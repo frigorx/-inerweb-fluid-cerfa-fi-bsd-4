@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1b3a63">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="inerWeb Fluide - Traçabilité fluides frigorigènes et CERFA 15497*04">
+  
+  <title>inerWeb Fluide</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="img/icon-192.png">
+  <link rel="apple-touch-icon" href="img/icon-192.png">
+  
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-container" id="app">
+    
+    <!-- ========== ÉCRAN DE LOGIN ========== -->
+    <div id="screen-login" class="screen">
+      <div class="login-container">
+        <div class="login-logo">
+          <!-- Logo inerWeb Fluide SVG officiel -->
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 100" class="logo-full">
+            <text fill="#1b3a63" font-size="36px" x="10" y="55">❄️</text>
+            <text fill="#1b3a63" font-family="Trebuchet MS, Trebuchet, sans-serif" font-size="34px" font-weight="bold" x="60" y="52">iner</text>
+            <text fill="#1b3a63" font-family="Segoe Script, Brush Script MT, cursive" font-size="34px" x="125" y="52">Web</text>
+            <line stroke="#e8914a" stroke-width="3" x1="60" x2="210" y1="58" y2="58"/>
+            <rect fill="#e8914a" x="220" y="20" rx="6" ry="6" width="90" height="32"/>
+            <text fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="18px" font-weight="bold" x="265" y="43" text-anchor="middle">Fluide</text>
+            <text fill="#cccccc" font-family="Segoe UI, sans-serif" font-size="11px" x="60" y="80">par F. Henninot</text>
+          </svg>
+        </div>
+        
+        <div class="login-card card">
+          <div class="card-body">
+            <h2 class="login-title">Connexion</h2>
+            
+            <form id="login-form">
+              <div class="form-group">
+                <label class="form-label required" for="login-id">Identifiant</label>
+                <input type="text" id="login-id" class="form-input" placeholder="Code ou nom" autocomplete="username" required>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label" for="login-password">Mot de passe</label>
+                <input type="password" id="login-password" class="form-input" placeholder="Optionnel" autocomplete="current-password">
+                <p class="form-help">Laissez vide en mode formation</p>
+              </div>
+              
+              <div id="login-error" class="form-error hidden"></div>
+              
+              <button type="submit" class="btn btn-primary btn-block btn-lg" id="login-submit">
+                <span>Se connecter</span>
+              </button>
+            </form>
+          </div>
+        </div>
+        
+        <p class="login-footer">
+          Traçabilité F-Gas · CERFA 15497*04
+        </p>
+      </div>
+    </div>
+    
+    <!-- ========== APPLICATION PRINCIPALE ========== -->
+    <div id="screen-app" class="screen hidden">
+      
+      <!-- Header -->
+      <header class="header">
+        <div class="header-logo">
+          <!-- Logo compact pour header -->
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 50">
+            <text fill="#ffffff" font-size="28px" x="4" y="34">❄️</text>
+            <text fill="#ffffff" font-family="Trebuchet MS, Trebuchet, sans-serif" font-size="26px" font-weight="bold" x="44" y="32">iner</text>
+            <text fill="#ffffff" font-family="Segoe Script, Brush Script MT, cursive" font-size="26px" x="94" y="32">Web</text>
+            <line stroke="#e8914a" stroke-width="2.5" x1="44" x2="155" y1="36" y2="36"/>
+            <rect fill="#e8914a" x="160" y="10" rx="5" ry="5" width="70" height="26"/>
+            <text fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="14px" font-weight="bold" x="195" y="28" text-anchor="middle">Fluide</text>
+          </svg>
+        </div>
+        
+        <div class="header-center">
+          <div id="mode-badge" class="mode-badge formation">
+            <span id="mode-label">Mode Formation</span>
+          </div>
+        </div>
+        
+        <div class="header-right">
+          <div class="user-info" id="user-info">
+            <div class="user-avatar" id="user-avatar">--</div>
+            <div class="user-details">
+              <span class="user-name" id="user-name">--</span>
+              <span class="user-role" id="user-role">--</span>
+            </div>
+          </div>
+          <button class="btn-icon" id="btn-logout" title="Déconnexion">⏻</button>
+        </div>
+      </header>
+      
+      <!-- Navigation -->
+      <nav class="nav" id="main-nav">
+        <button class="nav-item active" data-view="dashboard">
+          <span class="icon">📊</span>
+          <span class="label">Dashboard</span>
+        </button>
+        <button class="nav-item" data-view="machines">
+          <span class="icon">🏭</span>
+          <span class="label">Machines</span>
+        </button>
+        <button class="nav-item" data-view="bouteilles">
+          <span class="icon">🧪</span>
+          <span class="label">Bouteilles</span>
+        </button>
+        <button class="nav-item" data-view="mouvements">
+          <span class="icon">📝</span>
+          <span class="label">Mouvements</span>
+        </button>
+        <button class="nav-item" data-view="controles">
+          <span class="icon">🔍</span>
+          <span class="label">Contrôles</span>
+        </button>
+        <button class="nav-item" data-view="stats">
+          <span class="icon">📈</span>
+          <span class="label">Stats</span>
+        </button>
+        <button class="nav-item" data-view="alertes">
+          <span class="icon">⚠️</span>
+          <span class="label">Alertes</span>
+          <span class="nav-badge hidden" id="alertes-badge">0</span>
+        </button>
+      </nav>
+      
+      <!-- Contenu principal -->
+      <main class="main-content">
+        
+        <!-- ===== DASHBOARD ===== -->
+        <section id="view-dashboard" class="view">
+          <div class="page-header">
+            <h1 class="page-title">Tableau de bord</h1>
+            <button class="btn btn-primary" id="btn-nouveau-mouvement">
+              <span>➕</span>
+              <span>Nouveau mouvement</span>
+            </button>
+          </div>
+          
+          <div class="stats-grid" id="dashboard-stats">
+            <!-- Stats dynamiques -->
+          </div>
+          
+          <div class="card card-accent">
+            <div class="card-header">
+              <h3 class="card-title">⚠️ Alertes à traiter</h3>
+              <button class="btn btn-sm btn-secondary" data-view="alertes">Voir tout</button>
+            </div>
+            <div class="card-body">
+              <div class="alerte-list" id="dashboard-alertes">
+                <!-- Alertes dynamiques -->
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        <!-- ===== MACHINES ===== -->
+        <section id="view-machines" class="view hidden">
+          <div class="page-header">
+            <h1 class="page-title">Parc machines</h1>
+            <button class="btn btn-primary" id="btn-add-machine">
+              <span>➕</span>
+              <span>Ajouter</span>
+            </button>
+          </div>
+          
+          <div class="machines-grid" id="machines-list">
+            <!-- Machines dynamiques -->
+          </div>
+        </section>
+        
+        <!-- ===== BOUTEILLES ===== -->
+        <section id="view-bouteilles" class="view hidden">
+          <div class="page-header">
+            <h1 class="page-title">Stock bouteilles</h1>
+            <button class="btn btn-primary" id="btn-add-bouteille">
+              <span>➕</span>
+              <span>Ajouter</span>
+            </button>
+          </div>
+          
+          <div class="bouteilles-grid" id="bouteilles-list">
+            <!-- Bouteilles dynamiques -->
+          </div>
+        </section>
+        
+        <!-- ===== MOUVEMENTS ===== -->
+        <section id="view-mouvements" class="view hidden">
+          <div class="page-header">
+            <h1 class="page-title">Mouvements de fluide</h1>
+            <button class="btn btn-primary" id="btn-add-mouvement">
+              <span>➕</span>
+              <span>Nouveau</span>
+            </button>
+          </div>
+          
+          <div class="card">
+            <div class="card-body">
+              <div class="table-container">
+                <table class="table" id="mouvements-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Machine</th>
+                      <th>Type</th>
+                      <th>Quantité</th>
+                      <th>Statut</th>
+                    </tr>
+                  </thead>
+                  <tbody id="mouvements-tbody">
+                    <!-- Lignes dynamiques -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        <!-- ===== CONTRÔLES ===== -->
+        <section id="view-controles" class="view hidden">
+          <div class="page-header">
+            <h1 class="page-title">Contrôles d'étanchéité</h1>
+            <button class="btn btn-primary" id="btn-add-controle">
+              <span>➕</span>
+              <span>Nouveau</span>
+            </button>
+          </div>
+          
+          <div class="card">
+            <div class="card-body">
+              <div class="table-container">
+                <table class="table" id="controles-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Machine</th>
+                      <th>Résultat</th>
+                      <th>Prochain</th>
+                    </tr>
+                  </thead>
+                  <tbody id="controles-tbody">
+                    <!-- Lignes dynamiques -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        <!-- ===== STATS ===== -->
+        <section id="view-stats" class="view hidden">
+          <div class="page-header">
+            <h1 class="page-title">Statistiques</h1>
+          </div>
+          
+          <div class="stats-grid" id="stats-details">
+            <!-- Stats avancées dynamiques -->
+          </div>
+        </section>
+        
+        <!-- ===== ALERTES ===== -->
+        <section id="view-alertes" class="view hidden">
+          <div class="page-header">
+            <h1 class="page-title">Alertes réglementaires</h1>
+          </div>
+          
+          <div class="card">
+            <div class="card-body">
+              <div class="alerte-list" id="alertes-full-list">
+                <!-- Alertes complètes dynamiques -->
+              </div>
+            </div>
+          </div>
+        </section>
+        
+      </main>
+      
+    </div>
+    
+    <!-- ========== WIZARD MOUVEMENT ========== -->
+    <div id="wizard-overlay" class="modal-overlay hidden">
+      <div class="modal" style="max-width: 700px; max-height: 95vh;">
+        <div class="wizard">
+          <div class="wizard-header">
+            <h2 class="wizard-title">
+              <span>➕</span>
+              <span>Nouveau mouvement de fluide</span>
+            </h2>
+            <div class="wizard-steps" id="wizard-steps">
+              <div class="wizard-step active" data-step="1">
+                <span class="wizard-step-num">1</span>
+                <span>Type</span>
+              </div>
+              <div class="wizard-step" data-step="2">
+                <span class="wizard-step-num">2</span>
+                <span>Machine</span>
+              </div>
+              <div class="wizard-step" data-step="3">
+                <span class="wizard-step-num">3</span>
+                <span>Bouteille</span>
+              </div>
+              <div class="wizard-step" data-step="4">
+                <span class="wizard-step-num">4</span>
+                <span>Pesées</span>
+              </div>
+              <div class="wizard-step" data-step="5">
+                <span class="wizard-step-num">5</span>
+                <span>Signature</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="wizard-body" id="wizard-body">
+            <!-- Contenu dynamique selon l'étape -->
+          </div>
+          
+          <div class="wizard-footer">
+            <button class="btn btn-secondary" id="wizard-prev">← Retour</button>
+            <button class="btn btn-ghost" id="wizard-cancel">Annuler</button>
+            <button class="btn btn-success" id="wizard-next">Continuer →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ========== TOAST CONTAINER ========== -->
+    <div class="toast-container" id="toast-container"></div>
+    
+  </div>
+  
+  <!-- Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/wizard.js"></script>
+  <script src="js/app.js"></script>
+  
+  <!-- Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('SW registered'))
+          .catch(err => console.log('SW registration failed:', err));
+      });
+    }
+  </script>
+  
+  <style>
+    /* Styles spécifiques à la page de login */
+    .login-container {
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ed 100%);
+    }
+    
+    .login-logo {
+      margin-bottom: 24px;
+    }
+    
+    .login-logo svg {
+      max-width: 300px;
+      height: auto;
+    }
+    
+    .login-card {
+      width: 100%;
+      max-width: 380px;
+    }
+    
+    .login-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--inerweb-blue);
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .login-footer {
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--slate-400);
+      text-align: center;
+    }
+    
+    /* Screen management */
+    .screen {
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+    
+    .view {
+      animation: fadeIn 0.2s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+</body>
+</html>
