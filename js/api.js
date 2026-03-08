@@ -68,41 +68,6 @@ const API = {
     }
   },
   
-  /**
-   * Requête POST
-   */
-  async post(action, body = {}) {
-    const url = new URL(this.baseUrl);
-    url.searchParams.set('action', action);
-    if (this.apiKey) {
-      url.searchParams.set('key', this.apiKey);
-    }
-
-    const postBody = { ...body, action, key: this.apiKey || '' };
-
-    try {
-      const response = await fetch(url.toString(), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(postBody)
-      });
-      
-      const data = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.error || 'Erreur inconnue');
-      }
-      
-      return data;
-    } catch (error) {
-      console.error(`API POST ${action}:`, error);
-      throw error;
-    }
-  },
-  
   // ========== ACTIONS SPÉCIFIQUES ==========
   
   /**

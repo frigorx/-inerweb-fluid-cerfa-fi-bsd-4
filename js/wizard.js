@@ -89,41 +89,41 @@ const Wizard = {
     const selected = State.wizard.data.machineId;
     const machines = State.machines;
     
-    if (machines.length === 0) {
-      return `
-        <h3>Sélection de la machine</h3>
-        <div class="empty-state">
-          <div class="empty-state-icon">🏭</div>
-          <div class="empty-state-title">Aucune machine disponible</div>
-          <div class="empty-state-desc">Ajoutez d'abord une machine dans le parc</div>
-        </div>
-      `;
-    }
-    
     return `
       <h3>Sélection de la machine</h3>
-      <p>Choisissez l'équipement concerné</p>
-      <div class="machines-grid" style="max-height: 400px; overflow-y: auto;">
-        ${machines.map(m => `
-          <div class="machine-card ${selected === m.id ? 'selected' : ''}" data-id="${m.id}">
-            <div class="machine-header">
-              <div class="machine-icon">${UI.getMachineIcon(m.type)}</div>
-            </div>
-            <div class="machine-code">${m.code || m.id}</div>
-            <div class="machine-name">${m.nom || m.designation || '--'}</div>
-            <div class="machine-specs">
-              <div class="spec-item">
-                <span class="spec-label">Fluide</span>
-                <span class="spec-value refrigerant">${m.fluide || '--'}</span>
-              </div>
-              <div class="spec-item">
-                <span class="spec-label">Charge</span>
-                <span class="spec-value">${m.chargeActuelle || 0} kg</span>
-              </div>
-            </div>
-          </div>
-        `).join('')}
+      <p>Choisissez l'équipement concerné ou créez-en un nouveau</p>
+      <div style="margin-bottom: 12px;">
+        <button class="btn btn-primary btn-sm" id="wizard-add-machine">🏭 Créer une nouvelle machine</button>
       </div>
+      ${machines.length === 0 ? `
+        <div class="empty-state">
+          <div class="empty-state-icon">🏭</div>
+          <div class="empty-state-title">Aucune machine dans le parc</div>
+          <div class="empty-state-desc">Créez votre première machine ci-dessus</div>
+        </div>
+      ` : `
+        <div class="machines-grid" style="max-height: 350px; overflow-y: auto;">
+          ${machines.map(m => `
+            <div class="machine-card ${selected === m.id ? 'selected' : ''}" data-id="${m.id}">
+              <div class="machine-header">
+                <div class="machine-icon">${UI.getMachineIcon(m.type)}</div>
+              </div>
+              <div class="machine-code">${m.code || m.id}</div>
+              <div class="machine-name">${m.nom || m.designation || '--'}</div>
+              <div class="machine-specs">
+                <div class="spec-item">
+                  <span class="spec-label">Fluide</span>
+                  <span class="spec-value refrigerant">${m.fluide || '--'}</span>
+                </div>
+                <div class="spec-item">
+                  <span class="spec-label">Charge</span>
+                  <span class="spec-value">${m.chargeActuelle || 0} kg</span>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `}
     `;
   },
   
@@ -134,6 +134,18 @@ const Wizard = {
         card.classList.add('selected');
         State.wizardSetData('machineId', card.dataset.id);
       });
+    });
+    // Bouton créer machine depuis le wizard
+    document.getElementById('wizard-add-machine')?.addEventListener('click', async () => {
+      App.openModalMachine();
+      // Attendre la fermeture de la modale puis rafraîchir
+      const observer = new MutationObserver(() => {
+        if (document.getElementById('modal-machine').classList.contains('hidden')) {
+          observer.disconnect();
+          UI.renderWizardStep();
+        }
+      });
+      observer.observe(document.getElementById('modal-machine'), { attributes: true });
     });
   },
   
@@ -161,11 +173,14 @@ const Wizard = {
     return `
       <h3>Sélection de la bouteille</h3>
       <p>Machine: <strong>${machine.code}</strong> • Fluide compatible: <strong style="color: var(--refrigerant);">${fluide}</strong></p>
-      
+      <div style="margin-bottom: 12px;">
+        <button class="btn btn-primary btn-sm" id="wizard-add-bouteille">🧪 Créer une nouvelle bouteille</button>
+      </div>
       ${bouteillesCompatibles.length === 0 ? `
         <div class="empty-state">
           <div class="empty-state-icon">🧪</div>
           <div class="empty-state-title">Aucune bouteille ${fluide} disponible</div>
+          <div class="empty-state-desc">Créez une bouteille ci-dessus</div>
         </div>
       ` : `
         <div class="bouteilles-grid" style="max-height: 350px; overflow-y: auto;">
@@ -201,6 +216,17 @@ const Wizard = {
   },
   
   bindStepBouteille() {
+    // Bouton créer bouteille depuis le wizard
+    document.getElementById('wizard-add-bouteille')?.addEventListener('click', async () => {
+      App.openModalBouteille();
+      const observer = new MutationObserver(() => {
+        if (document.getElementById('modal-bouteille').classList.contains('hidden')) {
+          observer.disconnect();
+          UI.renderWizardStep();
+        }
+      });
+      observer.observe(document.getElementById('modal-bouteille'), { attributes: true });
+    });
     document.querySelectorAll('.bouteille-card:not(.incompatible)').forEach(card => {
       card.addEventListener('click', () => {
         document.querySelectorAll('.bouteille-card').forEach(c => c.classList.remove('selected'));

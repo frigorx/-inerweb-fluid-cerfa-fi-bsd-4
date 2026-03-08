@@ -374,7 +374,7 @@ const UI = {
       <tr>
         <td>${this.formatDate(c.date)}</td>
         <td>${c.machineCode || c.machineId || '--'}</td>
-        <td><span class="badge badge-${c.resultat === 'OK' ? 'success' : 'danger'}">${c.resultat || '--'}</span></td>
+        <td><span class="badge badge-${c.resultat === 'Conforme' ? 'success' : 'danger'}">${c.resultat || '--'}</span></td>
         <td>${this.formatDate(c.prochainControle)}</td>
       </tr>
     `).join('');

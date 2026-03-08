@@ -281,7 +281,7 @@ const App = {
     const serie = document.getElementById('machine-serie').value.trim();
     const localisation = document.getElementById('machine-localisation').value.trim();
 
-    if (!nom || !type || !fluide || !chargeNom) {
+    if (!fluide || !chargeNom) {
       UI.toast('Veuillez remplir tous les champs obligatoires', 'error');
       return;
     }
@@ -326,7 +326,7 @@ const App = {
     const fournisseur = document.getElementById('bouteille-fournisseur').value.trim();
     const lot = document.getElementById('bouteille-lot').value.trim();
 
-    if (!categorie || !fluide || !tare) {
+    if (!fluide || !tare) {
       UI.toast('Veuillez remplir tous les champs obligatoires', 'error');
       return;
     }

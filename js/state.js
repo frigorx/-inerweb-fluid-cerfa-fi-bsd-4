@@ -8,7 +8,25 @@ const State = {
   user: null,
   isLoggedIn: false,
   mode: 'FORMATION', // FORMATION ou OFFICIEL
-  
+
+  // Fluides par défaut (fallback si le serveur ne renvoie rien)
+  DEFAULT_FLUIDES: [
+    { code: 'R32', nom: 'Difluorométhane', prg: 675, famille: 'HFC', securite: 'A2L' },
+    { code: 'R410A', nom: 'Mélange R32/R125', prg: 2088, famille: 'HFC', securite: 'A1' },
+    { code: 'R134a', nom: 'Tétrafluoroéthane', prg: 1430, famille: 'HFC', securite: 'A1' },
+    { code: 'R404A', nom: 'Mélange HFC', prg: 3922, famille: 'HFC', securite: 'A1' },
+    { code: 'R407C', nom: 'Mélange HFC', prg: 1774, famille: 'HFC', securite: 'A1' },
+    { code: 'R407F', nom: 'Mélange HFC', prg: 1825, famille: 'HFC', securite: 'A1' },
+    { code: 'R449A', nom: 'Mélange HFO/HFC', prg: 1397, famille: 'HFO', securite: 'A1' },
+    { code: 'R448A', nom: 'Mélange HFO/HFC', prg: 1387, famille: 'HFO', securite: 'A1' },
+    { code: 'R290', nom: 'Propane', prg: 3, famille: 'HC', securite: 'A3' },
+    { code: 'R600a', nom: 'Isobutane', prg: 3, famille: 'HC', securite: 'A3' },
+    { code: 'R744', nom: 'CO2', prg: 1, famille: 'Naturel', securite: 'A1' },
+    { code: 'R1234yf', nom: 'Tétrafluoropropène', prg: 4, famille: 'HFO', securite: 'A2L' },
+    { code: 'R1234ze', nom: 'Trans-1,3,3,3-TFP', prg: 7, famille: 'HFO', securite: 'A2L' },
+    { code: 'R513A', nom: 'Mélange HFO/HFC', prg: 631, famille: 'HFO', securite: 'A1' }
+  ],
+
   // Données
   config: null,
   machines: [],
@@ -122,7 +140,8 @@ const State = {
       this.bouteilles = (bouteillesRes.data || bouteillesRes.bouteilles || []).map(b => ({
         ...b, id: b.code || b.id, stockActuel: b.masseFluide || 0, capacite: b.contenance || 10
       }));
-      this.fluides = fluidesRes.data || fluidesRes.fluides || [];
+      const fluidesData = fluidesRes.data || fluidesRes.fluides || [];
+      this.fluides = fluidesData.length > 0 ? fluidesData : this.DEFAULT_FLUIDES;
       this.alertes = alertesRes.data || alertesRes.alertes || [];
       
     } catch (error) {
@@ -154,7 +173,7 @@ const State = {
     try {
       const res = await API.getControles(params);
       this.controles = (res.data || res.controles || []).map(c => ({
-        ...c, machineCode: c.machine, resultat: c.resultat === 'Conforme' ? 'OK' : c.resultat
+        ...c, machineCode: c.machine, resultat: c.resultat
       }));
     } catch (error) {
       console.error('Erreur chargement contrôles:', error);
@@ -210,7 +229,7 @@ const State = {
    * Filtre les bouteilles compatibles avec un fluide
    */
   getBouteillesCompatibles(fluideCode) {
-    return this.bouteilles.filter(b => b.fluide === fluideCode && b.stockActuel > 0);
+    return this.bouteilles.filter(b => b.fluide === fluideCode);
   },
   
   /**
