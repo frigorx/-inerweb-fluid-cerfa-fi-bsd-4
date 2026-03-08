@@ -298,6 +298,15 @@ const UI = {
         } catch (err) { this.toast('Erreur: ' + err.message, 'error'); }
       });
     });
+
+    // Binding clic sur carte machine → fiche détaillée
+    document.querySelectorAll('.machine-card').forEach(card => {
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('button')) return; // Ignorer les clics sur les boutons
+        this.openDetailModal('machine', card.dataset.id);
+      });
+    });
   },
   
   getMachineIcon(type) {
@@ -352,8 +361,16 @@ const UI = {
         </div>
       `;
     }).join('');
+
+    // Binding clic sur carte bouteille → fiche détaillée
+    document.querySelectorAll('.bouteille-card').forEach(card => {
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', () => {
+        this.openDetailModal('bouteille', card.dataset.id);
+      });
+    });
   },
-  
+
   // ========== MOUVEMENTS ==========
   
   renderMouvements() {
@@ -646,6 +663,109 @@ const UI = {
   },
 
   /**
+   * Ouvre la modale de fiche détaillée avec traçabilité croisée
+   */
+  async openDetailModal(type, id) {
+    const modal = document.getElementById('modal-detail');
+    const title = document.getElementById('detail-title');
+    const body = document.getElementById('detail-body');
+
+    const typeLabels = { machine: 'Machine', bouteille: 'Bouteille', operateur: 'Opérateur', fluide: 'Fluide' };
+    title.textContent = (typeLabels[type] || type) + ' — ' + id;
+    body.innerHTML = '<div style="text-align:center;padding:40px;"><div class="spinner"></div><p>Chargement traçabilité...</p></div>';
+    modal.classList.remove('hidden');
+
+    try {
+      const res = await API.getTracabilite(type, id);
+      const data = res.data;
+
+      let html = '';
+
+      // Fiche entité
+      if (data.entite) {
+        html += '<div style="background:#F0F9FF;border:1px solid #3B82F6;border-radius:8px;padding:16px;margin-bottom:16px;">';
+        html += '<h3 style="margin:0 0 8px;color:#1E40AF;">Informations</h3>';
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;">';
+        Object.entries(data.entite).forEach(([k, v]) => {
+          if (v && typeof v !== 'object') {
+            const labels = { code:'Code', nom:'Nom', type:'Type', marque:'Marque', modele:'Modèle', serie:'N° série',
+              fluide:'Fluide', chargeNom:'Charge nominale', chargeAct:'Charge actuelle', eqCO2:'Éq. CO2',
+              localisation:'Localisation', miseEnService:'Mise en service', prochainControle:'Prochain contrôle',
+              statut:'Statut', capacite:'Capacité', masseVide:'Masse vide', stockActuel:'Stock actuel',
+              categorie:'Catégorie', fournisseur:'Fournisseur', prenom:'Prénom', role:'Rôle',
+              attestation:'Attestation', prg:'PRG', famille:'Famille', siret:'SIRET', ville:'Ville' };
+            html += '<div><strong>' + (labels[k] || k) + ' :</strong> ' + v + '</div>';
+          }
+        });
+        if (data.entite.client) {
+          html += '<div style="grid-column:1/-1;margin-top:8px;padding-top:8px;border-top:1px solid #93C5FD;">';
+          html += '<strong>Détenteur :</strong> ' + data.entite.client.nom + (data.entite.client.siret ? ' (SIRET: ' + data.entite.client.siret + ')' : '') + (data.entite.client.ville ? ' — ' + data.entite.client.ville : '');
+          html += '</div>';
+        }
+        html += '</div></div>';
+      }
+
+      // Mouvements
+      html += '<div style="margin-bottom:16px;">';
+      html += '<h3 style="margin:0 0 8px;border-bottom:2px solid #3B82F6;padding-bottom:4px;">Mouvements (' + data.mouvements.length + ')</h3>';
+      if (data.mouvements.length === 0) {
+        html += '<p style="color:#999;font-size:13px;">Aucun mouvement enregistré</p>';
+      } else {
+        html += '<table class="table" style="width:100%;font-size:12px;"><thead><tr><th>Date</th><th>Type</th><th>Machine</th><th>Bouteille</th><th>Masse</th><th>Opérateur</th><th>Statut</th></tr></thead><tbody>';
+        data.mouvements.forEach(m => {
+          html += '<tr><td>' + this.formatDate(m.date) + '</td><td>' + (m.type||'--') + '</td><td><code>' + (m.machine||'--') + '</code></td><td><code>' + (m.bouteille||'--') + '</code></td><td>' + (m.masse||0) + ' kg</td><td>' + (m.operateur||'--') + '</td><td><span class="badge badge-' + this.getStatutBadgeClass(m.statut) + '">' + (m.statut||'--') + '</span></td></tr>';
+        });
+        html += '</tbody></table>';
+      }
+      html += '</div>';
+
+      // Contrôles
+      html += '<div style="margin-bottom:16px;">';
+      html += '<h3 style="margin:0 0 8px;border-bottom:2px solid #10B981;padding-bottom:4px;">Contrôles (' + data.controles.length + ')</h3>';
+      if (data.controles.length === 0) {
+        html += '<p style="color:#999;font-size:13px;">Aucun contrôle enregistré</p>';
+      } else {
+        html += '<table class="table" style="width:100%;font-size:12px;"><thead><tr><th>Date</th><th>Machine</th><th>Fluide</th><th>Méthode</th><th>Résultat</th><th>Opérateur</th></tr></thead><tbody>';
+        data.controles.forEach(c => {
+          html += '<tr><td>' + this.formatDate(c.date) + '</td><td><code>' + (c.machine||'--') + '</code></td><td>' + (c.fluide||'--') + '</td><td>' + (c.methode||'--') + '</td><td><span class="badge badge-' + (c.resultat === 'Conforme' ? 'success' : 'danger') + '">' + (c.resultat||'--') + '</span></td><td>' + (c.operateur||'--') + '</td></tr>';
+        });
+        html += '</tbody></table>';
+      }
+      html += '</div>';
+
+      // CERFAs
+      html += '<div style="margin-bottom:16px;">';
+      html += '<h3 style="margin:0 0 8px;border-bottom:2px solid #F59E0B;padding-bottom:4px;">CERFAs générés (' + data.cerfas.length + ')</h3>';
+      if (data.cerfas.length === 0) {
+        html += '<p style="color:#999;font-size:13px;">Aucun CERFA généré</p>';
+      } else {
+        html += '<table class="table" style="width:100%;font-size:12px;"><thead><tr><th>N° FI</th><th>Date</th><th>Machine</th><th>Mouvement</th><th>Opérateur</th><th>Mode</th></tr></thead><tbody>';
+        data.cerfas.forEach(c => {
+          html += '<tr><td><strong>' + c.id + '</strong></td><td>' + this.formatDate(c.date) + '</td><td><code>' + (c.machine||'--') + '</code></td><td><code>' + (c.mouvement||'--') + '</code></td><td>' + (c.operateur||'--') + '</td><td><span class="badge">' + (c.mode||'--') + '</span></td></tr>';
+        });
+        html += '</tbody></table>';
+      }
+      html += '</div>';
+
+      // Résumé traçabilité
+      html += '<div style="background:#ECFDF5;border:1px solid #10B981;border-radius:8px;padding:12px;font-size:13px;">';
+      html += '<strong>Résumé traçabilité :</strong> ';
+      html += data.mouvements.length + ' mouvement(s), ';
+      html += data.controles.length + ' contrôle(s), ';
+      html += data.cerfas.length + ' CERFA(s) liés à cette ' + (type === 'machine' ? 'machine' : type === 'bouteille' ? 'bouteille' : type === 'operateur' ? 'cet opérateur' : 'ce fluide');
+      html += '</div>';
+
+      body.innerHTML = html;
+    } catch (err) {
+      body.innerHTML = '<div style="text-align:center;padding:40px;color:red;"><p>Erreur : ' + err.message + '</p></div>';
+    }
+
+    // Close handlers
+    document.getElementById('detail-close').addEventListener('click', () => modal.classList.add('hidden'));
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
+  },
+
+  /**
    * Rendu de la vue admin
    */
   async renderAdmin() {
@@ -744,6 +864,34 @@ const UI = {
         </tr>`).join('') +
         '</tbody></table>';
     }
+
+    // Charger journal d'audit
+    try {
+      const auditRes = await API.getAuditLog({ limit: 50 });
+      const logs = auditRes.data || [];
+      const auditList = document.getElementById('admin-audit-list');
+      if (logs.length === 0) {
+        auditList.innerHTML = '<p style="color:#999;">Aucune entrée dans le journal.</p>';
+      } else {
+        auditList.innerHTML = '<table class="table" style="width:100%;font-size:12px;"><thead><tr>' +
+          '<th>Date</th><th>Utilisateur</th><th>Catégorie</th><th>Action</th><th>Objet</th><th>Résultat</th>' +
+          '</tr></thead><tbody>' +
+          logs.map(l => `<tr>
+            <td>${l.timestamp || '--'}</td>
+            <td>${l.utilisateur || '--'}</td>
+            <td><span class="badge">${l.categorie || '--'}</span></td>
+            <td>${l.action || '--'}</td>
+            <td><code>${l.objet || '--'}</code></td>
+            <td><span class="badge badge-${l.resultat === 'success' ? 'success' : 'danger'}">${l.resultat || '--'}</span></td>
+          </tr>`).join('') +
+          '</tbody></table>';
+      }
+    } catch (e) {
+      document.getElementById('admin-audit-list').innerHTML = '<p style="color:red;">Erreur chargement audit</p>';
+    }
+
+    // Binding refresh audit
+    document.getElementById('btn-refresh-audit')?.addEventListener('click', () => this.renderAdmin());
   }
 };
 

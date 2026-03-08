@@ -375,6 +375,20 @@
               <button type="button" class="btn btn-secondary" id="btn-init-fluides" style="margin-top: 10px;">Initialiser les fluides par défaut</button>
             </div>
           </div>
+
+          <!-- Journal d'audit -->
+          <div class="card" style="margin-bottom: 16px;">
+            <div class="card-header" style="background: #1b3a63; color: white; padding: 12px 16px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
+              <h3 style="margin:0;">Journal d'audit — Qui a fait quoi</h3>
+              <button class="btn btn-secondary" id="btn-refresh-audit" style="background: white; color: #1b3a63; font-size: 13px;">Actualiser</button>
+            </div>
+            <div class="card-body" style="padding: 16px;">
+              <p style="font-size: 13px; color: #666; margin-bottom: 12px;">Historique complet des actions effectuées dans l'application.</p>
+              <div id="admin-audit-list">
+                <!-- Rempli dynamiquement -->
+              </div>
+            </div>
+          </div>
         </section>
 
       </main>
@@ -789,6 +803,19 @@
         <div class="modal-footer">
           <button class="btn btn-secondary" id="modal-client-cancel">Annuler</button>
           <button class="btn btn-primary" id="modal-client-submit">Créer le client</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MODALE FICHE DÉTAILLÉE ========== -->
+    <div id="modal-detail" class="modal-overlay hidden">
+      <div class="modal" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+        <div class="modal-header" style="position: sticky; top: 0; background: white; z-index: 1;">
+          <h2 class="modal-title" id="detail-title">Fiche détaillée</h2>
+          <button class="modal-close" id="detail-close">&times;</button>
+        </div>
+        <div class="modal-body" id="detail-body">
+          <!-- Rempli dynamiquement -->
         </div>
       </div>
     </div>

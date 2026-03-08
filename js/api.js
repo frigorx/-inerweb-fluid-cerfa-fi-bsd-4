@@ -239,6 +239,14 @@ const API = {
    */
   async exportPro(type, params = {}) {
     return this.get('exportPro', { type, ...params });
+  },
+
+  async getTracabilite(type, id) {
+    return this.get('getTracabilite', { type, id });
+  },
+
+  async getAuditLog(params = {}) {
+    return this.get('getAuditLog', params);
   }
 };
 
