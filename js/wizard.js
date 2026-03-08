@@ -203,12 +203,20 @@ const Wizard = {
       `;
     }
     
+    const isPrechargee = (machine.statut || '').includes('préchargée');
     const bouteillesCompatibles = State.getBouteillesCompatibles(fluide);
     const bouteillesIncompatibles = State.bouteilles.filter(b => b.fluide !== fluide);
-    
+
     return `
       <h3>Sélection de la bouteille</h3>
       <p>Machine: <strong>${machine.code}</strong> • Fluide compatible: <strong style="color: var(--refrigerant);">${fluide}</strong></p>
+      ${isPrechargee ? `
+        <div style="padding: 12px; background: #EFF6FF; border: 2px solid #3B82F6; border-radius: 8px; margin-bottom: 12px;">
+          <p style="margin: 0 0 8px 0; font-weight: 600; color: #1E40AF;">ℹ️ Machine préchargée en usine</p>
+          <p style="margin: 0 0 8px 0; font-size: 13px; color: #1E40AF;">Le fluide est déjà dans la machine (charge usine : ${machine.chargeActuelle || machine.charge || '?'} kg). Vous pouvez passer cette étape ou sélectionner une bouteille si vous faites un appoint.</p>
+          <button class="btn btn-sm" id="wizard-skip-bouteille" style="background: #3B82F6; color: white;">Passer (pas de bouteille)</button>
+        </div>
+      ` : ''}
       <div style="margin-bottom: 12px;">
         <button class="btn btn-primary btn-sm" id="wizard-add-bouteille">🧪 Créer une nouvelle bouteille</button>
       </div>
@@ -269,6 +277,13 @@ const Wizard = {
       });
       observer.observe(document.getElementById('modal-bouteille'), { attributes: true });
     });
+    // Bouton "Passer" pour machine préchargée
+    document.getElementById('wizard-skip-bouteille')?.addEventListener('click', () => {
+      State.wizardSetData('bouteilleId', null);
+      State.wizardNext();
+      UI.renderWizardStep();
+    });
+
     document.querySelectorAll('.bouteille-card:not(.incompatible)').forEach(card => {
       card.addEventListener('click', () => {
         document.querySelectorAll('.bouteille-card').forEach(c => c.classList.remove('selected'));
@@ -283,7 +298,25 @@ const Wizard = {
   renderStepPesees() {
     const data = State.wizard.data;
     const bouteille = State.getBouteilleById(data.bouteilleId);
-    
+
+    // Machine préchargée sans bouteille : pas de pesée
+    if (this.isMachinePrechargee() && !data.bouteilleId) {
+      const machine = State.getMachineById(data.machineId);
+      return `
+        <h3>Quantités</h3>
+        <div style="padding: 20px; background: #EFF6FF; border-radius: 8px; text-align: center;">
+          <div style="font-size: 40px; margin-bottom: 12px;">🏭</div>
+          <h4 style="color: #1E40AF; margin: 0 0 8px 0;">Machine préchargée en usine</h4>
+          <p style="color: #1E40AF; margin: 0 0 12px 0;">Pas de pesée nécessaire — le fluide est d'origine constructeur.</p>
+          <div style="display: inline-block; background: white; padding: 12px 24px; border-radius: 8px; border: 2px solid #3B82F6;">
+            <div style="font-size: 13px; color: #64748B;">Charge usine</div>
+            <div style="font-size: 28px; font-weight: 700; color: #1E40AF;">${machine?.chargeActuelle || machine?.charge || '?'} kg</div>
+            <div style="font-size: 12px; color: #64748B;">${machine?.fluide || ''} • Fluide neuf (usine)</div>
+          </div>
+        </div>
+      `;
+    }
+
     return `
       <h3>Pesées de la bouteille</h3>
       <p>Bouteille: <strong>${bouteille?.code || '--'}</strong> • Stock actuel: <strong>${bouteille?.stockActuel || 0} kg</strong></p>
@@ -379,8 +412,8 @@ const Wizard = {
           <div><span style="color: var(--slate-500);">Mode:</span> <strong style="color: ${State.mode === 'OFFICIEL' ? 'var(--success)' : 'var(--mode-formation)'};">${State.mode}</strong></div>
           <div><span style="color: var(--slate-500);">Machine:</span> <strong>${machine?.code || '--'}</strong></div>
           <div><span style="color: var(--slate-500);">Fluide:</span> <strong style="color: var(--refrigerant);">${machine?.fluide || '--'}</strong></div>
-          <div><span style="color: var(--slate-500);">Bouteille:</span> <strong>${bouteille?.code || '--'}</strong></div>
-          <div><span style="color: var(--slate-500);">Quantité:</span> <strong>${parseFloat(data.quantite || 0).toFixed(2)} kg</strong></div>
+          <div><span style="color: var(--slate-500);">Bouteille:</span> <strong>${bouteille?.code || (this.isMachinePrechargee() ? 'Précharge usine' : '--')}</strong></div>
+          <div><span style="color: var(--slate-500);">Quantité:</span> <strong>${this.isMachinePrechargee() && !data.bouteilleId ? (machine?.chargeActuelle || machine?.charge || '?') + ' kg (usine)' : parseFloat(data.quantite || 0).toFixed(2) + ' kg'}</strong></div>
         </div>
       </div>
       
@@ -485,9 +518,17 @@ const Wizard = {
   /**
    * Valide l'étape courante
    */
+  /**
+   * Vérifie si la machine sélectionnée est préchargée
+   */
+  isMachinePrechargee() {
+    const machine = State.getMachineById(State.wizard.data.machineId);
+    return machine && (machine.statut || '').includes('préchargée');
+  },
+
   validateStep(step) {
     const data = State.wizard.data;
-    
+
     switch (step) {
       case 1:
         if (!data.type) {
@@ -495,28 +536,28 @@ const Wizard = {
           return false;
         }
         break;
-        
+
       case 2:
         if (!data.machineId) {
           UI.toast('Veuillez sélectionner une machine', 'error');
           return false;
         }
-        // Vérifier cohérence machine préchargée + mise en service
-        const machine2 = State.getMachineById(data.machineId);
-        if (machine2 && (machine2.statut || '').includes('préchargée') && data.type === 'MISE_EN_SERVICE') {
-          UI.toast('Cette machine est préchargée en usine, la mise en service est déjà faite. Choisissez "Charge / Appoint" pour ajouter du fluide.', 'warning');
-          return false;
-        }
         break;
-        
+
       case 3:
-        if (!data.bouteilleId) {
+        // Bouteille optionnelle si machine préchargée (mise en service sans bouteille)
+        if (!data.bouteilleId && !this.isMachinePrechargee()) {
           UI.toast('Veuillez sélectionner une bouteille', 'error');
           return false;
         }
         break;
-        
+
       case 4:
+        // Pesées optionnelles si machine préchargée sans bouteille
+        if (this.isMachinePrechargee() && !data.bouteilleId) {
+          // Pas de pesée nécessaire, la charge usine est déjà enregistrée
+          break;
+        }
         if (!data.peseeAvant || !data.peseeApres) {
           UI.toast('Veuillez saisir les deux pesées', 'error');
           return false;
@@ -547,17 +588,23 @@ const Wizard = {
       // La signature base64 est trop volumineuse pour un GET
       // On envoie juste un flag "signe" et on stocke la signature localement
       const signe = data.signature ? 'oui' : 'non';
-      const response = await API.createMouvement({
-        type: data.type,
+      const isPrechargeSansBouteille = this.isMachinePrechargee() && !data.bouteilleId;
+
+      const mouvementData = {
+        type: isPrechargeSansBouteille ? 'MiseEnService' : data.type,
         machine: machine?.code || data.machineId,
-        bouteille: bouteille?.code || data.bouteilleId,
-        peseeAvant: data.peseeAvant,
-        peseeApres: data.peseeApres,
+        bouteille: bouteille?.code || data.bouteilleId || '',
+        peseeAvant: isPrechargeSansBouteille ? 0 : data.peseeAvant,
+        peseeApres: isPrechargeSansBouteille ? 0 : data.peseeApres,
         operateur: State.user.id,
         mode: State.mode,
         signe: signe,
-        observations: data.commentaire
-      });
+        observations: isPrechargeSansBouteille
+          ? (data.commentaire ? data.commentaire + ' | ' : '') + 'Précharge usine - fluide neuf origine constructeur'
+          : data.commentaire
+      };
+
+      const response = await API.createMouvement(mouvementData);
 
       // Stocker la signature localement pour le CERFA
       if (data.signature && response.data?.id) {
