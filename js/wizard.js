@@ -166,22 +166,26 @@ const Wizard = {
     document.getElementById('wizard-add-machine')?.addEventListener('click', async () => {
       App._derniereMachineCreee = null;
       App.openModalMachine();
-      // Attendre la fermeture de la modale
-      const observer = new MutationObserver(async () => {
-        if (document.getElementById('modal-machine').classList.contains('hidden')) {
-          observer.disconnect();
-          // La machine a été créée et les données rechargées par submitMachine
-          if (App._derniereMachineCreee) {
-            // Sélectionner automatiquement la machine créée
-            State.wizardSetData('machineId', App._derniereMachineCreee);
-            App._derniereMachineCreee = null;
-            // Passer à l'étape suivante
-            State.wizardNext();
-          }
-          UI.renderWizardStep();
-        }
-      });
-      observer.observe(document.getElementById('modal-machine'), { attributes: true });
+      // Attendre la fermeture de la modale avec polling simple
+      const modal = document.getElementById('modal-machine');
+      const waitClose = () => {
+        return new Promise(resolve => {
+          const check = setInterval(() => {
+            if (modal.classList.contains('hidden')) {
+              clearInterval(check);
+              resolve();
+            }
+          }, 200);
+        });
+      };
+      await waitClose();
+      // La modale est fermée et les données sont rechargées (submitMachine fait loadInitialData avant fermeture)
+      if (App._derniereMachineCreee) {
+        State.wizardSetData('machineId', App._derniereMachineCreee);
+        App._derniereMachineCreee = null;
+        State.wizardNext();
+      }
+      UI.renderWizardStep();
     });
   },
   
@@ -264,18 +268,24 @@ const Wizard = {
     document.getElementById('wizard-add-bouteille')?.addEventListener('click', async () => {
       App._derniereBouteilleCreee = null;
       App.openModalBouteille();
-      const observer = new MutationObserver(async () => {
-        if (document.getElementById('modal-bouteille').classList.contains('hidden')) {
-          observer.disconnect();
-          if (App._derniereBouteilleCreee) {
-            State.wizardSetData('bouteilleId', App._derniereBouteilleCreee);
-            App._derniereBouteilleCreee = null;
-            State.wizardNext();
-          }
-          UI.renderWizardStep();
-        }
-      });
-      observer.observe(document.getElementById('modal-bouteille'), { attributes: true });
+      const modal = document.getElementById('modal-bouteille');
+      const waitClose = () => {
+        return new Promise(resolve => {
+          const check = setInterval(() => {
+            if (modal.classList.contains('hidden')) {
+              clearInterval(check);
+              resolve();
+            }
+          }, 200);
+        });
+      };
+      await waitClose();
+      if (App._derniereBouteilleCreee) {
+        State.wizardSetData('bouteilleId', App._derniereBouteilleCreee);
+        App._derniereBouteilleCreee = null;
+        State.wizardNext();
+      }
+      UI.renderWizardStep();
     });
     // Bouton "Passer" pour machine préchargée
     document.getElementById('wizard-skip-bouteille')?.addEventListener('click', () => {
@@ -353,10 +363,13 @@ const Wizard = {
   bindStepPesees() {
     const inputAvant = document.getElementById('pesee-avant');
     const inputApres = document.getElementById('pesee-apres');
+    // Machine préchargée sans bouteille : pas d'inputs pesée
+    if (!inputAvant || !inputApres) return;
+
     const resultValue = document.getElementById('quantite-value');
     const warning = document.getElementById('pesee-warning');
     const type = State.wizard.data.type;
-    
+
     const calcQuantite = () => {
       const avant = parseFloat(inputAvant.value) || 0;
       const apres = parseFloat(inputApres.value) || 0;

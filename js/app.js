@@ -510,8 +510,9 @@ const App = {
       const codeCreee = response.data.code;
       UI.toast(`Bouteille ${codeCreee} créée !`, 'success');
       App._derniereBouteilleCreee = codeCreee;
-      document.getElementById('modal-bouteille').classList.add('hidden');
+      // Recharger les données AVANT de fermer la modale (le MutationObserver du wizard attend la fermeture)
       await State.loadInitialData();
+      document.getElementById('modal-bouteille').classList.add('hidden');
       if (!State.wizard.active) {
         UI.showView('bouteilles');
       }
