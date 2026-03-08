@@ -231,6 +231,16 @@ const App = {
       this.submitControle();
     });
 
+    // Afficher/masquer info machine préchargée
+    document.getElementById('machine-prechargee')?.addEventListener('change', (e) => {
+      const infoBox = document.getElementById('machine-prechargee-info');
+      if (e.target.checked) {
+        infoBox.classList.remove('hidden');
+      } else {
+        infoBox.classList.add('hidden');
+      }
+    });
+
     // Afficher/masquer localisation fuite selon résultat contrôle
     document.getElementById('controle-resultat')?.addEventListener('change', (e) => {
       const fuiteGroup = document.getElementById('controle-fuite-group');
@@ -280,6 +290,7 @@ const App = {
     const modele = document.getElementById('machine-modele').value.trim();
     const serie = document.getElementById('machine-serie').value.trim();
     const localisation = document.getElementById('machine-localisation').value.trim();
+    const prechargee = document.getElementById('machine-prechargee').checked;
 
     if (!fluide || !chargeNom) {
       UI.toast('Veuillez remplir tous les champs obligatoires', 'error');
@@ -290,7 +301,7 @@ const App = {
       document.getElementById('modal-machine-submit').disabled = true;
       const response = await API.get('createMachine', {
         nom, type, fluide, chargeNom, marque, modele, serie, localisation,
-        operateur: State.user.id
+        prechargee, operateur: State.user.id
       });
       UI.toast(`Machine ${response.data.code} créée !`, 'success');
       document.getElementById('modal-machine').classList.add('hidden');
