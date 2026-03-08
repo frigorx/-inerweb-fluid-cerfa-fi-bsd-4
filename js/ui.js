@@ -140,38 +140,50 @@ const UI = {
    * Charge les données d'une vue
    */
   async loadViewData(viewName) {
-    switch (viewName) {
-      case 'dashboard':
-        this.renderDashboard();
-        break;
-      case 'machines':
-        this.renderMachines();
-        break;
-      case 'bouteilles':
-        this.renderBouteilles();
-        break;
-      case 'mouvements':
-        await State.loadMouvements();
-        this.renderMouvements();
-        break;
-      case 'controles':
-        await State.loadControles();
-        this.renderControles();
-        break;
-      case 'stats':
-        await State.loadStats();
-        this.renderStats();
-        break;
-      case 'alertes':
-        await State.refreshAlertes();
-        this.renderAlertes();
-        break;
-      case 'admin':
-        this.renderAdmin();
-        break;
-      case 'bilan':
-        this.initBilan();
-        break;
+    try {
+      switch (viewName) {
+        case 'dashboard':
+          // Rafraîchir machines, bouteilles, alertes en parallèle
+          await Promise.all([
+            API.getMachines().then(r => { State.machines = (r.data||[]).map(m => ({...m, id: m.code||m.id, charge: m.chargeAct||m.chargeNom, chargeActuelle: m.chargeAct||m.chargeNom, prochainControle: m.prochControle})); }),
+            API.getBouteilles().then(r => { State.bouteilles = (r.data||[]).map(b => ({...b, id: b.code||b.id, stockActuel: b.masseFluide||0, capacite: b.contenance||10})); }),
+            State.refreshAlertes()
+          ]);
+          this.renderDashboard();
+          break;
+        case 'machines':
+          await API.getMachines().then(r => { State.machines = (r.data||[]).map(m => ({...m, id: m.code||m.id, charge: m.chargeAct||m.chargeNom, chargeActuelle: m.chargeAct||m.chargeNom, prochainControle: m.prochControle})); });
+          this.renderMachines();
+          break;
+        case 'bouteilles':
+          await API.getBouteilles().then(r => { State.bouteilles = (r.data||[]).map(b => ({...b, id: b.code||b.id, stockActuel: b.masseFluide||0, capacite: b.contenance||10})); });
+          this.renderBouteilles();
+          break;
+        case 'mouvements':
+          await State.loadMouvements();
+          this.renderMouvements();
+          break;
+        case 'controles':
+          await State.loadControles();
+          this.renderControles();
+          break;
+        case 'stats':
+          await State.loadStats();
+          this.renderStats();
+          break;
+        case 'alertes':
+          await State.refreshAlertes();
+          this.renderAlertes();
+          break;
+        case 'admin':
+          this.renderAdmin();
+          break;
+        case 'bilan':
+          this.initBilan();
+          break;
+      }
+    } catch (err) {
+      console.error('Erreur rafraîchissement vue ' + viewName + ':', err);
     }
   },
   
