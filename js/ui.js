@@ -243,9 +243,35 @@ const UI = {
       this.elements.dashboardAlertes.innerHTML = alertes.map(a => this.renderAlerteCard(a)).join('');
     }
     
+    // Derniers mouvements (5 max)
+    const mvtDiv = document.getElementById('dashboard-derniers-mvt');
+    if (mvtDiv) {
+      try {
+        API.getMouvements({ limit: 5 }).then(res => {
+          const mvts = res.data || [];
+          if (mvts.length === 0) {
+            mvtDiv.innerHTML = '<p style="color:#999;text-align:center;">Aucun mouvement</p>';
+          } else {
+            mvtDiv.innerHTML = '<table class="table" style="width:100%;font-size:12px;"><tbody>' +
+              mvts.map(m => {
+                const cerfaLink = m.cerfa ? (m.cerfaUrl ? `<a href="${m.cerfaUrl}" target="_blank" style="color:#1E40AF;">${m.cerfa}</a>` : m.cerfa) : '';
+                return `<tr>
+                  <td>${this.formatDate(m.date)}</td>
+                  <td><code>${m.machine||'--'}</code></td>
+                  <td>${m.type||'--'}</td>
+                  <td><strong>${parseFloat(m.masse||0).toFixed(2)} kg</strong></td>
+                  <td>${cerfaLink}</td>
+                  <td><span class="badge badge-${this.getStatutBadgeClass(m.statut)}">${m.statut||'--'}</span></td>
+                </tr>`;
+              }).join('') + '</tbody></table>';
+          }
+        }).catch(() => {});
+      } catch (e) {}
+    }
+
     this.updateAlertesBadge();
   },
-  
+
   calcTotalEqCO2() {
     return State.machines.reduce((sum, m) => sum + (parseFloat(m.eqCO2) || 0), 0);
   },

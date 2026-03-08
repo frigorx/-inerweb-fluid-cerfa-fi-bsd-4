@@ -159,14 +159,28 @@
             <!-- Stats dynamiques -->
           </div>
           
-          <div class="card card-accent">
-            <div class="card-header">
-              <h3 class="card-title">⚠️ Alertes à traiter</h3>
-              <button class="btn btn-sm btn-secondary" data-view="alertes">Voir tout</button>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="card card-accent">
+              <div class="card-header">
+                <h3 class="card-title">⚠️ Alertes à traiter</h3>
+                <button class="btn btn-sm btn-secondary" data-view="alertes">Voir tout</button>
+              </div>
+              <div class="card-body">
+                <div class="alerte-list" id="dashboard-alertes">
+                  <!-- Alertes dynamiques -->
+                </div>
+              </div>
             </div>
-            <div class="card-body">
-              <div class="alerte-list" id="dashboard-alertes">
-                <!-- Alertes dynamiques -->
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Derniers mouvements</h3>
+                <button class="btn btn-sm btn-secondary" data-view="mouvements">Voir tout</button>
+              </div>
+              <div class="card-body">
+                <div id="dashboard-derniers-mvt" style="font-size:13px;">
+                  <!-- Rempli dynamiquement -->
+                </div>
               </div>
             </div>
           </div>
