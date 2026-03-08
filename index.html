@@ -127,6 +127,10 @@
           <span class="icon">📈</span>
           <span class="label">Stats</span>
         </button>
+        <button class="nav-item" data-view="bilan">
+          <span class="icon">📊</span>
+          <span class="label">Bilan</span>
+        </button>
         <button class="nav-item" data-view="alertes">
           <span class="icon">⚠️</span>
           <span class="label">Alertes</span>
@@ -284,6 +288,27 @@
               <div class="alerte-list" id="alertes-full-list">
                 <!-- Alertes complètes dynamiques -->
               </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== BILAN ANNUEL ===== -->
+        <section id="view-bilan" class="view hidden">
+          <div class="page-header">
+            <h1 class="page-title">Bilan annuel de traçabilité</h1>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <select id="bilan-annee" class="form-select" style="width:120px;"></select>
+              <select id="bilan-fluide" class="form-select" style="width:150px;">
+                <option value="">Tous les fluides</option>
+              </select>
+              <button class="btn btn-primary" id="btn-load-bilan">Charger</button>
+            </div>
+          </div>
+          <div id="bilan-content">
+            <div class="empty-state">
+              <div class="empty-state-icon">📊</div>
+              <div class="empty-state-title">Sélectionnez une année</div>
+              <div class="empty-state-desc">Le bilan annuel reproduit le tableau de suivi réglementaire par fluide</div>
             </div>
           </div>
         </section>

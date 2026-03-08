@@ -241,6 +241,10 @@ const API = {
     return this.get('exportPro', { type, ...params });
   },
 
+  async getBilanAnnuel(annee, fluide = null) {
+    return this.get('getBilanAnnuel', { annee, fluide });
+  },
+
   async getTracabilite(type, id) {
     return this.get('getTracabilite', { type, id });
   },

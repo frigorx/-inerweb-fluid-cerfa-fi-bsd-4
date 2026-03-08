@@ -44,7 +44,8 @@ const UI = {
         controles: document.getElementById('view-controles'),
         stats: document.getElementById('view-stats'),
         alertes: document.getElementById('view-alertes'),
-        admin: document.getElementById('view-admin')
+        admin: document.getElementById('view-admin'),
+        bilan: document.getElementById('view-bilan')
       },
       
       // Dashboard
@@ -167,6 +168,9 @@ const UI = {
         break;
       case 'admin':
         this.renderAdmin();
+        break;
+      case 'bilan':
+        this.initBilan();
         break;
     }
   },
@@ -660,6 +664,181 @@ const UI = {
     this.elements.loginSubmit.innerHTML = loading
       ? '<span class="spinner" style="width:20px;height:20px;border-width:2px;"></span>'
       : '<span>Se connecter</span>';
+  },
+
+  /**
+   * Initialise la vue bilan annuel
+   */
+  initBilan() {
+    const selectAnnee = document.getElementById('bilan-annee');
+    const selectFluide = document.getElementById('bilan-fluide');
+
+    // Peupler les années (de l'année en cours à 2019)
+    if (selectAnnee.options.length <= 1) {
+      selectAnnee.innerHTML = '';
+      const currentYear = new Date().getFullYear();
+      for (let y = currentYear; y >= 2019; y--) {
+        selectAnnee.innerHTML += `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`;
+      }
+    }
+
+    // Peupler les fluides
+    if (selectFluide.options.length <= 1) {
+      selectFluide.innerHTML = '<option value="">Tous les fluides</option>';
+      State.fluides.forEach(f => {
+        selectFluide.innerHTML += `<option value="${f.code}">${f.code} — ${f.nom || ''}</option>`;
+      });
+    }
+
+    // Binding bouton charger
+    document.getElementById('btn-load-bilan')?.addEventListener('click', () => this.loadBilan());
+  },
+
+  /**
+   * Charge et affiche le bilan annuel
+   */
+  async loadBilan() {
+    const annee = document.getElementById('bilan-annee').value;
+    const fluide = document.getElementById('bilan-fluide').value;
+    const content = document.getElementById('bilan-content');
+
+    content.innerHTML = '<div style="text-align:center;padding:40px;"><div class="spinner"></div><p>Chargement du bilan ' + annee + '...</p></div>';
+
+    try {
+      const res = await API.getBilanAnnuel(annee, fluide);
+      const data = res.data;
+      const bilans = data.bilans;
+      const codes = Object.keys(bilans);
+
+      if (codes.length === 0) {
+        content.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📊</div><div class="empty-state-title">Aucun mouvement en ' + annee + '</div></div>';
+        return;
+      }
+
+      let html = '';
+
+      codes.forEach(code => {
+        const b = bilans[code];
+        const f = b.fluide;
+
+        html += '<div class="card" style="margin-bottom:20px;">';
+        html += '<div class="card-header" style="background:#1b3a63;color:white;padding:12px 16px;border-radius:8px 8px 0 0;">';
+        html += '<h3 style="margin:0;">FLUIDE : ' + f.code + (f.nom ? ' — ' + f.nom : '') + ' (PRG: ' + (f.prg || '?') + ')</h3>';
+        html += '<div style="font-size:12px;opacity:0.8;">Année ' + annee + ' — ' + b.nbInterventions + ' intervention(s)</div>';
+        html += '</div>';
+        html += '<div class="card-body" style="padding:16px;">';
+
+        // ===== MOUVEMENTS FLUIDES =====
+        html += '<h4 style="margin:0 0 8px;color:#1E40AF;border-bottom:2px solid #3B82F6;padding-bottom:4px;">MOUVEMENTS FLUIDES</h4>';
+        if (b.mouvements.length === 0) {
+          html += '<p style="color:#999;">Aucun mouvement</p>';
+        } else {
+          html += '<div style="overflow-x:auto;">';
+          html += '<table class="table" style="width:100%;font-size:11px;white-space:nowrap;">';
+          html += '<thead><tr style="background:#E0E7FF;">';
+          html += '<th>N°</th><th>N° intervention</th><th>Date</th><th>Type</th>';
+          html += '<th style="background:#DBEAFE;">Chargés<br>éq. neufs (J)</th>';
+          html += '<th style="background:#DBEAFE;">Chargés<br>maintenance (K)</th>';
+          html += '<th style="background:#FEF3C7;">Récup.<br>hors usage (M)</th>';
+          html += '<th style="background:#FEF3C7;">Récup.<br>maintenance (N)</th>';
+          html += '<th style="background:#D1FAE5;">Recyclés<br>(R)</th>';
+          html += '<th>Machine</th><th>Bouteille</th>';
+          html += '</tr></thead><tbody>';
+
+          b.mouvements.forEach((m, i) => {
+            const isCharge = m.type === 'MiseEnService' || m.type === 'Charge';
+            const isAppoint = m.type === 'Appoint';
+            const isVidange = m.type === 'Vidange';
+            const isRecup = m.type === 'Recuperation';
+            const isRecycle = isRecup && m.etatFluide === 'Recyclé';
+
+            html += '<tr>';
+            html += '<td>' + (i + 1) + '</td>';
+            html += '<td><code>' + m.id + '</code></td>';
+            html += '<td>' + this.formatDate(m.date) + '</td>';
+            html += '<td>' + (m.type || '--') + '</td>';
+            html += '<td style="background:#EFF6FF;text-align:right;font-weight:bold;">' + (isCharge ? m.masse : '') + '</td>';
+            html += '<td style="background:#EFF6FF;text-align:right;font-weight:bold;">' + (isAppoint ? m.masse : '') + '</td>';
+            html += '<td style="background:#FFFBEB;text-align:right;font-weight:bold;">' + (isVidange ? m.masse : '') + '</td>';
+            html += '<td style="background:#FFFBEB;text-align:right;font-weight:bold;">' + (isRecup && !isRecycle ? m.masse : '') + '</td>';
+            html += '<td style="background:#ECFDF5;text-align:right;font-weight:bold;">' + (isRecycle ? m.masse : '') + '</td>';
+            html += '<td><code>' + (m.machine || '') + '</code></td>';
+            html += '<td><code>' + (m.bouteille || '') + '</code></td>';
+            html += '</tr>';
+          });
+
+          // Ligne TOTAL
+          html += '<tr style="background:#1E3A5F;color:white;font-weight:bold;">';
+          html += '<td colspan="4">TOTAL</td>';
+          html += '<td style="text-align:right;">' + b.J_chargesNeufs + ' kg</td>';
+          html += '<td style="text-align:right;">' + b.K_chargesMaintenance + ' kg</td>';
+          html += '<td style="text-align:right;">' + b.M_recupHorsUsage + ' kg</td>';
+          html += '<td style="text-align:right;">' + b.N_recupMaintenance + ' kg</td>';
+          html += '<td style="text-align:right;">' + b.R_recycles + ' kg</td>';
+          html += '<td colspan="2"></td>';
+          html += '</tr>';
+          html += '</tbody></table></div>';
+        }
+
+        // ===== STOCKS =====
+        html += '<h4 style="margin:16px 0 8px;color:#065F46;border-bottom:2px solid #10B981;padding-bottom:4px;">STOCKS & COHÉRENCE</h4>';
+        html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">';
+
+        html += '<div style="background:#DBEAFE;padding:12px;border-radius:8px;text-align:center;">';
+        html += '<div style="font-size:11px;color:#1E40AF;">Total chargés (L=J+K)</div>';
+        html += '<div style="font-size:22px;font-weight:bold;color:#1E3A5F;">' + b.L_totalCharges + ' kg</div>';
+        html += '</div>';
+
+        html += '<div style="background:#FEF3C7;padding:12px;border-radius:8px;text-align:center;">';
+        html += '<div style="font-size:11px;color:#92400E;">Total récupérés (O=M+N)</div>';
+        html += '<div style="font-size:22px;font-weight:bold;color:#78350F;">' + b.O_totalRecup + ' kg</div>';
+        html += '</div>';
+
+        html += '<div style="background:#D1FAE5;padding:12px;border-radius:8px;text-align:center;">';
+        html += '<div style="font-size:11px;color:#065F46;">Stock actuel neufs</div>';
+        html += '<div style="font-size:22px;font-weight:bold;color:#064E3B;">' + b.stockActuelNeuf + ' kg</div>';
+        html += '</div>';
+
+        html += '<div style="background:#FEE2E2;padding:12px;border-radius:8px;text-align:center;">';
+        html += '<div style="font-size:11px;color:#991B1B;">Stock actuel usagés</div>';
+        html += '<div style="font-size:22px;font-weight:bold;color:#7F1D1D;">' + b.stockActuelUsage + ' kg</div>';
+        html += '</div>';
+
+        html += '<div style="background:#E0E7FF;padding:12px;border-radius:8px;text-align:center;">';
+        html += '<div style="font-size:11px;color:#3730A3;">Recyclés (R)</div>';
+        html += '<div style="font-size:22px;font-weight:bold;color:#312E81;">' + b.R_recycles + ' kg</div>';
+        html += '</div>';
+
+        html += '</div>'; // grid
+
+        html += '</div>'; // card-body
+        html += '</div>'; // card
+      });
+
+      // Résumé global
+      html += '<div style="background:#F0FDF4;border:2px solid #10B981;border-radius:8px;padding:16px;margin-top:8px;">';
+      html += '<h4 style="margin:0 0 8px;color:#065F46;">Résumé global ' + annee + '</h4>';
+      let totalJ = 0, totalK = 0, totalM = 0, totalN = 0, totalR = 0, totalInterv = 0;
+      codes.forEach(code => {
+        const b = bilans[code];
+        totalJ += b.J_chargesNeufs; totalK += b.K_chargesMaintenance;
+        totalM += b.M_recupHorsUsage; totalN += b.N_recupMaintenance;
+        totalR += b.R_recycles; totalInterv += b.nbInterventions;
+      });
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;font-size:13px;">';
+      html += '<div><strong>' + codes.length + '</strong> fluide(s)</div>';
+      html += '<div><strong>' + totalInterv + '</strong> intervention(s)</div>';
+      html += '<div>Chargés neufs: <strong>' + Math.round(totalJ * 1000) / 1000 + ' kg</strong></div>';
+      html += '<div>Chargés maint.: <strong>' + Math.round(totalK * 1000) / 1000 + ' kg</strong></div>';
+      html += '<div>Récup. hors usage: <strong>' + Math.round(totalM * 1000) / 1000 + ' kg</strong></div>';
+      html += '<div>Récup. maint.: <strong>' + Math.round(totalN * 1000) / 1000 + ' kg</strong></div>';
+      html += '<div>Recyclés: <strong>' + Math.round(totalR * 1000) / 1000 + ' kg</strong></div>';
+      html += '</div></div>';
+
+      content.innerHTML = html;
+    } catch (err) {
+      content.innerHTML = '<div style="text-align:center;padding:40px;color:red;"><p>Erreur : ' + err.message + '</p></div>';
+    }
   },
 
   /**
