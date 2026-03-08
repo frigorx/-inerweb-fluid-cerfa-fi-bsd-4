@@ -238,11 +238,14 @@ const UI = {
       return;
     }
     
+    const isPrechargee = (m) => (m.statut || '').includes('préchargée');
+
     this.elements.machinesList.innerHTML = State.machines.map(m => `
       <div class="machine-card" data-id="${m.id}">
         <div class="machine-header">
           <div class="machine-icon">${this.getMachineIcon(m.type)}</div>
           <span class="machine-status ${this.getMachineStatusClass(m)}">${this.getMachineStatusLabel(m)}</span>
+          ${isPrechargee(m) ? '<span style="position:absolute;top:6px;right:6px;background:#3B82F6;color:white;font-size:10px;padding:2px 6px;border-radius:10px;">Préchargée</span>' : ''}
         </div>
         <div class="machine-code">${m.code || m.id}</div>
         <div class="machine-name">${m.nom || m.designation || '--'}</div>
@@ -252,7 +255,7 @@ const UI = {
             <span class="spec-value refrigerant">${m.fluide || '--'}</span>
           </div>
           <div class="spec-item">
-            <span class="spec-label">Charge</span>
+            <span class="spec-label">Charge${isPrechargee(m) ? ' usine' : ''}</span>
             <span class="spec-value">${m.chargeActuelle || m.charge || 0} kg</span>
           </div>
           <div class="spec-item">
@@ -264,8 +267,27 @@ const UI = {
             <span class="spec-value ${this.isDatePassed(m.prochainControle) ? 'danger' : ''}">${this.formatDate(m.prochainControle)}</span>
           </div>
         </div>
+        ${isPrechargee(m) ? `<div style="margin-top:8px;text-align:center;"><button class="btn btn-sm btn-primary btn-cerfa-precharge" data-machine="${m.code || m.id}" title="CERFA précharge usine">📄 CERFA précharge</button></div>` : ''}
       </div>
     `).join('');
+
+    // Binding boutons CERFA précharge
+    document.querySelectorAll('.btn-cerfa-precharge').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        try {
+          const res = await API.get('genererCerfaPrecharge', {
+            machine: btn.dataset.machine,
+            operateur: State.user.id,
+            mode: State.mode
+          });
+          const w = window.open('', '_blank', 'width=700,height=800');
+          w.document.write('<html><head><title>CERFA Précharge ' + res.data.id + '</title></head><body><pre style="font-family:monospace;white-space:pre-wrap;padding:20px;">' + res.data.contenu + '</pre></body></html>');
+          w.document.close();
+          this.toast('CERFA précharge ' + res.data.id + ' généré', 'success');
+        } catch (err) { this.toast('Erreur: ' + err.message, 'error'); }
+      });
+    });
   },
   
   getMachineIcon(type) {
