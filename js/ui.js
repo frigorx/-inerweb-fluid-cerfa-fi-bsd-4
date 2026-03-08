@@ -412,15 +412,23 @@ const UI = {
         actions.push(`<button class="btn btn-sm btn-success btn-valider-mvt" data-id="${id}" title="Valider">✓</button>`);
         actions.push(`<button class="btn btn-sm btn-danger btn-annuler-mvt" data-id="${id}" title="Annuler">✕</button>`);
       }
-      if (m.statut === 'valide') {
+      if (m.statut === 'valide' && !m.cerfa) {
         actions.push(`<button class="btn btn-sm btn-primary btn-cerfa-mvt" data-id="${id}" title="Générer CERFA">📄</button>`);
+      }
+      // Colonne CERFA
+      let cerfaCell = '<em style="color:#999;">—</em>';
+      if (m.cerfa) {
+        cerfaCell = m.cerfaUrl
+          ? `<a href="${m.cerfaUrl}" target="_blank" style="color:#1E40AF;font-weight:bold;text-decoration:underline;" title="Ouvrir le CERFA">${m.cerfa}</a>`
+          : `<strong>${m.cerfa}</strong>`;
       }
       return `
         <tr>
           <td>${this.formatDate(m.date)}</td>
-          <td>${m.machineCode || m.machineId || '--'}</td>
+          <td>${m.machineCode || m.machine || m.machineId || '--'}</td>
           <td>${m.type || '--'}</td>
-          <td>${parseFloat(m.quantite || 0).toFixed(2)} kg</td>
+          <td>${parseFloat(m.quantite || m.masse || 0).toFixed(2)} kg</td>
+          <td>${cerfaCell}</td>
           <td><span class="badge badge-${this.getStatutBadgeClass(m.statut)}">${m.statut || '--'}</span></td>
           <td>${actions.join(' ')}</td>
         </tr>
@@ -483,7 +491,7 @@ const UI = {
     if (State.controles.length === 0) {
       this.elements.controlesTbody.innerHTML = `
         <tr>
-          <td colspan="4" class="text-center text-muted" style="padding: 40px;">
+          <td colspan="6" class="text-center text-muted" style="padding: 40px;">
             Aucun contrôle enregistré
           </td>
         </tr>
@@ -494,8 +502,10 @@ const UI = {
     this.elements.controlesTbody.innerHTML = State.controles.slice(0, 50).map(c => `
       <tr>
         <td>${this.formatDate(c.date)}</td>
-        <td>${c.machineCode || c.machineId || '--'}</td>
+        <td>${c.machineCode || c.machine || c.machineId || '--'}</td>
+        <td>${c.methode || '--'}</td>
         <td><span class="badge badge-${c.resultat === 'Conforme' ? 'success' : 'danger'}">${c.resultat || '--'}</span></td>
+        <td>${c.operateur || '--'}</td>
         <td>${this.formatDate(c.prochainControle)}</td>
       </tr>
     `).join('');
