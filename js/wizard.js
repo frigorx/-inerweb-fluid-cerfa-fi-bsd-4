@@ -664,8 +664,7 @@ const Wizard = {
     } catch (error) {
       UI.toast('Erreur: ' + error.message, 'error');
     }
-  }
-};
+  },
 
   /**
    * Affiche le récapitulatif après création du mouvement

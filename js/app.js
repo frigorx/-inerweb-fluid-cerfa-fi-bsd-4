@@ -17,9 +17,11 @@ const App = {
     UI.init();
     
     // Configurer l'API
-    const defaultApiUrl = 'https://script.google.com/macros/s/AKfycbxBOTSCbAW1C0aQSAJhIcEFWQKV6Eqy371LKSoWFIL2HQPq3g0enqcFWFIIYevxGc_l2g/exec';
-    const apiUrl = localStorage.getItem('inerweb_api_url') || defaultApiUrl;
-    localStorage.setItem('inerweb_api_url', apiUrl);
+    const defaultApiUrl = 'https://script.google.com/macros/s/AKfycbz6Mojw7ao-ld8ULGnBdiL_dTww3Qew_XImKLcRrt0vr0SCzBvJyUFCBFmQ6kJE1itS4Q/exec';
+    // Forcer la mise à jour si l'utilisateur a une ancienne URL en cache
+    const savedUrl = localStorage.getItem('inerweb_api_url');
+    const apiUrl = (!savedUrl || savedUrl.includes('AKfycbxBOT')) ? defaultApiUrl : savedUrl;
+    localStorage.setItem('inerweb_api_url', defaultApiUrl);
     API.init(apiUrl);
     
     // Vérifier si déjà connecté
