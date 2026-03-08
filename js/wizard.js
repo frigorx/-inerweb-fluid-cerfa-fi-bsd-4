@@ -496,6 +496,9 @@ const Wizard = {
     try {
       const machine = State.getMachineById(data.machineId);
       const bouteille = State.getBouteilleById(data.bouteilleId);
+      // La signature base64 est trop volumineuse pour un GET
+      // On envoie juste un flag "signe" et on stocke la signature localement
+      const signe = data.signature ? 'oui' : 'non';
       const response = await API.createMouvement({
         type: data.type,
         machine: machine?.code || data.machineId,
@@ -504,9 +507,16 @@ const Wizard = {
         peseeApres: data.peseeApres,
         operateur: State.user.id,
         mode: State.mode,
-        signature: data.signature,
+        signe: signe,
         observations: data.commentaire
       });
+
+      // Stocker la signature localement pour le CERFA
+      if (data.signature && response.data?.id) {
+        try {
+          localStorage.setItem('sig_' + response.data.id, data.signature);
+        } catch (e) { /* quota dépassé, pas grave */ }
+      }
       
       UI.toast('Mouvement créé avec succès !', 'success');
       UI.hideWizard();
