@@ -116,7 +116,7 @@ const API = {
    * Login
    */
   async login(identifiant, password = '') {
-    return this.post('login', { identifiant, password });
+    return this.get('login', { identifiant, password });
   },
   
   /**
