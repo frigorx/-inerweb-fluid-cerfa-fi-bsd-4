@@ -333,6 +333,180 @@
       </div>
     </div>
     
+    <!-- ========== MODALE AJOUT MACHINE ========== -->
+    <div id="modal-machine" class="modal-overlay hidden">
+      <div class="modal" style="max-width: 550px;">
+        <div class="modal-header">
+          <h2 class="modal-title">🏭 Ajouter une machine</h2>
+        </div>
+        <div class="modal-body">
+          <form id="form-machine">
+            <div class="form-group">
+              <label class="form-label required" for="machine-nom">Désignation</label>
+              <input type="text" id="machine-nom" class="form-input" placeholder="Ex: Clim bureau étage 1" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label required" for="machine-type">Type d'équipement</label>
+              <select id="machine-type" class="form-select" required>
+                <option value="">-- Sélectionner --</option>
+                <option value="Monosplit">Monosplit</option>
+                <option value="Multisplit">Multisplit</option>
+                <option value="PAC">PAC (Pompe à chaleur)</option>
+                <option value="Chambre froide">Chambre froide</option>
+                <option value="Vitrine">Vitrine réfrigérée</option>
+                <option value="CTA">CTA (Centrale de traitement d'air)</option>
+                <option value="Autre">Autre</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label required" for="machine-fluide">Fluide frigorigène</label>
+              <select id="machine-fluide" class="form-select" required>
+                <option value="">-- Chargement... --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label required" for="machine-charge">Charge nominale (kg)</label>
+              <input type="number" id="machine-charge" class="form-input" step="0.01" min="0.01" max="1000" placeholder="Ex: 2.5" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="machine-marque">Marque</label>
+              <input type="text" id="machine-marque" class="form-input" placeholder="Ex: Daikin, Mitsubishi...">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="machine-modele">Modèle</label>
+              <input type="text" id="machine-modele" class="form-input" placeholder="Ex: FTXK25G">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="machine-serie">N° de série</label>
+              <input type="text" id="machine-serie" class="form-input" placeholder="Numéro de série">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="machine-localisation">Localisation</label>
+              <input type="text" id="machine-localisation" class="form-input" placeholder="Ex: Salle 201, Bâtiment A">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="modal-machine-cancel">Annuler</button>
+          <button class="btn btn-primary" id="modal-machine-submit">Créer la machine</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MODALE AJOUT BOUTEILLE ========== -->
+    <div id="modal-bouteille" class="modal-overlay hidden">
+      <div class="modal" style="max-width: 550px;">
+        <div class="modal-header">
+          <h2 class="modal-title">🧪 Ajouter une bouteille</h2>
+        </div>
+        <div class="modal-body">
+          <form id="form-bouteille">
+            <div class="form-group">
+              <label class="form-label required" for="bouteille-categorie">Catégorie</label>
+              <select id="bouteille-categorie" class="form-select" required>
+                <option value="">-- Sélectionner --</option>
+                <option value="NEUVE">Neuve (fluide neuf)</option>
+                <option value="TRANSFERT">Transfert</option>
+                <option value="RECUP">Récupération</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label required" for="bouteille-fluide">Fluide frigorigène</label>
+              <select id="bouteille-fluide" class="form-select" required>
+                <option value="">-- Chargement... --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label required" for="bouteille-tare">Tare - poids à vide (kg)</label>
+              <input type="number" id="bouteille-tare" class="form-input" step="0.01" min="0.1" max="100" placeholder="Ex: 12.50" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="bouteille-etat">État du fluide</label>
+              <select id="bouteille-etat" class="form-select">
+                <option value="Neuf">Neuf</option>
+                <option value="Récupéré">Récupéré</option>
+                <option value="Recyclé">Recyclé</option>
+                <option value="Régénéré">Régénéré</option>
+                <option value="Déchet">Déchet</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="bouteille-contenance">Contenance / capacité (kg)</label>
+              <input type="number" id="bouteille-contenance" class="form-input" step="0.01" min="0" max="100" placeholder="Ex: 10.00">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="bouteille-masse">Masse de fluide actuelle (kg)</label>
+              <input type="number" id="bouteille-masse" class="form-input" step="0.01" min="0" max="100" placeholder="Ex: 8.50">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="bouteille-marque">Marque</label>
+              <input type="text" id="bouteille-marque" class="form-input" placeholder="Ex: Luxfer">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="bouteille-fournisseur">Fournisseur</label>
+              <input type="text" id="bouteille-fournisseur" class="form-input" placeholder="Ex: Climalife">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="bouteille-lot">N° de lot</label>
+              <input type="text" id="bouteille-lot" class="form-input" placeholder="Numéro de lot">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="modal-bouteille-cancel">Annuler</button>
+          <button class="btn btn-primary" id="modal-bouteille-submit">Créer la bouteille</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MODALE AJOUT CONTRÔLE ========== -->
+    <div id="modal-controle" class="modal-overlay hidden">
+      <div class="modal" style="max-width: 550px;">
+        <div class="modal-header">
+          <h2 class="modal-title">🔍 Nouveau contrôle d'étanchéité</h2>
+        </div>
+        <div class="modal-body">
+          <form id="form-controle">
+            <div class="form-group">
+              <label class="form-label required" for="controle-machine">Machine</label>
+              <select id="controle-machine" class="form-select" required>
+                <option value="">-- Sélectionner --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label required" for="controle-methode">Méthode de contrôle</label>
+              <select id="controle-methode" class="form-select" required>
+                <option value="">-- Sélectionner --</option>
+                <option value="Directe">Directe (détecteur de fuite)</option>
+                <option value="Indirecte">Indirecte (mesures physiques)</option>
+                <option value="Pression">Mise en pression</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label required" for="controle-resultat">Résultat</label>
+              <select id="controle-resultat" class="form-select" required>
+                <option value="">-- Sélectionner --</option>
+                <option value="Conforme">Conforme (pas de fuite)</option>
+                <option value="Fuite">Fuite détectée</option>
+              </select>
+            </div>
+            <div class="form-group hidden" id="controle-fuite-group">
+              <label class="form-label" for="controle-localisation">Localisation de la fuite</label>
+              <input type="text" id="controle-localisation" class="form-input" placeholder="Ex: Vanne de service, raccord HP...">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="controle-detecteur">Détecteur utilisé</label>
+              <input type="text" id="controle-detecteur" class="form-input" placeholder="Ex: Testo 316-3">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="modal-controle-cancel">Annuler</button>
+          <button class="btn btn-primary" id="modal-controle-submit">Enregistrer le contrôle</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ========== TOAST CONTAINER ========== -->
     <div class="toast-container" id="toast-container"></div>
     

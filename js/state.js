@@ -115,8 +115,13 @@ const State = {
       ]);
       
       this.config = configRes.data || configRes.config;
-      this.machines = machinesRes.data || machinesRes.machines || [];
-      this.bouteilles = bouteillesRes.data || bouteillesRes.bouteilles || [];
+      this.machines = (machinesRes.data || machinesRes.machines || []).map(m => ({
+        ...m, id: m.code || m.id, charge: m.chargeAct || m.chargeNom,
+        chargeActuelle: m.chargeAct || m.chargeNom, prochainControle: m.prochControle
+      }));
+      this.bouteilles = (bouteillesRes.data || bouteillesRes.bouteilles || []).map(b => ({
+        ...b, id: b.code || b.id, stockActuel: b.masseFluide || 0, capacite: b.contenance || 10
+      }));
       this.fluides = fluidesRes.data || fluidesRes.fluides || [];
       this.alertes = alertesRes.data || alertesRes.alertes || [];
       
@@ -134,7 +139,9 @@ const State = {
   async loadMouvements(params = {}) {
     try {
       const res = await API.getMouvements(params);
-      this.mouvements = res.data || res.mouvements || [];
+      this.mouvements = (res.data || res.mouvements || []).map(m => ({
+        ...m, machineCode: m.machine, date: m.date, quantite: m.masse
+      }));
     } catch (error) {
       console.error('Erreur chargement mouvements:', error);
     }
@@ -146,7 +153,9 @@ const State = {
   async loadControles(params = {}) {
     try {
       const res = await API.getControles(params);
-      this.controles = res.data || res.controles || [];
+      this.controles = (res.data || res.controles || []).map(c => ({
+        ...c, machineCode: c.machine, resultat: c.resultat === 'Conforme' ? 'OK' : c.resultat
+      }));
     } catch (error) {
       console.error('Erreur chargement contrôles:', error);
     }
@@ -180,14 +189,14 @@ const State = {
    * Trouve une machine par ID
    */
   getMachineById(id) {
-    return this.machines.find(m => m.id === id);
+    return this.machines.find(m => m.id === id || m.code === id);
   },
-  
+
   /**
    * Trouve une bouteille par ID
    */
   getBouteilleById(id) {
-    return this.bouteilles.find(b => b.id === id);
+    return this.bouteilles.find(b => b.id === id || b.code === id);
   },
   
   /**

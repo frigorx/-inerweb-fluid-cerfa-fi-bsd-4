@@ -193,49 +193,49 @@ const API = {
    * Créer un mouvement
    */
   async createMouvement(data) {
-    return this.post('createMouvement', data);
+    return this.get('createMouvement', data);
   },
-  
+
   /**
    * Valider un mouvement
    */
   async validerMouvement(mouvementId, validateurId, commentaire = '') {
-    return this.post('validerMouvement', { mouvementId, validateurId, commentaire });
+    return this.get('validerMouvement', { mouvementId, validateurId, commentaire });
   },
-  
+
   /**
    * Annuler un mouvement
    */
   async annulerMouvement(mouvementId, motif) {
-    return this.post('annulerMouvement', { mouvementId, motif });
+    return this.get('annulerMouvement', { mouvementId, motif });
   },
-  
+
   /**
    * Créer un contrôle
    */
   async createControle(data) {
-    return this.post('createControle', data);
+    return this.get('createControle', data);
   },
-  
+
   /**
    * Créer une machine
    */
   async createMachine(data) {
-    return this.post('createMachine', data);
+    return this.get('createMachine', data);
   },
-  
+
   /**
    * Créer une bouteille
    */
   async createBouteille(data) {
-    return this.post('createBouteille', data);
+    return this.get('createBouteille', data);
   },
-  
+
   /**
    * Générer CERFA
    */
   async genererCerfa(mouvementId) {
-    return this.post('genererCerfa', { mouvementId });
+    return this.get('genererCerfa', { mouvementId });
   },
   
   /**

@@ -468,17 +468,18 @@ const Wizard = {
     const data = State.wizard.data;
     
     try {
+      const machine = State.getMachineById(data.machineId);
+      const bouteille = State.getBouteilleById(data.bouteilleId);
       const response = await API.createMouvement({
         type: data.type,
-        machineId: data.machineId,
-        bouteilleId: data.bouteilleId,
+        machine: machine?.code || data.machineId,
+        bouteille: bouteille?.code || data.bouteilleId,
         peseeAvant: data.peseeAvant,
         peseeApres: data.peseeApres,
-        quantite: data.quantite,
-        operateurId: State.user.id,
+        operateur: State.user.id,
         mode: State.mode,
         signature: data.signature,
-        commentaire: data.commentaire
+        observations: data.commentaire
       });
       
       UI.toast('Mouvement créé avec succès !', 'success');
