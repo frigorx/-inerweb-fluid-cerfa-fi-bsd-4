@@ -459,8 +459,9 @@ const App = {
       UI.toast(`Machine ${codeCreee} créée !`, 'success');
       // Stocker le code pour le wizard
       App._derniereMachineCreee = codeCreee;
-      document.getElementById('modal-machine').classList.add('hidden');
+      // Recharger les données AVANT de fermer la modale (le MutationObserver du wizard attend la fermeture)
       await State.loadInitialData();
+      document.getElementById('modal-machine').classList.add('hidden');
       // Si le wizard est actif, ne pas changer de vue
       if (!State.wizard.active) {
         UI.showView('machines');
