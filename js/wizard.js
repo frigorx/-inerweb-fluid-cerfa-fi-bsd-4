@@ -103,10 +103,13 @@ const Wizard = {
         </div>
       ` : `
         <div class="machines-grid" style="max-height: 350px; overflow-y: auto;">
-          ${machines.map(m => `
-            <div class="machine-card ${selected === m.id ? 'selected' : ''}" data-id="${m.id}">
+          ${machines.map(m => {
+            const isPrechargee = (m.statut || '').includes('préchargée');
+            return `
+            <div class="machine-card ${selected === m.id ? 'selected' : ''}" data-id="${m.id}" data-prechargee="${isPrechargee}">
               <div class="machine-header">
                 <div class="machine-icon">${UI.getMachineIcon(m.type)}</div>
+                ${isPrechargee ? '<span style="position:absolute;top:6px;right:6px;background:#3B82F6;color:white;font-size:10px;padding:2px 6px;border-radius:10px;">Préchargée</span>' : ''}
               </div>
               <div class="machine-code">${m.code || m.id}</div>
               <div class="machine-name">${m.nom || m.designation || '--'}</div>
@@ -116,12 +119,12 @@ const Wizard = {
                   <span class="spec-value refrigerant">${m.fluide || '--'}</span>
                 </div>
                 <div class="spec-item">
-                  <span class="spec-label">Charge</span>
-                  <span class="spec-value">${m.chargeActuelle || 0} kg</span>
+                  <span class="spec-label">Charge${isPrechargee ? ' usine' : ''}</span>
+                  <span class="spec-value">${m.chargeActuelle || m.charge || 0} kg</span>
                 </div>
               </div>
             </div>
-          `).join('')}
+          `}).join('')}
         </div>
       `}
     `;
@@ -133,6 +136,30 @@ const Wizard = {
         document.querySelectorAll('.machine-card').forEach(c => c.classList.remove('selected'));
         card.classList.add('selected');
         State.wizardSetData('machineId', card.dataset.id);
+
+        // Avertissement si machine préchargée + mise en service
+        const isPrechargee = card.dataset.prechargee === 'true';
+        const type = State.wizard.data.type;
+        let msgBox = document.getElementById('wizard-prechargee-msg');
+        if (!msgBox) {
+          msgBox = document.createElement('div');
+          msgBox.id = 'wizard-prechargee-msg';
+          msgBox.style.cssText = 'margin-top:12px;padding:12px;border-radius:8px;font-size:13px;';
+          card.closest('.machines-grid')?.parentNode?.appendChild(msgBox);
+        }
+        if (isPrechargee && type === 'MISE_EN_SERVICE') {
+          msgBox.style.background = '#FEF3C7';
+          msgBox.style.color = '#92400E';
+          msgBox.innerHTML = '⚠️ Cette machine est <strong>préchargée en usine</strong>. La mise en service est déjà faite. Utilisez plutôt <strong>Charge / Appoint</strong> si vous devez compléter le niveau de fluide.';
+          msgBox.classList.remove('hidden');
+        } else if (isPrechargee) {
+          msgBox.style.background = '#EFF6FF';
+          msgBox.style.color = '#1E40AF';
+          msgBox.innerHTML = 'ℹ️ Machine préchargée en usine — la charge initiale est déjà comptabilisée.';
+          msgBox.classList.remove('hidden');
+        } else {
+          msgBox.classList.add('hidden');
+        }
       });
     });
     // Bouton créer machine depuis le wizard
@@ -457,6 +484,12 @@ const Wizard = {
       case 2:
         if (!data.machineId) {
           UI.toast('Veuillez sélectionner une machine', 'error');
+          return false;
+        }
+        // Vérifier cohérence machine préchargée + mise en service
+        const machine2 = State.getMachineById(data.machineId);
+        if (machine2 && (machine2.statut || '').includes('préchargée') && data.type === 'MISE_EN_SERVICE') {
+          UI.toast('Cette machine est préchargée en usine, la mise en service est déjà faite. Choisissez "Charge / Appoint" pour ajouter du fluide.', 'warning');
           return false;
         }
         break;

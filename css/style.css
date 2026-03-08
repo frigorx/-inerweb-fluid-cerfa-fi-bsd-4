@@ -614,6 +614,7 @@ body {
 }
 
 .machine-card {
+  position: relative;
   background: white;
   border: 2px solid var(--slate-200);
   border-radius: var(--radius-lg);
