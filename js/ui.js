@@ -295,10 +295,14 @@ const UI = {
             operateur: State.user.id,
             mode: State.mode
           });
-          const w = window.open('', '_blank', 'width=700,height=800');
-          w.document.write('<html><head><title>CERFA Précharge ' + res.data.id + '</title></head><body><pre style="font-family:monospace;white-space:pre-wrap;padding:20px;">' + res.data.contenu + '</pre></body></html>');
-          w.document.close();
-          this.toast('CERFA précharge ' + res.data.id + ' généré', 'success');
+          if (res.data.urlPdf) {
+            window.open(res.data.urlPdf, '_blank');
+          } else {
+            const w = window.open('', '_blank', 'width=700,height=800');
+            w.document.write('<html><head><title>CERFA Précharge ' + res.data.id + '</title></head><body><pre style="font-family:monospace;white-space:pre-wrap;padding:20px;">' + res.data.contenu + '</pre></body></html>');
+            w.document.close();
+          }
+          this.toast('CERFA précharge ' + res.data.id + ' généré — stocké dans Drive', 'success');
         } catch (err) { this.toast('Erreur: ' + err.message, 'error'); }
       });
     });
@@ -439,11 +443,14 @@ const UI = {
       btn.addEventListener('click', async () => {
         try {
           const res = await API.genererCerfa(btn.dataset.id);
-          // Afficher le CERFA dans une nouvelle fenêtre
-          const w = window.open('', '_blank', 'width=700,height=800');
-          w.document.write('<html><head><title>CERFA ' + res.data.id + '</title></head><body><pre style="font-family:monospace;white-space:pre-wrap;padding:20px;">' + res.data.contenu + '</pre></body></html>');
-          w.document.close();
-          this.toast('CERFA ' + res.data.id + ' généré', 'success');
+          if (res.data.urlPdf) {
+            window.open(res.data.urlPdf, '_blank');
+          } else {
+            const w = window.open('', '_blank', 'width=700,height=800');
+            w.document.write('<html><head><title>CERFA ' + res.data.id + '</title></head><body><pre style="font-family:monospace;white-space:pre-wrap;padding:20px;">' + res.data.contenu + '</pre></body></html>');
+            w.document.close();
+          }
+          this.toast('CERFA ' + res.data.id + ' généré — stocké dans Drive', 'success');
         } catch (e) { this.toast('Erreur: ' + e.message, 'error'); }
       });
     });
@@ -755,7 +762,7 @@ const UI = {
             html += '<tr>';
             html += '<td>' + (i + 1) + '</td>';
             html += '<td><code>' + m.id + '</code></td>';
-            html += '<td>' + (m.cerfa ? '<strong>' + m.cerfa + '</strong>' : '<em style="color:#999;">—</em>') + '</td>';
+            html += '<td>' + (m.cerfa ? (m.cerfaUrl ? '<a href="' + m.cerfaUrl + '" target="_blank" style="color:#1E40AF;font-weight:bold;text-decoration:underline;" title="Ouvrir le CERFA dans Drive">' + m.cerfa + '</a>' : '<strong>' + m.cerfa + '</strong>') : '<em style="color:#999;">—</em>') + '</td>';
             html += '<td>' + this.formatDate(m.date) + '</td>';
             html += '<td>' + (m.type || '--') + '</td>';
             html += '<td style="background:#EFF6FF;text-align:right;font-weight:bold;">' + (isCharge ? m.masse : '') + '</td>';
@@ -919,9 +926,11 @@ const UI = {
       if (data.cerfas.length === 0) {
         html += '<p style="color:#999;font-size:13px;">Aucun CERFA généré</p>';
       } else {
-        html += '<table class="table" style="width:100%;font-size:12px;"><thead><tr><th>N° FI</th><th>Date</th><th>Machine</th><th>Mouvement</th><th>Opérateur</th><th>Mode</th></tr></thead><tbody>';
+        html += '<table class="table" style="width:100%;font-size:12px;"><thead><tr><th>N° FI</th><th>Date</th><th>Machine</th><th>Mouvement</th><th>Opérateur</th><th>Mode</th><th>PDF</th></tr></thead><tbody>';
         data.cerfas.forEach(c => {
-          html += '<tr><td><strong>' + c.id + '</strong></td><td>' + this.formatDate(c.date) + '</td><td><code>' + (c.machine||'--') + '</code></td><td><code>' + (c.mouvement||'--') + '</code></td><td>' + (c.operateur||'--') + '</td><td><span class="badge">' + (c.mode||'--') + '</span></td></tr>';
+          var lienFI = c.urlPdf ? '<a href="' + c.urlPdf + '" target="_blank" style="color:#1E40AF;font-weight:bold;text-decoration:underline;">' + c.id + '</a>' : '<strong>' + c.id + '</strong>';
+          var btnPdf = c.urlPdf ? '<a href="' + c.urlPdf + '" target="_blank" class="btn btn-sm btn-primary" title="Ouvrir le PDF">📄</a>' : '<em style="color:#999;">—</em>';
+          html += '<tr><td>' + lienFI + '</td><td>' + this.formatDate(c.date) + '</td><td><code>' + (c.machine||'--') + '</code></td><td><code>' + (c.mouvement||'--') + '</code></td><td>' + (c.operateur||'--') + '</td><td><span class="badge">' + (c.mode||'--') + '</span></td><td>' + btnPdf + '</td></tr>';
         });
         html += '</tbody></table>';
       }

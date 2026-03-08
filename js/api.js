@@ -251,6 +251,10 @@ const API = {
 
   async getAuditLog(params = {}) {
     return this.get('getAuditLog', params);
+  },
+
+  async getCerfa(id) {
+    return this.get('getCerfa', { id });
   }
 };
 
