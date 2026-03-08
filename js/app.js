@@ -46,7 +46,7 @@ const App = {
    * Tentative de reconnexion automatique
    */
   async autoLogin() {
-    const response = await API.request('getUserRole');
+    const response = await API.get('getUserRole');
     if (response.success && response.data) {
       State.setUser(response.data);
       await State.loadInitialData();
