@@ -423,7 +423,7 @@ const UI = {
     if (State.mouvements.length === 0) {
       this.elements.mouvementsTbody.innerHTML = `
         <tr>
-          <td colspan="5" class="text-center text-muted" style="padding: 40px;">
+          <td colspan="7" class="text-center text-muted" style="padding: 40px;">
             Aucun mouvement enregistré
           </td>
         </tr>
@@ -770,7 +770,7 @@ const UI = {
         return;
       }
 
-      let html = '<div style="text-align:right;margin-bottom:12px;" class="no-print"><button class="btn btn-secondary" onclick="window.print()">Imprimer le bilan</button></div>';
+      let html = '';
 
       codes.forEach(code => {
         const b = bilans[code];

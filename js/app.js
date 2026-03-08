@@ -17,10 +17,10 @@ const App = {
     UI.init();
     
     // Configurer l'API
-    const defaultApiUrl = 'https://script.google.com/macros/s/AKfycbzXZObstzExEZxXbWbz2t_d3kASM9B2c-4KRxah7J9zsSmh1oVtaKrYvd9EwwnApOMZdw/exec';
+    const defaultApiUrl = 'https://script.google.com/macros/s/AKfycbzNqLIa6U2tg0jb16cx9Bts4KDnjTAh6XiZK6aPvc219feao6VVoEkhHvXEvFUKPCBocA/exec';
     // Forcer la mise à jour vers la dernière version déployée
     const savedUrl = localStorage.getItem('inerweb_api_url');
-    const apiUrl = (!savedUrl || !savedUrl.includes('AKfycbzXZ')) ? defaultApiUrl : savedUrl;
+    const apiUrl = (!savedUrl || !savedUrl.includes('AKfycbzNqLI')) ? defaultApiUrl : savedUrl;
     localStorage.setItem('inerweb_api_url', defaultApiUrl);
     API.init(apiUrl);
     
@@ -384,6 +384,16 @@ const App = {
       });
     });
 
+    // Bilan - Export CSV
+    document.getElementById('btn-export-bilan')?.addEventListener('click', () => {
+      this.exportBilanCSV();
+    });
+
+    // Bilan - Imprimer
+    document.getElementById('btn-print-bilan')?.addEventListener('click', () => {
+      window.print();
+    });
+
     // Raccourcis clavier
     document.addEventListener('keydown', (e) => {
       // Escape pour fermer le wizard
@@ -574,6 +584,52 @@ const App = {
     } finally {
       document.getElementById('modal-client-submit').disabled = false;
     }
+  },
+
+  /**
+   * Exporte le bilan annuel affiché en CSV
+   */
+  exportBilanCSV() {
+    const content = document.getElementById('bilan-content');
+    if (!content || !content.querySelector('table')) {
+      UI.toast('Chargez d\'abord un bilan avant d\'exporter', 'warning');
+      return;
+    }
+
+    const annee = document.getElementById('bilan-annee').value;
+    const tables = content.querySelectorAll('table');
+    let csv = '\uFEFF'; // BOM UTF-8
+
+    tables.forEach((table, idx) => {
+      // Titre du fluide (extraire du header de la card parente)
+      const card = table.closest('.card');
+      const header = card?.querySelector('.card-header h3');
+      if (header) {
+        csv += '"' + header.textContent.replace(/"/g, '""') + '"\n';
+      }
+
+      const rows = table.querySelectorAll('tr');
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('th, td');
+        const values = [];
+        cells.forEach(cell => {
+          let val = cell.textContent.trim().replace(/"/g, '""');
+          values.push('"' + val + '"');
+        });
+        csv += values.join(';') + '\n';
+      });
+      csv += '\n';
+    });
+
+    // Télécharger
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bilan_tracabilite_${annee}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    UI.toast('Export CSV téléchargé', 'success');
   },
 
   async submitControle() {
