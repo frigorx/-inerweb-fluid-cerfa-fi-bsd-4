@@ -164,11 +164,20 @@ const Wizard = {
     });
     // Bouton créer machine depuis le wizard
     document.getElementById('wizard-add-machine')?.addEventListener('click', async () => {
+      App._derniereMachineCreee = null;
       App.openModalMachine();
-      // Attendre la fermeture de la modale puis rafraîchir
-      const observer = new MutationObserver(() => {
+      // Attendre la fermeture de la modale
+      const observer = new MutationObserver(async () => {
         if (document.getElementById('modal-machine').classList.contains('hidden')) {
           observer.disconnect();
+          // La machine a été créée et les données rechargées par submitMachine
+          if (App._derniereMachineCreee) {
+            // Sélectionner automatiquement la machine créée
+            State.wizardSetData('machineId', App._derniereMachineCreee);
+            App._derniereMachineCreee = null;
+            // Passer à l'étape suivante
+            State.wizardNext();
+          }
           UI.renderWizardStep();
         }
       });
@@ -245,10 +254,16 @@ const Wizard = {
   bindStepBouteille() {
     // Bouton créer bouteille depuis le wizard
     document.getElementById('wizard-add-bouteille')?.addEventListener('click', async () => {
+      App._derniereBouteilleCreee = null;
       App.openModalBouteille();
-      const observer = new MutationObserver(() => {
+      const observer = new MutationObserver(async () => {
         if (document.getElementById('modal-bouteille').classList.contains('hidden')) {
           observer.disconnect();
+          if (App._derniereBouteilleCreee) {
+            State.wizardSetData('bouteilleId', App._derniereBouteilleCreee);
+            App._derniereBouteilleCreee = null;
+            State.wizardNext();
+          }
           UI.renderWizardStep();
         }
       });

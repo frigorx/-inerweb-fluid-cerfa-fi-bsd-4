@@ -359,38 +359,44 @@
                 <option value="Autre">Autre</option>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label required" for="machine-fluide">Fluide frigorigène</label>
-              <select id="machine-fluide" class="form-select" required>
-                <option value="">-- Chargement... --</option>
-              </select>
+            <div class="form-group" style="display: flex; align-items: center; gap: 10px; padding: 10px; background: #F0F9FF; border: 2px solid #3B82F6; border-radius: 8px;">
+              <input type="checkbox" id="machine-prechargee" style="width: 20px; height: 20px; flex-shrink: 0;">
+              <label for="machine-prechargee" class="form-label" style="margin: 0; cursor: pointer; font-weight: 600; color: #1E40AF;">Machine préchargée en usine (climatisation, etc.)</label>
             </div>
-            <div class="form-group">
-              <label class="form-label required" for="machine-charge">Charge nominale (kg)</label>
-              <input type="number" id="machine-charge" class="form-input" step="0.01" min="0.01" max="1000" placeholder="Ex: 2.5" required>
+            <div id="machine-prechargee-info" class="hidden" style="padding: 10px; background: #EFF6FF; border-radius: 8px; font-size: 13px; color: #1E40AF;">
+              ℹ️ La charge nominale ci-dessous sera comptée comme charge actuelle. Aucun mouvement de mise en service ne sera nécessaire.
             </div>
-            <div class="form-group">
-              <label class="form-label" for="machine-marque">Marque</label>
-              <input type="text" id="machine-marque" class="form-input" placeholder="Ex: Daikin, Mitsubishi...">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div class="form-group">
+                <label class="form-label required" for="machine-fluide">Fluide</label>
+                <select id="machine-fluide" class="form-select" required>
+                  <option value="">-- Chargement... --</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label required" for="machine-charge">Charge nominale (kg)</label>
+                <input type="number" id="machine-charge" class="form-input" step="0.01" min="0.01" max="1000" placeholder="Ex: 2.5" required>
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-label" for="machine-modele">Modèle</label>
-              <input type="text" id="machine-modele" class="form-input" placeholder="Ex: FTXK25G">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div class="form-group">
+                <label class="form-label" for="machine-marque">Marque</label>
+                <input type="text" id="machine-marque" class="form-input" placeholder="Ex: Daikin">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="machine-modele">Modèle</label>
+                <input type="text" id="machine-modele" class="form-input" placeholder="Ex: FTXK25G">
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-label" for="machine-serie">N° de série</label>
-              <input type="text" id="machine-serie" class="form-input" placeholder="Numéro de série">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="machine-localisation">Localisation</label>
-              <input type="text" id="machine-localisation" class="form-input" placeholder="Ex: Salle 201, Bâtiment A">
-            </div>
-            <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
-              <input type="checkbox" id="machine-prechargee" style="width: 18px; height: 18px;">
-              <label for="machine-prechargee" class="form-label" style="margin: 0; cursor: pointer;">Machine préchargée en usine (climatisation, etc.)</label>
-            </div>
-            <div id="machine-prechargee-info" class="hidden" style="padding: 10px; background: #EFF6FF; border-radius: 8px; font-size: 13px; color: #1E40AF; margin-top: -8px;">
-              ℹ️ Une machine préchargée contient déjà son fluide dès la sortie d'usine. Aucun mouvement de mise en service n'est nécessaire.
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div class="form-group">
+                <label class="form-label" for="machine-serie">N° de série</label>
+                <input type="text" id="machine-serie" class="form-input" placeholder="Numéro de série">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="machine-localisation">Localisation</label>
+                <input type="text" id="machine-localisation" class="form-input" placeholder="Ex: Salle 201">
+              </div>
             </div>
           </form>
         </div>

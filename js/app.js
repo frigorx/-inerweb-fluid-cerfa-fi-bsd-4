@@ -303,10 +303,16 @@ const App = {
         nom, type, fluide, chargeNom, marque, modele, serie, localisation,
         prechargee, operateur: State.user.id
       });
-      UI.toast(`Machine ${response.data.code} créée !`, 'success');
+      const codeCreee = response.data.code;
+      UI.toast(`Machine ${codeCreee} créée !`, 'success');
+      // Stocker le code pour le wizard
+      App._derniereMachineCreee = codeCreee;
       document.getElementById('modal-machine').classList.add('hidden');
       await State.loadInitialData();
-      UI.showView('machines');
+      // Si le wizard est actif, ne pas changer de vue
+      if (!State.wizard.active) {
+        UI.showView('machines');
+      }
     } catch (error) {
       UI.toast('Erreur : ' + error.message, 'error');
     } finally {
@@ -348,10 +354,14 @@ const App = {
         categorie, fluide, tare, etatFluide, contenance, masseFluide,
         marque, fournisseur, lot, operateur: State.user.id
       });
-      UI.toast(`Bouteille ${response.data.code} créée !`, 'success');
+      const codeCreee = response.data.code;
+      UI.toast(`Bouteille ${codeCreee} créée !`, 'success');
+      App._derniereBouteilleCreee = codeCreee;
       document.getElementById('modal-bouteille').classList.add('hidden');
       await State.loadInitialData();
-      UI.showView('bouteilles');
+      if (!State.wizard.active) {
+        UI.showView('bouteilles');
+      }
     } catch (error) {
       UI.toast('Erreur : ' + error.message, 'error');
     } finally {
