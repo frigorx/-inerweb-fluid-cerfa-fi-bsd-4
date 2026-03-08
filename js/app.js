@@ -16,11 +16,11 @@ const App = {
     // Initialiser l'UI
     UI.init();
     
-    // Configurer l'API (URL à définir)
-    const apiUrl = localStorage.getItem('inerweb_api_url') || '';
-    if (apiUrl) {
-      API.init(apiUrl);
-    }
+    // Configurer l'API
+    const defaultApiUrl = 'https://script.google.com/macros/s/AKfycbxBOTSCbAW1C0aQSAJhIcEFWQKV6Eqy371LKSoWFIL2HQPq3g0enqcFWFIIYevxGc_l2g/exec';
+    const apiUrl = localStorage.getItem('inerweb_api_url') || defaultApiUrl;
+    localStorage.setItem('inerweb_api_url', apiUrl);
+    API.init(apiUrl);
     
     // Vérifier si déjà connecté
     const savedApiKey = localStorage.getItem('inerweb_apikey');
@@ -63,17 +63,6 @@ const App = {
     try {
       UI.setLoginLoading(true);
       UI.hideLoginError();
-      
-      // Si pas d'URL configurée, demander
-      let apiUrl = localStorage.getItem('inerweb_api_url');
-      if (!apiUrl) {
-        apiUrl = prompt('URL du script Google Apps Script déployé:');
-        if (!apiUrl) {
-          throw new Error('URL requise');
-        }
-        localStorage.setItem('inerweb_api_url', apiUrl);
-        API.init(apiUrl);
-      }
       
       const response = await API.login(identifiant, password);
       
