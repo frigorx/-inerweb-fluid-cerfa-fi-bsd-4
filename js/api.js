@@ -200,7 +200,7 @@ const API = {
    * Générer CERFA
    */
   async genererCerfa(mouvementId) {
-    return this.get('genererCerfa', { mouvementId });
+    return this.get('genererCerfa', { id: mouvementId });
   },
   
   /**

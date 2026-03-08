@@ -336,24 +336,73 @@ const UI = {
       return;
     }
     
-    this.elements.mouvementsTbody.innerHTML = State.mouvements.slice(0, 50).map(m => `
-      <tr>
-        <td>${this.formatDate(m.date)}</td>
-        <td>${m.machineCode || m.machineId || '--'}</td>
-        <td>${m.type || '--'}</td>
-        <td>${parseFloat(m.quantite || 0).toFixed(2)} kg</td>
-        <td><span class="badge badge-${this.getStatutBadgeClass(m.statut)}">${m.statut || '--'}</span></td>
-      </tr>
-    `).join('');
+    this.elements.mouvementsTbody.innerHTML = State.mouvements.slice(0, 50).map(m => {
+      const id = m.id || m.code || '';
+      const actions = [];
+      if (m.statut === 'soumis') {
+        actions.push(`<button class="btn btn-sm btn-success btn-valider-mvt" data-id="${id}" title="Valider">✓</button>`);
+        actions.push(`<button class="btn btn-sm btn-danger btn-annuler-mvt" data-id="${id}" title="Annuler">✕</button>`);
+      }
+      if (m.statut === 'valide') {
+        actions.push(`<button class="btn btn-sm btn-primary btn-cerfa-mvt" data-id="${id}" title="Générer CERFA">📄</button>`);
+      }
+      return `
+        <tr>
+          <td>${this.formatDate(m.date)}</td>
+          <td>${m.machineCode || m.machineId || '--'}</td>
+          <td>${m.type || '--'}</td>
+          <td>${parseFloat(m.quantite || 0).toFixed(2)} kg</td>
+          <td><span class="badge badge-${this.getStatutBadgeClass(m.statut)}">${m.statut || '--'}</span></td>
+          <td>${actions.join(' ')}</td>
+        </tr>
+      `;
+    }).join('');
+
+    // Bindings actions mouvements
+    document.querySelectorAll('.btn-valider-mvt').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Valider ce mouvement ?')) return;
+        try {
+          await API.validerMouvement(btn.dataset.id, State.user.id);
+          this.toast('Mouvement validé', 'success');
+          await State.loadMouvements();
+          this.renderMouvements();
+        } catch (e) { this.toast('Erreur: ' + e.message, 'error'); }
+      });
+    });
+    document.querySelectorAll('.btn-annuler-mvt').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const motif = prompt('Motif d\'annulation :');
+        if (!motif) return;
+        try {
+          await API.annulerMouvement(btn.dataset.id, motif);
+          this.toast('Mouvement annulé', 'success');
+          await State.loadMouvements();
+          this.renderMouvements();
+        } catch (e) { this.toast('Erreur: ' + e.message, 'error'); }
+      });
+    });
+    document.querySelectorAll('.btn-cerfa-mvt').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        try {
+          const res = await API.genererCerfa(btn.dataset.id);
+          // Afficher le CERFA dans une nouvelle fenêtre
+          const w = window.open('', '_blank', 'width=700,height=800');
+          w.document.write('<html><head><title>CERFA ' + res.data.id + '</title></head><body><pre style="font-family:monospace;white-space:pre-wrap;padding:20px;">' + res.data.contenu + '</pre></body></html>');
+          w.document.close();
+          this.toast('CERFA ' + res.data.id + ' généré', 'success');
+        } catch (e) { this.toast('Erreur: ' + e.message, 'error'); }
+      });
+    });
   },
-  
+
   getStatutBadgeClass(statut) {
+    const s = (statut || '').toLowerCase();
     const classes = {
-      'VALIDE': 'success',
-      'EN_ATTENTE': 'warning',
-      'ANNULE': 'danger'
+      'valide': 'success', 'soumis': 'warning', 'brouillon': 'neutral',
+      'annule': 'danger', 'rejete': 'danger', 'archive': 'neutral'
     };
-    return classes[statut] || 'neutral';
+    return classes[s] || 'neutral';
   },
   
   // ========== CONTRÔLES ==========
