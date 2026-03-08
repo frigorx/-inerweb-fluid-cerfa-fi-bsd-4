@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#1b3a63">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -128,7 +128,7 @@
           <span class="label">Stats</span>
         </button>
         <button class="nav-item" data-view="bilan">
-          <span class="icon">📊</span>
+          <span class="icon">📋</span>
           <span class="label">Bilan</span>
         </button>
         <button class="nav-item" data-view="alertes">
@@ -439,7 +439,7 @@
               </div>
             </div>
             <div class="form-group">
-              <label class="form-label required" for="user-role">Rôle</label>
+              <label class="form-label required" for="user-role-select">Rôle</label>
               <select id="user-role-select" class="form-select" required>
                 <option value="ELEVE">Élève</option>
                 <option value="ENSEIGNANT">Enseignant</option>
@@ -833,7 +833,7 @@
     </div>
 
     <!-- ========== MODALE FICHE DÉTAILLÉE ========== -->
-    <div id="modal-detail" class="modal-overlay hidden">
+    <div id="modal-detail" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="detail-title">
       <div class="modal" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
         <div class="modal-header" style="position: sticky; top: 0; background: white; z-index: 1;">
           <h2 class="modal-title" id="detail-title">Fiche détaillée</h2>
@@ -846,7 +846,7 @@
     </div>
 
     <!-- ========== TOAST CONTAINER ========== -->
-    <div class="toast-container" id="toast-container"></div>
+    <div class="toast-container" id="toast-container" role="alert" aria-live="polite"></div>
     
   </div>
   
@@ -925,12 +925,18 @@
       to { opacity: 1; }
     }
 
-    /* ===== IMPRESSION BILAN AUDIT ===== */
+    /* ===== IMPRESSION ===== */
     @media print {
-      body * { visibility: hidden; }
-      #view-bilan, #view-bilan * { visibility: visible; }
-      #view-bilan { position: absolute; left: 0; top: 0; width: 100%; }
-      .no-print { display: none !important; }
+      /* Masquer navigation, header, boutons d'action */
+      .header, .nav, .main-nav, .toast-container,
+      .wizard-overlay, .modal, .no-print,
+      #screen-login, #btn-logout { display: none !important; }
+
+      /* La vue active s'affiche normalement */
+      body { margin: 0; padding: 0; }
+      .app-content { padding: 0 !important; }
+
+      /* Styles tableau propres pour impression */
       .page-header { border-bottom: 2px solid #000; margin-bottom: 16px; }
       .card { break-inside: avoid; border: 1px solid #ccc !important; box-shadow: none !important; }
       .card-header { background: #eee !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }

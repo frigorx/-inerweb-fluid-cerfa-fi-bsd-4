@@ -1617,16 +1617,23 @@ body {
 @media print {
   .header,
   .nav,
-  .btn,
-  .toast-container {
+  .main-nav,
+  .toast-container,
+  .wizard-overlay,
+  .no-print {
     display: none !important;
   }
-  
+
+  /* Masquer les boutons d'action mais garder les liens */
+  .btn:not(a) {
+    display: none !important;
+  }
+
   .main-content {
     padding: 0;
     background: white;
   }
-  
+
   .card {
     box-shadow: none;
     border: 1px solid #ddd;

@@ -630,10 +630,12 @@ const Wizard = {
       // Générer le CERFA automatiquement
       let cerfaContenu = null;
       let cerfaId = null;
+      let cerfaUrl = null;
       try {
         const cerfaRes = await API.genererCerfa(mouvementId);
         cerfaContenu = cerfaRes.data?.contenu;
         cerfaId = cerfaRes.data?.id;
+        cerfaUrl = cerfaRes.data?.urlPdf || null;
       } catch (e) {
         console.log('CERFA auto non généré:', e.message);
       }
@@ -649,6 +651,7 @@ const Wizard = {
         mouvementId,
         cerfaId,
         cerfaContenu,
+        cerfaUrl,
         operateurNom,
         machineNom,
         fluide: machine?.fluide || '--',
@@ -718,15 +721,21 @@ const Wizard = {
           ${info.cerfaId ? `
             <div style="background:#F0FDF4;border:2px solid #16A34A;border-radius:8px;padding:12px;margin-bottom:16px;text-align:center;">
               <div style="font-weight:600;color:#16A34A;margin-bottom:4px;">CERFA ${info.cerfaId} généré automatiquement</div>
-              <div style="font-size:12px;color:#15803D;">Fiche d'intervention conforme au CERFA 15497*04</div>
+              <div style="font-size:12px;color:#15803D;">Fiche d'intervention conforme au CERFA 15497*04${info.cerfaUrl ? ' — Stocké dans Google Drive' : ''}</div>
             </div>
           ` : ''}
 
           <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
-            ${info.cerfaContenu ? `
+            ${info.cerfaUrl ? `
+              <a href="${info.cerfaUrl}" target="_blank" class="btn btn-primary" style="flex:1;min-width:140px;text-align:center;text-decoration:none;">
+                📄 Ouvrir le CERFA (PDF)
+              </a>
+            ` : info.cerfaContenu ? `
               <button class="btn btn-primary" id="recap-voir-cerfa" style="flex:1;min-width:140px;">
                 📄 Voir le CERFA
               </button>
+            ` : ''}
+            ${info.cerfaContenu ? `
               <button class="btn btn-secondary" id="recap-imprimer-cerfa" style="flex:1;min-width:140px;">
                 🖨️ Imprimer
               </button>

@@ -964,6 +964,8 @@ const UI = {
     // Close handlers
     document.getElementById('detail-close').addEventListener('click', () => modal.classList.add('hidden'));
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
+    const escHandler = (e) => { if (e.key === 'Escape') { modal.classList.add('hidden'); document.removeEventListener('keydown', escHandler); } };
+    document.addEventListener('keydown', escHandler);
   },
 
   /**
