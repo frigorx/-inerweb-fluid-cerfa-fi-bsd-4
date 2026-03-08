@@ -17,10 +17,10 @@ const App = {
     UI.init();
     
     // Configurer l'API
-    const defaultApiUrl = 'https://script.google.com/macros/s/AKfycbzNqLIa6U2tg0jb16cx9Bts4KDnjTAh6XiZK6aPvc219feao6VVoEkhHvXEvFUKPCBocA/exec';
+    const defaultApiUrl = 'https://script.google.com/macros/s/AKfycbz9MdUpLiTQUC63wQypiGt5qHlNTa5i8NL2lAi2vAr1X1H4A71NdFFPiOpsTsbV6UuYDg/exec';
     // Forcer la mise à jour vers la dernière version déployée
     const savedUrl = localStorage.getItem('inerweb_api_url');
-    const apiUrl = (!savedUrl || !savedUrl.includes('AKfycbzNqLI')) ? defaultApiUrl : savedUrl;
+    const apiUrl = (!savedUrl || !savedUrl.includes('AKfycbz9Md')) ? defaultApiUrl : savedUrl;
     localStorage.setItem('inerweb_api_url', defaultApiUrl);
     API.init(apiUrl);
     
@@ -396,9 +396,11 @@ const App = {
 
     // Raccourcis clavier
     document.addEventListener('keydown', (e) => {
-      // Escape pour fermer le wizard
+      // Escape pour fermer le wizard (avec confirmation)
       if (e.key === 'Escape' && State.wizard.active) {
-        UI.hideWizard();
+        if (confirm('Abandonner ce mouvement ?')) {
+          UI.hideWizard();
+        }
       }
     });
 

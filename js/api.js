@@ -165,14 +165,14 @@ const API = {
    * Valider un mouvement
    */
   async validerMouvement(mouvementId, validateurId, commentaire = '') {
-    return this.get('validerMouvement', { mouvementId, validateurId, commentaire });
+    return this.get('validerMouvement', { id: mouvementId, validateur: validateurId, commentaire });
   },
 
   /**
    * Annuler un mouvement
    */
   async annulerMouvement(mouvementId, motif) {
-    return this.get('annulerMouvement', { mouvementId, motif });
+    return this.get('annulerMouvement', { id: mouvementId, motif });
   },
 
   /**

@@ -569,7 +569,7 @@ const UI = {
       </div>
       <div class="stat-card card-accent">
         <div class="stat-icon">👥</div>
-        <div class="stat-value">${s.operateurs?.total || 0}</div>
+        <div class="stat-value">${Object.keys(s.operateurs || {}).length}</div>
         <div class="stat-label">Opérateurs actifs</div>
       </div>
     `;
@@ -593,7 +593,7 @@ const UI = {
   },
   
   renderAlerteCard(alerte) {
-    const type = alerte.niveau === 'CRITIQUE' ? 'danger' : 'warning';
+    const type = (alerte.type === 'danger' || alerte.niveau === 'CRITIQUE') ? 'danger' : 'warning';
     const icon = type === 'danger' ? '🔴' : '🟡';
     
     return `
@@ -745,8 +745,12 @@ const UI = {
       });
     }
 
-    // Binding bouton charger
-    document.getElementById('btn-load-bilan')?.addEventListener('click', () => this.loadBilan());
+    // Binding bouton charger (une seule fois)
+    const btnLoad = document.getElementById('btn-load-bilan');
+    if (btnLoad && !btnLoad._bound) {
+      btnLoad.addEventListener('click', () => this.loadBilan());
+      btnLoad._bound = true;
+    }
   },
 
   /**

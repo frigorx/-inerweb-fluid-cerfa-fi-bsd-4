@@ -602,7 +602,7 @@ const Wizard = {
       const isPrechargeSansBouteille = this.isMachinePrechargee() && !data.bouteilleId;
 
       const mouvementData = {
-        type: isPrechargeSansBouteille ? 'MiseEnService' : data.type,
+        type: isPrechargeSansBouteille ? 'MiseEnService' : { 'CHARGE': 'Charge', 'RECUPERATION': 'Recuperation', 'MISE_EN_SERVICE': 'MiseEnService', 'TRANSFERT': 'Charge' }[data.type] || data.type,
         machine: machine?.code || data.machineId,
         bouteille: bouteille?.code || data.bouteilleId || '',
         peseeAvant: isPrechargeSansBouteille ? 0 : data.peseeAvant,
