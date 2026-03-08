@@ -511,12 +511,21 @@ const App = {
 
   // ========== MODALE CONTRÔLE ==========
 
-  openModalControle() {
+  async openModalControle() {
     const select = document.getElementById('controle-machine');
     select.innerHTML = '<option value="">-- Sélectionner --</option>';
     State.machines.forEach(m => {
       select.innerHTML += `<option value="${m.code || m.id}">${m.code || m.id} - ${m.nom || m.designation || ''} (${m.fluide || '?'})</option>`;
     });
+    // Peupler la liste des détecteurs
+    const detectSelect = document.getElementById('controle-detecteur');
+    detectSelect.innerHTML = '<option value="">-- Sélectionner --</option>';
+    try {
+      const res = await API.getDetecteurs();
+      (res.data || []).forEach(d => {
+        detectSelect.innerHTML += `<option value="${d.code || d.id}">${d.code || d.id} - ${d.marque || ''} ${d.modele || ''}</option>`;
+      });
+    } catch (e) { /* pas grave si ça échoue */ }
     document.getElementById('form-controle').reset();
     document.getElementById('controle-fuite-group').classList.add('hidden');
     document.getElementById('modal-controle').classList.remove('hidden');
