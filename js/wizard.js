@@ -403,28 +403,39 @@ const Wizard = {
     const machine = State.getMachineById(data.machineId);
     const bouteille = State.getBouteilleById(data.bouteilleId);
     
+    const operateurNom = State.user?.nomComplet || (State.user?.prenom + ' ' + State.user?.nom) || State.user?.id || '--';
+
     return `
       <h3>Récapitulatif et signature</h3>
-      
+
       <div style="background: var(--slate-50); border-radius: var(--radius); padding: 16px; margin-bottom: 20px;">
+        <div style="background: #1B3A63; color: white; padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 11px; opacity: 0.7; text-transform: uppercase;">Opérateur</div>
+            <div style="font-weight: 600; font-size: 16px;">${operateurNom}</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 11px; opacity: 0.7; text-transform: uppercase;">Mode</div>
+            <div style="font-weight: 600; font-size: 16px; color: ${State.mode === 'OFFICIEL' ? '#4ADE80' : '#60A5FA'};">${State.mode}</div>
+          </div>
+        </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 14px;">
           <div><span style="color: var(--slate-500);">Type:</span> <strong>${data.type}</strong></div>
-          <div><span style="color: var(--slate-500);">Mode:</span> <strong style="color: ${State.mode === 'OFFICIEL' ? 'var(--success)' : 'var(--mode-formation)'};">${State.mode}</strong></div>
-          <div><span style="color: var(--slate-500);">Machine:</span> <strong>${machine?.code || '--'}</strong></div>
+          <div><span style="color: var(--slate-500);">Machine:</span> <strong>${machine?.code || '--'}</strong> ${machine?.nom ? '(' + machine.nom + ')' : ''}</div>
           <div><span style="color: var(--slate-500);">Fluide:</span> <strong style="color: var(--refrigerant);">${machine?.fluide || '--'}</strong></div>
           <div><span style="color: var(--slate-500);">Bouteille:</span> <strong>${bouteille?.code || (this.isMachinePrechargee() ? 'Précharge usine' : '--')}</strong></div>
-          <div><span style="color: var(--slate-500);">Quantité:</span> <strong>${this.isMachinePrechargee() && !data.bouteilleId ? (machine?.chargeActuelle || machine?.charge || '?') + ' kg (usine)' : parseFloat(data.quantite || 0).toFixed(2) + ' kg'}</strong></div>
+          <div style="grid-column: span 2;"><span style="color: var(--slate-500);">Quantité:</span> <strong style="font-size: 18px;">${this.isMachinePrechargee() && !data.bouteilleId ? (machine?.chargeActuelle || machine?.charge || '?') + ' kg (usine)' : parseFloat(data.quantite || 0).toFixed(2) + ' kg'}</strong></div>
         </div>
       </div>
-      
+
       <div style="margin-bottom: 16px;">
-        <label class="form-label">Signature de l'opérateur</label>
+        <label class="form-label" style="font-weight: 600;">Signature de l'opérateur — ${operateurNom}</label>
         <div style="background: white; border: 2px solid var(--slate-200); border-radius: var(--radius); height: 120px; display: flex; align-items: center; justify-content: center; color: var(--slate-400);">
           <canvas id="signature-canvas" width="400" height="100" style="max-width: 100%; touch-action: none;"></canvas>
         </div>
         <button type="button" class="btn btn-sm btn-ghost mt-2" id="btn-clear-signature">Effacer</button>
       </div>
-      
+
       <div class="form-group">
         <label class="form-label" for="commentaire">Commentaire (optionnel)</label>
         <textarea id="commentaire" class="form-input" rows="2" placeholder="Observations éventuelles..."></textarea>
@@ -605,23 +616,164 @@ const Wizard = {
       };
 
       const response = await API.createMouvement(mouvementData);
+      const mouvementId = response.data?.id;
 
       // Stocker la signature localement pour le CERFA
-      if (data.signature && response.data?.id) {
+      if (data.signature && mouvementId) {
         try {
-          localStorage.setItem('sig_' + response.data.id, data.signature);
+          localStorage.setItem('sig_' + mouvementId, data.signature);
         } catch (e) { /* quota dépassé, pas grave */ }
       }
-      
-      UI.toast('Mouvement créé avec succès !', 'success');
+
       UI.hideWizard();
-      
-      // Rafraîchir les données
+
+      // Générer le CERFA automatiquement
+      let cerfaContenu = null;
+      let cerfaId = null;
+      try {
+        const cerfaRes = await API.genererCerfa(mouvementId);
+        cerfaContenu = cerfaRes.data?.contenu;
+        cerfaId = cerfaRes.data?.id;
+      } catch (e) {
+        console.log('CERFA auto non généré:', e.message);
+      }
+
+      // Afficher le récapitulatif complet
+      const operateurNom = State.user?.nomComplet || State.user?.prenom + ' ' + State.user?.nom || State.user?.id;
+      const machineNom = machine ? `${machine.code} - ${machine.nom || ''}` : data.machineId;
+      const qte = isPrechargeSansBouteille
+        ? (machine?.chargeActuelle || machine?.charge || '?') + ' kg (précharge usine)'
+        : parseFloat(data.quantite || 0).toFixed(2) + ' kg';
+
+      this.showRecapitulatif({
+        mouvementId,
+        cerfaId,
+        cerfaContenu,
+        operateurNom,
+        machineNom,
+        fluide: machine?.fluide || '--',
+        type: mouvementData.type,
+        quantite: qte,
+        mode: State.mode,
+        bouteille: bouteille?.code || (isPrechargeSansBouteille ? 'Précharge usine' : '--')
+      });
+
+      // Rafraîchir les données en arrière-plan
       await State.loadInitialData();
-      UI.showView('dashboard');
-      
+
     } catch (error) {
       UI.toast('Erreur: ' + error.message, 'error');
+    }
+  }
+};
+
+  /**
+   * Affiche le récapitulatif après création du mouvement
+   */
+  showRecapitulatif(info) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'recap-mouvement';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;';
+
+    overlay.innerHTML = `
+      <div style="background:white;border-radius:16px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <div style="background:linear-gradient(135deg,#1B3A63,#2563EB);color:white;padding:24px;border-radius:16px 16px 0 0;text-align:center;">
+          <div style="font-size:40px;margin-bottom:8px;">✅</div>
+          <h2 style="margin:0 0 4px 0;font-size:20px;">Mouvement enregistré</h2>
+          <div style="font-size:14px;opacity:0.8;">N° ${info.mouvementId}</div>
+        </div>
+
+        <div style="padding:20px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+            <div style="background:#F8FAFC;padding:12px;border-radius:8px;">
+              <div style="font-size:11px;color:#64748B;text-transform:uppercase;">Opérateur</div>
+              <div style="font-weight:600;color:#1B3A63;">${info.operateurNom}</div>
+            </div>
+            <div style="background:#F8FAFC;padding:12px;border-radius:8px;">
+              <div style="font-size:11px;color:#64748B;text-transform:uppercase;">Mode</div>
+              <div style="font-weight:600;color:${info.mode === 'OFFICIEL' ? '#16A34A' : '#2563EB'};">${info.mode}</div>
+            </div>
+            <div style="background:#F8FAFC;padding:12px;border-radius:8px;">
+              <div style="font-size:11px;color:#64748B;text-transform:uppercase;">Machine</div>
+              <div style="font-weight:600;color:#1B3A63;">${info.machineNom}</div>
+            </div>
+            <div style="background:#F8FAFC;padding:12px;border-radius:8px;">
+              <div style="font-size:11px;color:#64748B;text-transform:uppercase;">Type</div>
+              <div style="font-weight:600;color:#1B3A63;">${info.type}</div>
+            </div>
+            <div style="background:#F8FAFC;padding:12px;border-radius:8px;">
+              <div style="font-size:11px;color:#64748B;text-transform:uppercase;">Fluide</div>
+              <div style="font-weight:600;color:#E97132;">${info.fluide}</div>
+            </div>
+            <div style="background:#F8FAFC;padding:12px;border-radius:8px;">
+              <div style="font-size:11px;color:#64748B;text-transform:uppercase;">Quantité</div>
+              <div style="font-weight:600;color:#1B3A63;">${info.quantite}</div>
+            </div>
+            <div style="background:#F8FAFC;padding:12px;border-radius:8px;grid-column:span 2;">
+              <div style="font-size:11px;color:#64748B;text-transform:uppercase;">Bouteille</div>
+              <div style="font-weight:600;color:#1B3A63;">${info.bouteille}</div>
+            </div>
+          </div>
+
+          ${info.cerfaId ? `
+            <div style="background:#F0FDF4;border:2px solid #16A34A;border-radius:8px;padding:12px;margin-bottom:16px;text-align:center;">
+              <div style="font-weight:600;color:#16A34A;margin-bottom:4px;">CERFA ${info.cerfaId} généré automatiquement</div>
+              <div style="font-size:12px;color:#15803D;">Fiche d'intervention conforme au CERFA 15497*04</div>
+            </div>
+          ` : ''}
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+            ${info.cerfaContenu ? `
+              <button class="btn btn-primary" id="recap-voir-cerfa" style="flex:1;min-width:140px;">
+                📄 Voir le CERFA
+              </button>
+              <button class="btn btn-secondary" id="recap-imprimer-cerfa" style="flex:1;min-width:140px;">
+                🖨️ Imprimer
+              </button>
+            ` : ''}
+            <button class="btn btn-secondary" id="recap-fermer" style="flex:1;min-width:140px;">
+              Fermer
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Bindings
+    document.getElementById('recap-fermer')?.addEventListener('click', () => {
+      overlay.remove();
+      UI.showView('dashboard');
+    });
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+        UI.showView('dashboard');
+      }
+    });
+
+    if (info.cerfaContenu) {
+      document.getElementById('recap-voir-cerfa')?.addEventListener('click', () => {
+        const w = window.open('', '_blank', 'width=700,height=800');
+        w.document.write(`<html><head><title>CERFA ${info.cerfaId}</title><style>
+          body { font-family: 'Courier New', monospace; padding: 20px; background: #f9f9f9; }
+          pre { white-space: pre-wrap; background: white; padding: 30px; border: 1px solid #ddd; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+          @media print { body { background: white; } pre { border: none; box-shadow: none; padding: 0; } }
+        </style></head><body><pre>${info.cerfaContenu}</pre></body></html>`);
+        w.document.close();
+      });
+
+      document.getElementById('recap-imprimer-cerfa')?.addEventListener('click', () => {
+        const w = window.open('', '_blank', 'width=700,height=800');
+        w.document.write(`<html><head><title>CERFA ${info.cerfaId}</title><style>
+          body { font-family: 'Courier New', monospace; padding: 20px; }
+          pre { white-space: pre-wrap; }
+        </style></head><body><pre>${info.cerfaContenu}</pre><script>window.onload=function(){window.print();}<\/script></body></html>`);
+        w.document.close();
+      });
     }
   }
 };
