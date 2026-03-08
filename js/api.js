@@ -204,6 +204,17 @@ const API = {
   },
   
   /**
+   * Clients / Détenteurs
+   */
+  async getClients(siteId = null) {
+    return this.get('getClients', { siteId });
+  },
+
+  async createClient(data) {
+    return this.get('createClient', data);
+  },
+
+  /**
    * Export Pro
    */
   async exportPro(type, params = {}) {

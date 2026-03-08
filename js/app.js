@@ -210,9 +210,12 @@ const App = {
     document.getElementById('modal-controle-cancel')?.addEventListener('click', () => {
       document.getElementById('modal-controle').classList.add('hidden');
     });
+    document.getElementById('modal-client-cancel')?.addEventListener('click', () => {
+      document.getElementById('modal-client').classList.add('hidden');
+    });
 
     // Fermer modales en cliquant sur l'overlay
-    ['modal-machine', 'modal-bouteille', 'modal-controle'].forEach(id => {
+    ['modal-machine', 'modal-bouteille', 'modal-controle', 'modal-client'].forEach(id => {
       document.getElementById(id)?.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal-overlay')) {
           e.target.classList.add('hidden');
@@ -229,6 +232,14 @@ const App = {
     });
     document.getElementById('modal-controle-submit')?.addEventListener('click', () => {
       this.submitControle();
+    });
+    document.getElementById('modal-client-submit')?.addEventListener('click', () => {
+      this.submitClient();
+    });
+
+    // Bouton + Client dans la modale machine
+    document.getElementById('btn-add-client-inline')?.addEventListener('click', () => {
+      this.openModalClient();
     });
 
     // Afficher/masquer info machine préchargée
@@ -277,6 +288,12 @@ const App = {
     State.fluides.forEach(f => {
       select.innerHTML += `<option value="${f.code}">${f.code} - ${f.nom || ''} (PRG: ${f.prg || '?'})</option>`;
     });
+    // Remplir la liste des clients
+    const clientSelect = document.getElementById('machine-client');
+    clientSelect.innerHTML = '<option value="">-- Aucun (à renseigner plus tard) --</option>';
+    State.clients.forEach(c => {
+      clientSelect.innerHTML += `<option value="${c.id}">${c.nom}${c.ville ? ' (' + c.ville + ')' : ''}</option>`;
+    });
     document.getElementById('form-machine').reset();
     document.getElementById('modal-machine').classList.remove('hidden');
   },
@@ -291,6 +308,7 @@ const App = {
     const serie = document.getElementById('machine-serie').value.trim();
     const localisation = document.getElementById('machine-localisation').value.trim();
     const prechargee = document.getElementById('machine-prechargee').checked;
+    const clientId = document.getElementById('machine-client').value;
 
     if (!fluide || !chargeNom) {
       UI.toast('Veuillez remplir tous les champs obligatoires', 'error');
@@ -301,7 +319,7 @@ const App = {
       document.getElementById('modal-machine-submit').disabled = true;
       const response = await API.get('createMachine', {
         nom, type, fluide, chargeNom, marque, modele, serie, localisation,
-        prechargee, operateur: State.user.id
+        prechargee, clientId, operateur: State.user.id
       });
       const codeCreee = response.data.code;
       UI.toast(`Machine ${codeCreee} créée !`, 'success');
@@ -380,6 +398,51 @@ const App = {
     document.getElementById('form-controle').reset();
     document.getElementById('controle-fuite-group').classList.add('hidden');
     document.getElementById('modal-controle').classList.remove('hidden');
+  },
+
+  // ========== MODALE CLIENT / DÉTENTEUR ==========
+
+  openModalClient() {
+    document.getElementById('form-client').reset();
+    document.getElementById('modal-client').classList.remove('hidden');
+  },
+
+  async submitClient() {
+    const nom = document.getElementById('client-nom').value.trim();
+    const adresse = document.getElementById('client-adresse').value.trim();
+    const cp = document.getElementById('client-cp').value.trim();
+    const ville = document.getElementById('client-ville').value.trim();
+    const siret = document.getElementById('client-siret').value.trim();
+    const contact = document.getElementById('client-contact').value.trim();
+    const tel = document.getElementById('client-tel').value.trim();
+    const email = document.getElementById('client-email').value.trim();
+
+    if (!nom) {
+      UI.toast('Le nom du client est obligatoire', 'error');
+      return;
+    }
+
+    try {
+      document.getElementById('modal-client-submit').disabled = true;
+      const response = await API.createClient({ nom, adresse, cp, ville, siret, contact, tel, email });
+      const clientId = response.data.id;
+      UI.toast(`Client "${nom}" créé !`, 'success');
+      document.getElementById('modal-client').classList.add('hidden');
+      await State.loadInitialData();
+
+      // Si la modale machine est ouverte, mettre à jour le sélecteur client et sélectionner le nouveau
+      const clientSelect = document.getElementById('machine-client');
+      if (clientSelect && !document.getElementById('modal-machine').classList.contains('hidden')) {
+        clientSelect.innerHTML = '<option value="">-- Aucun --</option>';
+        State.clients.forEach(c => {
+          clientSelect.innerHTML += `<option value="${c.id}"${c.id === clientId ? ' selected' : ''}>${c.nom}${c.ville ? ' (' + c.ville + ')' : ''}</option>`;
+        });
+      }
+    } catch (error) {
+      UI.toast('Erreur : ' + error.message, 'error');
+    } finally {
+      document.getElementById('modal-client-submit').disabled = false;
+    }
   },
 
   async submitControle() {

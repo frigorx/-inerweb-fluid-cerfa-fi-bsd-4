@@ -32,6 +32,7 @@ const State = {
   machines: [],
   bouteilles: [],
   fluides: [],
+  clients: [],
   mouvements: [],
   controles: [],
   alertes: [],
@@ -59,6 +60,7 @@ const State = {
     this.machines = [];
     this.bouteilles = [];
     this.fluides = [];
+    this.clients = [];
     this.mouvements = [];
     this.controles = [];
     this.alertes = [];
@@ -124,12 +126,13 @@ const State = {
     
     try {
       // Charger en parallèle
-      const [configRes, machinesRes, bouteillesRes, fluidesRes, alertesRes] = await Promise.all([
+      const [configRes, machinesRes, bouteillesRes, fluidesRes, alertesRes, clientsRes] = await Promise.all([
         API.getConfig(),
         API.getMachines(),
         API.getBouteilles(),
         API.getFluides(),
-        API.getAlertes()
+        API.getAlertes(),
+        API.getClients()
       ]);
       
       this.config = configRes.data || configRes.config;
@@ -143,6 +146,7 @@ const State = {
       const fluidesData = fluidesRes.data || fluidesRes.fluides || [];
       this.fluides = fluidesData.length > 0 ? fluidesData : this.DEFAULT_FLUIDES;
       this.alertes = alertesRes.data || alertesRes.alertes || [];
+      this.clients = clientsRes.data || [];
       
     } catch (error) {
       console.error('Erreur chargement données:', error);
@@ -225,6 +229,13 @@ const State = {
     return this.fluides.find(f => f.code === code);
   },
   
+  /**
+   * Trouve un client par ID
+   */
+  getClientById(id) {
+    return this.clients.find(c => c.id === id);
+  },
+
   /**
    * Filtre les bouteilles compatibles avec un fluide
    */

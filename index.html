@@ -398,6 +398,15 @@
                 <input type="text" id="machine-localisation" class="form-input" placeholder="Ex: Salle 201">
               </div>
             </div>
+            <div class="form-group">
+              <label class="form-label" for="machine-client">Détenteur / Client (Cadre 2 CERFA)</label>
+              <div style="display: flex; gap: 8px;">
+                <select id="machine-client" class="form-select" style="flex: 1;">
+                  <option value="">-- Aucun (à renseigner plus tard) --</option>
+                </select>
+                <button type="button" class="btn btn-secondary" id="btn-add-client-inline" style="white-space: nowrap; font-size: 12px;">+ Client</button>
+              </div>
+            </div>
           </form>
         </div>
         <div class="modal-footer">
@@ -517,6 +526,60 @@
         <div class="modal-footer">
           <button class="btn btn-secondary" id="modal-controle-cancel">Annuler</button>
           <button class="btn btn-primary" id="modal-controle-submit">Enregistrer le contrôle</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MODALE AJOUT CLIENT / DÉTENTEUR ========== -->
+    <div id="modal-client" class="modal-overlay hidden">
+      <div class="modal" style="max-width: 550px;">
+        <div class="modal-header">
+          <h2 class="modal-title">👤 Ajouter un client / détenteur</h2>
+          <p style="font-size: 12px; color: #666; margin: 4px 0 0;">Cadre 2 du CERFA 15497*04</p>
+        </div>
+        <div class="modal-body">
+          <form id="form-client">
+            <div class="form-group">
+              <label class="form-label required" for="client-nom">Nom / Raison sociale</label>
+              <input type="text" id="client-nom" class="form-input" placeholder="Ex: Lycée Jean Moulin" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="client-adresse">Adresse</label>
+              <input type="text" id="client-adresse" class="form-input" placeholder="Ex: 12 rue de la Paix">
+            </div>
+            <div style="display: grid; grid-template-columns: 120px 1fr; gap: 10px;">
+              <div class="form-group">
+                <label class="form-label" for="client-cp">Code postal</label>
+                <input type="text" id="client-cp" class="form-input" placeholder="75001" maxlength="5">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="client-ville">Ville</label>
+                <input type="text" id="client-ville" class="form-input" placeholder="Paris">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="client-siret">N° SIRET</label>
+              <input type="text" id="client-siret" class="form-input" placeholder="14 chiffres" maxlength="14">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div class="form-group">
+                <label class="form-label" for="client-contact">Contact</label>
+                <input type="text" id="client-contact" class="form-input" placeholder="Nom du contact">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="client-tel">Téléphone</label>
+                <input type="tel" id="client-tel" class="form-input" placeholder="06...">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="client-email">Email</label>
+              <input type="email" id="client-email" class="form-input" placeholder="contact@example.com">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="modal-client-cancel">Annuler</button>
+          <button class="btn btn-primary" id="modal-client-submit">Créer le client</button>
         </div>
       </div>
     </div>
