@@ -214,6 +214,26 @@ const API = {
     return this.get('createClient', data);
   },
 
+  async createUser(data) {
+    return this.get('createUser', data);
+  },
+
+  async createDetecteur(data) {
+    return this.get('createDetecteur', data);
+  },
+
+  async saveConfig(data) {
+    return this.get('saveConfig', data);
+  },
+
+  async getDetecteurs() {
+    return this.get('getDetecteurs');
+  },
+
+  async getUsers() {
+    return this.get('getUsers');
+  },
+
   /**
    * Export Pro
    */

@@ -132,6 +132,10 @@
           <span class="label">Alertes</span>
           <span class="nav-badge hidden" id="alertes-badge">0</span>
         </button>
+        <button class="nav-item" data-view="admin" id="nav-admin" style="display:none;">
+          <span class="icon">⚙️</span>
+          <span class="label">Admin</span>
+        </button>
       </nav>
       
       <!-- Contenu principal -->
@@ -283,11 +287,216 @@
             </div>
           </div>
         </section>
-        
+
+        <!-- ===== ADMIN ===== -->
+        <section id="view-admin" class="view hidden">
+          <div class="page-header">
+            <h1 class="page-title">Administration</h1>
+          </div>
+
+          <!-- Entreprise / Opérateur (Cadre 1 CERFA) -->
+          <div class="card" style="margin-bottom: 16px;">
+            <div class="card-header" style="background: #1b3a63; color: white; padding: 12px 16px; border-radius: 8px 8px 0 0;">
+              <h3 style="margin:0;">Cadre 1 — Entreprise / Opérateur</h3>
+            </div>
+            <div class="card-body" style="padding: 16px;">
+              <p style="font-size: 13px; color: #666; margin-bottom: 12px;">Ces informations apparaissent sur chaque CERFA 15497*04 généré.</p>
+              <form id="form-config-entreprise">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                  <div class="form-group">
+                    <label class="form-label required" for="config-etablissement">Raison sociale</label>
+                    <input type="text" id="config-etablissement" class="form-input" placeholder="Ex: Lycée Jean Moulin">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="config-siret">N° SIRET</label>
+                    <input type="text" id="config-siret" class="form-input" placeholder="14 chiffres" maxlength="14">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="config-adresse">Adresse complète</label>
+                  <input type="text" id="config-adresse" class="form-input" placeholder="Ex: 12 rue de la Paix, 75001 Paris">
+                </div>
+                <button type="button" class="btn btn-primary" id="btn-save-config">Enregistrer</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Utilisateurs / Techniciens -->
+          <div class="card" style="margin-bottom: 16px;">
+            <div class="card-header" style="background: #1b3a63; color: white; padding: 12px 16px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
+              <h3 style="margin:0;">Utilisateurs / Techniciens</h3>
+              <button class="btn btn-secondary" id="btn-add-user" style="background: white; color: #1b3a63; font-size: 13px;">+ Ajouter</button>
+            </div>
+            <div class="card-body" style="padding: 16px;">
+              <p style="font-size: 13px; color: #666; margin-bottom: 12px;">Opérateurs habilités. L'attestation de capacité est requise pour le mode Officiel.</p>
+              <div id="admin-users-list">
+                <!-- Rempli dynamiquement -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Clients / Détenteurs (Cadre 2 CERFA) -->
+          <div class="card" style="margin-bottom: 16px;">
+            <div class="card-header" style="background: #1b3a63; color: white; padding: 12px 16px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
+              <h3 style="margin:0;">Cadre 2 — Clients / Détenteurs</h3>
+              <button class="btn btn-secondary" id="btn-add-client-admin" style="background: white; color: #1b3a63; font-size: 13px;">+ Ajouter</button>
+            </div>
+            <div class="card-body" style="padding: 16px;">
+              <p style="font-size: 13px; color: #666; margin-bottom: 12px;">Détenteurs des équipements (propriétaires des machines).</p>
+              <div id="admin-clients-list">
+                <!-- Rempli dynamiquement -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Détecteurs (Cadre 5 CERFA) -->
+          <div class="card" style="margin-bottom: 16px;">
+            <div class="card-header" style="background: #1b3a63; color: white; padding: 12px 16px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
+              <h3 style="margin:0;">Cadre 5 — Détecteurs de fuites</h3>
+              <button class="btn btn-secondary" id="btn-add-detecteur" style="background: white; color: #1b3a63; font-size: 13px;">+ Ajouter</button>
+            </div>
+            <div class="card-body" style="padding: 16px;">
+              <p style="font-size: 13px; color: #666; margin-bottom: 12px;">Détecteurs utilisés pour les contrôles d'étanchéité.</p>
+              <div id="admin-detecteurs-list">
+                <!-- Rempli dynamiquement -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Fluides -->
+          <div class="card" style="margin-bottom: 16px;">
+            <div class="card-header" style="background: #1b3a63; color: white; padding: 12px 16px; border-radius: 8px 8px 0 0;">
+              <h3 style="margin:0;">Fluides frigorigènes</h3>
+            </div>
+            <div class="card-body" style="padding: 16px;">
+              <div id="admin-fluides-list">
+                <!-- Rempli dynamiquement -->
+              </div>
+              <button type="button" class="btn btn-secondary" id="btn-init-fluides" style="margin-top: 10px;">Initialiser les fluides par défaut</button>
+            </div>
+          </div>
+        </section>
+
       </main>
-      
+
     </div>
-    
+
+    <!-- ========== MODALE AJOUT UTILISATEUR ========== -->
+    <div id="modal-user" class="modal-overlay hidden">
+      <div class="modal" style="max-width: 550px;">
+        <div class="modal-header">
+          <h2 class="modal-title">👤 Ajouter un utilisateur</h2>
+        </div>
+        <div class="modal-body">
+          <form id="form-user">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div class="form-group">
+                <label class="form-label required" for="user-nom">Nom</label>
+                <input type="text" id="user-nom" class="form-input" placeholder="Nom" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label required" for="user-prenom">Prénom</label>
+                <input type="text" id="user-prenom" class="form-input" placeholder="Prénom" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label required" for="user-role">Rôle</label>
+              <select id="user-role-select" class="form-select" required>
+                <option value="ELEVE">Élève</option>
+                <option value="ENSEIGNANT">Enseignant</option>
+                <option value="REFERENT">Référent / Chef atelier</option>
+                <option value="ADMIN">Administrateur</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="user-email">Email</label>
+              <input type="email" id="user-email" class="form-input" placeholder="email@example.com">
+            </div>
+            <div style="padding: 10px; background: #F0F9FF; border: 1px solid #3B82F6; border-radius: 8px; margin-bottom: 10px;">
+              <h4 style="margin: 0 0 8px; color: #1E40AF; font-size: 14px;">Attestation de capacité (CERFA)</h4>
+              <div class="form-group">
+                <label class="form-label" for="user-attestation">N° d'attestation</label>
+                <input type="text" id="user-attestation" class="form-input" placeholder="Ex: AT-2024-12345">
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group">
+                  <label class="form-label" for="user-date-att">Date attestation</label>
+                  <input type="date" id="user-date-att" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="user-validite-att">Validité jusqu'au</label>
+                  <input type="date" id="user-validite-att" class="form-input">
+                </div>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group">
+                  <label class="form-label" for="user-cat2008">Catégorie (arrêté 2008)</label>
+                  <select id="user-cat2008" class="form-select">
+                    <option value="">--</option>
+                    <option value="I">Cat. I</option>
+                    <option value="II">Cat. II</option>
+                    <option value="III">Cat. III</option>
+                    <option value="IV">Cat. IV</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="user-cat2025">Catégorie (arrêté 2025)</label>
+                  <select id="user-cat2025" class="form-select">
+                    <option value="">--</option>
+                    <option value="I">Cat. I</option>
+                    <option value="II">Cat. II</option>
+                    <option value="III">Cat. III</option>
+                    <option value="IV">Cat. IV</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="modal-user-cancel">Annuler</button>
+          <button class="btn btn-primary" id="modal-user-submit">Créer l'utilisateur</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MODALE AJOUT DÉTECTEUR ========== -->
+    <div id="modal-detecteur" class="modal-overlay hidden">
+      <div class="modal" style="max-width: 450px;">
+        <div class="modal-header">
+          <h2 class="modal-title">🔍 Ajouter un détecteur</h2>
+        </div>
+        <div class="modal-body">
+          <form id="form-detecteur">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div class="form-group">
+                <label class="form-label required" for="detecteur-marque">Marque</label>
+                <input type="text" id="detecteur-marque" class="form-input" placeholder="Ex: Testo" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label required" for="detecteur-modele">Modèle</label>
+                <input type="text" id="detecteur-modele" class="form-input" placeholder="Ex: 316-3" required>
+              </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div class="form-group">
+                <label class="form-label" for="detecteur-etalonnage">Date étalonnage</label>
+                <input type="date" id="detecteur-etalonnage" class="form-input">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="detecteur-prochain">Prochain étalonnage</label>
+                <input type="date" id="detecteur-prochain" class="form-input">
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="modal-detecteur-cancel">Annuler</button>
+          <button class="btn btn-primary" id="modal-detecteur-submit">Créer le détecteur</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ========== WIZARD MOUVEMENT ========== -->
     <div id="wizard-overlay" class="modal-overlay hidden">
       <div class="modal" style="max-width: 700px; max-height: 95vh;">

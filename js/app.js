@@ -262,6 +262,126 @@ const App = {
       }
     });
     
+    // ===== ADMIN BINDINGS =====
+
+    // Sauver config entreprise
+    document.getElementById('btn-save-config')?.addEventListener('click', async () => {
+      const etablissement = document.getElementById('config-etablissement').value.trim();
+      const adresse = document.getElementById('config-adresse').value.trim();
+      const siret = document.getElementById('config-siret').value.trim();
+      try {
+        await API.saveConfig({ etablissement, adresse, siret });
+        UI.toast('Configuration entreprise enregistrée', 'success');
+        // Mettre à jour le state local
+        if (State.config) {
+          State.config.etablissement = etablissement;
+          State.config.adresse = adresse;
+          State.config.siret = siret;
+        }
+      } catch (error) {
+        UI.toast('Erreur : ' + error.message, 'error');
+      }
+    });
+
+    // Ajouter utilisateur
+    document.getElementById('btn-add-user')?.addEventListener('click', () => {
+      document.getElementById('form-user').reset();
+      document.getElementById('modal-user').classList.remove('hidden');
+    });
+    document.getElementById('modal-user-cancel')?.addEventListener('click', () => {
+      document.getElementById('modal-user').classList.add('hidden');
+    });
+    document.getElementById('modal-user-submit')?.addEventListener('click', async () => {
+      const nom = document.getElementById('user-nom').value.trim();
+      const prenom = document.getElementById('user-prenom').value.trim();
+      const role = document.getElementById('user-role-select').value;
+      const email = document.getElementById('user-email').value.trim();
+      const attestation = document.getElementById('user-attestation').value.trim();
+      const dateAttestation = document.getElementById('user-date-att').value;
+      const validiteAttestation = document.getElementById('user-validite-att').value;
+      const categorie2008 = document.getElementById('user-cat2008').value;
+      const categorie2025 = document.getElementById('user-cat2025').value;
+
+      if (!nom || !prenom) {
+        UI.toast('Nom et prénom obligatoires', 'error');
+        return;
+      }
+
+      try {
+        document.getElementById('modal-user-submit').disabled = true;
+        const response = await API.createUser({
+          nom, prenom, role, email, attestation,
+          dateAttestation, validiteAttestation,
+          categorie2008, categorie2025
+        });
+        UI.toast(`Utilisateur ${prenom} ${nom} créé (${response.data.id})`, 'success');
+        document.getElementById('modal-user').classList.add('hidden');
+        UI.renderAdmin();
+      } catch (error) {
+        UI.toast('Erreur : ' + error.message, 'error');
+      } finally {
+        document.getElementById('modal-user-submit').disabled = false;
+      }
+    });
+
+    // Ajouter client depuis admin
+    document.getElementById('btn-add-client-admin')?.addEventListener('click', () => {
+      this.openModalClient();
+    });
+
+    // Ajouter détecteur
+    document.getElementById('btn-add-detecteur')?.addEventListener('click', () => {
+      document.getElementById('form-detecteur').reset();
+      document.getElementById('modal-detecteur').classList.remove('hidden');
+    });
+    document.getElementById('modal-detecteur-cancel')?.addEventListener('click', () => {
+      document.getElementById('modal-detecteur').classList.add('hidden');
+    });
+    document.getElementById('modal-detecteur-submit')?.addEventListener('click', async () => {
+      const marque = document.getElementById('detecteur-marque').value.trim();
+      const modele = document.getElementById('detecteur-modele').value.trim();
+      const etalonnage = document.getElementById('detecteur-etalonnage').value;
+      const prochain = document.getElementById('detecteur-prochain').value;
+
+      if (!marque || !modele) {
+        UI.toast('Marque et modèle obligatoires', 'error');
+        return;
+      }
+
+      try {
+        document.getElementById('modal-detecteur-submit').disabled = true;
+        const response = await API.createDetecteur({ marque, modele, etalonnage, prochain });
+        UI.toast(`Détecteur ${marque} ${modele} créé (${response.data.id})`, 'success');
+        document.getElementById('modal-detecteur').classList.add('hidden');
+        UI.renderAdmin();
+      } catch (error) {
+        UI.toast('Erreur : ' + error.message, 'error');
+      } finally {
+        document.getElementById('modal-detecteur-submit').disabled = false;
+      }
+    });
+
+    // Initialiser fluides
+    document.getElementById('btn-init-fluides')?.addEventListener('click', async () => {
+      try {
+        await API.get('initFluides');
+        UI.toast('Fluides initialisés', 'success');
+        await State.loadInitialData();
+        UI.renderAdmin();
+      } catch (error) {
+        UI.toast('Erreur : ' + error.message, 'error');
+      }
+    });
+
+    // Fermer modales admin overlay
+    ['modal-user', 'modal-detecteur'].forEach(id => {
+      document.getElementById(id)?.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal-overlay')) {
+          e.target.classList.add('hidden');
+        }
+      });
+    });
+
     // Raccourcis clavier
     document.addEventListener('keydown', (e) => {
       // Escape pour fermer le wizard
@@ -269,7 +389,7 @@ const App = {
         UI.hideWizard();
       }
     });
-    
+
     // Refresh périodique des alertes (toutes les 5 minutes)
     setInterval(async () => {
       if (State.isLoggedIn) {

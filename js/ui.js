@@ -43,7 +43,8 @@ const UI = {
         mouvements: document.getElementById('view-mouvements'),
         controles: document.getElementById('view-controles'),
         stats: document.getElementById('view-stats'),
-        alertes: document.getElementById('view-alertes')
+        alertes: document.getElementById('view-alertes'),
+        admin: document.getElementById('view-admin')
       },
       
       // Dashboard
@@ -87,6 +88,12 @@ const UI = {
     this.elements.screenLogin.classList.add('hidden');
     this.elements.screenApp.classList.remove('hidden');
     this.updateHeader();
+    // Afficher le bouton Admin pour ENSEIGNANT, REFERENT, ADMIN
+    const role = State.user?.role || '';
+    const navAdmin = document.getElementById('nav-admin');
+    if (navAdmin && ['ENSEIGNANT', 'REFERENT', 'ADMIN'].includes(role)) {
+      navAdmin.style.display = '';
+    }
     this.showView('dashboard');
   },
   
@@ -157,6 +164,9 @@ const UI = {
       case 'alertes':
         await State.refreshAlertes();
         this.renderAlertes();
+        break;
+      case 'admin':
+        this.renderAdmin();
         break;
     }
   },
@@ -630,9 +640,110 @@ const UI = {
    */
   setLoginLoading(loading) {
     this.elements.loginSubmit.disabled = loading;
-    this.elements.loginSubmit.innerHTML = loading 
+    this.elements.loginSubmit.innerHTML = loading
       ? '<span class="spinner" style="width:20px;height:20px;border-width:2px;"></span>'
       : '<span>Se connecter</span>';
+  },
+
+  /**
+   * Rendu de la vue admin
+   */
+  async renderAdmin() {
+    // Charger config entreprise
+    if (State.config) {
+      document.getElementById('config-etablissement').value = State.config.etablissement || '';
+      document.getElementById('config-adresse').value = State.config.adresse || '';
+      document.getElementById('config-siret').value = State.config.siret || '';
+    }
+
+    // Charger et afficher utilisateurs
+    try {
+      const usersRes = await API.getUsers();
+      const users = usersRes.data || [];
+      const usersList = document.getElementById('admin-users-list');
+      if (users.length === 0) {
+        usersList.innerHTML = '<p style="color:#999;">Aucun utilisateur enregistré.</p>';
+      } else {
+        usersList.innerHTML = '<table class="table" style="width:100%;font-size:13px;"><thead><tr>' +
+          '<th>ID</th><th>Nom</th><th>Rôle</th><th>Attestation</th><th>Validité</th><th>Cat.</th>' +
+          '</tr></thead><tbody>' +
+          users.map(u => {
+            const attClass = u.attestationValide === false ? 'color:red;font-weight:bold;' : (u.attestationStatus === 'ALERTE' ? 'color:orange;' : '');
+            return `<tr>
+              <td><code>${u.id}</code></td>
+              <td><strong>${u.prenom || ''} ${u.nom || ''}</strong></td>
+              <td><span class="badge">${u.role}</span></td>
+              <td>${u.attestation || '<em style="color:#999;">Non renseignée</em>'}</td>
+              <td style="${attClass}">${u.validiteAttestation || '--'}</td>
+              <td>${u.cat2008 || u.cat2025 || '--'}</td>
+            </tr>`;
+          }).join('') +
+          '</tbody></table>';
+      }
+    } catch (e) {
+      document.getElementById('admin-users-list').innerHTML = '<p style="color:red;">Erreur chargement utilisateurs</p>';
+    }
+
+    // Afficher clients
+    const clientsList = document.getElementById('admin-clients-list');
+    if (State.clients.length === 0) {
+      clientsList.innerHTML = '<p style="color:#999;">Aucun client enregistré.</p>';
+    } else {
+      clientsList.innerHTML = '<table class="table" style="width:100%;font-size:13px;"><thead><tr>' +
+        '<th>ID</th><th>Nom</th><th>Ville</th><th>SIRET</th><th>Contact</th>' +
+        '</tr></thead><tbody>' +
+        State.clients.map(c => `<tr>
+          <td><code>${c.id}</code></td>
+          <td><strong>${c.nom}</strong></td>
+          <td>${c.ville || '--'}</td>
+          <td>${c.siret || '--'}</td>
+          <td>${c.contact || '--'} ${c.tel ? '(' + c.tel + ')' : ''}</td>
+        </tr>`).join('') +
+        '</tbody></table>';
+    }
+
+    // Afficher détecteurs
+    try {
+      const detectRes = await API.getDetecteurs();
+      const detecteurs = detectRes.data || [];
+      const detectList = document.getElementById('admin-detecteurs-list');
+      if (detecteurs.length === 0) {
+        detectList.innerHTML = '<p style="color:#999;">Aucun détecteur enregistré.</p>';
+      } else {
+        detectList.innerHTML = '<table class="table" style="width:100%;font-size:13px;"><thead><tr>' +
+          '<th>Code</th><th>Marque</th><th>Modèle</th><th>Étalonnage</th><th>Prochain</th><th>Statut</th>' +
+          '</tr></thead><tbody>' +
+          detecteurs.map(d => `<tr>
+            <td><code>${d.code || d.id}</code></td>
+            <td>${d.marque || '--'}</td>
+            <td>${d.modele || '--'}</td>
+            <td>${d.etalonnage || '--'}</td>
+            <td>${d.prochain || '--'}</td>
+            <td>${d.statut || 'Actif'}</td>
+          </tr>`).join('') +
+          '</tbody></table>';
+      }
+    } catch (e) {
+      document.getElementById('admin-detecteurs-list').innerHTML = '<p style="color:red;">Erreur chargement détecteurs</p>';
+    }
+
+    // Afficher fluides
+    const fluidesList = document.getElementById('admin-fluides-list');
+    if (State.fluides.length === 0) {
+      fluidesList.innerHTML = '<p style="color:#999;">Aucun fluide.</p>';
+    } else {
+      fluidesList.innerHTML = '<table class="table" style="width:100%;font-size:13px;"><thead><tr>' +
+        '<th>Code</th><th>Nom</th><th>PRG</th><th>Famille</th><th>Sécurité</th>' +
+        '</tr></thead><tbody>' +
+        State.fluides.map(f => `<tr>
+          <td><strong>${f.code}</strong></td>
+          <td>${f.nom || '--'}</td>
+          <td>${f.prg || '--'}</td>
+          <td>${f.famille || '--'}</td>
+          <td>${f.securite || '--'}</td>
+        </tr>`).join('') +
+        '</tbody></table>';
+    }
   }
 };
 
