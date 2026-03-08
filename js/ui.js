@@ -715,7 +715,7 @@ const UI = {
         return;
       }
 
-      let html = '';
+      let html = '<div style="text-align:right;margin-bottom:12px;" class="no-print"><button class="btn btn-secondary" onclick="window.print()">Imprimer le bilan</button></div>';
 
       codes.forEach(code => {
         const b = bilans[code];
@@ -736,13 +736,13 @@ const UI = {
           html += '<div style="overflow-x:auto;">';
           html += '<table class="table" style="width:100%;font-size:11px;white-space:nowrap;">';
           html += '<thead><tr style="background:#E0E7FF;">';
-          html += '<th>N°</th><th>N° intervention</th><th>Date</th><th>Type</th>';
+          html += '<th>N°</th><th>N° intervention</th><th>N° CERFA / FI</th><th>Date</th><th>Type</th>';
           html += '<th style="background:#DBEAFE;">Chargés<br>éq. neufs (J)</th>';
           html += '<th style="background:#DBEAFE;">Chargés<br>maintenance (K)</th>';
           html += '<th style="background:#FEF3C7;">Récup.<br>hors usage (M)</th>';
           html += '<th style="background:#FEF3C7;">Récup.<br>maintenance (N)</th>';
           html += '<th style="background:#D1FAE5;">Recyclés<br>(R)</th>';
-          html += '<th>Machine</th><th>Bouteille</th>';
+          html += '<th>Installation</th><th>Bouteille n°</th>';
           html += '</tr></thead><tbody>';
 
           b.mouvements.forEach((m, i) => {
@@ -755,6 +755,7 @@ const UI = {
             html += '<tr>';
             html += '<td>' + (i + 1) + '</td>';
             html += '<td><code>' + m.id + '</code></td>';
+            html += '<td>' + (m.cerfa ? '<strong>' + m.cerfa + '</strong>' : '<em style="color:#999;">—</em>') + '</td>';
             html += '<td>' + this.formatDate(m.date) + '</td>';
             html += '<td>' + (m.type || '--') + '</td>';
             html += '<td style="background:#EFF6FF;text-align:right;font-weight:bold;">' + (isCharge ? m.masse : '') + '</td>';
@@ -762,14 +763,14 @@ const UI = {
             html += '<td style="background:#FFFBEB;text-align:right;font-weight:bold;">' + (isVidange ? m.masse : '') + '</td>';
             html += '<td style="background:#FFFBEB;text-align:right;font-weight:bold;">' + (isRecup && !isRecycle ? m.masse : '') + '</td>';
             html += '<td style="background:#ECFDF5;text-align:right;font-weight:bold;">' + (isRecycle ? m.masse : '') + '</td>';
-            html += '<td><code>' + (m.machine || '') + '</code></td>';
-            html += '<td><code>' + (m.bouteille || '') + '</code></td>';
+            html += '<td>' + (m.machineNom || m.machine || '') + '</td>';
+            html += '<td>' + (m.bouteille || '') + '</td>';
             html += '</tr>';
           });
 
           // Ligne TOTAL
           html += '<tr style="background:#1E3A5F;color:white;font-weight:bold;">';
-          html += '<td colspan="4">TOTAL</td>';
+          html += '<td colspan="5">TOTAL</td>';
           html += '<td style="text-align:right;">' + b.J_chargesNeufs + ' kg</td>';
           html += '<td style="text-align:right;">' + b.K_chargesMaintenance + ' kg</td>';
           html += '<td style="text-align:right;">' + b.M_recupHorsUsage + ' kg</td>';
