@@ -17,7 +17,7 @@ const App = {
     UI.init();
     
     // Configurer l'API
-    const defaultApiUrl = 'https://script.google.com/macros/s/AKfycbwRvarlCxmFhQtMtp3rqTwbexHVhqzMBvRvLs03Kb_ii--_K5sVtatxrvrXbtA3ZfWqFA/exec';
+    const defaultApiUrl = 'https://script.google.com/macros/s/AKfycbzEr_Vcwzp18-J7vy_4PUbIPDbEyRwifxqPnsLUly-4k9W2RPoMTsuq2tm6tccDFlpJ8A/exec';
 
     // Nettoyage automatique du localStorage
     this.cleanupLocalStorage(defaultApiUrl);
@@ -153,6 +153,24 @@ const App = {
     // Boutons d'action dashboard
     document.getElementById('btn-nouveau-mouvement')?.addEventListener('click', () => {
       UI.showWizard();
+    });
+
+    // Prévisualisation CERFA
+    document.getElementById('btn-preview-cerfa')?.addEventListener('click', async () => {
+      try {
+        UI.toast('Génération de l\'aperçu CERFA...', 'info');
+        const res = await API.get('previewCerfa');
+        if (res.success && res.data && res.data.html) {
+          const win = window.open('', '_blank', 'width=900,height=1100,scrollbars=yes');
+          win.document.write(res.data.html);
+          win.document.close();
+          win.document.title = 'CERFA 15497*04 — Aperçu';
+        } else {
+          UI.toast('Erreur lors de la génération', 'error');
+        }
+      } catch (err) {
+        UI.toast('Erreur : ' + err.message, 'error');
+      }
     });
     
     // Wizard navigation
