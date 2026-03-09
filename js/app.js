@@ -17,7 +17,7 @@ const App = {
     UI.init();
     
     // Configurer l'API
-    const defaultApiUrl = 'https://script.google.com/macros/s/AKfycbxY7r1IwSAX1BVfKyPnLxIEWwESwsl0sFuXB6IUBy2B2JUEvk6qgwCwGs0pA8_kgPK-NQ/exec';
+    const defaultApiUrl = 'https://script.google.com/macros/s/AKfycbyqBWKmKYsI2nfGnelDdDKWnV9eisov4TnZK7coMH-SZFXENh7NVBXKx--dQhHWz8gUcQ/exec';
 
     // Nettoyage automatique du localStorage
     this.cleanupLocalStorage(defaultApiUrl);
@@ -406,6 +406,70 @@ const App = {
         UI.toast('Erreur : ' + error.message, 'error');
       } finally {
         document.getElementById('modal-detecteur-submit').disabled = false;
+      }
+    });
+
+    // Trackdéchets - Enregistrer config
+    document.getElementById('btn-save-trackdechets')?.addEventListener('click', async () => {
+      const token = document.getElementById('config-td-token').value.trim();
+      const mode = document.getElementById('config-td-mode').value;
+      const url = mode === 'production'
+        ? 'https://api.trackdechets.beta.gouv.fr'
+        : 'https://api.sandbox.trackdechets.beta.gouv.fr';
+      try {
+        document.getElementById('btn-save-trackdechets').disabled = true;
+        const res = await API.get('configTrackdechets', { token, enabled: 'true', url });
+        if (res.success && res.data) {
+          UI.toast('Trackdéchets configuré — ' + (res.data.connectionTest || ''), 'success');
+          document.getElementById('config-td-token').value = '';
+          UI.renderAdmin();
+        } else {
+          UI.toast(res.error || 'Erreur configuration', 'error');
+        }
+      } catch (e) {
+        UI.toast('Erreur : ' + e.message, 'error');
+      } finally {
+        document.getElementById('btn-save-trackdechets').disabled = false;
+      }
+    });
+
+    // Trackdéchets - Lister les BSFF
+    document.getElementById('btn-list-bsffs')?.addEventListener('click', async () => {
+      try {
+        document.getElementById('btn-list-bsffs').disabled = true;
+        const res = await API.get('listBsffs');
+        const container = document.getElementById('trackdechets-bsffs');
+        if (res.success && res.data && res.data.data) {
+          const bsffs = res.data.data.bsffs;
+          const edges = bsffs ? bsffs.edges || [] : [];
+          if (edges.length === 0) {
+            container.innerHTML = '<p style="color:#999;">Aucun BSFF trouvé.</p>';
+          } else {
+            container.innerHTML = '<table class="table" style="width:100%;font-size:12px;"><thead><tr>' +
+              '<th>ID</th><th>Statut</th><th>Déchet</th><th>Masse (kg)</th><th>Date</th>' +
+              '</tr></thead><tbody>' +
+              edges.map(e => {
+                const n = e.node;
+                return `<tr>
+                  <td><code>${(n.id || '').substring(0, 12)}...</code></td>
+                  <td><span class="badge">${n.status || '--'}</span></td>
+                  <td>${n.waste ? n.waste.code : '--'}</td>
+                  <td>${n.weight ? n.weight.value : '--'}</td>
+                  <td>${n.createdAt ? n.createdAt.substring(0, 10) : '--'}</td>
+                </tr>`;
+              }).join('') +
+              '</tbody></table>' +
+              '<p style="font-size:11px;color:#666;">Total : ' + (bsffs.totalCount || edges.length) + ' BSFF</p>';
+          }
+          container.style.display = 'block';
+        } else {
+          container.innerHTML = '<p style="color:red;">' + (res.error || 'Erreur') + '</p>';
+          container.style.display = 'block';
+        }
+      } catch (e) {
+        UI.toast('Erreur : ' + e.message, 'error');
+      } finally {
+        document.getElementById('btn-list-bsffs').disabled = false;
       }
     });
 

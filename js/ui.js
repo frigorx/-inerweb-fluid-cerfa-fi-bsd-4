@@ -441,6 +441,9 @@ const UI = {
       if (m.statut === 'valide' && !m.cerfa) {
         actions.push(`<button class="btn btn-sm btn-primary btn-cerfa-mvt" data-id="${id}" title="Générer CERFA">📄</button>`);
       }
+      if (m.statut === 'valide' && (m.type === 'Recuperation' || m.type === 'Vidange')) {
+        actions.push(`<button class="btn btn-sm btn-bsff-mvt" data-id="${id}" title="Créer BSFF Trackdéchets" style="background:#059669;color:white;font-size:11px;">BSFF</button>`);
+      }
       // Colonne CERFA
       let cerfaCell = '<em style="color:#999;">—</em>';
       if (m.cerfa) {
@@ -498,6 +501,29 @@ const UI = {
           }
           this.toast('CERFA ' + res.data.id + ' généré — stocké dans Drive', 'success');
         } catch (e) { this.toast('Erreur: ' + e.message, 'error'); }
+      });
+    });
+    // Bouton BSFF Trackdéchets
+    document.querySelectorAll('.btn-bsff-mvt').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        try {
+          btn.disabled = true;
+          btn.textContent = '...';
+          this.toast('Création du BSFF sur Trackdéchets...', 'info');
+          const res = await API.get('creerBsff', { id: btn.dataset.id });
+          if (res.success) {
+            this.toast('BSFF créé : ' + (res.data.bsffId || 'OK'), 'success');
+            await State.loadMouvements();
+            this.renderMouvements();
+          } else {
+            this.toast(res.error || 'Erreur BSFF', 'error');
+          }
+        } catch (e) {
+          this.toast('Erreur BSFF: ' + e.message, 'error');
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'BSFF';
+        }
       });
     });
   },
@@ -1168,6 +1194,25 @@ const UI = {
           <td>${f.securite || '--'}</td>
         </tr>`).join('') +
         '</tbody></table>';
+    }
+
+    // Charger statut Trackdéchets
+    try {
+      const tdRes = await API.get('getTrackdechetsStatus');
+      const tdStatus = document.getElementById('trackdechets-status');
+      if (tdRes.success && tdRes.data) {
+        const td = tdRes.data;
+        const statusColor = td.ready ? '#059669' : (td.tokenConfigured ? '#D97706' : '#DC2626');
+        const statusText = td.ready ? 'Connecté — ' + td.mode : (td.tokenConfigured ? 'Token configuré mais désactivé' : 'Non configuré');
+        tdStatus.innerHTML = `<span style="color:${statusColor};font-weight:bold;">● ${statusText}</span>`;
+        if (td.url && td.url.indexOf('sandbox') === -1) {
+          document.getElementById('config-td-mode').value = 'production';
+        }
+      } else {
+        document.getElementById('trackdechets-status').innerHTML = '<span style="color:#999;">Statut indisponible</span>';
+      }
+    } catch (e) {
+      document.getElementById('trackdechets-status').innerHTML = '<span style="color:#999;">Erreur chargement statut</span>';
     }
 
     // Charger journal d'audit
