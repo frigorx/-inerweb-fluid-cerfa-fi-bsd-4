@@ -17,7 +17,7 @@ const App = {
     UI.init();
     
     // Configurer l'API
-    const defaultApiUrl = 'https://script.google.com/macros/s/AKfycbzEr_Vcwzp18-J7vy_4PUbIPDbEyRwifxqPnsLUly-4k9W2RPoMTsuq2tm6tccDFlpJ8A/exec';
+    const defaultApiUrl = 'https://script.google.com/macros/s/AKfycbxY7r1IwSAX1BVfKyPnLxIEWwESwsl0sFuXB6IUBy2B2JUEvk6qgwCwGs0pA8_kgPK-NQ/exec';
 
     // Nettoyage automatique du localStorage
     this.cleanupLocalStorage(defaultApiUrl);
@@ -488,6 +488,7 @@ const App = {
     const serie = document.getElementById('machine-serie').value.trim();
     const localisation = document.getElementById('machine-localisation').value.trim();
     const prechargee = document.getElementById('machine-prechargee').checked;
+    const detectionPermanente = document.getElementById('machine-detection-permanente').checked;
     const clientId = document.getElementById('machine-client').value;
 
     if (!fluide || !chargeNom) {
@@ -499,7 +500,7 @@ const App = {
       document.getElementById('modal-machine-submit').disabled = true;
       const response = await API.get('createMachine', {
         nom, type, fluide, chargeNom, marque, modele, serie, localisation,
-        prechargee, clientId, operateur: State.user.id
+        prechargee, detectionPermanente, clientId, operateur: State.user.id
       });
       const codeCreee = response.data.code;
       UI.toast(`Machine ${codeCreee} créée !`, 'success');

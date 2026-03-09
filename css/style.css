@@ -1639,3 +1639,14 @@ body {
     border: 1px solid #ddd;
   }
 }
+
+/* Animation pulse pour badge FUITE */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Style ligne fuite dans tableau contrôles */
+tr[style*="FEF2F2"] td {
+  border-bottom-color: #FECACA;
+}

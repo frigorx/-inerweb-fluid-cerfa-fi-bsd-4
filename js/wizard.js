@@ -460,11 +460,12 @@ const Wizard = {
     const data = State.wizard.data;
     const machine = State.getMachineById(data.machineId);
     const bouteille = State.getBouteilleById(data.bouteilleId);
-    
+
     const operateurNom = State.user?.nomComplet || (State.user?.prenom + ' ' + State.user?.nom) || State.user?.id || '--';
+    const aujourdhui = new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
     return `
-      <h3>Récapitulatif et signature</h3>
+      <h3>Récapitulatif et certification</h3>
 
       <div style="background: var(--slate-50); border-radius: var(--radius); padding: 16px; margin-bottom: 20px;">
         <div style="background: #1B3A63; color: white; padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
@@ -486,12 +487,23 @@ const Wizard = {
         </div>
       </div>
 
-      <div style="margin-bottom: 16px;">
-        <label class="form-label" style="font-weight: 600;">Signature de l'opérateur — ${operateurNom}</label>
-        <div style="background: white; border: 2px solid var(--slate-200); border-radius: var(--radius); height: 120px; display: flex; align-items: center; justify-content: center; color: var(--slate-400);">
-          <canvas id="signature-canvas" width="400" height="100" style="max-width: 100%; touch-action: none;"></canvas>
+      <div style="background: white; border: 2px solid var(--slate-200); border-radius: var(--radius); padding: 20px; margin-bottom: 16px;">
+        <div style="font-weight: 700; font-size: 16px; color: #1B3A63; margin-bottom: 16px;">Certification de l'opérateur</div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label" for="signataire-nom" style="font-weight: 600;">Nom du signataire</label>
+          <input type="text" id="signataire-nom" class="form-input" value="${operateurNom}" placeholder="Nom et prénom" style="font-size: 15px;">
         </div>
-        <button type="button" class="btn btn-sm btn-ghost mt-2" id="btn-clear-signature">Effacer</button>
+
+        <div style="background: #F8FAFC; border: 1px solid var(--slate-200); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+          <div style="font-size: 12px; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px;">Date de certification</div>
+          <div style="font-weight: 600; color: #1B3A63; font-size: 15px;" id="certification-date">${aujourdhui}</div>
+        </div>
+
+        <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; padding: 12px; border: 2px solid var(--slate-200); border-radius: 8px; transition: all 0.2s;" id="certification-label">
+          <input type="checkbox" id="certification-checkbox" style="margin-top: 3px; width: 18px; height: 18px; accent-color: #1B3A63; flex-shrink: 0;">
+          <span style="font-size: 14px; color: #334155; line-height: 1.4;">Je certifie avoir réalisé l'opération décrite ci-dessus et que les informations sont exactes.</span>
+        </label>
       </div>
 
       <div class="form-group">
@@ -500,86 +512,47 @@ const Wizard = {
       </div>
     `;
   },
-  
+
   bindStepSignature() {
-    const canvas = document.getElementById('signature-canvas');
-    const ctx = canvas.getContext('2d');
-    let isDrawing = false;
-    let lastX = 0;
-    let lastY = 0;
-    
-    // Style du trait
-    ctx.strokeStyle = '#1b3a63';
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    
-    const getPos = (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-      
-      if (e.touches) {
-        return {
-          x: (e.touches[0].clientX - rect.left) * scaleX,
-          y: (e.touches[0].clientY - rect.top) * scaleY
-        };
+    const checkbox = document.getElementById('certification-checkbox');
+    const label = document.getElementById('certification-label');
+    const nomInput = document.getElementById('signataire-nom');
+
+    // Mise à jour visuelle de la case à cocher
+    const updateCertification = () => {
+      if (checkbox.checked) {
+        label.style.borderColor = '#16A34A';
+        label.style.background = '#F0FDF4';
+        // Stocker la certification en texte simple : "CERTIFIÉ|NomPrenom|2026-03-09T12:00:00"
+        const nom = nomInput.value.trim() || '--';
+        const dateISO = new Date().toISOString();
+        State.wizardSetData('signature', `CERTIFIÉ|${nom}|${dateISO}`);
+      } else {
+        label.style.borderColor = 'var(--slate-200)';
+        label.style.background = 'transparent';
+        State.wizardSetData('signature', null);
       }
-      return {
-        x: (e.clientX - rect.left) * scaleX,
-        y: (e.clientY - rect.top) * scaleY
-      };
     };
-    
-    const startDrawing = (e) => {
-      e.preventDefault();
-      isDrawing = true;
-      const pos = getPos(e);
-      lastX = pos.x;
-      lastY = pos.y;
-    };
-    
-    const draw = (e) => {
-      if (!isDrawing) return;
-      e.preventDefault();
-      const pos = getPos(e);
-      
-      ctx.beginPath();
-      ctx.moveTo(lastX, lastY);
-      ctx.lineTo(pos.x, pos.y);
-      ctx.stroke();
-      
-      lastX = pos.x;
-      lastY = pos.y;
-    };
-    
-    const stopDrawing = () => {
-      isDrawing = false;
-      // Sauvegarder la signature
-      State.wizardSetData('signature', canvas.toDataURL());
-    };
-    
-    // Mouse events
-    canvas.addEventListener('mousedown', startDrawing);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mouseout', stopDrawing);
-    
-    // Touch events
-    canvas.addEventListener('touchstart', startDrawing);
-    canvas.addEventListener('touchmove', draw);
-    canvas.addEventListener('touchend', stopDrawing);
-    
-    // Effacer
-    document.getElementById('btn-clear-signature').addEventListener('click', () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      State.wizardSetData('signature', null);
+
+    checkbox.addEventListener('change', updateCertification);
+
+    // Si le nom change et que la case est cochée, mettre à jour la signature
+    nomInput.addEventListener('input', () => {
+      if (checkbox.checked) {
+        updateCertification();
+      }
     });
-    
+
     // Commentaire
     document.getElementById('commentaire').addEventListener('input', (e) => {
       State.wizardSetData('commentaire', e.target.value);
     });
+
+    // Restaurer l'état si déjà certifié (retour en arrière dans le wizard)
+    if (State.wizard.data.signature && State.wizard.data.signature.startsWith('CERTIFIÉ|')) {
+      checkbox.checked = true;
+      updateCertification();
+    }
   },
   
   // ========== VALIDATION ==========
@@ -637,7 +610,15 @@ const Wizard = {
         break;
         
       case 5:
-        // Signature optionnelle en formation
+        if (!data.signature || !data.signature.startsWith('CERTIFIÉ|')) {
+          UI.toast('Veuillez cocher la case de certification', 'error');
+          return false;
+        }
+        const nomSignataire = document.getElementById('signataire-nom')?.value?.trim();
+        if (!nomSignataire) {
+          UI.toast('Veuillez saisir le nom du signataire', 'error');
+          return false;
+        }
         break;
     }
     
@@ -653,9 +634,8 @@ const Wizard = {
     try {
       const machine = State.getMachineById(data.machineId);
       const bouteille = State.getBouteilleById(data.bouteilleId);
-      // La signature base64 est trop volumineuse pour un GET
-      // On envoie juste un flag "signe" et on stocke la signature localement
-      const signe = data.signature ? 'oui' : 'non';
+      // Signature = certification texte simple (CERTIFIÉ|Nom|Date)
+      const signe = data.signature && data.signature.startsWith('CERTIFIÉ|') ? 'oui' : 'non';
       const sansBouteille = !data.bouteilleId;
       const isPrechargee = this.isMachinePrechargee();
 
@@ -677,7 +657,7 @@ const Wizard = {
       const response = await API.createMouvement(mouvementData);
       const mouvementId = response.data?.id;
 
-      // Stocker la signature localement pour le CERFA
+      // Stocker la certification texte pour le CERFA
       if (data.signature && mouvementId) {
         try {
           localStorage.setItem('sig_' + mouvementId, data.signature);

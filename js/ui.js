@@ -533,12 +533,31 @@ const UI = {
           ? `<a href="${c.cerfaUrl}" target="_blank" style="color:#1E40AF;font-weight:bold;text-decoration:underline;" title="Ouvrir le CERFA">${c.cerfa}</a>`
           : `<strong>${c.cerfa}</strong>`;
       }
+
+      // Badge résultat avec gestion spécifique des fuites
+      let resultatCell = '';
+      const machineId = c.machineCode || c.machine || c.machineId || '';
+      if (c.resultat === 'Fuite') {
+        resultatCell = `
+          <span class="badge badge-danger" style="background:#DC2626;color:#fff;font-weight:bold;padding:4px 10px;border-radius:4px;animation:pulse 2s infinite;">FUITE</span>
+          <button class="btn btn-sm btn-primary" style="margin-left:6px;font-size:11px;padding:2px 8px;"
+            onclick="UI.ouvrirControleVerification('${machineId}')"
+            title="Planifier un contrôle de vérification post-réparation">
+            Contrôle vérification
+          </button>`;
+      } else {
+        resultatCell = `<span class="badge badge-${c.resultat === 'Conforme' ? 'success' : 'danger'}">${c.resultat || '--'}</span>`;
+      }
+
+      // Ligne en surbrillance rouge si fuite
+      const rowStyle = c.resultat === 'Fuite' ? ' style="background:#FEF2F2;border-left:3px solid #DC2626;"' : '';
+
       return `
-      <tr>
+      <tr${rowStyle}>
         <td>${this.formatDate(c.date)}</td>
-        <td>${c.machineCode || c.machine || c.machineId || '--'}</td>
+        <td>${machineId || '--'}</td>
         <td>${c.methode || '--'}</td>
-        <td><span class="badge badge-${c.resultat === 'Conforme' ? 'success' : 'danger'}">${c.resultat || '--'}</span></td>
+        <td>${resultatCell}</td>
         <td>${cerfaCell}</td>
         <td>${c.operateur || '--'}</td>
         <td>${this.formatDate(c.prochainControle)}</td>
@@ -546,7 +565,40 @@ const UI = {
     `;
     }).join('');
   },
-  
+
+  /**
+   * Ouvre le formulaire de contrôle pré-rempli pour une vérification post-fuite
+   */
+  ouvrirControleVerification(machineId) {
+    // Naviguer vers la vue contrôles si pas déjà dessus
+    if (typeof Actions !== 'undefined' && Actions.navigate) {
+      Actions.navigate('controles');
+    }
+    // Pré-remplir le formulaire de contrôle
+    const machineSelect = document.getElementById('ctrl-machine') || document.querySelector('[name="machine"]');
+    if (machineSelect) {
+      machineSelect.value = machineId;
+      // Déclencher l'événement change pour les listeners éventuels
+      machineSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    // Pré-remplir les observations
+    const obsField = document.getElementById('ctrl-observations') || document.querySelector('[name="observations"]');
+    if (obsField) {
+      obsField.value = 'Contrôle de vérification post-réparation (fuite détectée précédemment)';
+    }
+    // Ouvrir le formulaire/modal si disponible
+    const formModal = document.getElementById('modal-controle') || document.getElementById('form-controle');
+    if (formModal) {
+      formModal.classList.remove('hidden');
+      formModal.style.display = '';
+    }
+    // Scroll vers le formulaire
+    const formSection = document.getElementById('controle-form') || document.getElementById('section-new-controle');
+    if (formSection) {
+      formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  },
+
   // ========== STATS ==========
   
   renderStats() {
