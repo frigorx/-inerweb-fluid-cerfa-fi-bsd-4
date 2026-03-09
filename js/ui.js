@@ -517,24 +517,34 @@ const UI = {
     if (State.controles.length === 0) {
       this.elements.controlesTbody.innerHTML = `
         <tr>
-          <td colspan="6" class="text-center text-muted" style="padding: 40px;">
+          <td colspan="7" class="text-center text-muted" style="padding: 40px;">
             Aucun contrôle enregistré
           </td>
         </tr>
       `;
       return;
     }
-    
-    this.elements.controlesTbody.innerHTML = State.controles.slice(0, 50).map(c => `
+
+    this.elements.controlesTbody.innerHTML = State.controles.slice(0, 50).map(c => {
+      // Colonne CERFA
+      let cerfaCell = '<em style="color:#999;">—</em>';
+      if (c.cerfa) {
+        cerfaCell = c.cerfaUrl
+          ? `<a href="${c.cerfaUrl}" target="_blank" style="color:#1E40AF;font-weight:bold;text-decoration:underline;" title="Ouvrir le CERFA">${c.cerfa}</a>`
+          : `<strong>${c.cerfa}</strong>`;
+      }
+      return `
       <tr>
         <td>${this.formatDate(c.date)}</td>
         <td>${c.machineCode || c.machine || c.machineId || '--'}</td>
         <td>${c.methode || '--'}</td>
         <td><span class="badge badge-${c.resultat === 'Conforme' ? 'success' : 'danger'}">${c.resultat || '--'}</span></td>
+        <td>${cerfaCell}</td>
         <td>${c.operateur || '--'}</td>
         <td>${this.formatDate(c.prochainControle)}</td>
       </tr>
-    `).join('');
+    `;
+    }).join('');
   },
   
   // ========== STATS ==========
@@ -950,9 +960,9 @@ const UI = {
       if (data.mouvements.length === 0) {
         html += '<p style="color:#999;font-size:13px;">Aucun mouvement enregistré</p>';
       } else {
-        html += '<table class="table" style="width:100%;font-size:12px;"><thead><tr><th>Date</th><th>Type</th><th>Machine</th><th>Bouteille</th><th>Masse</th><th>Opérateur</th><th>Statut</th></tr></thead><tbody>';
+        html += '<table class="table" style="width:100%;font-size:12px;"><thead><tr><th>Date</th><th>Type</th><th>Machine</th><th>Bouteille</th><th>Masse</th><th>Opérateur</th><th>Validateur</th><th>Statut</th></tr></thead><tbody>';
         data.mouvements.forEach(m => {
-          html += '<tr><td>' + this.formatDate(m.date) + '</td><td>' + (m.type||'--') + '</td><td><code>' + (m.machine||'--') + '</code></td><td><code>' + (m.bouteille||'--') + '</code></td><td>' + (m.masse||0) + ' kg</td><td>' + (m.operateur||'--') + '</td><td><span class="badge badge-' + this.getStatutBadgeClass(m.statut) + '">' + (m.statut||'--') + '</span></td></tr>';
+          html += '<tr><td>' + this.formatDate(m.date) + '</td><td>' + (m.type||'--') + '</td><td><code>' + (m.machine||'--') + '</code></td><td><code>' + (m.bouteille||'--') + '</code></td><td>' + (m.masse||0) + ' kg</td><td>' + (m.operateur||'--') + '</td><td>' + (m.validateur||'--') + '</td><td><span class="badge badge-' + this.getStatutBadgeClass(m.statut) + '">' + (m.statut||'--') + '</span></td></tr>';
         });
         html += '</tbody></table>';
       }
