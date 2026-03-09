@@ -155,6 +155,11 @@ const App = {
       UI.showWizard();
     });
 
+    // Impression QR Codes
+    document.getElementById('btn-print-qrcodes')?.addEventListener('click', () => {
+      QRModule.printQRCodes({ machines: true, bouteilles: true });
+    });
+
     // Prévisualisation CERFA
     document.getElementById('btn-preview-cerfa')?.addEventListener('click', async () => {
       try {

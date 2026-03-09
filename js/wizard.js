@@ -92,8 +92,9 @@ const Wizard = {
     return `
       <h3>Sélection de la machine</h3>
       <p>Choisissez l'équipement concerné ou créez-en un nouveau</p>
-      <div style="margin-bottom: 12px;">
+      <div style="margin-bottom: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
         <button class="btn btn-primary btn-sm" id="wizard-add-machine">🏭 Créer une nouvelle machine</button>
+        <button class="btn btn-sm" id="wizard-scan-machine" style="background:#1b3a63;color:white;">📷 Scanner QR code</button>
       </div>
       ${machines.length === 0 ? `
         <div class="empty-state">
@@ -162,6 +163,24 @@ const Wizard = {
         }
       });
     });
+    // Scanner QR machine
+    document.getElementById('wizard-scan-machine')?.addEventListener('click', () => {
+      QRModule.openScanner((result) => {
+        if (result.type === 'MACHINE' || result.type === 'INCONNU') {
+          const machine = State.machines.find(m => (m.code || m.id) === result.code);
+          if (machine) {
+            State.wizardSetData('machineId', machine.code || machine.id);
+            UI.renderWizardStep();
+            UI.toast(`Machine ${result.code} sélectionnée`, 'success');
+          } else {
+            UI.toast(`Machine "${result.code}" non trouvée dans le parc`, 'error');
+          }
+        } else {
+          UI.toast(`Ce QR code est une ${result.type}, pas une machine`, 'warning');
+        }
+      });
+    });
+
     // Bouton créer machine depuis le wizard
     document.getElementById('wizard-add-machine')?.addEventListener('click', async () => {
       App._derniereMachineCreee = null;
@@ -227,8 +246,9 @@ const Wizard = {
           <button class="btn btn-sm btn-secondary" id="wizard-skip-bouteille">Passer cette étape →</button>
         </div>
       `}
-      <div style="margin-bottom: 12px;">
+      <div style="margin-bottom: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
         <button class="btn btn-primary btn-sm" id="wizard-add-bouteille">🧪 Créer une nouvelle bouteille</button>
+        <button class="btn btn-sm" id="wizard-scan-bouteille" style="background:#e8914a;color:white;">📷 Scanner QR code</button>
       </div>
       ${bouteillesCompatibles.length === 0 ? `
         <div class="empty-state">
@@ -270,6 +290,24 @@ const Wizard = {
   },
   
   bindStepBouteille() {
+    // Scanner QR bouteille
+    document.getElementById('wizard-scan-bouteille')?.addEventListener('click', () => {
+      QRModule.openScanner((result) => {
+        if (result.type === 'BOUTEILLE' || result.type === 'INCONNU') {
+          const bouteille = State.bouteilles.find(b => (b.code || b.id) === result.code);
+          if (bouteille) {
+            State.wizardSetData('bouteilleId', bouteille.code || bouteille.id);
+            UI.renderWizardStep();
+            UI.toast(`Bouteille ${result.code} sélectionnée`, 'success');
+          } else {
+            UI.toast(`Bouteille "${result.code}" non trouvée`, 'error');
+          }
+        } else {
+          UI.toast(`Ce QR code est une ${result.type}, pas une bouteille`, 'warning');
+        }
+      });
+    });
+
     // Bouton créer bouteille depuis le wizard
     document.getElementById('wizard-add-bouteille')?.addEventListener('click', async () => {
       App._derniereBouteilleCreee = null;
