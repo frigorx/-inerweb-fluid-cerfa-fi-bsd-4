@@ -18,15 +18,17 @@ const App = {
     
     // Configurer l'API
     const defaultApiUrl = 'https://script.google.com/macros/s/AKfycbz9MdUpLiTQUC63wQypiGt5qHlNTa5i8NL2lAi2vAr1X1H4A71NdFFPiOpsTsbV6UuYDg/exec';
+
+    // Nettoyage automatique du localStorage
+    this.cleanupLocalStorage(defaultApiUrl);
+
     // Forcer la mise à jour vers la dernière version déployée
-    const savedUrl = localStorage.getItem('inerweb_api_url');
-    const apiUrl = (!savedUrl || !savedUrl.includes('AKfycbz9Md')) ? defaultApiUrl : savedUrl;
     localStorage.setItem('inerweb_api_url', defaultApiUrl);
-    API.init(apiUrl);
-    
+    API.init(defaultApiUrl);
+
     // Vérifier si déjà connecté
     const savedApiKey = localStorage.getItem('inerweb_apikey');
-    if (savedApiKey && apiUrl) {
+    if (savedApiKey && defaultApiUrl) {
       API.setApiKey(savedApiKey);
       try {
         await this.autoLogin();
@@ -44,6 +46,27 @@ const App = {
     console.log('inerWeb Fluide initialisé');
   },
   
+  /**
+   * Nettoyage automatique du localStorage au démarrage
+   */
+  cleanupLocalStorage(defaultApiUrl) {
+    const VALID_KEYS = [
+      '67f958e706a64bf38b5256d384a1d9d6',
+      '0efa169cf7a04e40997343b7e8a42ff7',
+      '5c7791a78777425eb80a2b162f5f45f2'
+    ];
+    const savedKey = localStorage.getItem('inerweb_apikey');
+    if (savedKey && !VALID_KEYS.includes(savedKey)) {
+      localStorage.removeItem('inerweb_apikey');
+      console.log('[Cleanup] Clé API invalide supprimée');
+    }
+    const savedUrl = localStorage.getItem('inerweb_api_url');
+    if (savedUrl && savedUrl !== defaultApiUrl) {
+      localStorage.setItem('inerweb_api_url', defaultApiUrl);
+      console.log('[Cleanup] URL API corrigée');
+    }
+  },
+
   /**
    * Tentative de reconnexion automatique
    */
