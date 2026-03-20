@@ -434,8 +434,10 @@ const Wizard = {
       // Affichage
       resultValue.textContent = Math.abs(quantite).toFixed(2);
       
-      // Warning si négatif ou très grand
-      if (quantite < 0 || quantite > 50) {
+      // Warning si pesée inversée ou quantité très grande
+      const peseeInversee = (type === 'CHARGE' || type === 'MISE_EN_SERVICE') ? avant < apres :
+                            (type === 'RECUPERATION') ? apres < avant : false;
+      if (peseeInversee || Math.abs(quantite) > 50) {
         warning.classList.remove('hidden');
       } else {
         warning.classList.add('hidden');
@@ -599,11 +601,12 @@ const Wizard = {
         if (!data.bouteilleId) {
           break;
         }
-        if (!data.peseeAvant || !data.peseeApres) {
+        if (data.peseeAvant === null || data.peseeAvant === undefined || data.peseeAvant === '' ||
+            data.peseeApres === null || data.peseeApres === undefined || data.peseeApres === '') {
           UI.toast('Veuillez saisir les deux pesées', 'error');
           return false;
         }
-        if (data.quantite <= 0) {
+        if (!data.quantite || data.quantite <= 0) {
           UI.toast('La quantité doit être positive', 'error');
           return false;
         }

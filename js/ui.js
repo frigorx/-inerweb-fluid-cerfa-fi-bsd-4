@@ -595,33 +595,11 @@ const UI = {
   /**
    * Ouvre le formulaire de contrôle pré-rempli pour une vérification post-fuite
    */
-  ouvrirControleVerification(machineId) {
-    // Naviguer vers la vue contrôles si pas déjà dessus
-    if (typeof Actions !== 'undefined' && Actions.navigate) {
-      Actions.navigate('controles');
-    }
-    // Pré-remplir le formulaire de contrôle
-    const machineSelect = document.getElementById('ctrl-machine') || document.querySelector('[name="machine"]');
+  async ouvrirControleVerification(machineId) {
+    await App.openModalControle();
+    const machineSelect = document.getElementById('controle-machine');
     if (machineSelect) {
       machineSelect.value = machineId;
-      // Déclencher l'événement change pour les listeners éventuels
-      machineSelect.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-    // Pré-remplir les observations
-    const obsField = document.getElementById('ctrl-observations') || document.querySelector('[name="observations"]');
-    if (obsField) {
-      obsField.value = 'Contrôle de vérification post-réparation (fuite détectée précédemment)';
-    }
-    // Ouvrir le formulaire/modal si disponible
-    const formModal = document.getElementById('modal-controle') || document.getElementById('form-controle');
-    if (formModal) {
-      formModal.classList.remove('hidden');
-      formModal.style.display = '';
-    }
-    // Scroll vers le formulaire
-    const formSection = document.getElementById('controle-form') || document.getElementById('section-new-controle');
-    if (formSection) {
-      formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   },
 

@@ -43,7 +43,7 @@ var SHEETS = {
 
 var ETATS_FLUIDE = ['Neuf', 'Récupéré', 'Recyclé', 'Régénéré', 'Déchet'];
 var STATUTS_MOUVEMENT = ['brouillon', 'soumis', 'valide', 'rejete', 'annule', 'archive'];
-var TYPES_MOUVEMENT = ['Charge', 'Appoint', 'Recuperation', 'Vidange'];
+var TYPES_MOUVEMENT = ['Charge', 'Appoint', 'Recuperation', 'Vidange', 'MiseEnService'];
 var METHODES_CONTROLE = ['Directe', 'Indirecte', 'Pression'];
 var RESULTATS_CONTROLE = ['Conforme', 'Fuite'];
 var TYPES_MACHINE = ['Monosplit', 'Multisplit', 'PAC', 'Chambre froide', 'Vitrine', 'CTA', 'Autre'];
@@ -255,6 +255,10 @@ var ACTION_LEVELS = {
   'getAlertes': 'READ', 'getDashboard': 'READ', 'getCerfa': 'READ', 'getUserRole': 'READ',
   'login': 'PUBLIC', 'getSites': 'READ', 'getAteliers': 'READ',
   'getStatsAvancees': 'READ', 'getTendances': 'READ',
+  'getClients': 'READ', 'createClient': 'WRITE', 'createDetecteur': 'WRITE',
+  'getTracabilite': 'READ', 'getBilanAnnuel': 'READ', 'previewCerfa': 'READ', 'initFluides': 'ADMIN',
+  'getTrackdechetsStatus': 'READ', 'configTrackdechets': 'ADMIN', 'listBsffs': 'WRITE', 'creerBsff': 'WRITE',
+  'genererCerfaPrecharge': 'WRITE',
   'getTechniciens': 'WRITE', 'getUsers': 'WRITE', 'getAuditLog': 'ADMIN', 'getAuditStats': 'ADMIN',
   'exportRegistreFluides': 'READ', 'exportHistoriqueMachine': 'READ', 'exportHistoriqueBouteille': 'READ',
   'exportControlesAVenir': 'READ', 'exportBilanAnnuel': 'WRITE', 'exportActiviteEleve': 'WRITE',
@@ -1045,12 +1049,17 @@ function apiCreateMachine_(data) {
   // LOT 16: SiteId
   var siteId = data.siteId || '';
   
+  var prechargee = data.prechargee === 'true' || data.prechargee === true;
+  var detectionPerm = data.detectionPermanente === 'true' || data.detectionPermanente === true;
+  var clientId = sanitize_(data.clientId, 50);
+  var statut = prechargee ? 'En service (préchargée)' : 'En service';
+
   var rowData = [code, nom, type.value, sanitize_(data.marque, 50), sanitize_(data.modele, 50),
-    sanitize_(data.serie, 50), data.fluide, charge.value, charge.value, eqCO2,
-    sanitize_(data.localisation, 100), new Date(), '', freqCtrl, 'En service', siteId];
-  
+    sanitize_(data.serie, 50), data.fluide, charge.value, prechargee ? charge.value : 0, eqCO2,
+    sanitize_(data.localisation, 100), new Date(), '', freqCtrl, statut, siteId, clientId, detectionPerm ? 'OUI' : ''];
+
   DataStore.insert(SHEETS.MACHINES, rowData);
-  logAudit_('MACHINE', 'creer', code, null, { nom: nom, fluide: data.fluide, site: siteId }, 'success');
+  logAudit_('MACHINE', 'creer', code, null, { nom: nom, fluide: data.fluide, site: siteId, prechargee: prechargee }, 'success');
   CACHE_.fluides = null;
   
   return successResponse_({ code: code, eqCO2: eqCO2 });
@@ -1555,12 +1564,13 @@ function INSTALLER_INERWEB() {
     
     // Parc (LOT 16: +SiteID)
     creerOnglet_(ss, SHEETS.BOUTEILLES, ['Code', 'Catégorie', 'Fluide', 'État', 'Marque', 'Tare', 'Contenance', 'MasseFluide', 'MasseTotal', 'Entrée', 'Fournisseur', 'Lot', 'Statut', 'SiteID']);
-    creerOnglet_(ss, SHEETS.MACHINES, ['Code', 'Nom', 'Type', 'Marque', 'Modèle', 'Série', 'Fluide', 'ChargeNom', 'ChargeAct', 'EqCO2', 'Localisation', 'MiseEnService', 'ProchCtrl', 'FreqCtrl', 'Statut', 'SiteID']);
+    creerOnglet_(ss, SHEETS.MACHINES, ['Code', 'Nom', 'Type', 'Marque', 'Modèle', 'Série', 'Fluide', 'ChargeNom', 'ChargeAct', 'EqCO2', 'Localisation', 'MiseEnService', 'ProchCtrl', 'FreqCtrl', 'Statut', 'SiteID', 'ClientID', 'DetectionPerm']);
     
     // Opérations (LOT 16: +SiteID)
     creerOnglet_(ss, SHEETS.MOUVEMENTS, ['ID', 'Date', 'Type', 'Machine', 'Bouteille', 'Fluide', 'EtatFluide', 'Masse', 'PeseeAvant', 'PeseeApres', 'Temp', 'Operateur', 'Validateur', 'DateValid', 'Mode', 'Detecteur', 'HP', 'BP', 'Surch', 'SousRef', 'DeltaT', 'Obs', 'Hash', 'Statut', 'Signature', 'SiteID']);
     creerOnglet_(ss, SHEETS.CONTROLES, ['ID', 'Date', 'Machine', 'Fluide', 'Charge', 'EqCO2', 'Methode', 'Resultat', 'LocFuite', 'Operateur', 'Detecteur', 'Mode', 'ProchCtrl', 'Validateur', 'DateValid', 'Obs', 'Statut', 'SiteID']);
     creerOnglet_(ss, SHEETS.INCIDENTS, ['ID', 'Date', 'Machine', 'Type', 'Description', 'Gravité', 'Actions', 'Responsable', 'Statut', 'Clôture', 'SiteID']);
+    creerOnglet_(ss, 'CLIENTS', ['ID', 'Nom', 'Adresse', 'CP', 'Ville', 'SIRET', 'Contact', 'Tel', 'Email', 'Actif']);
     
     // Index & Logs
     creerOnglet_(ss, SHEETS.INDEX_CERFA, ['NumFI', 'Date', 'Mouvement', 'Machine', 'Operateur', 'Mode', 'URL', 'NomFichier']);
@@ -1624,6 +1634,378 @@ function apiSaveConfig_(data) {
   if (data.siret) DataStore.setConfig('siret', sanitize_(data.siret, 20));
   logAudit_('CONFIG', 'modifier', 'config', null, data, 'success');
   return successResponse_({ message: 'Configuration enregistrée' });
+}
+
+// ================================================================
+// SECTION: CLIENTS / DÉTENTEURS (Cadre 2 CERFA)
+// ================================================================
+
+function apiGetClients_(params) {
+  var clients = [];
+  var data = DataStore.findAll('CLIENTS');
+  data.forEach(function(row) {
+    if (!row[0]) return;
+    clients.push({ id: row[0], nom: row[1], adresse: row[2], cp: row[3], ville: row[4], siret: row[5], contact: row[6], tel: row[7], email: row[8], actif: row[9] !== false });
+  });
+  return successResponse_(clients);
+}
+
+function apiCreateClient_(data) {
+  var nom = sanitize_(data.nom, 200);
+  if (!nom) return errorResponse_('Nom obligatoire');
+  var id = DataStore.generateId('CLI');
+  DataStore.insert('CLIENTS', [id, nom, sanitize_(data.adresse, 200), sanitize_(data.cp, 5), sanitize_(data.ville, 100), sanitize_(data.siret, 14), sanitize_(data.contact, 100), sanitize_(data.tel, 20), sanitize_(data.email, 100), true]);
+  logAudit_('CLIENT', 'creer', id, null, { nom: nom }, 'success');
+  return successResponse_({ id: id });
+}
+
+// ================================================================
+// SECTION: DÉTECTEURS CRUD
+// ================================================================
+
+function apiCreateDetecteur_(data) {
+  var marque = sanitize_(data.marque, 100);
+  var modele = sanitize_(data.modele, 100);
+  if (!marque || !modele) return errorResponse_('Marque et modèle obligatoires');
+  var id = DataStore.generateId('DET');
+  DataStore.insert(SHEETS.DETECTEURS, [id, marque, modele, data.etalonnage || '', data.prochain || '', 'Actif']);
+  logAudit_('DETECTEUR', 'creer', id, null, { marque: marque, modele: modele }, 'success');
+  return successResponse_({ id: id });
+}
+
+// ================================================================
+// SECTION: TRAÇABILITÉ CROISÉE
+// ================================================================
+
+function apiGetTracabilite_(params) {
+  var type = params.type;
+  var id = params.id;
+  if (!type || !id) return errorResponse_('Type et ID obligatoires');
+
+  var entite = null;
+  var mouvements = [];
+  var controles = [];
+  var cerfas = [];
+
+  // Récupérer l'entité
+  if (type === 'machine') {
+    var m = DataStore.findById(SHEETS.MACHINES, id);
+    if (m.ok) {
+      entite = { code: m.data[0], nom: m.data[1], type: m.data[2], marque: m.data[3], modele: m.data[4], serie: m.data[5], fluide: m.data[6], chargeNom: m.data[7], chargeAct: m.data[8], eqCO2: m.data[9], localisation: m.data[10], miseEnService: formatDate_(m.data[11]), prochainControle: formatDate_(m.data[12]), statut: m.data[14] };
+      // Client lié
+      if (m.data[16]) {
+        var cli = DataStore.findById('CLIENTS', m.data[16]);
+        if (cli.ok) entite.client = { id: cli.data[0], nom: cli.data[1], siret: cli.data[5], ville: cli.data[4] };
+      }
+    }
+  } else if (type === 'bouteille') {
+    var b = DataStore.findById(SHEETS.BOUTEILLES, id);
+    if (b.ok) entite = { code: b.data[0], categorie: b.data[1], fluide: b.data[2], etatFluide: b.data[3], marque: b.data[4], tare: b.data[5], contenance: b.data[6], stockActuel: b.data[7], fournisseur: b.data[10], lot: b.data[11], statut: b.data[12] };
+  } else if (type === 'fluide') {
+    var f = DataStore.findById(SHEETS.FLUIDES, id);
+    if (f.ok) entite = { code: f.data[0], nom: f.data[1], prg: f.data[2], famille: f.data[3], securite: f.data[4] };
+  } else if (type === 'operateur') {
+    var u = findUser_(id);
+    if (u.ok) entite = { id: u.user.id, nom: u.user.nom, prenom: u.user.prenom, role: u.user.role, attestation: u.user.attestation };
+  }
+
+  // Mouvements liés
+  DataStore.findAll(SHEETS.MOUVEMENTS).forEach(function(row) {
+    if (!row[0]) return;
+    var match = false;
+    if (type === 'machine' && row[3] === id) match = true;
+    if (type === 'bouteille' && row[4] === id) match = true;
+    if (type === 'fluide' && row[5] === id) match = true;
+    if (type === 'operateur' && row[11] === id) match = true;
+    if (match) {
+      mouvements.push({ id: row[0], date: formatDateTime_(row[1]), type: row[2], machine: row[3], bouteille: row[4], fluide: row[5], masse: row[7], operateur: row[11], validateur: row[12], mode: row[14], statut: row[23] });
+    }
+  });
+
+  // Contrôles liés
+  DataStore.findAll(SHEETS.CONTROLES).forEach(function(row) {
+    if (!row[0]) return;
+    var match = false;
+    if (type === 'machine' && row[2] === id) match = true;
+    if (type === 'fluide' && row[3] === id) match = true;
+    if (type === 'operateur' && row[9] === id) match = true;
+    if (type === 'bouteille') match = false; // pas de contrôle sur bouteille
+    if (match) {
+      controles.push({ id: row[0], date: formatDateTime_(row[1]), machine: row[2], fluide: row[3], methode: row[6], resultat: row[7], operateur: row[9], mode: row[11], prochainControle: formatDate_(row[12]) });
+    }
+  });
+
+  // CERFAs liés
+  DataStore.findAll(SHEETS.INDEX_CERFA).forEach(function(row) {
+    if (!row[0]) return;
+    var match = false;
+    if (type === 'machine' && row[3] === id) match = true;
+    if (type === 'operateur' && row[4] === id) match = true;
+    // Pour bouteille/fluide, chercher via le mouvement
+    if (type === 'bouteille' || type === 'fluide') {
+      var mvt = mouvements.find(function(m) { return m.id === row[2]; });
+      if (mvt) match = true;
+    }
+    if (match) {
+      cerfas.push({ id: row[0], date: formatDateTime_(row[1]), mouvement: row[2], machine: row[3], operateur: row[4], mode: row[5], urlPdf: row[6] });
+    }
+  });
+
+  return successResponse_({ entite: entite, mouvements: mouvements, controles: controles, cerfas: cerfas });
+}
+
+// ================================================================
+// SECTION: BILAN ANNUEL (format ADEME)
+// ================================================================
+
+function apiGetBilanAnnuel_(params) {
+  var annee = parseInt(params.annee) || new Date().getFullYear();
+  var filtreFluide = params.fluide || null;
+
+  var bilans = {};
+
+  // Collecter les mouvements de l'année
+  DataStore.findAll(SHEETS.MOUVEMENTS).forEach(function(row) {
+    if (!row[0]) return;
+    var date = new Date(row[1]);
+    if (date.getFullYear() !== annee) return;
+    if (row[23] !== 'valide') return;
+
+    var fluide = row[5];
+    if (filtreFluide && fluide !== filtreFluide) return;
+
+    if (!bilans[fluide]) {
+      var fInfo = DataStore.findById(SHEETS.FLUIDES, fluide);
+      bilans[fluide] = {
+        fluide: { code: fluide, nom: fInfo.ok ? fInfo.data[1] : '', prg: fInfo.ok ? fInfo.data[2] : 0 },
+        mouvements: [], nbInterventions: 0,
+        J_chargesNeufs: 0, K_chargesMaintenance: 0, M_recupHorsUsage: 0, N_recupMaintenance: 0, R_recycles: 0,
+        L_totalCharges: 0, O_totalRecup: 0, stockActuelNeuf: 0, stockActuelUsage: 0
+      };
+    }
+
+    var b = bilans[fluide];
+    var masse = parseFloat(row[7]) || 0;
+    var type = row[2];
+    var etatFluide = row[6] || 'Neuf';
+    var isRecycle = etatFluide === 'Recyclé';
+
+    // Chercher le CERFA lié
+    var cerfa = null, cerfaUrl = null;
+    DataStore.findAll(SHEETS.INDEX_CERFA).forEach(function(c) { if (c[2] === row[0]) { cerfa = c[0]; cerfaUrl = c[6]; } });
+
+    // Chercher le nom de la machine
+    var machineNom = '';
+    var machData = DataStore.findById(SHEETS.MACHINES, row[3]);
+    if (machData.ok) machineNom = machData.data[1] || '';
+
+    b.mouvements.push({ id: row[0], date: formatDateTime_(row[1]), type: type, machine: row[3], machineNom: machineNom, bouteille: row[4], fluide: fluide, etatFluide: etatFluide, masse: masse, operateur: row[11], mode: row[14], cerfa: cerfa, cerfaUrl: cerfaUrl });
+    b.nbInterventions++;
+
+    if (type === 'MiseEnService' || type === 'Charge') { b.J_chargesNeufs += masse; }
+    else if (type === 'Appoint') { b.K_chargesMaintenance += masse; }
+    else if (type === 'Vidange') { b.M_recupHorsUsage += masse; }
+    else if (type === 'Recuperation') {
+      if (isRecycle) { b.R_recycles += masse; }
+      else { b.N_recupMaintenance += masse; }
+    }
+  });
+
+  // Calculer totaux et stocks
+  for (var code in bilans) {
+    var b = bilans[code];
+    b.J_chargesNeufs = Math.round(b.J_chargesNeufs * 1000) / 1000;
+    b.K_chargesMaintenance = Math.round(b.K_chargesMaintenance * 1000) / 1000;
+    b.M_recupHorsUsage = Math.round(b.M_recupHorsUsage * 1000) / 1000;
+    b.N_recupMaintenance = Math.round(b.N_recupMaintenance * 1000) / 1000;
+    b.R_recycles = Math.round(b.R_recycles * 1000) / 1000;
+    b.L_totalCharges = Math.round((b.J_chargesNeufs + b.K_chargesMaintenance) * 1000) / 1000;
+    b.O_totalRecup = Math.round((b.M_recupHorsUsage + b.N_recupMaintenance) * 1000) / 1000;
+
+    // Stock actuel depuis les bouteilles
+    DataStore.findAll(SHEETS.BOUTEILLES).forEach(function(row) {
+      if (row[2] === code) {
+        var masse = parseFloat(row[7]) || 0;
+        if (row[3] === 'Neuf') b.stockActuelNeuf += masse;
+        else b.stockActuelUsage += masse;
+      }
+    });
+    b.stockActuelNeuf = Math.round(b.stockActuelNeuf * 1000) / 1000;
+    b.stockActuelUsage = Math.round(b.stockActuelUsage * 1000) / 1000;
+  }
+
+  return successResponse_({ annee: annee, bilans: bilans });
+}
+
+// ================================================================
+// SECTION: INIT FLUIDES PAR DÉFAUT
+// ================================================================
+
+function apiInitFluides_() {
+  var fluides = [
+    ['R32', 'Difluorométhane', 675, 'HFC', 'A2L', false],
+    ['R410A', 'Mélange R32/R125', 2088, 'HFC', 'A1', false],
+    ['R134a', 'Tétrafluoroéthane', 1430, 'HFC', 'A1', false],
+    ['R404A', 'Mélange HFC', 3922, 'HFC', 'A1', false],
+    ['R407C', 'Mélange HFC', 1774, 'HFC', 'A1', false],
+    ['R407F', 'Mélange HFC', 1825, 'HFC', 'A1', false],
+    ['R449A', 'Mélange HFO/HFC', 1397, 'HFO', 'A1', false],
+    ['R448A', 'Mélange HFO/HFC', 1387, 'HFO', 'A1', false],
+    ['R290', 'Propane', 3, 'HC', 'A3', false],
+    ['R600a', 'Isobutane', 3, 'HC', 'A3', false],
+    ['R744', 'CO2', 1, 'Naturel', 'A1', false],
+    ['R1234yf', 'Tétrafluoropropène', 4, 'HFO', 'A2L', false],
+    ['R1234ze', 'Trans-1,3,3,3-TFP', 7, 'HFO', 'A2L', false],
+    ['R513A', 'Mélange HFO/HFC', 631, 'HFO', 'A1', false]
+  ];
+  var count = 0;
+  fluides.forEach(function(f) {
+    var existe = DataStore.findById(SHEETS.FLUIDES, f[0]);
+    if (!existe.ok) { DataStore.insert(SHEETS.FLUIDES, f); count++; }
+  });
+  CACHE_.fluides = null;
+  return successResponse_({ message: count + ' fluides ajoutés' });
+}
+
+// ================================================================
+// SECTION: PREVIEW CERFA (HTML)
+// ================================================================
+
+function apiPreviewCerfa_() {
+  var config = {};
+  DataStore.findAll(SHEETS.CONFIG).forEach(function(row) { if (row[0]) config[row[0]] = row[1]; });
+
+  var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>CERFA 15497*04 - Aperçu</title>';
+  html += '<style>body{font-family:Arial,sans-serif;margin:20px;font-size:12px;}';
+  html += '.cadre{border:2px solid #000;margin:10px 0;padding:10px;} .cadre-titre{background:#1b3a63;color:white;padding:6px 10px;font-weight:bold;margin:-10px -10px 10px -10px;}';
+  html += '.champ{display:inline-block;border-bottom:1px dotted #999;min-width:150px;padding:2px 4px;margin:2px 0;}';
+  html += '.header{text-align:center;border:3px solid #000;padding:15px;margin-bottom:15px;}';
+  html += '.header h1{margin:0;font-size:16px;} .header h2{margin:4px 0;font-size:13px;color:#333;}';
+  html += '.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}';
+  html += '.formation{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:60px;color:rgba(139,92,246,0.15);font-weight:bold;pointer-events:none;}';
+  html += '@media print{body{margin:0;} .no-print{display:none;}}</style></head><body>';
+  html += '<div style="position:relative;">';
+  html += '<div class="formation">APERÇU</div>';
+  html += '<div class="header"><h1>FICHE D\'INTERVENTION</h1><h2>en application des articles R. 543-76 à R. 543-123 du code de l\'environnement</h2><p>CERFA 15497*04</p></div>';
+
+  html += '<div class="cadre"><div class="cadre-titre">CADRE 1 — OPÉRATEUR</div>';
+  html += '<div class="grid"><div>Raison sociale : <span class="champ">' + (config.etablissement || '___') + '</span></div>';
+  html += '<div>N° SIRET : <span class="champ">' + (config.siret || '___') + '</span></div></div>';
+  html += '<div>Adresse : <span class="champ">' + (config.adresse || '___') + '</span></div></div>';
+
+  html += '<div class="cadre"><div class="cadre-titre">CADRE 2 — DÉTENTEUR DE L\'ÉQUIPEMENT</div>';
+  html += '<div class="grid"><div>Nom / Raison sociale : <span class="champ">___</span></div>';
+  html += '<div>N° SIRET : <span class="champ">___</span></div></div>';
+  html += '<div>Adresse : <span class="champ">___</span></div></div>';
+
+  html += '<div class="cadre"><div class="cadre-titre">CADRE 3 — CIRCUIT CONTENANT DES GAZ FLUORÉS</div>';
+  html += '<div class="grid"><div>Désignation : <span class="champ">___</span></div>';
+  html += '<div>N° série : <span class="champ">___</span></div>';
+  html += '<div>Fluide : <span class="champ">___</span></div>';
+  html += '<div>Charge nominale : <span class="champ">___</span> kg</div>';
+  html += '<div>GWP/PRG : <span class="champ">___</span></div>';
+  html += '<div>Teq CO2 : <span class="champ">___</span></div></div></div>';
+
+  html += '<div class="cadre"><div class="cadre-titre">CADRE 4 — NATURE DE L\'INTERVENTION</div>';
+  html += '<div class="grid"><div>☐ Mise en service ☐ Maintenance ☐ Réparation</div>';
+  html += '<div>Date : <span class="champ">___</span></div></div>';
+  html += '<p>Quantité chargée : <span class="champ">___</span> kg | Quantité récupérée : <span class="champ">___</span> kg</p></div>';
+
+  html += '<div class="cadre"><div class="cadre-titre">CADRE 5 — CONTRÔLE D\'ÉTANCHÉITÉ</div>';
+  html += '<div class="grid"><div>Méthode : <span class="champ">___</span></div>';
+  html += '<div>Résultat : <span class="champ">___</span></div>';
+  html += '<div>Détecteur : <span class="champ">___</span></div>';
+  html += '<div>Date vérification : <span class="champ">___</span></div></div></div>';
+
+  html += '<div class="cadre"><div class="cadre-titre">CADRE 6 — DÉTECTION PERMANENTE</div>';
+  html += '<p>☐ Oui ☐ Non</p></div>';
+
+  html += '<div class="cadre"><div class="cadre-titre">CADRE 7 — OBSERVATIONS</div>';
+  html += '<p style="min-height:40px;">___</p></div>';
+
+  html += '<div class="grid" style="margin-top:15px;"><div class="cadre"><div class="cadre-titre">SIGNATURE OPÉRATEUR</div><div style="height:60px;"></div></div>';
+  html += '<div class="cadre"><div class="cadre-titre">SIGNATURE DÉTENTEUR</div><div style="height:60px;"></div></div></div>';
+
+  html += '<p style="text-align:center;margin-top:10px;font-size:10px;color:#666;">Généré par inerWeb Fluide — Aperçu non officiel</p>';
+  html += '</div></body></html>';
+
+  return successResponse_({ html: html });
+}
+
+// ================================================================
+// SECTION: TRACKDÉCHETS (stubs)
+// ================================================================
+
+function apiGetTrackdechetsStatus_() {
+  var token = DataStore.getConfig('trackdechets_token');
+  var url = DataStore.getConfig('trackdechets_url') || '';
+  var enabled = DataStore.getConfig('trackdechets_enabled') === 'true';
+  return successResponse_({ tokenConfigured: !!token, enabled: enabled, ready: !!token && enabled, url: url, mode: url.indexOf('sandbox') >= 0 ? 'Sandbox' : 'Production' });
+}
+
+function apiConfigTrackdechets_(params) {
+  if (params.token) DataStore.setConfig('trackdechets_token', sanitize_(params.token, 200));
+  if (params.url) DataStore.setConfig('trackdechets_url', sanitize_(params.url, 200));
+  DataStore.setConfig('trackdechets_enabled', params.enabled === 'true' ? 'true' : 'false');
+  logAudit_('CONFIG', 'trackdechets', 'config', null, { enabled: params.enabled }, 'success');
+  var testResult = 'Token enregistré';
+  if (params.token) {
+    try {
+      var resp = UrlFetchApp.fetch((params.url || 'https://api.sandbox.trackdechets.beta.gouv.fr'), { method: 'post', contentType: 'application/json', headers: { 'Authorization': 'Bearer ' + params.token }, payload: JSON.stringify({ query: '{ me { id name } }' }), muteHttpExceptions: true });
+      var json = JSON.parse(resp.getContentText());
+      testResult = json.data && json.data.me ? 'Connecté : ' + json.data.me.name : 'Token invalide';
+    } catch(e) { testResult = 'Erreur connexion : ' + e.message; }
+  }
+  return successResponse_({ connectionTest: testResult });
+}
+
+function apiListBsffs_() {
+  var token = DataStore.getConfig('trackdechets_token');
+  var url = DataStore.getConfig('trackdechets_url');
+  if (!token || !url) return errorResponse_('Trackdéchets non configuré');
+  try {
+    var resp = UrlFetchApp.fetch(url, { method: 'post', contentType: 'application/json', headers: { 'Authorization': 'Bearer ' + token }, payload: JSON.stringify({ query: '{ bsffs(first: 20) { totalCount edges { node { id status waste { code } weight { value } createdAt } } } }' }), muteHttpExceptions: true });
+    return successResponse_(JSON.parse(resp.getContentText()));
+  } catch(e) { return errorResponse_('Erreur API Trackdéchets: ' + e.message); }
+}
+
+function apiCreerBsff_(params) {
+  var token = DataStore.getConfig('trackdechets_token');
+  var url = DataStore.getConfig('trackdechets_url');
+  if (!token || !url) return errorResponse_('Trackdéchets non configuré');
+  var mvt = DataStore.findById(SHEETS.MOUVEMENTS, params.id);
+  if (!mvt.ok) return errorResponse_('Mouvement non trouvé');
+  logAudit_('BSFF', 'creer', params.id, null, null, 'stub');
+  return successResponse_({ bsffId: 'STUB-' + params.id, message: 'Intégration BSFF en cours de développement' });
+}
+
+function apiGenererCerfaPrecharge_(params) {
+  var machine = params.machine;
+  var machOk = DataStore.findById(SHEETS.MACHINES, machine);
+  if (!machOk.ok) return errorResponse_('Machine non trouvée');
+  var mode = params.mode === 'OFFICIEL' ? 'OFFICIEL' : 'FORMATION';
+  var prefixe = mode === 'OFFICIEL' ? 'FI' : 'FORM';
+  var numFI = DataStore.generateId(prefixe);
+  var charge = parseFloat(machOk.data[8]) || parseFloat(machOk.data[7]) || 0;
+  var fluide = machOk.data[6];
+  var content = '═══════════════════════════════════════════════════════════════\n';
+  content += '                 FICHE D\'INTERVENTION — CERFA 15497*04\n';
+  content += '               PRÉCHARGE USINE — MISE EN SERVICE\n';
+  content += '═══════════════════════════════════════════════════════════════\n\n';
+  if (mode === 'FORMATION') content += '⚠️ DOCUMENT DE FORMATION — NON COMPTABILISÉ\n\n';
+  content += 'N° FI          : ' + numFI + '\n';
+  content += 'Date           : ' + formatDateTime_(new Date()) + '\n';
+  content += 'Machine        : ' + machine + ' — ' + machOk.data[1] + '\n';
+  content += 'Fluide         : ' + fluide + '\n';
+  content += 'Charge usine   : ' + charge + ' kg\n';
+  content += 'Type           : Précharge usine (fluide neuf origine constructeur)\n';
+  content += 'Opérateur      : ' + sanitize_(params.operateur, 100) + '\n';
+  content += '═══════════════════════════════════════════════════════════════\n';
+  var file = DriveApp.getRootFolder().createFile(Utilities.newBlob(content, 'text/plain', numFI + '_' + machine + '_precharge.txt'));
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  DataStore.insert(SHEETS.INDEX_CERFA, [numFI, new Date(), 'PRECHARGE', machine, params.operateur, mode, file.getUrl(), numFI + '_precharge']);
+  logAudit_('CERFA', 'genererPrecharge', numFI, null, { machine: machine, charge: charge, mode: mode }, 'success');
+  return successResponse_({ id: numFI, contenu: content, urlPdf: file.getUrl() });
 }
 
 function onOpen() {
@@ -1714,6 +2096,18 @@ function doGet(e) {
       case 'getSites': result = apiGetSites_(); break;
       case 'getAteliers': result = apiGetAteliers_(e.parameter); break;
       case 'getUserRole': result = successResponse_({ role: getUserRole_(e.parameter.userId) }); break;
+      case 'getClients': result = apiGetClients_(e.parameter); break;
+      case 'createClient': result = apiCreateClient_(e.parameter); break;
+      case 'createDetecteur': result = apiCreateDetecteur_(e.parameter); break;
+      case 'getTracabilite': result = apiGetTracabilite_(e.parameter); break;
+      case 'getBilanAnnuel': result = apiGetBilanAnnuel_(e.parameter); break;
+      case 'previewCerfa': result = apiPreviewCerfa_(); break;
+      case 'initFluides': result = apiInitFluides_(); break;
+      case 'getTrackdechetsStatus': result = apiGetTrackdechetsStatus_(); break;
+      case 'configTrackdechets': result = apiConfigTrackdechets_(e.parameter); break;
+      case 'listBsffs': result = apiListBsffs_(); break;
+      case 'creerBsff': result = apiCreerBsff_(e.parameter); break;
+      case 'genererCerfaPrecharge': result = apiGenererCerfaPrecharge_(e.parameter); break;
       case 'exportRegistreFluides': result = apiExportRegistreFluides_(e.parameter); break;
       case 'exportHistoriqueMachine': result = apiExportHistoriqueMachine_(e.parameter); break;
       case 'exportHistoriqueBouteille': result = apiExportHistoriqueBouteille_(e.parameter); break;

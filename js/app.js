@@ -50,16 +50,6 @@ const App = {
    * Nettoyage automatique du localStorage au démarrage
    */
   cleanupLocalStorage(defaultApiUrl) {
-    const VALID_KEYS = [
-      '67f958e706a64bf38b5256d384a1d9d6',
-      '0efa169cf7a04e40997343b7e8a42ff7',
-      '5c7791a78777425eb80a2b162f5f45f2'
-    ];
-    const savedKey = localStorage.getItem('inerweb_apikey');
-    if (savedKey && !VALID_KEYS.includes(savedKey)) {
-      localStorage.removeItem('inerweb_apikey');
-      console.log('[Cleanup] Clé API invalide supprimée');
-    }
     const savedUrl = localStorage.getItem('inerweb_api_url');
     if (savedUrl && savedUrl !== defaultApiUrl) {
       localStorage.setItem('inerweb_api_url', defaultApiUrl);
@@ -71,14 +61,22 @@ const App = {
    * Tentative de reconnexion automatique
    */
   async autoLogin() {
-    const response = await API.get('getUserRole');
-    if (response.success && response.data) {
-      State.setUser(response.data);
-      await State.loadInitialData();
-      UI.showApp();
-    } else {
-      throw new Error('Session expirée');
+    const savedUser = localStorage.getItem('inerweb_user');
+    if (savedUser) {
+      try {
+        const userData = JSON.parse(savedUser);
+        if (userData && userData.id) {
+          const response = await API.login(userData.id, '');
+          if (response.success && response.data) {
+            State.setUser(response.data);
+            await State.loadInitialData();
+            UI.showApp();
+            return;
+          }
+        }
+      } catch (e) { /* JSON parse error, continue */ }
     }
+    throw new Error('Session expirée');
   },
   
   /**
@@ -98,6 +96,7 @@ const App = {
         }
         
         State.setUser(response.data);
+        localStorage.setItem('inerweb_user', JSON.stringify({ id: response.data.id, nomComplet: response.data.nomComplet }));
         await State.loadInitialData();
         UI.showApp();
         UI.toast(`Bienvenue ${State.user.nomComplet || identifiant} !`, 'success');
@@ -116,6 +115,7 @@ const App = {
    * Déconnexion
    */
   logout() {
+    localStorage.removeItem('inerweb_user');
     State.logout();
     UI.showLogin();
     UI.toast('Déconnexion réussie', 'info');
@@ -506,10 +506,16 @@ const App = {
 
     // Raccourcis clavier
     document.addEventListener('keydown', (e) => {
-      // Escape pour fermer le wizard (avec confirmation)
-      if (e.key === 'Escape' && State.wizard.active) {
-        if (confirm('Abandonner ce mouvement ?')) {
-          UI.hideWizard();
+      if (e.key === 'Escape') {
+        // Fermer les modales ouvertes
+        const modals = ['modal-detail', 'modal-machine', 'modal-bouteille', 'modal-controle', 'modal-client', 'modal-user', 'modal-detecteur'];
+        for (const id of modals) {
+          const m = document.getElementById(id);
+          if (m && !m.classList.contains('hidden')) { m.classList.add('hidden'); return; }
+        }
+        // Wizard en dernier (avec confirmation)
+        if (State.wizard.active) {
+          if (confirm('Abandonner ce mouvement ?')) { UI.hideWizard(); }
         }
       }
     });
