@@ -210,6 +210,97 @@ function successResponse_(data, meta) { return { success: true, ok: true, data: 
 function errorResponse_(msg, code) { return { success: false, ok: false, data: null, error: msg, code: code || 'ERROR', meta: { version: APP_VERSION, timestamp: new Date().toISOString() } }; }
 
 // ================================================================
+// SECTION: DRIVE - Organisation automatique des fichiers
+// ================================================================
+
+/**
+ * Résout un chemin de dossiers Drive en créant récursivement les dossiers manquants.
+ * Utilise CACHE_ pour éviter les appels répétés à l'API Drive.
+ * @param {string} path - Chemin type "inerWeb Fluide/2025/Machines/CF03"
+ * @return {Folder} Le dossier Google Drive final
+ */
+function getDriveFolder_(path) {
+  if (!path) return DriveApp.getRootFolder();
+
+  // Vérifier le cache
+  if (CACHE_.driveFolders && CACHE_.driveFolders[path]) {
+    try {
+      // Vérifier que le dossier existe encore (pas supprimé entre-temps)
+      CACHE_.driveFolders[path].getName();
+      return CACHE_.driveFolders[path];
+    } catch(e) {
+      delete CACHE_.driveFolders[path];
+    }
+  }
+
+  if (!CACHE_.driveFolders) CACHE_.driveFolders = {};
+
+  var segments = path.split('/').filter(function(s) { return s.length > 0; });
+  var dossierCourant = DriveApp.getRootFolder();
+  var cheminPartiel = '';
+
+  for (var i = 0; i < segments.length; i++) {
+    var nomSegment = segments[i];
+    cheminPartiel += (i > 0 ? '/' : '') + nomSegment;
+
+    // Vérifier le cache pour ce chemin partiel
+    if (CACHE_.driveFolders[cheminPartiel]) {
+      try {
+        CACHE_.driveFolders[cheminPartiel].getName();
+        dossierCourant = CACHE_.driveFolders[cheminPartiel];
+        continue;
+      } catch(e) {
+        delete CACHE_.driveFolders[cheminPartiel];
+      }
+    }
+
+    // Chercher le sous-dossier existant
+    var sousDossiers = dossierCourant.getFoldersByName(nomSegment);
+    if (sousDossiers.hasNext()) {
+      dossierCourant = sousDossiers.next();
+    } else {
+      // Créer le dossier
+      dossierCourant = dossierCourant.createFolder(nomSegment);
+    }
+
+    // Mettre en cache
+    CACHE_.driveFolders[cheminPartiel] = dossierCourant;
+  }
+
+  return dossierCourant;
+}
+
+/**
+ * Sauvegarde un fichier dans un dossier Drive organisé.
+ * @param {string} contenu - Contenu du fichier
+ * @param {string} nomFichier - Nom du fichier (avec extension)
+ * @param {string} mimeType - Type MIME (ex: 'text/html')
+ * @param {string} cheminDossier - Chemin du dossier (ex: "inerWeb Fluide/2025/Machines/CF03")
+ * @return {Object} { url: string, id: string }
+ */
+function sauvegarderDansDrive_(contenu, nomFichier, mimeType, cheminDossier) {
+  var dossier = getDriveFolder_(cheminDossier);
+  var blob = Utilities.newBlob(contenu, mimeType, nomFichier);
+  var file = dossier.createFile(blob);
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  return { url: file.getUrl(), id: file.getId() };
+}
+
+/**
+ * Copie un fichier Drive existant dans un autre dossier.
+ * @param {string} fileId - ID du fichier source
+ * @param {string} cheminDossier - Chemin du dossier de destination
+ * @return {Object} { url: string, id: string }
+ */
+function copierDansDrive_(fileId, cheminDossier) {
+  var dossier = getDriveFolder_(cheminDossier);
+  var fichierSource = DriveApp.getFileById(fileId);
+  var copie = fichierSource.makeCopy(fichierSource.getName(), dossier);
+  copie.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  return { url: copie.getUrl(), id: copie.getId() };
+}
+
+// ================================================================
 // SECTION: AUDIT
 // ================================================================
 
@@ -1011,7 +1102,37 @@ function apiCreateControle_(data) {
   }
   
   logAudit_('CONTROLE', 'creer', numCtrl, null, { machine: data.machine, resultat: resultat.value, mode: mode }, 'success');
-  
+
+  // Sauvegarder un résumé du contrôle dans le dossier Drive de la machine
+  try {
+    var anneeCtrl = String(new Date().getFullYear());
+    var codeMachineCtrl = sanitize_(data.machine, 50).replace(/[^a-zA-Z0-9\-_]/g, '_');
+    var cheminMachineCtrl = 'inerWeb Fluide/' + anneeCtrl + '/Machines/' + codeMachineCtrl;
+    var resumeControle = [
+      'CONTRÔLE D\'ÉTANCHÉITÉ — ' + numCtrl,
+      '========================================',
+      'Date : ' + formatDateTime_(new Date()),
+      'Machine : ' + data.machine,
+      'Fluide : ' + fluide,
+      'Charge : ' + charge + ' kg',
+      'Eq. CO2 : ' + eqCO2.toFixed(2) + ' T',
+      'Méthode : ' + methode.value,
+      'Résultat : ' + resultat.value,
+      resultat.value === 'Fuite' ? 'Localisation fuite : ' + (data.localisationFuite || 'Non précisée') : '',
+      'Opérateur : ' + operateur,
+      'Détecteur : ' + (data.detecteur || 'Non renseigné'),
+      'Mode : ' + mode,
+      'Prochain contrôle : ' + formatDate_(prochCtrl),
+      '========================================',
+      'Généré automatiquement par inerWeb Fluides v' + APP_VERSION
+    ].filter(function(l) { return l !== ''; }).join('\n');
+
+    var nomFichierCtrl = numCtrl + '_' + codeMachineCtrl + '_' + formatDateISO_(new Date()) + '.txt';
+    sauvegarderDansDrive_(resumeControle, nomFichierCtrl, 'text/plain', cheminMachineCtrl);
+  } catch(e) {
+    Logger.log('Erreur sauvegarde résumé contrôle Drive: ' + e.message);
+  }
+
   return successResponse_({ id: numCtrl, prochainControle: formatDate_(prochCtrl), mode: mode, fuite: resultat.value === 'Fuite' });
 }
 
@@ -1948,14 +2069,21 @@ function apiGenererCerfa_(data) {
   // Générer le texte brut pour compatibilité
   var texteBrut = genererCerfaTexteBrut_(donnees);
 
-  // Sauvegarder en HTML sur Drive
-  var file = DriveApp.getRootFolder().createFile(Utilities.newBlob(htmlContent, 'text/html', nomFichier + '.html'));
-  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  // Sauvegarder en HTML sur Drive — dossier machine
+  var annee = String(new Date().getFullYear());
+  var codeMachine = sanitize_(machine, 50).replace(/[^a-zA-Z0-9\-_]/g, '_');
+  var cheminMachine = 'inerWeb Fluide/' + annee + '/Machines/' + codeMachine;
+  var cheminCerfa = 'inerWeb Fluide/' + annee + '/CERFA';
 
-  DataStore.insert(SHEETS.INDEX_CERFA, [numFI, new Date(), data.id, machine, mvtOk.data[11], mode, file.getUrl(), nomFichier]);
-  logAudit_('CERFA', 'generer', numFI, null, { mouvement: data.id, mode: mode, nomFichier: nomFichier }, 'success');
+  var fichierMachine = sauvegarderDansDrive_(htmlContent, nomFichier + '.html', 'text/html', cheminMachine);
 
-  return successResponse_({ id: numFI, html: htmlContent, contenu: texteBrut, urlPdf: file.getUrl(), url: file.getUrl(), nomFichier: nomFichier, mode: mode });
+  // Copier aussi dans le dossier CERFA annuel
+  var fichierCerfa = copierDansDrive_(fichierMachine.id, cheminCerfa);
+
+  DataStore.insert(SHEETS.INDEX_CERFA, [numFI, new Date(), data.id, machine, mvtOk.data[11], mode, fichierMachine.url, nomFichier]);
+  logAudit_('CERFA', 'generer', numFI, null, { mouvement: data.id, mode: mode, nomFichier: nomFichier, dossier: cheminMachine }, 'success');
+
+  return successResponse_({ id: numFI, html: htmlContent, contenu: texteBrut, urlPdf: fichierMachine.url, url: fichierMachine.url, nomFichier: nomFichier, mode: mode });
 }
 
 // ================================================================
@@ -2402,14 +2530,21 @@ function apiGenererCerfaPrecharge_(params) {
   var htmlContent = genererCerfaHTML_(donnees);
   var texteBrut = genererCerfaTexteBrut_(donnees);
 
-  // Sauvegarder en HTML sur Drive
-  var file = DriveApp.getRootFolder().createFile(Utilities.newBlob(htmlContent, 'text/html', nomFichier + '.html'));
-  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  // Sauvegarder en HTML sur Drive — dossier machine
+  var annee = String(new Date().getFullYear());
+  var codeMachine = sanitize_(machine, 50).replace(/[^a-zA-Z0-9\-_]/g, '_');
+  var cheminMachine = 'inerWeb Fluide/' + annee + '/Machines/' + codeMachine;
+  var cheminCerfa = 'inerWeb Fluide/' + annee + '/CERFA';
 
-  DataStore.insert(SHEETS.INDEX_CERFA, [numFI, new Date(), 'PRECHARGE', machine, operateurId, mode, file.getUrl(), nomFichier]);
-  logAudit_('CERFA', 'genererPrecharge', numFI, null, { machine: machine, charge: charge, mode: mode }, 'success');
+  var fichierMachine = sauvegarderDansDrive_(htmlContent, nomFichier + '.html', 'text/html', cheminMachine);
 
-  return successResponse_({ id: numFI, html: htmlContent, contenu: texteBrut, urlPdf: file.getUrl(), url: file.getUrl(), nomFichier: nomFichier, mode: mode });
+  // Copier aussi dans le dossier CERFA annuel
+  var fichierCerfa = copierDansDrive_(fichierMachine.id, cheminCerfa);
+
+  DataStore.insert(SHEETS.INDEX_CERFA, [numFI, new Date(), 'PRECHARGE', machine, operateurId, mode, fichierMachine.url, nomFichier]);
+  logAudit_('CERFA', 'genererPrecharge', numFI, null, { machine: machine, charge: charge, mode: mode, dossier: cheminMachine }, 'success');
+
+  return successResponse_({ id: numFI, html: htmlContent, contenu: texteBrut, urlPdf: fichierMachine.url, url: fichierMachine.url, nomFichier: nomFichier, mode: mode });
 }
 
 function onOpen() {

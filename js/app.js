@@ -651,12 +651,38 @@ const App = {
     // Peupler la liste des détecteurs
     const detectSelect = document.getElementById('controle-detecteur');
     detectSelect.innerHTML = '<option value="">-- Sélectionner --</option>';
-    try {
-      const res = await API.getDetecteurs();
-      (res.data || []).forEach(d => {
-        detectSelect.innerHTML += `<option value="${d.code || d.id}">${d.code || d.id} - ${d.marque || ''} ${d.modele || ''}</option>`;
-      });
-    } catch (e) { /* pas grave si ça échoue */ }
+    let detecteursData = State.detecteurs;
+    if (detecteursData.length === 0) {
+      try {
+        const res = await API.getDetecteurs();
+        detecteursData = res.data || [];
+        State.detecteurs = detecteursData;
+      } catch (e) { /* pas grave si ça échoue */ }
+    }
+    detecteursData.forEach(d => {
+      const perime = UI.isDatePassed(d.prochain);
+      detectSelect.innerHTML += `<option value="${d.code || d.id}" data-prochain="${d.prochain || ''}">${d.code || d.id} - ${d.marque || ''} ${d.modele || ''}${perime ? ' ⚠️ ÉCHU' : ''}</option>`;
+    });
+
+    // Supprimer un éventuel ancien warning
+    const oldWarning = document.getElementById('detecteur-warning');
+    if (oldWarning) oldWarning.remove();
+
+    // Warning dynamique au changement de détecteur
+    detectSelect.addEventListener('change', function() {
+      const existing = document.getElementById('detecteur-warning');
+      if (existing) existing.remove();
+      const selectedOpt = this.options[this.selectedIndex];
+      const prochainDate = selectedOpt?.dataset?.prochain;
+      if (prochainDate && UI.isDatePassed(prochainDate)) {
+        const warn = document.createElement('div');
+        warn.id = 'detecteur-warning';
+        warn.style.cssText = 'margin-top:6px;padding:8px 12px;background:#FFF7ED;border:2px solid #F59E0B;border-radius:6px;color:#92400E;font-size:13px;font-weight:600;';
+        warn.textContent = '⚠️ Ce détecteur a un étalonnage échu (' + UI.formatDate(prochainDate) + '). Utilisez un détecteur à jour.';
+        this.parentNode.appendChild(warn);
+      }
+    });
+
     document.getElementById('form-controle').reset();
     document.getElementById('controle-fuite-group').classList.add('hidden');
     document.getElementById('modal-controle').classList.remove('hidden');

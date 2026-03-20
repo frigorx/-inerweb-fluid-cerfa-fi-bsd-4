@@ -45,7 +45,8 @@ const UI = {
         stats: document.getElementById('view-stats'),
         alertes: document.getElementById('view-alertes'),
         admin: document.getElementById('view-admin'),
-        bilan: document.getElementById('view-bilan')
+        bilan: document.getElementById('view-bilan'),
+        fluides: document.getElementById('view-fluides')
       },
       
       // Dashboard
@@ -59,6 +60,7 @@ const UI = {
       controlesTbody: document.getElementById('controles-tbody'),
       statsDetails: document.getElementById('stats-details'),
       alertesFullList: document.getElementById('alertes-full-list'),
+      fluidesList: document.getElementById('fluides-list'),
       
       // Wizard
       wizardOverlay: document.getElementById('wizard-overlay'),
@@ -175,6 +177,9 @@ const UI = {
           await State.refreshAlertes();
           this.renderAlertes();
           break;
+        case 'fluides':
+          this.renderFluides();
+          break;
         case 'admin':
           this.renderAdmin();
           break;
@@ -229,9 +234,19 @@ const UI = {
     `;
     this.elements.dashboardStats.innerHTML = statsHtml;
     
-    // Alertes (max 3)
+    // Alertes détecteurs périmés
+    const detecteursPerimes = State.detecteurs.filter(d => this.isDatePassed(d.prochain));
+    const alertesDetecteurs = detecteursPerimes.map(d => ({
+      type: 'danger',
+      niveau: 'CRITIQUE',
+      titre: `Détecteur ${d.code || d.id} — étalonnage échu`,
+      description: `${d.marque || ''} ${d.modele || ''} — prochain étalonnage : ${this.formatDate(d.prochain)}`
+    }));
+
+    // Alertes (max 3 alertes classiques + alertes détecteurs)
     const alertes = State.alertes.slice(0, 3);
-    if (alertes.length === 0) {
+    const toutesAlertes = [...alertes, ...alertesDetecteurs];
+    if (toutesAlertes.length === 0) {
       this.elements.dashboardAlertes.innerHTML = `
         <div class="empty-state">
           <div class="empty-state-icon">✅</div>
@@ -240,7 +255,7 @@ const UI = {
         </div>
       `;
     } else {
-      this.elements.dashboardAlertes.innerHTML = alertes.map(a => this.renderAlerteCard(a)).join('');
+      this.elements.dashboardAlertes.innerHTML = toutesAlertes.map(a => this.renderAlerteCard(a)).join('');
     }
     
     // Derniers mouvements (5 max)
@@ -413,6 +428,64 @@ const UI = {
       card.style.cursor = 'pointer';
       card.addEventListener('click', () => {
         this.openDetailModal('bouteille', card.dataset.id);
+      });
+    });
+  },
+
+  // ========== FLUIDES ==========
+
+  renderFluides() {
+    if (State.fluides.length === 0) {
+      this.elements.fluidesList.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">🧊</div>
+          <div class="empty-state-title">Aucun fluide</div>
+          <div class="empty-state-desc">Initialisez les fluides depuis l'administration</div>
+        </div>
+      `;
+      return;
+    }
+
+    this.elements.fluidesList.innerHTML = State.fluides.map(f => {
+      const machinesFluide = State.machines.filter(m => m.fluide === f.code);
+      const bouteillesFluide = State.bouteilles.filter(b => b.fluide === f.code);
+      const stockTotal = bouteillesFluide.reduce((sum, b) => sum + parseFloat(b.stockActuel || 0), 0);
+
+      return `
+        <div class="machine-card fluide-card" data-code="${f.code}">
+          <div class="machine-header">
+            <div class="machine-icon">🧊</div>
+            <span class="machine-status ${f.prg > 2000 ? 'danger' : f.prg > 500 ? 'warning' : 'ok'}">${f.famille || '--'}</span>
+          </div>
+          <div class="machine-code">${f.code}</div>
+          <div class="machine-name">${f.nom || '--'}</div>
+          <div class="machine-specs">
+            <div class="spec-item">
+              <span class="spec-label">PRG</span>
+              <span class="spec-value ${f.prg > 2000 ? 'danger' : ''}">${f.prg || '--'}</span>
+            </div>
+            <div class="spec-item">
+              <span class="spec-label">Machines</span>
+              <span class="spec-value">${machinesFluide.length}</span>
+            </div>
+            <div class="spec-item">
+              <span class="spec-label">Bouteilles</span>
+              <span class="spec-value">${bouteillesFluide.length}</span>
+            </div>
+            <div class="spec-item">
+              <span class="spec-label">Stock total</span>
+              <span class="spec-value">${stockTotal.toFixed(2)} kg</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Binding clic sur carte fluide → fiche détaillée
+    document.querySelectorAll('.fluide-card').forEach(card => {
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', () => {
+        this.openDetailModal('fluide', card.dataset.code);
       });
     });
   },
@@ -1135,6 +1208,7 @@ const UI = {
     try {
       const detectRes = await API.getDetecteurs();
       const detecteurs = detectRes.data || [];
+      State.detecteurs = detecteurs;
       const detectList = document.getElementById('admin-detecteurs-list');
       if (detecteurs.length === 0) {
         detectList.innerHTML = '<p style="color:#999;">Aucun détecteur enregistré.</p>';
@@ -1142,14 +1216,20 @@ const UI = {
         detectList.innerHTML = '<table class="table" style="width:100%;font-size:13px;"><thead><tr>' +
           '<th>Code</th><th>Marque</th><th>Modèle</th><th>Étalonnage</th><th>Prochain</th><th>Statut</th>' +
           '</tr></thead><tbody>' +
-          detecteurs.map(d => `<tr>
+          detecteurs.map(d => {
+            const perime = this.isDatePassed(d.prochain);
+            const statutHtml = perime
+              ? '<span class="badge badge-danger" style="background:#DC2626;color:#fff;font-weight:bold;">Étalonnage échu</span>'
+              : '<span class="badge badge-success" style="background:#059669;color:#fff;">Valide</span>';
+            return `<tr${perime ? ' style="background:#FEF2F2;"' : ''}>
             <td><code>${d.code || d.id}</code></td>
             <td>${d.marque || '--'}</td>
             <td>${d.modele || '--'}</td>
             <td>${d.etalonnage || '--'}</td>
-            <td>${d.prochain || '--'}</td>
-            <td>${d.statut || 'Actif'}</td>
-          </tr>`).join('') +
+            <td style="${perime ? 'color:#DC2626;font-weight:bold;' : ''}">${d.prochain || '--'}</td>
+            <td>${statutHtml}</td>
+          </tr>`;
+          }).join('') +
           '</tbody></table>';
       }
     } catch (e) {

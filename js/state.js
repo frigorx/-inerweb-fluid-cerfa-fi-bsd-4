@@ -33,6 +33,7 @@ const State = {
   bouteilles: [],
   fluides: [],
   clients: [],
+  detecteurs: [],
   mouvements: [],
   controles: [],
   alertes: [],
@@ -61,6 +62,7 @@ const State = {
     this.bouteilles = [];
     this.fluides = [];
     this.clients = [];
+    this.detecteurs = [];
     this.mouvements = [];
     this.controles = [];
     this.alertes = [];
@@ -126,15 +128,16 @@ const State = {
     
     try {
       // Charger en parallèle
-      const [configRes, machinesRes, bouteillesRes, fluidesRes, alertesRes, clientsRes] = await Promise.all([
+      const [configRes, machinesRes, bouteillesRes, fluidesRes, alertesRes, clientsRes, detecteursRes] = await Promise.all([
         API.getConfig(),
         API.getMachines(),
         API.getBouteilles(),
         API.getFluides(),
         API.getAlertes(),
-        API.getClients()
+        API.getClients(),
+        API.getDetecteurs()
       ]);
-      
+
       this.config = configRes.data || configRes.config;
       this.machines = (machinesRes.data || machinesRes.machines || []).map(m => ({
         ...m, id: m.code || m.id, charge: m.chargeAct || m.chargeNom,
@@ -147,6 +150,7 @@ const State = {
       this.fluides = fluidesData.length > 0 ? fluidesData : this.DEFAULT_FLUIDES;
       this.alertes = alertesRes.data || alertesRes.alertes || [];
       this.clients = clientsRes.data || [];
+      this.detecteurs = detecteursRes.data || [];
       
     } catch (error) {
       console.error('Erreur chargement données:', error);
