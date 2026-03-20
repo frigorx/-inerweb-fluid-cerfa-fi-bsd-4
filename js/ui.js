@@ -1165,11 +1165,9 @@ const UI = {
       body.innerHTML = '<div style="text-align:center;padding:40px;color:red;"><p>Erreur : ' + err.message + '</p></div>';
     }
 
-    // Close handlers
-    document.getElementById('detail-close').addEventListener('click', () => modal.classList.add('hidden'));
-    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
-    const escHandler = (e) => { if (e.key === 'Escape') { modal.classList.add('hidden'); document.removeEventListener('keydown', escHandler); } };
-    document.addEventListener('keydown', escHandler);
+    // Close handlers (utiliser onclick pour éviter les listeners multiples)
+    document.getElementById('detail-close').onclick = () => modal.classList.add('hidden');
+    modal.onclick = (e) => { if (e.target === modal) modal.classList.add('hidden'); };
   },
 
   /**
@@ -1324,7 +1322,8 @@ const UI = {
     }
 
     // Binding refresh audit
-    document.getElementById('btn-refresh-audit')?.addEventListener('click', () => this.renderAdmin());
+    const btnRefresh = document.getElementById('btn-refresh-audit');
+    if (btnRefresh) btnRefresh.onclick = () => this.renderAdmin();
   }
 };
 

@@ -302,3 +302,6 @@ const QRModule = {
     }
   }
 };
+
+// Export global
+window.QRModule = QRModule;

@@ -17,7 +17,7 @@
 // SECTION: CONFIG
 // ================================================================
 
-var APP_VERSION = '7.0.0';
+var APP_VERSION = '7.1.0';
 var APP_NAME = 'inerWeb Fluides';
 var APP_BUILD_DATE = '2026-03-07';
 
@@ -43,7 +43,7 @@ var SHEETS = {
 
 var ETATS_FLUIDE = ['Neuf', 'Récupéré', 'Recyclé', 'Régénéré', 'Déchet'];
 var STATUTS_MOUVEMENT = ['brouillon', 'soumis', 'valide', 'rejete', 'annule', 'archive'];
-var TYPES_MOUVEMENT = ['Charge', 'Appoint', 'Recuperation', 'Vidange', 'MiseEnService'];
+var TYPES_MOUVEMENT = ['Charge', 'Appoint', 'Recuperation', 'Vidange', 'MiseEnService', 'Transfert'];
 var METHODES_CONTROLE = ['Directe', 'Indirecte', 'Pression'];
 var RESULTATS_CONTROLE = ['Conforme', 'Fuite'];
 var TYPES_MACHINE = ['Monosplit', 'Multisplit', 'PAC', 'Chambre froide', 'Vitrine', 'CTA', 'Autre'];
@@ -412,7 +412,7 @@ function apiLogin_(data) {
   } else if (user.role === 'ENSEIGNANT' || user.role === 'REFERENT') {
     roleApiKey = HARDCODED_KEYS_.WRITE;
   } else {
-    roleApiKey = HARDCODED_KEYS_.READ;
+    roleApiKey = HARDCODED_KEYS_.WRITE;
   }
 
   return successResponse_({
@@ -756,7 +756,7 @@ function apiGetFluides_() {
 function apiGetDetecteurs_() {
   var detecteurs = [];
   DataStore.findAll(SHEETS.DETECTEURS).forEach(function(row) {
-    if (row[0]) detecteurs.push({ code: row[0], marque: row[1], modele: row[2], dateEtalonnage: formatDate_(row[3]), prochainEtalonnage: formatDate_(row[4]), statut: row[5] || 'Actif' });
+    if (row[0]) detecteurs.push({ code: row[0], marque: row[1], modele: row[2], etalonnage: formatDate_(row[3]), prochain: formatDate_(row[4]), statut: row[5] || 'Actif' });
   });
   return successResponse_(detecteurs);
 }
@@ -765,17 +765,21 @@ function apiGetMouvements_(limit, params) {
   var maxRows = Math.min(parseInt(limit) || 50, 200);
   var siteId = params && params.siteId;
   var data = DataStore.findAll(SHEETS.MOUVEMENTS);
+  var cerfaIndex = {};
+  DataStore.findAll(SHEETS.INDEX_CERFA).forEach(function(c) { if (c[2]) cerfaIndex[c[2]] = { id: c[0], url: c[6] }; });
   var mouvements = [];
-  
+
   for (var i = data.length - 1; i >= 0 && mouvements.length < maxRows; i--) {
     var row = data[i];
     if (!row[0]) continue;
     if (siteId && row[25] !== siteId) continue;
+    var cerfaInfo = cerfaIndex[row[0]] || {};
     mouvements.push({
       id: row[0], date: formatDateTime_(row[1]), type: row[2], machine: row[3], bouteille: row[4],
       fluide: row[5], etatFluide: row[6], masse: row[7], operateur: row[11], validateur: row[12],
       dateValidation: formatDateTime_(row[13]), mode: row[14], statut: row[23] || 'soumis',
-      comptabilise: row[14] === 'OFFICIEL' && row[23] === 'valide'
+      comptabilise: row[14] === 'OFFICIEL' && row[23] === 'valide',
+      cerfa: cerfaInfo.id || null, cerfaUrl: cerfaInfo.url || null
     });
   }
   return successResponse_(mouvements, { count: mouvements.length });
@@ -785,16 +789,20 @@ function apiGetControles_(limit, params) {
   var maxRows = Math.min(parseInt(limit) || 50, 200);
   var siteId = params && params.siteId;
   var data = DataStore.findAll(SHEETS.CONTROLES);
+  var cerfaIndex = {};
+  DataStore.findAll(SHEETS.INDEX_CERFA).forEach(function(c) { if (c[3]) { if (!cerfaIndex[c[3]]) cerfaIndex[c[3]] = { id: c[0], url: c[6] }; } });
   var controles = [];
-  
+
   for (var i = data.length - 1; i >= 0 && controles.length < maxRows; i--) {
     var row = data[i];
     if (!row[0]) continue;
     if (siteId && row[17] !== siteId) continue;
+    var cerfaInfo = cerfaIndex[row[2]] || {};
     controles.push({
       id: row[0], date: formatDateTime_(row[1]), machine: row[2], fluide: row[3], charge: row[4],
       eqCO2: row[5], methode: row[6], resultat: row[7], operateur: row[9], mode: row[11],
-      prochainControle: formatDate_(row[12]), statut: row[16] || 'valide'
+      prochainControle: formatDate_(row[12]), statut: row[16] || 'valide',
+      cerfa: cerfaInfo.id || null, cerfaUrl: cerfaInfo.url || null
     });
   }
   return successResponse_(controles, { count: controles.length });
@@ -887,11 +895,15 @@ function apiCreateMouvement_(data) {
   var machOk = DataStore.findById(SHEETS.MACHINES, data.machine);
   if (!machOk.ok) return errorResponse_('Machine: ' + machOk.error);
   
-  var boutOk = DataStore.findById(SHEETS.BOUTEILLES, data.bouteille);
-  if (!boutOk.ok) return errorResponse_('Bouteille: ' + boutOk.error);
-  
-  // Anti-croisement
-  var fluideMachine = machOk.data[6], fluideBouteille = boutOk.data[2];
+  var boutOk = null;
+  var sansBouteille = !data.bouteille || data.bouteille === '';
+  if (!sansBouteille) {
+    boutOk = DataStore.findById(SHEETS.BOUTEILLES, data.bouteille);
+    if (!boutOk.ok) return errorResponse_('Bouteille: ' + boutOk.error);
+  }
+
+  // Anti-croisement (seulement si bouteille présente)
+  var fluideMachine = machOk.data[6], fluideBouteille = boutOk ? boutOk.data[2] : null;
   if (fluideMachine && fluideBouteille && fluideMachine !== fluideBouteille) {
     logAudit_('MOUVEMENT', 'croisementFluide', data.machine + '/' + data.bouteille, null, null, 'blocked');
     return errorResponse_('CROISEMENT FLUIDE: ' + fluideMachine + '/' + fluideBouteille, 'CROSSOVER');
@@ -925,7 +937,7 @@ function apiCreateMouvement_(data) {
   var etatFluide = validateEnum_(data.etatFluide || 'Neuf', ETATS_FLUIDE);
   
   var numMvt = DataStore.generateId('MVT');
-  var siteId = machOk.data[15] || boutOk.data[13] || '';
+  var siteId = machOk.data[15] || (boutOk ? boutOk.data[13] : '') || '';
   
   var rowData = [numMvt, new Date(), typeOk.value, data.machine, data.bouteille,
     fluideBouteille || fluideMachine, etatFluide.ok ? etatFluide.value : 'Neuf',
@@ -1025,15 +1037,19 @@ function mettreAJourChargeMachine_(code, masse, type) {
   var prg = getPRGFluide_(machOk.data[6]);
   
   var nouvelleCharge = chargeAct;
-  if (type === 'Charge' || type === 'Appoint') nouvelleCharge += masse;
+  if (type === 'Charge' || type === 'Appoint' || type === 'MiseEnService') nouvelleCharge += masse;
   else nouvelleCharge = Math.max(0, chargeAct - masse);
   
   var eqCO2 = calculerEqCO2_(nouvelleCharge, prg);
   var freqCtrl = calculerFrequenceControle_(eqCO2, false);
-  var prochCtrl = calculerProchainControle_(new Date(), freqCtrl);
-  
+
   DataStore.update(SHEETS.MACHINES, machOk.row, 9, [nouvelleCharge, eqCO2]);
-  DataStore.update(SHEETS.MACHINES, machOk.row, 13, [prochCtrl, freqCtrl]);
+  // Ne mettre à jour le prochain contrôle que si la fréquence change (changement de seuil éq. CO2)
+  var ancienFreq = machOk.data[13] || 0;
+  if (freqCtrl !== ancienFreq) {
+    var prochCtrl = calculerProchainControle_(new Date(), freqCtrl);
+    DataStore.update(SHEETS.MACHINES, machOk.row, 13, [prochCtrl, freqCtrl]);
+  }
   
   return { ok: true, ancienneCharge: chargeAct, nouvelleCharge: nouvelleCharge, eqCO2: eqCO2 };
 }
@@ -1046,7 +1062,7 @@ function mettreAJourStockBouteille_(code, masse, type) {
   var tare = parseFloat(boutOk.data[5]) || 0;
   
   var nouvelleMasse = masseAct;
-  if (type === 'Charge' || type === 'Appoint') nouvelleMasse = Math.max(0, masseAct - masse);
+  if (type === 'Charge' || type === 'Appoint' || type === 'MiseEnService') nouvelleMasse = Math.max(0, masseAct - masse);
   else nouvelleMasse += masse;
   
   var statut = nouvelleMasse <= 0 ? 'Vide' : 'En stock';
@@ -3539,6 +3555,17 @@ function doGet(e) {
     var result;
     switch(action) {
       case 'ping': result = successResponse_({ message: 'pong', version: APP_VERSION, buildDate: APP_BUILD_DATE }); break;
+      case 'initUsers': result = apiInitUsers_(); break;
+      case 'login': result = apiLogin_(e.parameter); break;
+      case 'createMachine': result = apiCreateMachine_(e.parameter); break;
+      case 'createBouteille': result = apiCreateBouteille_(e.parameter); break;
+      case 'createControle': result = apiCreateControle_(e.parameter); break;
+      case 'createMouvement': result = apiCreateMouvement_(e.parameter); break;
+      case 'createUser': result = apiCreateUser_(e.parameter); break;
+      case 'validerMouvement': result = apiValiderMouvement_(e.parameter); break;
+      case 'annulerMouvement': result = apiAnnulerMouvement_(e.parameter); break;
+      case 'genererCerfa': result = apiGenererCerfa_(e.parameter); break;
+      case 'saveConfig': result = apiSaveConfig_(e.parameter); break;
       case 'getConfig': result = apiGetConfig_(); break;
       case 'getMachines': result = apiGetMachines_(e.parameter); break;
       case 'getBouteilles': result = apiGetBouteilles_(e.parameter); break;

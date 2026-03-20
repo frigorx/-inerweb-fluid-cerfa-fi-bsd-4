@@ -642,7 +642,7 @@ const Wizard = {
       const sansBouteille = !data.bouteilleId;
       const isPrechargee = this.isMachinePrechargee();
 
-      const typeMap = { 'CHARGE': 'Charge', 'RECUPERATION': 'Recuperation', 'MISE_EN_SERVICE': 'MiseEnService', 'TRANSFERT': 'Charge' };
+      const typeMap = { 'CHARGE': 'Charge', 'RECUPERATION': 'Recuperation', 'MISE_EN_SERVICE': 'MiseEnService', 'TRANSFERT': 'Transfert' };
       const mouvementData = {
         type: (sansBouteille && isPrechargee) ? 'MiseEnService' : typeMap[data.type] || data.type,
         machine: machine?.code || data.machineId,
