@@ -220,10 +220,15 @@ const App = {
     // Mode toggle (clic sur le badge)
     UI.elements.modeBadge.addEventListener('click', () => {
       if (!State.user?.canUseOfficiel) {
-        UI.toast('Mode OFFICIEL non autorisé', 'warning');
+        // Faille 14 : Message spécifique si attestation expirée
+        if (State.user?.blocageOfficiel) {
+          UI.toast('Mode OFFICIEL bloqué : votre attestation de capacité est expirée. Renouvelez-la auprès de votre organisme.', 'error');
+        } else {
+          UI.toast('Mode OFFICIEL non autorisé pour votre profil', 'warning');
+        }
         return;
       }
-      
+
       const newMode = State.mode === 'FORMATION' ? 'OFFICIEL' : 'FORMATION';
       if (State.setMode(newMode)) {
         UI.updateHeader();

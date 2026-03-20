@@ -97,6 +97,15 @@ const UI = {
     if (navAdmin && ['ENSEIGNANT', 'REFERENT', 'ADMIN'].includes(role)) {
       navAdmin.style.display = '';
     }
+    // Faille 13 : Masquer boutons si permissions insuffisantes
+    const btnAddMachine = document.getElementById('btn-add-machine');
+    if (btnAddMachine && !State.hasPermission('creerMachine')) {
+      btnAddMachine.style.display = 'none';
+    }
+    const btnAddBouteille = document.getElementById('btn-add-bouteille');
+    if (btnAddBouteille && !State.hasPermission('creerBouteille')) {
+      btnAddBouteille.style.display = 'none';
+    }
     this.showView('dashboard');
   },
   
@@ -508,14 +517,18 @@ const UI = {
       const id = m.id || m.code || '';
       const actions = [];
       if (m.statut === 'soumis') {
-        actions.push(`<button class="btn btn-sm btn-success btn-valider-mvt" data-id="${id}" title="Valider">✓</button>`);
-        actions.push(`<button class="btn btn-sm btn-danger btn-annuler-mvt" data-id="${id}" title="Annuler">✕</button>`);
+        if (State.hasPermission('validerMouvement')) {
+          actions.push(`<button class="btn btn-sm btn-success btn-valider-mvt" data-id="${id}" title="Valider">✓</button>`);
+        }
+        if (State.hasPermission('annulerMouvement')) {
+          actions.push(`<button class="btn btn-sm btn-danger btn-annuler-mvt" data-id="${id}" title="Annuler">✕</button>`);
+        }
       }
       if (m.statut === 'valide' && !m.cerfa) {
         actions.push(`<button class="btn btn-sm btn-primary btn-cerfa-mvt" data-id="${id}" title="Générer CERFA">📄</button>`);
       }
       if (m.statut === 'valide' && (m.type === 'Recuperation' || m.type === 'Vidange')) {
-        actions.push(`<button class="btn btn-sm btn-bsff-mvt" data-id="${id}" title="Créer BSFF Trackdéchets" style="background:#059669;color:white;font-size:11px;">BSFF</button>`);
+        actions.push(`<button class="btn btn-sm btn-bsff-mvt" data-id="${id}" title="BSFF Trackdéchets (en développement)" style="background:#9CA3AF;color:white;font-size:11px;opacity:0.7;">BSFF</button>`);
       }
       // Colonne CERFA
       let cerfaCell = '<em style="color:#999;">—</em>';

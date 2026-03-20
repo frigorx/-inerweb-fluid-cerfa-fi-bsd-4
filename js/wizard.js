@@ -669,18 +669,10 @@ const Wizard = {
 
       UI.hideWizard();
 
-      // Générer le CERFA automatiquement
+      // CERFA sera généré automatiquement côté backend après validation (Faille 4)
       let cerfaContenu = null;
       let cerfaId = null;
       let cerfaUrl = null;
-      try {
-        const cerfaRes = await API.genererCerfa(mouvementId);
-        cerfaContenu = cerfaRes.data?.contenu;
-        cerfaId = cerfaRes.data?.id;
-        cerfaUrl = cerfaRes.data?.urlPdf || null;
-      } catch (e) {
-        console.log('CERFA auto non généré:', e.message);
-      }
 
       // Afficher le récapitulatif complet
       const operateurNom = State.user?.nomComplet || State.user?.prenom + ' ' + State.user?.nom || State.user?.id;
@@ -765,7 +757,12 @@ const Wizard = {
               <div style="font-weight:600;color:#16A34A;margin-bottom:4px;">CERFA ${info.cerfaId} généré automatiquement</div>
               <div style="font-size:12px;color:#15803D;">Fiche d'intervention conforme au CERFA 15497*04${info.cerfaUrl ? ' — Stocké dans Google Drive' : ''}</div>
             </div>
-          ` : ''}
+          ` : `
+            <div style="background:#FEF3C7;border:2px solid #F59E0B;border-radius:8px;padding:12px;margin-bottom:16px;text-align:center;">
+              <div style="font-weight:600;color:#92400E;margin-bottom:4px;">CERFA sera généré après validation</div>
+              <div style="font-size:12px;color:#92400E;">Le CERFA 15497*04 sera automatiquement créé lorsqu'un référent ou enseignant validera ce mouvement.</div>
+            </div>
+          `}
 
           <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
             ${info.cerfaUrl ? `
