@@ -1127,6 +1127,13 @@ const UI = {
       }
       html += '</div>';
 
+      // Bouton Documents MES (uniquement pour les machines)
+      if (type === 'machine') {
+        html += '<div style="margin-bottom:16px;text-align:center;">';
+        html += '<button class="btn btn-primary" id="btn-documents-mes" data-machine="' + id + '" style="font-size:14px;padding:10px 24px;">📋 Documents MES</button>';
+        html += '</div>';
+      }
+
       // Résumé traçabilité
       html += '<div style="background:#ECFDF5;border:1px solid #10B981;border-radius:8px;padding:12px;font-size:13px;">';
       html += '<strong>Résumé traçabilité :</strong> ';
@@ -1136,6 +1143,24 @@ const UI = {
       html += '</div>';
 
       body.innerHTML = html;
+
+      // Binding bouton Documents MES
+      const btnMES = document.getElementById('btn-documents-mes');
+      if (btnMES) {
+        btnMES.addEventListener('click', () => {
+          const machCode = btnMES.dataset.machine;
+          modal.classList.add('hidden');
+          document.getElementById('mes-machine-code').value = machCode;
+          // Reset les champs du formulaire MES
+          ['mes-hp','mes-bp','mes-t-condensation','mes-t-evaporation','mes-t-refoulement','mes-t-aspiration',
+           'mes-t-sortie-condenseur','mes-t-sortie-evaporateur','mes-i-compresseur','mes-i-evaporateur',
+           'mes-consigne','mes-cut-in','mes-cut-in-diff','mes-cut-off','mes-cut-off-diff'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+          });
+          document.getElementById('modal-mes').classList.remove('hidden');
+        });
+      }
     } catch (err) {
       body.innerHTML = '<div style="text-align:center;padding:40px;color:red;"><p>Erreur : ' + err.message + '</p></div>';
     }

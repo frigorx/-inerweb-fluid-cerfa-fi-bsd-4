@@ -499,16 +499,121 @@ const App = {
       this.exportBilanCSV();
     });
 
+    // Bilan - Export ADEME (Excel/CSV structuré)
+    document.getElementById('btn-export-ademe')?.addEventListener('click', () => {
+      this.exportBilanADEME();
+    });
+
     // Bilan - Imprimer
     document.getElementById('btn-print-bilan')?.addEventListener('click', () => {
       window.print();
+    });
+
+    // P7 — Impression en lot des CERFA de l'année
+    document.getElementById('btn-export-cerfa-lot')?.addEventListener('click', async () => {
+      const annee = document.getElementById('bilan-annee')?.value || new Date().getFullYear();
+      try {
+        UI.toast('Chargement des CERFA ' + annee + '...', 'info');
+        const res = await API.get('exportCerfaAnnee', { annee });
+        if (res.success && res.data) {
+          if (res.data.count === 0) {
+            UI.toast('Aucun CERFA trouvé pour ' + annee, 'warning');
+            return;
+          }
+          const win = window.open('', '_blank', 'width=900,height=1100,scrollbars=yes');
+          win.document.write(res.data.html);
+          win.document.close();
+          win.document.title = 'CERFA ' + annee + ' — ' + res.data.count + ' fiches';
+          setTimeout(() => { win.print(); }, 800);
+          UI.toast(res.data.count + ' CERFA chargés pour impression', 'success');
+        } else {
+          UI.toast('Erreur lors du chargement', 'error');
+        }
+      } catch (err) {
+        UI.toast('Erreur : ' + err.message, 'error');
+      }
+    });
+
+    // P8 — Documents MES : fermeture modale
+    document.getElementById('modal-mes-close')?.addEventListener('click', () => {
+      document.getElementById('modal-mes').classList.add('hidden');
+    });
+    document.getElementById('modal-mes-cancel')?.addEventListener('click', () => {
+      document.getElementById('modal-mes').classList.add('hidden');
+    });
+    document.getElementById('modal-mes')?.addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal-overlay')) {
+        e.target.classList.add('hidden');
+      }
+    });
+
+    // P8 — Documents MES : soumission
+    document.getElementById('modal-mes-submit')?.addEventListener('click', async () => {
+      const machineCode = document.getElementById('mes-machine-code').value;
+      if (!machineCode) {
+        UI.toast('Code machine manquant', 'error');
+        return;
+      }
+
+      const params = {
+        machine: machineCode,
+        operateur: State.user?.id || '',
+        hp: document.getElementById('mes-hp').value,
+        bp: document.getElementById('mes-bp').value,
+        tCondensation: document.getElementById('mes-t-condensation').value,
+        tEvaporation: document.getElementById('mes-t-evaporation').value,
+        tRefoulement: document.getElementById('mes-t-refoulement').value,
+        tAspiration: document.getElementById('mes-t-aspiration').value,
+        tSortieCondenseur: document.getElementById('mes-t-sortie-condenseur').value,
+        tSortieEvaporateur: document.getElementById('mes-t-sortie-evaporateur').value,
+        iCompresseur: document.getElementById('mes-i-compresseur').value,
+        iEvaporateur: document.getElementById('mes-i-evaporateur').value,
+        consigne: document.getElementById('mes-consigne').value,
+        cutIn: document.getElementById('mes-cut-in').value,
+        cutInDiff: document.getElementById('mes-cut-in-diff').value,
+        cutOff: document.getElementById('mes-cut-off').value,
+        cutOffDiff: document.getElementById('mes-cut-off-diff').value
+      };
+
+      try {
+        document.getElementById('modal-mes-submit').disabled = true;
+        UI.toast('Génération des documents MES...', 'info');
+        const res = await API.get('genererDocumentsMES', params);
+        if (res.success && res.data) {
+          document.getElementById('modal-mes').classList.add('hidden');
+
+          // Ouvrir les 3 documents dans des fenêtres séparées
+          const docs = [
+            { html: res.data.ficheMES_html, titre: 'Fiche MES — ' + machineCode },
+            { html: res.data.plaque_html, titre: 'Plaque F-Gas — ' + machineCode },
+            { html: res.data.macaron_html, titre: 'Macaron — ' + machineCode }
+          ];
+
+          docs.forEach((doc, i) => {
+            setTimeout(() => {
+              const win = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
+              win.document.write(doc.html);
+              win.document.close();
+              win.document.title = doc.titre;
+            }, i * 300);
+          });
+
+          UI.toast('3 documents MES générés pour ' + machineCode, 'success');
+        } else {
+          UI.toast(res.error || 'Erreur de génération', 'error');
+        }
+      } catch (err) {
+        UI.toast('Erreur : ' + err.message, 'error');
+      } finally {
+        document.getElementById('modal-mes-submit').disabled = false;
+      }
     });
 
     // Raccourcis clavier
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         // Fermer les modales ouvertes
-        const modals = ['modal-detail', 'modal-machine', 'modal-bouteille', 'modal-controle', 'modal-client', 'modal-user', 'modal-detecteur'];
+        const modals = ['modal-mes', 'modal-detail', 'modal-machine', 'modal-bouteille', 'modal-controle', 'modal-client', 'modal-user', 'modal-detecteur'];
         for (const id of modals) {
           const m = document.getElementById(id);
           if (m && !m.classList.contains('hidden')) { m.classList.add('hidden'); return; }
@@ -777,6 +882,54 @@ const App = {
     a.click();
     URL.revokeObjectURL(url);
     UI.toast('Export CSV téléchargé', 'success');
+  },
+
+  /**
+   * Export ADEME — tableau de traçabilité officiel (CSV structuré via API)
+   */
+  async exportBilanADEME() {
+    const annee = document.getElementById('bilan-annee').value;
+    if (!annee) {
+      UI.toast('Sélectionnez une année avant d\'exporter', 'warning');
+      return;
+    }
+
+    const fluide = document.getElementById('bilan-fluide').value || '';
+
+    try {
+      UI.toast('Génération du tableau ADEME en cours...', 'info');
+
+      const params = { annee };
+      if (fluide) params.fluide = fluide;
+
+      const response = await API.get('exportBilanExcel', params);
+
+      if (!response.success) {
+        UI.toast('Erreur : ' + (response.error || 'Export impossible'), 'error');
+        return;
+      }
+
+      const { csv, filename, count } = response.data;
+
+      if (count === 0) {
+        UI.toast('Aucun mouvement trouvé pour ' + annee, 'warning');
+        return;
+      }
+
+      // Télécharger le CSV
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      UI.toast('Export ADEME téléchargé (' + count + ' fluide' + (count > 1 ? 's' : '') + ')', 'success');
+    } catch (err) {
+      console.error('Erreur export ADEME:', err);
+      UI.toast('Erreur lors de l\'export ADEME', 'error');
+    }
   },
 
   async submitControle() {

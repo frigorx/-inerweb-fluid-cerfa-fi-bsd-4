@@ -344,7 +344,9 @@
               </select>
               <button class="btn btn-primary" id="btn-load-bilan">Charger</button>
               <button class="btn btn-secondary" id="btn-export-bilan" title="Exporter en CSV">📥 Export CSV</button>
+              <button class="btn btn-success" id="btn-export-ademe" title="Export ADEME format Excel (CSV structuré)">📊 Export ADEME (Excel)</button>
               <button class="btn btn-secondary" id="btn-print-bilan" title="Imprimer le bilan">🖨️ Imprimer</button>
+              <button class="btn btn-secondary" id="btn-export-cerfa-lot" title="Imprimer tous les CERFA de l'année">🖨️ Tous les CERFA</button>
             </div>
           </div>
           <div id="bilan-content">
@@ -926,6 +928,103 @@
         </div>
         <div class="modal-body" id="detail-body">
           <!-- Rempli dynamiquement -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MODAL DOCUMENTS MES ========== -->
+    <div id="modal-mes" class="modal-overlay hidden" role="dialog" aria-modal="true">
+      <div class="modal" style="max-width: 650px; max-height: 90vh; overflow-y: auto;">
+        <div class="modal-header" style="position: sticky; top: 0; background: white; z-index: 1;">
+          <h2 class="modal-title">Documents de Mise en Service</h2>
+          <button class="modal-close" id="modal-mes-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size: 13px; color: #666; margin-bottom: 12px;">Renseignez les mesures techniques pour générer la fiche MES, la plaque F-Gas et le macaron.</p>
+          <input type="hidden" id="mes-machine-code">
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group" style="grid-column: 1/-1;">
+              <label class="form-label" style="font-weight:bold; color:#1b3a63;">Pressions & Températures de saturation</label>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="mes-hp">Pk (HP) (bar)</label>
+              <input type="number" step="0.1" id="mes-hp" class="form-input" placeholder="ex: 18.5">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="mes-bp">Po (BP) (bar)</label>
+              <input type="number" step="0.1" id="mes-bp" class="form-input" placeholder="ex: 3.2">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="mes-t-condensation">θ condensation (°C)</label>
+              <input type="number" step="0.1" id="mes-t-condensation" class="form-input" placeholder="ex: 45">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="mes-t-evaporation">θ évaporation (°C)</label>
+              <input type="number" step="0.1" id="mes-t-evaporation" class="form-input" placeholder="ex: -10">
+            </div>
+
+            <div class="form-group" style="grid-column: 1/-1;">
+              <label class="form-label" style="font-weight:bold; color:#1b3a63;">Températures relevées</label>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="mes-t-refoulement">θ refoulement (°C)</label>
+              <input type="number" step="0.1" id="mes-t-refoulement" class="form-input" placeholder="ex: 80">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="mes-t-aspiration">θ aspiration (°C)</label>
+              <input type="number" step="0.1" id="mes-t-aspiration" class="form-input" placeholder="ex: -2">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="mes-t-sortie-condenseur">θ sortie condenseur (°C)</label>
+              <input type="number" step="0.1" id="mes-t-sortie-condenseur" class="form-input" placeholder="ex: 38">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="mes-t-sortie-evaporateur">θ sortie évaporateur (°C)</label>
+              <input type="number" step="0.1" id="mes-t-sortie-evaporateur" class="form-input" placeholder="ex: -5">
+            </div>
+
+            <div class="form-group" style="grid-column: 1/-1;">
+              <label class="form-label" style="font-weight:bold; color:#1b3a63;">Mesures électriques</label>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="mes-i-compresseur">I compresseur (A)</label>
+              <input type="number" step="0.1" id="mes-i-compresseur" class="form-input" placeholder="ex: 12.5">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="mes-i-evaporateur">I ventilo évaporateur (A)</label>
+              <input type="number" step="0.1" id="mes-i-evaporateur" class="form-input" placeholder="ex: 1.8">
+            </div>
+
+            <div class="form-group" style="grid-column: 1/-1;">
+              <label class="form-label" style="font-weight:bold; color:#1b3a63;">Régulation</label>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="mes-consigne">Point de consigne (°C)</label>
+              <input type="number" step="0.1" id="mes-consigne" class="form-input" placeholder="ex: -18">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="mes-cut-in">Pbp cut-in (bar)</label>
+              <input type="number" step="0.1" id="mes-cut-in" class="form-input">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="mes-cut-in-diff">Pbp différentiel (bar)</label>
+              <input type="number" step="0.1" id="mes-cut-in-diff" class="form-input">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="mes-cut-off">Php cut-off (bar)</label>
+              <input type="number" step="0.1" id="mes-cut-off" class="form-input">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="mes-cut-off-diff">Php différentiel (bar)</label>
+              <input type="number" step="0.1" id="mes-cut-off-diff" class="form-input">
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; padding-top: 12px; border-top: 1px solid #eee;">
+            <button class="btn btn-secondary" id="modal-mes-cancel">Annuler</button>
+            <button class="btn btn-primary" id="modal-mes-submit">Générer les 3 documents</button>
+          </div>
         </div>
       </div>
     </div>

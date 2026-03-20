@@ -350,9 +350,11 @@ var ACTION_LEVELS = {
   'getTracabilite': 'READ', 'getBilanAnnuel': 'READ', 'previewCerfa': 'READ', 'initFluides': 'ADMIN',
   'getTrackdechetsStatus': 'READ', 'configTrackdechets': 'ADMIN', 'listBsffs': 'WRITE', 'creerBsff': 'WRITE',
   'genererCerfaPrecharge': 'WRITE',
+  'exportCerfaAnnee': 'READ',
+  'genererDocumentsMES': 'WRITE', 'genererPlaque': 'READ', 'genererMacaron': 'READ',
   'getTechniciens': 'WRITE', 'getUsers': 'WRITE', 'getAuditLog': 'ADMIN', 'getAuditStats': 'ADMIN',
   'exportRegistreFluides': 'READ', 'exportHistoriqueMachine': 'READ', 'exportHistoriqueBouteille': 'READ',
-  'exportControlesAVenir': 'READ', 'exportBilanAnnuel': 'WRITE', 'exportActiviteEleve': 'WRITE',
+  'exportControlesAVenir': 'READ', 'exportBilanAnnuel': 'WRITE', 'exportBilanExcel': 'READ', 'exportActiviteEleve': 'WRITE',
   'exportSyntheseAtelier': 'WRITE', 'exportValidationsEnseignant': 'WRITE', 'exportPro': 'WRITE',
   'createMouvement': 'WRITE', 'createControle': 'WRITE', 'createMachine': 'WRITE', 'createBouteille': 'WRITE',
   'validerMouvement': 'WRITE', 'annulerMouvement': 'WRITE', 'genererCerfa': 'WRITE', 'recalculerTout': 'WRITE',
@@ -1539,6 +1541,292 @@ function apiExportBilanAnnuel_(params) { return apiExportPro_({ type: 'bilanAnnu
 function apiExportHistoriqueMachine_(params) { return apiExportPro_({ type: 'historiqueComplet', machine: params.machine }); }
 function apiExportHistoriqueBouteille_(params) { return apiExportPro_({ type: 'historiqueComplet', bouteille: params.bouteille }); }
 
+// ================================================================
+// SECTION: EXPORT BILAN ADEME (CSV structuré format Excel)
+// ================================================================
+
+/**
+ * Export du tableau de traçabilité ADEME — format officiel
+ * Un bloc par fluide + calculs de cohérence
+ * @param {Object} params - { annee, fluide (optionnel) }
+ * @returns {Object} { csv, filename, count }
+ */
+function apiExportBilanExcel_(params) {
+  var annee = parseInt(params.annee) || new Date().getFullYear();
+  var filtreFluide = params.fluide || null;
+
+  // --- Collecter la config opérateur ---
+  var config = {};
+  DataStore.findAll(SHEETS.CONFIG).forEach(function(row) { if (row[0]) config[row[0]] = row[1]; });
+
+  // --- Collecter les données par fluide ---
+  var bilans = {};
+  var fluidesInfo = {};
+
+  // Charger les infos fluides
+  DataStore.findAll(SHEETS.FLUIDES).forEach(function(row) {
+    if (row[0]) fluidesInfo[row[0]] = { nom: row[1] || '', prg: parseFloat(row[2]) || 0 };
+  });
+
+  // Collecter les mouvements valides de l'année
+  DataStore.findAll(SHEETS.MOUVEMENTS).forEach(function(row) {
+    if (!row[0]) return;
+    var date = new Date(row[1]);
+    if (date.getFullYear() !== annee) return;
+    if (row[23] !== 'valide') return;
+
+    var fluide = row[5];
+    if (filtreFluide && fluide !== filtreFluide) return;
+
+    if (!bilans[fluide]) {
+      bilans[fluide] = {
+        mouvements: [],
+        J_chargesNeufs: 0,
+        K_chargesMaintenance: 0,
+        M_recupHorsUsage: 0,
+        N_recupMaintenance: 0,
+        R_recycles: 0,
+        G_achetesFrance: 0,
+        H_achetesHorsFrance: 0,
+        P_remisDistributeurs: 0,
+        Q_cedesAutreOperateur: 0,
+        S_regeneres: 0,
+        U_detruits: 0,
+        stockInitialNeuf: 0,
+        stockInitialUsage: 0,
+        stockFinalNeuf: 0,
+        stockFinalUsage: 0
+      };
+    }
+
+    var b = bilans[fluide];
+    var masse = parseFloat(row[7]) || 0;
+    var type = row[2];
+    var etatFluide = row[6] || 'Neuf';
+    var isRecycle = etatFluide === 'Recyclé';
+
+    // Chercher le nom de la machine
+    var machineNom = '';
+    var machData = DataStore.findById(SHEETS.MACHINES, row[3]);
+    if (machData.ok) machineNom = machData.data[1] || '';
+
+    b.mouvements.push({
+      id: row[0],
+      date: formatDate_(row[1]),
+      type: type,
+      machine: row[3],
+      machineNom: machineNom,
+      bouteille: row[4],
+      masse: masse,
+      etatFluide: etatFluide,
+      operateur: row[11]
+    });
+
+    if (type === 'MiseEnService' || type === 'Charge') {
+      b.J_chargesNeufs += masse;
+    } else if (type === 'Appoint') {
+      b.K_chargesMaintenance += masse;
+    } else if (type === 'Vidange') {
+      b.M_recupHorsUsage += masse;
+    } else if (type === 'Recuperation') {
+      if (isRecycle) { b.R_recycles += masse; }
+      else { b.N_recupMaintenance += masse; }
+    }
+  });
+
+  // Calculer les stocks depuis les bouteilles
+  DataStore.findAll(SHEETS.BOUTEILLES).forEach(function(row) {
+    if (!row[0]) return;
+    var fluide = row[2];
+    if (!fluide) return;
+    if (filtreFluide && fluide !== filtreFluide) return;
+
+    if (!bilans[fluide]) {
+      bilans[fluide] = {
+        mouvements: [],
+        J_chargesNeufs: 0, K_chargesMaintenance: 0,
+        M_recupHorsUsage: 0, N_recupMaintenance: 0, R_recycles: 0,
+        G_achetesFrance: 0, H_achetesHorsFrance: 0,
+        P_remisDistributeurs: 0, Q_cedesAutreOperateur: 0,
+        S_regeneres: 0, U_detruits: 0,
+        stockInitialNeuf: 0, stockInitialUsage: 0,
+        stockFinalNeuf: 0, stockFinalUsage: 0
+      };
+    }
+
+    var masse = parseFloat(row[7]) || 0;
+    var etat = row[3] || 'Neuf';
+    if (etat === 'Neuf') {
+      bilans[fluide].stockFinalNeuf += masse;
+    } else {
+      bilans[fluide].stockFinalUsage += masse;
+    }
+  });
+
+  // Arrondir toutes les valeurs
+  for (var code in bilans) {
+    var b = bilans[code];
+    b.J_chargesNeufs = Math.round(b.J_chargesNeufs * 1000) / 1000;
+    b.K_chargesMaintenance = Math.round(b.K_chargesMaintenance * 1000) / 1000;
+    b.M_recupHorsUsage = Math.round(b.M_recupHorsUsage * 1000) / 1000;
+    b.N_recupMaintenance = Math.round(b.N_recupMaintenance * 1000) / 1000;
+    b.R_recycles = Math.round(b.R_recycles * 1000) / 1000;
+    b.stockFinalNeuf = Math.round(b.stockFinalNeuf * 1000) / 1000;
+    b.stockFinalUsage = Math.round(b.stockFinalUsage * 1000) / 1000;
+  }
+
+  // --- Générer le CSV ---
+  var lines = [];
+  var BOM = '\uFEFF';
+
+  // En-tête général
+  lines.push('TABLEAU DE TRACABILITE DES FLUIDES FRIGORIGENES');
+  lines.push('ANNEE ' + annee);
+  lines.push('Operateur : ' + (config.etablissement || '') + ' - SIRET : ' + (config.siret || ''));
+  lines.push('Adresse : ' + (config.adresse || ''));
+  lines.push('Genere le : ' + formatDateTime_(new Date()) + ' - inerWeb Fluides v' + APP_VERSION);
+  lines.push('');
+
+  var nbFluides = 0;
+
+  for (var fluide in bilans) {
+    nbFluides++;
+    var b = bilans[fluide];
+    var info = fluidesInfo[fluide] || { nom: '', prg: 0 };
+    var L = b.J_chargesNeufs + b.K_chargesMaintenance;
+    var O = b.M_recupHorsUsage + b.N_recupMaintenance;
+    L = Math.round(L * 1000) / 1000;
+    O = Math.round(O * 1000) / 1000;
+
+    // Calcul stocks initiaux (rétro-calcul : stockInitial = stockFinal - achats + charges)
+    var A_stockInitNeuf = Math.round((b.stockFinalNeuf + L - b.G_achetesFrance - b.H_achetesHorsFrance) * 1000) / 1000;
+    var B_stockInitUsage = Math.round((b.stockFinalUsage + b.P_remisDistributeurs - O) * 1000) / 1000;
+    if (A_stockInitNeuf < 0) A_stockInitNeuf = 0;
+    if (B_stockInitUsage < 0) B_stockInitUsage = 0;
+
+    lines.push('════════════════════════════════════════════════════════════════════════════════');
+    lines.push('FLUIDE : ' + fluide + ' - ' + info.nom + ' (PRG : ' + info.prg + ')');
+    lines.push('════════════════════════════════════════════════════════════════════════════════');
+    lines.push('');
+
+    // --- BLOC DISTRIBUTEURS ---
+    lines.push('─── DISTRIBUTEURS ───────────────────────────────────────────────');
+    lines.push(csvLine_(['Date', 'Achetes France (kg)', 'Achetes hors France (kg)', 'Total achetes (kg)', 'Remis distributeurs (kg)']));
+    var I_totalAchetes = b.G_achetesFrance + b.H_achetesHorsFrance;
+    lines.push(csvLine_(['Total ' + annee, b.G_achetesFrance.toFixed(3), b.H_achetesHorsFrance.toFixed(3), I_totalAchetes.toFixed(3), b.P_remisDistributeurs.toFixed(3)]));
+    lines.push('');
+
+    // --- BLOC MOUVEMENTS FLUIDES ---
+    lines.push('─── MOUVEMENTS FLUIDES ──────────────────────────────────────────');
+    lines.push(csvLine_(['N', 'N intervention', 'Date', 'Type', 'J - Charges neufs (kg)', 'K - Charges maintenance (kg)', 'M - Recup hors usage (kg)', 'N - Recup maintenance (kg)', 'R - Recycles (kg)', 'Installation', 'Bouteille n']));
+
+    var num = 0;
+    b.mouvements.forEach(function(mvt) {
+      num++;
+      var jVal = '', kVal = '', mVal = '', nVal = '', rVal = '';
+
+      if (mvt.type === 'MiseEnService' || mvt.type === 'Charge') {
+        jVal = mvt.masse.toFixed(3);
+      } else if (mvt.type === 'Appoint') {
+        kVal = mvt.masse.toFixed(3);
+      } else if (mvt.type === 'Vidange') {
+        mVal = mvt.masse.toFixed(3);
+      } else if (mvt.type === 'Recuperation') {
+        if (mvt.etatFluide === 'Recyclé') { rVal = mvt.masse.toFixed(3); }
+        else { nVal = mvt.masse.toFixed(3); }
+      }
+
+      lines.push(csvLine_([num, mvt.id, mvt.date, mvt.type, jVal, kVal, mVal, nVal, rVal, mvt.machineNom || mvt.machine, mvt.bouteille]));
+    });
+
+    // Ligne TOTAL
+    lines.push(csvLine_(['', '', '', 'TOTAL', b.J_chargesNeufs.toFixed(3), b.K_chargesMaintenance.toFixed(3), b.M_recupHorsUsage.toFixed(3), b.N_recupMaintenance.toFixed(3), b.R_recycles.toFixed(3), '', '']));
+    lines.push('');
+
+    // --- BLOC STOCKS ---
+    lines.push('─── STOCKS ──────────────────────────────────────────────────────');
+    lines.push(csvLine_(['Stock initial neufs (kg)', 'Stock initial usages (kg)', 'Stock final neufs (kg)', 'Stock final usages (kg)']));
+    lines.push(csvLine_([A_stockInitNeuf.toFixed(3), B_stockInitUsage.toFixed(3), b.stockFinalNeuf.toFixed(3), b.stockFinalUsage.toFixed(3)]));
+    lines.push('');
+    lines.push('');
+  }
+
+  // --- BLOC CALCULS DE COHERENCE (un par fluide) ---
+  lines.push('════════════════════════════════════════════════════════════════════════════════');
+  lines.push('CALCULS DE COHERENCE - ANNEE ' + annee);
+  lines.push('════════════════════════════════════════════════════════════════════════════════');
+  lines.push('');
+
+  for (var fluide in bilans) {
+    var b = bilans[fluide];
+    var info = fluidesInfo[fluide] || { nom: '', prg: 0 };
+    var L = Math.round((b.J_chargesNeufs + b.K_chargesMaintenance) * 1000) / 1000;
+    var O = Math.round((b.M_recupHorsUsage + b.N_recupMaintenance) * 1000) / 1000;
+    var I = Math.round((b.G_achetesFrance + b.H_achetesHorsFrance) * 1000) / 1000;
+    var W = Math.round((b.R_recycles + b.S_regeneres + b.U_detruits) * 1000) / 1000;
+
+    var A = Math.round((b.stockFinalNeuf + L - I) * 1000) / 1000;
+    var B = Math.round((b.stockFinalUsage + b.P_remisDistributeurs - O) * 1000) / 1000;
+    if (A < 0) A = 0;
+    if (B < 0) B = 0;
+    var C = Math.round((A + B) * 1000) / 1000;
+    var D = b.stockFinalNeuf;
+    var E = b.stockFinalUsage;
+    var F = Math.round((D + E) * 1000) / 1000;
+
+    // Vérification de cohérence : D doit être = A + I - L
+    var D_verif = Math.round((A + I - L) * 1000) / 1000;
+    var E_verif = Math.round((B + O - b.P_remisDistributeurs) * 1000) / 1000;
+
+    lines.push('── ' + fluide + ' - ' + info.nom + ' ──');
+    lines.push('');
+    lines.push(csvLine_(['Lettre', 'Description', 'Valeur (kg)', 'Formule']));
+    lines.push(csvLine_(['A', 'Stock initial neufs', A.toFixed(3), '']));
+    lines.push(csvLine_(['B', 'Stock initial usages', B.toFixed(3), '']));
+    lines.push(csvLine_(['C', 'Total stock initial', C.toFixed(3), 'A + B']));
+    lines.push(csvLine_(['', '', '', '']));
+    lines.push(csvLine_(['D', 'Stock final neufs', D.toFixed(3), 'A + I - L']));
+    lines.push(csvLine_(['E', 'Stock final usages', E.toFixed(3), 'B + O - P']));
+    lines.push(csvLine_(['F', 'Total stock final', F.toFixed(3), 'D + E']));
+    lines.push(csvLine_(['', '', '', '']));
+    lines.push(csvLine_(['G', 'Achetes France', b.G_achetesFrance.toFixed(3), '']));
+    lines.push(csvLine_(['H', 'Achetes hors France', b.H_achetesHorsFrance.toFixed(3), '']));
+    lines.push(csvLine_(['I', 'Total achetes', I.toFixed(3), 'G + H']));
+    lines.push(csvLine_(['', '', '', '']));
+    lines.push(csvLine_(['J', 'Charges neufs', b.J_chargesNeufs.toFixed(3), '']));
+    lines.push(csvLine_(['K', 'Charges maintenance', b.K_chargesMaintenance.toFixed(3), '']));
+    lines.push(csvLine_(['L', 'Total charges', L.toFixed(3), 'J + K']));
+    lines.push(csvLine_(['', '', '', '']));
+    lines.push(csvLine_(['M', 'Recuperes hors usage', b.M_recupHorsUsage.toFixed(3), '']));
+    lines.push(csvLine_(['N', 'Recuperes maintenance', b.N_recupMaintenance.toFixed(3), '']));
+    lines.push(csvLine_(['O', 'Total recuperes', O.toFixed(3), 'M + N']));
+    lines.push(csvLine_(['', '', '', '']));
+    lines.push(csvLine_(['P', 'Remis distributeurs', b.P_remisDistributeurs.toFixed(3), '']));
+    lines.push(csvLine_(['Q', 'Cedes autre operateur', b.Q_cedesAutreOperateur.toFixed(3), '']));
+    lines.push(csvLine_(['', '', '', '']));
+    lines.push(csvLine_(['R', 'Recycles', b.R_recycles.toFixed(3), '']));
+    lines.push(csvLine_(['S', 'Regeneres', b.S_regeneres.toFixed(3), '']));
+    lines.push(csvLine_(['U', 'Detruits', b.U_detruits.toFixed(3), '']));
+    lines.push(csvLine_(['W', 'Total R+S+U', W.toFixed(3), 'R + S + U']));
+    lines.push('');
+
+    // Vérification
+    var coherenceNeuf = Math.abs(D - D_verif) < 0.01 ? 'OK' : 'ECART ' + (D - D_verif).toFixed(3) + ' kg';
+    var coherenceUsage = Math.abs(E - E_verif) < 0.01 ? 'OK' : 'ECART ' + (E - E_verif).toFixed(3) + ' kg';
+    lines.push(csvLine_(['VERIF', 'Stock final neufs (D = A+I-L)', coherenceNeuf, '']));
+    lines.push(csvLine_(['VERIF', 'Stock final usages (E = B+O-P)', coherenceUsage, '']));
+    lines.push('');
+  }
+
+  lines.push('');
+  lines.push('Fin du tableau de tracabilite ADEME - ' + nbFluides + ' fluide(s)');
+
+  var csv = BOM + lines.join('\n');
+  var filename = 'tracabilite_ADEME_' + annee + '.csv';
+
+  return successResponse_({ csv: csv, filename: filename, count: nbFluides });
+}
+
 function apiExportControlesAVenir_() {
   var now = new Date();
   var lines = [csvLine_(['Machine', 'Fluide', 'Charge', 'Eq CO2', 'Fréquence', 'Prochain', 'Urgence', 'Jours'])];
@@ -2084,6 +2372,641 @@ function apiGenererCerfa_(data) {
   logAudit_('CERFA', 'generer', numFI, null, { mouvement: data.id, mode: mode, nomFichier: nomFichier, dossier: cheminMachine }, 'success');
 
   return successResponse_({ id: numFI, html: htmlContent, contenu: texteBrut, urlPdf: fichierMachine.url, url: fichierMachine.url, nomFichier: nomFichier, mode: mode });
+}
+
+// ================================================================
+// SECTION: P7 — IMPRESSION EN LOT DES CERFA
+// ================================================================
+
+/**
+ * Exporte tous les CERFA d'une année donnée en un seul document HTML multi-pages
+ * @param {Object} params - { annee }
+ * @returns {Object} { html, count, annee }
+ */
+function apiExportCerfaAnnee_(params) {
+  var annee = String(params.annee || new Date().getFullYear());
+  var allCerfa = DataStore.findAll(SHEETS.INDEX_CERFA);
+
+  // Filtrer par année (colonne Date = index 1)
+  var cerfaAnnee = allCerfa.filter(function(row) {
+    if (!row[1]) return false;
+    var d = row[1] instanceof Date ? row[1] : new Date(row[1]);
+    return !isNaN(d) && String(d.getFullYear()) === annee;
+  });
+
+  if (cerfaAnnee.length === 0) {
+    return successResponse_({ html: '', count: 0, annee: annee });
+  }
+
+  // Générer le HTML pour chaque CERFA
+  var pages = [];
+  cerfaAnnee.forEach(function(row) {
+    var numFI = row[0];
+    var mouvementId = row[2];
+    var machineCode = row[3];
+    var operateurId = row[4];
+    var mode = row[5] || 'FORMATION';
+
+    // Récupérer les données du mouvement
+    var mvtOk = DataStore.findById(SHEETS.MOUVEMENTS, mouvementId);
+    var mvtData = mvtOk.ok ? mvtOk.data : null;
+
+    // Collecter et générer
+    var donnees = collecterDonneesCerfa_(mvtData, machineCode, operateurId, mode);
+    donnees.numFI = numFI;
+    donnees.dateGeneration = row[1] instanceof Date ? formatDateTime_(row[1]) : formatDateTime_(new Date(row[1]));
+
+    var pageHtml = genererCerfaHTML_(donnees);
+    // Extraire uniquement le contenu du body
+    var bodyMatch = pageHtml.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+    if (bodyMatch) {
+      pages.push(bodyMatch[1]);
+    } else {
+      pages.push(pageHtml);
+    }
+  });
+
+  // Construire le document HTML combiné
+  var combinedHtml = '<!DOCTYPE html>\n<html lang="fr">\n<head>\n<meta charset="UTF-8">\n';
+  combinedHtml += '<title>CERFA ' + annee + ' — Impression en lot (' + pages.length + ' fiches)</title>\n';
+  combinedHtml += '<style>\n';
+  combinedHtml += '*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }\n';
+  combinedHtml += '@page { size: A4 portrait; margin: 8mm 10mm 8mm 10mm; }\n';
+  combinedHtml += 'body { font-family: Arial, Helvetica, sans-serif; font-size: 10px; line-height: 1.35; color: #000; background: #fff; }\n';
+  combinedHtml += '.page { width: 190mm; min-height: 277mm; margin: 0 auto; padding: 0; position: relative; page-break-after: always; }\n';
+  combinedHtml += '.page:last-child { page-break-after: avoid; }\n';
+  combinedHtml += '.header-cerfa { text-align: center; border: 2px solid #000; padding: 8px 10px 6px; margin-bottom: 6px; position: relative; }\n';
+  combinedHtml += '.header-cerfa h1 { font-size: 14px; font-weight: bold; margin-bottom: 2px; letter-spacing: 0.5px; }\n';
+  combinedHtml += '.header-cerfa h2 { font-size: 9px; font-weight: normal; color: #333; margin-bottom: 3px; }\n';
+  combinedHtml += '.header-cerfa .ref-cerfa { font-size: 9px; color: #555; }\n';
+  combinedHtml += '.header-cerfa .num-fi { position: absolute; right: 10px; top: 8px; font-size: 11px; font-weight: bold; color: #1b3a63; }\n';
+  combinedHtml += '.header-cerfa .date-gen { position: absolute; left: 10px; top: 8px; font-size: 8px; color: #666; }\n';
+  combinedHtml += '.cadre { border: 1.5px solid #000; margin-bottom: 5px; page-break-inside: avoid; }\n';
+  combinedHtml += '.cadre-titre { background: #1b3a63; color: #fff; padding: 3px 8px; font-weight: bold; font-size: 10px; letter-spacing: 0.3px; }\n';
+  combinedHtml += '.cadre-body { padding: 5px 8px; }\n';
+  combinedHtml += '.row { display: flex; flex-wrap: wrap; gap: 0; }\n';
+  combinedHtml += '.col-2 { width: 50%; padding: 1px 4px 1px 0; }\n';
+  combinedHtml += '.col-3 { width: 33.33%; padding: 1px 4px 1px 0; }\n';
+  combinedHtml += '.col-1 { width: 100%; padding: 1px 0; }\n';
+  combinedHtml += '.champ { display: inline; }\n';
+  combinedHtml += '.champ-label { font-weight: bold; font-size: 9px; color: #333; }\n';
+  combinedHtml += '.champ-val { border-bottom: 1px solid #999; padding: 0 3px; min-width: 80px; display: inline-block; font-size: 10px; }\n';
+  combinedHtml += '.champ-val.filled { border-bottom-color: #1b3a63; font-weight: 500; }\n';
+  combinedHtml += '.check-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 2px 0; }\n';
+  combinedHtml += '.check-item { display: inline-flex; align-items: center; gap: 2px; font-size: 10px; }\n';
+  combinedHtml += '.check-box { font-size: 13px; line-height: 1; }\n';
+  combinedHtml += '.signatures { display: flex; gap: 8px; margin-top: 6px; }\n';
+  combinedHtml += '.sig-box { flex: 1; border: 1.5px solid #000; }\n';
+  combinedHtml += '.sig-box .cadre-titre { font-size: 9px; padding: 2px 8px; }\n';
+  combinedHtml += '.sig-box .sig-area { height: 45px; padding: 4px 8px; font-size: 8px; color: #999; }\n';
+  combinedHtml += '.footer-cerfa { text-align: center; margin-top: 4px; font-size: 8px; color: #666; border-top: 1px solid #ccc; padding-top: 3px; }\n';
+  combinedHtml += '.qr-zone { position: absolute; bottom: 5px; right: 5px; width: 50px; height: 50px; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; font-size: 6px; color: #aaa; text-align: center; }\n';
+  combinedHtml += '.filigrane { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-35deg); font-size: 72px; font-weight: bold; pointer-events: none; z-index: 100; user-select: none; }\n';
+  combinedHtml += '.filigrane.formation { color: rgba(33, 150, 243, 0.12); }\n';
+  combinedHtml += '.filigrane.apercu { color: rgba(139, 92, 246, 0.10); }\n';
+  combinedHtml += 'table.tbl-interv { width: 100%; border-collapse: collapse; font-size: 9px; margin: 3px 0; }\n';
+  combinedHtml += 'table.tbl-interv th, table.tbl-interv td { border: 1px solid #666; padding: 2px 4px; text-align: left; }\n';
+  combinedHtml += 'table.tbl-interv th { background: #e8ecf1; font-weight: bold; font-size: 8px; text-transform: uppercase; }\n';
+  combinedHtml += '.lot-header { text-align: center; padding: 10px; font-size: 14px; font-weight: bold; color: #1b3a63; border-bottom: 2px solid #1b3a63; margin-bottom: 10px; }\n';
+  combinedHtml += '@media print {\n';
+  combinedHtml += '  body { margin: 0; padding: 0; }\n';
+  combinedHtml += '  .page { width: 100%; min-height: auto; margin: 0; }\n';
+  combinedHtml += '  .no-print { display: none !important; }\n';
+  combinedHtml += '  .lot-header { display: none; }\n';
+  combinedHtml += '}\n';
+  combinedHtml += '</style>\n</head>\n<body>\n';
+
+  // En-tête récapitulatif (visible à l'écran, masqué à l'impression)
+  combinedHtml += '<div class="lot-header no-print">Impression en lot — ' + pages.length + ' CERFA — Année ' + annee + '</div>\n';
+
+  // Insérer chaque page
+  for (var i = 0; i < pages.length; i++) {
+    combinedHtml += pages[i] + '\n';
+  }
+
+  combinedHtml += '</body>\n</html>';
+
+  return successResponse_({ html: combinedHtml, count: pages.length, annee: annee });
+}
+
+// ================================================================
+// SECTION: P8 — DOCUMENTS MES + ÉTIQUETTES
+// ================================================================
+
+/**
+ * Génère le HTML d'une Fiche de Mise en Service (format A4)
+ * @param {Object} data - Données techniques MES
+ * @returns {string} HTML complet
+ */
+function genererFicheMES_HTML_(data) {
+  var v = function(val, unite) {
+    var s = (val != null && val !== '' && val !== undefined) ? String(val) : '_______________';
+    return s + (unite && val ? ' ' + unite : '');
+  };
+
+  // Calculs automatiques
+  var surchauffe = '';
+  var sousRefroidissement = '';
+  if (data.tAspiration && data.tEvaporation) {
+    surchauffe = (parseFloat(data.tAspiration) - parseFloat(data.tEvaporation)).toFixed(1);
+  }
+  if (data.tCondensation && data.tSortieCondenseur) {
+    sousRefroidissement = (parseFloat(data.tCondensation) - parseFloat(data.tSortieCondenseur)).toFixed(1);
+  }
+
+  var html = '<!DOCTYPE html>\n<html lang="fr">\n<head>\n<meta charset="UTF-8">\n';
+  html += '<title>Fiche de Mise en Service — ' + v(data.machineCode) + '</title>\n';
+  html += '<style>\n';
+  html += '*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }\n';
+  html += '@page { size: A4 portrait; margin: 10mm 12mm; }\n';
+  html += 'body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; line-height: 1.4; color: #000; background: #fff; }\n';
+  html += '.fiche { width: 190mm; margin: 0 auto; padding: 0; }\n';
+  html += '.fiche-header { text-align: center; border: 2px solid #1b3a63; padding: 12px; margin-bottom: 10px; position: relative; background: linear-gradient(135deg, #f0f4f8 0%, #fff 100%); }\n';
+  html += '.fiche-header h1 { font-size: 18px; color: #1b3a63; margin-bottom: 4px; letter-spacing: 1px; }\n';
+  html += '.fiche-header .logo-text { font-size: 10px; color: #e8914a; font-weight: bold; }\n';
+  html += '.bloc { border: 1.5px solid #333; margin-bottom: 8px; page-break-inside: avoid; }\n';
+  html += '.bloc-titre { background: #1b3a63; color: #fff; padding: 4px 10px; font-weight: bold; font-size: 11px; letter-spacing: 0.3px; }\n';
+  html += '.bloc-body { padding: 8px 10px; }\n';
+  html += '.row { display: flex; flex-wrap: wrap; }\n';
+  html += '.col-2 { width: 50%; padding: 2px 6px 2px 0; }\n';
+  html += '.col-3 { width: 33.33%; padding: 2px 6px 2px 0; }\n';
+  html += '.col-1 { width: 100%; padding: 2px 0; }\n';
+  html += '.field { margin-bottom: 3px; }\n';
+  html += '.field-label { font-weight: bold; font-size: 10px; color: #444; }\n';
+  html += '.field-val { border-bottom: 1px solid #999; padding: 0 4px; min-width: 60px; display: inline-block; font-size: 11px; }\n';
+  html += '.field-val.filled { border-bottom-color: #1b3a63; font-weight: 600; }\n';
+  html += '.field-val.calc { color: #0D47A1; font-weight: bold; background: #E3F2FD; padding: 1px 6px; border-radius: 3px; border-bottom: none; }\n';
+  html += '.signatures-mes { display: flex; gap: 10px; margin-top: 10px; }\n';
+  html += '.sig-box-mes { flex: 1; border: 1.5px solid #333; }\n';
+  html += '.sig-box-mes .bloc-titre { font-size: 10px; padding: 3px 8px; }\n';
+  html += '.sig-box-mes .sig-content { height: 50px; padding: 6px 10px; font-size: 9px; color: #999; }\n';
+  html += '.footer-mes { text-align: center; margin-top: 8px; font-size: 8px; color: #999; border-top: 1px solid #ccc; padding-top: 4px; }\n';
+  html += '.rotation-check { display: inline-flex; align-items: center; gap: 4px; margin-right: 12px; font-size: 10px; }\n';
+  html += '.rotation-box { width: 14px; height: 14px; border: 1.5px solid #333; display: inline-block; text-align: center; font-size: 11px; line-height: 14px; }\n';
+  html += '@media print { body { margin: 0; } .fiche { width: 100%; } .no-print { display: none !important; } }\n';
+  html += '</style>\n</head>\n<body>\n';
+
+  html += '<div class="fiche">\n';
+
+  // En-tête
+  html += '<div class="fiche-header">\n';
+  html += '  <div class="logo-text">inerWeb Fluide</div>\n';
+  html += '  <h1>FICHE DE MISE EN SERVICE</h1>\n';
+  html += '</div>\n';
+
+  // Bloc Équipement
+  html += '<div class="bloc">\n';
+  html += '  <div class="bloc-titre">ÉQUIPEMENT</div>\n';
+  html += '  <div class="bloc-body">\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-2"><span class="field-label">Code machine : </span><span class="field-val' + (data.machineCode ? ' filled' : '') + '">' + v(data.machineCode) + '</span></div>\n';
+  html += '      <div class="col-2"><span class="field-label">Nom : </span><span class="field-val' + (data.machineNom ? ' filled' : '') + '">' + v(data.machineNom) + '</span></div>\n';
+  html += '    </div>\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-2"><span class="field-label">Marque : </span><span class="field-val' + (data.marque ? ' filled' : '') + '">' + v(data.marque) + '</span></div>\n';
+  html += '      <div class="col-2"><span class="field-label">Type : </span><span class="field-val' + (data.typeEquipement ? ' filled' : '') + '">' + v(data.typeEquipement) + '</span></div>\n';
+  html += '    </div>\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-2"><span class="field-label">Référence / Modèle : </span><span class="field-val' + (data.modele ? ' filled' : '') + '">' + v(data.modele) + '</span></div>\n';
+  html += '      <div class="col-2"><span class="field-label">N° série : </span><span class="field-val' + (data.serie ? ' filled' : '') + '">' + v(data.serie) + '</span></div>\n';
+  html += '    </div>\n';
+  html += '  </div>\n</div>\n';
+
+  // Bloc Fluide
+  html += '<div class="bloc">\n';
+  html += '  <div class="bloc-titre">FLUIDE FRIGORIGÈNE</div>\n';
+  html += '  <div class="bloc-body">\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-3"><span class="field-label">Fluide : </span><span class="field-val' + (data.fluide ? ' filled' : '') + '">' + v(data.fluide) + '</span></div>\n';
+  html += '      <div class="col-3"><span class="field-label">Charge nominale : </span><span class="field-val' + (data.chargeNom ? ' filled' : '') + '">' + v(data.chargeNom, 'kg') + '</span></div>\n';
+  html += '      <div class="col-3"><span class="field-label">PRG / GWP : </span><span class="field-val' + (data.prg ? ' filled' : '') + '">' + v(data.prg) + '</span></div>\n';
+  html += '    </div>\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-2"><span class="field-label">Pk (HP) : </span><span class="field-val' + (data.hp ? ' filled' : '') + '">' + v(data.hp, 'bar') + '</span></div>\n';
+  html += '      <div class="col-2"><span class="field-label">θ condensation : </span><span class="field-val' + (data.tCondensation ? ' filled' : '') + '">' + v(data.tCondensation, '°C') + '</span></div>\n';
+  html += '    </div>\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-2"><span class="field-label">Po (BP) : </span><span class="field-val' + (data.bp ? ' filled' : '') + '">' + v(data.bp, 'bar') + '</span></div>\n';
+  html += '      <div class="col-2"><span class="field-label">θ évaporation : </span><span class="field-val' + (data.tEvaporation ? ' filled' : '') + '">' + v(data.tEvaporation, '°C') + '</span></div>\n';
+  html += '    </div>\n';
+  html += '  </div>\n</div>\n';
+
+  // Bloc Températures
+  html += '<div class="bloc">\n';
+  html += '  <div class="bloc-titre">TEMPÉRATURES RELEVÉES</div>\n';
+  html += '  <div class="bloc-body">\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-2"><span class="field-label">θ refoulement : </span><span class="field-val' + (data.tRefoulement ? ' filled' : '') + '">' + v(data.tRefoulement, '°C') + '</span></div>\n';
+  html += '      <div class="col-2"><span class="field-label">θ aspiration : </span><span class="field-val' + (data.tAspiration ? ' filled' : '') + '">' + v(data.tAspiration, '°C') + '</span></div>\n';
+  html += '    </div>\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-2"><span class="field-label">θ sortie condenseur : </span><span class="field-val' + (data.tSortieCondenseur ? ' filled' : '') + '">' + v(data.tSortieCondenseur, '°C') + '</span></div>\n';
+  html += '      <div class="col-2"><span class="field-label">θ sortie évaporateur : </span><span class="field-val' + (data.tSortieEvaporateur ? ' filled' : '') + '">' + v(data.tSortieEvaporateur, '°C') + '</span></div>\n';
+  html += '    </div>\n';
+  html += '  </div>\n</div>\n';
+
+  // Bloc Électrique
+  html += '<div class="bloc">\n';
+  html += '  <div class="bloc-titre">MESURES ÉLECTRIQUES</div>\n';
+  html += '  <div class="bloc-body">\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-2"><span class="field-label">I compresseur : </span><span class="field-val' + (data.iCompresseur ? ' filled' : '') + '">' + v(data.iCompresseur, 'A') + '</span></div>\n';
+  html += '      <div class="col-2"><span class="field-label">I ventilateur évaporateur : </span><span class="field-val' + (data.iEvaporateur ? ' filled' : '') + '">' + v(data.iEvaporateur, 'A') + '</span></div>\n';
+  html += '    </div>\n';
+  html += '  </div>\n</div>\n';
+
+  // Bloc Régulation
+  html += '<div class="bloc">\n';
+  html += '  <div class="bloc-titre">RÉGULATION</div>\n';
+  html += '  <div class="bloc-body">\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-3"><span class="field-label">Point de consigne : </span><span class="field-val' + (data.consigne ? ' filled' : '') + '">' + v(data.consigne, '°C') + '</span></div>\n';
+  html += '    </div>\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-2"><span class="field-label">Pbp cut-in : </span><span class="field-val' + (data.cutIn ? ' filled' : '') + '">' + v(data.cutIn, 'bar') + '</span></div>\n';
+  html += '      <div class="col-2"><span class="field-label">Pbp différentiel : </span><span class="field-val' + (data.cutInDiff ? ' filled' : '') + '">' + v(data.cutInDiff, 'bar') + '</span></div>\n';
+  html += '    </div>\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-2"><span class="field-label">Php cut-off : </span><span class="field-val' + (data.cutOff ? ' filled' : '') + '">' + v(data.cutOff, 'bar') + '</span></div>\n';
+  html += '      <div class="col-2"><span class="field-label">Php différentiel : </span><span class="field-val' + (data.cutOffDiff ? ' filled' : '') + '">' + v(data.cutOffDiff, 'bar') + '</span></div>\n';
+  html += '    </div>\n';
+  html += '  </div>\n</div>\n';
+
+  // Bloc Calculs (surchauffe / sous-refroidissement)
+  html += '<div class="bloc">\n';
+  html += '  <div class="bloc-titre">CALCULS</div>\n';
+  html += '  <div class="bloc-body">\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-2"><span class="field-label">Surchauffe (θ asp - θ évap) : </span><span class="field-val calc">' + (surchauffe ? surchauffe + ' K' : 'N/A') + '</span></div>\n';
+  html += '      <div class="col-2"><span class="field-label">Sous-refroidissement (θ cond - θ sort.cond) : </span><span class="field-val calc">' + (sousRefroidissement ? sousRefroidissement + ' K' : 'N/A') + '</span></div>\n';
+  html += '    </div>\n';
+  html += '  </div>\n</div>\n';
+
+  // Bloc Sens de rotation
+  html += '<div class="bloc">\n';
+  html += '  <div class="bloc-titre">SENS DE ROTATION</div>\n';
+  html += '  <div class="bloc-body">\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-2">\n';
+  html += '        <span class="field-label">Ventilo-condenseur : </span>\n';
+  html += '        <span class="rotation-check"><span class="rotation-box">&#9744;</span> OK</span>\n';
+  html += '        <span class="rotation-check"><span class="rotation-box">&#9744;</span> Inversé</span>\n';
+  html += '      </div>\n';
+  html += '      <div class="col-2">\n';
+  html += '        <span class="field-label">Ventilo-évaporateur : </span>\n';
+  html += '        <span class="rotation-check"><span class="rotation-box">&#9744;</span> OK</span>\n';
+  html += '        <span class="rotation-check"><span class="rotation-box">&#9744;</span> Inversé</span>\n';
+  html += '      </div>\n';
+  html += '    </div>\n';
+  html += '  </div>\n</div>\n';
+
+  // Signatures
+  html += '<div class="signatures-mes">\n';
+  html += '  <div class="sig-box-mes"><div class="bloc-titre">DATE</div><div class="sig-content">' + v(data.dateMES || formatDate_(new Date())) + '</div></div>\n';
+  html += '  <div class="sig-box-mes"><div class="bloc-titre">OPÉRATEUR</div><div class="sig-content">' + v(data.operateur) + '</div></div>\n';
+  html += '  <div class="sig-box-mes"><div class="bloc-titre">SIGNATURE</div><div class="sig-content"></div></div>\n';
+  html += '</div>\n';
+
+  // Footer
+  html += '<div class="footer-mes">Généré par inerWeb Fluide v' + APP_VERSION + ' le ' + formatDateTime_(new Date()) + '</div>\n';
+
+  html += '</div>\n'; // fin .fiche
+  html += '</body>\n</html>';
+
+  return html;
+}
+
+/**
+ * Génère le HTML d'une Plaque d'Identification F-Gas (~15cm x 10cm)
+ * @param {Object} machineData - Données machine enrichies
+ * @returns {string} HTML complet
+ */
+function genererPlaqueIdentification_HTML_(machineData) {
+  var v = function(val) { return (val != null && val !== '' && val !== undefined) ? String(val) : '___'; };
+  var ck = function(condition) { return condition ? '&#9746;' : '&#9744;'; };
+
+  var fluide = machineData.fluide || '';
+  var famille = String(machineData.familleFluide || '').toUpperCase();
+  var isHFC = famille.indexOf('HFC') >= 0;
+  var isHFO = famille.indexOf('HFO') >= 0;
+  var isHCFC = famille.indexOf('HCFC') >= 0;
+  var isNaturel = famille.indexOf('NATUR') >= 0 || famille.indexOf('NH3') >= 0 || famille.indexOf('CO2') >= 0 || famille.indexOf('R290') >= 0 || famille.indexOf('R600') >= 0;
+
+  var chargeInit = parseFloat(machineData.chargeNom) || 0;
+  var chargeComplement = parseFloat(machineData.chargeComplement) || 0;
+  var chargeTotal = chargeInit + chargeComplement;
+  var prg = parseFloat(machineData.prg) || 0;
+  var teqCO2 = prg > 0 ? (chargeTotal * prg / 1000).toFixed(3) : '___';
+
+  var html = '<!DOCTYPE html>\n<html lang="fr">\n<head>\n<meta charset="UTF-8">\n';
+  html += '<title>Plaque F-Gas — ' + v(machineData.machineCode) + '</title>\n';
+  html += '<style>\n';
+  html += '*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }\n';
+  html += '@page { size: 150mm 100mm; margin: 3mm; }\n';
+  html += 'body { font-family: Arial, Helvetica, sans-serif; font-size: 8px; line-height: 1.3; color: #000; background: #fff; }\n';
+  html += '.plaque { width: 144mm; height: 94mm; border: 2.5px solid #1b3a63; margin: 0 auto; padding: 4mm; position: relative; overflow: hidden; }\n';
+  html += '.plaque-titre { text-align: center; font-size: 9px; font-weight: bold; color: #1b3a63; border-bottom: 1.5px solid #1b3a63; padding-bottom: 3px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }\n';
+  html += '.plaque-ref { text-align: center; font-size: 7px; color: #666; margin-bottom: 4px; }\n';
+  html += '.plaque-row { display: flex; margin-bottom: 2px; }\n';
+  html += '.plaque-label { font-weight: bold; font-size: 7.5px; color: #333; min-width: 40mm; }\n';
+  html += '.plaque-val { font-size: 8px; border-bottom: 0.5px solid #ccc; flex: 1; padding: 0 2px; }\n';
+  html += '.plaque-val.filled { font-weight: 600; }\n';
+  html += '.type-check { display: flex; gap: 6px; align-items: center; margin: 3px 0; }\n';
+  html += '.type-check span { display: inline-flex; align-items: center; gap: 2px; font-size: 7.5px; }\n';
+  html += '.type-box { font-size: 10px; line-height: 1; }\n';
+  html += '.plaque-section { border-top: 1px solid #ddd; padding-top: 2px; margin-top: 3px; }\n';
+  html += '.qr-placeholder { position: absolute; bottom: 3mm; right: 3mm; width: 18mm; height: 18mm; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; font-size: 6px; color: #aaa; text-align: center; }\n';
+  html += '.plaque-footer { position: absolute; bottom: 2mm; left: 4mm; font-size: 6px; color: #999; }\n';
+  html += '@media print { body { margin: 0; } .plaque { border-width: 2px; } }\n';
+  html += '</style>\n</head>\n<body>\n';
+
+  html += '<div class="plaque">\n';
+  html += '  <div class="plaque-titre">Installation contenant des gaz à effet de serre fluorés</div>\n';
+  html += '  <div class="plaque-ref">Conforme au règlement F-GAS 517/2014 CE & R543-79</div>\n';
+
+  html += '  <div class="plaque-row"><span class="plaque-label">Société :</span><span class="plaque-val' + (machineData.societe ? ' filled' : '') + '">' + v(machineData.societe) + '</span></div>\n';
+  html += '  <div class="plaque-row"><span class="plaque-label">Adresse :</span><span class="plaque-val' + (machineData.adresse ? ' filled' : '') + '">' + v(machineData.adresse) + '</span></div>\n';
+  html += '  <div class="plaque-row"><span class="plaque-label">Date MES :</span><span class="plaque-val' + (machineData.dateMES ? ' filled' : '') + '">' + v(machineData.dateMES) + '</span></div>\n';
+  html += '  <div class="plaque-row"><span class="plaque-label">Opérateur :</span><span class="plaque-val' + (machineData.operateur ? ' filled' : '') + '">' + v(machineData.operateur) + '</span></div>\n';
+  html += '  <div class="plaque-row"><span class="plaque-label">Type installation :</span><span class="plaque-val' + (machineData.typeEquipement ? ' filled' : '') + '">' + v(machineData.typeEquipement) + '</span></div>\n';
+  html += '  <div class="plaque-row"><span class="plaque-label">Repère BP / HP :</span><span class="plaque-val filled">' + v(machineData.machineCode) + '</span></div>\n';
+  html += '  <div class="plaque-row"><span class="plaque-label">Fluide :</span><span class="plaque-val' + (fluide ? ' filled' : '') + '">' + v(fluide) + '</span></div>\n';
+
+  // Type de fluide (checkboxes)
+  html += '  <div class="type-check">\n';
+  html += '    <span><span class="type-box">' + ck(isHFC) + '</span> HFC</span>\n';
+  html += '    <span><span class="type-box">' + ck(isHFO) + '</span> HFO</span>\n';
+  html += '    <span><span class="type-box">' + ck(isHCFC) + '</span> HCFC</span>\n';
+  html += '    <span><span class="type-box">' + ck(isNaturel) + '</span> Naturel</span>\n';
+  html += '  </div>\n';
+
+  html += '  <div class="plaque-section">\n';
+  html += '    <div class="plaque-row"><span class="plaque-label">Charge initiale :</span><span class="plaque-val filled">' + (chargeInit ? chargeInit + ' kg' : '___') + '</span></div>\n';
+  html += '    <div class="plaque-row"><span class="plaque-label">Complément :</span><span class="plaque-val">' + (chargeComplement ? chargeComplement + ' kg' : '___') + '</span></div>\n';
+  html += '    <div class="plaque-row"><span class="plaque-label">Charge totale :</span><span class="plaque-val filled">' + (chargeTotal ? chargeTotal + ' kg' : '___') + '</span></div>\n';
+  html += '    <div class="plaque-row"><span class="plaque-label">GWP / PRG :</span><span class="plaque-val' + (prg ? ' filled' : '') + '">' + v(prg || '') + '</span></div>\n';
+  html += '    <div class="plaque-row"><span class="plaque-label">Teq CO2 :</span><span class="plaque-val' + (teqCO2 !== '___' ? ' filled' : '') + '">' + teqCO2 + ' t</span></div>\n';
+  html += '  </div>\n';
+
+  html += '  <div class="plaque-section">\n';
+  html += '    <div class="plaque-row"><span class="plaque-label">Huile — nom :</span><span class="plaque-val">' + v(machineData.huileNom) + '</span></div>\n';
+  html += '    <div class="plaque-row"><span class="plaque-label">Huile — qté / type :</span><span class="plaque-val">' + v(machineData.huileQte) + (machineData.huileType ? ' / ' + machineData.huileType : '') + '</span></div>\n';
+  html += '  </div>\n';
+
+  html += '  <div class="qr-placeholder">[QR: ' + v(machineData.machineCode) + ']</div>\n';
+  html += '  <div class="plaque-footer">inerWeb Fluide v' + APP_VERSION + '</div>\n';
+
+  html += '</div>\n';
+  html += '</body>\n</html>';
+
+  return html;
+}
+
+/**
+ * Génère le HTML d'un macaron/étiquette (conforme ou fuite)
+ * @param {string} type - 'conforme' ou 'fuite'
+ * @param {Object} data - Données du macaron
+ * @returns {string} HTML complet
+ */
+function genererMacaronHTML_(type, data) {
+  var v = function(val) { return (val != null && val !== '' && val !== undefined) ? String(val) : '___'; };
+  var isConforme = (type === 'conforme');
+
+  var couleur = isConforme ? '#1565C0' : '#C62828';
+  var couleurLight = isConforme ? '#E3F2FD' : '#FFEBEE';
+  var titre = isConforme ? 'CONTRÔLE CONFORME' : 'FUITE DÉTECTÉE';
+
+  var html = '<!DOCTYPE html>\n<html lang="fr">\n<head>\n<meta charset="UTF-8">\n';
+  html += '<title>Macaron ' + type + ' — ' + v(data.machineCode) + '</title>\n';
+  html += '<style>\n';
+  html += '*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }\n';
+  html += '@page { size: 100mm 100mm; margin: 5mm; }\n';
+  html += 'body { font-family: Arial, Helvetica, sans-serif; background: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }\n';
+  html += '.macaron { width: 85mm; height: 85mm; border-radius: 50%; border: 3px solid ' + couleur + '; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 10mm; position: relative; background: ' + couleurLight + '; }\n';
+  html += '.macaron-titre { font-size: 10px; font-weight: bold; color: ' + couleur + '; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }\n';
+  html += '.macaron-machine { font-size: 14px; font-weight: bold; color: #000; margin-bottom: 6px; }\n';
+  html += '.macaron-date-label { font-size: 8px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }\n';
+  html += '.macaron-date { font-size: 13px; font-weight: bold; color: ' + couleur + '; margin-bottom: 4px; }\n';
+  html += '.macaron-info { font-size: 7px; color: #666; margin-top: 4px; }\n';
+  html += '.macaron-qr { font-size: 6px; color: #999; margin-top: 2px; }\n';
+  html += '@media print { body { margin: 0; min-height: auto; } }\n';
+  html += '</style>\n</head>\n<body>\n';
+
+  html += '<div class="macaron">\n';
+  html += '  <div class="macaron-titre">' + titre + '</div>\n';
+  html += '  <div class="macaron-machine">' + v(data.machineCode) + '</div>\n';
+
+  if (isConforme) {
+    html += '  <div class="macaron-date-label">PROCHAIN CONTRÔLE</div>\n';
+    html += '  <div class="macaron-date">' + v(data.prochainControle) + '</div>\n';
+    html += '  <div class="macaron-info">N° ADC : ' + v(data.numADC) + '</div>\n';
+  } else {
+    html += '  <div class="macaron-date-label">FUITE DÉTECTÉE LE</div>\n';
+    html += '  <div class="macaron-date">' + v(data.dateFuite) + '</div>\n';
+    html += '  <div class="macaron-date-label" style="margin-top:4px;">CONTRÔLE VÉRIFICATION OBLIGATOIRE</div>\n';
+    html += '  <div class="macaron-date">' + v(data.dateVerification) + '</div>\n';
+  }
+
+  html += '  <div class="macaron-qr">[QR: ' + v(data.machineCode) + ']</div>\n';
+  html += '</div>\n';
+  html += '</body>\n</html>';
+
+  return html;
+}
+
+/**
+ * Génère les 3 documents MES (Fiche MES + Plaque F-Gas + Macaron conforme)
+ * @param {Object} params - Paramètres techniques
+ * @returns {Object} { ficheMES_html, plaque_html, macaron_html, urls }
+ */
+function apiGenererDocumentsMES_(params) {
+  var machineCode = sanitize_(params.machine, 50);
+  if (!machineCode) return errorResponse_('Code machine obligatoire', 'VALIDATION');
+
+  // Récupérer les données machine
+  var machOk = DataStore.findById(SHEETS.MACHINES, machineCode);
+  if (!machOk.ok) return errorResponse_('Machine non trouvée: ' + machineCode, 'NOT_FOUND');
+  var machData = machOk.data;
+
+  // Config entreprise
+  var config = {};
+  DataStore.findAll(SHEETS.CONFIG).forEach(function(row) { if (row[0]) config[row[0]] = row[1]; });
+
+  // Info fluide
+  var fluideCode = machData[6] || '';
+  var prg = getPRGFluide_(fluideCode);
+  var fluideInfo = DataStore.findById(SHEETS.FLUIDES, fluideCode);
+  var familleFluide = fluideInfo.ok ? fluideInfo.data[3] : '';
+
+  // Info opérateur
+  var operateurNom = params.operateur || '';
+  if (operateurNom) {
+    var userOk = findUser_(operateurNom);
+    if (userOk.ok) {
+      operateurNom = ((userOk.user.prenom || '') + ' ' + (userOk.user.nom || '')).trim() || operateurNom;
+    }
+  }
+
+  // Construire l'objet data commun
+  var mesData = {
+    machineCode: machineCode,
+    machineNom: machData[1] || '',
+    typeEquipement: machData[2] || '',
+    marque: machData[3] || '',
+    modele: machData[4] || '',
+    serie: machData[5] || '',
+    fluide: fluideCode,
+    chargeNom: parseFloat(machData[7]) || 0,
+    prg: prg,
+    familleFluide: familleFluide,
+    localisation: machData[10] || '',
+    operateur: operateurNom,
+    dateMES: formatDate_(new Date()),
+    societe: config.etablissement || '',
+    adresse: config.adresse || '',
+    // Données techniques du formulaire
+    hp: params.hp || '',
+    bp: params.bp || '',
+    tCondensation: params.tCondensation || '',
+    tEvaporation: params.tEvaporation || '',
+    tRefoulement: params.tRefoulement || '',
+    tAspiration: params.tAspiration || '',
+    tSortieCondenseur: params.tSortieCondenseur || '',
+    tSortieEvaporateur: params.tSortieEvaporateur || '',
+    iCompresseur: params.iCompresseur || '',
+    iEvaporateur: params.iEvaporateur || '',
+    consigne: params.consigne || '',
+    cutIn: params.cutIn || '',
+    cutInDiff: params.cutInDiff || '',
+    cutOff: params.cutOff || '',
+    cutOffDiff: params.cutOffDiff || '',
+    huileNom: params.huileNom || '',
+    huileQte: params.huileQte || '',
+    huileType: params.huileType || ''
+  };
+
+  // 1. Fiche MES
+  var ficheMES_html = genererFicheMES_HTML_(mesData);
+
+  // 2. Plaque identification F-Gas
+  var plaque_html = genererPlaqueIdentification_HTML_(mesData);
+
+  // 3. Macaron conforme (bleu)
+  var prochainControle = machData[12] || '';
+  if (!prochainControle) {
+    // Calculer prochain contrôle à partir de la fréquence
+    var eqCO2 = parseFloat(machData[9]) || 0;
+    var freqMois = 12; // Par défaut annuel
+    for (var i = 0; i < SEUILS_CONTROLE.length; i++) {
+      if (eqCO2 >= SEUILS_CONTROLE[i].eqCO2Min && eqCO2 < SEUILS_CONTROLE[i].eqCO2Max) {
+        freqMois = SEUILS_CONTROLE[i].freqMois;
+        break;
+      }
+    }
+    if (freqMois > 0) {
+      var prochDate = new Date();
+      prochDate.setMonth(prochDate.getMonth() + freqMois);
+      prochainControle = formatDate_(prochDate);
+    }
+  } else {
+    prochainControle = formatDate_(prochainControle);
+  }
+
+  var macaron_html = genererMacaronHTML_('conforme', {
+    machineCode: machineCode,
+    prochainControle: prochainControle,
+    numADC: config.attestation || config.siret || ''
+  });
+
+  // Sauvegarder sur Drive
+  var annee = String(new Date().getFullYear());
+  var codeMachineSafe = sanitize_(machineCode, 50).replace(/[^a-zA-Z0-9\-_]/g, '_');
+  var cheminDossier = 'inerWeb Fluide/' + annee + '/Machines/' + codeMachineSafe + '/MES';
+  var dateISO = formatDateISO_(new Date());
+  var urls = {};
+
+  try {
+    var f1 = sauvegarderDansDrive_(ficheMES_html, 'FicheMES_' + codeMachineSafe + '_' + dateISO + '.html', 'text/html', cheminDossier);
+    urls.ficheMES = f1.url;
+  } catch(e) { urls.ficheMES = ''; }
+
+  try {
+    var f2 = sauvegarderDansDrive_(plaque_html, 'Plaque_FGas_' + codeMachineSafe + '_' + dateISO + '.html', 'text/html', cheminDossier);
+    urls.plaque = f2.url;
+  } catch(e) { urls.plaque = ''; }
+
+  try {
+    var f3 = sauvegarderDansDrive_(macaron_html, 'Macaron_' + codeMachineSafe + '_' + dateISO + '.html', 'text/html', cheminDossier);
+    urls.macaron = f3.url;
+  } catch(e) { urls.macaron = ''; }
+
+  logAudit_('MES', 'genererDocuments', machineCode, null, { operateur: params.operateur, fichiers: Object.keys(urls).length }, 'success');
+
+  return successResponse_({
+    ficheMES_html: ficheMES_html,
+    plaque_html: plaque_html,
+    macaron_html: macaron_html,
+    urls: urls,
+    machine: machineCode
+  });
+}
+
+/**
+ * Génère uniquement la plaque d'identification F-Gas
+ */
+function apiGenererPlaque_(params) {
+  var machineCode = sanitize_(params.machine, 50);
+  if (!machineCode) return errorResponse_('Code machine obligatoire', 'VALIDATION');
+
+  var machOk = DataStore.findById(SHEETS.MACHINES, machineCode);
+  if (!machOk.ok) return errorResponse_('Machine non trouvée', 'NOT_FOUND');
+  var machData = machOk.data;
+
+  var config = {};
+  DataStore.findAll(SHEETS.CONFIG).forEach(function(row) { if (row[0]) config[row[0]] = row[1]; });
+
+  var fluideCode = machData[6] || '';
+  var prg = getPRGFluide_(fluideCode);
+  var fluideInfo = DataStore.findById(SHEETS.FLUIDES, fluideCode);
+  var familleFluide = fluideInfo.ok ? fluideInfo.data[3] : '';
+
+  var plaqueData = {
+    machineCode: machineCode,
+    machineNom: machData[1] || '',
+    typeEquipement: machData[2] || '',
+    fluide: fluideCode,
+    chargeNom: parseFloat(machData[7]) || 0,
+    prg: prg,
+    familleFluide: familleFluide,
+    societe: config.etablissement || '',
+    adresse: config.adresse || '',
+    dateMES: machData[11] ? formatDate_(machData[11]) : '',
+    operateur: params.operateur || ''
+  };
+
+  return successResponse_({ html: genererPlaqueIdentification_HTML_(plaqueData) });
+}
+
+/**
+ * Génère uniquement un macaron (conforme ou fuite)
+ */
+function apiGenererMacaron_(params) {
+  var machineCode = sanitize_(params.machine, 50);
+  var type = params.type || 'conforme';
+  if (!machineCode) return errorResponse_('Code machine obligatoire', 'VALIDATION');
+
+  var config = {};
+  DataStore.findAll(SHEETS.CONFIG).forEach(function(row) { if (row[0]) config[row[0]] = row[1]; });
+
+  var macaronData = {
+    machineCode: machineCode,
+    prochainControle: params.prochainControle || '',
+    numADC: config.attestation || config.siret || '',
+    dateFuite: params.dateFuite || '',
+    dateVerification: params.dateVerification || ''
+  };
+
+  return successResponse_({ html: genererMacaronHTML_(type, macaronData) });
 }
 
 // ================================================================
@@ -2652,10 +3575,15 @@ function doGet(e) {
       case 'exportHistoriqueBouteille': result = apiExportHistoriqueBouteille_(e.parameter); break;
       case 'exportControlesAVenir': result = apiExportControlesAVenir_(); break;
       case 'exportBilanAnnuel': result = apiExportBilanAnnuel_(e.parameter); break;
+      case 'exportBilanExcel': result = apiExportBilanExcel_(e.parameter); break;
       case 'exportActiviteEleve': result = apiExportActiviteEleve_(e.parameter); break;
       case 'exportSyntheseAtelier': result = apiExportSyntheseAtelier_(e.parameter); break;
       case 'exportValidationsEnseignant': result = apiExportValidationsEnseignant_(e.parameter); break;
       case 'exportPro': result = apiExportPro_(e.parameter); break;
+      case 'exportCerfaAnnee': result = apiExportCerfaAnnee_(e.parameter); break;
+      case 'genererDocumentsMES': result = apiGenererDocumentsMES_(e.parameter); break;
+      case 'genererPlaque': result = apiGenererPlaque_(e.parameter); break;
+      case 'genererMacaron': result = apiGenererMacaron_(e.parameter); break;
       default: result = errorResponse_('Action inconnue', 'UNKNOWN');
     }
     return jsonResponse_(result);
