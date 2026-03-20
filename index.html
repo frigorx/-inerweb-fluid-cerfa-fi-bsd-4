@@ -23,7 +23,6 @@
     <div id="screen-login" class="screen">
       <div class="login-container">
         <div class="login-logo">
-          <!-- Logo inerWeb Fluide SVG officiel -->
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 100" class="logo-full">
             <text fill="#1b3a63" font-size="36px" x="10" y="55">❄️</text>
             <text fill="#1b3a63" font-family="Trebuchet MS, Trebuchet, sans-serif" font-size="34px" font-weight="bold" x="60" y="52">iner</text>
@@ -32,42 +31,69 @@
             <rect fill="#e8914a" x="220" y="20" rx="6" ry="6" width="90" height="32"/>
             <text fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="18px" font-weight="bold" x="265" y="43" text-anchor="middle">Fluide</text>
             <rect fill="#F59E0B" x="315" y="22" rx="4" ry="4" width="55" height="28"/>
-            <text fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="13px" font-weight="bold" x="342" y="41" text-anchor="middle">DÉMO</text>
-            <text fill="#cccccc" font-family="Segoe UI, sans-serif" font-size="11px" x="60" y="80">par F. Henninot</text>
+            <text fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="13px" font-weight="bold" x="342" y="41" text-anchor="middle">DEMO</text>
           </svg>
         </div>
-        
-        <div class="login-card card">
-          <div class="card-body">
-            <h2 class="login-title">Connexion</h2>
-            
-            <div style="background: linear-gradient(135deg, #F59E0B, #D97706); color: white; padding: 10px 16px; border-radius: 8px; margin-bottom: 16px; text-align: center; font-weight: 600; font-size: 13px;">
-              MODE DÉMO — Accès libre pour tester
+
+        <!-- Présentation du projet -->
+        <div style="max-width: 520px; width: 100%; margin-bottom: 20px;">
+          <div style="background: white; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden;">
+            <div style="background: linear-gradient(135deg, #1b3a63, #2d5a8a); padding: 20px 24px; color: white;">
+              <h2 style="margin: 0 0 8px 0; font-size: 20px; font-weight: 700;">Bienvenue sur inerWeb Fluide</h2>
+              <p style="margin: 0; font-size: 14px; opacity: 0.9;">Application de gestion des fluides frigorigenes pour les lycees professionnels</p>
             </div>
-            <form id="login-form">
-              <div class="form-group">
-                <label class="form-label required" for="login-id">Votre email ou prénom</label>
-                <input type="text" id="login-id" class="form-input" placeholder="ex: jean.dupont@ac-aix.fr ou Jean" autocomplete="username" required style="font-size: 16px; padding: 14px;">
-                <p class="form-help">Entrez n'importe quoi — un compte sera créé automatiquement avec accès complet</p>
+            <div style="padding: 20px 24px;">
+              <p style="font-size: 14px; color: #334155; line-height: 1.6; margin: 0 0 16px 0;">
+                Ce projet est developpe pour simplifier la <strong>tracabilite des fluides frigorigenes</strong> et la generation des documents reglementaires (<strong>CERFA 15497*04</strong>, fiches d'intervention, controles d'etancheite) dans le cadre de la formation en froid et climatisation.
+              </p>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+                <div style="background: #EFF6FF; padding: 10px 12px; border-radius: 8px; text-align: center;">
+                  <div style="font-size: 22px;">🏭</div>
+                  <div style="font-size: 12px; font-weight: 600; color: #1b3a63;">Parc machines</div>
+                </div>
+                <div style="background: #F0FDF4; padding: 10px 12px; border-radius: 8px; text-align: center;">
+                  <div style="font-size: 22px;">🧪</div>
+                  <div style="font-size: 12px; font-weight: 600; color: #065F46;">Stock bouteilles</div>
+                </div>
+                <div style="background: #FFF7ED; padding: 10px 12px; border-radius: 8px; text-align: center;">
+                  <div style="font-size: 22px;">📄</div>
+                  <div style="font-size: 12px; font-weight: 600; color: #92400E;">CERFA automatique</div>
+                </div>
+                <div style="background: #FDF2F8; padding: 10px 12px; border-radius: 8px; text-align: center;">
+                  <div style="font-size: 22px;">🔍</div>
+                  <div style="font-size: 12px; font-weight: 600; color: #831843;">Controles etancheite</div>
+                </div>
               </div>
 
-              <input type="hidden" id="login-password" value="">
+              <div style="background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+                <p style="margin: 0; font-size: 13px; color: #92400E; font-weight: 600;">Version beta — Votre aide est precieuse</p>
+                <p style="margin: 6px 0 0 0; font-size: 12px; color: #92400E; line-height: 1.5;">
+                  Cette version necessite encore des ameliorations. Si vous avez quelques minutes, testez les fonctionnalites et faites-moi remonter les bugs ou suggestions. Merci pour votre contribution !
+                </p>
+              </div>
 
-              <div id="login-error" class="form-error hidden"></div>
+              <form id="login-form">
+                <div class="form-group" style="margin-bottom: 12px;">
+                  <label class="form-label" for="login-id" style="font-size: 14px; font-weight: 600; color: #1b3a63;">Entrez votre email ou prenom pour commencer</label>
+                  <input type="text" id="login-id" class="form-input" placeholder="ex: jean.dupont@ac-aix.fr" autocomplete="username" required style="font-size: 16px; padding: 14px; margin-top: 6px;">
+                  <p class="form-help" style="margin-top: 4px;">Aucun mot de passe requis — un espace de test sera cree automatiquement</p>
+                </div>
 
-              <button type="submit" class="btn btn-primary btn-block btn-lg" id="login-submit">
-                <span>Tester inerWeb Fluide</span>
-              </button>
-            </form>
+                <input type="hidden" id="login-password" value="">
+                <div id="login-error" class="form-error hidden"></div>
 
-            <div style="margin-top: 12px; padding: 10px; background: #FEF3C7; border-radius: 8px; font-size: 11px; color: #92400E; text-align: center;">
-              Version démo — Toutes les fonctionnalités sont actives. Les données sont sauvegardées. Remontez les bugs à F. Henninot.
+                <button type="submit" class="btn btn-primary btn-block btn-lg" id="login-submit" style="font-size: 16px; padding: 16px;">
+                  <span>Tester l'application</span>
+                </button>
+              </form>
             </div>
           </div>
         </div>
-        
-        <p class="login-footer">
-          Traçabilité F-Gas · CERFA 15497*04
+
+        <p class="login-footer" style="max-width: 400px; line-height: 1.5;">
+          Projet pedagogique — Lycee Professionnel Jacques Raynaud, Marseille<br>
+          <span style="color: #94A3B8;">par F. Henninot — Tracabilite F-Gas · CERFA 15497*04</span>
         </p>
       </div>
     </div>
