@@ -3123,6 +3123,41 @@ function INSTALLER_INERWEB() {
   } catch(err) { ui.alert('❌ ' + err.message); }
 }
 
+function autoInit_() {
+  if (CACHE_.initDone) return;
+  var ss = DataStore.getSpreadsheet();
+  // Vérifier si les onglets existent déjà (test rapide sur MACHINES)
+  if (ss.getSheetByName(SHEETS.MACHINES)) { CACHE_.initDone = true; return; }
+  // Créer tous les onglets
+  creerOnglet_(ss, SHEETS.CONFIG, ['Clé', 'Valeur']);
+  creerOnglet_(ss, SHEETS.FLUIDES, ['Code', 'Nom', 'PRG', 'Famille', 'Sécurité', 'Obsolète']);
+  creerOnglet_(ss, SHEETS.DETECTEURS, ['Code', 'Marque', 'Modèle', 'Étalonnage', 'Prochain', 'Statut']);
+  creerOnglet_(ss, SHEETS.SITES, ['ID', 'Nom', 'Adresse', 'SIRET', 'Responsable', 'Actif']);
+  creerOnglet_(ss, SHEETS.ATELIERS, ['ID', 'Nom', 'SiteID', 'Responsable', 'Actif']);
+  creerOnglet_(ss, SHEETS.USERS, ['ID', 'Nom', 'Prénom', 'Rôle', 'Attestation', 'DateAtt', 'ValiditéAtt', 'Cat2008', 'Cat2025', 'Actif', 'Email', 'SiteID', 'AtelierID']);
+  creerOnglet_(ss, SHEETS.TECHNICIENS, ['ID', 'Nom', 'Prénom', 'Rôle', 'Attestation', 'Date', 'Validité', 'Cat2008', 'Cat2025', 'Actif', 'Email', 'SiteID', 'AtelierID']);
+  creerOnglet_(ss, SHEETS.BOUTEILLES, ['Code', 'Catégorie', 'Fluide', 'État', 'Marque', 'Tare', 'Contenance', 'MasseFluide', 'MasseTotal', 'Entrée', 'Fournisseur', 'Lot', 'Statut', 'SiteID']);
+  creerOnglet_(ss, SHEETS.MACHINES, ['Code', 'Nom', 'Type', 'Marque', 'Modèle', 'Série', 'Fluide', 'ChargeNom', 'ChargeAct', 'EqCO2', 'Localisation', 'MiseEnService', 'ProchCtrl', 'FreqCtrl', 'Statut', 'SiteID', 'ClientID', 'DetectionPerm']);
+  creerOnglet_(ss, SHEETS.MOUVEMENTS, ['ID', 'Date', 'Type', 'Machine', 'Bouteille', 'Fluide', 'EtatFluide', 'Masse', 'PeseeAvant', 'PeseeApres', 'Temp', 'Operateur', 'Validateur', 'DateValid', 'Mode', 'Detecteur', 'HP', 'BP', 'Surch', 'SousRef', 'DeltaT', 'Obs', 'Hash', 'Statut', 'Signature', 'SiteID']);
+  creerOnglet_(ss, SHEETS.CONTROLES, ['ID', 'Date', 'Machine', 'Fluide', 'Charge', 'EqCO2', 'Methode', 'Resultat', 'LocFuite', 'Operateur', 'Detecteur', 'Mode', 'ProchCtrl', 'Validateur', 'DateValid', 'Obs', 'Statut', 'SiteID']);
+  creerOnglet_(ss, SHEETS.INCIDENTS, ['ID', 'Date', 'Machine', 'Type', 'Description', 'Gravité', 'Actions', 'Responsable', 'Statut', 'Clôture', 'SiteID']);
+  creerOnglet_(ss, 'CLIENTS', ['ID', 'Nom', 'Adresse', 'CP', 'Ville', 'SIRET', 'Contact', 'Tel', 'Email', 'Actif']);
+  creerOnglet_(ss, SHEETS.INDEX_CERFA, ['NumFI', 'Date', 'Mouvement', 'Machine', 'Operateur', 'Mode', 'URL', 'NomFichier']);
+  creerOnglet_(ss, SHEETS.AUDIT_LOG, ['Timestamp', 'User', 'Role', 'Categorie', 'Action', 'Objet', 'Ancienne', 'Nouvelle', 'Resultat', 'Details']);
+  creerOnglet_(ss, SHEETS.STATS_CACHE, ['Date', 'Type', 'Data']);
+  // Supprimer Feuille 1
+  try { var f = ss.getSheetByName('Feuille 1'); if (f && ss.getSheets().length > 1) ss.deleteSheet(f); } catch(e) {}
+  try { var f = ss.getSheetByName('Sheet1'); if (f && ss.getSheets().length > 1) ss.deleteSheet(f); } catch(e) {}
+  // Init fluides
+  apiInitFluides_();
+  // Config
+  DataStore.setConfig('app_version', APP_VERSION);
+  DataStore.setConfig('etablissement', 'Lycée Jacques Raynaud (DÉMO)');
+  DataStore.setConfig('adresse', '59 traverse Charles Suzini, 13013 Marseille');
+  CACHE_.initDone = true;
+  logAudit_('SYSTEM', 'autoInit', 'v' + APP_VERSION, null, null, 'success');
+}
+
 function creerOnglet_(ss, nom, entetes) {
   var sheet = ss.getSheetByName(nom);
   if (!sheet) {
@@ -3611,6 +3646,8 @@ function afficherAlertes() {
 function doGet(e) {
   try {
     DataStore.init();
+    // Auto-initialisation au premier accès
+    autoInit_();
     var action = e.parameter.action || 'ping';
     var auth = checkAuth_(e.parameter.key || '', ACTION_LEVELS[action] || 'READ');
     if (!auth.ok) return jsonResponse_(errorResponse_(auth.error, 'AUTH'));

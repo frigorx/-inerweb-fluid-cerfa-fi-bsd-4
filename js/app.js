@@ -17,7 +17,7 @@ const App = {
     UI.init();
     
     // Configurer l'API
-    const defaultApiUrl = 'https://script.google.com/macros/s/AKfycbw3iKoYOqj_qANn-v_jP7_roiA_2-xwCqehDaC5X4mR8ItcnJlCbVkrL3jmcgZ5qjwl/exec';
+    const defaultApiUrl = 'https://script.google.com/macros/s/AKfycbyYsiur1RucxgD4bK98ZJTKfjsP9DRMxkdhtWI7enh0AhtxGB3nl7p4RO6mCED4r5U2/exec';
 
     // Nettoyage automatique du localStorage
     this.cleanupLocalStorage(defaultApiUrl);
