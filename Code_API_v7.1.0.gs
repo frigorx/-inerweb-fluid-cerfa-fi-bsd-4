@@ -1486,57 +1486,476 @@ function apiGetCerfa_(id) {
     mode: cerfaOk.data[5], urlPdf: cerfaOk.data[6], nomFichier: cerfaOk.data[7] || '' });
 }
 
+// ================================================================
+// SECTION: CERFA HTML TEMPLATE ENGINE
+// ================================================================
+
+/**
+ * Génère le HTML complet du CERFA 15497*04
+ * @param {Object} d - Données du CERFA
+ * @param {string} d.numFI - Numéro de fiche d'intervention
+ * @param {string} d.mode - FORMATION ou OFFICIEL
+ * @param {string} d.dateIntervention - Date de l'intervention
+ * @param {Object} d.operateur - {raisonSociale, siret, adresse, attestation, validiteAttestation, nomComplet}
+ * @param {Object} d.detenteur - {nom, siret, adresse}
+ * @param {Object} d.circuit - {designation, nomMachine, serie, localisation, fluideCode, fluideNom, familleFluide, chargeNominale, prg, eqCO2}
+ * @param {Object} d.intervention - {date, type, qteChargee, etatCharge, qteRecuperee, etatRecup, bouteille}
+ * @param {Object} d.controle - {methode, resultat, detecteurMarque, detecteurModele, dateVerifDetecteur}
+ * @param {string} d.detectionPermanente - Oui/Non
+ * @param {string} d.observations - Texte libre
+ * @param {boolean} d.estApercu - true si aperçu (champs vides)
+ * @returns {string} HTML complet
+ */
+function genererCerfaHTML_(d) {
+  var vide = '_______________';
+  var v = function(val) { return (val != null && val !== '' && val !== undefined) ? String(val) : vide; };
+  var ck = function(condition) { return condition ? '&#9746;' : '&#9744;'; };
+  var isFormation = (d.mode === 'FORMATION');
+  var isApercu = (d.estApercu === true);
+
+  var typeIntervention = String(d.intervention && d.intervention.type || '').toLowerCase();
+  var isMES = typeIntervention === 'miseenservice' || typeIntervention === 'mise en service';
+  var isMaint = typeIntervention === 'maintenance' || typeIntervention === 'appoint';
+  var isRepFuite = typeIntervention === 'recuperation' || typeIntervention === 'reparation fuite';
+  var isModif = typeIntervention === 'modification';
+  var isDemant = typeIntervention === 'vidange' || typeIntervention === 'demantelement';
+
+  var html = '<!DOCTYPE html>\n<html lang="fr">\n<head>\n<meta charset="UTF-8">\n';
+  html += '<title>CERFA 15497*04 - ' + v(d.numFI) + '</title>\n';
+  html += '<style>\n';
+  // Reset & page
+  html += '*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }\n';
+  html += '@page { size: A4 portrait; margin: 8mm 10mm 8mm 10mm; }\n';
+  html += 'body { font-family: Arial, Helvetica, sans-serif; font-size: 10px; line-height: 1.35; color: #000; background: #fff; }\n';
+  html += '.page { width: 190mm; min-height: 277mm; margin: 0 auto; padding: 0; position: relative; }\n';
+  // En-tête
+  html += '.header-cerfa { text-align: center; border: 2px solid #000; padding: 8px 10px 6px; margin-bottom: 6px; position: relative; }\n';
+  html += '.header-cerfa h1 { font-size: 14px; font-weight: bold; margin-bottom: 2px; letter-spacing: 0.5px; }\n';
+  html += '.header-cerfa h2 { font-size: 9px; font-weight: normal; color: #333; margin-bottom: 3px; }\n';
+  html += '.header-cerfa .ref-cerfa { font-size: 9px; color: #555; }\n';
+  html += '.header-cerfa .num-fi { position: absolute; right: 10px; top: 8px; font-size: 11px; font-weight: bold; color: #1b3a63; }\n';
+  html += '.header-cerfa .date-gen { position: absolute; left: 10px; top: 8px; font-size: 8px; color: #666; }\n';
+  // Cadres
+  html += '.cadre { border: 1.5px solid #000; margin-bottom: 5px; page-break-inside: avoid; }\n';
+  html += '.cadre-titre { background: #1b3a63; color: #fff; padding: 3px 8px; font-weight: bold; font-size: 10px; letter-spacing: 0.3px; }\n';
+  html += '.cadre-body { padding: 5px 8px; }\n';
+  // Grille
+  html += '.row { display: flex; flex-wrap: wrap; gap: 0; }\n';
+  html += '.col-2 { width: 50%; padding: 1px 4px 1px 0; }\n';
+  html += '.col-3 { width: 33.33%; padding: 1px 4px 1px 0; }\n';
+  html += '.col-1 { width: 100%; padding: 1px 0; }\n';
+  // Champs
+  html += '.champ { display: inline; }\n';
+  html += '.champ-label { font-weight: bold; font-size: 9px; color: #333; }\n';
+  html += '.champ-val { border-bottom: 1px solid #999; padding: 0 3px; min-width: 80px; display: inline-block; font-size: 10px; }\n';
+  html += '.champ-val.filled { border-bottom-color: #1b3a63; font-weight: 500; }\n';
+  // Cases à cocher
+  html += '.check-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 2px 0; }\n';
+  html += '.check-item { display: inline-flex; align-items: center; gap: 2px; font-size: 10px; }\n';
+  html += '.check-box { font-size: 13px; line-height: 1; }\n';
+  // Signatures
+  html += '.signatures { display: flex; gap: 8px; margin-top: 6px; }\n';
+  html += '.sig-box { flex: 1; border: 1.5px solid #000; }\n';
+  html += '.sig-box .cadre-titre { font-size: 9px; padding: 2px 8px; }\n';
+  html += '.sig-box .sig-area { height: 45px; padding: 4px 8px; font-size: 8px; color: #999; }\n';
+  // Footer
+  html += '.footer-cerfa { text-align: center; margin-top: 4px; font-size: 8px; color: #666; border-top: 1px solid #ccc; padding-top: 3px; }\n';
+  // QR placeholder
+  html += '.qr-zone { position: absolute; bottom: 5px; right: 5px; width: 50px; height: 50px; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; font-size: 6px; color: #aaa; text-align: center; }\n';
+  // Filigrane
+  html += '.filigrane { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-35deg); font-size: 72px; font-weight: bold; pointer-events: none; z-index: 100; user-select: none; }\n';
+  html += '.filigrane.formation { color: rgba(33, 150, 243, 0.12); }\n';
+  html += '.filigrane.apercu { color: rgba(139, 92, 246, 0.10); }\n';
+  // Tableau intervention
+  html += 'table.tbl-interv { width: 100%; border-collapse: collapse; font-size: 9px; margin: 3px 0; }\n';
+  html += 'table.tbl-interv th, table.tbl-interv td { border: 1px solid #666; padding: 2px 4px; text-align: left; }\n';
+  html += 'table.tbl-interv th { background: #e8ecf1; font-weight: bold; font-size: 8px; text-transform: uppercase; }\n';
+  // Print
+  html += '@media print {\n';
+  html += '  body { margin: 0; padding: 0; }\n';
+  html += '  .page { width: 100%; min-height: auto; margin: 0; }\n';
+  html += '  .no-print { display: none !important; }\n';
+  html += '}\n';
+  html += '</style>\n</head>\n<body>\n';
+
+  html += '<div class="page">\n';
+
+  // Filigrane
+  if (isFormation) {
+    html += '<div class="filigrane formation">FORMATION</div>\n';
+  } else if (isApercu) {
+    html += '<div class="filigrane apercu">APERÇU</div>\n';
+  }
+
+  // QR code zone
+  html += '<div class="qr-zone">' + v(d.circuit && d.circuit.designation || '') + '</div>\n';
+
+  // En-tête
+  html += '<div class="header-cerfa">\n';
+  html += '  <div class="date-gen">' + v(d.dateGeneration) + '</div>\n';
+  html += '  <div class="num-fi">N° ' + v(d.numFI) + '</div>\n';
+  html += '  <h1>FICHE D\'INTERVENTION</h1>\n';
+  html += '  <h2>en application des articles R. 543-76 à R. 543-123 du code de l\'environnement</h2>\n';
+  html += '  <div class="ref-cerfa">CERFA 15497*04</div>\n';
+  html += '</div>\n';
+
+  // CADRE 1 — OPÉRATEUR
+  var op = d.operateur || {};
+  html += '<div class="cadre">\n';
+  html += '  <div class="cadre-titre">CADRE 1 — OPÉRATEUR</div>\n';
+  html += '  <div class="cadre-body">\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-2"><span class="champ-label">Raison sociale : </span><span class="champ-val' + (op.raisonSociale ? ' filled' : '') + '">' + v(op.raisonSociale) + '</span></div>\n';
+  html += '      <div class="col-2"><span class="champ-label">N° SIRET : </span><span class="champ-val' + (op.siret ? ' filled' : '') + '">' + v(op.siret) + '</span></div>\n';
+  html += '    </div>\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-1"><span class="champ-label">Adresse : </span><span class="champ-val' + (op.adresse ? ' filled' : '') + '">' + v(op.adresse) + '</span></div>\n';
+  html += '    </div>\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-2"><span class="champ-label">N° attestation de capacité : </span><span class="champ-val' + (op.attestation ? ' filled' : '') + '">' + v(op.attestation) + '</span></div>\n';
+  html += '      <div class="col-2"><span class="champ-label">Date de validité : </span><span class="champ-val' + (op.validiteAttestation ? ' filled' : '') + '">' + v(op.validiteAttestation) + '</span></div>\n';
+  html += '    </div>\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-1"><span class="champ-label">Nom de l\'intervenant : </span><span class="champ-val' + (op.nomComplet ? ' filled' : '') + '">' + v(op.nomComplet) + '</span></div>\n';
+  html += '    </div>\n';
+  html += '  </div>\n</div>\n';
+
+  // CADRE 2 — DÉTENTEUR
+  var det = d.detenteur || {};
+  html += '<div class="cadre">\n';
+  html += '  <div class="cadre-titre">CADRE 2 — DÉTENTEUR DE L\'ÉQUIPEMENT</div>\n';
+  html += '  <div class="cadre-body">\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-2"><span class="champ-label">Nom / Raison sociale : </span><span class="champ-val' + (det.nom ? ' filled' : '') + '">' + v(det.nom) + '</span></div>\n';
+  html += '      <div class="col-2"><span class="champ-label">N° SIRET : </span><span class="champ-val' + (det.siret ? ' filled' : '') + '">' + v(det.siret) + '</span></div>\n';
+  html += '    </div>\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-1"><span class="champ-label">Adresse : </span><span class="champ-val' + (det.adresse ? ' filled' : '') + '">' + v(det.adresse) + '</span></div>\n';
+  html += '    </div>\n';
+  html += '  </div>\n</div>\n';
+
+  // CADRE 3 — CIRCUIT
+  var ci = d.circuit || {};
+  html += '<div class="cadre">\n';
+  html += '  <div class="cadre-titre">CADRE 3 — CIRCUIT CONTENANT DES FLUIDES FRIGORIGÈNES</div>\n';
+  html += '  <div class="cadre-body">\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-2"><span class="champ-label">Désignation de l\'équipement : </span><span class="champ-val' + (ci.designation ? ' filled' : '') + '">' + v(ci.designation) + (ci.nomMachine ? ' — ' + ci.nomMachine : '') + '</span></div>\n';
+  html += '      <div class="col-2"><span class="champ-label">N° de série : </span><span class="champ-val' + (ci.serie ? ' filled' : '') + '">' + v(ci.serie) + '</span></div>\n';
+  html += '    </div>\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-1"><span class="champ-label">Localisation : </span><span class="champ-val' + (ci.localisation ? ' filled' : '') + '">' + v(ci.localisation) + '</span></div>\n';
+  html += '    </div>\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-3"><span class="champ-label">Fluide frigorigène : </span><span class="champ-val' + (ci.fluideCode ? ' filled' : '') + '">' + v(ci.fluideCode) + (ci.fluideNom ? ' (' + ci.fluideNom + ')' : '') + '</span></div>\n';
+  html += '      <div class="col-3"><span class="champ-label">Type : </span><span class="champ-val' + (ci.familleFluide ? ' filled' : '') + '">' + v(ci.familleFluide) + '</span></div>\n';
+  html += '      <div class="col-3"><span class="champ-label">Charge nominale : </span><span class="champ-val' + (ci.chargeNominale ? ' filled' : '') + '">' + v(ci.chargeNominale) + ' kg</span></div>\n';
+  html += '    </div>\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-2"><span class="champ-label">GWP / PRG : </span><span class="champ-val' + (ci.prg ? ' filled' : '') + '">' + v(ci.prg) + '</span></div>\n';
+  html += '      <div class="col-2"><span class="champ-label">Teq CO2 : </span><span class="champ-val' + (ci.eqCO2 ? ' filled' : '') + '">' + v(ci.eqCO2 != null ? (Math.round(ci.eqCO2 * 1000) / 1000) : '') + ' t</span></div>\n';
+  html += '    </div>\n';
+  html += '  </div>\n</div>\n';
+
+  // CADRE 4 — NATURE DE L'INTERVENTION
+  var interv = d.intervention || {};
+  html += '<div class="cadre">\n';
+  html += '  <div class="cadre-titre">CADRE 4 — NATURE DE L\'INTERVENTION</div>\n';
+  html += '  <div class="cadre-body">\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-2"><span class="champ-label">Date : </span><span class="champ-val' + (interv.date ? ' filled' : '') + '">' + v(interv.date) + '</span></div>\n';
+  html += '    </div>\n';
+  html += '    <div class="check-group">\n';
+  html += '      <span class="check-item"><span class="check-box">' + ck(isMES) + '</span> Mise en service</span>\n';
+  html += '      <span class="check-item"><span class="check-box">' + ck(isMaint) + '</span> Maintenance / Entretien</span>\n';
+  html += '      <span class="check-item"><span class="check-box">' + ck(isRepFuite) + '</span> Réparation de fuite</span>\n';
+  html += '      <span class="check-item"><span class="check-box">' + ck(isModif) + '</span> Modification</span>\n';
+  html += '      <span class="check-item"><span class="check-box">' + ck(isDemant) + '</span> Démantèlement</span>\n';
+  html += '    </div>\n';
+  // Tableau charges / récupérations
+  html += '    <table class="tbl-interv">\n';
+  html += '      <tr><th colspan="3">Fluide frigorigène chargé</th><th colspan="3">Fluide frigorigène récupéré</th></tr>\n';
+  html += '      <tr><th>Quantité (kg)</th><th>État</th><th>N° bouteille</th><th>Quantité (kg)</th><th>État</th><th>N° bouteille</th></tr>\n';
+  html += '      <tr>';
+  // Chargé
+  var qteChargee = interv.qteChargee || '';
+  var qteRecuperee = interv.qteRecuperee || '';
+  var isCharge = typeIntervention === 'charge' || typeIntervention === 'appoint' || isMES;
+  var isRecup = typeIntervention === 'recuperation' || typeIntervention === 'vidange';
+  html += '<td>' + (isCharge ? v(qteChargee) : '') + '</td>';
+  html += '<td>' + (isCharge ? v(interv.etatCharge) : '') + '</td>';
+  html += '<td>' + (isCharge ? v(interv.bouteille) : '') + '</td>';
+  // Récupéré
+  html += '<td>' + (isRecup ? v(qteRecuperee) : '') + '</td>';
+  html += '<td>' + (isRecup ? v(interv.etatRecup) : '') + '</td>';
+  html += '<td>' + (isRecup ? v(interv.bouteille) : '') + '</td>';
+  html += '</tr>\n';
+  html += '    </table>\n';
+  html += '  </div>\n</div>\n';
+
+  // CADRE 5 — CONTRÔLE D'ÉTANCHÉITÉ
+  var ctrl = d.controle || {};
+  html += '<div class="cadre">\n';
+  html += '  <div class="cadre-titre">CADRE 5 — CONTRÔLE D\'ÉTANCHÉITÉ</div>\n';
+  html += '  <div class="cadre-body">\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-1"><span class="champ-label">Méthode : </span>\n';
+  html += '        <span class="check-item"><span class="check-box">' + ck(ctrl.methode === 'Directe') + '</span> Directe</span>\n';
+  html += '        <span class="check-item"><span class="check-box">' + ck(ctrl.methode === 'Indirecte') + '</span> Indirecte</span>\n';
+  html += '        <span class="check-item"><span class="check-box">' + ck(ctrl.methode === 'Pression') + '</span> Pression</span>\n';
+  html += '      </div>\n';
+  html += '    </div>\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-2"><span class="champ-label">Résultat : </span>\n';
+  html += '        <span class="check-item"><span class="check-box">' + ck(ctrl.resultat === 'Conforme') + '</span> Conforme</span>\n';
+  html += '        <span class="check-item"><span class="check-box">' + ck(ctrl.resultat === 'Fuite') + '</span> Fuite détectée</span>\n';
+  html += '      </div>\n';
+  html += '    </div>\n';
+  html += '    <div class="row">\n';
+  html += '      <div class="col-2"><span class="champ-label">Détecteur (marque / modèle) : </span><span class="champ-val' + (ctrl.detecteurMarque ? ' filled' : '') + '">' + v(ctrl.detecteurMarque) + (ctrl.detecteurModele ? ' / ' + ctrl.detecteurModele : '') + '</span></div>\n';
+  html += '      <div class="col-2"><span class="champ-label">Date dernière vérification : </span><span class="champ-val' + (ctrl.dateVerifDetecteur ? ' filled' : '') + '">' + v(ctrl.dateVerifDetecteur) + '</span></div>\n';
+  html += '    </div>\n';
+  html += '  </div>\n</div>\n';
+
+  // CADRE 6 — DÉTECTION PERMANENTE
+  var detPerm = d.detectionPermanente || '';
+  html += '<div class="cadre">\n';
+  html += '  <div class="cadre-titre">CADRE 6 — SYSTÈME DE DÉTECTION DE FUITE PERMANENT</div>\n';
+  html += '  <div class="cadre-body">\n';
+  html += '    <div class="check-group">\n';
+  html += '      <span class="check-item"><span class="check-box">' + ck(detPerm === 'Oui' || detPerm === true) + '</span> Oui</span>\n';
+  html += '      <span class="check-item"><span class="check-box">' + ck(detPerm === 'Non' || detPerm === false) + '</span> Non</span>\n';
+  html += '    </div>\n';
+  html += '  </div>\n</div>\n';
+
+  // CADRE 7 — OBSERVATIONS
+  html += '<div class="cadre">\n';
+  html += '  <div class="cadre-titre">CADRE 7 — OBSERVATIONS</div>\n';
+  html += '  <div class="cadre-body">\n';
+  html += '    <div style="min-height: 35px; padding: 3px 0; font-size: 10px; white-space: pre-wrap;">' + v(d.observations) + '</div>\n';
+  html += '  </div>\n</div>\n';
+
+  // SIGNATURES
+  html += '<div class="signatures">\n';
+  html += '  <div class="sig-box"><div class="cadre-titre">SIGNATURE DE L\'OPÉRATEUR</div><div class="sig-area">Nom : ' + v(op.nomComplet) + '<br>Date : ' + v(d.dateIntervention) + '</div></div>\n';
+  html += '  <div class="sig-box"><div class="cadre-titre">SIGNATURE DU DÉTENTEUR</div><div class="sig-area">Nom : ' + v(det.nom) + '<br>Date : ' + v(d.dateIntervention) + '</div></div>\n';
+  html += '</div>\n';
+
+  // Footer
+  html += '<div class="footer-cerfa">';
+  if (isFormation) {
+    html += '<strong style="color: #2196F3;">DOCUMENT DE FORMATION — NON COMPTABILISÉ OFFICIELLEMENT</strong><br>';
+  }
+  html += 'Généré par inerWeb Fluides v' + APP_VERSION + ' le ' + v(d.dateGeneration) + ' | Mode : ' + (d.mode || 'FORMATION');
+  html += '</div>\n';
+
+  html += '</div>\n'; // fin .page
+  html += '</body>\n</html>';
+
+  return html;
+}
+
+/**
+ * Construit le texte brut de compatibilité à partir des données CERFA
+ */
+function genererCerfaTexteBrut_(d) {
+  var v = function(val) { return (val != null && val !== '') ? String(val) : '___'; };
+  var op = d.operateur || {};
+  var det = d.detenteur || {};
+  var ci = d.circuit || {};
+  var interv = d.intervention || {};
+
+  var content = '';
+  content += '════════════════════════════════════════════════════════════════\n';
+  content += '           FICHE D\'INTERVENTION — CERFA 15497*04\n';
+  content += '════════════════════════════════════════════════════════════════\n\n';
+  if (d.mode === 'FORMATION') {
+    content += '⚠️ DOCUMENT DE FORMATION — NON COMPTABILISÉ OFFICIELLEMENT\n\n';
+  }
+  content += 'N° FI          : ' + v(d.numFI) + '\n';
+  content += 'Date           : ' + v(d.dateIntervention) + '\n';
+  content += 'Mode           : ' + v(d.mode) + '\n\n';
+  content += '─── CADRE 1 — OPÉRATEUR ────────────────────────────────────────\n';
+  content += 'Raison sociale : ' + v(op.raisonSociale) + '\n';
+  content += 'SIRET          : ' + v(op.siret) + '\n';
+  content += 'Adresse        : ' + v(op.adresse) + '\n';
+  content += 'Attestation    : ' + v(op.attestation) + ' (validité: ' + v(op.validiteAttestation) + ')\n';
+  content += 'Intervenant    : ' + v(op.nomComplet) + '\n\n';
+  content += '─── CADRE 2 — DÉTENTEUR ────────────────────────────────────────\n';
+  content += 'Nom            : ' + v(det.nom) + '\n';
+  content += 'SIRET          : ' + v(det.siret) + '\n';
+  content += 'Adresse        : ' + v(det.adresse) + '\n\n';
+  content += '─── CADRE 3 — CIRCUIT ──────────────────────────────────────────\n';
+  content += 'Désignation    : ' + v(ci.designation) + '\n';
+  content += 'N° série       : ' + v(ci.serie) + '\n';
+  content += 'Fluide         : ' + v(ci.fluideCode) + ' (' + v(ci.familleFluide) + ')\n';
+  content += 'Charge nom.    : ' + v(ci.chargeNominale) + ' kg\n';
+  content += 'PRG            : ' + v(ci.prg) + '\n';
+  content += 'Teq CO2        : ' + v(ci.eqCO2) + ' t\n\n';
+  content += '─── CADRE 4 — INTERVENTION ─────────────────────────────────────\n';
+  content += 'Type           : ' + v(interv.type) + '\n';
+  content += 'Date           : ' + v(interv.date) + '\n';
+  content += 'Qté chargée    : ' + v(interv.qteChargee) + ' kg (' + v(interv.etatCharge) + ')\n';
+  content += 'Qté récupérée  : ' + v(interv.qteRecuperee) + ' kg (' + v(interv.etatRecup) + ')\n';
+  content += 'Bouteille      : ' + v(interv.bouteille) + '\n\n';
+  content += '════════════════════════════════════════════════════════════════\n';
+  content += 'Généré par inerWeb Fluides v' + APP_VERSION + '\n';
+  return content;
+}
+
+/**
+ * Collecte les données complètes pour un mouvement (utilisé par genererCerfa et genererCerfaPrecharge)
+ */
+function collecterDonneesCerfa_(mvtData, machineCode, operateurId, mode) {
+  // Config opérateur
+  var config = {};
+  DataStore.findAll(SHEETS.CONFIG).forEach(function(row) { if (row[0]) config[row[0]] = row[1]; });
+
+  // Données machine
+  var machOk = DataStore.findById(SHEETS.MACHINES, machineCode);
+  var machData = machOk.ok ? machOk.data : [];
+  var fluideCode = machData[6] || (mvtData ? mvtData[5] : '');
+  var chargeNom = parseFloat(machData[7]) || 0;
+  var chargeAct = parseFloat(machData[8]) || chargeNom;
+  var serie = machData[5] || '';
+  var localisation = machData[10] || '';
+  var clientId = machData[16] || '';
+  var detectionPerm = machData[17] || '';
+  var nomMachine = machData[1] || '';
+
+  // PRG et famille fluide
+  var prg = getPRGFluide_(fluideCode);
+  var eqCO2 = calculerEqCO2_(chargeAct, prg);
+  var fluideInfo = DataStore.findById(SHEETS.FLUIDES, fluideCode);
+  var fluideNom = fluideInfo.ok ? fluideInfo.data[1] : '';
+  var familleFluide = fluideInfo.ok ? fluideInfo.data[3] : '';
+
+  // Détenteur (client)
+  var detenteur = {};
+  if (clientId) {
+    var cliOk = DataStore.findById('CLIENTS', clientId);
+    if (cliOk.ok) {
+      detenteur = {
+        nom: cliOk.data[1] || '',
+        adresse: ((cliOk.data[2] || '') + ' ' + (cliOk.data[3] || '') + ' ' + (cliOk.data[4] || '')).trim(),
+        siret: cliOk.data[5] || ''
+      };
+    }
+  }
+
+  // Opérateur (utilisateur)
+  var operateur = {
+    raisonSociale: config.etablissement || '',
+    siret: config.siret || '',
+    adresse: config.adresse || '',
+    attestation: '',
+    validiteAttestation: '',
+    nomComplet: operateurId || ''
+  };
+  if (operateurId) {
+    var userOk = findUser_(operateurId);
+    if (userOk.ok) {
+      operateur.nomComplet = ((userOk.user.prenom || '') + ' ' + (userOk.user.nom || '')).trim() || operateurId;
+      operateur.attestation = userOk.user.attestation || '';
+      operateur.validiteAttestation = userOk.user.validiteAttestation ? formatDate_(userOk.user.validiteAttestation) : '';
+    }
+  }
+
+  // Détecteur
+  var detecteurInfo = {};
+  if (mvtData && mvtData[15]) {
+    var detOk = DataStore.findById(SHEETS.DETECTEURS, mvtData[15]);
+    if (detOk.ok) {
+      detecteurInfo = { marque: detOk.data[1] || '', modele: detOk.data[2] || '', dateVerif: formatDate_(detOk.data[3]) };
+    }
+  }
+
+  // Déterminer type d'intervention lisible
+  var typeMap = { 'Charge': 'Charge', 'Appoint': 'Maintenance / Entretien', 'Recuperation': 'Récupération', 'Vidange': 'Vidange / Démantèlement', 'MiseEnService': 'Mise en service' };
+  var typeIntervention = mvtData ? (typeMap[mvtData[2]] || mvtData[2] || '') : '';
+
+  // Quantités chargées / récupérées
+  var masse = mvtData ? (parseFloat(mvtData[7]) || 0) : 0;
+  var typeRaw = mvtData ? mvtData[2] : '';
+  var isChargeType = (typeRaw === 'Charge' || typeRaw === 'Appoint' || typeRaw === 'MiseEnService');
+  var isRecupType = (typeRaw === 'Recuperation' || typeRaw === 'Vidange');
+
+  // Détection permanente
+  var detPermVal = '';
+  if (detectionPerm === true || detectionPerm === 'Oui' || detectionPerm === 'true') detPermVal = 'Oui';
+  else if (detectionPerm === false || detectionPerm === 'Non' || detectionPerm === 'false' || detectionPerm === '') detPermVal = 'Non';
+  else detPermVal = String(detectionPerm);
+
+  return {
+    mode: mode,
+    dateGeneration: formatDateTime_(new Date()),
+    dateIntervention: mvtData ? formatDateTime_(mvtData[1]) : formatDateTime_(new Date()),
+    operateur: operateur,
+    detenteur: detenteur,
+    circuit: {
+      designation: machineCode,
+      nomMachine: nomMachine,
+      serie: serie,
+      localisation: localisation,
+      fluideCode: fluideCode,
+      fluideNom: fluideNom,
+      familleFluide: familleFluide,
+      chargeNominale: chargeNom,
+      prg: prg,
+      eqCO2: eqCO2
+    },
+    intervention: {
+      date: mvtData ? formatDateTime_(mvtData[1]) : '',
+      type: typeIntervention,
+      qteChargee: isChargeType ? masse : '',
+      etatCharge: isChargeType ? (mvtData ? mvtData[6] : '') : '',
+      qteRecuperee: isRecupType ? masse : '',
+      etatRecup: isRecupType ? (mvtData ? mvtData[6] : '') : '',
+      bouteille: mvtData ? mvtData[4] : ''
+    },
+    controle: {
+      methode: detecteurInfo.marque ? 'Directe' : '',
+      resultat: '',
+      detecteurMarque: detecteurInfo.marque || '',
+      detecteurModele: detecteurInfo.modele || '',
+      dateVerifDetecteur: detecteurInfo.dateVerif || ''
+    },
+    detectionPermanente: detPermVal,
+    observations: mvtData ? (mvtData[21] || '') : ''
+  };
+}
+
 function apiGenererCerfa_(data) {
   var mvtOk = DataStore.findById(SHEETS.MOUVEMENTS, data.id);
   if (!mvtOk.ok) return errorResponse_('Mouvement: ' + mvtOk.error);
-  
+
   var mode = mvtOk.data[14] || 'FORMATION';
   var modeRules = MODE_RULES[mode];
   var prefixe = modeRules ? modeRules.prefixeCerfa : 'FI';
-  
+
   var numFI = DataStore.generateId(prefixe);
   var machine = mvtOk.data[3];
   var dateStr = formatDateISO_(mvtOk.data[1]);
   var nomFichier = numFI + '_' + machine + '_' + dateStr;
-  
-  var content = '═══════════════════════════════════════════════════════════════\n';
-  content += '                 FICHE D\'INTERVENTION - CERFA 15497*04\n';
-  content += '═══════════════════════════════════════════════════════════════\n\n';
-  
-  if (mode === 'FORMATION') {
-    content += '╔═══════════════════════════════════════════════════════════════╗\n';
-    content += '║   ⚠️  DOCUMENT DE FORMATION - NON COMPTABILISÉ OFFICIELLEMENT  ║\n';
-    content += '╚═══════════════════════════════════════════════════════════════╝\n\n';
-  }
-  
-  content += 'N° FI          : ' + numFI + '\n';
-  content += 'Date           : ' + formatDateTime_(mvtOk.data[1]) + '\n';
-  content += 'Mode           : ' + mode + '\n\n';
-  content += '─── ÉQUIPEMENT ─────────────────────────────────────────────────\n';
-  content += 'Machine        : ' + machine + '\n';
-  content += 'Fluide         : ' + mvtOk.data[5] + '\n\n';
-  content += '─── INTERVENTION ───────────────────────────────────────────────\n';
-  content += 'Type           : ' + mvtOk.data[2] + '\n';
-  content += 'Bouteille      : ' + mvtOk.data[4] + '\n';
-  content += 'État fluide    : ' + mvtOk.data[6] + '\n';
-  content += 'Masse (kg)     : ' + mvtOk.data[7] + '\n';
-  content += 'Pesée avant    : ' + mvtOk.data[8] + ' kg\n';
-  content += 'Pesée après    : ' + mvtOk.data[9] + ' kg\n\n';
-  content += '─── OPÉRATEUR ──────────────────────────────────────────────────\n';
-  content += 'Intervenant    : ' + mvtOk.data[11] + '\n';
-  content += 'Validateur     : ' + (mvtOk.data[12] || 'En attente') + '\n';
-  content += 'Date valid.    : ' + (formatDateTime_(mvtOk.data[13]) || 'En attente') + '\n\n';
-  content += '═══════════════════════════════════════════════════════════════\n';
-  content += 'Généré par inerWeb Fluides v' + APP_VERSION + ' le ' + formatDateTime_(new Date()) + '\n';
-  content += '═══════════════════════════════════════════════════════════════\n';
-  
-  var file = DriveApp.getRootFolder().createFile(Utilities.newBlob(content, 'text/plain', nomFichier + '.txt'));
+
+  // Collecter les données complètes
+  var donnees = collecterDonneesCerfa_(mvtOk.data, machine, mvtOk.data[11], mode);
+  donnees.numFI = numFI;
+
+  // Générer le HTML
+  var htmlContent = genererCerfaHTML_(donnees);
+
+  // Générer le texte brut pour compatibilité
+  var texteBrut = genererCerfaTexteBrut_(donnees);
+
+  // Sauvegarder en HTML sur Drive
+  var file = DriveApp.getRootFolder().createFile(Utilities.newBlob(htmlContent, 'text/html', nomFichier + '.html'));
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-  
+
   DataStore.insert(SHEETS.INDEX_CERFA, [numFI, new Date(), data.id, machine, mvtOk.data[11], mode, file.getUrl(), nomFichier]);
   logAudit_('CERFA', 'generer', numFI, null, { mouvement: data.id, mode: mode, nomFichier: nomFichier }, 'success');
-  
-  return successResponse_({ id: numFI, url: file.getUrl(), nomFichier: nomFichier, mode: mode });
+
+  return successResponse_({ id: numFI, html: htmlContent, contenu: texteBrut, urlPdf: file.getUrl(), url: file.getUrl(), nomFichier: nomFichier, mode: mode });
 }
 
 // ================================================================
@@ -1872,63 +2291,33 @@ function apiInitFluides_() {
 // ================================================================
 
 function apiPreviewCerfa_() {
+  // Récupérer la config opérateur pour pré-remplir le cadre 1
   var config = {};
   DataStore.findAll(SHEETS.CONFIG).forEach(function(row) { if (row[0]) config[row[0]] = row[1]; });
 
-  var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>CERFA 15497*04 - Aperçu</title>';
-  html += '<style>body{font-family:Arial,sans-serif;margin:20px;font-size:12px;}';
-  html += '.cadre{border:2px solid #000;margin:10px 0;padding:10px;} .cadre-titre{background:#1b3a63;color:white;padding:6px 10px;font-weight:bold;margin:-10px -10px 10px -10px;}';
-  html += '.champ{display:inline-block;border-bottom:1px dotted #999;min-width:150px;padding:2px 4px;margin:2px 0;}';
-  html += '.header{text-align:center;border:3px solid #000;padding:15px;margin-bottom:15px;}';
-  html += '.header h1{margin:0;font-size:16px;} .header h2{margin:4px 0;font-size:13px;color:#333;}';
-  html += '.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}';
-  html += '.formation{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:60px;color:rgba(139,92,246,0.15);font-weight:bold;pointer-events:none;}';
-  html += '@media print{body{margin:0;} .no-print{display:none;}}</style></head><body>';
-  html += '<div style="position:relative;">';
-  html += '<div class="formation">APERÇU</div>';
-  html += '<div class="header"><h1>FICHE D\'INTERVENTION</h1><h2>en application des articles R. 543-76 à R. 543-123 du code de l\'environnement</h2><p>CERFA 15497*04</p></div>';
+  var donnees = {
+    numFI: 'APERÇU',
+    mode: 'FORMATION',
+    estApercu: true,
+    dateGeneration: formatDateTime_(new Date()),
+    dateIntervention: '',
+    operateur: {
+      raisonSociale: config.etablissement || '',
+      siret: config.siret || '',
+      adresse: config.adresse || '',
+      attestation: '',
+      validiteAttestation: '',
+      nomComplet: ''
+    },
+    detenteur: {},
+    circuit: {},
+    intervention: {},
+    controle: {},
+    detectionPermanente: '',
+    observations: ''
+  };
 
-  html += '<div class="cadre"><div class="cadre-titre">CADRE 1 — OPÉRATEUR</div>';
-  html += '<div class="grid"><div>Raison sociale : <span class="champ">' + (config.etablissement || '___') + '</span></div>';
-  html += '<div>N° SIRET : <span class="champ">' + (config.siret || '___') + '</span></div></div>';
-  html += '<div>Adresse : <span class="champ">' + (config.adresse || '___') + '</span></div></div>';
-
-  html += '<div class="cadre"><div class="cadre-titre">CADRE 2 — DÉTENTEUR DE L\'ÉQUIPEMENT</div>';
-  html += '<div class="grid"><div>Nom / Raison sociale : <span class="champ">___</span></div>';
-  html += '<div>N° SIRET : <span class="champ">___</span></div></div>';
-  html += '<div>Adresse : <span class="champ">___</span></div></div>';
-
-  html += '<div class="cadre"><div class="cadre-titre">CADRE 3 — CIRCUIT CONTENANT DES GAZ FLUORÉS</div>';
-  html += '<div class="grid"><div>Désignation : <span class="champ">___</span></div>';
-  html += '<div>N° série : <span class="champ">___</span></div>';
-  html += '<div>Fluide : <span class="champ">___</span></div>';
-  html += '<div>Charge nominale : <span class="champ">___</span> kg</div>';
-  html += '<div>GWP/PRG : <span class="champ">___</span></div>';
-  html += '<div>Teq CO2 : <span class="champ">___</span></div></div></div>';
-
-  html += '<div class="cadre"><div class="cadre-titre">CADRE 4 — NATURE DE L\'INTERVENTION</div>';
-  html += '<div class="grid"><div>☐ Mise en service ☐ Maintenance ☐ Réparation</div>';
-  html += '<div>Date : <span class="champ">___</span></div></div>';
-  html += '<p>Quantité chargée : <span class="champ">___</span> kg | Quantité récupérée : <span class="champ">___</span> kg</p></div>';
-
-  html += '<div class="cadre"><div class="cadre-titre">CADRE 5 — CONTRÔLE D\'ÉTANCHÉITÉ</div>';
-  html += '<div class="grid"><div>Méthode : <span class="champ">___</span></div>';
-  html += '<div>Résultat : <span class="champ">___</span></div>';
-  html += '<div>Détecteur : <span class="champ">___</span></div>';
-  html += '<div>Date vérification : <span class="champ">___</span></div></div></div>';
-
-  html += '<div class="cadre"><div class="cadre-titre">CADRE 6 — DÉTECTION PERMANENTE</div>';
-  html += '<p>☐ Oui ☐ Non</p></div>';
-
-  html += '<div class="cadre"><div class="cadre-titre">CADRE 7 — OBSERVATIONS</div>';
-  html += '<p style="min-height:40px;">___</p></div>';
-
-  html += '<div class="grid" style="margin-top:15px;"><div class="cadre"><div class="cadre-titre">SIGNATURE OPÉRATEUR</div><div style="height:60px;"></div></div>';
-  html += '<div class="cadre"><div class="cadre-titre">SIGNATURE DÉTENTEUR</div><div style="height:60px;"></div></div></div>';
-
-  html += '<p style="text-align:center;margin-top:10px;font-size:10px;color:#666;">Généré par inerWeb Fluide — Aperçu non officiel</p>';
-  html += '</div></body></html>';
-
+  var html = genererCerfaHTML_(donnees);
   return successResponse_({ html: html });
 }
 
@@ -1983,29 +2372,44 @@ function apiGenererCerfaPrecharge_(params) {
   var machine = params.machine;
   var machOk = DataStore.findById(SHEETS.MACHINES, machine);
   if (!machOk.ok) return errorResponse_('Machine non trouvée');
+
   var mode = params.mode === 'OFFICIEL' ? 'OFFICIEL' : 'FORMATION';
   var prefixe = mode === 'OFFICIEL' ? 'FI' : 'FORM';
   var numFI = DataStore.generateId(prefixe);
   var charge = parseFloat(machOk.data[8]) || parseFloat(machOk.data[7]) || 0;
-  var fluide = machOk.data[6];
-  var content = '═══════════════════════════════════════════════════════════════\n';
-  content += '                 FICHE D\'INTERVENTION — CERFA 15497*04\n';
-  content += '               PRÉCHARGE USINE — MISE EN SERVICE\n';
-  content += '═══════════════════════════════════════════════════════════════\n\n';
-  if (mode === 'FORMATION') content += '⚠️ DOCUMENT DE FORMATION — NON COMPTABILISÉ\n\n';
-  content += 'N° FI          : ' + numFI + '\n';
-  content += 'Date           : ' + formatDateTime_(new Date()) + '\n';
-  content += 'Machine        : ' + machine + ' — ' + machOk.data[1] + '\n';
-  content += 'Fluide         : ' + fluide + '\n';
-  content += 'Charge usine   : ' + charge + ' kg\n';
-  content += 'Type           : Précharge usine (fluide neuf origine constructeur)\n';
-  content += 'Opérateur      : ' + sanitize_(params.operateur, 100) + '\n';
-  content += '═══════════════════════════════════════════════════════════════\n';
-  var file = DriveApp.getRootFolder().createFile(Utilities.newBlob(content, 'text/plain', numFI + '_' + machine + '_precharge.txt'));
+  var nomFichier = numFI + '_' + machine + '_precharge';
+  var operateurId = sanitize_(params.operateur, 100);
+
+  // Construire un faux mvtData pour la précharge (mise en service usine)
+  // On simule un mouvement MiseEnService avec la charge usine
+  var fakeMvtData = [];
+  fakeMvtData[1] = new Date();       // Date
+  fakeMvtData[2] = 'MiseEnService';  // Type
+  fakeMvtData[3] = machine;          // Machine
+  fakeMvtData[4] = '';               // Bouteille (précharge = pas de bouteille)
+  fakeMvtData[5] = machOk.data[6];   // Fluide
+  fakeMvtData[6] = 'Neuf';           // État fluide (précharge usine = neuf)
+  fakeMvtData[7] = charge;           // Masse
+  fakeMvtData[11] = operateurId;     // Opérateur
+  fakeMvtData[14] = mode;            // Mode
+  fakeMvtData[15] = '';              // Détecteur
+  fakeMvtData[21] = 'Précharge usine — fluide neuf origine constructeur'; // Observations
+
+  var donnees = collecterDonneesCerfa_(fakeMvtData, machine, operateurId, mode);
+  donnees.numFI = numFI;
+
+  // Générer HTML et texte brut
+  var htmlContent = genererCerfaHTML_(donnees);
+  var texteBrut = genererCerfaTexteBrut_(donnees);
+
+  // Sauvegarder en HTML sur Drive
+  var file = DriveApp.getRootFolder().createFile(Utilities.newBlob(htmlContent, 'text/html', nomFichier + '.html'));
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-  DataStore.insert(SHEETS.INDEX_CERFA, [numFI, new Date(), 'PRECHARGE', machine, params.operateur, mode, file.getUrl(), numFI + '_precharge']);
+
+  DataStore.insert(SHEETS.INDEX_CERFA, [numFI, new Date(), 'PRECHARGE', machine, operateurId, mode, file.getUrl(), nomFichier]);
   logAudit_('CERFA', 'genererPrecharge', numFI, null, { machine: machine, charge: charge, mode: mode }, 'success');
-  return successResponse_({ id: numFI, contenu: content, urlPdf: file.getUrl() });
+
+  return successResponse_({ id: numFI, html: htmlContent, contenu: texteBrut, urlPdf: file.getUrl(), url: file.getUrl(), nomFichier: nomFichier, mode: mode });
 }
 
 function onOpen() {
