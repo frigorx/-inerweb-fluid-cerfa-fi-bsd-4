@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#1b3a63">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="description" content="inerWeb Fluide - Traçabilité fluides frigorigènes et CERFA 15497*04">
-  
-  <title>inerWeb Fluide</title>
+  <meta name="description" content="inerWeb Fluide DÉMO - Traçabilité fluides frigorigènes et CERFA 15497*04">
+
+  <title>inerWeb Fluide DÉMO</title>
   
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="192x192" href="img/icon-192.png">
@@ -31,6 +31,8 @@
             <line stroke="#e8914a" stroke-width="3" x1="60" x2="210" y1="58" y2="58"/>
             <rect fill="#e8914a" x="220" y="20" rx="6" ry="6" width="90" height="32"/>
             <text fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="18px" font-weight="bold" x="265" y="43" text-anchor="middle">Fluide</text>
+            <rect fill="#F59E0B" x="315" y="22" rx="4" ry="4" width="55" height="28"/>
+            <text fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="13px" font-weight="bold" x="342" y="41" text-anchor="middle">DÉMO</text>
             <text fill="#cccccc" font-family="Segoe UI, sans-serif" font-size="11px" x="60" y="80">par F. Henninot</text>
           </svg>
         </div>
@@ -39,24 +41,28 @@
           <div class="card-body">
             <h2 class="login-title">Connexion</h2>
             
+            <div style="background: linear-gradient(135deg, #F59E0B, #D97706); color: white; padding: 10px 16px; border-radius: 8px; margin-bottom: 16px; text-align: center; font-weight: 600; font-size: 13px;">
+              MODE DÉMO — Accès libre pour tester
+            </div>
             <form id="login-form">
               <div class="form-group">
-                <label class="form-label required" for="login-id">Identifiant</label>
-                <input type="text" id="login-id" class="form-input" placeholder="Code ou nom" autocomplete="username" required>
+                <label class="form-label required" for="login-id">Votre email ou prénom</label>
+                <input type="text" id="login-id" class="form-input" placeholder="ex: jean.dupont@ac-aix.fr ou Jean" autocomplete="username" required style="font-size: 16px; padding: 14px;">
+                <p class="form-help">Entrez n'importe quoi — un compte sera créé automatiquement avec accès complet</p>
               </div>
-              
-              <div class="form-group">
-                <label class="form-label" for="login-password">Mot de passe</label>
-                <input type="password" id="login-password" class="form-input" placeholder="Optionnel" autocomplete="current-password">
-                <p class="form-help">Laissez vide en mode formation</p>
-              </div>
-              
+
+              <input type="hidden" id="login-password" value="">
+
               <div id="login-error" class="form-error hidden"></div>
-              
+
               <button type="submit" class="btn btn-primary btn-block btn-lg" id="login-submit">
-                <span>Se connecter</span>
+                <span>Tester inerWeb Fluide</span>
               </button>
             </form>
+
+            <div style="margin-top: 12px; padding: 10px; background: #FEF3C7; border-radius: 8px; font-size: 11px; color: #92400E; text-align: center;">
+              Version démo — Toutes les fonctionnalités sont actives. Les données sont sauvegardées. Remontez les bugs à F. Henninot.
+            </div>
           </div>
         </div>
         
@@ -84,6 +90,7 @@
         </div>
         
         <div class="header-center">
+          <span style="background:#F59E0B;color:white;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;margin-right:8px;letter-spacing:0.5px;">DÉMO</span>
           <div id="mode-badge" class="mode-badge formation">
             <span id="mode-label">Mode Formation</span>
           </div>

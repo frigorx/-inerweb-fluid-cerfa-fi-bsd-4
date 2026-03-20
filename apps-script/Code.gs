@@ -387,11 +387,25 @@ function checkAuth_(apiKey, requiredLevel) {
 function apiLogin_(data) {
   var identifiant = sanitize_(data.identifiant, 100);
   if (!identifiant) return errorResponse_('Identifiant obligatoire', 'LOGIN_REQUIRED');
-  
+
   var userData = findUser_(identifiant);
+
+  // MODE DÉMO : auto-création si l'utilisateur n'existe pas
   if (!userData.ok) {
-    logAudit_('AUTH', 'loginEchec', identifiant, null, null, 'blocked');
-    return errorResponse_('Identifiant non reconnu', 'USER_NOT_FOUND');
+    var isEmail = identifiant.indexOf('@') > 0;
+    var nom = isEmail ? identifiant.split('@')[0] : identifiant;
+    var prenom = 'Démo';
+    var newId = 'demo_' + nom.replace(/[^a-zA-Z0-9]/g, '').substring(0, 20);
+    var ss = DataStore.getSpreadsheet();
+    var sheet = ss.getSheetByName(SHEETS.USERS);
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEETS.USERS);
+      sheet.getRange(1, 1, 1, 13).setValues([['id', 'nom', 'prenom', 'role', 'attestation', 'numAttestation', 'validiteAttestation', 'telephone', 'actif', 'emailNotif', 'email', 'siteId', 'atelierId']]);
+    }
+    sheet.appendRow([newId, nom, prenom, 'ADMIN', '', '', '', '', true, '', isEmail ? identifiant : '', '', '']);
+    logAudit_('AUTH', 'autoCreateDemo', newId, null, { identifiant: identifiant }, 'success');
+    userData = findUser_(newId);
+    if (!userData.ok) return errorResponse_('Erreur création compte démo');
   }
   
   var user = userData.user;
@@ -993,7 +1007,10 @@ function apiValiderMouvement_(data) {
   var hash = genererHash_(mvtOk.data);
   DataStore.update(SHEETS.MOUVEMENTS, mvtOk.row, 13, [validateur, new Date()]);
   DataStore.update(SHEETS.MOUVEMENTS, mvtOk.row, 23, [hash, 'valide']);
-  
+
+  // Auto-génération CERFA après validation réussie (Faille 4)
+  try { apiGenererCerfa_({ id: data.id }); } catch(e) { Logger.log('Auto-CERFA error: ' + e.message); }
+
   var comptabilise = mode === 'OFFICIEL';
   logAudit_('MOUVEMENT', 'valider', data.id, { statut: statut }, { statut: 'valide', validateur: validateur, mode: mode, comptabilise: comptabilise }, 'success');
   
@@ -1023,9 +1040,16 @@ function apiAnnulerMouvement_(data) {
   
   DataStore.updateCell(SHEETS.MOUVEMENTS, mvtOk.row, 22, (mvtOk.data[21] || '') + ' [ANNULÉ: ' + motif + ']');
   DataStore.updateCell(SHEETS.MOUVEMENTS, mvtOk.row, 24, 'annule');
-  
+
+  // Marquer les CERFA liés comme annulés (Faille 6)
+  DataStore.findAll(SHEETS.INDEX_CERFA).forEach(function(row, idx) {
+    if (row[2] === data.id) {
+      DataStore.updateCell(SHEETS.INDEX_CERFA, idx + 2, 8, 'ANNULE - ' + motif);
+    }
+  });
+
   logAudit_('MOUVEMENT', 'annuler', data.id, { statut: statut }, { statut: 'annule', motif: motif, rollback: rollback }, 'success');
-  
+
   return successResponse_({ id: data.id, statut: 'annule', rollback: rollback });
 }
 
@@ -1098,12 +1122,25 @@ function apiCreateControle_(data) {
   
   var numCtrl = DataStore.generateId('CTRL');
   var siteId = machOk.data[15] || '';
-  
+
+  // Faille 9 : Vérifier si le détecteur est périmé et ajouter un warning
+  var warningDetecteur = '';
+  if (data.detecteur) {
+    var detectOk = DataStore.findById(SHEETS.DETECTEURS, data.detecteur);
+    if (detectOk.ok && detectOk.data[4]) {
+      var dateProchain = new Date(detectOk.data[4]);
+      if (!isNaN(dateProchain) && dateProchain < new Date()) {
+        warningDetecteur = ' [ATTENTION: Détecteur ' + data.detecteur + ' étalonnage échu le ' + formatDate_(dateProchain) + ']';
+      }
+    }
+  }
+
   // LOT 18: Statut fuite = nécessite résolution
   var statutCtrl = resultat.value === 'Fuite' ? 'fuite_non_resolue' : 'valide';
-  
+
+  var observations = sanitize_(data.localisationFuite, 200) + warningDetecteur;
   var rowData = [numCtrl, new Date(), data.machine, fluide, charge, eqCO2, methode.value, resultat.value,
-    sanitize_(data.localisationFuite, 200), operateur, sanitize_(data.detecteur, 50), mode, prochCtrl, '', '', '', statutCtrl, siteId];
+    observations, operateur, sanitize_(data.detecteur, 50), mode, prochCtrl, '', '', '', statutCtrl, siteId];
   
   DataStore.insert(SHEETS.CONTROLES, rowData);
   
@@ -1570,6 +1607,7 @@ function apiExportHistoriqueBouteille_(params) { return apiExportPro_({ type: 'h
 function apiExportBilanExcel_(params) {
   var annee = parseInt(params.annee) || new Date().getFullYear();
   var filtreFluide = params.fluide || null;
+  var includeFormation = params.includeFormation === 'true';
 
   // --- Collecter la config opérateur ---
   var config = {};
@@ -1584,12 +1622,12 @@ function apiExportBilanExcel_(params) {
     if (row[0]) fluidesInfo[row[0]] = { nom: row[1] || '', prg: parseFloat(row[2]) || 0 };
   });
 
-  // Collecter les mouvements valides de l'année
+  // Collecter les mouvements valides de l'année (Faille 5 : filtre OFFICIEL seulement par défaut)
   DataStore.findAll(SHEETS.MOUVEMENTS).forEach(function(row) {
     if (!row[0]) return;
     var date = new Date(row[1]);
     if (date.getFullYear() !== annee) return;
-    if (row[23] !== 'valide') return;
+    if (row[23] !== 'valide' || (!includeFormation && row[14] !== 'OFFICIEL')) return;
 
     var fluide = row[5];
     if (filtreFluide && fluide !== filtreFluide) return;
@@ -1940,10 +1978,11 @@ function genererCerfaHTML_(d) {
 
   var typeIntervention = String(d.intervention && d.intervention.type || '').toLowerCase();
   var isMES = typeIntervention === 'miseenservice' || typeIntervention === 'mise en service';
-  var isMaint = typeIntervention === 'maintenance' || typeIntervention === 'appoint';
-  var isRepFuite = typeIntervention === 'recuperation' || typeIntervention === 'reparation fuite';
+  var isMaint = typeIntervention === 'maintenance' || typeIntervention === 'appoint' || typeIntervention === 'charge' || typeIntervention === 'recuperation';
+  var isRepFuite = typeIntervention === 'reparation fuite';
   var isModif = typeIntervention === 'modification';
   var isDemant = typeIntervention === 'vidange' || typeIntervention === 'demantelement';
+  var isAutre = typeIntervention === 'transfert';
 
   var html = '<!DOCTYPE html>\n<html lang="fr">\n<head>\n<meta charset="UTF-8">\n';
   html += '<title>CERFA 15497*04 - ' + v(d.numFI) + '</title>\n';
@@ -2096,6 +2135,7 @@ function genererCerfaHTML_(d) {
   html += '      <span class="check-item"><span class="check-box">' + ck(isRepFuite) + '</span> Réparation de fuite</span>\n';
   html += '      <span class="check-item"><span class="check-box">' + ck(isModif) + '</span> Modification</span>\n';
   html += '      <span class="check-item"><span class="check-box">' + ck(isDemant) + '</span> Démantèlement</span>\n';
+  html += '      <span class="check-item"><span class="check-box">' + ck(isAutre) + '</span> Autre</span>\n';
   html += '    </div>\n';
   // Tableau charges / récupérations
   html += '    <table class="tbl-interv">\n';
@@ -2738,12 +2778,14 @@ function genererPlaqueIdentification_HTML_(machineData) {
 
   html += '<div class="plaque">\n';
   html += '  <div class="plaque-titre">Installation contenant des gaz à effet de serre fluorés</div>\n';
+  html += '  <div class="plaque-ref">Contient des gaz à effet de serre fluorés visés par le protocole de Kyoto</div>\n';
   html += '  <div class="plaque-ref">Conforme au règlement F-GAS 517/2014 CE & R543-79</div>\n';
 
   html += '  <div class="plaque-row"><span class="plaque-label">Société :</span><span class="plaque-val' + (machineData.societe ? ' filled' : '') + '">' + v(machineData.societe) + '</span></div>\n';
   html += '  <div class="plaque-row"><span class="plaque-label">Adresse :</span><span class="plaque-val' + (machineData.adresse ? ' filled' : '') + '">' + v(machineData.adresse) + '</span></div>\n';
   html += '  <div class="plaque-row"><span class="plaque-label">Date MES :</span><span class="plaque-val' + (machineData.dateMES ? ' filled' : '') + '">' + v(machineData.dateMES) + '</span></div>\n';
   html += '  <div class="plaque-row"><span class="plaque-label">Opérateur :</span><span class="plaque-val' + (machineData.operateur ? ' filled' : '') + '">' + v(machineData.operateur) + '</span></div>\n';
+  html += '  <div class="plaque-row"><span class="plaque-label">N° att. capacité :</span><span class="plaque-val' + (machineData.attestationCapacite ? ' filled' : '') + '">' + v(machineData.attestationCapacite) + '</span></div>\n';
   html += '  <div class="plaque-row"><span class="plaque-label">Type installation :</span><span class="plaque-val' + (machineData.typeEquipement ? ' filled' : '') + '">' + v(machineData.typeEquipement) + '</span></div>\n';
   html += '  <div class="plaque-row"><span class="plaque-label">Repère BP / HP :</span><span class="plaque-val filled">' + v(machineData.machineCode) + '</span></div>\n';
   html += '  <div class="plaque-row"><span class="plaque-label">Fluide :</span><span class="plaque-val' + (fluide ? ' filled' : '') + '">' + v(fluide) + '</span></div>\n';
@@ -3267,6 +3309,7 @@ function apiGetTracabilite_(params) {
 function apiGetBilanAnnuel_(params) {
   var annee = parseInt(params.annee) || new Date().getFullYear();
   var filtreFluide = params.fluide || null;
+  var includeFormation = params.includeFormation === 'true';
 
   var bilans = {};
 
@@ -3275,7 +3318,7 @@ function apiGetBilanAnnuel_(params) {
     if (!row[0]) return;
     var date = new Date(row[1]);
     if (date.getFullYear() !== annee) return;
-    if (row[23] !== 'valide') return;
+    if (row[23] !== 'valide' || (!includeFormation && row[14] !== 'OFFICIEL')) return;
 
     var fluide = row[5];
     if (filtreFluide && fluide !== filtreFluide) return;
@@ -3572,6 +3615,17 @@ function doGet(e) {
     var auth = checkAuth_(e.parameter.key || '', ACTION_LEVELS[action] || 'READ');
     if (!auth.ok) return jsonResponse_(errorResponse_(auth.error, 'AUTH'));
     
+    // Vérification permissions par rôle pour les actions d'écriture (Faille 1+2)
+    var PERM_MAP_GET = { createMachine: 'creerMachine', createBouteille: 'creerBouteille', validerMouvement: 'validerMouvement', annulerMouvement: 'annulerMouvement', genererCerfa: 'genererCerfa', createUser: 'gererUsers', saveConfig: 'modifierConfig' };
+    if (PERM_MAP_GET[action]) {
+      var userId = e.parameter.operateur || e.parameter.validateur || '';
+      var role = userId ? getUserRole_(userId) : ROLES.ELEVE;
+      if (!hasPermission_(role, PERM_MAP_GET[action])) {
+        logAudit_('SECURITY', 'refus', action, { userId: userId, role: role }, PERM_MAP_GET[action], 'blocked');
+        return jsonResponse_(errorResponse_('Permission refusée', 'PERM'));
+      }
+    }
+
     var result;
     switch(action) {
       case 'ping': result = successResponse_({ message: 'pong', version: APP_VERSION, buildDate: APP_BUILD_DATE }); break;

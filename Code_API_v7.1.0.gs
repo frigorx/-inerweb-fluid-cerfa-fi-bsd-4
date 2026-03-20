@@ -387,11 +387,25 @@ function checkAuth_(apiKey, requiredLevel) {
 function apiLogin_(data) {
   var identifiant = sanitize_(data.identifiant, 100);
   if (!identifiant) return errorResponse_('Identifiant obligatoire', 'LOGIN_REQUIRED');
-  
+
   var userData = findUser_(identifiant);
+
+  // MODE DÉMO : auto-création si l'utilisateur n'existe pas
   if (!userData.ok) {
-    logAudit_('AUTH', 'loginEchec', identifiant, null, null, 'blocked');
-    return errorResponse_('Identifiant non reconnu', 'USER_NOT_FOUND');
+    var isEmail = identifiant.indexOf('@') > 0;
+    var nom = isEmail ? identifiant.split('@')[0] : identifiant;
+    var prenom = 'Démo';
+    var newId = 'demo_' + nom.replace(/[^a-zA-Z0-9]/g, '').substring(0, 20);
+    var ss = DataStore.getSpreadsheet();
+    var sheet = ss.getSheetByName(SHEETS.USERS);
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEETS.USERS);
+      sheet.getRange(1, 1, 1, 13).setValues([['id', 'nom', 'prenom', 'role', 'attestation', 'numAttestation', 'validiteAttestation', 'telephone', 'actif', 'emailNotif', 'email', 'siteId', 'atelierId']]);
+    }
+    sheet.appendRow([newId, nom, prenom, 'ADMIN', '', '', '', '', true, '', isEmail ? identifiant : '', '', '']);
+    logAudit_('AUTH', 'autoCreateDemo', newId, null, { identifiant: identifiant }, 'success');
+    userData = findUser_(newId);
+    if (!userData.ok) return errorResponse_('Erreur création compte démo');
   }
   
   var user = userData.user;
