@@ -833,8 +833,8 @@ const Wizard = {
     });
 
     // Aperçu CERFA pixel-perfect via module CERFA
-    document.getElementById('recap-apercu-cerfa')?.addEventListener('click', () => {
-      CERFA.ouvrir({
+    document.getElementById('recap-apercu-cerfa')?.addEventListener('click', async () => {
+      await CERFA.ouvrir({
         id: info.mouvementId,
         cerfa: info.cerfaId || info.mouvementId,
         type: info.type,

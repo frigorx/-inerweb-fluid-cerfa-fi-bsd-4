@@ -3,17 +3,21 @@
  * Support hors-ligne et mise en cache
  */
 
-const CACHE_NAME = 'inerweb-fluide-v7.1.0';
+const CACHE_NAME = 'inerweb-fluide-v7.2.0';
 
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './css/style.css',
+  './js/pdf-lib.min.js',
   './js/api.js',
   './js/state.js',
   './js/ui.js',
+  './js/cerfa.js',
+  './js/qrcode.js',
   './js/wizard.js',
   './js/app.js',
+  './cerfa_15497-04_officiel.pdf',
   './manifest.json',
   './img/icon-192.png',
   './img/icon-512.png'

@@ -650,9 +650,10 @@ const App = {
     /**
      * B5 — Affiche un aperçu CERFA pixel-perfect via le module CERFA
      */
-    this._showDemoCerfa = () => {
-      CERFA.ouvrir({});
-      UI.toast('Aperçu CERFA 15497*04 généré', 'success');
+    this._showDemoCerfa = async () => {
+      UI.toast('Génération du CERFA PDF officiel...', 'info');
+      await CERFA.ouvrir({});
+      UI.toast('CERFA 15497*04 officiel généré', 'success');
     };
 
     // Raccourcis clavier
