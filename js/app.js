@@ -71,6 +71,7 @@ const App = {
             State.setUser(response.data);
             await State.loadInitialData();
             UI.showApp();
+            setTimeout(() => AIDE.injecterBoutons(), 500);
             return;
           }
         }
@@ -99,6 +100,8 @@ const App = {
         localStorage.setItem('inerweb_user', JSON.stringify({ id: response.data.id, nomComplet: response.data.nomComplet }));
         await State.loadInitialData();
         UI.showApp();
+        // Injecter les boutons d'aide contextuelle
+        setTimeout(() => AIDE.injecterBoutons(), 500);
         UI.toast(`Bienvenue ${State.user.nomComplet || identifiant} !`, 'success');
       } else {
         throw new Error(response.error || 'Connexion échouée');
@@ -669,11 +672,55 @@ const App = {
       UI.toast('CERFA 15497*04 officiel généré', 'success');
     };
 
+    // ===== GESTION DES PLAINTES =====
+    // Initialiser les plaintes depuis localStorage
+    State.plaintes = JSON.parse(localStorage.getItem('inerweb_plaintes') || '[]');
+
+    document.getElementById('btn-add-plainte')?.addEventListener('click', () => {
+      document.getElementById('plainte-date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('plainte-client').value = '';
+      document.getElementById('plainte-nature').value = '';
+      document.getElementById('plainte-reponse').value = '';
+      document.getElementById('plainte-etat').value = 'En cours';
+      document.getElementById('modal-plainte').classList.remove('hidden');
+    });
+
+    document.getElementById('modal-plainte-close')?.addEventListener('click', () => {
+      document.getElementById('modal-plainte').classList.add('hidden');
+    });
+    document.getElementById('modal-plainte-cancel')?.addEventListener('click', () => {
+      document.getElementById('modal-plainte').classList.add('hidden');
+    });
+
+    document.getElementById('modal-plainte-submit')?.addEventListener('click', () => {
+      const plainte = {
+        id: 'PL-' + Date.now(),
+        dateReception: document.getElementById('plainte-date').value,
+        client: document.getElementById('plainte-client').value,
+        nature: document.getElementById('plainte-nature').value,
+        dateReponse: document.getElementById('plainte-reponse').value,
+        etat: document.getElementById('plainte-etat').value
+      };
+      if (!plainte.dateReception || !plainte.client || !plainte.nature) {
+        UI.toast('Remplir au minimum : date, client, nature', 'warning');
+        return;
+      }
+      State.plaintes.push(plainte);
+      localStorage.setItem('inerweb_plaintes', JSON.stringify(State.plaintes));
+      document.getElementById('modal-plainte').classList.add('hidden');
+      UI.renderPlaintes();
+      UI.toast('Plainte enregistrée', 'success');
+    });
+
+    document.getElementById('btn-print-plaintes')?.addEventListener('click', () => {
+      DOCS.ouvrirRegistrePlaintes(State.plaintes || []);
+    });
+
     // Raccourcis clavier
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         // Fermer les modales ouvertes
-        const modals = ['modal-mes', 'modal-detail', 'modal-machine', 'modal-bouteille', 'modal-controle', 'modal-client', 'modal-user', 'modal-detecteur'];
+        const modals = ['modal-mes', 'modal-detail', 'modal-machine', 'modal-bouteille', 'modal-controle', 'modal-client', 'modal-user', 'modal-detecteur', 'modal-plainte'];
         for (const id of modals) {
           const m = document.getElementById(id);
           if (m && !m.classList.contains('hidden')) { m.classList.add('hidden'); return; }

@@ -1182,6 +1182,45 @@ const UI = {
   /**
    * Ouvre la modale de fiche détaillée avec traçabilité croisée
    */
+  // ========== REGISTRE DES PLAINTES ==========
+  renderPlaintes() {
+    const container = document.getElementById('admin-plaintes-list');
+    if (!container) return;
+    const plaintes = State.plaintes || [];
+
+    if (plaintes.length === 0) {
+      container.innerHTML = '<p style="color:#999;font-size:13px;">Aucune plainte enregistrée. Le registre vide sera imprimé tel quel.</p>';
+      return;
+    }
+
+    let html = '<table class="table" style="width:100%;font-size:12px;">';
+    html += '<thead><tr><th>Date réception</th><th>Client</th><th>Nature</th><th>Date réponse</th><th>État</th><th>Actions</th></tr></thead><tbody>';
+    plaintes.forEach((p, i) => {
+      const badge = p.etat === 'Clos' ? 'success' : p.etat === 'Traité' ? 'success' : p.etat === 'En attente' ? 'warning' : 'info';
+      html += '<tr>';
+      html += '<td>' + (p.dateReception || '') + '</td>';
+      html += '<td>' + (p.client || '') + '</td>';
+      html += '<td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + (p.nature || '').replace(/"/g, '&quot;') + '">' + (p.nature || '') + '</td>';
+      html += '<td>' + (p.dateReponse || '<em style="color:#999">—</em>') + '</td>';
+      html += '<td><span class="badge badge-' + badge + '">' + p.etat + '</span></td>';
+      html += '<td><button class="btn-delete-plainte" data-index="' + i + '" style="background:#EF4444;color:white;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;">Supprimer</button></td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+
+    // Binding suppression
+    container.querySelectorAll('.btn-delete-plainte').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.index);
+        State.plaintes.splice(idx, 1);
+        localStorage.setItem('inerweb_plaintes', JSON.stringify(State.plaintes));
+        this.renderPlaintes();
+        this.toast('Plainte supprimée', 'success');
+      });
+    });
+  },
+
   async openDetailModal(type, id) {
     const modal = document.getElementById('modal-detail');
     const title = document.getElementById('detail-title');
@@ -1727,6 +1766,9 @@ const UI = {
     // Binding refresh audit
     const btnRefresh = document.getElementById('btn-refresh-audit');
     if (btnRefresh) btnRefresh.onclick = () => this.renderAdmin();
+
+    // Registre des plaintes
+    this.renderPlaintes();
   }
 };
 

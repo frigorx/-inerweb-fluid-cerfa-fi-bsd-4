@@ -38,6 +38,8 @@ const State = {
   controles: [],
   alertes: [],
   archives: { machines: [], bouteilles: [] },
+  plaintes: [],
+  users: [],
   stats: null,
   
   // UI
