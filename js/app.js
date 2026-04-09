@@ -255,8 +255,19 @@ const App = {
     
     // Mode toggle (clic sur le badge)
     UI.elements.modeBadge.addEventListener('click', () => {
+      // B5 — Vérification attestation côté client (double sécurité)
+      if (State.user) {
+        const validite = State.user.validiteAttestation || State.user.attestationValidite;
+        if (validite) {
+          const dateExp = new Date(validite);
+          if (!isNaN(dateExp.getTime()) && dateExp < new Date()) {
+            UI.toast('Mode OFFICIEL bloqué : votre attestation de capacité a expiré le ' + dateExp.toLocaleDateString('fr-FR') + '. Renouvelez-la.', 'error');
+            return;
+          }
+        }
+      }
+
       if (!State.user?.canUseOfficiel) {
-        // Faille 14 : Message spécifique si attestation expirée
         if (State.user?.blocageOfficiel) {
           UI.toast('Mode OFFICIEL bloqué : votre attestation de capacité est expirée. Renouvelez-la auprès de votre organisme.', 'error');
         } else {
@@ -673,8 +684,14 @@ const App = {
     };
 
     // ===== GESTION DES PLAINTES =====
-    // Initialiser les plaintes depuis localStorage
-    State.plaintes = JSON.parse(localStorage.getItem('inerweb_plaintes') || '[]');
+    // B1 — Charger plaintes depuis backend, fallback localStorage
+    try {
+      const res = await API.getPlaintes();
+      State.plaintes = res.data || [];
+      localStorage.setItem('inerweb_plaintes', JSON.stringify(State.plaintes));
+    } catch (e) {
+      State.plaintes = JSON.parse(localStorage.getItem('inerweb_plaintes') || '[]');
+    }
 
     document.getElementById('btn-add-plainte')?.addEventListener('click', () => {
       document.getElementById('plainte-date').value = new Date().toISOString().split('T')[0];
@@ -694,7 +711,8 @@ const App = {
 
     document.getElementById('modal-plainte-submit')?.addEventListener('click', () => {
       const plainte = {
-        id: 'PL-' + Date.now(),
+        id: 'PL-' + new Date().getFullYear() + '-' + String(State.plaintes.length + 1).padStart(3, '0'),
+        numero: State.plaintes.length + 1,
         dateReception: document.getElementById('plainte-date').value,
         client: document.getElementById('plainte-client').value,
         nature: document.getElementById('plainte-nature').value,
@@ -707,6 +725,8 @@ const App = {
       }
       State.plaintes.push(plainte);
       localStorage.setItem('inerweb_plaintes', JSON.stringify(State.plaintes));
+      // B1 — Sync backend
+      API.savePlaintes(State.plaintes).catch(e => console.warn('Sync plaintes backend échouée:', e.message));
       document.getElementById('modal-plainte').classList.add('hidden');
       UI.renderPlaintes();
       UI.toast('Plainte enregistrée', 'success');
@@ -1049,6 +1069,18 @@ const App = {
     if (!machine || !methode || !resultat) {
       UI.toast('Veuillez remplir tous les champs obligatoires', 'error');
       return;
+    }
+
+    // B8 — Vérifier étalonnage détecteur
+    if (detecteur) {
+      const det = State.detecteurs.find(d => (d.code || d.id) === detecteur);
+      if (det?.prochain) {
+        const dateProchain = new Date(det.prochain);
+        if (!isNaN(dateProchain.getTime()) && dateProchain < new Date()) {
+          UI.toast('Le détecteur ' + detecteur + ' a un étalonnage échu (périmé le ' + dateProchain.toLocaleDateString('fr-FR') + '). Faites-le étalonner avant de l\'utiliser.', 'error');
+          return;
+        }
+      }
     }
 
     try {

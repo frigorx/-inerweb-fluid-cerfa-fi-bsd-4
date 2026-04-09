@@ -1194,10 +1194,11 @@ const UI = {
     }
 
     let html = '<table class="table" style="width:100%;font-size:12px;">';
-    html += '<thead><tr><th>Date réception</th><th>Client</th><th>Nature</th><th>Date réponse</th><th>État</th><th>Actions</th></tr></thead><tbody>';
+    html += '<thead><tr><th>N°</th><th>Date réception</th><th>Client</th><th>Nature</th><th>Date réponse</th><th>État</th><th>Actions</th></tr></thead><tbody>';
     plaintes.forEach((p, i) => {
       const badge = p.etat === 'Clos' ? 'success' : p.etat === 'Traité' ? 'success' : p.etat === 'En attente' ? 'warning' : 'info';
       html += '<tr>';
+      html += '<td><code>' + (p.id || p.numero || i + 1) + '</code></td>';
       html += '<td>' + (p.dateReception || '') + '</td>';
       html += '<td>' + (p.client || '') + '</td>';
       html += '<td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + (p.nature || '').replace(/"/g, '&quot;') + '">' + (p.nature || '') + '</td>';
@@ -1215,6 +1216,7 @@ const UI = {
         const idx = parseInt(btn.dataset.index);
         State.plaintes.splice(idx, 1);
         localStorage.setItem('inerweb_plaintes', JSON.stringify(State.plaintes));
+        API.savePlaintes(State.plaintes).catch(e => console.warn('Sync plaintes:', e.message));
         this.renderPlaintes();
         this.toast('Plainte supprimée', 'success');
       });

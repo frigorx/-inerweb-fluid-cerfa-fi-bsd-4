@@ -610,6 +610,18 @@ const Wizard = {
           UI.toast('La quantité doit être positive', 'error');
           return false;
         }
+        // B3 — Vérifier pesée inversée (warning bloquant)
+        {
+          const type = (data.type || '').toUpperCase();
+          const avant = parseFloat(data.peseeAvant);
+          const apres = parseFloat(data.peseeApres);
+          const peseeInversee = (type === 'CHARGE' || type === 'MISE_EN_SERVICE') ? avant < apres :
+                                (type === 'RECUPERATION' || type === 'VIDANGE') ? apres < avant : false;
+          if (peseeInversee) {
+            UI.toast('Pesée inversée détectée ! Vérifiez les valeurs avant/après. En charge, la bouteille s\'allège (avant > après). En récupération, elle s\'alourdit (après > avant).', 'error');
+            return false;
+          }
+        }
         break;
         
       case 5:
@@ -645,6 +657,16 @@ const Wizard = {
     try {
       const machine = State.getMachineById(data.machineId);
       const bouteille = State.getBouteilleById(data.bouteilleId);
+
+      // B4 — Vérifier que le fluide de la machine est connu
+      if (machine?.fluide) {
+        const fluideConnu = State.getFluidByCode(machine.fluide);
+        if (!fluideConnu || !fluideConnu.prg) {
+          UI.toast('Fluide "' + machine.fluide + '" inconnu ou PRG non renseigné. Vérifiez la configuration des fluides dans Admin.', 'error');
+          return;
+        }
+      }
+
       // Signature = certification texte simple (CERTIFIÉ|Nom|Date)
       const signe = data.signature && data.signature.startsWith('CERTIFIÉ|') ? 'oui' : 'non';
       const sansBouteille = !data.bouteilleId;

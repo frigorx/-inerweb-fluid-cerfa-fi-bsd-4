@@ -285,6 +285,16 @@ const API = {
 
   async getArchives() {
     return this.get('getArchives');
+  },
+
+  // ========== PLAINTES ==========
+
+  async getPlaintes() {
+    return this.get('getPlaintes');
+  },
+
+  async savePlaintes(plaintes) {
+    return this.get('savePlaintes', { plaintes: JSON.stringify(plaintes) });
   }
 };
 
