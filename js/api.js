@@ -255,6 +255,36 @@ const API = {
 
   async getCerfa(id) {
     return this.get('getCerfa', { id });
+  },
+
+  // ========== ARCHIVES / CORBEILLE ==========
+
+  async archiveMachine(code, motif = '') {
+    return this.get('archiveMachine', { code, motif });
+  },
+
+  async restaurerMachine(code) {
+    return this.get('restaurerMachine', { code });
+  },
+
+  async supprimerMachine(code) {
+    return this.get('supprimerMachine', { code });
+  },
+
+  async archiveBouteille(code, motif = '') {
+    return this.get('archiveBouteille', { code, motif });
+  },
+
+  async restaurerBouteille(code) {
+    return this.get('restaurerBouteille', { code });
+  },
+
+  async supprimerBouteille(code) {
+    return this.get('supprimerBouteille', { code });
+  },
+
+  async getArchives() {
+    return this.get('getArchives');
   }
 };
 

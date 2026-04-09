@@ -622,6 +622,14 @@ const Wizard = {
           UI.toast('Veuillez saisir le nom du signataire', 'error');
           return false;
         }
+        // B11 : En mode OFFICIEL, vérifier l'attestation de capacité
+        if (State.mode === 'OFFICIEL') {
+          const user = State.user;
+          if (!user?.attestation && !user?.hasAttestation) {
+            UI.toast('Mode OFFICIEL : attestation de capacité requise. Renseignez-la dans Admin > Utilisateurs.', 'error');
+            return false;
+          }
+        }
         break;
     }
     
@@ -667,6 +675,22 @@ const Wizard = {
         } catch (e) { /* quota dépassé, pas grave */ }
       }
 
+      // B2 + B12 : Mettre à jour le stock et statut de la bouteille localement
+      if (bouteille && data.bouteilleId) {
+        const type = data.type;
+        const qty = parseFloat(data.quantite || 0);
+        if (type === 'CHARGE' || type === 'MISE_EN_SERVICE') {
+          bouteille.stockActuel = Math.max(0, parseFloat(bouteille.stockActuel || 0) - qty);
+        } else if (type === 'RECUPERATION') {
+          bouteille.stockActuel = parseFloat(bouteille.stockActuel || 0) + qty;
+        }
+        // Mettre à jour le statut
+        if (bouteille.categorie === 'Neuve' || bouteille.categorie === 'NEUVE') {
+          bouteille.categorie = 'En service';
+        }
+        bouteille.statut = 'En service';
+      }
+
       UI.hideWizard();
 
       // CERFA sera généré automatiquement côté backend après validation (Faille 4)
@@ -691,7 +715,10 @@ const Wizard = {
         fluide: machine?.fluide || '--',
         type: mouvementData.type,
         quantite: qte,
+        quantiteNum: data.quantite || 0,
         mode: State.mode,
+        machineCode: machine?.code || data.machineId,
+        bouteilleCode: bouteille?.code || data.bouteilleId || '',
         bouteille: bouteille?.code || (sansBouteille && isPrechargee ? 'Précharge usine' : '--')
       });
 
@@ -761,6 +788,7 @@ const Wizard = {
             <div style="background:#FEF3C7;border:2px solid #F59E0B;border-radius:8px;padding:12px;margin-bottom:16px;text-align:center;">
               <div style="font-weight:600;color:#92400E;margin-bottom:4px;">CERFA sera généré après validation</div>
               <div style="font-size:12px;color:#92400E;">Le CERFA 15497*04 sera automatiquement créé lorsqu'un référent ou enseignant validera ce mouvement.</div>
+              <button class="btn btn-primary" id="recap-apercu-cerfa" style="margin-top:8px;font-size:13px;">📄 Aperçu CERFA 15497*04</button>
             </div>
           `}
 
@@ -790,16 +818,32 @@ const Wizard = {
     document.body.appendChild(overlay);
 
     // Bindings
-    document.getElementById('recap-fermer')?.addEventListener('click', () => {
+    document.getElementById('recap-fermer')?.addEventListener('click', async () => {
       overlay.remove();
+      await State.loadMouvements();
       UI.showView('dashboard');
     });
 
-    overlay.addEventListener('click', (e) => {
+    overlay.addEventListener('click', async (e) => {
       if (e.target === overlay) {
         overlay.remove();
+        await State.loadMouvements();
         UI.showView('dashboard');
       }
+    });
+
+    // Aperçu CERFA pixel-perfect via module CERFA
+    document.getElementById('recap-apercu-cerfa')?.addEventListener('click', () => {
+      CERFA.ouvrir({
+        id: info.mouvementId,
+        cerfa: info.cerfaId || info.mouvementId,
+        type: info.type,
+        machine: info.machineCode,
+        quantite: info.quantiteNum || 0,
+        mode: info.mode,
+        observations: '',
+        bouteille: info.bouteilleCode
+      });
     });
 
     if (info.cerfaContenu) {

@@ -173,6 +173,10 @@
           <span class="label">Alertes</span>
           <span class="nav-badge hidden" id="alertes-badge">0</span>
         </button>
+        <button class="nav-item" data-view="archives" id="nav-archives">
+          <span class="icon">🗑️</span>
+          <span class="label">Corbeille</span>
+        </button>
         <button class="nav-item" data-view="admin" id="nav-admin" style="display:none;">
           <span class="icon">⚙️</span>
           <span class="label">Admin</span>
@@ -387,6 +391,43 @@
               <div class="empty-state-icon">📊</div>
               <div class="empty-state-title">Sélectionnez une année</div>
               <div class="empty-state-desc">Le bilan annuel reproduit le tableau de suivi réglementaire par fluide</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== ARCHIVES / CORBEILLE ===== -->
+        <section id="view-archives" class="view hidden">
+          <div class="page-header">
+            <h1 class="page-title">🗑️ Corbeille / Archives</h1>
+          </div>
+
+          <div style="background:#FEF3C7;border:2px solid #F59E0B;border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:#92400E;">
+            <strong>Les éléments archivés</strong> sont retirés du parc actif mais leur historique (mouvements, contrôles, CERFA) est conservé pour la traçabilité réglementaire. Vous pouvez <strong>restaurer</strong> un élément ou le <strong>supprimer définitivement</strong>.
+          </div>
+
+          <!-- Machines archivées -->
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-header" style="background:#1b3a63;color:white;padding:12px 16px;border-radius:8px 8px 0 0;">
+              <h3 style="margin:0;">🏭 Machines archivées</h3>
+              <span id="archives-machines-count" class="badge" style="background:rgba(255,255,255,0.2);color:white;">0</span>
+            </div>
+            <div class="card-body" style="padding:16px;">
+              <div id="archives-machines-list">
+                <p style="color:#999;text-align:center;">Aucune machine archivée</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bouteilles archivées -->
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-header" style="background:#1b3a63;color:white;padding:12px 16px;border-radius:8px 8px 0 0;">
+              <h3 style="margin:0;">🧪 Bouteilles archivées</h3>
+              <span id="archives-bouteilles-count" class="badge" style="background:rgba(255,255,255,0.2);color:white;">0</span>
+            </div>
+            <div class="card-body" style="padding:16px;">
+              <div id="archives-bouteilles-list">
+                <p style="color:#999;text-align:center;">Aucune bouteille archivée</p>
+              </div>
             </div>
           </div>
         </section>
@@ -1072,6 +1113,7 @@
   <script src="js/state.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/qrcode.js"></script>
+  <script src="js/cerfa.js"></script>
   <script src="js/wizard.js"></script>
   <script src="js/app.js"></script>
   

@@ -315,6 +315,29 @@ body {
   display: none;
 }
 
+/* B14 — Indicateur de scroll horizontal sur mobile */
+.nav {
+  position: relative;
+}
+
+.nav::after {
+  content: '›';
+  position: sticky;
+  right: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, white 40%);
+  color: var(--slate-400);
+  font-size: 22px;
+  font-weight: bold;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
 .nav-item {
   display: flex;
   align-items: center;
@@ -887,6 +910,8 @@ body {
 .wizard-body {
   padding: 20px;
   min-height: 200px;
+  max-height: calc(85vh - 180px);
+  overflow-y: auto;
 }
 
 .wizard-body h3 {
@@ -1551,6 +1576,10 @@ body {
     right: 20px;
     max-width: 400px;
   }
+
+  .nav::after {
+    display: none;
+  }
 }
 
 /* ========================================
@@ -1571,6 +1600,10 @@ body {
   
   .nav {
     padding: 8px 20px;
+  }
+
+  .nav::after {
+    display: none;
   }
   
   .stats-grid {
@@ -1637,6 +1670,28 @@ body {
   .card {
     box-shadow: none;
     border: 1px solid #ddd;
+  }
+}
+
+/* B15 — Scroll horizontal sur tous les tableaux en mobile */
+@media (max-width: 639px) {
+  /* Masquer l'indicateur de scroll nav quand tout est visible */
+  .nav::after {
+    display: flex;
+  }
+
+  /* Tableaux du dashboard et des vues */
+  .card-body {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Grille dashboard en colonne sur mobile */
+  [style*="grid-template-columns:1fr 1fr"] {
+    display: block !important;
+  }
+  [style*="grid-template-columns:1fr 1fr"] > .card {
+    margin-bottom: 12px;
   }
 }
 

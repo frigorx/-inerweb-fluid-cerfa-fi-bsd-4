@@ -46,7 +46,8 @@ const UI = {
         alertes: document.getElementById('view-alertes'),
         admin: document.getElementById('view-admin'),
         bilan: document.getElementById('view-bilan'),
-        fluides: document.getElementById('view-fluides')
+        fluides: document.getElementById('view-fluides'),
+        archives: document.getElementById('view-archives')
       },
       
       // Dashboard
@@ -195,6 +196,10 @@ const UI = {
         case 'bilan':
           this.initBilan();
           break;
+        case 'archives':
+          await this.loadArchives();
+          this.renderArchives();
+          break;
       }
     } catch (err) {
       console.error('Erreur rafraîchissement vue ' + viewName + ':', err);
@@ -276,7 +281,7 @@ const UI = {
           if (mvts.length === 0) {
             mvtDiv.innerHTML = '<p style="color:#999;text-align:center;">Aucun mouvement</p>';
           } else {
-            mvtDiv.innerHTML = '<table class="table" style="width:100%;font-size:12px;"><tbody>' +
+            mvtDiv.innerHTML = '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;"><table class="table" style="width:100%;font-size:12px;"><tbody>' +
               mvts.map(m => {
                 const cerfaLink = m.cerfa ? (m.cerfaUrl ? `<a href="${m.cerfaUrl}" target="_blank" style="color:#1E40AF;">${m.cerfa}</a>` : m.cerfa) : '';
                 return `<tr>
@@ -287,7 +292,7 @@ const UI = {
                   <td>${cerfaLink}</td>
                   <td><span class="badge badge-${this.getStatutBadgeClass(m.statut)}">${m.statut||'--'}</span></td>
                 </tr>`;
-              }).join('') + '</tbody></table>';
+              }).join('') + '</tbody></table></div>';
           }
         }).catch(() => {});
       } catch (e) {}
@@ -340,10 +345,13 @@ const UI = {
           </div>
           <div class="spec-item">
             <span class="spec-label">Prochain ctrl</span>
-            <span class="spec-value ${this.isDatePassed(m.prochainControle) ? 'danger' : ''}">${this.formatDate(m.prochainControle)}</span>
+            <span class="spec-value ${this.isDatePassed(m.prochainControle || this.calcProchainControle(m)) ? 'danger' : ''}">${this.formatDate(m.prochainControle || this.calcProchainControle(m))}</span>
           </div>
         </div>
-        ${isPrechargee(m) ? `<div style="margin-top:8px;text-align:center;"><button class="btn btn-sm btn-primary btn-cerfa-precharge" data-machine="${m.code || m.id}" title="CERFA précharge usine">📄 CERFA précharge</button></div>` : ''}
+        <div style="margin-top:8px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+          ${isPrechargee(m) ? `<button class="btn btn-sm btn-primary btn-cerfa-precharge" data-machine="${m.code || m.id}" title="CERFA précharge usine">📄 CERFA précharge</button>` : ''}
+          <button class="btn btn-sm btn-archive-machine" data-code="${m.code || m.id}" title="Archiver cette machine" style="background:#94A3B8;color:white;font-size:11px;">🗑️ Archiver</button>
+        </div>
       </div>
     `).join('');
 
@@ -377,6 +385,14 @@ const UI = {
         this.openDetailModal('machine', card.dataset.id);
       });
     });
+
+    // Binding bouton archiver machine
+    document.querySelectorAll('.btn-archive-machine').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.archiveMachine(btn.dataset.code);
+      });
+    });
   },
   
   getMachineIcon(type) {
@@ -402,6 +418,42 @@ const UI = {
     if (this.isDateSoon(machine.prochainControle, 30)) return 'Ctrl. proche';
     return 'En service';
   },
+
+  /**
+   * B13 — Calcule la fréquence de contrôle F-Gas selon charge×PRG
+   * Retourne la périodicité en mois
+   */
+  getFrequenceControle(machine) {
+    const fluide = State.getFluidByCode(machine.fluide);
+    if (!fluide) return 12;
+    const charge = parseFloat(machine.chargeActuelle || machine.charge || 0);
+    const eqCO2 = charge * (fluide.prg || 0) / 1000; // tonnes éq. CO2
+    if (eqCO2 >= 500) return 3;   // Tous les 3 mois
+    if (eqCO2 >= 50) return 6;    // Tous les 6 mois
+    if (eqCO2 >= 5) return 12;    // Annuel
+    return 0; // Pas d'obligation
+  },
+
+  /**
+   * B13 — Calcule la date de prochain contrôle si non fournie
+   */
+  calcProchainControle(machine) {
+    if (machine.prochainControle) return machine.prochainControle;
+    // Si on a un dernier contrôle
+    const dernierControle = State.controles.find(c =>
+      (c.machineCode || c.machine) === (machine.code || machine.id)
+    );
+    if (dernierControle && dernierControle.date) {
+      const freq = this.getFrequenceControle(machine);
+      if (freq === 0) return null;
+      const d = this._parseDate(dernierControle.date);
+      if (d && !isNaN(d.getTime())) {
+        d.setMonth(d.getMonth() + freq);
+        return d.toISOString().split('T')[0];
+      }
+    }
+    return null;
+  },
   
   // ========== BOUTEILLES ==========
   
@@ -419,15 +471,20 @@ const UI = {
     
     this.elements.bouteillesList.innerHTML = State.bouteilles.map(b => {
       const niveau = Math.min(100, Math.max(0, (b.stockActuel / (b.capacite || 10)) * 100));
+      const code = b.code || b.id;
       return `
         <div class="bouteille-card" data-id="${b.id}">
           <div class="bouteille-icon">
             <div class="bouteille-level" style="height: ${niveau}%;"></div>
           </div>
           <span class="bouteille-category ${(b.categorie || 'neuve').toLowerCase()}">${b.categorie || 'Neuve'}</span>
-          <div class="bouteille-code">${b.code || b.id}</div>
+          <div class="bouteille-code">${code}</div>
           <div class="bouteille-fluide">${b.fluide || '--'}</div>
           <div class="bouteille-masse">${parseFloat(b.stockActuel || 0).toFixed(2)} kg</div>
+          <div style="margin-top:6px;display:flex;gap:4px;justify-content:center;flex-wrap:wrap;">
+            <button class="btn-archive-bouteille" data-code="${code}" title="Archiver" style="background:#94A3B8;color:white;border:none;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;">🗑️</button>
+            <button class="btn-retour-bouteille" data-code="${code}" title="Retour fournisseur / Trackdéchets" style="background:#6366F1;color:white;border:none;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;">📦 Retour</button>
+          </div>
         </div>
       `;
     }).join('');
@@ -435,8 +492,40 @@ const UI = {
     // Binding clic sur carte bouteille → fiche détaillée
     document.querySelectorAll('.bouteille-card').forEach(card => {
       card.style.cursor = 'pointer';
-      card.addEventListener('click', () => {
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('button')) return;
         this.openDetailModal('bouteille', card.dataset.id);
+      });
+    });
+
+    // Binding bouton archiver bouteille
+    document.querySelectorAll('.btn-archive-bouteille').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.archiveBouteille(btn.dataset.code);
+      });
+    });
+
+    // Binding bouton retour bouteille (fournisseur / Trackdéchets)
+    document.querySelectorAll('.btn-retour-bouteille').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const code = btn.dataset.code;
+        const choix = prompt(
+          'Retour bouteille ' + code + ' :\n\n' +
+          '1 — Retournée au fournisseur\n' +
+          '2 — Envoyée via Trackdéchets (BSFF)\n' +
+          '3 — Vide / consignée\n\n' +
+          'Tapez 1, 2 ou 3 :'
+        );
+        if (!choix) return;
+        const motifs = {
+          '1': 'Retournée fournisseur',
+          '2': 'Envoyée Trackdéchets (BSFF)',
+          '3': 'Vide / consignée'
+        };
+        const motif = motifs[choix] || choix;
+        this.archiveBouteille(code, motif);
       });
     });
   },
@@ -694,9 +783,16 @@ const UI = {
   renderStats() {
     if (!State.stats) {
       this.elements.statsDetails.innerHTML = `
-        <div class="empty-state">
+        <div class="empty-state" style="grid-column:1/-1;">
           <div class="empty-state-icon">📈</div>
-          <div class="empty-state-title">Chargement...</div>
+          <div class="empty-state-title">Statistiques</div>
+          <div class="empty-state-desc">Les statistiques seront disponibles après quelques mouvements enregistrés.</div>
+          <div style="margin-top:20px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:400px;margin-left:auto;margin-right:auto;">
+            <div class="stat-card card-accent"><div class="stat-icon">📝</div><div class="stat-value">${State.mouvements.length}</div><div class="stat-label">Mouvements</div></div>
+            <div class="stat-card card-accent"><div class="stat-icon">🏭</div><div class="stat-value">${State.machines.length}</div><div class="stat-label">Machines</div></div>
+            <div class="stat-card card-accent"><div class="stat-icon">🧪</div><div class="stat-value">${State.bouteilles.length}</div><div class="stat-label">Bouteilles</div></div>
+            <div class="stat-card card-accent"><div class="stat-icon">⚠️</div><div class="stat-value">${State.alertes.length}</div><div class="stat-label">Alertes</div></div>
+          </div>
         </div>
       `;
       return;
@@ -756,7 +852,7 @@ const UI = {
           <div class="alerte-desc">${alerte.description || alerte.details || ''}</div>
         </div>
         <div class="alerte-action">
-          <button class="btn btn-sm ${type === 'danger' ? 'btn-primary' : 'btn-secondary'}">Voir</button>
+          <button class="btn btn-sm ${type === 'danger' ? 'btn-primary' : 'btn-secondary'}" onclick="UI.showView('${alerte.machineCode ? 'machines' : 'alertes'}')">Voir</button>
         </div>
       </div>
     `;
@@ -800,29 +896,47 @@ const UI = {
   
   // ========== UTILITAIRES ==========
   
+  /**
+   * Parse une date en gérant les formats DD/MM/YYYY, DD/MM/YYYY HH:mm, ISO, etc.
+   */
+  _parseDate(dateStr) {
+    if (!dateStr) return null;
+    // Format DD/MM/YYYY ou DD/MM/YYYY HH:mm
+    if (typeof dateStr === 'string' && /^\d{2}\/\d{2}\/\d{4}/.test(dateStr)) {
+      const parts = dateStr.split(' ');
+      const dp = parts[0].split('/');
+      const iso = dp[2] + '-' + dp[1] + '-' + dp[0];
+      return new Date(parts.length > 1 ? iso + 'T' + parts[1] : iso);
+    }
+    return new Date(dateStr);
+  },
+
   formatDate(dateStr) {
     if (!dateStr) return '--';
     try {
-      const d = new Date(dateStr);
+      const d = this._parseDate(dateStr);
+      if (!d || isNaN(d.getTime())) return dateStr;
       return d.toLocaleDateString('fr-FR');
     } catch {
       return dateStr;
     }
   },
-  
+
   isDatePassed(dateStr) {
     if (!dateStr) return false;
     try {
-      return new Date(dateStr) < new Date();
+      const d = this._parseDate(dateStr);
+      return d && !isNaN(d.getTime()) && d < new Date();
     } catch {
       return false;
     }
   },
-  
+
   isDateSoon(dateStr, days) {
     if (!dateStr) return false;
     try {
-      const d = new Date(dateStr);
+      const d = this._parseDate(dateStr);
+      if (!d || isNaN(d.getTime())) return false;
       const limit = new Date();
       limit.setDate(limit.getDate() + days);
       return d <= limit && d >= new Date();
@@ -903,6 +1017,9 @@ const UI = {
       btnLoad.addEventListener('click', () => this.loadBilan());
       btnLoad._bound = true;
     }
+
+    // Auto-charger le bilan à l'ouverture
+    this.loadBilan();
   },
 
   /**
@@ -1082,9 +1199,13 @@ const UI = {
             const labels = { code:'Code', nom:'Nom', type:'Type', marque:'Marque', modele:'Modèle', serie:'N° série',
               fluide:'Fluide', chargeNom:'Charge nominale', chargeAct:'Charge actuelle', eqCO2:'Éq. CO2',
               localisation:'Localisation', miseEnService:'Mise en service', prochainControle:'Prochain contrôle',
-              statut:'Statut', capacite:'Capacité', masseVide:'Masse vide', stockActuel:'Stock actuel',
-              categorie:'Catégorie', fournisseur:'Fournisseur', prenom:'Prénom', role:'Rôle',
-              attestation:'Attestation', prg:'PRG', famille:'Famille', siret:'SIRET', ville:'Ville' };
+              statut:'Statut', capacite:'Capacité', contenance:'Contenance', masseVide:'Masse vide',
+              masseFluide:'Masse de fluide', stockActuel:'Stock actuel', tare:'Tare (kg)',
+              etatFluide:'État du fluide', categorie:'Catégorie', fournisseur:'Fournisseur',
+              lot:'N° de lot', prenom:'Prénom', role:'Rôle',
+              attestation:'Attestation', prg:'PRG', famille:'Famille', siret:'SIRET', ville:'Ville',
+              designation:'Désignation', chargeActuelle:'Charge actuelle', prochControle:'Prochain contrôle',
+              detectionPermanente:'Détection permanente', prechargee:'Préchargée usine' };
             html += '<div><strong>' + (labels[k] || k) + ' :</strong> ' + v + '</div>';
           }
         });
@@ -1181,6 +1302,222 @@ const UI = {
     // Close handlers (utiliser onclick pour éviter les listeners multiples)
     document.getElementById('detail-close').onclick = () => modal.classList.add('hidden');
     modal.onclick = (e) => { if (e.target === modal) modal.classList.add('hidden'); };
+  },
+
+  // ========== ARCHIVES / CORBEILLE ==========
+
+  /**
+   * Charge les archives depuis le backend (ou fallback local)
+   */
+  async loadArchives() {
+    try {
+      const res = await API.getArchives();
+      State.archives = {
+        machines: res.data?.machines || [],
+        bouteilles: res.data?.bouteilles || []
+      };
+    } catch (e) {
+      // Fallback : archives locales stockees dans localStorage
+      try {
+        const saved = JSON.parse(localStorage.getItem('inerweb_archives') || '{}');
+        State.archives = {
+          machines: saved.machines || [],
+          bouteilles: saved.bouteilles || []
+        };
+      } catch (e2) {
+        State.archives = { machines: [], bouteilles: [] };
+      }
+    }
+  },
+
+  /**
+   * Sauvegarde les archives en local (fallback si backend indisponible)
+   */
+  _saveArchivesLocal() {
+    try {
+      localStorage.setItem('inerweb_archives', JSON.stringify(State.archives));
+    } catch (e) { /* quota */ }
+  },
+
+  /**
+   * Archive une machine
+   */
+  async archiveMachine(code) {
+    const motif = prompt('Motif d\'archivage (optionnel) :') || '';
+    try {
+      await API.archiveMachine(code, motif);
+    } catch (e) {
+      // Fallback local : deplacer dans les archives
+      const machine = State.machines.find(m => (m.code || m.id) === code);
+      if (machine) {
+        machine.archiveLe = new Date().toISOString();
+        machine.archiveMotif = motif;
+        machine.archivePar = State.user?.id || '';
+        State.archives.machines.push({ ...machine });
+        this._saveArchivesLocal();
+      }
+    }
+    // Retirer du parc actif
+    State.machines = State.machines.filter(m => (m.code || m.id) !== code);
+    this.toast('Machine ' + code + ' archivée', 'success');
+    this.renderMachines();
+  },
+
+  /**
+   * Restaure une machine depuis les archives
+   */
+  async restaurerMachine(code) {
+    try {
+      await API.restaurerMachine(code);
+    } catch (e) {
+      // Fallback local
+      const machine = State.archives.machines.find(m => (m.code || m.id) === code);
+      if (machine) {
+        delete machine.archiveLe;
+        delete machine.archiveMotif;
+        delete machine.archivePar;
+        State.machines.push(machine);
+      }
+    }
+    State.archives.machines = State.archives.machines.filter(m => (m.code || m.id) !== code);
+    this._saveArchivesLocal();
+    this.toast('Machine ' + code + ' restaurée dans le parc', 'success');
+    this.renderArchives();
+  },
+
+  /**
+   * Supprime définitivement une machine des archives
+   */
+  async supprimerMachineDefinitivement(code) {
+    if (!confirm('Supprimer définitivement la machine ' + code + ' ?\n\nCette action est irréversible. L\'historique dans la Google Sheet sera conservé.')) return;
+    try {
+      await API.supprimerMachine(code);
+    } catch (e) { /* local */ }
+    State.archives.machines = State.archives.machines.filter(m => (m.code || m.id) !== code);
+    this._saveArchivesLocal();
+    this.toast('Machine ' + code + ' supprimée définitivement', 'info');
+    this.renderArchives();
+  },
+
+  /**
+   * Archive une bouteille
+   */
+  async archiveBouteille(code, motif) {
+    const raison = motif || prompt('Motif :\n• Retournée fournisseur\n• Vide / consignée\n• Envoyée Trackdéchets\n• Erreur de saisie\n• Autre') || '';
+    try {
+      await API.archiveBouteille(code, raison);
+    } catch (e) {
+      const bouteille = State.bouteilles.find(b => (b.code || b.id) === code);
+      if (bouteille) {
+        bouteille.archiveLe = new Date().toISOString();
+        bouteille.archiveMotif = raison;
+        bouteille.archivePar = State.user?.id || '';
+        State.archives.bouteilles.push({ ...bouteille });
+        this._saveArchivesLocal();
+      }
+    }
+    State.bouteilles = State.bouteilles.filter(b => (b.code || b.id) !== code);
+    this.toast('Bouteille ' + code + ' archivée — ' + raison, 'success');
+    this.renderBouteilles();
+  },
+
+  /**
+   * Restaure une bouteille depuis les archives
+   */
+  async restaurerBouteille(code) {
+    try {
+      await API.restaurerBouteille(code);
+    } catch (e) {
+      const bouteille = State.archives.bouteilles.find(b => (b.code || b.id) === code);
+      if (bouteille) {
+        delete bouteille.archiveLe;
+        delete bouteille.archiveMotif;
+        delete bouteille.archivePar;
+        State.bouteilles.push(bouteille);
+      }
+    }
+    State.archives.bouteilles = State.archives.bouteilles.filter(b => (b.code || b.id) !== code);
+    this._saveArchivesLocal();
+    this.toast('Bouteille ' + code + ' restaurée dans le stock', 'success');
+    this.renderArchives();
+  },
+
+  /**
+   * Supprime définitivement une bouteille des archives
+   */
+  async supprimerBouteilleDefinitivement(code) {
+    if (!confirm('Supprimer définitivement la bouteille ' + code + ' ?\n\nCette action est irréversible.')) return;
+    try {
+      await API.supprimerBouteille(code);
+    } catch (e) { /* local */ }
+    State.archives.bouteilles = State.archives.bouteilles.filter(b => (b.code || b.id) !== code);
+    this._saveArchivesLocal();
+    this.toast('Bouteille ' + code + ' supprimée définitivement', 'info');
+    this.renderArchives();
+  },
+
+  /**
+   * Rendu de la vue Archives
+   */
+  renderArchives() {
+    const machinesList = document.getElementById('archives-machines-list');
+    const bouteillesList = document.getElementById('archives-bouteilles-list');
+    const machinesCount = document.getElementById('archives-machines-count');
+    const bouteillesCount = document.getElementById('archives-bouteilles-count');
+
+    const am = State.archives.machines;
+    const ab = State.archives.bouteilles;
+
+    machinesCount.textContent = am.length;
+    bouteillesCount.textContent = ab.length;
+
+    // Machines archivées
+    if (am.length === 0) {
+      machinesList.innerHTML = '<p style="color:#999;text-align:center;padding:20px;">Aucune machine archivée</p>';
+    } else {
+      machinesList.innerHTML = '<div style="overflow-x:auto;"><table class="table" style="width:100%;font-size:13px;"><thead><tr>' +
+        '<th>Code</th><th>Nom</th><th>Fluide</th><th>Charge</th><th>Archivée le</th><th>Motif</th><th>Actions</th>' +
+        '</tr></thead><tbody>' +
+        am.map(m => {
+          const code = m.code || m.id;
+          return '<tr>' +
+            '<td><code>' + code + '</code></td>' +
+            '<td>' + (m.nom || m.designation || '--') + '</td>' +
+            '<td><span style="color:var(--refrigerant);font-weight:600;">' + (m.fluide || '--') + '</span></td>' +
+            '<td>' + (m.chargeActuelle || m.charge || '0') + ' kg</td>' +
+            '<td>' + this.formatDate(m.archiveLe) + '</td>' +
+            '<td><em>' + (m.archiveMotif || '--') + '</em></td>' +
+            '<td style="white-space:nowrap;">' +
+              '<button class="btn btn-sm btn-success" onclick="UI.restaurerMachine(\'' + code + '\')" title="Remettre dans le parc">♻️ Restaurer</button> ' +
+              '<button class="btn btn-sm btn-danger" onclick="UI.supprimerMachineDefinitivement(\'' + code + '\')" title="Supprimer définitivement">🗑️ Supprimer</button>' +
+            '</td></tr>';
+        }).join('') +
+        '</tbody></table></div>';
+    }
+
+    // Bouteilles archivées
+    if (ab.length === 0) {
+      bouteillesList.innerHTML = '<p style="color:#999;text-align:center;padding:20px;">Aucune bouteille archivée</p>';
+    } else {
+      bouteillesList.innerHTML = '<div style="overflow-x:auto;"><table class="table" style="width:100%;font-size:13px;"><thead><tr>' +
+        '<th>Code</th><th>Fluide</th><th>Stock</th><th>Catégorie</th><th>Archivée le</th><th>Motif</th><th>Actions</th>' +
+        '</tr></thead><tbody>' +
+        ab.map(b => {
+          const code = b.code || b.id;
+          return '<tr>' +
+            '<td><code>' + code + '</code></td>' +
+            '<td><span style="color:var(--refrigerant);font-weight:600;">' + (b.fluide || '--') + '</span></td>' +
+            '<td>' + parseFloat(b.stockActuel || 0).toFixed(2) + ' kg</td>' +
+            '<td>' + (b.categorie || '--') + '</td>' +
+            '<td>' + this.formatDate(b.archiveLe) + '</td>' +
+            '<td><em>' + (b.archiveMotif || '--') + '</em></td>' +
+            '<td style="white-space:nowrap;">' +
+              '<button class="btn btn-sm btn-success" onclick="UI.restaurerBouteille(\'' + code + '\')" title="Remettre en stock">♻️ Restaurer</button> ' +
+              '<button class="btn btn-sm btn-danger" onclick="UI.supprimerBouteilleDefinitivement(\'' + code + '\')" title="Supprimer définitivement">🗑️ Supprimer</button>' +
+            '</td></tr>';
+        }).join('') +
+        '</tbody></table></div>';
+    }
   },
 
   /**

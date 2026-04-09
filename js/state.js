@@ -37,6 +37,7 @@ const State = {
   mouvements: [],
   controles: [],
   alertes: [],
+  archives: { machines: [], bouteilles: [] },
   stats: null,
   
   // UI
@@ -66,6 +67,7 @@ const State = {
     this.mouvements = [];
     this.controles = [];
     this.alertes = [];
+    this.archives = { machines: [], bouteilles: [] };
     this.stats = null;
     this.currentView = 'dashboard';
     this.wizard = { active: false, step: 1, data: {} };
