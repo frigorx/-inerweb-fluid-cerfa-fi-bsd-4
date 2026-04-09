@@ -146,10 +146,21 @@ const App = {
     });
     
     // Navigation
-    UI.elements.mainNav.addEventListener('click', (e) => {
+    const hamburger = document.getElementById('hamburger-btn');
+    const nav = UI.elements.mainNav;
+
+    hamburger?.addEventListener('click', () => {
+      hamburger.classList.toggle('open');
+      nav.classList.toggle('open');
+    });
+
+    nav.addEventListener('click', (e) => {
       const navItem = e.target.closest('.nav-item');
       if (navItem && navItem.dataset.view) {
         UI.showView(navItem.dataset.view);
+        // Fermer le menu mobile après clic
+        hamburger?.classList.remove('open');
+        nav.classList.remove('open');
       }
     });
     

@@ -377,22 +377,18 @@ const UI = {
       });
     });
 
-    // Binding clic sur carte machine → fiche détaillée
-    document.querySelectorAll('.machine-card').forEach(card => {
-      card.style.cursor = 'pointer';
-      card.addEventListener('click', (e) => {
-        if (e.target.closest('button')) return; // Ignorer les clics sur les boutons
-        this.openDetailModal('machine', card.dataset.id);
-      });
-    });
-
-    // Binding bouton archiver machine
-    document.querySelectorAll('.btn-archive-machine').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+    // Event delegation sur le container machines
+    this.elements.machinesList.onclick = (e) => {
+      const archiveBtn = e.target.closest('.btn-archive-machine');
+      if (archiveBtn) {
         e.stopPropagation();
-        this.archiveMachine(btn.dataset.code);
-      });
-    });
+        this.archiveMachine(archiveBtn.dataset.code);
+        return;
+      }
+      if (e.target.closest('button')) return;
+      const card = e.target.closest('.machine-card');
+      if (card) this.openDetailModal('machine', card.dataset.id);
+    };
   },
   
   getMachineIcon(type) {
@@ -490,36 +486,18 @@ const UI = {
       `;
     }).join('');
 
-    // Binding clic sur carte bouteille → fiche détaillée
-    document.querySelectorAll('.bouteille-card').forEach(card => {
-      card.style.cursor = 'pointer';
-      card.addEventListener('click', (e) => {
-        if (e.target.closest('button')) return;
-        this.openDetailModal('bouteille', card.dataset.id);
-      });
-    });
+    // Event delegation sur le container bouteilles
+    this.elements.bouteillesList.onclick = (e) => {
+      const archiveBtn = e.target.closest('.btn-archive-bouteille');
+      if (archiveBtn) { e.stopPropagation(); this.archiveBouteille(archiveBtn.dataset.code); return; }
 
-    // Binding bouton archiver bouteille
-    document.querySelectorAll('.btn-archive-bouteille').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.archiveBouteille(btn.dataset.code);
-      });
-    });
+      const pdfBtn = e.target.closest('.btn-pdf-bouteille');
+      if (pdfBtn) { e.stopPropagation(); DOCS.ouvrirFicheBouteille(pdfBtn.dataset.id); return; }
 
-    // Binding bouton PDF fiche bouteille
-    document.querySelectorAll('.btn-pdf-bouteille').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      const retourBtn = e.target.closest('.btn-retour-bouteille');
+      if (retourBtn) {
         e.stopPropagation();
-        DOCS.ouvrirFicheBouteille(btn.dataset.id);
-      });
-    });
-
-    // Binding bouton retour bouteille (fournisseur / Trackdéchets)
-    document.querySelectorAll('.btn-retour-bouteille').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const code = btn.dataset.code;
+        const code = retourBtn.dataset.code;
         const choix = prompt(
           'Retour bouteille ' + code + ' :\n\n' +
           '1 — Retournée au fournisseur\n' +
@@ -528,15 +506,15 @@ const UI = {
           'Tapez 1, 2 ou 3 :'
         );
         if (!choix) return;
-        const motifs = {
-          '1': 'Retournée fournisseur',
-          '2': 'Envoyée Trackdéchets (BSFF)',
-          '3': 'Vide / consignée'
-        };
-        const motif = motifs[choix] || choix;
-        this.archiveBouteille(code, motif);
-      });
-    });
+        const motifs = { '1': 'Retournée fournisseur', '2': 'Envoyée Trackdéchets (BSFF)', '3': 'Vide / consignée' };
+        this.archiveBouteille(code, motifs[choix] || choix);
+        return;
+      }
+
+      if (e.target.closest('button')) return;
+      const card = e.target.closest('.bouteille-card');
+      if (card) this.openDetailModal('bouteille', card.dataset.id);
+    };
   },
 
   // ========== FLUIDES ==========

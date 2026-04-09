@@ -38,7 +38,8 @@ var SHEETS = {
   INCIDENTS: 'INCIDENTS',
   INDEX_CERFA: 'INDEX_CERFA',
   AUDIT_LOG: 'AUDIT_LOG',
-  STATS_CACHE: 'STATS_CACHE'
+  STATS_CACHE: 'STATS_CACHE',
+  PLAINTES: 'PLAINTES'
 };
 
 var ETATS_FLUIDE = ['Neuf', 'Récupéré', 'Recyclé', 'Régénéré', 'Déchet'];
@@ -3643,6 +3644,46 @@ function afficherAlertes() {
 // SECTION: MAIN ROUTES
 // ================================================================
 
+// ==================== PLAINTES ====================
+
+function apiGetPlaintes_() {
+  var rows = DataStore.findAll(SHEETS.PLAINTES);
+  var plaintes = rows.map(function(r) {
+    return {
+      id: r[0] || '',
+      numero: r[1] || '',
+      dateReception: r[2] || '',
+      client: r[3] || '',
+      nature: r[4] || '',
+      dateReponse: r[5] || '',
+      etat: r[6] || ''
+    };
+  });
+  return successResponse_(plaintes);
+}
+
+function apiSavePlaintes_(params) {
+  var ss = DataStore.getSpreadsheet();
+  var sheet = ss.getSheetByName(SHEETS.PLAINTES);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEETS.PLAINTES);
+    sheet.getRange(1, 1, 1, 7).setValues([['ID', 'Numero', 'DateReception', 'Client', 'Nature', 'DateReponse', 'Etat']]);
+  }
+  // Effacer les données existantes (sauf en-tête)
+  if (sheet.getLastRow() > 1) {
+    sheet.getRange(2, 1, sheet.getLastRow() - 1, 7).clearContent();
+  }
+  // Écrire les nouvelles données
+  var plaintes = JSON.parse(params.plaintes || '[]');
+  if (plaintes.length > 0) {
+    var data = plaintes.map(function(p) {
+      return [p.id || '', p.numero || '', p.dateReception || '', p.client || '', p.nature || '', p.dateReponse || '', p.etat || ''];
+    });
+    sheet.getRange(2, 1, data.length, 7).setValues(data);
+  }
+  return successResponse_({ count: plaintes.length });
+}
+
 function doGet(e) {
   try {
     DataStore.init();
@@ -3722,6 +3763,8 @@ function doGet(e) {
       case 'genererDocumentsMES': result = apiGenererDocumentsMES_(e.parameter); break;
       case 'genererPlaque': result = apiGenererPlaque_(e.parameter); break;
       case 'genererMacaron': result = apiGenererMacaron_(e.parameter); break;
+      case 'getPlaintes': result = apiGetPlaintes_(); break;
+      case 'savePlaintes': result = apiSavePlaintes_(e.parameter); break;
       default: result = errorResponse_('Action inconnue', 'UNKNOWN');
     }
     return jsonResponse_(result);

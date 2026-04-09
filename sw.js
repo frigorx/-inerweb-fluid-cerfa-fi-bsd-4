@@ -3,7 +3,7 @@
  * Support hors-ligne et mise en cache
  */
 
-const CACHE_NAME = 'inerweb-fluide-v7.4.0';
+const CACHE_NAME = 'inerweb-fluide-v7.5.0';
 
 const ASSETS_TO_CACHE = [
   './',

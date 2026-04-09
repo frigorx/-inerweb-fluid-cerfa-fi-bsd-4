@@ -7,23 +7,42 @@ const API = {
   // URL du script déployé (à configurer)
   baseUrl: '',
   apiKey: '',
-  
+
+  // Obfuscation clé API (XOR simple pour éviter le vol trivial via DevTools)
+  _obfuscate(str) {
+    const key = 'iNeRwEb2026';
+    return btoa(str.split('').map((c, i) =>
+      String.fromCharCode(c.charCodeAt(0) ^ key.charCodeAt(i % key.length))
+    ).join(''));
+  },
+  _deobfuscate(encoded) {
+    try {
+      const key = 'iNeRwEb2026';
+      const decoded = atob(encoded);
+      return decoded.split('').map((c, i) =>
+        String.fromCharCode(c.charCodeAt(0) ^ key.charCodeAt(i % key.length))
+      ).join('');
+    } catch (e) { return encoded; } // fallback si ancienne valeur en clair
+  },
+
   /**
    * Configure l'API avec l'URL du backend
    */
   init(url) {
     this.baseUrl = url.replace(/\/$/, '');
-    this.apiKey = localStorage.getItem('inerweb_apikey') || '';
+    const stored = localStorage.getItem('inerweb_apikey') || '';
+    // Migration : si la clé stockée n'est pas obfusquée (pas en base64), la migrer
+    this.apiKey = stored ? this._deobfuscate(stored) : '';
   },
-  
+
   /**
    * Définit la clé API
    */
   setApiKey(key) {
     this.apiKey = key;
-    localStorage.setItem('inerweb_apikey', key);
+    localStorage.setItem('inerweb_apikey', this._obfuscate(key));
   },
-  
+
   /**
    * Efface la clé API
    */
