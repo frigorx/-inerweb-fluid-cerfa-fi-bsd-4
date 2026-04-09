@@ -572,6 +572,19 @@ const App = {
       }
     });
 
+    // Documents PDF officiels — Suivi fluides
+    document.getElementById('btn-suivi-fluides-pdf')?.addEventListener('click', () => {
+      const annee = parseInt(document.getElementById('bilan-annee')?.value) || new Date().getFullYear();
+      const fluide = document.getElementById('bilan-fluide')?.value || null;
+      DOCS.ouvrirSuiviFluides(annee, fluide === 'all' ? null : fluide);
+    });
+
+    // Documents PDF officiels — Registre des plaintes
+    document.getElementById('btn-registre-plaintes-pdf')?.addEventListener('click', () => {
+      // Charger les plaintes depuis le state ou générer vide
+      DOCS.ouvrirRegistrePlaintes(State.plaintes || []);
+    });
+
     // P8 — Documents MES : fermeture modale
     document.getElementById('modal-mes-close')?.addEventListener('click', () => {
       document.getElementById('modal-mes').classList.add('hidden');

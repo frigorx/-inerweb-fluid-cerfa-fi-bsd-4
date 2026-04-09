@@ -484,6 +484,7 @@ const UI = {
           <div style="margin-top:6px;display:flex;gap:4px;justify-content:center;flex-wrap:wrap;">
             <button class="btn-archive-bouteille" data-code="${code}" title="Archiver" style="background:#94A3B8;color:white;border:none;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;">🗑️</button>
             <button class="btn-retour-bouteille" data-code="${code}" title="Retour fournisseur / Trackdéchets" style="background:#6366F1;color:white;border:none;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;">📦 Retour</button>
+            <button class="btn-pdf-bouteille" data-id="${b.id}" title="Fiche mouvement PDF" style="background:#1b3a63;color:white;border:none;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;">📄 PDF</button>
           </div>
         </div>
       `;
@@ -503,6 +504,14 @@ const UI = {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         this.archiveBouteille(btn.dataset.code);
+      });
+    });
+
+    // Binding bouton PDF fiche bouteille
+    document.querySelectorAll('.btn-pdf-bouteille').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        DOCS.ouvrirFicheBouteille(btn.dataset.id);
       });
     });
 
@@ -1267,6 +1276,50 @@ const UI = {
         html += '<button class="btn btn-primary" id="btn-documents-mes" data-machine="' + id + '" style="font-size:14px;padding:10px 24px;">📋 Documents MES</button>';
         html += '</div>';
       }
+
+      // Boutons Documents PDF officiels
+      html += '<div style="background:#FFF7ED;border:1px solid #F59E0B;border-radius:8px;padding:12px;margin-bottom:16px;">';
+      html += '<h3 style="margin:0 0 8px;color:#92400E;">Documents officiels imprimables</h3>';
+      html += '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+      if (type === 'bouteille') {
+        html += '<button class="btn btn-primary btn-sm" onclick="DOCS.ouvrirFicheBouteille(\'' + id + '\')">Fiche mouvement bouteille (PDF)</button>';
+      }
+      if (type === 'machine') {
+        html += '<button class="btn btn-primary btn-sm" onclick="CERFA.ouvrir({machine:\'' + id + '\'})">CERFA 15497*04 (PDF officiel)</button>';
+      }
+      html += '<button class="btn btn-sm" style="background:#1b3a63;color:white;" onclick="DOCS.ouvrirSuiviFluides()">Tableau suivi traçabilité fluides</button>';
+      html += '<button class="btn btn-sm" style="background:#1b3a63;color:white;" onclick="DOCS.ouvrirRegistrePlaintes()">Registre des plaintes</button>';
+      html += '</div></div>';
+
+      // Liens croisés cliquables
+      html += '<div style="background:#F0F9FF;border:1px solid #3B82F6;border-radius:8px;padding:12px;margin-bottom:16px;">';
+      html += '<h3 style="margin:0 0 8px;color:#1E40AF;">Tri croisé — Explorer</h3>';
+      html += '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+
+      // Collecter les entités liées
+      const linkedMachines = [...new Set(data.mouvements.map(m => m.machine).filter(Boolean))];
+      const linkedBouteilles = [...new Set(data.mouvements.map(m => m.bouteille).filter(Boolean))];
+      const linkedOperateurs = [...new Set(data.mouvements.map(m => m.operateur).filter(Boolean))];
+
+      if (type !== 'machine') {
+        linkedMachines.forEach(code => {
+          html += '<button class="btn btn-sm" style="background:#DBEAFE;color:#1E40AF;border:1px solid #93C5FD;" onclick="UI.openDetailModal(\'machine\',\'' + code + '\')">Machine ' + code + '</button>';
+        });
+      }
+      if (type !== 'bouteille') {
+        linkedBouteilles.forEach(code => {
+          html += '<button class="btn btn-sm" style="background:#D1FAE5;color:#065F46;border:1px solid #6EE7B7;" onclick="UI.openDetailModal(\'bouteille\',\'' + code + '\')">Bouteille ' + code + '</button>';
+        });
+      }
+      if (type !== 'operateur') {
+        linkedOperateurs.forEach(nom => {
+          html += '<button class="btn btn-sm" style="background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;" onclick="UI.openDetailModal(\'operateur\',\'' + nom + '\')">' + nom + '</button>';
+        });
+      }
+      if (linkedMachines.length === 0 && linkedBouteilles.length === 0 && linkedOperateurs.length === 0) {
+        html += '<span style="color:#999;font-size:12px;">Aucune entité liée trouvée</span>';
+      }
+      html += '</div></div>';
 
       // Résumé traçabilité
       html += '<div style="background:#ECFDF5;border:1px solid #10B981;border-radius:8px;padding:12px;font-size:13px;">';
