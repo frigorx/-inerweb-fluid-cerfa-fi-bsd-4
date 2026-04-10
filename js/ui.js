@@ -1747,6 +1747,15 @@ const UI = {
     const btnRefresh = document.getElementById('btn-refresh-audit');
     if (btnRefresh) btnRefresh.onclick = () => this.renderAdmin();
 
+    // Résumé sauvegarde
+    const backupDiv = document.getElementById('backup-resume');
+    if (backupDiv && typeof BACKUP !== 'undefined') {
+      const r = BACKUP.getResume();
+      backupDiv.innerHTML = '<strong>Dernière sauvegarde :</strong> ' + (r.derniereSauvegarde === 'Jamais' ? '<span style="color:red;">Jamais</span>' : new Date(r.derniereSauvegarde).toLocaleDateString('fr-FR') + ' ' + new Date(r.derniereSauvegarde).toLocaleTimeString('fr-FR')) +
+        ' — <strong>Données :</strong> ' + r.nbMachines + ' machines, ' + r.nbBouteilles + ' bouteilles, ' + r.nbMouvements + ' mouvements, ' + r.nbPlaintes + ' plaintes' +
+        ' — <strong>localStorage :</strong> ' + r.tailleLocalStorage;
+    }
+
     // Registre des plaintes
     this.renderPlaintes();
   }

@@ -3,7 +3,7 @@
  * Support hors-ligne et mise en cache
  */
 
-const CACHE_NAME = 'inerweb-fluide-v7.5.0';
+const CACHE_NAME = 'inerweb-fluide-v7.6.0';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -16,6 +16,7 @@ const ASSETS_TO_CACHE = [
   './js/cerfa.js',
   './js/docs.js',
   './js/aide.js',
+  './js/backup.js',
   './js/qrcode.js',
   './js/wizard.js',
   './js/app.js',

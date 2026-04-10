@@ -218,6 +218,10 @@ const AIDE = {
         {
           q: 'Mode Formation vs Officiel',
           r: '• Formation : filigrane sur les documents, numérotation FORM-, accès libre\n• Officiel : documents sans filigrane, numérotation FI- officielle, require attestation valide'
+        },
+        {
+          q: 'Sauvegarde & Restauration',
+          r: '5 méthodes de sauvegarde disponibles :\n\n• 💾 Clé USB : télécharge un fichier JSON complet\n• ☁️ Google Drive : sauvegarde automatique dans un dossier dédié (30 backups conservés)\n• 📧 Email : envoie le backup par email avec résumé\n• 🖨️ Impression : génère tous les PDF officiels pour archivage papier\n• 📂 Restauration : recharge un backup JSON précédent\n\nRègle d\'or : sauvegardez sur AU MOINS 2 supports différents, régulièrement.'
         }
       ]
     }

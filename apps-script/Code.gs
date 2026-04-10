@@ -3684,6 +3684,62 @@ function apiSavePlaintes_(params) {
   return successResponse_({ count: plaintes.length });
 }
 
+// ==================== BACKUP DRIVE ====================
+
+function apiBackupDrive_(params) {
+  var backup = params.backup || '{}';
+  var date = Utilities.formatDate(new Date(), 'Europe/Paris', 'yyyy-MM-dd_HHmmss');
+  var filename = 'inerWeb_Fluide_backup_' + date + '.json';
+
+  // Créer ou trouver le dossier de backup
+  var folders = DriveApp.getFoldersByName('inerWeb_Backups');
+  var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder('inerWeb_Backups');
+
+  // Sauvegarder le fichier
+  var file = folder.createFile(filename, backup, MimeType.PLAIN_TEXT);
+
+  // Nettoyer les vieux backups (garder les 30 derniers)
+  var files = folder.getFiles();
+  var allFiles = [];
+  while (files.hasNext()) { allFiles.push(files.next()); }
+  allFiles.sort(function(a, b) { return b.getDateCreated() - a.getDateCreated(); });
+  for (var i = 30; i < allFiles.length; i++) {
+    allFiles[i].setTrashed(true);
+  }
+
+  return successResponse_({ filename: filename, url: file.getUrl(), count: allFiles.length });
+}
+
+// ==================== BACKUP EMAIL ====================
+
+function apiBackupEmail_(params) {
+  var email = params.email;
+  var backup = params.backup || '{}';
+
+  if (!email) return errorResponse_('Email requis', 'PARAM');
+
+  var date = Utilities.formatDate(new Date(), 'Europe/Paris', 'dd/MM/yyyy HH:mm');
+  var filename = 'inerWeb_Fluide_backup_' + Utilities.formatDate(new Date(), 'Europe/Paris', 'yyyy-MM-dd') + '.json';
+
+  var data = JSON.parse(backup);
+  var resume = 'Sauvegarde inerWeb Fluide du ' + date + '\n\n' +
+    'Machines : ' + (data.stats ? data.stats.nbMachines : '?') + '\n' +
+    'Bouteilles : ' + (data.stats ? data.stats.nbBouteilles : '?') + '\n' +
+    'Mouvements : ' + (data.stats ? data.stats.nbMouvements : '?') + '\n' +
+    'Contrôles : ' + (data.stats ? data.stats.nbControles : '?') + '\n' +
+    'Plaintes : ' + (data.stats ? data.stats.nbPlaintes : '?') + '\n\n' +
+    'Fichier JSON joint pour restauration.';
+
+  MailApp.sendEmail({
+    to: email,
+    subject: '[inerWeb Fluide] Sauvegarde du ' + date,
+    body: resume,
+    attachments: [Utilities.newBlob(backup, MimeType.PLAIN_TEXT, filename)]
+  });
+
+  return successResponse_({ email: email, date: date });
+}
+
 function doGet(e) {
   try {
     DataStore.init();
@@ -3764,6 +3820,8 @@ function doGet(e) {
       case 'genererPlaque': result = apiGenererPlaque_(e.parameter); break;
       case 'genererMacaron': result = apiGenererMacaron_(e.parameter); break;
       case 'getPlaintes': result = apiGetPlaintes_(); break;
+      case 'backupDrive': result = apiBackupDrive_(e.parameter); break;
+      case 'backupEmail': result = apiBackupEmail_(e.parameter); break;
       case 'savePlaintes': result = apiSavePlaintes_(e.parameter); break;
       default: result = errorResponse_('Action inconnue', 'UNKNOWN');
     }

@@ -561,6 +561,24 @@
             </div>
           </div>
 
+          <!-- Sauvegarde & Restauration -->
+          <div class="card" style="margin-bottom: 16px;">
+            <div class="card-header" style="background: #1b3a63; color: white; padding: 12px 16px; border-radius: 8px 8px 0 0;">
+              <h3 style="margin:0;">Sauvegarde & Restauration</h3>
+            </div>
+            <div class="card-body" style="padding: 16px;">
+              <p style="font-size: 12px; color: #666; margin-bottom: 12px;">Plusieurs méthodes de sauvegarde pour ne jamais perdre vos données. Sauvegardez régulièrement sur plusieurs supports.</p>
+              <div id="backup-resume" style="background:#F0F9FF;border:1px solid #3B82F6;border-radius:8px;padding:12px;margin-bottom:12px;font-size:13px;"></div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-primary" id="btn-backup-usb" title="Télécharger un fichier JSON sur clé USB ou disque dur">💾 Sauv. clé USB / disque</button>
+                <button class="btn btn-success" id="btn-backup-cloud" title="Sauvegarder sur Google Drive">☁️ Sauv. Google Drive</button>
+                <button class="btn btn-secondary" id="btn-backup-email" title="Envoyer la sauvegarde par email" style="background:#ff6b35;color:white;">📧 Envoyer par email</button>
+                <button class="btn btn-secondary" id="btn-backup-print" title="Imprimer tous les documents officiels">🖨️ Imprimer tous les docs</button>
+                <button class="btn btn-secondary" id="btn-backup-restore" title="Restaurer depuis un fichier de sauvegarde">📂 Restaurer un backup</button>
+              </div>
+            </div>
+          </div>
+
           <!-- Registre des plaintes -->
           <div class="card" style="margin-bottom: 16px;">
             <div class="card-header" style="background: #1b3a63; color: white; padding: 12px 16px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
@@ -1180,6 +1198,7 @@
   <script src="js/cerfa.js"></script>
   <script src="js/docs.js"></script>
   <script src="js/aide.js"></script>
+  <script src="js/backup.js"></script>
   <script src="js/wizard.js"></script>
   <script src="js/app.js"></script>
   

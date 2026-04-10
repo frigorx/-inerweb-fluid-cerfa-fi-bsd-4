@@ -586,6 +586,17 @@ const Wizard = {
           UI.toast('Veuillez sélectionner une machine', 'error');
           return false;
         }
+        // Vérifier fluide connu dès la sélection machine
+        {
+          const machine2 = State.getMachineById(data.machineId);
+          if (machine2?.fluide) {
+            const fl = State.getFluidByCode(machine2.fluide);
+            if (!fl || !fl.prg) {
+              UI.toast('Le fluide "' + machine2.fluide + '" de cette machine est inconnu. Vérifiez la configuration dans Admin > Fluides.', 'error');
+              return false;
+            }
+          }
+        }
         break;
 
       case 3:
@@ -609,6 +620,18 @@ const Wizard = {
         if (!data.quantite || data.quantite <= 0) {
           UI.toast('La quantité doit être positive', 'error');
           return false;
+        }
+        // Vérifier stock bouteille suffisant en mode CHARGE
+        if (data.bouteilleId) {
+          const bType = (data.type || '').toUpperCase();
+          if (bType === 'CHARGE' || bType === 'MISE_EN_SERVICE') {
+            const bout = State.getBouteilleById(data.bouteilleId);
+            const stock = parseFloat(bout?.stockActuel || bout?.masse || 0);
+            if (stock > 0 && data.quantite > stock) {
+              UI.toast('La bouteille ne contient que ' + stock.toFixed(2) + ' kg mais vous essayez d\'en charger ' + parseFloat(data.quantite).toFixed(2) + ' kg.', 'error');
+              return false;
+            }
+          }
         }
         // B3 — Vérifier pesée inversée (warning bloquant)
         {
@@ -697,20 +720,30 @@ const Wizard = {
         } catch (e) { /* quota dépassé, pas grave */ }
       }
 
-      // B2 + B12 : Mettre à jour le stock et statut de la bouteille localement
+      // B2 + B12 : Mettre à jour le stock bouteille ET charge machine localement
+      const type = data.type;
+      const qty = parseFloat(data.quantite || 0);
+
       if (bouteille && data.bouteilleId) {
-        const type = data.type;
-        const qty = parseFloat(data.quantite || 0);
         if (type === 'CHARGE' || type === 'MISE_EN_SERVICE') {
           bouteille.stockActuel = Math.max(0, parseFloat(bouteille.stockActuel || 0) - qty);
         } else if (type === 'RECUPERATION') {
           bouteille.stockActuel = parseFloat(bouteille.stockActuel || 0) + qty;
         }
-        // Mettre à jour le statut
         if (bouteille.categorie === 'Neuve' || bouteille.categorie === 'NEUVE') {
           bouteille.categorie = 'En service';
         }
         bouteille.statut = 'En service';
+      }
+
+      // Mise à jour charge machine locale
+      if (machine) {
+        const chargeActuelle = parseFloat(machine.chargeActuelle || machine.charge || 0);
+        if (type === 'CHARGE' || type === 'MISE_EN_SERVICE') {
+          machine.chargeActuelle = (chargeActuelle + qty).toFixed(2);
+        } else if (type === 'RECUPERATION' || type === 'VIDANGE') {
+          machine.chargeActuelle = Math.max(0, chargeActuelle - qty).toFixed(2);
+        }
       }
 
       UI.hideWizard();

@@ -17,7 +17,7 @@ const App = {
     UI.init();
     
     // Configurer l'API
-    const defaultApiUrl = 'https://script.google.com/macros/s/AKfycbwKVq2ghv1BkjLHPNAPZRCGH8SB4dMEYAFpi6VKSwzWEl83uH8IEQ3M3MjJVI1qrMSE/exec';
+    const defaultApiUrl = 'https://script.google.com/macros/s/AKfycbwFlSD9lw4Ezdph96jDWw94hNpVC4_NKGJFUQidVPtyA6xd5Z7Pf-vy9m9bis_9x5Kf/exec';
 
     // Nettoyage automatique du localStorage
     this.cleanupLocalStorage(defaultApiUrl);
@@ -747,6 +747,13 @@ const App = {
       DOCS.ouvrirRegistrePlaintes(State.plaintes || []);
     });
 
+    // ===== SAUVEGARDE & RESTAURATION =====
+    document.getElementById('btn-backup-usb')?.addEventListener('click', () => BACKUP.sauvegarderUSB());
+    document.getElementById('btn-backup-cloud')?.addEventListener('click', () => BACKUP.sauvegarderCloud());
+    document.getElementById('btn-backup-email')?.addEventListener('click', () => BACKUP.envoyerParEmail());
+    document.getElementById('btn-backup-print')?.addEventListener('click', () => BACKUP.imprimerTout());
+    document.getElementById('btn-backup-restore')?.addEventListener('click', () => BACKUP.restaurer());
+
     // Raccourcis clavier
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
@@ -804,8 +811,8 @@ const App = {
     const detectionPermanente = document.getElementById('machine-detection-permanente').checked;
     const clientId = document.getElementById('machine-client').value;
 
-    if (!fluide || !chargeNom) {
-      UI.toast('Veuillez remplir tous les champs obligatoires', 'error');
+    if (!nom || !fluide || !chargeNom) {
+      UI.toast('Veuillez remplir : nom, fluide et charge nominale', 'error');
       return;
     }
 
