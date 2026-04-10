@@ -561,6 +561,35 @@
             </div>
           </div>
 
+          <!-- Nettoyage & Purge sélective -->
+          <div class="card" style="margin-bottom: 16px;">
+            <div class="card-header" style="background: #DC2626; color: white; padding: 12px 16px; border-radius: 8px 8px 0 0;">
+              <h3 style="margin:0;">Nettoyage & Purge sélective</h3>
+            </div>
+            <div class="card-body" style="padding: 16px;">
+              <p style="font-size: 12px; color: #666; margin-bottom: 8px;">Supprimez les essais et les ratés. Les éléments sans mouvement lié sont supprimés sans trace. Les éléments avec mouvements nécessitent une confirmation.</p>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+                <button class="btn btn-secondary" id="btn-purge-orphelins" title="Supprimer machines et bouteilles sans aucun mouvement" style="background:#F59E0B;color:white;">Purger les orphelins (sans mouvement)</button>
+                <button class="btn btn-danger" id="btn-reset-total" title="TOUT supprimer — remise à zéro complète" style="background:#DC2626;color:white;">Réinitialiser à zéro</button>
+              </div>
+              <div id="purge-panel">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                  <div>
+                    <h4 style="margin:0 0 6px;color:#1b3a63;">Machines <span id="purge-machines-count" style="color:#999;font-size:12px;"></span></h4>
+                    <div id="purge-machines-list" style="max-height:300px;overflow-y:auto;border:1px solid #E5E7EB;border-radius:8px;padding:8px;"></div>
+                  </div>
+                  <div>
+                    <h4 style="margin:0 0 6px;color:#1b3a63;">Bouteilles <span id="purge-bouteilles-count" style="color:#999;font-size:12px;"></span></h4>
+                    <div id="purge-bouteilles-list" style="max-height:300px;overflow-y:auto;border:1px solid #E5E7EB;border-radius:8px;padding:8px;"></div>
+                  </div>
+                </div>
+                <div style="margin-top:10px;text-align:right;">
+                  <button class="btn btn-danger" id="btn-purge-selection" style="display:none;">Supprimer la sélection</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Sauvegarde & Restauration -->
           <div class="card" style="margin-bottom: 16px;">
             <div class="card-header" style="background: #1b3a63; color: white; padding: 12px 16px; border-radius: 8px 8px 0 0;">

@@ -17,7 +17,7 @@ const App = {
     UI.init();
     
     // Configurer l'API
-    const defaultApiUrl = 'https://script.google.com/macros/s/AKfycbwFlSD9lw4Ezdph96jDWw94hNpVC4_NKGJFUQidVPtyA6xd5Z7Pf-vy9m9bis_9x5Kf/exec';
+    const defaultApiUrl = 'https://script.google.com/macros/s/AKfycbwv-G63lIYYJ4fJOF6LpaUJjws1eLUfgXa_zypkgP7VXOnLQB5IuVbiozL-BUmg6hpr/exec';
 
     // Nettoyage automatique du localStorage
     this.cleanupLocalStorage(defaultApiUrl);
@@ -745,6 +745,157 @@ const App = {
 
     document.getElementById('btn-print-plaintes')?.addEventListener('click', () => {
       DOCS.ouvrirRegistrePlaintes(State.plaintes || []);
+    });
+
+    // ===== NETTOYAGE & PURGE =====
+
+    // Rendre le panneau de purge
+    this._renderPurgePanel = () => {
+      const machList = document.getElementById('purge-machines-list');
+      const boutList = document.getElementById('purge-bouteilles-list');
+      const machCount = document.getElementById('purge-machines-count');
+      const boutCount = document.getElementById('purge-bouteilles-count');
+      if (!machList || !boutList) return;
+
+      const mouvements = State.mouvements || [];
+
+      // Machines avec compteur de mouvements
+      machCount.textContent = '(' + (State.machines || []).length + ')';
+      machList.innerHTML = (State.machines || []).map(m => {
+        const code = m.code || m.id;
+        const nbMouv = mouvements.filter(mv => mv.machine === code || mv.machineCode === code).length;
+        const orphelin = nbMouv === 0;
+        return `<label style="display:flex;align-items:center;gap:6px;padding:4px;border-bottom:1px solid #F3F4F6;font-size:12px;cursor:pointer;">
+          <input type="checkbox" class="purge-machine-cb" data-code="${code}" ${orphelin ? 'checked' : ''}>
+          <span style="flex:1;">${code} — ${m.nom || m.designation || '?'} (${m.fluide || '?'})</span>
+          <span style="font-size:11px;${orphelin ? 'color:#10B981;' : 'color:#F59E0B;'}">${nbMouv} mouv.</span>
+        </label>`;
+      }).join('') || '<p style="color:#999;font-size:12px;">Aucune machine</p>';
+
+      // Bouteilles avec compteur de mouvements
+      boutCount.textContent = '(' + (State.bouteilles || []).length + ')';
+      boutList.innerHTML = (State.bouteilles || []).map(b => {
+        const code = b.code || b.id;
+        const nbMouv = mouvements.filter(mv => mv.bouteille === code || mv.bouteilleCode === code).length;
+        const orphelin = nbMouv === 0;
+        return `<label style="display:flex;align-items:center;gap:6px;padding:4px;border-bottom:1px solid #F3F4F6;font-size:12px;cursor:pointer;">
+          <input type="checkbox" class="purge-bouteille-cb" data-code="${code}" ${orphelin ? 'checked' : ''}>
+          <span style="flex:1;">${code} — ${b.fluide || '?'} (${b.categorie || '?'})</span>
+          <span style="font-size:11px;${orphelin ? 'color:#10B981;' : 'color:#F59E0B;'}">${nbMouv} mouv.</span>
+        </label>`;
+      }).join('') || '<p style="color:#999;font-size:12px;">Aucune bouteille</p>';
+
+      // Afficher le bouton supprimer si des cases sont cochées
+      const btnPurge = document.getElementById('btn-purge-selection');
+      const updateBtn = () => {
+        const nbChecked = document.querySelectorAll('.purge-machine-cb:checked, .purge-bouteille-cb:checked').length;
+        btnPurge.style.display = nbChecked > 0 ? 'inline-block' : 'none';
+        btnPurge.textContent = 'Supprimer ' + nbChecked + ' élément(s) sélectionné(s)';
+      };
+      machList.addEventListener('change', updateBtn);
+      boutList.addEventListener('change', updateBtn);
+      updateBtn();
+    };
+
+    // Purge orphelins (sans mouvement)
+    document.getElementById('btn-purge-orphelins')?.addEventListener('click', async () => {
+      const mouvements = State.mouvements || [];
+      const machOrph = (State.machines || []).filter(m => {
+        const code = m.code || m.id;
+        return mouvements.filter(mv => mv.machine === code || mv.machineCode === code).length === 0;
+      });
+      const boutOrph = (State.bouteilles || []).filter(b => {
+        const code = b.code || b.id;
+        return mouvements.filter(mv => mv.bouteille === code || mv.bouteilleCode === code).length === 0;
+      });
+
+      if (machOrph.length === 0 && boutOrph.length === 0) {
+        UI.toast('Aucun orphelin à purger — toutes les machines et bouteilles ont des mouvements', 'info');
+        return;
+      }
+
+      const ok = confirm('Supprimer ' + machOrph.length + ' machine(s) et ' + boutOrph.length + ' bouteille(s) sans mouvement ?\n\nCes éléments seront supprimés SANS TRACE.');
+      if (!ok) return;
+
+      for (const m of machOrph) {
+        try { await API.supprimerMachine(m.code || m.id); } catch (e) {}
+      }
+      for (const b of boutOrph) {
+        try { await API.supprimerBouteille(b.code || b.id); } catch (e) {}
+      }
+
+      await State.loadInitialData();
+      UI.showView('admin');
+      UI.toast(machOrph.length + ' machines + ' + boutOrph.length + ' bouteilles orphelines supprimées', 'success');
+    });
+
+    // Purge sélective
+    document.getElementById('btn-purge-selection')?.addEventListener('click', async () => {
+      const machCodes = [...document.querySelectorAll('.purge-machine-cb:checked')].map(cb => cb.dataset.code);
+      const boutCodes = [...document.querySelectorAll('.purge-bouteille-cb:checked')].map(cb => cb.dataset.code);
+
+      if (machCodes.length === 0 && boutCodes.length === 0) return;
+
+      // Vérifier si certains ont des mouvements
+      const mouvements = State.mouvements || [];
+      const machAvecMouv = machCodes.filter(code => mouvements.some(mv => mv.machine === code || mv.machineCode === code));
+      const boutAvecMouv = boutCodes.filter(code => mouvements.some(mv => mv.bouteille === code || mv.bouteilleCode === code));
+
+      let msg = 'Supprimer ' + machCodes.length + ' machine(s) et ' + boutCodes.length + ' bouteille(s) ?';
+      if (machAvecMouv.length > 0 || boutAvecMouv.length > 0) {
+        msg += '\n\nATTENTION : ' + (machAvecMouv.length + boutAvecMouv.length) + ' élément(s) ont des mouvements liés. Les mouvements et CERFAs associés seront aussi supprimés.';
+      }
+      msg += '\n\nCette action est IRRÉVERSIBLE.';
+
+      if (!confirm(msg)) return;
+
+      UI.toast('Suppression en cours...', 'info');
+      for (const code of machCodes) {
+        try { await API.supprimerMachine(code); } catch (e) {}
+      }
+      for (const code of boutCodes) {
+        try { await API.supprimerBouteille(code); } catch (e) {}
+      }
+
+      await State.loadInitialData();
+      UI.showView('admin');
+      UI.toast(machCodes.length + ' machines + ' + boutCodes.length + ' bouteilles supprimées', 'success');
+    });
+
+    // Reset total
+    document.getElementById('btn-reset-total')?.addEventListener('click', async () => {
+      const code = prompt(
+        'RÉINITIALISATION COMPLÈTE\n\n' +
+        'TOUTES les données seront effacées :\n' +
+        '• ' + (State.machines || []).length + ' machines\n' +
+        '• ' + (State.bouteilles || []).length + ' bouteilles\n' +
+        '• ' + (State.mouvements || []).length + ' mouvements\n' +
+        '• ' + (State.controles || []).length + ' contrôles\n' +
+        '• ' + (State.plaintes || []).length + ' plaintes\n\n' +
+        'Tapez REINITIALISER pour confirmer :'
+      );
+      if (code !== 'REINITIALISER') {
+        UI.toast('Réinitialisation annulée', 'info');
+        return;
+      }
+
+      // Sauvegarder d'abord
+      UI.toast('Sauvegarde avant réinitialisation...', 'info');
+      await BACKUP.sauvegarderUSB();
+
+      // Supprimer tout
+      UI.toast('Réinitialisation en cours...', 'info');
+      try {
+        await API.get('resetAll', { confirm: 'REINITIALISER' });
+        // Vider localStorage
+        State.plaintes = [];
+        localStorage.setItem('inerweb_plaintes', '[]');
+        await State.loadInitialData();
+        UI.showView('dashboard');
+        UI.toast('Réinitialisation complète. L\'ancienne sauvegarde a été téléchargée.', 'success');
+      } catch (e) {
+        UI.toast('Erreur réinitialisation : ' + e.message, 'error');
+      }
     });
 
     // ===== SAUVEGARDE & RESTAURATION =====

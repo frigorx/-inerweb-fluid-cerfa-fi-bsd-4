@@ -3740,6 +3740,30 @@ function apiBackupEmail_(params) {
   return successResponse_({ email: email, date: date });
 }
 
+// ==================== RESET TOTAL ====================
+
+function apiResetAll_(params) {
+  if (params.confirm !== 'REINITIALISER') return errorResponse_('Confirmation invalide', 'PARAM');
+
+  // Faire un backup Drive avant de tout vider
+  try { apiBackupDrive_({ backup: JSON.stringify({ autoBackupBeforeReset: true, date: new Date().toISOString() }) }); } catch (e) {}
+
+  // Vider les onglets de données (garder les en-têtes)
+  var tables = [SHEETS.MACHINES, SHEETS.BOUTEILLES, SHEETS.MOUVEMENTS, SHEETS.CONTROLES, SHEETS.INCIDENTS, SHEETS.INDEX_CERFA, SHEETS.PLAINTES];
+  var ss = DataStore.getSpreadsheet();
+  tables.forEach(function(tableName) {
+    var sheet = ss.getSheetByName(tableName);
+    if (sheet && sheet.getLastRow() > 1) {
+      sheet.deleteRows(2, sheet.getLastRow() - 1);
+    }
+  });
+
+  // Logger l'action
+  logAudit_('ADMIN', 'admin', 'resetAll', { tables: tables.length }, 'Réinitialisation complète', 'success');
+
+  return successResponse_({ message: 'Réinitialisation complète effectuée', tables: tables.length });
+}
+
 function doGet(e) {
   try {
     DataStore.init();
@@ -3822,6 +3846,7 @@ function doGet(e) {
       case 'getPlaintes': result = apiGetPlaintes_(); break;
       case 'backupDrive': result = apiBackupDrive_(e.parameter); break;
       case 'backupEmail': result = apiBackupEmail_(e.parameter); break;
+      case 'resetAll': result = apiResetAll_(e.parameter); break;
       case 'savePlaintes': result = apiSavePlaintes_(e.parameter); break;
       default: result = errorResponse_('Action inconnue', 'UNKNOWN');
     }

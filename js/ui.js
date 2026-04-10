@@ -350,7 +350,7 @@ const UI = {
         </div>
         <div style="margin-top:8px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
           ${isPrechargee(m) ? `<button class="btn btn-sm btn-primary btn-cerfa-precharge" data-machine="${m.code || m.id}" title="CERFA précharge usine">📄 CERFA précharge</button>` : ''}
-          <button class="btn btn-sm btn-archive-machine" data-code="${m.code || m.id}" title="Archiver cette machine" style="background:#94A3B8;color:white;font-size:11px;">🗑️ Archiver</button>
+          ${this._isAdmin() ? `<button class="btn btn-sm btn-archive-machine" data-code="${m.code || m.id}" title="Archiver cette machine" style="background:#94A3B8;color:white;font-size:11px;">🗑️ Archiver</button>` : ''}
         </div>
       </div>
     `).join('');
@@ -478,7 +478,7 @@ const UI = {
           <div class="bouteille-fluide">${b.fluide || '--'}</div>
           <div class="bouteille-masse">${parseFloat(b.stockActuel || 0).toFixed(2)} kg</div>
           <div style="margin-top:6px;display:flex;gap:4px;justify-content:center;flex-wrap:wrap;">
-            <button class="btn-archive-bouteille" data-code="${code}" title="Archiver" style="background:#94A3B8;color:white;border:none;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;">🗑️</button>
+            ${this._isAdmin() ? `<button class="btn-archive-bouteille" data-code="${code}" title="Archiver" style="background:#94A3B8;color:white;border:none;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;">🗑️</button>` : ''}
             <button class="btn-retour-bouteille" data-code="${code}" title="Retour fournisseur / Trackdéchets" style="background:#6366F1;color:white;border:none;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;">📦 Retour</button>
             <button class="btn-pdf-bouteille" data-id="${b.id}" title="Fiche mouvement PDF" style="background:#1b3a63;color:white;border:none;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;">📄 PDF</button>
           </div>
@@ -688,6 +688,14 @@ const UI = {
         }
       });
     });
+  },
+
+  /**
+   * Vérifie si l'utilisateur courant est admin/enseignant/référent
+   */
+  _isAdmin() {
+    const role = (State.user?.role || '').toLowerCase();
+    return ['admin', 'enseignant', 'referent', 'référent'].includes(role);
   },
 
   getStatutBadgeClass(statut) {
@@ -1746,6 +1754,11 @@ const UI = {
     // Binding refresh audit
     const btnRefresh = document.getElementById('btn-refresh-audit');
     if (btnRefresh) btnRefresh.onclick = () => this.renderAdmin();
+
+    // Panneau purge sélective
+    if (typeof App !== 'undefined' && App._renderPurgePanel) {
+      App._renderPurgePanel();
+    }
 
     // Résumé sauvegarde
     const backupDiv = document.getElementById('backup-resume');
