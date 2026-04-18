@@ -174,5 +174,59 @@ function handleReleveTpAction(action, e, body) {
   if (action === 'getInventaireConsolide') {
     return getInventaireConsolide();
   }
+  if (action === 'importerBouteillesTp') {
+    return importerBouteillesTp(body || {});
+  }
   return null; // action non gérée ici → laisser le reste du routing s'en occuper
+}
+
+/**
+ * Passerelle TP → inerWeb Fluide : crée des bouteilles dans la feuille BOUTEILLES
+ * à partir de l'inventaire TP consolidé. Déduplique sur (fluide + num_serie).
+ *
+ * payload : { categorie: 'NEUVE'|'TRANSFERT'|'RECUP', siteId?: string, bouteilles: [{...releveTP}] }
+ */
+function importerBouteillesTp(payload) {
+  var categorie = payload.categorie || 'NEUVE';
+  var siteId = payload.siteId || '';
+  var liste = payload.bouteilles || [];
+  if (!liste.length) return { success: false, error: 'Aucune bouteille à importer' };
+
+  // Index des bouteilles existantes : clé = fluide|num_serie
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var shBout = ss.getSheetByName('BOUTEILLES');
+  var dejaEnBase = {};
+  if (shBout && shBout.getLastRow() > 1) {
+    var data = shBout.getRange(2, 1, shBout.getLastRow() - 1, shBout.getLastColumn()).getValues();
+    // Colonnes : 0=code, 1=categorie, 2=fluide, 3=etat, 4=marque, 5=tare, 6=contenance, 7=masseFluide, 8=masseTotal, 9=date, 10=fournisseur, 11=lot
+    data.forEach(function (row) {
+      var k = String(row[2] || '').trim() + '|' + String(row[11] || '').trim();
+      dejaEnBase[k] = true;
+    });
+  }
+
+  var importees = 0, ignorees = 0, erreurs = [];
+  liste.forEach(function (b) {
+    var fluide = String(b.fluide || '').trim();
+    var numSerie = String(b.num_serie || '').trim();
+    if (!fluide) { erreurs.push((b.bouteille_code || '?') + ': fluide manquant'); return; }
+    var k = fluide + '|' + numSerie;
+    if (dejaEnBase[k]) { ignorees++; return; }
+    var r = apiCreateBouteille_({
+      categorie: categorie,
+      fluide: fluide,
+      etatFluide: 'Neuf',
+      marque: b.marque || '',
+      tare: Number(b.tare_kg) || 0,
+      contenance: Number(b.capacite_L) || 0,
+      masseFluide: Number(b.masse_nette_kg) || 0,
+      fournisseur: b.marque || '',
+      lot: numSerie,
+      siteId: siteId
+    });
+    if (r && r.success) { importees++; dejaEnBase[k] = true; }
+    else { erreurs.push((b.bouteille_code || '?') + ': ' + (r && r.error ? r.error : 'erreur inconnue')); }
+  });
+
+  return { success: true, importees: importees, ignorees: ignorees, erreurs: erreurs };
 }

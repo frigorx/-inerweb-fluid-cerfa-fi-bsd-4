@@ -9,8 +9,12 @@
 <body>
 
 <div class="header">
-  <h1>❄️ inerWeb <span class="logo-badge">TP · Admin</span></h1>
-  <div class="sub">Console prof — consolidation des relevés</div>
+  <h1>
+    <span>❄️ inerWeb</span>
+    <span class="logo-badge">Édu</span>
+    <span class="signature">par F. Henninot</span>
+  </h1>
+  <div class="sub">TP Inventaire Bouteilles — console prof (consolidation + import vers inerWeb Fluide)</div>
 </div>
 
 <div class="container">
@@ -33,30 +37,46 @@
       <input type="text" id="filtre-classe" placeholder="Filtrer par classe">
       <input type="text" id="filtre-eleve" placeholder="Filtrer par élève">
     </div>
-    <div id="status" style="font-size:12px;color:#888;margin-bottom:10px"></div>
+    <div id="status" style="font-size:14pt;color:#888;margin-bottom:10px"></div>
     <div id="releves-table" style="overflow-x:auto"></div>
   </div>
 
   <div class="card">
     <h2 class="card-title">📊 Inventaire consolidé</h2>
-    <p style="font-size:13px;color:#555">Pour chaque bouteille, le meilleur relevé auto-validé (≥ 80 %) est retenu. Ce tableau peut être collé tel quel dans la feuille BOUTEILLES de inerWeb Fluide.</p>
+    <p>Pour chaque bouteille, le meilleur relevé auto-validé (≥ 80 %) est retenu. Cet inventaire peut être importé directement dans la base <b>BOUTEILLES</b> de inerWeb Fluide.</p>
     <button type="button" class="btn btn-primary" id="btn-consolide">🔄 Générer l'inventaire consolidé</button>
     <div id="consolide-table" style="overflow-x:auto;margin-top:12px"></div>
-    <button type="button" class="btn btn-orange btn-block" id="btn-export-csv" style="display:none;margin-top:10px">📥 Exporter CSV</button>
+    <div id="import-block" style="display:none;margin-top:14px">
+      <label for="import-cat">Catégorie à attribuer aux bouteilles importées</label>
+      <select id="import-cat">
+        <option value="NEUVE">NEUVE (stock atelier)</option>
+        <option value="TRANSFERT">TRANSFERT</option>
+        <option value="RECUP">RÉCUP</option>
+      </select>
+      <label for="import-site">Site / atelier (facultatif)</label>
+      <input type="text" id="import-site" placeholder="ex. ATELIER-FROID-1">
+      <div class="inline-row" style="margin-top:12px">
+        <button type="button" class="btn btn-orange" id="btn-import-fluide">📦 Importer dans la base BOUTEILLES</button>
+        <button type="button" class="btn btn-ghost" id="btn-export-csv">📥 Exporter CSV</button>
+      </div>
+      <div id="import-status" style="margin-top:10px"></div>
+    </div>
   </div>
 
   <div class="card">
     <h2 class="card-title">🗑 Données locales</h2>
-    <p style="font-size:13px;color:#555">Les élèves qui utilisent l'app sur ce téléphone stockent aussi leurs relevés localement. Tu peux les visualiser/effacer ici.</p>
+    <p>Les élèves qui utilisent l'app sur ce téléphone stockent aussi leurs relevés localement. Tu peux les visualiser ou les effacer ici.</p>
     <button type="button" class="btn btn-ghost" id="btn-local">Voir les relevés locaux</button>
     <button type="button" class="btn btn-danger" id="btn-clear-local">Effacer localStorage</button>
-    <div id="local-data" style="margin-top:10px;font-size:12px"></div>
+    <div id="local-data" style="margin-top:10px"></div>
   </div>
 
 </div>
 
 <div class="footer">
-  inerWeb TP v1.0 · Console prof · F. Henninot
+  <span>inerWeb Édu — TP Inventaire Bouteilles v1.0 · Console prof</span>
+  <span class="signature"> · par F. Henninot</span>
+  <span class="etablissement">LP Privé Jacques Raynaud — Campus ÉQUATIO, Marseille · Filière Froid &amp; Climatisation</span>
 </div>
 
 <script>
@@ -96,24 +116,24 @@ function renderReleves(rows) {
     $('releves-table').innerHTML = '<p style="color:#888">Aucun relevé.</p>';
     return;
   }
-  let html = '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>' +
+  let html = '<table style="width:100%;border-collapse:collapse;font-size:14pt;line-height:1.5"><thead><tr>' +
     ['Date', 'Élève', 'Classe', 'Bouteille', 'Fluide', 'Net (kg)', 'tCO2eq', 'Note', 'Validé'].map(h =>
-      `<th style="background:#1B3A63;color:#fff;padding:6px;text-align:left">${h}</th>`
+      `<th style="background:#1b3a63;color:#fff;padding:8px;text-align:left;font-family:\'Trebuchet MS\',sans-serif">${h}</th>`
     ).join('') + '</tr></thead><tbody>';
   rows.forEach(r => {
     const date = new Date(r.timestamp).toLocaleString('fr-FR');
     const note = `${r.note_sur_20}/${r.note_max || 20}`;
     const valid = r.auto_validation === 'OUI' ? '✅' : '⏳';
     html += `<tr style="border-bottom:1px solid #eee">
-      <td style="padding:6px">${date}</td>
-      <td style="padding:6px"><b>${r.eleve}</b></td>
-      <td style="padding:6px">${r.classe}</td>
-      <td style="padding:6px"><code>${r.bouteille_code}</code></td>
-      <td style="padding:6px">${r.fluide || '—'}</td>
-      <td style="padding:6px">${r.masse_nette_kg || '—'}</td>
-      <td style="padding:6px">${r.tCO2eq || '—'}</td>
-      <td style="padding:6px">${note} (${r.pourcentage}%)</td>
-      <td style="padding:6px">${valid}</td>
+      <td style="padding:8px">${date}</td>
+      <td style="padding:8px"><b>${r.eleve}</b></td>
+      <td style="padding:8px">${r.classe}</td>
+      <td style="padding:8px"><code>${r.bouteille_code}</code></td>
+      <td style="padding:8px">${r.fluide || '—'}</td>
+      <td style="padding:8px">${r.masse_nette_kg || '—'}</td>
+      <td style="padding:8px">${r.tCO2eq || '—'}</td>
+      <td style="padding:8px">${note} (${r.pourcentage}%)</td>
+      <td style="padding:8px">${valid}</td>
     </tr>`;
   });
   html += '</tbody></table>';
@@ -139,31 +159,54 @@ $('btn-consolide').addEventListener('click', async () => {
       $('btn-export-csv').style.display = 'none';
       return;
     }
-    let html = '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>' +
+    let html = '<table style="width:100%;border-collapse:collapse;font-size:14pt;line-height:1.5"><thead><tr>' +
       ['Bouteille', 'Marque', 'N° série', 'Type', 'Cap.', 'Fluide', 'Tare', 'Brute', 'Net', 'tCO2eq', 'Par'].map(h =>
-        `<th style="background:#E8914A;color:#fff;padding:6px">${h}</th>`
+        `<th style="background:#ff6b35;color:#fff;padding:8px;text-align:left;font-family:\'Trebuchet MS\',sans-serif">${h}</th>`
       ).join('') + '</tr></thead><tbody>';
     rows.forEach(r => {
       html += `<tr style="border-bottom:1px solid #eee">
-        <td style="padding:6px"><code>${r.bouteille_code}</code></td>
-        <td style="padding:6px">${r.marque}</td>
-        <td style="padding:6px">${r.num_serie}</td>
-        <td style="padding:6px">${r.type}</td>
-        <td style="padding:6px">${r.capacite_L}</td>
-        <td style="padding:6px"><b>${r.fluide}</b></td>
-        <td style="padding:6px">${r.tare_kg}</td>
-        <td style="padding:6px">${r.masse_brute_kg}</td>
-        <td style="padding:6px"><b>${r.masse_nette_kg}</b></td>
-        <td style="padding:6px">${r.tCO2eq}</td>
-        <td style="padding:6px">${r.eleve}</td>
+        <td style="padding:8px"><code>${r.bouteille_code}</code></td>
+        <td style="padding:8px">${r.marque}</td>
+        <td style="padding:8px">${r.num_serie}</td>
+        <td style="padding:8px">${r.type}</td>
+        <td style="padding:8px">${r.capacite_L}</td>
+        <td style="padding:8px"><b>${r.fluide}</b></td>
+        <td style="padding:8px">${r.tare_kg}</td>
+        <td style="padding:8px">${r.masse_brute_kg}</td>
+        <td style="padding:8px"><b>${r.masse_nette_kg}</b></td>
+        <td style="padding:8px">${r.tCO2eq}</td>
+        <td style="padding:8px">${r.eleve}</td>
       </tr>`;
     });
     html += '</tbody></table>';
     $('consolide-table').innerHTML = html;
-    $('btn-export-csv').style.display = 'block';
+    $('import-block').style.display = 'block';
     $('btn-export-csv').dataset.rows = JSON.stringify(rows);
+    $('btn-import-fluide').dataset.rows = JSON.stringify(rows);
   } catch (e) {
     $('consolide-table').innerHTML = '<p style="color:red">❌ ' + e.message + '</p>';
+  }
+});
+
+$('btn-import-fluide').addEventListener('click', async () => {
+  if (!apiUrl) { $('import-status').innerHTML = '<span style="color:red">❌ URL non configurée.</span>'; return; }
+  const rows = JSON.parse($('btn-import-fluide').dataset.rows || '[]');
+  if (rows.length === 0) { $('import-status').textContent = 'Aucune bouteille à importer.'; return; }
+  const categorie = $('import-cat').value;
+  const siteId = $('import-site').value.trim();
+  if (!confirm(`Importer ${rows.length} bouteille(s) dans la base BOUTEILLES de inerWeb Fluide (catégorie ${categorie}) ?`)) return;
+  $('import-status').textContent = '⏳ Import en cours…';
+  try {
+    const res = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'importerBouteillesTp', categorie, siteId, bouteilles: rows })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Erreur import');
+    $('import-status').innerHTML = `<span style="color:var(--vert);font-weight:bold">✅ ${data.importees || 0} bouteille(s) importée(s), ${data.ignorees || 0} ignorée(s) (déjà en base).</span>`;
+  } catch (e) {
+    $('import-status').innerHTML = '<span style="color:red">❌ ' + e.message + '</span>';
   }
 });
 
