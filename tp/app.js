@@ -22,7 +22,7 @@ const state = {
   bouteille: null,         // objet BOUTEILLES_REELLES courant
   reponses: {},            // réponses de l'élève
   notation: null,          // résultat auto-correction
-  apiUrl: localStorage.getItem('tp_api_url') || '' // URL Apps Script
+  apiUrl: localStorage.getItem('tp_api_url') || 'https://script.google.com/macros/s/AKfycbwH9UJOW-QB4EY2y8wY9X8FnQqjfX06m29_VGk1R9S6RXnSOCk1OH-mhIUV7eg-AL4I/exec' // URL Apps Script
 };
 
 // ==========================================================================
