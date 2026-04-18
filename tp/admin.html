@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>inerWeb TP — Admin Prof</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>❄️ inerWeb <span class="logo-badge">TP · Admin</span></h1>
+  <div class="sub">Console prof — consolidation des relevés</div>
+</div>
+
+<div class="container">
+
+  <div class="card">
+    <h2 class="card-title">🔧 Configuration</h2>
+    <label for="api-url">URL du webapp Apps Script</label>
+    <input type="url" id="api-url" placeholder="https://script.google.com/macros/s/XXX/exec">
+    <small class="hint">URL retournée par « Deploy → Manage deployments » dans Apps Script.</small>
+
+    <div class="inline-row" style="margin-top:12px">
+      <button type="button" class="btn btn-primary" id="btn-save-url">💾 Enregistrer</button>
+      <button type="button" class="btn btn-orange" id="btn-fetch">🔄 Charger les relevés</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title">📋 Relevés élèves</h2>
+    <div class="inline-row" style="margin-bottom:10px">
+      <input type="text" id="filtre-classe" placeholder="Filtrer par classe">
+      <input type="text" id="filtre-eleve" placeholder="Filtrer par élève">
+    </div>
+    <div id="status" style="font-size:12px;color:#888;margin-bottom:10px"></div>
+    <div id="releves-table" style="overflow-x:auto"></div>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title">📊 Inventaire consolidé</h2>
+    <p style="font-size:13px;color:#555">Pour chaque bouteille, le meilleur relevé auto-validé (≥ 80 %) est retenu. Ce tableau peut être collé tel quel dans la feuille BOUTEILLES de inerWeb Fluide.</p>
+    <button type="button" class="btn btn-primary" id="btn-consolide">🔄 Générer l'inventaire consolidé</button>
+    <div id="consolide-table" style="overflow-x:auto;margin-top:12px"></div>
+    <button type="button" class="btn btn-orange btn-block" id="btn-export-csv" style="display:none;margin-top:10px">📥 Exporter CSV</button>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title">🗑 Données locales</h2>
+    <p style="font-size:13px;color:#555">Les élèves qui utilisent l'app sur ce téléphone stockent aussi leurs relevés localement. Tu peux les visualiser/effacer ici.</p>
+    <button type="button" class="btn btn-ghost" id="btn-local">Voir les relevés locaux</button>
+    <button type="button" class="btn btn-danger" id="btn-clear-local">Effacer localStorage</button>
+    <div id="local-data" style="margin-top:10px;font-size:12px"></div>
+  </div>
+
+</div>
+
+<div class="footer">
+  inerWeb TP v1.0 · Console prof · F. Henninot
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let apiUrl = localStorage.getItem('tp_admin_api_url') || '';
+$('api-url').value = apiUrl;
+
+$('btn-save-url').addEventListener('click', () => {
+  apiUrl = $('api-url').value.trim().replace(/\/$/, '');
+  localStorage.setItem('tp_admin_api_url', apiUrl);
+  $('status').textContent = '✓ URL enregistrée';
+});
+
+async function fetchReleves() {
+  if (!apiUrl) { $('status').textContent = '❌ Configure d\'abord l\'URL.'; return; }
+  $('status').textContent = 'Chargement…';
+  try {
+    const r = await fetch(apiUrl + '?action=getReleves');
+    const data = await r.json();
+    if (!data.success) throw new Error(data.error || 'Erreur');
+    renderReleves(data.data || []);
+    $('status').textContent = `✓ ${data.count || 0} relevé(s) chargé(s)`;
+  } catch (e) {
+    $('status').textContent = '❌ ' + e.message;
+  }
+}
+$('btn-fetch').addEventListener('click', fetchReleves);
+
+function renderReleves(rows) {
+  const fc = $('filtre-classe').value.trim().toLowerCase();
+  const fe = $('filtre-eleve').value.trim().toLowerCase();
+  rows = rows.filter(r =>
+    (!fc || String(r.classe || '').toLowerCase().includes(fc)) &&
+    (!fe || String(r.eleve || '').toLowerCase().includes(fe))
+  );
+  if (rows.length === 0) {
+    $('releves-table').innerHTML = '<p style="color:#888">Aucun relevé.</p>';
+    return;
+  }
+  let html = '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>' +
+    ['Date', 'Élève', 'Classe', 'Bouteille', 'Fluide', 'Net (kg)', 'tCO2eq', 'Note', 'Validé'].map(h =>
+      `<th style="background:#1B3A63;color:#fff;padding:6px;text-align:left">${h}</th>`
+    ).join('') + '</tr></thead><tbody>';
+  rows.forEach(r => {
+    const date = new Date(r.timestamp).toLocaleString('fr-FR');
+    const note = `${r.note_sur_20}/${r.note_max || 20}`;
+    const valid = r.auto_validation === 'OUI' ? '✅' : '⏳';
+    html += `<tr style="border-bottom:1px solid #eee">
+      <td style="padding:6px">${date}</td>
+      <td style="padding:6px"><b>${r.eleve}</b></td>
+      <td style="padding:6px">${r.classe}</td>
+      <td style="padding:6px"><code>${r.bouteille_code}</code></td>
+      <td style="padding:6px">${r.fluide || '—'}</td>
+      <td style="padding:6px">${r.masse_nette_kg || '—'}</td>
+      <td style="padding:6px">${r.tCO2eq || '—'}</td>
+      <td style="padding:6px">${note} (${r.pourcentage}%)</td>
+      <td style="padding:6px">${valid}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  $('releves-table').innerHTML = html;
+}
+
+['filtre-classe', 'filtre-eleve'].forEach(id => {
+  $(id).addEventListener('input', () => {
+    // refresh en re-fetchant (simple)
+    fetchReleves();
+  });
+});
+
+$('btn-consolide').addEventListener('click', async () => {
+  if (!apiUrl) { $('status').textContent = '❌ Configure d\'abord l\'URL.'; return; }
+  try {
+    const r = await fetch(apiUrl + '?action=getInventaireConsolide');
+    const data = await r.json();
+    if (!data.success) throw new Error(data.error);
+    const rows = data.data || [];
+    if (rows.length === 0) {
+      $('consolide-table').innerHTML = '<p style="color:#888">Aucune bouteille auto-validée.</p>';
+      $('btn-export-csv').style.display = 'none';
+      return;
+    }
+    let html = '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>' +
+      ['Bouteille', 'Marque', 'N° série', 'Type', 'Cap.', 'Fluide', 'Tare', 'Brute', 'Net', 'tCO2eq', 'Par'].map(h =>
+        `<th style="background:#E8914A;color:#fff;padding:6px">${h}</th>`
+      ).join('') + '</tr></thead><tbody>';
+    rows.forEach(r => {
+      html += `<tr style="border-bottom:1px solid #eee">
+        <td style="padding:6px"><code>${r.bouteille_code}</code></td>
+        <td style="padding:6px">${r.marque}</td>
+        <td style="padding:6px">${r.num_serie}</td>
+        <td style="padding:6px">${r.type}</td>
+        <td style="padding:6px">${r.capacite_L}</td>
+        <td style="padding:6px"><b>${r.fluide}</b></td>
+        <td style="padding:6px">${r.tare_kg}</td>
+        <td style="padding:6px">${r.masse_brute_kg}</td>
+        <td style="padding:6px"><b>${r.masse_nette_kg}</b></td>
+        <td style="padding:6px">${r.tCO2eq}</td>
+        <td style="padding:6px">${r.eleve}</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    $('consolide-table').innerHTML = html;
+    $('btn-export-csv').style.display = 'block';
+    $('btn-export-csv').dataset.rows = JSON.stringify(rows);
+  } catch (e) {
+    $('consolide-table').innerHTML = '<p style="color:red">❌ ' + e.message + '</p>';
+  }
+});
+
+$('btn-export-csv').addEventListener('click', () => {
+  const rows = JSON.parse($('btn-export-csv').dataset.rows || '[]');
+  const cols = ['bouteille_code', 'marque', 'num_serie', 'type', 'capacite_L', 'fluide', 'tare_kg', 'masse_brute_kg', 'masse_nette_kg', 'tCO2eq'];
+  let csv = cols.join(';') + '\n';
+  rows.forEach(r => {
+    csv += cols.map(c => `"${(r[c] || '').toString().replace(/"/g, '""')}"`).join(';') + '\n';
+  });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `inventaire_bouteilles_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+});
+
+$('btn-local').addEventListener('click', () => {
+  const histo = JSON.parse(localStorage.getItem('tp_histo') || '[]');
+  $('local-data').innerHTML = `<b>${histo.length}</b> relevé(s) en localStorage.<br>
+    <pre style="background:#F5F7FA;padding:8px;overflow:auto;max-height:200px;font-size:10px">${JSON.stringify(histo, null, 2)}</pre>`;
+});
+
+$('btn-clear-local').addEventListener('click', () => {
+  if (confirm('Effacer tous les relevés locaux ?')) {
+    localStorage.removeItem('tp_histo');
+    $('local-data').innerHTML = 'localStorage effacé.';
+  }
+});
+
+// Auto-chargement si URL configurée
+if (apiUrl) fetchReleves();
+</script>
+
+</body>
+</html>

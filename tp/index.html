@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="theme-color" content="#1b3a63">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>inerWeb TP — Inventaire Bouteilles</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="../img/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="../img/icon-192.png">
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1>
+    <span>❄️ inerWeb</span>
+    <span class="logo-badge">TP</span>
+  </h1>
+  <div class="sub">
+    <span id="user-info">Connecte-toi pour commencer</span>
+    <a href="#" id="btn-logout" style="float:right;color:#fff;font-size:11px;opacity:.85;text-decoration:underline">se déconnecter</a>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ============================================================ -->
+  <!-- ÉCRAN 0 : LOGIN                                                -->
+  <!-- ============================================================ -->
+  <div id="screen-login" class="screen active">
+    <div class="card">
+      <h2 class="card-title"><span class="step">👤</span> Identifie-toi</h2>
+      <form id="form-login">
+        <label for="prenom">Prénom</label>
+        <input type="text" id="prenom" required placeholder="ex. Mohamed" autocomplete="given-name">
+        <label for="classe">Classe</label>
+        <select id="classe" required>
+          <option value="">-- Choisis ta classe --</option>
+          <option value="2nde BAC Pro MFER">2nde BAC Pro MFER</option>
+          <option value="1ère BAC Pro MFER">1ère BAC Pro MFER</option>
+          <option value="Term BAC Pro MFER">Term BAC Pro MFER</option>
+          <option value="1ère CAP MFR">1ère CAP MFR</option>
+          <option value="2e CAP MFR">2e CAP MFR</option>
+          <option value="BTS FED">BTS FED</option>
+          <option value="Autre">Autre</option>
+        </select>
+        <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top:16px">
+          Commencer le TP
+        </button>
+      </form>
+    </div>
+    <div class="consigne">
+      <strong>À lire avant de commencer :</strong>
+      <ol>
+        <li>Tu vas peser et identifier une bouteille de fluide.</li>
+        <li>Chaque bouteille a un QR code. Scanne-le avec la caméra OU saisis son code.</li>
+        <li>Tu dois remplir les infos de la bouteille (marque, type…), peser, puis calculer la masse de fluide et son équivalent CO₂.</li>
+        <li>Les calculs sont à faire PAR TOI (pas de calculette intégrée). L'appli vérifiera ta réponse.</li>
+        <li>10 bouteilles au total. Tu passes à la suivante quand tu as fini une.</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ÉCRAN 1 : SCAN / SAISIE CODE BOUTEILLE                         -->
+  <!-- ============================================================ -->
+  <div id="screen-scan" class="screen">
+    <div class="card">
+      <h2 class="card-title"><span class="step">1</span> Quelle bouteille ?</h2>
+      <p style="margin:0 0 12px;font-size:14px;color:#555">Scanne le QR collé sur la bouteille OU tape son code manuellement.</p>
+
+      <div id="progression-badge" style="background:#E8914A;color:#fff;font-size:12px;font-weight:700;padding:6px 12px;border-radius:12px;display:inline-block;margin-bottom:12px">0 / 10 bouteilles pesées</div>
+
+      <button class="btn btn-orange btn-block btn-lg" id="btn-scan">📷 Scanner le QR code</button>
+
+      <div style="text-align:center;margin:14px 0;color:#999;font-size:13px">— ou —</div>
+
+      <label for="code-manuel">Code de la bouteille</label>
+      <input type="text" id="code-manuel" placeholder="TP-B01" pattern="TP-B[0-9]{2}" style="text-transform:uppercase">
+      <button type="button" class="btn btn-primary btn-block" id="btn-manual" style="margin-top:10px">Valider le code</button>
+
+      <button type="button" class="btn btn-ghost btn-block" id="btn-voir-bilan" style="margin-top:14px;display:none">
+        📊 Voir mon bilan
+      </button>
+    </div>
+
+    <div class="consigne">
+      <strong>Sécurité :</strong>
+      <ol>
+        <li>Bouteille <b>toujours à la verticale</b> — capuchon vissé pour le transport.</li>
+        <li>EPI : <b>gants + lunettes</b> obligatoires.</li>
+        <li>Ne jamais ouvrir un robinet à l'air libre.</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ÉCRAN 1 bis : CAMERA QR                                        -->
+  <!-- ============================================================ -->
+  <div id="screen-qr" class="screen">
+    <div class="card">
+      <h2 class="card-title"><span class="step">📷</span> Vise le QR code</h2>
+      <video id="qr-video" autoplay muted playsinline></video>
+      <button class="btn btn-ghost btn-block" id="btn-stop-scan" style="margin-top:12px">Annuler</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ÉCRAN 2 : IDENTIFICATION                                       -->
+  <!-- ============================================================ -->
+  <div id="screen-identification" class="screen">
+    <div class="card">
+      <h2 class="card-title"><span class="step">2</span> Identifie la bouteille <span id="ident-bouteille" style="margin-left:auto;background:#1b3a63;color:#fff;padding:2px 8px;border-radius:6px;font-family:monospace"></span></h2>
+      <p style="font-size:13px;color:#555;margin:0 0 12px">Regarde la bouteille. Lis l'étiquette et ce qui est gravé sur le <b>collet</b>.</p>
+
+      <form id="form-identification">
+        <label for="f-marque">Marque (sur l'étiquette)</label>
+        <select id="f-marque" required></select>
+
+        <label for="f-numserie">N° de série (gravé sur l'ogive)</label>
+        <input type="text" id="f-numserie" placeholder="ex. 0672" required>
+        <small class="hint">Petite suite de chiffres/lettres. Parfois frappée au pointeau sur le collet.</small>
+
+        <label for="f-type">Type de bouteille</label>
+        <select id="f-type" required></select>
+        <small class="hint">Neuve = scellée usine · Transfert = re-remplie · Récup = déchet à traiter.</small>
+
+        <label for="f-capacite">Capacité</label>
+        <select id="f-capacite" required></select>
+
+        <label for="f-fluide-etq">Fluide indiqué sur l'étiquette</label>
+        <select id="f-fluide-etq" required></select>
+        <small class="hint">Si pas d'étiquette ou bouteille vide → choisis « VIDE » et tu passeras au manomètre.</small>
+
+        <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top:16px">Suivant →</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ÉCRAN 3 : MANOMÈTRE (si pas d'étiquette)                       -->
+  <!-- ============================================================ -->
+  <div id="screen-manometre" class="screen">
+    <div class="card">
+      <h2 class="card-title"><span class="step">3</span> Manomètre</h2>
+      <div class="consigne">
+        <strong>Pas d'étiquette lisible.</strong>
+        <ol>
+          <li>Pose un <b>jeu de manomètres</b> sur la bouteille (BP).</li>
+          <li>Ouvre doucement le robinet. Attends la stabilisation.</li>
+          <li>Relève <b>pression BP</b> et <b>température ambiante</b>.</li>
+          <li>Avec la relation pression-température (mollier ou tablette fluide), <b>identifie le fluide</b>.</li>
+          <li>Referme le robinet et déconnecte avec précaution.</li>
+        </ol>
+      </div>
+
+      <form id="form-manometre">
+        <div class="inline-row">
+          <div>
+            <label for="f-pression">Pression BP (bar rel.)</label>
+            <input type="number" id="f-pression" step="0.1" min="0" required>
+          </div>
+          <div>
+            <label for="f-temp">Température (°C)</label>
+            <input type="number" id="f-temp" step="0.1" required>
+          </div>
+        </div>
+
+        <label for="f-fluide-deduit">Fluide déduit</label>
+        <select id="f-fluide-deduit" required></select>
+        <small class="hint">Compare ta pression à la courbe de saturation du fluide à la température ambiante.</small>
+
+        <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top:16px">Suivant →</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ÉCRAN 4 : BALANCE — CONSIGNE + SAISIE                          -->
+  <!-- ============================================================ -->
+  <div id="screen-balance" class="screen">
+    <div class="card">
+      <h2 class="card-title"><span class="step">3</span> Pesée de la bouteille</h2>
+
+      <div class="consigne">
+        <strong>⚖️ Apprends à utiliser TA balance :</strong>
+        <ol>
+          <li>Pose la balance à plat sur un sol stable, à l'abri des courants d'air.</li>
+          <li>Trouve le bouton <b>ON / START</b> (chaque modèle est différent — cherche-le !).</li>
+          <li>Attends l'affichage <b>0.000 kg stable</b>. Si le plateau n'est pas parfaitement à zéro, appuie sur <b>TARE</b> pour <b>faire la tare</b> (mise à zéro).</li>
+          <li>Pose la bouteille <b>centrée</b> sur le plateau.</li>
+          <li>Attends la stabilisation (le chiffre ne bouge plus).</li>
+          <li>Note la valeur ci-dessous.</li>
+          <li>Retire la bouteille. <b>Appuie sur OFF / STOP</b> pour arrêter la balance avant de passer au suivant.</li>
+        </ol>
+        <div style="margin-top:10px;padding:8px 10px;background:#FFF;border-radius:6px;font-size:12px;color:#555">
+          <b>⚠ Ne pas confondre :</b>
+          <b>la tare gravée</b> sur la bouteille (masse de la bouteille vide, en kg — à recopier plus bas)
+          et <b>faire la tare</b> sur la balance (remettre l'affichage à zéro avant la pesée).
+        </div>
+      </div>
+
+      <button type="button" class="btn btn-ghost btn-block" id="btn-info-balance" style="margin-bottom:14px">
+        📖 Comprendre le principe d'une balance
+      </button>
+
+      <form id="form-balance">
+        <label for="f-tare">Tare lue sur la bouteille (kg)</label>
+        <input type="number" id="f-tare" step="0.01" min="0" required>
+        <small class="hint">La <b>tare</b> est la masse de la bouteille VIDE, gravée sur le collet ou sur l'étiquette (ex. « TW 13,2 »).</small>
+
+        <label for="f-brute">Masse brute pesée (kg)</label>
+        <input type="number" id="f-brute" step="0.001" min="0" required>
+        <small class="hint">C'est ce que la balance affiche avec la bouteille dessus.</small>
+
+        <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top:16px">Suivant →</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ÉCRAN 5 : CALCULS ÉLÈVE                                        -->
+  <!-- ============================================================ -->
+  <div id="screen-calculs" class="screen">
+    <div class="card">
+      <h2 class="card-title"><span class="step">4</span> À toi de calculer</h2>
+
+      <div class="recap-grid">
+        <div><strong>Tare</strong> <span id="recap-tare">—</span></div>
+        <div><strong>Masse brute</strong> <span id="recap-brute">—</span></div>
+        <div><strong>Fluide</strong> <span id="recap-fluide">—</span></div>
+        <div><strong>PRP</strong> <span id="recap-prp">—</span></div>
+      </div>
+
+      <form id="form-calculs">
+        <label for="f-masse-nette">Masse nette de fluide (kg)</label>
+        <div class="formule">masse nette = masse brute − tare</div>
+        <input type="number" id="f-masse-nette" step="0.001" min="0" required>
+        <small class="hint">Calcule à la main (ou dans ta tête). L'appli vérifiera.</small>
+
+        <label for="f-tco2eq">Tonne équivalent CO₂ (tCO2eq)</label>
+        <div class="formule">tCO2eq = masse nette (kg) × PRP ÷ 1000</div>
+        <input type="number" id="f-tco2eq" step="0.0001" min="0" required>
+        <small class="hint">Exemple : 5 kg de R134a × 1430 / 1000 = <b>7,15</b> tCO2eq.</small>
+
+        <button type="submit" class="btn btn-orange btn-block btn-lg" style="margin-top:16px">✓ Valider mes réponses</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ÉCRAN INFO : BALANCES — Généralités + Tes balances              -->
+  <!-- ============================================================ -->
+  <div id="screen-info-balance" class="screen">
+    <div class="card">
+      <h2 class="card-title"><span class="step">📖</span> Les balances</h2>
+
+      <p style="font-size:13px;color:#444;margin:0 0 10px;line-height:1.5">
+        Une balance électronique mesure une <b>force</b> (le poids) grâce à une jauge
+        de contrainte, puis la convertit en masse. En frigoriste, on s'en sert pour
+        <b>peser les bouteilles de fluide</b> (stock, charge, récupération) et vérifier
+        qu'une installation reçoit bien la <b>quantité exacte</b> prévue.
+      </p>
+
+      <!-- Séquence type (5 pastilles) -->
+      <h3 style="color:#1B3A63;margin:8px 0 6px;font-size:13px">Séquence type (identique sur toutes les balances)</h3>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:10px">
+        <div style="background:#4CAF50;color:#fff;padding:8px 2px;border-radius:6px;text-align:center;font-size:10px;font-weight:700;line-height:1.2">1<br>ON</div>
+        <div style="background:#FF9800;color:#fff;padding:8px 2px;border-radius:6px;text-align:center;font-size:10px;font-weight:700;line-height:1.2">2<br>TARE</div>
+        <div style="background:#2196F3;color:#fff;padding:8px 2px;border-radius:6px;text-align:center;font-size:10px;font-weight:700;line-height:1.2">3<br>POSER</div>
+        <div style="background:#9C27B0;color:#fff;padding:8px 2px;border-radius:6px;text-align:center;font-size:10px;font-weight:700;line-height:1.2">4<br>LIRE</div>
+        <div style="background:#E53935;color:#fff;padding:8px 2px;border-radius:6px;text-align:center;font-size:10px;font-weight:700;line-height:1.2">5<br>OFF</div>
+      </div>
+
+      <!-- Avertissements clés -->
+      <div style="background:#FFEBEE;border-left:4px solid #E53935;padding:10px 12px;border-radius:6px;margin-bottom:10px;font-size:12px;line-height:1.5">
+        <b style="color:#B71C1C">⚠ Attention aux unités.</b>
+        Toutes ces balances peuvent afficher en <b>kg</b> (français) ou en <b>lb / oz</b>
+        (anglo-saxon). <b>1 lb = 0,454 kg</b> — donc si la balance est en lb, ton relevé
+        est <b>faux de plus de moitié</b> ! Vérifie toujours que l'unité affichée est <b>kg</b>
+        avant de noter (bouton <b>UNIT</b> ou <b>MODE</b>).
+      </div>
+
+      <div style="background:#FFF8E1;border-left:4px solid #FFC107;padding:10px 12px;border-radius:6px;margin-bottom:14px;font-size:12px;line-height:1.5">
+        <b style="color:#B8860B">⚠ Ne jamais dépasser la portée maximale</b> indiquée sur
+        la balance (ex. 100 kg). Une bouteille de 27 L pleine peut peser 40 kg — vérifie
+        avant de poser.
+      </div>
+
+      <!-- TES BALANCES -->
+      <h3 style="color:#1B3A63;margin:16px 0 6px;font-size:14px;border-bottom:2px solid #E8914A;padding-bottom:4px">Les 4 balances de l'atelier</h3>
+
+      <div class="balance-card">
+        <div class="balance-head">
+          <b>Refco REF-METER-OCTA</b>
+          <span class="balance-specs">110 kg · 2 g · kg/lb/oz</span>
+        </div>
+        <div class="balance-body">
+          <img src="img/balances/refco_octa_schema.png" alt="Schéma Refco REF-METER-OCTA" class="balance-img">
+          La plus précise. Boutons <b>ON/OFF</b>, <b>TARE</b>, <b>UNITS</b> et ▲▼ sur le
+          boîtier déporté (LCD). Unités : appuyer plusieurs fois sur <b>UNITS</b> pour
+          cycler kg → lb → oz. Plateau octogonal. Piles : 4 × AAA.
+        </div>
+      </div>
+
+      <div class="balance-card">
+        <div class="balance-head">
+          <b>Value TF-VES-100A</b>
+          <span class="balance-specs">100 kg · 5 g · ±0,05 %</span>
+        </div>
+        <div class="balance-body">
+          Programmable (alarme sonore au poids cible). Plateau amovible 237×237 mm,
+          mallette ABS. Pile <b>9 V</b>. Unités kg/lb par bouton dédié. <b>TARE</b> en
+          façade.
+        </div>
+      </div>
+
+      <div class="balance-card">
+        <div class="balance-head">
+          <b>TIF 9030E</b>
+          <span class="balance-specs">100 kg (220 lb) · 10 g</span>
+        </div>
+        <div class="balance-body">
+          Compacte, portable (sacoche à bandoulière). Trois boutons seulement :
+          <b>ON/OFF</b>, <b>UNITS</b>, <b>ZERO</b> (= TARE). Affiche kg, lb ou oz.
+          Pile 9 V. Résolution un peu plus grossière (10 g) : à éviter pour les petites
+          charges.
+        </div>
+      </div>
+
+      <div class="balance-card">
+        <div class="balance-head">
+          <b>Teddington TF-B12005</b>
+          <span class="balance-specs">120 kg · 5 g · ±0,5 %</span>
+        </div>
+        <div class="balance-body">
+          La plus grosse portée (120 kg). Plateau 230×230 mm amovible, module de contrôle
+          déporté (câble 1,80 m). Pile 9 V, <b>extinction auto après 5 min</b> — re-appuie
+          sur ON si l'affichage s'est éteint pendant que tu changeais de bouteille.
+          Unités kg/lb/oz.
+        </div>
+      </div>
+
+      <div class="balance-card">
+        <div class="balance-head">
+          <b>Sego SCL 100 kg (5G)</b>
+          <span class="balance-specs">100 kg · résol. ≈ 50 g</span>
+        </div>
+        <div class="balance-body">
+          Modèle plus basique, résolution moins fine. Utilise-la pour les bouteilles
+          grosses charges quand la précision au gramme n'est pas critique. Vérifie
+          bien l'unité affichée avant lecture.
+        </div>
+      </div>
+
+      <div style="background:#EEF4FA;border-left:4px solid #1B3A63;padding:8px 10px;border-radius:6px;font-size:11px;color:#333;margin-top:6px;line-height:1.5">
+        <b>Pas de schéma pour ta balance ?</b> Regarde-la directement : la séquence
+        <b>ON → TARE → POSER → LIRE → OFF</b> marche sur toutes. Les boutons sont
+        toujours repérés ON/OFF, TARE (ou ZERO), UNITS (ou MODE).
+        <b>Débrouille-toi</b> — c'est aussi l'exercice.
+      </div>
+
+      <p style="font-size:11px;color:#777;font-style:italic;margin:14px 0 0">
+        Astuce dépannage : si une balance affiche « <b>Er</b> », « <b>OL</b> » ou
+        « <b>---</b> », c'est une erreur (surcharge ou besoin de refaire la tare).
+        Appuie sur ZERO/TARE ou éteins/rallume.
+      </p>
+
+      <button type="button" class="btn btn-primary btn-block" id="btn-close-info-balance" style="margin-top:16px">
+        J'ai compris, retour à la pesée
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ÉCRAN 6 : RÉSULTAT / NOTATION                                  -->
+  <!-- ============================================================ -->
+  <div id="screen-resultat" class="screen">
+    <div class="card">
+      <h2 class="card-title"><span class="step">✓</span> Ta note</h2>
+
+      <div id="resultat-bandeau" class="result">
+        <div style="text-align:center">
+          <div class="note-grande" id="note-finale">— / 20</div>
+          <div style="font-size:18px;color:#666" id="note-pct">— %</div>
+        </div>
+      </div>
+
+      <div id="resultat-details" style="margin-top:16px"></div>
+      <div id="resultat-competences"></div>
+
+      <div id="status-envoi" style="margin-top:14px;font-size:13px;color:#555"></div>
+
+      <button type="button" class="btn btn-primary btn-block btn-lg" id="btn-nouvelle" style="margin-top:18px">
+        ➕ Peser une autre bouteille
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ÉCRAN BILAN : tableau de bord élève                            -->
+  <!-- ============================================================ -->
+  <div id="screen-bilan" class="screen">
+    <div class="card">
+      <h2 class="card-title"><span class="step">📊</span> Ton bilan TP</h2>
+
+      <p style="font-size:13px;color:#555;margin:0 0 10px"><b id="bilan-nom">—</b></p>
+
+      <div class="recap-grid">
+        <div><strong>Bouteilles</strong> <span id="bilan-progression">0 / 10</span></div>
+        <div><strong>Note finale</strong> <span id="bilan-moyenne">— / 20</span></div>
+        <div><strong>Réussite</strong> <span id="bilan-pct">— %</span></div>
+        <div><strong>Référentiel</strong> CAP IFCA</div>
+      </div>
+
+      <h3 style="color:#1B3A63;margin:14px 0 6px;font-size:14px;border-bottom:2px solid #E8914A;padding-bottom:4px">Détail par bouteille</h3>
+      <div id="bilan-liste"></div>
+
+      <h3 style="color:#1B3A63;margin:14px 0 6px;font-size:14px;border-bottom:2px solid #E8914A;padding-bottom:4px">Réussite par compétence</h3>
+      <div id="bilan-competences"></div>
+
+      <div class="inline-row" style="margin-top:18px">
+        <button type="button" class="btn btn-primary" id="btn-bilan-retour">← Continuer</button>
+        <button type="button" class="btn btn-orange" id="btn-bilan-export">📥 Exporter</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  inerWeb TP v1.0 · LP Jacques Raynaud — F. Henninot · Filière Froid & Climatisation
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

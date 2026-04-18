@@ -3766,6 +3766,13 @@ function apiResetAll_(params) {
 
 function doGet(e) {
   try {
+    var tpAction = handleReleveTpAction(
+      (e.parameter && e.parameter.action) || '',
+      e,
+      (function(){ try { return JSON.parse(e.postData && e.postData.contents); } catch(_){ return {}; } })()
+    );
+    if (tpAction !== null) return ContentService.createTextOutput(JSON.stringify(tpAction))
+                             .setMimeType(ContentService.MimeType.JSON);
     DataStore.init();
     // Auto-initialisation au premier accès
     autoInit_();
@@ -3856,6 +3863,13 @@ function doGet(e) {
 
 function doPost(e) {
   try {
+    var tpAction = handleReleveTpAction(
+      (e.parameter && e.parameter.action) || '',
+      e,
+      (function(){ try { return JSON.parse(e.postData && e.postData.contents); } catch(_){ return {}; } })()
+    );
+    if (tpAction !== null) return ContentService.createTextOutput(JSON.stringify(tpAction))
+                             .setMimeType(ContentService.MimeType.JSON);
     DataStore.init();
     var data = JSON.parse(e.postData.contents);
     var auth = checkAuth_(data.key || '', ACTION_LEVELS[data.action] || 'ADMIN');
