@@ -1604,11 +1604,30 @@ const UI = {
    * Rendu de la vue admin
    */
   async renderAdmin() {
-    // Charger config entreprise
+    // Charger config entreprise (champs de base + étendus)
     if (State.config) {
-      document.getElementById('config-etablissement').value = State.config.etablissement || '';
-      document.getElementById('config-adresse').value = State.config.adresse || '';
-      document.getElementById('config-siret').value = State.config.siret || '';
+      const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+      setVal('config-etablissement', State.config.etablissement);
+      setVal('config-adresse', State.config.adresse);
+      setVal('config-siret', State.config.siret);
+      setVal('config-ape', State.config.codeApe);
+      setVal('config-tel', State.config.telephone);
+      setVal('config-email', State.config.email);
+      setVal('config-attestation', State.config.attestationCapacite);
+      setVal('config-categorie-fgas', State.config.certifFGas);
+      setVal('config-validite-att', State.config.validiteAttestation);
+      // Logo : afficher s'il existe
+      const logoPreview = document.getElementById('config-logo-preview');
+      const btnRemoveLogo = document.getElementById('btn-remove-logo');
+      if (logoPreview) {
+        if (State.config.logo) {
+          logoPreview.innerHTML = '<img src="' + State.config.logo + '" style="max-width:100%;max-height:100%;object-fit:contain;">';
+          if (btnRemoveLogo) btnRemoveLogo.style.display = 'inline-block';
+        } else {
+          logoPreview.innerHTML = 'Aucun logo';
+          if (btnRemoveLogo) btnRemoveLogo.style.display = 'none';
+        }
+      }
     }
 
     // Charger et afficher utilisateurs

@@ -41,12 +41,50 @@ const Wizard = {
       { id: 'TRANSFERT', label: 'Transfert', icon: '↔️', desc: 'Transfert entre bouteilles' },
       { id: 'MISE_EN_SERVICE', label: 'Mise en service', icon: '🆕', desc: 'Première charge de l\'équipement' }
     ];
-    
+
     const selected = State.wizard.data.type;
-    
+    const selectedOp = State.wizard.data.operateur || (State.user && State.user.id) || '';
+
+    // Liste des techniciens habilités (rôles opérationnels)
+    const techniciens = (State.users || []).filter(u =>
+      u.actif !== false && ['ADMIN', 'REFERENT', 'ENSEIGNANT', 'ELEVE'].includes(u.role)
+    );
+
+    // Helper pour vérifier la validité d'attestation
+    const isExpired = (dateStr) => {
+      if (!dateStr) return false;
+      const d = new Date(dateStr);
+      return !isNaN(d.getTime()) && d < new Date();
+    };
+
+    const expired = techniciens.find(u => u.id === selectedOp && isExpired(u.validiteAttestation));
+
     return `
-      <h3>Type d'opération</h3>
-      <p>Sélectionnez le type de mouvement de fluide</p>
+      <h3>Technicien et type d'opération</h3>
+      <p>Qui intervient et quel type de mouvement de fluide ?</p>
+
+      <div class="form-group" style="margin-bottom: 18px; padding: 12px; background: #f8fafc; border-radius: 8px; border-left: 3px solid #1b3a63;">
+        <label class="form-label required" for="wizard-technicien" style="font-weight:bold;color:#1b3a63;">👤 Technicien intervenant</label>
+        ${techniciens.length === 0
+          ? '<p style="color:#c62828;font-size:13px;margin:6px 0 0;">Aucun technicien habilité enregistré. Allez dans <strong>Administration → Utilisateurs</strong> pour en ajouter.</p>'
+          : `<select id="wizard-technicien" class="form-input" style="font-size:15px;padding:10px;">
+              <option value="">— Choisir un technicien —</option>
+              ${techniciens.map(u => {
+                const exp = isExpired(u.validiteAttestation);
+                const cat = u.categorie2025 || u.categorie2008 || '';
+                const att = u.attestation || (u.role === 'ELEVE' ? 'Formation' : '');
+                const label = `${u.prenom || ''} ${u.nom || ''} — ${u.role}${cat ? ' · Cat. ' + cat : ''}${att ? ' · ' + att : ''}${exp ? ' ⚠ EXPIRÉ' : ''}`;
+                return `<option value="${u.id}" ${selectedOp === u.id ? 'selected' : ''}>${label}</option>`;
+              }).join('')}
+            </select>`
+        }
+        ${expired
+          ? '<div style="margin-top:8px;padding:8px;background:#fdecea;border:1px solid #c62828;border-radius:6px;color:#c62828;font-size:13px;"><strong>⚠ Attestation expirée</strong> — Ce technicien ne peut pas signer un CERFA officiel. Mode Formation uniquement.</div>'
+          : ''
+        }
+      </div>
+
+      <h4 style="color:#1b3a63;margin:0 0 8px;">Type d'intervention</h4>
       <div class="type-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
         ${types.map(t => `
           <div class="type-card ${selected === t.id ? 'selected' : ''}" data-type="${t.id}" style="
@@ -66,8 +104,23 @@ const Wizard = {
       </div>
     `;
   },
-  
+
   bindStepType() {
+    // Sélecteur technicien
+    const selectTech = document.getElementById('wizard-technicien');
+    if (selectTech) {
+      selectTech.addEventListener('change', (e) => {
+        const userId = e.target.value;
+        State.wizardSetData('operateur', userId);
+        const tech = (State.users || []).find(u => u.id === userId);
+        if (tech) {
+          State.wizardSetData('operateurNom', `${tech.prenom || ''} ${tech.nom || ''}`.trim());
+          State.wizardSetData('operateurAttestation', tech.attestation || '');
+        }
+      });
+    }
+
+    // Cartes type
     document.querySelectorAll('.type-card').forEach(card => {
       card.addEventListener('click', () => {
         document.querySelectorAll('.type-card').forEach(c => {
@@ -575,6 +628,10 @@ const Wizard = {
 
     switch (step) {
       case 1:
+        if (!data.operateur) {
+          UI.toast('Veuillez sélectionner le technicien intervenant', 'error');
+          return false;
+        }
         if (!data.type) {
           UI.toast('Veuillez sélectionner un type d\'opération', 'error');
           return false;

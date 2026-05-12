@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>inerWeb Fluide — Démonstration guidée</title>
+<style>
+  :root {
+    --bleu: #1b3a63;
+    --bleu-doux: #5a7ba3;
+    --bleu-clair: #eef2f7;
+    --orange: #ff6b35;
+    --orange-doux: #f5a07a;
+    --orange-clair: #fff4ed;
+    --vert: #2e7d32;
+    --vert-clair: #e8f5e9;
+    --rouge: #c62828;
+    --rouge-clair: #fdecea;
+    --fond: #faf8f4;
+    --fond-section: #f4f1ea;
+    --gris-bordure: #e6e1d6;
+    --gris-texte: #6a6258;
+    --texte: #2a2a2a;
+    --blanc: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Calibri', 'Segoe UI', sans-serif;
+    font-size: 17px;
+    line-height: 1.5;
+    color: var(--texte);
+    background: var(--fond);
+    text-align: left;
+    letter-spacing: 0.3px;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Trebuchet MS', 'Calibri', sans-serif;
+    font-weight: bold;
+    color: var(--bleu);
+    margin: 0;
+    text-align: left;
+  }
+
+  /* ====== HÉROS ====== */
+  .hero {
+    background: linear-gradient(135deg, var(--bleu) 0%, #2a4d7a 100%);
+    color: var(--blanc);
+    padding: 60px 32px 80px;
+    text-align: left;
+  }
+  .hero-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 40px;
+    align-items: center;
+  }
+  .hero h1 {
+    color: var(--blanc);
+    font-size: 38px;
+    line-height: 1.2;
+    margin-bottom: 16px;
+  }
+  .hero .baseline {
+    font-size: 19px;
+    line-height: 1.55;
+    margin-bottom: 24px;
+    opacity: 0.95;
+  }
+  .hero .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 28px;
+  }
+  .badge {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 5px 12px;
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: bold;
+  }
+  .hero-cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+  .btn-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 22px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    font-family: 'Calibri', sans-serif;
+    font-size: 16px;
+    border: 2px solid;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-orange {
+    background: var(--orange);
+    color: var(--blanc);
+    border-color: var(--orange);
+  }
+  .btn-orange:hover { background: #e85a26; border-color: #e85a26; }
+  .btn-outline {
+    background: transparent;
+    color: var(--blanc);
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+  .btn-outline:hover { background: rgba(255, 255, 255, 0.1); }
+
+  /* Carte écran fictive dans le héros */
+  .hero-mockup {
+    background: var(--blanc);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    color: var(--texte);
+    transform: rotate(-1.5deg);
+    transition: transform 0.3s;
+  }
+  .hero-mockup:hover { transform: rotate(0); }
+  .mockup-titlebar {
+    background: var(--fond-section);
+    padding: 10px 14px;
+    display: flex;
+    gap: 6px;
+    border-bottom: 1px solid var(--gris-bordure);
+  }
+  .mockup-titlebar span {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #e0e0e0;
+  }
+  .mockup-titlebar span:nth-child(1) { background: #ff5f57; }
+  .mockup-titlebar span:nth-child(2) { background: #ffbd2e; }
+  .mockup-titlebar span:nth-child(3) { background: #28c940; }
+  .mockup-content { padding: 18px; }
+  .mockup-tiles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .mockup-tile {
+    background: var(--fond-section);
+    padding: 12px;
+    border-radius: 8px;
+    border-left: 3px solid var(--bleu-doux);
+  }
+  .mockup-tile.orange { border-left-color: var(--orange); }
+  .mockup-tile-num {
+    font-family: 'Trebuchet MS', sans-serif;
+    font-weight: bold;
+    color: var(--bleu);
+    font-size: 22px;
+    line-height: 1;
+  }
+  .mockup-tile-lbl {
+    font-size: 12px;
+    color: var(--gris-texte);
+    margin-top: 4px;
+  }
+
+  /* ====== SECTIONS ====== */
+  main { max-width: 1200px; margin: 0 auto; padding: 60px 32px; }
+  .section { margin-bottom: 80px; }
+  .section-title {
+    font-size: 28px;
+    margin-bottom: 8px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--orange-doux);
+    display: inline-block;
+  }
+  .section-baseline {
+    color: var(--gris-texte);
+    font-size: 16px;
+    margin-bottom: 28px;
+  }
+
+  /* ====== CARTES FONCTIONNALITÉS ====== */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
+  }
+  .feature {
+    background: var(--blanc);
+    border: 1px solid var(--gris-bordure);
+    border-left: 4px solid var(--bleu-doux);
+    border-radius: 10px;
+    padding: 20px;
+    transition: all 0.15s;
+  }
+  .feature:hover {
+    border-left-color: var(--orange);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    transform: translateY(-2px);
+  }
+  .feature-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+  }
+  .feature h3 {
+    font-size: 17px;
+    margin-bottom: 6px;
+  }
+  .feature p {
+    font-size: 15px;
+    color: var(--texte);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* ====== PARCOURS GUIDÉ (étapes) ====== */
+  .steps {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .step {
+    background: var(--blanc);
+    border: 1px solid var(--gris-bordure);
+    border-radius: 10px;
+    padding: 20px 24px;
+    display: grid;
+    grid-template-columns: 50px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  .step-num {
+    background: var(--bleu);
+    color: var(--blanc);
+    font-family: 'Trebuchet MS', sans-serif;
+    font-weight: bold;
+    font-size: 22px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .step.orange .step-num { background: var(--orange); }
+  .step.vert .step-num { background: var(--vert); }
+  .step h3 {
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+  .step p {
+    font-size: 15px;
+    color: var(--texte);
+    margin: 0;
+    line-height: 1.55;
+  }
+  .step-kbd {
+    display: inline-block;
+    background: var(--fond-section);
+    border: 1px solid var(--gris-bordure);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'Consolas', monospace;
+    font-size: 13px;
+    margin: 0 2px;
+  }
+
+  /* ====== APERÇU CERFA ====== */
+  .cerfa-preview {
+    background: var(--blanc);
+    border: 1px solid var(--gris-bordure);
+    border-radius: 10px;
+    padding: 28px;
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 30px;
+    align-items: center;
+  }
+  .cerfa-mock {
+    background: var(--fond-section);
+    border-radius: 8px;
+    padding: 18px;
+    border: 1px solid var(--gris-bordure);
+    font-family: 'Consolas', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--texte);
+  }
+  .cerfa-mock-title {
+    font-family: 'Trebuchet MS', sans-serif;
+    font-weight: bold;
+    color: var(--bleu);
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--bleu);
+  }
+  .cerfa-mock-cadre {
+    border: 1px solid var(--bleu-doux);
+    padding: 8px;
+    margin-bottom: 6px;
+    background: var(--blanc);
+  }
+  .cerfa-mock-cadre strong { color: var(--bleu); }
+  .cerfa-info h3 { font-size: 22px; margin-bottom: 12px; }
+  .cerfa-info ul {
+    margin: 0;
+    padding-left: 22px;
+    font-size: 15px;
+  }
+  .cerfa-info li { margin-bottom: 6px; }
+  .cerfa-info .stamp {
+    display: inline-block;
+    background: var(--vert-clair);
+    color: var(--vert);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
+    margin-top: 16px;
+  }
+
+  /* ====== DATASET DEMO ====== */
+  .dataset {
+    background: var(--bleu-clair);
+    border: 1px solid var(--bleu-doux);
+    border-radius: 10px;
+    padding: 24px 28px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 18px;
+  }
+  .dataset-item {
+    text-align: center;
+  }
+  .dataset-num {
+    font-family: 'Trebuchet MS', sans-serif;
+    font-weight: bold;
+    color: var(--bleu);
+    font-size: 32px;
+    line-height: 1;
+  }
+  .dataset-lbl {
+    font-size: 14px;
+    color: var(--gris-texte);
+    margin-top: 6px;
+  }
+
+  /* ====== APPEL FINAL ====== */
+  .final-cta {
+    background: var(--blanc);
+    border: 2px solid var(--orange);
+    border-radius: 14px;
+    padding: 32px;
+    text-align: left;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 30px;
+    align-items: center;
+  }
+  .final-cta h2 { margin-bottom: 8px; }
+  .final-cta p { margin: 0; color: var(--gris-texte); font-size: 16px; }
+  .final-cta .btn-cta { font-size: 18px; padding: 18px 28px; }
+  .final-cta .btn-orange { color: var(--blanc); }
+
+  /* ====== FOOTER ====== */
+  footer {
+    background: var(--fond-section);
+    color: var(--gris-texte);
+    padding: 24px 32px;
+    text-align: left;
+    font-size: 14px;
+    border-top: 1px solid var(--gris-bordure);
+  }
+  footer strong { color: var(--bleu); }
+  footer .footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* ====== RESPONSIVE ====== */
+  @media (max-width: 768px) {
+    .hero-inner, .cerfa-preview, .final-cta {
+      grid-template-columns: 1fr;
+    }
+    .hero h1 { font-size: 28px; }
+    .hero { padding: 40px 20px 60px; }
+    main { padding: 40px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== HÉROS ========== -->
+<header class="hero">
+  <div class="hero-inner">
+    <div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+        <span style="font-size:36px;">❄</span>
+        <span style="font-family:'Trebuchet MS',sans-serif;font-weight:bold;font-size:30px;letter-spacing:0.5px;">inerWeb</span>
+        <span style="background:var(--orange);color:#fff;padding:4px 12px;border-radius:4px;font-family:'Trebuchet MS',sans-serif;font-weight:bold;font-size:16px;">Fluide</span>
+      </div>
+      <h1>Traçabilité des fluides frigorigènes,<br>du TP au CERFA officiel.</h1>
+      <p class="baseline">
+        Une application pour gérer les bouteilles, les machines, les contrôles d'étanchéité et générer le vrai <strong>CERFA 15497*04</strong> en quelques clics. Pensé pour les lycées professionnels du froid et utilisable par les artisans frigoristes.
+      </p>
+      <div class="badges">
+        <span class="badge">CERFA 15497*04 officiel</span>
+        <span class="badge">F-Gas III conforme</span>
+        <span class="badge">Mode formation</span>
+        <span class="badge">Mode officiel</span>
+        <span class="badge">RGPD by design</span>
+      </div>
+      <div class="hero-cta">
+        <button type="button" class="btn-cta btn-orange" onclick="lancerDemo()">🎓 Lancer la démo</button>
+        <a class="btn-cta btn-outline" href="#parcours">📘 Voir le parcours</a>
+      </div>
+    </div>
+
+    <!-- Mockup d'écran -->
+    <div class="hero-mockup" role="img" aria-label="Aperçu de l'application">
+      <div class="mockup-titlebar"><span></span><span></span><span></span></div>
+      <div class="mockup-content">
+        <div style="font-family:'Trebuchet MS',sans-serif;font-weight:bold;color:var(--bleu);font-size:15px;">Tableau de bord — Atelier froid</div>
+        <div style="font-size:12px;color:var(--gris-texte);margin-top:2px;">Démonstration · données fictives</div>
+        <div class="mockup-tiles">
+          <div class="mockup-tile"><div class="mockup-tile-num">8</div><div class="mockup-tile-lbl">Machines suivies</div></div>
+          <div class="mockup-tile orange"><div class="mockup-tile-num">5</div><div class="mockup-tile-lbl">Bouteilles en stock</div></div>
+          <div class="mockup-tile"><div class="mockup-tile-num">4</div><div class="mockup-tile-lbl">Clients / Détenteurs</div></div>
+          <div class="mockup-tile orange"><div class="mockup-tile-num">5</div><div class="mockup-tile-lbl">CERFA générés</div></div>
+        </div>
+        <div style="margin-top:12px;padding:8px 10px;background:var(--vert-clair);border-left:3px solid var(--vert);font-size:12px;color:var(--vert);font-weight:bold;">
+          ✓ 3 contrôles d'étanchéité conformes ce mois-ci
+        </div>
+        <div style="margin-top:6px;padding:8px 10px;background:var(--orange-clair);border-left:3px solid var(--orange);font-size:12px;color:var(--orange);font-weight:bold;">
+          ⚠ Détecteur DET-003 — vérification annuelle à prévoir
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ========== FONCTIONNALITÉS ========== -->
+  <section class="section">
+    <h2 class="section-title">À quoi ça sert</h2>
+    <p class="section-baseline">Quatre piliers pour remplacer le classeur papier + tableurs disparates.</p>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">🏭</div>
+        <h3>Parc machines complet</h3>
+        <p>Chaque équipement frigorifique avec ses caractéristiques, son fluide, sa charge, son client détenteur. Calcul automatique de la prochaine échéance de contrôle d'étanchéité.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🧪</div>
+        <h3>Stock bouteilles temps réel</h3>
+        <p>Pesées avant/après pour chaque intervention, traçabilité du lot, du fournisseur. Plus de bouteille perdue ou de stock approximatif.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📄</div>
+        <h3>CERFA 15497*04 pixel-perfect</h3>
+        <p>Le vrai formulaire officiel rempli automatiquement. 72 champs renseignés depuis vos données. Imprimable, signable, archivable. Conforme F-Gas III.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🔍</div>
+        <h3>Contrôles d'étanchéité tracés</h3>
+        <p>Détecteur utilisé (et son étalonnage), résultat, localisation des fuites, plan d'action. Alerte automatique si le détecteur est périmé.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🎓</div>
+        <h3>Mode formation</h3>
+        <p>Filigrane FORMATION sur tous les documents générés par les élèves. Aucune confusion possible avec un document réglementaire.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📊</div>
+        <h3>Bilans annuels ADEME</h3>
+        <p>Export Excel rétro-compatible (modèle ADEME utilisé depuis 2019). Onglet par fluide, calculs de cohérence J/K/M/N/R, stock initial reporté.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== JEU DE DONNÉES DÉMO ========== -->
+  <section class="section">
+    <h2 class="section-title">Ce que contient la démo</h2>
+    <p class="section-baseline">Un atelier fictif complet, pré-rempli, prêt à explorer. Aucune donnée réelle.</p>
+    <div class="dataset">
+      <div class="dataset-item"><div class="dataset-num">1</div><div class="dataset-lbl">Établissement</div></div>
+      <div class="dataset-item"><div class="dataset-num">4</div><div class="dataset-lbl">Techniciens</div></div>
+      <div class="dataset-item"><div class="dataset-num">4</div><div class="dataset-lbl">Clients</div></div>
+      <div class="dataset-item"><div class="dataset-num">8</div><div class="dataset-lbl">Machines</div></div>
+      <div class="dataset-item"><div class="dataset-num">5</div><div class="dataset-lbl">Bouteilles</div></div>
+      <div class="dataset-item"><div class="dataset-num">3</div><div class="dataset-lbl">Détecteurs</div></div>
+      <div class="dataset-item"><div class="dataset-num">5</div><div class="dataset-lbl">Interventions</div></div>
+      <div class="dataset-item"><div class="dataset-num">5</div><div class="dataset-lbl">CERFA prêts</div></div>
+    </div>
+  </section>
+
+  <!-- ========== PARCOURS GUIDÉ ========== -->
+  <section class="section" id="parcours">
+    <h2 class="section-title">Parcours conseillé en 5 minutes</h2>
+    <p class="section-baseline">Suivez ces 6 étapes pour faire le tour de l'application.</p>
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <h3>Lancez la démo</h3>
+          <p>Cliquez sur le bouton orange <span class="step-kbd">🎓 Lancer la démo</span> en haut de cette page. Une bannière orange "MODE DÉMONSTRATION" s'affiche en permanence : tout est fictif, rien n'est envoyé.</p>
+        </div>
+      </div>
+
+      <div class="step orange">
+        <div class="step-num">2</div>
+        <div>
+          <h3>Survolez le tableau de bord</h3>
+          <p>Vue d'ensemble : machines, bouteilles, alertes. Repérez l'alerte orange "Détecteur DET-003 vérification annuelle à prévoir" — l'app surveille en arrière-plan.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          <h3>Explorez le parc machines</h3>
+          <p>Menu <span class="step-kbd">Machines</span>. Vous y trouvez la Centrale CO₂ booster du Supermarché Provence Frais, la chambre froide positive de la boulangerie, la PAC du restaurant… Chaque ligne ouvre la fiche détaillée et l'historique.</p>
+        </div>
+      </div>
+
+      <div class="step orange">
+        <div class="step-num">4</div>
+        <div>
+          <h3>Générez un CERFA officiel</h3>
+          <p>Sur n'importe quelle fiche machine, cliquez sur <span class="step-kbd">📄 CERFA 15497*04</span>. Le vrai formulaire officiel s'affiche dans une modale plein écran, rempli avec les données du dossier. Boutons <span class="step-kbd">🖨️ Imprimer</span> et <span class="step-kbd">⬇️ Télécharger</span>.</p>
+        </div>
+      </div>
+
+      <div class="step vert">
+        <div class="step-num">5</div>
+        <div>
+          <h3>Créez une intervention</h3>
+          <p>Bouton <span class="step-kbd">+ Nouveau mouvement</span>. Un assistant en 5 étapes : type d'intervention → machine → bouteille → pesées → confirmation. À la fin : CERFA pré-rempli prêt à signer.</p>
+        </div>
+      </div>
+
+      <div class="step vert">
+        <div class="step-num">6</div>
+        <div>
+          <h3>Quittez quand vous voulez</h3>
+          <p>Cliquez sur <span class="step-kbd">✖ Quitter la démo</span> dans la bannière orange en haut de page. L'application revient en mode normal, prête pour vos vraies données.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========== APERÇU CERFA ========== -->
+  <section class="section">
+    <h2 class="section-title">Le CERFA officiel, vraiment</h2>
+    <p class="section-baseline">Pas une imitation, pas un brouillon : le formulaire de l'État rempli automatiquement.</p>
+    <div class="cerfa-preview">
+      <div class="cerfa-mock" aria-label="Représentation simplifiée du CERFA 15497*04">
+        <div class="cerfa-mock-title">CERFA n° 15497*04 — Fiche d'intervention</div>
+        <div class="cerfa-mock-cadre"><strong>Cadre 1 — Opérateur</strong><br>Atelier Froid Démonstration<br>SIRET : 123 456 789 01234</div>
+        <div class="cerfa-mock-cadre"><strong>Cadre 2 — Détenteur</strong><br>Supermarché Provence Frais<br>120 av. du Prado, 13008 Marseille</div>
+        <div class="cerfa-mock-cadre"><strong>Cadre 3 — Équipement</strong><br>CF04 — Centrale CO₂ booster — Carrier CO2-BOOSTER-30</div>
+        <div class="cerfa-mock-cadre"><strong>Cadre 4 — Fluide</strong><br>R744 (CO₂) · charge : 18,5 kg · t.eq CO₂ : 0,02</div>
+        <div class="cerfa-mock-cadre"><strong>Cadre 5 — Contrôle</strong><br>Détecteur Inficon D-TEK Select · résultat : conforme</div>
+        <div style="text-align:center;font-size:11px;color:var(--gris-texte);margin-top:8px;">+ 6 cadres réglementaires + signatures</div>
+      </div>
+      <div class="cerfa-info">
+        <h3>72 champs officiels remplis automatiquement</h3>
+        <ul>
+          <li>Cadres 1 à 14 du formulaire CERFA 15497*04</li>
+          <li>Cases F-Gas selon seuils 5 / 50 / 500 t.eq.CO₂</li>
+          <li>Fréquence de contrôle calculée (avec ou sans détection permanente)</li>
+          <li>Cadre 11 — quantités, contenants, BSFF</li>
+          <li>Signatures opérateur et détenteur</li>
+          <li>Filigrane FORMATION automatique si élève</li>
+        </ul>
+        <span class="stamp">✓ Conforme arrêté du 21/11/2025 — F-Gas III</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== APPEL FINAL ========== -->
+  <section class="section">
+    <div class="final-cta">
+      <div>
+        <h2>Prêt à essayer ?</h2>
+        <p>Le mode démo charge un atelier fictif complet, vous explorez librement, et vous quittez en un clic. Aucune installation, aucun compte requis.</p>
+      </div>
+      <button type="button" class="btn-cta btn-orange" onclick="lancerDemo()">🚀 Lancer la démo maintenant</button>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <strong>inerWeb Fluide</strong> — Démonstration · par F. Henninot<br>
+    Données traitées localement · RGPD by design · CERFA 15497*04 officiel · F-Gas III conforme
+  </div>
+</footer>
+
+<script>
+  function lancerDemo() {
+    // Active le flag démo et redirige vers l'app
+    try { localStorage.setItem('inerweb_demo', '1'); } catch (e) {}
+    window.location.href = 'index.html?demo=1';
+  }
+</script>
+
+</body>
+</html>

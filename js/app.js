@@ -12,10 +12,10 @@ const App = {
    */
   async init() {
     console.log(`inerWeb Fluide v${this.version} - Initialisation...`);
-    
+
     // Initialiser l'UI
     UI.init();
-    
+
     // Configurer l'API
     const defaultApiUrl = 'https://script.google.com/macros/s/AKfycbwv-G63lIYYJ4fJOF6LpaUJjws1eLUfgXa_zypkgP7VXOnLQB5IuVbiozL-BUmg6hpr/exec';
 
@@ -25,6 +25,21 @@ const App = {
     // Forcer la mise à jour vers la dernière version déployée
     localStorage.setItem('inerweb_api_url', defaultApiUrl);
     API.init(defaultApiUrl);
+
+    // Bindings (avant tout, pour que le bouton démo soit actif même si on reste sur login)
+    this.bindEvents();
+
+    // ===== Mode démo demandé via URL ?demo=1 ou localStorage =====
+    // Bascule directement dans l'app, sans login.
+    if (window.DemoMode && this._isDemoRequested()) {
+      try {
+        await this.startDemoSession();
+        console.log('inerWeb Fluide initialisé (mode démo)');
+        return;
+      } catch (err) {
+        console.error('Échec démarrage démo, retour login :', err);
+      }
+    }
 
     // Vérifier si déjà connecté
     const savedApiKey = localStorage.getItem('inerweb_apikey');
@@ -39,11 +54,45 @@ const App = {
     } else {
       UI.showLogin();
     }
-    
-    // Bindings
-    this.bindEvents();
-    
+
     console.log('inerWeb Fluide initialisé');
+  },
+
+  /**
+   * Détecte si le mode démo est demandé (URL ou localStorage).
+   */
+  _isDemoRequested() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('demo') === '1') return true;
+      if (localStorage.getItem('inerweb_demo') === '1') return true;
+    } catch (e) {}
+    return false;
+  },
+
+  /**
+   * Démarre une session démo complète : patche API, injecte user fictif,
+   * charge les données démo, affiche l'app. Aucune saisie utilisateur requise.
+   */
+  async startDemoSession() {
+    DemoMode.start();
+    State.setUser({
+      id: 'USER-DEMO-001',
+      nom: 'Martin', prenom: 'Julien',
+      nomComplet: 'Julien Martin',
+      role: 'REFERENT',
+      permissions: ['READ', 'WRITE', 'OFFICIEL'],
+      canUseOfficiel: true,
+      attestation: 'AAF-CAT1-2024-1547'
+    });
+    await State.loadInitialData();
+    try {
+      const usersRes = await API.getUsers();
+      State.users = usersRes.data || [];
+    } catch (_) {}
+    UI.showApp();
+    setTimeout(() => { if (window.AIDE) AIDE.injecterBoutons(); }, 500);
+    UI.toast('Mode démonstration — Julien Martin (Référent)', 'success');
   },
   
   /**
@@ -137,6 +186,39 @@ const App = {
         this.login(id, pwd);
       }
     });
+
+    // Bouton « Lancer la démo » sur l'écran de connexion :
+    // bascule directement dans l'app, sans demander d'identifiant.
+    document.getElementById('btn-launch-demo')?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      if (!window.DemoMode) return;
+      try {
+        if (UI.hideLoginError) UI.hideLoginError();
+        await this.startDemoSession();
+      } catch (err) {
+        console.error('Erreur démarrage démo :', err);
+        UI.toast('Erreur démarrage démo : ' + err.message, 'error');
+      }
+    });
+
+    // Tuiles de navigation admin — scroll fluide vers la cible + halo orange
+    document.querySelectorAll('.admin-tile').forEach(tile => {
+      tile.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetId = tile.dataset.target;
+        const target = document.getElementById(targetId);
+        if (!target) return;
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Halo orange temporaire sur la carte ciblée
+        const header = target.querySelector('.card-header');
+        if (header) {
+          const original = header.style.boxShadow;
+          header.style.boxShadow = '0 0 0 4px rgba(255, 107, 53, 0.5)';
+          header.style.transition = 'box-shadow 0.3s';
+          setTimeout(() => { header.style.boxShadow = original; }, 1800);
+        }
+      });
+    });
     
     // Logout
     UI.elements.btnLogout.addEventListener('click', () => {
@@ -205,23 +287,15 @@ const App = {
       }
     });
 
-    // Prévisualisation CERFA
+    // Prévisualisation CERFA — affiche directement le PDF officiel 15497*04
+    // rempli via pdf-lib, dans une modale iframe (aucun appel backend, aucun popup).
     document.getElementById('btn-preview-cerfa')?.addEventListener('click', async () => {
       try {
-        UI.toast('Génération de l\'aperçu CERFA...', 'info');
-        const res = await API.get('previewCerfa');
-        if (res.success && res.data && res.data.html) {
-          const win = window.open('', '_blank', 'width=900,height=1100,scrollbars=yes');
-          win.document.write(res.data.html);
-          win.document.close();
-          win.document.title = 'CERFA 15497*04 — Aperçu';
-        } else {
-          // Fallback : générer un aperçu CERFA démo côté client
-          this._showDemoCerfa();
-        }
+        UI.toast('Génération du CERFA officiel...', 'info');
+        await CERFA.ouvrir({});
       } catch (err) {
-        // Fallback côté client si le backend ne répond pas
-        this._showDemoCerfa();
+        console.error('Erreur ouverture CERFA :', err);
+        UI.toast('Erreur ouverture CERFA : ' + err.message, 'error');
       }
     });
     
@@ -375,23 +449,53 @@ const App = {
     
     // ===== ADMIN BINDINGS =====
 
-    // Sauver config entreprise
+    // Sauver config entreprise (champs étendus : APE/NAF, tél, e-mail, attestation, F-Gas, logo)
     document.getElementById('btn-save-config')?.addEventListener('click', async () => {
-      const etablissement = document.getElementById('config-etablissement').value.trim();
-      const adresse = document.getElementById('config-adresse').value.trim();
-      const siret = document.getElementById('config-siret').value.trim();
+      const cfg = {
+        etablissement: document.getElementById('config-etablissement').value.trim(),
+        adresse: document.getElementById('config-adresse').value.trim(),
+        siret: document.getElementById('config-siret').value.trim(),
+        codeApe: document.getElementById('config-ape')?.value.trim() || '',
+        telephone: document.getElementById('config-tel')?.value.trim() || '',
+        email: document.getElementById('config-email')?.value.trim() || '',
+        attestationCapacite: document.getElementById('config-attestation')?.value.trim() || '',
+        certifFGas: document.getElementById('config-categorie-fgas')?.value || '',
+        validiteAttestation: document.getElementById('config-validite-att')?.value || '',
+        logo: (State.config && State.config.logo) || ''
+      };
       try {
-        await API.saveConfig({ etablissement, adresse, siret });
+        await API.saveConfig(cfg);
         UI.toast('Configuration entreprise enregistrée', 'success');
-        // Mettre à jour le state local
-        if (State.config) {
-          State.config.etablissement = etablissement;
-          State.config.adresse = adresse;
-          State.config.siret = siret;
-        }
+        State.config = Object.assign(State.config || {}, cfg);
       } catch (error) {
         UI.toast('Erreur : ' + error.message, 'error');
       }
+    });
+
+    // Upload logo (converti en base64 et stocké dans State.config.logo)
+    document.getElementById('config-logo-input')?.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      if (file.size > 500 * 1024) {
+        UI.toast('Logo trop volumineux (max 500 Ko)', 'error');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target.result;
+        State.config = State.config || {};
+        State.config.logo = dataUrl;
+        const preview = document.getElementById('config-logo-preview');
+        preview.innerHTML = '<img src="' + dataUrl + '" style="max-width:100%;max-height:100%;object-fit:contain;">';
+        document.getElementById('btn-remove-logo').style.display = 'inline-block';
+      };
+      reader.readAsDataURL(file);
+    });
+    document.getElementById('btn-remove-logo')?.addEventListener('click', () => {
+      if (State.config) State.config.logo = '';
+      document.getElementById('config-logo-preview').innerHTML = 'Aucun logo';
+      document.getElementById('config-logo-input').value = '';
+      document.getElementById('btn-remove-logo').style.display = 'none';
     });
 
     // Ajouter utilisateur

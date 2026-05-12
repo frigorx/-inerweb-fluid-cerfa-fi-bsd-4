@@ -87,6 +87,20 @@
                   <span>Tester l'application</span>
                 </button>
               </form>
+
+              <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed #e2e8f0;">
+                <p style="font-size: 13px; color: #475569; margin: 0 0 10px 0; text-align: center;">
+                  ✨ <strong>Première visite ?</strong> Lancez le mode démonstration : données fictives pré-remplies, exemples de CERFA, parcours guidé.
+                </p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                  <a href="demo.html" class="btn btn-secondary" style="font-size: 14px; padding: 10px; text-align: center; text-decoration: none; background: #fff; color: #1b3a63; border: 1px solid #1b3a63; border-radius: 6px; font-weight: bold;">
+                    📘 Guide de démo
+                  </a>
+                  <button type="button" id="btn-launch-demo" class="btn btn-primary" style="font-size: 14px; padding: 10px; background: #ff6b35; border: 1px solid #ff6b35; color: #fff; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                    🎓 Lancer la démo
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -441,20 +455,80 @@
         <section id="view-admin" class="view hidden">
           <div class="page-header">
             <h1 class="page-title">Administration</h1>
+            <p style="margin:4px 0 0;color:#6a6258;font-size:14px;">Cliquez sur une tuile pour aller directement à la section concernée.</p>
           </div>
 
+          <!-- Tuiles de navigation admin (raccourcis vers les sections) -->
+          <div class="admin-tiles" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:24px;">
+            <a href="#admin-card-entreprise" class="admin-tile" data-target="admin-card-entreprise" style="display:block;background:#fff;border:1px solid #e6e1d6;border-left:4px solid #5a7ba3;border-radius:8px;padding:14px 16px;text-decoration:none;color:inherit;transition:all 0.15s;cursor:pointer;">
+              <div style="font-size:26px;line-height:1;">🏢</div>
+              <div style="font-family:'Trebuchet MS',sans-serif;font-weight:bold;color:#1b3a63;font-size:15px;margin-top:6px;">Établissement</div>
+              <div style="font-size:12px;color:#6a6258;margin-top:2px;">Raison sociale, SIRET, attestation</div>
+            </a>
+            <a href="#admin-card-users" class="admin-tile" data-target="admin-card-users" style="display:block;background:#fff;border:1px solid #e6e1d6;border-left:4px solid #5a7ba3;border-radius:8px;padding:14px 16px;text-decoration:none;color:inherit;transition:all 0.15s;cursor:pointer;">
+              <div style="font-size:26px;line-height:1;">👥</div>
+              <div style="font-family:'Trebuchet MS',sans-serif;font-weight:bold;color:#1b3a63;font-size:15px;margin-top:6px;">Techniciens</div>
+              <div style="font-size:12px;color:#6a6258;margin-top:2px;">Habilitations, attestations</div>
+            </a>
+            <a href="#admin-card-clients" class="admin-tile" data-target="admin-card-clients" style="display:block;background:#fff;border:1px solid #e6e1d6;border-left:4px solid #5a7ba3;border-radius:8px;padding:14px 16px;text-decoration:none;color:inherit;transition:all 0.15s;cursor:pointer;">
+              <div style="font-size:26px;line-height:1;">🤝</div>
+              <div style="font-family:'Trebuchet MS',sans-serif;font-weight:bold;color:#1b3a63;font-size:15px;margin-top:6px;">Clients / Détenteurs</div>
+              <div style="font-size:12px;color:#6a6258;margin-top:2px;">Propriétaires d'équipements</div>
+            </a>
+            <a href="#admin-card-detecteurs" class="admin-tile" data-target="admin-card-detecteurs" style="display:block;background:#fff;border:1px solid #e6e1d6;border-left:4px solid #5a7ba3;border-radius:8px;padding:14px 16px;text-decoration:none;color:inherit;transition:all 0.15s;cursor:pointer;">
+              <div style="font-size:26px;line-height:1;">🔍</div>
+              <div style="font-family:'Trebuchet MS',sans-serif;font-weight:bold;color:#1b3a63;font-size:15px;margin-top:6px;">Détecteurs</div>
+              <div style="font-size:12px;color:#6a6258;margin-top:2px;">Étalonnage, périodicité</div>
+            </a>
+            <a href="#admin-card-fluides" class="admin-tile" data-target="admin-card-fluides" style="display:block;background:#fff;border:1px solid #e6e1d6;border-left:4px solid #5a7ba3;border-radius:8px;padding:14px 16px;text-decoration:none;color:inherit;transition:all 0.15s;cursor:pointer;">
+              <div style="font-size:26px;line-height:1;">🧪</div>
+              <div style="font-family:'Trebuchet MS',sans-serif;font-weight:bold;color:#1b3a63;font-size:15px;margin-top:6px;">Fluides</div>
+              <div style="font-size:12px;color:#6a6258;margin-top:2px;">Référentiel PRG, sécurité</div>
+            </a>
+            <a href="#admin-card-trackdechets" class="admin-tile" data-target="admin-card-trackdechets" style="display:block;background:#fff;border:1px solid #e6e1d6;border-left:4px solid #5a7ba3;border-radius:8px;padding:14px 16px;text-decoration:none;color:inherit;transition:all 0.15s;cursor:pointer;">
+              <div style="font-size:26px;line-height:1;">♻️</div>
+              <div style="font-family:'Trebuchet MS',sans-serif;font-weight:bold;color:#1b3a63;font-size:15px;margin-top:6px;">Trackdéchets / BSFF</div>
+              <div style="font-size:12px;color:#6a6258;margin-top:2px;">Bordereaux dématérialisés</div>
+            </a>
+            <a href="#admin-card-backup" class="admin-tile" data-target="admin-card-backup" style="display:block;background:#fff;border:1px solid #e6e1d6;border-left:4px solid #ff6b35;border-radius:8px;padding:14px 16px;text-decoration:none;color:inherit;transition:all 0.15s;cursor:pointer;">
+              <div style="font-size:26px;line-height:1;">💾</div>
+              <div style="font-family:'Trebuchet MS',sans-serif;font-weight:bold;color:#1b3a63;font-size:15px;margin-top:6px;">Sauvegarde</div>
+              <div style="font-size:12px;color:#6a6258;margin-top:2px;">USB, Drive, e-mail, restaurer</div>
+            </a>
+            <a href="#admin-card-plaintes" class="admin-tile" data-target="admin-card-plaintes" style="display:block;background:#fff;border:1px solid #e6e1d6;border-left:4px solid #5a7ba3;border-radius:8px;padding:14px 16px;text-decoration:none;color:inherit;transition:all 0.15s;cursor:pointer;">
+              <div style="font-size:26px;line-height:1;">📋</div>
+              <div style="font-family:'Trebuchet MS',sans-serif;font-weight:bold;color:#1b3a63;font-size:15px;margin-top:6px;">Plaintes</div>
+              <div style="font-size:12px;color:#6a6258;margin-top:2px;">Registre obligatoire (R543)</div>
+            </a>
+            <a href="#admin-card-audit" class="admin-tile" data-target="admin-card-audit" style="display:block;background:#fff;border:1px solid #e6e1d6;border-left:4px solid #5a7ba3;border-radius:8px;padding:14px 16px;text-decoration:none;color:inherit;transition:all 0.15s;cursor:pointer;">
+              <div style="font-size:26px;line-height:1;">📜</div>
+              <div style="font-family:'Trebuchet MS',sans-serif;font-weight:bold;color:#1b3a63;font-size:15px;margin-top:6px;">Journal d'audit</div>
+              <div style="font-size:12px;color:#6a6258;margin-top:2px;">Qui a fait quoi, quand</div>
+            </a>
+          </div>
+          <style>
+            .admin-tile:hover { border-left-color: #ff6b35 !important; box-shadow: 0 3px 10px rgba(0,0,0,0.06); transform: translateY(-2px); }
+            .admin-tile.highlight { animation: tile-pulse 1.2s ease-in-out 2; }
+            @keyframes tile-pulse {
+              0%, 100% { box-shadow: 0 0 0 0 rgba(255,107,53,0); }
+              50% { box-shadow: 0 0 0 8px rgba(255,107,53,0.25); }
+            }
+          </style>
+
           <!-- Entreprise / Opérateur (Cadre 1 CERFA) -->
-          <div class="card" style="margin-bottom: 16px;">
+          <div class="card" id="admin-card-entreprise" style="margin-bottom: 16px;">
             <div class="card-header" style="background: #1b3a63; color: white; padding: 12px 16px; border-radius: 8px 8px 0 0;">
               <h3 style="margin:0;">Cadre 1 — Entreprise / Opérateur</h3>
             </div>
             <div class="card-body" style="padding: 16px;">
               <p style="font-size: 13px; color: #666; margin-bottom: 12px;">Ces informations apparaissent sur chaque CERFA 15497*04 généré.</p>
               <form id="form-config-entreprise">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <!-- Identité -->
+                <h4 style="color:#1b3a63;font-size:14px;margin:4px 0 8px;border-bottom:1px solid #e5e7eb;padding-bottom:4px;">Identité</h4>
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
                   <div class="form-group">
                     <label class="form-label required" for="config-etablissement">Raison sociale</label>
-                    <input type="text" id="config-etablissement" class="form-input" placeholder="Ex: Lycée Jean Moulin">
+                    <input type="text" id="config-etablissement" class="form-input" placeholder="Ex: Atelier Froid Henninot">
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="config-siret">N° SIRET</label>
@@ -463,15 +537,67 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="config-adresse">Adresse complète</label>
-                  <input type="text" id="config-adresse" class="form-input" placeholder="Ex: 12 rue de la Paix, 75001 Paris">
+                  <input type="text" id="config-adresse" class="form-input" placeholder="Ex: 12 rue de la Paix, 13001 Marseille">
                 </div>
-                <button type="button" class="btn btn-primary" id="btn-save-config">Enregistrer</button>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                  <div class="form-group">
+                    <label class="form-label" for="config-ape">Code APE / NAF</label>
+                    <input type="text" id="config-ape" class="form-input" placeholder="Ex: 4322B" maxlength="6">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="config-tel">Téléphone</label>
+                    <input type="tel" id="config-tel" class="form-input" placeholder="04 91 00 00 00">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="config-email">E-mail</label>
+                    <input type="email" id="config-email" class="form-input" placeholder="contact@atelier.fr">
+                  </div>
+                </div>
+
+                <!-- Habilitations F-Gas -->
+                <h4 style="color:#1b3a63;font-size:14px;margin:14px 0 8px;border-bottom:1px solid #e5e7eb;padding-bottom:4px;">Habilitations F-Gas</h4>
+                <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 10px;">
+                  <div class="form-group">
+                    <label class="form-label" for="config-attestation">N° d'attestation de capacité entreprise</label>
+                    <input type="text" id="config-attestation" class="form-input" placeholder="Ex: AC-2024-XXXXX">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="config-categorie-fgas">Catégorie F-Gas</label>
+                    <select id="config-categorie-fgas" class="form-input">
+                      <option value="">—</option>
+                      <option value="I">Catégorie I</option>
+                      <option value="II">Catégorie II</option>
+                      <option value="III">Catégorie III</option>
+                      <option value="IV">Catégorie IV</option>
+                      <option value="V">Catégorie V</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="config-validite-att">Valide jusqu'au</label>
+                    <input type="date" id="config-validite-att" class="form-input">
+                  </div>
+                </div>
+
+                <!-- Logo -->
+                <h4 style="color:#1b3a63;font-size:14px;margin:14px 0 8px;border-bottom:1px solid #e5e7eb;padding-bottom:4px;">Logo (imprimé sur les documents)</h4>
+                <div style="display:flex;gap:14px;align-items:center;">
+                  <div id="config-logo-preview" style="width:90px;height:90px;border:1px dashed #cbd5e1;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#f8fafc;color:#94a3b8;font-size:12px;text-align:center;overflow:hidden;">Aucun logo</div>
+                  <div style="flex:1;">
+                    <input type="file" id="config-logo-input" accept="image/png,image/jpeg,image/svg+xml" style="font-size:13px;">
+                    <p style="font-size:12px;color:#94a3b8;margin:4px 0 0;">PNG, JPG ou SVG — 200×200 px recommandé</p>
+                    <button type="button" id="btn-remove-logo" class="btn btn-secondary" style="margin-top:6px;font-size:12px;padding:4px 10px;display:none;">Retirer le logo</button>
+                  </div>
+                </div>
+
+                <div style="margin-top:18px;">
+                  <button type="button" class="btn btn-primary" id="btn-save-config">💾 Enregistrer</button>
+                </div>
               </form>
             </div>
           </div>
 
           <!-- Utilisateurs / Techniciens -->
-          <div class="card" style="margin-bottom: 16px;">
+          <div class="card" id="admin-card-users" style="margin-bottom: 16px;">
             <div class="card-header" style="background: #1b3a63; color: white; padding: 12px 16px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
               <h3 style="margin:0;">Utilisateurs / Techniciens</h3>
               <button class="btn btn-secondary" id="btn-add-user" style="background: white; color: #1b3a63; font-size: 13px;">+ Ajouter</button>
@@ -485,7 +611,7 @@
           </div>
 
           <!-- Clients / Détenteurs (Cadre 2 CERFA) -->
-          <div class="card" style="margin-bottom: 16px;">
+          <div class="card" id="admin-card-clients" style="margin-bottom: 16px;">
             <div class="card-header" style="background: #1b3a63; color: white; padding: 12px 16px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
               <h3 style="margin:0;">Cadre 2 — Clients / Détenteurs</h3>
               <button class="btn btn-secondary" id="btn-add-client-admin" style="background: white; color: #1b3a63; font-size: 13px;">+ Ajouter</button>
@@ -499,7 +625,7 @@
           </div>
 
           <!-- Détecteurs (Cadre 5 CERFA) -->
-          <div class="card" style="margin-bottom: 16px;">
+          <div class="card" id="admin-card-detecteurs" style="margin-bottom: 16px;">
             <div class="card-header" style="background: #1b3a63; color: white; padding: 12px 16px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
               <h3 style="margin:0;">Cadre 5 — Détecteurs de fuites</h3>
               <button class="btn btn-secondary" id="btn-add-detecteur" style="background: white; color: #1b3a63; font-size: 13px;">+ Ajouter</button>
@@ -513,7 +639,7 @@
           </div>
 
           <!-- Trackdéchets / BSFF -->
-          <div class="card" style="margin-bottom: 16px;">
+          <div class="card" id="admin-card-trackdechets" style="margin-bottom: 16px;">
             <div class="card-header" style="background: #1b3a63; color: white; padding: 12px 16px; border-radius: 8px 8px 0 0;">
               <h3 style="margin:0;">Trackdéchets / BSFF</h3>
             </div>
@@ -549,7 +675,7 @@
           </div>
 
           <!-- Fluides -->
-          <div class="card" style="margin-bottom: 16px;">
+          <div class="card" id="admin-card-fluides" style="margin-bottom: 16px;">
             <div class="card-header" style="background: #1b3a63; color: white; padding: 12px 16px; border-radius: 8px 8px 0 0;">
               <h3 style="margin:0;">Fluides frigorigènes</h3>
             </div>
@@ -591,7 +717,7 @@
           </div>
 
           <!-- Sauvegarde & Restauration -->
-          <div class="card" style="margin-bottom: 16px;">
+          <div class="card" id="admin-card-backup" style="margin-bottom: 16px;">
             <div class="card-header" style="background: #1b3a63; color: white; padding: 12px 16px; border-radius: 8px 8px 0 0;">
               <h3 style="margin:0;">Sauvegarde & Restauration</h3>
             </div>
@@ -609,7 +735,7 @@
           </div>
 
           <!-- Registre des plaintes -->
-          <div class="card" style="margin-bottom: 16px;">
+          <div class="card" id="admin-card-plaintes" style="margin-bottom: 16px;">
             <div class="card-header" style="background: #1b3a63; color: white; padding: 12px 16px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
               <h3 style="margin:0;">Registre des plaintes</h3>
               <div style="display:flex;gap:6px;">
@@ -626,7 +752,7 @@
           </div>
 
           <!-- Journal d'audit -->
-          <div class="card" style="margin-bottom: 16px;">
+          <div class="card" id="admin-card-audit" style="margin-bottom: 16px;">
             <div class="card-header" style="background: #1b3a63; color: white; padding: 12px 16px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
               <h3 style="margin:0;">Journal d'audit — Qui a fait quoi</h3>
               <button class="btn btn-secondary" id="btn-refresh-audit" style="background: white; color: #1b3a63; font-size: 13px;">Actualiser</button>
@@ -1229,6 +1355,8 @@
   <script src="js/aide.js"></script>
   <script src="js/backup.js"></script>
   <script src="js/wizard.js"></script>
+  <script src="js/demo-data.js"></script>
+  <script src="js/demo-mode.js"></script>
   <script src="js/app.js"></script>
   
   <!-- Service Worker -->

@@ -275,20 +275,83 @@ const CERFA = {
   },
 
   /**
-   * Génère le PDF rempli et l'ouvre dans un nouvel onglet
+   * Affiche le PDF dans une modale plein écran (iframe).
+   * Évite les blocages de popup et garantit l'affichage du CERFA officiel.
+   */
+  _showInModal(pdfUrl, filename) {
+    const existing = document.getElementById('cerfa-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'cerfa-modal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-label', 'CERFA 15497*04');
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:99999;display:flex;flex-direction:column;font-family:Calibri,sans-serif;';
+
+    modal.innerHTML = ''
+      + '<div style="background:#1b3a63;color:#fff;padding:12px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
+      +   '<strong style="flex:1;min-width:200px;font-family:\'Trebuchet MS\',sans-serif;font-size:16px;">📄 CERFA 15497*04 — Document officiel</strong>'
+      +   '<button id="cerfa-btn-print" style="background:#ff6b35;color:#fff;border:1px solid #ff6b35;padding:8px 14px;border-radius:5px;font-weight:bold;cursor:pointer;font-family:inherit;font-size:14px;">🖨️ Imprimer</button>'
+      +   '<button id="cerfa-btn-download" style="background:#fff;color:#1b3a63;border:1px solid #fff;padding:8px 14px;border-radius:5px;font-weight:bold;cursor:pointer;font-family:inherit;font-size:14px;">⬇️ Télécharger</button>'
+      +   '<button id="cerfa-btn-newtab" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.5);padding:8px 14px;border-radius:5px;font-weight:bold;cursor:pointer;font-family:inherit;font-size:14px;">↗ Nouvel onglet</button>'
+      +   '<button id="cerfa-btn-close" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.5);padding:8px 14px;border-radius:5px;font-weight:bold;cursor:pointer;font-family:inherit;font-size:14px;">✖ Fermer</button>'
+      + '</div>'
+      + '<iframe id="cerfa-iframe" src="' + pdfUrl + '" style="flex:1;width:100%;border:none;background:#fff;"></iframe>';
+
+    document.body.appendChild(modal);
+
+    const close = () => {
+      modal.remove();
+      document.removeEventListener('keydown', escHandler);
+      setTimeout(() => URL.revokeObjectURL(pdfUrl), 1000);
+    };
+    const escHandler = (e) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', escHandler);
+
+    document.getElementById('cerfa-btn-close').onclick = close;
+    document.getElementById('cerfa-btn-newtab').onclick = () => window.open(pdfUrl, '_blank');
+    document.getElementById('cerfa-btn-print').onclick = () => {
+      const iframe = document.getElementById('cerfa-iframe');
+      try {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      } catch (e) {
+        window.open(pdfUrl, '_blank');
+      }
+    };
+    document.getElementById('cerfa-btn-download').onclick = () => {
+      const a = document.createElement('a');
+      a.href = pdfUrl;
+      a.download = filename || 'CERFA_15497_apercu.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    };
+  },
+
+  /**
+   * Génère le PDF rempli et l'affiche dans une modale plein écran (iframe).
+   * Le PDF officiel CERFA 15497*04 est rempli pixel-perfect via pdf-lib (AcroForm).
    */
   async ouvrir(data = {}) {
     try {
+      if (typeof PDFLib === 'undefined') {
+        const msg = 'pdf-lib non chargé — impossible de générer le CERFA';
+        if (typeof UI !== 'undefined' && UI.toast) UI.toast(msg, 'error');
+        else alert(msg);
+        return null;
+      }
       const pdfBytes = await this._remplirPDF(data);
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
-      const win = window.open(url, '_blank');
-      // Libérer l'URL après un délai
-      setTimeout(() => URL.revokeObjectURL(url), 60000);
-      return win;
+      const filename = 'CERFA_15497_' + (data.cerfa || data.id || 'apercu') + '.pdf';
+      this._showInModal(url, filename);
+      return true;
     } catch (err) {
       console.error('Erreur génération CERFA PDF :', err);
-      UI.toast('Erreur génération CERFA : ' + err.message, 'error');
+      const msg = 'Erreur génération CERFA : ' + err.message;
+      if (typeof UI !== 'undefined' && UI.toast) UI.toast(msg, 'error');
+      else alert(msg);
       return null;
     }
   },
