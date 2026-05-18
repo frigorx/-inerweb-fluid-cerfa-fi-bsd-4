@@ -1,9 +1,9 @@
 /**
- * inerWeb Fluide - Service Worker v7.7.0
+ * inerWeb Fluide - Service Worker v7.8.0
  * Support hors-ligne et mise en cache + PDF.js embarqué
  */
 
-const CACHE_NAME = 'inerweb-fluide-v7.7.0';
+const CACHE_NAME = 'inerweb-fluide-v7.8.0';
 
 const ASSETS_TO_CACHE = [
   './',

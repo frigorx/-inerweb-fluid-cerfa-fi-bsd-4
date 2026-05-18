@@ -1312,7 +1312,7 @@ const UI = {
         html += '<button class="btn btn-primary btn-sm" onclick="DOCS.ouvrirFicheBouteille(\'' + id + '\')">Fiche mouvement bouteille (PDF)</button>';
       }
       if (type === 'machine') {
-        html += '<button class="btn btn-primary btn-sm" onclick="CERFA.ouvrir({machine:\'' + id + '\'})">CERFA 15497*04 (PDF officiel)</button>';
+        html += '<button class="btn btn-primary btn-sm" onclick="CERFA.ouvrir({machine:\'' + id + '\'})">CERFA 15497*04 — Aperçu</button>';
       }
       html += '<button class="btn btn-sm" style="background:#1b3a63;color:white;" onclick="DOCS.ouvrirSuiviFluides()">Tableau suivi traçabilité fluides</button>';
       html += '<button class="btn btn-sm" style="background:#1b3a63;color:white;" onclick="DOCS.ouvrirRegistrePlaintes()">Registre des plaintes</button>';

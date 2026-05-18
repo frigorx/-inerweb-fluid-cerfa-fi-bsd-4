@@ -287,12 +287,17 @@ const App = {
       }
     });
 
-    // Prévisualisation CERFA — affiche directement le PDF officiel 15497*04
-    // rempli via pdf-lib, dans une modale iframe (aucun appel backend, aucun popup).
+    // Prévisualisation CERFA — aperçu HTML lisible (cadres 1-14), avec bouton
+    // « PDF officiel » dans la modale pour basculer vers le formulaire ministère.
     document.getElementById('btn-preview-cerfa')?.addEventListener('click', async () => {
       try {
-        UI.toast('Génération du CERFA officiel...', 'info');
-        await CERFA.ouvrir({});
+        UI.toast('Aperçu CERFA…', 'info');
+        // Donnée exemple cohérente : intervention de maintenance sur 1ʳᵉ machine
+        await CERFA.ouvrir({
+          type: 'Maintenance',
+          quantite: 0.5,
+          observations: 'Aperçu — données pré-remplies depuis la configuration établissement'
+        });
       } catch (err) {
         console.error('Erreur ouverture CERFA :', err);
         UI.toast('Erreur ouverture CERFA : ' + err.message, 'error');
@@ -790,12 +795,15 @@ const App = {
     });
 
     /**
-     * B5 — Affiche un aperçu CERFA pixel-perfect via le module CERFA
+     * B5 — Aperçu HTML lisible (cadres 1-14), bouton « PDF officiel » dans la modale.
      */
     this._showDemoCerfa = async () => {
-      UI.toast('Génération du CERFA PDF officiel...', 'info');
-      await CERFA.ouvrir({});
-      UI.toast('CERFA 15497*04 officiel généré', 'success');
+      UI.toast('Aperçu CERFA…', 'info');
+      await CERFA.ouvrir({
+        type: 'Maintenance',
+        quantite: 0.5,
+        observations: 'Démonstration — aperçu pré-rempli'
+      });
     };
 
     // ===== GESTION DES PLAINTES =====

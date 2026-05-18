@@ -1,5 +1,18 @@
 # Changelog inerWeb Fluide
 
+## [7.8.0] - 2026-05-18
+
+### 📄 CERFA — Aperçu HTML lisible + PDF officiel à un clic
+- **Nouveau** : `CERFA.ouvrir()` affiche désormais un **aperçu HTML** lisible (cadres 1-14 numérotés, cases ☐/☒, mise en page proche du formulaire officiel imprimable) → on voit enfin le contenu à l'écran sans télécharger.
+- **Bouton « 📑 PDF officiel »** dans la modale d'aperçu → bascule vers le vrai CERFA officiel ministère rempli via pdf-lib (pour archivage et signature réglementaire).
+- **Préremplissage** : l'aperçu pioche dans `State.config` (établissement, SIRET, attestation, intervenant) et la machine sélectionnée. Le bouton « Aperçu CERFA » du tableau de bord passe maintenant une intervention exemple (Maintenance, 0,5 kg) pour montrer le rendu cases cochées.
+- **API CERFA** :
+  - `CERFA.ouvrir(data)` → aperçu HTML (nouveau défaut)
+  - `CERFA.ouvrirPDF(data)` → PDF officiel directement (modale PDF.js)
+  - `CERFA.imprimer(data)` → aperçu HTML + impression
+  - `CERFA.telecharger(data)` → téléchargement direct du PDF officiel
+- Labels boutons mis à jour : « CERFA 15497*04 (PDF officiel) » → « CERFA 15497*04 — Aperçu »
+
 ## [7.7.0] - 2026-05-18
 
 ### 📄 Visualiseur CERFA universel (PDF.js)
