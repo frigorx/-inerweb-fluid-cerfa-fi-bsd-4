@@ -321,7 +321,12 @@ const UI = {
     
     const isPrechargee = (m) => (m.statut || '').includes('préchargée');
 
-    this.elements.machinesList.innerHTML = State.machines.map(m => `
+    this.elements.machinesList.innerHTML = State.machines.map(m => {
+      const client = m.clientId ? State.getClientById(m.clientId) : null;
+      const clientChip = client
+        ? `<button class="btn-machine-client" data-client="${client.id}" title="Voir le détenteur" style="background:#eff6ff;color:#1e40af;border:1px solid #93c5fd;border-radius:12px;padding:2px 8px;font-size:11px;cursor:pointer;margin-top:4px;display:inline-block;">🤝 ${client.nom}</button>`
+        : '';
+      return `
       <div class="machine-card" data-id="${m.id}">
         <div class="machine-header">
           <div class="machine-icon">${this.getMachineIcon(m.type)}</div>
@@ -330,6 +335,7 @@ const UI = {
         </div>
         <div class="machine-code">${m.code || m.id}</div>
         <div class="machine-name">${m.nom || m.designation || '--'}</div>
+        ${clientChip}
         <div class="machine-specs">
           <div class="spec-item">
             <span class="spec-label">Fluide</span>
@@ -354,7 +360,8 @@ const UI = {
           ${this._isAdmin() ? `<button class="btn btn-sm btn-archive-machine" data-code="${m.code || m.id}" title="Archiver cette machine" style="background:#94A3B8;color:white;font-size:11px;">🗑️ Archiver</button>` : ''}
         </div>
       </div>
-    `).join('');
+    `;
+    }).join('');
 
     // Binding boutons CERFA précharge
     document.querySelectorAll('.btn-cerfa-precharge').forEach(btn => {
@@ -384,6 +391,13 @@ const UI = {
       if (archiveBtn) {
         e.stopPropagation();
         this.archiveMachine(archiveBtn.dataset.code);
+        return;
+      }
+      // Bouton "Voir le détenteur" — navigation Machine → Client
+      const clientBtn = e.target.closest('.btn-machine-client');
+      if (clientBtn) {
+        e.stopPropagation();
+        this.showClientMachines(clientBtn.dataset.client);
         return;
       }
       if (e.target.closest('button')) return;
@@ -434,6 +448,53 @@ const UI = {
   /**
    * B13 — Calcule la date de prochain contrôle si non fournie
    */
+  /**
+   * Affiche dans une modale toutes les machines d'un client donné
+   * (navigation Client → Machines)
+   */
+  showClientMachines(clientId) {
+    const client = State.getClientById(clientId);
+    const machines = (State.machines || []).filter(m => (m.clientId || m.client) === clientId);
+
+    const existing = document.getElementById('client-machines-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'client-machines-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;font-family:Calibri,sans-serif;';
+
+    const machinesHTML = machines.length === 0
+      ? '<p style="color:#94a3b8;text-align:center;padding:30px;">Aucune machine enregistrée pour ce client.</p>'
+      : '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;">'
+        + machines.map(m => `
+          <div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;background:#f8fafc;cursor:pointer;" onclick="document.getElementById('client-machines-modal').remove();UI.openDetailModal('machine','${m.id}')">
+            <div style="font-weight:bold;color:#1b3a63;font-family:'Trebuchet MS',sans-serif;">${m.code || m.id}</div>
+            <div style="font-size:13px;color:#475569;margin:4px 0;">${m.nom || m.designation || '—'}</div>
+            <div style="font-size:12px;color:#64748b;">Fluide : <strong style="color:#ff6b35;">${m.fluide || '—'}</strong> · ${m.chargeActuelle || m.charge || 0} kg</div>
+          </div>
+        `).join('')
+        + '</div>';
+
+    modal.innerHTML = ''
+      + '<div style="background:white;border-radius:12px;max-width:760px;width:100%;max-height:85vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);">'
+      +   '<div style="background:#1b3a63;color:white;padding:14px 20px;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between;">'
+      +     '<div>'
+      +       '<div style="font-family:\'Trebuchet MS\',sans-serif;font-weight:bold;font-size:16px;">🤝 ' + (client?.nom || 'Client') + '</div>'
+      +       '<div style="font-size:12px;opacity:0.85;">' + (client?.ville || '') + (client?.siret ? ' · SIRET ' + client.siret : '') + '</div>'
+      +     '</div>'
+      +     '<button id="client-machines-close" style="background:transparent;color:white;border:1px solid rgba(255,255,255,0.4);padding:6px 12px;border-radius:5px;cursor:pointer;font-family:inherit;">✖ Fermer</button>'
+      +   '</div>'
+      +   '<div style="padding:20px;">'
+      +     '<h3 style="margin:0 0 12px;color:#1b3a63;font-family:\'Trebuchet MS\',sans-serif;font-size:14px;">Parc machines (' + machines.length + ')</h3>'
+      +     machinesHTML
+      +   '</div>'
+      + '</div>';
+
+    document.body.appendChild(modal);
+    document.getElementById('client-machines-close').onclick = () => modal.remove();
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+  },
+
   calcProchainControle(machine) {
     if (machine.prochainControle) return machine.prochainControle;
     // Si on a un dernier contrôle
@@ -1665,17 +1726,40 @@ const UI = {
     if (State.clients.length === 0) {
       clientsList.innerHTML = '<p style="color:#999;">Aucun client enregistré.</p>';
     } else {
+      // Index machines par client
+      const machinesParClient = {};
+      (State.machines || []).forEach(m => {
+        const cid = m.clientId || m.client || '';
+        if (!machinesParClient[cid]) machinesParClient[cid] = [];
+        machinesParClient[cid].push(m);
+      });
       clientsList.innerHTML = '<table class="table" style="width:100%;font-size:13px;"><thead><tr>' +
-        '<th>ID</th><th>Nom</th><th>Ville</th><th>SIRET</th><th>Contact</th>' +
+        '<th>ID</th><th>Nom</th><th>Ville</th><th>SIRET</th><th>Contact</th><th>Machines</th>' +
         '</tr></thead><tbody>' +
-        State.clients.map(c => `<tr>
-          <td><code>${c.id}</code></td>
-          <td><strong>${c.nom}</strong></td>
-          <td>${c.ville || '--'}</td>
-          <td>${c.siret || '--'}</td>
-          <td>${c.contact || '--'} ${c.tel ? '(' + c.tel + ')' : ''}</td>
-        </tr>`).join('') +
+        State.clients.map(c => {
+          const machines = machinesParClient[c.id] || [];
+          const nbMach = machines.length;
+          const machBtn = nbMach > 0
+            ? `<button class="btn-client-machines" data-client="${c.id}" style="background:#1b3a63;color:white;border:none;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;font-weight:bold;">🏭 ${nbMach} machine${nbMach > 1 ? 's' : ''}</button>`
+            : '<span style="color:#94a3b8;font-size:12px;">—</span>';
+          return `<tr>
+            <td><code>${c.id}</code></td>
+            <td><strong>${c.nom}</strong></td>
+            <td>${c.ville || '--'}</td>
+            <td>${c.siret || '--'}</td>
+            <td>${c.contact || '--'} ${c.tel ? '(' + c.tel + ')' : ''}</td>
+            <td>${machBtn}</td>
+          </tr>`;
+        }).join('') +
         '</tbody></table>';
+
+      // Binding bouton "voir machines"
+      clientsList.querySelectorAll('.btn-client-machines').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.showClientMachines(btn.dataset.client);
+        });
+      });
     }
 
     // Afficher détecteurs

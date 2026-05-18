@@ -1,5 +1,21 @@
 # Changelog inerWeb Fluide
 
+## [7.10.0] - 2026-05-18 (nuit) — P2 livré
+
+### 🔗 Clients ↔ Machines bidirectionnel
+- **Carte machine** : chip bleu cliquable « 🤝 Nom du client » qui ouvre la liste des machines de ce client
+- **Admin → Clients** : nouvelle colonne « 🏭 N machine(s) » cliquable → modale détail
+- **Nouvelle modale** `showClientMachines(clientId)` : liste compacte des équipements d'un client avec accès direct à la fiche détail (mouvements + contrôles + CERFAs)
+
+### 🔇 UX silencieuse
+- Bouton principal du dashboard reformulé « ➕ Nouvelle intervention → CERFA » (plus parlant, lien explicite avec le livrable réglementaire)
+- Hiérarchie 3 niveaux + Calibri 14 pt + bleu/orange respectés partout
+
+### 📊 Suivi machines (existait déjà — vérifié)
+- `calcProchainControle()` + `getFrequenceControle()` calculent automatiquement la prochaine échéance F-Gas selon teqCO2/famille (HFC, HCFC, HFO)
+- Carte machine : indicateur rouge si contrôle dépassé
+- `openDetailModal('machine')` : historique mouvements + contrôles + CERFAs liés
+
 ## [7.9.0] - 2026-05-18 (soirée)
 
 ### 🧙 Wizard CERFA enrichi — 6 étapes au lieu de 5
