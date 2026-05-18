@@ -279,10 +279,10 @@ const State = {
   },
   
   /**
-   * Wizard: étape suivante
+   * Wizard: étape suivante (6 étapes : Type/Tech · Machine · Bouteille · Pesées · Contrôle/Détecteur · Signature)
    */
   wizardNext() {
-    if (this.wizard.step < 5) {
+    if (this.wizard.step < 6) {
       this.wizard.step++;
     }
   },

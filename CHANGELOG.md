@@ -1,5 +1,28 @@
 # Changelog inerWeb Fluide
 
+## [7.9.0] - 2026-05-18 (soirée)
+
+### 🧙 Wizard CERFA enrichi — 6 étapes au lieu de 5
+Nouvelle étape **5 « Contrôle d'étanchéité + Détecteur »** insérée entre Pesées et Signature. Le wizard couvre désormais TOUS les cadres du CERFA 15497*04 :
+- **Cadre 5 — Détecteur** : menu déroulant depuis Admin → Détecteurs (alerte ⚠ EXPIRÉ si étalonnage échu)
+- **Cadre 6 — Détection permanente** : auto depuis la fiche machine (OUI/NON)
+- **Cadre 10 — Résultat contrôle** : 3 boutons (Sans objet / Conforme / Fuite) ; si Fuite → 3 lignes localisation + cases « Réparée »
+- **Cadre 13 — Destination + BSFF** : affiché uniquement si Récupération/Vidange (champ obligatoire)
+- **Cadre 14 — Observations** : commentaire libre étape 6
+
+### 📱 Étiquettes QR imprimables (module `qr-print.js`)
+- Boutons orange « 📱 QR » sur chaque **carte machine**, **carte bouteille** et **ligne détecteur** (admin)
+- Étiquette format **50 × 70 mm** : QR (35 mm) + code Trebuchet bold + détails Calibri
+- Bouton « Imprimer les QR codes » → planche **A4 grille 3×2** (6 étiquettes par page)
+- QR pointe vers URL absolue GitHub Pages avec paramètre (`?machine=...`, `?bouteille=...`, `?detecteur=...`)
+- Lib **qrcodejs 1.0.0 (davidshimjs)** embarquée localement (offline OK)
+
+### 🔧 Technique
+- `state.js` : `wizardNext()` autorise 6 étapes au lieu de 5
+- `ui.js` : libellé bouton « Valider » à l'étape 6
+- `index.html` : 6e onglet « Contrôle » dans le bandeau wizard ; scripts `qrcode-lib.min.js` + `qr-print.js`
+- `sw.js` : cache v7.9.0 incluant les nouveaux assets
+
 ## [7.8.0] - 2026-05-18
 
 ### 📄 CERFA — Aperçu HTML lisible + PDF officiel à un clic

@@ -350,6 +350,7 @@ const UI = {
         </div>
         <div style="margin-top:8px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
           ${isPrechargee(m) ? `<button class="btn btn-sm btn-primary btn-cerfa-precharge" data-machine="${m.code || m.id}" title="CERFA précharge usine">📄 CERFA précharge</button>` : ''}
+          <button class="btn-qr" data-qr-type="machine" data-qr-id="${m.id}" title="Imprimer étiquette QR" style="background:#ff6b35;color:white;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-weight:bold;">📱 QR</button>
           ${this._isAdmin() ? `<button class="btn btn-sm btn-archive-machine" data-code="${m.code || m.id}" title="Archiver cette machine" style="background:#94A3B8;color:white;font-size:11px;">🗑️ Archiver</button>` : ''}
         </div>
       </div>
@@ -480,6 +481,7 @@ const UI = {
           <div style="margin-top:6px;display:flex;gap:4px;justify-content:center;flex-wrap:wrap;">
             ${this._isAdmin() ? `<button class="btn-archive-bouteille" data-code="${code}" title="Archiver" style="background:#94A3B8;color:white;border:none;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;">🗑️</button>` : ''}
             <button class="btn-retour-bouteille" data-code="${code}" title="Retour fournisseur / Trackdéchets" style="background:#6366F1;color:white;border:none;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;">📦 Retour</button>
+            <button class="btn-qr" data-qr-type="bouteille" data-qr-id="${b.id}" title="Imprimer étiquette QR" style="background:#ff6b35;color:white;border:none;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;font-weight:bold;">📱 QR</button>
             <button class="btn-pdf-bouteille" data-id="${b.id}" title="Fiche mouvement PDF" style="background:#1b3a63;color:white;border:none;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;">📄 PDF</button>
           </div>
         </div>
@@ -879,7 +881,7 @@ const UI = {
     
     // Boutons
     this.elements.wizardPrev.disabled = step === 1;
-    this.elements.wizardNext.textContent = step === 5 ? 'Valider ✓' : 'Continuer →';
+    this.elements.wizardNext.textContent = step === 6 ? 'Valider ✓' : 'Continuer →';
     
     // Contenu selon l'étape
     const content = Wizard.renderStep(step);
@@ -1686,13 +1688,14 @@ const UI = {
         detectList.innerHTML = '<p style="color:#999;">Aucun détecteur enregistré.</p>';
       } else {
         detectList.innerHTML = '<table class="table" style="width:100%;font-size:13px;"><thead><tr>' +
-          '<th>Code</th><th>Marque</th><th>Modèle</th><th>Étalonnage</th><th>Prochain</th><th>Statut</th>' +
+          '<th>Code</th><th>Marque</th><th>Modèle</th><th>Étalonnage</th><th>Prochain</th><th>Statut</th><th>QR</th>' +
           '</tr></thead><tbody>' +
           detecteurs.map(d => {
             const perime = this.isDatePassed(d.prochain);
             const statutHtml = perime
               ? '<span class="badge badge-danger" style="background:#DC2626;color:#fff;font-weight:bold;">Étalonnage échu</span>'
               : '<span class="badge badge-success" style="background:#059669;color:#fff;">Valide</span>';
+            const qrBtn = '<button class="btn-qr" data-qr-type="detecteur" data-qr-id="' + (d.id || d.code) + '" title="Imprimer étiquette QR" style="background:#ff6b35;color:white;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-weight:bold;">📱 QR</button>';
             return `<tr${perime ? ' style="background:#FEF2F2;"' : ''}>
             <td><code>${d.code || d.id}</code></td>
             <td>${d.marque || '--'}</td>
@@ -1700,6 +1703,7 @@ const UI = {
             <td>${d.etalonnage || '--'}</td>
             <td style="${perime ? 'color:#DC2626;font-weight:bold;' : ''}">${d.prochain || '--'}</td>
             <td>${statutHtml}</td>
+            <td>${qrBtn}</td>
           </tr>`;
           }).join('') +
           '</tbody></table>';

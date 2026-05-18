@@ -1,9 +1,9 @@
 /**
- * inerWeb Fluide - Service Worker v7.8.0
+ * inerWeb Fluide - Service Worker v7.9.0
  * Support hors-ligne et mise en cache + PDF.js embarqué
  */
 
-const CACHE_NAME = 'inerweb-fluide-v7.8.0';
+const CACHE_NAME = 'inerweb-fluide-v7.9.0';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -20,6 +20,8 @@ const ASSETS_TO_CACHE = [
   './js/aide.js',
   './js/backup.js',
   './js/qrcode.js',
+  './js/qrcode-lib.min.js',
+  './js/qr-print.js',
   './js/wizard.js',
   './js/app.js',
   './cerfa_15497-04_officiel.pdf',

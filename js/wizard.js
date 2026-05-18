@@ -6,7 +6,13 @@
 const Wizard = {
   
   /**
-   * Rendu de l'étape courante
+   * Rendu de l'étape courante (6 étapes — couvre les 14 cadres du CERFA)
+   *   1. Type d'opération + technicien (cadre 4 nature)
+   *   2. Machine + détenteur (cadres 2, 3)
+   *   3. Bouteille (cadre 11 contenant)
+   *   4. Pesées (cadre 11 quantités A+B+C ou D+E)
+   *   5. Contrôle étanchéité + détecteur (cadres 5, 6, 10)
+   *   6. Signature opérateur + détenteur (cadre 14 + signatures)
    */
   renderStep(step) {
     switch (step) {
@@ -14,11 +20,12 @@ const Wizard = {
       case 2: return this.renderStepMachine();
       case 3: return this.renderStepBouteille();
       case 4: return this.renderStepPesees();
-      case 5: return this.renderStepSignature();
+      case 5: return this.renderStepControle();
+      case 6: return this.renderStepSignature();
       default: return '<p>Étape inconnue</p>';
     }
   },
-  
+
   /**
    * Bindings spécifiques à chaque étape
    */
@@ -28,7 +35,8 @@ const Wizard = {
       case 2: this.bindStepMachine(); break;
       case 3: this.bindStepBouteille(); break;
       case 4: this.bindStepPesees(); break;
-      case 5: this.bindStepSignature(); break;
+      case 5: this.bindStepControle(); break;
+      case 6: this.bindStepSignature(); break;
     }
   },
   
@@ -509,8 +517,140 @@ const Wizard = {
     calcQuantite();
   },
   
-  // ========== ÉTAPE 5: SIGNATURE ==========
-  
+  // ========== ÉTAPE 5: CONTRÔLE ÉTANCHÉITÉ + DÉTECTEUR ==========
+  // Couvre cadres 5 (détecteur), 6 (détection permanente), 10 (fuites)
+
+  renderStepControle() {
+    const data = State.wizard.data;
+    const machine = State.getMachineById(data.machineId);
+    const detPerm = machine?.detectionPermanente || false;
+    const detecteurs = (State.detecteurs || []).filter(d => d.actif !== false);
+    const selectedDet = data.detecteur || '';
+    const resultat = data.resultatControle || ''; // Conforme | Fuite | NonApplicable
+    const isFuite = resultat === 'Fuite';
+    const fuites = data.fuites || [];
+
+    const isControle = ['ControlePerio', 'ControleNonPerio', 'CONTROLE_ETANCHEITE', 'MAINTENANCE', 'MISE_EN_SERVICE'].includes(data.type) || true;
+
+    return ''
+      + '<h3>Contrôle d\'étanchéité — Cadres 5, 6 et 10 du CERFA</h3>'
+      + '<p style="color:#64748B;font-size:13px;margin-bottom:14px;">Renseignez le détecteur utilisé et le résultat du contrôle. Si une fuite est détectée, indiquez sa localisation et son traitement.</p>'
+
+      // === CADRE 5 — Détecteur ===
+      + '<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:14px;margin-bottom:14px;">'
+        + '<h4 style="margin:0 0 10px;color:#1b3a63;font-size:14px;border-bottom:2px solid #1b3a63;padding-bottom:6px;">📟 Cadre 5 — Détecteur manuel de fuite</h4>'
+        + (detecteurs.length === 0
+            ? '<p style="color:#92400E;background:#FEF3C7;padding:10px;border-radius:6px;font-size:13px;margin:0;">'
+              + '⚠️ Aucun détecteur enregistré. Allez dans <strong>Administration → Détecteurs</strong> pour en ajouter (marque, modèle, certificat d\'étalonnage).'
+              + '</p>'
+            : '<select id="wizard-detecteur" class="form-input" style="font-size:14px;padding:10px;">'
+              + '<option value="">— Pas de détecteur utilisé (intervention sans contrôle) —</option>'
+              + detecteurs.map(d => {
+                  const dateProch = d.prochain || d.prochainEtalonnage || '';
+                  const expirePoche = dateProch && new Date(dateProch) < new Date();
+                  const label = (d.code || d.id) + ' — ' + (d.marque || '') + ' ' + (d.modele || '')
+                    + (dateProch ? ' · Étalon. ' + new Date(dateProch).toLocaleDateString('fr-FR') : '')
+                    + (expirePoche ? ' ⚠ EXPIRÉ' : '');
+                  return '<option value="' + (d.code || d.id) + '"' + (selectedDet === (d.code || d.id) ? ' selected' : '') + '>' + label + '</option>';
+                }).join('')
+              + '</select>'
+          )
+      + '</div>'
+
+      // === CADRE 6 — Détection permanente (auto depuis fiche machine) ===
+      + '<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:14px;margin-bottom:14px;">'
+        + '<h4 style="margin:0 0 10px;color:#1b3a63;font-size:14px;border-bottom:2px solid #1b3a63;padding-bottom:6px;">🛡️ Cadre 6 — Système permanent de détection de fuite</h4>'
+        + '<p style="margin:0;font-size:13px;">Sur la machine <strong>' + (machine?.code || '—') + '</strong> : '
+          + '<strong style="color:' + (detPerm ? '#16A34A' : '#64748B') + ';">' + (detPerm ? '☒ OUI — détection permanente' : '☐ NON — pas de détection permanente') + '</strong>'
+        + '</p>'
+        + '<p style="margin:6px 0 0;font-size:12px;color:#94a3b8;">(Modifiable dans la fiche machine si erroné)</p>'
+      + '</div>'
+
+      // === CADRE 10 — Résultat contrôle + fuites ===
+      + '<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:14px;margin-bottom:14px;">'
+        + '<h4 style="margin:0 0 10px;color:#1b3a63;font-size:14px;border-bottom:2px solid #1b3a63;padding-bottom:6px;">🔍 Cadre 10 — Résultat du contrôle d\'étanchéité</h4>'
+        + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">'
+          + ['NonApplicable', 'Conforme', 'Fuite'].map(r => {
+              const labels = { NonApplicable: 'Sans objet (pas de contrôle)', Conforme: '✓ Conforme (pas de fuite)', Fuite: '⚠ Fuite détectée' };
+              const colors = { NonApplicable: '#94a3b8', Conforme: '#16A34A', Fuite: '#c62828' };
+              const isSel = resultat === r;
+              return '<button type="button" class="wizard-resultat" data-resultat="' + r + '" style="'
+                + 'flex:1;min-width:140px;padding:12px;border:2px solid ' + (isSel ? colors[r] : '#E2E8F0') + ';'
+                + 'background:' + (isSel ? (r === 'Conforme' ? '#F0FDF4' : (r === 'Fuite' ? '#FEE2E2' : '#F1F5F9')) : '#fff') + ';'
+                + 'color:' + colors[r] + ';border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;">'
+                + labels[r] + '</button>';
+            }).join('')
+        + '</div>'
+        + '<div id="wizard-fuites-block" style="' + (isFuite ? '' : 'display:none;') + '">'
+          + '<p style="font-size:13px;color:#92400E;margin:0 0 8px;">Décrivez chaque fuite localisée (3 lignes maximum, comme sur le CERFA) :</p>'
+          + [0, 1, 2].map(i => {
+              const f = fuites[i] || {};
+              return '<div style="display:grid;grid-template-columns:30px 1fr auto;gap:8px;align-items:center;margin-bottom:6px;">'
+                + '<strong>#' + (i + 1) + '</strong>'
+                + '<input type="text" class="form-input wizard-fuite-loca" data-idx="' + i + '" placeholder="Ex : raccord HP compresseur, vanne service…" value="' + (f.localisation || '') + '" style="font-size:13px;padding:8px;">'
+                + '<label style="font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;">'
+                  + '<input type="checkbox" class="wizard-fuite-rep" data-idx="' + i + '"' + (f.reparee ? ' checked' : '') + '> Réparée'
+                + '</label>'
+                + '</div>';
+            }).join('')
+        + '</div>'
+      + '</div>'
+
+      // === Cadre 13 - Destination du fluide récupéré (si récupération) ===
+      + ((data.type === 'RECUPERATION' || data.type === 'VIDANGE')
+          ? '<div style="background:#FFF7ED;border:1px solid #F59E0B;border-radius:8px;padding:14px;margin-bottom:14px;">'
+            + '<h4 style="margin:0 0 10px;color:#92400E;font-size:14px;border-bottom:2px solid #F59E0B;padding-bottom:6px;">♻️ Cadre 13 — Destination du fluide récupéré</h4>'
+            + '<label class="form-label" style="font-size:13px;">Installation de destination (Nom / SIRET / Adresse)</label>'
+            + '<textarea id="wizard-destination" class="form-input" rows="2" placeholder="Ex : Climalife Marseille — SIRET 12345678900012 — 12 av. de la République 13003 Marseille" style="font-size:13px;">' + (data.destination || '') + '</textarea>'
+            + '<label class="form-label" style="font-size:13px;margin-top:8px;">N° BSFF Trackdéchets</label>'
+            + '<input type="text" id="wizard-bsff" class="form-input" placeholder="BSFF-2026-XXXX" value="' + (data.bsff || '') + '" style="font-size:13px;">'
+          + '</div>'
+          : ''
+        );
+  },
+
+  bindStepControle() {
+    // Détecteur
+    document.getElementById('wizard-detecteur')?.addEventListener('change', (e) => {
+      State.wizardSetData('detecteur', e.target.value);
+    });
+
+    // Résultat
+    document.querySelectorAll('.wizard-resultat').forEach(btn => {
+      btn.addEventListener('click', () => {
+        State.wizardSetData('resultatControle', btn.dataset.resultat);
+        // Pour CERFA : reformuler en clair
+        const map = { Conforme: 'Conforme', Fuite: 'Fuite', NonApplicable: '' };
+        State.wizardSetData('resultat', map[btn.dataset.resultat] || '');
+        UI.renderWizardStep();
+      });
+    });
+
+    // Fuites
+    const updateFuites = () => {
+      const fuites = [];
+      document.querySelectorAll('.wizard-fuite-loca').forEach(inp => {
+        const idx = parseInt(inp.dataset.idx, 10);
+        const loca = inp.value.trim();
+        const rep = document.querySelector('.wizard-fuite-rep[data-idx="' + idx + '"]')?.checked || false;
+        if (loca) fuites[idx] = { localisation: loca, reparee: rep };
+      });
+      State.wizardSetData('fuites', fuites.filter(Boolean));
+    };
+    document.querySelectorAll('.wizard-fuite-loca').forEach(i => i.addEventListener('input', updateFuites));
+    document.querySelectorAll('.wizard-fuite-rep').forEach(c => c.addEventListener('change', updateFuites));
+
+    // Destination + BSFF
+    document.getElementById('wizard-destination')?.addEventListener('input', (e) => {
+      State.wizardSetData('destination', e.target.value);
+    });
+    document.getElementById('wizard-bsff')?.addEventListener('input', (e) => {
+      State.wizardSetData('bsff', e.target.value);
+    });
+  },
+
+  // ========== ÉTAPE 6: SIGNATURE ==========
+
   renderStepSignature() {
     const data = State.wizard.data;
     const machine = State.getMachineById(data.machineId);
@@ -705,6 +845,30 @@ const Wizard = {
         break;
         
       case 5:
+        // Étape Contrôle étanchéité + Détecteur — non bloquante : on peut continuer sans détecteur ni fuite
+        // mais on impose un choix explicite sur le résultat pour éviter l'oubli
+        if (!data.resultatControle) {
+          UI.toast('Veuillez choisir le résultat du contrôle d\'étanchéité (ou "Sans objet")', 'warning');
+          return false;
+        }
+        // Si Fuite, exiger au moins une ligne de localisation
+        if (data.resultatControle === 'Fuite') {
+          const fuites = data.fuites || [];
+          if (fuites.length === 0) {
+            UI.toast('Une fuite est déclarée : indiquez sa localisation (au moins une ligne)', 'error');
+            return false;
+          }
+        }
+        // Si Récupération/Vidange + Conforme/Fuite, exiger destination + BSFF
+        if (['RECUPERATION', 'VIDANGE'].includes(data.type) && data.quantite > 0) {
+          if (!data.destination || data.destination.length < 5) {
+            UI.toast('Précisez la destination du fluide récupéré (Cadre 13 CERFA)', 'error');
+            return false;
+          }
+        }
+        break;
+
+      case 6:
         if (!data.signature || !data.signature.startsWith('CERTIFIÉ|')) {
           UI.toast('Veuillez cocher la case de certification', 'error');
           return false;
@@ -724,7 +888,7 @@ const Wizard = {
         }
         break;
     }
-    
+
     return true;
   },
   
@@ -944,8 +1108,9 @@ const Wizard = {
       }
     });
 
-    // Aperçu CERFA pixel-perfect via module CERFA
+    // Aperçu CERFA pixel-perfect via module CERFA (toutes les données wizard + état)
     document.getElementById('recap-apercu-cerfa')?.addEventListener('click', async () => {
+      const w = State.wizard?.data || {};
       await CERFA.ouvrir({
         id: info.mouvementId,
         cerfa: info.cerfaId || info.mouvementId,
@@ -953,8 +1118,17 @@ const Wizard = {
         machine: info.machineCode,
         quantite: info.quantiteNum || 0,
         mode: info.mode,
-        observations: '',
-        bouteille: info.bouteilleCode
+        bouteille: info.bouteilleCode,
+        // Cadre 5 — détecteur
+        detecteur: w.detecteur || '',
+        // Cadre 10 — résultat + fuites
+        resultat: w.resultat || w.resultatControle || '',
+        fuites: w.fuites || [],
+        // Cadre 13 — destination + BSFF
+        destination: w.destination || '',
+        bsff: w.bsff || '',
+        // Cadre 14 — observations
+        observations: w.commentaire || ''
       });
     });
 
