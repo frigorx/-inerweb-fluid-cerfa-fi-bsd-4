@@ -1,5 +1,20 @@
 # Changelog inerWeb Fluide
 
+## [7.7.0] - 2026-05-18
+
+### 📄 Visualiseur CERFA universel (PDF.js)
+- **PDF.js 3.11.174** embarqué localement (`js/pdf.min.js` + worker) → fonctionne hors-ligne
+- **Rendu canvas** garanti sur tous navigateurs : Safari iOS, Android, PC, Mac
+- **Corrige** : sur Safari iOS / certains navigateurs mobiles, l'iframe affichait le code source du PDF au lieu du document — désormais le PDF s'ouvre dans une modale plein écran
+- **Zoom −/+** (50 % → 400 %) dans la barre d'outils de la modale
+- **Boutons** : 🖨️ Imprimer · ⬇️ Télécharger · ↗ Onglet · ✖ Fermer · Esc pour fermer
+- **Confirmation** : le PDF `cerfa_15497-04_officiel.pdf` du repo est bien le document officiel (MD5 identique à service-public.gouv.fr) — depuis la révision *04 (juillet 2024), le CERFA tient sur 1 seule page (format compact ministère)
+
+### 🔧 Technique
+- `cerfa.js` : nouvelle méthode `_loadPdfJs()` (lazy load) + `_renderPdfInContainer()` (canvas par page)
+- `_showInModal()` réécrit : reçoit les bytes du PDF en plus de l'URL pour rendu canvas
+- `sw.js` : cache `pdf.min.js` et `pdf.worker.min.js`, bump `inerweb-fluide-v7.7.0`
+
 ## [7.1.0] - 2026-03-07
 
 ### 🎨 Charte graphique officielle

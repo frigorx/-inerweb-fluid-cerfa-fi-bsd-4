@@ -275,10 +275,51 @@ const CERFA = {
   },
 
   /**
-   * Affiche le PDF dans une modale plein écran (iframe).
-   * Évite les blocages de popup et garantit l'affichage du CERFA officiel.
+   * Charge PDF.js dynamiquement (une seule fois).
+   * Embarqué localement pour fonctionner hors-ligne (PWA).
    */
-  _showInModal(pdfUrl, filename) {
+  async _loadPdfJs() {
+    if (window.pdfjsLib) return window.pdfjsLib;
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = new URL('js/pdf.min.js', window.location.href).href;
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('Impossible de charger PDF.js'));
+      document.head.appendChild(s);
+    });
+    if (!window.pdfjsLib) throw new Error('PDF.js chargé mais introuvable');
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+      new URL('js/pdf.worker.min.js', window.location.href).href;
+    return window.pdfjsLib;
+  },
+
+  /**
+   * Rendu du PDF dans des canvas via PDF.js — fonctionne sur tous
+   * navigateurs (Safari iOS, Android, PC, Mac), corrige le bug
+   * « l'iframe affiche une ligne de code au lieu du PDF ».
+   */
+  async _renderPdfInContainer(pdfBytes, container, zoom) {
+    const pdfjsLib = await this._loadPdfJs();
+    const loadingTask = pdfjsLib.getDocument({ data: pdfBytes.slice(0) });
+    const pdf = await loadingTask.promise;
+    container.innerHTML = '';
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const viewport = page.getViewport({ scale: zoom });
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      canvas.style.cssText = 'display:block;margin:12px auto;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,0.4);max-width:100%;height:auto;';
+      container.appendChild(canvas);
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    }
+  },
+
+  /**
+   * Affiche le PDF dans une modale plein écran avec rendu PDF.js.
+   * Garantit l'affichage du CERFA officiel sur tous les appareils.
+   */
+  async _showInModal(pdfBytes, pdfUrl, filename) {
     const existing = document.getElementById('cerfa-modal');
     if (existing) existing.remove();
 
@@ -286,19 +327,38 @@ const CERFA = {
     modal.id = 'cerfa-modal';
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-label', 'CERFA 15497*04');
-    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:99999;display:flex;flex-direction:column;font-family:Calibri,sans-serif;';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:99999;display:flex;flex-direction:column;font-family:Calibri,sans-serif;';
 
     modal.innerHTML = ''
       + '<div style="background:#1b3a63;color:#fff;padding:12px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
-      +   '<strong style="flex:1;min-width:200px;font-family:\'Trebuchet MS\',sans-serif;font-size:16px;">📄 CERFA 15497*04 — Document officiel</strong>'
+      +   '<strong style="flex:1;min-width:180px;font-family:\'Trebuchet MS\',sans-serif;font-size:16px;">📄 CERFA 15497*04 — Document officiel</strong>'
+      +   '<button id="cerfa-btn-zoom-out" title="Zoom -" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.5);padding:8px 12px;border-radius:5px;font-weight:bold;cursor:pointer;font-family:inherit;font-size:14px;">−</button>'
+      +   '<span id="cerfa-zoom-label" style="color:#fff;min-width:50px;text-align:center;font-size:13px;">100%</span>'
+      +   '<button id="cerfa-btn-zoom-in" title="Zoom +" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.5);padding:8px 12px;border-radius:5px;font-weight:bold;cursor:pointer;font-family:inherit;font-size:14px;">+</button>'
       +   '<button id="cerfa-btn-print" style="background:#ff6b35;color:#fff;border:1px solid #ff6b35;padding:8px 14px;border-radius:5px;font-weight:bold;cursor:pointer;font-family:inherit;font-size:14px;">🖨️ Imprimer</button>'
       +   '<button id="cerfa-btn-download" style="background:#fff;color:#1b3a63;border:1px solid #fff;padding:8px 14px;border-radius:5px;font-weight:bold;cursor:pointer;font-family:inherit;font-size:14px;">⬇️ Télécharger</button>'
-      +   '<button id="cerfa-btn-newtab" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.5);padding:8px 14px;border-radius:5px;font-weight:bold;cursor:pointer;font-family:inherit;font-size:14px;">↗ Nouvel onglet</button>'
+      +   '<button id="cerfa-btn-newtab" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.5);padding:8px 14px;border-radius:5px;font-weight:bold;cursor:pointer;font-family:inherit;font-size:14px;">↗ Onglet</button>'
       +   '<button id="cerfa-btn-close" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.5);padding:8px 14px;border-radius:5px;font-weight:bold;cursor:pointer;font-family:inherit;font-size:14px;">✖ Fermer</button>'
       + '</div>'
-      + '<iframe id="cerfa-iframe" src="' + pdfUrl + '" style="flex:1;width:100%;border:none;background:#fff;"></iframe>';
+      + '<div id="cerfa-pdf-container" style="flex:1;overflow:auto;background:#444;padding:12px;text-align:center;">'
+      +   '<p style="color:#fff;font-family:inherit;font-size:14px;padding:40px;">Chargement du document officiel…</p>'
+      + '</div>';
 
     document.body.appendChild(modal);
+
+    const container = document.getElementById('cerfa-pdf-container');
+    const zoomLabel = document.getElementById('cerfa-zoom-label');
+    let currentZoom = 1.5;
+
+    const render = async () => {
+      try {
+        await this._renderPdfInContainer(pdfBytes, container, currentZoom);
+        zoomLabel.textContent = Math.round(currentZoom / 1.5 * 100) + '%';
+      } catch (e) {
+        container.innerHTML = '<p style="color:#fff;font-family:inherit;font-size:14px;padding:40px;">⚠️ Affichage impossible. <a href="' + pdfUrl + '" target="_blank" style="color:#ff6b35;">Ouvrir le PDF dans un onglet</a></p>';
+        console.error('PDF.js render error:', e);
+      }
+    };
 
     const close = () => {
       modal.remove();
@@ -310,13 +370,19 @@ const CERFA = {
 
     document.getElementById('cerfa-btn-close').onclick = close;
     document.getElementById('cerfa-btn-newtab').onclick = () => window.open(pdfUrl, '_blank');
+    document.getElementById('cerfa-btn-zoom-in').onclick = () => {
+      currentZoom = Math.min(currentZoom + 0.25, 4);
+      render();
+    };
+    document.getElementById('cerfa-btn-zoom-out').onclick = () => {
+      currentZoom = Math.max(currentZoom - 0.25, 0.5);
+      render();
+    };
     document.getElementById('cerfa-btn-print').onclick = () => {
-      const iframe = document.getElementById('cerfa-iframe');
-      try {
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
-      } catch (e) {
-        window.open(pdfUrl, '_blank');
+      // Impression : on ouvre le blob dans un onglet (viewer natif → impression)
+      const win = window.open(pdfUrl, '_blank');
+      if (win) {
+        setTimeout(() => { try { win.print(); } catch (e) { /* l'utilisateur imprimera depuis le viewer */ } }, 800);
       }
     };
     document.getElementById('cerfa-btn-download').onclick = () => {
@@ -327,6 +393,8 @@ const CERFA = {
       a.click();
       document.body.removeChild(a);
     };
+
+    render();
   },
 
   /**
@@ -345,7 +413,7 @@ const CERFA = {
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const filename = 'CERFA_15497_' + (data.cerfa || data.id || 'apercu') + '.pdf';
-      this._showInModal(url, filename);
+      await this._showInModal(pdfBytes, url, filename);
       return true;
     } catch (err) {
       console.error('Erreur génération CERFA PDF :', err);
