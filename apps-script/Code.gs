@@ -362,25 +362,21 @@ var ACTION_LEVELS = {
   'createSite': 'ADMIN', 'createAtelier': 'ADMIN', 'createUser': 'ADMIN', 'saveConfig': 'ADMIN'
 };
 
-var HARDCODED_KEYS_ = {
-  READ: '577a8ad29b1449448101f8ab07be49dc',
-  WRITE: 'c3ddb47b3e7b4ae7b4e65337f90db458',
-  ADMIN: '0465ceed0aae4dd8bad9a625c12aeacf'
-};
+// SÉCURITÉ : les clés API vivent UNIQUEMENT dans les Script Properties
+// (Éditeur Apps Script → Paramètres du projet → Propriétés du script).
+// Pour les (ré)générer : exécuter genererClesAPI() depuis l'éditeur.
+// JAMAIS de clé en clair dans ce fichier — le dépôt GitHub est public.
+function getApiKey_(level) {
+  return PropertiesService.getScriptProperties().getProperty('API_KEY_' + level) || null;
+}
 
 function checkAuth_(apiKey, requiredLevel) {
   if (requiredLevel === 'PUBLIC') return { ok: true, level: 'PUBLIC' };
   if (!apiKey) return { ok: false, error: 'Clé API manquante' };
   var lvl = null;
-  if (apiKey === HARDCODED_KEYS_.ADMIN) lvl = 'ADMIN';
-  else if (apiKey === HARDCODED_KEYS_.WRITE) lvl = 'WRITE';
-  else if (apiKey === HARDCODED_KEYS_.READ) lvl = 'READ';
-  else {
-    var props = PropertiesService.getScriptProperties();
-    if (apiKey === props.getProperty('API_KEY_ADMIN')) lvl = 'ADMIN';
-    else if (apiKey === props.getProperty('API_KEY_WRITE')) lvl = 'WRITE';
-    else if (apiKey === props.getProperty('API_KEY_READ')) lvl = 'READ';
-  }
+  if (apiKey === getApiKey_('ADMIN')) lvl = 'ADMIN';
+  else if (apiKey === getApiKey_('WRITE')) lvl = 'WRITE';
+  else if (apiKey === getApiKey_('READ')) lvl = 'READ';
   if (!lvl) return { ok: false, error: 'Clé API invalide' };
   return API_LEVELS[lvl] >= API_LEVELS[requiredLevel] ? { ok: true, level: lvl } : { ok: false, error: 'Niveau insuffisant' };
 }
@@ -420,14 +416,12 @@ function apiLogin_(data) {
   
   logAudit_('AUTH', 'login', user.id, null, { role: user.role }, 'success');
 
-  // Déterminer la clé API à renvoyer selon le rôle
+  // Déterminer la clé API à renvoyer selon le rôle (lue depuis les Script Properties)
   var roleApiKey = '';
   if (user.role === 'ADMIN') {
-    roleApiKey = HARDCODED_KEYS_.ADMIN;
-  } else if (user.role === 'ENSEIGNANT' || user.role === 'REFERENT') {
-    roleApiKey = HARDCODED_KEYS_.WRITE;
+    roleApiKey = getApiKey_('ADMIN') || '';
   } else {
-    roleApiKey = HARDCODED_KEYS_.WRITE;
+    roleApiKey = getApiKey_('WRITE') || '';
   }
 
   return successResponse_({
@@ -492,13 +486,9 @@ function genererClesAPI() {
     SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
-function setClesAPI_temp() {
-  var props = PropertiesService.getScriptProperties();
-  props.setProperty('API_KEY_READ', '577a8ad29b1449448101f8ab07be49dc');
-  props.setProperty('API_KEY_WRITE', 'c3ddb47b3e7b4ae7b4e65337f90db458');
-  props.setProperty('API_KEY_ADMIN', '0465ceed0aae4dd8bad9a625c12aeacf');
-  return 'OK';
-}
+// setClesAPI_temp() SUPPRIMÉE (elle réinjectait des clés exposées publiquement).
+// Utiliser genererClesAPI() ci-dessus : elle génère des clés aléatoires,
+// les stocke dans les Script Properties et les affiche une seule fois.
 
 // ================================================================
 // SECTION: LOT 15 - STATS AVANCÉES
