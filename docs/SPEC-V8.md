@@ -83,6 +83,9 @@ Un seul code, une couche données à adaptateurs. Le mode est déterminé au dé
 
 - **Règle d'or** : brancher le neuf avant de retirer l'ancien. La v7 reste fonctionnelle
   (GitHub Pages actuel) tant que la v8 n'est pas validée.
+- **Pendant la construction** : la v8 vit dans le sous-dossier `v8/` (démo accessible sur
+  `…/v8/`) ; la bascule vers la racine (et v7 → `legacy-v7/`) se fera en fin de Phase D,
+  une fois la v8 jugée présentable par Franck.
 
 ## 4. Design (maquette validée)
 

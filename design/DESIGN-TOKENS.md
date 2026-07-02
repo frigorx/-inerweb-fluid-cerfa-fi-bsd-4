@@ -106,6 +106,13 @@ police Arial — reproduit le formulaire officiel (cadres numérotés, cases ☐
 12. **Modale Sauvegarde** : « Vos données sont enregistrées automatiquement sur cet appareil. »,
     2 grandes options (Exporter une sauvegarde .json / Restaurer), bouton Fermer marine pleine largeur.
 
+## Variante mobile (observée sur la maquette, < 900 px)
+- La sidebar disparaît → **bouton hamburger** (carré arrondi, bordure fine) à gauche du header.
+- Header mobile : hamburger · fil d'ariane + titre · badge mode · avatar.
+- Cartes KPI empilées en 1 colonne, pleine largeur ; bouton « + Nouveau mouvement » conservé
+  en haut à droite du titre de page.
+- Grilles de cartes (machines, bouteilles) → 1 colonne.
+
 ## Divers
 - Rayon des cartes ≈ 14 px ; chips ≈ 999 px ; boutons ≈ 10 px.
 - Ombres douces (`0 1px 3px rgba(15,23,42,.06)` env.), pas d'ombres dures.

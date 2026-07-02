@@ -9,6 +9,24 @@
 - ⚠️ **Révocation à faire côté Apps Script** (les anciennes clés restent valides tant que
   `genererClesAPI()` n'a pas été exécutée puis le script redéployé) : procédure dans `SECURITE.md`.
 
+### ✅ Phase A — Socle v8 livré (dossier `v8/`, démo : `…/v8/`)
+- **Coquille** fidèle à la maquette : sidebar marine dégradée (logo, 9 sections, badge d'alertes,
+  bouton Sauvegarde + état), header (fil d'ariane, badge « DÉMO / FORMATION », avatar), routeur
+  par ancre, tiroir mobile < 900 px, IBM Plex Sans / Space Grotesk / IBM Plex Mono, icônes SVG
+  linéaires (zéro emoji).
+- **Couche données** : contrat `DataStore` unique (prêt pour Local/Cloud en Phases E/F),
+  `DemoStore` avec persistance localStorage + **export/restauration JSON fonctionnels** (modale
+  Sauvegarde), monde de démonstration fidèle à la maquette (6 machines, 5 bouteilles,
+  7 mouvements, 3 contrôles, 9 fluides GWP AR4, 4 alertes ; stats calculées : 16,0 kg en charge,
+  31,0 kg de stock, 29,2 t éq. CO₂).
+- **9 vues en lecture** : tableau de bord, parc machines, stock bouteilles, mouvements,
+  contrôles, statistiques, bilan annuel (**export CSV fonctionnel** + impression), fluides,
+  administration (lecture seule).
+- **Qualité** : 12 agents, relecture d'intégration, `node --check` 18/18, 61 vérifications
+  automatisées vertes (tests données + chargement des modules), vérification visuelle contre
+  la maquette (bureau + mobile).
+- Reste Phase B : wizard de mouvement, création/édition, verrouillage + contre-écritures.
+
 ### 📐 Fondations v8 (pas encore de code applicatif)
 - `docs/SPEC-V8.md` : spécification consolidée — 3 modes (Démo GitHub Pages / Local Lycée
   portable Node+SQLite / Cloud Supabase), modèle de données « registre opposable » issu de

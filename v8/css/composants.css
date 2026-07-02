@@ -1,0 +1,618 @@
+/* ============================================================
+   inerWeb Fluide — composants.css
+   Composants de la charte : boutons, cartes, chips, barres,
+   tableaux, modales, toasts, badges, états vides.
+   ============================================================ */
+
+/* ============================================================
+   Boutons
+   ============================================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border: 1px solid transparent;
+  border-radius: var(--rayon-bouton);
+  font-family: var(--police-corps);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: filter .15s ease, background .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.btn svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+
+.btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+/* Bouton principal : dégradé turquoise */
+.btn-primaire {
+  background: var(--degrade-bouton);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(18, 181, 201, .3);
+}
+
+.btn-primaire:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+/* Bouton secondaire : blanc bordé */
+.btn-secondaire {
+  background: var(--carte);
+  border-color: var(--bordure);
+  color: var(--texte-2);
+  box-shadow: var(--ombre-douce);
+}
+
+.btn-secondaire:hover:not(:disabled) {
+  background: var(--fond-2);
+}
+
+/* Bouton contour turquoise */
+.btn-contour {
+  background: transparent;
+  border-color: var(--accent);
+  color: var(--accent-fort);
+}
+
+.btn-contour:hover:not(:disabled) {
+  background: var(--accent-fond-2);
+}
+
+/* Bouton contour danger (suppression) */
+.btn-danger-contour {
+  background: transparent;
+  border-color: var(--danger-bordure);
+  color: var(--danger);
+}
+
+.btn-danger-contour:hover:not(:disabled) {
+  background: var(--danger-fond);
+}
+
+/* Bouton marine plein */
+.btn-marine {
+  background: var(--marine-900);
+  color: #ffffff;
+}
+
+.btn-marine:hover:not(:disabled) {
+  background: var(--marine-800);
+}
+
+/* Bouton pleine largeur */
+.btn-bloc {
+  width: 100%;
+}
+
+/* Petit bouton compact (actions de tableau) */
+.btn-petit {
+  padding: 6px 11px;
+  font-size: 12.5px;
+}
+
+/* ============================================================
+   Cartes
+   ============================================================ */
+
+.carte {
+  background: var(--carte);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-carte);
+  box-shadow: var(--ombre-douce);
+  padding: 18px 20px;
+}
+
+/* ---- Carte KPI ---- */
+
+.carte-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kpi-haut {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* Libellé en capitales espacées grises */
+.kpi-libelle {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--texte-3);
+  padding-top: 4px;
+}
+
+/* Pastille d'icône colorée en haut à droite */
+.kpi-pastille {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: var(--rayon-bouton);
+}
+
+.kpi-pastille svg {
+  width: 19px;
+  height: 19px;
+}
+
+.kpi-pastille-accent { background: var(--accent-fond);  color: var(--accent-fort); }
+.kpi-pastille-rose   { background: #ffe4e6;             color: var(--danger-2); }
+.kpi-pastille-vert   { background: var(--succes-fond);  color: var(--succes); }
+.kpi-pastille-violet { background: var(--violet-fond);  color: var(--violet); }
+
+/* Valeur énorme en Space Grotesk */
+.kpi-valeur {
+  font-family: var(--police-titres);
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--texte);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-sous-texte {
+  font-size: 12px;
+  color: var(--texte-3);
+}
+
+/* ============================================================
+   Chips (pilules d'état)
+   ============================================================ */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--rayon-chip);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.chip-vert   { background: var(--succes-fond);   color: var(--succes); }
+.chip-rouge  { background: var(--danger-fond);   color: var(--danger); }
+.chip-ambre  { background: var(--avert-fond);    color: var(--avert); }
+.chip-violet { background: var(--violet-fond);   color: var(--violet); }
+.chip-bleu   { background: var(--info-fond);     color: var(--info); }
+.chip-teal   { background: var(--accent-fond);   color: var(--accent-fort); }
+.chip-orange { background: var(--orange-fond);   color: var(--orange); }
+.chip-gris   { background: var(--fond-2);        color: var(--texte-3); }
+.chip-marine { background: var(--marine-900);    color: #ffffff; }
+
+/* Code fluide en mono (ex. R-404A) */
+.chip-mono {
+  font-family: var(--police-mono);
+  letter-spacing: .02em;
+}
+
+/* ============================================================
+   Barres de progression
+   ============================================================ */
+
+.barre {
+  height: 8px;
+  border-radius: var(--rayon-chip);
+  background: var(--fond-2);
+  overflow: hidden;
+}
+
+.barre-remplissage {
+  height: 100%;
+  border-radius: var(--rayon-chip);
+  transition: width .35s ease;
+}
+
+.barre-accent { background: var(--degrade-bouton); }
+.barre-vert   { background: var(--succes); }
+.barre-rouge  { background: var(--danger); }
+.barre-ambre  { background: var(--avert-icone); }
+
+/* ============================================================
+   Tableaux
+   ============================================================ */
+
+.tableau-defilement {
+  overflow-x: auto;
+  background: var(--carte);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-carte);
+  box-shadow: var(--ombre-douce);
+}
+
+.tableau {
+  width: 100%;
+  font-size: 13px;
+}
+
+/* En-têtes : capitales espacées grises */
+.tableau thead th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--texte-3);
+  border-bottom: 1px solid var(--bordure);
+  background: var(--fond-3);
+  white-space: nowrap;
+}
+
+/* Lignes blanches séparées par filets fins, survol léger */
+.tableau tbody td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--bordure-2);
+  color: var(--texte-2);
+  vertical-align: middle;
+}
+
+.tableau tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tableau tbody tr:hover {
+  background: var(--fond-3);
+}
+
+.tableau .align-droite  { text-align: right; }
+.tableau .align-centre  { text-align: center; }
+
+/* Quantités signées et codes en mono */
+.tableau .cellule-mono {
+  font-family: var(--police-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.quantite-positive { color: var(--succes); }
+.quantite-negative { color: var(--violet); }
+
+/* Échéance dépassée : rouge gras */
+.echeance-depassee {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+/* ============================================================
+   Badges
+   ============================================================ */
+
+/* Compteur rouge (alertes dans la sidebar) */
+.badge-rouge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 6px;
+  flex: none;
+  border-radius: var(--rayon-chip);
+  background: var(--danger);
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* ============================================================
+   Modales
+   ============================================================ */
+
+.modale-fond {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(14, 42, 71, .5);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+
+.modale-fond.visible {
+  opacity: 1;
+}
+
+.modale {
+  width: 100%;
+  max-width: 520px;
+  max-height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
+  background: var(--carte);
+  border-radius: var(--rayon-carte);
+  box-shadow: var(--ombre-haute);
+  transform: translateY(10px);
+  transition: transform .2s ease;
+  overflow: hidden;
+}
+
+.modale-fond.visible .modale {
+  transform: translateY(0);
+}
+
+.modale-entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--bordure);
+}
+
+.modale-titre {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.modale-fermer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: var(--rayon-bouton);
+  color: var(--texte-3);
+  transition: background .15s ease, color .15s ease;
+}
+
+.modale-fermer:hover {
+  background: var(--fond-2);
+  color: var(--texte);
+}
+
+.modale-fermer svg {
+  width: 18px;
+  height: 18px;
+}
+
+.modale-corps {
+  padding: 20px;
+  overflow-y: auto;
+  color: var(--texte-2);
+  font-size: 13.5px;
+}
+
+.modale-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--bordure);
+  background: var(--fond-3);
+}
+
+/* Feuille attachée en bas sur mobile (« bottom sheet ») */
+@media (max-width: 639px) {
+  .modale-fond {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modale {
+    max-width: none;
+    max-height: 88vh;
+    border-radius: var(--rayon-carte) var(--rayon-carte) 0 0;
+    transform: translateY(24px);
+  }
+}
+
+/* ---- Modale de sauvegarde ---- */
+
+.modale-intro {
+  margin-bottom: 16px;
+  color: var(--texte-2);
+}
+
+.options-sauvegarde {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 639px) {
+  .options-sauvegarde {
+    grid-template-columns: 1fr;
+  }
+}
+
+.option-sauvegarde {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-carte);
+  background: var(--fond-3);
+  text-align: left;
+  transition: border-color .15s ease, background .15s ease;
+}
+
+.option-sauvegarde:hover {
+  border-color: var(--accent);
+  background: var(--accent-fond-2);
+}
+
+.option-sauvegarde svg {
+  width: 22px;
+  height: 22px;
+  color: var(--accent-fort);
+}
+
+.option-titre {
+  font-weight: 600;
+  color: var(--texte);
+  font-size: 13.5px;
+}
+
+.option-detail {
+  font-size: 12px;
+  color: var(--texte-3);
+  line-height: 1.45;
+}
+
+/* ============================================================
+   Toasts (notifications éphémères, coin bas droit)
+   ============================================================ */
+
+#zone-toasts {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: min(360px, calc(100vw - 40px));
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--marine-900);
+  color: #e8f1f9;
+  border-radius: var(--rayon-bouton);
+  box-shadow: var(--ombre-haute);
+  font-size: 13px;
+  opacity: 0;
+  transform: translateX(16px);
+  transition: opacity .25s ease, transform .25s ease;
+  pointer-events: auto;
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.toast-icone {
+  display: flex;
+  flex: none;
+}
+
+.toast-icone svg {
+  width: 18px;
+  height: 18px;
+}
+
+.toast-succes .toast-icone { color: #4ade80; }
+.toast-erreur .toast-icone { color: #f87171; }
+.toast-info   .toast-icone { color: var(--accent-clair); }
+
+/* ============================================================
+   État vide
+   ============================================================ */
+
+.etat-vide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--texte-faible);
+}
+
+.etat-vide svg {
+  width: 34px;
+  height: 34px;
+  opacity: .6;
+}
+
+.etat-vide p {
+  font-size: 13px;
+  color: var(--texte-3);
+}
+
+/* ============================================================
+   En-tête de vue (helper enteteVue)
+   ============================================================ */
+
+.entete-vue {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.entete-vue-titre {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.entete-vue-sous-titre {
+  margin-top: 3px;
+  font-size: 13px;
+  color: var(--texte-3);
+}
+
+.entete-vue-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ============================================================
+   Panneau « Vue en construction »
+   ============================================================ */
+
+.vue-construction {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 24px;
+  text-align: center;
+  background: var(--carte);
+  border: 1px dashed var(--bordure-3);
+  border-radius: var(--rayon-carte);
+  color: var(--texte-3);
+}
+
+.vue-construction svg {
+  width: 38px;
+  height: 38px;
+  color: var(--texte-faible);
+}
+
+.vue-construction h2 {
+  font-size: 17px;
+  color: var(--texte-2);
+}
+
+.vue-construction p {
+  font-size: 13px;
+  max-width: 42ch;
+}

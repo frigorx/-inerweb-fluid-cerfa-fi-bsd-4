@@ -1,0 +1,407 @@
+/* ============================================================
+   inerWeb Fluide — coquille.css
+   Mise en page générale : sidebar fixe, en-tête collant, zone
+   principale, grilles utilitaires, variante mobile (< 900 px).
+   ============================================================ */
+
+/* ============================================================
+   Sidebar (barre latérale fixe, 240 px, dégradé marine)
+   ============================================================ */
+
+#sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  background: var(--degrade-sidebar);
+  color: #cfe0f0;
+  z-index: 60;
+}
+
+/* ---- Logo ---- */
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 18px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+}
+
+.logo-carre {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: var(--rayon-bouton);
+  background: var(--degrade-bouton);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(18, 181, 201, .35);
+}
+
+.logo-carre svg {
+  width: 22px;
+  height: 22px;
+}
+
+.logo-nom {
+  font-family: var(--police-titres);
+  font-weight: 700;
+  font-size: 17px;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.logo-nom .logo-fluide {
+  color: var(--accent-clair);
+}
+
+.logo-sous-titre {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: #7d9cbd;
+  margin-top: 2px;
+}
+
+/* ---- Navigation ---- */
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 12px;
+  border-radius: var(--rayon-bouton);
+  color: #b7cade;
+  font-size: 13.5px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background .15s ease, color .15s ease;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, .06);
+  color: #e8f1f9;
+  text-decoration: none;
+}
+
+/* Item actif : fond turquoise translucide + texte turquoise clair */
+.nav-item.actif {
+  background: rgba(18, 181, 201, .18);
+  color: #7fe4f0;
+}
+
+.nav-icone {
+  display: flex;
+  flex: none;
+}
+
+.nav-icone svg {
+  width: 19px;
+  height: 19px;
+}
+
+.nav-libelle {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- Pied de sidebar : sauvegarde ---- */
+
+.sidebar-pied {
+  padding: 14px 16px 16px;
+  border-top: 1px solid rgba(255, 255, 255, .08);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.btn-sauvegarde {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid rgba(255, 255, 255, .25);
+  border-radius: var(--rayon-bouton);
+  color: #e8f1f9;
+  font-size: 13px;
+  font-weight: 500;
+  background: transparent;
+  transition: background .15s ease, border-color .15s ease;
+}
+
+.btn-sauvegarde:hover {
+  background: rgba(255, 255, 255, .08);
+  border-color: rgba(255, 255, 255, .4);
+}
+
+.btn-sauvegarde svg {
+  width: 17px;
+  height: 17px;
+}
+
+.etat-sauvegarde {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: #8fb0cd;
+}
+
+/* Pastille verte pulsante */
+.pastille-verte {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: var(--rayon-chip);
+  background: #22c55e;
+  animation: ifPulse 2.4s ease-out infinite;
+}
+
+/* ============================================================
+   Zone principale
+   ============================================================ */
+
+.zone-principale {
+  margin-left: 240px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- En-tête collant ---- */
+
+#entete {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 28px;
+  background: var(--carte);
+  border-bottom: 1px solid var(--bordure);
+}
+
+/* Bouton hamburger : masqué sur grand écran */
+.bouton-menu {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-bouton);
+  background: var(--carte);
+  color: var(--texte-2);
+}
+
+.bouton-menu:hover {
+  background: var(--fond-2);
+}
+
+.bouton-menu svg {
+  width: 20px;
+  height: 20px;
+}
+
+.entete-titres {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Fil d'ariane discret au-dessus du titre */
+.fil-ariane {
+  font-size: 11px;
+  color: var(--texte-faible);
+  letter-spacing: .02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#titre-page {
+  font-size: 19px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.entete-droite {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+}
+
+/* Badge de mode « ● DÉMO / FORMATION » (pilule ambre) */
+.badge-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-radius: var(--rayon-chip);
+  background: var(--avert-fond);
+  color: var(--avert);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+
+.badge-mode::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: var(--rayon-chip);
+  background: var(--avert-icone);
+}
+
+/* Avatar rond marine (initiales) */
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: var(--rayon-chip);
+  background: var(--marine-900);
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: .04em;
+}
+
+/* ---- Contenu des vues ---- */
+
+#vue {
+  flex: 1;
+  padding: 26px 28px 40px;
+  outline: none;
+}
+
+.vue-contenu {
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+/* ============================================================
+   Grilles utilitaires
+   ============================================================ */
+
+.grille-2,
+.grille-3,
+.grille-4 {
+  display: grid;
+  gap: 16px;
+}
+
+.grille-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grille-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grille-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+@media (max-width: 1180px) {
+  .grille-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grille-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ============================================================
+   Voile du tiroir mobile
+   ============================================================ */
+
+#voile-sidebar {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: rgba(14, 42, 71, .45);
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+
+#voile-sidebar.visible {
+  opacity: 1;
+}
+
+/* ============================================================
+   Variante mobile (< 900 px) : sidebar en tiroir coulissant
+   ============================================================ */
+
+@media (max-width: 899px) {
+  #sidebar {
+    transform: translateX(-100%);
+    transition: transform .22s ease;
+    box-shadow: none;
+  }
+
+  body.menu-ouvert #sidebar {
+    transform: translateX(0);
+    box-shadow: var(--ombre-haute);
+  }
+
+  .zone-principale {
+    margin-left: 0;
+  }
+
+  .bouton-menu {
+    display: flex;
+  }
+
+  #entete {
+    padding: 10px 16px;
+  }
+
+  #vue {
+    padding: 18px 16px 32px;
+  }
+
+  .grille-2,
+  .grille-3,
+  .grille-4 {
+    grid-template-columns: 1fr;
+  }
+
+  /* Le voile n'existe que quand le tiroir est ouvert (attribut hidden géré en JS) */
+}
+
+/* ============================================================
+   Impression
+   ============================================================ */
+
+@media print {
+  #sidebar,
+  #entete,
+  #voile-sidebar,
+  #zone-toasts,
+  .no-print {
+    display: none !important;
+  }
+
+  .zone-principale {
+    margin-left: 0;
+  }
+
+  body {
+    background: #ffffff;
+  }
+}
