@@ -1,0 +1,33 @@
+# ============================================================
+# inerWeb Fluide v8 — fichiers à ne JAMAIS committer
+# (cf. docs/SPEC-V8.md §8 Sécurité)
+# ============================================================
+
+# --- Secrets et configuration locale ---
+# Tous les fichiers .env (variables d'environnement, clés)
+# SAUF le modèle .env.example, qui ne contient aucune valeur réelle.
+.env
+.env.*
+!.env.example
+
+# --- Données réelles (mode Local Lycée) ---
+# Base SQLite, pièces justificatives et sauvegardes vivent
+# À CÔTÉ de l'application, jamais dans le dépôt public.
+data/
+documents/
+backups/
+
+# --- Dépendances ---
+node_modules/
+
+# --- Fichiers temporaires et système ---
+*.log
+*.tmp
+*.bak
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# --- Exports locaux (dossiers d'audit, registres générés) ---
+exports/
+*.zip

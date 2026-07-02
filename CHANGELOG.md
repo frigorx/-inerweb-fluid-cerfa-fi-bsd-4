@@ -1,5 +1,29 @@
 # Changelog inerWeb Fluide
 
+## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
+
+### 🔒 SÉCURITÉ (correctif immédiat)
+- **Clés API retirées du code** (`Code_API_v7.1.0.gs` + `apps-script/Code.gs`) : les 3 clés
+  READ/WRITE/ADMIN étaient en clair dans le dépôt public. Lecture désormais exclusive depuis
+  les Script Properties (`getApiKey_()`), fonction `setClesAPI_temp()` supprimée.
+- ⚠️ **Révocation à faire côté Apps Script** (les anciennes clés restent valides tant que
+  `genererClesAPI()` n'a pas été exécutée puis le script redéployé) : procédure dans `SECURITE.md`.
+
+### 📐 Fondations v8 (pas encore de code applicatif)
+- `docs/SPEC-V8.md` : spécification consolidée — 3 modes (Démo GitHub Pages / Local Lycée
+  portable Node+SQLite / Cloud Supabase), modèle de données « registre opposable » issu de
+  l'audit métier du 02/07 (dossier opérateur, registre personnel, outillage réglementaire,
+  bouteilles et mouvements enrichis, contre-écritures + hash chaîné, balance matière annuelle,
+  chaîne BSFF, pièces jointes, dossier audit annuel en un clic), correspondance unique
+  types ↔ cases CERFA, alertes bloquantes, phasage A→F.
+- `design/DESIGN-TOKENS.md` : charte extraite de la maquette Claude Design validée
+  (IBM Plex Sans / Space Grotesk / IBM Plex Mono, marine #0e2a47, turquoise #12b5c9,
+  12 vues de référence).
+- Documentation de diffusion : `README.md`, `LICENSE` (MIT), `INSTALLATION_SIMPLE.md`,
+  `INSTALLATION_CLOUD.md`, `SAUVEGARDE.md`, `SECURITE.md`, `RGPD.md`.
+- Socle technique : `server/schema.sql` (modèle v8 complet), `server/db.js` (node:sqlite),
+  `server/serveur.js` (squelette), `lancer-inerweb.bat`, `.env.example`, `.gitignore`.
+
 ## [7.10.0] - 2026-05-18 (nuit) — P2 livré
 
 ### 🔗 Clients ↔ Machines bidirectionnel
