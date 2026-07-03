@@ -1,12 +1,14 @@
 // ============================================================
-// inerWeb Fluide — vue « Contrôles d'étanchéité » (Phase A, lecture seule)
+// inerWeb Fluide — vue « Contrôles d'étanchéité »
 // Tableau des contrôles : date, machine, méthode, résultat,
 // opérateur, prochaine échéance (rouge gras si en retard).
-// Les actions (nouveau contrôle, CERFA) arrivent en Phases B et D.
+// Phase B : création d'un contrôle via modale dédiée.
+// Le CERFA arrive en Phase D.
 // ============================================================
 
 import { enteteVue, tableau, chipStatut, toast, ICONES } from './communs.js';
 import { esc, fmtDate } from '../core/utils.js';
+import { ouvrirFormControle } from '../modales/controle-form.js';
 
 export const titre = 'Contrôles d’étanchéité';
 
@@ -90,11 +92,11 @@ export async function render(conteneur, ctx) {
     lignesHtml: tries.map(ligneControle)
   });
 
-  // Bouton « + Nouveau contrôle » : saisie prévue en Phase B
+  // Bouton « + Nouveau contrôle » : ouvre la modale de création
   const boutonNouveau = conteneur.querySelector('[data-action="nouveau-controle"]');
   if (boutonNouveau) {
     boutonNouveau.addEventListener('click', function () {
-      toast('La saisie d’un nouveau contrôle arrivera en Phase B.', 'info');
+      ouvrirFormControle(ctx);
     });
   }
 

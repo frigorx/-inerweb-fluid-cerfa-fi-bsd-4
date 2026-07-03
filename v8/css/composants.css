@@ -616,3 +616,268 @@
   font-size: 13px;
   max-width: 42ch;
 }
+
+/* ============================================================
+   Formulaires génériques (Phase B)
+   ============================================================ */
+
+.formulaire {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.champ {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.champ > label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--texte-3);
+}
+
+.champ input,
+.champ select,
+.champ textarea {
+  font: inherit;
+  font-size: 14px;
+  color: var(--texte);
+  background: var(--carte);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-bouton);
+  padding: 9px 12px;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.champ input::placeholder,
+.champ textarea::placeholder {
+  color: var(--texte-faible);
+}
+
+.champ input:focus,
+.champ select:focus,
+.champ textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-halo);
+}
+
+.champ.invalide input,
+.champ.invalide select,
+.champ.invalide textarea {
+  border-color: var(--danger);
+}
+
+.champ-erreur {
+  font-size: 12px;
+  color: var(--danger);
+}
+
+.grille-form-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+}
+
+@media (max-width: 640px) {
+  .grille-form-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Champ avec suffixe d'unité (« kg ») affiché DANS le champ */
+.champ-unite {
+  position: relative;
+}
+
+.champ-unite input {
+  width: 100%;
+  padding-right: 44px;
+}
+
+.champ-unite::after {
+  content: attr(data-unite);
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  font-size: 13px;
+  color: var(--texte-faible);
+  pointer-events: none;
+}
+
+/* ============================================================
+   Wizard (assistant pas à pas, ex. « Nouveau mouvement »)
+   ============================================================ */
+
+.wizard-etapes {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 2px 14px;
+  border-bottom: 1px solid var(--bordure-2);
+}
+
+.wizard-etape {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+.wizard-pastille {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--rayon-chip);
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--fond-2);
+  border: 1px solid var(--bordure);
+  color: var(--texte-3);
+  transition: background .15s, color .15s, border-color .15s;
+}
+
+.wizard-etape-libelle {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: var(--texte-faible);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Étape ACTIVE : pastille turquoise pleine */
+.wizard-etape.active .wizard-pastille {
+  background: var(--degrade-bouton);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 0 0 3px var(--accent-halo);
+}
+
+.wizard-etape.active .wizard-etape-libelle {
+  color: var(--accent-fort);
+}
+
+/* Étape FAITE : pastille marine avec coche (le numéro est masqué) */
+.wizard-etape.faite .wizard-pastille {
+  background: var(--marine-900);
+  border-color: var(--marine-900);
+  color: transparent;
+  position: relative;
+}
+
+.wizard-etape.faite .wizard-pastille::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 8px;
+  width: 8px;
+  height: 12px;
+  border-right: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  transform: rotate(45deg);
+}
+
+.wizard-etape.faite .wizard-etape-libelle {
+  color: var(--texte-2);
+}
+
+.wizard-corps {
+  padding: 18px 2px;
+  min-height: 220px;
+}
+
+.wizard-pied {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--bordure-2);
+}
+
+/* Le bouton « Continuer » se pousse à droite ; « Annuler » reste au centre */
+.wizard-pied .pousser-droite,
+.wizard-pied > :last-child {
+  margin-left: auto;
+}
+
+/* ============================================================
+   Carte de choix (grande carte cliquable du wizard)
+   ============================================================ */
+
+.carte-choix {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: var(--carte);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-carte);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: var(--texte);
+  transition: border-color .15s, box-shadow .15s, transform .15s;
+}
+
+.carte-choix:hover {
+  border-color: var(--accent);
+}
+
+.carte-choix:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-halo);
+}
+
+.carte-choix.selectionnee {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-halo);
+  background: var(--accent-fond-2);
+}
+
+/* ============================================================
+   Bandeaux d'avertissement et d'erreur
+   ============================================================ */
+
+.bandeau-avertissement,
+.bandeau-erreur {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: var(--rayon-bouton);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.bandeau-avertissement {
+  background: var(--avert-fond);
+  color: var(--avert);
+}
+
+.bandeau-erreur {
+  background: var(--danger-fond);
+  color: var(--danger);
+}
+
+.bandeau-avertissement svg,
+.bandeau-erreur svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}

@@ -9,6 +9,35 @@
 - ⚠️ **Révocation à faire côté Apps Script** (les anciennes clés restent valides tant que
   `genererClesAPI()` n'a pas été exécutée puis le script redéployé) : procédure dans `SECURITE.md`.
 
+### 🔧 CERFA v7 — correctif de conformité (03/07)
+- **Bug corrigé** : le wizard envoyait `CHARGE/MISE_EN_SERVICE/RECUPERATION/TRANSFERT`, le
+  générateur testait `Charge/MiseEnService/Recuperation` → **aucune case du cadre 4 cochée**
+  et quantités du cadre 11 mal ventilées sur les CERFA du wizard. Table de correspondance
+  unique `CERFA_TYPE_NORMALISE`/`CERFA_TYPE_VERS_CASE` (PDF officiel + aperçu HTML).
+- Correction métier : récupération simple = « Maintenance » (plus « Démantèlement »).
+- **`docs/SPEC-CERFA.md`** : inventaire des **72 champs officiels** (extraits du PDF, MD5
+  identique à service-public.gouv.fr), table types↔cases, seuils/fréquences cadre 7, ventilation
+  QA→QE cadre 11, cadre 12 transport (UN 1078 / UN 3161, non géré v7 → Phase D), critères
+  d'acceptation. Décision Phase D : l'aperçu à l'écran = le PDF officiel rempli (PDF.js).
+
+### ✅ Phase B — Registre vivant (03/07)
+- **Store** : mutations complètes (machines, bouteilles + pesée, contrôles, mouvements) ;
+  cycle brouillon → soumis → validé ; **écritures validées figées** (correction uniquement par
+  **contre-écriture** liée) ; **hash SHA-256 chaîné** + `verifierChaineHash()` ; journal d'audit
+  append-only ; numérotation FORM-/FI- séparée ; règles métier (anti-croisement de fluides,
+  bornes de charge/masse, un élève ne valide jamais) ; outillage (détecteurs/balance).
+- **Wizard « Nouveau mouvement » 6 étapes** (Type/Technicien · Machine · Bouteille · Pesées ·
+  Contrôle/Détecteur · Signature) : filtrage par compatibilité fluide, quantité calculée en
+  direct, alerte détecteur expiré, signature manuscrite (canvas tactile), récapitulatif.
+- **Formulaires** : création/édition machine, bouteille (+ pesée dédiée), contrôle d'étanchéité
+  (fuite → localisation + réparation immédiate).
+- **Qualité** : répartition Fable (cœur métier, wizard, intégration) / Sonnet (formulaires,
+  signature) ; 6 corrections d'intégration (dont 1 bug bloquant de rafraîchissement) ;
+  **74 vérifications automatisées vertes** (27 + 36 + chargement + scénario de bout en bout) ;
+  parcours complet vérifié dans le navigateur (FORM-2026-0001 : M1 4,20→4,50 kg,
+  B-03 3,6→3,3 kg, chaîne de hash intacte, audit tracé).
+- Reste Phase C : conformité (personnel, outillage complet, pièces jointes, balance matière).
+
 ### ✅ Phase A — Socle v8 livré (dossier `v8/`, démo : `…/v8/`)
 - **Coquille** fidèle à la maquette : sidebar marine dégradée (logo, 9 sections, badge d'alertes,
   bouton Sauvegarde + état), header (fil d'ariane, badge « DÉMO / FORMATION », avatar), routeur

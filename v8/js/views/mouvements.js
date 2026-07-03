@@ -7,6 +7,7 @@
 
 import { enteteVue, chipStatut, chipType, tableau, toast, ICONES } from './communs.js';
 import { fmtDate, fmtKgSigne, esc } from '../core/utils.js';
+import { ouvrirWizard } from '../wizard/wizard.js';
 
 export const titre = 'Mouvements de fluide';
 
@@ -108,11 +109,14 @@ export async function render(conteneur, ctx) {
 
   // ---- Écouteurs ----
 
-  // Bouton « + Nouveau mouvement » : assistant à venir en Phase B
+  // Bouton « + Nouveau mouvement » : assistant en 6 étapes (Phase B).
+  // Après une fin de parcours réussie, le wizard appelle
+  // ctx.naviguer('mouvements'), ce qui force un NOUVEAU rendu de la vue
+  // (le routeur re-rend même si la vue demandée est déjà affichée).
   const boutonNouveau = conteneur.querySelector('[data-action="nouveau-mouvement"]');
   if (boutonNouveau) {
     boutonNouveau.addEventListener('click', function () {
-      toast('Assistant « Nouveau mouvement » : Phase B', 'info');
+      ouvrirWizard(ctx);
     });
   }
 

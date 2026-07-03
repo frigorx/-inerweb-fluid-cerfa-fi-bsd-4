@@ -7,6 +7,7 @@
 
 import { enteteVue, chipStatut, barreProgression, toast, ICONES } from './communs.js';
 import { esc, fmtNombre } from '../core/utils.js';
+import { ouvrirFormBouteille, ouvrirPesee } from '../modales/bouteille-form.js';
 
 export const titre = 'Stock bouteilles';
 
@@ -114,6 +115,8 @@ function carteBouteille(b) {
     + '<div class="bouteille-pied">'
     + '<button type="button" class="btn btn-secondaire btn-petit" data-action="modifier" data-id="' + esc(b.id) + '"'
     + ' aria-label="Modifier la bouteille ' + esc(b.code) + '">Modifier</button>'
+    + '<button type="button" class="btn btn-contour btn-petit" data-action="peser" data-id="' + esc(b.id) + '"'
+    + ' aria-label="Peser la bouteille ' + esc(b.code) + '">Peser</button>'
     + '<button type="button" class="btn btn-danger-contour btn-petit" data-action="supprimer" data-id="' + esc(b.id) + '"'
     + ' aria-label="Supprimer la bouteille ' + esc(b.code) + '">Suppr.</button>'
     + '</div>'
@@ -149,12 +152,22 @@ export async function render(conteneur, ctx) {
     const bouton = evenement.target.closest('[data-action]');
     if (!bouton || !conteneur.contains(bouton)) return;
 
-    const messages = {
-      ajouter:   'L’ajout de bouteille arrive en Phase B.',
-      modifier:  'La modification de bouteille arrive en Phase B.',
-      supprimer: 'La suppression de bouteille arrive en Phase B.'
-    };
-    const message = messages[bouton.dataset.action];
-    if (message) toast(message, 'info');
+    const action = bouton.dataset.action;
+    const id = bouton.dataset.id;
+    // Rafraîchissement après fermeture d'une modale : redemande la même vue
+    // au routeur, qui reconstruit un conteneur neuf (pas d'écouteurs dupliqués).
+    const ctxAvecRafraichissement = Object.assign({}, ctx, {
+      rafraichir: function () { ctx.naviguer('bouteilles'); }
+    });
+
+    if (action === 'ajouter') {
+      ouvrirFormBouteille(ctxAvecRafraichissement);
+    } else if (action === 'modifier') {
+      ouvrirFormBouteille(ctxAvecRafraichissement, id);
+    } else if (action === 'peser') {
+      ouvrirPesee(ctxAvecRafraichissement, id);
+    } else if (action === 'supprimer') {
+      toast('Suppression encadrée : Phase C — une bouteille se retourne ou se déclare déchet, elle ne s’efface pas.', 'info');
+    }
   });
 }

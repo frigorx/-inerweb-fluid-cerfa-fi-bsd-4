@@ -4,6 +4,44 @@
  * 72 champs officiels : texte + cases à cocher
  */
 
+// ================================================================
+// TABLE DE CORRESPONDANCE UNIQUE (correctif 03/07/2026)
+// Le wizard envoie CHARGE / MISE_EN_SERVICE / RECUPERATION / TRANSFERT,
+// les anciens appels envoyaient Charge / MiseEnService / Recuperation…
+// Ce module ne testait QUE la 2e forme → cases du cadre 4 jamais
+// cochées et quantités du cadre 11 mal remplies pour les CERFA du
+// wizard. On normalise ici, une seule fois, pour tout le module
+// (PDF officiel ET aperçu HTML).
+// Note métier : récupération simple = « Maintenance de l'équipement » ;
+// seule une vidange/démantèlement coche « Démantèlement ».
+// ================================================================
+const CERFA_TYPE_NORMALISE = {
+  CHARGE: 'CHARGE_APPOINT', Charge: 'CHARGE_APPOINT', Appoint: 'CHARGE_APPOINT', CHARGE_APPOINT: 'CHARGE_APPOINT',
+  MISE_EN_SERVICE: 'MISE_EN_SERVICE', MiseEnService: 'MISE_EN_SERVICE',
+  RECUPERATION: 'RECUPERATION_MAINTENANCE', Recuperation: 'RECUPERATION_MAINTENANCE', RECUPERATION_MAINTENANCE: 'RECUPERATION_MAINTENANCE',
+  VIDANGE: 'RECUPERATION_DEMANTELEMENT', Vidange: 'RECUPERATION_DEMANTELEMENT', Demantelement: 'RECUPERATION_DEMANTELEMENT',
+  RECUPERATION_DEMANTELEMENT: 'RECUPERATION_DEMANTELEMENT', DEMANTELEMENT: 'RECUPERATION_DEMANTELEMENT',
+  TRANSFERT: 'TRANSFERT', Transfert: 'TRANSFERT',
+  ASSEMBLAGE: 'ASSEMBLAGE', Assemblage: 'ASSEMBLAGE',
+  MODIFICATION: 'MODIFICATION', Modification: 'MODIFICATION',
+  CONTROLE_PERIODIQUE: 'CONTROLE_PERIODIQUE', ControlePerio: 'CONTROLE_PERIODIQUE', ControlePeriodique: 'CONTROLE_PERIODIQUE',
+  CONTROLE_NON_PERIODIQUE: 'CONTROLE_NON_PERIODIQUE', ControleNonPerio: 'CONTROLE_NON_PERIODIQUE', ControleNonPeriodique: 'CONTROLE_NON_PERIODIQUE',
+  AUTRE: 'AUTRE', Autre: 'AUTRE'
+};
+
+const CERFA_TYPE_VERS_CASE = {
+  CHARGE_APPOINT: 'Case_Maintenance',
+  MISE_EN_SERVICE: 'Case_MiseService',
+  RECUPERATION_MAINTENANCE: 'Case_Maintenance',
+  RECUPERATION_DEMANTELEMENT: 'Case_Demantel',
+  TRANSFERT: 'Case_Maintenance',
+  ASSEMBLAGE: 'Case_Assemblage',
+  MODIFICATION: 'Case_Modif',
+  CONTROLE_PERIODIQUE: 'Case_CtrlPerio',
+  CONTROLE_NON_PERIODIQUE: 'Case_CtrlNonPerio',
+  AUTRE: 'Case_Autre'
+};
+
 const CERFA = {
 
   /** Cache du PDF template (chargé une seule fois) */
@@ -66,22 +104,15 @@ const CERFA = {
       frequenceCase = detPerm ? 'Case_Avec_24m' : 'Case_Sans_12m';
     }
 
-    // Type intervention → case à cocher
-    const type = data.type || '';
+    // Type d'intervention → case du cadre 4, via la table unique du module
+    const type = CERFA_TYPE_NORMALISE[String(data.type || '')] || '';
     const natureCases = {};
-    if (['Charge', 'Appoint'].includes(type)) natureCases.Case_Maintenance = true;
-    if (type === 'MiseEnService') natureCases.Case_MiseService = true;
-    if (type === 'Recuperation' || type === 'Vidange') natureCases.Case_Demantel = true;
-    if (type === 'Transfert') natureCases.Case_Maintenance = true;
-    if (type === 'Assemblage') natureCases.Case_Assemblage = true;
-    if (type === 'Modification') natureCases.Case_Modif = true;
-    if (type === 'ControlePerio') natureCases.Case_CtrlPerio = true;
-    if (type === 'ControleNonPerio') natureCases.Case_CtrlNonPerio = true;
+    if (CERFA_TYPE_VERS_CASE[type]) natureCases[CERFA_TYPE_VERS_CASE[type]] = true;
 
     // Quantités
     const qty = parseFloat(data.quantite || data.masse || 0);
-    const isCharge = ['Charge', 'Appoint', 'MiseEnService'].includes(type);
-    const isRecup = ['Recuperation', 'Vidange'].includes(type);
+    const isCharge = ['CHARGE_APPOINT', 'MISE_EN_SERVICE'].includes(type);
+    const isRecup = ['RECUPERATION_MAINTENANCE', 'RECUPERATION_DEMANTELEMENT'].includes(type);
 
     // Détecteur
     const detecteur = data.detecteur
@@ -442,9 +473,9 @@ const CERFA = {
     else if (seuil.endsWith('-bas')) frequence = detPerm ? 24 : 12;
 
     const qty = parseFloat(data.quantite || data.masse || 0);
-    const type = data.type || '';
-    const isCharge = ['Charge', 'Appoint', 'MiseEnService'].includes(type);
-    const isRecup = ['Recuperation', 'Vidange'].includes(type);
+    const type = CERFA_TYPE_NORMALISE[String(data.type || '')] || '';
+    const isCharge = ['CHARGE_APPOINT', 'MISE_EN_SERVICE'].includes(type);
+    const isRecup = ['RECUPERATION_MAINTENANCE', 'RECUPERATION_DEMANTELEMENT'].includes(type);
 
     const detecteur = data.detecteur
       ? State.detecteurs.find(d => d.code === data.detecteur || d.id === data.detecteur)
@@ -545,16 +576,16 @@ const CERFA = {
       + '</div></div>'
       + '<div class="cadre"><div class="cadre-num">4</div><div class="cadre-title">NATURE DE L\'INTERVENTION : cocher une ou plusieurs cases</div><div class="cadre-content checkbox-grid">'
         + '<div class="cb-col">'
-          + '<label class="cb">' + this._checkboxHTML(d.nature === 'Assemblage') + ' Assemblage de l\'équipement</label>'
-          + '<label class="cb">' + this._checkboxHTML(d.nature === 'MiseEnService') + ' Mise en service de l\'équipement</label>'
-          + '<label class="cb">' + this._checkboxHTML(d.nature === 'Modification') + ' Modification de l\'équipement</label>'
-          + '<label class="cb">' + this._checkboxHTML(['Maintenance','Appoint','Charge'].includes(d.nature)) + ' Maintenance de l\'équipement</label>'
+          + '<label class="cb">' + this._checkboxHTML(d.nature === 'ASSEMBLAGE') + ' Assemblage de l\'équipement</label>'
+          + '<label class="cb">' + this._checkboxHTML(d.nature === 'MISE_EN_SERVICE') + ' Mise en service de l\'équipement</label>'
+          + '<label class="cb">' + this._checkboxHTML(d.nature === 'MODIFICATION') + ' Modification de l\'équipement</label>'
+          + '<label class="cb">' + this._checkboxHTML(['CHARGE_APPOINT','RECUPERATION_MAINTENANCE','TRANSFERT'].includes(d.nature)) + ' Maintenance de l\'équipement</label>'
         + '</div>'
         + '<div class="cb-col">'
-          + '<label class="cb">' + this._checkboxHTML(d.nature === 'ControlePerio' || d.nature === 'ControlePeriodique') + ' Contrôle d\'étanchéité périodique</label>'
-          + '<label class="cb">' + this._checkboxHTML(d.nature === 'ControleNonPerio' || d.nature === 'ControleNonPeriodique') + ' Contrôle d\'étanchéité non périodique</label>'
-          + '<label class="cb">' + this._checkboxHTML(['Demantelement','Vidange','Recuperation'].includes(d.nature)) + ' Démantèlement</label>'
-          + '<label class="cb">' + this._checkboxHTML(d.nature === 'Autre') + ' Autre (préciser) : <span class="val-inline">' + (d.natureAutre || '') + '</span></label>'
+          + '<label class="cb">' + this._checkboxHTML(d.nature === 'CONTROLE_PERIODIQUE') + ' Contrôle d\'étanchéité périodique</label>'
+          + '<label class="cb">' + this._checkboxHTML(d.nature === 'CONTROLE_NON_PERIODIQUE') + ' Contrôle d\'étanchéité non périodique</label>'
+          + '<label class="cb">' + this._checkboxHTML(d.nature === 'RECUPERATION_DEMANTELEMENT') + ' Démantèlement</label>'
+          + '<label class="cb">' + this._checkboxHTML(d.nature === 'AUTRE') + ' Autre (préciser) : <span class="val-inline">' + (d.natureAutre || '') + '</span></label>'
         + '</div>'
       + '</div></div>'
       + '<div class="cadre cadre-inline"><div class="cadre-num">5</div><div class="cadre-title-inline">Détecteur manuel de fuite :</div>'

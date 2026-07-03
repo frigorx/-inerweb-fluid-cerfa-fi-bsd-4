@@ -6,6 +6,7 @@
 
 import { enteteVue, carteKpi, toast, ICONES } from './communs.js';
 import { esc, fmtNombre, fmtKgSigne, fmtDate } from '../core/utils.js';
+import { ouvrirWizard } from '../wizard/wizard.js';
 
 export const titre = 'Tableau de bord';
 
@@ -269,10 +270,10 @@ export async function render(conteneur, ctx) {
 
   // ---- Écouteurs ----
 
-  // Bouton « + Nouveau mouvement » : assistant prévu en Phase B
+  // Bouton « + Nouveau mouvement » : assistant en 6 étapes (Phase B)
   conteneur.querySelector('#btn-nouveau-mouvement')
     .addEventListener('click', function () {
-      toast('Assistant de mouvement : Phase B', 'info');
+      ouvrirWizard(ctx);
     });
 
   // Lien « Voir tout » : bascule vers la vue Mouvements

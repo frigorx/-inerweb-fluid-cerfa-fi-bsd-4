@@ -4,8 +4,9 @@
 // fidèle à la maquette validée (composant n° 4 de la charte).
 // ============================================================
 
-import { enteteVue, chipStatut, barreProgression, toast, ICONES } from './communs.js';
+import { enteteVue, chipStatut, barreProgression, ICONES } from './communs.js';
 import { esc, fmtNombre, fmtKg, fmtTeq, teqCO2 } from '../core/utils.js';
+import { ouvrirFormMachine } from '../modales/machine-form.js';
 
 export const titre = 'Parc machines';
 
@@ -93,6 +94,12 @@ const STYLES_VUE = `
   .machine-detenteur {
     text-align: right;
   }
+
+  /* Pied d'actions : bouton Modifier aligné à droite */
+  .machine-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
 </style>`;
 
 /* ============================================================
@@ -163,6 +170,12 @@ function carteMachine(machine, fluideParCode, clientParId) {
     + '<span class="machine-detenteur">' + esc(detenteur) + '</span>'
     + '</div>'
 
+    // Action discrète : modification de la fiche machine
+    + '<div class="machine-actions">'
+    + '<button type="button" class="btn btn-contour btn-petit" data-action="modifier-machine" '
+    + 'data-id="' + esc(machine.id) + '" aria-label="Modifier ' + esc(machine.designation) + '">Modifier</button>'
+    + '</div>'
+
     + '</article>';
 }
 
@@ -208,8 +221,17 @@ export async function render(conteneur, ctx) {
       })
     + cartes;
 
-  // Phase A : la création de machine arrive en Phase B
-  conteneur.querySelector('#bouton-ajouter-machine').addEventListener('click', function () {
-    toast('Création de machine : Phase B');
+  // Ajout d'une nouvelle machine : ré-affiche la vue si l'enregistrement a réussi
+  conteneur.querySelector('#bouton-ajouter-machine').addEventListener('click', async function () {
+    const enregistre = await ouvrirFormMachine(ctx);
+    if (enregistre) render(conteneur, ctx);
+  });
+
+  // Modification d'une machine existante, une écoute par carte
+  conteneur.querySelectorAll('[data-action="modifier-machine"]').forEach(function (bouton) {
+    bouton.addEventListener('click', async function () {
+      const enregistre = await ouvrirFormMachine(ctx, bouton.dataset.id);
+      if (enregistre) render(conteneur, ctx);
+    });
   });
 }

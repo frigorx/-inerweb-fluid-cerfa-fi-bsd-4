@@ -47,7 +47,43 @@ for (const nom of ['routeur', 'icones', 'utils']) {
   }
 }
 
-// ---- 3. Chaque vue se charge et respecte le contrat ----
+// ---- 3. Les modules Phase B (wizard, modales) se chargent sans DOM ----
+try {
+  const wizard = await import('./js/wizard/wizard.js');
+  verifier(typeof wizard.ouvrirWizard === 'function',
+    'wizard/wizard.js se charge sans DOM et exporte ouvrirWizard');
+} catch (erreur) {
+  echecs += 1;
+  console.error('ÉCHEC wizard/wizard.js : ' + erreur.message);
+}
+
+try {
+  const signature = await import('./js/wizard/signature.js');
+  verifier(typeof signature.creerSignature === 'function',
+    'wizard/signature.js se charge sans DOM et exporte creerSignature');
+} catch (erreur) {
+  echecs += 1;
+  console.error('ÉCHEC wizard/signature.js : ' + erreur.message);
+}
+
+const MODALES = [
+  { fichier: 'machine-form', exports: ['ouvrirFormMachine'] },
+  { fichier: 'bouteille-form', exports: ['ouvrirFormBouteille', 'ouvrirPesee'] },
+  { fichier: 'controle-form', exports: ['ouvrirFormControle'] }
+];
+for (const { fichier, exports } of MODALES) {
+  try {
+    const module = await import('./js/modales/' + fichier + '.js');
+    verifier(exports.every((nom) => typeof module[nom] === 'function'),
+      'modales/' + fichier + '.js se charge sans DOM et exporte '
+      + exports.join(' + '));
+  } catch (erreur) {
+    echecs += 1;
+    console.error('ÉCHEC modales/' + fichier + '.js : ' + erreur.message);
+  }
+}
+
+// ---- 4. Chaque vue se charge et respecte le contrat ----
 for (const id of VUES) {
   try {
     const module = await import('./js/views/' + id + '.js');

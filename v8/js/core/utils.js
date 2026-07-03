@@ -100,3 +100,53 @@ export function genId(prefixe) {
   const horodatage = Date.now().toString(36).slice(-4);
   return `${prefixe}-${horodatage}${aleatoire}`;
 }
+
+// ------------------------------------------------------------
+// Chaîne d'intégrité des écritures (Phase B — registre vivant)
+// ------------------------------------------------------------
+
+/**
+ * Champs MÉTIER d'un mouvement pris en compte dans le hachage.
+ * Le statut est volontairement EXCLU : une écriture annulée passe
+ * de VALIDE à ANNULE sans que sa signature ne soit invalidée
+ * (ses données métier restent intactes).
+ */
+const CHAMPS_HASH_MOUVEMENT = [
+  'id', 'numero', 'date', 'mode', 'type',
+  'machineId', 'fluide', 'quantiteKg',
+  'peseeAvantKg', 'peseeApresKg',
+  'bouteilleSrcId', 'bouteilleDstId',
+  'causeMouvement', 'controle', 'technicien',
+  'validateurId', 'contreEcritureDe', 'motif'
+];
+
+/** Retourne l'API SubtleCrypto (navigateur, ou repli Node ≥ 18). */
+async function obtenirSubtle() {
+  if (globalThis.crypto && globalThis.crypto.subtle) {
+    return globalThis.crypto.subtle;
+  }
+  // Node sans crypto global : module natif (jamais atteint en navigateur)
+  const { webcrypto } = await import('node:crypto');
+  return webcrypto.subtle;
+}
+
+/**
+ * Calcule l'empreinte SHA-256 (hexadécimale) d'une écriture de mouvement,
+ * chaînée à l'empreinte de l'écriture validée précédente.
+ * @param {object} mouvement - écriture (les champs absents comptent pour null)
+ * @param {string|null} hashPrecedent - empreinte précédente de la chaîne
+ * @returns {Promise<string>} empreinte hexadécimale (64 caractères)
+ */
+export async function hasherEcriture(mouvement, hashPrecedent) {
+  const champs = {};
+  for (const nom of CHAMPS_HASH_MOUVEMENT) {
+    champs[nom] = mouvement[nom] ?? null;
+  }
+  const texte = `${JSON.stringify(champs)}|${hashPrecedent ?? ''}`;
+  const subtle = await obtenirSubtle();
+  const empreinte = await subtle.digest('SHA-256',
+    new TextEncoder().encode(texte));
+  return [...new Uint8Array(empreinte)]
+    .map((octet) => octet.toString(16).padStart(2, '0'))
+    .join('');
+}
