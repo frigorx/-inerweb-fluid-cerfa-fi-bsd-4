@@ -273,6 +273,55 @@ journal d'audit logiciel (CSV/PDF).
   par phrase de passe, redondance recommandée (disque local + clé USB + cloud établissement).
 - RGPD : voir `RGPD.md` (données minimales, UE si cloud, droits, durées de conservation).
 
+## 8 bis. Fiche machine, QR codes et relevés pédagogiques (vision Franck 03/07/2026)
+
+> Reprend et dépasse le système originel v7 (module `qr-print.js`). Objectif : **le QR collé
+> sur la machine est la porte d'entrée de tout** — identité, documents légaux, historique,
+> et relevés de mesures des élèves.
+
+### 8bis.1 Fiche machine (vue dédiée, URL directe)
+Chaque machine a une **fiche complète** accessible par URL directe (`#/machine/<id>`, cible du QR) :
+- **Identité** : code, désignation, type, marque, modèle, n° série, localisation, détenteur,
+  photo de la plaque signalétique (PJ).
+- **Données techniques** (nouveaux champs machine) : fluide et charge, régime de fonctionnement
+  (froid positif / négatif / PAC…), températures de service (évaporation/condensation),
+  pressions de service HP/BP (bar), **nature de l'huile** (POE, PAG, minérale… + viscosité),
+  éventuel complément libre (réglages, particularités).
+- **Documents légaux et techniques** : plaque F-Gas, feuille de mise en service, notice (PJ),
+  schéma frigorifique (PJ), CERFA liés.
+- **Historique complet** (« la mémoire de la machine ») : interventions (mouvements), contrôles
+  d'étanchéité, relevés de mesures — tout, daté et signé.
+- Actions : QR (étiquette), plaque F-Gas, feuille de MES, nouveau mouvement préciblé,
+  nouveau contrôle préciblé, **nouveau relevé**.
+
+### 8bis.2 QR codes (report v7 → v8)
+- Bibliothèque QR **locale** (celle de la v7 : `js/qrcode-lib.min.js`, hors-ligne) copiée en v8.
+- Étiquettes 50 × 70 mm (machine, bouteille) : QR + code en gros + infos clés ; **planche A4**
+  (grille 3 × 2) pour imprimer l'atelier d'un coup.
+- Le QR encode l'URL de la fiche (`…/#/machine/<id>` ou `…/#/bouteille/<id>`) — en mode Local
+  Lycée, l'URL du poste serveur : **scan tablette → fiche immédiate**.
+
+### 8bis.3 Feuille de mise en service
+Document généré depuis la fiche (imprimable/PDF) : identité complète, fluide/charge, données
+techniques déclarées, pressions d'essai, résultat du contrôle d'étanchéité initial, signatures.
+La fiche machine peut être **éditée à partir de la feuille de MES** (les champs techniques
+saisis à la MES alimentent la fiche).
+
+### 8bis.4 Relevés de mesures (le circuit pédagogique)
+- **Le professeur définit des valeurs de référence par machine** : liste de grandeurs
+  (T° évaporation, T° condensation, HP, BP, surchauffe, sous-refroidissement, intensité…)
+  avec valeur attendue et **tolérance** (± unité). Configurable par machine.
+- **L'élève, en TP, scanne le QR avec la tablette** → fiche machine → « Nouveau relevé » :
+  il saisit ses mesures (l'élève est identifié, date/heure automatiques).
+- **Archivage automatique** : tous les relevés sont historisés (par machine ET par élève),
+  jamais modifiables après validation (même esprit que le registre).
+- **Comparaison automatique** : chaque relevé est confronté aux valeurs de référence →
+  écart par grandeur, dans/hors tolérance, code couleur. Le professeur voit d'un coup d'œil
+  « qui a juste » et où sont les erreurs de mesure.
+- **Pont HAL (plus tard)** : export des relevés et écarts vers inerWeb HAL pour alimenter le
+  positionnement par compétence (format d'échange à définir avec le référentiel unique HAL —
+  ne PAS coupler les deux applications avant que ce format soit posé).
+
 ## 9. Phasage
 
 - **Phase A — Socle** : arborescence v8, tokens CSS, coquille (sidebar/header/router),
@@ -283,6 +332,9 @@ journal d'audit logiciel (CSV/PDF).
   déchets/BSFF, balance matière + inventaire 31/12, alertes bloquantes.
 - **Phase D — Documents** : CERFA (aperçu fidèle + PDF officiel), plaque F-Gas, exports,
   dossier audit annuel.
+- **Phase D2 — Fiche machine, QR et relevés** (§8 bis) : fiche machine complète + données
+  techniques, QR codes + étiquettes, feuille de mise en service, relevés élèves avec
+  valeurs de référence et comparaison.
 - **Phase E — Mode Local** : serveur Node + SQLite, comptes, sauvegardes ZIP un clic,
   assistant première configuration, `lancer-inerweb.bat`.
 - **Phase F — Mode Cloud** : adaptateur Supabase, auth, storage, RLS, sauvegarde auto.
