@@ -13,10 +13,6 @@ import { esc, fmtNombre } from '../core/utils.js';
 
 export const titre = 'Balance matière';
 
-// Années proposées dans le sélecteur (monde de démo : 2026 uniquement)
-const ANNEES = [2026];
-const ANNEE_PAR_DEFAUT = 2026;
-
 // Tolérance de pesée : au-delà, l'écart doit être justifié (SPEC §6)
 const SEUIL_ECART_KG = 0.01;
 
@@ -117,8 +113,8 @@ function ligneActive(ligne) {
    ============================================================ */
 
 /** Actions d'entête : année, saisie d'inventaire (marine), impression. */
-function actionsEntete(annee) {
-  const options = ANNEES.map((a) =>
+function actionsEntete(annee, annees) {
+  const options = annees.map((a) =>
     `<option value="${a}"${a === annee ? ' selected' : ''}>${a}</option>`
   ).join('');
 
@@ -210,13 +206,13 @@ function tableauBalance(balance) {
 }
 
 /** Page complète de la vue pour une balance donnée. */
-function construireHtml(balance) {
+function construireHtml(balance, annees) {
   return '<div class="vue-balance anim-fade">'
     + STYLES_VUE
     + enteteVue({
       titre: 'Balance matière annuelle',
       sousTitre: 'Bilan matière par fluide — stock théorique, inventaire physique et écarts',
-      actionsHtml: actionsEntete(balance.annee)
+      actionsHtml: actionsEntete(balance.annee, annees)
     })
     + encartFormule()
     + tableauBalance(balance)
@@ -449,11 +445,12 @@ function ouvrirModaleJustification(ctx, annee, lignesEnEcart, rafraichir) {
  */
 export async function render(conteneur, ctx) {
   let balanceCourante = null;
+  let anneesDisponibles = [];
 
   /** Charge la balance de l'année demandée, rend la page, branche tout. */
   async function chargerEtAfficher(annee) {
     balanceCourante = await ctx.store.getBalanceMatiere(annee);
-    conteneur.innerHTML = construireHtml(balanceCourante);
+    conteneur.innerHTML = construireHtml(balanceCourante, anneesDisponibles);
     attacherEcouteurs();
   }
 
@@ -477,5 +474,9 @@ export async function render(conteneur, ctx) {
     });
   }
 
-  await chargerEtAfficher(ANNEE_PAR_DEFAUT);
+  // IM-10 : années dérivées des données réelles (plus de [2026] figé) ;
+  // par défaut, l'année la plus récente disponible.
+  anneesDisponibles = await ctx.store.getAnneesDisponibles();
+  const anneeParDefaut = anneesDisponibles[0];
+  await chargerEtAfficher(anneeParDefaut);
 }

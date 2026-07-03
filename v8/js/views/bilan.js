@@ -3,18 +3,15 @@
 // Bilan annuel de traçabilité : tableau de suivi réglementaire
 // par fluide (déclaration ADEME), deux cartes de totaux dégradées,
 // export CSV (séparateur « ; », BOM UTF-8) et impression.
+// IM-16 : synthèse « Audit en 5 minutes », page unique imprimable.
 // Lecture seule (Phase A) : tout vient de ctx.store.getBilan(année).
 // ============================================================
 
-import { enteteVue, tableau, toast, ICONES } from './communs.js';
-import { esc, fmtKg, fmtNombre } from '../core/utils.js';
+import { enteteVue, tableau, modale, toast, ICONES } from './communs.js';
+import { esc, fmtKg, fmtDate, fmtNombre } from '../core/utils.js';
 import { genererDossierAudit } from '../documents/dossier-audit.js';
 
 export const titre = 'Bilan annuel';
-
-// Années proposées dans le sélecteur (monde de démo : 2026 uniquement)
-const ANNEES = [2026];
-const ANNEE_PAR_DEFAUT = 2026;
 
 /* ============================================================
    Styles propres à la vue (cartes dégradées, bouton vert,
@@ -93,12 +90,13 @@ const STYLES_VUE = `
    ============================================================ */
 
 /** Actions d'entête : sélecteur d'année, Export CSV (vert), Imprimer. */
-function actionsEntete(annee) {
-  const options = ANNEES.map((a) =>
+function actionsEntete(annee, annees) {
+  const options = annees.map((a) =>
     `<option value="${a}"${a === annee ? ' selected' : ''}>${a}</option>`
   ).join('');
 
   return `<select id="selecteur-annee" class="selecteur-annee no-print" aria-label="Année du bilan">${options}</select>`
+    + `<button type="button" id="btn-audit-5min" class="btn btn-contour no-print">${ICONES.controle}Audit en 5 minutes</button>`
     + `<button type="button" id="btn-dossier-audit" class="btn btn-marine no-print">${ICONES.telecharger}Dossier audit annuel (ZIP)</button>`
     + `<button type="button" id="btn-export-csv" class="btn btn-vert no-print">${ICONES.telecharger}Export CSV</button>`
     + `<button type="button" id="btn-imprimer" class="btn btn-secondaire no-print">${ICONES.imprimer}Imprimer</button>`;
@@ -149,13 +147,13 @@ function tableauBilan(bilan) {
 }
 
 /** Page complète de la vue pour un bilan donné. */
-function construireHtml(bilan) {
+function construireHtml(bilan, annees) {
   return '<div class="vue-bilan anim-fade">'
     + STYLES_VUE
     + enteteVue({
       titre: 'Bilan annuel de traçabilité',
       sousTitre: 'Tableau de suivi réglementaire par fluide — déclaration ADEME',
-      actionsHtml: actionsEntete(bilan.annee)
+      actionsHtml: actionsEntete(bilan.annee, annees)
     })
     + cartesTotaux(bilan)
     + tableauBilan(bilan)
@@ -228,6 +226,280 @@ function telechargerBlob(blob, nomFichier) {
 }
 
 /* ============================================================
+   IM-16 : synthèse « Audit en 5 minutes »
+   ------------------------------------------------------------
+   Page unique en lecture seule, imprimable, résumant en un coup
+   d'œil ce qu'un auditeur F-Gas viendrait vérifier : attestation
+   de capacité, personnel (aptitudes), outillage, machines/contrôles,
+   alertes critiques ouvertes, balance de l'année, nombre de CERFA.
+   Tout est recalculé depuis le store (aucune saisie ici).
+   ============================================================ */
+
+const STYLE_AUDIT5MIN_ID = 'style-audit-5-minutes';
+
+/** Injecte une fois le style de la synthèse (écran + impression). */
+function assurerStyleAudit5Minutes() {
+  if (document.getElementById(STYLE_AUDIT5MIN_ID)) return;
+  const style = document.createElement('style');
+  style.id = STYLE_AUDIT5MIN_ID;
+  style.textContent = `
+    .audit5min-page {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+    .audit5min-entete {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--marine-900);
+    }
+    .audit5min-entete h2 {
+      font-family: var(--police-titres);
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--marine-900);
+    }
+    .audit5min-entete p {
+      font-size: 12.5px;
+      color: var(--texte-3);
+    }
+    .audit5min-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--bordure-2);
+    }
+    .audit5min-section:last-child { border-bottom: none; }
+    .audit5min-section h3 {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--texte-3);
+    }
+    .audit5min-lignes { display: flex; flex-direction: column; gap: 4px; }
+    .audit5min-ligne {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--texte);
+    }
+    .audit5min-ligne-libelle { color: var(--texte-2); }
+    .audit5min-ligne-valeur { font-weight: 600; text-align: right; }
+    .audit5min-ok { color: var(--succes, #16a34a); }
+    .audit5min-alerte { color: var(--danger, #dc2626); }
+    .audit5min-liste-puces {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 12.5px;
+      color: var(--texte-2);
+    }
+    .audit5min-liste-puces li { margin-bottom: 3px; }
+    .audit5min-liste-puces .audit5min-alerte { font-weight: 600; }
+    .audit5min-vide { font-size: 12.5px; color: var(--texte-3); }
+
+    @media print {
+      body * { visibility: hidden; }
+      .audit5min-page, .audit5min-page * { visibility: visible; }
+      .audit5min-page {
+        position: fixed; inset: 0; margin: 0; max-width: 100%;
+        padding: 14mm;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+/** Une ligne libellé/valeur, avec classe optionnelle sur la valeur. */
+function ligneAudit5min(libelle, valeur, classeValeur = '') {
+  return '<div class="audit5min-ligne">'
+    + '<span class="audit5min-ligne-libelle">' + esc(libelle) + '</span>'
+    + '<span class="audit5min-ligne-valeur' + (classeValeur ? ' ' + classeValeur : '') + '">'
+    + esc(valeur) + '</span>'
+    + '</div>';
+}
+
+/** Rassemble les données de la synthèse depuis le store (une année donnée). */
+async function collecterDonneesAudit5Minutes(store, annee) {
+  const [etablissement, personnel, outillage, machines, alertes, balance, mouvements] =
+    await Promise.all([
+      store.getEtablissement(),
+      store.getPersonnel(),
+      store.getOutillage(),
+      store.getMachines(),
+      store.getAlertes(),
+      store.getBalanceMatiere(annee),
+      store.getMouvements()
+    ]);
+
+  const jour = new Date().toISOString().slice(0, 10);
+
+  // Personnel actif : aptitudes valides vs expirées
+  const personnelActif = personnel.filter((p) => p.actif !== false);
+  const aptitudesExpirees = personnelActif.filter(
+    (p) => p.dateFinValidite && p.dateFinValidite < jour);
+  const aptitudesValides = personnelActif.length - aptitudesExpirees.length;
+
+  // Outillage : conforme vs expiré (statut déjà recalculé par le store)
+  const outillageExpire = outillage.filter((o) => o.statut === 'EXPIRE');
+  const outillageConforme = outillage.length - outillageExpire.length;
+
+  // Machines : en service vs à l'arrêt/démantelées, et contrôles en retard
+  const machinesActives = machines.filter((m) => m.statut !== 'DEMANTELEE');
+  const controlesEnRetard = machines.filter((m) =>
+    m.statut !== 'DEMANTELEE' && m.statut !== 'ARRETEE' &&
+    m.prochainControle && m.prochainControle < jour);
+
+  // Alertes critiques ouvertes (déjà triées, critiques en tête)
+  const alertesCritiques = alertes.filter((a) => a.niveau === 'CRITIQUE');
+
+  // Balance : écarts justifiés / non justifiés (fluides avec inventaire saisi)
+  const lignesInventoriees = balance.lignes.filter((l) => l.stockReelKg !== null);
+  const ecartsNonJustifies = lignesInventoriees.filter((l) =>
+    l.ecartKg !== null && Math.abs(l.ecartKg) > 0.01 && !l.justification);
+  const ecartsJustifies = lignesInventoriees.filter((l) =>
+    l.ecartKg !== null && Math.abs(l.ecartKg) > 0.01 && l.justification);
+
+  // CERFA générés sur l'année (mouvements validés/annulés avec numéro)
+  const prefixeAnnee = `${annee}-`;
+  const nbCerfa = mouvements.filter((mv) =>
+    mv.cerfaNumero && mv.date.startsWith(prefixeAnnee)).length;
+
+  return {
+    annee, etablissement, jour,
+    aptitudesValides, aptitudesExpirees,
+    outillageConforme, outillageExpire,
+    machinesActives, controlesEnRetard,
+    alertesCritiques,
+    ecartsJustifies, ecartsNonJustifies, lignesInventoriees,
+    nbCerfa
+  };
+}
+
+/** Construit le HTML complet de la page de synthèse. */
+function gabaritAudit5Minutes(d) {
+  const echeanceCapacite = d.etablissement.dateEcheanceCapacite;
+  const capaciteExpiree = Boolean(echeanceCapacite && echeanceCapacite < d.jour);
+
+  const listeControles = d.controlesEnRetard.length
+    ? '<ul class="audit5min-liste-puces">' + d.controlesEnRetard.map((m) =>
+        '<li class="audit5min-alerte">' + esc(m.designation)
+        + ' — échéance ' + esc(fmtDate(m.prochainControle)) + '</li>').join('') + '</ul>'
+    : '<p class="audit5min-vide">Aucun contrôle en retard.</p>';
+
+  const listeAlertes = d.alertesCritiques.length
+    ? '<ul class="audit5min-liste-puces">' + d.alertesCritiques.map((a) =>
+        '<li class="audit5min-alerte">' + esc(a.titre)
+        + (a.detail ? ' — ' + esc(a.detail) : '') + '</li>').join('') + '</ul>'
+    : '<p class="audit5min-vide">Aucune alerte critique ouverte.</p>';
+
+  return '<div class="audit5min-page">'
+
+    + '<div class="audit5min-entete">'
+    + '<h2>Audit en 5 minutes — ' + esc(d.annee) + '</h2>'
+    + '<p>' + esc(d.etablissement.raisonSociale || '—')
+    + ' · document généré le ' + esc(fmtDate(d.jour)) + '</p>'
+    + '</div>'
+
+    + '<div class="audit5min-section">'
+    + '<h3>Attestation de capacité</h3>'
+    + '<div class="audit5min-lignes">'
+    + ligneAudit5min('Numéro', d.etablissement.numAttestationCapacite || '—')
+    + ligneAudit5min('Échéance', fmtDate(echeanceCapacite),
+        capaciteExpiree ? 'audit5min-alerte' : 'audit5min-ok')
+    + '</div>'
+    + '</div>'
+
+    + '<div class="audit5min-section">'
+    + '<h3>Personnel</h3>'
+    + '<div class="audit5min-lignes">'
+    + ligneAudit5min('Aptitudes valides', String(d.aptitudesValides), 'audit5min-ok')
+    + ligneAudit5min('Aptitudes expirées', String(d.aptitudesExpirees.length),
+        d.aptitudesExpirees.length ? 'audit5min-alerte' : 'audit5min-ok')
+    + '</div>'
+    + '</div>'
+
+    + '<div class="audit5min-section">'
+    + '<h3>Outillage réglementaire</h3>'
+    + '<div class="audit5min-lignes">'
+    + ligneAudit5min('Conforme', String(d.outillageConforme), 'audit5min-ok')
+    + ligneAudit5min('Expiré', String(d.outillageExpire.length),
+        d.outillageExpire.length ? 'audit5min-alerte' : 'audit5min-ok')
+    + '</div>'
+    + '</div>'
+
+    + '<div class="audit5min-section">'
+    + '<h3>Machines et contrôles d’étanchéité</h3>'
+    + '<div class="audit5min-lignes">'
+    + ligneAudit5min('Machines suivies', String(d.machinesActives.length))
+    + ligneAudit5min('Contrôles en retard', String(d.controlesEnRetard.length),
+        d.controlesEnRetard.length ? 'audit5min-alerte' : 'audit5min-ok')
+    + '</div>'
+    + listeControles
+    + '</div>'
+
+    + '<div class="audit5min-section">'
+    + '<h3>Alertes critiques ouvertes</h3>'
+    + listeAlertes
+    + '</div>'
+
+    + '<div class="audit5min-section">'
+    + '<h3>Balance matière ' + esc(d.annee) + '</h3>'
+    + '<div class="audit5min-lignes">'
+    + ligneAudit5min('Fluides inventoriés', String(d.lignesInventoriees.length))
+    + ligneAudit5min('Écarts justifiés', String(d.ecartsJustifies.length))
+    + ligneAudit5min('Écarts non justifiés', String(d.ecartsNonJustifies.length),
+        d.ecartsNonJustifies.length ? 'audit5min-alerte' : 'audit5min-ok')
+    + '</div>'
+    + '</div>'
+
+    + '<div class="audit5min-section">'
+    + '<h3>CERFA</h3>'
+    + '<div class="audit5min-lignes">'
+    + ligneAudit5min('CERFA générés en ' + d.annee, String(d.nbCerfa))
+    + '</div>'
+    + '</div>'
+
+    + '</div>';
+}
+
+/**
+ * Ouvre la modale « Audit en 5 minutes » : synthèse imprimable une page.
+ * @param {{ store: object }} ctx
+ * @param {number} annee
+ */
+async function ouvrirAudit5Minutes(ctx, annee) {
+  assurerStyleAudit5Minutes();
+  const donnees = await collecterDonneesAudit5Minutes(ctx.store, annee);
+
+  const { fermer } = modale({
+    titre: 'Audit en 5 minutes — ' + annee,
+    contenuHtml: gabaritAudit5Minutes(donnees),
+    actionsHtml:
+      '<button type="button" id="audit5min-fermer" class="btn btn-secondaire no-print">Fermer</button>'
+      + '<button type="button" id="audit5min-imprimer" class="btn btn-marine no-print">'
+      + ICONES.imprimer + '<span>Imprimer</span></button>'
+  });
+
+  const racine = document.querySelector('.modale-fond:last-of-type .modale')
+    || document.querySelector('.modale');
+
+  racine.querySelector('#audit5min-fermer').addEventListener('click', function () {
+    fermer();
+  });
+  racine.querySelector('#audit5min-imprimer').addEventListener('click', function () {
+    window.print();
+  });
+}
+
+/* ============================================================
    Rendu de la vue
    ============================================================ */
 
@@ -238,23 +510,30 @@ function telechargerBlob(blob, nomFichier) {
  */
 export async function render(conteneur, ctx) {
   let bilanCourant = null;
+  let anneesDisponibles = [];
 
   /** Charge le bilan de l'année demandée, rend la page et branche les écouteurs. */
   async function chargerEtAfficher(annee) {
     bilanCourant = await ctx.store.getBilan(annee);
-    conteneur.innerHTML = construireHtml(bilanCourant);
+    conteneur.innerHTML = construireHtml(bilanCourant, anneesDisponibles);
     attacherEcouteurs();
   }
 
-  /** Branche sélecteur d'année, dossier d'audit, export CSV et impression. */
+  /** Branche sélecteur d'année, dossier d'audit, export CSV, audit 5 min et impression. */
   function attacherEcouteurs() {
     const selecteur = conteneur.querySelector('#selecteur-annee');
     const boutonDossier = conteneur.querySelector('#btn-dossier-audit');
     const boutonCsv = conteneur.querySelector('#btn-export-csv');
+    const boutonAudit5min = conteneur.querySelector('#btn-audit-5min');
     const boutonImprimer = conteneur.querySelector('#btn-imprimer');
 
     selecteur.addEventListener('change', () => {
       chargerEtAfficher(Number(selecteur.value));
+    });
+
+    // IM-16 : synthèse « Audit en 5 minutes », une page imprimable.
+    boutonAudit5min.addEventListener('click', async () => {
+      await ouvrirAudit5Minutes(ctx, bilanCourant.annee);
     });
 
     // Dossier d'audit annuel : ZIP complet (sommaire, CSV, CERFA, PJ)
@@ -287,5 +566,9 @@ export async function render(conteneur, ctx) {
     });
   }
 
-  await chargerEtAfficher(ANNEE_PAR_DEFAUT);
+  // IM-10 : années dérivées des données réelles (plus de [2026] figé) ;
+  // par défaut, l'année la plus récente disponible.
+  anneesDisponibles = await ctx.store.getAnneesDisponibles();
+  const anneeParDefaut = anneesDisponibles[0];
+  await chargerEtAfficher(anneeParDefaut);
 }

@@ -37,10 +37,14 @@ verifier('nbBouteilles === 5', stats.nbBouteilles === 5);
 verifier('nbFuites === 1', stats.nbFuites === 1);
 verifier('tauxConformitePct === 67', stats.tauxConformitePct === 67,
   `valeur = ${stats.tauxConformitePct}`);
-verifier('fluxMensuels : 6 mois Févr. → Juil.',
+// IM-10 (Lot 2) : la fenêtre n'est plus codée en dur Févr.→Juil. —
+// elle GLISSE et se termine au mois de la donnée la plus récente
+// (dernier mouvement du monde de démo : 29/06/2026 → Janv.→Juin).
+verifier('fluxMensuels : fenêtre glissante de 6 mois close sur Juin 2026',
   stats.fluxMensuels.length === 6 &&
-  stats.fluxMensuels[0].mois === 'Févr.' &&
-  stats.fluxMensuels[5].mois === 'Juil.');
+  stats.fluxMensuels[0].mois === 'Janv.' &&
+  stats.fluxMensuels[5].mois === 'Juin' &&
+  stats.fluxMensuels[5].annee === 2026);
 
 // --- Mouvements ---------------------------------------------
 const mouvements = await store.getMouvements();

@@ -6,10 +6,30 @@
   <title>inerWeb Fluide — Traçabilité F-Gas</title>
   <meta name="description" content="inerWeb Fluide — traçabilité des fluides frigorigènes (F-Gas) : parc machines, bouteilles, mouvements, contrôles d'étanchéité et bilan annuel.">
 
-  <!-- Polices : IBM Plex Sans (corps), Space Grotesk (titres), IBM Plex Mono (valeurs) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+  <!-- CF-10 : Content-Security-Policy stricte mais compatible avec les usages réels
+       vérifiés dans le code (aucun oubli futur d'échappement ne serait alors rattrapé) :
+       - style-src 'unsafe-inline' : les vues injectent des styles inline (attributs style="…")
+       - img-src data: : signature tactile encodée en PNG base64 (wizard/signature.js)
+       - img-src/connect-src/worker-src blob: : téléchargements CSV/ZIP/PDF/pièces jointes
+         (URL.createObjectURL dans bilan.js, app.js, visualiseur.js, pieces-jointes.js)
+         et worker dédié de PDF.js (lib/pdf.worker.min.mjs)
+       - object-src 'none', base-uri 'self', form-action 'self' : durcissement standard -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self';
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' data: blob:;
+    font-src 'self';
+    connect-src 'self';
+    worker-src 'self' blob:;
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+  ">
+
+  <!-- Polices : IBM Plex Sans (corps), Space Grotesk (titres), IBM Plex Mono (valeurs)
+       Auto-hébergées (CF-9) : @font-face dans css/tokens.css, fichiers dans v8/polices/.
+       Plus aucun appel à Google Fonts (hors-ligne complet, aucune IP transmise). -->
 
   <!-- Feuilles de style de la charte -->
   <link rel="stylesheet" href="css/tokens.css">

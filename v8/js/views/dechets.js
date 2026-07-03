@@ -129,6 +129,12 @@ function carteRecuperation(b, jour) {
       + 'Créer le BSFF</button>'
     : '';
 
+  // IM-7 : la décision « déchet » est réversible (store) — le bouton
+  // change de libellé pour le dire, la même modale re-décide
+  const libelleDecider = b.decisionFluide === 'DECHET'
+    ? 'Revenir sur la décision'
+    : 'Décider';
+
   return '<article class="carte carte-recup">'
     + '<div class="recup-haut">'
     + '<span class="recup-fluide mono">' + esc(b.fluide) + '</span>'
@@ -141,7 +147,7 @@ function carteRecuperation(b, jour) {
     + infoGarde
     + '<div class="recup-pied">'
     + '<button type="button" class="btn btn-secondaire btn-petit" data-action="decider" data-id="' + esc(b.id) + '">'
-    + 'Décider</button>'
+    + esc(libelleDecider) + '</button>'
     + boutonBsff
     + '</div>'
     + '</article>';
@@ -181,10 +187,20 @@ function ligneBsff(bsff) {
 function ouvrirDecision(ctx, bouteille) {
   const decisionCourante = bouteille.decisionFluide || null;
 
+  // IM-7 : revenir sur une décision « déchet » remet le fluide en
+  // stock utilisable et annule le délai de garde (store réversible)
+  const bandeauRetour = decisionCourante === 'DECHET'
+    ? '<div class="bandeau-avertissement">'
+      + '<span>Cette bouteille est déclarée déchet. Choisir « Réutilisable » '
+      + 'ou « À analyser » annule l’état déchet : le fluide revient en stock '
+      + 'et le délai de garde est effacé.</span></div>'
+    : '';
+
   const contenuHtml = ''
     + '<p class="modale-intro">Bouteille <strong>' + esc(bouteille.code) + '</strong>'
     + ' · Fluide <span class="mono">' + esc(bouteille.fluide) + '</span>'
     + ' · <span class="mono">' + esc(fmtNombre(bouteille.masseNetteKg, 2)) + ' kg</span></p>'
+    + bandeauRetour
     + '<div id="zone-erreur-decision"></div>'
     + '<div class="grille-form-2">'
     + '<button type="button" class="carte-choix' + (decisionCourante === 'REUTILISABLE' ? ' selectionnee' : '')

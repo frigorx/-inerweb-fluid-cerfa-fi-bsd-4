@@ -234,28 +234,101 @@ export function toast(message, type = 'info') {
 }
 
 /* ============================================================
+   Piège de focus (IM-20)
+   ============================================================ */
+
+// Sélecteur des éléments focusables au clavier (aligné WAI-ARIA Authoring Practices)
+const SELECTEUR_FOCUSABLE = [
+  'a[href]', 'button:not([disabled])', 'textarea:not([disabled])',
+  'input:not([disabled]):not([type="hidden"])', 'select:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])'
+].join(',');
+
+/**
+ * Piège le focus clavier à l'intérieur d'un conteneur (modale, wizard…) :
+ * Tab/Shift+Tab bouclent sur le premier/dernier élément focusable, le focus
+ * initial est posé sur le premier champ ou bouton, et le focus est restitué
+ * à l'élément qui avait le focus avant l'ouverture lorsqu'on appelle
+ * la fonction de restitution retournée.
+ * @param {HTMLElement} conteneur — élément racine du dialogue (déjà dans le DOM)
+ * @returns {{ liberer: () => void, restituerFocus: () => void }}
+ */
+export function piegerFocus(conteneur) {
+  const declencheur = document.activeElement;
+
+  function elementsFocusables() {
+    return Array.from(conteneur.querySelectorAll(SELECTEUR_FOCUSABLE))
+      .filter(function (el) { return el.offsetParent !== null || el === document.activeElement; });
+  }
+
+  function focusInitial() {
+    const elements = elementsFocusables();
+    (elements[0] || conteneur).focus();
+  }
+
+  function surTouche(evenement) {
+    if (evenement.key !== 'Tab') return;
+    const elements = elementsFocusables();
+    if (elements.length === 0) {
+      evenement.preventDefault();
+      return;
+    }
+    const premier = elements[0];
+    const dernier = elements[elements.length - 1];
+    if (evenement.shiftKey && document.activeElement === premier) {
+      evenement.preventDefault();
+      dernier.focus();
+    } else if (!evenement.shiftKey && document.activeElement === dernier) {
+      evenement.preventDefault();
+      premier.focus();
+    }
+  }
+
+  conteneur.addEventListener('keydown', surTouche);
+  // Focus initial au rendu suivant (laisse le temps au contenu de s'insérer)
+  requestAnimationFrame(focusInitial);
+
+  function restituerFocus() {
+    if (declencheur && typeof declencheur.focus === 'function') declencheur.focus();
+  }
+
+  function liberer() {
+    conteneur.removeEventListener('keydown', surTouche);
+  }
+
+  return { liberer, restituerFocus };
+}
+
+/* ============================================================
    Modale
    ============================================================ */
 
 /**
  * Ouvre une modale (carte centrée, feuille en bas sur mobile).
  * Fermeture : bouton croix, clic sur le fond, touche Échap.
+ * Focus : piégé dans la modale (Tab/Shift+Tab bouclent), posé sur le
+ * premier champ/bouton à l'ouverture, restitué à l'ouvreur à la fermeture.
  * @param {{ titre: string, contenuHtml?: string, actionsHtml?: string }} options
  * @returns {{ fermer: () => void }}
  */
 export function modale({ titre, contenuHtml = '', actionsHtml = '' }) {
   const zone = document.getElementById('zone-modales') || document.body;
 
+  const idTitre = 'modale-titre-' + Math.random().toString(36).slice(2, 9);
+
   const fond = document.createElement('div');
   fond.className = 'modale-fond';
-  fond.innerHTML = '<div class="modale" role="dialog" aria-modal="true" aria-label="' + esc(titre) + '">'
+  fond.innerHTML = '<div class="modale" role="dialog" aria-modal="true" aria-labelledby="' + idTitre + '">'
     + '<div class="modale-entete">'
-    + '<h3 class="modale-titre">' + esc(titre) + '</h3>'
+    + '<h3 class="modale-titre" id="' + idTitre + '">' + esc(titre) + '</h3>'
     + '<button class="modale-fermer" type="button" aria-label="Fermer">' + ICONES.croix + '</button>'
     + '</div>'
     + '<div class="modale-corps">' + contenuHtml + '</div>'
     + (actionsHtml ? '<div class="modale-actions">' + actionsHtml + '</div>' : '')
     + '</div>';
+
+  const boiteDialogue = fond.querySelector('.modale');
+  const piege = piegerFocus(boiteDialogue);
 
   let fermee = false;
 
@@ -263,7 +336,9 @@ export function modale({ titre, contenuHtml = '', actionsHtml = '' }) {
     if (fermee) return;
     fermee = true;
     document.removeEventListener('keydown', surTouche);
+    piege.liberer();
     fond.classList.remove('visible');
+    piege.restituerFocus();
     setTimeout(function () { fond.remove(); }, 220);
   }
 

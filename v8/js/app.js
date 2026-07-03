@@ -45,7 +45,11 @@ function construireSidebar() {
   const sidebar = document.getElementById('sidebar');
 
   const liens = VUES.map(function (vue) {
-    const badge = vue.id === 'controles'
+    // IM-2 : les alertes couvrent bien plus que les seuls contrôles
+    // d'étanchéité (capacité, aptitudes, outillage, garde déchets, écarts,
+    // mouvements…) — le badge global est donc posé sur « Tableau de bord »,
+    // première entrée de la sidebar, plutôt que sur une famille particulière.
+    const badge = vue.id === 'dashboard'
       ? '<span id="badge-alertes" class="badge-rouge" hidden></span>'
       : '';
     return '<a class="nav-item" href="#/' + vue.id + '" data-vue="' + vue.id + '">'
@@ -193,10 +197,6 @@ async function afficherVue(id) {
 
   zone.scrollTop = 0;
   window.scrollTo(0, 0);
-
-  // Le compteur d'alertes peut changer après toute action utilisateur :
-  // on le recalcule à chaque navigation plutôt qu'au seul démarrage.
-  majBadgeAlertes();
 }
 
 /** Navigation par programme (déléguée au routeur). */
@@ -360,6 +360,12 @@ async function demarrer() {
 
   construireSidebar();
   initialiserTiroir();
+
+  // IM-2(b) : le badge se met à jour après TOUTE mutation du store — plus
+  // seulement à la navigation — pour couvrir les vues qui se re-rendent
+  // elles-mêmes sans passer par le routeur (ex. machines.js, outillage.js).
+  store.surChangement(majBadgeAlertes);
+  majBadgeAlertes();
 
   routeur = creerRouteur({ surChangement: afficherVue });
   afficherVue(routeur.idCourant());

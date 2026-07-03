@@ -237,22 +237,39 @@ function colonneHistogramme(valeurKg, maxKg, type) {
 }
 
 /**
+ * IM-10 : la fenêtre de 6 mois est glissante et peut chevaucher deux
+ * années civiles (ex. Nov./Déc. 2026 puis Janv.…Avr. 2027) — le
+ * libellé du mois seul deviendrait ambigu. On affiche l'année en
+ * plus chaque fois qu'elle change par rapport au mois précédent
+ * (et toujours sur le tout premier mois de la série).
+ * @param {{ mois: string, annee: number }[]} fluxMensuels
+ * @returns {string[]} libellés à afficher, un par mois
+ */
+function libellesMoisAvecAnnee(fluxMensuels) {
+  return fluxMensuels.map((f, i) => {
+    const anneeChange = i === 0 || fluxMensuels[i - 1].annee !== f.annee;
+    return anneeChange ? f.mois + ' ' + f.annee : f.mois;
+  });
+}
+
+/**
  * Carte « Flux mensuels (6 mois) » : légende + histogramme en divs flex,
  * un groupe par mois (barre Charge turquoise, barre Récupération violette).
- * @param {{ mois: string, chargeKg: number, recupKg: number }[]} fluxMensuels
+ * @param {{ mois: string, annee: number, chargeKg: number, recupKg: number }[]} fluxMensuels
  * @returns {string} HTML
  */
 function carteFluxMensuels(fluxMensuels) {
   const maxKg = fluxMensuels.reduce(
     (max, f) => Math.max(max, f.chargeKg, f.recupKg), 0);
+  const libelles = libellesMoisAvecAnnee(fluxMensuels);
 
-  const groupes = fluxMensuels.map((f) =>
+  const groupes = fluxMensuels.map((f, i) =>
     '<div class="stats-groupe-mois">'
     + '<div class="stats-barres">'
     + colonneHistogramme(f.chargeKg, maxKg, 'charge')
     + colonneHistogramme(f.recupKg, maxKg, 'recup')
     + '</div>'
-    + '<span class="stats-libelle-mois">' + esc(f.mois) + '</span>'
+    + '<span class="stats-libelle-mois">' + esc(libelles[i]) + '</span>'
     + '</div>'
   ).join('');
 

@@ -244,7 +244,8 @@ async function assemblerContexte(store, { source, id }) {
     contexte.operateurNom = mouvement.technicien ?? null;
     contexte.signatureDataUrl = mouvement.signatureDataUrl ?? null;
     if (mouvement.causeMouvement) {
-      contexte.observations.push(String(mouvement.causeMouvement));
+      // IM-14 : la cause saisie est reportée au cadre 14 (observations)
+      contexte.observations.push(`Cause : ${String(mouvement.causeMouvement)}`);
     }
     if (mouvement.statut === 'ANNULE') {
       contexte.observations.push(
@@ -395,6 +396,7 @@ export async function genererCerfaPdf(store, { source, id }) {
   let qA = '', qB = '', qC = '', qD = '', qE = '', qDE = '';
   let contenant = null;
   let bsffLie = null;
+  let versDechet = false;
   if (estCharge && quantite !== null) {
     // Ventilation selon l'état du fluide de la bouteille SOURCE
     const etat = ctx.bouteilleSrc?.etatFluide ?? 'VIERGE';
@@ -409,7 +411,7 @@ export async function genererCerfaPdf(store, { source, id }) {
       ? ctx.bsffListe.find((b) => b.bouteilleId === dst.id ||
           (dst.numBsff && b.numeroBsff === dst.numBsff)) || null
       : null;
-    const versDechet = Boolean(dst && (dst.decisionFluide === 'DECHET' ||
+    versDechet = Boolean(dst && (dst.decisionFluide === 'DECHET' ||
       dst.statut === 'DECHET' || dst.numBsff || bsffLie));
     if (versDechet) qD = fmtVirgule(quantite);
     else qE = fmtVirgule(quantite);
@@ -422,6 +424,11 @@ export async function genererCerfaPdf(store, { source, id }) {
   const transportNonInflammable = estRecuperation && classeSecurite === 'A1';
   const transportInflammable = estRecuperation &&
     ['A2L', 'A2', 'A3'].includes(classeSecurite);
+  // IM-13 : fluide récupéré parti en DÉCHET → la ligne « autre déchet »
+  // du cadre 12 est cochée, avec le code déchet européen dans le champ
+  // texte (14 06 01 non inflammable, 16 05 04 inflammable — SPEC-CERFA).
+  const dechetNonInflammable = transportNonInflammable && versDechet;
+  const dechetInflammable = transportInflammable && versDechet;
 
   // ---- Cadre 13 — installation de destination (BSFF) ----
   const installationTexte = bsffLie ? [
@@ -486,9 +493,11 @@ export async function genererCerfaPdf(store, { source, id }) {
       ? (contenant.numeroReel ?? contenant.code ?? '')
       : '',
     '11_BSFF': bsffLie?.numeroBsff ?? ctx.bouteilleDst?.numBsff ?? '',
-    // Cadre 12 — champs libres transport
-    'Autre-FF-NON-inflammable': '',
-    'Autre-FF-inflammable': '',
+    // Cadre 12 — champs libres transport (codes déchets européens)
+    'Autre-FF-NON-inflammable': dechetNonInflammable
+      ? 'Fluide frigorigène usagé — code déchet 14 06 01' : '',
+    'Autre-FF-inflammable': dechetInflammable
+      ? 'Fluide frigorigène usagé — code déchet 16 05 04' : '',
     // Cadre 13 — installation de destination
     '13_Instal': installationTexte,
     // Cadre 14 — observations
@@ -541,8 +550,8 @@ export async function genererCerfaPdf(store, { source, id }) {
     // Cadre 12 — transport du fluide récupéré
     'Case_12_UN1078': transportNonInflammable,
     'Case_12_UN3161': transportInflammable,
-    'Case_12_Autre140601': false,
-    'Case_12_Autre160504': false
+    'Case_12_Autre140601': dechetNonInflammable,
+    'Case_12_Autre160504': dechetInflammable
   };
 
   for (const [nom, valeur] of Object.entries(champsTexte)) {

@@ -7,7 +7,7 @@
 // Aucun accès DOM à l'import du module.
 // ============================================================
 
-import { toast, chipStatut, chipType, ICONES } from '../views/communs.js';
+import { toast, chipStatut, chipType, modale, ICONES } from '../views/communs.js';
 import { esc, fmtNombre, fmtKg, fmtKgSigne, fmtDate } from '../core/utils.js';
 import { creerSignature } from './signature.js';
 
@@ -22,7 +22,7 @@ const LIBELLES_ROLES = {
   ELEVE: 'Élève'
 };
 
-/** Les 4 grandes cartes de l'étape 1. */
+/** Les 5 grandes cartes de l'étape 1 (IM-15 : « Autre intervention »). */
 const CARTES_TYPE = [
   {
     id: 'charge',
@@ -47,8 +47,45 @@ const CARTES_TYPE = [
     icone: 'echange',
     titre: 'Transfert',
     detail: 'Transfert de fluide entre deux bouteilles de même fluide.'
+  },
+  {
+    id: 'autre',
+    icone: 'engrenage',
+    titre: 'Autre intervention',
+    detail: 'Assemblage, modification ou autre intervention avec charge de fluide.'
   }
 ];
+
+/**
+ * IM-15 : natures d'intervention de la carte « Autre intervention ».
+ * Le registre ne connaissant que 5 types de mouvements, l'écriture
+ * est enregistrée en CHARGE_APPOINT (mêmes effets stocks) et la
+ * nature réelle est tracée dans causeMouvement (cadre 14 du CERFA).
+ */
+const NATURES_AUTRE = {
+  ASSEMBLAGE: {
+    court: 'Assemblage',
+    libelle: 'Assemblage (tuyauteries, raccordements)'
+  },
+  MODIFICATION: {
+    court: 'Modification / transformation',
+    libelle: 'Modification / transformation de l’équipement'
+  },
+  AUTRE: {
+    court: 'Autre',
+    libelle: 'Autre intervention (préciser)'
+  }
+};
+
+/** IM-14 : causes de mouvement proposées (cadre 14 du CERFA). */
+const CAUSES_MOUVEMENT = {
+  FUITE: 'Fuite',
+  MAINTENANCE: 'Maintenance',
+  REMPLACEMENT_COMPOSANT: 'Remplacement de composant',
+  MISE_AU_REBUT: 'Mise au rebut',
+  EXERCICE_PEDAGOGIQUE: 'Exercice pédagogique',
+  AUTRE: 'Autre (préciser)'
+};
 
 /** Les 3 cartes de l'étape Contrôle d'étanchéité. */
 const CARTES_CONTROLE = [
@@ -293,9 +330,13 @@ export async function ouvrirWizard(ctx, options = {}) {
   // ---- État du wizard ----
   const etat = {
     etape: 1,
-    carteType: null,        // 'charge' | 'appoint' | 'recuperation' | 'transfert'
+    carteType: null,        // 'charge' | 'appoint' | 'recuperation' | 'transfert' | 'autre'
     premiereCharge: false,  // interrupteur de la carte Charge / Mise en service
     demantelement: false,   // interrupteur de la carte Récupération
+    natureAutre: null,      // IM-15 : 'ASSEMBLAGE' | 'MODIFICATION' | 'AUTRE'
+    natureAutreDetail: '',  // IM-15 : texte libre si natureAutre === 'AUTRE'
+    causeMouvement: null,   // IM-14 : clé de CAUSES_MOUVEMENT (facultatif)
+    causeDetail: '',        // IM-14 : texte libre si causeMouvement === 'AUTRE'
     technicienId: null,
     machineId: options.machineId || null,
     bouteilleSrcId: null,
@@ -348,6 +389,12 @@ export async function ouvrirWizard(ctx, options = {}) {
         ? String(brouillon.peseeApresKg) : '';
       etat.statutControle = brouillon.controle?.statutControle ?? null;
       etat.detecteurId = brouillon.controle?.detecteurId ?? null;
+      // IM-14 : la cause du brouillon (texte libre) est conservée telle
+      // quelle via le choix « Autre » du select de l'étape 6
+      if (brouillon.causeMouvement) {
+        etat.causeMouvement = 'AUTRE';
+        etat.causeDetail = String(brouillon.causeMouvement);
+      }
       // Le brouillon stocke le NOM du technicien : retrouvé par
       // correspondance exacte, sinon l'étape 1 redemande le choix
       const technicienRepris = techniciens.find((p) =>
@@ -377,13 +424,19 @@ export async function ouvrirWizard(ctx, options = {}) {
         : 'RECUPERATION_MAINTENANCE';
     }
     if (etat.carteType === 'transfert') return 'TRANSFERT';
+    // IM-15 : « Autre intervention » (assemblage, modification…) —
+    // le registre n'admet que 5 types : l'écriture prend les effets
+    // d'un complément de charge et la nature réelle part dans
+    // causeMouvement (cadre 14 du CERFA).
+    if (etat.carteType === 'autre') return 'CHARGE_APPOINT';
     return null;
   }
 
   function estTransfert() { return etat.carteType === 'transfert'; }
   function estRecuperation() { return etat.carteType === 'recuperation'; }
   function estCharge() {
-    return etat.carteType === 'charge' || etat.carteType === 'appoint';
+    return etat.carteType === 'charge' || etat.carteType === 'appoint'
+      || etat.carteType === 'autre';
   }
 
   function machineChoisie() {
@@ -430,9 +483,34 @@ export async function ouvrirWizard(ctx, options = {}) {
     });
   }
 
+  /**
+   * IM-6 : miroir de verifierBouteilleEnStock (store) — une bouteille
+   * sortie du stock (retournée, déchet…) ne participe plus à aucun
+   * mouvement, ni comme source, ni comme destination.
+   */
+  function bouteilleDisponible(b) {
+    return b.statut === 'EN_STOCK' || b.statut === 'EN_SERVICE';
+  }
+
+  /**
+   * IM-6 : miroir de verifierSourceDeCharge (store) — une source de
+   * charge ou de transfert doit contenir du fluide UTILISABLE : jamais
+   * un fluide déclaré déchet ni en attente d'analyse ; pour un fluide
+   * de récupération-réemploi, la décision « réutilisable » est requise.
+   */
+  function sourceUtilisable(b) {
+    if (!bouteilleDisponible(b) || b.masseNetteKg <= 0) return false;
+    if (b.etatFluide === 'DECHET' || b.decisionFluide === 'DECHET'
+        || b.decisionFluide === 'A_ANALYSER') return false;
+    if (b.etatFluide === 'RECUPERE' && b.decisionFluide !== 'REUTILISABLE') {
+      return false;
+    }
+    return true;
+  }
+
   /** Bouteilles sources possibles pour un transfert (étape 2). */
   function bouteillesSourcesTransfert() {
-    return bouteilles.filter((b) => b.masseNetteKg > 0);
+    return bouteilles.filter(sourceUtilisable);
   }
 
   /** Bouteilles proposées à l'étape 3 selon le contexte. */
@@ -441,21 +519,25 @@ export async function ouvrirWizard(ctx, options = {}) {
       const machine = machineChoisie();
       if (!machine) return [];
       return bouteilles.filter((b) =>
-        b.fluide === machine.fluide && b.masseNetteKg > 0);
+        b.fluide === machine.fluide && sourceUtilisable(b));
     }
     if (estRecuperation()) {
       const machine = machineChoisie();
       if (!machine) return [];
+      // IM-6 : encore en stock et avec de la place restante
       return bouteilles.filter((b) =>
-        b.type === 'RECUPERATION' && b.fluide === machine.fluide);
+        b.type === 'RECUPERATION' && b.fluide === machine.fluide &&
+        bouteilleDisponible(b) &&
+        arrondir(b.contenanceMaxKg - b.masseNetteKg) > 0);
     }
     // Transfert : destination de même fluide, différente de la source,
-    // avec de la place restante
+    // encore en stock (IM-6), avec de la place restante
     const source = bouteilleSrc();
     if (!source) return [];
     return bouteilles.filter((b) =>
       b.id !== source.id &&
       b.fluide === source.fluide &&
+      bouteilleDisponible(b) &&
       arrondir(b.contenanceMaxKg - b.masseNetteKg) > 0);
   }
 
@@ -533,7 +615,15 @@ export async function ouvrirWizard(ctx, options = {}) {
   function etapeComplete() {
     switch (etat.etape) {
       case 1:
-        return Boolean(etat.carteType && etat.technicienId);
+        if (!etat.carteType || !etat.technicienId) return false;
+        // IM-15 : la carte « Autre intervention » exige une nature
+        // (et son détail en texte libre pour « Autre »)
+        if (etat.carteType === 'autre') {
+          if (!etat.natureAutre) return false;
+          if (etat.natureAutre === 'AUTRE'
+              && !etat.natureAutreDetail.trim()) return false;
+        }
+        return true;
       case 2:
         return estTransfert()
           ? Boolean(etat.bouteilleSrcId)
@@ -548,6 +638,9 @@ export async function ouvrirWizard(ctx, options = {}) {
         return etat.statutControle === 'SANS_OBJET'
           || Boolean(etat.statutControle && etat.detecteurId);
       case 6:
+        // IM-14 : « Autre » comme cause exige le texte libre
+        if (etat.causeMouvement === 'AUTRE'
+            && !etat.causeDetail.trim()) return false;
         return !finalisationEnCours;
       default:
         return false;
@@ -559,7 +652,7 @@ export async function ouvrirWizard(ctx, options = {}) {
     return Boolean(etat.carteType || etat.technicienId
       || etat.bouteilleSrcId || etat.bouteilleDstId
       || etat.peseeAvant !== '' || etat.peseeApres !== ''
-      || etat.statutControle
+      || etat.statutControle || etat.causeMouvement
       || (etat.machineId && etat.machineId !== (options.machineId || null)));
   }
 
@@ -736,6 +829,29 @@ export async function ouvrirWizard(ctx, options = {}) {
         + (etat.demantelement ? ' checked' : '') + '>'
         + '<span>Démantèlement de l’équipement (récupération totale)</span>'
         + '</label>';
+    } else if (etat.carteType === 'autre') {
+      // IM-15 : sous-choix de la nature d'intervention
+      const optionsNature = ['<option value="">— Choisir la nature —</option>']
+        .concat(Object.keys(NATURES_AUTRE).map(function (cle) {
+          const selectionne = cle === etat.natureAutre ? ' selected' : '';
+          return '<option value="' + esc(cle) + '"' + selectionne + '>'
+            + esc(NATURES_AUTRE[cle].libelle) + '</option>';
+        })).join('');
+      interrupteur = '<div class="wizard-bloc champ">'
+        + '<label for="wizard-nature-autre">Nature de l’intervention</label>'
+        + '<select id="wizard-nature-autre">' + optionsNature + '</select>'
+        + '</div>'
+        + (etat.natureAutre === 'AUTRE'
+          ? '<div class="wizard-bloc champ">'
+            + '<label for="wizard-nature-detail">Préciser l’intervention</label>'
+            + '<input type="text" id="wizard-nature-detail" maxlength="120"'
+            + ' value="' + esc(etat.natureAutreDetail) + '"'
+            + ' placeholder="Ex. : remplacement d’un flexible de liaison">'
+            + '</div>'
+          : '')
+        + '<p class="wizard-sens">L’intervention est tracée au registre '
+        + 'comme un mouvement de fluide (la bouteille source se vide dans '
+        + 'la machine) ; sa nature est reportée sur la fiche d’intervention.</p>';
     }
 
     // Select « Technicien intervenant »
@@ -770,6 +886,8 @@ export async function ouvrirWizard(ctx, options = {}) {
         const nouveau = bouton.getAttribute('data-carte-type');
         if (nouveau !== etat.carteType) {
           etat.carteType = nouveau;
+          etat.natureAutre = null;
+          etat.natureAutreDetail = '';
           etat.machineId = options.machineId || null;
           etat.bouteilleSrcId = null;
           etat.bouteilleDstId = null;
@@ -785,6 +903,22 @@ export async function ouvrirWizard(ctx, options = {}) {
       caseChoix.addEventListener('change', function () {
         if (etat.carteType === 'charge') etat.premiereCharge = caseChoix.checked;
         if (etat.carteType === 'recuperation') etat.demantelement = caseChoix.checked;
+      });
+    }
+
+    // IM-15 : nature de l'intervention « Autre »
+    const selectNature = corpsEl.querySelector('#wizard-nature-autre');
+    if (selectNature) {
+      selectNature.addEventListener('change', function (evenement) {
+        etat.natureAutre = evenement.target.value || null;
+        rendreEtape(); // affiche/retire le champ « Préciser »
+      });
+    }
+    const champNatureDetail = corpsEl.querySelector('#wizard-nature-detail');
+    if (champNatureDetail) {
+      champNatureDetail.addEventListener('input', function (evenement) {
+        etat.natureAutreDetail = evenement.target.value;
+        majPied();
       });
     }
 
@@ -840,8 +974,10 @@ export async function ouvrirWizard(ctx, options = {}) {
       // Transfert : choisir la bouteille SOURCE
       const sources = bouteillesSourcesTransfert();
       if (!sources.length) {
-        corpsEl.innerHTML = bandeauErreur('Aucune bouteille contenant du '
-          + 'fluide n’est disponible : transfert impossible.');
+        corpsEl.innerHTML = bandeauErreur('Aucune bouteille au fluide '
+          + 'utilisable n’est disponible en stock : transfert impossible. '
+          + 'Sont exclues les bouteilles sorties du stock (retournées, '
+          + 'déchet) et les fluides récupérés sans décision « réutilisable ».');
         return;
       }
       corpsEl.innerHTML =
@@ -901,16 +1037,21 @@ export async function ouvrirWizard(ctx, options = {}) {
       let message;
       if (estCharge()) {
         message = 'Aucune bouteille de ' + (machine ? machine.fluide : 'fluide')
-          + ' contenant du fluide n’est disponible en stock : charge impossible.';
+          + ' au fluide utilisable n’est disponible en stock : charge '
+          + 'impossible. Sont exclues les bouteilles sorties du stock '
+          + '(retournées, déchet), les fluides déclarés déchet ou à analyser '
+          + 'et les fluides récupérés sans décision « réutilisable ».';
       } else if (estRecuperation()) {
         message = 'Aucune bouteille de récupération compatible '
-          + (machine ? machine.fluide : '') + ' en stock : créez-en une dans '
-          + '« Stock bouteilles » avant de récupérer.';
+          + (machine ? machine.fluide : '') + ' encore en stock avec de la '
+          + 'place restante : créez-en une dans « Stock bouteilles » avant '
+          + 'de récupérer (les bouteilles retournées ou parties en BSFF '
+          + 'sont exclues).';
       } else {
         const source = bouteilleSrc();
         message = 'Aucune bouteille de destination compatible '
-          + (source ? source.fluide : '') + ' avec de la place disponible : '
-          + 'transfert impossible.';
+          + (source ? source.fluide : '') + ' encore en stock avec de la '
+          + 'place disponible : transfert impossible.';
       }
       corpsEl.innerHTML = bandeauErreur(message);
       return;
@@ -1110,7 +1251,15 @@ export async function ouvrirWizard(ctx, options = {}) {
     const lignes = [];
     lignes.push(ligneRecap('Type', chipType(type)
       + (etat.carteType === 'recuperation' && etat.demantelement
-        ? ' <span class="choix-detail">(démantèlement)</span>' : '')));
+        ? ' <span class="choix-detail">(démantèlement)</span>' : '')
+      // IM-15 : nature réelle d'une « Autre intervention »
+      + (etat.carteType === 'autre' && etat.natureAutre
+        ? ' <span class="choix-detail">('
+          + esc(etat.natureAutre === 'AUTRE'
+            ? etat.natureAutreDetail.trim().toLowerCase() || 'autre'
+            : NATURES_AUTRE[etat.natureAutre].court.toLowerCase())
+          + ')</span>'
+        : '')));
     if (machine) {
       lignes.push(ligneRecap('Machine',
         esc(machine.code + ' — ' + machine.designation)));
@@ -1152,15 +1301,72 @@ export async function ouvrirWizard(ctx, options = {}) {
         + 'pour validation par un référent.')
       : '';
 
+    // IM-14 : cause du mouvement (cadre 14 du CERFA), facultative
+    const optionsCause = ['<option value="">— Non précisée —</option>']
+      .concat(Object.keys(CAUSES_MOUVEMENT).map(function (cle) {
+        const selectionne = cle === etat.causeMouvement ? ' selected' : '';
+        return '<option value="' + esc(cle) + '"' + selectionne + '>'
+          + esc(CAUSES_MOUVEMENT[cle]) + '</option>';
+      })).join('');
+    const blocCause = '<div class="wizard-bloc champ">'
+      + '<label for="wizard-cause">Cause du mouvement</label>'
+      + '<select id="wizard-cause">' + optionsCause + '</select>'
+      + '</div>'
+      + '<div class="wizard-bloc champ" id="wizard-bloc-cause-detail"'
+      + (etat.causeMouvement === 'AUTRE' ? '' : ' style="display:none"') + '>'
+      + '<label for="wizard-cause-detail">Préciser la cause</label>'
+      + '<input type="text" id="wizard-cause-detail" maxlength="200"'
+      + ' value="' + esc(etat.causeDetail) + '"'
+      + ' placeholder="Ex. : casse d’un bouchon fusible">'
+      + '</div>';
+
     corpsEl.innerHTML =
       '<div class="wizard-recap">' + lignes.join('') + '</div>'
       + bandeauEleve
+      + blocCause
       // Le libellé « Signature du technicien » est rendu par creerSignature
       + '<div id="wizard-signature"></div>'
       + '<div class="wizard-bloc" id="wizard-finalisation-erreurs"></div>';
 
+    // IM-14 : listeneurs SANS re-rendu (le canvas de signature serait
+    // effacé) — bascule d'affichage directe du champ « Préciser »
+    const selectCause = corpsEl.querySelector('#wizard-cause');
+    const blocCauseDetail = corpsEl.querySelector('#wizard-bloc-cause-detail');
+    const champCauseDetail = corpsEl.querySelector('#wizard-cause-detail');
+    selectCause.addEventListener('change', function (evenement) {
+      etat.causeMouvement = evenement.target.value || null;
+      blocCauseDetail.style.display =
+        etat.causeMouvement === 'AUTRE' ? '' : 'none';
+      majPied();
+    });
+    champCauseDetail.addEventListener('input', function (evenement) {
+      etat.causeDetail = evenement.target.value;
+      majPied();
+    });
+
     // Canvas de signature (module développé en parallèle, API stable)
     signature = creerSignature(corpsEl.querySelector('#wizard-signature'));
+  }
+
+  /**
+   * IM-14 + IM-15 : texte transmis au champ causeMouvement du store
+   * (repris dans les observations du cadre 14 du CERFA). Nature de
+   * l'intervention (carte « Autre ») puis cause choisie, ou null.
+   */
+  function texteCause() {
+    const parties = [];
+    if (etat.carteType === 'autre' && etat.natureAutre) {
+      parties.push('Intervention : '
+        + (etat.natureAutre === 'AUTRE'
+          ? etat.natureAutreDetail.trim()
+          : NATURES_AUTRE[etat.natureAutre].court));
+    }
+    if (etat.causeMouvement) {
+      parties.push(etat.causeMouvement === 'AUTRE'
+        ? etat.causeDetail.trim()
+        : 'Cause : ' + CAUSES_MOUVEMENT[etat.causeMouvement]);
+    }
+    return parties.length ? parties.join(' · ') : null;
   }
 
   /* ----------------------------------------------------------
@@ -1195,7 +1401,7 @@ export async function ouvrirWizard(ctx, options = {}) {
           bouteilleDstId: estCharge() ? null : etat.bouteilleDstId,
           peseeAvantKg: Number(etat.peseeAvant),
           peseeApresKg: Number(etat.peseeApres),
-          causeMouvement: null,
+          causeMouvement: texteCause(), // IM-14 (+ nature IM-15)
           controle: {
             statutControle: etat.statutControle,
             detecteurId: etat.detecteurId
@@ -1214,8 +1420,12 @@ export async function ouvrirWizard(ctx, options = {}) {
       }
 
       // 3. Validation si l'utilisateur courant en a le droit
+      let proposerDemantelement = false;
       if (peutValider) {
-        await store.validerMouvement(idMouvementCree, utilisateur.id);
+        const valide = await store.validerMouvement(idMouvementCree, utilisateur.id);
+        // IM-4 : le store signale une machine vidée par la
+        // récupération-démantèlement — proposition, rien d'appliqué
+        proposerDemantelement = Boolean(valide && valide.proposerDemantelement);
         toast('Mouvement ' + numeroMouvementCree
           + ' validé et inscrit au registre.', 'succes');
       } else {
@@ -1238,6 +1448,12 @@ export async function ouvrirWizard(ctx, options = {}) {
       fermer();
       ctx.naviguer('mouvements');
 
+      // IM-4 : machine vide de fluide → proposer le démantèlement
+      const machineVidee = machineChoisie();
+      if (proposerDemantelement && machineVidee) {
+        ouvrirPropositionDemantelement(machineVidee);
+      }
+
     } catch (erreur) {
       // Erreur du store : affichée SANS fermer le wizard
       finalisationEnCours = false;
@@ -1246,6 +1462,48 @@ export async function ouvrirWizard(ctx, options = {}) {
         ? erreur.message
         : 'Erreur inattendue lors de l’enregistrement du mouvement.');
     }
+  }
+
+  /**
+   * IM-4 : après une récupération-démantèlement validée qui vide la
+   * machine, propose de la déclarer démantelée (définitif). Ouverte
+   * APRÈS la fermeture du wizard, au-dessus de la vue Mouvements.
+   * @param {object} machine - machine de l'instantané du wizard
+   */
+  function ouvrirPropositionDemantelement(machine) {
+    const instance = modale({
+      titre: 'Machine vide de fluide',
+      contenuHtml: '<p class="modale-intro">La machine <strong>'
+        + esc(machine.code + ' — ' + machine.designation)
+        + '</strong> est vide de fluide. La déclarer démantelée ?</p>'
+        + '<p class="wizard-sens">Le démantèlement est définitif : la '
+        + 'machine sort du parc suivi (statut « Démantelée »).</p>'
+        + '<div id="wizard-erreur-demantelement"></div>',
+      actionsHtml: '<button type="button" class="btn btn-secondaire"'
+        + ' data-action="conserver">Non, la conserver</button>'
+        + '<button type="button" class="btn btn-primaire"'
+        + ' data-action="demanteler">Oui, la déclarer démantelée</button>'
+    });
+    const racine = document.getElementById('zone-modales') || document.body;
+    racine.querySelector('[data-action="conserver"]')
+      .addEventListener('click', function () { instance.fermer(); });
+    racine.querySelector('[data-action="demanteler"]')
+      .addEventListener('click', async function () {
+        try {
+          await store.demantelerMachine(machine.id,
+            utilisateur.prenom + ' ' + utilisateur.nom);
+          toast('Machine ' + machine.code + ' déclarée démantelée.', 'succes');
+          instance.fermer();
+          ctx.naviguer('mouvements'); // rafraîchit la vue courante
+        } catch (erreur) {
+          const zoneErreur = racine.querySelector('#wizard-erreur-demantelement');
+          if (zoneErreur) {
+            zoneErreur.innerHTML = bandeauErreur(erreur && erreur.message
+              ? erreur.message
+              : 'Impossible de démanteler cette machine.');
+          }
+        }
+      });
   }
 
   /* ----------------------------------------------------------

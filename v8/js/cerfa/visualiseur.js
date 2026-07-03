@@ -7,6 +7,8 @@
 // Le corps affiche LE PDF OFFICIEL REMPLI retourné par
 // genererCerfaPdf, rendu par PDF.js sur canvas (feuille A4
 // blanche centrée, netteté ×2, largeur adaptée à l'écran).
+// PDF.js 4.10.38 build legacy (IM-18, ≥ 4.2.67 : CVE-2024-4367
+// corrigée), module ES chargé paresseusement par import().
 // ============================================================
 
 import { genererCerfaPdf } from './generateur.js';
@@ -22,34 +24,32 @@ const LARGEUR_FEUILLE_MAX = 900;
 let promessePdfJs = null;
 
 /**
- * Charge PDF.js paresseusement : injection unique d'une balise
- * <script> (UMD → window.pdfjsLib), puis réglage du workerSrc.
+ * Charge PDF.js paresseusement (IM-18 : version 4.x, build legacy).
+ * PDF.js 4.x est distribué en module ES (.mjs) : import() dynamique
+ * — plus de balise <script> ni de global window.pdfjsLib. Le module
+ * n'est chargé QU'À l'ouverture du visualiseur (paresseux).
  * @returns {Promise<object>} l'espace de noms pdfjsLib
  */
 async function chargerPdfJs() {
-  if (!window.pdfjsLib) {
-    if (!promessePdfJs) {
-      promessePdfJs = new Promise(function (resoudre, rejeter) {
-        const balise = document.createElement('script');
-        balise.src = new URL('../lib/pdf.min.js', import.meta.url).href;
-        balise.onload = resoudre;
-        balise.onerror = function () {
-          rejeter(new Error('Impossible de charger PDF.js.'));
-        };
-        document.head.appendChild(balise);
-      });
-    }
-    await promessePdfJs;
-    if (!window.pdfjsLib) {
-      throw new Error('PDF.js chargé mais introuvable (window.pdfjsLib).');
-    }
+  if (!promessePdfJs) {
+    promessePdfJs = import(
+      new URL('../lib/pdf.min.mjs', import.meta.url).href
+    ).catch(function (erreur) {
+      promessePdfJs = null; // nouvel essai possible à la prochaine ouverture
+      throw new Error('Impossible de charger PDF.js. (' +
+        (erreur && erreur.message ? erreur.message : erreur) + ')');
+    });
   }
-  // Worker dédié au rendu (chemin v8 autonome), réglé une seule fois
-  if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
-    window.pdfjsLib.GlobalWorkerOptions.workerSrc =
-      new URL('../lib/pdf.worker.min.js', import.meta.url).href;
+  const pdfjs = await promessePdfJs;
+  if (!pdfjs || typeof pdfjs.getDocument !== 'function') {
+    throw new Error('PDF.js chargé mais inutilisable (getDocument absent).');
   }
-  return window.pdfjsLib;
+  // Worker dédié au rendu (module .mjs, chemin v8 autonome), réglé une fois
+  if (!pdfjs.GlobalWorkerOptions.workerSrc) {
+    pdfjs.GlobalWorkerOptions.workerSrc =
+      new URL('../lib/pdf.worker.min.mjs', import.meta.url).href;
+  }
+  return pdfjs;
 }
 
 /* ============================================================
@@ -189,7 +189,13 @@ function injecterStyles() {
  * @param {HTMLElement} conteneurPages — zone .cerfa-visu-pages
  */
 async function rendrePages(pdfjs, octets, conteneurPages) {
-  const document_ = await pdfjs.getDocument({ data: octets }).promise;
+  // isEvalSupported:false : jamais d'évaluation de code embarqué dans
+  // un PDF (défense en profondeur — règle « ne jamais rendre un PDF
+  // non généré par l'application », cf. audit IM-18).
+  const document_ = await pdfjs.getDocument({
+    data: octets,
+    isEvalSupported: false
+  }).promise;
   const largeurDisponible = Math.max(
     280, conteneurPages.clientWidth || window.innerWidth - 32);
   const largeurCible = Math.min(largeurDisponible, LARGEUR_FEUILLE_MAX);

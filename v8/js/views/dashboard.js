@@ -120,6 +120,22 @@ const STYLES_VUE = `
     border-bottom: 1px solid var(--bordure-2);
   }
   .tdb-alerte:last-child { border-bottom: none; padding-bottom: 2px; }
+  /* IM-2(c) : ligne d'alerte cliquable → navigue vers ctx.cible.vue */
+  .tdb-alerte-lien {
+    cursor: pointer;
+    border-radius: var(--rayon-bouton);
+    margin: 0 -8px;
+    padding: 10px 8px;
+  }
+  .tdb-alerte-lien:last-child { padding-bottom: 8px; }
+  .tdb-alerte-lien:hover,
+  .tdb-alerte-lien:focus-visible {
+    background: var(--fond-2);
+  }
+  .tdb-alerte-lien:focus-visible {
+    outline: 2px solid var(--accent-fort);
+    outline-offset: -2px;
+  }
   .tdb-point {
     width: 9px;
     height: 9px;
@@ -209,6 +225,13 @@ function peutAfficherCerfa(mouvement) {
  * Bandeau « Mode Officiel » (CR-6) : rend visible et testable, dès la Démo,
  * le contrat de blocage §7.2 — sinon `peutPasserEnOfficiel()` n'est qu'une
  * donnée calculée dans le vide, jamais montrée à l'écran.
+ * IM-2 : pas de doublon visuel avec la carte « Alertes réglementaires »
+ * malgré un recoupement de fond assumé (ex. écart de balance matière non
+ * justifié peut apparaître dans les deux) — les deux blocs répondent à une
+ * question différente : « que faut-il traiter maintenant » (alertes,
+ * cliquables vers leur vue) vs « qu'est-ce qui bloque le mode Officiel »
+ * (bandeau, prérequis figés). Emplacement (sous les KPI, avant les colonnes)
+ * et gabarit (bandeau pleine largeur vs carte à points) déjà différenciés.
  * @param {{ok: boolean, motifs: string[]}} etatOfficiel
  * @returns {string} HTML
  */
@@ -232,12 +255,17 @@ function bandeauModeOfficiel(etatOfficiel) {
 /**
  * Ligne d'alerte réglementaire : point coloré selon le niveau,
  * titre en gras, détail en gris.
+ * IM-2(c) : chaque ligne porte `alerte.cible` (vue + id éventuel) et devient
+ * un lien accessible (role=link, tabindex, activable au clic et à l'Entrée).
  * @param {object} alerte — alerte du store
  * @returns {string} HTML
  */
 function ligneAlerte(alerte) {
   const classePoint = alerte.niveau === 'CRITIQUE' ? 'tdb-point-critique' : 'tdb-point-important';
-  return '<div class="tdb-alerte">'
+  const cible = alerte.cible || {};
+  return '<div class="tdb-alerte tdb-alerte-lien" role="link" tabindex="0" '
+    + 'data-vue="' + esc(cible.vue || '') + '" data-id="' + esc(cible.id || '') + '" '
+    + 'aria-label="' + esc(alerte.titre) + ' — ' + esc(alerte.detail) + '">'
     + '<span class="tdb-point ' + classePoint + '" aria-hidden="true"></span>'
     + '<div>'
     + '<div class="tdb-alerte-titre">' + esc(alerte.titre) + '</div>'
@@ -357,6 +385,22 @@ export async function render(conteneur, ctx) {
   conteneur.querySelectorAll('.tdb-btn-cerfa').forEach(function (bouton) {
     bouton.addEventListener('click', function () {
       ouvrirCerfa(ctx, { source: 'mouvement', id: bouton.dataset.id });
+    });
+  });
+
+  // IM-2(c) : lignes d'alerte cliquables → naviguent vers leur cible
+  // (clic souris ou clavier, la cible étant un rôle « link »).
+  conteneur.querySelectorAll('.tdb-alerte-lien').forEach(function (ligne) {
+    const vueCible = ligne.dataset.vue;
+    if (!vueCible) return;
+    ligne.addEventListener('click', function () {
+      naviguer(vueCible);
+    });
+    ligne.addEventListener('keydown', function (evenement) {
+      if (evenement.key === 'Enter' || evenement.key === ' ') {
+        evenement.preventDefault();
+        naviguer(vueCible);
+      }
     });
   });
 }

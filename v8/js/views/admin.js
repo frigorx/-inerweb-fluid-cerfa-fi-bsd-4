@@ -2,14 +2,15 @@
 // inerWeb Fluide v8 — vue « Administration » (Phase C, édition)
 // Dossier opérateur (cadre 1 du CERFA) éditable, suivi d'audit
 // organisme et non-conformités, renvoi vers le registre du
-// personnel, clients/détenteurs (cadre 2, lecture seule ici).
+// personnel, clients/détenteurs (cadre 2, création et édition — IM-11).
 // ============================================================
 
-import { enteteVue, toast, ICONES } from './communs.js';
+import { enteteVue, ICONES } from './communs.js';
 import { esc, fmtDate } from '../core/utils.js';
 import { ouvrirFormEtablissement } from '../modales/etablissement-form.js';
 import { ouvrirFormAudit, ouvrirFormNonConformite, ouvrirFormSolderNonConformite }
   from '../modales/audit-form.js';
+import { ouvrirFormClient } from '../modales/client-form.js';
 
 export const titre = 'Administration';
 
@@ -252,7 +253,8 @@ function ligneClient(client) {
     + ' · SIRET <span class="mono">' + esc(client.siret) + '</span></span>'
     + '</div>'
     + '<span class="chip chip-gris">' + esc(compteur) + '</span>'
-    + '<button type="button" class="btn btn-secondaire btn-petit" data-action="modifier">Modifier</button>'
+    + '<button type="button" class="btn btn-secondaire btn-petit" '
+    + 'data-action="modifier-client" data-id="' + esc(client.id) + '">Modifier</button>'
     + '</li>';
 }
 
@@ -268,6 +270,8 @@ function carteClients(clients) {
     + '<p class="carte-rappel">Détenteurs des équipements suivis dans le parc.</p>'
     + '</div>'
     + '</div>'
+    + '<button type="button" class="btn btn-contour btn-petit" data-action="ajouter-client">'
+    + ICONES.plus + 'Ajouter</button>'
     + '</div>'
     + '<ul class="liste">'
     + (lignes || '<li><span class="liste-detail">Aucun détenteur enregistré.</span></li>')
@@ -349,10 +353,20 @@ export async function render(conteneur, ctx) {
       });
     }
 
-    // Clients : édition non encore disponible (hors périmètre de cette tâche)
-    conteneur.querySelectorAll('[data-action="modifier"]').forEach((bouton) => {
-      bouton.addEventListener('click', () => {
-        toast('La modification des détenteurs sera disponible prochainement.', 'info');
+    // IM-11 : création / modification des clients-détenteurs.
+    const boutonAjouterClient = conteneur.querySelector('[data-action="ajouter-client"]');
+    if (boutonAjouterClient) {
+      boutonAjouterClient.addEventListener('click', async () => {
+        const enregistre = await ouvrirFormClient(ctx, null);
+        if (enregistre) await rafraichir();
+      });
+    }
+
+    conteneur.querySelectorAll('[data-action="modifier-client"]').forEach((bouton) => {
+      bouton.addEventListener('click', async () => {
+        const client = clients.find((c) => c.id === bouton.dataset.id) || null;
+        const enregistre = await ouvrirFormClient(ctx, client);
+        if (enregistre) await rafraichir();
       });
     });
   }

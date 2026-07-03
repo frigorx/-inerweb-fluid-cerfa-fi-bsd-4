@@ -56,7 +56,8 @@ export function zonePiecesJointes(conteneur, ctx,
           <strong>Ajouter une pièce jointe</strong>
           <span>Cliquer ou déposer un fichier ici (PDF ou image, 5 Mo max.)</span>
         </span>
-        <input type="file" accept="${ACCEPT_FICHIERS}" multiple hidden>
+        <input type="file" accept="${ACCEPT_FICHIERS}" multiple hidden
+          aria-label="Ajouter une pièce jointe (PDF ou image, 5 Mo maximum)">
       </label>`}
       <div class="pj-message" hidden></div>
     </div>`;
@@ -91,10 +92,12 @@ export function zonePiecesJointes(conteneur, ctx,
         </div>
         <div class="pj-actions">
           <button type="button" class="pj-telecharger"
-            title="Télécharger ${esc(pj.nomFichier)}">${ICONES.telecharger}</button>
+            title="Télécharger ${esc(pj.nomFichier)}"
+            aria-label="Télécharger ${esc(pj.nomFichier)}">${ICONES.telecharger}</button>
           ${lectureSeule ? '' : `
           <button type="button" class="pj-supprimer"
-            title="Supprimer ${esc(pj.nomFichier)}">${ICONES.croix}</button>`}
+            title="Supprimer ${esc(pj.nomFichier)}"
+            aria-label="Supprimer ${esc(pj.nomFichier)}">${ICONES.croix}</button>`}
         </div>
       </div>`).join('');
   }

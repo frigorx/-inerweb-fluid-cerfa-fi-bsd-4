@@ -281,6 +281,143 @@ verifier('formation : PDF avec signature plus lourd que le vierge',
   formation.octets.length > 10000);
 
 // ============================================================
+// 4 bis. IM-13 + IM-14 — récupération vers DÉCHET : cadre 12
+//    complet (ligne « autre déchet » + code déchet européen) et
+//    cause du mouvement reportée au cadre 14 (« Cause : … »).
+// ============================================================
+
+// Fluide NON inflammable (R-404A, classe A1) : B3 (bouteille de
+// récupération) reçoit la vidange de M1, puis son fluide est déclaré
+// DÉCHET → UN 1078 + « autre déchet » code 14 06 01.
+const recupDechet = await store.creerMouvement({
+  type: 'RECUPERATION_MAINTENANCE',
+  mode: 'FORMATION',
+  machineId: 'M1',
+  bouteilleDstId: 'B3',
+  peseeAvantKg: 16.8,
+  peseeApresKg: 17.0,
+  causeMouvement: 'Vidange avant remplacement du compresseur',
+  technicien: 'Sophie Bianchi'
+});
+await store.soumettreMouvement(recupDechet.id);
+await store.validerMouvement(recupDechet.id, 'per-fh');
+await store.deciderFluideRecupere('B3', 'DECHET', 'per-fh');
+
+const dechet = await genererCerfaPdf(store, {
+  source: 'mouvement', id: recupDechet.id
+});
+const d = await relire(dechet.octets);
+verifier('IM-14 : cause reportée au cadre 14 en préfixe « Cause : »',
+  d.texte('14_Observations')
+    .includes('Cause : Vidange avant remplacement du compresseur'));
+verifier('cadre 11 : décision DÉCHET → 11_QD = 0,20 (QE vide)',
+  d.texte('11_QD') === '0,20' && d.texte('11_QE') === '' &&
+  d.texte('11_QDE') === '0,20');
+verifier('IM-13 : Case_12_UN1078 cochée (R-404A classe A1)',
+  d.coche('Case_12_UN1078') && !d.coche('Case_12_UN3161'));
+verifier('IM-13 : Case_12_Autre140601 cochée (déchet non inflammable)',
+  d.coche('Case_12_Autre140601') && !d.coche('Case_12_Autre160504'));
+verifier('IM-13 : champ texte = code déchet 14 06 01',
+  d.texte('Autre-FF-NON-inflammable').includes('14 06 01') &&
+  d.texte('Autre-FF-inflammable') === '');
+
+// Fluide INFLAMMABLE (R-455A, classe A2L) : nouvelle bouteille de
+// récupération, vidange de M5, décision DÉCHET → UN 3161 + code 16 05 04.
+const bouteilleA2L = await store.createBouteille({
+  type: 'RECUPERATION',
+  fluide: 'R-455A',
+  tareKg: 12.0,
+  masseBruteKg: 12.0,
+  contenanceMaxKg: 10,
+  operateur: 'per-fh'
+});
+const recupInflammable = await store.creerMouvement({
+  type: 'RECUPERATION_MAINTENANCE',
+  mode: 'FORMATION',
+  machineId: 'M5',
+  bouteilleDstId: bouteilleA2L.id,
+  peseeAvantKg: 12.0,
+  peseeApresKg: 12.1,
+  technicien: 'Sophie Bianchi'
+});
+await store.soumettreMouvement(recupInflammable.id);
+await store.validerMouvement(recupInflammable.id, 'per-fh');
+await store.deciderFluideRecupere(bouteilleA2L.id, 'DECHET', 'per-fh');
+
+const dechetInf = await genererCerfaPdf(store, {
+  source: 'mouvement', id: recupInflammable.id
+});
+const di = await relire(dechetInf.octets);
+verifier('IM-13 : Case_12_UN3161 + Case_12_Autre160504 (A2L déchet)',
+  di.coche('Case_12_UN3161') && di.coche('Case_12_Autre160504') &&
+  !di.coche('Case_12_UN1078') && !di.coche('Case_12_Autre140601'));
+verifier('IM-13 : champ texte = code déchet 16 05 04',
+  di.texte('Autre-FF-inflammable').includes('16 05 04') &&
+  di.texte('Autre-FF-NON-inflammable') === '');
+verifier('cadre 11 : 11_QD = 0,10 (déchet inflammable)',
+  di.texte('11_QD') === '0,10' && di.texte('11_QE') === '');
+
+// ============================================================
+// 4 ter. IM-15 (volet générateur) — types ASSEMBLAGE /
+//    MODIFICATION / AUTRE : cases du cadre 4 + champ « Autre ».
+//    Le store de démo ne crée pas encore ces types (volet wizard) :
+//    un mouvement validé fictif est injecté PAR-DESSUS le store réel
+//    (Proxy sur getMouvements), le générateur ne voyant que ses
+//    accesseurs.
+// ============================================================
+function storeAvecMouvement(mouvementFictif) {
+  return new Proxy(store, {
+    get(cible, propriete) {
+      if (propriete === 'getMouvements') {
+        return async () =>
+          [...(await cible.getMouvements()), mouvementFictif];
+      }
+      const valeur = cible[propriete];
+      return typeof valeur === 'function' ? valeur.bind(cible) : valeur;
+    }
+  });
+}
+
+const CASES_CADRE_4 = ['Case_Assemblage', 'Case_MiseService', 'Case_Modif',
+  'Case_Maintenance', 'Case_CtrlPerio', 'Case_CtrlNonPerio',
+  'Case_Demantel', 'Case_Autre'];
+const CAS_IM15 = [
+  { type: 'ASSEMBLAGE', caseAttendue: 'Case_Assemblage' },
+  { type: 'MODIFICATION', caseAttendue: 'Case_Modif' },
+  { type: 'AUTRE', caseAttendue: 'Case_Autre' }
+];
+for (const { type, caseAttendue } of CAS_IM15) {
+  const fictif = {
+    id: `mvt-im15-${type.toLowerCase()}`,
+    numero: `TEST-${type}`,
+    date: '2026-07-01',
+    mode: 'FORMATION',
+    type,
+    machineId: 'M1',
+    quantiteKg: null,
+    technicien: 'Sophie Bianchi',
+    causeMouvement: type === 'AUTRE'
+      ? 'Rinçage du circuit à l’azote' : null,
+    statut: 'VALIDE'
+  };
+  const pdfType = await genererCerfaPdf(storeAvecMouvement(fictif), {
+    source: 'mouvement', id: fictif.id
+  });
+  const t = await relire(pdfType.octets);
+  verifier(`IM-15 : ${type} → ${caseAttendue} cochée, les 7 autres non`,
+    t.coche(caseAttendue) &&
+    CASES_CADRE_4.filter((n) => n !== caseAttendue)
+      .every((n) => !t.coche(n)));
+  if (type === 'AUTRE') {
+    verifier('IM-15 : champ « Autre » du cadre 4 renseigné (type AUTRE)',
+      t.texte('Autre') !== '');
+    verifier('IM-15 : la cause du type AUTRE est au cadre 14 (préfixe)',
+      t.texte('14_Observations')
+        .includes('Cause : Rinçage du circuit à l’azote'));
+  }
+}
+
+// ============================================================
 // 5. Couverture : les 72 champs officiels de SPEC-CERFA sont
 //    TOUS traités par le module générateur (aucun oubli possible)
 // ============================================================

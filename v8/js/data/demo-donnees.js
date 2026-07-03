@@ -490,7 +490,7 @@ export const DEMO = {
       activitesAutorisees: ['MISE_EN_SERVICE', 'MAINTENANCE', 'CONTROLE',
         'RECUPERATION', 'DEMANTELEMENT'],
       actif: true,
-      email: 'frederic.henninot@lycee-raynaud.fr'
+      email: 'frederic.henninot@exemple.fr'
     },
     {
       id: 'per-sb',
@@ -507,7 +507,7 @@ export const DEMO = {
       activitesAutorisees: ['MISE_EN_SERVICE', 'MAINTENANCE', 'CONTROLE',
         'RECUPERATION'],
       actif: true,
-      email: 'sophie.bianchi@lycee-raynaud.fr'
+      email: 'sophie.bianchi@exemple.fr'
     },
     {
       id: 'per-jm',
@@ -647,6 +647,9 @@ export const DEMO = {
   inventaires: [],
   justificationsEcarts: [],
   piecesJointes: [],
+  // IM-9 : retours de bouteilles consignées au fournisseur
+  // (alimente le poste « retours fournisseur » de la balance matière)
+  retoursFournisseur: [],
 
   // --------------------------------------------------------
   // Alertes du tableau de bord (4)

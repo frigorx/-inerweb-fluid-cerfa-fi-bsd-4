@@ -1,10 +1,12 @@
 // ============================================================
-// inerWeb Fluide — vue « Parc machines » (Phase A, lecture seule)
+// inerWeb Fluide — vue « Parc machines »
 // Grille de cartes machine : statut, fluide, charge, contrôles,
 // fidèle à la maquette validée (composant n° 4 de la charte).
+// IM-4 : cycle de vie piloté depuis la carte — arrêt, remise en
+// service, démantèlement (définitif, fluide récupéré d'abord).
 // ============================================================
 
-import { enteteVue, chipStatut, barreProgression, ICONES } from './communs.js';
+import { enteteVue, chipStatut, barreProgression, modale, toast, ICONES } from './communs.js';
 import { esc, fmtNombre, fmtKg, fmtTeq, teqCO2 } from '../core/utils.js';
 import { ouvrirFormMachine } from '../modales/machine-form.js';
 import { ouvrirPlaque } from '../documents/plaque-fgas.js';
@@ -100,13 +102,53 @@ const STYLES_VUE = `
   .machine-actions {
     display: flex;
     justify-content: flex-end;
+    flex-wrap: wrap;
     gap: 8px;
+  }
+
+  /* IM-4 : machine démantelée — carte grisée, aucune action */
+  .carte-machine-demantelee {
+    opacity: 0.55;
+    filter: grayscale(0.4);
   }
 </style>`;
 
 /* ============================================================
    Gabarit d'une carte machine
    ============================================================ */
+
+/**
+ * IM-4 : boutons d'action selon le statut de la machine.
+ * EN_SERVICE (et FUITE, CONTROLE_DU) : « Arrêter » ;
+ * ARRETEE : « Remettre en service » + « Démanteler » ;
+ * DEMANTELEE : aucune action (carte grisée, état définitif).
+ * @param {object} machine
+ * @returns {string} HTML (vide pour une machine démantelée)
+ */
+function actionsMachine(machine) {
+  if (machine.statut === 'DEMANTELEE') return '';
+
+  const id = esc(machine.id);
+  const nom = esc(machine.designation);
+  const boutons = [];
+
+  if (machine.statut === 'ARRETEE') {
+    boutons.push('<button type="button" class="btn btn-contour btn-petit" data-action="remettre-machine" '
+      + 'data-id="' + id + '" aria-label="Remettre en service ' + nom + '">Remettre en service</button>');
+    boutons.push('<button type="button" class="btn btn-danger-contour btn-petit" data-action="demanteler-machine" '
+      + 'data-id="' + id + '" aria-label="Démanteler ' + nom + '">Démanteler</button>');
+  } else {
+    boutons.push('<button type="button" class="btn btn-contour btn-petit" data-action="arreter-machine" '
+      + 'data-id="' + id + '" aria-label="Arrêter ' + nom + '">Arrêter</button>');
+  }
+
+  boutons.push('<button type="button" class="btn btn-contour btn-petit" data-action="plaque-machine" '
+    + 'data-id="' + id + '" aria-label="Plaque F-Gas de ' + nom + '">Plaque</button>');
+  boutons.push('<button type="button" class="btn btn-contour btn-petit" data-action="modifier-machine" '
+    + 'data-id="' + id + '" aria-label="Modifier ' + nom + '">Modifier</button>');
+
+  return '<div class="machine-actions">' + boutons.join('') + '</div>';
+}
 
 /**
  * Rend la carte d'une machine.
@@ -137,7 +179,12 @@ function carteMachine(machine, fluideParCode, clientParId) {
       + '<span class="sr-uniquement">Détection permanente de fuite</span>'
     : '';
 
-  return '<article class="carte carte-machine">'
+  // IM-4 : carte grisée pour une machine démantelée (état définitif)
+  const classeCarte = machine.statut === 'DEMANTELEE'
+    ? 'carte carte-machine carte-machine-demantelee'
+    : 'carte carte-machine';
+
+  return '<article class="' + classeCarte + '">'
 
     // Ligne 1 : désignation + statut
     + '<div class="machine-entete">'
@@ -172,15 +219,59 @@ function carteMachine(machine, fluideParCode, clientParId) {
     + '<span class="machine-detenteur">' + esc(detenteur) + '</span>'
     + '</div>'
 
-    // Actions discrètes : plaque F-Gas (aperçu/impression) + modification de la fiche
-    + '<div class="machine-actions">'
-    + '<button type="button" class="btn btn-contour btn-petit" data-action="plaque-machine" '
-    + 'data-id="' + esc(machine.id) + '" aria-label="Plaque F-Gas de ' + esc(machine.designation) + '">Plaque</button>'
-    + '<button type="button" class="btn btn-contour btn-petit" data-action="modifier-machine" '
-    + 'data-id="' + esc(machine.id) + '" aria-label="Modifier ' + esc(machine.designation) + '">Modifier</button>'
-    + '</div>'
+    // Actions selon le statut (IM-4) : cycle de vie + plaque + fiche
+    + actionsMachine(machine)
 
     + '</article>';
+}
+
+/* ============================================================
+   Actions du cycle de vie (IM-4)
+   ============================================================ */
+
+/** Nom complet de l'utilisateur courant, pour le journal du store. */
+async function operateurCourant(ctx) {
+  const utilisateur = await ctx.store.getUtilisateurCourant();
+  return utilisateur.prenom + ' ' + utilisateur.nom;
+}
+
+/**
+ * IM-4 : confirmation avant démantèlement (définitif). L'erreur du
+ * store — notamment « fluide à récupérer d'abord » — part en toast.
+ * @param {object} ctx
+ * @param {object} machine
+ * @param {() => void} surSucces — rafraîchit la vue après mutation
+ */
+function ouvrirConfirmationDemantelement(ctx, machine, surSucces) {
+  const instance = modale({
+    titre: 'Démanteler la machine',
+    contenuHtml: '<p style="font-size:13px;color:var(--texte-2)">'
+      + esc(machine.designation) + ' (' + esc(machine.code) + ') sortira '
+      + 'définitivement du parc : plus aucun mouvement de fluide ne sera '
+      + 'possible. Le fluide doit avoir été entièrement récupéré au '
+      + 'préalable (mouvement « Récupération — démantèlement »).</p>',
+    actionsHtml:
+      '<button type="button" class="btn btn-secondaire" data-role="fermer">Annuler</button>'
+      + '<button type="button" class="btn btn-danger-contour" data-role="confirmer">Démanteler</button>'
+  });
+
+  // La modale vient d'être injectée : on câble la dernière boîte ouverte
+  const boites = document.querySelectorAll('.modale');
+  const boite = boites[boites.length - 1];
+  if (!boite) return;
+
+  boite.querySelector('[data-role="fermer"]').addEventListener('click', instance.fermer);
+  boite.querySelector('[data-role="confirmer"]').addEventListener('click', async function () {
+    try {
+      await ctx.store.demantelerMachine(machine.id, await operateurCourant(ctx));
+      instance.fermer();
+      toast('Machine ' + machine.code + ' démantelée.', 'succes');
+      surSucces();
+    } catch (erreur) {
+      instance.fermer();
+      toast(erreur && erreur.message ? erreur.message : 'Erreur inattendue.', 'erreur');
+    }
+  });
 }
 
 /* ============================================================
@@ -203,9 +294,14 @@ export async function render(conteneur, ctx) {
   const fluideParCode = new Map(fluides.map(function (f) { return [f.code, f]; }));
   const clientParId = new Map(clients.map(function (c) { return [c.id, c]; }));
 
-  const pluriel = machines.length > 1 ? 's' : '';
-  const sousTitre = machines.length + ' équipement' + pluriel + ' suivi' + pluriel
-    + ' — charge, fluide, contrôles';
+  // IM-4 : le compteur d'en-tête ne compte que les machines en service
+  const enService = machines.filter(function (m) {
+    return m.statut !== 'ARRETEE' && m.statut !== 'DEMANTELEE';
+  }).length;
+  const pluriel = enService > 1 ? 's' : '';
+  const plurielSuivi = machines.length > 1 ? 's' : '';
+  const sousTitre = enService + ' équipement' + pluriel + ' en service sur '
+    + machines.length + ' suivi' + plurielSuivi + ' — charge, fluide, contrôles';
 
   const cartes = machines.length
     ? '<div class="grille-2">'
@@ -243,6 +339,44 @@ export async function render(conteneur, ctx) {
   conteneur.querySelectorAll('[data-action="plaque-machine"]').forEach(function (bouton) {
     bouton.addEventListener('click', function () {
       ouvrirPlaque(ctx, bouton.dataset.id);
+    });
+  });
+
+  // IM-4 : cycle de vie — l'index machine par id sert aux trois actions
+  const machineParId = new Map(machines.map(function (m) { return [m.id, m]; }));
+  const rafraichir = function () { render(conteneur, ctx); };
+
+  // Mise à l'arrêt (la machine sort des compteurs « en service »)
+  conteneur.querySelectorAll('[data-action="arreter-machine"]').forEach(function (bouton) {
+    bouton.addEventListener('click', async function () {
+      try {
+        const machine = await ctx.store.arreterMachine(bouton.dataset.id, await operateurCourant(ctx));
+        toast('Machine ' + machine.code + ' mise à l’arrêt.', 'succes');
+        rafraichir();
+      } catch (erreur) {
+        toast(erreur && erreur.message ? erreur.message : 'Erreur inattendue.', 'erreur');
+      }
+    });
+  });
+
+  // Remise en service d'une machine à l'arrêt
+  conteneur.querySelectorAll('[data-action="remettre-machine"]').forEach(function (bouton) {
+    bouton.addEventListener('click', async function () {
+      try {
+        const machine = await ctx.store.remettreEnService(bouton.dataset.id, await operateurCourant(ctx));
+        toast('Machine ' + machine.code + ' remise en service.', 'succes');
+        rafraichir();
+      } catch (erreur) {
+        toast(erreur && erreur.message ? erreur.message : 'Erreur inattendue.', 'erreur');
+      }
+    });
+  });
+
+  // Démantèlement : définitif, donc confirmation préalable
+  conteneur.querySelectorAll('[data-action="demanteler-machine"]').forEach(function (bouton) {
+    bouton.addEventListener('click', function () {
+      const machine = machineParId.get(bouton.dataset.id);
+      if (machine) ouvrirConfirmationDemantelement(ctx, machine, rafraichir);
     });
   });
 }

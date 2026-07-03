@@ -54,7 +54,9 @@ export async function ouvrirFormBsff(ctx, bouteilleId) {
     + ' · Masse nette actuelle : <span class="mono">' + esc(fmtNombre(bouteille.masseNetteKg, 2)) + ' kg</span></p>'
 
     + '<div class="bandeau-avertissement">' + ICONES.alerte
-    + '<span>La validation sort la bouteille du stock — opération tracée, non réversible.</span></div>'
+    + '<span>Opération tracée, non réversible. Remise totale : la bouteille '
+    + 'sort du stock. Remise partielle : le reliquat reste en stock, '
+    + 'toujours en statut déchet (délai de garde conservé).</span></div>'
 
     + '<div class="grille-form-2">'
     + '<div class="champ">'
@@ -89,6 +91,9 @@ export async function ouvrirFormBsff(ctx, bouteilleId) {
     + 'Ne peut pas dépasser le contenu de la bouteille (' + esc(fmtNombre(bouteille.masseNetteKg, 2)) + ' kg).</span>'
     + '</div>'
 
+    // IM-8 : reliquat annoncé en direct si la masse remise est partielle
+    + '<div id="zone-reliquat-bsff"></div>'
+
     + '</form>';
 
   const actionsHtml = ''
@@ -118,6 +123,30 @@ export async function ouvrirFormBsff(ctx, bouteilleId) {
   function effacerErreur() {
     zoneErreur.innerHTML = '';
   }
+
+  /**
+   * IM-8 : annonce en direct le reliquat qui restera en stock quand
+   * la masse remise saisie est inférieure au contenu de la bouteille,
+   * et explique ce qu'il devient (statut déchet, garde conservée).
+   */
+  const zoneReliquat = racine.querySelector('#zone-reliquat-bsff');
+  function majReliquat() {
+    const masse = Number(champMasse.value);
+    const partielle = Number.isFinite(masse) && masse > 0
+      && masse < bouteille.masseNetteKg - 1e-9;
+    if (!partielle) {
+      zoneReliquat.innerHTML = '';
+      return;
+    }
+    const reliquat = Math.round((bouteille.masseNetteKg - masse) * 1000) / 1000;
+    zoneReliquat.innerHTML = '<div class="bandeau-avertissement">' + ICONES.alerte
+      + '<span>Remise partielle : un reliquat de <strong>'
+      + esc(fmtNombre(reliquat, 2)) + ' kg</strong> restera en stock, '
+      + 'toujours en statut déchet (délai de garde conservé). '
+      + 'Un second BSFF sera nécessaire pour le solde.</span></div>';
+  }
+  champMasse.addEventListener('input', majReliquat);
+  majReliquat();
 
   boutonAnnuler.addEventListener('click', function () {
     instance.fermer();
@@ -170,7 +199,13 @@ export async function ouvrirFormBsff(ctx, bouteilleId) {
         operateur
       });
 
-      toast('BSFF créé — bouteille sortie du stock.', 'succes');
+      // IM-8 : le message dit ce qu'il advient réellement de la bouteille
+      const reliquatKg = Math.round(
+        (bouteille.masseNetteKg - masseRemiseKg) * 1000) / 1000;
+      toast(reliquatKg > 0
+        ? 'BSFF créé — reliquat de ' + fmtNombre(reliquatKg, 2)
+          + ' kg conservé en stock (statut déchet).'
+        : 'BSFF créé — bouteille sortie du stock.', 'succes');
 
       // Après création, propose d'attacher immédiatement le bordereau
       afficherFormPiecesJointes(bsff.id);

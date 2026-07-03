@@ -9,6 +9,31 @@
 - ⚠️ **Révocation à faire côté Apps Script** (les anciennes clés restent valides tant que
   `genererClesAPI()` n'a pas été exécutée puis le script redéployé) : procédure dans `SECURITE.md`.
 
+### 🛠️ Lot 2 — les 23 constats importants de l'audit corrigés (03/07)
+- **Cycle de vie complet des objets** : machines Arrêter / Remettre en service / Démanteler
+  (proposition automatique quand une récupération-démantèlement vide la machine ; démantelées
+  grisées et exclues des compteurs) ; bouteilles avec chip de statut, section « Sorties du
+  stock », bouton **Retour fournisseur** (alimente la balance) ; décision déchet **réversible** ;
+  **BSFF partiel** (reliquat exact en stock) ; filtres du wizard alignés sur les règles du
+  registre (plus de bouteilles interdites proposées).
+- **Alertes** : 3 familles ajoutées (bouteille sans pesée récente, mouvement à valider,
+  brouillon ancien), chaque alerte **cliquable** (navigue vers l'objet), badge rafraîchi après
+  toute mutation (abonnement au store) ; « prochain contrôle » calculable automatiquement.
+- **Pérennité** : années dynamiques partout (fini le 2026 figé), flux mensuels glissants.
+- **CERFA** : cadre 12 complété (codes déchets 14 06 01 / 16 05 04 selon classe), cause du
+  mouvement saisie au wizard et reportée au cadre 14, types Assemblage/Modification accessibles.
+- **Sécurité/durcissement** : **PDF.js 4.10.38** (CVE-2024-4367 corrigée, modules .mjs,
+  isEvalSupported désactivé), **polices auto-hébergées** (10 woff2, hors-ligne complet,
+  plus aucun appel à Google), **CSP stricte** dans index.html, MIME des pièces jointes validé
+  côté registre, e-mails de démo en domaine réservé.
+- **Accessibilité** : piégeage du focus dans les modales, contrastes corrigés, aria sur les
+  pièces jointes.
+- **Administration** : formulaire clients/détenteurs complet (SIRET validé) ; **vue « Audit en
+  5 minutes »** imprimable (tout ce que l'auditeur demande, sur une page, depuis le Bilan).
+- Qualité : 8 agents, **14 suites — ≈ 420 vérifications vertes** ; vérification navigateur
+  (visualiseur PDF.js 4 sous CSP : rendu 0,3 s ; polices locales ; alertes cliquables ;
+  création de détenteur).
+
 ### 🛠️ Lot 1 — les 6 critiques de l'audit corrigés (03/07)
 Suite à l'audit complet (`docs/AUDIT-2026-07-03.md`, note 7/10) :
 - **CR-1** : plus d'impasse — actions par statut sur les mouvements (Brouillon : reprendre dans

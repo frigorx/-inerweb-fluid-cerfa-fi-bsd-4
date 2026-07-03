@@ -4,6 +4,93 @@
    reset minimal, base typographique, scrollbars, animations.
    ============================================================ */
 
+/* ============================================================
+   Polices auto-hébergées (CF-9)
+   Sous-ensemble latin uniquement, poids réellement utilisés par
+   la charte. Fichiers dans v8/polices/ — aucun appel réseau externe
+   (hors-ligne complet, aucune IP transmise à un CDN de polices).
+   ============================================================ */
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../polices/ibm-plex-sans-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('../polices/ibm-plex-sans-500.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../polices/ibm-plex-sans-600.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../polices/ibm-plex-sans-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('../polices/space-grotesk-500.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../polices/space-grotesk-600.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../polices/space-grotesk-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../polices/ibm-plex-mono-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('../polices/ibm-plex-mono-500.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../polices/ibm-plex-mono-600.woff2') format('woff2');
+}
+
 :root {
   /* ---- Structure ---- */
   --marine-900: #0e2a47;   /* sidebar (fond), texte fort sur clair */
@@ -21,12 +108,12 @@
   --texte:        #1e293b;
   --texte-2:      #475569;
   --texte-3:      #64748b;
-  --texte-faible: #94a3b8;
+  --texte-faible: #66768d;  /* IM-21 : #94a3b8 (2,56:1) trop clair sur blanc, remonté à 4,6:1 AA */
 
   /* ---- Accent (turquoise) ---- */
-  --accent:        #12b5c9;  /* liens, actifs, icônes */
-  --accent-fort:   #0e93a3;  /* texte accent, survol */
-  --accent-clair:  #19c3d6;  /* dégradés */
+  --accent:        #12b5c9;  /* liens, actifs, icônes (jamais du texte seul sur blanc) */
+  --accent-fort:   #0a7482;  /* IM-21 : texte accent/survol, assombri de #0e93a3 (3,67:1) à 5,48:1 AA */
+  --accent-clair:  #19c3d6;  /* dégradés (aplats larges, pas de texte dessus) */
   --accent-fond:   #e0f7fa;  /* fonds de chips */
   --accent-fond-2: #f0fcfe;  /* fonds très clairs */
   --accent-halo:   #a5e9f1;  /* halos */
@@ -64,7 +151,9 @@
   --ombre-haute: 0 12px 32px rgba(15, 23, 42, .18);
 
   /* ---- Dégradés ---- */
-  --degrade-bouton:  linear-gradient(150deg, #19c3d6, #0e93a3);
+  /* IM-21 : bornes assombries (#19c3d6→#0e93a3 descendait à 2,86:1 avec du texte
+     blanc dessus) ; la nouvelle plage tient 4,5:1 AA sur toute la surface du bouton. */
+  --degrade-bouton:  linear-gradient(150deg, #0e7d8c, #0a6270);
   --degrade-sidebar: linear-gradient(150deg, #163c61, #0e2a47);
 }
 

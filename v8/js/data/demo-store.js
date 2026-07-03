@@ -12,6 +12,9 @@
 import { DEMO } from './demo-donnees.js';
 import { teqCO2, fmtDate, fmtKgSigne, genId, hasherEcriture }
   from '../core/utils.js';
+// IM-1 : fréquence réglementaire des contrôles d'étanchéité —
+// logique UNIQUE partagée avec le cadre 7 du CERFA (aucun doublon).
+import { calculerCadre7 } from '../cerfa/generateur.js';
 
 const CLE_STOCKAGE = 'inerweb-fluide-v8-demo';
 
@@ -23,6 +26,16 @@ const PJ_TAILLE_MAX = 5 * 1024 * 1024;
 
 /** Seuil au-delà duquel un écart de balance matière doit être justifié. */
 const SEUIL_ECART_KG = 0.01;
+
+/** IM-4 : tolérance de charge résiduelle pour démanteler (± 0,05 kg). */
+const TOLERANCE_CHARGE_RESIDUELLE_KG = 0.05;
+
+/**
+ * IM-19 : types MIME acceptés pour les pièces jointes — MÊME liste
+ * blanche que le composant d'interface (SVG exclu : risque XSS).
+ */
+const PJ_TYPES_MIME = ['application/pdf', 'image/png', 'image/jpeg',
+  'image/webp'];
 
 /** Types de personnes du registre du personnel (SPEC §5.2). */
 const TYPES_PERSONNE = ['ENSEIGNANT', 'ELEVE', 'SALARIE', 'SOUS_TRAITANT',
@@ -82,6 +95,20 @@ function aujourdHui() {
 function ajouterJours(iso, nbJours) {
   const [annee, mois, jour] = iso.split('-').map(Number);
   const d = new Date(annee, mois - 1, jour + nbJours);
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const j = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${j}`;
+}
+
+/**
+ * IM-1 : ajoute des mois à une date ISO, sans fuseau horaire.
+ * Un débordement de fin de mois est ramené au dernier jour du mois
+ * cible (31/01 + 1 mois → 28 ou 29/02, jamais le 3 mars).
+ */
+function ajouterMois(iso, nbMois) {
+  const [annee, mois, jour] = iso.split('-').map(Number);
+  const d = new Date(annee, mois - 1 + nbMois, jour);
+  if (d.getDate() !== jour) d.setDate(0);
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const j = String(d.getDate()).padStart(2, '0');
   return `${d.getFullYear()}-${m}-${j}`;
@@ -356,6 +383,28 @@ export function creerDemoStore() {
   let donnees = chargerDepuisStockage() || copier(DEMO);
 
   // --------------------------------------------------------
+  // IM-2 : abonnés au signal « données modifiées ». Simple liste
+  // de rappels, AUCUNE dépendance DOM (fonctionne sous Node).
+  // Chaque mutation réussie persiste PUIS notifie.
+  // --------------------------------------------------------
+  const abonnesChangement = new Set();
+
+  function notifierChangement() {
+    for (const rappel of [...abonnesChangement]) {
+      try {
+        rappel();
+      } catch {
+        // Un abonné défaillant ne doit jamais bloquer les autres
+      }
+    }
+  }
+
+  function persisterEtNotifier() {
+    persister(donnees);
+    notifierChangement();
+  }
+
+  // --------------------------------------------------------
   // Petits accès internes (références VIVES, usage interne)
   // --------------------------------------------------------
 
@@ -491,6 +540,14 @@ export function creerDemoStore() {
       if (!(bsff.dateRemise || '').startsWith(prefixe)) continue;
       const l = ligne(bsff.fluide);
       l.destructionsKg = arrondir(l.destructionsKg + bsff.masseRemiseKg);
+    }
+
+    // IM-9 : retours de bouteilles consignées au fournisseur dans l'année
+    for (const retour of donnees.retoursFournisseur || []) {
+      if (!(retour.date || '').startsWith(prefixe)) continue;
+      const l = ligne(retour.fluide);
+      l.retoursFournisseurKg =
+        arrondir(l.retoursFournisseurKg + retour.masseKg);
     }
 
     const lignes = [...parFluide.values()]
@@ -644,6 +701,36 @@ export function creerDemoStore() {
     machine.chargeActuelleKg = nouvelleCharge;
   }
 
+  /**
+   * IM-6 : une bouteille sortie du stock (retournée, déchet…) ne peut
+   * plus participer à un mouvement — ni comme source, ni comme
+   * destination de récupération.
+   */
+  function verifierBouteilleEnStock(bouteille, role) {
+    if (bouteille.statut !== 'EN_STOCK' && bouteille.statut !== 'EN_SERVICE') {
+      throw new Error(
+        `${role} ${bouteille.code} sortie du stock ` +
+        `(statut ${bouteille.statut}) : mouvement impossible.`);
+    }
+  }
+
+  /**
+   * IM-6 : une bouteille source de charge doit contenir du fluide
+   * UTILISABLE — jamais un fluide déclaré déchet ni en attente
+   * d'analyse.
+   */
+  function verifierSourceDeCharge(bouteille) {
+    verifierBouteilleEnStock(bouteille, 'Bouteille source');
+    if (bouteille.etatFluide === 'DECHET' ||
+        bouteille.decisionFluide === 'DECHET' ||
+        bouteille.decisionFluide === 'A_ANALYSER') {
+      throw new Error(
+        `Fluide de la bouteille ${bouteille.code} déclaré ` +
+        `${bouteille.decisionFluide === 'A_ANALYSER' ? 'à analyser' : 'déchet'}` +
+        ' : charge interdite (une décision « réutilisable » est requise).');
+    }
+  }
+
   /** Applique les règles métier et les effets d'une écriture SOUMISE. */
   function appliquerEffets(mouvement) {
     const avant = Number(mouvement.peseeAvantKg);
@@ -658,6 +745,7 @@ export function creerDemoStore() {
       const machine = trouverMachine(mouvement.machineId);
       const source = trouverBouteille(mouvement.bouteilleSrcId,
         'Bouteille source');
+      verifierSourceDeCharge(source); // IM-6
       if (source.fluide !== machine.fluide) {
         throw new Error(
           `Croisement de fluides interdit : bouteille ${source.fluide} ` +
@@ -685,6 +773,9 @@ export function creerDemoStore() {
           'La récupération exige une bouteille de destination de type ' +
           'RÉCUPÉRATION.');
       }
+      // IM-6 : jamais dans une bouteille qui a quitté l'établissement.
+      // La place restante est contrôlée par verserDansBouteille (débordement).
+      verifierBouteilleEnStock(destination, 'Bouteille de destination');
       if (destination.fluide !== machine.fluide) {
         throw new Error(
           `Croisement de fluides interdit : bouteille ${destination.fluide} ` +
@@ -695,6 +786,15 @@ export function creerDemoStore() {
         throw new Error(
           'Pesées incohérentes : la bouteille de récupération doit se ' +
           'remplir (pesée après > pesée avant).');
+      }
+      // IM-6 : place restante vérifiée AVANT tout effet — sinon la
+      // machine serait vidée puis le versement échouerait (mutation
+      // partielle).
+      if (arrondir(destination.masseNetteKg + quantite) >
+          destination.contenanceMaxKg) {
+        throw new Error(
+          `Débordement : la bouteille ${destination.code} dépasserait sa ` +
+          `contenance (${destination.contenanceMaxKg} kg).`);
       }
       viderMachine(machine, quantite);
       verserDansBouteille(destination, quantite);
@@ -708,6 +808,8 @@ export function creerDemoStore() {
         'Bouteille source');
       const destination = trouverBouteille(mouvement.bouteilleDstId,
         'Bouteille de destination');
+      verifierSourceDeCharge(source); // IM-6
+      verifierBouteilleEnStock(destination, 'Bouteille de destination');
       if (source.fluide !== destination.fluide) {
         throw new Error(
           `Croisement de fluides interdit : transfert ${source.fluide} ` +
@@ -718,6 +820,13 @@ export function creerDemoStore() {
         throw new Error(
           'Pesées incohérentes : la bouteille source doit se vider ' +
           '(pesée avant > pesée après).');
+      }
+      // IM-6 : place restante vérifiée AVANT tout effet (voir ci-dessus)
+      if (arrondir(destination.masseNetteKg + quantite) >
+          destination.contenanceMaxKg) {
+        throw new Error(
+          `Débordement : la bouteille ${destination.code} dépasserait sa ` +
+          `contenance (${destination.contenanceMaxKg} kg).`);
       }
       retirerDeBouteille(source, quantite);
       verserDansBouteille(destination, quantite);
@@ -824,6 +933,20 @@ export function creerDemoStore() {
     // null = sain, { ok: false, casseA } = registre altéré.
     registreAltere: null,
 
+    /**
+     * IM-2 : abonne un rappel au signal « données modifiées »,
+     * notifié après CHAQUE mutation réussie (aucune dépendance DOM).
+     * @param {Function} rappel
+     * @returns {Function} fonction de désabonnement
+     */
+    surChangement(rappel) {
+      if (typeof rappel !== 'function') {
+        throw new Error('surChangement attend une fonction de rappel.');
+      }
+      abonnesChangement.add(rappel);
+      return () => { abonnesChangement.delete(rappel); };
+    },
+
     // ------------------------------------------------------
     // Initialisation (appelée par la fabrique creerStore)
     // ------------------------------------------------------
@@ -842,7 +965,8 @@ export function creerDemoStore() {
 
       // Compléments Phase C pour les sauvegardes A/B existantes
       for (const cle of ['auditsOrganisme', 'nonConformites', 'stocksInitiaux',
-        'bsff', 'inventaires', 'justificationsEcarts', 'piecesJointes']) {
+        'bsff', 'inventaires', 'justificationsEcarts', 'piecesJointes',
+        'retoursFournisseur']) {
         if (!Array.isArray(donnees[cle])) {
           donnees[cle] = copier(DEMO[cle] ?? []);
           modifie = true;
@@ -887,7 +1011,7 @@ export function creerDemoStore() {
         modifie = true;
       }
 
-      if (modifie) persister(donnees);
+      if (modifie) persisterEtNotifier();
 
       // CR-5 : vérification d'intégrité au chargement (localStorage
       // réécrit à la main, sauvegarde trafiquée…). L'application n'est
@@ -979,6 +1103,8 @@ export function creerDemoStore() {
       // Phase C : alertes ENTIÈREMENT dynamiques, recalculées depuis
       // les données. Niveaux conformes à la SPEC §7.2 : ce qui est
       // ÉCHU est critique, ce qui APPROCHE (90 jours) est important.
+      // IM-2 : chaque alerte porte une cible { vue, id? } pour les
+      // liens cliquables du tableau de bord.
       const alertes = [];
       const jour = aujourdHui();
       const horizon = ajouterJours(jour, 90);
@@ -991,7 +1117,8 @@ export function creerDemoStore() {
           niveau: 'CRITIQUE',
           titre: 'Attestation de capacité expirée',
           detail: `${donnees.etablissement.numAttestationCapacite ?? '—'} · ` +
-            `échéance ${fmtDate(echeanceCapacite)}`
+            `échéance ${fmtDate(echeanceCapacite)}`,
+          cible: { vue: 'admin' }
         });
       } else if (echeanceCapacite && echeanceCapacite <= horizon) {
         alertes.push({
@@ -999,7 +1126,8 @@ export function creerDemoStore() {
           niveau: 'IMPORTANT',
           titre: 'Attestation de capacité à renouveler',
           detail: `${donnees.etablissement.numAttestationCapacite ?? '—'} · ` +
-            `échéance ${fmtDate(echeanceCapacite)}`
+            `échéance ${fmtDate(echeanceCapacite)}`,
+          cible: { vue: 'admin' }
         });
       }
 
@@ -1011,34 +1139,40 @@ export function creerDemoStore() {
             id: `alr-aptitude-${p.id}`,
             niveau: 'CRITIQUE',
             titre: 'Attestation d’aptitude expirée',
-            detail: `${p.prenom} ${p.nom} · échéance ${fmtDate(p.dateFinValidite)}`
+            detail: `${p.prenom} ${p.nom} · échéance ${fmtDate(p.dateFinValidite)}`,
+            cible: { vue: 'personnel', id: p.id }
           });
         } else if (p.dateFinValidite <= horizon) {
           alertes.push({
             id: `alr-aptitude-${p.id}`,
             niveau: 'IMPORTANT',
             titre: 'Attestation d’aptitude à renouveler',
-            detail: `${p.prenom} ${p.nom} · échéance ${fmtDate(p.dateFinValidite)}`
+            detail: `${p.prenom} ${p.nom} · échéance ${fmtDate(p.dateFinValidite)}`,
+            cible: { vue: 'personnel', id: p.id }
           });
         }
       }
 
-      // 3. Machines : fuites non résolues, contrôles dépassés
+      // 3. Machines : fuites non résolues, contrôles dépassés.
+      // IM-4 : une machine à l'arrêt ou démantelée n'exige plus de
+      // contrôle périodique.
       for (const m of donnees.machines) {
         if (m.statut === 'FUITE') {
           alertes.push({
             id: `alr-fuite-${m.id}`,
             niveau: 'CRITIQUE',
             titre: 'Fuite non résolue',
-            detail: `${m.designation} · recontrôle ${fmtDate(m.prochainControle)}`
+            detail: `${m.designation} · recontrôle ${fmtDate(m.prochainControle)}`,
+            cible: { vue: 'machines', id: m.id }
           });
-        } else if (m.statut !== 'DEMANTELEE' &&
+        } else if (m.statut !== 'DEMANTELEE' && m.statut !== 'ARRETEE' &&
                    m.prochainControle && m.prochainControle < jour) {
           alertes.push({
             id: `alr-controle-${m.id}`,
             niveau: 'CRITIQUE',
             titre: 'Contrôle d’étanchéité en retard',
-            detail: `${m.designation} · échéance ${fmtDate(m.prochainControle)}`
+            detail: `${m.designation} · échéance ${fmtDate(m.prochainControle)}`,
+            cible: { vue: 'machines', id: m.id }
           });
         }
       }
@@ -1060,7 +1194,8 @@ export function creerDemoStore() {
           niveau: (outil.typeOutil === 'DETECTEUR' ||
                    outil.typeOutil === 'BALANCE') ? 'CRITIQUE' : 'IMPORTANT',
           titre,
-          detail: `${outil.marque} ${outil.modele} · ${fmtDate(outil.prochaineEcheance)}`
+          detail: `${outil.marque} ${outil.modele} · ${fmtDate(outil.prochaineEcheance)}`,
+          cible: { vue: 'outillage', id: outil.id }
         });
       }
 
@@ -1072,7 +1207,8 @@ export function creerDemoStore() {
             id: `alr-garde-${b.id}`,
             niveau: 'CRITIQUE',
             titre: 'Fluide déchet au-delà du délai de garde',
-            detail: `${b.code} (${b.fluide}) · limite ${fmtDate(b.dateLimiteGarde)}`
+            detail: `${b.code} (${b.fluide}) · limite ${fmtDate(b.dateLimiteGarde)}`,
+            cible: { vue: 'bouteilles', id: b.id }
           });
         }
       }
@@ -1084,8 +1220,53 @@ export function creerDemoStore() {
           niveau: 'CRITIQUE',
           titre: 'Écart de balance matière non justifié',
           detail: `${ecart.fluide} · ${ecart.annee} · ` +
-            `écart ${fmtKgSigne(ecart.ecartKg)}`
+            `écart ${fmtKgSigne(ecart.ecartKg)}`,
+          cible: { vue: 'balance' }
         });
+      }
+
+      // 7. IM-3 : bouteille active sans pesée récente (> 90 jours)
+      const limitePesee = ajouterJours(jour, -90);
+      for (const b of donnees.bouteilles) {
+        if (b.statut !== 'EN_STOCK' && b.statut !== 'EN_SERVICE') continue;
+        if (!b.datePesee || b.datePesee < limitePesee) {
+          alertes.push({
+            id: `alr-pesee-${b.id}`,
+            niveau: 'IMPORTANT',
+            titre: 'Bouteille sans pesée récente',
+            detail: `${b.code} (${b.fluide}) · dernière pesée ` +
+              `${fmtDate(b.datePesee)}`,
+            cible: { vue: 'bouteilles', id: b.id }
+          });
+        }
+      }
+
+      // 8. IM-3 : mouvements en souffrance — soumis depuis plus de
+      // 7 jours (à valider) ou brouillon depuis plus de 30 jours.
+      // Repli sur la date du mouvement pour les données antérieures
+      // au champ dateSoumission.
+      const limiteSoumis = ajouterJours(jour, -7);
+      const limiteBrouillon = ajouterJours(jour, -30);
+      for (const mv of donnees.mouvements) {
+        if (mv.statut === 'SOUMIS' &&
+            (mv.dateSoumission ?? mv.date) < limiteSoumis) {
+          alertes.push({
+            id: `alr-soumis-${mv.id}`,
+            niveau: 'IMPORTANT',
+            titre: 'Mouvement soumis à valider',
+            detail: `${mv.numero} · ${mv.type} · soumis le ` +
+              `${fmtDate(mv.dateSoumission ?? mv.date)}`,
+            cible: { vue: 'mouvements', id: mv.id }
+          });
+        } else if (mv.statut === 'BROUILLON' && mv.date < limiteBrouillon) {
+          alertes.push({
+            id: `alr-brouillon-${mv.id}`,
+            niveau: 'IMPORTANT',
+            titre: 'Brouillon de mouvement à reprendre',
+            detail: `${mv.numero} · ${mv.type} · créé le ${fmtDate(mv.date)}`,
+            cible: { vue: 'mouvements', id: mv.id }
+          });
+        }
       }
 
       // Les alertes critiques d'abord (tri stable)
@@ -1149,7 +1330,7 @@ export function creerDemoStore() {
       donnees.machines.push(machine);
       journaliser(d.operateur, 'CREATION_MACHINE', machine.code,
         `${machine.designation} (${machine.fluide})`);
-      persister(donnees);
+      persisterEtNotifier();
       return copier(machine);
     },
 
@@ -1171,8 +1352,122 @@ export function creerDemoStore() {
       }
       journaliser(d.operateur, 'MODIFICATION_MACHINE', machine.code,
         `Champs : ${Object.keys(d).filter((c) => CHAMPS.includes(c)).join(', ')}`);
-      persister(donnees);
+      persisterEtNotifier();
       return copier(machine);
+    },
+
+    /**
+     * IM-4 : met une machine à l'ARRÊT (elle sort des compteurs
+     * « en service » mais reste au parc, fluide compris).
+     */
+    async arreterMachine(id, operateur) {
+      const machine = trouverMachine(id);
+      if (machine.statut === 'DEMANTELEE') {
+        throw new Error('Machine démantelée : arrêt sans objet.');
+      }
+      if (machine.statut === 'ARRETEE') {
+        throw new Error(`Machine ${machine.code} déjà à l’arrêt.`);
+      }
+      machine.statut = 'ARRETEE';
+      journaliser(operateur, 'ARRET_MACHINE', machine.code,
+        `${machine.designation} mise à l’arrêt`);
+      persisterEtNotifier();
+      return copier(machine);
+    },
+
+    /**
+     * IM-4 : démantèle une machine. Exige une charge résiduelle
+     * quasi nulle (± 0,05 kg) : le fluide doit d'abord être récupéré
+     * (mouvement RECUPERATION_DEMANTELEMENT). Définitif.
+     */
+    async demantelerMachine(id, operateur) {
+      const machine = trouverMachine(id);
+      if (machine.statut === 'DEMANTELEE') {
+        throw new Error(`Machine ${machine.code} déjà démantelée.`);
+      }
+      if (Math.abs(machine.chargeActuelleKg) >
+          TOLERANCE_CHARGE_RESIDUELLE_KG) {
+        throw new Error(
+          `Démantèlement impossible : la machine ${machine.code} contient ` +
+          `encore ${machine.chargeActuelleKg} kg de fluide. Récupérez ` +
+          'd’abord le fluide (mouvement « Récupération — démantèlement »).');
+      }
+      machine.statut = 'DEMANTELEE';
+      journaliser(operateur, 'DEMANTELEMENT_MACHINE', machine.code,
+        `${machine.designation} démantelée (charge résiduelle ` +
+        `${machine.chargeActuelleKg} kg)`);
+      persisterEtNotifier();
+      return copier(machine);
+    },
+
+    /** IM-4 : remet en service une machine à l'arrêt. */
+    async remettreEnService(id, operateur) {
+      const machine = trouverMachine(id);
+      if (machine.statut === 'DEMANTELEE') {
+        throw new Error(
+          'Machine démantelée : remise en service impossible (définitif).');
+      }
+      if (machine.statut !== 'ARRETEE') {
+        throw new Error(
+          `Seule une machine à l’arrêt se remet en service ` +
+          `(statut actuel : ${machine.statut}).`);
+      }
+      machine.statut = 'EN_SERVICE';
+      journaliser(operateur, 'REMISE_EN_SERVICE_MACHINE', machine.code,
+        `${machine.designation} remise en service`);
+      persisterEtNotifier();
+      return copier(machine);
+    },
+
+    // ------------------------------------------------------
+    // Mutations : clients / détenteurs (IM-11)
+    // ------------------------------------------------------
+    async createClient(donneesClient) {
+      const d = donneesClient || {};
+      const raisonSociale = String(d.raisonSociale || '').trim();
+      if (!raisonSociale) {
+        throw new Error('Raison sociale obligatoire.');
+      }
+      const adresse = String(d.adresse || '').trim();
+      if (!adresse) {
+        throw new Error('Adresse obligatoire.');
+      }
+      const siret = String(d.siret || '').trim();
+      if (!/^\d{14}$/.test(siret.replace(/[\s.-]/g, ''))) {
+        throw new Error('SIRET invalide : 14 chiffres attendus.');
+      }
+      const client = {
+        id: genId('cli'),
+        raisonSociale,
+        adresse,
+        siret,
+        nbMachines: 0
+      };
+      donnees.clients.push(client);
+      journaliser(d.operateur, 'CREATION_CLIENT', client.raisonSociale,
+        `SIRET ${siret}`);
+      persisterEtNotifier();
+      return copier(client);
+    },
+
+    async updateClient(id, donneesClient) {
+      const client = donnees.clients.find((c) => c.id === id);
+      if (!client) {
+        throw new Error(`Client / détenteur introuvable : ${id}.`);
+      }
+      const d = donneesClient || {};
+      if (d.siret !== undefined &&
+          !/^\d{14}$/.test(String(d.siret).trim().replace(/[\s.-]/g, ''))) {
+        throw new Error('SIRET invalide : 14 chiffres attendus.');
+      }
+      const CHAMPS = ['raisonSociale', 'adresse', 'siret'];
+      for (const champ of CHAMPS) {
+        if (d[champ] !== undefined) client[champ] = String(d[champ]).trim();
+      }
+      journaliser(d.operateur, 'MODIFICATION_CLIENT', client.raisonSociale,
+        `Champs : ${Object.keys(d).filter((c) => CHAMPS.includes(c)).join(', ')}`);
+      persisterEtNotifier();
+      return copier(client);
     },
 
     // ------------------------------------------------------
@@ -1233,7 +1528,7 @@ export function creerDemoStore() {
       donnees.bouteilles.push(bouteille);
       journaliser(d.operateur, 'CREATION_BOUTEILLE', bouteille.code,
         `${bouteille.type} ${bouteille.fluide} (${bouteille.contenanceMaxKg} kg)`);
-      persister(donnees);
+      persisterEtNotifier();
       return copier(bouteille);
     },
 
@@ -1262,7 +1557,7 @@ export function creerDemoStore() {
       }
       journaliser(d.operateur, 'MODIFICATION_BOUTEILLE', bouteille.code,
         `Champs : ${Object.keys(d).filter((c) => CHAMPS.includes(c)).join(', ')}`);
-      persister(donnees);
+      persisterEtNotifier();
       return copier(bouteille);
     },
 
@@ -1288,7 +1583,7 @@ export function creerDemoStore() {
       bouteille.datePesee = aujourdHui();
       journaliser(operateur, 'PESEE_BOUTEILLE', bouteille.code,
         `Brute ${bouteille.masseBruteKg} kg → nette ${nette} kg`);
-      persister(donnees);
+      persisterEtNotifier();
       return copier(bouteille);
     },
 
@@ -1297,8 +1592,29 @@ export function creerDemoStore() {
     // ------------------------------------------------------
     async createControle(donneesControle) {
       const controle = enregistrerControle(donneesControle || {});
-      persister(donnees);
+      persisterEtNotifier();
       return copier(controle);
+    },
+
+    /**
+     * IM-1 : date du PROCHAIN contrôle d'étanchéité calculée depuis
+     * la fréquence réglementaire — même logique que le cadre 7 du
+     * CERFA (HCFC en kg, HFC/PFC en t éq. CO₂, HFO en kg, croisée
+     * avec la détection permanente).
+     * @param {string} machineId
+     * @param {string} [dateControleISO] date du contrôle (défaut : aujourd'hui)
+     * @returns {Promise<string|null>} date ISO, ou null si la machine
+     *   est hors périmètre F-Gas (aucun contrôle périodique exigé)
+     */
+    async calculerProchainControle(machineId, dateControleISO) {
+      const machine = trouverMachine(machineId);
+      const fluideRef = donnees.fluides.find(
+        (f) => f.code === machine.fluide) ?? null;
+      const { frequenceMois } = calculerCadre7(
+        fluideRef, machine.chargeActuelleKg,
+        Boolean(machine.detectionPermanente));
+      if (!frequenceMois) return null;
+      return ajouterMois(dateControleISO ?? aujourdHui(), frequenceMois);
     },
 
     // ------------------------------------------------------
@@ -1346,7 +1662,7 @@ export function creerDemoStore() {
       donnees.mouvements.push(mouvement);
       journaliser(mouvement.technicien, 'CREATION_MOUVEMENT', mouvement.numero,
         `${mouvement.type} (brouillon)`);
-      persister(donnees);
+      persisterEtNotifier();
       return copier(mouvement);
     },
 
@@ -1359,9 +1675,12 @@ export function creerDemoStore() {
         throw new Error('Seul un mouvement en brouillon peut être soumis.');
       }
       mouvement.statut = 'SOUMIS';
+      // IM-3 : date de soumission (base de l'alerte « à valider »).
+      // Champ HORS de l'empreinte : il ne fige rien.
+      mouvement.dateSoumission = aujourdHui();
       journaliser(mouvement.technicien, 'SOUMISSION_MOUVEMENT',
         mouvement.numero, mouvement.type);
-      persister(donnees);
+      persisterEtNotifier();
       return copier(mouvement);
     },
 
@@ -1385,7 +1704,7 @@ export function creerDemoStore() {
       donnees.mouvements.splice(indice, 1);
       journaliser(operateur ?? mouvement.technicien, 'SUPPRESSION_MOUVEMENT',
         mouvement.numero, `${mouvement.type} (brouillon supprimé)`);
-      persister(donnees);
+      persisterEtNotifier();
       return true;
     },
 
@@ -1408,7 +1727,7 @@ export function creerDemoStore() {
       mouvement.motifRejet = String(motif).trim();
       journaliser(null, 'REJET_MOUVEMENT', mouvement.numero,
         `${mouvement.type} · motif : ${mouvement.motifRejet}`);
-      persister(donnees);
+      persisterEtNotifier();
       return copier(mouvement);
     },
 
@@ -1459,8 +1778,22 @@ export function creerDemoStore() {
       journaliser(`${validateur.prenom} ${validateur.nom}`,
         'VALIDATION_MOUVEMENT', mouvement.numero,
         `${mouvement.type} · ${mouvement.quantiteKg} kg ${mouvement.fluide}`);
-      persister(donnees);
-      return copier(mouvement);
+      persisterEtNotifier();
+
+      // IM-4 : une récupération-démantèlement qui VIDE la machine
+      // (charge ≈ 0) invite l'interface à proposer le démantèlement —
+      // proposition seulement, RIEN n'est appliqué ici.
+      const resultat = copier(mouvement);
+      if (mouvement.type === 'RECUPERATION_DEMANTELEMENT' &&
+          mouvement.machineId) {
+        const machine = trouverMachine(mouvement.machineId);
+        if (machine.statut !== 'DEMANTELEE' &&
+            Math.abs(machine.chargeActuelleKg) <=
+              TOLERANCE_CHARGE_RESIDUELLE_KG) {
+          resultat.proposerDemantelement = true;
+        }
+      }
+      return resultat;
     },
 
     async annulerParContreEcriture(id, motif, validateurId) {
@@ -1520,7 +1853,7 @@ export function creerDemoStore() {
       journaliser(`${validateur.prenom} ${validateur.nom}`,
         'CONTRE_ECRITURE', contreEcriture.numero,
         `Annule ${original.numero} · motif : ${contreEcriture.motif}`);
-      persister(donnees);
+      persisterEtNotifier();
       return copier(contreEcriture);
     },
 
@@ -1594,10 +1927,21 @@ export function creerDemoStore() {
         (mv.statut === 'VALIDE' || mv.statut === 'ANNULE') &&
         Number.isFinite(mv.quantiteKg));
 
-      // Flux mensuels sur 6 mois : Févr. → Juil. 2026, depuis les mouvements
+      // IM-10 : flux mensuels sur une fenêtre GLISSANTE de 6 mois,
+      // calée sur la donnée la plus récente (repli : aujourd'hui) —
+      // plus aucun mois codé en dur.
+      let dateMax = '';
+      for (const mv of mouvementsEffectifs) {
+        if (mv.date > dateMax) dateMax = mv.date;
+      }
+      if (!dateMax) dateMax = aujourdHui();
+      const [anneeFin, moisFin] = dateMax.split('-').map(Number);
       const fluxMensuels = [];
-      for (let mois = 2; mois <= 7; mois += 1) {
-        const prefixe = `2026-${String(mois).padStart(2, '0')}`;
+      for (let recul = 5; recul >= 0; recul -= 1) {
+        const total = anneeFin * 12 + (moisFin - 1) - recul;
+        const annee = Math.floor(total / 12);
+        const mois = (total % 12) + 1;
+        const prefixe = `${annee}-${String(mois).padStart(2, '0')}`;
         let chargeKg = 0;
         let recupKg = 0;
         for (const mv of mouvementsEffectifs) {
@@ -1605,11 +1949,15 @@ export function creerDemoStore() {
           if (mv.quantiteKg >= 0) chargeKg += mv.quantiteKg;
           else recupKg += Math.abs(mv.quantiteKg);
         }
-        fluxMensuels.push({ mois: LIBELLES_MOIS[mois - 1], chargeKg, recupKg });
+        fluxMensuels.push(
+          { mois: LIBELLES_MOIS[mois - 1], annee, chargeKg, recupKg });
       }
 
       return {
-        nbMachines: parc.length,
+        // IM-4 : les machines à l'arrêt ou démantelées ne comptent
+        // pas « en service » (le fluide d'une machine à l'arrêt reste
+        // compté dans la charge du parc : il est physiquement là).
+        nbMachines: parc.filter((m) => m.statut !== 'ARRETEE').length,
         chargeParcKg,
         stockBouteillesKg,
         nbBouteilles: donnees.bouteilles.length,
@@ -1624,6 +1972,34 @@ export function creerDemoStore() {
         chargeParFluide,
         fluxMensuels
       };
+    },
+
+    /**
+     * IM-10 : années proposables aux vues Bilan / Balance — années
+     * réellement présentes dans les données (mouvements, contrôles,
+     * BSFF, retours fournisseur, inventaires) ∪ année de la dernière
+     * écriture du journal ∪ 2026 (monde de démonstration).
+     * @returns {Promise<number[]>} années triées décroissantes
+     */
+    async getAnneesDisponibles() {
+      const annees = new Set([2026]);
+      const ajouterAnneeDe = (iso) => {
+        const annee = Number(String(iso || '').slice(0, 4));
+        if (Number.isInteger(annee) && annee > 2000) annees.add(annee);
+      };
+      for (const mv of donnees.mouvements) ajouterAnneeDe(mv.date);
+      for (const c of donnees.controles) ajouterAnneeDe(c.date);
+      for (const bsff of donnees.bsff || []) ajouterAnneeDe(bsff.dateRemise);
+      for (const retour of donnees.retoursFournisseur || []) {
+        ajouterAnneeDe(retour.date);
+      }
+      for (const inventaire of donnees.inventaires || []) {
+        if (Number.isInteger(inventaire.annee)) annees.add(inventaire.annee);
+      }
+      const derniereEcriture =
+        donnees.journalAudit[donnees.journalAudit.length - 1];
+      if (derniereEcriture) ajouterAnneeDe(derniereEcriture.date);
+      return [...annees].sort((a, b) => b - a);
     },
 
     // ------------------------------------------------------
@@ -1705,7 +2081,7 @@ export function creerDemoStore() {
       journaliser(d.operateur, 'MODIFICATION_ETABLISSEMENT',
         donnees.etablissement.raisonSociale,
         `Champs : ${champsModifies.join(', ')}`);
-      persister(donnees);
+      persisterEtNotifier();
       return copier(donnees.etablissement);
     },
 
@@ -1739,7 +2115,7 @@ export function creerDemoStore() {
       }
       journaliser(d.operateur, 'CREATION_AUDIT', audit.organisme,
         `${fmtDate(audit.date)} · ${audit.resultat}`);
-      persister(donnees);
+      persisterEtNotifier();
       return copier(audit);
     },
 
@@ -1774,7 +2150,7 @@ export function creerDemoStore() {
       donnees.nonConformites.push(nonConformite);
       journaliser(d.operateur, 'CREATION_NON_CONFORMITE', nonConformite.id,
         nonConformite.description);
-      persister(donnees);
+      persisterEtNotifier();
       return copier(nonConformite);
     },
 
@@ -1794,7 +2170,7 @@ export function creerDemoStore() {
       nonConformite.commentaireSolde = String(commentaire).trim();
       journaliser(null, 'SOLDE_NON_CONFORMITE', nonConformite.id,
         nonConformite.commentaireSolde);
-      persister(donnees);
+      persisterEtNotifier();
       return copier(nonConformite);
     },
 
@@ -1834,7 +2210,7 @@ export function creerDemoStore() {
       donnees.personnel.push(personne);
       journaliser(d.operateur, 'CREATION_PERSONNE',
         `${personne.prenom} ${personne.nom}`, personne.typePersonne);
-      persister(donnees);
+      persisterEtNotifier();
       return copier(personne);
     },
 
@@ -1866,7 +2242,7 @@ export function creerDemoStore() {
       journaliser(d.operateur, 'MODIFICATION_PERSONNE',
         `${personne.prenom} ${personne.nom}`,
         `Champs : ${Object.keys(d).filter((c) => CHAMPS.includes(c)).join(', ')}`);
-      persister(donnees);
+      persisterEtNotifier();
       return copier(personne);
     },
 
@@ -1880,7 +2256,7 @@ export function creerDemoStore() {
       journaliser(operateur, 'DESACTIVATION_PERSONNE',
         `${personne.prenom} ${personne.nom}`,
         'Désactivation (la personne reste au registre : aucune suppression)');
-      persister(donnees);
+      persisterEtNotifier();
       return copier(personne);
     },
 
@@ -1914,7 +2290,7 @@ export function creerDemoStore() {
       donnees.outillage.push(outil);
       journaliser(d.operateur, 'CREATION_OUTIL', `${outil.marque} ${outil.modele ?? ''}`.trim(),
         `${outil.typeOutil} · échéance ${fmtDate(outil.prochaineEcheance)}`);
-      persister(donnees);
+      persisterEtNotifier();
       return copier(outil);
     },
 
@@ -1937,7 +2313,7 @@ export function creerDemoStore() {
       journaliser(d.operateur, 'MODIFICATION_OUTIL',
         `${outil.marque} ${outil.modele ?? ''}`.trim(),
         `Champs : ${Object.keys(d).filter((c) => CHAMPS.includes(c)).join(', ')}`);
-      persister(donnees);
+      persisterEtNotifier();
       return copier(outil);
     },
 
@@ -1950,7 +2326,7 @@ export function creerDemoStore() {
       journaliser(operateur, 'REFORME_OUTIL',
         `${outil.marque} ${outil.modele ?? ''}`.trim(),
         'Outil réformé : hors service');
-      persister(donnees);
+      persisterEtNotifier();
       return copier(outil);
     },
 
@@ -1966,6 +2342,14 @@ export function creerDemoStore() {
       }
       if (!d.nomFichier || !String(d.nomFichier).trim()) {
         throw new Error('Nom de fichier de la pièce jointe obligatoire.');
+      }
+      // IM-19 : liste blanche des types MIME appliquée AU STORE (le
+      // composant d'interface filtre déjà, mais la garantie est ici).
+      const mime = String(d.mimeType ?? '').toLowerCase();
+      if (!PJ_TYPES_MIME.includes(mime)) {
+        throw new Error(
+          `Type de fichier refusé : ${d.mimeType || 'inconnu'}. ` +
+          'Formats acceptés : PDF, PNG, JPEG, WebP.');
       }
       const contenu = d.blob ?? d.base64;
       if (!contenu) {
@@ -1983,7 +2367,7 @@ export function creerDemoStore() {
         entiteId: d.entiteId,
         categorie: d.categorie ?? 'AUTRE',
         nomFichier: String(d.nomFichier).trim(),
-        mimeType: d.mimeType ?? 'application/octet-stream',
+        mimeType: mime,
         taille: octets.length,
         hashSha256: await hasherOctets(octets),
         dateAjout: new Date().toISOString(),
@@ -1995,7 +2379,7 @@ export function creerDemoStore() {
       journaliser(pieceJointe.ajoutePar, 'AJOUT_PIECE_JOINTE',
         `${pieceJointe.entiteType}/${pieceJointe.entiteId}`,
         `${pieceJointe.nomFichier} (${pieceJointe.taille} octets)`);
-      persister(donnees);
+      persisterEtNotifier();
       return copier(pieceJointe);
     },
 
@@ -2042,7 +2426,7 @@ export function creerDemoStore() {
       journaliser(operateur, 'SUPPRESSION_PIECE_JOINTE',
         `${pieceJointe.entiteType}/${pieceJointe.entiteId}`,
         pieceJointe.nomFichier);
-      persister(donnees);
+      persisterEtNotifier();
       return true;
     },
 
@@ -2061,6 +2445,12 @@ export function creerDemoStore() {
           'La décision sur le fluide ne concerne que les bouteilles de ' +
           'récupération.');
       }
+      if (bouteille.statut === 'RETOURNEE') {
+        throw new Error(
+          `Bouteille ${bouteille.code} sortie de l’établissement : ` +
+          'décision sans objet.');
+      }
+      const etaitDechet = bouteille.statut === 'DECHET';
       bouteille.decisionFluide = decision;
       bouteille.decisionPar = par ?? null;
       bouteille.decisionDate = aujourdHui();
@@ -2069,10 +2459,18 @@ export function creerDemoStore() {
         bouteille.etatFluide = 'DECHET';
         // Tolérance réglementaire : garde d'UN AN maximum
         bouteille.dateLimiteGarde = ajouterUnAn(aujourdHui());
+      } else {
+        // IM-7 : décision RÉVERSIBLE — re-décider REUTILISABLE (ou
+        // A_ANALYSER) restaure le stock et efface l'état déchet.
+        bouteille.statut = 'EN_STOCK';
+        bouteille.etatFluide = 'RECUPERE';
+        bouteille.dateLimiteGarde = null;
       }
       journaliser(par, 'DECISION_FLUIDE', bouteille.code,
-        `${decision} (${bouteille.fluide})`);
-      persister(donnees);
+        `${decision} (${bouteille.fluide})` +
+        (etaitDechet && decision !== 'DECHET'
+          ? ' · retour en stock (état déchet annulé)' : ''));
+      persisterEtNotifier();
       return copier(bouteille);
     },
 
@@ -2109,24 +2507,80 @@ export function creerDemoStore() {
       };
       donnees.bsff.push(bsff);
 
-      // Sortie du stock : bouteille retournée, vidée, BSFF référencé
-      bouteille.statut = 'RETOURNEE';
+      // IM-8 : la bouteille est décrémentée de la masse REMISE.
+      // Remise totale → bouteille vidée et RETOURNEE (comme avant) ;
+      // remise partielle → le reliquat reste en stock, statut inchangé
+      // (DECHET, délai de garde conservé) : aucun kilo ne s'évapore.
+      bouteille.masseNetteKg =
+        arrondir(bouteille.masseNetteKg - bsff.masseRemiseKg);
+      if (bouteille.masseNetteKg <= 1e-9) {
+        bouteille.masseNetteKg = 0;
+        bouteille.statut = 'RETOURNEE';
+      }
+      bouteille.masseBruteKg =
+        arrondir(bouteille.tareKg + bouteille.masseNetteKg);
       bouteille.numBsff = bsff.numeroBsff;
-      bouteille.masseNetteKg = 0;
-      bouteille.masseBruteKg = bouteille.tareKg;
       bouteille.datePesee = aujourdHui();
 
       // Mouvement de sortie tracé au journal d'audit
       journaliser(d.operateur, 'SORTIE_BSFF', bouteille.code,
         `BSFF ${bsff.numeroBsff} · ${fmtKgSigne(-bsff.masseRemiseKg)} ` +
-        `${bsff.fluide} → ${bsff.installationDestination ?? 'destination non renseignée'}`);
-      persister(donnees);
+        `${bsff.fluide} → ${bsff.installationDestination ?? 'destination non renseignée'}` +
+        (bouteille.masseNetteKg > 0
+          ? ` · reliquat ${bouteille.masseNetteKg} kg en stock` : ''));
+      persisterEtNotifier();
       return copier(bsff);
     },
 
     async getBsff() {
       const liste = copier(donnees.bsff);
       liste.sort((a, b) => b.dateRemise.localeCompare(a.dateRemise));
+      return liste;
+    },
+
+    /**
+     * IM-9 : retour d'une bouteille consignée au fournisseur.
+     * La masse nette restante alimente le poste « retours
+     * fournisseur » de la balance matière (année de l'opération) ;
+     * la bouteille sort du stock (RETOURNEE).
+     */
+    async retournerFournisseur(bouteilleId, operateur) {
+      const bouteille = trouverBouteille(bouteilleId);
+      if (bouteille.statut === 'RETOURNEE') {
+        throw new Error(`Bouteille ${bouteille.code} déjà retournée.`);
+      }
+      if (bouteille.statut === 'DECHET') {
+        throw new Error(
+          `Bouteille ${bouteille.code} déclarée déchet : la sortie passe ` +
+          'par un BSFF, pas par un retour fournisseur.');
+      }
+      const masseKg = bouteille.masseNetteKg;
+      const retour = {
+        id: genId('rf'),
+        bouteilleId: bouteille.id,
+        bouteilleCode: bouteille.code,
+        fluide: bouteille.fluide,
+        masseKg,
+        date: aujourdHui(),
+        operateur: operateur ?? null
+      };
+      donnees.retoursFournisseur.push(retour);
+
+      bouteille.statut = 'RETOURNEE';
+      bouteille.masseNetteKg = 0;
+      bouteille.masseBruteKg = bouteille.tareKg;
+      bouteille.datePesee = aujourdHui();
+
+      journaliser(operateur, 'RETOUR_FOURNISSEUR', bouteille.code,
+        `${fmtKgSigne(-masseKg)} ${bouteille.fluide} → fournisseur` +
+        (bouteille.proprietaire ? ` ${bouteille.proprietaire}` : ''));
+      persisterEtNotifier();
+      return copier(bouteille);
+    },
+
+    async getRetoursFournisseur() {
+      const liste = copier(donnees.retoursFournisseur);
+      liste.sort((a, b) => b.date.localeCompare(a.date));
       return liste;
     },
 
@@ -2175,7 +2629,7 @@ export function creerDemoStore() {
       }
       journaliser(operateur, 'SAISIE_INVENTAIRE', `inventaire ${anneeNum}`,
         `${lignes.length} fluide(s) pesé(s)`);
-      persister(donnees);
+      persisterEtNotifier();
       return copier(calculerBalanceMatiere(anneeNum));
     },
 
@@ -2205,7 +2659,7 @@ export function creerDemoStore() {
       }
       journaliser(null, 'JUSTIFICATION_ECART', `${fluide} ${anneeNum}`,
         String(justification).trim());
-      persister(donnees);
+      persisterEtNotifier();
       return copier(calculerBalanceMatiere(anneeNum));
     },
 
@@ -2279,7 +2733,8 @@ export function creerDemoStore() {
       if (!Array.isArray(candidat.journalAudit)) candidat.journalAudit = [];
       // Compléments Phase C pour les imports A/B
       for (const cle of ['auditsOrganisme', 'nonConformites', 'stocksInitiaux',
-        'bsff', 'inventaires', 'justificationsEcarts', 'piecesJointes']) {
+        'bsff', 'inventaires', 'justificationsEcarts', 'piecesJointes',
+        'retoursFournisseur']) {
         if (!Array.isArray(candidat[cle])) candidat[cle] = copier(DEMO[cle] ?? []);
       }
       if (candidat.etablissement.numAttestationCapacite === undefined) {
@@ -2333,13 +2788,13 @@ export function creerDemoStore() {
       this.registreAltere = null;
       journaliser('système', 'IMPORT_DONNEES', 'sauvegarde',
         'Restauration depuis un fichier JSON (intégrité vérifiée)');
-      persister(donnees);
+      persisterEtNotifier();
       return true;
     }
   };
 
   // Première persistance (silencieuse si localStorage indisponible)
-  persister(donnees);
+  persisterEtNotifier();
 
   return store;
 }
