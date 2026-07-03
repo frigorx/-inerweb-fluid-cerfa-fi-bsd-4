@@ -8,6 +8,7 @@
 
 import { enteteVue, tableau, toast, ICONES } from './communs.js';
 import { esc, fmtKg, fmtNombre } from '../core/utils.js';
+import { genererDossierAudit } from '../documents/dossier-audit.js';
 
 export const titre = 'Bilan annuel';
 
@@ -98,6 +99,7 @@ function actionsEntete(annee) {
   ).join('');
 
   return `<select id="selecteur-annee" class="selecteur-annee no-print" aria-label="Année du bilan">${options}</select>`
+    + `<button type="button" id="btn-dossier-audit" class="btn btn-marine no-print">${ICONES.telecharger}Dossier audit annuel (ZIP)</button>`
     + `<button type="button" id="btn-export-csv" class="btn btn-vert no-print">${ICONES.telecharger}Export CSV</button>`
     + `<button type="button" id="btn-imprimer" class="btn btn-secondaire no-print">${ICONES.imprimer}Imprimer</button>`;
 }
@@ -209,6 +211,11 @@ function genererCsv(bilan) {
 /** Déclenche le téléchargement d'un fichier CSV par lien temporaire. */
 function telechargerCsv(contenu, nomFichier) {
   const blob = new Blob([contenu], { type: 'text/csv;charset=utf-8' });
+  telechargerBlob(blob, nomFichier);
+}
+
+/** Déclenche le téléchargement d'un Blob quelconque par lien temporaire. */
+function telechargerBlob(blob, nomFichier) {
   const url = URL.createObjectURL(blob);
   const lien = document.createElement('a');
   lien.href = url;
@@ -239,14 +246,34 @@ export async function render(conteneur, ctx) {
     attacherEcouteurs();
   }
 
-  /** Branche sélecteur d'année, export CSV et impression. */
+  /** Branche sélecteur d'année, dossier d'audit, export CSV et impression. */
   function attacherEcouteurs() {
     const selecteur = conteneur.querySelector('#selecteur-annee');
+    const boutonDossier = conteneur.querySelector('#btn-dossier-audit');
     const boutonCsv = conteneur.querySelector('#btn-export-csv');
     const boutonImprimer = conteneur.querySelector('#btn-imprimer');
 
     selecteur.addEventListener('change', () => {
       chargerEtAfficher(Number(selecteur.value));
+    });
+
+    // Dossier d'audit annuel : ZIP complet (sommaire, CSV, CERFA, PJ)
+    boutonDossier.addEventListener('click', async () => {
+      boutonDossier.disabled = true;
+      toast('Assemblage du dossier…', 'info');
+      try {
+        const { blob, nomFichier, nbDocuments } =
+          await genererDossierAudit(ctx.store, bilanCourant.annee);
+        telechargerBlob(blob, nomFichier);
+        toast(`Dossier d'audit ${bilanCourant.annee} téléchargé : `
+          + `${nbDocuments} documents (« ${nomFichier} »).`, 'succes');
+      } catch (erreur) {
+        toast(erreur && erreur.message
+          ? erreur.message
+          : 'Impossible d\'assembler le dossier d\'audit.', 'erreur');
+      } finally {
+        boutonDossier.disabled = false;
+      }
     });
 
     boutonCsv.addEventListener('click', () => {

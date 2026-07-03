@@ -5,9 +5,10 @@
 // quantités signées colorées, n° CERFA turquoise, statut, action).
 // ============================================================
 
-import { enteteVue, chipStatut, chipType, tableau, toast, ICONES } from './communs.js';
+import { enteteVue, chipStatut, chipType, tableau, ICONES } from './communs.js';
 import { fmtDate, fmtKgSigne, esc } from '../core/utils.js';
 import { ouvrirWizard } from '../wizard/wizard.js';
+import { ouvrirCerfa } from '../cerfa/visualiseur.js';
 
 export const titre = 'Mouvements de fluide';
 
@@ -42,7 +43,7 @@ function ligneMouvement(mouvement) {
     + '</td>'
     // Statut (chip verte « Signé » pour VALIDE)
     + '<td>' + chipStatut(mouvement.statut) + '</td>'
-    // Action : visualiser le CERFA (Phase D)
+    // Action : visualiser le CERFA officiel rempli (Phase D)
     + '<td class="align-droite">'
     + '<button type="button" class="btn btn-contour btn-petit" data-action="voir-cerfa"'
     + ' data-id="' + esc(mouvement.id) + '">Visualiser CERFA</button>'
@@ -120,11 +121,12 @@ export async function render(conteneur, ctx) {
     });
   }
 
-  // Boutons « Visualiser CERFA » : délégation sur le conteneur
+  // Boutons « Visualiser CERFA » : délégation sur le conteneur —
+  // ouvre le visualiseur plein écran du PDF officiel rempli (Phase D)
   conteneur.addEventListener('click', function (evenement) {
     const bouton = evenement.target.closest('[data-action="voir-cerfa"]');
     if (bouton && conteneur.contains(bouton)) {
-      toast('Visualiseur CERFA : Phase D', 'info');
+      ouvrirCerfa(ctx, { source: 'mouvement', id: bouton.dataset.id });
     }
   });
 }

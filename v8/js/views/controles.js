@@ -3,12 +3,13 @@
 // Tableau des contrôles : date, machine, méthode, résultat,
 // opérateur, prochaine échéance (rouge gras si en retard).
 // Phase B : création d'un contrôle via modale dédiée.
-// Le CERFA arrive en Phase D.
+// Phase D : visualiseur du CERFA officiel rempli.
 // ============================================================
 
-import { enteteVue, tableau, chipStatut, toast, ICONES } from './communs.js';
+import { enteteVue, tableau, chipStatut, ICONES } from './communs.js';
 import { esc, fmtDate } from '../core/utils.js';
 import { ouvrirFormControle } from '../modales/controle-form.js';
+import { ouvrirCerfa } from '../cerfa/visualiseur.js';
 
 export const titre = 'Contrôles d’étanchéité';
 
@@ -100,10 +101,10 @@ export async function render(conteneur, ctx) {
     });
   }
 
-  // Boutons « CERFA » : visualiseur prévu en Phase D
+  // Boutons « CERFA » : visualiseur plein écran du PDF officiel rempli
   conteneur.querySelectorAll('[data-action="cerfa"]').forEach(function (bouton) {
     bouton.addEventListener('click', function () {
-      toast('La visualisation du CERFA arrivera en Phase D.', 'info');
+      ouvrirCerfa(ctx, { source: 'controle', id: bouton.dataset.id });
     });
   });
 }

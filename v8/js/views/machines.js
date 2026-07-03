@@ -7,6 +7,7 @@
 import { enteteVue, chipStatut, barreProgression, ICONES } from './communs.js';
 import { esc, fmtNombre, fmtKg, fmtTeq, teqCO2 } from '../core/utils.js';
 import { ouvrirFormMachine } from '../modales/machine-form.js';
+import { ouvrirPlaque } from '../documents/plaque-fgas.js';
 
 export const titre = 'Parc machines';
 
@@ -95,10 +96,11 @@ const STYLES_VUE = `
     text-align: right;
   }
 
-  /* Pied d'actions : bouton Modifier aligné à droite */
+  /* Pied d'actions : boutons Plaque / Modifier alignés à droite */
   .machine-actions {
     display: flex;
     justify-content: flex-end;
+    gap: 8px;
   }
 </style>`;
 
@@ -170,8 +172,10 @@ function carteMachine(machine, fluideParCode, clientParId) {
     + '<span class="machine-detenteur">' + esc(detenteur) + '</span>'
     + '</div>'
 
-    // Action discrète : modification de la fiche machine
+    // Actions discrètes : plaque F-Gas (aperçu/impression) + modification de la fiche
     + '<div class="machine-actions">'
+    + '<button type="button" class="btn btn-contour btn-petit" data-action="plaque-machine" '
+    + 'data-id="' + esc(machine.id) + '" aria-label="Plaque F-Gas de ' + esc(machine.designation) + '">Plaque</button>'
     + '<button type="button" class="btn btn-contour btn-petit" data-action="modifier-machine" '
     + 'data-id="' + esc(machine.id) + '" aria-label="Modifier ' + esc(machine.designation) + '">Modifier</button>'
     + '</div>'
@@ -232,6 +236,13 @@ export async function render(conteneur, ctx) {
     bouton.addEventListener('click', async function () {
       const enregistre = await ouvrirFormMachine(ctx, bouton.dataset.id);
       if (enregistre) render(conteneur, ctx);
+    });
+  });
+
+  // Aperçu / impression de la plaque F-Gas, une écoute par carte
+  conteneur.querySelectorAll('[data-action="plaque-machine"]').forEach(function (bouton) {
+    bouton.addEventListener('click', function () {
+      ouvrirPlaque(ctx, bouton.dataset.id);
     });
   });
 }

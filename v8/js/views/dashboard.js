@@ -4,9 +4,10 @@
 // alertes réglementaires. Lecture seule (Phase A).
 // ============================================================
 
-import { enteteVue, carteKpi, toast, ICONES } from './communs.js';
+import { enteteVue, carteKpi, ICONES } from './communs.js';
 import { esc, fmtNombre, fmtKgSigne, fmtDate } from '../core/utils.js';
 import { ouvrirWizard } from '../wizard/wizard.js';
+import { ouvrirCerfa } from '../cerfa/visualiseur.js';
 
 export const titre = 'Tableau de bord';
 
@@ -156,7 +157,7 @@ function ligneMouvement(mouvement) {
     + '<div class="tdb-fluide">' + esc(mouvement.fluide) + '</div>'
     + '</div>'
     + '<button type="button" class="btn btn-contour btn-petit tdb-btn-cerfa" '
-    + 'data-numero="' + esc(mouvement.cerfaNumero || mouvement.numero) + '">CERFA</button>'
+    + 'data-id="' + esc(mouvement.id) + '">CERFA</button>'
     + '</div>';
 }
 
@@ -282,10 +283,10 @@ export async function render(conteneur, ctx) {
       naviguer('mouvements');
     });
 
-  // Boutons « CERFA » : visualiseur prévu en Phase D
+  // Boutons « CERFA » : visualiseur plein écran du PDF officiel rempli
   conteneur.querySelectorAll('.tdb-btn-cerfa').forEach(function (bouton) {
     bouton.addEventListener('click', function () {
-      toast('Visualiseur CERFA : Phase D', 'info');
+      ouvrirCerfa(ctx, { source: 'mouvement', id: bouton.dataset.id });
     });
   });
 }

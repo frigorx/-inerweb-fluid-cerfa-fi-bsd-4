@@ -99,6 +99,32 @@ try {
   console.error('ÉCHEC composants/pieces-jointes.js : ' + erreur.message);
 }
 
+// ---- 3 ter. Les modules Phase D se chargent sans DOM et SANS charger
+// les bibliothèques UMD (pdf-lib / PDF.js restent paresseuses) ----
+const MODULES_PHASE_D = [
+  { chemin: './js/core/zip.js', exports: ['creerZip', 'creerZipOctets', 'crc32'] },
+  { chemin: './js/cerfa/generateur.js', exports: ['genererCerfaPdf', 'chargerPdfLib', 'calculerCadre7'] },
+  { chemin: './js/cerfa/visualiseur.js', exports: ['ouvrirCerfa'] },
+  { chemin: './js/documents/exports.js', exports: ['toutesLesTables'] },
+  { chemin: './js/documents/plaque-fgas.js', exports: ['ouvrirPlaque'] },
+  { chemin: './js/documents/dossier-audit.js', exports: ['genererDossierAudit'] }
+];
+for (const { chemin, exports } of MODULES_PHASE_D) {
+  try {
+    const module = await import(chemin);
+    verifier(exports.every((nom) => typeof module[nom] === 'function'),
+      chemin.replace('./js/', '') + ' se charge sans DOM et exporte '
+      + exports.join(' + '));
+  } catch (erreur) {
+    echecs += 1;
+    console.error('ÉCHEC ' + chemin + ' : ' + erreur.message);
+  }
+}
+// Preuve que le chargement reste paresseux : aucun global UMD posé
+verifier(typeof globalThis.PDFLib === 'undefined'
+  && typeof globalThis.pdfjsLib === 'undefined',
+  'pdf-lib et PDF.js ne sont PAS chargés au simple import (paresseux)');
+
 // ---- 4. Chaque vue se charge et respecte le contrat ----
 for (const id of VUES) {
   try {

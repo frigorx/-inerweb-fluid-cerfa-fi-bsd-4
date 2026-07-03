@@ -9,6 +9,30 @@
 - ⚠️ **Révocation à faire côté Apps Script** (les anciennes clés restent valides tant que
   `genererClesAPI()` n'a pas été exécutée puis le script redéployé) : procédure dans `SECURITE.md`.
 
+### ✅ Phase D — Documents officiels (03/07)
+- **CERFA 15497*04 = le PDF officiel rempli, affiché tel quel** (exigence « au pixel près ») :
+  moteur `v8/js/cerfa/generateur.js` couvrant les **72 champs officiels** de `docs/SPEC-CERFA.md`
+  (cadre 4 via la table unique, cadre 7 seuils HCFC kg / HFC teq / HFO kg × détection permanente,
+  cadre 10 fuites + réparations, cadre 11 ventilation vierge/recyclé/régénéré/déchet/réemploi,
+  **cadre 12 transport UN 1078 / UN 3161 selon la classe de sécurité du fluide — première fois
+  géré**, cadre 13 destination BSFF, signatures + image de la signature manuscrite) ;
+  filigrane diagonal + mention cadre 14 en mode FORMATION ; classes de sécurité ajoutées au
+  référentiel fluides (A1/A2L/A3).
+- **Visualiseur plein écran** (PDF.js, fidèle à la maquette) : rendu canvas du PDF rempli,
+  Imprimer / Télécharger / Fermer, branché partout (mouvements, tableau de bord, contrôles).
+- **Plaque F-Gas** imprimable par machine (fluide, charge, teqCO₂, détection, fréquence).
+- **Dossier audit annuel en un clic** (vue Bilan) : ZIP autonome — sommaire, 9 tableaux CSV,
+  le CERFA PDF de chaque mouvement et contrôle de l'année, attestation de capacité jointe.
+  Écriture ZIP maison sans dépendance (`v8/js/core/zip.js`), archive validée par l'extracteur
+  Windows (20 documents, ~1,8 Mo).
+- **2 correctifs de robustesse navigateur** (trouvés en vérification live) : `doc.save()` pdf-lib
+  et `page.render()` PDF.js gelaient dans les onglets en arrière-plan (minuteries/rAF bridés) →
+  sauvegarde en un bloc (`objectsPerTick: Infinity`) + rendu en intention `print` (qui donne
+  aussi les apparences finales des champs).
+- **Qualité : 280 vérifications automatisées vertes** (10 jeux de tests, dont 78 sur le PDF
+  officiel relu case par case) + vérification navigateur (CERFA rendu, dossier ZIP généré).
+- Reste : bascule v8 → racine (après validation Franck), puis Phase E (mode local Node+SQLite).
+
 ### ✅ Phase C — Conformité audit (03/07)
 - **Balance matière annuelle** (le cœur de l'audit) : vue dédiée par fluide (stock initial neuf/
   récupéré, achats, récupérations, charges, cessions, retours, destructions → stock théorique),
