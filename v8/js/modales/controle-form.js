@@ -162,7 +162,7 @@ export async function ouvrirFormControle(ctx, machineId = null) {
     + '<label for="ctl-prochain">Prochain contrôle</label>'
     + '<input type="date" id="ctl-prochain" name="prochainControle">'
     + '<span class="champ-erreur" style="color:var(--texte-faible)">'
-    + 'Aide : calcul automatique selon la charge en Phase C.</span>'
+    + 'Aide : périodicité réglementaire selon la charge en teq CO2 (12, 6 ou 3 mois).</span>'
     + '</div>'
 
     + '</form>';

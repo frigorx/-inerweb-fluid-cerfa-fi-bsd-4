@@ -9,6 +9,32 @@
 - ⚠️ **Révocation à faire côté Apps Script** (les anciennes clés restent valides tant que
   `genererClesAPI()` n'a pas été exécutée puis le script redéployé) : procédure dans `SECURITE.md`.
 
+### ✅ Phase C — Conformité audit (03/07)
+- **Balance matière annuelle** (le cœur de l'audit) : vue dédiée par fluide (stock initial neuf/
+  récupéré, achats, récupérations, charges, cessions, retours, destructions → stock théorique),
+  **inventaire physique au 31/12** (saisie par fluide, opérateur obligatoire) et **justification
+  obligatoire des écarts** (écart non justifié = alerte critique + blocage du mode officiel).
+- **Registre du personnel** : vue + formulaire complets (type de personne, attestation d'APTITUDE
+  individuelle, organisme, catégories 2008 ET 2025 avec encart d'aide réglementaire, activités
+  autorisées, désactivation — jamais de suppression). Séparation stricte capacité/aptitude.
+- **Outillage réglementaire** : tous types (stations, balance, détecteurs, pompe, manifold…),
+  statut recalculé depuis l'échéance (conforme / à vérifier / expiré), réforme tracée,
+  bandeau de blocage officiel si détecteur ou balance expiré.
+- **Pièces jointes généralisées** : composant réutilisable (dépôt, liste, téléchargement,
+  5 Mo max), binaires dans IndexedDB + métadonnées et hash SHA-256 dans le registre — branché
+  sur personnel (attestations), outillage (certificats), établissement (attestation capacité),
+  BSFF (bordereaux).
+- **Chaîne déchets/BSFF** : décision (réutilisable / à analyser / déchet + garde 1 an),
+  bordereau BSFF, sortie de stock tracée au journal.
+- **Dossier opérateur** : administration éditable (attestation de capacité complète, catégories,
+  activités, sites) + suivi d'audit organisme (audits, non-conformités, actions correctives).
+- **Alertes dynamiques** : recalculées depuis les données réelles (7 familles, niveaux SPEC §7.2),
+  badge sidebar rafraîchi à chaque navigation ; `peutPasserEnOfficiel()` avec motifs.
+- Navigation : 13 vues. **Qualité : 148 vérifications automatisées vertes** (6 jeux de tests dont
+  scénario audit de bout en bout) + vérification navigateur (balance avec écart justifié,
+  pièce jointe IndexedDB relue octet pour octet). Répartition Fable/Sonnet reconduite.
+- Reste Phase D : CERFA (PDF officiel rempli affiché), plaque F-Gas, dossier audit annuel en un clic.
+
 ### 🔧 CERFA v7 — correctif de conformité (03/07)
 - **Bug corrigé** : le wizard envoyait `CHARGE/MISE_EN_SERVICE/RECUPERATION/TRANSFERT`, le
   générateur testait `Charge/MiseEnService/Recuperation` → **aucune case du cadre 4 cochée**

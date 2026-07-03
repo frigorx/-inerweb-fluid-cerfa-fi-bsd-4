@@ -67,6 +67,11 @@ const CHIPS_STATUT = {
   ARRETEE:     { libelle: 'Arrêtée',         classe: 'chip-gris' },
   DEMANTELEE:  { libelle: 'Démantelée',      classe: 'chip-gris' },
 
+  // Statuts d'outillage réglementaire (Phase C)
+  A_VERIFIER:  { libelle: 'À vérifier',      classe: 'chip-ambre' },
+  EXPIRE:      { libelle: 'Expiré',          classe: 'chip-rouge' },
+  HORS_SERVICE:{ libelle: 'Hors service',    classe: 'chip-gris' },
+
   // Résultats de contrôle et statuts de mouvement
   CONFORME:    { libelle: 'Conforme',        classe: 'chip-vert' },
   VALIDE:      { libelle: 'Signé',           classe: 'chip-vert' },

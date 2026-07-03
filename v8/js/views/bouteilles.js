@@ -167,7 +167,7 @@ export async function render(conteneur, ctx) {
     } else if (action === 'peser') {
       ouvrirPesee(ctxAvecRafraichissement, id);
     } else if (action === 'supprimer') {
-      toast('Suppression encadrée : Phase C — une bouteille se retourne ou se déclare déchet, elle ne s’efface pas.', 'info');
+      toast('Une bouteille ne s’efface pas : elle se retourne au fournisseur ou part en filière déchet (vue Déchets / BSFF).', 'info');
     }
   });
 }

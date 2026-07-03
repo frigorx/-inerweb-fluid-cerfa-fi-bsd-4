@@ -16,8 +16,12 @@ const VUES = [
   { id: 'bouteilles', libelle: 'Stock bouteilles',         icone: 'bouteille' },
   { id: 'mouvements', libelle: 'Mouvements',               icone: 'echange' },
   { id: 'controles',  libelle: "Contrôles d'étanchéité",   icone: 'controle' },
+  { id: 'dechets',    libelle: 'Déchets / BSFF',           icone: 'dechets' },
+  { id: 'outillage',  libelle: 'Outillage',                icone: 'outillage' },
+  { id: 'personnel',  libelle: 'Personnel',                icone: 'utilisateur' },
   { id: 'stats',      libelle: 'Statistiques',             icone: 'stats' },
   { id: 'bilan',      libelle: 'Bilan annuel',             icone: 'bilan' },
+  { id: 'balance',    libelle: 'Balance matière',          icone: 'balance' },
   { id: 'fluides',    libelle: 'Fluides',                  icone: 'flocon' },
   { id: 'admin',      libelle: 'Administration',           icone: 'engrenage' }
 ];
@@ -188,6 +192,10 @@ async function afficherVue(id) {
 
   zone.scrollTop = 0;
   window.scrollTo(0, 0);
+
+  // Le compteur d'alertes peut changer après toute action utilisateur :
+  // on le recalcule à chaque navigation plutôt qu'au seul démarrage.
+  majBadgeAlertes();
 }
 
 /** Navigation par programme (déléguée au routeur). */
@@ -289,7 +297,6 @@ async function demarrer() {
 
   construireSidebar();
   initialiserTiroir();
-  majBadgeAlertes();
 
   routeur = creerRouteur({ surChangement: afficherVue });
   afficherVue(routeur.idCourant());

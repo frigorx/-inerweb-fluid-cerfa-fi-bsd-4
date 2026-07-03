@@ -1,12 +1,15 @@
 // ============================================================
-// inerWeb Fluide v8 — vue « Administration » (Phase A, lecture seule)
-// Paramètres du CERFA (cadre 1), utilisateurs/techniciens,
-// clients/détenteurs (cadre 2). Toute édition renvoie vers la
-// Phase C via un toast — aucune écriture dans le store.
+// inerWeb Fluide v8 — vue « Administration » (Phase C, édition)
+// Dossier opérateur (cadre 1 du CERFA) éditable, suivi d'audit
+// organisme et non-conformités, renvoi vers le registre du
+// personnel, clients/détenteurs (cadre 2, lecture seule ici).
 // ============================================================
 
 import { enteteVue, toast, ICONES } from './communs.js';
 import { esc, fmtDate } from '../core/utils.js';
+import { ouvrirFormEtablissement } from '../modales/etablissement-form.js';
+import { ouvrirFormAudit, ouvrirFormNonConformite, ouvrirFormSolderNonConformite }
+  from '../modales/audit-form.js';
 
 export const titre = 'Administration';
 
@@ -18,16 +21,6 @@ export const titre = 'Administration';
 
 const STYLE_VUE = `<style>
   .vue-admin { display: flex; flex-direction: column; gap: 16px; }
-
-  /* Bandeau discret « lecture seule » */
-  .vue-admin .bandeau-phase {
-    display: flex; align-items: center; gap: 9px;
-    padding: 10px 14px;
-    background: var(--info-fond); color: var(--info);
-    border-radius: var(--rayon-bouton);
-    font-size: 12.5px; font-weight: 500;
-  }
-  .vue-admin .bandeau-phase svg { width: 16px; height: 16px; flex: none; }
 
   /* En-tête de carte : badge CADRE n + titre + rappel */
   .vue-admin .carte-entete {
@@ -58,8 +51,9 @@ const STYLE_VUE = `<style>
     overflow-wrap: anywhere;
   }
   .vue-admin .champ-valeur.mono { font-size: 13px; }
+  .vue-admin .champ-valeur.echeance-proche { color: var(--danger, #dc2626); font-weight: 600; }
 
-  /* Listes utilisateurs et détenteurs : lignes fines */
+  /* Listes utilisateurs, clients, audits, non-conformités : lignes fines */
   .vue-admin .liste { list-style: none; margin: 0; padding: 0; }
   .vue-admin .liste li {
     display: flex; align-items: center; gap: 12px;
@@ -72,6 +66,14 @@ const STYLE_VUE = `<style>
 
   /* Chip « marine clair » (rôle Référent / chef d'atelier) */
   .vue-admin .chip-marine-clair { background: #e2eaf3; color: var(--marine-800); }
+
+  /* Chips de statut non-conformité */
+  .vue-admin .chip-rouge { background: #fee2e2; color: #dc2626; }
+  .vue-admin .chip-vert { background: #dcfce7; color: #16a34a; }
+
+  /* Renvoi (carte Utilisateurs devenue simple lien) */
+  .vue-admin .carte-renvoi { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+  .vue-admin .carte-renvoi p { font-size: 13px; color: var(--texte-2); }
 </style>`;
 
 /* ============================================================
@@ -91,20 +93,44 @@ function chipRole(roleApp) {
   return '<span class="chip ' + role.classe + '">' + esc(role.libelle) + '</span>';
 }
 
+/** Libellés courts des activités réglementées. */
+const LIBELLES_ACTIVITE = {
+  MISE_EN_SERVICE: 'Mise en service',
+  MAINTENANCE: 'Maintenance',
+  CONTROLE: 'Contrôle d’étanchéité',
+  RECUPERATION: 'Récupération',
+  DEMANTELEMENT: 'Démantèlement'
+};
+
 /* ============================================================
    Gabarits
    ============================================================ */
 
 /** Champ en style formulaire désactivé : libellé capitales + valeur figée. */
-function champFixe(libelle, valeur, mono = false) {
+function champFixe(libelle, valeur, options = {}) {
+  const classeAlerte = options.alerte ? ' echeance-proche' : '';
   return '<div class="champ">'
     + '<span class="champ-libelle">' + esc(libelle) + '</span>'
-    + '<span class="champ-valeur' + (mono ? ' mono' : '') + '">' + esc(valeur || '—') + '</span>'
+    + '<span class="champ-valeur' + (options.mono ? ' mono' : '') + classeAlerte + '">'
+    + esc(valeur || '—') + '</span>'
     + '</div>';
 }
 
-/** Carte « Entreprise / Opérateur » (cadre 1 du CERFA), lecture seule. */
+/** Carte « Entreprise / Opérateur » (cadre 1 du CERFA), éditable. */
 function carteEntreprise(etablissement) {
+  const jour = new Date().toISOString().slice(0, 10);
+  const horizon90 = (function () {
+    const d = new Date();
+    d.setDate(d.getDate() + 90);
+    return d.toISOString().slice(0, 10);
+  })();
+  const echeance = etablissement.dateEcheanceCapacite;
+  const echeanceProche = Boolean(echeance && echeance <= horizon90);
+
+  const categories = (etablissement.categoriesAutorisees || []).join(', ');
+  const activites = (etablissement.activitesAutorisees || [])
+    .map((a) => LIBELLES_ACTIVITE[a] || a).join(', ');
+
   return '<section class="carte">'
     + '<div class="carte-entete">'
     + '<div class="carte-entete-titres">'
@@ -114,53 +140,104 @@ function carteEntreprise(etablissement) {
     + '<p class="carte-rappel">Ces informations apparaissent sur chaque CERFA 15497*04 généré.</p>'
     + '</div>'
     + '</div>'
+    + '<button type="button" class="btn btn-secondaire btn-petit" data-action="modifier-etablissement">'
+    + 'Modifier</button>'
     + '</div>'
     + '<div class="grille-2">'
     + champFixe('Raison sociale', etablissement.raisonSociale)
-    + champFixe('N° SIRET', etablissement.siret, true)
-    + champFixe('N° attestation de capacité', etablissement.numAttestationCapacite, true)
+    + champFixe('N° SIRET', etablissement.siret, { mono: true })
+    + champFixe('N° attestation de capacité', etablissement.numAttestationCapacite, { mono: true })
     + champFixe('Adresse complète', etablissement.adresse)
     + champFixe('Organisme certificateur', etablissement.organisme)
-    + champFixe('Échéance de l’attestation', fmtDate(etablissement.dateEcheanceCapacite))
+    + champFixe('Date de délivrance', fmtDate(etablissement.dateDelivranceCapacite))
+    + champFixe('Échéance de l’attestation', fmtDate(echeance), { alerte: echeanceProche })
+    + champFixe('Catégories autorisées', categories)
+    + champFixe('Activités autorisées', activites)
+    + champFixe('Dernier audit', fmtDate(etablissement.dernierAudit))
+    + champFixe('Prochain audit', fmtDate(etablissement.prochainAudit))
     + '</div>'
     + '</section>';
 }
 
-/** Ligne d'un utilisateur : nom gras, attestation, chip de rôle, bouton. */
-function ligneUtilisateur(personne) {
-  const detail = personne.numAttestationAptitude
-    ? 'Att. n° <span class="mono">' + esc(personne.numAttestationAptitude) + '</span>'
-      + ' · valide jusqu’au ' + esc(fmtDate(personne.dateFinValidite))
-    : 'Aucune attestation d’aptitude';
-
+/** Ligne d'un audit organisme. */
+function ligneAudit(audit) {
   return '<li>'
     + '<div class="liste-infos">'
-    + '<span class="liste-nom">' + esc(personne.prenom + ' ' + personne.nom) + '</span>'
-    + '<span class="liste-detail">' + detail + '</span>'
+    + '<span class="liste-nom">' + esc(fmtDate(audit.date)) + ' · ' + esc(audit.organisme) + '</span>'
+    + '<span class="liste-detail">' + esc(audit.resultat)
+    + (audit.remarques ? ' — ' + esc(audit.remarques) : '') + '</span>'
     + '</div>'
-    + chipRole(personne.roleApp)
-    + (personne.actif ? '' : '<span class="chip chip-gris">Inactif</span>')
-    + '<button type="button" class="btn btn-secondaire btn-petit" data-action="modifier">Modifier</button>'
     + '</li>';
 }
 
-/** Carte « Utilisateurs / Techniciens » avec bouton d'ajout (Phase C). */
-function carteUtilisateurs(personnel) {
-  const lignes = personnel.map(ligneUtilisateur).join('');
+/** Ligne d'une non-conformité, avec bouton Solder si ouverte. */
+function ligneNonConformite(nc) {
+  const chip = nc.statut === 'SOLDEE'
+    ? '<span class="chip chip-vert">Soldée</span>'
+    : '<span class="chip chip-rouge">Ouverte</span>';
+  const detailEcheance = nc.echeance ? ' · échéance ' + esc(fmtDate(nc.echeance)) : '';
+  const detailAction = nc.actionCorrective ? ' — ' + esc(nc.actionCorrective) : '';
+  return '<li>'
+    + '<div class="liste-infos">'
+    + '<span class="liste-nom">' + esc(nc.description) + '</span>'
+    + '<span class="liste-detail">' + detailAction.replace(/^ — /, '') + detailEcheance + '</span>'
+    + '</div>'
+    + chip
+    + (nc.statut === 'SOLDEE' ? '' :
+      '<button type="button" class="btn btn-secondaire btn-petit" '
+      + 'data-action="solder-nc" data-id="' + esc(nc.id) + '">Solder</button>')
+    + '</li>';
+}
+
+/** Carte « Suivi d'audit » : audits organisme + non-conformités. */
+function carteSuiviAudit(audits, nonConformites) {
+  const lignesAudits = audits.map(ligneAudit).join('');
+  const lignesNc = nonConformites.map(ligneNonConformite).join('');
   return '<section class="carte">'
     + '<div class="carte-entete">'
     + '<div class="carte-entete-titres">'
     + '<div>'
-    + '<h3 class="carte-titre">Utilisateurs / Techniciens</h3>'
-    + '<p class="carte-rappel">Intervenants attestés et élèves habilités à manipuler.</p>'
+    + '<h3 class="carte-titre">Suivi d’audit</h3>'
+    + '<p class="carte-rappel">Audits de l’organisme certificateur et actions correctives.</p>'
     + '</div>'
     + '</div>'
-    + '<button type="button" class="btn btn-contour btn-petit" data-action="ajouter">'
-    + ICONES.plus + 'Ajouter</button>'
+    + '</div>'
+
+    + '<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">'
+    + '<span class="champ-libelle">Audits</span>'
+    + '<button type="button" class="btn btn-contour btn-petit" data-action="ajouter-audit">'
+    + ICONES.plus + 'Enregistrer un audit</button>'
     + '</div>'
     + '<ul class="liste">'
-    + (lignes || '<li><span class="liste-detail">Aucun utilisateur enregistré.</span></li>')
+    + (lignesAudits || '<li><span class="liste-detail">Aucun audit enregistré.</span></li>')
     + '</ul>'
+
+    + '<div style="display:flex; align-items:center; justify-content:space-between; margin:18px 0 8px;">'
+    + '<span class="champ-libelle">Non-conformités</span>'
+    + '<button type="button" class="btn btn-contour btn-petit" data-action="ajouter-nc">'
+    + ICONES.plus + 'Non-conformité</button>'
+    + '</div>'
+    + '<ul class="liste">'
+    + (lignesNc || '<li><span class="liste-detail">Aucune non-conformité enregistrée.</span></li>')
+    + '</ul>'
+    + '</section>';
+}
+
+/** Carte « Utilisateurs / Techniciens » : simple renvoi vers le registre du personnel. */
+function carteRenvoiPersonnel() {
+  return '<section class="carte carte-renvoi">'
+    + '<div class="carte-entete">'
+    + '<div class="carte-entete-titres">'
+    + '<div>'
+    + '<h3 class="carte-titre">Utilisateurs / Techniciens</h3>'
+    + '<p class="carte-rappel">Le registre complet du personnel a déménagé.</p>'
+    + '</div>'
+    + '</div>'
+    + '</div>'
+    + '<p>Intervenants attestés, élèves habilités et leurs attestations d’aptitude '
+    + 'se gèrent désormais dans le registre du personnel.</p>'
+    + '<button type="button" class="btn btn-primaire btn-petit" data-action="ouvrir-personnel">'
+    + 'Ouvrir le registre du personnel</button>'
     + '</section>';
 }
 
@@ -203,44 +280,82 @@ function carteClients(clients) {
    ============================================================ */
 
 /**
- * Rend la vue Administration (lecture seule en Phase A).
+ * Rend la vue Administration (édition, Phase C).
  * @param {HTMLElement} conteneur — élément déjà vidé par le routeur
  * @param {{ store: object, naviguer: (id: string) => void }} ctx
  */
 export async function render(conteneur, ctx) {
-  const { store } = ctx;
+  const { store, naviguer } = ctx;
 
-  // Lectures en parallèle (le store retourne des copies)
-  const [etablissement, personnel, clients] = await Promise.all([
-    store.getEtablissement(),
-    store.getPersonnel(),
-    store.getClients()
-  ]);
+  async function rafraichir() {
+    const [etablissement, audits, nonConformites, clients] = await Promise.all([
+      store.getEtablissement(),
+      store.getAuditsOrganisme(),
+      store.getNonConformites(),
+      store.getClients()
+    ]);
 
-  conteneur.innerHTML = STYLE_VUE
-    + '<div class="vue-admin anim-fade">'
-    + enteteVue({
-      titre: 'Administration',
-      sousTitre: 'Paramètres du CERFA, utilisateurs, détenteurs et intégrations'
-    })
-    + '<div class="bandeau-phase" role="note">' + ICONES.alerte
-    + '<span>Lecture seule — l’édition sera disponible en Phase C.</span></div>'
-    + carteEntreprise(etablissement)
-    + '<div class="grille-2">'
-    + carteUtilisateurs(personnel)
-    + carteClients(clients)
-    + '</div>'
-    + '</div>';
+    conteneur.innerHTML = STYLE_VUE
+      + '<div class="vue-admin anim-fade">'
+      + enteteVue({
+        titre: 'Administration',
+        sousTitre: 'Dossier opérateur, suivi d’audit, détenteurs et intégrations'
+      })
+      + carteEntreprise(etablissement)
+      + carteSuiviAudit(audits, nonConformites)
+      + '<div class="grille-2">'
+      + carteRenvoiPersonnel()
+      + carteClients(clients)
+      + '</div>'
+      + '</div>';
 
-  // Phase A : tous les boutons d'édition renvoient un toast explicatif
-  conteneur.querySelectorAll('[data-action="ajouter"]').forEach((bouton) => {
-    bouton.addEventListener('click', () => {
-      toast('L’ajout sera disponible en Phase C.', 'info');
+    // ---- Écouteurs ------------------------------------------------
+
+    const boutonModifierEtab = conteneur.querySelector('[data-action="modifier-etablissement"]');
+    if (boutonModifierEtab) {
+      boutonModifierEtab.addEventListener('click', async () => {
+        const enregistre = await ouvrirFormEtablissement(ctx);
+        if (enregistre) await rafraichir();
+      });
+    }
+
+    const boutonAjouterAudit = conteneur.querySelector('[data-action="ajouter-audit"]');
+    if (boutonAjouterAudit) {
+      boutonAjouterAudit.addEventListener('click', async () => {
+        const enregistre = await ouvrirFormAudit(ctx);
+        if (enregistre) await rafraichir();
+      });
+    }
+
+    const boutonAjouterNc = conteneur.querySelector('[data-action="ajouter-nc"]');
+    if (boutonAjouterNc) {
+      boutonAjouterNc.addEventListener('click', async () => {
+        const enregistre = await ouvrirFormNonConformite(ctx);
+        if (enregistre) await rafraichir();
+      });
+    }
+
+    conteneur.querySelectorAll('[data-action="solder-nc"]').forEach((bouton) => {
+      bouton.addEventListener('click', async () => {
+        const soldee = await ouvrirFormSolderNonConformite(ctx, bouton.dataset.id);
+        if (soldee) await rafraichir();
+      });
     });
-  });
-  conteneur.querySelectorAll('[data-action="modifier"]').forEach((bouton) => {
-    bouton.addEventListener('click', () => {
-      toast('L’édition sera disponible en Phase C.', 'info');
+
+    const boutonPersonnel = conteneur.querySelector('[data-action="ouvrir-personnel"]');
+    if (boutonPersonnel) {
+      boutonPersonnel.addEventListener('click', () => {
+        naviguer('personnel');
+      });
+    }
+
+    // Clients : édition non encore disponible (hors périmètre de cette tâche)
+    conteneur.querySelectorAll('[data-action="modifier"]').forEach((bouton) => {
+      bouton.addEventListener('click', () => {
+        toast('La modification des détenteurs sera disponible prochainement.', 'info');
+      });
     });
-  });
+  }
+
+  await rafraichir();
 }

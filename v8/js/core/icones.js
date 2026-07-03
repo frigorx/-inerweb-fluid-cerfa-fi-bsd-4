@@ -155,5 +155,27 @@ export const ICONES = {
     '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/>'
     + '<path d="M17 21v-7H7v7"/>'
     + '<path d="M7 3v4.5h7"/>'
+  ),
+
+  // Déchets / BSFF : fût de récupération
+  dechets: svg(
+    '<path d="M6 8h12l-1 12.2a1.6 1.6 0 0 1-1.6 1.5H8.6A1.6 1.6 0 0 1 7 20.2Z"/>'
+    + '<path d="M5 8h14"/>'
+    + '<path d="M8.5 8V5.5A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5V8"/>'
+    + '<path d="M10 11.5v6M14 11.5v6"/>'
+  ),
+
+  // Outillage : clé plate
+  outillage: svg(
+    '<path d="M14.7 6.3a4 4 0 0 0-5.4 4.9L4 16.5V19h2.5l5.3-5.3a4 4 0 0 0 4.9-5.4l-2.6 2.6-2-.6-.6-2Z"/>'
+  ),
+
+  // Balance matière : balance à deux plateaux
+  balance: svg(
+    '<path d="M12 3v18"/>'
+    + '<path d="M7 21h10"/>'
+    + '<path d="M4 7h6M14 7h6"/>'
+    + '<path d="M4 7l-2.2 5A2.4 2.4 0 0 0 4 15a2.4 2.4 0 0 0 2.2-3Z"/>'
+    + '<path d="M20 7l-2.2 5A2.4 2.4 0 0 0 20 15a2.4 2.4 0 0 0 2.2-3Z"/>'
   )
 };

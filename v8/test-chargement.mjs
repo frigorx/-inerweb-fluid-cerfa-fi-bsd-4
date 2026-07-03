@@ -8,7 +8,8 @@
 
 const VUES = [
   'dashboard', 'machines', 'bouteilles', 'mouvements',
-  'controles', 'stats', 'bilan', 'fluides', 'admin', 'communs'
+  'controles', 'dechets', 'outillage', 'personnel',
+  'stats', 'bilan', 'balance', 'fluides', 'admin', 'communs'
 ];
 
 let echecs = 0;
@@ -69,7 +70,12 @@ try {
 const MODALES = [
   { fichier: 'machine-form', exports: ['ouvrirFormMachine'] },
   { fichier: 'bouteille-form', exports: ['ouvrirFormBouteille', 'ouvrirPesee'] },
-  { fichier: 'controle-form', exports: ['ouvrirFormControle'] }
+  { fichier: 'controle-form', exports: ['ouvrirFormControle'] },
+  { fichier: 'audit-form', exports: ['ouvrirFormAudit', 'ouvrirFormNonConformite', 'ouvrirFormSolderNonConformite'] },
+  { fichier: 'bsff-form', exports: ['ouvrirFormBsff'] },
+  { fichier: 'etablissement-form', exports: ['ouvrirFormEtablissement'] },
+  { fichier: 'outil-form', exports: ['ouvrirFormOutil'] },
+  { fichier: 'personne-form', exports: ['ouvrirFormPersonne'] }
 ];
 for (const { fichier, exports } of MODALES) {
   try {
@@ -81,6 +87,16 @@ for (const { fichier, exports } of MODALES) {
     echecs += 1;
     console.error('ÉCHEC modales/' + fichier + '.js : ' + erreur.message);
   }
+}
+
+// ---- 3 bis. Le composant pièces jointes se charge sans DOM ----
+try {
+  const pj = await import('./js/composants/pieces-jointes.js');
+  verifier(typeof pj.zonePiecesJointes === 'function',
+    'composants/pieces-jointes.js se charge sans DOM et exporte zonePiecesJointes');
+} catch (erreur) {
+  echecs += 1;
+  console.error('ÉCHEC composants/pieces-jointes.js : ' + erreur.message);
 }
 
 // ---- 4. Chaque vue se charge et respecte le contrat ----

@@ -881,3 +881,235 @@
   flex-shrink: 0;
   margin-top: 1px;
 }
+
+/* ============================================================
+   Pièces jointes (Phase C) : liste + zone de dépôt
+   ============================================================ */
+
+.zone-pj {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.zone-pj .pj-vide {
+  font-size: 13px;
+  color: var(--texte-3);
+  margin: 0;
+}
+
+.pj-ligne {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 12px;
+  background: var(--fond-3);
+  border: 1px solid var(--bordure-2);
+  border-radius: var(--rayon-bouton);
+}
+
+.pj-ligne + .pj-ligne {
+  margin-top: 6px;
+}
+
+.pj-ligne .pj-infos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pj-ligne .pj-nom {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texte);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pj-ligne .pj-meta {
+  font-size: 12px;
+  color: var(--texte-3);
+}
+
+.pj-ligne .pj-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.pj-ligne .pj-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: var(--carte);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-bouton);
+  color: var(--texte-2);
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+
+.pj-ligne .pj-actions button:hover {
+  border-color: var(--accent);
+  color: var(--accent-fort);
+}
+
+.pj-ligne .pj-actions button.pj-supprimer:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.pj-ligne .pj-actions svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Zone de dépôt : pointillés, survol turquoise */
+.pj-depot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 2px dashed var(--bordure-3);
+  border-radius: var(--rayon-carte);
+  background: var(--fond-3);
+  color: var(--texte-2);
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+
+.pj-depot:hover,
+.pj-depot.pj-depot-survol {
+  border-color: var(--accent);
+  background: var(--accent-fond-2);
+}
+
+.pj-depot svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--accent-fort);
+}
+
+.pj-depot .pj-depot-texte {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+}
+
+.pj-depot .pj-depot-texte strong {
+  font-size: 13px;
+  color: var(--texte);
+}
+
+.pj-message {
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: var(--rayon-bouton);
+  background: var(--fond-2);
+  color: var(--texte-2);
+}
+
+.pj-message.pj-message-erreur {
+  background: var(--danger-fond);
+  color: var(--danger);
+}
+
+/* ============================================================
+   Tableau « balance matière » (variante dense du tableau)
+   Colonne écart colorée : vert nul, rouge non justifié,
+   ambre justifié.
+   ============================================================ */
+
+.tableau-balance table {
+  font-size: 12.5px;
+}
+
+.tableau-balance th,
+.tableau-balance td {
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+
+.tableau-balance td.nombre {
+  font-family: var(--police-mono);
+  text-align: right;
+}
+
+.tableau-balance .ecart-nul {
+  color: var(--succes);
+  font-weight: 600;
+}
+
+.tableau-balance .ecart-non-justifie {
+  color: var(--danger);
+  font-weight: 700;
+  background: var(--danger-fond);
+}
+
+.tableau-balance .ecart-justifie {
+  color: var(--avert);
+  font-weight: 600;
+  background: var(--avert-fond);
+}
+
+/* ============================================================
+   Encart d'aide (ex. grilles de catégories 2008 / 2025)
+   ============================================================ */
+
+.encart-aide {
+  padding: 12px 14px;
+  background: var(--accent-fond-2);
+  border: 1px solid var(--accent);
+  border-radius: var(--rayon-carte);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--texte-2);
+}
+
+.encart-aide strong {
+  color: var(--texte);
+}
+
+/* ============================================================
+   Liste-fiche : paires libellé / valeur (dossier opérateur…)
+   ============================================================ */
+
+.liste-fiche {
+  display: grid;
+  grid-template-columns: minmax(160px, max-content) 1fr;
+  gap: 8px 18px;
+  font-size: 13px;
+}
+
+.liste-fiche dt {
+  color: var(--texte-3);
+}
+
+.liste-fiche dd {
+  margin: 0;
+  color: var(--texte);
+  font-weight: 500;
+}
+
+.liste-fiche dd.valeur-mono {
+  font-family: var(--police-mono);
+}
+
+@media (max-width: 700px) {
+  .liste-fiche {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .liste-fiche dd {
+    margin-bottom: 8px;
+  }
+}
