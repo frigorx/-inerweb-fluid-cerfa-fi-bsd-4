@@ -262,6 +262,11 @@ function ouvrirModaleSauvegarde() {
       + '<span class="option-titre">Restaurer</span>'
       + '<span class="option-detail">Recharge les données depuis un fichier .json exporté.</span>'
       + '</button>'
+      + '<button id="option-reinitialiser" class="option-sauvegarde" type="button">'
+      + ICONES.croix
+      + '<span class="option-titre">Réinitialiser la démonstration</span>'
+      + '<span class="option-detail">Efface tout et recharge le monde fictif de départ (machines, bouteilles, mouvements d\'exemple).</span>'
+      + '</button>'
       + '</div>'
       + '<input id="fichier-restauration" type="file" accept=".json,application/json" hidden>',
     actionsHtml:
@@ -283,6 +288,25 @@ function ouvrirModaleSauvegarde() {
   });
 
   document.getElementById('bouton-fermer-sauvegarde').addEventListener('click', fermer);
+
+  // Réinitialisation de la démonstration : on efface le registre local
+  // (localStorage) ET les pièces jointes (IndexedDB), puis on recharge —
+  // le monde fictif de départ se reconstruit tout seul au démarrage.
+  document.getElementById('option-reinitialiser').addEventListener('click', function () {
+    const confirme = window.confirm(
+      'Réinitialiser la démonstration ?\n\n'
+      + 'Toutes les données saisies sur cet appareil (mouvements, machines, pièces jointes…) '
+      + 'seront effacées et remplacées par le monde fictif de départ.\n\n'
+      + 'Pensez à exporter une sauvegarde avant si vous voulez garder une trace.'
+    );
+    if (!confirme) return;
+    try { localStorage.removeItem('inerweb-fluide-v8-demo'); } catch (e) { /* stockage indisponible */ }
+    const suppression = indexedDB.deleteDatabase('inerweb-fluide-v8-pj');
+    const recharger = function () { window.location.reload(); };
+    suppression.onsuccess = recharger;
+    suppression.onerror = recharger;
+    suppression.onblocked = recharger;
+  });
 }
 
 /* ============================================================
