@@ -72,11 +72,13 @@ const CHIPS_STATUT = {
   EXPIRE:      { libelle: 'Expiré',          classe: 'chip-rouge' },
   HORS_SERVICE:{ libelle: 'Hors service',    classe: 'chip-gris' },
 
-  // Résultats de contrôle et statuts de mouvement
+  // Résultats de contrôle et statuts de mouvement (CR-1 : chaque
+  // statut du cycle de vie a sa chip distincte)
   CONFORME:    { libelle: 'Conforme',        classe: 'chip-vert' },
   VALIDE:      { libelle: 'Signé',           classe: 'chip-vert' },
-  SOUMIS:      { libelle: 'Soumis',          classe: 'chip-ambre' },
+  SOUMIS:      { libelle: 'À valider',       classe: 'chip-ambre' },
   BROUILLON:   { libelle: 'Brouillon',       classe: 'chip-gris' },
+  ANNULE:      { libelle: 'Annulé',          classe: 'chip-rouge' },
 
   // Types et états de bouteille
   NEUVE:        { libelle: 'Neuve',          classe: 'chip-teal' },

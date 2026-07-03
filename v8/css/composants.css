@@ -882,6 +882,18 @@
   margin-top: 1px;
 }
 
+/* CR-5 : bandeau d'intégrité du registre — fixe en tête de la zone
+   principale, sous l'en-tête collant, pleine largeur, non fermable
+   (aucun bouton de fermeture posé côté JS). */
+#bandeau-integrite.bandeau-erreur {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  border-radius: 0;
+  padding: 11px 28px;
+  font-weight: 500;
+}
+
 /* ============================================================
    Pièces jointes (Phase C) : liste + zone de dépôt
    ============================================================ */

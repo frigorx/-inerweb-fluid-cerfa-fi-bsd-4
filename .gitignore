@@ -13,9 +13,12 @@
 # --- Données réelles (mode Local Lycée) ---
 # Base SQLite, pièces justificatives et sauvegardes vivent
 # À CÔTÉ de l'application, jamais dans le dépôt public.
-data/
-documents/
-backups/
+# ANCRÉS À LA RACINE (préfixe /) : les motifs non ancrés ignoraient
+# aussi v8/js/data/ (store + tests) et v8/js/documents/ (exports),
+# qui sont du CODE à versionner.
+/data/
+/documents/
+/backups/
 
 # --- Dépendances ---
 node_modules/

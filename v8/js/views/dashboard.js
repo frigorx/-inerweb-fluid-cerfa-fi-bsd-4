@@ -131,6 +131,34 @@ const STYLES_VUE = `
   .tdb-point-important { background: var(--avert-icone); }
   .tdb-alerte-titre  { font-size: 12.5px; font-weight: 600; color: var(--texte); }
   .tdb-alerte-detail { margin-top: 2px; font-size: 11.5px; color: var(--texte-3); }
+
+  /* Bandeau « Mode Officiel » (CR-6) : discret mais permanent, sous les KPI */
+  .tdb-officiel {
+    margin-top: 16px;
+  }
+  .tdb-officiel-motifs {
+    margin: 6px 0 0;
+    padding-left: 18px;
+  }
+  .tdb-officiel-motifs li { margin-top: 2px; }
+  .tdb-officiel-note {
+    margin-top: 6px;
+    font-style: italic;
+    opacity: .9;
+  }
+  .tdb-officiel-ok {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 8px 14px;
+    border-radius: var(--rayon-bouton);
+    background: var(--succes-fond);
+    color: var(--succes);
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+  .tdb-officiel-ok svg { width: 15px; height: 15px; flex: none; }
 </style>`;
 
 /**
@@ -156,8 +184,48 @@ function ligneMouvement(mouvement) {
     + '<div class="tdb-quantite ' + classeQuantite + '">' + esc(fmtKgSigne(mouvement.quantiteKg)) + '</div>'
     + '<div class="tdb-fluide">' + esc(mouvement.fluide) + '</div>'
     + '</div>'
-    + '<button type="button" class="btn btn-contour btn-petit tdb-btn-cerfa" '
-    + 'data-id="' + esc(mouvement.id) + '">CERFA</button>'
+    // CF-1 / IM-12 : le CERFA n'existe (et ne se visualise sans erreur) que pour
+    // une écriture figée (VALIDE/ANNULE) hors TRANSFERT (pas de CERFA machine — registre).
+    + (peutAfficherCerfa(mouvement)
+      ? '<button type="button" class="btn btn-contour btn-petit tdb-btn-cerfa" '
+        + 'data-id="' + esc(mouvement.id) + '">CERFA</button>'
+      : '')
+    + '</div>';
+}
+
+/**
+ * CF-1 + IM-12 : un bouton « CERFA » n'a de sens que sur une écriture figée
+ * (VALIDE ou ANNULE) et jamais pour un TRANSFERT (pas de CERFA machine —
+ * SPEC-V8.md §7.1 : c'est une écriture de registre interne).
+ * @param {object} mouvement — mouvement du store
+ * @returns {boolean}
+ */
+function peutAfficherCerfa(mouvement) {
+  return (mouvement.statut === 'VALIDE' || mouvement.statut === 'ANNULE')
+    && mouvement.type !== 'TRANSFERT';
+}
+
+/**
+ * Bandeau « Mode Officiel » (CR-6) : rend visible et testable, dès la Démo,
+ * le contrat de blocage §7.2 — sinon `peutPasserEnOfficiel()` n'est qu'une
+ * donnée calculée dans le vide, jamais montrée à l'écran.
+ * @param {{ok: boolean, motifs: string[]}} etatOfficiel
+ * @returns {string} HTML
+ */
+function bandeauModeOfficiel(etatOfficiel) {
+  if (etatOfficiel.ok) {
+    return '<div class="tdb-officiel-ok">' + ICONES.coche
+      + '<span>Prérequis du mode Officiel : tous réunis.</span></div>';
+  }
+  const motifs = etatOfficiel.motifs.map((motif) => '<li>' + esc(motif) + '</li>').join('');
+  return '<div class="bandeau-avertissement tdb-officiel">'
+    + ICONES.alerte
+    + '<div>'
+    + '<strong>Mode Officiel indisponible</strong>'
+    + '<ul class="tdb-officiel-motifs">' + motifs + '</ul>'
+    + '<p class="tdb-officiel-note">En mode démonstration, tout reste en FORMATION ; '
+    + 'ces verrous s’appliqueront au mode réel.</p>'
+    + '</div>'
     + '</div>';
 }
 
@@ -187,10 +255,11 @@ export async function render(conteneur, ctx) {
   const { store, naviguer } = ctx;
 
   // Lecture des données en parallèle (le store renvoie des copies)
-  const [stats, mouvements, alertes] = await Promise.all([
+  const [stats, mouvements, alertes, etatOfficiel] = await Promise.all([
     store.getStats(),
     store.getMouvements(),
-    store.getAlertes()
+    store.getAlertes(),
+    store.peutPasserEnOfficiel()
   ]);
 
   const derniersMouvements = mouvements.slice(0, NB_DERNIERS_MOUVEMENTS);
@@ -267,6 +336,7 @@ export async function render(conteneur, ctx) {
   conteneur.innerHTML = STYLES_VUE
     + entete
     + rangeeKpi
+    + bandeauModeOfficiel(etatOfficiel)
     + '<div class="tdb-colonnes">' + carteMouvements + carteAlertes + '</div>';
 
   // ---- Écouteurs ----

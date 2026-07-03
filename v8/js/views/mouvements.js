@@ -1,16 +1,75 @@
 // ============================================================
-// inerWeb Fluide v8 — vue « Mouvements de fluide » (Phase A, lecture seule)
-// Historique des charges, compléments et récupérations :
-// tableau charte (date mono, machine en gras, chips de type,
-// quantités signées colorées, n° CERFA turquoise, statut, action).
+// inerWeb Fluide v8 — vue « Mouvements de fluide »
+// Historique des charges, compléments et récupérations, avec
+// actions PAR STATUT (CR-1 / CR-2) :
+//   BROUILLON → Reprendre (wizard préchargé) · Supprimer ;
+//   SOUMIS    → Valider (modale de confirmation) · Rejeter (motif) ;
+//   VALIDE    → Visualiser CERFA (sauf transfert) · Annuler
+//               (contre-écriture, motif obligatoire) ;
+//   ANNULE    → Visualiser CERFA (sauf transfert).
+// CF-1 + IM-12 : le bouton CERFA n'apparaît QUE pour les écritures
+// figées (VALIDE/ANNULE) d'un type qui produit une fiche (≠ TRANSFERT).
 // ============================================================
 
-import { enteteVue, chipStatut, chipType, tableau, ICONES } from './communs.js';
-import { fmtDate, fmtKgSigne, esc } from '../core/utils.js';
+import { enteteVue, chipStatut, chipType, tableau, modale, toast, ICONES }
+  from './communs.js';
+import { fmtDate, fmtKg, fmtKgSigne, esc } from '../core/utils.js';
 import { ouvrirWizard } from '../wizard/wizard.js';
 import { ouvrirCerfa } from '../cerfa/visualiseur.js';
 
 export const titre = 'Mouvements de fluide';
+
+/** Rôles autorisés à valider une écriture (contrat Phase B). */
+const ROLES_VALIDEURS = ['REFERENT', 'ENSEIGNANT', 'ADMIN'];
+
+/* ============================================================
+   Petits fragments HTML
+   ============================================================ */
+
+/** Bandeau d'erreur (rouge), même motif que le wizard. */
+function bandeauErreur(message) {
+  return '<div class="bandeau-erreur">' + ICONES.alerte
+    + '<span>' + esc(message) + '</span></div>';
+}
+
+/** Bouton d'action d'une ligne du tableau. */
+function boutonLigne(action, libelle, id, classe) {
+  return '<button type="button" class="btn ' + classe + ' btn-petit"'
+    + ' data-action="' + esc(action) + '" data-id="' + esc(id) + '">'
+    + esc(libelle) + '</button>';
+}
+
+/**
+ * Boutons de la cellule Action, selon le statut du mouvement.
+ * @param {object} mv — mouvement (copie du store)
+ * @returns {string} HTML
+ */
+function boutonsAction(mv) {
+  const boutons = [];
+
+  if (mv.statut === 'BROUILLON') {
+    boutons.push(boutonLigne('reprendre', 'Reprendre', mv.id, 'btn-contour'));
+    boutons.push(boutonLigne('supprimer', 'Supprimer', mv.id, 'btn-danger-contour'));
+
+  } else if (mv.statut === 'SOUMIS') {
+    boutons.push(boutonLigne('valider', 'Valider', mv.id, 'btn-contour'));
+    boutons.push(boutonLigne('rejeter', 'Rejeter', mv.id, 'btn-danger-contour'));
+
+  } else if (mv.statut === 'VALIDE' || mv.statut === 'ANNULE') {
+    // CF-1 + IM-12 : CERFA seulement pour les écritures figées d'un
+    // type qui produit une fiche (le transfert reste interne au registre)
+    if (mv.type !== 'TRANSFERT') {
+      boutons.push(boutonLigne('voir-cerfa', 'Visualiser CERFA', mv.id, 'btn-contour'));
+    }
+    if (mv.statut === 'VALIDE') {
+      boutons.push(boutonLigne('annuler', 'Annuler', mv.id, 'btn-danger-contour'));
+    }
+  }
+
+  if (!boutons.length) return '—';
+  return '<span style="display:inline-flex;gap:8px;flex-wrap:wrap;'
+    + 'justify-content:flex-end">' + boutons.join('') + '</span>';
+}
 
 /* ============================================================
    Rendu d'une ligne du tableau
@@ -25,29 +84,33 @@ function ligneMouvement(mouvement) {
   // Quantité signée : vert si charge (positif), violet si récupération (négatif)
   const classeQuantite = mouvement.quantiteKg < 0 ? 'quantite-negative' : 'quantite-positive';
 
+  // Un brouillon issu d'un rejet garde son motif (visible au survol)
+  const infoRejet = (mouvement.statut === 'BROUILLON' && mouvement.motifRejet)
+    ? ' title="Rejeté : ' + esc(mouvement.motifRejet) + '"'
+    : '';
+
   return '<tr>'
     // Date en mono
     + '<td class="cellule-mono">' + esc(fmtDate(mouvement.date)) + '</td>'
     // Machine en gras
-    + '<td><strong>' + esc(mouvement.machineLabel) + '</strong></td>'
+    + '<td><strong>' + esc(mouvement.machineLabel || '—') + '</strong></td>'
     // Type de mouvement (chip colorée)
     + '<td>' + chipType(mouvement.type) + '</td>'
     // Quantité signée colorée + code fluide gris
     + '<td class="cellule-mono">'
-    + '<span class="' + classeQuantite + '">' + esc(fmtKgSigne(mouvement.quantiteKg)) + '</span>'
-    + ' <span style="color:var(--texte-3);font-size:12px">' + esc(mouvement.fluide) + '</span>'
+    + '<span class="' + classeQuantite + '">'
+    + esc(mouvement.quantiteKg === null ? '—' : fmtKgSigne(mouvement.quantiteKg))
+    + '</span>'
+    + ' <span style="color:var(--texte-3);font-size:12px">' + esc(mouvement.fluide || '') + '</span>'
     + '</td>'
     // Numéro CERFA en mono turquoise
     + '<td class="cellule-mono" style="color:var(--accent-fort)">'
     + (mouvement.cerfaNumero ? esc(mouvement.cerfaNumero) : '—')
     + '</td>'
-    // Statut (chip verte « Signé » pour VALIDE)
-    + '<td>' + chipStatut(mouvement.statut) + '</td>'
-    // Action : visualiser le CERFA officiel rempli (Phase D)
-    + '<td class="align-droite">'
-    + '<button type="button" class="btn btn-contour btn-petit" data-action="voir-cerfa"'
-    + ' data-id="' + esc(mouvement.id) + '">Visualiser CERFA</button>'
-    + '</td>'
+    // Statut (chip distincte par statut : gris / ambre / vert / rouge)
+    + '<td' + infoRejet + '>' + chipStatut(mouvement.statut) + '</td>'
+    // Actions selon le statut (CR-1 / CR-2 / CF-1)
+    + '<td class="align-droite">' + boutonsAction(mouvement) + '</td>'
     + '</tr>';
 }
 
@@ -70,6 +133,207 @@ function etatVide() {
 }
 
 /* ============================================================
+   Modales d'action (suppression, validation, rejet, contre-écriture)
+   ============================================================ */
+
+/** Racine DOM de la modale la plus récente (convention .modale-fond:last-of-type). */
+function derniereModale() {
+  return document.querySelector('.modale-fond:last-of-type .modale');
+}
+
+/** Ligne de rappel « libellé : valeur » dans une modale. */
+function ligneRappel(libelle, valeurHtml) {
+  return '<div style="display:flex;justify-content:space-between;gap:12px;'
+    + 'padding:6px 0;border-bottom:1px solid var(--bordure-2);font-size:13px">'
+    + '<span style="color:var(--texte-3)">' + esc(libelle) + '</span>'
+    + '<span style="font-weight:600;text-align:right">' + valeurHtml + '</span>'
+    + '</div>';
+}
+
+/** Rappel synthétique d'un mouvement (numéro, date, type, machine, pesées). */
+function rappelMouvement(mv) {
+  const lignes = [
+    ligneRappel('Numéro', '<span class="cellule-mono">' + esc(mv.numero) + '</span>'),
+    ligneRappel('Date', esc(fmtDate(mv.date))),
+    ligneRappel('Type', chipType(mv.type))
+  ];
+  if (mv.machineLabel) lignes.push(ligneRappel('Machine', esc(mv.machineLabel)));
+  if (mv.quantiteKg !== null && Number.isFinite(mv.quantiteKg)) {
+    lignes.push(ligneRappel('Quantité',
+      '<span class="cellule-mono">' + esc(fmtKgSigne(mv.quantiteKg)) + '</span>'));
+  } else if (Number.isFinite(mv.peseeAvantKg) && Number.isFinite(mv.peseeApresKg)) {
+    lignes.push(ligneRappel('Pesées',
+      '<span class="cellule-mono">' + esc(fmtKg(mv.peseeAvantKg))
+      + ' → ' + esc(fmtKg(mv.peseeApresKg)) + '</span>'));
+  }
+  if (mv.technicien) lignes.push(ligneRappel('Technicien', esc(mv.technicien)));
+  return '<div style="margin-bottom:14px">' + lignes.join('') + '</div>';
+}
+
+/**
+ * Câble une modale de confirmation : bouton « fermer », bouton
+ * « confirmer » qui exécute `action` (les erreurs du store s'affichent
+ * en bandeau dans la modale, sans la fermer).
+ * @param {{ fermer: () => void }} instance — retour de modale()
+ * @param {(boite: HTMLElement) => Promise<void>} action
+ */
+function cablerConfirmation(instance, action) {
+  const boite = derniereModale();
+  if (!boite) return;
+  const boutonFermer = boite.querySelector('[data-role="fermer"]');
+  const boutonConfirmer = boite.querySelector('[data-role="confirmer"]');
+  if (boutonFermer) boutonFermer.addEventListener('click', instance.fermer);
+  if (!boutonConfirmer) return;
+
+  boutonConfirmer.addEventListener('click', async function () {
+    const zoneErreur = boite.querySelector('[data-zone-erreur]');
+    if (zoneErreur) zoneErreur.innerHTML = '';
+    boutonConfirmer.disabled = true;
+    try {
+      await action(boite);
+    } catch (erreur) {
+      boutonConfirmer.disabled = false;
+      if (zoneErreur) {
+        zoneErreur.innerHTML = bandeauErreur(erreur && erreur.message
+          ? erreur.message
+          : 'Erreur inattendue.');
+      }
+    }
+  });
+}
+
+/** Champ « motif » (textarea) avec libellé, pour rejet et contre-écriture. */
+function champMotif(libelle) {
+  return '<div class="champ">'
+    + '<label for="modale-motif">' + esc(libelle) + '</label>'
+    + '<textarea id="modale-motif" rows="3"></textarea>'
+    + '</div>';
+}
+
+/** Lit le motif saisi dans la modale ; throw si vide (message métier). */
+function lireMotif(boite, messageVide) {
+  const champ = boite.querySelector('#modale-motif');
+  const motif = champ ? String(champ.value).trim() : '';
+  if (!motif) throw new Error(messageVide);
+  return motif;
+}
+
+/** BROUILLON → confirmation puis suppression définitive. */
+function ouvrirSuppression(ctx, mv) {
+  const instance = modale({
+    titre: 'Supprimer le brouillon',
+    contenuHtml: rappelMouvement(mv)
+      + '<p style="font-size:13px;color:var(--texte-2)">Ce brouillon n’a '
+      + 'aucun effet sur les stocks ni sur le registre : sa suppression '
+      + 'est définitive et sans conséquence.</p>'
+      + '<div data-zone-erreur></div>',
+    actionsHtml:
+      '<button type="button" class="btn btn-secondaire" data-role="fermer">Annuler</button>'
+      + '<button type="button" class="btn btn-danger-contour" data-role="confirmer">Supprimer</button>'
+  });
+  cablerConfirmation(instance, async function () {
+    await ctx.store.supprimerMouvement(mv.id);
+    instance.fermer();
+    toast('Brouillon ' + mv.numero + ' supprimé.', 'succes');
+    ctx.naviguer('mouvements');
+  });
+}
+
+/** SOUMIS → modale de validation (validateur = utilisateur courant). */
+function ouvrirValidation(ctx, mv, utilisateur) {
+  const peutValider = Boolean(utilisateur
+    && ROLES_VALIDEURS.includes(utilisateur.roleApp));
+
+  const blocValidateur = peutValider
+    ? ligneRappel('Validateur',
+        esc(utilisateur.prenom + ' ' + utilisateur.nom) + ' '
+        + chipStatut(utilisateur.roleApp))
+    : bandeauErreur('Votre profil ne permet pas de valider une écriture '
+        + '(rôle requis : référent, enseignant ou administrateur).');
+
+  const instance = modale({
+    titre: 'Valider le mouvement',
+    contenuHtml: rappelMouvement(mv)
+      + '<p style="font-size:13px;color:var(--texte-2)">La validation '
+      + 'applique les effets sur les stocks et inscrit l’écriture au '
+      + 'registre : elle devient définitive (correction uniquement par '
+      + 'contre-écriture).</p>'
+      + '<div style="margin-top:10px">' + blocValidateur + '</div>'
+      + '<div data-zone-erreur style="margin-top:10px"></div>',
+    actionsHtml:
+      '<button type="button" class="btn btn-secondaire" data-role="fermer">Annuler</button>'
+      + (peutValider
+        ? '<button type="button" class="btn btn-primaire" data-role="confirmer">Valider</button>'
+        : '')
+  });
+  cablerConfirmation(instance, async function () {
+    await ctx.store.validerMouvement(mv.id, utilisateur.id);
+    instance.fermer();
+    toast('Mouvement ' + mv.numero + ' validé et inscrit au registre.', 'succes');
+    ctx.naviguer('mouvements');
+  });
+}
+
+/** SOUMIS → modale de rejet (motif obligatoire, retour en brouillon). */
+function ouvrirRejet(ctx, mv) {
+  const instance = modale({
+    titre: 'Rejeter le mouvement',
+    contenuHtml: rappelMouvement(mv)
+      + '<p style="font-size:13px;color:var(--texte-2)">Le mouvement '
+      + 'repasse en brouillon avec votre motif : le technicien pourra le '
+      + 'reprendre ou le supprimer.</p>'
+      + champMotif('Motif du rejet (obligatoire)')
+      + '<div data-zone-erreur></div>',
+    actionsHtml:
+      '<button type="button" class="btn btn-secondaire" data-role="fermer">Annuler</button>'
+      + '<button type="button" class="btn btn-danger-contour" data-role="confirmer">Rejeter</button>'
+  });
+  cablerConfirmation(instance, async function (boite) {
+    const motif = lireMotif(boite, 'Motif de rejet obligatoire.');
+    await ctx.store.rejeterMouvement(mv.id, motif);
+    instance.fermer();
+    toast('Mouvement ' + mv.numero + ' rejeté (retour en brouillon).', 'succes');
+    ctx.naviguer('mouvements');
+  });
+}
+
+/** VALIDE → modale d'annulation par contre-écriture (CR-2). */
+function ouvrirContreEcriture(ctx, mv, utilisateur) {
+  const peutValider = Boolean(utilisateur
+    && ROLES_VALIDEURS.includes(utilisateur.roleApp));
+
+  const instance = modale({
+    titre: 'Annuler par contre-écriture',
+    contenuHtml: rappelMouvement(mv)
+      + '<p style="font-size:13px;color:var(--texte-2)"><strong>Le registre '
+      + 'ne s’efface jamais.</strong> L’écriture validée reste au registre ; '
+      + 'une écriture inverse (quantité opposée) la neutralise. Les stocks '
+      + 'et charges reviennent à leur état antérieur.</p>'
+      + champMotif('Motif de l’annulation (obligatoire)')
+      + (peutValider ? '' : '<div style="margin-top:10px">'
+        + bandeauErreur('Votre profil ne permet pas de valider une '
+          + 'contre-écriture (rôle requis : référent, enseignant ou '
+          + 'administrateur).') + '</div>')
+      + '<div data-zone-erreur></div>',
+    actionsHtml:
+      '<button type="button" class="btn btn-secondaire" data-role="fermer">Annuler</button>'
+      + (peutValider
+        ? '<button type="button" class="btn btn-danger-contour" data-role="confirmer">'
+          + 'Contre-écriture</button>'
+        : '')
+  });
+  cablerConfirmation(instance, async function (boite) {
+    const motif = lireMotif(boite, 'Motif d’annulation obligatoire.');
+    const contre = await ctx.store.annulerParContreEcriture(
+      mv.id, motif, utilisateur.id);
+    instance.fermer();
+    toast('Écriture ' + mv.numero + ' annulée par la contre-écriture '
+      + contre.numero + '.', 'succes');
+    ctx.naviguer('mouvements');
+  });
+}
+
+/* ============================================================
    Rendu de la vue
    ============================================================ */
 
@@ -80,6 +344,17 @@ function etatVide() {
  */
 export async function render(conteneur, ctx) {
   const mouvements = await ctx.store.getMouvements();
+
+  // Utilisateur courant : validateur pressenti des modales (Phase B :
+  // toujours le référent ; l'authentification réelle arrive en Phase E)
+  let utilisateur = null;
+  try {
+    utilisateur = await ctx.store.getUtilisateurCourant();
+  } catch {
+    // Aucun référent : les modales afficheront le refus de validation
+  }
+
+  const parId = new Map(mouvements.map((mv) => [mv.id, mv]));
 
   // ---- En-tête : titre, sous-titre, bouton d'action principal ----
   const entete = enteteVue({
@@ -108,25 +383,43 @@ export async function render(conteneur, ctx) {
   // Insertion unique dans le conteneur
   conteneur.innerHTML = entete + corps;
 
-  // ---- Écouteurs ----
-
-  // Bouton « + Nouveau mouvement » : assistant en 6 étapes (Phase B).
-  // Après une fin de parcours réussie, le wizard appelle
-  // ctx.naviguer('mouvements'), ce qui force un NOUVEAU rendu de la vue
-  // (le routeur re-rend même si la vue demandée est déjà affichée).
-  const boutonNouveau = conteneur.querySelector('[data-action="nouveau-mouvement"]');
-  if (boutonNouveau) {
-    boutonNouveau.addEventListener('click', function () {
-      ouvrirWizard(ctx);
-    });
-  }
-
-  // Boutons « Visualiser CERFA » : délégation sur le conteneur —
-  // ouvre le visualiseur plein écran du PDF officiel rempli (Phase D)
+  // ---- Écouteurs (délégation unique : le routeur crée un conteneur neuf) ----
   conteneur.addEventListener('click', function (evenement) {
-    const bouton = evenement.target.closest('[data-action="voir-cerfa"]');
-    if (bouton && conteneur.contains(bouton)) {
-      ouvrirCerfa(ctx, { source: 'mouvement', id: bouton.dataset.id });
+    const bouton = evenement.target.closest('[data-action]');
+    if (!bouton || !conteneur.contains(bouton)) return;
+    const action = bouton.dataset.action;
+
+    // Bouton « + Nouveau mouvement » : assistant en 6 étapes. Après une
+    // fin de parcours réussie, le wizard appelle ctx.naviguer('mouvements'),
+    // ce qui force un NOUVEAU rendu de la vue.
+    if (action === 'nouveau-mouvement') {
+      ouvrirWizard(ctx);
+      return;
+    }
+
+    const mv = parId.get(bouton.dataset.id);
+    if (!mv) return;
+
+    switch (action) {
+      case 'voir-cerfa':
+        ouvrirCerfa(ctx, { source: 'mouvement', id: mv.id });
+        break;
+      case 'reprendre':
+        // CR-1 : rouvre le wizard préchargé avec les données du brouillon
+        ouvrirWizard(ctx, { brouillonId: mv.id });
+        break;
+      case 'supprimer':
+        ouvrirSuppression(ctx, mv);
+        break;
+      case 'valider':
+        ouvrirValidation(ctx, mv, utilisateur);
+        break;
+      case 'rejeter':
+        ouvrirRejet(ctx, mv);
+        break;
+      case 'annuler':
+        ouvrirContreEcriture(ctx, mv, utilisateur);
+        break;
     }
   });
 }

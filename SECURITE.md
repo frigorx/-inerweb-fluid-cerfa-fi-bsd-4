@@ -112,6 +112,23 @@ Le registre des mouvements de fluides est conçu pour être **opposable** :
   (append-only) : l'application n'expose **aucune route de suppression ni de purge** ;
 - les pièces justificatives portent leur propre empreinte SHA-256.
 
+### Limites du mode Démo — l'inviolabilité réelle relève du mode Local
+
+En mode Démo, les données vivent dans le navigateur (`localStorage`) : quiconque a accès
+au poste peut les réécrire. Les protections v8 sont donc **détectives**, pas préventives :
+
+- **à l'import d'une sauvegarde JSON**, les invariants métier (masses et charges positives
+  et finies, quantités finies) et la **chaîne de hash complète** sont revérifiés — un fichier
+  forgé ou altéré est **refusé** en désignant l'écriture en cause ;
+- **au chargement**, les mêmes vérifications s'exécutent : en cas de rupture, l'application
+  n'est pas bloquée mais signale un **registre altéré** (drapeau `getEtatRegistre()`, bandeau
+  d'interface).
+
+Ces contrôles détectent une altération, ils ne peuvent pas l'empêcher : un attaquant maîtrisant
+le poste peut régénérer une chaîne cohérente. **L'inviolabilité réelle du registre relèvera du
+mode Local** (base SQLite côté serveur, triggers d'interdiction de `UPDATE`/`DELETE` déjà
+prêts dans `server/schema.sql`), où l'utilisateur du navigateur n'a plus la main sur le stockage.
+
 ## 4. Sécurité par mode d'utilisation
 
 ### Mode Démo (GitHub Pages)

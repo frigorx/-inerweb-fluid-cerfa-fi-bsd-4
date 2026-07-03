@@ -223,6 +223,13 @@ async function assemblerContexte(store, { source, id }) {
         'CERFA impossible : seul un mouvement validé (ou annulé) est ' +
         'inscrit au registre.');
     }
+    // SPEC §7.1 (IM-12) : un TRANSFERT bouteille → bouteille est une
+    // opération interne au stock, tracée au registre — jamais un CERFA.
+    if (mouvement.type === 'TRANSFERT') {
+      throw new Error(
+        'Un transfert entre contenants ne donne pas lieu à une fiche ' +
+        'd’intervention machine : consultez le registre des mouvements.');
+    }
     contexte.numero = mouvement.numero;
     contexte.mode = mouvement.mode ?? 'OFFICIEL';
     contexte.typeIntervention = mouvement.type;

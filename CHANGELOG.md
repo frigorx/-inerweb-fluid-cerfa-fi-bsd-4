@@ -9,6 +9,30 @@
 - ⚠️ **Révocation à faire côté Apps Script** (les anciennes clés restent valides tant que
   `genererClesAPI()` n'a pas été exécutée puis le script redéployé) : procédure dans `SECURITE.md`.
 
+### 🛠️ Lot 1 — les 6 critiques de l'audit corrigés (03/07)
+Suite à l'audit complet (`docs/AUDIT-2026-07-03.md`, note 7/10) :
+- **CR-1** : plus d'impasse — actions par statut sur les mouvements (Brouillon : reprendre dans
+  le wizard / supprimer ; À valider : valider / rejeter avec motif) + purge du brouillon à
+  l'abandon du wizard ; chips de statut distinctes (dont « Annulé »).
+- **CR-2** : la **contre-écriture a son bouton** (« Annuler » sur les écritures validées,
+  modale avec rappel de l'écriture + motif obligatoire).
+- **CR-3** : la fuite déclarée dans le wizard **crée le contrôle lié** à la validation
+  (machine → FUITE, alerte, contrôle NON_PERIODIQUE référencé).
+- **CR-4** : balance matière juste pour les bouteilles créées dans l'application
+  (`masseEntreeKg` figé à la création + reprise des anciennes sauvegardes).
+- **CR-5** : intégrité vérifiée à l'import ET au chargement (invariants + chaîne de hash,
+  rejet motivé des fichiers forgés, bandeau rouge « registre altéré » si rupture).
+- **CR-6** : bandeau « Mode Officiel indisponible : {motifs} » au tableau de bord,
+  branché sur `peutPasserEnOfficiel()`.
+- **IM-12 + CF-1** : plus de CERFA pour les transferts (ni numéro, ni compteur, ni bouton) ;
+  bouton CERFA seulement sur Validé/Annulé.
+- ⚠️ **Découverte d'intégration : le `.gitignore` (motifs non ancrés `data/`, `documents/`)
+  excluait `v8/js/data/` et `v8/js/documents/` — le store, le jeu de démo, les exports et
+  9 fichiers de tests n'avaient JAMAIS été commis : la démo GitHub Pages `/v8/` était cassée
+  en ligne.** Corrigé (motifs ancrés `/data/`…) : ce commit pousse enfin l'application complète.
+- Qualité : 12 suites, **336+ vérifications vertes** (dont test-lot1 32 + scénario Lot 1 24) ;
+  vérification navigateur (bandeau officiel, contre-écriture de bout en bout).
+
 ### ✅ Phase D — Documents officiels (03/07)
 - **CERFA 15497*04 = le PDF officiel rempli, affiché tel quel** (exigence « au pixel près ») :
   moteur `v8/js/cerfa/generateur.js` couvrant les **72 champs officiels** de `docs/SPEC-CERFA.md`

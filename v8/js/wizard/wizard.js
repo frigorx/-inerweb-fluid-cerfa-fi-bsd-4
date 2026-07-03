@@ -266,7 +266,11 @@ function bandeauErreur(message) {
  * À la fin (validation ou soumission réussie) : toast de succès,
  * fermeture, puis ctx.naviguer('mouvements').
  * @param {{ store: object, naviguer: (vue: string) => void }} ctx
- * @param {{ machineId?: string }} [options] — machineId pour préciblage
+ * @param {{ machineId?: string, brouillonId?: string }} [options]
+ *   machineId — préciblage d'une machine ;
+ *   brouillonId — CR-1 : reprise d'un mouvement resté en BROUILLON
+ *   (l'assistant est préchargé avec ses données ; à la validation,
+ *   une écriture neuve remplace l'ancien brouillon, jamais de doublon).
  * @returns {Promise<void>}
  */
 export async function ouvrirWizard(ctx, options = {}) {
@@ -311,6 +315,51 @@ export async function ouvrirWizard(ctx, options = {}) {
 
   // Instance du canvas de signature (recréée à chaque rendu de l'étape 6)
   let signature = null;
+
+  // ---- CR-1 : reprise d'un brouillon existant (options.brouillonId) ----
+  // Le store n'expose aucune modification de brouillon : la reprise
+  // PRÉCHARGE l'assistant avec les données du brouillon, et la
+  // finalisation crée une écriture NEUVE puis supprime l'ancien
+  // brouillon (choix documenté : pas de doublon, numéro rafraîchi).
+  let idBrouillonRepris = null;
+  let numeroBrouillonRepris = null;
+  if (options.brouillonId) {
+    const brouillon = (await store.getMouvements()).find((mv) =>
+      mv.id === options.brouillonId && mv.statut === 'BROUILLON');
+    if (brouillon) {
+      idBrouillonRepris = brouillon.id;
+      numeroBrouillonRepris = brouillon.numero;
+      const CARTE_PAR_TYPE = {
+        MISE_EN_SERVICE: 'charge',
+        CHARGE_APPOINT: 'appoint',
+        RECUPERATION_MAINTENANCE: 'recuperation',
+        RECUPERATION_DEMANTELEMENT: 'recuperation',
+        TRANSFERT: 'transfert'
+      };
+      etat.carteType = CARTE_PAR_TYPE[brouillon.type] || null;
+      etat.premiereCharge = brouillon.type === 'MISE_EN_SERVICE';
+      etat.demantelement = brouillon.type === 'RECUPERATION_DEMANTELEMENT';
+      etat.machineId = brouillon.machineId || null;
+      etat.bouteilleSrcId = brouillon.bouteilleSrcId || null;
+      etat.bouteilleDstId = brouillon.bouteilleDstId || null;
+      etat.peseeAvant = Number.isFinite(brouillon.peseeAvantKg)
+        ? String(brouillon.peseeAvantKg) : '';
+      etat.peseeApres = Number.isFinite(brouillon.peseeApresKg)
+        ? String(brouillon.peseeApresKg) : '';
+      etat.statutControle = brouillon.controle?.statutControle ?? null;
+      etat.detecteurId = brouillon.controle?.detecteurId ?? null;
+      // Le brouillon stocke le NOM du technicien : retrouvé par
+      // correspondance exacte, sinon l'étape 1 redemande le choix
+      const technicienRepris = techniciens.find((p) =>
+        p.prenom + ' ' + p.nom === brouillon.technicien);
+      etat.technicienId = technicienRepris ? technicienRepris.id : null;
+      // Reprise à la première étape incomplète (la signature n'est
+      // jamais conservée : elle se refait toujours à l'étape 6)
+      while (etat.etape < 6 && etapeComplete()) etat.etape += 1;
+    } else {
+      toast('Brouillon introuvable ou déjà traité : nouveau mouvement.', 'info');
+    }
+  }
 
   /* ----------------------------------------------------------
      Accès dérivés à l'état
@@ -521,13 +570,16 @@ export async function ouvrirWizard(ctx, options = {}) {
   injecterStyles();
 
   const zone = document.getElementById('zone-modales') || document.body;
+  const titreWizard = idBrouillonRepris
+    ? 'Reprise du mouvement ' + numeroBrouillonRepris
+    : 'Nouveau mouvement de fluide';
   const fond = document.createElement('div');
   fond.className = 'modale-fond';
   fond.innerHTML =
     '<div class="modale modale-wizard" role="dialog" aria-modal="true"'
-    + ' aria-label="Nouveau mouvement de fluide">'
+    + ' aria-label="' + esc(titreWizard) + '">'
     + '<div class="modale-entete">'
-    + '<h3 class="modale-titre">Nouveau mouvement de fluide</h3>'
+    + '<h3 class="modale-titre">' + esc(titreWizard) + '</h3>'
     + '<button class="modale-fermer" type="button" aria-label="Fermer">'
     + ICONES.croix + '</button>'
     + '</div>'
@@ -557,12 +609,38 @@ export async function ouvrirWizard(ctx, options = {}) {
     setTimeout(function () { fond.remove(); }, 220);
   }
 
+  /**
+   * CR-1 : purge silencieuse de l'écriture créée par une finalisation
+   * en échec (abandon du wizard, retour en arrière) — aucun orphelin
+   * BROUILLON/SOUMIS ne doit survivre à l'assistant. Un mouvement
+   * resté SOUMIS est d'abord rejeté (retour brouillon) puis supprimé.
+   * Le brouillon REPRIS (idBrouillonRepris) n'est jamais purgé ici :
+   * abandonner une reprise le laisse intact dans la vue Mouvements.
+   */
+  async function purgerEcritureEnCours() {
+    if (!idMouvementCree) return;
+    const id = idMouvementCree;
+    const soumis = mouvementSoumis;
+    idMouvementCree = null;
+    numeroMouvementCree = null;
+    mouvementSoumis = false;
+    try {
+      if (soumis) {
+        await store.rejeterMouvement(id, 'Abandon de la saisie dans l’assistant.');
+      }
+      await store.supprimerMouvement(id);
+    } catch {
+      // Silencieux : au pire, l'écriture reste actionnable dans la vue
+    }
+  }
+
   /** Demande confirmation avant d'abandonner si des données sont saisies. */
   function demanderFermeture() {
     if (finalisationEnCours) return;
     if (!donneesSaisies()
         || window.confirm('Abandonner ce mouvement ? '
           + 'Les informations saisies seront perdues.')) {
+      purgerEcritureEnCours();
       fermer();
     }
   }
@@ -580,11 +658,9 @@ export async function ouvrirWizard(ctx, options = {}) {
 
   boutonRetour.addEventListener('click', function () {
     if (etat.etape <= 1) return;
-    // Retour en arrière : un éventuel brouillon en échec est abandonné
-    // (les données vont probablement changer, on repartira d'une écriture neuve)
-    idMouvementCree = null;
-    numeroMouvementCree = null;
-    mouvementSoumis = false;
+    // Retour en arrière : un éventuel brouillon en échec est SUPPRIMÉ
+    // du registre (CR-1 : pas d'orphelin), on repartira d'une écriture neuve
+    purgerEcritureEnCours();
     etat.etape -= 1;
     rendreEtape();
   });
@@ -1145,6 +1221,18 @@ export async function ouvrirWizard(ctx, options = {}) {
       } else {
         toast('Mouvement ' + numeroMouvementCree
           + ' soumis pour validation.', 'succes');
+      }
+
+      // 4. Reprise aboutie : l'ancien brouillon est remplacé par
+      // l'écriture neuve — suppression silencieuse, jamais de doublon.
+      // (Tant que la finalisation n'a pas abouti, il reste intact.)
+      if (idBrouillonRepris && idBrouillonRepris !== idMouvementCree) {
+        try {
+          await store.supprimerMouvement(idBrouillonRepris);
+        } catch {
+          // Déjà supprimé ou statut changé entre-temps : sans gravité
+        }
+        idBrouillonRepris = null;
       }
 
       fermer();

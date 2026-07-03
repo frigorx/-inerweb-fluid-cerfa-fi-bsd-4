@@ -7,6 +7,7 @@
 import { creerStore } from './data/datastore.js';
 import { creerRouteur } from './core/routeur.js';
 import { ICONES } from './core/icones.js';
+import { esc } from './core/utils.js';
 import { modale, toast } from './views/communs.js';
 
 // ---- Liste ordonnée des vues (contrat v8) ----
@@ -241,7 +242,13 @@ async function restaurerSauvegarde(fichier) {
     }
   } catch (erreur) {
     console.error('Restauration en échec :', erreur);
-    toast('La restauration a échoué.', 'erreur');
+    // CR-5 : le store refuse un fichier forgé avec un message explicite
+    // (« Import refusé — … ») : le montrer tel quel plutôt qu'un générique.
+    const message = erreur && erreur.message
+      && erreur.message.startsWith('Import refusé')
+      ? erreur.message
+      : 'La restauration a échoué.';
+    toast(message, 'erreur');
   }
 }
 
@@ -310,6 +317,36 @@ function ouvrirModaleSauvegarde() {
 }
 
 /* ============================================================
+   Intégrité du registre (CR-5)
+   ============================================================ */
+
+/**
+ * Affiche, si besoin, le bandeau rouge non fermable signalant une rupture
+ * de la chaîne d'écritures (registre altéré : import forgé ou localStorage
+ * réécrit hors application). Rien ne bloque l'application — c'est un
+ * signal, pas un verrou (cf. `getEtatRegistre` dans demo-store.js).
+ */
+async function verifierIntegriteRegistre() {
+  const bandeau = document.getElementById('bandeau-integrite');
+  if (!bandeau) return;
+  try {
+    const etat = await store.getEtatRegistre();
+    if (!etat.altere) {
+      bandeau.hidden = true;
+      return;
+    }
+    bandeau.className = 'bandeau-erreur';
+    bandeau.innerHTML = ICONES.alerte
+      + '<span><strong>Intégrité du registre non vérifiée</strong> : la chaîne des '
+      + 'écritures a été rompue (écriture ' + esc(etat.casseA || '?') + '). '
+      + 'Exportez une sauvegarde et contactez l’administrateur.</span>';
+    bandeau.hidden = false;
+  } catch (erreur) {
+    console.error('Vérification de l’intégrité du registre impossible :', erreur);
+  }
+}
+
+/* ============================================================
    Amorçage
    ============================================================ */
 
@@ -318,6 +355,8 @@ async function demarrer() {
 
   // Badge de mode dans l'en-tête (« ● DÉMO / FORMATION »)
   document.getElementById('badge-mode').textContent = store.modeLabel + ' / FORMATION';
+
+  await verifierIntegriteRegistre();
 
   construireSidebar();
   initialiserTiroir();

@@ -1,0 +1,2345 @@
+// ============================================================
+// inerWeb Fluide v8 — magasin de données de démonstration
+// Phase A : lectures + statistiques calculées.
+// Phase B : registre vivant (mutations, cycle de vie des
+// mouvements, chaîne d'intégrité SHA-256, journal d'audit).
+// Persistance localStorage (clé 'inerweb-fluide-v8-demo'),
+// optionnelle : fonctionne aussi SANS localStorage (Node).
+// Toutes les méthodes sont ASYNC et retournent des COPIES.
+// Toute violation de règle métier → throw Error(message français).
+// ============================================================
+
+import { DEMO } from './demo-donnees.js';
+import { teqCO2, fmtDate, fmtKgSigne, genId, hasherEcriture }
+  from '../core/utils.js';
+
+const CLE_STOCKAGE = 'inerweb-fluide-v8-demo';
+
+/** Base IndexedDB des contenus de pièces jointes (repli mémoire sous Node). */
+const NOM_BASE_PJ = 'inerweb-fluide-v8-pj';
+
+/** Taille maximale d'une pièce jointe : 5 Mo. */
+const PJ_TAILLE_MAX = 5 * 1024 * 1024;
+
+/** Seuil au-delà duquel un écart de balance matière doit être justifié. */
+const SEUIL_ECART_KG = 0.01;
+
+/** Types de personnes du registre du personnel (SPEC §5.2). */
+const TYPES_PERSONNE = ['ENSEIGNANT', 'ELEVE', 'SALARIE', 'SOUS_TRAITANT',
+  'INTERVENANT_EXT'];
+
+/** Types d'outillage réglementaire (SPEC §5.3). */
+const TYPES_OUTIL = ['STATION_RECUPERATION', 'STATION_CHARGE', 'BALANCE',
+  'DETECTEUR', 'POMPE_A_VIDE', 'MANIFOLD', 'THERMOMETRE', 'BOUTEILLE_RECUP',
+  'FLEXIBLE', 'EPI', 'AUTRE'];
+
+/** Activités réglementées (attestation de capacité et d'aptitude). */
+const ACTIVITES_REGLEMENTEES = ['MISE_EN_SERVICE', 'MAINTENANCE', 'CONTROLE',
+  'RECUPERATION', 'DEMANTELEMENT'];
+
+/** Catégories d'attestation (grilles 2008 et 2025). */
+const CATEGORIES_ATTESTATION = ['I', 'II', 'III', 'IV'];
+
+/** Décisions possibles sur un fluide récupéré (SPEC §5.8). */
+const DECISIONS_FLUIDE = ['REUTILISABLE', 'A_ANALYSER', 'DECHET'];
+
+/** Types de mouvements admis par le registre. */
+const TYPES_MOUVEMENT = [
+  'CHARGE_APPOINT',
+  'MISE_EN_SERVICE',
+  'RECUPERATION_MAINTENANCE',
+  'RECUPERATION_DEMANTELEMENT',
+  'TRANSFERT'
+];
+
+/** Rôles autorisés à VALIDER une écriture (jamais un élève). */
+const ROLES_VALIDEURS = ['REFERENT', 'ENSEIGNANT', 'ADMIN'];
+
+/** Message unique d'écriture figée (contrat Phase B). */
+const MSG_ECRITURE_FIGEE =
+  'Écriture validée : correction uniquement par contre-écriture.';
+
+/** Copie profonde (structuredClone natif, repli JSON). */
+function copier(objet) {
+  if (typeof structuredClone === 'function') return structuredClone(objet);
+  return JSON.parse(JSON.stringify(objet));
+}
+
+/** Arrondi métier au gramme (évite la dérive des flottants). */
+function arrondir(valeur) {
+  return Math.round(valeur * 1000) / 1000;
+}
+
+/** Date du jour au format ISO (AAAA-MM-JJ). */
+function aujourdHui() {
+  const d = new Date();
+  const mois = String(d.getMonth() + 1).padStart(2, '0');
+  const jour = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mois}-${jour}`;
+}
+
+/** Ajoute (ou retire) des jours à une date ISO, sans fuseau horaire. */
+function ajouterJours(iso, nbJours) {
+  const [annee, mois, jour] = iso.split('-').map(Number);
+  const d = new Date(annee, mois - 1, jour + nbJours);
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const j = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${j}`;
+}
+
+/** Ajoute un an à une date ISO (délai de garde des fluides déchets). */
+function ajouterUnAn(iso) {
+  const [annee, mois, jour] = iso.split('-').map(Number);
+  const d = new Date(annee + 1, mois - 1, jour);
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const j = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${j}`;
+}
+
+/**
+ * Statut d'un outil RECALCULÉ depuis sa prochaine échéance :
+ * EXPIRE si dépassée, A_VERIFIER si à moins de 30 jours (ou sans
+ * échéance connue), CONFORME sinon. Un outil réformé
+ * (HORS_SERVICE) le reste quelle que soit son échéance.
+ */
+function calculerStatutOutil(outil, jour) {
+  if (outil.statut === 'HORS_SERVICE') return 'HORS_SERVICE';
+  if (!outil.prochaineEcheance) return 'A_VERIFIER';
+  if (outil.prochaineEcheance < jour) return 'EXPIRE';
+  if (outil.prochaineEcheance <= ajouterJours(jour, 30)) return 'A_VERIFIER';
+  return 'CONFORME';
+}
+
+/** Lit la sauvegarde locale si elle existe et semble valide, sinon null. */
+function chargerDepuisStockage() {
+  try {
+    const brut = localStorage.getItem(CLE_STOCKAGE);
+    if (!brut) return null;
+    const donnees = JSON.parse(brut);
+    return estValide(donnees) ? donnees : null;
+  } catch {
+    // localStorage absent (Node) ou JSON corrompu → repartir du monde de démo
+    return null;
+  }
+}
+
+/** Écrit l'état courant dans localStorage (silencieux si indisponible). */
+function persister(donnees) {
+  try {
+    localStorage.setItem(CLE_STOCKAGE, JSON.stringify(donnees));
+  } catch {
+    // Persistance optionnelle : rien à faire si le stockage est indisponible
+  }
+}
+
+/** Validation basique d'une structure de données importée. */
+function estValide(donnees) {
+  return Boolean(
+    donnees &&
+    typeof donnees === 'object' &&
+    donnees.etablissement &&
+    Array.isArray(donnees.machines) &&
+    Array.isArray(donnees.bouteilles) &&
+    Array.isArray(donnees.mouvements) &&
+    Array.isArray(donnees.controles) &&
+    Array.isArray(donnees.fluides) &&
+    Array.isArray(donnees.personnel) &&
+    Array.isArray(donnees.clients) &&
+    Array.isArray(donnees.alertes)
+  );
+}
+
+/**
+ * Écritures figées (VALIDE/ANNULE) d'une liste de mouvements,
+ * triées dans l'ordre de validation (chaîne d'intégrité).
+ */
+function ecrituresFigees(mouvements) {
+  return mouvements
+    .filter((mv) => (mv.statut === 'VALIDE' || mv.statut === 'ANNULE') &&
+      Number.isFinite(mv.ordreValidation))
+    .sort((a, b) => a.ordreValidation - b.ordreValidation);
+}
+
+/**
+ * Vérifie la chaîne de hash SHA-256 d'une liste de mouvements
+ * (CR-5 : utilisable sur les données candidates d'un import AVANT
+ * de les adopter, comme sur les données en place).
+ * @returns {Promise<{ok: boolean, casseA: string|null}>}
+ */
+async function verifierChaineMouvements(mouvements) {
+  let precedent = null;
+  for (const mouvement of ecrituresFigees(mouvements)) {
+    if ((mouvement.hashPrecedent ?? null) !== precedent) {
+      return { ok: false, casseA: mouvement.numero };
+    }
+    const attendu = await hasherEcriture(mouvement, precedent);
+    if (attendu !== mouvement.hashEcriture) {
+      return { ok: false, casseA: mouvement.numero };
+    }
+    precedent = mouvement.hashEcriture;
+  }
+  return { ok: true, casseA: null };
+}
+
+/**
+ * Invariants MÉTIER d'un jeu de données candidat (import JSON ou
+ * sauvegarde locale) — CR-5 : masses et charges positives et finies,
+ * écritures figées porteuses de leur empreinte et de leur ordre,
+ * quantités finies.
+ * @returns {string|null} description du premier problème, ou null si sain
+ */
+function verifierInvariantsDonnees(candidat) {
+  for (const b of candidat.bouteilles) {
+    const ref = b.code ?? b.id ?? '?';
+    for (const champ of ['tareKg', 'masseBruteKg', 'masseNetteKg']) {
+      if (!Number.isFinite(b[champ]) || b[champ] < 0) {
+        return `bouteille ${ref} : ${champ} invalide (${b[champ]})`;
+      }
+    }
+    if (!Number.isFinite(b.contenanceMaxKg) || b.contenanceMaxKg <= 0) {
+      return `bouteille ${ref} : contenanceMaxKg invalide (${b.contenanceMaxKg})`;
+    }
+    if (b.masseEntreeKg !== undefined && b.masseEntreeKg !== null &&
+        (!Number.isFinite(b.masseEntreeKg) || b.masseEntreeKg < 0)) {
+      return `bouteille ${ref} : masseEntreeKg invalide (${b.masseEntreeKg})`;
+    }
+  }
+  for (const m of candidat.machines) {
+    const ref = m.code ?? m.id ?? '?';
+    if (!Number.isFinite(m.chargeActuelleKg) || m.chargeActuelleKg < 0) {
+      return `machine ${ref} : chargeActuelleKg invalide (${m.chargeActuelleKg})`;
+    }
+    if (!Number.isFinite(m.chargeNominaleKg) || m.chargeNominaleKg <= 0) {
+      return `machine ${ref} : chargeNominaleKg invalide (${m.chargeNominaleKg})`;
+    }
+  }
+  const figees = candidat.mouvements.filter((mv) =>
+    mv.statut === 'VALIDE' || mv.statut === 'ANNULE');
+  // Une sauvegarde antérieure à la Phase B (aucune empreinte nulle part)
+  // reste acceptée : la chaîne sera amorcée. En revanche, dès qu'UNE
+  // écriture porte une empreinte, TOUTES doivent en porter une valide.
+  const chaineAmorcee = figees.some((mv) => mv.hashEcriture);
+  for (const mv of figees) {
+    const ref = mv.numero ?? mv.id ?? '?';
+    if (!Number.isFinite(mv.quantiteKg)) {
+      return `mouvement ${ref} : quantité non finie (${mv.quantiteKg})`;
+    }
+    if (chaineAmorcee) {
+      if (typeof mv.hashEcriture !== 'string' ||
+          !/^[0-9a-f]{64}$/.test(mv.hashEcriture)) {
+        return `mouvement ${ref} : empreinte d'écriture absente ou invalide`;
+      }
+      if (!Number.isFinite(mv.ordreValidation)) {
+        return `mouvement ${ref} : ordre de validation absent`;
+      }
+    }
+  }
+  return null;
+}
+
+/** Libellés courts des mois pour les flux mensuels. */
+const LIBELLES_MOIS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin',
+  'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'];
+
+// ------------------------------------------------------------
+// Contenus des pièces jointes : IndexedDB (navigateur), avec
+// repli en mémoire (Map) sous Node — les tests passent sans DOM.
+// Les MÉTADONNÉES vivent dans les données du store ; seuls les
+// octets des fichiers sont rangés ici.
+// ------------------------------------------------------------
+
+const pjContenusMemoire = new Map();
+
+/** Ouvre (et crée au besoin) la base IndexedDB des pièces jointes. */
+function ouvrirBasePj() {
+  return new Promise((resoudre, rejeter) => {
+    const requete = indexedDB.open(NOM_BASE_PJ, 1);
+    requete.onupgradeneeded = () => {
+      if (!requete.result.objectStoreNames.contains('contenus')) {
+        requete.result.createObjectStore('contenus');
+      }
+    };
+    requete.onsuccess = () => resoudre(requete.result);
+    requete.onerror = () => rejeter(requete.error);
+  });
+}
+
+/** Exécute une opération sur le magasin IndexedDB des contenus. */
+async function transactionPj(mode, operation) {
+  const base = await ouvrirBasePj();
+  return new Promise((resoudre, rejeter) => {
+    const transaction = base.transaction('contenus', mode);
+    const requete = operation(transaction.objectStore('contenus'));
+    transaction.oncomplete = () => { base.close(); resoudre(requete?.result); };
+    transaction.onerror = () => { base.close(); rejeter(transaction.error); };
+  });
+}
+
+async function ecrireContenuPj(id, contenu) {
+  if (typeof indexedDB === 'undefined') {
+    pjContenusMemoire.set(id, contenu);
+    return;
+  }
+  try {
+    await transactionPj('readwrite', (magasin) => magasin.put(contenu, id));
+  } catch {
+    pjContenusMemoire.set(id, contenu);
+  }
+}
+
+async function lireContenuPj(id) {
+  if (typeof indexedDB !== 'undefined') {
+    try {
+      const contenu = await transactionPj('readonly', (magasin) => magasin.get(id));
+      if (contenu !== undefined) return contenu;
+    } catch {
+      // IndexedDB indisponible : repli mémoire ci-dessous
+    }
+  }
+  return pjContenusMemoire.get(id);
+}
+
+async function supprimerContenuPj(id) {
+  pjContenusMemoire.delete(id);
+  if (typeof indexedDB === 'undefined') return;
+  try {
+    await transactionPj('readwrite', (magasin) => magasin.delete(id));
+  } catch {
+    // Contenu déjà absent : rien d'autre à faire
+  }
+}
+
+/** Convertit un contenu de pièce jointe (blob | base64) en octets. */
+async function octetsDepuis(contenu) {
+  if (typeof Blob !== 'undefined' && contenu instanceof Blob) {
+    return new Uint8Array(await contenu.arrayBuffer());
+  }
+  if (contenu instanceof Uint8Array) return contenu;
+  if (contenu instanceof ArrayBuffer) return new Uint8Array(contenu);
+  if (typeof contenu === 'string') {
+    const base64 = contenu.replace(/^data:[^;]*;base64,/, '');
+    let binaire;
+    try {
+      binaire = atob(base64);
+    } catch {
+      throw new Error('Contenu base64 illisible pour la pièce jointe.');
+    }
+    const octets = new Uint8Array(binaire.length);
+    for (let i = 0; i < binaire.length; i += 1) {
+      octets[i] = binaire.charCodeAt(i);
+    }
+    return octets;
+  }
+  throw new Error('Contenu de pièce jointe attendu : blob ou base64.');
+}
+
+/** Empreinte SHA-256 hexadécimale d'un contenu de fichier. */
+async function hasherOctets(octets) {
+  let subtle = globalThis.crypto?.subtle;
+  if (!subtle) {
+    const { webcrypto } = await import('node:crypto');
+    subtle = webcrypto.subtle;
+  }
+  const empreinte = await subtle.digest('SHA-256', octets);
+  return [...new Uint8Array(empreinte)]
+    .map((octet) => octet.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+/**
+ * Crée le magasin de démonstration conforme aux contrats Phases A + B.
+ * @returns {object} store
+ */
+export function creerDemoStore() {
+
+  // État interne : sauvegarde locale si présente, sinon copie du monde de démo
+  let donnees = chargerDepuisStockage() || copier(DEMO);
+
+  // --------------------------------------------------------
+  // Petits accès internes (références VIVES, usage interne)
+  // --------------------------------------------------------
+
+  /** Index des fluides par code → { gwpAr4, famille, impact }. */
+  function indexFluides() {
+    const index = new Map();
+    for (const f of donnees.fluides) index.set(f.code, f);
+    return index;
+  }
+
+  /** Machines comptant dans le parc (tout sauf démantelées). */
+  function machinesEnParc() {
+    return donnees.machines.filter((m) => m.statut !== 'DEMANTELEE');
+  }
+
+  function trouverMachine(id) {
+    const machine = donnees.machines.find((m) => m.id === id);
+    if (!machine) throw new Error(`Machine introuvable : ${id}.`);
+    return machine;
+  }
+
+  function trouverBouteille(id, role = 'Bouteille') {
+    const bouteille = donnees.bouteilles.find((b) => b.id === id);
+    if (!bouteille) throw new Error(`${role} introuvable : ${id}.`);
+    return bouteille;
+  }
+
+  function trouverMouvement(id) {
+    const mouvement = donnees.mouvements.find((mv) => mv.id === id);
+    if (!mouvement) throw new Error(`Mouvement introuvable : ${id}.`);
+    return mouvement;
+  }
+
+  function trouverPersonne(id) {
+    const personne = donnees.personnel.find((p) => p.id === id);
+    if (!personne) throw new Error(`Personne introuvable : ${id}.`);
+    return personne;
+  }
+
+  function trouverOutil(id) {
+    const outil = donnees.outillage.find((o) => o.id === id);
+    if (!outil) throw new Error(`Outil introuvable : ${id}.`);
+    return outil;
+  }
+
+  /** Valide une catégorie d'attestation (null accepté : non attesté). */
+  function verifierCategorie(valeur, champ) {
+    if (valeur === null || valeur === undefined) return null;
+    if (!CATEGORIES_ATTESTATION.includes(valeur)) {
+      throw new Error(
+        `Catégorie d'attestation inconnue pour ${champ} : ${valeur} ` +
+        `(attendu : ${CATEGORIES_ATTESTATION.join(', ')}).`);
+    }
+    return valeur;
+  }
+
+  /** Valide une liste d'activités réglementées. */
+  function verifierActivites(liste) {
+    const activites = liste ?? [];
+    if (!Array.isArray(activites)) {
+      throw new Error('Liste d’activités réglementées attendue.');
+    }
+    for (const activite of activites) {
+      if (!ACTIVITES_REGLEMENTEES.includes(activite)) {
+        throw new Error(
+          `Activité réglementée inconnue : ${activite} ` +
+          `(attendu : ${ACTIVITES_REGLEMENTEES.join(', ')}).`);
+      }
+    }
+    return [...activites];
+  }
+
+  // --------------------------------------------------------
+  // Balance matière (SPEC §6) — calcul interne partagé entre
+  // getBalanceMatiere, les alertes et le blocage OFFICIEL.
+  // --------------------------------------------------------
+  function calculerBalanceMatiere(annee) {
+    const prefixe = `${annee}-`;
+    const parFluide = new Map();
+    const ligne = (fluide) => {
+      if (!parFluide.has(fluide)) {
+        parFluide.set(fluide, {
+          fluide,
+          stockInitialNeufKg: 0,
+          stockInitialRecupKg: 0,
+          achatsKg: 0,
+          recuperationsKg: 0,
+          chargesKg: 0,
+          cessionsKg: 0,
+          retoursFournisseurKg: 0,
+          destructionsKg: 0
+        });
+      }
+      return parFluide.get(fluide);
+    };
+
+    // Stocks au 1er janvier (données de démo / saisie établissement)
+    for (const stock of donnees.stocksInitiaux || []) {
+      if (stock.annee !== annee) continue;
+      const l = ligne(stock.fluide);
+      l.stockInitialNeufKg = arrondir(Number(stock.neufKg) || 0);
+      l.stockInitialRecupKg = arrondir(Number(stock.recupKg) || 0);
+    }
+
+    // Achats : masse nette à l'entrée des bouteilles NEUVES de l'année
+    for (const b of donnees.bouteilles) {
+      if (b.type !== 'NEUVE') continue;
+      if (!(b.dateEntree || '').startsWith(prefixe)) continue;
+      const entree = Number.isFinite(b.masseEntreeKg)
+        ? b.masseEntreeKg
+        : b.masseNetteKg;
+      const l = ligne(b.fluide);
+      l.achatsKg = arrondir(l.achatsKg + entree);
+    }
+
+    // Charges / récupérations : écritures FIGÉES de l'année.
+    // Les contre-écritures (quantité opposée) se neutralisent d'elles-mêmes.
+    // Les transferts bouteille → bouteille sont internes au stock : exclus.
+    for (const mv of donnees.mouvements) {
+      if (!(mv.date || '').startsWith(prefixe)) continue;
+      if (mv.statut !== 'VALIDE' && mv.statut !== 'ANNULE') continue;
+      if (!Number.isFinite(mv.quantiteKg) || mv.type === 'TRANSFERT') continue;
+      const l = ligne(mv.fluide);
+      if (mv.quantiteKg >= 0) {
+        l.chargesKg = arrondir(l.chargesKg + mv.quantiteKg);
+      } else {
+        l.recuperationsKg = arrondir(l.recuperationsKg + Math.abs(mv.quantiteKg));
+      }
+    }
+
+    // Destructions / éliminations : BSFF remis dans l'année
+    for (const bsff of donnees.bsff || []) {
+      if (!(bsff.dateRemise || '').startsWith(prefixe)) continue;
+      const l = ligne(bsff.fluide);
+      l.destructionsKg = arrondir(l.destructionsKg + bsff.masseRemiseKg);
+    }
+
+    const lignes = [...parFluide.values()]
+      .map((l) => {
+        const stockTheoriqueKg = arrondir(
+          l.stockInitialNeufKg + l.stockInitialRecupKg +
+          l.achatsKg + l.recuperationsKg -
+          l.chargesKg - l.cessionsKg -
+          l.retoursFournisseurKg - l.destructionsKg);
+        const inventaire = (donnees.inventaires || []).find(
+          (i) => i.annee === annee && i.fluide === l.fluide);
+        const stockReelKg = inventaire ? inventaire.stockReelKg : null;
+        const ecartKg = inventaire
+          ? arrondir(stockReelKg - stockTheoriqueKg)
+          : null;
+        const justificatif = (donnees.justificationsEcarts || []).find(
+          (j) => j.annee === annee && j.fluide === l.fluide);
+        return {
+          ...l,
+          stockTheoriqueKg,
+          stockReelKg,
+          ecartKg,
+          justification: justificatif ? justificatif.justification : null
+        };
+      })
+      .sort((a, b) => a.fluide.localeCompare(b.fluide));
+
+    return { annee, lignes };
+  }
+
+  /** Écarts d'inventaire au-delà du seuil et SANS justification. */
+  function ecartsNonJustifies() {
+    const annees = [...new Set((donnees.inventaires || []).map((i) => i.annee))];
+    const resultat = [];
+    for (const annee of annees) {
+      for (const l of calculerBalanceMatiere(annee).lignes) {
+        if (l.ecartKg !== null && Math.abs(l.ecartKg) > SEUIL_ECART_KG &&
+            !l.justification) {
+          resultat.push({ annee, fluide: l.fluide, ecartKg: l.ecartKg });
+        }
+      }
+    }
+    return resultat;
+  }
+
+  /** Vérifie qu'une personne existe ET a le droit de valider. */
+  function verifierValidateur(validateurId) {
+    const personne = donnees.personnel.find((p) => p.id === validateurId);
+    if (!personne) {
+      throw new Error(`Validateur introuvable : ${validateurId}.`);
+    }
+    if (!ROLES_VALIDEURS.includes(personne.roleApp)) {
+      throw new Error(
+        'Validation refusée : un élève ne peut pas valider une écriture ' +
+        '(rôle requis : référent, enseignant ou administrateur).');
+    }
+    return personne;
+  }
+
+  // --------------------------------------------------------
+  // Journal d'audit (append-only : AUCUNE méthode de purge)
+  // --------------------------------------------------------
+  function journaliser(qui, action, cible, details) {
+    donnees.journalAudit.push({
+      date: new Date().toISOString(),
+      qui: qui || 'système',
+      action,
+      cible,
+      details
+    });
+  }
+
+  // --------------------------------------------------------
+  // Chaîne d'intégrité des écritures
+  // --------------------------------------------------------
+
+  /** Écritures figées (VALIDE/ANNULE), dans l'ordre de validation. */
+  function chaineValidee() {
+    return ecrituresFigees(donnees.mouvements);
+  }
+
+  /** Scelle une écriture : ordre, hash précédent, hash propre. */
+  async function sceller(mouvement) {
+    const chaine = chaineValidee();
+    const derniere = chaine[chaine.length - 1] || null;
+    mouvement.ordreValidation = (derniere?.ordreValidation ?? 0) + 1;
+    mouvement.hashPrecedent = derniere?.hashEcriture ?? null;
+    mouvement.hashEcriture =
+      await hasherEcriture(mouvement, mouvement.hashPrecedent);
+  }
+
+  /** Prochain numéro de fiche : FORM-AAAA-NNNN ou FI-AAAA-NNNN. */
+  function prochainNumero(mode) {
+    const prefixe = mode === 'OFFICIEL' ? 'FI' : 'FORM';
+    const motif = new RegExp(`^${prefixe}-\\d{4}-(\\d{4})$`);
+    let max = 0;
+    for (const mv of donnees.mouvements) {
+      const trouve = motif.exec(mv.numero || '');
+      if (trouve) max = Math.max(max, Number(trouve[1]));
+    }
+    const annee = new Date().getFullYear();
+    return `${prefixe}-${annee}-${String(max + 1).padStart(4, '0')}`;
+  }
+
+  // --------------------------------------------------------
+  // Effets stocks / charges d'une écriture au moment de la
+  // validation. Mutations VIVES + calcul de quantiteKg signée.
+  // --------------------------------------------------------
+
+  function verserDansBouteille(bouteille, quantite) {
+    const nouvelleNette = arrondir(bouteille.masseNetteKg + quantite);
+    if (nouvelleNette > bouteille.contenanceMaxKg) {
+      throw new Error(
+        `Débordement : la bouteille ${bouteille.code} dépasserait sa ` +
+        `contenance (${bouteille.contenanceMaxKg} kg).`);
+    }
+    bouteille.masseNetteKg = nouvelleNette;
+    bouteille.masseBruteKg = arrondir(bouteille.tareKg + nouvelleNette);
+    bouteille.datePesee = aujourdHui();
+  }
+
+  function retirerDeBouteille(bouteille, quantite) {
+    const nouvelleNette = arrondir(bouteille.masseNetteKg - quantite);
+    if (nouvelleNette < 0) {
+      throw new Error(
+        `Stock insuffisant : la bouteille ${bouteille.code} ne contient ` +
+        `que ${bouteille.masseNetteKg} kg.`);
+    }
+    bouteille.masseNetteKg = nouvelleNette;
+    bouteille.masseBruteKg = arrondir(bouteille.tareKg + nouvelleNette);
+    bouteille.datePesee = aujourdHui();
+  }
+
+  function chargerMachine(machine, quantite) {
+    const nouvelleCharge = arrondir(machine.chargeActuelleKg + quantite);
+    if (nouvelleCharge > arrondir(machine.chargeNominaleKg * 1.05)) {
+      throw new Error(
+        `Surcharge : la machine ${machine.code} dépasserait sa charge ` +
+        `nominale de ${machine.chargeNominaleKg} kg (tolérance 5 %).`);
+    }
+    machine.chargeActuelleKg = nouvelleCharge;
+  }
+
+  function viderMachine(machine, quantite) {
+    const nouvelleCharge = arrondir(machine.chargeActuelleKg - quantite);
+    if (nouvelleCharge < 0) {
+      throw new Error(
+        `Incohérence : la machine ${machine.code} ne contient que ` +
+        `${machine.chargeActuelleKg} kg de fluide.`);
+    }
+    machine.chargeActuelleKg = nouvelleCharge;
+  }
+
+  /** Applique les règles métier et les effets d'une écriture SOUMISE. */
+  function appliquerEffets(mouvement) {
+    const avant = Number(mouvement.peseeAvantKg);
+    const apres = Number(mouvement.peseeApresKg);
+    if (!Number.isFinite(avant) || !Number.isFinite(apres)) {
+      throw new Error(
+        'Pesées avant et après obligatoires pour valider le mouvement.');
+    }
+
+    if (mouvement.type === 'CHARGE_APPOINT' ||
+        mouvement.type === 'MISE_EN_SERVICE') {
+      const machine = trouverMachine(mouvement.machineId);
+      const source = trouverBouteille(mouvement.bouteilleSrcId,
+        'Bouteille source');
+      if (source.fluide !== machine.fluide) {
+        throw new Error(
+          `Croisement de fluides interdit : bouteille ${source.fluide} ` +
+          `sur machine ${machine.fluide}.`);
+      }
+      const quantite = arrondir(avant - apres);
+      if (quantite <= 0) {
+        throw new Error(
+          'Pesées incohérentes : la bouteille source doit se vider ' +
+          '(pesée avant > pesée après).');
+      }
+      retirerDeBouteille(source, quantite);
+      chargerMachine(machine, quantite);
+      mouvement.fluide = machine.fluide;
+      mouvement.machineLabel = machine.designation;
+      mouvement.quantiteKg = quantite;
+
+    } else if (mouvement.type === 'RECUPERATION_MAINTENANCE' ||
+               mouvement.type === 'RECUPERATION_DEMANTELEMENT') {
+      const machine = trouverMachine(mouvement.machineId);
+      const destination = trouverBouteille(mouvement.bouteilleDstId,
+        'Bouteille de destination');
+      if (destination.type !== 'RECUPERATION') {
+        throw new Error(
+          'La récupération exige une bouteille de destination de type ' +
+          'RÉCUPÉRATION.');
+      }
+      if (destination.fluide !== machine.fluide) {
+        throw new Error(
+          `Croisement de fluides interdit : bouteille ${destination.fluide} ` +
+          `sur machine ${machine.fluide}.`);
+      }
+      const quantite = arrondir(apres - avant);
+      if (quantite <= 0) {
+        throw new Error(
+          'Pesées incohérentes : la bouteille de récupération doit se ' +
+          'remplir (pesée après > pesée avant).');
+      }
+      viderMachine(machine, quantite);
+      verserDansBouteille(destination, quantite);
+      mouvement.fluide = machine.fluide;
+      mouvement.machineLabel = machine.designation;
+      // Convention d'affichage existante : récupération = quantité NÉGATIVE
+      mouvement.quantiteKg = -quantite;
+
+    } else if (mouvement.type === 'TRANSFERT') {
+      const source = trouverBouteille(mouvement.bouteilleSrcId,
+        'Bouteille source');
+      const destination = trouverBouteille(mouvement.bouteilleDstId,
+        'Bouteille de destination');
+      if (source.fluide !== destination.fluide) {
+        throw new Error(
+          `Croisement de fluides interdit : transfert ${source.fluide} ` +
+          `vers ${destination.fluide}.`);
+      }
+      const quantite = arrondir(avant - apres);
+      if (quantite <= 0) {
+        throw new Error(
+          'Pesées incohérentes : la bouteille source doit se vider ' +
+          '(pesée avant > pesée après).');
+      }
+      retirerDeBouteille(source, quantite);
+      verserDansBouteille(destination, quantite);
+      mouvement.fluide = source.fluide;
+      mouvement.quantiteKg = quantite;
+
+    } else {
+      throw new Error(`Type de mouvement inconnu : ${mouvement.type}.`);
+    }
+  }
+
+  /** Applique les effets INVERSES d'une écriture validée (contre-écriture). */
+  function appliquerEffetsInverses(original) {
+    const quantite = Math.abs(original.quantiteKg);
+
+    if (original.type === 'CHARGE_APPOINT' ||
+        original.type === 'MISE_EN_SERVICE') {
+      const machine = trouverMachine(original.machineId);
+      viderMachine(machine, quantite);
+      if (original.bouteilleSrcId) {
+        verserDansBouteille(
+          trouverBouteille(original.bouteilleSrcId, 'Bouteille source'),
+          quantite);
+      }
+    } else if (original.type === 'RECUPERATION_MAINTENANCE' ||
+               original.type === 'RECUPERATION_DEMANTELEMENT') {
+      const machine = trouverMachine(original.machineId);
+      chargerMachine(machine, quantite);
+      if (original.bouteilleDstId) {
+        retirerDeBouteille(
+          trouverBouteille(original.bouteilleDstId,
+            'Bouteille de destination'),
+          quantite);
+      }
+    } else if (original.type === 'TRANSFERT') {
+      if (original.bouteilleDstId) {
+        retirerDeBouteille(
+          trouverBouteille(original.bouteilleDstId,
+            'Bouteille de destination'),
+          quantite);
+      }
+      if (original.bouteilleSrcId) {
+        verserDansBouteille(
+          trouverBouteille(original.bouteilleSrcId, 'Bouteille source'),
+          quantite);
+      }
+    }
+  }
+
+  // --------------------------------------------------------
+  // Contrôle d'étanchéité : logique UNIQUE partagée entre
+  // createControle et la validation d'un mouvement dont le
+  // wizard a déclaré un contrôle (CR-3). Mutations VIVES,
+  // journalisation incluse, persistance à la charge de l'appelant.
+  // --------------------------------------------------------
+  function enregistrerControle(d) {
+    const machine = trouverMachine(d.machineId);
+    if (d.resultat !== 'CONFORME' && d.resultat !== 'FUITE') {
+      throw new Error('Résultat de contrôle obligatoire : CONFORME ou FUITE.');
+    }
+    const controle = {
+      id: genId('ctl'),
+      date: d.date ?? aujourdHui(),
+      machineId: machine.id,
+      machineLabel: machine.designation,
+      typeControle: d.typeControle ?? 'PERIODIQUE',
+      methode: d.methode ?? 'DIRECTE',
+      resultat: d.resultat,
+      detecteurId: d.detecteurId ?? null,
+      localisationFuite: d.localisationFuite ?? null,
+      reparationImmediate: Boolean(d.reparationImmediate),
+      operateur: d.operateur ?? null,
+      operateurId: d.operateurId ?? null,
+      prochainControle: d.prochainControle ?? null,
+      enRetard: false
+    };
+    donnees.controles.push(controle);
+
+    // Effets sur la machine (contrat Phase B)
+    machine.dernierControle = controle.date;
+    if (controle.prochainControle) {
+      machine.prochainControle = controle.prochainControle;
+    }
+    if (controle.resultat === 'FUITE') {
+      machine.statut = 'FUITE';
+    } else if ((machine.statut === 'FUITE' || machine.statut === 'CONTROLE_DU') &&
+               (!machine.prochainControle ||
+                machine.prochainControle >= aujourdHui())) {
+      // Conforme et pas en retard → retour en service
+      machine.statut = 'EN_SERVICE';
+    }
+
+    journaliser(controle.operateur, 'CREATION_CONTROLE', machine.code,
+      `${controle.typeControle} ${controle.methode} → ${controle.resultat}`);
+    return controle;
+  }
+
+  const store = {
+
+    // Étiquette de mode affichée dans l'interface
+    modeLabel: 'DÉMO',
+
+    // État d'intégrité constaté au chargement (CR-5) :
+    // null = sain, { ok: false, casseA } = registre altéré.
+    registreAltere: null,
+
+    // ------------------------------------------------------
+    // Initialisation (appelée par la fabrique creerStore)
+    // ------------------------------------------------------
+    async init() {
+      let modifie = false;
+
+      // Compléments Phase B pour les sauvegardes Phase A existantes
+      if (!Array.isArray(donnees.outillage)) {
+        donnees.outillage = copier(DEMO.outillage);
+        modifie = true;
+      }
+      if (!Array.isArray(donnees.journalAudit)) {
+        donnees.journalAudit = [];
+        modifie = true;
+      }
+
+      // Compléments Phase C pour les sauvegardes A/B existantes
+      for (const cle of ['auditsOrganisme', 'nonConformites', 'stocksInitiaux',
+        'bsff', 'inventaires', 'justificationsEcarts', 'piecesJointes']) {
+        if (!Array.isArray(donnees[cle])) {
+          donnees[cle] = copier(DEMO[cle] ?? []);
+          modifie = true;
+        }
+      }
+      // Dossier opérateur : une sauvegarde ancienne reçoit les champs
+      // enrichis du monde de démo (ses valeurs existantes priment).
+      if (donnees.etablissement.numAttestationCapacite === undefined) {
+        donnees.etablissement =
+          { ...copier(DEMO.etablissement), ...donnees.etablissement };
+        modifie = true;
+      }
+
+      // CR-4 : reprise des anciennes sauvegardes — les bouteilles sans
+      // masse d'entrée figée reçoivent leur masse nette courante (la
+      // meilleure approximation disponible), une fois pour toutes.
+      for (const b of donnees.bouteilles) {
+        if (!Number.isFinite(b.masseEntreeKg)) {
+          b.masseEntreeKg = b.masseNetteKg;
+          modifie = true;
+        }
+      }
+
+      // Amorçage de la chaîne d'intégrité : les écritures du monde de
+      // démonstration (ou d'un import Phase A, AUCUNE empreinte nulle
+      // part) reçoivent leur empreinte. Une chaîne PARTIELLE n'est
+      // jamais ré-amorcée : ce serait masquer une altération (CR-5).
+      const figees = donnees.mouvements.filter((mv) =>
+        mv.statut === 'VALIDE' || mv.statut === 'ANNULE');
+      if (figees.length > 0 && figees.every((mv) => !mv.hashEcriture)) {
+        figees.sort((a, b) =>
+          a.date.localeCompare(b.date) || a.numero.localeCompare(b.numero));
+        let precedent = null;
+        let ordre = 1;
+        for (const mv of figees) {
+          mv.ordreValidation = ordre;
+          mv.hashPrecedent = precedent;
+          mv.hashEcriture = await hasherEcriture(mv, precedent);
+          precedent = mv.hashEcriture;
+          ordre += 1;
+        }
+        modifie = true;
+      }
+
+      if (modifie) persister(donnees);
+
+      // CR-5 : vérification d'intégrité au chargement (localStorage
+      // réécrit à la main, sauvegarde trafiquée…). L'application n'est
+      // PAS bloquée : le drapeau est posé pour le bandeau d'interface.
+      this.registreAltere = null;
+      const probleme = verifierInvariantsDonnees(donnees);
+      if (probleme) {
+        this.registreAltere = { ok: false, casseA: probleme };
+      } else {
+        const chaine = await verifierChaineMouvements(donnees.mouvements);
+        if (!chaine.ok) {
+          this.registreAltere = { ok: false, casseA: chaine.casseA };
+        }
+      }
+    },
+
+    // ------------------------------------------------------
+    // Lectures simples (copies)
+    // ------------------------------------------------------
+    async getEtablissement() {
+      return copier(donnees.etablissement);
+    },
+
+    async getUtilisateurCourant() {
+      // Phase B : utilisateur fixe (l'authentification arrive en Phase E)
+      const referent = donnees.personnel.find((p) => p.roleApp === 'REFERENT');
+      if (!referent) throw new Error('Aucun référent dans le personnel.');
+      return copier(referent);
+    },
+
+    async getOutillage() {
+      // Statuts RECALCULÉS depuis les échéances à chaque lecture
+      const jour = aujourdHui();
+      for (const outil of donnees.outillage) {
+        outil.statut = calculerStatutOutil(outil, jour);
+      }
+      return copier(donnees.outillage);
+    },
+
+    async getMachines() {
+      return copier(donnees.machines);
+    },
+
+    async getBouteilles() {
+      return copier(donnees.bouteilles);
+    },
+
+    async getMouvements() {
+      // Tri par date décroissante, puis numéro décroissant (stabilité)
+      const liste = copier(donnees.mouvements);
+      liste.sort((a, b) =>
+        b.date.localeCompare(a.date) || b.numero.localeCompare(a.numero));
+      return liste;
+    },
+
+    async getControles() {
+      const liste = copier(donnees.controles);
+      liste.sort((a, b) => b.date.localeCompare(a.date));
+      return liste;
+    },
+
+    async getFluides() {
+      // nbMachines recalculé depuis le parc courant.
+      // classeSecurite : complétée depuis le référentiel de démo
+      // pour les sauvegardes antérieures à la Phase D.
+      const parc = machinesEnParc();
+      return donnees.fluides.map((f) => ({
+        ...copier(f),
+        classeSecurite: f.classeSecurite ??
+          DEMO.fluides.find((r) => r.code === f.code)?.classeSecurite ?? null,
+        nbMachines: parc.filter((m) => m.fluide === f.code).length
+      }));
+    },
+
+    async getPersonnel() {
+      return copier(donnees.personnel);
+    },
+
+    async getClients() {
+      // nbMachines recalculé depuis le parc courant
+      const parc = machinesEnParc();
+      return donnees.clients.map((c) => ({
+        ...copier(c),
+        nbMachines: parc.filter((m) => m.clientId === c.id).length
+      }));
+    },
+
+    async getAlertes() {
+      // Phase C : alertes ENTIÈREMENT dynamiques, recalculées depuis
+      // les données. Niveaux conformes à la SPEC §7.2 : ce qui est
+      // ÉCHU est critique, ce qui APPROCHE (90 jours) est important.
+      const alertes = [];
+      const jour = aujourdHui();
+      const horizon = ajouterJours(jour, 90);
+
+      // 1. Attestation de CAPACITÉ de l'établissement
+      const echeanceCapacite = donnees.etablissement.dateEcheanceCapacite;
+      if (echeanceCapacite && echeanceCapacite < jour) {
+        alertes.push({
+          id: 'alr-capacite',
+          niveau: 'CRITIQUE',
+          titre: 'Attestation de capacité expirée',
+          detail: `${donnees.etablissement.numAttestationCapacite ?? '—'} · ` +
+            `échéance ${fmtDate(echeanceCapacite)}`
+        });
+      } else if (echeanceCapacite && echeanceCapacite <= horizon) {
+        alertes.push({
+          id: 'alr-capacite',
+          niveau: 'IMPORTANT',
+          titre: 'Attestation de capacité à renouveler',
+          detail: `${donnees.etablissement.numAttestationCapacite ?? '—'} · ` +
+            `échéance ${fmtDate(echeanceCapacite)}`
+        });
+      }
+
+      // 2. Attestations d'APTITUDE du personnel actif
+      for (const p of donnees.personnel) {
+        if (!p.actif || !p.dateFinValidite) continue;
+        if (p.dateFinValidite < jour) {
+          alertes.push({
+            id: `alr-aptitude-${p.id}`,
+            niveau: 'CRITIQUE',
+            titre: 'Attestation d’aptitude expirée',
+            detail: `${p.prenom} ${p.nom} · échéance ${fmtDate(p.dateFinValidite)}`
+          });
+        } else if (p.dateFinValidite <= horizon) {
+          alertes.push({
+            id: `alr-aptitude-${p.id}`,
+            niveau: 'IMPORTANT',
+            titre: 'Attestation d’aptitude à renouveler',
+            detail: `${p.prenom} ${p.nom} · échéance ${fmtDate(p.dateFinValidite)}`
+          });
+        }
+      }
+
+      // 3. Machines : fuites non résolues, contrôles dépassés
+      for (const m of donnees.machines) {
+        if (m.statut === 'FUITE') {
+          alertes.push({
+            id: `alr-fuite-${m.id}`,
+            niveau: 'CRITIQUE',
+            titre: 'Fuite non résolue',
+            detail: `${m.designation} · recontrôle ${fmtDate(m.prochainControle)}`
+          });
+        } else if (m.statut !== 'DEMANTELEE' &&
+                   m.prochainControle && m.prochainControle < jour) {
+          alertes.push({
+            id: `alr-controle-${m.id}`,
+            niveau: 'CRITIQUE',
+            titre: 'Contrôle d’étanchéité en retard',
+            detail: `${m.designation} · échéance ${fmtDate(m.prochainControle)}`
+          });
+        }
+      }
+
+      // 4. Outillage à échéance dépassée (statut recalculé)
+      for (const outil of donnees.outillage) {
+        if (calculerStatutOutil(outil, jour) !== 'EXPIRE') continue;
+        const titre =
+          outil.typeOutil === 'BALANCE' ? 'Balance à revérifier' :
+          outil.typeOutil === 'STATION_RECUPERATION'
+            ? 'Station de récupération à contrôler'
+            : outil.typeOutil === 'DETECTEUR'
+              ? 'Détecteur à réétalonner'
+              : 'Outillage à vérifier';
+        alertes.push({
+          id: `alr-outil-${outil.id}`,
+          // SPEC §7.2 : détecteur ou balance expiré = CRITIQUE
+          // (blocage du mode officiel), le reste = IMPORTANT.
+          niveau: (outil.typeOutil === 'DETECTEUR' ||
+                   outil.typeOutil === 'BALANCE') ? 'CRITIQUE' : 'IMPORTANT',
+          titre,
+          detail: `${outil.marque} ${outil.modele} · ${fmtDate(outil.prochaineEcheance)}`
+        });
+      }
+
+      // 5. Fluides déchets gardés au-delà du délai (1 an)
+      for (const b of donnees.bouteilles) {
+        if (b.statut !== 'DECHET' || !b.dateLimiteGarde) continue;
+        if (b.dateLimiteGarde < jour) {
+          alertes.push({
+            id: `alr-garde-${b.id}`,
+            niveau: 'CRITIQUE',
+            titre: 'Fluide déchet au-delà du délai de garde',
+            detail: `${b.code} (${b.fluide}) · limite ${fmtDate(b.dateLimiteGarde)}`
+          });
+        }
+      }
+
+      // 6. Écarts de balance matière non justifiés
+      for (const ecart of ecartsNonJustifies()) {
+        alertes.push({
+          id: `alr-ecart-${ecart.annee}-${ecart.fluide}`,
+          niveau: 'CRITIQUE',
+          titre: 'Écart de balance matière non justifié',
+          detail: `${ecart.fluide} · ${ecart.annee} · ` +
+            `écart ${fmtKgSigne(ecart.ecartKg)}`
+        });
+      }
+
+      // Les alertes critiques d'abord (tri stable)
+      alertes.sort((a, b) =>
+        (a.niveau === b.niveau) ? 0 : (a.niveau === 'CRITIQUE' ? -1 : 1));
+      return alertes;
+    },
+
+    async getJournalAudit() {
+      return copier(donnees.journalAudit);
+    },
+
+    // ------------------------------------------------------
+    // Mutations : machines
+    // ------------------------------------------------------
+    async createMachine(donneesMachine) {
+      const d = donneesMachine || {};
+      if (!d.designation || !String(d.designation).trim()) {
+        throw new Error('Désignation de la machine obligatoire.');
+      }
+      if (!indexFluides().has(d.fluide)) {
+        throw new Error(`Fluide inconnu au référentiel : ${d.fluide}.`);
+      }
+      const nominale = Number(d.chargeNominaleKg);
+      if (!Number.isFinite(nominale) || nominale <= 0) {
+        throw new Error('Charge nominale obligatoire (en kg, positive).');
+      }
+      const client = d.clientId
+        ? donnees.clients.find((c) => c.id === d.clientId)
+        : null;
+      if (d.clientId && !client) {
+        throw new Error(`Client / détenteur introuvable : ${d.clientId}.`);
+      }
+
+      // Code lisible : M7, M8… d'après le plus grand code existant
+      const maxCode = donnees.machines.reduce((max, m) => {
+        const n = Number(String(m.code || '').replace(/^M/, ''));
+        return Number.isFinite(n) ? Math.max(max, n) : max;
+      }, 0);
+
+      const machine = {
+        id: genId('mac'),
+        code: `M${maxCode + 1}`,
+        designation: String(d.designation).trim(),
+        type: d.type ?? null,
+        marque: d.marque ?? null,
+        modele: d.modele ?? null,
+        numSerie: d.numSerie ?? null,
+        fluide: d.fluide,
+        chargeNominaleKg: nominale,
+        chargeActuelleKg: Number(d.chargeActuelleKg) || 0,
+        clientId: d.clientId ?? null,
+        localisation: d.localisation ?? null,
+        siteLabel: d.siteLabel ?? client?.raisonSociale ?? null,
+        statut: d.statut ?? 'EN_SERVICE',
+        detectionPermanente: Boolean(d.detectionPermanente),
+        dateMiseEnService: d.dateMiseEnService ?? null,
+        dernierControle: d.dernierControle ?? null,
+        prochainControle: d.prochainControle ?? null
+      };
+      donnees.machines.push(machine);
+      journaliser(d.operateur, 'CREATION_MACHINE', machine.code,
+        `${machine.designation} (${machine.fluide})`);
+      persister(donnees);
+      return copier(machine);
+    },
+
+    async updateMachine(id, donneesMachine) {
+      const machine = trouverMachine(id);
+      if (machine.statut === 'DEMANTELEE') {
+        throw new Error('Machine démantelée : modification interdite.');
+      }
+      const d = donneesMachine || {};
+      if (d.fluide !== undefined && !indexFluides().has(d.fluide)) {
+        throw new Error(`Fluide inconnu au référentiel : ${d.fluide}.`);
+      }
+      const CHAMPS = ['designation', 'type', 'marque', 'modele', 'numSerie',
+        'fluide', 'chargeNominaleKg', 'chargeActuelleKg', 'clientId',
+        'localisation', 'siteLabel', 'statut', 'detectionPermanente',
+        'dateMiseEnService', 'dernierControle', 'prochainControle'];
+      for (const champ of CHAMPS) {
+        if (d[champ] !== undefined) machine[champ] = d[champ];
+      }
+      journaliser(d.operateur, 'MODIFICATION_MACHINE', machine.code,
+        `Champs : ${Object.keys(d).filter((c) => CHAMPS.includes(c)).join(', ')}`);
+      persister(donnees);
+      return copier(machine);
+    },
+
+    // ------------------------------------------------------
+    // Mutations : bouteilles
+    // ------------------------------------------------------
+    async createBouteille(donneesBouteille) {
+      const d = donneesBouteille || {};
+      if (!indexFluides().has(d.fluide)) {
+        throw new Error(`Fluide inconnu au référentiel : ${d.fluide}.`);
+      }
+      if (d.type !== 'NEUVE' && d.type !== 'RECUPERATION') {
+        throw new Error('Type de bouteille obligatoire : NEUVE ou RECUPERATION.');
+      }
+      const tare = Number(d.tareKg);
+      const contenance = Number(d.contenanceMaxKg);
+      if (!Number.isFinite(tare) || tare < 0) {
+        throw new Error('Tare obligatoire (en kg, positive ou nulle).');
+      }
+      if (!Number.isFinite(contenance) || contenance <= 0) {
+        throw new Error('Contenance maximale obligatoire (en kg, positive).');
+      }
+      const brute = d.masseBruteKg !== undefined ? Number(d.masseBruteKg) : tare;
+      const nette = arrondir(brute - tare);
+      if (nette < 0) {
+        throw new Error('Masse brute inférieure à la tare : pesée incohérente.');
+      }
+      if (nette > contenance) {
+        throw new Error('Masse nette supérieure à la contenance de la bouteille.');
+      }
+
+      // Code lisible : B-06, B-07… d'après le plus grand code existant
+      const maxCode = donnees.bouteilles.reduce((max, b) => {
+        const n = Number(String(b.code || '').replace(/^B-?/, ''));
+        return Number.isFinite(n) ? Math.max(max, n) : max;
+      }, 0);
+
+      const bouteille = {
+        id: genId('bou'),
+        code: `B-${String(maxCode + 1).padStart(2, '0')}`,
+        numeroReel: d.numeroReel ?? null,
+        type: d.type,
+        fluide: d.fluide,
+        etatFluide: d.etatFluide ?? (d.type === 'RECUPERATION' ? 'RECUPERE' : 'VIERGE'),
+        tareKg: tare,
+        masseBruteKg: arrondir(brute),
+        masseNetteKg: nette,
+        // CR-4 : masse nette à l'ENTRÉE en stock, FIGÉE à la création —
+        // le poste « achats » de la balance matière lit cette valeur,
+        // jamais la masse nette courante (qui baisse à chaque charge).
+        masseEntreeKg: nette,
+        contenanceMaxKg: contenance,
+        proprietaire: d.proprietaire ?? null,
+        lot: d.lot ?? null,
+        dateEntree: d.dateEntree ?? aujourdHui(),
+        datePesee: d.datePesee ?? aujourdHui(),
+        statut: d.statut ?? 'EN_STOCK'
+      };
+      donnees.bouteilles.push(bouteille);
+      journaliser(d.operateur, 'CREATION_BOUTEILLE', bouteille.code,
+        `${bouteille.type} ${bouteille.fluide} (${bouteille.contenanceMaxKg} kg)`);
+      persister(donnees);
+      return copier(bouteille);
+    },
+
+    async updateBouteille(id, donneesBouteille) {
+      const bouteille = trouverBouteille(id);
+      const d = donneesBouteille || {};
+      if (d.fluide !== undefined && !indexFluides().has(d.fluide)) {
+        throw new Error(`Fluide inconnu au référentiel : ${d.fluide}.`);
+      }
+      const CHAMPS = ['numeroReel', 'type', 'fluide', 'etatFluide', 'tareKg',
+        'masseBruteKg', 'contenanceMaxKg', 'proprietaire', 'lot',
+        'dateEntree', 'datePesee', 'statut'];
+      for (const champ of CHAMPS) {
+        if (d[champ] !== undefined) bouteille[champ] = d[champ];
+      }
+      // Cohérence : la masse nette découle toujours de brute − tare
+      if (d.masseBruteKg !== undefined || d.tareKg !== undefined) {
+        const nette = arrondir(bouteille.masseBruteKg - bouteille.tareKg);
+        if (nette < 0) {
+          throw new Error('Masse brute inférieure à la tare : pesée incohérente.');
+        }
+        if (nette > bouteille.contenanceMaxKg) {
+          throw new Error('Masse nette supérieure à la contenance de la bouteille.');
+        }
+        bouteille.masseNetteKg = nette;
+      }
+      journaliser(d.operateur, 'MODIFICATION_BOUTEILLE', bouteille.code,
+        `Champs : ${Object.keys(d).filter((c) => CHAMPS.includes(c)).join(', ')}`);
+      persister(donnees);
+      return copier(bouteille);
+    },
+
+    async peserBouteille(id, masseBruteKg, operateur) {
+      const bouteille = trouverBouteille(id);
+      const brute = Number(masseBruteKg);
+      if (!Number.isFinite(brute) || brute < 0) {
+        throw new Error('Masse brute obligatoire (en kg, positive).');
+      }
+      const nette = arrondir(brute - bouteille.tareKg);
+      if (nette < 0) {
+        throw new Error(
+          `Pesée invalide : masse brute (${brute} kg) inférieure à la tare ` +
+          `(${bouteille.tareKg} kg).`);
+      }
+      if (nette > bouteille.contenanceMaxKg) {
+        throw new Error(
+          `Pesée invalide : masse nette (${nette} kg) supérieure à la ` +
+          `contenance (${bouteille.contenanceMaxKg} kg).`);
+      }
+      bouteille.masseBruteKg = arrondir(brute);
+      bouteille.masseNetteKg = nette;
+      bouteille.datePesee = aujourdHui();
+      journaliser(operateur, 'PESEE_BOUTEILLE', bouteille.code,
+        `Brute ${bouteille.masseBruteKg} kg → nette ${nette} kg`);
+      persister(donnees);
+      return copier(bouteille);
+    },
+
+    // ------------------------------------------------------
+    // Mutations : contrôles d'étanchéité
+    // ------------------------------------------------------
+    async createControle(donneesControle) {
+      const controle = enregistrerControle(donneesControle || {});
+      persister(donnees);
+      return copier(controle);
+    },
+
+    // ------------------------------------------------------
+    // Mutations : cycle de vie des mouvements (registre)
+    // ------------------------------------------------------
+    async creerMouvement(donneesMouvement) {
+      const d = donneesMouvement || {};
+      if (!TYPES_MOUVEMENT.includes(d.type)) {
+        throw new Error(
+          `Type de mouvement obligatoire parmi : ${TYPES_MOUVEMENT.join(', ')}.`);
+      }
+      const mode = d.mode === 'OFFICIEL' ? 'OFFICIEL' : 'FORMATION';
+      // Références vérifiées dès le brouillon si fournies
+      const machine = d.machineId ? trouverMachine(d.machineId) : null;
+      if (d.bouteilleSrcId) trouverBouteille(d.bouteilleSrcId, 'Bouteille source');
+      if (d.bouteilleDstId) {
+        trouverBouteille(d.bouteilleDstId, 'Bouteille de destination');
+      }
+
+      const mouvement = {
+        id: genId('mvt'),
+        numero: prochainNumero(mode),
+        date: d.date ?? aujourdHui(),
+        mode,
+        type: d.type,
+        machineId: d.machineId ?? null,
+        machineLabel: machine?.designation ?? null,
+        fluide: d.fluide ?? machine?.fluide ?? null,
+        quantiteKg: null,
+        peseeAvantKg: d.peseeAvantKg ?? null,
+        peseeApresKg: d.peseeApresKg ?? null,
+        bouteilleSrcId: d.bouteilleSrcId ?? null,
+        bouteilleDstId: d.bouteilleDstId ?? null,
+        causeMouvement: d.causeMouvement ?? null,
+        controle: d.controle ?? { statutControle: 'SANS_OBJET', detecteurId: null },
+        signatureDataUrl: d.signatureDataUrl ?? null,
+        technicien: d.technicien ?? null,
+        validateurId: null,
+        hashEcriture: null,
+        hashPrecedent: null,
+        contreEcritureDe: null,
+        statut: 'BROUILLON',
+        cerfaNumero: null
+      };
+      donnees.mouvements.push(mouvement);
+      journaliser(mouvement.technicien, 'CREATION_MOUVEMENT', mouvement.numero,
+        `${mouvement.type} (brouillon)`);
+      persister(donnees);
+      return copier(mouvement);
+    },
+
+    async soumettreMouvement(id) {
+      const mouvement = trouverMouvement(id);
+      if (mouvement.statut === 'VALIDE' || mouvement.statut === 'ANNULE') {
+        throw new Error(MSG_ECRITURE_FIGEE);
+      }
+      if (mouvement.statut !== 'BROUILLON') {
+        throw new Error('Seul un mouvement en brouillon peut être soumis.');
+      }
+      mouvement.statut = 'SOUMIS';
+      journaliser(mouvement.technicien, 'SOUMISSION_MOUVEMENT',
+        mouvement.numero, mouvement.type);
+      persister(donnees);
+      return copier(mouvement);
+    },
+
+    /**
+     * CR-1 : supprime un mouvement resté en BROUILLON (abandon du
+     * wizard, erreur de saisie). Un brouillon n'a AUCUN effet sur les
+     * stocks ni sur la chaîne d'intégrité : sa suppression est sûre.
+     */
+    async supprimerMouvement(id, operateur) {
+      const mouvement = trouverMouvement(id);
+      if (mouvement.statut === 'VALIDE' || mouvement.statut === 'ANNULE') {
+        throw new Error(MSG_ECRITURE_FIGEE);
+      }
+      if (mouvement.statut !== 'BROUILLON') {
+        throw new Error(
+          'Seul un mouvement en brouillon peut être supprimé ' +
+          '(un mouvement soumis se rejette, une écriture validée ' +
+          's’annule par contre-écriture).');
+      }
+      const indice = donnees.mouvements.findIndex((mv) => mv.id === id);
+      donnees.mouvements.splice(indice, 1);
+      journaliser(operateur ?? mouvement.technicien, 'SUPPRESSION_MOUVEMENT',
+        mouvement.numero, `${mouvement.type} (brouillon supprimé)`);
+      persister(donnees);
+      return true;
+    },
+
+    /**
+     * CR-1 : rejette un mouvement SOUMIS (validateur pas d'accord) —
+     * retour en BROUILLON avec le motif du rejet, pour reprise.
+     */
+    async rejeterMouvement(id, motif) {
+      const mouvement = trouverMouvement(id);
+      if (mouvement.statut === 'VALIDE' || mouvement.statut === 'ANNULE') {
+        throw new Error(MSG_ECRITURE_FIGEE);
+      }
+      if (mouvement.statut !== 'SOUMIS') {
+        throw new Error('Seul un mouvement soumis peut être rejeté.');
+      }
+      if (!motif || !String(motif).trim()) {
+        throw new Error('Motif de rejet obligatoire.');
+      }
+      mouvement.statut = 'BROUILLON';
+      mouvement.motifRejet = String(motif).trim();
+      journaliser(null, 'REJET_MOUVEMENT', mouvement.numero,
+        `${mouvement.type} · motif : ${mouvement.motifRejet}`);
+      persister(donnees);
+      return copier(mouvement);
+    },
+
+    async validerMouvement(id, validateurId) {
+      const mouvement = trouverMouvement(id);
+      if (mouvement.statut === 'VALIDE' || mouvement.statut === 'ANNULE') {
+        throw new Error(MSG_ECRITURE_FIGEE);
+      }
+      if (mouvement.statut !== 'SOUMIS') {
+        throw new Error('Seul un mouvement soumis peut être validé.');
+      }
+      const validateur = verifierValidateur(validateurId);
+
+      // Règles métier + effets stocks/charges (throw si violation)
+      appliquerEffets(mouvement);
+
+      // CR-3 : le contrôle d'étanchéité déclaré à l'étape 5 du wizard
+      // produit un VRAI contrôle lié (mêmes effets que createControle :
+      // machine en statut FUITE si fuite, dernierControle mis à jour,
+      // alerte). Référence croisée mouvement ↔ contrôle, posée AVANT
+      // le scellement pour être couverte par l'empreinte.
+      const declare = mouvement.controle || {};
+      if (mouvement.machineId &&
+          (declare.statutControle === 'CONFORME' ||
+           declare.statutControle === 'FUITE')) {
+        const controleLie = enregistrerControle({
+          machineId: mouvement.machineId,
+          date: mouvement.date,
+          typeControle: 'NON_PERIODIQUE',
+          methode: 'DIRECTE',
+          resultat: declare.statutControle,
+          detecteurId: declare.detecteurId ?? null,
+          operateur: mouvement.technicien ?? null
+        });
+        controleLie.mouvementId = mouvement.id;
+        mouvement.controle = { ...declare, controleId: controleLie.id };
+      }
+
+      mouvement.validateurId = validateurId;
+      mouvement.statut = 'VALIDE';
+      // IM-12 (SPEC §7.1) : un TRANSFERT entre contenants est une écriture
+      // interne au registre — aucun numéro de fiche d'intervention attribué
+      // (sinon la colonne CERFA et le compteur nbCerfa mentiraient).
+      mouvement.cerfaNumero =
+        mouvement.type === 'TRANSFERT' ? null : mouvement.numero;
+      await sceller(mouvement);
+
+      journaliser(`${validateur.prenom} ${validateur.nom}`,
+        'VALIDATION_MOUVEMENT', mouvement.numero,
+        `${mouvement.type} · ${mouvement.quantiteKg} kg ${mouvement.fluide}`);
+      persister(donnees);
+      return copier(mouvement);
+    },
+
+    async annulerParContreEcriture(id, motif, validateurId) {
+      const original = trouverMouvement(id);
+      if (original.statut === 'ANNULE') {
+        throw new Error('Écriture déjà annulée : contre-écriture impossible.');
+      }
+      if (original.statut !== 'VALIDE') {
+        throw new Error(
+          'Seule une écriture validée peut être annulée par contre-écriture.');
+      }
+      if (!motif || !String(motif).trim()) {
+        throw new Error('Motif d’annulation obligatoire.');
+      }
+      const validateur = verifierValidateur(validateurId);
+
+      // Effets inverses AVANT de figer quoi que ce soit (throw si impossible)
+      appliquerEffetsInverses(original);
+
+      const contreEcriture = {
+        id: genId('mvt'),
+        numero: prochainNumero(original.mode),
+        date: aujourdHui(),
+        mode: original.mode,
+        type: original.type,
+        machineId: original.machineId ?? null,
+        machineLabel: original.machineLabel ?? null,
+        fluide: original.fluide ?? null,
+        // Quantité OPPOSÉE (le + 0 neutralise un éventuel « moins zéro »)
+        quantiteKg: arrondir(-original.quantiteKg) + 0,
+        // Pesées permutées : le fluide fait le chemin inverse
+        peseeAvantKg: original.peseeApresKg ?? null,
+        peseeApresKg: original.peseeAvantKg ?? null,
+        bouteilleSrcId: original.bouteilleSrcId ?? null,
+        bouteilleDstId: original.bouteilleDstId ?? null,
+        causeMouvement: original.causeMouvement ?? null,
+        controle: { statutControle: 'SANS_OBJET', detecteurId: null },
+        signatureDataUrl: null,
+        technicien: `${validateur.prenom} ${validateur.nom}`,
+        motif: String(motif).trim(),
+        validateurId,
+        contreEcritureDe: original.id,
+        statut: 'VALIDE',
+        hashEcriture: null,
+        hashPrecedent: null,
+        cerfaNumero: null
+      };
+      // IM-12 : même règle qu'à la validation — pas de CERFA pour un TRANSFERT
+      contreEcriture.cerfaNumero =
+        contreEcriture.type === 'TRANSFERT' ? null : contreEcriture.numero;
+      await sceller(contreEcriture);
+      donnees.mouvements.push(contreEcriture);
+
+      // L'original change UNIQUEMENT de statut : ses données restent intactes
+      original.statut = 'ANNULE';
+
+      journaliser(`${validateur.prenom} ${validateur.nom}`,
+        'CONTRE_ECRITURE', contreEcriture.numero,
+        `Annule ${original.numero} · motif : ${contreEcriture.motif}`);
+      persister(donnees);
+      return copier(contreEcriture);
+    },
+
+    // ------------------------------------------------------
+    // Intégrité de la chaîne d'écritures
+    // ------------------------------------------------------
+    async verifierChaineHash() {
+      return verifierChaineMouvements(donnees.mouvements);
+    },
+
+    /**
+     * État d'intégrité du registre constaté au dernier chargement /
+     * import (CR-5). L'application n'est JAMAIS bloquée : l'interface
+     * peut afficher un bandeau « registre altéré ».
+     * @returns {Promise<{altere: boolean, casseA: string|null}>}
+     */
+    async getEtatRegistre() {
+      const etat = this.registreAltere;
+      return {
+        altere: Boolean(etat && etat.ok === false),
+        casseA: etat?.casseA ?? null
+      };
+    },
+
+    // ------------------------------------------------------
+    // Statistiques CALCULÉES depuis les données
+    // ------------------------------------------------------
+    async getStats() {
+      const fluides = indexFluides();
+      const parc = machinesEnParc();
+
+      // Charge totale du parc et équivalent CO₂ (kg × GWP / 1000)
+      let chargeParcKg = 0;
+      let teqCo2Parc = 0;
+      const parFluide = new Map();
+      for (const m of parc) {
+        chargeParcKg += m.chargeActuelleKg;
+        const gwp = fluides.get(m.fluide)?.gwpAr4 ?? 0;
+        teqCo2Parc += teqCO2(m.chargeActuelleKg, gwp);
+        const cumul = parFluide.get(m.fluide) || 0;
+        parFluide.set(m.fluide, cumul + m.chargeActuelleKg);
+      }
+      const chargeParFluide = [...parFluide.entries()]
+        .map(([fluide, kgEnParc]) => ({
+          fluide,
+          kgEnParc,
+          teqCo2: teqCO2(kgEnParc, fluides.get(fluide)?.gwpAr4 ?? 0)
+        }))
+        .sort((a, b) => b.kgEnParc - a.kgEnParc);
+
+      // Stock bouteilles : somme des masses nettes précalculées
+      const stockBouteillesKg = donnees.bouteilles
+        .reduce((somme, b) => somme + b.masseNetteKg, 0);
+
+      // Conformité : part des contrôles conformes
+      const nbControles = donnees.controles.length;
+      const nbConformes = donnees.controles
+        .filter((c) => c.resultat === 'CONFORME').length;
+      const tauxConformitePct = nbControles
+        ? Math.round((nbConformes / nbControles) * 100)
+        : 100;
+
+      // Opérateurs actifs : personnes ACTIVES du registre du personnel
+      // (contrat Phase C — plus les intervenants déduits des écritures)
+      const nbOperateursActifs =
+        donnees.personnel.filter((p) => p.actif !== false).length;
+
+      // Mouvements comptant dans les flux : écritures validées ou annulées
+      // (les brouillons/soumis n'ont pas encore d'effet réel)
+      const mouvementsEffectifs = donnees.mouvements.filter((mv) =>
+        (mv.statut === 'VALIDE' || mv.statut === 'ANNULE') &&
+        Number.isFinite(mv.quantiteKg));
+
+      // Flux mensuels sur 6 mois : Févr. → Juil. 2026, depuis les mouvements
+      const fluxMensuels = [];
+      for (let mois = 2; mois <= 7; mois += 1) {
+        const prefixe = `2026-${String(mois).padStart(2, '0')}`;
+        let chargeKg = 0;
+        let recupKg = 0;
+        for (const mv of mouvementsEffectifs) {
+          if (!mv.date.startsWith(prefixe)) continue;
+          if (mv.quantiteKg >= 0) chargeKg += mv.quantiteKg;
+          else recupKg += Math.abs(mv.quantiteKg);
+        }
+        fluxMensuels.push({ mois: LIBELLES_MOIS[mois - 1], chargeKg, recupKg });
+      }
+
+      return {
+        nbMachines: parc.length,
+        chargeParcKg,
+        stockBouteillesKg,
+        nbBouteilles: donnees.bouteilles.length,
+        teqCo2Parc,
+        nbCerfa: donnees.mouvements.filter((mv) => mv.cerfaNumero).length,
+        nbFiches: donnees.mouvements.length,
+        nbMouvements: donnees.mouvements.length,
+        nbControles,
+        tauxConformitePct,
+        nbFuites: donnees.machines.filter((m) => m.statut === 'FUITE').length,
+        nbOperateursActifs,
+        chargeParFluide,
+        fluxMensuels
+      };
+    },
+
+    // ------------------------------------------------------
+    // Bilan annuel CALCULÉ depuis les mouvements + le parc
+    // ------------------------------------------------------
+    async getBilan(annee) {
+      const fluides = indexFluides();
+      const prefixe = `${annee}-`;
+      const mouvementsAnnee = donnees.mouvements
+        .filter((mv) => mv.date.startsWith(prefixe) &&
+          (mv.statut === 'VALIDE' || mv.statut === 'ANNULE') &&
+          Number.isFinite(mv.quantiteKg));
+
+      // Cumuls chargé / récupéré par fluide sur l'année
+      const parFluide = new Map();
+      const ligneVide = () => ({ chargeKg: 0, recupereKg: 0, enParcKg: 0 });
+      for (const mv of mouvementsAnnee) {
+        if (!parFluide.has(mv.fluide)) parFluide.set(mv.fluide, ligneVide());
+        const ligne = parFluide.get(mv.fluide);
+        if (mv.quantiteKg >= 0) ligne.chargeKg += mv.quantiteKg;
+        else ligne.recupereKg += Math.abs(mv.quantiteKg);
+      }
+
+      // Charge en parc par fluide (état courant)
+      for (const m of machinesEnParc()) {
+        if (!parFluide.has(m.fluide)) parFluide.set(m.fluide, ligneVide());
+        parFluide.get(m.fluide).enParcKg += m.chargeActuelleKg;
+      }
+
+      const lignes = [...parFluide.entries()]
+        .map(([fluide, cumuls]) => {
+          const ref = fluides.get(fluide);
+          const gwpAr4 = ref?.gwpAr4 ?? 0;
+          return {
+            fluide,
+            famille: ref?.famille ?? '—',
+            gwpAr4,
+            chargeKg: cumuls.chargeKg,
+            recupereKg: cumuls.recupereKg,
+            enParcKg: cumuls.enParcKg,
+            teqCo2: teqCO2(cumuls.enParcKg, gwpAr4)
+          };
+        })
+        .sort((a, b) => b.enParcKg - a.enParcKg);
+
+      return {
+        annee,
+        totalChargeKg: lignes.reduce((s, l) => s + l.chargeKg, 0),
+        totalRecupereKg: lignes.reduce((s, l) => s + l.recupereKg, 0),
+        lignes
+      };
+    },
+
+    // ------------------------------------------------------
+    // Phase C : dossier opérateur (établissement, audits,
+    // non-conformités)
+    // ------------------------------------------------------
+    async updateEtablissement(donneesEtab) {
+      const d = donneesEtab || {};
+      if (d.categoriesAutorisees !== undefined) {
+        for (const categorie of d.categoriesAutorisees ?? []) {
+          verifierCategorie(categorie, 'l’établissement');
+        }
+      }
+      if (d.activitesAutorisees !== undefined) {
+        verifierActivites(d.activitesAutorisees);
+      }
+      const CHAMPS = ['raisonSociale', 'siret', 'adresse',
+        'numAttestationCapacite', 'organisme', 'dateDelivranceCapacite',
+        'dateEcheanceCapacite', 'categoriesAutorisees', 'activitesAutorisees',
+        'sitesCouverts', 'dernierAudit', 'prochainAudit'];
+      const champsModifies = [];
+      for (const champ of CHAMPS) {
+        if (d[champ] !== undefined) {
+          donnees.etablissement[champ] = copier(d[champ]);
+          champsModifies.push(champ);
+        }
+      }
+      journaliser(d.operateur, 'MODIFICATION_ETABLISSEMENT',
+        donnees.etablissement.raisonSociale,
+        `Champs : ${champsModifies.join(', ')}`);
+      persister(donnees);
+      return copier(donnees.etablissement);
+    },
+
+    async getAuditsOrganisme() {
+      const liste = copier(donnees.auditsOrganisme);
+      liste.sort((a, b) => b.date.localeCompare(a.date));
+      return liste;
+    },
+
+    async createAuditOrganisme(donneesAudit) {
+      const d = donneesAudit || {};
+      if (!d.date) throw new Error('Date de l’audit obligatoire.');
+      if (!d.organisme || !String(d.organisme).trim()) {
+        throw new Error('Organisme certificateur obligatoire.');
+      }
+      if (!d.resultat || !String(d.resultat).trim()) {
+        throw new Error('Résultat de l’audit obligatoire.');
+      }
+      const audit = {
+        id: genId('aud'),
+        date: d.date,
+        organisme: String(d.organisme).trim(),
+        resultat: String(d.resultat).trim(),
+        remarques: d.remarques ?? null
+      };
+      donnees.auditsOrganisme.push(audit);
+      // Le dossier opérateur suit le dernier audit connu
+      if (!donnees.etablissement.dernierAudit ||
+          audit.date > donnees.etablissement.dernierAudit) {
+        donnees.etablissement.dernierAudit = audit.date;
+      }
+      journaliser(d.operateur, 'CREATION_AUDIT', audit.organisme,
+        `${fmtDate(audit.date)} · ${audit.resultat}`);
+      persister(donnees);
+      return copier(audit);
+    },
+
+    async getNonConformites() {
+      return copier(donnees.nonConformites);
+    },
+
+    async createNonConformite(donneesNc) {
+      const d = donneesNc || {};
+      if (!d.description || !String(d.description).trim()) {
+        throw new Error('Description de la non-conformité obligatoire.');
+      }
+      if (d.statut !== undefined && d.statut !== 'OUVERTE' &&
+          d.statut !== 'SOLDEE') {
+        throw new Error(
+          'Statut de non-conformité inconnu : OUVERTE ou SOLDEE attendu.');
+      }
+      if (d.auditId &&
+          !donnees.auditsOrganisme.some((a) => a.id === d.auditId)) {
+        throw new Error(`Audit introuvable : ${d.auditId}.`);
+      }
+      const nonConformite = {
+        id: genId('nc'),
+        auditId: d.auditId ?? null,
+        description: String(d.description).trim(),
+        actionCorrective: d.actionCorrective ?? null,
+        echeance: d.echeance ?? null,
+        statut: d.statut ?? 'OUVERTE',
+        dateSolde: null,
+        commentaireSolde: null
+      };
+      donnees.nonConformites.push(nonConformite);
+      journaliser(d.operateur, 'CREATION_NON_CONFORMITE', nonConformite.id,
+        nonConformite.description);
+      persister(donnees);
+      return copier(nonConformite);
+    },
+
+    async solderNonConformite(id, commentaire) {
+      const nonConformite = donnees.nonConformites.find((nc) => nc.id === id);
+      if (!nonConformite) {
+        throw new Error(`Non-conformité introuvable : ${id}.`);
+      }
+      if (nonConformite.statut === 'SOLDEE') {
+        throw new Error('Non-conformité déjà soldée.');
+      }
+      if (!commentaire || !String(commentaire).trim()) {
+        throw new Error('Commentaire de solde obligatoire (preuve de l’action).');
+      }
+      nonConformite.statut = 'SOLDEE';
+      nonConformite.dateSolde = aujourdHui();
+      nonConformite.commentaireSolde = String(commentaire).trim();
+      journaliser(null, 'SOLDE_NON_CONFORMITE', nonConformite.id,
+        nonConformite.commentaireSolde);
+      persister(donnees);
+      return copier(nonConformite);
+    },
+
+    // ------------------------------------------------------
+    // Phase C : registre du personnel (JAMAIS de suppression —
+    // une personne se DÉSACTIVE, sa trace reste)
+    // ------------------------------------------------------
+    async createPersonne(donneesPersonne) {
+      const d = donneesPersonne || {};
+      if (!d.nom || !String(d.nom).trim()) {
+        throw new Error('Nom de la personne obligatoire.');
+      }
+      if (!d.prenom || !String(d.prenom).trim()) {
+        throw new Error('Prénom de la personne obligatoire.');
+      }
+      if (!TYPES_PERSONNE.includes(d.typePersonne)) {
+        throw new Error(
+          `Type de personne obligatoire parmi : ${TYPES_PERSONNE.join(', ')}.`);
+      }
+      const personne = {
+        id: genId('per'),
+        nom: String(d.nom).trim(),
+        prenom: String(d.prenom).trim(),
+        typePersonne: d.typePersonne,
+        roleApp: d.roleApp ??
+          (d.typePersonne === 'ELEVE' ? 'ELEVE' : 'ENSEIGNANT'),
+        numAttestationAptitude: d.numAttestationAptitude ?? null,
+        organismeDelivreur: d.organismeDelivreur ?? null,
+        dateObtention: d.dateObtention ?? null,
+        dateFinValidite: d.dateFinValidite ?? null,
+        categorie2008: verifierCategorie(d.categorie2008, 'la grille 2008'),
+        categorie2025: verifierCategorie(d.categorie2025, 'la grille 2025'),
+        activitesAutorisees: verifierActivites(d.activitesAutorisees),
+        actif: d.actif !== false,
+        email: d.email ?? null
+      };
+      donnees.personnel.push(personne);
+      journaliser(d.operateur, 'CREATION_PERSONNE',
+        `${personne.prenom} ${personne.nom}`, personne.typePersonne);
+      persister(donnees);
+      return copier(personne);
+    },
+
+    async updatePersonne(id, donneesPersonne) {
+      const personne = trouverPersonne(id);
+      const d = donneesPersonne || {};
+      if (d.typePersonne !== undefined &&
+          !TYPES_PERSONNE.includes(d.typePersonne)) {
+        throw new Error(
+          `Type de personne inconnu : ${d.typePersonne} ` +
+          `(attendu : ${TYPES_PERSONNE.join(', ')}).`);
+      }
+      if (d.categorie2008 !== undefined) {
+        verifierCategorie(d.categorie2008, 'la grille 2008');
+      }
+      if (d.categorie2025 !== undefined) {
+        verifierCategorie(d.categorie2025, 'la grille 2025');
+      }
+      if (d.activitesAutorisees !== undefined) {
+        verifierActivites(d.activitesAutorisees);
+      }
+      const CHAMPS = ['nom', 'prenom', 'typePersonne', 'roleApp',
+        'numAttestationAptitude', 'organismeDelivreur', 'dateObtention',
+        'dateFinValidite', 'categorie2008', 'categorie2025',
+        'activitesAutorisees', 'actif', 'email'];
+      for (const champ of CHAMPS) {
+        if (d[champ] !== undefined) personne[champ] = copier(d[champ]);
+      }
+      journaliser(d.operateur, 'MODIFICATION_PERSONNE',
+        `${personne.prenom} ${personne.nom}`,
+        `Champs : ${Object.keys(d).filter((c) => CHAMPS.includes(c)).join(', ')}`);
+      persister(donnees);
+      return copier(personne);
+    },
+
+    async desactiverPersonne(id, operateur) {
+      const personne = trouverPersonne(id);
+      if (!personne.actif) {
+        throw new Error(
+          `${personne.prenom} ${personne.nom} est déjà désactivé(e).`);
+      }
+      personne.actif = false;
+      journaliser(operateur, 'DESACTIVATION_PERSONNE',
+        `${personne.prenom} ${personne.nom}`,
+        'Désactivation (la personne reste au registre : aucune suppression)');
+      persister(donnees);
+      return copier(personne);
+    },
+
+    // ------------------------------------------------------
+    // Phase C : outillage réglementaire (statut recalculé)
+    // ------------------------------------------------------
+    async createOutil(donneesOutil) {
+      const d = donneesOutil || {};
+      if (!TYPES_OUTIL.includes(d.typeOutil)) {
+        throw new Error(
+          `Type d'outil obligatoire parmi : ${TYPES_OUTIL.join(', ')}.`);
+      }
+      if (!d.marque || !String(d.marque).trim()) {
+        throw new Error('Marque de l’outil obligatoire.');
+      }
+      const outil = {
+        id: genId('out'),
+        typeOutil: d.typeOutil,
+        marque: String(d.marque).trim(),
+        modele: d.modele ?? null,
+        numSerie: d.numSerie ?? null,
+        siteAtelier: d.siteAtelier ?? null,
+        precision: d.precision ?? null,
+        sensibilite: d.sensibilite ?? null,
+        dateEtalonnage: d.dateEtalonnage ?? d.dateVerification ?? null,
+        dateVerification: d.dateVerification ?? d.dateEtalonnage ?? null,
+        prochaineEcheance: d.prochaineEcheance ?? null,
+        statut: 'CONFORME'
+      };
+      outil.statut = calculerStatutOutil(outil, aujourdHui());
+      donnees.outillage.push(outil);
+      journaliser(d.operateur, 'CREATION_OUTIL', `${outil.marque} ${outil.modele ?? ''}`.trim(),
+        `${outil.typeOutil} · échéance ${fmtDate(outil.prochaineEcheance)}`);
+      persister(donnees);
+      return copier(outil);
+    },
+
+    async updateOutil(id, donneesOutil) {
+      const outil = trouverOutil(id);
+      const d = donneesOutil || {};
+      if (d.typeOutil !== undefined && !TYPES_OUTIL.includes(d.typeOutil)) {
+        throw new Error(
+          `Type d'outil inconnu : ${d.typeOutil} ` +
+          `(attendu : ${TYPES_OUTIL.join(', ')}).`);
+      }
+      const CHAMPS = ['typeOutil', 'marque', 'modele', 'numSerie',
+        'siteAtelier', 'precision', 'sensibilite', 'dateEtalonnage',
+        'dateVerification', 'prochaineEcheance'];
+      for (const champ of CHAMPS) {
+        if (d[champ] !== undefined) outil[champ] = d[champ];
+      }
+      // Le statut découle TOUJOURS de l'échéance (sauf réforme)
+      outil.statut = calculerStatutOutil(outil, aujourdHui());
+      journaliser(d.operateur, 'MODIFICATION_OUTIL',
+        `${outil.marque} ${outil.modele ?? ''}`.trim(),
+        `Champs : ${Object.keys(d).filter((c) => CHAMPS.includes(c)).join(', ')}`);
+      persister(donnees);
+      return copier(outil);
+    },
+
+    async reformerOutil(id, operateur) {
+      const outil = trouverOutil(id);
+      if (outil.statut === 'HORS_SERVICE') {
+        throw new Error('Outil déjà réformé (hors service).');
+      }
+      outil.statut = 'HORS_SERVICE';
+      journaliser(operateur, 'REFORME_OUTIL',
+        `${outil.marque} ${outil.modele ?? ''}`.trim(),
+        'Outil réformé : hors service');
+      persister(donnees);
+      return copier(outil);
+    },
+
+    // ------------------------------------------------------
+    // Phase C : pièces jointes (métadonnées ici, contenus en
+    // IndexedDB — repli mémoire sous Node)
+    // ------------------------------------------------------
+    async ajouterPieceJointe(donneesPj) {
+      const d = donneesPj || {};
+      if (!d.entiteType || !d.entiteId) {
+        throw new Error(
+          'Pièce jointe : entité liée obligatoire (type et identifiant).');
+      }
+      if (!d.nomFichier || !String(d.nomFichier).trim()) {
+        throw new Error('Nom de fichier de la pièce jointe obligatoire.');
+      }
+      const contenu = d.blob ?? d.base64;
+      if (!contenu) {
+        throw new Error(
+          'Contenu de la pièce jointe obligatoire (blob ou base64).');
+      }
+      const octets = await octetsDepuis(contenu);
+      if (octets.length > PJ_TAILLE_MAX) {
+        throw new Error(
+          'Fichier trop volumineux : 5 Mo maximum par pièce jointe.');
+      }
+      const pieceJointe = {
+        id: genId('pj'),
+        entiteType: d.entiteType,
+        entiteId: d.entiteId,
+        categorie: d.categorie ?? 'AUTRE',
+        nomFichier: String(d.nomFichier).trim(),
+        mimeType: d.mimeType ?? 'application/octet-stream',
+        taille: octets.length,
+        hashSha256: await hasherOctets(octets),
+        dateAjout: new Date().toISOString(),
+        ajoutePar: d.ajoutePar ?? null
+      };
+      await ecrireContenuPj(pieceJointe.id,
+        { octets, mimeType: pieceJointe.mimeType });
+      donnees.piecesJointes.push(pieceJointe);
+      journaliser(pieceJointe.ajoutePar, 'AJOUT_PIECE_JOINTE',
+        `${pieceJointe.entiteType}/${pieceJointe.entiteId}`,
+        `${pieceJointe.nomFichier} (${pieceJointe.taille} octets)`);
+      persister(donnees);
+      return copier(pieceJointe);
+    },
+
+    async listerPiecesJointes(entiteType, entiteId) {
+      return copier(donnees.piecesJointes.filter((pj) =>
+        pj.entiteType === entiteType && pj.entiteId === entiteId));
+    },
+
+    async obtenirPieceJointe(id) {
+      const pieceJointe = donnees.piecesJointes.find((pj) => pj.id === id);
+      if (!pieceJointe) {
+        throw new Error(`Pièce jointe introuvable : ${id}.`);
+      }
+      const contenu = await lireContenuPj(id);
+      if (!contenu) {
+        throw new Error(
+          `Contenu de la pièce jointe introuvable : ${pieceJointe.nomFichier}.`);
+      }
+      const blob = typeof Blob !== 'undefined'
+        ? new Blob([contenu.octets], { type: pieceJointe.mimeType })
+        : contenu.octets;
+      return { ...copier(pieceJointe), blob };
+    },
+
+    async supprimerPieceJointe(id, operateur) {
+      const indice = donnees.piecesJointes.findIndex((pj) => pj.id === id);
+      if (indice === -1) {
+        throw new Error(`Pièce jointe introuvable : ${id}.`);
+      }
+      const pieceJointe = donnees.piecesJointes[indice];
+      // Suppression réservée : jamais sur une écriture figée
+      if (pieceJointe.entiteType === 'MOUVEMENT') {
+        const mouvement = donnees.mouvements.find(
+          (mv) => mv.id === pieceJointe.entiteId);
+        if (mouvement &&
+            (mouvement.statut === 'VALIDE' || mouvement.statut === 'ANNULE')) {
+          throw new Error(
+            'Écriture figée : sa pièce justificative ne peut plus être ' +
+            'supprimée.');
+        }
+      }
+      donnees.piecesJointes.splice(indice, 1);
+      await supprimerContenuPj(id);
+      journaliser(operateur, 'SUPPRESSION_PIECE_JOINTE',
+        `${pieceJointe.entiteType}/${pieceJointe.entiteId}`,
+        pieceJointe.nomFichier);
+      persister(donnees);
+      return true;
+    },
+
+    // ------------------------------------------------------
+    // Phase C : chaîne déchets / BSFF (SPEC §5.8)
+    // ------------------------------------------------------
+    async deciderFluideRecupere(bouteilleId, decision, par) {
+      const bouteille = trouverBouteille(bouteilleId);
+      if (!DECISIONS_FLUIDE.includes(decision)) {
+        throw new Error(
+          `Décision inconnue : ${decision} ` +
+          `(attendu : ${DECISIONS_FLUIDE.join(', ')}).`);
+      }
+      if (bouteille.type !== 'RECUPERATION') {
+        throw new Error(
+          'La décision sur le fluide ne concerne que les bouteilles de ' +
+          'récupération.');
+      }
+      bouteille.decisionFluide = decision;
+      bouteille.decisionPar = par ?? null;
+      bouteille.decisionDate = aujourdHui();
+      if (decision === 'DECHET') {
+        bouteille.statut = 'DECHET';
+        bouteille.etatFluide = 'DECHET';
+        // Tolérance réglementaire : garde d'UN AN maximum
+        bouteille.dateLimiteGarde = ajouterUnAn(aujourdHui());
+      }
+      journaliser(par, 'DECISION_FLUIDE', bouteille.code,
+        `${decision} (${bouteille.fluide})`);
+      persister(donnees);
+      return copier(bouteille);
+    },
+
+    async createBsff(donneesBsff) {
+      const d = donneesBsff || {};
+      const bouteille = trouverBouteille(d.bouteilleId);
+      if (bouteille.statut !== 'DECHET') {
+        throw new Error(
+          'Sortie BSFF impossible : la bouteille doit d’abord être ' +
+          'déclarée DÉCHET (décision sur le fluide récupéré).');
+      }
+      if (!d.numeroBsff || !String(d.numeroBsff).trim()) {
+        throw new Error('Numéro de BSFF obligatoire.');
+      }
+      const masse = Number(d.masseRemiseKg);
+      if (!Number.isFinite(masse) || masse <= 0) {
+        throw new Error('Masse remise obligatoire (en kg, positive).');
+      }
+      if (masse > bouteille.masseNetteKg + 1e-9) {
+        throw new Error(
+          `Masse remise (${masse} kg) supérieure au contenu de la ` +
+          `bouteille ${bouteille.code} (${bouteille.masseNetteKg} kg).`);
+      }
+      const bsff = {
+        id: genId('bsff'),
+        bouteilleId: bouteille.id,
+        bouteilleCode: bouteille.code,
+        fluide: bouteille.fluide,
+        numeroBsff: String(d.numeroBsff).trim(),
+        transporteur: d.transporteur ?? null,
+        installationDestination: d.installationDestination ?? null,
+        masseRemiseKg: arrondir(masse),
+        dateRemise: d.dateRemise ?? aujourdHui()
+      };
+      donnees.bsff.push(bsff);
+
+      // Sortie du stock : bouteille retournée, vidée, BSFF référencé
+      bouteille.statut = 'RETOURNEE';
+      bouteille.numBsff = bsff.numeroBsff;
+      bouteille.masseNetteKg = 0;
+      bouteille.masseBruteKg = bouteille.tareKg;
+      bouteille.datePesee = aujourdHui();
+
+      // Mouvement de sortie tracé au journal d'audit
+      journaliser(d.operateur, 'SORTIE_BSFF', bouteille.code,
+        `BSFF ${bsff.numeroBsff} · ${fmtKgSigne(-bsff.masseRemiseKg)} ` +
+        `${bsff.fluide} → ${bsff.installationDestination ?? 'destination non renseignée'}`);
+      persister(donnees);
+      return copier(bsff);
+    },
+
+    async getBsff() {
+      const liste = copier(donnees.bsff);
+      liste.sort((a, b) => b.dateRemise.localeCompare(a.dateRemise));
+      return liste;
+    },
+
+    // ------------------------------------------------------
+    // Phase C : balance matière et inventaire (SPEC §6)
+    // ------------------------------------------------------
+    async getBalanceMatiere(annee) {
+      return copier(calculerBalanceMatiere(Number(annee)));
+    },
+
+    async saisirInventaire(annee, lignes, operateur) {
+      const anneeNum = Number(annee);
+      if (!Number.isInteger(anneeNum)) {
+        throw new Error('Année d’inventaire obligatoire (nombre entier).');
+      }
+      if (!Array.isArray(lignes) || lignes.length === 0) {
+        throw new Error('Inventaire vide : au moins une ligne fluide attendue.');
+      }
+      const fluides = indexFluides();
+      for (const l of lignes) {
+        if (!fluides.has(l.fluide)) {
+          throw new Error(`Fluide inconnu au référentiel : ${l.fluide}.`);
+        }
+        const reel = Number(l.stockReelKg);
+        if (!Number.isFinite(reel) || reel < 0) {
+          throw new Error(
+            `Stock réel invalide pour ${l.fluide} (en kg, positif ou nul).`);
+        }
+      }
+      for (const l of lignes) {
+        const existant = donnees.inventaires.find(
+          (i) => i.annee === anneeNum && i.fluide === l.fluide);
+        if (existant) {
+          existant.stockReelKg = arrondir(Number(l.stockReelKg));
+          existant.dateSaisie = aujourdHui();
+          existant.operateur = operateur ?? null;
+        } else {
+          donnees.inventaires.push({
+            annee: anneeNum,
+            fluide: l.fluide,
+            stockReelKg: arrondir(Number(l.stockReelKg)),
+            dateSaisie: aujourdHui(),
+            operateur: operateur ?? null
+          });
+        }
+      }
+      journaliser(operateur, 'SAISIE_INVENTAIRE', `inventaire ${anneeNum}`,
+        `${lignes.length} fluide(s) pesé(s)`);
+      persister(donnees);
+      return copier(calculerBalanceMatiere(anneeNum));
+    },
+
+    async justifierEcart(annee, fluide, justification) {
+      const anneeNum = Number(annee);
+      if (!justification || !String(justification).trim()) {
+        throw new Error('Justification d’écart obligatoire.');
+      }
+      const balance = calculerBalanceMatiere(anneeNum);
+      const ligne = balance.lignes.find((l) => l.fluide === fluide);
+      if (!ligne || ligne.ecartKg === null) {
+        throw new Error(
+          `Aucun écart d'inventaire à justifier pour ${fluide} en ${anneeNum}.`);
+      }
+      const existant = donnees.justificationsEcarts.find(
+        (j) => j.annee === anneeNum && j.fluide === fluide);
+      if (existant) {
+        existant.justification = String(justification).trim();
+        existant.date = aujourdHui();
+      } else {
+        donnees.justificationsEcarts.push({
+          annee: anneeNum,
+          fluide,
+          justification: String(justification).trim(),
+          date: aujourdHui()
+        });
+      }
+      journaliser(null, 'JUSTIFICATION_ECART', `${fluide} ${anneeNum}`,
+        String(justification).trim());
+      persister(donnees);
+      return copier(calculerBalanceMatiere(anneeNum));
+    },
+
+    // ------------------------------------------------------
+    // Phase C : blocage du mode OFFICIEL (SPEC §7.2)
+    // ------------------------------------------------------
+    async peutPasserEnOfficiel() {
+      const motifs = [];
+      const jour = aujourdHui();
+      const etab = donnees.etablissement;
+
+      if (!etab.numAttestationCapacite) {
+        motifs.push('Aucune attestation de capacité renseignée pour ' +
+          'l’établissement.');
+      } else if (etab.dateEcheanceCapacite &&
+                 etab.dateEcheanceCapacite < jour) {
+        motifs.push('Attestation de capacité expirée depuis le ' +
+          `${fmtDate(etab.dateEcheanceCapacite)}.`);
+      }
+
+      const statuts = donnees.outillage.map((o) => ({
+        typeOutil: o.typeOutil,
+        statut: calculerStatutOutil(o, jour)
+      }));
+      if (!statuts.some((o) => o.typeOutil === 'BALANCE' &&
+                               o.statut === 'CONFORME')) {
+        motifs.push('Aucune balance conforme (vérification à jour requise).');
+      }
+      if (!statuts.some((o) => o.typeOutil === 'DETECTEUR' &&
+                               o.statut === 'CONFORME')) {
+        motifs.push('Aucun détecteur de fuite conforme (étalonnage à jour ' +
+          'requis).');
+      }
+
+      for (const ecart of ecartsNonJustifies()) {
+        motifs.push(`Écart de balance matière non justifié : ${ecart.fluide} ` +
+          `(${ecart.annee}, ${fmtKgSigne(ecart.ecartKg)}).`);
+      }
+
+      return { ok: motifs.length === 0, motifs };
+    },
+
+    // ------------------------------------------------------
+    // Sauvegarde / restauration
+    // ------------------------------------------------------
+    async exporterJSON() {
+      return JSON.stringify({
+        application: 'inerWeb Fluide',
+        version: 8,
+        exporteLe: new Date().toISOString(),
+        donnees
+      }, null, 2);
+    },
+
+    async importerJSON(texte) {
+      let candidat;
+      try {
+        const paquet = JSON.parse(texte);
+        // Accepte l'enveloppe d'export ou les données brutes
+        candidat = paquet && paquet.donnees ? paquet.donnees : paquet;
+      } catch {
+        return false; // JSON illisible
+      }
+      if (!estValide(candidat)) return false;
+      candidat = copier(candidat);
+
+      // Compléments Phase B pour les imports Phase A
+      if (!Array.isArray(candidat.outillage)) {
+        candidat.outillage = copier(DEMO.outillage);
+      }
+      if (!Array.isArray(candidat.journalAudit)) candidat.journalAudit = [];
+      // Compléments Phase C pour les imports A/B
+      for (const cle of ['auditsOrganisme', 'nonConformites', 'stocksInitiaux',
+        'bsff', 'inventaires', 'justificationsEcarts', 'piecesJointes']) {
+        if (!Array.isArray(candidat[cle])) candidat[cle] = copier(DEMO[cle] ?? []);
+      }
+      if (candidat.etablissement.numAttestationCapacite === undefined) {
+        candidat.etablissement =
+          { ...copier(DEMO.etablissement), ...candidat.etablissement };
+      }
+
+      // CR-5 : invariants métier vérifiés AVANT d'adopter quoi que ce soit
+      const probleme = verifierInvariantsDonnees(candidat);
+      if (probleme) {
+        throw new Error(
+          `Import refusé — donnée incohérente : ${probleme}.`);
+      }
+
+      // CR-5 : chaîne de hash reconstruite/vérifiée sur les données
+      // CANDIDATES. Une sauvegarde Phase A (aucune empreinte) voit sa
+      // chaîne amorcée ; toute rupture est rejetée avec l'écriture en cause.
+      const figees = candidat.mouvements.filter((mv) =>
+        mv.statut === 'VALIDE' || mv.statut === 'ANNULE');
+      if (figees.some((mv) => mv.hashEcriture)) {
+        const chaine = await verifierChaineMouvements(candidat.mouvements);
+        if (!chaine.ok) {
+          throw new Error(
+            'Import refusé — chaîne d’intégrité rompue à l’écriture ' +
+            `${chaine.casseA} : fichier altéré ou forgé.`);
+        }
+      } else if (figees.length > 0) {
+        // Sauvegarde antérieure à la Phase B : amorçage de la chaîne
+        figees.sort((a, b) =>
+          a.date.localeCompare(b.date) || a.numero.localeCompare(b.numero));
+        let precedent = null;
+        let ordre = 1;
+        for (const mv of figees) {
+          mv.ordreValidation = ordre;
+          mv.hashPrecedent = precedent;
+          mv.hashEcriture = await hasherEcriture(mv, precedent);
+          precedent = mv.hashEcriture;
+          ordre += 1;
+        }
+      }
+
+      // CR-4 : reprise des bouteilles sans masse d'entrée figée
+      for (const b of candidat.bouteilles) {
+        if (!Number.isFinite(b.masseEntreeKg)) {
+          b.masseEntreeKg = b.masseNetteKg;
+        }
+      }
+
+      // Adoption : les vérifications sont passées
+      donnees = candidat;
+      this.registreAltere = null;
+      journaliser('système', 'IMPORT_DONNEES', 'sauvegarde',
+        'Restauration depuis un fichier JSON (intégrité vérifiée)');
+      persister(donnees);
+      return true;
+    }
+  };
+
+  // Première persistance (silencieuse si localStorage indisponible)
+  persister(donnees);
+
+  return store;
+}
