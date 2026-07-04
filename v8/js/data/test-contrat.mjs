@@ -37,8 +37,14 @@ async function fabriquerStore(nom) {
       const { creerStore } = await import('./datastore.js');
       return creerStore();
     }
+    case 'local': {
+      // Base jetable + LocalStore sur transport in-process (V9-E3).
+      const { creerStoreDeTest } =
+        await import('../../../server/harnais-contrat.mjs');
+      return creerStoreDeTest();
+    }
     default:
-      console.error(`Store inconnu : « ${nom} » (implémentations connues : demo).`);
+      console.error(`Store inconnu : « ${nom} » (implémentations connues : demo, local).`);
       process.exit(2);
   }
 }

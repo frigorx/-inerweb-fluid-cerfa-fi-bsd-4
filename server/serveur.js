@@ -18,6 +18,7 @@
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
+const api = require('./api.js');
 
 // ----- Configuration -----
 const PORT = Number(process.env.PORT) || 2011; // port par défaut du Mode Local
@@ -78,6 +79,33 @@ function repondreErreur(reponse, code, message) {
 
 // ----- Routes de l'API (/api/*) -----
 
+/** Lit le corps d'une requête (JSON), borné à 20 Mo (pièces jointes base64). */
+function lireCorps(requete) {
+  return new Promise((resoudre, rejeter) => {
+    const morceaux = [];
+    let taille = 0;
+    const MAX = 20 * 1024 * 1024;
+    requete.on('data', (morceau) => {
+      taille += morceau.length;
+      if (taille > MAX) {
+        rejeter(new Error('Corps de requête trop volumineux.'));
+        requete.destroy();
+        return;
+      }
+      morceaux.push(morceau);
+    });
+    requete.on('end', () => resoudre(Buffer.concat(morceaux).toString('utf8')));
+    requete.on('error', rejeter);
+  });
+}
+
+/** Code HTTP à renvoyer selon le code métier porté par une erreur d'api. */
+function codeHttpErreur(erreur) {
+  if (erreur && erreur.code === 403) return 403;
+  if (erreur && erreur.code === 501) return 500; // méthode inconnue = erreur serveur
+  return 400; // violation métier (message français destiné à l'interface)
+}
+
 function traiterApi(requete, reponse, chemin) {
   // Vérification de vie du serveur : utilisée par le front pour détecter le Mode Local
   if (chemin === '/api/ping') {
@@ -85,12 +113,45 @@ function traiterApi(requete, reponse, chemin) {
     return;
   }
 
-  // TODO Phase E : routes du registre (machines, bouteilles, mouvements, contrôles…)
-  // branchées sur SQLite via ./db.js — voir docs/SPEC-V8.md §5 (modèle de données).
-  repondreJson(reponse, 501, {
-    ok: false,
-    erreur: 'Route non encore implémentée (chantier Phase E).',
-    chemin,
+  // Toutes les routes du DataStore sont en POST /api/:methode.
+  if (requete.method !== 'POST') {
+    repondreErreur(reponse, 405, 'Méthode non autorisée.');
+    return;
+  }
+
+  const methode = chemin.slice('/api/'.length);
+
+  lireCorps(requete).then((brut) => {
+    let enveloppe;
+    try {
+      enveloppe = brut ? JSON.parse(brut) : {};
+    } catch {
+      repondreJson(reponse, 400, {
+        ok: false,
+        erreur: 'Corps de requête JSON invalide.',
+        code: 400,
+      });
+      return;
+    }
+
+    try {
+      const resultat = api.appeler(
+        methode, enveloppe.params ?? {}, enveloppe.contexte ?? {});
+      repondreJson(reponse, 200, { ok: true, resultat });
+    } catch (erreur) {
+      const code = codeHttpErreur(erreur);
+      repondreJson(reponse, code, {
+        ok: false,
+        erreur: erreur.message,
+        code,
+      });
+    }
+  }).catch(() => {
+    repondreJson(reponse, 500, {
+      ok: false,
+      erreur: 'Erreur interne du serveur local.',
+      code: 500,
+    });
   });
 }
 
