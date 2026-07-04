@@ -9,6 +9,40 @@
 - ⚠️ **Révocation à faire côté Apps Script** (les anciennes clés restent valides tant que
   `genererClesAPI()` n'a pas été exécutée puis le script redéployé) : procédure dans `SECURITE.md`.
 
+### 🧩 V9-E0 — Le contrat DataStore est figé (04/07)
+Ouverture du chantier V9 « coffre-fort » (plan `docs/VISION-V9-V10.md` §11) :
+- **`v8/js/data/contrat.js`** : les 64 méthodes du magasin de données figées noir sur blanc,
+  plus les 2 propriétés (`modeLabel`, `registreAltere`), les constantes canoniques
+  (`MSG_ECRITURE_FIGEE`, `TYPES_MOUVEMENT`, `ROLES_VALIDEURS`, `FORMAT_EXPORT`) et
+  `verifierSurface()` — qui inspecte aussi les prototypes (implémentations en classe) et
+  signale méthodes manquantes ET intruses (l'anti-dérive du bug v7).
+- **`v8/js/data/test-contrat.mjs`** : la suite de conformité (**183 vérifications**) qui tourne
+  contre N'IMPORTE quelle implémentation (`node v8/js/data/test-contrat.mjs [demo]`). Règle
+  d'or : elle construit son propre monde par les mutations du contrat, sans rien devoir aux
+  données de démonstration — le LocalStore SQLite (E3) devra la passer TELLE QUELLE. Couvre les
+  5 types de mouvement (dont TRANSFERT sans CERFA et RECUPERATION_DEMANTELEMENT avec
+  proposition de démantèlement), la contre-écriture, la chaîne de hash, les copies sur toutes
+  les collections, les messages canoniques, l'import forgé rejeté. Rejouable sur base
+  persistante (identifiants uniques par passage).
+- **`server/mapping.js`** : LA correspondance unique front (camelCase) ↔ SQL (snake_case), et
+  le registre de **18 divergences structurelles** consignées avec leur échéance — colonnes
+  `hash_precedent`/`ordre_validation`/`date_soumission` absentes du schéma, table
+  `retours_fournisseur` inexistante, enums désaccordés (`ARRETEE`/`ARRETE`, `FUITE` sans valeur
+  SQL, rôles applicatifs étrangers, types d'outils), quantité signée vs valeur absolue,
+  `sitesCouverts` tableau… Tout champ non migré LÈVE une erreur explicite : rien ne passe en
+  silence. C'est l'intrant direct des migrations E1/E2.
+- **`server/test-mapping.mjs`** (**111 vérifications**) : aller-retour fidèle par table,
+  couverture exhaustive du schéma (une migration qui ajoute une colonne sans la déclarer casse
+  le test), couverture des objets RÉELS du DemoStore (cycle de mutation complet provoqué :
+  soumission, rejet, validation, contre-écriture, pièce jointe), énumérations confrontées aux
+  valeurs des CHECK du schéma.
+- Méthode : cartographie multi-agents (64 méthodes inventoriées) → rédaction → revue
+  adversariale (2 relecteurs ; constats corrigés : suite auto-suffisante en référent, fluide
+  choisi par critère et non par position, surface via prototypes, `sitesCouverts` tableau,
+  `controles.operateur` non jeté en silence) → intégration **16 suites toutes vertes**
+  (~700 vérifications dont 294 nouvelles) → contrôle navigateur (surface conforme vérifiée
+  dans le navigateur, zéro erreur console, tableau de bord intact).
+
 ### 🛠️ Retours terrain n° 1 — pesées, virgule, création à la volée, modales empilées (04/07)
 Premiers retours d'utilisateurs réels sur la démo :
 - **« Aucune bouteille compatible » ne bloque plus et ne gronde plus** : encart ambre guidant

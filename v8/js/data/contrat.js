@@ -1,0 +1,294 @@
+// ============================================================
+// inerWeb Fluide v8 — LE CONTRAT DataStore (V9-E0)
+//
+// Ce module FIGE l'interface que tout magasin de données doit
+// respecter : le DemoStore d'aujourd'hui (navigateur, monde
+// fictif) comme le LocalStore de demain (fetch REST → serveur
+// Node → SQLite) et l'éventuel CloudStore. Le front ne sait
+// jamais quel store il a en face : ce contrat est la seule
+// frontière (VISION-V9-V10 §2).
+//
+// Il est vérifié mécaniquement par test-contrat.mjs, qui tourne
+// contre N'IMPORTE quelle implémentation : toute divergence de
+// surface OU de sémantique casse la suite (leçon du bug v7
+// « wizard/générateur divergents » — plus jamais à la main).
+//
+// Règles transverses du contrat (vérifiées par la suite) :
+//  1. Toutes les méthodes sont asynchrones (retournent une
+//     Promise), SAUF surChangement (synchrone).
+//  2. Toute lecture retourne des COPIES : muter la valeur reçue
+//     n'a aucun effet sur l'état du store.
+//  3. Toute violation métier lève Error avec un message en
+//     FRANÇAIS — exception : importerJSON retourne false pour un
+//     fichier illisible (et ne lève que pour un fichier forgé).
+//  4. Chaque mutation réussie : journalise (append-only), puis
+//     persiste, puis notifie les abonnés surChangement.
+//  5. Les contrôles de faisabilité précèdent TOUT effet : jamais
+//     de mutation partielle.
+//  6. Une écriture VALIDE ou ANNULE est FIGÉE : toute tentative
+//     de modification répond par MSG_ECRITURE_FIGEE ; la seule
+//     correction est la contre-écriture.
+//  7. Les dates métier sont « AAAA-MM-JJ » (locales, sans
+//     fuseau) ; seuls journal d'audit, pièces jointes et
+//     enveloppe d'export portent un horodatage ISO complet.
+//  8. Les masses sont des nombres (jamais des chaînes),
+//     arrondies au gramme.
+// ============================================================
+
+/** Version du contrat (à incrémenter à chaque évolution de surface). */
+export const VERSION_CONTRAT = 1;
+
+/**
+ * Message canonique opposé à toute tentative de modification d'une
+ * écriture figée (statut VALIDE ou ANNULE). Les implémentations
+ * doivent le reprendre mot pour mot : l'interface s'appuie dessus.
+ */
+export const MSG_ECRITURE_FIGEE =
+  'Écriture validée : correction uniquement par contre-écriture.';
+
+/**
+ * Enveloppe CONTRACTUELLE de l'export JSON (format d'échange entre
+ * stores : un export du DemoStore doit s'importer dans le LocalStore
+ * et réciproquement). La version n'évolue qu'avec le format.
+ */
+export const FORMAT_EXPORT = { application: 'inerWeb Fluide', version: 8 };
+
+/** Les cinq types de mouvement du registre. */
+export const TYPES_MOUVEMENT = [
+  'CHARGE_APPOINT',
+  'MISE_EN_SERVICE',
+  'RECUPERATION_MAINTENANCE',
+  'RECUPERATION_DEMANTELEMENT',
+  'TRANSFERT'
+];
+
+/** Machine à états stricte d'un mouvement (aucun autre chemin). */
+export const STATUTS_MOUVEMENT = ['BROUILLON', 'SOUMIS', 'VALIDE', 'ANNULE'];
+
+/** Rôles habilités à valider une écriture (jamais un élève). */
+export const ROLES_VALIDEURS = ['REFERENT', 'ENSEIGNANT', 'ADMIN'];
+
+/**
+ * Propriétés (non fonctions) que tout store expose.
+ * - modeLabel : étiquette du mode affichée dans l'interface
+ *   (« DÉMO », « LOCAL »…), une chaîne non vide.
+ * - registreAltere : état d'intégrité constaté au chargement —
+ *   null si sain, sinon { ok:false, casseA } où casseA désigne le
+ *   problème : numéro de la première écriture dont la chaîne est
+ *   rompue, OU description de l'invariant de données violé.
+ */
+export const PROPRIETES_CONTRAT = ['modeLabel', 'registreAltere'];
+
+/**
+ * Les 64 méthodes du contrat, dans l'ordre du cycle de vie.
+ * genre : 'abonnement' | 'initialisation' | 'lecture' | 'mutation'.
+ * La sémantique fine (formes de retour, garde-fous, effets) est
+ * décrite ici en une ligne et VÉRIFIÉE dans test-contrat.mjs.
+ */
+export const METHODES_CONTRAT = {
+  // --- signal de changement et initialisation -----------------
+  surChangement: { genre: 'abonnement',
+    description: 'Abonne un rappel appelé après chaque mutation réussie ; retourne la fonction de désabonnement. SYNCHRONE.' },
+  init: { genre: 'initialisation',
+    description: 'Migrations de sauvegardes anciennes, amorçage éventuel de la chaîne, vérification d’intégrité (pose registreAltere).' },
+
+  // --- lectures d'état ----------------------------------------
+  getEtablissement: { genre: 'lecture',
+    description: 'L’établissement (dossier opérateur) — copie.' },
+  getUtilisateurCourant: { genre: 'lecture',
+    description: 'L’utilisateur courant (Phase B : premier REFERENT du personnel) ; Error s’il n’y en a pas.' },
+  getOutillage: { genre: 'lecture',
+    description: 'Outillage avec statut RECALCULÉ à la lecture (CONFORME | A_VERIFIER | EXPIRE | HORS_SERVICE).' },
+  getMachines: { genre: 'lecture',
+    description: 'Toutes les machines, démantelées incluses (les vues filtrent).' },
+  getBouteilles: { genre: 'lecture',
+    description: 'Toutes les bouteilles ; invariant masseNetteKg = masseBruteKg − tareKg (au gramme).' },
+  getMouvements: { genre: 'lecture',
+    description: 'Tous les mouvements, triés date puis numéro décroissants.' },
+  getControles: { genre: 'lecture',
+    description: 'Tous les contrôles d’étanchéité, triés date décroissante.' },
+  getFluides: { genre: 'lecture',
+    description: 'Le référentiel des fluides, nbMachines recalculé (machines non démantelées).' },
+  getPersonnel: { genre: 'lecture',
+    description: 'Tout le personnel (jamais supprimé : seulement désactivé).' },
+  getClients: { genre: 'lecture',
+    description: 'Les clients détenteurs, nbMachines recalculé.' },
+  getAlertes: { genre: 'lecture',
+    description: 'Alertes calculées à la volée { id, niveau CRITIQUE|IMPORTANT, titre, detail, cible }, CRITIQUE d’abord.' },
+  getJournalAudit: { genre: 'lecture',
+    description: 'Le journal d’audit append-only { date ISO complet, qui, action, cible, details } — aucune méthode de purge n’existe.' },
+
+  // --- machines ------------------------------------------------
+  createMachine: { genre: 'mutation',
+    description: 'Crée une machine (code auto M{n}) ; Error si désignation vide, fluide inconnu, charge invalide, client introuvable.' },
+  updateMachine: { genre: 'mutation',
+    description: 'Patch partiel (id et code intouchables) ; Error si introuvable ou démantelée.' },
+  arreterMachine: { genre: 'mutation',
+    description: 'Passe EN_SERVICE → ARRETEE (reste au parc) ; Error si démantelée ou déjà arrêtée.' },
+  demantelerMachine: { genre: 'mutation',
+    description: 'Passe → DEMANTELEE (DÉFINITIF) ; Error si charge résiduelle > 0,05 kg.' },
+  remettreEnService: { genre: 'mutation',
+    description: 'Passe ARRETEE → EN_SERVICE ; Error sinon.' },
+
+  // --- clients détenteurs ---------------------------------------
+  createClient: { genre: 'mutation',
+    description: 'Crée un client ; Error si raison sociale/adresse vide ou SIRET ≠ 14 chiffres.' },
+  updateClient: { genre: 'mutation',
+    description: 'Patch partiel (raisonSociale, adresse, siret) ; Error si introuvable ou SIRET invalide.' },
+
+  // --- bouteilles -----------------------------------------------
+  createBouteille: { genre: 'mutation',
+    description: 'Crée une bouteille (code auto B-NN) ; masseEntreeKg figée à l’entrée (CR-4) ; garde-fous tare/contenance/nette.' },
+  updateBouteille: { genre: 'mutation',
+    description: 'Patch partiel ; masseNetteKg recalculée si brute ou tare changent (jamais patchable directement).' },
+  peserBouteille: { genre: 'mutation',
+    description: 'Nouvelle pesée : brute posée, nette recalculée, datePesee = aujourd’hui ; garde-fous.' },
+
+  // --- contrôles d'étanchéité -----------------------------------
+  createControle: { genre: 'mutation',
+    description: 'Crée un contrôle ; FUITE → machine en statut FUITE ; CONFORME → retour EN_SERVICE si elle était FUITE/CONTROLE_DU.' },
+  calculerProchainControle: { genre: 'lecture',
+    description: 'Prochain contrôle selon charge×PRP et détection permanente (logique unique du cadre 7 CERFA) ; null si hors périmètre.' },
+
+  // --- registre des mouvements (cœur WORM) ----------------------
+  creerMouvement: { genre: 'mutation',
+    description: 'Crée un BROUILLON numéroté FORM-/FI- selon le mode ; aucun effet stock ; Error si type ou référence inconnus.' },
+  soumettreMouvement: { genre: 'mutation',
+    description: 'BROUILLON → SOUMIS (dateSoumission posée, hors empreinte) ; MSG_ECRITURE_FIGEE si déjà figé.' },
+  supprimerMouvement: { genre: 'mutation',
+    description: 'Supprime un BROUILLON uniquement (CR-1) ; retourne true ; MSG_ECRITURE_FIGEE si figé.' },
+  rejeterMouvement: { genre: 'mutation',
+    description: 'SOUMIS → BROUILLON avec motifRejet obligatoire.' },
+  validerMouvement: { genre: 'mutation',
+    description: 'SOUMIS → VALIDE par un rôle habilité : quantité signée calculée des pesées, effets stocks atomiques, scellement hash chaîné.' },
+  annulerParContreEcriture: { genre: 'mutation',
+    description: 'Crée l’écriture inverse scellée (quantité opposée, pesées permutées) et passe l’original en ANNULE (hash intact).' },
+
+  // --- intégrité et synthèses -----------------------------------
+  verifierChaineHash: { genre: 'lecture',
+    description: 'Re-parcourt la chaîne des écritures figées : { ok, casseA (numéro de la première rupture) }.' },
+  getEtatRegistre: { genre: 'lecture',
+    description: 'État d’intégrité constaté au chargement : { altere, casseA } — bandeau, jamais de blocage.' },
+  getStats: { genre: 'lecture',
+    description: 'Le tableau de bord : parc, stocks, teqCO₂, conformité, flux mensuels (fenêtre glissante 6 mois).' },
+  getAnneesDisponibles: { genre: 'lecture',
+    description: 'Années ayant des données, année de travail courante incluse, triées décroissantes.' },
+  getBilan: { genre: 'lecture',
+    description: 'Bilan annuel par fluide { annee, totalChargeKg, totalRecupereKg, lignes }.' },
+
+  // --- dossier opérateur ----------------------------------------
+  updateEtablissement: { genre: 'mutation',
+    description: 'Patch partiel du dossier opérateur ; Error si catégorie ou activité inconnue.' },
+  getAuditsOrganisme: { genre: 'lecture',
+    description: 'Audits de l’organisme certificateur, triés date décroissante.' },
+  createAuditOrganisme: { genre: 'mutation',
+    description: 'Crée un audit ; met à jour etablissement.dernierAudit s’il est plus récent.' },
+  getNonConformites: { genre: 'lecture',
+    description: 'Non-conformités { statut OUVERTE|SOLDEE }.' },
+  createNonConformite: { genre: 'mutation',
+    description: 'Crée une non-conformité ; Error si description vide ou audit introuvable.' },
+  solderNonConformite: { genre: 'mutation',
+    description: 'Solde une NC avec commentaire obligatoire (preuve de l’action).' },
+
+  // --- personnel -------------------------------------------------
+  createPersonne: { genre: 'mutation',
+    description: 'Crée une personne (roleApp défaut : ELEVE si élève, sinon ENSEIGNANT) ; garde-fous type/catégorie/activités.' },
+  updatePersonne: { genre: 'mutation',
+    description: 'Patch partiel ; mêmes garde-fous.' },
+  desactiverPersonne: { genre: 'mutation',
+    description: 'Désactive (actif=false) — le personnel n’est JAMAIS supprimé, la trace reste.' },
+
+  // --- outillage ---------------------------------------------------
+  createOutil: { genre: 'mutation',
+    description: 'Crée un outil ; statut calculé depuis l’échéance.' },
+  updateOutil: { genre: 'mutation',
+    description: 'Patch partiel ; statut TOUJOURS recalculé (non patchable), sauf HORS_SERVICE qui persiste.' },
+  reformerOutil: { genre: 'mutation',
+    description: 'Réforme définitive : statut HORS_SERVICE permanent.' },
+
+  // --- pièces jointes ----------------------------------------------
+  ajouterPieceJointe: { genre: 'mutation',
+    description: 'Ajoute une PJ (PDF/PNG/JPEG/WebP, ≤ 5 Mo, jamais de SVG) ; contenu stocké à part, métadonnées hachées SHA-256.' },
+  listerPiecesJointes: { genre: 'lecture',
+    description: 'Les métadonnées des PJ d’une entité (tableau vide si aucune).' },
+  obtenirPieceJointe: { genre: 'lecture',
+    description: 'Métadonnées + contenu binaire ; Error si introuvable.' },
+  supprimerPieceJointe: { genre: 'mutation',
+    description: 'Supprime métadonnées et contenu ; Error si la PJ est liée à un mouvement figé (pièce justificative).' },
+
+  // --- chaîne déchets et fournisseur --------------------------------
+  deciderFluideRecupere: { genre: 'mutation',
+    description: 'Décision sur fluide récupéré (REUTILISABLE | A_ANALYSER | DECHET) ; DECHET pose le délai de garde d’un an.' },
+  createBsff: { genre: 'mutation',
+    description: 'Sortie déchet (BSFF interne — ne remplace PAS Trackdéchets) ; décrémente la bouteille, remise totale → RETOURNEE.' },
+  getBsff: { genre: 'lecture',
+    description: 'Les BSFF émis, triés date de remise décroissante.' },
+  retournerFournisseur: { genre: 'mutation',
+    description: 'Retourne une bouteille non-déchet au fournisseur (nette à zéro) et trace le retour (poste de la balance matière).' },
+  getRetoursFournisseur: { genre: 'lecture',
+    description: 'Les retours fournisseur, triés date décroissante.' },
+
+  // --- balance matière -----------------------------------------------
+  getBalanceMatiere: { genre: 'lecture',
+    description: 'La balance matière annuelle par fluide (stock théorique vs réel, écart, justification).' },
+  saisirInventaire: { genre: 'mutation',
+    description: 'Saisit l’inventaire physique (upsert par année et fluide) ; retourne la balance recalculée.' },
+  justifierEcart: { genre: 'mutation',
+    description: 'Justifie un écart constaté ; Error s’il n’y a aucun écart à justifier.' },
+
+  // --- mode officiel et échanges --------------------------------------
+  peutPasserEnOfficiel: { genre: 'lecture',
+    description: 'Les 4 vérifications bloquantes du mode OFFICIEL (SPEC §7.2) : { ok, motifs[] en français }.' },
+  exporterJSON: { genre: 'lecture',
+    description: 'Exporte l’état complet dans l’enveloppe { application, version, exporteLe, donnees }.' },
+  importerJSON: { genre: 'mutation',
+    description: 'Importe une sauvegarde : true si adoptée, FALSE si illisible, Error si forgée (chaîne rompue) ou incohérente.' }
+};
+
+/**
+ * Toutes les propriétés publiques d'un store, prototypes compris
+ * (un LocalStore écrit en classe porte ses méthodes sur le
+ * prototype). Les propriétés préfixées « _ » sont privées, et
+ * « constructor » est du langage : ignorées.
+ */
+function proprietesPubliques(store) {
+  const cles = new Set();
+  let objet = store;
+  while (objet && objet !== Object.prototype) {
+    for (const cle of Object.getOwnPropertyNames(objet)) {
+      if (!cle.startsWith('_') && cle !== 'constructor') cles.add(cle);
+    }
+    objet = Object.getPrototypeOf(objet);
+  }
+  return [...cles];
+}
+
+/**
+ * Vérifie la SURFACE d'un store contre le contrat : méthodes
+ * manquantes, méthodes intruses (hors contrat — c'est ainsi que la
+ * dérive DemoStore/LocalStore se détecte), propriétés manquantes.
+ * Les prototypes sont inspectés (implémentations en classe incluses).
+ * @param {object} store Une implémentation à vérifier.
+ * @returns {{ ok: boolean, manques: string[], intrus: string[],
+ *            proprietesManquantes: string[] }}
+ */
+export function verifierSurface(store) {
+  const noms = Object.keys(METHODES_CONTRAT);
+  const manques = noms.filter((nom) => typeof store?.[nom] !== 'function');
+
+  const connues = new Set([...noms, ...PROPRIETES_CONTRAT]);
+  const intrus = store
+    ? proprietesPubliques(store).filter((cle) => !connues.has(cle))
+    : [];
+
+  const proprietesManquantes = PROPRIETES_CONTRAT
+    .filter((cle) => !(cle in (store ?? {})));
+
+  return {
+    ok: manques.length === 0 && intrus.length === 0
+      && proprietesManquantes.length === 0,
+    manques,
+    intrus,
+    proprietesManquantes
+  };
+}

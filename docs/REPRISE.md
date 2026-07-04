@@ -34,10 +34,15 @@
 ## Prochaine étape (le plan, dans l'ordre)
 
 1. **Décisions §16 de la VISION** à trancher par Franck (dépôt/licence pro, cloud, RGPD élèves,
-   écoute LAN pour scan tablette…). Non bloquant pour commencer E0.
-2. **V9 — E0** : figer le contrat `DataStore` (`contrat.js`) + `test-contrat.mjs` qui tourne
-   contre N'IMPORTE quel store (démo ET futur local). AVANT toute ligne de LocalStore.
-3. E1 migrations `user_version` → E2 journal d'audit chaîné → E3 LocalStore + routes serveur
+   écoute LAN pour scan tablette…). Non bloquant. Présentées à Franck le 04/07 avec
+   recommandations ; actions qui ne dépendent que de lui : révoquer les clés v7 (§16.7),
+   amorcer la démarche RGPD élèves (§16.5).
+2. ~~**V9 — E0** : figer le contrat `DataStore`~~ **FAIT le 04/07** : `v8/js/data/contrat.js`
+   (64 méthodes) + `test-contrat.mjs` (183 vérifications, tourne contre n'importe quel store)
+   + `server/mapping.js` (correspondance unique + **18 divergences front↔SQL consignées**,
+   l'intrant des migrations E1) + `server/test-mapping.mjs` (111 vérifications).
+3. **E1 migrations `user_version`** (PROCHAINE ÉTAPE — partir des DIVERGENCES de
+   `server/mapping.js`) → E2 journal d'audit chaîné → E3 LocalStore + routes serveur
    (contrôle de rôle CÔTÉ SERVEUR, 403) → E4 sauvegarde `VACUUM INTO` + restauration atomique
    → E5 comptes/rôles/sessions (Franck = admin unique qui octroie, zéro inscription libre).
 4. Puis V9.1 fiche machine vivante (`#/m/:code`) → QR (`code_public` opaque) → relevés élèves.
@@ -81,6 +86,11 @@
 cd C:\git\inerweb-fluide
 python -m http.server 8123          # puis http://localhost:8123/v8/
 node v8/js/data/test-demo-store.mjs # (et les autres test-*.mjs — tous doivent être verts)
+node v8/js/data/test-contrat.mjs    # conformité au contrat DataStore (E0) — 183 vérif.
+node server/test-mapping.mjs        # correspondance front <-> SQL (E0) — 111 vérif.
 ```
+
+⚠️ `test-contrat.mjs` ÉCRIT dans le store cible : contre le futur LocalStore (E3), toujours
+sur une base de test jetable, jamais sur le `data/` réel.
 
 *La mémoire persistante (fiche « Projet inerWeb Fluide v8 ») pointe vers ce fichier.*
