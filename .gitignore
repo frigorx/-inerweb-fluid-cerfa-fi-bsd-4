@@ -34,3 +34,6 @@ Desktop.ini
 # --- Exports locaux (dossiers d'audit, registres générés) ---
 exports/
 *.zip
+
+# Configuration locale des outils (non partagée)
+/.claude/
