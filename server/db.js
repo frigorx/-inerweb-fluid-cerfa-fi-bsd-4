@@ -34,6 +34,9 @@ const CHEMIN_SCHEMA = path.join(__dirname, 'schema.sql');
 /** Instance unique de la base (ouverte à la demande). */
 let base = null;
 
+/** Chemin du fichier .db actuellement ouvert (pour dériver documents/). */
+let cheminBaseOuverte = null;
+
 /**
  * Ouvre (ou crée) la base et applique le schéma. Idempotent : les appels
  * suivants renvoient la même instance.
@@ -47,6 +50,7 @@ function ouvrir(cheminBase = CHEMIN_BASE_DEFAUT) {
   fs.mkdirSync(path.dirname(cheminBase), { recursive: true });
 
   base = new DatabaseSync(cheminBase);
+  cheminBaseOuverte = cheminBase;
 
   try {
     // PRAGMA coffre-fort (vision §13.2) : intégrité référentielle, WAL,
@@ -102,7 +106,18 @@ function fermer() {
   if (base) {
     base.close();
     base = null;
+    cheminBaseOuverte = null;
   }
+}
+
+/**
+ * Chemin du fichier .db actuellement ouvert (ou le défaut si rien n'est
+ * encore ouvert) — sert à dériver le dossier `documents/` des pièces
+ * jointes, TOUJOURS à côté de la base (jetable en test, réelle en prod).
+ * @returns {string}
+ */
+function cheminOuvert() {
+  return cheminBaseOuverte ?? CHEMIN_BASE_DEFAUT;
 }
 
 /**
@@ -302,6 +317,7 @@ module.exports = {
   CHEMIN_BASE_DEFAUT,
   ouvrir,
   fermer,
+  cheminOuvert,
   get,
   all,
   run,

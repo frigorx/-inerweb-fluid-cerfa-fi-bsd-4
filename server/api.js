@@ -23,6 +23,9 @@
  * le test-contrat local à la section 3, comme prévu).
  */
 
+const fs = require('node:fs');
+const path = require('node:path');
+const crypto = require('node:crypto');
 const db = require('./db.js');
 const mapping = require('./mapping.js');
 const { hasherMouvement } = require('./hash-mouvement.js');
@@ -56,6 +59,31 @@ const TYPES_MOUVEMENT = ['CHARGE_APPOINT', 'MISE_EN_SERVICE',
 
 /** Rôles autorisés à VALIDER une écriture (jamais un élève). */
 const ROLES_VALIDEURS = ['REFERENT', 'ENSEIGNANT', 'ADMIN'];
+
+/** Décisions possibles sur un fluide récupéré (SPEC §5.8). */
+const DECISIONS_FLUIDE = ['REUTILISABLE', 'A_ANALYSER', 'DECHET'];
+
+/** Types d'outillage réglementaire (SPEC §5.3). */
+const TYPES_OUTIL = ['STATION_RECUPERATION', 'STATION_CHARGE', 'BALANCE',
+  'DETECTEUR', 'POMPE_A_VIDE', 'MANIFOLD', 'THERMOMETRE', 'BOUTEILLE_RECUP',
+  'FLEXIBLE', 'EPI', 'AUTRE'];
+
+/**
+ * IM-19 : types MIME acceptés pour les pièces jointes — MÊME liste
+ * blanche que le DemoStore (SVG exclu : risque XSS).
+ */
+const PJ_TYPES_MIME = ['application/pdf', 'image/png', 'image/jpeg',
+  'image/webp'];
+
+/** Taille maximale d'une pièce jointe : 5 Mo. */
+const PJ_TAILLE_MAX = 5 * 1024 * 1024;
+
+/** Seuil d'écart d'inventaire au-delà duquel une justification est exigée. */
+const SEUIL_ECART_KG = 0.01;
+
+/** Libellés courts des mois (flux mensuels des statistiques). */
+const LIBELLES_MOIS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin',
+  'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'];
 
 /** Message unique d'écriture figée (contrat Phase B) — repris MOT POUR MOT. */
 const MSG_ECRITURE_FIGEE =
@@ -199,6 +227,64 @@ function ajouterMois(iso, nbMois) {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const j = String(d.getDate()).padStart(2, '0');
   return `${d.getFullYear()}-${m}-${j}`;
+}
+
+/** Ajoute (ou retire) des jours à une date ISO, sans fuseau horaire. */
+function ajouterJours(iso, nbJours) {
+  const [annee, mois, jour] = iso.split('-').map(Number);
+  const d = new Date(annee, mois - 1, jour + nbJours);
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const j = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${j}`;
+}
+
+/** Ajoute un an à une date ISO (délai de garde des fluides déchets). */
+function ajouterUnAn(iso) {
+  const [annee, mois, jour] = iso.split('-').map(Number);
+  const d = new Date(annee + 1, mois - 1, jour);
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const j = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${j}`;
+}
+
+/** Équivalent CO₂ en tonnes : kg × GWP / 1000 (clone de utils.js:teqCO2). */
+function teqCO2(kg, gwp) {
+  return (Number(kg) * Number(gwp)) / 1000;
+}
+
+/**
+ * Masse signée formatée « + 2,00 kg » / « − 0,50 kg » (clone de
+ * utils.js:fmtKgSigne — libellés du journal identiques au DemoStore).
+ */
+function fmtKgSigne(n) {
+  const valeur = Number(n);
+  if (!Number.isFinite(valeur)) return '—';
+  const signe = valeur < 0 ? '−' : '+';
+  return `${signe} ${fmtNombre(Math.abs(valeur), 2)} kg`;
+}
+
+/** Date « JJ/MM/AAAA » (clone de utils.js:fmtDate — messages identiques). */
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  const jour = String(d.getDate()).padStart(2, '0');
+  const mois = String(d.getMonth() + 1).padStart(2, '0');
+  return `${jour}/${mois}/${d.getFullYear()}`;
+}
+
+/**
+ * Statut d'un outil RECALCULÉ depuis sa prochaine échéance : EXPIRE si
+ * dépassée, A_VERIFIER si à moins de 30 jours (ou sans échéance connue),
+ * CONFORME sinon. Un outil réformé (HORS_SERVICE) le reste. Clone du
+ * calculerStatutOutil du DemoStore.
+ */
+function calculerStatutOutil(outil, jour) {
+  if (outil.statut === 'HORS_SERVICE') return 'HORS_SERVICE';
+  if (!outil.prochaineEcheance) return 'A_VERIFIER';
+  if (outil.prochaineEcheance < jour) return 'EXPIRE';
+  if (outil.prochaineEcheance <= ajouterJours(jour, 30)) return 'A_VERIFIER';
+  return 'CONFORME';
 }
 
 /**
@@ -536,6 +622,367 @@ const HANDLERS = {
       journaliser(d.operateur, 'MODIFICATION_CLIENT', client.raisonSociale,
         `Champs : ${Object.keys(patch).join(', ')}`);
       return client;
+    });
+  },
+
+  // === dossier opérateur (VAGUE 9) ==========================
+
+  /**
+   * Patch de l'établissement singleton (12 champs). Error si une catégorie
+   * ou une activité déclarée est inconnue. Reprend updateEtablissement du
+   * DemoStore (validations, journal, forme exacts).
+   */
+  updateEtablissement(params) {
+    const d = params.patch || {};
+    if (d.categoriesAutorisees !== undefined) {
+      for (const categorie of d.categoriesAutorisees ?? []) {
+        verifierCategorie(categorie, 'l’établissement');
+      }
+    }
+    if (d.activitesAutorisees !== undefined) {
+      verifierActivites(d.activitesAutorisees);
+    }
+    const CHAMPS = ['raisonSociale', 'siret', 'adresse',
+      'numAttestationCapacite', 'organisme', 'dateDelivranceCapacite',
+      'dateEcheanceCapacite', 'categoriesAutorisees', 'activitesAutorisees',
+      'sitesCouverts', 'dernierAudit', 'prochainAudit'];
+    const patch = {};
+    for (const champ of CHAMPS) {
+      if (d[champ] !== undefined) patch[champ] = d[champ];
+    }
+    return muter(() => {
+      amorcerEtablissement();
+      majParId('etablissements', ID_ETABLISSEMENT,
+        mapping.versSql('etablissements', patch));
+      const etablissement = HANDLERS.getEtablissement();
+      journaliser(d.operateur, 'MODIFICATION_ETABLISSEMENT',
+        etablissement.raisonSociale,
+        `Champs : ${Object.keys(patch).join(', ')}`);
+      return etablissement;
+    });
+  },
+
+  /** Audits de l'organisme certificateur, triés date décroissante. */
+  getAuditsOrganisme() {
+    const lignes = db.all(
+      'SELECT * FROM audits_etablissement ORDER BY date_audit DESC');
+    return lignes.map((ligne) => mapping.versFront('audits_etablissement', ligne));
+  },
+
+  /**
+   * Crée un audit ; met à jour le DERNIER audit connu de l'établissement
+   * si celui-ci est plus récent (ou absent). Reprend createAuditOrganisme
+   * du DemoStore (garde-fous, journal, forme exacts).
+   */
+  createAuditOrganisme(params) {
+    const d = params.donneesAudit || {};
+    if (!d.date) throw new Error('Date de l’audit obligatoire.');
+    if (!d.organisme || !String(d.organisme).trim()) {
+      throw new Error('Organisme certificateur obligatoire.');
+    }
+    if (!d.resultat || !String(d.resultat).trim()) {
+      throw new Error('Résultat de l’audit obligatoire.');
+    }
+    const audit = {
+      id: db.generateId('AUD'),
+      date: d.date,
+      organisme: String(d.organisme).trim(),
+      resultat: String(d.resultat).trim(),
+      remarques: d.remarques ?? null
+    };
+    return muter(() => {
+      amorcerEtablissement();
+      const ligne = mapping.versSql('audits_etablissement', audit);
+      ligne.etablissement_id = ID_ETABLISSEMENT;
+      inserer('audits_etablissement', ligne);
+
+      const etablissement = HANDLERS.getEtablissement();
+      if (!etablissement.dernierAudit ||
+          audit.date > etablissement.dernierAudit) {
+        majParId('etablissements', ID_ETABLISSEMENT,
+          { date_dernier_audit: audit.date });
+      }
+      journaliser(d.operateur, 'CREATION_AUDIT', audit.organisme,
+        `${fmtDate(audit.date)} · ${audit.resultat}`);
+      return mapping.versFront('audits_etablissement',
+        db.get('SELECT * FROM audits_etablissement WHERE id = ?', [audit.id]));
+    });
+  },
+
+  /** Toutes les non-conformités (aucun tri contractuel imposé). */
+  getNonConformites() {
+    const lignes = db.all(
+      'SELECT * FROM non_conformites ORDER BY date_constat, id');
+    return lignes.map((ligne) => mapping.versFront('non_conformites', ligne));
+  },
+
+  /**
+   * Crée une non-conformité, OUVERTE par défaut, rattachée à un audit
+   * existant si fourni. Reprend createNonConformite du DemoStore.
+   */
+  createNonConformite(params) {
+    const d = params.donneesNc || {};
+    if (!d.description || !String(d.description).trim()) {
+      throw new Error('Description de la non-conformité obligatoire.');
+    }
+    if (d.statut !== undefined && d.statut !== 'OUVERTE' &&
+        d.statut !== 'SOLDEE') {
+      throw new Error(
+        'Statut de non-conformité inconnu : OUVERTE ou SOLDEE attendu.');
+    }
+    if (d.auditId) {
+      const audit = db.get(
+        'SELECT id FROM audits_etablissement WHERE id = ?', [d.auditId]);
+      if (!audit) throw new Error(`Audit introuvable : ${d.auditId}.`);
+    }
+    const nonConformite = {
+      id: db.generateId('NC'),
+      auditId: d.auditId ?? null,
+      description: String(d.description).trim(),
+      actionCorrective: d.actionCorrective ?? null,
+      echeance: d.echeance ?? null,
+      statut: d.statut ?? 'OUVERTE',
+      dateSolde: null,
+      commentaireSolde: null
+    };
+    return muter(() => {
+      amorcerEtablissement();
+      const ligne = mapping.versSql('non_conformites', nonConformite);
+      ligne.etablissement_id = ID_ETABLISSEMENT;
+      inserer('non_conformites', ligne);
+      journaliser(d.operateur, 'CREATION_NON_CONFORMITE', nonConformite.id,
+        nonConformite.description);
+      return lireNonConformite(nonConformite.id);
+    });
+  },
+
+  /** OUVERTE → SOLDEE, commentaire de preuve obligatoire. */
+  solderNonConformite(params) {
+    const { id, commentaire } = params;
+    const nonConformite = lireNonConformite(id, true);
+    if (nonConformite.statut === 'SOLDEE') {
+      throw new Error('Non-conformité déjà soldée.');
+    }
+    if (!commentaire || !String(commentaire).trim()) {
+      throw new Error('Commentaire de solde obligatoire (preuve de l’action).');
+    }
+    const commentaireNet = String(commentaire).trim();
+    return muter(() => {
+      majParId('non_conformites', id, {
+        statut: 'SOLDEE',
+        date_cloture: aujourdHui(),
+        commentaire_solde: commentaireNet
+      });
+      journaliser(null, 'SOLDE_NON_CONFORMITE', nonConformite.id,
+        commentaireNet);
+      return lireNonConformite(id);
+    });
+  },
+
+  // === outillage réglementaire (VAGUE 9) ====================
+
+  /**
+   * Crée un outil, statut RECALCULÉ à la création (aujourd'hui). Reprend
+   * createOutil du DemoStore (garde-fous, défauts croisés étalonnage/
+   * vérification, journal exacts).
+   */
+  createOutil(params) {
+    const d = params.donneesOutil || {};
+    if (!TYPES_OUTIL.includes(d.typeOutil)) {
+      throw new Error(
+        `Type d'outil obligatoire parmi : ${TYPES_OUTIL.join(', ')}.`);
+    }
+    if (!d.marque || !String(d.marque).trim()) {
+      throw new Error('Marque de l’outil obligatoire.');
+    }
+    const outil = {
+      id: db.generateId('OUT'),
+      typeOutil: d.typeOutil,
+      marque: String(d.marque).trim(),
+      modele: d.modele ?? null,
+      numSerie: d.numSerie ?? null,
+      siteAtelier: d.siteAtelier ?? null,
+      precision: d.precision ?? null,
+      sensibilite: d.sensibilite ?? null,
+      dateEtalonnage: d.dateEtalonnage ?? d.dateVerification ?? null,
+      dateVerification: d.dateVerification ?? d.dateEtalonnage ?? null,
+      prochaineEcheance: d.prochaineEcheance ?? null,
+      statut: 'CONFORME'
+    };
+    outil.statut = calculerStatutOutil(outil, aujourdHui());
+    return muter(() => {
+      const ligne = mapping.versSql('outillage', outil);
+      ligne.etablissement_id = ID_ETABLISSEMENT;
+      inserer('outillage', ligne);
+      journaliser(d.operateur, 'CREATION_OUTIL',
+        `${outil.marque} ${outil.modele ?? ''}`.trim(),
+        `${outil.typeOutil} · échéance ${fmtDate(outil.prochaineEcheance)}`);
+      return lireOutil(outil.id);
+    });
+  },
+
+  /**
+   * Patch un outil ; le statut découle TOUJOURS de l'échéance recalculée,
+   * SAUF un outil déjà HORS_SERVICE (réforme définitive, jamais relevée).
+   * Reprend updateOutil du DemoStore.
+   */
+  updateOutil(params) {
+    const { id } = params;
+    const outil = trouverOutil(id);
+    const d = params.donneesOutil || {};
+    if (d.typeOutil !== undefined && !TYPES_OUTIL.includes(d.typeOutil)) {
+      throw new Error(
+        `Type d'outil inconnu : ${d.typeOutil} ` +
+        `(attendu : ${TYPES_OUTIL.join(', ')}).`);
+    }
+    const CHAMPS = ['typeOutil', 'marque', 'modele', 'numSerie',
+      'siteAtelier', 'precision', 'sensibilite', 'dateEtalonnage',
+      'dateVerification', 'prochaineEcheance'];
+    const patch = {};
+    for (const champ of CHAMPS) {
+      if (d[champ] !== undefined) patch[champ] = d[champ];
+    }
+    return muter(() => {
+      majParId('outillage', id, mapping.versSql('outillage', patch));
+      // Le statut découle TOUJOURS de l'échéance (sauf réforme, HORS_SERVICE
+      // permanent — calculerStatutOutil le renvoie tel quel dans ce cas).
+      const outilMaj = { ...outil, ...patch };
+      const nouveauStatut = calculerStatutOutil(outilMaj, aujourdHui());
+      majParId('outillage', id, { statut: nouveauStatut });
+      journaliser(d.operateur, 'MODIFICATION_OUTIL',
+        `${outilMaj.marque} ${outilMaj.modele ?? ''}`.trim(),
+        `Champs : ${Object.keys(patch).join(', ')}`);
+      return lireOutil(id);
+    });
+  },
+
+  /** Réforme définitive d'un outil (HORS_SERVICE, jamais relevé). */
+  reformerOutil(params) {
+    const { id } = params;
+    const outil = trouverOutil(id);
+    if (outil.statut === 'HORS_SERVICE') {
+      throw new Error('Outil déjà réformé (hors service).');
+    }
+    return muter(() => {
+      majParId('outillage', id, { statut: 'HORS_SERVICE' });
+      journaliser(params.par, 'REFORME_OUTIL',
+        `${outil.marque} ${outil.modele ?? ''}`.trim(),
+        'Outil réformé : hors service');
+      return lireOutil(id);
+    });
+  },
+
+  // === pièces jointes (VAGUE 10) =============================
+
+  /**
+   * Ajoute une pièce jointe : liste blanche MIME (IM-19), taille ≤ 5 Mo,
+   * contenu décodé du base64 et ÉCRIT SUR DISQUE (dossier documents/ à côté
+   * de la base), hash SHA-256 du contenu, métadonnées en table. Reprend
+   * ajouterPieceJointe du DemoStore (garde-fous, journal exacts).
+   */
+  ajouterPieceJointe(params) {
+    const d = params.donneesPj || {};
+    if (!d.entiteType || !d.entiteId) {
+      throw new Error(
+        'Pièce jointe : entité liée obligatoire (type et identifiant).');
+    }
+    if (!d.nomFichier || !String(d.nomFichier).trim()) {
+      throw new Error('Nom de fichier de la pièce jointe obligatoire.');
+    }
+    const mime = String(d.mimeType ?? '').toLowerCase();
+    if (!PJ_TYPES_MIME.includes(mime)) {
+      throw new Error(
+        `Type de fichier refusé : ${d.mimeType || 'inconnu'}. ` +
+        'Formats acceptés : PDF, PNG, JPEG, WebP.');
+    }
+    const contenuBase64 = d.base64 ?? d.blob;
+    if (!contenuBase64) {
+      throw new Error(
+        'Contenu de la pièce jointe obligatoire (blob ou base64).');
+    }
+    const octets = decoderBase64Pj(contenuBase64);
+    if (octets.length > PJ_TAILLE_MAX) {
+      throw new Error(
+        'Fichier trop volumineux : 5 Mo maximum par pièce jointe.');
+    }
+    const pieceJointe = {
+      id: db.generateId('PJ'),
+      entiteType: d.entiteType,
+      entiteId: d.entiteId,
+      categorie: d.categorie ?? 'AUTRE',
+      nomFichier: String(d.nomFichier).trim(),
+      mimeType: mime,
+      taille: octets.length,
+      hashSha256: crypto.createHash('sha256').update(octets).digest('hex'),
+      dateAjout: new Date().toISOString(),
+      ajoutePar: d.ajoutePar ?? null
+    };
+    return muter(() => {
+      const chemin = ecrirePieceJointeSurDisque(pieceJointe.id, octets);
+      const ligne = mapping.versSql('pieces_jointes', pieceJointe);
+      ligne.etablissement_id = ID_ETABLISSEMENT;
+      ligne.chemin = chemin;
+      inserer('pieces_jointes', ligne);
+      journaliser(pieceJointe.ajoutePar, 'AJOUT_PIECE_JOINTE',
+        `${pieceJointe.entiteType}/${pieceJointe.entiteId}`,
+        `${pieceJointe.nomFichier} (${pieceJointe.taille} octets)`);
+      return lirePieceJointe(pieceJointe.id);
+    });
+  },
+
+  /** Métadonnées seules des pièces jointes d'une entité (contenu exclu). */
+  listerPiecesJointes(params) {
+    const { entiteType, entiteId } = params;
+    const lignes = db.all(
+      `SELECT * FROM pieces_jointes
+       WHERE entite_type = ? AND entite_id = ? ORDER BY date_ajout`,
+      [entiteType, entiteId]);
+    return lignes.map((ligne) => mapping.versFront('pieces_jointes', ligne));
+  },
+
+  /** Métadonnées + contenu (base64 relu du disque) d'une pièce jointe. */
+  obtenirPieceJointe(params) {
+    const { id } = params;
+    const ligne = db.get('SELECT * FROM pieces_jointes WHERE id = ?', [id]);
+    if (!ligne) throw new Error(`Pièce jointe introuvable : ${id}.`);
+    if (!ligne.chemin || !fs.existsSync(ligne.chemin)) {
+      throw new Error(
+        `Contenu de la pièce jointe introuvable : ${ligne.nom_fichier}.`);
+    }
+    const octets = fs.readFileSync(ligne.chemin);
+    const pieceJointe = mapping.versFront('pieces_jointes', ligne);
+    pieceJointe.blob = octets.toString('base64');
+    return pieceJointe;
+  },
+
+  /**
+   * Supprime une pièce jointe : refusée si liée à un MOUVEMENT figé
+   * (VALIDE/ANNULE — les preuves d'une écriture scellée sont intouchables).
+   * Supprime la métadonnée ET le fichier. Reprend supprimerPieceJointe du
+   * DemoStore.
+   */
+  supprimerPieceJointe(params) {
+    const { id } = params;
+    const ligne = db.get('SELECT * FROM pieces_jointes WHERE id = ?', [id]);
+    if (!ligne) throw new Error(`Pièce jointe introuvable : ${id}.`);
+    if (ligne.entite_type === 'MOUVEMENT') {
+      const mouvement = db.get(
+        'SELECT statut FROM mouvements WHERE id = ?', [ligne.entite_id]);
+      if (mouvement &&
+          (mouvement.statut === 'VALIDE' || mouvement.statut === 'ANNULE')) {
+        throw new Error(
+          'Écriture figée : sa pièce justificative ne peut plus être ' +
+          'supprimée.');
+      }
+    }
+    return muter(() => {
+      db.run('DELETE FROM pieces_jointes WHERE id = ?', [id]);
+      if (ligne.chemin && fs.existsSync(ligne.chemin)) {
+        fs.unlinkSync(ligne.chemin);
+      }
+      journaliser(params.par, 'SUPPRESSION_PIECE_JOINTE',
+        `${ligne.entite_type}/${ligne.entite_id}`, ligne.nom_fichier);
+      return true;
     });
   },
 
@@ -1118,6 +1565,267 @@ const HANDLERS = {
   /** CR-5 : vérifie la chaîne de hash SHA-256 des écritures figées. */
   verifierChaineHash() {
     return verifierChaineMouvements();
+  },
+
+  // === chaîne déchets / BSFF (VAGUE 7 — SPEC §5.8) ==========
+
+  /**
+   * IM-7 : décision sur le fluide d'une bouteille de RÉCUPÉRATION. DECHET
+   * fige la bouteille (statut/état DECHET, délai de garde d'un an) ; une
+   * décision réutilisable/à analyser est RÉVERSIBLE (restaure EN_STOCK /
+   * RECUPERE, efface le délai). Reprend deciderFluideRecupere du DemoStore
+   * (messages, effets, journal mot pour mot).
+   */
+  deciderFluideRecupere(params) {
+    const { id, decision, par } = params;
+    const bouteille = trouverBouteille(id);
+    if (!DECISIONS_FLUIDE.includes(decision)) {
+      throw new Error(
+        `Décision inconnue : ${decision} ` +
+        `(attendu : ${DECISIONS_FLUIDE.join(', ')}).`);
+    }
+    if (bouteille.type !== 'RECUPERATION') {
+      throw new Error(
+        'La décision sur le fluide ne concerne que les bouteilles de ' +
+        'récupération.');
+    }
+    if (bouteille.statut === 'RETOURNEE') {
+      throw new Error(
+        `Bouteille ${bouteille.code} sortie de l’établissement : ` +
+        'décision sans objet.');
+    }
+    const etaitDechet = bouteille.statut === 'DECHET';
+    const patch = {
+      decision_fluide: decision,
+      decision_par: par ?? null,
+      date_decision: aujourdHui()
+    };
+    if (decision === 'DECHET') {
+      patch.statut = 'DECHET';
+      patch.etat_fluide = 'DECHET';
+      patch.date_limite_garde = ajouterUnAn(aujourdHui());
+    } else {
+      // IM-7 : décision RÉVERSIBLE — restaure le stock, efface l'état déchet.
+      patch.statut = 'EN_STOCK';
+      patch.etat_fluide = 'RECUPERE';
+      patch.date_limite_garde = null;
+    }
+    return muter(() => {
+      majParId('bouteilles', bouteille.id, patch);
+      journaliser(par, 'DECISION_FLUIDE', bouteille.code,
+        `${decision} (${bouteille.fluide})` +
+        (etaitDechet && decision !== 'DECHET'
+          ? ' · retour en stock (état déchet annulé)' : ''));
+      return lireBouteille(bouteille.id);
+    });
+  },
+
+  /**
+   * IM-8 : sortie BSFF d'une bouteille DÉCHET. Décrémente la masse remise ;
+   * remise totale → bouteille vidée et RETOURNEE, remise partielle → reliquat
+   * en stock (statut DECHET conservé). Numéro de BSFF reporté sur la bouteille.
+   * Reprend createBsff du DemoStore (garde-fous, décrément, journal exacts).
+   */
+  createBsff(params) {
+    const d = params.donneesBsff || params || {};
+    const bouteille = trouverBouteille(d.bouteilleId);
+    if (bouteille.statut !== 'DECHET') {
+      throw new Error(
+        'Sortie BSFF impossible : la bouteille doit d’abord être ' +
+        'déclarée DÉCHET (décision sur le fluide récupéré).');
+    }
+    if (!d.numeroBsff || !String(d.numeroBsff).trim()) {
+      throw new Error('Numéro de BSFF obligatoire.');
+    }
+    const masse = Number(d.masseRemiseKg);
+    if (!Number.isFinite(masse) || masse <= 0) {
+      throw new Error('Masse remise obligatoire (en kg, positive).');
+    }
+    if (masse > bouteille.masseNetteKg + 1e-9) {
+      throw new Error(
+        `Masse remise (${masse} kg) supérieure au contenu de la ` +
+        `bouteille ${bouteille.code} (${bouteille.masseNetteKg} kg).`);
+    }
+    const bsff = {
+      id: db.generateId('BSFF'),
+      bouteilleId: bouteille.id,
+      bouteilleCode: bouteille.code,
+      fluide: bouteille.fluide,
+      numeroBsff: String(d.numeroBsff).trim(),
+      transporteur: d.transporteur ?? null,
+      installationDestination: d.installationDestination ?? null,
+      masseRemiseKg: arrondir(masse),
+      dateRemise: d.dateRemise ?? aujourdHui()
+    };
+    return muter(() => {
+      const ligne = mapping.versSql('bsff', bsff);
+      ligne.etablissement_id = ID_ETABLISSEMENT;
+      inserer('bsff', ligne);
+
+      // IM-8 : la bouteille est décrémentée de la masse REMISE.
+      let nette = arrondir(bouteille.masseNetteKg - bsff.masseRemiseKg);
+      const patch = { numero_bsff: bsff.numeroBsff, date_derniere_pesee: aujourdHui() };
+      if (nette <= 1e-9) {
+        nette = 0;
+        patch.statut = 'RETOURNEE';
+      }
+      patch.masse_brute_kg = arrondir(bouteille.tareKg + nette);
+      majParId('bouteilles', bouteille.id, patch);
+
+      journaliser(d.operateur, 'SORTIE_BSFF', bouteille.code,
+        `BSFF ${bsff.numeroBsff} · ${fmtKgSigne(-bsff.masseRemiseKg)} ` +
+        `${bsff.fluide} → ${bsff.installationDestination ?? 'destination non renseignée'}` +
+        (nette > 0 ? ` · reliquat ${nette} kg en stock` : ''));
+      return lireBsff(bsff.id);
+    });
+  },
+
+  /** Tous les BSFF, triés date de remise décroissante. */
+  getBsff() {
+    const lignes = db.all('SELECT * FROM bsff ORDER BY date_remise DESC');
+    return lignes.map((ligne) => mapping.versFront('bsff', ligne));
+  },
+
+  /**
+   * IM-9 : retour d'une bouteille consignée au fournisseur. La masse nette
+   * restante alimente le poste « retours fournisseur » de la balance ; la
+   * bouteille sort du stock (RETOURNEE). Reprend retournerFournisseur du
+   * DemoStore (garde-fous, trace, journal exacts).
+   */
+  retournerFournisseur(params) {
+    const { id, par } = params;
+    const operateur = par ?? null;
+    const bouteille = trouverBouteille(id);
+    if (bouteille.statut === 'RETOURNEE') {
+      throw new Error(`Bouteille ${bouteille.code} déjà retournée.`);
+    }
+    if (bouteille.statut === 'DECHET') {
+      throw new Error(
+        `Bouteille ${bouteille.code} déclarée déchet : la sortie passe ` +
+        'par un BSFF, pas par un retour fournisseur.');
+    }
+    const masseKg = bouteille.masseNetteKg;
+    const retour = {
+      id: db.generateId('RF'),
+      bouteilleId: bouteille.id,
+      bouteilleCode: bouteille.code,
+      fluide: bouteille.fluide,
+      masseKg,
+      date: aujourdHui(),
+      operateur: operateur ?? null
+    };
+    return muter(() => {
+      const ligne = mapping.versSql('retours_fournisseur', retour);
+      ligne.etablissement_id = ID_ETABLISSEMENT;
+      inserer('retours_fournisseur', ligne);
+
+      // La bouteille sort du stock : nette à 0, brute = tare.
+      majParId('bouteilles', bouteille.id, {
+        statut: 'RETOURNEE',
+        masse_brute_kg: arrondir(bouteille.tareKg),
+        date_derniere_pesee: aujourdHui()
+      });
+
+      journaliser(operateur, 'RETOUR_FOURNISSEUR', bouteille.code,
+        `${fmtKgSigne(-masseKg)} ${bouteille.fluide} → fournisseur` +
+        (bouteille.proprietaire ? ` ${bouteille.proprietaire}` : ''));
+      return lireBouteille(bouteille.id);
+    });
+  },
+
+  /** Tous les retours fournisseur, triés date décroissante. */
+  getRetoursFournisseur() {
+    const lignes = db.all(
+      'SELECT * FROM retours_fournisseur ORDER BY date_retour DESC');
+    return lignes.map((ligne) =>
+      mapping.versFront('retours_fournisseur', ligne));
+  },
+
+  // === balance matière + synthèses (VAGUE 8 — SPEC §6/§7) ===
+
+  /** Balance matière annuelle par fluide (via la VUE bilan_matiere). */
+  getBalanceMatiere(params) {
+    return calculerBalanceMatiere(Number(params.annee));
+  },
+
+  /**
+   * Inventaire physique : upsert (année, fluide) du stock réel pesé, puis
+   * balance recalculée. Reprend saisirInventaire du DemoStore (validations,
+   * journal exacts).
+   */
+  saisirInventaire(params) {
+    const anneeNum = Number(params.annee);
+    const lignes = params.lignes;
+    const operateur = params.par ?? params.operateur ?? null;
+    if (!Number.isInteger(anneeNum)) {
+      throw new Error('Année d’inventaire obligatoire (nombre entier).');
+    }
+    if (!Array.isArray(lignes) || lignes.length === 0) {
+      throw new Error('Inventaire vide : au moins une ligne fluide attendue.');
+    }
+    for (const l of lignes) {
+      if (!fluideConnu(l.fluide)) {
+        throw new Error(`Fluide inconnu au référentiel : ${l.fluide}.`);
+      }
+      const reel = Number(l.stockReelKg);
+      if (!Number.isFinite(reel) || reel < 0) {
+        throw new Error(
+          `Stock réel invalide pour ${l.fluide} (en kg, positif ou nul).`);
+      }
+    }
+    return muter(() => {
+      for (const l of lignes) {
+        upsertInventaire(anneeNum, l.fluide, arrondir(Number(l.stockReelKg)),
+          operateur);
+      }
+      journaliser(operateur, 'SAISIE_INVENTAIRE', `inventaire ${anneeNum}`,
+        `${lignes.length} fluide(s) pesé(s)`);
+      return calculerBalanceMatiere(anneeNum);
+    });
+  },
+
+  /**
+   * Justifie un écart d'inventaire (upsert année/fluide). Error s'il n'y a
+   * aucun écart à justifier. Reprend justifierEcart du DemoStore.
+   */
+  justifierEcart(params) {
+    const anneeNum = Number(params.annee);
+    const { fluide, justification } = params;
+    if (!justification || !String(justification).trim()) {
+      throw new Error('Justification d’écart obligatoire.');
+    }
+    const balance = calculerBalanceMatiere(anneeNum);
+    const ligne = balance.lignes.find((l) => l.fluide === fluide);
+    if (!ligne || ligne.ecartKg === null) {
+      throw new Error(
+        `Aucun écart d'inventaire à justifier pour ${fluide} en ${anneeNum}.`);
+    }
+    const texte = String(justification).trim();
+    return muter(() => {
+      upsertJustification(anneeNum, fluide, texte);
+      journaliser(null, 'JUSTIFICATION_ECART', `${fluide} ${anneeNum}`, texte);
+      return calculerBalanceMatiere(anneeNum);
+    });
+  },
+
+  /** Tableau de bord : forme EXACTE du DemoStore (getStats). */
+  getStats() {
+    return calculerStats();
+  },
+
+  /** Années proposables aux vues Bilan / Balance (∪ année courante), DESC. */
+  getAnneesDisponibles() {
+    return anneesDisponibles();
+  },
+
+  /** Bilan annuel calculé depuis les mouvements figés + le parc. */
+  getBilan(params) {
+    return calculerBilan(Number(params.annee));
+  },
+
+  /** CR : 4 vérifs bloquantes avant le passage en mode OFFICIEL. */
+  peutPasserEnOfficiel() {
+    return calculerPeutPasserEnOfficiel();
   }
 };
 
@@ -1728,6 +2436,63 @@ function trouverClient(id) {
   if (!ligne) throw new Error(`Client / détenteur introuvable : ${id}.`);
 }
 
+/** Non-conformité par id (copie camelCase). Error si introuvable et exigee. */
+function lireNonConformite(id, exigee = false) {
+  const ligne = db.get('SELECT * FROM non_conformites WHERE id = ?', [id]);
+  if (!ligne) {
+    if (exigee) throw new Error(`Non-conformité introuvable : ${id}.`);
+    return null;
+  }
+  return mapping.versFront('non_conformites', ligne);
+}
+
+/** Outil par id (copie camelCase). */
+function lireOutil(id) {
+  return mapping.versFront('outillage',
+    db.get('SELECT * FROM outillage WHERE id = ?', [id]));
+}
+
+function trouverOutil(id) {
+  const ligne = db.get('SELECT * FROM outillage WHERE id = ?', [id]);
+  if (!ligne) throw new Error(`Outil introuvable : ${id}.`);
+  return mapping.versFront('outillage', ligne);
+}
+
+/** Pièce jointe par id (métadonnées seules, copie camelCase). */
+function lirePieceJointe(id) {
+  return mapping.versFront('pieces_jointes',
+    db.get('SELECT * FROM pieces_jointes WHERE id = ?', [id]));
+}
+
+/**
+ * Décode le contenu (data URL ou base64 brut) d'une pièce jointe en octets.
+ * Clone la tolérance du DemoStore (préfixe data: optionnel) — lève un
+ * message clair si le base64 est illisible.
+ * @returns {Buffer}
+ */
+function decoderBase64Pj(contenu) {
+  const base64 = String(contenu).replace(/^data:[^;]*;base64,/, '');
+  try {
+    return Buffer.from(base64, 'base64');
+  } catch {
+    throw new Error('Contenu base64 illisible pour la pièce jointe.');
+  }
+}
+
+/** Dossier documents/ des pièces jointes, TOUJOURS à côté de la base. */
+function dossierDocuments() {
+  const dossier = path.join(path.dirname(db.cheminOuvert()), 'documents');
+  fs.mkdirSync(dossier, { recursive: true });
+  return dossier;
+}
+
+/** Écrit le contenu d'une pièce jointe sur disque, renvoie le chemin. */
+function ecrirePieceJointeSurDisque(id, octets) {
+  const chemin = path.join(dossierDocuments(), id);
+  fs.writeFileSync(chemin, octets);
+  return chemin;
+}
+
 /** Machine par id (copie camelCase). */
 function lireMachine(id) {
   return mapping.versFront('machines',
@@ -1776,6 +2541,333 @@ function verifierValidateur(validateurId) {
       '(rôle requis : référent, enseignant ou administrateur).');
   }
   return personne;
+}
+
+/** BSFF par id (copie camelCase). */
+function lireBsff(id) {
+  return mapping.versFront('bsff',
+    db.get('SELECT * FROM bsff WHERE id = ?', [id]));
+}
+
+// ------------------------------------------------------------
+// Balance matière + inventaire (VAGUE 8). La VUE bilan_matiere reproduit
+// le calcul du DemoStore (calculerBalanceMatiere) ; on la lit filtrée
+// (établissement + année) et on MAPPE ses colonnes snake_case vers la forme
+// contrat camelCase. Les valeurs sont ré-arrondies au gramme comme le
+// DemoStore (la vue fait l'arithmétique brute, susceptible de dérive float).
+// ------------------------------------------------------------
+
+/** Upsert d'une ligne d'inventaire (année, fluide) — clé composite. */
+function upsertInventaire(annee, fluide, stockReelKg, operateur) {
+  db.run(
+    `INSERT INTO inventaires
+       (etablissement_id, annee, fluide, stock_reel_kg, date_saisie, operateur)
+     VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT(etablissement_id, annee, fluide) DO UPDATE SET
+       stock_reel_kg = excluded.stock_reel_kg,
+       date_saisie   = excluded.date_saisie,
+       operateur     = excluded.operateur`,
+    [ID_ETABLISSEMENT, annee, fluide, stockReelKg, aujourdHui(),
+      operateur ?? null]);
+}
+
+/** Upsert d'une justification d'écart (année, fluide) — clé composite. */
+function upsertJustification(annee, fluide, justification) {
+  db.run(
+    `INSERT INTO justifications_ecarts
+       (etablissement_id, annee, fluide, justification, date_justification)
+     VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT(etablissement_id, annee, fluide) DO UPDATE SET
+       justification      = excluded.justification,
+       date_justification = excluded.date_justification`,
+    [ID_ETABLISSEMENT, annee, fluide, justification, aujourdHui()]);
+}
+
+/**
+ * Balance matière annuelle : lit la VUE bilan_matiere (filtrée établissement
+ * + année), mappe vers la forme contrat camelCase, ré-arrondit, trie par
+ * fluide. Miroir exact de calculerBalanceMatiere du DemoStore.
+ */
+function calculerBalanceMatiere(annee) {
+  const lignesSql = db.all(
+    `SELECT * FROM bilan_matiere
+     WHERE etablissement_id = ? AND annee = ?`,
+    [ID_ETABLISSEMENT, annee]);
+  const lignes = lignesSql.map((r) => {
+    const stockReelKg = r.stock_reel_kg == null ? null
+      : arrondir(Number(r.stock_reel_kg));
+    const ecartKg = r.ecart_kg == null ? null : arrondir(Number(r.ecart_kg));
+    return {
+      fluide: r.fluide,
+      stockInitialNeufKg: arrondir(Number(r.stock_initial_neuf_kg) || 0),
+      stockInitialRecupKg: arrondir(Number(r.stock_initial_recupere_kg) || 0),
+      achatsKg: arrondir(Number(r.achats_kg) || 0),
+      recuperationsKg: arrondir(Number(r.recuperations_kg) || 0),
+      chargesKg: arrondir(Number(r.charges_kg) || 0),
+      cessionsKg: arrondir(Number(r.cessions_kg) || 0),
+      retoursFournisseurKg: arrondir(Number(r.retours_fournisseur_kg) || 0),
+      destructionsKg: arrondir(Number(r.destructions_kg) || 0),
+      stockTheoriqueKg: arrondir(Number(r.stock_theorique_kg) || 0),
+      stockReelKg,
+      ecartKg,
+      justification: r.justification ?? null
+    };
+  }).sort((a, b) => a.fluide.localeCompare(b.fluide));
+  return { annee, lignes };
+}
+
+/**
+ * Écarts d'inventaire au-delà du seuil et NON justifiés, sur toutes les
+ * années inventoriées. Reprend ecartsNonJustifies du DemoStore.
+ */
+function ecartsNonJustifies() {
+  const annees = db.all(
+    `SELECT DISTINCT annee FROM inventaires WHERE etablissement_id = ?`,
+    [ID_ETABLISSEMENT]).map((r) => r.annee);
+  const resultat = [];
+  for (const annee of annees) {
+    for (const l of calculerBalanceMatiere(annee).lignes) {
+      if (l.ecartKg !== null && Math.abs(l.ecartKg) > SEUIL_ECART_KG &&
+          !l.justification) {
+        resultat.push({ annee, fluide: l.fluide, ecartKg: l.ecartKg });
+      }
+    }
+  }
+  return resultat;
+}
+
+// ------------------------------------------------------------
+// Synthèses (VAGUE 8) — stats, années, bilan, mode officiel.
+// Reprennent getStats / getAnneesDisponibles / getBilan /
+// peutPasserEnOfficiel du DemoStore (formes et calculs exacts).
+// ------------------------------------------------------------
+
+/** Machines comptant dans le parc (tout sauf démantelées) — camelCase. */
+function machinesEnParc() {
+  return db.all(`SELECT * FROM machines WHERE statut <> 'DEMANTELEE'`)
+    .map((ligne) => mapping.versFront('machines', ligne));
+}
+
+/** Index des fluides du référentiel par code → objet camelCase. */
+function indexFluides() {
+  const index = new Map();
+  for (const ligne of db.all('SELECT * FROM fluides')) {
+    index.set(ligne.code, mapping.versFront('fluides', ligne));
+  }
+  return index;
+}
+
+/** Tableau de bord : forme EXACTE du DemoStore (getStats). */
+function calculerStats() {
+  const fluides = indexFluides();
+  const parc = machinesEnParc();
+
+  let chargeParcKg = 0;
+  let teqCo2Parc = 0;
+  const parFluide = new Map();
+  for (const m of parc) {
+    chargeParcKg += m.chargeActuelleKg;
+    const gwp = fluides.get(m.fluide)?.gwpAr4 ?? 0;
+    teqCo2Parc += teqCO2(m.chargeActuelleKg, gwp);
+    const cumul = parFluide.get(m.fluide) || 0;
+    parFluide.set(m.fluide, cumul + m.chargeActuelleKg);
+  }
+  const chargeParFluide = [...parFluide.entries()]
+    .map(([fluide, kgEnParc]) => ({
+      fluide,
+      kgEnParc,
+      teqCo2: teqCO2(kgEnParc, fluides.get(fluide)?.gwpAr4 ?? 0)
+    }))
+    .sort((a, b) => b.kgEnParc - a.kgEnParc);
+
+  const bouteilles = db.all('SELECT * FROM bouteilles')
+    .map((ligne) => mapping.versFront('bouteilles', ligne));
+  const stockBouteillesKg = bouteilles
+    .reduce((somme, b) => somme + b.masseNetteKg, 0);
+
+  const controles = db.all('SELECT resultat FROM controles');
+  const nbControles = controles.length;
+  const nbConformes = controles
+    .filter((c) => c.resultat === 'CONFORME').length;
+  const tauxConformitePct = nbControles
+    ? Math.round((nbConformes / nbControles) * 100)
+    : 100;
+
+  const nbOperateursActifs = db.get(
+    `SELECT count(*) AS n FROM personnel WHERE actif = 1`).n;
+
+  const mouvements = db.all('SELECT * FROM mouvements')
+    .map((ligne) => reconstituerMouvement(ligne));
+  const mouvementsEffectifs = mouvements.filter((mv) =>
+    (mv.statut === 'VALIDE' || mv.statut === 'ANNULE') &&
+    Number.isFinite(mv.quantiteKg));
+
+  // IM-10 : flux mensuels sur une fenêtre GLISSANTE de 6 mois.
+  let dateMax = '';
+  for (const mv of mouvementsEffectifs) {
+    if (mv.date > dateMax) dateMax = mv.date;
+  }
+  if (!dateMax) dateMax = aujourdHui();
+  const [anneeFin, moisFin] = dateMax.split('-').map(Number);
+  const fluxMensuels = [];
+  for (let recul = 5; recul >= 0; recul -= 1) {
+    const total = anneeFin * 12 + (moisFin - 1) - recul;
+    const annee = Math.floor(total / 12);
+    const mois = (total % 12) + 1;
+    const prefixe = `${annee}-${String(mois).padStart(2, '0')}`;
+    let chargeKg = 0;
+    let recupKg = 0;
+    for (const mv of mouvementsEffectifs) {
+      if (!mv.date.startsWith(prefixe)) continue;
+      if (mv.quantiteKg >= 0) chargeKg += mv.quantiteKg;
+      else recupKg += Math.abs(mv.quantiteKg);
+    }
+    fluxMensuels.push(
+      { mois: LIBELLES_MOIS[mois - 1], annee, chargeKg, recupKg });
+  }
+
+  return {
+    nbMachines: parc.filter((m) => m.statut !== 'ARRETEE').length,
+    chargeParcKg,
+    stockBouteillesKg,
+    nbBouteilles: bouteilles.length,
+    teqCo2Parc,
+    nbCerfa: mouvements.filter((mv) => mv.cerfaNumero).length,
+    nbFiches: mouvements.length,
+    nbMouvements: mouvements.length,
+    nbControles,
+    tauxConformitePct,
+    nbFuites: db.get(
+      `SELECT count(*) AS n FROM machines WHERE statut = 'FUITE'`).n,
+    nbOperateursActifs,
+    chargeParFluide,
+    fluxMensuels
+  };
+}
+
+/**
+ * Années proposables : années présentes dans les données (mouvements,
+ * contrôles, BSFF, retours, inventaires) ∪ dernière écriture du journal ∪
+ * année courante, triées décroissantes. Reprend getAnneesDisponibles du
+ * DemoStore (2026 remplacé par l'année courante : monde local non figé).
+ */
+function anneesDisponibles() {
+  const annees = new Set([new Date().getFullYear()]);
+  const ajouterAnneeDe = (iso) => {
+    const annee = Number(String(iso || '').slice(0, 4));
+    if (Number.isInteger(annee) && annee > 2000) annees.add(annee);
+  };
+  for (const r of db.all('SELECT date_mouvement AS d FROM mouvements')) {
+    ajouterAnneeDe(r.d);
+  }
+  for (const r of db.all('SELECT date_controle AS d FROM controles')) {
+    ajouterAnneeDe(r.d);
+  }
+  for (const r of db.all('SELECT date_remise AS d FROM bsff')) {
+    ajouterAnneeDe(r.d);
+  }
+  for (const r of db.all('SELECT date_retour AS d FROM retours_fournisseur')) {
+    ajouterAnneeDe(r.d);
+  }
+  for (const r of db.all('SELECT DISTINCT annee FROM inventaires')) {
+    if (Number.isInteger(r.annee)) annees.add(r.annee);
+  }
+  const derniere = db.get(
+    'SELECT date_heure AS d FROM journal_audit ORDER BY id DESC LIMIT 1');
+  if (derniere) ajouterAnneeDe(derniere.d);
+  return [...annees].sort((a, b) => b - a);
+}
+
+/** Bilan annuel calculé depuis les mouvements figés + le parc courant. */
+function calculerBilan(annee) {
+  const fluides = indexFluides();
+  const prefixe = `${annee}-`;
+  const mouvements = db.all('SELECT * FROM mouvements')
+    .map((ligne) => reconstituerMouvement(ligne));
+  const mouvementsAnnee = mouvements.filter((mv) =>
+    (mv.date || '').startsWith(prefixe) &&
+    (mv.statut === 'VALIDE' || mv.statut === 'ANNULE') &&
+    Number.isFinite(mv.quantiteKg));
+
+  const parFluide = new Map();
+  const ligneVide = () => ({ chargeKg: 0, recupereKg: 0, enParcKg: 0 });
+  for (const mv of mouvementsAnnee) {
+    if (!parFluide.has(mv.fluide)) parFluide.set(mv.fluide, ligneVide());
+    const ligne = parFluide.get(mv.fluide);
+    if (mv.quantiteKg >= 0) ligne.chargeKg += mv.quantiteKg;
+    else ligne.recupereKg += Math.abs(mv.quantiteKg);
+  }
+
+  for (const m of machinesEnParc()) {
+    if (!parFluide.has(m.fluide)) parFluide.set(m.fluide, ligneVide());
+    parFluide.get(m.fluide).enParcKg += m.chargeActuelleKg;
+  }
+
+  const lignes = [...parFluide.entries()]
+    .map(([fluide, cumuls]) => {
+      const ref = fluides.get(fluide);
+      const gwpAr4 = ref?.gwpAr4 ?? 0;
+      return {
+        fluide,
+        famille: ref?.famille ?? '—',
+        gwpAr4,
+        chargeKg: cumuls.chargeKg,
+        recupereKg: cumuls.recupereKg,
+        enParcKg: cumuls.enParcKg,
+        teqCo2: teqCO2(cumuls.enParcKg, gwpAr4)
+      };
+    })
+    .sort((a, b) => b.enParcKg - a.enParcKg);
+
+  return {
+    annee,
+    totalChargeKg: lignes.reduce((s, l) => s + l.chargeKg, 0),
+    totalRecupereKg: lignes.reduce((s, l) => s + l.recupereKg, 0),
+    lignes
+  };
+}
+
+/**
+ * 4 vérifs bloquantes avant le mode OFFICIEL : capacité non expirée, ≥ 1
+ * balance conforme, ≥ 1 détecteur conforme, aucun écart de balance non
+ * justifié. Reprend peutPasserEnOfficiel du DemoStore (motifs mot pour mot).
+ */
+function calculerPeutPasserEnOfficiel() {
+  const motifs = [];
+  const jour = aujourdHui();
+  const etab = HANDLERS.getEtablissement();
+
+  if (!etab.numAttestationCapacite) {
+    motifs.push('Aucune attestation de capacité renseignée pour ' +
+      'l’établissement.');
+  } else if (etab.dateEcheanceCapacite &&
+             etab.dateEcheanceCapacite < jour) {
+    motifs.push('Attestation de capacité expirée depuis le ' +
+      `${fmtDate(etab.dateEcheanceCapacite)}.`);
+  }
+
+  const outillage = db.all('SELECT * FROM outillage')
+    .map((ligne) => mapping.versFront('outillage', ligne));
+  const statuts = outillage.map((o) => ({
+    typeOutil: o.typeOutil,
+    statut: calculerStatutOutil(o, jour)
+  }));
+  if (!statuts.some((o) => o.typeOutil === 'BALANCE' &&
+                           o.statut === 'CONFORME')) {
+    motifs.push('Aucune balance conforme (vérification à jour requise).');
+  }
+  if (!statuts.some((o) => o.typeOutil === 'DETECTEUR' &&
+                           o.statut === 'CONFORME')) {
+    motifs.push('Aucun détecteur de fuite conforme (étalonnage à jour ' +
+      'requis).');
+  }
+
+  for (const ecart of ecartsNonJustifies()) {
+    motifs.push(`Écart de balance matière non justifié : ${ecart.fluide} ` +
+      `(${ecart.annee}, ${fmtKgSigne(ecart.ecartKg)}).`);
+  }
+
+  return { ok: motifs.length === 0, motifs };
 }
 
 // ------------------------------------------------------------
