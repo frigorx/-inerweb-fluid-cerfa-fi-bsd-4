@@ -133,7 +133,7 @@ export function genId(prefixe) {
  * de VALIDE à ANNULE sans que sa signature ne soit invalidée
  * (ses données métier restent intactes).
  */
-const CHAMPS_HASH_MOUVEMENT = [
+export const CHAMPS_HASH_MOUVEMENT = [
   'id', 'numero', 'date', 'mode', 'type',
   'machineId', 'fluide', 'quantiteKg',
   'peseeAvantKg', 'peseeApresKg',
