@@ -89,7 +89,8 @@ export const DEMO = {
       numSerie: 'BZ-77120',
       fluide: 'R-404A',
       chargeNominaleKg: 4.50,
-      chargeActuelleKg: 4.20,
+      // Charge inférieure à la nominale (fluide perdu) : marge pour appoint
+      chargeActuelleKg: 3.80,
       clientId: 'cli-lycee',
       localisation: 'Atelier froid — poste 1',
       siteLabel: 'Lycée J. Raynaud — Atelier',
@@ -108,7 +109,8 @@ export const DEMO = {
       numSerie: 'CG-45012',
       fluide: 'R-134a',
       chargeNominaleKg: 1.80,
-      chargeActuelleKg: 1.80,
+      // Charge inférieure à la nominale (fluide perdu) : marge pour appoint
+      chargeActuelleKg: 1.50,
       clientId: 'cli-lycee',
       localisation: 'Atelier froid — poste 2',
       siteLabel: 'Lycée J. Raynaud — Atelier',
@@ -127,7 +129,8 @@ export const DEMO = {
       numSerie: 'DA3-88210',
       fluide: 'R-32',
       chargeNominaleKg: 2.40,
-      chargeActuelleKg: 2.40,
+      // Charge inférieure à la nominale (fluide perdu) : marge pour appoint
+      chargeActuelleKg: 1.80,
       clientId: 'cli-lycee',
       localisation: 'Plateforme extérieure',
       siteLabel: 'Lycée J. Raynaud — Atelier',
@@ -146,7 +149,8 @@ export const DEMO = {
       numSerie: 'MA-91733',
       fluide: 'R-32',
       chargeNominaleKg: 0.90,
-      chargeActuelleKg: 0.90,
+      // Charge inférieure à la nominale (fluide perdu) : marge pour appoint
+      chargeActuelleKg: 0.70,
       clientId: 'cli-lycee',
       localisation: 'Salle B12',
       siteLabel: 'Lycée J. Raynaud — Atelier',
@@ -186,7 +190,8 @@ export const DEMO = {
       numSerie: 'RM-55019',
       fluide: 'R-410A',
       chargeNominaleKg: 3.80,
-      chargeActuelleKg: 3.60,
+      // Charge inférieure à la nominale (fluide perdu) : marge pour appoint
+      chargeActuelleKg: 3.00,
       clientId: 'cli-lycee',
       localisation: 'Bureaux administration',
       siteLabel: 'Lycée J. Raynaud — Atelier',

@@ -5,6 +5,28 @@
 // ============================================================
 
 /**
+ * Convertit une saisie fr-FR en nombre JavaScript.
+ * Accepte un nombre (retourné tel quel) ou une chaîne : les espaces
+ * (y compris fines/insécables et séparateurs de milliers) sont retirés,
+ * la virgule décimale est remplacée par un point, puis Number() est
+ * appliqué. Number("13,9") vaut NaN en JS : ce helper évite ce piège.
+ * @param {number|string} valeur - saisie à convertir
+ * @returns {number} le nombre, ou NaN si la saisie est invalide
+ */
+export function nombreFr(valeur) {
+  if (typeof valeur === 'number') return valeur;
+  if (typeof valeur !== 'string') return NaN;
+  const nettoyee = valeur
+    .trim()
+    // tous les espaces : \s couvre en JS les fines (U+202F) et
+    // insécables (U+00A0), séparateurs de milliers en fr-FR
+    .replace(/[\s   ]/g, '')
+    .replace(',', '.');
+  if (nettoyee === '') return NaN;
+  return Number(nettoyee);
+}
+
+/**
  * Formate un nombre en fr-FR avec un nombre fixe de décimales.
  * @param {number} n - valeur numérique
  * @param {number} [dec=2] - nombre de décimales

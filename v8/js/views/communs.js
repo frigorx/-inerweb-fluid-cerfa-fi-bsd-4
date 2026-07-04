@@ -309,7 +309,13 @@ export function piegerFocus(conteneur) {
  * Focus : piégé dans la modale (Tab/Shift+Tab bouclent), posé sur le
  * premier champ/bouton à l'ouverture, restitué à l'ouvreur à la fermeture.
  * @param {{ titre: string, contenuHtml?: string, actionsHtml?: string }} options
- * @returns {{ fermer: () => void }}
+ * @returns {{ fermer: () => void, racine: HTMLElement }} racine = l'élément
+ *   .modale CRÉÉ par cet appel. Les appelants doivent cibler leurs champs
+ *   via cette racine, JAMAIS via document.querySelector('.modale') : quand
+ *   deux modales s'empilent (ex. création de bouteille par-dessus le
+ *   wizard, qui est lui-même une .modale), le sélecteur global attrape la
+ *   mauvaise boîte et le câblage plante (bouton « submit » natif →
+ *   rechargement de page — bug réel constaté le 04/07/2026).
  */
 export function modale({ titre, contenuHtml = '', actionsHtml = '' }) {
   const zone = document.getElementById('zone-modales') || document.body;
@@ -355,5 +361,5 @@ export function modale({ titre, contenuHtml = '', actionsHtml = '' }) {
   zone.appendChild(fond);
   requestAnimationFrame(function () { fond.classList.add('visible'); });
 
-  return { fermer };
+  return { fermer, racine: boiteDialogue };
 }

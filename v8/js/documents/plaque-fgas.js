@@ -374,7 +374,7 @@ export async function ouvrirPlaque(ctx, machineId) {
 
   assurerStylePlaque();
 
-  const { fermer } = modale({
+  const { fermer, racine } = modale({
     titre: 'Plaque F-Gas — ' + machine.designation,
     contenuHtml: '<div class="plaque-apercu">'
       + gabaritEtiquette(machine, fluide, frequence, etablissement)
@@ -384,9 +384,6 @@ export async function ouvrirPlaque(ctx, machineId) {
       + '<button type="button" id="plaque-imprimer" class="btn btn-marine no-print">'
       + ICONES.imprimer + '<span>Imprimer</span></button>'
   });
-
-  const racine = document.querySelector('.modale-fond:last-of-type .modale')
-    || document.querySelector('.modale');
 
   racine.querySelector('#plaque-fermer').addEventListener('click', function () {
     fermer();

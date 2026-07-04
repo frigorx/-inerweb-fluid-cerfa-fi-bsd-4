@@ -8,7 +8,7 @@
 // ============================================================
 
 import { modale, toast, ICONES } from '../views/communs.js';
-import { esc, fmtNombre } from '../core/utils.js';
+import { esc, fmtNombre, nombreFr } from '../core/utils.js';
 
 // Libellés français des états de fluide (mêmes clés que bouteilles.js)
 const LIBELLES_ETAT_FLUIDE = {
@@ -61,6 +61,12 @@ function afficherBandeauErreur(racine, message) {
  * Ouvre la modale de création ou de modification d'une bouteille.
  * @param {{ store: object, naviguer: (id: string) => void }} ctx
  * @param {string|null} [bouteilleId] - id de la bouteille à éditer ; null = création
+ * @returns {Promise<string|boolean>} résolue à la fermeture :
+ *   - en CRÉATION réussie : l'identifiant (string) de la bouteille créée ;
+ *   - en MODIFICATION réussie : true ;
+ *   - sinon (annulation, fermeture sans enregistrement) : false.
+ *   Rétrocompatible : les appelants existants ignorent la valeur de retour.
+ *   Le wizard s'en sert pour présélectionner la bouteille créée.
  */
 export async function ouvrirFormBouteille(ctx, bouteilleId = null) {
   const [fluides, bouteilles] = await Promise.all([
@@ -173,16 +179,21 @@ export async function ouvrirFormBouteille(ctx, bouteilleId = null) {
     + '<button type="submit" form="form-bouteille" class="btn btn-marine">'
     + (enEdition ? 'Enregistrer' : 'Ajouter') + '</button>';
 
-  const { fermer } = modale({
+  const { fermer, racine } = modale({
     titre: enEdition ? 'Modifier la bouteille ' + (bouteille.code || '') : 'Ajouter une bouteille',
     contenuHtml: contenuHtml,
     actionsHtml: actionsHtml
   });
 
-  const racine = document.querySelector('.modale');
-  const formulaire = document.getElementById('form-bouteille');
+  const formulaire = racine.querySelector('#form-bouteille');
 
   racine.querySelector('[data-role="annuler"]').addEventListener('click', fermer);
+
+  // Création réussie → id (string) ; modification réussie → true ;
+  // sinon (annulation, fermeture) → false. Permet au wizard de
+  // présélectionner la bouteille créée à la volée.
+  let idBouteilleCreee = null;
+  let enregistree = false;
 
   formulaire.addEventListener('submit', async function (evenement) {
     evenement.preventDefault();
@@ -193,9 +204,11 @@ export async function ouvrirFormBouteille(ctx, bouteilleId = null) {
     const type = donnees.get('type');
     const fluide = donnees.get('fluide');
     const etatFluide = donnees.get('etatFluide');
-    const tareKg = Number(donnees.get('tareKg'));
-    const masseNetteKg = Number(donnees.get('masseNetteKg'));
-    const contenanceMaxKg = Number(donnees.get('contenanceMaxKg'));
+    // nombreFr : accepte la virgule décimale fr-FR (« 4,20 »), sinon
+    // Number('4,20') vaudrait NaN → refus silencieux à la saisie.
+    const tareKg = nombreFr(donnees.get('tareKg'));
+    const masseNetteKg = nombreFr(donnees.get('masseNetteKg'));
+    const contenanceMaxKg = nombreFr(donnees.get('contenanceMaxKg'));
     const proprietaire = String(donnees.get('proprietaire') || '').trim();
     const lot = String(donnees.get('lot') || '').trim();
     const dateEntree = String(donnees.get('dateEntree') || '').trim();
@@ -242,9 +255,12 @@ export async function ouvrirFormBouteille(ctx, bouteilleId = null) {
 
       if (enEdition) {
         await ctx.store.updateBouteille(bouteilleId, chargeUtile);
+        enregistree = true;
         toast('Bouteille modifiée.', 'succes');
       } else {
-        await ctx.store.createBouteille(chargeUtile);
+        const creee = await ctx.store.createBouteille(chargeUtile);
+        idBouteilleCreee = creee && creee.id ? creee.id : null;
+        enregistree = true;
         toast('Bouteille ajoutée.', 'succes');
       }
       fermer();
@@ -252,6 +268,19 @@ export async function ouvrirFormBouteille(ctx, bouteilleId = null) {
     } catch (erreur) {
       afficherBandeauErreur(racine, erreur.message || 'Une erreur est survenue.');
     }
+  });
+
+  // Résolution à la fermeture (annuler, croix, fond, Échap, ou
+  // enregistrement) : le fond vit dans #zone-modales, d'où subtree.
+  return new Promise(function (resoudre) {
+    const fondModale = racine.closest('.modale-fond');
+    const observateur = new MutationObserver(function () {
+      if (!document.body.contains(fondModale)) {
+        observateur.disconnect();
+        resoudre(idBouteilleCreee || enregistree);
+      }
+    });
+    observateur.observe(document.body, { childList: true, subtree: true });
   });
 }
 
@@ -301,20 +330,20 @@ export async function ouvrirPesee(ctx, bouteilleId) {
   const actionsHtml = '<button type="button" class="btn btn-secondaire" data-role="annuler">Annuler</button>'
     + '<button type="submit" form="form-pesee" class="btn btn-marine">Enregistrer la pesée</button>';
 
-  const { fermer } = modale({
+  const { fermer, racine } = modale({
     titre: 'Peser la bouteille',
     contenuHtml: contenuHtml,
     actionsHtml: actionsHtml
   });
 
-  const racine = document.querySelector('.modale');
-  const formulaire = document.getElementById('form-pesee');
-  const champBrute = document.getElementById('pz-brute');
-  const apercu = document.getElementById('pz-apercu');
+  const formulaire = racine.querySelector('#form-pesee');
+  const champBrute = racine.querySelector('#pz-brute');
+  const apercu = racine.querySelector('#pz-apercu');
 
   // Aperçu en direct de la masse nette pendant la saisie
   champBrute.addEventListener('input', function () {
-    const brute = Number(champBrute.value);
+    // nombreFr : « 13,0 » (virgule décimale) accepté comme « 13.0 »
+    const brute = nombreFr(champBrute.value);
     const nette = Number.isFinite(brute) ? brute - bouteille.tareKg : NaN;
     apercu.innerHTML = 'Masse nette : <strong class="mono">'
       + esc(Number.isFinite(nette) ? fmtNombre(nette, 1) : '—') + ' kg</strong>';
@@ -326,7 +355,7 @@ export async function ouvrirPesee(ctx, bouteilleId) {
     evenement.preventDefault();
     afficherBandeauErreur(racine, '');
 
-    const brute = Number(champBrute.value);
+    const brute = nombreFr(champBrute.value);
     if (!Number.isFinite(brute) || brute < 0) {
       afficherBandeauErreur(racine, 'La masse brute doit être un nombre positif ou nul.');
       return;

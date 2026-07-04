@@ -231,16 +231,13 @@ export async function ouvrirFormOutil(ctx, outilId = null) {
   const valeursInitiales = outilExistant || {};
 
   return new Promise(function (resoudre) {
-    const { fermer } = modale({
+    const { fermer, racine } = modale({
       titre: enModification ? 'Modifier l’outil' : 'Ajouter un outil',
       contenuHtml: gabaritFormulaire(valeursInitiales),
       actionsHtml:
         '<button type="button" id="of-annuler" class="btn btn-secondaire">Annuler</button>'
         + '<button type="button" id="of-enregistrer" class="btn btn-primaire">Enregistrer</button>'
     });
-
-    const racine = document.querySelector('.modale-fond:last-of-type .modale')
-      || document.querySelector('.modale');
     const bandeauErreur = racine.querySelector('#bandeau-erreur-outil');
     const selectType = racine.querySelector('#of-type');
 

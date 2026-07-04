@@ -178,7 +178,7 @@ export async function ouvrirFormControle(ctx, machineId = null) {
     actionsHtml
   });
 
-  const racine = document.getElementById('zone-modales') || document.body;
+  const racine = instance.racine; // la boîte créée par CET appel (jamais un sélecteur global)
   const form = racine.querySelector('#form-nouveau-controle');
   const zoneErreur = racine.querySelector('#zone-erreur-controle');
   const zoneAvertissementDetecteur = racine.querySelector('#zone-avertissement-detecteur');

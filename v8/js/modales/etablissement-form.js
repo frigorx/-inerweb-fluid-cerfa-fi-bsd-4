@@ -234,16 +234,13 @@ export async function ouvrirFormEtablissement(ctx) {
   ]);
 
   return new Promise(function (resoudre) {
-    const { fermer } = modale({
+    const { fermer, racine } = modale({
       titre: 'Modifier le dossier opérateur',
       contenuHtml: gabaritFormulaire(etablissement),
       actionsHtml:
         '<button type="button" id="ef-annuler" class="btn btn-secondaire">Annuler</button>'
         + '<button type="button" id="ef-enregistrer" class="btn btn-primaire">Enregistrer</button>'
     });
-
-    const racine = document.querySelector('.modale-fond:last-of-type .modale')
-      || document.querySelector('.modale');
     const bandeauErreur = racine.querySelector('#bandeau-erreur-etab');
 
     // Zone pièces jointes (attestation de capacité de l'établissement)

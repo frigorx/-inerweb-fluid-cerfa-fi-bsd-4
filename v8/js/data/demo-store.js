@@ -10,7 +10,7 @@
 // ============================================================
 
 import { DEMO } from './demo-donnees.js';
-import { teqCO2, fmtDate, fmtKgSigne, genId, hasherEcriture }
+import { teqCO2, fmtDate, fmtNombre, fmtKgSigne, genId, hasherEcriture }
   from '../core/utils.js';
 // IM-1 : fréquence réglementaire des contrôles d'étanchéité —
 // logique UNIQUE partagée avec le cadre 7 du CERFA (aucun doublon).
@@ -661,8 +661,11 @@ export function creerDemoStore() {
     const nouvelleNette = arrondir(bouteille.masseNetteKg + quantite);
     if (nouvelleNette > bouteille.contenanceMaxKg) {
       throw new Error(
-        `Débordement : la bouteille ${bouteille.code} dépasserait sa ` +
-        `contenance (${bouteille.contenanceMaxKg} kg).`);
+        `Débordement : la bouteille ${bouteille.code} contient déjà ` +
+        `${fmtNombre(bouteille.masseNetteKg, 2)} kg ; y ajouter ` +
+        `${fmtNombre(quantite, 2)} kg donnerait ` +
+        `${fmtNombre(nouvelleNette, 2)} kg, au-delà de sa contenance de ` +
+        `${fmtNombre(bouteille.contenanceMaxKg, 2)} kg.`);
     }
     bouteille.masseNetteKg = nouvelleNette;
     bouteille.masseBruteKg = arrondir(bouteille.tareKg + nouvelleNette);
@@ -674,7 +677,8 @@ export function creerDemoStore() {
     if (nouvelleNette < 0) {
       throw new Error(
         `Stock insuffisant : la bouteille ${bouteille.code} ne contient ` +
-        `que ${bouteille.masseNetteKg} kg.`);
+        `que ${fmtNombre(bouteille.masseNetteKg, 2)} kg, or vous prélevez ` +
+        `${fmtNombre(quantite, 2)} kg.`);
     }
     bouteille.masseNetteKg = nouvelleNette;
     bouteille.masseBruteKg = arrondir(bouteille.tareKg + nouvelleNette);
@@ -683,10 +687,15 @@ export function creerDemoStore() {
 
   function chargerMachine(machine, quantite) {
     const nouvelleCharge = arrondir(machine.chargeActuelleKg + quantite);
-    if (nouvelleCharge > arrondir(machine.chargeNominaleKg * 1.05)) {
+    const plafond = arrondir(machine.chargeNominaleKg * 1.05);
+    if (nouvelleCharge > plafond) {
       throw new Error(
-        `Surcharge : la machine ${machine.code} dépasserait sa charge ` +
-        `nominale de ${machine.chargeNominaleKg} kg (tolérance 5 %).`);
+        `Surcharge : la machine ${machine.code} contient déjà ` +
+        `${fmtNombre(machine.chargeActuelleKg, 2)} kg ; ajouter ` +
+        `${fmtNombre(quantite, 2)} kg donnerait ` +
+        `${fmtNombre(nouvelleCharge, 2)} kg, au-delà de la limite de ` +
+        `${fmtNombre(plafond, 2)} kg (charge nominale ` +
+        `${fmtNombre(machine.chargeNominaleKg, 2)} kg + 5 % de tolérance).`);
     }
     machine.chargeActuelleKg = nouvelleCharge;
   }
@@ -793,8 +802,12 @@ export function creerDemoStore() {
       if (arrondir(destination.masseNetteKg + quantite) >
           destination.contenanceMaxKg) {
         throw new Error(
-          `Débordement : la bouteille ${destination.code} dépasserait sa ` +
-          `contenance (${destination.contenanceMaxKg} kg).`);
+          `Débordement : la bouteille ${destination.code} contient déjà ` +
+          `${fmtNombre(destination.masseNetteKg, 2)} kg ; y ajouter ` +
+          `${fmtNombre(quantite, 2)} kg donnerait ` +
+          `${fmtNombre(arrondir(destination.masseNetteKg + quantite), 2)} kg, ` +
+          `au-delà de sa contenance de ` +
+          `${fmtNombre(destination.contenanceMaxKg, 2)} kg.`);
       }
       viderMachine(machine, quantite);
       verserDansBouteille(destination, quantite);
@@ -825,8 +838,12 @@ export function creerDemoStore() {
       if (arrondir(destination.masseNetteKg + quantite) >
           destination.contenanceMaxKg) {
         throw new Error(
-          `Débordement : la bouteille ${destination.code} dépasserait sa ` +
-          `contenance (${destination.contenanceMaxKg} kg).`);
+          `Débordement : la bouteille ${destination.code} contient déjà ` +
+          `${fmtNombre(destination.masseNetteKg, 2)} kg ; y ajouter ` +
+          `${fmtNombre(quantite, 2)} kg donnerait ` +
+          `${fmtNombre(arrondir(destination.masseNetteKg + quantite), 2)} kg, ` +
+          `au-delà de sa contenance de ` +
+          `${fmtNombre(destination.contenanceMaxKg, 2)} kg.`);
       }
       retirerDeBouteille(source, quantite);
       verserDansBouteille(destination, quantite);

@@ -67,16 +67,13 @@ export async function ouvrirFormAudit(ctx) {
     + '</form>';
 
   return new Promise(function (resoudre) {
-    const { fermer } = modale({
+    const { fermer, racine } = modale({
       titre: 'Enregistrer un audit',
       contenuHtml: contenuHtml,
       actionsHtml:
         '<button type="button" id="af-annuler" class="btn btn-secondaire">Annuler</button>'
         + '<button type="button" id="af-enregistrer" class="btn btn-primaire">Enregistrer</button>'
     });
-
-    const racine = document.querySelector('.modale-fond:last-of-type .modale')
-      || document.querySelector('.modale');
     const bandeauErreur = racine.querySelector('#bandeau-erreur-audit');
     let fermeeParEnregistrement = false;
 
@@ -171,16 +168,13 @@ export async function ouvrirFormNonConformite(ctx) {
     + '</form>';
 
   return new Promise(function (resoudre) {
-    const { fermer } = modale({
+    const { fermer, racine } = modale({
       titre: 'Nouvelle non-conformité',
       contenuHtml: contenuHtml,
       actionsHtml:
         '<button type="button" id="ncf-annuler" class="btn btn-secondaire">Annuler</button>'
         + '<button type="button" id="ncf-enregistrer" class="btn btn-primaire">Enregistrer</button>'
     });
-
-    const racine = document.querySelector('.modale-fond:last-of-type .modale')
-      || document.querySelector('.modale');
     const bandeauErreur = racine.querySelector('#bandeau-erreur-nc');
     let fermeeParEnregistrement = false;
 
@@ -246,16 +240,13 @@ export async function ouvrirFormSolderNonConformite(ctx, nonConformiteId) {
     + '</form>';
 
   return new Promise(function (resoudre) {
-    const { fermer } = modale({
+    const { fermer, racine } = modale({
       titre: 'Solder la non-conformité',
       contenuHtml: contenuHtml,
       actionsHtml:
         '<button type="button" id="sc-annuler" class="btn btn-secondaire">Annuler</button>'
         + '<button type="button" id="sc-confirmer" class="btn btn-primaire">Solder</button>'
     });
-
-    const racine = document.querySelector('.modale-fond:last-of-type .modale')
-      || document.querySelector('.modale');
     const bandeauErreur = racine.querySelector('#bandeau-erreur-solder');
     let fermeeParEnregistrement = false;
 

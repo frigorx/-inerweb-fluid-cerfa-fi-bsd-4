@@ -66,7 +66,7 @@ let stats = await store.getStats();
 verifier('IM-4 : machine ARRETEE exclue du compteur « en service » (5/6)',
   stats.nbMachines === 5, `nbMachines = ${stats.nbMachines}`);
 verifier('IM-4 : le fluide de la machine à l’arrêt reste compté au parc',
-  stats.chargeParcKg >= 15.95 && stats.chargeParcKg <= 16.05,
+  stats.chargeParcKg >= 13.80 && stats.chargeParcKg <= 13.90,
   `chargeParcKg = ${stats.chargeParcKg}`);
 
 await verifierRejet('IM-4 : arrêt refusé sur machine déjà à l’arrêt',
@@ -149,7 +149,7 @@ await verifierRejet(
   store.validerMouvement(deborde.id, 'per-fh'), 'Débordement');
 verifier('IM-6 : le rejet ne laisse AUCUNE mutation partielle (M1 intact)',
   PROCHE((await store.getMachines()).find((m) => m.id === 'M1')
-    .chargeActuelleKg, 4.2));
+    .chargeActuelleKg, 3.8));
 
 // Source dont le fluide est en attente d'analyse
 await store.deciderFluideRecupere('B3', 'A_ANALYSER', 'Frédéric Henninot');

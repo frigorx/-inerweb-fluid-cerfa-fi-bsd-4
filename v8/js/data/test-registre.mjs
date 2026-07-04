@@ -153,8 +153,8 @@ machines = await store.getMachines();
 bouteilles = await store.getBouteilles();
 const m1 = machines.find((m) => m.id === 'M1');
 const b3 = bouteilles.find((b) => b.id === 'B3');
-verifier('effets exacts : M1 4,20 → 3,70 kg, B3 3,60 → 4,10 kg',
-  PROCHE(m1.chargeActuelleKg, 3.7) && PROCHE(b3.masseNetteKg, 4.1),
+verifier('effets exacts : M1 3,80 → 3,30 kg, B3 3,60 → 4,10 kg',
+  PROCHE(m1.chargeActuelleKg, 3.3) && PROCHE(b3.masseNetteKg, 4.1),
   `M1 = ${m1.chargeActuelleKg}, B3 = ${b3.masseNetteKg}`);
 
 // --- Rejets métier -------------------------------------------

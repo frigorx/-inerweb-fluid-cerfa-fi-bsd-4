@@ -323,7 +323,7 @@ export async function ouvrirFormPersonne(ctx, personneId = null) {
   const utilisateur = await ctx.store.getUtilisateurCourant();
 
   return new Promise(function (resoudre) {
-    const { fermer } = modale({
+    const { fermer, racine } = modale({
       titre: enModification ? 'Modifier la personne' : 'Ajouter une personne',
       contenuHtml: gabaritFormulaire(valeursInitiales, enModification),
       actionsHtml:
@@ -333,9 +333,6 @@ export async function ouvrirFormPersonne(ctx, personneId = null) {
         + '<button type="button" id="pf-annuler" class="btn btn-secondaire">Annuler</button>'
         + '<button type="button" id="pf-enregistrer" class="btn btn-primaire">Enregistrer</button>'
     });
-
-    const racine = document.querySelector('.modale-fond:last-of-type .modale')
-      || document.querySelector('.modale');
     const bandeauErreur = racine.querySelector('#bandeau-erreur-personne');
     const selectTypePersonne = racine.querySelector('#pf-type-personne');
     const bandeauEleve = racine.querySelector('#pf-bandeau-eleve');

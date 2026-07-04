@@ -23,14 +23,16 @@ const store = await creerStore();
 
 // --- Statistiques -------------------------------------------
 const stats = await store.getStats();
-verifier('chargeParcKg proche de 15,95–16,05',
-  stats.chargeParcKg >= 15.95 && stats.chargeParcKg <= 16.05,
+// Charges de démo ramenées sous la nominale (marge pour appoint) :
+// M1 3,80 + M2 1,50 + M3 1,80 + M4 0,70 + M5 3,05 + M6 3,00 = 13,85 kg
+verifier('chargeParcKg proche de 13,80–13,90',
+  stats.chargeParcKg >= 13.80 && stats.chargeParcKg <= 13.90,
   `valeur = ${stats.chargeParcKg}`);
 verifier('stockBouteillesKg === 31',
   Math.abs(stats.stockBouteillesKg - 31) < 1e-9,
   `valeur = ${stats.stockBouteillesKg}`);
-verifier('teqCo2Parc entre 29 et 29,5',
-  stats.teqCo2Parc >= 29 && stats.teqCo2Parc <= 29.5,
+verifier('teqCo2Parc entre 25,4 et 25,5',
+  stats.teqCo2Parc >= 25.4 && stats.teqCo2Parc <= 25.5,
   `valeur = ${stats.teqCo2Parc}`);
 verifier('nbMachines === 6', stats.nbMachines === 6);
 verifier('nbBouteilles === 5', stats.nbBouteilles === 5);

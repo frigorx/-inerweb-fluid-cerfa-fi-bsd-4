@@ -5,7 +5,7 @@
 // ============================================================
 
 import { modale, toast } from '../views/communs.js';
-import { esc } from '../core/utils.js';
+import { esc, nombreFr } from '../core/utils.js';
 
 // Types de machine proposés au choix (libellés métier, valeurs libres en base)
 const TYPES_MACHINE = [
@@ -212,7 +212,8 @@ function validerFormulaire(racine) {
   }
 
   const chargeNominaleTexte = String(donnees.get('chargeNominaleKg') || '').trim();
-  const chargeNominaleKg = Number(chargeNominaleTexte);
+  // nombreFr : accepte « 2,40 » (virgule décimale fr-FR) comme « 2.40 »
+  const chargeNominaleKg = nombreFr(chargeNominaleTexte);
   // Même règle que le store : charge nominale strictement positive
   if (!chargeNominaleTexte || !Number.isFinite(chargeNominaleKg) || chargeNominaleKg <= 0) {
     marquerErreur(racine, 'chargeNominaleKg', 'Indiquez une charge nominale en kg, strictement positive.');
@@ -220,7 +221,7 @@ function validerFormulaire(racine) {
   }
 
   const chargeActuelleTexte = String(donnees.get('chargeActuelleKg') || '').trim();
-  const chargeActuelleKg = chargeActuelleTexte === '' ? 0 : Number(chargeActuelleTexte);
+  const chargeActuelleKg = chargeActuelleTexte === '' ? 0 : nombreFr(chargeActuelleTexte);
   if (!Number.isFinite(chargeActuelleKg) || chargeActuelleKg < 0) {
     marquerErreur(racine, 'chargeActuelleKg', 'La charge actuelle doit être un nombre positif ou nul.');
     valide = false;
@@ -258,7 +259,13 @@ function validerFormulaire(racine) {
  * Ouvre la modale de création ou de modification d'une machine.
  * @param {{ store: object, naviguer: (id: string) => void }} ctx
  * @param {string|null} [machineId=null] — identifiant à modifier, ou null pour créer
- * @returns {Promise<void>} résolue à la fermeture de la modale
+ * @returns {Promise<string|boolean>} résolue à la fermeture :
+ *   - en CRÉATION réussie : l'identifiant (string) de la machine créée ;
+ *   - en MODIFICATION réussie : true ;
+ *   - sinon (annulation, fermeture sans enregistrement) : false.
+ *   Les appelants historiques testent la valeur comme un booléen
+ *   (un id de création est truthy) : le contrat reste rétrocompatible,
+ *   et le wizard récupère en plus l'id pour présélectionner la machine.
  */
 export async function ouvrirFormMachine(ctx, machineId = null) {
   const enModification = Boolean(machineId);
@@ -282,16 +289,13 @@ export async function ouvrirFormMachine(ctx, machineId = null) {
   const valeursInitiales = machineExistante || {};
 
   return new Promise(function (resoudre) {
-    const { fermer } = modale({
+    const { fermer, racine } = modale({
       titre: enModification ? 'Modifier la machine' : 'Ajouter une machine',
       contenuHtml: gabaritFormulaire(valeursInitiales, fluides, clients),
       actionsHtml:
         '<button type="button" id="mf-annuler" class="btn btn-secondaire">Annuler</button>'
         + '<button type="button" id="mf-enregistrer" class="btn btn-primaire">Enregistrer</button>'
     });
-
-    const racine = document.querySelector('.modale-fond:last-of-type .modale')
-      || document.querySelector('.modale');
     const bandeauErreur = racine.querySelector('#bandeau-erreur-machine');
 
     function masquerBandeau() {
@@ -314,6 +318,9 @@ export async function ouvrirFormMachine(ctx, machineId = null) {
     });
 
     let fermeeParEnregistrement = false;
+    // Identifiant de la machine CRÉÉE (reste null en modification / annulation) :
+    // permet au wizard de présélectionner la machine à la volée.
+    let idMachineCreee = null;
 
     racine.querySelector('#mf-annuler').addEventListener('click', function () {
       fermer();
@@ -334,10 +341,11 @@ export async function ouvrirFormMachine(ctx, machineId = null) {
           });
           toast('Machine modifiée.', 'succes');
         } else {
-          await ctx.store.createMachine({
+          const creee = await ctx.store.createMachine({
             ...valeurs,
             operateur: utilisateur.id
           });
+          idMachineCreee = creee && creee.id ? creee.id : null;
           toast('Machine ajoutée.', 'succes');
         }
         fermeeParEnregistrement = true;
@@ -355,7 +363,9 @@ export async function ouvrirFormMachine(ctx, machineId = null) {
     const observateur = new MutationObserver(function () {
       if (!document.body.contains(fondModale)) {
         observateur.disconnect();
-        resoudre(fermeeParEnregistrement);
+        // Création réussie → id (string, truthy) ; modification réussie →
+        // true ; annulation / fermeture sans enregistrement → false.
+        resoudre(idMachineCreee || fermeeParEnregistrement);
       }
     });
     observateur.observe(document.body, { childList: true, subtree: true });

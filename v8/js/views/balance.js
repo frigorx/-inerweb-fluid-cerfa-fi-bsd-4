@@ -9,7 +9,7 @@
 // ============================================================
 
 import { enteteVue, tableau, toast, modale, ICONES } from './communs.js';
-import { esc, fmtNombre } from '../core/utils.js';
+import { esc, fmtNombre, nombreFr } from '../core/utils.js';
 
 export const titre = 'Balance matière';
 
@@ -316,7 +316,8 @@ async function ouvrirModaleInventaire(ctx, balance, rafraichir) {
     // Lecture des masses pesées, une par fluide
     const saisies = [];
     for (const champ of form.querySelectorAll('input[data-fluide]')) {
-      const valeur = Number(champ.value);
+      // nombreFr : stock réel pesé saisi à la virgule fr-FR (« 13,9 »)
+      const valeur = nombreFr(champ.value);
       if (!Number.isFinite(valeur) || valeur < 0) {
         afficherErreur('Stock réel invalide pour '
           + champ.getAttribute('data-fluide') + ' (en kg, positif ou nul).');

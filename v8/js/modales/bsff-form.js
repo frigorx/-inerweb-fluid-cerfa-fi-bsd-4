@@ -7,7 +7,7 @@
 // ============================================================
 
 import { modale, toast, ICONES } from '../views/communs.js';
-import { esc, fmtNombre } from '../core/utils.js';
+import { esc, fmtNombre, nombreFr } from '../core/utils.js';
 import { zonePiecesJointes } from '../composants/pieces-jointes.js';
 
 /**
@@ -107,7 +107,7 @@ export async function ouvrirFormBsff(ctx, bouteilleId) {
     actionsHtml
   });
 
-  const racine = document.getElementById('zone-modales') || document.body;
+  const racine = instance.racine; // la boîte créée par CET appel (jamais un sélecteur global)
   const form = racine.querySelector('#form-bsff');
   const zoneErreur = racine.querySelector('#zone-erreur-bsff');
   const champMasse = racine.querySelector('#bsff-masse');
@@ -131,7 +131,8 @@ export async function ouvrirFormBsff(ctx, bouteilleId) {
    */
   const zoneReliquat = racine.querySelector('#zone-reliquat-bsff');
   function majReliquat() {
-    const masse = Number(champMasse.value);
+    // nombreFr : accepte la virgule décimale fr-FR (« 4,20 »)
+    const masse = nombreFr(champMasse.value);
     const partielle = Number.isFinite(masse) && masse > 0
       && masse < bouteille.masseNetteKg - 1e-9;
     if (!partielle) {
@@ -160,7 +161,7 @@ export async function ouvrirFormBsff(ctx, bouteilleId) {
     const numeroBsff = String(donnees.get('numeroBsff') || '').trim();
     const transporteur = String(donnees.get('transporteur') || '').trim();
     const installationDestination = String(donnees.get('installationDestination') || '').trim();
-    const masseRemiseKg = Number(donnees.get('masseRemiseKg'));
+    const masseRemiseKg = nombreFr(donnees.get('masseRemiseKg'));
     const dateRemise = String(donnees.get('dateRemise') || '').trim();
 
     if (!numeroBsff) {

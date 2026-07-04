@@ -123,16 +123,13 @@ export async function ouvrirFormClient(ctx, client = null) {
   const enEdition = Boolean(client && client.id);
 
   return new Promise(function (resoudre) {
-    const { fermer } = modale({
+    const { fermer, racine } = modale({
       titre: enEdition ? 'Modifier le détenteur' : 'Ajouter un détenteur',
       contenuHtml: gabaritFormulaire(client),
       actionsHtml:
         '<button type="button" id="cf-annuler" class="btn btn-secondaire">Annuler</button>'
         + '<button type="button" id="cf-enregistrer" class="btn btn-primaire">Enregistrer</button>'
     });
-
-    const racine = document.querySelector('.modale-fond:last-of-type .modale')
-      || document.querySelector('.modale');
     const bandeauErreur = racine.querySelector('#cf-bandeau-erreur');
 
     function masquerBandeau() {

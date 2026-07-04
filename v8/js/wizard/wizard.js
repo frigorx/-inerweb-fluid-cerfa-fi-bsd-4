@@ -8,8 +8,10 @@
 // ============================================================
 
 import { toast, chipStatut, chipType, modale, ICONES } from '../views/communs.js';
-import { esc, fmtNombre, fmtKg, fmtKgSigne, fmtDate } from '../core/utils.js';
+import { esc, fmtNombre, fmtKg, fmtKgSigne, fmtDate, nombreFr } from '../core/utils.js';
 import { creerSignature } from './signature.js';
+import { ouvrirFormMachine } from '../modales/machine-form.js';
+import { ouvrirFormBouteille } from '../modales/bouteille-form.js';
 
 /** Rôles autorisés à valider une écriture (contrat Phase B). */
 const ROLES_VALIDEURS = ['REFERENT', 'ENSEIGNANT', 'ADMIN'];
@@ -327,6 +329,24 @@ export async function ouvrirWizard(ctx, options = {}) {
   const detecteurs = outillage.filter((o) => o.typeOutil === 'DETECTEUR');
   const peutValider = ROLES_VALIDEURS.includes(utilisateur.roleApp);
 
+  /**
+   * Recharge l'instantané des machines depuis le store en le mutant
+   * EN PLACE (le tableau reste la même référence : les fonctions qui
+   * l'ont capturé continuent de lire les valeurs à jour).
+   */
+  async function rechargerMachines() {
+    const fraiches = await store.getMachines();
+    machines.length = 0;
+    machines.push(...fraiches);
+  }
+
+  /** Idem pour les bouteilles (voir rechargerMachines). */
+  async function rechargerBouteilles() {
+    const fraiches = await store.getBouteilles();
+    bouteilles.length = 0;
+    bouteilles.push(...fraiches);
+  }
+
   // ---- État du wizard ----
   const etat = {
     etape: 1,
@@ -550,8 +570,10 @@ export async function ouvrirWizard(ctx, options = {}) {
    * @returns {{ ok: boolean, quantite: number|null, erreurs: string[] }}
    */
   function verifierPesees() {
-    const avant = Number(etat.peseeAvant);
-    const apres = Number(etat.peseeApres);
+    // nombreFr : « 13,9 » (virgule décimale fr-FR) comme « 13.9 »
+    // deviennent 13.9 — Number('13,9') vaudrait NaN (blocage silencieux).
+    const avant = nombreFr(etat.peseeAvant);
+    const apres = nombreFr(etat.peseeApres);
     const saisies = etat.peseeAvant !== '' && etat.peseeApres !== ''
       && Number.isFinite(avant) && Number.isFinite(apres);
     if (!saisies) return { ok: false, quantite: null, erreurs: [] };
@@ -570,12 +592,18 @@ export async function ouvrirWizard(ctx, options = {}) {
       }
       if (machine && quantite > machine.chargeActuelleKg) {
         erreurs.push(`Incohérence : la machine ${machine.code} ne contient `
-          + `que ${fmtNombre(machine.chargeActuelleKg, 2)} kg de fluide.`);
+          + `que ${fmtNombre(machine.chargeActuelleKg, 2)} kg de fluide, `
+          + `or vous récupérez ${fmtNombre(quantite, 2)} kg.`);
       }
-      if (destination &&
-          arrondir(destination.masseNetteKg + quantite) > destination.contenanceMaxKg) {
-        erreurs.push(`Débordement : la bouteille ${destination.code} `
-          + `dépasserait sa contenance (${fmtNombre(destination.contenanceMaxKg, 2)} kg).`);
+      if (destination) {
+        const nouvelleNette = arrondir(destination.masseNetteKg + quantite);
+        if (nouvelleNette > destination.contenanceMaxKg) {
+          erreurs.push(`Débordement : la bouteille ${destination.code} `
+            + `contient déjà ${fmtNombre(destination.masseNetteKg, 2)} kg ; `
+            + `y ajouter ${fmtNombre(quantite, 2)} kg donnerait `
+            + `${fmtNombre(nouvelleNette, 2)} kg, au-delà de sa contenance `
+            + `de ${fmtNombre(destination.contenanceMaxKg, 2)} kg.`);
+        }
       }
       return { ok: erreurs.length === 0, quantite, erreurs };
     }
@@ -590,22 +618,32 @@ export async function ouvrirWizard(ctx, options = {}) {
     }
     if (source && quantite > source.masseNetteKg) {
       erreurs.push(`Stock insuffisant : la bouteille ${source.code} ne `
-        + `contient que ${fmtNombre(source.masseNetteKg, 2)} kg.`);
+        + `contient que ${fmtNombre(source.masseNetteKg, 2)} kg, or vous `
+        + `prélevez ${fmtNombre(quantite, 2)} kg.`);
     }
     if (estCharge() && machine) {
       const plafond = arrondir(machine.chargeNominaleKg * 1.05);
-      if (arrondir(machine.chargeActuelleKg + quantite) > plafond) {
-        erreurs.push(`Surcharge : la machine ${machine.code} dépasserait sa `
-          + `charge nominale de ${fmtNombre(machine.chargeNominaleKg, 2)} kg `
-          + '(tolérance 5 %).');
+      const nouvelleCharge = arrondir(machine.chargeActuelleKg + quantite);
+      if (nouvelleCharge > plafond) {
+        erreurs.push(`Surcharge : la machine ${machine.code} contient déjà `
+          + `${fmtNombre(machine.chargeActuelleKg, 2)} kg ; ajouter `
+          + `${fmtNombre(quantite, 2)} kg donnerait `
+          + `${fmtNombre(nouvelleCharge, 2)} kg, au-delà de la limite de `
+          + `${fmtNombre(plafond, 2)} kg (charge nominale `
+          + `${fmtNombre(machine.chargeNominaleKg, 2)} kg + 5 % de tolérance).`);
       }
     }
     if (estTransfert()) {
       const destination = bouteilleDst();
-      if (destination &&
-          arrondir(destination.masseNetteKg + quantite) > destination.contenanceMaxKg) {
-        erreurs.push(`Débordement : la bouteille ${destination.code} `
-          + `dépasserait sa contenance (${fmtNombre(destination.contenanceMaxKg, 2)} kg).`);
+      if (destination) {
+        const nouvelleNette = arrondir(destination.masseNetteKg + quantite);
+        if (nouvelleNette > destination.contenanceMaxKg) {
+          erreurs.push(`Débordement : la bouteille ${destination.code} `
+            + `contient déjà ${fmtNombre(destination.masseNetteKg, 2)} kg ; `
+            + `y ajouter ${fmtNombre(quantite, 2)} kg donnerait `
+            + `${fmtNombre(nouvelleNette, 2)} kg, au-delà de sa contenance `
+            + `de ${fmtNombre(destination.contenanceMaxKg, 2)} kg.`);
+        }
       }
     }
     return { ok: erreurs.length === 0, quantite, erreurs };
@@ -933,6 +971,23 @@ export async function ouvrirWizard(ctx, options = {}) {
      Étape 2 — Machine (ou bouteille source pour un transfert)
      ---------------------------------------------------------- */
 
+  /**
+   * Carte « + Créer… » en tête de liste (machine ou bouteille). Réutilise
+   * la charte .carte-choix ; l'attribut porté (sans valeur) sert de cible
+   * au gestionnaire de clic.
+   * @param {string} attribut - ex. « data-nouvelle-machine »
+   * @param {string} libelle - ex. « Nouvelle machine »
+   */
+  function carteAjout(attribut, libelle) {
+    return '<button type="button" class="carte-choix carte-choix-ajout" '
+      + attribut + '>'
+      + '<span class="choix-titre">' + (ICONES.plus || '+')
+      + esc(libelle) + '</span>'
+      + '<span class="choix-detail">Créer sans quitter l’assistant, '
+      + 'puis continuer avec cet élément présélectionné.</span>'
+      + '</button>';
+  }
+
   /** Carte cliquable d'une machine. */
   function carteMachine(machine) {
     const classe = etat.machineId === machine.id ? ' selectionnee' : '';
@@ -1003,13 +1058,21 @@ export async function ouvrirWizard(ctx, options = {}) {
 
     // Charge / récupération : choisir la MACHINE
     const compatibles = machinesCompatibles();
-    if (!compatibles.length) {
-      corpsEl.innerHTML = bandeauErreur('Aucune machine compatible avec ce '
-        + 'type de mouvement dans le parc.');
-      return;
-    }
-    corpsEl.innerHTML = '<div class="wizard-grille-choix">'
+    // La carte « + Nouvelle machine » précède toujours la liste :
+    // même quand le parc est vide, on peut en créer une sans quitter.
+    const messageVide = compatibles.length ? '' : bandeauErreur(
+      estRecuperation()
+        ? 'Aucune machine contenant du fluide à récupérer dans le parc. '
+          + 'Créez-en une ci-dessous ou revenez en arrière.'
+        : 'Aucune machine dans le parc. Créez-en une ci-dessous.');
+    corpsEl.innerHTML = messageVide
+      + '<div class="wizard-grille-choix">'
+      + carteAjout('data-nouvelle-machine', 'Nouvelle machine')
       + compatibles.map(carteMachine).join('') + '</div>';
+
+    corpsEl.querySelector('[data-nouvelle-machine]')
+      .addEventListener('click', creerMachineALaVolee);
+
     corpsEl.querySelectorAll('[data-machine]').forEach(function (bouton) {
       bouton.addEventListener('click', function () {
         const nouveau = bouton.getAttribute('data-machine');
@@ -1025,6 +1088,26 @@ export async function ouvrirWizard(ctx, options = {}) {
     });
   }
 
+  /**
+   * Ouvre le formulaire de création d'une machine SANS quitter le
+   * wizard. À la création réussie : recharge l'instantané, présélectionne
+   * la machine créée puis re-rend l'étape (l'utilisateur continue).
+   */
+  async function creerMachineALaVolee() {
+    const idCree = await ouvrirFormMachine(ctx);
+    if (!idCree) return; // annulation : rien ne change
+    await rechargerMachines();
+    // Présélection : la machine créée devient le choix courant
+    if (etat.machineId !== idCree) {
+      etat.machineId = idCree;
+      etat.bouteilleSrcId = null;
+      etat.bouteilleDstId = null;
+      etat.peseeAvant = '';
+      etat.peseeApres = '';
+    }
+    rendreEtape();
+  }
+
   /* ----------------------------------------------------------
      Étape 3 — Bouteille (source, destination ou récupération)
      ---------------------------------------------------------- */
@@ -1033,28 +1116,27 @@ export async function ouvrirWizard(ctx, options = {}) {
     const compatibles = bouteillesEtape3();
     const machine = machineChoisie();
 
+    // Encart GUIDANT quand aucune bouteille n'est éligible (retour terrain :
+    // ne pas gronder, dire le besoin) : la carte « + Nouvelle bouteille »
+    // reste proposée juste en dessous — le parcours n'est jamais bloqué.
+    let messageVide = '';
     if (!compatibles.length) {
       let message;
       if (estCharge()) {
-        message = 'Aucune bouteille de ' + (machine ? machine.fluide : 'fluide')
-          + ' au fluide utilisable n’est disponible en stock : charge '
-          + 'impossible. Sont exclues les bouteilles sorties du stock '
-          + '(retournées, déchet), les fluides déclarés déchet ou à analyser '
-          + 'et les fluides récupérés sans décision « réutilisable ».';
+        message = 'Vous avez besoin d’une bouteille de '
+          + (machine ? machine.fluide : 'ce fluide')
+          + ' avec du fluide utilisable. Créez-la en un clic ci-dessous.';
       } else if (estRecuperation()) {
-        message = 'Aucune bouteille de récupération compatible '
-          + (machine ? machine.fluide : '') + ' encore en stock avec de la '
-          + 'place restante : créez-en une dans « Stock bouteilles » avant '
-          + 'de récupérer (les bouteilles retournées ou parties en BSFF '
-          + 'sont exclues).';
+        message = 'Vous avez besoin d’une bouteille de récupération '
+          + (machine ? machine.fluide : '')
+          + ' avec de la place restante. Créez-la en un clic ci-dessous.';
       } else {
         const source = bouteilleSrc();
-        message = 'Aucune bouteille de destination compatible '
-          + (source ? source.fluide : '') + ' encore en stock avec de la '
-          + 'place disponible : transfert impossible.';
+        message = 'Vous avez besoin d’une bouteille de destination '
+          + (source ? source.fluide : '')
+          + ' avec de la place disponible. Créez-la en un clic ci-dessous.';
       }
-      corpsEl.innerHTML = bandeauErreur(message);
-      return;
+      messageVide = bandeauAvertissement(message);
     }
 
     const attribut = estCharge() ? 'data-bouteille-src' : 'data-bouteille-dst';
@@ -1065,10 +1147,15 @@ export async function ouvrirWizard(ctx, options = {}) {
         : 'Choisissez la bouteille de destination (celle qui se remplit).';
 
     corpsEl.innerHTML =
-      '<p class="wizard-sens" style="margin:0 0 12px">' + esc(consigne) + '</p>'
+      messageVide
+      + '<p class="wizard-sens" style="margin:0 0 12px">' + esc(consigne) + '</p>'
       + '<div class="wizard-grille-choix">'
+      + carteAjout('data-nouvelle-bouteille', 'Nouvelle bouteille')
       + compatibles.map(function (b) { return carteBouteille(b, attribut); }).join('')
       + '</div>';
+
+    corpsEl.querySelector('[data-nouvelle-bouteille]')
+      .addEventListener('click', creerBouteilleALaVolee);
 
     corpsEl.querySelectorAll('[' + attribut + ']').forEach(function (bouton) {
       bouton.addEventListener('click', function () {
@@ -1087,6 +1174,32 @@ export async function ouvrirWizard(ctx, options = {}) {
         rendreEtape();
       });
     });
+  }
+
+  /**
+   * Ouvre le formulaire de création d'une bouteille SANS quitter le
+   * wizard. À la création réussie : recharge l'instantané et présélectionne
+   * la bouteille créée SI elle passe le filtre de compatibilité (fluide,
+   * type, place restante) de l'étape courante ; sinon la liste est
+   * simplement rafraîchie et l'utilisateur voit pourquoi elle n'apparaît pas.
+   */
+  async function creerBouteilleALaVolee() {
+    const idCree = await ouvrirFormBouteille(ctx);
+    if (!idCree) return; // annulation : rien ne change
+    await rechargerBouteilles();
+    // Le filtre de compatibilité est conservé : on ne présélectionne que
+    // si la bouteille créée est réellement éligible à l'étape courante.
+    const eligible = bouteillesEtape3().some(function (b) { return b.id === idCree; });
+    if (eligible) {
+      if (estCharge()) {
+        etat.bouteilleSrcId = idCree;
+      } else {
+        etat.bouteilleDstId = idCree;
+      }
+      etat.peseeAvant = '';
+      etat.peseeApres = '';
+    }
+    rendreEtape();
   }
 
   /* ----------------------------------------------------------
@@ -1274,8 +1387,8 @@ export async function ouvrirWizard(ctx, options = {}) {
         esc(destination.code + ' · ' + destination.fluide)));
     }
     lignes.push(ligneRecap('Pesées',
-      '<span class="cellule-mono">' + esc(fmtKg(Number(etat.peseeAvant)))
-      + ' → ' + esc(fmtKg(Number(etat.peseeApres))) + '</span>'));
+      '<span class="cellule-mono">' + esc(fmtKg(nombreFr(etat.peseeAvant)))
+      + ' → ' + esc(fmtKg(nombreFr(etat.peseeApres))) + '</span>'));
     lignes.push(ligneRecap('Quantité',
       '<span class="cellule-mono '
       + (quantiteSignee !== null && quantiteSignee < 0
@@ -1399,8 +1512,8 @@ export async function ouvrirWizard(ctx, options = {}) {
           machineId: estTransfert() ? null : etat.machineId,
           bouteilleSrcId: estRecuperation() ? null : etat.bouteilleSrcId,
           bouteilleDstId: estCharge() ? null : etat.bouteilleDstId,
-          peseeAvantKg: Number(etat.peseeAvant),
-          peseeApresKg: Number(etat.peseeApres),
+          peseeAvantKg: nombreFr(etat.peseeAvant),
+          peseeApresKg: nombreFr(etat.peseeApres),
           causeMouvement: texteCause(), // IM-14 (+ nature IM-15)
           controle: {
             statutControle: etat.statutControle,

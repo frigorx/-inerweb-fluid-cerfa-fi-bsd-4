@@ -479,7 +479,7 @@ async function ouvrirAudit5Minutes(ctx, annee) {
   assurerStyleAudit5Minutes();
   const donnees = await collecterDonneesAudit5Minutes(ctx.store, annee);
 
-  const { fermer } = modale({
+  const { fermer, racine } = modale({
     titre: 'Audit en 5 minutes — ' + annee,
     contenuHtml: gabaritAudit5Minutes(donnees),
     actionsHtml:
@@ -487,9 +487,6 @@ async function ouvrirAudit5Minutes(ctx, annee) {
       + '<button type="button" id="audit5min-imprimer" class="btn btn-marine no-print">'
       + ICONES.imprimer + '<span>Imprimer</span></button>'
   });
-
-  const racine = document.querySelector('.modale-fond:last-of-type .modale')
-    || document.querySelector('.modale');
 
   racine.querySelector('#audit5min-fermer').addEventListener('click', function () {
     fermer();

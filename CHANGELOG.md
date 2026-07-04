@@ -9,6 +9,26 @@
 - ⚠️ **Révocation à faire côté Apps Script** (les anciennes clés restent valides tant que
   `genererClesAPI()` n'a pas été exécutée puis le script redéployé) : procédure dans `SECURITE.md`.
 
+### 🛠️ Retours terrain n° 1 — pesées, virgule, création à la volée, modales empilées (04/07)
+Premiers retours d'utilisateurs réels sur la démo :
+- **« Aucune bouteille compatible » ne bloque plus et ne gronde plus** : encart ambre guidant
+  (« Vous avez besoin d'une bouteille de récupération R-134a… Créez-la en un clic ci-dessous »)
+  + la carte « + Nouvelle bouteille » reste toujours proposée.
+- **Création de machine ET de bouteille à la volée depuis l'assistant** (sans le quitter) :
+  la fiche créée est présélectionnée, on continue le mouvement directement.
+- **Bug grave corrigé — modales empilées** : les formulaires ciblaient « la première `.modale`
+  du document » ; ouverts par-dessus l'assistant (lui-même une `.modale`), leur câblage plantait
+  et le bouton Ajouter déclenchait un envoi natif → **rechargement de page, travail perdu**.
+  Le helper `modale()` retourne désormais sa propre racine, les 12 fichiers appelants normalisés.
+- **Messages de refus avec l'arithmétique** : « la machine contient déjà X kg ; ajouter Y kg
+  donnerait Z kg, au-delà de la limite L (nominale + 5 %) » — le refus de surcharge signalé par
+  Franck était mathématiquement juste mais illisible.
+- **Virgule décimale blindée** : helper `nombreFr()` (« 13,9 » = « 13.9 »), plus de NaN silencieux.
+- **Machines de démo avec marge réaliste** (elles étaient toutes à charge nominale → aucun
+  appoint démontrable) : M1 3,80/4,50 · M2 1,50/1,80 · M3 1,80/2,40 · M4 0,70/0,90 · M6 3,00/3,80.
+- Vérifié : 11 suites de tests vertes + parcours navigateur complet (impasse → création →
+  présélection → pesées 0,90 kg sans erreur) + modales contrôle/outillage/audit.
+
 ### 🛠️ Lot 2 — les 23 constats importants de l'audit corrigés (03/07)
 - **Cycle de vie complet des objets** : machines Arrêter / Remettre en service / Démanteler
   (proposition automatique quand une récupération-démantèlement vide la machine ; démantelées
