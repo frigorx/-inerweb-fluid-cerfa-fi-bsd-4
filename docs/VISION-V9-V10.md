@@ -540,6 +540,13 @@ ordre de maturité :
    faible, HP/BP incohérentes → hypothèses de panne) — prolonge la sentinelle V10 ; MÊME DOCTRINE :
    règles déterministes d'abord (seuils métier), l'IA ne calcule jamais un diagnostic seule, elle
    formule à partir des règles. « On verra plus tard mais c'est l'objectif » (Franck).
+5. **Sondes Testo Bluetooth → relevés automatiques** (Franck possède 549i pression / 115i
+   température). **Intrant REÇU le 04/07 : outil de découverte GATT** (`docs/intrants-v10/
+   testo-ble-discovery.html`, Web Bluetooth). La mesure entre seule dans la feuille de relevés —
+   fin des erreurs de recopie, chaîne complète scan QR → sonde → relevé → comparaison → Mollier.
+   Prérequis : (a) Franck relève les UUID/trames des sondes réelles avec l'outil (protocole
+   propriétaire, se découvre sur le matériel) ; (b) contexte sécurisé — Web Bluetooth exige HTTPS
+   ou localhost, la tablette du LAN devra être traitée avec la décision §16.6. Après V9.2.
 
 ---
 
