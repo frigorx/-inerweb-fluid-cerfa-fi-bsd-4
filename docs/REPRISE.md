@@ -41,10 +41,17 @@
    (64 méthodes) + `test-contrat.mjs` (183 vérifications, tourne contre n'importe quel store)
    + `server/mapping.js` (correspondance unique + **18 divergences front↔SQL consignées**,
    l'intrant des migrations E1) + `server/test-mapping.mjs` (111 vérifications).
-3. **E1 migrations `user_version`** (PROCHAINE ÉTAPE — partir des DIVERGENCES de
-   `server/mapping.js`) → E2 journal d'audit chaîné → E3 LocalStore + routes serveur
-   (contrôle de rôle CÔTÉ SERVEUR, 403) → E4 sauvegarde `VACUUM INTO` + restauration atomique
-   → E5 comptes/rôles/sessions (Franck = admin unique qui octroie, zéro inscription libre).
+3. ~~**E1 migrations `user_version`**~~ **FAIT le 04/07** : `server/schema.sql` v1 ALIGNÉ sur le
+   contrat (les 18 divergences E0 résorbées à la source — aucune base réelle n'existait) +
+   `server/migrations.js` (boucle `user_version` transactionnelle, migrations 002 sites +
+   003 codes publics QR) + `db.js` versionné avec PRAGMA coffre-fort. ⚠️ **Trou WORM découvert
+   et bouché en revue adversariale : `PRAGMA recursive_triggers = ON` obligatoire**, sans lui
+   `INSERT OR REPLACE` contourne les déclencheurs (ne JAMAIS le retirer).
+4. **E2 journal d'audit chaîné** (PROCHAINE ÉTAPE — migration 004 : `hash_precedent` + `hash`,
+   trancher l'accueil de cible/details, cf. DIVERGENCES de `mapping.js`) → E3 LocalStore +
+   routes serveur (contrôle de rôle CÔTÉ SERVEUR, 403 ; aplatissement de `mouvement.controle`)
+   → E4 sauvegarde `VACUUM INTO` + restauration atomique → E5 comptes/rôles/sessions
+   (Franck = admin unique qui octroie, zéro inscription libre).
 4. Puis V9.1 fiche machine vivante (`#/m/:code`) → QR (`code_public` opaque) → relevés élèves.
 5. Bascule v8 → racine quand Franck valide. Lot confort audit (22 🟡) au fil de l'eau.
 
@@ -87,7 +94,8 @@ cd C:\git\inerweb-fluide
 python -m http.server 8123          # puis http://localhost:8123/v8/
 node v8/js/data/test-demo-store.mjs # (et les autres test-*.mjs — tous doivent être verts)
 node v8/js/data/test-contrat.mjs    # conformité au contrat DataStore (E0) — 183 vérif.
-node server/test-mapping.mjs        # correspondance front <-> SQL (E0) — 111 vérif.
+node server/test-mapping.mjs        # correspondance front <-> SQL (E0/E1) — 140 vérif.
+node server/test-migrations.mjs     # versionnage SQLite + WORM (E1) — 45 vérif.
 ```
 
 ⚠️ `test-contrat.mjs` ÉCRIT dans le store cible : contre le futur LocalStore (E3), toujours

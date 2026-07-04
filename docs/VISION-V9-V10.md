@@ -519,6 +519,28 @@ données internes).
 **Dangereux, à border :** aucun e-mail/relance automatique non validé par un humain en mode Officiel (un
 rappel erroné à un vrai client engage la responsabilité).
 
+### 9.4 Pistes V10+ exprimées par Franck (04/07/2026) — l'outil universel
+
+Cap confirmé par Franck : transformer l'outil en **dossier vivant par machine**. Quatre pistes, par
+ordre de maturité :
+
+1. **Feuille de relevés complète, vérifiable, comparée au modèle de référence** — c'est déjà le cœur
+   de V9.2 (relevés + références + tolérances + vue prof) : rien à ajouter au plan, juste à livrer.
+2. **Assistant de mise en service** — guidage pas à pas d'une mise en service (checklist réglementaire
+   + relevés + seuils), qui produit la feuille de mise en service (SPEC §8 bis) ET le mouvement
+   MISE_EN_SERVICE. S'appuie sur l'existant : wizard + relevés + fiche machine. À placer après V9.2.
+3. **Tracé du diagramme enthalpique** depuis les relevés (T°/pressions HP-BP → cycle frigorifique
+   sur le diagramme du fluide). **Intrant REÇU le 04/07 : le traceur « FRIGOLO Mollier v3 PRO » de
+   Franck** (https://frigorx.github.io/inerweb-frigolo/outils/frigolo-mollier.html, archivé dans
+   `docs/intrants-v10/` avec sa fiche) — noyau thermodynamique complet (tables de saturation
+   6 fluides, interpolation, cycle depuis BP/HP/surchauffe/sous-refroidissement, COP), autonome,
+   zéro dépendance. Chemin tout tracé : extraire le noyau en module ES, superposer le cycle MESURÉ
+   (relevés V9.2) au cycle de référence. Pédagogiquement fort.
+4. **Module intelligent d'identification de problèmes** (surchauffe anormale, sous-refroidissement
+   faible, HP/BP incohérentes → hypothèses de panne) — prolonge la sentinelle V10 ; MÊME DOCTRINE :
+   règles déterministes d'abord (seuils métier), l'IA ne calcule jamais un diagnostic seule, elle
+   formule à partir des règles. « On verra plus tard mais c'est l'objectif » (Franck).
+
 ---
 
 ## 10. Conformité résiduelle — ce qui manque pour un usage pro opposable

@@ -1,34 +1,39 @@
 -- ============================================================================
--- inerWeb Fluide v8 — Schéma SQLite complet (Mode Local Lycée)
+-- inerWeb Fluide — Schéma SQLite v1 (Mode Local « coffre-fort », V9)
 -- ----------------------------------------------------------------------------
--- Source de vérité : docs/SPEC-V8.md (§5 modèle de données, §6 bilan matière,
--- §7 règles réglementaires). Ce schéma traduit TOUT le modèle v8 : il sert de
--- squelette aux phases B (registre) et C (conformité).
+-- Sources de vérité : le CONTRAT DataStore (v8/js/data/contrat.js — les formes
+-- front font foi) et docs/SPEC-V8.md (§5 modèle de données, §6 bilan matière,
+-- §7 règles réglementaires). Les 18 divergences front↔SQL relevées en V9-E0
+-- (server/mapping.js) sont résolues ICI, à la création — aucune base réelle
+-- n'existait avant le versionnage.
+--
+-- VERSIONNAGE (V9-E1) : ce fichier crée la BASE v1 (PRAGMA user_version = 1,
+-- posé par server/db.js après exécution). Il n'est exécuté QUE sur une base
+-- vierge ; toute évolution ultérieure passe par server/migrations.js
+-- (boucle user_version), jamais par modification de ce fichier après coup.
 --
 -- Conventions :
 --   - Identifiants texte préfixés : ETB-, PER-, OUT-, MAC-, BTL-, MVT-, CTL-,
---     BSFF-, PJ-, CLI-, INV-, UTI-, AUD-, NC- (générés par server/db.js).
---   - Dates et horodatages au format ISO 8601 (TEXT) : « 2026-07-02 » ou
---     « 2026-07-02T14:30:00 ».
+--     BSFF-, PJ-, CLI-, AUD-, NC-, UTI-, RF-, SITE- (générés par server/db.js
+--     ou par le front — le format n'est PAS contractuel, seule l'unicité l'est).
+--   - Dates métier au format « AAAA-MM-JJ » (contrat §7) ; horodatages ISO
+--     complets réservés au journal d'audit et aux pièces jointes.
 --   - Booléens : INTEGER 0/1 avec contrainte CHECK.
---   - Quantités de fluide en kilogrammes (REAL), 3 décimales recommandées.
+--   - Quantités de fluide en kilogrammes (REAL), arrondies au gramme.
 --   - `etablissement_id` partout (multi-site prêt).
 --   - Les clés étrangères sont ACTIVÉES par db.js (PRAGMA foreign_keys = ON).
---   - Idempotent : IF NOT EXISTS partout, jamais de DROP. Ce fichier est
---     exécuté à chaque ouverture de la base sans risque.
 -- ============================================================================
 
 
 -- ============================================================================
 -- RÉFÉRENTIEL DES FLUIDES FRIGORIGÈNES
 -- Base commune : code, famille, PRP (GWP AR4, valeurs de la réglementation
--- F-Gas), classe de sécurité NF EN 378 /
--- ASHRAE 34, statut réglementaire F-Gas.
+-- F-Gas), classe de sécurité NF EN 378 / ASHRAE 34, statut réglementaire.
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS fluides (
     code                 TEXT PRIMARY KEY,          -- ex. « R-32 », « R-410A »
     famille              TEXT NOT NULL,             -- HFC, HFO, HC, mélange, inorganique…
-    gwp_ar4              REAL NOT NULL,             -- PRP (potentiel de réchauffement global, rapport GIEC AR4 — valeurs F-Gas)
+    gwp_ar4              REAL NOT NULL,             -- PRP (rapport GIEC AR4 — valeurs F-Gas)
     classe_securite      TEXT NOT NULL
         CHECK (classe_securite IN ('A1','A2L','A2','A3','B1','B2L','B2','B3')),
     statut_reglementaire TEXT NOT NULL DEFAULT 'AUTORISE'
@@ -41,7 +46,6 @@ CREATE TABLE IF NOT EXISTS fluides (
 -- §5.1 — DOSSIER OPÉRATEUR / ÉTABLISSEMENT
 -- Attestation de CAPACITÉ = établissement (≠ attestation d'APTITUDE = personne).
 -- Le PDF de l'attestation est porté par la table pieces_jointes.
--- Les audits et non-conformités sont dans des tables liées (ci-dessous).
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS etablissements (
     id                        TEXT PRIMARY KEY,      -- ETB-…
@@ -51,51 +55,52 @@ CREATE TABLE IF NOT EXISTS etablissements (
     numero_attestation_capacite TEXT,                -- ⚿ n° attestation de capacité (établissement)
     organisme_certificateur   TEXT,                  -- Socotec, Bureau Veritas, SGS, Qualiclimafroid…
     date_delivrance           TEXT,                  -- ISO
-    date_echeance             TEXT,                  -- ISO — alerte automatique à l'approche
-    categories_2008           TEXT,                  -- catégories autorisées, grille 2008 (ex. « I » ; valable jusqu'au 31/12/2026)
-    categories_2025           TEXT,                  -- catégories autorisées, grille 2025 (obligatoire au 01/01/2027)
-    activites_autorisees      TEXT,                  -- mise en service, maintenance, contrôle, récupération, démantèlement (liste)
-    sites_couverts            TEXT,                  -- sites/ateliers couverts par l'attestation
+    date_echeance             TEXT,                  -- ISO — alerte automatique à l'approche (M-2)
+    categories_2008           TEXT,                  -- grille 2008 (valable jusqu'au 31/12/2026) — sort à confirmer, cf. mapping
+    categories_2025           TEXT,                  -- ⚿ catégories autorisées (contrat : categoriesAutorisees, tableau JSON)
+    activites_autorisees      TEXT,                  -- tableau JSON (mise en service, maintenance, contrôle…)
+    sites_couverts            TEXT,                  -- tableau JSON des sites/ateliers couverts
     date_dernier_audit        TEXT,                  -- ISO
     date_prochain_audit       TEXT,                  -- ISO
     date_creation             TEXT NOT NULL DEFAULT (datetime('now','localtime'))
 );
 
--- Audits de l'organisme certificateur (table liée du dossier opérateur)
+-- Audits de l'organisme certificateur (table liée du dossier opérateur).
+-- `resultat` : texte libre (contrat) — « Conforme avec 1 remarque »…
 CREATE TABLE IF NOT EXISTS audits_etablissement (
     id               TEXT PRIMARY KEY,               -- AUD-…
     etablissement_id TEXT NOT NULL REFERENCES etablissements(id),
     date_audit       TEXT NOT NULL,                  -- ISO
     organisme        TEXT,                           -- organisme ayant réalisé l'audit
     type_audit       TEXT,                           -- initial, de suivi, de renouvellement…
-    resultat         TEXT
-        CHECK (resultat IS NULL OR resultat IN ('CONFORME','CONFORME_AVEC_REMARQUES','NON_CONFORME')),
+    resultat         TEXT,                           -- texte libre (aligné contrat, E0)
     observation      TEXT
 );
 
--- Non-conformités relevées + actions correctives (table liée)
+-- Non-conformités relevées + actions correctives (table liée).
+-- Cycle contractuel : OUVERTE → SOLDEE (avec commentaire de preuve).
 CREATE TABLE IF NOT EXISTS non_conformites (
     id                  TEXT PRIMARY KEY,            -- NC-…
     etablissement_id    TEXT NOT NULL REFERENCES etablissements(id),
     audit_id            TEXT REFERENCES audits_etablissement(id),
-    date_constat        TEXT NOT NULL,               -- ISO
+    date_constat        TEXT DEFAULT (date('now','localtime')),  -- ISO
     description         TEXT NOT NULL,
     gravite             TEXT
         CHECK (gravite IS NULL OR gravite IN ('MINEURE','MAJEURE','CRITIQUE')),
     action_corrective   TEXT,                        -- action décidée
     date_echeance_action TEXT,                       -- ISO — date limite de l'action corrective
-    date_cloture        TEXT,                        -- ISO — NULL tant que la non-conformité est ouverte
+    date_cloture        TEXT,                        -- ISO — NULL tant que la NC est ouverte
+    commentaire_solde   TEXT,                        -- preuve de l'action (obligatoire au solde, contrôle applicatif)
     statut              TEXT NOT NULL DEFAULT 'OUVERTE'
-        CHECK (statut IN ('OUVERTE','EN_COURS','CLOTUREE'))
+        CHECK (statut IN ('OUVERTE','SOLDEE'))
 );
 
 
 -- ============================================================================
 -- §5.2 — REGISTRE DU PERSONNEL
--- « Personnes autorisées à intervenir dans l'application : techniciens
--- titulaires d'une attestation d'aptitude, enseignants référents, élèves en
--- mode formation. » Un élève = mode formation uniquement, jamais officiel.
--- Le scan PDF de l'attestation d'aptitude est porté par pieces_jointes.
+-- Un élève = mode formation uniquement, jamais officiel. Le personnel n'est
+-- JAMAIS supprimé (désactivation seule, la trace reste — contrat).
+-- Rôles applicatifs alignés sur le contrat et la vision §5.1.
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS personnel (
     id                          TEXT PRIMARY KEY,    -- PER-…
@@ -103,17 +108,17 @@ CREATE TABLE IF NOT EXISTS personnel (
     nom                         TEXT NOT NULL,       -- ⚿
     prenom                      TEXT NOT NULL,       -- ⚿
     type_personne               TEXT NOT NULL        -- ⚿
-        CHECK (type_personne IN ('SALARIE','ENSEIGNANT','ELEVE','SOUS_TRAITANT','INTERVENANT_EXTERIEUR')),
-    role_applicatif             TEXT NOT NULL DEFAULT 'VOIR'
-        CHECK (role_applicatif IN ('VOIR','SAISIR','VALIDER','ADMINISTRER','OFFICIEL')),
+        CHECK (type_personne IN ('SALARIE','ENSEIGNANT','ELEVE','SOUS_TRAITANT','INTERVENANT_EXT')),
+    role_applicatif             TEXT NOT NULL DEFAULT 'ELEVE'
+        CHECK (role_applicatif IN ('ADMIN','REFERENT','ENSEIGNANT','ELEVE','TECHNICIEN')),
     numero_attestation_aptitude TEXT,                -- n° attestation d'APTITUDE individuelle
     organisme_delivreur         TEXT,
     date_obtention              TEXT,                -- ISO
     date_limite_aptitude        TEXT,                -- ISO — date limite / remise à niveau (alerte)
     categorie_2008              TEXT,                -- grille 2008 (transition, cf. SPEC §7.3)
     categorie_2025              TEXT,                -- grille 2025
-    activites_autorisees        TEXT,
-    signature_chemin            TEXT,                -- chemin de l'image de signature (dossier documents/)
+    activites_autorisees        TEXT,                -- tableau JSON
+    signature_chemin            TEXT,                -- chemin de l'image de signature (documents/)
     email                       TEXT,
     actif                       INTEGER NOT NULL DEFAULT 1 CHECK (actif IN (0,1)),
     date_creation               TEXT NOT NULL DEFAULT (datetime('now','localtime'))
@@ -122,24 +127,25 @@ CREATE TABLE IF NOT EXISTS personnel (
 
 -- ============================================================================
 -- §5.3 — OUTILLAGE RÉGLEMENTAIRE
--- Remplace les « détecteurs » seuls. Le certificat d'étalonnage (PDF) est
--- porté par pieces_jointes. Blocage du mode officiel si balance ou détecteur
--- requis est expiré (règle appliquée côté serveur, SPEC §7.2).
+-- Types alignés sur le contrat (E0). Le statut est RECALCULÉ à la lecture
+-- par l'application (sauf HORS_SERVICE, permanent) — la colonne matérialise
+-- le dernier état connu.
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS outillage (
     id                  TEXT PRIMARY KEY,            -- OUT-…
     etablissement_id    TEXT NOT NULL REFERENCES etablissements(id),
-    type                TEXT NOT NULL                -- ⚿
-        CHECK (type IN ('STATION_RECUPERATION','STATION_CHARGE','BALANCE','DETECTEUR_FUITE',
-                        'POMPE_A_VIDE','MANIFOLD','THERMOMETRE_SONDE','BOUTEILLE_RECUPERATION',
-                        'FLEXIBLE_VANNES','RACCORDS_SPECIFIQUES','EPI','AUTRE')),
+    type                TEXT NOT NULL                -- ⚿ (enum du contrat)
+        CHECK (type IN ('STATION_RECUPERATION','STATION_CHARGE','BALANCE','DETECTEUR',
+                        'POMPE_A_VIDE','MANIFOLD','THERMOMETRE','BOUTEILLE_RECUP',
+                        'FLEXIBLE','EPI','AUTRE')),
     marque              TEXT,                        -- ⚿
     modele              TEXT,                        -- ⚿
     numero_serie        TEXT,                        -- ⚿
     site_atelier        TEXT,                        -- ⚿ site / atelier d'affectation
     precision_balance   TEXT,                        -- précision (balances), ex. « ± 5 g »
     sensibilite_detecteur TEXT,                      -- sensibilité (détecteurs), ex. « 5 g/an »
-    date_verification   TEXT,                        -- ISO — dernière vérification / étalonnage
+    date_etalonnage     TEXT,                        -- ISO — dernier étalonnage (distinct de la vérification, contrat)
+    date_verification   TEXT,                        -- ISO — dernière vérification
     prochaine_echeance  TEXT,                        -- ISO — prochaine vérification (alerte)
     statut              TEXT NOT NULL DEFAULT 'CONFORME'
         CHECK (statut IN ('CONFORME','A_VERIFIER','EXPIRE','HORS_SERVICE')),
@@ -150,8 +156,6 @@ CREATE TABLE IF NOT EXISTS outillage (
 
 -- ============================================================================
 -- CLIENTS / DÉTENTEURS d'équipements
--- Détenteur ou propriétaire d'une machine (client externe, ou l'établissement
--- lui-même pour le parc pédagogique).
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS clients_detenteurs (
     id               TEXT PRIMARY KEY,               -- CLI-…
@@ -168,25 +172,25 @@ CREATE TABLE IF NOT EXISTS clients_detenteurs (
 
 -- ============================================================================
 -- §5.4 — MACHINES / ÉQUIPEMENTS
--- Le PRP est porté par le référentiel fluides ; le tonnage équivalent CO₂
--- (charge × PRP / 1000) et la fréquence de contrôle en découlent.
--- La photo de la plaque signalétique est portée par pieces_jointes.
--- L'historique complet des interventions = tables mouvements et controles.
+-- Statuts alignés sur le contrat (E0) : EN_SERVICE, ARRETEE, DEMANTELEE,
+-- FUITE, CONTROLE_DU. `machine_label` des mouvements et `site_label` restent
+-- des dénormalisations assumées côté écriture (cadre 2 CERFA, historique).
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS machines (
     id                      TEXT PRIMARY KEY,        -- MAC-…
     etablissement_id        TEXT NOT NULL REFERENCES etablissements(id),
-    code_interne            TEXT,                    -- ⚿ code interne atelier
+    code_interne            TEXT,                    -- ⚿ code lisible atelier (« M7 »)
     designation             TEXT NOT NULL,           -- ⚿
     type                    TEXT,                    -- ⚿ groupe froid, PAC, chambre froide, split…
     marque                  TEXT,
     modele                  TEXT,
     numero_serie            TEXT,
     localisation            TEXT,                    -- ⚿
+    site_label              TEXT,                    -- libellé du site affiché (contrat : siteLabel)
     client_detenteur_id     TEXT REFERENCES clients_detenteurs(id),  -- détenteur / propriétaire
     fluide                  TEXT REFERENCES fluides(code),           -- ⚿
     charge_nominale_kg      REAL,                    -- ⚿
-    charge_actuelle_kg      REAL,                    -- ⚿ mise à jour par les mouvements
+    charge_actuelle_kg      REAL,                    -- ⚿ mise à jour par les mouvements validés
     date_mise_en_service    TEXT,                    -- ISO
     detection_permanente    INTEGER NOT NULL DEFAULT 0 CHECK (detection_permanente IN (0,1)),
     justification_detection TEXT,                    -- justification si la fréquence de contrôle est doublée
@@ -195,7 +199,7 @@ CREATE TABLE IF NOT EXISTS machines (
     date_prochain_controle  TEXT,                    -- ISO (alerte, blocage si dépassé — SPEC §7.2)
     plaque_fgas_generee     INTEGER NOT NULL DEFAULT 0 CHECK (plaque_fgas_generee IN (0,1)),
     statut                  TEXT NOT NULL DEFAULT 'EN_SERVICE'
-        CHECK (statut IN ('EN_SERVICE','ARRETE','DEMANTELE')),
+        CHECK (statut IN ('EN_SERVICE','ARRETEE','DEMANTELEE','FUITE','CONTROLE_DU')),
     observation             TEXT,
     date_creation           TEXT NOT NULL DEFAULT (datetime('now','localtime'))
 );
@@ -204,14 +208,15 @@ CREATE TABLE IF NOT EXISTS machines (
 -- ============================================================================
 -- §5.5 — BOUTEILLES
 -- La masse nette est une colonne CALCULÉE (masse brute − tare), jamais saisie.
--- BL/facture, bon de reprise : pieces_jointes. Lien déchets : table bsff.
+-- La décision sur fluide récupéré vit SUR la bouteille (contrat E0) ; le BSFF
+-- en garde une copie de constat. `proprietaire` : texte libre (contrat).
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS bouteilles (
     id                      TEXT PRIMARY KEY,        -- BTL-…
     etablissement_id        TEXT NOT NULL REFERENCES etablissements(id),
-    code_interne            TEXT,                    -- ⚿
-    numero_bouteille        TEXT,                    -- ⚿ n° bouteille réel (gravé / étiquette fabricant)
-    qr_interne              TEXT,                    -- contenu du QR code interne
+    code_interne            TEXT,                    -- ⚿ code lisible (« B-06 »)
+    numero_bouteille        TEXT,                    -- ⚿ n° réel gravé / étiquette fabricant (contrat : numeroReel)
+    qr_interne              TEXT,                    -- contenu du QR code interne (legacy — cf. code_public, migration 003)
     type                    TEXT NOT NULL            -- ⚿
         CHECK (type IN ('NEUVE','RECUPERATION','TRANSFERT','DECHET')),
     fluide                  TEXT REFERENCES fluides(code),  -- ⚿
@@ -221,88 +226,104 @@ CREATE TABLE IF NOT EXISTS bouteilles (
     masse_brute_kg          REAL,                    -- ⚿ masse brute actuelle (dernière pesée)
     masse_nette_kg          REAL GENERATED ALWAYS AS (masse_brute_kg - tare_kg) VIRTUAL,  -- ⚿ calculée
     contenance_max_kg       REAL,
-    proprietaire            TEXT NOT NULL DEFAULT 'ETABLISSEMENT'
-        CHECK (proprietaire IN ('FOURNISSEUR','ETABLISSEMENT','CONSIGNATION')),
+    proprietaire            TEXT,                    -- texte libre (« Climalife ») ou NULL — aligné contrat (E0)
     numero_lot              TEXT,
     date_entree_stock       TEXT,                    -- ISO
-    masse_nette_entree_kg   REAL,                    -- masse nette pesée à l'entrée en stock (sert d'« achat » au bilan matière)
+    masse_nette_entree_kg   REAL,                    -- masse nette FIGÉE à l'entrée (CR-4 — poste « achats » du bilan)
     date_derniere_pesee     TEXT,                    -- ISO
     pese_par                TEXT REFERENCES personnel(id),  -- utilisateur ayant pesé
     statut                  TEXT NOT NULL DEFAULT 'EN_STOCK'
         CHECK (statut IN ('EN_STOCK','EN_SERVICE','VIDE','A_RETOURNER','RETOURNEE','DECHET','BLOQUEE')),
+    decision_fluide         TEXT                     -- décision sur fluide récupéré (contrat, IM-7)
+        CHECK (decision_fluide IS NULL OR decision_fluide IN ('REUTILISABLE','A_ANALYSER','DECHET')),
+    decision_par            TEXT,                    -- qui a décidé (nom en toutes lettres)
+    date_decision           TEXT,                    -- ISO
     numero_bl_facture       TEXT,                    -- n° BL / facture (le document est en pièce jointe)
-    numero_bsff             TEXT,                    -- n° BSFF si la bouteille part en déchet (cf. table bsff)
+    numero_bsff             TEXT,                    -- n° BSFF si la bouteille part en déchet (contrat : numBsff)
     date_retour_fournisseur TEXT,                    -- ISO
     date_epreuve            TEXT,                    -- ISO — épreuve / réépreuve (bouteilles de récupération)
-    date_limite_garde       TEXT,                    -- ISO — limite de garde du fluide récupéré
-                                                     -- (tolérance : 1 an après la dernière intervention
-                                                     --  pour les fluides non réutilisables)
+    date_limite_garde       TEXT,                    -- ISO — limite de garde du fluide récupéré (1 an, IM-7)
     observation             TEXT,
     date_creation           TEXT NOT NULL DEFAULT (datetime('now','localtime'))
 );
 
 
 -- ============================================================================
--- §5.6 — MOUVEMENTS (registre verrouillé)
--- Types d'opération normalisés (SPEC §7.1) — table de correspondance unique
--- avec les cases du CERFA 15497 :
---   MISE_EN_SERVICE, CHARGE_APPOINT, RECUPERATION_MAINTENANCE,
---   RECUPERATION_DEMANTELEMENT, CONTROLE_PERIODIQUE, CONTROLE_NON_PERIODIQUE,
---   ASSEMBLAGE, MODIFICATION, TRANSFERT.
+-- §5.6 — MOUVEMENTS (registre verrouillé, cœur WORM)
+-- Le CONTRAT fait foi (E0) : date de JOUR (« AAAA-MM-JJ »), quantité SIGNÉE
+-- (positive = charge/transfert, négative = récupération), chaîne de hash
+-- vérifiable (hash_precedent + ordre_validation), champs du cycle de vie
+-- (date_soumission, motif_rejet, motif de contre-écriture), signature.
 -- Cycle de vie : BROUILLON → SOUMIS → VALIDE → (ANNULE par contre-écriture).
 -- ⚠ Une écriture VALIDÉE n'est JAMAIS modifiée ni effacée : toute correction
--- passe par une contre-écriture qui référence l'écriture d'origine
--- (contre_ecriture_de). Le hash d'écriture SHA-256 est chaîné au hash de
--- l'écriture validée précédente → registre inviolable (voir db.js).
+-- passe par une contre-écriture (contre_ecriture_de). Voir les déclencheurs.
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS mouvements (
     id                      TEXT PRIMARY KEY,        -- MVT-…
-    numero                  TEXT NOT NULL UNIQUE,    -- ⚿ n° unique (FI-YYYY-XXXXX officiel / FORM-YYYY-XXXXX formation)
+    numero                  TEXT NOT NULL UNIQUE,    -- ⚿ n° unique (FI-AAAA-NNNN officiel / FORM-AAAA-NNNN formation)
     etablissement_id        TEXT NOT NULL REFERENCES etablissements(id),
-    date_heure              TEXT NOT NULL,           -- ⚿ ISO date + heure
+    date_mouvement          TEXT NOT NULL,           -- ⚿ date de JOUR « AAAA-MM-JJ » (contrat §7)
     mode                    TEXT NOT NULL            -- ⚿ SPEC §7.4 : séparation stricte
         CHECK (mode IN ('FORMATION','OFFICIEL')),
     type_operation          TEXT NOT NULL            -- ⚿ type réglementaire normalisé (SPEC §7.1)
         CHECK (type_operation IN ('MISE_EN_SERVICE','CHARGE_APPOINT','RECUPERATION_MAINTENANCE',
                                   'RECUPERATION_DEMANTELEMENT','CONTROLE_PERIODIQUE',
                                   'CONTROLE_NON_PERIODIQUE','ASSEMBLAGE','MODIFICATION','TRANSFERT')),
-    cause                   TEXT,                    -- fuite, maintenance, remplacement compresseur,
-                                                     -- mise au rebut, exercice pédagogique…
-    machine_id              TEXT REFERENCES machines(id),      -- machine concernée (source)
-    machine_destination_id  TEXT REFERENCES machines(id),      -- machine destination (transfert)
+    cause                   TEXT,                    -- fuite, maintenance, remplacement compresseur… (contrat : causeMouvement)
+    machine_id              TEXT REFERENCES machines(id),      -- machine concernée
+    machine_label           TEXT,                    -- libellé machine figé à l'écriture (dénormalisation assumée, hors empreinte)
+    machine_destination_id  TEXT REFERENCES machines(id),      -- machine destination (réservé)
     bouteille_source_id     TEXT REFERENCES bouteilles(id),
     bouteille_destination_id TEXT REFERENCES bouteilles(id),
     fluide                  TEXT REFERENCES fluides(code),     -- ⚿
     pesee_avant_kg          REAL,                    -- ⚿ pesée avant intervention
     pesee_apres_kg          REAL,                    -- ⚿ pesée après intervention
-    quantite_calculee_kg    REAL,                    -- ⚿ |pesée après − pesée avant|
-    sens                    TEXT
+    quantite_calculee_kg    REAL,                    -- ⚿ quantité SIGNÉE (contrat : quantiteKg ; + charge, − récupération)
+    sens                    TEXT                     -- réservé serveur (rapports) — le signe fait foi
         CHECK (sens IS NULL OR sens IN ('ENTREE','SORTIE','INTERNE')),
-    -- Quantités séparées (toutes en kg — une seule est en général renseignée) :
-    quantite_chargee_kg                 REAL,        -- fluide chargé dans un équipement
-    quantite_recuperee_kg               REAL,        -- fluide récupéré
-    quantite_cedee_kg                   REAL,        -- fluide cédé à un tiers
-    quantite_retournee_fournisseur_kg   REAL,        -- fluide retourné au fournisseur
-    quantite_detruite_regeneree_kg      REAL,        -- fluide détruit / régénéré / recyclé
+    -- Quantités ventilées (réservées serveur / déclaration ADEME — une seule
+    -- est en général renseignée) :
+    quantite_chargee_kg                 REAL,
+    quantite_recuperee_kg               REAL,
+    quantite_cedee_kg                   REAL,
+    quantite_retournee_fournisseur_kg   REAL,
+    quantite_detruite_regeneree_kg      REAL,
     origine_fluide          TEXT
         CHECK (origine_fluide IS NULL OR origine_fluide IN ('BOUTEILLE_NEUVE','BOUTEILLE_RECUPEREE','AUTRE_EQUIPEMENT')),
     destination_fluide      TEXT
         CHECK (destination_fluide IS NULL OR destination_fluide IN ('MACHINE','BOUTEILLE_RECUP','FOURNISSEUR','DECHET')),
-    technicien_id           TEXT REFERENCES personnel(id),     -- ⚿
-    validateur_id           TEXT REFERENCES personnel(id),     -- ⚿ référent — obligatoire en lycée (contrôle applicatif)
-    cerfa_numero            TEXT,                    -- n° de la fiche d'intervention CERFA liée
+    technicien              TEXT,                    -- ⚿ nom en toutes lettres (contrat — intervenant extérieur possible)
+    technicien_id           TEXT REFERENCES personnel(id),     -- rapprochement optionnel avec le registre du personnel
+    validateur_id           TEXT REFERENCES personnel(id),     -- ⚿ rôle habilité (REFERENT/ENSEIGNANT/ADMIN — contrôle applicatif)
+    -- Contrôle d'étanchéité DÉCLARÉ dans le mouvement (contrat : objet
+    -- `controle` imbriqué, aplati ici par le LocalStore — CR-3) :
+    statut_controle_declare TEXT
+        CHECK (statut_controle_declare IS NULL OR statut_controle_declare IN ('SANS_OBJET','CONFORME','FUITE')),
+    detecteur_declare_id    TEXT REFERENCES outillage(id),
+    controle_lie_id         TEXT REFERENCES controles(id),     -- le VRAI contrôle créé à la validation (CR-3)
+    signature_data_url      TEXT,                    -- signature manuscrite (data URL canvas — hors empreinte)
+    cerfa_numero            TEXT,                    -- n° de fiche CERFA (= numero, sauf TRANSFERT : NULL — IM-12)
     bsff_id                 TEXT REFERENCES bsff(id),          -- BSFF lié le cas échéant
     observation             TEXT,
     statut                  TEXT NOT NULL DEFAULT 'BROUILLON'  -- ⚿
         CHECK (statut IN ('BROUILLON','SOUMIS','VALIDE','ANNULE')),
-    hash_ecriture           TEXT,                    -- ⚿ empreinte SHA-256 chaînée (posée à la validation)
+    date_soumission         TEXT,                    -- ISO — posée à la soumission (hors empreinte)
+    motif_rejet             TEXT,                    -- motif du dernier rejet (hors empreinte)
+    motif                   TEXT,                    -- motif de la contre-écriture (DANS l'empreinte)
+    hash_ecriture           TEXT,                    -- ⚿ empreinte SHA-256 chaînée (posée au scellement)
+    hash_precedent          TEXT,                    -- ⚿ empreinte de l'écriture scellée précédente (chaîne vérifiable)
+    ordre_validation        INTEGER,                 -- ⚿ rang de scellement (1, 2, 3…) — unique quand présent
     contre_ecriture_de      TEXT REFERENCES mouvements(id),    -- écriture d'origine si régularisation
     date_creation           TEXT NOT NULL DEFAULT (datetime('now','localtime'))
 );
 
+-- Un seul rang de scellement par écriture scellée (fourche de chaîne interdite).
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mouvements_ordre_validation
+    ON mouvements (ordre_validation) WHERE ordre_validation IS NOT NULL;
+
 -- Verrouillage du registre : une écriture VALIDÉE ne peut être ni supprimée,
--- ni modifiée (seul le passage VALIDE → ANNULE par contre-écriture est admis,
--- sans toucher au contenu ni au hash). Une écriture ANNULÉE est figée.
+-- ni modifiée. Seul le passage VALIDE → ANNULE (contre-écriture) est admis,
+-- TOUT le contenu restant strictement identique. Une écriture ANNULÉE est figée.
 CREATE TRIGGER IF NOT EXISTS mouvements_interdire_suppression
 BEFORE DELETE ON mouvements
 WHEN OLD.statut IN ('VALIDE','ANNULE')
@@ -321,20 +342,48 @@ CREATE TRIGGER IF NOT EXISTS mouvements_interdire_modification_validee
 BEFORE UPDATE ON mouvements
 WHEN OLD.statut = 'VALIDE'
  AND NOT (    NEW.statut = 'ANNULE'
-          AND NEW.hash_ecriture         IS OLD.hash_ecriture
+          AND NEW.id                    IS OLD.id
           AND NEW.numero                IS OLD.numero
-          AND NEW.date_heure            IS OLD.date_heure
+          AND NEW.etablissement_id      IS OLD.etablissement_id
+          AND NEW.date_mouvement        IS OLD.date_mouvement
           AND NEW.mode                  IS OLD.mode
           AND NEW.type_operation        IS OLD.type_operation
+          AND NEW.cause                 IS OLD.cause
+          AND NEW.machine_id            IS OLD.machine_id
+          AND NEW.machine_label         IS OLD.machine_label
+          AND NEW.machine_destination_id IS OLD.machine_destination_id
+          AND NEW.bouteille_source_id   IS OLD.bouteille_source_id
+          AND NEW.bouteille_destination_id IS OLD.bouteille_destination_id
           AND NEW.fluide                IS OLD.fluide
           AND NEW.pesee_avant_kg        IS OLD.pesee_avant_kg
           AND NEW.pesee_apres_kg        IS OLD.pesee_apres_kg
           AND NEW.quantite_calculee_kg  IS OLD.quantite_calculee_kg
+          AND NEW.sens                  IS OLD.sens
           AND NEW.quantite_chargee_kg               IS OLD.quantite_chargee_kg
           AND NEW.quantite_recuperee_kg             IS OLD.quantite_recuperee_kg
           AND NEW.quantite_cedee_kg                 IS OLD.quantite_cedee_kg
           AND NEW.quantite_retournee_fournisseur_kg IS OLD.quantite_retournee_fournisseur_kg
-          AND NEW.quantite_detruite_regeneree_kg    IS OLD.quantite_detruite_regeneree_kg)
+          AND NEW.quantite_detruite_regeneree_kg    IS OLD.quantite_detruite_regeneree_kg
+          AND NEW.origine_fluide        IS OLD.origine_fluide
+          AND NEW.destination_fluide    IS OLD.destination_fluide
+          AND NEW.technicien            IS OLD.technicien
+          AND NEW.technicien_id         IS OLD.technicien_id
+          AND NEW.validateur_id         IS OLD.validateur_id
+          AND NEW.statut_controle_declare IS OLD.statut_controle_declare
+          AND NEW.detecteur_declare_id  IS OLD.detecteur_declare_id
+          AND NEW.controle_lie_id       IS OLD.controle_lie_id
+          AND NEW.signature_data_url    IS OLD.signature_data_url
+          AND NEW.cerfa_numero          IS OLD.cerfa_numero
+          AND NEW.bsff_id               IS OLD.bsff_id
+          AND NEW.observation           IS OLD.observation
+          AND NEW.date_soumission       IS OLD.date_soumission
+          AND NEW.motif_rejet           IS OLD.motif_rejet
+          AND NEW.motif                 IS OLD.motif
+          AND NEW.hash_ecriture         IS OLD.hash_ecriture
+          AND NEW.hash_precedent        IS OLD.hash_precedent
+          AND NEW.ordre_validation      IS OLD.ordre_validation
+          AND NEW.contre_ecriture_de    IS OLD.contre_ecriture_de
+          AND NEW.date_creation         IS OLD.date_creation)
 BEGIN
     SELECT RAISE(ABORT, 'Registre verrouillé : une écriture validée ne peut pas être modifiée (utiliser une contre-écriture).');
 END;
@@ -342,10 +391,9 @@ END;
 
 -- ============================================================================
 -- §5.7 — CONTRÔLES D'ÉTANCHÉITÉ
--- Le tonnage équivalent CO₂ est une colonne calculée (charge × PRP / 1000) ;
--- c'est lui qui déclenche la fréquence de contrôle.
--- La validité d'étalonnage du détecteur est vérifiée côté serveur au moment
--- de la saisie (blocage si expirée — SPEC §7.2).
+-- Résultats alignés sur le contrat : CONFORME | FUITE. `operateur` = nom en
+-- toutes lettres (contrat) ; `operateur_id` = rapprochement optionnel.
+-- `mouvement_id` croise le contrôle né d'une validation de mouvement (CR-3).
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS controles (
     id                          TEXT PRIMARY KEY,    -- CTL-…
@@ -353,6 +401,7 @@ CREATE TABLE IF NOT EXISTS controles (
     type_controle               TEXT NOT NULL        -- ⚿
         CHECK (type_controle IN ('PERIODIQUE','NON_PERIODIQUE','APRES_REPARATION','MISE_EN_SERVICE')),
     machine_id                  TEXT NOT NULL REFERENCES machines(id),  -- ⚿
+    machine_label               TEXT,                -- libellé machine figé au contrôle (contrat : machineLabel)
     date_controle               TEXT NOT NULL,       -- ⚿ ISO
     charge_kg                   REAL,                -- ⚿ charge au moment du contrôle
     prg_utilise                 REAL,                -- ⚿ PRP retenu pour le calcul
@@ -361,8 +410,8 @@ CREATE TABLE IF NOT EXISTS controles (
         CHECK (methode IS NULL OR methode IN ('DIRECTE','INDIRECTE')),
     methode_detail              TEXT,                -- détail : détecteur manuel, produit moussant, pression…
     detecteur_id                TEXT REFERENCES outillage(id),  -- détecteur utilisé (n° série via outillage)
-    resultat                    TEXT                 -- ⚿
-        CHECK (resultat IS NULL OR resultat IN ('CONFORME','FUITE_DETECTEE')),
+    resultat                    TEXT                 -- ⚿ (enum du contrat)
+        CHECK (resultat IS NULL OR resultat IN ('CONFORME','FUITE')),
     localisation_fuite          TEXT,                -- localisation précise de la fuite
     partie_concernee            TEXT
         CHECK (partie_concernee IS NULL OR partie_concernee IN ('RACCORD','VANNE','BRASURE','ECHANGEUR','AUTRE')),
@@ -371,7 +420,9 @@ CREATE TABLE IF NOT EXISTS controles (
     date_reparation_prevue      TEXT,                -- ISO
     controle_apres_reparation_id TEXT REFERENCES controles(id),  -- contrôle après réparation (lié)
     date_prochain_controle      TEXT,                -- ISO — prochain contrôle calculé
-    operateur_id                TEXT REFERENCES personnel(id),   -- ⚿
+    operateur                   TEXT,                -- ⚿ nom en toutes lettres (contrat)
+    operateur_id                TEXT REFERENCES personnel(id),   -- rapprochement optionnel
+    mouvement_id                TEXT REFERENCES mouvements(id),  -- mouvement d'origine (CR-3)
     cerfa_numero                TEXT,                -- CERFA lié
     observation                 TEXT,
     date_creation               TEXT NOT NULL DEFAULT (datetime('now','localtime'))
@@ -380,22 +431,21 @@ CREATE TABLE IF NOT EXISTS controles (
 
 -- ============================================================================
 -- §5.8 — DÉCHETS / BSFF (bordereau de suivi des fluides frigorigènes)
--- Chaîne complète : récupération → stockage bouteille de récupération →
--- décision (réutilisable / à analyser / déchet) → si déchet : BSFF →
--- enlèvement ou retour fournisseur → masse réellement remise → justificatif
--- (pièce jointe ou lien Trackdéchets) → sortie du stock.
+-- ⚠ BSFF INTERNE : il ne remplace PAS Trackdéchets (M-1) — aucun mouvement
+-- déchet OFFICIEL réel tant que le pont Trackdéchets (V10.5) n'existe pas.
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS bsff (
     id                       TEXT PRIMARY KEY,       -- BSFF-…
     etablissement_id         TEXT NOT NULL REFERENCES etablissements(id),
-    numero_bsff              TEXT,                   -- ⚿ n° BSFF (lié au stock, pas seulement au CERFA)
+    numero_bsff              TEXT,                   -- ⚿ n° BSFF
     bouteille_id             TEXT REFERENCES bouteilles(id),  -- bouteille concernée
+    bouteille_code           TEXT,                   -- code lisible figé à l'émission (contrat : bouteilleCode)
     fluide                   TEXT REFERENCES fluides(code),
-    statut_fluide            TEXT                    -- ⚿ statut du fluide récupéré
+    statut_fluide            TEXT                    -- ⚿ constat au moment de l'émission
         CHECK (statut_fluide IS NULL OR statut_fluide IN ('REUTILISABLE','A_ANALYSER','DECHET')),
-    decision_par             TEXT REFERENCES personnel(id),   -- ⚿ décision prise par qui
+    decision_par             TEXT,                   -- ⚿ décision prise par qui (nom)
     date_decision            TEXT,                   -- ⚿ ISO
-    transporteur_collecteur  TEXT,                   -- ⚿
+    transporteur_collecteur  TEXT,                   -- ⚿ (contrat : transporteur)
     installation_destination TEXT,                   -- ⚿ installation de destination
     masse_remise_kg          REAL,                   -- ⚿ masse réellement remise
     date_remise              TEXT,                   -- ⚿ ISO
@@ -408,11 +458,27 @@ CREATE TABLE IF NOT EXISTS bsff (
 
 
 -- ============================================================================
+-- RETOURS FOURNISSEUR (IM-9 — poste de la balance matière)
+-- Trace figée du retour d'une bouteille consignée (masse au moment du retour).
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS retours_fournisseur (
+    id               TEXT PRIMARY KEY,               -- RF-…
+    etablissement_id TEXT NOT NULL REFERENCES etablissements(id),
+    bouteille_id     TEXT REFERENCES bouteilles(id),
+    bouteille_code   TEXT,                           -- code lisible figé (contrat : bouteilleCode)
+    fluide           TEXT REFERENCES fluides(code),
+    masse_kg         REAL,                           -- masse nette au moment du retour
+    date_retour      TEXT,                           -- ISO (contrat : date)
+    operateur        TEXT                            -- nom en toutes lettres
+);
+
+
+-- ============================================================================
 -- §5.9 — PIÈCES JOINTES (table unique polymorphe)
--- Tout objet important doit pouvoir porter des preuves : le couple
--- (entite_type, entite_id) désigne l'objet lié. Le fichier physique vit dans
--- le dossier documents/ (nommage horodaté) ; le hash SHA-256 garantit son
--- intégrité.
+-- Le couple (entite_type, entite_id) désigne l'objet lié. En mode Local le
+-- fichier vit dans documents/ (colonne chemin, posée par le serveur) ; le
+-- hash SHA-256 garantit son intégrité. `mime_type` : liste blanche IM-19
+-- appliquée par l'application (PDF, PNG, JPEG, WebP — jamais de SVG).
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS pieces_jointes (
     id             TEXT PRIMARY KEY,                 -- PJ-…
@@ -426,25 +492,26 @@ CREATE TABLE IF NOT EXISTS pieces_jointes (
         CHECK (categorie IN ('ATTESTATION','CERTIFICAT','FACTURE','BL','BON_DE_REPRISE','BSFF',
                              'PHOTO_PESEE','PLAQUE_SIGNALETIQUE','RAPPORT','AUTRE')),
     nom_fichier    TEXT NOT NULL,
-    chemin         TEXT NOT NULL,                    -- chemin relatif dans documents/ (ou clé de stockage cloud)
+    mime_type      TEXT,                             -- type MIME vérifié (contrat : mimeType)
+    chemin         TEXT,                             -- chemin relatif dans documents/ (posé par le serveur)
     taille_octets  INTEGER,
     hash_sha256    TEXT,                             -- empreinte du fichier (intégrité de la preuve)
     date_ajout     TEXT NOT NULL DEFAULT (datetime('now','localtime')),
-    ajoute_par     TEXT                              -- login ou id de l'utilisateur
+    ajoute_par     TEXT                              -- login ou nom de l'utilisateur
 );
 
 
 -- ============================================================================
 -- §5.10 — JOURNAL D'AUDIT (append-only)
--- Qui, quoi, quand, avant/après (JSON), poste, résultat. Non modifiable et
--- non supprimable depuis l'application (aucune route de purge) — verrouillé
--- ici même par déclencheurs. Export CSV/PDF pour le dossier annuel.
+-- Non modifiable et non supprimable — verrouillé par déclencheurs.
+-- Le CHAÎNAGE par hash (hash_precedent + hash) arrive en V9-E2 : c'est le
+-- vrai passage démo → coffre-fort (vision §3).
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS journal_audit (
     id           INTEGER PRIMARY KEY AUTOINCREMENT, -- séquence stricte, jamais réutilisée
     date_heure   TEXT NOT NULL DEFAULT (datetime('now','localtime')),
-    utilisateur  TEXT,                              -- login (ou « système »)
-    action       TEXT NOT NULL,                     -- ex. CREATION, MODIFICATION, VALIDATION, CONNEXION…
+    utilisateur  TEXT,                              -- qui (ou « système »)
+    action       TEXT NOT NULL,                     -- ex. CREATION_MACHINE, VALIDATION_MOUVEMENT…
     entite_type  TEXT,
     entite_id    TEXT,
     avant_json   TEXT,                              -- état avant (JSON)
@@ -467,37 +534,48 @@ END;
 
 
 -- ============================================================================
--- §6 — INVENTAIRE PHYSIQUE (stock réel pesé au 31/12)
--- Un inventaire = une campagne de pesée à une date donnée ; ses lignes
--- donnent, par fluide, le stock réel pesé (neuf et récupéré séparés).
--- Si l'écart avec le stock théorique est non nul, la justification est
--- obligatoire (saisie bloquante côté application — SPEC §6).
+-- §6 — BALANCE MATIÈRE : stocks initiaux, inventaire, justifications
+-- Modèle ALIGNÉ SUR LE CONTRAT (E0) : inventaire à plat par (année, fluide),
+-- justification d'écart séparée. L'inventaire nominatif bouteille par
+-- bouteille (CF-20) est une évolution prévue en V9.4.
 -- ============================================================================
-CREATE TABLE IF NOT EXISTS inventaires (
-    id               TEXT PRIMARY KEY,               -- INV-…
-    etablissement_id TEXT NOT NULL REFERENCES etablissements(id),
-    date_inventaire  TEXT NOT NULL,                  -- ISO — en pratique le 31/12
-    operateur_id     TEXT REFERENCES personnel(id),  -- qui a pesé
-    valide           INTEGER NOT NULL DEFAULT 0 CHECK (valide IN (0,1)),
-    observation      TEXT,
-    date_creation    TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+
+-- Stocks au 1er janvier (saisie établissement / reprise d'existant)
+CREATE TABLE IF NOT EXISTS stocks_initiaux (
+    etablissement_id   TEXT NOT NULL REFERENCES etablissements(id),
+    annee              INTEGER NOT NULL,
+    fluide             TEXT NOT NULL REFERENCES fluides(code),
+    stock_neuf_kg      REAL NOT NULL DEFAULT 0,      -- (contrat : neufKg)
+    stock_recupere_kg  REAL NOT NULL DEFAULT 0,      -- (contrat : recupKg)
+    PRIMARY KEY (etablissement_id, annee, fluide)
 );
 
-CREATE TABLE IF NOT EXISTS inventaire_lignes (
-    id                      TEXT PRIMARY KEY,        -- INV-…-L…
-    inventaire_id           TEXT NOT NULL REFERENCES inventaires(id),
-    fluide                  TEXT NOT NULL REFERENCES fluides(code),
-    stock_reel_neuf_kg      REAL NOT NULL DEFAULT 0, -- stock réel pesé, fluide neuf
-    stock_reel_recupere_kg  REAL NOT NULL DEFAULT 0, -- stock réel pesé, fluide récupéré
-    justification_ecart     TEXT,                    -- obligatoire si écart ≠ 0 (contrôle applicatif)
-    UNIQUE (inventaire_id, fluide)
+-- Inventaire physique : stock réel pesé, une ligne par (année, fluide)
+CREATE TABLE IF NOT EXISTS inventaires (
+    etablissement_id TEXT NOT NULL REFERENCES etablissements(id),
+    annee            INTEGER NOT NULL,
+    fluide           TEXT NOT NULL REFERENCES fluides(code),
+    stock_reel_kg    REAL NOT NULL,                  -- (contrat : stockReelKg)
+    date_saisie      TEXT,                           -- ISO (contrat : dateSaisie)
+    operateur        TEXT,                           -- nom en toutes lettres
+    PRIMARY KEY (etablissement_id, annee, fluide)
+);
+
+-- Justifications d'écart théorique/réel (obligatoires au-delà de 0,01 kg)
+CREATE TABLE IF NOT EXISTS justifications_ecarts (
+    etablissement_id   TEXT NOT NULL REFERENCES etablissements(id),
+    annee              INTEGER NOT NULL,
+    fluide             TEXT NOT NULL REFERENCES fluides(code),
+    justification      TEXT NOT NULL,
+    date_justification TEXT,                         -- ISO (contrat : date)
+    PRIMARY KEY (etablissement_id, annee, fluide)
 );
 
 
 -- ============================================================================
 -- COMPTES UTILISATEURS DE L'APPLICATION (mode local)
 -- Mot de passe haché scrypt (node:crypto), jamais en clair (SPEC §8).
--- Rôles : ADMIN / REFERENT / ENSEIGNANT / ELEVE (SPEC §2.2).
+-- La table sessions (jetons opaques) arrive en V9-E5.
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS utilisateurs_app (
     id                  TEXT PRIMARY KEY,            -- UTI-…
@@ -527,7 +605,7 @@ CREATE TABLE IF NOT EXISTS parametres (
 -- ============================================================================
 -- INDEX DE RECHERCHE
 -- ============================================================================
-CREATE INDEX IF NOT EXISTS idx_mouvements_date        ON mouvements (date_heure);
+CREATE INDEX IF NOT EXISTS idx_mouvements_date        ON mouvements (date_mouvement);
 CREATE INDEX IF NOT EXISTS idx_mouvements_machine     ON mouvements (machine_id);
 CREATE INDEX IF NOT EXISTS idx_mouvements_fluide      ON mouvements (fluide);
 CREATE INDEX IF NOT EXISTS idx_mouvements_statut      ON mouvements (statut);
@@ -536,6 +614,7 @@ CREATE INDEX IF NOT EXISTS idx_mouvements_bouteille_src ON mouvements (bouteille
 CREATE INDEX IF NOT EXISTS idx_mouvements_bouteille_dst ON mouvements (bouteille_destination_id);
 CREATE INDEX IF NOT EXISTS idx_controles_machine      ON controles (machine_id);
 CREATE INDEX IF NOT EXISTS idx_controles_date         ON controles (date_controle);
+CREATE INDEX IF NOT EXISTS idx_controles_mouvement    ON controles (mouvement_id);
 CREATE INDEX IF NOT EXISTS idx_machines_fluide        ON machines (fluide);
 CREATE INDEX IF NOT EXISTS idx_machines_statut        ON machines (statut);
 CREATE INDEX IF NOT EXISTS idx_machines_prochain_ctl  ON machines (date_prochain_controle);
@@ -546,88 +625,109 @@ CREATE INDEX IF NOT EXISTS idx_outillage_echeance     ON outillage (prochaine_ec
 CREATE INDEX IF NOT EXISTS idx_pj_entite              ON pieces_jointes (entite_type, entite_id);
 CREATE INDEX IF NOT EXISTS idx_journal_date           ON journal_audit (date_heure);
 CREATE INDEX IF NOT EXISTS idx_bsff_bouteille         ON bsff (bouteille_id);
-CREATE INDEX IF NOT EXISTS idx_inventaires_date       ON inventaires (date_inventaire);
+CREATE INDEX IF NOT EXISTS idx_retours_bouteille      ON retours_fournisseur (bouteille_id);
 
 
 -- ============================================================================
 -- §6 — VUE bilan_matiere : balance matière annuelle par fluide
--- Pour chaque fluide et chaque année (mode OFFICIEL, écritures VALIDÉES) :
---   stock début (inventaire au 31/12 de l'année précédente)
---   + achats (bouteilles neuves entrées en stock dans l'année)
---   + récupérations − charges − cessions − retours fournisseur
---   − destructions/régénérations = stock théorique fin,
--- comparé au stock réel pesé (inventaire de l'année). Écart = réel − théorique
--- (NULL tant que l'inventaire de l'année n'existe pas).
+-- MIROIR EXACT du calcul du contrat (demo-store calculerBalanceMatiere) :
+--   théorique = stock initial (neuf + récupéré, table stocks_initiaux)
+--             + achats (masse d'entrée FIGÉE des bouteilles NEUVES de l'année)
+--             + récupérations (écritures FIGÉES à quantité négative)
+--             − charges (écritures FIGÉES à quantité positive)
+--             − retours fournisseur − destructions (BSFF remis dans l'année) ;
+--   écritures FIGÉES = statut VALIDE **ou ANNULE** (les contre-écritures se
+--   neutralisent d'elles-mêmes) ; TRANSFERT exclu (interne au stock) ;
+--   réel = inventaires (année, fluide) ; écart = réel − théorique (NULL sans
+--   inventaire) ; justification jointe.
+-- La conformité métier de cette vue sera éprouvée en E3 par test-contrat
+-- (getBalanceMatiere) — ne pas s'en servir avant sans vérification.
 -- ============================================================================
 CREATE VIEW IF NOT EXISTS bilan_matiere AS
 WITH
 mvt AS (
     SELECT etablissement_id,
            fluide,
-           CAST(strftime('%Y', date_heure) AS INTEGER) AS annee,
-           SUM(COALESCE(quantite_chargee_kg, 0))               AS charge_kg,
-           SUM(COALESCE(quantite_recuperee_kg, 0))             AS recupere_kg,
-           SUM(COALESCE(quantite_cedee_kg, 0))                 AS cede_kg,
-           SUM(COALESCE(quantite_retournee_fournisseur_kg, 0)) AS retourne_kg,
-           SUM(COALESCE(quantite_detruite_regeneree_kg, 0))    AS detruit_kg
+           CAST(strftime('%Y', date_mouvement) AS INTEGER) AS annee,
+           SUM(CASE WHEN quantite_calculee_kg >= 0 THEN quantite_calculee_kg ELSE 0 END) AS charge_kg,
+           SUM(CASE WHEN quantite_calculee_kg <  0 THEN -quantite_calculee_kg ELSE 0 END) AS recupere_kg
     FROM mouvements
-    WHERE statut = 'VALIDE' AND mode = 'OFFICIEL' AND fluide IS NOT NULL
+    WHERE statut IN ('VALIDE','ANNULE')
+      AND quantite_calculee_kg IS NOT NULL
+      AND type_operation <> 'TRANSFERT'
+      AND fluide IS NOT NULL
     GROUP BY etablissement_id, fluide, annee
 ),
 achats AS (
     SELECT etablissement_id,
            fluide,
            CAST(strftime('%Y', date_entree_stock) AS INTEGER) AS annee,
-           SUM(COALESCE(masse_nette_entree_kg, 0)) AS achats_kg
+           -- Repli IDENTIQUE au contrat : masse d'entrée figée, sinon la
+           -- masse NETTE courante (reprise d'anciennes données sans CR-4).
+           SUM(COALESCE(masse_nette_entree_kg, masse_nette_kg, 0)) AS achats_kg
     FROM bouteilles
     WHERE type = 'NEUVE' AND date_entree_stock IS NOT NULL AND fluide IS NOT NULL
     GROUP BY etablissement_id, fluide, annee
 ),
-stocks AS (
-    SELECT i.etablissement_id,
-           l.fluide,
-           CAST(strftime('%Y', i.date_inventaire) AS INTEGER) AS annee,
-           SUM(COALESCE(l.stock_reel_neuf_kg, 0))     AS reel_neuf_kg,
-           SUM(COALESCE(l.stock_reel_recupere_kg, 0)) AS reel_recupere_kg
-    FROM inventaires i
-    JOIN inventaire_lignes l ON l.inventaire_id = i.id
-    GROUP BY i.etablissement_id, l.fluide, annee
+destructions AS (
+    SELECT etablissement_id,
+           fluide,
+           CAST(strftime('%Y', date_remise) AS INTEGER) AS annee,
+           SUM(COALESCE(masse_remise_kg, 0)) AS detruit_kg
+    FROM bsff
+    WHERE date_remise IS NOT NULL AND fluide IS NOT NULL
+    GROUP BY etablissement_id, fluide, annee
 ),
+retours AS (
+    SELECT etablissement_id,
+           fluide,
+           CAST(strftime('%Y', date_retour) AS INTEGER) AS annee,
+           SUM(COALESCE(masse_kg, 0)) AS retourne_kg
+    FROM retours_fournisseur
+    WHERE date_retour IS NOT NULL AND fluide IS NOT NULL
+    GROUP BY etablissement_id, fluide, annee
+),
+-- Périmètre IDENTIQUE au contrat : une ligne naît d'un stock initial, d'un
+-- achat, d'une écriture ou d'une sortie — JAMAIS d'un inventaire seul
+-- (l'inventaire se JOINT aux lignes existantes, il n'en crée pas).
 perimetre AS (
     SELECT etablissement_id, fluide, annee FROM mvt
     UNION SELECT etablissement_id, fluide, annee FROM achats
-    UNION SELECT etablissement_id, fluide, annee + 1 FROM stocks  -- l'inventaire N ouvre l'année N+1
-    UNION SELECT etablissement_id, fluide, annee FROM stocks
+    UNION SELECT etablissement_id, fluide, annee FROM destructions
+    UNION SELECT etablissement_id, fluide, annee FROM retours
+    UNION SELECT etablissement_id, fluide, annee FROM stocks_initiaux
 )
 SELECT
     p.etablissement_id,
     p.fluide,
     p.annee,
-    COALESCE(si.reel_neuf_kg, 0)      AS stock_initial_neuf_kg,
-    COALESCE(si.reel_recupere_kg, 0)  AS stock_initial_recupere_kg,
+    COALESCE(si.stock_neuf_kg, 0)     AS stock_initial_neuf_kg,
+    COALESCE(si.stock_recupere_kg, 0) AS stock_initial_recupere_kg,
     COALESCE(a.achats_kg, 0)          AS achats_kg,
-    COALESCE(m.recupere_kg, 0)        AS recupere_kg,
-    COALESCE(m.charge_kg, 0)          AS charge_kg,
-    COALESCE(m.cede_kg, 0)            AS cede_kg,
-    COALESCE(m.retourne_kg, 0)        AS retourne_fournisseur_kg,
-    COALESCE(m.detruit_kg, 0)         AS detruit_regenere_kg,
-    -- Stock théorique fin = stock début + achats + récupérations
-    --                       − charges − cessions − retours − destructions
-    ( COALESCE(si.reel_neuf_kg, 0) + COALESCE(si.reel_recupere_kg, 0)
+    COALESCE(m.recupere_kg, 0)        AS recuperations_kg,
+    COALESCE(m.charge_kg, 0)          AS charges_kg,
+    0                                 AS cessions_kg,
+    COALESCE(r.retourne_kg, 0)        AS retours_fournisseur_kg,
+    COALESCE(d.detruit_kg, 0)         AS destructions_kg,
+    ( COALESCE(si.stock_neuf_kg, 0) + COALESCE(si.stock_recupere_kg, 0)
     + COALESCE(a.achats_kg, 0) + COALESCE(m.recupere_kg, 0)
-    - COALESCE(m.charge_kg, 0) - COALESCE(m.cede_kg, 0)
-    - COALESCE(m.retourne_kg, 0) - COALESCE(m.detruit_kg, 0) ) AS stock_theorique_kg,
-    (sf.reel_neuf_kg + sf.reel_recupere_kg) AS stock_reel_kg,   -- NULL si pas d'inventaire cette année
-    ( (sf.reel_neuf_kg + sf.reel_recupere_kg)
-    - ( COALESCE(si.reel_neuf_kg, 0) + COALESCE(si.reel_recupere_kg, 0)
+    - COALESCE(m.charge_kg, 0)
+    - COALESCE(r.retourne_kg, 0) - COALESCE(d.detruit_kg, 0) ) AS stock_theorique_kg,
+    i.stock_reel_kg                   AS stock_reel_kg,   -- NULL si pas d'inventaire cette année
+    ( i.stock_reel_kg
+    - ( COALESCE(si.stock_neuf_kg, 0) + COALESCE(si.stock_recupere_kg, 0)
       + COALESCE(a.achats_kg, 0) + COALESCE(m.recupere_kg, 0)
-      - COALESCE(m.charge_kg, 0) - COALESCE(m.cede_kg, 0)
-      - COALESCE(m.retourne_kg, 0) - COALESCE(m.detruit_kg, 0) ) ) AS ecart_kg
+      - COALESCE(m.charge_kg, 0)
+      - COALESCE(r.retourne_kg, 0) - COALESCE(d.detruit_kg, 0) ) ) AS ecart_kg,
+    j.justification                   AS justification
 FROM perimetre p
-LEFT JOIN mvt    m  ON m.etablissement_id  = p.etablissement_id AND m.fluide  = p.fluide AND m.annee  = p.annee
-LEFT JOIN achats a  ON a.etablissement_id  = p.etablissement_id AND a.fluide  = p.fluide AND a.annee  = p.annee
-LEFT JOIN stocks si ON si.etablissement_id = p.etablissement_id AND si.fluide = p.fluide AND si.annee = p.annee - 1
-LEFT JOIN stocks sf ON sf.etablissement_id = p.etablissement_id AND sf.fluide = p.fluide AND sf.annee = p.annee;
+LEFT JOIN mvt          m  ON m.etablissement_id  = p.etablissement_id AND m.fluide  = p.fluide AND m.annee  = p.annee
+LEFT JOIN achats       a  ON a.etablissement_id  = p.etablissement_id AND a.fluide  = p.fluide AND a.annee  = p.annee
+LEFT JOIN destructions d  ON d.etablissement_id  = p.etablissement_id AND d.fluide  = p.fluide AND d.annee  = p.annee
+LEFT JOIN retours      r  ON r.etablissement_id  = p.etablissement_id AND r.fluide  = p.fluide AND r.annee  = p.annee
+LEFT JOIN stocks_initiaux si ON si.etablissement_id = p.etablissement_id AND si.fluide = p.fluide AND si.annee = p.annee
+LEFT JOIN inventaires  i  ON i.etablissement_id  = p.etablissement_id AND i.fluide  = p.fluide AND i.annee  = p.annee
+LEFT JOIN justifications_ecarts j ON j.etablissement_id = p.etablissement_id AND j.fluide = p.fluide AND j.annee = p.annee;
 
 
 -- ============================================================================

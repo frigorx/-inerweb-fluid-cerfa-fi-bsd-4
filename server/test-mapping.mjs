@@ -1,22 +1,29 @@
 // ============================================================
-// Test du module de correspondance front ↔ SQL (V9-E0)
+// Test du module de correspondance front ↔ SQL (V9-E0, refondu E1)
 // Exécution : node server/test-mapping.mjs
 //
-// Trois verrous anti-dérive :
+// Quatre verrous anti-dérive :
 //  1. ALLER-RETOUR : pour chaque table, un objet front couvrant tous les
 //     champs traduits vers SQL puis retraduits revient IDENTIQUE.
-//  2. COUVERTURE DU SCHÉMA : toute colonne de server/schema.sql est soit
-//     mappée, soit réservée serveur, soit d'une table documentée non
-//     mappée — une migration qui ajoute une colonne sans la déclarer
-//     dans mapping.js casse ce test.
+//  2. COUVERTURE DE LA BASE RÉELLE : la base est créée par db.js
+//     (schema.sql v1 + migrations) puis introspectée — toute colonne
+//     réelle est mappée, réservée serveur, ou d'une table documentée non
+//     mappée. Une migration qui ajoute une colonne sans la déclarer dans
+//     mapping.js casse ce test.
 //  3. COUVERTURE DU FRONT RÉEL : toute clé présente sur les objets du
-//     DemoStore vivant est connue du mapping (mappée, calculée ou
-//     divergence consignée).
-// Node ≥ 18, sans DOM.
+//     DemoStore vivant (cycle de mutation complet provoqué) est connue.
+//  4. CONTRAT ↔ CHECK : les énumérations du contrat (contrat.js) sont
+//     acceptées par les CHECK de la base réelle.
+// Node ≥ 22 (node:sqlite), sans DOM.
 // ============================================================
 
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import mapping from './mapping.js';
+import db from './db.js';
+import { TYPES_MOUVEMENT, STATUTS_MOUVEMENT, ROLES_VALIDEURS }
+  from '../v8/js/data/contrat.js';
 
 const { TABLES, TABLES_NON_MAPPEES, DIVERGENCES, versSql, versFront } = mapping;
 
@@ -72,6 +79,7 @@ function valeurEssai(def, cle) {
   if ((def.tableauxJson ?? []).includes(cle)) return ['I', 'II'];
   const enumeration = def.valeurs?.[cle];
   if (enumeration) return Object.keys(enumeration)[0];
+  if (cle === 'annee') return 2026;
   if (cle.endsWith('Kg')) return 12.345;
   return `essai-${cle}`;
 }
@@ -105,100 +113,100 @@ for (const [nomTable, def] of Object.entries(TABLES)) {
 }
 
 // ============================================================
-// 2. Couverture du schéma SQL (schema.sql fait foi)
+// 2. Couverture de la BASE RÉELLE (schema.sql v1 + migrations)
 // ============================================================
-const sqlSchema = readFileSync(new URL('./schema.sql', import.meta.url), 'utf8');
+const DOSSIER = mkdtempSync(join(tmpdir(), 'inerweb-fluide-mapping-'));
+const baseReelle = db.ouvrir(join(DOSSIER, 'carte.db'));
 
-function extraireTablesDuSchema(sql) {
-  const tables = {};
-  const motsContrainte = new Set(['foreign', 'unique', 'check', 'primary',
-    'constraint', 'references']);
-  const re = /CREATE TABLE IF NOT EXISTS (\w+)\s*\(([\s\S]*?)\);/g;
-  let bloc;
-  while ((bloc = re.exec(sql)) !== null) {
-    const [, nom, corps] = bloc;
-    const colonnes = [];
-    for (const ligne of corps.split('\n')) {
-      const colonne = ligne.trim()
-        .match(/^([a-z_][a-z0-9_]*)\s+(TEXT|INTEGER|REAL|BLOB|NUMERIC)/i);
-      if (colonne && !motsContrainte.has(colonne[1].toLowerCase())) {
-        colonnes.push(colonne[1]);
-      }
-    }
-    tables[nom] = colonnes;
-  }
-  return tables;
-}
+const tablesReelles = baseReelle.prepare(
+  "SELECT name FROM sqlite_master WHERE type = 'table' " +
+  "AND name NOT LIKE 'sqlite_%'").all().map((r) => r.name);
+verifier('la base réelle expose au moins 15 tables',
+  tablesReelles.length >= 15, `trouvées : ${tablesReelles.length}`);
 
-const tablesSchema = extraireTablesDuSchema(sqlSchema);
-verifier('le schéma est lisible (au moins 10 tables extraites)',
-  Object.keys(tablesSchema).length >= 10,
-  `extraites : ${Object.keys(tablesSchema).length}`);
-
-for (const [nomTable, colonnes] of Object.entries(tablesSchema)) {
+for (const nomTable of tablesReelles) {
   if (nomTable in TABLES_NON_MAPPEES) continue;
   const def = TABLES[nomTable];
   verifier(`la table ${nomTable} est mappée ou documentée non mappée`,
     def !== undefined);
   if (!def) continue;
+  // table_xinfo (et non table_info) : les colonnes GÉNÉRÉES virtuelles
+  // (masse_nette_kg, tco2eq) sont masquées par table_info.
+  const colonnes = baseReelle.prepare(`PRAGMA table_xinfo(${nomTable})`)
+    .all().map((c) => c.name);
   const declarees = colonnesDeclarees(def);
   const orphelines = colonnes.filter((c) => !declarees.has(c));
-  verifier(`toutes les colonnes de ${nomTable} sont couvertes`,
+  verifier(`toutes les colonnes réelles de ${nomTable} sont couvertes`,
     orphelines.length === 0, `non couvertes : ${orphelines.join(', ')}`);
   const fantomes = [...declarees].filter((c) => !colonnes.includes(c));
   verifier(`aucune colonne fantôme déclarée pour ${nomTable}`,
     fantomes.length === 0, `fantômes : ${fantomes.join(', ')}`);
 }
 for (const nomTable of Object.keys(TABLES)) {
-  verifier(`la table mappée ${nomTable} existe dans le schéma`,
-    nomTable in tablesSchema);
+  verifier(`la table mappée ${nomTable} existe dans la base réelle`,
+    tablesReelles.includes(nomTable));
 }
 for (const nomTable of Object.keys(TABLES_NON_MAPPEES)) {
-  verifier(`la table documentée non mappée ${nomTable} existe dans le schéma`,
-    nomTable in tablesSchema);
-}
-
-// --- les traductions d'énumérations visent des valeurs RÉELLES des CHECK --
-// (une faute de frappe dans une valeur SQL de valeurs{} passerait sinon)
-function extraireChecksDuSchema(sql) {
-  const parColonne = {};
-  const re = /CREATE TABLE IF NOT EXISTS (\w+)\s*\(([\s\S]*?)\);/g;
-  let bloc;
-  while ((bloc = re.exec(sql)) !== null) {
-    const [, nomTable, corps] = bloc;
-    const reCheck = /(\w+)\s+IN\s*\(((?:\s*'[^']*'\s*,?)+)\)/g;
-    let check;
-    while ((check = reCheck.exec(corps)) !== null) {
-      const valeurs = [...check[2].matchAll(/'([^']*)'/g)].map((v) => v[1]);
-      parColonne[`${nomTable}.${check[1]}`] = new Set(valeurs);
-    }
-  }
-  return parColonne;
-}
-const checksSchema = extraireChecksDuSchema(sqlSchema);
-for (const [nomTable, def] of Object.entries(TABLES)) {
-  for (const [cle, enumeration] of Object.entries(def.valeurs ?? {})) {
-    const colonne = def.champs[cle];
-    const check = checksSchema[`${nomTable}.${colonne}`];
-    if (!check) continue; // colonne sans CHECK : rien à confronter
-    const horsCheck = Object.values(enumeration)
-      .filter((v) => !check.has(v));
-    verifier(`les traductions de ${nomTable}.${cle} visent des valeurs du CHECK`,
-      horsCheck.length === 0, `hors CHECK : ${horsCheck.join(', ')}`);
-  }
+  verifier(`la table documentée non mappée ${nomTable} existe dans la base réelle`,
+    tablesReelles.includes(nomTable));
 }
 
 // ============================================================
-// 3. Couverture des objets RÉELS du DemoStore
+// 3. Les CHECK de la base acceptent les énumérations du CONTRAT
+// ============================================================
+function valeursCheck(nomTable, colonne) {
+  const sql = baseReelle.prepare(
+    'SELECT sql FROM sqlite_master WHERE name = ?').get(nomTable)?.sql ?? '';
+  // Frontière de mot à gauche : sans elle, « ancien_statut IN (…) » serait
+  // pris pour le CHECK de « statut » (revue E1).
+  const motif = new RegExp(
+    `(?:^|[^A-Za-z0-9_])${colonne}\\s+IN\\s*\\(((?:\\s*'[^']*'\\s*,?)+)\\)`);
+  const trouve = sql.match(motif);
+  if (!trouve) return null;
+  return new Set([...trouve[1].matchAll(/'([^']*)'/g)].map((v) => v[1]));
+}
+
+const EXIGENCES_CHECK = [
+  ['mouvements', 'type_operation', TYPES_MOUVEMENT],
+  ['mouvements', 'statut', STATUTS_MOUVEMENT],
+  ['machines', 'statut',
+    ['EN_SERVICE', 'ARRETEE', 'DEMANTELEE', 'FUITE', 'CONTROLE_DU']],
+  ['controles', 'resultat', ['CONFORME', 'FUITE']],
+  ['personnel', 'role_applicatif', [...ROLES_VALIDEURS, 'ELEVE']],
+  ['personnel', 'type_personne',
+    ['SALARIE', 'ENSEIGNANT', 'ELEVE', 'SOUS_TRAITANT', 'INTERVENANT_EXT']],
+  ['outillage', 'type',
+    ['STATION_RECUPERATION', 'STATION_CHARGE', 'BALANCE', 'DETECTEUR',
+      'POMPE_A_VIDE', 'MANIFOLD', 'THERMOMETRE', 'BOUTEILLE_RECUP',
+      'FLEXIBLE', 'EPI', 'AUTRE']],
+  ['bouteilles', 'type', ['NEUVE', 'RECUPERATION']],
+  ['bouteilles', 'etat_fluide', ['VIERGE', 'RECUPERE', 'DECHET']],
+  ['bouteilles', 'statut', ['EN_STOCK', 'EN_SERVICE', 'DECHET', 'RETOURNEE']],
+  ['bouteilles', 'decision_fluide', ['REUTILISABLE', 'A_ANALYSER', 'DECHET']],
+  ['non_conformites', 'statut', ['OUVERTE', 'SOLDEE']]
+];
+for (const [nomTable, colonne, attendues] of EXIGENCES_CHECK) {
+  const check = valeursCheck(nomTable, colonne);
+  const manquantes = check
+    ? attendues.filter((v) => !check.has(v))
+    : attendues;
+  verifier(`le CHECK ${nomTable}.${colonne} accepte les valeurs du contrat`,
+    check !== null && manquantes.length === 0,
+    check ? `refusées : ${manquantes.join(', ')}` : 'CHECK introuvable');
+}
+
+// ============================================================
+// 4. Couverture des objets RÉELS du DemoStore
 // ============================================================
 const { creerStore } = await import('../v8/js/data/datastore.js');
 const store = await creerStore();
 
-// Le monde de démo naît sans BSFF, sans entrée de journal, et ses
-// mouvements seedés ne portent pas les clés posées par mutation
-// (dateSoumission, motifRejet, motif, hashPrecedent, ordreValidation…).
-// On provoque TOUT le cycle pour éprouver la couverture des clés réelles.
+// Le monde de démo naît sans BSFF, sans journal, sans inventaire ni retour
+// fournisseur, et ses mouvements seedés ne portent pas les clés posées par
+// mutation. On provoque TOUT le cycle pour éprouver les clés réelles.
 let machineEssai;
+let retourCr3;
+let retourVidage;
 {
   const fluide = (await store.getFluides())[0].code;
   const bouteille = await store.createBouteille({
@@ -231,12 +239,51 @@ let machineEssai;
   await store.validerMouvement(mouvement.id, validateur.id); // scelle
   await store.annulerParContreEcriture(mouvement.id, 'Essai de mapping',
     validateur.id);                                    // pose motif
+
+  // Branche CR-3 : un mouvement avec contrôle DÉCLARÉ crée un vrai
+  // contrôle croisé (controles[].mouvementId + controle.controleId).
+  const detecteur = (await store.getOutillage())
+    .find((o) => o.typeOutil === 'DETECTEUR');
+  const mouvementControle = await store.creerMouvement({
+    type: 'CHARGE_APPOINT', machineId: machineEssai.id,
+    bouteilleSrcId: source.id, peseeAvantKg: 18, peseeApresKg: 17,
+    technicien: 'Test mapping',
+    controle: { statutControle: 'CONFORME', detecteurId: detecteur?.id ?? null }
+  });
+  await store.soumettreMouvement(mouvementControle.id);
+  retourCr3 = await store.validerMouvement(mouvementControle.id, validateur.id);
+
+  // Branche « vidage » : la récupération qui vide la machine pose le champ
+  // éphémère proposerDemantelement sur la copie retournée.
+  const bRecup = await store.createBouteille({
+    type: 'RECUPERATION', fluide, tareKg: 5, masseBruteKg: 5,
+    contenanceMaxKg: 10
+  });
+  const mouvementVidage = await store.creerMouvement({
+    type: 'RECUPERATION_DEMANTELEMENT', machineId: machineEssai.id,
+    bouteilleDstId: bRecup.id, peseeAvantKg: 5, peseeApresKg: 6,
+    technicien: 'Test mapping'
+  });
+  await store.soumettreMouvement(mouvementVidage.id);
+  retourVidage = await store.validerMouvement(mouvementVidage.id, validateur.id);
+
+  await store.retournerFournisseur(source.id, 'Test mapping');
   await store.ajouterPieceJointe({
     entiteType: 'MACHINE', entiteId: machineEssai.id, categorie: 'AUTRE',
     nomFichier: 'essai.png', mimeType: 'image/png',
     base64: Buffer.from('essai mapping').toString('base64')
   });
+  const annee = new Date().getFullYear();
+  const balance = await store.getBalanceMatiere(annee);
+  const ligne = balance.lignes.find((l) => l.fluide === fluide);
+  await store.saisirInventaire(annee,
+    [{ fluide, stockReelKg: ligne.stockTheoriqueKg + 0.5 }], 'Test mapping');
+  await store.justifierEcart(annee, fluide, 'Essai de mapping.');
 }
+
+// Les collections sans lecture dédiée (stocks initiaux, inventaires,
+// justifications) sont prises dans l'export : formes front réelles.
+const donneesExport = JSON.parse(await store.exporterJSON()).donnees;
 
 /** Union des clés présentes sur tous les éléments d'une collection. */
 function unionDesCles(collection) {
@@ -247,10 +294,17 @@ function unionDesCles(collection) {
   return cles;
 }
 
+verifier('la branche « vidage » pose bien le champ éphémère à éprouver',
+  retourVidage?.proposerDemantelement === true);
+verifier('la branche CR-3 croise bien contrôle et mouvement',
+  typeof retourCr3?.controle?.controleId === 'string');
+
 const COLLECTIONS = [
   ['machines', await store.getMachines()],
   ['bouteilles', await store.getBouteilles()],
-  ['mouvements', await store.getMouvements()],
+  // Les copies RETOURNÉES par validerMouvement portent des clés que les
+  // objets relus n'ont pas (proposerDemantelement) : on les éprouve aussi.
+  ['mouvements', [...await store.getMouvements(), retourCr3, retourVidage]],
   ['controles', await store.getControles()],
   ['personnel', await store.getPersonnel()],
   ['clients_detenteurs', await store.getClients()],
@@ -259,16 +313,20 @@ const COLLECTIONS = [
   ['audits_etablissement', await store.getAuditsOrganisme()],
   ['non_conformites', await store.getNonConformites()],
   ['bsff', await store.getBsff()],
+  ['retours_fournisseur', await store.getRetoursFournisseur()],
   ['journal_audit', await store.getJournalAudit()],
   ['etablissements', [await store.getEtablissement()]],
   ['pieces_jointes',
-    await store.listerPiecesJointes('MACHINE', machineEssai.id)]
+    await store.listerPiecesJointes('MACHINE', machineEssai.id)],
+  ['stocks_initiaux', donneesExport.stocksInitiaux ?? []],
+  ['inventaires', donneesExport.inventaires ?? []],
+  ['justifications_ecarts', donneesExport.justificationsEcarts ?? []]
 ];
 
 for (const [nomTable, collection] of COLLECTIONS) {
   if (collection.length === 0) {
-    console.log(`  --  ${nomTable} : collection vide dans le monde de démo, ` +
-      'couverture front non évaluable');
+    verifier(`couverture front de ${nomTable}`, false,
+      'collection vide : la couverture n\'est pas éprouvée (provoquer un objet)');
     continue;
   }
   const connues = clesConnues(TABLES[nomTable]);
@@ -280,61 +338,67 @@ for (const [nomTable, collection] of COLLECTIONS) {
 }
 
 // ============================================================
-// 4. Traductions d'énumérations et de types
+// 5. Traductions et conversions de types
 // ============================================================
 verifier('detectionPermanente : booléen → 0/1 → booléen',
   versSql('machines', { detectionPermanente: true }).detection_permanente === 1
   && versFront('machines', { detection_permanente: 0 })
     .detectionPermanente === false);
-verifier('résultat de contrôle : FUITE ↔ FUITE_DETECTEE',
-  versSql('controles', { resultat: 'FUITE' }).resultat === 'FUITE_DETECTEE'
-  && versFront('controles', { resultat: 'FUITE_DETECTEE' })
-    .resultat === 'FUITE');
-verifier('type de personne : INTERVENANT_EXT ↔ INTERVENANT_EXTERIEUR',
-  versSql('personnel', { typePersonne: 'INTERVENANT_EXT' })
-    .type_personne === 'INTERVENANT_EXTERIEUR');
-verifier('type d’outil : DETECTEUR ↔ DETECTEUR_FUITE',
-  versSql('outillage', { typeOutil: 'DETECTEUR' }).type === 'DETECTEUR_FUITE');
-verifier('statut machine : ARRETEE ↔ ARRETE',
-  versSql('machines', { statut: 'ARRETEE' }).statut === 'ARRETE'
-  && versFront('machines', { statut: 'ARRETE' }).statut === 'ARRETEE');
-verifier('statut de non-conformité : SOLDEE ↔ CLOTUREE',
-  versSql('non_conformites', { statut: 'SOLDEE' }).statut === 'CLOTUREE');
+verifier('les enums du contrat passent tels quels (identité depuis E1)',
+  versSql('machines', { statut: 'FUITE' }).statut === 'FUITE'
+  && versSql('controles', { resultat: 'FUITE' }).resultat === 'FUITE'
+  && versSql('outillage', { typeOutil: 'DETECTEUR' }).type === 'DETECTEUR'
+  && versSql('personnel', { typePersonne: 'INTERVENANT_EXT' })
+    .type_personne === 'INTERVENANT_EXT'
+  && versSql('non_conformites', { statut: 'SOLDEE' }).statut === 'SOLDEE');
+verifier('les renommages structurants tiennent (date, chaîne, rôle)',
+  'date_mouvement' in versSql('mouvements', { date: '2026-07-04' })
+  && 'hash_precedent' in versSql('mouvements', { hashPrecedent: 'a'.repeat(64) })
+  && 'ordre_validation' in versSql('mouvements', { ordreValidation: 3 })
+  && 'role_applicatif' in versSql('personnel', { roleApp: 'REFERENT' })
+  && 'mime_type' in versSql('pieces_jointes', { mimeType: 'image/png' })
+  && 'mouvement_id' in versSql('controles', { mouvementId: 'mvt-x' })
+  && 'commentaire_solde' in versSql('non_conformites',
+    { commentaireSolde: 'preuve' }));
 verifier('tableau front → TEXT JSON → tableau',
   versSql('personnel', { activitesAutorisees: ['MANIPULATION'] })
     .activites_autorisees === '["MANIPULATION"]'
   && JSON.stringify(versFront('personnel',
     { activites_autorisees: '["MANIPULATION"]' }).activitesAutorisees)
     === '["MANIPULATION"]');
-verifier('la masse nette (colonne générée) se lit mais ne s’écrit pas',
+verifier('sitesCouverts (tableau) est sérialisé, jamais altéré en chaîne',
+  versSql('etablissements', { sitesCouverts: ['Atelier', 'Labo'] })
+    .sites_couverts === '["Atelier","Labo"]');
+verifier('la masse nette (colonne générée) se lit mais ne s\'écrit pas',
   versFront('bouteilles', { masse_nette_kg: 7.5 }).masseNetteKg === 7.5
   && !('masse_nette_kg' in versSql('bouteilles', { masseNetteKg: 7.5 })));
 
 // ============================================================
-// 5. Les garde-fous lèvent des erreurs explicites
+// 6. Les garde-fous lèvent des erreurs explicites
 // ============================================================
-verifierLeve('un statut machine sans valeur SQL (FUITE) est refusé',
-  () => versSql('machines', { statut: 'FUITE' }), 'sans équivalent SQL');
-verifierLeve('une valeur pathologique (constructor) est refusée, pas héritée',
-  () => versSql('machines', { statut: 'constructor' }), 'sans équivalent SQL');
-verifierLeve('un champ en divergence (hashPrecedent) est refusé',
-  () => versSql('mouvements', { hashPrecedent: 'abc' }), 'non transposable');
-verifierLeve('le roleApp (enum SQL désaccordé) est refusé',
-  () => versSql('personnel', { roleApp: 'REFERENT' }), 'non transposable');
+verifierLeve('l\'objet imbriqué mouvements.controle reste bloqué (E3)',
+  () => versSql('mouvements', { controle: { statutControle: 'SANS_OBJET' } }),
+  'non transposable');
+verifierLeve('journal_audit.cible reste bloqué (E2)',
+  () => versSql('journal_audit', { cible: 'M1' }), 'non transposable');
 verifierLeve('une clé front inconnue est refusée (anti-dérive)',
   () => versSql('machines', { cleFarfelue: 1 }), 'inconnue');
+verifierLeve('une clé pathologique (constructor) est refusée, pas héritée',
+  () => versSql('machines', { constructor: 1 }), 'inconnue');
 verifierLeve('une colonne SQL inconnue est refusée (anti-dérive)',
   () => versFront('machines', { colonne_farfelue: 1 }), 'inconnue');
 verifierLeve('une table inconnue est refusée',
   () => versSql('table_mysterieuse', {}), 'Table inconnue');
 
-verifier('les divergences sont consignées et datées d’un incrément',
-  Array.isArray(DIVERGENCES) && DIVERGENCES.length >= 10
+verifier('les divergences restantes sont consignées et datées d\'un incrément',
+  Array.isArray(DIVERGENCES) && DIVERGENCES.length >= 4
   && DIVERGENCES.every((d) => d.objet && d.constat && d.echeance));
 
 // ============================================================
 // Verdict
 // ============================================================
+db.fermer();
+rmSync(DOSSIER, { recursive: true, force: true });
 console.log(`\n${nbOk} vérifications réussies, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);
 console.log('Correspondance front ↔ SQL : tout est vert.');

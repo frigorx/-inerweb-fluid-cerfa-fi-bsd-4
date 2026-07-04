@@ -2,7 +2,7 @@
 
 /**
  * inerWeb Fluide — CORRESPONDANCE unique front (camelCase) ↔ SQL (snake_case).
- * (V9-E0 — VISION-V9-V10 §11 : « le mapping dans un seul module »)
+ * (V9-E0, mise à jour V9-E1 : schéma v1 aligné sur le contrat)
  *
  * Ce module est LA SEULE source de vérité de la traduction entre les objets
  * du contrat DataStore (v8/js/data/contrat.js, formes camelCase du front) et
@@ -10,18 +10,21 @@
  * serveur passent exclusivement par ici — jamais de renommage à la main dans
  * une route (leçon v7 : deux traductions divergentes = deux vérités).
  *
- * Il consigne aussi, sans les masquer, les DIVERGENCES structurelles
- * constatées entre le front réel et le schéma actuel : colonnes absentes,
- * enums désaccordés, tables manquantes. Chaque divergence pointe l'incrément
- * (E1, E2, E3, E5) qui doit la résorber. Tant qu'elle ne l'est pas, toute
- * tentative de traduction du champ concerné LÈVE une erreur explicite :
- * rien ne passe en silence.
+ * Historique : l'inventaire E0 avait relevé 18 divergences structurelles
+ * front↔SQL. Le schéma v1 (V9-E1) les a résorbées à la création — colonnes
+ * de chaîne ajoutées, enums alignés sur le contrat, tables manquantes créées
+ * (retours_fournisseur, stocks_initiaux, inventaires à plat, justifications).
+ * Ne RESTENT que les divergences listées dans DIVERGENCES, chacune datée de
+ * son incrément. Tant qu'elle n'est pas résorbée, toute tentative de
+ * traduction du champ concerné LÈVE une erreur explicite : rien ne passe en
+ * silence.
  *
  * Vérifié mécaniquement par server/test-mapping.mjs :
  *  - aller-retour front → SQL → front fidèle pour chaque table ;
- *  - chaque colonne du schéma est couverte (mappée, réservée serveur ou
- *    documentée en divergence) ;
- *  - chaque clé des objets réels du DemoStore est couverte.
+ *  - chaque colonne de la base RÉELLE (créée par db.js, migrations incluses)
+ *    est couverte (mappée, réservée serveur ou table documentée non mappée) ;
+ *  - chaque clé des objets réels du DemoStore est couverte ;
+ *  - les CHECK du schéma contiennent bien les énumérations du contrat.
  *
  * Structure d'une définition de table :
  *  champs            clé front → colonne SQL (lecture-écriture)
@@ -29,6 +32,8 @@
  *  booleens          clés front booléennes, stockées INTEGER 0/1
  *  tableauxJson      clés front tableau, stockées TEXT JSON
  *  valeurs           traductions d'énumérations { cléFront: { FRONT: 'SQL' } }
+ *                    (vide depuis E1 : les enums SQL = ceux du contrat ;
+ *                    le mécanisme reste pour d'éventuels besoins futurs)
  *  frontSeulement    clés front calculées/dénormalisées, jamais persistées
  *  bloquees          clés front SANS transposition possible aujourd'hui
  *                    (divergence à migrer) — versSql lève une erreur
@@ -75,6 +80,7 @@ const TABLES = {
       nom: 'nom',
       prenom: 'prenom',
       typePersonne: 'type_personne',
+      roleApp: 'role_applicatif',
       numAttestationAptitude: 'numero_attestation_aptitude',
       organismeDelivreur: 'organisme_delivreur',
       dateObtention: 'date_obtention',
@@ -87,22 +93,7 @@ const TABLES = {
     },
     booleens: ['actif'],
     tableauxJson: ['activitesAutorisees'],
-    valeurs: {
-      typePersonne: {
-        SALARIE: 'SALARIE',
-        ENSEIGNANT: 'ENSEIGNANT',
-        ELEVE: 'ELEVE',
-        SOUS_TRAITANT: 'SOUS_TRAITANT',
-        INTERVENANT_EXT: 'INTERVENANT_EXTERIEUR'
-      }
-    },
-    bloquees: {
-      roleApp: 'enum SQL role_applicatif (VOIR/SAISIR/VALIDER/ADMINISTRER/' +
-        'OFFICIEL) étranger aux rôles réels (ADMIN/REFERENT/ENSEIGNANT/' +
-        'ELEVE) — CHECK à réécrire, migration E1 (vision §5.1)'
-    },
-    sqlSeulement: ['etablissement_id', 'role_applicatif', 'signature_chemin',
-      'date_creation']
+    sqlSeulement: ['etablissement_id', 'signature_chemin', 'date_creation']
   },
 
   outillage: {
@@ -115,28 +106,10 @@ const TABLES = {
       siteAtelier: 'site_atelier',
       precision: 'precision_balance',
       sensibilite: 'sensibilite_detecteur',
+      dateEtalonnage: 'date_etalonnage',
       dateVerification: 'date_verification',
       prochaineEcheance: 'prochaine_echeance',
       statut: 'statut'
-    },
-    valeurs: {
-      typeOutil: {
-        STATION_RECUPERATION: 'STATION_RECUPERATION',
-        STATION_CHARGE: 'STATION_CHARGE',
-        BALANCE: 'BALANCE',
-        DETECTEUR: 'DETECTEUR_FUITE',
-        POMPE_A_VIDE: 'POMPE_A_VIDE',
-        MANIFOLD: 'MANIFOLD',
-        THERMOMETRE: 'THERMOMETRE_SONDE',
-        BOUTEILLE_RECUP: 'BOUTEILLE_RECUPERATION',
-        FLEXIBLE: 'FLEXIBLE_VANNES',
-        EPI: 'EPI',
-        AUTRE: 'AUTRE'
-      }
-    },
-    bloquees: {
-      dateEtalonnage: 'colonne date_etalonnage absente du schéma — ' +
-        'migration E1'
     },
     sqlSeulement: ['etablissement_id', 'observation', 'date_creation']
   },
@@ -163,6 +136,7 @@ const TABLES = {
       modele: 'modele',
       numSerie: 'numero_serie',
       localisation: 'localisation',
+      siteLabel: 'site_label',
       clientId: 'client_detenteur_id',
       fluide: 'fluide',
       chargeNominaleKg: 'charge_nominale_kg',
@@ -174,19 +148,11 @@ const TABLES = {
       statut: 'statut'
     },
     booleens: ['detectionPermanente'],
-    valeurs: {
-      // FUITE et CONTROLE_DU n'ont AUCUNE valeur SQL : le CHECK doit être
-      // élargi (migration E1). En attendant, les traduire lève une erreur.
-      statut: {
-        EN_SERVICE: 'EN_SERVICE',
-        ARRETEE: 'ARRETE',
-        DEMANTELEE: 'DEMANTELE'
-      }
-    },
-    frontSeulement: ['siteLabel'],
+    // site_id (migration 002) et code_public (003) seront exposés au
+    // contrat par V9.1 (fiche machine + QR) — réservés serveur d'ici là.
     sqlSeulement: ['etablissement_id', 'justification_detection',
       'frequence_controle_mois', 'plaque_fgas_generee', 'observation',
-      'date_creation']
+      'date_creation', 'site_id', 'code_public']
   },
 
   bouteilles: {
@@ -201,10 +167,14 @@ const TABLES = {
       masseBruteKg: 'masse_brute_kg',
       masseEntreeKg: 'masse_nette_entree_kg',
       contenanceMaxKg: 'contenance_max_kg',
+      proprietaire: 'proprietaire',
       lot: 'numero_lot',
       dateEntree: 'date_entree_stock',
       datePesee: 'date_derniere_pesee',
       statut: 'statut',
+      decisionFluide: 'decision_fluide',
+      decisionPar: 'decision_par',
+      decisionDate: 'date_decision',
       numBsff: 'numero_bsff',
       dateLimiteGarde: 'date_limite_garde'
     },
@@ -212,61 +182,56 @@ const TABLES = {
       // Colonne GENERATED ALWAYS (masse_brute_kg − tare_kg) : jamais écrite.
       masseNetteKg: 'masse_nette_kg'
     },
-    bloquees: {
-      proprietaire: 'texte libre côté front (« Climalife ») contre CHECK ' +
-        'strict côté SQL (FOURNISSEUR/ETABLISSEMENT/CONSIGNATION) — ' +
-        'normalisation à trancher, migration E1',
-      decisionFluide: 'porté côté SQL par bsff.statut_fluide — ' +
-        'réconciliation du modèle en E1/E3',
-      decisionPar: 'porté côté SQL par bsff.decision_par — E1/E3',
-      decisionDate: 'porté côté SQL par bsff.date_decision — E1/E3'
-    },
-    sqlSeulement: ['etablissement_id', 'qr_interne', 'proprietaire',
-      'pese_par', 'numero_bl_facture', 'date_retour_fournisseur',
-      'date_epreuve', 'observation', 'date_creation']
+    sqlSeulement: ['etablissement_id', 'qr_interne', 'pese_par',
+      'numero_bl_facture', 'date_retour_fournisseur', 'date_epreuve',
+      'observation', 'date_creation', 'code_public']
   },
 
   mouvements: {
     champs: {
       id: 'id',
       numero: 'numero',
-      date: 'date_heure',
+      date: 'date_mouvement',
       mode: 'mode',
       type: 'type_operation',
+      causeMouvement: 'cause',
       machineId: 'machine_id',
+      machineLabel: 'machine_label',
       fluide: 'fluide',
       quantiteKg: 'quantite_calculee_kg',
       peseeAvantKg: 'pesee_avant_kg',
       peseeApresKg: 'pesee_apres_kg',
       bouteilleSrcId: 'bouteille_source_id',
       bouteilleDstId: 'bouteille_destination_id',
-      causeMouvement: 'cause',
+      technicien: 'technicien',
       validateurId: 'validateur_id',
-      hashEcriture: 'hash_ecriture',
-      contreEcritureDe: 'contre_ecriture_de',
+      signatureDataUrl: 'signature_data_url',
+      cerfaNumero: 'cerfa_numero',
       statut: 'statut',
-      cerfaNumero: 'cerfa_numero'
+      dateSoumission: 'date_soumission',
+      motifRejet: 'motif_rejet',
+      motif: 'motif',
+      hashEcriture: 'hash_ecriture',
+      hashPrecedent: 'hash_precedent',
+      ordreValidation: 'ordre_validation',
+      contreEcritureDe: 'contre_ecriture_de'
     },
-    frontSeulement: ['machineLabel'],
+    // proposerDemantelement : champ ÉPHÉMÈRE posé sur la COPIE retournée
+    // par validerMouvement quand la récupération vide la machine — jamais
+    // persisté, jamais relu.
+    frontSeulement: ['proposerDemantelement'],
     bloquees: {
-      hashPrecedent: 'colonne hash_precedent absente — migration E1 ' +
-        '(indispensable à la vérification de chaîne)',
-      ordreValidation: 'colonne ordre_validation absente — migration E1',
-      dateSoumission: 'colonne date_soumission absente — migration E1',
-      motifRejet: 'colonne motif_rejet absente — migration E1',
-      motif: 'colonne motif absente (contre-écritures) — migration E1',
-      signatureDataUrl: 'support de la signature à trancher (colonne ou ' +
-        'pièce jointe) — E1',
-      technicien: 'front = nom en toutes lettres, SQL = technicien_id ' +
-        '(clé étrangère personnel) — réconciliation E3',
-      controle: 'objet imbriqué { statutControle, detecteurId, controleId } ' +
-        'sans colonnes SQL — réconciliation E1/E3 (avec controles.mouvement_id)'
+      controle: 'objet imbriqué { statutControle, detecteurId, controleId } : ' +
+        'aplati par le LocalStore (E3) vers statut_controle_declare / ' +
+        'detecteur_declare_id / controle_lie_id (colonnes posées en E1) — ' +
+        'hors de portée d\'une correspondance plate'
     },
     sqlSeulement: ['etablissement_id', 'machine_destination_id', 'sens',
       'quantite_chargee_kg', 'quantite_recuperee_kg', 'quantite_cedee_kg',
       'quantite_retournee_fournisseur_kg', 'quantite_detruite_regeneree_kg',
-      'origine_fluide', 'destination_fluide', 'technicien_id', 'bsff_id',
-      'observation', 'date_creation']
+      'origine_fluide', 'destination_fluide', 'technicien_id',
+      'statut_controle_declare', 'detecteur_declare_id', 'controle_lie_id',
+      'bsff_id', 'observation', 'date_creation']
   },
 
   controles: {
@@ -275,26 +240,19 @@ const TABLES = {
       date: 'date_controle',
       typeControle: 'type_controle',
       machineId: 'machine_id',
+      machineLabel: 'machine_label',
       methode: 'methode',
       resultat: 'resultat',
       detecteurId: 'detecteur_id',
       localisationFuite: 'localisation_fuite',
       reparationImmediate: 'reparation_immediate',
+      operateur: 'operateur',
       operateurId: 'operateur_id',
+      mouvementId: 'mouvement_id',
       prochainControle: 'date_prochain_controle'
     },
     booleens: ['reparationImmediate'],
-    valeurs: {
-      resultat: { CONFORME: 'CONFORME', FUITE: 'FUITE_DETECTEE' }
-    },
-    frontSeulement: ['machineLabel', 'enRetard'],
-    bloquees: {
-      operateur: 'front = nom en toutes lettres (seule identité portée ' +
-        'par les contrôles réels), SQL = operateur_id — réconciliation E3 ' +
-        '(même cas que mouvements.technicien)',
-      mouvementId: 'colonne mouvement_id absente — migration E1 ' +
-        '(croisement contrôle ↔ mouvement, CR-3)'
-    },
+    frontSeulement: ['enRetard'],
     sqlSeulement: ['etablissement_id', 'charge_kg', 'prg_utilise', 'tco2eq',
       'methode_detail', 'partie_concernee', 'gravite',
       'date_reparation_prevue', 'controle_apres_reparation_id',
@@ -306,16 +264,60 @@ const TABLES = {
       id: 'id',
       numeroBsff: 'numero_bsff',
       bouteilleId: 'bouteille_id',
+      bouteilleCode: 'bouteille_code',
       fluide: 'fluide',
       transporteur: 'transporteur_collecteur',
       installationDestination: 'installation_destination',
       masseRemiseKg: 'masse_remise_kg',
       dateRemise: 'date_remise'
     },
-    frontSeulement: ['bouteilleCode'],
     sqlSeulement: ['etablissement_id', 'statut_fluide', 'decision_par',
       'date_decision', 'lien_trackdechets', 'statut', 'observation',
       'date_creation']
+  },
+
+  retours_fournisseur: {
+    champs: {
+      id: 'id',
+      bouteilleId: 'bouteille_id',
+      bouteilleCode: 'bouteille_code',
+      fluide: 'fluide',
+      masseKg: 'masse_kg',
+      date: 'date_retour',
+      operateur: 'operateur'
+    },
+    sqlSeulement: ['etablissement_id']
+  },
+
+  stocks_initiaux: {
+    champs: {
+      annee: 'annee',
+      fluide: 'fluide',
+      neufKg: 'stock_neuf_kg',
+      recupKg: 'stock_recupere_kg'
+    },
+    sqlSeulement: ['etablissement_id']
+  },
+
+  inventaires: {
+    champs: {
+      annee: 'annee',
+      fluide: 'fluide',
+      stockReelKg: 'stock_reel_kg',
+      dateSaisie: 'date_saisie',
+      operateur: 'operateur'
+    },
+    sqlSeulement: ['etablissement_id']
+  },
+
+  justifications_ecarts: {
+    champs: {
+      annee: 'annee',
+      fluide: 'fluide',
+      justification: 'justification',
+      date: 'date_justification'
+    },
+    sqlSeulement: ['etablissement_id']
   },
 
   pieces_jointes: {
@@ -325,16 +327,15 @@ const TABLES = {
       entiteId: 'entite_id',
       categorie: 'categorie',
       nomFichier: 'nom_fichier',
+      mimeType: 'mime_type',
       taille: 'taille_octets',
       hashSha256: 'hash_sha256',
       dateAjout: 'date_ajout',
       ajoutePar: 'ajoute_par'
     },
-    bloquees: {
-      mimeType: 'colonne mime_type absente — migration E1'
-    },
-    // En mode Local le contenu vit sur disque (colonne chemin) ; en démo il
-    // vit dans IndexedDB. Le contrat n'expose que les métadonnées.
+    // En mode Local le contenu vit sur disque (colonne chemin, posée par le
+    // serveur) ; en démo il vit dans IndexedDB. Le contrat n'expose que les
+    // métadonnées.
     sqlSeulement: ['etablissement_id', 'chemin']
   },
 
@@ -347,7 +348,7 @@ const TABLES = {
     bloquees: {
       cible: 'répartition entre entite_type et entite_id à trancher — E2 ' +
         '(journal chaîné)',
-      details: 'colonne d’accueil à trancher (apres_json ? resultat ?) — E2'
+      details: 'colonne d\'accueil à trancher (apres_json ? resultat ?) — E2'
     },
     sqlSeulement: ['id', 'entite_type', 'entite_id', 'avant_json',
       'apres_json', 'ip_poste', 'resultat']
@@ -358,14 +359,10 @@ const TABLES = {
       id: 'id',
       date: 'date_audit',
       organisme: 'organisme',
+      resultat: 'resultat',
       remarques: 'observation'
     },
-    bloquees: {
-      resultat: 'texte libre côté front (« Conforme avec 1 remarque ») ' +
-        'contre CHECK strict côté SQL (CONFORME/CONFORME_AVEC_REMARQUES/' +
-        'NON_CONFORME) — normalisation à trancher, migration E1'
-    },
-    sqlSeulement: ['etablissement_id', 'type_audit', 'resultat']
+    sqlSeulement: ['etablissement_id', 'type_audit']
   },
 
   non_conformites: {
@@ -376,108 +373,52 @@ const TABLES = {
       actionCorrective: 'action_corrective',
       echeance: 'date_echeance_action',
       statut: 'statut',
-      dateSolde: 'date_cloture'
-    },
-    valeurs: {
-      statut: { OUVERTE: 'OUVERTE', SOLDEE: 'CLOTUREE' }
-    },
-    bloquees: {
-      commentaireSolde: 'colonne commentaire_solde absente — migration E1'
+      dateSolde: 'date_cloture',
+      commentaireSolde: 'commentaire_solde'
     },
     sqlSeulement: ['etablissement_id', 'date_constat', 'gravite']
   }
 };
 
 /**
- * Tables du schéma volontairement NON mappées vers le contrat DataStore,
- * avec la raison. Le test de couverture exige que toute table du schéma
- * soit ou bien mappée, ou bien listée ici.
+ * Tables de la base volontairement NON mappées vers le contrat DataStore,
+ * avec la raison. Le test de couverture exige que toute table de la base
+ * réelle soit ou bien mappée, ou bien listée ici.
  */
 const TABLES_NON_MAPPEES = {
-  inventaires: 'modèle SQL (campagne + lignes neuf/récupéré) étranger au ' +
-    'modèle front plat { annee, fluide, stockReelKg } — réconciliation E1',
-  inventaire_lignes: 'voir inventaires — réconciliation E1',
+  sites: 'posée par la migration 002 pour V9.1 (fiche machine) — pas encore ' +
+    'd\'objet dans le contrat',
   utilisateurs_app: 'authentification, réservée au serveur (E5) — jamais ' +
     'exposée au front',
   parametres: 'clé/valeur interne du serveur'
 };
 
 /**
- * Divergences STRUCTURELLES front ↔ schéma constatées à l'écriture du
- * contrat (E0). Chacune désigne l'incrément qui doit la résorber.
- * C'est l'intrant direct des migrations E1/E2 et du LocalStore E3.
+ * Divergences front ↔ schéma RESTANTES après l'alignement E1, chacune datée
+ * de l'incrément qui doit la résorber. (Les 18 divergences relevées en E0
+ * ont été résorbées par le schéma v1 — voir l'historique en tête de module.)
  */
 const DIVERGENCES = [
-  { objet: 'mouvements', echeance: 'E1',
-    constat: 'Colonnes absentes : hash_precedent, ordre_validation, ' +
-      'date_soumission, motif_rejet, motif, signature. Sans hash_precedent ' +
-      'ni ordre_validation, la chaîne du registre n’est pas vérifiable ' +
-      'côté SQL.' },
-  { objet: 'mouvements.controle / controles.mouvement_id', echeance: 'E1',
-    constat: 'Le front imbrique le contrôle déclaré dans le mouvement et ' +
-      'croise controleId/mouvementId ; le schéma n’a ni l’un ni ' +
-      'l’autre.' },
-  { objet: 'mouvements.technicien', echeance: 'E3',
-    constat: 'Front : nom en toutes lettres (personne extérieure possible) ; ' +
-      'SQL : technicien_id NOT NULL vers personnel. Trancher : colonne ' +
-      'texte libre + clé optionnelle, ou personnel systématique. Même cas ' +
-      'pour controles.operateur (seule identité des contrôles réels).' },
-  { objet: 'mouvements.quantiteKg', echeance: 'E1',
-    constat: 'Convention front : quantité SIGNÉE (négative = récupération), ' +
-      'celle du contrat ; le schéma documente quantite_calculee_kg comme ' +
-      'valeur absolue et porte le sens dans la colonne sens. Le contrat ' +
-      'fait foi : corriger le commentaire SQL, statuer sur sens.' },
-  { objet: 'audits_etablissement.resultat', echeance: 'E1',
-    constat: 'Front : texte libre (« Conforme avec 1 remarque ») ; SQL : ' +
-      'CHECK strict. Élargir/supprimer le CHECK ou normaliser le front.' },
-  { objet: 'machines.statut', echeance: 'E1',
-    constat: 'CHECK SQL limité à EN_SERVICE/ARRETE/DEMANTELE (au masculin) ; ' +
-      'le front vit avec ARRETEE/DEMANTELEE et deux états de plus : FUITE, ' +
-      'CONTROLE_DU.' },
-  { objet: 'personnel.role_applicatif', echeance: 'E1',
-    constat: 'Enum SQL (VOIR/SAISIR/VALIDER/ADMINISTRER/OFFICIEL) étranger ' +
-      'aux rôles réels du contrat (ADMIN/REFERENT/ENSEIGNANT/ELEVE, plus ' +
-      'TECHNICIEN en V9) — vision §5.1.' },
-  { objet: 'retoursFournisseur', echeance: 'E1',
-    constat: 'Poste à part entière de la balance matière côté front ' +
-      '(IM-9) ; AUCUNE table SQL. Créer retours_fournisseur.' },
-  { objet: 'stocksInitiaux', echeance: 'E1',
-    constat: 'Stocks d’ouverture par fluide côté front ; aucune table ' +
-      'SQL. Créer stocks_initiaux (ou lignes d’inventaire d’ouverture).' },
-  { objet: 'inventaires / justificationsEcarts', echeance: 'E1',
-    constat: 'Front : upsert plat par (annee, fluide) + justifications ' +
-      'séparées ; SQL : campagnes + lignes neuf/récupéré + justification ' +
-      'embarquée. Le contrat (front) fait foi : aligner le schéma ou faire ' +
-      'traduire le LocalStore.' },
-  { objet: 'pieces_jointes.mime_type', echeance: 'E1',
-    constat: 'Le front porte mimeType (liste blanche IM-19) ; pas de ' +
-      'colonne SQL.' },
-  { objet: 'bouteilles.decision*', echeance: 'E1/E3',
-    constat: 'decisionFluide/decisionPar/decisionDate vivent sur la ' +
-      'bouteille côté front, sur le bsff côté SQL.' },
-  { objet: 'bouteilles.proprietaire', echeance: 'E1',
-    constat: 'SQL : NOT NULL DEFAULT ETABLISSEMENT avec CHECK ; front : ' +
-      'texte libre (« Climalife ») ou null. Champ bloqué en attendant la ' +
-      'normalisation (CHECK à revoir ou champ front à contraindre).' },
-  { objet: 'outillage.date_etalonnage', echeance: 'E1',
-    constat: 'Le front distingue étalonnage et vérification ; le schéma ' +
-      'n’a que date_verification. (RACCORDS_SPECIFIQUES, valeur SQL sans ' +
-      'équivalent front, reste inutilisée.)' },
-  { objet: 'etablissements.categories', echeance: 'E1',
-    constat: 'Front : categoriesAutorisees unique ; SQL : categories_2008 ' +
-      'ET categories_2025. Mappé sur categories_2025 ; confirmer le sort ' +
-      'de 2008.' },
-  { objet: 'non_conformites', echeance: 'E1',
-    constat: 'commentaire_solde absent ; statuts SQL EN_COURS/gravite/' +
-      'date_constat inutilisés par le front (SOLDEE ↔ CLOTUREE traduit).' },
+  { objet: 'mouvements.controle', echeance: 'E3',
+    constat: 'Objet imbriqué côté contrat ; colonnes aplaties côté SQL ' +
+      '(statut_controle_declare, detecteur_declare_id, controle_lie_id). ' +
+      'Le LocalStore fera l\'aplatissement et la reconstitution.' },
   { objet: 'journal_audit', echeance: 'E2',
-    constat: 'Ajouter hash_precedent et hash (chaînage du journal — le ' +
-      'vrai passage démo → coffre-fort) ; trancher l’accueil de cible/' +
-      'details.' },
-  { objet: 'mouvements.date_heure', echeance: 'E3',
-    constat: 'Le front ne porte qu’une date de jour (AAAA-MM-JJ) ; la ' +
-      'colonne suggère un horodatage complet. Le contrat impose la date ' +
-      'de jour (§7 du contrat).' }
+    constat: 'Chaînage à poser (hash_precedent + hash — le vrai passage ' +
+      'démo → coffre-fort) et accueil de cible/details à trancher.' },
+  { objet: 'etablissements.categories_2008', echeance: 'E3',
+    constat: 'Le contrat ne porte qu\'une liste de catégories (mappée sur ' +
+      'categories_2025) ; le sort de la grille 2008 (transition jusqu\'au ' +
+      '31/12/2026) reste à confirmer avec Franck.' },
+  { objet: 'vue bilan_matiere', echeance: 'E3',
+    constat: 'La vue SQL reproduit le calcul du contrat (écritures figées ' +
+      'signées, TRANSFERT exclu, stocks initiaux, inventaire à plat) mais ' +
+      'sa conformité ne sera PROUVÉE que par test-contrat contre le ' +
+      'LocalStore (getBalanceMatiere).' },
+  { objet: 'inventaire nominatif', echeance: 'V9.4',
+    constat: 'L\'inventaire est à plat par (année, fluide) comme le ' +
+      'contrat ; l\'inventaire nominatif bouteille par bouteille (CF-20) ' +
+      'et l\'inventaire d\'ouverture au 01/01 sont une évolution prévue.' }
 ];
 
 // ------------------------------------------------------------
@@ -519,7 +460,7 @@ function traduireValeurVersSql(def, cle, valeur) {
     // « constructor » doit être refusée, pas traduite en fonction).
     if (!Object.hasOwn(enumeration, valeur)) {
       throw new Error(`Valeur « ${valeur} » de ${cle} sans équivalent SQL ` +
-        '(divergence d’énumération à migrer — voir DIVERGENCES).');
+        '(divergence d\'énumération à migrer — voir DIVERGENCES).');
     }
     return enumeration[valeur];
   }
@@ -538,7 +479,7 @@ function traduireValeurVersFront(def, cle, valeur) {
       .find((f) => enumeration[f] === valeur);
     if (front === undefined) {
       throw new Error(`Valeur SQL « ${valeur} » de ${cle} sans équivalent ` +
-        'front (divergence d’énumération — voir DIVERGENCES).');
+        'front (divergence d\'énumération — voir DIVERGENCES).');
     }
     return front;
   }

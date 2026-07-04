@@ -7,8 +7,13 @@
  *   externe, rien à installer (SPEC-V8 §2.2).
  * - La base vit dans `data/inerweb-fluide.db` à côté de l'application ; le
  *   dossier est créé au besoin.
- * - À l'ouverture : clés étrangères activées, journal en mode WAL, puis
- *   exécution de `schema.sql` (idempotent : IF NOT EXISTS partout).
+ * - À l'ouverture (V9-E1) : PRAGMA coffre-fort (clés étrangères, WAL,
+ *   busy_timeout, synchronous=FULL, wal_autocheckpoint — vision §13.2),
+ *   puis VERSIONNAGE : une base vierge reçoit le socle v1 (schema.sql +
+ *   user_version = 1), une base versionnée passe par les migrations
+ *   (server/migrations.js). Une base NON versionnée mais non vide date
+ *   d'avant la V9 : refusée avec un message clair (aucune base réelle
+ *   n'existait — recréer).
  * - Fournit aussi les deux aides transverses du registre :
  *   `generateId(prefixe)` (identifiants préfixés MAC-, BTL-, MVT-…) et
  *   `hashEcriture(donnees, hashPrecedent)` (empreinte SHA-256 chaînée,
@@ -19,6 +24,7 @@ const { DatabaseSync } = require('node:sqlite');
 const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
+const migrations = require('./migrations.js');
 
 // Chemins par défaut : la base dans data/ à la racine de l'application,
 // le schéma à côté de ce module.
@@ -42,12 +48,51 @@ function ouvrir(cheminBase = CHEMIN_BASE_DEFAUT) {
 
   base = new DatabaseSync(cheminBase);
 
-  // Intégrité référentielle + journal WAL (lectures concurrentes, robustesse).
-  base.exec('PRAGMA foreign_keys = ON;');
-  base.exec('PRAGMA journal_mode = WAL;');
+  try {
+    // PRAGMA coffre-fort (vision §13.2) : intégrité référentielle, WAL,
+    // patience sous verrou, durabilité avant vitesse (volumes faibles).
+    base.exec('PRAGMA foreign_keys = ON;');
+    base.exec('PRAGMA journal_mode = WAL;');
+    base.exec('PRAGMA busy_timeout = 5000;');
+    base.exec('PRAGMA synchronous = FULL;');
+    base.exec('PRAGMA wal_autocheckpoint = 200;');
+    // INDISPENSABLE au WORM : sans lui, le DELETE implicite d'un
+    // INSERT OR REPLACE / UPDATE OR REPLACE ne déclenche PAS les
+    // BEFORE DELETE — une écriture scellée serait remplaçable en silence
+    // (trou découvert en revue adversariale E1).
+    base.exec('PRAGMA recursive_triggers = ON;');
 
-  // Application du schéma (jamais de DROP, IF NOT EXISTS partout).
-  base.exec(fs.readFileSync(CHEMIN_SCHEMA, 'utf8'));
+    // Versionnage (V9-E1) : socle v1 sur base vierge, migrations ensuite.
+    const version = base.prepare('PRAGMA user_version').get().user_version;
+    if (version === 0) {
+      const { n } = base.prepare(
+        "SELECT count(*) AS n FROM sqlite_master " +
+        "WHERE type = 'table' AND name NOT LIKE 'sqlite_%'").get();
+      if (n > 0) {
+        throw new Error(
+          'Base à l\'état 0 mais non vide : création interrompue ou base ' +
+          'd\'avant le versionnage V9 (aucune base réelle n\'existait ' +
+          `alors). Vérifier puis supprimer ou déplacer ${cheminBase} et ` +
+          'relancer — le socle v1 sera recréé proprement.');
+      }
+      // Création ATOMIQUE : schéma + estampille dans la même transaction —
+      // une coupure ne laisse jamais des tables sans version.
+      base.exec('BEGIN IMMEDIATE;');
+      try {
+        base.exec(fs.readFileSync(CHEMIN_SCHEMA, 'utf8'));
+        base.exec(`PRAGMA user_version = ${migrations.VERSION_BASE};`);
+        base.exec('COMMIT;');
+      } catch (erreur) {
+        base.exec('ROLLBACK;');
+        throw erreur;
+      }
+    }
+    migrations.migrer(base);
+  } catch (erreur) {
+    base.close();
+    base = null;
+    throw erreur;
+  }
 
   return base;
 }

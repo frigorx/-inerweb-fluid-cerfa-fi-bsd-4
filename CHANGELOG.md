@@ -9,6 +9,42 @@
 - ⚠️ **Révocation à faire côté Apps Script** (les anciennes clés restent valides tant que
   `genererClesAPI()` n'a pas été exécutée puis le script redéployé) : procédure dans `SECURITE.md`.
 
+### 🗄️ V9-E1 — La base versionnée, alignée sur le contrat (04/07)
+Le socle SQLite devient réel — et le contrat fait foi :
+- **`server/schema.sql` v1 ALIGNÉ** : les 18 divergences front↔SQL relevées en E0 sont résorbées
+  à la source (aucune base réelle n'existait — pas de migrations de reconstruction pour des
+  tables vides). Colonnes de chaîne (`hash_precedent`, `ordre_validation` UNIQUE), statuts et
+  enums du contrat (`ARRETEE`/`DEMANTELEE`/`FUITE`/`CONTROLE_DU`, rôles réels, `DETECTEUR`…),
+  date de jour `date_mouvement`, quantité SIGNÉE, `technicien`/`operateur` en toutes lettres,
+  tables `retours_fournisseur` + `stocks_initiaux` + `inventaires` à plat + `justifications_ecarts`,
+  `pieces_jointes.mime_type`, décision déchet sur la bouteille. Déclencheur WORM étendu à
+  **toutes** les colonnes de contenu. Vue `bilan_matiere` réécrite en miroir exact du contrat
+  (écritures figées VALIDE **et** ANNULE, TRANSFERT exclu, repli masse d'entrée → nette courante,
+  pas de ligne fantôme sur inventaire seul).
+- **`server/migrations.js`** : boucle `user_version` transactionnelle (tout ou rien, registre
+  troué refusé, jamais de DROP ni de re-hash), migrations **002 sites** (le chaînon
+  client↔machine de la vision §3) et **003 codes publics QR** (identifiants opaques UNIQUE).
+  Chemin unique : les bases neuves passent par les mêmes migrations — éprouvées à chaque création.
+- **`server/db.js`** : PRAGMA coffre-fort (`synchronous=FULL`, `busy_timeout`, WAL,
+  `wal_autocheckpoint`), création v1 ATOMIQUE (schéma + estampille en une transaction), refus
+  motivé des bases non versionnées, migrations au fil de l'ouverture.
+- 🛡️ **Trou WORM découvert par la revue adversariale et BOUCHÉ : `PRAGMA recursive_triggers=ON`.**
+  Sans lui, le DELETE implicite d'un `INSERT OR REPLACE` / `UPDATE OR REPLACE` ne déclenche pas
+  les `BEFORE DELETE` : une écriture scellée était **remplaçable en silence** (reproduit, puis
+  prouvé bloqué). La suite éprouve désormais les trois assauts + la transition ANNULE-avec-retouche,
+  et un garde anti-migration vérifie que le déclencheur couvre TOUTES les colonnes du registre.
+- **`server/test-migrations.mjs`** (45 vérifications) + `test-mapping.mjs` refondu
+  (**140 vérifications** : couverture par introspection de la base RÉELLE créée par db.js,
+  CHECK confrontés aux énumérations du contrat, branches CR-3 et « vidage » provoquées).
+  `mapping.js` v2 : champs débloqués, 4 nouvelles tables mappées, DIVERGENCES réduites à 5
+  (contrôle imbriqué E3, journal E2, categories_2008, vue à éprouver en E3, inventaire nominatif V9.4).
+- Intégration : **17 suites toutes vertes** (777 vérifications au passage de revue, 368 sur le
+  périmètre serveur+contrat après correctifs).
+- 🎁 **Intrant V10 reçu de Franck : le traceur « FRIGOLO Mollier v3 PRO »** (log(p)-h, noyau
+  thermodynamique 6 fluides, COP), archivé dans `docs/intrants-v10/` avec sa fiche d'analyse ;
+  vision enrichie d'un §9.4 (outil universel : relevés comparés, assistant de mise en service,
+  diagramme enthalpique, identification de pannes).
+
 ### 🧩 V9-E0 — Le contrat DataStore est figé (04/07)
 Ouverture du chantier V9 « coffre-fort » (plan `docs/VISION-V9-V10.md` §11) :
 - **`v8/js/data/contrat.js`** : les 64 méthodes du magasin de données figées noir sur blanc,
