@@ -343,15 +343,15 @@ const TABLES = {
     champs: {
       date: 'date_heure',
       qui: 'utilisateur',
-      action: 'action'
+      action: 'action',
+      cible: 'cible',
+      details: 'details'
     },
-    bloquees: {
-      cible: 'répartition entre entite_type et entite_id à trancher — E2 ' +
-        '(journal chaîné)',
-      details: 'colonne d\'accueil à trancher (apres_json ? resultat ?) — E2'
-    },
+    // hash/hash_precedent (chaînage E2, posés par db.js:journaliser) et les
+    // champs structurés restent réservés au serveur — le contrat n'expose
+    // que { date, qui, action, cible, details }.
     sqlSeulement: ['id', 'entite_type', 'entite_id', 'avant_json',
-      'apres_json', 'ip_poste', 'resultat']
+      'apres_json', 'ip_poste', 'resultat', 'hash_precedent', 'hash']
   },
 
   audits_etablissement: {
@@ -394,18 +394,16 @@ const TABLES_NON_MAPPEES = {
 };
 
 /**
- * Divergences front ↔ schéma RESTANTES après l'alignement E1, chacune datée
- * de l'incrément qui doit la résorber. (Les 18 divergences relevées en E0
- * ont été résorbées par le schéma v1 — voir l'historique en tête de module.)
+ * Divergences front ↔ schéma RESTANTES après les alignements E1 et E2,
+ * chacune datée de l'incrément qui doit la résorber. (Les 18 divergences
+ * relevées en E0 ont été résorbées par le schéma v1 ; le journal chaîné —
+ * migration 004 + db.js:journaliser — a résorbé celle du journal.)
  */
 const DIVERGENCES = [
   { objet: 'mouvements.controle', echeance: 'E3',
     constat: 'Objet imbriqué côté contrat ; colonnes aplaties côté SQL ' +
       '(statut_controle_declare, detecteur_declare_id, controle_lie_id). ' +
       'Le LocalStore fera l\'aplatissement et la reconstitution.' },
-  { objet: 'journal_audit', echeance: 'E2',
-    constat: 'Chaînage à poser (hash_precedent + hash — le vrai passage ' +
-      'démo → coffre-fort) et accueil de cible/details à trancher.' },
   { objet: 'etablissements.categories_2008', echeance: 'E3',
     constat: 'Le contrat ne porte qu\'une liste de catégories (mappée sur ' +
       'categories_2025) ; le sort de la grille 2008 (transition jusqu\'au ' +

@@ -169,14 +169,127 @@ base2.exec("DELETE FROM mouvements WHERE id = 'MVT-T5';");
     nonCouvertes.length === 0, `non couvertes : ${nonCouvertes.join(', ')}`);
 }
 
-base2.exec(`INSERT INTO journal_audit (utilisateur, action)
-            VALUES ('système', 'TEST_MIGRATIONS');`);
+// Depuis E2, TOUT passe par journaliser (une ligne sans hash = anomalie).
+db.journaliser({ qui: 'système', action: 'TEST_MIGRATIONS' });
 verifierLeve('le journal d’audit refuse toute modification',
   () => base2.exec("UPDATE journal_audit SET action = 'RETOUCHE';"),
   'ajout seul');
 verifierLeve('le journal d’audit refuse toute suppression',
   () => base2.exec('DELETE FROM journal_audit;'),
   'ajout seul');
+
+// --- E2 : le journal CHAÎNÉ — le vrai passage démo → coffre-fort ---------
+verifier('le journal porte les colonnes du chaînage (migration 004)',
+  (() => {
+    const noms = base2.prepare('PRAGMA table_xinfo(journal_audit)').all()
+      .map((c) => c.name);
+    return ['cible', 'details', 'hash_precedent', 'hash']
+      .every((c) => noms.includes(c));
+  })());
+verifierLeve('journaliser exige une action',
+  () => db.journaliser({ qui: 'Testeur', action: '  ' }), 'obligatoire');
+const HEX_64 = /^[0-9a-f]{64}$/;
+const empreintes = [
+  db.journaliser({ qui: 'Testeur', action: 'CREATION_MACHINE',
+    cible: 'M-TEST', details: 'première entrée chaînée' }),
+  db.journaliser({ action: 'VALIDATION_MOUVEMENT', cible: 'FORM-2026-0001' }),
+  db.journaliser({ qui: 'Testeur', action: 'SAISIE_INVENTAIRE' })
+];
+verifier('chaque entrée chaînée porte une empreinte SHA-256',
+  empreintes.every((h) => HEX_64.test(h)));
+{
+  const entrees = base2.prepare(
+    'SELECT * FROM journal_audit ORDER BY id').all();
+  verifier('la chaîne du journal se tisse (hash_precedent de proche en proche)',
+    entrees.length === 4 && entrees[0].hash_precedent === null
+    && entrees.every((e, i) => HEX_64.test(e.hash)
+      && (i === 0 || e.hash_precedent === entrees[i - 1].hash)));
+  verifier('qui absent → « système » (convention du contrat)',
+    entrees.find((e) => e.action === 'VALIDATION_MOUVEMENT')
+      .utilisateur === 'système');
+}
+verifier('verifierChaineJournal valide une chaîne intacte',
+  (() => { const v = db.verifierChaineJournal();
+    return v.ok === true && v.casseA === null; })());
+
+// Ré-entrance (revue E2) : journaliser DANS une transaction ouverte rejoint
+// le tout-ou-rien de l'appelant au lieu de le saborder.
+db.transaction((bdd) => {
+  bdd.prepare("INSERT INTO parametres (cle, valeur) VALUES (?, ?)")
+    .run('essai_reentrance', 'oui');
+  db.journaliser({ qui: 'Testeur', action: 'ESSAI_REENTRANCE' });
+});
+verifier('journaliser rejoint une transaction ouverte (mutation + journal atomiques)',
+  base2.prepare("SELECT valeur FROM parametres WHERE cle = 'essai_reentrance'")
+    .get()?.valeur === 'oui'
+  && db.verifierChaineJournal().ok === true
+  && base2.prepare(`SELECT count(*) AS n FROM journal_audit
+      WHERE action = 'ESSAI_REENTRANCE'`).get().n === 1);
+verifierLeve('une panne dans la transaction annule mutation ET journal d’un bloc',
+  () => db.transaction((bdd) => {
+    bdd.prepare("INSERT INTO parametres (cle, valeur) VALUES (?, ?)")
+      .run('essai_rollback', 'non');
+    db.journaliser({ qui: 'Testeur', action: 'JAMAIS_COMMITEE' });
+    throw new Error('panne simulée après journalisation');
+  }), 'panne simulée');
+verifier('après le rollback : ni paramètre, ni entrée de journal, chaîne intacte',
+  base2.prepare("SELECT count(*) AS n FROM parametres WHERE cle = 'essai_rollback'")
+    .get().n === 0
+  && base2.prepare(`SELECT count(*) AS n FROM journal_audit
+      WHERE action = 'JAMAIS_COMMITEE'`).get().n === 0
+  && db.verifierChaineJournal().ok === true);
+
+// Altération de hash_precedent SEUL, par outil externe : détectée puis réparée.
+{
+  const declencheurs = base2.prepare(`SELECT name, sql FROM sqlite_master
+    WHERE type = 'trigger' AND tbl_name = 'journal_audit'`).all();
+  for (const d of declencheurs) base2.exec(`DROP TRIGGER ${d.name};`);
+  const deuxieme = base2.prepare(
+    'SELECT id, hash_precedent FROM journal_audit ORDER BY id LIMIT 1 OFFSET 1')
+    .get();
+  base2.prepare('UPDATE journal_audit SET hash_precedent = ? WHERE id = ?')
+    .run('f'.repeat(64), deuxieme.id);
+  const verdictAltere = db.verifierChaineJournal();
+  verifier('une altération du seul hash_precedent casse la chaîne au bon endroit',
+    verdictAltere.ok === false && verdictAltere.casseA === deuxieme.id,
+    `verdict = ${JSON.stringify(verdictAltere)}`);
+  base2.prepare('UPDATE journal_audit SET hash_precedent = ? WHERE id = ?')
+    .run(deuxieme.hash_precedent, deuxieme.id);
+  verifier('chaîne redevenue intacte après restauration',
+    db.verifierChaineJournal().ok === true);
+  for (const d of declencheurs) base2.exec(d.sql + ';');
+}
+
+// Forgerie : une entrée insérée SANS hash (l'INSERT n'est pas bloqué par les
+// déclencheurs) doit être SIGNALÉE — plus jamais de feu vert sur un journal
+// contenant une ligne hors chaîne (trou de la revue E2).
+{
+  base2.exec(`INSERT INTO journal_audit (utilisateur, action)
+              VALUES ('PIRATE', 'FAUSSE_ENTREE');`);
+  const forgee = base2.prepare(
+    'SELECT id FROM journal_audit ORDER BY id DESC LIMIT 1').get().id;
+  const verdict = db.verifierChaineJournal();
+  verifier('une entrée forgée sans hash est signalée (jamais tolérée)',
+    verdict.ok === false && verdict.casseA === forgee,
+    `verdict = ${JSON.stringify(verdict)}`);
+}
+
+// Excision par OUTIL EXTERNE (contourne les déclencheurs) : détectée.
+{
+  const declencheurs = base2.prepare(`SELECT name, sql FROM sqlite_master
+    WHERE type = 'trigger' AND tbl_name = 'journal_audit'`).all();
+  for (const d of declencheurs) base2.exec(`DROP TRIGGER ${d.name};`);
+  const milieu = base2.prepare(`SELECT id FROM journal_audit
+    WHERE hash IS NOT NULL ORDER BY id LIMIT 1 OFFSET 1`).get().id;
+  base2.exec(`DELETE FROM journal_audit WHERE id = ${milieu};`);
+  for (const d of declencheurs) base2.exec(d.sql + ';');
+  const suivante = base2.prepare(`SELECT id FROM journal_audit
+    WHERE hash IS NOT NULL AND id > ? ORDER BY id LIMIT 1`).get(milieu).id;
+  const verdict = db.verifierChaineJournal();
+  verifier('une excision au milieu du journal CASSE la chaîne, au bon endroit',
+    verdict.ok === false && verdict.casseA === suivante,
+    `verdict = ${JSON.stringify(verdict)}`);
+}
 
 // ============================================================
 // 4. Les CHECK sont alignés sur le contrat DataStore (E0)

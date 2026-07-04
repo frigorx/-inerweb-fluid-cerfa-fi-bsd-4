@@ -147,13 +147,24 @@ function run(sql, params) {
 /**
  * Exécute `fn` dans une transaction : COMMIT si tout passe, ROLLBACK à la
  * moindre erreur (l'erreur est relancée). `fn` reçoit l'instance de la base.
+ *
+ * RÉ-ENTRANT (V9-E2) : un appel imbriqué rejoint la transaction ambiante au
+ * lieu de lever « cannot start a transaction within a transaction » — et
+ * surtout au lieu de la SABORDER par son ROLLBACK. Indispensable pour
+ * journaliser une mutation dans le même tout-ou-rien qu'elle (E3).
+ * Node est mono-fil et DatabaseSync synchrone : un drapeau suffit.
  * @template T
  * @param {(db: DatabaseSync) => T} fn
  * @returns {T}
  */
+let transactionOuverte = false;
 function transaction(fn) {
   const db = ouvrir();
+  if (transactionOuverte) {
+    return fn(db); // rejoint la transaction ambiante (l'appelant décide)
+  }
   db.exec('BEGIN IMMEDIATE;');
+  transactionOuverte = true;
   try {
     const resultat = fn(db);
     db.exec('COMMIT;');
@@ -161,6 +172,8 @@ function transaction(fn) {
   } catch (erreur) {
     db.exec('ROLLBACK;');
     throw erreur;
+  } finally {
+    transactionOuverte = false;
   }
 }
 
@@ -193,6 +206,82 @@ function stringifierStable(valeur) {
 }
 
 /**
+ * Écrit une entrée CHAÎNÉE au journal d'audit (V9-E2 — le vrai passage
+ * démo → coffre-fort). L'empreinte de chaque entrée intègre celle de
+ * l'entrée précédente : toute excision a posteriori (même par un outil
+ * externe qui contournerait les déclencheurs) casse la chaîne et devient
+ * détectable par verifierChaineJournal().
+ * Sérialisé par transaction (BEGIN IMMEDIATE) : pas de fourche de chaîne.
+ * @param {{qui?: string, action: string, cible?: string, details?: string}} entree
+ * @returns {string} L'empreinte de l'entrée écrite.
+ */
+function journaliser({ qui = null, action, cible = null, details = null }) {
+  if (!action || !String(action).trim()) {
+    throw new Error('Action de journal obligatoire.');
+  }
+  return transaction((bdd) => {
+    const precedent = bdd.prepare(
+      `SELECT hash FROM journal_audit
+       WHERE hash IS NOT NULL ORDER BY id DESC LIMIT 1`).get();
+    const contenu = {
+      date_heure: new Date().toISOString(),
+      utilisateur: qui ?? 'système',
+      action: String(action),
+      cible,
+      details
+    };
+    const hash = hashEcriture(contenu, precedent?.hash ?? '');
+    bdd.prepare(
+      `INSERT INTO journal_audit
+         (date_heure, utilisateur, action, cible, details,
+          hash_precedent, hash)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`)
+      .run(contenu.date_heure, contenu.utilisateur, contenu.action,
+        contenu.cible, contenu.details, precedent?.hash ?? null, hash);
+    return hash;
+  });
+}
+
+/**
+ * Re-parcourt le journal d'audit EN ENTIER et recalcule chaque empreinte.
+ * Depuis E2, TOUTE entrée passe par journaliser() : une ligne sans hash est
+ * une anomalie en soi (forgerie insérée à côté de la chaîne, ou entrée
+ * soustraite à la vérification) — elle est SIGNALÉE, jamais tolérée
+ * (trou découvert en revue adversariale E2 : une entrée forgée hash NULL
+ * passait au vert).
+ * Limites documentées (vision §4.6, tamper-evidence) : une troncature de
+ * FIN de chaîne et une ré-écriture complète cohérente, disque en main,
+ * restent indétectables sans scellé conservé hors système.
+ * @returns {{ok: boolean, casseA: number|null}} casseA = id de la première
+ *          entrée en rupture (excision, altération ou hors chaîne).
+ */
+function verifierChaineJournal() {
+  const entrees = all(
+    `SELECT id, date_heure, utilisateur, action, cible, details,
+            hash_precedent, hash
+     FROM journal_audit ORDER BY id`);
+  let precedent = '';
+  for (const entree of entrees) {
+    if (entree.hash === null) {
+      return { ok: false, casseA: entree.id };
+    }
+    const attendu = hashEcriture({
+      date_heure: entree.date_heure,
+      utilisateur: entree.utilisateur,
+      action: entree.action,
+      cible: entree.cible,
+      details: entree.details
+    }, precedent);
+    if ((entree.hash_precedent ?? '') !== precedent
+      || entree.hash !== attendu) {
+      return { ok: false, casseA: entree.id };
+    }
+    precedent = entree.hash;
+  }
+  return { ok: true, casseA: null };
+}
+
+/**
  * Empreinte SHA-256 chaînée d'une écriture du registre (SPEC-V8 §5.6).
  * Le hash de chaque écriture validée intègre le hash de l'écriture validée
  * précédente : toute altération a posteriori casse la chaîne, ce qui rend le
@@ -219,4 +308,6 @@ module.exports = {
   transaction,
   generateId,
   hashEcriture,
+  journaliser,
+  verifierChaineJournal,
 };

@@ -379,8 +379,13 @@ verifier('la masse nette (colonne générée) se lit mais ne s\'écrit pas',
 verifierLeve('l\'objet imbriqué mouvements.controle reste bloqué (E3)',
   () => versSql('mouvements', { controle: { statutControle: 'SANS_OBJET' } }),
   'non transposable');
-verifierLeve('journal_audit.cible reste bloqué (E2)',
-  () => versSql('journal_audit', { cible: 'M1' }), 'non transposable');
+verifier('le journal du contrat se traduit en entier depuis E2',
+  (() => {
+    const ligne = versSql('journal_audit', { date: '2026-07-04T18:00:00.000Z',
+      qui: 'Testeur', action: 'ESSAI', cible: 'M1', details: 'détail' });
+    return ligne.date_heure === '2026-07-04T18:00:00.000Z'
+      && ligne.cible === 'M1' && ligne.details === 'détail';
+  })());
 verifierLeve('une clé front inconnue est refusée (anti-dérive)',
   () => versSql('machines', { cleFarfelue: 1 }), 'inconnue');
 verifierLeve('une clé pathologique (constructor) est refusée, pas héritée',

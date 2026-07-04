@@ -20,7 +20,7 @@
  * Registre :
  *   2 — sites : le chaînon client ↔ machine (vision §3), porté par V9.1.
  *   3 — codes publics : identifiants opaques stables pour les QR (vision §6).
- *   4 — (E2) chaînage du journal d'audit : hash_precedent + hash.
+ *   4 — journal chaîné (E2) : hash_precedent + hash + cible/details.
  *   5 — (V9.2) relevés pédagogiques : releves + références + valeurs.
  */
 
@@ -75,6 +75,23 @@ const MIGRATIONS = {
                  ON machines (code_public) WHERE code_public IS NOT NULL;`);
       db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_bouteilles_code_public
                  ON bouteilles (code_public) WHERE code_public IS NOT NULL;`);
+    }
+  },
+
+  4: {
+    nom: 'journal_chaine',
+    appliquer(db) {
+      // LE vrai passage démo → coffre-fort (vision §3) : le journal d'audit
+      // devient chaîné par hash. Les déclencheurs interdisent déjà toute
+      // modification/suppression PAR L'APPLICATION ; le chaînage rend toute
+      // excision par un outil externe DÉTECTABLE (tamper-evidence, §4.6).
+      // cible/details : les deux champs du contrat (getJournalAudit) qui
+      // n'avaient pas de colonne d'accueil — entite_type/entite_id/
+      // avant_json/apres_json restent réservés au serveur.
+      db.exec('ALTER TABLE journal_audit ADD COLUMN cible TEXT;');
+      db.exec('ALTER TABLE journal_audit ADD COLUMN details TEXT;');
+      db.exec('ALTER TABLE journal_audit ADD COLUMN hash_precedent TEXT;');
+      db.exec('ALTER TABLE journal_audit ADD COLUMN hash TEXT;');
     }
   }
 };

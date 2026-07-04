@@ -9,6 +9,25 @@
 - ⚠️ **Révocation à faire côté Apps Script** (les anciennes clés restent valides tant que
   `genererClesAPI()` n'a pas été exécutée puis le script redéployé) : procédure dans `SECURITE.md`.
 
+### 🔗 V9-E2 — Le journal d'audit chaîné (04/07)
+« Le vrai passage démo → coffre-fort » (vision §3) : sans chaîne, on pouvait exciser une ligne
+du journal sans trace ; désormais toute excision est détectable.
+- **Migration 004** : `journal_audit` gagne `cible`/`details` (les deux champs du contrat qui
+  n'avaient pas de colonne) et `hash_precedent`/`hash` (le chaînage).
+- **`db.js:journaliser()`** : écrit chaque entrée avec une empreinte SHA-256 qui intègre celle de
+  la précédente, en transaction `BEGIN IMMEDIATE` (pas de fourche). **Ré-entrant** : appelé dans
+  une transaction ouverte, il la REJOINT — mutation métier + journal dans le même tout-ou-rien
+  (le piège « rollback saboteur » découvert en revue est neutralisé et prouvé dans les deux sens :
+  commit atomique, rollback atomique).
+- **`db.js:verifierChaineJournal()`** : recalcule la chaîne sur la table ENTIÈRE — une ligne sans
+  hash est une anomalie SIGNALÉE, jamais tolérée (2ᵉ trou de revue : une entrée forgée hash NULL
+  passait au vert). Limites honnêtes documentées (vision §4.6) : troncature de fin et ré-écriture
+  totale cohérente restent l'affaire des scellés hors système (E4).
+- Tests (58 vérifications au total) : chaîne tissée de proche en proche, excision au milieu
+  détectée à la ligne près, altération du seul `hash_precedent` détectée, forgerie signalée,
+  ré-entrance et rollback atomique prouvés. `mapping.js` : journal débloqué (cible/details),
+  plus que 4 divergences. Intégration : **17 suites vertes, 794 vérifications**.
+
 ### 🗄️ V9-E1 — La base versionnée, alignée sur le contrat (04/07)
 Le socle SQLite devient réel — et le contrat fait foi :
 - **`server/schema.sql` v1 ALIGNÉ** : les 18 divergences front↔SQL relevées en E0 sont résorbées
