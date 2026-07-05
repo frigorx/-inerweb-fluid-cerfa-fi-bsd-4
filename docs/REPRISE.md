@@ -57,10 +57,17 @@
    sécurité), CSRF/rebinding bouché. **Comment lancer le mode Local** : `node server/serveur.js`
    (port 2011) puis http://127.0.0.1:2011/v8/. ⚠️ Le rôle REFERENT accordé au loopback est un
    raccourci E3 provisoire (sessions réelles = E5).
-6. **E4 sauvegarde/restauration** (PROCHAINE ÉTAPE) : `VACUUM INTO` seule primitive, snapshots +
-   archives, manifeste vérifié, restauration atomique + sauvegarde de sécurité + 3 vérifications +
-   rollback, `.partiel`, chiffrement AES-GCM (vision §4) → E5 comptes/rôles/sessions (Franck =
-   admin unique qui octroie, zéro inscription libre ; remplace le raccourci loopback d'E3).
+6. ~~**E4 sauvegarde/restauration**~~ **FAIT le 05/07** : coffre-fort complet (plan `docs/E4-PLAN.md`).
+   `VACUUM INTO` seule primitive, snapshots + archives, manifeste-preuve, restauration atomique +
+   sauvegarde de sécurité + rollback via l'original intact + reprise au démarrage, chiffrement
+   AES-256-GCM (phrase NFC + re-déchiffrement de vérification), écran `v8/js/views/sauvegarde.js`.
+   Tests : `node server/test-sauvegarde.mjs` (14 familles), `node server/test-chiffrement.mjs`.
+   ⚠️ Modules E4 = server/{sauvegarde,restauration,manifeste,verification,zip-node,chiffrement,
+   routes-sauvegarde}.js. Rôles ADMIN/REFERENT sur les 4 routes /api/*.
+7. **E5 comptes/rôles/sessions** (PROCHAINE ÉTAPE) : table `sessions`, jeton opaque cookie
+   HttpOnly, admin unique qui octroie (zéro inscription libre), pas de compte par défaut,
+   verrouillage après 5 échecs, scrypt. **Remplace le raccourci loopback=REFERENT d'E3** (le vrai
+   contrôle d'accès) et débloque l'écoute LAN pour le scan tablette (décision §16.6).
 4. Puis V9.1 fiche machine vivante (`#/m/:code`) → QR (`code_public` opaque) → relevés élèves.
 5. Bascule v8 → racine quand Franck valide. Lot confort audit (22 🟡) au fil de l'eau.
 
@@ -107,6 +114,8 @@ node v8/js/data/test-contrat.mjs local  # contrat DataStore, mode LOCAL SQLite (
 node server/test-hash-mouvement.mjs     # équivalence hash front/serveur (E3) — 18 vérif.
 node server/test-mapping.mjs            # correspondance front <-> SQL (E0/E1) — 140 vérif.
 node server/test-migrations.mjs         # versionnage + WORM + journal chaîné (E1/E2) — 58 vérif.
+node server/test-sauvegarde.mjs         # coffre-fort : sauvegarde/restauration (E4.1) — 14 familles
+node server/test-chiffrement.mjs        # chiffrement AES-256-GCM (E4.2) — 6 familles
 ```
 
 ⚠️ `test-contrat.mjs` ÉCRIT dans le store cible : contre le futur LocalStore (E3), toujours

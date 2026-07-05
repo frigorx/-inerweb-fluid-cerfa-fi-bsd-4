@@ -9,6 +9,32 @@
 - ⚠️ **Révocation à faire côté Apps Script** (les anciennes clés restent valides tant que
   `genererClesAPI()` n'a pas été exécutée puis le script redéployé) : procédure dans `SECURITE.md`.
 
+### 🔐 V9-E4 — Le coffre-fort : sauvegarde, restauration, chiffrement (05/07)
+L'exigence n°1 (ne JAMAIS perdre les données) tenue de bout en bout, plan `docs/E4-PLAN.md`.
+- **E4.1 noyau** : `VACUUM INTO` seule primitive (jamais copier le `.db` à chaud) ; snapshots
+  (base seule, filet anti-erreur) + archives complètes (base+documents, filet anti-sinistre) ;
+  **manifeste-preuve** (empreinte, chaîne OK, compteurs) ; **restauration atomique** Windows
+  (sortir l'ancienne du chemin, poser la nouvelle sur le chemin libre, purge du WAL orphelin) ;
+  sauvegarde de sécurité auto non désactivable ; **rollback via l'original intact** (`ancienne.db`,
+  pas une archive faillible) ; bouton « Tester une sauvegarde » (base temporaire, jamais la base
+  vive) ; reprise au démarrage. `server/` : zip-node, verification, manifeste, sauvegarde,
+  restauration, routes-sauvegarde. **14 familles de test (158 vérif.)** dont la coupure simulée à
+  chaque étape (jamais d'hybride), le filet saboté, le crash pendant rollback, la PJ manquante.
+- **E4.2 chiffrement** : AES-256-GCM + scrypt, `.zip.chiffre` (manifeste EN CLAIR en tête pour
+  inventorier sans la phrase, sert d'AAD GCM), **re-déchiffrement de vérification** (refuse
+  d'annoncer OK si l'archive n'est pas ré-ouvrable — parade au « phrase perdue »), **phrase
+  normalisée NFC** (une phrase accentuée saisie autrement ne rend plus la sauvegarde
+  irrécupérable). 6 familles de test.
+- **E4.3 écran** (`v8/js/views/sauvegarde.js`) : liste, Sauvegarder (snapshot/archive/chiffrer),
+  Tester, Restaurer avec écran de comparaison + confirmation de perte ; en démo, encart + repli
+  JSON. Vérifié navigateur (serveur réel) : snapshot chiffré créé, testé « restaurable ».
+- Deux revues adversariales : la 1re a trouvé un **scénario de perte de données** (rollback si le
+  filet échoue) et un bug de chemins — corrigés et prouvés ; la 2de (crypto) a fait ajouter la
+  normalisation NFC. Rôles ADMIN/REFERENT sur les 4 routes, verrou anti-concurrence, détection
+  OneDrive. Sécurité restante ASSUMÉE : tamper-evidence (§4.6), pas d'authentification du manifeste
+  contre un falsificateur disque-en-main (comme tout registre local).
+- Commits : `8f292d8` noyau · `0d232e4` durcissement · `73132de` chiffrement · `237b63c` écran+NFC.
+
 ### 🔌 V9-E3 — Le mode Local branché : le contrat passe 183/0 sur SQLite (04-05/07)
 Le plus gros incrément de la V9 : les 64 méthodes du contrat DataStore réimplémentées côté
 serveur, éprouvées par LES MÊMES 183 assertions que le mode démo. L'objectif d'E0 est atteint —
