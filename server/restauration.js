@@ -55,26 +55,53 @@ const sauvegarde = require('./sauvegarde.js');
 // Emplacements — dérivés du .db ouvert (jetable en test, réel en prod).
 // data/ = dossier du .db ; restauration-en-cours/ et documents/ y vivent ;
 // backups/avant-restauration/ est frère (sous backups/).
+//
+// PIÈGE MORTEL (revue adversariale E4.1) : db.cheminOuvert() retourne le
+// CHEMIN PAR DÉFAUT (data/ RÉEL du dépôt) dès que la base est FERMÉE
+// (db.fermer() nulle cheminBaseOuverte). Or la restauration FERME la base
+// pour basculer le fichier. Recalculer un chemin via ces fonctions APRÈS la
+// fermeture viserait donc data/ RÉEL — corruption/perte en test ET latent en
+// prod. RÈGLE : restaurer() capture TOUS les chemins dérivés AU DÉBUT (base
+// encore ouverte) via capturerChemins() et les passe en paramètres ; on ne
+// dérive JAMAIS un chemin de bascule via cheminOuvert() après db.fermer().
 // ------------------------------------------------------------
 
-/** Racine data/ (dossier du .db). */
+/** Racine data/ (dossier du .db) — À N'UTILISER QUE base OUVERTE. */
 function dossierData() {
   return path.dirname(db.cheminOuvert());
 }
 
-/** Zone de travail de bascule (deux .db entiers pendant l'échange). */
+/** Zone de travail de bascule — À N'UTILISER QUE base OUVERTE (cf. capturerChemins). */
 function dossierRestaurationEnCours() {
   return path.join(dossierData(), 'restauration-en-cours');
 }
 
-/** Dossier des pièces jointes (à côté de la base — cf. api.js). */
-function dossierDocuments() {
-  return path.join(dossierData(), 'documents');
-}
-
-/** Filet AUTO d'avant-restauration (sous backups/). */
+/** Filet AUTO d'avant-restauration (sous backups/) — base OUVERTE seulement. */
 function dossierAvantRestauration() {
   return path.join(sauvegarde.dossierBackups(), 'avant-restauration');
+}
+
+/**
+ * Capture, DEPUIS le chemin de la base vive (donné AVANT toute fermeture),
+ * TOUS les chemins dérivés dont la bascule/le rollback/la reprise ont besoin.
+ * Aucune de ces valeurs ne repasse jamais par db.cheminOuvert() : elles
+ * survivent donc à db.fermer() (qui ferait retomber cheminOuvert() sur data/
+ * RÉEL du dépôt). C'est le cœur du correctif « chemins après fermeture ».
+ * @param {string} cheminBaseVive - chemin du .db vif, capturé base ouverte
+ * @returns {{cheminBaseVive: string, dossierData: string,
+ *   documentsVifs: string, zone: string, dossierAvantRestauration: string}}
+ */
+function capturerChemins(cheminBaseVive) {
+  const data = path.dirname(cheminBaseVive);
+  // backups/ est frère de data/ (cf. sauvegarde.dossierBackups()).
+  const backups = path.join(path.dirname(data), 'backups');
+  return {
+    cheminBaseVive,
+    dossierData: data,
+    documentsVifs: path.join(data, 'documents'),
+    zone: path.join(data, 'restauration-en-cours'),
+    dossierAvantRestauration: path.join(backups, 'avant-restauration')
+  };
 }
 
 // ------------------------------------------------------------
@@ -343,11 +370,15 @@ function extraireEtVerifierHorsBase(cheminZip, manifeste, zone) {
   }
 
   // 1e. Documents (ARCHIVE) : vérifier nombre + sha256Global contre le
-  //     manifeste, sur les fichiers EXTRAITS (les CRC sont déjà validés).
+  //     manifeste, ET recroiser le nombre de fichiers EXTRAITS avec le count
+  //     RÉEL de pieces_jointes dans la base extraite (le manifeste seul est
+  //     falsifiable : un attaquant peut retirer une PJ et re-signer le
+  //     manifeste — mais pas mentir sur la base, dont le sha256 est le pivot
+  //     déjà vérifié en 1c). Correctif 4 (b).
   let cheminDocumentsExtraits = null;
   if (manifeste.type === 'ARCHIVE') {
     cheminDocumentsExtraits = path.join(zone, 'documents');
-    verifierDocumentsExtraits(cheminDocumentsExtraits, manifeste);
+    verifierDocumentsExtraits(cheminDocumentsExtraits, manifeste, cheminNouvelle);
   }
 
   return { cheminNouvelle, cheminDocumentsExtraits };
@@ -372,14 +403,22 @@ function motifVerdict(verdict) {
 }
 
 /**
- * Vérifie les documents extraits d'une ARCHIVE : le NOMBRE de fichiers sous
- * documents/ == manifeste.documents.nombre, et le sha256Global recomposé
- * (SHA-256 de la concaténation TRIÉE des sha256 par fichier) == celui du
- * manifeste. Détecte une PJ manquante/altérée sans ouvrir la base.
+ * Vérifie les documents extraits d'une ARCHIVE. Trois recroisements :
+ *   1. NOMBRE de fichiers sous documents/ == manifeste.documents.nombre ;
+ *   2. sha256Global recomposé (SHA-256 de la concaténation TRIÉE des sha256
+ *      par fichier) == celui du manifeste ;
+ *   3. NOMBRE de fichiers == count(*) RÉEL de pieces_jointes dans la base
+ *      EXTRAITE — LA garde anti-falsification (correctif 4 (b)). Le manifeste
+ *      est falsifiable (on peut retirer une PJ et re-signer nombre +
+ *      sha256Global du vide) ; la base, elle, ne ment pas : son sha256 est le
+ *      pivot déjà vérifié, et sa table pieces_jointes dit le VRAI compte. Une
+ *      archive à qui il manque une PJ est ainsi démasquée même manifeste
+ *      recalculé.
  * @param {string} dossierDocs - dossier documents/ extrait (peut ne pas exister si 0 PJ)
  * @param {object} manifeste
+ * @param {string} cheminBaseExtraite - la base .db extraite (pour le count réel)
  */
-function verifierDocumentsExtraits(dossierDocs, manifeste) {
+function verifierDocumentsExtraits(dossierDocs, manifeste, cheminBaseExtraite) {
   const attendu = manifeste.documents;
   const fichiers = fs.existsSync(dossierDocs)
     ? fs.readdirSync(dossierDocs).filter((n) => {
@@ -387,6 +426,17 @@ function verifierDocumentsExtraits(dossierDocs, manifeste) {
         return fs.statSync(p).isFile();
       })
     : [];
+
+  // 3. Recroisement avec le count RÉEL de la base (indépendant du manifeste).
+  const pjEnBase = compterPiecesJointes(cheminBaseExtraite);
+  if (fichiers.length !== pjEnBase) {
+    throw new Error(
+      `Pièces jointes incohérentes avec la base : ${fichiers.length} ` +
+      `fichier(s) extrait(s) pour ${pjEnBase} pièce(s) jointe(s) en base ` +
+      '(pieces_jointes) — une PJ manque ou a été ajoutée hors base, ' +
+      'restauration ABANDONNÉE (le manifeste seul ne fait pas foi).');
+  }
+
   if (fichiers.length !== attendu.nombre) {
     throw new Error(
       `Documents de l'archive incohérents : ${fichiers.length} fichier(s) ` +
@@ -404,6 +454,22 @@ function verifierDocumentsExtraits(dossierDocs, manifeste) {
   }
 }
 
+/**
+ * Compte les pièces jointes (`count(*) FROM pieces_jointes`) dans un fichier
+ * .db AUTONOME, via une instance DÉDIÉE en lecture seule (jamais le singleton).
+ * @param {string} cheminDb
+ * @returns {number}
+ */
+function compterPiecesJointes(cheminDb) {
+  const instance = new DatabaseSync(cheminDb, { readOnly: true });
+  try {
+    return instance.prepare(
+      'SELECT count(*) AS n FROM pieces_jointes').get().n;
+  } finally {
+    instance.close();
+  }
+}
+
 // ------------------------------------------------------------
 // (3) BASCULE ATOMIQUE (le contournement NTFS) + documents.
 // ------------------------------------------------------------
@@ -416,14 +482,17 @@ function verifierDocumentsExtraits(dossierDocs, manifeste) {
  * APRÈS l'étape nommée, la reprise au démarrage devant alors rétablir un état
  * cohérent (jamais un hybride).
  *
- * @param {string} cheminBaseVive - chemin du .db vif (déjà capturé AVANT fermer)
+ * @param {ReturnType<typeof capturerChemins>} chemins - chemins CAPTURÉS base
+ *        ouverte (cheminBaseVive, documentsVifs, zone…). JAMAIS recalculés via
+ *        cheminOuvert() après db.fermer() (viserait data/ RÉEL).
  * @param {string} cheminNouvelle - restauration-en-cours/nouvelle.db (vérifiée)
  * @param {string|null} cheminDocumentsExtraits - documents/ extrait (ARCHIVE)
- * @param {string} zone - restauration-en-cours/
  * @param {(etape: string) => void} [interrompreApres] - crochet de test
  */
-function basculer(cheminBaseVive, cheminNouvelle, cheminDocumentsExtraits,
-  zone, interrompreApres = () => {}) {
+function basculer(chemins, cheminNouvelle, cheminDocumentsExtraits,
+  interrompreApres = () => {}) {
+  const cheminBaseVive = chemins.cheminBaseVive;
+  const zone = chemins.zone;
   const cheminAncienne = path.join(zone, 'ancienne.db');
 
   // a. Fermer la base VIVE (libère le verrou fichier Windows). db.js met son
@@ -438,7 +507,9 @@ function basculer(cheminBaseVive, cheminNouvelle, cheminDocumentsExtraits,
 
   // c. Sortir l'ANCIENNE base du chemin (cible inexistante = rename sûr).
   //    Après ceci, data/inerweb-fluide.db N'EXISTE PLUS (état "rien" —
-  //    la zone porte les DEUX bases entières : reprise possible).
+  //    la zone porte les DEUX bases entières : reprise possible). ancienne.db
+  //    est l'ORIGINAL bit-pour-bit : c'est lui, et non le filet re-extractible,
+  //    qui sert de premier recours au rollback (correctif 2).
   if (fs.existsSync(cheminBaseVive)) {
     // Si une ancienne.db traîne (tentative précédente), la dégager d'abord.
     if (fs.existsSync(cheminAncienne)) supprimerAvecReessai(cheminAncienne);
@@ -455,8 +526,10 @@ function basculer(cheminBaseVive, cheminNouvelle, cheminDocumentsExtraits,
   // e. Basculer les documents/ (ARCHIVE) par la même technique : jamais
   //    par-dessus l'existant. On sort l'ancien dossier documents/ dans la
   //    zone (documents-ancien/) puis on pose le nouveau sur le chemin libre.
+  //    docsVifs vient des chemins CAPTURÉS (jamais de cheminOuvert() : la base
+  //    est fermée ici, cheminOuvert() viserait data/ RÉEL).
   if (cheminDocumentsExtraits && fs.existsSync(cheminDocumentsExtraits)) {
-    const docsVifs = dossierDocuments();
+    const docsVifs = chemins.documentsVifs;
     const docsAncien = path.join(zone, 'documents-ancien');
     if (fs.existsSync(docsVifs)) {
       if (fs.existsSync(docsAncien)) supprimerDossier(docsAncien);
@@ -472,6 +545,29 @@ function basculer(cheminBaseVive, cheminNouvelle, cheminDocumentsExtraits,
 // ------------------------------------------------------------
 
 /**
+ * Nom du marqueur (fichier zéro octet dans la zone) posé PENDANT un rollback
+ * via ancienne.db. Il lève l'ambiguïté à la reprise : « base vive présente +
+ * documents-ancien en attente » signifie « rollback interrompu après repose
+ * de la base, documents à restaurer » (et NON un aller-retour réussi dont on
+ * garderait les nouveaux documents). Un simple fichier, pas un sous-dossier.
+ */
+const MARQUEUR_ROLLBACK = '.rollback-en-cours';
+
+/**
+ * NOTE D'HONNÊTETÉ (tamper-evidence, VISION §4.6). « VERT » ici =
+ * « structure cohérente + chaîne du REGISTRE re-vérifiée par recalcul » sur
+ * l'instance extraite (verifierIntegrite), PAS « archive authentifiée contre
+ * un falsificateur disque-en-main ». Le manifeste n'est pas signé : ses
+ * champs hors chaîne de hash (compteurs, sha256 annoncés) ne sont pas
+ * protégés cryptographiquement — comme en mode démo. Ce qui EST garanti :
+ *   - la chaîne du registre et du journal est recalculée sur la base réelle
+ *     extraite (un registre trafiqué casse la chaîne, détecté) ;
+ *   - le NOMBRE de pièces jointes est recroisé avec le count RÉEL de la base
+ *     restaurée (pas seulement le manifeste, falsifiable — correctif E4.1).
+ * Ce qui n'est PAS garanti : un adversaire qui réécrit COHÉREMMENT base +
+ * chaîne + manifeste, disque en main, reste indétectable sans scellé
+ * conservé hors système (renvoi §4.6). On ne prétend aucune garantie au-delà.
+ *
  * RESTAURE une sauvegarde (le déroulé atomique 0→6 de E4-PLAN).
  *
  * @param {string} cheminZip - archive .zip à restaurer
@@ -485,23 +581,38 @@ function basculer(cheminBaseVive, cheminNouvelle, cheminDocumentsExtraits,
  * @param {(verdict: object) => object} [options._forcerVerdictVif] - crochet
  *        de TEST : remplace le verdict des 3 vérifications sur la base VIVE
  *        (étape 4) pour éprouver le rollback. Jamais en prod.
+ * @param {(etape: string) => void} [options._interrompreRollbackApres] -
+ *        crochet de TEST : injecte une exception à une étape du rollback via
+ *        ancienne.db (crash pendant le rollback). Jamais en prod.
+ * @param {boolean} [options._forcerFiletNonSain] - crochet de TEST : force le
+ *        filet à être jugé NON sain à sa création (éprouve l'ABANDON). Jamais
+ *        en prod.
+ * @param {(cheminFilet: string) => void} [options._saboterFiletApresCreation]
+ *        - crochet de TEST : appelé avec le chemin du filet juste après sa
+ *        création+vérification, pour le corrompre et prouver que le rollback
+ *        via ancienne.db sauve quand même l'état d'avant. Jamais en prod.
  * @returns {{ok: boolean, verdict: 'VERT'|'ROUGE', type: string,
  *            compteursAvant: object, compteursApres: object,
  *            cheminFiletSecurite: string, rollback?: boolean,
- *            motif?: string}}
+ *            methodeRollback?: 'ancienne'|'filet', motif?: string}}
  */
 function restaurer(cheminZip, options = {}) {
   const {
     confirmePerte = false,
     _interrompreApres = () => {},
-    _forcerVerdictVif = null
+    _forcerVerdictVif = null,
+    _interrompreRollbackApres = () => {},
+    _forcerFiletNonSain = false,
+    _saboterFiletApresCreation = null
   } = options;
 
   prendreVerrou('restauration');
   // Capturer le chemin de la base VIVE AVANT toute fermeture (db.fermer()
-  // nulle cheminBaseOuverte : le lire après serait le chemin par défaut).
-  const cheminBaseVive = db.cheminOuvert();
-  const zone = dossierRestaurationEnCours();
+  // nulle cheminBaseOuverte : le lire après serait le chemin par défaut,
+  // c.-à-d. le data/ RÉEL du dépôt). On en dérive TOUS les chemins de bascule
+  // MAINTENANT, base ouverte : ils survivront à la fermeture (correctif 1).
+  const chemins = capturerChemins(db.cheminOuvert());
+  const zone = chemins.zone;
   let filet = null;
 
   try {
@@ -526,32 +637,40 @@ function restaurer(cheminZip, options = {}) {
     //     jamais de restauration sans filet. On archive l'état ACTUEL
     //     COMPLET (base + documents), par VACUUM INTO (cohérent), dans
     //     backups/avant-restauration/. La base vive est TOUJOURS ouverte
-    //     à ce stade (on n'a encore rien basculé).
-    filet = produireFiletSecurite();
+    //     à ce stade (on n'a encore rien basculé). Le filet est VÉRIFIÉ
+    //     restaurable juste après création ; s'il n'est pas sain, ABANDON
+    //     AVANT toute bascule (base vive encore intacte) — correctif 2.
+    filet = produireFiletSecurite(chemins, { forcerNonSain: _forcerFiletNonSain });
+    if (_saboterFiletApresCreation) _saboterFiletApresCreation(filet.chemin);
     _interrompreApres('filet-cree');
 
     // (3) BASCULE ATOMIQUE. À partir d'ici la base vive change de fichier ;
     //     une coupure laisse la zone avec deux .db entiers (reprise).
-    basculer(cheminBaseVive, cheminNouvelle, cheminDocumentsExtraits, zone,
+    //     zone/ancienne.db = l'ORIGINAL bit-pour-bit, planche de salut n°1.
+    basculer(chemins, cheminNouvelle, cheminDocumentsExtraits,
       _interrompreApres);
 
     // (4) ROUVRIR + 3 VÉRIFICATIONS SUR LA BASE VIVE.
-    db.ouvrir(cheminBaseVive);
+    db.ouvrir(chemins.cheminBaseVive);
     _interrompreApres('reouverture');
     let verdictVif = verifierBaseVive();
     if (_forcerVerdictVif) verdictVif = _forcerVerdictVif(verdictVif);
 
     if (!verdictVif.ok) {
-      // (5) ROLLBACK AUTO : rejouer le filet de sécurité par le MÊME chemin.
+      // (5) ROLLBACK AUTO. Ordre du correctif 2 : (a) reposer zone/ancienne.db
+      //     (l'original, rename direct, déterministe, SANS re-extraction) ;
+      //     (b) SEULEMENT si ancienne.db absente/corrompue, recourir au filet ;
+      //     (c) si tout échoue, état explicite (base absente + zone préservée +
+      //     erreur CRITIQUE) plutôt qu'une base silencieusement fausse.
       const motif = motifVerdict(verdictVif);
-      rollbackDepuisFilet(cheminBaseVive, filet.chemin, zone);
+      const retour = tenterRetourEtatAvant(
+        chemins, filet.chemin, _interrompreRollbackApres);
       const compteursApres = compteursBaseVive();
       db.journaliser({
         qui: 'système',
         action: 'RESTAURATION',
         cible: path.basename(cheminZip),
-        details: `ÉCHEC (${motif}) · rollback rejoué depuis ` +
-          `${path.basename(filet.chemin)} · ` +
+        details: `ÉCHEC (${motif}) · rollback via ${retour.methode} · ` +
           `${compteursApres.mouvementsValides} écriture(s) figée(s) après ` +
           'retour à l\'état d\'avant restauration'
       });
@@ -565,6 +684,7 @@ function restaurer(cheminZip, options = {}) {
         compteursApres,
         cheminFiletSecurite: filet.chemin,
         rollback: true,
+        methodeRollback: retour.methode,
         motif
       };
     }
@@ -591,10 +711,17 @@ function restaurer(cheminZip, options = {}) {
       cheminFiletSecurite: filet.chemin
     };
   } catch (erreur) {
+    // Un rollback via ancienne.db est-il en cours (marqueur posé) ? Si oui, la
+    // coupure a frappé PENDANT le rollback : NE PAS nettoyer la zone — elle
+    // porte zone/ancienne.db (l'original) et documents-ancien ; la reprise au
+    // prochain démarrage terminera le rollback (correctif 2 (iii) / 3).
+    if (fs.existsSync(path.join(zone, MARQUEUR_ROLLBACK))) {
+      throw erreur;
+    }
     // Toute exception AVANT la bascule (0,1,2) laisse la base vive intacte et
     // ouverte : on nettoie seulement la zone. Une exception PENDANT la bascule
     // laisse un état intermédiaire à rétablir proprement.
-    if (baseViveManquante(cheminBaseVive)) {
+    if (baseViveManquante(chemins.cheminBaseVive)) {
       // Base vive ABSENTE (coupure entre sortie de l'ancienne et pose de la
       // nouvelle) : NE PAS nettoyer la zone — elle porte les deux .db entiers,
       // c'est le filet de reprise au prochain démarrage. On relance l'erreur.
@@ -616,15 +743,15 @@ function restaurer(cheminZip, options = {}) {
     if (baseDejaPosee && fs.existsSync(docsEnAttente)
       && !fs.existsSync(docsDejaBascules)) {
       try {
-        const docsVifs = dossierDocuments();
+        const docsVifs = chemins.documentsVifs; // CAPTURÉ (jamais cheminOuvert)
         if (fs.existsSync(docsVifs)) supprimerDossier(docsVifs);
         renommerAvecReessai(docsEnAttente, docsVifs);
       } catch { /* au pire, la reprise au démarrage terminera */ }
     }
     // Rouvrir la base si elle a été fermée pendant la bascule (ne pas laisser
     // le singleton mort).
-    if (!db.estOuverte() && fs.existsSync(cheminBaseVive)) {
-      try { db.ouvrir(cheminBaseVive); } catch { /* rouverte au mieux */ }
+    if (!db.estOuverte() && fs.existsSync(chemins.cheminBaseVive)) {
+      try { db.ouvrir(chemins.cheminBaseVive); } catch { /* rouverte au mieux */ }
     }
     supprimerDossier(zone);
     throw erreur;
@@ -642,12 +769,16 @@ function baseViveManquante(cheminBaseVive) {
  * Produit le filet de sécurité AUTO (état ACTUEL complet) dans
  * backups/avant-restauration/. Réutilise la fabrique (VACUUM INTO cohérent,
  * base + documents + config + manifeste), puis DÉPLACE l'archive produite
- * sous avant-restauration/ (nom avant-<horodatage>.zip). Échec ici = l'appelant
- * ABANDONNE (pas de filet, pas de restauration).
+ * sous avant-restauration/ (nom avant-<horodatage>.zip). Le filet est ensuite
+ * VÉRIFIÉ restaurable (baseFichierSaine sur sa base + relecture du manifeste) :
+ * un filet non sain fait ÉCHOUER ici, AVANT toute bascule — jamais de
+ * restauration derrière un filet qui ne protégerait pas (correctif 2 (ii)).
+ * @param {ReturnType<typeof capturerChemins>} chemins - chemins capturés
+ * @param {{forcerNonSain?: boolean}} [options] - crochet de test
  * @returns {{chemin: string, manifeste: object}}
  */
-function produireFiletSecurite() {
-  fs.mkdirSync(dossierAvantRestauration(), { recursive: true });
+function produireFiletSecurite(chemins, options = {}) {
+  fs.mkdirSync(chemins.dossierAvantRestauration, { recursive: true });
   // La fabrique écrit dans backups/archives/ ; on rapatrie sous
   // avant-restauration/ pour bien distinguer le filet des sauvegardes
   // normales (il ne doit JAMAIS être purgé par la rotation GFS).
@@ -656,13 +787,61 @@ function produireFiletSecurite() {
     .replace(/-archive-[0-9a-f]{6}\.zip$/, '')
     .replace(/\.zip$/, '');
   const cible = path.join(
-    dossierAvantRestauration(), `avant-${base}.zip`);
+    chemins.dossierAvantRestauration, `avant-${base}.zip`);
   const cibleUnique = fs.existsSync(cible)
-    ? path.join(dossierAvantRestauration(),
+    ? path.join(chemins.dossierAvantRestauration,
         `avant-${base}-${crypto.randomBytes(3).toString('hex')}.zip`)
     : cible;
   renommerAvecReessai(produit.chemin, cibleUnique);
+
+  // VÉRIFIER que le filet est restaurable AVANT de compter dessus. On teste
+  // sa base extraite (les 3 vérifications, comme testerSauvegarde) : un filet
+  // illisible/corrompu ici = ABANDON immédiat, base vive encore intacte.
+  const filetSain = !options.forcerNonSain && filetRestaurable(cibleUnique);
+  if (!filetSain) {
+    // Le filet ne protège pas : on refuse d'aller plus loin. On le laisse en
+    // place pour inspection ; la base vive n'a PAS été touchée.
+    throw new Error(
+      'Restauration ABANDONNÉE : le filet de sécurité créé juste avant la ' +
+      'bascule n\'est pas restaurable (archive de secours non saine). La base ' +
+      'actuelle n\'a pas été touchée. Vérifier l\'espace disque et les droits ' +
+      `sous ${path.dirname(cibleUnique)}.`);
+  }
   return { chemin: cibleUnique, manifeste: produit.manifeste };
+}
+
+/**
+ * Vrai si l'archive filet est restaurable : manifeste relisible + base extraite
+ * passant les 3 vérifications + documents recroisés. C'est le CŒUR de
+ * testerSauvegarde SANS prendre le verrou E4 (restaurer() le détient déjà :
+ * réutiliser testerSauvegarde ici lèverait « opération déjà en cours ») et SANS
+ * écrire le témoin dernier_test_sauvegarde_ok (on est en pleine restauration).
+ * La base COURANTE n'est ni ouverte ni fermée ni écrite. Best-effort défensif :
+ * toute exception = filet jugé non sain.
+ * @param {string} cheminFilet
+ */
+function filetRestaurable(cheminFilet) {
+  const dossierTest = fs.mkdtempSync(
+    path.join(require('node:os').tmpdir(), 'inerweb-fluide-filet-'));
+  try {
+    const manifeste = lireManifesteArchive(cheminFilet);
+    const extraites = zip.extraireVers(cheminFilet, dossierTest);
+    const baseExtraite = extraites.find(
+      (e) => e.nom === 'base/' + manifeste.base.nomFichier
+        || e.nom === 'base/inerweb-fluide.db');
+    if (!baseExtraite) return false;
+    if (sha256Fichier(baseExtraite.chemin) !== manifeste.base.sha256) return false;
+    if (!verifierBaseFichier(baseExtraite.chemin).ok) return false;
+    if (manifeste.type === 'ARCHIVE') {
+      verifierDocumentsExtraits(
+        path.join(dossierTest, 'documents'), manifeste, baseExtraite.chemin);
+    }
+    return true;
+  } catch {
+    return false;
+  } finally {
+    supprimerDossier(dossierTest);
+  }
 }
 
 /**
@@ -682,32 +861,165 @@ function verifierBaseVive() {
 }
 
 /**
- * ROLLBACK : la base vive vient d'être jugée ROUGE après bascule. On rétablit
- * l'état d'AVANT en rejouant le filet de sécurité par le MÊME chemin de
- * bascule (extraire → vérifier hors-base → fermer → purger WAL → sortir la
- * mauvaise → poser l'ancienne). Le filet ayant été produit par la fabrique,
- * il est intègre par construction ; on le re-vérifie tout de même.
- * @param {string} cheminBaseVive
- * @param {string} cheminFilet - backups/avant-restauration/avant-….zip
- * @param {string} zone - restauration-en-cours/
+ * ORCHESTRE le retour à l'état d'AVANT après une bascule jugée ROUGE.
+ * Ordre du correctif 2 :
+ *   (a) reposer zone/ancienne.db (l'ORIGINAL bit-pour-bit, rename direct,
+ *       déterministe, SANS re-extraction faillible) → si VERT, réussi ;
+ *   (b) SEULEMENT si ancienne.db absente/corrompue, recours au filet
+ *       (re-extraction, l'ancien chemin) ;
+ *   (c) si TOUT échoue, laisser un état EXPLICITE (base absente + zone
+ *       préservée + erreur CRITIQUE) plutôt qu'une base silencieusement fausse.
+ * @param {ReturnType<typeof capturerChemins>} chemins
+ * @param {string} cheminFilet - filet de secours (recours (b))
+ * @param {(etape: string) => void} [interrompreRollbackApres] - crochet de test
+ * @returns {{ok: true, methode: 'ancienne'|'filet'}}
  */
-function rollbackDepuisFilet(cheminBaseVive, cheminFilet, zone) {
-  const manifesteFilet = lireManifesteArchive(cheminFilet);
-  const zoneRollback = path.join(zone, 'rollback');
-  const { cheminNouvelle, cheminDocumentsExtraits } =
-    extraireEtVerifierHorsBase(cheminFilet, manifesteFilet, zoneRollback);
-  basculer(cheminBaseVive, cheminNouvelle, cheminDocumentsExtraits,
-    zoneRollback);
+function tenterRetourEtatAvant(chemins, cheminFilet,
+  interrompreRollbackApres = () => {}) {
+  // (a) Planche de salut n°1 : l'original, déjà présent, bit-pour-bit.
+  const parAncienne = rollbackDepuisAncienne(chemins, interrompreRollbackApres);
+  if (parAncienne.ok) return { ok: true, methode: 'ancienne' };
+
+  // (b) Recours : re-extraire le filet (faillible, mais dernière chance saine).
+  const parFilet = rollbackDepuisFilet(chemins, cheminFilet);
+  if (parFilet.ok) return { ok: true, methode: 'filet' };
+
+  // (c) Ni l'original ni le filet ne redonnent une base saine. On NE laisse
+  //     PAS la base restaurée REJETÉE en place (fausse en silence) : on la
+  //     dégage, la zone (avec ancienne.db si présente) est PRÉSERVÉE pour
+  //     inspection, et on lève une erreur CRITIQUE claire.
+  etablirEtatCritique(chemins);
+  throw new Error(
+    'ÉCHEC CRITIQUE du rollback : ni la base d\'origine (zone/ancienne.db) ni ' +
+    'le filet de sécurité ne redonnent une base saine. La base restaurée ' +
+    '(rejetée) a été mise de côté pour NE PAS servir de base fausse. État à ' +
+    'inspecter manuellement : la zone de restauration et le filet sont ' +
+    'CONSERVÉS sous data/restauration-en-cours/ et backups/avant-restauration/.');
+}
+
+/**
+ * ROLLBACK n°1 (correctif 2) : reposer zone/ancienne.db (l'ORIGINAL, présent
+ * depuis basculer()) sur le chemin vif par renommage DIRECT — aucune
+ * re-extraction, déterministe. Puis restaurer documents-ancien. Puis rouvrir +
+ * vérifier. Un MARQUEUR (fichier zéro octet) est posé au tout début et retiré
+ * en cas de succès : il permet à la reprise au démarrage de terminer un
+ * rollback interrompu sans ambiguïté (crash pendant le rollback).
+ *
+ * ORDRE des mutations (pour que toute coupure laisse la reprise capable de
+ * reposer l'ancienne) : la base transite par « chemin vif ABSENT » AVANT que
+ * l'ancienne y soit posée ; les documents sont restaurés EN DERNIER.
+ *
+ * @param {ReturnType<typeof capturerChemins>} chemins
+ * @param {(etape: string) => void} [interrompreApres] - crochet de test
+ * @returns {{ok: boolean, verdict?: object, raison?: string}}
+ */
+function rollbackDepuisAncienne(chemins, interrompreApres = () => {}) {
+  const zone = chemins.zone;
+  const cheminAncienne = path.join(zone, 'ancienne.db');
+  const docsAncien = path.join(zone, 'documents-ancien');
+  const cheminBaseVive = chemins.cheminBaseVive;
+
+  // L'original doit être présent ET sain, sinon on laisse la main au filet.
+  if (!fs.existsSync(cheminAncienne) || !baseFichierSaine(cheminAncienne)) {
+    return { ok: false, raison: 'ancienne-absente-ou-corrompue' };
+  }
+
+  // Marqueur « rollback en cours » : lève l'ambiguïté à la reprise.
+  fs.writeFileSync(path.join(zone, MARQUEUR_ROLLBACK), '');
+
+  // Fermer la base vive (rejetée) pour libérer le verrou fichier.
+  db.fermer();
+  effacerWalShm(cheminBaseVive);
+
+  // Dégager la base REJETÉE hors du chemin (déterministe, pas de re-extraction).
+  // Après ceci, le chemin vif est LIBRE (état « rien ») : une coupure ici est
+  // rattrapée par la reprise (Cas 2 : reposer ancienne).
+  if (fs.existsSync(cheminBaseVive)) {
+    const rejetee = path.join(zone, 'rejetee.db');
+    if (fs.existsSync(rejetee)) supprimerAvecReessai(rejetee);
+    renommerAvecReessai(cheminBaseVive, rejetee);
+  }
+  effacerWalShm(cheminBaseVive); // ceinture
+  interrompreApres('rejetee-sortie');
+
+  // Reposer l'ORIGINAL sur le chemin LIBRE (rename direct, quasi-atomique).
+  renommerAvecReessai(cheminAncienne, cheminBaseVive);
+  interrompreApres('ancienne-reposee');
+
+  // Restaurer les documents d'origine EN DERNIER (si un lot avait été mis de
+  // côté par basculer()). C'est l'étape que la reprise « base présente +
+  // marqueur » termine si la coupure survient juste avant.
+  if (fs.existsSync(docsAncien)) {
+    if (fs.existsSync(chemins.documentsVifs)) {
+      supprimerDossier(chemins.documentsVifs);
+    }
+    renommerAvecReessai(docsAncien, chemins.documentsVifs);
+  }
+  interrompreApres('documents-restaures');
+
+  // Rouvrir + vérifier : l'original doit être VERT (il l'était avant la
+  // tentative de restauration).
   db.ouvrir(cheminBaseVive);
   const verdict = verifierBaseVive();
   if (!verdict.ok) {
-    // Catastrophe théorique (le filet lui-même est corrompu) : on ne masque
-    // pas — mieux vaut une erreur bruyante qu'une base silencieusement fausse.
-    throw new Error(
-      'Rollback impossible : le filet de sécurité échoue lui-même aux ' +
-      `vérifications (${motifVerdict(verdict)}). État à inspecter ` +
-      'manuellement (filet conservé sous backups/avant-restauration/).');
+    // Très improbable (l'original était sain) : on laisse le marqueur et on
+    // rend la main — le recours filet prendra le relais.
+    return { ok: false, verdict, raison: 'ancienne-verif-rouge' };
   }
+  // Succès : retirer le marqueur (le rollback est terminé et cohérent).
+  supprimerAvecReessai(path.join(zone, MARQUEUR_ROLLBACK));
+  return { ok: true, verdict };
+}
+
+/**
+ * ROLLBACK n°2 (recours) : rejouer le FILET de sécurité par le même chemin de
+ * bascule (extraire → vérifier hors-base → fermer → purger WAL → sortir la
+ * mauvaise → poser le filet). Faillible (re-extraction : le filet peut être
+ * corrompu/illisible/ENOSPC), d'où son rang de RECOURS après ancienne.db.
+ * Ne lève pas pour un filet corrompu : renvoie { ok:false } pour laisser
+ * l'orchestrateur établir l'état critique.
+ * @param {ReturnType<typeof capturerChemins>} chemins
+ * @param {string} cheminFilet - backups/avant-restauration/avant-….zip
+ * @returns {{ok: boolean, verdict?: object, raison?: string}}
+ */
+function rollbackDepuisFilet(chemins, cheminFilet) {
+  const zoneRollback = path.join(chemins.zone, 'rollback-filet');
+  try {
+    const manifesteFilet = lireManifesteArchive(cheminFilet);
+    const { cheminNouvelle, cheminDocumentsExtraits } =
+      extraireEtVerifierHorsBase(cheminFilet, manifesteFilet, zoneRollback);
+    // basculer() attend des chemins capturés + une zone : on réutilise la zone
+    // de travail dédiée au rollback (rollback-filet/) pour ancienne.db/rejetee.
+    basculer({ ...chemins, zone: zoneRollback },
+      cheminNouvelle, cheminDocumentsExtraits);
+    db.ouvrir(chemins.cheminBaseVive);
+    const verdict = verifierBaseVive();
+    return { ok: verdict.ok, verdict, raison: verdict.ok ? undefined : 'filet-verif-rouge' };
+  } catch (erreur) {
+    return { ok: false, raison: `filet-illisible: ${erreur.message}` };
+  }
+}
+
+/**
+ * (c) État CRITIQUE explicite : ni l'original ni le filet n'ont redonné une
+ * base saine. On refuse de laisser la base restaurée REJETÉE tenir lieu de
+ * base (fausse en silence). On la met de côté (rejetee.db dans la zone), la
+ * zone est CONSERVÉE (ancienne.db éventuelle, marqueur, filet préservés) pour
+ * inspection, et le chemin vif reste ABSENT — un socle vierge ne sera PAS
+ * recréé par-dessus (db.ouvrir n'est pas appelé ici ; la reprise verra une
+ * zone à inspecter). Best-effort : n'aggrave jamais l'état.
+ * @param {ReturnType<typeof capturerChemins>} chemins
+ */
+function etablirEtatCritique(chemins) {
+  try { if (db.estOuverte()) db.fermer(); } catch { /* déjà fermée */ }
+  try { effacerWalShm(chemins.cheminBaseVive); } catch { /* best-effort */ }
+  try {
+    if (fs.existsSync(chemins.cheminBaseVive)) {
+      const rejetee = path.join(chemins.zone, 'rejetee-critique.db');
+      if (fs.existsSync(rejetee)) supprimerAvecReessai(rejetee);
+      renommerAvecReessai(chemins.cheminBaseVive, rejetee);
+    }
+  } catch { /* best-effort : au pire la base rejetée reste, mais on a levé */ }
 }
 
 // ------------------------------------------------------------
@@ -746,16 +1058,31 @@ function reprendreRestaurationInterrompue(cheminBase = db.CHEMIN_BASE_DEFAUT) {
   // nettoyer, plutôt que de discarder un lot déjà extrait et vérifié.
   if (fs.existsSync(cheminBase)) {
     effacerWalShm(cheminBase); // purge défensive avant tout db.ouvrir ultérieur
+    const docsVifs = path.join(path.dirname(cheminBase), 'documents');
+    const cheminDocsAncienRepr = path.join(zone, 'documents-ancien');
+
+    // ROLLBACK interrompu APRÈS repose de l'ancienne base (marqueur présent) :
+    // la base vive est déjà l'ORIGINAL, il ne reste qu'à restaurer ses
+    // documents d'origine (documents-ancien). Sans ce cas, le nettoyage
+    // générique ci-dessous jetterait documents-ancien et laisserait le nouveau
+    // lot sur l'ancienne base (incohérence PJ). Correctif 3.
+    if (fs.existsSync(path.join(zone, MARQUEUR_ROLLBACK))) {
+      if (fs.existsSync(cheminDocsAncienRepr)) {
+        if (fs.existsSync(docsVifs)) supprimerDossier(docsVifs);
+        renommerAvecReessai(cheminDocsAncienRepr, docsVifs);
+      }
+      supprimerDossier(zone);
+      return { repris: true, action: 'rollback-documents-termines' };
+    }
+
     // Ne compléter le basculement des documents QUE si la nouvelle base est
     // déjà posée (nouvelle.db absente de la zone). Si nouvelle.db est encore
     // là, la base présente est l'ANCIENNE : poser le nouveau lot de documents
     // dessus créerait une incohérence — on n'y touche pas.
     const baseDejaPosee = !fs.existsSync(path.join(zone, 'nouvelle.db'));
     const cheminDocsEnAttente = path.join(zone, 'documents');
-    const cheminDocsDejaBascules = path.join(zone, 'documents-ancien');
     if (baseDejaPosee && fs.existsSync(cheminDocsEnAttente)
-      && !fs.existsSync(cheminDocsDejaBascules)) {
-      const docsVifs = path.join(path.dirname(cheminBase), 'documents');
+      && !fs.existsSync(cheminDocsAncienRepr)) {
       if (fs.existsSync(docsVifs)) supprimerDossier(docsVifs);
       renommerAvecReessai(cheminDocsEnAttente, docsVifs);
       supprimerDossier(zone);
@@ -797,9 +1124,30 @@ function reprendreRestaurationInterrompue(cheminBase = db.CHEMIN_BASE_DEFAUT) {
     return { repris: true, action: 'ancienne-reposee' };
   }
 
-  // Cas 3 : ni nouvelle exploitable ni ancienne — zone inexploitable. On la
-  // conserve (pour inspection) plutôt que de détruire une éventuelle preuve,
-  // et on laisse db.ouvrir recréer un socle vierge si vraiment rien n'existe.
+  // Cas 3 : ni nouvelle ni ancienne au 1er niveau. AVANT de conclure
+  // « inexploitable » (ce qui laisserait db.ouvrir recréer un socle VIERGE),
+  // on SCRUTE toute la zone (y compris les sous-dossiers de rollback :
+  // rollback-filet/) : un recours filet interrompu peut y avoir laissé une
+  // base ENTIÈRE et saine. Correctif 3 : le socle vierge ne doit JAMAIS
+  // enterrer une base récupérable.
+  const baseProfonde = trouverBaseSaineDansZone(zone);
+  if (baseProfonde) {
+    // On NE choisit PAS à l'aveugle laquelle poser (nouvelle vs ancienne vs
+    // filet, sémantiques différentes) : on HALTE avec un message clair pour
+    // inspection manuelle, plutôt que de recréer un socle vierge par-dessus
+    // une base exploitable (perte silencieuse) ou de deviner mal.
+    throw new Error(
+      'Restauration interrompue à un état AMBIGU : la zone ' +
+      `data/restauration-en-cours/ contient une base entière et saine ` +
+      `(${path.relative(zone, baseProfonde)}) mais ni « nouvelle.db » ni ` +
+      '« ancienne.db » au premier niveau. Un socle vierge NE sera PAS créé ' +
+      'par-dessus. Inspecter manuellement la zone (une bascule/rollback a ' +
+      'été coupée dans un sous-dossier de travail) avant de relancer.');
+  }
+
+  // Vraiment aucune base entière : zone inexploitable. On la conserve (pour
+  // inspection) plutôt que de détruire une éventuelle preuve, et on laisse
+  // db.ouvrir recréer un socle vierge (c'est le SEUL cas où c'est admis).
   return { repris: false, action: 'zone-inexploitable-conservee' };
 }
 
@@ -812,19 +1160,61 @@ function baseFichierSaine(cheminDb) {
   }
 }
 
+/**
+ * Cherche récursivement, dans la zone, UN fichier .db ENTIER et sain (passant
+ * verifierIntegrite). Sert de garde-fou anti « socle vierge par-dessus une
+ * base récupérable » à la reprise (correctif 3). Renvoie le chemin du premier
+ * trouvé, ou null. Best-effort borné (ne suit pas de liens ; profondeur
+ * naturelle de la zone : quelques sous-dossiers de travail au plus).
+ * @param {string} racineZone
+ * @returns {string|null}
+ */
+function trouverBaseSaineDansZone(racineZone) {
+  const pile = [racineZone];
+  while (pile.length > 0) {
+    const dossier = pile.pop();
+    let entrees;
+    try {
+      entrees = fs.readdirSync(dossier, { withFileTypes: true });
+    } catch { continue; }
+    for (const entree of entrees) {
+      const complet = path.join(dossier, entree.name);
+      if (entree.isDirectory()) {
+        pile.push(complet);
+      } else if (entree.isFile() && entree.name.endsWith('.db')) {
+        if (baseFichierSaine(complet)) return complet;
+      }
+    }
+  }
+  return null;
+}
+
 // ------------------------------------------------------------
 // (g) TESTER UNE SAUVEGARDE — sans jamais toucher la base courante.
 // ------------------------------------------------------------
 
 /**
+ * NOTE D'HONNÊTETÉ (tamper-evidence, VISION §4.6). Un verdict « VERT » ici
+ * signifie « structure cohérente + chaîne du REGISTRE (et du journal)
+ * re-vérifiée par recalcul sur l'instance extraite », PAS « archive
+ * authentifiée contre un falsificateur disque-en-main ». Le manifeste N'EST
+ * PAS signé : ses champs hors chaîne de hash (compteurs, sha256 annoncés) ne
+ * sont pas protégés cryptographiquement — comme en mode démo. Ce qui EST
+ * garanti : la chaîne est recalculée sur la base réelle (un registre trafiqué
+ * casse la chaîne), et le NOMBRE de PJ est recroisé avec le count RÉEL de la
+ * base (pas seulement le manifeste, falsifiable). Ce qui n'est PAS garanti :
+ * un adversaire réécrivant COHÉREMMENT base + chaîne + manifeste, disque en
+ * main, reste indétectable sans scellé conservé hors système (renvoi §4.6).
+ *
  * Ouvre une sauvegarde dans une base TEMP en LECTURE SEULE (instance
  * DatabaseSync DÉDIÉE, JAMAIS le singleton db.js) et rend un verdict
  * VERT/ROUGE. « Une sauvegarde jamais testée n'est qu'un espoir » (VISION
  * §4.3). Déroulé : lire le manifeste (en tête) → extraire la base dans un
  * dossier temp jetable → sha256 === manifeste → verifierIntegrite (3 vérifs)
- * → si ARCHIVE, documents nombre + sha256Global → verdict. La base courante
- * n'est NI ouverte NI fermée NI écrite. En cas de succès, la date du dernier
- * test OK est inscrite dans `parametres` (dernier_test_sauvegarde_ok).
+ * → si ARCHIVE, documents nombre + sha256Global + recroisement count RÉEL
+ * pieces_jointes → verdict. La base courante n'est NI ouverte NI fermée NI
+ * écrite. En cas de succès, la date du dernier test OK est inscrite dans
+ * `parametres` (dernier_test_sauvegarde_ok).
  *
  * @param {string} cheminZip
  * @param {object} [options]
@@ -863,11 +1253,12 @@ function testerSauvegarde(cheminZip, options = {}) {
         motif: motifVerdict(verdict)
       };
     }
-    // Documents (ARCHIVE) : nombre + sha256Global.
+    // Documents (ARCHIVE) : nombre + sha256Global + recroisement avec le count
+    // RÉEL de pieces_jointes dans la base extraite (correctif 4 (b)).
     if (manifeste.type === 'ARCHIVE') {
       try {
         verifierDocumentsExtraits(
-          path.join(dossierTest, 'documents'), manifeste);
+          path.join(dossierTest, 'documents'), manifeste, baseExtraite.chemin);
       } catch (erreur) {
         return rougeTest(manifeste, erreur.message);
       }

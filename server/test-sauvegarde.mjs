@@ -1,5 +1,5 @@
 // ============================================================
-// inerWeb Fluide — PREUVE du coffre-fort E4.1 (6 familles)
+// inerWeb Fluide — PREUVE du coffre-fort E4.1 (12 familles)
 // Exécution : node server/test-sauvegarde.mjs
 //
 // « server/test-sauvegarde.mjs prouve la non-perte ET la réversibilité sur
@@ -11,7 +11,7 @@
 //     backups/ (frère de data/) reste sous la racine temporaire jetable ;
 //   - chaque famille construit SON monde puis nettoie sa racine temp.
 //
-// Les 6 familles (E4-PLAN) :
+// Les 6 familles d'origine (E4-PLAN) :
 //   1. Aller-retour identique (compteurs concordent, chaînes vertes, sha256
 //      base restaurée === manifeste, chaque PJ relue par son hash).
 //   2. Archive corrompue refusée AVANT écrasement (base courante INTACTE).
@@ -22,6 +22,28 @@
 //   5. Les 3 vérifications détectent (integrity / foreign_key / chaîne) →
 //      testerSauvegarde ROUGE avec le bon motif, base courante intacte.
 //   6. .partiel purgés : un .partiel + un tmp/*.db orphelins → purgerPartiels.
+//
+// Les 6 familles du DURCISSEMENT (revue adversariale, correctifs 1→4) :
+//   7. La restauration n'effleure JAMAIS le data/ RÉEL du dépôt (correctif 1 :
+//      chemins capturés base ouverte, jamais recalculés via cheminOuvert()
+//      après db.fermer()).
+//   8. Rollback via zone/ancienne.db (l'original bit-pour-bit) MÊME si le
+//      filet est saboté : verif post ROUGE + filet illisible → l'état d'avant
+//      est quand même restauré, ZÉRO perte (correctif 2 (i)).
+//   9. Filet NON SAIN à la création → ABANDON avant toute bascule, base vive
+//      intacte, aucune donnée perdue (correctif 2 (ii)).
+//  10. CRASH pendant le rollback (à chaque étape) → reprise au démarrage
+//      rétablit la base d'avant (l'ancienne), jamais un hybride ni un socle
+//      vierge (correctif 2 (iii) / 3).
+//  11. Lecteur ZIP : offsets hors bornes rejetés proprement (« archive
+//      corrompue »), jamais un RangeError Node brut (correctif 4 (a)).
+//  12. PJ manquante + manifeste RE-SIGNÉ : détectée à la vérif pré-bascule par
+//      recroisement avec le count RÉEL de pieces_jointes (correctif 4 (b)).
+//  13. RECOURS au filet quand zone/ancienne.db est corrompue : la hiérarchie
+//      ancienne → filet rétablit l'état d'avant (correctif 2 (b)).
+//  14. Garde-fou anti socle vierge : une zone dont la seule base saine est en
+//      sous-dossier (recours coupé) + base vive absente → la reprise HALTE,
+//      jamais de socle vierge par-dessus une base récupérable (correctif 3).
 //
 // Node ≥ 22 (node:sqlite), sans DOM.
 // ============================================================
@@ -785,11 +807,518 @@ function famille6() {
 }
 
 // ============================================================
+// FAMILLE 7 — Correctif 1 : la restauration ne touche JAMAIS le data/ réel.
+// Une restauration sur base JETABLE ne doit dériver aucun chemin depuis
+// db.CHEMIN_BASE_DEFAUT (data/ du dépôt) après la fermeture de la base. Le
+// témoin : le dossier documents/ du dépôt réel n'est ni créé ni modifié.
+// ============================================================
+function famille7() {
+  console.log('\n=== Famille 7 — la restauration n’effleure jamais le data/ réel ===');
+  // Empreinte AVANT : existence + éventuel horodatage du data/ réel du dépôt.
+  const dataReel = dirname(db.CHEMIN_BASE_DEFAUT);
+  const docsReel = join(dataReel, 'documents');
+  const restaurationReel = join(dataReel, 'restauration-en-cours');
+  const docsReelExistaitAvant = existsSync(docsReel);
+  const restaurationReelExistaitAvant = existsSync(restaurationReel);
+
+  const { racine } = ouvrirBaseJetable('f7-');
+  try {
+    const monde = peupler();
+    const produit = sauvegarde.sauvegarderArchive();
+
+    // Restauration ARCHIVE (avec documents) : c'est la bascule des documents
+    // qui, dans le bug, renommait vers data/documents RÉEL du dépôt.
+    const resultat = restauration.restaurer(produit.chemin);
+    verifier('restaurer : verdict VERT (aller-retour ARCHIVE)',
+      resultat.verdict === 'VERT' && resultat.ok);
+
+    // Le data/ RÉEL n'a pas été créé/altéré par une restauration jetable.
+    verifier('data/documents RÉEL non créé par la restauration jetable',
+      existsSync(docsReel) === docsReelExistaitAvant,
+      `avant=${docsReelExistaitAvant} après=${existsSync(docsReel)}`);
+    verifier('data/restauration-en-cours RÉEL absent après restauration jetable',
+      existsSync(restaurationReel) === restaurationReelExistaitAvant);
+
+    // La PJ reste fidèle dans la base jetable (documents bien basculés LOCALEMENT).
+    const relue = api.appeler('obtenirPieceJointe', { id: monde.pj.id }, CONTEXTE);
+    const hashRelu = createHash('sha256')
+      .update(Buffer.from(relue.blob, 'base64')).digest('hex');
+    verifier('PJ fidèle après restauration (documents basculés localement)',
+      hashRelu === monde.hashPj);
+  } finally {
+    nettoyer(racine);
+    // Filet de sûreté du test : si le bug réapparaissait et créait un
+    // documents/ ou restauration-en-cours/ VIDE dans le dépôt, on le retire
+    // pour ne pas polluer le dépôt (mais on l'a déjà signalé par un échec).
+    if (!docsReelExistaitAvant && existsSync(docsReel)) {
+      try { rmSync(docsReel, { recursive: true, force: true }); } catch { /* best-effort */ }
+    }
+    if (!restaurationReelExistaitAvant && existsSync(restaurationReel)) {
+      try { rmSync(restaurationReel, { recursive: true, force: true }); } catch { /* best-effort */ }
+    }
+  }
+}
+
+// ============================================================
+// FAMILLE 8 — Correctif 2 (i) : verif post ROUGE + filet SABOTÉ →
+// l'état d'AVANT (N écritures figées) est QUAND MÊME restauré via
+// zone/ancienne.db (l'original bit-pour-bit), AUCUNE perte. Le filet
+// re-extractible n'est PLUS l'unique planche de salut.
+// ============================================================
+function famille8() {
+  console.log('\n=== Famille 8 — rollback via ancienne.db même si le filet est saboté ===');
+  const { racine } = ouvrirBaseJetable('f8-');
+  try {
+    const monde = peupler();
+    // État d'AVANT = 2 écritures figées (le peuplement). On restaure une
+    // archive de CE MÊME état ; la vérif post est forcée ROUGE.
+    const avant = compteurs();
+    verifier('préparation : 2 écritures figées', avant.mouvementsValides === 2);
+    const produit = sauvegarde.sauvegarderArchive();
+
+    // Empreinte métier d'avant (référence de fidélité après rollback).
+    const mouvementsAvant = api.appeler('getMouvements', {}, CONTEXTE);
+
+    let appelsVerdict = 0;
+    const resultat = restauration.restaurer(produit.chemin, {
+      // Forcer ROUGE au 1er verdict (base restaurée) ; laisser VERT ensuite
+      // (le rollback via ancienne.db doit vraiment aboutir au vert).
+      _forcerVerdictVif: (v) => {
+        appelsVerdict += 1;
+        return appelsVerdict === 1 ? { ok: false, details: v.details } : v;
+      },
+      // SABOTER le filet juste après sa création : il devient illisible.
+      // L'ancien rollback (re-extraction du filet) échouerait ; le nouveau
+      // (reposer zone/ancienne.db) doit sauver l'état d'avant.
+      _saboterFiletApresCreation: (cheminFilet) => {
+        writeFileSync(cheminFilet, Buffer.from('FILET SABOTE — illisible'));
+      }
+    });
+
+    verifier('restaurer : verdict ROUGE (vérif post forcée)',
+      resultat.verdict === 'ROUGE' && resultat.ok === false, JSON.stringify(resultat));
+    verifier('restaurer : rollback signalé', resultat.rollback === true);
+    verifier('restaurer : rollback via ancienne.db (pas via le filet saboté)',
+      resultat.methodeRollback === 'ancienne', JSON.stringify(resultat));
+
+    // AUCUNE perte : les 2 écritures figées d'avant sont là, base intègre.
+    const apres = compteurs();
+    verifier('rollback : état d’avant restauré (2 écritures figées), zéro perte',
+      apres.mouvementsValides === 2, `${apres.mouvementsValides} au lieu de 2`);
+    const cles = ['machines', 'bouteilles', 'mouvements', 'mouvementsValides', 'documents'];
+    verifier('rollback : compteurs métier = état d’avant',
+      cles.every((c) => apres[c] === avant[c]),
+      `${JSON.stringify(apres)} vs ${JSON.stringify(avant)}`);
+    const etat = api.appeler('getEtatRegistre', {}, CONTEXTE);
+    verifier('rollback : base intègre (chaînes vertes)',
+      etat.altere === false, JSON.stringify(etat));
+
+    // Fidélité métier bit pour bit.
+    verifier('rollback : mouvements identiques à l’état d’avant',
+      JSON.stringify(api.appeler('getMouvements', {}, CONTEXTE)) === JSON.stringify(mouvementsAvant));
+    const relue = api.appeler('obtenirPieceJointe', { id: monde.pj.id }, CONTEXTE);
+    const hashRelu = createHash('sha256')
+      .update(Buffer.from(relue.blob, 'base64')).digest('hex');
+    verifier('rollback : PJ fidèle après retour via ancienne.db',
+      hashRelu === monde.hashPj);
+
+    // Zone nettoyée après un rollback réussi.
+    verifier('rollback : zone de restauration nettoyée',
+      !existsSync(restauration.dossierRestaurationEnCours()));
+  } finally {
+    nettoyer(racine);
+  }
+}
+
+// ============================================================
+// FAMILLE 9 — Correctif 2 (ii) : filet NON SAIN à la création → ABANDON
+// AVANT toute bascule, base vive INTACTE. On ne bascule jamais sans un
+// filet vérifié restaurable.
+// ============================================================
+function famille9() {
+  console.log('\n=== Famille 9 — filet non sain à la création = ABANDON, base vive intacte ===');
+  const { racine } = ouvrirBaseJetable('f9-');
+  try {
+    peupler();
+    const produit = sauvegarde.sauvegarderArchive();
+
+    // État métier AVANT (la référence de non-perte). NB : créer le filet
+    // journalise légitimement une entrée SAUVEGARDE (une écriture réelle) —
+    // donc « intacte » se mesure sur les DONNÉES (aucune perte, base cohérente
+    // et ouverte, AUCUNE bascule), pas sur un sha256 brut du fichier.
+    const avant = compteurs();
+    const mouvementsAvant = api.appeler('getMouvements', {}, CONTEXTE);
+
+    // Forcer le filet à être jugé NON SAIN à sa création : la restauration
+    // doit ABANDONNER avant la moindre bascule.
+    const r = leve(() => restauration.restaurer(produit.chemin, {
+      _forcerFiletNonSain: true
+    }), 'filet');
+    verifier('restaurer ABANDONNE si le filet n’est pas sain (exception)',
+      r.leve, r.message);
+
+    // Base vive TOUJOURS ouverte, AUCUNE bascule, AUCUNE donnée perdue.
+    verifier('base vive toujours ouverte après l’abandon', db.estOuverte());
+    const apres = compteurs();
+    const clesMetier = ['machines', 'bouteilles', 'mouvements',
+      'mouvementsValides', 'documents'];
+    verifier('base vive INTACTE : aucune donnée métier perdue (aucune bascule)',
+      clesMetier.every((c) => apres[c] === avant[c]),
+      `${JSON.stringify(apres)} vs ${JSON.stringify(avant)}`);
+    verifier('base vive : mouvements identiques après l’abandon',
+      JSON.stringify(api.appeler('getMouvements', {}, CONTEXTE)) === JSON.stringify(mouvementsAvant));
+    const etat = api.appeler('getEtatRegistre', {}, CONTEXTE);
+    verifier('base vive : intégrité intacte après l’abandon',
+      etat.altere === false);
+
+    // Zone nettoyée, pas de bascule en suspens.
+    verifier('abandon : zone de restauration nettoyée',
+      !existsSync(restauration.dossierRestaurationEnCours()));
+  } finally {
+    nettoyer(racine);
+  }
+}
+
+// ============================================================
+// FAMILLE 10 — Correctif 2 (iii) / Correctif 3 : CRASH PENDANT le rollback.
+// La reprise au démarrage rétablit une base COHÉRENTE (l'ancienne), jamais
+// un hybride ni un socle vierge.
+// ============================================================
+function famille10() {
+  console.log('\n=== Famille 10 — crash pendant le rollback → reprise = ancienne cohérente ===');
+
+  // On interrompt le rollback à chacune de ses étapes ; à chaque fois la
+  // reprise doit rétablir la base d'avant (2 écritures figées), intègre.
+  const etapesRollback = ['rejetee-sortie', 'ancienne-reposee', 'documents-restaures'];
+  for (const etape of etapesRollback) {
+    const { racine, chemin } = ouvrirBaseJetable('f10-');
+    try {
+      const monde = peupler();
+      const avant = compteurs();
+      const produit = sauvegarde.sauvegarderArchive();
+
+      let appelsVerdict = 0;
+      const r = leve(() => restauration.restaurer(produit.chemin, {
+        _forcerVerdictVif: (v) => {
+          appelsVerdict += 1;
+          return appelsVerdict === 1 ? { ok: false, details: v.details } : v;
+        },
+        // Interrompre le rollback (via ancienne.db) APRÈS l'étape nommée.
+        _interrompreRollbackApres: (nom) => {
+          if (nom === etape) throw new Error(`COUPURE rollback après ${nom}`);
+        }
+      }));
+      verifier(`[rollback:${etape}] la coupure interrompt bien le rollback`,
+        r.leve, r.message);
+
+      // Redémarrage simulé : fermer le singleton, reprendre AVANT réouverture.
+      try { db.fermer(); } catch { /* peut déjà être fermée */ }
+      const reprise = restauration.reprendreRestaurationInterrompue(chemin);
+      verifier(`[rollback:${etape}] après reprise : la base vive existe`,
+        existsSync(chemin), `action=${reprise.action}`);
+
+      db.ouvrir(chemin);
+      const etat = api.appeler('getEtatRegistre', {}, CONTEXTE);
+      verifier(`[rollback:${etape}] base cohérente (jamais hybride) après reprise`,
+        etat.altere === false, JSON.stringify(etat));
+
+      // La base d'avant (2 écritures figées) est retrouvée — jamais un socle
+      // vierge (qui aurait 0) ni un hybride.
+      const apres = compteurs();
+      verifier(`[rollback:${etape}] état d’avant retrouvé (${apres.mouvementsValides} = ${avant.mouvementsValides}), pas de socle vierge`,
+        apres.mouvementsValides === avant.mouvementsValides
+          && apres.mouvementsValides === 2,
+        `${apres.mouvementsValides} vs ${avant.mouvementsValides}`);
+
+      verifier(`[rollback:${etape}] zone de restauration nettoyée`,
+        !existsSync(join(dirname(chemin), 'restauration-en-cours')),
+        `action=${reprise.action}`);
+
+      // PJ toujours fidèle : documents cohérents avec la base d'avant.
+      const relue = api.appeler('obtenirPieceJointe', { id: monde.pj.id }, CONTEXTE);
+      const hashRelu = createHash('sha256')
+        .update(Buffer.from(relue.blob, 'base64')).digest('hex');
+      verifier(`[rollback:${etape}] PJ fidèle après reprise (documents cohérents)`,
+        hashRelu === monde.hashPj);
+    } finally {
+      nettoyer(racine);
+    }
+  }
+}
+
+// ============================================================
+// FAMILLE 11 — Correctif 4 (a) : lecteur ZIP robuste aux offsets hors bornes.
+// Un ZIP dont le décalage du répertoire central (ou une entrée) pointe hors
+// du buffer est REJETÉ proprement (« archive corrompue »), jamais un
+// RangeError Node brut.
+// ============================================================
+function famille11() {
+  console.log('\n=== Famille 11 — lecteur ZIP : offsets hors bornes rejetés proprement ===');
+  const { racine } = ouvrirBaseJetable('f11-');
+  try {
+    // Un ZIP valide comme base de départ.
+    const octetsValides = zip.creerZipOctets(
+      [{ nom: 'manifeste.json', contenu: '{"format":"x"}' }], new Date());
+
+    // 11a. Corrompre le décalage du répertoire central dans l'EOCD (offset
+    // absurde, très au-delà de la taille du buffer) → catalogue() doit lever
+    // une erreur CLAIRE, pas un RangeError.
+    const b1 = Buffer.from(octetsValides);
+    // EOCD est en fin ; le champ "décalage du répertoire central" est à
+    // offsetEocd+16. On le pousse hors bornes.
+    const offsetEocd1 = trouverEocdTest(b1);
+    b1.writeUInt32LE(0x7fffffff, offsetEocd1 + 16);
+    const cible1 = join(racine, 'offset-repertoire-hors-borne.zip');
+    writeFileSync(cible1, b1);
+    const r1 = leve(() => zip.listerEntrees(cible1));
+    verifier('ZIP à décalage de répertoire hors borne : rejeté proprement',
+      r1.leve, r1.message);
+    verifier('ZIP hors borne : message « corrompue » (pas un RangeError brut)',
+      /corrompue|illisible|invalide|hors|borne/i.test(r1.message ?? '')
+        && !/RangeError|out of (range|bounds)|attempt to access/i.test(r1.message ?? ''),
+      r1.message ?? '');
+
+    // 11b. Nombre d'entrées annoncé énorme + décalage répertoire valide mais
+    // le curseur va vite déborder → lecture d'en-tête central hors bornes.
+    const b2 = Buffer.from(octetsValides);
+    const offsetEocd2 = trouverEocdTest(b2);
+    // Annoncer 9999 entrées (nb total + nb sur ce disque).
+    b2.writeUInt16LE(9999, offsetEocd2 + 8);
+    b2.writeUInt16LE(9999, offsetEocd2 + 10);
+    const cible2 = join(racine, 'nb-entrees-mensonger.zip');
+    writeFileSync(cible2, b2);
+    const r2 = leve(() => zip.listerEntrees(cible2));
+    verifier('ZIP à nombre d’entrées mensonger : rejeté proprement',
+      r2.leve, r2.message);
+    verifier('ZIP nb entrées mensonger : message clair (pas un RangeError brut)',
+      !/RangeError|out of (range|bounds)|attempt to access/i.test(r2.message ?? ''),
+      r2.message ?? '');
+
+    // 11c. Un vrai coffre : restaurer un tel ZIP est refusé avant tout effet.
+    const cheminVif = db.cheminOuvert();
+    db.fermer();
+    const shaAvant = sha256Fichier(cheminVif);
+    db.ouvrir(cheminVif);
+    const r3 = leve(() => restauration.restaurer(cible1));
+    verifier('restaurer refuse un ZIP à offset hors borne (exception)', r3.leve, r3.message);
+    const cheminVif2 = db.cheminOuvert();
+    db.fermer();
+    verifier('base vive INTACTE après refus d’un ZIP hors borne',
+      sha256Fichier(cheminVif2) === shaAvant);
+    db.ouvrir(cheminVif2);
+  } finally {
+    nettoyer(racine);
+  }
+}
+
+/** Recherche l'EOCD (miroir de zip-node.trouverEocd) pour préparer les cas. */
+function trouverEocdTest(octets) {
+  const TAILLE_EOCD = 22;
+  const SIGNATURE_FIN = 0x06054b50;
+  const min = Math.max(0, octets.length - TAILLE_EOCD - 0xffff);
+  for (let i = octets.length - TAILLE_EOCD; i >= min; i -= 1) {
+    if (octets.readUInt32LE(i) === SIGNATURE_FIN) return i;
+  }
+  throw new Error('EOCD introuvable dans le ZIP de test.');
+}
+
+// ============================================================
+// FAMILLE 12 — Correctif 4 (b) : PJ MANQUANTE mais manifeste RE-SIGNÉ.
+// La vérification pré-bascule recroise le nombre de documents EXTRAITS avec
+// le count RÉEL en base (pieces_jointes) — pas seulement avec le manifeste
+// (falsifiable). Une archive à qui il manque une PJ, dont le manifeste a été
+// recalculé pour mentir, est détectée AVANT toute bascule.
+// ============================================================
+function famille12() {
+  console.log('\n=== Famille 12 — PJ manquante + manifeste re-signé : détectée à la vérif ===');
+  const { racine } = ouvrirBaseJetable('f12-');
+  try {
+    const monde = peupler(); // 1 PJ en base
+    const produit = sauvegarde.sauvegarderArchive();
+
+    // Empreinte base vive AVANT (témoin d'intégrité).
+    const cheminVif = db.cheminOuvert();
+    db.fermer();
+    const shaAvant = sha256Fichier(cheminVif);
+    db.ouvrir(cheminVif);
+
+    // Fabriquer une archive TRUQUÉE : on RETIRE la PJ (documents/<id>) et on
+    // RE-SIGNE le manifeste pour qu'il prétende 0 document (nombre + sha256Global
+    // du vide) tout en gardant la BASE d'origine (qui, elle, compte 1 PJ). Le
+    // manifeste est donc cohérent avec lui-même : seule la confrontation au
+    // count RÉEL de la base restaurée démasque le mensonge.
+    const cheminTruque = fabriquerArchiveSansPj(produit.chemin, racine);
+
+    // testerSauvegarde : doit être ROUGE (recroisement base vs documents extraits).
+    const verdictTest = restauration.testerSauvegarde(cheminTruque);
+    verifier('testerSauvegarde : PJ manquante + manifeste menteur = ROUGE',
+      verdictTest.verdict === 'ROUGE', JSON.stringify(verdictTest));
+    verifier('testerSauvegarde : motif évoque les pièces jointes / documents',
+      /pièce|piece|document|PJ/i.test(verdictTest.motif ?? ''), verdictTest.motif ?? '');
+
+    // restaurer : refusé AVANT toute bascule, base vive intacte.
+    const r = leve(() => restauration.restaurer(cheminTruque));
+    verifier('restaurer refuse l’archive à PJ manquante (exception)', r.leve, r.message);
+    verifier('base vive toujours ouverte après le refus', db.estOuverte());
+    const cheminVif2 = db.cheminOuvert();
+    db.fermer();
+    verifier('base vive INTACTE : sha256 inchangé (PJ manquante détectée avant bascule)',
+      sha256Fichier(cheminVif2) === shaAvant);
+    db.ouvrir(cheminVif2);
+    // La PJ d'origine est toujours là et fidèle.
+    const relue = api.appeler('obtenirPieceJointe', { id: monde.pj.id }, CONTEXTE);
+    const hashRelu = createHash('sha256')
+      .update(Buffer.from(relue.blob, 'base64')).digest('hex');
+    verifier('PJ d’origine intacte après refus', hashRelu === monde.hashPj);
+  } finally {
+    nettoyer(racine);
+  }
+}
+
+/**
+ * Fabrique une archive dérivée SANS la/les entrée(s) documents/ et avec un
+ * manifeste RE-SIGNÉ prétendant 0 document (nombre + sha256Global du vide),
+ * la BASE d'origine étant conservée telle quelle (elle compte pourtant 1 PJ
+ * en table). Objectif : prouver que la vérification recroise avec le count
+ * RÉEL de la base, pas seulement avec le manifeste. Retourne le chemin.
+ */
+function fabriquerArchiveSansPj(cheminZip, racine) {
+  const { entrees } = zip.lireZip(readFileSync(cheminZip));
+  // sha256Global du vide (SHA-256 de la chaîne vide) — schéma manifeste.js.
+  const sha256GlobalVide = createHash('sha256').update('', 'utf8').digest('hex');
+  const conservees = [];
+  for (const e of entrees) {
+    if (e.nom.startsWith('documents/')) continue; // on RETIRE toutes les PJ
+    if (e.nom === 'manifeste.json') {
+      const manifeste = JSON.parse(e.contenu.toString('utf8'));
+      // Mentir : 0 document, sceau global du vide (cohérent avec 0 PJ).
+      manifeste.documents = {
+        nombre: 0, tailleTotaleOctets: 0, sha256Global: sha256GlobalVide
+      };
+      conservees.push({
+        nom: 'manifeste.json', contenu: JSON.stringify(manifeste, null, 2)
+      });
+      continue;
+    }
+    conservees.push({ nom: e.nom, contenu: e.contenu });
+  }
+  const cible = join(racine, `sans-pj-${Math.random().toString(36).slice(2)}.zip`);
+  writeFileSync(cible, zip.creerZipOctets(conservees));
+  return cible;
+}
+
+// ============================================================
+// FAMILLE 13 — Correctif 2 (b) : RECOURS au filet quand ancienne.db est
+// inutilisable. verif post ROUGE + zone/ancienne.db SABOTÉE → le rollback
+// bascule sur le filet (re-extraction) et rétablit l'état d'avant. Prouve la
+// hiérarchie ancienne → filet.
+// ============================================================
+function famille13() {
+  console.log('\n=== Famille 13 — recours au filet si ancienne.db est corrompue ===');
+  const { racine } = ouvrirBaseJetable('f13-');
+  try {
+    const monde = peupler();
+    const avant = compteurs();
+    const produit = sauvegarde.sauvegarderArchive();
+
+    let appelsVerdict = 0;
+    const resultat = restauration.restaurer(produit.chemin, {
+      _forcerVerdictVif: (v) => {
+        appelsVerdict += 1;
+        if (appelsVerdict === 1) {
+          // Au moment du 1er verdict (base restaurée, ROUGE forcé), SABOTER
+          // zone/ancienne.db : le rollback n°1 (ancienne) doit alors échouer
+          // sa vérification de sanité et laisser la main au recours filet.
+          const ancienne = join(restauration.dossierRestaurationEnCours(), 'ancienne.db');
+          if (existsSync(ancienne)) writeFileSync(ancienne, Buffer.from('ANCIENNE CORROMPUE'));
+          return { ok: false, details: v.details };
+        }
+        return v;
+      }
+    });
+
+    verifier('restaurer : verdict ROUGE (vérif post forcée)',
+      resultat.verdict === 'ROUGE' && resultat.ok === false, JSON.stringify(resultat));
+    verifier('restaurer : rollback signalé', resultat.rollback === true);
+    verifier('restaurer : recours au FILET (ancienne.db corrompue)',
+      resultat.methodeRollback === 'filet', JSON.stringify(resultat));
+
+    // L'état d'avant est rétabli malgré ancienne.db corrompue (le filet a sauvé).
+    const apres = compteurs();
+    const cles = ['machines', 'bouteilles', 'mouvements', 'mouvementsValides', 'documents'];
+    verifier('recours filet : état d’avant restauré, zéro perte',
+      cles.every((c) => apres[c] === avant[c]) && apres.mouvementsValides === 2,
+      `${JSON.stringify(apres)} vs ${JSON.stringify(avant)}`);
+    const etat = api.appeler('getEtatRegistre', {}, CONTEXTE);
+    verifier('recours filet : base intègre (chaînes vertes)', etat.altere === false);
+    const relue = api.appeler('obtenirPieceJointe', { id: monde.pj.id }, CONTEXTE);
+    const hashRelu = createHash('sha256')
+      .update(Buffer.from(relue.blob, 'base64')).digest('hex');
+    verifier('recours filet : PJ fidèle', hashRelu === monde.hashPj);
+    verifier('recours filet : zone nettoyée',
+      !existsSync(restauration.dossierRestaurationEnCours()));
+  } finally {
+    nettoyer(racine);
+  }
+}
+
+// ============================================================
+// FAMILLE 14 — Correctif 3 (garde-fou) : la reprise NE recrée JAMAIS un socle
+// vierge par-dessus une base récupérable. Une zone qui ne contient une base
+// entière et saine QUE dans un sous-dossier de travail (recours filet coupé),
+// base vive absente → la reprise HALTE (erreur explicite), pas de socle vierge.
+// ============================================================
+function famille14() {
+  console.log('\n=== Famille 14 — jamais de socle vierge par-dessus une base récupérable ===');
+  const { racine, chemin } = ouvrirBaseJetable('f14-');
+  try {
+    peupler();
+    // Produire une vraie base saine (VACUUM) pour la déposer en profondeur.
+    const produit = sauvegarde.sauvegarderArchive();
+    const dossierBase = mkdtempSync(join(tmpdir(), 'inerweb-fluide-f14x-'));
+    const ecrites = zip.extraireVers(produit.chemin, dossierBase);
+    const baseSaine = ecrites.find((e) => e.nom === 'base/inerweb-fluide.db').chemin;
+
+    // Simuler un recours filet COUPÉ : base vive absente + une base entière et
+    // saine UNIQUEMENT dans un sous-dossier de travail de la zone.
+    db.fermer();
+    const zone = join(dirname(chemin), 'restauration-en-cours');
+    const sousDossier = join(zone, 'rollback-filet');
+    mkdirSync(sousDossier, { recursive: true });
+    renameSync(baseSaine, join(sousDossier, 'ancienne.db'));
+    // Base vive absente (on l'enlève du chemin).
+    if (existsSync(chemin)) rmSync(chemin, { force: true });
+    for (const suff of ['-wal', '-shm']) {
+      if (existsSync(chemin + suff)) rmSync(chemin + suff, { force: true });
+    }
+    rmSync(dossierBase, { recursive: true, force: true });
+
+    // La reprise doit HALTER (erreur explicite), et NE PAS recréer un socle
+    // vierge par-dessus la base récupérable en profondeur.
+    const r = leve(() => restauration.reprendreRestaurationInterrompue(chemin));
+    verifier('reprise HALTE sur zone ambiguë (base récupérable en sous-dossier)',
+      r.leve, r.message);
+    verifier('reprise : message évoque l’inspection / le socle vierge évité',
+      /vierge|ambig|inspect|sous-dossier/i.test(r.message ?? ''), r.message ?? '');
+    // La base récupérable est CONSERVÉE (zone non détruite).
+    verifier('reprise : la base récupérable est conservée (zone préservée)',
+      existsSync(join(sousDossier, 'ancienne.db')));
+    // Aucun socle vierge n'a été posé sur le chemin vif.
+    verifier('reprise : aucun socle vierge posé sur le chemin vif',
+      !existsSync(chemin));
+  } finally {
+    nettoyer(racine);
+  }
+}
+
+// ============================================================
 // Exécution.
 // ============================================================
-console.log('Preuve du coffre-fort E4.1 — 6 familles (base jetable, os.tmpdir).');
+console.log('Preuve du coffre-fort E4.1 — 14 familles (base jetable, os.tmpdir).');
 
-const familles = [famille1, famille2, famille3, famille4, famille5, famille6];
+const familles = [famille1, famille2, famille3, famille4, famille5, famille6,
+  famille7, famille8, famille9, famille10, famille11, famille12, famille13,
+  famille14];
 for (const f of familles) {
   try {
     f();
@@ -803,7 +1332,7 @@ for (const f of familles) {
 console.log('');
 if (nbEchecs === 0) {
   console.log(`${nbOk} vérifications réussies, 0 échec(s).`);
-  console.log('Coffre-fort E4.1 : les 6 familles sont vertes.');
+  console.log('Coffre-fort E4.1 : les 14 familles sont vertes.');
   process.exit(0);
 } else {
   console.error(`${nbOk} réussies, ${nbEchecs} ÉCHEC(S) :`);

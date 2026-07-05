@@ -242,11 +242,49 @@ function creerZipOctets(entrees, horodatage = new Date()) {
  * @returns {number} décalage de l'EOCD
  */
 function trouverEocd(octets) {
+  // Un fichier plus court que l'EOCD minimal ne peut pas être un ZIP : le
+  // dire clairement plutôt que de laisser un index négatif filer vers un
+  // RangeError de readUInt32LE.
+  if (octets.length < TAILLE_EOCD) {
+    throw new Error(
+      'Archive corrompue : fichier trop court pour un ZIP (fin de ' +
+      'répertoire central absente).');
+  }
   const min = Math.max(0, octets.length - TAILLE_EOCD - 0xffff);
   for (let i = octets.length - TAILLE_EOCD; i >= min; i -= 1) {
     if (octets.readUInt32LE(i) === SIGNATURE_FIN_REPERTOIRE) return i;
   }
   throw new Error('Archive illisible : fin de répertoire central (EOCD) introuvable.');
+}
+
+/**
+ * Lit un entier 32 bits little-endian APRÈS avoir vérifié que les 4 octets
+ * tiennent dans le buffer. Un offset hors bornes (issu d'un ZIP corrompu ou
+ * malveillant : EOCD menteur, en-tête central forgé) donne un message CLAIR
+ * « archive corrompue » au lieu du RangeError brut de Node.
+ * @param {Buffer} octets
+ * @param {number} position
+ * @param {string} quoi - libellé du champ pour le message d'erreur
+ */
+function lireU32(octets, position, quoi) {
+  if (!Number.isInteger(position) || position < 0
+    || position + 4 > octets.length) {
+    throw new Error(
+      `Archive corrompue : ${quoi} pointe hors des limites du fichier ` +
+      `(offset ${position}, taille ${octets.length}).`);
+  }
+  return octets.readUInt32LE(position);
+}
+
+/** Comme lireU32, pour un entier 16 bits (2 octets). */
+function lireU16(octets, position, quoi) {
+  if (!Number.isInteger(position) || position < 0
+    || position + 2 > octets.length) {
+    throw new Error(
+      `Archive corrompue : ${quoi} pointe hors des limites du fichier ` +
+      `(offset ${position}, taille ${octets.length}).`);
+  }
+  return octets.readUInt16LE(position);
 }
 
 /**
@@ -260,24 +298,43 @@ function trouverEocd(octets) {
  */
 function catalogue(octets) {
   const offsetEocd = trouverEocd(octets);
-  const nbEntrees = octets.readUInt16LE(offsetEocd + 10);
-  const decalageRepertoire = octets.readUInt32LE(offsetEocd + 16);
+  const nbEntrees = lireU16(octets, offsetEocd + 10, 'nombre d\'entrées');
+  const decalageRepertoire = lireU32(
+    octets, offsetEocd + 16, 'décalage du répertoire central');
+  // Le répertoire central doit commencer DANS le fichier (avant l'EOCD).
+  if (decalageRepertoire > offsetEocd) {
+    throw new Error(
+      'Archive corrompue : le répertoire central commence hors des ' +
+      `limites du fichier (offset ${decalageRepertoire}, EOCD à ` +
+      `${offsetEocd}).`);
+  }
 
   const entrees = [];
   let curseur = decalageRepertoire;
   for (let i = 0; i < nbEntrees; i += 1) {
-    if (octets.readUInt32LE(curseur) !== SIGNATURE_ENTETE_CENTRAL) {
+    // Chaque en-tête central fait AU MOINS 46 octets fixes ; les valider dans
+    // les bornes AVANT toute lecture (un nbEntrees mensonger ne doit pas
+    // provoquer un RangeError mais un refus clair).
+    if (lireU32(octets, curseur, `en-tête central de l'entrée ${i}`)
+      !== SIGNATURE_ENTETE_CENTRAL) {
       throw new Error(
         `Archive corrompue : en-tête central invalide à l'entrée ${i}.`);
     }
-    const methode = octets.readUInt16LE(curseur + 10);
-    const crcDeclare = octets.readUInt32LE(curseur + 16);
-    const tailleCompressee = octets.readUInt32LE(curseur + 20);
-    const tailleReelle = octets.readUInt32LE(curseur + 24);
-    const longueurNom = octets.readUInt16LE(curseur + 28);
-    const longueurExtra = octets.readUInt16LE(curseur + 30);
-    const longueurCommentaire = octets.readUInt16LE(curseur + 32);
-    const decalageLocal = octets.readUInt32LE(curseur + 42);
+    const methode = lireU16(octets, curseur + 10, 'méthode');
+    const crcDeclare = lireU32(octets, curseur + 16, 'CRC déclaré');
+    const tailleCompressee = lireU32(octets, curseur + 20, 'taille compressée');
+    const tailleReelle = lireU32(octets, curseur + 24, 'taille réelle');
+    const longueurNom = lireU16(octets, curseur + 28, 'longueur du nom');
+    const longueurExtra = lireU16(octets, curseur + 30, 'longueur extra');
+    const longueurCommentaire = lireU16(
+      octets, curseur + 32, 'longueur commentaire');
+    const decalageLocal = lireU32(
+      octets, curseur + 42, 'décalage de l\'en-tête local');
+    // Le nom doit tenir entièrement dans le buffer.
+    if (curseur + 46 + longueurNom > octets.length) {
+      throw new Error(
+        `Archive corrompue : nom de l'entrée ${i} hors des limites du fichier.`);
+    }
     const nom = octets.toString(
       'utf8', curseur + 46, curseur + 46 + longueurNom);
 
@@ -292,9 +349,17 @@ function catalogue(octets) {
     }
 
     // Le contenu se localise VIA L'EN-TÊTE LOCAL (longueurs nom/extra
-    // propres au local, parfois différentes du central).
-    const longueurNomLocal = octets.readUInt16LE(decalageLocal + 26);
-    const longueurExtraLocal = octets.readUInt16LE(decalageLocal + 28);
+    // propres au local, parfois différentes du central). L'en-tête local a
+    // 30 octets fixes : valider ses lectures dans les bornes.
+    if (lireU32(octets, decalageLocal, `en-tête local de « ${nom} »`)
+      !== SIGNATURE_ENTETE_LOCAL) {
+      throw new Error(
+        `Archive corrompue : en-tête local absent ou invalide pour « ${nom} ».`);
+    }
+    const longueurNomLocal = lireU16(
+      octets, decalageLocal + 26, 'longueur du nom (local)');
+    const longueurExtraLocal = lireU16(
+      octets, decalageLocal + 28, 'longueur extra (local)');
     const debutContenu =
       decalageLocal + 30 + longueurNomLocal + longueurExtraLocal;
 
@@ -313,6 +378,14 @@ function catalogue(octets) {
  * @returns {Buffer} contenu (copie indépendante)
  */
 function contenuVerifie(octets, entree) {
+  // Début ET fin du contenu doivent tenir dans le buffer : un décalage local
+  // forgé (négatif après calcul, ou colossal) est refusé proprement.
+  if (!Number.isInteger(entree.debutContenu) || entree.debutContenu < 0
+    || entree.debutContenu > octets.length) {
+    throw new Error(
+      `Archive corrompue : début du contenu de « ${entree.nom} » hors ` +
+      'des limites du fichier.');
+  }
   const fin = entree.debutContenu + entree.taille;
   if (fin > octets.length) {
     throw new Error(
