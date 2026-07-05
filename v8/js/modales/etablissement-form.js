@@ -228,10 +228,13 @@ function validerFormulaire(racine) {
  * @returns {Promise<boolean>} résolue à la fermeture (true si enregistré)
  */
 export async function ouvrirFormEtablissement(ctx) {
-  const [etablissement, utilisateur] = await Promise.all([
-    ctx.store.getEtablissement(),
-    ctx.store.getUtilisateurCourant()
-  ]);
+  const etablissement = await ctx.store.getEtablissement();
+  let utilisateur = null;
+  try {
+    utilisateur = await ctx.store.getUtilisateurCourant();
+  } catch {
+    // Aucun utilisateur courant : la modale reste utilisable en dégradé
+  }
 
   return new Promise(function (resoudre) {
     const { fermer, racine } = modale({
@@ -281,7 +284,7 @@ export async function ouvrirFormEtablissement(ctx) {
       try {
         await ctx.store.updateEtablissement({
           ...valeurs,
-          operateur: utilisateur.id
+          operateur: utilisateur?.id
         });
         toast('Dossier opérateur mis à jour.', 'succes');
         fermeeParEnregistrement = true;

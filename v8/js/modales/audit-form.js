@@ -35,7 +35,12 @@ function effacerErreur(racine, nomChamp) {
  * @returns {Promise<boolean>} true si un audit a été enregistré
  */
 export async function ouvrirFormAudit(ctx) {
-  const utilisateur = await ctx.store.getUtilisateurCourant();
+  let utilisateur = null;
+  try {
+    utilisateur = await ctx.store.getUtilisateurCourant();
+  } catch {
+    // Aucun utilisateur courant : la modale reste utilisable en dégradé
+  }
 
   const contenuHtml = '<form id="form-audit" class="formulaire" novalidate>'
     + '<div id="bandeau-erreur-audit" class="bandeau-erreur" hidden></div>'
@@ -102,7 +107,7 @@ export async function ouvrirFormAudit(ctx) {
           organisme: organisme,
           resultat: resultat,
           remarques: String(donnees.get('remarques') || '').trim() || null,
-          operateur: utilisateur.id
+          operateur: utilisateur?.id
         });
         toast('Audit enregistré.', 'succes');
         fermeeParEnregistrement = true;
@@ -131,10 +136,13 @@ export async function ouvrirFormAudit(ctx) {
  * @returns {Promise<boolean>} true si enregistrée
  */
 export async function ouvrirFormNonConformite(ctx) {
-  const [audits, utilisateur] = await Promise.all([
-    ctx.store.getAuditsOrganisme(),
-    ctx.store.getUtilisateurCourant()
-  ]);
+  const audits = await ctx.store.getAuditsOrganisme();
+  let utilisateur = null;
+  try {
+    utilisateur = await ctx.store.getUtilisateurCourant();
+  } catch {
+    // Aucun utilisateur courant : la modale reste utilisable en dégradé
+  }
 
   const optionsAudits = '<option value="">— Aucun audit lié —</option>'
     + audits.map(function (a) {
@@ -200,7 +208,7 @@ export async function ouvrirFormNonConformite(ctx) {
           actionCorrective: String(donnees.get('actionCorrective') || '').trim() || null,
           echeance: String(donnees.get('echeance') || '').trim() || null,
           auditId: String(donnees.get('auditId') || '').trim() || null,
-          operateur: utilisateur.id
+          operateur: utilisateur?.id
         });
         toast('Non-conformité enregistrée.', 'succes');
         fermeeParEnregistrement = true;

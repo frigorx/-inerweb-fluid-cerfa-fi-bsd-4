@@ -233,8 +233,13 @@ function carteMachine(machine, fluideParCode, clientParId) {
 
 /** Nom complet de l'utilisateur courant, pour le journal du store. */
 async function operateurCourant(ctx) {
-  const utilisateur = await ctx.store.getUtilisateurCourant();
-  return utilisateur.prenom + ' ' + utilisateur.nom;
+  let utilisateur = null;
+  try {
+    utilisateur = await ctx.store.getUtilisateurCourant();
+  } catch {
+    // Aucun utilisateur courant : le journal recevra un opérateur vide
+  }
+  return utilisateur ? (utilisateur.prenom + ' ' + utilisateur.nom) : null;
 }
 
 /**

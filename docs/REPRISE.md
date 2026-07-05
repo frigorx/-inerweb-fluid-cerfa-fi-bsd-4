@@ -92,16 +92,17 @@
    navigateur (rendu QR cassé par un emballage module ES — corrigé en chargement classique,
    test durci). Tests : **`test-contrat.mjs` local et demo = 187/0**, plus `test-routeur`
    12/0, `test-wizard` 7/0, `test-etiquette-machine` 15/0, `test-migrations` 64/0,
-   `test-mapping` 141/0 ; vérifié navigateur (port 2011, base jetable). ⚠️ **Point ouvert** :
-   `getUtilisateurCourant()` (`server/api.js:691`) reste le stub d'avant E5 (« premier
-   REFERENT du personnel », lève si le personnel est vide) au lieu de lire la session E5 —
-   bloque le wizard sur une base fraîche sans personnel. À recâbler en finition E5,
-   indépendant de V9.1.
+   `test-mapping` 141/0 ; vérifié navigateur (port 2011, base jetable). ✅ **Point ouvert
+   RÉSOLU (05/07, finition E5)** : `getUtilisateurCourant()` est câblé sur la session
+   (`contexte.utilisateur` → compte `utilisateurs_app`, fiche personnel liée ou objet minimal
+   pour l'admin CLI ; `roleApp` = rôle de la session ; repli premier REFERENT sans session).
+   Le wizard s'ouvre désormais sur une base fraîche. Preuve : `server/test-utilisateur-courant.mjs`
+   (14/0) + contrat 187/0 inchangé.
 9. **Prochaine étape** : validation live par Franck (LAN réel + tablette, saisie masquée CLI
    du bootstrap E5 — toujours en attente), puis choisir entre **V9.2 « Relevés »** (⚠️ bloquée
    par la décision RGPD élèves §16.5 avant tout usage réel) et le **lot confort audit**
-   (22 points, au fil de l'eau) ; §16 de la VISION toujours en attente ; garder le point
-   `getUtilisateurCourant` en tête des finitions E5.
+   (22 points, au fil de l'eau) ; §16 de la VISION toujours en attente. Finition E5
+   `getUtilisateurCourant` FAITE (05/07).
 10. Bascule v8 → racine quand Franck valide.
 
 ## Méthode de travail validée avec Franck
@@ -153,6 +154,7 @@ node server/test-comptes.mjs            # hachage scrypt + verrouillage de compt
 node server/test-sessions.mjs           # cycle de vie des sessions (E5) — 37 vérif.
 node server/test-routes-comptes.mjs     # connexion/déconnexion/création (E5) — 30 vérif.
 node server/test-bootstrap.mjs          # CLI creer-admin.js (E5) — 19 vérif.
+node server/test-utilisateur-courant.mjs # getUtilisateurCourant ← session (E5) — 14 vérif.
 ```
 
 ⚠️ `test-contrat.mjs` ÉCRIT dans le store cible : contre le futur LocalStore (E3), toujours

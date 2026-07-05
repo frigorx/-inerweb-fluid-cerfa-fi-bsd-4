@@ -2,6 +2,45 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔑 Finition E5 — `getUtilisateurCourant()` câblé sur la session (05/07)
+Le point ouvert laissé par V9.1 est corrigé : `getUtilisateurCourant()` renvoie désormais
+l'utilisateur RÉELLEMENT authentifié, plus le stub « premier REFERENT du personnel ».
+- **`server/api.js`** : le handler reçoit `(_params, contexte)` et lit `contexte.utilisateur`
+  (id du compte `utilisateurs_app` posé par `serveur.js:contexteDeLaConnexion` via
+  `sessions.verifierSession`). Nouveaux helpers `utilisateurDeSession()` /
+  `utilisateurMinimalDeCompte()` : une fiche personnel liée (`personnel_id`) fournit l'identité
+  riche (id PER-…, prénom, nom, attestations) ; à défaut (compte ADMIN amorcé en CLI, personnel
+  encore vide) un objet minimal de MÊME forme (nom = login, prénom vide, attestations nulles) —
+  **c'est ce qui débloque le wizard « Nouveau mouvement » sur une base fraîche**.
+- **Le rôle fait toujours autorité depuis la SESSION**, jamais depuis la fiche : `roleApp` du
+  retour = rôle figé de la session (`contexte.role`). Un compte REFERENT rattaché à une fiche
+  ELEVE remonte `roleApp = 'REFERENT'` — le front (`wizard.js:peutValider`) et le serveur
+  (`garderRole`) raisonnent ainsi sur le même rôle.
+- **Repli conservé** quand aucune session n'est ouverte (loopback en lecture, ou harnais de
+  test qui ne pose qu'un rôle) : premier REFERENT du personnel, Error s'il n'y en a pas —
+  comportement d'avant E5, identique au **DemoStore** (mode démo sans auth, inchangé).
+- **`contrat.js`** : description de `getUtilisateurCourant` actualisée (session E5 + repli).
+- **Tests** : nouveau `server/test-utilisateur-courant.mjs` (14 vérifs, vrai serveur HTTP
+  jetable) — repli base vide, session ADMIN sans fiche (bug corrigé), fiche liée, divergence
+  rôle fiche/session, retour au repli. Non-régression : **`test-contrat.mjs` local ET demo =
+  187/0**, `test-mapping` 141/0, `test-routes-comptes` 30/0, `test-sessions` 37/0,
+  `test-comptes` 29/0, `test-migrations` 64/0, `test-bootstrap` 19/0, `test-registre` (demo) 36/0.
+- **Durcissement front (null-safety)** : au cas où `getUtilisateurCourant()` renvoie/​lève sans
+  utilisateur (base fraîche, aucune session), `wizard.js` (appel sorti du `Promise.all`, `try/catch`
+  façon `mouvements.js`, `peutValider = Boolean(utilisateur && …)`), `machines.js` (`operateurCourant`)
+  et 5 modales (personne / machine / outil / établissement / audit) tolèrent désormais l'absence
+  d'utilisateur sans planter. Le parcours normal (utilisateur présent) est strictement inchangé.
+  `test-wizard.mjs` 9/0 (nouveau cas : un utilisateur en échec n'empêche pas l'ouverture du wizard).
+- **Correctif au passage** : `createPersonne` (`server/api.js`) insérait dans `personnel` sans appeler
+  `amorcerEtablissement()` → `FOREIGN KEY constraint failed` (`etablissement_id`) sur une base jamais
+  initialisée ; corrigé (symétrique à `updateEtablissement` / `createAuditOrganisme` / `createNonConformite`).
+  ⚠️ Dette notée : ~14 handlers d'insertion posent `etablissement_id` mais seuls 5 amorcent — audit des
+  autres (machines, mouvements, bouteilles…) à faire dans un incrément séparé.
+- ⚠️ **Hors périmètre (noté)** : un compte ADMIN SANS fiche personnel a `id = UTI-…` ; s'il
+  tente de VALIDER un mouvement, `verifierValidateur` cherchera cet id dans `personnel` et
+  lèvera « Validateur introuvable » — attendu tant que l'admin n'a pas de fiche personnel (base
+  non encore configurée). L'ouverture du wizard, elle, n'est plus bloquée.
+
 ### 🏷️ V9.1 — Fiche machine vivante : accès par code, étiquette QR, mouvement pré-réglé (05/07)
 Accéder à une machine par son identifiant public, avec une fiche complète, une étiquette QR
 imprimable et un mouvement pré-rempli depuis cette fiche.
@@ -55,11 +94,9 @@ imprimable et un mouvement pré-rempli depuis cette fiche.
   QR rend un vrai `<canvas>`+`<img>` non vide, planche A4 = 9 QR ; « Nouveau mouvement » depuis
   la fiche saute l'étape 2 (Machine) et atterrit sur l'étape 3 (Bouteille) avec le fluide R-32
   déjà connu.
-- ⚠️ **Point ouvert (non corrigé ici)** : `getUtilisateurCourant()` (`server/api.js:691`) est
-  resté le stub d'avant E5 — il renvoie « le premier REFERENT du personnel » (et lève si le
-  personnel est vide) au lieu de l'utilisateur réellement authentifié par sa session E5.
-  Conséquence : sur une base fraîche (admin créé en CLI, personnel vide), le wizard ne peut
-  pas s'ouvrir. À recâbler sur la session (finition E5), indépendant de V9.1.
+- ✅ **Point ouvert résolu** (voir « Finition E5 » ci-dessus, même journée) :
+  `getUtilisateurCourant()` est désormais câblé sur la session E5 — le wizard s'ouvre sur une
+  base fraîche (admin CLI, personnel vide).
 
 ### 🔒 SÉCURITÉ (correctif immédiat)
 - **Clés API retirées du code** (`Code_API_v7.1.0.gs` + `apps-script/Code.gs`) : les 3 clés

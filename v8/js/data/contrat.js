@@ -96,7 +96,7 @@ export const METHODES_CONTRAT = {
   getEtablissement: { genre: 'lecture',
     description: 'L’établissement (dossier opérateur) — copie.' },
   getUtilisateurCourant: { genre: 'lecture',
-    description: 'L’utilisateur courant (Phase B : premier REFERENT du personnel) ; Error s’il n’y en a pas.' },
+    description: 'L’utilisateur courant : l’authentifié de la session (V9-E5) ; à défaut de session (loopback en lecture, mode démo), repli sur le premier REFERENT du personnel — Error s’il n’y en a pas.' },
   getOutillage: { genre: 'lecture',
     description: 'Outillage avec statut RECALCULÉ à la lecture (CONFORME | A_VERIFIER | EXPIRE | HORS_SERVICE).' },
   getMachines: { genre: 'lecture',

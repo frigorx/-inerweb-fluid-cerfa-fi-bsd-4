@@ -187,6 +187,38 @@ const MACHINE_TEST = {
     'motif options.retour introuvable dans finaliser()');
 }
 
+/* ============================================================
+   5. E5 (finition) : getUtilisateurCourant() qui lève (base fraîche
+      sans référent ni session) n'empêche PAS l'ouverture du wizard.
+      L'assistant s'ouvre en dégradé : pas de validateur pressenti
+      (peutValider = false), donc la finalisation ira en simple
+      soumission plutôt qu'en validation directe — vérifié ici
+      seulement au niveau de l'ouverture (pas de crash), la
+      finalisation réelle exigeant la signature (canvas), hors de
+      portée du shim comme documenté plus haut.
+   ============================================================ */
+{
+  const store = creerStoreFactice({ machines: [MACHINE_TEST], bouteilles: [] });
+  store.getUtilisateurCourant = async function () {
+    throw new Error('Aucun référent dans le personnel.');
+  };
+  const ctx = { store, naviguer: () => {} };
+
+  let leve = false;
+  try {
+    await ouvrirWizard(ctx, {});
+  } catch {
+    leve = true;
+  }
+  verifier('un utilisateur courant en échec (base fraîche) n’empêche pas '
+    + 'l’ouverture du wizard : aucune exception ne remonte',
+    !leve);
+
+  const fond = document.body.querySelectorAll('.modale-fond').at(-1);
+  verifier('le wizard est bien monté dans le DOM malgré l’échec de '
+    + 'getUtilisateurCourant()', Boolean(fond));
+}
+
 // ---- Bilan ----
 console.log(`\n${nbOk} test(s) réussi(s), ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);

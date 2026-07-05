@@ -270,12 +270,17 @@ function validerFormulaire(racine) {
 export async function ouvrirFormMachine(ctx, machineId = null) {
   const enModification = Boolean(machineId);
 
-  const [machines, fluides, clients, utilisateur] = await Promise.all([
+  const [machines, fluides, clients] = await Promise.all([
     enModification ? ctx.store.getMachines() : Promise.resolve([]),
     ctx.store.getFluides(),
-    ctx.store.getClients(),
-    ctx.store.getUtilisateurCourant()
+    ctx.store.getClients()
   ]);
+  let utilisateur = null;
+  try {
+    utilisateur = await ctx.store.getUtilisateurCourant();
+  } catch {
+    // Aucun utilisateur courant : la modale reste utilisable en dégradé
+  }
 
   const machineExistante = enModification
     ? machines.find(function (m) { return m.id === machineId; })
@@ -337,13 +342,13 @@ export async function ouvrirFormMachine(ctx, machineId = null) {
         if (enModification) {
           await ctx.store.updateMachine(machineId, {
             ...valeurs,
-            operateur: utilisateur.id
+            operateur: utilisateur?.id
           });
           toast('Machine modifiée.', 'succes');
         } else {
           const creee = await ctx.store.createMachine({
             ...valeurs,
-            operateur: utilisateur.id
+            operateur: utilisateur?.id
           });
           idMachineCreee = creee && creee.id ? creee.id : null;
           toast('Machine ajoutée.', 'succes');

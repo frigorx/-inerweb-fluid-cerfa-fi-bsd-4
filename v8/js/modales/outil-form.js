@@ -214,10 +214,13 @@ function validerFormulaire(racine) {
 export async function ouvrirFormOutil(ctx, outilId = null) {
   const enModification = Boolean(outilId);
 
-  const [outillage, utilisateur] = await Promise.all([
-    enModification ? ctx.store.getOutillage() : Promise.resolve([]),
-    ctx.store.getUtilisateurCourant()
-  ]);
+  const outillage = enModification ? await ctx.store.getOutillage() : [];
+  let utilisateur = null;
+  try {
+    utilisateur = await ctx.store.getUtilisateurCourant();
+  } catch {
+    // Aucun utilisateur courant : la modale reste utilisable en dégradé
+  }
 
   const outilExistant = enModification
     ? outillage.find(function (o) { return o.id === outilId; })
@@ -294,13 +297,13 @@ export async function ouvrirFormOutil(ctx, outilId = null) {
         if (enModification) {
           await ctx.store.updateOutil(outilId, {
             ...valeurs,
-            operateur: utilisateur.id
+            operateur: utilisateur?.id
           });
           toast('Outil modifié.', 'succes');
         } else {
           await ctx.store.createOutil({
             ...valeurs,
-            operateur: utilisateur.id
+            operateur: utilisateur?.id
           });
           toast('Outil ajouté.', 'succes');
         }

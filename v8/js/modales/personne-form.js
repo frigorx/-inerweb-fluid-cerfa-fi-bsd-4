@@ -320,7 +320,12 @@ export async function ouvrirFormPersonne(ctx, personneId = null) {
   }
 
   const valeursInitiales = personneExistante || {};
-  const utilisateur = await ctx.store.getUtilisateurCourant();
+  let utilisateur = null;
+  try {
+    utilisateur = await ctx.store.getUtilisateurCourant();
+  } catch {
+    // Aucun utilisateur courant : la modale reste utilisable en dégradé
+  }
 
   return new Promise(function (resoudre) {
     const { fermer, racine } = modale({
@@ -393,7 +398,7 @@ export async function ouvrirFormPersonne(ctx, personneId = null) {
 
         boutonDesactiver.disabled = true;
         try {
-          await ctx.store.desactiverPersonne(personneId, utilisateur.id);
+          await ctx.store.desactiverPersonne(personneId, utilisateur?.id);
           toast('Personne désactivée.', 'succes');
           fermeeParEnregistrement = true;
           fermer();
@@ -415,13 +420,13 @@ export async function ouvrirFormPersonne(ctx, personneId = null) {
         if (enModification) {
           await ctx.store.updatePersonne(personneId, {
             ...valeurs,
-            operateur: utilisateur.id
+            operateur: utilisateur?.id
           });
           toast('Personne modifiée.', 'succes');
         } else {
           await ctx.store.createPersonne({
             ...valeurs,
-            operateur: utilisateur.id
+            operateur: utilisateur?.id
           });
           toast('Personne ajoutée.', 'succes');
         }

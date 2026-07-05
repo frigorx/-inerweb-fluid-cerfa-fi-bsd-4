@@ -685,10 +685,29 @@ const HANDLERS = {
   },
 
   /**
-   * Utilisateur courant : premier REFERENT du personnel (l'authentification
-   * arrive en E5). Error si aucun référent — identique au DemoStore.
+   * Utilisateur courant (V9-E5) : l'utilisateur RÉELLEMENT authentifié, lu
+   * depuis la SESSION (contexte.utilisateur = id du compte utilisateurs_app,
+   * posé par serveur.js:contexteDeLaConnexion via sessions.verifierSession) —
+   * PLUS le stub « premier REFERENT du personnel » d'avant E5.
+   *
+   *  - Session ouverte (contexte.utilisateur présent) : on résout le compte.
+   *    S'il porte une fiche personnel (personnel_id), on renvoie cette fiche
+   *    (id PER-…, prénom, nom, attestations) ; sinon (compte ADMIN amorcé en
+   *    CLI, personnel encore vide) un objet minimal de MÊME forme — c'est ce
+   *    qui débloque le wizard sur une base fraîche. Dans les deux cas,
+   *    roleApp = le rôle de la SESSION (jamais celui de la fiche) : c'est ce
+   *    rôle qui gouverne les gardes serveur (garderRole), le front
+   *    (peutValider) doit raisonner sur le même.
+   *  - Aucune session (loopback en lecture ouverte, ou harnais de test qui ne
+   *    pose qu'un rôle) : repli HISTORIQUE = premier REFERENT du personnel,
+   *    Error s'il n'y en a pas — comportement d'avant E5, préservé pour le
+   *    contrat et le confort mono-poste (identique au DemoStore, sans session).
    */
-  getUtilisateurCourant() {
+  getUtilisateurCourant(_params, contexte) {
+    const idCompte = contexte?.utilisateur ?? null;
+    if (idCompte) {
+      return utilisateurDeSession(idCompte, contexte.role ?? null);
+    }
     const ligne = db.get(
       `SELECT * FROM personnel WHERE role_applicatif = 'REFERENT'
        ORDER BY rowid LIMIT 1`);
@@ -732,6 +751,7 @@ const HANDLERS = {
       email: d.email ?? null
     };
     return muter(() => {
+      amorcerEtablissement();
       const ligne = mapping.versSql('personnel', personne);
       ligne.etablissement_id = ID_ETABLISSEMENT;
       inserer('personnel', ligne);
@@ -3134,6 +3154,63 @@ function codePublicUnique() {
 function lirePersonne(id) {
   return mapping.versFront('personnel',
     db.get('SELECT * FROM personnel WHERE id = ?', [id]));
+}
+
+/**
+ * Résout l'utilisateur d'une SESSION E5 : mappe le compte `utilisateurs_app`
+ * de la session vers l'objet attendu par le front ({ id, nom, prenom,
+ * roleApp, … }). Une fiche personnel liée (personnel_id) fournit l'identité
+ * riche ; à défaut (compte ADMIN amorcé en CLI, personnel encore vide) on
+ * synthétise un objet minimal de même forme. Le rôle est TOUJOURS celui de la
+ * session (autorité), jamais celui de la fiche personnel.
+ * @param {string} idCompte      id du compte (contexte.utilisateur)
+ * @param {string|null} roleSession  rôle figé de la session
+ */
+function utilisateurDeSession(idCompte, roleSession) {
+  const compte = db.get(
+    `SELECT id, login, role, personnel_id FROM utilisateurs_app WHERE id = ?`,
+    [idCompte]);
+  if (!compte) {
+    // verifierSession a normalement déjà garanti l'existence + actif=1 ;
+    // défense en profondeur si la session survivait à la disparition du compte.
+    throw new Error('Compte de session introuvable.');
+  }
+  const role = roleSession ?? compte.role;
+  if (compte.personnel_id) {
+    const fiche = db.get(
+      'SELECT * FROM personnel WHERE id = ?', [compte.personnel_id]);
+    if (fiche) {
+      const personne = mapping.versFront('personnel', fiche);
+      personne.roleApp = role; // le rôle vient de la session, jamais de la fiche
+      return personne;
+    }
+  }
+  return utilisateurMinimalDeCompte(compte, role);
+}
+
+/**
+ * Objet « utilisateur courant » minimal pour un compte SANS fiche personnel
+ * (ADMIN amorcé en CLI avant toute saisie du personnel). Même forme qu'une
+ * fiche personnel mappée (mapping.js:personnel) pour que le front n'ait aucun
+ * cas particulier : identité réduite au login, aucune attestation.
+ */
+function utilisateurMinimalDeCompte(compte, role) {
+  return {
+    id: compte.id,
+    nom: compte.login,
+    prenom: '',
+    typePersonne: null,
+    roleApp: role,
+    numAttestationAptitude: null,
+    organismeDelivreur: null,
+    dateObtention: null,
+    dateFinValidite: null,
+    categorie2008: null,
+    categorie2025: null,
+    activitesAutorisees: [],
+    actif: true,
+    email: null,
+  };
 }
 
 function trouverPersonne(id) {

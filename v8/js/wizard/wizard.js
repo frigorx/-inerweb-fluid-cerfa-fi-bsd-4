@@ -316,18 +316,27 @@ export async function ouvrirWizard(ctx, options = {}) {
   const { store } = ctx;
 
   // ---- Instantané des données (le store rend des copies) ----
-  const [personnel, machines, bouteilles, outillage, utilisateur] =
+  // Utilisateur courant : lu à part et tolérant à l'échec (base fraîche,
+  // session absente...) — un utilisateur null dégrade proprement le
+  // wizard (pas de validateur pressenti) plutôt que de le faire planter.
+  let utilisateur = null;
+  try {
+    utilisateur = await store.getUtilisateurCourant();
+  } catch {
+    // Aucun utilisateur courant : la validation restera fermée (peutValider = false)
+  }
+
+  const [personnel, machines, bouteilles, outillage] =
     await Promise.all([
       store.getPersonnel(),
       store.getMachines(),
       store.getBouteilles(),
-      store.getOutillage(),
-      store.getUtilisateurCourant()
+      store.getOutillage()
     ]);
 
   const techniciens = personnel.filter((p) => p.actif);
   const detecteurs = outillage.filter((o) => o.typeOutil === 'DETECTEUR');
-  const peutValider = ROLES_VALIDEURS.includes(utilisateur.roleApp);
+  const peutValider = Boolean(utilisateur && ROLES_VALIDEURS.includes(utilisateur.roleApp));
 
   /**
    * Recharge l'instantané des machines depuis le store en le mutant
@@ -1623,8 +1632,10 @@ export async function ouvrirWizard(ctx, options = {}) {
     racine.querySelector('[data-action="demanteler"]')
       .addEventListener('click', async function () {
         try {
-          await store.demantelerMachine(machine.id,
-            utilisateur.prenom + ' ' + utilisateur.nom);
+          const libelleAuteur = utilisateur
+            ? (utilisateur.prenom + ' ' + utilisateur.nom)
+            : null;
+          await store.demantelerMachine(machine.id, libelleAuteur);
           toast('Machine ' + machine.code + ' déclarée démantelée.', 'succes');
           instance.fermer();
           ctx.naviguer('mouvements'); // rafraîchit la vue courante
