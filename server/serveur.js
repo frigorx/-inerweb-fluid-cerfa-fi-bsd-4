@@ -19,6 +19,10 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const api = require('./api.js');
+const db = require('./db.js');
+const sauvegarde = require('./sauvegarde.js');
+const restauration = require('./restauration.js');
+const routesSauvegarde = require('./routes-sauvegarde.js');
 
 // ----- Configuration -----
 const PORT = Number(process.env.PORT) || 2011; // port par défaut du Mode Local
@@ -102,6 +106,8 @@ function lireCorps(requete) {
 /** Code HTTP à renvoyer selon le code métier porté par une erreur d'api. */
 function codeHttpErreur(erreur) {
   if (erreur && erreur.code === 403) return 403;
+  if (erreur && erreur.code === 409) return 409; // opération E4 déjà en cours
+  if (erreur && erreur.code === 400) return 400; // violation métier explicite
   if (erreur && erreur.code === 501) return 500; // méthode inconnue = erreur serveur
   return 400; // violation métier (message français destiné à l'interface)
 }
@@ -190,6 +196,24 @@ function traiterApi(requete, reponse, chemin) {
         erreur: 'Corps de requête JSON invalide.',
         code: 400,
       });
+      return;
+    }
+
+    // Routes E4 (sauvegarde/restauration) : dédiées, HORS du contrat
+    // DataStore, aiguillées AVANT api.appeler. Même contexte de connexion
+    // (rôle REFERENT en loopback), garde ADMIN/REFERENT + anti-concurrence
+    // dans routes-sauvegarde. Enveloppe standard identique.
+    if (routesSauvegarde.gereMethode(methode)) {
+      try {
+        const resultat = routesSauvegarde.appeler(
+          methode, enveloppe.params ?? {}, contexteDeLaConnexion(requete));
+        repondreJson(reponse, 200, { ok: true, resultat });
+      } catch (erreur) {
+        const code = codeHttpErreur(erreur);
+        repondreJson(reponse, code, {
+          ok: false, erreur: erreur.message, code,
+        });
+      }
       return;
     }
 
@@ -294,6 +318,68 @@ const serveur = http.createServer((requete, reponse) => {
 
   traiterStatique(requete, reponse, chemin);
 });
+
+/**
+ * Détecte un `data/` sous OneDrive / « Mon Drive » (segment de chemin OU
+ * variable d'environnement) et AVERTIT fortement : la synchro cloud corrompt
+ * le WAL d'une base vive (vision §4, piège Windows n°5). Le cloud = pour des
+ * ZIP figés, jamais pour la base ouverte. N'empêche pas le démarrage
+ * (l'utilisateur peut savoir ce qu'il fait), mais le signale sans ambiguïté.
+ */
+function avertirSiDataSousOneDrive() {
+  const cheminData = path.resolve(RACINE, 'data');
+  const segments = cheminData.toLowerCase().split(/[\\/]/);
+  const motsCloud = ['onedrive', 'mon drive', 'my drive', 'google drive',
+    'dropbox'];
+  const trouve = segments.some((s) => motsCloud.includes(s))
+    || (process.env.OneDrive
+        && cheminData.toLowerCase().startsWith(
+          String(process.env.OneDrive).toLowerCase()));
+  if (trouve) {
+    console.warn('');
+    console.warn('  [AVERTISSEMENT] Le dossier des données semble se trouver');
+    console.warn(`  sous un espace synchronisé (cloud) : ${cheminData}`);
+    console.warn('  La synchronisation permanente peut CORROMPRE la base');
+    console.warn('  ouverte (journal WAL). Déplacez data/ hors du cloud ;');
+    console.warn('  réservez le cloud aux SAUVEGARDES (fichiers ZIP figés).');
+    console.warn('');
+  }
+}
+
+/**
+ * Séquence de démarrage « coffre-fort » (E4), AVANT toute écoute et AVANT la
+ * première ouverture de la base :
+ *  1) REPRENDRE une restauration interrompue (data/inerweb-fluide.db absent
+ *     + restauration-en-cours/ présent) — doit passer AVANT db.ouvrir, qui
+ *     recréerait sinon un socle vierge par-dessus une restauration en cours ;
+ *  2) OUVRIR la base (socle v1 sur base vierge, migrations sinon) ;
+ *  3) PURGER les .partiel / tmp orphelins (sauvegarde interrompue = n'existe pas) ;
+ *  4) AVERTIR si data/ est sous un espace cloud.
+ * Toute erreur ici est fatale et explicite (mieux qu'un démarrage douteux).
+ */
+function preparerCoffreFort() {
+  try {
+    const reprise = restauration.reprendreRestaurationInterrompue();
+    if (reprise.repris) {
+      console.log(`  [reprise] Restauration interrompue reprise : ${reprise.action}.`);
+    }
+    db.ouvrir();
+    const purge = sauvegarde.purgerPartiels();
+    if (purge.partielsSupprimes > 0 || purge.tempsSupprimes > 0) {
+      console.log(
+        `  [purge] ${purge.partielsSupprimes} sauvegarde(s) partielle(s) et ` +
+        `${purge.tempsSupprimes} fichier(s) temporaire(s) nettoyés.`);
+    }
+    avertirSiDataSousOneDrive();
+  } catch (erreur) {
+    console.error(
+      '\n  [ERREUR] Préparation du coffre-fort impossible :',
+      erreur.message, '\n');
+    process.exit(1);
+  }
+}
+
+preparerCoffreFort();
 
 serveur.listen(PORT, HOTE, () => {
   console.log('');

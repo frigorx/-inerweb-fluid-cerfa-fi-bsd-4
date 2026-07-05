@@ -26,6 +26,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const migrations = require('./migrations.js');
 
+/** Version du socle posé par schema.sql sur une base vierge (réexportée). */
+const VERSION_BASE = migrations.VERSION_BASE;
+
 // Chemins par défaut : la base dans data/ à la racine de l'application,
 // le schéma à côté de ce module.
 const CHEMIN_BASE_DEFAUT = path.join(__dirname, '..', 'data', 'inerweb-fluide.db');
@@ -108,6 +111,61 @@ function fermer() {
     base = null;
     cheminBaseOuverte = null;
   }
+}
+
+/**
+ * Vrai si une base est actuellement ouverte (handle vivant). Le noyau de
+ * sauvegarde/restauration (E4) s'en sert pour décider s'il faut rouvrir
+ * après une bascule de fichier.
+ * @returns {boolean}
+ */
+function estOuverte() {
+  return base !== null;
+}
+
+/**
+ * Réouvre la base précédemment ouverte (ou le chemin par défaut). Ferme
+ * d'abord un éventuel handle courant (idempotent), puis rouvre le MÊME
+ * chemin avec le versionnage complet (PRAGMA + migrations). Indispensable à
+ * la restauration E4 : après avoir fermé pour libérer le verrou fichier et
+ * basculé le .db, on rouvre exactement là où on était.
+ * @returns {DatabaseSync}
+ */
+function reouvrir() {
+  const chemin = cheminBaseOuverte ?? CHEMIN_BASE_DEFAUT;
+  fermer();
+  return ouvrir(chemin);
+}
+
+/**
+ * Version courante du schéma de la base ouverte (`PRAGMA user_version`).
+ * Le manifeste de sauvegarde la fige au moment du VACUUM (E4) : une archive
+ * porte la version de schéma de sa base, condition d'une restauration sûre.
+ * @returns {number}
+ */
+function versionBase() {
+  return ouvrir().prepare('PRAGMA user_version').get().user_version;
+}
+
+/**
+ * Copie transactionnellement COHÉRENTE de la base ouverte vers un fichier
+ * .db cible, par `VACUUM INTO` — la SEULE primitive de sauvegarde admise
+ * (VISION §4.1). Contrairement à une copie brute du fichier, `VACUUM INTO`
+ * intègre le WAL, défragmente et n'écrit ni `-wal` ni `-shm` : le résultat
+ * est un .db autonome et sain, capturé sans fermer ni verrouiller la base
+ * vivante (les lectures continuent).
+ *
+ * La cible doit être INEXISTANTE (SQLite refuse d'écraser : « output file
+ * already exists ») — l'appelant fournit un nom unique. Les quotes SQL du
+ * chemin sont échappées (doublées) : un dossier « c'est » ne casse pas la
+ * commande. Aucune validation de format de chemin ici : `path.resolve` en
+ * amont a déjà produit un chemin propre.
+ * @param {string} cibleAbsolue - chemin absolu du .db à créer (inexistant)
+ */
+function vacuumInto(cibleAbsolue) {
+  const instance = ouvrir();
+  const chemin = String(cibleAbsolue).split('\\').join('/');
+  instance.exec("VACUUM INTO '" + chemin.replace(/'/g, "''") + "'");
 }
 
 /**
@@ -315,8 +373,13 @@ function hashEcriture(donnees, hashPrecedent = '') {
 
 module.exports = {
   CHEMIN_BASE_DEFAUT,
+  VERSION_BASE,
   ouvrir,
   fermer,
+  estOuverte,
+  reouvrir,
+  versionBase,
+  vacuumInto,
   cheminOuvert,
   get,
   all,
