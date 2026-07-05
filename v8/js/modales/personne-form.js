@@ -7,9 +7,10 @@
 // Pièces jointes (attestation d'aptitude) visibles en édition.
 // ============================================================
 
-import { modale, toast, ICONES } from '../views/communs.js';
+import { modale, toast, ICONES, confirmer } from '../views/communs.js';
 import { esc } from '../core/utils.js';
 import { zonePiecesJointes } from '../composants/pieces-jointes.js';
+import { creerSignature } from '../wizard/signature.js';
 
 // Types de personne proposés au choix (contrat Phase C)
 const TYPES_PERSONNE = [
@@ -195,6 +196,20 @@ function gabaritFormulaire(personne, enModification) {
       + '<div id="pf-zone-pj"></div>'
       + '</div>' : '')
 
+    + (enModification ? '<div class="champ">'
+      + '<label>Signature de référence</label>'
+      + '<div id="pf-zone-signature"></div>'
+      + '<div class="wizard-bloc" style="margin-top:8px; display:flex; gap:10px; align-items:center;">'
+      + '<button type="button" id="pf-enregistrer-signature" class="btn btn-contour btn-petit">'
+      + 'Enregistrer la signature</button>'
+      + '<span id="pf-signature-statut" class="encart-aide" style="margin:0;"></span>'
+      + '</div>'
+      // CF-21 : zone dédiée à la signature COURANTE déjà enregistrée
+      // (catégorie SIGNATURE), distincte de la PJ attestation d'aptitude,
+      // pour pouvoir la voir/vérifier/supprimer.
+      + '<div id="pf-zone-signature-pj" style="margin-top:8px;"></div>'
+      + '</div>' : '')
+
     + '</div>' // fin #pf-bloc-attestation
 
     + '</form>';
@@ -353,6 +368,97 @@ export async function ouvrirFormPersonne(ctx, personneId = null) {
       });
     }
 
+    // CF-21 : signature de référence — canvas réutilisé tel quel (aucune
+    // modification du module wizard/signature.js). Le store Personne n'a
+    // pas de champ signature dédié : on la range en pièce jointe dédiée,
+    // catégorie SIGNATURE, comme les autres PJ de la fiche.
+    const zoneSignature = racine.querySelector('#pf-zone-signature');
+    const boutonSignature = racine.querySelector('#pf-enregistrer-signature');
+    const statutSignature = racine.querySelector('#pf-signature-statut');
+    const zoneSignaturePj = racine.querySelector('#pf-zone-signature-pj');
+    let signature = null;
+
+    // CF-21 : rafraîchit la zone dédiée à la signature COURANTE — la PJ de
+    // catégorie SIGNATURE n'est jamais mêlée à l'attestation d'aptitude,
+    // et reste visible/supprimable indépendamment.
+    async function rafraichirSignaturePj() {
+      if (!zoneSignaturePj) return;
+      const pieces = (await ctx.store.listerPiecesJointes('personne', personneId))
+        .filter(function (pj) { return pj.categorie === 'SIGNATURE'; });
+      if (pieces.length === 0) {
+        zoneSignaturePj.innerHTML =
+          '<p class="pj-vide">Aucune signature enregistrée pour le moment.</p>';
+        return;
+      }
+      zoneSignaturePj.innerHTML = pieces.map(function (pj) {
+        return '<div class="pj-ligne" data-id="' + esc(pj.id) + '">'
+          + '<div class="pj-infos">'
+          + '<span class="pj-nom">' + esc(pj.nomFichier) + '</span>'
+          + '</div>'
+          + '<div class="pj-actions">'
+          + '<button type="button" class="pf-signature-supprimer" '
+          + 'data-id="' + esc(pj.id) + '" title="Supprimer la signature" '
+          + 'aria-label="Supprimer la signature">' + ICONES.croix + '</button>'
+          + '</div>'
+          + '</div>';
+      }).join('');
+    }
+
+    if (zoneSignaturePj) {
+      zoneSignaturePj.addEventListener('click', async function (evenement) {
+        const bouton = evenement.target.closest('.pf-signature-supprimer');
+        if (!bouton) return;
+        try {
+          await ctx.store.supprimerPieceJointe(bouton.dataset.id, utilisateur?.id);
+          await rafraichirSignaturePj();
+        } catch (erreur) {
+          statutSignature.textContent = erreur && erreur.message
+            ? erreur.message : 'Suppression de la signature impossible.';
+        }
+      });
+    }
+
+    if (zoneSignature && enModification) {
+      signature = creerSignature(zoneSignature);
+      rafraichirSignaturePj();
+
+      boutonSignature.addEventListener('click', async function () {
+        if (!signature || signature.estVide()) {
+          statutSignature.textContent = 'Dessinez une signature avant d’enregistrer.';
+          return;
+        }
+        boutonSignature.disabled = true;
+        statutSignature.textContent = 'Enregistrement…';
+        try {
+          // (b) Remplacement, pas d'accumulation : on retire l'éventuelle
+          // signature précédente AVANT d'ajouter la nouvelle.
+          const existantes = (await ctx.store.listerPiecesJointes('personne', personneId))
+            .filter(function (pj) { return pj.categorie === 'SIGNATURE'; });
+          for (const ancienne of existantes) {
+            await ctx.store.supprimerPieceJointe(ancienne.id, utilisateur?.id);
+          }
+          const reponse = await fetch(signature.dataURL());
+          const blob = await reponse.blob();
+          await ctx.store.ajouterPieceJointe({
+            entiteType: 'personne',
+            entiteId: personneId,
+            categorie: 'SIGNATURE',
+            nomFichier: 'signature-' + personneId + '.png',
+            mimeType: 'image/png',
+            blob: blob
+          });
+          statutSignature.textContent = 'Signature enregistrée.';
+          signature.effacer();
+          await rafraichirSignaturePj();
+        } catch (erreur) {
+          statutSignature.textContent = erreur && erreur.message
+            ? erreur.message : 'Enregistrement de la signature impossible.';
+        } finally {
+          boutonSignature.disabled = false;
+        }
+      });
+    }
+
     function masquerBandeau() {
       bandeauErreur.hidden = true;
       bandeauErreur.textContent = '';
@@ -390,10 +496,14 @@ export async function ouvrirFormPersonne(ctx, personneId = null) {
     const boutonDesactiver = racine.querySelector('#pf-desactiver');
     if (boutonDesactiver) {
       boutonDesactiver.addEventListener('click', async function () {
-        const confirmation = window.confirm(
-          'Désactiver ' + valeursInitiales.prenom + ' ' + valeursInitiales.nom + ' ?\n'
-          + 'La personne restera au registre (aucune suppression) mais ne pourra plus '
-          + 'être choisie comme opérateur ou validateur.');
+        const confirmation = await confirmer({
+          titre: 'Désactiver la personne',
+          message: 'Désactiver ' + valeursInitiales.prenom + ' ' + valeursInitiales.nom + ' ? '
+            + 'La personne restera au registre (aucune suppression) mais ne pourra plus '
+            + 'être choisie comme opérateur ou validateur.',
+          libelleConfirmer: 'Désactiver',
+          danger: true
+        });
         if (!confirmation) return;
 
         boutonDesactiver.disabled = true;

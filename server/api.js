@@ -81,6 +81,9 @@ const PJ_TAILLE_MAX = 5 * 1024 * 1024;
 /** Seuil d'écart d'inventaire au-delà duquel une justification est exigée. */
 const SEUIL_ECART_KG = 0.01;
 
+/** Seuil en deçà duquel une bouteille est considérée vide (repris EXACT du DemoStore). */
+const SEUIL_BOUTEILLE_VIDE_KG = 1e-9;
+
 /** Libellés courts des mois (flux mensuels des statistiques). */
 const LIBELLES_MOIS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin',
   'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'];
@@ -2741,6 +2744,28 @@ function verifierChaineMouvements() {
 // (messages MOT POUR MOT, mêmes ordres de contrôle).
 // ------------------------------------------------------------
 
+/**
+ * Attribution automatique du statut d'une bouteille après variation de sa
+ * masse nette — parité STRICTE avec le DemoStore (CF-5) :
+ * - masse retombée à ~0 depuis EN_STOCK/EN_SERVICE : bouteille NEUVE
+ *   consignée (proprietaire renseigné) → A_RETOURNER (destinée au
+ *   fournisseur, IM-9) ; toute autre → VIDE ;
+ * - masse à nouveau positive depuis VIDE/A_RETOURNER : retour EN_STOCK.
+ * Les statuts hors cycle courant (DECHET, RETOURNEE) ne sont jamais touchés.
+ */
+function mettreAJourStatutApresVariation(bouteille) {
+  const vide = bouteille.masseNetteKg <= SEUIL_BOUTEILLE_VIDE_KG;
+  if (vide) {
+    if (bouteille.statut === 'EN_STOCK' || bouteille.statut === 'EN_SERVICE') {
+      bouteille.statut = (bouteille.type === 'NEUVE' && bouteille.proprietaire)
+        ? 'A_RETOURNER'
+        : 'VIDE';
+    }
+  } else if (bouteille.statut === 'VIDE' || bouteille.statut === 'A_RETOURNER') {
+    bouteille.statut = 'EN_STOCK';
+  }
+}
+
 function verserDansBouteille(bouteille, quantite) {
   const nouvelleNette = arrondir(bouteille.masseNetteKg + quantite);
   if (nouvelleNette > bouteille.contenanceMaxKg) {
@@ -2754,6 +2779,7 @@ function verserDansBouteille(bouteille, quantite) {
   bouteille.masseNetteKg = nouvelleNette;
   bouteille.masseBruteKg = arrondir(bouteille.tareKg + nouvelleNette);
   bouteille.datePesee = aujourdHui();
+  mettreAJourStatutApresVariation(bouteille);
 }
 
 function retirerDeBouteille(bouteille, quantite) {
@@ -2767,6 +2793,7 @@ function retirerDeBouteille(bouteille, quantite) {
   bouteille.masseNetteKg = nouvelleNette;
   bouteille.masseBruteKg = arrondir(bouteille.tareKg + nouvelleNette);
   bouteille.datePesee = aujourdHui();
+  mettreAJourStatutApresVariation(bouteille);
 }
 
 function chargerMachine(machine, quantite) {
@@ -2991,12 +3018,15 @@ function persisterMachineCharge(machine) {
 
 /**
  * Persiste une bouteille mutée par les effets : masse_brute_kg (la nette
- * GÉNÉRÉE suit) + date de pesée. On n'écrit QUE ce que les effets touchent.
+ * GÉNÉRÉE suit), date de pesée et statut. On n'écrit QUE ce que les effets
+ * touchent ; le statut est inclus car mettreAJourStatutApresVariation peut
+ * le faire basculer (VIDE / A_RETOURNER / EN_STOCK) — parité DemoStore (CF-5).
  */
 function persisterBouteille(bouteille) {
   majParId('bouteilles', bouteille.id, {
     masse_brute_kg: bouteille.masseBruteKg,
-    date_derniere_pesee: bouteille.datePesee
+    date_derniere_pesee: bouteille.datePesee,
+    statut: bouteille.statut
   });
 }
 

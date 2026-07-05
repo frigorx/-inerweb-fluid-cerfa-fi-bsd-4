@@ -6,7 +6,7 @@
 // ============================================================
 
 import { creerStore } from '../data/datastore.js';
-import { toutesLesTables } from './exports.js';
+import { toutesLesTables, genererJournalAuditPdf, champCsv } from './exports.js';
 
 let nbOk = 0;
 let nbEchecs = 0;
@@ -134,6 +134,55 @@ verifier('bouteilles.csv : masses formatées avec virgule décimale (pas un poin
 // --- 10. Dates au format fr JJ/MM/AAAA ---------------------------
 verifier('bouteilles.csv : dates au format JJ/MM/AAAA',
   Boolean(ligneB1) && /\b15\/04\/2026\b/.test(ligneB1), ligneB1);
+
+// --- 11. CF-12 : neutralisation de l'injection de formule CSV ---
+// Un champ TEXTE commençant par « = + - @ » est préfixé d'une apostrophe
+// (convention tableur : affiché tel quel, jamais interprété en formule).
+for (const motif of ['=SOMME(A1:A9)', '+1+1', '-2+3', '@NOTIFIER(1)']) {
+  await store.justifierEcart(ANNEE, 'R-32', motif);
+  const fichiersFormule = await toutesLesTables(store, ANNEE);
+  const balanceFormule = fichiersFormule
+    .find((f) => f.nom === 'balance-matiere.csv').contenu;
+  const ligneFormule = lignesDe(balanceFormule).find((l) => l.startsWith('R-32'));
+  verifier(`balance-matiere.csv : justification « ${motif} » neutralisée (apostrophe)`,
+    Boolean(ligneFormule) && ligneFormule.includes(`'${motif}`), ligneFormule);
+}
+
+// --- 11 bis. CF-12 : tabulation en tête, amorce d'injection CSV (OWASP) --
+// Testé directement sur champCsv() : les champs métier réels sont trimmés
+// avant stockage (bonne hygiène des données), donc une tabulation en tête
+// ne survit à aucun chemin métier existant — mais la fonction d'échappement
+// elle-même doit rester sûre si un texte non maîtrisé (import, futur champ)
+// lui parvenait tel quel.
+verifier('champCsv : tabulation + « = » neutralisée (apostrophe)',
+  champCsv('\t=SOMME(A1:A9)') === "'\t=SOMME(A1:A9)",
+  champCsv('\t=SOMME(A1:A9)'));
+// Le cas « nombre réel jamais préfixé » est déjà couvert plus bas (section
+// 12) via le vrai chemin nb() → MARQUEUR_NOMBRE, sur un écart négatif réel.
+
+// --- 12. CF-12 : un nombre négatif RÉEL n'est jamais préfixé -----
+// L'écart d'inventaire (ecartKg) est une valeur numérique déjà formatée
+// par nb() : même négatif (« -3,50 »), il ne doit PAS recevoir
+// l'apostrophe de neutralisation (ce n'est pas une formule).
+await store.saisirInventaire(ANNEE,
+  [{ fluide: 'R-32', stockReelKg: theoriqueR32 - 3.5 }], utilisateur.id);
+await store.justifierEcart(ANNEE, 'R-32', 'Écart contrôlé, sans lien avec une fuite.');
+const fichiersEcartNeg = await toutesLesTables(store, ANNEE);
+const balanceEcartNeg = fichiersEcartNeg
+  .find((f) => f.nom === 'balance-matiere.csv').contenu;
+const ligneEcartNeg = lignesDe(balanceEcartNeg).find((l) => l.startsWith('R-32'));
+verifier('balance-matiere.csv : écart négatif réel (-3,50) non préfixé d’apostrophe',
+  Boolean(ligneEcartNeg) && ligneEcartNeg.includes('-3,50') &&
+  !ligneEcartNeg.includes("'-3,50"), ligneEcartNeg);
+
+// --- 13. CF-22 : export PDF du journal d'audit -------------------
+const pdfJournal = await genererJournalAuditPdf(store);
+verifier('genererJournalAuditPdf retourne des octets et un nom de fichier',
+  pdfJournal.octets instanceof Uint8Array && pdfJournal.octets.length > 0 &&
+  pdfJournal.nomFichier === 'journal-audit.pdf');
+const enteteMagiquePdf = Buffer.from(pdfJournal.octets.slice(0, 5)).toString('latin1');
+verifier('genererJournalAuditPdf produit un PDF valide (en-tête %PDF-)',
+  enteteMagiquePdf === '%PDF-', enteteMagiquePdf);
 
 // --- Verdict ------------------------------------------------------
 console.log(`\n${nbOk} vérifications réussies, ${nbEchecs} échec(s).`);

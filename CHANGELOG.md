@@ -2,6 +2,67 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🛋️ Lot confort — 18 points CF de l'audit traités (05/07)
+Traitement du lot confort de l'audit du 03/07 (`docs/AUDIT-2026-07-03.md`), 22 points CF au
+total. Triage préalable : **CF-1, CF-9, CF-10, CF-13 déjà faits** (Lot 2 / E5), non retouchés
+dans cet incrément.
+- **CF-2** : encart « Prise en main » (3 étapes machine → bouteille → mouvement) sur le tableau
+  de bord quand la base est vide (`v8/js/views/dashboard.js`).
+- **CF-3** : section « Intégrité du registre » dans l'Admin (`v8/js/views/admin.js`) — bouton
+  « Vérifier maintenant » appelant `store.verifierChaineHash()` + aperçu des dernières écritures
+  du journal (`getJournalAudit`), sans recalcul de hash côté client.
+- **CF-4** : le bandeau outillage (`v8/js/views/outillage.js`) s'aligne sur `peutPasserEnOfficiel()`
+  (alerte aussi quand un détecteur/balance CONFORME manque, pas seulement EXPIRÉ) ; filtre par
+  préfixe exact pour ne pas capter à tort le motif « Écart de balance matière ».
+- **CF-5** : attribution AUTOMATIQUE des statuts bouteille VIDE / A_RETOURNER (masse retombée à
+  ~0) et retour EN_STOCK au re-remplissage — répliquée à l'IDENTIQUE dans le DemoStore
+  (`v8/js/data/demo-store.js`) ET le LocalStore SQLite (`server/api.js`) pour parité stricte ;
+  statuts DECHET/RETOURNEE jamais touchés.
+- **CF-7** : colonne Machine des mouvements TRANSFERT affiche « B-01 → B-04 » (bouteilles
+  source/destination) au lieu de vide (`v8/js/views/mouvements.js`).
+- **CF-8** : le formulaire de contrôle (`v8/js/modales/controle-form.js`) exclut les machines
+  ARRÊTÉE/DÉMANTELÉE.
+- **CF-11** : nom du personnel démo « Frédéric Henninot » (quasi-homonyme de l'auteur) remplacé
+  par un nom fictif neutre « Marc Delorme » (`v8/js/data/demo-donnees.js`, e-mail dérivé,
+  `test-registre.mjs` adapté).
+- **CF-12** : neutralisation de l'injection de formule CSV (`v8/js/documents/exports.js`) —
+  préfixe apostrophe si un champ TEXTE commence par `= + - @` ou une tabulation ; les nombres
+  réels (dont négatifs) restent intacts (marqueur interne). Fonction `champCsv` désormais
+  exportée pour le test unitaire du correctif.
+- **CF-15** : modale du wizard passée en `aria-labelledby` (accessibilité, `v8/js/wizard/wizard.js`).
+- **CF-16** : état vide dédié pour la vue Fluides (`v8/js/views/fluides.js`).
+- **CF-18** : les 4 `window.confirm()` natifs (`app.js`, `modales/personne-form.js`,
+  `views/outillage.js`, `wizard/wizard.js`) remplacés par une modale interne chartée ; nouveau
+  helper générique `confirmer(...)` (Promise<boolean>) dans `v8/js/views/communs.js`.
+- **CF-19** : pièces jointes branchées sur les bouteilles en édition
+  (`v8/js/modales/bouteille-form.js`, `zonePiecesJointes` entiteType BOUTEILLE).
+- **CF-21** : signature de référence du personnel (`v8/js/modales/personne-form.js`) via PJ
+  catégorie SIGNATURE (réutilise `wizard/signature.js`) — avec zone d'affichage dédiée et
+  remplacement (pas d'accumulation de doublons).
+- **CF-22** : fonction `genererJournalAuditPdf()` (PDF paginé du journal d'audit, patron pdf-lib
+  du CERFA) ajoutée dans `v8/js/documents/exports.js` — exportée, non encore câblée à un bouton
+  dédié (le journal reste dans le ZIP du dossier d'audit).
+- **Revue adversariale (2 lentilles : métier/données, sécurité/robustesse)** : 2 constats
+  IMPORTANT corrigés — (a) CF-5 divergence démo/local silencieuse → résorbée à la source dans
+  `server/api.js` (parité stricte avec le DemoStore) ; (b) CF-18 l'annulation par croix/clic-fond/
+  Échap ne résolvait pas la promesse → corrigé dans `communs.js` (option `surFermeture`). 3
+  constats MINEUR corrigés aussi : CF-4 faux positif « balance matière » (préfixes exacts), CF-12
+  tabulation en tête de champ, CF-21 signature invisible après enregistrement + doublons à la
+  ré-édition.
+- **Écartés** (justification consignée dans `docs/REPRISE.md`) : **CF-6** (superseded par E5 : le
+  parcours élève passe désormais par de vrais comptes en Mode Local, plus par un sélecteur
+  démo) ; **CF-14** (harmonisation des sélecteurs de modale — refactor à risque, pile le piège
+  modale déjà source d'un bug passé) ; **CF-17** (progression fine du ZIP — surface large) ;
+  **CF-20** (inventaire nominatif bouteille-par-bouteille — vraie fonctionnalité déjà notée V9.4,
+  pas du confort).
+- Tests (tous verts) : **`test-contrat.mjs` local ET demo = 187/0** ; `test-chargement.mjs` OK ;
+  `test-exports.mjs` 26/0 ; `test-wizard.mjs` 9/0 ; `test-registre.mjs` 36/0 ; `test-mapping.mjs`
+  141/0 ; `test-routes-comptes.mjs` 30/0 ; suites bouteille/scénario (lot1/lot2/scenario-b/c,
+  conformité) vertes.
+- **Vérifié navigateur** (Mode Local port 2011, base jetable) : CF-2 encart d'accueil visible sur
+  base vide (3 étapes) ; CF-3 « Vérifier maintenant » → « Chaîne intacte : aucune rupture
+  détectée. ».
+
 ### 🔑 Finition E5 — `getUtilisateurCourant()` câblé sur la session (05/07)
 Le point ouvert laissé par V9.1 est corrigé : `getUtilisateurCourant()` renvoie désormais
 l'utilisateur RÉELLEMENT authentifié, plus le stub « premier REFERENT du personnel ».

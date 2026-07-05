@@ -9,6 +9,7 @@
 // ============================================================
 
 import { fmtDate, fmtNombre } from '../core/utils.js';
+import { chargerPdfLib } from '../cerfa/generateur.js';
 
 /** Marque d'ordre des octets UTF-8 (BOM) : Excel FR l'exige pour les accents. */
 const BOM = '﻿';
@@ -20,15 +21,43 @@ const CRLF = '\r\n';
 const SEPARATEUR = ';';
 
 /**
+ * Motif de déclenchement d'une formule dans un tableur (Excel, LibreOffice,
+ * Google Sheets) : un champ dont le TEXTE commence par l'un de ces
+ * caractères — ou par une tabulation les précédant, amorce d'injection CSV
+ * connue (OWASP) — est interprété comme une formule à l'ouverture (CF-12).
+ */
+const MOTIF_FORMULE = /^[\t=+\-@]/;
+
+/**
+ * Marqueur posé par nb() : une valeur déjà formatée en nombre fr (virgule
+ * décimale, signe moins ASCII éventuel) ne doit JAMAIS être neutralisée
+ * comme une formule — un nombre négatif réel (ex. écart d'inventaire)
+ * commence légitimement par « - » et n'est pas une injection.
+ */
+const MARQUEUR_NOMBRE = Symbol('nombreCsv');
+
+/**
  * Échappe une valeur pour une cellule CSV : entourée de guillemets dès
  * qu'elle contient le séparateur, un guillemet ou un saut de ligne ;
  * les guillemets internes sont doublés (règle CSV standard).
+ *
+ * Neutralisation d'injection de formule (CF-12) : un champ TEXTE (donc
+ * jamais une valeur passée par nb(), reconnaissable à son marqueur) dont
+ * le contenu commence par « = », « + », « - » ou « @ » est préfixé d'une
+ * apostrophe. Ce préfixe est la convention standard (tableurs l'affichent
+ * comme texte littéral, apostrophe non imprimée) pour désamorcer une
+ * formule sans altérer la valeur légitime affichée.
  * @param {*} valeur
  * @returns {string}
  */
-function champCsv(valeur) {
+export function champCsv(valeur) {
   if (valeur === null || valeur === undefined) return '';
-  const texte = String(valeur);
+  const estNombre = typeof valeur === 'object' && valeur !== null &&
+    valeur[MARQUEUR_NOMBRE] === true;
+  let texte = estNombre ? valeur.texte : String(valeur);
+  if (!estNombre && MOTIF_FORMULE.test(texte)) {
+    texte = `'${texte}`;
+  }
   if (/["\n\r]/.test(texte) || texte.includes(SEPARATEUR)) {
     return `"${texte.replace(/"/g, '""')}"`;
   }
@@ -52,12 +81,18 @@ function construireCsv(entetes, lignes) {
   return BOM + corps + CRLF;
 }
 
-/** Formate un nombre en cellule CSV : virgule décimale, vide si absent. */
+/**
+ * Formate un nombre en cellule CSV : virgule décimale, vide si absent.
+ * Le résultat est marqué « valeur numérique » (MARQUEUR_NOMBRE) pour que
+ * champCsv() ne lui applique JAMAIS la neutralisation d'injection de
+ * formule (CF-12) : un écart négatif réel (« -3,50 ») n'est pas une
+ * formule, seuls les champs texte libres le sont.
+ */
 function nb(valeur, dec = 2) {
   if (valeur === null || valeur === undefined || !Number.isFinite(Number(valeur))) {
-    return '';
+    return { [MARQUEUR_NOMBRE]: true, texte: '' };
   }
-  return fmtNombre(valeur, dec);
+  return { [MARQUEUR_NOMBRE]: true, texte: fmtNombre(valeur, dec) };
 }
 
 /** Formate un booléen en « Oui » / « Non ». */
@@ -247,4 +282,153 @@ export async function toutesLesTables(store, annee) {
     { nom: 'bsff.csv', contenu: csvBsff(bsff) },
     { nom: 'journal-audit.csv', contenu: csvJournalAudit(journalAudit) }
   ];
+}
+
+// ------------------------------------------------------------
+// Export PDF du journal d'audit (CF-22)
+// ------------------------------------------------------------
+// Patron pdf-lib repris de cerfa/generateur.js : même chargement
+// paresseux (chargerPdfLib, navigateur ↔ Node), mêmes primitives
+// (PDFDocument, StandardFonts, drawText). Ici le PDF est construit
+// de toutes pièces (PDFDocument.create), pas rempli depuis un modèle
+// officiel : il n'y a pas de CERFA du journal d'audit.
+
+/** Format de page A4 portrait, en points PDF (72 pt/pouce). */
+const PAGE_A4 = { largeur: 595.28, hauteur: 841.89 };
+
+/** Marges de page, en points. */
+const MARGE = { haut: 56, bas: 48, gauche: 40, droite: 40 };
+
+/** Tailles de police du tableau du journal. */
+const TAILLE_TITRE = 16;
+const TAILLE_SOUS_TITRE = 10;
+const TAILLE_ENTETE = 9;
+const TAILLE_LIGNE = 8.5;
+const HAUTEUR_LIGNE = 14;
+
+/** Largeurs de colonnes (points), dans l'ordre Date/Qui/Action/Cible/Détails. */
+const LARGEURS_COLONNES = [92, 90, 90, 90, 173];
+
+/** Coupe un texte pour qu'il tienne dans `largeurMax` points à `taille` donnée. */
+function tronquerPourLargeur(police, texte, taille, largeurMax) {
+  const chaine = String(texte ?? '');
+  if (police.widthOfTextAtSize(chaine, taille) <= largeurMax) return chaine;
+  const suffixe = '…';
+  let resultat = chaine;
+  while (resultat.length > 0 &&
+    police.widthOfTextAtSize(resultat + suffixe, taille) > largeurMax) {
+    resultat = resultat.slice(0, -1);
+  }
+  return resultat + suffixe;
+}
+
+/**
+ * Génère un PDF paginé du journal d'audit : titre, sous-titre (établissement
+ * + date de génération), tableau lisible des lignes (Date, Qui, Action,
+ * Cible, Détails) avec en-têtes répétés à chaque page.
+ * @param {object} store - magasin de données v8 (contrat Phases A/B/C)
+ * @returns {Promise<{ octets: Uint8Array, nomFichier: string }>}
+ */
+export async function genererJournalAuditPdf(store) {
+  const [etablissement, journal] = await Promise.all([
+    store.getEtablissement(),
+    store.getJournalAudit()
+  ]);
+
+  const PDFLib = await chargerPdfLib();
+  const { PDFDocument, StandardFonts, rgb } = PDFLib;
+
+  const doc = await PDFDocument.create();
+  const policeTitre = await doc.embedFont(StandardFonts.HelveticaBold);
+  const police = await doc.embedFont(StandardFonts.Helvetica);
+
+  const largeurUtile = PAGE_A4.largeur - MARGE.gauche - MARGE.droite;
+  const entetes = ['Date', 'Qui', 'Action', 'Cible', 'Détails'];
+  const maintenant = new Date();
+
+  let page = null;
+  let y = 0;
+
+  /** Abscisse de départ de chaque colonne (cumul des largeurs précédentes). */
+  function abscisseColonne(indice) {
+    let x = MARGE.gauche;
+    for (let i = 0; i < indice; i += 1) x += LARGEURS_COLONNES[i];
+    return x;
+  }
+
+  /** Ajoute une page vierge et redessine titre + en-tête de tableau. */
+  function nouvellePage() {
+    page = doc.addPage([PAGE_A4.largeur, PAGE_A4.hauteur]);
+    y = PAGE_A4.hauteur - MARGE.haut;
+
+    page.drawText('Journal d’audit — inerWeb Fluide', {
+      x: MARGE.gauche, y, size: TAILLE_TITRE, font: policeTitre,
+      color: rgb(0.1, 0.14, 0.22)
+    });
+    y -= TAILLE_TITRE + 6;
+
+    const sousTitre = [
+      etablissement?.raisonSociale,
+      `généré le ${fmtDate(maintenant.toISOString())}`
+    ].filter(Boolean).join(' — ');
+    page.drawText(sousTitre, {
+      x: MARGE.gauche, y, size: TAILLE_SOUS_TITRE, font: police,
+      color: rgb(0.35, 0.38, 0.45)
+    });
+    y -= TAILLE_SOUS_TITRE + 14;
+
+    entetes.forEach((texte, i) => {
+      page.drawText(texte, {
+        x: abscisseColonne(i), y, size: TAILLE_ENTETE, font: policeTitre,
+        color: rgb(0.1, 0.14, 0.22)
+      });
+    });
+    y -= 4;
+    page.drawLine({
+      start: { x: MARGE.gauche, y },
+      end: { x: PAGE_A4.largeur - MARGE.droite, y },
+      thickness: 0.75, color: rgb(0.6, 0.62, 0.68)
+    });
+    y -= HAUTEUR_LIGNE;
+  }
+
+  nouvellePage();
+
+  for (const j of journal) {
+    if (y < MARGE.bas + HAUTEUR_LIGNE) nouvellePage();
+
+    const cellules = [
+      fmtDateHeure(j.date), j.qui, j.action, j.cible, j.details
+    ];
+    cellules.forEach((valeur, i) => {
+      const largeurMax = LARGEURS_COLONNES[i] - 6;
+      const texte = tronquerPourLargeur(
+        police, valeur ?? '', TAILLE_LIGNE, largeurMax);
+      page.drawText(texte, {
+        x: abscisseColonne(i), y, size: TAILLE_LIGNE, font: police,
+        color: rgb(0.15, 0.15, 0.18)
+      });
+    });
+    y -= HAUTEUR_LIGNE;
+  }
+
+  if (journal.length === 0) {
+    page.drawText('Aucune écriture au journal d’audit.', {
+      x: MARGE.gauche, y, size: TAILLE_LIGNE, font: police,
+      color: rgb(0.4, 0.42, 0.48)
+    });
+  }
+
+  // Pagination « Page X / N » en pied de chaque page.
+  const pages = doc.getPages();
+  pages.forEach((p, i) => {
+    p.drawText(`Page ${i + 1} / ${pages.length}`, {
+      x: PAGE_A4.largeur - MARGE.droite - 60,
+      y: MARGE.bas - 20,
+      size: 8, font: police, color: rgb(0.45, 0.47, 0.52)
+    });
+  });
+
+  const octets = await doc.save({ objectsPerTick: Infinity });
+  return { octets, nomFichier: 'journal-audit.pdf' };
 }

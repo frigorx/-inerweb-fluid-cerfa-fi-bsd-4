@@ -5,7 +5,7 @@
 // pompe à vide, EPI…). Statut recalculé depuis l'échéance.
 // ============================================================
 
-import { enteteVue, chipStatut, toast, ICONES } from './communs.js';
+import { enteteVue, chipStatut, toast, ICONES, confirmer } from './communs.js';
 import { esc, fmtDate } from '../core/utils.js';
 import { ouvrirFormOutil } from '../modales/outil-form.js';
 
@@ -199,11 +199,22 @@ export async function render(conteneur, ctx) {
 
   const tries = outillage.slice().sort(comparerOutils);
 
-  // Bandeau d'avertissement : détecteur ou balance EXPIRE → mode officiel bloqué
-  const detecteurOuBalanceExpire = outillage.some(function (o) {
-    return (o.typeOutil === 'DETECTEUR' || o.typeOutil === 'BALANCE') && o.statut === 'EXPIRE';
+  // Bandeau d'avertissement : reprend la même condition de blocage du mode
+  // officiel que store.peutPasserEnOfficiel() (SPEC §7.2) pour la part
+  // outillage — alerte dès qu'il MANQUE un détecteur ou une balance
+  // CONFORME, pas seulement quand un outil est EXPIRE (un outil peut aussi
+  // manquer, ou être A_VERIFIER/HORS_SERVICE, sans jamais être passé par
+  // EXPIRE).
+  const etatOfficiel = await ctx.store.peutPasserEnOfficiel();
+  // Préfixes EXACTS des deux seuls motifs d'outillage (demo-store.js,
+  // peutPasserEnOfficiel) — surtout pas de correspondance par sous-chaîne
+  // sur « balance », qui capterait aussi « Écart de balance matière non
+  // justifié : ... » (blocage inventaire, pas outillage).
+  const motifsOutillage = etatOfficiel.motifs.filter(function (motif) {
+    return motif.startsWith('Aucune balance conforme')
+      || motif.startsWith('Aucun détecteur de fuite conforme');
   });
-  const bandeau = detecteurOuBalanceExpire
+  const bandeau = motifsOutillage.length
     ? '<div class="bandeau-avertissement">' + ICONES.alerte
       + '<span>Le mode officiel est bloqué tant qu’un détecteur et une balance conformes '
       + 'ne sont pas disponibles.</span></div>'
@@ -242,9 +253,13 @@ export async function render(conteneur, ctx) {
   // Réforme d'un outil (hors service), avec confirmation
   conteneur.querySelectorAll('[data-action="reformer-outil"]').forEach(function (bouton) {
     bouton.addEventListener('click', async function () {
-      const confirme = window.confirm(
-        'Réformer « ' + bouton.dataset.libelle + ' » ? '
-        + 'L’outil passera hors service et ne pourra plus être utilisé pour une vérification.');
+      const confirme = await confirmer({
+        titre: 'Réformer l’outil',
+        message: 'Réformer « ' + bouton.dataset.libelle + ' » ? '
+          + 'L’outil passera hors service et ne pourra plus être utilisé pour une vérification.',
+        libelleConfirmer: 'Réformer',
+        danger: true
+      });
       if (!confirme) return;
       try {
         const utilisateur = await ctx.store.getUtilisateurCourant();

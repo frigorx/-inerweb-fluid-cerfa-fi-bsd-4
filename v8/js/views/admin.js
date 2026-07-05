@@ -5,7 +5,7 @@
 // personnel, clients/détenteurs (cadre 2, création et édition — IM-11).
 // ============================================================
 
-import { enteteVue, ICONES } from './communs.js';
+import { enteteVue, ICONES, toast } from './communs.js';
 import { esc, fmtDate } from '../core/utils.js';
 import { ouvrirFormEtablissement } from '../modales/etablissement-form.js';
 import { ouvrirFormAudit, ouvrirFormNonConformite, ouvrirFormSolderNonConformite }
@@ -75,6 +75,39 @@ const STYLE_VUE = `<style>
   /* Renvoi (carte Utilisateurs devenue simple lien) */
   .vue-admin .carte-renvoi { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
   .vue-admin .carte-renvoi p { font-size: 13px; color: var(--texte-2); }
+
+  /* Intégrité du registre : résultat de vérification + aperçu du journal */
+  .vue-admin .integrite-resultat {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 12px; padding: 10px 12px;
+    border-radius: var(--rayon-bouton);
+    font-size: 13px; font-weight: 600;
+  }
+  .vue-admin .integrite-resultat.ok {
+    background: var(--succes-fond); color: var(--succes);
+  }
+  .vue-admin .integrite-resultat.anomalie {
+    background: var(--danger-fond); color: var(--danger);
+  }
+  .vue-admin .integrite-resultat svg { flex: none; }
+  .vue-admin .journal-apercu { margin-top: 16px; }
+  .vue-admin .journal-apercu-entete {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .vue-admin .liste-journal { list-style: none; margin: 0; padding: 0; }
+  .vue-admin .liste-journal li {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 8px 2px; border-bottom: 1px solid var(--bordure-2);
+    font-size: 12.5px;
+  }
+  .vue-admin .liste-journal li:last-child { border-bottom: none; padding-bottom: 0; }
+  .vue-admin .liste-journal .journal-ligne1 {
+    display: flex; align-items: baseline; gap: 8px; color: var(--texte);
+  }
+  .vue-admin .liste-journal .journal-date { color: var(--texte-3); font-family: var(--police-mono); }
+  .vue-admin .liste-journal .journal-action { font-weight: 600; }
+  .vue-admin .liste-journal .journal-detail { color: var(--texte-3); }
 </style>`;
 
 /* ============================================================
@@ -258,6 +291,59 @@ function ligneClient(client) {
     + '</li>';
 }
 
+/** Formate une date ISO complète en « jj/mm/aaaa hh:mm:ss » (affichage seul). */
+function fmtDateHeure(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  const heures = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const secondes = String(d.getSeconds()).padStart(2, '0');
+  return fmtDate(iso) + ' ' + heures + ':' + minutes + ':' + secondes;
+}
+
+/** Ligne d'aperçu du journal d'audit (append-only, lecture seule). */
+function ligneJournal(entree) {
+  return '<li>'
+    + '<div class="journal-ligne1">'
+    + '<span class="journal-date">' + esc(fmtDateHeure(entree.date)) + '</span>'
+    + '<span class="journal-action">' + esc(entree.action || '—') + '</span>'
+    + '<span class="journal-detail">' + esc(entree.qui || 'système') + '</span>'
+    + '</div>'
+    + (entree.cible || entree.details
+      ? '<span class="journal-detail">'
+        + esc([entree.cible, entree.details].filter(Boolean).join(' — '))
+        + '</span>'
+      : '')
+    + '</li>';
+}
+
+/** Carte « Intégrité du registre » : vérification à la demande + aperçu du journal. */
+function carteIntegriteRegistre() {
+  return '<section class="carte">'
+    + '<div class="carte-entete">'
+    + '<div class="carte-entete-titres">'
+    + '<div>'
+    + '<h3 class="carte-titre">Intégrité du registre</h3>'
+    + '<p class="carte-rappel">Chaîne de hash des écritures figées et journal d’audit '
+    + '(append-only, sans purge possible).</p>'
+    + '</div>'
+    + '</div>'
+    + '<button type="button" class="btn btn-secondaire btn-petit" data-action="verifier-integrite">'
+    + 'Vérifier maintenant</button>'
+    + '</div>'
+    + '<div id="integrite-resultat"></div>'
+    + '<div class="journal-apercu">'
+    + '<div class="journal-apercu-entete">'
+    + '<span class="champ-libelle">Journal d’audit (dernières écritures)</span>'
+    + '</div>'
+    + '<ul class="liste-journal" id="integrite-journal">'
+    + '<li><span class="journal-detail">Chargement…</span></li>'
+    + '</ul>'
+    + '</div>'
+    + '</section>';
+}
+
 /** Carte « Clients / Détenteurs » (cadre 2 du CERFA). */
 function carteClients(clients) {
   const lignes = clients.map(ligneClient).join('');
@@ -307,6 +393,7 @@ export async function render(conteneur, ctx) {
       })
       + carteEntreprise(etablissement)
       + carteSuiviAudit(audits, nonConformites)
+      + carteIntegriteRegistre()
       + '<div class="grille-2">'
       + carteRenvoiPersonnel()
       + carteClients(clients)
@@ -369,6 +456,54 @@ export async function render(conteneur, ctx) {
         if (enregistre) await rafraichir();
       });
     });
+
+    // CF-3 : intégrité du registre, vérification à la demande + aperçu du journal.
+    const zoneJournal = conteneur.querySelector('#integrite-journal');
+    if (zoneJournal) {
+      store.getJournalAudit().then((journal) => {
+        const dernieres = (journal || []).slice(-10).reverse();
+        zoneJournal.innerHTML = dernieres.length
+          ? dernieres.map(ligneJournal).join('')
+          : '<li><span class="journal-detail">Aucune écriture au journal.</span></li>';
+      }).catch((erreur) => {
+        zoneJournal.innerHTML = '<li><span class="journal-detail">'
+          + 'Journal indisponible.</span></li>';
+        console.error('Lecture du journal d’audit impossible :', erreur);
+      });
+    }
+
+    const boutonVerifierIntegrite = conteneur.querySelector('[data-action="verifier-integrite"]');
+    if (boutonVerifierIntegrite) {
+      boutonVerifierIntegrite.addEventListener('click', async () => {
+        const zoneResultat = conteneur.querySelector('#integrite-resultat');
+        boutonVerifierIntegrite.disabled = true;
+        try {
+          const resultat = await store.verifierChaineHash();
+          if (zoneResultat) {
+            zoneResultat.innerHTML = resultat.ok
+              ? '<div class="integrite-resultat ok">' + ICONES.coche
+                + '<span>Chaîne intacte : aucune rupture détectée.</span></div>'
+              : '<div class="integrite-resultat anomalie">' + ICONES.alerte
+                + '<span>Anomalie détectée : rupture à l’écriture '
+                + esc(resultat.casseA || '?') + '.</span></div>';
+          }
+          toast(
+            resultat.ok ? 'Chaîne intacte : aucune rupture détectée.'
+              : 'Anomalie détectée à l’écriture ' + (resultat.casseA || '?') + '.',
+            resultat.ok ? 'succes' : 'erreur'
+          );
+        } catch (erreur) {
+          if (zoneResultat) {
+            zoneResultat.innerHTML = '<div class="integrite-resultat anomalie">' + ICONES.alerte
+              + '<span>Vérification impossible.</span></div>';
+          }
+          toast('Vérification du registre impossible.', 'erreur');
+          console.error('Vérification de la chaîne du registre impossible :', erreur);
+        } finally {
+          boutonVerifierIntegrite.disabled = false;
+        }
+      });
+    }
   }
 
   await rafraichir();

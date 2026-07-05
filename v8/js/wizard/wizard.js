@@ -7,7 +7,7 @@
 // Aucun accès DOM à l'import du module.
 // ============================================================
 
-import { toast, chipStatut, chipType, modale, ICONES } from '../views/communs.js';
+import { toast, chipStatut, chipType, modale, ICONES, confirmer } from '../views/communs.js';
 import { esc, fmtNombre, fmtKg, fmtKgSigne, fmtDate, nombreFr } from '../core/utils.js';
 import { creerSignature } from './signature.js';
 import { ouvrirFormMachine } from '../modales/machine-form.js';
@@ -721,13 +721,14 @@ export async function ouvrirWizard(ctx, options = {}) {
   const titreWizard = idBrouillonRepris
     ? 'Reprise du mouvement ' + numeroBrouillonRepris
     : 'Nouveau mouvement de fluide';
+  const idTitreWizard = 'wizard-titre-' + Math.random().toString(36).slice(2, 9);
   const fond = document.createElement('div');
   fond.className = 'modale-fond';
   fond.innerHTML =
     '<div class="modale modale-wizard" role="dialog" aria-modal="true"'
-    + ' aria-label="' + esc(titreWizard) + '">'
+    + ' aria-labelledby="' + idTitreWizard + '">'
     + '<div class="modale-entete">'
-    + '<h3 class="modale-titre">' + esc(titreWizard) + '</h3>'
+    + '<h3 class="modale-titre" id="' + idTitreWizard + '">' + esc(titreWizard) + '</h3>'
     + '<button class="modale-fermer" type="button" aria-label="Fermer">'
     + ICONES.croix + '</button>'
     + '</div>'
@@ -783,11 +784,15 @@ export async function ouvrirWizard(ctx, options = {}) {
   }
 
   /** Demande confirmation avant d'abandonner si des données sont saisies. */
-  function demanderFermeture() {
+  async function demanderFermeture() {
     if (finalisationEnCours) return;
     if (!donneesSaisies()
-        || window.confirm('Abandonner ce mouvement ? '
-          + 'Les informations saisies seront perdues.')) {
+        || await confirmer({
+          titre: 'Abandonner ce mouvement',
+          message: 'Abandonner ce mouvement ? Les informations saisies seront perdues.',
+          libelleConfirmer: 'Abandonner',
+          danger: true
+        })) {
       purgerEcritureEnCours();
       fermer();
     }

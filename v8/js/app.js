@@ -9,7 +9,7 @@ import { creerTransportHttp, EVENEMENT_SESSION_REQUISE } from './data/transport-
 import { creerRouteur } from './core/routeur.js';
 import { ICONES } from './core/icones.js';
 import { esc } from './core/utils.js';
-import { modale, toast } from './views/communs.js';
+import { modale, toast, confirmer } from './views/communs.js';
 import { render as rendreConnexion } from './views/connexion.js';
 
 // ---- Liste ordonnée des vues (contrat v8) ----
@@ -445,13 +445,15 @@ function ouvrirModaleSauvegarde() {
   // Réinitialisation de la démonstration : on efface le registre local
   // (localStorage) ET les pièces jointes (IndexedDB), puis on recharge —
   // le monde fictif de départ se reconstruit tout seul au démarrage.
-  document.getElementById('option-reinitialiser').addEventListener('click', function () {
-    const confirme = window.confirm(
-      'Réinitialiser la démonstration ?\n\n'
-      + 'Toutes les données saisies sur cet appareil (mouvements, machines, pièces jointes…) '
-      + 'seront effacées et remplacées par le monde fictif de départ.\n\n'
-      + 'Pensez à exporter une sauvegarde avant si vous voulez garder une trace.'
-    );
+  document.getElementById('option-reinitialiser').addEventListener('click', async function () {
+    const confirme = await confirmer({
+      titre: 'Réinitialiser la démonstration',
+      message: 'Toutes les données saisies sur cet appareil (mouvements, machines, pièces jointes…) '
+        + 'seront effacées et remplacées par le monde fictif de départ. '
+        + 'Pensez à exporter une sauvegarde avant si vous voulez garder une trace.',
+      libelleConfirmer: 'Réinitialiser',
+      danger: true
+    });
     if (!confirme) return;
     try { localStorage.removeItem('inerweb-fluide-v8-demo'); } catch (e) { /* stockage indisponible */ }
     const suppression = indexedDB.deleteDatabase('inerweb-fluide-v8-pj');

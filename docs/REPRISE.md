@@ -2,7 +2,7 @@
 
 > **À lire en premier au démarrage de toute session de travail.**
 > Rédigé le 04/07/2026 à la clôture de la session fondatrice (v8 complète + vision V9/V10).
-> Mis à jour le 05/07/2026 après V9.1 (fiche machine vivante).
+> Mis à jour le 05/07/2026 après V9.1 (fiche machine vivante), puis après le lot confort.
 
 ## État exact du projet (04/07/2026, commit `7b0fe17`)
 
@@ -98,12 +98,22 @@
    pour l'admin CLI ; `roleApp` = rôle de la session ; repli premier REFERENT sans session).
    Le wizard s'ouvre désormais sur une base fraîche. Preuve : `server/test-utilisateur-courant.mjs`
    (14/0) + contrat 187/0 inchangé.
-9. **Prochaine étape** : validation live par Franck (LAN réel + tablette, saisie masquée CLI
-   du bootstrap E5 — toujours en attente), puis choisir entre **V9.2 « Relevés »** (⚠️ bloquée
-   par la décision RGPD élèves §16.5 avant tout usage réel) et le **lot confort audit**
-   (22 points, au fil de l'eau) ; §16 de la VISION toujours en attente. Finition E5
-   `getUtilisateurCourant` FAITE (05/07).
-10. Bascule v8 → racine quand Franck valide.
+9. ~~**Lot confort audit**~~ **FAIT le 05/07** : 18 des 22 points CF traités (CF-1/9/10/13
+   étaient déjà faits en Lot 2/E5, non retouchés). Détail dans `CHANGELOG.md` (entrée « Lot
+   confort »). Revue adversariale : 2 constats IMPORTANT corrigés (parité démo/local des
+   statuts bouteille CF-5, promesse non résolue à l'annulation CF-18) + 3 MINEUR. **4 points
+   écartés, justification consignée** : **CF-6** (superseded par E5, vrais comptes désormais) ;
+   **CF-14** (harmonisation des sélecteurs de modale — refactor jugé à risque) ; **CF-17**
+   (progression fine du ZIP — surface large) ; **CF-20** (inventaire nominatif bouteille-par-
+   bouteille — reporté en V9.4, ce n'est pas du confort). Tests tous verts (contrat local+demo
+   187/0, exports 26/0, wizard 9/0, registre 36/0, mapping 141/0, routes-comptes 30/0). Vérifié
+   navigateur (port 2011, base jetable) : encart de prise en main (CF-2), vérification
+   d'intégrité du registre (CF-3).
+10. **Prochaine étape** : validation live par Franck (LAN réel + tablette, saisie masquée CLI
+    du bootstrap E5 — toujours en attente), puis **V9.2 « Relevés »** (⚠️ bloquée par la
+    décision RGPD élèves §16.5 avant tout usage réel) ; garder **V9.4** pour CF-20 (inventaire
+    nominatif) ; §16 de la VISION toujours en attente.
+11. Bascule v8 → racine quand Franck valide.
 
 ## Méthode de travail validée avec Franck
 

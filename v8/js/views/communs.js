@@ -317,7 +317,7 @@ export function piegerFocus(conteneur) {
  *   mauvaise boîte et le câblage plante (bouton « submit » natif →
  *   rechargement de page — bug réel constaté le 04/07/2026).
  */
-export function modale({ titre, contenuHtml = '', actionsHtml = '' }) {
+export function modale({ titre, contenuHtml = '', actionsHtml = '', surFermeture = null }) {
   const zone = document.getElementById('zone-modales') || document.body;
 
   const idTitre = 'modale-titre-' + Math.random().toString(36).slice(2, 9);
@@ -341,6 +341,10 @@ export function modale({ titre, contenuHtml = '', actionsHtml = '' }) {
   function fermer() {
     if (fermee) return;
     fermee = true;
+    // Notifie l'appelant AVANT tout retrait : ainsi la croix, le clic sur le
+    // fond et la touche Échap — qui appellent tous ce fermer() local —
+    // déclenchent la même résolution que le bouton Annuler (CF-18).
+    if (typeof surFermeture === 'function') surFermeture();
     document.removeEventListener('keydown', surTouche);
     piege.liberer();
     fond.classList.remove('visible');
@@ -362,4 +366,48 @@ export function modale({ titre, contenuHtml = '', actionsHtml = '' }) {
   requestAnimationFrame(function () { fond.classList.add('visible'); });
 
   return { fermer, racine: boiteDialogue };
+}
+
+/* ============================================================
+   Confirmation (remplace window.confirm)
+   ============================================================ */
+
+/**
+ * Modale de confirmation chartée, à la place du window.confirm() natif.
+ * @param {{ titre?: string, message: string, libelleConfirmer?: string,
+ *           danger?: boolean }} options
+ * @returns {Promise<boolean>} true si l'utilisateur confirme, false sinon
+ *   (bouton Annuler, croix, clic sur le fond ou touche Échap).
+ */
+export function confirmer({ titre = 'Confirmation', message, libelleConfirmer = 'Confirmer', danger = false }) {
+  return new Promise(function (resoudre) {
+    let repondu = false;
+
+    function repondre(valeur) {
+      if (repondu) return;
+      repondu = true;
+      resoudre(valeur);
+    }
+
+    // TOUTE fermeture (croix, clic sur le fond, touche Échap ou bouton
+    // Annuler) passe par le fermer() interne de modale(), donc par ce
+    // rappel : la promesse se résout alors à false. Le bouton Confirmer,
+    // lui, résout à true AVANT d'appeler fermer(), et le garde `repondu`
+    // empêche que la résolution false qui suit ne l'écrase (CF-18).
+    const instance = modale({
+      titre: titre,
+      contenuHtml: '<p style="font-size:13px;color:var(--texte-2)">' + esc(message) + '</p>',
+      actionsHtml:
+        '<button type="button" class="btn btn-secondaire" data-role="annuler">Annuler</button>'
+        + '<button type="button" class="btn ' + (danger ? 'btn-danger-contour' : 'btn-primaire')
+        + '" data-role="confirmer">' + esc(libelleConfirmer) + '</button>',
+      surFermeture: function () { repondre(false); }
+    });
+
+    instance.racine.querySelector('[data-role="annuler"]').addEventListener('click', instance.fermer);
+    instance.racine.querySelector('[data-role="confirmer"]').addEventListener('click', function () {
+      repondre(true);
+      instance.fermer();
+    });
+  });
 }

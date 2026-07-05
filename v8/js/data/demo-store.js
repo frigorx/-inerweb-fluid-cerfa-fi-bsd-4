@@ -31,6 +31,12 @@ const SEUIL_ECART_KG = 0.01;
 const TOLERANCE_CHARGE_RESIDUELLE_KG = 0.05;
 
 /**
+ * CF-5 : tolérance flottante pour considérer une bouteille comme vide
+ * après un mouvement (même seuil que le reste du fichier, cf. BSFF).
+ */
+const SEUIL_BOUTEILLE_VIDE_KG = 1e-9;
+
+/**
  * IM-19 : types MIME acceptés pour les pièces jointes — MÊME liste
  * blanche que le composant d'interface (SVG exclu : risque XSS).
  */
@@ -679,6 +685,33 @@ export function creerDemoStore() {
   // validation. Mutations VIVES + calcul de quantiteKg signée.
   // --------------------------------------------------------
 
+  /**
+   * CF-5 : attribution AUTOMATIQUE et cohérente des statuts VIDE /
+   * A_RETOURNER après un mouvement qui fait varier la masse nette —
+   * jamais touchée pour un statut hors du cycle courant (DECHET,
+   * RETOURNEE : sémantique propre gérée par deciderFluideRecupere,
+   * createBsff et retournerFournisseur, IM-7/IM-8/IM-9).
+   *
+   * - masse retombée à ~0 depuis EN_STOCK/EN_SERVICE : bouteille
+   *   NEUVE consignée (proprietaire renseigné) → A_RETOURNER (elle
+   *   est destinée à repartir chez le fournisseur, cf. IM-9) ;
+   *   toute autre bouteille (RECUPERATION, TRANSFERT…) → VIDE.
+   * - masse à nouveau positive depuis VIDE/A_RETOURNER : la bouteille
+   *   redevient utilisable → retour à EN_STOCK.
+   */
+  function mettreAJourStatutApresVariation(bouteille) {
+    const vide = bouteille.masseNetteKg <= SEUIL_BOUTEILLE_VIDE_KG;
+    if (vide) {
+      if (bouteille.statut === 'EN_STOCK' || bouteille.statut === 'EN_SERVICE') {
+        bouteille.statut = (bouteille.type === 'NEUVE' && bouteille.proprietaire)
+          ? 'A_RETOURNER'
+          : 'VIDE';
+      }
+    } else if (bouteille.statut === 'VIDE' || bouteille.statut === 'A_RETOURNER') {
+      bouteille.statut = 'EN_STOCK';
+    }
+  }
+
   function verserDansBouteille(bouteille, quantite) {
     const nouvelleNette = arrondir(bouteille.masseNetteKg + quantite);
     if (nouvelleNette > bouteille.contenanceMaxKg) {
@@ -692,6 +725,7 @@ export function creerDemoStore() {
     bouteille.masseNetteKg = nouvelleNette;
     bouteille.masseBruteKg = arrondir(bouteille.tareKg + nouvelleNette);
     bouteille.datePesee = aujourdHui();
+    mettreAJourStatutApresVariation(bouteille);
   }
 
   function retirerDeBouteille(bouteille, quantite) {
@@ -705,6 +739,7 @@ export function creerDemoStore() {
     bouteille.masseNetteKg = nouvelleNette;
     bouteille.masseBruteKg = arrondir(bouteille.tareKg + nouvelleNette);
     bouteille.datePesee = aujourdHui();
+    mettreAJourStatutApresVariation(bouteille);
   }
 
   function chargerMachine(machine, quantite) {

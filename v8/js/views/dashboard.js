@@ -175,6 +175,72 @@ const STYLES_VUE = `
     font-weight: 600;
   }
   .tdb-officiel-ok svg { width: 15px; height: 15px; flex: none; }
+
+  /* CF-2 : encart d'accueil affiché uniquement quand la base est vide
+     (aucune machine ni bouteille) — disparaît dès qu'il y a des données. */
+  .tdb-accueil {
+    margin-top: 16px;
+  }
+  .tdb-accueil-titre {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--texte);
+  }
+  .tdb-accueil-texte {
+    margin-top: 4px;
+    font-size: 12.5px;
+    color: var(--texte-3);
+  }
+  .tdb-accueil-etapes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+  }
+  @media (max-width: 899px) {
+    .tdb-accueil-etapes { grid-template-columns: 1fr; }
+  }
+  .tdb-accueil-etape {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--bordure-2);
+    border-radius: var(--rayon-bouton);
+  }
+  .tdb-accueil-etape.tdb-accueil-etape-lien { cursor: pointer; }
+  .tdb-accueil-etape.tdb-accueil-etape-lien:hover,
+  .tdb-accueil-etape.tdb-accueil-etape-lien:focus-visible {
+    background: var(--fond-2);
+  }
+  .tdb-accueil-etape.tdb-accueil-etape-lien:focus-visible {
+    outline: 2px solid var(--accent-fort);
+    outline-offset: -2px;
+  }
+  .tdb-accueil-numero {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex: none;
+    border-radius: var(--rayon-chip);
+    background: var(--accent-fond);
+    color: var(--accent-fort);
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--police-mono);
+  }
+  .tdb-accueil-etape-titre {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--texte);
+  }
+  .tdb-accueil-etape-detail {
+    margin-top: 2px;
+    font-size: 11.5px;
+    color: var(--texte-3);
+  }
 </style>`;
 
 /**
@@ -275,6 +341,39 @@ function ligneAlerte(alerte) {
 }
 
 /**
+ * CF-2 : encart d'accueil affiché uniquement quand la base est vide
+ * (aucune machine ET aucune bouteille) — guide vers les 3 premières
+ * étapes. Disparaît de lui-même dès qu'il y a des données (le test
+ * porte sur les stats déjà lues, aucune requête supplémentaire).
+ * @returns {string} HTML
+ */
+function encartAccueil() {
+  const etapes = [
+    { numero: '1', titre: 'Créer une machine', detail: 'Déclarer un équipement du parc.', vue: 'machines' },
+    { numero: '2', titre: 'Ajouter une bouteille', detail: 'Enregistrer un contenant de fluide.', vue: 'bouteilles' },
+    { numero: '3', titre: 'Enregistrer un mouvement', detail: 'Tracer une charge ou une récupération.', vue: '' }
+  ];
+  const etapesHtml = etapes.map((etape) => {
+    const estLien = Boolean(etape.vue);
+    return '<div class="tdb-accueil-etape' + (estLien ? ' tdb-accueil-etape-lien' : '') + '"'
+      + (estLien ? ' role="link" tabindex="0" data-vue="' + esc(etape.vue) + '"' : '')
+      + '>'
+      + '<span class="tdb-accueil-numero" aria-hidden="true">' + esc(etape.numero) + '</span>'
+      + '<div>'
+      + '<div class="tdb-accueil-etape-titre">' + esc(etape.titre) + '</div>'
+      + '<div class="tdb-accueil-etape-detail">' + esc(etape.detail) + '</div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+
+  return '<section class="carte tdb-accueil" aria-label="Prise en main">'
+    + '<h3 class="tdb-accueil-titre">Prise en main</h3>'
+    + '<p class="tdb-accueil-texte">Aucune donnée pour l’instant. Trois étapes pour démarrer la traçabilité.</p>'
+    + '<div class="tdb-accueil-etapes">' + etapesHtml + '</div>'
+    + '</section>';
+}
+
+/**
  * Rend la vue « Tableau de bord ».
  * @param {HTMLElement} conteneur — élément déjà vidé par le routeur
  * @param {{ store: object, naviguer: (id: string) => void }} ctx
@@ -360,10 +459,14 @@ export async function render(conteneur, ctx) {
     + listeAlertes
     + '</section>';
 
+  // CF-2 : base vide (aucune machine ni bouteille) → encart de prise en main
+  const baseVide = stats.nbMachines === 0 && stats.nbBouteilles === 0;
+
   // ---- Insertion unique dans le conteneur ----
   conteneur.innerHTML = STYLES_VUE
     + entete
     + rangeeKpi
+    + (baseVide ? encartAccueil() : '')
     + bandeauModeOfficiel(etatOfficiel)
     + '<div class="tdb-colonnes">' + carteMouvements + carteAlertes + '</div>';
 
@@ -397,6 +500,22 @@ export async function render(conteneur, ctx) {
       naviguer(vueCible);
     });
     ligne.addEventListener('keydown', function (evenement) {
+      if (evenement.key === 'Enter' || evenement.key === ' ') {
+        evenement.preventDefault();
+        naviguer(vueCible);
+      }
+    });
+  });
+
+  // CF-2 : étapes de l'encart d'accueil cliquables → naviguent vers leur vue
+  // (même comportement clavier que les lignes d'alerte).
+  conteneur.querySelectorAll('.tdb-accueil-etape-lien').forEach(function (etape) {
+    const vueCible = etape.dataset.vue;
+    if (!vueCible) return;
+    etape.addEventListener('click', function () {
+      naviguer(vueCible);
+    });
+    etape.addEventListener('keydown', function (evenement) {
       if (evenement.key === 'Enter' || evenement.key === ' ') {
         evenement.preventDefault();
         naviguer(vueCible);

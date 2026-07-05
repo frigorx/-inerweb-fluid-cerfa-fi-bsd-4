@@ -58,7 +58,13 @@ export async function ouvrirFormControle(ctx, machineId = null) {
   const detecteurs = outillage.filter(function (o) { return o.typeOutil === 'DETECTEUR'; });
   const operateursActifs = personnel.filter(function (p) { return p.actif; });
 
-  const optionsMachines = machines.map(function (m) {
+  // CF-8 : un contrôle n'a de sens que sur une machine en service
+  // (une machine arrêtée ou démantelée n'est plus exploitée).
+  const machinesControlables = machines.filter(function (m) {
+    return m.statut !== 'ARRETEE' && m.statut !== 'DEMANTELEE';
+  });
+
+  const optionsMachines = machinesControlables.map(function (m) {
     const selectionne = m.id === machineId ? ' selected' : '';
     return '<option value="' + esc(m.id) + '"' + selectionne + '>'
       + esc(m.designation) + '</option>';

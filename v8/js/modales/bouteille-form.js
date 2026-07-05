@@ -9,6 +9,7 @@
 
 import { modale, toast, ICONES } from '../views/communs.js';
 import { esc, fmtNombre, nombreFr } from '../core/utils.js';
+import { zonePiecesJointes } from '../composants/pieces-jointes.js';
 
 // Libellés français des états de fluide (mêmes clés que bouteilles.js)
 const LIBELLES_ETAT_FLUIDE = {
@@ -173,6 +174,8 @@ export async function ouvrirFormBouteille(ctx, bouteilleId = null) {
     + '</div>'
     + '</div>'
 
+    + '<div class="champ" id="bf-zone-pieces-jointes"></div>'
+
     + '</form>';
 
   const actionsHtml = '<button type="button" class="btn btn-secondaire" data-role="annuler">Annuler</button>'
@@ -186,6 +189,18 @@ export async function ouvrirFormBouteille(ctx, bouteilleId = null) {
   });
 
   const formulaire = racine.querySelector('#form-bouteille');
+
+  // Pièces jointes (ex. photo de pesée, certificat) : uniquement en
+  // édition, la bouteille existant déjà avec un identifiant.
+  if (enEdition) {
+    zonePiecesJointes(racine.querySelector('#bf-zone-pieces-jointes'), ctx, {
+      entiteType: 'BOUTEILLE',
+      entiteId: bouteilleId,
+      categorie: 'PHOTO_PESEE'
+    });
+  } else {
+    racine.querySelector('#bf-zone-pieces-jointes').hidden = true;
+  }
 
   racine.querySelector('[data-role="annuler"]').addEventListener('click', fermer);
 

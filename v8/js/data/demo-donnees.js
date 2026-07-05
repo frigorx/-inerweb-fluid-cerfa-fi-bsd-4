@@ -427,7 +427,7 @@ export const DEMO = {
       typeControle: 'PERIODIQUE',
       methode: 'DIRECTE',
       resultat: 'CONFORME',
-      operateur: 'Frédéric Henninot',
+      operateur: 'Marc Delorme',
       prochainControle: '2027-06-29',
       enRetard: false
     },
@@ -451,7 +451,7 @@ export const DEMO = {
       typeControle: 'PERIODIQUE',
       methode: 'INDIRECTE',
       resultat: 'CONFORME',
-      operateur: 'Frédéric Henninot',
+      operateur: 'Marc Delorme',
       prochainControle: '2026-06-27',
       enRetard: true
     }
@@ -482,8 +482,8 @@ export const DEMO = {
   personnel: [
     {
       id: 'per-fh',
-      nom: 'Henninot',
-      prenom: 'Frédéric',
+      nom: 'Delorme',
+      prenom: 'Marc',
       typePersonne: 'ENSEIGNANT',
       roleApp: 'REFERENT',
       numAttestationAptitude: 'AAF-CAT1-2024-1547',
@@ -495,7 +495,7 @@ export const DEMO = {
       activitesAutorisees: ['MISE_EN_SERVICE', 'MAINTENANCE', 'CONTROLE',
         'RECUPERATION', 'DEMANTELEMENT'],
       actif: true,
-      email: 'frederic.henninot@exemple.fr'
+      email: 'marc.delorme@exemple.fr'
     },
     {
       id: 'per-sb',

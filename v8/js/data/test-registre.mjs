@@ -37,8 +37,8 @@ const store = await creerStore();
 
 // --- Utilisateur courant et outillage ------------------------
 const utilisateur = await store.getUtilisateurCourant();
-verifier('getUtilisateurCourant → Frédéric Henninot, rôle REFERENT',
-  utilisateur.prenom === 'Frédéric' && utilisateur.nom === 'Henninot' &&
+verifier('getUtilisateurCourant → Marc Delorme, rôle REFERENT',
+  utilisateur.prenom === 'Marc' && utilisateur.nom === 'Delorme' &&
   utilisateur.roleApp === 'REFERENT');
 
 const outillage = await store.getOutillage();
@@ -66,7 +66,7 @@ const machine = await store.createMachine({
   fluide: 'R-134a',
   chargeNominaleKg: 5.0,
   clientId: 'cli-lycee',
-  operateur: 'Frédéric Henninot'
+  operateur: 'Marc Delorme'
 });
 verifier('createMachine → code M7, EN_SERVICE, charge 0',
   machine.code === 'M7' && machine.statut === 'EN_SERVICE' &&
@@ -78,22 +78,22 @@ const bouteille = await store.createBouteille({
   tareKg: 12.0,
   masseBruteKg: 12.0,
   contenanceMaxKg: 10,
-  operateur: 'Frédéric Henninot'
+  operateur: 'Marc Delorme'
 });
 verifier('createBouteille → code B-06, masse nette 0 (brute = tare)',
   bouteille.code === 'B-06' && PROCHE(bouteille.masseNetteKg, 0));
 
 // --- Pesée ---------------------------------------------------
-const pesee = await store.peserBouteille(bouteille.id, 14.5, 'Frédéric Henninot');
+const pesee = await store.peserBouteille(bouteille.id, 14.5, 'Marc Delorme');
 verifier('peserBouteille → nette = brute − tare (14,5 − 12 = 2,5)',
   PROCHE(pesee.masseNetteKg, 2.5) && PROCHE(pesee.masseBruteKg, 14.5));
 
 await verifierRejet('peserBouteille rejette brute < tare',
-  store.peserBouteille(bouteille.id, 10.0, 'Frédéric Henninot'),
+  store.peserBouteille(bouteille.id, 10.0, 'Marc Delorme'),
   'inférieure à la tare');
 
 await verifierRejet('peserBouteille rejette nette > contenance',
-  store.peserBouteille(bouteille.id, 23.0, 'Frédéric Henninot'),
+  store.peserBouteille(bouteille.id, 23.0, 'Marc Delorme'),
   'contenance');
 
 // --- Cycle brouillon → soumis → validé -----------------------
@@ -224,7 +224,7 @@ await store.createControle({
   resultat: 'FUITE',
   typeControle: 'NON_PERIODIQUE',
   methode: 'DIRECTE',
-  operateur: 'Frédéric Henninot',
+  operateur: 'Marc Delorme',
   prochainControle: '2026-08-05'
 });
 machines = await store.getMachines();
@@ -242,7 +242,7 @@ await store.createControle({
   resultat: 'CONFORME',
   typeControle: 'NON_PERIODIQUE',
   methode: 'DIRECTE',
-  operateur: 'Frédéric Henninot',
+  operateur: 'Marc Delorme',
   prochainControle: '2027-07-03'
 });
 machines = await store.getMachines();
@@ -259,7 +259,7 @@ await verifierRejet('updateMachine rejette une machine DEMANTELEE',
 const journalAvant = await store.getJournalAudit();
 verifier('journal d’audit non vide après les mutations',
   journalAvant.length > 0, `taille = ${journalAvant.length}`);
-await store.peserBouteille('B1', 19.4, 'Frédéric Henninot');
+await store.peserBouteille('B1', 19.4, 'Marc Delorme');
 const journalApres = await store.getJournalAudit();
 verifier('journal d’audit croissant (chaque mutation ajoute une entrée)',
   journalApres.length === journalAvant.length + 1,

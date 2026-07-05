@@ -76,11 +76,27 @@ function boutonsAction(mv) {
    ============================================================ */
 
 /**
+ * CF-7 : libellé de la colonne « Machine » pour une ligne TRANSFERT
+ * (pas de machine, le mouvement est entre deux bouteilles) : résout
+ * les codes source/destination via la liste des bouteilles de la vue.
+ * @param {object} mouvement
+ * @param {Map<string, object>} bouteillesParId
+ * @returns {string} libellé, ex. « B-01 → B-04 », ou « — » si non résolu
+ */
+function libelleTransfert(mouvement, bouteillesParId) {
+  const src = bouteillesParId.get(mouvement.bouteilleSrcId);
+  const dst = bouteillesParId.get(mouvement.bouteilleDstId);
+  if (!src && !dst) return '—';
+  return (src ? src.code : '—') + ' → ' + (dst ? dst.code : '—');
+}
+
+/**
  * Construit la ligne HTML d'un mouvement.
  * @param {object} mouvement — objet Mouvement du store (copie)
+ * @param {Map<string, object>} bouteillesParId — bouteilles chargées par la vue
  * @returns {string} HTML `<tr>…</tr>`
  */
-function ligneMouvement(mouvement) {
+function ligneMouvement(mouvement, bouteillesParId) {
   // Quantité signée : vert si charge (positif), violet si récupération (négatif)
   const classeQuantite = mouvement.quantiteKg < 0 ? 'quantite-negative' : 'quantite-positive';
 
@@ -89,11 +105,16 @@ function ligneMouvement(mouvement) {
     ? ' title="Rejeté : ' + esc(mouvement.motifRejet) + '"'
     : '';
 
+  // CF-7 : un TRANSFERT n'a pas de machine, mais deux bouteilles
+  const libelleMachine = mouvement.type === 'TRANSFERT'
+    ? libelleTransfert(mouvement, bouteillesParId)
+    : (mouvement.machineLabel || '—');
+
   return '<tr>'
     // Date en mono
     + '<td class="cellule-mono">' + esc(fmtDate(mouvement.date)) + '</td>'
-    // Machine en gras
-    + '<td><strong>' + esc(mouvement.machineLabel || '—') + '</strong></td>'
+    // Machine en gras (ou « B-01 → B-04 » pour un transfert)
+    + '<td><strong>' + esc(libelleMachine) + '</strong></td>'
     // Type de mouvement (chip colorée)
     + '<td>' + chipType(mouvement.type) + '</td>'
     // Quantité signée colorée + code fluide gris
@@ -345,6 +366,11 @@ function ouvrirContreEcriture(ctx, mv, utilisateur) {
 export async function render(conteneur, ctx) {
   const mouvements = await ctx.store.getMouvements();
 
+  // CF-7 : bouteilles chargées pour résoudre les codes des TRANSFERT
+  // (un transfert n'a pas de machine, seulement bouteilleSrcId/DstId)
+  const bouteilles = await ctx.store.getBouteilles();
+  const bouteillesParId = new Map(bouteilles.map((b) => [b.id, b]));
+
   // Utilisateur courant : validateur pressenti des modales (Phase B :
   // toujours le référent ; l'authentification réelle arrive en Phase E)
   let utilisateur = null;
@@ -376,7 +402,7 @@ export async function render(conteneur, ctx) {
           { cle: 'statut',  libelle: 'Statut' },
           { cle: 'action',  libelle: '', align: 'droite' }
         ],
-        lignesHtml: mouvements.map(ligneMouvement)
+        lignesHtml: mouvements.map((mv) => ligneMouvement(mv, bouteillesParId))
       })
     : etatVide();
 

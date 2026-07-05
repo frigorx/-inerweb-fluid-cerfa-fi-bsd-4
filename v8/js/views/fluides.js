@@ -5,7 +5,7 @@
 // Lecture seule (Phase A) — aucune action de modification.
 // ============================================================
 
-import { enteteVue, chipStatut, tableau } from './communs.js';
+import { enteteVue, chipStatut, tableau, ICONES } from './communs.js';
 import { esc, fmtNombre } from '../core/utils.js';
 
 export const titre = 'Fluides frigorigènes';
@@ -34,23 +34,31 @@ export async function render(conteneur, ctx) {
       + '</tr>';
   });
 
+  // CF-16 : état vide dédié (sur le patron bouteilles/machines) plutôt que
+  // le repli générique de tableau() « Aucune donnée à afficher. »
+  const corpsVue = fluides.length
+    ? tableau({
+        colonnes: [
+          { cle: 'fluide',    libelle: 'Fluide' },
+          { cle: 'famille',   libelle: 'Famille' },
+          { cle: 'gwp',       libelle: 'GWP (AR4)', align: 'droite' },
+          { cle: 'impact',    libelle: 'Impact' },
+          { cle: 'machines',  libelle: 'Machines',  align: 'droite' }
+        ],
+        lignesHtml
+      })
+    : '<div class="carte"><div class="etat-vide">' + ICONES.flocon
+      + '<p>Aucun fluide référencé.</p></div></div>';
+
   // Insertion unique du gabarit complet dans le conteneur
   conteneur.innerHTML = enteteVue({
     titre,
     sousTitre: 'Référentiel des fluides, familles et potentiel de réchauffement (GWP)'
-  }) + tableau({
-    colonnes: [
-      { cle: 'fluide',    libelle: 'Fluide' },
-      { cle: 'famille',   libelle: 'Famille' },
-      { cle: 'gwp',       libelle: 'GWP (AR4)', align: 'droite' },
-      { cle: 'impact',    libelle: 'Impact' },
-      { cle: 'machines',  libelle: 'Machines',  align: 'droite' }
-    ],
-    lignesHtml
-  });
+  }) + corpsVue;
 
   // Note réglementaire discrète en bas de carte (pas de classe dédiée
   // dans la charte → style inline minimal, ton gris et filet fin)
+  // Absente si le référentiel est vide (rien à commenter).
   const carte = conteneur.querySelector('.tableau-defilement');
   if (carte) {
     carte.insertAdjacentHTML('beforeend',
