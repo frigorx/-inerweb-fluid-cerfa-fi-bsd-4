@@ -24,7 +24,8 @@ const VUES = [
   { id: 'bilan',      libelle: 'Bilan annuel',             icone: 'bilan' },
   { id: 'balance',    libelle: 'Balance matière',          icone: 'balance' },
   { id: 'fluides',    libelle: 'Fluides',                  icone: 'flocon' },
-  { id: 'admin',      libelle: 'Administration',           icone: 'engrenage' }
+  { id: 'admin',      libelle: 'Administration',           icone: 'engrenage' },
+  { id: 'sauvegarde', libelle: 'Sauvegarde',               icone: 'sauvegarde' }
 ];
 
 // Icône hamburger (propre au menu mobile, hors bibliothèque partagée)

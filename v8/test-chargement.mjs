@@ -9,7 +9,7 @@
 const VUES = [
   'dashboard', 'machines', 'bouteilles', 'mouvements',
   'controles', 'dechets', 'outillage', 'personnel',
-  'stats', 'bilan', 'balance', 'fluides', 'admin', 'communs'
+  'stats', 'bilan', 'balance', 'fluides', 'admin', 'sauvegarde', 'communs'
 ];
 
 let echecs = 0;

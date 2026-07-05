@@ -89,7 +89,12 @@ function deriverCle(phrase, sel) {
     throw new Error(
       `Sel de dérivation invalide (attendu ${LONGUEUR_SEL} octets).`);
   }
-  return crypto.scryptSync(phrase, sel, LONGUEUR_CLE, {
+  // Normalisation Unicode NFC (revue crypto E4.2) : une phrase française
+  // accentuée saisie en NFC au chiffrement puis fournie en NFD à la
+  // restauration (copier-coller macOS, gestionnaire de mots de passe) a des
+  // octets DIFFÉRENTS sans normalisation → clé différente → sauvegarde
+  // irrécupérable malgré la « bonne » phrase. NFC lève cette ambiguïté.
+  return crypto.scryptSync(phrase.normalize('NFC'), sel, LONGUEUR_CLE, {
     N: SCRYPT_N, r: SCRYPT_R, p: SCRYPT_P, maxmem: SCRYPT_MAXMEM
   });
 }
