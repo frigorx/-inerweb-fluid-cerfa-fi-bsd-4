@@ -185,8 +185,14 @@ function afficherConstruction(conteneur, libelle) {
     + '</div>';
 }
 
-/** Charge dynamiquement une vue et l'affiche. */
-async function afficherVue(id) {
+/**
+ * Charge dynamiquement une vue et l'affiche.
+ * @param {string} id — identifiant de vue (ex. 'machines', ou 'm' pour la
+ *   fiche machine, hors sidebar)
+ * @param {string} [param=''] — paramètre brut porté par le hash (ex. le
+ *   code public d'une machine pour id === 'm')
+ */
+async function afficherVue(id, param = '') {
   // L'écran de connexion occupe #vue : aucune vue ne doit l'écraser tant
   // qu'on ne s'est pas reconnecté (surConnexion rappelle afficherVue lui-même).
   if (ecranConnexionAffiche) return;
@@ -195,17 +201,21 @@ async function afficherVue(id) {
   const definition = VUES.find(function (vue) { return vue.id === id; });
   const libelle = definition ? definition.libelle : id;
 
-  // Item actif dans la sidebar
+  // Item actif dans la sidebar (aucun match pour une vue hors sidebar,
+  // ex. la fiche machine 'm' : la boucle retire simplement toute classe
+  // « actif », ce qui est le comportement voulu)
   document.querySelectorAll('#sidebar .nav-item').forEach(function (lien) {
     lien.classList.toggle('actif', lien.dataset.vue === id);
   });
 
   fermerTiroir();
 
-  // Chargement du module de la vue
+  // Chargement du module de la vue. La fiche machine ('#/m/<code>') est un
+  // module dédié, volontairement absent de VUES (pas d'entrée sidebar).
+  const nomModule = id === 'm' ? 'fiche-machine' : id;
   let module = null;
   try {
-    module = await import('./views/' + id + '.js');
+    module = await import('./views/' + nomModule + '.js');
   } catch (erreur) {
     console.error('Chargement de la vue « ' + id + ' » impossible :', erreur);
   }
@@ -224,7 +234,7 @@ async function afficherVue(id) {
 
   if (module && typeof module.render === 'function') {
     try {
-      await module.render(conteneur, { store, naviguer: naviguer });
+      await module.render(conteneur, { store, naviguer: naviguer, param: param });
     } catch (erreur) {
       console.error('Rendu de la vue « ' + id + ' » en échec :', erreur);
       afficherConstruction(conteneur, libelle);
@@ -237,9 +247,13 @@ async function afficherVue(id) {
   window.scrollTo(0, 0);
 }
 
-/** Navigation par programme (déléguée au routeur). */
-function naviguer(id) {
-  routeur.naviguer(id);
+/**
+ * Navigation par programme (déléguée au routeur).
+ * @param {string} hash — identifiant de vue, avec ou sans paramètre
+ *   (ex. 'machines', ou 'm/AB12CD3')
+ */
+function naviguer(hash) {
+  routeur.naviguer(hash);
 }
 
 /* ============================================================
@@ -280,7 +294,7 @@ function afficherEcranConnexion() {
       // encore prêt (connexion déclenchée pendant la séquence de démarrage,
       // avant creerRouteur), on reprend la séquence de démarrage à la place.
       if (routeur) {
-        afficherVue(routeur.idCourant());
+        afficherVue(routeur.idCourant(), routeur.paramCourant());
       } else {
         reprendreDemarrageApresConnexion();
       }
@@ -501,7 +515,7 @@ function reprendreDemarrageApresConnexion() {
   majBadgeAlertes();
 
   routeur = creerRouteur({ surChangement: afficherVue });
-  afficherVue(routeur.idCourant());
+  afficherVue(routeur.idCourant(), routeur.paramCourant());
 }
 
 async function demarrer() {

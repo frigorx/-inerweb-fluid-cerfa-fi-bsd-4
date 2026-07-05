@@ -144,6 +144,8 @@ function actionsMachine(machine) {
 
   boutons.push('<button type="button" class="btn btn-contour btn-petit" data-action="plaque-machine" '
     + 'data-id="' + id + '" aria-label="Plaque F-Gas de ' + nom + '">Plaque</button>');
+  boutons.push('<button type="button" class="btn btn-contour btn-petit" data-action="ouvrir-fiche" '
+    + 'data-id="' + id + '" aria-label="Ouvrir la fiche de ' + nom + '">Ouvrir la fiche</button>');
   boutons.push('<button type="button" class="btn btn-contour btn-petit" data-action="modifier-machine" '
     + 'data-id="' + id + '" aria-label="Modifier ' + nom + '">Modifier</button>');
 
@@ -339,6 +341,14 @@ export async function render(conteneur, ctx) {
   conteneur.querySelectorAll('[data-action="plaque-machine"]').forEach(function (bouton) {
     bouton.addEventListener('click', function () {
       ouvrirPlaque(ctx, bouton.dataset.id);
+    });
+  });
+
+  // V9.1 : ouverture de la fiche machine vivante, par son code_public
+  conteneur.querySelectorAll('[data-action="ouvrir-fiche"]').forEach(function (bouton) {
+    bouton.addEventListener('click', function () {
+      const machine = machines.find(function (m) { return m.id === bouton.dataset.id; });
+      if (machine && machine.codePublic) ctx.naviguer('m/' + machine.codePublic);
     });
   });
 

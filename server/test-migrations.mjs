@@ -11,7 +11,7 @@
 // Node ≥ 22 (node:sqlite), sans DOM.
 // ============================================================
 
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -436,6 +436,65 @@ verifierLeve('le code public est unique (résolution QR sans ambiguïté)',
                       code_public)
                     VALUES ('MAC-T3', 'ETB-TEST', 'X', '8F3K2Q');`),
   'UNIQUE');
+
+// ============================================================
+// 6bis. Backfill du code public pour les machines PRÉEXISTANTES
+// (migration 006) — simule une base restée bloquée en version 5 avec
+// des machines créées AVANT l'introduction du générateur (V9.1).
+//
+// IMPORTANT : db.ouvrir() est un SINGLETON (rend la même instance si déjà
+// ouverte) — la base « ancienne » doit donc être montée directement via
+// DatabaseSync, jamais via db.ouvrir, exactement comme la section 7 le
+// fait déjà pour la base pré-versionnage.
+// ============================================================
+{
+  const CHEMIN_ANCIENNE = join(DOSSIER, 'ancienne.db');
+  const ancienne = new DatabaseSync(CHEMIN_ANCIENNE);
+  ancienne.exec(readFileSync(
+    new URL('./schema.sql', import.meta.url), 'utf8'));
+  ancienne.exec(`PRAGMA user_version = ${migrations.VERSION_BASE};`);
+  migrations.migrer(ancienne, { 2: migrations.MIGRATIONS[2],
+    3: migrations.MIGRATIONS[3], 4: migrations.MIGRATIONS[4],
+    5: migrations.MIGRATIONS[5] }); // portée à 5, PAS encore 6
+
+  // Machines « anciennes » sans code_public, comme l'aurait laissé une
+  // base réelle créée avant que createMachine ne génère systématiquement
+  // le code (le code_public de la migration 003 restait vide).
+  ancienne.exec(`INSERT INTO etablissements (id, raison_sociale)
+                 VALUES ('ETB-ANC', 'Lycée ancien');`);
+  for (let i = 0; i < 4; i += 1) {
+    ancienne.exec(`INSERT INTO machines (id, etablissement_id, designation)
+                   VALUES ('MAC-ANC-${i}', 'ETB-ANC', 'Machine ancienne ${i}');`);
+  }
+  // Une machine qui aurait DÉJÀ un code_public (posée par une exécution
+  // partielle antérieure de la migration 003, par exemple) : son code
+  // ne doit ni être régénéré, ni entrer en collision avec le backfill.
+  ancienne.exec(`INSERT INTO machines (id, etablissement_id, designation,
+                   code_public)
+                 VALUES ('MAC-ANC-DEJA', 'ETB-ANC', 'Déjà pourvue', 'ABCDEFG');`);
+
+  verifier('avant migration 006 : les machines anciennes sont sans code public',
+    ancienne.prepare(`SELECT count(*) AS n FROM machines
+      WHERE etablissement_id = 'ETB-ANC' AND code_public IS NULL`)
+      .get().n === 4);
+  verifier('avant migration 006 : la base est bloquée en version 5',
+    migrations.lireVersion(ancienne) === 5);
+
+  const versionFinale = migrations.migrer(ancienne, { 6: migrations.MIGRATIONS[6] });
+  verifier('la migration 006 porte la base à la version 6',
+    versionFinale === 6 && migrations.lireVersion(ancienne) === 6);
+
+  const lignes = ancienne.prepare(`SELECT id, code_public FROM machines
+    WHERE etablissement_id = 'ETB-ANC' ORDER BY id`).all();
+  verifier('toutes les machines anciennes reçoivent un code public (format Crockford)',
+    lignes.every((m) => /^[0-9A-HJKMNP-TV-Z]{7}$/.test(m.code_public)));
+  verifier('les codes publics backfillés sont tous distincts',
+    new Set(lignes.map((m) => m.code_public)).size === lignes.length);
+  verifier('une machine déjà pourvue conserve SON code (jamais régénéré)',
+    lignes.find((m) => m.id === 'MAC-ANC-DEJA').code_public === 'ABCDEFG');
+
+  ancienne.close();
+}
 
 // ============================================================
 // 7. Base pré-versionnage : refusée avec un message clair

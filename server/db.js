@@ -262,6 +262,32 @@ function generateId(prefixe) {
 }
 
 /**
+ * Alphabet base32 Crockford, SANS I, L, O, U (ambiguïtés visuelles), même
+ * alphabet que v8/js/core/utils.js — équivalent Node de genererCodePublic
+ * (crypto natif au lieu de crypto.getRandomValues navigateur).
+ */
+const ALPHABET_CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+
+/** Longueur fixe d'un code public (VISION-V9-V10 §6). */
+const LONGUEUR_CODE_PUBLIC = 7;
+
+/**
+ * Génère un identifiant OPAQUE base32 Crockford de 7 caractères pour le QR
+ * d'une machine ou d'une bouteille (code_public). Ne garantit PAS
+ * l'unicité à lui seul : l'appelant retire (retry) en cas de collision
+ * avec la contrainte UNIQUE de la base.
+ * @returns {string} ex. « 8F3K2Q7 »
+ */
+function genererCodePublic() {
+  const octets = crypto.randomBytes(LONGUEUR_CODE_PUBLIC);
+  let code = '';
+  for (let i = 0; i < LONGUEUR_CODE_PUBLIC; i += 1) {
+    code += ALPHABET_CROCKFORD[octets[i] % ALPHABET_CROCKFORD.length];
+  }
+  return code;
+}
+
+/**
  * Sérialisation JSON stable (clés triées récursivement) : le hash d'une même
  * écriture est identique quel que soit l'ordre de construction de l'objet.
  */
@@ -386,6 +412,7 @@ module.exports = {
   run,
   transaction,
   generateId,
+  genererCodePublic,
   hashEcriture,
   journaliser,
   verifierChaineJournal,

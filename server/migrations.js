@@ -23,10 +23,33 @@
  *   4 — journal chaîné (E2) : hash_precedent + hash + cible/details.
  *   5 — comptes/sessions (E5) : verrouillage utilisateurs_app + table
  *       sessions (remplace le raccourci provisoire loopback = REFERENT).
+ *   6 — backfill code_public machines (V9.1) : toute machine préexistante
+ *       (créée avant la migration 003) reçoit un code public unique — la
+ *       colonne posée par la migration 003 restait vide, rien ne la
+ *       remplissait encore côté application.
  */
 
 /** Version de base posée par schema.sql (base vierge). */
 const VERSION_BASE = 1;
+
+/**
+ * Alphabet base32 Crockford, SANS I, L, O, U — identique à celui de db.js
+ * et de v8/js/core/utils.js. Dupliqué ici (pas d'import croisé db.js ↔
+ * migrations.js) pour le seul usage du backfill de la migration 6.
+ */
+const ALPHABET_CROCKFORD_MIGRATION = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+
+/** Tire un code public de 7 caractères (backfill migration 6 uniquement). */
+function tirerCodePublicMigration() {
+  const crypto = require('node:crypto');
+  const octets = crypto.randomBytes(7);
+  let code = '';
+  for (let i = 0; i < 7; i += 1) {
+    code += ALPHABET_CROCKFORD_MIGRATION[
+      octets[i] % ALPHABET_CROCKFORD_MIGRATION.length];
+  }
+  return code;
+}
 
 /**
  * Le registre des migrations. Clé = version CIBLE (entier), valeur =
@@ -123,6 +146,30 @@ const MIGRATIONS = {
       `);
       db.exec(`CREATE INDEX IF NOT EXISTS idx_sessions_utilisateur
                  ON sessions (utilisateur_id);`);
+    }
+  },
+
+  6: {
+    nom: 'backfill_code_public_machines',
+    appliquer(db) {
+      // La migration 003 avait posé la colonne (nullable) et son index
+      // UNIQUE partiel, mais rien ne la remplissait encore : toute machine
+      // créée avant l'introduction de createMachine « générateur » (V9.1)
+      // reste avec code_public NULL. Backfill un-shot, un code UNIQUE par
+      // ligne (retry en cas de collision avec le parc déjà en base).
+      const sansCode = db.prepare(
+        'SELECT id FROM machines WHERE code_public IS NULL').all();
+      const dejaPris = new Set(
+        db.prepare('SELECT code_public AS c FROM machines WHERE code_public IS NOT NULL')
+          .all().map((l) => l.c));
+      const maj = db.prepare(
+        'UPDATE machines SET code_public = ? WHERE id = ?');
+      for (const { id } of sansCode) {
+        let code = tirerCodePublicMigration();
+        while (dejaPris.has(code)) code = tirerCodePublicMigration();
+        dejaPris.add(code);
+        maj.run(code, id);
+      }
     }
   }
 };

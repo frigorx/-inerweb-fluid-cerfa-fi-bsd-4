@@ -80,6 +80,13 @@
     </div>
   </noscript>
 
+  <!-- Lib QR code vendored (davidshimjs/qrcodejs), en <script> CLASSIQUE
+       (pas type="module") pour qu'elle s'exécute en contexte global
+       (this = window), comme elle est conçue à l'origine — voir l'en-tête
+       de js/lib/qrcode-vendor.js. DOIT précéder app.js : elle pose
+       window.QRCode, lu ensuite par js/lib/qrcode.js (obtenirQRCode()).
+       Autorisé par la CSP (script-src 'self', fichier same-origin). -->
+  <script src="js/lib/qrcode-vendor.js"></script>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

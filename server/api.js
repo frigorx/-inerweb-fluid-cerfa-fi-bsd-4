@@ -1260,7 +1260,11 @@ const HANDLERS = {
       detectionPermanente: Boolean(d.detectionPermanente),
       dateMiseEnService: d.dateMiseEnService ?? null,
       dernierControle: d.dernierControle ?? null,
-      prochainControle: d.prochainControle ?? null
+      prochainControle: d.prochainControle ?? null,
+      // Identifiant opaque QR (V9.1) : généré une fois, jamais modifiable
+      // (updateMachine ne le liste pas dans ses CHAMPS). Retry sur collision
+      // avec l'index UNIQUE partiel de la migration 003.
+      codePublic: codePublicUnique()
     };
     return muter(() => {
       const ligne = mapping.versSql('machines', machine);
@@ -3102,6 +3106,28 @@ function plusGrandCode(table, colonne, prefixe) {
     if (Number.isFinite(n) && n > max) max = n;
   }
   return max;
+}
+
+/** Nombre de tentatives avant d'abandonner un tirage de code public. */
+const CODE_PUBLIC_TENTATIVES_MAX = 20;
+
+/**
+ * Tire un code public (base32 Crockford, 7 car.) UNIQUE dans machines —
+ * retire (retry) en cas de collision avec le parc déjà en base. La
+ * collision est structurellement quasi impossible (32^7 ≈ 34 milliards de
+ * combinaisons) : la boucle est un filet de sécurité, pas le mécanisme
+ * d'unicité réel (celui-ci est l'index UNIQUE partiel de la migration 003).
+ */
+function codePublicUnique() {
+  for (let tentative = 0; tentative < CODE_PUBLIC_TENTATIVES_MAX; tentative += 1) {
+    const code = db.genererCodePublic();
+    const collision = db.get(
+      'SELECT 1 AS x FROM machines WHERE code_public = ?', [code]);
+    if (!collision) return code;
+  }
+  throw new Error(
+    'Impossible de générer un code public unique pour la machine ' +
+    `(après ${CODE_PUBLIC_TENTATIVES_MAX} tentatives).`);
 }
 
 /** Personne par id, avec ses champs camelCase (copie). */

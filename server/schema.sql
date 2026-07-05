@@ -202,6 +202,10 @@ CREATE TABLE IF NOT EXISTS machines (
         CHECK (statut IN ('EN_SERVICE','ARRETEE','DEMANTELEE','FUITE','CONTROLE_DU')),
     observation             TEXT,
     date_creation           TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    -- code_public (identifiant opaque QR, 7 car. base32 Crockford, UNIQUE,
+    -- jamais modifiable) : colonne posée par la migration 003, backfillée
+    -- et générée systématiquement à la création depuis la migration 006
+    -- (V9.1) — cf. server/migrations.js, PAS dans le socle v1 ici.
 );
 
 

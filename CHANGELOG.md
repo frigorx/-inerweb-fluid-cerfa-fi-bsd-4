@@ -2,6 +2,65 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🏷️ V9.1 — Fiche machine vivante : accès par code, étiquette QR, mouvement pré-réglé (05/07)
+Accéder à une machine par son identifiant public, avec une fiche complète, une étiquette QR
+imprimable et un mouvement pré-rempli depuis cette fiche.
+- **Décisions (arrêtées)** : `code_public` opaque base32 Crockford 7 caractères (sans I/L/O/U),
+  généré à la création, JAMAIS modifiable ; recherche par filtrage `getMachines()` côté vue
+  (AUCUNE méthode ajoutée au contrat, toujours **64 méthodes / 187 vérifications**) ; le QR
+  encode un chemin relatif `#/m/<code_public>` (jamais d'URL absolue, indépendant de l'IP —
+  l'URL LAN absolue attendra §16.6) ; scan caméra tablette DIFFÉRÉ (dépend du matériel, non
+  testable ici).
+- **`code_public`** généré sur les deux stores : `demo-store.js` et `server/api.js:createMachine`
+  (via `codePublicUnique`, retry sur collision, index UNIQUE) ; immuable (`updateMachine` ne le
+  liste pas) ; backfill des lignes existantes (migration 6 `backfill_code_public_machines` côté
+  SQLite + normalisation à l'init du DemoStore) ; générateurs base32 dans
+  `v8/js/core/utils.js`, `server/db.js`, `server/migrations.js` (3 implémentations séparées
+  assumées, comme `genId`/`generateId`) ; `mapping.js` expose `codePublic`.
+- **Route paramétrée** : `v8/js/core/routeur.js` (`lireHash()` renvoie `{id, param}`, compat
+  totale des routes existantes) ; `v8/js/app.js` aiguille `id==='m'` vers
+  `v8/js/views/fiche-machine.js` (hors sidebar, aucune entrée de navigation) ; bouton
+  « Ouvrir la fiche » ajouté aux cartes du Parc (`machines.js`).
+- **Fiche 5 blocs** (`fiche-machine.js`) : (1) identité 4 indicateurs (fluide, charge + barre,
+  tCO₂ via `teqCO2`, prochaine échéance + statut), (2) actions (nouveau mouvement pré-réglé,
+  contrôle, plaque F-Gas, CERFA, étiquette QR), (3) données techniques repliables `<details>`
+  (valeurs nulles masquées), (4) alertes de la machine, (5) historique en onglets
+  (mouvements / contrôles / documents via `zonePiecesJointes`) ; état vide « Machine
+  introuvable » pour un code inexistant.
+- **Wizard pré-réglé** (`wizard.js`) : `ouvrirWizard(ctx, {machineId, retour})` saute l'étape 2
+  (choix machine) quand `machineId` est fourni (hors transfert) et revient sur
+  `#/m/<code>` après finalisation ; parcours normal (sans `machineId`) inchangé.
+- **Étiquette QR hors ligne** : lib davidshimjs/qrcodejs vendored copiée en
+  `v8/js/lib/qrcode-vendor.js`, chargée par un `<script>` classique dans `v8/index.html`
+  (autorisé par la CSP `script-src 'self'`) ; `v8/js/lib/qrcode.js` expose `obtenirQRCode()` =
+  `window.QRCode` ; `v8/js/documents/etiquette-machine.js` : modale d'aperçu 50×70 mm (code
+  M{n} + `code_public` + QR encodant `#/m/<code_public>`) + bascule planche A4 (3×3),
+  impression navigateur.
+- **Revue adversariale** (2 lentilles : `code_public` / routeur+fiche) : 0 constat.
+- **Bug trouvé au navigateur ET corrigé dans le même incrément** : l'étiquette QR ne se rendait
+  pas — l'emballage « paresseux » de la lib QR en module ES cassait son exécution
+  (`Cannot read properties of undefined (reading '_android')`, la lib exige un contexte
+  global) ; les tests le masquaient via un repli `<table>`. Corrigé par chargement en
+  `<script>` classique (la lib tourne dans son contexte global d'origine) ; test de
+  l'étiquette durci (ne s'appuie plus sur le repli). C'est précisément ce que le contrôle
+  navigateur devait attraper.
+- Tests (tous verts) : **`test-contrat.mjs` local ET demo = 187/0** (183 + 4 nouveaux : format
+  Crockford, unicité, immutabilité, lot de 15) ; `test-routeur.mjs` 12/0 ; `test-wizard.mjs`
+  7/0 ; `test-etiquette-machine.mjs` 15/0 ; `test-migrations.mjs` 64/0 ; `test-mapping.mjs`
+  141/0 ; `test-chargement.mjs` OK (fiche-machine incluse) ; régression E5
+  `test-routes-comptes` 30/0 ; toutes les autres suites du dépôt vertes.
+- **Vérifié navigateur** (serveur réel Mode Local port 2011, base jetable) : machine créée en
+  SQLite → `code_public` « TE9WHYH » (7 caractères Crockford) ; fiche `#/m/TE9WHYH` affiche
+  les 5 blocs, charge « 2,50 / 2,50 kg », données techniques complètes, ZÉRO emoji ; étiquette
+  QR rend un vrai `<canvas>`+`<img>` non vide, planche A4 = 9 QR ; « Nouveau mouvement » depuis
+  la fiche saute l'étape 2 (Machine) et atterrit sur l'étape 3 (Bouteille) avec le fluide R-32
+  déjà connu.
+- ⚠️ **Point ouvert (non corrigé ici)** : `getUtilisateurCourant()` (`server/api.js:691`) est
+  resté le stub d'avant E5 — il renvoie « le premier REFERENT du personnel » (et lève si le
+  personnel est vide) au lieu de l'utilisateur réellement authentifié par sa session E5.
+  Conséquence : sur une base fraîche (admin créé en CLI, personnel vide), le wizard ne peut
+  pas s'ouvrir. À recâbler sur la session (finition E5), indépendant de V9.1.
+
 ### 🔒 SÉCURITÉ (correctif immédiat)
 - **Clés API retirées du code** (`Code_API_v7.1.0.gs` + `apps-script/Code.gs`) : les 3 clés
   READ/WRITE/ADMIN étaient en clair dans le dépôt public. Lecture désormais exclusive depuis

@@ -107,7 +107,14 @@ const MODULES_PHASE_D = [
   { chemin: './js/cerfa/visualiseur.js', exports: ['ouvrirCerfa'] },
   { chemin: './js/documents/exports.js', exports: ['toutesLesTables'] },
   { chemin: './js/documents/plaque-fgas.js', exports: ['ouvrirPlaque'] },
-  { chemin: './js/documents/dossier-audit.js', exports: ['genererDossierAudit'] }
+  { chemin: './js/documents/dossier-audit.js', exports: ['genererDossierAudit'] },
+  // V9.1 (correctif QR) : js/lib/qrcode.js n'embarque plus la lib QR
+  // vendored (davidshimjs/qrcodejs) — celle-ci vit désormais dans
+  // js/lib/qrcode-vendor.js, chargée en <script> CLASSIQUE (global,
+  // pas de module) depuis index.html. obtenirQRCode() se contente de
+  // lire window.QRCode : aucune exécution de code DOM à l'import.
+  { chemin: './js/lib/qrcode.js', exports: ['obtenirQRCode'] },
+  { chemin: './js/documents/etiquette-machine.js', exports: ['ouvrirEtiquette'] }
 ];
 for (const { chemin, exports } of MODULES_PHASE_D) {
   try {
@@ -124,6 +131,12 @@ for (const { chemin, exports } of MODULES_PHASE_D) {
 verifier(typeof globalThis.PDFLib === 'undefined'
   && typeof globalThis.pdfjsLib === 'undefined',
   'pdf-lib et PDF.js ne sont PAS chargés au simple import (paresseux)');
+// La lib QR vendored (js/lib/qrcode-vendor.js) n'est plus embarquée dans
+// un module ES : elle se charge en <script> classique depuis index.html,
+// hors du périmètre de ce test Node. L'import de lib/qrcode.js n'exécute
+// donc plus aucun code DOM ni ne pose de global — obtenirQRCode() se
+// contente de lire window.QRCode, absent sous Node (vérifié par
+// test-etiquette-machine.mjs, qui constate que l'appel lève proprement).
 
 // ---- 4. Chaque vue se charge et respecte le contrat ----
 for (const id of VUES) {
@@ -140,6 +153,21 @@ for (const id of VUES) {
     echecs += 1;
     console.error('ÉCHEC views/' + id + '.js : ' + erreur.message);
   }
+}
+
+// ---- 4 bis. Fiche machine (V9.1) : vue hors sidebar (route paramétrée
+// '#/m/<CODE>'), volontairement absente de VUES, mais soumise au même
+// contrat de vue (titre + render) ----
+try {
+  const module = await import('./js/views/fiche-machine.js');
+  verifier(true, 'views/fiche-machine.js se charge sans DOM');
+  verifier(typeof module.titre === 'string' && module.titre.length > 0,
+    'views/fiche-machine.js exporte « titre » (chaîne non vide)');
+  verifier(typeof module.render === 'function',
+    'views/fiche-machine.js exporte « render » (fonction)');
+} catch (erreur) {
+  echecs += 1;
+  console.error('ÉCHEC views/fiche-machine.js : ' + erreur.message);
 }
 
 // ---- Bilan ----

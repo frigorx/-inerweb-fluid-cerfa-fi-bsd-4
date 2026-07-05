@@ -10,8 +10,8 @@
 // ============================================================
 
 import { DEMO } from './demo-donnees.js';
-import { teqCO2, fmtDate, fmtNombre, fmtKgSigne, genId, hasherEcriture }
-  from '../core/utils.js';
+import { teqCO2, fmtDate, fmtNombre, fmtKgSigne, genId, hasherEcriture,
+  genererCodePublic } from '../core/utils.js';
 // IM-1 : fréquence réglementaire des contrôles d'étanchéité —
 // logique UNIQUE partagée avec le cadre 7 du CERFA (aucun doublon).
 import { calculerCadre7 } from '../cerfa/generateur.js';
@@ -424,6 +424,28 @@ export function creerDemoStore() {
     const machine = donnees.machines.find((m) => m.id === id);
     if (!machine) throw new Error(`Machine introuvable : ${id}.`);
     return machine;
+  }
+
+  /** Nombre de tentatives avant d'abandonner un tirage de code public. */
+  const CODE_PUBLIC_TENTATIVES_MAX = 20;
+
+  /**
+   * Tire un code public (base32 Crockford, 7 car.) UNIQUE dans le parc
+   * actuel — retire (retry) en cas de collision. Collision structurellement
+   * quasi impossible (32^7 combinaisons) : la boucle est un filet de
+   * sécurité, jamais le mécanisme d'unicité réel.
+   */
+  function codePublicUnique() {
+    const pris = new Set(donnees.machines
+      .map((m) => m.codePublic)
+      .filter(Boolean));
+    for (let tentative = 0; tentative < CODE_PUBLIC_TENTATIVES_MAX; tentative += 1) {
+      const code = genererCodePublic();
+      if (!pris.has(code)) return code;
+    }
+    throw new Error(
+      'Impossible de générer un code public unique pour la machine ' +
+      `(après ${CODE_PUBLIC_TENTATIVES_MAX} tentatives).`);
   }
 
   function trouverBouteille(id, role = 'Bouteille') {
@@ -1007,6 +1029,17 @@ export function creerDemoStore() {
         }
       }
 
+      // V9.1 : backfill du code public — toute machine du monde de démo
+      // (ou d'une sauvegarde antérieure à cet incrément) sans identifiant
+      // opaque QR en reçoit un, unique et stable à vie (jamais régénéré
+      // une fois posé).
+      for (const m of donnees.machines) {
+        if (!m.codePublic) {
+          m.codePublic = codePublicUnique();
+          modifie = true;
+        }
+      }
+
       // Amorçage de la chaîne d'intégrité : les écritures du monde de
       // démonstration (ou d'un import Phase A, AUCUNE empreinte nulle
       // part) reçoivent leur empreinte. Une chaîne PARTIELLE n'est
@@ -1342,7 +1375,10 @@ export function creerDemoStore() {
         detectionPermanente: Boolean(d.detectionPermanente),
         dateMiseEnService: d.dateMiseEnService ?? null,
         dernierControle: d.dernierControle ?? null,
-        prochainControle: d.prochainControle ?? null
+        prochainControle: d.prochainControle ?? null,
+        // Identifiant opaque QR (V9.1) : généré une fois, jamais modifiable
+        // (updateMachine ne le liste pas dans ses CHAMPS).
+        codePublic: codePublicUnique()
       };
       donnees.machines.push(machine);
       journaliser(d.operateur, 'CREATION_MACHINE', machine.code,

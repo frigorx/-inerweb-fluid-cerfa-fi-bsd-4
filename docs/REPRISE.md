@@ -2,6 +2,7 @@
 
 > **À lire en premier au démarrage de toute session de travail.**
 > Rédigé le 04/07/2026 à la clôture de la session fondatrice (v8 complète + vision V9/V10).
+> Mis à jour le 05/07/2026 après V9.1 (fiche machine vivante).
 
 ## État exact du projet (04/07/2026, commit `7b0fe17`)
 
@@ -81,10 +82,27 @@
    écoute LAN + scan tablette sur un vrai 2e appareil (non testable en bac à sable, seulement
    câblé en local avec `IWF_HOTE_LAN=127.0.0.1`) ; saisie masquée interactive du CLI bootstrap
    (validée seulement via arguments en test).
-8. **Prochaine étape** : validation live par Franck (LAN réel + tablette, saisie masquée CLI),
-   puis suite du plan V9 à redéfinir avec lui — §16 de la VISION toujours en attente.
-9. Puis V9.1 fiche machine vivante (`#/m/:code`) → QR (`code_public` opaque) → relevés élèves.
-10. Bascule v8 → racine quand Franck valide. Lot confort audit (22 🟡) au fil de l'eau.
+8. ~~**V9.1 fiche machine vivante**~~ **FAIT le 05/07** : accès à une machine par son
+   `code_public` (base32 Crockford 7 caractères, opaque, immuable, généré sur les deux
+   stores) ; route paramétrée `#/m/<code_public>` (`routeur.js` + `app.js`, hors sidebar) ;
+   fiche 5 blocs (`v8/js/views/fiche-machine.js`) ; wizard pré-réglé qui saute l'étape
+   « Machine » depuis la fiche (`wizard.js:ouvrirWizard`) ; étiquette QR imprimable 50×70 mm +
+   planche A4 (`v8/js/documents/etiquette-machine.js`, lib QR vendored en `<script>`
+   classique). Revue adversariale : 0 constat. Un bug trouvé ET corrigé au contrôle
+   navigateur (rendu QR cassé par un emballage module ES — corrigé en chargement classique,
+   test durci). Tests : **`test-contrat.mjs` local et demo = 187/0**, plus `test-routeur`
+   12/0, `test-wizard` 7/0, `test-etiquette-machine` 15/0, `test-migrations` 64/0,
+   `test-mapping` 141/0 ; vérifié navigateur (port 2011, base jetable). ⚠️ **Point ouvert** :
+   `getUtilisateurCourant()` (`server/api.js:691`) reste le stub d'avant E5 (« premier
+   REFERENT du personnel », lève si le personnel est vide) au lieu de lire la session E5 —
+   bloque le wizard sur une base fraîche sans personnel. À recâbler en finition E5,
+   indépendant de V9.1.
+9. **Prochaine étape** : validation live par Franck (LAN réel + tablette, saisie masquée CLI
+   du bootstrap E5 — toujours en attente), puis choisir entre **V9.2 « Relevés »** (⚠️ bloquée
+   par la décision RGPD élèves §16.5 avant tout usage réel) et le **lot confort audit**
+   (22 points, au fil de l'eau) ; §16 de la VISION toujours en attente ; garder le point
+   `getUtilisateurCourant` en tête des finitions E5.
+10. Bascule v8 → racine quand Franck valide.
 
 ## Méthode de travail validée avec Franck
 

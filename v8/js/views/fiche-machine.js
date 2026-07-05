@@ -1,0 +1,497 @@
+// ============================================================
+// inerWeb Fluide — vue « Fiche machine vivante » (V9.1, vague 2)
+// Vue hors sidebar, atteinte par la route paramétrée '#/m/<CODE>'
+// (code_public, cf. utils.js). Cinq blocs : identité rapide, actions,
+// données techniques repliables, alertes machine, historique en onglets.
+// ============================================================
+
+import { enteteVue, carteKpi, chipStatut, barreProgression, tableau, ICONES } from './communs.js';
+import { esc, fmtKg, fmtTeq, fmtDate, fmtNombre, teqCO2 } from '../core/utils.js';
+import { ouvrirWizard } from '../wizard/wizard.js';
+import { ouvrirFormControle } from '../modales/controle-form.js';
+import { ouvrirPlaque, calculerFrequenceControle } from '../documents/plaque-fgas.js';
+import { ouvrirEtiquette } from '../documents/etiquette-machine.js';
+import { ouvrirCerfa } from '../cerfa/visualiseur.js';
+import { zonePiecesJointes } from '../composants/pieces-jointes.js';
+
+export const titre = 'Fiche machine';
+
+/* ============================================================
+   Styles propres à la vue (classes préfixées « fiche- »)
+   ============================================================ */
+
+const STYLES_VUE = `
+<style>
+  .fiche-retour {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: var(--texte-3);
+    text-decoration: none;
+  }
+  .fiche-retour:hover, .fiche-retour:focus-visible {
+    color: var(--accent);
+  }
+
+  .fiche-section {
+    margin-top: 20px;
+  }
+
+  .fiche-section-titre {
+    font-family: var(--police-titres);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--texte);
+    margin: 0 0 10px;
+  }
+
+  .fiche-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* Bloc « Données techniques » : liste étiquette/valeur, deux colonnes */
+  .fiche-details {
+    border: 1px solid var(--bordure);
+    border-radius: var(--rayon-carte);
+    background: var(--carte);
+    overflow: hidden;
+  }
+  .fiche-details > summary {
+    cursor: pointer;
+    padding: 12px 16px;
+    font-family: var(--police-titres);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--texte);
+    list-style: none;
+  }
+  .fiche-details > summary::-webkit-details-marker { display: none; }
+  .fiche-details > summary::before {
+    content: '▸';
+    display: inline-block;
+    margin-right: 8px;
+    color: var(--texte-3);
+    transition: transform .15s ease;
+  }
+  .fiche-details[open] > summary::before {
+    transform: rotate(90deg);
+  }
+  .fiche-details-corps {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 24px;
+    padding: 4px 16px 16px;
+    border-top: 1px solid var(--bordure-2);
+  }
+  @media (max-width: 640px) {
+    .fiche-details-corps { grid-template-columns: 1fr; }
+  }
+  .fiche-detail-libelle {
+    font-size: 10.5px;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    color: var(--texte-faible);
+  }
+  .fiche-detail-valeur {
+    font-size: 13.5px;
+    color: var(--texte);
+    margin-top: 2px;
+  }
+
+  /* Bloc « Alertes » */
+  .fiche-alerte {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--bordure-2);
+  }
+  .fiche-alerte:last-child { border-bottom: none; padding-bottom: 2px; }
+  .fiche-alerte-titre { font-size: 12.5px; font-weight: 600; color: var(--texte); }
+  .fiche-alerte-detail { margin-top: 2px; font-size: 11.5px; color: var(--texte-3); }
+  .fiche-point {
+    width: 9px;
+    height: 9px;
+    flex: none;
+    border-radius: var(--rayon-chip);
+    margin-top: 4px;
+  }
+  .fiche-point-critique  { background: var(--danger); }
+  .fiche-point-important { background: var(--avert-icone); }
+
+  /* Onglets d'historique : boutons simples, contenu masqué par [hidden] */
+  .fiche-onglets-boutons {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--bordure);
+    margin-bottom: 14px;
+  }
+  .fiche-onglet-bouton {
+    padding: 9px 14px;
+    border: none;
+    background: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--texte-3);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .fiche-onglet-bouton:hover { color: var(--texte); }
+  .fiche-onglet-bouton.actif {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+</style>`;
+
+/* ============================================================
+   Bloc 1 — Identité rapide (4 cartes KPI)
+   ============================================================ */
+
+/**
+ * Carte KPI « Charge » et « Prochaine échéance » ont besoin d'un sous-texte
+ * en HTML (barre de progression, chip colorée) — carteKpi() de communs.js
+ * échappe systématiquement son sousTexte (texte brut partout ailleurs dans
+ * la base), donc ces deux cartes reprennent son gabarit exact à la main
+ * plutôt que de détourner l'API partagée.
+ * @param {{ libelle: string, valeur: string, sousTexteHtml: string,
+ *           icone: string, teinte: string }} options
+ * @returns {string} HTML
+ */
+function carteKpiSousTexteHtml({ libelle, valeur, sousTexteHtml, icone, teinte }) {
+  return '<div class="carte carte-kpi">'
+    + '<div class="kpi-haut">'
+    + '<span class="kpi-libelle">' + esc(libelle) + '</span>'
+    + '<span class="kpi-pastille kpi-pastille-' + esc(teinte) + '">' + ICONES[icone] + '</span>'
+    + '</div>'
+    + '<div class="kpi-valeur">' + esc(valeur) + '</div>'
+    + '<div class="kpi-sous-texte">' + sousTexteHtml + '</div>'
+    + '</div>';
+}
+
+function blocIdentite(machine, fluide) {
+  const pct = machine.chargeNominaleKg > 0
+    ? (machine.chargeActuelleKg / machine.chargeNominaleKg) * 100
+    : 0;
+  const teinteBarre = machine.statut === 'FUITE' ? 'rouge' : 'vert';
+  const co2 = fluide ? fmtTeq(teqCO2(machine.chargeActuelleKg, fluide.gwpAr4)) : '—';
+
+  return '<div class="grille-4">'
+    + carteKpi({
+        libelle: 'Fluide',
+        valeur: esc(machine.fluide),
+        sousTexte: fluide ? esc(fluide.famille) : '—',
+        icone: 'flocon',
+        teinte: 'accent'
+      })
+    + carteKpiSousTexteHtml({
+        libelle: 'Charge',
+        valeur: fmtNombre(machine.chargeActuelleKg, 2) + ' / ' + fmtKg(machine.chargeNominaleKg),
+        sousTexteHtml: barreProgression(pct, teinteBarre),
+        icone: 'machine',
+        teinte: 'vert'
+      })
+    + carteKpi({
+        libelle: 'Équivalent CO₂',
+        valeur: co2,
+        icone: 'bilan',
+        teinte: 'violet'
+      })
+    + carteKpiSousTexteHtml({
+        libelle: 'Prochaine échéance',
+        valeur: fmtDate(machine.prochainControle),
+        sousTexteHtml: chipStatut(machine.statut),
+        icone: 'controle',
+        teinte: 'rose'
+      })
+    + '</div>';
+}
+
+/* ============================================================
+   Bloc 2 — Actions
+   ============================================================ */
+
+function blocActions() {
+  return '<div class="fiche-section">'
+    + '<div class="fiche-actions">'
+    + '<button type="button" class="btn btn-primaire" data-action="nouveau-mouvement">'
+    + ICONES.plus + '<span>Nouveau mouvement</span></button>'
+    + '<button type="button" class="btn btn-contour" data-action="nouveau-controle">'
+    + ICONES.controle + '<span>Contrôle</span></button>'
+    + '<button type="button" class="btn btn-contour" data-action="plaque">'
+    + ICONES.imprimer + '<span>Plaque F-Gas</span></button>'
+    + '<button type="button" class="btn btn-contour" data-action="cerfa" disabled '
+    + 'title="Choisissez un mouvement ou un contrôle dans l\'historique pour ouvrir son CERFA">'
+    + ICONES.bilan + '<span>CERFA</span></button>'
+    + '<button type="button" class="btn btn-contour" data-action="etiquette">'
+    + ICONES.grille + '<span>Étiquette QR</span></button>'
+    + '</div>'
+    + '</div>';
+}
+
+/* ============================================================
+   Bloc 3 — Données techniques (repliable)
+   ============================================================ */
+
+/** Une paire libellé/valeur ; omise si la valeur est vide/nulle. */
+function ligneDetail(libelle, valeur) {
+  if (valeur === null || valeur === undefined || valeur === '') return '';
+  return '<div>'
+    + '<div class="fiche-detail-libelle">' + esc(libelle) + '</div>'
+    + '<div class="fiche-detail-valeur">' + esc(valeur) + '</div>'
+    + '</div>';
+}
+
+function blocDonneesTechniques(machine, fluide, client) {
+  const frequence = calculerFrequenceControle(machine, fluide);
+  const libelleFrequence = frequence.frequenceMois
+    ? 'Tous les ' + frequence.frequenceMois + ' mois'
+    : null;
+
+  const lignes = [
+    ligneDetail('Type', machine.type),
+    ligneDetail('Marque', machine.marque),
+    ligneDetail('Modèle', machine.modele),
+    ligneDetail('Numéro de série', machine.numSerie),
+    ligneDetail('Mise en service', machine.dateMiseEnService ? fmtDate(machine.dateMiseEnService) : null),
+    ligneDetail('Localisation', machine.localisation),
+    ligneDetail('Site', machine.siteLabel),
+    ligneDetail('Client', client ? client.raisonSociale : null),
+    ligneDetail('Détection permanente', machine.detectionPermanente ? 'Oui' : null),
+    ligneDetail('Fréquence de contrôle', libelleFrequence)
+  ].join('');
+
+  return '<div class="fiche-section">'
+    + '<details class="fiche-details">'
+    + '<summary>Données techniques</summary>'
+    + '<div class="fiche-details-corps">' + lignes + '</div>'
+    + '</details>'
+    + '</div>';
+}
+
+/* ============================================================
+   Bloc 4 — Alertes machine
+   ============================================================ */
+
+function ligneAlerteMachine(alerte) {
+  const classePoint = alerte.niveau === 'CRITIQUE' ? 'fiche-point-critique' : 'fiche-point-important';
+  return '<div class="fiche-alerte">'
+    + '<span class="fiche-point ' + classePoint + '" aria-hidden="true"></span>'
+    + '<div>'
+    + '<div class="fiche-alerte-titre">' + esc(alerte.titre) + '</div>'
+    + '<div class="fiche-alerte-detail">' + esc(alerte.detail) + '</div>'
+    + '</div>'
+    + '</div>';
+}
+
+function blocAlertes(alertes) {
+  const contenu = alertes.length
+    ? alertes.map(ligneAlerteMachine).join('')
+    : '<div class="etat-vide">' + ICONES.coche + '<p>Aucune alerte pour cette machine.</p></div>';
+
+  return '<div class="fiche-section">'
+    + '<h3 class="fiche-section-titre">Alertes</h3>'
+    + '<div class="carte">' + contenu + '</div>'
+    + '</div>';
+}
+
+/* ============================================================
+   Bloc 5 — Historique en onglets (Mouvements / Contrôles / Documents)
+   ============================================================ */
+
+function ligneMouvementFiche(mv) {
+  return '<tr>'
+    + '<td>' + fmtDate(mv.date) + '</td>'
+    + '<td>' + esc(mv.type) + '</td>'
+    + '<td>' + esc(fmtNombre(mv.quantiteKg, 2)) + ' kg</td>'
+    + '<td>' + chipStatut(mv.statut) + '</td>'
+    + '<td class="align-droite">'
+    + '<button type="button" class="btn btn-contour btn-petit" data-action="cerfa-mouvement" '
+    + 'data-id="' + esc(mv.id) + '">CERFA</button>'
+    + '</td>'
+    + '</tr>';
+}
+
+function ligneControleFiche(ct) {
+  return '<tr>'
+    + '<td>' + fmtDate(ct.date) + '</td>'
+    + '<td>' + esc(ct.methode) + '</td>'
+    + '<td>' + chipStatut(ct.resultat) + '</td>'
+    + '<td>' + esc(ct.operateur) + '</td>'
+    + '<td class="align-droite">'
+    + '<button type="button" class="btn btn-contour btn-petit" data-action="cerfa-controle" '
+    + 'data-id="' + esc(ct.id) + '">CERFA</button>'
+    + '</td>'
+    + '</tr>';
+}
+
+function blocHistorique(mouvements, controles) {
+  const tableauMouvements = tableau({
+    colonnes: [
+      { cle: 'date', libelle: 'Date' },
+      { cle: 'type', libelle: 'Type' },
+      { cle: 'qte', libelle: 'Qté' },
+      { cle: 'statut', libelle: 'Statut' },
+      { cle: 'action', libelle: '', align: 'droite' }
+    ],
+    lignesHtml: mouvements.map(ligneMouvementFiche)
+  });
+
+  const tableauControles = tableau({
+    colonnes: [
+      { cle: 'date', libelle: 'Date' },
+      { cle: 'methode', libelle: 'Méthode' },
+      { cle: 'resultat', libelle: 'Résultat' },
+      { cle: 'operateur', libelle: 'Opérateur' },
+      { cle: 'action', libelle: '', align: 'droite' }
+    ],
+    lignesHtml: controles.map(ligneControleFiche)
+  });
+
+  return '<div class="fiche-section">'
+    + '<h3 class="fiche-section-titre">Historique</h3>'
+    + '<div class="fiche-onglets-boutons">'
+    + '<button type="button" class="fiche-onglet-bouton actif" data-onglet="mouvements">Mouvements</button>'
+    + '<button type="button" class="fiche-onglet-bouton" data-onglet="controles">Contrôles</button>'
+    + '<button type="button" class="fiche-onglet-bouton" data-onglet="documents">Documents</button>'
+    + '</div>'
+    + '<div data-panneau="mouvements">' + tableauMouvements + '</div>'
+    + '<div data-panneau="controles" hidden>' + tableauControles + '</div>'
+    + '<div data-panneau="documents" hidden></div>'
+    + '</div>';
+}
+
+/* ============================================================
+   État vide : machine introuvable
+   ============================================================ */
+
+function afficherMachineIntrouvable(conteneur) {
+  conteneur.innerHTML = STYLES_VUE
+    + enteteVue({ titre: 'Machine introuvable' })
+    + '<div class="carte"><div class="etat-vide">' + ICONES.machine
+    + '<p>Aucune machine ne correspond à ce code. Elle a peut-être été '
+    + 'démantelée ou le lien est incorrect.</p></div></div>';
+}
+
+/* ============================================================
+   Rendu de la vue
+   ============================================================ */
+
+/**
+ * Rend la fiche vivante d'une machine, retrouvée par son code_public.
+ * @param {HTMLElement} conteneur — élément vidé d'avance par app.js
+ * @param {{ store: object, naviguer: (hash: string) => void, param: string }} ctx
+ */
+export async function render(conteneur, ctx) {
+  const { store, naviguer, param } = ctx;
+  const codePublic = String(param || '').trim();
+
+  const [machines, fluides, clients, alertesToutes] = await Promise.all([
+    store.getMachines(),
+    store.getFluides(),
+    store.getClients(),
+    store.getAlertes()
+  ]);
+
+  const machine = machines.find((m) => m.codePublic === codePublic);
+  if (!machine) {
+    afficherMachineIntrouvable(conteneur);
+    return;
+  }
+
+  const fluide = fluides.find((f) => f.code === machine.fluide);
+  const client = clients.find((c) => c.id === machine.clientId);
+  const alertes = alertesToutes.filter((a) =>
+    a.cible && a.cible.vue === 'machines' && a.cible.id === machine.id);
+
+  const [mouvements, controles] = await Promise.all([
+    store.getMouvements(),
+    store.getControles()
+  ]);
+  const mouvementsMachine = mouvements.filter((mv) => mv.machineId === machine.id);
+  const controlesMachine = controles.filter((ct) => ct.machineId === machine.id);
+
+  conteneur.innerHTML = STYLES_VUE
+    + '<a href="#/machines" class="fiche-retour">' + ICONES.grille + '<span>Retour au parc</span></a>'
+    + enteteVue({ titre: machine.designation, sousTitre: 'Code ' + machine.codePublic })
+    + blocIdentite(machine, fluide)
+    + blocActions()
+    + blocDonneesTechniques(machine, fluide, client)
+    + blocAlertes(alertes)
+    + blocHistorique(mouvementsMachine, controlesMachine);
+
+  // ---- Bloc « Documents » : monté seulement quand l'onglet est activé
+  // (zonePiecesJointes vide le conteneur passé, donc pas de montage avant) ----
+  let documentsMontes = false;
+  function monterDocumentsSiBesoin() {
+    if (documentsMontes) return;
+    documentsMontes = true;
+    const panneau = conteneur.querySelector('[data-panneau="documents"]');
+    zonePiecesJointes(panneau, ctx, {
+      entiteType: 'MACHINE',
+      entiteId: machine.id,
+      lectureSeule: false
+    });
+  }
+
+  // ---- Onglets d'historique ----
+  conteneur.querySelectorAll('.fiche-onglet-bouton').forEach(function (bouton) {
+    bouton.addEventListener('click', function () {
+      const cible = bouton.dataset.onglet;
+      conteneur.querySelectorAll('.fiche-onglet-bouton').forEach(function (b) {
+        b.classList.toggle('actif', b === bouton);
+      });
+      conteneur.querySelectorAll('[data-panneau]').forEach(function (panneau) {
+        panneau.hidden = panneau.dataset.panneau !== cible;
+      });
+      if (cible === 'documents') monterDocumentsSiBesoin();
+    });
+  });
+
+  // ---- Actions ----
+  const boutonMouvement = conteneur.querySelector('[data-action="nouveau-mouvement"]');
+  if (boutonMouvement) {
+    boutonMouvement.addEventListener('click', function () {
+      // V9.1 : préréglage de la machine (l'étape 2 du wizard est sautée)
+      // et retour sur cette même fiche à la finalisation (au lieu de la
+      // vue Mouvements par défaut).
+      ouvrirWizard(ctx, { machineId: machine.id, retour: '#/m/' + machine.codePublic });
+    });
+  }
+
+  const boutonControle = conteneur.querySelector('[data-action="nouveau-controle"]');
+  if (boutonControle) {
+    boutonControle.addEventListener('click', function () {
+      ouvrirFormControle(ctx, machine.id);
+    });
+  }
+
+  const boutonPlaque = conteneur.querySelector('[data-action="plaque"]');
+  if (boutonPlaque) {
+    boutonPlaque.addEventListener('click', function () {
+      ouvrirPlaque(ctx, machine.id);
+    });
+  }
+
+  const boutonEtiquette = conteneur.querySelector('[data-action="etiquette"]');
+  if (boutonEtiquette) {
+    boutonEtiquette.addEventListener('click', function () {
+      ouvrirEtiquette(ctx, machine.id);
+    });
+  }
+
+  // ---- CERFA depuis l'historique (un mouvement ou un contrôle précis) ----
+  conteneur.querySelectorAll('[data-action="cerfa-mouvement"]').forEach(function (bouton) {
+    bouton.addEventListener('click', function () {
+      ouvrirCerfa(ctx, { source: 'mouvement', id: bouton.dataset.id });
+    });
+  });
+  conteneur.querySelectorAll('[data-action="cerfa-controle"]').forEach(function (bouton) {
+    bouton.addEventListener('click', function () {
+      ouvrirCerfa(ctx, { source: 'controle', id: bouton.dataset.id });
+    });
+  });
+}

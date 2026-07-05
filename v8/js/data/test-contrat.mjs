@@ -87,6 +87,8 @@ function verifierCles(libelle, objet, cles) {
 const PROCHE = (a, b) => Math.abs(a - b) < 1e-9;
 const DATE_JOUR = /^\d{4}-\d{2}-\d{2}$/;
 const HASH_HEX = /^[0-9a-f]{64}$/;
+// V9.1 : identifiant opaque QR — base32 Crockford (sans I, L, O, U), 7 car.
+const CODE_PUBLIC = /^[0-9A-HJKMNP-TV-Z]{7}$/;
 
 /** Date locale AAAA-MM-JJ décalée de n jours (même convention que le store). */
 function dateRelative(jours) {
@@ -261,6 +263,10 @@ verifier('createMachine relie le client détenteur', machineA.clientId === clien
 verifier('getClients recalcule nbMachines',
   (await store.getClients()).find((c) => c.id === client.id).nbMachines === 1);
 
+// V9.1 : code public (identifiant opaque QR) — format, unicité, immutabilité.
+verifier('createMachine pose un code public au format Crockford (7 car.)',
+  CODE_PUBLIC.test(machineA.codePublic));
+
 await verifierRejet('createMachine refuse un fluide inconnu au référentiel',
   store.createMachine({ designation: 'X', fluide: 'R-999', chargeNominaleKg: 1 }));
 await verifierRejet('createMachine refuse une charge nominale négative ou nulle',
@@ -273,11 +279,31 @@ const machineB = await store.createMachine({
   designation: 'Groupe froid du contrat', fluide: FLUIDE,
   chargeNominaleKg: 10, localisation: 'Atelier B', operateur: 'Testeur Contrat'
 });
+verifier('createMachine : deux machines reçoivent des codes publics distincts',
+  CODE_PUBLIC.test(machineB.codePublic)
+  && machineB.codePublic !== machineA.codePublic);
+
 const machineBMaj = await store.updateMachine(machineB.id,
-  { localisation: 'Atelier C' });
+  { localisation: 'Atelier C', codePublic: 'ZZZZZZZ' });
 verifier('updateMachine applique le patch sans toucher id ni code',
   machineBMaj.localisation === 'Atelier C' && machineBMaj.id === machineB.id
   && machineBMaj.code === machineB.code);
+verifier('updateMachine ignore silencieusement une tentative de modifier codePublic',
+  machineBMaj.codePublic === machineB.codePublic
+  && machineBMaj.codePublic !== 'ZZZZZZZ');
+
+// Unicité sur un lot : N créations → N codes publics distincts.
+{
+  const lot = [];
+  for (let i = 0; i < 15; i += 1) {
+    lot.push(await store.createMachine({
+      designation: `Machine du lot ${i}`, fluide: FLUIDE, chargeNominaleKg: 1
+    }));
+  }
+  const codes = new Set(lot.map((m) => m.codePublic));
+  verifier('createMachine : un lot de 15 machines donne 15 codes publics distincts',
+    codes.size === lot.length && lot.every((m) => CODE_PUBLIC.test(m.codePublic)));
+}
 
 const machineArretee = await store.arreterMachine(machineA.id, 'Testeur');
 verifier('arreterMachine passe la machine en ARRETEE',

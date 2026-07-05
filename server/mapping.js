@@ -145,14 +145,18 @@ const TABLES = {
       detectionPermanente: 'detection_permanente',
       dernierControle: 'date_dernier_controle',
       prochainControle: 'date_prochain_controle',
-      statut: 'statut'
+      statut: 'statut',
+      // code_public (migration 003 + backfill 006, V9.1) : généré à la
+      // création (createMachine), jamais dans la liste CHAMPS d'updateMachine
+      // — intouchable en pratique, comme code_interne.
+      codePublic: 'code_public'
     },
     booleens: ['detectionPermanente'],
-    // site_id (migration 002) et code_public (003) seront exposés au
-    // contrat par V9.1 (fiche machine + QR) — réservés serveur d'ici là.
+    // site_id (migration 002) sera exposé au contrat par une prochaine vague
+    // (multi-sites) — réservé serveur d'ici là.
     sqlSeulement: ['etablissement_id', 'justification_detection',
       'frequence_controle_mois', 'plaque_fgas_generee', 'observation',
-      'date_creation', 'site_id', 'code_public']
+      'date_creation', 'site_id']
   },
 
   bouteilles: {

@@ -426,6 +426,14 @@ export async function ouvrirWizard(ctx, options = {}) {
     } else {
       toast('Brouillon introuvable ou déjà traité : nouveau mouvement.', 'info');
     }
+  } else if (options.machineId) {
+    // V9.1 : machine préréglée depuis la fiche machine (sans reprise de
+    // brouillon) — même idiome de saut que la reprise CR-1 ci-dessus.
+    // Tant que l'étape 1 (type + technicien) n'est pas complétée par
+    // l'utilisateur, la boucle ne peut pas dépasser l'étape 1 : le saut
+    // de l'étape 2 (choix machine, déjà connu via etat.machineId) ne
+    // devient effectif qu'une fois l'étape 1 franchie.
+    while (etat.etape < 6 && etapeComplete()) etat.etape += 1;
   }
 
   /* ----------------------------------------------------------
@@ -800,6 +808,16 @@ export async function ouvrirWizard(ctx, options = {}) {
     if (!etapeComplete()) return;
     if (etat.etape < 6) {
       etat.etape += 1;
+      // V9.1 : machine préréglée (options.machineId, hors transfert où
+      // l'étape 2 choisit une BOUTEILLE source, pas une machine) —
+      // l'étape 2 est déjà acquise dès qu'on l'atteint : sautée, comme
+      // à l'ouverture (CR-1). Portée volontairement restreinte à cette
+      // seule étape (pas une boucle générale) pour ne jamais sauter une
+      // étape du parcours normal par simple coïncidence d'un état déjà
+      // rempli (ex. pesées conservées après un retour en arrière).
+      if (etat.etape === 2 && options.machineId && !estTransfert() && etapeComplete()) {
+        etat.etape += 1;
+      }
       rendreEtape();
     } else {
       finaliser();
@@ -1559,7 +1577,9 @@ export async function ouvrirWizard(ctx, options = {}) {
       }
 
       fermer();
-      ctx.naviguer('mouvements');
+      // V9.1 : depuis la fiche machine, revient sur la fiche plutôt que
+      // sur la vue Mouvements — comportement par défaut inchangé sinon.
+      ctx.naviguer(options.retour || 'mouvements');
 
       // IM-4 : machine vide de fluide → proposer le démantèlement
       const machineVidee = machineChoisie();

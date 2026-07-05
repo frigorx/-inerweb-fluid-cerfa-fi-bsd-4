@@ -124,6 +124,49 @@ export function genId(prefixe) {
 }
 
 // ------------------------------------------------------------
+// Code public (V9.1 — fiche machine vivante, QR hors-ligne)
+// ------------------------------------------------------------
+
+/**
+ * Alphabet base32 Crockford, SANS I, L, O, U (ambiguïtés visuelles à la
+ * lecture manuelle comme au scan). 32 symboles, 5 bits chacun.
+ */
+const ALPHABET_CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+
+/** Longueur fixe d'un code public (VISION-V9-V10 §6). */
+export const LONGUEUR_CODE_PUBLIC = 7;
+
+/**
+ * Génère un identifiant OPAQUE base32 Crockford de 7 caractères, tiré au
+ * hasard (crypto, jamais Math.random : c'est un identifiant public exposé
+ * par QR, pas seulement une clé technique interne). Ne garantit PAS
+ * l'unicité à lui seul : l'appelant retire (retry) en cas de collision
+ * avec le parc existant.
+ * @returns {string} ex. « 8F3K2Q7 »
+ */
+export function genererCodePublic() {
+  const octets = new Uint8Array(LONGUEUR_CODE_PUBLIC);
+  globalThis.crypto.getRandomValues(octets);
+  let code = '';
+  for (let i = 0; i < LONGUEUR_CODE_PUBLIC; i += 1) {
+    code += ALPHABET_CROCKFORD[octets[i] % ALPHABET_CROCKFORD.length];
+  }
+  return code;
+}
+
+/**
+ * Vrai si `valeur` a la forme d'un code public valide (7 caractères de
+ * l'alphabet Crockford restreint). N'atteste PAS son existence en base.
+ * @param {*} valeur
+ * @returns {boolean}
+ */
+export function estCodePublicValide(valeur) {
+  if (typeof valeur !== 'string') return false;
+  const motif = new RegExp(`^[${ALPHABET_CROCKFORD}]{${LONGUEUR_CODE_PUBLIC}}$`);
+  return motif.test(valeur);
+}
+
+// ------------------------------------------------------------
 // Chaîne d'intégrité des écritures (Phase B — registre vivant)
 // ------------------------------------------------------------
 
