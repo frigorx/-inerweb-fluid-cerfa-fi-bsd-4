@@ -106,6 +106,25 @@ function codeHttpErreur(erreur) {
   return 400; // violation métier (message français destiné à l'interface)
 }
 
+/**
+ * Contexte d'appel déterminé CÔTÉ SERVEUR — jamais depuis le corps de la
+ * requête (un client pourrait y forger { role: 'ADMIN' }).
+ *
+ * PROVISOIRE V9-E3, à remplacer par les sessions E5 (cookie opaque
+ * HttpOnly, table sessions) : le serveur n'écoutant QUE sur 127.0.0.1,
+ * une connexion loopback = le poste du référent → rôle REFERENT.
+ * ⚠ Ne JAMAIS élargir ce raccourci à une écoute LAN (décision §16.6) :
+ * l'écoute réseau exigera l'authentification E5 d'abord.
+ */
+function contexteDeLaConnexion(requete) {
+  const adresse = requete.socket?.remoteAddress ?? '';
+  const loopback = adresse === '127.0.0.1' || adresse === '::1'
+    || adresse === '::ffff:127.0.0.1';
+  return loopback
+    ? { role: 'REFERENT', utilisateur: 'poste-local' }
+    : {};
+}
+
 function traiterApi(requete, reponse, chemin) {
   // Vérification de vie du serveur : utilisée par le front pour détecter le Mode Local
   if (chemin === '/api/ping') {
@@ -135,8 +154,9 @@ function traiterApi(requete, reponse, chemin) {
     }
 
     try {
+      // Le contexte vient de la CONNEXION, jamais de l'enveloppe cliente.
       const resultat = api.appeler(
-        methode, enveloppe.params ?? {}, enveloppe.contexte ?? {});
+        methode, enveloppe.params ?? {}, contexteDeLaConnexion(requete));
       repondreJson(reponse, 200, { ok: true, resultat });
     } catch (erreur) {
       const code = codeHttpErreur(erreur);
@@ -158,9 +178,10 @@ function traiterApi(requete, reponse, chemin) {
 // ----- Fichiers statiques (le front : index.html, css/, js/, img/…) -----
 
 function traiterStatique(requete, reponse, chemin) {
-  // La racine sert index.html (application monopage)
-  if (chemin === '/') {
-    chemin = '/index.html';
+  // Un chemin de dossier sert son index.html : '/' → la v7 (racine),
+  // '/v8/' → l'application v8 (le mode Local sert le front ET l'API).
+  if (chemin.endsWith('/')) {
+    chemin += 'index.html';
   }
 
   // Décodage des caractères encodés dans l'URL (%20, accents…)

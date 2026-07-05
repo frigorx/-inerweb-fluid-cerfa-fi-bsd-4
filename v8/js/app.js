@@ -74,7 +74,8 @@ function construireSidebar() {
     + '</button>'
     + '<div class="etat-sauvegarde">'
     + '<span class="pastille-verte" aria-hidden="true"></span>'
-    + '<span>Données de démonstration</span>'
+    + '<span>' + (store && store.modeLabel === 'LOCAL'
+      ? 'Données locales (SQLite)' : 'Données de démonstration') + '</span>'
     + '</div>'
     + '</div>';
 
