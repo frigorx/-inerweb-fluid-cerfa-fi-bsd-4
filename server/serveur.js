@@ -125,7 +125,47 @@ function contexteDeLaConnexion(requete) {
     : {};
 }
 
+// Hôtes et origines loopback légitimes (le front est servi par CE serveur).
+const HOTES_AUTORISES = new Set([
+  `127.0.0.1:${PORT}`, `localhost:${PORT}`, `[::1]:${PORT}`
+]);
+const ORIGINES_AUTORISEES = new Set([...HOTES_AUTORISES]
+  .map((h) => `http://${h}`));
+
+/**
+ * Garde anti-CSRF / anti-DNS-rebinding sur /api (revue sécurité E3).
+ * Le rôle REFERENT est accordé à toute connexion loopback : sans ce garde,
+ * une PAGE WEB HOSTILE ouverte dans le navigateur du poste pourrait, par une
+ * requête cross-origin vers 127.0.0.1, déclencher n'importe quelle mutation
+ * (jusqu'à importerJSON qui REMPLACE le registre). Deux barrières :
+ *  - En-tête `Host` : doit désigner le loopback (un nom DNS qui résout vers
+ *    127.0.0.1 — attaque par rebinding — porte un autre Host → rejeté).
+ *  - En-tête `Origin` (envoyé par le navigateur sur toute requête
+ *    cross-origin, y compris « simple ») : s'il est présent, il doit être
+ *    une origine loopback de ce serveur. Une navigation directe n'a pas
+ *    d'Origin (autorisée). Une page tierce porte SON origine → rejetée.
+ * @returns {string|null} un message de refus, ou null si la requête est sûre.
+ */
+function refusReseau(requete) {
+  const hote = requete.headers.host ?? '';
+  if (!HOTES_AUTORISES.has(hote)) {
+    return 'Hôte non autorisé (accès local uniquement).';
+  }
+  const origine = requete.headers.origin;
+  if (origine !== undefined && !ORIGINES_AUTORISEES.has(origine)) {
+    return 'Origine non autorisée (requête inter-site refusée).';
+  }
+  return null;
+}
+
 function traiterApi(requete, reponse, chemin) {
+  // Barrière réseau AVANT tout traitement (ping compris) : CSRF / rebinding.
+  const refus = refusReseau(requete);
+  if (refus) {
+    repondreJson(reponse, 403, { ok: false, erreur: refus, code: 403 });
+    return;
+  }
+
   // Vérification de vie du serveur : utilisée par le front pour détecter le Mode Local
   if (chemin === '/api/ping') {
     repondreJson(reponse, 200, { ok: true, version: VERSION, mode: 'local' });

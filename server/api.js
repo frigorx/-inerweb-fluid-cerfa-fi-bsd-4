@@ -319,17 +319,29 @@ function journaliser(qui, action, cible, details) {
   db.journaliser({ qui: qui || null, action, cible, details });
 }
 
-/** Amorce l'établissement singleton VIDE s'il n'existe pas encore. */
+/**
+ * Amorce l'établissement singleton VIDE s'il n'existe pas encore.
+ * ÉCRITURE : n'est appelée que par des mutations (init, updateEtablissement),
+ * jamais par une lecture (revue E3 : une lecture ne mute jamais).
+ * raison_sociale est NOT NULL au schéma → chaîne vide (dossier à saisir).
+ */
 function amorcerEtablissement() {
   const existe = db.get(
     'SELECT id FROM etablissements WHERE id = ?', [ID_ETABLISSEMENT]);
   if (existe) return;
-  // Toutes les colonnes utiles restent NULL : le contrat lit un dossier
-  // opérateur VIDE mais complet (toutes ses clés présentes, à null).
-  // raison_sociale est NOT NULL au schéma → chaîne vide (dossier à saisir).
   db.run(
     `INSERT INTO etablissements (id, raison_sociale) VALUES (?, '')`,
     [ID_ETABLISSEMENT]);
+}
+
+/**
+ * L'établissement singleton en forme SQL, ou un dossier VIDE reconstitué
+ * (toutes les colonnes à NULL) s'il n'a pas encore été amorcé — SANS écrire.
+ * Le contrat lit toujours un dossier complet (toutes ses clés présentes).
+ */
+function etablissementCourant() {
+  return db.get('SELECT * FROM etablissements WHERE id = ?',
+    [ID_ETABLISSEMENT]) ?? { id: ID_ETABLISSEMENT, raison_sociale: '' };
 }
 
 // ------------------------------------------------------------
@@ -342,7 +354,7 @@ const HANDLERS = {
 
   // === initialisation =======================================
   init() {
-    amorcerEtablissement();
+    db.transaction(() => amorcerEtablissement());
     // CR-5 : l'état d'intégrité constaté au chargement juge le REGISTRE
     // des mouvements (chaîne de hash recalculée) ET le journal d'audit —
     // une base altérée hors application ne démarre jamais « saine »
@@ -373,12 +385,9 @@ const HANDLERS = {
     });
   },
 
-  /** L'établissement (dossier opérateur) — copie complète, amorcée si absente. */
+  /** L'établissement (dossier opérateur) — copie complète, jamais d'écriture. */
   getEtablissement() {
-    amorcerEtablissement();
-    const ligne = db.get(
-      'SELECT * FROM etablissements WHERE id = ?', [ID_ETABLISSEMENT]);
-    return mapping.versFront('etablissements', ligne);
+    return mapping.versFront('etablissements', etablissementCourant());
   },
 
   /** État d'intégrité constaté : { altere, casseA } (registre ET journal). */
@@ -394,12 +403,194 @@ const HANDLERS = {
     return { altere: false, casseA: null };
   },
 
-  /** Alertes calculées à la volée, CRITIQUE d'abord (vide au départ). */
+  /**
+   * Alertes ENTIÈREMENT dynamiques, recalculées depuis la base à chaque
+   * lecture — MIROIR EXACT du getAlertes du DemoStore (SPEC §7.2 : ce qui
+   * est ÉCHU est critique, ce qui APPROCHE — 90 jours — est important).
+   * IM-2 : chaque alerte porte une cible { vue, id? } pour les liens
+   * cliquables du tableau de bord. Les lectures suivent l'ordre rowid
+   * (= ordre d'insertion du DemoStore) pour un tri stable identique.
+   */
   getAlertes() {
-    // VAGUE 2 : le calcul complet des alertes (aptitudes, contrôles,
-    // écarts…) suit la mise en place des données. Un registre vierge
-    // ne porte aucune alerte : tableau vide, conforme au contrat.
-    return [];
+    const alertes = [];
+    const jour = aujourdHui();
+    const horizon = ajouterJours(jour, 90);
+
+    // 1. Attestation de CAPACITÉ de l'établissement
+    const etablissement = HANDLERS.getEtablissement();
+    const echeanceCapacite = etablissement.dateEcheanceCapacite;
+    if (echeanceCapacite && echeanceCapacite < jour) {
+      alertes.push({
+        id: 'alr-capacite',
+        niveau: 'CRITIQUE',
+        titre: 'Attestation de capacité expirée',
+        detail: `${etablissement.numAttestationCapacite ?? '—'} · ` +
+          `échéance ${fmtDate(echeanceCapacite)}`,
+        cible: { vue: 'admin' }
+      });
+    } else if (echeanceCapacite && echeanceCapacite <= horizon) {
+      alertes.push({
+        id: 'alr-capacite',
+        niveau: 'IMPORTANT',
+        titre: 'Attestation de capacité à renouveler',
+        detail: `${etablissement.numAttestationCapacite ?? '—'} · ` +
+          `échéance ${fmtDate(echeanceCapacite)}`,
+        cible: { vue: 'admin' }
+      });
+    }
+
+    // 2. Attestations d'APTITUDE du personnel actif
+    const personnel = db.all('SELECT * FROM personnel ORDER BY rowid')
+      .map((ligne) => mapping.versFront('personnel', ligne));
+    for (const p of personnel) {
+      if (!p.actif || !p.dateFinValidite) continue;
+      if (p.dateFinValidite < jour) {
+        alertes.push({
+          id: `alr-aptitude-${p.id}`,
+          niveau: 'CRITIQUE',
+          titre: 'Attestation d’aptitude expirée',
+          detail: `${p.prenom} ${p.nom} · échéance ${fmtDate(p.dateFinValidite)}`,
+          cible: { vue: 'personnel', id: p.id }
+        });
+      } else if (p.dateFinValidite <= horizon) {
+        alertes.push({
+          id: `alr-aptitude-${p.id}`,
+          niveau: 'IMPORTANT',
+          titre: 'Attestation d’aptitude à renouveler',
+          detail: `${p.prenom} ${p.nom} · échéance ${fmtDate(p.dateFinValidite)}`,
+          cible: { vue: 'personnel', id: p.id }
+        });
+      }
+    }
+
+    // 3. Machines : fuites non résolues, contrôles dépassés.
+    // IM-4 : une machine à l'arrêt ou démantelée n'exige plus de
+    // contrôle périodique.
+    const machines = db.all('SELECT * FROM machines ORDER BY rowid')
+      .map((ligne) => mapping.versFront('machines', ligne));
+    for (const m of machines) {
+      if (m.statut === 'FUITE') {
+        alertes.push({
+          id: `alr-fuite-${m.id}`,
+          niveau: 'CRITIQUE',
+          titre: 'Fuite non résolue',
+          detail: `${m.designation} · recontrôle ${fmtDate(m.prochainControle)}`,
+          cible: { vue: 'machines', id: m.id }
+        });
+      } else if (m.statut !== 'DEMANTELEE' && m.statut !== 'ARRETEE' &&
+                 m.prochainControle && m.prochainControle < jour) {
+        alertes.push({
+          id: `alr-controle-${m.id}`,
+          niveau: 'CRITIQUE',
+          titre: 'Contrôle d’étanchéité en retard',
+          detail: `${m.designation} · échéance ${fmtDate(m.prochainControle)}`,
+          cible: { vue: 'machines', id: m.id }
+        });
+      }
+    }
+
+    // 4. Outillage à échéance dépassée (statut recalculé)
+    const outillage = db.all('SELECT * FROM outillage ORDER BY rowid')
+      .map((ligne) => mapping.versFront('outillage', ligne));
+    for (const outil of outillage) {
+      if (calculerStatutOutil(outil, jour) !== 'EXPIRE') continue;
+      const titre =
+        outil.typeOutil === 'BALANCE' ? 'Balance à revérifier' :
+        outil.typeOutil === 'STATION_RECUPERATION'
+          ? 'Station de récupération à contrôler'
+          : outil.typeOutil === 'DETECTEUR'
+            ? 'Détecteur à réétalonner'
+            : 'Outillage à vérifier';
+      alertes.push({
+        id: `alr-outil-${outil.id}`,
+        // SPEC §7.2 : détecteur ou balance expiré = CRITIQUE
+        // (blocage du mode officiel), le reste = IMPORTANT.
+        niveau: (outil.typeOutil === 'DETECTEUR' ||
+                 outil.typeOutil === 'BALANCE') ? 'CRITIQUE' : 'IMPORTANT',
+        titre,
+        detail: `${outil.marque} ${outil.modele} · ${fmtDate(outil.prochaineEcheance)}`,
+        cible: { vue: 'outillage', id: outil.id }
+      });
+    }
+
+    // 5. Fluides déchets gardés au-delà du délai (1 an)
+    const bouteilles = db.all('SELECT * FROM bouteilles ORDER BY rowid')
+      .map((ligne) => mapping.versFront('bouteilles', ligne));
+    for (const b of bouteilles) {
+      if (b.statut !== 'DECHET' || !b.dateLimiteGarde) continue;
+      if (b.dateLimiteGarde < jour) {
+        alertes.push({
+          id: `alr-garde-${b.id}`,
+          niveau: 'CRITIQUE',
+          titre: 'Fluide déchet au-delà du délai de garde',
+          detail: `${b.code} (${b.fluide}) · limite ${fmtDate(b.dateLimiteGarde)}`,
+          cible: { vue: 'bouteilles', id: b.id }
+        });
+      }
+    }
+
+    // 6. Écarts de balance matière non justifiés
+    for (const ecart of ecartsNonJustifies()) {
+      alertes.push({
+        id: `alr-ecart-${ecart.annee}-${ecart.fluide}`,
+        niveau: 'CRITIQUE',
+        titre: 'Écart de balance matière non justifié',
+        detail: `${ecart.fluide} · ${ecart.annee} · ` +
+          `écart ${fmtKgSigne(ecart.ecartKg)}`,
+        cible: { vue: 'balance' }
+      });
+    }
+
+    // 7. IM-3 : bouteille active sans pesée récente (> 90 jours)
+    const limitePesee = ajouterJours(jour, -90);
+    for (const b of bouteilles) {
+      if (b.statut !== 'EN_STOCK' && b.statut !== 'EN_SERVICE') continue;
+      if (!b.datePesee || b.datePesee < limitePesee) {
+        alertes.push({
+          id: `alr-pesee-${b.id}`,
+          niveau: 'IMPORTANT',
+          titre: 'Bouteille sans pesée récente',
+          detail: `${b.code} (${b.fluide}) · dernière pesée ` +
+            `${fmtDate(b.datePesee)}`,
+          cible: { vue: 'bouteilles', id: b.id }
+        });
+      }
+    }
+
+    // 8. IM-3 : mouvements en souffrance — soumis depuis plus de
+    // 7 jours (à valider) ou brouillon depuis plus de 30 jours.
+    // Repli sur la date du mouvement pour les données antérieures
+    // au champ dateSoumission.
+    const limiteSoumis = ajouterJours(jour, -7);
+    const limiteBrouillon = ajouterJours(jour, -30);
+    const mouvements = db.all('SELECT * FROM mouvements ORDER BY rowid')
+      .map((ligne) => reconstituerMouvement(ligne));
+    for (const mv of mouvements) {
+      if (mv.statut === 'SOUMIS' &&
+          (mv.dateSoumission ?? mv.date) < limiteSoumis) {
+        alertes.push({
+          id: `alr-soumis-${mv.id}`,
+          niveau: 'IMPORTANT',
+          titre: 'Mouvement soumis à valider',
+          detail: `${mv.numero} · ${mv.type} · soumis le ` +
+            `${fmtDate(mv.dateSoumission ?? mv.date)}`,
+          cible: { vue: 'mouvements', id: mv.id }
+        });
+      } else if (mv.statut === 'BROUILLON' && mv.date < limiteBrouillon) {
+        alertes.push({
+          id: `alr-brouillon-${mv.id}`,
+          niveau: 'IMPORTANT',
+          titre: 'Brouillon de mouvement à reprendre',
+          detail: `${mv.numero} · ${mv.type} · créé le ${fmtDate(mv.date)}`,
+          cible: { vue: 'mouvements', id: mv.id }
+        });
+      }
+    }
+
+    // Les alertes critiques d'abord (tri stable)
+    alertes.sort((a, b) =>
+      (a.niveau === b.niveau) ? 0 : (a.niveau === 'CRITIQUE' ? -1 : 1));
+    return alertes;
   },
 
   /** Tout le personnel (jamais supprimé : seulement désactivé). */
@@ -572,9 +763,11 @@ const HANDLERS = {
     return muter(() => {
       majParId('personnel', id, mapping.versSql('personnel', patch));
       const personne = lirePersonne(id);
+      // Champs dans l'ordre de SAISIE de l'appelant (comme le DemoStore :
+      // Object.keys(d) filtré), pas l'ordre canonique de la liste blanche.
       journaliser(d.operateur, 'MODIFICATION_PERSONNE',
         `${personne.prenom} ${personne.nom}`,
-        `Champs : ${Object.keys(patch).join(', ')}`);
+        `Champs : ${Object.keys(d).filter((c) => CHAMPS.includes(c)).join(', ')}`);
       return personne;
     });
   },
@@ -644,8 +837,9 @@ const HANDLERS = {
       majParId('clients_detenteurs', id,
         mapping.versSql('clients_detenteurs', patch));
       const client = lireClient(id);
+      // Ordre de saisie de l'appelant, comme le DemoStore.
       journaliser(d.operateur, 'MODIFICATION_CLIENT', client.raisonSociale,
-        `Champs : ${Object.keys(patch).join(', ')}`);
+        `Champs : ${Object.keys(d).filter((c) => CHAMPS.includes(c)).join(', ')}`);
       return client;
     });
   },
@@ -680,6 +874,9 @@ const HANDLERS = {
       majParId('etablissements', ID_ETABLISSEMENT,
         mapping.versSql('etablissements', patch));
       const etablissement = HANDLERS.getEtablissement();
+      // Ici (et SEULEMENT ici) le DemoStore journalise dans l'ordre de la
+      // liste blanche (champsModifies construit en itérant CHAMPS) : les
+      // clés de `patch` suivent déjà exactement cet ordre.
       journaliser(d.operateur, 'MODIFICATION_ETABLISSEMENT',
         etablissement.raisonSociale,
         `Champs : ${Object.keys(patch).join(', ')}`);
@@ -874,9 +1071,10 @@ const HANDLERS = {
       const outilMaj = { ...outil, ...patch };
       const nouveauStatut = calculerStatutOutil(outilMaj, aujourdHui());
       majParId('outillage', id, { statut: nouveauStatut });
+      // Ordre de saisie de l'appelant, comme le DemoStore.
       journaliser(d.operateur, 'MODIFICATION_OUTIL',
         `${outilMaj.marque} ${outilMaj.modele ?? ''}`.trim(),
-        `Champs : ${Object.keys(patch).join(', ')}`);
+        `Champs : ${Object.keys(d).filter((c) => CHAMPS.includes(c)).join(', ')}`);
       return lireOutil(id);
     });
   },
@@ -1086,8 +1284,9 @@ const HANDLERS = {
     }
     return muter(() => {
       majParId('machines', id, mapping.versSql('machines', patch));
+      // Ordre de saisie de l'appelant, comme le DemoStore.
       journaliser(d.operateur, 'MODIFICATION_MACHINE', machine.code,
-        `Champs : ${Object.keys(patch).join(', ')}`);
+        `Champs : ${Object.keys(d).filter((c) => CHAMPS.includes(c)).join(', ')}`);
       return lireMachine(id);
     });
   },
@@ -1243,8 +1442,9 @@ const HANDLERS = {
     }
     return muter(() => {
       majParId('bouteilles', id, mapping.versSql('bouteilles', patch));
+      // Ordre de saisie de l'appelant, comme le DemoStore.
       journaliser(d.operateur, 'MODIFICATION_BOUTEILLE', bouteille.code,
-        `Champs : ${Object.keys(patch).join(', ')}`);
+        `Champs : ${Object.keys(d).filter((c) => CHAMPS.includes(c)).join(', ')}`);
       return lireBouteille(id);
     });
   },
@@ -3109,9 +3309,13 @@ function calculerBalanceMatiere(annee) {
  * années inventoriées. Reprend ecartsNonJustifies du DemoStore.
  */
 function ecartsNonJustifies() {
-  const annees = db.all(
-    `SELECT DISTINCT annee FROM inventaires WHERE etablissement_id = ?`,
-    [ID_ETABLISSEMENT]).map((r) => r.annee);
+  // Années dans l'ordre de PREMIÈRE saisie d'inventaire (rowid), comme le
+  // DemoStore ([...new Set(inventaires.map(annee))]) — jamais DISTINCT,
+  // dont l'ordre n'est pas garanti.
+  const annees = [...new Set(db.all(
+    `SELECT annee FROM inventaires WHERE etablissement_id = ?
+     ORDER BY rowid`,
+    [ID_ETABLISSEMENT]).map((r) => r.annee))];
   const resultat = [];
   for (const annee of annees) {
     for (const l of calculerBalanceMatiere(annee).lignes) {
