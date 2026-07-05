@@ -492,6 +492,31 @@ function traiterStatique(requete, reponse, chemin) {
 
 // ----- Serveur HTTP -----
 
+/**
+ * Entrée par défaut du serveur local = la v9 (sous v8/), jamais l'ancienne
+ * v7 restée à la racine du dépôt. Redirige '/' et '/index.html' vers '/v8/'
+ * par une VRAIE redirection HTTP 302 (Location: /v8/) — PAS une réécriture
+ * interne servant v8/index.html sur '/' : les chemins relatifs de la v9
+ * (« ./css/... », « ./js/... ») résoudraient alors vers la racine (donc les
+ * fichiers v7) et casseraient l'application. Seule la redirection change
+ * l'URL vue par le navigateur, donc la base de résolution des chemins
+ * relatifs. Vaut aussi bien en loopback qu'en LAN (même chemin de code,
+ * aucune dépendance à l'hôte). '/v8/' et '/v8/index.html' ne sont PAS
+ * concernés : ils continuent d'être servis normalement (pas de boucle).
+ */
+function estEntreeRacine(chemin) {
+  return chemin === '/' || chemin === '/index.html';
+}
+
+function rediriger(reponse, cible) {
+  reponse.writeHead(302, {
+    'Location': cible,
+    'Content-Length': 0,
+    'Cache-Control': 'no-store',
+  });
+  reponse.end();
+}
+
 const serveur = http.createServer((requete, reponse) => {
   // On ne garde que le chemin (sans la chaîne de requête ?a=b)
   const url = new URL(requete.url, `http://${requete.headers.host || 'localhost'}`);
@@ -505,6 +530,14 @@ const serveur = http.createServer((requete, reponse) => {
 
   if (requete.method !== 'GET' && requete.method !== 'HEAD') {
     repondreErreur(reponse, 405, 'Méthode non autorisée.');
+    return;
+  }
+
+  // Entrée par défaut → v9 (voir estEntreeRacine ci-dessus). Placé avant le
+  // service de fichiers : '/' et '/index.html' ne doivent JAMAIS atteindre
+  // traiterStatique (qui servirait sinon la v7 de la racine).
+  if (estEntreeRacine(chemin)) {
+    rediriger(reponse, '/v8/');
     return;
   }
 
