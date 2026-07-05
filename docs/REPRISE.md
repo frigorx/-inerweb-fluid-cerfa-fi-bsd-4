@@ -64,12 +64,27 @@
    Tests : `node server/test-sauvegarde.mjs` (14 familles), `node server/test-chiffrement.mjs`.
    ⚠️ Modules E4 = server/{sauvegarde,restauration,manifeste,verification,zip-node,chiffrement,
    routes-sauvegarde}.js. Rôles ADMIN/REFERENT sur les 4 routes /api/*.
-7. **E5 comptes/rôles/sessions** (PROCHAINE ÉTAPE) : table `sessions`, jeton opaque cookie
-   HttpOnly, admin unique qui octroie (zéro inscription libre), pas de compte par défaut,
-   verrouillage après 5 échecs, scrypt. **Remplace le raccourci loopback=REFERENT d'E3** (le vrai
-   contrôle d'accès) et débloque l'écoute LAN pour le scan tablette (décision §16.6).
-4. Puis V9.1 fiche machine vivante (`#/m/:code`) → QR (`code_public` opaque) → relevés élèves.
-5. Bascule v8 → racine quand Franck valide. Lot confort audit (22 🟡) au fil de l'eau.
+7. ~~**E5 comptes/rôles/sessions**~~ **FAIT le 05/07** : 4 rôles (ADMIN/REFERENT/ENSEIGNANT/
+   ELEVE, TECHNICIEN reporté V10), table `sessions` (migration 5), jeton opaque cookie
+   `iwf_session` HttpOnly, bootstrap par CLI uniquement (`server/creer-admin.js`, zéro endpoint
+   web, zéro compte par défaut), verrouillage 15 min au 5ᵉ échec, scrypt (`server/comptes.js`).
+   **Remplace le raccourci loopback=REFERENT d'E3** : lectures ouvertes en loopback sans
+   session, toute mutation exige une session, LAN exige une session même en lecture. Revue
+   adversariale : oracle de timing scrypt corrigé (vérification leurre constante), session
+   d'un compte désactivé révoquée, purge des sessions obsolètes au démarrage. Tests tous verts
+   (comptes 29/0, sessions 37/0, routes-comptes 30/0, bootstrap 19/0, migrations 58/0, mapping
+   141/0, contrat local+demo 183/0 chacun). Vérifié navigateur (port 2011) : connexion,
+   mutation gardée, déconnexion, lectures loopback ouvertes — flux complet conforme.
+   ⚠️ **Point ouvert non corrigé** : `serveur.js` sert la racine du dépôt, donc
+   `http://localhost:2011/` affiche encore l'ancienne démo v7 (sans E5) ; la v9 est sous `/v8/`.
+   À trancher avec Franck (servir `v8/` comme racine ?). **Reste à valider par Franck** :
+   écoute LAN + scan tablette sur un vrai 2e appareil (non testable en bac à sable, seulement
+   câblé en local avec `IWF_HOTE_LAN=127.0.0.1`) ; saisie masquée interactive du CLI bootstrap
+   (validée seulement via arguments en test).
+8. **Prochaine étape** : validation live par Franck (LAN réel + tablette, saisie masquée CLI),
+   puis suite du plan V9 à redéfinir avec lui — §16 de la VISION toujours en attente.
+9. Puis V9.1 fiche machine vivante (`#/m/:code`) → QR (`code_public` opaque) → relevés élèves.
+10. Bascule v8 → racine quand Franck valide. Lot confort audit (22 🟡) au fil de l'eau.
 
 ## Méthode de travail validée avec Franck
 
@@ -116,6 +131,10 @@ node server/test-mapping.mjs            # correspondance front <-> SQL (E0/E1) �
 node server/test-migrations.mjs         # versionnage + WORM + journal chaîné (E1/E2) — 58 vérif.
 node server/test-sauvegarde.mjs         # coffre-fort : sauvegarde/restauration (E4.1) — 14 familles
 node server/test-chiffrement.mjs        # chiffrement AES-256-GCM (E4.2) — 6 familles
+node server/test-comptes.mjs            # hachage scrypt + verrouillage de compte (E5) — 29 vérif.
+node server/test-sessions.mjs           # cycle de vie des sessions (E5) — 37 vérif.
+node server/test-routes-comptes.mjs     # connexion/déconnexion/création (E5) — 30 vérif.
+node server/test-bootstrap.mjs          # CLI creer-admin.js (E5) — 19 vérif.
 ```
 
 ⚠️ `test-contrat.mjs` ÉCRIT dans le store cible : contre le futur LocalStore (E3), toujours

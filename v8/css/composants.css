@@ -1125,3 +1125,126 @@
     margin-bottom: 8px;
   }
 }
+
+/* ============================================================
+   Écran de connexion (V9-E5, vague 5)
+   ============================================================ */
+
+.ecran-connexion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 200px);
+  padding: 24px;
+}
+
+.carte-connexion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  max-width: 360px;
+  padding: 32px 28px;
+  background: var(--carte);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-carte);
+  box-shadow: var(--ombre-douce);
+  text-align: center;
+}
+
+.connexion-pastille {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 6px;
+  border-radius: 50%;
+  background: var(--accent-fond-2);
+  color: var(--accent);
+}
+
+.connexion-pastille svg {
+  width: 24px;
+  height: 24px;
+}
+
+.connexion-titre {
+  font-size: 18px;
+  color: var(--texte);
+}
+
+.connexion-sous-titre {
+  margin: 0 0 18px;
+  font-size: 13px;
+  color: var(--texte-3);
+}
+
+.carte-connexion .formulaire {
+  width: 100%;
+  text-align: left;
+}
+
+/* ============================================================
+   Bouton de déconnexion (pied de la sidebar, V9-E5)
+   ============================================================ */
+
+.pied-session {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  margin-top: 8px;
+  border-top: 1px solid var(--bordure);
+}
+
+.pied-session-identite {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.pied-session-login {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--texte);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pied-session-role {
+  font-size: 11px;
+  color: var(--texte-3);
+}
+
+.bouton-deconnexion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-bouton);
+  background: var(--carte);
+  color: var(--texte-3);
+  cursor: pointer;
+  transition: color .15s, border-color .15s, background .15s;
+}
+
+.bouton-deconnexion:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: var(--danger-fond);
+}
+
+.bouton-deconnexion svg {
+  width: 16px;
+  height: 16px;
+}

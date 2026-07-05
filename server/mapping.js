@@ -390,6 +390,8 @@ const TABLES_NON_MAPPEES = {
     'd\'objet dans le contrat',
   utilisateurs_app: 'authentification, réservée au serveur (E5) — jamais ' +
     'exposée au front',
+  sessions: 'jetons de session (E5, migration 005) — réservée au serveur, ' +
+    'jamais exposée au front',
   parametres: 'clé/valeur interne du serveur'
 };
 

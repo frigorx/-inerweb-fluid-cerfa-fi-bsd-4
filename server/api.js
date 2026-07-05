@@ -140,11 +140,19 @@ function verifierActivites(liste) {
 const VALIDEUR = ['REFERENT', 'ENSEIGNANT', 'ADMIN'];
 const OPERATEUR = ['REFERENT', 'ENSEIGNANT', 'ADMIN', 'ELEVE', 'TECHNICIEN'];
 
+/**
+ * V9-E5 : importerJSON REMPLACE tout le registre — bascule de VALIDEUR à
+ * REFERENT+ADMIN uniquement (un ENSEIGNANT valide des écritures, mais ne
+ * doit plus pouvoir écraser la base entière). Décision arrêtée, non
+ * négociable. L'export (lecture) n'est pas concerné.
+ */
+const REFERENT_ADMIN = ['REFERENT', 'ADMIN'];
+
 const ROLES_MUTATION = {
   // Niveau VALIDEUR (fige / scelle / intégrité)
   validerMouvement: VALIDEUR,
   annulerParContreEcriture: VALIDEUR,
-  importerJSON: VALIDEUR,
+  importerJSON: REFERENT_ADMIN,
   updateEtablissement: VALIDEUR,
   createAuditOrganisme: VALIDEUR,
   createNonConformite: VALIDEUR,

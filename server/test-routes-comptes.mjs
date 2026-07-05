@@ -1,0 +1,457 @@
+// ============================================================
+// inerWeb Fluide — PREUVE des routes d'authentification (V9-E5, vague 3)
+// Exécution : node server/test-routes-comptes.mjs
+//
+// Éprouve serveur.js + routes-comptes.js + le contexteDeLaConnexion basé
+// sessions (qui REMPLACE le raccourci « loopback = REFERENT ») en lançant un
+// VRAI serveur HTTP (process enfant, copie jetable de server/ sous
+// os.tmpdir() — jamais le data/ réel, jamais le port 2011 réel).
+//
+// Familles :
+//   1. Mutation sans session → 403.
+//   2. Connexion pose un cookie iwf_session ; requête suivante avec ce
+//      cookie porte le rôle attendu.
+//   3. Session ELEVE : validerMouvement (VALIDEUR) → 403 ; session REFERENT
+//      → passe la garde de rôle (peut échouer plus loin pour raison métier,
+//      mais PAS 403).
+//   4. creerCompte : non-admin → 403 ; admin → 200 (compte utilisable).
+//   5. Verrou : 5 échecs consécutifs → 403 « Compte verrouillé » même avec
+//      le bon mot de passe ensuite.
+//   6. Lecture (get*) : loopback sans session → 200 ; « LAN » (Host distinct
+//      simulé) sans session → 403 (session exigée même en lecture).
+//   7. Déconnexion : après logout, le cookie ne porte plus de rôle (une
+//      mutation qui marchait avant échoue en 403 après).
+//
+// Node ≥ 22 (node:sqlite, node:http natifs), sans DOM.
+// ============================================================
+
+import { spawn } from 'node:child_process';
+import { mkdtempSync, cpSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import http from 'node:http';
+
+// ------------------------------------------------------------
+// Outillage de vérification (conventions maison des suites v8/v9).
+// ------------------------------------------------------------
+let nbOk = 0;
+let nbEchecs = 0;
+
+function verifier(libelle, condition, detail = '') {
+  if (condition) {
+    nbOk += 1;
+    console.log(`  OK  ${libelle}`);
+  } else {
+    nbEchecs += 1;
+    console.error(`ÉCHEC ${libelle}${detail ? ` — ${detail}` : ''}`);
+  }
+}
+
+// ------------------------------------------------------------
+// Petit client HTTP natif (pas de fetch nécessaire, node:http suffit et
+// donne un contrôle total sur l'en-tête Host — indispensable pour simuler
+// une origine « LAN » face à la garde anti-rebinding de serveur.js).
+// ------------------------------------------------------------
+function requeteJson(port, methodeApi, params, { cookie, host } = {}) {
+  return new Promise((resoudre, rejeter) => {
+    const corps = JSON.stringify({ params: params ?? {} });
+    const entetes = {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Content-Length': Buffer.byteLength(corps),
+      'Host': host ?? `127.0.0.1:${port}`,
+    };
+    if (cookie) entetes['Cookie'] = cookie;
+    const requete = http.request({
+      hostname: '127.0.0.1',
+      port,
+      path: `/api/${methodeApi}`,
+      method: 'POST',
+      headers: entetes,
+    }, (reponse) => {
+      const morceaux = [];
+      reponse.on('data', (m) => morceaux.push(m));
+      reponse.on('end', () => {
+        let corpsJson = null;
+        try { corpsJson = JSON.parse(Buffer.concat(morceaux).toString('utf8')); }
+        catch { /* corps vide ou non JSON (405...) */ }
+        resoudre({
+          statut: reponse.statusCode,
+          setCookie: reponse.headers['set-cookie']?.[0] ?? null,
+          corps: corpsJson,
+        });
+      });
+    });
+    requete.on('error', rejeter);
+    requete.write(corps);
+    requete.end();
+  });
+}
+
+/** Extrait le jeton du cookie posé (« iwf_session=XXX; HttpOnly; ... »). */
+function extraireJetonDuSetCookie(setCookie) {
+  if (!setCookie) return null;
+  const m = /^iwf_session=([^;]*)/.exec(setCookie);
+  return m ? m[1] : null;
+}
+
+// ------------------------------------------------------------
+// Serveur jetable : copie de server/ sous un dossier temporaire, lancé en
+// process enfant sur un port dédié. La base et backups/ se créent tout
+// seuls à l'intérieur (jamais le data/ réel du dépôt).
+// ------------------------------------------------------------
+const DOSSIER = mkdtempSync(join(tmpdir(), 'inerweb-fluide-routes-comptes-'));
+cpSync(join(import.meta.dirname, '.'), join(DOSSIER, 'server'), { recursive: true });
+
+const PORT = 2093 + Math.floor(Math.random() * 500); // évite les collisions entre lancements
+
+const enfant = spawn(process.execPath, ['server/serveur.js'], {
+  cwd: DOSSIER,
+  env: { ...process.env, PORT: String(PORT) },
+  stdio: ['ignore', 'pipe', 'pipe'],
+});
+
+let sortieServeur = '';
+enfant.stdout.on('data', (d) => { sortieServeur += d.toString(); });
+enfant.stderr.on('data', (d) => { sortieServeur += d.toString(); });
+
+/** Attend que /api/ping réponde (le serveur a fini sa séquence de démarrage). */
+async function attendreDemarrage(dureeMaxMs = 10000) {
+  const debut = Date.now();
+  while (Date.now() - debut < dureeMaxMs) {
+    try {
+      const r = await requeteJson(PORT, 'ping', {});
+      if (r.statut === 200) return true;
+    } catch { /* pas encore prêt */ }
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  return false;
+}
+
+const pret = await attendreDemarrage();
+verifier('le serveur jetable démarre et répond à /api/ping', pret, sortieServeur);
+if (!pret) {
+  console.error(sortieServeur);
+  enfant.kill();
+  process.exit(1);
+}
+
+// ------------------------------------------------------------
+// Amorçage : un compte ADMIN créé DIRECTEMENT en base (simule le CLI
+// creer-admin.js, hors périmètre de cette vague) — nécessaire pour ensuite
+// tester /api/creerCompte via HTTP avec une vraie session ADMIN.
+// ------------------------------------------------------------
+{
+  const { createRequire } = await import('node:module');
+  const require = createRequire(import.meta.url);
+  // Le process enfant a SA PROPRE instance de db.js (process séparé) : on
+  // écrit directement dans SON fichier .db avec une instance locale ici,
+  // après extinction... impossible pendant qu'il tourne (SQLite WAL admet
+  // plusieurs connexions). On ouvre donc la même base depuis ce process,
+  // db.js gère le journal_mode=WAL avec busy_timeout : coexistence sûre.
+  const cheminDb = join(DOSSIER, 'data', 'inerweb-fluide.db');
+  const dbTest = require(join(DOSSIER, 'server', 'db.js'));
+  const comptesTest = require(join(DOSSIER, 'server', 'comptes.js'));
+  dbTest.ouvrir(cheminDb);
+  const { hash, sel } = comptesTest.hacherMotDePasse('MotDePasseAdmin-Amorce-2026');
+  dbTest.run(
+    `INSERT INTO utilisateurs_app (id, login, hash_mot_de_passe, sel, role)
+     VALUES (?, ?, ?, ?, ?)`,
+    ['UTI-ADMIN-AMORCE', 'admin.amorce', hash, sel, 'ADMIN']);
+  dbTest.fermer();
+}
+
+// ============================================================
+// 1. Mutation sans session → 403
+// ============================================================
+{
+  const r = await requeteJson(PORT, 'createClient', {
+    donneesClient: { raisonSociale: 'Client sans session', adresse: '1 rue Test', siret: '12345678901234' }
+  });
+  verifier('mutation (createClient) sans cookie de session → 403',
+    r.statut === 403, JSON.stringify(r.corps));
+}
+
+// ============================================================
+// 2. Connexion pose un cookie ; la session ouverte porte le bon rôle
+// ============================================================
+let cookieAdmin;
+{
+  const rEchec = await requeteJson(PORT, 'connexion',
+    { login: 'admin.amorce', motDePasse: 'MauvaisMotDePasse' });
+  verifier('connexion avec mauvais mot de passe → 400, message unique',
+    rEchec.statut === 400 &&
+    rEchec.corps?.erreur === 'Identifiant ou mot de passe incorrect.');
+
+  const rLoginInexistant = await requeteJson(PORT, 'connexion',
+    { login: 'nexiste-pas-du-tout', motDePasse: 'peu-importe-12345' });
+  verifier('connexion avec login inexistant → même message (pas de fuite)',
+    rLoginInexistant.statut === 400 &&
+    rLoginInexistant.corps?.erreur === rEchec.corps?.erreur);
+
+  const rOk = await requeteJson(PORT, 'connexion',
+    { login: 'admin.amorce', motDePasse: 'MotDePasseAdmin-Amorce-2026' });
+  verifier('connexion avec bon mot de passe → 200', rOk.statut === 200,
+    JSON.stringify(rOk.corps));
+  verifier('un Set-Cookie iwf_session est posé', rOk.setCookie?.includes('iwf_session=') === true);
+  verifier('le cookie porte HttpOnly; SameSite=Strict; Path=/; Max-Age=28800',
+    rOk.setCookie?.includes('HttpOnly') &&
+    rOk.setCookie?.includes('SameSite=Strict') &&
+    rOk.setCookie?.includes('Path=/') &&
+    rOk.setCookie?.includes('Max-Age=28800'));
+  verifier('le corps de réponse NE PORTE PAS le jeton clair (seulement role/utilisateur)',
+    rOk.corps?.resultat?.jetonClair === undefined && rOk.corps?.resultat?.role === 'ADMIN');
+
+  const jeton = extraireJetonDuSetCookie(rOk.setCookie);
+  cookieAdmin = `iwf_session=${jeton}`;
+
+  const rQui = await requeteJson(PORT, 'getEtablissement', {}, { cookie: cookieAdmin });
+  verifier('lecture avec le cookie ADMIN fonctionne (200)', rQui.statut === 200);
+}
+
+// ============================================================
+// 3. Session ELEVE : validerMouvement → 403 ; REFERENT → passe la garde
+// ============================================================
+let cookieReferent;
+let cookieEleve;
+{
+  // Créer un référent et un élève via /api/creerCompte (garde ADMIN,
+  // testée en famille 4 — ici on l'utilise juste comme outillage).
+  const rCreeRef = await requeteJson(PORT, 'creerCompte',
+    { login: 'referent.test3', motDePasseInitial: 'MotDePasseRef-Long-2026', role: 'REFERENT' },
+    { cookie: cookieAdmin });
+  verifier('création REFERENT via ADMIN → 200 (outillage famille 3)',
+    rCreeRef.statut === 200, JSON.stringify(rCreeRef.corps));
+
+  const rCreeEleve = await requeteJson(PORT, 'creerCompte',
+    { login: 'eleve.test3', motDePasseInitial: 'MotDePasseEleve1', role: 'ELEVE' },
+    { cookie: cookieAdmin });
+  verifier('création ELEVE via ADMIN → 200 (outillage famille 3)',
+    rCreeEleve.statut === 200, JSON.stringify(rCreeEleve.corps));
+
+  const rLoginRef = await requeteJson(PORT, 'connexion',
+    { login: 'referent.test3', motDePasse: 'MotDePasseRef-Long-2026' });
+  cookieReferent = `iwf_session=${extraireJetonDuSetCookie(rLoginRef.setCookie)}`;
+
+  const rLoginEleve = await requeteJson(PORT, 'connexion',
+    { login: 'eleve.test3', motDePasse: 'MotDePasseEleve1' });
+  cookieEleve = `iwf_session=${extraireJetonDuSetCookie(rLoginEleve.setCookie)}`;
+
+  const rMutationEleve = await requeteJson(PORT, 'validerMouvement',
+    { id: 'MVT-INEXISTANT' }, { cookie: cookieEleve });
+  verifier('validerMouvement avec session ELEVE → 403 (rôle non habilité)',
+    rMutationEleve.statut === 403, JSON.stringify(rMutationEleve.corps));
+
+  const rMutationRef = await requeteJson(PORT, 'validerMouvement',
+    { id: 'MVT-INEXISTANT' }, { cookie: cookieReferent });
+  verifier('validerMouvement avec session REFERENT → PASSE la garde de rôle (pas 403 ; ' +
+    'échoue pour raison métier, mouvement introuvable)',
+    rMutationRef.statut !== 403, JSON.stringify(rMutationRef.corps));
+}
+
+// ============================================================
+// 4. creerCompte : non-admin → 403 ; admin → 200 (déjà exercé en famille 3,
+//    on ajoute ici le rejet explicite d'un rôle non-ADMIN)
+// ============================================================
+{
+  const rNonAdmin = await requeteJson(PORT, 'creerCompte',
+    { login: 'intrus.test4', motDePasseInitial: 'PeuImporteQuoi1', role: 'ELEVE' },
+    { cookie: cookieReferent });
+  verifier('creerCompte avec session REFERENT (non-ADMIN) → 403',
+    rNonAdmin.statut === 403, JSON.stringify(rNonAdmin.corps));
+
+  const rSansSession = await requeteJson(PORT, 'creerCompte',
+    { login: 'intrus2.test4', motDePasseInitial: 'PeuImporteQuoi2', role: 'ELEVE' });
+  verifier('creerCompte sans session → 403',
+    rSansSession.statut === 403, JSON.stringify(rSansSession.corps));
+
+  const rRoleInvalide = await requeteJson(PORT, 'creerCompte',
+    { login: 'role.invalide4', motDePasseInitial: 'MotDePasseValide99', role: 'TECHNICIEN' },
+    { cookie: cookieAdmin });
+  verifier('creerCompte avec un rôle TECHNICIEN (absent en V9) → refusé (400, pas 500)',
+    rRoleInvalide.statut === 400, JSON.stringify(rRoleInvalide.corps));
+
+  const rMdpCourt = await requeteJson(PORT, 'creerCompte',
+    { login: 'admin.court4', motDePasseInitial: 'court12', role: 'ADMIN' },
+    { cookie: cookieAdmin });
+  verifier('creerCompte ADMIN avec mot de passe < 10 caractères → refusé',
+    rMdpCourt.statut === 400, JSON.stringify(rMdpCourt.corps));
+
+  const rDoublon = await requeteJson(PORT, 'creerCompte',
+    { login: 'admin.amorce', motDePasseInitial: 'UnAutreMotDePasse1', role: 'ENSEIGNANT' },
+    { cookie: cookieAdmin });
+  verifier('creerCompte avec un login déjà pris → refusé',
+    rDoublon.statut === 400, JSON.stringify(rDoublon.corps));
+}
+
+// ============================================================
+// 5. Verrou : 5 échecs consécutifs → compte verrouillé (même bon mot de
+//    passe ensuite refusé, 403 explicite « Compte verrouillé »)
+// ============================================================
+{
+  const rCree = await requeteJson(PORT, 'creerCompte',
+    { login: 'verrou.test5', motDePasseInitial: 'MotDePasseVerrou-2026', role: 'ENSEIGNANT' },
+    { cookie: cookieAdmin });
+  verifier('compte de test du verrou créé (outillage famille 5)',
+    rCree.statut === 200, JSON.stringify(rCree.corps));
+
+  let dernierStatut = null;
+  for (let i = 0; i < 5; i += 1) {
+    const r = await requeteJson(PORT, 'connexion',
+      { login: 'verrou.test5', motDePasse: 'MauvaisMotDePasse' });
+    dernierStatut = r.statut;
+  }
+  verifier('les 5 échecs consécutifs sont bien refusés (400, message unique)',
+    dernierStatut === 400);
+
+  const rBonMdpApresVerrou = await requeteJson(PORT, 'connexion',
+    { login: 'verrou.test5', motDePasse: 'MotDePasseVerrou-2026' });
+  verifier('après 5 échecs : même le BON mot de passe est refusé (403, compte verrouillé)',
+    rBonMdpApresVerrou.statut === 403 &&
+    rBonMdpApresVerrou.corps?.erreur === 'Compte verrouillé.',
+    JSON.stringify(rBonMdpApresVerrou.corps));
+}
+
+// ============================================================
+// 6. Lecture : loopback sans session → 200 ; « LAN » sans session → 403
+// ============================================================
+{
+  const rLoopback = await requeteJson(PORT, 'getFluides', {});
+  verifier('lecture (getFluides) en loopback SANS session → 200 (confort mono-poste)',
+    rLoopback.statut === 200, JSON.stringify(rLoopback.corps));
+
+  // Simulation « LAN » : Host distinct de la liste des hôtes loopback
+  // autorisés → cette requête tombe déjà sous la garde anti-rebinding
+  // (refusReseau, ANTÉRIEURE à E5, CONSERVÉE), qui est INTENTIONNELLEMENT
+  // plus stricte encore (403 avant même d'atteindre la garde de session
+  // ajoutée dans cette vague). On vérifie donc que le refus est bien un
+  // 403, quelle qu'en soit la barrière exacte.
+  //
+  // NOTE DE PORTÉE : tant que serveur.js n'écoute QUE sur 127.0.0.1 (HOTE),
+  // une vraie requête « LAN » (IP source non loopback) ne peut structurel-
+  // lement jamais atteindre ce serveur — le test ci-dessus (Host étranger)
+  // est donc le seul cas de « non-loopback » observable de bout en bout
+  // aujourd'hui. La garde ajoutée dans traiterApi (session exigée en
+  // lecture dès que ni rôle ni loopback ne sont posés) est du blindage en
+  // profondeur pour le jour où l'écoute s'élargira à une interface LAN :
+  // elle est correcte par relecture de code (contexteDeLaConnexion ne pose
+  // JAMAIS loopback:true pour une IP non-127.0.0.1/::1, cf. estLoopback),
+  // mais ce fichier ne peut pas l'exercer par une vraie connexion réseau
+  // sans modifier HOTE — hors périmètre de cette vague.
+  const rHostEtranger = await requeteJson(PORT, 'getFluides', {}, { host: 'un-autre-hote:1234' });
+  verifier('lecture avec un Host non loopback (simule une origine LAN) → 403',
+    rHostEtranger.statut === 403, JSON.stringify(rHostEtranger.corps));
+}
+
+// ============================================================
+// 7. Déconnexion : après logout, la session ne porte plus de rôle
+// ============================================================
+{
+  const rMutationAvant = await requeteJson(PORT, 'createClient', {
+    donneesClient: { raisonSociale: 'Avant logout', adresse: '2 rue Test', siret: '98765432109876' }
+  }, { cookie: cookieReferent });
+  verifier('mutation avec session REFERENT valide, AVANT déconnexion → pas 403',
+    rMutationAvant.statut !== 403, JSON.stringify(rMutationAvant.corps));
+
+  const rLogout = await requeteJson(PORT, 'deconnexion', {}, { cookie: cookieReferent });
+  verifier('déconnexion → 200', rLogout.statut === 200);
+  verifier('déconnexion pose un Set-Cookie qui efface le cookie (Max-Age=0)',
+    rLogout.setCookie?.includes('Max-Age=0') === true);
+
+  const rMutationApres = await requeteJson(PORT, 'createClient', {
+    donneesClient: { raisonSociale: 'Après logout', adresse: '3 rue Test', siret: '11122233344455' }
+  }, { cookie: cookieReferent });
+  verifier('la MÊME mutation, APRÈS déconnexion (cookie révoqué) → 403',
+    rMutationApres.statut === 403, JSON.stringify(rMutationApres.corps));
+
+  // Idempotence : redéconnecter un jeton déjà révoqué ne doit jamais lever.
+  const rLogout2 = await requeteJson(PORT, 'deconnexion', {}, { cookie: cookieReferent });
+  verifier('déconnexion répétée (jeton déjà révoqué) → 200, pas d’erreur',
+    rLogout2.statut === 200);
+
+  // Déconnexion sans cookie du tout : no-op silencieux également.
+  const rLogoutSansCookie = await requeteJson(PORT, 'deconnexion', {});
+  verifier('déconnexion sans cookie → 200 (no-op silencieux)',
+    rLogoutSansCookie.statut === 200);
+}
+
+// ============================================================
+// 8. Anti-oracle de timing : le temps de réponse d'un login INEXISTANT ne doit
+//    PAS être discernablement plus court que celui d'un login EXISTANT (mais
+//    mauvais mot de passe). Les deux doivent payer un scrypt complet ; sans le
+//    correctif, le login inexistant court-circuitait le scrypt et répondait en
+//    quelques millisecondes, exposant l'existence des identifiants.
+//
+//    Mesure d'ORDRE DE GRANDEUR uniquement, avec tolérance large : on ne vise
+//    pas l'égalité stricte (bruit d'ordonnancement, GC, WAL), seulement
+//    l'ABSENCE d'un delta de la taille d'un scrypt (~dizaines de ms). On médiane
+//    plusieurs mesures pour lisser le bruit, et on utilise un compte dédié
+//    (jamais verrouillé pendant la mesure : seulement des mauvais mots de passe
+//    sur un login existant NON verrouillé — on crée un compte frais et on reste
+//    sous le seuil de 5 échecs par salve en le recréant si besoin).
+// ============================================================
+{
+  // Compte existant JAMAIS verrouillé : on mesure avec le BON login mais un
+  // mauvais mot de passe. Pour ne pas déclencher le verrou (5 échecs), on
+  // limite le nombre de mesures « login existant » à moins de 5 et on
+  // réinitialise via une connexion réussie entre les salves.
+  await requeteJson(PORT, 'creerCompte',
+    { login: 'timing.test8', motDePasseInitial: 'MotDePasseTiming-2026', role: 'ENSEIGNANT' },
+    { cookie: cookieAdmin });
+
+  function mediane(valeurs) {
+    const triees = [...valeurs].sort((a, b) => a - b);
+    const milieu = Math.floor(triees.length / 2);
+    return triees.length % 2 === 0
+      ? (triees[milieu - 1] + triees[milieu]) / 2
+      : triees[milieu];
+  }
+
+  async function mesurer(login, motDePasse) {
+    const t0 = process.hrtime.bigint();
+    await requeteJson(PORT, 'connexion', { login, motDePasse });
+    const t1 = process.hrtime.bigint();
+    return Number(t1 - t0) / 1e6; // millisecondes
+  }
+
+  const tempsInexistant = [];
+  const tempsExistant = [];
+  // 4 mesures de chaque type, entrelacées, en restant sous le seuil de verrou
+  // (4 mauvais essais < 5) et en remettant à zéro par une connexion réussie.
+  for (let i = 0; i < 4; i += 1) {
+    tempsInexistant.push(await mesurer('nexiste-vraiment-pas-8', 'peu-importe-12345'));
+    tempsExistant.push(await mesurer('timing.test8', 'MauvaisMotDePasseXY'));
+  }
+  // Remise à zéro du compteur d'échecs par une connexion réussie (évite le
+  // verrou pour la suite et respecte la règle « reset au succès »).
+  await requeteJson(PORT, 'connexion',
+    { login: 'timing.test8', motDePasse: 'MotDePasseTiming-2026' });
+
+  const medInexistant = mediane(tempsInexistant);
+  const medExistant = mediane(tempsExistant);
+
+  // Sans le correctif, medExistant >> medInexistant (delta ~ coût d'un scrypt,
+  // typiquement plusieurs dizaines de ms). Avec le correctif, les deux médianes
+  // sont du même ordre. On tolère largement le bruit : on exige seulement que
+  // le login inexistant ne soit pas plus rapide que la moitié du login existant
+  // (donc qu'un scrypt a bien été payé aussi sur le chemin « inexistant »).
+  verifier('anti-oracle de timing : login inexistant paie aussi un scrypt ' +
+    '(médiane inexistant >= moitié de la médiane existant)',
+    medInexistant >= medExistant / 2,
+    `inexistant=${medInexistant.toFixed(1)}ms existant=${medExistant.toFixed(1)}ms`);
+}
+
+// ============================================================
+// Verdict + nettoyage
+// ============================================================
+enfant.kill();
+await new Promise((r) => setTimeout(r, 300)); // laisse le temps de libérer le fichier .db
+try {
+  rmSync(DOSSIER, { recursive: true, force: true });
+} catch {
+  // Best-effort : sous Windows, WAL/SHM peuvent rester verrouillés un court
+  // instant après l'arrêt du process — ne fait pas échouer la suite.
+}
+
+console.log(`\n${nbOk} vérifications réussies, ${nbEchecs} échec(s).`);
+if (nbEchecs > 0) process.exit(1);
+console.log('Routes de comptes (V9-E5, vague 3) : tout est vert.');

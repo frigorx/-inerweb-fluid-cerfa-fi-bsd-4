@@ -9,6 +9,69 @@
 - ⚠️ **Révocation à faire côté Apps Script** (les anciennes clés restent valides tant que
   `genererClesAPI()` n'a pas été exécutée puis le script redéployé) : procédure dans `SECURITE.md`.
 
+### 🔑 V9-E5 — Comptes, rôles, sessions : fin du raccourci loopback=REFERENT (05/07)
+Le raccourci provisoire d'E3 (loopback = REFERENT) est remplacé par un vrai contrôle d'accès.
+- **Décisions (Franck)** : 4 rôles ADMIN/REFERENT/ENSEIGNANT/ELEVE (TECHNICIEN reporté V10) ;
+  restauration du coffre = ADMIN + REFERENT (les 4 routes coffre inchangées) ; bootstrap par
+  commande CLI uniquement (aucun endpoint web, aucun compte par défaut, aucune inscription
+  libre) ; lectures ouvertes en loopback sans session (confort mono-poste), toute MUTATION
+  exige une session, et sur le LAN une session est exigée même en lecture.
+- **Migration 5** (`server/migrations.js`) : `echecs_consecutifs`/`verrouille_jusqua` sur
+  `utilisateurs_app` + table `sessions` (jeton = empreinte SHA-256, `utilisateur_id`, `role`
+  figé, `cree_le`, `expire_le`, `ip`, `revoque`, index sur `utilisateur_id`). `mapping.js` :
+  `sessions` déclarée non mappée au contrat.
+- **`server/comptes.js`** : hachage scrypt + sel 16 o + NFC (mêmes paramètres N=32768/r=8/p=1
+  que `chiffrement.js`), vérification en `crypto.timingSafeEqual`, verrouillage par compte
+  (verrou 15 min au 5ᵉ échec, remise à zéro sur succès).
+- **`server/sessions.js`** : `creerSession` (jeton clair `randomBytes(32)` base64url, seule
+  l'empreinte SHA-256 va en base, expire +8 h), `verifierSession` (timing-safe, expiration
+  vérifiée à chaque appel, purge paresseuse, REFUSE si le compte est `actif=0`),
+  `revoquerSession`, `revoquerToutesLesSessions(utilisateurId)`, `purgerSessionsObsoletes()`
+  (branchée au démarrage).
+- **`server/routes-comptes.js`** : `POST /api/connexion` (message d'échec UNIQUE, verrou avant
+  vérification du mot de passe, cookie `iwf_session` HttpOnly ; SameSite=Strict ; Path=/ ;
+  Max-Age=28800 ; Secure si TLS ; jeton clair jamais renvoyé dans le corps),
+  `POST /api/deconnexion` (révoque la session du cookie entrant, idempotente),
+  `POST /api/creerCompte` (GARDÉE ADMIN, unicité du login, longueur minimale du mot de passe
+  selon le rôle, journalise CREATION_COMPTE).
+- **`server/serveur.js`** : `contexteDeLaConnexion` lit le cookie `iwf_session` →
+  `sessions.verifierSession` (le rôle vient TOUJOURS de la session serveur, jamais du corps) ;
+  garde « lecture hors loopback sans session refusée » ; garde CSRF/anti-rebinding
+  (`refusReseau`, Host+Origin) conservée ; écoute LAN conditionnée (`IWF_LAN=1` +
+  `IWF_HOTE_LAN=<ip>`) avec extension des hôtes/origines autorisés à `<ip>:<port>`.
+  **`server/api.js`** : `importerJSON` passe de VALIDEUR à REFERENT+ADMIN (les autres méthodes
+  VALIDEUR inchangées). **`server/creer-admin.js`** : CLI de bootstrap du 1er ADMIN (saisie
+  masquée si TTY, refuse un 2e ADMIN, journalise BOOTSTRAP_ADMIN).
+- **Front** : `v8/js/views/connexion.js` (écran sobre, charte claire, zéro emoji),
+  `v8/js/app.js` (montage hors routeur, pied de session identité+rôle+Déconnexion en Mode
+  Local), `v8/js/data/transport-http.js` (`credentials:'same-origin'` + évènement
+  `iwf:session-requise` sur 403 sans rôle), `v8/js/core/icones.js`, `v8/css/composants.css`.
+- **Revue adversariale du cœur (3 lentilles : forgeage de rôle / crypto-timing /
+  CSRF-atomicité)** : 1 constat IMPORTANT corrigé — oracle de timing scrypt à la connexion (un
+  login inexistant renvoyait sans passer par scrypt) → vérification LEURRE constante ajoutée,
+  les deux chemins paient désormais exactement un scrypt (vérification du mot de passe déplacée
+  avant le test de verrou pour éviter toute asymétrie de branche). 2 constats MINEURS fermés :
+  (a) une session survivait jusqu'à 8 h à la désactivation d'un compte → `verifierSession`
+  refuse un compte `actif=0` + `revoquerToutesLesSessions` ; (b) sessions obsolètes jamais
+  purgées → `purgerSessionsObsoletes` au démarrage.
+- Tests (tous verts) : `test-comptes` 29/0, `test-sessions` 37/0, `test-routes-comptes` 30/0
+  (dont le test anti-oracle de timing), `test-bootstrap` 19/0, `test-migrations` 58/0,
+  `test-mapping` 141/0 ; suites existantes intactes ; **contrat `test-contrat.mjs local` ET
+  `demo` = 183/0** (aucune adaptation du harnais).
+- **Vérifié navigateur (serveur réel port 2011, base jetable)** : flux complet same-origin —
+  mutation sans session refusée 403 « rôle courant : aucun » ; mauvais mot de passe = message
+  unique ; connexion correcte = 200 + cookie `iwf_session` HttpOnly (invisible en JS) ; mutation
+  ensuite = garde ouverte ; écran de connexion monté via `iwf:session-requise` ; pied de session
+  « login + rôle » ; déconnexion = session révoquée, retour à l'écran de connexion, mutation de
+  nouveau 403. Lectures ouvertes en loopback confirmées (tableau de bord sans connexion).
+- ⚠️ **Observation hors périmètre (non corrigée)** : `serveur.js` sert la RACINE du dépôt ;
+  `http://localhost:2011/` affiche l'ancienne démo v7 (sans E5), la v9 est sous `/v8/`. Piège
+  d'entrée en Mode Local à trancher ultérieurement avec Franck (faut-il servir `v8/` comme
+  racine ?).
+- **Reste à valider par Franck** : écoute LAN + scan tablette RÉEL (2e appareil, vraie IP LAN) —
+  non testable dans le bac à sable (validé seulement par câblage avec `IWF_HOTE_LAN=127.0.0.1`) ;
+  saisie masquée interactive du CLI (validée seulement via arguments).
+
 ### 🔐 V9-E4 — Le coffre-fort : sauvegarde, restauration, chiffrement (05/07)
 L'exigence n°1 (ne JAMAIS perdre les données) tenue de bout en bout, plan `docs/E4-PLAN.md`.
 - **E4.1 noyau** : `VACUUM INTO` seule primitive (jamais copier le `.db` à chaud) ; snapshots

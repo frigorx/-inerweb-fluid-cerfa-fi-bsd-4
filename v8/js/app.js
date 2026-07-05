@@ -5,10 +5,12 @@
 // ============================================================
 
 import { creerStore } from './data/datastore.js';
+import { creerTransportHttp, EVENEMENT_SESSION_REQUISE } from './data/transport-http.js';
 import { creerRouteur } from './core/routeur.js';
 import { ICONES } from './core/icones.js';
 import { esc } from './core/utils.js';
 import { modale, toast } from './views/communs.js';
+import { render as rendreConnexion } from './views/connexion.js';
 
 // ---- Liste ordonnée des vues (contrat v8) ----
 const VUES = [
@@ -36,6 +38,34 @@ const ICONE_MENU = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" 
 // État global de l'application
 let store = null;
 let routeur = null;
+
+/* ============================================================
+   Session (V9-E5, vague 5)
+   ============================================================ */
+
+// Transport dédié aux routes de compte (connexion/déconnexion), distinct
+// du transport du LocalStore : ces routes sont HORS du contrat DataStore
+// (cf. routes-comptes.js) et n'existent qu'en Mode Local (store HTTP) —
+// jamais construit contre le DemoStore, qui n'a ni serveur ni session.
+const transportComptes = creerTransportHttp();
+
+// Identité de la session en cours, connue seulement côté client une fois
+// la connexion réussie (le cookie iwf_session, lui, est HttpOnly : seule
+// source de vérité côté serveur). Perdue au rechargement — sans
+// conséquence : la prochaine lecture/mutation qui l'exige redéclenche
+// l'écran de connexion via EVENEMENT_SESSION_REQUISE si besoin.
+let sessionCourante = null;
+
+// Vrai pendant que l'écran de connexion occupe #vue : protège contre un
+// écrasement par la suite de la séquence de démarrage (verifierIntegriteRegistre
+// peut déclencher EVENEMENT_SESSION_REQUISE avant que construireSidebar/
+// afficherVue n'aient tourné) ou par un rendu de vue concurrent.
+let ecranConnexionAffiche = false;
+
+/** Vrai si l'application tourne en Mode Local (store HTTP, sessions actives). */
+function modeLocalActif() {
+  return Boolean(store && store.modeLabel === 'LOCAL');
+}
 
 /* ============================================================
    Sidebar
@@ -78,9 +108,11 @@ function construireSidebar() {
     + '<span>' + (store && store.modeLabel === 'LOCAL'
       ? 'Données locales (SQLite)' : 'Données de démonstration') + '</span>'
     + '</div>'
+    + '<div class="pied-session" id="pied-session" hidden></div>'
     + '</div>';
 
   document.getElementById('bouton-sauvegarde').addEventListener('click', ouvrirModaleSauvegarde);
+  majPiedSession();
 
   // Sur mobile, un clic sur un lien referme le tiroir
   sidebar.querySelectorAll('.nav-item').forEach(function (lien) {
@@ -155,6 +187,10 @@ function afficherConstruction(conteneur, libelle) {
 
 /** Charge dynamiquement une vue et l'affiche. */
 async function afficherVue(id) {
+  // L'écran de connexion occupe #vue : aucune vue ne doit l'écraser tant
+  // qu'on ne s'est pas reconnecté (surConnexion rappelle afficherVue lui-même).
+  if (ecranConnexionAffiche) return;
+
   const zone = document.getElementById('vue');
   const definition = VUES.find(function (vue) { return vue.id === id; });
   const libelle = definition ? definition.libelle : id;
@@ -204,6 +240,100 @@ async function afficherVue(id) {
 /** Navigation par programme (déléguée au routeur). */
 function naviguer(id) {
   routeur.naviguer(id);
+}
+
+/* ============================================================
+   Écran de connexion (V9-E5, vague 5)
+   ============================================================ */
+
+/**
+ * Affiche l'écran de connexion à la place de la vue courante. Hors
+ * routeur hash (ne touche jamais window.location.hash) : à la
+ * connexion réussie, on réaffiche simplement la vue déjà demandée par
+ * l'utilisateur — jamais de redirection forcée vers le tableau de bord,
+ * jamais de boucle avec l'écran qu'elle protège.
+ */
+function afficherEcranConnexion() {
+  ecranConnexionAffiche = true;
+
+  document.getElementById('fil-ariane').textContent = 'inerWeb Fluide / Connexion';
+  document.getElementById('titre-page').textContent = 'Connexion';
+  document.title = 'Connexion — inerWeb Fluide';
+
+  const zone = document.getElementById('vue');
+  zone.innerHTML = '';
+  const conteneur = document.createElement('div');
+  conteneur.className = 'vue-contenu anim-fade';
+  zone.appendChild(conteneur);
+
+  rendreConnexion(conteneur, {
+    transport: transportComptes,
+    surConnexion(resultat) {
+      sessionCourante = resultat && resultat.utilisateur
+        ? { role: resultat.role, utilisateur: resultat.utilisateur }
+        : null;
+      ecranConnexionAffiche = false;
+      majPiedSession();
+      toast('Connexion réussie.', 'succes');
+      // On réaffiche la vue déjà demandée (le hash n'a jamais bougé) plutôt
+      // que de forcer un retour au tableau de bord. Si le routeur n'est pas
+      // encore prêt (connexion déclenchée pendant la séquence de démarrage,
+      // avant creerRouteur), on reprend la séquence de démarrage à la place.
+      if (routeur) {
+        afficherVue(routeur.idCourant());
+      } else {
+        reprendreDemarrageApresConnexion();
+      }
+    }
+  });
+
+  zone.scrollTop = 0;
+  window.scrollTo(0, 0);
+}
+
+/** Déconnexion : révoque la session serveur puis revient à l'écran de connexion. */
+async function seDeconnecter() {
+  try {
+    await transportComptes('deconnexion', {});
+  } catch (erreur) {
+    // Idempotent côté serveur (cf. routes-comptes.js) : une erreur réseau
+    // ici ne doit pas empêcher de nettoyer l'état local et de reproposer
+    // l'écran de connexion.
+    console.error('Déconnexion : appel serveur en échec :', erreur);
+  }
+  sessionCourante = null;
+  majPiedSession();
+  toast('Déconnecté.', 'info');
+  afficherEcranConnexion();
+}
+
+/**
+ * Construit (ou met à jour) le pied de session dans la sidebar : identité
+ * + bouton Déconnexion si une session est active, rien en Mode Démo (pas
+ * de compte à cette échelle) ni tant qu'aucune connexion n'a réussi.
+ */
+function majPiedSession() {
+  const pied = document.getElementById('pied-session');
+  if (!pied) return;
+
+  if (!modeLocalActif() || !sessionCourante) {
+    pied.hidden = true;
+    pied.innerHTML = '';
+    return;
+  }
+
+  const login = (sessionCourante.utilisateur && sessionCourante.utilisateur.login) || '';
+  const role = sessionCourante.role || '';
+  pied.hidden = false;
+  pied.innerHTML =
+    '<div class="pied-session-identite">'
+    + '<span class="pied-session-login">' + esc(login) + '</span>'
+    + '<span class="pied-session-role">' + esc(role) + '</span>'
+    + '</div>'
+    + '<button type="button" class="bouton-deconnexion" id="bouton-deconnexion" '
+    + 'title="Déconnexion" aria-label="Déconnexion">' + ICONES.verrou + '</button>';
+
+  document.getElementById('bouton-deconnexion').addEventListener('click', seDeconnecter);
 }
 
 /* ============================================================
@@ -352,14 +482,15 @@ async function verifierIntegriteRegistre() {
    Amorçage
    ============================================================ */
 
-async function demarrer() {
-  store = await creerStore();
-
-  // Badge de mode dans l'en-tête (« ● DÉMO / FORMATION »)
-  document.getElementById('badge-mode').textContent = store.modeLabel + ' / FORMATION';
-
-  await verifierIntegriteRegistre();
-
+/**
+ * Poursuit (ou reprend) l'amorçage une fois qu'aucun écran de connexion ne
+ * bloque plus #vue : sidebar, tiroir, badge d'alertes, routeur. Appelée une
+ * fois normalement par demarrer(), et de nouveau par surConnexion() si la
+ * toute première lecture du démarrage (verifierIntegriteRegistre, sur une
+ * origine LAN sans session) a fait basculer sur l'écran de connexion avant
+ * que cette suite n'ait eu la main.
+ */
+function reprendreDemarrageApresConnexion() {
   construireSidebar();
   initialiserTiroir();
 
@@ -371,6 +502,42 @@ async function demarrer() {
 
   routeur = creerRouteur({ surChangement: afficherVue });
   afficherVue(routeur.idCourant());
+}
+
+async function demarrer() {
+  store = await creerStore();
+
+  // Badge de mode dans l'en-tête (« ● DÉMO / FORMATION »)
+  document.getElementById('badge-mode').textContent = store.modeLabel + ' / FORMATION';
+
+  // Session (V9-E5) : uniquement en Mode Local (store HTTP, back par
+  // sessions). Le Mode Démo n'a ni serveur ni cookie — rien à écouter.
+  // Une seule écoute pour toute la durée de vie de la page : chaque appel
+  // du transport (lecture ou mutation) peut la redéclencher, quelle que
+  // soit la vue affichée au moment où la session expire.
+  if (modeLocalActif()) {
+    document.addEventListener(EVENEMENT_SESSION_REQUISE, () => {
+      if (sessionCourante) {
+        // On avait une session côté client : elle vient d'expirer côté
+        // serveur (8 h dépassées, ou révoquée) — pas une simple absence
+        // initiale. Le message le dit à l'utilisateur avant de le renvoyer
+        // à l'écran de connexion.
+        sessionCourante = null;
+        majPiedSession();
+        toast('Session expirée. Merci de vous reconnecter.', 'erreur');
+      }
+      afficherEcranConnexion();
+    });
+  }
+
+  await verifierIntegriteRegistre();
+
+  // Si verifierIntegriteRegistre a basculé sur l'écran de connexion (LAN
+  // sans session), on s'arrête là : surConnexion() reprendra la séquence
+  // via reprendreDemarrageApresConnexion() une fois la connexion réussie.
+  if (ecranConnexionAffiche) return;
+
+  reprendreDemarrageApresConnexion();
 }
 
 demarrer().catch(function (erreur) {

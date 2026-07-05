@@ -21,7 +21,8 @@
  *   2 — sites : le chaînon client ↔ machine (vision §3), porté par V9.1.
  *   3 — codes publics : identifiants opaques stables pour les QR (vision §6).
  *   4 — journal chaîné (E2) : hash_precedent + hash + cible/details.
- *   5 — (V9.2) relevés pédagogiques : releves + références + valeurs.
+ *   5 — comptes/sessions (E5) : verrouillage utilisateurs_app + table
+ *       sessions (remplace le raccourci provisoire loopback = REFERENT).
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -92,6 +93,36 @@ const MIGRATIONS = {
       db.exec('ALTER TABLE journal_audit ADD COLUMN details TEXT;');
       db.exec('ALTER TABLE journal_audit ADD COLUMN hash_precedent TEXT;');
       db.exec('ALTER TABLE journal_audit ADD COLUMN hash TEXT;');
+    }
+  },
+
+  5: {
+    nom: 'comptes_sessions',
+    appliquer(db) {
+      // Verrouillage après échecs (V9-E5, remplace loopback = REFERENT) :
+      // compteur PAR COMPTE (jamais par IP), remis à zéro sur connexion
+      // réussie ; verrouille_jusqua NULL = compte non verrouillé.
+      db.exec(`ALTER TABLE utilisateurs_app
+                 ADD COLUMN echecs_consecutifs INTEGER NOT NULL DEFAULT 0;`);
+      db.exec('ALTER TABLE utilisateurs_app ADD COLUMN verrouille_jusqua TEXT;');
+
+      // Sessions : jeton = SHA-256 du jeton clair (jamais le clair en base —
+      // le cookie porte le clair, la base ne connaît que son empreinte). Le
+      // rôle est FIGÉ à l'ouverture de session (source de vérité serveur,
+      // jamais recalculé depuis le corps d'une requête).
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS sessions (
+            jeton           TEXT PRIMARY KEY,          -- SHA-256 (hex) du jeton clair
+            utilisateur_id  TEXT NOT NULL REFERENCES utilisateurs_app(id),
+            role            TEXT NOT NULL,              -- rôle figé à la connexion
+            cree_le         TEXT NOT NULL,              -- ISO
+            expire_le       TEXT NOT NULL,              -- ISO — durée de vie 8 h
+            ip              TEXT,                       -- IP du poste à la connexion
+            revoque         INTEGER NOT NULL DEFAULT 0 CHECK (revoque IN (0,1))
+        );
+      `);
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_sessions_utilisateur
+                 ON sessions (utilisateur_id);`);
     }
   }
 };

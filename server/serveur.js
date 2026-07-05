@@ -23,11 +23,29 @@ const db = require('./db.js');
 const sauvegarde = require('./sauvegarde.js');
 const restauration = require('./restauration.js');
 const routesSauvegarde = require('./routes-sauvegarde.js');
+const routesComptes = require('./routes-comptes.js');
+const sessions = require('./sessions.js');
 
 // ----- Configuration -----
 const PORT = Number(process.env.PORT) || 2011; // port par défaut du Mode Local
-const HOTE = '127.0.0.1';                      // localhost uniquement (sécurité)
 const VERSION = '8.0.0-dev';
+
+/**
+ * Écoute LAN (V9-E5, vague 4 — vision §16.6/§10.6) : par défaut le serveur
+ * n'écoute QUE le loopback, comme depuis l'origine. Activer l'écoute sur
+ * l'IP LAN du poste (nécessaire pour qu'une tablette du lycée l'atteigne)
+ * exige une CONFIGURATION EXPLICITE — jamais un comportement par défaut :
+ *   IWF_LAN=1 IWF_HOTE_LAN=192.168.1.42 node server/serveur.js
+ * Sans IWF_LAN=1, IWF_HOTE_LAN est ignorée : on retombe sur 127.0.0.1 quoi
+ * qu'il arrive. C'est le prix de la décision « LAN lycée = zone semi-fiable,
+ * l'auth par compte reste la barrière » : ouvrir l'écoute SANS étendre du
+ * même geste les hôtes/origines autorisés (ci-dessous) laisserait passer un
+ * scan tablette en 403 systématique — ou pire, une écoute large sans jamais
+ * vérifier Host/Origin. Les deux vont nécessairement ensemble.
+ */
+const LAN_ACTIF = process.env.IWF_LAN === '1';
+const HOTE_LAN = process.env.IWF_HOTE_LAN || null;
+const HOTE = (LAN_ACTIF && HOTE_LAN) ? HOTE_LAN : '127.0.0.1';
 
 // Racine des fichiers statiques = racine du dépôt (dossier parent de server/)
 const RACINE = path.resolve(__dirname, '..');
@@ -112,38 +130,158 @@ function codeHttpErreur(erreur) {
   return 400; // violation métier (message français destiné à l'interface)
 }
 
+/** Nom du cookie de session (règle V9-E5, non négociable). */
+const COOKIE_SESSION = 'iwf_session';
+
+/**
+ * Extrait la valeur d'un cookie nommé depuis l'en-tête `Cookie` brut. Analyse
+ * MINIMALE (paires « nom=valeur » séparées par « ; ») : suffisant, ce serveur
+ * ne pose jamais qu'un seul cookie. Ne décode pas (le jeton est déjà en
+ * base64url, sans caractère à encoder).
+ * @param {string|undefined} enteteCookie
+ * @param {string} nom
+ * @returns {string|null}
+ */
+function extraireCookie(enteteCookie, nom) {
+  if (!enteteCookie) return null;
+  for (const paire of enteteCookie.split(';')) {
+    const indexEgal = paire.indexOf('=');
+    if (indexEgal === -1) continue;
+    const cle = paire.slice(0, indexEgal).trim();
+    if (cle === nom) {
+      return paire.slice(indexEgal + 1).trim();
+    }
+  }
+  return null;
+}
+
+/**
+ * Vrai si la connexion provient du loopback (127.0.0.1 / ::1) — le poste où
+ * tourne le serveur lui-même.
+ */
+function estLoopback(requete) {
+  const adresse = requete.socket?.remoteAddress ?? '';
+  return adresse === '127.0.0.1' || adresse === '::1'
+    || adresse === '::ffff:127.0.0.1';
+}
+
 /**
  * Contexte d'appel déterminé CÔTÉ SERVEUR — jamais depuis le corps de la
  * requête (un client pourrait y forger { role: 'ADMIN' }).
  *
- * PROVISOIRE V9-E3, à remplacer par les sessions E5 (cookie opaque
- * HttpOnly, table sessions) : le serveur n'écoutant QUE sur 127.0.0.1,
- * une connexion loopback = le poste du référent → rôle REFERENT.
- * ⚠ Ne JAMAIS élargir ce raccourci à une écoute LAN (décision §16.6) :
- * l'écoute réseau exigera l'authentification E5 d'abord.
+ * V9-E5 : REMPLACE le raccourci provisoire « loopback = REFERENT ». Le rôle
+ * vient DÉSORMAIS EXCLUSIVEMENT d'une session valide (cookie iwf_session
+ * vérifié par sessions.verifierSession — jeton haché, comparé en temps
+ * constant, expiration vérifiée à CHAQUE appel).
+ *
+ * Lectures vs mutations (décision non négociable) :
+ *   - Sans session : en LOOPBACK, le contexte porte { loopback: true } sans
+ *     rôle — les LECTURES restent ouvertes (confort mono-poste), les
+ *     MUTATIONS tombent en 403 via garderRole (aucune méthode de mutation
+ *     n'est dans ROLES_MUTATION avec un rôle `undefined`/`null` habilité).
+ *   - Sans session, sur une origine LAN (non loopback) : contexte vide, ni
+ *     rôle ni loopback — la route d'API distinguera lecture/mutation
+ *     (cf. traiterApi : une lecture sans session est refusée hors loopback).
+ *   - Avec session valide : { role, utilisateur } — le rôle est CELUI FIGÉ
+ *     à l'ouverture de session, jamais recalculé depuis le corps.
  */
 function contexteDeLaConnexion(requete) {
-  const adresse = requete.socket?.remoteAddress ?? '';
-  const loopback = adresse === '127.0.0.1' || adresse === '::1'
-    || adresse === '::ffff:127.0.0.1';
-  return loopback
-    ? { role: 'REFERENT', utilisateur: 'poste-local' }
-    : {};
+  const jetonClair = extraireCookie(requete.headers.cookie, COOKIE_SESSION);
+  const base = {
+    loopback: estLoopback(requete),
+    ip: requete.socket?.remoteAddress ?? null,
+    // Jeton du cookie ENTRANT (brut, non vérifié) : utile à /api/deconnexion
+    // pour révoquer la session même si elle est par ailleurs déjà expirée
+    // (idempotence — cf. sessions.revoquerSession, no-op silencieux).
+    jetonClair: jetonClair ?? null,
+  };
+  if (jetonClair) {
+    const verdict = sessions.verifierSession(jetonClair);
+    if (verdict) {
+      return { ...base, role: verdict.role, utilisateur: verdict.utilisateur_id };
+    }
+  }
+  // Aucune session valide : pas de rôle. Le loopback reste distingué pour
+  // que les LECTURES (get*) restent ouvertes en confort mono-poste — les
+  // MUTATIONS, elles, exigent toujours un rôle habilité (garderRole).
+  return base;
+}
+
+/**
+ * Vrai si la requête est portée par TLS (HTTPS) — l'attribut `Secure` du
+ * cookie n'est posé que dans ce cas (règle V9-E5 : « Secure seulement si
+ * HTTPS » — ce serveur écoute en clair sur 127.0.0.1, un `Secure` posé à tort
+ * empêcherait le navigateur de renvoyer le cookie).
+ */
+function estHttps(requete) {
+  return Boolean(requete.socket?.encrypted);
+}
+
+/**
+ * Fabrique l'en-tête Set-Cookie de connexion (règle V9-E5, attributs figés) :
+ * nom iwf_session, HttpOnly, SameSite=Strict, Path=/, Max-Age=28800 (8 h,
+ * cohérent avec sessions.DUREE_SESSION_MS), Secure seulement si HTTPS.
+ * @param {string} jetonClair
+ * @param {import('node:http').IncomingMessage} requete
+ * @returns {string}
+ */
+function fabriquerCookieSession(jetonClair, requete) {
+  const attributs = [
+    `${COOKIE_SESSION}=${jetonClair}`,
+    'HttpOnly',
+    'SameSite=Strict',
+    'Path=/',
+    'Max-Age=28800',
+  ];
+  if (estHttps(requete)) attributs.push('Secure');
+  return attributs.join('; ');
+}
+
+/**
+ * Fabrique l'en-tête Set-Cookie d'expiration immédiate (déconnexion) : mêmes
+ * attributs que la pose (SameSite/Path/HttpOnly identiques, sinon certains
+ * navigateurs ignorent la suppression), Max-Age=0.
+ * @param {import('node:http').IncomingMessage} requete
+ * @returns {string}
+ */
+function fabriquerCookieExpire(requete) {
+  const attributs = [
+    `${COOKIE_SESSION}=`,
+    'HttpOnly',
+    'SameSite=Strict',
+    'Path=/',
+    'Max-Age=0',
+  ];
+  if (estHttps(requete)) attributs.push('Secure');
+  return attributs.join('; ');
 }
 
 // Hôtes et origines loopback légitimes (le front est servi par CE serveur).
 const HOTES_AUTORISES = new Set([
   `127.0.0.1:${PORT}`, `localhost:${PORT}`, `[::1]:${PORT}`
 ]);
+// LAN actif (IWF_LAN=1 + IWF_HOTE_LAN renseignée) : ÉTENDRE la liste des
+// hôtes/origines autorisés à l'IP LAN du poste — sinon toute requête d'une
+// tablette du réseau (Host = ip-lan:port) tomberait en 403 systématique par
+// la garde anti-rebinding (refusReseau), alors même que le serveur écoute
+// désormais sur cette interface. Sans cette extension, activer IWF_LAN
+// ouvrirait l'écoute sans jamais laisser passer la moindre requête utile —
+// un « LAN qui ne sert à rien » plutôt qu'un défaut dangereux, mais autant
+// le faire correctement.
+if (LAN_ACTIF && HOTE_LAN) {
+  HOTES_AUTORISES.add(`${HOTE_LAN}:${PORT}`);
+}
 const ORIGINES_AUTORISEES = new Set([...HOTES_AUTORISES]
   .map((h) => `http://${h}`));
 
 /**
- * Garde anti-CSRF / anti-DNS-rebinding sur /api (revue sécurité E3).
- * Le rôle REFERENT est accordé à toute connexion loopback : sans ce garde,
- * une PAGE WEB HOSTILE ouverte dans le navigateur du poste pourrait, par une
- * requête cross-origin vers 127.0.0.1, déclencher n'importe quelle mutation
- * (jusqu'à importerJSON qui REMPLACE le registre). Deux barrières :
+ * Garde anti-CSRF / anti-DNS-rebinding sur /api (revue sécurité E3, CONSERVÉE
+ * telle quelle par V9-E5 : l'authentification par session s'AJOUTE à cette
+ * garde, elle ne la remplace pas). Sans elle, une PAGE WEB HOSTILE ouverte
+ * dans le navigateur du poste pourrait, par une requête cross-origin vers
+ * 127.0.0.1, rejouer le cookie de session du référent (déjà posé par le
+ * navigateur) et déclencher n'importe quelle mutation en son nom (jusqu'à
+ * importerJSON qui REMPLACE le registre). Deux barrières :
  *  - En-tête `Host` : doit désigner le loopback (un nom DNS qui résout vers
  *    127.0.0.1 — attaque par rebinding — porte un autre Host → rejeté).
  *  - En-tête `Origin` (envoyé par le navigateur sur toute requête
@@ -199,14 +337,53 @@ function traiterApi(requete, reponse, chemin) {
       return;
     }
 
+    const contexte = contexteDeLaConnexion(requete);
+
+    // Routes d'authentification (V9-E5) : dédiées, HORS du contrat DataStore
+    // ET hors routes-sauvegarde, aiguillées EN PREMIER (avant même la garde
+    // de lecture LAN ci-dessous — se connecter ne peut pas exiger d'être
+    // déjà connecté). connexion/deconnexion posent/lèvent le cookie
+    // iwf_session ; creerCompte porte sa propre garde ADMIN.
+    if (routesComptes.gereMethode(methode)) {
+      try {
+        const resultat = routesComptes.appeler(
+          methode, enveloppe.params ?? {}, contexte);
+        const entetes = { 'Content-Type': 'application/json; charset=utf-8' };
+        if (methode === 'connexion') {
+          entetes['Set-Cookie'] = fabriquerCookieSession(resultat.jetonClair, requete);
+        } else if (methode === 'deconnexion') {
+          entetes['Set-Cookie'] = fabriquerCookieExpire(requete);
+        }
+        const corps = JSON.stringify({
+          ok: true,
+          // Le jeton clair ne doit JAMAIS repartir dans le corps JSON (il
+          // est déjà posé en cookie HttpOnly) : le front n'en a pas besoin.
+          resultat: methode === 'connexion'
+            ? { role: resultat.role, utilisateur: resultat.utilisateur }
+            : resultat,
+        });
+        entetes['Content-Length'] = Buffer.byteLength(corps);
+        entetes['X-Content-Type-Options'] = 'nosniff';
+        entetes['Cache-Control'] = 'no-store';
+        reponse.writeHead(200, entetes);
+        reponse.end(corps);
+      } catch (erreur) {
+        const code = codeHttpErreur(erreur);
+        repondreJson(reponse, code, {
+          ok: false, erreur: erreur.message, code,
+        });
+      }
+      return;
+    }
+
     // Routes E4 (sauvegarde/restauration) : dédiées, HORS du contrat
     // DataStore, aiguillées AVANT api.appeler. Même contexte de connexion
-    // (rôle REFERENT en loopback), garde ADMIN/REFERENT + anti-concurrence
-    // dans routes-sauvegarde. Enveloppe standard identique.
+    // (session), garde ADMIN/REFERENT + anti-concurrence dans
+    // routes-sauvegarde. Enveloppe standard identique.
     if (routesSauvegarde.gereMethode(methode)) {
       try {
         const resultat = routesSauvegarde.appeler(
-          methode, enveloppe.params ?? {}, contexteDeLaConnexion(requete));
+          methode, enveloppe.params ?? {}, contexte);
         repondreJson(reponse, 200, { ok: true, resultat });
       } catch (erreur) {
         const code = codeHttpErreur(erreur);
@@ -217,10 +394,25 @@ function traiterApi(requete, reponse, chemin) {
       return;
     }
 
+    // Garde lecture LAN (V9-E5) : sur une origine LAN (non loopback), une
+    // session valide est exigée MÊME pour une lecture (get*). En loopback,
+    // les lectures restent ouvertes sans session (confort mono-poste) — les
+    // mutations, elles, sont de toute façon bloquées par garderRole (aucun
+    // rôle n'est habilité sans session, quel que soit le loopback).
+    const estMutation = Object.prototype.hasOwnProperty.call(
+      api.ROLES_MUTATION, methode);
+    if (!estMutation && !contexte.role && !contexte.loopback) {
+      repondreJson(reponse, 403, {
+        ok: false,
+        erreur: 'Session requise (connexion nécessaire).',
+        code: 403,
+      });
+      return;
+    }
+
     try {
       // Le contexte vient de la CONNEXION, jamais de l'enveloppe cliente.
-      const resultat = api.appeler(
-        methode, enveloppe.params ?? {}, contexteDeLaConnexion(requete));
+      const resultat = api.appeler(methode, enveloppe.params ?? {}, contexte);
       repondreJson(reponse, 200, { ok: true, resultat });
     } catch (erreur) {
       const code = codeHttpErreur(erreur);
@@ -370,6 +562,12 @@ function preparerCoffreFort() {
         `  [purge] ${purge.partielsSupprimes} sauvegarde(s) partielle(s) et ` +
         `${purge.tempsSupprimes} fichier(s) temporaire(s) nettoyés.`);
     }
+    // Purge best-effort des sessions obsolètes (expirées, ou révoquées ET
+    // expirées) — évite l'accumulation indéfinie dans la table sessions.
+    const sessionsSupprimees = sessions.purgerSessionsObsoletes();
+    if (sessionsSupprimees > 0) {
+      console.log(`  [purge] ${sessionsSupprimees} session(s) obsolète(s) nettoyée(s).`);
+    }
     avertirSiDataSousOneDrive();
   } catch (erreur) {
     console.error(
@@ -385,7 +583,12 @@ serveur.listen(PORT, HOTE, () => {
   console.log('');
   console.log('  inerWeb Fluide v8 — serveur local démarré');
   console.log(`  Application : http://localhost:${PORT}`);
-  console.log(`  Mode        : local (écoute limitée à ${HOTE})`);
+  if (LAN_ACTIF && HOTE_LAN) {
+    console.log(`  Mode        : LAN (écoute sur ${HOTE}) — auth obligatoire`);
+    console.log(`  Réseau      : http://${HOTE}:${PORT} (accessible depuis le LAN du lycée)`);
+  } else {
+    console.log(`  Mode        : local (écoute limitée à ${HOTE})`);
+  }
   console.log('');
   console.log('  Fermez cette fenêtre pour arrêter inerWeb Fluide.');
 });

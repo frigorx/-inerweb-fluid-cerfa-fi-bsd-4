@@ -150,6 +150,13 @@ export const ICONES = {
     + '<path d="M5 20a7 7 0 0 1 14 0"/>'
   ),
 
+  // Verrou (cadenas) : écran de connexion, comptes
+  verrou: svg(
+    '<rect x="4.5" y="11" width="15" height="10" rx="1.8"/>'
+    + '<path d="M7.5 11V7.5a4.5 4.5 0 0 1 9 0V11"/>'
+    + '<circle cx="12" cy="15.5" r="1.6"/>'
+  ),
+
   // Sauvegarde : disquette
   sauvegarde: svg(
     '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/>'
