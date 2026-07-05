@@ -314,7 +314,9 @@ function majParId(table, id, ligne) {
 
 /** Écrit une entrée au journal d'audit (chaîné, dans la transaction ambiante). */
 function journaliser(qui, action, cible, details) {
-  db.journaliser({ qui: qui ?? null, action, cible, details });
+  // `qui || null` (pas ??) : une chaîne vide devient « système » comme au
+  // DemoStore (`qui || 'système'`) — db.journaliser traduit null → système.
+  db.journaliser({ qui: qui || null, action, cible, details });
 }
 
 /** Amorce l'établissement singleton VIDE s'il n'existe pas encore. */
@@ -341,12 +343,17 @@ const HANDLERS = {
   // === initialisation =======================================
   init() {
     amorcerEtablissement();
-    // Vérification d'intégrité (posée dans registreAltere côté LocalStore).
-    // En V2 la chaîne des mouvements est vide → sain. La vérification fine
-    // de la chaîne de hash arrivera avec le registre (vague 5).
+    // CR-5 : l'état d'intégrité constaté au chargement juge le REGISTRE
+    // des mouvements (chaîne de hash recalculée) ET le journal d'audit —
+    // une base altérée hors application ne démarre jamais « saine »
+    // (revue E3). Bandeau seulement, jamais de blocage (contrat).
+    const registre = verifierChaineMouvements();
+    if (!registre.ok) {
+      return { ok: false, casseA: registre.casseA };
+    }
     const journal = db.verifierChaineJournal();
     if (!journal.ok) {
-      return { ok: false, casseA: journal.casseA };
+      return { ok: false, casseA: `journal n° ${journal.casseA}` };
     }
     return null;
   },
@@ -374,11 +381,15 @@ const HANDLERS = {
     return mapping.versFront('etablissements', ligne);
   },
 
-  /** État d'intégrité constaté : { altere, casseA }. */
+  /** État d'intégrité constaté : { altere, casseA } (registre ET journal). */
   getEtatRegistre() {
+    const registre = verifierChaineMouvements();
+    if (!registre.ok) {
+      return { altere: true, casseA: registre.casseA };
+    }
     const journal = db.verifierChaineJournal();
     if (!journal.ok) {
-      return { altere: true, casseA: journal.casseA };
+      return { altere: true, casseA: `journal n° ${journal.casseA}` };
     }
     return { altere: false, casseA: null };
   },
@@ -394,7 +405,7 @@ const HANDLERS = {
   /** Tout le personnel (jamais supprimé : seulement désactivé). */
   getPersonnel() {
     const lignes = db.all(
-      'SELECT * FROM personnel ORDER BY date_creation, id');
+      'SELECT * FROM personnel ORDER BY rowid');
     return lignes.map((ligne) => mapping.versFront('personnel', ligne));
   },
 
@@ -419,14 +430,14 @@ const HANDLERS = {
   /** Toutes les machines, démantelées incluses (les vues filtrent). */
   getMachines() {
     const lignes = db.all(
-      'SELECT * FROM machines ORDER BY date_creation, id');
+      'SELECT * FROM machines ORDER BY rowid');
     return lignes.map((ligne) => mapping.versFront('machines', ligne));
   },
 
   /** Toutes les bouteilles ; masseNetteKg = brute − tare (colonne calculée). */
   getBouteilles() {
     const lignes = db.all(
-      'SELECT * FROM bouteilles ORDER BY date_creation, id');
+      'SELECT * FROM bouteilles ORDER BY rowid');
     return lignes.map((ligne) => mapping.versFront('bouteilles', ligne));
   },
 
@@ -442,14 +453,28 @@ const HANDLERS = {
   getControles() {
     const lignes = db.all(
       'SELECT * FROM controles ORDER BY date_controle DESC');
-    return lignes.map((ligne) => mapping.versFront('controles', ligne));
+    return lignes.map((ligne) => {
+      const controle = mapping.versFront('controles', ligne);
+      // Clé contractuelle posée par le DemoStore à la création (jamais
+      // persistée côté SQL — frontSeulement) : restituée à la lecture.
+      controle.enRetard = false;
+      return controle;
+    });
   },
 
-  /** Outillage avec statut RECALCULÉ à la lecture. */
+  /**
+   * Outillage avec statut RECALCULÉ à la lecture (jamais un statut figé —
+   * un outil CONFORME dont l'échéance passe devient EXPIRE tout seul,
+   * comme au DemoStore ; HORS_SERVICE reste permanent).
+   */
   getOutillage() {
     const lignes = db.all(
-      'SELECT * FROM outillage ORDER BY date_creation, id');
-    return lignes.map((ligne) => mapping.versFront('outillage', ligne));
+      'SELECT * FROM outillage ORDER BY rowid');
+    return lignes.map((ligne) => {
+      const outil = mapping.versFront('outillage', ligne);
+      outil.statut = calculerStatutOutil(outil, aujourdHui());
+      return outil;
+    });
   },
 
   /** Le journal d'audit append-only { date, qui, action, cible, details }. */
@@ -467,7 +492,7 @@ const HANDLERS = {
   getUtilisateurCourant() {
     const ligne = db.get(
       `SELECT * FROM personnel WHERE role_applicatif = 'REFERENT'
-       ORDER BY date_creation, id LIMIT 1`);
+       ORDER BY rowid LIMIT 1`);
     if (!ligne) throw new Error('Aucun référent dans le personnel.');
     return mapping.versFront('personnel', ligne);
   },
@@ -1009,7 +1034,7 @@ const HANDLERS = {
     }
 
     // Code lisible : M7, M8… d'après le plus grand code existant (COMPTEUR).
-    const maxCode = plusGrandCode('machines', 'code_interne', /^M(\d+)$/);
+    const maxCode = plusGrandCode('machines', 'code_interne', /^M/);
 
     const machine = {
       id: db.generateId('MAC'),
@@ -1153,7 +1178,7 @@ const HANDLERS = {
     }
 
     // Code lisible : B-06, B-07… d'après le plus grand code existant (COMPTEUR).
-    const maxCode = plusGrandCode('bouteilles', 'code_interne', /^B-?(\d+)$/);
+    const maxCode = plusGrandCode('bouteilles', 'code_interne', /^B-?/);
 
     const bouteille = {
       id: db.generateId('BTL'),
@@ -2775,17 +2800,21 @@ function enregistrerControle(d) {
   ligne.etablissement_id = ID_ETABLISSEMENT;
   inserer('controles', ligne);
 
-  // Effets sur la machine (contrat Phase B) — mêmes règles que le DemoStore.
+  // Effets sur la machine (contrat Phase B) — mêmes règles que le DemoStore :
+  // le retour EN_SERVICE se juge sur l'échéance DE LA MACHINE une fois mise
+  // à jour (l'ancienne si le contrôle n'en fournit pas), jamais sur le seul
+  // champ du contrôle — sinon une machine en retard serait libérée à tort
+  // par un contrôle conforme sans nouvelle échéance (revue E3).
   const patchMachine = { date_dernier_controle: controle.date };
   let nouveauStatut = machine.statut;
   if (controle.prochainControle) {
     patchMachine.date_prochain_controle = controle.prochainControle;
   }
+  const echeanceMachine = controle.prochainControle ?? machine.prochainControle;
   if (controle.resultat === 'FUITE') {
     nouveauStatut = 'FUITE';
   } else if ((machine.statut === 'FUITE' || machine.statut === 'CONTROLE_DU') &&
-             (!controle.prochainControle ||
-              controle.prochainControle >= aujourdHui())) {
+             (!echeanceMachine || echeanceMachine >= aujourdHui())) {
     nouveauStatut = 'EN_SERVICE';
   }
   patchMachine.statut = nouveauStatut;
@@ -2854,15 +2883,15 @@ function frequenceControleMois(fluideRef, chargeKg, detectionPermanente) {
  * Plus grand nombre extrait d'un code lisible (M{n}, B-NN…) par COMPTEUR,
  * sur toutes les lignes de `table`. 0 si aucun code exploitable.
  */
-function plusGrandCode(table, colonne, motif) {
+function plusGrandCode(table, colonne, prefixe) {
   const lignes = db.all(`SELECT ${colonne} AS code FROM ${table}`);
   let max = 0;
   for (const { code } of lignes) {
-    const trouve = motif.exec(String(code ?? ''));
-    if (trouve) {
-      const n = Number(trouve[1]);
-      if (Number.isFinite(n)) max = Math.max(max, n);
-    }
+    // Même tolérance que le DemoStore : on retire le préfixe et on garde
+    // tout code résiduel numérique (un code importé « 12 » compte pour 12) —
+    // sinon les compteurs divergeraient après un import (revue E3).
+    const n = Number(String(code ?? '').replace(prefixe, ''));
+    if (Number.isFinite(n) && n > max) max = n;
   }
   return max;
 }

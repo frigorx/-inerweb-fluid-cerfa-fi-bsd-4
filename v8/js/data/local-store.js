@@ -244,8 +244,17 @@ export function creerLocalStore(transport) {
     },
 
     // --- échanges -----------------------------------------
-    importerJSON(texte) {
-      return muter('importerJSON', { texte });
+    async importerJSON(texte) {
+      const adopte = await muter('importerJSON', { texte });
+      if (adopte === true) {
+        // Contrat : un import propre remet l'état d'intégrité à neuf
+        // (même sémantique que le DemoStore — revue E3).
+        const etat = await lire('getEtatRegistre', {});
+        this.registreAltere = etat && etat.altere
+          ? { ok: false, casseA: etat.casseA }
+          : null;
+      }
+      return adopte;
     }
   };
 

@@ -224,7 +224,7 @@ CREATE TABLE IF NOT EXISTS bouteilles (
         CHECK (etat_fluide IN ('VIERGE','RECUPERE','RECYCLE','REGENERE','DECHET','DOUTEUX','MELANGE')),
     tare_kg                 REAL,                    -- ⚿
     masse_brute_kg          REAL,                    -- ⚿ masse brute actuelle (dernière pesée)
-    masse_nette_kg          REAL GENERATED ALWAYS AS (masse_brute_kg - tare_kg) VIRTUAL,  -- ⚿ calculée
+    masse_nette_kg          REAL GENERATED ALWAYS AS (ROUND(masse_brute_kg - tare_kg, 3)) VIRTUAL,  -- ⚿ calculée, arrondie au gramme (contrat §7)
     contenance_max_kg       REAL,
     proprietaire            TEXT,                    -- texte libre (« Climalife ») ou NULL — aligné contrat (E0)
     numero_lot              TEXT,
