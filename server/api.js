@@ -1826,8 +1826,467 @@ const HANDLERS = {
   /** CR : 4 vérifs bloquantes avant le passage en mode OFFICIEL. */
   peutPasserEnOfficiel() {
     return calculerPeutPasserEnOfficiel();
+  },
+
+  // === export / import (VAGUE 11 — format d'échange entre stores) ====
+
+  /**
+   * Exporte l'état COMPLET dans l'enveloppe contractuelle FORMAT_EXPORT
+   * { application, version, exporteLe, donnees }, JSON indenté 2 espaces.
+   * `donnees` reprend la MÊME structure camelCase que le DemoStore (mêmes
+   * clés, chaque collection à la forme du contrat) : un export local doit
+   * pouvoir se réimporter dans le DemoStore et réciproquement. Les
+   * reconstitutions déjà éprouvées (getMouvements avec hash/ordre/controle,
+   * getBouteilles avec masse nette générée…) sont réutilisées telles quelles.
+   */
+  exporterJSON() {
+    return JSON.stringify({
+      application: 'inerWeb Fluide',
+      version: 8,
+      exporteLe: new Date().toISOString(),
+      donnees: construireDonneesExport()
+    }, null, 2);
+  },
+
+  /**
+   * Importe une sauvegarde : true si adoptée, FALSE si illisible/structure
+   * étrangère (sans lever), Error si forgée (chaîne rompue) ou incohérente.
+   *
+   * Ordre STRICT (les contrôles précèdent TOUT effet — jamais de mutation
+   * partielle, l'état courant reste intact après un refus) :
+   *  (1) JSON.parse → false si illisible ;
+   *  (2) structure attendue présente → false sinon ;
+   *  (3) invariants métier → THROW « Import refusé — donnée incohérente : … » ;
+   *  (4) chaîne de hash des mouvements figés recalculée sur le CANDIDAT →
+   *      THROW « Import refusé — chaîne d'intégrité rompue à l'écriture
+   *      {numero} : fichier altéré ou forgé. » si divergence ;
+   *  (5) remplacement TOTAL de l'état SQL en UNE transaction, journal
+   *      IMPORT_DONNEES, return true. registreAltere est remis à null côté
+   *      LocalStore (le harnais ne le retouche pas : l'état importé est sain).
+   */
+  importerJSON(params) {
+    const texte = params?.texte;
+
+    // (1) Illisible → false (le transport rend false sans lever).
+    let paquet;
+    try {
+      paquet = JSON.parse(texte);
+    } catch {
+      return false;
+    }
+    // Accepte l'enveloppe d'export OU les données brutes (comme le DemoStore).
+    let candidat = paquet && paquet.donnees ? paquet.donnees : paquet;
+
+    // (2) Structure étrangère → false.
+    if (!estStructureValide(candidat)) return false;
+
+    // Compléments de reprise (imports d'anciennes phases) — mêmes clés que
+    // le DemoStore, pour qu'une sauvegarde partielle reste importable.
+    candidat = completerCandidat(candidat);
+
+    // (3) Invariants métier AVANT d'adopter quoi que ce soit.
+    const probleme = verifierInvariantsDonneesCandidat(candidat);
+    if (probleme) {
+      throw new Error(`Import refusé — donnée incohérente : ${probleme}.`);
+    }
+
+    // (4) Chaîne de hash des écritures figées, recalculée sur le CANDIDAT,
+    // AVANT de toucher la base (le test forge une quantité → le hash ne
+    // colle plus). Une sauvegarde antérieure à la chaîne (aucune empreinte)
+    // voit sa chaîne amorcée.
+    const figees = candidat.mouvements.filter((mv) =>
+      mv.statut === 'VALIDE' || mv.statut === 'ANNULE');
+    if (figees.some((mv) => mv.hashEcriture)) {
+      const chaine = verifierChaineMouvementsCandidat(candidat.mouvements);
+      if (!chaine.ok) {
+        throw new Error(
+          'Import refusé — chaîne d’intégrité rompue à l’écriture ' +
+          `${chaine.casseA} : fichier altéré ou forgé.`);
+      }
+    } else if (figees.length > 0) {
+      amorcerChaineCandidat(figees);
+    }
+
+    // CR-4 : reprise des bouteilles sans masse d'entrée figée.
+    for (const b of candidat.bouteilles) {
+      if (!Number.isFinite(b.masseEntreeKg)) {
+        b.masseEntreeKg = b.masseNetteKg;
+      }
+    }
+
+    // (5) Remplacement TOTAL, atomique (throw → ROLLBACK complet, y compris
+    // les déclencheurs WORM recréés). La vérification de chaîne est déjà
+    // passée : on ne touche la base qu'ici.
+    remplacerToutLEtat(candidat);
+    return true;
   }
 };
+
+// ------------------------------------------------------------
+// Export / import (VAGUE 11) — FORMAT D'ÉCHANGE entre stores.
+// L'objet `donnees` reprend EXACTEMENT la structure du DemoStore
+// (mêmes clés camelCase, chaque collection à la forme du contrat),
+// pour qu'un export local se réimporte en démo et réciproquement.
+// Reprend exporterJSON / importerJSON du DemoStore (sémantique triple,
+// invariants CR-5, vérification de chaîne AVANT adoption, messages EXACTS).
+// ------------------------------------------------------------
+
+/**
+ * Tables PLATES (clé composite, sans getter dédié) lues telles quelles pour
+ * l'export : le mapping camelCase suffit (aucune reconstitution).
+ */
+function lireTablePlate(nomTable, sqlTable, tri) {
+  const lignes = db.all(`SELECT * FROM ${sqlTable}${tri ? ` ORDER BY ${tri}` : ''}`);
+  return lignes.map((ligne) => mapping.versFront(nomTable, ligne));
+}
+
+/**
+ * Construit l'objet `donnees` COMPLET dans la structure du DemoStore. Chaque
+ * collection réutilise la reconstitution déjà éprouvée (getMouvements,
+ * getBouteilles…) : formes camelCase strictement identiques au contrat.
+ */
+function construireDonneesExport() {
+  return {
+    etablissement: HANDLERS.getEtablissement(),
+    auditsOrganisme: HANDLERS.getAuditsOrganisme(),
+    nonConformites: HANDLERS.getNonConformites(),
+    clients: HANDLERS.getClients(),
+    machines: HANDLERS.getMachines(),
+    bouteilles: HANDLERS.getBouteilles(),
+    mouvements: HANDLERS.getMouvements(),
+    controles: HANDLERS.getControles(),
+    fluides: HANDLERS.getFluides(),
+    personnel: HANDLERS.getPersonnel(),
+    outillage: HANDLERS.getOutillage(),
+    stocksInitiaux: lireTablePlate('stocks_initiaux', 'stocks_initiaux',
+      'annee, fluide'),
+    bsff: HANDLERS.getBsff(),
+    inventaires: lireTablePlate('inventaires', 'inventaires', 'annee, fluide'),
+    justificationsEcarts: lireTablePlate('justifications_ecarts',
+      'justifications_ecarts', 'annee, fluide'),
+    piecesJointes: lireTablePlate('pieces_jointes', 'pieces_jointes',
+      'date_ajout, id'),
+    retoursFournisseur: HANDLERS.getRetoursFournisseur(),
+    alertes: HANDLERS.getAlertes(),
+    journalAudit: HANDLERS.getJournalAudit()
+  };
+}
+
+/**
+ * Validation de STRUCTURE d'un candidat d'import (mêmes exigences que
+ * estValide du DemoStore) : l'établissement + les collections attendues.
+ * Retour booléen (le handler rend false, jamais d'Error, pour l'illisible).
+ */
+function estStructureValide(donnees) {
+  return Boolean(
+    donnees &&
+    typeof donnees === 'object' &&
+    donnees.etablissement &&
+    Array.isArray(donnees.machines) &&
+    Array.isArray(donnees.bouteilles) &&
+    Array.isArray(donnees.mouvements) &&
+    Array.isArray(donnees.controles) &&
+    Array.isArray(donnees.fluides) &&
+    Array.isArray(donnees.personnel) &&
+    Array.isArray(donnees.clients) &&
+    Array.isArray(donnees.alertes));
+}
+
+/**
+ * Complète un candidat des collections optionnelles absentes (import d'une
+ * sauvegarde d'une phase antérieure) : tableaux vides, jamais undefined.
+ * Reprend l'esprit des compléments A/B/C du DemoStore.
+ */
+function completerCandidat(donnees) {
+  const candidat = { ...donnees };
+  for (const cle of ['auditsOrganisme', 'nonConformites', 'outillage',
+    'stocksInitiaux', 'bsff', 'inventaires', 'justificationsEcarts',
+    'piecesJointes', 'retoursFournisseur', 'journalAudit']) {
+    if (!Array.isArray(candidat[cle])) candidat[cle] = [];
+  }
+  return candidat;
+}
+
+/**
+ * Écritures figées (VALIDE/ANNULE, ordreValidation fini) d'une liste de
+ * mouvements CANDIDATS, triées par ordre de validation. Miroir de
+ * ecrituresFigees du DemoStore.
+ */
+function ecrituresFigeesCandidat(mouvements) {
+  return mouvements
+    .filter((mv) => (mv.statut === 'VALIDE' || mv.statut === 'ANNULE') &&
+      Number.isFinite(mv.ordreValidation))
+    .sort((a, b) => a.ordreValidation - b.ordreValidation);
+}
+
+/**
+ * CR-5 : re-parcourt la chaîne des écritures figées d'un CANDIDAT d'import et
+ * recalcule chaque empreinte (hasherMouvement, clone du front). casseA =
+ * numéro de la première rupture. Identique à verifierChaineMouvements du
+ * DemoStore, mais sur l'objet logique du candidat (déjà en camelCase).
+ * @returns {{ok: boolean, casseA: string|null}}
+ */
+function verifierChaineMouvementsCandidat(mouvements) {
+  let precedent = null;
+  for (const mouvement of ecrituresFigeesCandidat(mouvements)) {
+    if ((mouvement.hashPrecedent ?? null) !== precedent) {
+      return { ok: false, casseA: mouvement.numero };
+    }
+    const attendu = hasherMouvement(
+      objetLogiquePourHash(mouvement), precedent);
+    if (attendu !== mouvement.hashEcriture) {
+      return { ok: false, casseA: mouvement.numero };
+    }
+    precedent = mouvement.hashEcriture;
+  }
+  return { ok: true, casseA: null };
+}
+
+/**
+ * Amorce la chaîne d'un candidat SANS aucune empreinte (sauvegarde antérieure
+ * au scellement) : rang de validation, hash précédent, empreinte, dans
+ * l'ordre date puis numéro. Mute les mouvements figés en place. Miroir de
+ * l'amorçage du DemoStore.
+ */
+function amorcerChaineCandidat(figees) {
+  figees.sort((a, b) =>
+    String(a.date).localeCompare(String(b.date)) ||
+    String(a.numero).localeCompare(String(b.numero)));
+  let precedent = null;
+  let ordre = 1;
+  for (const mv of figees) {
+    mv.ordreValidation = ordre;
+    mv.hashPrecedent = precedent;
+    mv.hashEcriture = hasherMouvement(objetLogiquePourHash(mv), precedent);
+    precedent = mv.hashEcriture;
+    ordre += 1;
+  }
+}
+
+/**
+ * Invariants MÉTIER d'un candidat d'import (CR-5) : masses et charges finies
+ * et positives, écritures figées porteuses de leur empreinte et de leur
+ * ordre dès que la chaîne est amorcée, quantités finies. CLONE EXACT de
+ * verifierInvariantsDonnees du DemoStore (mêmes messages, mêmes seuils).
+ * @returns {string|null} description du premier problème, ou null si sain.
+ */
+function verifierInvariantsDonneesCandidat(candidat) {
+  for (const b of candidat.bouteilles) {
+    const ref = b.code ?? b.id ?? '?';
+    for (const champ of ['tareKg', 'masseBruteKg', 'masseNetteKg']) {
+      if (!Number.isFinite(b[champ]) || b[champ] < 0) {
+        return `bouteille ${ref} : ${champ} invalide (${b[champ]})`;
+      }
+    }
+    if (!Number.isFinite(b.contenanceMaxKg) || b.contenanceMaxKg <= 0) {
+      return `bouteille ${ref} : contenanceMaxKg invalide (${b.contenanceMaxKg})`;
+    }
+    if (b.masseEntreeKg !== undefined && b.masseEntreeKg !== null &&
+        (!Number.isFinite(b.masseEntreeKg) || b.masseEntreeKg < 0)) {
+      return `bouteille ${ref} : masseEntreeKg invalide (${b.masseEntreeKg})`;
+    }
+  }
+  for (const m of candidat.machines) {
+    const ref = m.code ?? m.id ?? '?';
+    if (!Number.isFinite(m.chargeActuelleKg) || m.chargeActuelleKg < 0) {
+      return `machine ${ref} : chargeActuelleKg invalide (${m.chargeActuelleKg})`;
+    }
+    if (!Number.isFinite(m.chargeNominaleKg) || m.chargeNominaleKg <= 0) {
+      return `machine ${ref} : chargeNominaleKg invalide (${m.chargeNominaleKg})`;
+    }
+  }
+  const figees = candidat.mouvements.filter((mv) =>
+    mv.statut === 'VALIDE' || mv.statut === 'ANNULE');
+  // Une sauvegarde antérieure au scellement (aucune empreinte) reste
+  // acceptée : la chaîne sera amorcée. Dès qu'UNE écriture porte une
+  // empreinte, TOUTES doivent en porter une valide.
+  const chaineAmorcee = figees.some((mv) => mv.hashEcriture);
+  for (const mv of figees) {
+    const ref = mv.numero ?? mv.id ?? '?';
+    if (!Number.isFinite(mv.quantiteKg)) {
+      return `mouvement ${ref} : quantité non finie (${mv.quantiteKg})`;
+    }
+    if (chaineAmorcee) {
+      if (typeof mv.hashEcriture !== 'string' ||
+          !/^[0-9a-f]{64}$/.test(mv.hashEcriture)) {
+        return `mouvement ${ref} : empreinte d'écriture absente ou invalide`;
+      }
+      if (!Number.isFinite(mv.ordreValidation)) {
+        return `mouvement ${ref} : ordre de validation absent`;
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Les 5 déclencheurs WORM (mouvements + journal_audit) interdisent DELETE/
+ * UPDATE sur les écritures figées et sur le journal. Pour un remplacement
+ * TOTAL (opération admin légitime, pas une mutation applicative), on les
+ * retire le temps du remplacement puis on les RECRÉE — le tout dans la même
+ * transaction (un ROLLBACK restaure DDL et données). On capture leur SQL
+ * EXACT depuis sqlite_master (aucune dérive possible vis-à-vis du schéma).
+ */
+function declencheursWorm() {
+  return db.all(
+    `SELECT name, sql FROM sqlite_master
+     WHERE type = 'trigger'
+       AND tbl_name IN ('mouvements', 'journal_audit')`);
+}
+
+/**
+ * Tables métier vidées puis réinsérées à l'import, DANS l'ordre où les
+ * réinsertions respectent les getters/mappings. L'ordre de suppression est
+ * neutralisé par PRAGMA defer_foreign_keys (contrôle des FK reporté au
+ * COMMIT), l'ordre d'insertion l'est de même : on garde une liste unique.
+ * Les colonnes GÉNÉRÉES (masse_nette_kg, tco2eq) ne sont jamais écrites
+ * (mapping.versSql les ignore).
+ */
+
+/** Insère la collection `items` (objets camelCase) dans `sqlTable` via versSql. */
+function reinsererCollection(nomTable, sqlTable, items) {
+  for (const item of items ?? []) {
+    const ligne = mapping.versSql(nomTable, item);
+    ligne.etablissement_id = ID_ETABLISSEMENT;
+    inserer(sqlTable, ligne);
+  }
+}
+
+/** Insère les mouvements (aplatissement du `controle` imbriqué + versSql). */
+function reinsererMouvements(mouvements) {
+  for (const mv of mouvements ?? []) {
+    // insererMouvement fait déjà : versSql (ignore `controle`, frontSeulement)
+    // + aplatirControle + etablissement_id. On lui passe l'objet logique tel
+    // quel — proposerDemantelement (frontSeulement) est ignoré par versSql.
+    insererMouvement(mv);
+  }
+}
+
+/**
+ * Réinsère le journal d'audit à l'IDENTIQUE (append-only) : le contrat
+ * n'expose que { date, qui, action, cible, details }, mais l'import doit
+ * préserver la trace. On réamorce le CHAÎNAGE du journal (hash_precedent /
+ * hash via db.hashEcriture) pour que verifierChaineJournal reste au vert
+ * après import — l'ordre d'origine est conservé.
+ */
+function reinsererJournal(entrees) {
+  let precedent = '';
+  for (const entree of entrees ?? []) {
+    const contenu = {
+      date_heure: entree.date ?? new Date().toISOString(),
+      utilisateur: entree.qui ?? 'système',
+      action: String(entree.action ?? 'IMPORT'),
+      cible: entree.cible ?? null,
+      details: entree.details ?? null
+    };
+    const hash = db.hashEcriture(contenu, precedent);
+    db.run(
+      `INSERT INTO journal_audit
+         (date_heure, utilisateur, action, cible, details,
+          hash_precedent, hash)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [contenu.date_heure, contenu.utilisateur, contenu.action,
+        contenu.cible, contenu.details, precedent || null, hash]);
+    precedent = hash;
+  }
+}
+
+/**
+ * Remplace TOUT l'état SQL par le candidat, atomiquement. Retire les
+ * déclencheurs WORM le temps du remplacement, vide toutes les tables métier,
+ * réinsère chaque collection, RECRÉE les déclencheurs, puis journalise
+ * l'import (chaîné à la nouvelle chaîne de journal). PRAGMA
+ * defer_foreign_keys reporte le contrôle des clés étrangères au COMMIT :
+ * l'ordre de vidage/insertion n'a plus d'importance et une incohérence
+ * référentielle fait échouer proprement (ROLLBACK global).
+ */
+function remplacerToutLEtat(candidat) {
+  muter(() => {
+    // Reporte le contrôle des FK au COMMIT (autorisé DANS une transaction ;
+    // se réinitialise en fin de transaction). Sans lui, l'ordre de
+    // suppression/insertion des tables à références croisées coincerait.
+    db.run('PRAGMA defer_foreign_keys = ON');
+
+    const worm = declencheursWorm();
+    for (const t of worm) db.run(`DROP TRIGGER IF EXISTS ${t.name}`);
+
+    // Vidage TOTAL des tables métier (journal inclus : remplacement complet).
+    const TABLES_A_VIDER = ['pieces_jointes', 'retours_fournisseur', 'bsff',
+      'controles', 'mouvements', 'justifications_ecarts', 'inventaires',
+      'stocks_initiaux', 'bouteilles', 'machines', 'clients_detenteurs',
+      'outillage', 'non_conformites', 'audits_etablissement', 'personnel',
+      'journal_audit', 'etablissements'];
+    for (const table of TABLES_A_VIDER) db.run(`DELETE FROM ${table}`);
+
+    // Établissement singleton : le candidat porte un dossier sans id (le
+    // front le traite comme un singleton). On réamorce l'id local.
+    const etab = mapping.versSql('etablissements', candidat.etablissement);
+    etab.id = ID_ETABLISSEMENT;
+    inserer('etablissements', etab);
+
+    // Référentiel des fluides : upsert (INSERT OR IGNORE au socle, mais un
+    // candidat peut porter un référentiel complété). On réécrit ce qui est
+    // fourni sans casser les fluides déjà semés (INSERT OR REPLACE).
+    for (const f of candidat.fluides ?? []) {
+      const ligne = mapping.versSql('fluides', f);
+      const colonnes = Object.keys(ligne);
+      const marques = colonnes.map(() => '?').join(', ');
+      db.run(
+        `INSERT OR REPLACE INTO fluides (${colonnes.join(', ')}) ` +
+        `VALUES (${marques})`, colonnes.map((c) => ligne[c]));
+    }
+
+    reinsererCollection('personnel', 'personnel', candidat.personnel);
+    reinsererCollection('audits_etablissement', 'audits_etablissement',
+      candidat.auditsOrganisme);
+    reinsererCollection('non_conformites', 'non_conformites',
+      candidat.nonConformites);
+    reinsererCollection('outillage', 'outillage', candidat.outillage);
+    reinsererCollection('clients_detenteurs', 'clients_detenteurs',
+      candidat.clients);
+    reinsererCollection('machines', 'machines', candidat.machines);
+    reinsererCollection('bouteilles', 'bouteilles', candidat.bouteilles);
+    reinsererMouvements(candidat.mouvements);
+    reinsererCollection('controles', 'controles', candidat.controles);
+    reinsererCollection('bsff', 'bsff', candidat.bsff);
+    reinsererCollection('retours_fournisseur', 'retours_fournisseur',
+      candidat.retoursFournisseur);
+    reinsererCollection('stocks_initiaux', 'stocks_initiaux',
+      candidat.stocksInitiaux);
+    reinsererCollection('inventaires', 'inventaires', candidat.inventaires);
+    reinsererCollection('justifications_ecarts', 'justifications_ecarts',
+      candidat.justificationsEcarts);
+    reinsererPiecesJointes(candidat.piecesJointes);
+
+    // Journal d'audit : trace d'origine préservée, chaîne réamorcée.
+    reinsererJournal(candidat.journalAudit);
+
+    // Recréation des déclencheurs WORM (SQL exact de sqlite_master) : le
+    // registre redevient inviolable dans la même transaction.
+    for (const t of worm) db.run(t.sql);
+
+    // Journalise l'import LUI-MÊME (chaîné à la chaîne de journal réamorcée).
+    journaliser('système', 'IMPORT_DONNEES', 'sauvegarde',
+      'Restauration depuis un fichier JSON (intégrité vérifiée)');
+  });
+}
+
+/**
+ * Réinsère les métadonnées des pièces jointes (le contenu binaire vit sur
+ * disque, colonne chemin — non exposée au contrat). Un import venu d'un autre
+ * store (démo) n'apporte pas le fichier : la métadonnée est conservée, chemin
+ * à null (le contenu sera indisponible, mais la trace reste). versSql ignore
+ * `chemin` (sqlSeulement) : on le pose à la main s'il existe déjà en local.
+ */
+function reinsererPiecesJointes(items) {
+  for (const pj of items ?? []) {
+    const ligne = mapping.versSql('pieces_jointes', pj);
+    ligne.etablissement_id = ID_ETABLISSEMENT;
+    // chemin : conservé s'il pointe vers un fichier local encore présent.
+    if (pj.chemin && fs.existsSync(pj.chemin)) ligne.chemin = pj.chemin;
+    inserer('pieces_jointes', ligne);
+  }
+}
 
 // ------------------------------------------------------------
 // Reconstitution de l'objet `mouvement.controle` imbriqué (divergence
