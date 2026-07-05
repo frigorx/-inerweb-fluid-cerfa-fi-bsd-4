@@ -9,6 +9,33 @@
 - ⚠️ **Révocation à faire côté Apps Script** (les anciennes clés restent valides tant que
   `genererClesAPI()` n'a pas été exécutée puis le script redéployé) : procédure dans `SECURITE.md`.
 
+### 🔌 V9-E3 — Le mode Local branché : le contrat passe 183/0 sur SQLite (04-05/07)
+Le plus gros incrément de la V9 : les 64 méthodes du contrat DataStore réimplémentées côté
+serveur, éprouvées par LES MÊMES 183 assertions que le mode démo. L'objectif d'E0 est atteint —
+le branchement est prouvé fidèle, pas espéré.
+- **Ossature** (`server/api.js` dispatcher + `muter()`, `v8/js/data/local-store.js`,
+  `transport-http.js`, `server/harnais-contrat.mjs`, `serveur.js` routage `POST /api/:methode`,
+  `datastore.js` sélecteur ping→local sinon demo) : le front ne sait jamais quel store il a.
+- **Hash verrouillé AVANT tout** (`server/hash-mouvement.js`) : `db.hashEcriture` diverge du
+  hasseur front sur 3 points — un clone exact + un test d'équivalence (18 vérifs) garantissent
+  que le registre local est IMPORTABLE dans le registre démo et réciproquement (prouvé croisé).
+- **Registre WORM** : quantité signée, effets stocks atomiques, contre-écriture, scellement,
+  double garde de rôle (validateur élève → refus). **Balance matière** via la vue SQL (fidélité
+  au calcul du front enfin prouvée). Déchets, outillage, dossier, pièces jointes (base64→disque),
+  **8 familles d'alertes** à l'identique, export/import (remplacement total sous WORM : verrous
+  retirés puis recréés dans la transaction, FK différées).
+- **Vérifié EN VRAI (navigateur + serveur Node)** : bascule LOCAL automatique, création machine
+  via HTTP, persistance SQLite après rechargement, badge « LOCAL / SQLite ».
+- **Revue adversariale (fidélité + sécurité), constats corrigés** : trou de rôle forgeable dans
+  le corps (→ contexte déterminé côté serveur), **CSRF / DNS-rebinding** (→ garde Host + Origin,
+  éprouvé HTTP : hostile 403, légitime OK), CR-5 amputé (→ intégrité du registre ET du journal au
+  chargement), `getAlertes` stub, statut d'outillage figé, machine libérée à tort, `registreAltere`
+  non rafraîchi après import, masse nette générée non arrondie, compteurs de codes, tris, journaux.
+- Sécurité restante ASSUMÉE (documentée) : les vraies sessions/comptes arrivent en E5 ; le rôle
+  REFERENT accordé au loopback est un raccourci E3 explicite, jamais élargi au LAN sans E5.
+- Commits : socle `e05c4ff` · fondations `3a81ada` · registre `9c92880` · métier `5fe0f69` ·
+  export `c8c7a50` · navigateur `cc844e7` · revue fidélité `06386f1` · clôture `f62d367`.
+
 ### 🔗 V9-E2 — Le journal d'audit chaîné (04/07)
 « Le vrai passage démo → coffre-fort » (vision §3) : sans chaîne, on pouvait exciser une ligne
 du journal sans trace ; désormais toute excision est détectable.

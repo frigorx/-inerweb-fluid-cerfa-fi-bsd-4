@@ -51,12 +51,16 @@
    `hash_precedent`/`hash`), `db.js:journaliser()` (chaîne SHA-256 en transaction, ré-entrant —
    rejoint la transaction ambiante) et `verifierChaineJournal()` (table ENTIÈRE : une ligne sans
    hash = anomalie signalée, jamais tolérée). Excision, altération et forgerie détectées, prouvé.
-5. **E3 LocalStore + routes serveur** (PROCHAINE ÉTAPE, GROS morceau) : les 64 méthodes du
-   contrat mappées sur `/api/*` via `server/mapping.js`, chaque mutation en transaction +
-   `journaliser()`, contrôle de rôle CÔTÉ SERVEUR (403), aplatissement de `mouvement.controle`,
-   `test-contrat.mjs` lancé contre le LocalStore (base jetable) → E4 sauvegarde `VACUUM INTO` +
-   restauration atomique → E5 comptes/rôles/sessions (Franck = admin unique qui octroie, zéro
-   inscription libre).
+5. ~~**E3 LocalStore + routes serveur**~~ **FAIT le 04-05/07** : les 64 méthodes branchées sur
+   SQLite, **`test-contrat.mjs local` = 183/0** (les mêmes assertions que `demo`). Plan complet
+   dans `docs/E3-PLAN.md`. Vérifié navigateur+serveur. Revue adversariale passée (fidélité +
+   sécurité), CSRF/rebinding bouché. **Comment lancer le mode Local** : `node server/serveur.js`
+   (port 2011) puis http://127.0.0.1:2011/v8/. ⚠️ Le rôle REFERENT accordé au loopback est un
+   raccourci E3 provisoire (sessions réelles = E5).
+6. **E4 sauvegarde/restauration** (PROCHAINE ÉTAPE) : `VACUUM INTO` seule primitive, snapshots +
+   archives, manifeste vérifié, restauration atomique + sauvegarde de sécurité + 3 vérifications +
+   rollback, `.partiel`, chiffrement AES-GCM (vision §4) → E5 comptes/rôles/sessions (Franck =
+   admin unique qui octroie, zéro inscription libre ; remplace le raccourci loopback d'E3).
 4. Puis V9.1 fiche machine vivante (`#/m/:code`) → QR (`code_public` opaque) → relevés élèves.
 5. Bascule v8 → racine quand Franck valide. Lot confort audit (22 🟡) au fil de l'eau.
 
@@ -98,9 +102,11 @@
 cd C:\git\inerweb-fluide
 python -m http.server 8123          # puis http://localhost:8123/v8/
 node v8/js/data/test-demo-store.mjs # (et les autres test-*.mjs — tous doivent être verts)
-node v8/js/data/test-contrat.mjs    # conformité au contrat DataStore (E0) — 183 vérif.
-node server/test-mapping.mjs        # correspondance front <-> SQL (E0/E1) — 140 vérif.
-node server/test-migrations.mjs     # versionnage + WORM + journal chaîné (E1/E2) — 58 vérif.
+node v8/js/data/test-contrat.mjs        # contrat DataStore, mode DÉMO (E0) — 183 vérif.
+node v8/js/data/test-contrat.mjs local  # contrat DataStore, mode LOCAL SQLite (E3) — 183 vérif.
+node server/test-hash-mouvement.mjs     # équivalence hash front/serveur (E3) — 18 vérif.
+node server/test-mapping.mjs            # correspondance front <-> SQL (E0/E1) — 140 vérif.
+node server/test-migrations.mjs         # versionnage + WORM + journal chaîné (E1/E2) — 58 vérif.
 ```
 
 ⚠️ `test-contrat.mjs` ÉCRIT dans le store cible : contre le futur LocalStore (E3), toujours
