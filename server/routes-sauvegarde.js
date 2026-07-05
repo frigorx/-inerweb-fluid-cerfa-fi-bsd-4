@@ -21,9 +21,14 @@
  * opération ne doit s'intercaler. Le refus est renvoyé en 409 (conflit).
  *
  * SÉCURITÉ chemins : `restaurer`/`testerSauvegarde` n'acceptent QUE des
- * archives situées SOUS backups/ (une archive arbitraire du disque, ou un
- * chemin remontant par « .. », est refusée — on ne restaure pas n'importe
- * quel fichier fourni par une requête).
+ * archives (« .zip » claires OU « .zip.chiffre » chiffrées) situées SOUS
+ * backups/ (une archive arbitraire du disque, ou un chemin remontant par
+ * « .. », est refusée — on ne restaure pas n'importe quel fichier fourni par
+ * une requête).
+ *
+ * CHIFFREMENT (E4.2) : `sauvegarder` accepte `chiffrer`/`phrase`/`indice` ;
+ * `restaurer`/`testerSauvegarde` acceptent `phrase` (requise pour un chiffré,
+ * un tag KO = rejet avant tout effet). Détail dans chiffrement.js / VISION §4.5.
  *
  * Zéro dépendance externe.
  */
@@ -101,16 +106,22 @@ const HANDLERS = {
       erreur.code = 400;
       throw erreur;
     }
-    // E4.1 : chiffrement non encore branché (E4.2). L'indice non secret peut
-    // déjà être consigné dans le manifeste.
-    const options = { indice: params?.indice ?? null };
+    // E4.2 : chiffrement branché. `chiffrer` (bool) + `phrase` (requise si
+    // chiffré) + `indice` (non secret, consigné dans le manifeste clair). Sans
+    // phrase alors que chiffrer=true, sauvegarder() lève une erreur claire.
+    const options = {
+      indice: params?.indice ?? null,
+      chiffrer: params?.chiffrer === true,
+      phrase: params?.phrase
+    };
     const produit = type === 'ARCHIVE'
       ? sauvegarde.sauvegarderArchive(options)
       : sauvegarde.sauvegarderSnapshot(options);
     return {
       chemin: produit.chemin,
       type: produit.type,
-      manifeste: produit.manifeste
+      manifeste: produit.manifeste,
+      chiffre: produit.chiffre === true
     };
   },
 

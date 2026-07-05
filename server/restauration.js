@@ -47,6 +47,7 @@ const { DatabaseSync } = require('node:sqlite');
 
 const db = require('./db.js');
 const zip = require('./zip-node.js');
+const chiffrement = require('./chiffrement.js');
 const { verifierIntegrite } = require('./verification.js');
 const { relireManifeste } = require('./manifeste.js');
 const sauvegarde = require('./sauvegarde.js');
@@ -211,6 +212,67 @@ function effacerWalShm(cheminDb) {
 function supprimerDossier(dossier) {
   if (!fs.existsSync(dossier)) return;
   fs.rmSync(dossier, { recursive: true, force: true });
+}
+
+// ------------------------------------------------------------
+// Déchiffrement PRÉALABLE (E4.2) — une sauvegarde chiffrée (.zip.chiffre ou
+// magic « IWF-CHIFFRE-1 ») est ramenée à un ZIP CLAIR dans un fichier temp
+// JETABLE, AVANT tout contact avec la base vive. Un mauvais tag (phrase fausse
+// OU altération) fait ÉCHOUER ICI, avant lecture du manifeste, extraction et a
+// fortiori toute bascule : la base vive n'est jamais touchée (VISION §4.5,
+// E4-PLAN §0). Le clair temporaire est effacé en fin d'opération.
+// ------------------------------------------------------------
+
+/** Vrai si le fichier sur disque est une sauvegarde chiffrée (extension ou magic). */
+function estFichierChiffre(chemin) {
+  if (typeof chemin === 'string' && chemin.endsWith('.zip.chiffre')) return true;
+  try {
+    // Lire juste assez d'octets pour tester le magic (défense en profondeur :
+    // un chiffré renommé « .zip » est quand même reconnu par son en-tête).
+    const fd = fs.openSync(chemin, 'r');
+    try {
+      const tete = Buffer.alloc(chiffrement.MAGIC.length);
+      const lus = fs.readSync(fd, tete, 0, tete.length, 0);
+      return chiffrement.estEnveloppeChiffree(tete.subarray(0, lus));
+    } finally {
+      fs.closeSync(fd);
+    }
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Ramène une sauvegarde à un ZIP CLAIR exploitable par le pipeline E4.1.
+ *   - fichier CLAIR : renvoie tel quel (aucune copie, aucun temp) ;
+ *   - fichier CHIFFRÉ : exige la phrase, déchiffre en mémoire (tag GCM vérifié
+ *     — phrase fausse ou octet modifié = REJET ici, base vive intacte), écrit
+ *     le clair dans un fichier temp JETABLE et renvoie son chemin + un nettoyeur.
+ * @param {string} chemin - chemin de la sauvegarde (clair ou chiffré)
+ * @param {string|undefined} phrase - requise si chiffré
+ * @returns {{cheminClair: string, nettoyer: () => void}}
+ */
+function preparerZipClair(chemin, phrase) {
+  if (!estFichierChiffre(chemin)) {
+    return { cheminClair: chemin, nettoyer: () => {} };
+  }
+  if (typeof phrase !== 'string' || phrase.length === 0) {
+    throw new Error(
+      'Cette sauvegarde est chiffrée : une phrase est requise pour la lire ' +
+      '(restauration/test refusés sans phrase).');
+  }
+  const enveloppe = fs.readFileSync(chemin);
+  // dechiffrer LÈVE « Phrase incorrecte ou sauvegarde altérée » sur tag KO —
+  // AVANT toute lecture de manifeste ou extraction (base vive jamais touchée).
+  const octetsZip = chiffrement.dechiffrer(enveloppe, phrase);
+  const dossierTmp = fs.mkdtempSync(
+    path.join(require('node:os').tmpdir(), 'inerweb-fluide-dechiffre-'));
+  const cheminClair = path.join(dossierTmp, 'sauvegarde-claire.zip');
+  fs.writeFileSync(cheminClair, octetsZip);
+  return {
+    cheminClair,
+    nettoyer: () => { try { supprimerDossier(dossierTmp); } catch { /* best-effort */ } }
+  };
 }
 
 // ------------------------------------------------------------
@@ -570,9 +632,11 @@ const MARQUEUR_ROLLBACK = '.rollback-en-cours';
  *
  * RESTAURE une sauvegarde (le déroulé atomique 0→6 de E4-PLAN).
  *
- * @param {string} cheminZip - archive .zip à restaurer
+ * @param {string} cheminZip - archive .zip ou .zip.chiffre à restaurer
  * @param {object} [options]
- * @param {string} [options.phrase] - phrase de déchiffrement (E4.2, ignorée en E4.1)
+ * @param {string} [options.phrase] - phrase de déchiffrement (E4.2) : REQUISE si
+ *        la sauvegarde est chiffrée ; un tag KO (phrase fausse OU octet modifié)
+ *        rejette AVANT toute bascule (base vive intacte)
  * @param {boolean} [options.confirmePerte] - autorise une restauration qui
  *        RÉGRESSE (archive plus ancienne : perte d'écritures figées). Sans
  *        elle, une régression est REFUSÉE avant tout effet.
@@ -614,10 +678,20 @@ function restaurer(cheminZip, options = {}) {
   const chemins = capturerChemins(db.cheminOuvert());
   const zone = chemins.zone;
   let filet = null;
+  let nettoyerClair = () => {};
 
   try {
+    // (0 bis) DÉCHIFFREMENT PRÉALABLE (E4.2) — si la sauvegarde est chiffrée,
+    //     on la ramène à un ZIP clair temp AVANT tout pré-contrôle. Un mauvais
+    //     tag (phrase fausse OU octet modifié) LÈVE ICI, base vive JAMAIS
+    //     touchée (aucune écriture, aucune bascule). Le clair temp est effacé
+    //     dans le finally. Une sauvegarde claire passe inchangée.
+    const prep = preparerZipClair(cheminZip, options.phrase);
+    const cheminSource = prep.cheminClair;
+    nettoyerClair = prep.nettoyer;
+
     // (0) PRÉ-CONTRÔLES SANS ÉCRIRE.
-    const manifeste = lireManifesteArchive(cheminZip);
+    const manifeste = lireManifesteArchive(cheminSource);
     const comparaison = comparerAvecBaseVive(manifeste);
     if (comparaison.regression && !confirmePerte) {
       throw new Error(
@@ -628,9 +702,11 @@ function restaurer(cheminZip, options = {}) {
         'explicitement la perte pour continuer (confirmePerte).');
     }
 
-    // (1) EXTRAIRE + VÉRIFIER HORS-BASE (base vive encore intacte ici).
+    // (1) EXTRAIRE + VÉRIFIER HORS-BASE (base vive encore intacte ici). On
+    //     travaille sur le ZIP CLAIR (déchiffré si besoin) : le pipeline E4.1
+    //     est inchangé, il ne voit jamais de chiffré.
     const { cheminNouvelle, cheminDocumentsExtraits } =
-      extraireEtVerifierHorsBase(cheminZip, manifeste, zone);
+      extraireEtVerifierHorsBase(cheminSource, manifeste, zone);
     _interrompreApres('extraction-verifiee');
 
     // (2) SAUVEGARDE DE SÉCURITÉ AUTO, NON DÉSACTIVABLE. Échec = ABANDON :
@@ -756,6 +832,9 @@ function restaurer(cheminZip, options = {}) {
     supprimerDossier(zone);
     throw erreur;
   } finally {
+    // Effacer le ZIP clair temporaire issu d'un éventuel déchiffrement (E4.2) :
+    // aucun clair ne doit survivre à l'opération.
+    try { nettoyerClair(); } catch { /* best-effort */ }
     rendreVerrou();
   }
 }
@@ -1216,9 +1295,10 @@ function trouverBaseSaineDansZone(racineZone) {
  * écrite. En cas de succès, la date du dernier test OK est inscrite dans
  * `parametres` (dernier_test_sauvegarde_ok).
  *
- * @param {string} cheminZip
+ * @param {string} cheminZip - archive .zip ou .zip.chiffre
  * @param {object} [options]
- * @param {string} [options.phrase] - déchiffrement (E4.2, ignoré en E4.1)
+ * @param {string} [options.phrase] - déchiffrement (E4.2) : REQUISE si chiffrée ;
+ *        tag KO (phrase fausse OU altération) = ROUGE, base courante intacte
  * @returns {{verdict: 'VERT'|'ROUGE', type: string, compteurs: object,
  *            details: object, motif: string|null}}
  */
@@ -1226,10 +1306,26 @@ function testerSauvegarde(cheminZip, options = {}) {
   prendreVerrou('test de sauvegarde');
   const dossierTest = fs.mkdtempSync(
     path.join(require('node:os').tmpdir(), 'inerweb-fluide-test-'));
+  let nettoyerClair = () => {};
   try {
-    const manifeste = lireManifesteArchive(cheminZip);
+    // DÉCHIFFREMENT PRÉALABLE (E4.2) : ramener à un ZIP clair temp si chiffré.
+    // Une phrase fausse ou une altération LÈVE ici — on renvoie alors un ROUGE
+    // « Phrase incorrecte ou sauvegarde altérée » (jamais un plantage), la base
+    // courante n'étant de toute façon jamais touchée par un test.
+    let cheminSource;
+    try {
+      const prep = preparerZipClair(cheminZip, options.phrase);
+      cheminSource = prep.cheminClair;
+      nettoyerClair = prep.nettoyer;
+    } catch (erreur) {
+      return {
+        verdict: 'ROUGE', type: null, compteurs: null,
+        details: null, motif: erreur.message
+      };
+    }
+    const manifeste = lireManifesteArchive(cheminSource);
     // Extraire dans le dossier temp jetable (CRC-32 vérifié par zip-node).
-    const extraites = zip.extraireVers(cheminZip, dossierTest);
+    const extraites = zip.extraireVers(cheminSource, dossierTest);
     const baseExtraite = extraites.find(
       (e) => e.nom === 'base/' + manifeste.base.nomFichier
         || e.nom === 'base/inerweb-fluide.db');
@@ -1275,6 +1371,7 @@ function testerSauvegarde(cheminZip, options = {}) {
       motif: null
     };
   } finally {
+    try { nettoyerClair(); } catch { /* best-effort : clair temp effacé */ }
     supprimerDossier(dossierTest);
     rendreVerrou();
   }

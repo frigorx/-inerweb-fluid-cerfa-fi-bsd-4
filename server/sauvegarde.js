@@ -40,6 +40,7 @@ const crypto = require('node:crypto');
 
 const db = require('./db.js');
 const zip = require('./zip-node.js');
+const chiffrement = require('./chiffrement.js');
 const { construireManifeste, relireManifeste } = require('./manifeste.js');
 
 // ------------------------------------------------------------
@@ -107,6 +108,56 @@ function sha256Fichier(chemin) {
 /** SHA-256 hexadécimal d'un tampon d'octets. */
 function sha256Octets(octets) {
   return crypto.createHash('sha256').update(octets).digest('hex');
+}
+
+// ------------------------------------------------------------
+// Reconnaissance / lecture d'une sauvegarde — claire (.zip) OU chiffrée
+// (.zip.chiffre). Le manifeste est EN CLAIR dans les deux cas (en tête du ZIP
+// pour une claire, en tête de l'enveloppe pour une chiffrée) : on l'inventorie
+// SANS phrase (VISION §4.5).
+// ------------------------------------------------------------
+
+/** Vrai si `nom` est un fichier de sauvegarde FINAL (jamais un « .partiel »). */
+function estFichierSauvegarde(nom) {
+  if (nom.endsWith('.partiel')) return false;
+  return nom.endsWith('.zip.chiffre') || nom.endsWith('.zip');
+}
+
+/** Vrai si le NOM désigne une sauvegarde chiffrée (extension « .zip.chiffre »). */
+function estNomChiffre(nom) {
+  return nom.endsWith('.zip.chiffre');
+}
+
+/**
+ * Lit le manifeste EN CLAIR d'une sauvegarde sur disque, claire ou chiffrée,
+ * SANS extraire ni déchiffrer le contenu. Pour une claire, l'entrée
+ * manifeste.json en tête du ZIP (zip.lireEntree) ; pour une chiffrée, l'en-tête
+ * clair de l'enveloppe (chiffrement.lireManifesteClair). Renvoie le manifeste
+ * relu/validé (relireManifeste) et le drapeau `chiffre`.
+ * @param {string} chemin
+ * @returns {{manifeste: object, chiffre: boolean}}
+ */
+function lireManifesteSauvegarde(chemin) {
+  if (estNomChiffre(chemin)) {
+    const enveloppe = fs.readFileSync(chemin);
+    const brut = chiffrement.lireManifesteClair(enveloppe);
+    return { manifeste: relireManifeste(brut), chiffre: true };
+  }
+  // Défense en profondeur : un « .zip » qui serait en réalité une enveloppe
+  // chiffrée (renommée) est lu par son en-tête clair — le magic fait foi.
+  const octets = fs.readFileSync(chemin);
+  if (chiffrement.estEnveloppeChiffree(octets)) {
+    const brut = chiffrement.lireManifesteClair(octets);
+    return { manifeste: relireManifeste(brut), chiffre: true };
+  }
+  const entree = zip.lireEntree(chemin, 'manifeste.json');
+  if (!entree) {
+    throw new Error('manifeste.json absent de l\'archive.');
+  }
+  return {
+    manifeste: relireManifeste(JSON.parse(entree.toString('utf8'))),
+    chiffre: false
+  };
 }
 
 // ------------------------------------------------------------
@@ -181,11 +232,29 @@ function collecterConfig() {
 
 /**
  * Produit une sauvegarde et renvoie son chemin final + son manifeste.
+ *
+ * CHIFFREMENT (E4.2, VISION §4.5) : si `options.chiffrer`, le ZIP produit en
+ * mémoire est ENVELOPPÉ (AES-256-GCM, manifeste EN CLAIR en tête) via
+ * chiffrement.js et écrit en « .zip.chiffre » (extension DISTINCTE : l'esprit
+ * de l'Explorateur ne le prend pas pour un ZIP ouvrable). Le manifeste porte
+ * alors `chiffrement.actif = true`. Sans phrase, on refuse (erreur claire :
+ * chiffrer sans phrase n'a pas de sens). En clair (défaut), rien ne change :
+ * comportement E4.1 strictement identique.
+ *
  * @param {'SNAPSHOT'|'ARCHIVE'} type
- * @param {{indice?: string|null}} [options]
- * @returns {{chemin: string, type: string, manifeste: object}}
+ * @param {{indice?: string|null, chiffrer?: boolean, phrase?: string}} [options]
+ * @returns {{chemin: string, type: string, manifeste: object, chiffre: boolean}}
  */
 function sauvegarder(type, options = {}) {
+  const chiffrer = options.chiffrer === true;
+  const phrase = options.phrase;
+  // Refus AVANT tout effet : une sauvegarde chiffrée exige une phrase.
+  if (chiffrer && (typeof phrase !== 'string' || phrase.length === 0)) {
+    throw new Error(
+      'Sauvegarde chiffrée demandée sans phrase : impossible. Fournissez ' +
+      'une phrase (sans elle, rien à protéger ni à rouvrir).');
+  }
+
   const instant = new Date();
   preparerArborescence();
   purgerPartiels(); // une sauvegarde interrompue précédente n'existe pas
@@ -203,10 +272,13 @@ function sauvegarder(type, options = {}) {
   db.vacuumInto(cibleVacuum);
 
   let manifeste;
+  // Extension DISTINCTE pour un chiffré (« .zip.chiffre ») : l'Explorateur ne
+  // le prend pas pour un ZIP, et l'inventaire/la restauration savent au nom.
+  const extFinale = chiffrer ? 'zip.chiffre' : 'zip';
   const cheminPartiel =
-    path.join(dossierCible, `${base}-${suffixeType}-${rnd}.zip.partiel`);
+    path.join(dossierCible, `${base}-${suffixeType}-${rnd}.${extFinale}.partiel`);
   const cheminFinal =
-    path.join(dossierCible, `${base}-${suffixeType}-${rnd}.zip`);
+    path.join(dossierCible, `${base}-${suffixeType}-${rnd}.${extFinale}`);
 
   try {
     // 2) Empreinte + taille du .db issu du VACUUM (le pivot de vérification).
@@ -237,6 +309,11 @@ function sauvegarder(type, options = {}) {
       indice: options.indice ?? null,
       horodatage: instant
     });
+    // Chiffrement : le manifeste (en clair en tête de l'enveloppe) DOIT porter
+    // chiffrement.actif = true — c'est ce que listerSauvegardes/restaurer
+    // lisent pour savoir qu'une phrase est requise. On ne touche QUE ce champ ;
+    // le reste (indice, algorithme, kdfParams) est déjà posé par manifeste.js.
+    if (chiffrer) manifeste.chiffrement.actif = true;
 
     // 5) Écriture du ZIP en « .partiel ». Ordre des entrées : le manifeste
     //    EN TÊTE (listerSauvegardes le lit sans dérouler), puis la base, puis
@@ -248,7 +325,17 @@ function sauvegarder(type, options = {}) {
       ...configEntrees
     ];
     const octetsZip = zip.creerZipOctets(entrees, instant);
-    fs.writeFileSync(cheminPartiel, octetsZip);
+
+    if (chiffrer) {
+      // ENVELOPPE chiffrée : manifeste EN CLAIR en tête (inventaire sans la
+      // phrase) + ZIP chiffré. chiffrement.chiffrer() re-déchiffre en mémoire
+      // pour PROUVER que la phrase rouvre le contenu AVANT d'écrire quoi que ce
+      // soit — un chiffré non ré-ouvrable LÈVE ici (rien n'est écrit).
+      const enveloppe = chiffrement.chiffrer(octetsZip, phrase, manifeste);
+      fs.writeFileSync(cheminPartiel, enveloppe);
+    } else {
+      fs.writeFileSync(cheminPartiel, octetsZip);
+    }
   } finally {
     // 6) Le .db temporaire n'a plus de raison d'exister (succès comme échec).
     try { fs.rmSync(cibleVacuum, { force: true }); } catch { /* best-effort */ }
@@ -266,14 +353,15 @@ function sauvegarder(type, options = {}) {
     qui: 'système',
     action: 'SAUVEGARDE',
     cible: path.basename(cheminFinal),
-    details: `${type} · base sha256 ${manifeste.base.sha256.slice(0, 12)}… · ` +
+    details: `${type}${chiffrer ? ' (chiffrée)' : ''} · base sha256 ` +
+      `${manifeste.base.sha256.slice(0, 12)}… · ` +
       `${manifeste.compteurs.mouvementsValides} écriture(s) figée(s)`
   });
 
   // 9) Rotation GFS (best-effort : jamais bloquante — la nouvelle est déjà là).
   try { appliquerRotation(type); } catch { /* rotation non critique */ }
 
-  return { chemin: cheminFinal, type, manifeste };
+  return { chemin: cheminFinal, type, manifeste, chiffre: chiffrer };
 }
 
 /** Renomme avec quelques réessais bornés (EPERM antivirus transitoire). */
@@ -298,7 +386,8 @@ function renommerAvecReessai(source, cible, essais = 5) {
 
 /**
  * Sauvegarde SNAPSHOT (base seule). Filet anti-erreur-humaine.
- * @returns {{chemin, type, manifeste}}
+ * @param {{indice?: string|null, chiffrer?: boolean, phrase?: string}} [options]
+ * @returns {{chemin, type, manifeste, chiffre}}
  */
 function sauvegarderSnapshot(options = {}) {
   return sauvegarder('SNAPSHOT', options);
@@ -306,7 +395,8 @@ function sauvegarderSnapshot(options = {}) {
 
 /**
  * Sauvegarde ARCHIVE (base + documents + config). Filet anti-sinistre.
- * @returns {{chemin, type, manifeste}}
+ * @param {{indice?: string|null, chiffrer?: boolean, phrase?: string}} [options]
+ * @returns {{chemin, type, manifeste, chiffre}}
  */
 function sauvegarderArchive(options = {}) {
   return sauvegarder('ARCHIVE', options);
@@ -375,22 +465,21 @@ function listerSauvegardes() {
   for (const dossier of [dossierArchives(), dossierSnapshots()]) {
     if (!fs.existsSync(dossier)) continue;
     for (const nom of fs.readdirSync(dossier)) {
-      if (!nom.endsWith('.zip')) continue; // ignore .partiel et autres
+      // .zip (clair) ET .zip.chiffre (chiffré) ; jamais un .partiel.
+      if (!estFichierSauvegarde(nom)) continue;
       const chemin = path.join(dossier, nom);
       const entree = { chemin, fichier: nom };
       try {
-        const octets = zip.lireEntree(chemin, 'manifeste.json');
-        if (!octets) {
-          throw new Error('manifeste.json absent de l\'archive.');
-        }
-        const manifeste = relireManifeste(JSON.parse(octets.toString('utf8')));
+        const { manifeste, chiffre } = lireManifesteSauvegarde(chemin);
         entree.type = manifeste.type;
         entree.horodatage = manifeste.horodatage;
         entree.versionBase = manifeste.versionBase;
         entree.compteurs = manifeste.compteurs;
         entree.chaineRegistreOk = manifeste.integrite.chaineRegistreOk;
         entree.chaineJournalOk = manifeste.integrite.chaineJournalOk;
-        entree.chiffre = manifeste.chiffrement?.actif === true;
+        // chiffre = drapeau du fichier (extension/magic) recroisé avec le
+        // manifeste (chiffrement.actif). L'extension fait foi pour la lecture.
+        entree.chiffre = chiffre || manifeste.chiffrement?.actif === true;
         entree.valide = true;
       } catch (erreur) {
         entree.valide = false;
@@ -415,13 +504,15 @@ function listerSauvegardes() {
 // ne touche jamais un « .partiel » ni « avant-restauration/ ».
 // ------------------------------------------------------------
 
-/** Parse l'horodatage ISO d'une sauvegarde (via son manifeste en tête). */
+/**
+ * Parse l'horodatage ISO d'une sauvegarde (via son manifeste EN CLAIR en tête),
+ * qu'elle soit claire (.zip) ou chiffrée (.zip.chiffre — manifeste en tête de
+ * l'enveloppe, sans phrase). null si illisible (la rotation conserve alors).
+ */
 function horodatageDe(chemin) {
   try {
-    const octets = zip.lireEntree(chemin, 'manifeste.json');
-    if (!octets) return null;
-    const m = JSON.parse(octets.toString('utf8'));
-    const t = Date.parse(m.horodatage);
+    const { manifeste } = lireManifesteSauvegarde(chemin);
+    const t = Date.parse(manifeste.horodatage);
     return Number.isFinite(t) ? t : null;
   } catch {
     return null;
@@ -446,7 +537,7 @@ function rotationSnapshots() {
   if (!fs.existsSync(dossier)) return;
   const limite = Date.now() - 48 * 3600 * 1000;
   for (const nom of fs.readdirSync(dossier)) {
-    if (!nom.endsWith('.zip')) continue;
+    if (!estFichierSauvegarde(nom)) continue; // .zip ET .zip.chiffre
     const chemin = path.join(dossier, nom);
     const t = horodatageDe(chemin);
     if (t !== null && t < limite) {
@@ -468,7 +559,7 @@ function rotationArchives() {
   if (!fs.existsSync(dossier)) return;
 
   const fichiers = fs.readdirSync(dossier)
-    .filter((n) => n.endsWith('.zip'))
+    .filter((n) => estFichierSauvegarde(n)) // .zip ET .zip.chiffre
     .map((n) => {
       const chemin = path.join(dossier, n);
       return { chemin, t: horodatageDe(chemin) };
@@ -532,5 +623,9 @@ module.exports = {
   dossierSnapshots,
   dossierArchives,
   dossierTmp,
-  dossierDocuments
+  dossierDocuments,
+  // Exposés pour la restauration chiffrée (E4.2) et les tests.
+  estFichierSauvegarde,
+  estNomChiffre,
+  lireManifesteSauvegarde
 };
