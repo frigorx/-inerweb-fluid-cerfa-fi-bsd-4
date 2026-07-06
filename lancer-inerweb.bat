@@ -2,69 +2,76 @@
 rem ============================================================
 rem  inerWeb Fluide v8 - lanceur du Mode Local Lycee
 rem  Double-cliquez sur ce fichier pour demarrer l'application.
+rem  IMPORTANT : ce fichier doit rester en ASCII pur (pas d'accents)
+rem  sinon cmd.exe casse l'analyse des blocs (voir historique).
 rem ============================================================
 
-rem Page de code UTF-8 pour afficher correctement les accents
+rem Codepage UTF-8 : uniquement pour bien afficher les accents que le
+rem serveur Node ecrit dans cette fenetre (le .bat lui-meme reste ASCII).
 chcp 65001 >nul
-title inerWeb Fluide — Traçabilité F-Gas (serveur local)
+title inerWeb Fluide - Tracabilite F-Gas (serveur local)
 
-rem Se placer dans le dossier de ce script (l'application est portable :
-rem elle fonctionne depuis n'importe quel dossier, y compris une clé USB)
+rem Se placer dans le dossier de ce script (application portable).
 cd /d "%~dp0"
 
 echo.
-echo   ============================================
-echo    inerWeb Fluide v8 — Traçabilité F-Gas
-echo   ============================================
+echo   ===========================================
+echo    inerWeb Fluide v8 - Tracabilite F-Gas
+echo   ===========================================
 echo.
 
-rem --- Vérifier que Node.js est installé ---
+rem --- Verifier que Node.js est installe ---
 where node >nul 2>nul
 if errorlevel 1 (
-    echo   [ERREUR] Node.js n'est pas installé sur ce poste.
+    echo   [ERREUR] Node.js n'est pas installe sur ce poste.
     echo.
     echo   inerWeb Fluide a besoin de Node.js pour fonctionner.
-    echo   Téléchargez la version LTS ^(gratuite^) sur :
-    echo.
-    echo       https://nodejs.org/fr
-    echo.
+    echo   Telechargez la version LTS ^(gratuite^) sur : https://nodejs.org/fr
     echo   Installez-la puis relancez ce fichier.
     echo.
     pause
     exit /b 1
 )
 
-rem --- Créer les dossiers de données s'ils n'existent pas ---
+rem --- Creer les dossiers de donnees s'ils n'existent pas ---
 if not exist "data"      mkdir "data"
 if not exist "documents" mkdir "documents"
 if not exist "backups"   mkdir "backups"
 
-rem --- Première utilisation : créer le compte administrateur ---
+rem --- Premiere utilisation : creer le compte administrateur ---
+rem On ne demarre PAS le serveur tant que le compte n'est pas cree.
 if not exist "data\inerweb-fluide.db" (
-    echo   Première utilisation : création du compte administrateur.
-    echo   Choisissez un identifiant et un mot de passe ^(10 caractères minimum^).
+    echo   Premiere utilisation : creation du compte administrateur.
+    echo   Tapez un identifiant, puis un mot de passe ^(10 caracteres minimum^).
+    echo   Le mot de passe ne s'affiche pas pendant la frappe, c'est normal.
     echo.
     node "%~dp0server\creer-admin.js"
+    if errorlevel 1 (
+        echo.
+        echo   [ARRET] Le compte administrateur n'a pas ete cree.
+        echo   Relancez le raccourci et renseignez un identifiant ET un
+        echo   mot de passe d'au moins 10 caracteres.
+        echo.
+        pause
+        exit /b 1
+    )
+    echo.
+    echo   Compte administrateur cree.
     echo.
 )
 
-echo   Démarrage du serveur local...
-echo   L'application va s'ouvrir dans votre navigateur :
-echo   http://localhost:2011
+echo   Demarrage du serveur local...
+echo   L'application va s'ouvrir dans votre navigateur : http://localhost:2011
 echo.
-echo   ┌──────────────────────────────────────────────┐
-echo   │  Fermez cette fenêtre pour arrêter           │
-echo   │  inerWeb Fluide.                             │
-echo   └──────────────────────────────────────────────┘
+echo   Fermez cette fenetre pour arreter inerWeb Fluide.
 echo.
 
-rem --- Ouvrir le navigateur après 2 secondes (le temps que le serveur démarre) ---
+rem --- Ouvrir le navigateur apres 2 secondes (le temps que le serveur demarre) ---
 start "" /min cmd /c "timeout /t 2 /nobreak >nul & start "" http://localhost:2011"
 
-rem --- Démarrer le serveur (au premier plan : fermer la fenêtre = arrêter) ---
+rem --- Demarrer le serveur (au premier plan : fermer la fenetre = arreter) ---
 node "%~dp0server\serveur.js"
 
-rem Si le serveur s'arrête avec une erreur, laisser le message visible
 echo.
-echo   Le serveur s'est arrêté.
+echo   Le serveur s'est arrete.
 pause
