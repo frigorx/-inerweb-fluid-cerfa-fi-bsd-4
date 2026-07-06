@@ -151,6 +151,34 @@ verifier('CR-3 : création du contrôle journalisée',
     e.action === 'CREATION_CONTROLE' && e.cible === machineFuite.code &&
     e.details.includes('FUITE')));
 
+// R3c : tant que la fuite reste ouverte (pas de réparation tracée), le
+// CHARGE_APPOINT est bloqué — même s'il déclare au passage un contrôle
+// CONFORME (la garde s'applique AVANT tout effet, cf. appliquerEffets).
+await verifierRejet(
+  'R3c : CHARGE_APPOINT refusé tant que la fuite n’est pas réparée (tracée)',
+  (async () => {
+    const mvtBloque = await store.creerMouvement({
+      type: 'CHARGE_APPOINT',
+      date: '2026-07-03',
+      machineId: machine.id,
+      bouteilleSrcId: bouteille.id,
+      peseeAvantKg: 18.5,
+      peseeApresKg: 18.2,
+      controle: { statutControle: 'CONFORME', detecteurId: 'out-1' },
+      technicien: 'Frédéric Henninot'
+    });
+    await store.soumettreMouvement(mvtBloque.id);
+    await store.validerMouvement(mvtBloque.id, 'per-fh');
+  })(),
+  'Tracez la réparation');
+
+// R3a : réparation tracée sur le contrôle FUITE → le CHARGE_APPOINT
+// redevient possible.
+await store.tracerReparation(controleLie.id, {
+  dateReparation: '2026-07-02', natureReparation: 'Resserrage du raccord',
+  reparateur: 'Frédéric Henninot'
+});
+
 // Contrôle CONFORME déclaré au wizard → la machine revient EN_SERVICE
 const mvtConforme = await store.creerMouvement({
   type: 'CHARGE_APPOINT',

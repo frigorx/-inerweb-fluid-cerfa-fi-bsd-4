@@ -387,7 +387,8 @@ export async function ouvrirWizard(ctx, options = {}) {
     peseeAvant: '',         // chaînes brutes des champs (kg)
     peseeApres: '',
     statutControle: null,   // 'SANS_OBJET' | 'CONFORME' | 'FUITE'
-    detecteurId: null
+    detecteurId: null,
+    localisationFuite: ''   // R5 : localisation saisie si statutControle === 'FUITE'
   };
 
   // Écriture déjà créée/soumise dont la validation a échoué (nouvel essai
@@ -432,6 +433,7 @@ export async function ouvrirWizard(ctx, options = {}) {
         ? String(brouillon.peseeApresKg) : '';
       etat.statutControle = brouillon.controle?.statutControle ?? null;
       etat.detecteurId = brouillon.controle?.detecteurId ?? null;
+      etat.localisationFuite = brouillon.controle?.localisationFuite ?? '';
       // IM-14 : la cause du brouillon (texte libre) est conservée telle
       // quelle via le choix « Autre » du select de l'étape 6
       if (brouillon.causeMouvement) {
@@ -569,25 +571,42 @@ export async function ouvrirWizard(ctx, options = {}) {
     if (estCharge()) {
       const machine = machineChoisie();
       if (!machine) return [];
+      // R2 : une bouteille MELANGE (contenu incertain) ne recharge jamais
+      // une installation — miroir du garde-fou store (appliquerEffets).
       return bouteilles.filter((b) =>
-        b.fluide === machine.fluide && sourceUtilisable(b));
+        b.fluide === machine.fluide && sourceUtilisable(b) &&
+        b.etatFluide !== 'MELANGE');
     }
     if (estRecuperation()) {
       const machine = machineChoisie();
       if (!machine) return [];
-      // IM-6 : encore en stock et avec de la place restante
+      // IM-6 : encore en stock et avec de la place restante.
+      // R2 : une bouteille MELANGE accepte aussi un fluide différent de
+      // son étiquette (on n'est pas sûr du contenu).
       return bouteilles.filter((b) =>
-        b.type === 'RECUPERATION' && b.fluide === machine.fluide &&
+        b.type === 'RECUPERATION' &&
+        (b.fluide === machine.fluide || b.etatFluide === 'MELANGE') &&
         bouteilleDisponible(b) &&
         arrondir(b.contenanceMaxKg - b.masseNetteKg) > 0);
     }
     // Transfert : destination de même fluide, différente de la source,
-    // encore en stock (IM-6), avec de la place restante
+    // encore en stock (IM-6), avec de la place restante.
+    // R2 : une bouteille RÉCUPÉRATION marquée MELANGE accepte aussi un
+    // fluide différent (croisement relâché UNIQUEMENT vers elle) ; une
+    // SOURCE MELANGE ne se transfère que vers une autre MELANGE
+    // (confinement du mélange).
+    // R1 : jamais vers une bouteille NEUVE (même non-vierge) ni VIERGE
+    // depuis un fluide non-vierge (miroir du garde-fou store —
+    // appliquerEffets TRANSFERT).
     const source = bouteilleSrc();
     if (!source) return [];
     return bouteilles.filter((b) =>
       b.id !== source.id &&
-      b.fluide === source.fluide &&
+      (b.fluide === source.fluide ||
+        (b.type === 'RECUPERATION' && b.etatFluide === 'MELANGE')) &&
+      !((b.etatFluide === 'VIERGE' || b.type === 'NEUVE') &&
+        source.etatFluide !== 'VIERGE') &&
+      (source.etatFluide !== 'MELANGE' || b.etatFluide === 'MELANGE') &&
       bouteilleDisponible(b) &&
       arrondir(b.contenanceMaxKg - b.masseNetteKg) > 0);
   }
@@ -1056,11 +1075,15 @@ export async function ouvrirWizard(ctx, options = {}) {
     const idChoisi = attribut === 'data-bouteille-src'
       ? etat.bouteilleSrcId : etat.bouteilleDstId;
     const classe = idChoisi === bouteille.id ? ' selectionnee' : '';
+    // R2 : avertissement visuel — cette bouteille accepte un croisement
+    // de fluides, son étiquette n'est que le gaz majoritaire.
+    const chipMelange = bouteille.etatFluide === 'MELANGE'
+      ? '<span class="chip chip-ambre">Mélange</span>' : '';
     return '<button type="button" class="carte-choix' + classe + '"'
       + ' ' + attribut + '="' + esc(bouteille.id) + '">'
       + '<span class="choix-ligne">'
       + '<span class="choix-titre">' + esc(bouteille.code) + '</span>'
-      + chipStatut(bouteille.type)
+      + chipStatut(bouteille.type) + chipMelange
       + '</span>'
       + '<span class="choix-mono">' + esc(bouteille.fluide) + ' · '
       + esc(fmtNombre(bouteille.masseNetteKg, 1)) + ' / '
@@ -1360,9 +1383,22 @@ export async function ouvrirWizard(ctx, options = {}) {
       }
     }
 
+    // R5 : localisation de la fuite (comme controle-form.js), visible
+    // uniquement quand statutControle === 'FUITE'.
+    let blocLocalisation = '';
+    if (etat.statutControle === 'FUITE') {
+      blocLocalisation = '<div class="wizard-bloc champ">'
+        + '<label for="wizard-localisation-fuite">Localisation de la fuite</label>'
+        + '<input type="text" id="wizard-localisation-fuite" '
+        + 'value="' + esc(etat.localisationFuite) + '" '
+        + 'placeholder="Ex. : raccord détendeur">'
+        + '</div>';
+    }
+
     corpsEl.innerHTML =
       '<div class="wizard-grille-choix wizard-grille-3">' + cartes + '</div>'
-      + blocDetecteur;
+      + blocDetecteur
+      + blocLocalisation;
 
     corpsEl.querySelectorAll('[data-controle]').forEach(function (bouton) {
       bouton.addEventListener('click', function () {
@@ -1370,6 +1406,7 @@ export async function ouvrirWizard(ctx, options = {}) {
         if (nouveau !== etat.statutControle) {
           etat.statutControle = nouveau;
           if (nouveau === 'SANS_OBJET') etat.detecteurId = null;
+          if (nouveau !== 'FUITE') etat.localisationFuite = '';
         }
         rendreEtape();
       });
@@ -1380,6 +1417,14 @@ export async function ouvrirWizard(ctx, options = {}) {
       selectDetecteur.addEventListener('change', function (evenement) {
         etat.detecteurId = evenement.target.value || null;
         rendreEtape(); // rafraîchit le bandeau « étalonnage expiré »
+      });
+    }
+
+    const champLocalisation = corpsEl.querySelector('#wizard-localisation-fuite');
+    if (champLocalisation) {
+      // SANS re-rendu (le focus serait perdu à chaque frappe).
+      champLocalisation.addEventListener('input', function (evenement) {
+        etat.localisationFuite = evenement.target.value;
       });
     }
   }
@@ -1577,10 +1622,23 @@ export async function ouvrirWizard(ctx, options = {}) {
           peseeAvantKg: nombreFr(etat.peseeAvant),
           peseeApresKg: nombreFr(etat.peseeApres),
           causeMouvement: texteCause(), // IM-14 (+ nature IM-15)
-          controle: {
-            statutControle: etat.statutControle,
-            detecteurId: etat.detecteurId
-          },
+          // R5 : localisation de la fuite (propagée jusqu'au contrôle
+          // enregistré à la validation — CR-3 — puis au CERFA cadre 10).
+          // La clé localisationFuite n'est émise QUE renseignée : l'objet
+          // controle entre dans l'empreinte SHA-256 du registre et sa
+          // forme doit rester identique au round-trip SQL (une clé à null
+          // casserait la chaîne à l'échange démo ↔ local).
+          controle: (etat.statutControle === 'FUITE'
+            && etat.localisationFuite.trim()
+            ? {
+              statutControle: etat.statutControle,
+              detecteurId: etat.detecteurId,
+              localisationFuite: etat.localisationFuite.trim()
+            }
+            : {
+              statutControle: etat.statutControle,
+              detecteurId: etat.detecteurId
+            }),
           signatureDataUrl: signature.dataURL(),
           technicien: technicien ? technicien.prenom + ' ' + technicien.nom : null
         });

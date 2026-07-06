@@ -249,6 +249,9 @@ CREATE TABLE IF NOT EXISTS bouteilles (
     date_limite_garde       TEXT,                    -- ISO — limite de garde du fluide récupéré (1 an, IM-7)
     observation             TEXT,
     date_creation           TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    -- composition_melange (TEXT, JSON) : trace des versements croisés dans
+    -- une bouteille RECUPERATION marquée etat_fluide='MELANGE' (R2) — colonne
+    -- posée par la migration 7, PAS dans le socle v1 ici (cf. server/migrations.js).
 );
 
 
@@ -304,6 +307,9 @@ CREATE TABLE IF NOT EXISTS mouvements (
     statut_controle_declare TEXT
         CHECK (statut_controle_declare IS NULL OR statut_controle_declare IN ('SANS_OBJET','CONFORME','FUITE')),
     detecteur_declare_id    TEXT REFERENCES outillage(id),
+    -- R5 : localisation de la fuite déclarée à l'étape 5 du wizard —
+    -- colonne posée par la migration 8 (server/migrations.js), PAS ici
+    -- (schema.sql = socle v1 figé, cf. remarque ci-dessus pour controles).
     controle_lie_id         TEXT REFERENCES controles(id),     -- le VRAI contrôle créé à la validation (CR-3)
     signature_data_url      TEXT,                    -- signature manuscrite (data URL canvas — hors empreinte)
     cerfa_numero            TEXT,                    -- n° de fiche CERFA (= numero, sauf TRANSFERT : NULL — IM-12)
@@ -375,6 +381,7 @@ WHEN OLD.statut = 'VALIDE'
           AND NEW.validateur_id         IS OLD.validateur_id
           AND NEW.statut_controle_declare IS OLD.statut_controle_declare
           AND NEW.detecteur_declare_id  IS OLD.detecteur_declare_id
+          AND NEW.localisation_fuite_declaree IS OLD.localisation_fuite_declaree
           AND NEW.controle_lie_id       IS OLD.controle_lie_id
           AND NEW.signature_data_url    IS OLD.signature_data_url
           AND NEW.cerfa_numero          IS OLD.cerfa_numero
@@ -421,8 +428,12 @@ CREATE TABLE IF NOT EXISTS controles (
         CHECK (partie_concernee IS NULL OR partie_concernee IN ('RACCORD','VANNE','BRASURE','ECHANGEUR','AUTRE')),
     gravite                     TEXT,
     reparation_immediate        INTEGER CHECK (reparation_immediate IS NULL OR reparation_immediate IN (0,1)),
-    date_reparation_prevue      TEXT,                -- ISO
+    date_reparation_prevue      TEXT,                -- ISO — échéance ANNONCÉE au moment de la fuite
     controle_apres_reparation_id TEXT REFERENCES controles(id),  -- contrôle après réparation (lié)
+    -- R3/R4 : réparation TRACÉE a posteriori sur CE contrôle FUITE (date
+    -- réelle, nature, réparateur) — colonnes posées par la migration 8
+    -- (server/migrations.js), PAS ici : schema.sql est le socle v1 figé,
+    -- toute évolution ultérieure passe par le registre de migrations.
     date_prochain_controle      TEXT,                -- ISO — prochain contrôle calculé
     operateur                   TEXT,                -- ⚿ nom en toutes lettres (contrat)
     operateur_id                TEXT REFERENCES personnel(id),   -- rapprochement optionnel

@@ -27,6 +27,14 @@
  *       (créée avant la migration 003) reçoit un code public unique — la
  *       colonne posée par la migration 003 restait vide, rien ne la
  *       remplissait encore côté application.
+ *   7 — cycle du fluide (lot F-Gas R1/R2/R6) : bouteilles.composition_melange
+ *       (JSON, trace des versements croisés dans une bouteille MELANGE, R2).
+ *   8 — cycle de la fuite (lot F-Gas R3/R4/R5) : controles.date_reparation /
+ *       nature_reparation / reparateur / reparateur_id — réparation TRACÉE
+ *       a posteriori sur un contrôle FUITE (tracerReparation()) ;
+ *       mouvements.localisation_fuite_declaree — localisation de la fuite
+ *       déclarée à l'étape 5 du wizard (R5), même pattern que
+ *       statut_controle_declare/detecteur_declare_id.
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -170,6 +178,38 @@ const MIGRATIONS = {
         dejaPris.add(code);
         maj.run(code, id);
       }
+    }
+  },
+
+  7: {
+    nom: 'cycle_fluide_melange',
+    appliquer(db) {
+      // R2 : traçabilité des versements croisés dans une bouteille de
+      // RÉCUPÉRATION marquée etatFluide = 'MELANGE' (déjà admise par le
+      // CHECK du socle v1) — un versement par ligne { fluide, quantiteKg,
+      // date, mouvementId }, JSON nullable (NULL = pas mélangée / historique
+      // non tracé pour les bouteilles préexistantes).
+      db.exec('ALTER TABLE bouteilles ADD COLUMN composition_melange TEXT;');
+    }
+  },
+
+  8: {
+    nom: 'cycle_fluide_reparation',
+    appliquer(db) {
+      // R3/R4 : réparation TRACÉE a posteriori sur un contrôle FUITE —
+      // distincte de date_reparation_prevue (échéance ANNONCÉE au moment
+      // de la fuite, colonne déjà posée par le socle v1). Pose sur le
+      // contrôle lui-même (pattern operateur/operateur_id déjà en place) :
+      // une fuite = une réparation tracée, éventuellement mise à jour.
+      db.exec('ALTER TABLE controles ADD COLUMN date_reparation TEXT;');
+      db.exec('ALTER TABLE controles ADD COLUMN nature_reparation TEXT;');
+      db.exec('ALTER TABLE controles ADD COLUMN reparateur TEXT;');
+      db.exec(`ALTER TABLE controles
+                 ADD COLUMN reparateur_id TEXT REFERENCES personnel(id);`);
+      // R5 : localisation de la fuite DÉCLARÉE dans le mouvement (étape 5
+      // du wizard) — même pattern que statut_controle_declare /
+      // detecteur_declare_id, propagée au VRAI contrôle par CR-3.
+      db.exec('ALTER TABLE mouvements ADD COLUMN localisation_fuite_declaree TEXT;');
     }
   }
 };

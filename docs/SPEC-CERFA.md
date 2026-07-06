@@ -82,6 +82,20 @@ Fréquence (une seule case, croisement seuil × détection permanente) :
 | `Fuite_Loca_1..3` | localisations des fuites (3 lignes) |
 | `Case_Rep_Fuite1..3_realisee` / `Case_Rep_Fuite1..3_AFaire` | réparation faite / à faire par ligne |
 
+Ventilation v8 (lot F-Gas R5, 07/2026) : le modèle actuel ne gère qu'UNE
+fuite par contrôle (`controle.localisationFuite`, une seule valeur) → seule
+`Fuite_Loca_1` est renseignée (`Fuite_Loca_2/3` restent vides). La
+localisation est saisie à l'étape 5 du wizard (comme `controle-form.js`),
+propagée dans `mouvement.controle.localisationFuite` jusqu'au VRAI contrôle
+enregistré par CR-3 (`enregistrerControle`), puis lue par le générateur
+(`assemblerContexte`, source `mouvement` ou `controle`).
+
+R3/R4 (réparation tracée, hors CERFA à ce stade) : `Case_Rep_Fuite1_realisee`
+reflète `controle.reparationImmediate` (déclaratif au moment du contrôle),
+PAS `controle.dateReparation` (réparation tracée a posteriori par
+`store.tracerReparation`, qui ne modifie ni ce contrôle ni le CERFA déjà
+émis — un nouveau contrôle CONFORME de suivi produit son propre CERFA).
+
 ### Cadre 11 — Quantités de fluide (10 champs texte)
 | `11_Denom` | dénomination du fluide |
 | `11_Quantite` | charge totale de l'équipement (kg) |
@@ -95,8 +109,13 @@ Fréquence (une seule case, croisement seuil × détection permanente) :
 | `11_BSFF` | n° du BSFF si déchet |
 
 Ventilation v8 : selon type de mouvement et `etatFluide` de la bouteille source
-(VIERGE → QA, RECYCLE → QB, REGENERE → QC) ; récupération → QD (déchet) ou QE (réutilisation)
-selon la décision de la chaîne déchets (cf. SPEC-V8 §5.8), QDE = somme.
+(VIERGE → QA, RECYCLE → QB, REGENERE → QC) ; RECUPERE (réutilisable) et MELANGE
+en charge → QE (**jamais QA** : ce n'est pas du fluide vierge — correction R6,
+07/2026) ; récupération (destination) → QD (déchet) ou QE (réutilisation) selon
+la décision de la chaîne déchets (cf. SPEC-V8 §5.8), QDE = somme. Une bouteille
+MELANGE (R2, `etatFluide='MELANGE'`) ne coche jamais QA, source ou destination,
+et porte la mention « (mélange) » sur `11_Contenant_ID` + une ligne dédiée au
+cadre 14 (observations).
 
 ### Cadre 12 — Transport (4 cases + 2 textes) — NON GÉRÉ EN v7, à couvrir en Phase D
 | `Case_12_UN1078` | fluide frigorigène NON inflammable — « UN 1078, gaz frigorifique NSA, 2.2 » |

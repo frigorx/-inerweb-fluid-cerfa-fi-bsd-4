@@ -16,7 +16,10 @@ const LIBELLES_ETAT_FLUIDE = {
   VIERGE:   'Vierge',
   RECUPERE: 'Récupéré',
   RECYCLE:  'Recyclé',
-  REGENERE: 'Régénéré'
+  REGENERE: 'Régénéré',
+  // R2 : bouteille de récupération au contenu probablement mélangé
+  // (croisement de fluides autorisé uniquement vers elle).
+  MELANGE:  'Mélange (contenu incertain)'
 };
 
 /* ============================================================
@@ -96,12 +99,24 @@ export async function ouvrirFormBouteille(ctx, bouteilleId = null) {
     bouteille ? bouteille.fluide : (fluides[0] ? fluides[0].code : '')
   );
 
-  const optionsEtat = optionsSelect([
-    { valeur: 'VIERGE', libelle: 'Vierge' },
-    { valeur: 'RECUPERE', libelle: 'Récupéré' },
-    { valeur: 'RECYCLE', libelle: 'Recyclé' },
-    { valeur: 'REGENERE', libelle: 'Régénéré' }
-  ], bouteille ? bouteille.etatFluide : 'VIERGE');
+  // R2 : MELANGE réservé aux bouteilles de type RÉCUPÉRATION (garde-fou
+  // store, cf. createBouteille) — l'option n'apparaît que pour ce type,
+  // et le select est reconstruit au changement de type (voir plus bas).
+  function optionsEtatPour(type, courant) {
+    const options = [
+      { valeur: 'VIERGE', libelle: 'Vierge' },
+      { valeur: 'RECUPERE', libelle: 'Récupéré' },
+      { valeur: 'RECYCLE', libelle: 'Recyclé' },
+      { valeur: 'REGENERE', libelle: 'Régénéré' }
+    ];
+    if (type === 'RECUPERATION') {
+      options.push({ valeur: 'MELANGE', libelle: LIBELLES_ETAT_FLUIDE.MELANGE });
+    }
+    return optionsSelect(options, courant);
+  }
+  const typeInitial = bouteille ? bouteille.type : 'NEUVE';
+  const optionsEtat = optionsEtatPour(typeInitial,
+    bouteille ? bouteille.etatFluide : 'VIERGE');
 
   const contenuHtml = '<form id="form-bouteille" class="formulaire" novalidate>'
     + '<div class="bandeau-erreur" hidden></div>'
@@ -128,6 +143,12 @@ export async function ouvrirFormBouteille(ctx, bouteilleId = null) {
     + '<select id="bf-etat" name="etatFluide">' + optionsEtat + '</select>'
     + '</div>'
     + '</div>'
+
+    + '<div class="chip chip-ambre" id="bf-mention-melange"'
+    + (typeInitial === 'RECUPERATION' && bouteille && bouteille.etatFluide === 'MELANGE'
+      ? '' : ' hidden')
+    + '>Contenu probablement mélangé : le fluide déclaré est le gaz'
+    + ' majoritaire, des versements d’autres fluides sont tracés sur la fiche.</div>'
 
     + '<div class="grille-form-2">'
     + '<div class="champ">'
@@ -189,6 +210,23 @@ export async function ouvrirFormBouteille(ctx, bouteilleId = null) {
   });
 
   const formulaire = racine.querySelector('#form-bouteille');
+  const selectType = racine.querySelector('#bf-type');
+  const selectEtat = racine.querySelector('#bf-etat');
+  const mentionMelange = racine.querySelector('#bf-mention-melange');
+
+  // R2 : le select « État du fluide » se reconstruit au changement de
+  // type (l'option MELANGE n'existe que pour RÉCUPÉRATION) ; la mention
+  // ambre suit l'état sélectionné, quel que soit le déclencheur.
+  function synchroniserMentionMelange() {
+    mentionMelange.hidden = selectEtat.value !== 'MELANGE';
+  }
+  selectType.addEventListener('change', function () {
+    const courant = selectEtat.value;
+    selectEtat.innerHTML = optionsEtatPour(selectType.value,
+      selectType.value === 'RECUPERATION' ? courant : 'VIERGE');
+    synchroniserMentionMelange();
+  });
+  selectEtat.addEventListener('change', synchroniserMentionMelange);
 
   // Pièces jointes (ex. photo de pesée, certificat) : uniquement en
   // édition, la bouteille existant déjà avec un identifiant.

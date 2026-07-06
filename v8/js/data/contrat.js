@@ -80,7 +80,7 @@ export const ROLES_VALIDEURS = ['REFERENT', 'ENSEIGNANT', 'ADMIN'];
 export const PROPRIETES_CONTRAT = ['modeLabel', 'registreAltere'];
 
 /**
- * Les 64 méthodes du contrat, dans l'ordre du cycle de vie.
+ * Les 65 méthodes du contrat, dans l'ordre du cycle de vie.
  * genre : 'abonnement' | 'initialisation' | 'lecture' | 'mutation'.
  * La sémantique fine (formes de retour, garde-fous, effets) est
  * décrite ici en une ligne et VÉRIFIÉE dans test-contrat.mjs.
@@ -146,9 +146,11 @@ export const METHODES_CONTRAT = {
 
   // --- contrôles d'étanchéité -----------------------------------
   createControle: { genre: 'mutation',
-    description: 'Crée un contrôle ; FUITE → machine en statut FUITE ; CONFORME → retour EN_SERVICE si elle était FUITE/CONTROLE_DU.' },
+    description: 'Crée un contrôle ; FUITE → machine en statut FUITE ; CONFORME → retour EN_SERVICE depuis FUITE seulement si la réparation est TRACÉE et que le contrôle date du jour de la réparation ou d’après (R4), ou depuis CONTROLE_DU sans retard.' },
   calculerProchainControle: { genre: 'lecture',
     description: 'Prochain contrôle selon charge×PRP et détection permanente (logique unique du cadre 7 CERFA) ; null si hors périmètre.' },
+  tracerReparation: { genre: 'mutation',
+    description: 'Trace a posteriori la réparation d’un contrôle FUITE (date, nature, réparateur) ; Error si contrôle introuvable, si son résultat n’est pas FUITE, ou si un champ obligatoire est vide. Ne change PAS machine.statut (R4 : le retour EN_SERVICE exige un contrôle CONFORME postérieur).' },
 
   // --- registre des mouvements (cœur WORM) ----------------------
   creerMouvement: { genre: 'mutation',

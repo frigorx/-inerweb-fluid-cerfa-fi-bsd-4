@@ -217,8 +217,10 @@ verifier('contrôle : résultat CONFORME → Case_Fuite_Non',
   k.coche('Case_Fuite_Non') && !k.coche('Case_Fuite_Oui'));
 verifier('contrôle : équipement M1 renseigné',
   k.texte('Equipement_ID').includes('M1'));
-verifier('contrôle : opérateur = Frédéric Henninot (titulaire)',
-  k.texte('Sign_Operateur_Nom') === 'Frédéric Henninot' &&
+// Données démo anonymisées : l'opérateur de ctl-003 est Marc Delorme
+// (REFERENT titulaire d'une attestation d'aptitude).
+verifier('contrôle : opérateur = Marc Delorme (titulaire)',
+  k.texte('Sign_Operateur_Nom') === 'Marc Delorme' &&
   k.texte('Sign_Operateur_Qualite') === 'Titulaire attestation d’aptitude');
 verifier('contrôle : observations décrivent le contrôle',
   k.texte('14_Observations').toLowerCase().includes('périodique'));
@@ -416,6 +418,75 @@ for (const { type, caseAttendue } of CAS_IM15) {
         .includes('Cause : Rinçage du circuit à l’azote'));
   }
 }
+
+// ============================================================
+// 4 quater. R6 — cadre 11 : ventilation selon le VRAI etatFluide de
+//    la bouteille SOURCE d'une charge. RECUPERE réutilisable et
+//    MELANGE ne cochent JAMAIS QA (constat d'audit corrigé).
+// ============================================================
+const machineR6 = await store.createMachine({
+  designation: 'Machine du cadre 11 (R6)', fluide: 'R-410A',
+  chargeNominaleKg: 5, operateur: 'per-fh'
+});
+
+// --- RECUPERE réutilisable en source de charge → QE (jamais QA) --------
+const bouteilleRecupereReutilisable = await store.createBouteille({
+  type: 'RECUPERATION', fluide: 'R-410A', etatFluide: 'RECUPERE',
+  tareKg: 5, masseBruteKg: 8, contenanceMaxKg: 10, operateur: 'per-fh'
+});
+await store.deciderFluideRecupere(
+  bouteilleRecupereReutilisable.id, 'REUTILISABLE', 'per-fh');
+const chargeDepuisRecupere = await store.creerMouvement({
+  type: 'CHARGE_APPOINT', mode: 'FORMATION', machineId: machineR6.id,
+  bouteilleSrcId: bouteilleRecupereReutilisable.id,
+  peseeAvantKg: 3, peseeApresKg: 2.5, technicien: 'Sophie Bianchi'
+});
+await store.soumettreMouvement(chargeDepuisRecupere.id);
+await store.validerMouvement(chargeDepuisRecupere.id, 'per-fh');
+const pdfRecupere = await genererCerfaPdf(store,
+  { source: 'mouvement', id: chargeDepuisRecupere.id });
+const rR6 = await relire(pdfRecupere.octets);
+verifier('R6 : charge depuis une bouteille RECUPERE réutilisable → 11_QA VIDE',
+  rR6.texte('11_QA') === '');
+verifier('R6 : charge depuis une bouteille RECUPERE réutilisable → 11_QE = 0,50',
+  rR6.texte('11_QE') === '0,50');
+
+// --- MELANGE en source de charge → QE + mention, jamais QA --------------
+// Le store BLOQUE désormais la charge depuis une bouteille MELANGE (R2 :
+// contenu incertain, jamais vers une installation) — le générateur doit
+// POURTANT ventiler correctement une telle écriture si elle existe dans
+// un registre HISTORIQUE (antérieur au blocage, ou importé) : on injecte
+// donc un mouvement VALIDE fictif sans passer par validerMouvement.
+const bouteilleMelangeR6 = await store.createBouteille({
+  type: 'RECUPERATION', fluide: 'R-410A', etatFluide: 'MELANGE',
+  tareKg: 5, masseBruteKg: 9, contenanceMaxKg: 10, operateur: 'per-fh'
+});
+const chargeDepuisMelange = {
+  id: 'mvt-r6-melange',
+  numero: 'TEST-R6-MELANGE',
+  date: '2026-07-01',
+  mode: 'FORMATION',
+  type: 'CHARGE_APPOINT',
+  machineId: machineR6.id,
+  fluide: 'R-410A',
+  quantiteKg: 0.3,
+  peseeAvantKg: 4,
+  peseeApresKg: 3.7,
+  bouteilleSrcId: bouteilleMelangeR6.id,
+  technicien: 'Sophie Bianchi',
+  statut: 'VALIDE'
+};
+const pdfMelange = await genererCerfaPdf(storeAvecMouvement(chargeDepuisMelange),
+  { source: 'mouvement', id: chargeDepuisMelange.id });
+const mR6 = await relire(pdfMelange.octets);
+verifier('R6 : charge depuis une bouteille MELANGE → 11_QA VIDE',
+  mR6.texte('11_QA') === '');
+verifier('R6 : charge depuis une bouteille MELANGE → 11_QE = 0,30',
+  mR6.texte('11_QE') === '0,30');
+verifier('R6 : mention du mélange sur 11_Contenant_ID',
+  mR6.texte('11_Contenant_ID').includes('(mélange)'));
+verifier('R6 : mention du mélange reportée au cadre 14 (observations)',
+  mR6.texte('14_Observations').toLowerCase().includes('mélang'));
 
 // ============================================================
 // 5. Couverture : les 72 champs officiels de SPEC-CERFA sont

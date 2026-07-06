@@ -2,6 +2,55 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### ⚗️ Lot métier F-Gas — audit des gestes professionnels + règles de l'expert (06/07)
+**Audit métier complet demandé par Franck** (cheminements des gestes pro, incompatibilités,
+cycle fuite, conformité CERFA 72 champs) : 4 lentilles + vérification adversariale de chaque
+constat → **12 constats CONFIRMÉS (4 bloquants), 0 rejeté**, dont les 2 intuitions de l'expert
+(transfert de récupéré vers bouteille vierge non bloqué → CERFA « vierge » faux ; emplacement
+de fuite absent du parcours wizard). Corrigés selon les **règles métier arrêtées par Franck** :
+- **R1 — Pas de mélange** : transfert de fluide non-vierge vers une bouteille neuve/vierge
+  BLOQUÉ (les deux stores, message : « Transfert interdit : fluide non-vierge vers une bouteille
+  neuve/vierge. Utilisez une bouteille de récupération. ») ; vierge→vierge et
+  récupéré→récupération même fluide restent permis.
+- **R2 — Bouteille de récupération « MÉLANGE »** (exception voulue) : état `MELANGE` enfin câblé
+  (existait au CHECK SQL, jamais posé) ; migration 7 (`bouteilles.composition_melange` JSON) ;
+  chaque versement tracé (fluide, quantité, date, mouvement), **étiquette = gaz majoritaire**
+  recalculée (contenu initial amorcé dans le calcul — constat de revue corrigé), croisement de
+  fluide relâché UNIQUEMENT vers une bouteille MÉLANGE ; chip « Contenu probablement mélangé »
+  dans les vues ; **charger une machine depuis une bouteille MÉLANGE : bloqué** (revue) ;
+  contre-écriture d'un versement : composition et étiquette restaurées (revue).
+- **R3 — Fuite sans blocage aveugle** : déclarer une fuite sans réparer reste possible (signalée,
+  machine FUITE) ; **un complément de gaz sur fuite ouverte est bloqué** avec un message qui dit
+  quoi faire (tracer la réparation puis re-contrôler) ; après réparation tracée, la recharge
+  redevient possible. Nouvelle méthode de contrat **`tracerReparation`** (64→65 méthodes, les
+  deux stores) + migration 8 (date/nature/réparateur sur `controles`,
+  `mouvements.localisation_fuite_declaree`, trigger WORM étendu) + modale `reparation-form.js`.
+- **R4 — Clôture stricte** : l'alerte « Fuite non résolue » ne se ferme QUE sur réparation tracée
+  + contrôle CONFORME postérieur (à date égale : réputé postérieur — cas « même jour » corrigé
+  en revue) ; un CONFORME de complaisance sans réparation ne referme plus rien (revue) ;
+  échéance « contrôle de suivi à faire » à 30 jours après réparation.
+- **R5 — Emplacement de fuite** : champ dans le wizard (étape 5, si FUITE), propagé au contrôle
+  enregistré et au CERFA cadre 10.
+- **R6 — CERFA cadre 11** : le fluide RÉCUPÉRÉ/MÉLANGE ne coche plus jamais QA « vierge » ;
+  mention « (mélange) » + observation cadre 14 ; `docs/SPEC-CERFA.md` à jour.
+- **Cohérences** : bilan annuel + stats n'assimilent plus les TRANSFERTS à des charges (alignés
+  sur la balance matière, contre-écritures comprises) ; une contre-écriture ne fait plus
+  réapparaître de fluide dans une bouteille DECHET/RETOURNEE (mais reste permise sur VIDE /
+  A_RETOURNER automatiques — revue) ; plus aucun mouvement possible sur machine DÉMANTELÉE même
+  hors interface ; `updateBouteille` ne peut plus poser/retirer MÉLANGE à tort (revue).
+- **Trouvés et corrigés au passage** : bug de hachage (clé `localisationFuite` ajoutée
+  inconditionnellement cassait `verifierChaineHash` sur les anciens mouvements) ; **faux
+  « registre altéré » sur un export démo importé en mode local** (forme canonique du contrôle,
+  échange démo↔local éprouvé dans les deux sens) ; l'échec préexistant de `test-generateur`
+  (« Frédéric Henninot », résidu CF-11) réparé.
+- Revue adversariale : 23 constats, **13 BLOQUANT/IMPORTANT tous corrigés**. Tests : contrat
+  local ET démo **240/0** (220 → +20 assertions métier), CERFA **97/0**, migrations 64/0,
+  hash 18/18, conformité 56/0, toutes suites vertes. **Vérifié navigateur** (base réelle) :
+  transfert récupéré→neuve bloqué mot pour mot, fuite + emplacement, complément bloqué sur
+  fuite ouverte, réparation tracée → EN_SERVICE → recharge débloquée.
+- Dettes notées (non traitées) : provenance/détenteur du fluide récupéré, signature détenteur,
+  cadre 3 nominale vs réelle, classement QE systématique au moment de la récupération.
+
 ### 🔎 Récupération : clarification de l'affichage + proposition « Compléter la charge » (05/07)
 Signalement terrain (Franck) : après une récupération, la ligne du mouvement affiche « −0,60 kg »
 en rouge → impression que la bouteille de récupération est DÉBITÉE. **Diagnostic prouvé sur la

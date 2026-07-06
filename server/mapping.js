@@ -180,12 +180,16 @@ const TABLES = {
       decisionPar: 'decision_par',
       decisionDate: 'date_decision',
       numBsff: 'numero_bsff',
-      dateLimiteGarde: 'date_limite_garde'
+      dateLimiteGarde: 'date_limite_garde',
+      // R2 (migration 7) : versements croisés dans une bouteille MELANGE —
+      // [{ fluide, quantiteKg, date, mouvementId }, …], JSON nullable.
+      compositionMelange: 'composition_melange'
     },
     champsLectureSeule: {
       // Colonne GENERATED ALWAYS (masse_brute_kg − tare_kg) : jamais écrite.
       masseNetteKg: 'masse_nette_kg'
     },
+    tableauxJson: ['compositionMelange'],
     sqlSeulement: ['etablissement_id', 'qr_interne', 'pese_par',
       'numero_bl_facture', 'date_retour_fournisseur', 'date_epreuve',
       'observation', 'date_creation', 'code_public']
@@ -234,7 +238,8 @@ const TABLES = {
       'quantite_chargee_kg', 'quantite_recuperee_kg', 'quantite_cedee_kg',
       'quantite_retournee_fournisseur_kg', 'quantite_detruite_regeneree_kg',
       'origine_fluide', 'destination_fluide', 'technicien_id',
-      'statut_controle_declare', 'detecteur_declare_id', 'controle_lie_id',
+      'statut_controle_declare', 'detecteur_declare_id',
+      'localisation_fuite_declaree', 'controle_lie_id',
       'bsff_id', 'observation', 'date_creation']
   },
 
@@ -250,6 +255,16 @@ const TABLES = {
       detecteurId: 'detecteur_id',
       localisationFuite: 'localisation_fuite',
       reparationImmediate: 'reparation_immediate',
+      // R4 : échéance ANNONCÉE au moment de la fuite (posée par
+      // enregistrerControle) — lisible côté front pour calculer/afficher
+      // le délai de 30 jours du contrôle de suivi après réparation tracée.
+      dateReparationPrevue: 'date_reparation_prevue',
+      // R3/R4 (migration 8) : réparation TRACÉE a posteriori (tracerReparation),
+      // distincte de dateReparationPrevue ci-dessus (échéance annoncée).
+      dateReparation: 'date_reparation',
+      natureReparation: 'nature_reparation',
+      reparateur: 'reparateur',
+      reparateurId: 'reparateur_id',
       operateur: 'operateur',
       operateurId: 'operateur_id',
       mouvementId: 'mouvement_id',
@@ -259,7 +274,7 @@ const TABLES = {
     frontSeulement: ['enRetard'],
     sqlSeulement: ['etablissement_id', 'charge_kg', 'prg_utilise', 'tco2eq',
       'methode_detail', 'partie_concernee', 'gravite',
-      'date_reparation_prevue', 'controle_apres_reparation_id',
+      'controle_apres_reparation_id',
       'cerfa_numero', 'observation', 'date_creation']
   },
 

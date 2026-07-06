@@ -219,7 +219,7 @@ await verifierRejet('rejet d’une seconde annulation du même original',
   'déjà annulée');
 
 // --- Contrôle d'étanchéité : effets sur la machine ------------
-await store.createControle({
+const controleFuiteM3 = await store.createControle({
   machineId: 'M3',
   resultat: 'FUITE',
   typeControle: 'NON_PERIODIQUE',
@@ -237,12 +237,21 @@ verifier('getStats / getAlertes reflètent la nouvelle fuite (2 fuites)',
   statsFuite.nbFuites === 2 &&
   alertesFuite.filter((a) => a.titre === 'Fuite non résolue').length === 2);
 
+// R4 : le retour EN_SERVICE exige une réparation TRACÉE, postérieure à
+// laquelle le contrôle CONFORME doit se situer (durcissement du lot
+// F-Gas R3/R4 — avant, n'importe quel CONFORME suffisait).
+await store.tracerReparation(controleFuiteM3.id, {
+  dateReparation: '2026-07-02',
+  natureReparation: 'Resserrage raccord',
+  reparateur: 'Marc Delorme'
+});
 await store.createControle({
   machineId: 'M3',
   resultat: 'CONFORME',
   typeControle: 'NON_PERIODIQUE',
   methode: 'DIRECTE',
   operateur: 'Marc Delorme',
+  date: '2026-07-03',
   prochainControle: '2027-07-03'
 });
 machines = await store.getMachines();

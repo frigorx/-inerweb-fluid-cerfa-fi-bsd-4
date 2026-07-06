@@ -71,6 +71,7 @@ const MODALES = [
   { fichier: 'machine-form', exports: ['ouvrirFormMachine'] },
   { fichier: 'bouteille-form', exports: ['ouvrirFormBouteille', 'ouvrirPesee'] },
   { fichier: 'controle-form', exports: ['ouvrirFormControle'] },
+  { fichier: 'reparation-form', exports: ['ouvrirFormReparation'] },
   { fichier: 'audit-form', exports: ['ouvrirFormAudit', 'ouvrirFormNonConformite', 'ouvrirFormSolderNonConformite'] },
   { fichier: 'bsff-form', exports: ['ouvrirFormBsff'] },
   { fichier: 'etablissement-form', exports: ['ouvrirFormEtablissement'] },

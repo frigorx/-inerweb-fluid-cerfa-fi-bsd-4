@@ -93,6 +93,18 @@ const MSG_ECRITURE_FIGEE =
   'Écriture validée : correction uniquement par contre-écriture.';
 
 /**
+ * R3c : message métier UNIQUE opposé au complément de gaz (CHARGE_APPOINT)
+ * sur une machine à fuite OUVERTE — repris MOT POUR MOT du DemoStore.
+ */
+const MSG_FUITE_OUVERTE =
+  'Complément de gaz impossible : cette machine a une fuite déclarée non ' +
+  'réparée. Tracez la réparation (date, nature, réparateur) puis déclarez ' +
+  'un nouveau contrôle d’étanchéité avant de recharger.';
+
+/** R4 : délai réglementaire par défaut du contrôle de suivi après réparation. */
+const DELAI_CONTROLE_SUIVI_JOURS = 30;
+
+/**
  * Formate un nombre en fr-FR avec un nombre fixe de décimales (« 4,20 »).
  * CLONE EXACT de v8/js/core/utils.js:fmtNombre : les messages d'erreur du
  * registre (débordement, surcharge, stock insuffisant) doivent être
@@ -184,6 +196,7 @@ const ROLES_MUTATION = {
   updateBouteille: OPERATEUR,
   peserBouteille: OPERATEUR,
   createControle: OPERATEUR,
+  tracerReparation: OPERATEUR,
   createPersonne: OPERATEUR,
   updatePersonne: OPERATEUR,
   createOutil: OPERATEUR,
@@ -481,13 +494,31 @@ const HANDLERS = {
       .map((ligne) => mapping.versFront('machines', ligne));
     for (const m of machines) {
       if (m.statut === 'FUITE') {
-        alertes.push({
-          id: `alr-fuite-${m.id}`,
-          niveau: 'CRITIQUE',
-          titre: 'Fuite non résolue',
-          detail: `${m.designation} · recontrôle ${fmtDate(m.prochainControle)}`,
-          cible: { vue: 'machines', id: m.id }
-        });
+        // R4 : distinguer fuite OUVERTE (CRITIQUE) de fuite RÉPARÉE en
+        // attente de contrôle de suivi (IMPORTANT, échéance 30 jours).
+        const statutFuite = estFuiteOuverte(controlesDeLaMachine(m.id));
+        // R4 : l'alerte de SUIVI n'existe que si une réparation est
+        // TRACÉE — sans elle, la fuite reste « non résolue » (jamais de
+        // dates nulles affichées).
+        if (statutFuite.ouverte || !statutFuite.dateReparation) {
+          alertes.push({
+            id: `alr-fuite-${m.id}`,
+            niveau: 'CRITIQUE',
+            titre: 'Fuite non résolue',
+            detail: `${m.designation} · réparation à tracer`,
+            cible: { vue: 'machines', id: m.id }
+          });
+        } else {
+          alertes.push({
+            id: `alr-fuite-${m.id}`,
+            niveau: 'IMPORTANT',
+            titre: 'Contrôle de suivi à faire',
+            detail: `${m.designation} · réparée le ` +
+              `${fmtDate(statutFuite.dateReparation)} · à recontrôler avant ` +
+              `${fmtDate(statutFuite.echeanceControleSuivi)}`,
+            cible: { vue: 'machines', id: m.id }
+          });
+        }
       } else if (m.statut !== 'DEMANTELEE' && m.statut !== 'ARRETEE' &&
                  m.prochainControle && m.prochainControle < jour) {
         alertes.push({
@@ -1394,6 +1425,13 @@ const HANDLERS = {
     if (d.type !== 'NEUVE' && d.type !== 'RECUPERATION') {
       throw new Error('Type de bouteille obligatoire : NEUVE ou RECUPERATION.');
     }
+    // R2 : etatFluide MELANGE réservé aux bouteilles de RÉCUPÉRATION
+    // (bouteille étiquetée au gaz majoritaire, croisement de fluides
+    // relâché UNIQUEMENT vers elle — cf. verserDansBouteille).
+    if (d.etatFluide === 'MELANGE' && d.type !== 'RECUPERATION') {
+      throw new Error(
+        'L’état MÉLANGE est réservé aux bouteilles de type RÉCUPÉRATION.');
+    }
     const tare = Number(d.tareKg);
     const contenance = Number(d.contenanceMaxKg);
     if (!Number.isFinite(tare) || tare < 0) {
@@ -1434,6 +1472,16 @@ const HANDLERS = {
       datePesee: d.datePesee ?? aujourdHui(),
       statut: d.statut ?? 'EN_STOCK'
     };
+    // R2 : bouteille créée MELANGE → composition amorcée avec son contenu
+    // initial (l'étiquette courante), sans quoi le premier versement
+    // croisé, même minoritaire, volerait l'étiquette. La masse nette
+    // n'étant pas encore en base (colonne GÉNÉRÉE), on l'amorce avec la
+    // nette calculée ci-dessus — parité DemoStore.
+    if (bouteille.etatFluide === 'MELANGE') {
+      bouteille.masseNetteKg = nette;
+      amorcerCompositionMelange(bouteille, bouteille.dateEntree);
+      delete bouteille.masseNetteKg; // colonne générée : jamais écrite
+    }
     return muter(() => {
       const ligne = mapping.versSql('bouteilles', bouteille);
       ligne.etablissement_id = ID_ETABLISSEMENT;
@@ -1474,6 +1522,25 @@ const HANDLERS = {
       if (nette > contenance) {
         throw new Error('Masse nette supérieure à la contenance de la bouteille.');
       }
+    }
+    // R2 : bouteille DEVENUE MELANGE (ou MELANGE sans composition) →
+    // amorce avec le contenu courant (valeurs APRÈS patch), comme à la
+    // création — parité DemoStore.
+    const etatApres = d.etatFluide !== undefined
+      ? d.etatFluide : bouteille.etatFluide;
+    if (etatApres === 'MELANGE' &&
+        !(Array.isArray(bouteille.compositionMelange) &&
+          bouteille.compositionMelange.length > 0)) {
+      const bruteApres = d.masseBruteKg !== undefined
+        ? Number(d.masseBruteKg) : bouteille.masseBruteKg;
+      const tareApres = d.tareKg !== undefined
+        ? Number(d.tareKg) : bouteille.tareKg;
+      patch.compositionMelange = [{
+        fluide: d.fluide !== undefined ? d.fluide : bouteille.fluide,
+        quantiteKg: arrondir(bruteApres - tareApres),
+        date: aujourdHui(),
+        mouvementId: null
+      }];
     }
     return muter(() => {
       majParId('bouteilles', id, mapping.versSql('bouteilles', patch));
@@ -1528,6 +1595,51 @@ const HANDLERS = {
    */
   createControle(params) {
     return muter(() => enregistrerControle(params.donneesControle || {}));
+  },
+
+  /**
+   * R3/R4 : trace a posteriori la réparation d'un contrôle FUITE (date
+   * réelle, nature, réparateur). Ne touche PAS machine.statut : le retour
+   * EN_SERVICE (R4) exige un contrôle CONFORME postérieur, jamais la
+   * réparation seule. Ne crée PAS de nouveau contrôle. Reprend
+   * tracerReparation du DemoStore.
+   */
+  tracerReparation(params) {
+    const { controleId } = params;
+    const d = params.donneesReparation || {};
+    return muter(() => {
+      const ligne = db.get('SELECT * FROM controles WHERE id = ?', [controleId]);
+      if (!ligne) {
+        throw new Error(`Contrôle introuvable : ${controleId}.`);
+      }
+      const controle = mapping.versFront('controles', ligne);
+      if (controle.resultat !== 'FUITE') {
+        throw new Error(
+          'Seul un contrôle FUITE peut recevoir une réparation tracée.');
+      }
+      const dateReparation = String(d.dateReparation || '').trim();
+      const natureReparation = String(d.natureReparation || '').trim();
+      const reparateur = String(d.reparateur || '').trim();
+      if (!dateReparation || !natureReparation || !reparateur) {
+        throw new Error(
+          'Réparation incomplète : date, nature et réparateur sont obligatoires.');
+      }
+      majParId('controles', controleId, {
+        date_reparation: dateReparation,
+        nature_reparation: natureReparation,
+        reparateur,
+        reparateur_id: d.reparateurId || null
+      });
+      journaliser(reparateur, 'TRACE_REPARATION', controle.machineLabel,
+        `Contrôle ${controleId} · ${natureReparation}`);
+      return {
+        ...controle,
+        dateReparation,
+        natureReparation,
+        reparateur,
+        reparateurId: d.reparateurId || null
+      };
+    });
   },
 
   /**
@@ -1713,6 +1825,9 @@ const HANDLERS = {
           methode: 'DIRECTE',
           resultat: declare.statutControle,
           detecteurId: declare.detecteurId ?? null,
+          // R5 : localisation de la fuite saisie à l'étape 5 du wizard,
+          // propagée jusqu'au contrôle enregistré (puis au CERFA cadre 10).
+          localisationFuite: declare.localisationFuite ?? null,
           operateur: mouvement.technicien ?? null,
           mouvementId: mouvement.id
         });
@@ -2562,6 +2677,15 @@ function reconstituerMouvement(ligneSql) {
       statutControle: ligneSql.statut_controle_declare,
       detecteurId: ligneSql.detecteur_declare_id ?? null
     };
+    // R5 : localisation de la fuite déclarée (étape 5 du wizard) — clé
+    // ajoutée SEULEMENT si elle a été fournie à la création (comme
+    // controleId ci-dessous), pour reproduire EXACTEMENT la forme hachée
+    // au scellement (JSON.stringify est sensible à la présence des clés,
+    // pas seulement à leur valeur — sinon la chaîne de hash divergerait
+    // entre l'écriture et sa relecture après passage par SQL).
+    if (ligneSql.localisation_fuite_declaree != null) {
+      controle.localisationFuite = ligneSql.localisation_fuite_declaree;
+    }
     if (ligneSql.controle_lie_id != null) {
       controle.controleId = ligneSql.controle_lie_id;
     }
@@ -2590,6 +2714,8 @@ function aplatirControle(mouvement) {
   return {
     statut_controle_declare: controle?.statutControle ?? null,
     detecteur_declare_id: controle?.detecteurId ?? null,
+    // R5 : localisation de la fuite déclarée (étape 5 du wizard).
+    localisation_fuite_declaree: controle?.localisationFuite ?? null,
     controle_lie_id: controle?.controleId ?? null
   };
 }
@@ -2766,7 +2892,92 @@ function mettreAJourStatutApresVariation(bouteille) {
   }
 }
 
-function verserDansBouteille(bouteille, quantite) {
+/**
+ * R2 : recalcule l'étiquette (fluide MAJORITAIRE) d'une bouteille MELANGE
+ * depuis sa composition tracée. À égalité parfaite, le premier fluide
+ * versé garde l'étiquette. Mutation VIVE — parité STRICTE avec le
+ * DemoStore (recalculerEtiquetteMelange).
+ */
+function recalculerEtiquetteMelange(bouteille) {
+  const versements = Array.isArray(bouteille.compositionMelange)
+    ? bouteille.compositionMelange : [];
+  const totaux = new Map();
+  for (const v of versements) {
+    totaux.set(v.fluide, arrondir((totaux.get(v.fluide) ?? 0) + v.quantiteKg));
+  }
+  let majoritaire = bouteille.fluide;
+  let max = -Infinity;
+  for (const [fluide, total] of totaux) {
+    if (total > max) { max = total; majoritaire = fluide; }
+  }
+  if (majoritaire !== bouteille.fluide) bouteille.fluide = majoritaire;
+}
+
+/**
+ * R2 : versement INITIAL de la composition tracée d'une bouteille MELANGE
+ * — le contenu déjà présent au moment où elle devient MELANGE, au fluide
+ * de son étiquette. Posée même à masse nulle (trace de l'étiquette
+ * d'origine). Parité STRICTE avec le DemoStore (amorcerCompositionMelange).
+ */
+function amorcerCompositionMelange(bouteille, dateAmorce) {
+  if (Array.isArray(bouteille.compositionMelange) &&
+      bouteille.compositionMelange.length > 0) {
+    return; // déjà tracée : jamais de double amorce
+  }
+  bouteille.compositionMelange = [{
+    fluide: bouteille.fluide,
+    quantiteKg: bouteille.masseNetteKg,
+    date: dateAmorce ?? aujourdHui(),
+    mouvementId: null
+  }];
+}
+
+/**
+ * R2 : ajoute un versement à la composition tracée d'une bouteille
+ * MELANGE, puis met à jour l'étiquette (fluide majoritaire) si le
+ * nouveau versement fait basculer la majorité. Mutation VIVE — parité
+ * STRICTE avec le DemoStore (tracerVersementMelange).
+ */
+function tracerVersementMelange(bouteille, fluideVerse, quantite, mouvementId) {
+  const versements = Array.isArray(bouteille.compositionMelange)
+    ? bouteille.compositionMelange.slice()
+    : [];
+  versements.push({
+    fluide: fluideVerse,
+    quantiteKg: quantite,
+    date: aujourdHui(),
+    mouvementId: mouvementId ?? null
+  });
+  bouteille.compositionMelange = versements;
+  recalculerEtiquetteMelange(bouteille);
+}
+
+/**
+ * R2 : retire de la composition tracée le versement issu du mouvement
+ * ANNULÉ par contre-écriture, puis recalcule l'étiquette majoritaire —
+ * le versement initial (mouvementId null) n'est jamais retiré.
+ * Mutation VIVE — parité STRICTE avec le DemoStore.
+ */
+function retirerVersementMelange(bouteille, mouvementId) {
+  if (!Array.isArray(bouteille.compositionMelange) || mouvementId == null) {
+    return;
+  }
+  bouteille.compositionMelange = bouteille.compositionMelange
+    .filter((v) => v.mouvementId !== mouvementId);
+  recalculerEtiquetteMelange(bouteille);
+}
+
+/**
+ * Verse `quantite` dans une bouteille. `fluideVerse` : fluide RÉELLEMENT
+ * versé — n'est requis que pour tracer un versement croisé dans une
+ * bouteille MELANGE (R2) ; omis, le versement est supposé du même fluide
+ * que l'étiquette. `mouvementId` : traçabilité du versement. `tracer` :
+ * false pour un REVERSEMENT de contre-écriture — le fluide revient, ce
+ * n'est pas un versement neuf (R2 : pas de ligne fantôme dans la
+ * composition d'une bouteille MELANGE). Parité STRICTE avec le DemoStore.
+ */
+function verserDansBouteille(bouteille, quantite, fluideVerse, mouvementId,
+  tracer = true) {
   const nouvelleNette = arrondir(bouteille.masseNetteKg + quantite);
   if (nouvelleNette > bouteille.contenanceMaxKg) {
     throw new Error(
@@ -2779,6 +2990,10 @@ function verserDansBouteille(bouteille, quantite) {
   bouteille.masseNetteKg = nouvelleNette;
   bouteille.masseBruteKg = arrondir(bouteille.tareKg + nouvelleNette);
   bouteille.datePesee = aujourdHui();
+  if (bouteille.etatFluide === 'MELANGE' && tracer) {
+    tracerVersementMelange(bouteille, fluideVerse ?? bouteille.fluide,
+      quantite, mouvementId);
+  }
   mettreAJourStatutApresVariation(bouteille);
 }
 
@@ -2843,6 +3058,53 @@ function verifierSourceDeCharge(bouteille) {
   }
 }
 
+/** Contrôles d'une machine (camelCase), triés date décroissante. */
+function controlesDeLaMachine(machineId) {
+  return db.all(
+    'SELECT * FROM controles WHERE machine_id = ? ORDER BY date_controle DESC',
+    [machineId]
+  ).map((ligne) => mapping.versFront('controles', ligne));
+}
+
+/**
+ * R3/R4 : prédicat « fuite ouverte/réparée/en attente de suivi » d'une
+ * machine, calculé depuis SES contrôles. MIROIR EXACT de la fonction du
+ * même nom dans v8/js/data/demo-store.js (pattern déjà suivi pour
+ * enregistrerControle) : { ouverte, controleFuiteId, dateReparation,
+ * echeanceControleSuivi }.
+ */
+function estFuiteOuverte(controlesMachine) {
+  const tries = controlesMachine.slice()
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  const derniereFuite = tries.find((c) => c.resultat === 'FUITE');
+  if (!derniereFuite) {
+    return { ouverte: false, controleFuiteId: null, dateReparation: null,
+      echeanceControleSuivi: null };
+  }
+  // R3c/R4 : SANS réparation tracée, la fuite reste OUVERTE — un contrôle
+  // CONFORME, même postérieur, ne la referme JAMAIS seul (sinon un
+  // contrôle prématuré ou de complaisance contournerait le blocage du
+  // complément de gaz). Réparation tracée : refermée dès qu'un CONFORME
+  // date du jour de la réparation ou d'après (dates au JOUR — à date
+  // égale, le contrôle est réputé postérieur à la réparation).
+  if (!derniereFuite.dateReparation) {
+    return { ouverte: true, controleFuiteId: derniereFuite.id,
+      dateReparation: null, echeanceControleSuivi: null };
+  }
+  const conformePostReparation = tries.some((c) =>
+    c.resultat === 'CONFORME' &&
+    c.date >= derniereFuite.dateReparation &&
+    c.date >= derniereFuite.date);
+  return {
+    ouverte: false,
+    controleFuiteId: derniereFuite.id,
+    dateReparation: derniereFuite.dateReparation,
+    echeanceControleSuivi: conformePostReparation
+      ? null
+      : ajouterJours(derniereFuite.dateReparation, DELAI_CONTROLE_SUIVI_JOURS)
+  };
+}
+
 /**
  * Applique les règles métier et les effets stocks/charges d'une écriture
  * qui se valide. Mute `mouvement.fluide`, `machineLabel`, `quantiteKg`
@@ -2859,9 +3121,33 @@ function appliquerEffets(mouvement) {
   if (mouvement.type === 'CHARGE_APPOINT' ||
       mouvement.type === 'MISE_EN_SERVICE') {
     const machine = trouverMachine(mouvement.machineId);
+    // Une machine DÉMANTELÉE est définitivement sortie du parc : aucun
+    // mouvement n'est plus possible dessus (blocage dur, ARRÊTÉE reste
+    // autorisée — droit de recharger avant remise en service).
+    if (machine.statut === 'DEMANTELEE') {
+      throw new Error(
+        `Machine démantelée : mouvement impossible sur ${machine.code}.`);
+    }
+    // R3c : un CHARGE_APPOINT sur une machine à fuite OUVERTE (fuite
+    // déclarée sans réparation tracée postérieure) exige d'abord de
+    // tracer la réparation puis de déclarer un nouveau contrôle.
+    if (mouvement.type === 'CHARGE_APPOINT' &&
+        estFuiteOuverte(controlesDeLaMachine(machine.id)).ouverte) {
+      throw new Error(MSG_FUITE_OUVERTE);
+    }
     const source = trouverBouteille(mouvement.bouteilleSrcId,
       'Bouteille source');
     verifierSourceDeCharge(source); // IM-6
+    // R2 : une bouteille MELANGE (contenu incertain) ne recharge JAMAIS
+    // une installation — son fluide est destiné au regroupement puis à
+    // la filière déchets. Bloqué ICI et pas dans verifierSourceDeCharge :
+    // le TRANSFERT mélange → bouteille MÉLANGE doit rester permis.
+    if (source.etatFluide === 'MELANGE') {
+      throw new Error(
+        `Charge interdite : le contenu de la bouteille ${source.code} ` +
+        'est probablement mélangé — orientez ce fluide vers la filière ' +
+        'déchets, jamais vers une installation.');
+    }
     if (source.fluide !== machine.fluide) {
       throw new Error(
         `Croisement de fluides interdit : bouteille ${source.fluide} ` +
@@ -2884,6 +3170,13 @@ function appliquerEffets(mouvement) {
   } else if (mouvement.type === 'RECUPERATION_MAINTENANCE' ||
              mouvement.type === 'RECUPERATION_DEMANTELEMENT') {
     const machine = trouverMachine(mouvement.machineId);
+    // Une machine DÉMANTELÉE est définitivement sortie du parc : elle n'a
+    // déjà plus de fluide résiduel (le démantèlement l'exige) — aucun
+    // mouvement n'est plus possible dessus.
+    if (machine.statut === 'DEMANTELEE') {
+      throw new Error(
+        `Machine démantelée : mouvement impossible sur ${machine.code}.`);
+    }
     const destination = trouverBouteille(mouvement.bouteilleDstId,
       'Bouteille de destination');
     if (destination.type !== 'RECUPERATION') {
@@ -2892,7 +3185,11 @@ function appliquerEffets(mouvement) {
         'RÉCUPÉRATION.');
     }
     verifierBouteilleEnStock(destination, 'Bouteille de destination'); // IM-6
-    if (destination.fluide !== machine.fluide) {
+    // R2 : une bouteille MELANGE accepte un fluide différent de son
+    // étiquette (on n'est pas sûr du contenu) — le croisement de fluide
+    // reste interdit vers TOUTE AUTRE bouteille de récupération.
+    if (destination.fluide !== machine.fluide &&
+        destination.etatFluide !== 'MELANGE') {
       throw new Error(
         `Croisement de fluides interdit : bouteille ${destination.fluide} ` +
         `sur machine ${machine.fluide}.`);
@@ -2916,7 +3213,7 @@ function appliquerEffets(mouvement) {
         `${fmtNombre(destination.contenanceMaxKg, 2)} kg.`);
     }
     viderMachine(machine, quantite);
-    verserDansBouteille(destination, quantite);
+    verserDansBouteille(destination, quantite, machine.fluide, mouvement.id);
     mouvement.fluide = machine.fluide;
     mouvement.machineLabel = machine.designation;
     // Convention d'affichage : récupération = quantité NÉGATIVE.
@@ -2931,7 +3228,36 @@ function appliquerEffets(mouvement) {
       'Bouteille de destination');
     verifierSourceDeCharge(source); // IM-6
     verifierBouteilleEnStock(destination, 'Bouteille de destination');
-    if (source.fluide !== destination.fluide) {
+    // R1 : le fluide non-vierge (récupéré/recyclé/régénéré/douteux/
+    // mélangé) ne va JAMAIS dans une bouteille NEUVE / VIERGE — le type
+    // NEUVE compte même si son état déclaré n'est pas VIERGE (bouteille
+    // fournisseur de fluide certifié recyclé/régénéré : la consigne
+    // repart vide, on n'y reverse rien).
+    if (source.etatFluide !== 'VIERGE' &&
+        (destination.etatFluide === 'VIERGE' ||
+         destination.type === 'NEUVE')) {
+      throw new Error(
+        'Transfert interdit : fluide non-vierge vers une bouteille ' +
+        'neuve/vierge. Utilisez une bouteille de récupération.');
+    }
+    // R2 : le mélange reste CONFINÉ — le contenu incertain d'une
+    // bouteille MELANGE ne se transfère que vers une autre bouteille
+    // MELANGE (regroupement), sinon le caractère « probablement
+    // mélangé » disparaîtrait du registre ; sa sortie normale est la
+    // filière déchets (BSFF).
+    if (source.etatFluide === 'MELANGE' &&
+        destination.etatFluide !== 'MELANGE') {
+      throw new Error(
+        `Transfert interdit : le contenu de la bouteille ${source.code} ` +
+        'est probablement mélangé — il ne se transfère que vers une ' +
+        'autre bouteille de récupération MÉLANGE, ou part en filière ' +
+        'déchets.');
+    }
+    // R2 : croisement de fluide relâché UNIQUEMENT vers une bouteille
+    // de récupération MELANGE — sinon le croisement reste interdit.
+    if (source.fluide !== destination.fluide &&
+        !(destination.type === 'RECUPERATION' &&
+          destination.etatFluide === 'MELANGE')) {
       throw new Error(
         `Croisement de fluides interdit : transfert ${source.fluide} ` +
         `vers ${destination.fluide}.`);
@@ -2953,7 +3279,7 @@ function appliquerEffets(mouvement) {
         `${fmtNombre(destination.contenanceMaxKg, 2)} kg.`);
     }
     retirerDeBouteille(source, quantite);
-    verserDansBouteille(destination, quantite);
+    verserDansBouteille(destination, quantite, source.fluide, mouvement.id);
     mouvement.fluide = source.fluide;
     mouvement.quantiteKg = quantite;
     persisterBouteille(source);
@@ -2964,19 +3290,50 @@ function appliquerEffets(mouvement) {
   }
 }
 
-/** Applique les effets INVERSES d'une écriture validée (contre-écriture). */
+/**
+ * Une contre-écriture reverse du fluide dans la bouteille d'origine — mais
+ * si CETTE bouteille est RÉELLEMENT sortie du circuit ENTRE-TEMPS (retournée
+ * au fournisseur, remise en filière déchets), le fluide ne doit pas y
+ * « réapparaître ». Les statuts VIDE et A_RETOURNER restent AUTORISÉS :
+ * posés AUTOMATIQUEMENT quand la masse retombe à ~0 (CF-5), la bouteille
+ * est encore physiquement à l'atelier et le reversement la remet EN_STOCK
+ * tout seul — la contre-écriture est l'UNIQUE voie de correction du
+ * registre WORM. Parité STRICTE avec le DemoStore.
+ */
+function verifierBouteillePourContreEcriture(bouteille) {
+  if (bouteille.statut === 'DECHET' || bouteille.statut === 'RETOURNEE') {
+    throw new Error(
+      `Contre-écriture impossible : la bouteille ${bouteille.code} est ` +
+      `sortie du stock (statut ${bouteille.statut}) depuis l’écriture ` +
+      'd’origine ; le fluide ne peut pas y être reversé.');
+  }
+}
+
+/**
+ * Applique les effets INVERSES d'une écriture validée (contre-écriture).
+ * IMPORTANT : toute vérification qui peut lever une Error doit se faire
+ * AVANT la moindre mutation — la transaction SQL (muter/db.transaction)
+ * annule déjà tout en cas de throw, mais l'ordre est aligné sur le
+ * DemoStore (qui n'a pas de transaction en mémoire) par cohérence et
+ * défense en profondeur.
+ */
 function appliquerEffetsInverses(original) {
   const quantite = Math.abs(original.quantiteKg);
 
   if (original.type === 'CHARGE_APPOINT' ||
       original.type === 'MISE_EN_SERVICE') {
     const machine = trouverMachine(original.machineId);
+    const source = original.bouteilleSrcId
+      ? trouverBouteille(original.bouteilleSrcId, 'Bouteille source')
+      : null;
+    if (source) verifierBouteillePourContreEcriture(source); // AVANT mutation
     viderMachine(machine, quantite);
     persisterMachineCharge(machine);
-    if (original.bouteilleSrcId) {
-      const source = trouverBouteille(original.bouteilleSrcId,
-        'Bouteille source');
-      verserDansBouteille(source, quantite);
+    if (source) {
+      // tracer=false : le fluide REVIENT (annulation), pas un versement
+      // neuf — sinon une source MELANGE gagnerait une ligne fantôme (R2).
+      verserDansBouteille(source, quantite, original.fluide, original.id,
+        false);
       persisterBouteille(source);
     }
   } else if (original.type === 'RECUPERATION_MAINTENANCE' ||
@@ -2988,19 +3345,32 @@ function appliquerEffetsInverses(original) {
       const destination = trouverBouteille(original.bouteilleDstId,
         'Bouteille de destination');
       retirerDeBouteille(destination, quantite);
+      // R2 : le versement annulé sort de la composition tracée et
+      // l'étiquette majoritaire est recalculée.
+      if (destination.etatFluide === 'MELANGE') {
+        retirerVersementMelange(destination, original.id);
+      }
       persisterBouteille(destination);
     }
   } else if (original.type === 'TRANSFERT') {
+    const source = original.bouteilleSrcId
+      ? trouverBouteille(original.bouteilleSrcId, 'Bouteille source')
+      : null;
+    if (source) verifierBouteillePourContreEcriture(source); // AVANT mutation
     if (original.bouteilleDstId) {
       const destination = trouverBouteille(original.bouteilleDstId,
         'Bouteille de destination');
       retirerDeBouteille(destination, quantite);
+      // R2 : même règle que la récupération annulée (voir ci-dessus).
+      if (destination.etatFluide === 'MELANGE') {
+        retirerVersementMelange(destination, original.id);
+      }
       persisterBouteille(destination);
     }
-    if (original.bouteilleSrcId) {
-      const source = trouverBouteille(original.bouteilleSrcId,
-        'Bouteille source');
-      verserDansBouteille(source, quantite);
+    if (source) {
+      // tracer=false : reversement d'annulation (voir CHARGE ci-dessus).
+      verserDansBouteille(source, quantite, original.fluide, original.id,
+        false);
       persisterBouteille(source);
     }
   }
@@ -3021,12 +3391,19 @@ function persisterMachineCharge(machine) {
  * GÉNÉRÉE suit), date de pesée et statut. On n'écrit QUE ce que les effets
  * touchent ; le statut est inclus car mettreAJourStatutApresVariation peut
  * le faire basculer (VIDE / A_RETOURNER / EN_STOCK) — parité DemoStore (CF-5).
+ * fluide et composition_melange : verserDansBouteille (R2) peut faire
+ * basculer l'étiquette d'une bouteille MELANGE et tracer le versement —
+ * écrits systématiquement (no-op si la bouteille n'est pas MELANGE, le
+ * champ reste alors tel quel/null).
  */
 function persisterBouteille(bouteille) {
   majParId('bouteilles', bouteille.id, {
     masse_brute_kg: bouteille.masseBruteKg,
     date_derniere_pesee: bouteille.datePesee,
-    statut: bouteille.statut
+    statut: bouteille.statut,
+    fluide: bouteille.fluide,
+    composition_melange: bouteille.compositionMelange
+      ? JSON.stringify(bouteille.compositionMelange) : null
   });
 }
 
@@ -3075,7 +3452,19 @@ function enregistrerControle(d) {
   const echeanceMachine = controle.prochainControle ?? machine.prochainControle;
   if (controle.resultat === 'FUITE') {
     nouveauStatut = 'FUITE';
-  } else if ((machine.statut === 'FUITE' || machine.statut === 'CONTROLE_DU') &&
+  } else if (machine.statut === 'FUITE') {
+    // R4 : le retour EN_SERVICE depuis FUITE exige une réparation TRACÉE
+    // sur le dernier contrôle FUITE ET que CE contrôle CONFORME (déjà
+    // inséré ci-dessus) lui soit postérieur — jamais un simple CONFORME
+    // sans réparation tracée au préalable. Convention des dates au jour :
+    // à date ÉGALE, le contrôle est réputé postérieur à la réparation
+    // (réparation immédiate + recontrôle dans la foulée).
+    const statutFuite = estFuiteOuverte(controlesDeLaMachine(machine.id));
+    if (statutFuite.dateReparation &&
+        controle.date >= statutFuite.dateReparation) {
+      nouveauStatut = 'EN_SERVICE';
+    }
+  } else if (machine.statut === 'CONTROLE_DU' &&
              (!echeanceMachine || echeanceMachine >= aujourdHui())) {
     nouveauStatut = 'EN_SERVICE';
   }
@@ -3534,6 +3923,11 @@ function calculerStats() {
   const mouvementsEffectifs = mouvements.filter((mv) =>
     (mv.statut === 'VALIDE' || mv.statut === 'ANNULE') &&
     Number.isFinite(mv.quantiteKg));
+  // Un TRANSFERT est interne au stock : ni charge, ni récupération dans les
+  // flux mensuels — aligné sur calculerBalanceMatiere/calculerBilan (IM-12).
+  // nbFiches/nbMouvements comptent TOUS les mouvements (transfert inclus).
+  const mouvementsFlux = mouvementsEffectifs.filter(
+    (mv) => mv.type !== 'TRANSFERT');
 
   // IM-10 : flux mensuels sur une fenêtre GLISSANTE de 6 mois.
   let dateMax = '';
@@ -3550,7 +3944,7 @@ function calculerStats() {
     const prefixe = `${annee}-${String(mois).padStart(2, '0')}`;
     let chargeKg = 0;
     let recupKg = 0;
-    for (const mv of mouvementsEffectifs) {
+    for (const mv of mouvementsFlux) {
       if (!mv.date.startsWith(prefixe)) continue;
       if (mv.quantiteKg >= 0) chargeKg += mv.quantiteKg;
       else recupKg += Math.abs(mv.quantiteKg);
@@ -3617,10 +4011,12 @@ function calculerBilan(annee) {
   const prefixe = `${annee}-`;
   const mouvements = db.all('SELECT * FROM mouvements')
     .map((ligne) => reconstituerMouvement(ligne));
+  // Un TRANSFERT est un mouvement INTERNE au stock (bouteille → bouteille) :
+  // ni charge, ni récupération — aligné sur calculerBalanceMatiere (IM-12).
   const mouvementsAnnee = mouvements.filter((mv) =>
     (mv.date || '').startsWith(prefixe) &&
     (mv.statut === 'VALIDE' || mv.statut === 'ANNULE') &&
-    Number.isFinite(mv.quantiteKg));
+    Number.isFinite(mv.quantiteKg) && mv.type !== 'TRANSFERT');
 
   const parFluide = new Map();
   const ligneVide = () => ({ chargeKg: 0, recupereKg: 0, enParcKg: 0 });

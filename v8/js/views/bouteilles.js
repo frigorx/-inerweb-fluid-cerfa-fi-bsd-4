@@ -19,7 +19,9 @@ const LIBELLES_ETAT_FLUIDE = {
   RECUPERE: 'Récupéré',
   RECYCLE:  'Recyclé',
   REGENERE: 'Régénéré',
-  DECHET:   'Déchet'
+  DECHET:   'Déchet',
+  // R2 : bouteille de récupération au contenu probablement mélangé.
+  MELANGE:  'Mélange'
 };
 
 // IM-5 : chips de statut propres aux bouteilles (le code EN_SERVICE
@@ -157,6 +159,7 @@ function carteBouteille(b) {
   const pct = b.contenanceMaxKg > 0 ? (b.masseNetteKg / b.contenanceMaxKg) * 100 : 0;
   const etat = LIBELLES_ETAT_FLUIDE[b.etatFluide] || b.etatFluide;
   const sortie = estSortieDuStock(b);
+  const melangee = b.etatFluide === 'MELANGE';
 
   // IM-5 : plus aucune action sur une bouteille sortie du stock ;
   // IM-9 : « Retour fourn. » (consigne) sur les contenants actifs.
@@ -171,9 +174,23 @@ function carteBouteille(b) {
       + ' aria-label="Retourner la bouteille ' + esc(b.code) + ' au fournisseur">Retour fourn.</button>'
       + '</div>';
 
+  // R2 : chip TRÈS visible + détail des versements tracés (fluide,
+  // quantité, date) quand la bouteille est marquée MELANGE.
+  const chipMelange = melangee
+    ? '<span class="chip chip-ambre">Contenu probablement mélangé</span>' : '';
+  const composition = melangee && Array.isArray(b.compositionMelange) &&
+      b.compositionMelange.length
+    ? '<div class="bouteille-detail">Versements tracés : '
+      + b.compositionMelange.map(function (v) {
+        return esc(v.fluide) + ' ' + esc(fmtNombre(v.quantiteKg, 2)) + ' kg ('
+          + esc(v.date) + ')';
+      }).join(' · ')
+      + '</div>'
+    : '';
+
   return '<article class="carte carte-bouteille' + (sortie ? ' carte-bouteille-sortie' : '') + '">'
     + '<div class="bouteille-haut">'
-    + '<span class="bouteille-chips">' + chipStatut(b.type) + chipStatutBouteille(b.statut) + '</span>'
+    + '<span class="bouteille-chips">' + chipStatut(b.type) + chipStatutBouteille(b.statut) + chipMelange + '</span>'
     + '<span class="bouteille-fluide mono">' + esc(b.fluide) + '</span>'
     + '</div>'
     + '<div class="bouteille-niveau">'
@@ -184,6 +201,7 @@ function carteBouteille(b) {
     + '<div class="bouteille-detail">État : ' + esc(etat)
     + ' · Tare ' + esc(fmtNombre(b.tareKg, 1)) + ' kg</div>'
     + '<div class="bouteille-detail">' + esc(b.proprietaire) + ' · Lot ' + esc(b.lot) + '</div>'
+    + composition
     + pied
     + '</article>';
 }

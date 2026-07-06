@@ -160,6 +160,10 @@ export function creerLocalStore(transport) {
       return muter('createControle', { donneesControle });
     },
 
+    tracerReparation(controleId, donneesReparation) {
+      return muter('tracerReparation', { controleId, donneesReparation });
+    },
+
     // --- registre des mouvements --------------------------
     creerMouvement(donneesMouvement) {
       return muter('creerMouvement', { donneesMouvement });

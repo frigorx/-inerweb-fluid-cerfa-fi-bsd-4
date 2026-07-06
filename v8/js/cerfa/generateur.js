@@ -397,12 +397,22 @@ export async function genererCerfaPdf(store, { source, id }) {
   let contenant = null;
   let bsffLie = null;
   let versDechet = false;
+  let mentionMelange = '';
   if (estCharge && quantite !== null) {
-    // Ventilation selon l'état du fluide de la bouteille SOURCE
+    // Ventilation selon l'état RÉEL du fluide de la bouteille SOURCE
+    // (R6, constat d'audit corrigé) : VIERGE → QA ; RECYCLE → QB ;
+    // REGENERE → QC ; RECUPERE réutilisable → JAMAIS QA (ce n'est pas du
+    // fluide vierge) — porté en QE (réutilisation), seule case dont le
+    // libellé couvre un fluide déjà récupéré ; MELANGE → jamais QA non
+    // plus, même case QE + mention du mélange (contenu incertain).
     const etat = ctx.bouteilleSrc?.etatFluide ?? 'VIERGE';
     if (etat === 'RECYCLE') qB = fmtVirgule(quantite);
     else if (etat === 'REGENERE') qC = fmtVirgule(quantite);
-    else qA = fmtVirgule(quantite);
+    else if (etat === 'RECUPERE' || etat === 'DOUTEUX') qE = fmtVirgule(quantite);
+    else if (etat === 'MELANGE') {
+      qE = fmtVirgule(quantite);
+      mentionMelange = 'Contenu de la bouteille source probablement mélangé.';
+    } else qA = fmtVirgule(quantite);
     contenant = ctx.bouteilleSrc;
   } else if (estRecuperation && quantite !== null) {
     // Destination déchet : décision de la chaîne déchets ou BSFF lié
@@ -417,6 +427,11 @@ export async function genererCerfaPdf(store, { source, id }) {
     else qE = fmtVirgule(quantite);
     qDE = fmtVirgule(quantite);
     contenant = dst;
+    // R2 : la destination peut être une bouteille MELANGE (croisement de
+    // fluides relâché uniquement vers elle) — mention du caractère incertain.
+    if (dst?.etatFluide === 'MELANGE') {
+      mentionMelange = 'Contenu de la bouteille de destination probablement mélangé.';
+    }
   }
 
   // ---- Cadre 12 — transport (récupérations UNIQUEMENT) ----
@@ -436,8 +451,9 @@ export async function genererCerfaPdf(store, { source, id }) {
     bsffLie.transporteur ? `Transporteur : ${bsffLie.transporteur}` : ''
   ].filter(Boolean).join('\n') : '';
 
-  // ---- Cadre 14 — observations (+ mention formation) ----
+  // ---- Cadre 14 — observations (+ mention formation, + mention mélange) ----
   const observations = [...ctx.observations];
+  if (mentionMelange) observations.push(mentionMelange);
   if (formation) observations.push(MENTION_FORMATION);
 
   // ---- Signatures ----
@@ -489,8 +505,11 @@ export async function genererCerfaPdf(store, { source, id }) {
     '11_QD': qD,
     '11_QE': qE,
     '11_QDE': qDE,
+    // R2 : suffixe « (mélange) » sur l'identification du contenant quand
+    // son contenu est probablement mélangé (jamais QA, cf. ci-dessus).
     '11_Contenant_ID': contenant
       ? (contenant.numeroReel ?? contenant.code ?? '')
+        + (contenant.etatFluide === 'MELANGE' ? ' (mélange)' : '')
       : '',
     '11_BSFF': bsffLie?.numeroBsff ?? ctx.bouteilleDst?.numBsff ?? '',
     // Cadre 12 — champs libres transport (codes déchets européens)

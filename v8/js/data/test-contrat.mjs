@@ -3,7 +3,7 @@
 // Exécution : node v8/js/data/test-contrat.mjs [demo]
 //
 // Cette suite vérifie qu'une implémentation respecte contrat.js :
-// surface (64 méthodes, 2 propriétés, rien de plus), sémantique
+// surface (65 méthodes, 2 propriétés, rien de plus), sémantique
 // (formes de retour, garde-fous, messages français, effets stocks,
 // hash chaîné, machine à états des mouvements), et invariants
 // transverses (copies, notifications, journal append-only).
@@ -103,7 +103,7 @@ const store = await fabriquerStore(NOM_STORE);
 console.log(`Conformité au contrat DataStore — implémentation « ${NOM_STORE} »\n`);
 
 // ============================================================
-// 1. Surface du contrat : 64 méthodes, 2 propriétés, rien de plus
+// 1. Surface du contrat : 65 méthodes, 2 propriétés, rien de plus
 // ============================================================
 const surface = verifierSurface(store);
 verifier('toutes les méthodes du contrat sont présentes',
@@ -113,8 +113,8 @@ verifier('aucune méthode intruse hors contrat (anti-dérive v7)',
 verifier('les propriétés du contrat sont présentes',
   surface.proprietesManquantes.length === 0,
   `manquent : ${surface.proprietesManquantes.join(', ')}`);
-verifier('le contrat compte bien 64 méthodes',
-  Object.keys(METHODES_CONTRAT).length === 64,
+verifier('le contrat compte bien 65 méthodes',
+  Object.keys(METHODES_CONTRAT).length === 65,
   `compté : ${Object.keys(METHODES_CONTRAT).length}`);
 verifier('modeLabel est une chaîne non vide',
   typeof store.modeLabel === 'string' && store.modeLabel.length > 0);
@@ -569,18 +569,141 @@ verifier('un contrôle FUITE passe la machine en statut FUITE',
   controleFuite.resultat === 'FUITE'
   && (await store.getMachines()).find((m) => m.id === machineB.id)
     .statut === 'FUITE');
+verifier('un contrôle FUITE porte la localisation saisie',
+  controleFuite.localisationFuite === 'Raccord BP');
+
+// R4 : un CONFORME SANS réparation tracée ne referme PAS la fuite
+// (durcissement — avant ce lot, n'importe quel CONFORME suffisait).
 await store.createControle({
   machineId: machineB.id, resultat: 'CONFORME', methode: 'DIRECTE',
   operateur: 'Testeur Contrat', prochainControle: prochain
 });
-verifier('un contrôle CONFORME ramène la machine EN_SERVICE',
+verifier('R4 : un CONFORME sans réparation tracée NE remet PAS la machine en service',
+  (await store.getMachines()).find((m) => m.id === machineB.id)
+    .statut === 'FUITE');
+
+// Bouteille DÉDIÉE à ces essais R3/R4/R5 (jamais b1 : ses valeurs sont
+// attendues EXACTES plus loin — retour fournisseur §13).
+const bAppointFuite = await store.createBouteille({
+  type: 'NEUVE', fluide: FLUIDE, tareKg: 5, masseBruteKg: 25,
+  contenanceMaxKg: 20
+});
+
+// R3c : CHARGE_APPOINT bloqué tant que la fuite reste ouverte (pas de
+// réparation tracée) — MISE_EN_SERVICE n'est PAS concernée par ce blocage.
+const mvtAppointBloque = await store.creerMouvement({
+  type: 'CHARGE_APPOINT', machineId: machineB.id, bouteilleSrcId: bAppointFuite.id,
+  peseeAvantKg: 20, peseeApresKg: 19, technicien: 'Testeur Contrat'
+});
+await store.soumettreMouvement(mvtAppointBloque.id);
+await verifierRejet(
+  'R3c : CHARGE_APPOINT refusé sur une machine à fuite ouverte',
+  store.validerMouvement(mvtAppointBloque.id, enseignant.id),
+  'Tracez la réparation');
+// Rejette (SOUMIS → BROUILLON) puis supprime : un mouvement refusé par la
+// garde métier reste SOUMIS (validerMouvement a throw AVANT de sceller).
+await store.rejeterMouvement(mvtAppointBloque.id, 'Nettoyage test contrat (R3c)');
+await store.supprimerMouvement(mvtAppointBloque.id);
+
+// R3/R4 : tracerReparation — champs obligatoires, résultat FUITE requis
+await verifierRejet('tracerReparation refuse un contrôle introuvable',
+  store.tracerReparation('ctl-fantome', {
+    dateReparation: dateRelative(-1), natureReparation: 'Test',
+    reparateur: 'Testeur Contrat'
+  }));
+await verifierRejet('tracerReparation refuse un contrôle non-FUITE',
+  store.tracerReparation((await store.getControles())
+    .find((c) => c.machineId === machineB.id && c.resultat === 'CONFORME').id, {
+    dateReparation: dateRelative(-1), natureReparation: 'Test',
+    reparateur: 'Testeur Contrat'
+  }));
+await verifierRejet('tracerReparation refuse une réparation incomplète',
+  store.tracerReparation(controleFuite.id, { dateReparation: dateRelative(-1) }));
+
+// R4 : réparation datée D'HIER — le CONFORME de suivi (aujourd'hui) lui
+// est postérieur et refermera la fuite (le cas MÊME JOUR est éprouvé
+// plus bas, section 13 quinquies).
+const reparation = await store.tracerReparation(controleFuite.id, {
+  dateReparation: dateRelative(-1), natureReparation: 'Remplacement raccord',
+  reparateur: 'Testeur Contrat'
+});
+verifier('tracerReparation pose les 3 champs sur le contrôle',
+  reparation.dateReparation === dateRelative(-1)
+  && reparation.natureReparation === 'Remplacement raccord'
+  && reparation.reparateur === 'Testeur Contrat');
+verifier('tracerReparation NE remet PAS la machine en service (R4)',
+  (await store.getMachines()).find((m) => m.id === machineB.id)
+    .statut === 'FUITE');
+
+// R4 : une fois réparée (tracée), l'alerte devient IMPORTANT « contrôle de
+// suivi à faire » — elle n'est plus CRITIQUE « fuite non résolue ».
+{
+  const alertesApresReparation = await store.getAlertes();
+  const alerteMachineB = alertesApresReparation.find(
+    (a) => a.id === `alr-fuite-${machineB.id}`);
+  verifier('R4 : alerte « contrôle de suivi à faire » (IMPORTANT) après réparation tracée',
+    alerteMachineB?.niveau === 'IMPORTANT'
+    && alerteMachineB?.titre === 'Contrôle de suivi à faire');
+}
+
+// R3a : la réparation tracée débloque le CHARGE_APPOINT (fuite plus « ouverte »)
+const mvtAppointDebloque = await store.creerMouvement({
+  type: 'CHARGE_APPOINT', machineId: machineB.id, bouteilleSrcId: bAppointFuite.id,
+  peseeAvantKg: 20, peseeApresKg: 19, technicien: 'Testeur Contrat'
+});
+await store.soumettreMouvement(mvtAppointDebloque.id);
+const mvtAppointValide = await store.validerMouvement(mvtAppointDebloque.id, enseignant.id);
+verifier('R3a : CHARGE_APPOINT accepté une fois la réparation tracée',
+  PROCHE(mvtAppointValide.quantiteKg, 1));
+
+// R4 : un CONFORME postérieur À LA RÉPARATION referme enfin la fuite
+await store.createControle({
+  machineId: machineB.id, resultat: 'CONFORME', methode: 'DIRECTE',
+  operateur: 'Testeur Contrat', prochainControle: prochain
+});
+verifier('R4 : un CONFORME postérieur à la réparation remet la machine en service',
   (await store.getMachines()).find((m) => m.id === machineB.id)
     .statut === 'EN_SERVICE');
+
+// R5 : la localisation de la fuite déclarée dans mouvement.controle (étape
+// 5 du wizard) est propagée jusqu'au VRAI contrôle enregistré par CR-3.
+const mvtNouvelleFuite = await store.creerMouvement({
+  type: 'CHARGE_APPOINT', machineId: machineB.id, bouteilleSrcId: bAppointFuite.id,
+  peseeAvantKg: 19, peseeApresKg: 18.5, technicien: 'Testeur Contrat',
+  controle: { statutControle: 'FUITE', detecteurId: null,
+    localisationFuite: 'Vanne HP' }
+});
+await store.soumettreMouvement(mvtNouvelleFuite.id);
+const mvtNouvelleFuiteValide =
+  await store.validerMouvement(mvtNouvelleFuite.id, enseignant.id);
+{
+  const controleLie = (await store.getControles())
+    .find((c) => c.id === mvtNouvelleFuiteValide.controle?.controleId);
+  verifier('R5 : le contrôle CR-3 porte la localisation déclarée dans le mouvement',
+    controleLie?.localisationFuite === 'Vanne HP');
+}
+// Nettoyage : referme cette seconde fuite (réparation + CONFORME) pour ne
+// pas polluer les sections suivantes (démantèlement, etc. attendent
+// EN_SERVICE).
+const controleFuite2 = (await store.getControles())
+  .find((c) => c.id === mvtNouvelleFuiteValide.controle?.controleId);
+await store.tracerReparation(controleFuite2.id, {
+  dateReparation: dateRelative(-1), natureReparation: 'Remplacement vanne',
+  reparateur: 'Testeur Contrat'
+});
+await store.createControle({
+  machineId: machineB.id, resultat: 'CONFORME', methode: 'DIRECTE',
+  operateur: 'Testeur Contrat', prochainControle: prochain
+});
+verifier('R5 : nettoyage — machine EN_SERVICE après la seconde réparation',
+  (await store.getMachines()).find((m) => m.id === machineB.id)
+    .statut === 'EN_SERVICE');
+
 await verifierRejet('createControle refuse un résultat inconnu',
   store.createControle({ machineId: machineB.id, resultat: 'MOYEN' }));
 await verifierRejet('createControle refuse une machine introuvable',
   store.createControle({ machineId: 'mac-fantome', resultat: 'CONFORME' }));
-await verifierRejet('demantelerMachine refuse une machine chargée (3,5 kg > 0,05)',
+await verifierRejet('demantelerMachine refuse une machine chargée (> 0,05)',
   store.demantelerMachine(machineB.id, 'Testeur'));
 
 // ============================================================
@@ -701,6 +824,505 @@ const machineC = await store.createMachine({
 }
 
 // ============================================================
+// 13 ter. Cycle du fluide (lot F-Gas R1 + R2 + R6) : blocage du
+// croisement recup→vierge, bouteille MELANGE, ventilation CERFA
+// ============================================================
+const AUTRE_FLUIDE = fluides.find((f) => f.code !== FLUIDE)?.code;
+verifier('le référentiel offre un second fluide pour éprouver le croisement',
+  Boolean(AUTRE_FLUIDE));
+
+// --- R1 : transfert recup → vierge/neuve BLOQUÉ ------------------------
+{
+  const bNeuve = await store.createBouteille({
+    type: 'NEUVE', fluide: FLUIDE, tareKg: 5, masseBruteKg: 5,
+    contenanceMaxKg: 10
+  });
+  const bRecup = await store.createBouteille({
+    type: 'RECUPERATION', fluide: FLUIDE, tareKg: 5, masseBruteKg: 8,
+    contenanceMaxKg: 10
+  });
+  const transfertInterdit = await store.creerMouvement({
+    type: 'TRANSFERT', bouteilleSrcId: bRecup.id, bouteilleDstId: bNeuve.id,
+    peseeAvantKg: 8, peseeApresKg: 6, technicien: 'Testeur Contrat'
+  });
+  await store.soumettreMouvement(transfertInterdit.id);
+  await verifierRejet('R1 : transfert fluide récupéré → bouteille neuve/vierge BLOQUÉ',
+    store.validerMouvement(transfertInterdit.id, enseignant.id),
+    'Transfert interdit');
+
+  // R1 (contrôle) : transfert vierge → vierge reste AUTORISÉ (déjà couvert
+  // section 13 bis, b2 → b3) ; transfert recup → RECUPERATION même fluide
+  // (regroupement de fonds) reste AUTORISÉ.
+  const bRecup2 = await store.createBouteille({
+    type: 'RECUPERATION', fluide: FLUIDE, tareKg: 5, masseBruteKg: 5,
+    contenanceMaxKg: 10
+  });
+  const regroupement = await store.creerMouvement({
+    type: 'TRANSFERT', bouteilleSrcId: bRecup.id, bouteilleDstId: bRecup2.id,
+    peseeAvantKg: 8, peseeApresKg: 6, technicien: 'Testeur Contrat'
+  });
+  await store.soumettreMouvement(regroupement.id);
+  const valideRegroupement =
+    await store.validerMouvement(regroupement.id, enseignant.id);
+  verifier('R1 : transfert récupéré → RECUPÉRATION même fluide AUTORISÉ (regroupement)',
+    PROCHE(valideRegroupement.quantiteKg, 2));
+}
+
+// --- R2 : bouteille MELANGE ---------------------------------------------
+await verifierRejet('createBouteille refuse MELANGE hors type RÉCUPÉRATION',
+  store.createBouteille({
+    type: 'NEUVE', fluide: FLUIDE, etatFluide: 'MELANGE', tareKg: 5,
+    masseBruteKg: 5, contenanceMaxKg: 10
+  }),
+  'MÉLANGE');
+{
+  const bMelange = await store.createBouteille({
+    type: 'RECUPERATION', fluide: FLUIDE, etatFluide: 'MELANGE',
+    tareKg: 5, masseBruteKg: 8, contenanceMaxKg: 20
+  });
+  verifier('createBouteille MELANGE : composition AMORCÉE avec le contenu initial (3 kg, étiquette)',
+    bMelange.etatFluide === 'MELANGE' &&
+    Array.isArray(bMelange.compositionMelange) &&
+    bMelange.compositionMelange.length === 1 &&
+    bMelange.compositionMelange[0].fluide === FLUIDE &&
+    PROCHE(bMelange.compositionMelange[0].quantiteKg, 3) &&
+    bMelange.compositionMelange[0].mouvementId === null);
+
+  // Machine de l'AUTRE fluide : récupération croisée vers la MELANGE.
+  const machineAutreFluide = await store.createMachine({
+    designation: 'Machine croisement du contrat', fluide: AUTRE_FLUIDE,
+    chargeNominaleKg: 5, operateur: 'Testeur Contrat'
+  });
+  const mise = await store.creerMouvement({
+    type: 'MISE_EN_SERVICE', machineId: machineAutreFluide.id,
+    bouteilleSrcId: (await store.createBouteille({
+      type: 'NEUVE', fluide: AUTRE_FLUIDE, tareKg: 5, masseBruteKg: 10,
+      contenanceMaxKg: 10
+    })).id,
+    peseeAvantKg: 10, peseeApresKg: 5, technicien: 'Testeur Contrat'
+  });
+  await store.soumettreMouvement(mise.id);
+  await store.validerMouvement(mise.id, enseignant.id);
+
+  const recupCroisee = await store.creerMouvement({
+    type: 'RECUPERATION_MAINTENANCE', machineId: machineAutreFluide.id,
+    bouteilleDstId: bMelange.id, peseeAvantKg: 6, peseeApresKg: 8,
+    technicien: 'Testeur Contrat'
+  });
+  await store.soumettreMouvement(recupCroisee.id);
+  const valideCroisee =
+    await store.validerMouvement(recupCroisee.id, enseignant.id);
+  verifier('R2 : récupération d’un AUTRE fluide dans une bouteille MELANGE AUTORISÉE',
+    PROCHE(valideCroisee.quantiteKg, -2));
+
+  const bMelangeApres = (await store.getBouteilles())
+    .find((b) => b.id === bMelange.id);
+  verifier('R2 : le versement croisé est tracé (fluide, quantité, date)',
+    Array.isArray(bMelangeApres.compositionMelange) &&
+    bMelangeApres.compositionMelange.length === 2 &&
+    bMelangeApres.compositionMelange[1].fluide === AUTRE_FLUIDE &&
+    PROCHE(bMelangeApres.compositionMelange[1].quantiteKg, 2));
+  verifier('R2 : l’étiquette NE bascule PAS — le contenu initial (3 kg) reste majoritaire',
+    bMelangeApres.fluide === FLUIDE);
+
+  // Second versement croisé (2 kg de plus) : l'AUTRE fluide devient
+  // majoritaire (4 kg > 3 kg) → l'étiquette bascule ENFIN.
+  const recupCroisee2 = await store.creerMouvement({
+    type: 'RECUPERATION_MAINTENANCE', machineId: machineAutreFluide.id,
+    bouteilleDstId: bMelange.id, peseeAvantKg: 8, peseeApresKg: 10,
+    technicien: 'Testeur Contrat'
+  });
+  await store.soumettreMouvement(recupCroisee2.id);
+  await store.validerMouvement(recupCroisee2.id, enseignant.id);
+  const bMelangeApres2 = (await store.getBouteilles())
+    .find((b) => b.id === bMelange.id);
+  verifier('R2 : l’étiquette bascule quand l’autre fluide devient MAJORITAIRE (4 kg > 3 kg)',
+    bMelangeApres2.fluide === AUTRE_FLUIDE &&
+    bMelangeApres2.compositionMelange.length === 3);
+
+  // R1 (contrôle croisé) : croisement de fluide INTERDIT vers toute AUTRE
+  // bouteille de récupération non-MELANGE (règle inchangée).
+  const bRecupOrdinaire = await store.createBouteille({
+    type: 'RECUPERATION', fluide: FLUIDE, tareKg: 5, masseBruteKg: 5,
+    contenanceMaxKg: 10
+  });
+  const machineFluide = await store.createMachine({
+    designation: 'Machine ordinaire du contrat', fluide: FLUIDE,
+    chargeNominaleKg: 5, operateur: 'Testeur Contrat'
+  });
+  const miseOrdinaire = await store.creerMouvement({
+    type: 'MISE_EN_SERVICE', machineId: machineFluide.id,
+    bouteilleSrcId: (await store.createBouteille({
+      type: 'NEUVE', fluide: FLUIDE, tareKg: 5, masseBruteKg: 8,
+      contenanceMaxKg: 10
+    })).id,
+    peseeAvantKg: 8, peseeApresKg: 6, technicien: 'Testeur Contrat'
+  });
+  await store.soumettreMouvement(miseOrdinaire.id);
+  await store.validerMouvement(miseOrdinaire.id, enseignant.id);
+  const machineAutreFluide2 = await store.createMachine({
+    designation: 'Machine croisement 2 du contrat', fluide: AUTRE_FLUIDE,
+    chargeNominaleKg: 5, operateur: 'Testeur Contrat'
+  });
+  const miseAutre2 = await store.creerMouvement({
+    type: 'MISE_EN_SERVICE', machineId: machineAutreFluide2.id,
+    bouteilleSrcId: (await store.createBouteille({
+      type: 'NEUVE', fluide: AUTRE_FLUIDE, tareKg: 5, masseBruteKg: 8,
+      contenanceMaxKg: 10
+    })).id,
+    peseeAvantKg: 8, peseeApresKg: 6, technicien: 'Testeur Contrat'
+  });
+  await store.soumettreMouvement(miseAutre2.id);
+  await store.validerMouvement(miseAutre2.id, enseignant.id);
+  const recupInterdite = await store.creerMouvement({
+    type: 'RECUPERATION_MAINTENANCE', machineId: machineAutreFluide2.id,
+    bouteilleDstId: bRecupOrdinaire.id, peseeAvantKg: 6, peseeApresKg: 7,
+    technicien: 'Testeur Contrat'
+  });
+  await store.soumettreMouvement(recupInterdite.id);
+  await verifierRejet('R2 (contrôle) : croisement toujours interdit vers une RÉCUPÉRATION non-MELANGE',
+    store.validerMouvement(recupInterdite.id, enseignant.id),
+    'Croisement de fluides interdit');
+}
+
+// ============================================================
+// 13 quater. Cohérences transverses (audit V3) : contre-écriture sur
+// bouteille sortie du stock, machine DÉMANTELÉE bloquée dur
+// ============================================================
+
+// --- Contre-écriture bloquée si la bouteille est sortie du stock -------
+{
+  const machineCE = await store.createMachine({
+    designation: 'Machine contre-écriture du contrat', fluide: FLUIDE,
+    chargeNominaleKg: 8, operateur: 'Testeur Contrat'
+  });
+  const bSourceCE = await store.createBouteille({
+    type: 'NEUVE', fluide: FLUIDE, tareKg: 5, masseBruteKg: 11,
+    contenanceMaxKg: 10
+  });
+  const chargeCE = await store.creerMouvement({
+    type: 'MISE_EN_SERVICE', machineId: machineCE.id,
+    bouteilleSrcId: bSourceCE.id,
+    peseeAvantKg: 6, peseeApresKg: 3, technicien: 'Testeur Contrat'
+  });
+  await store.soumettreMouvement(chargeCE.id);
+  const chargeCEValidee =
+    await store.validerMouvement(chargeCE.id, enseignant.id);
+  verifier('V3 (préparation) : charge validée (+3 kg) avant vidage de la bouteille',
+    PROCHE(chargeCEValidee.quantiteKg, 3));
+
+  // La bouteille source se vide ensuite (transfert du reliquat) puis sort
+  // du stock (retour fournisseur) — statut courant modifié APRÈS la charge.
+  const bDstVidage = await store.createBouteille({
+    type: 'NEUVE', fluide: FLUIDE, tareKg: 5, masseBruteKg: 5,
+    contenanceMaxKg: 10
+  });
+  const bSourceCEApresCharge = (await store.getBouteilles())
+    .find((b) => b.id === bSourceCE.id);
+  const vidage = await store.creerMouvement({
+    type: 'TRANSFERT', bouteilleSrcId: bSourceCE.id,
+    bouteilleDstId: bDstVidage.id,
+    peseeAvantKg: bSourceCEApresCharge.masseNetteKg, peseeApresKg: 0,
+    technicien: 'Testeur Contrat'
+  });
+  await store.soumettreMouvement(vidage.id);
+  await store.validerMouvement(vidage.id, enseignant.id);
+  await store.retournerFournisseur(bSourceCE.id, 'Testeur Contrat');
+  const bSourceRetournee = (await store.getBouteilles())
+    .find((b) => b.id === bSourceCE.id);
+  verifier('V3 (préparation) : la bouteille source est bien RETOURNEE',
+    bSourceRetournee.statut === 'RETOURNEE');
+
+  await verifierRejet(
+    'V3 : contre-écriture BLOQUÉE — la bouteille source a quitté le stock',
+    store.annulerParContreEcriture(chargeCE.id,
+      'Erreur de saisie (test contrat)', enseignant.id),
+    'Contre-écriture impossible');
+
+  const machineApresRejet = (await store.getMachines())
+    .find((m) => m.id === machineCE.id);
+  const chargeApresRejet = (await store.getMouvements())
+    .find((mv) => mv.id === chargeCE.id);
+  verifier('V3 : après le refus, l’écriture d’origine reste VALIDÉE (pas de mutation partielle)',
+    chargeApresRejet.statut === 'VALIDE');
+  verifier('V3 : après le refus, la charge machine reste intacte',
+    PROCHE(machineApresRejet.chargeActuelleKg, 3));
+}
+
+// --- Machine DÉMANTELÉE : blocage dur de tout mouvement -----------------
+{
+  const machineDem = await store.createMachine({
+    designation: 'Machine à démanteler du contrat', fluide: FLUIDE,
+    chargeNominaleKg: 5, operateur: 'Testeur Contrat'
+  });
+  verifier('V3 (préparation) : machine neuve démantelable (charge nulle)',
+    (await store.demantelerMachine(machineDem.id, 'Testeur Contrat'))
+      .statut === 'DEMANTELEE');
+
+  const bSourceDem = await store.createBouteille({
+    type: 'NEUVE', fluide: FLUIDE, tareKg: 5, masseBruteKg: 8,
+    contenanceMaxKg: 10
+  });
+  const miseSurDemantelee = await store.creerMouvement({
+    type: 'MISE_EN_SERVICE', machineId: machineDem.id,
+    bouteilleSrcId: bSourceDem.id,
+    peseeAvantKg: 3, peseeApresKg: 1, technicien: 'Testeur Contrat'
+  });
+  await store.soumettreMouvement(miseSurDemantelee.id);
+  await verifierRejet(
+    'V3 : mouvement BLOQUÉ sur une machine DÉMANTELÉE (charge)',
+    store.validerMouvement(miseSurDemantelee.id, enseignant.id),
+    'démantelée');
+
+  const bDstDem = await store.createBouteille({
+    type: 'RECUPERATION', fluide: FLUIDE, tareKg: 5, masseBruteKg: 5,
+    contenanceMaxKg: 10
+  });
+  const recupSurDemantelee = await store.creerMouvement({
+    type: 'RECUPERATION_MAINTENANCE', machineId: machineDem.id,
+    bouteilleDstId: bDstDem.id,
+    peseeAvantKg: 0, peseeApresKg: 1, technicien: 'Testeur Contrat'
+  });
+  await store.soumettreMouvement(recupSurDemantelee.id);
+  await verifierRejet(
+    'V3 : mouvement BLOQUÉ sur une machine DÉMANTELÉE (récupération)',
+    store.validerMouvement(recupSurDemantelee.id, enseignant.id),
+    'démantelée');
+}
+
+// ============================================================
+// 13 quinquies. Lot métier F-Gas (2e passe) : R1 étendu au type NEUVE,
+// confinement du mélange (charge et transfert), contre-écritures sur
+// bouteille MELANGE / VIDE / A_RETOURNER, fuite réparée le même jour
+// ============================================================
+
+// --- R1 étendu : récupéré → bouteille NEUVE même non-VIERGE, BLOQUÉ ----
+{
+  const bNeuveRecyclee = await store.createBouteille({
+    type: 'NEUVE', fluide: FLUIDE, etatFluide: 'RECYCLE', tareKg: 5,
+    masseBruteKg: 5, contenanceMaxKg: 10
+  });
+  const bRecupSrc = await store.createBouteille({
+    type: 'RECUPERATION', fluide: FLUIDE, tareKg: 5, masseBruteKg: 9,
+    contenanceMaxKg: 10
+  });
+  const transfertNeuve = await store.creerMouvement({
+    type: 'TRANSFERT', bouteilleSrcId: bRecupSrc.id,
+    bouteilleDstId: bNeuveRecyclee.id,
+    peseeAvantKg: 4, peseeApresKg: 3, technicien: 'Testeur Contrat'
+  });
+  await store.soumettreMouvement(transfertNeuve.id);
+  await verifierRejet(
+    'R1 étendu : transfert récupéré → bouteille NEUVE (état RECYCLE) BLOQUÉ',
+    store.validerMouvement(transfertNeuve.id, enseignant.id),
+    'Transfert interdit');
+  await store.rejeterMouvement(transfertNeuve.id, 'Nettoyage (R1 étendu)');
+  await store.supprimerMouvement(transfertNeuve.id);
+}
+
+// --- R2 : le mélange ne recharge rien et reste confiné ------------------
+{
+  // Bouteille MELANGE avec 3 kg de contenu initial, étiquetée FLUIDE.
+  const bMelSrc = await store.createBouteille({
+    type: 'RECUPERATION', fluide: FLUIDE, etatFluide: 'MELANGE',
+    tareKg: 5, masseBruteKg: 8, contenanceMaxKg: 20
+  });
+
+  // (a) recharge d'une installation depuis la MELANGE : BLOQUÉE.
+  const machineMel = await store.createMachine({
+    designation: 'Machine mélange du contrat', fluide: FLUIDE,
+    chargeNominaleKg: 5, operateur: 'Testeur Contrat'
+  });
+  const chargeMel = await store.creerMouvement({
+    type: 'CHARGE_APPOINT', machineId: machineMel.id,
+    bouteilleSrcId: bMelSrc.id, peseeAvantKg: 3, peseeApresKg: 2,
+    technicien: 'Testeur Contrat'
+  });
+  await store.soumettreMouvement(chargeMel.id);
+  await verifierRejet(
+    'R2 : CHARGE_APPOINT depuis une bouteille MELANGE BLOQUÉ (contenu incertain)',
+    store.validerMouvement(chargeMel.id, enseignant.id),
+    'probablement mélangé');
+  await store.rejeterMouvement(chargeMel.id, 'Nettoyage (R2 charge)');
+  await store.supprimerMouvement(chargeMel.id);
+
+  // (b) transfert MELANGE → bouteille de récupération ordinaire : BLOQUÉ
+  // (le caractère « probablement mélangé » ne doit pas se blanchir).
+  const bRecupPropre = await store.createBouteille({
+    type: 'RECUPERATION', fluide: FLUIDE, tareKg: 5, masseBruteKg: 5,
+    contenanceMaxKg: 10
+  });
+  const evasionMel = await store.creerMouvement({
+    type: 'TRANSFERT', bouteilleSrcId: bMelSrc.id,
+    bouteilleDstId: bRecupPropre.id,
+    peseeAvantKg: 3, peseeApresKg: 2, technicien: 'Testeur Contrat'
+  });
+  await store.soumettreMouvement(evasionMel.id);
+  await verifierRejet(
+    'R2 : transfert MELANGE → bouteille non-MELANGE BLOQUÉ (le mélange reste confiné)',
+    store.validerMouvement(evasionMel.id, enseignant.id),
+    'probablement mélangé');
+  await store.rejeterMouvement(evasionMel.id, 'Nettoyage (R2 transfert)');
+  await store.supprimerMouvement(evasionMel.id);
+
+  // (c) transfert MELANGE → MELANGE (regroupement de fonds) : AUTORISÉ,
+  // versement tracé chez la destination, étiquette recalculée.
+  const bMelDst = await store.createBouteille({
+    type: 'RECUPERATION', fluide: AUTRE_FLUIDE, etatFluide: 'MELANGE',
+    tareKg: 5, masseBruteKg: 5, contenanceMaxKg: 20
+  });
+  const regroupMel = await store.creerMouvement({
+    type: 'TRANSFERT', bouteilleSrcId: bMelSrc.id, bouteilleDstId: bMelDst.id,
+    peseeAvantKg: 3, peseeApresKg: 2, technicien: 'Testeur Contrat'
+  });
+  await store.soumettreMouvement(regroupMel.id);
+  const regroupValide =
+    await store.validerMouvement(regroupMel.id, enseignant.id);
+  verifier('R2 : transfert MELANGE → MELANGE AUTORISÉ (regroupement, 1 kg)',
+    PROCHE(regroupValide.quantiteKg, 1));
+  {
+    const dst = (await store.getBouteilles()).find((b) => b.id === bMelDst.id);
+    verifier('R2 : versement du regroupement tracé, étiquette recalculée (1 kg > 0 kg initial)',
+      dst.fluide === FLUIDE &&
+      dst.compositionMelange.some((v) => v.mouvementId === regroupMel.id));
+  }
+
+  // (d) contre-écriture : le versement annulé SORT de la composition,
+  // l'étiquette d'origine REVIENT, la source ne gagne AUCUNE ligne
+  // fantôme au reversement.
+  await store.annulerParContreEcriture(regroupMel.id,
+    'Erreur de saisie (test contrat R2)', enseignant.id);
+  {
+    const dst = (await store.getBouteilles()).find((b) => b.id === bMelDst.id);
+    const src = (await store.getBouteilles()).find((b) => b.id === bMelSrc.id);
+    verifier('R2 : contre-écriture — versement retiré et étiquette d’origine restaurée',
+      dst.fluide === AUTRE_FLUIDE && PROCHE(dst.masseNetteKg, 0) &&
+      !dst.compositionMelange.some((v) => v.mouvementId === regroupMel.id));
+    verifier('R2 : contre-écriture — la source MELANGE reprend sa masse SANS versement fantôme',
+      PROCHE(src.masseNetteKg, 3) && src.compositionMelange.length === 1);
+  }
+}
+
+// --- Contre-écriture sur bouteille passée VIDE / A_RETOURNER ------------
+{
+  // A_RETOURNER : une charge vide une bouteille NEUVE consignée → statut
+  // automatique (CF-5). La contre-écriture doit RESTER possible (unique
+  // voie de correction du registre WORM) : le reversement remet EN_STOCK.
+  const machineCE2 = await store.createMachine({
+    designation: 'Machine contre-écriture 2 du contrat', fluide: FLUIDE,
+    chargeNominaleKg: 5, operateur: 'Testeur Contrat'
+  });
+  const bConsignee = await store.createBouteille({
+    type: 'NEUVE', fluide: FLUIDE, tareKg: 5, masseBruteKg: 7,
+    contenanceMaxKg: 10, proprietaire: 'Fournigaz'
+  });
+  const chargeVidante = await store.creerMouvement({
+    type: 'CHARGE_APPOINT', machineId: machineCE2.id,
+    bouteilleSrcId: bConsignee.id, peseeAvantKg: 2, peseeApresKg: 0,
+    technicien: 'Testeur Contrat'
+  });
+  await store.soumettreMouvement(chargeVidante.id);
+  await store.validerMouvement(chargeVidante.id, enseignant.id);
+  verifier('CF-5 (préparation) : la bouteille consignée vidée passe A_RETOURNER',
+    (await store.getBouteilles()).find((b) => b.id === bConsignee.id)
+      .statut === 'A_RETOURNER');
+  await store.annulerParContreEcriture(chargeVidante.id,
+    'Erreur de saisie (test contrat A_RETOURNER)', enseignant.id);
+  {
+    const b = (await store.getBouteilles()).find((x) => x.id === bConsignee.id);
+    verifier('contre-écriture ACCEPTÉE sur une bouteille A_RETOURNER — retour EN_STOCK (2 kg)',
+      b.statut === 'EN_STOCK' && PROCHE(b.masseNetteKg, 2));
+  }
+
+  // VIDE : un transfert vide une bouteille de récupération (sans
+  // propriétaire) → statut VIDE ; même exigence.
+  const bRecupV = await store.createBouteille({
+    type: 'RECUPERATION', fluide: FLUIDE, tareKg: 5, masseBruteKg: 6,
+    contenanceMaxKg: 10
+  });
+  const bRecupV2 = await store.createBouteille({
+    type: 'RECUPERATION', fluide: FLUIDE, tareKg: 5, masseBruteKg: 5,
+    contenanceMaxKg: 10
+  });
+  const transfertVidant = await store.creerMouvement({
+    type: 'TRANSFERT', bouteilleSrcId: bRecupV.id, bouteilleDstId: bRecupV2.id,
+    peseeAvantKg: 1, peseeApresKg: 0, technicien: 'Testeur Contrat'
+  });
+  await store.soumettreMouvement(transfertVidant.id);
+  await store.validerMouvement(transfertVidant.id, enseignant.id);
+  verifier('CF-5 (préparation) : la bouteille vidée par transfert passe VIDE',
+    (await store.getBouteilles()).find((b) => b.id === bRecupV.id)
+      .statut === 'VIDE');
+  await store.annulerParContreEcriture(transfertVidant.id,
+    'Erreur de saisie (test contrat VIDE)', enseignant.id);
+  {
+    const b = (await store.getBouteilles()).find((x) => x.id === bRecupV.id);
+    verifier('contre-écriture ACCEPTÉE sur une bouteille VIDE — retour EN_STOCK (1 kg)',
+      b.statut === 'EN_STOCK' && PROCHE(b.masseNetteKg, 1));
+  }
+}
+
+// --- Fuite : CONFORME de complaisance, puis réparation le MÊME JOUR -----
+{
+  const machineFuite2 = await store.createMachine({
+    designation: 'Machine fuite même jour du contrat', fluide: FLUIDE,
+    chargeNominaleKg: 5, operateur: 'Testeur Contrat'
+  });
+  const bSrcFuite = await store.createBouteille({
+    type: 'NEUVE', fluide: FLUIDE, tareKg: 5, masseBruteKg: 10,
+    contenanceMaxKg: 10
+  });
+  // Fuite déclarée il y a 5 jours, AUCUNE réparation tracée, puis un
+  // CONFORME daté d'aujourd'hui (prématuré ou de complaisance) : la
+  // fuite doit RESTER ouverte (R3c) et l'alerte RESTER « Fuite non
+  // résolue » (R4) — jamais refermée par un contrôle seul.
+  const ctlFuite2 = await store.createControle({
+    machineId: machineFuite2.id, resultat: 'FUITE', methode: 'DIRECTE',
+    date: dateRelative(-5), operateur: 'Testeur Contrat'
+  });
+  await store.createControle({
+    machineId: machineFuite2.id, resultat: 'CONFORME', methode: 'DIRECTE',
+    date: dateRelative(0), operateur: 'Testeur Contrat'
+  });
+  const appointComplaisance = await store.creerMouvement({
+    type: 'CHARGE_APPOINT', machineId: machineFuite2.id,
+    bouteilleSrcId: bSrcFuite.id, peseeAvantKg: 5, peseeApresKg: 4,
+    technicien: 'Testeur Contrat'
+  });
+  await store.soumettreMouvement(appointComplaisance.id);
+  await verifierRejet(
+    'R3c : un CONFORME postérieur SANS réparation tracée ne referme PAS la fuite',
+    store.validerMouvement(appointComplaisance.id, enseignant.id),
+    'Tracez la réparation');
+  {
+    const alerte = (await store.getAlertes())
+      .find((a) => a.id === `alr-fuite-${machineFuite2.id}`);
+    verifier('R4 : l’alerte reste CRITIQUE « Fuite non résolue » (pas de réparation tracée)',
+      alerte?.niveau === 'CRITIQUE' && alerte?.titre === 'Fuite non résolue');
+  }
+  await store.rejeterMouvement(appointComplaisance.id, 'Nettoyage (R3c bis)');
+  await store.supprimerMouvement(appointComplaisance.id);
+
+  // MÊME JOUR : réparation tracée aujourd'hui + CONFORME daté d'aujourd'hui
+  // → machine EN_SERVICE (convention : à date égale, le contrôle est
+  // réputé postérieur à la réparation) et l'alerte se ferme.
+  await store.tracerReparation(ctlFuite2.id, {
+    dateReparation: dateRelative(0), natureReparation: 'Brasure reprise',
+    reparateur: 'Testeur Contrat'
+  });
+  await store.createControle({
+    machineId: machineFuite2.id, resultat: 'CONFORME', methode: 'DIRECTE',
+    date: dateRelative(0), operateur: 'Testeur Contrat'
+  });
+  verifier('R4 : réparation + contrôle CONFORME le MÊME JOUR → machine EN_SERVICE',
+    (await store.getMachines()).find((m) => m.id === machineFuite2.id)
+      .statut === 'EN_SERVICE');
+  verifier('R4 : plus d’alerte fuite après réparation + contrôle du même jour',
+    !(await store.getAlertes())
+      .some((a) => a.id === `alr-fuite-${machineFuite2.id}`));
+}
+
+// ============================================================
 // 14. Balance matière : inventaire et justification d'écart
 // ============================================================
 const ANNEE = new Date().getFullYear();
@@ -761,6 +1383,54 @@ verifier('getBilan : totaux et lignes par fluide',
   && typeof bilan.totalChargeKg === 'number');
 verifier('le bilan a une ligne pour le fluide de nos écritures',
   bilan.lignes.some((l) => l.fluide === FLUIDE));
+
+// ------------------------------------------------------------
+// V3 : un TRANSFERT est interne au stock (bouteille → bouteille) — il ne
+// doit JAMAIS être compté comme charge ni comme récupération, ni dans
+// getBilan, ni dans getStats.fluxMensuels (alignement sur la balance
+// matière, IM-12). Test DIFFÉRENTIEL : le total ne bouge pas après un
+// nouveau transfert connu.
+// ------------------------------------------------------------
+{
+  const bSrcT = await store.createBouteille({
+    type: 'NEUVE', fluide: FLUIDE, tareKg: 5, masseBruteKg: 12,
+    contenanceMaxKg: 10
+  });
+  const bDstT = await store.createBouteille({
+    type: 'NEUVE', fluide: FLUIDE, tareKg: 5, masseBruteKg: 5,
+    contenanceMaxKg: 10
+  });
+  const bilanAvant = await store.getBilan(ANNEE);
+  const statsAvant = await store.getStats();
+  const ligneAvant = bilanAvant.lignes.find((l) => l.fluide === FLUIDE);
+  const totalChargeAvant = ligneAvant ? ligneAvant.chargeKg : 0;
+  const totalRecupereAvant = ligneAvant ? ligneAvant.recupereKg : 0;
+  const totalFluxAvant = statsAvant.fluxMensuels
+    .reduce((s, f) => s + f.chargeKg + f.recupKg, 0);
+
+  const transfertV3 = await store.creerMouvement({
+    type: 'TRANSFERT', bouteilleSrcId: bSrcT.id, bouteilleDstId: bDstT.id,
+    peseeAvantKg: 7, peseeApresKg: 3, technicien: 'Testeur Contrat V3'
+  });
+  await store.soumettreMouvement(transfertV3.id);
+  const transfertValideV3 =
+    await store.validerMouvement(transfertV3.id, enseignant.id);
+  verifier('V3 : le transfert de contrôle est bien validé (+4 kg)',
+    PROCHE(transfertValideV3.quantiteKg, 4));
+
+  const bilanApres = await store.getBilan(ANNEE);
+  const statsApres = await store.getStats();
+  const ligneApres = bilanApres.lignes.find((l) => l.fluide === FLUIDE);
+  const totalFluxApres = statsApres.fluxMensuels
+    .reduce((s, f) => s + f.chargeKg + f.recupKg, 0);
+
+  verifier('V3 : getBilan.chargeKg INCHANGÉ après un TRANSFERT (mouvement interne)',
+    PROCHE(ligneApres.chargeKg, totalChargeAvant));
+  verifier('V3 : getBilan.recupereKg INCHANGÉ après un TRANSFERT',
+    PROCHE(ligneApres.recupereKg, totalRecupereAvant));
+  verifier('V3 : getStats.fluxMensuels INCHANGÉ après un TRANSFERT',
+    PROCHE(totalFluxApres, totalFluxAvant));
+}
 
 const officiel = await store.peutPasserEnOfficiel();
 verifier('peutPasserEnOfficiel : { ok, motifs[] français }',
@@ -926,6 +1596,52 @@ verifier('après import propre, le registre est déclaré sain',
   && store.registreAltere === null);
 verifier('l’état importé est fidèle (nos mouvements sont là)',
   (await store.getMouvements()).some((m) => m.id === mvt3.id));
+
+// ============================================================
+// 22. Forme canonique du contrôle déclaré + échange CROISÉ démo ↔ local
+// ============================================================
+{
+  // Le wizard envoie detecteurId/localisationFuite éventuellement NULS :
+  // le store doit figer la forme CANONIQUE (clé localisationFuite absente
+  // quand nulle), identique au round-trip SQL — l'empreinte SHA-256 couvre
+  // l'objet controle entier et JSON.stringify est sensible à la présence
+  // des clés. Sans ça : faux « registre altéré » au premier échange.
+  const bCanon1 = await store.createBouteille({
+    type: 'NEUVE', fluide: FLUIDE, tareKg: 5, masseBruteKg: 8,
+    contenanceMaxKg: 10
+  });
+  const bCanon2 = await store.createBouteille({
+    type: 'NEUVE', fluide: FLUIDE, tareKg: 5, masseBruteKg: 5,
+    contenanceMaxKg: 10
+  });
+  const mvtCanon = await store.creerMouvement({
+    type: 'TRANSFERT', bouteilleSrcId: bCanon1.id, bouteilleDstId: bCanon2.id,
+    peseeAvantKg: 3, peseeApresKg: 2, technicien: 'Testeur Contrat',
+    controle: { statutControle: 'CONFORME', detecteurId: null,
+      localisationFuite: null }
+  });
+  verifier('controle déclaré : forme canonique (localisationFuite ABSENTE quand nulle)',
+    mvtCanon.controle.statutControle === 'CONFORME' &&
+    !('localisationFuite' in mvtCanon.controle));
+  await store.soumettreMouvement(mvtCanon.id);
+  await store.validerMouvement(mvtCanon.id, enseignant.id);
+
+  // Échange croisé : l'export de CETTE implémentation doit s'importer dans
+  // L'AUTRE avec un registre déclaré SAIN (CR-5) — c'est le trajet réel
+  // « démo → fichier → mode local » (et l'inverse) d'un utilisateur.
+  const exportCroise = await store.exporterJSON();
+  const autreNom = NOM_STORE === 'demo' ? 'local' : 'demo';
+  const autreStore = await fabriquerStore(autreNom);
+  verifier(`échange croisé : l’export « ${NOM_STORE} » s’importe dans « ${autreNom} »`,
+    await autreStore.importerJSON(exportCroise) === true);
+  const etatCroise = await autreStore.getEtatRegistre();
+  verifier('échange croisé : le registre importé est déclaré SAIN (chaîne intacte)',
+    etatCroise.altere === false && etatCroise.casseA === null,
+    `casse à ${etatCroise.casseA}`);
+  const chaineCroisee = await autreStore.verifierChaineHash();
+  verifier('échange croisé : la chaîne de hash se recalcule à l’identique',
+    chaineCroisee.ok === true, `casse à ${chaineCroisee.casseA}`);
+}
 
 // ============================================================
 // Verdict

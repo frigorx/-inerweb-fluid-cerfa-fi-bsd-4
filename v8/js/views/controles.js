@@ -9,6 +9,7 @@
 import { enteteVue, tableau, chipStatut, ICONES } from './communs.js';
 import { esc, fmtDate } from '../core/utils.js';
 import { ouvrirFormControle } from '../modales/controle-form.js';
+import { ouvrirFormReparation } from '../modales/reparation-form.js';
 import { ouvrirCerfa } from '../cerfa/visualiseur.js';
 
 export const titre = 'Contrôles d’étanchéité';
@@ -45,6 +46,14 @@ function ligneControle(controle) {
     ? '<span class="echeance-depassee">' + dateProchain + '</span>'
     : dateProchain;
 
+  // R3/R4 : un contrôle FUITE sans réparation tracée propose l'action
+  // dédiée (le formulaire de contrôle ne suffit pas : la réparation
+  // se constate a posteriori, souvent bien après le contrôle).
+  const boutonReparation = (controle.resultat === 'FUITE' && !controle.dateReparation)
+    ? '<button type="button" class="btn btn-contour btn-petit" '
+      + 'data-action="reparation" data-id="' + esc(controle.id) + '">Tracer réparation</button>'
+    : '';
+
   return '<tr>'
     + '<td>' + fmtDate(controle.date) + '</td>'
     + '<td><strong>' + esc(controle.machineLabel) + '</strong></td>'
@@ -53,6 +62,7 @@ function ligneControle(controle) {
     + '<td>' + esc(controle.operateur) + '</td>'
     + '<td>' + celluleProchain + '</td>'
     + '<td class="align-droite">'
+    + boutonReparation
     + '<button type="button" class="btn btn-contour btn-petit" '
     + 'data-action="cerfa" data-id="' + esc(controle.id) + '">CERFA</button>'
     + '</td>'
@@ -105,6 +115,14 @@ export async function render(conteneur, ctx) {
   conteneur.querySelectorAll('[data-action="cerfa"]').forEach(function (bouton) {
     bouton.addEventListener('click', function () {
       ouvrirCerfa(ctx, { source: 'controle', id: bouton.dataset.id });
+    });
+  });
+
+  // Boutons « Tracer réparation » (R3/R4) : modale dédiée
+  conteneur.querySelectorAll('[data-action="reparation"]').forEach(function (bouton) {
+    bouton.addEventListener('click', function () {
+      const controle = tries.find(function (c) { return c.id === bouton.dataset.id; });
+      if (controle) ouvrirFormReparation(ctx, controle);
     });
   });
 }
