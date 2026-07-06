@@ -211,6 +211,48 @@ function blocIdentite(machine, fluide) {
 }
 
 /* ============================================================
+   Bloc 1 bis — Charge incomplète (proposition de complément, jamais imposé)
+   ============================================================ */
+
+/** Tolérance numérique (arrondis flottants) pour la comparaison de charges. */
+const EPSILON_CHARGE = 1e-9;
+
+/**
+ * La machine est-elle sous-chargée par rapport à sa charge nominale ?
+ * Ignore les machines sans charge nominale connue (absente ou nulle) et
+ * les machines sorties du parc suivi (démantelée ou arrêtée).
+ * @param {object} machine
+ * @returns {boolean}
+ */
+function estSousChargee(machine) {
+  if (machine.statut === 'DEMANTELEE' || machine.statut === 'ARRETEE') return false;
+  if (!(machine.chargeNominaleKg > 0)) return false;
+  return machine.chargeActuelleKg < machine.chargeNominaleKg - EPSILON_CHARGE;
+}
+
+/**
+ * Encart sobre (ambre/information, pas rouge) proposant de compléter la
+ * charge d'une machine sous-chargée. Une simple proposition : l'utilisateur
+ * garde la main via le bouton, rien n'est fait automatiquement.
+ * @param {object} machine
+ * @returns {string} HTML, ou chaîne vide si la charge est complète
+ */
+function blocChargeIncomplete(machine) {
+  if (!estSousChargee(machine)) return '';
+  return '<div class="fiche-section">'
+    + '<div class="bandeau-avertissement" style="align-items:center">' + ICONES.alerte
+    + '<span>Charge incomplète : '
+    + esc(fmtNombre(machine.chargeActuelleKg, 2)) + ' / '
+    + esc(fmtKg(machine.chargeNominaleKg)) + ' (' + esc(machine.fluide) + ').'
+    + '</span>'
+    + '<button type="button" class="btn btn-contour btn-petit" '
+    + 'data-action="completer-charge" style="margin-left:auto;flex:none">'
+    + ICONES.televerser + '<span>Compléter la charge</span></button>'
+    + '</div>'
+    + '</div>';
+}
+
+/* ============================================================
    Bloc 2 — Actions
    ============================================================ */
 
@@ -302,11 +344,28 @@ function blocAlertes(alertes) {
    Bloc 5 — Historique en onglets (Mouvements / Contrôles / Documents)
    ============================================================ */
 
+/**
+ * Attribut `title` explicitant les DEUX flux d'une récupération (le
+ * chiffre affiché décrit la machine qui se vide, pas la bouteille qui
+ * au contraire se remplit du même montant). Chaîne vide sinon — la
+ * valeur affichée n'est jamais modifiée.
+ * @param {object} mv — mouvement (copie du store)
+ * @returns {string} attribut ` title="…"` ou chaîne vide
+ */
+function titreQuantiteRecuperationFiche(mv) {
+  const estRecuperation = mv.type === 'RECUPERATION_MAINTENANCE'
+    || mv.type === 'RECUPERATION_DEMANTELEMENT';
+  if (!estRecuperation || !Number.isFinite(mv.quantiteKg)) return '';
+  const gain = fmtKg(Math.abs(mv.quantiteKg));
+  return ' title="Fluide retiré de la machine ; la bouteille de récupération a gagné +'
+    + esc(gain.replace(' kg', '')) + ' kg."';
+}
+
 function ligneMouvementFiche(mv) {
   return '<tr>'
     + '<td>' + fmtDate(mv.date) + '</td>'
     + '<td>' + esc(mv.type) + '</td>'
-    + '<td>' + esc(fmtNombre(mv.quantiteKg, 2)) + ' kg</td>'
+    + '<td' + titreQuantiteRecuperationFiche(mv) + '>' + esc(fmtNombre(mv.quantiteKg, 2)) + ' kg</td>'
     + '<td>' + chipStatut(mv.statut) + '</td>'
     + '<td class="align-droite">'
     + '<button type="button" class="btn btn-contour btn-petit" data-action="cerfa-mouvement" '
@@ -418,6 +477,7 @@ export async function render(conteneur, ctx) {
     + '<a href="#/machines" class="fiche-retour">' + ICONES.grille + '<span>Retour au parc</span></a>'
     + enteteVue({ titre: machine.designation, sousTitre: 'Code ' + machine.codePublic })
     + blocIdentite(machine, fluide)
+    + blocChargeIncomplete(machine)
     + blocActions()
     + blocDonneesTechniques(machine, fluide, client)
     + blocAlertes(alertes)
@@ -459,6 +519,19 @@ export async function render(conteneur, ctx) {
       // et retour sur cette même fiche à la finalisation (au lieu de la
       // vue Mouvements par défaut).
       ouvrirWizard(ctx, { machineId: machine.id, retour: '#/m/' + machine.codePublic });
+    });
+  }
+
+  const boutonCompleterCharge = conteneur.querySelector('[data-action="completer-charge"]');
+  if (boutonCompleterCharge) {
+    boutonCompleterCharge.addEventListener('click', function () {
+      // Machine + type « Complément de charge » présélectionnés, retour
+      // sur cette même fiche à la finalisation (même idiome que V9.1).
+      ouvrirWizard(ctx, {
+        machineId: machine.id,
+        typeInitial: 'appoint',
+        retour: '#/m/' + machine.codePublic
+      });
     });
   }
 

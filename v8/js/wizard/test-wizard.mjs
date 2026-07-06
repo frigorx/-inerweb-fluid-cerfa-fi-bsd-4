@@ -219,6 +219,98 @@ const MACHINE_TEST = {
     + 'getUtilisateurCourant()', Boolean(fond));
 }
 
+/* ============================================================
+   6. V9.2 : options.typeInitial='appoint' (bouton « Compléter la
+      charge » de la fiche machine) — la carte « Complément de
+      charge » doit être présélectionnée dès l'ouverture (classe
+      « selectionnee »), et combiné à machineId, le choix du
+      technicien à l'étape 1 doit suffire à sauter directement
+      l'étape 2 (machine déjà connue) jusqu'à l'étape 3 (bouteille).
+   ============================================================ */
+{
+  const store = creerStoreFactice({
+    machines: [MACHINE_TEST],
+    bouteilles: [{
+      id: 'bou-1', code: 'B1', fluide: 'R404A', type: 'BOUTEILLE',
+      masseNetteKg: 8, contenanceMaxKg: 20, statut: 'EN_STOCK',
+      etatFluide: 'VIERGE', decisionFluide: null
+    }]
+  });
+  const ctx = { store, naviguer: () => {} };
+
+  await ouvrirWizard(ctx, { machineId: 'mac-1', typeInitial: 'appoint' });
+  const fond = document.body.querySelectorAll('.modale-fond').at(-1);
+
+  const carteAppoint = fond.querySelector('[data-carte-type="appoint"]');
+  verifier('typeInitial="appoint" : la carte « Complément de charge » est '
+    + 'présélectionnée dès l’ouverture (classe "selectionnee")',
+    Boolean(carteAppoint) && carteAppoint.className.includes('selectionnee'),
+    'className = ' + (carteAppoint && carteAppoint.className));
+
+  // L'étape 1 reste affichée tant que le technicien n'est pas choisi
+  // (etapeComplete(1) exige carteType ET technicienId), comme pour
+  // machineId seul (cas 1 ci-dessus) : la présélection de la carte ne
+  // suffit pas à elle seule à faire sauter une étape.
+  let pastilleActive = fond.querySelector('.wizard-etape.active .wizard-pastille');
+  verifier('typeInitial seul (sans technicien choisi) ne fait pas sauter '
+    + 'l’étape 1 : il en manque encore le technicien',
+    pastilleActive && pastilleActive.textContent === '1',
+    'pastille active = ' + (pastilleActive && pastilleActive.textContent));
+
+  // Le technicien est choisi (la carte reste "appoint", déjà acquise) :
+  // l'étape 1 devient complète, machineId fait sauter l'étape 2.
+  const selectTechnicien = fond.querySelector('#wizard-technicien');
+  selectTechnicien.value = 'p1';
+  selectTechnicien.declencher('change');
+  fond.querySelector('#wizard-continuer').declencher('click');
+
+  pastilleActive = fond.querySelector('.wizard-etape.active .wizard-pastille');
+  verifier('typeInitial="appoint" + machineId : après avoir choisi le '
+    + 'technicien (carte déjà présélectionnée), le wizard saute directement '
+    + 'à l’étape 3 (bouteille), sans repasser par l’étape 2 (machine)',
+    pastilleActive && pastilleActive.textContent === '3',
+    'pastille active = ' + (pastilleActive && pastilleActive.textContent));
+
+  // L'utilisateur garde la main : la carte reste changeable (elle est
+  // rendue comme un bouton cliquable ordinaire, pas verrouillée).
+  verifier('la carte présélectionnée reste un bouton cliquable ordinaire '
+    + '(pas de verrouillage : l’utilisateur peut toujours en changer)',
+    carteAppoint.tagName === 'BUTTON' || carteAppoint.getAttribute('type') === 'button');
+}
+
+/* ============================================================
+   7. Sans typeInitial : comportement STRICTEMENT inchangé — aucune
+      carte présélectionnée à l'étape 1, et une valeur invalide/inconnue
+      passée en typeInitial est ignorée sans erreur (dégradation propre).
+   ============================================================ */
+{
+  const store = creerStoreFactice({ machines: [MACHINE_TEST], bouteilles: [] });
+  const ctx = { store, naviguer: () => {} };
+
+  await ouvrirWizard(ctx, {});
+  let fond = document.body.querySelectorAll('.modale-fond').at(-1);
+  let carteSelectionnee = fond.querySelector('.carte-choix.selectionnee');
+  verifier('sans typeInitial, aucune carte n’est présélectionnée à '
+    + 'l’étape 1 (comportement inchangé)',
+    !carteSelectionnee);
+
+  // Valeur inconnue : ignorée silencieusement, pas de présélection ni
+  // d'exception (dégradation propre comme documenté dans ouvrirWizard).
+  let leve = false;
+  try {
+    await ouvrirWizard(ctx, { typeInitial: 'valeur-inconnue-xyz' });
+  } catch {
+    leve = true;
+  }
+  verifier('un typeInitial invalide/inconnu n’empêche pas l’ouverture du '
+    + 'wizard (ignoré silencieusement)', !leve);
+
+  fond = document.body.querySelectorAll('.modale-fond').at(-1);
+  carteSelectionnee = fond.querySelector('.carte-choix.selectionnee');
+  verifier('un typeInitial invalide/inconnu ne présélectionne aucune carte',
+    !carteSelectionnee);
+}
+
 // ---- Bilan ----
 console.log(`\n${nbOk} test(s) réussi(s), ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);

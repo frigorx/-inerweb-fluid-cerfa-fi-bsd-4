@@ -2,6 +2,29 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔎 Récupération : clarification de l'affichage + proposition « Compléter la charge » (05/07)
+Signalement terrain (Franck) : après une récupération, la ligne du mouvement affiche « −0,60 kg »
+en rouge → impression que la bouteille de récupération est DÉBITÉE. **Diagnostic prouvé sur la
+vraie base SQLite : le moteur est SAIN** (la bouteille gagne bien +0,60 kg, la machine perd
+0,60 kg, parité démo/SQLite stricte, CF-5 hors de cause) — le signe négatif est une convention
+interne (flux vu de la machine, utilisée par la balance matière) que rien n'expliquait à l'écran.
+- **Affichage clarifié** (`mouvements.js`, `fiche-machine.js`) : infobulle sur la quantité des
+  récupérations — « Fluide retiré de la machine ; la bouteille de récupération a gagné +X,XX kg. »
+  Valeur affichée et modèle de données INCHANGÉS (CERFA/balance non touchés).
+- **Récapitulatif du wizard** : une récupération affiche désormais les DEUX flux
+  (« Machine : −X,XX kg · Bouteille B-XX : +X,XX kg »).
+- **Proposition « Compléter la charge »** (demande métier : fuite réparée → machine sous-chargée) :
+  la fiche machine affiche un bandeau ambre « Charge incomplète : 3,40 / 4,00 kg (R-32). » avec un
+  bouton qui ouvre le wizard PRÉ-RÉGLÉ (machine + type « Complément de charge » présélectionnés,
+  retour fiche). Proposition, jamais une obligation. Nouvelle option `typeInitial` du wizard
+  (validée, ignorée si inconnue, comportement sans option strictement inchangé).
+- `lancer-inerweb.bat` : au premier lancement (base absente), le lanceur crée le compte
+  administrateur (CLI `creer-admin.js`) avant de démarrer le serveur — raccourci bureau « un clic ».
+- Tests : `test-wizard.mjs` 16/0 (préselection + saut d'étape + comportement inchangé sans option),
+  contrat local + démo 187/0, chargement OK. **Vérifié navigateur** (base jetable, récupération
+  réelle validée) : encart, bouton, présélection « Complément de charge », saut à l'étape Bouteille,
+  infobulle exacte.
+
 ### 🛋️ Lot confort — 18 points CF de l'audit traités (05/07)
 Traitement du lot confort de l'audit du 03/07 (`docs/AUDIT-2026-07-03.md`), 22 points CF au
 total. Triage préalable : **CF-1, CF-9, CF-10, CF-13 déjà faits** (Lot 2 / E5), non retouchés

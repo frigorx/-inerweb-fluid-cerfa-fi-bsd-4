@@ -91,6 +91,23 @@ function libelleTransfert(mouvement, bouteillesParId) {
 }
 
 /**
+ * Attribut `title` explicitant les DEUX flux d'une récupération (le
+ * « − X,XX kg » affiché décrit la machine qui se vide, pas la bouteille
+ * qui au contraire se remplit du même montant). Chaîne vide pour tout
+ * autre type de mouvement — la valeur affichée n'est jamais modifiée.
+ * @param {object} mouvement — objet Mouvement du store (copie)
+ * @returns {string} attribut ` title="…"` ou chaîne vide
+ */
+function titreQuantiteRecuperation(mouvement) {
+  const estRecuperation = mouvement.type === 'RECUPERATION_MAINTENANCE'
+    || mouvement.type === 'RECUPERATION_DEMANTELEMENT';
+  if (!estRecuperation || !Number.isFinite(mouvement.quantiteKg)) return '';
+  const gain = fmtKg(Math.abs(mouvement.quantiteKg));
+  return ' title="Fluide retiré de la machine ; la bouteille de récupération a gagné +'
+    + esc(gain.replace(' kg', '')) + ' kg."';
+}
+
+/**
  * Construit la ligne HTML d'un mouvement.
  * @param {object} mouvement — objet Mouvement du store (copie)
  * @param {Map<string, object>} bouteillesParId — bouteilles chargées par la vue
@@ -110,6 +127,12 @@ function ligneMouvement(mouvement, bouteillesParId) {
     ? libelleTransfert(mouvement, bouteillesParId)
     : (mouvement.machineLabel || '—');
 
+  // Clarté d'affichage : une récupération montre « − X,XX kg » (convention
+  // conservée), mais ce chiffre décrit le flux côté MACHINE, pas la
+  // bouteille — celle-ci a au contraire GAGNÉ ce fluide. Le titre au
+  // survol lève l'ambiguïté sans toucher à la valeur affichée.
+  const titreQuantite = titreQuantiteRecuperation(mouvement);
+
   return '<tr>'
     // Date en mono
     + '<td class="cellule-mono">' + esc(fmtDate(mouvement.date)) + '</td>'
@@ -119,7 +142,7 @@ function ligneMouvement(mouvement, bouteillesParId) {
     + '<td>' + chipType(mouvement.type) + '</td>'
     // Quantité signée colorée + code fluide gris
     + '<td class="cellule-mono">'
-    + '<span class="' + classeQuantite + '">'
+    + '<span class="' + classeQuantite + '"' + titreQuantite + '>'
     + esc(mouvement.quantiteKg === null ? '—' : fmtKgSigne(mouvement.quantiteKg))
     + '</span>'
     + ' <span style="color:var(--texte-3);font-size:12px">' + esc(mouvement.fluide || '') + '</span>'
@@ -181,7 +204,8 @@ function rappelMouvement(mv) {
   if (mv.machineLabel) lignes.push(ligneRappel('Machine', esc(mv.machineLabel)));
   if (mv.quantiteKg !== null && Number.isFinite(mv.quantiteKg)) {
     lignes.push(ligneRappel('Quantité',
-      '<span class="cellule-mono">' + esc(fmtKgSigne(mv.quantiteKg)) + '</span>'));
+      '<span class="cellule-mono"' + titreQuantiteRecuperation(mv) + '>'
+      + esc(fmtKgSigne(mv.quantiteKg)) + '</span>'));
   } else if (Number.isFinite(mv.peseeAvantKg) && Number.isFinite(mv.peseeApresKg)) {
     lignes.push(ligneRappel('Pesées',
       '<span class="cellule-mono">' + esc(fmtKg(mv.peseeAvantKg))

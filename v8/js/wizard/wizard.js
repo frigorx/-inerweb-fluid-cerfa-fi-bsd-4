@@ -305,11 +305,17 @@ function bandeauErreur(message) {
  * À la fin (validation ou soumission réussie) : toast de succès,
  * fermeture, puis ctx.naviguer('mouvements').
  * @param {{ store: object, naviguer: (vue: string) => void }} ctx
- * @param {{ machineId?: string, brouillonId?: string }} [options]
+ * @param {{ machineId?: string, brouillonId?: string, typeInitial?: string,
+ *           retour?: string }} [options]
  *   machineId — préciblage d'une machine ;
  *   brouillonId — CR-1 : reprise d'un mouvement resté en BROUILLON
  *   (l'assistant est préchargé avec ses données ; à la validation,
- *   une écriture neuve remplace l'ancien brouillon, jamais de doublon).
+ *   une écriture neuve remplace l'ancien brouillon, jamais de doublon) ;
+ *   typeInitial — préselection de la carte type de l'étape 1 (ex. 'appoint'
+ *   pour « Complément de charge ») ; ignorée si elle ne correspond à aucune
+ *   carte connue, et toujours modifiable ensuite par l'utilisateur ;
+ *   retour — vue à ouvrir après une finalisation réussie (par défaut
+ *   'mouvements').
  * @returns {Promise<void>}
  */
 export async function ouvrirWizard(ctx, options = {}) {
@@ -356,10 +362,18 @@ export async function ouvrirWizard(ctx, options = {}) {
     bouteilles.push(...fraiches);
   }
 
+  // Préselection de la carte type (ex. « Compléter la charge » depuis la
+  // fiche machine) : n'a d'effet que si la valeur correspond à une carte
+  // réelle de l'étape 1 ; sinon ignorée silencieusement (pas de crash sur
+  // une valeur inattendue). L'utilisateur peut toujours changer de carte.
+  const carteTypeInitiale = CARTES_TYPE.some((c) => c.id === options.typeInitial)
+    ? options.typeInitial
+    : null;
+
   // ---- État du wizard ----
   const etat = {
     etape: 1,
-    carteType: null,        // 'charge' | 'appoint' | 'recuperation' | 'transfert' | 'autre'
+    carteType: carteTypeInitiale, // 'charge' | 'appoint' | 'recuperation' | 'transfert' | 'autre'
     premiereCharge: false,  // interrupteur de la carte Charge / Mise en service
     demantelement: false,   // interrupteur de la carte Récupération
     natureAutre: null,      // IM-15 : 'ASSEMBLAGE' | 'MODIFICATION' | 'AUTRE'
@@ -704,7 +718,8 @@ export async function ouvrirWizard(ctx, options = {}) {
 
   /** Des données ont-elles été saisies (confirmation avant abandon) ? */
   function donneesSaisies() {
-    return Boolean(etat.carteType || etat.technicienId
+    return Boolean(
+      (etat.carteType && etat.carteType !== carteTypeInitiale) || etat.technicienId
       || etat.bouteilleSrcId || etat.bouteilleDstId
       || etat.peseeAvant !== '' || etat.peseeApres !== ''
       || etat.statutControle || etat.causeMouvement
@@ -1421,12 +1436,27 @@ export async function ouvrirWizard(ctx, options = {}) {
     lignes.push(ligneRecap('Pesées',
       '<span class="cellule-mono">' + esc(fmtKg(nombreFr(etat.peseeAvant)))
       + ' → ' + esc(fmtKg(nombreFr(etat.peseeApres))) + '</span>'));
-    lignes.push(ligneRecap('Quantité',
-      '<span class="cellule-mono '
-      + (quantiteSignee !== null && quantiteSignee < 0
-        ? 'quantite-negative' : 'quantite-positive') + '">'
-      + esc(quantiteSignee !== null ? fmtKgSigne(quantiteSignee) : '—')
-      + '</span>'));
+
+    if (estRecuperation() && quantite !== null) {
+      // Clarté : une récupération a DEUX flux opposés (la machine se vide,
+      // la bouteille se remplit du même montant) — les afficher tous les
+      // deux évite de croire que la bouteille perd du fluide.
+      const libelleMachine = machine ? machine.code : 'Machine';
+      const libelleBouteille = destination ? destination.code : 'Bouteille';
+      lignes.push(ligneRecap('Quantité',
+        '<span class="cellule-mono quantite-negative">'
+        + esc(libelleMachine + ' : ' + fmtKgSigne(-quantite)) + '</span>'
+        + '<br>'
+        + '<span class="cellule-mono quantite-positive">'
+        + esc(libelleBouteille + ' : ' + fmtKgSigne(quantite)) + '</span>'));
+    } else {
+      lignes.push(ligneRecap('Quantité',
+        '<span class="cellule-mono '
+        + (quantiteSignee !== null && quantiteSignee < 0
+          ? 'quantite-negative' : 'quantite-positive') + '">'
+        + esc(quantiteSignee !== null ? fmtKgSigne(quantiteSignee) : '—')
+        + '</span>'));
+    }
 
     let texteControle = 'Sans objet';
     if (etat.statutControle === 'CONFORME' || etat.statutControle === 'FUITE') {

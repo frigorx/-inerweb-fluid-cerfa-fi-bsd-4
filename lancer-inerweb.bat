@@ -39,6 +39,15 @@ if not exist "data"      mkdir "data"
 if not exist "documents" mkdir "documents"
 if not exist "backups"   mkdir "backups"
 
+rem --- Première utilisation : créer le compte administrateur ---
+if not exist "data\inerweb-fluide.db" (
+    echo   Première utilisation : création du compte administrateur.
+    echo   Choisissez un identifiant et un mot de passe ^(10 caractères minimum^).
+    echo.
+    node "%~dp0server\creer-admin.js"
+    echo.
+)
+
 echo   Démarrage du serveur local...
 echo   L'application va s'ouvrir dans votre navigateur :
 echo   http://localhost:2011
