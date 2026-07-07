@@ -183,7 +183,11 @@ const TABLES = {
       dateLimiteGarde: 'date_limite_garde',
       // R2 (migration 7) : versements croisés dans une bouteille MELANGE —
       // [{ fluide, quantiteKg, date, mouvementId }, …], JSON nullable.
-      compositionMelange: 'composition_melange'
+      compositionMelange: 'composition_melange',
+      // code_public (migration 003 + backfill 009) : généré à la création
+      // (createBouteille), jamais dans la liste CHAMPS d'updateBouteille —
+      // intouchable en pratique, comme code_interne (parité machines V9.1).
+      codePublic: 'code_public'
     },
     champsLectureSeule: {
       // Colonne GENERATED ALWAYS (masse_brute_kg − tare_kg) : jamais écrite.
@@ -192,7 +196,7 @@ const TABLES = {
     tableauxJson: ['compositionMelange'],
     sqlSeulement: ['etablissement_id', 'qr_interne', 'pese_par',
       'numero_bl_facture', 'date_retour_fournisseur', 'date_epreuve',
-      'observation', 'date_creation', 'code_public']
+      'observation', 'date_creation']
   },
 
   mouvements: {

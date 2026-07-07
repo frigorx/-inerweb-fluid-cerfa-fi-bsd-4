@@ -16,6 +16,8 @@ import { enteteVue, chipStatut, chipType, tableau, modale, toast, ICONES }
 import { fmtDate, fmtKg, fmtKgSigne, esc } from '../core/utils.js';
 import { ouvrirWizard } from '../wizard/wizard.js';
 import { ouvrirCerfa } from '../cerfa/visualiseur.js';
+import { ouvrirFeuilleMiseEnService, peutOuvrirFeuilleMiseEnService }
+  from '../documents/feuille-mise-en-service.js';
 
 export const titre = 'Mouvements de fluide';
 
@@ -60,6 +62,11 @@ function boutonsAction(mv) {
     // type qui produit une fiche (le transfert reste interne au registre)
     if (mv.type !== 'TRANSFERT') {
       boutons.push(boutonLigne('voir-cerfa', 'Visualiser CERFA', mv.id, 'btn-contour'));
+    }
+    // CF-1 : feuille de mise en service, uniquement pour un mouvement de
+    // type MISE_EN_SERVICE figé (même règle que le bouton CERFA ci-dessus)
+    if (peutOuvrirFeuilleMiseEnService(mv)) {
+      boutons.push(boutonLigne('feuille-mise-en-service', 'Feuille de mise en service', mv.id, 'btn-contour'));
     }
     if (mv.statut === 'VALIDE') {
       boutons.push(boutonLigne('annuler', 'Annuler', mv.id, 'btn-danger-contour'));
@@ -453,6 +460,9 @@ export async function render(conteneur, ctx) {
     switch (action) {
       case 'voir-cerfa':
         ouvrirCerfa(ctx, { source: 'mouvement', id: mv.id });
+        break;
+      case 'feuille-mise-en-service':
+        ouvrirFeuilleMiseEnService(ctx, mv.id);
         break;
       case 'reprendre':
         // CR-1 : rouvre le wizard préchargé avec les données du brouillon

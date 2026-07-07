@@ -10,6 +10,7 @@
 import { enteteVue, chipStatut, barreProgression, modale, toast, ICONES } from './communs.js';
 import { esc, fmtNombre } from '../core/utils.js';
 import { ouvrirFormBouteille, ouvrirPesee } from '../modales/bouteille-form.js';
+import { ouvrirEtiquette } from '../documents/etiquette-bouteille.js';
 
 export const titre = 'Stock bouteilles';
 
@@ -170,6 +171,8 @@ function carteBouteille(b) {
       + ' aria-label="Modifier la bouteille ' + esc(b.code) + '">Modifier</button>'
       + '<button type="button" class="btn btn-contour btn-petit" data-action="peser" data-id="' + esc(b.id) + '"'
       + ' aria-label="Peser la bouteille ' + esc(b.code) + '">Peser</button>'
+      + '<button type="button" class="btn btn-contour btn-petit" data-action="etiquette" data-id="' + esc(b.id) + '"'
+      + ' aria-label="Étiquette QR de la bouteille ' + esc(b.code) + '">Étiquette QR</button>'
       + '<button type="button" class="btn btn-danger-contour btn-petit" data-action="retour" data-id="' + esc(b.id) + '"'
       + ' aria-label="Retourner la bouteille ' + esc(b.code) + ' au fournisseur">Retour fourn.</button>'
       + '</div>';
@@ -319,6 +322,8 @@ export async function render(conteneur, ctx) {
       ouvrirFormBouteille(ctxAvecRafraichissement, id);
     } else if (action === 'peser') {
       ouvrirPesee(ctxAvecRafraichissement, id);
+    } else if (action === 'etiquette') {
+      ouvrirEtiquette(ctxAvecRafraichissement, id);
     } else if (action === 'retour') {
       // IM-9 : retour fournisseur avec confirmation (remplace l'ancien
       // « Suppr. » qui se bornait à renvoyer vers cette action)

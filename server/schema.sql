@@ -220,7 +220,7 @@ CREATE TABLE IF NOT EXISTS bouteilles (
     etablissement_id        TEXT NOT NULL REFERENCES etablissements(id),
     code_interne            TEXT,                    -- ⚿ code lisible (« B-06 »)
     numero_bouteille        TEXT,                    -- ⚿ n° réel gravé / étiquette fabricant (contrat : numeroReel)
-    qr_interne              TEXT,                    -- contenu du QR code interne (legacy — cf. code_public, migration 003)
+    qr_interne              TEXT,                    -- contenu du QR code interne (legacy — cf. code_public, migration 003, backfillé + généré systématiquement depuis la migration 009)
     type                    TEXT NOT NULL            -- ⚿
         CHECK (type IN ('NEUVE','RECUPERATION','TRANSFERT','DECHET')),
     fluide                  TEXT REFERENCES fluides(code),  -- ⚿

@@ -11,6 +11,10 @@ import { ouvrirWizard } from '../wizard/wizard.js';
 import { ouvrirFormControle } from '../modales/controle-form.js';
 import { ouvrirPlaque, calculerFrequenceControle } from '../documents/plaque-fgas.js';
 import { ouvrirEtiquette } from '../documents/etiquette-machine.js';
+import { ouvrirBonIntervention } from '../documents/bon-intervention.js';
+import { ouvrirFicheIdentification } from '../documents/fiche-identification-machine.js';
+import { ouvrirFeuilleMiseEnService, peutOuvrirFeuilleMiseEnService }
+  from '../documents/feuille-mise-en-service.js';
 import { ouvrirCerfa } from '../cerfa/visualiseur.js';
 import { zonePiecesJointes } from '../composants/pieces-jointes.js';
 
@@ -270,6 +274,10 @@ function blocActions() {
     + ICONES.bilan + '<span>CERFA</span></button>'
     + '<button type="button" class="btn btn-contour" data-action="etiquette">'
     + ICONES.grille + '<span>Étiquette QR</span></button>'
+    + '<button type="button" class="btn btn-contour" data-action="bon-intervention">'
+    + ICONES.bilan + '<span>Bon d\'intervention</span></button>'
+    + '<button type="button" class="btn btn-contour" data-action="fiche-identification">'
+    + ICONES.imprimer + '<span>Fiche d\'identification (A4)</span></button>'
     + '</div>'
     + '</div>';
 }
@@ -362,14 +370,24 @@ function titreQuantiteRecuperationFiche(mv) {
 }
 
 function ligneMouvementFiche(mv) {
+  // CF-1 : bouton « Feuille de mise en service » uniquement pour un
+  // mouvement de type MISE_EN_SERVICE figé (VALIDE/ANNULE), même règle
+  // que le bouton CERFA de la même ligne.
+  const boutonFeuille = peutOuvrirFeuilleMiseEnService(mv)
+    ? '<button type="button" class="btn btn-contour btn-petit" data-action="feuille-mise-en-service" '
+      + 'data-id="' + esc(mv.id) + '">Feuille de mise en service</button>'
+    : '';
   return '<tr>'
     + '<td>' + fmtDate(mv.date) + '</td>'
     + '<td>' + esc(mv.type) + '</td>'
     + '<td' + titreQuantiteRecuperationFiche(mv) + '>' + esc(fmtNombre(mv.quantiteKg, 2)) + ' kg</td>'
     + '<td>' + chipStatut(mv.statut) + '</td>'
     + '<td class="align-droite">'
+    + '<span style="display:inline-flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">'
     + '<button type="button" class="btn btn-contour btn-petit" data-action="cerfa-mouvement" '
     + 'data-id="' + esc(mv.id) + '">CERFA</button>'
+    + boutonFeuille
+    + '</span>'
     + '</td>'
     + '</tr>';
 }
@@ -556,10 +574,30 @@ export async function render(conteneur, ctx) {
     });
   }
 
+  const boutonBonIntervention = conteneur.querySelector('[data-action="bon-intervention"]');
+  if (boutonBonIntervention) {
+    boutonBonIntervention.addEventListener('click', function () {
+      ouvrirBonIntervention(ctx, machine.id);
+    });
+  }
+
+  const boutonFicheIdentification = conteneur.querySelector('[data-action="fiche-identification"]');
+  if (boutonFicheIdentification) {
+    boutonFicheIdentification.addEventListener('click', function () {
+      ouvrirFicheIdentification(ctx, machine.id);
+    });
+  }
+
   // ---- CERFA depuis l'historique (un mouvement ou un contrôle précis) ----
   conteneur.querySelectorAll('[data-action="cerfa-mouvement"]').forEach(function (bouton) {
     bouton.addEventListener('click', function () {
       ouvrirCerfa(ctx, { source: 'mouvement', id: bouton.dataset.id });
+    });
+  });
+  // ---- Feuille de mise en service depuis l'historique (CF-1) ----
+  conteneur.querySelectorAll('[data-action="feuille-mise-en-service"]').forEach(function (bouton) {
+    bouton.addEventListener('click', function () {
+      ouvrirFeuilleMiseEnService(ctx, bouton.dataset.id);
     });
   });
   conteneur.querySelectorAll('[data-action="cerfa-controle"]').forEach(function (bouton) {

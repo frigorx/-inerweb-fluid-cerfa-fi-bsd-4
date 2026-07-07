@@ -449,13 +449,14 @@ export function creerDemoStore() {
   const CODE_PUBLIC_TENTATIVES_MAX = 20;
 
   /**
-   * Tire un code public (base32 Crockford, 7 car.) UNIQUE dans le parc
-   * actuel — retire (retry) en cas de collision. Collision structurellement
-   * quasi impossible (32^7 combinaisons) : la boucle est un filet de
-   * sécurité, jamais le mécanisme d'unicité réel.
+   * Tire un code public (base32 Crockford, 7 car.) UNIQUE dans la
+   * `collection` donnée (donnees.machines ou donnees.bouteilles) — retire
+   * (retry) en cas de collision. Collision structurellement quasi
+   * impossible (32^7 combinaisons) : la boucle est un filet de sécurité,
+   * jamais le mécanisme d'unicité réel.
    */
-  function codePublicUnique() {
-    const pris = new Set(donnees.machines
+  function codePublicUnique(collection) {
+    const pris = new Set(collection
       .map((m) => m.codePublic)
       .filter(Boolean));
     for (let tentative = 0; tentative < CODE_PUBLIC_TENTATIVES_MAX; tentative += 1) {
@@ -463,7 +464,7 @@ export function creerDemoStore() {
       if (!pris.has(code)) return code;
     }
     throw new Error(
-      'Impossible de générer un code public unique pour la machine ' +
+      'Impossible de générer un code public unique ' +
       `(après ${CODE_PUBLIC_TENTATIVES_MAX} tentatives).`);
   }
 
@@ -1350,7 +1351,16 @@ export function creerDemoStore() {
       // une fois posé).
       for (const m of donnees.machines) {
         if (!m.codePublic) {
-          m.codePublic = codePublicUnique();
+          m.codePublic = codePublicUnique(donnees.machines);
+          modifie = true;
+        }
+      }
+
+      // Backfill équivalent (migration 009) pour les bouteilles — même
+      // règle : jamais régénéré une fois posé.
+      for (const b of donnees.bouteilles) {
+        if (!b.codePublic) {
+          b.codePublic = codePublicUnique(donnees.bouteilles);
           modifie = true;
         }
       }
@@ -1714,7 +1724,7 @@ export function creerDemoStore() {
         prochainControle: d.prochainControle ?? null,
         // Identifiant opaque QR (V9.1) : généré une fois, jamais modifiable
         // (updateMachine ne le liste pas dans ses CHAMPS).
-        codePublic: codePublicUnique()
+        codePublic: codePublicUnique(donnees.machines)
       };
       donnees.machines.push(machine);
       journaliser(d.operateur, 'CREATION_MACHINE', machine.code,
@@ -1922,7 +1932,10 @@ export function creerDemoStore() {
         statut: d.statut ?? 'EN_STOCK',
         // R2 : versements tracés d'une bouteille MELANGE ; null hors
         // MELANGE, amorcée ci-dessous sinon.
-        compositionMelange: null
+        compositionMelange: null,
+        // Identifiant opaque QR (parité machines V9.1) : généré une fois,
+        // jamais modifiable (updateBouteille ne le liste pas dans CHAMPS).
+        codePublic: codePublicUnique(donnees.bouteilles)
       };
       // R2 : bouteille créée MELANGE → composition amorcée avec son
       // contenu initial (l'étiquette courante), sans quoi le premier

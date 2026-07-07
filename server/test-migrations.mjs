@@ -497,6 +497,59 @@ verifierLeve('le code public est unique (résolution QR sans ambiguïté)',
 }
 
 // ============================================================
+// 6ter. Backfill du code public pour les bouteilles PRÉEXISTANTES
+// (migration 009) — parité exacte de la 6bis (machines), simule une base
+// bloquée en version 8 avec des bouteilles créées AVANT l'introduction
+// du générateur côté bouteilles (V9.2).
+// ============================================================
+{
+  const CHEMIN_ANCIENNE_BTL = join(DOSSIER, 'ancienne-bouteilles.db');
+  const ancienneBtl = new DatabaseSync(CHEMIN_ANCIENNE_BTL);
+  ancienneBtl.exec(readFileSync(
+    new URL('./schema.sql', import.meta.url), 'utf8'));
+  ancienneBtl.exec(`PRAGMA user_version = ${migrations.VERSION_BASE};`);
+  migrations.migrer(ancienneBtl, { 2: migrations.MIGRATIONS[2],
+    3: migrations.MIGRATIONS[3], 4: migrations.MIGRATIONS[4],
+    5: migrations.MIGRATIONS[5], 6: migrations.MIGRATIONS[6],
+    7: migrations.MIGRATIONS[7],
+    8: migrations.MIGRATIONS[8] }); // portée à 8, PAS encore 9
+
+  ancienneBtl.exec(`INSERT INTO etablissements (id, raison_sociale)
+                 VALUES ('ETB-ANC-B', 'Lycée ancien');`);
+  for (let i = 0; i < 4; i += 1) {
+    ancienneBtl.exec(`INSERT INTO bouteilles (id, etablissement_id, type, fluide)
+                   VALUES ('BTL-ANC-${i}', 'ETB-ANC-B', 'NEUVE', 'R-410A');`);
+  }
+  // Une bouteille qui aurait DÉJÀ un code_public : son code ne doit ni
+  // être régénéré, ni entrer en collision avec le backfill.
+  ancienneBtl.exec(`INSERT INTO bouteilles (id, etablissement_id, type, fluide,
+                   code_public)
+                 VALUES ('BTL-ANC-DEJA', 'ETB-ANC-B', 'NEUVE', 'R-410A', 'HJKMNPQ');`);
+
+  verifier('avant migration 009 : les bouteilles anciennes sont sans code public',
+    ancienneBtl.prepare(`SELECT count(*) AS n FROM bouteilles
+      WHERE etablissement_id = 'ETB-ANC-B' AND code_public IS NULL`)
+      .get().n === 4);
+  verifier('avant migration 009 : la base est bloquée en version 8',
+    migrations.lireVersion(ancienneBtl) === 8);
+
+  const versionFinaleBtl = migrations.migrer(ancienneBtl, { 9: migrations.MIGRATIONS[9] });
+  verifier('la migration 009 porte la base à la version 9',
+    versionFinaleBtl === 9 && migrations.lireVersion(ancienneBtl) === 9);
+
+  const lignesBtl = ancienneBtl.prepare(`SELECT id, code_public FROM bouteilles
+    WHERE etablissement_id = 'ETB-ANC-B' ORDER BY id`).all();
+  verifier('toutes les bouteilles anciennes reçoivent un code public (format Crockford)',
+    lignesBtl.every((b) => /^[0-9A-HJKMNP-TV-Z]{7}$/.test(b.code_public)));
+  verifier('les codes publics backfillés (bouteilles) sont tous distincts',
+    new Set(lignesBtl.map((b) => b.code_public)).size === lignesBtl.length);
+  verifier('une bouteille déjà pourvue conserve SON code (jamais régénéré)',
+    lignesBtl.find((b) => b.id === 'BTL-ANC-DEJA').code_public === 'HJKMNPQ');
+
+  ancienneBtl.close();
+}
+
+// ============================================================
 // 7. Base pré-versionnage : refusée avec un message clair
 // ============================================================
 db.fermer();

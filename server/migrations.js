@@ -35,6 +35,11 @@
  *       mouvements.localisation_fuite_declaree — localisation de la fuite
  *       déclarée à l'étape 5 du wizard (R5), même pattern que
  *       statut_controle_declare/detecteur_declare_id.
+ *   9 — backfill code_public bouteilles (V9.2, parité migration 6) : toute
+ *       bouteille préexistante (créée avant que createBouteille ne génère
+ *       systématiquement le code) reçoit un code public unique — la colonne
+ *       posée par la migration 003 restait vide côté bouteilles, rien ne la
+ *       remplissait encore côté application.
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -210,6 +215,32 @@ const MIGRATIONS = {
       // du wizard) — même pattern que statut_controle_declare /
       // detecteur_declare_id, propagée au VRAI contrôle par CR-3.
       db.exec('ALTER TABLE mouvements ADD COLUMN localisation_fuite_declaree TEXT;');
+    }
+  },
+
+  9: {
+    nom: 'backfill_code_public_bouteilles',
+    appliquer(db) {
+      // Parité exacte de la migration 6 (backfill machines), scopée sur
+      // bouteilles : la migration 003 avait posé la colonne (nullable) et
+      // son index UNIQUE partiel, mais rien ne la remplissait encore côté
+      // bouteilles — toute bouteille créée avant l'introduction du
+      // générateur dans createBouteille reste avec code_public NULL.
+      // Backfill un-shot, un code UNIQUE par ligne (retry en cas de
+      // collision avec le parc déjà en base).
+      const sansCode = db.prepare(
+        'SELECT id FROM bouteilles WHERE code_public IS NULL').all();
+      const dejaPris = new Set(
+        db.prepare('SELECT code_public AS c FROM bouteilles WHERE code_public IS NOT NULL')
+          .all().map((l) => l.c));
+      const maj = db.prepare(
+        'UPDATE bouteilles SET code_public = ? WHERE id = ?');
+      for (const { id } of sansCode) {
+        let code = tirerCodePublicMigration();
+        while (dejaPris.has(code)) code = tirerCodePublicMigration();
+        dejaPris.add(code);
+        maj.run(code, id);
+      }
     }
   }
 };

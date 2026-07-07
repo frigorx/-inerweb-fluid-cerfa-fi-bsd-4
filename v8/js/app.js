@@ -11,6 +11,7 @@ import { ICONES } from './core/icones.js';
 import { esc } from './core/utils.js';
 import { modale, toast, confirmer } from './views/communs.js';
 import { render as rendreConnexion } from './views/connexion.js';
+import { ouvrirFormBouteille } from './modales/bouteille-form.js';
 
 // ---- Liste ordonnée des vues (contrat v8) ----
 const VUES = [
@@ -197,6 +198,16 @@ async function afficherVue(id, param = '') {
   // qu'on ne s'est pas reconnecté (surConnexion rappelle afficherVue lui-même).
   if (ecranConnexionAffiche) return;
 
+  // Route paramétrée '#/b/<code>' (V9.1, vague bouteilles) : pas une vue à
+  // proprement parler — un raccourci qui retrouve la bouteille par son
+  // code_public puis ouvre le formulaire d'édition existant par-dessus la
+  // vue 'bouteilles' (fond cohérent). Code inconnu → toast sobre, jamais
+  // d'exception JS.
+  if (id === 'b') {
+    await ouvrirBouteilleParCode(param);
+    return;
+  }
+
   const zone = document.getElementById('vue');
   const definition = VUES.find(function (vue) { return vue.id === id; });
   const libelle = definition ? definition.libelle : id;
@@ -245,6 +256,36 @@ async function afficherVue(id, param = '') {
 
   zone.scrollTop = 0;
   window.scrollTo(0, 0);
+}
+
+/**
+ * Résout la route '#/b/<code>' : retrouve la bouteille par son code_public
+ * puis ouvre le formulaire d'édition existant (bouteille-form.js) par-dessus
+ * la vue 'bouteilles', déjà affichée comme fond. Code inconnu → navigation
+ * vers 'bouteilles' + toast sobre, sans exception.
+ * @param {string} codePublic — paramètre brut porté par le hash
+ */
+async function ouvrirBouteilleParCode(codePublic) {
+  const code = String(codePublic || '').trim();
+  // Rendu immédiat de la vue 'bouteilles' comme fond (même mécanisme que
+  // reprendreDemarrageApresConnexion : appel direct à afficherVue, sans
+  // attendre le hashchange asynchrone du routeur). Le hash '#/b/<code>'
+  // reste affiché dans la barre d'adresse — sans conséquence : un
+  // rechargement rejouera simplement cette même route.
+  await afficherVue('bouteilles');
+
+  try {
+    const bouteilles = await store.getBouteilles();
+    const bouteille = bouteilles.find(function (b) { return b.codePublic === code; });
+    if (!bouteille) {
+      toast('Bouteille introuvable (code inconnu).', 'erreur');
+      return;
+    }
+    await ouvrirFormBouteille({ store: store, naviguer: naviguer, rafraichir: function () { naviguer('bouteilles'); } }, bouteille.id);
+  } catch (erreur) {
+    console.error('Ouverture de la bouteille par code impossible :', erreur);
+    toast('Bouteille introuvable (code inconnu).', 'erreur');
+  }
 }
 
 /**

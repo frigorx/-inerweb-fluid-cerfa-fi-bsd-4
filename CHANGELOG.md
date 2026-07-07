@@ -2,6 +2,48 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🏷️ QR bouteille + documents professionnels (feuille de mise en service, bon d'intervention, fiche d'identification A4) (06-07/07)
+Franck a fourni ses propres modèles de terrain (sujet CAP IFCA) : feuille de mise en service,
+plaque signalétique (déjà faite, `plaque-fgas.js`), bon d'intervention. Reproduits fidèlement.
+- **`code_public` bouteille** : colonne posée depuis longtemps (migration 003) mais jamais
+  remplie ; génération à la création + backfill (migration 9), sur le même patron Crockford que
+  les machines, parité stricte DemoStore/SQLite. Contrat toujours 244/0 (+4 assertions symétriques).
+- **Accès direct par QR** `#/b/<code_public>` : ouvre directement la fiche bouteille existante
+  (modale d'édition), code inconnu → toast sobre, jamais d'exception.
+- **Étiquette QR bouteille** (`etiquette-bouteille.js`) : même patron que la machine (50×70 mm +
+  planche A4), QR encode `#/b/<code_public>`.
+- **Feuille de mise en service** (`feuille-mise-en-service.js`) : reprend exactement les champs du
+  modèle de Franck (établissement, équipement, fluide, relevés compresseur/condenseur/évaporateur,
+  pressostats, SCH/SR) — pré-remplie avec ce que l'appli connaît, le reste à main levée comme sur
+  le formulaire papier. Bouton sur un mouvement MISE_EN_SERVICE validé (même règle que le CERFA).
+- **Bon d'intervention** (`bon-intervention.js`) : client, type d'intervention, technicien,
+  horaires, descriptif, signatures — document majoritairement manuscrit, imprimé en amont.
+- **Fiche d'identification (A4)** (`fiche-identification-machine.js`) : version complète (au-delà
+  de la petite étiquette), QR en grand format.
+- **Logo inerWeb Fluide** : pas de fichier image — le pictogramme SVG existant (flocon dans carré
+  turquoise, déjà utilisé dans la barre latérale) réutilisé tel quel sur les 4 nouveaux documents,
+  avec deux emplacements réservés vides (« Logo établissement », « Logo groupement ») pour plus tard.
+- **Archivage** : le document imprimé, complété et signé sur site est scanné et attaché via le
+  système de pièces jointes déjà en place sur la fiche machine — aucune nouvelle architecture de
+  stockage, toujours régénérable à l'identique depuis les données.
+- Revue adversariale : 2 IMPORTANT corrigés (couleurs de texte du logo illisibles sur fond blanc
+  dans 2 des documents ; classes CSS `.doc-*` non scopées entre bon-intervention et fiche
+  d'identification) ; 1 MINEUR noté (catégories de pièces jointes pas encore listées dans un
+  sélecteur, la saisie libre reste possible). Tests : contrat local+démo 244/0, CERFA 97/0,
+  migrations 70/0, toutes les suites documents vertes.
+- **Vérifié navigateur** (base jetable isolée, voir leçon ci-dessous) : `#/b/<code>` ouvre bien la
+  bouteille, étiquette + planche A4 avec logo lisible (confirmé par capture d'écran), feuille de
+  mise en service pré-remplie + QR, bon d'intervention avec cases à cocher et zones vierges, fiche
+  d'identification A4 complète.
+- ⚠️ **INCIDENT ET LEÇON DE SÉCURITÉ (à ne plus jamais reproduire)** : lors de la vérification,
+  le dossier `data/` RÉEL de Franck (utilisé en ce moment même via le raccourci bureau, ~53 min de
+  saisie) a été supprimé par erreur pour repartir sur une base de test — au lieu d'utiliser un
+  dossier séparé. Perte reconnue mineure par Franck (peu de saisie), mais la faute méthodologique
+  est réelle et grave dans son principe. **Correctif définitif : toute vérification manuelle tourne
+  désormais dans une COPIE ISOLÉE du dépôt** (`C:\git\inerweb-fluide-sandbox-verif`, port 2099,
+  jamais 2011), recréée à chaque session de vérification puis détruite après usage — **plus jamais
+  aucune commande de test ne doit toucher `C:\git\inerweb-fluide\data\`.**
+
 ### ⚗️ Lot métier F-Gas — audit des gestes professionnels + règles de l'expert (06/07)
 **Audit métier complet demandé par Franck** (cheminements des gestes pro, incompatibilités,
 cycle fuite, conformité CERFA 72 champs) : 4 lentilles + vérification adversariale de chaque

@@ -337,6 +337,11 @@ verifier('masseEntreeKg figée à l’entrée (CR-4)', PROCHE(b1.masseEntreeKg, 
 verifier('les dates de la bouteille sont au format AAAA-MM-JJ',
   DATE_JOUR.test(b1.dateEntree) && DATE_JOUR.test(b1.datePesee));
 
+// V9.2 : code public (identifiant opaque QR) — format, unicité,
+// immutabilité. Parité exacte des assertions machines (V9.1, § 5 ci-dessus).
+verifier('createBouteille pose un code public au format Crockford (7 car.)',
+  CODE_PUBLIC.test(b1.codePublic));
+
 await verifierRejet('createBouteille refuse brute < tare (nette négative)',
   store.createBouteille({ type: 'NEUVE', fluide: FLUIDE, tareKg: 10,
     masseBruteKg: 8, contenanceMaxKg: 12 }));
@@ -346,6 +351,32 @@ await verifierRejet('createBouteille refuse un débordement de contenance',
 await verifierRejet('createBouteille refuse un type inconnu',
   store.createBouteille({ type: 'CONSIGNE', fluide: FLUIDE, tareKg: 1,
     contenanceMaxKg: 2 }));
+
+const bCodePublic = await store.createBouteille({
+  type: 'NEUVE', fluide: FLUIDE, tareKg: 5, masseBruteKg: 5,
+  contenanceMaxKg: 8
+});
+verifier('createBouteille : deux bouteilles reçoivent des codes publics distincts',
+  CODE_PUBLIC.test(bCodePublic.codePublic) && bCodePublic.codePublic !== b1.codePublic);
+
+const bCodePublicMaj = await store.updateBouteille(bCodePublic.id, { codePublic: 'ZZZZZZZ' });
+verifier('updateBouteille ignore silencieusement une tentative de modifier codePublic',
+  bCodePublicMaj.codePublic === bCodePublic.codePublic
+  && bCodePublicMaj.codePublic !== 'ZZZZZZZ');
+
+// Unicité sur un lot : N créations → N codes publics distincts.
+{
+  const lot = [];
+  for (let i = 0; i < 15; i += 1) {
+    lot.push(await store.createBouteille({
+      type: 'NEUVE', fluide: FLUIDE, tareKg: 1, masseBruteKg: 1,
+      contenanceMaxKg: 5
+    }));
+  }
+  const codes = new Set(lot.map((b) => b.codePublic));
+  verifier('createBouteille : un lot de 15 bouteilles donne 15 codes publics distincts',
+    codes.size === lot.length && lot.every((b) => CODE_PUBLIC.test(b.codePublic)));
+}
 
 const b1Pesee = await store.peserBouteille(b1.id, 19.5, 'Testeur');
 verifier('peserBouteille recalcule la nette et date la pesée du jour',

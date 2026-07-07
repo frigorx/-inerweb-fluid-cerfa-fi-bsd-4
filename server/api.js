@@ -1318,7 +1318,7 @@ const HANDLERS = {
       // Identifiant opaque QR (V9.1) : généré une fois, jamais modifiable
       // (updateMachine ne le liste pas dans ses CHAMPS). Retry sur collision
       // avec l'index UNIQUE partiel de la migration 003.
-      codePublic: codePublicUnique()
+      codePublic: codePublicUnique('machines')
     };
     return muter(() => {
       const ligne = mapping.versSql('machines', machine);
@@ -1470,7 +1470,10 @@ const HANDLERS = {
       lot: d.lot ?? null,
       dateEntree: d.dateEntree ?? aujourdHui(),
       datePesee: d.datePesee ?? aujourdHui(),
-      statut: d.statut ?? 'EN_STOCK'
+      statut: d.statut ?? 'EN_STOCK',
+      // Identifiant opaque QR (parité machines V9.1) : généré une fois,
+      // jamais modifiable (updateBouteille ne le liste pas dans CHAMPS).
+      codePublic: codePublicUnique('bouteilles')
     };
     // R2 : bouteille créée MELANGE → composition amorcée avec son contenu
     // initial (l'étiquette courante), sans quoi le premier versement
@@ -3551,21 +3554,23 @@ function plusGrandCode(table, colonne, prefixe) {
 const CODE_PUBLIC_TENTATIVES_MAX = 20;
 
 /**
- * Tire un code public (base32 Crockford, 7 car.) UNIQUE dans machines —
- * retire (retry) en cas de collision avec le parc déjà en base. La
- * collision est structurellement quasi impossible (32^7 ≈ 34 milliards de
- * combinaisons) : la boucle est un filet de sécurité, pas le mécanisme
- * d'unicité réel (celui-ci est l'index UNIQUE partiel de la migration 003).
+ * Tire un code public (base32 Crockford, 7 car.) UNIQUE dans la `table`
+ * donnée ('machines' ou 'bouteilles') — retire (retry) en cas de collision
+ * avec le parc déjà en base. La collision est structurellement quasi
+ * impossible (32^7 ≈ 34 milliards de combinaisons) : la boucle est un
+ * filet de sécurité, pas le mécanisme d'unicité réel (celui-ci est l'index
+ * UNIQUE partiel de la migration 003, posé sur les deux tables).
  */
-function codePublicUnique() {
+function codePublicUnique(table) {
   for (let tentative = 0; tentative < CODE_PUBLIC_TENTATIVES_MAX; tentative += 1) {
     const code = db.genererCodePublic();
     const collision = db.get(
-      'SELECT 1 AS x FROM machines WHERE code_public = ?', [code]);
+      `SELECT 1 AS x FROM ${table} WHERE code_public = ?`, [code]);
     if (!collision) return code;
   }
   throw new Error(
-    'Impossible de générer un code public unique pour la machine ' +
+    'Impossible de générer un code public unique pour la ' +
+    `${table === 'bouteilles' ? 'bouteille' : 'machine'} ` +
     `(après ${CODE_PUBLIC_TENTATIVES_MAX} tentatives).`);
 }
 
