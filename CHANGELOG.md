@@ -2,6 +2,30 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 📦 Phase 2 · Lot 1 — paquet portable « clé en main » (Node embarqué) (09/07)
+**Objectif** (cap Phase 2 : déployabilité d'abord) : donner à un collègue un dossier qu'il copie
+sur un poste **vierge** (sans Node.js installé) et lance d'un double-clic, sans friction.
+- **Lanceur `lancer-inerweb.bat`** : choisit le moteur Node dans l'ordre **`node\node.exe` embarqué
+  → Node du système → message clair**. Un paquet portable contient son propre `node.exe`, donc plus
+  jamais de « node n'est pas reconnu ». Reste en ASCII pur (piège cmd.exe connu).
+- **Fabrication `outils/fabriquer-paquet.mjs`** : assemble un dossier autonome. Node est **embarqué
+  en copiant `process.execPath`** — sur Windows `node.exe` est autonome et n'utilise que les modules
+  `node:` intégrés (approche décidée au plan : node.exe local, **PAS pkg/SEA**, cohérent zéro
+  dépendance ; le paquet prend la version de Node déjà validée sur la machine de build). Le paquet ne
+  contient QUE l'exécution : `server/` (hors tests), `v8/` (hors tests), le lanceur, le PDF CERFA
+  officiel, `.env.example`, `LICENSE`, un `LISEZ-MOI.txt`. **Exclus volontairement** : l'ancienne v7
+  (racine du dépôt — le serveur redirige `/` → `/v8/`, la v7 est inutile) et la doc interne
+  (`docs/`, `apps-script/`…). Garde-fous : refuse d'écrire dans le dépôt, refuse un dossier de sortie
+  non vide, n'embarque **jamais** `data/`/`documents/`/`backups/` (ne copie que du code). Option
+  `--zip` (via `zip-node.js` maison, zéro dépendance).
+- **Non destructif** : rien n'est retiré du dépôt (la bascule v8 → racine reste une décision Franck
+  distincte) ; la « version propre » est produite par le script, à la demande.
+- **Épreuve du feu (vérifiée)** : paquet fabriqué dans un dossier isolé (jamais le `data/` réel),
+  puis serveur démarré **via le seul `node.exe` embarqué** (chemin absolu, hors PATH) sur un port
+  jetable → `/api/ping` répond `mode:local`, `/` renvoie 302 vers `/v8/`, `/v8/` sert la v9 (titre
+  correct), et la base SQLite est créée par le Node embarqué (preuve que `node:sqlite` fonctionne en
+  autonomie). Aucune régression : contrat local+démo 244/0, migrations 81/0.
+
 ### 🔧 Phase 2 · Lot 0 — catégories de pièces jointes élargies (migration 010) (09/07)
 **Bug débloquant confirmé** (fil rouge du CDC Phase 2 : bloquait dossier documentaire,
 outillage, audit, habilitations). Le CHECK du socle v1 sur `pieces_jointes.categorie`

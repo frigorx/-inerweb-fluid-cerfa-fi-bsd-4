@@ -20,14 +20,21 @@ echo    inerWeb Fluide v8 - Tracabilite F-Gas
 echo   ===========================================
 echo.
 
-rem --- Verifier que Node.js est installe ---
-where node >nul 2>nul
-if errorlevel 1 (
-    echo   [ERREUR] Node.js n'est pas installe sur ce poste.
+rem --- Choisir le moteur Node : celui EMBARQUE (paquet portable) en priorite, ---
+rem --- sinon le Node installe sur le poste. Le paquet cle en main contient   ---
+rem --- node\node.exe : rien a installer, double-clic sur un poste vierge.     ---
+set "NODE_EXE="
+if exist "%~dp0node\node.exe" (
+    set "NODE_EXE=%~dp0node\node.exe"
+) else (
+    where node >nul 2>nul && set "NODE_EXE=node"
+)
+if not defined NODE_EXE (
+    echo   [ERREUR] Node.js est introuvable sur ce poste.
     echo.
-    echo   inerWeb Fluide a besoin de Node.js pour fonctionner.
-    echo   Telechargez la version LTS ^(gratuite^) sur : https://nodejs.org/fr
-    echo   Installez-la puis relancez ce fichier.
+    echo   Utilisez le paquet portable inerWeb Fluide ^(il contient tout,
+    echo   rien a installer^), ou installez Node.js LTS ^(gratuit^) sur
+    echo   https://nodejs.org/fr puis relancez ce fichier.
     echo.
     pause
     exit /b 1
@@ -45,7 +52,7 @@ if not exist "data\inerweb-fluide.db" (
     echo   Tapez un identifiant, puis un mot de passe ^(10 caracteres minimum^).
     echo   Le mot de passe ne s'affiche pas pendant la frappe, c'est normal.
     echo.
-    node "%~dp0server\creer-admin.js"
+    "%NODE_EXE%" "%~dp0server\creer-admin.js"
     if errorlevel 1 (
         echo.
         echo   [ARRET] Le compte administrateur n'a pas ete cree.
@@ -70,7 +77,7 @@ rem --- Ouvrir le navigateur apres 2 secondes (le temps que le serveur demarre) 
 start "" /min cmd /c "timeout /t 2 /nobreak >nul & start "" http://localhost:2011"
 
 rem --- Demarrer le serveur (au premier plan : fermer la fenetre = arreter) ---
-node "%~dp0server\serveur.js"
+"%NODE_EXE%" "%~dp0server\serveur.js"
 
 echo.
 echo   Le serveur s'est arrete.
