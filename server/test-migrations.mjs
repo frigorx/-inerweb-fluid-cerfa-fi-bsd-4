@@ -550,6 +550,106 @@ verifierLeve('le code public est unique (résolution QR sans ambiguïté)',
 }
 
 // ============================================================
+// 6quater. Catégories de pièces jointes élargies (migration 010) —
+// sur la base NEUVE (déjà à la version cible) : les cinq catégories du
+// front passent, une inconnue est refusée, l'unique index a survécu à
+// la recréation de la table. ETB-TEST et PER-T1 existent (sections 3-4).
+// ============================================================
+{
+  const NOUVELLES = ['SIGNATURE', 'ATTESTATION_APTITUDE',
+    'ATTESTATION_CAPACITE', 'BORDEREAU_BSFF', 'CERTIFICAT_ETALONNAGE'];
+  const insertPj = (id, cat) => base2.exec(
+    `INSERT INTO pieces_jointes (id, etablissement_id, entite_type, entite_id,
+       categorie, nom_fichier)
+     VALUES ('${id}', 'ETB-TEST', 'PERSONNEL', 'PER-T1', '${cat}', 'preuve.pdf');`);
+  verifier('pieces_jointes accepte les cinq catégories du front (migration 010)',
+    (() => {
+      try { NOUVELLES.forEach((c, i) => insertPj(`PJ-NEW-${i}`, c)); return true; }
+      catch (e) { return false; }
+    })());
+  verifier('une catégorie du socle v1 (RAPPORT) reste acceptée',
+    (() => { insertPj('PJ-RAPPORT', 'RAPPORT'); return true; })());
+  verifierLeve('une catégorie inconnue est toujours refusée par le CHECK',
+    () => insertPj('PJ-KO', 'CATEGORIE_BIDON'), 'CHECK');
+  verifier('l’index idx_pj_entite a survécu à la recréation de la table',
+    base2.prepare(`SELECT count(*) AS n FROM sqlite_master
+      WHERE type = 'index' AND name = 'idx_pj_entite'`).get().n === 1);
+}
+
+// ============================================================
+// 6quinquies. Migration 010 sur une base PRÉEXISTANTE (v9 → v10) : les
+// pièces jointes déjà stockées sont TOUTES préservées ; une nouvelle
+// catégorie, refusée avant, passe après. Même patron que 6bis/6ter.
+// ============================================================
+{
+  const CHEMIN_ANCIENNE_PJ = join(DOSSIER, 'ancienne-pj.db');
+  const anciennePj = new DatabaseSync(CHEMIN_ANCIENNE_PJ);
+  anciennePj.exec(readFileSync(new URL('./schema.sql', import.meta.url), 'utf8'));
+  anciennePj.exec(`PRAGMA user_version = ${migrations.VERSION_BASE};`);
+  const jusqua9 = {};
+  for (let v = 2; v <= 9; v += 1) jusqua9[v] = migrations.MIGRATIONS[v];
+  migrations.migrer(anciennePj, jusqua9); // portée à 9, PAS encore 10
+
+  anciennePj.exec(`INSERT INTO etablissements (id, raison_sociale)
+                   VALUES ('ETB-PJ', 'Lycée PJ');`);
+  anciennePj.exec(`INSERT INTO pieces_jointes (id, etablissement_id, entite_type,
+      entite_id, categorie, nom_fichier)
+    VALUES ('PJ-OLD-1', 'ETB-PJ', 'MACHINE', 'MAC-X', 'CERTIFICAT', 'a.pdf'),
+           ('PJ-OLD-2', 'ETB-PJ', 'BOUTEILLE', 'BTL-X', 'PHOTO_PESEE', 'b.png');`);
+
+  verifier('avant migration 010 : une nouvelle catégorie est refusée',
+    (() => {
+      try {
+        anciennePj.exec(`INSERT INTO pieces_jointes (id, etablissement_id,
+          entite_type, entite_id, categorie, nom_fichier)
+          VALUES ('PJ-KO', 'ETB-PJ', 'PERSONNEL', 'PER-X',
+            'ATTESTATION_CAPACITE', 'c.pdf');`);
+        return false;
+      } catch { return true; }
+    })());
+  verifier('avant migration 010 : la base est bloquée en version 9',
+    migrations.lireVersion(anciennePj) === 9);
+
+  const vFinale = migrations.migrer(anciennePj, { 10: migrations.MIGRATIONS[10] });
+  verifier('la migration 010 porte la base à la version 10',
+    vFinale === 10 && migrations.lireVersion(anciennePj) === 10);
+  verifier('les pièces jointes préexistantes sont TOUTES préservées (données intactes)',
+    anciennePj.prepare(`SELECT count(*) AS n FROM pieces_jointes
+      WHERE etablissement_id = 'ETB-PJ'`).get().n === 2
+    && anciennePj.prepare(
+      "SELECT categorie FROM pieces_jointes WHERE id = 'PJ-OLD-1'")
+      .get().categorie === 'CERTIFICAT'
+    && anciennePj.prepare(
+      "SELECT nom_fichier FROM pieces_jointes WHERE id = 'PJ-OLD-2'")
+      .get().nom_fichier === 'b.png');
+  verifier('après migration 010 : les cinq nouvelles catégories passent',
+    (() => {
+      try {
+        ['SIGNATURE', 'ATTESTATION_APTITUDE', 'ATTESTATION_CAPACITE',
+          'BORDEREAU_BSFF', 'CERTIFICAT_ETALONNAGE'].forEach((c, i) =>
+          anciennePj.exec(`INSERT INTO pieces_jointes (id, etablissement_id,
+            entite_type, entite_id, categorie, nom_fichier)
+            VALUES ('PJ-AP-${i}', 'ETB-PJ', 'PERSONNEL', 'PER-X', '${c}', 'd.pdf');`));
+        return true;
+      } catch { return false; }
+    })());
+  verifier('après migration 010 : une catégorie inconnue reste refusée',
+    (() => {
+      try {
+        anciennePj.exec(`INSERT INTO pieces_jointes (id, etablissement_id,
+          entite_type, entite_id, categorie, nom_fichier)
+          VALUES ('PJ-KO2', 'ETB-PJ', 'PERSONNEL', 'PER-X', 'NIMPORTE', 'e.pdf');`);
+        return false;
+      } catch { return true; }
+    })());
+  verifier('l’index idx_pj_entite existe sur la base migrée 010',
+    anciennePj.prepare(`SELECT count(*) AS n FROM sqlite_master
+      WHERE type = 'index' AND name = 'idx_pj_entite'`).get().n === 1);
+
+  anciennePj.close();
+}
+
+// ============================================================
 // 7. Base pré-versionnage : refusée avec un message clair
 // ============================================================
 db.fermer();

@@ -40,6 +40,12 @@
  *       systématiquement le code) reçoit un code public unique — la colonne
  *       posée par la migration 003 restait vide côté bouteilles, rien ne la
  *       remplissait encore côté application.
+ *  10 — catégories de pièces jointes élargies (Phase 2, Lot 0) : le CHECK du
+ *       socle v1 sur pieces_jointes.categorie refusait cinq catégories POURTANT
+ *       posées par le front (SIGNATURE, ATTESTATION_APTITUDE, ATTESTATION_CAPACITE,
+ *       BORDEREAU_BSFF, CERTIFICAT_ETALONNAGE) → échec silencieux en Mode Local
+ *       (SQLite), la démo (sans liste blanche) les acceptait. Recréation de la
+ *       table (SQLite ne sait pas ALTERer un CHECK), données et index préservés.
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -241,6 +247,66 @@ const MIGRATIONS = {
         dejaPris.add(code);
         maj.run(code, id);
       }
+    }
+  },
+
+  10: {
+    nom: 'categories_pieces_jointes_elargies',
+    appliquer(db) {
+      // Phase 2, Lot 0 — le fil rouge du CDC. Le CHECK du socle v1 sur
+      // pieces_jointes.categorie ne connaissait que dix catégories et
+      // REFUSAIT en Mode Local (SQLite) cinq catégories POURTANT posées par
+      // le front — la démo, sans liste blanche, les acceptait, d'où l'échec
+      // invisible tant qu'on ne passait pas sur SQLite :
+      //   SIGNATURE             signature d'un personnel      (personne-form)
+      //   ATTESTATION_APTITUDE  aptitude d'une personne       (personne-form)
+      //   ATTESTATION_CAPACITE  capacité de l'établissement   (etablissement-form, dossier-audit)
+      //   BORDEREAU_BSFF        bordereau BSFF                (bsff-form)
+      //   CERTIFICAT_ETALONNAGE étalonnage d'un outil         (outil-form)
+      // SQLite ne sait pas ALTERer une contrainte CHECK : on RECRÉE la table
+      // (procédure officielle SQLite), TOUTES les données et l'unique index
+      // préservés. Aucun trigger, aucune FK entrante sur pieces_jointes ; sa
+      // seule FK sortante (etablissement_id) est déjà satisfaite par les
+      // lignes existantes. Copie par colonnes NOMMÉES (robuste à un futur
+      // changement d'ordre du socle). recursive_triggers/foreign_keys sont
+      // sans effet ici (pas de trigger, pas de FK entrante).
+      db.exec(`
+        CREATE TABLE pieces_jointes_nouveau (
+            id             TEXT PRIMARY KEY,
+            etablissement_id TEXT REFERENCES etablissements(id),
+            entite_type    TEXT NOT NULL
+                CHECK (entite_type IN ('ETABLISSEMENT','AUDIT','NON_CONFORMITE','PERSONNEL','OUTILLAGE',
+                                       'MACHINE','BOUTEILLE','MOUVEMENT','CONTROLE','BSFF',
+                                       'CLIENT_DETENTEUR','INVENTAIRE')),
+            entite_id      TEXT NOT NULL,
+            categorie      TEXT NOT NULL DEFAULT 'AUTRE'
+                CHECK (categorie IN ('ATTESTATION','CERTIFICAT','FACTURE','BL','BON_DE_REPRISE','BSFF',
+                                     'PHOTO_PESEE','PLAQUE_SIGNALETIQUE','RAPPORT','AUTRE',
+                                     'SIGNATURE','ATTESTATION_APTITUDE','ATTESTATION_CAPACITE',
+                                     'BORDEREAU_BSFF','CERTIFICAT_ETALONNAGE')),
+            nom_fichier    TEXT NOT NULL,
+            mime_type      TEXT,
+            chemin         TEXT,
+            taille_octets  INTEGER,
+            hash_sha256    TEXT,
+            date_ajout     TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+            ajoute_par     TEXT
+        );
+      `);
+      db.exec(`
+        INSERT INTO pieces_jointes_nouveau
+            (id, etablissement_id, entite_type, entite_id, categorie,
+             nom_fichier, mime_type, chemin, taille_octets, hash_sha256,
+             date_ajout, ajoute_par)
+        SELECT id, etablissement_id, entite_type, entite_id, categorie,
+               nom_fichier, mime_type, chemin, taille_octets, hash_sha256,
+               date_ajout, ajoute_par
+          FROM pieces_jointes;
+      `);
+      db.exec('DROP TABLE pieces_jointes;');
+      db.exec('ALTER TABLE pieces_jointes_nouveau RENAME TO pieces_jointes;');
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_pj_entite
+                 ON pieces_jointes (entite_type, entite_id);`);
     }
   }
 };

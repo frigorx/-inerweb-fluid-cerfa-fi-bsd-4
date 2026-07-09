@@ -2,6 +2,34 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔧 Phase 2 · Lot 0 — catégories de pièces jointes élargies (migration 010) (09/07)
+**Bug débloquant confirmé** (fil rouge du CDC Phase 2 : bloquait dossier documentaire,
+outillage, audit, habilitations). Le CHECK du socle v1 sur `pieces_jointes.categorie`
+(`schema.sql:506-508`) ne connaissait que dix catégories et **refusait en Mode Local (SQLite)
+cinq catégories POURTANT posées par le front** — la démo, sans liste blanche, les acceptait,
+d'où un échec invisible tant qu'on ne passait pas sur SQLite :
+- `SIGNATURE` (signature d'un personnel — `personne-form.js:445`),
+- `ATTESTATION_APTITUDE` (aptitude personne — `personne-form.js:367`),
+- `ATTESTATION_CAPACITE` (capacité établissement — `etablissement-form.js:253`, `dossier-audit.js:144`),
+- `BORDEREAU_BSFF` (bordereau BSFF — `bsff-form.js:243`),
+- `CERTIFICAT_ETALONNAGE` (étalonnage d'un outil — `outil-form.js:253`).
+
+Correctif = **migration 010** (`server/migrations.js`) : SQLite ne sait pas ALTERer une
+contrainte CHECK, on **RECRÉE la table** (procédure officielle SQLite) avec le CHECK élargi,
+**toutes les données et l'unique index `idx_pj_entite` préservés** (copie par colonnes nommées).
+Aucun trigger, aucune FK entrante sur `pieces_jointes` ; sa seule FK sortante
+(`etablissement_id`) est déjà satisfaite par les lignes existantes. `schema.sql` **non modifié**
+(discipline : le socle v1 reste figé, toute évolution est une migration — les bases neuves passent
+par le même chemin 2→10).
+- Tests (`server/test-migrations.mjs`, 64 → **81/0**) : sur base neuve les cinq catégories passent,
+  une inconnue est refusée par le CHECK, l'index survit ; sur base **préexistante v9 → v10** les PJ
+  déjà stockées sont TOUTES préservées (données intactes), une nouvelle catégorie refusée AVANT
+  passe APRÈS, une inconnue reste refusée. Toutes les suites vertes : contrat local **244/0**,
+  contrat démo **244/0**, conformité 56/0, mapping 141/0.
+- **Vérifié bout en bout hors navigateur** (chemin réel `front → api.js → SQLite`, base jetable via
+  `harnais-contrat.mjs`) : les cinq catégories s'enregistrent ET se relisent en Mode Local, une
+  catégorie inconnue est refusée (6/0). C'est exactement ce que fait le navigateur en Mode Local.
+
 ### 🏷️ QR bouteille + documents professionnels (feuille de mise en service, bon d'intervention, fiche d'identification A4) (06-07/07)
 Franck a fourni ses propres modèles de terrain (sujet CAP IFCA) : feuille de mise en service,
 plaque signalétique (déjà faite, `plaque-fgas.js`), bon d'intervention. Reproduits fidèlement.
