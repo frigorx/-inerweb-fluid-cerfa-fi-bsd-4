@@ -39,9 +39,22 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 
 const db = require('./db.js');
+const parametres = require('./parametres.js');
 const zip = require('./zip-node.js');
 const chiffrement = require('./chiffrement.js');
 const { construireManifeste, relireManifeste } = require('./manifeste.js');
+
+/**
+ * Clés de réglage (table `parametres`) et défauts liés à la sauvegarde.
+ *  - CLE_DOSSIER : dossier de destination des sauvegardes. Vide/absent =
+ *    comportement historique (backups/ frère de data/). Renseigné = les
+ *    archives vont dans ce dossier (typiquement déjà synchronisé Drive/OneDrive).
+ *  - CLE_ALERTE_JOURS : seuil d'ancienneté (jours) au-delà duquel l'écran
+ *    Sauvegarde signale que la dernière sauvegarde est trop ancienne.
+ */
+const CLE_DOSSIER_DESTINATION = 'sauvegarde_dossier_destination';
+const CLE_ALERTE_JOURS = 'sauvegarde_alerte_jours';
+const ALERTE_JOURS_DEFAUT = 7;
 
 // ------------------------------------------------------------
 // Emplacements — TOUJOURS dérivés du .db ouvert (jetable en test, réel en
@@ -53,9 +66,74 @@ function dossierData() {
   return path.dirname(db.cheminOuvert());
 }
 
-/** Racine backups/ (frère de data/). */
-function dossierBackups() {
+/** Racine backups/ PAR DÉFAUT (frère de data/) — le comportement historique. */
+function dossierBackupsParDefaut() {
   return path.join(path.dirname(dossierData()), 'backups');
+}
+
+/**
+ * Racine des sauvegardes. Si un dossier de destination est configuré (et la
+ * base ouverte pour le lire), les archives y vont ; sinon on retombe sur le
+ * dossier par défaut. C'est LE point de dérivation unique : snapshots,
+ * archives, tmp, inventaire, rotation, filet « avant-restauration » et la
+ * validation de chemin de restauration en découlent tous.
+ *
+ * Le garde `db.estOuverte()` évite de RÉOUVRIR la base juste pour lire le
+ * réglage : pendant une restauration (base fermée), on ne doit jamais
+ * ressusciter la base — les chemins sont de toute façon capturés en amont,
+ * base ouverte (restauration.js:capturerChemins).
+ */
+function dossierBackups() {
+  if (db.estOuverte()) {
+    const configure = parametres.lire(CLE_DOSSIER_DESTINATION, '');
+    if (configure && String(configure).trim()) {
+      return path.resolve(String(configure).trim());
+    }
+  }
+  return dossierBackupsParDefaut();
+}
+
+/**
+ * Valide un dossier de destination candidat. Vide = « revenir au défaut »
+ * (toujours accepté). Sinon : chemin ABSOLU, hors de data/ (ni data/ lui-même,
+ * ni un sous-dossier — sinon les ZIP côtoieraient la base vive, risque de
+ * synchro/corruption), et effectivement INSCRIPTIBLE (créé au besoin, test
+ * d'écriture réel). Renvoie { ok, resolu?, message? }.
+ * @param {string} cheminBrut
+ * @returns {{ok: boolean, resolu?: string, message?: string}}
+ */
+function validerDossierDestination(cheminBrut) {
+  const chemin = String(cheminBrut ?? '').trim();
+  if (!chemin) return { ok: true, resolu: '' }; // vide = défaut
+  if (!path.isAbsolute(chemin)) {
+    return { ok: false, message:
+      'Indiquez un chemin ABSOLU (ex. C:\\Users\\vous\\OneDrive\\Sauvegardes-Fluide).' };
+  }
+  const resolu = path.resolve(chemin);
+  const data = path.resolve(dossierData());
+  if (resolu === data || resolu.startsWith(data + path.sep)) {
+    return { ok: false, message:
+      'Le dossier de sauvegarde ne doit pas être le dossier des données ni ' +
+      's’y trouver (risque de corruption de la base).' };
+  }
+  try {
+    fs.mkdirSync(resolu, { recursive: true });
+    const temoin = path.join(resolu, '.iwf-test-ecriture-' + suffixeAleatoire());
+    fs.writeFileSync(temoin, 'ok');
+    fs.unlinkSync(temoin);
+  } catch (erreur) {
+    return { ok: false, message:
+      'Dossier inaccessible en écriture : ' + erreur.message };
+  }
+  return { ok: true, resolu };
+}
+
+/** Seuil d'alerte d'ancienneté (jours) configuré, sinon le défaut. */
+function alerteJours() {
+  const brut = db.estOuverte()
+    ? parametres.lire(CLE_ALERTE_JOURS, null) : null;
+  const n = Number.parseInt(brut, 10);
+  return Number.isFinite(n) && n > 0 ? n : ALERTE_JOURS_DEFAUT;
 }
 
 /** Sous-dossiers de backups/. */
@@ -620,10 +698,17 @@ module.exports = {
   listerSauvegardes,
   // Exposés pour le noyau restauration (E4.1 seconde moitié) et les tests.
   dossierBackups,
+  dossierBackupsParDefaut,
   dossierSnapshots,
   dossierArchives,
   dossierTmp,
   dossierDocuments,
+  // Réglages de sauvegarde (dossier de destination + alerte d'ancienneté).
+  validerDossierDestination,
+  alerteJours,
+  CLE_DOSSIER_DESTINATION,
+  CLE_ALERTE_JOURS,
+  ALERTE_JOURS_DEFAUT,
   // Exposés pour la restauration chiffrée (E4.2) et les tests.
   estFichierSauvegarde,
   estNomChiffre,

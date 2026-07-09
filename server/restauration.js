@@ -94,8 +94,10 @@ function dossierAvantRestauration() {
  */
 function capturerChemins(cheminBaseVive) {
   const data = path.dirname(cheminBaseVive);
-  // backups/ est frère de data/ (cf. sauvegarde.dossierBackups()).
-  const backups = path.join(path.dirname(data), 'backups');
+  // backups/ = destination configurée si elle existe, sinon frère de data/.
+  // Capturé ICI, base OUVERTE : la valeur survit à db.fermer() (dossierBackups
+  // ne rouvrira pas la base ensuite, cf. son garde db.estOuverte()).
+  const backups = sauvegarde.dossierBackups();
   return {
     cheminBaseVive,
     dossierData: data,

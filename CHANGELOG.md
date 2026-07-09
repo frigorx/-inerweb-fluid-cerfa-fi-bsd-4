@@ -2,6 +2,41 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 💾 Phase 2 · Dossier de sauvegarde configurable + alerte d'ancienneté (09/07)
+Brique ② de la série livrable : rapprocher le coffre-fort de la règle « zéro perte » sans
+intégration cloud lourde. L'utilisateur peut envoyer ses sauvegardes vers un **dossier déjà
+synchronisé** (OneDrive, Drive, serveur d'établissement) et être **prévenu si la dernière
+sauvegarde est trop ancienne**.
+- **`server/parametres.js`** (nouveau) : petit accès générique clé/valeur à la table `parametres`
+  (déjà présente au socle v1 et déjà incluse dans les archives — un réglage survit à une
+  restauration). Upsert avec date de modification.
+- **`server/sauvegarde.js`** : `dossierBackups()` devient **configurable** (clé
+  `sauvegarde_dossier_destination`) tout en gardant le défaut historique (`dossierBackupsParDefaut`) ;
+  c'est le point de dérivation unique, donc snapshots/archives/tmp/inventaire/rotation/filet
+  « avant-restauration » suivent sans autre changement. Garde `db.estOuverte()` pour ne jamais
+  rouvrir la base juste pour lire le réglage (sûreté pendant une restauration). Ajout de
+  `validerDossierDestination` (chemin **absolu**, **hors `data/`**, **réellement inscriptible** —
+  test d'écriture) et `alerteJours` (seuil, défaut 7).
+- **`server/restauration.js`** : `capturerChemins` suit la destination configurée (capturée base
+  ouverte, survit à `db.fermer()`), au lieu de recalculer le dossier par défaut en dur.
+- **`server/routes-sauvegarde.js`** : deux routes ADMIN/REFERENT — `lireReglagesSauvegarde`
+  (destination configurée + effective + par défaut + seuil) et `definirReglagesSauvegarde`
+  (validation + persistance + journal `CONFIG_SAUVEGARDE`). Exemptées du verrou anti-concurrence
+  (409) car elles ne touchent pas le fichier de base.
+- **Front `v8/js/views/sauvegarde.js`** : bandeau d'ancienneté en tête (aucune sauvegarde, ou
+  dernière trop ancienne vs seuil) et section repliable **« Réglages de sauvegarde »** (dossier de
+  destination avec la destination effective affichée + seuil d'alerte), avec enregistrement et
+  remontée des erreurs de validation.
+- Tests : nouvelle suite `test-reglages-sauvegarde.mjs` **24/0** (parametres, redirection du
+  dossier, validation, seuil, gardes de rôle ADMIN/REFERENT, **bout-en-bout** : une sauvegarde
+  atterrit bien dans le dossier configuré et rien dans le dossier par défaut). Coffre-fort E4.1
+  14/14 et chiffrement 6/6 inchangés ; contrat 254/0 démo+local.
+- **Vérifié navigateur** (sandbox, Mode Local port jetable, base vierge, session admin) : bandeau
+  « Aucune sauvegarde » ; réglages affichés (dossier par défaut en placeholder, seuil 7) ;
+  enregistrement du seuil (→ 3, persisté) ; création d'une sauvegarde → bandeau disparu + snapshot
+  listé ; dossier invalide (relatif) → message d'erreur serveur affiché dans la section. Jamais le
+  `data/` réel.
+
 ### 👥 Phase 2 · Gestion des comptes de connexion (créer / réinitialiser / activer-désactiver) (09/07)
 Suite naturelle du premier lancement : l'administrateur peut désormais gérer les autres comptes
 **depuis l'application** (le backend E5 existait, il n'y avait aucune interface). Toutes les routes

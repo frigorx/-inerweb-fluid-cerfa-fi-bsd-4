@@ -11,10 +11,12 @@
  * (403 AVANT tout effet) et l'enveloppe standard { ok, resultat } /
  * { ok:false, erreur, code }.
  *
- *   POST /api/sauvegarder       { type, chiffrer?, phrase?, indice? }
- *   POST /api/listerSauvegardes {}
- *   POST /api/restaurer         { chemin, phrase?, confirmePerte? }
- *   POST /api/testerSauvegarde  { chemin, phrase? }
+ *   POST /api/sauvegarder             { type, chiffrer?, phrase?, indice? }
+ *   POST /api/listerSauvegardes       {}
+ *   POST /api/restaurer               { chemin, phrase?, confirmePerte? }
+ *   POST /api/testerSauvegarde        { chemin, phrase? }
+ *   POST /api/lireReglagesSauvegarde  {}
+ *   POST /api/definirReglagesSauvegarde { dossierDestination?, alerteJours? }
  *
  * Un DRAPEAU anti-concurrence (restauration.operationEnCours) refuse une
  * seconde opération simultanée : une restauration FERME la base, aucune autre
@@ -35,15 +37,27 @@
 
 const path = require('node:path');
 
+const db = require('./db.js');
+const parametres = require('./parametres.js');
 const sauvegarde = require('./sauvegarde.js');
 const restauration = require('./restauration.js');
 
 /** Rôles habilités aux opérations de sauvegarde (jamais un ELEVE). */
 const ROLES_SAUVEGARDE = ['ADMIN', 'REFERENT'];
 
-/** Les 4 méthodes servies par ce routeur (préfixe /api/ retiré). */
+/** Méthodes servies par ce routeur (préfixe /api/ retiré). */
 const METHODES = Object.freeze([
-  'sauvegarder', 'listerSauvegardes', 'restaurer', 'testerSauvegarde'
+  'sauvegarder', 'listerSauvegardes', 'restaurer', 'testerSauvegarde',
+  'lireReglagesSauvegarde', 'definirReglagesSauvegarde'
+]);
+
+/**
+ * Méthodes EXEMPTÉES du verrou anti-concurrence (409) : lire/écrire un réglage
+ * ne touche pas le fichier de base et ne doit pas être bloqué par une
+ * sauvegarde en cours (l'écran de sauvegarde lit les réglages au chargement).
+ */
+const SANS_VERROU_CONCURRENCE = new Set([
+  'lireReglagesSauvegarde', 'definirReglagesSauvegarde'
 ]);
 
 /** Vrai si `methode` relève de ce routeur (sert d'aiguillage à serveur.js). */
@@ -143,6 +157,60 @@ const HANDLERS = {
   testerSauvegarde(params) {
     const chemin = resoudreCheminArchive(params?.chemin);
     return restauration.testerSauvegarde(chemin, { phrase: params?.phrase });
+  },
+
+  /**
+   * Lit les réglages de sauvegarde : le dossier de destination CONFIGURÉ
+   * (vide = défaut), le dossier EFFECTIF où vont réellement les archives, le
+   * dossier par DÉFAUT, et le seuil d'alerte d'ancienneté (jours).
+   */
+  lireReglagesSauvegarde() {
+    const configure = parametres.lire(sauvegarde.CLE_DOSSIER_DESTINATION, '') || '';
+    return {
+      dossierDestination: configure,
+      dossierEffectif: sauvegarde.dossierBackups(),
+      dossierParDefaut: sauvegarde.dossierBackupsParDefaut(),
+      alerteJours: sauvegarde.alerteJours()
+    };
+  },
+
+  /**
+   * Définit les réglages de sauvegarde. Champs OPTIONNELS (on ne modifie que
+   * ceux présents) : `dossierDestination` (validé absolu + hors data/ +
+   * inscriptible ; chaîne vide = revenir au dossier par défaut) et
+   * `alerteJours` (entier 1..3650). Journalise, puis renvoie les réglages à jour.
+   */
+  definirReglagesSauvegarde(params, contexte) {
+    const maj = {};
+    if (Object.prototype.hasOwnProperty.call(params, 'dossierDestination')) {
+      const verdict = sauvegarde.validerDossierDestination(params.dossierDestination);
+      if (!verdict.ok) {
+        const erreur = new Error(verdict.message);
+        erreur.code = 400;
+        throw erreur;
+      }
+      parametres.ecrire(sauvegarde.CLE_DOSSIER_DESTINATION, verdict.resolu);
+      maj.dossierDestination = verdict.resolu;
+    }
+    if (Object.prototype.hasOwnProperty.call(params, 'alerteJours')) {
+      const n = Number.parseInt(params.alerteJours, 10);
+      if (!Number.isFinite(n) || n < 1 || n > 3650) {
+        const erreur = new Error(
+          'Le seuil d’alerte doit être un nombre de jours entre 1 et 3650.');
+        erreur.code = 400;
+        throw erreur;
+      }
+      parametres.ecrire(sauvegarde.CLE_ALERTE_JOURS, n);
+      maj.alerteJours = n;
+    }
+    if (typeof db.journaliser === 'function') {
+      db.journaliser({
+        qui: contexte?.utilisateur ?? null,
+        action: 'CONFIG_SAUVEGARDE',
+        details: JSON.stringify(maj)
+      });
+    }
+    return HANDLERS.lireReglagesSauvegarde();
   }
 };
 
@@ -167,7 +235,8 @@ function appeler(methode, params, contexte) {
   garderRole(contexte);
   // 2) Anti-concurrence : une seule opération E4 à la fois (restaurer ferme
   //    la base — rien d'autre ne doit s'intercaler). 409 = conflit temporaire.
-  if (restauration.operationEnCours()) {
+  //    Les routes de RÉGLAGE en sont exemptées (ne touchent pas la base fichier).
+  if (!SANS_VERROU_CONCURRENCE.has(methode) && restauration.operationEnCours()) {
     const erreur = new Error(
       'Une opération de sauvegarde est déjà en cours : réessayez dans un ' +
       'instant (une seule à la fois).');

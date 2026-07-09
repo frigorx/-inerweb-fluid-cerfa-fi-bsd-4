@@ -385,14 +385,78 @@ function tableauSauvegardes(liste) {
   return tableau({ colonnes, lignesHtml });
 }
 
+/**
+ * Bandeau d'ancienneté : rien si la dernière sauvegarde valide est récente ;
+ * une alerte si elle dépasse le seuil configuré, ou s'il n'y en a aucune.
+ */
+function banniereAnciennete(liste, reglages) {
+  const seuil = (reglages && Number(reglages.alerteJours)) || 7;
+  const style = 'display:flex;gap:10px;align-items:center;padding:12px 14px;'
+    + 'border-radius:8px;margin-bottom:14px;font-size:13px;font-weight:600;'
+    + 'background:var(--danger-fond,#fee2e2);color:var(--danger,#dc2626);';
+  const derniere = (liste || []).find((s) => s.valide);
+  if (!derniere) {
+    return '<div style="' + style + '">' + ICONES.alerte
+      + '<span><strong>Aucune sauvegarde enregistrée.</strong> Créez une '
+      + 'première sauvegarde pour protéger les données de ce poste.</span></div>';
+  }
+  const t = Date.parse(derniere.horodatage);
+  if (!Number.isFinite(t)) return '';
+  const ageJours = Math.floor((Date.now() - t) / 86400000);
+  if (ageJours > seuil) {
+    return '<div style="' + style + '">' + ICONES.alerte
+      + '<span><strong>Dernière sauvegarde il y a ' + ageJours + ' jour'
+      + (ageJours > 1 ? 's' : '') + '</strong> (seuil d’alerte : ' + seuil
+      + ' jours). Pensez à sauvegarder — de préférence dans un dossier '
+      + 'synchronisé hors du poste.</span></div>';
+  }
+  return '';
+}
+
+/** Section « Réglages » : dossier de destination + seuil d'alerte d'ancienneté. */
+function sectionReglages(reglages) {
+  const r = reglages || {};
+  const dest = r.dossierDestination || '';
+  const effectif = r.dossierEffectif || '';
+  const parDefaut = r.dossierParDefaut || '';
+  const jours = Number(r.alerteJours) || 7;
+  return '<details class="encart-aide" style="margin-top:18px;">'
+    + '<summary style="cursor:pointer;font-weight:600;">Réglages de sauvegarde</summary>'
+    + '<div style="margin-top:12px;display:flex;flex-direction:column;gap:14px;">'
+    + '<div class="champ">'
+    + '<label for="reg-dossier">Dossier de destination des sauvegardes</label>'
+    + '<input type="text" id="reg-dossier" value="' + esc(dest) + '" '
+    + 'placeholder="Par défaut : ' + esc(parDefaut) + '" '
+    + 'style="font-family:var(--police-mono);font-size:12.5px;">'
+    + '<span class="aide" style="font-size:12px;color:var(--texte-3);">'
+    + 'Laissez vide pour le dossier par défaut. Vous pouvez indiquer un dossier '
+    + 'déjà synchronisé (OneDrive, Google Drive, serveur de l’établissement) pour '
+    + 'une copie hors du poste. Chemin ABSOLU, hors du dossier des données. '
+    + 'Ne change que les <strong>prochaines</strong> sauvegardes. '
+    + 'Destination actuelle : <strong style="font-family:var(--police-mono);">'
+    + esc(effectif) + '</strong>.</span>'
+    + '</div>'
+    + '<div class="champ">'
+    + '<label for="reg-jours">Alerter si la dernière sauvegarde dépasse (jours)</label>'
+    + '<input type="number" id="reg-jours" min="1" max="3650" value="' + jours + '" '
+    + 'style="max-width:120px;">'
+    + '</div>'
+    + '<div id="reg-erreur" class="bandeau-erreur" hidden></div>'
+    + '<div><button type="button" id="btn-enregistrer-reglages" class="btn btn-secondaire">'
+    + 'Enregistrer les réglages</button></div>'
+    + '</div>'
+    + '</details>';
+}
+
 /** Page complète du mode LOCAL, pour une liste de sauvegardes donnée. */
-function construireHtmlLocal(liste) {
+function construireHtmlLocal(liste, reglages) {
   return '<div class="vue-sauvegarde anim-fade">'
     + STYLES_VUE
     + enteteVue({
       titre: 'Sauvegarde',
       sousTitre: 'Coffre-fort local : sauvegarder, tester et restaurer les données du poste'
     })
+    + banniereAnciennete(liste, reglages)
     + '<div class="encart-aide">'
     + '<strong>Sauvegarde locale du poste.</strong> '
     + 'Un <em>snapshot</em> copie la seule base (rapide, léger) ; une '
@@ -409,6 +473,7 @@ function construireHtmlLocal(liste) {
     + ICONES.echange + '<span>Rafraîchir la liste</span></button>'
     + '</div>'
     + tableauSauvegardes(liste)
+    + sectionReglages(reglages)
     + '</div>';
 }
 
@@ -854,7 +919,7 @@ export async function render(conteneur, ctx) {
     return;
   }
 
-  /** Charge la liste des sauvegardes, rend la page, branche les écouteurs. */
+  /** Charge la liste des sauvegardes + les réglages, rend la page, branche les écouteurs. */
   async function chargerEtAfficher() {
     let liste = [];
     let erreurListe = null;
@@ -863,14 +928,23 @@ export async function render(conteneur, ctx) {
     } catch (erreur) {
       erreurListe = erreur.message || 'Lecture des sauvegardes impossible.';
     }
-    conteneur.innerHTML = construireHtmlLocal(Array.isArray(liste) ? liste : []);
+    let reglages = null;
+    try {
+      reglages = await appelerCoffre('lireReglagesSauvegarde', {});
+    } catch (erreur) {
+      // Non bloquant : sans réglages, le bandeau utilise le seuil par défaut
+      // et la section réglages affiche les valeurs vides.
+      console.error('Lecture des réglages de sauvegarde impossible :', erreur);
+    }
+    conteneur.innerHTML = construireHtmlLocal(
+      Array.isArray(liste) ? liste : [], reglages);
     if (erreurListe) {
       toast(erreurListe, 'erreur');
     }
     attacherEcouteurs(Array.isArray(liste) ? liste : []);
   }
 
-  /** Branche les deux actions de tête + les actions par ligne. */
+  /** Branche les deux actions de tête + les actions par ligne + les réglages. */
   function attacherEcouteurs(liste) {
     const boutonSauvegarder = conteneur.querySelector('#btn-sauvegarder');
     const boutonRafraichir = conteneur.querySelector('#btn-rafraichir');
@@ -881,6 +955,32 @@ export async function render(conteneur, ctx) {
     boutonRafraichir.addEventListener('click', () => {
       chargerEtAfficher();
     });
+
+    // Réglages : enregistrer le dossier de destination + le seuil d'alerte.
+    const boutonReglages = conteneur.querySelector('#btn-enregistrer-reglages');
+    if (boutonReglages) {
+      boutonReglages.addEventListener('click', async () => {
+        const champDossier = conteneur.querySelector('#reg-dossier');
+        const champJours = conteneur.querySelector('#reg-jours');
+        const zoneErreur = conteneur.querySelector('#reg-erreur');
+        if (zoneErreur) { zoneErreur.hidden = true; zoneErreur.textContent = ''; }
+        boutonReglages.disabled = true;
+        try {
+          await appelerCoffre('definirReglagesSauvegarde', {
+            dossierDestination: champDossier ? champDossier.value : '',
+            alerteJours: champJours ? Number(champJours.value) : undefined
+          });
+          toast('Réglages de sauvegarde enregistrés.', 'succes');
+          await chargerEtAfficher();
+        } catch (erreur) {
+          if (zoneErreur) {
+            zoneErreur.textContent = erreur.message || 'Enregistrement impossible.';
+            zoneErreur.hidden = false;
+          }
+          boutonReglages.disabled = false;
+        }
+      });
+    }
 
     conteneur.querySelectorAll('[data-action]').forEach((bouton) => {
       const action = bouton.getAttribute('data-action');
