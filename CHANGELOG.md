@@ -2,6 +2,22 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🛠️ Phase 2 · Fiche outil vivante (scan QR → fiche, certificats en pièces jointes) (09/07)
+Suite du QR intégral : la route `#/o/<code>` ouvre désormais une **vraie fiche** (comme la fiche
+machine), plus un simple formulaire. Un scan de l'étiquette outil mène à l'état complet de l'outil.
+- **`v8/js/views/fiche-outil.js`** (nouvelle vue hors sidebar, route `#/o/<code>`) : bloc d'identité
+  (type, **état** coloré, prochaine échéance, dernière vérification), caractéristiques (marque,
+  modèle, n° série, site, précision/sensibilité, dates d'étalonnage/vérification), alertes de l'outil,
+  actions (Étiquette QR, Modifier, Réformer), et surtout une **zone de pièces jointes** pour les
+  **certificats d'étalonnage** (`entiteType: OUTILLAGE`) — catégorie `CERTIFICAT_ETALONNAGE` enfin
+  acceptée en Mode Local grâce au Lot 0 (boucle bouclée).
+- `app.js` : route `o` → `fiche-outil` (comme `m`/`c`), retrait de l'ancien détour « ouvrir le
+  formulaire par-dessus la liste ». `outillage.js` : bouton **« Ouvrir la fiche »** par carte.
+- **Vérifié navigateur** (mode Démo, origine neuve pour cache ES vierge — piège du cache de modules
+  respecté) : fiche rendue (4 KPI, chip d'état « Expiré », caractéristiques, zone PJ montée),
+  navigation depuis la carte outil, `document.title` « Fiche outil ». Aucun changement de contrat/
+  store (toutes les suites restent à 0 échec).
+
 ### 🔳 Phase 2 · QR intégral — code public + étiquette + accès direct pour CLIENTS et OUTILLAGE (09/07)
 Les machines et bouteilles avaient déjà QR / étiquette / accès direct ; les **clients** et
 l'**outillage** ne l'avaient pas. Le patron `code_public` (base32 Crockford opaque, immuable) est

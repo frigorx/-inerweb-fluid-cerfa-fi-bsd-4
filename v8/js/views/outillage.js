@@ -175,6 +175,10 @@ function carteOutil(outil) {
     + '</p>'
 
     + '<div class="outil-actions">'
+    + (outil.codePublic
+        ? '<button type="button" class="btn btn-contour btn-petit" data-action="ouvrir-fiche-outil" '
+          + 'data-code="' + esc(outil.codePublic) + '">Ouvrir la fiche</button>'
+        : '')
     + '<button type="button" class="btn btn-contour btn-petit" data-action="etiquette-outil" '
     + 'data-id="' + esc(outil.id) + '">Étiquette QR</button>'
     + '<button type="button" class="btn btn-contour btn-petit" data-action="modifier-outil" '
@@ -243,6 +247,13 @@ export async function render(conteneur, ctx) {
   conteneur.querySelector('#bouton-ajouter-outil').addEventListener('click', async function () {
     const enregistre = await ouvrirFormOutil(ctx);
     if (enregistre) render(conteneur, ctx);
+  });
+
+  // Ouvrir la fiche vivante de l'outil (par son code_public)
+  conteneur.querySelectorAll('[data-action="ouvrir-fiche-outil"]').forEach(function (bouton) {
+    bouton.addEventListener('click', function () {
+      ctx.naviguer('o/' + bouton.dataset.code);
+    });
   });
 
   // Étiquette QR d'un outil (à coller dessus → sa fiche d'étalonnage)

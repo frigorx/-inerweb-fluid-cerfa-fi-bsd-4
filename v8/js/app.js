@@ -12,7 +12,6 @@ import { esc } from './core/utils.js';
 import { modale, toast, confirmer } from './views/communs.js';
 import { render as rendreConnexion } from './views/connexion.js';
 import { ouvrirFormBouteille } from './modales/bouteille-form.js';
-import { ouvrirFormOutil } from './modales/outil-form.js';
 
 // ---- Liste ordonnée des vues (contrat v8) ----
 const VUES = [
@@ -218,14 +217,6 @@ async function afficherVue(id, param = '') {
     return;
   }
 
-  // Route paramétrée '#/o/<code>' (QR outillage) : retrouve l'outil par son
-  // code_public puis ouvre son formulaire d'édition par-dessus la vue
-  // 'outillage'. Code inconnu → toast sobre, jamais d'exception.
-  if (id === 'o') {
-    await ouvrirOutilParCode(param);
-    return;
-  }
-
   const zone = document.getElementById('vue');
   const definition = VUES.find(function (vue) { return vue.id === id; });
   const libelle = definition ? definition.libelle : id;
@@ -245,6 +236,7 @@ async function afficherVue(id, param = '') {
   // l'annuaire 'clients' ou une carte machine).
   const nomModule = id === 'm' ? 'fiche-machine'
     : id === 'c' ? 'fiche-client'
+    : id === 'o' ? 'fiche-outil'
     : id;
   let module = null;
   try {
@@ -332,32 +324,6 @@ async function ouvrirClientParCode(codePublic) {
     console.error('Ouverture du client par code impossible :', erreur);
     await afficherVue('clients');
     toast('Client introuvable (code inconnu).', 'erreur');
-  }
-}
-
-/**
- * Résout la route '#/o/<code>' : retrouve l'outil par son code_public puis
- * ouvre son formulaire d'édition (outil-form.js) par-dessus la vue
- * 'outillage', déjà affichée comme fond. Code inconnu → toast sobre, sans
- * exception. Utilisé par l'étiquette QR de l'outil (documents/etiquette-outil.js).
- * @param {string} codePublic — paramètre brut porté par le hash
- */
-async function ouvrirOutilParCode(codePublic) {
-  const code = String(codePublic || '').trim();
-  await afficherVue('outillage');
-  try {
-    const outillage = await store.getOutillage();
-    const outil = outillage.find(function (o) { return o.codePublic === code; });
-    if (!outil) {
-      toast('Outil introuvable (code inconnu).', 'erreur');
-      return;
-    }
-    await ouvrirFormOutil(
-      { store: store, naviguer: naviguer, rafraichir: function () { naviguer('outillage'); } },
-      outil.id);
-  } catch (erreur) {
-    console.error('Ouverture de l’outil par code impossible :', erreur);
-    toast('Outil introuvable (code inconnu).', 'erreur');
   }
 }
 
