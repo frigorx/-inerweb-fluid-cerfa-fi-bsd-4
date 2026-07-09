@@ -47,6 +47,56 @@ function nomSur(nom) {
   return String(nom || 'document').replace(/[\\/]+/g, '_').trim() || 'document';
 }
 
+/** Contenu d'une entrée (chaîne UTF-8 ou octets) → Uint8Array, pour le hachage. */
+function octetsEntree(contenu) {
+  return typeof contenu === 'string' ? new TextEncoder().encode(contenu) : contenu;
+}
+
+/**
+ * Empreinte SHA-256 (hex minuscule) d'un tampon d'octets, via Web Crypto
+ * (globalThis.crypto.subtle : présent au navigateur ET sous Node ≥ 20).
+ * @param {Uint8Array|ArrayBuffer} octets
+ * @returns {Promise<string>} 64 caractères hexadécimaux
+ */
+async function sha256Hex(octets) {
+  const vue = octets instanceof Uint8Array ? octets : new Uint8Array(octets);
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', vue);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Rédige le manifeste des empreintes SHA-256 (01-EMPREINTES-SHA256.txt) :
+ * une ligne « <empreinte>  <fichier> » par entrée du dossier (sommaire +
+ * fichiers de données), pour vérifier l'intégrité fichier par fichier. Le
+ * manifeste ne peut pas contenir sa propre empreinte ; l'empreinte GLOBALE
+ * du ZIP (retournée par genererDossierAudit) scelle l'ensemble, manifeste
+ * compris.
+ * @param {Array<{nom: string, contenu: string|Uint8Array}>} entrees
+ * @param {number} annee
+ * @returns {Promise<string>}
+ */
+async function redigerManifesteEmpreintes(entrees, annee) {
+  const lignes = [
+    `EMPREINTES SHA-256 — DOSSIER D'AUDIT ${annee}`,
+    '='.repeat(68),
+    '',
+    'Chaque fichier du dossier est listé avec son empreinte SHA-256.',
+    'Pour vérifier qu\'un fichier n\'a pas été modifié, recalculez son',
+    'empreinte SHA-256 et comparez-la à la valeur ci-dessous.',
+    'L\'empreinte GLOBALE de l\'archive .zip (à conserver hors du logiciel',
+    'au moment de l\'export) scelle l\'ensemble du dossier.',
+    '',
+    '-'.repeat(68)
+  ];
+  for (const entree of entrees) {
+    const hex = await sha256Hex(octetsEntree(entree.contenu));
+    lignes.push(`${hex}  ${entree.nom}`);
+  }
+  lignes.push('');
+  return lignes.join('\r\n');
+}
+
 /**
  * Rédige le sommaire du dossier (00-SOMMAIRE.txt) : établissement,
  * date de génération, rappel d'origine et liste complète des fichiers.
@@ -149,15 +199,31 @@ export async function genererDossierAudit(store, annee) {
     });
   }
 
-  // ---- 5. Sommaire en tête d'archive (liste TOUS les fichiers) ----
+  // ---- 5. Sommaire + manifeste d'empreintes en tête d'archive ----
   const nomsFichiers = entrees.map((e) => e.nom);
   const sommaire = redigerSommaire(
-    etablissement, annee, ['00-SOMMAIRE.txt', ...nomsFichiers], maintenant);
-  entrees.unshift({ nom: '00-SOMMAIRE.txt', contenu: sommaire });
+    etablissement, annee,
+    ['00-SOMMAIRE.txt', '01-EMPREINTES-SHA256.txt', ...nomsFichiers], maintenant);
+  const entreeSommaire = { nom: '00-SOMMAIRE.txt', contenu: sommaire };
+
+  // Le manifeste couvre le sommaire + tous les fichiers de données (il ne
+  // peut pas se hacher lui-même ; l'empreinte globale du ZIP scelle le tout).
+  const manifeste = await redigerManifesteEmpreintes(
+    [entreeSommaire, ...entrees], annee);
+  entrees.unshift(entreeSommaire,
+    { nom: '01-EMPREINTES-SHA256.txt', contenu: manifeste });
+
+  // ---- 6. Scellement : empreinte SHA-256 de l'archive complète ----
+  const blob = creerZip(entrees, maintenant);
+  const octetsZip = blob instanceof Uint8Array
+    ? blob
+    : new Uint8Array(await blob.arrayBuffer());
+  const empreinte = await sha256Hex(octetsZip);
 
   return {
-    blob: creerZip(entrees, maintenant),
+    blob,
     nomFichier: `dossier-audit-fluides-${annee}.zip`,
-    nbDocuments: entrees.length
+    nbDocuments: entrees.length,
+    empreinte
   };
 }

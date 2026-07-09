@@ -2,6 +2,23 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔒 Phase 2 · Lot 2 (partie scellement) — dossier d'audit scellé SHA-256 (09/07)
+Renforce la valeur d'audit du dossier annuel : il devient **tamper-evident** (toute modification
+ultérieure est détectable), sans dépendance externe.
+- **`documents/dossier-audit.js`** : le ZIP embarque désormais un **manifeste `01-EMPREINTES-SHA256.txt`**
+  (empreinte SHA-256 de chaque fichier — sommaire + CSV + CERFA + PJ, pour vérifier l'intégrité
+  fichier par fichier) et `genererDossierAudit()` retourne l'**empreinte SHA-256 globale de l'archive**
+  (Web Crypto `crypto.subtle`, présent au navigateur ET sous Node ≥ 20 — zéro dépendance).
+- **`views/bilan.js`** : après l'export du dossier, une modale **« Scellement du dossier d'audit »**
+  affiche l'empreinte à **conserver hors du logiciel** (impression, courriel, coffre numérique) avec
+  bouton « Copier ». Preuve d'inviolabilité : recalculer l'empreinte du .zip et comparer.
+- Tests : `test-dossier-audit.mjs` 15 → **20/0** (manifeste présent en 2ᵉ entrée, chaque CSV listé avec
+  une empreinte 64-hex, empreinte globale = SHA-256 recalculé de l'archive). **Vérifié navigateur**
+  (mode Démo, origine neuve) : la modale s'ouvre après l'export avec une empreinte SHA-256 (64 hex) et
+  le bouton Copier. Capture à l'appui.
+- ⏳ Reste du Lot 2 (dossier de sauvegarde configurable + alerte d'ancienneté) = côté serveur E4,
+  à faire ensuite.
+
 ### 🛠️ Phase 2 · Fiche outil vivante (scan QR → fiche, certificats en pièces jointes) (09/07)
 Suite du QR intégral : la route `#/o/<code>` ouvre désormais une **vraie fiche** (comme la fiche
 machine), plus un simple formulaire. Un scan de l'étiquette outil mène à l'état complet de l'outil.

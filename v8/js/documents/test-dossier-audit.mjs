@@ -6,6 +6,7 @@
 // les vérifications portent sur le fichier réellement produit.
 // ============================================================
 
+import { createHash } from 'node:crypto';
 import { creerStore } from '../data/datastore.js';
 import { genererDossierAudit } from './dossier-audit.js';
 
@@ -54,7 +55,7 @@ function lireZip(zip) {
 }
 
 const store = await creerStore();
-const { blob, nomFichier, nbDocuments } = await genererDossierAudit(store, 2026);
+const { blob, nomFichier, nbDocuments, empreinte } = await genererDossierAudit(store, 2026);
 
 // ---- 1. Forme du résultat ----
 verifier('nomFichier = dossier-audit-fluides-2026.zip',
@@ -136,6 +137,24 @@ verifier('chaque cerfa/*.pdf pèse plus de 10 Ko',
 // ---- 10. Pas de doublon de nom dans l'archive ----
 verifier('aucun doublon de nom de fichier',
   new Set(noms).size === noms.length);
+
+// ---- 11. Scellement : manifeste d'empreintes + empreinte globale ----
+verifier('01-EMPREINTES-SHA256.txt présent (2e entrée)',
+  noms[1] === '01-EMPREINTES-SHA256.txt');
+const manifeste = new TextDecoder().decode(
+  entrees.find((e) => e.nom === '01-EMPREINTES-SHA256.txt')?.octets ?? new Uint8Array());
+verifier('le manifeste liste chaque CSV avec une empreinte SHA-256 (64 hex)',
+  CSV_ATTENDUS.every((nom) =>
+    new RegExp('^[0-9a-f]{64}  ' + nom.replace('.', '\\.'), 'm').test(manifeste)),
+  CSV_ATTENDUS.filter((nom) =>
+    !new RegExp('^[0-9a-f]{64}  ' + nom.replace('.', '\\.'), 'm').test(manifeste)).join(', '));
+verifier('le manifeste couvre aussi le sommaire',
+  /^[0-9a-f]{64}  00-SOMMAIRE\.txt$/m.test(manifeste));
+const empreinteRecalculee = createHash('sha256').update(octetsZip).digest('hex');
+verifier('l\'empreinte retournée = SHA-256 de l\'archive .zip complète',
+  typeof empreinte === 'string' && /^[0-9a-f]{64}$/.test(empreinte)
+  && empreinte === empreinteRecalculee,
+  `${empreinte} vs ${empreinteRecalculee}`);
 
 // ---- Bilan ----
 console.log(`\nVérifications : ${nbOk} réussies, ${nbEchecs} en échec.`);

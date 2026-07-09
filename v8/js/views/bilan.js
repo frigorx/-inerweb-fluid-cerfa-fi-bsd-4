@@ -13,6 +13,53 @@ import { genererDossierAudit } from '../documents/dossier-audit.js';
 
 export const titre = 'Bilan annuel';
 
+/**
+ * Affiche l'empreinte SHA-256 de scellement du dossier d'audit qui vient
+ * d'être exporté. L'utilisateur doit la CONSERVER HORS du logiciel : c'est
+ * la preuve d'inviolabilité (tamper-evidence) — recalculer l'empreinte du
+ * .zip et la comparer révèle toute modification ultérieure.
+ * @param {number} annee
+ * @param {string} nomFichier
+ * @param {string} empreinte - SHA-256 hex du fichier .zip
+ */
+function afficherEmpreinteScellement(annee, nomFichier, empreinte) {
+  const { fermer, racine } = modale({
+    titre: `Scellement du dossier d'audit ${annee}`,
+    contenuHtml:
+      '<p class="modale-intro">Empreinte <strong>SHA-256</strong> du dossier « '
+      + esc(nomFichier) + ' ». Conservez-la <strong>hors du logiciel</strong> '
+      + '(impression, courriel à vous-même, coffre numérique) : elle prouve '
+      + 'que le dossier n\'a pas été modifié après l\'export. Pour vérifier plus '
+      + 'tard, recalculez l\'empreinte SHA-256 du fichier .zip et comparez-la à '
+      + 'cette valeur.</p>'
+      + '<div class="empreinte-scellement">' + esc(empreinte) + '</div>',
+    actionsHtml:
+      '<button type="button" id="empreinte-copier" class="btn btn-contour">Copier l\'empreinte</button>'
+      + '<button type="button" id="empreinte-fermer" class="btn btn-marine">Fermer</button>'
+  });
+  const champ = racine.querySelector('.empreinte-scellement');
+  if (champ && !document.getElementById('style-empreinte-scellement')) {
+    const style = document.createElement('style');
+    style.id = 'style-empreinte-scellement';
+    style.textContent = '.empreinte-scellement{font-family:var(--police-mono);'
+      + 'font-size:13px;line-height:1.6;word-break:break-all;background:var(--fond-2);'
+      + 'border:1px solid var(--bordure);border-radius:var(--rayon-bouton);'
+      + 'padding:12px;color:var(--texte);user-select:all;}';
+    document.head.appendChild(style);
+  }
+  racine.querySelector('#empreinte-fermer').addEventListener('click', fermer);
+  racine.querySelector('#empreinte-copier').addEventListener('click', async function () {
+    try {
+      await navigator.clipboard.writeText(empreinte);
+      toast('Empreinte copiée.', 'succes');
+    } catch {
+      // Presse-papiers indisponible : la valeur reste sélectionnable à l'écran
+      // (user-select:all) — l'utilisateur peut la copier à la main.
+      toast('Copie automatique indisponible — sélectionnez le texte affiché.', 'info');
+    }
+  });
+}
+
 /* ============================================================
    Styles propres à la vue (cartes dégradées, bouton vert,
    sélecteur d'année) — préfixés .vue-bilan pour rester cloisonnés.
@@ -538,11 +585,12 @@ export async function render(conteneur, ctx) {
       boutonDossier.disabled = true;
       toast('Assemblage du dossier…', 'info');
       try {
-        const { blob, nomFichier, nbDocuments } =
+        const { blob, nomFichier, nbDocuments, empreinte } =
           await genererDossierAudit(ctx.store, bilanCourant.annee);
         telechargerBlob(blob, nomFichier);
         toast(`Dossier d'audit ${bilanCourant.annee} téléchargé : `
           + `${nbDocuments} documents (« ${nomFichier} »).`, 'succes');
+        afficherEmpreinteScellement(bilanCourant.annee, nomFichier, empreinte);
       } catch (erreur) {
         toast(erreur && erreur.message
           ? erreur.message
