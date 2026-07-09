@@ -21,10 +21,10 @@ attentes. Tu ne t'arrêtes que quand une brique est **finie et testée par toi-m
    (**source de vérité**, entrées les plus récentes en tête), `docs/PLAN-PHASE-2.md`,
    `docs/VISION-V9-V10.md` (la boussole).
 
-## État exact (dernier commit `d5263b3`, 09/07/2026)
+## État exact (dernier commit poussé `d6023b1`, 09/07/2026)
 
 Socle **E0→E5** (contrat DataStore + SQLite + coffre-fort + comptes/rôles/sessions) et **V9.1**
-(fiche machine + QR) déjà faits. **Phase 2 en cours**, déjà faits et poussés :
+(fiche machine + QR) déjà faits. **Phase 2 FAITE et poussée** :
 - **Lot 0** — fix des catégories de pièces jointes (migration 010).
 - **Lot 1** — paquet portable « clé en main » (Node embarqué, `outils/fabriquer-paquet.mjs`).
 - **Référence client** — annuaire des détenteurs, fiche client `#/c/<id>`, machines par client.
@@ -32,21 +32,31 @@ Socle **E0→E5** (contrat DataStore + SQLite + coffre-fort + comptes/rôles/ses
   **outillage** (`#/o/<code>`, migrations 011/012).
 - **Fiche outil vivante** (route `#/o/` = vraie fiche, certificats en pièces jointes).
 - **Scellement du dossier d'audit** (empreinte SHA-256, manifeste + empreinte globale du ZIP).
+- **Premier lancement guidé par le web** (écran de création admin dans le navigateur) + **gestion
+  des comptes** (créer / réinitialiser / activer-désactiver).
+- **Dossier de sauvegarde configurable** + alerte si dernière sauvegarde ancienne.
+- **Export ZIP « dossier machine » / « dossier client »** scellé (SHA-256).
 
-Contrat **254/0** sur les deux implémentations, toutes les suites `test-*.mjs` à 0 échec. La démo
-en ligne (GitHub Pages) se republie à chaque push.
+Contrat **254/0** sur les deux implémentations, toutes les suites `test-*.mjs` à 0 échec.
+**Démo en ligne vérifiée fonctionnelle** : https://frigorx.github.io/-inerweb-fluid-cerfa-fi-bsd-4/v8/
+(GitHub Pages se republie à chaque push). Working tree **propre**, tout est poussé.
 
-## Feuille de route (détail dans `reference_roadmap_fluide_audit.md`)
+## Feuille de route (détail COMPLET dans `reference_roadmap_fluide_audit.md`)
 
-- **À faire sans dépendance à Franck** : export ZIP « dossier machine » et « dossier client »,
-  **dossier de fuite fermé** (différenciateur n°1), inventaire nominatif bouteille par bouteille,
-  dossier de sauvegarde configurable, sentinelle d'alertes persistées.
+La feuille de route détaille : les briques restantes prévues (B1-B13), **des extensions au-delà du
+prévu** (correction auto du CERFA élève, mode TP guidé, pont inerWeb Édu, tableau de bord de
+conformité « feu tricolore », horodatage externe du scellement, sondes Testo BLE, packs pédagogiques
+partageables…), ce qui attend Franck, et les atouts vs concurrence. En résumé :
+- **À faire sans dépendance à Franck** : **dossier de fuite fermé** (différenciateur n°1),
+  inventaire nominatif bouteille par bouteille, sentinelle d'alertes persistées, code machine
+  lisible `JR-CF-001` + lien intervention→outils multi, tableau de bord enrichi.
 - ⛔ **GATÉ sur la validation réglementaire de Franck (NE PAS coder en dur avant qu'il valide sur
   le texte officiel — arrêté du 21/11/2025)** : **mode Officiel réellement bloquant** +
-  **habilitations** (attestation de capacité établissement / aptitude personne, catégories 2008
-  *et* 2025 A1/A2/B/C/D/E/V) + **calcul auto de la fréquence de contrôle** (seuils en tonnes
-  équivalent CO₂). **C'est LE cœur de l'audit-proof.**
-- **Différé** : pont Trackdéchets (obligatoire mais lourd), relevés élèves (bloqué RGPD §16.5).
+  **habilitations** (capacité établissement / aptitude personne, catégories 2008 *et* 2025
+  A1/A2/B/C/D/E/V) + **calcul auto de la fréquence de contrôle** (seuils tCO₂eq). **LE cœur de
+  l'audit-proof.**
+- **Différé** : pont Trackdéchets (obligatoire mais lourd), relevés élèves (bloqué RGPD §16.5),
+  assistant client (contrats / portail / rapports).
 
 ## Méthode de travail (non négociable)
 
@@ -88,7 +98,12 @@ en ligne (GitHub Pages) se republie à chaque push.
 
 ## Prochaine action
 
-Reprendre la production « à fond » sur les briques **sans dépendance à Franck**, en commençant par
-l'**export ZIP « dossier machine » / « dossier client »** (preuve ciblée en un clic pour un audit),
-sauf nouvelle consigne de Franck. Annoncer le réglage conseillé, puis exécuter (tests d'abord,
+Reprendre la production « à fond » sur les briques **sans dépendance à Franck**. Ordre recommandé
+(fort impact démo, aucune validation externe) : **① tableau de bord de conformité (feu tricolore)**
+→ **② dossier de fuite fermé** → **③ correction automatique du CERFA rempli par l'élève**. Sauf
+nouvelle consigne de Franck. Annoncer le réglage conseillé, puis exécuter (tests d'abord,
 vérification navigateur sur port neuf, commit + push + mémoire).
+
+Dès que Franck fournit la **grille réglementaire officielle**, basculer sur le **cœur audit-proof**
+(mode Officiel bloquant + habilitations 2008/2025 + fréquence de contrôle auto) — c'est ce qui rend
+le logiciel « irréprochable en audit ».
