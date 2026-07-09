@@ -1,0 +1,94 @@
+# Prompt de démarrage — inerWeb Fluide (à coller dans un nouveau chat)
+
+> Copier tout ce qui suit comme PREMIER message d'un nouveau chat. Il est
+> autonome : il rappelle le contexte, l'état exact, la méthode et les consignes.
+
+---
+
+Tu reprends le développement d'**inerWeb Fluide**, un logiciel **local** de traçabilité des
+fluides frigorigènes (F-Gas / CERFA 15497*04) pour lycées professionnels (filière froid/clim).
+**Objectif** : un logiciel de traçabilité **irréprochable lors d'un audit**, qui permet de
+**former les élèves** et de **simplifier toute la gestion du fluide**, assez **professionnel pour
+être diffusé gratuitement dans les lycées**. Tu as **carte blanche** et le droit de dépasser les
+attentes. Tu ne t'arrêtes que quand une brique est **finie et testée par toi-même**.
+
+## À LIRE EN PREMIER (dans l'ordre, avant de coder)
+
+1. **Mémoire persistante** (si présente sur le disque, `G:\Mon Drive\claude-memoire\`) :
+   `MEMORY.md`, puis la fiche `project_inerweb_fluide.md` et la feuille de route
+   `reference_roadmap_fluide_audit.md`.
+2. **Dépôt `C:\git\inerweb-fluide`** : `docs/REPRISE.md` (état + pièges), `CHANGELOG.md`
+   (**source de vérité**, entrées les plus récentes en tête), `docs/PLAN-PHASE-2.md`,
+   `docs/VISION-V9-V10.md` (la boussole).
+
+## État exact (dernier commit `d5263b3`, 09/07/2026)
+
+Socle **E0→E5** (contrat DataStore + SQLite + coffre-fort + comptes/rôles/sessions) et **V9.1**
+(fiche machine + QR) déjà faits. **Phase 2 en cours**, déjà faits et poussés :
+- **Lot 0** — fix des catégories de pièces jointes (migration 010).
+- **Lot 1** — paquet portable « clé en main » (Node embarqué, `outils/fabriquer-paquet.mjs`).
+- **Référence client** — annuaire des détenteurs, fiche client `#/c/<id>`, machines par client.
+- **QR intégral** — code public + étiquette + accès direct pour **clients** (`#/cl/<code>`) et
+  **outillage** (`#/o/<code>`, migrations 011/012).
+- **Fiche outil vivante** (route `#/o/` = vraie fiche, certificats en pièces jointes).
+- **Scellement du dossier d'audit** (empreinte SHA-256, manifeste + empreinte globale du ZIP).
+
+Contrat **254/0** sur les deux implémentations, toutes les suites `test-*.mjs` à 0 échec. La démo
+en ligne (GitHub Pages) se republie à chaque push.
+
+## Feuille de route (détail dans `reference_roadmap_fluide_audit.md`)
+
+- **À faire sans dépendance à Franck** : export ZIP « dossier machine » et « dossier client »,
+  **dossier de fuite fermé** (différenciateur n°1), inventaire nominatif bouteille par bouteille,
+  dossier de sauvegarde configurable, sentinelle d'alertes persistées.
+- ⛔ **GATÉ sur la validation réglementaire de Franck (NE PAS coder en dur avant qu'il valide sur
+  le texte officiel — arrêté du 21/11/2025)** : **mode Officiel réellement bloquant** +
+  **habilitations** (attestation de capacité établissement / aptitude personne, catégories 2008
+  *et* 2025 A1/A2/B/C/D/E/V) + **calcul auto de la fréquence de contrôle** (seuils en tonnes
+  équivalent CO₂). **C'est LE cœur de l'audit-proof.**
+- **Différé** : pont Trackdéchets (obligatoire mais lourd), relevés élèves (bloqué RGPD §16.5).
+
+## Méthode de travail (non négociable)
+
+- **Une brique = un commit.** Cycle : tests d'abord → code → revue adversariale du cœur →
+  **contrôle navigateur par toi-même** → `CHANGELOG.md` + commit + push (messages en français,
+  finir par `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`) → mettre à jour la mémoire.
+- **JAMAIS toucher au dossier `data/` réel de Franck** (incident vécu : dossier réel supprimé par
+  erreur). Toute vérification navigateur = servir `v8/` en statique sur un **port jetable**
+  (ex. `python -m http.server 8140 --directory v8`), **jamais le port 2011**, et sur une
+  **origine/port NEUF à chaque session de vérif** (piège payé cher : le cache de modules ES sert
+  l'ancien code ; un service worker v7 peut aussi intercepter).
+- **Parité stricte** DemoStore (navigateur) ↔ LocalStore (serveur SQLite) : `test-contrat.mjs`
+  tourne contre les deux et casse le build à la moindre divergence. Vérifier `local` ET `demo`.
+- **Migrations** : jamais de DROP destructif ni de re-hash d'écritures scellées, versions
+  consécutives, chaque migration rejouable de zéro. **`PRAGMA recursive_triggers = ON` obligatoire**
+  (WORM). Ne jamais modifier `schema.sql` pour une évolution — c'est une migration.
+- **QR** = `code_public` opaque (base32 Crockford), encodé en **chemin relatif** (`#/m/…`,
+  `#/b/…`, `#/cl/…`, `#/o/…`), jamais d'URL absolue ni de donnée métier/client dans le QR.
+- **Zéro dépendance npm nouvelle** (Node natif ; seules libs tolérées : pdf-lib, PDF.js, qrcode).
+  **Zéro emoji dans l'interface. Français accentué partout.**
+- Sécurité serveur local : garde CSRF/anti-rebinding (Host + Origin) sur le loopback ; le rôle
+  n'est jamais lu du corps d'une requête ; ne jamais rendre un PDF non généré par l'application.
+
+## Consignes de Franck (à respecter)
+
+- **Avant chaque tâche de codage**, annoncer en une ligne le **réglage conseillé, EN FRANÇAIS** :
+  « Réglage conseillé : [modèle], effort [niveau] » + une ligne de raison. **Niveaux en français** :
+  minimal / bas / moyen / élevé / très élevé / maximum (jamais low/medium/high/xhigh/max — Franck
+  recopie ça sur son tableau de bord et n'est pas à l'aise avec l'anglais). Franck applique
+  lui-même le réglage. Défaut pour le cœur métier : **Opus, effort très élevé** ; tâches bien
+  cadrées : Sonnet.
+- **Décider sans redemander** quand le choix logique est clair ; ne pas bloquer sur des questions
+  inutiles. **Français simple, zéro anglicisme.** Économiser les tokens sans sacrifier la rigueur
+  (lire mémoire + CHANGELOG d'abord, carte ciblée, rester concis).
+- **Sobriété** : ergonomie et fiabilité d'abord, ne pas complexifier pour pas grand-chose.
+- **Ce qui attend Franck** (le lui rappeler, sans le harceler) : la **grille réglementaire** (qui
+  débloque le cœur audit) ; le **RGPD élèves** (§16.5, avant tout module relevés) ; **révoquer les
+  vieilles clés API v7** (§16.7, faille encore ouverte, à faire indépendamment).
+
+## Prochaine action
+
+Reprendre la production « à fond » sur les briques **sans dépendance à Franck**, en commençant par
+l'**export ZIP « dossier machine » / « dossier client »** (preuve ciblée en un clic pour un audit),
+sauf nouvelle consigne de Franck. Annoncer le réglage conseillé, puis exécuter (tests d'abord,
+vérification navigateur sur port neuf, commit + push + mémoire).
