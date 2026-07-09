@@ -11,6 +11,7 @@ import { ICONES } from './core/icones.js';
 import { esc } from './core/utils.js';
 import { modale, toast, confirmer } from './views/communs.js';
 import { render as rendreConnexion } from './views/connexion.js';
+import { render as rendreBootstrap } from './views/bootstrap-admin.js';
 import { ouvrirFormBouteille } from './modales/bouteille-form.js';
 
 // ---- Liste ordonnée des vues (contrat v8) ----
@@ -385,6 +386,48 @@ function afficherEcranConnexion() {
   window.scrollTo(0, 0);
 }
 
+/**
+ * Affiche l'écran de PREMIER LANCEMENT (création du 1er compte ADMIN) à la
+ * place de la vue courante. Même patron que l'écran de connexion (hors routeur
+ * hash, occupe #vue via le même verrou ecranConnexionAffiche pour ne pas être
+ * écrasé par la suite du démarrage). À la création réussie, l'administrateur
+ * est déjà connecté (le serveur a posé le cookie de session) : on enchaîne
+ * directement sur l'application.
+ */
+function afficherEcranBootstrap() {
+  ecranConnexionAffiche = true;
+
+  document.getElementById('fil-ariane').textContent = 'inerWeb Fluide / Premier lancement';
+  document.getElementById('titre-page').textContent = 'Premier lancement';
+  document.title = 'Premier lancement — inerWeb Fluide';
+
+  const zone = document.getElementById('vue');
+  zone.innerHTML = '';
+  const conteneur = document.createElement('div');
+  conteneur.className = 'vue-contenu anim-fade';
+  zone.appendChild(conteneur);
+
+  rendreBootstrap(conteneur, {
+    transport: transportComptes,
+    surCreation(resultat) {
+      sessionCourante = resultat && resultat.utilisateur
+        ? { role: resultat.role, utilisateur: resultat.utilisateur }
+        : null;
+      ecranConnexionAffiche = false;
+      majPiedSession();
+      toast('Compte administrateur créé. Bienvenue !', 'succes');
+      if (routeur) {
+        afficherVue(routeur.idCourant(), routeur.paramCourant());
+      } else {
+        reprendreDemarrageApresConnexion();
+      }
+    }
+  });
+
+  zone.scrollTop = 0;
+  window.scrollTo(0, 0);
+}
+
 /** Déconnexion : révoque la session serveur puis revient à l'écran de connexion. */
 async function seDeconnecter() {
   try {
@@ -624,6 +667,25 @@ async function demarrer() {
       }
       afficherEcranConnexion();
     });
+  }
+
+  // Premier lancement (Mode Local) : si AUCUN compte n'existe encore, on
+  // présente l'écran « Créer le compte administrateur » AVANT toute lecture
+  // de données — plus de fenêtre CLI, plus d'impasse « base sans admin ».
+  if (modeLocalActif()) {
+    let initialise = true;
+    try {
+      const etat = await transportComptes('etatInitial', {});
+      initialise = Boolean(etat && etat.initialise);
+    } catch (erreur) {
+      // Si l'état ne peut pas être lu, ne pas bloquer le démarrage : la
+      // séquence normale (connexion) prendra le relais si besoin.
+      console.error("Lecture de l'état d'initialisation impossible :", erreur);
+    }
+    if (!initialise) {
+      afficherEcranBootstrap();
+      return; // surCreation() reprendra la séquence de démarrage.
+    }
   }
 
   await verifierIntegriteRegistre();

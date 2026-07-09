@@ -30,8 +30,13 @@ const migrations = require('./migrations.js');
 const VERSION_BASE = migrations.VERSION_BASE;
 
 // Chemins par défaut : la base dans data/ à la racine de l'application,
-// le schéma à côté de ce module.
-const CHEMIN_BASE_DEFAUT = path.join(__dirname, '..', 'data', 'inerweb-fluide.db');
+// le schéma à côté de ce module. IWF_CHEMIN_BASE permet de pointer une base
+// JETABLE (tests, vérification navigateur sur port neuf) sans jamais toucher
+// au data/ réel — le défaut de production reste inchangé si la variable est
+// absente.
+const CHEMIN_BASE_DEFAUT = process.env.IWF_CHEMIN_BASE
+  ? path.resolve(process.env.IWF_CHEMIN_BASE)
+  : path.join(__dirname, '..', 'data', 'inerweb-fluide.db');
 const CHEMIN_SCHEMA = path.join(__dirname, 'schema.sql');
 
 /** Instance unique de la base (ouverte à la demande). */

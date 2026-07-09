@@ -47,6 +47,16 @@ if (!/node(\.exe)?$/i.test(nodeExe)) {
   console.error(`[ERREUR] Exécutable Node introuvable (process.execPath = ${nodeExe}).`);
   process.exit(1);
 }
+// Le node.exe embarqué est celui de CETTE machine de build : il doit être en
+// version 22+ (module intégré node:sqlite requis par le Mode Local), sinon on
+// produirait un paquet qui plante au démarrage sur un poste vierge.
+const majeurBuild = Number(process.versions.node.split('.')[0]);
+if (Number.isNaN(majeurBuild) || majeurBuild < 22) {
+  console.error(`[ERREUR] Node ${process.versions.node} est trop ancien pour être embarqué.`);
+  console.error('         inerWeb Fluide (Mode Local) exige Node 22+ (module node:sqlite).');
+  console.error('         Relancez la fabrication avec Node 22 ou plus récent.');
+  process.exit(1);
+}
 if (SORTIE === RACINE || SORTIE.startsWith(RACINE + path.sep)) {
   console.error('[ERREUR] Le dossier de sortie ne doit pas être DANS le dépôt.');
   console.error(`         Sortie demandée : ${SORTIE}`);
@@ -122,12 +132,18 @@ sur CE poste : rien n'est envoyé sur Internet.
 DÉMARRER
 --------
 1. Double-cliquez sur « lancer-inerweb.bat ».
-2. Au tout premier lancement, l'application vous demande de créer un
-   compte administrateur (un identifiant et un mot de passe d'au moins
-   10 caractères). Le mot de passe ne s'affiche pas pendant la frappe,
-   c'est normal.
-3. Le navigateur s'ouvre sur http://localhost:2011
+2. Le navigateur s'ouvre sur http://localhost:2011
+3. Au tout premier lancement, l'application affiche un écran
+   « Créer le compte administrateur » : choisissez un identifiant et un
+   mot de passe d'au moins 10 caractères, puis validez. Vous entrez
+   ensuite directement dans l'application.
 4. Pour arrêter l'application : fermez la fenêtre noire.
+
+Windows peut afficher un avertissement « SmartScreen » au premier
+lancement (application téléchargée non signée) : cliquez sur
+« Informations complémentaires » puis « Exécuter quand même ». Vous
+pouvez aussi débloquer le dossier via clic droit → Propriétés →
+« Débloquer » avant de lancer.
 
 Node.js est DÉJÀ inclus dans ce dossier (sous « node\\ ») : il n'y a
 rien à installer.

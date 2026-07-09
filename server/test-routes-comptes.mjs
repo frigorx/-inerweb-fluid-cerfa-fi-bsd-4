@@ -8,6 +8,9 @@
 // os.tmpdir() — jamais le data/ réel, jamais le port 2011 réel).
 //
 // Familles :
+//   0. Premier lancement : etatInitial (non initialisé) puis bootstrapAdmin
+//      (crée le 1er ADMIN + session ; refuse mdp court / sans login / 2e appel
+//      / origine non loopback).
 //   1. Mutation sans session → 403.
 //   2. Connexion pose un cookie iwf_session ; requête suivante avec ce
 //      cookie porte le rôle attendu.
@@ -135,29 +138,70 @@ if (!pret) {
   process.exit(1);
 }
 
-// ------------------------------------------------------------
-// Amorçage : un compte ADMIN créé DIRECTEMENT en base (simule le CLI
-// creer-admin.js, hors périmètre de cette vague) — nécessaire pour ensuite
-// tester /api/creerCompte via HTTP avec une vraie session ADMIN.
-// ------------------------------------------------------------
+// ============================================================
+// 0. Premier lancement : /api/etatInitial + /api/bootstrapAdmin
+//    Sur base VIERGE (aucun compte), etatInitial signale non-initialisé et
+//    bootstrapAdmin crée le 1er ADMIN puis ouvre une session. C'est désormais
+//    le chemin NOMINAL (il remplace l'ancien amorçage direct en base / CLI) :
+//    l'ADMIN 'admin.amorce' ainsi créé sert d'outillage aux familles suivantes.
+// ============================================================
 {
-  const { createRequire } = await import('node:module');
-  const require = createRequire(import.meta.url);
-  // Le process enfant a SA PROPRE instance de db.js (process séparé) : on
-  // écrit directement dans SON fichier .db avec une instance locale ici,
-  // après extinction... impossible pendant qu'il tourne (SQLite WAL admet
-  // plusieurs connexions). On ouvre donc la même base depuis ce process,
-  // db.js gère le journal_mode=WAL avec busy_timeout : coexistence sûre.
-  const cheminDb = join(DOSSIER, 'data', 'inerweb-fluide.db');
-  const dbTest = require(join(DOSSIER, 'server', 'db.js'));
-  const comptesTest = require(join(DOSSIER, 'server', 'comptes.js'));
-  dbTest.ouvrir(cheminDb);
-  const { hash, sel } = comptesTest.hacherMotDePasse('MotDePasseAdmin-Amorce-2026');
-  dbTest.run(
-    `INSERT INTO utilisateurs_app (id, login, hash_mot_de_passe, sel, role)
-     VALUES (?, ?, ?, ?, ?)`,
-    ['UTI-ADMIN-AMORCE', 'admin.amorce', hash, sel, 'ADMIN']);
-  dbTest.fermer();
+  const rEtat0 = await requeteJson(PORT, 'etatInitial', {});
+  verifier('etatInitial sur base vierge → { initialise: false }',
+    rEtat0.statut === 200 && rEtat0.corps?.resultat?.initialise === false,
+    JSON.stringify(rEtat0.corps));
+
+  const rCourt = await requeteJson(PORT, 'bootstrapAdmin',
+    { login: 'admin.amorce', motDePasse: 'court12' });
+  verifier('bootstrapAdmin avec mot de passe < 10 caractères → 400',
+    rCourt.statut === 400, JSON.stringify(rCourt.corps));
+
+  const rSansLogin = await requeteJson(PORT, 'bootstrapAdmin',
+    { login: '   ', motDePasse: 'MotDePasseAdmin-Amorce-2026' });
+  verifier('bootstrapAdmin sans identifiant → 400',
+    rSansLogin.statut === 400, JSON.stringify(rSansLogin.corps));
+
+  // Toujours aucun compte : les tentatives invalides n'ont rien créé.
+  const rEtatEncore = await requeteJson(PORT, 'etatInitial', {});
+  verifier('après tentatives invalides, l’installation reste NON initialisée',
+    rEtatEncore.corps?.resultat?.initialise === false,
+    JSON.stringify(rEtatEncore.corps));
+
+  const rBoot = await requeteJson(PORT, 'bootstrapAdmin',
+    { login: 'admin.amorce', motDePasse: 'MotDePasseAdmin-Amorce-2026' });
+  verifier('bootstrapAdmin valide en loopback → 200', rBoot.statut === 200,
+    JSON.stringify(rBoot.corps));
+  verifier('bootstrapAdmin pose un Set-Cookie iwf_session (connexion immédiate)',
+    rBoot.setCookie?.includes('iwf_session=') === true);
+  verifier('bootstrapAdmin ne renvoie PAS le jeton clair (role ADMIN seulement)',
+    rBoot.corps?.resultat?.jetonClair === undefined &&
+    rBoot.corps?.resultat?.role === 'ADMIN', JSON.stringify(rBoot.corps));
+
+  // La session ouverte par le bootstrap est immédiatement utilisable.
+  const cookieBoot = `iwf_session=${extraireJetonDuSetCookie(rBoot.setCookie)}`;
+  const rLectureBoot = await requeteJson(PORT, 'getEtablissement', {}, { cookie: cookieBoot });
+  verifier('la session ouverte par bootstrapAdmin fonctionne (lecture 200)',
+    rLectureBoot.statut === 200, JSON.stringify(rLectureBoot.corps));
+
+  const rEtat1 = await requeteJson(PORT, 'etatInitial', {});
+  verifier('après bootstrapAdmin → etatInitial { initialise: true }',
+    rEtat1.corps?.resultat?.initialise === true, JSON.stringify(rEtat1.corps));
+
+  // FENÊTRE UNIQUE : un 2e bootstrap est refusé (un compte existe désormais).
+  const rBoot2 = await requeteJson(PORT, 'bootstrapAdmin',
+    { login: 'autre.admin', motDePasse: 'UnAutreMotDePasse-2026' });
+  verifier('bootstrapAdmin une fois initialisé → 403 (fenêtre refermée)',
+    rBoot2.statut === 403, JSON.stringify(rBoot2.corps));
+
+  // Défense réseau : depuis un Host non loopback (simule une origine LAN), la
+  // garde anti-rebinding (refusReseau) refuse AVANT même la garde loopback du
+  // handler — le bootstrap n'est jamais atteignable à distance (même limite de
+  // portée que la famille 6 : l'écoute réelle reste sur 127.0.0.1).
+  const rBootLan = await requeteJson(PORT, 'bootstrapAdmin',
+    { login: 'lan.admin', motDePasse: 'MotDePasseLan-2026' },
+    { host: 'un-autre-hote:1234' });
+  verifier('bootstrapAdmin depuis un Host non loopback → 403 (jamais à distance)',
+    rBootLan.statut === 403, JSON.stringify(rBootLan.corps));
 }
 
 // ============================================================

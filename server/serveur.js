@@ -18,6 +18,23 @@
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
+
+// Garde de version, AVANT tout require d'un module local : le Mode Local
+// s'appuie sur node:sqlite, module intégré à Node ≥ 22. Sur un Node plus
+// ancien, le require('./db.js') ci-dessous échouerait par une erreur
+// cryptique (« No such built-in module: node:sqlite ») ; on l'anticipe par
+// un message clair, en français, et un code de sortie non nul.
+const MAJEUR_NODE = Number(process.versions.node.split('.')[0]);
+if (Number.isNaN(MAJEUR_NODE) || MAJEUR_NODE < 22) {
+  console.error('');
+  console.error('  [ERREUR] inerWeb Fluide a besoin de Node.js version 22 ou plus récente.');
+  console.error(`  Version détectée sur ce poste : ${process.versions.node}.`);
+  console.error('  Utilisez le paquet portable (Node est inclus, rien à installer)');
+  console.error('  ou installez Node.js LTS (gratuit) depuis https://nodejs.org/fr .');
+  console.error('');
+  process.exit(1);
+}
+
 const api = require('./api.js');
 const db = require('./db.js');
 const sauvegarde = require('./sauvegarde.js');
@@ -349,7 +366,11 @@ function traiterApi(requete, reponse, chemin) {
         const resultat = routesComptes.appeler(
           methode, enveloppe.params ?? {}, contexte);
         const entetes = { 'Content-Type': 'application/json; charset=utf-8' };
-        if (methode === 'connexion') {
+        // connexion ET bootstrapAdmin ouvrent une session (renvoient un
+        // jetonClair) : dans les deux cas on pose le cookie iwf_session et on
+        // ne renvoie au front que { role, utilisateur }, jamais le jeton.
+        const poseSession = methode === 'connexion' || methode === 'bootstrapAdmin';
+        if (poseSession) {
           entetes['Set-Cookie'] = fabriquerCookieSession(resultat.jetonClair, requete);
         } else if (methode === 'deconnexion') {
           entetes['Set-Cookie'] = fabriquerCookieExpire(requete);
@@ -358,7 +379,7 @@ function traiterApi(requete, reponse, chemin) {
           ok: true,
           // Le jeton clair ne doit JAMAIS repartir dans le corps JSON (il
           // est déjà posé en cookie HttpOnly) : le front n'en a pas besoin.
-          resultat: methode === 'connexion'
+          resultat: poseSession
             ? { role: resultat.role, utilisateur: resultat.utilisateur }
             : resultat,
         });

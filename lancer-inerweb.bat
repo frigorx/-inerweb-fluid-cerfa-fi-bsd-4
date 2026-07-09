@@ -45,27 +45,11 @@ if not exist "data"      mkdir "data"
 if not exist "documents" mkdir "documents"
 if not exist "backups"   mkdir "backups"
 
-rem --- Premiere utilisation : creer le compte administrateur ---
-rem On ne demarre PAS le serveur tant que le compte n'est pas cree.
-if not exist "data\inerweb-fluide.db" (
-    echo   Premiere utilisation : creation du compte administrateur.
-    echo   Tapez un identifiant, puis un mot de passe ^(10 caracteres minimum^).
-    echo   Le mot de passe ne s'affiche pas pendant la frappe, c'est normal.
-    echo.
-    "%NODE_EXE%" "%~dp0server\creer-admin.js"
-    if errorlevel 1 (
-        echo.
-        echo   [ARRET] Le compte administrateur n'a pas ete cree.
-        echo   Relancez le raccourci et renseignez un identifiant ET un
-        echo   mot de passe d'au moins 10 caracteres.
-        echo.
-        pause
-        exit /b 1
-    )
-    echo.
-    echo   Compte administrateur cree.
-    echo.
-)
+rem --- Premiere utilisation ---
+rem Au tout premier lancement (aucun compte), l'application affiche
+rem directement dans le navigateur un ecran " Creer le compte
+rem administrateur ". Plus aucune saisie dans cette fenetre noire : on
+rem demarre simplement le serveur, l'onboarding se fait a l'ecran.
 
 echo   Demarrage du serveur local...
 echo   L'application va s'ouvrir dans votre navigateur : http://localhost:2011

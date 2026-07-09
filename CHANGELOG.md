@@ -2,6 +2,48 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🚀 Phase 2 · Premier lancement guidé par le web (fin de la fenêtre cmd et de l'impasse admin) (09/07)
+Objectif « logiciel fini et livrable » : un enseignant reçoit le paquet, double-clique, et
+crée son compte administrateur **dans le navigateur** — plus de fenêtre noire, et surtout plus
+d'impasse silencieuse. Cette brique **remplace le chemin CLI** sur le premier lancement tout en
+préservant la posture E5 (« pas d'inscription libre, pas de compte par défaut »).
+- **Bug d'impasse corrigé** (constat de reconnaissance) : l'ancien lanceur créait la base via
+  `creer-admin.js` **avant** la saisie du mot de passe ; une interruption / un mot de passe trop
+  court laissait une **base vide sans admin**, et la garde `if not exist …db` du `.bat` sautait
+  alors la création **à vie** → connexion impossible. Désormais « base sans compte » est un état
+  **valide** qui ramène toujours à l'écran de création : aucun cul-de-sac possible.
+- **`server/routes-comptes.js`** : deux routes hors contrat DataStore. `etatInitial` (lecture
+  ouverte : `{ initialise }` — l'installation a-t-elle au moins un compte ?) ; `bootstrapAdmin`
+  (crée le 1er ADMIN **puis ouvre la session**, connexion immédiate). Gardes : **loopback strict**
+  (jamais à distance, même `IWF_LAN=1` — le rôle/loopback vient de la socket, jamais du corps) et
+  **fenêtre unique** (refusé dès qu'un compte existe). La création réutilise `creerPremierAdmin`
+  (déjà couvert par `test-bootstrap.mjs` : ≥ 10 caractères, unicité, refus d'un 2ᵉ ADMIN, journal
+  `BOOTSTRAP_ADMIN` transactionnel).
+- **`server/serveur.js`** : le cookie `iwf_session` est désormais posé pour `bootstrapAdmin`
+  **comme** pour `connexion` (le jeton clair ne repart jamais dans le corps JSON) ; **garde de
+  version Node ≥ 22** placée avant tout `require` local (message clair au lieu du crash cryptique
+  « No such built-in module: node:sqlite »).
+- **`server/db.js`** : `IWF_CHEMIN_BASE` permet de pointer une base **jetable** (vérification sur
+  port neuf) sans jamais toucher au `data/` réel — défaut de production inchangé.
+- **Front** : nouvelle vue `v8/js/views/bootstrap-admin.js` (« Créer le compte administrateur » :
+  identifiant + mot de passe + confirmation, contrôles côté client) sur le patron sobre de la vue
+  Connexion ; `app.js` interroge `etatInitial` au démarrage du Mode Local et affiche l'écran de
+  premier lancement **avant toute lecture** si aucun compte n'existe, puis enchaîne sur
+  l'application (l'admin est déjà connecté).
+- **`lancer-inerweb.bat`** : suppression du bloc CLI `creer-admin` (source de l'impasse) — le
+  serveur démarre, l'onboarding se fait à l'écran. **`outils/fabriquer-paquet.mjs`** : refus de
+  fabriquer un paquet avec un Node < 22 (évite un paquet cassé sur poste vierge) + LISEZ-MOI mis à
+  jour (création du compte au navigateur, note SmartScreen).
+- Tests : `test-routes-comptes.mjs` 35 → **41/0** (famille 0 : `etatInitial` avant/après,
+  `bootstrapAdmin` succès + session immédiate, refus mdp court / sans login / 2ᵉ appel / origine
+  non loopback). Toutes les suites serveur et le contrat (254/0 démo **et** local) restent vertes.
+- **Vérifié navigateur** (sandbox isolée, serveur Mode Local sur port jetable 8151, base vierge,
+  origine neuve `?t=` — jamais le `data/` réel ni le port 2011) : base vierge → écran « Créer le
+  compte administrateur » ; création → entrée directe au tableau de bord, pied de session
+  `prof.froid / ADMIN` + bouton Déconnexion ; rechargement → plus de bootstrap (installation
+  initialisée), lecture loopback ouverte. Un pied vide au 1ᵉ essai a confirmé (encore) le piège du
+  cache de modules ES : correct dès l'origine neuve.
+
 ### 🔒 Phase 2 · Lot 2 (partie scellement) — dossier d'audit scellé SHA-256 (09/07)
 Renforce la valeur d'audit du dossier annuel : il devient **tamper-evident** (toute modification
 ultérieure est détectable), sans dépendance externe.

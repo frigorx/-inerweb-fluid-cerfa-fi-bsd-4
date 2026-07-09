@@ -9,10 +9,13 @@
  * MÊMES gardes réseau (CSRF / DNS-rebinding) déjà posées par traiterApi.
  * Patron repris de routes-sauvegarde.js (aiguillage, enveloppe, gardes).
  *
- *   POST /api/connexion    { login, motDePasse }
- *   POST /api/deconnexion  {}
- *   POST /api/creerCompte  { login, motDePasseInitial, role, personnelId? }
- *                          — GARDÉE ADMIN uniquement.
+ *   POST /api/connexion      { login, motDePasse }
+ *   POST /api/deconnexion    {}
+ *   POST /api/creerCompte    { login, motDePasseInitial, role, personnelId? }
+ *                            — GARDÉE ADMIN uniquement.
+ *   POST /api/etatInitial    {}  — lecture ouverte : { initialise: bool }.
+ *   POST /api/bootstrapAdmin { login, motDePasse }  — 1er ADMIN au premier
+ *                            lancement, GARDÉE « aucun compte + loopback strict ».
  *
  * Ces routes NE SONT PAS gardées par garderRole du contrat DataStore (elles
  * n'en font pas partie) : /api/connexion et /api/deconnexion sont ouvertes à
@@ -39,6 +42,7 @@ const crypto = require('node:crypto');
 const db = require('./db.js');
 const comptes = require('./comptes.js');
 const sessions = require('./sessions.js');
+const { creerPremierAdmin } = require('./creer-admin.js');
 
 /** Message d'échec de connexion UNIQUE (règle non négociable V9-E5). */
 const MSG_ECHEC_CONNEXION = 'Identifiant ou mot de passe incorrect.';
@@ -71,8 +75,18 @@ const LONGUEUR_MIN_MOT_DE_PASSE_HABILITE = 10;
 /** Longueur minimale du mot de passe pour ENSEIGNANT/ELEVE. */
 const LONGUEUR_MIN_MOT_DE_PASSE_STANDARD = 8;
 
-/** Les 3 méthodes servies par ce routeur (préfixe /api/ retiré). */
-const METHODES = Object.freeze(['connexion', 'deconnexion', 'creerCompte']);
+/**
+ * Méthodes servies par ce routeur (préfixe /api/ retiré).
+ *   - connexion / deconnexion : ouvertes (poser/lever une session).
+ *   - creerCompte             : gardée ADMIN.
+ *   - etatInitial             : lecture ouverte (l'app a-t-elle un compte ?),
+ *                               interrogée AVANT toute connexion pour décider
+ *                               d'afficher l'écran de premier lancement.
+ *   - bootstrapAdmin          : création web du 1er ADMIN, gardée par
+ *                               « aucun compte + loopback strict » (cf. handler).
+ */
+const METHODES = Object.freeze([
+  'connexion', 'deconnexion', 'creerCompte', 'etatInitial', 'bootstrapAdmin']);
 
 /** Vrai si `methode` relève de ce routeur (sert d'aiguillage à serveur.js). */
 function gereMethode(methode) {
@@ -192,6 +206,75 @@ const HANDLERS = {
       sessions.revoquerSession(jetonClair);
     }
     return { deconnecte: true };
+  },
+
+  /**
+   * État d'initialisation de l'installation : y a-t-il DÉJÀ au moins un compte ?
+   * Lecture ouverte (aucune donnée sensible : uniquement un booléen), consultée
+   * par le front au démarrage du Mode Local pour décider s'il faut afficher
+   * l'écran de premier lancement (« Créer le compte administrateur ») plutôt
+   * que l'écran de connexion.
+   */
+  etatInitial() {
+    const compte = db.get('SELECT id FROM utilisateurs_app LIMIT 1');
+    return { initialise: Boolean(compte) };
+  },
+
+  /**
+   * Premier lancement — création WEB du 1er compte ADMIN, puis connexion
+   * immédiate. Remplace la fenêtre CLI (creer-admin.js) sur le chemin nominal
+   * du paquet portable : plus de fenêtre noire, plus d'impasse « base créée
+   * sans admin ».
+   *
+   * Gardes (l'esprit E5 « pas d'inscription libre » est PRÉSERVÉ) :
+   *   - LOOPBACK STRICT : uniquement depuis le poste où tourne le serveur,
+   *     JAMAIS via le LAN (même IWF_LAN=1 : le bootstrap n'est pas une opération
+   *     de réseau). contexte.loopback est déterminé côté serveur (adresse de la
+   *     socket), jamais depuis le corps de la requête.
+   *   - FENÊTRE UNIQUE : refusé dès qu'un compte — quel qu'il soit — existe.
+   *     La création réelle (creerPremierAdmin) re-vérifie de son côté qu'aucun
+   *     ADMIN n'existe et journalise BOOTSTRAP_ADMIN dans une transaction ;
+   *     Node étant mono-fil et DatabaseSync synchrone, deux requêtes de
+   *     bootstrap ne peuvent pas s'entrelacer (la seconde voit le compte créé
+   *     par la première et tombe en 403).
+   */
+  bootstrapAdmin(params, contexte) {
+    if (!contexte || contexte.loopback !== true) {
+      const erreur = new Error(
+        'Création du compte administrateur possible uniquement depuis le ' +
+        'poste où tourne inerWeb Fluide (pas à distance).');
+      erreur.code = 403;
+      throw erreur;
+    }
+    const dejaUnCompte = db.get('SELECT id FROM utilisateurs_app LIMIT 1');
+    if (dejaUnCompte) {
+      const erreur = new Error(
+        'inerWeb Fluide est déjà initialisé : un compte existe. ' +
+        'Connectez-vous.');
+      erreur.code = 403;
+      throw erreur;
+    }
+
+    const login = typeof params?.login === 'string' ? params.login.trim() : '';
+    const motDePasse = typeof params?.motDePasse === 'string'
+      ? params.motDePasse : '';
+
+    // creerPremierAdmin (creer-admin.js, déjà couvert par test-bootstrap.mjs)
+    // porte les règles métier : identifiant obligatoire, mot de passe ≥ 10
+    // caractères, unicité du login, refus d'un 2e ADMIN, insertion + journal
+    // BOOTSTRAP_ADMIN dans une transaction. Ses Error portent un message
+    // français ; on les laisse remonter telles quelles (code 400 par défaut).
+    const admin = creerPremierAdmin(login, motDePasse);
+
+    // Connexion immédiate : on ouvre une session comme /api/connexion, pour que
+    // l'utilisateur entre directement dans l'application après création.
+    const ip = contexte?.ip ?? null;
+    const jetonClair = sessions.creerSession(admin.id, admin.role, ip);
+    return {
+      jetonClair,
+      role: admin.role,
+      utilisateur: { id: admin.id, login: admin.login, role: admin.role },
+    };
   },
 
   /**
