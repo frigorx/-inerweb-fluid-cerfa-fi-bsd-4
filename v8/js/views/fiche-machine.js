@@ -5,8 +5,10 @@
 // données techniques repliables, alertes machine, historique en onglets.
 // ============================================================
 
-import { enteteVue, carteKpi, chipStatut, barreProgression, tableau, ICONES } from './communs.js';
+import { enteteVue, carteKpi, chipStatut, barreProgression, tableau, toast, ICONES } from './communs.js';
 import { esc, fmtKg, fmtTeq, fmtDate, fmtNombre, teqCO2 } from '../core/utils.js';
+import { genererDossierMachine } from '../documents/dossier-machine.js';
+import { telechargerEtSceller } from '../documents/telecharger-dossier.js';
 import { ouvrirWizard } from '../wizard/wizard.js';
 import { ouvrirFormControle } from '../modales/controle-form.js';
 import { ouvrirPlaque, calculerFrequenceControle } from '../documents/plaque-fgas.js';
@@ -278,6 +280,8 @@ function blocActions() {
     + ICONES.bilan + '<span>Bon d\'intervention</span></button>'
     + '<button type="button" class="btn btn-contour" data-action="fiche-identification">'
     + ICONES.imprimer + '<span>Fiche d\'identification (A4)</span></button>'
+    + '<button type="button" class="btn btn-contour" data-action="dossier-machine">'
+    + ICONES.sauvegarde + '<span>Exporter le dossier (ZIP)</span></button>'
     + '</div>'
     + '</div>';
 }
@@ -585,6 +589,27 @@ export async function render(conteneur, ctx) {
   if (boutonFicheIdentification) {
     boutonFicheIdentification.addEventListener('click', function () {
       ouvrirFicheIdentification(ctx, machine.id);
+    });
+  }
+
+  // Export ZIP « dossier machine » — preuve ciblée scellée (SHA-256).
+  const boutonDossierMachine = conteneur.querySelector('[data-action="dossier-machine"]');
+  if (boutonDossierMachine) {
+    boutonDossierMachine.addEventListener('click', async function () {
+      const libelle = boutonDossierMachine.querySelector('span');
+      const texteInitial = libelle ? libelle.textContent : '';
+      boutonDossierMachine.disabled = true;
+      if (libelle) libelle.textContent = 'Génération…';
+      try {
+        const dossier = await genererDossierMachine(store, machine.id);
+        telechargerEtSceller(dossier);
+      } catch (erreur) {
+        toast(erreur && erreur.message ? erreur.message
+          : 'Export du dossier machine impossible.', 'erreur');
+      } finally {
+        boutonDossierMachine.disabled = false;
+        if (libelle) libelle.textContent = texteInitial;
+      }
     });
   }
 

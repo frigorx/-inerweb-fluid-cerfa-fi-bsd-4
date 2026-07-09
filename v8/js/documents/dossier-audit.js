@@ -17,6 +17,9 @@
 import { creerZip } from '../core/zip.js';
 import { toutesLesTables } from './exports.js';
 import { genererCerfaPdf } from '../cerfa/generateur.js';
+import {
+  versOctets, nomSur, octetsEntree, sha256Hex
+} from './dossier-commun.js';
 
 /** Statuts de mouvement inscrits au registre (donc porteurs d'un CERFA). */
 const STATUTS_REGISTRE = ['VALIDE', 'ANNULE'];
@@ -28,42 +31,9 @@ function fmtDateFr(iso) {
   return `${jour}/${mois}/${annee}`;
 }
 
-/**
- * Convertit un contenu de pièce jointe (Blob en navigateur, Uint8Array
- * sous Node — cf. store.obtenirPieceJointe) en Uint8Array pour le ZIP.
- * @param {Blob|Uint8Array} contenu
- * @returns {Promise<Uint8Array>}
- */
-async function versOctets(contenu) {
-  if (contenu instanceof Uint8Array) return contenu;
-  if (typeof Blob !== 'undefined' && contenu instanceof Blob) {
-    return new Uint8Array(await contenu.arrayBuffer());
-  }
-  throw new TypeError('Pièce jointe : contenu binaire inattendu.');
-}
-
-/** Nettoie un nom pour l'archive : pas de séparateurs de chemin parasites. */
-function nomSur(nom) {
-  return String(nom || 'document').replace(/[\\/]+/g, '_').trim() || 'document';
-}
-
-/** Contenu d'une entrée (chaîne UTF-8 ou octets) → Uint8Array, pour le hachage. */
-function octetsEntree(contenu) {
-  return typeof contenu === 'string' ? new TextEncoder().encode(contenu) : contenu;
-}
-
-/**
- * Empreinte SHA-256 (hex minuscule) d'un tampon d'octets, via Web Crypto
- * (globalThis.crypto.subtle : présent au navigateur ET sous Node ≥ 20).
- * @param {Uint8Array|ArrayBuffer} octets
- * @returns {Promise<string>} 64 caractères hexadécimaux
- */
-async function sha256Hex(octets) {
-  const vue = octets instanceof Uint8Array ? octets : new Uint8Array(octets);
-  const digest = await globalThis.crypto.subtle.digest('SHA-256', vue);
-  return Array.from(new Uint8Array(digest))
-    .map((b) => b.toString(16).padStart(2, '0')).join('');
-}
+// versOctets / nomSur / octetsEntree / sha256Hex sont désormais partagés
+// (documents/dossier-commun.js) avec les dossiers machine et client — versOctets
+// y accepte aussi une chaîne base64 (parité mode Local).
 
 /**
  * Rédige le manifeste des empreintes SHA-256 (01-EMPREINTES-SHA256.txt) :

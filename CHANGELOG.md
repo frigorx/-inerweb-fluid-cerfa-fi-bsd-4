@@ -2,6 +2,38 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 📦 Phase 2 · Export ZIP « dossier machine » / « dossier client » scellé (09/07)
+Brique ③ de la série livrable : la **preuve ciblée en un clic**. Depuis la fiche d'une machine (ou
+d'un client), un bouton produit un ZIP **scellé SHA-256** rassemblant tout son historique — idéal
+pour présenter un équipement précis à un auditeur sans exporter tout le registre.
+- **`v8/js/documents/dossier-commun.js`** (nouveau, PUR/Node-testable) : helpers partagés par les
+  trois dossiers (audit annuel, machine, client) — `versOctets` (Blob **et chaîne base64** →
+  **corrige le trou de parité** : les pièces jointes en mode Local revenaient en base64 et
+  cassaient l'export), `sha256Hex`, `redigerManifesteEmpreintes`, `redigerSommaire`, `objetsVersCsv`
+  (dump complet, rien de masqué), `paireCsv`, et `assemblerDossier` (00-SOMMAIRE + 01-EMPREINTES +
+  ZIP + **empreinte globale** = le scellé externe).
+- **`v8/js/documents/dossier-machine.js`** (nouveau) : `genererDossierMachine(store, ref)` (par id
+  OU code public) → identité + données techniques + détenteur, mouvements et contrôles de la
+  machine, **CERFA officiels remplis** (mouvements figés + contrôles), pièces jointes. `entreesMachine`
+  est réutilisable (préfixe de dossier).
+- **`v8/js/documents/dossier-client.js`** (nouveau) : `genererDossierClient(store, ref)` → identité
+  client + parc + **le dossier complet de chaque machine** (`machines/<code>/…`) + PJ client.
+- **`v8/js/documents/telecharger-dossier.js`** (nouveau, DOM) : téléchargement + modale de
+  **scellement** affichant l'empreinte SHA-256 de l'archive à conserver hors du logiciel (bouton
+  « Copier »).
+- **`dossier-audit.js`** refactoré pour réutiliser les helpers communs (moins de duplication,
+  parité base64 corrigée au passage) — sortie **identique** (`test-dossier-audit` 20/0 inchangé).
+- **Front** : bouton « Exporter le dossier (ZIP) » dans la fiche machine (`fiche-machine.js`,
+  bloc actions) et la fiche client (`fiche-client.js`), avec état « Génération… » et remontée
+  d'erreur. Marche en **Démo ET Local** (n'utilise que le contrat DataStore + Web Crypto).
+- Tests : nouvelle suite `test-dossier-machine.mjs` **23/0** (structure ZIP relue octet par octet,
+  sommaire + manifeste 64-hex, empreinte globale = SHA-256 de l'archive, dossier client imbriqué,
+  accès par code public, **parité `versOctets(base64)`**). `test-dossier-audit` 20/0, contrat 254/0
+  démo+local, suites serveur vertes.
+- **Vérifié navigateur** (Mode Démo, sandbox port jetable) : fiche machine → export → ZIP 537 Ko +
+  modale de scellement (empreinte 64 hex) ; fiche client → export → ZIP 356 Ko + scellement ;
+  zéro erreur console.
+
 ### 💾 Phase 2 · Dossier de sauvegarde configurable + alerte d'ancienneté (09/07)
 Brique ② de la série livrable : rapprocher le coffre-fort de la règle « zéro perte » sans
 intégration cloud lourde. L'utilisateur peut envoyer ses sauvegardes vers un **dossier déjà

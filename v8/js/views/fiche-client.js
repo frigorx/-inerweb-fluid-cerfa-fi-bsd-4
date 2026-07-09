@@ -10,6 +10,8 @@ import { esc, fmtNombre, fmtKg } from '../core/utils.js';
 import { ouvrirFormClient } from '../modales/client-form.js';
 import { ouvrirFormMachine } from '../modales/machine-form.js';
 import { ouvrirEtiquetteClient } from '../documents/etiquette-client.js';
+import { genererDossierClient } from '../documents/dossier-client.js';
+import { telechargerEtSceller } from '../documents/telecharger-dossier.js';
 
 export const titre = 'Fiche client';
 
@@ -161,6 +163,8 @@ export async function render(conteneur, ctx) {
     + ICONES.grille + '<span>Étiquette QR</span></button>'
     + '<button type="button" class="btn btn-contour" data-action="modifier-client">'
     + ICONES.engrenage + '<span>Modifier le client</span></button>'
+    + '<button type="button" class="btn btn-contour" data-action="dossier-client">'
+    + ICONES.sauvegarde + '<span>Exporter le dossier (ZIP)</span></button>'
     + (nb ? '<button type="button" class="btn btn-contour" data-action="voir-parc">'
         + ICONES.machine + '<span>Voir dans le parc</span></button>' : '')
     + '</div></div>'
@@ -198,6 +202,27 @@ export async function render(conteneur, ctx) {
   if (boutonParc) {
     boutonParc.addEventListener('click', function () {
       naviguer('machines/' + client.id);
+    });
+  }
+
+  // Export ZIP « dossier client » — identité + parc + dossier de chaque machine.
+  const boutonDossierClient = conteneur.querySelector('[data-action="dossier-client"]');
+  if (boutonDossierClient) {
+    boutonDossierClient.addEventListener('click', async function () {
+      const libelle = boutonDossierClient.querySelector('span');
+      const texteInitial = libelle ? libelle.textContent : '';
+      boutonDossierClient.disabled = true;
+      if (libelle) libelle.textContent = 'Génération…';
+      try {
+        const dossier = await genererDossierClient(store, client.id);
+        telechargerEtSceller(dossier);
+      } catch (erreur) {
+        toast(erreur && erreur.message ? erreur.message
+          : 'Export du dossier client impossible.', 'erreur');
+      } finally {
+        boutonDossierClient.disabled = false;
+        if (libelle) libelle.textContent = texteInitial;
+      }
     });
   }
 }
