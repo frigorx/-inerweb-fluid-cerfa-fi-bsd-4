@@ -249,6 +249,35 @@ await verifierRejet('updateClient refuse un client introuvable',
 const clientMaj = await store.updateClient(client.id, { adresse: '5 rue Neuve' });
 verifier('updateClient applique le patch', clientMaj.adresse === '5 rue Neuve');
 
+// Référence client enrichie (Phase 2) : SIRET optionnel, coordonnées, désactivation.
+const clientSansSiret = await store.createClient({
+  raisonSociale: 'Client sans SIRET', adresse: 'Zone test'
+});
+verifier('createClient accepte l’absence de SIRET (référence allégée)',
+  Boolean(clientSansSiret.id)
+  && (clientSansSiret.siret === '' || clientSansSiret.siret == null));
+verifier('createClient : actif à vrai par défaut', clientSansSiret.actif === true);
+const clientCoord = await store.createClient({
+  raisonSociale: 'Client coordonnées', adresse: 'Rue Contact',
+  contact: 'M. Dupont', email: 'contact@exemple.fr', telephone: '0491000000'
+});
+verifier('createClient enregistre les coordonnées',
+  clientCoord.contact === 'M. Dupont'
+  && clientCoord.email === 'contact@exemple.fr'
+  && clientCoord.telephone === '0491000000');
+const clientRelu = (await store.getClients()).find((c) => c.id === clientCoord.id);
+verifier('getClients restitue coordonnées et actif',
+  clientRelu.telephone === '0491000000' && clientRelu.actif === true);
+const clientDesactive = await store.updateClient(clientCoord.id, { actif: false });
+verifier('updateClient désactive un client (actif=false)',
+  clientDesactive.actif === false);
+const clientReactive = await store.updateClient(clientCoord.id,
+  { actif: true, telephone: '0492000000' });
+verifier('updateClient réactive et modifie les coordonnées',
+  clientReactive.actif === true && clientReactive.telephone === '0492000000');
+await verifierRejet('updateClient refuse un SIRET renseigné invalide',
+  store.updateClient(clientCoord.id, { siret: '42' }));
+
 // ============================================================
 // 5. Machines : création, patch, cycle arrêt/remise/démantèlement
 // ============================================================

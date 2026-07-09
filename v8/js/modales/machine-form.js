@@ -267,7 +267,7 @@ function validerFormulaire(racine) {
  *   (un id de création est truthy) : le contrat reste rétrocompatible,
  *   et le wizard récupère en plus l'id pour présélectionner la machine.
  */
-export async function ouvrirFormMachine(ctx, machineId = null) {
+export async function ouvrirFormMachine(ctx, machineId = null, preset = null) {
   const enModification = Boolean(machineId);
 
   const [machines, fluides, clients] = await Promise.all([
@@ -291,7 +291,9 @@ export async function ouvrirFormMachine(ctx, machineId = null) {
     return;
   }
 
-  const valeursInitiales = machineExistante || {};
+  // À la création, un pré-réglage optionnel { clientId } présélectionne le
+  // détenteur (ouverture depuis la fiche client « Ajouter une machine »).
+  const valeursInitiales = machineExistante || (preset || {});
 
   return new Promise(function (resoudre) {
     const { fermer, racine } = modale({

@@ -150,6 +150,14 @@ export const ICONES = {
     + '<path d="M5 20a7 7 0 0 1 14 0"/>'
   ),
 
+  // Client / détenteur : devanture commerciale (immeuble + auvent)
+  client: svg(
+    '<path d="M4 9.5 5.2 5h13.6L20 9.5"/>'
+    + '<path d="M4 9.5a2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0"/>'
+    + '<path d="M5 11.5V20h14v-8.5"/>'
+    + '<path d="M9.5 20v-4.5h5V20"/>'
+  ),
+
   // Verrou (cadenas) : écran de connexion, comptes
   verrou: svg(
     '<rect x="4.5" y="11" width="15" height="10" rx="1.8"/>'

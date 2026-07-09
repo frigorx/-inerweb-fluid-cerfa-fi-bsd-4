@@ -862,22 +862,29 @@ const HANDLERS = {
     if (!adresse) {
       throw new Error('Adresse obligatoire.');
     }
+    // SIRET OPTIONNEL (référence client allégée) : validé SEULEMENT s'il est
+    // renseigné — un petit client ou un particulier n'en a pas forcément.
     const siret = String(d.siret || '').trim();
-    if (!/^\d{14}$/.test(siret.replace(/[\s.-]/g, ''))) {
+    if (siret && !/^\d{14}$/.test(siret.replace(/[\s.-]/g, ''))) {
       throw new Error('SIRET invalide : 14 chiffres attendus.');
     }
+    const texteOuNull = (v) => (v !== undefined && String(v).trim() !== ''
+      ? String(v).trim() : null);
     const client = {
       id: db.generateId('CLI'),
       raisonSociale,
       adresse,
-      siret
+      siret,
+      contact: texteOuNull(d.contact),
+      email: texteOuNull(d.email),
+      telephone: texteOuNull(d.telephone)
     };
     return muter(() => {
       const ligne = mapping.versSql('clients_detenteurs', client);
       ligne.etablissement_id = ID_ETABLISSEMENT;
       inserer('clients_detenteurs', ligne);
       journaliser(d.operateur, 'CREATION_CLIENT', client.raisonSociale,
-        `SIRET ${siret}`);
+        siret ? `SIRET ${siret}` : 'sans SIRET');
       return lireClient(client.id);
     });
   },
@@ -886,22 +893,26 @@ const HANDLERS = {
     const { id } = params;
     const d = params.donneesClient || {};
     trouverClient(id);
-    if (d.siret !== undefined &&
+    if (d.siret !== undefined && String(d.siret).trim() !== '' &&
         !/^\d{14}$/.test(String(d.siret).trim().replace(/[\s.-]/g, ''))) {
       throw new Error('SIRET invalide : 14 chiffres attendus.');
     }
-    const CHAMPS = ['raisonSociale', 'adresse', 'siret'];
+    const CHAMPS_TEXTE = ['raisonSociale', 'adresse', 'siret', 'contact',
+      'email', 'telephone'];
     const patch = {};
-    for (const champ of CHAMPS) {
+    for (const champ of CHAMPS_TEXTE) {
       if (d[champ] !== undefined) patch[champ] = String(d[champ]).trim();
     }
+    // actif : booléen (désactivation/réactivation), jamais stringifié.
+    if (d.actif !== undefined) patch.actif = Boolean(d.actif);
     return muter(() => {
-      majParId('clients_detenteurs', id,
-        mapping.versSql('clients_detenteurs', patch));
+      if (Object.keys(patch).length > 0) {
+        majParId('clients_detenteurs', id,
+          mapping.versSql('clients_detenteurs', patch));
+      }
       const client = lireClient(id);
-      // Ordre de saisie de l'appelant, comme le DemoStore.
       journaliser(d.operateur, 'MODIFICATION_CLIENT', client.raisonSociale,
-        `Champs : ${Object.keys(d).filter((c) => CHAMPS.includes(c)).join(', ')}`);
+        `Champs : ${Object.keys(patch).join(', ')}`);
       return client;
     });
   },

@@ -111,6 +111,23 @@ const STYLES_VUE = `
     opacity: 0.55;
     filter: grayscale(0.4);
   }
+
+  /* Barre de recherche + pré-filtre par client */
+  .machines-barre {
+    display: flex; flex-wrap: wrap; align-items: center;
+    gap: 12px; margin-bottom: 14px;
+  }
+  .machines-recherche { flex: 1 1 240px; max-width: 420px; }
+  .machines-recherche input { width: 100%; }
+  .machines-bandeau-client {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 10px 14px; margin-bottom: 14px;
+    background: var(--carte); border: 1px solid var(--bordure);
+    border-radius: var(--rayon-carte); font-size: 13px; color: var(--texte-2);
+  }
+  .machines-aucun-resultat {
+    padding: 18px; text-align: center; color: var(--texte-3); font-size: 13px;
+  }
 </style>`;
 
 /* ============================================================
@@ -186,7 +203,16 @@ function carteMachine(machine, fluideParCode, clientParId) {
     ? 'carte carte-machine carte-machine-demantelee'
     : 'carte carte-machine';
 
-  return '<article class="' + classeCarte + '">'
+  // Texte agrégé pour la recherche libre (nom, type, marque, fluide,
+  // localisation, détenteur, code) + id client pour le pré-filtrage.
+  const recherche = [machine.designation, machine.type, machine.marque,
+    machine.modele, machine.fluide, fluide ? fluide.famille : '',
+    machine.localisation, detenteur, machine.code]
+    .filter(Boolean).join(' ').toLowerCase();
+
+  return '<article class="' + classeCarte + '" '
+    + 'data-client-id="' + esc(machine.clientId || '') + '" '
+    + 'data-recherche="' + esc(recherche) + '">'
 
     // Ligne 1 : désignation + statut
     + '<div class="machine-entete">'
@@ -310,6 +336,12 @@ export async function render(conteneur, ctx) {
   const sousTitre = enService + ' équipement' + pluriel + ' en service sur '
     + machines.length + ' suivi' + plurielSuivi + ' — charge, fluide, contrôles';
 
+  // Pré-filtre par client (arrivée depuis la fiche client « Voir dans le
+  // parc » : route '#/machines/<clientId>'). Inconnu → ignoré.
+  const clientPrefilter = ctx.param
+    ? clients.find(function (c) { return c.id === ctx.param; })
+    : null;
+
   const cartes = machines.length
     ? '<div class="grille-2">'
       + machines.map(function (machine) {
@@ -319,6 +351,19 @@ export async function render(conteneur, ctx) {
     : '<div class="carte"><div class="etat-vide">' + ICONES.machine
       + '<p>Aucune machine dans le parc pour le moment.</p></div></div>';
 
+  const bandeauClient = clientPrefilter
+    ? '<div class="machines-bandeau-client">' + ICONES.client
+      + '<span>Machines de <strong>' + esc(clientPrefilter.raisonSociale) + '</strong></span>'
+      + '<a href="#/machines" style="margin-left:auto">Voir tout le parc</a></div>'
+    : '';
+
+  const barre = machines.length
+    ? '<div class="machines-barre"><div class="machines-recherche">'
+      + '<input type="search" id="machines-recherche" '
+      + 'placeholder="Rechercher (machine, fluide, détenteur, localisation…)" '
+      + 'aria-label="Rechercher une machine"></div></div>'
+    : '';
+
   conteneur.innerHTML = STYLES_VUE
     + enteteVue({
         titre: titre,
@@ -326,7 +371,29 @@ export async function render(conteneur, ctx) {
         actionsHtml: '<button id="bouton-ajouter-machine" class="btn btn-marine" type="button">'
           + ICONES.plus + '<span>Ajouter</span></button>'
       })
-    + cartes;
+    + bandeauClient
+    + barre
+    + cartes
+    + '<div class="machines-aucun-resultat" id="machines-aucun" hidden>'
+    + 'Aucune machine ne correspond à votre recherche.</div>';
+
+  // ---- Recherche libre + pré-filtre client : masque/affiche les cartes ----
+  const champRecherche = conteneur.querySelector('#machines-recherche');
+  const messageAucun = conteneur.querySelector('#machines-aucun');
+  function appliquerFiltre() {
+    const q = champRecherche ? champRecherche.value.trim().toLowerCase() : '';
+    let n = 0;
+    conteneur.querySelectorAll('.carte-machine').forEach(function (card) {
+      const okClient = !clientPrefilter || card.dataset.clientId === clientPrefilter.id;
+      const okTexte = q === '' || (card.dataset.recherche || '').includes(q);
+      const visible = okClient && okTexte;
+      card.style.display = visible ? '' : 'none';
+      if (visible) n += 1;
+    });
+    if (messageAucun) messageAucun.hidden = n !== 0;
+  }
+  if (champRecherche) champRecherche.addEventListener('input', appliquerFiltre);
+  if (clientPrefilter) appliquerFiltre();
 
   // Ajout d'une nouvelle machine : ré-affiche la vue si l'enregistrement a réussi
   conteneur.querySelector('#bouton-ajouter-machine').addEventListener('click', async function () {

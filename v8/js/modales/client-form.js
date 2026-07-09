@@ -30,10 +30,29 @@ function gabaritFormulaire(client) {
     + '</div>'
 
     + '<div class="champ" data-champ="siret">'
-    + '<label for="cf-siret">N° SIRET *</label>'
+    + '<label for="cf-siret">N° SIRET</label>'
     + '<input type="text" id="cf-siret" name="siret" maxlength="20" inputmode="numeric" '
-    + 'value="' + esc(c.siret || '') + '" placeholder="14 chiffres, ex. 824 519 002 00018">'
+    + 'value="' + esc(c.siret || '') + '" placeholder="14 chiffres (optionnel), ex. 824 519 002 00018">'
     + '<span class="champ-erreur" hidden></span>'
+    + '</div>'
+
+    + '<div class="grille-form-2">'
+    + '<div class="champ" data-champ="contact">'
+    + '<label for="cf-contact">Contact</label>'
+    + '<input type="text" id="cf-contact" name="contact" maxlength="120" '
+    + 'value="' + esc(c.contact || '') + '" placeholder="Ex. M. Martin (responsable)">'
+    + '</div>'
+    + '<div class="champ" data-champ="telephone">'
+    + '<label for="cf-telephone">Téléphone</label>'
+    + '<input type="tel" id="cf-telephone" name="telephone" maxlength="30" '
+    + 'value="' + esc(c.telephone || '') + '" placeholder="Ex. 04 91 00 00 00">'
+    + '</div>'
+    + '</div>'
+
+    + '<div class="champ" data-champ="email">'
+    + '<label for="cf-email">Courriel</label>'
+    + '<input type="email" id="cf-email" name="email" maxlength="150" '
+    + 'value="' + esc(c.email || '') + '" placeholder="Ex. contact@exemple.fr">'
     + '</div>'
 
     + '</form>';
@@ -95,12 +114,11 @@ function validerFormulaire(racine) {
     valide = false;
   }
 
+  // SIRET OPTIONNEL : validé seulement s'il est renseigné (référence client
+  // allégée — un petit client ou un particulier n'en a pas forcément).
   const siretBrut = String(donnees.get('siret') || '').trim();
-  if (!siretBrut) {
-    marquerErreur(racine, 'siret', 'Le SIRET est obligatoire.');
-    valide = false;
-  } else if (!siretDeFormeValide(siretBrut)) {
-    marquerErreur(racine, 'siret', 'Le SIRET doit comporter 14 chiffres.');
+  if (siretBrut && !siretDeFormeValide(siretBrut)) {
+    marquerErreur(racine, 'siret', 'Le SIRET doit comporter 14 chiffres (ou laissez vide).');
     valide = false;
   }
 
@@ -109,7 +127,10 @@ function validerFormulaire(racine) {
   return {
     raisonSociale: raisonSociale,
     adresse: adresse,
-    siret: siretBrut
+    siret: siretBrut,
+    contact: String(donnees.get('contact') || '').trim(),
+    email: String(donnees.get('email') || '').trim(),
+    telephone: String(donnees.get('telephone') || '').trim()
   };
 }
 

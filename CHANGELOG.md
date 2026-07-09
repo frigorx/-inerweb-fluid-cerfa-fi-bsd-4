@@ -2,6 +2,42 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🏢 Phase 2 · Référence client — annuaire des détenteurs + machines par client (09/07)
+Demande de Franck : faire d'inerWeb Fluide un logiciel complet de gestion **fluides + parc
+machines**, avec une **dose de référence client** — une machine pouvant être chez différents
+clients, un annuaire pour retrouver les machines par détenteur. L'ossature relationnelle
+(clients_detenteurs ↔ machines) existait déjà ; ce lot rend le client **utilisable de bout en
+bout dans l'interface**.
+- **Entité client enrichie** (contrat + DemoStore + LocalStore + mapping, **parité stricte**) :
+  coordonnées `contact` / `email` / `telephone` (présentes en base depuis le socle v1, désormais
+  exposées) + drapeau `actif` (désactivation réversible, un client n'est jamais supprimé — ses
+  machines et leur historique restent intacts). **SIRET rendu optionnel** (validé seulement s'il
+  est renseigné — référence allégée pour un petit client). Tests de contrat 244 → **251/0** sur
+  les DEUX stores (SIRET optionnel, coordonnées, désactivation/réactivation verrouillés).
+- **Vue « Clients / détenteurs »** (`v8/js/views/clients.js`, nouvelle entrée de sidebar, icône
+  dédiée) : annuaire avec **recherche** (nom, ville, SIRET, contact…), coordonnées, nombre de
+  machines, ajout, modification, **désactivation/réactivation** (avec bascule « Afficher les
+  inactifs »).
+- **Fiche client** (`v8/js/views/fiche-client.js`, route `#/c/<id>`, hors sidebar comme la fiche
+  machine) : coordonnées + **liste des machines du client** (drill-down cliquable vers la fiche
+  machine), bouton **« Ajouter une machine »** (formulaire pré-rattaché à ce client), « Modifier
+  le client », « Voir dans le parc ».
+- **Parc machines** : **barre de recherche libre** (machine, fluide, détenteur, localisation…) +
+  **pré-filtre par client** via la route `#/machines/<clientId>` (bandeau « Machines de X · Voir
+  tout le parc »).
+- **Formulaire client** (`client-form.js`) : champs contact/téléphone/courriel, SIRET marqué
+  optionnel. **Formulaire machine** (`machine-form.js`) : accepte un pré-réglage `{ clientId }`
+  (détenteur présélectionné à la création depuis la fiche client). Nouvelle icône `client`.
+- **Non destructif / sobre** : couche « sites » (multi-sites) volontairement laissée de côté
+  (hors du besoin « juste une base clients ») ; aucune suppression dure de client.
+- **Vérifié navigateur** (mode Démo, serveur statique isolé sur port jetable, jamais le `data/`
+  réel — piège du service worker v7 contourné) : sidebar, annuaire + recherche, création d'un
+  client sans SIRET avec coordonnées, fiche client, ajout de machine pré-rattachée (client
+  présélectionné confirmé), pré-filtre parc par client + recherche libre, désactivation →
+  inactifs → réactivation, drill-down client → machine → fiche machine. Captures d'écran à
+  l'appui. Aucune régression (contrat local+démo 251/0, mapping 141/0, migrations 81/0,
+  conformité 56/0, scénario Lot 2 vert).
+
 ### 📦 Phase 2 · Lot 1 — paquet portable « clé en main » (Node embarqué) (09/07)
 **Objectif** (cap Phase 2 : déployabilité d'abord) : donner à un collègue un dossier qu'il copie
 sur un poste **vierge** (sans Node.js installé) et lance d'un double-clic, sans friction.

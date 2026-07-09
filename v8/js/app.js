@@ -23,6 +23,7 @@ const VUES = [
   { id: 'dechets',    libelle: 'Déchets / BSFF',           icone: 'dechets' },
   { id: 'outillage',  libelle: 'Outillage',                icone: 'outillage' },
   { id: 'personnel',  libelle: 'Personnel',                icone: 'utilisateur' },
+  { id: 'clients',    libelle: 'Clients / détenteurs',     icone: 'client' },
   { id: 'stats',      libelle: 'Statistiques',             icone: 'stats' },
   { id: 'bilan',      libelle: 'Bilan annuel',             icone: 'bilan' },
   { id: 'balance',    libelle: 'Balance matière',          icone: 'balance' },
@@ -221,9 +222,13 @@ async function afficherVue(id, param = '') {
 
   fermerTiroir();
 
-  // Chargement du module de la vue. La fiche machine ('#/m/<code>') est un
-  // module dédié, volontairement absent de VUES (pas d'entrée sidebar).
-  const nomModule = id === 'm' ? 'fiche-machine' : id;
+  // Chargement du module de la vue. Les fiches (machine '#/m/<code>',
+  // client '#/c/<id>') sont des modules dédiés, volontairement absents de
+  // VUES (pas d'entrée sidebar propre — la fiche client est atteinte depuis
+  // l'annuaire 'clients' ou une carte machine).
+  const nomModule = id === 'm' ? 'fiche-machine'
+    : id === 'c' ? 'fiche-client'
+    : id;
   let module = null;
   try {
     module = await import('./views/' + nomModule + '.js');

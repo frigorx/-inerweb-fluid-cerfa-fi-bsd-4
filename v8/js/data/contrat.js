@@ -132,9 +132,9 @@ export const METHODES_CONTRAT = {
 
   // --- clients détenteurs ---------------------------------------
   createClient: { genre: 'mutation',
-    description: 'Crée un client ; Error si raison sociale/adresse vide ou SIRET ≠ 14 chiffres.' },
+    description: 'Crée un client { raisonSociale, adresse, siret?, contact?, email?, telephone? } ; actif=vrai ; Error si raison sociale/adresse vide ou SIRET renseigné ≠ 14 chiffres (SIRET optionnel).' },
   updateClient: { genre: 'mutation',
-    description: 'Patch partiel (raisonSociale, adresse, siret) ; Error si introuvable ou SIRET invalide.' },
+    description: 'Patch partiel (raisonSociale, adresse, siret, contact, email, telephone, actif) ; désactivation via actif=false ; Error si introuvable ou SIRET renseigné invalide.' },
 
   // --- bouteilles -----------------------------------------------
   createBouteille: { genre: 'mutation',

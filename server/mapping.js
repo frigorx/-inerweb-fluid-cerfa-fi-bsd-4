@@ -119,11 +119,19 @@ const TABLES = {
       id: 'id',
       raisonSociale: 'raison_sociale',
       adresse: 'adresse',
-      siret: 'siret'
+      siret: 'siret',
+      // Coordonnées (Phase 2 « référence client ») : présentes en base
+      // depuis le socle v1, désormais exposées au contrat (annuaire client).
+      contact: 'contact',
+      email: 'email',
+      telephone: 'telephone',
+      // actif : un client n'est jamais supprimé (machines rattachées), il est
+      // DÉSACTIVÉ (masqué de l'annuaire actif) — même logique que personnel.
+      actif: 'actif'
     },
+    booleens: ['actif'],
     frontSeulement: ['nbMachines'],
-    sqlSeulement: ['etablissement_id', 'contact', 'email', 'telephone',
-      'actif']
+    sqlSeulement: ['etablissement_id']
   },
 
   machines: {

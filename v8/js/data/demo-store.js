@@ -1466,10 +1466,12 @@ export function creerDemoStore() {
     },
 
     async getClients() {
-      // nbMachines recalculé depuis le parc courant
+      // nbMachines recalculé depuis le parc courant ; actif par défaut à vrai
+      // pour les clients hérités de données antérieures à ce champ.
       const parc = machinesEnParc();
       return donnees.clients.map((c) => ({
         ...copier(c),
+        actif: c.actif === undefined ? true : c.actif,
         nbMachines: parc.filter((m) => m.clientId === c.id).length
       }));
     },
@@ -1831,20 +1833,27 @@ export function creerDemoStore() {
       if (!adresse) {
         throw new Error('Adresse obligatoire.');
       }
+      // SIRET OPTIONNEL : validé seulement s'il est renseigné (cf. LocalStore).
       const siret = String(d.siret || '').trim();
-      if (!/^\d{14}$/.test(siret.replace(/[\s.-]/g, ''))) {
+      if (siret && !/^\d{14}$/.test(siret.replace(/[\s.-]/g, ''))) {
         throw new Error('SIRET invalide : 14 chiffres attendus.');
       }
+      const texteOuNull = (v) => (v !== undefined && String(v).trim() !== ''
+        ? String(v).trim() : null);
       const client = {
         id: genId('cli'),
         raisonSociale,
         adresse,
         siret,
+        contact: texteOuNull(d.contact),
+        email: texteOuNull(d.email),
+        telephone: texteOuNull(d.telephone),
+        actif: true,
         nbMachines: 0
       };
       donnees.clients.push(client);
       journaliser(d.operateur, 'CREATION_CLIENT', client.raisonSociale,
-        `SIRET ${siret}`);
+        siret ? `SIRET ${siret}` : 'sans SIRET');
       persisterEtNotifier();
       return copier(client);
     },
@@ -1855,16 +1864,25 @@ export function creerDemoStore() {
         throw new Error(`Client / détenteur introuvable : ${id}.`);
       }
       const d = donneesClient || {};
-      if (d.siret !== undefined &&
+      if (d.siret !== undefined && String(d.siret).trim() !== '' &&
           !/^\d{14}$/.test(String(d.siret).trim().replace(/[\s.-]/g, ''))) {
         throw new Error('SIRET invalide : 14 chiffres attendus.');
       }
-      const CHAMPS = ['raisonSociale', 'adresse', 'siret'];
-      for (const champ of CHAMPS) {
-        if (d[champ] !== undefined) client[champ] = String(d[champ]).trim();
+      const CHAMPS_TEXTE = ['raisonSociale', 'adresse', 'siret', 'contact',
+        'email', 'telephone'];
+      const modifies = [];
+      for (const champ of CHAMPS_TEXTE) {
+        if (d[champ] !== undefined) {
+          client[champ] = String(d[champ]).trim();
+          modifies.push(champ);
+        }
+      }
+      if (d.actif !== undefined) {
+        client.actif = Boolean(d.actif);
+        modifies.push('actif');
       }
       journaliser(d.operateur, 'MODIFICATION_CLIENT', client.raisonSociale,
-        `Champs : ${Object.keys(d).filter((c) => CHAMPS.includes(c)).join(', ')}`);
+        `Champs : ${modifies.join(', ')}`);
       persisterEtNotifier();
       return copier(client);
     },
