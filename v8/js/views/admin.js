@@ -5,12 +5,19 @@
 // personnel, clients/détenteurs (cadre 2, création et édition — IM-11).
 // ============================================================
 
-import { enteteVue, ICONES, toast } from './communs.js';
+import { enteteVue, ICONES, toast, confirmer } from './communs.js';
 import { esc, fmtDate } from '../core/utils.js';
 import { ouvrirFormEtablissement } from '../modales/etablissement-form.js';
 import { ouvrirFormAudit, ouvrirFormNonConformite, ouvrirFormSolderNonConformite }
   from '../modales/audit-form.js';
 import { ouvrirFormClient } from '../modales/client-form.js';
+import { ouvrirCreationCompte, ouvrirReinitialisationMotDePasse }
+  from '../modales/compte-form.js';
+import { creerTransportHttp } from '../data/transport-http.js';
+
+// Transport des routes de compte (hors contrat DataStore, Mode Local seul).
+// Construit une fois pour la vue ; jamais utilisé en Mode Démo (aucun serveur).
+const transportComptes = creerTransportHttp();
 
 export const titre = 'Administration';
 
@@ -125,6 +132,58 @@ const CHIPS_ROLE = {
 function chipRole(roleApp) {
   const role = CHIPS_ROLE[roleApp] || { libelle: roleApp || '—', classe: 'chip-gris' };
   return '<span class="chip ' + role.classe + '">' + esc(role.libelle) + '</span>';
+}
+
+/** Vrai si l'application tourne en Mode Local (comptes réels côté serveur). */
+function estModeLocal(store) {
+  return Boolean(store && store.modeLabel === 'LOCAL');
+}
+
+/** Ligne d'un compte de connexion (login, rôle, état, dernière connexion, actions). */
+function ligneCompte(compte) {
+  const statut = compte.actif
+    ? '<span class="chip chip-vert">Actif</span>'
+    : '<span class="chip chip-gris">Désactivé</span>';
+  const verrou = compte.verrouille ? ' · verrouillé' : '';
+  const derniere = compte.derniereConnexion
+    ? 'Dernière connexion ' + esc(fmtDateHeure(compte.derniereConnexion))
+    : 'Jamais connecté';
+  const actionActivation = compte.actif ? 'desactiver' : 'reactiver';
+  const libelleActivation = compte.actif ? 'Désactiver' : 'Réactiver';
+  return '<li>'
+    + '<div class="liste-infos">'
+    + '<span class="liste-nom">' + esc(compte.login) + '</span>'
+    + '<span class="liste-detail">' + derniere + verrou + '</span>'
+    + '</div>'
+    + chipRole(compte.role)
+    + statut
+    + '<button type="button" class="btn btn-secondaire btn-petit" '
+    + 'data-action="reinit-compte" data-id="' + esc(compte.id) + '">Mot de passe</button>'
+    + '<button type="button" class="btn btn-secondaire btn-petit" '
+    + 'data-action="' + actionActivation + '-compte" data-id="' + esc(compte.id) + '" '
+    + 'data-login="' + esc(compte.login) + '">' + libelleActivation + '</button>'
+    + '</li>';
+}
+
+/** Carte « Comptes de connexion » : coquille (le corps se peuple en asynchrone). */
+function carteComptesCoquille(store) {
+  const boutonCreer = estModeLocal(store)
+    ? '<button type="button" class="btn btn-contour btn-petit" data-action="creer-compte">'
+      + ICONES.plus + 'Créer un compte</button>'
+    : '';
+  return '<section class="carte">'
+    + '<div class="carte-entete">'
+    + '<div class="carte-entete-titres">'
+    + '<div>'
+    + '<h3 class="carte-titre">Comptes de connexion</h3>'
+    + '<p class="carte-rappel">Créer, réinitialiser un mot de passe, activer ou '
+    + 'désactiver un compte (Référent, Enseignant, Élève, Administrateur).</p>'
+    + '</div>'
+    + '</div>'
+    + boutonCreer
+    + '</div>'
+    + '<div id="comptes-corps"><p class="carte-rappel">Chargement…</p></div>'
+    + '</section>';
 }
 
 /** Libellés courts des activités réglementées. */
@@ -393,6 +452,7 @@ export async function render(conteneur, ctx) {
       })
       + carteEntreprise(etablissement)
       + carteSuiviAudit(audits, nonConformites)
+      + carteComptesCoquille(store)
       + carteIntegriteRegistre()
       + '<div class="grille-2">'
       + carteRenvoiPersonnel()
@@ -504,6 +564,86 @@ export async function render(conteneur, ctx) {
         }
       });
     }
+
+    // ---- Comptes de connexion (Mode Local) --------------------------
+    const boutonCreerCompte = conteneur.querySelector('[data-action="creer-compte"]');
+    if (boutonCreerCompte) {
+      boutonCreerCompte.addEventListener('click', async () => {
+        const cree = await ouvrirCreationCompte(transportComptes);
+        if (cree) await rafraichirComptes();
+      });
+    }
+    await rafraichirComptes();
+  }
+
+  /**
+   * (Re)peuple la carte « Comptes de connexion ». En Mode Démo, affiche une
+   * note (aucun compte à cette échelle). En Mode Local, liste les comptes via
+   * le transport dédié (route ADMIN `listerComptes`) et câble les actions
+   * (réinitialisation du mot de passe, activation/désactivation).
+   */
+  async function rafraichirComptes() {
+    const corps = conteneur.querySelector('#comptes-corps');
+    if (!corps) return;
+
+    if (!estModeLocal(store)) {
+      corps.innerHTML = '<p class="carte-rappel">La gestion des comptes de '
+        + 'connexion est disponible en Mode Local (poste lycée). En mode '
+        + 'démonstration, il n’y a pas de comptes.</p>';
+      return;
+    }
+
+    corps.innerHTML = '<p class="carte-rappel">Chargement…</p>';
+    let comptes;
+    try {
+      comptes = await transportComptes('listerComptes', {});
+    } catch (erreur) {
+      corps.innerHTML = '<p class="carte-rappel">Comptes indisponibles ('
+        + esc(erreur && erreur.message ? erreur.message : 'erreur') + ').</p>';
+      return;
+    }
+
+    corps.innerHTML = '<ul class="liste">'
+      + (comptes.length
+        ? comptes.map(ligneCompte).join('')
+        : '<li><span class="liste-detail">Aucun compte.</span></li>')
+      + '</ul>';
+
+    corps.querySelectorAll('[data-action="reinit-compte"]').forEach((bouton) => {
+      bouton.addEventListener('click', async () => {
+        const compte = comptes.find((c) => c.id === bouton.dataset.id);
+        if (!compte) return;
+        const fait = await ouvrirReinitialisationMotDePasse(transportComptes, compte);
+        if (fait) await rafraichirComptes();
+      });
+    });
+
+    corps.querySelectorAll('[data-action="desactiver-compte"], [data-action="reactiver-compte"]')
+      .forEach((bouton) => {
+        bouton.addEventListener('click', async () => {
+          const activer = bouton.dataset.action === 'reactiver-compte';
+          const login = bouton.dataset.login || '';
+          const ok = await confirmer({
+            titre: activer ? 'Réactiver le compte' : 'Désactiver le compte',
+            message: activer
+              ? 'Réactiver « ' + login + ' » ? Il pourra de nouveau se connecter.'
+              : 'Désactiver « ' + login + ' » ? Ses sessions ouvertes seront '
+                + 'fermées et il ne pourra plus se connecter. Le compte n’est '
+                + 'pas supprimé (réactivable à tout moment).',
+            libelleConfirmer: activer ? 'Réactiver' : 'Désactiver',
+            danger: !activer
+          });
+          if (!ok) return;
+          try {
+            await transportComptes('definirActivationCompte',
+              { id: bouton.dataset.id, actif: activer });
+            toast(activer ? 'Compte réactivé.' : 'Compte désactivé.', 'succes');
+            await rafraichirComptes();
+          } catch (erreur) {
+            toast(erreur && erreur.message ? erreur.message : 'Action impossible.', 'erreur');
+          }
+        });
+      });
   }
 
   await rafraichir();

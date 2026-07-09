@@ -2,6 +2,34 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 👥 Phase 2 · Gestion des comptes de connexion (créer / réinitialiser / activer-désactiver) (09/07)
+Suite naturelle du premier lancement : l'administrateur peut désormais gérer les autres comptes
+**depuis l'application** (le backend E5 existait, il n'y avait aucune interface). Toutes les routes
+sont **gardées ADMIN côté serveur** (le rôle vient de la session, jamais du corps).
+- **`server/routes-comptes.js`** : trois routes ADMIN. `listerComptes` (identité, rôle, état
+  d'activation, dates, verrouillage — **jamais** le hash ni le sel) ; `reinitialiserMotDePasse`
+  (re-hache scrypt + sel frais, **lève le verrou** et remet les échecs à zéro, **révoque toutes les
+  sessions** du compte → reconnexion obligatoire, longueur minimale selon le rôle) ;
+  `definirActivationCompte` (désactivation = suppression douce : le compte n'est jamais effacé mais
+  ne peut plus se connecter, sessions révoquées immédiatement). **Garde-fous anti-verrouillage
+  total** : on ne peut ni désactiver son propre compte, ni désactiver le dernier ADMIN actif. La
+  garde ADMIN est généralisée (`METHODES_ADMIN`) au lieu du seul `creerCompte`.
+- **Front** : nouvelle modale `v8/js/modales/compte-form.js` (création — identifiant, rôle,
+  mot de passe + confirmation, longueur minimale dynamique selon le rôle ; et réinitialisation) ;
+  la vue **Administration** (`v8/js/views/admin.js`) reçoit une carte **« Comptes de connexion »**
+  (Mode Local uniquement) qui liste les comptes avec leur état et câble les actions (créer,
+  réinitialiser le mot de passe, activer/désactiver avec confirmation). En Mode Démo, une note
+  explique que les comptes relèvent du Mode Local.
+- Tests : `test-routes-comptes.mjs` 41 → **59/0** (famille 9 : garde ADMIN sur les 3 routes, liste
+  sans secret, reset qui révoque la session et change le mot de passe, désactivation qui bloque la
+  connexion puis réactivation, refus d'auto-désactivation). Contrat 254/0 démo+local, suites serveur
+  vertes.
+- **Vérifié navigateur** (sandbox isolée, Mode Local port jetable, base vierge, origine neuve) :
+  après bootstrap admin, la carte liste `prof.froid / Admin / Actif` ; création d'un `m.referent`
+  (Référent) qui apparaît aussitôt ; désactivation avec confirmation → chip « Désactivé » + bouton
+  « Réactiver » ; tentative d'auto-désactivation de l'admin courant → refusée, compte laissé Actif ;
+  modale de réinitialisation opérationnelle. Jamais le `data/` réel.
+
 ### 🚀 Phase 2 · Premier lancement guidé par le web (fin de la fenêtre cmd et de l'impasse admin) (09/07)
 Objectif « logiciel fini et livrable » : un enseignant reçoit le paquet, double-clique, et
 crée son compte administrateur **dans le navigateur** — plus de fenêtre noire, et surtout plus

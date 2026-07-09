@@ -16,6 +16,9 @@
  *   POST /api/etatInitial    {}  — lecture ouverte : { initialise: bool }.
  *   POST /api/bootstrapAdmin { login, motDePasse }  — 1er ADMIN au premier
  *                            lancement, GARDÉE « aucun compte + loopback strict ».
+ *   POST /api/listerComptes  {}  — GARDÉE ADMIN : liste des comptes (sans hash).
+ *   POST /api/reinitialiserMotDePasse { id, nouveauMotDePasse } — GARDÉE ADMIN.
+ *   POST /api/definirActivationCompte { id, actif } — GARDÉE ADMIN (soft-delete).
  *
  * Ces routes NE SONT PAS gardées par garderRole du contrat DataStore (elles
  * n'en font pas partie) : /api/connexion et /api/deconnexion sont ouvertes à
@@ -86,7 +89,13 @@ const LONGUEUR_MIN_MOT_DE_PASSE_STANDARD = 8;
  *                               « aucun compte + loopback strict » (cf. handler).
  */
 const METHODES = Object.freeze([
-  'connexion', 'deconnexion', 'creerCompte', 'etatInitial', 'bootstrapAdmin']);
+  'connexion', 'deconnexion', 'creerCompte', 'etatInitial', 'bootstrapAdmin',
+  'listerComptes', 'reinitialiserMotDePasse', 'definirActivationCompte']);
+
+/** Méthodes de ce routeur réservées au rôle ADMIN (gardées dans appeler()). */
+const METHODES_ADMIN = new Set([
+  'creerCompte', 'listerComptes', 'reinitialiserMotDePasse',
+  'definirActivationCompte']);
 
 /** Vrai si `methode` relève de ce routeur (sert d'aiguillage à serveur.js). */
 function gereMethode(methode) {
@@ -101,7 +110,7 @@ function garderRoleAdmin(contexte) {
   const role = contexte?.role ?? null;
   if (role !== 'ADMIN') {
     const erreur = new Error(
-      `Création de compte réservée au rôle ADMIN — rôle courant : ` +
+      `Gestion des comptes réservée au rôle ADMIN — rôle courant : ` +
       `${role ?? 'aucun'}.`);
     erreur.code = 403;
     throw erreur;
@@ -356,6 +365,147 @@ const HANDLERS = {
         dateCreation: ligne.date_creation
       };
     });
+  },
+
+  /**
+   * Liste des comptes de connexion — GARDÉE ADMIN. Ne renvoie JAMAIS le hash
+   * ni le sel : seulement l'identité, le rôle, l'état d'activation, les dates
+   * et l'état de verrouillage courant (pour l'écran de gestion des comptes).
+   */
+  listerComptes() {
+    const lignes = db.all(
+      `SELECT id, login, role, actif, personnel_id,
+              date_creation, derniere_connexion, verrouille_jusqua
+       FROM utilisateurs_app
+       ORDER BY role, login`);
+    const maintenant = Date.now();
+    return lignes.map((l) => ({
+      id: l.id,
+      login: l.login,
+      role: l.role,
+      actif: l.actif === 1,
+      personnelId: l.personnel_id,
+      dateCreation: l.date_creation,
+      derniereConnexion: l.derniere_connexion,
+      verrouille: Boolean(l.verrouille_jusqua
+        && new Date(l.verrouille_jusqua).getTime() > maintenant),
+    }));
+  },
+
+  /**
+   * Réinitialise le mot de passe d'un compte — GARDÉE ADMIN. Re-hache
+   * (scrypt + sel frais), **lève le verrou** et remet le compteur d'échecs à
+   * zéro (un compte bloqué est ainsi déverrouillé par le changement), puis
+   * **révoque toutes les sessions ouvertes** de ce compte (le nouveau mot de
+   * passe implique une reconnexion). Longueur minimale selon le rôle.
+   */
+  reinitialiserMotDePasse(params, contexte) {
+    const id = typeof params?.id === 'string' ? params.id : '';
+    const nouveauMotDePasse = typeof params?.nouveauMotDePasse === 'string'
+      ? params.nouveauMotDePasse : '';
+    if (!id) {
+      const erreur = new Error('Compte cible obligatoire.');
+      erreur.code = 400;
+      throw erreur;
+    }
+    const compte = db.get(
+      'SELECT id, login, role FROM utilisateurs_app WHERE id = ?', [id]);
+    if (!compte) {
+      const erreur = new Error('Compte introuvable.');
+      erreur.code = 400;
+      throw erreur;
+    }
+    const longueurMin = ROLES_MOT_DE_PASSE_LONG.includes(compte.role)
+      ? LONGUEUR_MIN_MOT_DE_PASSE_HABILITE
+      : LONGUEUR_MIN_MOT_DE_PASSE_STANDARD;
+    if (nouveauMotDePasse.length < longueurMin) {
+      const erreur = new Error(
+        `Mot de passe trop court : ${longueurMin} caractères minimum pour ` +
+        `le rôle ${compte.role}.`);
+      erreur.code = 400;
+      throw erreur;
+    }
+
+    const { hash, sel } = comptes.hacherMotDePasse(nouveauMotDePasse);
+    return db.transaction(() => {
+      db.run(
+        `UPDATE utilisateurs_app
+         SET hash_mot_de_passe = ?, sel = ?, echecs_consecutifs = 0,
+             verrouille_jusqua = NULL
+         WHERE id = ?`,
+        [hash, sel, id]);
+      sessions.revoquerToutesLesSessions(id);
+      db.journaliser({
+        qui: contexte?.utilisateur ?? null,
+        action: 'REINIT_MOT_DE_PASSE',
+        cible: compte.login,
+        details: `role=${compte.role}`,
+      });
+      return { id: compte.id, login: compte.login, role: compte.role };
+    });
+  },
+
+  /**
+   * Active ou désactive un compte — GARDÉE ADMIN. La désactivation est la
+   * « suppression douce » : le compte n'est jamais effacé (traçabilité), mais
+   * il ne peut plus se connecter et ses sessions ouvertes sont **révoquées
+   * immédiatement** (sans attendre l'expiration de 8 h ; `verifierSession`
+   * refuse déjà `actif=0`, on ajoute la révocation pour couper net).
+   *
+   * Garde-fous anti-verrouillage total (sinon l'ADMIN pourrait s'enfermer
+   * dehors) : on ne peut ni **désactiver son propre compte**, ni **désactiver
+   * le dernier ADMIN actif**.
+   */
+  definirActivationCompte(params, contexte) {
+    const id = typeof params?.id === 'string' ? params.id : '';
+    const actif = params?.actif === true;
+    if (!id) {
+      const erreur = new Error('Compte cible obligatoire.');
+      erreur.code = 400;
+      throw erreur;
+    }
+    const compte = db.get(
+      'SELECT id, login, role, actif FROM utilisateurs_app WHERE id = ?', [id]);
+    if (!compte) {
+      const erreur = new Error('Compte introuvable.');
+      erreur.code = 400;
+      throw erreur;
+    }
+
+    if (!actif) {
+      if (contexte?.utilisateur && contexte.utilisateur === id) {
+        const erreur = new Error(
+          'Vous ne pouvez pas désactiver votre propre compte.');
+        erreur.code = 400;
+        throw erreur;
+      }
+      if (compte.role === 'ADMIN') {
+        const autres = db.get(
+          `SELECT COUNT(*) AS n FROM utilisateurs_app
+           WHERE role = 'ADMIN' AND actif = 1 AND id <> ?`, [id]);
+        if (!autres || autres.n === 0) {
+          const erreur = new Error(
+            'Impossible de désactiver le dernier administrateur actif.');
+          erreur.code = 400;
+          throw erreur;
+        }
+      }
+    }
+
+    return db.transaction(() => {
+      db.run('UPDATE utilisateurs_app SET actif = ? WHERE id = ?',
+        [actif ? 1 : 0, id]);
+      if (!actif) sessions.revoquerToutesLesSessions(id);
+      db.journaliser({
+        qui: contexte?.utilisateur ?? null,
+        action: actif ? 'REACTIVATION_COMPTE' : 'DESACTIVATION_COMPTE',
+        cible: compte.login,
+        details: `role=${compte.role}`,
+      });
+      return {
+        id: compte.id, login: compte.login, role: compte.role, actif,
+      };
+    });
   }
 };
 
@@ -376,7 +526,7 @@ function appeler(methode, params, contexte) {
     erreur.code = 501;
     throw erreur;
   }
-  if (methode === 'creerCompte') {
+  if (METHODES_ADMIN.has(methode)) {
     garderRoleAdmin(contexte);
   }
   return handler(params ?? {}, contexte ?? {});

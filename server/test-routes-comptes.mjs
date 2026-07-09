@@ -485,6 +485,114 @@ let cookieEleve;
 }
 
 // ============================================================
+// 9. Gestion des comptes (ADMIN) : listerComptes / reinitialiserMotDePasse /
+//    definirActivationCompte + garde-fous.
+// ============================================================
+{
+  // --- listerComptes : garde ADMIN, jamais de secret exposé ---
+  const rListeSansSession = await requeteJson(PORT, 'listerComptes', {});
+  verifier('listerComptes sans session → 403',
+    rListeSansSession.statut === 403, JSON.stringify(rListeSansSession.corps));
+
+  const rListe = await requeteJson(PORT, 'listerComptes', {}, { cookie: cookieAdmin });
+  verifier('listerComptes en ADMIN → 200 + tableau', rListe.statut === 200
+    && Array.isArray(rListe.corps?.resultat), JSON.stringify(rListe.corps));
+  const comptesListe = rListe.corps?.resultat ?? [];
+  verifier('la liste contient admin.amorce',
+    comptesListe.some((c) => c.login === 'admin.amorce'));
+  verifier('la liste n’expose NI hash NI sel',
+    comptesListe.every((c) => c.hash_mot_de_passe === undefined
+      && c.sel === undefined && c.hash === undefined));
+  const adminAmorce = comptesListe.find((c) => c.login === 'admin.amorce');
+
+  // --- reinitialiserMotDePasse : garde ADMIN + révocation de session +
+  //     changement effectif du mot de passe ---
+  const rCreeRef9 = await requeteJson(PORT, 'creerCompte',
+    { login: 'gestion.ref9', motDePasseInitial: 'MotDePasseRef9-Ancien', role: 'REFERENT' },
+    { cookie: cookieAdmin });
+  verifier('création REFERENT gestion.ref9 (outillage) → 200',
+    rCreeRef9.statut === 200, JSON.stringify(rCreeRef9.corps));
+  const idRef9 = rCreeRef9.corps.resultat.id;
+
+  const rLoginRef9 = await requeteJson(PORT, 'connexion',
+    { login: 'gestion.ref9', motDePasse: 'MotDePasseRef9-Ancien' });
+  const cookieRef9 = `iwf_session=${extraireJetonDuSetCookie(rLoginRef9.setCookie)}`;
+
+  const rMutationAvant = await requeteJson(PORT, 'createClient', {
+    donneesClient: { raisonSociale: 'Ref9 avant reset', adresse: '9 rue Test', siret: '55566677788899' }
+  }, { cookie: cookieRef9 });
+  verifier('mutation avec la session REFERENT valide (avant reset) → pas 403',
+    rMutationAvant.statut !== 403, JSON.stringify(rMutationAvant.corps));
+
+  const rReinitNonAdmin = await requeteJson(PORT, 'reinitialiserMotDePasse',
+    { id: adminAmorce?.id, nouveauMotDePasse: 'PeuImporte-123456' }, { cookie: cookieRef9 });
+  verifier('reinitialiserMotDePasse par un non-ADMIN → 403',
+    rReinitNonAdmin.statut === 403, JSON.stringify(rReinitNonAdmin.corps));
+
+  const rReinit = await requeteJson(PORT, 'reinitialiserMotDePasse',
+    { id: idRef9, nouveauMotDePasse: 'MotDePasseRef9-Nouveau' }, { cookie: cookieAdmin });
+  verifier('reinitialiserMotDePasse en ADMIN → 200', rReinit.statut === 200,
+    JSON.stringify(rReinit.corps));
+
+  const rMutationApres = await requeteJson(PORT, 'createClient', {
+    donneesClient: { raisonSociale: 'Ref9 apres reset', adresse: '9 rue Test', siret: '55566677788899' }
+  }, { cookie: cookieRef9 });
+  verifier('après reset, l’ancienne session REFERENT est révoquée (mutation → 403)',
+    rMutationApres.statut === 403, JSON.stringify(rMutationApres.corps));
+
+  const rAncienMdp = await requeteJson(PORT, 'connexion',
+    { login: 'gestion.ref9', motDePasse: 'MotDePasseRef9-Ancien' });
+  verifier('l’ancien mot de passe ne fonctionne plus après reset → 400',
+    rAncienMdp.statut === 400, JSON.stringify(rAncienMdp.corps));
+
+  const rNouveauMdp = await requeteJson(PORT, 'connexion',
+    { login: 'gestion.ref9', motDePasse: 'MotDePasseRef9-Nouveau' });
+  verifier('le nouveau mot de passe fonctionne après reset → 200',
+    rNouveauMdp.statut === 200, JSON.stringify(rNouveauMdp.corps));
+
+  // --- definirActivationCompte : désactivation bloque la connexion, réactivation la rétablit ---
+  const rCreeAct9 = await requeteJson(PORT, 'creerCompte',
+    { login: 'gestion.act9', motDePasseInitial: 'MotDePasseAct9', role: 'ENSEIGNANT' },
+    { cookie: cookieAdmin });
+  verifier('création ENSEIGNANT gestion.act9 (outillage) → 200',
+    rCreeAct9.statut === 200, JSON.stringify(rCreeAct9.corps));
+  const idAct9 = rCreeAct9.corps.resultat.id;
+
+  const rDesactive = await requeteJson(PORT, 'definirActivationCompte',
+    { id: idAct9, actif: false }, { cookie: cookieAdmin });
+  verifier('définirActivationCompte (désactivation) en ADMIN → 200',
+    rDesactive.statut === 200 && rDesactive.corps?.resultat?.actif === false,
+    JSON.stringify(rDesactive.corps));
+
+  const rLoginDesactive = await requeteJson(PORT, 'connexion',
+    { login: 'gestion.act9', motDePasse: 'MotDePasseAct9' });
+  verifier('un compte désactivé ne peut plus se connecter → 400',
+    rLoginDesactive.statut === 400, JSON.stringify(rLoginDesactive.corps));
+
+  const rReactive = await requeteJson(PORT, 'definirActivationCompte',
+    { id: idAct9, actif: true }, { cookie: cookieAdmin });
+  verifier('définirActivationCompte (réactivation) en ADMIN → 200',
+    rReactive.statut === 200 && rReactive.corps?.resultat?.actif === true,
+    JSON.stringify(rReactive.corps));
+
+  const rLoginReactive = await requeteJson(PORT, 'connexion',
+    { login: 'gestion.act9', motDePasse: 'MotDePasseAct9' });
+  verifier('après réactivation, la connexion refonctionne → 200',
+    rLoginReactive.statut === 200, JSON.stringify(rLoginReactive.corps));
+
+  // --- Garde-fous ---
+  const rAutoDesactivation = await requeteJson(PORT, 'definirActivationCompte',
+    { id: adminAmorce?.id, actif: false }, { cookie: cookieAdmin });
+  verifier('un ADMIN ne peut pas désactiver son PROPRE compte → 400',
+    rAutoDesactivation.statut === 400, JSON.stringify(rAutoDesactivation.corps));
+
+  const rActivSansSession = await requeteJson(PORT, 'definirActivationCompte',
+    { id: idAct9, actif: false });
+  verifier('définirActivationCompte sans session → 403',
+    rActivSansSession.statut === 403, JSON.stringify(rActivSansSession.corps));
+}
+
+// ============================================================
 // Verdict + nettoyage
 // ============================================================
 enfant.kill();
