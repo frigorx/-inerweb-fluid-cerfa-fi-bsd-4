@@ -8,6 +8,7 @@
 import { enteteVue, chipStatut, toast, ICONES, confirmer } from './communs.js';
 import { esc, fmtDate } from '../core/utils.js';
 import { ouvrirFormOutil } from '../modales/outil-form.js';
+import { ouvrirEtiquetteOutil } from '../documents/etiquette-outil.js';
 
 export const titre = 'Outillage réglementaire';
 
@@ -174,6 +175,8 @@ function carteOutil(outil) {
     + '</p>'
 
     + '<div class="outil-actions">'
+    + '<button type="button" class="btn btn-contour btn-petit" data-action="etiquette-outil" '
+    + 'data-id="' + esc(outil.id) + '">Étiquette QR</button>'
     + '<button type="button" class="btn btn-contour btn-petit" data-action="modifier-outil" '
     + 'data-id="' + esc(outil.id) + '">Modifier</button>'
     + (outil.statut !== 'HORS_SERVICE'
@@ -240,6 +243,13 @@ export async function render(conteneur, ctx) {
   conteneur.querySelector('#bouton-ajouter-outil').addEventListener('click', async function () {
     const enregistre = await ouvrirFormOutil(ctx);
     if (enregistre) render(conteneur, ctx);
+  });
+
+  // Étiquette QR d'un outil (à coller dessus → sa fiche d'étalonnage)
+  conteneur.querySelectorAll('[data-action="etiquette-outil"]').forEach(function (bouton) {
+    bouton.addEventListener('click', function () {
+      ouvrirEtiquetteOutil(ctx, bouton.dataset.id);
+    });
   });
 
   // Modification d'un outil existant, une écoute par carte

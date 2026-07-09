@@ -2,6 +2,30 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔳 Phase 2 · QR intégral — code public + étiquette + accès direct pour CLIENTS et OUTILLAGE (09/07)
+Les machines et bouteilles avaient déjà QR / étiquette / accès direct ; les **clients** et
+l'**outillage** ne l'avaient pas. Le patron `code_public` (base32 Crockford opaque, immuable) est
+désormais **cohérent partout**, sur exactement le même modèle que machines/bouteilles (migration 003).
+- **Clients / détenteurs** : `code_public` (migration 011 = colonne + index UNIQUE partiel + backfill
+  des clients existants ; génération à la création, parité DemoStore/SQLite). Route `#/cl/<code>` :
+  un scan ouvre la **fiche du client et la liste de ses machines** (idéal collé chez le détenteur).
+  **Étiquette QR** (`documents/etiquette-client.js`, 50×70 mm + planche A4 3×3) accessible depuis la
+  fiche client.
+- **Outillage** : `code_public` (migration 012, même patron). Route `#/o/<code>` : un scan ouvre la
+  **fiche d'édition de l'outil** (état d'étalonnage / vérification). **Étiquette QR**
+  (`documents/etiquette-outil.js`) accessible depuis chaque carte outil.
+- Générateurs branchés dans les deux stores (`createClient`, `createOutil`) + **backfill au
+  chargement** côté démo (clients/outillage hérités reçoivent un code, jamais régénéré une fois posé)
+  + mapping (`codePublic` exposé, immuable — jamais dans un patch). Codes encodés en chemin relatif
+  hors-ligne (`#/cl/…`, `#/o/…`), jamais d'URL absolue ni de donnée métier dans le QR.
+- Tests : migrations 87 → **93/0** (backfill v10→v11 clients, v11→v12 outillage, unicité), contrat
+  local+démo **254/0** (code public opaque + immuable), mapping 141/0, conformité 56/0.
+- **Vérifié navigateur** (mode Démo, serveur `v8/` isolé sur port jetable, jamais le `data/` réel) :
+  étiquette QR client rendue (**canvas 200×200**, code + nom + « Scanner pour les équipements »,
+  planche A4), route `#/cl/<code>` → fiche client ; étiquette QR outil rendue (canvas, type + code),
+  route `#/o/<code>` → formulaire d'édition ; code inconnu géré sans exception (toast sobre). Capture
+  d'écran à l'appui. Aucune régression (toutes les suites test-*.mjs à 0 échec).
+
 ### 🏢 Phase 2 · Référence client — annuaire des détenteurs + machines par client (09/07)
 Demande de Franck : faire d'inerWeb Fluide un logiciel complet de gestion **fluides + parc
 machines**, avec une **dose de référence client** — une machine pouvant être chez différents

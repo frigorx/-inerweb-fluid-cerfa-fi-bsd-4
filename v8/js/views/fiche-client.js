@@ -9,6 +9,7 @@ import { enteteVue, tableau, chipStatut, toast, ICONES } from './communs.js';
 import { esc, fmtNombre, fmtKg } from '../core/utils.js';
 import { ouvrirFormClient } from '../modales/client-form.js';
 import { ouvrirFormMachine } from '../modales/machine-form.js';
+import { ouvrirEtiquetteClient } from '../documents/etiquette-client.js';
 
 export const titre = 'Fiche client';
 
@@ -156,6 +157,8 @@ export async function render(conteneur, ctx) {
     + '<div class="fc-section"><div class="fc-actions">'
     + '<button type="button" class="btn btn-primaire" data-action="ajouter-machine">'
     + ICONES.plus + '<span>Ajouter une machine</span></button>'
+    + '<button type="button" class="btn btn-contour" data-action="etiquette-client">'
+    + ICONES.grille + '<span>Étiquette QR</span></button>'
     + '<button type="button" class="btn btn-contour" data-action="modifier-client">'
     + ICONES.engrenage + '<span>Modifier le client</span></button>'
     + (nb ? '<button type="button" class="btn btn-contour" data-action="voir-parc">'
@@ -177,6 +180,11 @@ export async function render(conteneur, ctx) {
   conteneur.querySelector('[data-action="ajouter-machine"]').addEventListener('click', async function () {
     const enregistre = await ouvrirFormMachine(ctx, null, { clientId: client.id });
     if (enregistre) rafraichir();
+  });
+
+  // Étiquette QR du client (à coller chez le détenteur → ses machines)
+  conteneur.querySelector('[data-action="etiquette-client"]').addEventListener('click', function () {
+    ouvrirEtiquetteClient(ctx, client.id);
   });
 
   // Modifier le client

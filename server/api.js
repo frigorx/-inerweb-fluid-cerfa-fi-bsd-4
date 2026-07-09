@@ -877,7 +877,8 @@ const HANDLERS = {
       siret,
       contact: texteOuNull(d.contact),
       email: texteOuNull(d.email),
-      telephone: texteOuNull(d.telephone)
+      telephone: texteOuNull(d.telephone),
+      codePublic: codePublicUnique('clients_detenteurs')
     };
     return muter(() => {
       const ligne = mapping.versSql('clients_detenteurs', client);
@@ -1102,6 +1103,7 @@ const HANDLERS = {
       dateEtalonnage: d.dateEtalonnage ?? d.dateVerification ?? null,
       dateVerification: d.dateVerification ?? d.dateEtalonnage ?? null,
       prochaineEcheance: d.prochaineEcheance ?? null,
+      codePublic: codePublicUnique('outillage'),
       statut: 'CONFORME'
     };
     outil.statut = calculerStatutOutil(outil, aujourdHui());

@@ -650,6 +650,98 @@ verifierLeve('le code public est unique (résolution QR sans ambiguïté)',
 }
 
 // ============================================================
+// 6sexies. Code public des clients (migration 011) — sur une base
+// PRÉEXISTANTE (v10 → v11) : la colonne est ajoutée, tous les clients
+// reçoivent un code Crockford unique, l'index UNIQUE est en place.
+// ============================================================
+{
+  const CHEMIN_ANCIENNE_CL = join(DOSSIER, 'ancienne-clients.db');
+  const ancienneCl = new DatabaseSync(CHEMIN_ANCIENNE_CL);
+  ancienneCl.exec(readFileSync(new URL('./schema.sql', import.meta.url), 'utf8'));
+  ancienneCl.exec(`PRAGMA user_version = ${migrations.VERSION_BASE};`);
+  const jusqua10 = {};
+  for (let v = 2; v <= 10; v += 1) jusqua10[v] = migrations.MIGRATIONS[v];
+  migrations.migrer(ancienneCl, jusqua10); // portée à 10, PAS encore 11
+
+  ancienneCl.exec(`INSERT INTO etablissements (id, raison_sociale)
+                   VALUES ('ETB-CL', 'Lycée CL');`);
+  for (let i = 0; i < 4; i += 1) {
+    ancienneCl.exec(`INSERT INTO clients_detenteurs (id, etablissement_id, raison_sociale)
+                     VALUES ('CLI-ANC-${i}', 'ETB-CL', 'Client ancien ${i}');`);
+  }
+
+  verifier('avant migration 011 : la base est bloquée en version 10',
+    migrations.lireVersion(ancienneCl) === 10);
+  verifier('avant migration 011 : clients_detenteurs n’a pas encore code_public',
+    !ancienneCl.prepare('PRAGMA table_info(clients_detenteurs)').all()
+      .some((c) => c.name === 'code_public'));
+
+  const vFinaleCl = migrations.migrer(ancienneCl, { 11: migrations.MIGRATIONS[11] });
+  verifier('la migration 011 porte la base à la version 11',
+    vFinaleCl === 11 && migrations.lireVersion(ancienneCl) === 11);
+
+  const lignesCl = ancienneCl.prepare(`SELECT id, code_public FROM clients_detenteurs
+    WHERE etablissement_id = 'ETB-CL' ORDER BY id`).all();
+  verifier('tous les clients reçoivent un code public (format Crockford)',
+    lignesCl.length === 4
+    && lignesCl.every((c) => /^[0-9A-HJKMNP-TV-Z]{7}$/.test(c.code_public)));
+  verifier('les codes publics clients sont tous distincts',
+    new Set(lignesCl.map((c) => c.code_public)).size === lignesCl.length);
+  verifierLeve('le code public client est unique (index UNIQUE partiel)',
+    () => ancienneCl.exec(`INSERT INTO clients_detenteurs (id, etablissement_id,
+        raison_sociale, code_public)
+      VALUES ('CLI-DUP', 'ETB-CL', 'Doublon', '${lignesCl[0].code_public}');`),
+    'UNIQUE');
+
+  ancienneCl.close();
+}
+
+// ============================================================
+// 6septies. Code public de l'outillage (migration 012) — base
+// PRÉEXISTANTE (v11 → v12) : colonne ajoutée, backfill Crockford unique.
+// ============================================================
+{
+  const CHEMIN_ANCIENNE_OUT = join(DOSSIER, 'ancienne-outillage.db');
+  const ancienneOut = new DatabaseSync(CHEMIN_ANCIENNE_OUT);
+  ancienneOut.exec(readFileSync(new URL('./schema.sql', import.meta.url), 'utf8'));
+  ancienneOut.exec(`PRAGMA user_version = ${migrations.VERSION_BASE};`);
+  const jusqua11 = {};
+  for (let v = 2; v <= 11; v += 1) jusqua11[v] = migrations.MIGRATIONS[v];
+  migrations.migrer(ancienneOut, jusqua11); // portée à 11, PAS encore 12
+
+  ancienneOut.exec(`INSERT INTO etablissements (id, raison_sociale)
+                    VALUES ('ETB-OUT', 'Lycée OUT');`);
+  for (let i = 0; i < 3; i += 1) {
+    ancienneOut.exec(`INSERT INTO outillage (id, etablissement_id, type)
+                      VALUES ('OUT-ANC-${i}', 'ETB-OUT', 'DETECTEUR');`);
+  }
+
+  verifier('avant migration 012 : la base est bloquée en version 11',
+    migrations.lireVersion(ancienneOut) === 11);
+  verifier('avant migration 012 : outillage n’a pas encore code_public',
+    !ancienneOut.prepare('PRAGMA table_info(outillage)').all()
+      .some((c) => c.name === 'code_public'));
+
+  const vFinaleOut = migrations.migrer(ancienneOut, { 12: migrations.MIGRATIONS[12] });
+  verifier('la migration 012 porte la base à la version 12',
+    vFinaleOut === 12 && migrations.lireVersion(ancienneOut) === 12);
+
+  const lignesOut = ancienneOut.prepare(`SELECT id, code_public FROM outillage
+    WHERE etablissement_id = 'ETB-OUT' ORDER BY id`).all();
+  verifier('tous les outils reçoivent un code public (format Crockford)',
+    lignesOut.length === 3
+    && lignesOut.every((o) => /^[0-9A-HJKMNP-TV-Z]{7}$/.test(o.code_public)));
+  verifier('les codes publics outils sont tous distincts',
+    new Set(lignesOut.map((o) => o.code_public)).size === lignesOut.length);
+  verifierLeve('le code public outil est unique (index UNIQUE partiel)',
+    () => ancienneOut.exec(`INSERT INTO outillage (id, etablissement_id, type, code_public)
+      VALUES ('OUT-DUP', 'ETB-OUT', 'DETECTEUR', '${lignesOut[0].code_public}');`),
+    'UNIQUE');
+
+  ancienneOut.close();
+}
+
+// ============================================================
 // 7. Base pré-versionnage : refusée avec un message clair
 // ============================================================
 db.fermer();

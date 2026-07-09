@@ -277,6 +277,13 @@ verifier('updateClient réactive et modifie les coordonnées',
   clientReactive.actif === true && clientReactive.telephone === '0492000000');
 await verifierRejet('updateClient refuse un SIRET renseigné invalide',
   store.updateClient(clientCoord.id, { siret: '42' }));
+// Code public opaque (référence client QR) : format Crockford, unique.
+verifier('createClient pose un code public opaque (Crockford 7)',
+  CODE_PUBLIC.test(client.codePublic) && CODE_PUBLIC.test(clientCoord.codePublic)
+  && client.codePublic !== clientCoord.codePublic);
+verifier('le code public du client est stable (immuable au patch)',
+  (await store.updateClient(clientCoord.id, { contact: 'Autre' })).codePublic
+    === clientCoord.codePublic);
 
 // ============================================================
 // 5. Machines : création, patch, cycle arrêt/remise/démantèlement
@@ -1505,6 +1512,8 @@ const outil = await store.createOutil({
 });
 verifier('createOutil : statut CONFORME (échéance à 120 jours)',
   outil.statut === 'CONFORME');
+verifier('createOutil pose un code public opaque (Crockford 7)',
+  CODE_PUBLIC.test(outil.codePublic));
 verifier('updateOutil recalcule le statut (échéance dépassée → EXPIRE)',
   (await store.updateOutil(outil.id, { prochaineEcheance: dateRelative(-1) }))
     .statut === 'EXPIRE');

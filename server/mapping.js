@@ -109,7 +109,11 @@ const TABLES = {
       dateEtalonnage: 'date_etalonnage',
       dateVerification: 'date_verification',
       prochaineEcheance: 'prochaine_echeance',
-      statut: 'statut'
+      statut: 'statut',
+      // code_public (migration 012) : identifiant opaque QR de l'outil,
+      // généré à la création (createOutil), immuable. Étiquette QR sur l'outil
+      // → sa fiche d'édition (état d'étalonnage/vérification).
+      codePublic: 'code_public'
     },
     sqlSeulement: ['etablissement_id', 'observation', 'date_creation']
   },
@@ -127,7 +131,11 @@ const TABLES = {
       telephone: 'telephone',
       // actif : un client n'est jamais supprimé (machines rattachées), il est
       // DÉSACTIVÉ (masqué de l'annuaire actif) — même logique que personnel.
-      actif: 'actif'
+      actif: 'actif',
+      // code_public (migration 011) : identifiant opaque QR du client, généré
+      // à la création (createClient), immuable — jamais dans le patch
+      // updateClient. Permet une étiquette QR « chez le client » → ses machines.
+      codePublic: 'code_public'
     },
     booleens: ['actif'],
     frontSeulement: ['nbMachines'],

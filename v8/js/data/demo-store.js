@@ -1365,6 +1365,24 @@ export function creerDemoStore() {
         }
       }
 
+      // Backfill équivalent (migration 011) pour les clients / détenteurs —
+      // porte l'étiquette QR « chez le client ». Même règle : jamais régénéré.
+      for (const c of donnees.clients) {
+        if (!c.codePublic) {
+          c.codePublic = codePublicUnique(donnees.clients);
+          modifie = true;
+        }
+      }
+
+      // Backfill équivalent (migration 012) pour l'outillage — étiquette QR
+      // sur l'outil. Même règle : jamais régénéré une fois posé.
+      for (const o of donnees.outillage) {
+        if (!o.codePublic) {
+          o.codePublic = codePublicUnique(donnees.outillage);
+          modifie = true;
+        }
+      }
+
       // Amorçage de la chaîne d'intégrité : les écritures du monde de
       // démonstration (ou d'un import Phase A, AUCUNE empreinte nulle
       // part) reçoivent leur empreinte. Une chaîne PARTIELLE n'est
@@ -1848,6 +1866,7 @@ export function creerDemoStore() {
         contact: texteOuNull(d.contact),
         email: texteOuNull(d.email),
         telephone: texteOuNull(d.telephone),
+        codePublic: codePublicUnique(donnees.clients),
         actif: true,
         nbMachines: 0
       };
@@ -2785,6 +2804,7 @@ export function creerDemoStore() {
         dateEtalonnage: d.dateEtalonnage ?? d.dateVerification ?? null,
         dateVerification: d.dateVerification ?? d.dateEtalonnage ?? null,
         prochaineEcheance: d.prochaineEcheance ?? null,
+        codePublic: codePublicUnique(donnees.outillage),
         statut: 'CONFORME'
       };
       outil.statut = calculerStatutOutil(outil, aujourdHui());

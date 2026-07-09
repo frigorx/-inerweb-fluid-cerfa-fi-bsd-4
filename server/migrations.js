@@ -46,6 +46,13 @@
  *       BORDEREAU_BSFF, CERTIFICAT_ETALONNAGE) → échec silencieux en Mode Local
  *       (SQLite), la démo (sans liste blanche) les acceptait. Recréation de la
  *       table (SQLite ne sait pas ALTERer un CHECK), données et index préservés.
+ *  11 — code_public des clients (Phase 2, référence client QR) : colonne opaque
+ *       QR sur clients_detenteurs (comme machines/bouteilles migration 003) +
+ *       index UNIQUE partiel + backfill un-shot des clients préexistants. Permet
+ *       une étiquette QR « chez le client » qui ouvre la liste de ses machines.
+ *  12 — code_public de l'outillage (Phase 2, QR outillage) : même patron que la
+ *       migration 011, scopé sur outillage — étiquette QR sur un outil qui ouvre
+ *       sa fiche (état d'étalonnage/vérification).
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -307,6 +314,56 @@ const MIGRATIONS = {
       db.exec('ALTER TABLE pieces_jointes_nouveau RENAME TO pieces_jointes;');
       db.exec(`CREATE INDEX IF NOT EXISTS idx_pj_entite
                  ON pieces_jointes (entite_type, entite_id);`);
+    }
+  },
+
+  11: {
+    nom: 'code_public_clients',
+    appliquer(db) {
+      // Même patron que la migration 003 (machines/bouteilles) : colonne
+      // opaque nullable + index UNIQUE partiel (n'indexe que les non-NULL).
+      db.exec('ALTER TABLE clients_detenteurs ADD COLUMN code_public TEXT;');
+      db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_clients_code_public
+                 ON clients_detenteurs (code_public) WHERE code_public IS NOT NULL;`);
+      // Backfill un-shot des clients préexistants (parité migrations 006/009) :
+      // un code UNIQUE par ligne, retry en cas de collision avec le parc déjà
+      // en base. Jamais régénéré une fois posé.
+      const sansCode = db.prepare(
+        'SELECT id FROM clients_detenteurs WHERE code_public IS NULL').all();
+      const dejaPris = new Set(
+        db.prepare('SELECT code_public AS c FROM clients_detenteurs WHERE code_public IS NOT NULL')
+          .all().map((l) => l.c));
+      const maj = db.prepare(
+        'UPDATE clients_detenteurs SET code_public = ? WHERE id = ?');
+      for (const { id } of sansCode) {
+        let code = tirerCodePublicMigration();
+        while (dejaPris.has(code)) code = tirerCodePublicMigration();
+        dejaPris.add(code);
+        maj.run(code, id);
+      }
+    }
+  },
+
+  12: {
+    nom: 'code_public_outillage',
+    appliquer(db) {
+      // Parité exacte de la migration 011, scopée sur outillage.
+      db.exec('ALTER TABLE outillage ADD COLUMN code_public TEXT;');
+      db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_outillage_code_public
+                 ON outillage (code_public) WHERE code_public IS NOT NULL;`);
+      const sansCode = db.prepare(
+        'SELECT id FROM outillage WHERE code_public IS NULL').all();
+      const dejaPris = new Set(
+        db.prepare('SELECT code_public AS c FROM outillage WHERE code_public IS NOT NULL')
+          .all().map((l) => l.c));
+      const maj = db.prepare(
+        'UPDATE outillage SET code_public = ? WHERE id = ?');
+      for (const { id } of sansCode) {
+        let code = tirerCodePublicMigration();
+        while (dejaPris.has(code)) code = tirerCodePublicMigration();
+        dejaPris.add(code);
+        maj.run(code, id);
+      }
     }
   }
 };
