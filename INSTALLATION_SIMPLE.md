@@ -7,40 +7,44 @@ aucune donnée ne quitte le poste.
 
 ---
 
-## 1. Ce qu'il vous faut (prérequis)
+## 1. Deux façons d'installer — choisissez la vôtre
 
-| Élément | Détail |
+| Vous avez… | Suivez… |
 |---|---|
-| Un ordinateur | Un PC Windows du lycée (poste d'atelier, de bureau ou portable) |
-| Node.js version 22 ou plus | Le « moteur » gratuit qui fait tourner l'application |
+| Le **paquet portable** (dossier « clé en main » fourni par un collègue ou téléchargé) | La voie A : **rien à installer**, Node.js est déjà dedans |
+| Le **dossier du projet** téléchargé depuis GitHub (« Code » → « Download ZIP ») | La voie B : installer d'abord Node.js (5 minutes, une seule fois) |
 
-### Installer Node.js (une seule fois par poste)
+> 💡 Dans le doute, regardez dans votre dossier : s'il contient un sous-dossier `node\`
+> et un fichier `LISEZ-MOI.txt`, c'est le paquet portable (voie A).
+
+### Voie A — le paquet portable (recommandée)
+
+Il n'y a **aucun prérequis** : le « moteur » Node.js est déjà inclus dans le dossier.
+Passez directement au point 2.
+
+### Voie B — le dossier GitHub : installer Node.js (une seule fois par poste)
 
 1. Ouvrez le site officiel : **<https://nodejs.org>**
-2. Téléchargez la version **LTS** (c'est le gros bouton vert, « LTS » signifie version stable
-   recommandée). Elle doit être **au minimum la version 22**.
+2. Téléchargez la version **LTS** (« LTS » signifie version stable recommandée).
+   Elle doit être **au minimum la version 22** (version 24 conseillée).
 3. Lancez le fichier téléchargé et cliquez sur **« Suivant »** à chaque étape,
    sans rien modifier, jusqu'à « Terminer ».
 
 C'est tout. Vous n'aurez plus jamais à y toucher.
 
 > 💡 Pour vérifier que Node.js est bien installé : menu Démarrer → tapez `cmd` → Entrée,
-> puis tapez `node -v` et Entrée. Un numéro de version s'affiche (par exemple `v22.x.x`).
+> puis tapez `node -v` et Entrée. Un numéro de version s'affiche (par exemple `v24.x.x`).
 
 ---
 
-## 2. Installer l'application
+## 2. Installer et lancer l'application
 
-1. **Récupérez le dossier de l'application** :
-   - soit en téléchargeant le fichier ZIP depuis la page GitHub du projet
-     (bouton **« Code » → « Download ZIP »**), puis en le décompressant
-     (clic droit → « Extraire tout… ») ;
-   - soit en le copiant depuis une **clé USB** fournie par un collègue.
-2. **Déposez le dossier où vous voulez** sur le poste, par exemple :
+1. **Déposez le dossier où vous voulez** sur le poste, par exemple :
    `D:\inerweb-fluide` (ou `C:\inerweb-fluide`, ou dans vos Documents).
    L'application est **portable** : tout tient dans ce dossier.
-3. Ouvrez le dossier et **double-cliquez sur `lancer-inerweb.bat`**.
-4. Une petite fenêtre noire s'ouvre (c'est le serveur local : **ne la fermez pas**
+   Si vous avez un ZIP, décompressez-le d'abord (clic droit → « Extraire tout… »).
+2. Ouvrez le dossier et **double-cliquez sur `lancer-inerweb.bat`**.
+3. Une petite fenêtre noire s'ouvre (c'est le serveur local : **ne la fermez pas**
    tant que vous utilisez l'application), puis votre navigateur s'ouvre automatiquement
    sur l'adresse :
 
@@ -51,23 +55,33 @@ C'est tout. Vous n'aurez plus jamais à y toucher.
 > 💡 `localhost` signifie « ce poste-ci » : l'application n'est accessible que depuis
 > l'ordinateur sur lequel elle tourne. Rien ne circule sur internet.
 
+> 💡 Windows peut afficher un avertissement « SmartScreen » au premier lancement
+> (application téléchargée non signée) : cliquez sur « Informations complémentaires »
+> puis « Exécuter quand même ».
+
 ---
 
-## 3. La première configuration (assistant guidé)
+## 3. Le premier lancement
 
-Au tout premier lancement, un **assistant de configuration** s'affiche et vous demande,
-étape par étape :
+Au tout premier lancement, l'application affiche **un seul écran** :
+**« Créer le compte administrateur »**. Choisissez un identifiant et un mot de passe
+(au moins 10 caractères) et validez : vous entrez directement dans l'application.
+Ce compte permettra ensuite de créer les comptes des collègues (référents,
+enseignants) et des élèves, depuis l'écran **Administration**.
 
-1. **Votre établissement** :
-   - raison sociale (le nom officiel du lycée) ;
-   - numéro **SIRET** ;
-   - numéro d'**attestation de capacité** de l'établissement, avec son organisme
-     certificateur et ses dates de validité (l'application vous alertera avant l'échéance).
-2. **Le premier compte administrateur** : votre nom, votre adresse électronique
-   et un mot de passe. Ce compte permettra ensuite de créer les comptes des collègues
-   (référents, enseignants) et des élèves.
+### Complétez ensuite votre établissement (important)
 
-Une fois l'assistant terminé, vous arrivez sur le tableau de bord : l'application est prête.
+Le tableau de bord vous accueille avec les premières étapes de prise en main.
+La toute première : **compléter le dossier de votre établissement** (écran
+**Administration**, c'est le **cadre 1 du CERFA**) :
+
+- raison sociale (le nom officiel du lycée) et adresse ;
+- numéro **SIRET** ;
+- numéro d'**attestation de capacité** de l'établissement, avec son organisme
+  certificateur et ses dates de validité (l'application vous alertera avant l'échéance).
+
+Sans ce dossier, les CERFA générés seraient incomplets : prenez ces cinq minutes
+avant de saisir vos premières machines et bouteilles.
 
 ---
 
@@ -115,9 +129,11 @@ quelques secondes, puis relancez `lancer-inerweb.bat`. Si le problème persiste,
 redémarrez le poste.
 
 ### « node n'est pas reconnu… » ou la fenêtre noire se ferme aussitôt
-Node.js n'est pas installé (ou pas dans une version suffisante). Reprenez le point 1
-de ce guide : installez la version LTS depuis <https://nodejs.org> (version 22 minimum),
-puis relancez.
+- **Paquet portable (voie A)** : le dossier est incomplet (le sous-dossier `node\` manque).
+  Recopiez le paquet en entier depuis sa source.
+- **Dossier GitHub (voie B)** : Node.js n'est pas installé (ou pas dans une version
+  suffisante). Reprenez le point 1 : installez la version LTS depuis <https://nodejs.org>
+  (version 22 minimum), puis relancez.
 
 ### L'antivirus bloque le lancement
 Certains antivirus se méfient des fichiers `.bat`. Si un message s'affiche, choisissez

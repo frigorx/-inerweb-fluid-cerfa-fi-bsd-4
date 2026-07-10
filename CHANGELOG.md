@@ -2,6 +2,53 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧹 Séance 0 · Assainissement (10/07)
+Les cinq petits correctifs sans risque validés par l'examen multi-agents du 10/07,
+avant les grosses briques.
+- **`sw.js` v7 « sabordé »** : l'ancien service worker (cache-d'abord sur TOUT le site,
+  y compris `/v8/` sur GitHub Pages, jamais désenregistré) est remplacé par un SW qui
+  purge tous les caches, se désenregistre et recharge les pages sous son contrôle dès
+  que le navigateur le revérifie (≤ 24 h). Ceinture et bretelles : `index.html` (v7)
+  n'enregistre plus de SW — il désenregistre activement et purge les caches à chaque
+  visite. Plus AUCUN handler `fetch` : à ne jamais réintroduire.
+- **Lanceur de tests global `outils/lancer-tests.mjs`** : découvre les 36 suites
+  `test-*.mjs` du dépôt (serveur + front), les lance une à une (contrat joué DEUX fois :
+  demo puis local) et s'arrête au premier rouge en rejouant la sortie de la suite en
+  échec (`--tout` pour un bilan complet). ⚠️ Exclusions ancrées à la racine : `data/`
+  réel exclu, mais `v8/js/data/` (code + suites) parcouru — même piège que le
+  `.gitignore` (un motif non ancré ratait 17 suites sur 37, vécu pendant l'écriture).
+- **CF-22 enfin câblé** : bouton « Exporter en PDF » sur la carte « Intégrité du
+  registre » (Administration) → `genererJournalAuditPdf()` (testée depuis le lot
+  confort mais importée nulle part). État « Génération… », toast, remontée d'erreur.
+- **`amorcerEtablissement()` généralisé** (`server/api.js`) : l'amorce du singleton
+  devient AUTOMATIQUE dans `inserer()` (dès qu'une ligne porte `etablissement_id`)
+  et dans les deux upserts SQL directs (inventaires, justifications d'écarts). Sur
+  base fraîche, créer un client/outil/machine/bouteille ou saisir un inventaire avant
+  d'avoir touché à l'établissement ne plante plus en FOREIGN KEY (~14 sites d'insertion,
+  seuls 5 amorçaient). Preuve : `server/test-amorce-etablissement.mjs` **12/0**
+  (chaque cas sur base NEUVE sans init ; rouge vérifié sans le correctif, y compris
+  l'idempotence : jamais deux lignes, jamais d'écrasement du dossier saisi).
+- **Encart « Prise en main » enrichi** (`dashboard.js`) : tant que le dossier opérateur
+  est vide (cadre 1 du CERFA), la toute première étape affichée est « Compléter votre
+  établissement » (→ Administration). Lecture de l'établissement SEULEMENT quand
+  l'encart s'affiche (base vide).
+- **`INSTALLATION_SIMPLE.md` remis d'aplomb** : il décrivait un « assistant de
+  configuration » multi-étapes qui n'existe pas (la réalité : UN écran « Créer le
+  compte administrateur », puis l'encart de prise en main) et imposait Node.js alors
+  que le paquet portable l'embarque. Désormais : voie A paquet portable (rien à
+  installer) / voie B dossier GitHub (Node ≥ 22), premier lancement conforme, encart
+  « Complétez ensuite votre établissement », dépannage ajusté aux deux voies.
+- Tests : **37 exécutions TOUT VERT** via le nouveau lanceur (36 suites + contrat
+  demo/local, dont la nouvelle suite d'amorçage).
+- **Vérifié navigateur** (sandbox scratchpad, serveur Local port jetable 8147 base
+  vierge + démo statique port 8148, origines neuves, jamais le `data/` réel) :
+  bootstrap admin → tableau de bord avec encart « Quatre étapes » (étape 1 =
+  établissement, clic → Administration) ; « Exporter en PDF » → « Génération… » →
+  toast « Journal d’audit exporté en PDF. » (Local ET Démo) ; création d'un client
+  sur base fraîche sans établissement saisi → « Détenteur ajouté. » (avant :
+  FOREIGN KEY constraint failed) ; racine v7 : 0 service worker enregistré, 0 cache,
+  zéro erreur console.
+
 ### 📦 Phase 2 · Export ZIP « dossier machine » / « dossier client » scellé (09/07)
 Brique ③ de la série livrable : la **preuve ciblée en un clic**. Depuis la fiche d'une machine (ou
 d'un client), un bouton produit un ZIP **scellé SHA-256** rassemblant tout son historique — idéal

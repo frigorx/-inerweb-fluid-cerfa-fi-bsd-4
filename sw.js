@@ -1,107 +1,24 @@
 /**
- * inerWeb Fluide - Service Worker v7.10.0
- * Support hors-ligne et mise en cache + PDF.js embarqué
+ * inerWeb Fluide - Service Worker « sabordage » (remplace le SW v7)
+ *
+ * Le SW v7 faisait du cache-d'abord sur tout le site (y compris /v8/ sur
+ * GitHub Pages) et n'était jamais désenregistré : les visiteurs pouvaient
+ * recevoir indéfiniment de l'ancien code. Ce remplaçant n'intercepte AUCUNE
+ * requête : à sa prochaine revérification par le navigateur (au plus tard
+ * 24 h), il s'installe, purge tous les caches, se désenregistre et recharge
+ * les pages encore sous son contrôle. Ne pas ré-introduire de handler fetch.
  */
 
-const CACHE_NAME = 'inerweb-fluide-v7.10.0';
-
-const ASSETS_TO_CACHE = [
-  './',
-  './index.html',
-  './css/style.css',
-  './js/pdf-lib.min.js',
-  './js/pdf.min.js',
-  './js/pdf.worker.min.js',
-  './js/api.js',
-  './js/state.js',
-  './js/ui.js',
-  './js/cerfa.js',
-  './js/docs.js',
-  './js/aide.js',
-  './js/backup.js',
-  './js/qrcode.js',
-  './js/qrcode-lib.min.js',
-  './js/qr-print.js',
-  './js/wizard.js',
-  './js/app.js',
-  './cerfa_15497-04_officiel.pdf',
-  './manifest.json',
-  './img/icon-192.png',
-  './img/icon-512.png'
-];
-
-// Installation
-self.addEventListener('install', (event) => {
-  console.log('[SW] Installation...');
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('[SW] Mise en cache des assets');
-        return cache.addAll(ASSETS_TO_CACHE);
-      })
-      .then(() => self.skipWaiting())
-  );
+self.addEventListener('install', () => {
+  self.skipWaiting();
 });
 
-// Activation
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activation...');
-  event.waitUntil(
-    caches.keys()
-      .then((cacheNames) => {
-        return Promise.all(
-          cacheNames
-            .filter((name) => name !== CACHE_NAME)
-            .map((name) => {
-              console.log('[SW] Suppression ancien cache:', name);
-              return caches.delete(name);
-            })
-        );
-      })
-      .then(() => self.clients.claim())
-  );
-});
-
-// Interception des requêtes
-self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
-
-  // Ne pas intercepter les requêtes API
-  if (url.hostname.includes('script.google.com') ||
-      url.hostname.includes('googleapis.com')) {
-    return;
-  }
-
-  event.respondWith(
-    caches.match(event.request)
-      .then((cachedResponse) => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-
-        return fetch(event.request)
-          .then((response) => {
-            // Ne pas mettre en cache les erreurs
-            if (!response || response.status !== 200) {
-              return response;
-            }
-
-            // Mettre en cache les nouvelles ressources
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-
-            return response;
-          })
-          .catch(() => {
-            // Fallback pour les pages HTML
-            if (event.request.headers.get('accept') &&
-                event.request.headers.get('accept').includes('text/html')) {
-              return caches.match('./index.html');
-            }
-          });
-      })
-  );
+  event.waitUntil((async () => {
+    const noms = await caches.keys();
+    await Promise.all(noms.map((nom) => caches.delete(nom)));
+    await self.registration.unregister();
+    const fenetres = await self.clients.matchAll({ type: 'window' });
+    fenetres.forEach((client) => client.navigate(client.url));
+  })());
 });

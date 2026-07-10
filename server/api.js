@@ -314,8 +314,13 @@ function calculerStatutOutil(outil, jour) {
 /**
  * INSÈRE une ligne SQL (déjà en colonnes snake_case) dans `table`.
  * Les colonnes NULL sont incluses (défauts du schéma sinon appliqués).
+ * Toute ligne rattachée à l'établissement singleton l'AMORCE d'abord
+ * (idempotent) : sur base fraîche, un handler qui écrit avant init() ou
+ * updateEtablissement() n'échoue plus sur la FK etablissement_id
+ * (revue 10/07 : ~14 sites d'insertion, seuls 5 amorçaient).
  */
 function inserer(table, ligne) {
+  if (ligne.etablissement_id === ID_ETABLISSEMENT) amorcerEtablissement();
   const colonnes = Object.keys(ligne);
   const marques = colonnes.map(() => '?').join(', ');
   db.run(
@@ -345,8 +350,10 @@ function journaliser(qui, action, cible, details) {
 
 /**
  * Amorce l'établissement singleton VIDE s'il n'existe pas encore.
- * ÉCRITURE : n'est appelée que par des mutations (init, updateEtablissement),
- * jamais par une lecture (revue E3 : une lecture ne mute jamais).
+ * ÉCRITURE : n'est appelée que par des mutations — init, updateEtablissement,
+ * et automatiquement par inserer() / les upserts d'inventaire dès qu'une
+ * ligne porte etablissement_id — jamais par une lecture (revue E3 : une
+ * lecture ne mute jamais).
  * raison_sociale est NOT NULL au schéma → chaîne vide (dossier à saisir).
  */
 function amorcerEtablissement() {
@@ -3795,6 +3802,7 @@ function lireBsff(id) {
 
 /** Upsert d'une ligne d'inventaire (année, fluide) — clé composite. */
 function upsertInventaire(annee, fluide, stockReelKg, operateur) {
+  amorcerEtablissement(); // SQL direct : ne passe pas par inserer()
   db.run(
     `INSERT INTO inventaires
        (etablissement_id, annee, fluide, stock_reel_kg, date_saisie, operateur)
@@ -3809,6 +3817,7 @@ function upsertInventaire(annee, fluide, stockReelKg, operateur) {
 
 /** Upsert d'une justification d'écart (année, fluide) — clé composite. */
 function upsertJustification(annee, fluide, justification) {
+  amorcerEtablissement(); // SQL direct : ne passe pas par inserer()
   db.run(
     `INSERT INTO justifications_ecarts
        (etablissement_id, annee, fluide, justification, date_justification)

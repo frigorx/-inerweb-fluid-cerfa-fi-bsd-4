@@ -347,12 +347,23 @@ function ligneAlerte(alerte) {
  * porte sur les stats déjà lues, aucune requête supplémentaire).
  * @returns {string} HTML
  */
-function encartAccueil() {
+function encartAccueil(dossierAConfigurer) {
   const etapes = [
-    { numero: '1', titre: 'Créer une machine', detail: 'Déclarer un équipement du parc.', vue: 'machines' },
-    { numero: '2', titre: 'Ajouter une bouteille', detail: 'Enregistrer un contenant de fluide.', vue: 'bouteilles' },
-    { numero: '3', titre: 'Enregistrer un mouvement', detail: 'Tracer une charge ou une récupération.', vue: '' }
+    { titre: 'Créer une machine', detail: 'Déclarer un équipement du parc.', vue: 'machines' },
+    { titre: 'Ajouter une bouteille', detail: 'Enregistrer un contenant de fluide.', vue: 'bouteilles' },
+    { titre: 'Enregistrer un mouvement', detail: 'Tracer une charge ou une récupération.', vue: '' }
   ];
+  // Séance 0 : tant que le dossier opérateur (cadre 1 du CERFA) est vide,
+  // la toute première étape est de le compléter — sans lui, aucun CERFA
+  // généré n'est valable et le mode Officiel restera hors d'atteinte.
+  if (dossierAConfigurer) {
+    etapes.unshift({
+      titre: 'Compléter votre établissement',
+      detail: 'Raison sociale, SIRET, attestation de capacité (cadre 1 du CERFA).',
+      vue: 'admin'
+    });
+  }
+  etapes.forEach((etape, indice) => { etape.numero = String(indice + 1); });
   const etapesHtml = etapes.map((etape) => {
     const estLien = Boolean(etape.vue);
     return '<div class="tdb-accueil-etape' + (estLien ? ' tdb-accueil-etape-lien' : '') + '"'
@@ -368,7 +379,8 @@ function encartAccueil() {
 
   return '<section class="carte tdb-accueil" aria-label="Prise en main">'
     + '<h3 class="tdb-accueil-titre">Prise en main</h3>'
-    + '<p class="tdb-accueil-texte">Aucune donnée pour l’instant. Trois étapes pour démarrer la traçabilité.</p>'
+    + '<p class="tdb-accueil-texte">Aucune donnée pour l’instant. '
+    + (dossierAConfigurer ? 'Quatre' : 'Trois') + ' étapes pour démarrer la traçabilité.</p>'
     + '<div class="tdb-accueil-etapes">' + etapesHtml + '</div>'
     + '</section>';
 }
@@ -459,14 +471,21 @@ export async function render(conteneur, ctx) {
     + listeAlertes
     + '</section>';
 
-  // CF-2 : base vide (aucune machine ni bouteille) → encart de prise en main
+  // CF-2 : base vide (aucune machine ni bouteille) → encart de prise en main.
+  // Lecture du dossier opérateur SEULEMENT dans ce cas (une lecture de plus
+  // uniquement quand l'encart va s'afficher) : dossier vide → étape 1 dédiée.
   const baseVide = stats.nbMachines === 0 && stats.nbBouteilles === 0;
+  let dossierAConfigurer = false;
+  if (baseVide) {
+    const etablissement = await store.getEtablissement().catch(() => null);
+    dossierAConfigurer = !String(etablissement?.raisonSociale ?? '').trim();
+  }
 
   // ---- Insertion unique dans le conteneur ----
   conteneur.innerHTML = STYLES_VUE
     + entete
     + rangeeKpi
-    + (baseVide ? encartAccueil() : '')
+    + (baseVide ? encartAccueil(dossierAConfigurer) : '')
     + bandeauModeOfficiel(etatOfficiel)
     + '<div class="tdb-colonnes">' + carteMouvements + carteAlertes + '</div>';
 

@@ -14,6 +14,7 @@ import { ouvrirFormClient } from '../modales/client-form.js';
 import { ouvrirCreationCompte, ouvrirReinitialisationMotDePasse }
   from '../modales/compte-form.js';
 import { creerTransportHttp } from '../data/transport-http.js';
+import { genererJournalAuditPdf } from '../documents/exports.js';
 
 // Transport des routes de compte (hors contrat DataStore, Mode Local seul).
 // Construit une fois pour la vue ; jamais utilisé en Mode Démo (aucun serveur).
@@ -36,6 +37,7 @@ const STYLE_VUE = `<style>
     gap: 12px; margin-bottom: 16px;
   }
   .vue-admin .carte-entete-titres { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
+  .vue-admin .carte-entete-actions { display: flex; gap: 8px; flex: none; flex-wrap: wrap; }
   .vue-admin .badge-cadre {
     flex: none; margin-top: 2px; padding: 3px 9px;
     border-radius: 6px; background: var(--marine-900); color: #ffffff;
@@ -388,8 +390,12 @@ function carteIntegriteRegistre() {
     + '(append-only, sans purge possible).</p>'
     + '</div>'
     + '</div>'
+    + '<div class="carte-entete-actions">'
     + '<button type="button" class="btn btn-secondaire btn-petit" data-action="verifier-integrite">'
     + 'Vérifier maintenant</button>'
+    + '<button type="button" class="btn btn-contour btn-petit" data-action="exporter-journal-pdf">'
+    + 'Exporter en PDF</button>'
+    + '</div>'
     + '</div>'
     + '<div id="integrite-resultat"></div>'
     + '<div class="journal-apercu">'
@@ -561,6 +567,35 @@ export async function render(conteneur, ctx) {
           console.error('Vérification de la chaîne du registre impossible :', erreur);
         } finally {
           boutonVerifierIntegrite.disabled = false;
+        }
+      });
+    }
+
+    // CF-22 : export PDF paginé du journal d'audit complet.
+    const boutonExporterJournal = conteneur.querySelector('[data-action="exporter-journal-pdf"]');
+    if (boutonExporterJournal) {
+      boutonExporterJournal.addEventListener('click', async () => {
+        boutonExporterJournal.disabled = true;
+        const libelleInitial = boutonExporterJournal.textContent;
+        boutonExporterJournal.textContent = 'Génération…';
+        try {
+          const { octets, nomFichier } = await genererJournalAuditPdf(store);
+          const blob = new Blob([octets], { type: 'application/pdf' });
+          const url = URL.createObjectURL(blob);
+          const lien = document.createElement('a');
+          lien.href = url;
+          lien.download = nomFichier;
+          document.body.appendChild(lien);
+          lien.click();
+          lien.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+          toast('Journal d’audit exporté en PDF.', 'succes');
+        } catch (erreur) {
+          toast('Export du journal impossible.', 'erreur');
+          console.error('Export PDF du journal d’audit impossible :', erreur);
+        } finally {
+          boutonExporterJournal.disabled = false;
+          boutonExporterJournal.textContent = libelleInitial;
         }
       });
     }
