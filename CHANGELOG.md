@@ -2,6 +2,40 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🚦 Brique ① · Tableau de bord de conformité « feu tricolore » (10/07)
+La conformité était éclatée sur 5 vues (constat de l'examen du 10/07) : nouvel écran
+**« Conformité »** (sidebar, sous le Tableau de bord) = l'état réglementaire complet en un
+écran vert / orange / rouge — ce qu'un inspecteur viendrait vérifier. **Rien créé de zéro** :
+consolidation de l'existant.
+- **`v8/js/data/feu-tricolore.js`** (nouveau, PUR/Node-testable, zéro DOM) : agrège
+  `getAlertes()` (rattachement par familles d'ids stables `alr-*` posées en Phase C),
+  `peutPasserEnOfficiel()` et `verifierChaineHash()` en **7 domaines** (établissement/capacité,
+  personnel/aptitudes, contrôles & fuites, outillage, balance matière, bouteilles & déchets,
+  registre & écritures). Barème : ROUGE = alerte CRITIQUE (ou chaîne rompue, avec constat
+  synthétique dédié) ; ORANGE = IMPORTANT ; global = pire des domaines. **Deux garde-fous
+  d'honnêteté** : ① jamais « tout vert » si les prérequis du mode Officiel manquent (une base
+  incomplète — attestation/balance/détecteur jamais renseignés — n'est signalée QUE par
+  `peutPasserEnOfficiel`, pas par les alertes) ; ② domaine-filet « Autres alertes » : une
+  famille d'alertes future à préfixe inconnu ne passe JAMAIS sous le radar (l'écran ne peut
+  pas mentir à un auditeur par omission).
+- **`v8/js/views/conformite.js`** (nouveau) : bandeau feu global (pastille + « Conforme —
+  prêt pour un audit » / « Points à surveiller » / « Non-conformités à traiter » + compteurs
+  + état du registre), carte « Prérequis du mode Officiel » (coche ou motifs), grille des
+  domaines — chaque en-tête de domaine ET chaque constat est cliquable vers sa vue
+  (clic + Entrée, rôles ARIA). Lecture seule, marche en Démo ET Local (contrat seul).
+- **`app.js`** : entrée sidebar « Conformité » (icône coche), 2e position.
+- Tests : **`test-feu-tricolore.mjs` 30/0 en demo ET en local** (volet A pur : barème,
+  filet, chaîne rompue, zéro perte d'alerte, garde-fou Officiel ; volet B contre le store
+  réel : cohérence avec getAlertes/peutPasserEnOfficiel, attestation expirée → ROUGE,
+  aptitude à 30 j → ORANGE, détecteur expiré → ROUGE). Suite ajoutée aux **suites doublées**
+  du lanceur (parité demo/local systématique). **39 exécutions TOUT VERT.**
+- **Vérifié navigateur** (sandbox, Local 8147 + Démo 8148) : Local base quasi vide → feu
+  global ORANGE « Points à surveiller » (le garde-fou anti-tout-vert joue), 7 domaines, les
+  3 motifs Officiel listés, clic domaine Outillage → `#/outillage` ; Démo → feu ROUGE
+  « Non-conformités à traiter », « 4 points bloquants » (2 fuites + 2 outillage, recoupe les
+  alertes du monde démo), clic constat « Fuite non résolue » → `#/machines` ; zéro erreur
+  console dans les deux modes.
+
 ### 🧹 Séance 0 · Assainissement (10/07)
 Les cinq petits correctifs sans risque validés par l'examen multi-agents du 10/07,
 avant les grosses briques.

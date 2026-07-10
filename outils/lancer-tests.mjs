@@ -48,11 +48,18 @@ function decouvrirSuites(dossier = RACINE) {
   return suites.sort();
 }
 
+// Suites jouées DEUX fois (demo puis local) : celles qui éprouvent la
+// parité DemoStore/LocalStore via l'argument de store.
+const SUITES_DOUBLEES = new Set([
+  'v8/js/data/test-contrat.mjs',
+  'v8/js/data/test-feu-tricolore.mjs'
+]);
+
 /** Une exécution = un fichier + des arguments éventuels. */
 function planifier(suites) {
   const plan = [];
   for (const chemin of suites) {
-    if (chemin.split(sep).join('/') === 'v8/js/data/test-contrat.mjs') {
+    if (SUITES_DOUBLEES.has(chemin.split(sep).join('/'))) {
       plan.push({ chemin, args: ['demo'], libelle: `${chemin} (demo)` });
       plan.push({ chemin, args: ['local'], libelle: `${chemin} (local)` });
     } else {

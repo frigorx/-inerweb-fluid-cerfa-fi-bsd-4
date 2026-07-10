@@ -17,6 +17,7 @@ import { ouvrirFormBouteille } from './modales/bouteille-form.js';
 // ---- Liste ordonnée des vues (contrat v8) ----
 const VUES = [
   { id: 'dashboard',  libelle: 'Tableau de bord',          icone: 'grille' },
+  { id: 'conformite', libelle: 'Conformité',               icone: 'coche' },
   { id: 'machines',   libelle: 'Parc machines',            icone: 'machine' },
   { id: 'bouteilles', libelle: 'Stock bouteilles',         icone: 'bouteille' },
   { id: 'mouvements', libelle: 'Mouvements',               icone: 'echange' },
