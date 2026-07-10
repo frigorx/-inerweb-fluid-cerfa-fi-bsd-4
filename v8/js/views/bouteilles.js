@@ -162,11 +162,19 @@ function carteBouteille(b) {
   const sortie = estSortieDuStock(b);
   const melangee = b.etatFluide === 'MELANGE';
 
-  // IM-5 : plus aucune action sur une bouteille sortie du stock ;
-  // IM-9 : « Retour fourn. » (consigne) sur les contenants actifs.
+  // Brique ② : la fiche vivante (#/b/<code>) est accessible pour TOUTES
+  // les bouteilles, y compris sorties du stock — leur chronologie est
+  // précisément ce qu'un auditeur demande (« la vie de la B-04 »).
+  const lienFiche = '<a class="btn btn-contour btn-petit" href="#/b/'
+    + esc(b.codePublic) + '" aria-label="Fiche de la bouteille '
+    + esc(b.code) + '">Fiche</a>';
+
+  // IM-5 : plus aucune action de MUTATION sur une bouteille sortie du
+  // stock ; IM-9 : « Retour fourn. » (consigne) sur les contenants actifs.
   const pied = sortie
-    ? ''
+    ? '<div class="bouteille-pied">' + lienFiche + '</div>'
     : '<div class="bouteille-pied">'
+      + lienFiche
       + '<button type="button" class="btn btn-secondaire btn-petit" data-action="modifier" data-id="' + esc(b.id) + '"'
       + ' aria-label="Modifier la bouteille ' + esc(b.code) + '">Modifier</button>'
       + '<button type="button" class="btn btn-contour btn-petit" data-action="peser" data-id="' + esc(b.id) + '"'

@@ -2023,6 +2023,14 @@ export function creerDemoStore() {
 
     async peserBouteille(id, masseBruteKg, operateur) {
       const bouteille = trouverBouteille(id);
+      // IM-5 durci (brique ②) : une bouteille sortie du stock ne se pèse
+      // plus — une pesée postérieure à un retour fournisseur ou une sortie
+      // déchet rendrait la chronologie d'audit incohérente (masse réécrite
+      // après le départ physique du contenant).
+      if (bouteille.statut === 'RETOURNEE' || bouteille.statut === 'DECHET') {
+        throw new Error(
+          'Bouteille sortie du stock (retournée ou déchet) : pesée impossible.');
+      }
       const brute = Number(masseBruteKg);
       if (!Number.isFinite(brute) || brute < 0) {
         throw new Error('Masse brute obligatoire (en kg, positive).');
@@ -2284,11 +2292,19 @@ export function creerDemoStore() {
       // (sinon la colonne CERFA et le compteur nbCerfa mentiraient).
       mouvement.cerfaNumero =
         mouvement.type === 'TRANSFERT' ? null : mouvement.numero;
+      // Brique ② : PRP du fluide DU MOUVEMENT figé au moment où l'écriture
+      // devient opposable (même moment que cerfaNumero, HORS empreinte —
+      // le référentiel peut évoluer, l'écriture validée garde sa valeur).
+      mouvement.prpFige =
+        indexFluides().get(mouvement.fluide)?.gwpAr4 ?? null;
       await sceller(mouvement);
 
+      // Le PRP figé est consigné dans le journal (recoupement opposable —
+      // parité stricte avec le serveur, dont le journal est chaîné).
       journaliser(`${validateur.prenom} ${validateur.nom}`,
         'VALIDATION_MOUVEMENT', mouvement.numero,
-        `${mouvement.type} · ${mouvement.quantiteKg} kg ${mouvement.fluide}`);
+        `${mouvement.type} · ${mouvement.quantiteKg} kg ${mouvement.fluide}`
+        + (mouvement.prpFige != null ? ` · PRP figé ${mouvement.prpFige}` : ''));
       persisterEtNotifier();
 
       // IM-4 : une récupération-démantèlement qui VIDE la machine
@@ -2355,6 +2371,11 @@ export function creerDemoStore() {
       // IM-12 : même règle qu'à la validation — pas de CERFA pour un TRANSFERT
       contreEcriture.cerfaNumero =
         contreEcriture.type === 'TRANSFERT' ? null : contreEcriture.numero;
+      // Brique ② : la contre-écriture fige le PRP à SA validation (même
+      // fluide que l'original ; si le référentiel a bougé entre-temps, les
+      // deux valeurs témoignent chacune de leur époque).
+      contreEcriture.prpFige =
+        indexFluides().get(contreEcriture.fluide)?.gwpAr4 ?? null;
       await sceller(contreEcriture);
       donnees.mouvements.push(contreEcriture);
 

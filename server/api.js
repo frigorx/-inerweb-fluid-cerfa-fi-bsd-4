@@ -1577,6 +1577,12 @@ const HANDLERS = {
   peserBouteille(params) {
     const { id } = params;
     const bouteille = trouverBouteille(id);
+    // IM-5 durci (brique ②) : une bouteille sortie du stock ne se pèse
+    // plus — parité stricte avec le DemoStore (message identique).
+    if (bouteille.statut === 'RETOURNEE' || bouteille.statut === 'DECHET') {
+      throw new Error(
+        'Bouteille sortie du stock (retournée ou déchet) : pesée impossible.');
+    }
     const brute = Number(params.masseBruteKg);
     if (!Number.isFinite(brute) || brute < 0) {
       throw new Error('Masse brute obligatoire (en kg, positive).');
@@ -1862,15 +1868,23 @@ const HANDLERS = {
       // IM-12 : un TRANSFERT interne ne reçoit AUCUN numéro CERFA.
       mouvement.cerfaNumero =
         mouvement.type === 'TRANSFERT' ? null : mouvement.numero;
+      // Brique ② : PRP du fluide DU MOUVEMENT figé au moment où l'écriture
+      // devient opposable (même moment que cerfaNumero, HORS empreinte —
+      // le référentiel peut évoluer, l'écriture validée garde sa valeur).
+      mouvement.prpFige = lireFluide(mouvement.fluide)?.gwpAr4 ?? null;
       sceller(mouvement);
 
       // Persistance : effets déjà écrits, ici on fige l'écriture (SOUMIS →
       // VALIDE, quantité, contrôle aplati, scellement).
       persisterMouvementValide(mouvement);
 
+      // Le PRP figé est consigné dans le journal CHAÎNÉ : prg_fige est hors
+      // empreinte (falsifiable dans un export édité à la main), cette ligne
+      // de journal donne le point de recoupement opposable.
       journaliser(`${validateur.prenom} ${validateur.nom}`,
         'VALIDATION_MOUVEMENT', mouvement.numero,
-        `${mouvement.type} · ${mouvement.quantiteKg} kg ${mouvement.fluide}`);
+        `${mouvement.type} · ${mouvement.quantiteKg} kg ${mouvement.fluide}`
+        + (mouvement.prpFige != null ? ` · PRP figé ${mouvement.prpFige}` : ''));
 
       const resultat = reconstituerMouvement(lireLigneMouvement(id));
       // IM-4 : une récupération-démantèlement qui VIDE la machine invite
@@ -1946,6 +1960,11 @@ const HANDLERS = {
       // IM-12 : pas de CERFA pour un TRANSFERT.
       contreEcriture.cerfaNumero =
         contreEcriture.type === 'TRANSFERT' ? null : contreEcriture.numero;
+      // Brique ② : la contre-écriture fige le PRP à SA validation (même
+      // fluide que l'original ; si le référentiel a bougé entre-temps, les
+      // deux valeurs témoignent chacune de leur époque).
+      contreEcriture.prpFige =
+        lireFluide(contreEcriture.fluide)?.gwpAr4 ?? null;
       sceller(contreEcriture);
       insererMouvement(contreEcriture);
 
@@ -2770,6 +2789,7 @@ function persisterMouvementValide(mouvement) {
     machine_label: mouvement.machineLabel ?? null,
     validateur_id: mouvement.validateurId ?? null,
     cerfa_numero: mouvement.cerfaNumero ?? null,
+    prg_fige: mouvement.prpFige ?? null,
     hash_ecriture: mouvement.hashEcriture,
     hash_precedent: mouvement.hashPrecedent,
     ordre_validation: mouvement.ordreValidation,

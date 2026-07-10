@@ -59,6 +59,15 @@ function reconstituerMouvement(ligneSql) {
       statutControle: ligneSql.statut_controle_declare,
       detecteurId: ligneSql.detecteur_declare_id ?? null
     };
+    // R5 : clé ajoutée SEULEMENT si fournie, AVANT controleId — clone
+    // EXACT de api.js:reconstituerMouvement. Son OMISSION ici (corrigée
+    // brique ②) faisait juger « chaîne registre rompue » toute sauvegarde
+    // contenant un mouvement FUITE avec localisation déclarée : la clé
+    // avait été hachée au scellement mais manquait à la re-vérification
+    // (JSON.stringify est sensible à la présence des clés).
+    if (ligneSql.localisation_fuite_declaree != null) {
+      controle.localisationFuite = ligneSql.localisation_fuite_declaree;
+    }
     if (ligneSql.controle_lie_id != null) {
       controle.controleId = ligneSql.controle_lie_id;
     }

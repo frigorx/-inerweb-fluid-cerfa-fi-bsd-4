@@ -742,6 +742,71 @@ verifierLeve('le code public est unique (résolution QR sans ambiguïté)',
 }
 
 // ============================================================
+// 6octies. PRP figé sur les mouvements (migration 013) — base
+// PRÉEXISTANTE (v12 → v13) : colonne ajoutée NULL sur l'existant,
+// écriture scellée INTACTE, déclencheur WORM recréé qui couvre
+// prg_fige (et répare le trou migration 8 des vieilles bases).
+// ============================================================
+{
+  const CHEMIN_ANCIENNE_PRP = join(DOSSIER, 'ancienne-prp.db');
+  const anciennePrp = new DatabaseSync(CHEMIN_ANCIENNE_PRP);
+  anciennePrp.exec(readFileSync(new URL('./schema.sql', import.meta.url), 'utf8'));
+  anciennePrp.exec(`PRAGMA user_version = ${migrations.VERSION_BASE};`);
+  const jusqua12 = {};
+  for (let v = 2; v <= 12; v += 1) jusqua12[v] = migrations.MIGRATIONS[v];
+  migrations.migrer(anciennePrp, jusqua12); // portée à 12, PAS encore 13
+
+  anciennePrp.exec(`INSERT INTO etablissements (id, raison_sociale)
+                    VALUES ('ETB-PRP', 'Lycée PRP');`);
+  // Une écriture SCELLÉE d'avant la migration (comme une vraie base).
+  anciennePrp.exec(`INSERT INTO mouvements (id, numero, etablissement_id,
+      date_mouvement, mode, type_operation, statut, quantite_calculee_kg,
+      hash_ecriture, hash_precedent, ordre_validation)
+    VALUES ('MVT-PRP-1', 'FORM-2026-0001', 'ETB-PRP', '2026-07-01',
+      'FORMATION', 'CHARGE_APPOINT', 'VALIDE', 2.5,
+      '${'d'.repeat(64)}', NULL, 1);`);
+
+  verifier('avant migration 013 : la base est bloquée en version 12',
+    migrations.lireVersion(anciennePrp) === 12);
+  verifier('avant migration 013 : mouvements n’a pas encore prg_fige',
+    !anciennePrp.prepare('PRAGMA table_info(mouvements)').all()
+      .some((c) => c.name === 'prg_fige'));
+
+  const vFinalePrp = migrations.migrer(anciennePrp,
+    { 13: migrations.MIGRATIONS[13] });
+  verifier('la migration 013 porte la base à la version 13',
+    vFinalePrp === 13 && migrations.lireVersion(anciennePrp) === 13);
+  verifier('la colonne prg_fige existe après migration',
+    anciennePrp.prepare('PRAGMA table_info(mouvements)').all()
+      .some((c) => c.name === 'prg_fige'));
+
+  const scellee = anciennePrp.prepare(
+    "SELECT * FROM mouvements WHERE id = 'MVT-PRP-1'").get();
+  verifier('l’écriture scellée d’avant la migration est INTACTE (pas de backfill)',
+    scellee.prg_fige === null && scellee.hash_ecriture === 'd'.repeat(64)
+    && PROCHE(scellee.quantite_calculee_kg, 2.5));
+
+  // Le déclencheur recréé couvre prg_fige : impossible de poser une valeur
+  // sur une écriture scellée, même pendant la bascule VALIDE→ANNULE.
+  verifierLeve('le WORM recréé bloque tout backfill de prg_fige sur une écriture scellée',
+    () => anciennePrp.exec(
+      "UPDATE mouvements SET prg_fige = 675 WHERE id = 'MVT-PRP-1';"),
+    'Registre verrouillé');
+  verifierLeve('VALIDE → ANNULE avec prg_fige retouché dans la même passe est bloqué',
+    () => anciennePrp.exec(`UPDATE mouvements SET statut = 'ANNULE',
+      prg_fige = 675 WHERE id = 'MVT-PRP-1';`),
+    'Registre verrouillé');
+
+  const sqlDeclencheurPrp = anciennePrp.prepare(`SELECT sql FROM sqlite_master
+    WHERE name = 'mouvements_interdire_modification_validee'`).get().sql;
+  verifier('le déclencheur recréé couvre prg_fige ET localisation_fuite_declaree (trou migration 8 réparé)',
+    sqlDeclencheurPrp.includes('NEW.prg_fige')
+    && sqlDeclencheurPrp.includes('NEW.localisation_fuite_declaree'));
+
+  anciennePrp.close();
+}
+
+// ============================================================
 // 7. Base pré-versionnage : refusée avec un message clair
 // ============================================================
 db.fermer();

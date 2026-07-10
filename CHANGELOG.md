@@ -2,6 +2,67 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧴 Brique ② (volet A) · Fiche bouteille vivante + « la vie de la bouteille » + PRP figé (10/07)
+« Montrez-moi la vie de la B-04 » a désormais une réponse (trou n°1 de l'examen du 10/07 :
+`#/b/` ouvrait juste le formulaire d'édition). Construit avec cartographie multi-agents
+(8 lentilles) puis revue adversariale multi-agents (4 lentilles) — 1 bloquant et 1 important
+attrapés AVANT le navigateur.
+- **`v8/js/views/fiche-bouteille.js`** (nouveau, patron fiche machine) : la route QR
+  `#/b/<code_public>` (hash INCHANGÉ — gravé sur les étiquettes imprimées) ouvre une vraie
+  fiche — 4 KPI (fluide + état, masse nette/contenance avec barre, statut, dernière pesée),
+  actions (Peser / Modifier / Étiquette QR — **masquées sur une bouteille sortie du stock**,
+  fiche en consultation seule), détails repliables (tare, contenance, masse d'entrée figée,
+  décision fluide, composition MÉLANGE…), alertes de la bouteille, et **chronologie** +
+  onglet Documents (PJ). L'édition reste accessible par « Modifier la fiche ».
+- **`v8/js/data/vie-bouteille.js`** (nouveau, PUR/Node-testable) : fusionne les mouvements
+  opposables (source ET destination — variations vues DE LA BOUTEILLE, contre-écritures
+  appariées à leur originale, contrepartie des transferts « → B-04 »/« ← B-01 ») et le
+  journal d'audit (création, pesées avec valeurs, décision déchet, BSFF, retour fournisseur)
+  en une frise datée. teq CO₂ par mouvement au **PRP figé** (repli affiché « PRP actuel »
+  pour les écritures d'avant). Tri : jour métier, puis rang intra-jour honnête (création au
+  fond de sa journée, mouvements par rang de scellement).
+- **PRP FIGÉ à la validation (B7 partiel)** : migration **013** `mouvements.prg_fige`
+  (nommage aligné sur `controles.prg_utilise` ; clé front `prpFige`), posé au MÊME moment
+  que `cerfaNumero` (validation ET contre-écriture, parité stricte démo/serveur), **HORS
+  empreinte chaînée** (liste blanche du hasseur — chaînes existantes intactes, échange
+  croisé démo↔local prouvé), **pas de backfill** (NULL = « pas figé à l'époque », antidater
+  serait mensonger). La migration **recrée le déclencheur WORM** avec la liste complète —
+  répare au passage le trou hérité de la migration 8 (bases d'avant le 06/07 :
+  `localisation_fuite_declaree` non surveillée). Le PRP figé est aussi **consigné dans le
+  journal d'audit CHAÎNÉ** à la validation (« · PRP figé 675 ») : point de recoupement
+  opposable, le champ seul étant hors empreinte. ⚠️ Leçon : le trigger du SOCLE ne peut pas
+  référencer une colonne posée par une migration ultérieure au `RENAME` de la migration 10
+  (SQLite re-parse les triggers) — d'où le DROP/CREATE dans la 13, socle intact.
+- **Bug latent PRÉEXISTANT corrigé** (`server/verification.js`) : la re-vérification d'une
+  SAUVEGARDE omettait `controle.localisationFuite` dans la pré-image → toute archive
+  contenant un mouvement FUITE localisé était jugée « chaîne registre rompue » À TORT.
+  Rouge prouvé puis corrigé (`test-verification-fuite.mjs` 3/0).
+- **IM-5 durci** : `peserBouteille` refuse désormais une bouteille sortie du stock
+  (RETOURNEE/DECHET) dans les DEUX stores — une masse réécrite après le départ physique
+  fausserait l'audit (assertion ajoutée au contrat, 255/0).
+- **Vue Stock** : lien « Fiche » sur chaque carte, y compris les bouteilles sorties (leur
+  chronologie est précisément ce qu'un auditeur demande).
+- Tests : `test-vie-bouteille.mjs` **25/0** (signes par type et contre-écritures, tri
+  intra-jour, contrepartie transfert, zéro perte, parcours réel complet), `test-prp-fige.mjs`
+  **16/0 en demo ET local** (suite doublée ; brouillon sans PRP, validation, contre-écriture,
+  chaîne intacte, export/import, **échange croisé démo→local + vieil export sans la clé**),
+  section 6octies de `test-migrations` (base v12→13 : scellée intacte, backfill bloqué,
+  trigger recréé complet). **43 exécutions TOUT VERT.**
+- **Vérifié navigateur** (sandbox, Local 8147 — la base v12 de la sandbox a migré en 13 au
+  démarrage — + Démo 8153 origine neuve ; piège du cache ES re-payé sur 8148 réutilisé,
+  d'où le port neuf) : Local = création bouteille → lien Fiche → fiche 4 KPI → « Entrée au
+  parc » au journal → pesée → frise et compteur mis à jour ; Démo = fiche seed (état vide
+  honnête), wizard complet 6 étapes (charge B-01 → M3, signature) → frise « Complément de
+  charge · FORM-2026-0001 · −0,50 kg · PAC air/eau formation · ≈ 0,34 t éq. CO₂ (PRP figé
+  675) · par Marc Delorme » + bouton CERFA, masse 7,40 → 6,90 kg. Zéro erreur console.
+- ⚠️ Dettes notées (revue) : `updateBouteille` reste sans garde de statut (préexistant —
+  une DECHET peut théoriquement être repassée EN_STOCK à la main, à traiter avec les
+  habilitations B2) ; `prpFige` reste falsifiable dans un export édité à la main (hors
+  empreinte par construction — le recoupement = la ligne du journal chaîné) ; l'import ne
+  vérifie pas l'intégrité référentielle du référentiel fluides d'un candidat (préexistant).
+  Volet B à suivre : inventaire nominatif au 01/01 et 31/12 (photographie figée à la
+  saisie d'inventaire) + fuites ouvertes au 31/12.
+
 ### 🚦 Brique ① · Tableau de bord de conformité « feu tricolore » (10/07)
 La conformité était éclatée sur 5 vues (constat de l'examen du 10/07) : nouvel écran
 **« Conformité »** (sidebar, sous le Tableau de bord) = l'état réglementaire complet en un

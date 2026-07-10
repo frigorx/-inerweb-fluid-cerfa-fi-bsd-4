@@ -53,6 +53,13 @@
  *  12 — code_public de l'outillage (Phase 2, QR outillage) : même patron que la
  *       migration 011, scopé sur outillage — étiquette QR sur un outil qui ouvre
  *       sa fiche (état d'étalonnage/vérification).
+ *  13 — PRP figé sur les mouvements (brique ② / B7) : mouvements.prg_fige
+ *       (REAL NULL, nommage prg_* aligné sur controles.prg_utilise ; clé front
+ *       prpFige), posé à la VALIDATION avec le gwp_ar4 courant du fluide du
+ *       mouvement. HORS empreinte chaînée (liste blanche du hasseur), pas de
+ *       backfill (NULL = pas figé à l'époque). Recrée le déclencheur WORM avec
+ *       la liste complète — répare aussi le trou de la migration 8 (bases
+ *       d'avant le 06/07 : localisation_fuite_declaree non surveillée).
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -364,6 +371,80 @@ const MIGRATIONS = {
         dejaPris.add(code);
         maj.run(code, id);
       }
+    }
+  },
+
+  13: {
+    nom: 'prg_fige_mouvements',
+    appliquer(db) {
+      // PRP (GWP AR4) FIGÉ à la validation du mouvement — brique ② (B7).
+      // Nommage SQL prg_* aligné sur le précédent controles.prg_utilise ;
+      // clé front = prpFige (mapping.js). Champ HORS empreinte chaînée
+      // (CHAMPS_HASH_MOUVEMENT est une liste blanche : rien à faire), donc
+      // les chaînes existantes restent valides. PAS de backfill : NULL sur
+      // les écritures antérieures = « pas figé à l'époque » (antidater une
+      // valeur figée serait mensonger vis-à-vis d'un audit) ; l'affichage
+      // replie sur le référentiel courant en le disant.
+      db.exec('ALTER TABLE mouvements ADD COLUMN prg_fige REAL;');
+
+      // Recréation du déclencheur WORM avec la liste de colonnes COMPLÈTE :
+      // couvre prg_fige, et RÉPARE au passage le trou hérité de la
+      // migration 8 (les bases créées avant le 06/07 gardaient un trigger
+      // qui ne surveillait pas localisation_fuite_declaree pendant la
+      // bascule VALIDE→ANNULE). Recréer un trigger ne touche à AUCUNE
+      // donnée : aucun re-hash, aucune écriture de ligne.
+      db.exec('DROP TRIGGER IF EXISTS mouvements_interdire_modification_validee;');
+      db.exec(`CREATE TRIGGER mouvements_interdire_modification_validee
+BEFORE UPDATE ON mouvements
+WHEN OLD.statut = 'VALIDE'
+ AND NOT (    NEW.statut = 'ANNULE'
+          AND NEW.id                    IS OLD.id
+          AND NEW.numero                IS OLD.numero
+          AND NEW.etablissement_id      IS OLD.etablissement_id
+          AND NEW.date_mouvement        IS OLD.date_mouvement
+          AND NEW.mode                  IS OLD.mode
+          AND NEW.type_operation        IS OLD.type_operation
+          AND NEW.cause                 IS OLD.cause
+          AND NEW.machine_id            IS OLD.machine_id
+          AND NEW.machine_label         IS OLD.machine_label
+          AND NEW.machine_destination_id IS OLD.machine_destination_id
+          AND NEW.bouteille_source_id   IS OLD.bouteille_source_id
+          AND NEW.bouteille_destination_id IS OLD.bouteille_destination_id
+          AND NEW.fluide                IS OLD.fluide
+          AND NEW.pesee_avant_kg        IS OLD.pesee_avant_kg
+          AND NEW.pesee_apres_kg        IS OLD.pesee_apres_kg
+          AND NEW.quantite_calculee_kg  IS OLD.quantite_calculee_kg
+          AND NEW.sens                  IS OLD.sens
+          AND NEW.quantite_chargee_kg               IS OLD.quantite_chargee_kg
+          AND NEW.quantite_recuperee_kg             IS OLD.quantite_recuperee_kg
+          AND NEW.quantite_cedee_kg                 IS OLD.quantite_cedee_kg
+          AND NEW.quantite_retournee_fournisseur_kg IS OLD.quantite_retournee_fournisseur_kg
+          AND NEW.quantite_detruite_regeneree_kg    IS OLD.quantite_detruite_regeneree_kg
+          AND NEW.origine_fluide        IS OLD.origine_fluide
+          AND NEW.destination_fluide    IS OLD.destination_fluide
+          AND NEW.technicien            IS OLD.technicien
+          AND NEW.technicien_id         IS OLD.technicien_id
+          AND NEW.validateur_id         IS OLD.validateur_id
+          AND NEW.statut_controle_declare IS OLD.statut_controle_declare
+          AND NEW.detecteur_declare_id  IS OLD.detecteur_declare_id
+          AND NEW.localisation_fuite_declaree IS OLD.localisation_fuite_declaree
+          AND NEW.controle_lie_id       IS OLD.controle_lie_id
+          AND NEW.signature_data_url    IS OLD.signature_data_url
+          AND NEW.cerfa_numero          IS OLD.cerfa_numero
+          AND NEW.bsff_id               IS OLD.bsff_id
+          AND NEW.observation           IS OLD.observation
+          AND NEW.date_soumission       IS OLD.date_soumission
+          AND NEW.motif_rejet           IS OLD.motif_rejet
+          AND NEW.motif                 IS OLD.motif
+          AND NEW.hash_ecriture         IS OLD.hash_ecriture
+          AND NEW.hash_precedent        IS OLD.hash_precedent
+          AND NEW.ordre_validation      IS OLD.ordre_validation
+          AND NEW.contre_ecriture_de    IS OLD.contre_ecriture_de
+          AND NEW.date_creation         IS OLD.date_creation
+          AND NEW.prg_fige              IS OLD.prg_fige)
+BEGIN
+    SELECT RAISE(ABORT, 'Registre verrouillé : une écriture validée ne peut pas être modifiée (utiliser une contre-écriture).');
+END;`);
     }
   }
 };

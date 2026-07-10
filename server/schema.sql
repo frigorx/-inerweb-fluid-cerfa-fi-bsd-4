@@ -325,6 +325,10 @@ CREATE TABLE IF NOT EXISTS mouvements (
     ordre_validation        INTEGER,                 -- ⚿ rang de scellement (1, 2, 3…) — unique quand présent
     contre_ecriture_de      TEXT REFERENCES mouvements(id),    -- écriture d'origine si régularisation
     date_creation           TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    -- PRP figé à la validation (prg_fige REAL, hors empreinte) : colonne
+    -- posée par la migration 13 (server/migrations.js), PAS ici
+    -- (schema.sql = socle v1 figé). La migration 13 recrée aussi le
+    -- déclencheur WORM avec la liste complète (voir sa remarque plus bas).
 );
 
 -- Un seul rang de scellement par écriture scellée (fourche de chaîne interdite).
@@ -398,6 +402,11 @@ WHEN OLD.statut = 'VALIDE'
 BEGIN
     SELECT RAISE(ABORT, 'Registre verrouillé : une écriture validée ne peut pas être modifiée (utiliser une contre-écriture).');
 END;
+-- NB : la migration 13 REMPLACE ce déclencheur par une version couvrant
+-- aussi prg_fige (colonne posée par elle). Il ne peut pas référencer
+-- prg_fige ICI : l'ALTER TABLE … RENAME de la migration 10 re-parse les
+-- déclencheurs, et une colonne encore absente ferait échouer toute
+-- création de base neuve (« no such column: NEW.prg_fige », vécu).
 
 
 -- ============================================================================

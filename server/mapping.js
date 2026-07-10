@@ -242,7 +242,11 @@ const TABLES = {
       hashEcriture: 'hash_ecriture',
       hashPrecedent: 'hash_precedent',
       ordreValidation: 'ordre_validation',
-      contreEcritureDe: 'contre_ecriture_de'
+      contreEcritureDe: 'contre_ecriture_de',
+      // PRP (gwp_ar4) FIGÉ à la validation — colonne posée par la
+      // migration 13, HORS empreinte chaînée (liste blanche du hasseur).
+      // NULL sur les écritures antérieures (backfill interdit par le WORM).
+      prpFige: 'prg_fige'
     },
     // proposerDemantelement : champ ÉPHÉMÈRE posé sur la COPIE retournée
     // par validerMouvement quand la récupération vide la machine — jamais

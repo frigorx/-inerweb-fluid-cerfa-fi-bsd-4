@@ -820,6 +820,10 @@ verifier('retournerFournisseur vide la bouteille et la sort du stock',
 }
 await verifierRejet('retournerFournisseur refuse une bouteille déjà retournée',
   store.retournerFournisseur(b1.id, 'Testeur'));
+// IM-5 durci (brique ②) : plus de pesée sur une bouteille sortie du stock
+// (une masse réécrite APRÈS le départ physique fausserait l'audit).
+await verifierRejet('peserBouteille refuse une bouteille sortie du stock',
+  store.peserBouteille(b1.id, 12, 'Testeur'), 'sortie du stock');
 
 // ============================================================
 // 13 bis. Les trois autres types : TRANSFERT (sans CERFA),

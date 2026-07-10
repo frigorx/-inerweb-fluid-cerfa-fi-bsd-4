@@ -52,7 +52,8 @@ function decouvrirSuites(dossier = RACINE) {
 // parité DemoStore/LocalStore via l'argument de store.
 const SUITES_DOUBLEES = new Set([
   'v8/js/data/test-contrat.mjs',
-  'v8/js/data/test-feu-tricolore.mjs'
+  'v8/js/data/test-feu-tricolore.mjs',
+  'v8/js/data/test-prp-fige.mjs'
 ]);
 
 /** Une exécution = un fichier + des arguments éventuels. */
