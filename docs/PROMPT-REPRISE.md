@@ -21,7 +21,22 @@ attentes. Tu ne t'arrêtes que quand une brique est **finie et testée par toi-m
    (**source de vérité**, entrées les plus récentes en tête), `docs/PLAN-PHASE-2.md`,
    `docs/VISION-V9-V10.md` (la boussole).
 
-## État exact (dernier commit poussé `d6023b1`, 09/07/2026)
+## État exact (dernier commit poussé `bc2698c`, 10/07/2026)
+
+**FAIT le 10/07 (après l'examen multi-agents)** :
+- **Séance 0 « assainissement » (`c8b7dc7`)** : sw.js v7 sabordé (+ désenregistrement actif) ;
+  **lanceur global `outils/lancer-tests.mjs`** (toutes les suites en une commande, contrat et
+  feu-tricolore joués demo+local, arrêt au premier rouge) ; CF-22 câblé (bouton « Exporter en
+  PDF » du journal, Administration) ; **`amorcerEtablissement()` automatique** dans `inserer()`
+  + upserts inventaire (fin des échecs FK sur base fraîche, `test-amorce-etablissement.mjs`
+  12/0) ; encart Prise en main étape 1 « Compléter votre établissement » ;
+  `INSTALLATION_SIMPLE.md` conforme à la réalité (paquet portable sans Node, un seul écran au
+  premier lancement).
+- **Brique ① « Conformité » feu tricolore (`bc2698c`)** : écran « Conformité » (sidebar, 2e
+  position) — moteur pur `v8/js/data/feu-tricolore.js` consolidant getAlertes /
+  peutPasserEnOfficiel / verifierChaineHash en 7 domaines tricolores ; garde-fous « jamais
+  tout vert si prérequis Officiel manquants » et domaine-filet anti-omission ;
+  `test-feu-tricolore.mjs` **30/0 en demo ET local**. **39 exécutions TOUT VERT.**
 
 Socle **E0→E5** (contrat DataStore + SQLite + coffre-fort + comptes/rôles/sessions) et **V9.1**
 (fiche machine + QR) déjà faits. **Phase 2 FAITE et poussée** :
@@ -106,24 +121,9 @@ partageables…), ce qui attend Franck, et les atouts vs concurrence. En résum�
 
 ## Prochaine action
 
-**Commencer par la Séance 0 « assainissement »** (une séance, un commit, validée par l'examen du
-10/07 — tout est petit et sans risque) :
-1. **Tuer le service worker v7** : remplacer `sw.js` (racine) par un service worker « suicide »
-   (`self.registration.unregister()` + purge des caches) — le sw v7 actuel fait du cache-d'abord
-   sur tout, couvre `/v8/` sur GitHub Pages et n'est jamais désenregistré (le plus dangereux).
-2. **Lanceur de tests global** `outils/lancer-tests.mjs` : énumère toutes les suites `test-*.mjs`
-   (serveur + front), échoue au premier rouge — aujourd'hui 35 suites se lancent une par une.
-3. **Câbler CF-22** : `genererJournalAuditPdf()` (`v8/js/documents/exports.js`) est testée mais
-   importée par aucune vue — ajouter le bouton dans `admin.js` ou `bilan.js`.
-4. **Généraliser `amorcerEtablissement()`** dans `server/api.js` : ~14 insertions posent
-   `etablissement_id`, seules 5 amorcent (échec FK possible sur base fraîche).
-5. **Corriger `INSTALLATION_SIMPLE.md`** : il décrit un assistant de configuration qui n'existe
-   pas (seul le compte admin est demandé) et impose Node alors que le paquet portable l'embarque ;
-   ajouter après le bootstrap un encart « complétez votre établissement » (cadre 1 du CERFA).
+*(Séance 0 et brique ① : FAITES le 10/07, cf. « État exact » ci-dessus.)*
 
-Puis, briques **sans dépendance à Franck**, dans l'ordre (fort impact démo) :
-**① tableau de bord de conformité (feu tricolore)** — consolider l'existant (« Audit en
-5 minutes » de `bilan.js` + `getAlertes` + `peutPasserEnOfficiel`), ne rien créer de zéro →
+Briques **sans dépendance à Franck**, dans l'ordre (fort impact démo) :
 **② fiche bouteille avec historique** (fusionner avec l'inventaire nominatif B7 ; « montrez-moi la
 vie de la B-04 » doit avoir une réponse ; attention : les pesées sont écrasées en place, l'historique
 n'est qu'au journal ; figer le PRP = champ HORS empreinte chaînée) → **③ dossier de fuite fermé
@@ -131,7 +131,8 @@ matérialisé** (la règle est déjà codée, construire l'écran chronologie + 
 scellement + vérificateur HTML autonome embarqué dans chaque ZIP** (preuve auto-vérifiable par un
 auditeur sans le logiciel) → **⑤ correction automatique du CERFA rempli par l'élève** (v1 bornée aux
 PDF remplis numériquement). Sauf nouvelle consigne de Franck. Annoncer le réglage conseillé, puis
-exécuter (tests d'abord, vérification navigateur sur port neuf, commit + push + mémoire).
+exécuter (tests d'abord — `node outils/lancer-tests.mjs` = tout le filet en une commande —,
+vérification navigateur sur port neuf, commit + push + mémoire).
 
 Dès que Franck fournit la **grille réglementaire officielle**, basculer sur le **cœur audit-proof**
 (mode Officiel bloquant + habilitations 2008/2025 + fréquence de contrôle auto) — c'est ce qui rend
