@@ -21,22 +21,39 @@ attentes. Tu ne t'arrêtes que quand une brique est **finie et testée par toi-m
    (**source de vérité**, entrées les plus récentes en tête), `docs/PLAN-PHASE-2.md`,
    `docs/VISION-V9-V10.md` (la boussole).
 
-## État exact (dernier commit poussé `bc2698c`, 10/07/2026)
+## État exact (dernier commit poussé `1a2a6b5`, 10/07/2026)
 
 **FAIT le 10/07 (après l'examen multi-agents)** :
 - **Séance 0 « assainissement » (`c8b7dc7`)** : sw.js v7 sabordé (+ désenregistrement actif) ;
-  **lanceur global `outils/lancer-tests.mjs`** (toutes les suites en une commande, contrat et
-  feu-tricolore joués demo+local, arrêt au premier rouge) ; CF-22 câblé (bouton « Exporter en
+  **lanceur global `outils/lancer-tests.mjs`** (toutes les suites en une commande, suites de
+  parité jouées demo+local, arrêt au premier rouge) ; CF-22 câblé (bouton « Exporter en
   PDF » du journal, Administration) ; **`amorcerEtablissement()` automatique** dans `inserer()`
-  + upserts inventaire (fin des échecs FK sur base fraîche, `test-amorce-etablissement.mjs`
-  12/0) ; encart Prise en main étape 1 « Compléter votre établissement » ;
-  `INSTALLATION_SIMPLE.md` conforme à la réalité (paquet portable sans Node, un seul écran au
-  premier lancement).
-- **Brique ① « Conformité » feu tricolore (`bc2698c`)** : écran « Conformité » (sidebar, 2e
-  position) — moteur pur `v8/js/data/feu-tricolore.js` consolidant getAlertes /
-  peutPasserEnOfficiel / verifierChaineHash en 7 domaines tricolores ; garde-fous « jamais
-  tout vert si prérequis Officiel manquants » et domaine-filet anti-omission ;
-  `test-feu-tricolore.mjs` **30/0 en demo ET local**. **39 exécutions TOUT VERT.**
+  + upserts inventaire (fin des échecs FK sur base fraîche) ; encart Prise en main étape 1
+  « Compléter votre établissement » ; `INSTALLATION_SIMPLE.md` conforme à la réalité.
+- **Brique ① « Conformité » feu tricolore (`bc2698c`)** : écran « Conformité » (sidebar) —
+  moteur pur `v8/js/data/feu-tricolore.js` consolidant getAlertes / peutPasserEnOfficiel /
+  verifierChaineHash en 7 domaines tricolores ; garde-fous « jamais tout vert si prérequis
+  Officiel manquants » et domaine-filet anti-omission ; test 30/0 demo+local.
+- **Brique ② COMPLÈTE (volets A `bb30e4f` + B `1a2a6b5`)** :
+  - **Fiche bouteille vivante `#/b/<code>`** (hash QR inchangé, patron fiche machine, lien
+    « Fiche » sur les cartes du stock, consultation seule sur bouteille sortie) +
+    **chronologie « la vie de la bouteille »** (module pur `v8/js/data/vie-bouteille.js` :
+    mouvements opposables vus de la bouteille, contre-écritures appariées, contrepartie des
+    transferts, journal — pesées avec valeurs, BSFF, retour, décision).
+  - **PRP figé à la validation** (migration 013 `prg_fige`/`prpFige`, HORS empreinte — liste
+    blanche du hasseur —, pas de backfill, consigné AUSSI au journal chaîné « · PRP figé N » ;
+    trigger WORM recréé = trou migration 8 réparé). Bug latent corrigé : `verification.js`
+    omettait `localisationFuite` (sauvegardes avec fuite localisée jugées corrompues à tort).
+    IM-5 durci : `peserBouteille` refuse une bouteille sortie du stock (contrat 255/0).
+  - **Inventaire NOMINATIF (B7/CF-20)** : `saisirInventaire` fige une PHOTOGRAPHIE
+    (bouteilles présentes + fuites ouvertes, migration 014, tables dénormalisées) ; nouvelle
+    méthode contrat `getInventaireNominatif(annee)` (surface **66**) avec **ouverture** =
+    photo N−1 (état au 01/01) ; section dans la vue Balance ; 2 CSV conditionnels scellés
+    dans le dossier d'audit ; export/import complet. ⚠️ Leçons : jamais d'ORDER BY pour un
+    ordre contractuel (collation BINARY ≠ localeCompare) ; le trigger du socle ne peut pas
+    référencer une colonne posée après le RENAME de la migration 10.
+  **45 exécutions TOUT VERT** (suites doublées demo/local : contrat, feu-tricolore,
+  prp-fige, inventaire-nominatif). Vérifié navigateur Local + Démo (origines neuves).
 
 Socle **E0→E5** (contrat DataStore + SQLite + coffre-fort + comptes/rôles/sessions) et **V9.1**
 (fiche machine + QR) déjà faits. **Phase 2 FAITE et poussée** :
@@ -121,18 +138,22 @@ partageables…), ce qui attend Franck, et les atouts vs concurrence. En résum�
 
 ## Prochaine action
 
-*(Séance 0 et brique ① : FAITES le 10/07, cf. « État exact » ci-dessus.)*
+*(Séance 0, briques ① et ② : FAITES le 10/07, cf. « État exact » ci-dessus.)*
 
 Briques **sans dépendance à Franck**, dans l'ordre (fort impact démo) :
-**② fiche bouteille avec historique** (fusionner avec l'inventaire nominatif B7 ; « montrez-moi la
-vie de la B-04 » doit avoir une réponse ; attention : les pesées sont écrasées en place, l'historique
-n'est qu'au journal ; figer le PRP = champ HORS empreinte chaînée) → **③ dossier de fuite fermé
-matérialisé** (la règle est déjà codée, construire l'écran chronologie + export) → **④ certificat de
-scellement + vérificateur HTML autonome embarqué dans chaque ZIP** (preuve auto-vérifiable par un
-auditeur sans le logiciel) → **⑤ correction automatique du CERFA rempli par l'élève** (v1 bornée aux
-PDF remplis numériquement). Sauf nouvelle consigne de Franck. Annoncer le réglage conseillé, puis
-exécuter (tests d'abord — `node outils/lancer-tests.mjs` = tout le filet en une commande —,
-vérification navigateur sur port neuf, commit + push + mémoire).
+**③ dossier de fuite fermé matérialisé** (la règle d'or est déjà codée/testée — retour
+EN_SERVICE impossible sans réparation tracée + contrôle conforme postérieur ; construire
+l'écran CHRONOLOGIE de la fuite + l'export — différenciateur n°1, aucun concurrent ne le
+documente) → **④ certificat de scellement + vérificateur HTML autonome embarqué dans chaque
+ZIP** (preuve auto-vérifiable par un auditeur sans le logiciel — meilleur rapport
+impact/effort selon l'examen du 10/07) → **⑤ correction automatique du CERFA rempli par
+l'élève** (v1 bornée aux PDF remplis numériquement). Sauf nouvelle consigne de Franck.
+Annoncer le réglage conseillé, puis exécuter (tests d'abord — `node outils/lancer-tests.mjs`
+= tout le filet en une commande —, vérification navigateur sur port JAMAIS UTILISÉ (origine
+neuve, le cache de modules ES survit à tout), commit + push + mémoire).
+⚠️ Dettes notées en revue (brique ②, à traiter avec les habilitations B2) : `updateBouteille`
+sans garde de statut ; `prpFige` falsifiable dans un export édité à la main (recoupement =
+journal chaîné) ; l'import ne vérifie pas l'intégrité référentielle des fluides du candidat.
 
 Dès que Franck fournit la **grille réglementaire officielle**, basculer sur le **cœur audit-proof**
 (mode Officiel bloquant + habilitations 2008/2025 + fréquence de contrôle auto) — c'est ce qui rend
