@@ -41,6 +41,14 @@ Contrat **254/0** sur les deux implémentations, toutes les suites `test-*.mjs` 
 **Démo en ligne vérifiée fonctionnelle** : https://frigorx.github.io/-inerweb-fluid-cerfa-fi-bsd-4/v8/
 (GitHub Pages se republie à chaque push). Working tree **propre**, tout est poussé.
 
+**EXAMEN MULTI-AGENTS du 10/07** (9 agents, lecture seule, constats contre-vérifiés sur pièces —
+détail dans la **section G** de `reference_roadmap_fluide_audit.md`, à lire) : le code est **plus
+avancé que la feuille de route ne le dit** — B3 et B4 quasi-faits (seuils tCO₂eq et fréquences
+12/6/3 mois DÉJÀ codés/testés dans `plaque-fgas.js`, reste le câblage + la confirmation de Franck),
+B1 = effort moyen (manque la bascule + le verrou dans `validerMouvement`), la règle d'or de B8 déjà
+codée ; **B2 (habilitations) = seul vrai gros chantier du cœur**. Trous produit confirmés : pas de
+fiche bouteille, conformité éclatée sur 5 vues, Mouvements sans filtre, guide d'installation faux.
+
 ## Feuille de route (détail COMPLET dans `reference_roadmap_fluide_audit.md`)
 
 La feuille de route détaille : les briques restantes prévues (B1-B13), **des extensions au-delà du
@@ -98,11 +106,32 @@ partageables…), ce qui attend Franck, et les atouts vs concurrence. En résum�
 
 ## Prochaine action
 
-Reprendre la production « à fond » sur les briques **sans dépendance à Franck**. Ordre recommandé
-(fort impact démo, aucune validation externe) : **① tableau de bord de conformité (feu tricolore)**
-→ **② dossier de fuite fermé** → **③ correction automatique du CERFA rempli par l'élève**. Sauf
-nouvelle consigne de Franck. Annoncer le réglage conseillé, puis exécuter (tests d'abord,
-vérification navigateur sur port neuf, commit + push + mémoire).
+**Commencer par la Séance 0 « assainissement »** (une séance, un commit, validée par l'examen du
+10/07 — tout est petit et sans risque) :
+1. **Tuer le service worker v7** : remplacer `sw.js` (racine) par un service worker « suicide »
+   (`self.registration.unregister()` + purge des caches) — le sw v7 actuel fait du cache-d'abord
+   sur tout, couvre `/v8/` sur GitHub Pages et n'est jamais désenregistré (le plus dangereux).
+2. **Lanceur de tests global** `outils/lancer-tests.mjs` : énumère toutes les suites `test-*.mjs`
+   (serveur + front), échoue au premier rouge — aujourd'hui 35 suites se lancent une par une.
+3. **Câbler CF-22** : `genererJournalAuditPdf()` (`v8/js/documents/exports.js`) est testée mais
+   importée par aucune vue — ajouter le bouton dans `admin.js` ou `bilan.js`.
+4. **Généraliser `amorcerEtablissement()`** dans `server/api.js` : ~14 insertions posent
+   `etablissement_id`, seules 5 amorcent (échec FK possible sur base fraîche).
+5. **Corriger `INSTALLATION_SIMPLE.md`** : il décrit un assistant de configuration qui n'existe
+   pas (seul le compte admin est demandé) et impose Node alors que le paquet portable l'embarque ;
+   ajouter après le bootstrap un encart « complétez votre établissement » (cadre 1 du CERFA).
+
+Puis, briques **sans dépendance à Franck**, dans l'ordre (fort impact démo) :
+**① tableau de bord de conformité (feu tricolore)** — consolider l'existant (« Audit en
+5 minutes » de `bilan.js` + `getAlertes` + `peutPasserEnOfficiel`), ne rien créer de zéro →
+**② fiche bouteille avec historique** (fusionner avec l'inventaire nominatif B7 ; « montrez-moi la
+vie de la B-04 » doit avoir une réponse ; attention : les pesées sont écrasées en place, l'historique
+n'est qu'au journal ; figer le PRP = champ HORS empreinte chaînée) → **③ dossier de fuite fermé
+matérialisé** (la règle est déjà codée, construire l'écran chronologie + export) → **④ certificat de
+scellement + vérificateur HTML autonome embarqué dans chaque ZIP** (preuve auto-vérifiable par un
+auditeur sans le logiciel) → **⑤ correction automatique du CERFA rempli par l'élève** (v1 bornée aux
+PDF remplis numériquement). Sauf nouvelle consigne de Franck. Annoncer le réglage conseillé, puis
+exécuter (tests d'abord, vérification navigateur sur port neuf, commit + push + mémoire).
 
 Dès que Franck fournit la **grille réglementaire officielle**, basculer sur le **cœur audit-proof**
 (mode Officiel bloquant + habilitations 2008/2025 + fréquence de contrôle auto) — c'est ce qui rend
