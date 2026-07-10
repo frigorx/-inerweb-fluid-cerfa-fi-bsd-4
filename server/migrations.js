@@ -60,6 +60,13 @@
  *       backfill (NULL = pas figé à l'époque). Recrée le déclencheur WORM avec
  *       la liste complète — répare aussi le trou de la migration 8 (bases
  *       d'avant le 06/07 : localisation_fuite_declaree non surveillée).
+ *  14 — inventaire NOMINATIF (brique ② / B7, CF-20 annoncé « V9.4 ») : tables
+ *       inventaires_bouteilles + inventaires_fuites = PHOTOGRAPHIE de l'état
+ *       bouteille par bouteille (et des fuites machines ouvertes) FIGÉE à la
+ *       saisie de l'inventaire annuel — le rejeu des mouvements ne peut PAS
+ *       reconstituer l'état passé (les pesées écrasent hors registre).
+ *       Dénormalisées à dessein (code, fluide, masse recopiés) : une photo
+ *       doit rester lisible même si la bouteille évolue ensuite.
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -445,6 +452,46 @@ WHEN OLD.statut = 'VALIDE'
 BEGIN
     SELECT RAISE(ABORT, 'Registre verrouillé : une écriture validée ne peut pas être modifiée (utiliser une contre-écriture).');
 END;`);
+    }
+  },
+
+  14: {
+    nom: 'inventaire_nominatif',
+    appliquer(db) {
+      // Photographies annuelles nominatives (brique ② / B7). Une ligne par
+      // bouteille présente à la photo (upsert PAR ANNÉE : re-saisir
+      // l'inventaire d'une année REFIGE sa photo). Pas de FK vers
+      // bouteilles/machines : la photo est une archive dénormalisée qui
+      // doit survivre à l'évolution du parc.
+      // Seules les colonnes posées PAR la photo elle-même sont NOT NULL :
+      // les champs recopiés de la bouteille restent nullables (une
+      // bouteille importée d'un vieil export peut être incomplète — la
+      // photo doit la documenter telle quelle, pas bloquer l'inventaire).
+      db.exec(`CREATE TABLE IF NOT EXISTS inventaires_bouteilles (
+        etablissement_id TEXT NOT NULL REFERENCES etablissements(id),
+        annee            INTEGER NOT NULL,
+        bouteille_id     TEXT NOT NULL,
+        code_interne     TEXT,
+        numero_bouteille TEXT,
+        type             TEXT,
+        fluide           TEXT,
+        etat_fluide      TEXT,
+        statut           TEXT,
+        masse_nette_kg   REAL,
+        proprietaire     TEXT,
+        date_photo       TEXT NOT NULL,
+        PRIMARY KEY (etablissement_id, annee, bouteille_id)
+      );`);
+      db.exec(`CREATE TABLE IF NOT EXISTS inventaires_fuites (
+        etablissement_id TEXT NOT NULL REFERENCES etablissements(id),
+        annee            INTEGER NOT NULL,
+        machine_id       TEXT NOT NULL,
+        machine_label    TEXT,
+        date_constat     TEXT,
+        localisation     TEXT,
+        date_photo       TEXT NOT NULL,
+        PRIMARY KEY (etablissement_id, annee, machine_id)
+      );`);
     }
   }
 };

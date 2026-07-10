@@ -53,7 +53,8 @@ function decouvrirSuites(dossier = RACINE) {
 const SUITES_DOUBLEES = new Set([
   'v8/js/data/test-contrat.mjs',
   'v8/js/data/test-feu-tricolore.mjs',
-  'v8/js/data/test-prp-fige.mjs'
+  'v8/js/data/test-prp-fige.mjs',
+  'v8/js/data/test-inventaire-nominatif.mjs'
 ]);
 
 /** Une exécution = un fichier + des arguments éventuels. */

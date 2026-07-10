@@ -246,6 +246,9 @@ export function creerLocalStore(transport) {
     justifierEcart(annee, fluide, justification) {
       return muter('justifierEcart', { annee, fluide, justification });
     },
+    getInventaireNominatif(annee) {
+      return lire('getInventaireNominatif', { annee });
+    },
 
     // --- échanges -----------------------------------------
     async importerJSON(texte) {

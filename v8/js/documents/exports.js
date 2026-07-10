@@ -251,14 +251,14 @@ function fmtDateHeure(iso) {
 // ------------------------------------------------------------
 
 /**
- * Construit les 9 fichiers CSV du registre pour l'année donnée.
+ * Construit les fichiers CSV du registre (9 fixes + 2 conditionnels : photo nominative) pour l'année donnée.
  * @param {object} store - magasin de données v8 (contrat Phases A/B/C)
  * @param {number} annee - année de référence (mouvements, contrôles, balance)
  * @returns {Promise<Array<{ nom: string, contenu: string }>>}
  */
 export async function toutesLesTables(store, annee) {
   const [personnel, outillage, bouteilles, machines, clients, mouvements,
-    controles, balance, bsff, journalAudit] = await Promise.all([
+    controles, balance, bsff, journalAudit, nominatif] = await Promise.all([
     store.getPersonnel(),
     store.getOutillage(),
     store.getBouteilles(),
@@ -268,10 +268,11 @@ export async function toutesLesTables(store, annee) {
     store.getControles(),
     store.getBalanceMatiere(annee),
     store.getBsff(),
-    store.getJournalAudit()
+    store.getJournalAudit(),
+    store.getInventaireNominatif(annee)
   ]);
 
-  return [
+  const tables = [
     { nom: 'personnel.csv', contenu: csvPersonnel(personnel) },
     { nom: 'outillage.csv', contenu: csvOutillage(outillage) },
     { nom: 'bouteilles.csv', contenu: csvBouteilles(bouteilles) },
@@ -282,6 +283,42 @@ export async function toutesLesTables(store, annee) {
     { nom: 'bsff.csv', contenu: csvBsff(bsff) },
     { nom: 'journal-audit.csv', contenu: csvJournalAudit(journalAudit) }
   ];
+  // Brique ② (B7) : la photographie nominative de l'année, si elle a été
+  // figée (saisie d'inventaire) — couverte automatiquement par le
+  // manifeste d'empreintes et le scellement du dossier d'audit.
+  if (nominatif.datePhoto !== null) {
+    tables.push({
+      nom: `inventaire-bouteilles-${annee}.csv`,
+      contenu: csvInventaireNominatif(nominatif)
+    });
+    tables.push({
+      nom: `fuites-ouvertes-${annee}.csv`,
+      contenu: csvFuitesPhoto(nominatif)
+    });
+  }
+  return tables;
+}
+
+/** Photographie nominative : une ligne par bouteille présente à la photo. */
+function csvInventaireNominatif(nominatif) {
+  const entetes = ['Bouteille', 'N° gravé', 'Type', 'Fluide', 'État du fluide',
+    'Statut', 'Masse nette (kg)', 'Propriétaire', 'Photo figée le'];
+  const lignes = nominatif.bouteilles.map((p) => [
+    p.code, p.numeroReel, p.type, p.fluide, p.etatFluide, p.statut,
+    nb(p.masseNetteKg), p.proprietaire, fmtDate(p.datePhoto)
+  ]);
+  return construireCsv(entetes, lignes);
+}
+
+/** Fuites machines ouvertes au moment de la photo nominative. */
+function csvFuitesPhoto(nominatif) {
+  const entetes = ['Machine', 'Localisation de la fuite', 'Constatée le',
+    'Photo figée le'];
+  const lignes = nominatif.fuitesOuvertes.map((f) => [
+    f.machineLabel ?? f.machineId, f.localisation, fmtDate(f.dateConstat),
+    fmtDate(f.datePhoto)
+  ]);
+  return construireCsv(entetes, lignes);
 }
 
 // ------------------------------------------------------------

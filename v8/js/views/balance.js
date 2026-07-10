@@ -9,7 +9,7 @@
 // ============================================================
 
 import { enteteVue, tableau, toast, modale, ICONES } from './communs.js';
-import { esc, fmtNombre, nombreFr } from '../core/utils.js';
+import { esc, fmtDate, fmtNombre, nombreFr } from '../core/utils.js';
 
 export const titre = 'Balance matière';
 
@@ -206,7 +206,7 @@ function tableauBalance(balance) {
 }
 
 /** Page complète de la vue pour une balance donnée. */
-function construireHtml(balance, annees) {
+function construireHtml(balance, annees, nominatif) {
   return '<div class="vue-balance anim-fade">'
     + STYLES_VUE
     + enteteVue({
@@ -216,7 +216,103 @@ function construireHtml(balance, annees) {
     })
     + encartFormule()
     + tableauBalance(balance)
+    + sectionNominative(nominatif)
     + '</div>';
+}
+
+/* ============================================================
+   Brique ② (B7) : inventaire NOMINATIF — la photographie bouteille
+   par bouteille figée à la saisie de l'inventaire, l'ouverture au
+   01/01 (photo N−1) et les fuites ouvertes au moment de la photo.
+   ============================================================ */
+
+// Libellés français des codes photographiés (même sens que la vue
+// bouteilles — pas de code technique sur l'écran vitrine de l'audit).
+const LIBELLES_STATUT_PHOTO = {
+  EN_STOCK: 'En stock', EN_SERVICE: 'En service', VIDE: 'Vide',
+  A_RETOURNER: 'À retourner', RETOURNEE: 'Retournée', DECHET: 'Déchet'
+};
+const LIBELLES_ETAT_PHOTO = {
+  VIERGE: 'Vierge', RECUPERE: 'Récupéré', RECYCLE: 'Recyclé',
+  REGENERE: 'Régénéré', DECHET: 'Déchet', DOUTEUX: 'Douteux',
+  MELANGE: 'Mélangé'
+};
+
+/** Tableau des bouteilles d'une photo (photo = objet du contrat). */
+function tableauPhotoBouteilles(photo) {
+  const lignesHtml = photo.bouteilles.map((p) =>
+    '<tr>'
+    + '<td class="cellule-mono">' + esc(p.code ?? '—') + '</td>'
+    + '<td>' + esc(p.type === 'NEUVE' ? 'Neuve' : 'Récupération') + '</td>'
+    + '<td class="cellule-mono">' + esc(p.fluide ?? '—') + '</td>'
+    + '<td>' + esc(LIBELLES_ETAT_PHOTO[p.etatFluide] ?? p.etatFluide ?? '—') + '</td>'
+    + '<td>' + esc(LIBELLES_STATUT_PHOTO[p.statut] ?? p.statut ?? '—') + '</td>'
+    + '<td class="cellule-mono align-droite">' + esc(fmtNombre(p.masseNetteKg, 2)) + '</td>'
+    + '<td>' + esc(p.proprietaire ?? '—') + '</td>'
+    + '</tr>');
+  return tableau({
+    colonnes: [
+      { cle: 'code', libelle: 'Bouteille' },
+      { cle: 'type', libelle: 'Type' },
+      { cle: 'fluide', libelle: 'Fluide' },
+      { cle: 'etat', libelle: 'État' },
+      { cle: 'statut', libelle: 'Statut' },
+      { cle: 'nette', libelle: 'Nette (kg)', align: 'droite' },
+      { cle: 'proprietaire', libelle: 'Propriétaire' }
+    ],
+    lignesHtml
+  });
+}
+
+/** Liste des fuites ouvertes d'une photo. */
+function listeFuitesPhoto(photo) {
+  if (!photo.fuitesOuvertes.length) {
+    return '<p style="font-size:13px;color:var(--texte-3);margin:8px 0 0">'
+      + 'Aucune fuite ouverte au moment de la photo.</p>';
+  }
+  return '<ul style="margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--texte-2)">'
+    + photo.fuitesOuvertes.map((f) =>
+      '<li>' + esc(f.machineLabel ?? f.machineId)
+      + (f.localisation ? ' — ' + esc(f.localisation) : '')
+      + (f.dateConstat ? ' (constatée le ' + esc(fmtDate(f.dateConstat)) + ')' : '')
+      + '</li>').join('')
+    + '</ul>';
+}
+
+function sectionNominative(nominatif) {
+  if (!nominatif) return '';
+  let corps;
+  if (nominatif.datePhoto === null) {
+    corps = '<p style="font-size:13px;color:var(--texte-2);margin:0">'
+      + 'Aucune photographie nominative pour cette année : elle sera figée '
+      + 'automatiquement à la saisie de l’inventaire au 31/12 (bouton ci-dessus).</p>';
+  } else {
+    const ouverture = nominatif.ouverture
+      ? '<details style="margin-top:14px"><summary style="cursor:pointer;font-weight:600;font-size:13px">'
+        + 'État au 01/01 (photographie du 31/12/' + esc(nominatif.ouverture.annee) + ' — '
+        + nominatif.ouverture.bouteilles.length + ' bouteille'
+        + (nominatif.ouverture.bouteilles.length > 1 ? 's' : '') + ')</summary>'
+        + tableauPhotoBouteilles(nominatif.ouverture)
+        + listeFuitesPhoto(nominatif.ouverture)
+        + '</details>'
+      : '<p style="font-size:12px;color:var(--texte-3);margin-top:12px">'
+        + 'Pas de photographie pour l’année précédente : l’état au 01/01 sera '
+        + 'disponible dès que l’inventaire de l’an dernier aura été saisi (ou '
+        + 'à partir de l’an prochain).</p>';
+    corps =
+      '<p style="font-size:12.5px;color:var(--texte-3);margin:0 0 10px">'
+      + 'Photographie figée le ' + esc(fmtDate(nominatif.datePhoto))
+      + ' (à la saisie de l’inventaire) — elle ne bouge plus, même si le '
+      + 'parc évolue ensuite.</p>'
+      + tableauPhotoBouteilles(nominatif)
+      + listeFuitesPhoto(nominatif)
+      + ouverture;
+  }
+  return '<section class="carte" style="margin-top:16px">'
+    + '<h3 style="font-family:var(--police-titres);font-size:15px;margin:0 0 10px">'
+    + 'Inventaire nominatif (bouteille par bouteille)</h3>'
+    + corps
+    + '</section>';
 }
 
 /* ============================================================
@@ -450,8 +546,13 @@ export async function render(conteneur, ctx) {
 
   /** Charge la balance de l'année demandée, rend la page, branche tout. */
   async function chargerEtAfficher(annee) {
-    balanceCourante = await ctx.store.getBalanceMatiere(annee);
-    conteneur.innerHTML = construireHtml(balanceCourante, anneesDisponibles);
+    const [balance, nominatif] = await Promise.all([
+      ctx.store.getBalanceMatiere(annee),
+      ctx.store.getInventaireNominatif(annee)
+    ]);
+    balanceCourante = balance;
+    conteneur.innerHTML =
+      construireHtml(balanceCourante, anneesDisponibles, nominatif);
     attacherEcouteurs();
   }
 

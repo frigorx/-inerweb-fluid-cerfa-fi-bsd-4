@@ -80,7 +80,7 @@ export const ROLES_VALIDEURS = ['REFERENT', 'ENSEIGNANT', 'ADMIN'];
 export const PROPRIETES_CONTRAT = ['modeLabel', 'registreAltere'];
 
 /**
- * Les 65 méthodes du contrat, dans l'ordre du cycle de vie.
+ * Les 66 méthodes du contrat, dans l'ordre du cycle de vie.
  * genre : 'abonnement' | 'initialisation' | 'lecture' | 'mutation'.
  * La sémantique fine (formes de retour, garde-fous, effets) est
  * décrite ici en une ligne et VÉRIFIÉE dans test-contrat.mjs.
@@ -234,9 +234,11 @@ export const METHODES_CONTRAT = {
   getBalanceMatiere: { genre: 'lecture',
     description: 'La balance matière annuelle par fluide (stock théorique vs réel, écart, justification).' },
   saisirInventaire: { genre: 'mutation',
-    description: 'Saisit l’inventaire physique (upsert par année et fluide) ; retourne la balance recalculée.' },
+    description: 'Saisit l’inventaire physique (upsert par année et fluide) ET refige la PHOTOGRAPHIE nominative de l’année ; retourne la balance recalculée.' },
   justifierEcart: { genre: 'mutation',
     description: 'Justifie un écart constaté ; Error s’il n’y a aucun écart à justifier.' },
+  getInventaireNominatif: { genre: 'lecture',
+    description: 'La photographie nominative d’une année (brique ②/B7) : { annee, datePhoto|null, bouteilles[], fuitesOuvertes[], ouverture|null } — ouverture = photo de l’année N−1 (l’état au 01/01).' },
 
   // --- mode officiel et échanges --------------------------------------
   peutPasserEnOfficiel: { genre: 'lecture',

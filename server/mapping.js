@@ -353,6 +353,38 @@ const TABLES = {
     sqlSeulement: ['etablissement_id']
   },
 
+  // Photographie annuelle NOMINATIVE (brique ② / B7, migration 14) :
+  // une ligne par bouteille présente à la saisie de l'inventaire.
+  inventaires_bouteilles: {
+    champs: {
+      annee: 'annee',
+      bouteilleId: 'bouteille_id',
+      code: 'code_interne',
+      numeroReel: 'numero_bouteille',
+      type: 'type',
+      fluide: 'fluide',
+      etatFluide: 'etat_fluide',
+      statut: 'statut',
+      masseNetteKg: 'masse_nette_kg',
+      proprietaire: 'proprietaire',
+      datePhoto: 'date_photo'
+    },
+    sqlSeulement: ['etablissement_id']
+  },
+
+  // Fuites machines OUVERTES au moment de la photo (même migration).
+  inventaires_fuites: {
+    champs: {
+      annee: 'annee',
+      machineId: 'machine_id',
+      machineLabel: 'machine_label',
+      dateConstat: 'date_constat',
+      localisation: 'localisation',
+      datePhoto: 'date_photo'
+    },
+    sqlSeulement: ['etablissement_id']
+  },
+
   justifications_ecarts: {
     champs: {
       annee: 'annee',

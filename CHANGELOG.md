@@ -2,6 +2,47 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 📸 Brique ② (volet B) · Inventaire NOMINATIF bouteille par bouteille (B7 / CF-20) (10/07)
+La dette « CF-20, prévue V9.4 » consignée dans le schéma est soldée : l'inventaire annuel
+n'est plus seulement agrégé par fluide — la saisie du 31/12 FIGE désormais une
+**photographie nominative** (l'état de CHAQUE bouteille + les fuites machines ouvertes).
+Principe assumé : une PHOTO, pas une reconstruction (le rejeu des mouvements est inexact,
+les pesées écrasent hors registre — examen du 10/07).
+- **Migration 014** : tables `inventaires_bouteilles` + `inventaires_fuites`,
+  DÉNORMALISÉES à dessein (code, fluide, masse recopiés : une photo d'archive doit rester
+  lisible même si le parc évolue) ; seuls les champs posés par la photo elle-même sont
+  NOT NULL (une bouteille incomplète venue d'un vieil import est photographiée telle
+  quelle, jamais bloquante — constat de revue).
+- **`saisirInventaire` étendu** (les DEUX stores, parité stricte) : après l'upsert agrégé,
+  refige la photo de l'année (upsert PAR ANNÉE — re-saisir = re-photographier). Périmètre :
+  bouteilles présentes (RETOURNEE exclues — chez le fournisseur —, DECHET incluses —
+  encore sur site) + fuites machines « non résolues » (même règle que l'alerte).
+- **Nouvelle méthode contrat `getInventaireNominatif(annee)`** (surface 65 → **66**) :
+  { annee, datePhoto, bouteilles[], fuitesOuvertes[], **ouverture** } — l'ouverture est la
+  photo de N−1 = **l'état au 01/01**. Une photo d'un parc VIDE reste datée (repli sur la
+  date de saisie de l'inventaire : « zéro bouteille au 31/12 » est une information
+  d'audit). Tri applicatif identique des deux côtés (⚠️ constat de revue : la collation
+  BINARY de SQLite classe « Échangeur » après « Zebra » — jamais d'ORDER BY pour un ordre
+  contractuel, localeCompare des deux côtés).
+- **Vue Balance matière** : section « Inventaire nominatif » — photo du 31/12 (libellés et
+  dates en français), fuites ouvertes, état au 01/01 replié (photo N−1), et invitation
+  claire quand aucune photo n'existe encore.
+- **Dossier d'audit scellé** : 2 CSV conditionnels (`inventaire-bouteilles-<annee>.csv`,
+  `fuites-ouvertes-<annee>.csv`) ajoutés à `toutesLesTables` quand la photo existe —
+  couverts automatiquement par le manifeste d'empreintes et le scellement SHA-256.
+- **Export/import** : les photos voyagent (les DEUX stores) ; vieux exports sans les
+  clés → listes vides, jamais d'échec.
+- Tests : `test-inventaire-nominatif.mjs` **16/0 en demo ET local** (suite doublée) :
+  périmètre RETOURNEE/DECHET, photo = ARCHIVE (peser après ne la change pas), re-saisie
+  refige, ouverture N−1 sans récursion, export/import, les 2 CSV du dossier d'audit.
+  Revue adversariale 2 lentilles (2 IMPORTANT corrigés : collation du tri, NOT NULL
+  bloquant ; finitions dates/libellés français). **45 exécutions TOUT VERT.**
+- **Vérifié navigateur** (sandbox, Démo 8154 origine neuve + Local 8147) : saisie
+  d'inventaire → « Photographie figée le 10/07/2026 », tableau B-01→B-05 libellés
+  français, fuite « Chambre froide — Le Fournil (constatée le 18/06/2026) » ; en Local,
+  la base v13 de la sandbox a migré en 14 au démarrage et l'API répond la forme
+  contractuelle. Zéro erreur console.
+
 ### 🧴 Brique ② (volet A) · Fiche bouteille vivante + « la vie de la bouteille » + PRP figé (10/07)
 « Montrez-moi la vie de la B-04 » a désormais une réponse (trou n°1 de l'examen du 10/07 :
 `#/b/` ouvrait juste le formulaire d'édition). Construit avec cartographie multi-agents

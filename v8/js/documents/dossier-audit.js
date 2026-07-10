@@ -2,7 +2,7 @@
 // inerWeb Fluide v8 — dossier d'audit annuel (Phase D, étape 3)
 // Assemble en UN CLIC une archive ZIP complète et opposable :
 //   00-SOMMAIRE.txt        — contenu du dossier, établissement, date
-//   *.csv                  — les 9 tables du registre (exports.js)
+//   *.csv                  — les tables du registre (exports.js)
 //   cerfa/<numero>.pdf     — CERFA 15497*04 officiel rempli pour
 //                            chaque mouvement VALIDE/ANNULE de
 //                            l'année ET chaque contrôle de l'année
@@ -131,7 +131,7 @@ export async function genererDossierAudit(store, annee) {
   /** @type {Array<{nom: string, contenu: string|Uint8Array}>} */
   const entrees = [];
 
-  // ---- 1. Les 9 tables CSV du registre ----
+  // ---- 1. Les tables CSV du registre (9 fixes + photo nominative éventuelle) ----
   for (const table of tables) {
     entrees.push({ nom: table.nom, contenu: table.contenu });
   }

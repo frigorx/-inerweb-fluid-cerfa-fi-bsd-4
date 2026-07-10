@@ -2195,10 +2195,29 @@ const HANDLERS = {
         upsertInventaire(anneeNum, l.fluide, arrondir(Number(l.stockReelKg)),
           operateur);
       }
+      // Brique ② (B7) : la saisie FIGE aussi la photographie nominative
+      // de l'année — parité stricte avec le DemoStore.
+      figerPhotoNominative(anneeNum);
       journaliser(operateur, 'SAISIE_INVENTAIRE', `inventaire ${anneeNum}`,
         `${lignes.length} fluide(s) pesé(s)`);
       return calculerBalanceMatiere(anneeNum);
     });
+  },
+
+  /**
+   * Photographie nominative d'une année (brique ② / B7) : bouteilles
+   * présentes + fuites ouvertes figées à la saisie de l'inventaire,
+   * plus l'ouverture (photo N−1 = l'état au 01/01). Forme EXACTE du
+   * DemoStore.
+   */
+  getInventaireNominatif(params) {
+    const anneeNum = Number(params.annee);
+    if (!Number.isInteger(anneeNum)) {
+      throw new Error('Année d’inventaire obligatoire (nombre entier).');
+    }
+    const courant = lirePhotoNominative(anneeNum);
+    const ouverture = lirePhotoOuNull(anneeNum - 1);
+    return { ...courant, ouverture };
   },
 
   /**
@@ -2379,6 +2398,10 @@ function construireDonneesExport() {
       'annee, fluide'),
     bsff: HANDLERS.getBsff(),
     inventaires: lireTablePlate('inventaires', 'inventaires', 'annee, fluide'),
+    inventairesBouteilles: lireTablePlate('inventaires_bouteilles',
+      'inventaires_bouteilles', 'annee, code_interne'),
+    inventairesFuites: lireTablePlate('inventaires_fuites',
+      'inventaires_fuites', 'annee, machine_label'),
     justificationsEcarts: lireTablePlate('justifications_ecarts',
       'justifications_ecarts', 'annee, fluide'),
     piecesJointes: lireTablePlate('pieces_jointes', 'pieces_jointes',
@@ -2630,6 +2653,7 @@ function remplacerToutLEtat(candidat) {
     // Vidage TOTAL des tables métier (journal inclus : remplacement complet).
     const TABLES_A_VIDER = ['pieces_jointes', 'retours_fournisseur', 'bsff',
       'controles', 'mouvements', 'justifications_ecarts', 'inventaires',
+      'inventaires_bouteilles', 'inventaires_fuites',
       'stocks_initiaux', 'bouteilles', 'machines', 'clients_detenteurs',
       'outillage', 'non_conformites', 'audits_etablissement', 'personnel',
       'journal_audit', 'etablissements'];
@@ -2671,6 +2695,12 @@ function remplacerToutLEtat(candidat) {
     reinsererCollection('stocks_initiaux', 'stocks_initiaux',
       candidat.stocksInitiaux);
     reinsererCollection('inventaires', 'inventaires', candidat.inventaires);
+    // Brique ② (B7) : photos nominatives — absentes des vieux exports
+    // (reinsererCollection tolère undefined).
+    reinsererCollection('inventaires_bouteilles', 'inventaires_bouteilles',
+      candidat.inventairesBouteilles);
+    reinsererCollection('inventaires_fuites', 'inventaires_fuites',
+      candidat.inventairesFuites);
     reinsererCollection('justifications_ecarts', 'justifications_ecarts',
       candidat.justificationsEcarts);
     reinsererPiecesJointes(candidat.piecesJointes);
@@ -3833,6 +3863,102 @@ function upsertInventaire(annee, fluide, stockReelKg, operateur) {
        operateur     = excluded.operateur`,
     [ID_ETABLISSEMENT, annee, fluide, stockReelKg, aujourdHui(),
       operateur ?? null]);
+}
+
+/**
+ * Brique ② (B7) : FIGE la photographie nominative d'une année — miroir
+ * EXACT du DemoStore (mêmes règles : bouteilles présentes hors RETOURNEE,
+ * fuites machines « non résolues » au sens de l'alerte). Upsert PAR ANNÉE
+ * (DELETE + INSERT dans la transaction ambiante de muter()).
+ */
+function figerPhotoNominative(annee) {
+  amorcerEtablissement();
+  const datePhoto = aujourdHui();
+  db.run('DELETE FROM inventaires_bouteilles WHERE etablissement_id = ? AND annee = ?',
+    [ID_ETABLISSEMENT, annee]);
+  db.run('DELETE FROM inventaires_fuites WHERE etablissement_id = ? AND annee = ?',
+    [ID_ETABLISSEMENT, annee]);
+
+  const bouteilles = HANDLERS.getBouteilles();
+  for (const b of bouteilles) {
+    if (b.statut === 'RETOURNEE') continue;
+    // Champs recopiés en ?? null : une bouteille incomplète (vieil import)
+    // est photographiée TELLE QUELLE, jamais bloquante — parité démo.
+    inserer('inventaires_bouteilles', {
+      etablissement_id: ID_ETABLISSEMENT,
+      annee,
+      bouteille_id: b.id,
+      code_interne: b.code ?? null,
+      numero_bouteille: b.numeroReel ?? null,
+      type: b.type ?? null,
+      fluide: b.fluide ?? null,
+      etat_fluide: b.etatFluide ?? null,
+      statut: b.statut ?? null,
+      masse_nette_kg: b.masseNetteKg ?? null,
+      proprietaire: b.proprietaire ?? null,
+      date_photo: datePhoto
+    });
+  }
+
+  const machines = db.all(
+    "SELECT id, designation FROM machines WHERE statut = 'FUITE'");
+  for (const m of machines) {
+    const statutFuite = estFuiteOuverte(controlesDeLaMachine(m.id));
+    if (!statutFuite.ouverte && statutFuite.dateReparation) continue;
+    const controleFuite = statutFuite.controleFuiteId
+      ? controlesDeLaMachine(m.id)
+        .find((c) => c.id === statutFuite.controleFuiteId)
+      : null;
+    inserer('inventaires_fuites', {
+      etablissement_id: ID_ETABLISSEMENT,
+      annee,
+      machine_id: m.id,
+      machine_label: m.designation ?? null,
+      date_constat: controleFuite?.date ?? null,
+      localisation: controleFuite?.localisationFuite ?? null,
+      date_photo: datePhoto
+    });
+  }
+}
+
+/** La photo nominative d'une année (datePhoto null = jamais figée). */
+function lirePhotoNominative(annee) {
+  // Tri APPLICATIF (localeCompare) et non ORDER BY : la collation BINARY
+  // de SQLite classe « Échangeur » après « Zebra » — la parité d'ordre
+  // avec le DemoStore exige le même comparateur des deux côtés.
+  const bouteilles = db.all(
+    `SELECT * FROM inventaires_bouteilles
+     WHERE etablissement_id = ? AND annee = ?`,
+    [ID_ETABLISSEMENT, annee])
+    .map((l) => mapping.versFront('inventaires_bouteilles', l))
+    .sort((a, b) => String(a.code).localeCompare(String(b.code)));
+  const fuites = db.all(
+    `SELECT * FROM inventaires_fuites
+     WHERE etablissement_id = ? AND annee = ?`,
+    [ID_ETABLISSEMENT, annee])
+    .map((l) => mapping.versFront('inventaires_fuites', l))
+    .sort((a, b) => String(a.machineLabel ?? '')
+      .localeCompare(String(b.machineLabel ?? '')));
+  return {
+    annee,
+    // Une photo d'un parc VIDE reste datée (repli sur la date de saisie
+    // de l'inventaire agrégé) : « zéro bouteille au 31/12 » est une
+    // information d'audit, pas une absence de photo.
+    datePhoto: bouteilles[0]?.datePhoto ?? fuites[0]?.datePhoto
+      ?? db.get(
+        `SELECT date_saisie AS d FROM inventaires
+         WHERE etablissement_id = ? AND annee = ? LIMIT 1`,
+        [ID_ETABLISSEMENT, annee])?.d
+      ?? null,
+    bouteilles,
+    fuitesOuvertes: fuites
+  };
+}
+
+/** La photo d'une année, ou null si elle n'a jamais été figée. */
+function lirePhotoOuNull(annee) {
+  const photo = lirePhotoNominative(annee);
+  return photo.datePhoto === null ? null : photo;
 }
 
 /** Upsert d'une justification d'écart (année, fluide) — clé composite. */

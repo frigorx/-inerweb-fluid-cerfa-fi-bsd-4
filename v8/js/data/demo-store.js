@@ -620,6 +620,91 @@ export function creerDemoStore() {
     return { annee, lignes };
   }
 
+  /**
+   * Brique ② (B7) : FIGE la photographie nominative d'une année — une
+   * ligne par bouteille PRÉSENTE (les RETOURNEE sont chez le fournisseur,
+   * les DECHET encore sur site comptent) + les fuites machines OUVERTES
+   * au moment de la photo (même règle que l'alerte « Fuite non résolue »).
+   * Upsert PAR ANNÉE : re-saisir l'inventaire d'une année refige sa photo.
+   * Dénormalisée à dessein : la photo doit rester lisible telle quelle
+   * même si le parc évolue ensuite.
+   */
+  function figerPhotoNominative(annee) {
+    donnees.inventairesBouteilles ??= [];
+    donnees.inventairesFuites ??= [];
+    const datePhoto = aujourdHui();
+    donnees.inventairesBouteilles =
+      donnees.inventairesBouteilles.filter((p) => p.annee !== annee);
+    donnees.inventairesFuites =
+      donnees.inventairesFuites.filter((p) => p.annee !== annee);
+    for (const b of donnees.bouteilles) {
+      if (b.statut === 'RETOURNEE') continue;
+      // Champs recopiés en ?? null : une bouteille incomplète (vieil
+      // import) est photographiée TELLE QUELLE — parité de FORME stricte
+      // avec le serveur (versFront émet toujours les clés).
+      donnees.inventairesBouteilles.push({
+        annee,
+        bouteilleId: b.id,
+        code: b.code ?? null,
+        numeroReel: b.numeroReel ?? null,
+        type: b.type ?? null,
+        fluide: b.fluide ?? null,
+        etatFluide: b.etatFluide ?? null,
+        statut: b.statut ?? null,
+        masseNetteKg: b.masseNetteKg ?? null,
+        proprietaire: b.proprietaire ?? null,
+        datePhoto
+      });
+    }
+    for (const m of donnees.machines) {
+      if (m.statut !== 'FUITE') continue;
+      const statutFuite = estFuiteOuverte(
+        donnees.controles.filter((c) => c.machineId === m.id));
+      // Même règle que getAlertes : « non résolue » = pas de réparation
+      // tracée (une fuite réparée en attente de contrôle de suivi n'est
+      // plus « ouverte » au sens de la photo).
+      if (!statutFuite.ouverte && statutFuite.dateReparation) continue;
+      const controleFuite = donnees.controles.find(
+        (c) => c.id === statutFuite.controleFuiteId);
+      donnees.inventairesFuites.push({
+        annee,
+        machineId: m.id,
+        machineLabel: m.designation ?? null,
+        dateConstat: controleFuite?.date ?? null,
+        localisation: controleFuite?.localisationFuite ?? null,
+        datePhoto
+      });
+    }
+  }
+
+  /** La photo nominative d'une année (jamais null : datePhoto le dit). */
+  function lirePhotoNominative(annee) {
+    const bouteillesPhoto = (donnees.inventairesBouteilles ?? [])
+      .filter((p) => p.annee === annee)
+      .sort((a, b) => String(a.code).localeCompare(String(b.code)));
+    const fuites = (donnees.inventairesFuites ?? [])
+      .filter((p) => p.annee === annee)
+      .sort((a, b) => String(a.machineLabel ?? '')
+        .localeCompare(String(b.machineLabel ?? '')));
+    return {
+      annee,
+      // Photo d'un parc VIDE : datée quand même (repli sur la date de
+      // saisie de l'inventaire agrégé) — « zéro bouteille au 31/12 » est
+      // une information d'audit. Parité stricte avec le serveur.
+      datePhoto: bouteillesPhoto[0]?.datePhoto ?? fuites[0]?.datePhoto
+        ?? (donnees.inventaires ?? []).find((i) => i.annee === annee)?.dateSaisie
+        ?? null,
+      bouteilles: bouteillesPhoto,
+      fuitesOuvertes: fuites
+    };
+  }
+
+  /** La photo d'une année, ou null si elle n'a jamais été figée. */
+  function lirePhotoOuNull(annee) {
+    const photo = lirePhotoNominative(annee);
+    return photo.datePhoto === null ? null : photo;
+  }
+
   /** Écarts d'inventaire au-delà du seuil et SANS justification. */
   function ecartsNonJustifies() {
     const annees = [...new Set((donnees.inventaires || []).map((i) => i.annee))];
@@ -3169,10 +3254,26 @@ export function creerDemoStore() {
           });
         }
       }
+      // Brique ② (B7) : la saisie d'inventaire FIGE aussi la photographie
+      // NOMINATIVE de l'année (bouteille par bouteille + fuites ouvertes) —
+      // le rejeu des mouvements ne sait pas reconstituer l'état passé
+      // (les pesées écrasent hors registre), seule une photo fait foi.
+      figerPhotoNominative(anneeNum);
       journaliser(operateur, 'SAISIE_INVENTAIRE', `inventaire ${anneeNum}`,
         `${lignes.length} fluide(s) pesé(s)`);
       persisterEtNotifier();
       return copier(calculerBalanceMatiere(anneeNum));
+    },
+
+    async getInventaireNominatif(annee) {
+      const anneeNum = Number(annee);
+      if (!Number.isInteger(anneeNum)) {
+        throw new Error('Année d’inventaire obligatoire (nombre entier).');
+      }
+      const courant = lirePhotoNominative(anneeNum);
+      // L'état au 01/01 de l'année N = la photo du 31/12 de N−1.
+      const ouverture = lirePhotoOuNull(anneeNum - 1);
+      return copier({ ...courant, ouverture });
     },
 
     async justifierEcart(annee, fluide, justification) {
@@ -3276,7 +3377,9 @@ export function creerDemoStore() {
       // Compléments Phase C pour les imports A/B
       for (const cle of ['auditsOrganisme', 'nonConformites', 'stocksInitiaux',
         'bsff', 'inventaires', 'justificationsEcarts', 'piecesJointes',
-        'retoursFournisseur']) {
+        'retoursFournisseur',
+        // Brique ② (B7) : photos nominatives — vides sur les vieux exports.
+        'inventairesBouteilles', 'inventairesFuites']) {
         if (!Array.isArray(candidat[cle])) candidat[cle] = copier(DEMO[cle] ?? []);
       }
       if (candidat.etablissement.numAttestationCapacite === undefined) {
