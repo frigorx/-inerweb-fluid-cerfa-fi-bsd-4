@@ -33,8 +33,9 @@ implémentations (démo + local). Démo en ligne fonctionnelle (GitHub Pages `/v
 2. ~~**④ Certificat de scellement + vérificateur HTML autonome**~~ — **FAIT 13/07
    (`c00d264`)** : `99-VERIFICATEUR.html` dans chaque dossier scellé + certificat
    imprimable, 39/0 dont archives forgées hostiles, vérifié navigateur.
-3. **⑤ Correction automatique du CERFA rempli par l'élève** (v1 bornée aux PDF remplis
-   numériquement) — le pont pédagogique.
+3. ~~**⑤ Correction automatique du CERFA rempli par l'élève**~~ — **FAIT 13/07
+   (`e4a04c2`)** : comparateur équitable sur les 72 champs (rapport par cadre,
+   rapport HTML imprimable), 30/0 sur PDF réels, vérifié navigateur.
 4. Sentinelle d'alertes persistées.
 5. Code machine lisible structuré `SITE-FAMILLE-NUMERO` (ex. `JR-CF-001`, décision Franck 07/07,
    remplace `M1/M2` ; le `code_public` opaque du QR reste distinct et inchangé).
