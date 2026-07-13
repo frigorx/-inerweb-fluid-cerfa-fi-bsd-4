@@ -2,6 +2,45 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔏 Brique ④ · Certificat de scellement + vérificateur HTML AUTONOME (13/07)
+La preuve devient auto-vérifiable : un auditeur peut contrôler un dossier scellé
+**sans le logiciel, hors ligne** — meilleur rapport impact/effort de l'examen du 10/07.
+- **`v8/js/documents/verificateur.js`** (nouveau) : `NOYAU_SOURCE` = analyseur ZIP
+  « stored » écrit en JS pur (EOCD → répertoire central → en-têtes locaux) + lecture du
+  manifeste + SHA-256 Web Crypto. **La MÊME source est évaluée par les tests Node et
+  embarquée dans la page** : ce qui est prouvé en test est exactement ce qui part en
+  archive.
+- **`99-VERIFICATEUR.html` embarqué dans CHAQUE dossier scellé** (audit annuel, machine,
+  client, fuite — un seul point d'intégration : `assemblerDossier`) : page autonome
+  française, zéro ressource externe, ouverte d'un double-clic depuis le disque
+  (`file://` = contexte sécurisé, Web Crypto disponible). Déposer le .zip → empreinte
+  globale + comparaison à l'empreinte de référence collée (IDENTIQUE/DIFFÉRENTE) +
+  tableau fichier par fichier contre le manifeste (CONFORME / ALTÉRÉ / MANQUANT /
+  INATTENDU / ILLISIBLE).
+- **Certificat de scellement imprimable** : bouton « Télécharger le certificat » dans la
+  modale de scellement — document HTML autonome portant titre, archive, nombre de
+  documents, date et empreinte SHA-256, avec les consignes (conserver HORS du dossier,
+  vérifier via 99-VERIFICATEUR.html ou `Get-FileHash`). L'empreinte globale ne peut pas
+  vivre DANS le fichier qu'elle scelle : le certificat voyage à côté.
+- **Sécurité (revue adversariale Opus, 0 bloquant)** : un ZIP déposé est une donnée
+  HOSTILE — noms de fichiers et messages affichés via `textContent` uniquement (zéro
+  innerHTML) ; analyseur éprouvé contre offsets hors bornes, nombre d'entrées menteur,
+  ZIP64, EOCD injecté, **doublons d'entrées** (un doublon altéré ne passe jamais
+  « conforme ») ; gardes anti-gel (10 000 entrées / 1 Go déclarés max) ; **le verdict
+  interne vert porte la réserve d'honnêteté** (« ne prouve PAS l'authenticité — seule
+  l'empreinte de référence externe le prouve », le manifeste vivant dans l'archive) ;
+  manifeste compressé ≠ manifeste absent. Aucune évaluation dynamique dans l'appli
+  (CSP intacte).
+- Tests : `test-verificateur.mjs` **39/0** (archive saine + recalcul node:crypto
+  indépendant + falsifications octet/manquant/inattendu/compressé + archives forgées
+  hostiles + page + certificat échappé + dossier machine réel de bout en bout) ;
+  **49 exécutions TOUT VERT** (les 4 suites dossiers absorbent la nouvelle entrée).
+- **Vérifié navigateur** (pages servies depuis un bac à sable, ports neufs 8183/8187) :
+  dossier machine réel vérifié dans la page autonome (empreinte identique au scellement,
+  7 fichiers conformes, réserve d'authenticité affichée), empreinte de référence
+  IDENTIQUE puis DIFFÉRENTE, octet falsifié → « identite-machine.csv ALTÉRÉ » ;
+  modale de l'appli : bouton certificat opérationnel. Zéro erreur console.
+
 ### 🧯 Brique ③ · Dossier de fuite fermé MATÉRIALISÉ (13/07)
 Le différenciateur n°1 (aucun concurrent ne le documente) : la règle d'or était déjà
 codée (R3c/R4 — retour EN_SERVICE impossible sans réparation tracée + contrôle CONFORME

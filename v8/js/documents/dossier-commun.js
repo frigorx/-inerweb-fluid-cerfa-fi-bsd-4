@@ -12,6 +12,7 @@
 
 import { creerZip } from '../core/zip.js';
 import { champCsv } from './exports.js';
+import { construireVerificateurHtml } from './verificateur.js';
 
 /**
  * Convertit un contenu de pièce jointe en Uint8Array pour le ZIP. Accepte :
@@ -184,20 +185,24 @@ export async function assemblerDossier(
   const nomsData = entreesData.map((e) => e.nom);
   const sommaire = redigerSommaire(
     titre, lignesInfos,
-    ['00-SOMMAIRE.txt', '01-EMPREINTES-SHA256.txt', ...nomsData], maintenant);
+    ['00-SOMMAIRE.txt', '01-EMPREINTES-SHA256.txt', ...nomsData,
+      '99-VERIFICATEUR.html'], maintenant);
   const entreeSommaire = { nom: '00-SOMMAIRE.txt', contenu: sommaire };
   const manifeste = await redigerManifesteEmpreintes(
     [entreeSommaire, ...entreesData], titre);
 
+  // Le vérificateur autonome (brique ④) : hors manifeste — comme le
+  // manifeste lui-même, il est scellé par l'empreinte GLOBALE du .zip.
   const toutes = [
     entreeSommaire,
     { nom: '01-EMPREINTES-SHA256.txt', contenu: manifeste },
-    ...entreesData
+    ...entreesData,
+    { nom: '99-VERIFICATEUR.html', contenu: construireVerificateurHtml() }
   ];
   const blob = creerZip(toutes, maintenant);
   const octetsZip = blob instanceof Uint8Array
     ? blob : new Uint8Array(await blob.arrayBuffer());
   const empreinte = await sha256Hex(octetsZip);
 
-  return { blob, nomFichier, nbDocuments: toutes.length, empreinte };
+  return { blob, nomFichier, nbDocuments: toutes.length, empreinte, titre };
 }
