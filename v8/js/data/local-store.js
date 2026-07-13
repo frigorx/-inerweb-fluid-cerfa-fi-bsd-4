@@ -250,6 +250,17 @@ export function creerLocalStore(transport) {
       return lire('getInventaireNominatif', { annee });
     },
 
+    // --- sentinelle d'alertes persistées ------------------
+    getSentinelle() {
+      return lire('getSentinelle', {});
+    },
+    rafraichirSentinelle(par) {
+      return muter('rafraichirSentinelle', { par });
+    },
+    acquitterAlerte(idAlerte, par) {
+      return muter('acquitterAlerte', { idAlerte, par });
+    },
+
     // --- échanges -----------------------------------------
     async importerJSON(texte) {
       const adopte = await muter('importerJSON', { texte });

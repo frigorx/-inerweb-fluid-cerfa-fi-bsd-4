@@ -4,7 +4,7 @@
 // alertes réglementaires. Lecture seule (Phase A).
 // ============================================================
 
-import { enteteVue, carteKpi, ICONES } from './communs.js';
+import { enteteVue, carteKpi, ICONES, toast } from './communs.js';
 import { esc, fmtNombre, fmtKgSigne, fmtDate } from '../core/utils.js';
 import { ouvrirWizard } from '../wizard/wizard.js';
 import { ouvrirCerfa } from '../cerfa/visualiseur.js';
@@ -147,6 +147,46 @@ const STYLES_VUE = `
   .tdb-point-important { background: var(--avert-icone); }
   .tdb-alerte-titre  { font-size: 12.5px; font-weight: 600; color: var(--texte); }
   .tdb-alerte-detail { margin-top: 2px; font-size: 11.5px; color: var(--texte-3); }
+  /* Sentinelle : « active depuis le … » + prise de connaissance */
+  .tdb-alerte-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .tdb-alerte-depuis {
+    font-size: 11px;
+    color: var(--texte-3);
+    font-variant-numeric: tabular-nums;
+  }
+  .tdb-alerte-acquit {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--succes);
+  }
+  .tdb-alerte-acquit svg { width: 13px; height: 13px; flex: none; }
+  .tdb-alerte-acquit-btn {
+    padding: 3px 9px;
+    border: 1px solid var(--bordure);
+    border-radius: var(--rayon-chip);
+    background: var(--carte);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--texte-2);
+    cursor: pointer;
+  }
+  .tdb-alerte-acquit-btn:hover {
+    border-color: var(--accent-fort);
+    color: var(--accent-fort);
+  }
+  .tdb-alerte-acquit-btn:focus-visible {
+    outline: 2px solid var(--accent-fort);
+    outline-offset: 1px;
+  }
 
   /* Bandeau « Mode Officiel » (CR-6) : discret mais permanent, sous les KPI */
   .tdb-officiel {
@@ -326,9 +366,32 @@ function bandeauModeOfficiel(etatOfficiel) {
  * @param {object} alerte — alerte du store
  * @returns {string} HTML
  */
-function ligneAlerte(alerte) {
+function ligneAlerte(alerte, episode, peutAcquitter) {
   const classePoint = alerte.niveau === 'CRITIQUE' ? 'tdb-point-critique' : 'tdb-point-important';
   const cible = alerte.cible || {};
+
+  // Couche sentinelle : depuis quand l'alerte est active + prise de
+  // connaissance. L'épisode ouvert est apparié par idAlerte (getAlertes
+  // reste la vérité du présent ; la sentinelle ne fait que dater).
+  let meta = '';
+  if (episode) {
+    const depuis = '<span class="tdb-alerte-depuis">Active depuis le '
+      + esc(fmtDate(String(episode.apparueLe).slice(0, 10))) + '</span>';
+    let acquit;
+    if (episode.acquitteeLe) {
+      acquit = '<span class="tdb-alerte-acquit">' + ICONES.coche
+        + 'Pris connaissance le ' + esc(fmtDate(String(episode.acquitteeLe).slice(0, 10)))
+        + (episode.acquitteePar ? ' · ' + esc(episode.acquitteePar) : '')
+        + '</span>';
+    } else if (peutAcquitter) {
+      acquit = '<button type="button" class="tdb-alerte-acquit-btn" '
+        + 'data-id-alerte="' + esc(alerte.id) + '">J’ai pris connaissance</button>';
+    } else {
+      acquit = '';
+    }
+    meta = '<div class="tdb-alerte-meta">' + depuis + acquit + '</div>';
+  }
+
   return '<div class="tdb-alerte tdb-alerte-lien" role="link" tabindex="0" '
     + 'data-vue="' + esc(cible.vue || '') + '" data-id="' + esc(cible.id || '') + '" '
     + 'aria-label="' + esc(alerte.titre) + ' — ' + esc(alerte.detail) + '">'
@@ -336,6 +399,7 @@ function ligneAlerte(alerte) {
     + '<div>'
     + '<div class="tdb-alerte-titre">' + esc(alerte.titre) + '</div>'
     + '<div class="tdb-alerte-detail">' + esc(alerte.detail) + '</div>'
+    + meta
     + '</div>'
     + '</div>';
 }
@@ -393,13 +457,36 @@ function encartAccueil(dossierAConfigurer) {
 export async function render(conteneur, ctx) {
   const { store, naviguer } = ctx;
 
+  // Sentinelle : réconcilie la table d'épisodes avec les alertes du moment.
+  // BEST-EFFORT — c'est une mutation (rôle OPERATEUR / session requise) ;
+  // un lecteur non habilité (ex. loopback anonyme) ne doit pas casser
+  // l'affichage : l'échec est silencieux, getAlertes reste la vérité.
+  await store.rafraichirSentinelle().catch(() => {});
+
   // Lecture des données en parallèle (le store renvoie des copies)
-  const [stats, mouvements, alertes, etatOfficiel] = await Promise.all([
-    store.getStats(),
-    store.getMouvements(),
-    store.getAlertes(),
-    store.peutPasserEnOfficiel()
-  ]);
+  const [stats, mouvements, alertes, etatOfficiel, sentinelle, utilisateur] =
+    await Promise.all([
+      store.getStats(),
+      store.getMouvements(),
+      store.getAlertes(),
+      store.peutPasserEnOfficiel(),
+      store.getSentinelle(),
+      store.getUtilisateurCourant().catch(() => null)
+    ]);
+
+  // Seul un valideur (référent / enseignant / admin) prend acte d'une
+  // non-conformité réglementaire — jamais un élève (cohérent ROLES_MUTATION).
+  const peutAcquitter =
+    ['REFERENT', 'ENSEIGNANT', 'ADMIN'].includes(utilisateur?.roleApp);
+  const nomOperateur = utilisateur
+    ? `${utilisateur.prenom ?? ''} ${utilisateur.nom ?? ''}`.trim()
+    : '';
+
+  // Épisode OUVERT par id d'alerte : datte l'apparition et porte l'acquittement.
+  const episodeParAlerte = new Map();
+  for (const e of sentinelle) {
+    if (e.resolueLe === null) episodeParAlerte.set(e.idAlerte, e);
+  }
 
   const derniersMouvements = mouvements.slice(0, NB_DERNIERS_MOUVEMENTS);
 
@@ -459,7 +546,7 @@ export async function render(conteneur, ctx) {
 
   // ---- Carte « Alertes réglementaires » (colonne 1/3) ----
   const listeAlertes = alertes.length
-    ? alertes.map(ligneAlerte).join('')
+    ? alertes.map((a) => ligneAlerte(a, episodeParAlerte.get(a.id), peutAcquitter)).join('')
     : '<div class="etat-vide">' + ICONES.coche + '<p>Aucune alerte en cours.</p></div>';
 
   const carteAlertes = '<section class="carte" aria-label="Alertes réglementaires">'
@@ -515,13 +602,33 @@ export async function render(conteneur, ctx) {
   conteneur.querySelectorAll('.tdb-alerte-lien').forEach(function (ligne) {
     const vueCible = ligne.dataset.vue;
     if (!vueCible) return;
-    ligne.addEventListener('click', function () {
+    ligne.addEventListener('click', function (evenement) {
+      // Le bouton d'acquittement, imbriqué, ne doit pas déclencher la navigation.
+      if (evenement.target.closest('.tdb-alerte-acquit-btn')) return;
       naviguer(vueCible);
     });
     ligne.addEventListener('keydown', function (evenement) {
+      if (evenement.target.closest('.tdb-alerte-acquit-btn')) return;
       if (evenement.key === 'Enter' || evenement.key === ' ') {
         evenement.preventDefault();
         naviguer(vueCible);
+      }
+    });
+  });
+
+  // Sentinelle : « J'ai pris connaissance » — acquitte l'alerte (trace au
+  // journal chaîné) puis ré-affiche. stopPropagation : ne pas naviguer.
+  conteneur.querySelectorAll('.tdb-alerte-acquit-btn').forEach(function (bouton) {
+    bouton.addEventListener('click', async function (evenement) {
+      evenement.stopPropagation();
+      bouton.disabled = true;
+      try {
+        await store.acquitterAlerte(bouton.dataset.idAlerte, nomOperateur || null);
+        toast('Prise de connaissance enregistrée.', 'succes');
+        await render(conteneur, ctx);
+      } catch (erreur) {
+        bouton.disabled = false;
+        toast(erreur.message || 'Acquittement impossible.', 'erreur');
       }
     });
   });

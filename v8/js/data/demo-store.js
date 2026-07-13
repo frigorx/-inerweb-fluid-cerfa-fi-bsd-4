@@ -15,6 +15,10 @@ import { teqCO2, fmtDate, fmtNombre, fmtKgSigne, genId, hasherEcriture,
 // IM-1 : fréquence réglementaire des contrôles d'étanchéité —
 // logique UNIQUE partagée avec le cadre 7 du CERFA (aucun doublon).
 import { calculerCadre7 } from '../cerfa/generateur.js';
+// Sentinelle d'alertes persistées : diff pur + formatage (module partagé
+// avec le test unitaire ; le serveur en tient un miroir exact).
+import { calculerTransitions, formaterEpisode, comparerEpisodes, estOuvert }
+  from './sentinelle.js';
 
 const CLE_STOCKAGE = 'inerweb-fluide-v8-demo';
 
@@ -1406,7 +1410,7 @@ export function creerDemoStore() {
       // Compléments Phase C pour les sauvegardes A/B existantes
       for (const cle of ['auditsOrganisme', 'nonConformites', 'stocksInitiaux',
         'bsff', 'inventaires', 'justificationsEcarts', 'piecesJointes',
-        'retoursFournisseur']) {
+        'retoursFournisseur', 'sentinelleAlertes']) {
         if (!Array.isArray(donnees[cle])) {
           donnees[cle] = copier(DEMO[cle] ?? []);
           modifie = true;
@@ -3274,6 +3278,78 @@ export function creerDemoStore() {
       // L'état au 01/01 de l'année N = la photo du 31/12 de N−1.
       const ouverture = lirePhotoOuNull(anneeNum - 1);
       return copier({ ...courant, ouverture });
+    },
+
+    // ------------------------------------------------------
+    // Sentinelle d'alertes persistées
+    // getAlertes() reste la vérité du présent ; la sentinelle
+    // n'historise que le temps et l'acquittement — jamais de masquage.
+    // ------------------------------------------------------
+    async getSentinelle() {
+      return donnees.sentinelleAlertes.map(formaterEpisode).sort(comparerEpisodes);
+    },
+
+    async rafraichirSentinelle() {
+      const actives = await store.getAlertes();
+      const ouverts = donnees.sentinelleAlertes.filter(estOuvert);
+      const maintenant = new Date().toISOString();
+      const { apparitions, escalades, resolutions } =
+        calculerTransitions(actives, ouverts, maintenant);
+      // Idempotent : sans transition, aucun effet (ni persistance ni notif).
+      if (apparitions.length === 0 && escalades.length === 0 &&
+          resolutions.length === 0) {
+        return donnees.sentinelleAlertes.map(formaterEpisode).sort(comparerEpisodes);
+      }
+      for (const app of apparitions) {
+        donnees.sentinelleAlertes.push({
+          id: genId('sen'),
+          ...app,
+          resolueLe: null,
+          acquitteeLe: null,
+          acquitteePar: null
+        });
+      }
+      // Escalade : rafraîchir le snapshot ET remettre à zéro l'acquittement
+      // (l'aggravation doit être revue). L'entrée de journal de l'ancien
+      // acquittement, elle, reste — le journal est append-only.
+      const escaladeParId = new Map(escalades.map((x) => [x.id, x]));
+      const aClore = new Set(resolutions);
+      for (const e of donnees.sentinelleAlertes) {
+        const esc = escaladeParId.get(e.id);
+        if (esc) {
+          e.niveau = esc.niveau;
+          e.titre = esc.titre;
+          e.detail = esc.detail;
+          e.cibleVue = esc.cibleVue;
+          e.cibleId = esc.cibleId;
+          e.acquitteeLe = null;
+          e.acquitteePar = null;
+        }
+        if (aClore.has(e.id)) e.resolueLe = maintenant;
+      }
+      // rafraichirSentinelle ne touche PAS au journal chaîné (éviter de le
+      // noyer) : l'apparition/résolution vit dans cette table horodatée.
+      persisterEtNotifier();
+      return donnees.sentinelleAlertes.map(formaterEpisode).sort(comparerEpisodes);
+    },
+
+    async acquitterAlerte(idAlerte, par) {
+      if (!idAlerte || !String(idAlerte).trim()) {
+        throw new Error('Identifiant d’alerte obligatoire.');
+      }
+      const episode = donnees.sentinelleAlertes.find(
+        (e) => e.idAlerte === idAlerte && estOuvert(e));
+      if (!episode) {
+        throw new Error('Aucune alerte active à acquitter pour cet identifiant.');
+      }
+      // Idempotent : déjà pris connaissance → aucune seconde trace.
+      if (episode.acquitteeLe) return formaterEpisode(episode);
+      episode.acquitteeLe = new Date().toISOString();
+      episode.acquitteePar = par ?? null;
+      // Preuve opposable : la prise de connaissance est consignée au journal.
+      journaliser(par, 'ACQUITTEMENT_ALERTE', idAlerte, episode.titre);
+      persisterEtNotifier();
+      return formaterEpisode(episode);
     },
 
     async justifierEcart(annee, fluide, justification) {

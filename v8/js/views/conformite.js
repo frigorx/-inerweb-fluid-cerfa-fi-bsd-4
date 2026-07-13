@@ -67,7 +67,35 @@ const STYLE_VUE = `<style>
     display: flex; align-items: center; gap: 8px;
     color: var(--succes); font-weight: 600; font-size: 14px; margin-top: 10px;
   }
+  .vue-conformite .histo { margin-top: 16px; }
+  .vue-conformite .histo-titre { font-weight: 600; }
+  .vue-conformite .histo-detail { color: var(--texte-3); font-size: 12px; margin-top: 1px; }
+  .vue-conformite .histo-liste { list-style: none; margin: 12px 0 0; padding: 0; }
+  .vue-conformite .histo-liste li {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 9px 0; border-top: 1px solid var(--bordure);
+  }
+  .vue-conformite .histo-corps { flex: 1; min-width: 0; }
+  .vue-conformite .histo-alerte { font-size: 13px; font-weight: 600; }
+  .vue-conformite .histo-periode {
+    font-size: 12px; color: var(--texte-3); margin-top: 1px;
+    font-variant-numeric: tabular-nums;
+  }
+  .vue-conformite .histo-acquit {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 600; color: var(--succes); margin-top: 3px;
+  }
+  .vue-conformite .histo-acquit svg { width: 13px; height: 13px; flex: none; }
+  .vue-conformite .histo-etat {
+    flex: none; font-size: 11px; font-weight: 600; padding: 2px 8px;
+    border-radius: var(--rayon-chip);
+  }
+  .vue-conformite .histo-etat-active { background: var(--danger-fond); color: var(--danger); }
+  .vue-conformite .histo-etat-resolue { background: var(--succes-fond); color: var(--succes); }
 </style>`;
+
+/** Nombre d'épisodes affichés dans l'historique de la sentinelle. */
+const HISTO_MAX = 20;
 
 /** Pastille ronde du feu (grande ou petite). */
 function pastille(etat, petite) {
@@ -145,6 +173,49 @@ function carteDomaine(domaine) {
     + '</section>';
 }
 
+/** Une ligne d'historique : un épisode d'alerte daté (sentinelle). */
+function ligneHistorique(episode) {
+  const critique = episode.niveau === 'CRITIQUE';
+  const active = episode.resolueLe === null;
+  const debut = fmtDate(String(episode.apparueLe).slice(0, 10));
+  const periode = active
+    ? 'Active depuis le ' + esc(debut)
+    : 'Du ' + esc(debut) + ' au ' + esc(fmtDate(String(episode.resolueLe).slice(0, 10)));
+  const acquit = episode.acquitteeLe
+    ? '<div class="histo-acquit">' + ICONES.coche + 'Pris connaissance le '
+      + esc(fmtDate(String(episode.acquitteeLe).slice(0, 10)))
+      + (episode.acquitteePar ? ' · ' + esc(episode.acquitteePar) : '') + '</div>'
+    : '';
+  const etat = active
+    ? '<span class="histo-etat histo-etat-active">En cours</span>'
+    : '<span class="histo-etat histo-etat-resolue">Résolue</span>';
+  return '<li>'
+    + pastille(critique ? 'ROUGE' : 'ORANGE', true)
+    + '<div class="histo-corps">'
+    + '<div class="histo-alerte">' + esc(episode.titre) + '</div>'
+    + '<div class="histo-periode">' + periode + '</div>'
+    + acquit
+    + '</div>'
+    + etat
+    + '</li>';
+}
+
+/** Carte « Historique des alertes » : la timeline opposable de la sentinelle. */
+function carteHistorique(sentinelle) {
+  if (!sentinelle.length) return '';
+  const liste = sentinelle.slice(0, HISTO_MAX).map(ligneHistorique).join('');
+  return '<section class="carte histo" aria-label="Historique des alertes">'
+    + '<div class="domaine-entete" style="cursor:default">'
+    + '<div>'
+    + '<div class="histo-titre">Historique des alertes</div>'
+    + '<div class="histo-detail">Depuis quand chaque alerte est active, quand elle a été '
+    + 'résolue, et la trace de sa prise de connaissance (preuve opposable en audit).</div>'
+    + '</div>'
+    + '</div>'
+    + '<ul class="histo-liste">' + liste + '</ul>'
+    + '</section>';
+}
+
 /**
  * Rendu de la vue « Conformité ».
  * @param {HTMLElement} conteneur - élément vidé d'avance par le routeur
@@ -152,7 +223,13 @@ function carteDomaine(domaine) {
  */
 export async function render(conteneur, ctx) {
   const { store, naviguer } = ctx;
-  const resultat = await collecterConformite(store);
+  // Best-effort : garder la sentinelle à jour même si l'on atterrit
+  // directement ici (mutation ; échec silencieux si non habilité).
+  await store.rafraichirSentinelle().catch(() => {});
+  const [resultat, sentinelle] = await Promise.all([
+    collecterConformite(store),
+    store.getSentinelle()
+  ]);
   const jour = new Date().toISOString().slice(0, 10);
 
   conteneur.innerHTML = STYLE_VUE
@@ -166,6 +243,7 @@ export async function render(conteneur, ctx) {
     + '<div class="grille-domaines">'
     + resultat.domaines.map(carteDomaine).join('')
     + '</div>'
+    + carteHistorique(sentinelle)
     + '</div>';
 
   // Navigation : en-têtes de domaine et constats (clic + Entrée).

@@ -80,7 +80,7 @@ export const ROLES_VALIDEURS = ['REFERENT', 'ENSEIGNANT', 'ADMIN'];
 export const PROPRIETES_CONTRAT = ['modeLabel', 'registreAltere'];
 
 /**
- * Les 66 méthodes du contrat, dans l'ordre du cycle de vie.
+ * Les 69 méthodes du contrat, dans l'ordre du cycle de vie.
  * genre : 'abonnement' | 'initialisation' | 'lecture' | 'mutation'.
  * La sémantique fine (formes de retour, garde-fous, effets) est
  * décrite ici en une ligne et VÉRIFIÉE dans test-contrat.mjs.
@@ -239,6 +239,14 @@ export const METHODES_CONTRAT = {
     description: 'Justifie un écart constaté ; Error s’il n’y a aucun écart à justifier.' },
   getInventaireNominatif: { genre: 'lecture',
     description: 'La photographie nominative d’une année (brique ②/B7) : { annee, datePhoto|null, bouteilles[], fuitesOuvertes[], ouverture|null } — ouverture = photo de l’année N−1 (l’état au 01/01).' },
+
+  // --- sentinelle d'alertes persistées --------------------------------
+  getSentinelle: { genre: 'lecture',
+    description: 'Les épisodes d’alerte persistés (actifs et archivés), récents d’abord : { id, idAlerte, niveau, titre, detail, cible, apparueLe, resolueLe|null, acquitteeLe|null, acquitteePar|null }. getAlertes reste la vérité du présent ; la sentinelle date l’apparition, la résolution et la prise de connaissance.' },
+  rafraichirSentinelle: { genre: 'mutation',
+    description: 'Réconcilie la table avec getAlertes() : ouvre un épisode par alerte nouvellement apparue, clôt (resolueLe) les épisodes dont l’alerte a disparu. IDEMPOTENT (aucun effet si rien n’a changé) ; ne journalise PAS au registre chaîné. Retourne la sentinelle à jour.' },
+  acquitterAlerte: { genre: 'mutation',
+    description: 'Marque « pris connaissance » l’épisode ouvert d’une alerte (acquitteeLe/acquitteePar) et le CONSIGNE au journal d’audit (preuve opposable) ; Error si aucune alerte active pour cet id ; idempotent si déjà acquitté. NE MASQUE RIEN : l’alerte reste active et visible.' },
 
   // --- mode officiel et échanges --------------------------------------
   peutPasserEnOfficiel: { genre: 'lecture',

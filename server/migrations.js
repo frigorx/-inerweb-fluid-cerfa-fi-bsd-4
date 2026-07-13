@@ -67,6 +67,12 @@
  *       reconstituer l'état passé (les pesées écrasent hors registre).
  *       Dénormalisées à dessein (code, fluide, masse recopiés) : une photo
  *       doit rester lisible même si la bouteille évolue ensuite.
+ *  15 — sentinelle d'alertes persistées : table sentinelle_alertes = un
+ *       ÉPISODE par occurrence continue d'une alerte (rafraichirSentinelle
+ *       ouvre/clôt, acquitterAlerte marque la prise de connaissance +
+ *       journal chaîné). Index UNIQUE partiel « un seul épisode ouvert par
+ *       alerte ». getAlertes() reste la vérité du présent ; la sentinelle
+ *       n'HISTORISE que le temps et l'acquittement — jamais de masquage.
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -492,6 +498,46 @@ END;`);
         date_photo       TEXT NOT NULL,
         PRIMARY KEY (etablissement_id, annee, machine_id)
       );`);
+    }
+  },
+
+  15: {
+    nom: 'sentinelle_alertes',
+    appliquer(db) {
+      // Sentinelle d'alertes persistées : un ÉPISODE par occurrence
+      // continue d'une alerte (id_alerte = id stable de getAlertes).
+      // getAlertes() reste la vérité du présent ; cette table ne fait
+      // qu'HISTORISER — apparueLe / resolueLe — et porter la preuve de
+      // prise de connaissance (acquittee_le / acquittee_par, aussi
+      // consignée au journal chaîné). Une alerte qui disparaît puis
+      // revient ouvre un nouvel épisode (l'ancien reste, résolu).
+      // Snapshot (niveau/titre/detail/cible) FIGÉ à l'apparition : il ne
+      // sert qu'à l'historique des épisodes clos ; l'affichage courant
+      // relit getAlertes(). Pas de FK vers une entité métier (la cible
+      // peut être un agrégat — balance, admin — et l'épisode archivé
+      // doit survivre à la disparition de sa cible).
+      // Invariant applicatif : au plus UN épisode ouvert par id_alerte
+      // (garanti par la réconciliation, garanti en base par l'index
+      // UNIQUE partiel ci-dessous).
+      db.exec(`CREATE TABLE IF NOT EXISTS sentinelle_alertes (
+        id               TEXT PRIMARY KEY,
+        etablissement_id TEXT NOT NULL REFERENCES etablissements(id),
+        id_alerte        TEXT NOT NULL,
+        niveau           TEXT NOT NULL,
+        titre            TEXT NOT NULL,
+        detail           TEXT,
+        cible_vue        TEXT,
+        cible_id         TEXT,
+        apparue_le       TEXT NOT NULL,
+        resolue_le       TEXT,
+        acquittee_le     TEXT,
+        acquittee_par    TEXT
+      );`);
+      db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_sentinelle_ouverte
+        ON sentinelle_alertes (etablissement_id, id_alerte)
+        WHERE resolue_le IS NULL;`);
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_sentinelle_apparue
+        ON sentinelle_alertes (apparue_le);`);
     }
   }
 };

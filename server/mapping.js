@@ -429,6 +429,25 @@ const TABLES = {
       'apres_json', 'ip_poste', 'resultat', 'hash_precedent', 'hash']
   },
 
+  sentinelle_alertes: {
+    // Forme STOCKÉE à plat (cibleVue/cibleId) ; le handler getSentinelle
+    // reconstruit ensuite l'objet cible { vue, id } de la forme de sortie.
+    champs: {
+      id: 'id',
+      idAlerte: 'id_alerte',
+      niveau: 'niveau',
+      titre: 'titre',
+      detail: 'detail',
+      cibleVue: 'cible_vue',
+      cibleId: 'cible_id',
+      apparueLe: 'apparue_le',
+      resolueLe: 'resolue_le',
+      acquitteeLe: 'acquittee_le',
+      acquitteePar: 'acquittee_par'
+    },
+    sqlSeulement: ['etablissement_id']
+  },
+
   audits_etablissement: {
     champs: {
       id: 'id',

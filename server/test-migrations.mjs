@@ -807,6 +807,69 @@ verifierLeve('le code public est unique (résolution QR sans ambiguïté)',
 }
 
 // ============================================================
+// 6nonies. Sentinelle d'alertes (migration 015) — base
+// PRÉEXISTANTE (v14 → v15) : la table sentinelle_alertes est
+// créée, et l'index UNIQUE partiel garantit l'invariant « un seul
+// épisode OUVERT par alerte » (tout en laissant cohabiter un
+// épisode résolu et un nouvel épisode ouvert — la réapparition).
+// ============================================================
+{
+  const CHEMIN_SENT = join(DOSSIER, 'ancienne-sentinelle.db');
+  const ancienneSent = new DatabaseSync(CHEMIN_SENT);
+  ancienneSent.exec(readFileSync(new URL('./schema.sql', import.meta.url), 'utf8'));
+  ancienneSent.exec(`PRAGMA user_version = ${migrations.VERSION_BASE};`);
+  const jusqua14 = {};
+  for (let v = 2; v <= 14; v += 1) jusqua14[v] = migrations.MIGRATIONS[v];
+  migrations.migrer(ancienneSent, jusqua14); // portée à 14, PAS encore 15
+
+  verifier('avant migration 015 : la base est bloquée en version 14',
+    migrations.lireVersion(ancienneSent) === 14);
+  verifier('avant migration 015 : la table sentinelle_alertes n’existe pas',
+    ancienneSent.prepare(
+      "SELECT count(*) AS n FROM sqlite_master WHERE name = 'sentinelle_alertes'")
+      .get().n === 0);
+
+  const vFinaleSent = migrations.migrer(ancienneSent,
+    { 15: migrations.MIGRATIONS[15] });
+  verifier('la migration 015 porte la base à la version 15',
+    vFinaleSent === 15 && migrations.lireVersion(ancienneSent) === 15);
+  verifier('la table sentinelle_alertes existe après migration',
+    ancienneSent.prepare(
+      "SELECT count(*) AS n FROM sqlite_master WHERE name = 'sentinelle_alertes'")
+      .get().n === 1);
+  verifier('l’index UNIQUE partiel des épisodes ouverts existe',
+    ancienneSent.prepare(
+      "SELECT count(*) AS n FROM sqlite_master WHERE name = 'idx_sentinelle_ouverte'")
+      .get().n === 1);
+
+  ancienneSent.exec(`INSERT INTO etablissements (id, raison_sociale)
+                     VALUES ('ETB-SEN', 'Lycée Sentinelle');`);
+  ancienneSent.exec(`INSERT INTO sentinelle_alertes
+      (id, etablissement_id, id_alerte, niveau, titre, apparue_le)
+    VALUES ('SEN-A', 'ETB-SEN', 'alr-capacite', 'CRITIQUE', 'Capacité',
+      '2026-07-13T09:00:00.000Z');`);
+  verifierLeve('l’index empêche un SECOND épisode ouvert pour la même alerte',
+    () => ancienneSent.exec(`INSERT INTO sentinelle_alertes
+        (id, etablissement_id, id_alerte, niveau, titre, apparue_le)
+      VALUES ('SEN-B', 'ETB-SEN', 'alr-capacite', 'CRITIQUE', 'Capacité',
+        '2026-07-13T10:00:00.000Z');`),
+    'UNIQUE');
+  // Réapparition : un épisode RÉSOLU + un nouvel ouvert cohabitent.
+  ancienneSent.exec(
+    "UPDATE sentinelle_alertes SET resolue_le = '2026-07-14T09:00:00.000Z' WHERE id = 'SEN-A';");
+  ancienneSent.exec(`INSERT INTO sentinelle_alertes
+      (id, etablissement_id, id_alerte, niveau, titre, apparue_le)
+    VALUES ('SEN-C', 'ETB-SEN', 'alr-capacite', 'CRITIQUE', 'Capacité',
+      '2026-07-15T09:00:00.000Z');`);
+  verifier('un épisode résolu et un nouvel ouvert cohabitent (réapparition)',
+    ancienneSent.prepare(
+      "SELECT count(*) AS n FROM sentinelle_alertes WHERE id_alerte = 'alr-capacite'")
+      .get().n === 2);
+
+  ancienneSent.close();
+}
+
+// ============================================================
 // 7. Base pré-versionnage : refusée avec un message clair
 // ============================================================
 db.fermer();

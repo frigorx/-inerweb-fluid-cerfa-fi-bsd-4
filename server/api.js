@@ -176,6 +176,7 @@ const ROLES_MUTATION = {
   reformerOutil: VALIDEUR,
   justifierEcart: VALIDEUR,
   saisirInventaire: VALIDEUR,
+  acquitterAlerte: VALIDEUR,
   createBsff: VALIDEUR,
   retournerFournisseur: VALIDEUR,
   deciderFluideRecupere: VALIDEUR,
@@ -202,7 +203,11 @@ const ROLES_MUTATION = {
   createOutil: OPERATEUR,
   updateOutil: OPERATEUR,
   ajouterPieceJointe: OPERATEUR,
-  supprimerPieceJointe: OPERATEUR
+  supprimerPieceJointe: OPERATEUR,
+  // Rafraîchir la sentinelle est déclenché en consultant le tableau de bord :
+  // tout utilisateur connecté peut l'appeler (best-effort, sans effet si rien
+  // n'a changé). Acquitter, en revanche, engage le responsable → VALIDEUR.
+  rafraichirSentinelle: OPERATEUR
 };
 
 // ------------------------------------------------------------
@@ -373,6 +378,88 @@ function amorcerEtablissement() {
 function etablissementCourant() {
   return db.get('SELECT * FROM etablissements WHERE id = ?',
     [ID_ETABLISSEMENT]) ?? { id: ID_ETABLISSEMENT, raison_sociale: '' };
+}
+
+// ------------------------------------------------------------
+// Sentinelle d'alertes persistées — MIROIR EXACT du module pur
+// v8/js/data/sentinelle.js (le serveur est CommonJS, le front ESM :
+// la parité de sortie est garantie par test-contrat, pas par le
+// partage de code — même choix que getAlertes).
+// ------------------------------------------------------------
+
+/** Diff pur alertes actives ↔ épisodes ouverts (cf. sentinelle.js). */
+function calculerTransitionsSentinelle(alertesActives, episodesOuverts, maintenantIso) {
+  const idsActifs = new Set(alertesActives.map((a) => a.id));
+  const ouvertParIdAlerte = new Map();
+  for (const e of episodesOuverts) ouvertParIdAlerte.set(e.idAlerte, e);
+  const apparitions = [];
+  const escalades = [];
+  const vus = new Set();
+  for (const a of alertesActives) {
+    if (vus.has(a.id)) continue;
+    vus.add(a.id);
+    const ouvert = ouvertParIdAlerte.get(a.id);
+    if (!ouvert) {
+      apparitions.push({
+        idAlerte: a.id,
+        niveau: a.niveau,
+        titre: a.titre,
+        detail: a.detail ?? null,
+        cibleVue: a.cible?.vue ?? null,
+        cibleId: a.cible?.id ?? null,
+        apparueLe: maintenantIso
+      });
+    } else if (ouvert.niveau !== a.niveau) {
+      escalades.push({
+        id: ouvert.id,
+        niveau: a.niveau,
+        titre: a.titre,
+        detail: a.detail ?? null,
+        cibleVue: a.cible?.vue ?? null,
+        cibleId: a.cible?.id ?? null
+      });
+    }
+  }
+  const resolutions = episodesOuverts
+    .filter((e) => !idsActifs.has(e.idAlerte))
+    .map((e) => e.id);
+  return { apparitions, escalades, resolutions };
+}
+
+/** Épisode STOCKÉ (forme à plat) → forme de sortie du contrat (cf. sentinelle.js). */
+function formaterEpisodeSentinelle(e) {
+  return {
+    id: e.id,
+    idAlerte: e.idAlerte,
+    niveau: e.niveau,
+    titre: e.titre,
+    detail: e.detail ?? null,
+    cible: e.cibleVue ? { vue: e.cibleVue, id: e.cibleId ?? null } : null,
+    apparueLe: e.apparueLe,
+    resolueLe: e.resolueLe ?? null,
+    acquitteeLe: e.acquitteeLe ?? null,
+    acquitteePar: e.acquitteePar ?? null
+  };
+}
+
+/** Ordre stable : plus récent d'abord, départage par idAlerte (cf. sentinelle.js). */
+function comparerEpisodesSentinelle(a, b) {
+  if (a.apparueLe !== b.apparueLe) return a.apparueLe < b.apparueLe ? 1 : -1;
+  if (a.idAlerte === b.idAlerte) return 0;
+  return a.idAlerte < b.idAlerte ? -1 : 1;
+}
+
+/** La sentinelle complète, en forme de sortie triée (lecture SANS écriture). */
+function lireSentinelleTriee() {
+  const lignes = db.all(
+    `SELECT id, id_alerte, niveau, titre, detail, cible_vue, cible_id,
+            apparue_le, resolue_le, acquittee_le, acquittee_par
+     FROM sentinelle_alertes WHERE etablissement_id = ?`,
+    [ID_ETABLISSEMENT]);
+  return lignes
+    .map((l) => mapping.versFront('sentinelle_alertes', l))
+    .map(formaterEpisodeSentinelle)
+    .sort(comparerEpisodesSentinelle);
 }
 
 // ------------------------------------------------------------
@@ -2218,6 +2305,105 @@ const HANDLERS = {
     const courant = lirePhotoNominative(anneeNum);
     const ouverture = lirePhotoOuNull(anneeNum - 1);
     return { ...courant, ouverture };
+  },
+
+  // ----------------------------------------------------------
+  // Sentinelle d'alertes persistées (miroir du DemoStore)
+  // ----------------------------------------------------------
+
+  /** Les épisodes persistés, récents d'abord (lecture pure). */
+  getSentinelle() {
+    return lireSentinelleTriee();
+  },
+
+  /**
+   * Réconcilie la table avec getAlertes() : ouvre/clôt des épisodes.
+   * IDEMPOTENT (aucun effet ni transaction si rien n'a changé) ; ne
+   * journalise PAS au registre chaîné. Reprend rafraichirSentinelle
+   * du DemoStore.
+   */
+  rafraichirSentinelle() {
+    const actives = HANDLERS.getAlertes();
+    const maintenant = new Date().toISOString();
+    const ouverts = db.all(
+      `SELECT id, id_alerte AS idAlerte, niveau FROM sentinelle_alertes
+       WHERE etablissement_id = ? AND resolue_le IS NULL`,
+      [ID_ETABLISSEMENT]);
+    const { apparitions, escalades, resolutions } =
+      calculerTransitionsSentinelle(actives, ouverts, maintenant);
+    if (apparitions.length === 0 && escalades.length === 0 &&
+        resolutions.length === 0) {
+      return lireSentinelleTriee();
+    }
+    return muter(() => {
+      for (const app of apparitions) {
+        inserer('sentinelle_alertes', {
+          id: db.generateId('SEN'),
+          etablissement_id: ID_ETABLISSEMENT,
+          id_alerte: app.idAlerte,
+          niveau: app.niveau,
+          titre: app.titre,
+          detail: app.detail,
+          cible_vue: app.cibleVue,
+          cible_id: app.cibleId,
+          apparue_le: app.apparueLe,
+          resolue_le: null,
+          acquittee_le: null,
+          acquittee_par: null
+        });
+      }
+      // Escalade : rafraîchir le snapshot ET remettre à zéro l'acquittement
+      // (l'aggravation doit être revue ; l'entrée de journal de l'ancien
+      // acquittement reste, le journal est append-only).
+      for (const esc of escalades) {
+        db.run(
+          `UPDATE sentinelle_alertes SET niveau = ?, titre = ?, detail = ?,
+             cible_vue = ?, cible_id = ?, acquittee_le = NULL, acquittee_par = NULL
+           WHERE id = ?`,
+          [esc.niveau, esc.titre, esc.detail, esc.cibleVue, esc.cibleId, esc.id]);
+      }
+      for (const id of resolutions) {
+        db.run('UPDATE sentinelle_alertes SET resolue_le = ? WHERE id = ?',
+          [maintenant, id]);
+      }
+      return lireSentinelleTriee();
+    });
+  },
+
+  /**
+   * Marque « pris connaissance » l'épisode ouvert d'une alerte + CONSIGNE
+   * au journal chaîné. Error si aucune alerte active ; idempotent si déjà
+   * acquitté. NE MASQUE RIEN. Reprend acquitterAlerte du DemoStore.
+   */
+  acquitterAlerte(params) {
+    const idAlerte = params.idAlerte;
+    const par = params.par;
+    if (!idAlerte || !String(idAlerte).trim()) {
+      throw new Error('Identifiant d’alerte obligatoire.');
+    }
+    const episode = db.get(
+      `SELECT * FROM sentinelle_alertes
+       WHERE etablissement_id = ? AND id_alerte = ? AND resolue_le IS NULL`,
+      [ID_ETABLISSEMENT, idAlerte]);
+    if (!episode) {
+      throw new Error('Aucune alerte active à acquitter pour cet identifiant.');
+    }
+    if (episode.acquittee_le) {
+      return formaterEpisodeSentinelle(
+        mapping.versFront('sentinelle_alertes', episode));
+    }
+    const maintenant = new Date().toISOString();
+    return muter(() => {
+      db.run(
+        `UPDATE sentinelle_alertes SET acquittee_le = ?, acquittee_par = ?
+         WHERE id = ?`,
+        [maintenant, par ?? null, episode.id]);
+      journaliser(par, 'ACQUITTEMENT_ALERTE', idAlerte, episode.titre);
+      const relu = db.get('SELECT * FROM sentinelle_alertes WHERE id = ?',
+        [episode.id]);
+      return formaterEpisodeSentinelle(
+        mapping.versFront('sentinelle_alertes', relu));
+    });
   },
 
   /**

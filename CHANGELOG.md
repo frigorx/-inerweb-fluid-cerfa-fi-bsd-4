@@ -2,6 +2,70 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔔 Brique ⑥ · Sentinelle d'alertes PERSISTÉES (13/07)
+Jusqu'ici les 8 familles d'alertes étaient **recalculées à la volée** à chaque
+lecture (rien n'existait entre deux consultations). La sentinelle pose par-dessus
+`getAlertes()` — qui reste la SEULE vérité du présent — une couche **temporelle et
+opposable** : depuis quand une alerte est active, quand elle a cessé, et la **preuve
+qu'un responsable en a pris connaissance**. Sans jamais inventer ni **masquer** une
+alerte.
+- **Modèle « épisode »** (`v8/js/data/sentinelle.js`, module pur — diff/format/tri,
+  dupliqué en miroir exact côté serveur comme `getAlertes`) : un épisode = une
+  occurrence continue d'une alerte (id stable `alr-…`). Une alerte qui disparaît puis
+  revient ouvre un **nouvel** épisode (l'ancien reste archivé, résolu) — même logique
+  que les dossiers de fuite.
+- **Migration 015** — table `sentinelle_alertes` (`apparue_le` / `resolue_le` /
+  `acquittee_le` / `acquittee_par` + snapshot niveau/titre/detail/cible) + **index
+  UNIQUE partiel** `WHERE resolue_le IS NULL` = invariant « au plus **un** épisode
+  ouvert par alerte » (tout en laissant cohabiter résolu + ouvert à la réapparition).
+  Rejouable de zéro, aucun DROP, aucun re-hash.
+- **3 méthodes de contrat** (surface **66 → 69**, parité demo/local stricte) :
+  - `rafraichirSentinelle()` — réconcilie la table avec les alertes du moment (ouvre
+    les apparitions, clôt les résolutions). **IDEMPOTENTE** (aucun effet, aucune
+    transaction si rien n'a changé) ; ne touche **pas** au journal chaîné (pour ne pas
+    le noyer) — l'horodatage vit dans la table.
+  - `acquitterAlerte(idAlerte, par)` — « j'ai pris connaissance », horodaté +
+    **consigné au journal d'audit chaîné** (LA preuve opposable) ; Error si aucune
+    alerte active, idempotent si déjà acquitté.
+  - `getSentinelle()` — les épisodes (actifs + archivés), récents d'abord.
+- **GARDE-FOU AUDIT — aucun masquage** : il n'existe AUCUNE méthode de snooze /
+  suppression / dé-acquittement. Acquitter ne fait jamais disparaître : une alerte
+  critique acquittée reste active, visible, et le **feu tricolore reste au rouge**
+  (il consomme `getAlertes`, inchangé).
+- **Rôles** : `rafraichirSentinelle` = OPERATEUR (tout utilisateur connecté déclenche
+  le rafraîchissement en consultant, best-effort) ; `acquitterAlerte` = **VALIDEUR**
+  (la prise d'acte d'une non-conformité réglementaire engage le responsable, jamais
+  un élève). Rôle gardé côté serveur AVANT effet, lu du contexte de session.
+- **Interface** :
+  - Tableau de bord — chaque alerte gagne « **Active depuis le …** » et, pour un
+    valideur, le bouton « **J'ai pris connaissance** » (→ badge « Pris connaissance
+    le … · nom » après clic, l'alerte restant affichée). Rafraîchissement best-effort
+    au chargement (échec silencieux si non habilité).
+  - Conformité — carte « **Historique des alertes** » : la timeline opposable
+    (période active/résolue + trace d'acquittement) qu'un auditeur consulterait.
+- **Escalade de niveau tracée (constat IMPORTANT 1 de la revue adversariale)** : si
+  une alerte change de gravité sous le même id (capacité « à renouveler » IMPORTANT →
+  « expirée » CRITIQUE), l'épisode ouvert voit son snapshot rafraîchi ET son
+  **acquittement remis à zéro** — prendre acte de la version douce ne vaut pas prise
+  d'acte de l'aggravation. L'entrée de journal de l'ancien acquittement reste
+  (append-only). Vérifié en navigateur : l'alerte redevenue critique réaffiche le
+  bouton, sans badge « pris connaissance ».
+- **Tri déterministe et COMMUN aux deux stores** (constat IMPORTANT 2) : départage par
+  `idAlerte`, jamais par l'id de stockage (aléatoire, divergent d'un store à l'autre) —
+  la parité du tri est garantie. **Dédup défensif** des apparitions par `idAlerte`
+  (aligne demo/serveur, évite un rollback total si un id d'alerte était un jour dupliqué).
+- **Revue adversariale (1 agent, lecture seule) : 0 bloquant** ; les 2 constats
+  IMPORTANT ci-dessus corrigés. Mineurs notés hors périmètre v1 : le « qui »
+  auto-déclaré (transversal à tout le code, pas propre à la brique) ; `apparueLe` =
+  1re consultation, pas naissance de la condition (design sans backfill).
+- Tests : `test-sentinelle-pur.mjs` **40/0** (diff/escalade/allègement/dédup/format/
+  tri), `test-sentinelle.mjs` **33/0 demo+local** (cycle complet apparition →
+  acquittement + journal → résolution → réapparition, escalade + remise à zéro,
+  idempotence, garde-fous), `test-migrations` v14→v15 (index partiel prouvé), contrat
+  **255/0** sur les deux stores, mapping 156/0. **53 exécutions TOUT VERT.** Vérifié
+  navigateur (ports neufs 8191/8207, origines vierges) : datation, acquittement +
+  toast + journal, historique Conformité, masquage impossible, escalade.
+
 ### 🎓 Brique ⑤ · Correction AUTOMATIQUE du CERFA rempli par l'élève (13/07)
 Le pont pédagogique : l'élève remplit le CERFA 15497*04 officiel vierge À L'ORDINATEUR,
 le professeur importe le PDF, l'appli compare champ par champ aux valeurs attendues du
