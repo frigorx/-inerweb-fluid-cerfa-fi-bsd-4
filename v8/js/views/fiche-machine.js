@@ -7,6 +7,7 @@
 
 import { enteteVue, carteKpi, chipStatut, barreProgression, tableau, toast, ICONES } from './communs.js';
 import { esc, fmtKg, fmtTeq, fmtDate, fmtNombre, teqCO2 } from '../core/utils.js';
+import { construireDossiersFuite, LIBELLES_STATUT_FUITE } from '../data/dossiers-fuite.js';
 import { genererDossierMachine } from '../documents/dossier-machine.js';
 import { telechargerEtSceller } from '../documents/telecharger-dossier.js';
 import { ouvrirWizard } from '../wizard/wizard.js';
@@ -353,6 +354,55 @@ function blocAlertes(alertes) {
 }
 
 /* ============================================================
+   Bloc 4 bis — Fuites (dossiers de fuite, brique ③)
+   ============================================================ */
+
+// Mêmes classes de chip que le reste de la charte (chip-rouge/ambre/vert),
+// même idiome que chipStatutFuite de fiche-fuite.js (dupliqué à dessein :
+// deux vues indépendantes, pas de dépendance croisée entre fiches).
+const CLASSES_STATUT_FUITE = {
+  OUVERTE: 'chip-rouge',
+  REPAREE: 'chip-ambre',
+  FERMEE: 'chip-vert'
+};
+
+function chipStatutFuiteMachine(statut) {
+  const classe = CLASSES_STATUT_FUITE[statut] || 'chip-gris';
+  const libelle = LIBELLES_STATUT_FUITE[statut] || statut;
+  return '<span class="chip ' + classe + '">' + esc(libelle) + '</span>';
+}
+
+function ligneDossierFuite(dossier) {
+  const echeance = (dossier.statut === 'REPAREE' && dossier.echeanceControleSuivi)
+    ? '<div class="fiche-alerte-detail">Contrôle de suivi attendu le '
+      + esc(fmtDate(dossier.echeanceControleSuivi))
+      + (dossier.suiviEnRetard ? ' — <strong style="color:var(--danger)">en retard</strong>' : '')
+      + '</div>'
+    : '';
+  return '<div class="fiche-alerte">'
+    + '<div style="flex:1;min-width:0">'
+    + '<div class="fiche-alerte-titre">' + esc(fmtDate(dossier.dateDetection)) + ' — '
+    + esc(dossier.localisation || 'Localisation non précisée') + ' '
+    + chipStatutFuiteMachine(dossier.statut)
+    + '</div>'
+    + echeance
+    + '</div>'
+    + '<button type="button" class="btn btn-contour btn-petit" '
+    + 'data-action="ouvrir-dossier-fuite" data-id="' + esc(dossier.controleFuiteId) + '">'
+    + 'Ouvrir le dossier</button>'
+    + '</div>';
+}
+
+/** Bloc « Fuites », affiché seulement si la machine a au moins un dossier. */
+function blocFuites(dossiers) {
+  if (!dossiers.length) return '';
+  return '<div class="fiche-section">'
+    + '<h3 class="fiche-section-titre">Fuites</h3>'
+    + '<div class="carte">' + dossiers.map(ligneDossierFuite).join('') + '</div>'
+    + '</div>';
+}
+
+/* ============================================================
    Bloc 5 — Historique en onglets (Mouvements / Contrôles / Documents)
    ============================================================ */
 
@@ -494,6 +544,9 @@ export async function render(conteneur, ctx) {
   ]);
   const mouvementsMachine = mouvements.filter((mv) => mv.machineId === machine.id);
   const controlesMachine = controles.filter((ct) => ct.machineId === machine.id);
+  // construireDossiersFuite filtre déjà par machine.id en interne : on lui
+  // passe les tableaux complets, comme pour genererDossierMachine ailleurs.
+  const { dossiers: dossiersFuite } = construireDossiersFuite({ machine, controles, mouvements });
 
   conteneur.innerHTML = STYLES_VUE
     + '<a href="#/machines" class="fiche-retour">' + ICONES.grille + '<span>Retour au parc</span></a>'
@@ -503,6 +556,7 @@ export async function render(conteneur, ctx) {
     + blocActions()
     + blocDonneesTechniques(machine, fluide, client)
     + blocAlertes(alertes)
+    + blocFuites(dossiersFuite)
     + blocHistorique(mouvementsMachine, controlesMachine);
 
   // ---- Bloc « Documents » : monté seulement quand l'onglet est activé
@@ -612,6 +666,13 @@ export async function render(conteneur, ctx) {
       }
     });
   }
+
+  // ---- Ouverture d'un dossier de fuite depuis le bloc « Fuites » ----
+  conteneur.querySelectorAll('[data-action="ouvrir-dossier-fuite"]').forEach(function (bouton) {
+    bouton.addEventListener('click', function () {
+      naviguer('f/' + bouton.dataset.id);
+    });
+  });
 
   // ---- CERFA depuis l'historique (un mouvement ou un contrôle précis) ----
   conteneur.querySelectorAll('[data-action="cerfa-mouvement"]').forEach(function (bouton) {

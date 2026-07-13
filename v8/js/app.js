@@ -222,9 +222,11 @@ async function afficherVue(id, param = '') {
   fermerTiroir();
 
   // Chargement du module de la vue. Les fiches (machine '#/m/<code>',
-  // bouteille '#/b/<code>', client '#/c/<id>') sont des modules dédiés,
-  // volontairement absents de VUES (pas d'entrée sidebar propre — la fiche
-  // client est atteinte depuis l'annuaire 'clients' ou une carte machine).
+  // bouteille '#/b/<code>', client '#/c/<id>', dossier de fuite
+  // '#/f/<idControleFuite>') sont des modules dédiés, volontairement
+  // absents de VUES (pas d'entrée sidebar propre — la fiche client est
+  // atteinte depuis l'annuaire 'clients' ou une carte machine, le dossier
+  // de fuite depuis le bloc « Fuites » de la fiche machine).
   // Brique ② : '#/b/<code>' ouvre désormais la VRAIE fiche bouteille (le
   // hash des étiquettes QR imprimées est inchangé) ; l'édition reste
   // accessible par le bouton « Modifier la fiche » de la fiche.
@@ -232,6 +234,7 @@ async function afficherVue(id, param = '') {
     : id === 'b' ? 'fiche-bouteille'
     : id === 'c' ? 'fiche-client'
     : id === 'o' ? 'fiche-outil'
+    : id === 'f' ? 'fiche-fuite'
     : id;
   let module = null;
   try {

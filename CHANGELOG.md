@@ -2,6 +2,55 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧯 Brique ③ · Dossier de fuite fermé MATÉRIALISÉ (13/07)
+Le différenciateur n°1 (aucun concurrent ne le documente) : la règle d'or était déjà
+codée (R3c/R4 — retour EN_SERVICE impossible sans réparation tracée + contrôle CONFORME
+postérieur), il manquait l'ÉCRAN et la PREUVE. Zéro migration, zéro écriture nouvelle :
+lecture pure des données déjà en base. Méthode habituelle : carto (1 agent) → cœur +
+tests d'abord → 2 agents Sonnet en parallèle (export / interface) → 2 revues
+adversariales Opus → correctifs → navigateur.
+- **`v8/js/data/dossiers-fuite.js`** (nouveau, PUR/Node-testable) : reconstruit les
+  dossiers de fuite d'une machine depuis les contrôles (ancre = contrôle FUITE,
+  réparation migration 8, clôture = premier CONFORME postérieur — MÊME règle que
+  `estFuiteOuverte`, convention date égale comprise). Statuts OUVERTE / REPAREE
+  (échéance de suivi +30 j, retard) / FERMEE ; fenêtre des mouvements « pendant la
+  fuite » ; chronologie triée avec rang intra-jour COHÉRENT avec R3c/R4 (détection →
+  récupérations → réparation → compléments → contrôles).
+- **⚠️ REGROUPEMENT EN ÉPISODES (constat n°1 de la revue adversariale — le vrai sujet)** :
+  un contrôle FUITE survenu alors que l'épisode précédent n'est pas refermé REJOINT le
+  même dossier (fuite qui continue, confirmée) ; un nouveau dossier ne s'ouvre qu'après
+  fermeture du précédent. Sans cela, une fuite ancienne jamais réparée suivie d'une
+  fuite réparée+refermée serait restée affichée « ouverte » alors que les stores
+  (`estFuiteOuverte` ne regarde que la DERNIÈRE fuite) la considèrent refermée et
+  débloquent le complément de gaz. Invariant garanti et TESTÉ : seul le dossier le plus
+  récent peut être non fermé, et son statut coïncide avec les stores.
+- **Écran `#/f/<idContrôle>`** (`v8/js/views/fiche-fuite.js`, patron fiche bouteille) :
+  synthèse (détection/localisation/réparation/clôture/échéance/durée), pastille de
+  statut, chronologie en frise, consultation seule, état sobre si dossier introuvable.
+  **Bloc « Fuites » sur la fiche machine** (entre alertes et historique, disparaît à
+  zéro dossier) : détection, localisation, statut, « Ouvrir le dossier » — les dossiers
+  FERMÉS restent archivés là où les alertes, elles, s'éteignent.
+- **Export ZIP scellé** (`v8/js/documents/dossier-fuite.js`, patron dossier machine) :
+  02-SYNTHESE.csv, 03-CHRONOLOGIE.txt lisible auditeur, 04-CONTROLES.csv,
+  05-MOUVEMENTS-PENDANT-FUITE.csv, CERFA PDF des mouvements de la fenêtre (échec CERFA
+  isolé), manifeste d'empreintes + SHA-256 global + modale de scellement.
+- **Correctifs de revue** (2×Opus, 0 bloquant) : regroupement en épisodes (ci-dessus) +
+  scénarios de réciprocité testés ; désinfection CR/LF/tab des champs SAISIS écrits dans
+  le TXT (une localisation « \r\n2020-01-01 — … » aurait forgé une fausse ligne de
+  chronologie DANS la preuve scellée — les CSV étaient déjà protégés par champCsv) ;
+  garde sur date de réparation malformée (le dossier reste lisible, l'échéance manque) ;
+  localisation affichée dans la frise ; pastille en doublon retirée.
+- Tests : `test-dossiers-fuite.mjs` **46/0 en demo ET local** (suite doublée : statuts,
+  anti-contournement « un CONFORME seul ne referme jamais », épisodes, fenêtres, tri
+  intra-jour, date corrompue, parcours réel complet via le contrat) ;
+  `test-dossier-fuite.mjs` (export) **26/0** ; **48 exécutions TOUT VERT**.
+- **Vérifié navigateur** (sandbox statique port 8177 NEUF, jamais `data/` réel) : fuite
+  démo du Fournil → bloc Fuites « Fuite ouverte » → dossier → « Tracer réparation »
+  (modale existante) → statut « Réparée — contrôle de suivi attendu », échéance +30 j →
+  contrôle CONFORME → « Fermée », machine repassée Conforme, alerte éteinte, dossier
+  archivé sur la fiche → export ZIP + modale scellement (empreinte 64 hex) ; id inconnu
+  → état sobre ; machine sans fuite → pas de bloc. Zéro erreur console.
+
 ### 📸 Brique ② (volet B) · Inventaire NOMINATIF bouteille par bouteille (B7 / CF-20) (10/07)
 La dette « CF-20, prévue V9.4 » consignée dans le schéma est soldée : l'inventaire annuel
 n'est plus seulement agrégé par fluide — la saisie du 31/12 FIGE désormais une
