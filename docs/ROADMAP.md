@@ -36,7 +36,13 @@ implémentations (démo + local). Démo en ligne fonctionnelle (GitHub Pages `/v
 3. ~~**⑤ Correction automatique du CERFA rempli par l'élève**~~ — **FAIT 13/07
    (`e4a04c2`)** : comparateur équitable sur les 72 champs (rapport par cadre,
    rapport HTML imprimable), 30/0 sur PDF réels, vérifié navigateur.
-4. Sentinelle d'alertes persistées.
+4. ~~**Sentinelle d'alertes persistées**~~ — **FAIT 13/07 (`2f0c537`)** : module pur
+   `sentinelle.js` + migration 015 (table `sentinelle_alertes`, index UNIQUE partiel
+   « un seul épisode ouvert par alerte ») + 3 méthodes de contrat (rafraichir idempotente,
+   acquitter → journal chaîné, getSentinelle ; surface 66→69). Aucun masquage (feu tricolore
+   inchangé). UI tableau de bord (« active depuis » + « J'ai pris connaissance ») + historique
+   Conformité. Escalade de niveau tracée (acquittement remis à zéro). Revue adversariale
+   0 bloquant. 40/0 + 33/0 demo+local, 53 exécutions vertes, vérifié navigateur.
 5. Code machine lisible structuré `SITE-FAMILLE-NUMERO` (ex. `JR-CF-001`, décision Franck 07/07,
    remplace `M1/M2` ; le `code_public` opaque du QR reste distinct et inchangé).
 6. Lien intervention → outils utilisés MULTI-outils (aujourd'hui seul le détecteur est lié —

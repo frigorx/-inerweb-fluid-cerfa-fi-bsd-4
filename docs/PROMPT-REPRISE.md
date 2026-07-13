@@ -22,7 +22,25 @@ attentes. Tu ne t'arrêtes que quand une brique est **finie et testée par toi-m
    (**source de vérité**, entrées les plus récentes en tête), `docs/PLAN-PHASE-2.md`,
    `docs/VISION-V9-V10.md` (la boussole).
 
-## État exact (dernier commit poussé `e4a04c2`, 13/07/2026)
+## État exact (dernier commit poussé `2f0c537`, 13/07/2026)
+
+**FAIT le 13/07 (suite)** :
+- **Brique ⑥ « sentinelle d'alertes persistées » (`2f0c537`)** : couche temporelle
+  opposable par-dessus `getAlertes()` (qui reste la vérité du présent). Module pur
+  `v8/js/data/sentinelle.js` (diff/format/tri, miroir exact côté serveur) ; **migration
+  015** table `sentinelle_alertes` + **index UNIQUE partiel** `WHERE resolue_le IS NULL`
+  (invariant « un seul épisode ouvert par alerte », résolu+ouvert cohabitent à la
+  réapparition) ; **3 méthodes de contrat** (surface **66 → 69**) : `rafraichirSentinelle`
+  (idempotente, hors journal chaîné), `acquitterAlerte` (→ **journal chaîné** = preuve
+  opposable, VALIDEUR), `getSentinelle` (lecture). **Aucun masquage** (garde-fou audit :
+  une critique acquittée reste active, feu tricolore inchangé). UI : tableau de bord
+  (« Active depuis le … » + bouton « J'ai pris connaissance ») + carte « Historique des
+  alertes » de la vue Conformité. **Escalade de niveau tracée** (snapshot rafraîchi +
+  acquittement remis à zéro — constat IMPORTANT 1 de la revue). Tri déterministe par
+  `idAlerte` + dédup défensif (constats IMPORTANT 2 / mineur). Revue adversariale
+  **0 bloquant**. `test-sentinelle-pur` **40/0**, `test-sentinelle` **33/0 demo+local**,
+  migrations v14→v15, contrat 255/0, mapping 156/0 — **53 exécutions TOUT VERT**, vérifié
+  navigateur (ports neufs 8191/8207).
 
 **FAIT le 13/07** :
 - **Brique ⑤ « correction automatique du CERFA élève » (`e4a04c2`)** : refactor du
@@ -175,15 +193,14 @@ partageables…), ce qui attend Franck, et les atouts vs concurrence. En résum�
 
 ## Prochaine action
 
-*(Séance 0 + briques ① à ⑤ : TOUTES FAITES les 10 et 13/07 — la série « fort impact
-démo » du plan de reprise est SOLDÉE.)*
+*(Séance 0 + briques ① à ⑥ : TOUTES FAITES les 10 et 13/07 — la sentinelle d'alertes
+persistées est SOLDÉE le 13/07.)*
 
 Briques suivantes **sans dépendance à Franck**, dans l'ordre :
-**sentinelle d'alertes persistées** → **code machine lisible `SITE-FAMILLE-NUMERO`**
-(ex. `JR-CF-001`, décision Franck 07/07 — le `code_public` opaque du QR reste
-inchangé) → **lien intervention → outils utilisés MULTI-outils** (+ blocage par-outil
-non conforme en mode officiel) → **tableau de bord enrichi**. Sauf nouvelle consigne
-de Franck.
+**code machine lisible `SITE-FAMILLE-NUMERO`** (ex. `JR-CF-001`, décision Franck 07/07 —
+le `code_public` opaque du QR reste distinct et inchangé) → **lien intervention → outils
+utilisés MULTI-outils** (+ blocage par-outil non conforme en mode officiel) → **tableau
+de bord enrichi**. Sauf nouvelle consigne de Franck.
 Annoncer le réglage conseillé, puis exécuter (tests d'abord — `node outils/lancer-tests.mjs`
 = tout le filet en une commande —, vérification navigateur sur port JAMAIS UTILISÉ (origine
 neuve, le cache de modules ES survit à tout), commit + push + mémoire).
