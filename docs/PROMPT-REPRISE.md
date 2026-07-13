@@ -15,13 +15,28 @@ attentes. Tu ne t'arrêtes que quand une brique est **finie et testée par toi-m
 ## À LIRE EN PREMIER (dans l'ordre, avant de coder)
 
 1. **Mémoire persistante** (si présente sur le disque, `G:\Mon Drive\claude-memoire\`) :
-   `MEMORY.md`, puis la fiche `project_inerweb_fluide.md` et la feuille de route
-   `reference_roadmap_fluide_audit.md`.
+   `MEMORY.md`, puis la fiche `project_inerweb_fluide.md`. La feuille de route vit
+   désormais DANS le dépôt : **`docs/ROADMAP.md`** (la fiche Drive a disparu 3 fois,
+   elle n'est plus qu'un pointeur).
 2. **Dépôt `C:\git\inerweb-fluide`** : `docs/REPRISE.md` (état + pièges), `CHANGELOG.md`
    (**source de vérité**, entrées les plus récentes en tête), `docs/PLAN-PHASE-2.md`,
    `docs/VISION-V9-V10.md` (la boussole).
 
-## État exact (dernier commit poussé `1a2a6b5`, 10/07/2026)
+## État exact (dernier commit poussé `827fe9c`, 13/07/2026)
+
+**FAIT le 13/07** :
+- **Brique ③ « dossier de fuite fermé matérialisé » (`827fe9c`)** — le différenciateur
+  n°1 : module pur `v8/js/data/dossiers-fuite.js` (dossiers reconstruits des contrôles,
+  **épisodes regroupés** — une FUITE sur épisode non refermé rejoint le dossier, statut
+  du plus récent = `estFuiteOuverte` —, statuts OUVERTE/REPAREE(+30 j)/FERMEE, fenêtre
+  des mouvements, tri intra-jour cohérent R3c/R4) ; écran `#/f/<idContrôle>` + bloc
+  « Fuites » sur la fiche machine (les dossiers FERMÉS restent archivés) ; export ZIP
+  scellé SHA-256 (synthèse, chronologie auditeur, contrôles, mouvements, CERFA).
+  Revue adversariale 2×Opus (0 bloquant ; épisodes + désinfection CR/LF du TXT + garde
+  date corrompue corrigés). `test-dossiers-fuite.mjs` **46/0 demo+local**,
+  `test-dossier-fuite.mjs` **26/0**, **48 exécutions TOUT VERT**, vérifié navigateur
+  (cycle complet ouverte→réparée→fermée sur la fuite démo, port neuf 8177).
+- **`docs/ROADMAP.md`** : feuille de route restaurée DANS le dépôt (`f8596f8`).
 
 **FAIT le 10/07 (après l'examen multi-agents)** :
 - **Séance 0 « assainissement » (`c8b7dc7`)** : sw.js v7 sabordé (+ désenregistrement actif) ;
@@ -138,13 +153,10 @@ partageables…), ce qui attend Franck, et les atouts vs concurrence. En résum�
 
 ## Prochaine action
 
-*(Séance 0, briques ① et ② : FAITES le 10/07, cf. « État exact » ci-dessus.)*
+*(Séance 0, briques ①, ② et ③ : FAITES les 10 et 13/07, cf. « État exact » ci-dessus.)*
 
 Briques **sans dépendance à Franck**, dans l'ordre (fort impact démo) :
-**③ dossier de fuite fermé matérialisé** (la règle d'or est déjà codée/testée — retour
-EN_SERVICE impossible sans réparation tracée + contrôle conforme postérieur ; construire
-l'écran CHRONOLOGIE de la fuite + l'export — différenciateur n°1, aucun concurrent ne le
-documente) → **④ certificat de scellement + vérificateur HTML autonome embarqué dans chaque
+**④ certificat de scellement + vérificateur HTML autonome embarqué dans chaque
 ZIP** (preuve auto-vérifiable par un auditeur sans le logiciel — meilleur rapport
 impact/effort selon l'examen du 10/07) → **⑤ correction automatique du CERFA rempli par
 l'élève** (v1 bornée aux PDF remplis numériquement). Sauf nouvelle consigne de Franck.

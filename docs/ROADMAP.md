@@ -26,10 +26,9 @@ implémentations (démo + local). Démo en ligne fonctionnelle (GitHub Pages `/v
 
 ## Briques restantes — SANS dépendance à Franck (dans l'ordre)
 
-1. **③ Dossier de fuite fermé matérialisé** — *différenciateur n°1, aucun concurrent ne le
-   documente*. La règle d'or est déjà codée et testée (retour EN_SERVICE impossible sans
-   réparation tracée + contrôle conforme postérieur ; complément sur fuite ouverte bloqué).
-   Reste : l'écran CHRONOLOGIE de la fuite + l'export scellé.
+1. ~~**③ Dossier de fuite fermé matérialisé**~~ — **FAIT 13/07 (`827fe9c`)** : module pur
+   `dossiers-fuite.js` (épisodes regroupés alignés sur `estFuiteOuverte`), écran `#/f/`,
+   bloc « Fuites » fiche machine, export ZIP scellé, 46/0+26/0, vérifié navigateur.
 2. **④ Certificat de scellement + vérificateur HTML autonome** embarqué dans chaque ZIP —
    preuve auto-vérifiable par un auditeur sans le logiciel. Meilleur rapport impact/effort
    selon l'examen du 10/07.
