@@ -19,6 +19,7 @@ import { ouvrirFicheIdentification } from '../documents/fiche-identification-mac
 import { ouvrirFeuilleMiseEnService, peutOuvrirFeuilleMiseEnService }
   from '../documents/feuille-mise-en-service.js';
 import { ouvrirCerfa } from '../cerfa/visualiseur.js';
+import { ouvrirCorrectionCerfa } from '../cerfa/correcteur.js';
 import { zonePiecesJointes } from '../composants/pieces-jointes.js';
 
 export const titre = 'Fiche machine';
@@ -440,6 +441,14 @@ function ligneMouvementFiche(mv) {
     + '<span style="display:inline-flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">'
     + '<button type="button" class="btn btn-contour btn-petit" data-action="cerfa-mouvement" '
     + 'data-id="' + esc(mv.id) + '">CERFA</button>'
+    // Correction élève : seulement sur un mouvement FIGÉ hors transfert
+    // (même règle que la vue Mouvements — sinon l'enseignant importait
+    // un PDF avant d'apprendre que le mouvement n'était pas éligible).
+    + ((mv.statut === 'VALIDE' || mv.statut === 'ANNULE')
+        && mv.type !== 'TRANSFERT'
+      ? '<button type="button" class="btn btn-contour btn-petit" data-action="corriger-cerfa-mouvement" '
+        + 'data-id="' + esc(mv.id) + '">Correction élève</button>'
+      : '')
     + boutonFeuille
     + '</span>'
     + '</td>'
@@ -678,6 +687,11 @@ export async function render(conteneur, ctx) {
   conteneur.querySelectorAll('[data-action="cerfa-mouvement"]').forEach(function (bouton) {
     bouton.addEventListener('click', function () {
       ouvrirCerfa(ctx, { source: 'mouvement', id: bouton.dataset.id });
+    });
+  });
+  conteneur.querySelectorAll('[data-action="corriger-cerfa-mouvement"]').forEach(function (bouton) {
+    bouton.addEventListener('click', function () {
+      ouvrirCorrectionCerfa(ctx, { source: 'mouvement', id: bouton.dataset.id });
     });
   });
   // ---- Feuille de mise en service depuis l'historique (CF-1) ----

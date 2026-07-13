@@ -2,6 +2,57 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🎓 Brique ⑤ · Correction AUTOMATIQUE du CERFA rempli par l'élève (13/07)
+Le pont pédagogique : l'élève remplit le CERFA 15497*04 officiel vierge À L'ORDINATEUR,
+le professeur importe le PDF, l'appli compare champ par champ aux valeurs attendues du
+mouvement et rend le rapport de correction. **v1 assumée : PDF numériques uniquement**
+(un scan n'a plus de champs — dit partout à l'écran).
+- **Refactor préalable du générateur** (`v8/js/cerfa/generateur.js`) : le calcul des
+  72 champs séparé de l'écriture PDF — `calculerChampsCerfa(store, {source,id})` →
+  `{texte, cases, radio, numero, mode}` ; `genererCerfaPdf` la consomme. **Une seule
+  vérité de calcul** : la correction attend exactement ce que le générateur écrit.
+  Comportement prouvé identique (test-generateur 97/0 inchangé, numéro de fiche stable
+  entre deux appels — vérifié en revue). `fmtVirgule`/`fmtDateFr`/`sansPrefixeR`/
+  `MENTION_FORMATION` exportés.
+- **`v8/js/cerfa/correction.js`** (nouveau, cœur) : lecture des champs AcroForm du PDF
+  élève (pdf-lib ; ⚠️ bundle MINIFIÉ → types testés par `instanceof`, jamais
+  `constructor.name` — bug réel attrapé par les tests), garde « c'est bien le CERFA
+  officiel » (72 champs, sinon message clair scan/mauvais fichier), garde anti-gel
+  (> 15 Mo refusé avant parsing), comparateur PUR `comparerChamps` → lignes
+  {champ, cadre, libellé français, attendu, saisi, statut Juste/Faux/Oublié/Rempli à
+  tort/Vide} + regroupement par cadre + pourcentage.
+- **Comparaison ÉQUITABLE (revue adversariale Opus, 0 bloquant — c'était LE sujet)** :
+  bienveillante sur la forme, stricte sur le fond, PAR NATURE DE CHAMP :
+  quantités « 3,20 » ≡ « 3.2 » (quasi exact) ; **teqCO₂ calculée par l'élève : tolérance
+  d'arrondi ±1 % ou ±0,05 t** (« 15,4 » vaut « 15,39 », « 14 » reste faux) ;
+  dates « 1/7/2026 » ≡ « 01/07/2026 » ; jour d'étalonnage « 7 » ≡ « 07 » ;
+  **identifiants STRICTS** (« 007 » ≠ « 7 » sur attestation/BSFF — la bienveillance
+  numérique ne vaut que pour les quantités) ; **pavés multi-lignes (opérateur,
+  détenteur, équipement) comparés ligne à ligne SANS ordre imposé**, « SIRET » avec ou
+  sans deux-points, numéro avec ou sans espaces ; **la mention « MODE FORMATION » du
+  cadre 14 (posée par l'appli) n'est JAMAIS exigée de l'élève**. Remplir un champ qui
+  devait rester vide est une erreur évaluée (l'élève doit savoir ce qui ne le
+  concerne pas).
+- **Interface** (`v8/js/cerfa/correcteur.js`) : modale « Correction du CERFA élève »
+  (nom de l'élève optionnel, dépôt/choix du PDF, erreurs en bandeau sobre, champs
+  inconnus du PDF signalés — jamais en silence) ; rapport à l'écran (pourcentage,
+  compteurs, tableaux par cadre, lignes actives seulement) ; **rapport HTML autonome
+  imprimable téléchargeable** (patron certificat, échappement complet — le PDF élève
+  est une donnée non fiable, tout passe par esc/textContent, zéro XSS vérifié en
+  revue). Boutons « Correction élève » : vue Mouvements + historique de la fiche
+  machine (mouvements FIGÉS hors transfert uniquement).
+- Tests : `test-correction.mjs` **30/0** (normalisations, équité multi-lignes/SIRET/
+  mention formation/teqCO₂/identifiants, PDF élève RÉELS fabriqués avec pdf-lib —
+  parfait 100 %, maladroit-mais-juste 100 %, fautif classé ligne à ligne, vierge,
+  hors sujet, non-PDF, 16 Mo, champ inconnu, cohérence générateur↔lecteur) ;
+  **50 exécutions TOUT VERT**.
+- **Vérifié navigateur** (ports neufs 8191/8195) : modale depuis la vue Mouvements,
+  élève parfait → 100 % (23 justes), élève fautif → 88 % avec les 3 fautes nommées
+  (« Démantèlement → Rempli à tort », « Quantité A → Faux », « Signature opérateur →
+  Oublié »), élève équitable (lignes inversées + SIRET souple + mention omise) →
+  100 %, rapport téléchargé, boutons présents sur les lignes validées. Zéro erreur
+  console.
+
 ### 🔏 Brique ④ · Certificat de scellement + vérificateur HTML AUTONOME (13/07)
 La preuve devient auto-vérifiable : un auditeur peut contrôler un dossier scellé
 **sans le logiciel, hors ligne** — meilleur rapport impact/effort de l'examen du 10/07.

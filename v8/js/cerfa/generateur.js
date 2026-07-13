@@ -83,7 +83,7 @@ const TYPE_VERS_CASE = {
 };
 
 /** Mention obligatoire du cadre 14 en mode formation. */
-const MENTION_FORMATION = 'MODE FORMATION — DOCUMENT NON OFFICIEL — ' +
+export const MENTION_FORMATION = 'MODE FORMATION — DOCUMENT NON OFFICIEL — ' +
   'NE PAS UTILISER POUR UNE INTERVENTION RÉELLE';
 
 // ------------------------------------------------------------
@@ -91,21 +91,21 @@ const MENTION_FORMATION = 'MODE FORMATION — DOCUMENT NON OFFICIEL — ' +
 // ------------------------------------------------------------
 
 /** Nombre en notation française à 2 décimales : 3.2 → « 3,20 ». */
-function fmtVirgule(n, dec = 2) {
+export function fmtVirgule(n, dec = 2) {
   const valeur = Number(n);
   if (!Number.isFinite(valeur)) return '';
   return valeur.toFixed(dec).replace('.', ',');
 }
 
 /** Date ISO « AAAA-MM-JJ » → « JJ/MM/AAAA » (sans objet Date). */
-function fmtDateFr(iso) {
+export function fmtDateFr(iso) {
   if (!iso || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return '';
   const [annee, mois, jour] = iso.slice(0, 10).split('-');
   return `${jour}/${mois}/${annee}`;
 }
 
 /** Code fluide sans le préfixe « R- » : « R-455A » → « 455A ». */
-function sansPrefixeR(code) {
+export function sansPrefixeR(code) {
   return String(code || '').replace(/^R-?/, '');
 }
 
@@ -305,20 +305,18 @@ async function assemblerContexte(store, { source, id }) {
 // ------------------------------------------------------------
 
 /**
- * Génère le CERFA 15497*04 officiel rempli.
+ * Calcule les VALEURS des 72 champs officiels du CERFA pour une cible,
+ * SANS toucher au PDF (brique ⑤ : la correction du CERFA élève compare
+ * ces valeurs attendues aux champs lus dans le PDF de l'élève ; le
+ * générateur les écrit). Fonction séparée = une seule vérité de calcul.
  * @param {object} store - magasin de données v8
  * @param {{source: 'mouvement'|'controle', id: string}} cible
- * @returns {Promise<{octets: Uint8Array, nomFichier: string, numero: string}>}
+ * @returns {Promise<{texte: Object<string,string>,
+ *   cases: Object<string,boolean>, radio: '1'|'2'|null, numero: string,
+ *   mode: string, signatureDataUrl: string|null}>}
  */
-export async function genererCerfaPdf(store, { source, id }) {
-  const PDFLib = await chargerPdfLib();
-  const { PDFDocument, StandardFonts, rgb, degrees } = PDFLib;
-
+export async function calculerChampsCerfa(store, { source, id }) {
   const ctx = await assemblerContexte(store, { source, id });
-  const doc = await PDFDocument.load(await chargerModele());
-  const form = doc.getForm();
-  const page = doc.getPages()[0];
-  const police = await doc.embedFont(StandardFonts.Helvetica);
 
   const machine = ctx.machine;
   const client = machine?.clientId
@@ -573,24 +571,50 @@ export async function genererCerfaPdf(store, { source, id }) {
     'Case_12_Autre160504': dechetInflammable
   };
 
-  for (const [nom, valeur] of Object.entries(champsTexte)) {
+  return {
+    texte: champsTexte,
+    cases,
+    // Cadre 6 — détection permanente : radio « 1 » = Oui, « 2 » = Non
+    radio: machine ? (machine.detectionPermanente ? '1' : '2') : null,
+    numero: ctx.numero,
+    mode: ctx.mode,
+    signatureDataUrl: ctx.signatureDataUrl ?? null
+  };
+}
+
+/**
+ * Génère le CERFA 15497*04 officiel rempli.
+ * @param {object} store - magasin de données v8
+ * @param {{source: 'mouvement'|'controle', id: string}} cible
+ * @returns {Promise<{octets: Uint8Array, nomFichier: string, numero: string}>}
+ */
+export async function genererCerfaPdf(store, { source, id }) {
+  const PDFLib = await chargerPdfLib();
+  const { PDFDocument, StandardFonts, rgb, degrees } = PDFLib;
+
+  const champs = await calculerChampsCerfa(store, { source, id });
+  const doc = await PDFDocument.load(await chargerModele());
+  const form = doc.getForm();
+  const page = doc.getPages()[0];
+  const police = await doc.embedFont(StandardFonts.Helvetica);
+  const formation = champs.mode === 'FORMATION';
+
+  for (const [nom, valeur] of Object.entries(champs.texte)) {
     form.getTextField(nom).setText(valeur || '');
   }
-  for (const [nom, coche] of Object.entries(cases)) {
+  for (const [nom, coche] of Object.entries(champs.cases)) {
     const champ = form.getCheckBox(nom);
     if (coche) champ.check();
     else champ.uncheck();
   }
-  // Cadre 6 — détection permanente : radio « 1 » = Oui, « 2 » = Non
-  if (machine) {
-    form.getRadioGroup('Bouton_Oui')
-      .select(machine.detectionPermanente ? '1' : '2');
+  if (champs.radio) {
+    form.getRadioGroup('Bouton_Oui').select(champs.radio);
   }
 
   // ---- Signature manuscrite (image PNG) sur la zone opérateur ----
-  if (ctx.signatureDataUrl) {
+  if (champs.signatureDataUrl) {
     try {
-      const image = await doc.embedPng(ctx.signatureDataUrl);
+      const image = await doc.embedPng(champs.signatureDataUrl);
       const gabarit = form.getTextField('Sign_Operateur_Date')
         .acroField.getWidgets()[0].getRectangle();
       const hauteur = 30;
@@ -628,7 +652,7 @@ export async function genererCerfaPdf(store, { source, id }) {
   const octets = await doc.save({ objectsPerTick: Infinity });
   return {
     octets,
-    nomFichier: `cerfa-15497-04_${ctx.numero}.pdf`,
-    numero: ctx.numero
+    nomFichier: `cerfa-15497-04_${champs.numero}.pdf`,
+    numero: champs.numero
   };
 }

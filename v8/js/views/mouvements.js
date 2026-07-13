@@ -16,6 +16,7 @@ import { enteteVue, chipStatut, chipType, tableau, modale, toast, ICONES }
 import { fmtDate, fmtKg, fmtKgSigne, esc } from '../core/utils.js';
 import { ouvrirWizard } from '../wizard/wizard.js';
 import { ouvrirCerfa } from '../cerfa/visualiseur.js';
+import { ouvrirCorrectionCerfa } from '../cerfa/correcteur.js';
 import { ouvrirFeuilleMiseEnService, peutOuvrirFeuilleMiseEnService }
   from '../documents/feuille-mise-en-service.js';
 
@@ -62,6 +63,7 @@ function boutonsAction(mv) {
     // type qui produit une fiche (le transfert reste interne au registre)
     if (mv.type !== 'TRANSFERT') {
       boutons.push(boutonLigne('voir-cerfa', 'Visualiser CERFA', mv.id, 'btn-contour'));
+      boutons.push(boutonLigne('corriger-cerfa', 'Correction élève', mv.id, 'btn-contour'));
     }
     // CF-1 : feuille de mise en service, uniquement pour un mouvement de
     // type MISE_EN_SERVICE figé (même règle que le bouton CERFA ci-dessus)
@@ -460,6 +462,9 @@ export async function render(conteneur, ctx) {
     switch (action) {
       case 'voir-cerfa':
         ouvrirCerfa(ctx, { source: 'mouvement', id: mv.id });
+        break;
+      case 'corriger-cerfa':
+        ouvrirCorrectionCerfa(ctx, { source: 'mouvement', id: mv.id });
         break;
       case 'feuille-mise-en-service':
         ouvrirFeuilleMiseEnService(ctx, mv.id);
