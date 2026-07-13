@@ -1,10 +1,11 @@
 # Feuille de route inerWeb Fluide — audit-proof
 
 > **Pourquoi ce fichier est ICI (dépôt git) et plus dans la mémoire Drive** : la fiche
-> `reference_roadmap_fluide.md` (ex-`reference_roadmap_fluide_audit.md`) a DISPARU TROIS FOIS
-> du dossier Google Drive `claude-memoire` (2× le 10/07, constat de la 3e le 13/07 — la
-> synchronisation re-supprimait la re-création). Le dépôt git est désormais la seule source
-> de vérité de la feuille de route ; la mémoire Drive ne contient plus qu'un pointeur.
+> `reference_roadmap_fluide.md` (ex-`reference_roadmap_fluide_audit.md`) a disparu trois fois
+> du dossier Google Drive `claude-memoire` (2× le 10/07, constat de la 3e le 13/07 —
+> cause élucidée : fausse manipulation lors d'un nettoyage de fichiers, pas la
+> synchronisation). Le dépôt git est désormais la seule source de vérité de la feuille
+> de route ; la mémoire Drive ne contient plus qu'un pointeur.
 > Reconstruite le 13/07/2026 depuis `docs/PROMPT-REPRISE.md` et la fiche projet ; le détail
 > intégral de l'ancienne section G (examen multi-agents du 10/07, 9 agents) est résumé ci-dessous,
 > sa version longue est perdue.
