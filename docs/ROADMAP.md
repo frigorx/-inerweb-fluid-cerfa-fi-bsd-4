@@ -30,9 +30,9 @@ implémentations (démo + local). Démo en ligne fonctionnelle (GitHub Pages `/v
 1. ~~**③ Dossier de fuite fermé matérialisé**~~ — **FAIT 13/07 (`827fe9c`)** : module pur
    `dossiers-fuite.js` (épisodes regroupés alignés sur `estFuiteOuverte`), écran `#/f/`,
    bloc « Fuites » fiche machine, export ZIP scellé, 46/0+26/0, vérifié navigateur.
-2. **④ Certificat de scellement + vérificateur HTML autonome** embarqué dans chaque ZIP —
-   preuve auto-vérifiable par un auditeur sans le logiciel. Meilleur rapport impact/effort
-   selon l'examen du 10/07.
+2. ~~**④ Certificat de scellement + vérificateur HTML autonome**~~ — **FAIT 13/07
+   (`c00d264`)** : `99-VERIFICATEUR.html` dans chaque dossier scellé + certificat
+   imprimable, 39/0 dont archives forgées hostiles, vérifié navigateur.
 3. **⑤ Correction automatique du CERFA rempli par l'élève** (v1 bornée aux PDF remplis
    numériquement) — le pont pédagogique.
 4. Sentinelle d'alertes persistées.

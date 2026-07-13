@@ -22,9 +22,19 @@ attentes. Tu ne t'arrêtes que quand une brique est **finie et testée par toi-m
    (**source de vérité**, entrées les plus récentes en tête), `docs/PLAN-PHASE-2.md`,
    `docs/VISION-V9-V10.md` (la boussole).
 
-## État exact (dernier commit poussé `827fe9c`, 13/07/2026)
+## État exact (dernier commit poussé `c00d264`, 13/07/2026)
 
 **FAIT le 13/07** :
+- **Brique ④ « certificat de scellement + vérificateur autonome » (`c00d264`)** :
+  `v8/js/documents/verificateur.js` — `99-VERIFICATEUR.html` embarqué dans CHAQUE
+  dossier scellé (point unique `assemblerDossier`) : page autonome hors ligne
+  (analyseur ZIP « stored » pur, empreinte globale + comparaison à la référence
+  externe, contrôle fichier par fichier contre le manifeste, données hostiles en
+  textContent, gardes anti-gel, réserve d'honnêteté sur le verdict interne) +
+  **certificat de scellement imprimable** (bouton dans la modale, voyage À CÔTÉ du
+  ZIP). La MÊME source est testée sous Node et embarquée. `test-verificateur.mjs`
+  **39/0** (dont archives forgées hostiles), **49 exécutions TOUT VERT**, vérifié
+  navigateur (dossier réel conforme, falsification détectée ALTÉRÉ, certificat).
 - **Brique ③ « dossier de fuite fermé matérialisé » (`827fe9c`)** — le différenciateur
   n°1 : module pur `v8/js/data/dossiers-fuite.js` (dossiers reconstruits des contrôles,
   **épisodes regroupés** — une FUITE sur épisode non refermé rejoint le dossier, statut
@@ -153,13 +163,14 @@ partageables…), ce qui attend Franck, et les atouts vs concurrence. En résum�
 
 ## Prochaine action
 
-*(Séance 0, briques ①, ② et ③ : FAITES les 10 et 13/07, cf. « État exact » ci-dessus.)*
+*(Séance 0, briques ①, ②, ③ et ④ : FAITES les 10 et 13/07, cf. « État exact » ci-dessus.)*
 
 Briques **sans dépendance à Franck**, dans l'ordre (fort impact démo) :
-**④ certificat de scellement + vérificateur HTML autonome embarqué dans chaque
-ZIP** (preuve auto-vérifiable par un auditeur sans le logiciel — meilleur rapport
-impact/effort selon l'examen du 10/07) → **⑤ correction automatique du CERFA rempli par
-l'élève** (v1 bornée aux PDF remplis numériquement). Sauf nouvelle consigne de Franck.
+**⑤ correction automatique du CERFA rempli par l'élève** (v1 bornée aux PDF remplis
+numériquement — comparer les champs saisis par l'élève aux valeurs attendues du
+mouvement, rapport de correction pour le professeur) → sentinelle d'alertes
+persistées → code machine lisible `SITE-FAMILLE-NUMERO` → lien intervention→outils
+multi. Sauf nouvelle consigne de Franck.
 Annoncer le réglage conseillé, puis exécuter (tests d'abord — `node outils/lancer-tests.mjs`
 = tout le filet en une commande —, vérification navigateur sur port JAMAIS UTILISÉ (origine
 neuve, le cache de modules ES survit à tout), commit + push + mémoire).
