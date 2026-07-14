@@ -2,6 +2,20 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧹 MÉNAGE — la v7 quitte la racine (14/07)
+Constat de l'audit (MORT-1/MORT-2) : **13 274 lignes de v7 dormaient à la racine**, servies par le
+serveur (`CHEMINS_INTERDITS` ne les excluait pas) et jamais testées — dont
+`js/cerfa_html_backup.js` (869 l.), **zéro référence dans tout le dépôt**. Pire : `index.html` à la
+racine était **l'ancienne démo v7 elle-même**, donc un visiteur du dépôt GitHub Pages tombait sur
+la version périmée au lieu de l'application.
+- **Supprimés** : `js/` (18 fichiers), `css/style.css`, `demo.html`.
+- **`index.html`** devient une **page de redirection** vers `/v8/` (meta refresh + `location.replace`,
+  aux couleurs du produit) : la démo publique ouvre enfin la BONNE application.
+- Rien d'autre n'est touché : le PDF CERFA officiel utilisé par la v8 vit déjà dans `v8/`, et
+  `sw.js` est déjà le service worker de « sabordage » (il purge le cache v7 et se désenregistre).
+- Vérifié navigateur (origine neuve 2089) : `/` redirige vers `/v8/`, l'application se charge
+  (17 entrées de menu), **zéro erreur console**. **TOUT VERT — 70 exécutions.**
+
 ### 🕵️ TÉMOIN D'IDENTITÉ au journal d'audit (14/07) — « on n'empêche pas la déclaration, on la recoupe »
 Réponse à la réserve la plus profonde de l'audit : **le « qui » du registre était déclaré par le
 client, jamais prouvé par la session** (aucun des 43 handlers mutants ne lisait `contexte` ;
