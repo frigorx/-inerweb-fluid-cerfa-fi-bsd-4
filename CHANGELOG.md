@@ -2,6 +2,23 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🎫 Habilitations F-Gas · Phase 2a — saisie & affichage (14/07)
+Interface de gestion des habilitations d'une personne, par-dessus le modèle de données de
+la Phase 1. **Saisie et affichage UNIQUEMENT — aucun verdict, aucun blocage** (le moteur
+« qui a le droit de faire quoi » = Phase 2b, gaté sur la validation de la matrice par Franck).
+- **Nouvelle modale `v8/js/modales/habilitations-modal.js`** (`ouvrirHabilitations(ctx, personneId)`) :
+  liste des habilitations de la personne (chip régime, catégorie, n°/organisme/validité, statut) —
+  les révoquées restent affichées, grisées et datées ; formulaire d'ajout (le choix du régime
+  recalcule la liste des catégories : I-IV pour 2008, A1-V pour 2025) ; bouton « Révoquer » avec
+  confirmation. Erreurs du store en bandeau sobre, rechargement après chaque mutation.
+- **`v8/js/views/personnel.js`** : bouton « Habilitations » par ligne + pastille du nombre d'actives.
+- Idiomes maison respectés (`modale()`/`confirmer()`/`toast`, `esc()` partout, français accentué,
+  zéro emoji, zéro dépendance). Construit via sous-agent (ultracode), relu et intégré.
+- Vérifié : `node --check` OK, la vue rend les boutons, **zéro erreur console** au chargement,
+  couche de données testée 38/0. ⚠️ Le clic-à-travers ajout/révocation en direct reste à
+  confirmer (panne temporaire de l'outillage navigateur au moment du contrôle) — risque faible
+  (réutilisation du patron de modale existant, méthodes de store exhaustivement testées).
+
 ### 🎫 Habilitations F-Gas · Phase 1 — modèle de données (14/07)
 Premier pallier du **cœur audit-proof (B2)**. Périmètre STRICT : on **stocke et on
 affiche, on ne refuse RIEN**. Le moteur de verdict (Phase 2) et le blocage en mode

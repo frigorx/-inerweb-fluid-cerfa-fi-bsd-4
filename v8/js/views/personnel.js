@@ -9,6 +9,7 @@
 import { enteteVue, chipStatut, tableau, ICONES } from './communs.js';
 import { esc, fmtDate } from '../core/utils.js';
 import { ouvrirFormPersonne } from '../modales/personne-form.js';
+import { ouvrirHabilitations } from '../modales/habilitations-modal.js';
 
 export const titre = 'Registre du personnel';
 
@@ -53,6 +54,19 @@ const STYLES_VUE = `
 
   /* Chip « marine clair » (Salarié) — même teinte que la vue Administration */
   .vue-personnel .chip-marine-clair { background: #e2eaf3; color: var(--marine-800); }
+
+  /* Cellule d'actions : boutons alignés à droite, compteur d'habilitations */
+  .vue-personnel .personnel-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .vue-personnel .personnel-hab-compteur {
+    min-width: 18px;
+    text-align: center;
+  }
 </style>`;
 
 /* ============================================================
@@ -103,7 +117,7 @@ function celluleCategorie(valeur) {
 }
 
 /** Ligne de tableau pour une personne du registre. */
-function lignePersonne(personne) {
+function lignePersonne(personne, nbHabilitationsActives) {
   const estEleve = personne.typePersonne === 'ELEVE';
   const nomComplet = esc(personne.prenom) + ' <span class="personnel-nom-secondaire">'
     + esc(personne.nom) + '</span>';
@@ -116,6 +130,12 @@ function lignePersonne(personne) {
     ? '<span class="pastille-actif" title="Actif"></span><span class="sr-uniquement">Actif</span>'
     : '<span class="pastille-inactif" title="Inactif"></span><span class="sr-uniquement">Inactif</span>';
 
+  // Compteur d'habilitations F-Gas actives (chip discrète, masquée si aucune)
+  const compteurHab = nbHabilitationsActives > 0
+    ? '<span class="chip chip-teal personnel-hab-compteur" '
+      + 'title="Habilitations F-Gas actives">' + esc(nbHabilitationsActives) + '</span>'
+    : '';
+
   return '<tr' + classeLigne + '>'
     + '<td><span class="personnel-nom">' + nomComplet + '</span></td>'
     + '<td>' + chipTypePersonne(personne.typePersonne) + '</td>'
@@ -126,9 +146,15 @@ function lignePersonne(personne) {
     + (estEleve ? '<td class="align-centre">—</td>' : celluleValidite(personne.dateFinValidite))
     + '<td class="align-centre">' + pastille + '</td>'
     + '<td class="align-droite">'
+    + '<div class="personnel-actions">'
+    + compteurHab
+    + '<button type="button" class="btn btn-contour btn-petit" data-action="habilitations-personne" '
+    + 'data-id="' + esc(personne.id) + '" aria-label="Habilitations de ' + esc(personne.prenom) + ' ' + esc(personne.nom) + '">'
+    + 'Habilitations</button>'
     + '<button type="button" class="btn btn-contour btn-petit" data-action="modifier-personne" '
     + 'data-id="' + esc(personne.id) + '" aria-label="Modifier ' + esc(personne.prenom) + ' ' + esc(personne.nom) + '">'
     + 'Modifier</button>'
+    + '</div>'
     + '</td>'
     + '</tr>';
 }
@@ -145,17 +171,25 @@ function lignePersonne(personne) {
 export async function render(conteneur, ctx) {
   const personnel = await ctx.store.getPersonnel();
 
+  // Nombre d'habilitations F-Gas ACTIVES par personne (lues une seule fois).
+  const habilitations = await ctx.store.getHabilitations();
+  const nbHabActivesParPersonne = new Map();
+  habilitations.forEach((h) => {
+    if (!h.actif) return;
+    nbHabActivesParPersonne.set(h.personneId, (nbHabActivesParPersonne.get(h.personneId) || 0) + 1);
+  });
+
   // Actifs d'abord (ordre alphabétique), inactifs grisés en fin de liste
   const tries = [...personnel].sort((a, b) => {
     if (a.actif !== b.actif) return a.actif ? -1 : 1;
     return (a.nom + a.prenom).localeCompare(b.nom + b.prenom, 'fr');
   });
 
-  const pluriel = personnel.length > 1 ? 's' : '';
   const sousTitre = "Attestations d'aptitude, catégories et activités autorisées"
     + ' — registre exigé pour l’audit';
 
-  const lignesHtml = tries.map(lignePersonne);
+  const lignesHtml = tries.map((personne) =>
+    lignePersonne(personne, nbHabActivesParPersonne.get(personne.id) || 0));
 
   const contenuTableau = tableau({
     colonnes: [
@@ -198,6 +232,13 @@ export async function render(conteneur, ctx) {
     bouton.addEventListener('click', async () => {
       const enregistre = await ouvrirFormPersonne(ctx, bouton.dataset.id);
       if (enregistre) render(conteneur, ctx);
+    });
+  });
+
+  conteneur.querySelectorAll('[data-action="habilitations-personne"]').forEach((bouton) => {
+    bouton.addEventListener('click', async () => {
+      const modifie = await ouvrirHabilitations(ctx, bouton.dataset.id);
+      if (modifie) render(conteneur, ctx);
     });
   });
 }
