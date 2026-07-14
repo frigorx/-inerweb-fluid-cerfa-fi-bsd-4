@@ -2,6 +2,27 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔐 VERROUS D'AUTORISATION — le filet avant la diffusion (14/07, Lot 1 de l'audit)
+Décision de Franck : le logiciel va être diffusé à d'autres établissements → **il y aura de vrais
+élèves connectés ailleurs**. On verrouille donc les autorisations par des tests AVANT de partir.
+Le trou : la garde de rôle est une **liste blanche** — toute méthode absente de `ROLES_MUTATION`
+est traitée comme une lecture, donc exécutée **sans aucune restriction** (`garderRole` :
+« if (!roles) return; »). L'invariant tenait par la seule vigilance : **aucun test ne le
+vérifiait**. Une brique future qui ajouterait un handler mutant en oubliant sa ligne de rôle
+ouvrirait la mutation à tout le monde, silencieusement, sans un seul test au rouge.
+- **`server/test-roles-mutations.mjs` 11/0** — lit le SOURCE de `api.js`, découpe l'objet
+  `HANDLERS`, et prouve : ① les **42 handlers qui appellent `muter()`** ont tous une entrée de
+  rôle ; ② aucune entrée de `ROLES_MUTATION` ne pointe dans le vide ; ③ **les 43 méthodes gardées
+  refusent toutes un rôle insuffisant (403)** — y compris « aucune session » pour celles ouvertes
+  à tous les rôles ; ④ contre-épreuve : un rôle autorisé franchit la garde (sinon le test ③ serait
+  satisfait par une garde qui refuse tout le monde) ; ⑤ nommément, **un ÉLÈVE ne peut ni valider un
+  mouvement, ni créer ou révoquer une habilitation, ni désactiver une personne, ni importer un
+  registre**.
+- `init` est **figé comme la SEULE écriture tolérée hors garde** (amorçage idempotent appelé au
+  tout premier démarrage, avant qu'aucun compte n'existe — sans lui, impossible de créer le 1er
+  ADMIN). Ce n'est plus un oubli, c'est un choix que le test protège.
+- **TOUT VERT — 71 exécutions.**
+
 ### 🧹 MÉNAGE — la v7 quitte la racine (14/07)
 Constat de l'audit (MORT-1/MORT-2) : **13 274 lignes de v7 dormaient à la racine**, servies par le
 serveur (`CHEMINS_INTERDITS` ne les excluait pas) et jamais testées — dont
