@@ -1533,10 +1533,20 @@ export function creerDemoStore() {
       // Compléments Phase C pour les sauvegardes A/B existantes
       for (const cle of ['auditsOrganisme', 'nonConformites', 'stocksInitiaux',
         'bsff', 'inventaires', 'justificationsEcarts', 'piecesJointes',
-        'retoursFournisseur', 'sentinelleAlertes', 'habilitations',
-        'mentionsHabilitation', 'mouvementOutillage']) {
+        'retoursFournisseur']) {
         if (!Array.isArray(donnees[cle])) {
           donnees[cle] = copier(DEMO[cle] ?? []);
+          modifie = true;
+        }
+      }
+      // ⚠️ Compléments TOUJOURS à VIDE, JAMAIS depuis DEMO : le monde de
+      // démo porte désormais des habilitations/mentions fictives — les
+      // recopier dans une sauvegarde qui n'en avait pas INVENTERAIT des
+      // aptitudes (droits) ou des faits (outils figés, épisodes d'alerte).
+      for (const cle of ['sentinelleAlertes', 'habilitations',
+        'mentionsHabilitation', 'mouvementOutillage']) {
+        if (!Array.isArray(donnees[cle])) {
+          donnees[cle] = [];
           modifie = true;
         }
       }
@@ -3867,14 +3877,16 @@ export function creerDemoStore() {
         'bsff', 'inventaires', 'justificationsEcarts', 'piecesJointes',
         'retoursFournisseur',
         // Brique ② (B7) : photos nominatives — vides sur les vieux exports.
-        'inventairesBouteilles', 'inventairesFuites',
-        // Chantier B2 : habilitations puis mentions (brique 1) — vides
-        // sur les exports antérieurs.
-        'habilitations', 'mentionsHabilitation',
-        // Brique produit n°2 : outils d'intervention — vides sur les
-        // exports antérieurs.
-        'mouvementOutillage']) {
+        'inventairesBouteilles', 'inventairesFuites']) {
         if (!Array.isArray(candidat[cle])) candidat[cle] = copier(DEMO[cle] ?? []);
+      }
+      // ⚠️ Compléments TOUJOURS à VIDE, JAMAIS depuis DEMO : le monde de
+      // démo porte désormais des habilitations/mentions fictives — les
+      // recopier dans un export ancien INVENTERAIT des aptitudes, et un
+      // registre étranger (sans per-fh/per-sb) serait REFUSÉ en orphelin.
+      for (const cle of ['habilitations', 'mentionsHabilitation',
+        'mouvementOutillage']) {
+        if (!Array.isArray(candidat[cle])) candidat[cle] = [];
       }
       if (candidat.etablissement.numAttestationCapacite === undefined) {
         candidat.etablissement =

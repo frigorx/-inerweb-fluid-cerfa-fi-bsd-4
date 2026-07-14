@@ -141,7 +141,11 @@ const mCo2SansFin = await store.createMention({
     .sort((a, b) => FLUIDES_MENTION.indexOf(a) - FLUIDES_MENTION.indexOf(b));
   verifier('tri : CO2 avant NH3 avant HC (ordre du référentiel)',
     fluidesTries.join(',') === attendu.join(','));
-  const co2 = toutes.filter((m) => m.fluideMention === 'CO2');
+  // Filtré par la personne du test : le monde de démo sème désormais ses
+  // propres mentions (réserve B2, 14/07) — le tri étant TOTAL, l'ordre
+  // relatif des mentions de l'enseignant reste contractuel.
+  const co2 = toutes.filter((m) =>
+    m.fluideMention === 'CO2' && m.personneId === enseignant.id);
   verifier('tri : à fluide égal, sans échéance EN TÊTE puis dateFin décroissante',
     co2.length === 3 && co2[0].dateFin === null
     && co2[0].id === mCo2SansFin.id

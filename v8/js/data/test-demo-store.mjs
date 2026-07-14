@@ -96,6 +96,57 @@ verifier('importerJSON accepte son propre export',
 verifier('importerJSON rejette un texte invalide',
   (await store.importerJSON('{"pas":"valide"}')) === false);
 
+// --- Habilitations du monde de démo (réserve B2, 14/07) ------
+// Le monde fictif porte des habilitations/mentions cohérentes avec les
+// fiches du personnel ; le PIÈGE documenté : les compléments d'import
+// restent à VIDE (jamais le semis démo — un export ancien recevrait des
+// aptitudes inventées, un registre étranger serait refusé en orphelin).
+{
+  const habilitations = await store.getHabilitations();
+  const mentions = await store.getMentions();
+  const idsPersonnel = new Set((await store.getPersonnel()).map((p) => p.id));
+
+  verifier('monde démo : 2 habilitations semées, toutes actives',
+    habilitations.length === 2 && habilitations.every((h) => h.actif === true));
+  verifier('monde démo : semis cohérent avec les fiches (régime 2008, cat. I)',
+    habilitations.every((h) => h.regime === '2008' && h.categorie === 'I'));
+  verifier('monde démo : chaque habilitation référence une personne existante',
+    habilitations.every((h) => idsPersonnel.has(h.personneId)));
+  verifier('monde démo : 2 mentions semées (1 CO2 active, 1 HC révoquée datée)',
+    mentions.length === 2
+    && mentions.some((m) => m.fluideMention === 'CO2' && m.actif === true
+      && m.dateRevocation === null)
+    && mentions.some((m) => m.fluideMention === 'HC' && m.actif === false
+      && /^\d{4}-\d{2}-\d{2}$/.test(m.dateRevocation)));
+  verifier('monde démo : aucune alerte d’aptitude ajoutée par le semis',
+    !(await store.getAlertes()).some((a) =>
+      String(a.id).startsWith('alr-habilitation-')
+      || String(a.id).startsWith('alr-mention-')));
+
+  // Aller-retour : le semis passe les invariants d'import tels quels.
+  const exporte = await store.exporterJSON();
+  const jumeau = await creerStore();
+  verifier('aller-retour : l’export du monde démo est réimportable',
+    (await jumeau.importerJSON(exporte)) === true);
+  verifier('aller-retour : les habilitations et mentions ont voyagé',
+    (await jumeau.getHabilitations()).length === 2
+    && (await jumeau.getMentions()).length === 2);
+
+  // LE PIÈGE : un export SANS les clés B2 (antérieur au chantier) doit
+  // être complété à VIDE, jamais depuis le semis du monde de démo.
+  const paquet = JSON.parse(exporte);
+  delete paquet.donnees.habilitations;
+  delete paquet.donnees.mentionsHabilitation;
+  delete paquet.donnees.mouvementOutillage;
+  const cible = await creerStore();
+  verifier('piège : import d’un export SANS clés B2 accepté',
+    (await cible.importerJSON(JSON.stringify(paquet))) === true);
+  verifier('piège : habilitations complétées à VIDE (jamais le semis démo)',
+    (await cible.getHabilitations()).length === 0);
+  verifier('piège : mentions complétées à VIDE (jamais le semis démo)',
+    (await cible.getMentions()).length === 0);
+}
+
 // --- Utilitaires de formatage -------------------------------
 // Les séparateurs fr-FR peuvent être des espaces insécables : on normalise.
 const normaliser = (s) => s.replace(/ | /g, ' ');

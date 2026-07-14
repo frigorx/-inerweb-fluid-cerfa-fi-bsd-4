@@ -73,13 +73,16 @@ const lignesPersonnel = lignesDe(personnelBrut);
 verifier('personnel.csv : 4 personnes + en-tête = 5 lignes',
   lignesPersonnel.length === 5, `reçu ${lignesPersonnel.length}`);
 
-// Habilitations / mentions (chantier B2) : présentes même VIDES sur le
-// monde de démo (en-tête seul), puis peuplées avec le NOM RÉSOLU de la
-// personne (jamais un id brut) — révoquées comprises, datées.
-verifier('habilitations.csv : présent et vide (en-tête seul) sur le monde démo',
-  lignesDe(parNom.get('habilitations.csv')).length === 1);
-verifier('mentions-habilitation.csv : présent et vide sur le monde démo',
-  lignesDe(parNom.get('mentions-habilitation.csv')).length === 1);
+// Habilitations / mentions (chantier B2) : le monde de démo en SÈME
+// désormais (réserve B2, 14/07) — le CSV les porte avec le NOM RÉSOLU
+// de la personne (jamais un id brut), révoquées comprises et datées.
+verifier('habilitations.csv : les 2 habilitations semées, noms résolus',
+  lignesDe(parNom.get('habilitations.csv')).length === 3
+  && parNom.get('habilitations.csv').includes('Marc Delorme')
+  && !parNom.get('habilitations.csv').includes('per-fh'));
+verifier('mentions-habilitation.csv : les 2 mentions semées (dont la révoquée)',
+  lignesDe(parNom.get('mentions-habilitation.csv')).length === 3
+  && parNom.get('mentions-habilitation.csv').includes('Sophie Bianchi'));
 {
   const personne = await store.createPersonne({
     nom: 'Cartier', prenom: 'Aude', typePersonne: 'ENSEIGNANT'

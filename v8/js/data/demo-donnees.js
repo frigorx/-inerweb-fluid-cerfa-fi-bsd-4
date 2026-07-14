@@ -549,6 +549,72 @@ export const DEMO = {
   ],
 
   // --------------------------------------------------------
+  // Habilitations F-Gas (chantier B2) — registre des aptitudes du
+  // monde fictif, cohérent avec les fiches du personnel ci-dessus
+  // (les DEUX registres coexistent jusqu'à ~2029). Échéances au-delà
+  // de l'horizon d'alerte (90 j) : le semis n'ajoute AUCUNE alerte.
+  // ⚠️ Ces données ne servent QUE le monde de démonstration : les
+  // compléments d'init/import restent à VIDE (cf. demo-store.js —
+  // recopier ce semis dans une sauvegarde étrangère inventerait des
+  // aptitudes, et une base sans ces personnes serait refusée en
+  // orphelin à l'import).
+  // --------------------------------------------------------
+  habilitations: [
+    {
+      id: 'hab-demo-fh',
+      personneId: 'per-fh',
+      regime: '2008',
+      categorie: 'I',
+      numeroAttestation: 'AAF-CAT1-2024-1547',
+      organismeDelivreur: 'QualiFroid Cert',
+      dateDebut: '2024-03-15',
+      dateFin: '2027-03-14',
+      actif: true,
+      dateRevocation: null
+    },
+    {
+      id: 'hab-demo-sb',
+      personneId: 'per-sb',
+      regime: '2008',
+      categorie: 'I',
+      numeroAttestation: 'AAF-CAT1-2023-0912',
+      organismeDelivreur: 'QualiFroid Cert',
+      dateDebut: '2023-09-01',
+      dateFin: '2028-08-31',
+      actif: true,
+      dateRevocation: null
+    }
+  ],
+  mentionsHabilitation: [
+    {
+      // Le cas nominal du moteur de conseil : ancien I + stage CO₂
+      // → vert sur une machine au R-744 (visible fiche machine + wizard).
+      id: 'men-demo-fh-co2',
+      personneId: 'per-fh',
+      fluideMention: 'CO2',
+      numeroAttestation: 'MEN-CO2-2025-0311',
+      organismeDelivreur: 'QualiFroid Cert',
+      dateDebut: '2025-03-11',
+      dateFin: '2030-03-10',
+      actif: true,
+      dateRevocation: null
+    },
+    {
+      // Mention révoquée : montre la ligne grisée + datée de la modale
+      // (l'historique reste au registre). Muette pour les alertes.
+      id: 'men-demo-sb-hc',
+      personneId: 'per-sb',
+      fluideMention: 'HC',
+      numeroAttestation: 'MEN-HC-2024-0108',
+      organismeDelivreur: 'QualiFroid Cert',
+      dateDebut: '2024-01-08',
+      dateFin: '2026-01-07',
+      actif: false,
+      dateRevocation: '2026-01-08'
+    }
+  ],
+
+  // --------------------------------------------------------
   // Outillage réglementé (Phase B) : détecteurs et balance.
   // Cohérent avec les alertes du tableau de bord : les deux
   // détecteurs sont à échéance dépassée (EXPIRE).

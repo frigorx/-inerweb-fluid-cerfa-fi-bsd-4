@@ -2,6 +2,33 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🎫 Réserves B2 soldées — semis démo + anti-doublon de mention (14/07)
+Les deux réserves notées à la fin du chantier habilitations sont soldées.
+- **Habilitations semées dans le monde de démo** (`demo-donnees.js`) : 2 habilitations
+  actives cohérentes avec les fiches du personnel (Marc et Sophie, régime 2008 cat. I,
+  mêmes numéros/échéances que leurs fiches — les deux registres coexistent) + 2 mentions
+  (CO₂ ACTIVE sur Marc = le cas nominal du moteur de conseil ; HC RÉVOQUÉE datée sur
+  Sophie = la ligne grisée d'historique). Échéances au-delà de l'horizon de 90 j :
+  le semis n'ajoute AUCUNE alerte (compteurs du tableau de bord inchangés).
+- **⚠️ LE PIÈGE, verrouillé dans le code ET testé** : les compléments de collections
+  absentes (`init()` ET `importerJSON`) passent TOUJOURS à VIDE pour `habilitations`,
+  `mentionsHabilitation`, `mouvementOutillage` (+ `sentinelleAlertes` à l'init) — jamais
+  depuis DEMO. Sinon un export ancien recevrait des aptitudes INVENTÉES, et un registre
+  étranger (sans per-fh/per-sb) serait REFUSÉ en orphelin à l'import. Testé dans
+  `test-demo-store.mjs` : import d'un export sans clés B2 → collections vides.
+- **Anti-doublon CONSEIL sur les mentions** (`habilitations-modal.js`) : ajouter une
+  mention d'un fluide déjà ACTIF pour la personne demande confirmation (« renouvellement :
+  les deux resteront au registre ») — jamais bloquant, le store reste seul juge ; si la
+  lecture de vérification échoue, la saisie n'est pas empêchée (conseil, pas verrou).
+- **Suites adaptées au semis** (intention inchangée) : `test-mentions` filtre le tri CO₂
+  par la personne du test (le tri TOTAL préserve l'ordre relatif) ; `test-exports`
+  vérifie désormais que les CSV portent les lignes semées avec NOM RÉSOLU (au lieu de
+  « présents et vides »). +11 vérifications dans `test-demo-store`.
+- **TOUT VERT : 64 exécutions.** Vérifié navigateur (origine neuve 8317) : badges du
+  registre du personnel, modales Marc/Sophie (semis + révoquée grisée datée), anti-doublon
+  (Annuler = rien ; « Ajouter quand même » = 2 mentions CO₂ au registre), zéro erreur
+  console.
+
 ### 📊 Tableau de bord enrichi + rôles réels enfin VISIBLES (14/07)
 Brique produit n°3 post-B2 : les trois rôles réels du chantier B2 (exécutant,
 superviseur, responsable du registre — stockés depuis la migration 016 mais

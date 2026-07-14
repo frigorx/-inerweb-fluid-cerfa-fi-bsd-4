@@ -475,11 +475,40 @@ export async function ouvrirHabilitations(ctx, personneId) {
       masquerBandeauMentions();
       const form = racine.querySelector('#men-form');
       const donnees = new FormData(form);
+      const fluideChoisi = String(donnees.get('fluideMention') || '');
+
+      // Anti-doublon CONSEIL (jamais bloquant) : une mention du même fluide
+      // déjà ACTIVE pour cette personne → confirmation avant d'ajouter (le
+      // renouvellement reste légitime : cumul au registre, patron
+      // habilitations — rien n'est jamais supprimé ni écrasé).
+      try {
+        const dejaActive = (await ctx.store.getMentions()).some(function (m) {
+          return m.personneId === personneId && m.actif
+            && m.fluideMention === fluideChoisi;
+        });
+        if (dejaActive) {
+          const info = LIBELLES_FLUIDE_MENTION[fluideChoisi];
+          const nomFluide = info ? info.option : fluideChoisi;
+          const poursuivre = await confirmer({
+            titre: 'Mention déjà active',
+            message: 'Une mention « ' + nomFluide + ' » active existe déjà '
+              + 'pour cette personne. Ajouter quand même (renouvellement : '
+              + 'les deux resteront au registre) ?',
+            libelleConfirmer: 'Ajouter quand même'
+          });
+          if (!poursuivre) return;
+        }
+      } catch (erreur) {
+        // La vérification de doublon est un CONSEIL : si la lecture échoue,
+        // on n'empêche pas la saisie (le store reste seul juge de l'ajout).
+        console.error('Vérification de doublon de mention impossible :', erreur);
+      }
+
       boutonAjouterMention.disabled = true;
       try {
         await ctx.store.createMention({
           personneId: personneId,
-          fluideMention: String(donnees.get('fluideMention') || ''),
+          fluideMention: fluideChoisi,
           numeroAttestation: String(donnees.get('numeroAttestation') || '').trim() || null,
           organismeDelivreur: String(donnees.get('organismeDelivreur') || '').trim() || null,
           dateDebut: String(donnees.get('dateDebut') || '').trim() || null,
