@@ -1728,6 +1728,61 @@ export function creerDemoStore() {
         }
       }
 
+      // 2 bis. Habilitations F-Gas et mentions (chantier B2, Phase 3
+      // « conseil ») : l'aptitude vit désormais AUSSI dans les tables du
+      // B2 (multi-régime, échéance PAR ligne) — une ligne ACTIVE d'une
+      // personne ACTIVE, échue ou sous l'horizon, alerte comme
+      // l'attestation héritée de la fiche. Les révoquées ne sonnent
+      // jamais (historique), les personnes désactivées non plus.
+      const nomsPersonnelActif = new Map(donnees.personnel
+        .filter((p) => p.actif)
+        .map((p) => [p.id, `${p.prenom} ${p.nom}`]));
+      for (const h of donnees.habilitations ?? []) {
+        if (!h.actif || !h.dateFin || !nomsPersonnelActif.has(h.personneId)) continue;
+        const qui = nomsPersonnelActif.get(h.personneId);
+        if (h.dateFin < jour) {
+          alertes.push({
+            id: `alr-habilitation-${h.id}`,
+            niveau: 'CRITIQUE',
+            titre: 'Habilitation F-Gas expirée',
+            detail: `${qui} · ${h.regime} ${h.categorie} · échéance ${fmtDate(h.dateFin)}`,
+            cible: { vue: 'personnel', id: h.personneId }
+          });
+        } else if (h.dateFin <= horizon) {
+          alertes.push({
+            id: `alr-habilitation-${h.id}`,
+            niveau: 'IMPORTANT',
+            titre: 'Habilitation F-Gas à renouveler',
+            detail: `${qui} · ${h.regime} ${h.categorie} · échéance ${fmtDate(h.dateFin)}`,
+            cible: { vue: 'personnel', id: h.personneId }
+          });
+        }
+      }
+      const LIBELLES_MENTION_ALERTE = { CO2: 'CO₂', NH3: 'NH₃', HC: 'HC' };
+      for (const m of donnees.mentionsHabilitation ?? []) {
+        if (!m.actif || !m.dateFin || !nomsPersonnelActif.has(m.personneId)) continue;
+        const qui = nomsPersonnelActif.get(m.personneId);
+        const fluideMention =
+          LIBELLES_MENTION_ALERTE[m.fluideMention] || m.fluideMention;
+        if (m.dateFin < jour) {
+          alertes.push({
+            id: `alr-mention-${m.id}`,
+            niveau: 'CRITIQUE',
+            titre: `Mention ${fluideMention} expirée`,
+            detail: `${qui} · échéance ${fmtDate(m.dateFin)}`,
+            cible: { vue: 'personnel', id: m.personneId }
+          });
+        } else if (m.dateFin <= horizon) {
+          alertes.push({
+            id: `alr-mention-${m.id}`,
+            niveau: 'IMPORTANT',
+            titre: `Mention ${fluideMention} à renouveler`,
+            detail: `${qui} · échéance ${fmtDate(m.dateFin)}`,
+            cible: { vue: 'personnel', id: m.personneId }
+          });
+        }
+      }
+
       // 3. Machines : fuites non résolues, contrôles dépassés.
       // IM-4 : une machine à l'arrêt ou démantelée n'exige plus de
       // contrôle périodique.

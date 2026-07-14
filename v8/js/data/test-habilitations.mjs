@@ -225,6 +225,67 @@ verifier('mouvement : les rôles survivent au scellement',
 verifier('mouvement : quantité calculée des pesées (+2 kg)',
   PROCHE(mvtValide.quantiteKg, 2));
 
+// --- Alertes d'échéance (chantier B2, Phase 3 « conseil ») ----------
+// Une habilitation/mention ACTIVE d'une personne ACTIVE, échue ou sous
+// l'horizon de 90 jours, alerte — révoquées et personnes désactivées ne
+// sonnent jamais. La sentinelle historise ces alertes automatiquement.
+{
+  const dateRelative = (jours) => {
+    const d = new Date();
+    d.setDate(d.getDate() + jours);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-`
+      + String(d.getDate()).padStart(2, '0');
+  };
+  const veilleur = await store.createPersonne({
+    nom: 'Veille', prenom: 'Échéance', typePersonne: 'ENSEIGNANT'
+  });
+  const echue = await store.createHabilitation({
+    personneId: veilleur.id, regime: '2025', categorie: 'A1',
+    dateFin: dateRelative(-10), operateur: 'testeur'
+  });
+  const proche = await store.createHabilitation({
+    personneId: veilleur.id, regime: '2008', categorie: 'I',
+    dateFin: dateRelative(30), operateur: 'testeur'
+  });
+  const mentionEchue = await store.createMention({
+    personneId: veilleur.id, fluideMention: 'CO2',
+    dateFin: dateRelative(-5), operateur: 'testeur'
+  });
+
+  let alertes = await store.getAlertes();
+  const alerteEchue = alertes.find((a) => a.id === `alr-habilitation-${echue.id}`);
+  verifier('alerte : habilitation ACTIVE échue → CRITIQUE, personne et catégorie nommées',
+    Boolean(alerteEchue) && alerteEchue.niveau === 'CRITIQUE'
+    && alerteEchue.titre === 'Habilitation F-Gas expirée'
+    && alerteEchue.detail.includes('Échéance Veille')
+    && alerteEchue.detail.includes('2025 A1'));
+  const alerteProche = alertes.find((a) => a.id === `alr-habilitation-${proche.id}`);
+  verifier('alerte : habilitation sous l’horizon (90 j) → IMPORTANT',
+    Boolean(alerteProche) && alerteProche.niveau === 'IMPORTANT'
+    && alerteProche.titre === 'Habilitation F-Gas à renouveler');
+  const alerteMention = alertes.find((a) => a.id === `alr-mention-${mentionEchue.id}`);
+  verifier('alerte : mention CO₂ échue → CRITIQUE au libellé exact',
+    Boolean(alerteMention) && alerteMention.niveau === 'CRITIQUE'
+    && alerteMention.titre === 'Mention CO₂ expirée');
+  verifier('alerte : cible cliquable vers la vue personnel',
+    Boolean(alerteEchue) && alerteEchue.cible
+    && alerteEchue.cible.vue === 'personnel'
+    && alerteEchue.cible.id === veilleur.id);
+
+  // La révocation ÉTEINT l'alerte (une aptitude retirée ne sonne plus).
+  await store.revoquerHabilitation(echue.id, 'testeur');
+  alertes = await store.getAlertes();
+  verifier('alerte : la révocation éteint l’alerte d’échéance',
+    !alertes.some((a) => a.id === `alr-habilitation-${echue.id}`));
+
+  // Une personne DÉSACTIVÉE ne sonne plus (elle n'intervient plus).
+  await store.desactiverPersonne(veilleur.id, 'testeur');
+  alertes = await store.getAlertes();
+  verifier('alerte : une personne désactivée ne sonne plus',
+    !alertes.some((a) => a.id === `alr-habilitation-${proche.id}`)
+    && !alertes.some((a) => a.id === `alr-mention-${mentionEchue.id}`));
+}
+
 // --- Parité : ÉCHANGE CROISÉ demo ↔ local -------------------------
 // Prouve que les rôles HORS empreinte ne cassent pas la chaîne d'un store
 // à l'autre, et que l'export emporte bien les habilitations.

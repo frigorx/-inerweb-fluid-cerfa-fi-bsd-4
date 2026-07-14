@@ -35,7 +35,10 @@ export const DOMAINES = [
     vue: 'admin', prefixes: ['alr-capacite'] },
   { id: 'personnel', titre: 'Personnel (aptitudes)',
     detail: 'Attestations d’aptitude des opérateurs.',
-    vue: 'personnel', prefixes: ['alr-aptitude-'] },
+    vue: 'personnel',
+    // Chantier B2 : les échéances des habilitations F-Gas et des mentions
+    // de formation complémentaire relèvent du même domaine.
+    prefixes: ['alr-aptitude-', 'alr-habilitation-', 'alr-mention-'] },
   { id: 'controles', titre: 'Contrôles d’étanchéité et fuites',
     detail: 'Échéances de contrôle des machines, fuites non résolues.',
     vue: 'controles', prefixes: ['alr-controle-', 'alr-fuite-'] },

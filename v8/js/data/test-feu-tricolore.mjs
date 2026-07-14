@@ -104,6 +104,20 @@ console.log('--- A. evaluerConformite (pur) ---');
     parId.etablissement.etat === 'ROUGE');
   verifier('alr-aptitude-* → domaine personnel ORANGE',
     parId.personnel.etat === 'ORANGE');
+  // Chantier B2 : les échéances d'habilitations et de mentions relèvent
+  // du domaine personnel (jamais du filet « autres »).
+  const rB2 = evaluerConformite({
+    alertes: [
+      { id: 'alr-habilitation-HAB-1', niveau: 'CRITIQUE', titre: 'Habilitation F-Gas expirée' },
+      { id: 'alr-mention-MEN-1', niveau: 'IMPORTANT', titre: 'Mention CO₂ à renouveler' }
+    ],
+    registre: REGISTRE_SAIN, officiel: OFFICIEL_OK
+  });
+  const parIdB2 = Object.fromEntries(rB2.domaines.map((d) => [d.id, d]));
+  verifier('alr-habilitation-* et alr-mention-* → domaine personnel ROUGE',
+    parIdB2.personnel.etat === 'ROUGE'
+    && parIdB2.personnel.alertes.length === 2
+    && !rB2.domaines.some((d) => d.id === 'autres'));
   verifier('alr-fuite-* → domaine contrôles ROUGE',
     parId.controles.etat === 'ROUGE');
   verifier('alr-pesee-* → domaine bouteilles ORANGE',

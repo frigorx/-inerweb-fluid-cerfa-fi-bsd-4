@@ -2,6 +2,23 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🎫 Habilitations F-Gas · Phase 3 « conseil » — alertes d'échéance d'aptitude (14/07)
+**LE CHANTIER B2 EST SOLDÉ** (Phases 1, 2a, 2b briques 1-4, dossier d'audit, Phase 3
+en mode CONSEIL — le blocage dur du mode Officiel reste un choix ultérieur de Franck).
+- **`getAlertes()` couvre les tables du B2** (miroir exact demo/serveur) : une
+  habilitation ou une mention ACTIVE d'une personne ACTIVE, échue (CRITIQUE) ou sous
+  l'horizon de 90 jours (IMPORTANT), alerte — ids `alr-habilitation-`/`alr-mention-`,
+  cible cliquable vers le registre du personnel. Les révoquées ne sonnent JAMAIS
+  (historique), les personnes désactivées non plus. L'alerte héritée sur la fiche
+  (`dateFinValidite`) reste : les deux registres coexistent réellement.
+- **Sentinelle** : historisation AUTOMATIQUE (elle diffe getAlertes) — vérifié au
+  navigateur (« Active depuis le … » + « J'ai pris connaissance » dès l'apparition).
+- **Feu tricolore** : les deux préfixes rejoignent le domaine « Personnel (aptitudes) »
+  (jamais le filet « autres ») — vérifié au navigateur (« 1 point bloquant »).
+- Tests : habilitations 41 → **48/0 demo+local** (échue/proche/mention/révocation
+  éteint/désactivation éteint), feu-tricolore **31/0 ×2** — **TOUT VERT, 60 exécutions**,
+  vérifié navigateur (origine neuve 8233, saisie par la modale réelle, zéro erreur console).
+
 ### 🎫 Habilitations F-Gas · Phase 2b (briques 3-4) — écran « qui intervient ? » (14/07)
 « La PREMIÈRE chose avant toute intervention = identifier le technicien » (Franck 14/07).
 Le moteur de conseil arrive À L'ÉCRAN — conseil, jamais blocage :
