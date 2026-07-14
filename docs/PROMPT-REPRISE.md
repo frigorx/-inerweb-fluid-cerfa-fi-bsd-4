@@ -22,7 +22,7 @@ attentes. Tu ne t'arrêtes que quand une brique est **finie et testée par toi-m
    (**source de vérité**, entrées les plus récentes en tête), `docs/PLAN-PHASE-2.md`,
    `docs/VISION-V9-V10.md` (la boussole).
 
-## État exact (dernier commit poussé `55fb088`, 14/07/2026)
+## État exact (dernier commit poussé `f45fa1d`, 14/07/2026)
 
 **FAIT le 14/07 — CHANTIER « HABILITATIONS F-Gas » (cœur audit-proof, B2), EN COURS** :
 > ⭐ **C'EST LE CHANTIER À REPRENDRE.** Cadrage complet = `docs/SPEC-HABILITATIONS.md`
@@ -57,16 +57,24 @@ attentes. Tu ne t'arrêtes que quand une brique est **finie et testée par toi-m
   correspondance 2008. **Bachir (E) et Pierre (D, 10 kg > 3 kg) reproduits au message exact.**
   `test-habilitations-moteur.mjs` **44/0**, **57 exécutions TOUT VERT**. Pure fonction (pas de
   méthode de contrat, zéro parité/migration).
+- **Phase 2b brique 1 — table `mentions_habilitation` (`f45fa1d`)** : migration 017 (table neuve,
+  trigger WORM inchangé), 3 méthodes de contrat `getMentions`/`createMention`/`revoquerMention`
+  (surface **73→76**, `VERSION_CONTRAT` 1→2), miroir demo/serveur + mapping + export/import,
+  **branchement du moteur** (`jetonsMentionsActives` → `verifierDroitIntervention`, cas I+CO₂
+  prouvé bout en bout sur le vrai store). Revue adversariale 0 bloquant ; **invariants d'import
+  renforcés sur habilitations ET mentions** (actif booléen exigé, unicité d'id, révocation datée
+  — dette Phase 1 soldée). `test-mentions` **32/0 demo+local**, habilitations 41/0,
+  **59 exécutions TOUT VERT**.
 
-**RESTE Phase 2b + Phase 3 (design COMPLET en réserve — workflow `wf_30bcfc0f`, résumé SPEC §9)** :
-- **Brique 1 — table `mentions_habilitation`** (saisie des mentions) : migration 017 (DDL prêt
-  dans le design), 3 méthodes de contrat `getMentions`/`createMention`/`revoquerMention`
-  (surface **73→76**, `VERSION_CONTRAT 1→2`), miroir DemoStore + serveur, mapping, export/import,
-  parité, tests. **Node-testable, aucun navigateur** → à FAIRE EN PREMIER à la reprise.
+**RESTE Phase 2b + Phase 3** :
 - **Briques 3-4 — écran « qui intervient ? »** : helper `v8/js/composants/conseil-intervenant.js`
   + encart « Intervenant » sur `v8/js/views/fiche-machine.js` + panneau sous le select technicien
   de l'étape 1 du wizard (`v8/js/wizard/wizard.js`, SANS nouvelle étape) + écriture `executeParId`
-  au `creerMouvement`. **UI → exigent le contrôle navigateur** (attendre qu'il refonctionne).
+  au `creerMouvement`. **UI → exigent le contrôle navigateur** (port jamais utilisé, origine neuve).
+- **UI de saisie des mentions** : cocher/révoquer une mention dans la modale habilitations
+  (Phase 2a, `v8/js/modales/habilitations-modal.js`) — mêmes patrons que les habilitations.
+- **CSV habilitations + mentions dans le dossier d'audit** (constat de revue : le paquet d'audit
+  les ignore — `v8/js/documents/exports.js`).
 - **Phase 3 — mode Officiel réellement bloquant** (Franck penche CONSEIL ; à cadrer).
 
 **FAIT le 13/07 (suite)** :
@@ -237,23 +245,21 @@ partageables…), ce qui attend Franck, et les atouts vs concurrence. En résum�
   ⚠️ La **grille réglementaire est RÉGLÉE** (matrice validée fonctionnellement le 14/07) — ne plus
   la lui redemander.
 
-## Prochaine action — REPRENDRE LE CHANTIER HABILITATIONS (Phase 2b, brique 1)
+## Prochaine action — REPRENDRE LE CHANTIER HABILITATIONS (briques 3-4, UI)
 
-**LIRE D'ABORD `docs/SPEC-HABILITATIONS.md`** (§0bis décisions Franck + §2 matrice + §9 plan des
-4 briques) ET le bloc « FAIT le 14/07 » ci-dessus. Séquence à reprendre, dans l'ordre :
+**LIRE D'ABORD `docs/SPEC-HABILITATIONS.md`** (§0bis décisions Franck + §2 matrice + §9 plan)
+ET le bloc « FAIT le 14/07 » ci-dessus. La brique 1 (mentions) est FAITE (`f45fa1d`).
+Séquence restante, dans l'ordre :
 
-1. **Brique 1 — table `mentions_habilitation`** (formations complémentaires par fluide). **À FAIRE
-   EN PREMIER** : Node-testable, aucun navigateur requis (donc immunisé à la panne d'outillage).
-   Migration 017 + 3 méthodes de contrat `getMentions`/`createMention`/`revoquerMention`
-   (surface **73→76**, `VERSION_CONTRAT 1→2`) + miroir DemoStore/serveur + mapping + export/import
-   + parité + tests. Le DDL et le code exact sont dans le design (workflow `wf_30bcfc0f`, résumé
-   SPEC §9) — les recalquer sur le patron des habilitations (Phase 1). Une fois fait, brancher le
-   moteur `verifierDroitIntervention` (déjà écrit) sur les vraies mentions via `getMentions`.
-2. **Briques 3-4 — écran « qui intervient ? »** (UI) : helper `conseil-intervenant.js` + encart
-   sur `fiche-machine.js` + panneau étape 1 du wizard + écriture `executeParId`. **Exigent le
-   contrôle navigateur** → ne les faire QUE si l'outillage navigateur refonctionne (sinon rester
-   sur la brique 1 + attendre). Contrôle sur port JAMAIS utilisé, origine neuve.
-3. **Phase 3 — mode Officiel réellement bloquant** (Franck penche CONSEIL ; à cadrer avec lui).
+1. **Briques 3-4 — écran « qui intervient ? »** (UI) : helper `conseil-intervenant.js` + encart
+   sur `fiche-machine.js` + panneau étape 1 du wizard + écriture `executeParId`. Consommer
+   `getHabilitations`/`getMentions` (actives, par personne) + `jetonsMentionsActives` +
+   `verifierDroitIntervention`. **Exigent le contrôle navigateur** → port JAMAIS utilisé,
+   origine neuve.
+2. **UI de saisie des mentions** dans la modale habilitations (Phase 2a) : cocher/révoquer,
+   mêmes patrons (créneau naturel : même commit que les briques 3-4).
+3. **CSV habilitations + mentions dans le dossier d'audit** (`v8/js/documents/exports.js`).
+4. **Phase 3 — mode Officiel réellement bloquant** (Franck penche CONSEIL ; à cadrer avec lui).
 
 Méthode : annoncer le réglage conseillé (cœur régl. = **Opus, effort maximum**), tests d'abord
 (`node outils/lancer-tests.mjs` = tout le filet), revue adversariale du cœur, contrôle navigateur
