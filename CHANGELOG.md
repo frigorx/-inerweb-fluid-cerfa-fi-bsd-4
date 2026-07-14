@@ -2,6 +2,56 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🎫 Habilitations F-Gas · Phase 2b (briques 3-4) — écran « qui intervient ? » (14/07)
+« La PREMIÈRE chose avant toute intervention = identifier le technicien » (Franck 14/07).
+Le moteur de conseil arrive À L'ÉCRAN — conseil, jamais blocage :
+- **Composant pur `v8/js/composants/conseil-intervenant.js`** (+ suite dédiée 20/0) :
+  `verdictPourIntervenant` (habilitations + jetons de mention ACTIFS et NON ÉCHUS de la
+  personne → `verifierDroitIntervention`, fluide/charge NOMINALE de la machine —
+  la charge de l'installation, celle des seuils réglementaires), `encartConseil`
+  (vert OK / ambre CONSEIL / rouge REFUS, esc() partout, testé contre données hostiles),
+  `dateDuJour` (date LOCALE ; le moteur reste sans horloge, la date vient de l'appelant).
+- **Fiche machine — bloc « Qui intervient ? »** : select des personnes actives → synthèse
+  de compétence sur CETTE machine (les cas de Franck à l'écran : E → « Contrôle
+  d'étanchéité uniquement » ; I + mention CO₂ → vert sur une machine R-744 ; sans
+  habilitation → renvoi vers l'administrateur).
+- **Wizard étape 1 — panneau de conseil** sous le select technicien (patron du bandeau
+  élève) : verdict d'OPÉRATION si la machine est connue (wizard ouvert depuis une fiche),
+  synthèse générale sinon ; recalculé au changement de technicien/carte ET au basculement
+  des interrupteurs (mise à jour ciblée sans re-rendu). **`executeParId` écrit au
+  `creerMouvement`** (l'id de la fiche personnel, en plus du nom libre hérité) — prouvé
+  au navigateur jusqu'à la signature réelle (mouvement scellé portant l'id).
+- **Modale habilitations — section « Mentions de formation complémentaire »** : liste
+  (chips CO₂/NH₃/HC, révoquées grisées datées), ajout par fluide + n°/organisme/dates,
+  révocation confirmée — mêmes patrons que les habilitations. **Pastille mentions** dans
+  le registre du personnel (chip bleue, actives seules).
+- **Corrigé au passage** : le rôle applicatif d'un élève s'affichait « Élevé » (collision
+  de clés avec le niveau GWP dans les chips communes) → « Élève » (fonction locale).
+- **Revue adversariale (2 angles, 0 bloquant) — 4 IMPORTANT corrigés** : ① la synthèse
+  ignorait la CHARGE (un D « ≤ 3 kg » paraissait autorisé en synthèse sur 10 kg quand le
+  verdict d'opération refusait — les deux écrans se contredisaient) → la synthèse écarte
+  les profils au-delà de leur limite, l'étanchéité survit (elle ne manipule pas) ; ② le
+  wizard SANS machine rendait un verdict d'opération faussement VERT (ni fluide ni
+  charge) → synthèse générale ; ③ habilitations/mentions ÉCHUES comptaient comme
+  valides → `dateReference` écarte les échues (les vues passent la date du jour) ;
+  ④ la reprise de brouillon ré-attribuait l'intervenant par NOM (homonymes ambigus)
+  → `executeParId` du brouillon prioritaire, le nom reste le repli des vieux brouillons.
+  Mineurs : libellé du moteur « charge actuelle » → « charge de l'installation » (on lui
+  passe la nominale), garde `chargeNominaleKg` null (colonne SQL nullable — un null
+  devenait 0 et fabriquait un faux refus), dégradé du wizard = panneau masqué (pas un
+  faux « aucune habilitation »).
+- **Vérifié navigateur (origines neuves 8229 puis 8231, zéro erreur console)** : parcours
+  complet fiche machine + wizard (signature réelle, mouvement `FORM-2026-0001` scellé avec
+  `executeParId`), saisie/révocation de mentions par l'UI, machine R-744 créée en direct
+  (Marc I + mention CO₂ → vert ; Sophie E → « formation complémentaire CO₂ requise »),
+  cas Pierre dès la fiche (D sur 4,5 kg → refus chiffré), synthèse ambre sans machine.
+  Clic-à-travers de la Phase 2a CONFIRMÉ (réserve levée). Tests : moteur 44 → **50/0**,
+  composant **20/0**, wizard 16 → **23/0** — **TOUT VERT, 60 exécutions**.
+- ⚠️ Notés pour la suite : le dossier d'audit CSV n'exporte ni habilitations ni mentions ;
+  le renouvellement d'une mention active est silencieux (légitime, patron habilitations) ;
+  semer des habilitations dans le monde de démo (avec précaution : les compléments
+  d'import doivent rester à vide, jamais les données démo).
+
 ### 🎫 Habilitations F-Gas · Phase 2b (brique 1) — mentions de formation complémentaire (14/07)
 La saisie des mentions par fluide (décision Franck 14/07) : l'admin coche CO₂ / NH₃ / HC
 sur une personne, la mention **ÉTEND l'axe fluide** de ses habilitations — jamais les

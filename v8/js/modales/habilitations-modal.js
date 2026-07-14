@@ -6,7 +6,8 @@
 // n'ÉVALUE rien : aucune règle de verdict / blocage ici (« qui a le
 // droit de faire quoi » viendra en Phase 2b/3). Cette modale ne fait
 // qu'appeler les méthodes de contrat déjà posées et testées :
-// getHabilitations, createHabilitation, revoquerHabilitation.
+// getHabilitations, createHabilitation, revoquerHabilitation,
+// getMentions, createMention, revoquerMention.
 //
 // Idiomes maison respectés : helper modale() (on cible `racine`,
 // jamais document.querySelector('.modale')), erreur affichée dans un
@@ -16,7 +17,7 @@
 
 import { modale, toast, confirmer, ICONES } from '../views/communs.js';
 import { esc, fmtDate } from '../core/utils.js';
-import { REGIMES, CATEGORIES_2008, CATEGORIES_2025 } from '../data/habilitations.js';
+import { REGIMES, CATEGORIES_2008, CATEGORIES_2025, FLUIDES_MENTION } from '../data/habilitations.js';
 
 // Libellés lisibles des deux régimes de certification.
 const LIBELLES_REGIME = {
@@ -51,6 +52,84 @@ function optionsCategoriePourRegime(regime) {
   return categories.map(function (c) {
     return '<option value="' + esc(c) + '">' + esc(c) + '</option>';
   }).join('');
+}
+
+// Libellés des fluides de mention : valeur canonique du store → libellé
+// lisible du select et chip courte de la liste (teintes de la charte).
+const LIBELLES_FLUIDE_MENTION = {
+  CO2: { option: 'CO₂ (R-744)', chip: 'CO₂', classe: 'chip-teal' },
+  NH3: { option: 'Ammoniac (R-717)', chip: 'NH₃', classe: 'chip-violet' },
+  HC: { option: 'Hydrocarbures (R-290…)', chip: 'HC', classe: 'chip-ambre' }
+};
+
+/**
+ * Options <option> du select fluide de mention, construites depuis
+ * FLUIDES_MENTION (valeurs = jetons canoniques 'CO2' / 'NH3' / 'HC').
+ * @returns {string} HTML
+ */
+function optionsFluideMention() {
+  return FLUIDES_MENTION.map(function (f) {
+    const info = LIBELLES_FLUIDE_MENTION[f];
+    return '<option value="' + esc(f) + '">'
+      + esc(info ? info.option : f) + '</option>';
+  }).join('');
+}
+
+/**
+ * Rend une ligne de mention de formation complémentaire. Même anatomie
+ * que les habilitations (classes .hab-* réutilisées telles quelles) :
+ * les révoquées restent affichées, grisées et datées, sans bouton.
+ * @param {object} m — mention (copie renvoyée par le store)
+ * @returns {string} HTML
+ */
+function ligneMention(m) {
+  const revoquee = !m.actif;
+  const classe = revoquee ? ' hab-revoquee' : '';
+  const info = LIBELLES_FLUIDE_MENTION[m.fluideMention]
+    || { option: m.fluideMention, chip: m.fluideMention, classe: 'chip-gris' };
+
+  const chipFluide = '<span class="chip ' + info.classe + '">' + esc(info.chip) + '</span>';
+  const chipEtat = revoquee
+    ? '<span class="chip chip-gris">Révoquée</span>'
+    : '<span class="chip chip-vert">Active</span>';
+
+  const meta = [];
+  if (m.numeroAttestation) {
+    meta.push('N° <span class="mono">' + esc(m.numeroAttestation) + '</span>');
+  }
+  if (m.organismeDelivreur) {
+    meta.push(esc(m.organismeDelivreur));
+  }
+  if (m.dateDebut || m.dateFin) {
+    meta.push(esc(fmtDate(m.dateDebut)) + ' → ' + esc(fmtDate(m.dateFin)));
+  }
+  const metaHtml = meta.length
+    ? '<div class="hab-meta">' + meta.join(' · ') + '</div>'
+    : '<div class="hab-meta">Aucune précision saisie.</div>';
+
+  const noteRevoc = revoquee
+    ? '<div class="hab-revoc-note">Révoquée le ' + esc(fmtDate(m.dateRevocation)) + '</div>'
+    : '';
+
+  const actions = revoquee ? ''
+    : '<div class="hab-item-actions">'
+      + '<button type="button" class="btn btn-danger-contour btn-petit" '
+      + 'data-action="revoquer-mention" data-id="' + esc(m.id) + '" '
+      + 'aria-label="Révoquer la mention ' + esc(info.option) + '">'
+      + 'Révoquer</button>'
+      + '</div>';
+
+  return '<div class="hab-item' + classe + '">'
+    + '<div class="hab-item-corps">'
+    + '<div class="hab-item-haut">'
+    + chipFluide
+    + chipEtat
+    + '</div>'
+    + metaHtml
+    + noteRevoc
+    + '</div>'
+    + actions
+    + '</div>';
 }
 
 /**
@@ -110,8 +189,9 @@ function ligneHabilitation(h) {
 }
 
 /**
- * Construit le contenu de la modale : liste (remplie après ouverture)
- * puis formulaire d'ajout.
+ * Construit le contenu de la modale : liste des habilitations (remplie
+ * après ouverture) et formulaire d'ajout, puis même duo pour les
+ * mentions de formation complémentaire.
  * @returns {string} HTML
  */
 function gabaritContenu() {
@@ -184,6 +264,54 @@ function gabaritContenu() {
 
     + '<div class="hab-form-actions">'
     + '<button type="button" id="hab-ajouter" class="btn btn-primaire btn-petit">'
+    + ICONES.plus + '<span>Ajouter</span></button>'
+    + '</div>'
+
+    + '</form>'
+
+    + '<div class="hab-sous-titre">Mentions de formation complémentaire</div>'
+
+    + '<p class="hab-vide">'
+    + 'Une mention étend le champ d’intervention à un fluide (CO₂, ammoniac, '
+    + 'hydrocarbures) — typiquement un stage complémentaire. '
+    + 'Elle reste au registre une fois révoquée.'
+    + '</p>'
+
+    + '<div id="men-liste" class="hab-liste"></div>'
+
+    + '<div id="men-bandeau-erreur" class="bandeau-erreur" hidden></div>'
+
+    + '<form id="men-form" class="formulaire" novalidate>'
+
+    + '<div class="champ" data-champ="fluideMention">'
+    + '<label for="men-fluide">Fluide</label>'
+    + '<select id="men-fluide" name="fluideMention">' + optionsFluideMention() + '</select>'
+    + '</div>'
+
+    + '<div class="grille-form-2">'
+    + '<div class="champ" data-champ="numeroAttestation">'
+    + '<label for="men-num">N° d’attestation</label>'
+    + '<input type="text" id="men-num" name="numeroAttestation" maxlength="60">'
+    + '</div>'
+    + '<div class="champ" data-champ="organismeDelivreur">'
+    + '<label for="men-organisme">Organisme délivreur</label>'
+    + '<input type="text" id="men-organisme" name="organismeDelivreur" maxlength="120">'
+    + '</div>'
+    + '</div>'
+
+    + '<div class="grille-form-2">'
+    + '<div class="champ" data-champ="dateDebut">'
+    + '<label for="men-debut">Date de début</label>'
+    + '<input type="date" id="men-debut" name="dateDebut">'
+    + '</div>'
+    + '<div class="champ" data-champ="dateFin">'
+    + '<label for="men-fin">Date de fin</label>'
+    + '<input type="date" id="men-fin" name="dateFin">'
+    + '</div>'
+    + '</div>'
+
+    + '<div class="hab-form-actions">'
+    + '<button type="button" id="men-ajouter" class="btn btn-primaire btn-petit">'
     + ICONES.plus + '<span>Ajouter</span></button>'
     + '</div>'
 
@@ -310,12 +438,100 @@ export async function ouvrirHabilitations(ctx, personneId) {
       }
     });
 
+    // --------------------------------------------------------
+    // Mentions de formation complémentaire : même trio que les
+    // habilitations (liste / ajout / révocation), bandeau séparé.
+    // --------------------------------------------------------
+    const bandeauErreurMentions = racine.querySelector('#men-bandeau-erreur');
+    const listeMentionsHtml = racine.querySelector('#men-liste');
+
+    function masquerBandeauMentions() {
+      bandeauErreurMentions.hidden = true;
+      bandeauErreurMentions.textContent = '';
+    }
+
+    function afficherBandeauMentions(message) {
+      bandeauErreurMentions.textContent = message;
+      bandeauErreurMentions.hidden = false;
+    }
+
+    // Recharge la liste des mentions de la personne. Le store rend déjà
+    // les mentions triées (CO2 → NH3 → HC puis dateFin décroissante) :
+    // le filtre par personne conserve cet ordre.
+    async function rafraichirListeMentions() {
+      const toutes = await ctx.store.getMentions();
+      const propres = toutes.filter(function (m) { return m.personneId === personneId; });
+      if (propres.length === 0) {
+        listeMentionsHtml.innerHTML =
+          '<p class="hab-vide">Aucune mention pour cette personne.</p>';
+        return;
+      }
+      listeMentionsHtml.innerHTML = propres.map(ligneMention).join('');
+    }
+
+    // Ajout d'une mention.
+    const boutonAjouterMention = racine.querySelector('#men-ajouter');
+    boutonAjouterMention.addEventListener('click', async function () {
+      masquerBandeauMentions();
+      const form = racine.querySelector('#men-form');
+      const donnees = new FormData(form);
+      boutonAjouterMention.disabled = true;
+      try {
+        await ctx.store.createMention({
+          personneId: personneId,
+          fluideMention: String(donnees.get('fluideMention') || ''),
+          numeroAttestation: String(donnees.get('numeroAttestation') || '').trim() || null,
+          organismeDelivreur: String(donnees.get('organismeDelivreur') || '').trim() || null,
+          dateDebut: String(donnees.get('dateDebut') || '').trim() || null,
+          dateFin: String(donnees.get('dateFin') || '').trim() || null,
+          operateur: operateur
+        });
+        auModifie = true;
+        toast('Mention ajoutée.', 'succes');
+        // Vide les champs optionnels, conserve le fluide choisi.
+        ['numeroAttestation', 'organismeDelivreur', 'dateDebut', 'dateFin'].forEach(function (nom) {
+          const champ = form.elements[nom];
+          if (champ) champ.value = '';
+        });
+        await rafraichirListeMentions();
+      } catch (erreur) {
+        afficherBandeauMentions(erreur && erreur.message ? erreur.message : 'Ajout impossible.');
+      } finally {
+        boutonAjouterMention.disabled = false;
+      }
+    });
+
+    // Révocation d'une mention (délégation : les boutons sont recréés à
+    // chaque rechargement). Confirmation maison avant de révoquer.
+    listeMentionsHtml.addEventListener('click', async function (evenement) {
+      const bouton = evenement.target.closest('[data-action="revoquer-mention"]');
+      if (!bouton) return;
+      masquerBandeauMentions();
+      const confirmation = await confirmer({
+        titre: 'Révoquer la mention',
+        message: 'Révoquer cette mention ? Elle restera au registre (aucune '
+          + 'suppression), marquée révoquée et datée.',
+        libelleConfirmer: 'Révoquer',
+        danger: true
+      });
+      if (!confirmation) return;
+      try {
+        await ctx.store.revoquerMention(bouton.dataset.id, operateur);
+        auModifie = true;
+        toast('Mention révoquée.', 'succes');
+        await rafraichirListeMentions();
+      } catch (erreur) {
+        afficherBandeauMentions(erreur && erreur.message ? erreur.message : 'Révocation impossible.');
+      }
+    });
+
     racine.querySelector('#hab-fermer').addEventListener('click', function () {
       fermer();
     });
 
-    // Premier remplissage de la liste.
+    // Premier remplissage des deux listes.
     rafraichirListe();
+    rafraichirListeMentions();
 
     // La modale se ferme aussi via la croix / le fond / Échap : on résout la
     // promesse dans tous les cas en observant la disparition du fond.

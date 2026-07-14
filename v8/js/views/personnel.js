@@ -63,7 +63,8 @@ const STYLES_VUE = `
     gap: 6px;
   }
 
-  .vue-personnel .personnel-hab-compteur {
+  .vue-personnel .personnel-hab-compteur,
+  .vue-personnel .personnel-men-compteur {
     min-width: 18px;
     text-align: center;
   }
@@ -116,8 +117,19 @@ function celluleCategorie(valeur) {
   return '<td class="align-centre">' + (valeur ? esc(valeur) : '—') + '</td>';
 }
 
+/**
+ * Chip « Rôle appli » : chipStatut (communs.js) fait retomber la clé
+ * ELEVE sur l'entrée GWP « Élevé » (collision de clés) ; on couvre donc
+ * localement les rôles applicatifs, et on délègue le reste tel quel.
+ */
+function chipRoleApp(roleApp) {
+  if (roleApp === 'ELEVE') return '<span class="chip chip-orange">Élève</span>';
+  if (roleApp === 'TECHNICIEN') return '<span class="chip chip-violet">Technicien</span>';
+  return chipStatut(roleApp);
+}
+
 /** Ligne de tableau pour une personne du registre. */
-function lignePersonne(personne, nbHabilitationsActives) {
+function lignePersonne(personne, nbHabilitationsActives, nbMentionsActives) {
   const estEleve = personne.typePersonne === 'ELEVE';
   const nomComplet = esc(personne.prenom) + ' <span class="personnel-nom-secondaire">'
     + esc(personne.nom) + '</span>';
@@ -136,10 +148,16 @@ function lignePersonne(personne, nbHabilitationsActives) {
       + 'title="Habilitations F-Gas actives">' + esc(nbHabilitationsActives) + '</span>'
     : '';
 
+  // Compteur de mentions de formation complémentaire actives (même logique)
+  const compteurMentions = nbMentionsActives > 0
+    ? '<span class="chip chip-bleu personnel-men-compteur" '
+      + 'title="Mentions de formation complémentaire actives">' + esc(nbMentionsActives) + '</span>'
+    : '';
+
   return '<tr' + classeLigne + '>'
     + '<td><span class="personnel-nom">' + nomComplet + '</span></td>'
     + '<td>' + chipTypePersonne(personne.typePersonne) + '</td>'
-    + '<td>' + chipStatut(personne.roleApp) + '</td>'
+    + '<td>' + chipRoleApp(personne.roleApp) + '</td>'
     + '<td>' + numAptitude + '</td>'
     + celluleCategorie(personne.categorie2008)
     + celluleCategorie(personne.categorie2025)
@@ -148,6 +166,7 @@ function lignePersonne(personne, nbHabilitationsActives) {
     + '<td class="align-droite">'
     + '<div class="personnel-actions">'
     + compteurHab
+    + compteurMentions
     + '<button type="button" class="btn btn-contour btn-petit" data-action="habilitations-personne" '
     + 'data-id="' + esc(personne.id) + '" aria-label="Habilitations de ' + esc(personne.prenom) + ' ' + esc(personne.nom) + '">'
     + 'Habilitations</button>'
@@ -179,6 +198,14 @@ export async function render(conteneur, ctx) {
     nbHabActivesParPersonne.set(h.personneId, (nbHabActivesParPersonne.get(h.personneId) || 0) + 1);
   });
 
+  // Même mécanique pour les mentions de formation complémentaire ACTIVES.
+  const mentions = await ctx.store.getMentions();
+  const nbMentionsActivesParPersonne = new Map();
+  mentions.forEach((m) => {
+    if (!m.actif) return;
+    nbMentionsActivesParPersonne.set(m.personneId, (nbMentionsActivesParPersonne.get(m.personneId) || 0) + 1);
+  });
+
   // Actifs d'abord (ordre alphabétique), inactifs grisés en fin de liste
   const tries = [...personnel].sort((a, b) => {
     if (a.actif !== b.actif) return a.actif ? -1 : 1;
@@ -189,7 +216,10 @@ export async function render(conteneur, ctx) {
     + ' — registre exigé pour l’audit';
 
   const lignesHtml = tries.map((personne) =>
-    lignePersonne(personne, nbHabActivesParPersonne.get(personne.id) || 0));
+    lignePersonne(
+      personne,
+      nbHabActivesParPersonne.get(personne.id) || 0,
+      nbMentionsActivesParPersonne.get(personne.id) || 0));
 
   const contenuTableau = tableau({
     colonnes: [

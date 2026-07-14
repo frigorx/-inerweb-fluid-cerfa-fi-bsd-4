@@ -126,6 +126,40 @@ verifier('opération inconnue → traitée MAINTENANCE (prudent)',
     JSON.stringify(v(e)) === JSON.stringify(v(e)));
 }
 
+// --- Synthèse AVEC charge connue (constat de revue briques 3-4) ---
+// La synthèse « qui intervient ? » sur une machine dont la charge est
+// connue écarte les profils au-delà de leur limite : le cas Pierre doit
+// apparaître dès la FICHE machine, pas seulement au choix d'une opération.
+{
+  const dSur10 = v({ habilitations: [H('2025', 'D')], operation: null,
+    familleFluide: 'HFC', chargeKg: 10 });
+  verifier('synthèse : D (≤ 3 kg) sur une installation de 10 kg → REFUS',
+    dSur10.gravite === 'REFUS' && dSur10.autorise === false);
+  verifier('synthèse : le refus nomme la limite ET la charge de l’installation',
+    /limitent la manipulation à 3 kg/.test(dSur10.conseil)
+    && /contient 10 kg, vous ne pouvez pas/.test(dSur10.conseil),
+    dSur10.conseil);
+}
+verifier('synthèse : D sur une installation de 2 kg → CONSEIL (dans la limite)',
+  grav({ habilitations: [H('2025', 'D')], operation: null,
+    familleFluide: 'HFC', chargeKg: 2 }) === 'CONSEIL');
+{
+  // Cumul A2 (≤ 3 kg) + E (étanchéité, sans limite : ne manipule pas) sur
+  // 10 kg : la manipulation tombe, l'étanchéité SURVIT.
+  const a2e = v({ habilitations: [H('2025', 'A2'), H('2025', 'E')],
+    operation: null, familleFluide: 'HFC', chargeKg: 10 });
+  verifier('synthèse : A2 + E sur 10 kg → il reste le contrôle d’étanchéité',
+    a2e.autorise === true && /étanchéité uniquement/i.test(a2e.conseil),
+    a2e.conseil);
+}
+verifier('synthèse sans chargeKg : comportement INCHANGÉ (pas de refus fabriqué)',
+  grav({ habilitations: [H('2025', 'D')], operation: null,
+    familleFluide: 'HFC' }) === 'CONSEIL');
+verifier('verdict d’opération : le libellé dit « charge de l’installation »',
+  /charge de l'installation 2 kg/.test(
+    v({ habilitations: [H('2025', 'D')], operation: 'RECUPERATION_MAINTENANCE',
+      familleFluide: 'HFC', chargeKg: 2 }).conseil));
+
 // --- Identifiabilité (règle admin) ------------------------------
 verifier('identifiable : actif + 1 habilitation active → oui',
   estIntervenantIdentifiable({ actif: true }, [H('2025', 'A1')], []) === true);

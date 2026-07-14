@@ -12,6 +12,8 @@ import { esc, fmtNombre, fmtKg, fmtKgSigne, fmtDate, nombreFr } from '../core/ut
 import { creerSignature } from './signature.js';
 import { ouvrirFormMachine } from '../modales/machine-form.js';
 import { ouvrirFormBouteille } from '../modales/bouteille-form.js';
+import { verdictPourIntervenant, encartConseil, injecterStylesConseil,
+  dateDuJour } from '../composants/conseil-intervenant.js';
 
 /** Rôles autorisés à valider une écriture (contrat Phase B). */
 const ROLES_VALIDEURS = ['REFERENT', 'ENSEIGNANT', 'ADMIN'];
@@ -340,6 +342,23 @@ export async function ouvrirWizard(ctx, options = {}) {
       store.getOutillage()
     ]);
 
+  // Habilitations + mentions (chantier B2) : nourrissent le conseil
+  // d'intervenant de l'étape 1. Tolérantes à l'échec, même dégradé que
+  // getUtilisateurCourant : un store partiel n'empêche pas le wizard.
+  // En échec, le panneau est MASQUÉ (conseilDisponible=false) — surtout
+  // pas un faux « aucune habilitation » fabriqué par des listes vides.
+  let habilitations = [];
+  let mentions = [];
+  let conseilDisponible = false;
+  try {
+    [habilitations, mentions] = await Promise.all([
+      store.getHabilitations(), store.getMentions()
+    ]);
+    conseilDisponible = true;
+  } catch {
+    // Conseil d'intervenant indisponible : le wizard reste utilisable.
+  }
+
   const techniciens = personnel.filter((p) => p.actif);
   const detecteurs = outillage.filter((o) => o.typeOutil === 'DETECTEUR');
   const peutValider = Boolean(utilisateur && ROLES_VALIDEURS.includes(utilisateur.roleApp));
@@ -440,9 +459,15 @@ export async function ouvrirWizard(ctx, options = {}) {
         etat.causeMouvement = 'AUTRE';
         etat.causeDetail = String(brouillon.causeMouvement);
       }
-      // Le brouillon stocke le NOM du technicien : retrouvé par
-      // correspondance exacte, sinon l'étape 1 redemande le choix
-      const technicienRepris = techniciens.find((p) =>
+      // Chantier B2 : le brouillon porte désormais executeParId (l'id de
+      // la fiche personnel) — PRIORITAIRE sur la correspondance par NOM
+      // (deux homonymes actifs rendaient la reprise ambiguë, et un nom
+      // corrigé entre-temps perdait le technicien). Le nom reste le
+      // repli des brouillons d'avant la brique 4.
+      const techniciensParId = brouillon.executeParId
+        ? techniciens.find((p) => p.id === brouillon.executeParId)
+        : null;
+      const technicienRepris = techniciensParId || techniciens.find((p) =>
         p.prenom + ' ' + p.nom === brouillon.technicien);
       etat.technicienId = technicienRepris ? technicienRepris.id : null;
       // Reprise à la première étape incomplète (la signature n'est
@@ -975,6 +1000,29 @@ export async function ouvrirWizard(ctx, options = {}) {
         + '</div>'
       : '';
 
+    // Conseil d'intervenant (chantier B2) : identifier le technicien EST
+    // la première chose avant l'intervention (Franck 14/07). Verdict
+    // d'OPÉRATION seulement si la machine est déjà connue (wizard ouvert
+    // depuis une fiche) — sans machine, ni fluide ni charge : un verdict
+    // d'opération serait faussement vert (constat de revue), la synthèse
+    // générale dit mieux (« récupération uniquement, limite 3 kg »).
+    // Se recalcule à chaque changement de technicien ou de carte
+    // (rendreEtape complet) et au basculement des interrupteurs
+    // (majPanneauConseil, sans re-rendu : le focus survit).
+    injecterStylesConseil();
+    function htmlConseil() {
+      const technicien = technicienChoisi();
+      if (!conseilDisponible || !technicien) return '';
+      const machine = machineChoisie() || null;
+      return encartConseil(technicien, verdictPourIntervenant({
+        personne: technicien, habilitations, mentions, machine,
+        operation: machine && etat.carteType ? typeMouvement() : null,
+        dateReference: dateDuJour()
+      }));
+    }
+    const panneauConseil =
+      '<div class="wizard-bloc" id="wizard-conseil">' + htmlConseil() + '</div>';
+
     corpsEl.innerHTML =
       '<div class="wizard-grille-choix">' + cartes + '</div>'
       + interrupteur
@@ -982,7 +1030,8 @@ export async function ouvrirWizard(ctx, options = {}) {
       + '<label for="wizard-technicien">Technicien intervenant</label>'
       + '<select id="wizard-technicien">' + optionsTechniciens + '</select>'
       + '</div>'
-      + bandeauEleve;
+      + bandeauEleve
+      + panneauConseil;
 
     // Sélection d'une carte de type : réinitialise la suite du parcours
     corpsEl.querySelectorAll('[data-carte-type]').forEach(function (bouton) {
@@ -1007,6 +1056,10 @@ export async function ouvrirWizard(ctx, options = {}) {
       caseChoix.addEventListener('change', function () {
         if (etat.carteType === 'charge') etat.premiereCharge = caseChoix.checked;
         if (etat.carteType === 'recuperation') etat.demantelement = caseChoix.checked;
+        // Le libellé du conseil dépend de typeMouvement() : mise à jour
+        // ciblée SANS re-rendu (le focus de la case survit).
+        const zoneConseil = corpsEl.querySelector('#wizard-conseil');
+        if (zoneConseil) zoneConseil.innerHTML = htmlConseil();
       });
     }
 
@@ -1640,7 +1693,11 @@ export async function ouvrirWizard(ctx, options = {}) {
               detecteurId: etat.detecteurId
             }),
           signatureDataUrl: signature.dataURL(),
-          technicien: technicien ? technicien.prenom + ' ' + technicien.nom : null
+          technicien: technicien ? technicien.prenom + ' ' + technicien.nom : null,
+          // Chantier B2 : QUI exécute le geste — l'id de la fiche personnel,
+          // en plus du nom libre `technicien` (hérité). Nullable, HORS
+          // empreinte SHA-256 (migration 016).
+          executeParId: etat.technicienId
         });
         idMouvementCree = mouvement.id;
         numeroMouvementCree = mouvement.numero;

@@ -44,7 +44,8 @@ const { ouvrirWizard } = await import('./wizard.js');
    signature exigeant un canvas hors de portée du shim).
    ============================================================ */
 
-function creerStoreFactice({ machines = [], bouteilles = [] } = {}) {
+function creerStoreFactice({ machines = [], bouteilles = [],
+  habilitations = [], mentions = [] } = {}) {
   return {
     async getPersonnel() {
       return [{ id: 'p1', prenom: 'Jean', nom: 'Dupont', actif: true, roleApp: 'REFERENT' }];
@@ -53,7 +54,10 @@ function creerStoreFactice({ machines = [], bouteilles = [] } = {}) {
     async getBouteilles() { return bouteilles.slice(); },
     async getOutillage() { return []; },
     async getUtilisateurCourant() { return { id: 'u1', prenom: 'Jean', nom: 'Dupont', roleApp: 'REFERENT' }; },
-    async getMouvements() { return []; }
+    async getMouvements() { return []; },
+    // Chantier B2 : nourrit le conseil d'intervenant de l'étape 1.
+    async getHabilitations() { return habilitations.slice(); },
+    async getMentions() { return mentions.slice(); }
   };
 }
 
@@ -309,6 +313,68 @@ const MACHINE_TEST = {
   carteSelectionnee = fond.querySelector('.carte-choix.selectionnee');
   verifier('un typeInitial invalide/inconnu ne présélectionne aucune carte',
     !carteSelectionnee);
+}
+
+/* ============================================================
+   8. Chantier B2 (brique 4) : conseil d'intervenant à l'étape 1.
+      Le technicien factice p1 détient un IV (2008) = contrôle
+      d'étanchéité SEUL. Sans carte choisie → synthèse de compétence
+      (bandeau CONSEIL) ; carte « appoint » (= MAINTENANCE) → REFUS
+      de conseil (bandeau rouge, jamais bloquant : Continuer marche).
+   ============================================================ */
+{
+  const store = creerStoreFactice({
+    machines: [MACHINE_TEST],
+    habilitations: [{ id: 'h1', personneId: 'p1', regime: '2008',
+      categorie: 'IV', actif: true }]
+  });
+  const ctx = { store, naviguer: () => {} };
+
+  await ouvrirWizard(ctx, { machineId: 'mac-1' });
+  const fond = document.body.querySelectorAll('.modale-fond').at(-1);
+
+  verifier('étape 1 sans technicien choisi : aucun encart de conseil',
+    !fond.querySelector('.conseil-intervenant'));
+
+  // Technicien choisi, AUCUNE carte : synthèse de compétence (cas Bachir).
+  const selectTechnicien = fond.querySelector('#wizard-technicien');
+  selectTechnicien.value = 'p1';
+  selectTechnicien.declencher('change');
+
+  let encart = fond.querySelector('.conseil-intervenant');
+  verifier('technicien choisi : l’encart de conseil apparaît (synthèse)',
+    Boolean(encart));
+  verifier('IV (2008) sans opération choisie → synthèse « étanchéité uniquement »',
+    encart && /étanchéité uniquement/i.test(encart.textContent || ''));
+
+  // Carte « appoint » (MAINTENANCE) : hors du champ d'un IV → REFUS rouge.
+  fond.querySelector('[data-carte-type="appoint"]').declencher('click');
+  encart = fond.querySelector('.conseil-intervenant');
+  verifier('IV (2008) sur un complément de charge → REFUS de conseil (rouge)',
+    encart && String(encart.className).includes('bandeau-erreur'));
+  verifier('le refus conseille de confier la charge à un titulaire habilité',
+    encart && /confiez/i.test(encart.textContent || ''));
+
+  // JAMAIS bloquant : l'étape 1 complète laisse continuer malgré le refus.
+  fond.querySelector('#wizard-continuer').declencher('click');
+  const pastilleActive = fond.querySelector('.wizard-etape.active .wizard-pastille');
+  verifier('le REFUS de conseil ne bloque PAS : le wizard continue (étape 3)',
+    pastilleActive && pastilleActive.textContent === '3',
+    'pastille active = ' + (pastilleActive && pastilleActive.textContent));
+}
+
+/* ============================================================
+   9. Chantier B2 (brique 4) : executeParId au creerMouvement — motif
+      source (patron du bloc 4 : la finalisation exige la signature,
+      hors de portée du shim ; le store, lui, est déjà prouvé par
+      test-habilitations.mjs qui crée des mouvements avec les rôles).
+   ============================================================ */
+{
+  const fs = await import('node:fs');
+  const source = fs.readFileSync(new URL('./wizard.js', import.meta.url), 'utf8');
+  verifier('creerMouvement reçoit executeParId = l’id du technicien choisi',
+    /executeParId:\s*etat\.technicienId/.test(source),
+    'motif executeParId: etat.technicienId introuvable dans finaliser()');
 }
 
 // ---- Bilan ----

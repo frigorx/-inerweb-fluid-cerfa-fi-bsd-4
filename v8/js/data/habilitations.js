@@ -297,8 +297,28 @@ export function verifierDroitIntervention({
 
   const op = operation ? operationNormalisee(operation) : null;
 
-  // 2a. Synthèse « qui intervient ? » (aucune opération choisie).
-  if (!op) return synthese(profils);
+  // 2a. Synthèse « qui intervient ? » (aucune opération choisie). La CHARGE
+  // de l'installation, quand elle est connue, écarte les profils dont la
+  // limite est dépassée (constat de revue : sans cela, un D limité à 3 kg
+  // paraissait « récupération autorisée » en synthèse sur une machine de
+  // 10 kg alors que le verdict d'opération l'aurait refusé — les deux
+  // écrans se contredisaient). L'étanchéité (limite null) survit toujours :
+  // contrôler ne manipule pas le circuit.
+  if (!op) {
+    if (chargeKg === null || chargeKg === undefined) return synthese(profils);
+    const dansLaLimite = profils.filter((pr) =>
+      pr.limiteKg === null || Number(chargeKg) <= pr.limiteKg);
+    if (dansLaLimite.length === 0) {
+      const limite = Math.max(...profils.map((pr) => pr.limiteKg));
+      return {
+        autorise: false, gravite: 'REFUS',
+        motif: `Charge de l'installation au-delà de votre limite (${limite} kg)`,
+        conseil: `Vos catégories limitent la manipulation à ${limite} kg : `
+          + `cette installation en contient ${fmtKg(chargeKg)}, vous ne pouvez pas.`
+      };
+    }
+    return synthese(dansLaLimite);
+  }
 
   // 2b. Verdict pour une opération précise.
   const donneOp = profils.filter((pr) => pr.ops.includes(op));
@@ -321,7 +341,7 @@ export function verifierDroitIntervention({
       return {
         autorise: true, gravite: 'CONSEIL',
         motif: `${cap(labelOp(op))} autorisée dans la limite de ${limite} kg`,
-        conseil: `Autorisé : ${labelOp(op)} dans la limite de ${limite} kg (charge actuelle ${fmtKg(chargeKg)}).`
+        conseil: `Autorisé : ${labelOp(op)} dans la limite de ${limite} kg (charge de l'installation ${fmtKg(chargeKg)}).`
       };
     }
   }

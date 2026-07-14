@@ -21,6 +21,8 @@ import { ouvrirFeuilleMiseEnService, peutOuvrirFeuilleMiseEnService }
 import { ouvrirCerfa } from '../cerfa/visualiseur.js';
 import { ouvrirCorrectionCerfa } from '../cerfa/correcteur.js';
 import { zonePiecesJointes } from '../composants/pieces-jointes.js';
+import { verdictPourIntervenant, encartConseil, injecterStylesConseil,
+  dateDuJour } from '../composants/conseil-intervenant.js';
 
 export const titre = 'Fiche machine';
 
@@ -256,6 +258,36 @@ function blocChargeIncomplete(machine) {
     + '<button type="button" class="btn btn-contour btn-petit" '
     + 'data-action="completer-charge" style="margin-left:auto;flex:none">'
     + ICONES.televerser + '<span>Compléter la charge</span></button>'
+    + '</div>'
+    + '</div>';
+}
+
+/* ============================================================
+   Bloc 1 ter — Qui intervient ? (chantier B2, conseil jamais blocage)
+   ============================================================ */
+
+/**
+ * Encart « Qui intervient ? » : identifier le technicien AVANT le geste
+ * (décision Franck 14/07). Select des personnes actives + zone de verdict
+ * remplie au choix — synthèse de compétence sur CETTE machine (fluide et
+ * charge nominale de l'installation). Un CONSEIL : rien n'est bloqué.
+ * @param {object[]} personnesActives — personnel actif, trié
+ * @returns {string} HTML
+ */
+function blocIntervenant(personnesActives) {
+  const options = ['<option value="">— Identifier l’intervenant —</option>']
+    .concat(personnesActives.map(function (p) {
+      return '<option value="' + esc(p.id) + '">'
+        + esc(p.prenom + ' ' + p.nom) + '</option>';
+    })).join('');
+  return '<div class="fiche-section">'
+    + '<h3 class="fiche-section-titre">Qui intervient ?</h3>'
+    + '<div class="carte">'
+    + '<div class="champ">'
+    + '<label for="fiche-intervenant">Intervenant pressenti</label>'
+    + '<select id="fiche-intervenant">' + options + '</select>'
+    + '</div>'
+    + '<div id="fiche-conseil-intervenant" style="margin-top:10px"></div>'
     + '</div>'
     + '</div>';
 }
@@ -529,11 +561,15 @@ export async function render(conteneur, ctx) {
   const { store, naviguer, param } = ctx;
   const codePublic = String(param || '').trim();
 
-  const [machines, fluides, clients, alertesToutes] = await Promise.all([
+  const [machines, fluides, clients, alertesToutes, personnel,
+    habilitations, mentions] = await Promise.all([
     store.getMachines(),
     store.getFluides(),
     store.getClients(),
-    store.getAlertes()
+    store.getAlertes(),
+    store.getPersonnel(),
+    store.getHabilitations(),
+    store.getMentions()
   ]);
 
   const machine = machines.find((m) => m.codePublic === codePublic);
@@ -557,11 +593,19 @@ export async function render(conteneur, ctx) {
   // passe les tableaux complets, comme pour genererDossierMachine ailleurs.
   const { dossiers: dossiersFuite } = construireDossiersFuite({ machine, controles, mouvements });
 
+  // Personnes actives, triées comme le registre du personnel.
+  const personnesActives = personnel
+    .filter(function (p) { return p.actif; })
+    .sort(function (a, b) {
+      return (a.nom + a.prenom).localeCompare(b.nom + b.prenom, 'fr');
+    });
+
   conteneur.innerHTML = STYLES_VUE
     + '<a href="#/machines" class="fiche-retour">' + ICONES.grille + '<span>Retour au parc</span></a>'
     + enteteVue({ titre: machine.designation, sousTitre: 'Code ' + machine.codePublic })
     + blocIdentite(machine, fluide)
     + blocChargeIncomplete(machine)
+    + blocIntervenant(personnesActives)
     + blocActions()
     + blocDonneesTechniques(machine, fluide, client)
     + blocAlertes(alertes)
@@ -595,6 +639,24 @@ export async function render(conteneur, ctx) {
       if (cible === 'documents') monterDocumentsSiBesoin();
     });
   });
+
+  // ---- Conseil d'intervenant (chantier B2, jamais bloquant) ----
+  injecterStylesConseil();
+  const selectIntervenant = conteneur.querySelector('#fiche-intervenant');
+  if (selectIntervenant) {
+    selectIntervenant.addEventListener('change', function () {
+      const zone = conteneur.querySelector('#fiche-conseil-intervenant');
+      const personne = personnesActives.find(function (p) {
+        return p.id === selectIntervenant.value;
+      });
+      if (!personne) { zone.innerHTML = ''; return; }
+      const verdict = verdictPourIntervenant({
+        personne, habilitations, mentions, machine, operation: null,
+        dateReference: dateDuJour()
+      });
+      zone.innerHTML = encartConseil(personne, verdict);
+    });
+  }
 
   // ---- Actions ----
   const boutonMouvement = conteneur.querySelector('[data-action="nouveau-mouvement"]');
