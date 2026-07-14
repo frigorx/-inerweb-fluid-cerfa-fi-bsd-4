@@ -22,11 +22,32 @@ attentes. Tu ne t'arrêtes que quand une brique est **finie et testée par toi-m
    (**source de vérité**, entrées les plus récentes en tête), `docs/PLAN-PHASE-2.md`,
    `docs/VISION-V9-V10.md` (la boussole).
 
-## État exact (dernier commit poussé `f45fa1d`, 14/07/2026)
+## État exact (dernier commit poussé `cf1c3ff`, 14/07/2026)
 
-**FAIT le 14/07 — CHANTIER « HABILITATIONS F-Gas » (cœur audit-proof, B2), EN COURS** :
-> ⭐ **C'EST LE CHANTIER À REPRENDRE.** Cadrage complet = `docs/SPEC-HABILITATIONS.md`
-> (LIRE §0bis vision Franck + §2 matrice validée + §9 plan des 4 briques).
+**FAIT le 14/07 — CHANTIER « HABILITATIONS F-Gas » (cœur audit-proof, B2) : ⭐ SOLDÉ ⭐** :
+> Phases 1, 2a, 2b (briques 1-4), dossier d'audit et Phase 3 en mode CONSEIL — toutes
+> FAITES, testées, vérifiées navigateur et poussées. Cadrage = `docs/SPEC-HABILITATIONS.md`.
+> Le BLOCAGE DUR du mode Officiel (verrou dans la validation) reste un choix ultérieur
+> de Franck (il penche CONSEIL — v1 assumée en conseil, rien d'autre à coder d'ici là).
+- **Phase 3 « conseil » — alertes d'échéance (`cf1c3ff`)** : `getAlertes()` couvre les
+  tables du B2 (habilitation/mention active échue → CRITIQUE, sous 90 j → IMPORTANT,
+  révoquées et personnes désactivées muettes) ; sentinelle (historisation) et feu
+  tricolore (domaine Personnel) branchés. habilitations 48/0 ×2, feu-tricolore 31/0 ×2.
+- **Dossier d'audit (`f83521d`)** : `habilitations.csv` + `mentions-habilitation.csv`
+  dans le paquet annuel (11 tables, noms résolus, révoquées comprises).
+- **Briques 3-4 — écran « qui intervient ? » (`1a89202`)** : composant pur
+  `v8/js/composants/conseil-intervenant.js` (verdict + encart, échéances écartées par
+  date de référence), bloc « Qui intervient ? » sur la fiche machine (la SYNTHÈSE tient
+  compte de la charge — cas Pierre dès la fiche), panneau de conseil à l'étape 1 du
+  wizard + **`executeParId` au `creerMouvement`** (prouvé jusqu'au scellement), section
+  Mentions dans la modale habilitations + pastille, coquille « Élevé » corrigée. Revue
+  2 angles 0 bloquant, 4 IMPORTANT corrigés. Moteur 50/0, composant 20/0, wizard 23/0.
+  **Clic-à-travers Phase 2a CONFIRMÉ au navigateur (réserve levée).**
+- **Brique 1 — table `mentions_habilitation` (`f45fa1d`)** : migration 017, 3 méthodes
+  de contrat (surface **73→76**, `VERSION_CONTRAT` 1→2), miroir demo/serveur + mapping +
+  export/import, branchement moteur. Revue 3 angles 0 bloquant ; invariants d'import
+  renforcés sur les DEUX tables (actif booléen, unicité d'id, révocation datée).
+  `test-mentions` 32/0 demo+local.
 - **Contexte** : Franck a donné carte blanche + activé **ultracode**. Le logiciel doit être
   « le plus complet ». On a orchestré en workflows (conception + revue adversariale).
 - **Décisions Franck ACTÉES (14/07, gravées SPEC §0bis)** — à respecter :
@@ -66,16 +87,13 @@ attentes. Tu ne t'arrêtes que quand une brique est **finie et testée par toi-m
   — dette Phase 1 soldée). `test-mentions` **32/0 demo+local**, habilitations 41/0,
   **59 exécutions TOUT VERT**.
 
-**RESTE Phase 2b + Phase 3** :
-- **Briques 3-4 — écran « qui intervient ? »** : helper `v8/js/composants/conseil-intervenant.js`
-  + encart « Intervenant » sur `v8/js/views/fiche-machine.js` + panneau sous le select technicien
-  de l'étape 1 du wizard (`v8/js/wizard/wizard.js`, SANS nouvelle étape) + écriture `executeParId`
-  au `creerMouvement`. **UI → exigent le contrôle navigateur** (port jamais utilisé, origine neuve).
-- **UI de saisie des mentions** : cocher/révoquer une mention dans la modale habilitations
-  (Phase 2a, `v8/js/modales/habilitations-modal.js`) — mêmes patrons que les habilitations.
-- **CSV habilitations + mentions dans le dossier d'audit** (constat de revue : le paquet d'audit
-  les ignore — `v8/js/documents/exports.js`).
-- **Phase 3 — mode Officiel réellement bloquant** (Franck penche CONSEIL ; à cadrer).
+**RESTE du chantier habilitations : RIEN d'obligatoire.** En réserve (non bloquant) :
+- **Blocage dur en mode Officiel** (verrou dans `validerMouvement` derrière un drapeau) —
+  SEULEMENT si Franck le demande un jour (il penche CONSEIL, v1 assumée en conseil).
+- Idées notées : semer des habilitations dans le monde de démo (⚠️ les compléments
+  d'import doivent rester à VIDE, jamais les données démo — voir CHANGELOG brique 1) ;
+  colonnes « rôles réels » (exécutant/superviseur) dans `mouvements.csv` ; anti-doublon
+  UI sur une mention déjà active (le renouvellement reste légitime).
 
 **FAIT le 13/07 (suite)** :
 - **Brique ⑥ « sentinelle d'alertes persistées » (`2f0c537`)** : couche temporelle
@@ -245,29 +263,27 @@ partageables…), ce qui attend Franck, et les atouts vs concurrence. En résum�
   ⚠️ La **grille réglementaire est RÉGLÉE** (matrice validée fonctionnellement le 14/07) — ne plus
   la lui redemander.
 
-## Prochaine action — REPRENDRE LE CHANTIER HABILITATIONS (briques 3-4, UI)
+## Prochaine action — NOUVELLE SÉRIE PRODUIT (le chantier habilitations est SOLDÉ)
 
-**LIRE D'ABORD `docs/SPEC-HABILITATIONS.md`** (§0bis décisions Franck + §2 matrice + §9 plan)
-ET le bloc « FAIT le 14/07 » ci-dessus. La brique 1 (mentions) est FAITE (`f45fa1d`).
-Séquence restante, dans l'ordre :
+Briques produit restantes, sans dépendance à Franck, dans l'ordre convenu :
 
-1. **Briques 3-4 — écran « qui intervient ? »** (UI) : helper `conseil-intervenant.js` + encart
-   sur `fiche-machine.js` + panneau étape 1 du wizard + écriture `executeParId`. Consommer
-   `getHabilitations`/`getMentions` (actives, par personne) + `jetonsMentionsActives` +
-   `verifierDroitIntervention`. **Exigent le contrôle navigateur** → port JAMAIS utilisé,
-   origine neuve.
-2. **UI de saisie des mentions** dans la modale habilitations (Phase 2a) : cocher/révoquer,
-   mêmes patrons (créneau naturel : même commit que les briques 3-4).
-3. **CSV habilitations + mentions dans le dossier d'audit** (`v8/js/documents/exports.js`).
-4. **Phase 3 — mode Officiel réellement bloquant** (Franck penche CONSEIL ; à cadrer avec lui).
+1. **Code machine lisible `JR-CF-001`** (identifiant humain par machine, en plus du
+   `code_public` opaque des QR).
+2. **Lien intervention → outils MULTIPLES** (quels outils réglementaires ont servi à
+   quel mouvement — traçabilité d'étalonnage).
+3. **Tableau de bord enrichi** (candidat : y intégrer les rôles réels du B2 —
+   exécutant/superviseur — dans les vues et le `mouvements.csv`).
+
+Méthode inchangée : réglage conseillé annoncé, tests d'abord (`node outils/lancer-tests.mjs`),
+revue adversariale, contrôle navigateur (port jamais utilisé, origine neuve), CHANGELOG +
+commit + push + mémoire.
+
+⚠️ À la reprise, `git log` + `git status` d'abord (sessions parallèles possibles).
 
 Méthode : annoncer le réglage conseillé (cœur régl. = **Opus, effort maximum**), tests d'abord
 (`node outils/lancer-tests.mjs` = tout le filet), revue adversariale du cœur, contrôle navigateur
 si UI, commit + push + mémoire. **ultracode ACTIF** → orchestrer en workflows (conception + revue).
 
-⚠️ À CONFIRMER À LA REPRISE : le **clic-à-travers ajout/révocation de la modale habilitations
-(Phase 2a)** — non vérifié en direct (panne navigateur). Cliquer le bouton « Habilitations » d'une
-personne et exercer ajout + révocation.
 
 ⚠️ Dettes notées (revue brique ②, à traiter un jour) : `updateBouteille` sans garde de statut ;
 `prpFige` falsifiable dans un export édité (recoupement = journal chaîné) ; l'import ne vérifie pas
