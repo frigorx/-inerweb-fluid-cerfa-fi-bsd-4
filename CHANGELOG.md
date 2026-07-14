@@ -2,6 +2,22 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 📦 PAQUET COMPRESSÉ — 92,6 Mo → 35,4 Mo (14/07)
+Le paquet portable est un fichier de **téléchargement** : sur la connexion d'un lycée, 92 Mo contre
+35 Mo, c'est la différence entre dix minutes et trois.
+- **La compression est écrite dans l'OUTIL, pas dans le produit.** `server/zip-node.js` écrit du
+  « stored » (non compressé) et il est le **miroir exact** de `v8/js/core/zip.js`, dont dépendent
+  les **dossiers d'audit scellés** et leur **vérificateur autonome hors ligne**. Y ajouter une
+  option de compression aurait touché au cœur du coffre-fort pour un simple confort de
+  téléchargement. `outils/fabriquer-paquet.mjs` écrit donc son propre ZIP **deflate** (`node:zlib`,
+  natif, zéro dépendance) : en-têtes locaux, répertoire central, CRC-32, noms UTF-8.
+  **`zip-node.js` et `zip.js` n'ont pas une ligne de modifiée** (vérifié : aucun diff).
+- Résultat : **35,4 Mo, soit 62 % de moins**. **Éprouvé pour de vrai** : extraction par le lecteur
+  ZIP **natif de Windows** (`Expand-Archive`) sans erreur, 128 fichiers restitués, et le
+  **`node.exe` extrait DÉMARRE** (`v24.16.0`) — un binaire de 88 Mo mal compressé ne s'exécuterait
+  pas. C'est la preuve que l'archive est correcte, pas seulement plus petite.
+- **TOUT VERT — 71 exécutions.**
+
 ### 🛡️ PROTECTION DU LOGICIEL — ce qui marche, et ce qui n'existe pas (14/07)
 Franck demandait s'il fallait « chiffrer le code pour éviter le piratage ». **Réponse donnée, et
 assumée : c'est impossible, et il ne faut pas le vouloir.** Le code s'exécute chez l'utilisateur —

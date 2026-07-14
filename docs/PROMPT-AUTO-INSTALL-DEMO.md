@@ -15,6 +15,21 @@ Le logiciel est **opérationnel, testé (71 exécutions vertes), et son code est
 rien à corriger. Ta mission est de le rendre **installable et compréhensible par un collègue qui
 n'y connaît rien**.
 
+## L'OBJECTIF, DIT PAR FRANCK
+
+> « Créer **le mode d'emploi complet avec des captures d'écran**, qui servira **à la fois de page
+> de démonstration sur GitHub et de lien pour télécharger le logiciel**. Dans le mode
+> démonstration, on aura aussi **un mode guide d'installation** avec des captures d'écran. »
+
+Autrement dit **UNE seule page publique**, qui fait trois choses :
+1. elle **montre** le logiciel (vitrine : ce qu'il fait, pour qui, ce qu'il a de plus) ;
+2. elle **l'explique** (mode d'emploi complet, écran par écran, captures à l'appui, y compris le
+   **guide d'installation** illustré) ;
+3. elle **le donne** (bouton de téléchargement + empreinte SHA-256 + lien vers la démo en ligne).
+
+Franck a précisé : « avec un **menu / sous-menu** qui explique d'abord les grandes lignes, puis tous
+les **cheminements**, et **tous les points de blocage** ». Et, si c'est possible, **du vocal**.
+
 ## À LIRE D'ABORD (et à ne pas re-découvrir)
 
 - `docs/CARTE-CODE.md` — l'architecture en une page. **Avant toute exploration.**
@@ -27,9 +42,13 @@ n'y connaît rien**.
 C'est le piège n° 1 de ce chantier : **l'auto-installeur est déjà écrit.**
 
 - **`outils/fabriquer-paquet.mjs`** assemble un **paquet portable autonome** : il embarque
-  `node.exe` (celui qui exécute le script), exclut les tests, la doc interne et l'ancienne v7,
-  copie `LICENSE` + `LICENCES-TIERCES.md`, écrit un `LISEZ-MOI.txt`, et sait produire un `.zip`
-  (`--zip`). Poids vérifié : **92,6 Mo** (dont 88 Mo de Node), soit ~35-40 Mo compressé.
+  `node.exe`, exclut les tests, la doc interne et l'ancienne v7, copie `LICENSE` +
+  `LICENCES-TIERCES.md`, écrit un `LISEZ-MOI.txt`, produit un **ZIP compressé** (`--zip`,
+  **35,4 Mo** — éprouvé : extrait par le lecteur natif de Windows, `node.exe` extrait démarre) et
+  calcule son **empreinte SHA-256** (fichier `.zip.sha256` + commande de vérification affichée).
+  ⚠️ Sa compression lui est PROPRE : `server/zip-node.js` (miroir de `v8/js/core/zip.js`) reste en
+  « stored », car les **dossiers d'audit scellés** et leur vérificateur autonome en dépendent —
+  **ne jamais y toucher pour un besoin d'emballage**.
 - **`lancer-inerweb.bat`** cherche d'abord le Node **embarqué**, se rabat sur celui du poste,
   et affiche un message clair s'il n'y en a aucun. Il crée `data/`, `documents/`, `backups/`,
   ouvre le navigateur, puis démarre le serveur.
@@ -52,11 +71,14 @@ marche sans droits, tient sur une clé USB, et se désinstalle en jetant le doss
 
 ### Brique 1 — Publier le paquet (la plus courte, fais-la en premier)
 
-Fabriquer le `.zip` et le publier en **Release GitHub** (le dépôt est public). Le lien de
-téléchargement de la page d'accueil pointera dessus. Vérifier que le ZIP téléchargé, décompressé
-sur un dossier vierge, **démarre d'un double-clic** (test réel, pas supposé).
-⚠️ Windows marque les fichiers venus d'Internet : documenter le clic droit → Propriétés →
-**Débloquer** si le `.bat` est bloqué.
+`node outils/fabriquer-paquet.mjs --zip`, puis publier le ZIP en **Release GitHub** (le dépôt est
+public), **avec son empreinte SHA-256 affichée à côté du lien** (l'outil te la donne, et donne la
+commande de vérification `certutil` pour l'utilisateur). Le bouton « Télécharger » de la page
+pointera sur cette release.
+Vérifier que le ZIP **téléchargé**, décompressé sur un dossier vierge, **démarre d'un double-clic**
+— test réel, pas supposé.
+⚠️ Windows marque les fichiers venus d'Internet : documenter, captures à l'appui, le clic droit →
+Propriétés → **Débloquer** si le `.bat` est bloqué.
 
 ### Brique 2 — La page d'accueil : vitrine + téléchargement
 

@@ -29,6 +29,7 @@
 
 import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
+import zlib from 'node:zlib';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -179,10 +180,51 @@ fs.writeFileSync(path.join(SORTIE, 'LISEZ-MOI.txt'), LISEZMOI, 'utf8');
 console.log('  [ok] LISEZ-MOI.txt');
 
 // ------------------------------------------------------------
-// ZIP optionnel (format « stored », lecteur/écrivain maison, zéro dépendance)
+// ZIP COMPRESSÉ (deflate) — c'est un fichier de TÉLÉCHARGEMENT.
+//
+// ⚠ On n'utilise volontairement PAS `server/zip-node.js` : ce module écrit du
+// « stored » (aucune compression) et il est le MIROIR EXACT de
+// `v8/js/core/zip.js`, dont dépendent les dossiers d'audit SCELLÉS et leur
+// vérificateur autonome hors ligne. **Un outil de fabrication n'a pas à toucher
+// au cœur du produit.** On écrit donc ici, dans l'outil seul, un ZIP deflate
+// autonome (`node:zlib`, natif) : ~92 Mo « stored » → ~35 Mo compressés, soit
+// la différence entre trois et dix minutes sur une connexion de lycée.
 // ------------------------------------------------------------
+
+/** CRC-32 (IEEE 802.3) — exigé par le format ZIP, sur le contenu NON compressé. */
+const TABLE_CRC32 = (() => {
+  const table = new Uint32Array(256);
+  for (let i = 0; i < 256; i += 1) {
+    let valeur = i;
+    for (let bit = 0; bit < 8; bit += 1) {
+      valeur = valeur & 1 ? 0xedb88320 ^ (valeur >>> 1) : valeur >>> 1;
+    }
+    table[i] = valeur >>> 0;
+  }
+  return table;
+})();
+
+function crc32(octets) {
+  let crc = 0xffffffff;
+  for (let i = 0; i < octets.length; i += 1) {
+    crc = TABLE_CRC32[(crc ^ octets[i]) & 0xff] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+const u16 = (v) => { const b = Buffer.alloc(2); b.writeUInt16LE(v, 0); return b; };
+const u32 = (v) => { const b = Buffer.alloc(4); b.writeUInt32LE(v >>> 0, 0); return b; };
+
+/** Date/heure au format MS-DOS (2 mots de 16 bits), exigé par le format ZIP. */
+function versDateDos(date) {
+  const heure = ((date.getHours() & 0x1f) << 11)
+    | ((date.getMinutes() & 0x3f) << 5) | ((date.getSeconds() / 2) & 0x1f);
+  const jour = (((date.getFullYear() - 1980) & 0x7f) << 9)
+    | (((date.getMonth() + 1) & 0x0f) << 5) | (date.getDate() & 0x1f);
+  return { heure, jour };
+}
+
 if (FAIRE_ZIP) {
-  const { creerZipOctets } = require(path.join(RACINE, 'server', 'zip-node.js'));
   const entrees = [];
   const racineZip = path.basename(SORTIE);
   (function parcourir(dossier) {
@@ -193,11 +235,50 @@ if (FAIRE_ZIP) {
       entrees.push({ nom: `${racineZip}/${rel}`, contenu: fs.readFileSync(abs) });
     }
   })(SORTIE);
-  const octets = creerZipOctets(entrees);
+
+  const { heure, jour } = versDateDos(new Date());
+  const METHODE_DEFLATE = 8;
+  const DRAPEAU_UTF8 = 0x0800; // les noms de fichiers sont en UTF-8
+  const morceaux = [];
+  const central = [];
+  let decalage = 0;
+  let tailleBrute = 0;
+
+  for (const entree of entrees) {
+    const nom = Buffer.from(entree.nom, 'utf8');
+    const brut = Buffer.from(entree.contenu);
+    const comprime = zlib.deflateRawSync(brut, { level: 9 });
+    const crc = crc32(brut);
+    tailleBrute += brut.length;
+
+    const enTeteLocal = Buffer.concat([
+      u32(0x04034b50), u16(20), u16(DRAPEAU_UTF8), u16(METHODE_DEFLATE),
+      u16(heure), u16(jour), u32(crc), u32(comprime.length), u32(brut.length),
+      u16(nom.length), u16(0), nom
+    ]);
+    morceaux.push(enTeteLocal, comprime);
+
+    central.push(Buffer.concat([
+      u32(0x02014b50), u16(20), u16(20), u16(DRAPEAU_UTF8), u16(METHODE_DEFLATE),
+      u16(heure), u16(jour), u32(crc), u32(comprime.length), u32(brut.length),
+      u16(nom.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(decalage), nom
+    ]));
+    decalage += enTeteLocal.length + comprime.length;
+  }
+
+  const repertoire = Buffer.concat(central);
+  const fin = Buffer.concat([
+    u32(0x06054b50), u16(0), u16(0), u16(entrees.length), u16(entrees.length),
+    u32(repertoire.length), u32(decalage), u16(0)
+  ]);
+  const octets = Buffer.concat([...morceaux, repertoire, fin]);
+
   const cheminZip = SORTIE + '.zip';
   fs.writeFileSync(cheminZip, octets);
-  const tailleZip = (octets.length / (1024 * 1024)).toFixed(0);
-  console.log(`\n  [ok] Archive : ${cheminZip} (${tailleZip} Mo, non compressée)`);
+  const tailleZip = (octets.length / (1024 * 1024)).toFixed(1);
+  const gain = (100 - (octets.length / tailleBrute) * 100).toFixed(0);
+  console.log(`\n  [ok] Archive : ${cheminZip} (${tailleZip} Mo, compressée — `
+    + `${gain} % de moins que le dossier)`);
 
   // EMPREINTE SHA-256 de l'archive — la SEULE protection qui vaille contre un
   // faux « inerWeb Fluide » vérolé distribué sous le nom de l'auteur. On ne
