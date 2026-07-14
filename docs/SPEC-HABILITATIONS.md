@@ -4,10 +4,33 @@
 > intervention, si la PERSONNE a l'aptitude requise et si l'ÉTABLISSEMENT a la
 > capacité requise — et l'opposer en mode Officiel.
 >
-> ⚠️ **GARDE-FOU RÉGLEMENTAIRE.** La matrice ci-dessous est un BROUILLON reconstitué
-> par recherche web (13/07/2026), à **valider ligne à ligne par Franck sur le texte
-> officiel** avant tout **blocage dur**. Tant que ce n'est pas fait, le moteur SIGNALE,
-> il ne BLOQUE pas. Une case fausse = audit faux : c'est précisément ce qu'on évite.
+> ✅ **MATRICE VALIDÉE FONCTIONNELLEMENT par Franck (14/07)** via deux cas concrets
+> (Bachir catégorie E = étanchéité seule ; Pierre catégorie D = récupération seule ≤ 3 kg,
+> refusé sur une installation de 10 kg). Le moteur (Phase 2b) fonctionne en **CONSEIL**
+> (rappelle le niveau, conseille peut/ne peut pas + pourquoi), pas en blocage brutal. Le
+> **blocage dur** en mode Officiel (Phase 3) reste distinct et à confirmer.
+
+## 0 bis. Vision & décisions Franck (14/07) — À RESPECTER
+
+Le logiciel doit être **le plus complet** (couvre TOUT le parc, pas seulement le CERFA).
+- **Périmètre COMPLET** : HFC/HFO **et** CO₂ (R-744) **et** ammoniac (R-717) **et**
+  **véhicules (V)** — les ateliers ont une machine de transfert de clim et la méca auto
+  fait la clim voiture. La catégorie V EST dans le périmètre.
+- **Double référentiel COEXISTANT** : ancien (I-IV, **~99 % des gens aujourd'hui**) +
+  nouveau (A1-V), montée en charge progressive **jusqu'à ~2029** (remise à niveau des
+  anciens). Une personne cumule ses catégories anciennes ET nouvelles.
+- **Formations complémentaires par FLUIDE** (CO₂, ammoniac, hydrocarbures) : une **mention**
+  que l'admin **coche** sur une personne, qui ÉTEND son droit d'intervenir sur ce fluide
+  (typiquement un ancien I-IV qui a suivi un stage CO₂ ou NH₃). Distincte des catégories.
+- **Comportement = CONSEIL à l'entrée sur la machine** : la PREMIÈRE chose avant toute
+  intervention = **identifier le technicien** ; le logiciel affiche alors son niveau et
+  conseille (« contrôle d'étanchéité uniquement », « récupération limitée à 3 kg — cette
+  installation en contient 10, vous ne pouvez pas »). Pas un blocage brutal (v1).
+- **Débloqué par l'admin** : l'identification n'est possible que si l'administrateur a
+  activé la personne (rôle) ET renseigné son **champ de compétence** (catégories + mentions).
+- **Ammoniac hors CERFA** : les installations NH₃ ne sont **pas soumises au CERFA 15497**.
+  Le logiciel les gère pour le **parc / vieillissement / habilitations**, sans générer de
+  CERFA F-Gas. (Nuance à porter aussi côté génération de documents.)
 
 ## 1. Cadre réglementaire (sources)
 
@@ -20,23 +43,27 @@
 - **Bascule** : nouveau régime obligatoire au **01/01/2027** ; les attestations
   « 2008 » (I–IV) restent reconnues **jusqu'au 31/12/2026** → coexistence à gérer.
 
-## 2. Matrice des catégories d'APTITUDE 2025 (BROUILLON — À VALIDER)
+## 2. Matrice des catégories d'APTITUDE 2025 (validée fonctionnellement 14/07)
 
 | Cat. | Opérations autorisées | Fluides | Charge |
 |------|-----------------------|---------|--------|
 | **A1** | étanchéité, installation, réparation, maintenance, récupération | HFC/HFO + hydrocarbures | aucune limite |
-| **A2** | idem A1 | HFC/HFO + hydrocarbures | < 3 kg (< 6 kg si hermétique scellé) ⚠️ |
+| **A2** | idem A1 | HFC/HFO + hydrocarbures | < 3 kg (< 6 kg si hermétique scellé) |
 | **B**  | idem A1 | CO₂ (R-744) | aucune |
 | **C**  | idem A1 | Ammoniac (R-717) | aucune |
-| **D**  | récupération **seule** | HFC/HFO | < 3 kg (< 6 kg si scellé) ⚠️ |
+| **D**  | récupération **seule** | HFC/HFO | < 3 kg (< 6 kg si scellé) |
 | **E**  | contrôle d'étanchéité **seul** (sans ouvrir le circuit) | HFC/HFO | — |
-| **V**  | climatisation **véhicules** | selon normes auto | ⚠️ **incertain** (à confirmer, hors périmètre froid/clim fixe ?) |
+| **V**  | climatisation **véhicules** (dans le périmètre, Franck 14/07) | fluides clim auto | selon normes auto |
 
 **Correspondance ancien → nouveau** : I & II → A1/A2 · III → D · IV → E.
 
-**Cases à verrouiller par Franck** : catégorie **V** ; seuils **A2/D** (3 kg / 6 kg
-scellé) ; **durée de validité** (« illimitée + remise à niveau tous les 7 ans » vs
-« 7 ans »).
+**Extension (mentions de formation complémentaire)** : indépendamment de la catégorie,
+une personne peut détenir une **mention par fluide** (CO₂, ammoniac, hydrocarbures) qui
+étend son droit d'intervenir sur ce fluide (ancien I-IV + stage). L'admin la coche.
+
+**Reste à confirmer sur pièce (non bloquant, le moteur est en CONSEIL)** : les seuils
+exacts A2/D (3 kg / 6 kg scellé) et la durée de validité. À affiner quand Franck aura
+le texte sous les yeux ; sans impact tant qu'on conseille au lieu de bloquer.
 
 ## 3. Attestation de CAPACITÉ (établissement)
 
@@ -81,23 +108,30 @@ détection permanente ; détection obligatoire ≥ 500 t ; hermétique scellé <
 - Moteur d'abord en **signalement** ; blocage dur activé après validation de la §2.
 - Coexistence **2008 + 2025** saisie et appliquée via la correspondance §2.
 
-## 8. Ce qui attend Franck
+## 8. Ce qui attend Franck (mis à jour 14/07)
 
-1. **Valider/corriger la §2** (surtout les cases ⚠️) sur le texte officiel — débloque le
-   passage en mode Officiel bloquant (Phase 3).
-2. **Périmètre fluides** : HFC/HFO seuls, ou aussi CO₂ (B) / ammoniac (C) / véhicules (V) ?
+1. ~~Valider la §2~~ **FAIT (validée fonctionnellement via Bachir/Pierre).**
+2. ~~Périmètre fluides~~ **TRANCHÉ : COMPLET** (HFC/HFO + CO₂ + NH₃ + véhicules).
 3. **Lien capacité ↔ aptitude** : quelles opérations exiger de l'établissement en plus
-   de la personne ?
+   de la personne ? (encore ouvert, non bloquant pour le moteur de conseil).
+4. **Blocage dur vs conseil** en mode Officiel (Phase 3) : Franck penche CONSEIL ; le
+   blocage brutal reste à décider (v1 = conseil).
 
-## 9. Plan d'exécution
+## 9. Plan d'exécution (révisé 14/07)
 
-- **Phase 1** — modèle de données (migration + saisie + correspondance + parité + tests).
-  Aucun blocage. **Sûr, indépendant de la validation §2.**
-- **Phase 2** — moteur `verifierDroitIntervention` (pur, testé) + affichage informatif +
-  alertes mode Formation. Non bloquant.
-- **Phase 3** — mode Officiel bloquant (verrou dans `validerMouvement`/`createControle`),
-  **gaté §8.1** + intégration feu tricolore / sentinelle.
+- ~~**Phase 1** — modèle de données~~ **FAIT** (`da96709`, migration 016).
+- ~~**Phase 2a** — saisie/affichage UI~~ **FAIT** (`4692c1d`).
+- **Phase 2b** — le CŒUR fonctionnel voulu par Franck :
+  1. **Extension modèle** (migration 017) : **mentions de formation complémentaire** par
+     fluide (CO₂ / NH₃ / hydrocarbures) sur une personne + **catégorie V** admise.
+  2. **Moteur pur `verifierDroitIntervention({ personne, operation, fluide, chargeKg })`**
+     → `{ autorise, motif, conseil }` : croise catégories (A1-V, I-IV via correspondance)
+     + mentions + seuils + fluide de l'installation. Testé, miroir serveur.
+  3. **Écran « qui intervient ? » à l'entrée d'une machine** (fiche machine / wizard) :
+     sélection du technicien parmi les personnes ACTIVÉES par l'admin → **conseil de
+     compétence** affiché (peut / ne peut pas + pourquoi, façon Bachir/Pierre). Non bloquant.
+- **Phase 3** — mode Officiel réellement bloquant (verrou dans validation), + feu
+  tricolore / sentinelle. Décision conseil-vs-blocage à confirmer.
 
-Méthode : une phase = un ou plusieurs commits, tests d'abord, revue adversariale du cœur,
-contrôle navigateur, parité démo/local stricte. Chantier lourd et décomposable →
-candidat aux Dynamic Workflows (si Franck opte pour ultracode).
+Méthode : une brique = un commit, tests d'abord, revue adversariale, contrôle navigateur,
+parité démo/local. Orchestration Dynamic Workflows (ultracode actif).
