@@ -262,6 +262,35 @@ verifier('genererJournalAuditPdf produit un PDF valide (en-tête %PDF-)',
     ligneMvOutils);
 }
 
+// --- 15. Brique 3 : rôles réels (executeParId) résolus en nom, pas en id,
+// dans mouvements.csv — colonne « Exécuté par » (aucun statut requis :
+// csvMouvements ne filtre que par année, cf. test 6 ci-dessus).
+{
+  const fluideRoles = (await store.getFluides())[0].code;
+  const executantRoles = await store.createPersonne({
+    nom: 'Rolland', prenom: 'Sacha', typePersonne: 'ENSEIGNANT'
+  });
+  const machineRoles = await store.createMachine({
+    designation: 'Machine export rôles', fluide: fluideRoles, chargeNominaleKg: 10
+  });
+  const bouteilleRoles = await store.createBouteille({
+    type: 'NEUVE', fluide: fluideRoles, tareKg: 10, masseBruteKg: 20, contenanceMaxKg: 12
+  });
+  const mvRoles = await store.creerMouvement({
+    type: 'CHARGE_APPOINT', machineId: machineRoles.id,
+    bouteilleSrcId: bouteilleRoles.id, peseeAvantKg: 20, peseeApresKg: 18,
+    technicien: 'Export Rôles', executeParId: executantRoles.id
+  });
+
+  const fichiersRoles = await toutesLesTables(store, ANNEE);
+  const mvCsv = fichiersRoles.find((f) => f.nom === 'mouvements.csv').contenu;
+  const ligneMvRoles = lignesDe(mvCsv).find((l) => l.startsWith(mvRoles.numero + ';'));
+  verifier('mouvements.csv : la colonne « Exécuté par » porte le nom résolu (executeParId)',
+    Boolean(ligneMvRoles) && ligneMvRoles.includes('Sacha Rolland')
+    && !ligneMvRoles.includes(executantRoles.id),
+    ligneMvRoles);
+}
+
 // --- Verdict ------------------------------------------------------
 console.log(`\n${nbOk} vérifications réussies, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);

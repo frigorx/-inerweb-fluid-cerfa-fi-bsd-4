@@ -8,6 +8,7 @@ import { enteteVue, carteKpi, ICONES, toast } from './communs.js';
 import { esc, fmtNombre, fmtKgSigne, fmtDate } from '../core/utils.js';
 import { ouvrirWizard } from '../wizard/wizard.js';
 import { ouvrirCerfa } from '../cerfa/visualiseur.js';
+import { collecterConformite } from '../data/feu-tricolore.js';
 
 export const titre = 'Tableau de bord';
 
@@ -281,26 +282,113 @@ const STYLES_VUE = `
     font-size: 11.5px;
     color: var(--texte-3);
   }
+
+  /* Brique 3 : carte « Conformité » (mini feu tricolore), pleine largeur,
+     sous la rangée des 4 KPI — mêmes teintes que la vue Conformité. */
+  .tdb-conformite {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 16px;
+    padding: 14px 18px;
+  }
+  .tdb-conformite-etat {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: none;
+  }
+  .tdb-conformite-point {
+    width: 14px;
+    height: 14px;
+    flex: none;
+    border-radius: 50%;
+  }
+  .tdb-conformite-point-VERT   { background: var(--succes); }
+  .tdb-conformite-point-ORANGE { background: var(--avert-icone); }
+  .tdb-conformite-point-ROUGE  { background: var(--danger); }
+  .tdb-conformite-libelle {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--texte);
+  }
+  .tdb-conformite-compteurs {
+    margin-top: 1px;
+    font-size: 11.5px;
+    color: var(--texte-3);
+  }
+  .tdb-conformite-domaines {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+  }
+  .tdb-conformite-puce {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--texte-2);
+    white-space: nowrap;
+  }
+  .tdb-conformite-puce-point {
+    width: 8px;
+    height: 8px;
+    flex: none;
+    border-radius: 50%;
+  }
+  .tdb-conformite-puce-point-VERT   { background: var(--succes); }
+  .tdb-conformite-puce-point-ORANGE { background: var(--avert-icone); }
+  .tdb-conformite-puce-point-ROUGE  { background: var(--danger); }
+  .tdb-conformite .tdb-lien { flex: none; }
 </style>`;
+
+/** Libellés du feu global, repris de la vue Conformité (même sémantique). */
+const LIBELLES_CONFORMITE_GLOBAL = {
+  VERT: 'Conforme',
+  ORANGE: 'À surveiller',
+  ROUGE: 'Non conforme'
+};
+
+/**
+ * Brique 3 : nom de l'exécutant d'un mouvement — résolu depuis le rôle réel
+ * executeParId si la personne existe encore au registre, sinon le champ
+ * libre technicien en repli (comportement d'origine), sinon rien.
+ * @param {object} mouvement — mouvement du store
+ * @param {Map<string, string>} personnelParId — id → « Prénom Nom »
+ * @returns {string}
+ */
+function nomExecutantMouvement(mouvement, personnelParId) {
+  if (mouvement.executeParId && personnelParId.has(mouvement.executeParId)) {
+    return personnelParId.get(mouvement.executeParId);
+  }
+  return mouvement.technicien || '';
+}
 
 /**
  * Ligne d'un mouvement récent : pastille d'icône par type, machine en gras,
- * « type · date » en gris, quantité mono signée colorée + code fluide,
- * bouton contour « CERFA ».
+ * « type · date [· exécutant] » en gris, quantité mono signée colorée +
+ * code fluide, bouton contour « CERFA ».
  * @param {object} mouvement — mouvement du store
+ * @param {Map<string, string>} personnelParId — id → « Prénom Nom » (brique 3)
  * @returns {string} HTML
  */
-function ligneMouvement(mouvement) {
+function ligneMouvement(mouvement, personnelParId) {
   const type = TYPES_MOUVEMENT[mouvement.type]
     || { libelle: mouvement.type, pastille: 'charge', icone: 'echange' };
   const classeQuantite = mouvement.quantiteKg < 0 ? 'quantite-negative' : 'quantite-positive';
+  const nomExecutant = nomExecutantMouvement(mouvement, personnelParId);
 
   return '<div class="tdb-mouvement">'
     + '<span class="tdb-pastille tdb-pastille-' + esc(type.pastille) + '">'
     + (ICONES[type.icone] || '') + '</span>'
     + '<div class="tdb-mouvement-infos">'
     + '<div class="tdb-mouvement-machine">' + esc(mouvement.machineLabel) + '</div>'
-    + '<div class="tdb-mouvement-detail">' + esc(type.libelle) + ' · ' + esc(fmtDate(mouvement.date)) + '</div>'
+    + '<div class="tdb-mouvement-detail">' + esc(type.libelle) + ' · ' + esc(fmtDate(mouvement.date))
+    + (nomExecutant ? ' · ' + esc(nomExecutant) : '') + '</div>'
     + '</div>'
     + '<div class="tdb-mouvement-quantites">'
     + '<div class="tdb-quantite ' + classeQuantite + '">' + esc(fmtKgSigne(mouvement.quantiteKg)) + '</div>'
@@ -356,6 +444,50 @@ function bandeauModeOfficiel(etatOfficiel) {
     + 'ces verrous s’appliqueront au mode réel.</p>'
     + '</div>'
     + '</div>';
+}
+
+/**
+ * Brique 3 : carte « Conformité » — un condensé cliquable du feu tricolore
+ * (moteur pur feu-tricolore.js), pleine largeur, sous les 4 KPI. Ne
+ * RECALCULE rien : reprend tel quel le verdict de collecterConformite().
+ * IM-2 (même logique que bandeauModeOfficiel ci-dessus) : ne double pas la
+ * carte « Alertes réglementaires », elle en donne la synthèse par domaine.
+ * @param {ReturnType<typeof import('../data/feu-tricolore.js').evaluerConformite>} conformite
+ * @returns {string} HTML
+ */
+function carteConformite(conformite) {
+  const compteurs = [];
+  if (conformite.nbCritiques) {
+    compteurs.push(conformite.nbCritiques
+      + ' critique' + (conformite.nbCritiques > 1 ? 's' : ''));
+  }
+  if (conformite.nbImportantes) {
+    compteurs.push(conformite.nbImportantes
+      + ' importante' + (conformite.nbImportantes > 1 ? 's' : ''));
+  }
+  const sousTexte = compteurs.join(', ');
+
+  const puces = conformite.domaines.map((domaine) =>
+    '<span class="tdb-conformite-puce" title="' + esc(domaine.resume) + '">'
+    + '<span class="tdb-conformite-puce-point tdb-conformite-puce-point-'
+    + esc(domaine.etat) + '" aria-hidden="true"></span>'
+    + esc(domaine.titre) + '</span>'
+  ).join('');
+
+  return '<section class="carte tdb-conformite" aria-label="Conformité">'
+    + '<div class="tdb-conformite-etat">'
+    + '<span class="tdb-conformite-point tdb-conformite-point-'
+    + esc(conformite.global) + '" aria-hidden="true"></span>'
+    + '<div>'
+    + '<div class="tdb-conformite-libelle">'
+    + esc(LIBELLES_CONFORMITE_GLOBAL[conformite.global]) + '</div>'
+    + (sousTexte ? '<div class="tdb-conformite-compteurs">' + esc(sousTexte) + '</div>' : '')
+    + '</div>'
+    + '</div>'
+    + '<div class="tdb-conformite-domaines">' + puces + '</div>'
+    + '<button type="button" id="lien-voir-conformite" class="tdb-lien">'
+    + '<span>Voir la conformité</span>' + ICONES['fleche-droite'] + '</button>'
+    + '</section>';
 }
 
 /**
@@ -464,15 +596,22 @@ export async function render(conteneur, ctx) {
   await store.rafraichirSentinelle().catch(() => {});
 
   // Lecture des données en parallèle (le store renvoie des copies)
-  const [stats, mouvements, alertes, etatOfficiel, sentinelle, utilisateur] =
-    await Promise.all([
+  // Brique 3 : collecterConformite (feu tricolore) et le registre du
+  // personnel (résolution des rôles réels) rejoignent le même Promise.all.
+  const [stats, mouvements, alertes, etatOfficiel, sentinelle, utilisateur,
+    conformite, personnel] = await Promise.all([
       store.getStats(),
       store.getMouvements(),
       store.getAlertes(),
       store.peutPasserEnOfficiel(),
       store.getSentinelle(),
-      store.getUtilisateurCourant().catch(() => null)
+      store.getUtilisateurCourant().catch(() => null),
+      collecterConformite(store),
+      store.getPersonnel()
     ]);
+
+  const personnelParId = new Map(
+    personnel.map((p) => [p.id, (p.prenom + ' ' + p.nom).trim()]));
 
   // Seul un valideur (référent / enseignant / admin) prend acte d'une
   // non-conformité réglementaire — jamais un élève (cohérent ROLES_MUTATION).
@@ -532,7 +671,7 @@ export async function render(conteneur, ctx) {
 
   // ---- Carte « Derniers mouvements » (colonne 2/3) ----
   const listeMouvements = derniersMouvements.length
-    ? derniersMouvements.map(ligneMouvement).join('')
+    ? derniersMouvements.map((mv) => ligneMouvement(mv, personnelParId)).join('')
     : '<div class="etat-vide">' + ICONES.echange + '<p>Aucun mouvement enregistré.</p></div>';
 
   const carteMouvements = '<section class="carte" aria-label="Derniers mouvements">'
@@ -572,6 +711,7 @@ export async function render(conteneur, ctx) {
   conteneur.innerHTML = STYLES_VUE
     + entete
     + rangeeKpi
+    + carteConformite(conformite)
     + (baseVide ? encartAccueil(dossierAConfigurer) : '')
     + bandeauModeOfficiel(etatOfficiel)
     + '<div class="tdb-colonnes">' + carteMouvements + carteAlertes + '</div>';
@@ -588,6 +728,12 @@ export async function render(conteneur, ctx) {
   conteneur.querySelector('#lien-voir-mouvements')
     .addEventListener('click', function () {
       naviguer('mouvements');
+    });
+
+  // Brique 3 : lien « Voir la conformité » — même motif que « Voir tout »
+  conteneur.querySelector('#lien-voir-conformite')
+    .addEventListener('click', function () {
+      naviguer('conformite');
     });
 
   // Boutons « CERFA » : visualiseur plein écran du PDF officiel rempli

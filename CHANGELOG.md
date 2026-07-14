@@ -2,6 +2,25 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 📊 Tableau de bord enrichi + rôles réels enfin VISIBLES (14/07)
+Brique produit n°3 post-B2 : les trois rôles réels du chantier B2 (exécutant,
+superviseur, responsable du registre — stockés depuis la migration 016 mais
+invisibles) arrivent à l'écran et au dossier d'audit.
+- **Modale détail d'un mouvement** : lignes « Exécuté par / Superviseur /
+  Responsable du registre » (noms résolus du registre du personnel, « (fiche
+  supprimée) » si l'id ne résout plus), seulement quand le rôle est renseigné.
+- **`mouvements.csv` du dossier d'audit** : 3 colonnes finales « Exécuté
+  par;Superviseur;Responsable registre » (noms résolus, motif habilitations).
+- **Tableau de bord — carte « Conformité »** (mini feu tricolore) : pastille
+  globale Conforme/À surveiller/Non conforme + compteurs critiques/importantes
+  + une puce colorée par domaine (infobulle = résumé) + lien vers la vue
+  Conformité — consolidation `collecterConformite` (module pur existant),
+  AUCUNE règle recalculée à la main, couleurs de la charte réutilisées.
+- **Derniers mouvements du tableau de bord** : le nom de l'exécutant réel
+  (repli : champ libre technicien) apparaît sur chaque ligne.
+- Tests : exports **34/0** (nom résolu dans le CSV, jamais l'id brut) —
+  **TOUT VERT, 64 exécutions**.
+
 ### 🔧 Lien intervention → outils MULTIPLES, état figé opposable (14/07)
 Brique produit n°2 post-B2 — « le vrai plus audit » : quels outils réglementaires ont
 servi à quel mouvement (jusqu'ici, seul le détecteur du contrôle était lié), avec la

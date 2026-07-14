@@ -204,8 +204,21 @@ function ligneRappel(libelle, valeurHtml) {
     + '</div>';
 }
 
+/**
+ * Brique 3 : nom d'une personne désignée par un rôle réel (executeParId /
+ * superviseurId / responsableRegistreId), résolu depuis la Map construite
+ * par le handler de clic. « (fiche supprimée) » si l'id ne résout pas
+ * (la personne a été retirée du registre depuis).
+ * @param {Map<string, string>} personnelParId - id → « Prénom Nom »
+ * @param {string} id
+ * @returns {string}
+ */
+function nomRolePersonnel(personnelParId, id) {
+  return personnelParId.has(id) ? personnelParId.get(id) : '(fiche supprimée)';
+}
+
 /** Rappel synthétique d'un mouvement (numéro, date, type, machine, pesées). */
-function rappelMouvement(mv, outils = []) {
+function rappelMouvement(mv, outils = [], personnelParId = new Map()) {
   const lignes = [
     ligneRappel('Numéro', '<span class="cellule-mono">' + esc(mv.numero) + '</span>'),
     ligneRappel('Date', esc(fmtDate(mv.date))),
@@ -222,6 +235,20 @@ function rappelMouvement(mv, outils = []) {
       + ' → ' + esc(fmtKg(mv.peseeApresKg)) + '</span>'));
   }
   if (mv.technicien) lignes.push(ligneRappel('Technicien', esc(mv.technicien)));
+  // Brique 3 : rôles réels de l'intervention (chantier B2), chacun absent
+  // de la modale tant que le champ n'a pas été renseigné.
+  if (mv.executeParId) {
+    lignes.push(ligneRappel('Exécuté par',
+      esc(nomRolePersonnel(personnelParId, mv.executeParId))));
+  }
+  if (mv.superviseurId) {
+    lignes.push(ligneRappel('Superviseur',
+      esc(nomRolePersonnel(personnelParId, mv.superviseurId))));
+  }
+  if (mv.responsableRegistreId) {
+    lignes.push(ligneRappel('Responsable du registre',
+      esc(nomRolePersonnel(personnelParId, mv.responsableRegistreId))));
+  }
   return '<div style="margin-bottom:14px">' + lignes.join('') + '</div>'
     + blocOutilsMouvement(outils);
 }
@@ -328,10 +355,10 @@ function lireMotif(boite, messageVide) {
 }
 
 /** BROUILLON → confirmation puis suppression définitive. */
-function ouvrirSuppression(ctx, mv, outils) {
+function ouvrirSuppression(ctx, mv, outils, personnelParId) {
   const instance = modale({
     titre: 'Supprimer le brouillon',
-    contenuHtml: rappelMouvement(mv, outils)
+    contenuHtml: rappelMouvement(mv, outils, personnelParId)
       + '<p style="font-size:13px;color:var(--texte-2)">Ce brouillon n’a '
       + 'aucun effet sur les stocks ni sur le registre : sa suppression '
       + 'est définitive et sans conséquence.</p>'
@@ -349,7 +376,7 @@ function ouvrirSuppression(ctx, mv, outils) {
 }
 
 /** SOUMIS → modale de validation (validateur = utilisateur courant). */
-function ouvrirValidation(ctx, mv, utilisateur, outils) {
+function ouvrirValidation(ctx, mv, utilisateur, outils, personnelParId) {
   const peutValider = Boolean(utilisateur
     && ROLES_VALIDEURS.includes(utilisateur.roleApp));
 
@@ -362,7 +389,7 @@ function ouvrirValidation(ctx, mv, utilisateur, outils) {
 
   const instance = modale({
     titre: 'Valider le mouvement',
-    contenuHtml: rappelMouvement(mv, outils)
+    contenuHtml: rappelMouvement(mv, outils, personnelParId)
       + '<p style="font-size:13px;color:var(--texte-2)">La validation '
       + 'applique les effets sur les stocks et inscrit l’écriture au '
       + 'registre : elle devient définitive (correction uniquement par '
@@ -384,10 +411,10 @@ function ouvrirValidation(ctx, mv, utilisateur, outils) {
 }
 
 /** SOUMIS → modale de rejet (motif obligatoire, retour en brouillon). */
-function ouvrirRejet(ctx, mv, outils) {
+function ouvrirRejet(ctx, mv, outils, personnelParId) {
   const instance = modale({
     titre: 'Rejeter le mouvement',
-    contenuHtml: rappelMouvement(mv, outils)
+    contenuHtml: rappelMouvement(mv, outils, personnelParId)
       + '<p style="font-size:13px;color:var(--texte-2)">Le mouvement '
       + 'repasse en brouillon avec votre motif : le technicien pourra le '
       + 'reprendre ou le supprimer.</p>'
@@ -407,13 +434,13 @@ function ouvrirRejet(ctx, mv, outils) {
 }
 
 /** VALIDE → modale d'annulation par contre-écriture (CR-2). */
-function ouvrirContreEcriture(ctx, mv, utilisateur, outils) {
+function ouvrirContreEcriture(ctx, mv, utilisateur, outils, personnelParId) {
   const peutValider = Boolean(utilisateur
     && ROLES_VALIDEURS.includes(utilisateur.roleApp));
 
   const instance = modale({
     titre: 'Annuler par contre-écriture',
-    contenuHtml: rappelMouvement(mv, outils)
+    contenuHtml: rappelMouvement(mv, outils, personnelParId)
       + '<p style="font-size:13px;color:var(--texte-2)"><strong>Le registre '
       + 'ne s’efface jamais.</strong> L’écriture validée reste au registre ; '
       + 'une écriture inverse (quantité opposée) la neutralise. Les stocks '
@@ -517,12 +544,25 @@ export async function render(conteneur, ctx) {
     // Brique 2 : les modales de rappel (supprimer/valider/rejeter/annuler)
     // affichent aussi les outils liés — chargés AVANT l'ouverture (modale
     // synchrone), tolérant à l'échec (aucune section outils affichée).
+    // Brique 3 : de même, les rôles réels (executeParId/superviseurId/
+    // responsableRegistreId) exigent le registre du personnel pour résoudre
+    // un nom — chargement indépendant, tolérant à l'échec lui aussi (une
+    // modale reste utilisable même si l'un des deux échoue).
     let outils = [];
+    let personnelParId = new Map();
     if (['supprimer', 'valider', 'rejeter', 'annuler'].includes(action)) {
       try {
         outils = await ctx.store.getOutilsMouvement(mv.id);
       } catch {
         // Store partiel ou méthode absente : la modale reste utilisable.
+      }
+      try {
+        const personnel = await ctx.store.getPersonnel();
+        personnelParId = new Map(
+          personnel.map((p) => [p.id, (p.prenom + ' ' + p.nom).trim()]));
+      } catch {
+        // Registre du personnel indisponible : les rôles resteront « (fiche
+        // supprimée) » plutôt que de faire échouer la modale.
       }
     }
 
@@ -541,16 +581,16 @@ export async function render(conteneur, ctx) {
         ouvrirWizard(ctx, { brouillonId: mv.id });
         break;
       case 'supprimer':
-        ouvrirSuppression(ctx, mv, outils);
+        ouvrirSuppression(ctx, mv, outils, personnelParId);
         break;
       case 'valider':
-        ouvrirValidation(ctx, mv, utilisateur, outils);
+        ouvrirValidation(ctx, mv, utilisateur, outils, personnelParId);
         break;
       case 'rejeter':
-        ouvrirRejet(ctx, mv, outils);
+        ouvrirRejet(ctx, mv, outils, personnelParId);
         break;
       case 'annuler':
-        ouvrirContreEcriture(ctx, mv, utilisateur, outils);
+        ouvrirContreEcriture(ctx, mv, utilisateur, outils, personnelParId);
         break;
     }
   });

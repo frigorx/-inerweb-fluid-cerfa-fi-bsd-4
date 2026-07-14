@@ -211,18 +211,33 @@ function csvMachines(machines, clients) {
   return construireCsv(entetes, lignes);
 }
 
-/** Mouvements de l'année (toutes fiches, quel que soit le statut). */
-function csvMouvements(mouvements, annee) {
+/**
+ * Mouvements de l'année (toutes fiches, quel que soit le statut).
+ * Brique 3 (rôles réels) : trois colonnes finales résolvent
+ * executeParId/superviseurId/responsableRegistreId en « Prénom Nom »
+ * (chaîne vide si le champ n'est pas renseigné), jamais un id brut.
+ * @param {Array<object>} mouvements
+ * @param {number} annee
+ * @param {Array<object>} personnel - retour de store.getPersonnel()
+ */
+function csvMouvements(mouvements, annee, personnel) {
+  const nomDe = (id) => {
+    if (!id) return '';
+    const p = personnel.find((x) => x.id === id);
+    return p ? p.prenom + ' ' + p.nom : id;
+  };
   const entetes = ['Numéro', 'Date', 'Mode', 'Type', 'Machine', 'Fluide',
     'Quantité (kg)', 'Pesée avant (kg)', 'Pesée après (kg)', 'Technicien',
-    'Statut', 'N° CERFA', 'Contre-écriture de', 'Motif'];
+    'Statut', 'N° CERFA', 'Contre-écriture de', 'Motif',
+    'Exécuté par', 'Superviseur', 'Responsable registre'];
   const prefixe = `${annee}-`;
   const lignes = mouvements
     .filter((mv) => (mv.date || '').startsWith(prefixe))
     .map((mv) => [
       mv.numero, fmtDate(mv.date), mv.mode, mv.type, mv.machineLabel,
       mv.fluide, nb(mv.quantiteKg), nb(mv.peseeAvantKg), nb(mv.peseeApresKg),
-      mv.technicien, mv.statut, mv.cerfaNumero, mv.contreEcritureDe, mv.motif
+      mv.technicien, mv.statut, mv.cerfaNumero, mv.contreEcritureDe, mv.motif,
+      nomDe(mv.executeParId), nomDe(mv.superviseurId), nomDe(mv.responsableRegistreId)
     ]);
   return construireCsv(entetes, lignes);
 }
@@ -362,7 +377,7 @@ export async function toutesLesTables(store, annee) {
     { nom: 'outillage.csv', contenu: csvOutillage(outillage) },
     { nom: 'bouteilles.csv', contenu: csvBouteilles(bouteilles) },
     { nom: 'machines.csv', contenu: csvMachines(machines, clients) },
-    { nom: 'mouvements.csv', contenu: csvMouvements(mouvements, annee) },
+    { nom: 'mouvements.csv', contenu: csvMouvements(mouvements, annee, personnel) },
     { nom: 'controles.csv', contenu: csvControles(controles, annee) },
     { nom: 'balance-matiere.csv', contenu: csvBalance(balance) },
     { nom: 'bsff.csv', contenu: csvBsff(bsff) },
