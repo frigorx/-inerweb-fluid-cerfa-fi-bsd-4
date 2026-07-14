@@ -95,6 +95,41 @@ const OPS_TOUTES = ['ETANCHEITE', 'INSTALLATION', 'MAINTENANCE', 'RECUPERATION']
 /** Familles de mention de formation complémentaire (l'admin les coche). */
 export const FLUIDES_MENTION = ['CO2', 'NH3', 'HC'];
 
+/**
+ * Ordre d'affichage stable des mentions (brique 1) : par fluide dans l'ordre
+ * du référentiel (CO2, NH3, HC), puis dateFin DÉCROISSANTE (null = pas
+ * d'échéance connue, placé EN TÊTE), puis id (départage TOTAL : l'ordre ne
+ * doit jamais dépendre de l'ordre d'insertion ni du parcours SQL). Un fluide
+ * hors référentiel (impossible depuis les stores : CHECK + invariants) se
+ * classerait EN TÊTE (indexOf = -1), sans erreur. Tri en JS des deux côtés
+ * (jamais d'ORDER BY pour un ordre contractuel). Dupliqué côté serveur.
+ */
+export function comparerMentions(a, b) {
+  const ia = FLUIDES_MENTION.indexOf(a.fluideMention);
+  const ib = FLUIDES_MENTION.indexOf(b.fluideMention);
+  if (ia !== ib) return ia - ib;
+  const fa = a.dateFin ?? null;
+  const fb = b.dateFin ?? null;
+  if (fa !== fb) {
+    if (fa === null) return -1;
+    if (fb === null) return 1;
+    return fa < fb ? 1 : -1;
+  }
+  if (a.id === b.id) return 0;
+  return a.id < b.id ? -1 : 1;
+}
+
+/**
+ * Jetons de mention ACTIFS d'une liste de lignes de store (getMentions) —
+ * la forme attendue par verifierDroitIntervention (champ `mentions`).
+ * Le filtrage par personne reste à l'appelant.
+ */
+export function jetonsMentionsActives(lignes) {
+  return (Array.isArray(lignes) ? lignes : [])
+    .filter((m) => m && m.actif)
+    .map((m) => m.fluideMention);
+}
+
 /** Seuils de charge (§2 ; à reconfirmer sur pièce — non bloquant en conseil). */
 export const SEUIL_CHARGE_LIMITEE_KG = 3;
 export const SEUIL_CHARGE_HERMETIQUE_KG = 6;

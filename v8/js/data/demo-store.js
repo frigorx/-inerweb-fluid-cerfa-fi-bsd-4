@@ -21,7 +21,8 @@ import { calculerTransitions, formaterEpisode, comparerEpisodes, estOuvert }
   from './sentinelle.js';
 // Habilitations F-Gas : référentiels + tri (module pur, miroir serveur).
 import { REGIMES, CATEGORIES_2008, CATEGORIES_2025, comparerHabilitations,
-  categorieCoherente } from './habilitations.js';
+  categorieCoherente, FLUIDES_MENTION, comparerMentions }
+  from './habilitations.js';
 
 const CLE_STOCKAGE = 'inerweb-fluide-v8-demo';
 
@@ -287,18 +288,49 @@ function verifierInvariantsDonnees(candidat) {
       }
     }
   }
-  // Habilitations (chantier B2) : refuser un registre importé incohérent, à
-  // l'IDENTIQUE du serveur (le CHECK composite + FK que SQLite applique).
+  // Habilitations et mentions (chantier B2) : refuser un registre importé
+  // incohérent, à l'IDENTIQUE du serveur — CHECK + FK + PRIMARY KEY que
+  // SQLite applique, ET forme canonique des DROITS : un `actif` absent
+  // serait actif par DÉFAUT côté SQL mais inactif côté démo (constat
+  // IMPORTANT 1 de la revue : droits divergents sur le même fichier).
   const idsPersonnel = new Set((candidat.personnel ?? []).map((p) => p.id));
+  const DATE_REVOC = /^\d{4}-\d{2}-\d{2}$/;
+  function problemeAptitude(nom, ligne, idsVus) {
+    const ref = ligne.id ?? '?';
+    if (idsVus.has(ligne.id)) return `${nom} ${ref} : id en double`;
+    idsVus.add(ligne.id);
+    if (!idsPersonnel.has(ligne.personneId)) {
+      return `${nom} ${ref} : personne introuvable (${ligne.personneId})`;
+    }
+    if (typeof ligne.actif !== 'boolean') {
+      return `${nom} ${ref} : champ actif non booléen (les droits en dépendent)`;
+    }
+    if (ligne.actif === false && !DATE_REVOC.test(ligne.dateRevocation ?? '')) {
+      return `${nom} ${ref} : révoquée sans date de révocation`;
+    }
+    if (ligne.actif === true && (ligne.dateRevocation ?? null) !== null) {
+      return `${nom} ${ref} : active avec une date de révocation`;
+    }
+    return null;
+  }
+  const idsHabilitations = new Set();
   for (const h of candidat.habilitations ?? []) {
     const ref = h.id ?? '?';
     if (!categorieCoherente(h.regime, h.categorie)) {
       return `habilitation ${ref} : catégorie « ${h.categorie} » ` +
         `incohérente avec le régime ${h.regime}`;
     }
-    if (!idsPersonnel.has(h.personneId)) {
-      return `habilitation ${ref} : personne introuvable (${h.personneId})`;
+    const probleme = problemeAptitude('habilitation', h, idsHabilitations);
+    if (probleme) return probleme;
+  }
+  const idsMentions = new Set();
+  for (const m of candidat.mentionsHabilitation ?? []) {
+    const ref = m.id ?? '?';
+    if (!FLUIDES_MENTION.includes(m.fluideMention)) {
+      return `mention ${ref} : fluide « ${m.fluideMention} » inconnu`;
     }
+    const probleme = problemeAptitude('mention', m, idsMentions);
+    if (probleme) return probleme;
   }
   return null;
 }
@@ -563,6 +595,22 @@ export function creerDemoStore() {
         `(attendu : ${attendues.join(', ')}).`);
     }
     return categorie;
+  }
+
+  function trouverMention(id) {
+    const m = donnees.mentionsHabilitation.find((x) => x.id === id);
+    if (!m) throw new Error(`Mention introuvable : ${id}.`);
+    return m;
+  }
+
+  /** Valide un fluide de mention (miroir EXACT du serveur). */
+  function verifierFluideMention(fluideMention) {
+    if (!FLUIDES_MENTION.includes(fluideMention)) {
+      throw new Error(
+        `Fluide de mention inconnu : ${fluideMention} ` +
+        `(attendu : ${FLUIDES_MENTION.join(', ')}).`);
+    }
+    return fluideMention;
   }
 
   // --------------------------------------------------------
@@ -1452,7 +1500,8 @@ export function creerDemoStore() {
       // Compléments Phase C pour les sauvegardes A/B existantes
       for (const cle of ['auditsOrganisme', 'nonConformites', 'stocksInitiaux',
         'bsff', 'inventaires', 'justificationsEcarts', 'piecesJointes',
-        'retoursFournisseur', 'sentinelleAlertes', 'habilitations']) {
+        'retoursFournisseur', 'sentinelleAlertes', 'habilitations',
+        'mentionsHabilitation']) {
         if (!Array.isArray(donnees[cle])) {
           donnees[cle] = copier(DEMO[cle] ?? []);
           modifie = true;
@@ -3017,6 +3066,58 @@ export function creerDemoStore() {
     },
 
     // ------------------------------------------------------
+    // Mentions de formation complémentaire (par fluide) — chantier B2,
+    // Phase 2b brique 1. Une mention ÉTEND l'axe FLUIDE des habilitations
+    // de la personne (jamais les opérations ni la charge) — Franck 14/07.
+    // ------------------------------------------------------
+    async getMentions() {
+      // Copies indépendantes ; tri contractuel en JS (jamais d'ORDER BY).
+      return (donnees.mentionsHabilitation ?? [])
+        .map(copier).sort(comparerMentions);
+    },
+
+    async createMention(donneesMention) {
+      const d = donneesMention || {};
+      const personne = trouverPersonne(d.personneId);
+      verifierFluideMention(d.fluideMention);
+      const mention = {
+        id: genId('men'),
+        personneId: personne.id,
+        fluideMention: d.fluideMention,
+        numeroAttestation: d.numeroAttestation ?? null,
+        organismeDelivreur: d.organismeDelivreur ?? null,
+        dateDebut: d.dateDebut ?? null,
+        dateFin: d.dateFin ?? null,
+        // Invariant : active à la création ; la désactivation passe
+        // EXCLUSIVEMENT par revoquerMention (comme les habilitations).
+        actif: true,
+        dateRevocation: null
+      };
+      donnees.mentionsHabilitation.push(mention);
+      journaliser(d.operateur, 'CREATION_MENTION',
+        `${personne.prenom} ${personne.nom}`, `Mention ${d.fluideMention}`);
+      persisterEtNotifier();
+      return copier(mention);
+    },
+
+    async revoquerMention(id, operateur) {
+      const mention = trouverMention(id);
+      // Double révocation refusée (préserve la date de retrait d'origine).
+      if (!mention.actif) {
+        throw new Error('Mention déjà révoquée.');
+      }
+      // JAMAIS de suppression : la ligne reste dans getMentions, marquée
+      // révoquée + datée (l'historique de compétence reste opposable).
+      mention.actif = false;
+      mention.dateRevocation = aujourdHui();
+      journaliser(operateur, 'RETRAIT_MENTION',
+        `Mention ${mention.fluideMention}`,
+        'Révocation (la mention reste au registre : aucune suppression)');
+      persisterEtNotifier();
+      return copier(mention);
+    },
+
+    // ------------------------------------------------------
     // Phase C : outillage réglementaire (statut recalculé)
     // ------------------------------------------------------
     async createOutil(donneesOutil) {
@@ -3582,8 +3683,9 @@ export function creerDemoStore() {
         'retoursFournisseur',
         // Brique ② (B7) : photos nominatives — vides sur les vieux exports.
         'inventairesBouteilles', 'inventairesFuites',
-        // Chantier B2 : habilitations — vides sur les exports antérieurs.
-        'habilitations']) {
+        // Chantier B2 : habilitations puis mentions (brique 1) — vides
+        // sur les exports antérieurs.
+        'habilitations', 'mentionsHabilitation']) {
         if (!Array.isArray(candidat[cle])) candidat[cle] = copier(DEMO[cle] ?? []);
       }
       if (candidat.etablissement.numAttestationCapacite === undefined) {

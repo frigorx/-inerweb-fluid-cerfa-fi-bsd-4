@@ -223,6 +223,17 @@ export function creerLocalStore(transport) {
       return muter('revoquerHabilitation', { id, par });
     },
 
+    // --- mentions de formation complémentaire -------------
+    getMentions() {
+      return lire('getMentions', {});
+    },
+    createMention(donneesMention) {
+      return muter('createMention', { donneesMention });
+    },
+    revoquerMention(id, par) {
+      return muter('revoquerMention', { id, par });
+    },
+
     // --- outillage ----------------------------------------
     createOutil(donneesOutil) {
       return muter('createOutil', { donneesOutil });

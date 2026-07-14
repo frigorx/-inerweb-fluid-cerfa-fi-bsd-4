@@ -81,6 +81,14 @@
  *       HORS empreinte de hachage) et trigger WORM recréé pour les couvrir
  *       (précédent prg_fige migration 13). Aucune règle bloquante : la Phase 1
  *       stocke et affiche, le verdict est Phase 2, le blocage est Phase 3.
+ *  17 — mentions de formation complémentaire (chantier B2, Phase 2b,
+ *       brique 1) : table mentions_habilitation = une mention PAR FLUIDE
+ *       (CO2 / NH3 / HC) que l'admin coche sur une personne et qui ÉTEND
+ *       l'axe fluide de ses habilitations (jamais les opérations ni la
+ *       charge — décision Franck 14/07, un ancien I-IV + stage CO₂ peut
+ *       intervenir sur le CO₂). Même patron que 16 : cumul/renouvellement
+ *       (aucun UNIQUE), jamais supprimée (actif=0 + date_revocation).
+ *       Table neuve : aucune colonne sur mouvements, trigger WORM inchangé.
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -652,6 +660,36 @@ WHEN OLD.statut = 'VALIDE'
 BEGIN
     SELECT RAISE(ABORT, 'Registre verrouillé : une écriture validée ne peut pas être modifiée (utiliser une contre-écriture).');
 END;`);
+    }
+  },
+
+  17: {
+    nom: 'mentions_habilitation',
+    appliquer(db) {
+      // Mentions de formation complémentaire par fluide (décision Franck
+      // 14/07) : un ancien I-IV + stage CO₂/NH₃/HC peut intervenir sur ce
+      // fluide. Même patron que habilitations (migration 16) : cumul de N
+      // mentions, renouvellement possible (AUCUN index UNIQUE sur
+      // (personne, fluide)), jamais supprimée (actif=0 + date_revocation),
+      // fenêtre de validité date_debut/date_fin PAR LIGNE. Table neuve :
+      // AUCUNE colonne sur mouvements, donc trigger WORM inchangé.
+      db.exec(`CREATE TABLE IF NOT EXISTS mentions_habilitation (
+        id                   TEXT PRIMARY KEY,
+        etablissement_id     TEXT NOT NULL REFERENCES etablissements(id),
+        personne_id          TEXT NOT NULL REFERENCES personnel(id),
+        fluide               TEXT NOT NULL CHECK (fluide IN ('CO2','NH3','HC')),
+        numero_attestation   TEXT,
+        organisme_delivreur  TEXT,
+        date_debut           TEXT,
+        date_fin             TEXT,
+        actif                INTEGER NOT NULL DEFAULT 1 CHECK (actif IN (0,1)),
+        date_revocation      TEXT,
+        date_creation        TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+      );`);
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_mentions_personne
+                 ON mentions_habilitation (personne_id);`);
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_mentions_echeance
+                 ON mentions_habilitation (date_fin);`);
     }
   }
 };

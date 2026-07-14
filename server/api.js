@@ -56,6 +56,7 @@ const CATEGORIES_ATTESTATION = ['I', 'II', 'III', 'IV'];
 const REGIMES = ['2008', '2025'];
 const CATEGORIES_2008 = ['I', 'II', 'III', 'IV'];
 const CATEGORIES_2025 = ['A1', 'A2', 'B', 'C', 'D', 'E', 'V'];
+const FLUIDES_MENTION = ['CO2', 'NH3', 'HC'];
 
 /** IM-4 : tolérance de charge résiduelle pour démanteler (± 0,05 kg). */
 const TOLERANCE_CHARGE_RESIDUELLE_KG = 0.05;
@@ -175,6 +176,32 @@ function comparerHabilitations(a, b) {
   return fa < fb ? 1 : -1;
 }
 
+/** Valide un fluide de mention (miroir EXACT du DemoStore). */
+function verifierFluideMention(fluideMention) {
+  if (!FLUIDES_MENTION.includes(fluideMention)) {
+    throw new Error(
+      `Fluide de mention inconnu : ${fluideMention} ` +
+      `(attendu : ${FLUIDES_MENTION.join(', ')}).`);
+  }
+  return fluideMention;
+}
+
+/** Ordre stable des mentions (miroir EXACT du module pur, tri JS). */
+function comparerMentions(a, b) {
+  const ia = FLUIDES_MENTION.indexOf(a.fluideMention);
+  const ib = FLUIDES_MENTION.indexOf(b.fluideMention);
+  if (ia !== ib) return ia - ib;
+  const fa = a.dateFin ?? null;
+  const fb = b.dateFin ?? null;
+  if (fa !== fb) {
+    if (fa === null) return -1;
+    if (fb === null) return 1;
+    return fa < fb ? 1 : -1;
+  }
+  if (a.id === b.id) return 0;
+  return a.id < b.id ? -1 : 1;
+}
+
 /** Valide une liste d'activités réglementées. */
 function verifierActivites(liste) {
   const activites = liste ?? [];
@@ -223,6 +250,10 @@ const ROLES_MUTATION = {
   createHabilitation: VALIDEUR,
   updateHabilitation: VALIDEUR,
   revoquerHabilitation: VALIDEUR,
+  // Une mention = une extension d'aptitude : même niveau que les
+  // habilitations (jamais un élève).
+  createMention: VALIDEUR,
+  revoquerMention: VALIDEUR,
   reformerOutil: VALIDEUR,
   justifierEcart: VALIDEUR,
   saisirInventaire: VALIDEUR,
@@ -1068,6 +1099,60 @@ const HANDLERS = {
         `${habilitation.regime} ${habilitation.categorie}`,
         'Révocation (l’habilitation reste au registre : aucune suppression)');
       return trouverHabilitation(id);
+    });
+  },
+
+  // === mentions de formation complémentaire (par fluide) — brique 1 ===
+
+  getMentions() {
+    const lignes = db.all(
+      'SELECT * FROM mentions_habilitation WHERE etablissement_id = ?',
+      [ID_ETABLISSEMENT]);
+    return lignes
+      .map((l) => mapping.versFront('mentions_habilitation', l))
+      .sort(comparerMentions);
+  },
+
+  createMention(params) {
+    const d = params.donneesMention || {};
+    const personne = trouverPersonne(d.personneId);
+    verifierFluideMention(d.fluideMention);
+    const mention = {
+      id: db.generateId('MEN'),
+      personneId: personne.id,
+      fluideMention: d.fluideMention,
+      numeroAttestation: d.numeroAttestation ?? null,
+      organismeDelivreur: d.organismeDelivreur ?? null,
+      dateDebut: d.dateDebut ?? null,
+      dateFin: d.dateFin ?? null,
+      // Invariant : active à la création (désactivation via revoquerMention).
+      actif: true,
+      dateRevocation: null
+    };
+    return muter(() => {
+      const ligne = mapping.versSql('mentions_habilitation', mention);
+      ligne.etablissement_id = ID_ETABLISSEMENT;
+      inserer('mentions_habilitation', ligne);
+      journaliser(d.operateur, 'CREATION_MENTION',
+        `${personne.prenom} ${personne.nom}`, `Mention ${d.fluideMention}`);
+      return trouverMention(mention.id);
+    });
+  },
+
+  revoquerMention(params) {
+    const { id } = params;
+    const mention = trouverMention(id);
+    // Double révocation refusée (préserve la date de retrait d'origine).
+    if (!mention.actif) {
+      throw new Error('Mention déjà révoquée.');
+    }
+    return muter(() => {
+      majParId('mentions_habilitation', id,
+        { actif: 0, date_revocation: aujourdHui() });
+      journaliser(params.par, 'RETRAIT_MENTION',
+        `Mention ${mention.fluideMention}`,
+        'Révocation (la mention reste au registre : aucune suppression)');
+      return trouverMention(id);
     });
   },
 
@@ -2719,6 +2804,7 @@ function construireDonneesExport() {
     fluides: HANDLERS.getFluides(),
     personnel: HANDLERS.getPersonnel(),
     habilitations: HANDLERS.getHabilitations(),
+    mentionsHabilitation: HANDLERS.getMentions(),
     outillage: HANDLERS.getOutillage(),
     stocksInitiaux: lireTablePlate('stocks_initiaux', 'stocks_initiaux',
       'annee, fluide'),
@@ -2767,7 +2853,8 @@ function completerCandidat(donnees) {
   const candidat = { ...donnees };
   for (const cle of ['auditsOrganisme', 'nonConformites', 'outillage',
     'stocksInitiaux', 'bsff', 'inventaires', 'justificationsEcarts',
-    'piecesJointes', 'retoursFournisseur', 'journalAudit', 'habilitations']) {
+    'piecesJointes', 'retoursFournisseur', 'journalAudit', 'habilitations',
+    'mentionsHabilitation']) {
     if (!Array.isArray(candidat[cle])) candidat[cle] = [];
   }
   return candidat;
@@ -2882,19 +2969,50 @@ function verifierInvariantsDonneesCandidat(candidat) {
       }
     }
   }
-  // Habilitations (chantier B2) : miroir EXACT du DemoStore — refuser un
-  // registre incohérent AVANT toute écriture (le CHECK/FK SQLite le ferait
-  // sinon avec un message cru, et la démo l'accepterait en silence).
+  // Habilitations et mentions (chantier B2) : miroir EXACT du DemoStore —
+  // refuser un registre incohérent AVANT toute écriture (le CHECK/FK/PK
+  // SQLite le ferait sinon avec un message cru, et la démo l'accepterait
+  // en silence), ET forme canonique des DROITS : un `actif` absent serait
+  // actif par DÉFAUT côté SQL mais inactif côté démo (constat IMPORTANT 1
+  // de la revue : droits divergents sur le même fichier).
   const idsPersonnel = new Set((candidat.personnel ?? []).map((p) => p.id));
+  const DATE_REVOC = /^\d{4}-\d{2}-\d{2}$/;
+  function problemeAptitude(nom, ligne, idsVus) {
+    const ref = ligne.id ?? '?';
+    if (idsVus.has(ligne.id)) return `${nom} ${ref} : id en double`;
+    idsVus.add(ligne.id);
+    if (!idsPersonnel.has(ligne.personneId)) {
+      return `${nom} ${ref} : personne introuvable (${ligne.personneId})`;
+    }
+    if (typeof ligne.actif !== 'boolean') {
+      return `${nom} ${ref} : champ actif non booléen (les droits en dépendent)`;
+    }
+    if (ligne.actif === false && !DATE_REVOC.test(ligne.dateRevocation ?? '')) {
+      return `${nom} ${ref} : révoquée sans date de révocation`;
+    }
+    if (ligne.actif === true && (ligne.dateRevocation ?? null) !== null) {
+      return `${nom} ${ref} : active avec une date de révocation`;
+    }
+    return null;
+  }
+  const idsHabilitations = new Set();
   for (const h of candidat.habilitations ?? []) {
     const ref = h.id ?? '?';
     if (!categorieCoherente(h.regime, h.categorie)) {
       return `habilitation ${ref} : catégorie « ${h.categorie} » ` +
         `incohérente avec le régime ${h.regime}`;
     }
-    if (!idsPersonnel.has(h.personneId)) {
-      return `habilitation ${ref} : personne introuvable (${h.personneId})`;
+    const probleme = problemeAptitude('habilitation', h, idsHabilitations);
+    if (probleme) return probleme;
+  }
+  const idsMentions = new Set();
+  for (const m of candidat.mentionsHabilitation ?? []) {
+    const ref = m.id ?? '?';
+    if (!FLUIDES_MENTION.includes(m.fluideMention)) {
+      return `mention ${ref} : fluide « ${m.fluideMention} » inconnu`;
     }
+    const probleme = problemeAptitude('mention', m, idsMentions);
+    if (probleme) return probleme;
   }
   return null;
 }
@@ -2996,7 +3114,7 @@ function remplacerToutLEtat(candidat) {
       'inventaires_bouteilles', 'inventaires_fuites',
       'stocks_initiaux', 'bouteilles', 'machines', 'clients_detenteurs',
       'outillage', 'non_conformites', 'audits_etablissement', 'habilitations',
-      'personnel', 'journal_audit', 'etablissements'];
+      'mentions_habilitation', 'personnel', 'journal_audit', 'etablissements'];
     for (const table of TABLES_A_VIDER) db.run(`DELETE FROM ${table}`);
 
     // Établissement singleton : le candidat porte un dossier sans id (le
@@ -3023,6 +3141,10 @@ function remplacerToutLEtat(candidat) {
     // vieux exports → reinsererCollection tolère undefined.
     reinsererCollection('habilitations', 'habilitations',
       candidat.habilitations);
+    // Mentions de formation complémentaire (brique 1) : même logique (FK
+    // personne_id, absentes des vieux exports → undefined toléré).
+    reinsererCollection('mentions_habilitation', 'mentions_habilitation',
+      candidat.mentionsHabilitation);
     reinsererCollection('audits_etablissement', 'audits_etablissement',
       candidat.auditsOrganisme);
     reinsererCollection('non_conformites', 'non_conformites',
@@ -4062,6 +4184,13 @@ function trouverHabilitation(id) {
   const ligne = db.get('SELECT * FROM habilitations WHERE id = ?', [id]);
   if (!ligne) throw new Error(`Habilitation introuvable : ${id}.`);
   return mapping.versFront('habilitations', ligne);
+}
+
+function trouverMention(id) {
+  const ligne = db.get(
+    'SELECT * FROM mentions_habilitation WHERE id = ?', [id]);
+  if (!ligne) throw new Error(`Mention introuvable : ${id}.`);
+  return mapping.versFront('mentions_habilitation', ligne);
 }
 
 /** Client par id, nbMachines recalculé (non démantelées) — comme getClients. */

@@ -269,6 +269,26 @@ verifier('mouvement : quantité calculée des pesées (+2 kg)',
   await verifierRejet('import refusé : habilitation orpheline (personne inconnue)',
     cibleB.importerJSON(await forger({ personneId: 'per-fantome' })),
     'introuvable');
+  // Renforts de la revue brique 1 (les DROITS dépendent de `actif` : un champ
+  // absent serait actif par défaut côté SQL, inactif côté démo).
+  const cibleC = await fabriquerStore(NOM_STORE);
+  await verifierRejet('import refusé : habilitation sans champ actif (droits divergents)',
+    cibleC.importerJSON(await forger({ actif: undefined })),
+    'actif non booléen');
+  const cibleD = await fabriquerStore(NOM_STORE);
+  await verifierRejet('import refusé : habilitation révoquée sans date de révocation',
+    cibleD.importerJSON(await forger({ actif: false })),
+    'sans date de révocation');
+  const cibleE = await fabriquerStore(NOM_STORE);
+  {
+    const paquet = JSON.parse(await store.exporterJSON());
+    const ligne = { id: 'HAB-DOUBLE', personneId: enseignant.id, regime: '2008',
+      categorie: 'II', numeroAttestation: null, organismeDelivreur: null,
+      dateDebut: null, dateFin: null, actif: true, dateRevocation: null };
+    paquet.donnees.habilitations.push(ligne, { ...ligne });
+    await verifierRejet('import refusé : deux habilitations sous le même id',
+      cibleE.importerJSON(JSON.stringify(paquet)), 'id en double');
+  }
 }
 
 console.log(`\n${nbOk} OK, ${nbEchecs} échec(s).`);

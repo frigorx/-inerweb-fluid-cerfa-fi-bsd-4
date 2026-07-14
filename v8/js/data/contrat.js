@@ -36,7 +36,7 @@
 // ============================================================
 
 /** Version du contrat (à incrémenter à chaque évolution de surface). */
-export const VERSION_CONTRAT = 1;
+export const VERSION_CONTRAT = 2;
 
 /**
  * Message canonique opposé à toute tentative de modification d'une
@@ -80,7 +80,7 @@ export const ROLES_VALIDEURS = ['REFERENT', 'ENSEIGNANT', 'ADMIN'];
 export const PROPRIETES_CONTRAT = ['modeLabel', 'registreAltere'];
 
 /**
- * Les 73 méthodes du contrat, dans l'ordre du cycle de vie.
+ * Les 76 méthodes du contrat, dans l'ordre du cycle de vie.
  * genre : 'abonnement' | 'initialisation' | 'lecture' | 'mutation'.
  * La sémantique fine (formes de retour, garde-fous, effets) est
  * décrite ici en une ligne et VÉRIFIÉE dans test-contrat.mjs.
@@ -208,7 +208,15 @@ export const METHODES_CONTRAT = {
   updateHabilitation: { genre: 'mutation',
     description: 'Patch partiel (numeroAttestation, organismeDelivreur, dateDebut, dateFin) ; régime et catégorie INTOUCHABLES (correction de coquille, jamais réécriture d’identité) ; Error si introuvable.' },
   revoquerHabilitation: { genre: 'mutation',
-    description: 'Retire une habilitation : actif=false + dateRevocation (AAAA-MM-JJ), consigné au journal ; JAMAIS de suppression (la ligne reste dans getHabilitations, historisée) ; Error si introuvable.' },
+    description: 'Retire une habilitation : actif=false + dateRevocation (AAAA-MM-JJ), consigné au journal ; JAMAIS de suppression (la ligne reste dans getHabilitations, historisée) ; Error si introuvable ou déjà révoquée.' },
+
+  // --- mentions de formation complémentaire (par fluide) -----------
+  getMentions: { genre: 'lecture',
+    description: 'Toutes les mentions de formation complémentaire (jamais supprimées : seulement révoquées), triées CO2 puis NH3 puis HC, puis dateFin décroissante (null en tête) ; copies indépendantes ; sans argument.' },
+  createMention: { genre: 'mutation',
+    description: 'Crée une mention { personneId, fluideMention CO2|NH3|HC, numeroAttestation?, organismeDelivreur?, dateDebut?, dateFin? } ; actif=vrai, dateRevocation=null ; cumul et renouvellement autorisés ; une mention ÉTEND l’axe fluide des habilitations de la personne (jamais les opérations ni la charge) ; Error si personne introuvable ou fluide de mention inconnu.' },
+  revoquerMention: { genre: 'mutation',
+    description: 'Retire une mention : actif=false + dateRevocation (AAAA-MM-JJ), consigné au journal ; JAMAIS de suppression (la ligne reste dans getMentions, historisée) ; Error si introuvable ou déjà révoquée.' },
 
   // --- outillage ---------------------------------------------------
   createOutil: { genre: 'mutation',

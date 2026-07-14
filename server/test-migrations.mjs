@@ -966,6 +966,75 @@ verifierLeve('le code public est unique (résolution QR sans ambiguïté)',
 }
 
 // ============================================================
+// 6undecies. Mentions de formation complémentaire (migration 017) —
+// base PRÉEXISTANTE (v16 → v17) : table mentions_habilitation (une
+// mention par fluide CO2/NH3/HC, cumul/renouvellement sans UNIQUE,
+// jamais supprimée). Table neuve : le trigger WORM de mouvements
+// reste STRICTEMENT INCHANGÉ (aucune colonne ajoutée à mouvements).
+// ============================================================
+{
+  const CHEMIN_MEN = join(DOSSIER, 'ancienne-mentions.db');
+  const ancienneMen = new DatabaseSync(CHEMIN_MEN);
+  ancienneMen.exec(readFileSync(new URL('./schema.sql', import.meta.url), 'utf8'));
+  ancienneMen.exec(`PRAGMA user_version = ${migrations.VERSION_BASE};`);
+  const jusqua16 = {};
+  for (let v = 2; v <= 16; v += 1) jusqua16[v] = migrations.MIGRATIONS[v];
+  migrations.migrer(ancienneMen, jusqua16); // portée à 16, PAS encore 17
+
+  ancienneMen.exec(`INSERT INTO etablissements (id, raison_sociale)
+                    VALUES ('ETB-MEN', 'Lycée Mentions');`);
+  ancienneMen.exec(`INSERT INTO personnel (id, etablissement_id, nom, prenom, type_personne)
+                    VALUES ('PER-MEN', 'ETB-MEN', 'Martin', 'Prof', 'ENSEIGNANT');`);
+
+  verifier('avant migration 017 : la base est bloquée en version 16',
+    migrations.lireVersion(ancienneMen) === 16);
+  verifier('avant migration 017 : la table mentions_habilitation n’existe pas',
+    ancienneMen.prepare(
+      "SELECT count(*) AS n FROM sqlite_master WHERE name = 'mentions_habilitation'")
+      .get().n === 0);
+  const sqlWormAvant = ancienneMen.prepare(`SELECT sql FROM sqlite_master
+    WHERE name = 'mouvements_interdire_modification_validee'`).get().sql;
+
+  const vMen = migrations.migrer(ancienneMen, { 17: migrations.MIGRATIONS[17] });
+  verifier('la migration 017 porte la base à la version 17',
+    vMen === 17 && migrations.lireVersion(ancienneMen) === 17);
+  verifier('la table mentions_habilitation existe après migration',
+    ancienneMen.prepare(
+      "SELECT count(*) AS n FROM sqlite_master WHERE name = 'mentions_habilitation'")
+      .get().n === 1);
+
+  // Cumul + renouvellement : deux mentions, dont deux fois le même fluide.
+  ancienneMen.exec(`INSERT INTO mentions_habilitation (id, etablissement_id, personne_id, fluide)
+                    VALUES ('MEN-1', 'ETB-MEN', 'PER-MEN', 'CO2');`);
+  ancienneMen.exec(`INSERT INTO mentions_habilitation (id, etablissement_id, personne_id, fluide, date_fin)
+                    VALUES ('MEN-2', 'ETB-MEN', 'PER-MEN', 'CO2', '2030-12-31');`);
+  ancienneMen.exec(`INSERT INTO mentions_habilitation (id, etablissement_id, personne_id, fluide)
+                    VALUES ('MEN-3', 'ETB-MEN', 'PER-MEN', 'NH3');`);
+  verifier('cumul et renouvellement acceptés (3 lignes, dont 2 × CO2)',
+    ancienneMen.prepare(
+      "SELECT count(*) AS n FROM mentions_habilitation WHERE personne_id = 'PER-MEN'")
+      .get().n === 3);
+
+  // CHECK : seul un fluide du référentiel (CO2/NH3/HC) est admis.
+  verifierLeve('le CHECK refuse un fluide hors référentiel de mention',
+    () => ancienneMen.exec(`INSERT INTO mentions_habilitation (id, etablissement_id, personne_id, fluide)
+      VALUES ('MEN-X', 'ETB-MEN', 'PER-MEN', 'R-32');`),
+    'CHECK');
+  verifierLeve('le CHECK refuse un actif hors 0/1',
+    () => ancienneMen.exec(`INSERT INTO mentions_habilitation (id, etablissement_id, personne_id, fluide, actif)
+      VALUES ('MEN-Y', 'ETB-MEN', 'PER-MEN', 'HC', 2);`),
+    'CHECK');
+
+  // Table neuve : le trigger WORM de mouvements est resté à l'identique.
+  const sqlWormApres = ancienneMen.prepare(`SELECT sql FROM sqlite_master
+    WHERE name = 'mouvements_interdire_modification_validee'`).get().sql;
+  verifier('le trigger WORM de mouvements est STRICTEMENT inchangé',
+    sqlWormApres === sqlWormAvant);
+
+  ancienneMen.close();
+}
+
+// ============================================================
 // 7. Base pré-versionnage : refusée avec un message clair
 // ============================================================
 db.fermer();

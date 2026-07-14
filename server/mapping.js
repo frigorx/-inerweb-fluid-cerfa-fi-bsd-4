@@ -472,6 +472,24 @@ const TABLES = {
     sqlSeulement: ['etablissement_id', 'date_creation']
   },
 
+  mentions_habilitation: {
+    // Mentions de formation complémentaire par fluide (migration 17,
+    // chantier B2 brique 1) : même patron que habilitations.
+    champs: {
+      id: 'id',
+      personneId: 'personne_id',
+      fluideMention: 'fluide',
+      numeroAttestation: 'numero_attestation',
+      organismeDelivreur: 'organisme_delivreur',
+      dateDebut: 'date_debut',
+      dateFin: 'date_fin',
+      actif: 'actif',
+      dateRevocation: 'date_revocation'
+    },
+    booleens: ['actif'],
+    sqlSeulement: ['etablissement_id', 'date_creation']
+  },
+
   audits_etablissement: {
     champs: {
       id: 'id',

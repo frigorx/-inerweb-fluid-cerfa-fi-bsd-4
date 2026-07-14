@@ -2,6 +2,41 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🎫 Habilitations F-Gas · Phase 2b (brique 1) — mentions de formation complémentaire (14/07)
+La saisie des mentions par fluide (décision Franck 14/07) : l'admin coche CO₂ / NH₃ / HC
+sur une personne, la mention **ÉTEND l'axe fluide** de ses habilitations — jamais les
+opérations ni la charge (un ancien I-IV + stage CO₂ peut intervenir sur le CO₂).
+- **Migration 017** : table `mentions_habilitation` calquée sur `habilitations` (cumul +
+  renouvellement sans UNIQUE, jamais supprimée : actif=0 + date_revocation, CHECK fluide
+  CO2/NH3/HC, index personne/échéance). Table neuve : AUCUNE colonne sur `mouvements`,
+  **trigger WORM strictement inchangé** (prouvé octet à octet par test-migrations).
+- **3 méthodes de contrat (surface 73 → 76, `VERSION_CONTRAT` 1 → 2)** : `getMentions`
+  (lecture triée CO2/NH3/HC, puis dateFin décroissante null en tête, puis id — départage
+  TOTAL, l'ordre ne dépend jamais de l'insertion), `createMention` / `revoquerMention`
+  (réservées VALIDEUR côté serveur, actif forcé vrai à la création, double révocation
+  refusée). Miroir exact DemoStore/serveur, mapping, export/import étendus (les vieux
+  exports sans mentions restent importables, complétés à vide).
+- **Branchement du moteur de conseil** : `jetonsMentionsActives()` (module pur) transforme
+  les lignes de `getMentions` en jetons pour `verifierDroitIntervention` — cas nominal
+  prouvé bout en bout sur le VRAI store : I(2008) + mention CO₂ → autorisé sur le R-744 ;
+  sans mention → refus + conseil « formation complémentaire CO₂ » ; mention révoquée →
+  droit retiré. NH₃ et HC prouvés de même.
+- **Revue adversariale (3 angles, 0 bloquant) — 2 IMPORTANT corrigés SUR LES DEUX TABLES**
+  (dette héritée de la Phase 1 soldée au passage) : ① un `actif` absent ou non booléen à
+  l'import donnait des DROITS divergents (actif par défaut côté SQL, inactif côté démo,
+  sur le même fichier) → invariants d'import renforcés des deux côtés (booléen exigé,
+  révoquée sans date refusée, active datée refusée) ; ② un doublon d'id passait côté démo
+  (registre ambigu) et cassait côté serveur en anglais brut → unicité d'id vérifiée AVANT
+  adoption, message français identique ; ③ test de tri tautologique (ordre d'insertion =
+  ordre attendu) → ordre de création inversé + branche « null en tête » exercée.
+- Tests : **`test-mentions.mjs` 32/0 demo+local** (nouvelle suite doublée du lanceur),
+  habilitations 38 → **41/0** (forgeries de renfort), contrat 255/0 ×2, migrations 129/0,
+  mapping 166/0 — **TOUT VERT, 59 exécutions**.
+- ⚠️ Notés pour la suite (revue, hors périmètre brique) : le dossier d'audit CSV n'exporte
+  ni habilitations ni mentions (à câbler avec l'écran « qui intervient ? ») ; une dateFin
+  passée n'invalide pas un jeton (l'échéance relève de la sentinelle / du feu tricolore,
+  Phase 3) ; l'export démo n'est pas trié quand celui du serveur l'est (cosmétique).
+
 ### 🎫 Habilitations F-Gas · Phase 2b (brique 2) — moteur de CONSEIL (14/07)
 Le cœur fonctionnel voulu par Franck : `verifierDroitIntervention` — dit, pour un intervenant
 et une machine, ce qu'il peut / ne peut pas faire et **pourquoi**. **Conseil, jamais blocage**

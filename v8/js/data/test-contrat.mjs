@@ -3,7 +3,7 @@
 // Exécution : node v8/js/data/test-contrat.mjs [demo]
 //
 // Cette suite vérifie qu'une implémentation respecte contrat.js :
-// surface (73 méthodes, 2 propriétés, rien de plus), sémantique
+// surface (76 méthodes, 2 propriétés, rien de plus), sémantique
 // (formes de retour, garde-fous, messages français, effets stocks,
 // hash chaîné, machine à états des mouvements), et invariants
 // transverses (copies, notifications, journal append-only).
@@ -103,7 +103,7 @@ const store = await fabriquerStore(NOM_STORE);
 console.log(`Conformité au contrat DataStore — implémentation « ${NOM_STORE} »\n`);
 
 // ============================================================
-// 1. Surface du contrat : 73 méthodes, 2 propriétés, rien de plus
+// 1. Surface du contrat : 76 méthodes, 2 propriétés, rien de plus
 // ============================================================
 const surface = verifierSurface(store);
 verifier('toutes les méthodes du contrat sont présentes',
@@ -113,8 +113,8 @@ verifier('aucune méthode intruse hors contrat (anti-dérive v7)',
 verifier('les propriétés du contrat sont présentes',
   surface.proprietesManquantes.length === 0,
   `manquent : ${surface.proprietesManquantes.join(', ')}`);
-verifier('le contrat compte bien 73 méthodes',
-  Object.keys(METHODES_CONTRAT).length === 73,
+verifier('le contrat compte bien 76 méthodes',
+  Object.keys(METHODES_CONTRAT).length === 76,
   `compté : ${Object.keys(METHODES_CONTRAT).length}`);
 verifier('modeLabel est une chaîne non vide',
   typeof store.modeLabel === 'string' && store.modeLabel.length > 0);
@@ -131,7 +131,7 @@ const LECTURES_SANS_ARGUMENT = [
   'getEtatRegistre', 'getStats', 'getAnneesDisponibles',
   'getAuditsOrganisme', 'getNonConformites', 'getBsff',
   'getRetoursFournisseur', 'peutPasserEnOfficiel', 'exporterJSON',
-  'getSentinelle', 'getHabilitations'
+  'getSentinelle', 'getHabilitations', 'getMentions'
 ];
 {
   let toutesDesPromesses = true;
