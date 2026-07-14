@@ -51,7 +51,7 @@ Un seul code, trois façons de l'utiliser. Le mode est déterminé au démarrage
   éducative est un usage permis, quelle que soit sa source de financement.
 - **Usage commercial** (société de froid et climatisation, bureau d'études, organisme de formation
   privé à but lucratif, éditeur de logiciel…) : une licence distincte est nécessaire —
-  écrire à fr.henninot@gmail.com.
+  écrire à **inerweb.fh@gmail.com**.
 
 Licence : [PolyForm Noncommercial 1.0.0](LICENSE). Les bibliothèques embarquées (PDF.js, pdf-lib,
 qrcodejs) restent sous **leur propre licence** : voir [LICENCES-TIERCES.md](LICENCES-TIERCES.md).
@@ -59,4 +59,5 @@ qrcodejs) restent sous **leur propre licence** : voir [LICENCES-TIERCES.md](LICE
 > Les versions publiées avant le 14/07/2026 l'ont été sous licence MIT. Cette licence-là reste
 > valable pour ces versions : le changement vaut pour la suite.
 
-Frédéric Henninot — Lycée professionnel Jacques Raynaud, Marseille.
+**Franck Henninot** — Lycée professionnel Jacques Raynaud, Marseille.
+Contact : inerweb.fh@gmail.com — <https://inerweb.ovh>

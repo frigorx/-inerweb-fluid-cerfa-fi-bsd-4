@@ -6,7 +6,7 @@
 > `docs/AUDIT-2026-07-03.md`, `CHANGELOG.md`.
 > Il intègre 7 contributions d'experts, arbitre leurs désaccords, et ajoute la vision d'ensemble.
 >
-> **Auteur du projet :** Frédéric Henninot (LP Jacques Raynaud, Marseille).
+> **Auteur du projet :** Franck Henninot (LP Jacques Raynaud, Marseille).
 > **Cap :** Phase E (mode Local) fiabilisée avant l'été 2026 ; V10 dans la foulée.
 
 ---

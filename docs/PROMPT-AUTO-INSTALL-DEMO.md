@@ -112,10 +112,32 @@ sont correctes. Prévoir le repli propre si aucune voix n'est disponible (bouton
 - Annoncer le réglage conseillé en français avant chaque tâche de code.
 - Sobriété : lire la carte du code plutôt que fouiller, déléguer les grandes recherches à UN agent.
 
+## LE NOM DE DOMAINE : `inerweb.ovh`
+
+Franck a déposé **`inerweb.ovh`** (contact : **inerweb.fh@gmail.com**). La vitrine doit y vivre.
+
+⚠️ **L'ORDRE EST IMPÉRATIF — inversé, il rend le site INACCESSIBLE.** Publier un fichier `CNAME`
+dans le dépôt fait basculer GitHub Pages sur le domaine personnalisé : si les DNS ne pointent pas
+encore vers GitHub, le site ne répond plus **ni** sur `inerweb.ovh`, **ni** sur `github.io`.
+
+1. **D'ABORD, chez OVH** (zone DNS de `inerweb.ovh`) — c'est Franck qui le fait, personne d'autre
+   n'a accès à son compte :
+   - 4 enregistrements **A** sur le domaine nu (`inerweb.ovh`) :
+     `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153`
+   - 4 enregistrements **AAAA** (IPv6, vérifiés) :
+     `2606:50c0:8000::153`, `2606:50c0:8001::153`, `2606:50c0:8002::153`, `2606:50c0:8003::153`
+   - 1 **CNAME** pour `www` → `frigorx.github.io.`
+2. **Attendre la propagation** (quelques minutes à quelques heures), puis **vérifier** :
+   `nslookup inerweb.ovh` doit renvoyer les adresses ci-dessus.
+3. **ENSUITE seulement**, créer le fichier `CNAME` à la racine du dépôt, contenant une seule
+   ligne : `inerweb.ovh`. Puis, dans GitHub → Settings → Pages, renseigner le domaine et cocher
+   **« Enforce HTTPS »** (le certificat Let's Encrypt met de quelques minutes à 24 h à sortir).
+4. Le lien de la démo devient `https://inerweb.ovh/v8/`. **Mettre à jour tous les liens** du
+   README, de la mémoire et de la vitrine.
+
 ## CE QUI ATTEND FRANCK
 
-1. **Son prénom sur la licence** : le fichier `LICENSE` porte « **Frédéric** Henninot ». À
-   confirmer (c'est le nom qui engage juridiquement).
+1. **La bascule DNS chez OVH** (étape 1 ci-dessus) — lui seul peut la faire.
 2. Le **texte de présentation** de la page d'accueil : à écrire, puis à lui faire valider — c'est
    sa vitrine, pas la nôtre.
 3. **`RGPD.md`** : à relire avant diffusion. Chaque établissement qui installe le logiciel devient
@@ -129,6 +151,7 @@ fuite, habilitations B2 (mode **conseil**), outillage, BSFF, coffre-fort chiffr�
 scellé + vérificateur autonome embarqué, feu tricolore, parcours d'audit guidé en 9 étapes, comptes
 et rôles (**les 43 verrous sont prouvés par un test**), mode démo et mode formation.
 **Licence : PolyForm Noncommercial 1.0.0** — gratuit pour l'enseignement, payant pour le commerce.
+**Auteur : Franck Henninot** (LP Jacques Raynaud, Marseille) — `inerweb.fh@gmail.com`, `inerweb.ovh`.
 
 ⚠️ **Ce qu'il ne faut PAS promettre dans la vitrine** : le mode « Officiel » à blocage dur n'est
 pas activé (le logiciel **conseille**, il ne bloque pas), et la grille réglementaire n'a jamais été
