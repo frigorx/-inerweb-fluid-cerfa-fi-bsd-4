@@ -73,6 +73,14 @@
  *       journal chaîné). Index UNIQUE partiel « un seul épisode ouvert par
  *       alerte ». getAlertes() reste la vérité du présent ; la sentinelle
  *       n'HISTORISE que le temps et l'acquittement — jamais de masquage.
+ *  16 — habilitations F-Gas (chantier B2, Phase 1) : table habilitations
+ *       MULTI-RÉGIME (2008 I-IV + 2025 A1-V cumulables sur une personne,
+ *       jamais supprimée : actif=0 + date_revocation) avec CHECK composite
+ *       régime↔catégorie ; + 3 colonnes de rôle sur mouvements (execute_par_id
+ *       / superviseur_id / responsable_registre_id, nullable, SANS backfill,
+ *       HORS empreinte de hachage) et trigger WORM recréé pour les couvrir
+ *       (précédent prg_fige migration 13). Aucune règle bloquante : la Phase 1
+ *       stocke et affiche, le verdict est Phase 2, le blocage est Phase 3.
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -538,6 +546,112 @@ END;`);
         WHERE resolue_le IS NULL;`);
       db.exec(`CREATE INDEX IF NOT EXISTS idx_sentinelle_apparue
         ON sentinelle_alertes (apparue_le);`);
+    }
+  },
+
+  16: {
+    nom: 'habilitations_fgas',
+    appliquer(db) {
+      // Habilitations F-Gas MULTI-RÉGIME (Phase 1, chantier B2). Une PERSONNE
+      // CUMULE N habilitations : régime 2008 (I–IV) ET 2025 (A1–V) coexistent
+      // jusqu'au 31/12/2026, catégories multiples, renouvellement possible
+      // (même (regime,categorie) plusieurs fois, différencié par les dates :
+      // AUCUN index UNIQUE sur le triplet). Jamais supprimée (actif=0 +
+      // date_revocation, comme personnel/clients) : l'historique d'aptitude
+      // est opposable en audit. date_debut/date_fin = fenêtre de validité PAR
+      // LIGNE. Le CHECK composite = intégrité de STOCKAGE régime↔catégorie
+      // (la Phase 1 ne BLOQUE aucune intervention : le verdict est Phase 2).
+      db.exec(`CREATE TABLE IF NOT EXISTS habilitations (
+        id                   TEXT PRIMARY KEY,
+        etablissement_id     TEXT NOT NULL REFERENCES etablissements(id),
+        personne_id          TEXT NOT NULL REFERENCES personnel(id),
+        regime               TEXT NOT NULL CHECK (regime IN ('2008','2025')),
+        categorie            TEXT NOT NULL,
+        numero_attestation   TEXT,
+        organisme_delivreur  TEXT,
+        date_debut           TEXT,
+        date_fin             TEXT,
+        actif                INTEGER NOT NULL DEFAULT 1 CHECK (actif IN (0,1)),
+        date_revocation      TEXT,
+        date_creation        TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+        CHECK ( (regime = '2008' AND categorie IN ('I','II','III','IV'))
+             OR (regime = '2025' AND categorie IN ('A1','A2','B','C','D','E','V')) )
+      );`);
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_habilitations_personne
+                 ON habilitations (personne_id);`);
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_habilitations_echeance
+                 ON habilitations (date_fin);`);
+
+      // Rôles réels d'une intervention pédagogique, posés sur le mouvement :
+      // qui fait le geste (élève), qui supervise (enseignant), qui répond du
+      // registre (référent). Nullable, sans DEFAULT, SANS backfill (backfill
+      // depuis `technicien` = attribution de rôle inventée = mensonge d'audit,
+      // même règle que prg_fige migration 13). HORS empreinte de hachage
+      // (CHAMPS_HASH_MOUVEMENT inchangé) : les chaînes scellées existantes,
+      // rôles NULL, restent valides.
+      db.exec('ALTER TABLE mouvements ADD COLUMN execute_par_id TEXT REFERENCES personnel(id);');
+      db.exec('ALTER TABLE mouvements ADD COLUMN superviseur_id TEXT REFERENCES personnel(id);');
+      db.exec('ALTER TABLE mouvements ADD COLUMN responsable_registre_id TEXT REFERENCES personnel(id);');
+
+      // WORM : recréer le déclencheur d'immuabilité avec les 3 colonnes de
+      // rôle (même raison que la migration 13 pour prg_fige) — sinon la
+      // bascule VALIDE→ANNULE laisserait muter ces champs sur une écriture
+      // scellée. Recréer un trigger ne touche à AUCUNE donnée : aucun re-hash.
+      db.exec('DROP TRIGGER IF EXISTS mouvements_interdire_modification_validee;');
+      db.exec(`CREATE TRIGGER mouvements_interdire_modification_validee
+BEFORE UPDATE ON mouvements
+WHEN OLD.statut = 'VALIDE'
+ AND NOT (    NEW.statut = 'ANNULE'
+          AND NEW.id                    IS OLD.id
+          AND NEW.numero                IS OLD.numero
+          AND NEW.etablissement_id      IS OLD.etablissement_id
+          AND NEW.date_mouvement        IS OLD.date_mouvement
+          AND NEW.mode                  IS OLD.mode
+          AND NEW.type_operation        IS OLD.type_operation
+          AND NEW.cause                 IS OLD.cause
+          AND NEW.machine_id            IS OLD.machine_id
+          AND NEW.machine_label         IS OLD.machine_label
+          AND NEW.machine_destination_id IS OLD.machine_destination_id
+          AND NEW.bouteille_source_id   IS OLD.bouteille_source_id
+          AND NEW.bouteille_destination_id IS OLD.bouteille_destination_id
+          AND NEW.fluide                IS OLD.fluide
+          AND NEW.pesee_avant_kg        IS OLD.pesee_avant_kg
+          AND NEW.pesee_apres_kg        IS OLD.pesee_apres_kg
+          AND NEW.quantite_calculee_kg  IS OLD.quantite_calculee_kg
+          AND NEW.sens                  IS OLD.sens
+          AND NEW.quantite_chargee_kg               IS OLD.quantite_chargee_kg
+          AND NEW.quantite_recuperee_kg             IS OLD.quantite_recuperee_kg
+          AND NEW.quantite_cedee_kg                 IS OLD.quantite_cedee_kg
+          AND NEW.quantite_retournee_fournisseur_kg IS OLD.quantite_retournee_fournisseur_kg
+          AND NEW.quantite_detruite_regeneree_kg    IS OLD.quantite_detruite_regeneree_kg
+          AND NEW.origine_fluide        IS OLD.origine_fluide
+          AND NEW.destination_fluide    IS OLD.destination_fluide
+          AND NEW.technicien            IS OLD.technicien
+          AND NEW.technicien_id         IS OLD.technicien_id
+          AND NEW.validateur_id         IS OLD.validateur_id
+          AND NEW.statut_controle_declare IS OLD.statut_controle_declare
+          AND NEW.detecteur_declare_id  IS OLD.detecteur_declare_id
+          AND NEW.localisation_fuite_declaree IS OLD.localisation_fuite_declaree
+          AND NEW.controle_lie_id       IS OLD.controle_lie_id
+          AND NEW.signature_data_url    IS OLD.signature_data_url
+          AND NEW.cerfa_numero          IS OLD.cerfa_numero
+          AND NEW.bsff_id               IS OLD.bsff_id
+          AND NEW.observation           IS OLD.observation
+          AND NEW.date_soumission       IS OLD.date_soumission
+          AND NEW.motif_rejet           IS OLD.motif_rejet
+          AND NEW.motif                 IS OLD.motif
+          AND NEW.hash_ecriture         IS OLD.hash_ecriture
+          AND NEW.hash_precedent        IS OLD.hash_precedent
+          AND NEW.ordre_validation      IS OLD.ordre_validation
+          AND NEW.contre_ecriture_de    IS OLD.contre_ecriture_de
+          AND NEW.date_creation         IS OLD.date_creation
+          AND NEW.prg_fige              IS OLD.prg_fige
+          AND NEW.execute_par_id          IS OLD.execute_par_id
+          AND NEW.superviseur_id          IS OLD.superviseur_id
+          AND NEW.responsable_registre_id IS OLD.responsable_registre_id)
+BEGIN
+    SELECT RAISE(ABORT, 'Registre verrouillé : une écriture validée ne peut pas être modifiée (utiliser une contre-écriture).');
+END;`);
     }
   }
 };

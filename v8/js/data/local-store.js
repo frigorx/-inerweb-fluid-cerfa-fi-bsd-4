@@ -209,6 +209,20 @@ export function creerLocalStore(transport) {
       return muter('desactiverPersonne', { id, par });
     },
 
+    // --- habilitations F-Gas ------------------------------
+    getHabilitations() {
+      return lire('getHabilitations', {});
+    },
+    createHabilitation(donneesHabilitation) {
+      return muter('createHabilitation', { donneesHabilitation });
+    },
+    updateHabilitation(id, donneesHabilitation) {
+      return muter('updateHabilitation', { id, donneesHabilitation });
+    },
+    revoquerHabilitation(id, par) {
+      return muter('revoquerHabilitation', { id, par });
+    },
+
     // --- outillage ----------------------------------------
     createOutil(donneesOutil) {
       return muter('createOutil', { donneesOutil });

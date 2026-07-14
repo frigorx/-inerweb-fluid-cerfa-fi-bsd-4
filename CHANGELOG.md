@@ -2,6 +2,45 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🎫 Habilitations F-Gas · Phase 1 — modèle de données (14/07)
+Premier pallier du **cœur audit-proof (B2)**. Périmètre STRICT : on **stocke et on
+affiche, on ne refuse RIEN**. Le moteur de verdict (Phase 2) et le blocage en mode
+Officiel (Phase 3, gaté sur validation réglementaire de Franck) viennent après.
+- **Recherche réglementaire faite (sources officielles)** : les DEUX arrêtés du
+  21/11/2025 (aptitude art. R.543-106 + capacité art. R.543-99), F-Gas III (règlement
+  UE 2024/573), bascule 01/01/2027, coexistence 2008 (I-IV) jusqu'au 31/12/2026.
+  Nouvelles catégories **A1/A2/B/C/D/E/V**. Cadrage = `docs/SPEC-HABILITATIONS.md`.
+  ⚠️ La **matrice** (ce que chaque catégorie autorise) reste un BROUILLON à valider
+  ligne à ligne par Franck AVANT tout blocage.
+- **Module pur `v8/js/data/habilitations.js`** : référentiels (REGIMES, CATEGORIES_2008,
+  CATEGORIES_2025), correspondance 2008→2025 (I&II→A1/A2 · III→D · IV→E, renvoyée en
+  TABLEAU — jamais matérialisée dans une ligne), `categorieCoherente`,
+  `comparerHabilitations` (tri contractuel en JS, jamais d'ORDER BY). Miroir exact serveur.
+- **Migration 016** : table `habilitations` MULTI-RÉGIME (une personne cumule 2008 ET
+  2025, catégories multiples, renouvellement possible — aucun UNIQUE sur le triplet),
+  **jamais supprimée** (actif=0 + date_revocation), **CHECK composite** régime↔catégorie.
+  + 3 colonnes de rôle sur `mouvements` — `execute_par_id` (qui exécute, ex. l'élève) /
+  `superviseur_id` (l'enseignant) / `responsable_registre_id` (le référent) — **nullable,
+  sans backfill** (dériver un rôle de `technicien` = mensonge d'audit), **HORS empreinte
+  SHA-256**, **trigger WORM recréé** pour les couvrir (patron `prg_fige` migration 13).
+- **4 méthodes de contrat (surface 69 → 73)** : `getHabilitations` (lecture, triée,
+  copies indépendantes), `createHabilitation` / `updateHabilitation` (régime et catégorie
+  INTOUCHABLES) / `revoquerHabilitation` (actif=false + date, jamais de DELETE) — toutes
+  réservées **VALIDEUR** (un élève ne s'auto-attribue pas une aptitude). Parité stricte
+  démo ↔ serveur. Export/import étendu (la collection voyage dans les deux sens).
+- **Revue adversariale (workflow 3 angles : parité / WORM-migration / fidélité-régression,
+  0 bloquant)** — 5 constats corrigés : rôle en **chaîne vide → null** (garde truthy vs
+  stockage nullish, évitait un FK cru côté SQLite) ; **validation d'import symétrique**
+  (le DemoStore refuse désormais EXACTEMENT ce que le CHECK/FK serveur refuse — habilitation
+  incohérente ou orpheline) ; **double révocation refusée** (préserve la date d'origine) ;
+  **actif TOUJOURS true à la création** ; garde défensive `getHabilitations`.
+- Tests : `test-habilitations-pur.mjs` **16/0** (référentiels, correspondance, tri),
+  `test-habilitations.mjs` **38/0 demo+local** (CRUD, garde-fous, cumul, révocation
+  historisée, rôles scellés hors empreinte, non-confusion élève-exécutant≠validateur,
+  correspondance, échange croisé, import forgé refusé), `test-migrations` v15→v16 (CHECK
+  composite + WORM recréé + écriture scellée intacte). **56 exécutions TOUT VERT**, contrat
+  255/0 démo+local, mapping 161/0. Vérifié navigateur (module chargé, CRUD front, 0 erreur).
+
 ### 🔔 Brique ⑥ · Sentinelle d'alertes PERSISTÉES (13/07)
 Jusqu'ici les 8 familles d'alertes étaient **recalculées à la volée** à chaque
 lecture (rien n'existait entre deux consultations). La sentinelle pose par-dessus

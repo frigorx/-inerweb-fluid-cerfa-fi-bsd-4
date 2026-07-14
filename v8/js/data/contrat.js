@@ -80,7 +80,7 @@ export const ROLES_VALIDEURS = ['REFERENT', 'ENSEIGNANT', 'ADMIN'];
 export const PROPRIETES_CONTRAT = ['modeLabel', 'registreAltere'];
 
 /**
- * Les 69 méthodes du contrat, dans l'ordre du cycle de vie.
+ * Les 73 méthodes du contrat, dans l'ordre du cycle de vie.
  * genre : 'abonnement' | 'initialisation' | 'lecture' | 'mutation'.
  * La sémantique fine (formes de retour, garde-fous, effets) est
  * décrite ici en une ligne et VÉRIFIÉE dans test-contrat.mjs.
@@ -199,6 +199,16 @@ export const METHODES_CONTRAT = {
     description: 'Patch partiel ; mêmes garde-fous.' },
   desactiverPersonne: { genre: 'mutation',
     description: 'Désactive (actif=false) — le personnel n’est JAMAIS supprimé, la trace reste.' },
+
+  // --- habilitations F-Gas (multi-régime 2008/2025) ----------------
+  getHabilitations: { genre: 'lecture',
+    description: 'Toutes les habilitations (jamais supprimées : seulement révoquées), triées 2025 avant 2008 puis dateFin décroissante (null en tête) ; copies indépendantes ; sans argument.' },
+  createHabilitation: { genre: 'mutation',
+    description: 'Crée une habilitation { personneId, regime 2008|2025, categorie, numeroAttestation?, organismeDelivreur?, dateDebut?, dateFin? } ; actif=vrai, dateRevocation=null ; cumul autorisé (2008 et 2025 coexistent, même catégorie renouvelable) ; Error si personne introuvable, régime inconnu ou catégorie incohérente avec le régime.' },
+  updateHabilitation: { genre: 'mutation',
+    description: 'Patch partiel (numeroAttestation, organismeDelivreur, dateDebut, dateFin) ; régime et catégorie INTOUCHABLES (correction de coquille, jamais réécriture d’identité) ; Error si introuvable.' },
+  revoquerHabilitation: { genre: 'mutation',
+    description: 'Retire une habilitation : actif=false + dateRevocation (AAAA-MM-JJ), consigné au journal ; JAMAIS de suppression (la ligne reste dans getHabilitations, historisée) ; Error si introuvable.' },
 
   // --- outillage ---------------------------------------------------
   createOutil: { genre: 'mutation',

@@ -870,6 +870,102 @@ verifierLeve('le code public est unique (résolution QR sans ambiguïté)',
 }
 
 // ============================================================
+// 6decies. Habilitations F-Gas (migration 016) — base PRÉEXISTANTE
+// (v15 → v16) : table habilitations (cumul 2008+2025, CHECK composite
+// régime↔catégorie) + 3 colonnes de rôle sur mouvements + trigger WORM
+// recréé qui les couvre (une écriture scellée reste INTACTE).
+// ============================================================
+{
+  const CHEMIN_HAB = join(DOSSIER, 'ancienne-hab.db');
+  const ancienneHab = new DatabaseSync(CHEMIN_HAB);
+  ancienneHab.exec(readFileSync(new URL('./schema.sql', import.meta.url), 'utf8'));
+  ancienneHab.exec(`PRAGMA user_version = ${migrations.VERSION_BASE};`);
+  const jusqua15 = {};
+  for (let v = 2; v <= 15; v += 1) jusqua15[v] = migrations.MIGRATIONS[v];
+  migrations.migrer(ancienneHab, jusqua15); // portée à 15, PAS encore 16
+
+  ancienneHab.exec(`INSERT INTO etablissements (id, raison_sociale)
+                    VALUES ('ETB-HAB', 'Lycée Habilitations');`);
+  ancienneHab.exec(`INSERT INTO personnel (id, etablissement_id, nom, prenom, type_personne)
+                    VALUES ('PER-HAB', 'ETB-HAB', 'Martin', 'Prof', 'ENSEIGNANT');`);
+  // Écriture SCELLÉE d'avant la migration (patron 6octies).
+  ancienneHab.exec(`INSERT INTO mouvements (id, numero, etablissement_id,
+      date_mouvement, mode, type_operation, statut, quantite_calculee_kg,
+      hash_ecriture, hash_precedent, ordre_validation)
+    VALUES ('MVT-HAB-1', 'FORM-2026-0001', 'ETB-HAB', '2026-07-01',
+      'FORMATION', 'CHARGE_APPOINT', 'VALIDE', 2.5,
+      '${'e'.repeat(64)}', NULL, 1);`);
+
+  verifier('avant migration 016 : la base est bloquée en version 15',
+    migrations.lireVersion(ancienneHab) === 15);
+  verifier('avant migration 016 : la table habilitations n’existe pas',
+    ancienneHab.prepare(
+      "SELECT count(*) AS n FROM sqlite_master WHERE name = 'habilitations'")
+      .get().n === 0);
+  verifier('avant migration 016 : mouvements n’a pas execute_par_id',
+    !ancienneHab.prepare('PRAGMA table_info(mouvements)').all()
+      .some((c) => c.name === 'execute_par_id'));
+
+  const vHab = migrations.migrer(ancienneHab, { 16: migrations.MIGRATIONS[16] });
+  verifier('la migration 016 porte la base à la version 16',
+    vHab === 16 && migrations.lireVersion(ancienneHab) === 16);
+  verifier('la table habilitations existe après migration',
+    ancienneHab.prepare(
+      "SELECT count(*) AS n FROM sqlite_master WHERE name = 'habilitations'")
+      .get().n === 1);
+  verifier('les 3 colonnes de rôle existent sur mouvements',
+    ['execute_par_id', 'superviseur_id', 'responsable_registre_id'].every((col) =>
+      ancienneHab.prepare('PRAGMA table_info(mouvements)').all()
+        .some((c) => c.name === col)));
+
+  // Cumul 2008 + 2025 sur la même personne (aucun UNIQUE sur le triplet).
+  ancienneHab.exec(`INSERT INTO habilitations (id, etablissement_id, personne_id, regime, categorie)
+                    VALUES ('HAB-1', 'ETB-HAB', 'PER-HAB', '2008', 'II');`);
+  ancienneHab.exec(`INSERT INTO habilitations (id, etablissement_id, personne_id, regime, categorie)
+                    VALUES ('HAB-2', 'ETB-HAB', 'PER-HAB', '2025', 'A1');`);
+  verifier('cumul 2008 + 2025 accepté (2 lignes)',
+    ancienneHab.prepare(
+      "SELECT count(*) AS n FROM habilitations WHERE personne_id = 'PER-HAB'")
+      .get().n === 2);
+
+  // CHECK composite : refuse un croisement régime ↔ catégorie.
+  verifierLeve('le CHECK refuse une catégorie 2025 sous le régime 2008',
+    () => ancienneHab.exec(`INSERT INTO habilitations (id, etablissement_id, personne_id, regime, categorie)
+      VALUES ('HAB-X', 'ETB-HAB', 'PER-HAB', '2008', 'A1');`),
+    'CHECK');
+  verifierLeve('le CHECK refuse une catégorie 2008 sous le régime 2025',
+    () => ancienneHab.exec(`INSERT INTO habilitations (id, etablissement_id, personne_id, regime, categorie)
+      VALUES ('HAB-Y', 'ETB-HAB', 'PER-HAB', '2025', 'III');`),
+    'CHECK');
+
+  // Écriture scellée d'avant la migration : INTACTE (aucun re-hash, rôle NULL).
+  const scellee = ancienneHab.prepare(
+    "SELECT * FROM mouvements WHERE id = 'MVT-HAB-1'").get();
+  verifier('l’écriture scellée d’avant la migration est INTACTE',
+    scellee.hash_ecriture === 'e'.repeat(64)
+    && scellee.execute_par_id === null
+    && PROCHE(scellee.quantite_calculee_kg, 2.5));
+
+  // WORM recréé : bloque tout backfill des rôles sur une écriture scellée.
+  verifierLeve('le WORM bloque un backfill de execute_par_id sur une écriture scellée',
+    () => ancienneHab.exec(
+      "UPDATE mouvements SET execute_par_id = 'PER-HAB' WHERE id = 'MVT-HAB-1';"),
+    'Registre verrouillé');
+  verifierLeve('VALIDE → ANNULE retouchant superviseur_id est bloqué',
+    () => ancienneHab.exec(`UPDATE mouvements SET statut = 'ANNULE',
+      superviseur_id = 'PER-HAB' WHERE id = 'MVT-HAB-1';`),
+    'Registre verrouillé');
+  const sqlTrigger = ancienneHab.prepare(`SELECT sql FROM sqlite_master
+    WHERE name = 'mouvements_interdire_modification_validee'`).get().sql;
+  verifier('le trigger recréé couvre les 3 colonnes de rôle',
+    sqlTrigger.includes('NEW.execute_par_id')
+    && sqlTrigger.includes('NEW.superviseur_id')
+    && sqlTrigger.includes('NEW.responsable_registre_id'));
+
+  ancienneHab.close();
+}
+
+// ============================================================
 // 7. Base pré-versionnage : refusée avec un message clair
 // ============================================================
 db.fermer();

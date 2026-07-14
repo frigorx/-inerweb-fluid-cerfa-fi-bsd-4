@@ -246,7 +246,13 @@ const TABLES = {
       // PRP (gwp_ar4) FIGÉ à la validation — colonne posée par la
       // migration 13, HORS empreinte chaînée (liste blanche du hasseur).
       // NULL sur les écritures antérieures (backfill interdit par le WORM).
-      prpFige: 'prg_fige'
+      prpFige: 'prg_fige',
+      // Rôles réels d'une intervention (migration 16, chantier B2) : qui
+      // exécute (élève), qui supervise (enseignant), qui répond du registre
+      // (référent). Nullable, HORS empreinte de hachage, figés par le WORM.
+      executeParId: 'execute_par_id',
+      superviseurId: 'superviseur_id',
+      responsableRegistreId: 'responsable_registre_id'
     },
     // proposerDemantelement : champ ÉPHÉMÈRE posé sur la COPIE retournée
     // par validerMouvement quand la récupération vide la machine — jamais
@@ -446,6 +452,24 @@ const TABLES = {
       acquitteePar: 'acquittee_par'
     },
     sqlSeulement: ['etablissement_id']
+  },
+
+  habilitations: {
+    // Habilitations F-Gas multi-régime (migration 16, chantier B2).
+    champs: {
+      id: 'id',
+      personneId: 'personne_id',
+      regime: 'regime',
+      categorie: 'categorie',
+      numeroAttestation: 'numero_attestation',
+      organismeDelivreur: 'organisme_delivreur',
+      dateDebut: 'date_debut',
+      dateFin: 'date_fin',
+      actif: 'actif',
+      dateRevocation: 'date_revocation'
+    },
+    booleens: ['actif'],
+    sqlSeulement: ['etablissement_id', 'date_creation']
   },
 
   audits_etablissement: {

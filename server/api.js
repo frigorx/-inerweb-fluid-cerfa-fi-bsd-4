@@ -50,6 +50,13 @@ const ACTIVITES_REGLEMENTEES = ['MISE_EN_SERVICE', 'MAINTENANCE', 'CONTROLE',
 /** Catégories d'attestation (grilles 2008 et 2025). */
 const CATEGORIES_ATTESTATION = ['I', 'II', 'III', 'IV'];
 
+// Habilitations F-Gas (chantier B2) — MIROIR EXACT du module pur ESM
+// v8/js/data/habilitations.js (le serveur est CommonJS : littéraux dupliqués,
+// parité de SORTIE prouvée par les tests, comme getAlertes/sentinelle).
+const REGIMES = ['2008', '2025'];
+const CATEGORIES_2008 = ['I', 'II', 'III', 'IV'];
+const CATEGORIES_2025 = ['A1', 'A2', 'B', 'C', 'D', 'E', 'V'];
+
 /** IM-4 : tolérance de charge résiduelle pour démanteler (± 0,05 kg). */
 const TOLERANCE_CHARGE_RESIDUELLE_KG = 0.05;
 
@@ -130,6 +137,44 @@ function verifierCategorie(valeur, champ) {
   return valeur;
 }
 
+/** Valide un régime d'habilitation (miroir EXACT du DemoStore). */
+function verifierRegime(regime) {
+  if (!REGIMES.includes(regime)) {
+    throw new Error(
+      `Régime d'habilitation inconnu : ${regime} (attendu : 2008 ou 2025).`);
+  }
+  return regime;
+}
+
+/** Vrai si `categorie` est cohérente avec `regime` (miroir du module pur). */
+function categorieCoherente(regime, categorie) {
+  if (regime === '2008') return CATEGORIES_2008.includes(categorie);
+  if (regime === '2025') return CATEGORIES_2025.includes(categorie);
+  return false;
+}
+
+/** Valide la cohérence régime ↔ catégorie (miroir EXACT du DemoStore). */
+function verifierCategorieHabilitation(regime, categorie) {
+  const attendues = regime === '2008' ? CATEGORIES_2008 : CATEGORIES_2025;
+  if (!attendues.includes(categorie)) {
+    throw new Error(
+      `Catégorie « ${categorie} » incohérente avec le régime ${regime} ` +
+      `(attendu : ${attendues.join(', ')}).`);
+  }
+  return categorie;
+}
+
+/** Ordre stable des habilitations (miroir EXACT du module pur, tri JS). */
+function comparerHabilitations(a, b) {
+  if (a.regime !== b.regime) return a.regime === '2025' ? -1 : 1;
+  const fa = a.dateFin ?? null;
+  const fb = b.dateFin ?? null;
+  if (fa === fb) return 0;
+  if (fa === null) return -1;
+  if (fb === null) return 1;
+  return fa < fb ? 1 : -1;
+}
+
 /** Valide une liste d'activités réglementées. */
 function verifierActivites(liste) {
   const activites = liste ?? [];
@@ -173,6 +218,11 @@ const ROLES_MUTATION = {
   createNonConformite: VALIDEUR,
   solderNonConformite: VALIDEUR,
   desactiverPersonne: VALIDEUR,
+  // Une habilitation = une aptitude réglementaire : sa gestion relève du
+  // responsable (jamais d'un élève, qui s'auto-attribuerait une aptitude).
+  createHabilitation: VALIDEUR,
+  updateHabilitation: VALIDEUR,
+  revoquerHabilitation: VALIDEUR,
   reformerOutil: VALIDEUR,
   justifierEcart: VALIDEUR,
   saisirInventaire: VALIDEUR,
@@ -941,6 +991,83 @@ const HANDLERS = {
         `${personne.prenom} ${personne.nom}`,
         'Désactivation (la personne reste au registre : aucune suppression)');
       return lirePersonne(id);
+    });
+  },
+
+  // === habilitations F-Gas (multi-régime 2008/2025) — chantier B2 ===
+
+  getHabilitations() {
+    const lignes = db.all(
+      'SELECT * FROM habilitations WHERE etablissement_id = ?',
+      [ID_ETABLISSEMENT]);
+    return lignes
+      .map((l) => mapping.versFront('habilitations', l))
+      .sort(comparerHabilitations);
+  },
+
+  createHabilitation(params) {
+    const d = params.donneesHabilitation || {};
+    const personne = trouverPersonne(d.personneId);
+    verifierRegime(d.regime);
+    verifierCategorieHabilitation(d.regime, d.categorie);
+    const habilitation = {
+      id: db.generateId('HAB'),
+      personneId: personne.id,
+      regime: d.regime,
+      categorie: d.categorie,
+      numeroAttestation: d.numeroAttestation ?? null,
+      organismeDelivreur: d.organismeDelivreur ?? null,
+      dateDebut: d.dateDebut ?? null,
+      dateFin: d.dateFin ?? null,
+      // Invariant : active à la création (désactivation via revoquerHabilitation).
+      actif: true,
+      dateRevocation: null
+    };
+    return muter(() => {
+      const ligne = mapping.versSql('habilitations', habilitation);
+      ligne.etablissement_id = ID_ETABLISSEMENT;
+      inserer('habilitations', ligne);
+      journaliser(d.operateur, 'CREATION_HABILITATION',
+        `${personne.prenom} ${personne.nom}`, `${d.regime} ${d.categorie}`);
+      return trouverHabilitation(habilitation.id);
+    });
+  },
+
+  updateHabilitation(params) {
+    const { id } = params;
+    const d = params.donneesHabilitation || {};
+    trouverHabilitation(id);
+    // Régime et catégorie INTOUCHABLES (correction de coquille, pas d'identité).
+    const CHAMPS = ['numeroAttestation', 'organismeDelivreur',
+      'dateDebut', 'dateFin'];
+    const patch = {};
+    for (const champ of CHAMPS) {
+      if (d[champ] !== undefined) patch[champ] = d[champ];
+    }
+    return muter(() => {
+      majParId('habilitations', id, mapping.versSql('habilitations', patch));
+      const habilitation = trouverHabilitation(id);
+      journaliser(d.operateur, 'MODIFICATION_HABILITATION',
+        `${habilitation.regime} ${habilitation.categorie}`,
+        `Champs : ${Object.keys(d).filter((c) => CHAMPS.includes(c)).join(', ')}`);
+      return habilitation;
+    });
+  },
+
+  revoquerHabilitation(params) {
+    const { id } = params;
+    const habilitation = trouverHabilitation(id);
+    // Double révocation refusée (préserve la date de retrait d'origine).
+    if (!habilitation.actif) {
+      throw new Error('Habilitation déjà révoquée.');
+    }
+    return muter(() => {
+      majParId('habilitations', id,
+        { actif: 0, date_revocation: aujourdHui() });
+      journaliser(params.par, 'RETRAIT_HABILITATION',
+        `${habilitation.regime} ${habilitation.categorie}`,
+        'Révocation (l’habilitation reste au registre : aucune suppression)');
+      return trouverHabilitation(id);
     });
   },
 
@@ -1798,6 +1925,11 @@ const HANDLERS = {
     if (d.bouteilleDstId) {
       trouverBouteille(d.bouteilleDstId, 'Bouteille de destination');
     }
+    // Rôles réels de l'intervention (chantier B2) : références vérifiées dès
+    // le brouillon. Aucune EXIGENCE d'habilitation (Phase 1 ne bloque rien).
+    if (d.executeParId) trouverPersonne(d.executeParId);
+    if (d.superviseurId) trouverPersonne(d.superviseurId);
+    if (d.responsableRegistreId) trouverPersonne(d.responsableRegistreId);
     return muter(() => {
       // Numéro attribué DANS la transaction (verrou implicite : Node
       // mono-fil + BEGIN IMMEDIATE) — pas de collision de compteur.
@@ -1821,6 +1953,13 @@ const HANDLERS = {
         signatureDataUrl: d.signatureDataUrl ?? null,
         technicien: d.technicien ?? null,
         validateurId: null,
+        // Rôles réels (chantier B2) : toujours présents (null par défaut),
+        // HORS empreinte de hachage, figés par le trigger WORM. `|| null`
+        // (pas `??`) : une chaîne vide devient null (parité DemoStore, évite
+        // un FOREIGN KEY cru sur execute_par_id = '').
+        executeParId: d.executeParId || null,
+        superviseurId: d.superviseurId || null,
+        responsableRegistreId: d.responsableRegistreId || null,
         hashEcriture: null,
         hashPrecedent: null,
         contreEcritureDe: null,
@@ -2579,6 +2718,7 @@ function construireDonneesExport() {
     controles: HANDLERS.getControles(),
     fluides: HANDLERS.getFluides(),
     personnel: HANDLERS.getPersonnel(),
+    habilitations: HANDLERS.getHabilitations(),
     outillage: HANDLERS.getOutillage(),
     stocksInitiaux: lireTablePlate('stocks_initiaux', 'stocks_initiaux',
       'annee, fluide'),
@@ -2627,7 +2767,7 @@ function completerCandidat(donnees) {
   const candidat = { ...donnees };
   for (const cle of ['auditsOrganisme', 'nonConformites', 'outillage',
     'stocksInitiaux', 'bsff', 'inventaires', 'justificationsEcarts',
-    'piecesJointes', 'retoursFournisseur', 'journalAudit']) {
+    'piecesJointes', 'retoursFournisseur', 'journalAudit', 'habilitations']) {
     if (!Array.isArray(candidat[cle])) candidat[cle] = [];
   }
   return candidat;
@@ -2742,6 +2882,20 @@ function verifierInvariantsDonneesCandidat(candidat) {
       }
     }
   }
+  // Habilitations (chantier B2) : miroir EXACT du DemoStore — refuser un
+  // registre incohérent AVANT toute écriture (le CHECK/FK SQLite le ferait
+  // sinon avec un message cru, et la démo l'accepterait en silence).
+  const idsPersonnel = new Set((candidat.personnel ?? []).map((p) => p.id));
+  for (const h of candidat.habilitations ?? []) {
+    const ref = h.id ?? '?';
+    if (!categorieCoherente(h.regime, h.categorie)) {
+      return `habilitation ${ref} : catégorie « ${h.categorie} » ` +
+        `incohérente avec le régime ${h.regime}`;
+    }
+    if (!idsPersonnel.has(h.personneId)) {
+      return `habilitation ${ref} : personne introuvable (${h.personneId})`;
+    }
+  }
   return null;
 }
 
@@ -2841,8 +2995,8 @@ function remplacerToutLEtat(candidat) {
       'controles', 'mouvements', 'justifications_ecarts', 'inventaires',
       'inventaires_bouteilles', 'inventaires_fuites',
       'stocks_initiaux', 'bouteilles', 'machines', 'clients_detenteurs',
-      'outillage', 'non_conformites', 'audits_etablissement', 'personnel',
-      'journal_audit', 'etablissements'];
+      'outillage', 'non_conformites', 'audits_etablissement', 'habilitations',
+      'personnel', 'journal_audit', 'etablissements'];
     for (const table of TABLES_A_VIDER) db.run(`DELETE FROM ${table}`);
 
     // Établissement singleton : le candidat porte un dossier sans id (le
@@ -2864,6 +3018,11 @@ function remplacerToutLEtat(candidat) {
     }
 
     reinsererCollection('personnel', 'personnel', candidat.personnel);
+    // Habilitations F-Gas (chantier B2) : APRÈS le personnel (FK personne_id ;
+    // defer_foreign_keys est ON mais l'ordre reste logique). Absentes des
+    // vieux exports → reinsererCollection tolère undefined.
+    reinsererCollection('habilitations', 'habilitations',
+      candidat.habilitations);
     reinsererCollection('audits_etablissement', 'audits_etablissement',
       candidat.auditsOrganisme);
     reinsererCollection('non_conformites', 'non_conformites',
@@ -3897,6 +4056,12 @@ function trouverPersonne(id) {
   const ligne = db.get('SELECT * FROM personnel WHERE id = ?', [id]);
   if (!ligne) throw new Error(`Personne introuvable : ${id}.`);
   return mapping.versFront('personnel', ligne);
+}
+
+function trouverHabilitation(id) {
+  const ligne = db.get('SELECT * FROM habilitations WHERE id = ?', [id]);
+  if (!ligne) throw new Error(`Habilitation introuvable : ${id}.`);
+  return mapping.versFront('habilitations', ligne);
 }
 
 /** Client par id, nbMachines recalculé (non démantelées) — comme getClients. */

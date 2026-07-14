@@ -19,6 +19,9 @@ import { calculerCadre7 } from '../cerfa/generateur.js';
 // avec le test unitaire ; le serveur en tient un miroir exact).
 import { calculerTransitions, formaterEpisode, comparerEpisodes, estOuvert }
   from './sentinelle.js';
+// Habilitations F-Gas : référentiels + tri (module pur, miroir serveur).
+import { REGIMES, CATEGORIES_2008, CATEGORIES_2025, comparerHabilitations,
+  categorieCoherente } from './habilitations.js';
 
 const CLE_STOCKAGE = 'inerweb-fluide-v8-demo';
 
@@ -284,6 +287,19 @@ function verifierInvariantsDonnees(candidat) {
       }
     }
   }
+  // Habilitations (chantier B2) : refuser un registre importé incohérent, à
+  // l'IDENTIQUE du serveur (le CHECK composite + FK que SQLite applique).
+  const idsPersonnel = new Set((candidat.personnel ?? []).map((p) => p.id));
+  for (const h of candidat.habilitations ?? []) {
+    const ref = h.id ?? '?';
+    if (!categorieCoherente(h.regime, h.categorie)) {
+      return `habilitation ${ref} : catégorie « ${h.categorie} » ` +
+        `incohérente avec le régime ${h.regime}`;
+    }
+    if (!idsPersonnel.has(h.personneId)) {
+      return `habilitation ${ref} : personne introuvable (${h.personneId})`;
+    }
+  }
   return null;
 }
 
@@ -521,6 +537,32 @@ export function creerDemoStore() {
       }
     }
     return [...activites];
+  }
+
+  function trouverHabilitation(id) {
+    const h = donnees.habilitations.find((x) => x.id === id);
+    if (!h) throw new Error(`Habilitation introuvable : ${id}.`);
+    return h;
+  }
+
+  /** Valide un régime d'habilitation (miroir EXACT du serveur). */
+  function verifierRegime(regime) {
+    if (!REGIMES.includes(regime)) {
+      throw new Error(
+        `Régime d'habilitation inconnu : ${regime} (attendu : 2008 ou 2025).`);
+    }
+    return regime;
+  }
+
+  /** Valide la cohérence régime ↔ catégorie (miroir EXACT du serveur). */
+  function verifierCategorieHabilitation(regime, categorie) {
+    const attendues = regime === '2008' ? CATEGORIES_2008 : CATEGORIES_2025;
+    if (!attendues.includes(categorie)) {
+      throw new Error(
+        `Catégorie « ${categorie} » incohérente avec le régime ${regime} ` +
+        `(attendu : ${attendues.join(', ')}).`);
+    }
+    return categorie;
   }
 
   // --------------------------------------------------------
@@ -1410,7 +1452,7 @@ export function creerDemoStore() {
       // Compléments Phase C pour les sauvegardes A/B existantes
       for (const cle of ['auditsOrganisme', 'nonConformites', 'stocksInitiaux',
         'bsff', 'inventaires', 'justificationsEcarts', 'piecesJointes',
-        'retoursFournisseur', 'sentinelleAlertes']) {
+        'retoursFournisseur', 'sentinelleAlertes', 'habilitations']) {
         if (!Array.isArray(donnees[cle])) {
           donnees[cle] = copier(DEMO[cle] ?? []);
           modifie = true;
@@ -2224,6 +2266,12 @@ export function creerDemoStore() {
       if (d.bouteilleDstId) {
         trouverBouteille(d.bouteilleDstId, 'Bouteille de destination');
       }
+      // Rôles réels de l'intervention (chantier B2) : références vérifiées dès
+      // le brouillon si fournies. Aucune EXIGENCE d'habilitation ici (Phase 1
+      // ne bloque rien) — seulement l'existence de la personne désignée.
+      if (d.executeParId) trouverPersonne(d.executeParId);
+      if (d.superviseurId) trouverPersonne(d.superviseurId);
+      if (d.responsableRegistreId) trouverPersonne(d.responsableRegistreId);
 
       // Forme CANONIQUE du contrôle déclaré : STRICTEMENT les clés que le
       // serveur SQL restitue à la relecture (reconstituerMouvement d'api.js)
@@ -2258,6 +2306,13 @@ export function creerDemoStore() {
         signatureDataUrl: d.signatureDataUrl ?? null,
         technicien: d.technicien ?? null,
         validateurId: null,
+        // Rôles réels (chantier B2) : toujours présents (null par défaut) pour
+        // que la couverture mapping les voie ; HORS empreinte de hachage.
+        // `|| null` (pas `??`) : une chaîne vide (select non renseigné) devient
+        // null — sinon la garde truthy la laisse passer et '' serait stocké.
+        executeParId: d.executeParId || null,
+        superviseurId: d.superviseurId || null,
+        responsableRegistreId: d.responsableRegistreId || null,
         hashEcriture: null,
         hashPrecedent: null,
         contreEcritureDe: null,
@@ -2891,6 +2946,77 @@ export function creerDemoStore() {
     },
 
     // ------------------------------------------------------
+    // Habilitations F-Gas (multi-régime 2008/2025) — chantier B2
+    // ------------------------------------------------------
+    async getHabilitations() {
+      // Copies indépendantes ; tri contractuel en JS (jamais d'ORDER BY).
+      return (donnees.habilitations ?? []).map(copier).sort(comparerHabilitations);
+    },
+
+    async createHabilitation(donneesHabilitation) {
+      const d = donneesHabilitation || {};
+      const personne = trouverPersonne(d.personneId);
+      verifierRegime(d.regime);
+      verifierCategorieHabilitation(d.regime, d.categorie);
+      const habilitation = {
+        id: genId('hab'),
+        personneId: personne.id,
+        regime: d.regime,
+        categorie: d.categorie,
+        numeroAttestation: d.numeroAttestation ?? null,
+        organismeDelivreur: d.organismeDelivreur ?? null,
+        dateDebut: d.dateDebut ?? null,
+        dateFin: d.dateFin ?? null,
+        // Invariant : à la création une habilitation est TOUJOURS active ; la
+        // désactivation passe EXCLUSIVEMENT par revoquerHabilitation (qui pose
+        // aussi la date). Interdit l'état incohérent « inactive sans date ».
+        actif: true,
+        dateRevocation: null
+      };
+      donnees.habilitations.push(habilitation);
+      journaliser(d.operateur, 'CREATION_HABILITATION',
+        `${personne.prenom} ${personne.nom}`, `${d.regime} ${d.categorie}`);
+      persisterEtNotifier();
+      return copier(habilitation);
+    },
+
+    async updateHabilitation(id, donneesHabilitation) {
+      const habilitation = trouverHabilitation(id);
+      const d = donneesHabilitation || {};
+      // Régime et catégorie INTOUCHABLES : on corrige une coquille (n°, dates,
+      // organisme), on ne réécrit jamais l'identité de l'attestation.
+      const CHAMPS = ['numeroAttestation', 'organismeDelivreur',
+        'dateDebut', 'dateFin'];
+      for (const champ of CHAMPS) {
+        if (d[champ] !== undefined) habilitation[champ] = copier(d[champ]);
+      }
+      journaliser(d.operateur, 'MODIFICATION_HABILITATION',
+        `${habilitation.regime} ${habilitation.categorie}`,
+        `Champs : ${Object.keys(d).filter((c) => CHAMPS.includes(c)).join(', ')}`);
+      persisterEtNotifier();
+      return copier(habilitation);
+    },
+
+    async revoquerHabilitation(id, operateur) {
+      const habilitation = trouverHabilitation(id);
+      // Une double révocation écraserait la date de retrait d'origine (signifiante
+      // sur un registre opposable) — refusée, comme desactiverPersonne.
+      if (!habilitation.actif) {
+        throw new Error('Habilitation déjà révoquée.');
+      }
+      // JAMAIS de suppression : la ligne reste dans getHabilitations, marquée
+      // révoquée + datée — une intervention passée sous une aptitude ensuite
+      // retirée reste auditable rétrospectivement.
+      habilitation.actif = false;
+      habilitation.dateRevocation = aujourdHui();
+      journaliser(operateur, 'RETRAIT_HABILITATION',
+        `${habilitation.regime} ${habilitation.categorie}`,
+        'Révocation (l’habilitation reste au registre : aucune suppression)');
+      persisterEtNotifier();
+      return copier(habilitation);
+    },
+
+    // ------------------------------------------------------
     // Phase C : outillage réglementaire (statut recalculé)
     // ------------------------------------------------------
     async createOutil(donneesOutil) {
@@ -3455,7 +3581,9 @@ export function creerDemoStore() {
         'bsff', 'inventaires', 'justificationsEcarts', 'piecesJointes',
         'retoursFournisseur',
         // Brique ② (B7) : photos nominatives — vides sur les vieux exports.
-        'inventairesBouteilles', 'inventairesFuites']) {
+        'inventairesBouteilles', 'inventairesFuites',
+        // Chantier B2 : habilitations — vides sur les exports antérieurs.
+        'habilitations']) {
         if (!Array.isArray(candidat[cle])) candidat[cle] = copier(DEMO[cle] ?? []);
       }
       if (candidat.etablissement.numAttestationCapacite === undefined) {
