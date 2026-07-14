@@ -67,6 +67,12 @@ implémentations (démo + local). Démo en ligne fonctionnelle (GitHub Pages `/v
    présence lus du contrat) + vue `#/audit-guide` (stepper numéroté, constats cliquables,
    bouton d'ouverture par étape) + entrée sidebar. Suite doublée demo/local. Vérifié
    navigateur.
+10. ~~**Filtres de la vue Mouvements** (trou de l'examen du 10/07)~~ — **FAIT 14/07** :
+   module pur `filtre-mouvements.js` (recherche sans accents, multi-mots ET, options
+   présentes seulement) + barre recherche/statut/type/fluide/année + compteur +
+   réinitialisation, masquage de lignes (délégation intacte). 25/0. Vérifié navigateur
+   (⚠️ sauf le clic « Réinitialiser » — panne du navigateur intégré en cours de passe,
+   à confirmer d'un clic).
 
 ## Briques GATÉES sur la validation réglementaire de Franck
 

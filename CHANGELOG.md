@@ -2,6 +2,36 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔍 Filtres de la vue Mouvements (14/07)
+Trou relevé à l'examen du 10/07 (« Mouvements sans filtre ») : le registre grossit à
+chaque intervention et restait un long tableau sans recherche.
+- **Module pur `v8/js/data/filtre-mouvements.js`** (toute la logique, zéro DOM) :
+  `indexerMouvement` (clés exactes statut/groupe de type/fluide/année + texte agrégé
+  cherchable : numéro, CERFA, machine ou codes bouteilles d'un transfert, fluide,
+  technicien, motif de rejet), `correspond` (recherche libre insensible à la casse ET
+  aux accents — « pesee » trouve « Pesée » —, multi-mots en ET, critères exacts),
+  `optionsDisponibles` (les listes ne proposent que des valeurs PRÉSENTES au registre ;
+  les deux types de récupération forment UNE entrée, fidèle aux chips ; un type hors
+  référentiel reste filtrable par sa valeur brute — filet).
+- **Vue Mouvements** : barre de filtres au-dessus du tableau (recherche libre + selects
+  Statut/Type/Fluide/Année + compteur « X sur Y » + bouton Réinitialiser affiché
+  seulement si un critère est actif) ; masquage de lignes par `data-id` (patron
+  machines.js — la délégation d'événements et les modales d'action sont INTOUCHÉES) ;
+  message « Aucun mouvement ne correspond aux filtres » ; l'appel initial couvre la
+  restauration de formulaire du navigateur au rechargement (vérifié : selects restaurés
+  → affichage cohérent d'emblée).
+- Tests : **`test-filtre-mouvements.mjs` 25/0** (normalisation, indexation transfert/
+  motif de rejet/type futur, correspondance casse/accents/ET/combinaisons, options
+  triées dédoublonnées, registre vide) — **TOUT VERT, 67 exécutions**.
+- Vérifié navigateur (origine neuve 8331) : barre et options exactes du monde démo,
+  « fournil » → 1 sur 7, « pedagogique » sans accent → la Vitrine, type Récupération →
+  1 ligne, statut Brouillon → 0 sur 7 + message vide, compteur et apparition du bouton
+  Réinitialiser, zéro erreur console. ⚠️ **Réserve : le CLIC sur « Réinitialiser » n'a
+  pas pu être prouvé en direct** (le navigateur intégré a cessé d'envoyer les événements
+  souris en cours de passe — même panne que le 14/07 matin ; `elementFromPoint` confirme
+  que le bouton est bien la cible, le handler rappelle `appliquerFiltres` déjà exercée
+  par tous les autres chemins). À confirmer d'un clic à la reprise.
+
 ### 🧭 Parcours « audit guidé » — le dernier trou produit non gaté (14/07)
 Priorité 3 de l'audit croisé GPT : un NON-développeur déroule un audit complet sans se
 perdre. Nouvelle vue `#/audit-guide` (sidebar, sous « Conformité ») : 9 étapes numérotées

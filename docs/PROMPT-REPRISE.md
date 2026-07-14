@@ -22,9 +22,23 @@ attentes. Tu ne t'arrêtes que quand une brique est **finie et testée par toi-m
    (**source de vérité**, entrées les plus récentes en tête), `docs/PLAN-PHASE-2.md`,
    `docs/VISION-V9-V10.md` (la boussole).
 
-## État exact (dernier commit poussé `05d3497`, 14/07/2026 soir)
+## État exact (14/07/2026 soir — voir `git log` pour le dernier commit)
 
-**FAIT le 14/07 soir — RÉSERVES B2 + PARCOURS « AUDIT GUIDÉ » : ⭐ SOLDÉS ⭐**
+**FAIT le 14/07 soir (2ᵉ partie) — FILTRES DE LA VUE MOUVEMENTS : ⭐ SOLDÉ ⭐**
+- Trou de l'examen du 10/07 fermé : module pur `v8/js/data/filtre-mouvements.js`
+  (index cherchable INSENSIBLE AUX ACCENTS, multi-mots ET, groupes de type fidèles aux
+  chips, options limitées aux valeurs présentes, type futur filtrable — filet) + barre
+  recherche/Statut/Type/Fluide/Année + compteur « X sur Y » + Réinitialiser conditionnel
+  + message vide ; masquage de lignes par `data-id` (patron machines.js, délégation des
+  actions INTOUCHÉE). `test-filtre-mouvements.mjs` 25/0 — TOUT VERT 67 exécutions.
+- Vérifié navigateur (origine 8331) : recherche « fournil » 1 sur 7, « pedagogique »
+  sans accent trouve la Vitrine, type Récupération, statut Brouillon → 0 + message,
+  restauration de formulaire cohérente au rechargement. ⚠️ **RÉSERVE À LEVER D'UN CLIC :
+  le bouton « Réinitialiser » n'a pas pu être cliqué en direct** (le navigateur intégré
+  a cessé d'envoyer les événements souris — panne récurrente ; la cible est confirmée
+  par elementFromPoint, le handler rappelle `appliquerFiltres` déjà exercée partout).
+
+**FAIT le 14/07 soir (1ʳᵉ partie) — RÉSERVES B2 + PARCOURS « AUDIT GUIDÉ » : ⭐ SOLDÉS ⭐**
 > Session Fable, sobriété appliquée : lecture par cartes, cœur+tests moi, UN agent de
 > revue adversariale sur le cœur, navigateur (origines neuves 8317/8323/8329).
 - **Réserves B2 (`b81b132`)** : habilitations SEMÉES au monde de démo (Marc 2008/I +
@@ -326,13 +340,14 @@ partageables…), ce qui attend Franck, et les atouts vs concurrence. En résum�
 
 ## Prochaine action — TOUS les trous produit non gatés sont fermés (candidats, au choix de Franck)
 
+0. **À la reprise (30 secondes)** : lever la réserve navigateur — un clic sur le bouton
+   « Réinitialiser » de la vue Mouvements (port jetable neuf).
 1. **V1.5 de la feuille de route** : planche d'étiquettes optimisée, mode TP guidé,
    diagramme enthalpique (intrant FRIGOLO, `docs/intrants-v10/`), pont inerWeb Édu,
    horodatage externe du scellement, packs pédagogiques partageables.
 2. **Dettes techniques notées** (`docs/ROADMAP.md` en bas) : `updateBouteille` sans garde
    de statut ; l'import ne vérifie pas l'intégrité référentielle des fluides du candidat ;
    `pieces_jointes.chemin` absolu (restauration cross-machine).
-3. **Filtres de la vue Mouvements** (trou relevé à l'examen du 10/07, jamais traité).
 ⛔ Toujours GATÉ Franck : blocage dur mode Officiel (+ blocage par-outil), relevés élèves
 (RGPD §16.5), Trackdéchets (différé).
 

@@ -14,6 +14,8 @@
 import { enteteVue, chipStatut, chipType, tableau, modale, toast, ICONES }
   from './communs.js';
 import { fmtDate, fmtKg, fmtKgSigne, esc } from '../core/utils.js';
+import { indexerMouvement, correspond, optionsDisponibles, STATUTS_FILTRE }
+  from '../data/filtre-mouvements.js';
 import { ouvrirWizard } from '../wizard/wizard.js';
 import { ouvrirCerfa } from '../cerfa/visualiseur.js';
 import { ouvrirCorrectionCerfa } from '../cerfa/correcteur.js';
@@ -143,7 +145,7 @@ function ligneMouvement(mouvement, bouteillesParId) {
   // survol lève l'ambiguïté sans toucher à la valeur affichée.
   const titreQuantite = titreQuantiteRecuperation(mouvement);
 
-  return '<tr>'
+  return '<tr data-id="' + esc(mouvement.id) + '">'
     // Date en mono
     + '<td class="cellule-mono">' + esc(fmtDate(mouvement.date)) + '</td>'
     // Machine en gras (ou « B-01 → B-04 » pour un transfert)
@@ -166,6 +168,69 @@ function ligneMouvement(mouvement, bouteillesParId) {
     // Actions selon le statut (CR-1 / CR-2 / CF-1)
     + '<td class="align-droite">' + boutonsAction(mouvement) + '</td>'
     + '</tr>';
+}
+
+/* ============================================================
+   Barre de filtres (trou produit relevé à l'examen du 10/07)
+   ============================================================ */
+
+const STYLE_FILTRES = `<style>
+  .mouvements-barre {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+    margin-bottom: 14px;
+  }
+  .mouvements-barre .filtre-recherche { flex: 1 1 220px; max-width: 380px; }
+  .mouvements-barre .filtre-recherche input { width: 100%; }
+  .mouvements-barre select { max-width: 210px; }
+  .mouvements-compteur {
+    margin-left: auto; font-size: 13px; color: var(--texte-3);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .mouvements-aucun {
+    padding: 18px; text-align: center; color: var(--texte-3);
+    font-size: 13.5px;
+  }
+</style>`;
+
+/** Options HTML d'un select de filtre : « Tous » + valeurs proposées. */
+function optionsFiltre(libelleTous, entrees) {
+  return '<option value="">' + esc(libelleTous) + '</option>'
+    + entrees.map(function (e) {
+        return '<option value="' + esc(e.valeur) + '">' + esc(e.libelle) + '</option>';
+      }).join('');
+}
+
+/**
+ * Barre de filtres du registre : recherche libre + statut + type +
+ * fluide + année + compteur. Les listes ne proposent que des valeurs
+ * réellement présentes (optionsDisponibles).
+ * @param {Array<object>} mouvements
+ * @returns {string} HTML
+ */
+function barreFiltres(mouvements) {
+  const options = optionsDisponibles(mouvements);
+  return STYLE_FILTRES
+    + '<div class="mouvements-barre">'
+    + '<div class="filtre-recherche">'
+    + '<input type="search" id="filtre-texte" '
+    + 'placeholder="Rechercher (machine, n° CERFA, technicien, fluide…)" '
+    + 'aria-label="Rechercher un mouvement"></div>'
+    + '<select id="filtre-statut" aria-label="Filtrer par statut">'
+    + optionsFiltre('Tous les statuts', STATUTS_FILTRE) + '</select>'
+    + '<select id="filtre-type" aria-label="Filtrer par type">'
+    + optionsFiltre('Tous les types', options.types) + '</select>'
+    + '<select id="filtre-fluide" aria-label="Filtrer par fluide">'
+    + optionsFiltre('Tous les fluides',
+        options.fluides.map(function (f) { return { valeur: f, libelle: f }; }))
+    + '</select>'
+    + '<select id="filtre-annee" aria-label="Filtrer par année">'
+    + optionsFiltre('Toutes les années',
+        options.annees.map(function (a) { return { valeur: a, libelle: a }; }))
+    + '</select>'
+    + '<button type="button" id="filtre-reinitialiser" class="btn btn-contour btn-petit" hidden>'
+    + 'Réinitialiser</button>'
+    + '<span class="mouvements-compteur" id="filtre-compteur" aria-live="polite"></span>'
+    + '</div>';
 }
 
 /* ============================================================
@@ -497,6 +562,11 @@ export async function render(conteneur, ctx) {
 
   const parId = new Map(mouvements.map((mv) => [mv.id, mv]));
 
+  // Index de filtrage : la logique vit dans le module pur, la vue ne
+  // fait que masquer/afficher les lignes (patron machines.js).
+  const indexParId = new Map(
+    mouvements.map((mv) => [mv.id, indexerMouvement(mv, bouteillesParId)]));
+
   // ---- En-tête : titre, sous-titre, bouton d'action principal ----
   const entete = enteteVue({
     titre,
@@ -505,9 +575,10 @@ export async function render(conteneur, ctx) {
       + ICONES.plus + '<span>Nouveau mouvement</span></button>'
   });
 
-  // ---- Corps : tableau des mouvements ou état vide ----
+  // ---- Corps : filtres + tableau des mouvements, ou état vide ----
   const corps = mouvements.length
-    ? tableau({
+    ? barreFiltres(mouvements)
+      + tableau({
         colonnes: [
           { cle: 'date',    libelle: 'Date' },
           { cle: 'machine', libelle: 'Machine' },
@@ -519,10 +590,61 @@ export async function render(conteneur, ctx) {
         ],
         lignesHtml: mouvements.map((mv) => ligneMouvement(mv, bouteillesParId))
       })
+      + '<div class="carte mouvements-aucun" id="filtre-aucun" hidden>'
+      + 'Aucun mouvement ne correspond aux filtres.</div>'
     : etatVide();
 
   // Insertion unique dans le conteneur
   conteneur.innerHTML = entete + corps;
+
+  // ---- Filtres : masque/affiche les lignes, compteur, réinitialisation ----
+  if (mouvements.length) {
+    const champs = {
+      texte: conteneur.querySelector('#filtre-texte'),
+      statut: conteneur.querySelector('#filtre-statut'),
+      type: conteneur.querySelector('#filtre-type'),
+      fluide: conteneur.querySelector('#filtre-fluide'),
+      annee: conteneur.querySelector('#filtre-annee')
+    };
+    const boutonReinitialiser = conteneur.querySelector('#filtre-reinitialiser');
+    const compteur = conteneur.querySelector('#filtre-compteur');
+    const messageAucun = conteneur.querySelector('#filtre-aucun');
+    const lignes = conteneur.querySelectorAll('tbody tr[data-id]');
+
+    function appliquerFiltres() {
+      const criteres = {
+        texte: champs.texte.value,
+        statut: champs.statut.value,
+        type: champs.type.value,
+        fluide: champs.fluide.value,
+        annee: champs.annee.value
+      };
+      const actif = Object.values(criteres).some((v) => String(v).trim() !== '');
+      let visibles = 0;
+      lignes.forEach(function (ligne) {
+        const indexe = indexParId.get(ligne.dataset.id);
+        const ok = !indexe || correspond(indexe, criteres);
+        ligne.style.display = ok ? '' : 'none';
+        if (ok) visibles += 1;
+      });
+      compteur.textContent = actif
+        ? visibles + ' sur ' + mouvements.length
+        : mouvements.length + ' mouvement' + (mouvements.length > 1 ? 's' : '');
+      boutonReinitialiser.hidden = !actif;
+      messageAucun.hidden = visibles !== 0;
+    }
+
+    champs.texte.addEventListener('input', appliquerFiltres);
+    [champs.statut, champs.type, champs.fluide, champs.annee].forEach(function (s) {
+      s.addEventListener('change', appliquerFiltres);
+    });
+    boutonReinitialiser.addEventListener('click', function () {
+      Object.values(champs).forEach(function (champ) { champ.value = ''; });
+      appliquerFiltres();
+      champs.texte.focus();
+    });
+    appliquerFiltres();
+  }
 
   // ---- Écouteurs (délégation unique : le routeur crée un conteneur neuf) ----
   conteneur.addEventListener('click', async function (evenement) {
