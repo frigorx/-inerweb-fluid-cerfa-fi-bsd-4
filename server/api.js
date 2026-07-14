@@ -1671,12 +1671,23 @@ const HANDLERS = {
       throw new Error(`Client / détenteur introuvable : ${d.clientId}.`);
     }
 
-    // Code lisible : M7, M8… d'après le plus grand code existant (COMPTEUR).
-    const maxCode = plusGrandCode('machines', 'code_interne', /^M/);
+    // Code lisible : fourni par l'appelant (structuré « JR-CF-001 »,
+    // normalisé + unicité), sinon repli compteur hérité M7, M8…
+    let code;
+    if (d.code !== undefined && d.code !== null && String(d.code).trim() !== '') {
+      code = normaliserCodeMachine(d.code);
+      const erreur = validerCodeMachine(code);
+      if (erreur) throw new Error(erreur);
+      if (codeMachineDejaPris(code, null)) {
+        throw new Error(`Code machine déjà utilisé : ${code}.`);
+      }
+    } else {
+      code = `M${plusGrandCode('machines', 'code_interne', /^M/) + 1}`;
+    }
 
     const machine = {
       id: db.generateId('MAC'),
-      code: `M${maxCode + 1}`,
+      code,
       designation: String(d.designation).trim(),
       type: d.type ?? null,
       marque: d.marque ?? null,
@@ -1718,6 +1729,20 @@ const HANDLERS = {
     if (d.fluide !== undefined && !fluideConnu(d.fluide)) {
       throw new Error(`Fluide inconnu au référentiel : ${d.fluide}.`);
     }
+    // Code lisible modifiable (renommer « M1 » en « JR-CF-001 ») :
+    // normalisé, validé, unique. Les libellés dénormalisés des écritures
+    // scellées (machine_label) restent figés, par principe.
+    let ancienCode = null;
+    let nouveauCode = machine.code;
+    if (d.code !== undefined) {
+      const code = normaliserCodeMachine(d.code);
+      const erreur = validerCodeMachine(code);
+      if (erreur) throw new Error(erreur);
+      if (codeMachineDejaPris(code, id)) {
+        throw new Error(`Code machine déjà utilisé : ${code}.`);
+      }
+      if (code !== machine.code) { ancienCode = machine.code; nouveauCode = code; }
+    }
     const CHAMPS = ['designation', 'type', 'marque', 'modele', 'numSerie',
       'fluide', 'chargeNominaleKg', 'chargeActuelleKg', 'clientId',
       'localisation', 'siteLabel', 'statut', 'detectionPermanente',
@@ -1726,11 +1751,14 @@ const HANDLERS = {
     for (const champ of CHAMPS) {
       if (d[champ] !== undefined) patch[champ] = d[champ];
     }
+    if (ancienCode) patch.code = nouveauCode;
     return muter(() => {
       majParId('machines', id, mapping.versSql('machines', patch));
       // Ordre de saisie de l'appelant, comme le DemoStore.
-      journaliser(d.operateur, 'MODIFICATION_MACHINE', machine.code,
-        `Champs : ${Object.keys(d).filter((c) => CHAMPS.includes(c)).join(', ')}`);
+      const champsModifies = Object.keys(d).filter((c) => CHAMPS.includes(c));
+      if (ancienCode) champsModifies.unshift(`code ${ancienCode} → ${nouveauCode}`);
+      journaliser(d.operateur, 'MODIFICATION_MACHINE', nouveauCode,
+        `Champs : ${champsModifies.join(', ')}`);
       return lireMachine(id);
     });
   },
@@ -4144,6 +4172,34 @@ function plusGrandCode(table, colonne, prefixe) {
     if (Number.isFinite(n) && n > max) max = n;
   }
   return max;
+}
+
+/**
+ * Code machine lisible — MIROIR EXACT de v8/js/data/code-machine.js
+ * (le serveur est CommonJS, le front ESM : littéraux dupliqués, motif
+ * habilitations/sentinelle). Toute évolution se fait DES DEUX CÔTÉS.
+ */
+function normaliserCodeMachine(code) {
+  return String(code || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toUpperCase()
+    .replace(/\s+/g, '');
+}
+
+function validerCodeMachine(code) {
+  if (!code) return 'Code machine vide.';
+  if (code.length > 24) return 'Code machine trop long (24 caractères maximum).';
+  if (!/^[A-Z0-9][A-Z0-9-]*$/.test(code)) {
+    return 'Code machine invalide : lettres, chiffres et tirets seulement.';
+  }
+  return null;
+}
+
+/** Vrai si un code machine normalisé est déjà porté par une AUTRE machine. */
+function codeMachineDejaPris(code, idExclu) {
+  const lignes = db.all('SELECT id, code_interne FROM machines');
+  return lignes.some((l) => l.id !== idExclu
+    && normaliserCodeMachine(l.code_interne) === code);
 }
 
 /** Nombre de tentatives avant d'abandonner un tirage de code public. */

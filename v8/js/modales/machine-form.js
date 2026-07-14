@@ -6,6 +6,8 @@
 
 import { modale, toast } from '../views/communs.js';
 import { esc, nombreFr } from '../core/utils.js';
+import { familleDuType, codeSite, genererCodeMachine, normaliserCodeMachine, validerCodeMachine }
+  from '../data/code-machine.js';
 
 // Types de machine proposés au choix (libellés métier, valeurs libres en base)
 const TYPES_MACHINE = [
@@ -74,11 +76,22 @@ function gabaritFormulaire(machine, fluides, clients) {
     + '<span class="champ-erreur" hidden></span>'
     + '</div>'
 
+    + '<div class="champ" data-champ="code">'
+    + '<label for="mf-code">Code machine</label>'
+    + '<input type="text" id="mf-code" name="code" maxlength="24" '
+    + 'value="' + esc(machine.code || '') + '" placeholder="Ex. JR-CF-001">'
+    + '<span class="champ-aide" style="display:block;margin-top:4px;font-size:12px;'
+    + 'font-weight:400;text-transform:none;letter-spacing:normal;color:var(--texte-2);">'
+    + 'Identifiant atelier lisible (site-famille-numéro). Proposé automatiquement, modifiable.'
+    + '</span>'
+    + '<span class="champ-erreur" hidden></span>'
+    + '</div>'
+    + '</div>'
+
     + '<div class="champ" data-champ="fluide">'
     + '<label for="mf-fluide">Fluide *</label>'
     + '<select id="mf-fluide" name="fluide">' + optionsFluides + '</select>'
     + '<span class="champ-erreur" hidden></span>'
-    + '</div>'
     + '</div>'
 
     + '<div class="grille-form-2">'
@@ -182,14 +195,15 @@ function effacerErreur(racine, nomChamp) {
  * Valide le formulaire en direct. Retourne les valeurs si tout est correct,
  * sinon affiche les erreurs de champ et retourne null.
  * @param {HTMLElement} racine
+ * @param {boolean} enModification — en modification, le code machine est obligatoire
  * @returns {object|null}
  */
-function validerFormulaire(racine) {
+function validerFormulaire(racine, enModification) {
   const form = racine.querySelector('#form-machine');
   const donnees = new FormData(form);
   let valide = true;
 
-  ['designation', 'type', 'fluide', 'chargeNominaleKg', 'chargeActuelleKg'].forEach(function (nom) {
+  ['designation', 'type', 'fluide', 'chargeNominaleKg', 'chargeActuelleKg', 'code'].forEach(function (nom) {
     effacerErreur(racine, nom);
   });
 
@@ -230,6 +244,20 @@ function validerFormulaire(racine) {
     valide = false;
   }
 
+  // Code machine : obligatoire en modification, facultatif en création
+  // (un code vide en création est complété par le store, qui hérite « M# »).
+  const codeBrut = String(donnees.get('code') || '').trim();
+  if (enModification && !codeBrut) {
+    marquerErreur(racine, 'code', 'Le code machine est obligatoire.');
+    valide = false;
+  } else if (codeBrut) {
+    const erreurCode = validerCodeMachine(normaliserCodeMachine(codeBrut));
+    if (erreurCode) {
+      marquerErreur(racine, 'code', erreurCode);
+      valide = false;
+    }
+  }
+
   if (!valide) return null;
 
   const marque = String(donnees.get('marque') || '').trim();
@@ -242,6 +270,7 @@ function validerFormulaire(racine) {
   return {
     designation: designation,
     type: type,
+    code: codeBrut,
     marque: marque || null,
     modele: modele || null,
     numSerie: numSerie || null,
@@ -270,10 +299,13 @@ function validerFormulaire(racine) {
 export async function ouvrirFormMachine(ctx, machineId = null, preset = null) {
   const enModification = Boolean(machineId);
 
-  const [machines, fluides, clients] = await Promise.all([
-    enModification ? ctx.store.getMachines() : Promise.resolve([]),
+  // machines + établissement chargés dans tous les cas : nécessaires à la
+  // proposition automatique de code machine (genererCodeMachine) en création.
+  const [machines, fluides, clients, etablissement] = await Promise.all([
+    ctx.store.getMachines(),
     ctx.store.getFluides(),
-    ctx.store.getClients()
+    ctx.store.getClients(),
+    ctx.store.getEtablissement()
   ]);
   let utilisateur = null;
   try {
@@ -293,7 +325,15 @@ export async function ouvrirFormMachine(ctx, machineId = null, preset = null) {
 
   // À la création, un pré-réglage optionnel { clientId } présélectionne le
   // détenteur (ouverture depuis la fiche client « Ajouter une machine »).
-  const valeursInitiales = machineExistante || (preset || {});
+  const valeursInitiales = machineExistante || { ...(preset || {}) };
+
+  // Proposition automatique de code machine, en création seulement
+  // (l'utilisateur peut la modifier avant enregistrement).
+  if (!enModification) {
+    const site = codeSite((etablissement && etablissement.raisonSociale) || '');
+    const famille = familleDuType(valeursInitiales.type || '');
+    valeursInitiales.code = genererCodeMachine(machines, site, famille);
+  }
 
   return new Promise(function (resoudre) {
     const { fermer, racine } = modale({
@@ -316,13 +356,33 @@ export async function ouvrirFormMachine(ctx, machineId = null, preset = null) {
     }
 
     // Validation en direct à la saisie / au changement
-    ['mf-designation', 'mf-type', 'mf-fluide', 'mf-charge-nominale', 'mf-charge-actuelle'].forEach(function (id) {
+    ['mf-designation', 'mf-type', 'mf-fluide', 'mf-charge-nominale', 'mf-charge-actuelle', 'mf-code'].forEach(function (id) {
       const champ = racine.querySelector('#' + id);
       if (champ) {
-        champ.addEventListener('input', function () { validerFormulaire(racine); masquerBandeau(); });
-        champ.addEventListener('change', function () { validerFormulaire(racine); masquerBandeau(); });
+        champ.addEventListener('input', function () { validerFormulaire(racine, enModification); masquerBandeau(); });
+        champ.addEventListener('change', function () { validerFormulaire(racine, enModification); masquerBandeau(); });
       }
     });
+
+    // Proposition automatique du code machine (création seulement) : tant que
+    // l'utilisateur n'a pas modifié le champ à la main, on le régénère à
+    // chaque changement de type (la famille dépend du type de machine).
+    if (!enModification) {
+      const champCode = racine.querySelector('#mf-code');
+      const champType = racine.querySelector('#mf-type');
+      let codeTouche = false;
+      if (champCode) {
+        champCode.addEventListener('input', function () { codeTouche = true; });
+      }
+      if (champType && champCode) {
+        champType.addEventListener('change', function () {
+          if (codeTouche) return;
+          const site = codeSite((etablissement && etablissement.raisonSociale) || '');
+          const famille = familleDuType(champType.value);
+          champCode.value = genererCodeMachine(machines, site, famille);
+        });
+      }
+    }
 
     let fermeeParEnregistrement = false;
     // Identifiant de la machine CRÉÉE (reste null en modification / annulation) :
@@ -334,7 +394,7 @@ export async function ouvrirFormMachine(ctx, machineId = null, preset = null) {
     });
 
     racine.querySelector('#mf-enregistrer').addEventListener('click', async function () {
-      const valeurs = validerFormulaire(racine);
+      const valeurs = validerFormulaire(racine, enModification);
       if (!valeurs) return;
 
       const bouton = racine.querySelector('#mf-enregistrer');
@@ -348,10 +408,12 @@ export async function ouvrirFormMachine(ctx, machineId = null, preset = null) {
           });
           toast('Machine modifiée.', 'succes');
         } else {
-          const creee = await ctx.store.createMachine({
-            ...valeurs,
-            operateur: utilisateur?.id
-          });
+          // En création, un code vide n'est pas envoyé : le store hérite
+          // alors du repli compteur (« M# ») plutôt que de recevoir une
+          // chaîne vide (que le store rejetterait comme invalide).
+          const donneesCreation = { ...valeurs, operateur: utilisateur?.id };
+          if (!donneesCreation.code) delete donneesCreation.code;
+          const creee = await ctx.store.createMachine(donneesCreation);
           idMachineCreee = creee && creee.id ? creee.id : null;
           toast('Machine ajoutée.', 'succes');
         }

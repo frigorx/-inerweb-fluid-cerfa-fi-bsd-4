@@ -602,7 +602,7 @@ export async function render(conteneur, ctx) {
 
   conteneur.innerHTML = STYLES_VUE
     + '<a href="#/machines" class="fiche-retour">' + ICONES.grille + '<span>Retour au parc</span></a>'
-    + enteteVue({ titre: machine.designation, sousTitre: 'Code ' + machine.codePublic })
+    + enteteVue({ titre: machine.designation, sousTitre: machine.code + ' · QR ' + machine.codePublic })
     + blocIdentite(machine, fluide)
     + blocChargeIncomplete(machine)
     + blocIntervenant(personnesActives)

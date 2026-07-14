@@ -17,6 +17,7 @@ import { teqCO2, fmtDate, fmtNombre, fmtKgSigne, genId, hasherEcriture,
 import { calculerCadre7 } from '../cerfa/generateur.js';
 // Sentinelle d'alertes persistées : diff pur + formatage (module partagé
 // avec le test unitaire ; le serveur en tient un miroir exact).
+import { normaliserCodeMachine, validerCodeMachine } from './code-machine.js';
 import { calculerTransitions, formaterEpisode, comparerEpisodes, estOuvert }
   from './sentinelle.js';
 // Habilitations F-Gas : référentiels + tri (module pur, miroir serveur).
@@ -1952,15 +1953,27 @@ export function creerDemoStore() {
         throw new Error(`Client / détenteur introuvable : ${d.clientId}.`);
       }
 
-      // Code lisible : M7, M8… d'après le plus grand code existant
-      const maxCode = donnees.machines.reduce((max, m) => {
-        const n = Number(String(m.code || '').replace(/^M/, ''));
-        return Number.isFinite(n) ? Math.max(max, n) : max;
-      }, 0);
+      // Code lisible : fourni par l'appelant (structuré « JR-CF-001 »,
+      // normalisé + unicité), sinon repli compteur hérité M7, M8…
+      let code;
+      if (d.code !== undefined && d.code !== null && String(d.code).trim() !== '') {
+        code = normaliserCodeMachine(d.code);
+        const erreur = validerCodeMachine(code);
+        if (erreur) throw new Error(erreur);
+        if (donnees.machines.some((m) => normaliserCodeMachine(m.code) === code)) {
+          throw new Error(`Code machine déjà utilisé : ${code}.`);
+        }
+      } else {
+        const maxCode = donnees.machines.reduce((max, m) => {
+          const n = Number(String(m.code || '').replace(/^M/, ''));
+          return Number.isFinite(n) ? Math.max(max, n) : max;
+        }, 0);
+        code = `M${maxCode + 1}`;
+      }
 
       const machine = {
         id: genId('mac'),
-        code: `M${maxCode + 1}`,
+        code,
         designation: String(d.designation).trim(),
         type: d.type ?? null,
         marque: d.marque ?? null,
@@ -1997,6 +2010,20 @@ export function creerDemoStore() {
       if (d.fluide !== undefined && !indexFluides().has(d.fluide)) {
         throw new Error(`Fluide inconnu au référentiel : ${d.fluide}.`);
       }
+      // Code lisible modifiable (renommer « M1 » en « JR-CF-001 ») :
+      // normalisé, validé, unique. Les libellés dénormalisés des
+      // écritures scellées (machineLabel) restent figés, par principe.
+      let ancienCode = null;
+      if (d.code !== undefined) {
+        const code = normaliserCodeMachine(d.code);
+        const erreur = validerCodeMachine(code);
+        if (erreur) throw new Error(erreur);
+        if (donnees.machines.some((m) => m.id !== machine.id
+            && normaliserCodeMachine(m.code) === code)) {
+          throw new Error(`Code machine déjà utilisé : ${code}.`);
+        }
+        if (code !== machine.code) { ancienCode = machine.code; machine.code = code; }
+      }
       const CHAMPS = ['designation', 'type', 'marque', 'modele', 'numSerie',
         'fluide', 'chargeNominaleKg', 'chargeActuelleKg', 'clientId',
         'localisation', 'siteLabel', 'statut', 'detectionPermanente',
@@ -2004,8 +2031,10 @@ export function creerDemoStore() {
       for (const champ of CHAMPS) {
         if (d[champ] !== undefined) machine[champ] = d[champ];
       }
+      const champsModifies = Object.keys(d).filter((c) => CHAMPS.includes(c));
+      if (ancienCode) champsModifies.unshift(`code ${ancienCode} → ${machine.code}`);
       journaliser(d.operateur, 'MODIFICATION_MACHINE', machine.code,
-        `Champs : ${Object.keys(d).filter((c) => CHAMPS.includes(c)).join(', ')}`);
+        `Champs : ${champsModifies.join(', ')}`);
       persisterEtNotifier();
       return copier(machine);
     },

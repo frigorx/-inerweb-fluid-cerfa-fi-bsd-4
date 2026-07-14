@@ -2,6 +2,32 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🏷️ Code machine lisible structuré SITE-FAMILLE-NUMÉRO (14/07)
+Brique produit n°1 de la série post-B2 (décision Franck 07/07) : un identifiant humain
+« JR-CF-001 » remplace les compteurs « M1/M2 » à la création — le `code_public` opaque
+des QR reste DISTINCT et inchangé.
+- **Module pur `v8/js/data/code-machine.js`** : `familleDuType` (Chambre froide → CF,
+  Vitrine → VR, PAC → PC, Monosplit → MS, Multisplit → MM, Centrale → CE, défaut MA),
+  `codeSite` (initiales des mots significatifs de la raison sociale — « Lycée Jacques
+  Raynaud » → JR, mots vides scolaires ignorés, replis sûrs), `genererCodeMachine`
+  (prochain numéro libre PAR préfixe, 3 chiffres), `normaliserCodeMachine` (majuscules,
+  accents dépouillés, espaces retirés) et `validerCodeMachine` (1-24 caractères,
+  lettres/chiffres/tirets — les codes hérités « M1 » restent valides). Miroir partiel
+  CommonJS dans `server/api.js` (motif habilitations/sentinelle).
+- **`createMachine` accepte un `code` fourni** (normalisé + unicité insensible à la
+  casse + format, erreurs françaises), repli compteur hérité `M{n}` sans code — AUCUNE
+  machine existante n'est renommée d'office.
+- **`updateMachine` permet de renommer** (mêmes gardes, unicité hors soi-même) ; le
+  renommage est JOURNALISÉ « code ancien → nouveau ». Les libellés dénormalisés des
+  écritures scellées (`machineLabel`) restent figés, par principe d'opposabilité.
+- **Formulaire machine** : champ « Code machine » proposé automatiquement en création
+  (site déduit de l'établissement + famille du type choisi), modifiable, validé en
+  direct ; pré-rempli en modification. **Fiche machine** : le code lisible passe en
+  tête du sous-titre, le code QR opaque reste visible en second.
+- Tests : **`test-code-machine.mjs` 32/0 demo + local** (module pur, parité création/
+  unicité/format/repli/renommage/journal), suite DOUBLÉE au lanceur — **TOUT VERT,
+  62 exécutions**.
+
 ### 🎫 Habilitations F-Gas · Phase 3 « conseil » — alertes d'échéance d'aptitude (14/07)
 **LE CHANTIER B2 EST SOLDÉ** (Phases 1, 2a, 2b briques 1-4, dossier d'audit, Phase 3
 en mode CONSEIL — le blocage dur du mode Officiel reste un choix ultérieur de Franck).
