@@ -1,0 +1,140 @@
+// Tests UNITAIRES du moteur de CONSEIL verifierDroitIntervention (module pur).
+// Aucun store, aucune horloge. Tourne une seule fois (non doublé).
+// Matrice §2 validée fonctionnellement par Franck (cas Bachir/Pierre).
+
+import {
+  verifierDroitIntervention as v,
+  familleDuFluide,
+  operationNormalisee,
+  estIntervenantIdentifiable
+} from './habilitations.js';
+
+let nbOk = 0;
+let nbEchecs = 0;
+function verifier(libelle, condition, detail = '') {
+  if (condition) { nbOk += 1; console.log(`  OK  ${libelle}`); }
+  else { nbEchecs += 1; console.error(`ÉCHEC ${libelle}${detail ? ` — ${detail}` : ''}`); }
+}
+const grav = (e) => v(e).gravite;
+const H = (regime, categorie) => ({ regime, categorie });
+
+// --- A1 / A2 (2025) : opérations + seuils ------------------------
+verifier('A1 · mise en service · HFC · 12 kg → OK',
+  grav({ habilitations: [H('2025', 'A1')], operation: 'MISE_EN_SERVICE', familleFluide: 'HFC', chargeKg: 12 }) === 'OK');
+verifier('A2 · appoint · HFC · 2 kg → CONSEIL (limite 3)',
+  grav({ habilitations: [H('2025', 'A2')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 2 }) === 'CONSEIL');
+verifier('A2 · appoint · HFC · 5 kg → REFUS (> 3 kg)',
+  grav({ habilitations: [H('2025', 'A2')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 5 }) === 'REFUS');
+verifier('A2 · hermétique scellé · 5 kg → CONSEIL (limite 6)',
+  grav({ habilitations: [H('2025', 'A2')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 5, hermetiqueScelle: true }) === 'CONSEIL');
+verifier('A2 · hermétique scellé · 8 kg → REFUS (> 6 kg)',
+  grav({ habilitations: [H('2025', 'A2')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 8, hermetiqueScelle: true }) === 'REFUS');
+
+// --- B (CO2) / C (NH3) : fluide dédié ----------------------------
+verifier('B · appoint · CO2 · 40 kg → OK',
+  grav({ habilitations: [H('2025', 'B')], operation: 'CHARGE_APPOINT', familleFluide: 'CO2', chargeKg: 40 }) === 'OK');
+verifier('B · maintenance · HFC → REFUS (fluide hors champ)',
+  grav({ habilitations: [H('2025', 'B')], operation: 'MAINTENANCE', familleFluide: 'HFC' }) === 'REFUS');
+verifier('C · maintenance · NH3 → OK',
+  grav({ habilitations: [H('2025', 'C')], operation: 'MAINTENANCE', familleFluide: 'NH3' }) === 'OK');
+verifier('C · maintenance · CO2 → REFUS (fluide hors champ)',
+  grav({ habilitations: [H('2025', 'C')], operation: 'MAINTENANCE', familleFluide: 'CO2' }) === 'REFUS');
+
+// --- D (récupération seule) — CAS PIERRE -------------------------
+verifier('D · récupération · HFC · 2 kg → CONSEIL (dans la limite)',
+  grav({ habilitations: [H('2025', 'D')], operation: 'RECUPERATION_MAINTENANCE', familleFluide: 'HFC', chargeKg: 2 }) === 'CONSEIL');
+{
+  const pierre = v({ habilitations: [H('2025', 'D')], operation: 'RECUPERATION_DEMANTELEMENT', familleFluide: 'HFC', chargeKg: 10 });
+  verifier('PIERRE : D · démantèlement · 10 kg → REFUS', pierre.gravite === 'REFUS');
+  verifier('PIERRE : message exact « contient 10 kg, vous ne pouvez pas »',
+    /limitée à 3 kg/.test(pierre.conseil) && /contient 10 kg, vous ne pouvez pas/.test(pierre.conseil),
+    pierre.conseil);
+}
+verifier('D · appoint · HFC → REFUS (récupération seule)',
+  grav({ habilitations: [H('2025', 'D')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC' }) === 'REFUS');
+
+// --- E (étanchéité seule) — CAS BACHIR ---------------------------
+{
+  const bachir = v({ habilitations: [H('2025', 'E')], operation: null, familleFluide: 'HFC' });
+  verifier('BACHIR : E · synthèse · HFC → CONSEIL', bachir.gravite === 'CONSEIL');
+  verifier('BACHIR : message exact « Contrôle d’étanchéité uniquement »',
+    bachir.motif === 'Contrôle d’étanchéité uniquement'
+    && /pas de manipulation du circuit/.test(bachir.conseil), bachir.conseil);
+}
+verifier('E · contrôle d’étanchéité · HFC → OK',
+  grav({ habilitations: [H('2025', 'E')], operation: 'CONTROLE_ETANCHEITE', familleFluide: 'HFC' }) === 'OK');
+verifier('E · appoint · HFC → REFUS (étanchéité seule)',
+  grav({ habilitations: [H('2025', 'E')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC' }) === 'REFUS');
+
+// --- V (véhicules) ----------------------------------------------
+verifier('V · mise en service · VEHICULE → OK',
+  grav({ habilitations: [H('2025', 'V')], operation: 'MISE_EN_SERVICE', familleFluide: 'VEHICULE' }) === 'OK');
+verifier('V · maintenance · HFC → REFUS (V ne couvre que le véhicule)',
+  grav({ habilitations: [H('2025', 'V')], operation: 'MAINTENANCE', familleFluide: 'HFC' }) === 'REFUS');
+verifier('A1 · mise en service · VEHICULE → REFUS (catégorie V requise)',
+  grav({ habilitations: [H('2025', 'A1')], operation: 'MISE_EN_SERVICE', familleFluide: 'VEHICULE' }) === 'REFUS');
+
+// --- Ancien régime 2008 (via correspondance) --------------------
+verifier('I(2008) · mise en service · HFC · 12 kg → OK (traité A1)',
+  grav({ habilitations: [H('2008', 'I')], operation: 'MISE_EN_SERVICE', familleFluide: 'HFC', chargeKg: 12 }) === 'OK');
+verifier('III(2008) · récupération · HFC · 10 kg → REFUS (> 3 kg)',
+  grav({ habilitations: [H('2008', 'III')], operation: 'RECUPERATION_MAINTENANCE', familleFluide: 'HFC', chargeKg: 10 }) === 'REFUS');
+verifier('IV(2008) · synthèse · HFC → CONSEIL (étanchéité uniquement)',
+  grav({ habilitations: [H('2008', 'IV')], operation: null, familleFluide: 'HFC' }) === 'CONSEIL');
+
+// --- MENTIONS de formation complémentaire par fluide ------------
+verifier('IV(2008) + mention CO2 · contrôle · CO2 → OK (fluide étendu, étanchéité)',
+  grav({ habilitations: [H('2008', 'IV')], mentions: ['CO2'], operation: 'CONTROLE', familleFluide: 'CO2' }) === 'OK');
+verifier('IV(2008) + mention CO2 · appoint · CO2 → REFUS (fluide OK mais étanchéité seule)',
+  grav({ habilitations: [H('2008', 'IV')], mentions: ['CO2'], operation: 'CHARGE_APPOINT', familleFluide: 'CO2' }) === 'REFUS');
+verifier('I(2008) + mention CO2 · appoint · CO2 · 20 kg → OK (ops via corr. + fluide via mention)',
+  grav({ habilitations: [H('2008', 'I')], mentions: ['CO2'], operation: 'CHARGE_APPOINT', familleFluide: 'CO2', chargeKg: 20 }) === 'OK');
+verifier('I(2008) sans mention · maintenance · CO2 → REFUS (fluide hors champ)',
+  grav({ habilitations: [H('2008', 'I')], operation: 'MAINTENANCE', familleFluide: 'CO2' }) === 'REFUS');
+verifier('I(2008) sans mention · maintenance · HC → REFUS (natif 2008 = HFC/HFO seul)',
+  grav({ habilitations: [H('2008', 'I')], operation: 'MAINTENANCE', familleFluide: 'HC' }) === 'REFUS');
+verifier('I(2008) + mention HC · maintenance · HC → OK',
+  grav({ habilitations: [H('2008', 'I')], mentions: ['HC'], operation: 'MAINTENANCE', familleFluide: 'HC' }) === 'OK');
+verifier('A1(2025) sans mention · maintenance · HC → OK (HC natif en 2025)',
+  grav({ habilitations: [H('2025', 'A1')], operation: 'MAINTENANCE', familleFluide: 'HC' }) === 'OK');
+verifier('E(2025) + mention CO2 · synthèse · CO2 → CONSEIL (étanchéité, sur CO₂)',
+  grav({ habilitations: [H('2025', 'E')], mentions: ['CO2'], operation: null, familleFluide: 'CO2' }) === 'CONSEIL');
+
+// --- Cumul de catégories ----------------------------------------
+verifier('A2 + D · récupération · HFC · 5 kg → REFUS (les deux limités à 3 kg)',
+  grav({ habilitations: [H('2025', 'A2'), H('2025', 'D')], operation: 'RECUPERATION_MAINTENANCE', familleFluide: 'HFC', chargeKg: 5 }) === 'REFUS');
+verifier('A1 + E · maintenance · HFC · 12 kg → OK (A1 illimité domine)',
+  grav({ habilitations: [H('2025', 'A1'), H('2025', 'E')], operation: 'MAINTENANCE', familleFluide: 'HFC', chargeKg: 12 }) === 'OK');
+
+// --- Dérivation de famille + robustesse -------------------------
+verifier('B · appoint · fluide R-744 sans familleFluide → OK (dérivée CO2)',
+  grav({ habilitations: [H('2025', 'B')], operation: 'CHARGE_APPOINT', fluide: 'R-744', chargeKg: 5 }) === 'OK');
+verifier('aucune habilitation → REFUS « Aucune habilitation enregistrée »',
+  v({ habilitations: [] }).motif === 'Aucune habilitation enregistrée');
+verifier('mention seule (sans habilitation) → REFUS',
+  grav({ habilitations: [], mentions: ['CO2'], operation: 'MAINTENANCE', familleFluide: 'CO2' }) === 'REFUS');
+verifier('entrée vide {} → REFUS (robustesse)', grav({}) === 'REFUS');
+verifier('D · TRANSFERT · HFC · 2 kg → CONSEIL (transfert = récupération)',
+  grav({ habilitations: [H('2025', 'D')], operation: 'TRANSFERT', familleFluide: 'HFC', chargeKg: 2 }) === 'CONSEIL');
+verifier('opération inconnue → traitée MAINTENANCE (prudent)',
+  operationNormalisee('XYZ_INCONNU') === 'MAINTENANCE');
+
+// --- Déterminisme -----------------------------------------------
+{
+  const e = { habilitations: [H('2025', 'A2')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 5 };
+  verifier('déterminisme : deux appels identiques → sorties identiques',
+    JSON.stringify(v(e)) === JSON.stringify(v(e)));
+}
+
+// --- Identifiabilité (règle admin) ------------------------------
+verifier('identifiable : actif + 1 habilitation active → oui',
+  estIntervenantIdentifiable({ actif: true }, [H('2025', 'A1')], []) === true);
+verifier('identifiable : inactif → non',
+  estIntervenantIdentifiable({ actif: false }, [H('2025', 'A1')], []) === false);
+verifier('identifiable : actif mais 0 habilitation / 0 mention → non',
+  estIntervenantIdentifiable({ actif: true }, [], []) === false);
+verifier('identifiable : actif + mention seule → oui',
+  estIntervenantIdentifiable({ actif: true }, [], [{ fluideMention: 'CO2' }]) === true);
+
+console.log(`\n${nbOk} OK, ${nbEchecs} échec(s).`);
+if (nbEchecs > 0) process.exit(1);

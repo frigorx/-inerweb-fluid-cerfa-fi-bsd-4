@@ -2,6 +2,31 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🎫 Habilitations F-Gas · Phase 2b (brique 2) — moteur de CONSEIL (14/07)
+Le cœur fonctionnel voulu par Franck : `verifierDroitIntervention` — dit, pour un intervenant
+et une machine, ce qu'il peut / ne peut pas faire et **pourquoi**. **Conseil, jamais blocage**
+(`gravite: 'REFUS'` = « vous ne pouvez pas », un conseil fort, pas un verrou ; le blocage dur =
+Phase 3). Conçu par workflow (3 angles + synthèse), matrice §2 validée fonctionnellement par
+Franck via deux cas concrets.
+- **Module pur `v8/js/data/habilitations.js`** (fonction `verifierDroitIntervention` + helpers
+  `familleDuFluide`, `operationNormalisee`, `estIntervenantIdentifiable`, constantes
+  `FLUIDES_MENTION`/seuils). Déterministe, sans horloge (reçoit les habilitations DÉJÀ actives).
+- **Matrice encodée** : A1 = tout · A2 = tout < 3 kg (6 si hermétique scellé) · B = CO₂ · C = NH₃ ·
+  D = récupération seule < 3 kg · E = étanchéité seule · V = véhicules. Correspondance ancien→nouveau
+  (I/II→A1, III→D, IV→E). **Mentions de formation complémentaire** par fluide (CO₂/NH₃/HC) qui
+  étendent l'axe fluide (un ancien I-IV + stage CO₂ peut intervenir sur CO₂, dans les limites de sa
+  catégorie). 2008 natif = HFC/HFO seul.
+- **Cas de référence reproduits au message exact** : Bachir (E) → « Contrôle d'étanchéité uniquement :
+  pas de manipulation du circuit » ; Pierre (D, récup ≤ 3 kg) sur 10 kg → « Récupération limitée à
+  3 kg : cette installation en contient 10 kg, vous ne pouvez pas ».
+- Tests : `test-habilitations-moteur.mjs` **44/0** (toutes catégories, seuils, hermétique, mentions,
+  correspondance 2008, cumul, dérivation de famille, robustesse entrée vide, déterminisme,
+  identifiabilité). **57 exécutions TOUT VERT.** Pure fonction (pas de méthode de contrat) : zéro
+  impact parité, zéro migration.
+- **Reste de la Phase 2b** (design complet en réserve) : brique 1 = table `mentions_habilitation`
+  (saisie des mentions) ; briques 3-4 = écran « qui intervient ? » (encart fiche machine + panneau
+  wizard) — reportées le temps que l'outillage navigateur (en panne) permette le contrôle à l'écran.
+
 ### 🎫 Habilitations F-Gas · Phase 2a — saisie & affichage (14/07)
 Interface de gestion des habilitations d'une personne, par-dessus le modèle de données de
 la Phase 1. **Saisie et affichage UNIQUEMENT — aucun verdict, aucun blocage** (le moteur
