@@ -44,6 +44,19 @@ Un seul code, trois façons de l'utiliser. Le mode est déterminé au démarrage
 
 ## Licence et auteur
 
-Projet pédagogique diffusé gratuitement aux lycées professionnels froid et climatisation, sous [licence MIT](LICENSE).
+**Gratuit pour l'enseignement, payant pour le commerce.**
+
+- **Lycées, CFA, universités, administrations, associations** : usage, copie, modification et
+  diffusion **libres et gratuits**. La licence le dit explicitement : l'usage par une institution
+  éducative est un usage permis, quelle que soit sa source de financement.
+- **Usage commercial** (société de froid et climatisation, bureau d'études, organisme de formation
+  privé à but lucratif, éditeur de logiciel…) : une licence distincte est nécessaire —
+  écrire à fr.henninot@gmail.com.
+
+Licence : [PolyForm Noncommercial 1.0.0](LICENSE). Les bibliothèques embarquées (PDF.js, pdf-lib,
+qrcodejs) restent sous **leur propre licence** : voir [LICENCES-TIERCES.md](LICENCES-TIERCES.md).
+
+> Les versions publiées avant le 14/07/2026 l'ont été sous licence MIT. Cette licence-là reste
+> valable pour ces versions : le changement vaut pour la suite.
 
 Frédéric Henninot — Lycée professionnel Jacques Raynaud, Marseille.

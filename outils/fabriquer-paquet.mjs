@@ -110,8 +110,10 @@ fs.cpSync(path.join(RACINE, 'v8'), path.join(SORTIE, 'v8'),
 console.log('  [ok] v8/ (sans les suites de test)');
 
 // 3) Les fichiers d'accompagnement (best-effort : on saute ceux absents).
+// LICENCES-TIERCES.md est OBLIGATOIRE dans le paquet : la licence Apache 2.0 de
+// PDF.js exige que ses notices voyagent avec toute redistribution du logiciel.
 const FICHIERS = ['lancer-inerweb.bat', 'cerfa_15497-04_officiel.pdf',
-  '.env.example', 'LICENSE'];
+  '.env.example', 'LICENSE', 'LICENCES-TIERCES.md'];
 for (const f of FICHIERS) {
   const src = path.join(RACINE, f);
   if (fs.existsSync(src)) {

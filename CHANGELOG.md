@@ -2,6 +2,27 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### ⚖️ LICENCE — gratuit pour l'enseignement, payant pour le commerce (14/07)
+Décision de Franck avant la diffusion : **gratuit pour les lycées, payant pour les entreprises**.
+Une licence « maison » aurait été un piège juridique — on prend une licence **prête, rédigée par
+des juristes**, qui dit exactement cela.
+- **`LICENSE`** : passage de MIT à **PolyForm Noncommercial 1.0.0** (texte officiel intégral, tiré
+  de polyformproject.org). Sa section « Noncommercial Organizations » vise **explicitement** les
+  institutions éducatives et gouvernementales, *quelle que soit leur source de financement* : un
+  lycée, un CFA, une université sont donc gratuits **de droit**. L'usage commercial (société de
+  froid, bureau d'études, organisme de formation privé, éditeur) exige une licence distincte.
+  Préambule en français en tête du fichier, pour que ce soit lisible sans juriste.
+- ⚠️ **Le passé reste MIT** : le dépôt est PUBLIC depuis des mois et une licence MIT accordée est
+  **irrévocable**. Les versions publiées avant ce jour restent utilisables sous MIT par qui les a
+  récupérées. Le changement vaut **pour la suite** — c'est dit noir sur blanc dans le README.
+- **`LICENCES-TIERCES.md` (nouveau, obligation légale non remplie jusqu'ici)** : le dépôt embarque
+  **PDF.js (Mozilla, Apache 2.0)**, pdf-lib (MIT, + `tslib` © Microsoft, Apache 2.0) et qrcodejs
+  (MIT). La licence Apache 2.0 **exige** que ses notices accompagnent toute redistribution. Le
+  fichier crédite chaque bibliothèque, son auteur, sa licence et son rôle.
+- **`outils/fabriquer-paquet.mjs`** embarque désormais `LICENCES-TIERCES.md` dans le paquet
+  portable : sans lui, chaque copie distribuée aurait été en infraction.
+- Paquet portable vérifié : **92,6 Mo** (dont 88 Mo de `node.exe` embarqué) — rien à installer.
+
 ### 🔐 VERROUS D'AUTORISATION — le filet avant la diffusion (14/07, Lot 1 de l'audit)
 Décision de Franck : le logiciel va être diffusé à d'autres établissements → **il y aura de vrais
 élèves connectés ailleurs**. On verrouille donc les autorisations par des tests AVANT de partir.
