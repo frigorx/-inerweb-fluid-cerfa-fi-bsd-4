@@ -43,11 +43,19 @@ implémentations (démo + local). Démo en ligne fonctionnelle (GitHub Pages `/v
    inchangé). UI tableau de bord (« active depuis » + « J'ai pris connaissance ») + historique
    Conformité. Escalade de niveau tracée (acquittement remis à zéro). Revue adversariale
    0 bloquant. 40/0 + 33/0 demo+local, 53 exécutions vertes, vérifié navigateur.
-5. Code machine lisible structuré `SITE-FAMILLE-NUMERO` (ex. `JR-CF-001`, décision Franck 07/07,
-   remplace `M1/M2` ; le `code_public` opaque du QR reste distinct et inchangé).
-6. Lien intervention → outils utilisés MULTI-outils (aujourd'hui seul le détecteur est lié —
-   le « vrai plus audit ») + blocage par-outil non conforme en mode officiel.
-7. Tableau de bord enrichi.
+5. ~~**Code machine lisible structuré `SITE-FAMILLE-NUMERO`**~~ — **FAIT 14/07 (`5adb7c3`)** :
+   module pur `code-machine.js` (JR-CF-001 proposé automatiquement au formulaire, site déduit
+   de l'établissement + famille du type), createMachine/updateMachine avec unicité, renommage
+   journalisé, fiche machine « code · QR ». 32/0 demo+local, vérifié navigateur.
+6. ~~**Lien intervention → outils MULTI-outils**~~ — **FAIT 14/07 (`b5dfd9c`)** : migration 018
+   `mouvement_outillage`, statut/échéance FIGÉS à la validation + journal chaîné (recoupement),
+   4 triggers anti-forge (re-parentage compris), wizard cases + avertissement CONSEIL, CSV
+   d'audit conditionnel. Contrat 77 (`VERSION_CONTRAT` 3). 26/0 ×2 + migrations 138/0, revue
+   adversariale soldée, vérifié navigateur. ⚠️ Le « blocage par-outil en mode officiel » suit
+   le sort du blocage dur B1 (gaté choix Franck — v1 = CONSEIL assumé).
+7. ~~**Tableau de bord enrichi**~~ — **FAIT 14/07 (`162b086`)** : rôles réels B2 visibles
+   (modale détail + `mouvements.csv` + exécutant sur les lignes du tableau de bord), carte
+   « Conformité » mini feu tricolore. Vérifié navigateur (parcours wizard complet).
 
 ## Briques GATÉES sur la validation réglementaire de Franck
 

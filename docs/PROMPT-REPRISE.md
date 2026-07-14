@@ -22,7 +22,43 @@ attentes. Tu ne t'arrêtes que quand une brique est **finie et testée par toi-m
    (**source de vérité**, entrées les plus récentes en tête), `docs/PLAN-PHASE-2.md`,
    `docs/VISION-V9-V10.md` (la boussole).
 
-## État exact (dernier commit poussé `cf1c3ff`, 14/07/2026)
+## État exact (dernier commit poussé `162b086`, 14/07/2026 après-midi)
+
+**FAIT le 14/07 après-midi — SÉRIE PRODUIT POST-B2 (3 briques) : ⭐ SOLDÉE ⭐**
+> Session ultracode Fable, méthode : carto 1 agent → cœur+tests moi → Sonnet sur l'UI
+> → revue adversariale Opus sur le critique → navigateur (port jetable 8300, parcours
+> wizard COMPLET signature comprise, zéro erreur console). ⚠️ **`docs/CARTE-CODE.md`
+> créée — À LIRE AVANT TOUTE EXPLORATION** (et à tenir à jour à chaque incrément).
+- **Brique 1 — code machine lisible (`5adb7c3`)** : module pur `v8/js/data/code-machine.js`
+  (SITE-FAMILLE-NUMÉRO « JR-CF-001 », site déduit de l'établissement, famille du type,
+  générateur par préfixe), createMachine/updateMachine acceptent/renomment avec unicité
+  (renommage journalisé « ancien → nouveau »), formulaire à proposition automatique,
+  fiche machine « JR-CF-001 · QR xxx ». `test-code-machine.mjs` 32/0 demo+local.
+- **Brique 2 — outils MULTIPLES par intervention (`b5dfd9c`)** : migration 018
+  `mouvement_outillage` (liens déclarés au BROUILLON, statut+échéance de CHAQUE outil
+  FIGÉS à la validation — « la balance était-elle étalonnée CE jour-là ? ») ; 4 triggers
+  anti-forge (liens d'un mouvement figé intouchables + re-parentage interdit, prouvés en
+  SQL brut) ; **journal CHAÎNÉ consigne « outils figés : id=STATUT »** (recoupement d'un
+  export édité — constat BLOQUANT de la revue, soldé) ; invariants d'import français
+  (orphelin/doublon/enum/figeage forgé) ; contrat **76→77** (`getOutilsMouvement`,
+  `VERSION_CONTRAT` 3) ; wizard cases à cocher + avertissement CONSEIL (jamais bloquant) ;
+  modale détail ; `outils-intervention.csv` conditionnel au dossier d'audit.
+  `test-outils-intervention.mjs` 26/0 ×2, migrations 138/0.
+- **Brique 3 — tableau de bord enrichi (`162b086`)** : les rôles réels du B2 enfin
+  VISIBLES (modale détail : Exécuté par / Superviseur / Responsable du registre résolus ;
+  `mouvements.csv` +3 colonnes ; exécutant sur les lignes du tableau de bord) + carte
+  « Conformité » mini feu tricolore (pastille globale + 7 domaines + lien, consolidation
+  `collecterConformite`, zéro règle recalculée). Exports 34/0.
+- **TOUT VERT : 64 exécutions.** Vérifié navigateur de bout en bout : formulaire propose
+  JR-CF-001/JR-MM-001 selon le type, fiche « JR-CF-001 · QR 5MJ1C20 », wizard complet
+  (encart bouteille manquante → M3, cases outils, avertissement « 1 outil non conforme »,
+  récap « 2 outil(s) », signature canvas, validation) → modale détail : « Exécuté par
+  Marc Delorme », « Balance Conforme le 15/01/2027 », « Détecteur Expiré le 10/11/2025 ».
+- ⚠️ Leçon navigateur : en mode démo, `creerStore()` importé dans la console = une
+  2ᵉ instance qui ÉCRASE les données de l'appli à la persistance — toujours passer par
+  l'interface réelle (ou une seule instance) pour vérifier.
+
+## État antérieur (matin du 14/07, dernier commit `cf1c3ff`)
 
 **FAIT le 14/07 — CHANTIER « HABILITATIONS F-Gas » (cœur audit-proof, B2) : ⭐ SOLDÉ ⭐** :
 > Phases 1, 2a, 2b (briques 1-4), dossier d'audit et Phase 3 en mode CONSEIL — toutes
@@ -263,20 +299,24 @@ partageables…), ce qui attend Franck, et les atouts vs concurrence. En résum�
   ⚠️ La **grille réglementaire est RÉGLÉE** (matrice validée fonctionnellement le 14/07) — ne plus
   la lui redemander.
 
-## Prochaine action — NOUVELLE SÉRIE PRODUIT (le chantier habilitations est SOLDÉ)
+## Prochaine action — la série produit post-B2 est SOLDÉE (candidats, au choix de Franck)
 
-Briques produit restantes, sans dépendance à Franck, dans l'ordre convenu :
+1. **Parcours « audit guidé »** (priorité 3 de l'audit croisé GPT, seul vrai trou produit
+   restant non gaté) : cheminement linéaire établissement → personnel → outillage →
+   bouteilles → mouvements → contrôles → déchets/BSFF → balance → export, pour qu'un
+   NON-développeur déroule un audit complet sans se perdre.
+2. **Réserves B2 (petit lot)** : semer des habilitations dans le monde de démo (⚠️ les
+   compléments d'IMPORT restent à VIDE — le piège est documenté au CHANGELOG brique 1
+   mentions) ; anti-doublon UI sur une mention déjà active (le renouvellement reste
+   légitime).
+3. **V1.5 de la feuille de route** : planche d'étiquettes optimisée, mode TP guidé,
+   diagramme enthalpique (intrant FRIGOLO), pont inerWeb Édu…
+⛔ Toujours GATÉ Franck : blocage dur mode Officiel (+ blocage par-outil), relevés élèves
+(RGPD §16.5), Trackdéchets (différé).
 
-1. **Code machine lisible `JR-CF-001`** (identifiant humain par machine, en plus du
-   `code_public` opaque des QR).
-2. **Lien intervention → outils MULTIPLES** (quels outils réglementaires ont servi à
-   quel mouvement — traçabilité d'étalonnage).
-3. **Tableau de bord enrichi** (candidat : y intégrer les rôles réels du B2 —
-   exécutant/superviseur — dans les vues et le `mouvements.csv`).
-
-Méthode inchangée : réglage conseillé annoncé, tests d'abord (`node outils/lancer-tests.mjs`),
-revue adversariale, contrôle navigateur (port jamais utilisé, origine neuve), CHANGELOG +
-commit + push + mémoire.
+Méthode inchangée : réglage conseillé annoncé, `docs/CARTE-CODE.md` AVANT toute exploration,
+tests d'abord (`node outils/lancer-tests.mjs`), revue adversariale sur le critique seulement,
+contrôle navigateur (port jamais utilisé, origine neuve), CHANGELOG + commit + push + mémoire.
 
 ⚠️ À la reprise, `git log` + `git status` d'abord (sessions parallèles possibles).
 
