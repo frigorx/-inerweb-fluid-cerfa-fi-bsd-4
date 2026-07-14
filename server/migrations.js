@@ -89,6 +89,15 @@
  *       intervenir sur le CO₂). Même patron que 16 : cumul/renouvellement
  *       (aucun UNIQUE), jamais supprimée (actif=0 + date_revocation).
  *       Table neuve : aucune colonne sur mouvements, trigger WORM inchangé.
+ *  18 — outils d'intervention (brique produit n°2 post-B2) : table de
+ *       jonction mouvement_outillage = QUELS outils réglementaires ont
+ *       servi à QUEL mouvement (traçabilité d'étalonnage — aujourd'hui
+ *       seul le détecteur du contrôle était lié). Lignes posées au
+ *       BROUILLON (déclaratif), statut + échéance de l'outil FIGÉS à la
+ *       validation du mouvement (opposable, hors empreinte — table
+ *       séparée). Triggers dédiés : une fois le mouvement figé
+ *       (VALIDE/ANNULE), ses liens d'outils ne peuvent plus être créés,
+ *       modifiés ni supprimés. Trigger WORM des mouvements INCHANGÉ.
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -690,6 +699,72 @@ END;`);
                  ON mentions_habilitation (personne_id);`);
       db.exec(`CREATE INDEX IF NOT EXISTS idx_mentions_echeance
                  ON mentions_habilitation (date_fin);`);
+    }
+  },
+
+  18: {
+    nom: 'outils_intervention',
+    appliquer(db) {
+      // Jonction mouvement ↔ outillage (traçabilité d'étalonnage) :
+      // déclarée au brouillon, FIGÉE avec le mouvement. statut_fige /
+      // echeance_figee = l'état de l'outil AU MOMENT de la validation
+      // (la question d'audit : « la balance était-elle étalonnée CE
+      // jour-là ? ») — posés par validerMouvement, dans la même
+      // transaction, AVANT le passage en VALIDE.
+      db.exec(`CREATE TABLE IF NOT EXISTS mouvement_outillage (
+        id               TEXT PRIMARY KEY,
+        etablissement_id TEXT NOT NULL REFERENCES etablissements(id),
+        mouvement_id     TEXT NOT NULL REFERENCES mouvements(id),
+        outillage_id     TEXT NOT NULL REFERENCES outillage(id),
+        statut_fige      TEXT
+            CHECK (statut_fige IS NULL OR
+                   statut_fige IN ('CONFORME','A_VERIFIER','EXPIRE','HORS_SERVICE')),
+        echeance_figee   TEXT,
+        date_creation    TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+      );`);
+      db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_mvt_outillage_unique
+                 ON mouvement_outillage (mouvement_id, outillage_id);`);
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_mvt_outillage_outil
+                 ON mouvement_outillage (outillage_id);`);
+      // Une fois le mouvement figé (VALIDE/ANNULE), ses liens d'outils
+      // sont figés avec lui : ni ajout, ni retouche, ni retrait (sinon
+      // on pourrait forger a posteriori « l'outil était conforme »).
+      db.exec(`CREATE TRIGGER IF NOT EXISTS mvt_outillage_interdire_insert_fige
+        BEFORE INSERT ON mouvement_outillage
+        WHEN (SELECT statut FROM mouvements WHERE id = NEW.mouvement_id)
+             IN ('VALIDE','ANNULE')
+        BEGIN
+          SELECT RAISE(ABORT,
+            'Écriture validée : liens d''outils figés (ajout interdit)');
+        END;`);
+      db.exec(`CREATE TRIGGER IF NOT EXISTS mvt_outillage_interdire_update_fige
+        BEFORE UPDATE ON mouvement_outillage
+        WHEN (SELECT statut FROM mouvements WHERE id = OLD.mouvement_id)
+             IN ('VALIDE','ANNULE')
+          OR (SELECT statut FROM mouvements WHERE id = NEW.mouvement_id)
+             IN ('VALIDE','ANNULE')
+        BEGIN
+          SELECT RAISE(ABORT,
+            'Écriture validée : liens d''outils figés (modification interdite)');
+        END;`);
+      // Un lien ne change JAMAIS de mouvement ni d'outil (le flux légitime
+      // ne met à jour que le figeage) : ferme la forge par re-parentage.
+      db.exec(`CREATE TRIGGER IF NOT EXISTS mvt_outillage_interdire_reparentage
+        BEFORE UPDATE ON mouvement_outillage
+        WHEN NEW.mouvement_id IS NOT OLD.mouvement_id
+          OR NEW.outillage_id IS NOT OLD.outillage_id
+        BEGIN
+          SELECT RAISE(ABORT,
+            'Lien d''outil : mouvement et outil ne sont pas modifiables');
+        END;`);
+      db.exec(`CREATE TRIGGER IF NOT EXISTS mvt_outillage_interdire_delete_fige
+        BEFORE DELETE ON mouvement_outillage
+        WHEN (SELECT statut FROM mouvements WHERE id = OLD.mouvement_id)
+             IN ('VALIDE','ANNULE')
+        BEGIN
+          SELECT RAISE(ABORT,
+            'Écriture validée : liens d''outils figés (suppression interdite)');
+        END;`);
     }
   }
 };

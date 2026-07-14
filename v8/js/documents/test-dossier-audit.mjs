@@ -157,6 +157,43 @@ verifier('l\'empreinte retournée = SHA-256 de l\'archive .zip complète',
   && empreinte === empreinteRecalculee,
   `${empreinte} vs ${empreinteRecalculee}`);
 
+// ---- 12. Brique 2 : outils-intervention.csv (conditionnel) se propage
+// jusqu'au ZIP — toutesLesTables (exports.js) porte toute la logique de
+// condition ; ce module se contente de reprendre les entrées produites,
+// sans code spécifique à ajouter (cf. commentaire de la section 1 ci-dessus).
+{
+  const storeOutils = await creerStore();
+  const fluide = (await storeOutils.getFluides())[0].code;
+  const enseignant = await storeOutils.createPersonne({
+    nom: 'Outils', prenom: 'Dossier', typePersonne: 'ENSEIGNANT'
+  });
+  const machine = await storeOutils.createMachine({
+    designation: 'Machine dossier outils', fluide, chargeNominaleKg: 10
+  });
+  const bouteille = await storeOutils.createBouteille({
+    type: 'NEUVE', fluide, tareKg: 10, masseBruteKg: 20, contenanceMaxKg: 12
+  });
+  const balance = await storeOutils.createOutil({
+    typeOutil: 'BALANCE', marque: 'Sauter', modele: 'FK-50-ZIP',
+    numSerie: 'SN-ZIP-1', prochaineEcheance: '2099-01-01'
+  });
+  const mv = await storeOutils.creerMouvement({
+    type: 'CHARGE_APPOINT', machineId: machine.id, bouteilleSrcId: bouteille.id,
+    peseeAvantKg: 20, peseeApresKg: 18, technicien: 'Dossier Outils',
+    outilsIds: [balance.id]
+  });
+  await storeOutils.soumettreMouvement(mv.id);
+  await storeOutils.validerMouvement(mv.id, enseignant.id);
+
+  const { blob: blobOutils } = await genererDossierAudit(storeOutils, 2026);
+  const octetsOutils = blobOutils instanceof Uint8Array
+    ? blobOutils : new Uint8Array(await blobOutils.arrayBuffer());
+  const { entrees: entreesOutils } = lireZip(octetsOutils);
+  verifier('outils-intervention.csv (conditionnel) se propage jusqu’au ZIP '
+    + 'dès qu’un mouvement validé porte un outil lié',
+    entreesOutils.some((e) => e.nom === 'outils-intervention.csv'));
+}
+
 // ---- Bilan ----
 console.log(`\nVérifications : ${nbOk} réussies, ${nbEchecs} en échec.`);
 if (nbEchecs > 0) {

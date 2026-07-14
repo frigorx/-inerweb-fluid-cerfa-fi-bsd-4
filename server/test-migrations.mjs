@@ -1035,6 +1035,104 @@ verifierLeve('le code public est unique (résolution QR sans ambiguïté)',
 }
 
 // ============================================================
+// 6duodecies. Outils d'intervention (migration 018) — base
+// PRÉEXISTANTE (v17 → v18) : table de jonction mouvement_outillage +
+// index UNIQUE (mouvement, outil) + triggers de figeage : les liens
+// d'un mouvement VALIDE/ANNULE sont intouchables (insert/update/delete).
+// ============================================================
+{
+  const CHEMIN_OUT = join(DOSSIER, 'ancienne-outils.db');
+  const ancienneOut = new DatabaseSync(CHEMIN_OUT);
+  ancienneOut.exec('PRAGMA recursive_triggers = ON;');
+  ancienneOut.exec(readFileSync(new URL('./schema.sql', import.meta.url), 'utf8'));
+  ancienneOut.exec(`PRAGMA user_version = ${migrations.VERSION_BASE};`);
+  const jusqua17 = {};
+  for (let v = 2; v <= 17; v += 1) jusqua17[v] = migrations.MIGRATIONS[v];
+  migrations.migrer(ancienneOut, jusqua17);
+
+  ancienneOut.exec(`INSERT INTO etablissements (id, raison_sociale)
+                    VALUES ('ETB-OUT', 'Lycée Outils');`);
+  ancienneOut.exec(`INSERT INTO outillage (id, etablissement_id, type)
+                    VALUES ('OUT-1', 'ETB-OUT', 'BALANCE');`);
+  ancienneOut.exec(`INSERT INTO outillage (id, etablissement_id, type)
+                    VALUES ('OUT-2', 'ETB-OUT', 'DETECTEUR');`);
+  // Un mouvement BROUILLON (liens éditables) et un VALIDE scellé (figé).
+  ancienneOut.exec(`INSERT INTO mouvements (id, numero, etablissement_id,
+      date_mouvement, mode, type_operation, statut)
+    VALUES ('MVT-OUT-B', 'FORM-2026-0001', 'ETB-OUT', '2026-07-01',
+      'FORMATION', 'CHARGE_APPOINT', 'BROUILLON');`);
+  ancienneOut.exec(`INSERT INTO mouvements (id, numero, etablissement_id,
+      date_mouvement, mode, type_operation, statut, quantite_calculee_kg,
+      hash_ecriture, hash_precedent, ordre_validation)
+    VALUES ('MVT-OUT-V', 'FORM-2026-0002', 'ETB-OUT', '2026-07-01',
+      'FORMATION', 'CHARGE_APPOINT', 'VALIDE', 2.5,
+      '${'f'.repeat(64)}', NULL, 1);`);
+
+  verifier('avant migration 018 : la table mouvement_outillage n’existe pas',
+    ancienneOut.prepare(
+      "SELECT count(*) AS n FROM sqlite_master WHERE name = 'mouvement_outillage'")
+      .get().n === 0);
+
+  const vOut = migrations.migrer(ancienneOut, { 18: migrations.MIGRATIONS[18] });
+  verifier('la migration 018 porte la base à la version 18',
+    vOut === 18 && migrations.lireVersion(ancienneOut) === 18);
+
+  // Liens éditables tant que le mouvement est BROUILLON.
+  ancienneOut.exec(`INSERT INTO mouvement_outillage (id, etablissement_id,
+      mouvement_id, outillage_id)
+    VALUES ('LNK-1', 'ETB-OUT', 'MVT-OUT-B', 'OUT-1');`);
+  verifierLeve('le couple (mouvement, outil) est UNIQUE',
+    () => ancienneOut.exec(`INSERT INTO mouvement_outillage (id, etablissement_id,
+        mouvement_id, outillage_id)
+      VALUES ('LNK-DOUBLON', 'ETB-OUT', 'MVT-OUT-B', 'OUT-1');`),
+    'UNIQUE');
+  ancienneOut.exec(`UPDATE mouvement_outillage
+      SET statut_fige = 'CONFORME' WHERE id = 'LNK-1';`);
+  verifier('un lien d’un BROUILLON reste modifiable (figeage possible)',
+    ancienneOut.prepare(
+      "SELECT statut_fige AS s FROM mouvement_outillage WHERE id = 'LNK-1'")
+      .get().s === 'CONFORME');
+
+  // Le mouvement passe VALIDE : ses liens deviennent intouchables.
+  ancienneOut.exec(`UPDATE mouvements SET statut = 'VALIDE',
+      quantite_calculee_kg = 1, hash_ecriture = '${'a'.repeat(64)}',
+      ordre_validation = 2 WHERE id = 'MVT-OUT-B';`);
+  verifierLeve('lien d’un mouvement figé : ajout interdit',
+    () => ancienneOut.exec(`INSERT INTO mouvement_outillage (id, etablissement_id,
+        mouvement_id, outillage_id)
+      VALUES ('LNK-FORGE', 'ETB-OUT', 'MVT-OUT-V', 'OUT-2');`),
+    'figés');
+  verifierLeve('lien d’un mouvement figé : modification interdite',
+    () => ancienneOut.exec(
+      `UPDATE mouvement_outillage SET statut_fige = 'EXPIRE' WHERE id = 'LNK-1';`),
+    'figés');
+  verifierLeve('lien d’un mouvement figé : suppression interdite',
+    () => ancienneOut.exec(
+      `DELETE FROM mouvement_outillage WHERE id = 'LNK-1';`),
+    'figés');
+
+  // Forge par re-parentage : un lien d'un BROUILLON ne peut pas être
+  // déplacé vers un mouvement figé (ni changer d'outil, tout court).
+  ancienneOut.exec(`INSERT INTO mouvements (id, numero, etablissement_id,
+      date_mouvement, mode, type_operation, statut)
+    VALUES ('MVT-OUT-B2', 'FORM-2026-0003', 'ETB-OUT', '2026-07-02',
+      'FORMATION', 'CHARGE_APPOINT', 'BROUILLON');`);
+  ancienneOut.exec(`INSERT INTO mouvement_outillage (id, etablissement_id,
+      mouvement_id, outillage_id)
+    VALUES ('LNK-2', 'ETB-OUT', 'MVT-OUT-B2', 'OUT-2');`);
+  verifierLeve('re-parenter un lien vers un mouvement figé est interdit',
+    () => ancienneOut.exec(
+      `UPDATE mouvement_outillage SET mouvement_id = 'MVT-OUT-V' WHERE id = 'LNK-2';`),
+    'modifiables');
+  verifierLeve('changer l’outil d’un lien existant est interdit',
+    () => ancienneOut.exec(
+      `UPDATE mouvement_outillage SET outillage_id = 'OUT-1' WHERE id = 'LNK-2';`),
+    'modifiables');
+
+  ancienneOut.close();
+}
+
+// ============================================================
 // 7. Base pré-versionnage : refusée avec un message clair
 // ============================================================
 db.fermer();

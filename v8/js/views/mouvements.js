@@ -19,6 +19,7 @@ import { ouvrirCerfa } from '../cerfa/visualiseur.js';
 import { ouvrirCorrectionCerfa } from '../cerfa/correcteur.js';
 import { ouvrirFeuilleMiseEnService, peutOuvrirFeuilleMiseEnService }
   from '../documents/feuille-mise-en-service.js';
+import { LIBELLES_TYPE_OUTIL } from './outillage.js';
 
 export const titre = 'Mouvements de fluide';
 
@@ -204,7 +205,7 @@ function ligneRappel(libelle, valeurHtml) {
 }
 
 /** Rappel synthétique d'un mouvement (numéro, date, type, machine, pesées). */
-function rappelMouvement(mv) {
+function rappelMouvement(mv, outils = []) {
   const lignes = [
     ligneRappel('Numéro', '<span class="cellule-mono">' + esc(mv.numero) + '</span>'),
     ligneRappel('Date', esc(fmtDate(mv.date))),
@@ -221,7 +222,61 @@ function rappelMouvement(mv) {
       + ' → ' + esc(fmtKg(mv.peseeApresKg)) + '</span>'));
   }
   if (mv.technicien) lignes.push(ligneRappel('Technicien', esc(mv.technicien)));
-  return '<div style="margin-bottom:14px">' + lignes.join('') + '</div>';
+  return '<div style="margin-bottom:14px">' + lignes.join('') + '</div>'
+    + blocOutilsMouvement(outils);
+}
+
+/**
+ * Brique 2 : ligne de statut figé d'un outil lié au mouvement — « Conforme
+ * le JJ/MM/AAAA » (vert), « Expiré le JJ/MM/AAAA » (rouge), « À vérifier »
+ * (ambre), ou (statutFige === null, brouillon) « déclaré (sera figé à la
+ * validation) ». Un statut inconnu (ex. HORS_SERVICE) reprend la chip
+ * générique de communs.js.
+ * @param {{ statutFige: string|null, echeanceFigee: string|null }} outil
+ * @returns {string} HTML
+ */
+function texteStatutOutilFige(outil) {
+  if (outil.statutFige === null) {
+    return '<span style="color:var(--texte-3);font-size:12px">'
+      + 'déclaré (sera figé à la validation)</span>';
+  }
+  if (outil.statutFige === 'CONFORME') {
+    return '<span class="chip chip-vert">Conforme le '
+      + esc(fmtDate(outil.echeanceFigee)) + '</span>';
+  }
+  if (outil.statutFige === 'EXPIRE') {
+    return '<span class="chip chip-rouge">Expiré le '
+      + esc(fmtDate(outil.echeanceFigee)) + '</span>';
+  }
+  if (outil.statutFige === 'A_VERIFIER') {
+    return '<span class="chip chip-ambre">À vérifier</span>';
+  }
+  return chipStatut(outil.statutFige);
+}
+
+/**
+ * Brique 2 : section « Outils utilisés » d'une modale de mouvement —
+ * absente si aucun outil n'est lié (pas de section vide affichée).
+ * @param {Array<object>} outils - retour de store.getOutilsMouvement()
+ * @returns {string} HTML
+ */
+function blocOutilsMouvement(outils) {
+  if (!outils || !outils.length) return '';
+  const lignes = outils.map(function (o) {
+    const marqueModele = [o.marque, o.modele].filter(Boolean).join(' ');
+    const libelle = (LIBELLES_TYPE_OUTIL[o.typeOutil] || o.typeOutil || '—')
+      + ' — ' + (marqueModele || '—');
+    return '<div style="display:flex;justify-content:space-between;align-items:center;'
+      + 'gap:12px;padding:5px 0;font-size:13px">'
+      + '<span>' + esc(libelle) + '</span>'
+      + texteStatutOutilFige(o)
+      + '</div>';
+  }).join('');
+  return '<div style="margin-top:4px;margin-bottom:14px">'
+    + '<p style="font-size:10.5px;font-weight:600;letter-spacing:.1em;'
+    + 'text-transform:uppercase;color:var(--texte-3);margin-bottom:4px">Outils utilisés</p>'
+    + lignes
+    + '</div>';
 }
 
 /**
@@ -273,10 +328,10 @@ function lireMotif(boite, messageVide) {
 }
 
 /** BROUILLON → confirmation puis suppression définitive. */
-function ouvrirSuppression(ctx, mv) {
+function ouvrirSuppression(ctx, mv, outils) {
   const instance = modale({
     titre: 'Supprimer le brouillon',
-    contenuHtml: rappelMouvement(mv)
+    contenuHtml: rappelMouvement(mv, outils)
       + '<p style="font-size:13px;color:var(--texte-2)">Ce brouillon n’a '
       + 'aucun effet sur les stocks ni sur le registre : sa suppression '
       + 'est définitive et sans conséquence.</p>'
@@ -294,7 +349,7 @@ function ouvrirSuppression(ctx, mv) {
 }
 
 /** SOUMIS → modale de validation (validateur = utilisateur courant). */
-function ouvrirValidation(ctx, mv, utilisateur) {
+function ouvrirValidation(ctx, mv, utilisateur, outils) {
   const peutValider = Boolean(utilisateur
     && ROLES_VALIDEURS.includes(utilisateur.roleApp));
 
@@ -307,7 +362,7 @@ function ouvrirValidation(ctx, mv, utilisateur) {
 
   const instance = modale({
     titre: 'Valider le mouvement',
-    contenuHtml: rappelMouvement(mv)
+    contenuHtml: rappelMouvement(mv, outils)
       + '<p style="font-size:13px;color:var(--texte-2)">La validation '
       + 'applique les effets sur les stocks et inscrit l’écriture au '
       + 'registre : elle devient définitive (correction uniquement par '
@@ -329,10 +384,10 @@ function ouvrirValidation(ctx, mv, utilisateur) {
 }
 
 /** SOUMIS → modale de rejet (motif obligatoire, retour en brouillon). */
-function ouvrirRejet(ctx, mv) {
+function ouvrirRejet(ctx, mv, outils) {
   const instance = modale({
     titre: 'Rejeter le mouvement',
-    contenuHtml: rappelMouvement(mv)
+    contenuHtml: rappelMouvement(mv, outils)
       + '<p style="font-size:13px;color:var(--texte-2)">Le mouvement '
       + 'repasse en brouillon avec votre motif : le technicien pourra le '
       + 'reprendre ou le supprimer.</p>'
@@ -352,13 +407,13 @@ function ouvrirRejet(ctx, mv) {
 }
 
 /** VALIDE → modale d'annulation par contre-écriture (CR-2). */
-function ouvrirContreEcriture(ctx, mv, utilisateur) {
+function ouvrirContreEcriture(ctx, mv, utilisateur, outils) {
   const peutValider = Boolean(utilisateur
     && ROLES_VALIDEURS.includes(utilisateur.roleApp));
 
   const instance = modale({
     titre: 'Annuler par contre-écriture',
-    contenuHtml: rappelMouvement(mv)
+    contenuHtml: rappelMouvement(mv, outils)
       + '<p style="font-size:13px;color:var(--texte-2)"><strong>Le registre '
       + 'ne s’efface jamais.</strong> L’écriture validée reste au registre ; '
       + 'une écriture inverse (quantité opposée) la neutralise. Les stocks '
@@ -443,7 +498,7 @@ export async function render(conteneur, ctx) {
   conteneur.innerHTML = entete + corps;
 
   // ---- Écouteurs (délégation unique : le routeur crée un conteneur neuf) ----
-  conteneur.addEventListener('click', function (evenement) {
+  conteneur.addEventListener('click', async function (evenement) {
     const bouton = evenement.target.closest('[data-action]');
     if (!bouton || !conteneur.contains(bouton)) return;
     const action = bouton.dataset.action;
@@ -458,6 +513,18 @@ export async function render(conteneur, ctx) {
 
     const mv = parId.get(bouton.dataset.id);
     if (!mv) return;
+
+    // Brique 2 : les modales de rappel (supprimer/valider/rejeter/annuler)
+    // affichent aussi les outils liés — chargés AVANT l'ouverture (modale
+    // synchrone), tolérant à l'échec (aucune section outils affichée).
+    let outils = [];
+    if (['supprimer', 'valider', 'rejeter', 'annuler'].includes(action)) {
+      try {
+        outils = await ctx.store.getOutilsMouvement(mv.id);
+      } catch {
+        // Store partiel ou méthode absente : la modale reste utilisable.
+      }
+    }
 
     switch (action) {
       case 'voir-cerfa':
@@ -474,16 +541,16 @@ export async function render(conteneur, ctx) {
         ouvrirWizard(ctx, { brouillonId: mv.id });
         break;
       case 'supprimer':
-        ouvrirSuppression(ctx, mv);
+        ouvrirSuppression(ctx, mv, outils);
         break;
       case 'valider':
-        ouvrirValidation(ctx, mv, utilisateur);
+        ouvrirValidation(ctx, mv, utilisateur, outils);
         break;
       case 'rejeter':
-        ouvrirRejet(ctx, mv);
+        ouvrirRejet(ctx, mv, outils);
         break;
       case 'annuler':
-        ouvrirContreEcriture(ctx, mv, utilisateur);
+        ouvrirContreEcriture(ctx, mv, utilisateur, outils);
         break;
     }
   });

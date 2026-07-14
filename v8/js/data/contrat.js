@@ -36,7 +36,7 @@
 // ============================================================
 
 /** Version du contrat (à incrémenter à chaque évolution de surface). */
-export const VERSION_CONTRAT = 2;
+export const VERSION_CONTRAT = 3;
 
 /**
  * Message canonique opposé à toute tentative de modification d'une
@@ -154,7 +154,7 @@ export const METHODES_CONTRAT = {
 
   // --- registre des mouvements (cœur WORM) ----------------------
   creerMouvement: { genre: 'mutation',
-    description: 'Crée un BROUILLON numéroté FORM-/FI- selon le mode ; aucun effet stock ; Error si type ou référence inconnus.' },
+    description: 'Crée un BROUILLON numéroté FORM-/FI- selon le mode ; aucun effet stock ; outilsIds? = outils réglementaires déclarés (dédupliqués, existence vérifiée, lisibles via getOutilsMouvement) ; Error si type ou référence inconnus.' },
   soumettreMouvement: { genre: 'mutation',
     description: 'BROUILLON → SOUMIS (dateSoumission posée, hors empreinte) ; MSG_ECRITURE_FIGEE si déjà figé.' },
   supprimerMouvement: { genre: 'mutation',
@@ -217,6 +217,10 @@ export const METHODES_CONTRAT = {
     description: 'Crée une mention { personneId, fluideMention CO2|NH3|HC, numeroAttestation?, organismeDelivreur?, dateDebut?, dateFin? } ; actif=vrai, dateRevocation=null ; cumul et renouvellement autorisés ; une mention ÉTEND l’axe fluide des habilitations de la personne (jamais les opérations ni la charge) ; Error si personne introuvable ou fluide de mention inconnu.' },
   revoquerMention: { genre: 'mutation',
     description: 'Retire une mention : actif=false + dateRevocation (AAAA-MM-JJ), consigné au journal ; JAMAIS de suppression (la ligne reste dans getMentions, historisée) ; Error si introuvable ou déjà révoquée.' },
+
+  // --- outils d'intervention (jonction mouvement ↔ outillage) ------
+  getOutilsMouvement: { genre: 'lecture',
+    description: 'Outils réglementaires déclarés sur un mouvement (id) : liste [{ outillageId, typeOutil, marque, modele, numSerie, statutFige, echeanceFigee }], outil résolu au présent (champs null si disparu), statutFige/echeanceFigee = état de l’outil FIGÉ à la validation du mouvement (null tant que brouillon/soumis) ; tri par typeOutil puis outillageId (comparaison de chaînes simple) ; copies indépendantes ; Error si mouvement introuvable.' },
 
   // --- outillage ---------------------------------------------------
   createOutil: { genre: 'mutation',

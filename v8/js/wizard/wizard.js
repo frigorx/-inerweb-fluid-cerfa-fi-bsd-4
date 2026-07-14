@@ -14,6 +14,7 @@ import { ouvrirFormMachine } from '../modales/machine-form.js';
 import { ouvrirFormBouteille } from '../modales/bouteille-form.js';
 import { verdictPourIntervenant, encartConseil, injecterStylesConseil,
   dateDuJour } from '../composants/conseil-intervenant.js';
+import { LIBELLES_TYPE_OUTIL } from '../views/outillage.js';
 
 /** Rôles autorisés à valider une écriture (contrat Phase B). */
 const ROLES_VALIDEURS = ['REFERENT', 'ENSEIGNANT', 'ADMIN'];
@@ -190,6 +191,31 @@ const STYLES_WIZARD = `
 
   .wizard-bloc { margin-top: 16px; }
 
+  .wizard-cases-outils {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    margin-top: 4px;
+  }
+  .wizard-case-outil {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--texte-2);
+    cursor: pointer;
+    text-transform: none;
+    letter-spacing: normal;
+  }
+  .wizard-case-outil input {
+    width: 16px;
+    height: 16px;
+    flex: none;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
   .wizard-encart {
     display: flex;
     align-items: baseline;
@@ -298,6 +324,14 @@ function bandeauErreur(message) {
     + '<span>' + esc(message) + '</span></div>';
 }
 
+/** Libellé « TYPE — Marque Modèle (n° série) » d'un outil (brique 2). */
+function libelleOutil(outil) {
+  const marqueModele = [outil.marque, outil.modele].filter(Boolean).join(' ');
+  return (LIBELLES_TYPE_OUTIL[outil.typeOutil] || outil.typeOutil || '—')
+    + ' — ' + (marqueModele || '—')
+    + (outil.numSerie ? ' (n° ' + outil.numSerie + ')' : '');
+}
+
 /* ============================================================
    Ouverture du wizard
    ============================================================ */
@@ -361,6 +395,13 @@ export async function ouvrirWizard(ctx, options = {}) {
 
   const techniciens = personnel.filter((p) => p.actif);
   const detecteurs = outillage.filter((o) => o.typeOutil === 'DETECTEUR');
+  // Brique 2 : liste complète de l'outillage (tous types), triée par
+  // typeOutil puis marque — pour les cases à cocher « Outils utilisés ».
+  const outilsTries = outillage.slice().sort(function (a, b) {
+    const ta = a.typeOutil || ''; const tb = b.typeOutil || '';
+    if (ta !== tb) return ta.localeCompare(tb, 'fr');
+    return (a.marque || '').localeCompare(b.marque || '', 'fr');
+  });
   const peutValider = Boolean(utilisateur && ROLES_VALIDEURS.includes(utilisateur.roleApp));
 
   /**
@@ -407,7 +448,8 @@ export async function ouvrirWizard(ctx, options = {}) {
     peseeApres: '',
     statutControle: null,   // 'SANS_OBJET' | 'CONFORME' | 'FUITE'
     detecteurId: null,
-    localisationFuite: ''   // R5 : localisation saisie si statutControle === 'FUITE'
+    localisationFuite: '',  // R5 : localisation saisie si statutControle === 'FUITE'
+    outilsIds: []           // brique 2 : outils réglementaires déclarés (ids)
   };
 
   // Écriture déjà créée/soumise dont la validation a échoué (nouvel essai
@@ -453,6 +495,10 @@ export async function ouvrirWizard(ctx, options = {}) {
       etat.statutControle = brouillon.controle?.statutControle ?? null;
       etat.detecteurId = brouillon.controle?.detecteurId ?? null;
       etat.localisationFuite = brouillon.controle?.localisationFuite ?? '';
+      // Brique 2 : outils déjà déclarés sur ce brouillon (résolus via
+      // getOutilsMouvement — rien n'est encore figé au brouillon).
+      const outilsDuBrouillon = await store.getOutilsMouvement(brouillon.id);
+      etat.outilsIds = outilsDuBrouillon.map((o) => o.outillageId);
       // IM-14 : la cause du brouillon (texte libre) est conservée telle
       // quelle via le choix « Autre » du select de l'étape 6
       if (brouillon.causeMouvement) {
@@ -1448,10 +1494,42 @@ export async function ouvrirWizard(ctx, options = {}) {
         + '</div>';
     }
 
+    // Brique 2 : cases à cocher « Outils utilisés pour l'intervention »,
+    // séparées du détecteur de contrôle ci-dessus (mécanisme indépendant,
+    // etat.detecteurId). Conseil seulement : jamais de blocage, même si un
+    // outil coché est EXPIRE ou HORS_SERVICE.
+    function htmlAvertissementOutils() {
+      const nonConformes = outilsTries.filter(function (o) {
+        return etat.outilsIds.includes(o.id)
+          && (o.statut === 'EXPIRE' || o.statut === 'HORS_SERVICE');
+      });
+      return nonConformes.length
+        ? bandeauAvertissement('Attention : ' + nonConformes.length
+          + ' outil(s) coché(s) non conforme(s) (étalonnage expiré ou hors '
+          + 'service) — l’état sera figé au dossier.')
+        : '';
+    }
+    let blocOutils = '';
+    if (outilsTries.length) {
+      const cases = outilsTries.map(function (outil) {
+        const coche = etat.outilsIds.includes(outil.id) ? ' checked' : '';
+        return '<label class="wizard-case-outil">'
+          + '<input type="checkbox" data-outil="' + esc(outil.id) + '"' + coche + '>'
+          + '<span>' + esc(libelleOutil(outil)) + '</span>'
+          + '</label>';
+      }).join('');
+      blocOutils = '<div class="wizard-bloc champ">'
+        + '<label>Outils utilisés pour l’intervention</label>'
+        + '<div class="wizard-cases-outils">' + cases + '</div>'
+        + '</div>'
+        + '<div id="wizard-outils-avertissement">' + htmlAvertissementOutils() + '</div>';
+    }
+
     corpsEl.innerHTML =
       '<div class="wizard-grille-choix wizard-grille-3">' + cartes + '</div>'
       + blocDetecteur
-      + blocLocalisation;
+      + blocLocalisation
+      + blocOutils;
 
     corpsEl.querySelectorAll('[data-controle]').forEach(function (bouton) {
       bouton.addEventListener('click', function () {
@@ -1480,6 +1558,23 @@ export async function ouvrirWizard(ctx, options = {}) {
         etat.localisationFuite = evenement.target.value;
       });
     }
+
+    // Brique 2 : cases à cocher outils — mise à jour ciblée du bandeau
+    // (même motif que majPesees) plutôt qu'un re-rendu complet de l'étape.
+    const zoneAvertissementOutils = corpsEl.querySelector('#wizard-outils-avertissement');
+    corpsEl.querySelectorAll('[data-outil]').forEach(function (caseOutil) {
+      caseOutil.addEventListener('change', function () {
+        const id = caseOutil.getAttribute('data-outil');
+        if (caseOutil.checked) {
+          if (!etat.outilsIds.includes(id)) etat.outilsIds.push(id);
+        } else {
+          etat.outilsIds = etat.outilsIds.filter(function (x) { return x !== id; });
+        }
+        if (zoneAvertissementOutils) {
+          zoneAvertissementOutils.innerHTML = htmlAvertissementOutils();
+        }
+      });
+    });
   }
 
   /* ----------------------------------------------------------
@@ -1563,6 +1658,17 @@ export async function ouvrirWizard(ctx, options = {}) {
         + (detecteur ? ' · ' + detecteur.marque + ' ' + detecteur.modele : '');
     }
     lignes.push(ligneRecap('Contrôle d’étanchéité', esc(texteControle)));
+    // Brique 2 : rappel synthétique des outils déclarés (nombre + types)
+    if (etat.outilsIds.length) {
+      const outilsChoisis = outilsTries.filter(function (o) {
+        return etat.outilsIds.includes(o.id);
+      });
+      const typesUniques = Array.from(new Set(outilsChoisis.map(function (o) {
+        return LIBELLES_TYPE_OUTIL[o.typeOutil] || o.typeOutil;
+      })));
+      lignes.push(ligneRecap('Outils utilisés',
+        esc(etat.outilsIds.length + ' outil(s) — ' + typesUniques.join(', '))));
+    }
     if (technicien) {
       const role = LIBELLES_ROLES[technicien.roleApp] || technicien.roleApp;
       lignes.push(ligneRecap('Technicien',
@@ -1697,7 +1803,10 @@ export async function ouvrirWizard(ctx, options = {}) {
           // Chantier B2 : QUI exécute le geste — l'id de la fiche personnel,
           // en plus du nom libre `technicien` (hérité). Nullable, HORS
           // empreinte SHA-256 (migration 016).
-          executeParId: etat.technicienId
+          executeParId: etat.technicienId,
+          // Brique 2 : outils réglementaires déclarés (dédupliqués et
+          // vérifiés côté store) ; leur statut est figé à la validation.
+          outilsIds: etat.outilsIds
         });
         idMouvementCree = mouvement.id;
         numeroMouvementCree = mouvement.numero;

@@ -227,6 +227,40 @@ function csvMouvements(mouvements, annee) {
   return construireCsv(entetes, lignes);
 }
 
+/**
+ * Brique 2 (outils multiples) : une ligne par outil lié à un mouvement de
+ * l'année, tous statuts confondus (même filtre par année que csvMouvements,
+ * ci-dessus). Contrairement aux autres csv*, prend le STORE directement
+ * (et non un tableau déjà chargé) : chaque mouvement exige son propre
+ * aller-retour store.getOutilsMouvement(). Les mouvements sans outil sont
+ * sautés. Retourne null si l'année ne compte AUCUNE ligne — le fichier est
+ * alors omis du dossier (CONDITIONNEL, comme la photo nominative, mais la
+ * condition ne peut être évaluée qu'après avoir parcouru les mouvements).
+ * @param {object} store
+ * @param {number} annee
+ * @returns {Promise<string|null>}
+ */
+export async function csvOutilsIntervention(store, annee) {
+  const mouvements = await store.getMouvements();
+  const prefixe = `${annee}-`;
+  const entetes = ['Numéro mouvement', 'Date', 'Type mouvement', 'Outil',
+    'Marque', 'Modèle', 'N° série', 'Statut figé', 'Échéance figée'];
+  const lignes = [];
+  for (const mv of mouvements) {
+    if (!(mv.date || '').startsWith(prefixe)) continue;
+    const outils = await store.getOutilsMouvement(mv.id);
+    if (!outils.length) continue;
+    for (const o of outils) {
+      lignes.push([
+        mv.numero, fmtDate(mv.date), mv.type, o.typeOutil, o.marque,
+        o.modele, o.numSerie, o.statutFige, fmtDate(o.echeanceFigee)
+      ]);
+    }
+  }
+  if (!lignes.length) return null;
+  return construireCsv(entetes, lignes);
+}
+
 /** Contrôles d'étanchéité de l'année. */
 function csvControles(controles, annee) {
   const entetes = ['Date', 'Machine', 'Type de contrôle', 'Méthode',
@@ -293,7 +327,8 @@ function fmtDateHeure(iso) {
 // ------------------------------------------------------------
 
 /**
- * Construit les fichiers CSV du registre (9 fixes + 2 conditionnels : photo nominative) pour l'année donnée.
+ * Construit les fichiers CSV du registre (11 fixes + jusqu'à 3 conditionnels :
+ * photo nominative ×2, outils-intervention.csv — brique 2) pour l'année donnée.
  * @param {object} store - magasin de données v8 (contrat Phases A/B/C)
  * @param {number} annee - année de référence (mouvements, contrôles, balance)
  * @returns {Promise<Array<{ nom: string, contenu: string }>>}
@@ -345,6 +380,13 @@ export async function toutesLesTables(store, annee) {
       nom: `fuites-ouvertes-${annee}.csv`,
       contenu: csvFuitesPhoto(nominatif)
     });
+  }
+  // Brique 2 (outils multiples) : outils-intervention.csv, seulement s'il
+  // existe au moins une ligne (contenu null sinon) — un mouvement sans
+  // outil déclaré ne doit pas produire un fichier vide au dossier.
+  const csvOutils = await csvOutilsIntervention(store, annee);
+  if (csvOutils !== null) {
+    tables.push({ nom: 'outils-intervention.csv', contenu: csvOutils });
   }
   return tables;
 }

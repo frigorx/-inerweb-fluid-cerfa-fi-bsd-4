@@ -333,6 +333,38 @@ function verifierInvariantsDonnees(candidat) {
     const probleme = problemeAptitude('mention', m, idsMentions);
     if (probleme) return probleme;
   }
+  // Outils d'intervention (brique produit n°2) : chaque lien référence un
+  // mouvement ET un outil existants, jamais deux fois le même couple.
+  const statutParMouvement = new Map(
+    candidat.mouvements.map((mv) => [mv.id, mv.statut]));
+  const idsOutillage = new Set((candidat.outillage ?? []).map((o) => o.id));
+  const STATUTS_FIGE = [null, 'CONFORME', 'A_VERIFIER', 'EXPIRE', 'HORS_SERVICE'];
+  const idsLiens = new Set();
+  const couplesLiens = new Set();
+  for (const l of candidat.mouvementOutillage ?? []) {
+    const ref = l.id ?? '?';
+    if (idsLiens.has(l.id)) return `lien d'outil ${ref} : id en double`;
+    idsLiens.add(l.id);
+    if (!statutParMouvement.has(l.mouvementId)) {
+      return `lien d'outil ${ref} : mouvement introuvable (${l.mouvementId})`;
+    }
+    if (!idsOutillage.has(l.outillageId)) {
+      return `lien d'outil ${ref} : outil introuvable (${l.outillageId})`;
+    }
+    const couple = `${l.mouvementId}|${l.outillageId}`;
+    if (couplesLiens.has(couple)) {
+      return `lien d'outil ${ref} : couple mouvement/outil en double`;
+    }
+    couplesLiens.add(couple);
+    if (!STATUTS_FIGE.includes(l.statutFige ?? null)) {
+      return `lien d'outil ${ref} : statut figé inconnu (${l.statutFige})`;
+    }
+    const statutMouvement = statutParMouvement.get(l.mouvementId);
+    if ((l.statutFige ?? null) !== null
+        && statutMouvement !== 'VALIDE' && statutMouvement !== 'ANNULE') {
+      return `lien d'outil ${ref} : statut figé sur un mouvement non validé`;
+    }
+  }
   return null;
 }
 
@@ -1502,7 +1534,7 @@ export function creerDemoStore() {
       for (const cle of ['auditsOrganisme', 'nonConformites', 'stocksInitiaux',
         'bsff', 'inventaires', 'justificationsEcarts', 'piecesJointes',
         'retoursFournisseur', 'sentinelleAlertes', 'habilitations',
-        'mentionsHabilitation']) {
+        'mentionsHabilitation', 'mouvementOutillage']) {
         if (!Array.isArray(donnees[cle])) {
           donnees[cle] = copier(DEMO[cle] ?? []);
           modifie = true;
@@ -1929,6 +1961,37 @@ export function creerDemoStore() {
 
     async getJournalAudit() {
       return copier(donnees.journalAudit);
+    },
+
+    // ------------------------------------------------------
+    // Outils d'intervention (brique produit n°2) : quels outils
+    // réglementaires ont servi à quel mouvement.
+    // ------------------------------------------------------
+    async getOutilsMouvement(mouvementId) {
+      trouverMouvement(mouvementId);
+      // Outil résolu AU PRÉSENT (marque/modèle) ; statutFige/echeanceFigee
+      // restent la vérité opposable (figés à la validation). Tri contractuel
+      // en JS par typeOutil puis outillageId (jamais d'ORDER BY).
+      return donnees.mouvementOutillage
+        .filter((l) => l.mouvementId === mouvementId)
+        .map((l) => {
+          const outil = donnees.outillage.find((o) => o.id === l.outillageId);
+          return {
+            outillageId: l.outillageId,
+            typeOutil: outil?.typeOutil ?? null,
+            marque: outil?.marque ?? null,
+            modele: outil?.modele ?? null,
+            numSerie: outil?.numSerie ?? null,
+            statutFige: l.statutFige ?? null,
+            echeanceFigee: l.echeanceFigee ?? null
+          };
+        })
+        .sort((a, b) => {
+          const ta = a.typeOutil ?? ''; const tb = b.typeOutil ?? '';
+          if (ta !== tb) return ta < tb ? -1 : 1;
+          return a.outillageId < b.outillageId ? -1
+            : (a.outillageId > b.outillageId ? 1 : 0);
+        });
     },
 
     // ------------------------------------------------------
@@ -2406,6 +2469,13 @@ export function creerDemoStore() {
       if (d.superviseurId) trouverPersonne(d.superviseurId);
       if (d.responsableRegistreId) trouverPersonne(d.responsableRegistreId);
 
+      // Outils réglementaires déclarés (brique produit n°2) : existence
+      // vérifiée dès le brouillon, dédupliqués. Les liens sont posés APRÈS
+      // le mouvement (plus bas) ; leur état sera FIGÉ à la validation.
+      const outilsIds = [...new Set(
+        (Array.isArray(d.outilsIds) ? d.outilsIds : []).filter(Boolean))];
+      for (const idOutil of outilsIds) trouverOutil(idOutil);
+
       // Forme CANONIQUE du contrôle déclaré : STRICTEMENT les clés que le
       // serveur SQL restitue à la relecture (reconstituerMouvement d'api.js)
       // — localisationFuite SEULEMENT si renseignée. L'empreinte SHA-256
@@ -2453,6 +2523,15 @@ export function creerDemoStore() {
         cerfaNumero: null
       };
       donnees.mouvements.push(mouvement);
+      for (const idOutil of outilsIds) {
+        donnees.mouvementOutillage.push({
+          id: genId('mou'),
+          mouvementId: mouvement.id,
+          outillageId: idOutil,
+          statutFige: null,
+          echeanceFigee: null
+        });
+      }
       journaliser(mouvement.technicien, 'CREATION_MOUVEMENT', mouvement.numero,
         `${mouvement.type} (brouillon)`);
       persisterEtNotifier();
@@ -2495,6 +2574,9 @@ export function creerDemoStore() {
       }
       const indice = donnees.mouvements.findIndex((mv) => mv.id === id);
       donnees.mouvements.splice(indice, 1);
+      // Les liens d'outils d'un brouillon partent avec lui (aucun effet).
+      donnees.mouvementOutillage = donnees.mouvementOutillage
+        .filter((l) => l.mouvementId !== id);
       journaliser(operateur ?? mouvement.technicien, 'SUPPRESSION_MOUVEMENT',
         mouvement.numero, `${mouvement.type} (brouillon supprimé)`);
       persisterEtNotifier();
@@ -2562,6 +2644,21 @@ export function creerDemoStore() {
         mouvement.controle = { ...declare, controleId: controleLie.id };
       }
 
+      // Brique produit n°2 : l'état des outils déclarés est FIGÉ au moment
+      // où l'écriture devient opposable (« la balance était-elle étalonnée
+      // CE jour-là ? ») — hors empreinte, table de liens séparée.
+      const jourValidation = aujourdHui();
+      const outilsFiges = [];
+      for (const lien of donnees.mouvementOutillage) {
+        if (lien.mouvementId !== mouvement.id) continue;
+        const outil = donnees.outillage.find((o) => o.id === lien.outillageId);
+        lien.statutFige = outil
+          ? calculerStatutOutil(outil, jourValidation) : null;
+        lien.echeanceFigee = outil?.prochaineEcheance ?? null;
+        outilsFiges.push(`${lien.outillageId}=${lien.statutFige ?? 'DISPARU'}`);
+      }
+      outilsFiges.sort();
+
       mouvement.validateurId = validateurId;
       mouvement.statut = 'VALIDE';
       // IM-12 (SPEC §7.1) : un TRANSFERT entre contenants est une écriture
@@ -2578,10 +2675,14 @@ export function creerDemoStore() {
 
       // Le PRP figé est consigné dans le journal (recoupement opposable —
       // parité stricte avec le serveur, dont le journal est chaîné).
+      // Les outils figés sont consignés AUSSI au journal chaîné (motif
+      // prpFige) : la table de liens est hors empreinte — cette ligne de
+      // journal est le point de recoupement opposable d'un export forgé.
       journaliser(`${validateur.prenom} ${validateur.nom}`,
         'VALIDATION_MOUVEMENT', mouvement.numero,
         `${mouvement.type} · ${mouvement.quantiteKg} kg ${mouvement.fluide}`
-        + (mouvement.prpFige != null ? ` · PRP figé ${mouvement.prpFige}` : ''));
+        + (mouvement.prpFige != null ? ` · PRP figé ${mouvement.prpFige}` : '')
+        + (outilsFiges.length ? ` · outils figés : ${outilsFiges.join(', ')}` : ''));
       persisterEtNotifier();
 
       // IM-4 : une récupération-démantèlement qui VIDE la machine
@@ -3769,7 +3870,10 @@ export function creerDemoStore() {
         'inventairesBouteilles', 'inventairesFuites',
         // Chantier B2 : habilitations puis mentions (brique 1) — vides
         // sur les exports antérieurs.
-        'habilitations', 'mentionsHabilitation']) {
+        'habilitations', 'mentionsHabilitation',
+        // Brique produit n°2 : outils d'intervention — vides sur les
+        // exports antérieurs.
+        'mouvementOutillage']) {
         if (!Array.isArray(candidat[cle])) candidat[cle] = copier(DEMO[cle] ?? []);
       }
       if (candidat.etablissement.numAttestationCapacite === undefined) {

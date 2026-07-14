@@ -45,6 +45,12 @@ verifier('les 11 noms de fichiers attendus sont présents',
 
 const parNom = new Map(fichiers.map((f) => [f.nom, f.contenu]));
 
+// Brique 2 (outils multiples) : aucun mouvement du monde de démo ne porte
+// d'outil lié — outils-intervention.csv est CONDITIONNEL et doit donc être
+// absent (pas un fichier vide en-tête seul comme les tables fixes).
+verifier('outils-intervention.csv absent : aucun outil lié sur le monde de démo',
+  !fichiers.some((f) => f.nom === 'outils-intervention.csv'));
+
 // --- 2. BOM UTF-8 présent sur chaque fichier --------------------
 verifier('chaque fichier commence par le BOM UTF-8',
   fichiers.every((f) => f.contenu.startsWith(BOM)));
@@ -214,6 +220,47 @@ verifier('genererJournalAuditPdf retourne des octets et un nom de fichier',
 const enteteMagiquePdf = Buffer.from(pdfJournal.octets.slice(0, 5)).toString('latin1');
 verifier('genererJournalAuditPdf produit un PDF valide (en-tête %PDF-)',
   enteteMagiquePdf === '%PDF-', enteteMagiquePdf);
+
+// --- 14. Brique 2 : outils-intervention.csv apparaît dès qu'un mouvement
+// validé porte un outil lié, avec son statut figé (CONFORME au jour de la
+// validation) — motif source : v8/js/data/test-outils-intervention.mjs.
+{
+  const fluideOutils = (await store.getFluides())[0].code;
+  const enseignantOutils = await store.createPersonne({
+    nom: 'Outils', prenom: 'Export', typePersonne: 'ENSEIGNANT'
+  });
+  const machineOutils = await store.createMachine({
+    designation: 'Machine export outils', fluide: fluideOutils, chargeNominaleKg: 10
+  });
+  const bouteilleOutils = await store.createBouteille({
+    type: 'NEUVE', fluide: fluideOutils, tareKg: 10, masseBruteKg: 20, contenanceMaxKg: 12
+  });
+  const balanceOutils = await store.createOutil({
+    typeOutil: 'BALANCE', marque: 'Sauter', modele: 'FK-50-CSV',
+    numSerie: 'SN-CSV-1', prochaineEcheance: '2099-01-01'
+  });
+  const mvOutils = await store.creerMouvement({
+    type: 'CHARGE_APPOINT', machineId: machineOutils.id,
+    bouteilleSrcId: bouteilleOutils.id, peseeAvantKg: 20, peseeApresKg: 18,
+    technicien: 'Export Outils', outilsIds: [balanceOutils.id]
+  });
+  await store.soumettreMouvement(mvOutils.id);
+  await store.validerMouvement(mvOutils.id, enseignantOutils.id);
+
+  const fichiersOutils = await toutesLesTables(store, ANNEE);
+  const tableOutils = fichiersOutils.find((f) => f.nom === 'outils-intervention.csv');
+  verifier('outils-intervention.csv apparaît dès qu’un mouvement validé porte un outil lié',
+    Boolean(tableOutils));
+
+  const lignesOutils = tableOutils ? lignesDe(tableOutils.contenu) : [];
+  const ligneMvOutils = lignesOutils.find((l) => l.startsWith(mvOutils.numero + ';'));
+  verifier('la ligne porte le numéro de mouvement, l’outil (type/marque/modèle) '
+    + 'et son statut figé CONFORME',
+    Boolean(ligneMvOutils) && ligneMvOutils.includes('BALANCE')
+    && ligneMvOutils.includes('Sauter') && ligneMvOutils.includes('FK-50-CSV')
+    && ligneMvOutils.includes('CONFORME'),
+    ligneMvOutils);
+}
 
 // --- Verdict ------------------------------------------------------
 console.log(`\n${nbOk} vérifications réussies, ${nbEchecs} échec(s).`);

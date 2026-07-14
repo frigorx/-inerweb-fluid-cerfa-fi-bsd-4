@@ -490,6 +490,21 @@ const TABLES = {
     sqlSeulement: ['etablissement_id', 'date_creation']
   },
 
+  mouvement_outillage: {
+    // Jonction mouvement ↔ outillage (migration 18, brique produit n°2) :
+    // quels outils réglementaires ont servi à quel mouvement. statut_fige /
+    // echeance_figee = état de l'outil figé à la VALIDATION du mouvement
+    // (hors empreinte : table séparée, le hash des mouvements ne bouge pas).
+    champs: {
+      id: 'id',
+      mouvementId: 'mouvement_id',
+      outillageId: 'outillage_id',
+      statutFige: 'statut_fige',
+      echeanceFigee: 'echeance_figee'
+    },
+    sqlSeulement: ['etablissement_id', 'date_creation']
+  },
+
   audits_etablissement: {
     champs: {
       id: 'id',

@@ -2102,6 +2102,11 @@ const HANDLERS = {
     if (d.executeParId) trouverPersonne(d.executeParId);
     if (d.superviseurId) trouverPersonne(d.superviseurId);
     if (d.responsableRegistreId) trouverPersonne(d.responsableRegistreId);
+    // Outils réglementaires déclarés (brique produit n°2) : existence
+    // vérifiée dès le brouillon, dédupliqués (parité DemoStore).
+    const outilsIds = [...new Set(
+      (Array.isArray(d.outilsIds) ? d.outilsIds : []).filter(Boolean))];
+    for (const idOutil of outilsIds) trouverOutil(idOutil);
     return muter(() => {
       // Numéro attribué DANS la transaction (verrou implicite : Node
       // mono-fil + BEGIN IMMEDIATE) — pas de collision de compteur.
@@ -2139,10 +2144,55 @@ const HANDLERS = {
         cerfaNumero: null
       };
       insererMouvement(mouvement);
+      for (const idOutil of outilsIds) {
+        inserer('mouvement_outillage', {
+          id: db.generateId('MOU'),
+          etablissement_id: ID_ETABLISSEMENT,
+          mouvement_id: mouvement.id,
+          outillage_id: idOutil,
+          statut_fige: null,
+          echeance_figee: null
+        });
+      }
       journaliser(mouvement.technicien, 'CREATION_MOUVEMENT', mouvement.numero,
         `${mouvement.type} (brouillon)`);
       return reconstituerMouvement(lireLigneMouvement(mouvement.id));
     });
+  },
+
+  /**
+   * Outils réglementaires déclarés sur un mouvement (brique produit n°2) :
+   * outil résolu au présent, statut/échéance FIGÉS à la validation.
+   * Même forme, même tri (JS) que le DemoStore.
+   */
+  getOutilsMouvement(params) {
+    const { mouvementId } = params;
+    trouverMouvement(mouvementId);
+    return db.all(
+      'SELECT * FROM mouvement_outillage WHERE mouvement_id = ?',
+      [mouvementId])
+      .map((ligne) => {
+        const lien = mapping.versFront('mouvement_outillage', ligne);
+        const ligneOutil = db.get(
+          'SELECT * FROM outillage WHERE id = ?', [lien.outillageId]);
+        const outil = ligneOutil
+          ? mapping.versFront('outillage', ligneOutil) : null;
+        return {
+          outillageId: lien.outillageId,
+          typeOutil: outil?.typeOutil ?? null,
+          marque: outil?.marque ?? null,
+          modele: outil?.modele ?? null,
+          numSerie: outil?.numSerie ?? null,
+          statutFige: lien.statutFige ?? null,
+          echeanceFigee: lien.echeanceFigee ?? null
+        };
+      })
+      .sort((a, b) => {
+        const ta = a.typeOutil ?? ''; const tb = b.typeOutil ?? '';
+        if (ta !== tb) return ta < tb ? -1 : 1;
+        return a.outillageId < b.outillageId ? -1
+          : (a.outillageId > b.outillageId ? 1 : 0);
+      });
   },
 
   /** BROUILLON → SOUMIS + date de soumission (hors empreinte). */
@@ -2208,6 +2258,8 @@ const HANDLERS = {
         's’annule par contre-écriture).');
     }
     return muter(() => {
+      // Les liens d'outils d'un brouillon partent avec lui (FK d'abord).
+      db.run('DELETE FROM mouvement_outillage WHERE mouvement_id = ?', [id]);
       db.run('DELETE FROM mouvements WHERE id = ?', [id]);
       journaliser(params.par ?? mouvement.technicien, 'SUPPRESSION_MOUVEMENT',
         mouvement.numero, `${mouvement.type} (brouillon supprimé)`);
@@ -2272,6 +2324,30 @@ const HANDLERS = {
       mouvement.prpFige = lireFluide(mouvement.fluide)?.gwpAr4 ?? null;
       sceller(mouvement);
 
+      // Brique produit n°2 : l'état des outils déclarés est FIGÉ au moment
+      // où l'écriture devient opposable — AVANT le passage en VALIDE en
+      // base (les triggers de la migration 18 interdisent toute retouche
+      // des liens d'un mouvement figé).
+      const jourValidation = aujourdHui();
+      const liensOutils = db.all(
+        'SELECT id, outillage_id FROM mouvement_outillage WHERE mouvement_id = ?',
+        [mouvement.id]);
+      const outilsFiges = [];
+      for (const lien of liensOutils) {
+        const ligneOutil = db.get(
+          'SELECT * FROM outillage WHERE id = ?', [lien.outillage_id]);
+        const outil = ligneOutil
+          ? mapping.versFront('outillage', ligneOutil) : null;
+        const statutFige = outil
+          ? calculerStatutOutil(outil, jourValidation) : null;
+        db.run(
+          'UPDATE mouvement_outillage SET statut_fige = ?, echeance_figee = ? '
+          + 'WHERE id = ?',
+          [statutFige, outil?.prochaineEcheance ?? null, lien.id]);
+        outilsFiges.push(`${lien.outillage_id}=${statutFige ?? 'DISPARU'}`);
+      }
+      outilsFiges.sort();
+
       // Persistance : effets déjà écrits, ici on fige l'écriture (SOUMIS →
       // VALIDE, quantité, contrôle aplati, scellement).
       persisterMouvementValide(mouvement);
@@ -2279,10 +2355,14 @@ const HANDLERS = {
       // Le PRP figé est consigné dans le journal CHAÎNÉ : prg_fige est hors
       // empreinte (falsifiable dans un export édité à la main), cette ligne
       // de journal donne le point de recoupement opposable.
+      // Les outils figés sont consignés AUSSI au journal chaîné (motif
+      // prpFige) : la table de liens est hors empreinte — cette ligne de
+      // journal est le point de recoupement opposable d'un export forgé.
       journaliser(`${validateur.prenom} ${validateur.nom}`,
         'VALIDATION_MOUVEMENT', mouvement.numero,
         `${mouvement.type} · ${mouvement.quantiteKg} kg ${mouvement.fluide}`
-        + (mouvement.prpFige != null ? ` · PRP figé ${mouvement.prpFige}` : ''));
+        + (mouvement.prpFige != null ? ` · PRP figé ${mouvement.prpFige}` : '')
+        + (outilsFiges.length ? ` · outils figés : ${outilsFiges.join(', ')}` : ''));
 
       const resultat = reconstituerMouvement(lireLigneMouvement(id));
       // IM-4 : une récupération-démantèlement qui VIDE la machine invite
@@ -2893,6 +2973,8 @@ function construireDonneesExport() {
     habilitations: HANDLERS.getHabilitations(),
     mentionsHabilitation: HANDLERS.getMentions(),
     outillage: HANDLERS.getOutillage(),
+    mouvementOutillage: lireTablePlate('mouvement_outillage',
+      'mouvement_outillage', 'rowid'),
     stocksInitiaux: lireTablePlate('stocks_initiaux', 'stocks_initiaux',
       'annee, fluide'),
     bsff: HANDLERS.getBsff(),
@@ -2941,7 +3023,7 @@ function completerCandidat(donnees) {
   for (const cle of ['auditsOrganisme', 'nonConformites', 'outillage',
     'stocksInitiaux', 'bsff', 'inventaires', 'justificationsEcarts',
     'piecesJointes', 'retoursFournisseur', 'journalAudit', 'habilitations',
-    'mentionsHabilitation']) {
+    'mentionsHabilitation', 'mouvementOutillage']) {
     if (!Array.isArray(candidat[cle])) candidat[cle] = [];
   }
   return candidat;
@@ -3101,6 +3183,37 @@ function verifierInvariantsDonneesCandidat(candidat) {
     const probleme = problemeAptitude('mention', m, idsMentions);
     if (probleme) return probleme;
   }
+  // Outils d'intervention (brique produit n°2) : miroir EXACT du DemoStore.
+  const statutParMouvement = new Map(
+    candidat.mouvements.map((mv) => [mv.id, mv.statut]));
+  const idsOutillage = new Set((candidat.outillage ?? []).map((o) => o.id));
+  const STATUTS_FIGE = [null, 'CONFORME', 'A_VERIFIER', 'EXPIRE', 'HORS_SERVICE'];
+  const idsLiens = new Set();
+  const couplesLiens = new Set();
+  for (const l of candidat.mouvementOutillage ?? []) {
+    const ref = l.id ?? '?';
+    if (idsLiens.has(l.id)) return `lien d'outil ${ref} : id en double`;
+    idsLiens.add(l.id);
+    if (!statutParMouvement.has(l.mouvementId)) {
+      return `lien d'outil ${ref} : mouvement introuvable (${l.mouvementId})`;
+    }
+    if (!idsOutillage.has(l.outillageId)) {
+      return `lien d'outil ${ref} : outil introuvable (${l.outillageId})`;
+    }
+    const couple = `${l.mouvementId}|${l.outillageId}`;
+    if (couplesLiens.has(couple)) {
+      return `lien d'outil ${ref} : couple mouvement/outil en double`;
+    }
+    couplesLiens.add(couple);
+    if (!STATUTS_FIGE.includes(l.statutFige ?? null)) {
+      return `lien d'outil ${ref} : statut figé inconnu (${l.statutFige})`;
+    }
+    const statutMouvement = statutParMouvement.get(l.mouvementId);
+    if ((l.statutFige ?? null) !== null
+        && statutMouvement !== 'VALIDE' && statutMouvement !== 'ANNULE') {
+      return `lien d'outil ${ref} : statut figé sur un mouvement non validé`;
+    }
+  }
   return null;
 }
 
@@ -3116,7 +3229,7 @@ function declencheursWorm() {
   return db.all(
     `SELECT name, sql FROM sqlite_master
      WHERE type = 'trigger'
-       AND tbl_name IN ('mouvements', 'journal_audit')`);
+       AND tbl_name IN ('mouvements', 'journal_audit', 'mouvement_outillage')`);
 }
 
 /**
@@ -3197,7 +3310,8 @@ function remplacerToutLEtat(candidat) {
 
     // Vidage TOTAL des tables métier (journal inclus : remplacement complet).
     const TABLES_A_VIDER = ['pieces_jointes', 'retours_fournisseur', 'bsff',
-      'controles', 'mouvements', 'justifications_ecarts', 'inventaires',
+      'controles', 'mouvement_outillage', 'mouvements',
+      'justifications_ecarts', 'inventaires',
       'inventaires_bouteilles', 'inventaires_fuites',
       'stocks_initiaux', 'bouteilles', 'machines', 'clients_detenteurs',
       'outillage', 'non_conformites', 'audits_etablissement', 'habilitations',
@@ -3242,6 +3356,10 @@ function remplacerToutLEtat(candidat) {
     reinsererCollection('machines', 'machines', candidat.machines);
     reinsererCollection('bouteilles', 'bouteilles', candidat.bouteilles);
     reinsererMouvements(candidat.mouvements);
+    // Liens d'outils APRÈS les mouvements (FK mouvement_id ; les triggers
+    // de figeage sont retirés avec les WORM le temps de l'import).
+    reinsererCollection('mouvement_outillage', 'mouvement_outillage',
+      candidat.mouvementOutillage);
     reinsererCollection('controles', 'controles', candidat.controles);
     reinsererCollection('bsff', 'bsff', candidat.bsff);
     reinsererCollection('retours_fournisseur', 'retours_fournisseur',

@@ -2,6 +2,43 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔧 Lien intervention → outils MULTIPLES, état figé opposable (14/07)
+Brique produit n°2 post-B2 — « le vrai plus audit » : quels outils réglementaires ont
+servi à quel mouvement (jusqu'ici, seul le détecteur du contrôle était lié), avec la
+réponse à LA question d'audit : « la balance était-elle étalonnée CE jour-là ? »
+- **Migration 018 `mouvement_outillage`** : table de jonction (couple mouvement/outil
+  UNIQUE), liens posés au BROUILLON (déclaratif), `statut_fige` + `echeance_figee`
+  posés à la VALIDATION dans la même transaction. **4 triggers dédiés** : liens d'un
+  mouvement figé (VALIDE/ANNULE) intouchables (ajout/modification/suppression), et
+  JAMAIS de re-parentage (mouvement_id/outillage_id immuables — la forge « déplacer un
+  lien de brouillon vers une écriture validée » est fermée, prouvée par test SQL brut).
+  Trigger WORM des mouvements INCHANGÉ ; hors empreinte (table séparée).
+- **Recoupement opposable (constat BLOQUANT de la revue, soldé)** : la table étant hors
+  empreinte, un export édité à la main pouvait forger « CONFORME ce jour-là » — la
+  validation consigne désormais les outils figés dans la ligne de **journal CHAÎNÉ**
+  (« … · outils figés : OUT-x=CONFORME, OUT-y=EXPIRE » — motif prpFige, tri stable).
+- **Contrat 76 → 77 (`VERSION_CONTRAT` 3)** : `getOutilsMouvement(mouvementId)` (outil
+  résolu au présent + vérité figée, tri contractuel en JS) ; `creerMouvement` accepte
+  `outilsIds` (dédupliqués, existence vérifiée dès le brouillon) ; suppression d'un
+  brouillon emporte ses liens ; la contre-écriture n'en copie aucun, ceux de l'original
+  restent intacts. Miroir demo/serveur + mapping + export/import complet.
+- **Invariants d'import** (miroir demo/serveur, messages français) : lien orphelin
+  (mouvement ou outil fantôme), couple en double, `statutFige` hors énumération,
+  figeage forgé sur un mouvement non validé → **Import refusé**.
+- **Wizard étape contrôle** : cases à cocher « Outils utilisés pour l'intervention »
+  (tri type puis marque), avertissement CONSEIL si un outil coché est expiré/hors
+  service (jamais de blocage), reprise de brouillon re-coche, récapitulatif synthétique.
+- **Modale détail mouvement** : section « Outils utilisés » (Conforme le … / Expiré
+  le … / À vérifier, « déclaré » au brouillon).
+- **Dossier d'audit annuel** : `outils-intervention.csv` CONDITIONNEL (12ᵉ table,
+  seulement si des liens existent), une ligne par outil et par mouvement de l'année.
+- Tests : **`test-outils-intervention.mjs` 26/0 demo + local** (suite doublée : figeage,
+  opposabilité après évolution de l'outil, journal chaîné, 5 imports forgés refusés),
+  migrations **138/0** (triggers éprouvés en SQL brut), wizard 36/0, exports 33/0,
+  dossier-audit 21/0 — **TOUT VERT, 64 exécutions**.
+- Revue adversariale (angle intégrité/opposabilité) : 1 BLOQUANT + 1 IMPORTANT +
+  1 MINEUR — tous soldés (journal chaîné, trigger re-parentage, invariants d'enum).
+
 ### 🏷️ Code machine lisible structuré SITE-FAMILLE-NUMÉRO (14/07)
 Brique produit n°1 de la série post-B2 (décision Franck 07/07) : un identifiant humain
 « JR-CF-001 » remplace les compteurs « M1/M2 » à la création — le `code_public` opaque

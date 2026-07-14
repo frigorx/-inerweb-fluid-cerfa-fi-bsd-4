@@ -59,7 +59,8 @@ const SUITES_DOUBLEES = new Set([
   'v8/js/data/test-sentinelle.mjs',
   'v8/js/data/test-habilitations.mjs',
   'v8/js/data/test-mentions.mjs',
-  'v8/js/data/test-code-machine.mjs'
+  'v8/js/data/test-code-machine.mjs',
+  'v8/js/data/test-outils-intervention.mjs'
 ]);
 
 /** Une exécution = un fichier + des arguments éventuels. */

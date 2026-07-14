@@ -131,7 +131,10 @@ export async function genererDossierAudit(store, annee) {
   /** @type {Array<{nom: string, contenu: string|Uint8Array}>} */
   const entrees = [];
 
-  // ---- 1. Les tables CSV du registre (9 fixes + photo nominative éventuelle) ----
+  // ---- 1. Les tables CSV du registre (11 fixes + conditionnelles : photo
+  // nominative, outils-intervention.csv — brique 2) — la liste `tables`
+  // (exports.js/toutesLesTables) porte déjà toute la logique de conditions ;
+  // ce module se contente de reprendre les entrées qu'elle a produites. ----
   for (const table of tables) {
     entrees.push({ nom: table.nom, contenu: table.contenu });
   }

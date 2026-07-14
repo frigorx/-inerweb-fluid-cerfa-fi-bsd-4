@@ -45,14 +45,14 @@ const { ouvrirWizard } = await import('./wizard.js');
    ============================================================ */
 
 function creerStoreFactice({ machines = [], bouteilles = [],
-  habilitations = [], mentions = [] } = {}) {
+  habilitations = [], mentions = [], outillage = [] } = {}) {
   return {
     async getPersonnel() {
       return [{ id: 'p1', prenom: 'Jean', nom: 'Dupont', actif: true, roleApp: 'REFERENT' }];
     },
     async getMachines() { return machines.slice(); },
     async getBouteilles() { return bouteilles.slice(); },
-    async getOutillage() { return []; },
+    async getOutillage() { return outillage.slice(); },
     async getUtilisateurCourant() { return { id: 'u1', prenom: 'Jean', nom: 'Dupont', roleApp: 'REFERENT' }; },
     async getMouvements() { return []; },
     // Chantier B2 : nourrit le conseil d'intervenant de l'étape 1.
@@ -375,6 +375,150 @@ const MACHINE_TEST = {
   verifier('creerMouvement reçoit executeParId = l’id du technicien choisi',
     /executeParId:\s*etat\.technicienId/.test(source),
     'motif executeParId: etat.technicienId introuvable dans finaliser()');
+}
+
+/* ============================================================
+   10. Brique 2 (outils multiples) : cases à cocher « Outils
+       utilisés » à l'étape 5 (Contrôle) — rendu, libellé, bandeau
+       de conseil réactif (jamais bloquant).
+   ============================================================ */
+{
+  const OUTIL_BALANCE = { id: 'out-1', typeOutil: 'BALANCE', marque: 'Sauter',
+    modele: 'FK-50', numSerie: 'SN1', statut: 'CONFORME' };
+  const OUTIL_DETECTEUR = { id: 'out-2', typeOutil: 'DETECTEUR', marque: 'Inficon',
+    modele: 'D-TEK', numSerie: 'SN2', statut: 'EXPIRE' };
+  const store = creerStoreFactice({
+    machines: [MACHINE_TEST],
+    bouteilles: [{
+      id: 'bou-1', code: 'B1', fluide: 'R404A', type: 'BOUTEILLE',
+      masseNetteKg: 8, contenanceMaxKg: 20, statut: 'EN_STOCK',
+      etatFluide: 'VIERGE', decisionFluide: null
+    }],
+    outillage: [OUTIL_BALANCE, OUTIL_DETECTEUR]
+  });
+  const ctx = { store, naviguer: () => {} };
+
+  await ouvrirWizard(ctx, { machineId: 'mac-1' });
+  const fond = document.body.querySelectorAll('.modale-fond').at(-1);
+
+  // Étape 1 : type + technicien (machineId préréglé saute l'étape 2)
+  fond.querySelector('[data-carte-type="appoint"]').declencher('click');
+  const selectTechnicien = fond.querySelector('#wizard-technicien');
+  selectTechnicien.value = 'p1';
+  selectTechnicien.declencher('change');
+  fond.querySelector('#wizard-continuer').declencher('click'); // -> étape 3
+
+  // Étape 3 : bouteille source
+  fond.querySelector('[data-bouteille-src="bou-1"]').declencher('click');
+  fond.querySelector('#wizard-continuer').declencher('click'); // -> étape 4
+
+  // Étape 4 : pesées valides (8 kg -> 6 kg, quantité 2 kg)
+  const champAvant = fond.querySelector('#wizard-pesee-avant');
+  const champApres = fond.querySelector('#wizard-pesee-apres');
+  champAvant.value = '8';
+  champAvant.declencher('input');
+  champApres.value = '6';
+  champApres.declencher('input');
+  fond.querySelector('#wizard-continuer').declencher('click'); // -> étape 5
+
+  let pastilleActive = fond.querySelector('.wizard-etape.active .wizard-pastille');
+  verifier('la séquence de test atteint bien l’étape 5 (Contrôle)',
+    pastilleActive && pastilleActive.textContent === '5',
+    'pastille active = ' + (pastilleActive && pastilleActive.textContent));
+
+  // « Sans objet » : complète l'étape 5 sans nécessiter de détecteur —
+  // ne concerne QUE le détecteur du contrôle, jamais les outils déclarés.
+  fond.querySelector('[data-controle="SANS_OBJET"]').declencher('click');
+  verifier('« Sans objet » suffit à rendre Continuer actionnable',
+    !fond.querySelector('#wizard-continuer').disabled);
+
+  const caseBalance = fond.querySelector('[data-outil="out-1"]');
+  const caseDetecteur = fond.querySelector('[data-outil="out-2"]');
+  verifier('les 2 outils de l’outillage apparaissent en cases à cocher à l’étape 5',
+    Boolean(caseBalance) && Boolean(caseDetecteur));
+
+  const labelBalance = caseBalance && caseBalance.parent;
+  verifier('le libellé d’un outil est « TYPE — Marque Modèle (n° série) »',
+    labelBalance && labelBalance.textContent.includes('Balance — Sauter FK-50 (n° SN1)'),
+    labelBalance && labelBalance.textContent);
+
+  verifier('aucune case n’est cochée par défaut',
+    !caseBalance.hasAttribute('checked') && !caseDetecteur.hasAttribute('checked'));
+  verifier('aucun bandeau de conseil tant qu’aucun outil non conforme n’est coché',
+    !fond.querySelector('#wizard-outils-avertissement .bandeau-avertissement'));
+
+  // Cocher le détecteur EXPIRE : bandeau CONSEIL, jamais bloquant.
+  caseDetecteur.checked = true;
+  caseDetecteur.declencher('change');
+  verifier('cocher un outil EXPIRE affiche le bandeau de conseil',
+    Boolean(fond.querySelector('#wizard-outils-avertissement .bandeau-avertissement')));
+  verifier('Continuer reste actionnable malgré l’outil non conforme coché '
+    + '(conseil, jamais blocage)',
+    !fond.querySelector('#wizard-continuer').disabled);
+
+  // Décocher : le bandeau disparaît.
+  caseDetecteur.checked = false;
+  caseDetecteur.declencher('change');
+  verifier('décocher l’outil fait disparaître le bandeau de conseil',
+    !fond.querySelector('#wizard-outils-avertissement .bandeau-avertissement'));
+}
+
+/* ============================================================
+   11. Brique 2 : reprise d'un brouillon — les outils déjà déclarés
+       (getOutilsMouvement) préchargent etat.outilsIds et précochent
+       la case correspondante.
+   ============================================================ */
+{
+  const OUTIL_BALANCE = { id: 'out-1', typeOutil: 'BALANCE', marque: 'Sauter',
+    modele: 'FK-50', numSerie: 'SN1', statut: 'CONFORME' };
+  const store = creerStoreFactice({
+    machines: [MACHINE_TEST],
+    bouteilles: [{
+      id: 'bou-1', code: 'B1', fluide: 'R404A', type: 'BOUTEILLE',
+      masseNetteKg: 8, contenanceMaxKg: 20, statut: 'EN_STOCK',
+      etatFluide: 'VIERGE', decisionFluide: null
+    }],
+    outillage: [OUTIL_BALANCE]
+  });
+  store.getMouvements = async () => [{
+    id: 'mv-brouillon-1', numero: 'FI-2026-099', statut: 'BROUILLON',
+    type: 'CHARGE_APPOINT', machineId: 'mac-1', bouteilleSrcId: 'bou-1',
+    peseeAvantKg: 8, peseeApresKg: 6, technicien: 'Jean Dupont'
+  }];
+  let idDemande = null;
+  store.getOutilsMouvement = async (id) => {
+    idDemande = id;
+    return [{ outillageId: 'out-1', typeOutil: 'BALANCE', marque: 'Sauter',
+      modele: 'FK-50', numSerie: 'SN1', statutFige: null, echeanceFigee: null }];
+  };
+  const ctx = { store, naviguer: () => {} };
+
+  await ouvrirWizard(ctx, { brouillonId: 'mv-brouillon-1' });
+
+  verifier('la reprise du brouillon interroge getOutilsMouvement avec son id',
+    idDemande === 'mv-brouillon-1');
+
+  const fond = document.body.querySelectorAll('.modale-fond').at(-1);
+  const pastilleActive = fond.querySelector('.wizard-etape.active .wizard-pastille');
+  verifier('la reprise s’arrête à l’étape 5 (contrôle non renseigné sur ce brouillon)',
+    pastilleActive && pastilleActive.textContent === '5',
+    'pastille active = ' + (pastilleActive && pastilleActive.textContent));
+
+  const caseBalance = fond.querySelector('[data-outil="out-1"]');
+  verifier('l’outil déjà déclaré sur le brouillon est précoché à la reprise',
+    Boolean(caseBalance) && caseBalance.hasAttribute('checked'));
+}
+
+/* ============================================================
+   12. Brique 2 : le payload creerMouvement transmet outilsIds
+       (motif source, comme executeParId — cf. test 9).
+   ============================================================ */
+{
+  const fs = await import('node:fs');
+  const source = fs.readFileSync(new URL('./wizard.js', import.meta.url), 'utf8');
+  verifier('creerMouvement reçoit outilsIds = etat.outilsIds',
+    /outilsIds:\s*etat\.outilsIds/.test(source),
+    'motif outilsIds: etat.outilsIds introuvable dans finaliser()');
 }
 
 // ---- Bilan ----

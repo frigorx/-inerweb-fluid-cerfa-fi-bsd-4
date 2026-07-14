@@ -234,6 +234,11 @@ export function creerLocalStore(transport) {
       return muter('revoquerMention', { id, par });
     },
 
+    // --- outils d'intervention -----------------------------
+    getOutilsMouvement(mouvementId) {
+      return lire('getOutilsMouvement', { mouvementId });
+    },
+
     // --- outillage ----------------------------------------
     createOutil(donneesOutil) {
       return muter('createOutil', { donneesOutil });
