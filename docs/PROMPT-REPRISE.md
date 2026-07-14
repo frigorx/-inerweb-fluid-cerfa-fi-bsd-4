@@ -338,16 +338,17 @@ partageables…), ce qui attend Franck, et les atouts vs concurrence. En résum�
   ⚠️ La **grille réglementaire est RÉGLÉE** (matrice validée fonctionnellement le 14/07) — ne plus
   la lui redemander.
 
-## Prochaine action — TOUS les trous produit non gatés sont fermés (candidats, au choix de Franck)
+## Prochaine action — DÉCIDÉE par Franck le 14/07 soir : AUDIT QUALITÉ DU CODE
 
-0. **À la reprise (30 secondes)** : lever la réserve navigateur — un clic sur le bouton
-   « Réinitialiser » de la vue Mouvements (port jetable neuf).
-1. **V1.5 de la feuille de route** : planche d'étiquettes optimisée, mode TP guidé,
-   diagramme enthalpique (intrant FRIGOLO, `docs/intrants-v10/`), pont inerWeb Édu,
-   horodatage externe du scellement, packs pédagogiques partageables.
-2. **Dettes techniques notées** (`docs/ROADMAP.md` en bas) : `updateBouteille` sans garde
-   de statut ; l'import ne vérifie pas l'intégrité référentielle des fluides du candidat ;
-   `pieces_jointes.chemin` absolu (restauration cross-machine).
+⭐ **PROCHAIN CHAT = coller `docs/PROMPT-AUDIT-QUALITE.md`** (audit en lecture seule de
+la qualité de la programmation : monolithes, duplication démo/serveur — le point faible
+n°1 —, code mort, patrons, sécurité, dette, couverture, coût en tokens → rapport
+`docs/AUDIT-QUALITE-2026-07.md` + plan de remaniement en PETITES BRIQUES, arbitré par
+Franck AVANT tout remaniement). Le pont Édu et le diagramme enthalpique sont REPORTÉS
+(évolutions futures, décision Franck). La V1.5 attendra la fin du remaniement.
+
+0. **À la reprise (30 secondes, avant l'audit)** : lever la réserve navigateur — un clic
+   sur le bouton « Réinitialiser » de la vue Mouvements (port jetable neuf).
 ⛔ Toujours GATÉ Franck : blocage dur mode Officiel (+ blocage par-outil), relevés élèves
 (RGPD §16.5), Trackdéchets (différé).
 
