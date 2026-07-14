@@ -2,6 +2,48 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧭 Parcours « audit guidé » — le dernier trou produit non gaté (14/07)
+Priorité 3 de l'audit croisé GPT : un NON-développeur déroule un audit complet sans se
+perdre. Nouvelle vue `#/audit-guide` (sidebar, sous « Conformité ») : 9 étapes numérotées
+dans l'ordre de visite voulu — établissement → personnel → outillage → bouteilles →
+mouvements → contrôles → déchets/BSFF → balance → export du dossier scellé.
+- **Module pur `v8/js/data/audit-guide.js`** (doctrine feu-tricolore : AUCUNE règle métier
+  nouvelle) : chaque étape rattache les alertes de `getAlertes()` par PRÉFIXE d'id et
+  hérite du barème ROUGE/ORANGE/VERT ; registre rompu → étape mouvements ROUGE (constat
+  dédié) ; prérequis Officiel manquants → jamais « tout vert ». **Zéro perte prouvée** :
+  toute alerte finit dans une étape ou dans `nonRattachees` (encart renvoyant vers
+  Conformité), et l'union des préfixes des étapes COUVRE ceux du feu tricolore (testé
+  contre `DOMAINES`). Les familles pesée/garde sont séparées (étapes bouteilles/déchets).
+- **Faits de présence** lus du contrat, jamais recalculés : « 6 machines au parc,
+  3 contrôles », « 4 personnes actives dont 2 avec une aptitude », « 1 fluide récupéré en
+  attente de décision »… Un registre vide est DIT (« Aucune personne au registre ») — pas
+  d'écran vide qui passe pour un écran en règle.
+- **Vue `v8/js/views/audit-guide.js`** : stepper vertical numéroté (rail + pastilles),
+  bandeau de progression (« X étapes sur 8 au vert · registre intact · N prérequis
+  Officiel manquants »), par étape : ce que l'auditeur regarde, faits, constats cliquables
+  (clic + Entrée), consigne « à faire », bouton « Ouvrir : <vue> ». Étape 9 = ACTION
+  (export) sans état. `esc()` sur toute donnée. Icône `parcours` ajoutée à la bibliothèque.
+- **Revue adversariale (0 bloquant, 3 IMPORTANT, 6 mineurs — tous les importants
+  soldés)** : ① le feu GLOBAL intègre désormais la sévérité des alertes non rattachées
+  (une critique d'une famille future ne peut plus laisser le bandeau dire « prêt pour
+  l'audit » — le filet du feu tricolore est hérité jusqu'au bout, testé CRITIQUE→ROUGE
+  et IMPORTANT→ORANGE) ; ② « machines au parc » exclut les DÉMANTELÉES (définition du
+  contrat : getMachines rend tout, les vues filtrent) ; ③ le compteur déchets reprend la
+  définition EXACTE de la vue Déchets cible (récupération portant du fluide, tout statut)
+  au lieu d'une sémantique maison, libellé « à suivre » (aucune promesse de décision).
+  Mineurs : personnes actives alignées sur getAlertes (champ absent = inactive), libellés
+  « encore non validé (brouillon ou soumis) » et « attestation au registre » (présence,
+  pas validité), accord « relèvent », classe `.feu-NEUTRE` (fin du style en dur). Restent
+  hérités du patron conformite (assumés) : `role="link"` sur les `<li>` de constats.
+- Tests : **`test-audit-guide.mjs` 47/0 demo + 39/0 local** (suite DOUBLÉE : ordre,
+  couverture ⊇ feu tricolore, rattachement par famille, zéro perte pur ET contre le store
+  réel, registre rompu, familles inconnues dans le global, garde-fou Officiel, accords
+  français des faits, monde démo sur pièces) — **TOUT VERT, 66 exécutions**.
+- Vérifié navigateur (origines neuves 8323 puis 8329 après revue) : sidebar, 9 étapes,
+  bandeau « 6 étapes sur 8 au vert », étapes outillage/contrôles ROUGES avec les vrais
+  constats, navigation bouton d'étape → Outillage, constat → vue cible, étape 9 → Bilan
+  annuel, zéro erreur console.
+
 ### 🎫 Réserves B2 soldées — semis démo + anti-doublon de mention (14/07)
 Les deux réserves notées à la fin du chantier habilitations sont soldées.
 - **Habilitations semées dans le monde de démo** (`demo-donnees.js`) : 2 habilitations

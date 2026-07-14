@@ -56,6 +56,17 @@ implémentations (démo + local). Démo en ligne fonctionnelle (GitHub Pages `/v
 7. ~~**Tableau de bord enrichi**~~ — **FAIT 14/07 (`162b086`)** : rôles réels B2 visibles
    (modale détail + `mouvements.csv` + exécutant sur les lignes du tableau de bord), carte
    « Conformité » mini feu tricolore. Vérifié navigateur (parcours wizard complet).
+8. ~~**Réserves B2** (semis démo + anti-doublon de mention)~~ — **FAIT 14/07 (`b81b132`)** :
+   habilitations/mentions semées au monde de démo (compléments d'import verrouillés À VIDE,
+   piège testé), confirmation de renouvellement sur mention déjà active (conseil, jamais
+   bloquant). Vérifié navigateur.
+9. ~~**Parcours « audit guidé »** (priorité 3 de l'audit croisé GPT — le dernier trou
+   produit non gaté)~~ — **FAIT 14/07** : module pur `audit-guide.js` (9 étapes ordonnées
+   établissement → personnel → outillage → bouteilles → mouvements → contrôles →
+   déchets/BSFF → balance → export ; alertes rattachées par préfixe, zéro perte, faits de
+   présence lus du contrat) + vue `#/audit-guide` (stepper numéroté, constats cliquables,
+   bouton d'ouverture par étape) + entrée sidebar. Suite doublée demo/local. Vérifié
+   navigateur.
 
 ## Briques GATÉES sur la validation réglementaire de Franck
 

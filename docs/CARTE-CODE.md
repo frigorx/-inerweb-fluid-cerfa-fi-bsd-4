@@ -50,6 +50,7 @@ contre chacune.
 | `code-machine.js` | pur : code lisible SITE-FAMILLE-NUMÉRO (JR-CF-001), générateur/validation |
 | `habilitations.js` | pur : moteur de conseil B2 (`verifierDroitIntervention`, matrice 2008+2025) |
 | `feu-tricolore.js` | pur : consolide alertes/officiel/chaîne en 7 domaines VERT/ORANGE/ROUGE (`collecterConformite(store)`) |
+| `audit-guide.js` | pur : parcours d'audit en 9 étapes ordonnées (alertes par préfixe + faits de présence, `collecterAuditGuide(store)`) |
 | `dossiers-fuite.js` | pur : dossiers de fuite reconstruits des contrôles (épisodes, OUVERTE/REPAREE/FERMEE) |
 | `sentinelle.js` | pur : historisation temporelle des alertes (épisodes, acquittement) |
 | `vie-bouteille.js` | pur : chronologie d'une bouteille (mouvements appariés) |

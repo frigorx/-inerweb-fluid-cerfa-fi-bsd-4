@@ -17,6 +17,7 @@ import { render as rendreBootstrap } from './views/bootstrap-admin.js';
 const VUES = [
   { id: 'dashboard',  libelle: 'Tableau de bord',          icone: 'grille' },
   { id: 'conformite', libelle: 'Conformité',               icone: 'coche' },
+  { id: 'audit-guide', libelle: 'Audit guidé',             icone: 'parcours' },
   { id: 'machines',   libelle: 'Parc machines',            icone: 'machine' },
   { id: 'bouteilles', libelle: 'Stock bouteilles',         icone: 'bouteille' },
   { id: 'mouvements', libelle: 'Mouvements',               icone: 'echange' },

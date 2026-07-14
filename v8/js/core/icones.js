@@ -138,6 +138,18 @@ export const ICONES = {
     '<path d="m5 12.5 4.5 4.5L19 7.5"/>'
   ),
 
+  // Parcours guidé : étapes numérotées reliées (stepper vertical)
+  parcours: svg(
+    '<circle cx="6" cy="5" r="1.8"/>'
+    + '<circle cx="6" cy="12" r="1.8"/>'
+    + '<circle cx="6" cy="19" r="1.8"/>'
+    + '<path d="M6 6.8v3.4"/>'
+    + '<path d="M6 13.8v3.4"/>'
+    + '<path d="M11 5h9"/>'
+    + '<path d="M11 12h9"/>'
+    + '<path d="M11 19h9"/>'
+  ),
+
   // Flèche vers la droite
   'fleche-droite': svg(
     '<path d="M4 12h16"/>'
