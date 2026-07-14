@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide v8 — composant « Pièces jointes » (Phase C)
 // Liste les pièces justificatives d'une entité (attestation,

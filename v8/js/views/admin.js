@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide v8 — vue « Administration » (Phase C, édition)
 // Dossier opérateur (cadre 1 du CERFA) éditable, suivi d'audit

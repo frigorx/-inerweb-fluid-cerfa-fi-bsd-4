@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide v8 — dossier ZIP scellé d'UN dossier de fuite (brique ③)
 // « Preuve de fermeture en un clic » : pour un contrôle FUITE donné, la

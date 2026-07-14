@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — icones.js
 // Bibliothèque d'icônes SVG linéaires (24×24, trait 1.8,

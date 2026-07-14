@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Test du Lot 1 de l'audit du 03/07/2026 (exécution : node test-lot1.mjs)
 // Côté moteur (store + générateur CERFA) :

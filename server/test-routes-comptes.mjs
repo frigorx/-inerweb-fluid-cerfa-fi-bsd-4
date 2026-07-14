@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — PREUVE des routes d'authentification (V9-E5, vague 3)
 // Exécution : node server/test-routes-comptes.mjs

@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — PREUVE de l'entrée par défaut du serveur local (v9)
 // Exécution : node server/test-entree.mjs

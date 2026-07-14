@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Scénario d'intégration du Lot 1 (exécution : node test-scenario-lot1.mjs)
 // Le parcours de l'audit du 03/07/2026 rejoué de bout en bout,

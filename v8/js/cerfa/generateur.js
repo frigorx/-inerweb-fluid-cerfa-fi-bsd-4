@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide v8 — générateur CERFA 15497*04 (Phase D)
 // Remplit LE PDF OFFICIEL (v8/cerfa_15497-04_officiel.pdf) via

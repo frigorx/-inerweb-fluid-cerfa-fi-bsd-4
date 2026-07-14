@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Test de la chronologie « vie de la bouteille » (brique ②).
 // Exécution : node v8/js/data/test-vie-bouteille.mjs

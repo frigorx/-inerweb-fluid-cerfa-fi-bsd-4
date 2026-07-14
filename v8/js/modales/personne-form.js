@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — modale « Créer / Modifier une personne » (Phase C)
 // Registre du personnel : nom, type de personne, rôle applicatif,

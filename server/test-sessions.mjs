@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — PREUVE des sessions (V9-E5, vague 2 : sessions serveur)
 // Exécution : node server/test-sessions.mjs

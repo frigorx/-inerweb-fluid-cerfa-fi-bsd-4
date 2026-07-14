@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Équivalence stricte des hasseurs de mouvement front ↔ serveur (V9-E3)
 // Exécution : node server/test-hash-mouvement.mjs

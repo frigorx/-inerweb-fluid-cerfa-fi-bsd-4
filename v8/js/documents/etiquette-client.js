@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — étiquette QR d'un client / détenteur (référence client)
 // Modale d'aperçu imprimable : étiquette individuelle 50×70 mm (raison

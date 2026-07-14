@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — PREUVE du coffre-fort E4.1 (12 familles)
 // Exécution : node server/test-sauvegarde.mjs

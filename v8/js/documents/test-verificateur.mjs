@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Test du vérificateur autonome de dossier scellé (brique ④).
 // Exécution : node v8/js/documents/test-verificateur.mjs

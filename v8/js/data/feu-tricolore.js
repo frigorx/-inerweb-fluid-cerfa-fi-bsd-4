@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide v8 — moteur du tableau de bord de conformité
 // « feu tricolore » (brique ①, PUR/Node-testable, zéro DOM).

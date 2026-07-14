@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — vue « Déchets / BSFF » (Phase C, SPEC §5.8)
 // Chaîne complète : récupération → décision (réutilisable / à

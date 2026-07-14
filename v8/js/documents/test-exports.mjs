@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Test des exports CSV Phase D (exécution : node test-exports.mjs)
 // Vérifie les 9 tables, le format CSV (BOM, séparateur, CRLF,

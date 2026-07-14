@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // Suite CONTRACTUELLE de la sentinelle d'alertes persistées (doublée
 // demo + local via outils/lancer-tests.mjs). Prouve, à l'identique sur
 // les deux stores, le cycle de vie d'un épisode et les garde-fous audit.

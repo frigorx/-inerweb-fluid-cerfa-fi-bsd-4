@@ -2,6 +2,33 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🛡️ PROTECTION DU LOGICIEL — ce qui marche, et ce qui n'existe pas (14/07)
+Franck demandait s'il fallait « chiffrer le code pour éviter le piratage ». **Réponse donnée, et
+assumée : c'est impossible, et il ne faut pas le vouloir.** Le code s'exécute chez l'utilisateur —
+donc il doit être lisible par la machine qui l'exécute, donc par un humain (c'est la règle d'or que
+Franck s'est lui-même donnée pour inerWeb Pilote : « aucun secret dans le navigateur élève »).
+L'obfuscation freine un curieux vingt minutes, casse le débogage, et interdit à un collègue de
+lire un logiciel qu'on veut lui **donner**. La vraie protection est **juridique** (la licence) et
+**probatoire** (l'historique git public horodaté = preuve d'antériorité).
+En revanche, la menace RÉELLE — qu'un tiers distribue un faux « inerWeb Fluide » vérolé sous le nom
+de l'auteur — se traite, et se traite ici :
+- **`outils/fabriquer-paquet.mjs`** calcule désormais l'**empreinte SHA-256** de l'archive et écrit
+  un fichier `.zip.sha256` (format standard `sha256sum -c`). Il affiche l'empreinte à publier à
+  côté du lien de téléchargement, et la commande de vérification pour l'utilisateur : Windows
+  (`certutil -hashfile … SHA256`, natif, rien à installer) ou Linux/Mac (`sha256sum`).
+  **Contrôle croisé fait** : l'empreinte annoncée et celle calculée par `certutil` sont identiques.
+  C'est le même principe que le scellement des dossiers d'audit — appliqué au logiciel lui-même.
+- **Ligne de licence en tête de 168 fichiers source** (`v8/`, `server/`, `outils/`, `index.html`) :
+  « inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh ».
+  Qui ouvre un fichier sait immédiatement à qui il appartient et à quelles conditions.
+  ⚠️ **`v8/js/lib/` est INTOUCHÉ** (PDF.js, pdf-lib, qrcodejs : bibliothèques tierces, leurs
+  notices leur appartiennent). Pièges traités : le shebang de `creer-admin.js` reste en ligne 1,
+  `'use strict'` reste la première *instruction* (un commentaire au-dessus est légal), et le
+  commentaire HTML est posé **après** le doctype (avant, il basculerait les vieux navigateurs en
+  mode « quirks »). **TOUT VERT — 71 exécutions.**
+- ⚠️ **À traiter à la publication** : l'archive est en format « stored » (**non compressée**),
+  d'où 92 Mo. Un vrai ZIP compressé tomberait vers 35-40 Mo. À arbitrer au chantier de diffusion.
+
 ### ⚖️ LICENCE — gratuit pour l'enseignement, payant pour le commerce (14/07)
 Décision de Franck avant la diffusion : **gratuit pour les lycées, payant pour les entreprises**.
 Une licence « maison » aurait été un piège juridique — on prend une licence **prête, rédigée par

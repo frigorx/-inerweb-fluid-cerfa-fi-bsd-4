@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide v8 — téléchargement + scellement d'un dossier ZIP (DOM)
 // Companion navigateur de dossier-commun.js (qui reste pur/Node-testable) :

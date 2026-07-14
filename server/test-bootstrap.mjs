@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — PREUVE du bootstrap ADMIN (V9-E5, vague 4)
 // Exécution : node server/test-bootstrap.mjs

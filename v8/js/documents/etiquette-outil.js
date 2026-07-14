@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — étiquette QR d'un outil réglementaire (QR outillage)
 // Modale d'aperçu imprimable : étiquette 50×70 mm (type + marque/modèle +

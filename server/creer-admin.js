@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 'use strict';
 
 /**

@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — PREUVE de getUtilisateurCourant câblé sur la SESSION
 // (V9-E5, finition — remplace le stub « premier REFERENT du personnel »).

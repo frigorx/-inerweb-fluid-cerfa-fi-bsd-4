@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // Suite CONTRACTUELLE des habilitations F-Gas — Phase 1 (modèle de données).
 // Doublée demo + local via outils/lancer-tests.mjs. Prouve, à l'identique sur
 // les deux stores : CRUD + garde-fous, cumul 2008/2025, révocation historisée,

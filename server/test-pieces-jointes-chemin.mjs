@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // Suite « chemins des pièces jointes » (Mode Local : sécurité + portabilité).
 //
 // CONTEXTE (audit du 14/07, constat RECTIFIÉ par ce test même) : l'audit avait

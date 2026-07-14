@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — vue « Fiche client / détenteur » (Phase 2)
 // Vue hors sidebar, atteinte par la route paramétrée '#/c/<id>'.

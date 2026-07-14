@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — vue « Tableau de bord »
 // Vue d'ensemble : 4 cartes KPI, derniers mouvements de fluide,

@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — Fabrication du PAQUET PORTABLE « clé en main »
 // (Phase 2, Lot 1)
@@ -27,6 +28,7 @@
 // ============================================================
 
 import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -196,6 +198,26 @@ if (FAIRE_ZIP) {
   fs.writeFileSync(cheminZip, octets);
   const tailleZip = (octets.length / (1024 * 1024)).toFixed(0);
   console.log(`\n  [ok] Archive : ${cheminZip} (${tailleZip} Mo, non compressée)`);
+
+  // EMPREINTE SHA-256 de l'archive — la SEULE protection qui vaille contre un
+  // faux « inerWeb Fluide » vérolé distribué sous le nom de l'auteur. On ne
+  // protège pas le code (impossible : il doit s'exécuter chez l'utilisateur) ;
+  // on prouve que le paquet téléchargé est bien CELUI-CI, octet pour octet.
+  // Même principe que le scellement des dossiers d'audit du logiciel lui-même.
+  // Le fichier suit le format standard « <empreinte>␣␣<nom> » (sha256sum -c).
+  const empreinte = createHash('sha256').update(octets).digest('hex');
+  const nomZip = path.basename(cheminZip);
+  fs.writeFileSync(`${cheminZip}.sha256`, `${empreinte}  ${nomZip}\n`, 'utf8');
+  console.log(`  [ok] Empreinte : ${cheminZip}.sha256`);
+  console.log('');
+  console.log('  ------------------------------------------------------------');
+  console.log('   PUBLIEZ CETTE EMPREINTE À CÔTÉ DU LIEN DE TÉLÉCHARGEMENT :');
+  console.log(`   SHA-256 : ${empreinte}`);
+  console.log('');
+  console.log('   Qui télécharge peut la vérifier, sans rien installer :');
+  console.log(`     certutil -hashfile ${nomZip} SHA256      (Windows)`);
+  console.log(`     sha256sum ${nomZip}                       (Linux / Mac)`);
+  console.log('  ------------------------------------------------------------');
 }
 
 console.log(`\n  Paquet prêt : ${SORTIE}`);

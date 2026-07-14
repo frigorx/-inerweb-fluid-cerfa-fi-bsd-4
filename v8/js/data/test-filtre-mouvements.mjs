@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Test du filtrage de la vue « Mouvements » (module pur).
 // Exécution : node v8/js/data/test-filtre-mouvements.mjs

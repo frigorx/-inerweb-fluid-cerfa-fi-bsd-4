@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — modale « Créer le BSFF » (Phase C)
 // Sortie de stock d'une bouteille de fluide récupéré déclarée

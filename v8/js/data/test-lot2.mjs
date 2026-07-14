@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Test du Lot 2 de l'audit du 03/07/2026 — côté MOTEUR (store).
 // Exécution : node test-lot2.mjs (Node ≥ 18, sans DOM).

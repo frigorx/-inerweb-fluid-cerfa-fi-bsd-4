@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // Tests UNITAIRES du module pur habilitations.js (aucun store, aucune horloge).
 // Tourne une seule fois (non doublé). Lancé par outils/lancer-tests.mjs.
 

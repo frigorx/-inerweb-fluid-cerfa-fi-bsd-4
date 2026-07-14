@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Test de la feuille de mise en service (V9.2)
 // Exécution : node v8/js/documents/test-feuille-mise-en-service.mjs

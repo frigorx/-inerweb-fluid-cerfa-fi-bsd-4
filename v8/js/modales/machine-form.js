@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — modale « Créer / Modifier une machine »
 // Phase B : formulaire de saisie conforme charte (.formulaire /

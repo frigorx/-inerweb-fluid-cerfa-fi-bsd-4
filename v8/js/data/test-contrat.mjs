@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Test de CONFORMITÉ AU CONTRAT DataStore (V9-E0)
 // Exécution : node v8/js/data/test-contrat.mjs [demo]

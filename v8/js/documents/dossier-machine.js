@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide v8 — dossier ZIP scellé d'UNE machine
 // « Preuve ciblée en un clic » : tout l'historique d'une machine pour un audit.

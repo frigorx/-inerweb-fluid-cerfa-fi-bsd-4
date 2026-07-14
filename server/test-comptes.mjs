@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — PREUVE des comptes (V9-E5, vague 1 : crypto comptes)
 // Exécution : node server/test-comptes.mjs

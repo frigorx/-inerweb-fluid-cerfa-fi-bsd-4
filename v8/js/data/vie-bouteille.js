@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide v8 — « la vie de la bouteille » (brique ②)
 // Module PUR/Node-testable (zéro DOM) : fusionne les gisements

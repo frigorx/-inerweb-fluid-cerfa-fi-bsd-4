@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Test du module de correspondance front ↔ SQL (V9-E0, refondu E1)
 // Exécution : node server/test-mapping.mjs

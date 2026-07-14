@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Test des dossiers ZIP scellés « machine » et « client » (Phase 2)
 // Exécution : node v8/js/documents/test-dossier-machine.mjs

@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — PREUVE du chiffrement E4.2 (AES-256-GCM).
 // Exécution : node server/test-chiffrement.mjs

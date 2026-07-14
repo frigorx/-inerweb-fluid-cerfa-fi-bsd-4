@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // Suite « contenu binaire des pièces jointes » (module PUR contenu-pj.js).
 // Prouve : l'aller-retour Blob ↔ base64 est FIDÈLE (octets binaires
 // compris), les gros contenus (5 Mo) ne débordent pas la pile, et surtout

@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — plaque F-Gas (Phase D)
 // Modale d'aperçu d'une étiquette réglementaire pour un équipement :

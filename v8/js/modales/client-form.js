@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — modale « Créer / Modifier un client / détenteur »
 // (Phase C, IM-11) Cadre 2 du CERFA : raison sociale, adresse,

@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Test du moteur « audit guidé » (parcours linéaire d'audit).
 // Exécution : node v8/js/data/test-audit-guide.mjs [demo|local]

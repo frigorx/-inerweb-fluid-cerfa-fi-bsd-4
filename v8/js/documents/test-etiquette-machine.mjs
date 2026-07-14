@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Test de l'étiquette QR machine (V9.1 — correctif QR, vague 3)
 // Exécution : node v8/js/documents/test-etiquette-machine.mjs

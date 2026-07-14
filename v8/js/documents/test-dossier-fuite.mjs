@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Test du dossier ZIP scellé « dossier de fuite » (brique ③, Phase 2 export)
 // Exécution : node v8/js/documents/test-dossier-fuite.mjs

@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // Tests UNITAIRES du moteur de CONSEIL verifierDroitIntervention (module pur).
 // Aucun store, aucune horloge. Tourne une seule fois (non doublé).
 // Matrice §2 validée fonctionnellement par Franck (cas Bachir/Pierre).

@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — vue « Outillage réglementaire » (Phase C)
 // Grille de cartes outil : étalonnages et vérifications exigés

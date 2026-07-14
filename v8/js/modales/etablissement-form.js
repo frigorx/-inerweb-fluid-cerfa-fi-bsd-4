@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — modale « Dossier opérateur » (Phase C)
 // Formulaire complet du cadre 1 (raison sociale, SIRET, adresse,

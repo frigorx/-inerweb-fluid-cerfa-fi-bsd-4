@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Test de l'INVENTAIRE NOMINATIF (brique ② / B7, CF-20).
 // Exécution : node v8/js/data/test-inventaire-nominatif.mjs [demo|local]

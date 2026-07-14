@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide v8 — vue « Registre du personnel » (Phase C)
 // Attestations d'aptitude, catégories 2008/2025 et activités

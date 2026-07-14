@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Test du moteur « feu tricolore » (brique ① conformité).
 // Exécution : node v8/js/data/test-feu-tricolore.mjs [demo|local]

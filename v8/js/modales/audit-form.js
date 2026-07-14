@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — mini-modales « Suivi d'audit » (Phase C)
 // Enregistrer un audit organisme, déclarer une non-conformité,

@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — bon d'intervention (V9.2)
 // Document A4 imprimable, très majoritairement MANUSCRIT : imprimé EN

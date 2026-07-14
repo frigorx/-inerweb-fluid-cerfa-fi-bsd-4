@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Mini-test du magasin de démonstration (exécution : node test-demo-store.mjs)
 // Vérifie les invariants du monde fictif de la maquette validée.

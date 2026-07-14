@@ -1,3 +1,4 @@
+// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Test du versionnage de la base SQLite (V9-E1)
 // Exécution : node server/test-migrations.mjs
