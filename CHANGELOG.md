@@ -2,6 +2,31 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🕵️ TÉMOIN D'IDENTITÉ au journal d'audit (14/07) — « on n'empêche pas la déclaration, on la recoupe »
+Réponse à la réserve la plus profonde de l'audit : **le « qui » du registre était déclaré par le
+client, jamais prouvé par la session** (aucun des 43 handlers mutants ne lisait `contexte` ;
+`validerMouvement` scellait au nom du `validateurId` reçu dans le CORPS de la requête). Décision
+de Franck, partagée : le registre F-Gas est **déclaratif par nature** — celui qui signe engage sa
+responsabilité, comme sur le CERFA papier, et le logiciel n'a pas à refuser une déclaration. Ce
+qui est opposable, c'est l'INALTÉRABILITÉ, et elle est acquise. On ne refond donc pas les
+43 handlers : **on recoupe**.
+- **`server/api.js`** : `appeler()` pose la session de l'appel en cours (et la remet à null dans un
+  `finally` — sans quoi une session « fuirait » sur l'appel suivant, y compris un appel sans
+  session : c'est le vrai piège du montage, il est testé). `journaliser()` consigne désormais
+  l'auteur **RÉEL** (`Prénom Nom (login)` du compte de session), et garde le nom déclaré à côté
+  quand il diffère : « auteur déclaré : X ».
+- **Libellé volontairement NEUTRE**, car les deux cas sont légitimes : le professeur connecté qui
+  saisit une intervention faite par un élève (usage courant), et l'élève qui signerait au nom de
+  son professeur (usage suspect). **Le journal ne tranche pas, il enregistre.**
+- **La trace est ineffaçable** : le journal est en AJOUT SEUL (le déclencheur WORM refuse tout
+  `UPDATE` — vérifié), et `details` entre dans l'empreinte chaînée (un outil externe qui
+  contournerait les déclencheurs casserait la chaîne).
+- **Parité intacte** : sans session (loopback en lecture, harnais de test, CLI), le comportement
+  reste STRICTEMENT celui d'avant — donc identique au DemoStore. `test-contrat` inchangé.
+- Tests : **`server/test-journal-identite.mjs` 10/0** (auteur réel ; élève déclarant son
+  professeur → journal nomme l'élève + consigne la divergence ; effacement REFUSÉ par le WORM ;
+  chaîne intacte ; **aucune fuite de session d'un appel à l'autre**). **TOUT VERT — 70 exécutions.**
+
 ### 🙈 AUDIT QUALITÉ — Lot 0, brique 3 : l'attribut `hidden` ne masquait RIEN (14/07)
 Une ligne de CSS, un défaut présent dans toute l'application. Le navigateur ne donne à `hidden`
 qu'un `display: none` de sa feuille utilisateur-agent — que **n'importe quelle règle d'auteur

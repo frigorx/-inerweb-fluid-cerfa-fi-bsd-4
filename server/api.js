@@ -427,11 +427,73 @@ function majParId(table, id, ligne) {
     [...colonnes.map((c) => ligne[c]), id]);
 }
 
+/**
+ * Session de l'appel EN COURS, posée par appeler() et remise à null dans son
+ * `finally`. Elle ne sert QU'AU journal (témoin d'identité) : les gardes de
+ * rôle, elles, lisent le contexte reçu en argument. Node est mono-thread et
+ * les handlers sont synchrones : aucun entrelacement possible.
+ */
+let sessionCourante = null;
+
 /** Écrit une entrée au journal d'audit (chaîné, dans la transaction ambiante). */
 function journaliser(qui, action, cible, details) {
   // `qui || null` (pas ??) : une chaîne vide devient « système » comme au
   // DemoStore (`qui || 'système'`) — db.journaliser traduit null → système.
-  db.journaliser({ qui: qui || null, action, cible, details });
+  const declare = qui || null;
+  const reel = auteurDeLaSession();
+
+  // Aucune session (loopback en lecture, harnais de test, CLI) : comportement
+  // d'origine, strictement identique au DemoStore — la parité est préservée.
+  if (!reel) {
+    db.journaliser({ qui: declare, action, cible, details });
+    return;
+  }
+
+  // TÉMOIN D'IDENTITÉ (14/07). Le registre F-Gas est déclaratif par nature —
+  // celui qui signe engage sa responsabilité, comme sur le CERFA papier, et le
+  // logiciel n'a pas à refuser une déclaration. Mais le JOURNAL, lui, n'a pas à
+  // croire le client sur parole : il consigne l'auteur RÉEL, celui de la
+  // session, que le serveur connaît déjà. Le nom déclaré est conservé à côté
+  // quand il diffère — SANS JUGER, car les deux cas sont légitimes :
+  //   - normal   : le professeur connecté saisit une intervention faite par un
+  //                élève (« auteur déclaré : Léa Martin ») ;
+  //   - suspect  : un élève connecté signe au nom de son professeur.
+  // Le journal ne tranche pas, il ENREGISTRE — dans une entrée chaînée et en
+  // ajout seul, donc ineffaçable. On n'empêche pas la déclaration : on la recoupe.
+  const concordant = !declare
+    || reel.libelle.includes(declare)
+    || (reel.personnelId !== null && declare === reel.personnelId);
+  const detailsFinal = concordant
+    ? details
+    : `${details ? `${details} — ` : ''}auteur déclaré : ${declare}`;
+  db.journaliser({ qui: reel.libelle, action, cible, details: detailsFinal });
+}
+
+/**
+ * L'auteur RÉEL de l'appel en cours : le compte de la session, jamais ce que
+ * le client déclare. `null` s'il n'y a pas de session (loopback en lecture,
+ * harnais de test, amorçage) — le journal retombe alors sur le nom déclaré,
+ * exactement comme le DemoStore (parité du contrat).
+ * @returns {{libelle: string, login: string, personnelId: string|null}|null}
+ */
+function auteurDeLaSession() {
+  const idCompte = sessionCourante?.utilisateur ?? null;
+  if (!idCompte) return null;
+  const compte = db.get(
+    'SELECT id, login, personnel_id FROM utilisateurs_app WHERE id = ?',
+    [idCompte]);
+  if (!compte) return null;
+  let libelle = compte.login;
+  if (compte.personnel_id) {
+    const fiche = db.get(
+      'SELECT prenom, nom FROM personnel WHERE id = ?', [compte.personnel_id]);
+    if (fiche) libelle = `${fiche.prenom} ${fiche.nom} (${compte.login})`;
+  }
+  return {
+    libelle,
+    login: compte.login,
+    personnelId: compte.personnel_id ?? null
+  };
 }
 
 /**
@@ -5090,7 +5152,15 @@ function appeler(methode, params = {}, contexte = {}) {
     throw erreur;
   }
   garderRole(methode, contexte);
-  return handler(params ?? {}, contexte ?? {});
+  // La session de CET appel, pour le journal chaîné (cf. journaliser).
+  // Remise à null dans tous les cas : sans ce `finally`, une session
+  // « fuirait » sur l'appel suivant — y compris un appel sans session.
+  sessionCourante = contexte ?? null;
+  try {
+    return handler(params ?? {}, contexte ?? {});
+  } finally {
+    sessionCourante = null;
+  }
 }
 
 module.exports = {
