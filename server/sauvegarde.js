@@ -258,9 +258,19 @@ function collecterDocuments() {
   const entrees = [];
   const documents = [];
   for (const pj of lignes) {
-    const chemin = pj.chemin
-      ? pj.chemin
-      : path.join(dossierDocuments(), pj.id);
+    // Contenu JAMAIS reçu (métadonnée importée seule — cf. api.js
+    // reinsererPiecesJointes : « la trace reste, le contenu est indisponible ») :
+    // il n'y a rien à sceller, et ce n'est pas une preuve manquante.
+    if (!pj.chemin) continue;
+    // Le chemin est TOUJOURS recalculé depuis l'id, jamais lu de la colonne
+    // `chemin` : un import forgé y aurait glissé un fichier du poste, qui se
+    // serait retrouvé scellé DANS l'archive (BLOQUANT de l'audit du 14/07).
+    // L'id est validé à l'import (invariants) ; ceinture et bretelles ici.
+    if (!/^[A-Za-z0-9_-]+$/.test(String(pj.id ?? ''))) {
+      throw new Error(
+        `Sauvegarde impossible : identifiant de pièce jointe invalide (${pj.id}).`);
+    }
+    const chemin = path.join(dossierDocuments(), pj.id);
     if (!fs.existsSync(chemin)) {
       throw new Error(
         `Sauvegarde impossible : fichier de la pièce jointe introuvable ` +

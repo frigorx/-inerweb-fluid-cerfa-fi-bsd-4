@@ -1581,10 +1581,13 @@ const HANDLERS = {
       ajoutePar: d.ajoutePar ?? null
     };
     return muter(() => {
-      const chemin = ecrirePieceJointeSurDisque(pieceJointe.id, octets);
+      ecrirePieceJointeSurDisque(pieceJointe.id, octets);
       const ligne = mapping.versSql('pieces_jointes', pieceJointe);
       ligne.etablissement_id = ID_ETABLISSEMENT;
-      ligne.chemin = chemin;
+      // `chemin` = nom RELATIF dans documents/ (= l'id), comme le promet
+      // schema.sql. Il ne sert QU'À dire « le contenu est présent » : le chemin
+      // réel est toujours recalculé par cheminPieceJointe() — jamais lu d'ici.
+      ligne.chemin = pieceJointe.id;
       inserer('pieces_jointes', ligne);
       journaliser(pieceJointe.ajoutePar, 'AJOUT_PIECE_JOINTE',
         `${pieceJointe.entiteType}/${pieceJointe.entiteId}`,
@@ -1608,11 +1611,14 @@ const HANDLERS = {
     const { id } = params;
     const ligne = db.get('SELECT * FROM pieces_jointes WHERE id = ?', [id]);
     if (!ligne) throw new Error(`Pièce jointe introuvable : ${id}.`);
-    if (!ligne.chemin || !fs.existsSync(ligne.chemin)) {
+    // `chemin` non nul = le contenu a été enregistré ; le chemin RÉEL est
+    // recalculé (jamais celui de la donnée — cf. cheminPieceJointe).
+    const chemin = ligne.chemin ? cheminPieceJointe(ligne.id) : null;
+    if (!chemin || !fs.existsSync(chemin)) {
       throw new Error(
         `Contenu de la pièce jointe introuvable : ${ligne.nom_fichier}.`);
     }
-    const octets = fs.readFileSync(ligne.chemin);
+    const octets = fs.readFileSync(chemin);
     const pieceJointe = mapping.versFront('pieces_jointes', ligne);
     pieceJointe.blob = octets.toString('base64');
     return pieceJointe;
@@ -1640,8 +1646,11 @@ const HANDLERS = {
     }
     return muter(() => {
       db.run('DELETE FROM pieces_jointes WHERE id = ?', [id]);
-      if (ligne.chemin && fs.existsSync(ligne.chemin)) {
-        fs.unlinkSync(ligne.chemin);
+      // On ne supprime QUE dans documents/, jamais un chemin venu des données :
+      // supprimerPieceJointe est ouvert au rôle OPERATEUR (donc à un ÉLÈVE).
+      const chemin = ligne.chemin ? cheminPieceJointe(ligne.id) : null;
+      if (chemin && fs.existsSync(chemin)) {
+        fs.unlinkSync(chemin);
       }
       journaliser(params.par, 'SUPPRESSION_PIECE_JOINTE',
         `${ligne.entite_type}/${ligne.entite_id}`, ligne.nom_fichier);
@@ -3214,6 +3223,19 @@ function verifierInvariantsDonneesCandidat(candidat) {
       return `lien d'outil ${ref} : statut figé sur un mouvement non validé`;
     }
   }
+
+  // Pièces jointes : l'id EST le nom du fichier sur disque (Mode Local). Un id
+  // hors alphabet (« ../.. ») ouvrirait une traversée de chemin — refusé À
+  // L'ENTRÉE, avant que la donnée n'existe. Règle identique côté DemoStore.
+  const idsPj = new Set();
+  for (const pj of candidat.piecesJointes ?? []) {
+    const ref = pj.id ?? '?';
+    if (!/^[A-Za-z0-9_-]+$/.test(String(pj.id ?? ''))) {
+      return `pièce jointe ${ref} : identifiant invalide`;
+    }
+    if (idsPj.has(pj.id)) return `pièce jointe ${ref} : id en double`;
+    idsPj.add(pj.id);
+  }
   return null;
 }
 
@@ -3401,8 +3423,15 @@ function reinsererPiecesJointes(items) {
   for (const pj of items ?? []) {
     const ligne = mapping.versSql('pieces_jointes', pj);
     ligne.etablissement_id = ID_ETABLISSEMENT;
-    // chemin : conservé s'il pointe vers un fichier local encore présent.
-    if (pj.chemin && fs.existsSync(pj.chemin)) ligne.chemin = pj.chemin;
+    // ⚠ Le `chemin` du candidat n'est JAMAIS repris (il ferait lire, puis
+    // supprimer, n'importe quel fichier du poste — BLOQUANT de l'audit du
+    // 14/07). On regarde seulement si le contenu est là, chez nous, sous l'id.
+    ligne.chemin = null;
+    try {
+      if (fs.existsSync(cheminPieceJointe(pj.id))) ligne.chemin = pj.id;
+    } catch {
+      // id hors alphabet (donc forgé) : la métadonnée entre sans contenu.
+    }
     inserer('pieces_jointes', ligne);
   }
 }
@@ -4500,9 +4529,34 @@ function dossierDocuments() {
   return dossier;
 }
 
+/**
+ * Chemin disque d'une pièce jointe — TOUJOURS RECALCULÉ depuis son id, JAMAIS
+ * lu des données (l'id EST le nom du fichier, cf. ecrirePieceJointeSurDisque).
+ *
+ * ⚠ SÉCURITÉ (BLOQUANT trouvé à l'audit du 14/07) : la colonne `chemin` était
+ * réinjectée telle quelle depuis un JSON importé, puis relue (fs.readFileSync,
+ * classée « lecture » donc SANS aucun rôle) et SUPPRIMÉE (fs.unlinkSync, classée
+ * OPERATEUR — rôle qui inclut ELEVE). Un chemin forgé dans un fichier d'import
+ * faisait donc lire, puis détruire, n'importe quel fichier du poste (la base
+ * elle-même, un document personnel…). On ne fait plus JAMAIS confiance à la
+ * donnée : le chemin est reconstruit, et l'id est validé (aucune traversée).
+ *
+ * Effet de bord bienvenu : les pièces jointes redeviennent PORTABLES — une base
+ * restaurée sur un autre poste retrouve ses fichiers (dette ROADMAP « chemin
+ * absolu », le schéma promettait d'ailleurs un chemin relatif depuis le début).
+ * @param {string} id
+ * @returns {string} chemin absolu, toujours à l'intérieur de documents/
+ */
+function cheminPieceJointe(id) {
+  if (typeof id !== 'string' || !/^[A-Za-z0-9_-]+$/.test(id)) {
+    throw new Error(`Identifiant de pièce jointe invalide : ${id}.`);
+  }
+  return path.join(dossierDocuments(), id);
+}
+
 /** Écrit le contenu d'une pièce jointe sur disque, renvoie le chemin. */
 function ecrirePieceJointeSurDisque(id, octets) {
-  const chemin = path.join(dossierDocuments(), id);
+  const chemin = cheminPieceJointe(id);
   fs.writeFileSync(chemin, octets);
   return chemin;
 }

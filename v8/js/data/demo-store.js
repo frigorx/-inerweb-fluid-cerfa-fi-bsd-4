@@ -365,6 +365,19 @@ function verifierInvariantsDonnees(candidat) {
       return `lien d'outil ${ref} : statut figé sur un mouvement non validé`;
     }
   }
+
+  // Pièces jointes : l'id EST le nom du fichier sur disque (Mode Local). Un id
+  // hors alphabet (« ../.. ») ouvrirait une traversée de chemin — refusé À
+  // L'ENTRÉE, avant que la donnée n'existe. Règle identique côté serveur.
+  const idsPj = new Set();
+  for (const pj of candidat.piecesJointes ?? []) {
+    const ref = pj.id ?? '?';
+    if (!/^[A-Za-z0-9_-]+$/.test(String(pj.id ?? ''))) {
+      return `pièce jointe ${ref} : identifiant invalide`;
+    }
+    if (idsPj.has(pj.id)) return `pièce jointe ${ref} : id en double`;
+    idsPj.add(pj.id);
+  }
   return null;
 }
 

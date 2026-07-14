@@ -16,10 +16,21 @@ zéro secret en dur, scrypt et cookie de session corrects, `esc()` appliqué par
 utilisateur entre dans du HTML (aucune injection trouvée), et **≈ 100 fichiers sur 100 portent
 déjà un en-tête de contrat** — le dépôt est, sur ce point, exemplaire.
 
-Mais l'audit a trouvé **deux défauts graves qui ne relèvent pas de la qualité de programmation :
-ils touchent les données**. Tous deux vivent dans l'angle mort du filet de tests, c'est-à-dire
-exactement là où la duplication démo/serveur n'est pas prouvée. Ce n'est pas une coïncidence :
-c'est la démonstration, en production, du « point faible n° 1 » déjà identifié.
+Mais l'audit a trouvé **un défaut grave qui ne relève pas de la qualité de programmation : il
+touche les données** (B1). Il vit dans l'angle mort du filet de tests, c'est-à-dire exactement là
+où la duplication démo/serveur n'est pas prouvée. Ce n'est pas une coïncidence : c'est la
+démonstration, en production, du « point faible n° 1 » déjà identifié.
+
+> ### ⚠️ RECTIFICATION DU 14/07 (après correctifs)
+> Ce rapport comptait initialement **deux** BLOQUANTS. Le second (B2 : « un fichier d'import fait
+> lire puis supprimer n'importe quel fichier du poste ») était **FAUX**, et c'est le test écrit
+> pour le prouver qui l'a démenti : `mapping.versSql` **lève sur toute clé inconnue**
+> (« l'anti-dérive », `server/mapping.js:659`) et il est appelé **une ligne avant** celle qui était
+> incriminée. Un import portant un champ `chemin` était donc rejeté net (`Clé front inconnue du
+> mapping pieces_jointes : chemin.`) : la ligne `if (pj.chemin && …)` était **du code mort**.
+> Deux agents et leur contre-vérificateur ont manqué cette garantie ; moi aussi, en raisonnant la
+> chaîne d'appels sans l'exécuter. **Leçon : une faille se prouve en la tirant, pas en la lisant.**
+> Ce qui restait réellement ouvert est plus étroit et a été corrigé (voir B2 rectifié).
 
 Le reste est de la dette structurelle saine à traiter : 76 des 77 méthodes du contrat écrites
 deux fois, ~610 lignes de littéraux recopiés côté serveur, trois monolithes, et un filet qui
@@ -28,7 +39,7 @@ vues**. Il faut renforcer le filet AVANT de remanier, pas après.
 
 ---
 
-## 🔴 BLOQUANTS (2)
+## 🔴 BLOQUANT (1)
 
 ### B1 — En mode serveur, toute pièce jointe ajoutée par l'interface est détruite en silence
 
@@ -61,35 +72,32 @@ durcir le serveur (refuser tout contenu qui n'est pas une chaîne, même message
 ajouter au contrat un cas « contenu non textuel refusé », joué contre les DEUX stores.
 Effort **M** · Risque **faible**.
 
-### B2 — Un fichier d'import peut faire lire, puis supprimer, n'importe quel fichier du poste
+### B2 (RECTIFIÉ, 🟠 IMPORTANT) — Un identifiant de pièce jointe forgé pouvait faire sceller un fichier du poste dans l'archive
 
-**Preuve.** À l'import, le chemin disque d'une pièce jointe est recopié tel quel depuis le JSON
-candidat, sans confinement — `server/api.js:3405` :
+**Ce qui était FAUX.** Le rapport initial affirmait qu'un `chemin` forgé dans un fichier d'import
+était réinjecté (`api.js:3405`), puis lu (`fs.readFileSync`, sans rôle) et **supprimé**
+(`fs.unlinkSync`, rôle OPERATEUR = ÉLÈVE). En réalité `mapping.versSql`, appelé **une ligne plus
+haut**, lève sur toute clé inconnue : le champ `chemin` faisait **échouer l'import** — la ligne
+incriminée n'était jamais atteinte. Le produit était protégé, par une garantie que **rien ne
+testait**. (Elle est désormais verrouillée : `server/test-pieces-jointes-chemin.mjs`.)
 
-```js
-if (pj.chemin && fs.existsSync(pj.chemin)) ligne.chemin = pj.chemin;
-```
+**Ce qui était VRAI.** L'`id`, lui, **est** une clé connue du mapping : un identifiant forgé
+(`../../DOCUMENT-PRIVE.txt`) entrait donc en base sans obstacle. Or `server/sauvegarde.js:261`
+reconstruisait le chemin par `path.join(dossierDocuments(), pj.id)` — sans validation. Un fichier
+arbitraire du poste pouvait ainsi être **lu, haché et scellé dans l'archive de sauvegarde** (ou,
+si son empreinte ne correspondait pas à celle déclarée, rendre **toute sauvegarde impossible** —
+un déni de service sur l'exigence n° 1 du produit).
 
-Ensuite :
-- `obtenirPieceJointe` (`server/api.js:1615`) fait `fs.readFileSync(ligne.chemin)` et renvoie le
-  contenu en base64. Cette méthode n'est **pas** dans `ROLES_MUTATION` : elle est donc classée
-  « lecture », **sans aucune restriction de rôle** (`api.js:224`) ;
-- `supprimerPieceJointe` (`server/api.js:1644`) fait `fs.unlinkSync(ligne.chemin)`, et il est classé
-  `OPERATEUR` (`api.js:287`) — **rôle qui inclut ELEVE** (`api.js:228`). La garde « écriture figée »
-  ne protège pas : il suffit que la pièce soit déclarée rattachée à une MACHINE, pas à un MOUVEMENT.
+**Impact réel.** Bien plus étroit que ce qui était annoncé : il faut un fichier d'import
+**délibérément modifié** (un export légitime ne contient jamais de champ `chemin`, il n'est pas
+dans le mapping), importé par un REFERENT/ADMIN, puis une sauvegarde. Aucune suppression de
+fichier n'était possible, aucune lecture par un élève non plus.
 
-**Impact.** Précondition : qu'un référent importe un JSON non fiable — c'est-à-dire précisément
-l'usage que le produit encourage (sauvegarde d'un collègue, export d'un autre poste, fichier de
-démo). Après cet import, un chemin forgé pointant vers `data/fluides.db`, un document personnel ou
-n'importe quel fichier lisible par le processus permet d'en lire le contenu, et **un élève connecté
-peut le supprimer**. Le patron de confinement existe déjà ailleurs dans le dépôt
-(`server/serveur.js:475-477`) : il n'a simplement pas été appliqué ici.
-
-**Correctif (brique 2).** Ne jamais accepter `chemin` d'un candidat : le recalculer localement
-depuis l'identifiant (le nom du fichier sur disque EST l'identifiant). En défense de profondeur,
-confiner lecture et suppression au dossier `documents/`. **Ce même correctif solde la dette 4 de la
-ROADMAP** (chemin absolu → pièces jointes inaccessibles après restauration sur un autre poste, cf.
-🟠 I7). Effort **M** · Risque **faible**.
+**Correctif (brique 2, FAIT).** Le chemin n'est plus jamais lu de la donnée : il est **recalculé
+depuis l'identifiant**, qui est validé (`/^[A-Za-z0-9_-]+$/`) à l'import — des deux côtés du
+contrat — et à la sauvegarde. **Solde du même coup la dette 4 de la ROADMAP** (chemin absolu →
+pièces jointes introuvables après restauration sur un autre poste, cf. 🟠 I7) : les preuves
+redeviennent portables. Effort **M** · Risque **faible**.
 
 ---
 

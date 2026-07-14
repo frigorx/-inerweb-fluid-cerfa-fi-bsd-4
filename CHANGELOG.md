@@ -2,6 +2,42 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔒 AUDIT QUALITÉ — Lot 0, brique 2 : chemins des pièces jointes (14/07)
+**L'audit s'était TROMPÉ, et c'est le test écrit pour le prouver qui l'a démenti.** Le rapport
+classait BLOQUANT le fait qu'un `chemin` forgé dans un fichier d'import soit réinjecté
+(`api.js`), puis lu (`fs.readFileSync`, sans rôle) et SUPPRIMÉ (`fs.unlinkSync`, rôle OPERATEUR
+= ÉLÈVE). **Faux** : `mapping.versSql` lève sur toute clé inconnue (« anti-dérive »,
+`mapping.js:659`) et il est appelé UNE LIGNE PLUS HAUT — l'import portant un `chemin` échouait
+net, la ligne incriminée était du **code mort**. Deux agents, leur contre-vérificateur et
+moi-même avions raisonné la chaîne d'appels sans l'exécuter. **Leçon : une faille se prouve en la
+tirant, pas en la lisant.** Rapport rectifié (`docs/AUDIT-QUALITE-2026-07.md`).
+- **Ce qui était RÉELLEMENT ouvert** : l'`id`, lui, EST une clé connue du mapping. Un identifiant
+  forgé (`../../DOCUMENT-PRIVE.txt`) entrait en base, et `sauvegarde.js:261` reconstruisait
+  `path.join(dossierDocuments(), pj.id)` sans validation → **un fichier arbitraire du poste
+  pouvait être lu, haché et SCELLÉ dans l'archive** (ou, empreinte différente, rendre TOUTE
+  sauvegarde impossible — déni de service sur l'exigence n°1). Étroit (il faut un fichier
+  délibérément modifié, importé par un REFERENT), mais réel.
+- **`server/api.js`** : nouvelle fonction `cheminPieceJointe(id)` — le chemin disque d'une PJ est
+  désormais TOUJOURS recalculé depuis son id (jamais lu de la donnée), et l'id est validé
+  (`/^[A-Za-z0-9_-]+$/`, aucune traversée possible). `ajouterPieceJointe` stocke un chemin
+  RELATIF (= l'id), comme `schema.sql:520` le promettait depuis le début ; `obtenirPieceJointe`,
+  `supprimerPieceJointe` et `reinsererPiecesJointes` passent tous par elle.
+- **Invariants d'import, des DEUX côtés** (`api.js` + `demo-store.js`, mot pour mot) : un id de
+  pièce jointe hors alphabet est refusé À L'ENTRÉE (« pièce jointe X : identifiant invalide »),
+  avant tout effet.
+- **`server/sauvegarde.js`** : chemin recalculé depuis l'id (jamais la colonne `chemin`) + garde
+  sur l'id. **Correction d'un bug latent au passage** : une PJ importée SANS contenu (trace seule,
+  cas documenté) faisait échouer toute sauvegarde (« fichier introuvable — l'archive serait
+  incomplète ») ; elle est maintenant simplement sautée. On distingue désormais « contenu jamais
+  reçu » (on saute) et « preuve disparue » (on refuse de sceller).
+- **Dette ROADMAP « `pieces_jointes.chemin` absolu » SOLDÉE** : le chemin étant recalculé, une base
+  restaurée sur un AUTRE poste retrouve ses pièces justificatives (elles étaient jusqu'ici
+  physiquement présentes mais introuvables).
+- Tests : **`server/test-pieces-jointes-chemin.mjs` 9/0** — la PJ ordinaire, l'anti-dérive du
+  mapping (garantie qui n'était prouvée NULLE PART), l'id forgé refusé à l'import, la sauvegarde
+  qui refuse un id invalide (le fichier privé du poste reste intact et jamais scellé), et la
+  portabilité (chemin hérité d'un autre poste). **TOUT VERT — 69 exécutions.**
+
 ### 🔴 AUDIT QUALITÉ — Lot 0, brique 1 : les pièces jointes étaient DÉTRUITES en Mode Local (14/07)
 Défaut BLOQUANT trouvé par l'audit qualité (`docs/AUDIT-QUALITE-2026-07.md`) et prouvé de bout
 en bout. **Aucune donnée perdue chez Franck** (vérifié : `data/documents/` n'existait pas — aucune
