@@ -16,7 +16,15 @@
 // surChangement est SYNCHRONE et purement LOCAL (le serveur ne pousse
 // rien : c'est le front qui, après une mutation réussie, notifie ses
 // propres abonnés — comme le DemoStore).
+//
+// SEULE ADAPTATION (et ce n'est PAS de la règle métier) : le CONTENU
+// BINAIRE des pièces jointes. JSON ne sait pas porter un Blob — il le
+// réduit à {} — donc le LocalStore convertit en base64 à l'aller et
+// reconstruit un Blob au retour, pour rendre au front EXACTEMENT ce que
+// rend le DemoStore (cf. contenu-pj.js, défaut trouvé à l'audit du 14/07).
 // ============================================================
+
+import { versBase64, versBlob } from './contenu-pj.js';
 
 /**
  * Crée un LocalStore conforme au contrat, branché sur `transport`.
@@ -113,8 +121,17 @@ export function creerLocalStore(transport) {
     listerPiecesJointes(entiteType, entiteId) {
       return lire('listerPiecesJointes', { entiteType, entiteId });
     },
-    obtenirPieceJointe(id) {
-      return lire('obtenirPieceJointe', { id });
+    async obtenirPieceJointe(id) {
+      const pj = await lire('obtenirPieceJointe', { id });
+      // Le serveur ne peut renvoyer le contenu qu'en base64 (JSON) ; le
+      // contrat, lui, promet un contenu BINAIRE — le DemoStore rend un Blob.
+      // On rétablit la parité ici, sinon les appelants qui font
+      // URL.createObjectURL(pj.blob) (composants/pieces-jointes.js) cassent
+      // en Mode Local.
+      if (pj && typeof pj.blob === 'string') {
+        return { ...pj, blob: versBlob(pj.blob, pj.mimeType) };
+      }
+      return pj;
     },
 
     // ------------------------------------------------------
@@ -251,8 +268,19 @@ export function creerLocalStore(transport) {
     },
 
     // --- pièces jointes -----------------------------------
-    ajouterPieceJointe(donneesPj) {
-      return muter('ajouterPieceJointe', { donneesPj });
+    async ajouterPieceJointe(donneesPj) {
+      // Le contenu part en JSON : un Blob/File y serait réduit à {} et le
+      // serveur enregistrerait 9 octets de déchet, hachés et journalisés
+      // comme preuve. On convertit AVANT le transport, en laissant passer
+      // l'absence de contenu (le serveur lève le même « obligatoire » que
+      // le DemoStore) et en levant les mêmes messages sur un contenu refusé.
+      const donnees = { ...(donneesPj || {}) };
+      const contenu = donnees.blob ?? donnees.base64;
+      if (contenu !== undefined && contenu !== null && contenu !== '') {
+        delete donnees.blob;
+        donnees.base64 = await versBase64(contenu);
+      }
+      return muter('ajouterPieceJointe', { donneesPj: donnees });
     },
     supprimerPieceJointe(id, par) {
       return muter('supprimerPieceJointe', { id, par });

@@ -39,6 +39,9 @@ contre chacune.
 | `comptes.js` / `sessions.js` / `routes-comptes.js` | scrypt+NFC+leurre anti-timing, jetons hachés SHA-256, cookie HttpOnly | message d'échec UNIQUE ; session meurt si compte désactivé |
 | `sauvegarde.js` / `restauration.js` / `manifeste.js` / `verification.js` / `chiffrement.js` | coffre-fort : VACUUM INTO, restauration atomique, AES-256-GCM | jamais copier le .db à chaud ; phrase NFC ; rollback = reposer l'original |
 | `creer-admin.js` | CLI bootstrap 1er ADMIN | aucun endpoint web équivalent |
+| `harnais-contrat.mjs` | monte un LocalStore sur une base JETABLE + transport in-process qui sérialise VRAIMENT en JSON | c'est lui qui joue `test-contrat.mjs local` ; contexte figé `role:'REFERENT'` |
+| `parametres.js` | table clé/valeur (réglages du poste) | — |
+| `zip-node.js` | ZIP « stored » côté serveur (coffre-fort) | confine les chemins (patron à reprendre) |
 
 ## v8/js/data/ (cœur pur + stores)
 
@@ -46,7 +49,11 @@ contre chacune.
 |---|---|
 | `contrat.js` | LA vérité de surface : 77 méthodes documentées, messages canoniques |
 | `demo-store.js` (~4000 l.) | implémentation mémoire complète (référence sémantique) |
-| `local-store.js` | enveloppes 1-pour-1 vers l'API (ajouter CHAQUE nouvelle méthode ici) |
+| `local-store.js` | enveloppes 1-pour-1 vers l'API (ajouter CHAQUE nouvelle méthode ici) ; SEULE adaptation : le contenu binaire des PJ (base64 à l'aller, Blob au retour) |
+| `contenu-pj.js` | pur : contenu binaire des pièces jointes (`versBase64`/`versBlob`) — JSON réduit un Blob à `{}`, d'où 9 octets de déchet enregistrés comme preuve avant le 14/07 |
+| `datastore.js` | fabrique : choisit DemoStore ou LocalStore selon que le serveur répond |
+| `demo-donnees.js` | le monde fictif de la Démo (données seules, aucune règle) |
+| `transport-http.js` | transport `fetch` du LocalStore (`POST /api/:methode`, enveloppe `{ok,resultat}`) |
 | `code-machine.js` | pur : code lisible SITE-FAMILLE-NUMÉRO (JR-CF-001), générateur/validation |
 | `habilitations.js` | pur : moteur de conseil B2 (`verifierDroitIntervention`, matrice 2008+2025) |
 | `feu-tricolore.js` | pur : consolide alertes/officiel/chaîne en 7 domaines VERT/ORANGE/ROUGE (`collecterConformite(store)`) |

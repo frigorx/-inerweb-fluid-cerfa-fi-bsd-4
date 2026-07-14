@@ -4472,17 +4472,25 @@ function lirePieceJointe(id) {
 
 /**
  * Décode le contenu (data URL ou base64 brut) d'une pièce jointe en octets.
- * Clone la tolérance du DemoStore (préfixe data: optionnel) — lève un
- * message clair si le base64 est illisible.
+ * MIROIR de v8/js/data/contenu-pj.js — mêmes messages, même alphabet.
+ *
+ * ⚠ PIÈGE PAYÉ (audit du 14/07) : `Buffer.from(x, 'base64')` NE LÈVE JAMAIS.
+ * Il ignore les caractères hors alphabet et rend du déchet — un Blob réduit
+ * à `{}` par JSON donnait `String({})` = « [object Object] » → 9 octets
+ * écrits sur disque, hachés en SHA-256 et journalisés comme pièce probante.
+ * Le try/catch d'origine était donc du code mort. La validation ci-dessous
+ * est EXPLICITE : c'est elle qui protège la preuve.
  * @returns {Buffer}
  */
 function decoderBase64Pj(contenu) {
-  const base64 = String(contenu).replace(/^data:[^;]*;base64,/, '');
-  try {
-    return Buffer.from(base64, 'base64');
-  } catch {
+  if (typeof contenu !== 'string') {
+    throw new Error('Contenu de pièce jointe attendu : blob ou base64.');
+  }
+  const base64 = contenu.replace(/^data:[^;]*;base64,/, '');
+  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(base64)) {
     throw new Error('Contenu base64 illisible pour la pièce jointe.');
   }
+  return Buffer.from(base64, 'base64');
 }
 
 /** Dossier documents/ des pièces jointes, TOUJOURS à côté de la base. */

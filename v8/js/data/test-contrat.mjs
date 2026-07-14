@@ -1604,6 +1604,42 @@ await verifierRejet('une pièce jointe sans contenu est refusée',
   store.ajouterPieceJointe({ entiteType: 'MACHINE', entiteId: machineB.id,
     nomFichier: 'x.png', mimeType: 'image/png' }));
 
+// --- Le chemin RÉEL de l'interface : un Blob -----------------------
+// composants/pieces-jointes.js passe le File du formulaire et
+// modales/personne-form.js la signature manuscrite — jamais du base64.
+// JSON ne sait pas porter un Blob (il le réduit à {}) : avant le correctif
+// du 14/07, le Mode Local enregistrait 9 octets de déchet, les hachait en
+// SHA-256 et les journalisait comme pièce probante, pendant que la Démo
+// refusait proprement. Ce cas est la sentinelle de cette divergence.
+const TEXTE_PJ = 'preuve binaire — pesée du 14/07 (accents : é à ü)';
+const OCTETS_ATTENDUS = new TextEncoder().encode(TEXTE_PJ).length;
+const pjBlob = await store.ajouterPieceJointe({
+  entiteType: 'MACHINE', entiteId: machineB.id, categorie: 'PHOTO_PESEE',
+  nomFichier: 'signature.png', mimeType: 'image/png',
+  blob: new Blob([TEXTE_PJ], { type: 'image/png' }),
+  ajoutePar: 'Testeur Contrat'
+});
+verifier('ajouterPieceJointe accepte un Blob et enregistre sa VRAIE taille',
+  pjBlob.taille === OCTETS_ATTENDUS,
+  `taille=${pjBlob.taille}, attendu=${OCTETS_ATTENDUS}`);
+{
+  const complete = await store.obtenirPieceJointe(pjBlob.id);
+  const relu = typeof complete.blob?.text === 'function'
+    ? await complete.blob.text()
+    : new TextDecoder().decode(complete.blob);
+  verifier('obtenirPieceJointe restitue le contenu du Blob à l’identique',
+    relu === TEXTE_PJ, `relu = ${JSON.stringify(relu).slice(0, 48)}`);
+}
+await verifierRejet('un contenu non textuel est REFUSÉ (jamais décodé en déchet)',
+  store.ajouterPieceJointe({ entiteType: 'MACHINE', entiteId: machineB.id,
+    nomFichier: 'x.png', mimeType: 'image/png', blob: { faux: true } }),
+  'attendu');
+await verifierRejet('une base64 illisible est refusée',
+  store.ajouterPieceJointe({ entiteType: 'MACHINE', entiteId: machineB.id,
+    nomFichier: 'x.png', mimeType: 'image/png',
+    base64: '@@@ pas du base64 @@@' }),
+  'illisible');
+
 const pjFigee = await store.ajouterPieceJointe({
   entiteType: 'MOUVEMENT', entiteId: mvt2.id, categorie: 'PHOTO_PESEE',
   nomFichier: 'preuve-mouvement.png', mimeType: 'image/png',

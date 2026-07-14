@@ -2,6 +2,43 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔴 AUDIT QUALITÉ — Lot 0, brique 1 : les pièces jointes étaient DÉTRUITES en Mode Local (14/07)
+Défaut BLOQUANT trouvé par l'audit qualité (`docs/AUDIT-QUALITE-2026-07.md`) et prouvé de bout
+en bout. **Aucune donnée perdue chez Franck** (vérifié : `data/documents/` n'existait pas — aucune
+pièce jointe n'avait encore été enregistrée en Mode Local ; le défaut aurait frappé à la première).
+- **Le défaut** : l'interface envoie le fichier comme objet (`composants/pieces-jointes.js:145`
+  passe le `File` du formulaire, `modales/personne-form.js:448` la signature manuscrite). Or JSON
+  ne sait pas porter un `Blob` : `JSON.stringify` le réduit à `{}`. Côté serveur,
+  `api.js` faisait `d.base64 ?? d.blob` — `{}` est *truthy*, le garde-fou laissait passer — puis
+  `String({})` = « [object Object] », que **`Buffer.from(…, 'base64')` décode SANS lever** en
+  **9 octets de déchet** (`a1b8de72d39b8de72d`), écrits sur disque, hachés en SHA-256 et
+  journalisés comme pièce probante. Le `try/catch` censé protéger était du code mort.
+  La Démo, elle, refusait proprement (`demo-store.js:464`) : **les deux implémentations
+  divergeaient en silence**, et `test-contrat.mjs` ne l'a pas vu parce qu'il n'exerçait que le
+  chemin `base64` — jamais le chemin `blob`, le seul que l'interface emprunte.
+- **Module pur `v8/js/data/contenu-pj.js`** (nouveau) : `versBase64` (Blob/File/Uint8Array/
+  ArrayBuffer/base64 → base64 pure, encodage PAR TRANCHES — `String.fromCharCode(...5 Mo)`
+  déborde la pile), `versBlob` (base64 → Blob : le « contenu binaire » que le contrat promet),
+  `base64VersOctets`, `estBase64`. Messages repris MOT POUR MOT du DemoStore.
+- **`local-store.js`** : convertit le contenu en base64 AVANT le transport, et **reconstruit un
+  Blob au retour** — car `obtenirPieceJointe` rendait une chaîne base64 en Local et un Blob en
+  Démo : `URL.createObjectURL(pj.blob)` (`pieces-jointes.js:109`) **cassait donc aussi le
+  téléchargement d'une PJ en Mode Local**. Second défaut réparé par la même brique.
+- **`server/api.js`** : `decoderBase64Pj` REFUSE désormais tout contenu non textuel et toute
+  base64 hors alphabet (validation explicite, le try/catch ne servait à rien).
+- Tests : **`test-contenu-pj.mjs` 20/0** (aller-retour fidèle sur les 256 valeurs d'octet, 5 Mo
+  sans débordement de pile, et la SENTINELLE : le `{}` que JSON fabrique à partir d'un Blob est
+  refusé) + **4 cas ajoutés à `test-contrat.mjs`, joués contre les DEUX stores** : un `Blob` est
+  accepté et enregistré à sa VRAIE taille, son contenu est restitué à l'identique, un contenu non
+  textuel est refusé, une base64 illisible est refusée. **TOUT VERT — 68 exécutions, 22 s.**
+- Vérifié navigateur en **Mode Local réel** (vrai serveur, base JETABLE hors `data/`, port neuf
+  2097, session ADMIN) : un `File` de 358 octets ajouté par le store → **358 octets enregistrés,
+  358 octets sur le disque**, contenu relu à l'identique, `URL.createObjectURL` de nouveau
+  possible. Avant le correctif : 9 octets. ⚠️ Réserve d'honnêteté : la soumission du formulaire
+  de connexion a dû être déclenchée par `requestSubmit()` — le navigateur intégré n'envoie plus
+  les événements souris/clavier aux boutons (panne récurrente, cf. 14/07) ; le code exécuté et le
+  chemin réseau sont les mêmes, seule la source de l'événement diffère.
+
 ### 🔍 Filtres de la vue Mouvements (14/07)
 Trou relevé à l'examen du 10/07 (« Mouvements sans filtre ») : le registre grossit à
 chaque intervention et restait un long tableau sans recherche.
@@ -25,12 +62,18 @@ chaque intervention et restait un long tableau sans recherche.
   triées dédoublonnées, registre vide) — **TOUT VERT, 67 exécutions**.
 - Vérifié navigateur (origine neuve 8331) : barre et options exactes du monde démo,
   « fournil » → 1 sur 7, « pedagogique » sans accent → la Vitrine, type Récupération →
-  1 ligne, statut Brouillon → 0 sur 7 + message vide, compteur et apparition du bouton
-  Réinitialiser, zéro erreur console. ⚠️ **Réserve : le CLIC sur « Réinitialiser » n'a
-  pas pu être prouvé en direct** (le navigateur intégré a cessé d'envoyer les événements
-  souris en cours de passe — même panne que le 14/07 matin ; `elementFromPoint` confirme
-  que le bouton est bien la cible, le handler rappelle `appliquerFiltres` déjà exercée
-  par tous les autres chemins). À confirmer d'un clic à la reprise.
+  1 ligne, statut Brouillon → 0 sur 7 + message vide, compteur, zéro erreur console.
+- **Réserve LEVÉE (14/07, origine neuve 2087)** : le CLIC souris réel sur « Réinitialiser »
+  est prouvé — recherche « fournil » (1 sur 7) → clic → champ vidé, les 4 listes revenues à
+  « Tous/Toutes », compteur « 7 mouvements », 7 lignes réaffichées. Le filtre est complet.
+- ⚠️ **Mais la vérification a démenti un point de la passe précédente** : le bouton
+  Réinitialiser n'« apparaît » pas — il est affiché EN PERMANENCE. Le code pose bien
+  `bouton.hidden = true`, mais `composants.css:11` déclare `.btn { display: inline-flex }`,
+  et une règle d'auteur bat toujours le `[hidden] { display: none }` de la feuille du
+  navigateur. Défaut GÉNÉRIQUE, prouvé en direct sur `.btn`, `.badge-rouge`, `.pied-session`
+  et `.chip` (donc aussi le badge d'alertes et le pied de session, qui ne peuvent pas se
+  cacher). Correctif = une ligne (`[hidden] { display: none !important }`) — porté à l'audit
+  qualité en cours, pas corrigé ici (phase de lecture seule).
 
 ### 🧭 Parcours « audit guidé » — le dernier trou produit non gaté (14/07)
 Priorité 3 de l'audit croisé GPT : un NON-développeur déroule un audit complet sans se
