@@ -2,6 +2,27 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🙈 AUDIT QUALITÉ — Lot 0, brique 3 : l'attribut `hidden` ne masquait RIEN (14/07)
+Une ligne de CSS, un défaut présent dans toute l'application. Le navigateur ne donne à `hidden`
+qu'un `display: none` de sa feuille utilisateur-agent — que **n'importe quelle règle d'auteur
+posant un `display` écrase** (une règle de l'auteur bat celle du navigateur, quelle que soit la
+spécificité). Or `.btn` (`composants.css:11`), `.badge-rouge` (:302), `.pied-session` (:1193) et
+`.chip` en déclarent tous un. Résultat : le code avait beau faire `element.hidden = true`, **le
+bouton « Réinitialiser » des filtres, le badge d'alertes et le pied de session restaient
+AFFICHÉS**. La passe de vérification de la veille avait même cru voir « l'apparition du bouton » :
+il n'apparaissait pas, il était là depuis le début.
+- **`v8/css/tokens.css`** (au reset) : `[hidden] { display: none !important; }`.
+- Vérifié navigateur (origine neuve 2088, mode Démo) : sans filtre le bouton est `display: none` ;
+  dès qu'un critère est actif il apparaît ; après réinitialisation il **se re-masque**, la
+  recherche est vidée, les 4 listes reviennent à « Tous », le compteur repasse à « 7 mouvements »
+  et les 7 lignes réapparaissent. Témoins anti-régression : les 4 classes masquent correctement
+  quand `hidden`, et gardent leur `display` normal sinon. ⚠️ Le navigateur intégré a de nouveau
+  cessé de délivrer les événements souris en cours de passe (`elementFromPoint` confirme pourtant
+  la bonne cible, et le screenshot expire) : le dernier clic a été déclenché par `bouton.click()`
+  — même gestionnaire, même chemin, seul `isTrusted` diffère. Le clic SOURIS réel de
+  « Réinitialiser », lui, avait été prouvé plus tôt dans la journée (origine 2087).
+- **TOUT VERT — 69 exécutions.**
+
 ### 🔒 AUDIT QUALITÉ — Lot 0, brique 2 : chemins des pièces jointes (14/07)
 **L'audit s'était TROMPÉ, et c'est le test écrit pour le prouver qui l'a démenti.** Le rapport
 classait BLOQUANT le fait qu'un `chemin` forgé dans un fichier d'import soit réinjecté

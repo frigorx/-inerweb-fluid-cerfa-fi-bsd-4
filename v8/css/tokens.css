@@ -167,6 +167,18 @@
   box-sizing: border-box;
 }
 
+/* L'attribut `hidden` DOIT masquer, toujours.
+   Le navigateur ne lui donne qu'un `display: none` de feuille utilisateur-agent,
+   que N'IMPORTE QUELLE règle d'auteur posant un `display` écrase (une règle de
+   l'auteur bat celle du navigateur, quelle que soit la spécificité). Résultat,
+   avant le 14/07 : `.btn`, `.badge-rouge`, `.pied-session` et `.chip` déclarant
+   tous un `display`, le code avait beau faire `element.hidden = true`, le bouton
+   « Réinitialiser » des filtres, le badge d'alertes et le pied de session
+   restaient AFFICHÉS. Prouvé au navigateur, corrigé ici en une ligne. */
+[hidden] {
+  display: none !important;
+}
+
 html {
   -webkit-text-size-adjust: 100%;
 }
