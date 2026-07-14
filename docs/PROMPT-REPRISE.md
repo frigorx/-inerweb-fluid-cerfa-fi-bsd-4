@@ -22,7 +22,52 @@ attentes. Tu ne t'arrêtes que quand une brique est **finie et testée par toi-m
    (**source de vérité**, entrées les plus récentes en tête), `docs/PLAN-PHASE-2.md`,
    `docs/VISION-V9-V10.md` (la boussole).
 
-## État exact (dernier commit poussé `2f0c537`, 13/07/2026)
+## État exact (dernier commit poussé `55fb088`, 14/07/2026)
+
+**FAIT le 14/07 — CHANTIER « HABILITATIONS F-Gas » (cœur audit-proof, B2), EN COURS** :
+> ⭐ **C'EST LE CHANTIER À REPRENDRE.** Cadrage complet = `docs/SPEC-HABILITATIONS.md`
+> (LIRE §0bis vision Franck + §2 matrice validée + §9 plan des 4 briques).
+- **Contexte** : Franck a donné carte blanche + activé **ultracode**. Le logiciel doit être
+  « le plus complet ». On a orchestré en workflows (conception + revue adversariale).
+- **Décisions Franck ACTÉES (14/07, gravées SPEC §0bis)** — à respecter :
+  - Périmètre **COMPLET** : HFC/HFO + CO₂ (R-744) + ammoniac (R-717) + **VÉHICULES (catégorie V)**
+    (les ateliers ont une machine de transfert clim + méca auto = clim voiture).
+  - **Matrice VALIDÉE fonctionnellement** (via 2 cas concrets, plus besoin de Légifrance) :
+    A1 = tout · A2 = tout < 3 kg (6 si hermétique scellé) · B = CO₂ · C = NH₃ · D = récupération
+    seule < 3 kg · E = étanchéité seule · V = véhicules. Correspondance I/II→A1, III→D, IV→E.
+    Anciens (I-IV, ~99 % des gens) et nouveaux (A1-V) COEXISTENT jusqu'à ~2029.
+  - **Formations complémentaires par fluide** (mentions CO₂/NH₃/HC que l'admin **coche**) :
+    étendent l'axe fluide d'un ancien I-IV (ex. + stage CO₂ → peut intervenir sur CO₂).
+  - **Comportement = CONSEIL** à l'entrée sur une machine (identifier le technicien → « peut /
+    ne peut pas + pourquoi »), **PAS blocage brutal** (le blocage dur = Phase 3, plus tard).
+  - **NH₃ hors CERFA** (le logiciel gère parc/vieillissement, pas de CERFA F-Gas sur ammoniac).
+- **Phase 1 — modèle de données (`da96709`)** : migration 016 (table `habilitations`
+  multi-régime cumul 2008+2025, CHECK composite, jamais supprimée ; + 3 colonnes de rôle
+  `execute_par_id`/`superviseur_id`/`responsable_registre_id` sur mouvements, HORS empreinte,
+  trigger WORM recréé) ; **4 méthodes de contrat (surface 69→73, réservées VALIDEUR)** ;
+  export/import étendu. Revue adversariale 0 bloquant + 5 correctifs. `test-habilitations`
+  38/0 demo+local.
+- **Phase 2a — saisie/affichage UI (`4692c1d`)** : modale `v8/js/modales/habilitations-modal.js`
+  (ajout/liste/révocation) + bouton « Habilitations » par ligne dans la vue personnel.
+  ⚠️ **Clic-à-travers ajout/révocation NON vérifié en direct** (navigateur intégré tombé en
+  panne au moment du test) — code relu + rend sans erreur. À confirmer d'un clic à la reprise.
+- **Phase 2b brique 2 — MOTEUR de conseil (`55fb088`)** : `verifierDroitIntervention` dans le
+  module pur `v8/js/data/habilitations.js` (+ `familleDuFluide`, `operationNormalisee`,
+  `estIntervenantIdentifiable`, `FLUIDES_MENTION`, seuils). Matrice encodée + mentions +
+  correspondance 2008. **Bachir (E) et Pierre (D, 10 kg > 3 kg) reproduits au message exact.**
+  `test-habilitations-moteur.mjs` **44/0**, **57 exécutions TOUT VERT**. Pure fonction (pas de
+  méthode de contrat, zéro parité/migration).
+
+**RESTE Phase 2b + Phase 3 (design COMPLET en réserve — workflow `wf_30bcfc0f`, résumé SPEC §9)** :
+- **Brique 1 — table `mentions_habilitation`** (saisie des mentions) : migration 017 (DDL prêt
+  dans le design), 3 méthodes de contrat `getMentions`/`createMention`/`revoquerMention`
+  (surface **73→76**, `VERSION_CONTRAT 1→2`), miroir DemoStore + serveur, mapping, export/import,
+  parité, tests. **Node-testable, aucun navigateur** → à FAIRE EN PREMIER à la reprise.
+- **Briques 3-4 — écran « qui intervient ? »** : helper `v8/js/composants/conseil-intervenant.js`
+  + encart « Intervenant » sur `v8/js/views/fiche-machine.js` + panneau sous le select technicien
+  de l'étape 1 du wizard (`v8/js/wizard/wizard.js`, SANS nouvelle étape) + écriture `executeParId`
+  au `creerMouvement`. **UI → exigent le contrôle navigateur** (attendre qu'il refonctionne).
+- **Phase 3 — mode Officiel réellement bloquant** (Franck penche CONSEIL ; à cadrer).
 
 **FAIT le 13/07 (suite)** :
 - **Brique ⑥ « sentinelle d'alertes persistées » (`2f0c537`)** : couche temporelle
@@ -187,27 +232,40 @@ partageables…), ce qui attend Franck, et les atouts vs concurrence. En résum�
   inutiles. **Français simple, zéro anglicisme.** Économiser les tokens sans sacrifier la rigueur
   (lire mémoire + CHANGELOG d'abord, carte ciblée, rester concis).
 - **Sobriété** : ergonomie et fiabilité d'abord, ne pas complexifier pour pas grand-chose.
-- **Ce qui attend Franck** (le lui rappeler, sans le harceler) : la **grille réglementaire** (qui
-  débloque le cœur audit) ; le **RGPD élèves** (§16.5, avant tout module relevés) ; **révoquer les
-  vieilles clés API v7** (§16.7, faille encore ouverte, à faire indépendamment).
+- **Ce qui attend Franck** (le lui rappeler, sans le harceler) : le **RGPD élèves** (§16.5, avant
+  tout module relevés) ; **révoquer les vieilles clés API v7** (§16.7, faille encore ouverte).
+  ⚠️ La **grille réglementaire est RÉGLÉE** (matrice validée fonctionnellement le 14/07) — ne plus
+  la lui redemander.
 
-## Prochaine action
+## Prochaine action — REPRENDRE LE CHANTIER HABILITATIONS (Phase 2b, brique 1)
 
-*(Séance 0 + briques ① à ⑥ : TOUTES FAITES les 10 et 13/07 — la sentinelle d'alertes
-persistées est SOLDÉE le 13/07.)*
+**LIRE D'ABORD `docs/SPEC-HABILITATIONS.md`** (§0bis décisions Franck + §2 matrice + §9 plan des
+4 briques) ET le bloc « FAIT le 14/07 » ci-dessus. Séquence à reprendre, dans l'ordre :
 
-Briques suivantes **sans dépendance à Franck**, dans l'ordre :
-**code machine lisible `SITE-FAMILLE-NUMERO`** (ex. `JR-CF-001`, décision Franck 07/07 —
-le `code_public` opaque du QR reste distinct et inchangé) → **lien intervention → outils
-utilisés MULTI-outils** (+ blocage par-outil non conforme en mode officiel) → **tableau
-de bord enrichi**. Sauf nouvelle consigne de Franck.
-Annoncer le réglage conseillé, puis exécuter (tests d'abord — `node outils/lancer-tests.mjs`
-= tout le filet en une commande —, vérification navigateur sur port JAMAIS UTILISÉ (origine
-neuve, le cache de modules ES survit à tout), commit + push + mémoire).
-⚠️ Dettes notées en revue (brique ②, à traiter avec les habilitations B2) : `updateBouteille`
-sans garde de statut ; `prpFige` falsifiable dans un export édité à la main (recoupement =
-journal chaîné) ; l'import ne vérifie pas l'intégrité référentielle des fluides du candidat.
+1. **Brique 1 — table `mentions_habilitation`** (formations complémentaires par fluide). **À FAIRE
+   EN PREMIER** : Node-testable, aucun navigateur requis (donc immunisé à la panne d'outillage).
+   Migration 017 + 3 méthodes de contrat `getMentions`/`createMention`/`revoquerMention`
+   (surface **73→76**, `VERSION_CONTRAT 1→2`) + miroir DemoStore/serveur + mapping + export/import
+   + parité + tests. Le DDL et le code exact sont dans le design (workflow `wf_30bcfc0f`, résumé
+   SPEC §9) — les recalquer sur le patron des habilitations (Phase 1). Une fois fait, brancher le
+   moteur `verifierDroitIntervention` (déjà écrit) sur les vraies mentions via `getMentions`.
+2. **Briques 3-4 — écran « qui intervient ? »** (UI) : helper `conseil-intervenant.js` + encart
+   sur `fiche-machine.js` + panneau étape 1 du wizard + écriture `executeParId`. **Exigent le
+   contrôle navigateur** → ne les faire QUE si l'outillage navigateur refonctionne (sinon rester
+   sur la brique 1 + attendre). Contrôle sur port JAMAIS utilisé, origine neuve.
+3. **Phase 3 — mode Officiel réellement bloquant** (Franck penche CONSEIL ; à cadrer avec lui).
 
-Dès que Franck fournit la **grille réglementaire officielle**, basculer sur le **cœur audit-proof**
-(mode Officiel bloquant + habilitations 2008/2025 + fréquence de contrôle auto) — c'est ce qui rend
-le logiciel « irréprochable en audit ».
+Méthode : annoncer le réglage conseillé (cœur régl. = **Opus, effort maximum**), tests d'abord
+(`node outils/lancer-tests.mjs` = tout le filet), revue adversariale du cœur, contrôle navigateur
+si UI, commit + push + mémoire. **ultracode ACTIF** → orchestrer en workflows (conception + revue).
+
+⚠️ À CONFIRMER À LA REPRISE : le **clic-à-travers ajout/révocation de la modale habilitations
+(Phase 2a)** — non vérifié en direct (panne navigateur). Cliquer le bouton « Habilitations » d'une
+personne et exercer ajout + révocation.
+
+⚠️ Dettes notées (revue brique ②, à traiter un jour) : `updateBouteille` sans garde de statut ;
+`prpFige` falsifiable dans un export édité (recoupement = journal chaîné) ; l'import ne vérifie pas
+l'intégrité référentielle des fluides du candidat.
+
+Après les habilitations, briques produit restantes (sans dépendance à Franck) : **code machine
+lisible `JR-CF-001`** → **lien intervention → outils multi** → **tableau de bord enrichi**.
