@@ -31,14 +31,15 @@ function lignesDe(contenu) {
 
 const store = await creerStore();
 
-// --- 1. Neuf fichiers, noms exacts -----------------------------
+// --- 1. Onze fichiers, noms exacts ------------------------------
 const fichiers = await toutesLesTables(store, ANNEE);
-const NOMS_ATTENDUS = ['personnel.csv', 'outillage.csv', 'bouteilles.csv',
+const NOMS_ATTENDUS = ['personnel.csv', 'habilitations.csv',
+  'mentions-habilitation.csv', 'outillage.csv', 'bouteilles.csv',
   'machines.csv', 'mouvements.csv', 'controles.csv', 'balance-matiere.csv',
   'bsff.csv', 'journal-audit.csv'];
-verifier('toutesLesTables retourne exactement 9 fichiers',
-  fichiers.length === 9, `reçu ${fichiers.length}`);
-verifier('les 9 noms de fichiers attendus sont présents',
+verifier('toutesLesTables retourne exactement 11 fichiers',
+  fichiers.length === 11, `reçu ${fichiers.length}`);
+verifier('les 11 noms de fichiers attendus sont présents',
   NOMS_ATTENDUS.every((nom) => fichiers.some((f) => f.nom === nom)),
   JSON.stringify(fichiers.map((f) => f.nom)));
 
@@ -65,6 +66,36 @@ verifier('le séparateur « ; » est bien utilisé (en-tête machines)',
 const lignesPersonnel = lignesDe(personnelBrut);
 verifier('personnel.csv : 4 personnes + en-tête = 5 lignes',
   lignesPersonnel.length === 5, `reçu ${lignesPersonnel.length}`);
+
+// Habilitations / mentions (chantier B2) : présentes même VIDES sur le
+// monde de démo (en-tête seul), puis peuplées avec le NOM RÉSOLU de la
+// personne (jamais un id brut) — révoquées comprises, datées.
+verifier('habilitations.csv : présent et vide (en-tête seul) sur le monde démo',
+  lignesDe(parNom.get('habilitations.csv')).length === 1);
+verifier('mentions-habilitation.csv : présent et vide sur le monde démo',
+  lignesDe(parNom.get('mentions-habilitation.csv')).length === 1);
+{
+  const personne = await store.createPersonne({
+    nom: 'Cartier', prenom: 'Aude', typePersonne: 'ENSEIGNANT'
+  });
+  await store.createHabilitation({
+    personneId: personne.id, regime: '2008', categorie: 'I',
+    numeroAttestation: 'AAF-EXPORT-1', operateur: 'testeur'
+  });
+  const mention = await store.createMention({
+    personneId: personne.id, fluideMention: 'CO2', operateur: 'testeur'
+  });
+  await store.revoquerMention(mention.id, 'testeur');
+  const fichiersB2 = await toutesLesTables(store, ANNEE);
+  const habCsv = fichiersB2.find((f) => f.nom === 'habilitations.csv').contenu;
+  const menCsv = fichiersB2.find((f) => f.nom === 'mentions-habilitation.csv').contenu;
+  verifier('habilitations.csv : la ligne porte le nom résolu, pas l’id',
+    habCsv.includes('Aude Cartier') && habCsv.includes('AAF-EXPORT-1')
+    && !habCsv.includes(personne.id));
+  verifier('mentions-habilitation.csv : la mention RÉVOQUÉE reste au dossier, datée',
+    menCsv.includes('Aude Cartier') && menCsv.includes('Révoquée')
+    && menCsv.includes('CO₂ (R-744)'));
+}
 
 // 7 mouvements de démo, tous datés dans l'année courante (2026).
 const lignesMouvements = lignesDe(parNom.get('mouvements.csv'));

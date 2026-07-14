@@ -97,8 +97,9 @@ verifier('le sommaire rappelle l\'origine (inerWeb Fluide) et l\'année',
 verifier('le sommaire liste chaque fichier de l\'archive',
   noms.every((nom) => sommaire.includes(nom)));
 
-// ---- 6. Les 9 tables CSV ----
-const CSV_ATTENDUS = ['personnel.csv', 'outillage.csv', 'bouteilles.csv',
+// ---- 6. Les 11 tables CSV ----
+const CSV_ATTENDUS = ['personnel.csv', 'habilitations.csv',
+  'mentions-habilitation.csv', 'outillage.csv', 'bouteilles.csv',
   'machines.csv', 'mouvements.csv', 'controles.csv', 'balance-matiere.csv',
   'bsff.csv', 'journal-audit.csv'];
 verifier('les 9 CSV du registre sont présents',

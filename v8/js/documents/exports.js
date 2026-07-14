@@ -123,6 +123,48 @@ function csvPersonnel(personnel) {
   return construireCsv(entetes, lignes);
 }
 
+/**
+ * Habilitations F-Gas (chantier B2) : l'aptitude de CHAQUE personne, régimes
+ * 2008 et 2025, révoquées comprises (l'historique est opposable en audit).
+ * Le nom est résolu depuis le registre du personnel (jamais un id brut).
+ */
+function csvHabilitations(habilitations, personnel) {
+  const nomDe = (id) => {
+    const p = personnel.find((x) => x.id === id);
+    return p ? p.prenom + ' ' + p.nom : id;
+  };
+  const entetes = ['Personne', 'Régime', 'Catégorie', 'N° attestation',
+    'Organisme délivreur', 'Début de validité', 'Fin de validité',
+    'Statut', 'Date de révocation'];
+  const lignes = habilitations.map((h) => [
+    nomDe(h.personneId), h.regime, h.categorie, h.numeroAttestation,
+    h.organismeDelivreur, fmtDate(h.dateDebut), fmtDate(h.dateFin),
+    h.actif ? 'Active' : 'Révoquée', fmtDate(h.dateRevocation)
+  ]);
+  return construireCsv(entetes, lignes);
+}
+
+/** Mentions de formation complémentaire par fluide (chantier B2, brique 1). */
+function csvMentions(mentions, personnel) {
+  const nomDe = (id) => {
+    const p = personnel.find((x) => x.id === id);
+    return p ? p.prenom + ' ' + p.nom : id;
+  };
+  const LIBELLES_FLUIDE = {
+    CO2: 'CO₂ (R-744)', NH3: 'Ammoniac (R-717)', HC: 'Hydrocarbures'
+  };
+  const entetes = ['Personne', 'Fluide', 'N° attestation',
+    'Organisme délivreur', 'Début de validité', 'Fin de validité',
+    'Statut', 'Date de révocation'];
+  const lignes = mentions.map((m) => [
+    nomDe(m.personneId), LIBELLES_FLUIDE[m.fluideMention] || m.fluideMention,
+    m.numeroAttestation, m.organismeDelivreur, fmtDate(m.dateDebut),
+    fmtDate(m.dateFin), m.actif ? 'Active' : 'Révoquée',
+    fmtDate(m.dateRevocation)
+  ]);
+  return construireCsv(entetes, lignes);
+}
+
 function csvOutillage(outillage) {
   const entetes = ['Type d’outil', 'Marque', 'Modèle', 'N° série',
     'Site / atelier', 'Précision', 'Sensibilité', 'Dernier étalonnage',
@@ -258,7 +300,8 @@ function fmtDateHeure(iso) {
  */
 export async function toutesLesTables(store, annee) {
   const [personnel, outillage, bouteilles, machines, clients, mouvements,
-    controles, balance, bsff, journalAudit, nominatif] = await Promise.all([
+    controles, balance, bsff, journalAudit, nominatif,
+    habilitations, mentions] = await Promise.all([
     store.getPersonnel(),
     store.getOutillage(),
     store.getBouteilles(),
@@ -269,11 +312,18 @@ export async function toutesLesTables(store, annee) {
     store.getBalanceMatiere(annee),
     store.getBsff(),
     store.getJournalAudit(),
-    store.getInventaireNominatif(annee)
+    store.getInventaireNominatif(annee),
+    store.getHabilitations(),
+    store.getMentions()
   ]);
 
   const tables = [
     { nom: 'personnel.csv', contenu: csvPersonnel(personnel) },
+    // Chantier B2 : l'aptitude réglementaire au dossier d'audit — TOUJOURS
+    // présentes, même vides (un auditeur voit « aucune ligne » plutôt
+    // qu'une absence ambiguë). Révoquées comprises (historique opposable).
+    { nom: 'habilitations.csv', contenu: csvHabilitations(habilitations, personnel) },
+    { nom: 'mentions-habilitation.csv', contenu: csvMentions(mentions, personnel) },
     { nom: 'outillage.csv', contenu: csvOutillage(outillage) },
     { nom: 'bouteilles.csv', contenu: csvBouteilles(bouteilles) },
     { nom: 'machines.csv', contenu: csvMachines(machines, clients) },
