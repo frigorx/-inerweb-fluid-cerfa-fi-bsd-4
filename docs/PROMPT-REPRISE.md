@@ -22,7 +22,34 @@ attentes. Tu ne t'arrêtes que quand une brique est **finie et testée par toi-m
    (**source de vérité**, entrées les plus récentes en tête), `docs/PLAN-PHASE-2.md`,
    `docs/VISION-V9-V10.md` (la boussole).
 
-## État exact (dernier commit poussé `162b086`, 14/07/2026 après-midi)
+## État exact (dernier commit poussé `05d3497`, 14/07/2026 soir)
+
+**FAIT le 14/07 soir — RÉSERVES B2 + PARCOURS « AUDIT GUIDÉ » : ⭐ SOLDÉS ⭐**
+> Session Fable, sobriété appliquée : lecture par cartes, cœur+tests moi, UN agent de
+> revue adversariale sur le cœur, navigateur (origines neuves 8317/8323/8329).
+- **Réserves B2 (`b81b132`)** : habilitations SEMÉES au monde de démo (Marc 2008/I +
+  mention CO₂ active = cas nominal du moteur ; Sophie 2008/I + mention HC révoquée datée ;
+  échéances > 90 j → AUCUNE alerte ajoutée). **⚠️ Piège verrouillé ET testé** : les
+  compléments d'init/import passent TOUJOURS à VIDE pour habilitations/mentions/
+  mouvementOutillage (jamais depuis DEMO — un export ancien recevrait des aptitudes
+  inventées, un registre étranger serait refusé en orphelin). Anti-doublon CONSEIL sur
+  mention déjà active (confirmation de renouvellement, jamais bloquant). Suites adaptées
+  au semis (tri CO₂ filtré par personne, CSV d'audit vérifiés porteurs, +11 vérifs).
+- **Parcours « audit guidé » (`05d3497`)** — le dernier trou produit non gaté (priorité 3
+  GPT) : module pur `v8/js/data/audit-guide.js` (9 étapes ordonnées établissement →
+  personnel → outillage → bouteilles → mouvements → contrôles → déchets/BSFF → balance →
+  export ; alertes rattachées par PRÉFIXE, barème hérité du feu tricolore, ZÉRO PERTE,
+  couverture ⊇ `DOMAINES` prouvée, faits de présence lus du contrat) + vue `#/audit-guide`
+  (stepper numéroté, bandeau de progression, constats cliquables, bouton par étape,
+  étape 9 = action d'export vers le bilan) + entrée sidebar + icône `parcours`.
+  **Revue adversariale 0 bloquant, 3 IMPORTANT soldés** (global couvrant les alertes non
+  rattachées ; « au parc » hors démantelées ; compteur déchets aligné sur la définition
+  de la vue cible). `test-audit-guide.mjs` 47/0 demo + 39/0 local (suite DOUBLÉE).
+- **TOUT VERT : 66 exécutions.** Vérifié navigateur : semis + anti-doublon (Annuler /
+  Ajouter quand même), parcours complet (constats rouges réels, navigation étape →
+  Outillage, constat → cible, export → Bilan annuel), zéro erreur console.
+
+## État antérieur (14/07 après-midi, dernier commit `162b086`)
 
 **FAIT le 14/07 après-midi — SÉRIE PRODUIT POST-B2 (3 briques) : ⭐ SOLDÉE ⭐**
 > Session ultracode Fable, méthode : carto 1 agent → cœur+tests moi → Sonnet sur l'UI
@@ -126,10 +153,8 @@ attentes. Tu ne t'arrêtes que quand une brique est **finie et testée par toi-m
 **RESTE du chantier habilitations : RIEN d'obligatoire.** En réserve (non bloquant) :
 - **Blocage dur en mode Officiel** (verrou dans `validerMouvement` derrière un drapeau) —
   SEULEMENT si Franck le demande un jour (il penche CONSEIL, v1 assumée en conseil).
-- Idées notées : semer des habilitations dans le monde de démo (⚠️ les compléments
-  d'import doivent rester à VIDE, jamais les données démo — voir CHANGELOG brique 1) ;
-  colonnes « rôles réels » (exécutant/superviseur) dans `mouvements.csv` ; anti-doublon
-  UI sur une mention déjà active (le renouvellement reste légitime).
+- ~~Semer des habilitations dans le monde de démo · anti-doublon UI mention · colonnes
+  « rôles réels » dans `mouvements.csv`~~ — **TOUT FAIT 14/07** (`b81b132`, `162b086`).
 
 **FAIT le 13/07 (suite)** :
 - **Brique ⑥ « sentinelle d'alertes persistées » (`2f0c537`)** : couche temporelle
@@ -299,35 +324,22 @@ partageables…), ce qui attend Franck, et les atouts vs concurrence. En résum�
   ⚠️ La **grille réglementaire est RÉGLÉE** (matrice validée fonctionnellement le 14/07) — ne plus
   la lui redemander.
 
-## Prochaine action — la série produit post-B2 est SOLDÉE (candidats, au choix de Franck)
+## Prochaine action — TOUS les trous produit non gatés sont fermés (candidats, au choix de Franck)
 
-1. **Parcours « audit guidé »** (priorité 3 de l'audit croisé GPT, seul vrai trou produit
-   restant non gaté) : cheminement linéaire établissement → personnel → outillage →
-   bouteilles → mouvements → contrôles → déchets/BSFF → balance → export, pour qu'un
-   NON-développeur déroule un audit complet sans se perdre.
-2. **Réserves B2 (petit lot)** : semer des habilitations dans le monde de démo (⚠️ les
-   compléments d'IMPORT restent à VIDE — le piège est documenté au CHANGELOG brique 1
-   mentions) ; anti-doublon UI sur une mention déjà active (le renouvellement reste
-   légitime).
-3. **V1.5 de la feuille de route** : planche d'étiquettes optimisée, mode TP guidé,
-   diagramme enthalpique (intrant FRIGOLO), pont inerWeb Édu…
+1. **V1.5 de la feuille de route** : planche d'étiquettes optimisée, mode TP guidé,
+   diagramme enthalpique (intrant FRIGOLO, `docs/intrants-v10/`), pont inerWeb Édu,
+   horodatage externe du scellement, packs pédagogiques partageables.
+2. **Dettes techniques notées** (`docs/ROADMAP.md` en bas) : `updateBouteille` sans garde
+   de statut ; l'import ne vérifie pas l'intégrité référentielle des fluides du candidat ;
+   `pieces_jointes.chemin` absolu (restauration cross-machine).
+3. **Filtres de la vue Mouvements** (trou relevé à l'examen du 10/07, jamais traité).
 ⛔ Toujours GATÉ Franck : blocage dur mode Officiel (+ blocage par-outil), relevés élèves
 (RGPD §16.5), Trackdéchets (différé).
 
-Méthode inchangée : réglage conseillé annoncé, `docs/CARTE-CODE.md` AVANT toute exploration,
-tests d'abord (`node outils/lancer-tests.mjs`), revue adversariale sur le critique seulement,
-contrôle navigateur (port jamais utilisé, origine neuve), CHANGELOG + commit + push + mémoire.
+Méthode inchangée : réglage conseillé annoncé EN FRANÇAIS, `docs/CARTE-CODE.md` AVANT toute
+exploration, tests d'abord (`node outils/lancer-tests.mjs` = tout le filet), revue
+adversariale sur le critique seulement (doctrine sobriété : 1 agent suffit sur un incrément
+cadré), contrôle navigateur (port JAMAIS utilisé, origine neuve), CHANGELOG + CARTE-CODE +
+commit + push + mémoire.
 
 ⚠️ À la reprise, `git log` + `git status` d'abord (sessions parallèles possibles).
-
-Méthode : annoncer le réglage conseillé (cœur régl. = **Opus, effort maximum**), tests d'abord
-(`node outils/lancer-tests.mjs` = tout le filet), revue adversariale du cœur, contrôle navigateur
-si UI, commit + push + mémoire. **ultracode ACTIF** → orchestrer en workflows (conception + revue).
-
-
-⚠️ Dettes notées (revue brique ②, à traiter un jour) : `updateBouteille` sans garde de statut ;
-`prpFige` falsifiable dans un export édité (recoupement = journal chaîné) ; l'import ne vérifie pas
-l'intégrité référentielle des fluides du candidat.
-
-Après les habilitations, briques produit restantes (sans dépendance à Franck) : **code machine
-lisible `JR-CF-001`** → **lien intervention → outils multi** → **tableau de bord enrichi**.
