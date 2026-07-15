@@ -501,6 +501,11 @@ function traiterStatique(requete, reponse, chemin) {
       'Content-Type': typeContenu,
       'Content-Length': infos.size,
       'X-Content-Type-Options': 'nosniff',
+      // Anti-clickjacking : la page ne peut être cadrée que par le serveur
+      // lui-même (SAMEORIGIN), jamais par un site tiers. La meta-CSP de
+      // v8/index.html ne peut pas poser `frame-ancestors` (interdit en meta) —
+      // cet en-tête HTTP est donc le seul rempart contre le cadrage.
+      'X-Frame-Options': 'SAMEORIGIN',
     });
 
     const flux = fs.createReadStream(cheminFichier);

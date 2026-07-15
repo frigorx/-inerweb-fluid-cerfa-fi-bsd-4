@@ -38,6 +38,18 @@ Les notices de licence sont conservées **dans les fichiers eux-mêmes** (blocs 
 - Rôle : produire les QR codes des étiquettes de machines et de bouteilles, sans aucun appel
   réseau (aucune donnée ne sort du poste).
 
+## Node.js — moteur d'exécution (paquet portable uniquement)
+
+- Fichier : `node/node.exe` — présent **uniquement dans le paquet portable** (jamais dans le dépôt).
+- Auteur : **les contributeurs de Node.js** (Node.js contributors)
+- Licence : **MIT**. Le binaire embarque aussi ses propres composants (V8, libuv, OpenSSL, ICU,
+  zlib, c-ares…), **chacun sous sa licence** (BSD, Apache 2.0…).
+- Source : <https://github.com/nodejs/node> — version embarquée : **v24.16.0**
+- Rôle : exécuter le serveur local ; c'est grâce à lui que l'utilisateur n'a **rien à installer**.
+- Le texte **complet** de la licence (Node.js et l'ensemble de ses composants) accompagne le
+  binaire dans le paquet portable, sous **`node/LICENSE`** — comme l'exige la licence MIT
+  (conservation de la notice de copyright lors de la redistribution).
+
 ## Document officiel
 
 - Fichier : `v8/cerfa_15497-04_officiel.pdf`

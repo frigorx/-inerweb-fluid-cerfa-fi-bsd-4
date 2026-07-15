@@ -104,6 +104,20 @@ fs.copyFileSync(nodeExe, path.join(SORTIE, 'node', 'node.exe'));
 const tailleNode = (fs.statSync(nodeExe).size / (1024 * 1024)).toFixed(0);
 console.log(`  [ok] node.exe embarqué (${tailleNode} Mo) — version ${process.version}`);
 
+// La licence de Node.js DOIT accompagner son binaire (obligation MIT :
+// conservation de la notice de copyright à la redistribution). Le fichier
+// NODE-LICENSE.txt du dépôt = LICENSE officiel de la version embarquée
+// (Node.js + tous ses composants). Sans lui, chaque copie serait en infraction.
+const licenceNode = path.join(RACINE, 'NODE-LICENSE.txt');
+if (fs.existsSync(licenceNode)) {
+  fs.copyFileSync(licenceNode, path.join(SORTIE, 'node', 'LICENSE'));
+  console.log('  [ok] node/LICENSE (licence de Node.js embarquée)');
+} else {
+  console.error('  [ERREUR] NODE-LICENSE.txt introuvable : la licence de Node.js');
+  console.error('           doit accompagner node.exe. Paquet interrompu.');
+  process.exit(1);
+}
+
 // 2) Le code applicatif (hors tests).
 fs.cpSync(path.join(RACINE, 'server'), path.join(SORTIE, 'server'),
   { recursive: true, filter: filtreCopie });
@@ -131,8 +145,15 @@ for (const f of FICHIERS) {
 const LISEZMOI = `inerWeb Fluide — Traçabilité F-Gas / CERFA
 ==========================================
 
-Application locale, autonome et gratuite. Toutes vos données restent
-sur CE poste : rien n'est envoyé sur Internet.
+Application locale et autonome : toutes vos données restent sur CE poste,
+rien n'est envoyé sur Internet.
+
+LICENCE
+-------
+Gratuit pour l'enseignement (lycées, CFA, universités). Pour un usage
+professionnel, une licence d'utilisation nominative est offerte sur simple
+demande auprès du lycée Jacques Raynaud (inerweb.fh@gmail.com). Détails
+dans le fichier « LICENSE ».
 
 DÉMARRER
 --------
@@ -151,7 +172,7 @@ pouvez aussi débloquer le dossier via clic droit → Propriétés →
 « Débloquer » avant de lancer.
 
 Node.js est DÉJÀ inclus dans ce dossier (sous « node\\ ») : il n'y a
-rien à installer.
+rien à installer. Sa licence figure dans « node\\LICENSE ».
 
 VOS DONNÉES
 -----------

@@ -2,6 +2,29 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔎 AUDIT COMPLET + CORRECTIFS → paquet v1.0.1 (15/07)
+Audit technique, réglementaire et RGPD mené sur le code complet, **en conditions réelles** (serveur
+sur base jetable, failles **tirées** et non lues). **Socle de sécurité sain** : registre WORM
+inviolable même par SQL direct (DELETE/UPDATE/`INSERT OR REPLACE` refusés), rôles verrouillés (élève
+ne peut valider), injection SQL bloquée, verrou anti-force-brute, chiffrement AES-256-GCM **réel**
+(altération d'un octet détectée). Aucune faille exploitable. Rapport détaillé : `docs/AUDIT-COMPLET-2026-07-15.md`
+(**interne, exclu du dépôt** — il reproduit des tests d'intrusion). Trois correctifs appliqués :
+- **Licence de Node.js embarquée** (obligation MIT non remplie jusqu'ici) : le paquet portable
+  distribuait `node.exe` sans sa notice. `NODE-LICENSE.txt` = LICENSE officiel de Node v24.16.0
+  (Node.js + tous ses composants), copié dans le paquet sous `node/LICENSE` ; `fabriquer-paquet.mjs`
+  **refuse de produire** un paquet sans elle ; `LICENCES-TIERCES.md` crédite Node.js.
+- **Wording de licence** (`LISEZ-MOI.txt` + vitrine) : décision Franck 15/07 = **gratuit pour
+  l'enseignement, usage professionnel sur simple demande** (licence nominative offerte par le lycée).
+  Le `LISEZ-MOI` disait « gratuite » tout court (faux + décourageant). PolyForm Noncommercial conservée
+  (Franck garde la main pour d'éventuelles licences payantes futures).
+- **`X-Frame-Options: SAMEORIGIN`** posé sur les réponses statiques (anti-clickjacking — la meta-CSP
+  ne peut pas poser `frame-ancestors`). Prouvé au serveur.
+- **TOUT VERT — 71 exécutions.** Paquet refabriqué (35,4 Mo), extraction + démarrage prouvés,
+  nouvelle empreinte `ad27b1e7…0f00`, Release **v1.0.1**.
+- ⏳ **Restent, non traités ici** (choix Franck) : CERFA issu d'un contrôle (n° technique + mode
+  toujours OFFICIEL), points réglementaires (R-1234yf, mélanges HFC/HFO, `cessions_kg`), confort RGPD
+  (export par personne, effacement). Détail et priorités dans le rapport d'audit interne.
+
 ### 📖 GUIDE ILLUSTRÉ + LECTURE VOCALE (15/07)
 `guide.html` : le mode d'emploi complet qui prend le collègue par la main, écran par écran.
 - **Sommaire à tiroirs** (les grandes lignes → installer/démarrer → renseigner/utiliser → quand ça
