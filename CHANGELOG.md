@@ -2,6 +2,23 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔒 RETOUR AUDIT EXTERNE — verrou mode Officiel + honnêteté doc (15/07, « paquet A »)
+Un tiers (ChatGPT) a audité le **code source complet** (archive `git archive`, SHA `2DA4…E885`) : SHA
+vérifié, 71 tests verts, requêtes hostiles jouées. Correctifs nets sans arbitrage réglementaire :
+- **Verrou du mode Officiel côté serveur** (défaut reproduit par l'auditeur) : l'API acceptait
+  `mode:'OFFICIEL'` sans aucun contrôle → `creerMouvement` (serveur **et** DemoStore, parité) **refuse**
+  désormais toute demande OFFICIEL tant que le mode n'est pas prêt (il manque le blocage dur et la
+  signature du détenteur). Test de rejet ajouté (`test-contrat`). Le mode Officiel complet
+  (`peutPasserEnOfficiel` appelé + double signature) viendra pour la distribution entreprise.
+- **Wording** : « inviolable » → « **inaltérable au sein de l'application** » (README) — juste : une
+  manipulation directe du fichier de base relève du chiffrement disque, pas du logiciel.
+- **Honnêteté doc sauvegarde** (`SAUVEGARDE.md`) : la sauvegarde périodique automatique était **promise
+  mais absente** (aucun planificateur) → doc alignée sur la réalité (manuelle + sécurité avant
+  restauration) ; la vraie sauvegarde auto au démarrage reste à implémenter.
+- **README** : ligne « Mode Officiel · local · Oui » → « pas encore, version formation ».
+- **`SECURITE.md`** : adresse de signalement des vulnérabilités complétée (`inerweb.fh@gmail.com`).
+- **TOUT VERT — 71 exécutions.**
+
 ### 🩹 CERFA DE CONTRÔLE — numéro de fiche + mode (défaut majeur de l'audit, 15/07)
 Le CERFA généré depuis un **contrôle** (pas un mouvement) affichait l'identifiant technique
 `ctl-…` au lieu d'un numéro de fiche, et restait **toujours en mode OFFICIEL** → un contrôle fait

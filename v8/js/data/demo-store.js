@@ -2503,7 +2503,16 @@ export function creerDemoStore() {
         throw new Error(
           `Type de mouvement obligatoire parmi : ${TYPES_MOUVEMENT.join(', ')}.`);
       }
-      const mode = d.mode === 'OFFICIEL' ? 'OFFICIEL' : 'FORMATION';
+      // Verrou de sécurité (audit externe 15/07) : mode Officiel pas encore
+      // disponible (ni blocage dur, ni signature détenteur). On refuse une
+      // demande OFFICIEL forgée plutôt que de créer une fiche sans ses
+      // contrôles. Parité stricte avec le serveur (api.js creerMouvement).
+      if (d.mode === 'OFFICIEL') {
+        throw new Error(
+          'Le mode Officiel n\'est pas encore disponible dans cette version : '
+          + 'les interventions sont enregistrées en mode Formation.');
+      }
+      const mode = 'FORMATION';
       // Références vérifiées dès le brouillon si fournies
       const machine = d.machineId ? trouverMachine(d.machineId) : null;
       if (d.bouteilleSrcId) trouverBouteille(d.bouteilleSrcId, 'Bouteille source');

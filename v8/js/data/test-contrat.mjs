@@ -312,6 +312,12 @@ await verifierRejet('createMachine refuse une charge nominale négative ou nulle
 await verifierRejet('createMachine refuse un client introuvable',
   store.createMachine({ designation: 'X', fluide: FLUIDE, chargeNominaleKg: 1,
     clientId: 'cli-fantome' }));
+// Verrou de sécurité (audit externe 15/07) : le mode Officiel n'est pas encore
+// disponible → une demande OFFICIEL forgée via l'API est refusée (parité
+// demo/local), au lieu de créer une fiche « officielle » sans ses contrôles.
+await verifierRejet('creerMouvement refuse une demande en mode OFFICIEL (version formation)',
+  store.creerMouvement({ type: 'CHARGE_APPOINT', mode: 'OFFICIEL' }),
+  'Officiel');
 
 const machineB = await store.createMachine({
   designation: 'Groupe froid du contrat', fluide: FLUIDE,

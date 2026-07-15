@@ -158,7 +158,9 @@ Si vous découvrez une vulnérabilité dans inerWeb Fluide :
 
 - **Ne pas ouvrir d'issue publique** décrivant la faille (cela la révélerait à tous
   avant qu'elle soit corrigée).
-- Contacter directement l'auteur : **[adresse de contact à compléter]**.
+- Contacter directement l'auteur : **inerweb.fh@gmail.com** (objet : « Sécurité inerWeb Fluide »).
+  Merci de signaler la faille en privé et de laisser un délai raisonnable de correction avant toute
+  divulgation publique.
 - Décrire la faille, les étapes pour la reproduire et, si possible, l'impact estimé.
 - Un accusé de réception sera envoyé et la correction sera priorisée ; la faille pourra
   être documentée publiquement **après** correction.

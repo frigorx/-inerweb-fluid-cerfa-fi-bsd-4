@@ -2162,7 +2162,19 @@ const HANDLERS = {
       throw new Error(
         `Type de mouvement obligatoire parmi : ${TYPES_MOUVEMENT.join(', ')}.`);
     }
-    const mode = d.mode === 'OFFICIEL' ? 'OFFICIEL' : 'FORMATION';
+    // Verrou de sécurité (audit externe 15/07) : le mode Officiel n'est pas
+    // encore disponible — il manque le blocage dur (peutPasserEnOfficiel appelé
+    // à la création/validation), la signature du détenteur et l'empreinte
+    // couvrant la signature. L'UI force déjà FORMATION ; on REFUSE ici une
+    // demande OFFICIEL forgée via l'API, plutôt que de fabriquer une fiche
+    // « officielle » sans ses contrôles réglementaires. Le mode Officiel complet
+    // viendra avec la distribution entreprise (choix Franck « pour plus tard »).
+    if (d.mode === 'OFFICIEL') {
+      throw new Error(
+        'Le mode Officiel n\'est pas encore disponible dans cette version : '
+        + 'les interventions sont enregistrées en mode Formation.');
+    }
+    const mode = 'FORMATION';
     // Références vérifiées dès le brouillon si fournies (msg exact).
     const machine = d.machineId ? trouverMachine(d.machineId) : null;
     if (d.bouteilleSrcId) trouverBouteille(d.bouteilleSrcId, 'Bouteille source');

@@ -52,15 +52,18 @@ l'application à l'identique sur n'importe quel poste.
 
 ## 3. Les sauvegardes automatiques
 
-Vous n'avez même pas besoin d'y penser : l'application s'en charge.
+Ce qui est **déjà automatique** dans cette version :
 
-- **À chaque fermeture** de l'application, une sauvegarde complète est créée
-  automatiquement dans `backups/`.
-- **À chaque ouverture**, l'application vérifie la date de la dernière sauvegarde :
-  si elle date de **plus de 24 heures**, une nouvelle sauvegarde est créée aussitôt.
+- **Avant chaque restauration**, l'application crée d'elle-même une sauvegarde de
+  sécurité de l'état courant, dans `backups/` : une restauration lancée par erreur
+  reste ainsi réversible.
 
-Ainsi, même si personne ne clique jamais sur le bouton, vous disposez toujours d'une
-sauvegarde récente.
+⚠️ **Ce qui n'est PAS encore actif** (prévu pour une prochaine version) : la
+sauvegarde **périodique planifiée** (à l'ouverture si la dernière date de plus de
+24 heures, et à la fermeture). Tant qu'elle n'est pas en place, **créez vous-même
+une sauvegarde régulièrement** (section 2), idéalement à chaque journée
+d'utilisation — c'est un simple clic. C'est votre meilleure garantie de ne rien
+perdre.
 
 ---
 
@@ -109,7 +112,7 @@ Organisation recommandée (qui applique le principe 3-2-1) :
 
 | Copie | Support | Fréquence conseillée |
 |---|---|---|
-| 1 — l'originale | Le disque du poste (`backups/`) | Automatique (quotidienne + à chaque fermeture) |
+| 1 — l'originale | Le disque du poste (`backups/`) | **Manuelle, à faire à chaque journée d'utilisation** (un clic) ; la sauvegarde périodique automatique est prévue mais pas encore active |
 | 2 — la clé USB | Une **clé USB dédiée**, rangée au bureau, qui ne sert qu'à ça | **Chaque semaine** : copier le dernier ZIP sur la clé |
 | 3 — hors site | L'espace réseau ou le cloud de l'établissement | **Chaque mois** : y déposer le dernier ZIP (chiffré de préférence) |
 

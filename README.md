@@ -16,13 +16,13 @@ Un seul code, trois façons de l'utiliser. Le mode est déterminé au démarrage
 | **Installation** | Aucune (navigateur) | Dossier portable à copier, lancement par double-clic | Projet Supabase (hébergement UE) |
 | **Données** | Fictives uniquement, stockées dans le navigateur | Base SQLite locale + documents à côté de l'application | PostgreSQL + stockage de documents privé |
 | **Comptes utilisateurs** | Non | Oui (ADMIN / RÉFÉRENT / ENSEIGNANT / ÉLÈVE) | Oui (authentification Supabase) |
-| **Mode Officiel** | Non — filigrane « DÉMO / FORMATION » permanent | Oui | Oui |
+| **Mode Officiel** | Non — filigrane « DÉMO / FORMATION » permanent | Pas encore — version formation (le mode officiel, avec blocage réglementaire et signature du détenteur, est prévu pour la diffusion en entreprise) | Prévu |
 | **Sauvegarde** | — | ZIP complet en un clic, restauration en un clic | Automatique planifiée + export local à tout moment |
 | **Réseau** | Site public statique | `localhost` uniquement, aucune donnée ne sort du poste | Multi-utilisateurs simultanés |
 
 ## Fonctionnalités clés
 
-- **Registre verrouillé à contre-écritures** : une écriture validée n'est jamais modifiée ni effacée ; toute correction passe par une contre-écriture de régularisation, avec empreintes chaînées (SHA-256) rendant le registre inviolable.
+- **Registre verrouillé à contre-écritures** : une écriture validée n'est jamais modifiée ni effacée ; toute correction passe par une contre-écriture de régularisation, avec empreintes chaînées (SHA-256) rendant le registre **inaltérable au sein de l'application** (toute modification via l'application est refusée et toute rupture de la chaîne est détectable ; une manipulation directe du fichier de base par un tiers reste, elle, du ressort du chiffrement du disque).
 - **Balance matière annuelle par fluide** : stock théorique calculé (achats, récupérations, charges, cessions, retours, destructions) comparé au stock réel pesé au 31/12 ; tout écart exige une justification.
 - **CERFA officiel rempli (PDF)** : le formulaire 15497\*04 officiel est rempli automatiquement, avec un aperçu à l'écran fidèle au document ; la référence imprimée et archivée est toujours le PDF officiel.
 - **Dossier audit annuel en un clic** : export ZIP complet (attestations, registres du personnel et de l'outillage, inventaires, mouvements, CERFA, contrôles d'étanchéité, BSFF, balance matière, journal d'audit) et vue « audit en 5 minutes ».
