@@ -38,7 +38,9 @@ exports/
 # Configuration locale des outils (non partagée)
 /.claude/
 
-# --- Dossier technique INTERNE (ne JAMAIS publier sur un dépôt public) ---
-# Il détaille les limites/failles exploitables (§6) : réservé à l'auteur et à
-# la direction. Le dépôt étant public, on l'exclut explicitement du suivi git.
+# --- Documents internes (ne JAMAIS publier sur un dépôt public) ---
+# Ils détaillent les limites/failles exploitables et des tests d'intrusion :
+# réservés à l'auteur et à la direction. Le dépôt étant public, on les exclut
+# explicitement du suivi git.
 /docs/DOSSIER-TECHNIQUE.md
+/docs/AUDIT-COMPLET-2026-07-15.md
