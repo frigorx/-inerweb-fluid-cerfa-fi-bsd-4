@@ -178,8 +178,10 @@ export const DEMO = {
       statut: 'FUITE',
       detectionPermanente: true,
       dernierControle: '2026-06-18',
-      // Recontrôle après réparation de fuite
-      prochainControle: '2026-07-23'
+      // Sous le seuil de contrôle périodique (R-455A traité HFC : 3,20 kg =
+      // 0,47 t éq. CO₂ < 5) → AUCUNE échéance périodique. La fuite reste
+      // suivie via l'alerte CRITIQUE « réparation à tracer » jusqu'à réparation.
+      prochainControle: null
     },
     {
       id: 'M6',
@@ -445,7 +447,10 @@ export const DEMO = {
       methode: 'DIRECTE',
       resultat: 'FUITE',
       operateur: 'Sophie Bianchi',
-      prochainControle: '2026-07-23',
+      // Machine sous le seuil de contrôle périodique : pas d'échéance
+      // périodique posée ; la fuite est suivie via l'alerte « réparation à
+      // tracer » jusqu'à réparation.
+      prochainControle: null,
       enRetard: false
     },
     {
@@ -740,7 +745,7 @@ export const DEMO = {
       id: 'alr-1',
       niveau: 'CRITIQUE',
       titre: 'Fuite non résolue',
-      detail: 'Chambre froide — Le Fournil · recontrôle 23/07/2026'
+      detail: 'Chambre froide — Le Fournil · réparation à tracer'
     },
     {
       id: 'alr-2',
