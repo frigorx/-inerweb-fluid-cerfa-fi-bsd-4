@@ -48,10 +48,14 @@ const TABLES = {
       code: 'code',
       famille: 'famille',
       gwpAr4: 'gwp_ar4',
-      classeSecurite: 'classe_securite'
+      classeSecurite: 'classe_securite',
+      // Exposés au front (feuille de paramétrage des gaz) : statut réglementaire
+      // (enum AUTORISE/RESTREINT/INTERDIT) et commentaire libre.
+      statutReglementaire: 'statut_reglementaire',
+      commentaire: 'commentaire'
     },
     frontSeulement: ['impact', 'nbMachines'],
-    sqlSeulement: ['statut_reglementaire', 'commentaire']
+    sqlSeulement: []
   },
 
   etablissements: {

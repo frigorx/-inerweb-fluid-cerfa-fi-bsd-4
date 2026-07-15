@@ -764,7 +764,7 @@ INSERT OR IGNORE INTO fluides (code, famille, gwp_ar4, classe_securite, statut_r
     ('R-134a',  'HFC',                1430, 'A1',  'AUTORISE',  NULL),
     ('R-407C',  'Mélange HFC',        1774, 'A1',  'AUTORISE',  'Mélange zéotrope (glissement de température)'),
     ('R-404A',  'Mélange HFC',        3922, 'A1',  'RESTREINT', 'PRP > 2 500 : maintenance au fluide vierge interdite (F-Gas)'),
-    ('R-1234yf','HFO',                   1, 'A2L', 'AUTORISE',  'PRP très faible — légèrement inflammable'),
+    ('R-1234yf','HFO',                   4, 'A2L', 'AUTORISE',  'PRP = 4 (annexe F-Gas) — légèrement inflammable'),
     ('R-455A',  'Mélange HFO/HFC',     148, 'A2L', 'AUTORISE',  NULL),
     ('R-744',   'Inorganique (CO2)',     1, 'A1',  'AUTORISE',  'Dioxyde de carbone — hautes pressions (transcritique)'),
     ('R-290',   'HC (propane)',          3, 'A3',  'AUTORISE',  'Hydrocarbure hautement inflammable — classe A3, pas A2L');

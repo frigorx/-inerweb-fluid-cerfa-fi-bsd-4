@@ -477,7 +477,7 @@ export const DEMO = {
     { code: 'R-134a', famille: 'HFC', gwpAr4: 1430, impact: 'ELEVE', classeSecurite: 'A1', nbMachines: 0 },
     { code: 'R-407C', famille: 'HFC', gwpAr4: 1774, impact: 'ELEVE', classeSecurite: 'A1', nbMachines: 0 },
     { code: 'R-404A', famille: 'HFC', gwpAr4: 3922, impact: 'TRES_ELEVE', classeSecurite: 'A1', nbMachines: 0 },
-    { code: 'R-1234yf', famille: 'HFO', gwpAr4: 1, impact: 'FAIBLE', classeSecurite: 'A2L', nbMachines: 0 },
+    { code: 'R-1234yf', famille: 'HFO', gwpAr4: 4, impact: 'FAIBLE', classeSecurite: 'A2L', nbMachines: 0 },
     { code: 'R-455A', famille: 'HFC/HFO', gwpAr4: 148, impact: 'FAIBLE', classeSecurite: 'A2L', nbMachines: 0 },
     { code: 'R-744', famille: 'CO2', gwpAr4: 1, impact: 'FAIBLE', classeSecurite: 'A1', nbMachines: 0 },
     { code: 'R-290', famille: 'HC', gwpAr4: 3, impact: 'FAIBLE', classeSecurite: 'A3', nbMachines: 0 }

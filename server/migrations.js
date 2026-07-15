@@ -105,6 +105,9 @@
  *       hors chaîne de hash) + backfill : contrôle lié = hérite du mouvement ;
  *       contrôle autonome = « C-FORM-AAAA-NNNN » (espace disjoint des
  *       mouvements → aucune collision de numéro), mode FORMATION.
+ *  20 — correction du PRP de R-1234yf (1 → 4, valeur de l'annexe F-Gas), et
+ *       seulement si la valeur d'origine (1) est intacte (jamais d'écrasement
+ *       d'un référentiel ajusté localement).
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -820,6 +823,17 @@ END;`);
         maj.run(`C-FORM-${annee}-${String(maxAuto).padStart(4, '0')}`,
           'FORMATION', c.id);
       }
+    }
+  },
+
+  20: {
+    nom: 'correction_gwp_r1234yf',
+    appliquer(db) {
+      // R-1234yf : PRP corrigé de 1 à 4 (valeur de l'annexe F-Gas), UNIQUEMENT
+      // si la valeur d'origine (1) est encore en place — on n'écrase jamais une
+      // valeur que l'utilisateur aurait lui-même ajustée dans son référentiel.
+      db.exec(
+        "UPDATE fluides SET gwp_ar4 = 4 WHERE code = 'R-1234yf' AND gwp_ar4 = 1;");
     }
   }
 };
