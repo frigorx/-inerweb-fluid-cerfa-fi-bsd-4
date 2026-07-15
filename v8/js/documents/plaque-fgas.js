@@ -10,89 +10,29 @@
 
 import { modale, ICONES } from '../views/communs.js';
 import { esc, fmtKg, fmtTeq, fmtDate, teqCO2 } from '../core/utils.js';
+import { evaluerControle } from '../data/reglementation-fluides.js';
 
 /* ============================================================
    Calcul de la fréquence de contrôle réglementaire (cadre 7 CERFA)
    ------------------------------------------------------------
-   Recopie EXACTE de la logique de seuils/fréquence de
-   docs/SPEC-CERFA.md §cadre 7 (elle-même reprise de js/cerfa.js,
-   fonction _prepareData) : une seule source de vérité pour le
-   PDF officiel (v8/js/cerfa/generateur.js) et pour la plaque.
-   - Seuils par famille : HCFC en kg, HFC/PFC en tonnes éq. CO₂, HFO en kg.
-   - Fréquence : croisement du niveau de seuil (bas/moyen/haut) avec
-     la détection permanente de fuite (machine.detectionPermanente).
+   La logique est CENTRALISÉE dans le moteur réglementaire unique
+   v8/js/data/reglementation-fluides.js (règles A/B/C validées,
+   cf. docs/TABLE-REGLEMENTAIRE-FLUIDES.md). La plaque ne fait que
+   présenter son résultat.
    ============================================================ */
 
-// Niveaux de seuil, du plus bas au plus haut, par famille.
-// La valeur comparée à « min » est soit la charge en kg (HCFC, HFO),
-// soit le teqCO2 (HFC/PFC) — cf. calculerFrequenceControle ci-dessous.
-const SEUILS_PAR_FAMILLE = {
-  HFC: [
-    { min: 500, niveau: 'haut' },
-    { min: 50, niveau: 'moyen' },
-    { min: 5, niveau: 'bas' }
-  ],
-  HFO: [
-    { min: 100, niveau: 'haut' },
-    { min: 10, niveau: 'moyen' },
-    { min: 1, niveau: 'bas' }
-  ],
-  HCFC: [
-    { min: 300, niveau: 'haut' },
-    { min: 30, niveau: 'moyen' },
-    { min: 2, niveau: 'bas' }
-  ]
-};
-
-// Fréquence (en mois) par niveau de seuil, selon détection permanente ou non.
-const FREQUENCE_MOIS = {
-  bas: { sans: 12, avec: 24 },
-  moyen: { sans: 6, avec: 12 },
-  haut: { sans: 3, avec: 6 }
-};
-
 /**
- * Détermine la famille réglementaire (HCFC / HFC / HFO) à partir de la
- * famille du référentiel fluides, qui peut être composite (ex. « HFC/HFO »).
- * Reproduit `famille.includes(...)` de js/cerfa.js : HFC est cherché avant
- * HFO pour qu'un mélange « HFC/HFO » reste traité comme HFC (comportement
- * v7 inchangé — premier `includes` qui matche l'emporte).
- * @param {string} familleReferentiel — ex. « HFC », « HFC/HFO », « HFO », « CO2 », « HC »
- * @returns {'HFC'|'HFO'|'HCFC'|null}
- */
-function familleReglementaire(familleReferentiel) {
-  const f = String(familleReferentiel || '').toUpperCase();
-  if (f.includes('HFC') || f.includes('PFC')) return 'HFC';
-  if (f.includes('HFO')) return 'HFO';
-  if (f.includes('HCFC')) return 'HCFC';
-  return null;
-}
-
-/**
- * Calcule le seuil réglementaire et la fréquence de contrôle d'un
- * équipement, selon son fluide (famille, GWP) et sa charge nominale.
+ * Seuil réglementaire et fréquence de contrôle d'un équipement, selon
+ * son fluide et sa charge NOMINALE déclarée. Délègue au moteur unique
+ * (un mélange contenant du HFC est traité comme un HFC — Règle A).
  * @param {{ chargeNominaleKg: number, detectionPermanente: boolean }} machine
  * @param {{ famille: string, gwpAr4: number }|undefined} fluide
- * @returns {{ niveau: 'bas'|'moyen'|'haut'|null, frequenceMois: number|null }}
+ * @returns {{ niveau: 1|2|3|null, frequenceMois: number|null }}
  */
 export function calculerFrequenceControle(machine, fluide) {
-  if (!fluide) return { niveau: null, frequenceMois: null };
-
-  const famille = familleReglementaire(fluide.famille);
-  if (!famille) return { niveau: null, frequenceMois: null };
-
-  const charge = Number(machine.chargeNominaleKg) || 0;
-  // HFC/PFC se seuille en tonnes éq. CO₂, HCFC et HFO en kg bruts.
-  const valeurTest = famille === 'HFC' ? teqCO2(charge, fluide.gwpAr4) : charge;
-
-  const paliers = SEUILS_PAR_FAMILLE[famille];
-  const palier = paliers.find((p) => valeurTest >= p.min);
-  if (!palier) return { niveau: null, frequenceMois: null };
-
-  const detection = Boolean(machine.detectionPermanente);
-  const frequenceMois = FREQUENCE_MOIS[palier.niveau][detection ? 'avec' : 'sans'];
-
-  return { niveau: palier.niveau, frequenceMois };
+  const { niveau, frequenceMois } = evaluerControle(
+    fluide, machine?.chargeNominaleKg, Boolean(machine?.detectionPermanente));
+  return { niveau, frequenceMois };
 }
 
 /* ============================================================
@@ -113,7 +53,7 @@ function libelleFrequence(mois) {
  * Construit le HTML de l'étiquette elle-même (zone imprimable).
  * @param {object} machine
  * @param {object|undefined} fluide
- * @param {{ niveau: string|null, frequenceMois: number|null }} frequence
+ * @param {{ niveau: 1|2|3|null, frequenceMois: number|null }} frequence
  * @param {object} etablissement
  * @returns {string} HTML
  */

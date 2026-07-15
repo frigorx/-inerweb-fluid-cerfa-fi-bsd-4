@@ -98,16 +98,17 @@ verifier('cadre 4 : les 7 autres cases décochées',
 verifier('cadre 6 : Bouton_Oui = « 1 » (détection permanente M5)',
   r.radio('Bouton_Oui') === '1');
 
-// Cadre 7 : R-455A (famille HFC/HFO → seuils HFO en kg), 3,05 kg ≥ 1
-verifier('cadre 7 : Case_HFO_1 cochée (3,05 kg ≥ 1 kg)',
-  r.coche('Case_HFO_1'));
-verifier('cadre 7 : Case_Avec_24m cochée (avec détection permanente)',
-  r.coche('Case_Avec_24m'));
-verifier('cadre 7 : aucune autre case de seuil ni de fréquence',
+// Cadre 7 : R-455A est un mélange traité comme un HFC (Règle A) ; sur la
+// charge NOMINALE (3,20 kg) → 3,20 × 148 / 1000 = 0,47 t éq. CO₂ < 5 →
+// AUCUNE case de seuil ni de fréquence. (Bug corrigé : auparavant classé
+// HFO/kg, il cochait Case_HFO_1 + Case_Avec_24m à tort.)
+verifier('cadre 7 : aucune case de seuil (R-455A sous 5 t éq. CO₂ en HFC)',
   ['Case_HCFC_2', 'Case_HCFC_30', 'Case_HCFC_300', 'Case_HFC_5',
-    'Case_HFC_50', 'Case_HFC_500', 'Case_HFO_10', 'Case_HFO_100',
-    'Case_Sans_12m', 'Case_Sans_6m', 'Case_Sans_3m', 'Case_Avec_12m',
-    'Case_Avec_6m'].every((c) => !r.coche(c)));
+    'Case_HFC_50', 'Case_HFC_500', 'Case_HFO_1', 'Case_HFO_10',
+    'Case_HFO_100'].every((c) => !r.coche(c)));
+verifier('cadre 7 : aucune case de fréquence (hors périmètre à cette charge)',
+  ['Case_Sans_12m', 'Case_Sans_6m', 'Case_Sans_3m', 'Case_Avec_24m',
+    'Case_Avec_12m', 'Case_Avec_6m'].every((c) => !r.coche(c)));
 
 // Cadre 10 : recoupé avec le contrôle du 18/06 (FUITE) sur M5
 verifier('cadre 10 : Case_Fuite_Oui cochée (contrôle du 18/06)',

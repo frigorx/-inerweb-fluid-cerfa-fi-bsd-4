@@ -2141,7 +2141,7 @@ const HANDLERS = {
     const machine = trouverMachine(params.machineId);
     const fluideRef = lireFluide(machine.fluide);
     const frequenceMois = frequenceControleMois(
-      fluideRef, machine.chargeActuelleKg,
+      fluideRef, machine.chargeNominaleKg,
       Boolean(machine.detectionPermanente));
     if (!frequenceMois) return null;
     return ajouterMois(params.dateControle ?? aujourdHui(), frequenceMois);
@@ -4378,18 +4378,28 @@ function lireFluide(code) {
 
 /**
  * IM-1 : fréquence réglementaire de contrôle d'étanchéité, en mois, ou
- * null si l'équipement est hors périmètre F-Gas. Reproduit FIDÈLEMENT la
- * partie fréquence du cadre 7 CERFA (calculerCadre7 de generateur.js) :
- * HFO/HCFC en kg, HFC/PFC en tonnes équivalent CO₂, seuils croisés avec la
- * détection permanente. generateur.js étant un module ES navigateur, on en
- * réimplémente ici la seule logique de fréquence (côté serveur).
+ * null si l'équipement est hors périmètre F-Gas. MIROIR EXACT du moteur
+ * réglementaire unique du front (evaluerControle de
+ * v8/js/data/reglementation-fluides.js, règles A/B/C validées, cf.
+ * docs/TABLE-REGLEMENTAIRE-FLUIDES.md) : Règle A = un mélange contenant du
+ * HFC est traité comme un HFC (HFC/PFC testés AVANT HFO) ; HFO purs et HCFC
+ * en kg ; charge NOMINALE déclarée (Règle C). api.js étant du CommonJS, on
+ * réimplémente ici la logique ; la parité demo/serveur, Y COMPRIS la
+ * reclassification des mélanges HFC/HFO en HFC (Règle A), est prouvée par
+ * test-contrat.mjs (joué demo ET local, machine R-455A → null sous 5 tCO₂eq).
  */
-function frequenceControleMois(fluideRef, chargeKg, detectionPermanente) {
+function frequenceControleMois(fluideRef, chargeNominaleKg, detectionPermanente) {
   const famille = String(fluideRef?.famille || '').toUpperCase();
-  const charge = Number(chargeKg) || 0;
+  const charge = Number(chargeNominaleKg) || 0;
   let niveau = null; // 1 = bas, 2 = moyen, 3 = haut
 
-  if (famille.includes('HFO')) {
+  // Règle A : HFC/PFC (mélanges contenant du HFC compris) testés AVANT HFO.
+  if (famille.includes('HFC') || famille.includes('PFC')) {
+    const teq = charge * (Number(fluideRef?.gwpAr4) || 0) / 1000;
+    if (teq >= 500) niveau = 3;
+    else if (teq >= 50) niveau = 2;
+    else if (teq >= 5) niveau = 1;
+  } else if (famille.includes('HFO')) {
     if (charge >= 100) niveau = 3;
     else if (charge >= 10) niveau = 2;
     else if (charge >= 1) niveau = 1;
@@ -4397,11 +4407,6 @@ function frequenceControleMois(fluideRef, chargeKg, detectionPermanente) {
     if (charge >= 300) niveau = 3;
     else if (charge >= 30) niveau = 2;
     else if (charge >= 2) niveau = 1;
-  } else if (famille.includes('HFC') || famille.includes('PFC')) {
-    const teq = charge * (Number(fluideRef?.gwpAr4) || 0) / 1000;
-    if (teq >= 500) niveau = 3;
-    else if (teq >= 50) niveau = 2;
-    else if (teq >= 5) niveau = 1;
   }
   // Autres familles (CO₂, HC…) : hors périmètre F-Gas, aucune fréquence.
 

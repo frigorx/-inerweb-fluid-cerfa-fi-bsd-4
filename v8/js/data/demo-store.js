@@ -15,7 +15,7 @@ import { teqCO2, fmtDate, fmtNombre, fmtKgSigne, genId, hasherEcriture,
   genererCodePublic } from '../core/utils.js';
 // IM-1 : fréquence réglementaire des contrôles d'étanchéité —
 // logique UNIQUE partagée avec le cadre 7 du CERFA (aucun doublon).
-import { calculerCadre7 } from '../cerfa/generateur.js';
+import { evaluerControle } from './reglementation-fluides.js';
 // Sentinelle d'alertes persistées : diff pur + formatage (module partagé
 // avec le test unitaire ; le serveur en tient un miroir exact).
 import { normaliserCodeMachine, validerCodeMachine } from './code-machine.js';
@@ -2487,8 +2487,8 @@ export function creerDemoStore() {
       const machine = trouverMachine(machineId);
       const fluideRef = donnees.fluides.find(
         (f) => f.code === machine.fluide) ?? null;
-      const { frequenceMois } = calculerCadre7(
-        fluideRef, machine.chargeActuelleKg,
+      const { frequenceMois } = evaluerControle(
+        fluideRef, machine.chargeNominaleKg,
         Boolean(machine.detectionPermanente));
       if (!frequenceMois) return null;
       return ajouterMois(dateControleISO ?? aujourdHui(), frequenceMois);

@@ -2,6 +2,32 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### ⚖️ MOTEUR RÉGLEMENTAIRE UNIQUE — condition 1, 2 bugs du cadre 7 corrigés (15/07 soir)
+Première brique du chantier « registre audit-proof » (`docs/PLAN-AUDIT-PROOF-2026.md`, condition 1).
+La règle du « cadre 7 » (seuils + fréquence de contrôle d'étanchéité) était **dupliquée en trois
+exemplaires qui se contredisaient** (`plaque-fgas.js`, `cerfa/generateur.js`, `server/api.js`). Table
+réglementaire par fluide **préparée sur sources officielles et validée par Franck** :
+`docs/TABLE-REGLEMENTAIRE-FLUIDES.md` (règles A/B/C, à annoter par le référent F-Gas).
+- **Module unique** `v8/js/data/reglementation-fluides.js` (`categorieCadre7` + `evaluerControle`) =
+  source de vérité ; plaque-fgas, generateur et demo-store le consomment, `api.js` en garde une copie
+  littérale (CommonJS) dont la parité est prouvée par `test-contrat` (demo + local).
+- **Bug n°1 corrigé — mélanges HFC/HFO** : R-455A (famille « HFC/HFO ») était classé HFO (seuils en
+  kg) alors que la **notice CERFA 15497*04 le cite nommément** comme relevant de la **catégorie HFC**
+  (seuils en tonnes éq. CO₂). On teste désormais HFC/PFC **avant** HFO. Effet : R-455A à 3,2 kg =
+  0,47 t éq. CO₂ < 5 → **plus de contrôle périodique indu** (le CERFA cochait `Case_HFO_1` à tort).
+- **Bug n°2 corrigé — charge de référence** : seuil/fréquence calculés sur la charge **NOMINALE
+  déclarée** (Règle C, FAQ DGPR : cumul des circuits, valeur fixe), non plus sur `chargeActuelleKg` —
+  qui faisait *s'alléger* le contrôle d'une machine ayant fui.
+- **HFO purs** (R-1234yf) : seuils en kg (1/10/100) **confirmés** = règlement UE 2024/573 (F-Gas III)
+  art. 5, pas une invention.
+- **Batterie de tests aux valeurs limites** : `test-reglementation-fluides.mjs` (sous / à / au-dessus
+  de chaque seuil ; mélange R-455A ; HFO purs ; HCFC ; hors périmètre CO₂/HC). Tests qui codifiaient
+  le bug **corrigés** (`test-lot2` M5 → null ; `test-contrat` hors-périmètre = fluide non fluoré ;
+  `test-generateur` cadre 7 de M5 → aucune case). **TOUT VERT — 72 exécutions.**
+- Le **mode Officiel reste fermé** (le serveur refuse OFFICIEL) : on est en mode CONSEIL. Suite de la
+  condition 1 plus tard (fiche explicite par fluide en base, prise en compte de la date
+  d'intervention) ; questions secondaires gatées au §4 du doc pour le référent F-Gas.
+
 ### 🔒 RETOUR AUDIT EXTERNE — verrou mode Officiel + honnêteté doc (15/07, « paquet A »)
 Un tiers (ChatGPT) a audité le **code source complet** (archive `git archive`, SHA `2DA4…E885`) : SHA
 vérifié, 71 tests verts, requêtes hostiles jouées. Correctifs nets sans arbitrage réglementaire :

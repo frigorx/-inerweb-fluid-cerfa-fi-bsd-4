@@ -11,6 +11,8 @@
 // (createRequire du fichier UMD).
 // ============================================================
 
+import { evaluerControle } from '../data/reglementation-fluides.js';
+
 /** Cache de la bibliothèque pdf-lib (une seule initialisation). */
 let promessePdfLib = null;
 
@@ -111,57 +113,31 @@ export function sansPrefixeR(code) {
 }
 
 // ------------------------------------------------------------
-// Cadre 7 — seuil de charge et fréquence de contrôle
-// (logique EXACTE de SPEC-CERFA : HCFC en kg, HFC/PFC en t éq.
-// CO₂, HFO en kg ; fréquence croisée avec la détection permanente)
+// Cadre 7 — seuil de charge et fréquence de contrôle.
+// La logique réglementaire est CENTRALISÉE dans le moteur unique
+// v8/js/data/reglementation-fluides.js (règles A/B/C validées,
+// cf. docs/TABLE-REGLEMENTAIRE-FLUIDES.md). Ici on ne fait que
+// projeter son résultat sur les cases AcroForm du CERFA.
 // ------------------------------------------------------------
 
 /**
  * Détermine la case de seuil et la case de fréquence du cadre 7.
+ * Délègue au moteur réglementaire unique (evaluerControle) : un mélange
+ * contenant du HFC est traité comme un HFC (Règle A) et le seuil se lit
+ * sur la charge NOMINALE déclarée (Règle C), pas la charge présente.
  * @param {object|null} fluideRef - fiche du référentiel fluides
- * @param {number} chargeKg - charge de fluide de l'équipement (kg)
+ * @param {number} chargeNominaleKg - charge NOMINALE totale déclarée (kg)
  * @param {boolean} detectionPermanente - cadre 6
  * @returns {{caseSeuil: string|null, caseFrequence: string|null,
  *            frequenceMois: number|null}}
  */
-export function calculerCadre7(fluideRef, chargeKg, detectionPermanente) {
-  const famille = String(fluideRef?.famille || '').toUpperCase();
-  const charge = Number(chargeKg) || 0;
-  let caseSeuil = null;
-  let niveau = null; // 1 = bas, 2 = moyen, 3 = haut
-
-  if (famille.includes('HFO')) {
-    // HFO (et mélanges contenant un HFO) : seuils en kilogrammes
-    if (charge >= 100) { caseSeuil = 'Case_HFO_100'; niveau = 3; }
-    else if (charge >= 10) { caseSeuil = 'Case_HFO_10'; niveau = 2; }
-    else if (charge >= 1) { caseSeuil = 'Case_HFO_1'; niveau = 1; }
-  } else if (famille.includes('HCFC')) {
-    // HCFC : seuils en kilogrammes
-    if (charge >= 300) { caseSeuil = 'Case_HCFC_300'; niveau = 3; }
-    else if (charge >= 30) { caseSeuil = 'Case_HCFC_30'; niveau = 2; }
-    else if (charge >= 2) { caseSeuil = 'Case_HCFC_2'; niveau = 1; }
-  } else if (famille.includes('HFC') || famille.includes('PFC')) {
-    // HFC / PFC : seuils en tonnes équivalent CO₂
-    const teq = charge * (Number(fluideRef?.gwpAr4) || 0) / 1000;
-    if (teq >= 500) { caseSeuil = 'Case_HFC_500'; niveau = 3; }
-    else if (teq >= 50) { caseSeuil = 'Case_HFC_50'; niveau = 2; }
-    else if (teq >= 5) { caseSeuil = 'Case_HFC_5'; niveau = 1; }
-  }
-  // Autres familles (CO₂, HC…) : hors périmètre F-Gas, aucune case
-
-  let caseFrequence = null;
-  let frequenceMois = null;
-  if (niveau === 1) {
-    caseFrequence = detectionPermanente ? 'Case_Avec_24m' : 'Case_Sans_12m';
-    frequenceMois = detectionPermanente ? 24 : 12;
-  } else if (niveau === 2) {
-    caseFrequence = detectionPermanente ? 'Case_Avec_12m' : 'Case_Sans_6m';
-    frequenceMois = detectionPermanente ? 12 : 6;
-  } else if (niveau === 3) {
-    caseFrequence = detectionPermanente ? 'Case_Avec_6m' : 'Case_Sans_3m';
-    frequenceMois = detectionPermanente ? 6 : 3;
-  }
-  return { caseSeuil, caseFrequence, frequenceMois };
+export function calculerCadre7(fluideRef, chargeNominaleKg, detectionPermanente) {
+  const r = evaluerControle(fluideRef, chargeNominaleKg, detectionPermanente);
+  return {
+    caseSeuil: r.caseSeuil,
+    caseFrequence: r.caseFrequence,
+    frequenceMois: r.frequenceMois
+  };
 }
 
 // ------------------------------------------------------------
@@ -372,9 +348,9 @@ export async function calculerChampsCerfa(store, { source, id }) {
       ? etalonnage.slice(0, 10).split('-')
       : [null, null, null];
 
-  // ---- Cadre 7 — seuil et fréquence (charge de fluide EN machine) ----
+  // ---- Cadre 7 — seuil et fréquence (charge NOMINALE déclarée, Règle C) ----
   const cadre7 = machine
-    ? calculerCadre7(fluideRef, machine.chargeActuelleKg,
+    ? calculerCadre7(fluideRef, machine.chargeNominaleKg,
         Boolean(machine.detectionPermanente))
     : { caseSeuil: null, caseFrequence: null, frequenceMois: null };
 

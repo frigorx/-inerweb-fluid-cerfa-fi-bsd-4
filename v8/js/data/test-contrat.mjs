@@ -631,8 +631,27 @@ verifier('récupération validée : quantité NÉGATIVE (−1,5 kg)',
 const prochain = await store.calculerProchainControle(machineB.id, dateRelative(0));
 verifier('calculerProchainControle : date ISO pour une machine dans le périmètre',
   typeof prochain === 'string' && DATE_JOUR.test(prochain));
-verifier('calculerProchainControle : null pour une machine hors périmètre',
-  await store.calculerProchainControle(machineA.id, dateRelative(0)) === null);
+// Règle C : le périmètre se juge sur la charge NOMINALE déclarée, pas sur la
+// quantité présente. Une machine hors périmètre = un fluide NON fluoré (CO₂,
+// HC), jamais une machine simplement « vide » (machineA, R-410A à 5 kg
+// nominal, EST dans le périmètre). On teste donc avec du R-744.
+const machineHorsPerimetre = await store.createMachine({
+  designation: 'Groupe CO₂ hors périmètre F-Gas', fluide: 'R-744',
+  chargeNominaleKg: 20, operateur: 'Testeur Contrat'
+});
+verifier('calculerProchainControle : null pour un fluide hors périmètre (R-744)',
+  await store.calculerProchainControle(machineHorsPerimetre.id, dateRelative(0)) === null);
+// Verrou de la reclassification (Règle A) sur demo ET serveur : un mélange
+// HFC/HFO se traite comme un HFC (teqCO₂), pas comme un HFO (kg). R-455A à
+// 5 kg nominal = 0,74 t éq. CO₂ < 5 → aucun contrôle. Sous l'ancien ordre
+// (HFO testé avant HFC), 5 kg ≥ 1 kg aurait déclenché un contrôle → ce test
+// échouerait. C'est la SEULE preuve de la reclassification côté serveur.
+const machineMelange = await store.createMachine({
+  designation: 'Groupe mélange HFC/HFO du contrat', fluide: 'R-455A',
+  chargeNominaleKg: 5, operateur: 'Testeur Contrat'
+});
+verifier('calculerProchainControle : mélange HFC/HFO (R-455A, 5 kg) traité HFC → null (< 5 t éq. CO₂)',
+  await store.calculerProchainControle(machineMelange.id, dateRelative(0)) === null);
 await verifierRejet('calculerProchainControle refuse une machine introuvable',
   store.calculerProchainControle('mac-fantome', dateRelative(0)));
 

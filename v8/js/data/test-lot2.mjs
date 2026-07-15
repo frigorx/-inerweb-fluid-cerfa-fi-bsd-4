@@ -391,9 +391,9 @@ verifier('IM-3 : un mouvement soumis AUJOURD’HUI ne lève pas d’alerte',
 verifier('IM-1 : M1 (R-404A, 4,5 kg → 17,6 t éq. CO₂, sans détection) ' +
   '→ + 12 mois',
   await store.calculerProchainControle('M1', '2026-07-01') === '2027-07-01');
-verifier('IM-1 : M5 (R-455A avec HFO, 3,05 kg, détection permanente) ' +
-  '→ + 24 mois',
-  await store.calculerProchainControle('M5', '2026-01-31') === '2028-01-31');
+verifier('IM-1 : M5 (R-455A = mélange traité comme HFC/Règle A, 3,2 kg ' +
+  'nominal → 0,47 t éq. CO₂ < 5) hors périmètre → null',
+  await store.calculerProchainControle('M5', '2026-01-31') === null);
 verifier('IM-1 : M4 (R-32, 0,9 kg → 0,6 t éq. CO₂) hors périmètre → null',
   await store.calculerProchainControle('M4', '2026-07-01') === null);
 
