@@ -2,6 +2,17 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🚀 DIFFUSION — Release publique v1.0.0 (15/07)
+Le paquet portable devient **téléchargeable** par n'importe quel collègue, sans compte ni outil.
+- **Release GitHub `v1.0.0`** (publique, pas une pré-version) : elle porte
+  `inerWeb-Fluide-portable.zip` (35,4 Mo) **et** son empreinte `inerWeb-Fluide-portable.zip.sha256`.
+  Notes de version en français : télécharger, **débloquer** (Windows marque les fichiers d'Internet),
+  décompresser, double-cliquer ; commande `certutil` pour vérifier l'empreinte ; licence PolyForm.
+- **Intégrité prouvée de bout en bout** : le ZIP a d'abord été **extrait sur un dossier vierge et
+  démarré** (serveur du paquet répond, page servie) ; puis **re-téléchargé depuis la Release** et son
+  SHA-256 recalculé — **identique** à l'original (`b5efa7da…5f06`). GitHub ne l'a pas altéré.
+- Le bouton « Télécharger » de la vitrine pointe sur l'asset de cette release.
+
 ### 📦 PAQUET COMPRESSÉ — 92,6 Mo → 35,4 Mo (14/07)
 Le paquet portable est un fichier de **téléchargement** : sur la connexion d'un lycée, 92 Mo contre
 35 Mo, c'est la différence entre dix minutes et trois.
