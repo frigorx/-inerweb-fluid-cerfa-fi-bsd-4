@@ -2,6 +2,20 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🏠 VITRINE — la page d'accueil publique (15/07)
+`index.html` à la racine n'est plus une simple redirection : c'est la **vitrine** du logiciel.
+- Ce qu'il fait, pour qui, et **ce qui le distingue** (registre inaltérable à hash chaîné, dossier
+  d'audit scellé + vérificateur autonome, dossiers de fuite fermés, pensé pour la classe, 100 % local,
+  gratuit pour l'enseignement). Bouton **Télécharger** (→ Release v1.0.0), lien **démo** (`v8/`),
+  lien **guide** (`guide.html`), empreinte SHA-256 affichée avec sa commande de vérification.
+- Charte de l'application reprise à l'identique (marine `#0e2a47`, turquoise `#12b5c9`, IBM Plex Sans,
+  flocon officiel, **zéro emoji**). Page **autonome** : aucune police web, aucun script distant.
+- Sans risque pour l'usage local : le serveur redirige `/` → `/v8/` **dans son code**, et le paquet
+  portable ne contient pas cet `index.html` — la vitrine ne vit que sur le site public.
+- **Formule honnête** reprise telle quelle : « implémente la lecture de la réglementation F-Gas par
+  son auteur, **en mode conseil** ». Aucune promesse de blocage dur « Officiel ».
+- ⚠️ **Le texte reste à faire valider par Franck** — c'est sa vitrine.
+
 ### 🚀 DIFFUSION — Release publique v1.0.0 (15/07)
 Le paquet portable devient **téléchargeable** par n'importe quel collègue, sans compte ni outil.
 - **Release GitHub `v1.0.0`** (publique, pas une pré-version) : elle porte
