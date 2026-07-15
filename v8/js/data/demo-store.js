@@ -920,6 +920,24 @@ export function creerDemoStore() {
     return `${prefixe}-${annee}-${String(max + 1).padStart(4, '0')}`;
   }
 
+  /**
+   * Prochain numéro de fiche pour un contrôle AUTONOME : C-FORM-AAAA-NNNN ou
+   * C-FI-AAAA-NNNN. Espace DISJOINT des mouvements (préfixe « C- ») : jamais de
+   * collision avec un numéro de mouvement, numérotation des mouvements (dans
+   * l'empreinte) intacte. Miroir exact de prochainNumeroControle du serveur.
+   */
+  function prochainNumeroControle(mode) {
+    const prefixe = mode === 'OFFICIEL' ? 'C-FI' : 'C-FORM';
+    const motif = new RegExp(`^${prefixe}-\\d{4}-(\\d{4})$`);
+    let max = 0;
+    for (const ctl of donnees.controles) {
+      const trouve = motif.exec(ctl.numero || '');
+      if (trouve) max = Math.max(max, Number(trouve[1]));
+    }
+    const annee = new Date().getFullYear();
+    return `${prefixe}-${annee}-${String(max + 1).padStart(4, '0')}`;
+  }
+
   // --------------------------------------------------------
   // Effets stocks / charges d'une écriture au moment de la
   // validation. Mutations VIVES + calcul de quantiteKg signée.
@@ -1453,8 +1471,14 @@ export function creerDemoStore() {
     if (d.resultat !== 'CONFORME' && d.resultat !== 'FUITE') {
       throw new Error('Résultat de contrôle obligatoire : CONFORME ou FUITE.');
     }
+    // Mode + numéro de fiche du contrôle (CERFA). Un contrôle LIÉ hérite ceux
+    // du mouvement (passés dans d) ; un contrôle AUTONOME prend un numéro dédié
+    // « C-FORM-/C-FI- » et le mode FORMATION par défaut (outil pédagogique).
+    const mode = d.mode === 'OFFICIEL' ? 'OFFICIEL' : 'FORMATION';
     const controle = {
       id: genId('ctl'),
+      numero: d.numero ?? prochainNumeroControle(mode),
+      mode,
       date: d.date ?? aujourdHui(),
       machineId: machine.id,
       machineLabel: machine.designation,
@@ -2662,7 +2686,11 @@ export function creerDemoStore() {
           // R5 : localisation de la fuite saisie à l'étape 5 du wizard,
           // propagée jusqu'au contrôle enregistré (puis au CERFA cadre 10).
           localisationFuite: declare.localisationFuite ?? null,
-          operateur: mouvement.technicien ?? null
+          operateur: mouvement.technicien ?? null,
+          // Le contrôle lié EST la même fiche que le mouvement : il hérite de
+          // son numéro et de son mode (CERFA identique de part et d'autre).
+          numero: mouvement.numero,
+          mode: mouvement.mode
         });
         controleLie.mouvementId = mouvement.id;
         mouvement.controle = { ...declare, controleId: controleLie.id };

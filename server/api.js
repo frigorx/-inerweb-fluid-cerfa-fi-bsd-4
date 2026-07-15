@@ -2380,7 +2380,12 @@ const HANDLERS = {
           // propagée jusqu'au contrôle enregistré (puis au CERFA cadre 10).
           localisationFuite: declare.localisationFuite ?? null,
           operateur: mouvement.technicien ?? null,
-          mouvementId: mouvement.id
+          mouvementId: mouvement.id,
+          // Le contrôle lié EST la même fiche que le mouvement : il hérite de
+          // son numéro et de son mode (le CERFA généré depuis l'un ou l'autre
+          // affiche le même numéro et le même filigrane).
+          numero: mouvement.numero,
+          mode: mouvement.mode
         });
         mouvement.controle = { ...declare, controleId: controleLie.id };
       }
@@ -3612,6 +3617,27 @@ function prochainNumeroMouvement(mode) {
 }
 
 /**
+ * Prochain numéro de fiche pour un contrôle AUTONOME : « C-FORM-AAAA-NNNN »
+ * (FORMATION) ou « C-FI-AAAA-NNNN » (OFFICIEL). Espace DISJOINT des mouvements
+ * (préfixe « C- ») : un contrôle ne réutilise jamais un numéro de mouvement, et
+ * la numérotation des mouvements (qui entre dans l'empreinte) reste INTACTE. Un
+ * contrôle LIÉ à un mouvement n'appelle pas ceci — il hérite du numéro du
+ * mouvement. Miroir exact de prochainNumeroControle du DemoStore.
+ */
+function prochainNumeroControle(mode) {
+  const prefixe = mode === 'OFFICIEL' ? 'C-FI' : 'C-FORM';
+  const motif = new RegExp(`^${prefixe}-\\d{4}-(\\d{4})$`);
+  const lignes = db.all('SELECT numero FROM controles');
+  let max = 0;
+  for (const { numero } of lignes) {
+    const trouve = motif.exec(numero || '');
+    if (trouve) max = Math.max(max, Number(trouve[1]));
+  }
+  const annee = new Date().getFullYear();
+  return `${prefixe}-${annee}-${String(max + 1).padStart(4, '0')}`;
+}
+
+/**
  * Objet mouvement LOGIQUE (camelCase, forme contrat) projeté sur les 18
  * champs de l'empreinte, dans l'ordre canonique — avec le `controle`
  * reconstitué { statutControle, detecteurId[, controleId] } dans CET ordre
@@ -4256,8 +4282,14 @@ function enregistrerControle(d) {
   if (d.resultat !== 'CONFORME' && d.resultat !== 'FUITE') {
     throw new Error('Résultat de contrôle obligatoire : CONFORME ou FUITE.');
   }
+  // Mode + numéro de fiche du contrôle (CERFA). Un contrôle LIÉ hérite ceux
+  // du mouvement (passés dans d) ; un contrôle AUTONOME prend un numéro dédié
+  // « C-FORM-/C-FI- » et le mode FORMATION par défaut (outil pédagogique).
+  const mode = d.mode === 'OFFICIEL' ? 'OFFICIEL' : 'FORMATION';
   const controle = {
     id: db.generateId('CTL'),
+    numero: d.numero ?? prochainNumeroControle(mode),
+    mode,
     date: d.date ?? aujourdHui(),
     machineId: machine.id,
     machineLabel: machine.designation,

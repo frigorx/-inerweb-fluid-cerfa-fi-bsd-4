@@ -80,6 +80,9 @@ verifier('les tables de la balance matière existent',
     'justifications_ecarts'].every((t) =>
     base.prepare('SELECT count(*) AS n FROM sqlite_master WHERE name = ?')
       .get(t).n === 1));
+verifier('controles porte numero et mode (migration 19)',
+  colonnes('controles').includes('numero')
+  && colonnes('controles').includes('mode'));
 
 // ============================================================
 // 2. Réouverture : idempotente, version conservée

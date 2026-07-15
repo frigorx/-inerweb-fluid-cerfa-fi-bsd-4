@@ -2,6 +2,26 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🩹 CERFA DE CONTRÔLE — numéro de fiche + mode (défaut majeur de l'audit, 15/07)
+Le CERFA généré depuis un **contrôle** (pas un mouvement) affichait l'identifiant technique
+`ctl-…` au lieu d'un numéro de fiche, et restait **toujours en mode OFFICIEL** → un contrôle fait
+**en formation** ressortait **sans filigrane**, d'apparence officielle. Cause : `enregistrerControle`
+ne posait ni `numero` ni `mode`. Correctif : chaque contrôle porte désormais un numéro + un mode.
+- **Migration 19** : `ADD COLUMN numero/mode` sur `controles` (table **hors WORM**, hors chaîne de
+  hash des mouvements → aucun risque) + backfill des bases existantes.
+- **Contrôle LIÉ à un mouvement** (CR-3) : **hérite** du numéro et du mode du mouvement (une seule
+  identité de fiche pour une même intervention).
+- **Contrôle AUTONOME** : numéro **dédié `C-FORM-AAAA-NNNN` / `C-FI-…`**, espace **disjoint** des
+  mouvements → **aucune collision** possible, et **la numérotation des mouvements (qui entre dans
+  l'empreinte) reste intacte**. Mode FORMATION par défaut (outil pédagogique) → le filigrane
+  FORMATION s'applique enfin aux CERFA de contrôle.
+- Parité DemoStore/LocalStore stricte (`prochainNumeroControle` miroir), `mapping.controles` complété
+  (sinon `getControles` casse). Prouvé : migration + backfill (lié hérite, autonome numéroté, zéro
+  collision) en Mode Local ; test-generateur (numéro + mention FORMATION) en Démo ; nouvelles
+  assertions dans `test-contrat` (parité) et `test-migrations`. **TOUT VERT — 71 exécutions.**
+- ⏳ **Non embarqué dans une release** pour l'instant : sera groupé avec les correctifs réglementaires
+  en attente de validation de Franck (R-1234yf, mélanges HFC/HFO, `cessions_kg`) → futur paquet v1.0.2.
+
 ### 🔎 AUDIT COMPLET + CORRECTIFS → paquet v1.0.1 (15/07)
 Audit technique, réglementaire et RGPD mené sur le code complet, **en conditions réelles** (serveur
 sur base jetable, failles **tirées** et non lues). **Socle de sécurité sain** : registre WORM

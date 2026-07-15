@@ -422,6 +422,8 @@ export const DEMO = {
   controles: [
     {
       id: 'ctl-003',
+      numero: 'C-FORM-2026-0003',
+      mode: 'FORMATION',
       date: '2026-06-29',
       machineId: 'M1',
       machineLabel: 'Chambre froide positive — Labo',
@@ -434,6 +436,8 @@ export const DEMO = {
     },
     {
       id: 'ctl-002',
+      numero: 'C-FORM-2026-0002',
+      mode: 'FORMATION',
       date: '2026-06-18',
       machineId: 'M5',
       machineLabel: 'Chambre froide — Le Fournil',
@@ -446,6 +450,8 @@ export const DEMO = {
     },
     {
       id: 'ctl-001',
+      numero: 'C-FORM-2026-0001',
+      mode: 'FORMATION',
       date: '2026-05-03',
       machineId: 'M6',
       machineLabel: 'Multisplit bureaux',

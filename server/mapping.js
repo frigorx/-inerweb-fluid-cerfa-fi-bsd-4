@@ -299,6 +299,12 @@ const TABLES = {
       operateur: 'operateur',
       operateurId: 'operateur_id',
       mouvementId: 'mouvement_id',
+      // Numéro de fiche + mode du contrôle (migration 19) : sans eux, le CERFA
+      // d'un contrôle affichait l'id technique et restait toujours OFFICIEL.
+      // Contrôle lié à un mouvement = hérite de son numéro/mode ; contrôle
+      // autonome = numéro dédié « C-FORM-/C-FI- » (espace disjoint des mouvements).
+      numero: 'numero',
+      mode: 'mode',
       prochainControle: 'date_prochain_controle'
     },
     booleens: ['reparationImmediate'],

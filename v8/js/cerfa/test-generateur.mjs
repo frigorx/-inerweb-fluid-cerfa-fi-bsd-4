@@ -208,8 +208,10 @@ const ctrl = await genererCerfaPdf(store, {
   source: 'controle', id: 'ctl-003'
 });
 const k = await relire(ctrl.octets);
-verifier('contrôle : Fiche_no = identifiant du contrôle',
-  k.texte('Fiche_no') === 'ctl-003');
+verifier('contrôle : Fiche_no = numéro de fiche du contrôle (plus l\'id technique ctl-)',
+  k.texte('Fiche_no') === 'C-FORM-2026-0003');
+verifier('contrôle en formation : mention FORMATION au cadre 14 (filigrane effectif)',
+  k.texte('14_Observations').includes('MODE FORMATION'));
 verifier('contrôle : Case_CtrlPerio cochée (contrôle périodique)',
   k.coche('Case_CtrlPerio'));
 verifier('contrôle : Case_CtrlNonPerio et Case_Maintenance décochées',

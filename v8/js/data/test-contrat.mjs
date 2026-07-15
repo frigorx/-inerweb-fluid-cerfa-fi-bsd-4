@@ -640,6 +640,13 @@ verifier('un contrôle FUITE passe la machine en statut FUITE',
     .statut === 'FUITE');
 verifier('un contrôle FUITE porte la localisation saisie',
   controleFuite.localisationFuite === 'Raccord BP');
+// Migration 19 / CERFA de contrôle : un contrôle AUTONOME reçoit un numéro de
+// fiche dédié (« C-FORM-AAAA-NNNN », espace disjoint des mouvements) et le mode
+// FORMATION — sans quoi le CERFA affichait l'id technique et restait OFFICIEL.
+// Vérifié à l'IDENTIQUE contre DemoStore ET LocalStore (parité).
+verifier('un contrôle autonome reçoit un numéro C-FORM- et le mode FORMATION',
+  /^C-FORM-\d{4}-\d{4}$/.test(controleFuite.numero)
+  && controleFuite.mode === 'FORMATION');
 
 // R4 : un CONFORME SANS réparation tracée ne referme PAS la fuite
 // (durcissement — avant ce lot, n'importe quel CONFORME suffisait).

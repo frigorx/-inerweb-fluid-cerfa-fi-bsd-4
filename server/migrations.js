@@ -99,6 +99,12 @@
  *       séparée). Triggers dédiés : une fois le mouvement figé
  *       (VALIDE/ANNULE), ses liens d'outils ne peuvent plus être créés,
  *       modifiés ni supprimés. Trigger WORM des mouvements INCHANGÉ.
+ *  19 — numéro + mode du CONTRÔLE : le CERFA d'un contrôle affichait l'id
+ *       technique (ctl-…) et restait toujours OFFICIEL (jamais de filigrane
+ *       FORMATION). ADD COLUMN numero/mode sur controles (table sans WORM,
+ *       hors chaîne de hash) + backfill : contrôle lié = hérite du mouvement ;
+ *       contrôle autonome = « C-FORM-AAAA-NNNN » (espace disjoint des
+ *       mouvements → aucune collision de numéro), mode FORMATION.
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -766,6 +772,54 @@ END;`);
           SELECT RAISE(ABORT,
             'Écriture validée : liens d''outils figés (suppression interdite)');
         END;`);
+    }
+  },
+
+  19: {
+    nom: 'numero_mode_controles',
+    appliquer(db) {
+      // CERFA depuis un CONTRÔLE : jusqu'ici le contrôle n'avait ni numéro ni
+      // mode → le CERFA affichait l'id technique (ctl-…) et restait toujours
+      // OFFICIEL (jamais de filigrane FORMATION). On dote chaque contrôle d'un
+      // numero + mode. La table controles est LIBREMENT mutable (les triggers
+      // WORM ne visent que mouvements/journal_audit, et elle est hors chaîne de
+      // hash des mouvements) : ALTER + backfill sans le moindre risque.
+      db.exec('ALTER TABLE controles ADD COLUMN numero TEXT;');
+      db.exec('ALTER TABLE controles ADD COLUMN mode TEXT;');
+
+      // 1) Contrôle LIÉ à un mouvement (CR-3) : hérite numéro + mode du
+      //    mouvement parent — une seule identité de fiche pour une même
+      //    intervention physique.
+      db.exec(`UPDATE controles
+                 SET numero = (SELECT m.numero FROM mouvements m
+                                WHERE m.id = controles.mouvement_id),
+                     mode   = (SELECT m.mode   FROM mouvements m
+                                WHERE m.id = controles.mouvement_id)
+               WHERE mouvement_id IS NOT NULL;`);
+
+      // 2) Contrôle AUTONOME (aucun mouvement) : numéro dédié
+      //    « C-FORM-AAAA-NNNN » (espace DISJOINT des mouvements → aucune
+      //    collision possible avec un numéro de fiche de mouvement), mode
+      //    FORMATION. NNNN = séquentiel sur les seuls contrôles autonomes.
+      const motif = /^C-FORM-\d{4}-(\d{4})$/;
+      let maxAuto = 0;
+      for (const { numero } of db.prepare(
+          'SELECT numero FROM controles WHERE numero IS NOT NULL').all()) {
+        const t = motif.exec(numero || '');
+        if (t) maxAuto = Math.max(maxAuto, Number(t[1]));
+      }
+      const autonomes = db.prepare(
+        `SELECT id, date_controle FROM controles
+          WHERE mouvement_id IS NULL ORDER BY date_controle, id`).all();
+      const maj = db.prepare(
+        'UPDATE controles SET numero = ?, mode = ? WHERE id = ?');
+      for (const c of autonomes) {
+        maxAuto += 1;
+        const annee = String(c.date_controle || '').slice(0, 4)
+          || String(new Date().getFullYear());
+        maj.run(`C-FORM-${annee}-${String(maxAuto).padStart(4, '0')}`,
+          'FORMATION', c.id);
+      }
     }
   }
 };
