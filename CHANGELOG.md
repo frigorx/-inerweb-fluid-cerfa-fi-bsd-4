@@ -2,6 +2,31 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 📖 GUIDE ILLUSTRÉ + LECTURE VOCALE (15/07)
+`guide.html` : le mode d'emploi complet qui prend le collègue par la main, écran par écran.
+- **Sommaire à tiroirs** (les grandes lignes → installer/démarrer → renseigner/utiliser → quand ça
+  bloque), avec surlignage de la section courante. **Dix étapes** dans l'ordre d'usage : installer,
+  créer l'administrateur, établissement/personnel, machines/bouteilles/clients, intervention+CERFA,
+  contrôles/fuites, balance/inventaire, dossier d'audit, sauvegarde, rôles prof/élève.
+- **Les points de blocage sont EXPLIQUÉS, pas contournés** : écriture validée non modifiable
+  (→ contre-écriture), fuite ouverte qui interdit le complément de gaz, élève qui ne peut pas valider,
+  mode Officiel indisponible, mouvement incohérent sur bouteille. Encadrés dédiés + récapitulatif final.
+- **17 captures d'écran faites en mode DÉMO** (données fictives, RGPD), dont 13 intégrées au guide.
+  **Aucune capture inventée** : les flux sans capture obtenue (installation système, écran de création
+  d'administrateur, assistant 6 étapes) sont décrits par le texte, pas illustrés par une fausse image.
+- **Lecture vocale (`speechSynthesis`)** : un bouton « Écouter cette étape » par section, voix
+  française, **native, gratuite, hors ligne, zéro dépendance**. Repli propre : si aucune voix n'est
+  disponible, les boutons se masquent.
+- **`outils/prendre-captures.mjs`** (nouvel outil d'emballage) refabrique les 17 captures d'un coup en
+  pilotant Chrome/Edge en headless via CDP (WebSocket natif de Node, aucune dépendance). Quand le
+  logiciel bouge, les captures se régénèrent — elles ne pourrissent pas.
+- Vérifié par le navigateur : **13 images chargées**, 12 sections, 12 boutons vocaux câblés,
+  **0 erreur console**, tous les liens du sommaire justes. Charte identique à la vitrine, page autonome.
+- ⚠️ **Réserve outillage** : la capture des pages HTML autonomes (vitrine/guide) n'a pas pu être
+  automatisée sur ce poste aujourd'hui (aperçu intégré en panne + Chrome headless instable après
+  plusieurs lancements). La vérification **structurelle** (contenu, liens, images, scripts) est faite ;
+  le **coup d'œil esthétique final** revient à Franck.
+
 ### 🏠 VITRINE — la page d'accueil publique (15/07)
 `index.html` à la racine n'est plus une simple redirection : c'est la **vitrine** du logiciel.
 - Ce qu'il fait, pour qui, et **ce qui le distingue** (registre inaltérable à hash chaîné, dossier

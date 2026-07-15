@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<!-- inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh -->
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0e2a47">
+  <meta name="description" content="Guide d'installation et mode d'emploi illustré d'inerWeb Fluide, écran par écran, points de blocage compris.">
+  <title>Guide — inerWeb Fluide</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --marine: #0e2a47; --marine-800: #163c61;
+      --accent: #12b5c9; --accent-fort: #0a7482; --accent-fond: #e0f7fa;
+      --texte: #17324d; --texte-doux: #45607d; --trait: #dde5ee;
+      --fond: #f4f7fa; --blanc: #ffffff;
+      --orange: #b26a00; --orange-fond: #fdf3e2; --orange-trait: #f0d9ae;
+      --rouge: #b3261e; --rouge-fond: #fbeceb; --rouge-trait: #f0c6c3;
+      --vert: #1c7a4a; --vert-fond: #e7f5ee;
+      --degrade: linear-gradient(150deg, #163c61, #0e2a47);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+      color: var(--texte); background: var(--fond); line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent-fort); }
+    img { max-width: 100%; }
+
+    /* Barre */
+    header.barre { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,.94); backdrop-filter: blur(6px); border-bottom: 1px solid var(--trait); }
+    .barre-inner { display: flex; align-items: center; gap: 14px; padding: 12px 22px; }
+    .marque { display: flex; align-items: center; gap: 11px; text-decoration: none; }
+    .marque .carre { width: 36px; height: 36px; border-radius: 9px; background: var(--degrade); color: #fff; display: grid; place-items: center; flex: none; }
+    .marque .carre svg { width: 21px; height: 21px; }
+    .marque .nom { font-weight: 600; color: var(--marine); }
+    .marque .nom b { color: var(--accent-fort); font-weight: 700; }
+    .barre .fil { color: var(--texte-doux); font-size: .95rem; }
+    .barre .retour { margin-left: auto; text-decoration: none; color: var(--texte-doux); font-weight: 500; padding: 8px 14px; border: 1px solid var(--trait); border-radius: 8px; }
+    .barre .retour:hover { border-color: var(--accent); color: var(--accent-fort); }
+
+    /* Mise en page : sommaire + contenu */
+    .page { display: grid; grid-template-columns: 300px 1fr; gap: 0; max-width: 1280px; margin: 0 auto; align-items: start; }
+    nav.sommaire { position: sticky; top: 61px; align-self: start; max-height: calc(100vh - 61px); overflow-y: auto; padding: 26px 18px 40px; border-right: 1px solid var(--trait); }
+    nav.sommaire h2 { font-size: .78rem; text-transform: uppercase; letter-spacing: .8px; color: var(--texte-doux); margin: 22px 0 8px; }
+    nav.sommaire h2:first-child { margin-top: 0; }
+    nav.sommaire a { display: block; text-decoration: none; color: var(--texte); padding: 7px 12px; border-radius: 7px; font-size: .95rem; border-left: 2px solid transparent; }
+    nav.sommaire a:hover { background: var(--fond); }
+    nav.sommaire a.actif { background: var(--accent-fond); color: var(--accent-fort); font-weight: 600; border-left-color: var(--accent); }
+    nav.sommaire a .num { display: inline-block; width: 1.5em; color: var(--texte-doux); font-variant-numeric: tabular-nums; }
+
+    main { padding: 32px 44px 96px; min-width: 0; }
+    .intro-guide { background: var(--degrade); color: #eaf3fb; border-radius: 14px; padding: 30px 32px; margin-bottom: 40px; }
+    .intro-guide h1 { margin: 0 0 10px; color: #fff; font-size: 1.9rem; }
+    .intro-guide p { margin: 0 0 8px; color: #c3d8ec; }
+    .intro-guide .rappel { margin-top: 16px; font-size: .92rem; color: #9fbcd6; border-top: 1px solid rgba(255,255,255,.15); padding-top: 14px; }
+
+    section.etape { scroll-margin-top: 74px; padding: 30px 0; border-top: 1px solid var(--trait); }
+    section.etape:first-of-type { border-top: none; }
+    .titre-ligne { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
+    .titre-ligne .puce { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--accent-fond); color: var(--accent-fort); display: grid; place-items: center; font-weight: 700; }
+    .titre-ligne h2 { margin: 0; font-size: 1.5rem; color: var(--marine); }
+    .etape > .sous { color: var(--texte-doux); margin: 0 0 18px; }
+    .etape p.lire { margin: 0 0 14px; }
+    .etape ul { margin: 0 0 14px; padding-left: 22px; }
+    .etape li { margin-bottom: 7px; }
+    .etape strong { color: var(--marine); }
+
+    figure { margin: 20px 0; }
+    figure img { width: 100%; border: 1px solid var(--trait); border-radius: 10px; box-shadow: 0 2px 10px rgba(14,42,71,.07); display: block; }
+    figure figcaption { color: var(--texte-doux); font-size: .9rem; margin-top: 8px; text-align: center; font-style: italic; }
+
+    .encadre { border-radius: 10px; padding: 16px 18px; margin: 18px 0; border: 1px solid; }
+    .encadre .etiq { font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: .95rem; }
+    .encadre p { margin: 0; font-size: .96rem; }
+    .encadre .etiq svg { width: 18px; height: 18px; }
+    .blocage { background: var(--rouge-fond); border-color: var(--rouge-trait); }
+    .blocage .etiq { color: var(--rouge); }
+    .attention { background: var(--orange-fond); border-color: var(--orange-trait); }
+    .attention .etiq { color: var(--orange); }
+    .astuce { background: var(--accent-fond); border-color: #b6e6ec; }
+    .astuce .etiq { color: var(--accent-fort); }
+
+    .btn-ecouter { display: inline-flex; align-items: center; gap: 7px; background: #fff; border: 1px solid var(--trait); color: var(--texte-doux); border-radius: 20px; padding: 6px 14px; font-size: .86rem; cursor: pointer; font-family: inherit; margin-bottom: 16px; }
+    .btn-ecouter:hover { border-color: var(--accent); color: var(--accent-fort); }
+    .btn-ecouter svg { width: 15px; height: 15px; }
+    .btn-ecouter.lecture { background: var(--accent-fond); color: var(--accent-fort); border-color: var(--accent); }
+
+    kbd { background: var(--marine); color: #fff; border-radius: 5px; padding: 1px 7px; font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; font-size: .85em; }
+    code.chemin { background: #eef3f8; border: 1px solid var(--trait); border-radius: 5px; padding: 1px 6px; font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; font-size: .9em; color: var(--marine); }
+
+    /* Bouton menu mobile */
+    .menu-mobile { display: none; }
+    @media (max-width: 900px) {
+      .page { grid-template-columns: 1fr; }
+      nav.sommaire { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--trait); display: none; }
+      nav.sommaire.ouvert { display: block; }
+      main { padding: 24px 20px 80px; }
+      .menu-mobile { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 9px 14px; font-family: inherit; font-weight: 600; cursor: pointer; }
+      .barre .retour { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="barre">
+    <a class="marque" href="index.html">
+      <span class="carre"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"/><path d="m9.5 5 2.5 2 2.5-2"/><path d="m9.5 19 2.5-2 2.5 2"/><path d="m4.2 7.5 15.6 9"/><path d="M4.8 10.6 7.9 9.7l.3-3.2"/><path d="m19.2 13.4-3.1.9-.3 3.2"/><path d="m19.8 7.5-15.6 9"/><path d="m19.2 10.6-3.1-.9-.3-3.2"/><path d="m4.8 13.4 3.1.9.3 3.2"/></svg></span>
+      <span class="nom">inerWeb <b>Fluide</b></span>
+    </a>
+    <span class="fil">Guide d'installation et mode d'emploi</span>
+    <a class="retour" href="index.html">Retour à l'accueil</a>
+    <button class="menu-mobile" onclick="document.querySelector('nav.sommaire').classList.toggle('ouvert')">Sommaire</button>
+  </header>
+
+  <div class="page">
+
+    <nav class="sommaire" id="sommaire">
+      <h2>Les grandes lignes</h2>
+      <a href="#vue-ensemble"><span class="num">•</span>Vue d'ensemble</a>
+      <h2>Installer et démarrer</h2>
+      <a href="#installer"><span class="num">1</span>Installer le logiciel</a>
+      <a href="#compte-admin"><span class="num">2</span>Créer le compte administrateur</a>
+      <h2>Renseigner et utiliser</h2>
+      <a href="#etablissement"><span class="num">3</span>Établissement et personnel</a>
+      <a href="#parc"><span class="num">4</span>Machines, bouteilles, clients</a>
+      <a href="#intervention"><span class="num">5</span>Faire une intervention</a>
+      <a href="#controles"><span class="num">6</span>Contrôles et fuites</a>
+      <a href="#balance"><span class="num">7</span>Balance et inventaire</a>
+      <a href="#audit"><span class="num">8</span>Le dossier d'audit</a>
+      <a href="#sauvegarde"><span class="num">9</span>Sauvegarder et restaurer</a>
+      <a href="#roles"><span class="num">10</span>Professeur et élève</a>
+      <h2>Quand ça bloque</h2>
+      <a href="#blocages"><span class="num">•</span>Tous les points de blocage</a>
+    </nav>
+
+    <main>
+      <div class="intro-guide">
+        <h1>Prendre en main inerWeb Fluide</h1>
+        <p>Ce guide vous accompagne écran par écran, de l'installation jusqu'au dossier d'audit,
+        dans l'ordre où l'on s'en sert.</p>
+        <p>Toutes les images de ce guide sont prises dans le <strong style="color:#d6e7f5;">mode démonstration</strong>,
+        qui contient un monde fictif : vous pouvez tout essayer sans risque, aucune donnée réelle n'est concernée.</p>
+        <p class="rappel">À chaque étape, vous trouverez <em>où cliquer</em>, <em>ce que vous devez voir</em>,
+        et — quand il y en a — le <em>point de blocage</em> : un garde-fou voulu par le logiciel.
+        Ces blocages ne sont pas des pannes ; ils protègent la valeur de votre registre.
+        Le bouton « Écouter cette étape » lit le texte à voix haute.</p>
+      </div>
+
+      <!-- VUE D'ENSEMBLE -->
+      <section class="etape" id="vue-ensemble">
+        <div class="titre-ligne"><span class="puce">•</span><h2>Vue d'ensemble</h2></div>
+        <p class="sous">Ce que vous avez sous les yeux en ouvrant le logiciel.</p>
+        <button class="btn-ecouter" onclick="ecouter(this)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>Écouter cette étape</button>
+        <p class="lire">inerWeb Fluide s'organise autour d'un <strong>menu à gauche</strong> : le tableau de bord,
+        la conformité, le parc de machines, le stock de bouteilles, les mouvements de fluide, les contrôles,
+        et tout le reste. Le <strong>tableau de bord</strong> est votre page d'accueil : il résume le parc,
+        le stock, l'équivalent CO₂, les derniers mouvements et les alertes réglementaires du moment.</p>
+        <p class="lire">En haut à droite, un repère indique le mode en cours. Sur cette image, l'étiquette
+        <strong>« Démo / Formation »</strong> signale que vous êtes dans le monde fictif d'essai.
+        En usage réel, ce repère disparaît et le logiciel travaille sur vos vraies données.</p>
+        <figure>
+          <img src="img/guide/01-tableau-de-bord.png" alt="Tableau de bord d'inerWeb Fluide : menu à gauche, cartes de synthèse, derniers mouvements et alertes réglementaires.">
+          <figcaption>Le tableau de bord : synthèse du parc, derniers mouvements et alertes.</figcaption>
+        </figure>
+      </section>
+
+      <!-- 1. INSTALLER -->
+      <section class="etape" id="installer">
+        <div class="titre-ligne"><span class="puce">1</span><h2>Installer le logiciel</h2></div>
+        <p class="sous">Aucun droit administrateur requis, rien à installer sur le système.</p>
+        <button class="btn-ecouter" onclick="ecouter(this)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>Écouter cette étape</button>
+        <p class="lire">Le logiciel se télécharge sous la forme d'un seul fichier compressé
+        (<code class="chemin">inerWeb-Fluide-portable.zip</code>), depuis la page d'accueil.
+        Il contient déjà tout ce qu'il faut pour fonctionner : il n'y a rien d'autre à installer.</p>
+        <ul>
+          <li><strong>Télécharger</strong> le fichier depuis le bouton « Télécharger » de la page d'accueil.</li>
+          <li><strong>Débloquer</strong> le fichier : Windows marque les fichiers venus d'Internet.
+            Faites un clic droit sur le <code class="chemin">.zip</code> téléchargé, puis <strong>Propriétés</strong>,
+            cochez <strong>Débloquer</strong> en bas et validez. Sans cette étape, le lanceur peut être bloqué.</li>
+          <li><strong>Décompresser</strong> : clic droit sur le fichier, puis <strong>Extraire tout</strong>.
+            Vous obtenez un dossier.</li>
+          <li><strong>Démarrer</strong> : ouvrez ce dossier et double-cliquez sur
+            <code class="chemin">lancer-inerweb.bat</code>. Une fenêtre noire s'ouvre (c'est normal, c'est le
+            moteur), puis l'application s'ouvre toute seule dans votre navigateur.</li>
+        </ul>
+        <div class="encadre astuce">
+          <div class="etiq"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>Vérifier que le fichier est authentique</div>
+          <p>À côté du bouton de téléchargement figure une empreinte SHA-256. Vous pouvez la contrôler
+          sans rien installer : ouvrez une invite de commande dans le dossier du téléchargement et tapez
+          <code class="chemin">certutil -hashfile inerWeb-Fluide-portable.zip SHA256</code>. L'empreinte affichée
+          doit être identique à celle publiée.</p>
+        </div>
+        <div class="encadre attention">
+          <div class="etiq"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20L12 3Z"/><path d="M12 9v5M12 17h.01"/></svg>Fermer la fenêtre noire = arrêter le logiciel</div>
+          <p>Tant que le logiciel tourne, la fenêtre noire reste ouverte. Pour arrêter inerWeb Fluide,
+          il suffit de la fermer. Pour désinstaller complètement, jetez simplement le dossier.</p>
+        </div>
+      </section>
+
+      <!-- 2. COMPTE ADMIN -->
+      <section class="etape" id="compte-admin">
+        <div class="titre-ligne"><span class="puce">2</span><h2>Créer le compte administrateur</h2></div>
+        <p class="sous">Au tout premier démarrage seulement.</p>
+        <button class="btn-ecouter" onclick="ecouter(this)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>Écouter cette étape</button>
+        <p class="lire">La toute première fois que vous ouvrez le logiciel sur un poste, il n'existe encore
+        aucun compte. L'application affiche donc directement, dans le navigateur, un écran
+        <strong>« Créer le compte administrateur »</strong>. Vous n'avez rien à saisir dans la fenêtre noire :
+        tout se passe à l'écran.</p>
+        <ul>
+          <li>Choisissez un <strong>nom d'utilisateur</strong> et une <strong>phrase de passe</strong> solides :
+            ce compte est le gardien de toutes vos données.</li>
+          <li>Notez cette phrase de passe en lieu sûr : elle protège le coffre-fort chiffré, et
+            <strong>personne ne peut la récupérer à votre place</strong> (c'est le prix de la confidentialité).</li>
+          <li>Une fois l'administrateur créé, vous arrivez sur le tableau de bord, prêt à travailler.</li>
+        </ul>
+        <div class="encadre attention">
+          <div class="etiq"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20L12 3Z"/><path d="M12 9v5M12 17h.01"/></svg>Pas de mot de passe oublié possible</div>
+          <p>Comme rien ne part sur Internet, aucun serveur ne peut vous renvoyer un lien de
+          réinitialisation. La phrase de passe de l'administrateur est votre unique clé : gardez-la.</p>
+        </div>
+      </section>
+
+      <!-- 3. ETABLISSEMENT -->
+      <section class="etape" id="etablissement">
+        <div class="titre-ligne"><span class="puce">3</span><h2>Établissement et personnel</h2></div>
+        <p class="sous">Qui détient les fluides, et qui a le droit d'intervenir.</p>
+        <button class="btn-ecouter" onclick="ecouter(this)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>Écouter cette étape</button>
+        <p class="lire">Dans le menu <strong>Administration</strong>, vous renseignez d'abord votre
+        <strong>établissement</strong> : raison sociale, SIRET, et surtout l'<strong>attestation de capacité</strong>
+        et son échéance. C'est le premier cadre du CERFA, et le premier point qu'un auditeur vérifie.</p>
+        <figure>
+          <img src="img/guide/15-administration.png" alt="Écran Administration : informations de l'établissement, attestation de capacité et réglages.">
+          <figcaption>Administration : l'établissement et son attestation de capacité.</figcaption>
+        </figure>
+        <p class="lire">Dans le menu <strong>Personnel</strong>, vous ajoutez les intervenants. Pour chacun,
+        le bouton <strong>Habilitations</strong> ouvre le détail des attestations d'aptitude et des mentions
+        F-Gas (catégories 2008 et 2025). Le logiciel se sert de ces habilitations pour vous
+        <strong>conseiller</strong> avant chaque intervention : qui a le droit de faire quoi, sur quel fluide.</p>
+        <figure>
+          <img src="img/guide/09-personnel-habilitations.png" alt="Écran Personnel : liste des intervenants avec leurs habilitations F-Gas.">
+          <figcaption>Personnel : chaque intervenant et ses habilitations.</figcaption>
+        </figure>
+      </section>
+
+      <!-- 4. PARC -->
+      <section class="etape" id="parc">
+        <div class="titre-ligne"><span class="puce">4</span><h2>Machines, bouteilles et clients</h2></div>
+        <p class="sous">Les objets sur lesquels porteront vos interventions.</p>
+        <button class="btn-ecouter" onclick="ecouter(this)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>Écouter cette étape</button>
+        <p class="lire">Dans <strong>Parc machines</strong>, le bouton d'ajout crée une machine : sa désignation,
+        son fluide, sa charge nominale. Chaque machine reçoit un <strong>code lisible</strong> et une étiquette QR
+        que l'on peut coller dessus pour la retrouver d'un coup de téléphone.</p>
+        <figure>
+          <img src="img/guide/04-parc-machines.png" alt="Écran Parc machines : liste des équipements avec fluide et charge.">
+          <figcaption>Parc machines : chaque équipement, son fluide et sa charge.</figcaption>
+        </figure>
+        <p class="lire">De la même façon, <strong>Stock bouteilles</strong> tient l'inventaire de vos contenants
+        (fluide, quantité, état), et <strong>Clients / détenteurs</strong> enregistre à qui appartiennent les
+        installations. Ces trois listes sont la matière première d'une intervention.</p>
+        <figure>
+          <img src="img/guide/05-stock-bouteilles.png" alt="Écran Stock bouteilles : contenants de fluide et quantités.">
+          <figcaption>Stock bouteilles : les contenants et leur quantité de fluide.</figcaption>
+        </figure>
+        <figure>
+          <img src="img/guide/10-clients-detenteurs.png" alt="Écran Clients / détenteurs : les propriétaires des installations.">
+          <figcaption>Clients / détenteurs : à qui appartiennent les installations.</figcaption>
+        </figure>
+      </section>
+
+      <!-- 5. INTERVENTION -->
+      <section class="etape" id="intervention">
+        <div class="titre-ligne"><span class="puce">5</span><h2>Faire une intervention</h2></div>
+        <p class="sous">Le geste central : saisir un mouvement de fluide et éditer le CERFA.</p>
+        <button class="btn-ecouter" onclick="ecouter(this)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>Écouter cette étape</button>
+        <p class="lire">Depuis le tableau de bord, le bouton <strong>« Nouveau mouvement »</strong> ouvre un
+        assistant en <strong>six étapes</strong> qui vous prend par la main : le type d'intervention
+        (charge, complément, récupération…), la machine concernée, la bouteille utilisée, la quantité,
+        l'intervenant, puis un récapitulatif. La dernière étape est la <strong>signature</strong>, tracée
+        directement à l'écran.</p>
+        <p class="lire">Tant que vous n'avez pas validé, le mouvement reste un <strong>brouillon</strong> :
+        vous pouvez tout corriger. Une fois <strong>validé et signé</strong>, il rejoint le registre des
+        <strong>Mouvements</strong>, et le bouton <strong>CERFA</strong> édite la fiche d'intervention
+        officielle, remplie automatiquement.</p>
+        <figure>
+          <img src="img/guide/06-mouvements.png" alt="Écran Mouvements : registre des interventions validées, chacune avec son bouton CERFA.">
+          <figcaption>Le registre des mouvements : chaque intervention validée et son CERFA.</figcaption>
+        </figure>
+        <div class="encadre blocage">
+          <div class="etiq"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Point de blocage — une écriture validée ne se modifie plus</div>
+          <p>C'est voulu, et c'est ce qui fait la valeur du registre. Une fois un mouvement validé, il est
+          scellé : impossible de le modifier ou de le supprimer. Si vous vous êtes trompé, vous ne
+          « corrigez » pas l'écriture — vous passez une <strong>contre-écriture</strong> (une annulation qui
+          reste visible), puis vous saisissez la bonne. Comme en comptabilité : on ne gomme pas, on
+          contrepasse. Toute tentative d'altération se verrait.</p>
+        </div>
+      </section>
+
+      <!-- 6. CONTROLES -->
+      <section class="etape" id="controles">
+        <div class="titre-ligne"><span class="puce">6</span><h2>Contrôles d'étanchéité et fuites</h2></div>
+        <p class="sous">Suivre les échéances et fermer proprement une fuite.</p>
+        <button class="btn-ecouter" onclick="ecouter(this)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>Écouter cette étape</button>
+        <p class="lire">Le menu <strong>Contrôles d'étanchéité</strong> enregistre chaque contrôle et suit les
+        <strong>échéances</strong> : le logiciel vous alerte quand un contrôle arrive à terme. Lorsqu'une fuite
+        est détectée, un <strong>dossier de fuite</strong> se constitue automatiquement, et se suit du premier
+        constat jusqu'à la réparation vérifiée.</p>
+        <figure>
+          <img src="img/guide/07-controles-etancheite.png" alt="Écran Contrôles d'étanchéité : contrôles, échéances et dossiers de fuite.">
+          <figcaption>Contrôles d'étanchéité : échéances suivies et dossiers de fuite.</figcaption>
+        </figure>
+        <p class="lire">La vue <strong>Conformité</strong> consolide tout cela en un <strong>feu tricolore</strong> :
+        vert, orange ou rouge, par domaine. C'est le premier coup d'œil avant une visite.</p>
+        <figure>
+          <img src="img/guide/02-conformite-feu-tricolore.png" alt="Écran Conformité : feu tricolore par domaine réglementaire.">
+          <figcaption>Conformité : le feu tricolore, domaine par domaine.</figcaption>
+        </figure>
+        <div class="encadre blocage">
+          <div class="etiq"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Point de blocage — une fuite ouverte interdit le complément de gaz</div>
+          <p>Tant qu'un dossier de fuite n'est pas refermé par un contrôle de réparation, le logiciel
+          refuse de tracer un simple complément de charge sur cette machine : remettre du gaz dans une
+          installation qui fuit encore n'a pas de sens réglementaire. Réparez, tracez le contrôle qui
+          referme la fuite, et le geste redevient possible.</p>
+        </div>
+      </section>
+
+      <!-- 7. BALANCE -->
+      <section class="etape" id="balance">
+        <div class="titre-ligne"><span class="puce">7</span><h2>Balance matière et inventaire</h2></div>
+        <p class="sous">Le bilan des fluides, calculé tout seul.</p>
+        <button class="btn-ecouter" onclick="ecouter(this)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>Écouter cette étape</button>
+        <p class="lire">La <strong>Balance matière</strong> fait, pour chaque fluide, le compte des entrées et des
+        sorties : ce qui est arrivé, ce qui a été chargé, récupéré, ce qui reste. Vous n'avez rien à calculer,
+        le logiciel s'en charge à partir des mouvements validés.</p>
+        <figure>
+          <img src="img/guide/11-balance-matiere.png" alt="Écran Balance matière : entrées et sorties par fluide.">
+          <figcaption>Balance matière : entrées et sorties de chaque fluide.</figcaption>
+        </figure>
+        <p class="lire">Le <strong>Bilan annuel</strong> prépare l'inventaire nominatif de fin d'année et
+        l'équivalent CO₂ du parc — les chiffres attendus lors d'un contrôle.</p>
+        <figure>
+          <img src="img/guide/12-bilan-annuel.png" alt="Écran Bilan annuel : inventaire nominatif et équivalent CO2.">
+          <figcaption>Bilan annuel : l'inventaire de fin d'année, prêt à présenter.</figcaption>
+        </figure>
+      </section>
+
+      <!-- 8. AUDIT -->
+      <section class="etape" id="audit">
+        <div class="titre-ligne"><span class="puce">8</span><h2>Le dossier d'audit</h2></div>
+        <p class="sous">Le moment où l'inspecteur arrive.</p>
+        <button class="btn-ecouter" onclick="ecouter(this)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>Écouter cette étape</button>
+        <p class="lire">Le menu <strong>Audit guidé</strong> déroule un parcours en <strong>neuf étapes ordonnées</strong>,
+        exactement dans l'ordre où un auditeur vérifie les choses : l'établissement, le personnel, l'outillage,
+        les contrôles, la balance… À chaque étape, le logiciel vous dit ce qui est au vert et ce qui reste à
+        traiter, avec un bouton pour ouvrir directement l'écran concerné.</p>
+        <figure>
+          <img src="img/guide/03-audit-guide.png" alt="Écran Audit guidé : parcours en neuf étapes avec état de conformité.">
+          <figcaption>Audit guidé : les neuf étapes, dans l'ordre de l'inspection.</figcaption>
+        </figure>
+        <p class="lire">Quand tout est prêt, le logiciel exporte un <strong>dossier d'audit scellé</strong> :
+        une archive accompagnée d'un <strong>vérificateur autonome</strong>, qui fonctionne hors ligne et
+        permet à n'importe qui de contrôler que le dossier n'a pas été retouché après coup.</p>
+        <div class="encadre attention">
+          <div class="etiq"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20L12 3Z"/><path d="M12 9v5M12 17h.01"/></svg>Devant un inspecteur F-Gas</div>
+          <p>inerWeb Fluide met en œuvre la lecture de la réglementation par son auteur, en
+          <strong>mode conseil</strong> : présentez-le comme votre outil de suivi et votre lecture de l'arrêté,
+          pas comme une décision réglementaire opposable à votre place.</p>
+        </div>
+      </section>
+
+      <!-- 9. SAUVEGARDE -->
+      <section class="etape" id="sauvegarde">
+        <div class="titre-ligne"><span class="puce">9</span><h2>Sauvegarder et restaurer</h2></div>
+        <p class="sous">L'exigence numéro un : ne rien perdre.</p>
+        <button class="btn-ecouter" onclick="ecouter(this)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>Écouter cette étape</button>
+        <p class="lire">Le menu <strong>Sauvegarde</strong> crée, en un clic, une copie complète et chiffrée de
+        toutes vos données, à ranger sur une clé USB ou un disque externe. La <strong>restauration</strong>
+        remet cette copie en place — utile en cas de changement de poste ou de mauvaise manipulation.</p>
+        <figure>
+          <img src="img/guide/14-sauvegarde.png" alt="Écran Sauvegarde : créer une sauvegarde chiffrée et restaurer.">
+          <figcaption>Sauvegarde : une copie chiffrée, à conserver hors du poste.</figcaption>
+        </figure>
+        <div class="encadre astuce">
+          <div class="etiq"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>Prenez l'habitude</div>
+          <p>Une sauvegarde régulière sur un support externe est la meilleure protection de votre registre.
+          Comme tout est local, c'est vous — et vous seul — qui gardez la maîtrise de vos données.</p>
+        </div>
+      </section>
+
+      <!-- 10. ROLES -->
+      <section class="etape" id="roles">
+        <div class="titre-ligne"><span class="puce">10</span><h2>Professeur et élève</h2></div>
+        <p class="sous">Des droits séparés, et un mode formation.</p>
+        <button class="btn-ecouter" onclick="ecouter(this)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>Écouter cette étape</button>
+        <p class="lire">inerWeb Fluide distingue les <strong>rôles</strong> : un professeur (ou référent) peut valider
+        et administrer ; un <strong>élève</strong>, lui, prépare et s'exerce, mais ne peut pas valider une
+        écriture officielle ni s'attribuer une habilitation. Le <strong>mode formation</strong> permet de
+        s'entraîner sur un jeu de données d'exercice, sans toucher au registre réel.</p>
+        <div class="encadre blocage">
+          <div class="etiq"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Point de blocage — un élève ne peut pas valider</div>
+          <p>Les droits ne sont pas qu'un affichage : le serveur refuse toute action réservée si le rôle ne
+          l'autorise pas. Un élève ne peut ni valider un mouvement, ni s'attribuer une habilitation, ni
+          importer des données. C'est ce qui rend l'outil sûr en classe, avec de vrais élèves connectés.</p>
+        </div>
+      </section>
+
+      <!-- BLOCAGES (RECAP) -->
+      <section class="etape" id="blocages">
+        <div class="titre-ligne"><span class="puce">•</span><h2>Tous les points de blocage</h2></div>
+        <p class="sous">Ce qui bloque, pourquoi, et comment débloquer — en un coup d'œil.</p>
+        <button class="btn-ecouter" onclick="ecouter(this)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>Écouter cette étape</button>
+        <p class="lire">Ces blocages sont voulus. Ce ne sont pas des pannes : ce sont les garde-fous qui font
+        qu'un registre inerWeb Fluide tient devant un contrôle. Voici les principaux et la façon de les lever.</p>
+        <ul>
+          <li><strong>« Cette écriture ne peut plus être modifiée. »</strong> — Un mouvement validé est scellé.
+            Pour corriger, passez une contre-écriture d'annulation, puis saisissez la bonne écriture.</li>
+          <li><strong>« Complément de gaz impossible : fuite ouverte. »</strong> — Réparez, tracez le contrôle
+            de réparation qui referme le dossier de fuite, puis reprenez le complément.</li>
+          <li><strong>« Action réservée : rôle insuffisant. »</strong> — Vous êtes connecté en élève. Cette
+            action (valider, habiliter, importer) est réservée au professeur ou à l'administrateur.</li>
+          <li><strong>« Mode Officiel indisponible. »</strong> — Un prérequis manque, par exemple un détecteur
+            de fuite dont l'étalonnage n'est plus à jour. Remettez le prérequis en ordre dans l'écran
+            concerné ; le tableau de bord vous dit lequel.</li>
+          <li><strong>« Mouvement incohérent sur la bouteille. »</strong> — Le sens (entrée / sortie) ou le
+            type de mouvement ne correspond pas à l'état de la bouteille. Vérifiez la bouteille choisie.</li>
+        </ul>
+        <div class="encadre astuce">
+          <div class="etiq"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>Entraînez-vous d'abord en mode démonstration</div>
+          <p>Le mode démonstration contient un monde fictif complet : rejouez chaque étape de ce guide,
+          provoquez volontairement les blocages pour bien les comprendre, puis passez au mode réel en
+          confiance. Rien de ce que vous faites en démonstration ne touche vos vraies données.</p>
+        </div>
+      </section>
+
+      <p style="margin-top:40px;color:var(--texte-doux);font-size:.92rem;border-top:1px solid var(--trait);padding-top:20px;">
+        inerWeb Fluide — © 2026 Franck Henninot · LP Jacques Raynaud, Marseille ·
+        <a href="mailto:inerweb.fh@gmail.com">inerweb.fh@gmail.com</a> ·
+        Licence PolyForm Noncommercial (gratuit pour l'enseignement). ·
+        <a href="index.html">Retour à l'accueil</a>
+      </p>
+    </main>
+  </div>
+
+  <script>
+    // ---- Lecture vocale (Brique 4) : API native du navigateur, hors ligne,
+    // zéro dépendance. Repli propre si aucune voix n'est disponible.
+    (function () {
+      var supporte = 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined';
+      if (!supporte) {
+        // Pas de synthèse vocale : on masque tous les boutons « Écouter ».
+        document.querySelectorAll('.btn-ecouter').forEach(function (b) { b.style.display = 'none'; });
+        return;
+      }
+      var enCours = null;
+
+      // Choisit une voix française si le navigateur en propose une.
+      function voixFr() {
+        var voix = window.speechSynthesis.getVoices() || [];
+        return voix.find(function (v) { return /fr(-|_)?/i.test(v.lang); }) || null;
+      }
+
+      window.ecouter = function (bouton) {
+        var section = bouton.closest('section');
+        // Si ce bouton lit déjà : on arrête (bascule lecture / arrêt).
+        if (enCours === bouton) { arreter(); return; }
+        arreter();
+
+        // On lit les paragraphes de contenu de la section (classe « lire »)
+        // et les listes, dans l'ordre. Pas les encadrés techniques ni les
+        // légendes d'images.
+        var morceaux = [];
+        section.querySelectorAll('p.lire, .etape > ul li').forEach(function (el) {
+          var t = el.textContent.replace(/\s+/g, ' ').trim();
+          if (t) morceaux.push(t);
+        });
+        var texte = morceaux.join(' ');
+        if (!texte) return;
+
+        var u = new SpeechSynthesisUtterance(texte);
+        u.lang = 'fr-FR';
+        var v = voixFr();
+        if (v) u.voice = v;
+        u.rate = 1;
+        u.onend = function () { reinit(bouton); };
+        u.onerror = function () { reinit(bouton); };
+        enCours = bouton;
+        bouton.classList.add('lecture');
+        majLibelle(bouton, 'Arrêter la lecture');
+        window.speechSynthesis.speak(u);
+      };
+
+      function arreter() {
+        window.speechSynthesis.cancel();
+        if (enCours) reinit(enCours);
+      }
+      function reinit(bouton) {
+        bouton.classList.remove('lecture');
+        majLibelle(bouton, 'Écouter cette étape');
+        if (enCours === bouton) enCours = null;
+      }
+      function majLibelle(bouton, texte) {
+        // Remplace le libellé sans toucher à l'icône SVG.
+        var noeuds = bouton.childNodes;
+        for (var i = noeuds.length - 1; i >= 0; i--) {
+          if (noeuds[i].nodeType === 3) { noeuds[i].textContent = texte; return; }
+        }
+        bouton.appendChild(document.createTextNode(texte));
+      }
+
+      // Les voix se chargent parfois de façon différée : on force le rafraîchissement.
+      if (typeof window.speechSynthesis.onvoiceschanged !== 'undefined') {
+        window.speechSynthesis.onvoiceschanged = function () { voixFr(); };
+      }
+      // On arrête proprement la lecture si l'utilisateur quitte la page.
+      window.addEventListener('beforeunload', function () { window.speechSynthesis.cancel(); });
+    })();
+
+    // ---- Surlignage du lien de sommaire correspondant à la section visible.
+    (function () {
+      var liens = Array.prototype.slice.call(document.querySelectorAll('nav.sommaire a'));
+      var sections = liens.map(function (a) { return document.querySelector(a.getAttribute('href')); }).filter(Boolean);
+      if (!('IntersectionObserver' in window) || !sections.length) return;
+      var obs = new IntersectionObserver(function (entrees) {
+        entrees.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          liens.forEach(function (a) { a.classList.remove('actif'); });
+          var actif = liens.find(function (a) { return a.getAttribute('href') === '#' + e.target.id; });
+          if (actif) actif.classList.add('actif');
+        });
+      }, { rootMargin: '-40% 0px -55% 0px' });
+      sections.forEach(function (s) { obs.observe(s); });
+    })();
+  </script>
+</body>
+</html>
