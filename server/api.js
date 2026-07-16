@@ -30,7 +30,7 @@ const crypto = require('node:crypto');
 const db = require('./db.js');
 const mapping = require('./mapping.js');
 const { hasherMouvement } = require('./hash-mouvement.js');
-const { FICHE_REGLEMENTAIRE_FLUIDES } = require('./migrations.js');
+const { FICHE_REGLEMENTAIRE_FLUIDES, corrigerPrpFgas3 } = require('./migrations.js');
 
 // ------------------------------------------------------------
 // Identité de l'établissement singleton (le front le traite sans id).
@@ -3448,7 +3448,11 @@ function remplacerToutLEtat(candidat) {
         fluide.contientHfc = fiche ? fiche.contientHfc : null;
         fluide.contientHfo = fiche ? fiche.contientHfo : null;
         fluide.categorieCadre7 = fiche ? fiche.categorieCadre7 : null;
-        fluide.sourcePrp = fiche ? fiche.sourcePrp : null;
+        // La source du PRP n'est recopiée que si le PRP importé EST la
+        // valeur réglementaire courante — pour une valeur locale, la
+        // source reste honnêtement inconnue (null).
+        fluide.sourcePrp = fiche && Number(fluide.gwpAr4) === fiche.prp
+          ? fiche.sourcePrp : null;
       }
       const ligne = mapping.versSql('fluides', fluide);
       const colonnes = Object.keys(ligne);
@@ -3457,6 +3461,13 @@ function remplacerToutLEtat(candidat) {
         `INSERT OR REPLACE INTO fluides (${colonnes.join(', ')}) ` +
         `VALUES (${marques})`, colonnes.map((c) => ligne[c]));
     }
+    // Corrections réglementaires conditionnelles (contenu de la migration
+    // 22) : un export ANTÉRIEUR réintroduirait les anciens PRP (1/4/3)
+    // par l'INSERT OR REPLACE ci-dessus, et la base étant déjà en version
+    // 22, la migration ne rejouerait jamais. On rejoue la correction —
+    // qui n'écrase jamais une valeur réellement ajustée. Miroir :
+    // importerJSON et chargerDepuisStockage du DemoStore.
+    corrigerPrpFgas3((sql) => db.run(sql));
 
     reinsererCollection('personnel', 'personnel', candidat.personnel);
     // Habilitations F-Gas (chantier B2) : APRÈS le personnel (FK personne_id ;

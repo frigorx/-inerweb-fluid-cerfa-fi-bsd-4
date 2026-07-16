@@ -46,7 +46,7 @@ const { ouvrirWizard } = await import('./wizard.js');
    ============================================================ */
 
 function creerStoreFactice({ machines = [], bouteilles = [],
-  habilitations = [], mentions = [], outillage = [] } = {}) {
+  habilitations = [], mentions = [], outillage = [], fluides = [] } = {}) {
   return {
     async getPersonnel() {
       return [{ id: 'p1', prenom: 'Jean', nom: 'Dupont', actif: true, roleApp: 'REFERENT' }];
@@ -58,7 +58,9 @@ function creerStoreFactice({ machines = [], bouteilles = [],
     async getMouvements() { return []; },
     // Chantier B2 : nourrit le conseil d'intervenant de l'étape 1.
     async getHabilitations() { return habilitations.slice(); },
-    async getMentions() { return mentions.slice(); }
+    async getMentions() { return mentions.slice(); },
+    // Avis 16/07 (Q10) : nourrit l'avertissement PRP >= 2500 de l'étape 3.
+    async getFluides() { return fluides.slice(); }
   };
 }
 
@@ -520,6 +522,64 @@ const MACHINE_TEST = {
   verifier('creerMouvement reçoit outilsIds = etat.outilsIds',
     /outilsIds:\s*etat\.outilsIds/.test(source),
     'motif outilsIds: etat.outilsIds introuvable dans finaliser()');
+}
+
+/* ============================================================
+   13. Avertissement PRP >= 2500 (Q10 de l'avis du 16/07/2026) :
+       présent à l'étape 3 pour un APPOINT sur fluide à PRP >= 2500
+       (maintenance au fluide vierge interdite), ABSENT en dessous,
+       et JAMAIS bloquant (Continuer reste actionnable).
+   ============================================================ */
+{
+  const FLUIDES_STUB = [
+    { code: 'R404A', famille: 'HFC', gwpAr4: 3922 },
+    { code: 'R32', famille: 'HFC', gwpAr4: 675 }
+  ];
+  const machines = [
+    { ...MACHINE_TEST },
+    { ...MACHINE_TEST, id: 'mac-2', code: 'M2', fluide: 'R32' }
+  ];
+  const bouteilles = [{
+    id: 'bou-a', code: 'BA', fluide: 'R404A', type: 'BOUTEILLE',
+    masseNetteKg: 8, contenanceMaxKg: 20, statut: 'EN_STOCK',
+    etatFluide: 'VIERGE', decisionFluide: null
+  }, {
+    id: 'bou-b', code: 'BB', fluide: 'R32', type: 'BOUTEILLE',
+    masseNetteKg: 8, contenanceMaxKg: 20, statut: 'EN_STOCK',
+    etatFluide: 'VIERGE', decisionFluide: null
+  }];
+  const store = creerStoreFactice({ machines, bouteilles, fluides: FLUIDES_STUB });
+
+  // Cas 1 — appoint sur R404A (PRP 3922) : bandeau présent, non bloquant.
+  await ouvrirWizard({ store, naviguer: () => {} }, { machineId: 'mac-1' });
+  let fond = document.body.querySelectorAll('.modale-fond').at(-1);
+  fond.querySelector('[data-carte-type="appoint"]').declencher('click');
+  let selectTechnicien = fond.querySelector('#wizard-technicien');
+  selectTechnicien.value = 'p1';
+  selectTechnicien.declencher('change');
+  fond.querySelector('#wizard-continuer').declencher('click'); // -> étape 3
+  const bandeaux = [...fond.querySelectorAll('.bandeau-avertissement')]
+    .map((b) => b.textContent);
+  verifier('appoint sur PRP 3922 : le bandeau « fluide VIERGE interdit » est à l’étape 3',
+    bandeaux.some((t) => t.includes('PRP') && t.includes('VIERGE')),
+    'bandeaux vus : ' + JSON.stringify(bandeaux));
+  fond.querySelector('[data-bouteille-src="bou-a"]').declencher('click');
+  verifier('le bandeau PRP ne bloque JAMAIS : Continuer actionnable après le choix',
+    !fond.querySelector('#wizard-continuer').disabled);
+
+  // Cas 2 — appoint sur R32 (PRP 675) : aucun bandeau PRP.
+  await ouvrirWizard({ store, naviguer: () => {} }, { machineId: 'mac-2' });
+  fond = document.body.querySelectorAll('.modale-fond').at(-1);
+  fond.querySelector('[data-carte-type="appoint"]').declencher('click');
+  selectTechnicien = fond.querySelector('#wizard-technicien');
+  selectTechnicien.value = 'p1';
+  selectTechnicien.declencher('change');
+  fond.querySelector('#wizard-continuer').declencher('click'); // -> étape 3
+  const textes = [...fond.querySelectorAll('.bandeau-avertissement')]
+    .map((b) => b.textContent);
+  verifier('appoint sur PRP 675 : aucun bandeau PRP à l’étape 3',
+    !textes.some((t) => t.includes('PRP')),
+    'bandeaux vus : ' + JSON.stringify(textes));
 }
 
 // ---- Bilan ----

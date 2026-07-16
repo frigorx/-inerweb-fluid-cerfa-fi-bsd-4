@@ -26,8 +26,12 @@ export async function render(conteneur, ctx) {
       + '<td class="cellule-mono"><strong style="color:var(--texte)">' + esc(fluide.code) + '</strong></td>'
       // Famille chimique (HFC, HFO, mélange, CO2, HC…)
       + '<td>' + esc(fluide.famille) + '</td>'
-      // GWP (AR4) : mono, aligné à droite, format fr avec espace des milliers
-      + '<td class="cellule-mono align-droite">' + esc(fmtNombre(fluide.gwpAr4, 0)) + '</td>'
+      // PRP réglementaire : mono, aligné à droite. Décimales ADAPTATIVES :
+      // depuis F-Gas III, des PRP < 1 existent (R-1234yf 0,501 · R-290
+      // 0,02) — arrondis à 0 décimale ils affichaient « 1 » et « 0 »,
+      // factuellement faux (constat de revue du 16/07).
+      + '<td class="cellule-mono align-droite">'
+      + esc(fmtNombre(fluide.gwpAr4, fluide.gwpAr4 < 1 ? 3 : 0)) + '</td>'
       // Impact environnemental : chip colorée Faible → Très élevé
       + '<td>' + chipStatut(fluide.impact) + '</td>'
       // Nombre de machines du parc utilisant ce fluide
@@ -42,7 +46,7 @@ export async function render(conteneur, ctx) {
         colonnes: [
           { cle: 'fluide',    libelle: 'Fluide' },
           { cle: 'famille',   libelle: 'Famille' },
-          { cle: 'gwp',       libelle: 'GWP (AR4)', align: 'droite' },
+          { cle: 'gwp',       libelle: 'PRP réglementaire', align: 'droite' },
           { cle: 'impact',    libelle: 'Impact' },
           { cle: 'machines',  libelle: 'Machines',  align: 'droite' }
         ],
@@ -65,7 +69,8 @@ export async function render(conteneur, ctx) {
     carte.insertAdjacentHTML('beforeend',
       '<p style="margin:0;padding:11px 16px;border-top:1px solid var(--bordure-2);'
       + 'font-size:12px;color:var(--texte-3)">'
-      + 'PRP (GWP)&nbsp;: valeurs AR4 du GIEC, utilisées pour le calcul des tonnes '
+      + 'PRP réglementaire utilisé par le moteur (AR4 du GIEC ou annexes du '
+      + 'règl. UE 2024/573 selon le fluide), pour le calcul des tonnes '
       + 'équivalent CO&#8322; (réglementation F-Gas).'
       + '</p>');
   }

@@ -183,7 +183,9 @@ function tableauBilan(bilan) {
     return '<tr>'
       + `<td class="bilan-fluide">${esc(ligne.fluide)}</td>`
       + `<td>${esc(ligne.famille)}</td>`
-      + `<td class="cellule-mono align-droite">${esc(fmtNombre(ligne.gwpAr4, 0))}</td>`
+      // Décimales adaptatives : PRP < 1 depuis F-Gas III (0,501 · 0,02),
+      // un arrondi à l'entier afficherait « 1 » ou « 0 » (faux).
+      + `<td class="cellule-mono align-droite">${esc(fmtNombre(ligne.gwpAr4, ligne.gwpAr4 < 1 ? 3 : 0))}</td>`
       + `<td class="cellule-mono align-droite">${esc(fmtNombre(ligne.chargeKg, 2))}</td>`
       + `<td class="cellule-mono align-droite${classeRecupere}">${esc(fmtNombre(ligne.recupereKg, 2))}</td>`
       + `<td class="cellule-mono align-droite">${esc(fmtNombre(ligne.enParcKg, 2))}</td>`
@@ -229,14 +231,16 @@ function genererCsv(bilan) {
   const sep = ';';
   const rangees = [];
 
-  rangees.push(['Fluide', 'Famille', 'GWP (AR4)', 'Chargé (kg)',
+  rangees.push(['Fluide', 'Famille', 'PRP réglementaire', 'Chargé (kg)',
     'Récupéré (kg)', 'En parc (kg)', 'CO2 éq (t)'].join(sep));
 
   for (const ligne of bilan.lignes) {
     rangees.push([
       ligne.fluide,
       ligne.famille,
-      nombreCsv(ligne.gwpAr4, 0),
+      // Décimales adaptatives (PRP < 1 depuis F-Gas III) — le CSV est un
+      // support de déclaration, « 0 » serait factuellement faux.
+      nombreCsv(ligne.gwpAr4, ligne.gwpAr4 < 1 ? 3 : 0),
       nombreCsv(ligne.chargeKg),
       nombreCsv(ligne.recupereKg),
       nombreCsv(ligne.enParcKg),

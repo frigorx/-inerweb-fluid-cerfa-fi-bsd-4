@@ -27,12 +27,13 @@ import { evaluerControle } from '../data/reglementation-fluides.js';
  * (un mélange contenant du HFC est traité comme un HFC — Règle A).
  * @param {{ chargeNominaleKg: number, detectionPermanente: boolean }} machine
  * @param {{ famille: string, gwpAr4: number }|undefined} fluide
- * @returns {{ niveau: 1|2|3|null, frequenceMois: number|null }}
+ * @returns {{ categorie: 'HFC'|'HFO'|'HCFC'|null, niveau: 1|2|3|null,
+ *   frequenceMois: number|null }} categorie null = hors périmètre F-Gas
  */
 export function calculerFrequenceControle(machine, fluide) {
-  const { niveau, frequenceMois } = evaluerControle(
+  const { categorie, niveau, frequenceMois } = evaluerControle(
     fluide, machine?.chargeNominaleKg, Boolean(machine?.detectionPermanente));
-  return { niveau, frequenceMois };
+  return { categorie, niveau, frequenceMois };
 }
 
 /* ============================================================

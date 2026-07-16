@@ -470,7 +470,9 @@ export const DEMO = {
   ],
 
   // --------------------------------------------------------
-  // Référentiel des fluides frigorigènes (GWP AR4)
+  // Référentiel des fluides frigorigènes (PRP réglementaire utilisé par
+  // le moteur — AR4 ou annexe F-Gas III selon le fluide, cf. sourcePrp ;
+  // avis réglementaire du 16/07/2026, miroir de la migration 022).
   // nbMachines : calculé par le store au chargement.
   // classeSecurite : classification NF EN 378 / ASHRAE 34
   // (A1 = non inflammable, A2L/A2/A3 = inflammable) — sert au
@@ -492,14 +494,14 @@ export const DEMO = {
       contientHfc: true, contientHfo: false, categorieCadre7: 'HFC', sourcePrp: 'AR4' },
     { code: 'R-404A', famille: 'HFC', gwpAr4: 3922, impact: 'TRES_ELEVE', classeSecurite: 'A1', nbMachines: 0,
       contientHfc: true, contientHfo: false, categorieCadre7: 'HFC', sourcePrp: 'AR4' },
-    { code: 'R-1234yf', famille: 'HFO', gwpAr4: 4, impact: 'FAIBLE', classeSecurite: 'A2L', nbMachines: 0,
-      contientHfc: false, contientHfo: true, categorieCadre7: 'HFO', sourcePrp: 'annexe F-Gas' },
+    { code: 'R-1234yf', famille: 'HFO', gwpAr4: 0.501, impact: 'FAIBLE', classeSecurite: 'A2L', nbMachines: 0,
+      contientHfc: false, contientHfo: true, categorieCadre7: 'HFO', sourcePrp: 'annexe règl. UE 2024/573 (F-Gas III)' },
     { code: 'R-455A', famille: 'HFC/HFO', gwpAr4: 148, impact: 'FAIBLE', classeSecurite: 'A2L', nbMachines: 0,
-      contientHfc: true, contientHfo: true, categorieCadre7: 'HFC', sourcePrp: 'moyenne pondérée massique (AR4)' },
+      contientHfc: true, contientHfo: true, categorieCadre7: 'HFC', sourcePrp: 'AR4 — 148 conservatoire (réserve DGPR)' },
     { code: 'R-744', famille: 'CO2', gwpAr4: 1, impact: 'FAIBLE', classeSecurite: 'A1', nbMachines: 0,
       contientHfc: false, contientHfo: false, categorieCadre7: 'AUCUNE', sourcePrp: 'définition' },
-    { code: 'R-290', famille: 'HC', gwpAr4: 3, impact: 'FAIBLE', classeSecurite: 'A3', nbMachines: 0,
-      contientHfc: false, contientHfo: false, categorieCadre7: 'AUCUNE', sourcePrp: 'AR4' }
+    { code: 'R-290', famille: 'HC', gwpAr4: 0.02, impact: 'FAIBLE', classeSecurite: 'A3', nbMachines: 0,
+      contientHfc: false, contientHfo: false, categorieCadre7: 'AUCUNE', sourcePrp: 'AR6 GIEC (réf. règl. UE 2024/573)' }
   ],
 
   // --------------------------------------------------------

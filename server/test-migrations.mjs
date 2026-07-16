@@ -1137,8 +1137,9 @@ verifierLeve('le code public est unique (résolution QR sans ambiguïté)',
 }
 
 // ============================================================
-// 6terdecies. Fiche réglementaire explicite par fluide (migration 021) —
-// base PRÉEXISTANTE (v18 → v21, en passant par 19/20) : les 4 colonnes
+// 6terdecies. Fiche réglementaire explicite par fluide (migration 021)
+// + PRP F-Gas III (migration 022) — base PRÉEXISTANTE (v18 → v22, en
+// passant par 19/20) : les 4 colonnes
 // sont ajoutées, le remplissage PAR CODE couvre les 9 fluides du
 // référentiel (R-455A = mélange HFC/HFO traité HFC, R-744/R-290 hors
 // périmètre), et un fluide LOCAL (code inconnu du remplissage) garde
@@ -1157,6 +1158,9 @@ verifierLeve('le code public est unique (résolution QR sans ambiguïté)',
   // remplissage) : doit garder les 4 colonnes à NULL après migration.
   ancienneFiche.exec(`INSERT INTO fluides (code, famille, gwp_ar4, classe_securite)
     VALUES ('R-TEST', 'HFC', 100, 'A1');`);
+  // Un PRP AJUSTÉ localement AVANT la migration 022 : la correction
+  // conditionnelle (R-290 : 3 → 0,02) ne doit JAMAIS l'écraser.
+  ancienneFiche.exec("UPDATE fluides SET gwp_ar4 = 7 WHERE code = 'R-290';");
 
   verifier('avant migration 021 : la base est bloquée en version 18',
     migrations.lireVersion(ancienneFiche) === 18);
@@ -1164,11 +1168,11 @@ verifierLeve('le code public est unique (résolution QR sans ambiguïté)',
     !ancienneFiche.prepare('PRAGMA table_info(fluides)').all()
       .some((c) => c.name === 'categorie_cadre7'));
 
-  const jusqua21 = { 19: migrations.MIGRATIONS[19], 20: migrations.MIGRATIONS[20],
-    21: migrations.MIGRATIONS[21] };
-  const vFiche = migrations.migrer(ancienneFiche, jusqua21);
-  verifier('la migration 021 porte la base à la version 21',
-    vFiche === 21 && migrations.lireVersion(ancienneFiche) === 21);
+  const jusqua22 = { 19: migrations.MIGRATIONS[19], 20: migrations.MIGRATIONS[20],
+    21: migrations.MIGRATIONS[21], 22: migrations.MIGRATIONS[22] };
+  const vFiche = migrations.migrer(ancienneFiche, jusqua22);
+  verifier('les migrations 021-022 portent la base à la version 22',
+    vFiche === 22 && migrations.lireVersion(ancienneFiche) === 22);
 
   verifier('les 4 colonnes de la fiche réglementaire existent après migration',
     ['contient_hfc', 'contient_hfo', 'categorie_cadre7', 'source_prp'].every((c) =>
@@ -1189,6 +1193,26 @@ verifierLeve('le code public est unique (résolution QR sans ambiguïté)',
     (() => { const l = ligne('R-TEST');
       return l.contient_hfc === null && l.contient_hfo === null
         && l.categorie_cadre7 === null && l.source_prp === null; })());
+
+  // Migration 022 — PRP F-Gas III (avis réglementaire du 16/07/2026).
+  const prp = (code) => ancienneFiche.prepare(
+    'SELECT gwp_ar4, source_prp, commentaire FROM fluides WHERE code = ?').get(code);
+  verifier('022 : R-1234yf passe de 4 à 0,501 (annexe F-Gas III), source alignée',
+    prp('R-1234yf').gwp_ar4 === 0.501
+    && prp('R-1234yf').source_prp === 'annexe règl. UE 2024/573 (F-Gas III)');
+  verifier('022 : le commentaire seed du R-1234yf (« PRP = 4 ... ») est corrigé',
+    prp('R-1234yf').commentaire
+      === 'PRP = 0,501 (annexe F-Gas III) — légèrement inflammable');
+  verifier('022 : R-455A garde 148 (conservatoire, réserve DGPR), source annotée',
+    prp('R-455A').gwp_ar4 === 148
+    && prp('R-455A').source_prp === 'AR4 — 148 conservatoire (réserve DGPR)');
+  verifier('022 : un PRP ajusté localement (R-290 à 7) n’est JAMAIS écrasé',
+    prp('R-290').gwp_ar4 === 7);
+  verifier('022 : la SOURCE du PRP ajusté n’est pas réétiquetée F-Gas III '
+    + '(elle garde le libellé figé de la 021 — cohérence gwp/source)',
+    prp('R-290').source_prp === 'AR4');
+  verifier('022 : le fluide local R-TEST garde son PRP (100), hors du remplissage',
+    prp('R-TEST').gwp_ar4 === 100);
 
   ancienneFiche.close();
 }

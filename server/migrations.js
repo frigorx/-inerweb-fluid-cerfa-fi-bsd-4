@@ -119,6 +119,10 @@
  *       NULL, ce qui déclenche justement le repli. Table fluides HORS WORM et
  *       hors chaîne de hash (comme la migration 19) : ALTER + remplissage
  *       sans le moindre risque sur le registre scellé.
+ *  22 — PRP F-Gas III (avis réglementaire du 16/07/2026, arbitrage Franck) :
+ *       R-1234yf 4 → 0,501 et R-290 3 → 0,02, conditionnels (jamais
+ *       d'écrasement d'une valeur ajustée localement) ; sources PRP
+ *       alignées ; R-455A garde 148 (conservatoire, réserve DGPR).
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -144,36 +148,80 @@ function tirerCodePublicMigration() {
 }
 
 /**
- * Fiche réglementaire des 9 fluides du référentiel — valeurs de la table
- * VALIDÉE docs/TABLE-REGLEMENTAIRE-FLUIDES.md (rien d'inventé), au format
- * front (camelCase, booléens). Consommée par la migration 21 ET par
- * l'import JSON (api.js) : un export antérieur porte des fluides SANS
- * fiche — l'import la recomplète depuis cette même source ; une fiche
- * explicitement importée n'est jamais écrasée. Miroir front : les MÊMES
- * valeurs vivent dans v8/js/data/demo-donnees.js (référentiel de démo,
- * motif des littéraux dupliqués CommonJS/ESM du dépôt), parité prouvée
- * par test-contrat (fiche identique demo/local, y compris après import).
+ * Fiche réglementaire COURANTE des 9 fluides du référentiel — valeurs de
+ * la table validée docs/TABLE-REGLEMENTAIRE-FLUIDES.md (§1 bis, avis du
+ * 16/07/2026 ; rien d'inventé), au format front (camelCase, booléens).
+ * `prp` = PRP réglementaire courant : sert à l'import JSON pour ne
+ * recopier `sourcePrp` QUE si le PRP importé est bien la valeur
+ * réglementaire (sinon source inconnue = null, on reste honnête).
+ * ⚠️ Consommée par l'IMPORT (api.js) SEULEMENT — jamais par une
+ * migration : une migration est IMMUABLE, elle fige ses propres
+ * littéraux (leçon de la relecture du 16/07). Miroir front : les MÊMES
+ * valeurs vivent dans v8/js/data/demo-donnees.js, parité prouvée par
+ * test-contrat (fiche identique demo/local, y compris après import).
  */
 const FICHE_REGLEMENTAIRE_FLUIDES = {
-  'R-32': { contientHfc: true, contientHfo: false,
+  'R-32': { contientHfc: true, contientHfo: false, prp: 675,
     categorieCadre7: 'HFC', sourcePrp: 'AR4 / annexe F-Gas' },
-  'R-410A': { contientHfc: true, contientHfo: false,
+  'R-410A': { contientHfc: true, contientHfo: false, prp: 2088,
     categorieCadre7: 'HFC', sourcePrp: 'AR4' },
-  'R-134a': { contientHfc: true, contientHfo: false,
+  'R-134a': { contientHfc: true, contientHfo: false, prp: 1430,
     categorieCadre7: 'HFC', sourcePrp: 'AR4' },
-  'R-407C': { contientHfc: true, contientHfo: false,
+  'R-407C': { contientHfc: true, contientHfo: false, prp: 1774,
     categorieCadre7: 'HFC', sourcePrp: 'AR4' },
-  'R-404A': { contientHfc: true, contientHfo: false,
+  'R-404A': { contientHfc: true, contientHfo: false, prp: 3922,
     categorieCadre7: 'HFC', sourcePrp: 'AR4' },
-  'R-1234yf': { contientHfc: false, contientHfo: true,
-    categorieCadre7: 'HFO', sourcePrp: 'annexe F-Gas' },
-  'R-455A': { contientHfc: true, contientHfo: true,
-    categorieCadre7: 'HFC', sourcePrp: 'moyenne pondérée massique (AR4)' },
-  'R-744': { contientHfc: false, contientHfo: false,
+  'R-1234yf': { contientHfc: false, contientHfo: true, prp: 0.501,
+    categorieCadre7: 'HFO', sourcePrp: 'annexe règl. UE 2024/573 (F-Gas III)' },
+  'R-455A': { contientHfc: true, contientHfo: true, prp: 148,
+    categorieCadre7: 'HFC', sourcePrp: 'AR4 — 148 conservatoire (réserve DGPR)' },
+  'R-744': { contientHfc: false, contientHfo: false, prp: 1,
     categorieCadre7: 'AUCUNE', sourcePrp: 'définition' },
-  'R-290': { contientHfc: false, contientHfo: false,
-    categorieCadre7: 'AUCUNE', sourcePrp: 'AR4' }
+  'R-290': { contientHfc: false, contientHfo: false, prp: 0.02,
+    categorieCadre7: 'AUCUNE', sourcePrp: 'AR6 GIEC (réf. règl. UE 2024/573)' }
 };
+
+/**
+ * Corrections réglementaires conditionnelles des PRP (avis du 16/07/2026)
+ * — le CONTENU de la migration 22, partagé avec l'import JSON : un export
+ * antérieur réintroduirait les anciens PRP par INSERT OR REPLACE alors
+ * que la base est déjà en version 22 (la migration ne rejouera jamais).
+ * N'écrase JAMAIS une valeur réellement ajustée (conditions d'égalité).
+ * ⚠️ FIGÉ avec la migration 22 : toute correction future = nouvelle
+ * migration + nouveau helper, on ne modifie plus celui-ci.
+ * @param {(sql: string) => void} executer — exécute un ordre SQL
+ *   (db.exec en migration, db.run côté api).
+ */
+function corrigerPrpFgas3(executer) {
+  // R-1234yf : 1 (pré-migration 20) ou 4 (ancien référentiel) → 0,501
+  // (valeur 100 ans, annexe II section 1 du règl. UE 2024/573).
+  executer(
+    "UPDATE fluides SET gwp_ar4 = 0.501 WHERE code = 'R-1234yf' AND gwp_ar4 IN (1, 4);");
+  // R-290 (propane) : 3 (AR4) → 0,02 (AR6 GIEC — le propane n'est pas un
+  // gaz fluoré, il ne figure pas dans une annexe : valeur référencée par
+  // le règl. UE 2024/573). Hors périmètre : effet d'affichage seulement.
+  executer(
+    "UPDATE fluides SET gwp_ar4 = 0.02 WHERE code = 'R-290' AND gwp_ar4 = 3;");
+  // Sources PRP alignées — seulement si la valeur réglementaire est en
+  // place. R-455A garde 148 : choix CONSERVATOIRE (contrôle déclenché
+  // plus tôt), réserve écrite à lever auprès de la DGPR (148 vs 145,53).
+  executer(
+    `UPDATE fluides SET source_prp = 'annexe règl. UE 2024/573 (F-Gas III)'
+      WHERE code = 'R-1234yf' AND gwp_ar4 = 0.501;`);
+  executer(
+    `UPDATE fluides SET source_prp = 'AR6 GIEC (réf. règl. UE 2024/573)'
+      WHERE code = 'R-290' AND gwp_ar4 = 0.02;`);
+  executer(
+    `UPDATE fluides SET source_prp = 'AR4 — 148 conservatoire (réserve DGPR)'
+      WHERE code = 'R-455A' AND gwp_ar4 = 148;`);
+  // Commentaire du seed devenu faux (« PRP = 4 ... ») : corrigé seulement
+  // s'il est intact (jamais un commentaire personnalisé).
+  executer(
+    `UPDATE fluides SET commentaire = 'PRP = 0,501 (annexe F-Gas III) — légèrement inflammable'
+      WHERE code = 'R-1234yf'
+        AND commentaire = 'PRP = 4 (annexe F-Gas) — légèrement inflammable'
+        AND gwp_ar4 = 0.501;`);
+}
 
 /**
  * Le registre des migrations. Clé = version CIBLE (entier), valeur =
@@ -897,19 +945,48 @@ END;`);
         "ALTER TABLE fluides ADD COLUMN categorie_cadre7 TEXT CHECK (categorie_cadre7 IN ('HFC','HFO','HCFC','AUCUNE'));");
       db.exec('ALTER TABLE fluides ADD COLUMN source_prp TEXT;');
 
-      // Remplissage PAR CODE des 9 fluides du référentiel — valeurs de la
-      // table VALIDÉE docs/TABLE-REGLEMENTAIRE-FLUIDES.md, rien d'inventé
-      // (constante partagée FICHE_REGLEMENTAIRE_FLUIDES, en tête de module).
-      // Un fluide ajouté localement (code hors de cette liste) garde les 4
-      // colonnes à NULL : categorieCadre7 NULL fait retomber le moteur sur
-      // la dérivation de famille (repli explicite, pas un défaut silencieux).
+      // Remplissage PAR CODE des 9 fluides du référentiel — valeurs et
+      // libellés FIGÉS à la livraison de cette migration (16/07/2026
+      // matin) : une migration est IMMUABLE, elle doit produire le même
+      // état quelle que soit la version du code qui la rejoue (leçon de
+      // la relecture du 16/07 — la constante partagée, elle, évolue avec
+      // l'import ; c'est la migration 22 qui réétiquette, conditionnelle-
+      // ment). Un fluide ajouté localement (code hors de cette liste)
+      // garde les 4 colonnes à NULL : categorieCadre7 NULL fait retomber
+      // le moteur sur la dérivation de famille (repli explicite).
+      const FICHE_LIVRAISON_21 = [
+        ['R-32', 1, 0, 'HFC', 'AR4 / annexe F-Gas'],
+        ['R-410A', 1, 0, 'HFC', 'AR4'],
+        ['R-134a', 1, 0, 'HFC', 'AR4'],
+        ['R-407C', 1, 0, 'HFC', 'AR4'],
+        ['R-404A', 1, 0, 'HFC', 'AR4'],
+        ['R-1234yf', 0, 1, 'HFO', 'annexe F-Gas'],
+        ['R-455A', 1, 1, 'HFC', 'moyenne pondérée massique (AR4)'],
+        ['R-744', 0, 0, 'AUCUNE', 'définition'],
+        ['R-290', 0, 0, 'AUCUNE', 'AR4']
+      ];
       const maj = db.prepare(`UPDATE fluides
         SET contient_hfc = ?, contient_hfo = ?, categorie_cadre7 = ?, source_prp = ?
         WHERE code = ?`);
-      for (const [code, fiche] of Object.entries(FICHE_REGLEMENTAIRE_FLUIDES)) {
-        maj.run(fiche.contientHfc ? 1 : 0, fiche.contientHfo ? 1 : 0,
-          fiche.categorieCadre7, fiche.sourcePrp, code);
+      for (const [code, hfc, hfo, categorie, source] of FICHE_LIVRAISON_21) {
+        maj.run(hfc, hfo, categorie, source, code);
       }
+    }
+  },
+
+  22: {
+    nom: 'prp_fgas3',
+    appliquer(db) {
+      // PRP réglementaires F-Gas III (avis réglementaire du 16/07/2026,
+      // arbitrage Franck : « au mieux du point de vue F-Gas, compromis le
+      // plus protecteur »). Sans effet sur le déclenchement des contrôles
+      // (HFO purs et HC seuillés en kg ou hors périmètre) : seul le
+      // tonnage équivalent CO₂ affiché/CERFA change. Conditionnel comme la
+      // migration 20 : on n'écrase JAMAIS une valeur ajustée localement.
+      // Le PRP FIGÉ des mouvements validés reste NON rétroactif (acté).
+      // Contenu = corrigerPrpFgas3 (en tête de module), PARTAGÉ avec
+      // l'import JSON (api.js) et FIGÉ avec cette migration.
+      corrigerPrpFgas3((sql) => db.exec(sql));
     }
   }
 };
@@ -968,6 +1045,7 @@ module.exports = {
   VERSION_BASE,
   MIGRATIONS,
   FICHE_REGLEMENTAIRE_FLUIDES,
+  corrigerPrpFgas3,
   versionCible,
   lireVersion,
   migrer

@@ -185,6 +185,12 @@ verifier('gwpAr4 est un nombre (jamais une chaîne)',
     (() => { const f = fluides.find((x) => x.code === 'R-1234yf');
       return f?.categorieCadre7 === 'HFO' && f?.contientHfo === true
         && f?.contientHfc === false; })());
+  // PRP réglementaires F-Gas III (avis du 16/07/2026, migration 022 côté
+  // serveur, demo-donnees côté front) : parité des valeurs des deux côtés.
+  verifier('PRP F-Gas III : R-1234yf 0,501 · R-290 0,02 · R-455A 148 (conservatoire)',
+    fluides.find((f) => f.code === 'R-1234yf')?.gwpAr4 === 0.501
+    && fluides.find((f) => f.code === 'R-290')?.gwpAr4 === 0.02
+    && fluides.find((f) => f.code === 'R-455A')?.gwpAr4 === 148);
 }
 
 // Le scénario exige un HFC à fort PRP (périmètre F-Gas atteint dès
@@ -1788,6 +1794,11 @@ verifier('l’état importé est fidèle (nos mouvements sont là)',
     delete f.categorieCadre7;
     delete f.sourcePrp;
   }
+  // Un export d'AVANT la migration 22 porte aussi les anciens PRP :
+  // l'import doit rejouer la correction conditionnelle (jamais sur une
+  // valeur réellement ajustée) — sinon INSERT OR REPLACE réintroduirait
+  // 4/3 pour toujours (la migration ne rejoue pas sur une base à jour).
+  ancien.donnees.fluides.find((f) => f.code === 'R-1234yf').gwpAr4 = 4;
   ancien.donnees.fluides.push({
     code: 'R-ETRANGER', famille: 'HFC', gwpAr4: 100, classeSecurite: 'A1'
   });
@@ -1802,6 +1813,10 @@ verifier('l’état importé est fidèle (nos mouvements sont là)',
     && typeof r455aImporte?.sourcePrp === 'string');
   verifier('import ancien : R-744 réacté hors périmètre (AUCUNE)',
     apres.find((f) => f.code === 'R-744')?.categorieCadre7 === 'AUCUNE');
+  verifier('import ancien : le PRP 4 du R-1234yf est recorrigé en 0,501 (F-Gas III)',
+    (() => { const f = apres.find((x) => x.code === 'R-1234yf');
+      return f?.gwpAr4 === 0.501
+        && f?.sourcePrp === 'annexe règl. UE 2024/573 (F-Gas III)'; })());
   const etranger = apres.find((f) => f.code === 'R-ETRANGER');
   verifier('import ancien : un fluide inconnu reste SANS fiche (4 clés à null)',
     etranger !== undefined && etranger.contientHfc === null

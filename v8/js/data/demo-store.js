@@ -166,13 +166,43 @@ function calculerStatutOutil(outil, jour) {
   return 'CONFORME';
 }
 
+/**
+ * Corrections réglementaires conditionnelles des PRP — MIROIR EXACT du
+ * contenu de la migration 22 côté serveur (corrigerPrpFgas3 de
+ * migrations.js, avis du 16/07/2026, FIGÉ avec elle) : appliquées à une
+ * sauvegarde localStorage ANTÉRIEURE au lot et à l'import d'un export
+ * ancien. N'écrase JAMAIS une valeur réellement ajustée (conditions
+ * d'égalité). Modifie les objets reçus.
+ */
+function corrigerPrpFgas3(fluides) {
+  for (const f of fluides ?? []) {
+    if (f.code === 'R-1234yf' && (f.gwpAr4 === 1 || f.gwpAr4 === 4)) {
+      f.gwpAr4 = 0.501;
+    }
+    if (f.code === 'R-290' && f.gwpAr4 === 3) f.gwpAr4 = 0.02;
+    if (f.code === 'R-1234yf' && f.gwpAr4 === 0.501) {
+      f.sourcePrp = 'annexe règl. UE 2024/573 (F-Gas III)';
+    }
+    if (f.code === 'R-290' && f.gwpAr4 === 0.02) {
+      f.sourcePrp = 'AR6 GIEC (réf. règl. UE 2024/573)';
+    }
+    if (f.code === 'R-455A' && f.gwpAr4 === 148) {
+      f.sourcePrp = 'AR4 — 148 conservatoire (réserve DGPR)';
+    }
+  }
+}
+
 /** Lit la sauvegarde locale si elle existe et semble valide, sinon null. */
 function chargerDepuisStockage() {
   try {
     const brut = localStorage.getItem(CLE_STOCKAGE);
     if (!brut) return null;
     const donnees = JSON.parse(brut);
-    return estValide(donnees) ? donnees : null;
+    if (!estValide(donnees)) return null;
+    // Monde persisté AVANT le lot du 16/07 : anciens PRP corrigés
+    // (conditionnel — un PRP ajusté par l'utilisateur reste intact).
+    corrigerPrpFgas3(donnees.fluides);
+    return donnees;
   } catch {
     // localStorage absent (Node) ou JSON corrompu → repartir du monde de démo
     return null;
@@ -549,7 +579,11 @@ export function creerDemoStore() {
     fluide.contientHfc = ref?.contientHfc ?? null;
     fluide.contientHfo = ref?.contientHfo ?? null;
     fluide.categorieCadre7 = ref?.categorieCadre7 ?? null;
-    fluide.sourcePrp = ref?.sourcePrp ?? null;
+    // La source du PRP n'est recopiée que si le PRP du fluide EST la
+    // valeur réglementaire courante — pour une valeur locale, la source
+    // reste honnêtement inconnue (null). Miroir de l'import serveur.
+    fluide.sourcePrp = ref && Number(fluide.gwpAr4) === ref.gwpAr4
+      ? ref.sourcePrp : null;
     return fluide;
   }
 
@@ -3943,6 +3977,11 @@ export function creerDemoStore() {
       if (!estValide(candidat)) return false;
       candidat = copier(candidat);
 
+      // Corrections réglementaires conditionnelles (miroir de la
+      // migration 22 serveur) : un export ANTÉRIEUR porte les anciens
+      // PRP (1/4/3) — corrigés AVANT la complétion de fiche, jamais sur
+      // une valeur réellement ajustée.
+      corrigerPrpFgas3(candidat.fluides);
       // Fiche réglementaire des fluides (miroir de l'import serveur,
       // migration 21) : un export ANTÉRIEUR porte des fluides sans fiche —
       // la recompléter depuis le référentiel (table validée), jamais

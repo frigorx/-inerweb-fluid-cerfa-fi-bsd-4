@@ -336,9 +336,20 @@ function ligneDetail(libelle, valeur) {
 
 function blocDonneesTechniques(machine, fluide, client) {
   const frequence = calculerFrequenceControle(machine, fluide);
-  const libelleFrequence = frequence.frequenceMois
-    ? 'Tous les ' + frequence.frequenceMois + ' mois'
-    : null;
+  // Q5 de l'avis réglementaire du 16/07/2026 : ne jamais laisser croire
+  // « aucune obligation » — hors du périmètre F-Gas, d'autres textes
+  // peuvent s'appliquer (EN 378, ICPE, notice constructeur). La ligne
+  // est donc toujours affichée, avec un libellé borné au cadre 7.
+  // Fluide inconnu du référentiel : ne rien affirmer (ligne masquée,
+  // comportement historique) — « hors périmètre » serait un faux constat.
+  const libelleFrequence = !fluide
+    ? null
+    : frequence.frequenceMois
+      ? 'Tous les ' + frequence.frequenceMois + ' mois'
+      : frequence.categorie
+        ? 'Aucun contrôle périodique F-Gas à cette charge (sous le seuil)'
+        : 'Hors contrôle d’étanchéité F-Gas — d’autres obligations peuvent '
+          + 's’appliquer (EN 378, ICPE, constructeur)';
 
   const lignes = [
     ligneDetail('Type', machine.type),

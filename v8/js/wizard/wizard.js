@@ -377,6 +377,17 @@ export async function ouvrirWizard(ctx, options = {}) {
       store.getOutillage()
     ]);
 
+  // Référentiel des fluides : nourrit l'avertissement PRP >= 2500 de
+  // l'étape 3 (Q10 de l'avis réglementaire du 16/07/2026). Tolérant à
+  // l'échec, même motif que les habilitations : sans référentiel, le
+  // bandeau ne s'affiche simplement pas — le wizard reste utilisable.
+  let fluides = [];
+  try {
+    fluides = (await store.getFluides()) ?? [];
+  } catch {
+    // Avertissement PRP indisponible : jamais bloquant.
+  }
+
   // Habilitations + mentions (chantier B2) : nourrissent le conseil
   // d'intervenant de l'étape 1. Tolérantes à l'échec, même dégradé que
   // getUtilisateurCourant : un store partiel n'empêche pas le wizard.
@@ -1316,8 +1327,35 @@ export async function ouvrirWizard(ctx, options = {}) {
         ? 'Choisissez la bouteille de récupération (celle qui se remplit).'
         : 'Choisissez la bouteille de destination (celle qui se remplit).';
 
+    // Q10 de l'avis réglementaire du 16/07/2026 (arbitrage Franck : jamais
+    // bloquant, compromis le plus protecteur) : la MAINTENANCE au fluide
+    // VIERGE de PRP >= 2500 (R-404A...) est interdite — réfrigération
+    // depuis le 01/01/2025, climatisation/PAC depuis le 01/01/2026
+    // (règl. UE 2024/573) ; le recyclé/régénéré reste autorisé sous
+    // conditions. On AVERTIT au moment de choisir la bouteille, on ne
+    // bloque jamais : une opération réellement réalisée doit toujours
+    // pouvoir être tracée (le motif se consigne dans la cause). La mise
+    // en service d'un équipement NEUF n'est pas de la maintenance : le
+    // bandeau ne vise que CHARGE_APPOINT.
+    let bandeauPrp = '';
+    if (typeMouvement() === 'CHARGE_APPOINT' && machine) {
+      const fluideRef = fluides.find(function (f) { return f.code === machine.fluide; });
+      if (fluideRef && Number(fluideRef.gwpAr4) >= 2500) {
+        // bandeauAvertissement échappe déjà tout le message : pas de esc()
+        // ici, sinon double échappement (constat de revue du 16/07).
+        bandeauPrp = bandeauAvertissement('Fluide à PRP ≥ 2 500 ('
+          + machine.fluide + ') : la maintenance au fluide VIERGE est '
+          + 'interdite (réfrigération depuis le 01/01/2025, climatisation et '
+          + 'pompes à chaleur depuis le 01/01/2026 — règl. UE 2024/573). Le '
+          + 'fluide recyclé ou régénéré reste autorisé sous conditions. Si '
+          + 'vous devez charger du fluide vierge, consignez le motif dans la '
+          + 'cause du mouvement.');
+      }
+    }
+
     corpsEl.innerHTML =
       messageVide
+      + bandeauPrp
       + '<p class="wizard-sens" style="margin:0 0 12px">' + esc(consigne) + '</p>'
       + '<div class="wizard-grille-choix">'
       + carteAjout('data-nouvelle-bouteille', 'Nouvelle bouteille')
