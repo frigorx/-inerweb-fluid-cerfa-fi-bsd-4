@@ -19,17 +19,35 @@
 
 ## 2. DÉCISIONS GATÉES — à trancher par Franck à la relecture
 
-1. **Qui est le « détenteur » qui signe au lycée ?** L'équipement appartient à
-   l'établissement (ou à un client d'atelier). Proposition : le signataire détenteur est une
-   PERSONNE PHYSIQUE désignée à la signature (nom + prénom + qualité, ex. « chef de travaux »,
-   « détenteur de l'équipement »), jamais la raison sociale seule. Au lycée, en pratique :
-   toi ou le responsable d'atelier.
+1. ✅ **ACTÉ (Franck, 16/07) — le détenteur et sa signature.** Deux cas :
+   - **Équipement du lycée** (le cas courant) : le détenteur = l'ÉTABLISSEMENT (sa raison
+     sociale figure comme détenteur au CERFA), et le PROFESSEUR signe **par délégation** —
+     il est alors à la fois l'intervenant ET le signataire détenteur. Spécificité assumée du
+     lycée : on ne va pas chercher la direction à chaque manipulation. Le parcours DOIT donc
+     autoriser signataire technicien = signataire détenteur (une personne, deux signatures,
+     pré-remplies).
+   - **Intervention pour un tiers** : le détenteur est une personne physique (ou le
+     représentant de l'entreprise cliente) qui signe, par délégation de plein droit le cas
+     échéant.
+   - **Mise en œuvre de la délégation (arbitrage délégué à l'assistant, vérifié sur le
+     formulaire)** : le CERFA 15497*04 n'a PAS de case « délégation » — son bloc signature
+     détenteur = Nom / **Qualité (texte libre)** / Date. La délégation s'exprime donc, comme
+     sur papier, dans la QUALITÉ : `Sign_Detenteur_Nom` = la personne PHYSIQUE (prénom nom,
+     plus jamais la raison sociale seule — défaut de l'audit corrigé),
+     `Sign_Detenteur_Qualite` = « Professeur, par délégation du détenteur (raison sociale) »,
+     `Sign_Detenteur_Date` = la date RÉELLE de signature. Dans le registre : la table
+     `signatures_mouvement` porte une case `par_delegation` (booléen) + `organisation` =
+     la raison sociale du détenteur représenté — cochée à l'écran de signature, pré-cochée
+     pour un équipement du lycée.
 2. **Textes exacts des déclarations signées** (affichés au moment de signer, figés dans la
    signature, DANS l'empreinte). Propositions à relire :
    - Technicien : « Je certifie avoir réalisé l'intervention décrite dans cette fiche et
      l'exactitude des informations qu'elle contient. »
    - Détenteur : « Je reconnais la réalisation de l'intervention décrite et l'exactitude des
-     informations de cette fiche. »
+     informations de cette fiche. » — quand `par_delegation` est cochée, la mention
+     « , par délégation du détenteur (raison sociale) » s'ajoute à la déclaration figée
+     (arbitrage délégué : la délégation vit dans la qualité ET la déclaration, pas dans une
+     retouche du formulaire officiel).
 3. **Le PDF final est généré CÔTÉ CLIENT** (navigateur) et transmis au serveur à la
    validation, qui le contrôle (nombres magiques `%PDF`), le fige et le scelle. Le registre
    STRUCTURÉ (la base) reste la vérité des données ; le PDF conservé est la preuve
@@ -48,7 +66,9 @@
 
 - **Nouvelle table `signatures_mouvement`** (WORM par trigger, comme `mouvements`) :
   `id` · `mouvement_id` → mouvements · `role` (TECHNICIEN | DETENTEUR) · `nom` · `prenom` ·
-  `qualite` · `organisation` · `date_heure` (ISO réel, PAS la date d'intervention) ·
+  `qualite` · `organisation` (raison sociale représentée) · `par_delegation` (booléen —
+  décision Franck 16/07 : au lycée le professeur signe détenteur par délégation de
+  l'établissement) · `date_heure` (ISO réel, PAS la date d'intervention) ·
   `declaration` (texte exact affiché) · `image_png` (contenu, via le canal pièces jointes —
   voir §5) · `session_compte_id` + `session_personnel_id` (identité de session au moment de
   signer, témoin) · `sha256_document` (empreinte de la fiche telle que présentée : hash de
@@ -92,6 +112,9 @@ contrôles + scellement empreinte v2 + conservation du PDF → VALIDE (verrouill
   deux signatures VALIDES (condition 11 du lot B étendue : le moteur `blocage-officiel` gagne
   deux faits `signatureTechnicienValide` / `signatureDetenteurValide` — à ajouter dans les
   DEUX miroirs du moteur, ESM et CommonJS, parité discriminée par `test-blocage-officiel`).
+  **La même personne physique PEUT porter les deux signatures** (décision Franck 16/07 :
+  au lycée, le professeur intervient ET signe détenteur par délégation — deux gestes
+  enchaînés, écran pré-rempli, `par_delegation` pré-cochée pour un équipement du lycée).
 - **Garde de rôle** : `signerMouvement` est une MUTATION → entrée OBLIGATOIRE dans
   `ROLES_MUTATION` (une méthode absente y est traitée comme une lecture, donc OUVERTE — piège
   vérifié dans `garderRole`). Proposition : OPERATEUR (l'élève-technicien signe son travail) ;
