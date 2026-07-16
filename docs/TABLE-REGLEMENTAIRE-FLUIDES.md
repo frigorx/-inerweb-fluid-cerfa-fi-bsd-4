@@ -1,15 +1,20 @@
-# Table réglementaire des fluides — PROPOSITION à valider
+# Table réglementaire des fluides
 
-> **Statut : PROPOSITION. Rien de ce document n'est codé en dur.**
-> C'est le premier pas de la **condition 1** du plan (`docs/PLAN-AUDIT-PROOF-2026.md`) : le
-> **moteur réglementaire unique**. La règle absolue du projet s'applique : **aucune valeur ou règle
-> réglementaire n'entre dans le code sans la validation de Franck + du référent F-Gas.**
-> Ce fichier est fait pour être **annoté** (colonne « Décision référent ») puis servir de source
-> unique une fois validé.
+> **Statut au 16/07/2026 : AVIS TECHNIQUE REÇU** (« Avis de validation réglementaire », document de
+> travail du 16/07/2026, reçu de Franck — ⚠️ **section « Validation formelle » NON signée** : avis
+> technique documenté, pas encore la validation formelle du référent F-Gas). L'avis **CONFIRME les
+> règles A/B/C**, les seuils HFC/HFO/HCFC (dont HCFC **2 kg**, valeur du code), la date d'effet
+> du 11/03/2024 pour les HFO purs et le CERFA 15497*04 comme version officielle actuelle.
+> **Réserve UNIQUE bloquant la clôture** : le PRP par défaut du R-455A (148 historique vs ≈ 145,53
+> recalculé F-Gas III) — question à poser par écrit à la DGPR ; en attendant, **148 = choix
+> conservatoire** (déclenche le contrôle plus tôt), c'est la valeur codée. Le détail des réponses
+> aux 10 questions est au §1 bis ; les suites **gatées sur l'arbitrage de Franck** y sont marquées ⏳.
+> La règle absolue du projet reste : **aucune valeur ou règle réglementaire nouvelle n'entre dans le
+> code sans la validation de Franck.**
 >
-> Établi le 15/07/2026 par extraction croisée des 3 implémentations actuelles du code + recherche
-> sur sources officielles (eur-lex, Légifrance, service-public, FAQ DGPR), avec vérification
-> adversariale des 3 points-clés.
+> Établi le 15/07/2026 par extraction croisée des 3 implémentations du code + recherche sur sources
+> officielles (eur-lex, Légifrance, service-public, FAQ DGPR), avec vérification adversariale des
+> 3 points-clés. Annoté le 16/07/2026 d'après l'avis technique.
 
 ---
 
@@ -62,7 +67,52 @@ Pas sur la quantité momentanément présente (qui varie avec les fuites, appoin
 
 ---
 
-## 2. Table réglementaire par fluide (proposée)
+## 1 bis. Avis technique du 16/07/2026 — réponses aux 10 questions du §4
+
+Source : « Avis de validation réglementaire — Table des fluides et moteur de contrôle
+d'étanchéité » (16/07/2026, sources officielles contrôlées : règl. UE 2024/573 art. 2/3/5/6/12/13 +
+annexes, note DGPR déc. 2024, notice CERFA 15497*04, arrêté du 29/02/2016 art. 4, Code env.
+R.543-75 à 123). ⚠️ Avis technique documenté, **validation formelle non signée** à ce stade.
+
+| Q | Décision de l'avis | Effet sur le code |
+|---|---|---|
+| 1. Mélange HFC/HFO | **CONFIRMÉ** — branche unique HFC / t éq. CO₂, jamais le seuil HFO en parallèle | conforme (déjà codé) |
+| 2. HFO purs + date | **CONFIRMÉ** — 1/10/100 kg depuis le **11/03/2024**, moteur versionné par date | conforme (déjà codé, `dateIntervention`) |
+| 3. Charge de référence | **CONFIRMÉ** — charge nominale totale déclarée, jamais la quantité présente | conforme (déjà codé) |
+| 4. HCFC seuil bas | **CONFIRMÉ : 2 kg** (arrêté du 29/02/2016, paliers 2/30/300) — ne PAS revenir à 3 kg | conforme (déjà codé) |
+| 5. R-744 / R-290 / R-717 | **CONFIRMÉ AVEC LIMITATION** — hors cadre 7, mais ne pas afficher « aucune obligation réglementaire » en général (EN 378, ICPE, constructeur…) | ⏳ wording UI à revoir (gaté Franck) |
+| 6. PRP R-1234yf | **CORRECTION : 0,501** (F-Gas III à 100 ans) — la valeur 4 = ancien référentiel ; sans effet sur le déclenchement (kg) | ⏳ codé 4 (migration 20) — arbitrage Franck requis |
+| 7. Multi-circuits | **À DÉVELOPPER** — circuits identifiés + charge nominale par circuit + charge totale CALCULÉE | ⏳ chantier modèle de données (gaté) |
+| 8. Hermétiquement scellés | **À GÉRER** — champs « hermétique / marqué / résidentiel » ; exemptions < 10 t éq. (annexe I), < 2 kg (annexe II-1), < 3 kg (hermétique résidentiel) | ⏳ chantier moteur (gaté) |
+| 9. Version du CERFA | **CONFIRMÉ** — 15497*04 = version officielle actuelle, **valable depuis le 23/07/2024, intègre F-Gas III** ; enregistrer numéro + date de version du modèle | conforme ; ⏳ versionnage du modèle à tracer |
+| 10. R-404A fluide vierge | **BLOCAGE CONTRÔLÉ** — vierge PRP ≥ 2500 interdit en maintenance : réfrigération depuis le 01/01/2025, clim/PAC depuis le 01/01/2026 ; recyclé/régénéré jusqu'en 2030/2032 ; blocage AVEC dérogation tracée (motif, justificatif, identité, journal) | ⏳ chantier moteur (gaté) |
+
+**Réserve unique (bloque la clôture de la table)** : PRP par défaut du **R-455A** — 148 (historique
+AR4, plaques) ou ≈ 145,53 (recalcul F-Gas III : R-32 = 675, R-1234yf = 0,501, R-744 = 1) ? Question
+à adresser **par écrit à la DGPR ou au référent**. En attendant : **148 conservatoire** (contrôle
+déclenché plus tôt, seuil ≈ 33,78 kg) = valeur codée. Le logiciel devra permettre d'enregistrer la
+valeur de la plaque et sa source **sans écraser** la valeur réglementaire versionnée.
+
+**Corrections d'affirmations exigées par l'avis (faites dans ce document le 16/07)** :
+- ~~« le 517/2014 est abrogé depuis le 31/12/2024 »~~ → le règl. UE **2024/573 est directement
+  applicable depuis le 11/03/2024** (certaines obligations particulières ont des dates d'effet
+  ultérieures) — c'était déjà la date codée dans le moteur.
+- ~~« le formulaire 15497*04 est antérieur à F-Gas III »~~ → le CERFA 15497*04 est **valable depuis
+  le 23/07/2024 et intègre F-Gas III**.
+- La mention « double seuil annexe I + annexe II » (ex-Q1) est supprimée : **branche réglementaire
+  unique** HFC / t éq. CO₂ pour un mélange contenant du HFC.
+
+**Règles cibles listées par l'avis (§7, REG-LEAK-001 → 010)** : 001 régime par date (fait), 002
+mélange→HFC (fait), 003 HFO purs en kg (fait), 004 charge nominale (fait), 005 charge totale
+multi-circuits calculée (⏳), 006 exemptions hermétiques si marquage confirmé (⏳), 007 toute
+modification de charge nominale = version datée justifiée (⏳), 008 PRP + source + version + résultat
+archivés avec la fiche (partiellement fait : `source_prp` + `prpFige`), 009 restrictions
+vierge/recyclé par famille d'équipement et date (⏳), 010 dérogation ne supprime jamais l'alerte,
+trace immuable (⏳).
+
+---
+
+## 2. Table réglementaire par fluide (codée)
 
 Le principe du **moteur unique** : chaque fluide devient une fiche explicite (plus de
 `famille.includes("HFO")` dont l'ordre change le résultat d'un fichier à l'autre).
@@ -126,14 +176,15 @@ sa fréquence de contrôle **s'alléger** — l'inverse du bon sens et du droit.
 
 ---
 
-## 4. Questions ouvertes — à trancher par Franck + référent F-Gas (GATE)
+## 4. Questions du questionnaire (réponses reçues le 16/07 — voir §1 bis)
 
-Aucune de ces réponses n'est codée avant validation.
+⚠️ **Les décisions font foi au §1 bis** (avis technique du 16/07/2026). Les questions sont gardées
+ci-dessous pour la trace ; les suites encore **gatées sur l'arbitrage de Franck** sont marquées ⏳
+au §1 bis. Rien de nouveau n'est codé sans sa validation.
 
-1. **Mélange HFC/HFO = catégorie HFC** (Règle A) : **on confirme** qu'un mélange contenant du HFC se
-   traite en tCO₂eq (seuils 5/50/500), conformément à la notice CERFA ? (Le règlement UE 2024/573
-   art. 5 §1 prévoit aussi un double-seuil annexe I *et* annexe II ; la **notice nationale simplifie**
-   en « catégorie HFC ». On suit la notice — à confirmer.)
+1. **Mélange HFC/HFO = catégorie HFC** (Règle A) : **CONFIRMÉ** — un mélange contenant au moins une
+   substance HFC (annexe I section 1 du 2024/573) relève de la catégorie HFC, contrôle déterminé en
+   tCO₂eq (5/50/500) ; **branche réglementaire unique**, jamais le seuil HFO de 1 kg en parallèle.
 2. **HFO purs = seuils kg depuis le 11/03/2024** (Règle B) : on applique bien les paliers 1/10/100 kg
    au R-1234yf pur (régime F-Gas III) ? Faut-il gérer la **date d'intervention** (avant/après
    11/03/2024) dans le moteur, ou considérer que tout est postérieur ?
@@ -150,10 +201,11 @@ Aucune de ces réponses n'est codée avant validation.
    charge totale distinct ? (Lacune de modèle à acter, pas bloquante.)
 8. **Équipements hermétiquement scellés** (exemption < 10 tCO₂eq / < 3 kg résidentiel, F-Gas III) :
    à gérer ou hors périmètre lycée ?
-9. **Régime applicable / version du CERFA** : à la date du 15/07/2026 c'est le **2024/573 (F-Gas III)**
-   qui s'applique (517/2014 abrogé le 31/12/2024). Le formulaire **15497*04** est antérieur : le
-   référent confirme-t-il qu'il reste le bon support, ou existe-t-il une révision plus récente ?
-   (Enjeu direct sur la mention « mode CONSEIL, ma lecture de l'arrêté ».)
+9. **Régime applicable / version du CERFA** : **CONFIRMÉ** — le règl. UE **2024/573 (F-Gas III) est
+   directement applicable depuis le 11/03/2024** (certaines obligations ont des dates d'effet
+   ultérieures) et le formulaire **15497*04 est la version officielle actuelle, valable depuis le
+   23/07/2024, qui INTÈGRE F-Gas III**. Le logiciel doit enregistrer le numéro et la date de version
+   du modèle utilisé (⏳ à tracer).
 10. **R-404A statut RESTREINT** (PRP > 2500, maintenance au fluide vierge interdite) : reste-t-il
     purement déclaratif, ou faut-il une règle codée qui alerte/bloque l'appoint en fluide vierge ?
 
