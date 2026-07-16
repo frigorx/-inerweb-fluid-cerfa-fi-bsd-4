@@ -2,6 +2,33 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🏷️ LOT D audit-proof — scellement externe simple (condition 5, 16/07 soir)
+Le témoin daté HORS du poste, sans DSI — ferme la limite documentée de la chaîne interne
+(« une réécriture complète cohérente, disque en main, reste indétectable sans scellé conservé
+hors système », db.js). Non gaté, livré dans la foulée du lot B.
+- **Nouveau module `server/scellement-externe.js`** : un TÉMOIN QUOTIDIEN
+  (`scellement/temoin-AAAA-MM-JJ.json`, ~1 Ko, jamais purgé) écrit dans le **dossier de
+  sauvegarde configurable** (pointé vers un espace synchronisé → il quitte le poste tout seul).
+  Contenu : têtes des chaînes registre + journal, compteurs, intervalle des numéros par mode,
+  versions (logiciel, base/migration, empreinte SHA-256 de la table réglementaire). Chaque
+  témoin embarque l'empreinte du témoin PRÉCÉDENT (mini-chaîne entre jours) et sa propre
+  empreinte **auto-vérifiable par la recette embarquée dans le fichier** (un contrôleur la
+  rejoue sans le logiciel). Le témoin CONSTATE (pas de verdict) ; écriture atomique.
+- **Deux crochets** : au démarrage du serveur (à côté de l'archive automatique) et après
+  chaque écriture scellée (même règle que le snapshot : hors transaction, best-effort ABSOLU,
+  échec journalisé `SCELLEMENT_ECHEC` sans jamais bloquer). Toujours actif (pas de réglage :
+  coût nul, le désactiver affaiblirait le registre). `SAUVEGARDE.md` §3 à jour.
+- **Preuves** : `server/test-scellement-externe.mjs` (13 vérifs : contenu exact contre le SQL,
+  empreinte recalculée par la recette, crochet RÉEL via api.appeler, chaîne entre jours,
+  falsification de la veille DÉTECTÉE, dossier saboté → l'écriture scellée aboutit quand même
+  et l'échec est journalisé) + vrai serveur HTTP jetable : témoin au démarrage vérifié, puis
+  rafraîchi par une validation HTTP (0 → 1 écriture scellée, tête posée).
+- 🔥 **Piège d'isolation attrapé et fermé** : une base jetable posée à la RACINE de mkdtemp
+  faisait dériver `backups/` sur `Temp\backups`, PARTAGÉ entre les suites (les crochets
+  snapshot/témoin y écrivaient depuis la condition 6). Les nouvelles suites ET
+  `harnais-contrat.mjs` nichent désormais la base sous `<mkdtemp>/data/` (patron de
+  test-sauvegarde). **TOUT VERT — 77 exécutions.**
+
 ### 🚧 LOT B audit-proof — blocage dur du mode Officiel (condition 2 du plan, 16/07 soir)
 Deuxième lot du CAP « registre réel en septembre ». Le mode Officiel reste FERMÉ (verrou de
 livraison jusqu'aux lots C-D), mais toute sa mécanique de blocage est posée, testée et TIRÉE

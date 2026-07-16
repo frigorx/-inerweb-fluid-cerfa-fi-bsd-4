@@ -17,7 +17,7 @@
 // ============================================================
 
 import { createRequire } from 'node:module';
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -32,9 +32,14 @@ import { creerLocalStore } from '../v8/js/data/local-store.js';
  * @returns {Promise<object>} store initialisé, conforme au contrat.
  */
 export async function creerStoreDeTest() {
-  // Base jetable propre à cette exécution (jamais le data/ réel).
+  // Base jetable propre à cette exécution (jamais le data/ réel), NICHÉE
+  // sous <mkdtemp>/data/ : le dossier backups/ dérivé (frère de data/)
+  // reste dans le bac à sable — depuis la condition 6 puis le lot D, les
+  // crochets d'api.appeler (snapshot, témoin) écrivent à chaque écriture
+  // scellée, et tombaient sinon dans Temp\backups PARTAGÉ entre suites.
   const dossier = mkdtempSync(join(tmpdir(), 'inerweb-fluide-contrat-'));
-  const chemin = join(dossier, 'test.db');
+  mkdirSync(join(dossier, 'data'));
+  const chemin = join(dossier, 'data', 'test.db');
   db.ouvrir(chemin); // crée le socle v1 (schema.sql + migrations)
 
   // Contexte de session du harnais : un référent (VALIDEUR).

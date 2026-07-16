@@ -103,8 +103,16 @@ du journal · nombre de fiches · intervalle de numéros · hash des PDF · vers
 moteur réglementaire · date+heure), **copié automatiquement hors du poste** (espace réseau protégé du
 lycée / stockage institutionnel versionné / coffre / envoi au DSI ou référent). But : un **témoin
 daté** que le poste local ne peut pas réécrire silencieusement.
-- **État actuel** : ❌ chaîne dans la base seulement.
-- **Gate** : Franck + DSI du lycée (emplacement extérieur).
+- **État actuel** : ✅ **VERSION SIMPLE FAITE (lot D, 16/07)** — module
+  `server/scellement-externe.js` : témoin quotidien `scellement/temoin-AAAA-MM-JJ.json` dans le
+  **dossier de sauvegarde configurable** (têtes des chaînes, compteurs, intervalle de numéros,
+  versions + empreinte du moteur réglementaire ; chaîné entre jours, empreinte auto-vérifiable
+  par la recette embarquée), écrit au démarrage et après chaque écriture scellée, jamais
+  bloquant. Il quitte le poste dès que le dossier pointe un espace synchronisé — sans DSI.
+  (Le « hash des PDF » attendra la condition 4 ; la version « espace réseau du lycée » attendra
+  le DSI.)
+- **Gate** : plus de gate logiciel pour la version simple — geste Franck : pointer le dossier de
+  sauvegarde vers un dossier synchronisé. (Version réseau lycée : DSI, plus tard.)
 
 ### 6. Sauvegardes RÉELLEMENT automatiques
 Snapshot après chaque validation officielle · archive quotidienne · archive hebdo sur 2ᵉ support ·

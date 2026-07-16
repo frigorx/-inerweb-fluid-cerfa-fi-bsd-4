@@ -12,7 +12,7 @@
 // ============================================================
 
 import { createRequire } from 'node:module';
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -42,9 +42,12 @@ function attendreRejet(libelle, fn, extrait, codeAttendu = null) {
   }
 }
 
-// Base JETABLE (jamais le data/ réel).
+// Base JETABLE (jamais le data/ réel), NICHÉE sous <mkdtemp>/data/ pour
+// que backups/ (frère de data/) reste dans le bac à sable — les crochets
+// de sauvegarde/scellement écriraient sinon dans Temp\backups partagé.
 const dossier = mkdtempSync(join(tmpdir(), 'inerweb-fluide-validateur-'));
-db.ouvrir(join(dossier, 'test.db'));
+mkdirSync(join(dossier, 'data'));
+db.ouvrir(join(dossier, 'data', 'test.db'));
 
 const sansSession = { role: 'REFERENT' };
 api.appeler('init', {}, sansSession);

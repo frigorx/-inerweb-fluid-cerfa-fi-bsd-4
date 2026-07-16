@@ -3,11 +3,13 @@
 > Copier tout ce qui suit comme PREMIER message d'un nouveau chat. Il est autonome : contexte, état
 > exact, cap, prochaine brique, gates, méthode et consignes.
 >
-> **Session conseillée : selon le lot choisi** (voir « LE CAP RÉACTIVÉ »). **LOTS A ET B CODÉS le
-> 16/07** (A soldé `872d34b` ; B codé + prouvé, ⏳ **gate : Franck relit
-> `docs/CONDITIONS-BLOCANTES-OFFICIEL.md`**) — prochaine brique = **LOT C** (août). LOT C
-> (réglementaire gaté, touche `hash-mouvement.js` → plan écrit + migration + tests AVANT de
-> coder) → **Opus effort MAXIMUM**. PAS d'ultracode hors point critique.
+> **Session conseillée : selon le lot choisi** (voir « LE CAP RÉACTIVÉ »). **LOTS A, B et D
+> FAITS le 16/07** (A soldé `872d34b` ; B codé + prouvé, ⏳ **gate : Franck relit
+> `docs/CONDITIONS-BLOCANTES-OFFICIEL.md`** ; D soldé — témoin quotidien de scellement) —
+> prochaine brique = **LOT C** (août ; son PLAN écrit = `docs/PLAN-LOT-C.md` si présent, sinon
+> à écrire AVANT tout code). LOT C (réglementaire gaté, touche `hash-mouvement.js` → plan écrit
+> + migration + tests AVANT de coder) → **Opus effort MAXIMUM**. PAS d'ultracode hors point
+> critique.
 
 ---
 
@@ -109,10 +111,14 @@ lui, DOIT bloquer — c'est sa définition. **Ordre des lots** :
    signatures, exécutant réel, PRP figé, n° CERFA, hash des PJ, hash du PDF) + **PDF final
    CONSERVÉ** (`FI-…pdf` + `.sha256` + manifeste). ⚠️ Touche `hash-mouvement.js` → plan écrit,
    migration, tests, AVANT de coder. Effort MAXIMUM.
-4. **LOT D — Scellement externe SIMPLE** (non gaté, petit) : manifeste QUOTIDIEN (tête des chaînes,
-   compteurs, intervalle de numéros, versions logiciel + moteur) écrit dans le **dossier de
-   sauvegarde configurable** — pointé vers un espace synchronisé, c'est le témoin daté hors du
-   poste, sans DSI. (La version « espace réseau du lycée » attendra.)
+4. ✅ **LOT D — SOLDÉ le 16/07** (livré dans la foulée du lot B) : témoin QUOTIDIEN
+   `scellement/temoin-AAAA-MM-JJ.json` dans le dossier de sauvegarde configurable — têtes des
+   chaînes, compteurs, intervalle de numéros, versions + empreinte du moteur réglementaire,
+   chaîné entre jours, empreinte auto-vérifiable (recette embarquée), écrit au démarrage + après
+   chaque écriture scellée, jamais bloquant (`SCELLEMENT_ECHEC` journalisé). Preuves :
+   `test-scellement-externe` (13 vérifs dont falsification de la veille détectée) + vrai serveur.
+   Geste Franck : pointer le dossier de sauvegarde vers un espace synchronisé. (La version
+   « espace réseau du lycée » attendra le DSI.)
 5. **LOT E — RGPD avant la rentrée** (des élèves y seront) : export individuel des données d'une
    personne, purge des données de formation selon la durée annoncée, notice d'information affichée
    dans l'application. Relecture DPD quand Franck peut.
@@ -124,8 +130,8 @@ avec secours papier/PDF. Jamais de bascule à sec le 1er septembre.
 **Restent GATÉS** : condition 2 — ⏳ RELECTURE par Franck de
 `docs/CONDITIONS-BLOCANTES-OFFICIEL.md` (13 lignes + 3 questions ouvertes ; le code est prêt,
 chaque retouche est triviale) ; 3 (double signature réelle), 4 (empreinte renforcée + PDF scellé
-conservé — touche `hash-mouvement.js` → plan + migration + tests), 5 (scellement externe
-quotidien — DSI). + les **10 questions du §4** de la table pour le référent.
+conservé — touche `hash-mouvement.js` → plan + migration + tests). La version « réseau lycée »
+du scellement externe (DSI) attendra. + les **10 questions du §4** de la table pour le référent.
 
 ## LES GATES (blocages hors code — à obtenir de Franck, ne pas les contourner)
 

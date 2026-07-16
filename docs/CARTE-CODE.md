@@ -40,6 +40,7 @@ contre chacune.
 | `comptes.js` / `sessions.js` / `routes-comptes.js` | scrypt+NFC+leurre anti-timing, jetons hachés SHA-256, cookie HttpOnly | message d'échec UNIQUE ; session meurt si compte désactivé |
 | `sauvegarde.js` / `restauration.js` / `manifeste.js` / `verification.js` / `chiffrement.js` | coffre-fort : VACUUM INTO, restauration atomique, AES-256-GCM | jamais copier le .db à chaud ; phrase NFC ; rollback = reposer l'original |
 | `sauvegarde-auto.js` | sauvegarde AUTOMATIQUE (condition 6) : archive au démarrage si > 24 h + VÉRIFIÉE, snapshot débouncé après écriture scellée (crochet dans api.appeler) | best-effort ABSOLU (jamais bloquant) ; hors transaction ; réglages `sauvegarde_auto_*` |
+| `scellement-externe.js` | témoin QUOTIDIEN de scellement (lot D) : têtes des chaînes + compteurs + versions dans `backups/scellement/`, chaîné entre jours, empreinte auto-vérifiable | best-effort ABSOLU ; toujours actif ; crochets démarrage + api.appeler ; ⚠️ tests : base jetable NICHÉE sous `<mkdtemp>/data/` sinon backups/ dérive sur Temp partagé |
 | `creer-admin.js` | CLI bootstrap 1er ADMIN | aucun endpoint web équivalent |
 | `harnais-contrat.mjs` | monte un LocalStore sur une base JETABLE + transport in-process qui sérialise VRAIMENT en JSON | c'est lui qui joue `test-contrat.mjs local` ; contexte figé `role:'REFERENT'` |
 | `parametres.js` | table clé/valeur (réglages du poste) | — |

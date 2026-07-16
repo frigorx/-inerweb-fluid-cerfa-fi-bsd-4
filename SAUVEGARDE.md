@@ -71,6 +71,18 @@ La rotation habituelle (jour/semaine/mois) s'applique aux sauvegardes automatiqu
 comme aux manuelles. L'interrupteur et l'intervalle se règlent dans l'écran
 Sauvegarde, section « Réglages de sauvegarde ».
 
+**Le témoin quotidien de scellement** (automatique lui aussi, toujours actif) :
+chaque jour, un petit fichier `scellement/temoin-AAAA-MM-JJ.json` est écrit dans
+le dossier de sauvegarde, et rafraîchi après chaque écriture validée. Il constate
+les **têtes des chaînes** du registre et du journal, les compteurs, l'intervalle
+des numéros et les versions ; chaque témoin embarque l'empreinte de celui de la
+veille et sa propre empreinte (recette de vérification incluse dans le fichier).
+Si le dossier de sauvegarde pointe vers un espace synchronisé, ce témoin **quitte
+le poste chaque jour** : c'est la preuve datée qu'on ne peut pas réécrire
+l'historique du registre en silence. Les témoins ne sont jamais supprimés
+(environ 1 Ko par jour). Un échec s'affiche et se journalise (`SCELLEMENT_ECHEC`)
+sans jamais rien bloquer.
+
 La sauvegarde **manuelle** (section 2) reste utile avant une opération
 inhabituelle (import, restauration, fin d'année) — c'est un simple clic.
 

@@ -689,6 +689,20 @@ preparerCoffreFort();
   }
 }
 
+// Scellement externe SIMPLE (lot D du plan audit-proof) : le témoin
+// quotidien — têtes des chaînes, compteurs, intervalle de numéros — est
+// écrit dans le dossier de sauvegarde (synchronisé = il quitte le poste).
+// Jamais fatal : compte-rendu en console seulement.
+{
+  const scellement = require('./scellement-externe.js');
+  const temoin = scellement.ecrireTemoinQuotidien();
+  if (temoin.fait) {
+    console.log(`  [scellement] Témoin quotidien écrit : ${temoin.fichier}`);
+  } else {
+    console.warn(`  [scellement] Témoin quotidien impossible : ${temoin.erreur}`);
+  }
+}
+
 serveur.listen(PORT, HOTE, () => {
   console.log('');
   console.log('  inerWeb Fluide v8 — serveur local démarré');

@@ -32,6 +32,9 @@ const mapping = require('./mapping.js');
 const { hasherMouvement } = require('./hash-mouvement.js');
 const { FICHE_REGLEMENTAIRE_FLUIDES, corrigerPrpFgas3 } = require('./migrations.js');
 const sauvegardeAuto = require('./sauvegarde-auto.js');
+// Scellement externe simple (lot D) : témoin quotidien dans le dossier de
+// sauvegarde, rafraîchi après chaque écriture scellée (jamais bloquant).
+const scellementExterne = require('./scellement-externe.js');
 // Blocage dur du mode OFFICIEL (lot B, condition 2 du plan audit-proof) :
 // moteur PUR de la liste docs/CONDITIONS-BLOCANTES-OFFICIEL.md (miroir du
 // module ESM du front, parité prouvée par test-blocage-officiel.mjs).
@@ -5504,6 +5507,9 @@ function appeler(methode, params = {}, contexte = {}) {
     if (methode === 'validerMouvement'
       || methode === 'annulerParContreEcriture') {
       sauvegardeAuto.snapshotApresEcritureScellee();
+      // Lot D (scellement externe) : le témoin quotidien suit chaque
+      // écriture scellée — mêmes règles (hors transaction, jamais bloquant).
+      scellementExterne.temoinApresEcritureScellee();
     }
     return resultat;
   } finally {
