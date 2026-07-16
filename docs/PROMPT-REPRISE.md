@@ -79,17 +79,38 @@ On ne promet **pas** « inviolable » : on promet **démontrable**.
 - Rappel socle (audit externe 15/07) : sécurité **SAINE** prouvée en conditions réelles. Rapports
   **INTERNES gitignorés** `docs/AUDIT-COMPLET-2026-07-15.md` et `docs/DOSSIER-TECHNIQUE.md`.
 
-## PROCHAINE ÉTAPE
+## LE CAP RÉACTIVÉ (Franck, 16/07 soir) : REGISTRE RÉEL EN SEPTEMBRE
 
-**Le développement est terminé pour l'usage interne.** La prochaine étape n'est PAS du code :
-Franck **utilise** le logiciel (essai en données fictives, puis fonctionnement en parallèle avec la
-procédure actuelle, puis bascule). Les correctifs viendront de l'usage réel — « on corrigera au
-besoin plus tard ».
+Franck veut s'en servir **à partir de septembre pour TOUTE la traçabilité de son fluide**, en vrai
+registre audit-proof. Les arbitrages restent délégués (« au mieux, compromis protecteur ») — il
+RELIT, il ne rédige pas. Rappel : en CONSEIL on ne bloque jamais (sa règle) ; le mode OFFICIEL,
+lui, DOIT bloquer — c'est sa définition. **Ordre des lots** :
 
-Si un chantier de code rouvre un jour (UNIQUEMENT si diffusion comme registre officiel
-d'entreprise) : conditions 2 (blocage dur Officiel + validateur de session), 3 (double signature),
-4 (empreinte renforcée + PDF scellé — touche `hash-mouvement.js` : plan + migration + tests),
-5 (scellement externe — DSI). Toutes GATÉES. **Opus effort MAXIMUM.**
+1. **LOT A — Lectures sous session** (non gaté, petit) : toute lecture exige une session SAUF
+   `ping`, amorçage initial, connexion — le blocage n°1 de l'audit externe, seul vrai trou
+   restant. + durcissements : signatures binaires réelles des PJ (pas le MIME déclaré), CSP en
+   en-tête HTTP, phrase de passe de sauvegarde ≥ 14 caractères. Effort élevé.
+2. **LOT B — Condition 2 : blocage dur du mode Officiel** : dresser la LISTE des conditions
+   bloquantes depuis le plan + l'avis (Franck relit ~10 lignes), `peutPasserEnOfficiel` appelé aux
+   3 moments (passage en officiel, soumission, avant validation), **validateur lu DE LA SESSION**
+   (jamais du corps). Simulation de validation (liste des blocages avant signature). Effort MAXIMUM.
+3. **LOT C — Conditions 3+4 ensemble** (le gros morceau, août) : double signature réelle
+   (technicien PUIS détenteur, personne physique, date réelle ; toute modification invalide les
+   signatures), signature illisible jamais ignorée en officiel ; empreinte RENFORCÉE (hash des
+   signatures, exécutant réel, PRP figé, n° CERFA, hash des PJ, hash du PDF) + **PDF final
+   CONSERVÉ** (`FI-…pdf` + `.sha256` + manifeste). ⚠️ Touche `hash-mouvement.js` → plan écrit,
+   migration, tests, AVANT de coder. Effort MAXIMUM.
+4. **LOT D — Scellement externe SIMPLE** (non gaté, petit) : manifeste QUOTIDIEN (tête des chaînes,
+   compteurs, intervalle de numéros, versions logiciel + moteur) écrit dans le **dossier de
+   sauvegarde configurable** — pointé vers un espace synchronisé, c'est le témoin daté hors du
+   poste, sans DSI. (La version « espace réseau du lycée » attendra.)
+5. **LOT E — RGPD avant la rentrée** (des élèves y seront) : export individuel des données d'une
+   personne, purge des données de formation selon la durée annoncée, notice d'information affichée
+   dans l'application. Relecture DPD quand Franck peut.
+
+**Calendrier** : A+B fin juillet · C en août · essai complet en données fictives + SIMULATION
+D'AUDIT fin août · **septembre en PARALLÈLE** (2-4 semaines) de la procédure actuelle, puis bascule
+avec secours papier/PDF. Jamais de bascule à sec le 1er septembre.
 
 **Restent GATÉS** : condition 2 (liste des conditions bloquantes), 3 (double signature réelle),
 4 (empreinte renforcée + PDF scellé conservé — touche `hash-mouvement.js` → plan + migration + tests),
