@@ -3,9 +3,9 @@
 > Copier tout ce qui suit comme PREMIER message d'un nouveau chat. Il est autonome : contexte, état
 > exact, cap, prochaine brique, gates, méthode et consignes.
 >
-> **Session conseillée : selon le lot choisi** (voir PROCHAINE BRIQUE). Condition 2/3 (réglementaire,
-> gatée) → **Opus effort MAXIMUM**. Condition 6 (sauvegardes auto, non gatée) → **Opus effort élevé**
-> (incrément cadré, PAS d'ultracode).
+> **Session conseillée : selon le lot choisi** (voir « LE CAP RÉACTIVÉ » — prochaine brique = LOT A).
+> LOT A (lectures sous session, non gaté) → **Opus effort élevé**. LOTS B et C (réglementaire gaté,
+> le C touche `hash-mouvement.js`) → **Opus effort MAXIMUM**. PAS d'ultracode hors point critique.
 
 ---
 
