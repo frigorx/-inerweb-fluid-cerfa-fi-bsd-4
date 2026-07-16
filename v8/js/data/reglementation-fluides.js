@@ -15,15 +15,28 @@
 //      catégorie des HFC »).
 //   B. Les HFO PURS ont des seuils en KILOGRAMMES (1/10/100 kg),
 //      nouveauté du règlement UE 2024/573 (F-Gas III) art. 5, en
-//      vigueur depuis le 11/03/2024.
+//      vigueur depuis le 11/03/2024 — AVANT cette date, les HFO purs
+//      n'étaient pas soumis au contrôle d'étanchéité (voir
+//      DEBUT_CONTROLE_HFO et le paramètre optionnel dateIntervention).
 //   C. La charge de référence est la charge NOMINALE / totale déclarée
 //      de l'équipement (valeur fixe marquée à demeure), PAS la quantité
 //      momentanément présente (FAQ DGPR). Ce module reçoit donc la
 //      charge nominale ; ne jamais lui passer chargeActuelleKg.
 //
+// FICHE EXPLICITE PAR FLUIDE (migration 21) : quand la fiche du
+// référentiel porte une catégorie explicite (champ categorieCadre7 :
+// HFC / HFO / HCFC / AUCUNE, peuplé depuis la table validée de
+// docs/TABLE-REGLEMENTAIRE-FLUIDES.md), elle L'EMPORTE sur la
+// dérivation du libellé de famille. La dérivation par includes() ne
+// reste qu'un REPLI pour un fluide ajouté localement sans fiche.
+//
 // Familles hors périmètre du contrôle d'étanchéité fluoré : CO₂ (R-744),
 // HC (R-290/propane), NH₃ (hors CERFA) → aucune fréquence exigée.
 // ============================================================
+
+// Entrée en vigueur du contrôle d'étanchéité des HFO purs (règl. UE
+// 2024/573, F-Gas III, art. 5). Avant : HFO purs non contrôlés.
+export const DEBUT_CONTROLE_HFO = '2024-03-11';
 
 // Seuils par catégorie réglementaire, du palier le plus HAUT au plus BAS
 // (le premier palier atteint l'emporte → niveau le plus élevé applicable).
@@ -66,12 +79,22 @@ const FREQUENCE = {
 
 /**
  * Catégorie réglementaire d'un fluide au sens du cadre 7 (F-Gas).
- * Règle A : HFC/PFC testés AVANT HFO — un mélange contenant du HFC
- * (ex. R-455A, famille « HFC/HFO ») relève de la catégorie HFC.
- * @param {{ famille?: string }|null|undefined} fluideRef
+ * 1. Fiche EXPLICITE d'abord : si le fluide porte un champ
+ *    categorieCadre7 (HFC / HFO / HCFC / AUCUNE — 'AUCUNE' = hors
+ *    périmètre acté), c'est LUI qui fait foi (migration 21, valeurs de
+ *    la table validée). Une valeur inconnue est ignorée (repli).
+ * 2. REPLI sinon : dérivation du libellé de famille, Règle A — HFC/PFC
+ *    testés AVANT HFO, un mélange contenant du HFC (ex. R-455A,
+ *    famille « HFC/HFO ») relève de la catégorie HFC.
+ * @param {{ famille?: string, categorieCadre7?: string }|null|undefined} fluideRef
  * @returns {'HFC'|'HFO'|'HCFC'|null} null = hors périmètre (CO₂, HC, NH₃…)
  */
 export function categorieCadre7(fluideRef) {
+  const explicite = String(fluideRef?.categorieCadre7 || '').toUpperCase();
+  if (explicite === 'AUCUNE') return null;
+  if (explicite === 'HFC' || explicite === 'HFO' || explicite === 'HCFC') {
+    return explicite;
+  }
   const f = String(fluideRef?.famille || '').toUpperCase();
   if (f.includes('HFC') || f.includes('PFC')) return 'HFC';
   if (f.includes('HFO')) return 'HFO';
@@ -81,19 +104,34 @@ export function categorieCadre7(fluideRef) {
 
 /**
  * Évalue l'obligation de contrôle d'étanchéité d'un équipement.
- * @param {{ famille?: string, gwpAr4?: number }|null|undefined} fluideRef
+ * @param {{ famille?: string, gwpAr4?: number, categorieCadre7?: string
+ *   }|null|undefined} fluideRef
  * @param {number} chargeNominaleKg — charge NOMINALE totale déclarée (Règle C)
  * @param {boolean} detectionPermanente — cadre 6
+ * @param {string} [dateIntervention] — date ISO de l'intervention. Les HFO
+ *   PURS ne sont soumis au contrôle que depuis le 11/03/2024 (F-Gas III) :
+ *   avant, aucun niveau ni fréquence (la catégorie reste 'HFO'). Omise ou
+ *   non ISO → régime courant (post-2024). Sans effet sur HFC/HCFC.
  * @returns {{ categorie: 'HFC'|'HFO'|'HCFC'|null, niveau: 1|2|3|null,
  *   caseSeuil: string|null, caseFrequence: string|null, frequenceMois: number|null }}
  */
-export function evaluerControle(fluideRef, chargeNominaleKg, detectionPermanente) {
+export function evaluerControle(fluideRef, chargeNominaleKg,
+  detectionPermanente, dateIntervention) {
   const categorie = categorieCadre7(fluideRef);
   const charge = Number(chargeNominaleKg) || 0;
 
+  // Portée temporelle de la Règle B : HFO pur + intervention datée AVANT
+  // le 11/03/2024 → pas encore de contrôle exigé. Une date non ISO est
+  // ignorée (on ne désactive jamais un contrôle sur une date illisible).
+  const date = typeof dateIntervention === 'string'
+    && /^\d{4}-\d{2}-\d{2}/.test(dateIntervention)
+    ? dateIntervention.slice(0, 10) : null;
+  const hfoAvantRegime = categorie === 'HFO'
+    && date !== null && date < DEBUT_CONTROLE_HFO;
+
   let niveau = null;
   let caseSeuil = null;
-  if (categorie) {
+  if (categorie && !hfoAvantRegime) {
     const { unite, paliers } = SEUILS[categorie];
     const valeur = unite === 'teqCO2'
       ? charge * (Number(fluideRef?.gwpAr4) || 0) / 1000

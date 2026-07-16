@@ -475,17 +475,31 @@ export const DEMO = {
   // classeSecurite : classification NF EN 378 / ASHRAE 34
   // (A1 = non inflammable, A2L/A2/A3 = inflammable) — sert au
   // cadre 12 « Transport » du CERFA 15497*04 (Phase D).
+  // contientHfc/contientHfo/categorieCadre7/sourcePrp : fiche réglementaire
+  // explicite du cadre 7 (docs/TABLE-REGLEMENTAIRE-FLUIDES.md), LUE EN
+  // PRIORITÉ par reglementation-fluides.js (categorieCadre7()) — parité
+  // EXACTE avec le remplissage de la migration 021 côté serveur (prouvée
+  // par test-contrat).
   // --------------------------------------------------------
   fluides: [
-    { code: 'R-32', famille: 'HFC', gwpAr4: 675, impact: 'MODERE', classeSecurite: 'A2L', nbMachines: 0 },
-    { code: 'R-410A', famille: 'HFC', gwpAr4: 2088, impact: 'ELEVE', classeSecurite: 'A1', nbMachines: 0 },
-    { code: 'R-134a', famille: 'HFC', gwpAr4: 1430, impact: 'ELEVE', classeSecurite: 'A1', nbMachines: 0 },
-    { code: 'R-407C', famille: 'HFC', gwpAr4: 1774, impact: 'ELEVE', classeSecurite: 'A1', nbMachines: 0 },
-    { code: 'R-404A', famille: 'HFC', gwpAr4: 3922, impact: 'TRES_ELEVE', classeSecurite: 'A1', nbMachines: 0 },
-    { code: 'R-1234yf', famille: 'HFO', gwpAr4: 4, impact: 'FAIBLE', classeSecurite: 'A2L', nbMachines: 0 },
-    { code: 'R-455A', famille: 'HFC/HFO', gwpAr4: 148, impact: 'FAIBLE', classeSecurite: 'A2L', nbMachines: 0 },
-    { code: 'R-744', famille: 'CO2', gwpAr4: 1, impact: 'FAIBLE', classeSecurite: 'A1', nbMachines: 0 },
-    { code: 'R-290', famille: 'HC', gwpAr4: 3, impact: 'FAIBLE', classeSecurite: 'A3', nbMachines: 0 }
+    { code: 'R-32', famille: 'HFC', gwpAr4: 675, impact: 'MODERE', classeSecurite: 'A2L', nbMachines: 0,
+      contientHfc: true, contientHfo: false, categorieCadre7: 'HFC', sourcePrp: 'AR4 / annexe F-Gas' },
+    { code: 'R-410A', famille: 'HFC', gwpAr4: 2088, impact: 'ELEVE', classeSecurite: 'A1', nbMachines: 0,
+      contientHfc: true, contientHfo: false, categorieCadre7: 'HFC', sourcePrp: 'AR4' },
+    { code: 'R-134a', famille: 'HFC', gwpAr4: 1430, impact: 'ELEVE', classeSecurite: 'A1', nbMachines: 0,
+      contientHfc: true, contientHfo: false, categorieCadre7: 'HFC', sourcePrp: 'AR4' },
+    { code: 'R-407C', famille: 'HFC', gwpAr4: 1774, impact: 'ELEVE', classeSecurite: 'A1', nbMachines: 0,
+      contientHfc: true, contientHfo: false, categorieCadre7: 'HFC', sourcePrp: 'AR4' },
+    { code: 'R-404A', famille: 'HFC', gwpAr4: 3922, impact: 'TRES_ELEVE', classeSecurite: 'A1', nbMachines: 0,
+      contientHfc: true, contientHfo: false, categorieCadre7: 'HFC', sourcePrp: 'AR4' },
+    { code: 'R-1234yf', famille: 'HFO', gwpAr4: 4, impact: 'FAIBLE', classeSecurite: 'A2L', nbMachines: 0,
+      contientHfc: false, contientHfo: true, categorieCadre7: 'HFO', sourcePrp: 'annexe F-Gas' },
+    { code: 'R-455A', famille: 'HFC/HFO', gwpAr4: 148, impact: 'FAIBLE', classeSecurite: 'A2L', nbMachines: 0,
+      contientHfc: true, contientHfo: true, categorieCadre7: 'HFC', sourcePrp: 'moyenne pondérée massique (AR4)' },
+    { code: 'R-744', famille: 'CO2', gwpAr4: 1, impact: 'FAIBLE', classeSecurite: 'A1', nbMachines: 0,
+      contientHfc: false, contientHfo: false, categorieCadre7: 'AUCUNE', sourcePrp: 'définition' },
+    { code: 'R-290', famille: 'HC', gwpAr4: 3, impact: 'FAIBLE', classeSecurite: 'A3', nbMachines: 0,
+      contientHfc: false, contientHfo: false, categorieCadre7: 'AUCUNE', sourcePrp: 'AR4' }
   ],
 
   // --------------------------------------------------------

@@ -128,11 +128,16 @@ export function sansPrefixeR(code) {
  * @param {object|null} fluideRef - fiche du référentiel fluides
  * @param {number} chargeNominaleKg - charge NOMINALE totale déclarée (kg)
  * @param {boolean} detectionPermanente - cadre 6
+ * @param {string} [dateIntervention] - date ISO de l'intervention (les HFO
+ *   purs ne sont soumis au contrôle que depuis le 11/03/2024 ; omise =
+ *   régime courant)
  * @returns {{caseSeuil: string|null, caseFrequence: string|null,
  *            frequenceMois: number|null}}
  */
-export function calculerCadre7(fluideRef, chargeNominaleKg, detectionPermanente) {
-  const r = evaluerControle(fluideRef, chargeNominaleKg, detectionPermanente);
+export function calculerCadre7(fluideRef, chargeNominaleKg,
+  detectionPermanente, dateIntervention) {
+  const r = evaluerControle(fluideRef, chargeNominaleKg,
+    detectionPermanente, dateIntervention);
   return {
     caseSeuil: r.caseSeuil,
     caseFrequence: r.caseFrequence,
@@ -348,10 +353,11 @@ export async function calculerChampsCerfa(store, { source, id }) {
       ? etalonnage.slice(0, 10).split('-')
       : [null, null, null];
 
-  // ---- Cadre 7 — seuil et fréquence (charge NOMINALE déclarée, Règle C) ----
+  // ---- Cadre 7 — seuil et fréquence (charge NOMINALE déclarée, Règle C ;
+  // le régime applicable est celui de la DATE d'intervention) ----
   const cadre7 = machine
     ? calculerCadre7(fluideRef, machine.chargeNominaleKg,
-        Boolean(machine.detectionPermanente))
+        Boolean(machine.detectionPermanente), ctx.date)
     : { caseSeuil: null, caseFrequence: null, frequenceMois: null };
 
   // ---- Cadre 10 — résultat du contrôle d'étanchéité ----

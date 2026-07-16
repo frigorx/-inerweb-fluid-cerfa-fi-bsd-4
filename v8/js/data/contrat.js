@@ -109,7 +109,7 @@ export const METHODES_CONTRAT = {
   getControles: { genre: 'lecture',
     description: 'Tous les contrôles d’étanchéité, triés date décroissante.' },
   getFluides: { genre: 'lecture',
-    description: 'Le référentiel des fluides, nbMachines recalculé (machines non démantelées).' },
+    description: 'Le référentiel des fluides, nbMachines recalculé (machines non démantelées) ; fiche réglementaire du cadre 7 (contientHfc, contientHfo, categorieCadre7 HFC|HFO|HCFC|AUCUNE, sourcePrp) — categorieCadre7 nul = pas de fiche, repli du moteur sur la dérivation de famille.' },
   getPersonnel: { genre: 'lecture',
     description: 'Tout le personnel (jamais supprimé : seulement désactivé).' },
   getClients: { genre: 'lecture',
@@ -149,7 +149,7 @@ export const METHODES_CONTRAT = {
   createControle: { genre: 'mutation',
     description: 'Crée un contrôle ; FUITE → machine en statut FUITE ; CONFORME → retour EN_SERVICE depuis FUITE seulement si la réparation est TRACÉE et que le contrôle date du jour de la réparation ou d’après (R4), ou depuis CONTROLE_DU sans retard.' },
   calculerProchainControle: { genre: 'lecture',
-    description: 'Prochain contrôle selon charge×PRP et détection permanente (logique unique du cadre 7 CERFA) ; null si hors périmètre.' },
+    description: 'Prochain contrôle selon charge×PRP et détection permanente (logique unique du cadre 7 CERFA) ; la date du contrôle (optionnelle, défaut aujourd’hui) fixe le régime applicable ; null si hors périmètre OU si HFO pur avant le 11/03/2024 (F-Gas III).' },
   tracerReparation: { genre: 'mutation',
     description: 'Trace a posteriori la réparation d’un contrôle FUITE (date, nature, réparateur) ; Error si contrôle introuvable, si son résultat n’est pas FUITE, ou si un champ obligatoire est vide. Ne change PAS machine.statut (R4 : le retour EN_SERVICE exige un contrôle CONFORME postérieur).' },
 

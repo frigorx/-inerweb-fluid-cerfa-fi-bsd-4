@@ -166,6 +166,27 @@ verifierCles('un fluide porte code, famille, gwpAr4, nbMachines',
 verifier('gwpAr4 est un nombre (jamais une chaîne)',
   fluides.every((f) => typeof f.gwpAr4 === 'number'));
 
+// Fiche réglementaire EXPLICITE par fluide (migration 21 côté serveur,
+// demo-donnees côté front) : les valeurs de la table validée
+// (docs/TABLE-REGLEMENTAIRE-FLUIDES.md) sont exposées à l'IDENTIQUE des
+// deux côtés — preuve que la colonne existe, traverse le mapping et que
+// la parité demo/local tient sur les 4 nouveaux champs.
+{
+  const r455a = fluides.find((f) => f.code === 'R-455A');
+  verifier('fiche explicite : R-455A porte contientHfc ET contientHfo à vrai',
+    r455a?.contientHfc === true && r455a?.contientHfo === true);
+  verifier('fiche explicite : R-455A classé HFC par la colonne (Règle A actée en base)',
+    r455a?.categorieCadre7 === 'HFC');
+  verifier('fiche explicite : R-455A porte la source de son PRP',
+    typeof r455a?.sourcePrp === 'string' && r455a.sourcePrp.length > 0);
+  verifier('fiche explicite : R-744 hors périmètre acté (AUCUNE, pas null)',
+    fluides.find((f) => f.code === 'R-744')?.categorieCadre7 === 'AUCUNE');
+  verifier('fiche explicite : R-1234yf classé HFO, sans HFC',
+    (() => { const f = fluides.find((x) => x.code === 'R-1234yf');
+      return f?.categorieCadre7 === 'HFO' && f?.contientHfo === true
+        && f?.contientHfc === false; })());
+}
+
 // Le scénario exige un HFC à fort PRP (périmètre F-Gas atteint dès
 // quelques kg) : choisi par CRITÈRE, jamais par position dans le
 // référentiel. R-410A est préféré s'il existe (lisibilité des masses).
@@ -652,6 +673,19 @@ const machineMelange = await store.createMachine({
 });
 verifier('calculerProchainControle : mélange HFC/HFO (R-455A, 5 kg) traité HFC → null (< 5 t éq. CO₂)',
   await store.calculerProchainControle(machineMelange.id, dateRelative(0)) === null);
+// Portée TEMPORELLE de la Règle B, prouvée côté demo ET serveur : les HFO
+// purs ne sont soumis au contrôle que depuis le 11/03/2024 (F-Gas III).
+// R-1234yf à 12 kg : contrôle daté de la veille → aucun prochain contrôle ;
+// daté du jour d'entrée en vigueur → 6 mois. Si le miroir serveur ignorait
+// la date, le premier cas rendrait une date → ce test échouerait.
+const machineHfo = await store.createMachine({
+  designation: 'Groupe HFO pur du contrat', fluide: 'R-1234yf',
+  chargeNominaleKg: 12, operateur: 'Testeur Contrat'
+});
+verifier('calculerProchainControle : HFO pur, contrôle du 10/03/2024 → null (avant F-Gas III)',
+  await store.calculerProchainControle(machineHfo.id, '2024-03-10') === null);
+verifier('calculerProchainControle : HFO pur, contrôle du 11/03/2024 → 6 mois (2024-09-11)',
+  await store.calculerProchainControle(machineHfo.id, '2024-03-11') === '2024-09-11');
 await verifierRejet('calculerProchainControle refuse une machine introuvable',
   store.calculerProchainControle('mac-fantome', dateRelative(0)));
 
@@ -1739,6 +1773,45 @@ verifier('après import propre, le registre est déclaré sain',
   && store.registreAltere === null);
 verifier('l’état importé est fidèle (nos mouvements sont là)',
   (await store.getMouvements()).some((m) => m.id === mvt3.id));
+
+// Un export ANTÉRIEUR au lot « fiche explicite » (fluides sans les 4
+// champs) ne doit PAS effacer la fiche réglementaire actée (constat de
+// revue du 16/07, prouvé : INSERT OR REPLACE → colonnes NULL côté
+// serveur, clés absentes côté démo). L'import la recomplète depuis la
+// table validée, à l'IDENTIQUE des deux côtés ; un fluide inconnu sans
+// fiche reste sans fiche (4 clés à null, jamais false ni undefined).
+{
+  const ancien = JSON.parse(exportPropre);
+  for (const f of ancien.donnees.fluides) {
+    delete f.contientHfc;
+    delete f.contientHfo;
+    delete f.categorieCadre7;
+    delete f.sourcePrp;
+  }
+  ancien.donnees.fluides.push({
+    code: 'R-ETRANGER', famille: 'HFC', gwpAr4: 100, classeSecurite: 'A1'
+  });
+  verifier('import : un export sans fiche réglementaire est accepté',
+    await store.importerJSON(JSON.stringify(ancien)) === true);
+  const apres = await store.getFluides();
+  const r455aImporte = apres.find((f) => f.code === 'R-455A');
+  verifier('import ancien : la fiche du R-455A est recomplétée (Règle A actée)',
+    r455aImporte?.categorieCadre7 === 'HFC'
+    && r455aImporte?.contientHfc === true
+    && r455aImporte?.contientHfo === true
+    && typeof r455aImporte?.sourcePrp === 'string');
+  verifier('import ancien : R-744 réacté hors périmètre (AUCUNE)',
+    apres.find((f) => f.code === 'R-744')?.categorieCadre7 === 'AUCUNE');
+  const etranger = apres.find((f) => f.code === 'R-ETRANGER');
+  verifier('import ancien : un fluide inconnu reste SANS fiche (4 clés à null)',
+    etranger !== undefined && etranger.contientHfc === null
+    && etranger.contientHfo === null && etranger.categorieCadre7 === null
+    && etranger.sourcePrp === null);
+  // Remettre l'état de référence : la suite du scénario ne doit pas
+  // dépendre du fluide étranger injecté ici.
+  verifier('import : retour à l’export propre après le cas « export ancien »',
+    await store.importerJSON(exportPropre) === true);
+}
 
 // ============================================================
 // 22. Forme canonique du contrôle déclaré + échange CROISÉ démo ↔ local

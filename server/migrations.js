@@ -108,6 +108,17 @@
  *  20 — correction du PRP de R-1234yf (1 → 4, valeur de l'annexe F-Gas), et
  *       seulement si la valeur d'origine (1) est intacte (jamais d'écrasement
  *       d'un référentiel ajusté localement).
+ *  21 — fiche réglementaire explicite par fluide (moteur cadre 7 unique,
+ *       docs/TABLE-REGLEMENTAIRE-FLUIDES.md) : fluides.contient_hfc /
+ *       contient_hfo / categorie_cadre7 / source_prp. categorieCadre7 est LU
+ *       EN PRIORITÉ par reglementation-fluides.js (categorieCadre7()) ; NULL
+ *       = pas de fiche → repli sur la dérivation historique du libellé
+ *       famille. Remplissage PAR CODE des 9 fluides du référentiel validé
+ *       (table VALIDÉE par Franck, aucune valeur inventée) ; un fluide ajouté
+ *       localement (code inconnu de ce remplissage) garde les 4 colonnes à
+ *       NULL, ce qui déclenche justement le repli. Table fluides HORS WORM et
+ *       hors chaîne de hash (comme la migration 19) : ALTER + remplissage
+ *       sans le moindre risque sur le registre scellé.
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -131,6 +142,38 @@ function tirerCodePublicMigration() {
   }
   return code;
 }
+
+/**
+ * Fiche réglementaire des 9 fluides du référentiel — valeurs de la table
+ * VALIDÉE docs/TABLE-REGLEMENTAIRE-FLUIDES.md (rien d'inventé), au format
+ * front (camelCase, booléens). Consommée par la migration 21 ET par
+ * l'import JSON (api.js) : un export antérieur porte des fluides SANS
+ * fiche — l'import la recomplète depuis cette même source ; une fiche
+ * explicitement importée n'est jamais écrasée. Miroir front : les MÊMES
+ * valeurs vivent dans v8/js/data/demo-donnees.js (référentiel de démo,
+ * motif des littéraux dupliqués CommonJS/ESM du dépôt), parité prouvée
+ * par test-contrat (fiche identique demo/local, y compris après import).
+ */
+const FICHE_REGLEMENTAIRE_FLUIDES = {
+  'R-32': { contientHfc: true, contientHfo: false,
+    categorieCadre7: 'HFC', sourcePrp: 'AR4 / annexe F-Gas' },
+  'R-410A': { contientHfc: true, contientHfo: false,
+    categorieCadre7: 'HFC', sourcePrp: 'AR4' },
+  'R-134a': { contientHfc: true, contientHfo: false,
+    categorieCadre7: 'HFC', sourcePrp: 'AR4' },
+  'R-407C': { contientHfc: true, contientHfo: false,
+    categorieCadre7: 'HFC', sourcePrp: 'AR4' },
+  'R-404A': { contientHfc: true, contientHfo: false,
+    categorieCadre7: 'HFC', sourcePrp: 'AR4' },
+  'R-1234yf': { contientHfc: false, contientHfo: true,
+    categorieCadre7: 'HFO', sourcePrp: 'annexe F-Gas' },
+  'R-455A': { contientHfc: true, contientHfo: true,
+    categorieCadre7: 'HFC', sourcePrp: 'moyenne pondérée massique (AR4)' },
+  'R-744': { contientHfc: false, contientHfo: false,
+    categorieCadre7: 'AUCUNE', sourcePrp: 'définition' },
+  'R-290': { contientHfc: false, contientHfo: false,
+    categorieCadre7: 'AUCUNE', sourcePrp: 'AR4' }
+};
 
 /**
  * Le registre des migrations. Clé = version CIBLE (entier), valeur =
@@ -835,6 +878,39 @@ END;`);
       db.exec(
         "UPDATE fluides SET gwp_ar4 = 4 WHERE code = 'R-1234yf' AND gwp_ar4 = 1;");
     }
+  },
+
+  21: {
+    nom: 'fiche_reglementaire_fluides',
+    appliquer(db) {
+      // Fiche réglementaire EXPLICITE par fluide (moteur cadre 7 unique) :
+      // plus de dérivation implicite depuis le libellé famille — chaque
+      // fluide du référentiel porte sa propre fiche, prioritaire dans
+      // reglementation-fluides.js (categorieCadre7()). Table fluides SANS
+      // WORM et hors chaîne de hash (comme la migration 019) : ALTER +
+      // remplissage sans le moindre risque.
+      db.exec(
+        "ALTER TABLE fluides ADD COLUMN contient_hfc INTEGER CHECK (contient_hfc IN (0,1));");
+      db.exec(
+        "ALTER TABLE fluides ADD COLUMN contient_hfo INTEGER CHECK (contient_hfo IN (0,1));");
+      db.exec(
+        "ALTER TABLE fluides ADD COLUMN categorie_cadre7 TEXT CHECK (categorie_cadre7 IN ('HFC','HFO','HCFC','AUCUNE'));");
+      db.exec('ALTER TABLE fluides ADD COLUMN source_prp TEXT;');
+
+      // Remplissage PAR CODE des 9 fluides du référentiel — valeurs de la
+      // table VALIDÉE docs/TABLE-REGLEMENTAIRE-FLUIDES.md, rien d'inventé
+      // (constante partagée FICHE_REGLEMENTAIRE_FLUIDES, en tête de module).
+      // Un fluide ajouté localement (code hors de cette liste) garde les 4
+      // colonnes à NULL : categorieCadre7 NULL fait retomber le moteur sur
+      // la dérivation de famille (repli explicite, pas un défaut silencieux).
+      const maj = db.prepare(`UPDATE fluides
+        SET contient_hfc = ?, contient_hfo = ?, categorie_cadre7 = ?, source_prp = ?
+        WHERE code = ?`);
+      for (const [code, fiche] of Object.entries(FICHE_REGLEMENTAIRE_FLUIDES)) {
+        maj.run(fiche.contientHfc ? 1 : 0, fiche.contientHfo ? 1 : 0,
+          fiche.categorieCadre7, fiche.sourcePrp, code);
+      }
+    }
   }
 };
 
@@ -891,6 +967,7 @@ function migrer(db, registre = MIGRATIONS) {
 module.exports = {
   VERSION_BASE,
   MIGRATIONS,
+  FICHE_REGLEMENTAIRE_FLUIDES,
   versionCible,
   lireVersion,
   migrer

@@ -74,6 +74,49 @@ verifier('R-455A à 33,8 kg → 5,0 t éq. CO₂ → contrôle 12 mois (traité 
 verifier('R-744 (CO₂) 500 kg → aucun contrôle', freq({ famille: 'CO2', gwpAr4: 1 }, 500, false) === null);
 verifier('R-290 (HC) 50 kg → aucun contrôle', freq({ famille: 'HC', gwpAr4: 3 }, 50, false) === null);
 
+// ---- Fiche EXPLICITE par fluide (migration 21) : la colonne l'emporte ----
+verifier('fiche explicite HFC sur famille « HFO » → HFC (la colonne fait foi)',
+  categorieCadre7({ famille: 'HFO', categorieCadre7: 'HFC' }) === 'HFC');
+verifier('fiche explicite AUCUNE sur famille « HFC » → hors périmètre',
+  categorieCadre7({ famille: 'HFC', categorieCadre7: 'AUCUNE' }) === null);
+verifier('fiche explicite en minuscules (« hfo ») → HFO (casse tolérée)',
+  categorieCadre7({ famille: '', categorieCadre7: 'hfo' }) === 'HFO');
+verifier('fiche explicite INCONNUE → ignorée, repli sur la famille',
+  categorieCadre7({ famille: 'HFC', categorieCadre7: 'PLOUF' }) === 'HFC');
+verifier('fiche explicite null → repli sur la famille (compat. anciens fluides)',
+  categorieCadre7({ famille: 'HCFC', categorieCadre7: null }) === 'HCFC');
+verifier('evaluerControle suit la fiche explicite (famille inconnue, HFO 10 kg → 6 mois)',
+  freq({ famille: 'Mystère', categorieCadre7: 'HFO', gwpAr4: 4 }, 10, false) === 6);
+verifier('evaluerControle : AUCUNE explicite neutralise une famille HFC (500 kg → rien)',
+  freq({ famille: 'HFC', categorieCadre7: 'AUCUNE', gwpAr4: 2000 }, 500, false) === null);
+
+// ---- Date d'intervention : HFO purs contrôlés seulement depuis le 11/03/2024 ----
+const freqDate = (fluide, charge, det, date) =>
+  evaluerControle(fluide, charge, det, date).frequenceMois;
+verifier('HFO 10 kg au 10/03/2024 → AUCUN contrôle (avant F-Gas III)',
+  freqDate(hfo, 10, false, '2024-03-10') === null);
+verifier('HFO 10 kg au 11/03/2024 → 6 mois (jour d\'entrée en vigueur)',
+  freqDate(hfo, 10, false, '2024-03-11') === 6);
+verifier('HFO 10 kg sans date → 6 mois (régime courant)',
+  freqDate(hfo, 10, false, undefined) === 6);
+verifier('HFO 10 kg, datetime « 2023-12-31T23:59:59 » → aucun contrôle',
+  freqDate(hfo, 10, false, '2023-12-31T23:59:59') === null);
+verifier('HFO avant régime : catégorie reste HFO, niveau/case à null',
+  (() => { const r = evaluerControle(hfo, 10, false, '2023-01-01');
+    return r.categorie === 'HFO' && r.niveau === null
+      && r.caseSeuil === null && r.caseFrequence === null; })());
+verifier('HFC 5 t au 01/01/2020 → 12 mois (les HFC étaient déjà contrôlés)',
+  freqDate(hfc, 5, false, '2020-01-01') === 12);
+verifier('mélange HFC/HFO 33,8 kg au 01/01/2023 → 12 mois (Règle A insensible à la date)',
+  freqDate(r455a, 33.8, false, '2023-01-01') === 12);
+verifier('HCFC 30 kg au 01/01/2023 → 6 mois (HCFC insensible à la date)',
+  freqDate(hcfc, 30, false, '2023-01-01') === 6);
+verifier('date NON ISO (« 10/03/2024 ») → ignorée → régime courant (6 mois)',
+  freqDate(hfo, 10, false, '10/03/2024') === 6);
+verifier('fiche explicite HFO + date avant régime → aucun contrôle (règles combinées)',
+  freqDate({ famille: 'Mystère', categorieCadre7: 'HFO', gwpAr4: 4 }, 10, false,
+    '2024-01-01') === null);
+
 // ---- Robustesse ----
 verifier('fluide null → hors périmètre', evaluerControle(null, 10, false).frequenceMois === null);
 verifier('charge NaN → 0 → aucun contrôle', freq(hfc, NaN, false) === null);

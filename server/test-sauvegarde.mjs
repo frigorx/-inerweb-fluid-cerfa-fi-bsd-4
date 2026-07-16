@@ -566,8 +566,22 @@ function famille5() {
       // n'est de toute façon jamais touchée).
       const cheminKo = fabriquerArchiveBaseModifiee(produit.chemin, racine,
         (octetsDb) => {
-          // Écraser une large plage au cœur du fichier (pages SQLite).
-          for (let i = 400; i < 900 && i < octetsDb.length; i += 1) {
+          // Garde-fou : si peupler() maigrissait au point de produire un
+          // fichier minuscule, la plage charcutée pourrait perdre son sens.
+          if (octetsDb.length < 16384) {
+            throw new Error(
+              'Base d\'archive anormalement petite pour le charcutage ' +
+              `(${octetsDb.length} octets) : renforcer peupler().`);
+          }
+          // Écraser une plage PROPORTIONNELLE au cœur du fichier (30 % → 70 %).
+          // Jamais d'offsets fixes : une plage figée (ex. 400-900) peut tomber
+          // dans l'espace non alloué d'une page quand le schéma évolue (vécu
+          // avec la migration 21) et integrity_check l'ignore à bon droit.
+          // L'archive sortant de VACUUM INTO, toutes ses pages sont utilisées :
+          // écraser 40 % du milieu du fichier touche forcément des pages vives.
+          const debut = Math.floor(octetsDb.length * 0.3);
+          const fin = Math.floor(octetsDb.length * 0.7);
+          for (let i = debut; i < fin; i += 1) {
             octetsDb[i] = 0x00;
           }
           return octetsDb;

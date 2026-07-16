@@ -52,8 +52,24 @@ const TABLES = {
       // Exposés au front (feuille de paramétrage des gaz) : statut réglementaire
       // (enum AUTORISE/RESTREINT/INTERDIT) et commentaire libre.
       statutReglementaire: 'statut_reglementaire',
-      commentaire: 'commentaire'
+      commentaire: 'commentaire',
+      // Fiche réglementaire explicite (migration 021, moteur cadre 7 unique) :
+      // categorieCadre7 est LUE EN PRIORITÉ par reglementation-fluides.js —
+      // NULL = pas de fiche pour ce fluide, le moteur replie sur la
+      // dérivation historique du libellé famille. Le NULL traverse le
+      // mapping INTACT dans les DEUX sens (prouvé : versSql null → NULL,
+      // versFront NULL → null — la conversion booléenne ne s'applique
+      // qu'aux valeurs renseignées) : le tri-état « fiche renseignée ou
+      // non » est fiable. Le piège réel est ailleurs : un INSERT OR REPLACE
+      // dont le candidat n'a pas ces clés EFFACE la fiche (colonnes
+      // absentes → NULL) — l'import JSON la recomplète depuis
+      // FICHE_REGLEMENTAIRE_FLUIDES (migrations.js), cf. api.js.
+      contientHfc: 'contient_hfc',
+      contientHfo: 'contient_hfo',
+      categorieCadre7: 'categorie_cadre7',
+      sourcePrp: 'source_prp'
     },
+    booleens: ['contientHfc', 'contientHfo'],
     frontSeulement: ['impact', 'nbMachines'],
     sqlSeulement: []
   },

@@ -30,6 +30,7 @@ const crypto = require('node:crypto');
 const db = require('./db.js');
 const mapping = require('./mapping.js');
 const { hasherMouvement } = require('./hash-mouvement.js');
+const { FICHE_REGLEMENTAIRE_FLUIDES } = require('./migrations.js');
 
 // ------------------------------------------------------------
 // Identité de l'établissement singleton (le front le traite sans id).
@@ -2140,11 +2141,14 @@ const HANDLERS = {
   calculerProchainControle(params) {
     const machine = trouverMachine(params.machineId);
     const fluideRef = lireFluide(machine.fluide);
+    // La date du contrôle fixe le régime applicable (HFO purs contrôlés
+    // seulement depuis le 11/03/2024) — miroir du DemoStore.
+    const dateControle = params.dateControle ?? aujourdHui();
     const frequenceMois = frequenceControleMois(
       fluideRef, machine.chargeNominaleKg,
-      Boolean(machine.detectionPermanente));
+      Boolean(machine.detectionPermanente), dateControle);
     if (!frequenceMois) return null;
-    return ajouterMois(params.dateControle ?? aujourdHui(), frequenceMois);
+    return ajouterMois(dateControle, frequenceMois);
   },
 
   // === registre des mouvements (VAGUE 5 — le coffre-fort) ====
@@ -3429,8 +3433,24 @@ function remplacerToutLEtat(candidat) {
     // Référentiel des fluides : upsert (INSERT OR IGNORE au socle, mais un
     // candidat peut porter un référentiel complété). On réécrit ce qui est
     // fourni sans casser les fluides déjà semés (INSERT OR REPLACE).
+    // Fiche réglementaire (migration 21) : un export ANTÉRIEUR porte des
+    // fluides SANS fiche — l'INSERT OR REPLACE l'effacerait (colonnes
+    // absentes → NULL, constat de revue du 16/07, prouvé). On la recomplète
+    // depuis la table VALIDÉE (mêmes valeurs que la migration, rien
+    // d'inventé) ; une fiche explicitement importée (categorieCadre7
+    // renseignée) n'est JAMAIS écrasée ; un fluide inconnu reste sans fiche
+    // (4 champs NULL → repli famille du moteur). Miroir : importerJSON du
+    // DemoStore fait strictement pareil (parité prouvée par test-contrat).
     for (const f of candidat.fluides ?? []) {
-      const ligne = mapping.versSql('fluides', f);
+      const fluide = { ...f };
+      if (fluide.categorieCadre7 == null) {
+        const fiche = FICHE_REGLEMENTAIRE_FLUIDES[fluide.code] ?? null;
+        fluide.contientHfc = fiche ? fiche.contientHfc : null;
+        fluide.contientHfo = fiche ? fiche.contientHfo : null;
+        fluide.categorieCadre7 = fiche ? fiche.categorieCadre7 : null;
+        fluide.sourcePrp = fiche ? fiche.sourcePrp : null;
+      }
+      const ligne = mapping.versSql('fluides', fluide);
       const colonnes = Object.keys(ligne);
       const marques = colonnes.map(() => '?').join(', ');
       db.run(
@@ -4377,38 +4397,79 @@ function lireFluide(code) {
 }
 
 /**
+ * Catégorie cadre 7 d'un fluide — MIROIR EXACT de categorieCadre7 du
+ * moteur réglementaire unique (v8/js/data/reglementation-fluides.js).
+ * 1. Fiche EXPLICITE d'abord : le champ categorieCadre7 (colonne
+ *    categorie_cadre7, migration 21 — HFC/HFO/HCFC/AUCUNE, 'AUCUNE' =
+ *    hors périmètre acté) fait foi ; valeur inconnue ignorée (repli).
+ * 2. REPLI : dérivation du libellé de famille, Règle A (HFC/PFC AVANT HFO).
+ */
+function categorieCadre7Fluide(fluideRef) {
+  const explicite = String(fluideRef?.categorieCadre7 || '').toUpperCase();
+  if (explicite === 'AUCUNE') return null;
+  if (explicite === 'HFC' || explicite === 'HFO' || explicite === 'HCFC') {
+    return explicite;
+  }
+  const f = String(fluideRef?.famille || '').toUpperCase();
+  if (f.includes('HFC') || f.includes('PFC')) return 'HFC';
+  if (f.includes('HFO')) return 'HFO';
+  if (f.includes('HCFC')) return 'HCFC';
+  return null;
+}
+
+/**
+ * Entrée en vigueur du contrôle d'étanchéité des HFO purs (règl. UE
+ * 2024/573, F-Gas III, art. 5) — miroir de DEBUT_CONTROLE_HFO du front.
+ */
+const DEBUT_CONTROLE_HFO = '2024-03-11';
+
+/**
  * IM-1 : fréquence réglementaire de contrôle d'étanchéité, en mois, ou
  * null si l'équipement est hors périmètre F-Gas. MIROIR EXACT du moteur
  * réglementaire unique du front (evaluerControle de
  * v8/js/data/reglementation-fluides.js, règles A/B/C validées, cf.
- * docs/TABLE-REGLEMENTAIRE-FLUIDES.md) : Règle A = un mélange contenant du
- * HFC est traité comme un HFC (HFC/PFC testés AVANT HFO) ; HFO purs et HCFC
- * en kg ; charge NOMINALE déclarée (Règle C). api.js étant du CommonJS, on
- * réimplémente ici la logique ; la parité demo/serveur, Y COMPRIS la
- * reclassification des mélanges HFC/HFO en HFC (Règle A), est prouvée par
- * test-contrat.mjs (joué demo ET local, machine R-455A → null sous 5 tCO₂eq).
+ * docs/TABLE-REGLEMENTAIRE-FLUIDES.md) : fiche explicite par fluide
+ * prioritaire (categorieCadre7Fluide ci-dessus) ; Règle A = un mélange
+ * contenant du HFC est traité comme un HFC (HFC/PFC testés AVANT HFO) ;
+ * HFO purs et HCFC en kg ; charge NOMINALE déclarée (Règle C) ; HFO purs
+ * soumis au contrôle seulement depuis le 11/03/2024 (dateIntervention
+ * optionnelle, omise ou non ISO = régime courant). api.js étant du
+ * CommonJS, on réimplémente ici la logique ; la parité demo/serveur,
+ * Y COMPRIS la reclassification des mélanges HFC/HFO en HFC (Règle A),
+ * la fiche explicite et la règle de date HFO, est prouvée par
+ * test-contrat.mjs (joué demo ET local).
  */
-function frequenceControleMois(fluideRef, chargeNominaleKg, detectionPermanente) {
-  const famille = String(fluideRef?.famille || '').toUpperCase();
+function frequenceControleMois(fluideRef, chargeNominaleKg,
+  detectionPermanente, dateIntervention) {
+  const categorie = categorieCadre7Fluide(fluideRef);
   const charge = Number(chargeNominaleKg) || 0;
-  let niveau = null; // 1 = bas, 2 = moyen, 3 = haut
 
-  // Règle A : HFC/PFC (mélanges contenant du HFC compris) testés AVANT HFO.
-  if (famille.includes('HFC') || famille.includes('PFC')) {
+  // Portée temporelle de la Règle B : HFO pur + intervention datée AVANT
+  // le 11/03/2024 → pas encore de contrôle exigé. Une date non ISO est
+  // ignorée (on ne désactive jamais un contrôle sur une date illisible).
+  const date = typeof dateIntervention === 'string'
+    && /^\d{4}-\d{2}-\d{2}/.test(dateIntervention)
+    ? dateIntervention.slice(0, 10) : null;
+  if (categorie === 'HFO' && date !== null && date < DEBUT_CONTROLE_HFO) {
+    return null;
+  }
+
+  let niveau = null; // 1 = bas, 2 = moyen, 3 = haut
+  if (categorie === 'HFC') {
     const teq = charge * (Number(fluideRef?.gwpAr4) || 0) / 1000;
     if (teq >= 500) niveau = 3;
     else if (teq >= 50) niveau = 2;
     else if (teq >= 5) niveau = 1;
-  } else if (famille.includes('HFO')) {
+  } else if (categorie === 'HFO') {
     if (charge >= 100) niveau = 3;
     else if (charge >= 10) niveau = 2;
     else if (charge >= 1) niveau = 1;
-  } else if (famille.includes('HCFC')) {
+  } else if (categorie === 'HCFC') {
     if (charge >= 300) niveau = 3;
     else if (charge >= 30) niveau = 2;
     else if (charge >= 2) niveau = 1;
   }
-  // Autres familles (CO₂, HC…) : hors périmètre F-Gas, aucune fréquence.
+  // Hors périmètre (CO₂, HC… ou 'AUCUNE' explicite) : aucune fréquence.
 
   if (niveau === 1) return detectionPermanente ? 24 : 12;
   if (niveau === 2) return detectionPermanente ? 12 : 6;

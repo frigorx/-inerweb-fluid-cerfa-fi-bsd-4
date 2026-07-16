@@ -1137,6 +1137,63 @@ verifierLeve('le code public est unique (résolution QR sans ambiguïté)',
 }
 
 // ============================================================
+// 6terdecies. Fiche réglementaire explicite par fluide (migration 021) —
+// base PRÉEXISTANTE (v18 → v21, en passant par 19/20) : les 4 colonnes
+// sont ajoutées, le remplissage PAR CODE couvre les 9 fluides du
+// référentiel (R-455A = mélange HFC/HFO traité HFC, R-744/R-290 hors
+// périmètre), et un fluide LOCAL (code inconnu du remplissage) garde
+// les 4 colonnes à NULL — le repli du moteur, pas un oubli.
+// ============================================================
+{
+  const CHEMIN_FICHE = join(DOSSIER, 'ancienne-fiche-fluides.db');
+  const ancienneFiche = new DatabaseSync(CHEMIN_FICHE);
+  ancienneFiche.exec(readFileSync(new URL('./schema.sql', import.meta.url), 'utf8'));
+  ancienneFiche.exec(`PRAGMA user_version = ${migrations.VERSION_BASE};`);
+  const jusqua18 = {};
+  for (let v = 2; v <= 18; v += 1) jusqua18[v] = migrations.MIGRATIONS[v];
+  migrations.migrer(ancienneFiche, jusqua18); // portée à 18, PAS encore 19-21
+
+  // Un fluide ajouté localement AVANT la migration 021 (code hors du
+  // remplissage) : doit garder les 4 colonnes à NULL après migration.
+  ancienneFiche.exec(`INSERT INTO fluides (code, famille, gwp_ar4, classe_securite)
+    VALUES ('R-TEST', 'HFC', 100, 'A1');`);
+
+  verifier('avant migration 021 : la base est bloquée en version 18',
+    migrations.lireVersion(ancienneFiche) === 18);
+  verifier('avant migration 021 : fluides n’a pas encore categorie_cadre7',
+    !ancienneFiche.prepare('PRAGMA table_info(fluides)').all()
+      .some((c) => c.name === 'categorie_cadre7'));
+
+  const jusqua21 = { 19: migrations.MIGRATIONS[19], 20: migrations.MIGRATIONS[20],
+    21: migrations.MIGRATIONS[21] };
+  const vFiche = migrations.migrer(ancienneFiche, jusqua21);
+  verifier('la migration 021 porte la base à la version 21',
+    vFiche === 21 && migrations.lireVersion(ancienneFiche) === 21);
+
+  verifier('les 4 colonnes de la fiche réglementaire existent après migration',
+    ['contient_hfc', 'contient_hfo', 'categorie_cadre7', 'source_prp'].every((c) =>
+      ancienneFiche.prepare('PRAGMA table_info(fluides)').all()
+        .some((col) => col.name === c)));
+
+  const ligne = (code) => ancienneFiche.prepare(
+    `SELECT contient_hfc, contient_hfo, categorie_cadre7, source_prp
+       FROM fluides WHERE code = ?`).get(code);
+
+  verifier('R-455A (mélange HFC/HFO, Règle A) est fiché contient_hfc=1, contient_hfo=1, HFC',
+    (() => { const l = ligne('R-455A');
+      return l.contient_hfc === 1 && l.contient_hfo === 1 && l.categorie_cadre7 === 'HFC'; })());
+  verifier('R-744 et R-290 sont fichés AUCUNE (hors périmètre du cadre 7)',
+    ligne('R-744').categorie_cadre7 === 'AUCUNE'
+    && ligne('R-290').categorie_cadre7 === 'AUCUNE');
+  verifier('un fluide LOCAL (code inconnu du remplissage) garde les 4 colonnes à NULL',
+    (() => { const l = ligne('R-TEST');
+      return l.contient_hfc === null && l.contient_hfo === null
+        && l.categorie_cadre7 === null && l.source_prp === null; })());
+
+  ancienneFiche.close();
+}
+
+// ============================================================
 // 7. Base pré-versionnage : refusée avec un message clair
 // ============================================================
 db.fermer();

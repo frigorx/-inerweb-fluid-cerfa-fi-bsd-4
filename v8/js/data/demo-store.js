@@ -533,6 +533,26 @@ export function creerDemoStore() {
     return index;
   }
 
+  /**
+   * Recomplète la fiche réglementaire d'un fluide SANS fiche
+   * (categorieCadre7 nulle ou absente) depuis le référentiel de démo —
+   * mêmes valeurs que la migration 21 côté serveur (table validée
+   * docs/TABLE-REGLEMENTAIRE-FLUIDES.md, rien d'inventé). Une fiche
+   * explicitement présente n'est JAMAIS écrasée ; un fluide inconnu
+   * reçoit les 4 clés à null (parité stricte avec les colonnes NULL du
+   * serveur — le moteur retombe alors sur la dérivation de famille).
+   * Modifie l'objet reçu et le retourne.
+   */
+  function completerFicheReglementaire(fluide) {
+    if (fluide.categorieCadre7 != null) return fluide;
+    const ref = DEMO.fluides.find((r) => r.code === fluide.code);
+    fluide.contientHfc = ref?.contientHfc ?? null;
+    fluide.contientHfo = ref?.contientHfo ?? null;
+    fluide.categorieCadre7 = ref?.categorieCadre7 ?? null;
+    fluide.sourcePrp = ref?.sourcePrp ?? null;
+    return fluide;
+  }
+
   /** Machines comptant dans le parc (tout sauf démantelées). */
   function machinesEnParc() {
     return donnees.machines.filter((m) => m.statut !== 'DEMANTELEE');
@@ -1731,8 +1751,10 @@ export function creerDemoStore() {
       // nbMachines recalculé depuis le parc courant.
       // classeSecurite : complétée depuis le référentiel de démo
       // pour les sauvegardes antérieures à la Phase D.
+      // Fiche réglementaire : complétée au même titre (mondes démo
+      // persistés AVANT la migration 21), jamais écrasée si présente.
       const parc = machinesEnParc();
-      return donnees.fluides.map((f) => ({
+      return donnees.fluides.map((f) => completerFicheReglementaire({
         ...copier(f),
         classeSecurite: f.classeSecurite ??
           DEMO.fluides.find((r) => r.code === f.code)?.classeSecurite ?? null,
@@ -2487,11 +2509,14 @@ export function creerDemoStore() {
       const machine = trouverMachine(machineId);
       const fluideRef = donnees.fluides.find(
         (f) => f.code === machine.fluide) ?? null;
+      // La date du contrôle fixe le régime applicable (HFO purs contrôlés
+      // seulement depuis le 11/03/2024) — miroir du serveur.
+      const dateControle = dateControleISO ?? aujourdHui();
       const { frequenceMois } = evaluerControle(
         fluideRef, machine.chargeNominaleKg,
-        Boolean(machine.detectionPermanente));
+        Boolean(machine.detectionPermanente), dateControle);
       if (!frequenceMois) return null;
-      return ajouterMois(dateControleISO ?? aujourdHui(), frequenceMois);
+      return ajouterMois(dateControle, frequenceMois);
     },
 
     // ------------------------------------------------------
@@ -3917,6 +3942,12 @@ export function creerDemoStore() {
       }
       if (!estValide(candidat)) return false;
       candidat = copier(candidat);
+
+      // Fiche réglementaire des fluides (miroir de l'import serveur,
+      // migration 21) : un export ANTÉRIEUR porte des fluides sans fiche —
+      // la recompléter depuis le référentiel (table validée), jamais
+      // écraser une fiche importée ; fluide inconnu → 4 clés à null.
+      for (const f of candidat.fluides) completerFicheReglementaire(f);
 
       // Compléments Phase B pour les imports Phase A
       if (!Array.isArray(candidat.outillage)) {
