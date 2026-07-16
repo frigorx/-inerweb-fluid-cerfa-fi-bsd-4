@@ -108,10 +108,15 @@ quitte le poste · vérification auto après création · **exercice réel de re
 septembre** puis annuel · phrase de passe ≥ 14 caractères, dans le coffre du lycée, connue de deux
 responsables · **BitLocker / chiffrement intégral du disque** (l'AES-256-GCM protège les sauvegardes,
 pas la base active).
-- **État actuel** : 🟡 sauvegarde manuelle + chiffrement + restauration bien construits ; sauvegarde
-  de sécurité auto **avant restauration** seulement. Pas de planificateur (doc corrigée, commit
-  `d597582`). Le reste à implémenter.
-- **Gate** : technique + Franck (BitLocker = décision poste).
+- **État actuel** : ✅ **FAIT côté logiciel (16/07, module `server/sauvegarde-auto.js`)** — archive
+  automatique AU DÉMARRAGE si la dernière date de plus de 24 h (réglable 1-720 h), **vérifiée
+  aussitôt** (testerSauvegarde) ; **snapshot après chaque écriture scellée** (validation,
+  contre-écriture ; débouncé 10 min, jamais bloquant) ; échec journalisé (`SAUVEGARDE_ECHEC`) sans
+  jamais gêner l'écriture ; rotation GFS et alerte d'ancienneté existantes ; réglages à l'écran
+  Sauvegarde (actif par défaut). Le « 2ᵉ support » = le dossier de destination configurable
+  (pointer un dossier synchronisé). Restent des GESTES de Franck : BitLocker (décision poste),
+  exercice réel de restauration, phrase de passe au coffre du lycée.
+- **Gate** : plus de gate logiciel — gestes humains ci-dessus seulement.
 
 ---
 

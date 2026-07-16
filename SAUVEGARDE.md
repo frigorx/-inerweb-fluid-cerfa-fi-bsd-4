@@ -52,18 +52,27 @@ l'application à l'identique sur n'importe quel poste.
 
 ## 3. Les sauvegardes automatiques
 
-Ce qui est **déjà automatique** dans cette version :
+Ce qui est **automatique** dans cette version (actif par défaut) :
 
+- **Au démarrage de l'application** : si la dernière archive date de plus de
+  **24 heures** (réglable de 1 à 720 heures), une **archive complète** est créée
+  d'elle-même, puis **vérifiée aussitôt** (intégrité de la base, clés étrangères,
+  chaînes du registre et du journal). Le résultat s'affiche dans la fenêtre de
+  démarrage et l'archive apparaît dans la liste de l'écran Sauvegarde.
+- **Après chaque écriture validée** (mouvement validé ou contre-écriture) : un
+  **instantané** de la base est créé (au plus un par tranche de 10 minutes) —
+  le filet anti-erreur-humaine.
 - **Avant chaque restauration**, l'application crée d'elle-même une sauvegarde de
-  sécurité de l'état courant, dans `backups/` : une restauration lancée par erreur
-  reste ainsi réversible.
+  sécurité de l'état courant : une restauration lancée par erreur reste réversible.
 
-⚠️ **Ce qui n'est PAS encore actif** (prévu pour une prochaine version) : la
-sauvegarde **périodique planifiée** (à l'ouverture si la dernière date de plus de
-24 heures, et à la fermeture). Tant qu'elle n'est pas en place, **créez vous-même
-une sauvegarde régulièrement** (section 2), idéalement à chaque journée
-d'utilisation — c'est un simple clic. C'est votre meilleure garantie de ne rien
-perdre.
+Un échec de sauvegarde automatique **n'empêche jamais** ni le démarrage ni la
+validation : il s'affiche en console et se journalise (action `SAUVEGARDE_ECHEC`).
+La rotation habituelle (jour/semaine/mois) s'applique aux sauvegardes automatiques
+comme aux manuelles. L'interrupteur et l'intervalle se règlent dans l'écran
+Sauvegarde, section « Réglages de sauvegarde ».
+
+La sauvegarde **manuelle** (section 2) reste utile avant une opération
+inhabituelle (import, restauration, fin d'année) — c'est un simple clic.
 
 ---
 
@@ -112,7 +121,7 @@ Organisation recommandée (qui applique le principe 3-2-1) :
 
 | Copie | Support | Fréquence conseillée |
 |---|---|---|
-| 1 — l'originale | Le disque du poste (`backups/`) | **Manuelle, à faire à chaque journée d'utilisation** (un clic) ; la sauvegarde périodique automatique est prévue mais pas encore active |
+| 1 — l'originale | Le disque du poste (`backups/`) | **Automatique** : archive au démarrage (si la dernière a plus de 24 h, vérifiée aussitôt) + instantané après chaque écriture validée |
 | 2 — la clé USB | Une **clé USB dédiée**, rangée au bureau, qui ne sert qu'à ça | **Chaque semaine** : copier le dernier ZIP sur la clé |
 | 3 — hors site | L'espace réseau ou le cloud de l'établissement | **Chaque mois** : y déposer le dernier ZIP (chiffré de préférence) |
 

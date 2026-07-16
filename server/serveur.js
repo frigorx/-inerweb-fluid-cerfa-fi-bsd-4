@@ -639,6 +639,25 @@ function preparerCoffreFort() {
 
 preparerCoffreFort();
 
+// Sauvegarde AUTOMATIQUE au démarrage (condition 6 du plan audit-proof) :
+// une ARCHIVE complète si la dernière date de plus du seuil réglé (24 h par
+// défaut), VÉRIFIÉE aussitôt. Jamais fatal : le module rend un compte-rendu.
+{
+  const sauvegardeAuto = require('./sauvegarde-auto.js');
+  const auto = sauvegardeAuto.archiveAuDemarrageSiDue();
+  if (auto.faite && auto.verifiee) {
+    console.log(`  [sauvegarde] Archive automatique créée et VÉRIFIÉE : ${auto.fichier}`);
+  } else if (auto.faite) {
+    console.warn(
+      `  [sauvegarde] Archive automatique créée mais NON vérifiée (${auto.erreur}) — ` +
+      'ouvrez l\'écran Sauvegarde pour contrôler.');
+  } else if (auto.erreur) {
+    console.warn(`  [sauvegarde] Sauvegarde automatique impossible : ${auto.erreur}`);
+  } else {
+    console.log(`  [sauvegarde] ${auto.raison}.`);
+  }
+}
+
 serveur.listen(PORT, HOTE, () => {
   console.log('');
   console.log('  inerWeb Fluide v8 — serveur local démarré');

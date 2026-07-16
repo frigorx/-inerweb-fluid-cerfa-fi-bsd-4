@@ -92,11 +92,11 @@ on ne bloque pas sur les exceptions ») : appliqué ci-dessus. Note R-290 : la v
 la table consolidée §5 de l'avis (statut VALIDÉ) ; le propane n'étant pas un gaz fluoré, il ne figure
 pas dans une annexe du 2024/573 — source libellée **« AR6 GIEC (réf. règl. UE 2024/573) »**.
 
-**Réserve unique (bloque la clôture de la table)** : PRP par défaut du **R-455A** — 148 (historique
-AR4, plaques) ou ≈ 145,53 (recalcul F-Gas III : R-32 = 675, R-1234yf = 0,501, R-744 = 1) ? Question
-à adresser **par écrit à la DGPR ou au référent**. En attendant : **148 conservatoire** (contrôle
-déclenché plus tôt, seuil ≈ 33,78 kg) = valeur codée. Le logiciel devra permettre d'enregistrer la
-valeur de la plaque et sa source **sans écraser** la valeur réglementaire versionnée.
+**Réserve R-455A : LEVÉE PAR DÉCISION FRANCK (16/07)** — **148 définitif** (valeur conservatoire :
+contrôle déclenché plus tôt, seuil ≈ 33,78 kg). Le logiciel est à usage INTERNE : pas de question
+DGPR, pas de signature formelle du référent — décision assumée, l'écart 148/145,53 est un détail
+sans effet pratique. (Si un jour le logiciel était diffusé comme registre officiel d'entreprise,
+la question écrite du §8 de l'avis reste disponible.) **La table est CLOSE.**
 
 **Corrections d'affirmations exigées par l'avis (faites dans ce document le 16/07)** :
 - ~~« le 517/2014 est abrogé depuis le 31/12/2024 »~~ → le règl. UE **2024/573 est directement

@@ -64,23 +64,32 @@ On ne promet **pas** « inviolable » : on promet **démontrable**.
   affichage PRP à décimales adaptatives. DIFFÉRÉS conservateurs : multi-circuits (Q7),
   exemptions hermétiques (Q8), versionnage du modèle CERFA (→ condition 4). Détail =
   `docs/TABLE-REGLEMENTAIRE-FLUIDES.md` §1 bis. ⚠️ Une migration est IMMUABLE (littéraux figés).
+- **CONDITION 6 SOLDÉE (16/07 soir)** : sauvegardes RÉELLEMENT automatiques
+  (`server/sauvegarde-auto.js` — archive au démarrage si > 24 h + VÉRIFIÉE, snapshot débouncé après
+  chaque écriture scellée via `api.appeler`, jamais bloquant, réglages à l'écran Sauvegarde,
+  famille 15 de test-sauvegarde + preuve sur le vrai serveur). `SAUVEGARDE.md` à jour.
+- **DÉCISIONS FRANCK 16/07 (ne pas rouvrir)** : le logiciel est à usage **INTERNE** → R-455A =
+  **148 DÉFINITIF**, pas de question DGPR, pas de signature formelle du référent — **la table
+  réglementaire est CLOSE**. « Ne pas bloquer sur des détails, finir le logiciel. »
+- **LE LOGICIEL EST COMPLET POUR L'USAGE INTERNE** : les 3 axes du cadrage sont couverts
+  (législation = moteur conforme à l'avis ; sauvegarde = automatique et vérifiée ; ergonomie = RAS).
 - **Le mode Officiel est FERMÉ** (le serveur refuse `mode:'OFFICIEL'`) et le reste **jusqu'à ce que
-  les conditions 1→4 du plan soient prêtes ET testées**. On travaille en mode **CONSEIL**.
+  les conditions 1→4 du plan soient prêtes ET testées**. On travaille en mode **CONSEIL** — assumé
+  pour l'usage interne.
 - Rappel socle (audit externe 15/07) : sécurité **SAINE** prouvée en conditions réelles. Rapports
   **INTERNES gitignorés** `docs/AUDIT-COMPLET-2026-07-15.md` et `docs/DOSSIER-TECHNIQUE.md`.
 
-## PROCHAINE BRIQUE (au choix)
+## PROCHAINE ÉTAPE
 
-- **Lot NON gaté aligné sur l'axe « sauvegarde »** → **condition 6 : sauvegardes RÉELLEMENT
-  automatiques** (snapshot après chaque validation, archive quotidienne, alerte bloquante si aucune
-  sauvegarde récente, vérification auto après création — hors décision BitLocker qui reste à Franck).
-  Voir l'état/détail dans le plan. Incrément cadré : Opus effort élevé, relecture simple.
-- **OU condition 2 : blocage dur du mode Officiel** — reste GATÉE sur la **liste des conditions
-  bloquantes à valider par Franck** (`peutPasserEnOfficiel` aux 3 moments, **validateur lu de la
-  session** — le trou « qui déclaré ≠ prouvé »). **Opus effort MAXIMUM, réglementaire.**
-- ⏳ Questions encore ouvertes côté référent : échéance d'un contrôle HFO **ressaisi** d'avant le
-  11/03/2024 (aujourd'hui : aucune — comportement conforme à la réponse Q2 de l'avis) ; réserve
-  R-455A (148 vs 145,53, question écrite DGPR §8 de l'avis). Ne rien coder sans validation.
+**Le développement est terminé pour l'usage interne.** La prochaine étape n'est PAS du code :
+Franck **utilise** le logiciel (essai en données fictives, puis fonctionnement en parallèle avec la
+procédure actuelle, puis bascule). Les correctifs viendront de l'usage réel — « on corrigera au
+besoin plus tard ».
+
+Si un chantier de code rouvre un jour (UNIQUEMENT si diffusion comme registre officiel
+d'entreprise) : conditions 2 (blocage dur Officiel + validateur de session), 3 (double signature),
+4 (empreinte renforcée + PDF scellé — touche `hash-mouvement.js` : plan + migration + tests),
+5 (scellement externe — DSI). Toutes GATÉES. **Opus effort MAXIMUM.**
 
 **Restent GATÉS** : condition 2 (liste des conditions bloquantes), 3 (double signature réelle),
 4 (empreinte renforcée + PDF scellé conservé — touche `hash-mouvement.js` → plan + migration + tests),
@@ -120,11 +129,10 @@ On ne promet **pas** « inviolable » : on promet **démontrable**.
 - **Règles A/B/C validées** par Franck. PRP figé **NON rétroactif**. **Licence** PolyForm
   Noncommercial + certificats nominatifs. **Rapports internes gitignorés** jamais publics.
 
-## CE QUI ATTEND FRANCK (hors code)
+## CE QUI ATTEND FRANCK (hors code — aucun bloquant)
 
-- **Envoyer la question écrite à la DGPR** (réserve R-455A : 148 vs ≈ 145,53 — le texte exact est
-  au §8 de l'avis du 16/07) et **faire signer la section 9 « Validation formelle »** de l'avis par
-  le référent F-Gas (aujourd'hui : avis technique non signé).
-- **Valider la liste des conditions bloquantes** du mode Officiel (débloque la condition 2).
-- Secondaire : relecture `RGPD.md` (DPD), texte de la vitrine. Quand il le décidera : essai en
-  données fictives, puis fonctionnement **en parallèle** avec la procédure actuelle.
+- **UTILISER le logiciel** : essai en données fictives, puis en parallèle de la procédure actuelle.
+- Gestes de protection du poste (à son rythme) : **BitLocker**, un **exercice réel de
+  restauration** (bouton « Tester » puis restaurer une sauvegarde sur un poste d'essai), pointer le
+  **dossier de destination** des sauvegardes vers un dossier synchronisé (copie hors du poste).
+- Secondaire : relecture `RGPD.md` (DPD), texte de la vitrine.

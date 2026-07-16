@@ -41,6 +41,7 @@ const path = require('node:path');
 const db = require('./db.js');
 const parametres = require('./parametres.js');
 const sauvegarde = require('./sauvegarde.js');
+const sauvegardeAuto = require('./sauvegarde-auto.js');
 const restauration = require('./restauration.js');
 
 /** Rôles habilités aux opérations de sauvegarde (jamais un ELEVE). */
@@ -171,7 +172,10 @@ const HANDLERS = {
       dossierDestination: configure,
       dossierEffectif: sauvegarde.dossierBackups(),
       dossierParDefaut: sauvegarde.dossierBackupsParDefaut(),
-      alerteJours: sauvegarde.alerteJours()
+      alerteJours: sauvegarde.alerteJours(),
+      // Sauvegarde AUTOMATIQUE (condition 6) : active par défaut.
+      autoActive: sauvegardeAuto.estActive(),
+      autoHeures: sauvegardeAuto.heuresIntervalle()
     };
   },
 
@@ -203,6 +207,23 @@ const HANDLERS = {
       }
       parametres.ecrire(sauvegarde.CLE_ALERTE_JOURS, n);
       maj.alerteJours = n;
+    }
+    // Sauvegarde AUTOMATIQUE (condition 6) : activation + intervalle (heures).
+    if (Object.prototype.hasOwnProperty.call(params, 'autoActive')) {
+      parametres.ecrire(sauvegardeAuto.CLE_ACTIVE, params.autoActive ? '1' : '0');
+      maj.autoActive = Boolean(params.autoActive);
+    }
+    if (Object.prototype.hasOwnProperty.call(params, 'autoHeures')) {
+      const h = Number.parseInt(params.autoHeures, 10);
+      if (!Number.isFinite(h) || h < 1 || h > 720) {
+        const erreur = new Error(
+          'L’intervalle de sauvegarde automatique doit être un nombre ' +
+          'd’heures entre 1 et 720.');
+        erreur.code = 400;
+        throw erreur;
+      }
+      parametres.ecrire(sauvegardeAuto.CLE_HEURES, h);
+      maj.autoHeures = h;
     }
     if (typeof db.journaliser === 'function') {
       db.journaliser({

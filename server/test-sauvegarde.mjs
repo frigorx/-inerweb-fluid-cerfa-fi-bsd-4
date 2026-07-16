@@ -61,6 +61,8 @@ const require = createRequire(import.meta.url);
 const db = require('./db.js');
 const api = require('./api.js');
 const sauvegarde = require('./sauvegarde.js');
+const sauvegardeAuto = require('./sauvegarde-auto.js');
+const parametres = require('./parametres.js');
 const restauration = require('./restauration.js');
 const zip = require('./zip-node.js');
 const { verifierIntegrite } = require('./verification.js');
@@ -1329,11 +1331,83 @@ function famille14() {
 // ============================================================
 // Exécution.
 // ============================================================
-console.log('Preuve du coffre-fort E4.1 — 14 familles (base jetable, os.tmpdir).');
+// ============================================================
+// FAMILLE 15 — Sauvegarde AUTOMATIQUE (condition 6 du plan audit-proof,
+// 16/07/2026) : archive au démarrage si due + VÉRIFIÉE, snapshot débouncé
+// après écriture scellée (crochet réel de api.appeler), réglages bornés,
+// trace au journal chaîné. Jamais bloquant.
+// ============================================================
+function famille15() {
+  console.log('\n=== Famille 15 — sauvegarde automatique (condition 6) ===');
+  const { racine } = ouvrirBaseJetable('f15-');
+  try {
+    // Le débounce du snapshot est PAR PROCESSUS : remis à zéro pour que
+    // la première validation de peupler() (qui passe par api.appeler)
+    // déclenche le filet ICI, dans la racine jetable de cette famille —
+    // preuve d'INTÉGRATION du crochet appeler() → snapshot.
+    sauvegardeAuto.reinitialiserDebouncePourTests();
+    peupler();
+
+    verifier('une écriture scellée via appeler() a produit un SNAPSHOT automatique',
+      sauvegarde.listerSauvegardes().some((s) => s.type === 'SNAPSHOT' && s.valide));
+    const nbSnapshots = sauvegarde.listerSauvegardes()
+      .filter((s) => s.type === 'SNAPSHOT').length;
+    verifier('le débounce tient : 2 validations dans la foulée = 1 seul snapshot',
+      nbSnapshots === 1, `${nbSnapshots} snapshot(s)`);
+
+    // Archive automatique « au démarrage » : due (aucune archive encore),
+    // produite ET VÉRIFIÉE réellement (testerSauvegarde → verdict VERT).
+    const premiere = sauvegardeAuto.archiveAuDemarrageSiDue();
+    verifier('archive automatique due : créée et VÉRIFIÉE (verdict VERT)',
+      premiere.faite === true && premiere.verifiee === true
+      && typeof premiere.fichier === 'string', JSON.stringify(premiere));
+    verifier('l’archive automatique est à l’inventaire (ARCHIVE valide)',
+      sauvegarde.listerSauvegardes().some((s) =>
+        s.type === 'ARCHIVE' && s.valide && s.fichier === premiere.fichier));
+
+    // Rejouée aussitôt : la dernière archive est récente → rien de refait.
+    const seconde = sauvegardeAuto.archiveAuDemarrageSiDue();
+    verifier('rejouée aussitôt : aucune nouvelle archive (dernière récente)',
+      seconde.faite === false && /récente/.test(seconde.raison ?? ''),
+      JSON.stringify(seconde));
+
+    // Désactivée par réglage : ni archive ni snapshot, raison explicite.
+    parametres.ecrire(sauvegardeAuto.CLE_ACTIVE, '0');
+    const desactivee = sauvegardeAuto.archiveAuDemarrageSiDue();
+    verifier('sauvegarde_auto_active = 0 : archive refusée avec raison explicite',
+      desactivee.faite === false && /désactivée/.test(desactivee.raison ?? ''));
+    sauvegardeAuto.reinitialiserDebouncePourTests();
+    sauvegardeAuto.snapshotApresEcritureScellee();
+    verifier('sauvegarde_auto_active = 0 : le snapshot ne fait rien non plus',
+      sauvegarde.listerSauvegardes()
+        .filter((s) => s.type === 'SNAPSHOT').length === 1);
+    parametres.ecrire(sauvegardeAuto.CLE_ACTIVE, '1');
+
+    // Réglage d'intervalle : borné, et le défaut revient quand il est effacé.
+    parametres.ecrire(sauvegardeAuto.CLE_HEURES, '5000');
+    verifier('intervalle borné (5000 → 720 h maximum)',
+      sauvegardeAuto.heuresIntervalle() === 720);
+    parametres.ecrire(sauvegardeAuto.CLE_HEURES, null);
+    verifier('intervalle par défaut (réglage effacé → 24 h, jamais 1 h)',
+      sauvegardeAuto.heuresIntervalle() === 24);
+
+    // La trace au journal chaîné (action SAUVEGARDE de sauvegarde.js) :
+    // au moins le snapshot + l'archive automatiques de cette famille.
+    const instance = db.ouvrir();
+    const n = instance.prepare(
+      "SELECT COUNT(*) AS n FROM journal_audit WHERE action = 'SAUVEGARDE'").get().n;
+    verifier('le journal chaîné trace les sauvegardes automatiques (≥ 2)',
+      n >= 2, `${n} entrée(s)`);
+  } finally {
+    nettoyer(racine);
+  }
+}
+
+console.log('Preuve du coffre-fort E4.1 — 15 familles (base jetable, os.tmpdir).');
 
 const familles = [famille1, famille2, famille3, famille4, famille5, famille6,
   famille7, famille8, famille9, famille10, famille11, famille12, famille13,
-  famille14];
+  famille14, famille15];
 for (const f of familles) {
   try {
     f();
@@ -1347,7 +1421,7 @@ for (const f of familles) {
 console.log('');
 if (nbEchecs === 0) {
   console.log(`${nbOk} vérifications réussies, 0 échec(s).`);
-  console.log('Coffre-fort E4.1 : les 14 familles sont vertes.');
+  console.log('Coffre-fort E4.1 : les 15 familles sont vertes.');
   process.exit(0);
 } else {
   console.error(`${nbOk} réussies, ${nbEchecs} ÉCHEC(S) :`);

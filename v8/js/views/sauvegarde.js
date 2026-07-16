@@ -414,16 +414,33 @@ function banniereAnciennete(liste, reglages) {
   return '';
 }
 
-/** Section « Réglages » : dossier de destination + seuil d'alerte d'ancienneté. */
+/** Section « Réglages » : sauvegarde automatique + dossier + seuil d'alerte. */
 function sectionReglages(reglages) {
   const r = reglages || {};
   const dest = r.dossierDestination || '';
   const effectif = r.dossierEffectif || '';
   const parDefaut = r.dossierParDefaut || '';
   const jours = Number(r.alerteJours) || 7;
+  // Sauvegarde automatique (condition 6) : active par défaut.
+  const autoActive = r.autoActive !== false;
+  const autoHeures = Number(r.autoHeures) || 24;
   return '<details class="encart-aide" style="margin-top:18px;">'
     + '<summary style="cursor:pointer;font-weight:600;">Réglages de sauvegarde</summary>'
     + '<div style="margin-top:12px;display:flex;flex-direction:column;gap:14px;">'
+    + '<div class="champ">'
+    + '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;">'
+    + '<input type="checkbox" id="reg-auto-active"' + (autoActive ? ' checked' : '') + '>'
+    + 'Sauvegarde automatique (recommandé)</label>'
+    + '<span class="aide" style="font-size:12px;color:var(--texte-3);">'
+    + 'Au démarrage : une archive complète si la dernière est trop ancienne, '
+    + 'vérifiée aussitôt. Après chaque écriture validée : un instantané de la '
+    + 'base (au plus un par 10 minutes). Jamais bloquant.</span>'
+    + '</div>'
+    + '<div class="champ">'
+    + '<label for="reg-auto-heures">Archive automatique si la dernière dépasse (heures)</label>'
+    + '<input type="number" id="reg-auto-heures" min="1" max="720" value="' + autoHeures + '" '
+    + 'style="max-width:120px;"' + (autoActive ? '' : ' disabled') + '>'
+    + '</div>'
     + '<div class="champ">'
     + '<label for="reg-dossier">Dossier de destination des sauvegardes</label>'
     + '<input type="text" id="reg-dossier" value="' + esc(dest) + '" '
@@ -957,19 +974,32 @@ export async function render(conteneur, ctx) {
       chargerEtAfficher();
     });
 
-    // Réglages : enregistrer le dossier de destination + le seuil d'alerte.
+    // Réglages : le champ d'intervalle suit l'interrupteur automatique.
+    const caseAuto = conteneur.querySelector('#reg-auto-active');
+    if (caseAuto) {
+      caseAuto.addEventListener('change', () => {
+        const champHeures = conteneur.querySelector('#reg-auto-heures');
+        if (champHeures) champHeures.disabled = !caseAuto.checked;
+      });
+    }
+
+    // Réglages : enregistrer sauvegarde auto + dossier + seuil d'alerte.
     const boutonReglages = conteneur.querySelector('#btn-enregistrer-reglages');
     if (boutonReglages) {
       boutonReglages.addEventListener('click', async () => {
         const champDossier = conteneur.querySelector('#reg-dossier');
         const champJours = conteneur.querySelector('#reg-jours');
+        const champAuto = conteneur.querySelector('#reg-auto-active');
+        const champHeures = conteneur.querySelector('#reg-auto-heures');
         const zoneErreur = conteneur.querySelector('#reg-erreur');
         if (zoneErreur) { zoneErreur.hidden = true; zoneErreur.textContent = ''; }
         boutonReglages.disabled = true;
         try {
           await appelerCoffre('definirReglagesSauvegarde', {
             dossierDestination: champDossier ? champDossier.value : '',
-            alerteJours: champJours ? Number(champJours.value) : undefined
+            alerteJours: champJours ? Number(champJours.value) : undefined,
+            autoActive: champAuto ? champAuto.checked : undefined,
+            autoHeures: champHeures ? Number(champHeures.value) : undefined
           });
           toast('Réglages de sauvegarde enregistrés.', 'succes');
           await chargerEtAfficher();

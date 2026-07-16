@@ -2,6 +2,31 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 💾 SAUVEGARDES RÉELLEMENT AUTOMATIQUES — condition 6 SOLDÉE (16/07 soir)
+Décisions Franck : **R-455A = 148 DÉFINITIF** (logiciel à usage interne — pas de question DGPR ni
+de signature formelle, la table réglementaire est **CLOSE**) et « **finir le logiciel** ». Sur les
+trois axes du cadrage (législation ✓ ce matin, ergonomie ✓), le trou restant était l'axe
+**SAUVEGARDE** : la sauvegarde automatique était promise mais absente. Fermé :
+- **Nouveau module `server/sauvegarde-auto.js`** (aucun nouveau chemin de sauvegarde : il orchestre
+  le coffre-fort existant — VACUUM INTO, manifeste, rotation GFS, journal chaîné).
+- **Au démarrage du serveur** : ARCHIVE complète si la dernière archive valide date de plus du
+  seuil réglé (24 h par défaut, borné 1-720 h), puis **VÉRIFIÉE aussitôt** (testerSauvegarde :
+  intégrité physique, clés étrangères, chaînes registre + journal). Compte-rendu en console.
+- **Après chaque écriture SCELLÉE** (validation de mouvement, contre-écriture) : **SNAPSHOT**
+  débouncé (au plus un par 10 minutes) — le filet anti-erreur-humaine du plan. Crochet posé dans
+  `api.appeler()` APRÈS la transaction, **jamais bloquant** : un échec de sauvegarde s'affiche et
+  se journalise (`SAUVEGARDE_ECHEC`) mais ne gêne jamais ni le démarrage ni la validation.
+- **Réglages** : actif par défaut (l'exigence n°1 : jamais de perte), interrupteur + intervalle à
+  l'écran Sauvegarde (routes `lireReglagesSauvegarde`/`definirReglagesSauvegarde` étendues).
+- **`SAUVEGARDE.md` enfin honnête dans l'autre sens** : la sauvegarde périodique n'est plus
+  « prévue », elle est LÀ (doc alignée, stratégie 3-2-1 mise à jour).
+- **Preuves** : famille 15 de `test-sauvegarde` (archive due créée ET vérifiée · rejouée aussitôt =
+  rien · désactivation par réglage · bornes d'intervalle · débounce · trace au journal · crochet
+  d'intégration RÉEL via api.appeler) ; et le VRAI serveur démarré sur base jetable : « Archive
+  automatique créée et VÉRIFIÉE » + fichier présent. ⚠️ Piège attrapé avant livraison :
+  `Number(null) = 0` aurait réduit un intervalle EFFACÉ à 1 h au lieu du défaut 24 h.
+  **TOUT VERT — 74 exécutions.**
+
 ### ⚖️ AVIS RÉGLEMENTAIRE DU 16/07 APPLIQUÉ — PRP F-Gas III + garde-fous protecteurs (16/07 après-midi)
 Un « Avis de validation réglementaire » (16/07/2026, reçu de Franck — avis technique documenté,
 validation formelle NON signée à ce stade) répond aux 10 questions du questionnaire. Arbitrage

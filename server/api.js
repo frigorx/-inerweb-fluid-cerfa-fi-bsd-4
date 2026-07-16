@@ -31,6 +31,7 @@ const db = require('./db.js');
 const mapping = require('./mapping.js');
 const { hasherMouvement } = require('./hash-mouvement.js');
 const { FICHE_REGLEMENTAIRE_FLUIDES, corrigerPrpFgas3 } = require('./migrations.js');
+const sauvegardeAuto = require('./sauvegarde-auto.js');
 
 // ------------------------------------------------------------
 // Identité de l'établissement singleton (le front le traite sans id).
@@ -5279,7 +5280,17 @@ function appeler(methode, params = {}, contexte = {}) {
   // « fuirait » sur l'appel suivant — y compris un appel sans session.
   sessionCourante = contexte ?? null;
   try {
-    return handler(params ?? {}, contexte ?? {});
+    const resultat = handler(params ?? {}, contexte ?? {});
+    // Condition 6 (sauvegardes automatiques) : après une écriture SCELLÉE
+    // réussie, un SNAPSHOT débouncé — filet anti-erreur-humaine. Placé ICI
+    // (hors transaction : muter() est déjà retombé) et JAMAIS bloquant
+    // (best-effort dans le module) : l'écriture est acquise quoi qu'il
+    // arrive à la sauvegarde.
+    if (methode === 'validerMouvement'
+      || methode === 'annulerParContreEcriture') {
+      sauvegardeAuto.snapshotApresEcritureScellee();
+    }
+    return resultat;
   } finally {
     sessionCourante = null;
   }
