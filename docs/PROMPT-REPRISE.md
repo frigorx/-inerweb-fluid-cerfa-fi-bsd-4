@@ -3,9 +3,9 @@
 > Copier tout ce qui suit comme PREMIER message d'un nouveau chat. Il est autonome : contexte, état
 > exact, cap, prochaine brique, gates, méthode et consignes.
 >
-> **Session conseillée : selon le lot choisi** (voir « LE CAP RÉACTIVÉ » — prochaine brique = LOT A).
-> LOT A (lectures sous session, non gaté) → **Opus effort élevé**. LOTS B et C (réglementaire gaté,
-> le C touche `hash-mouvement.js`) → **Opus effort MAXIMUM**. PAS d'ultracode hors point critique.
+> **Session conseillée : selon le lot choisi** (voir « LE CAP RÉACTIVÉ »). **LOT A SOLDÉ le 16/07**
+> (commit `872d34b`) — prochaine brique = **LOT B**. LOTS B et C (réglementaire gaté, le C touche
+> `hash-mouvement.js`) → **Opus effort MAXIMUM**. PAS d'ultracode hors point critique.
 
 ---
 
@@ -86,10 +86,12 @@ registre audit-proof. Les arbitrages restent délégués (« au mieux, compromis
 RELIT, il ne rédige pas. Rappel : en CONSEIL on ne bloque jamais (sa règle) ; le mode OFFICIEL,
 lui, DOIT bloquer — c'est sa définition. **Ordre des lots** :
 
-1. **LOT A — Lectures sous session** (non gaté, petit) : toute lecture exige une session SAUF
-   `ping`, amorçage initial, connexion — le blocage n°1 de l'audit externe, seul vrai trou
-   restant. + durcissements : signatures binaires réelles des PJ (pas le MIME déclaré), CSP en
-   en-tête HTTP, phrase de passe de sauvegarde ≥ 14 caractères. Effort élevé.
+1. ✅ **LOT A — SOLDÉ le 16/07 (commit `872d34b`)** : toute lecture exige une session (loopback
+   COMPRIS), seuls `ping` + amorçage `routes-comptes` passent sans. Régression front réglée
+   (`init()` tolère « Session requise », intégrité re-vérifiée post-connexion). Les 3 durcissements
+   posés : signature binaire réelle des PJ (nombres magiques, démo + serveur), CSP en en-tête HTTP
+   (`frame-ancestors 'none'`), phrase de sauvegarde ≥ 14 caractères à la création. 74 exéc. vertes,
+   vérifié en direct (base + port jetables). Détail = tête du `CHANGELOG.md`.
 2. **LOT B — Condition 2 : blocage dur du mode Officiel** : dresser la LISTE des conditions
    bloquantes depuis le plan + l'avis (Franck relit ~10 lignes), `peutPasserEnOfficiel` appelé aux
    3 moments (passage en officiel, soumission, avant validation), **validateur lu DE LA SESSION**
