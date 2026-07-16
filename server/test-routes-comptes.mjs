@@ -357,31 +357,36 @@ let cookieEleve;
 }
 
 // ============================================================
-// 6. Lecture : loopback sans session → 200 ; « LAN » sans session → 403
+// 6. Lecture SANS session → 403 (lot A audit-proof), loopback COMPRIS,
+//    et « LAN » sans session → 403 (garde anti-rebinding, antérieure).
 // ============================================================
 {
+  // Lot A : depuis l'audit externe du 15/07, une lecture anonyme n'est plus
+  // tolérée MÊME en loopback (l'ancien « confort mono-poste » était le
+  // blocage n°1). Un registre réglementaire doit dire QUI a consulté quoi :
+  // toute lecture exige une session. Cette assertion échouerait contre le
+  // serveur d'avant le lot A (où elle renvoyait 200) : garde-fou anti-
+  // régression. Seules ping, etatInitial, bootstrapAdmin et connexion
+  // restent atteignables sans session — aiguillées AVANT la garde de lecture.
   const rLoopback = await requeteJson(PORT, 'getFluides', {});
-  verifier('lecture (getFluides) en loopback SANS session → 200 (confort mono-poste)',
-    rLoopback.statut === 200, JSON.stringify(rLoopback.corps));
+  verifier('lecture (getFluides) en loopback SANS session → 403 [lot A]',
+    rLoopback.statut === 403, JSON.stringify(rLoopback.corps));
+  verifier('le refus porte « Session requise (connexion nécessaire). »',
+    rLoopback.corps?.erreur === 'Session requise (connexion nécessaire).',
+    JSON.stringify(rLoopback.corps));
 
   // Simulation « LAN » : Host distinct de la liste des hôtes loopback
-  // autorisés → cette requête tombe déjà sous la garde anti-rebinding
-  // (refusReseau, ANTÉRIEURE à E5, CONSERVÉE), qui est INTENTIONNELLEMENT
-  // plus stricte encore (403 avant même d'atteindre la garde de session
-  // ajoutée dans cette vague). On vérifie donc que le refus est bien un
-  // 403, quelle qu'en soit la barrière exacte.
+  // autorisés → cette requête tombe sous la garde anti-rebinding
+  // (refusReseau, ANTÉRIEURE à E5, CONSERVÉE), qui refuse encore plus tôt
+  // (403 avant même d'atteindre la garde de session). On vérifie que le
+  // refus est bien un 403, quelle qu'en soit la barrière exacte.
   //
   // NOTE DE PORTÉE : tant que serveur.js n'écoute QUE sur 127.0.0.1 (HOTE),
   // une vraie requête « LAN » (IP source non loopback) ne peut structurel-
   // lement jamais atteindre ce serveur — le test ci-dessus (Host étranger)
   // est donc le seul cas de « non-loopback » observable de bout en bout
-  // aujourd'hui. La garde ajoutée dans traiterApi (session exigée en
-  // lecture dès que ni rôle ni loopback ne sont posés) est du blindage en
-  // profondeur pour le jour où l'écoute s'élargira à une interface LAN :
-  // elle est correcte par relecture de code (contexteDeLaConnexion ne pose
-  // JAMAIS loopback:true pour une IP non-127.0.0.1/::1, cf. estLoopback),
-  // mais ce fichier ne peut pas l'exercer par une vraie connexion réseau
-  // sans modifier HOTE — hors périmètre de cette vague.
+  // aujourd'hui. Depuis le lot A, la garde de session couvre de toute façon
+  // loopback ET non-loopback de façon uniforme (plus de branche `loopback`).
   const rHostEtranger = await requeteJson(PORT, 'getFluides', {}, { host: 'un-autre-hote:1234' });
   verifier('lecture avec un Host non loopback (simule une origine LAN) → 403',
     rHostEtranger.statut === 403, JSON.stringify(rHostEtranger.corps));

@@ -1652,8 +1652,13 @@ await verifierRejet('désactiver deux fois est refusé',
 // ============================================================
 // 19. Pièces jointes : liste blanche MIME, préservation des preuves
 // ============================================================
-const CONTENU_BASE64 = Buffer.from('preuve de pesée (essai du contrat)')
-  .toString('base64');
+// PNG 1×1 minimal (vraie signature 0x89 'P' 'N' 'G' …) : depuis le
+// durcissement audit-proof, le store VÉRIFIE que le contenu concorde avec le
+// type déclaré. Toute PJ « image acceptée » du scénario s'appuie sur ce fixture.
+const PNG_1x1_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk'
+  + 'YPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+const OCTETS_PNG = Buffer.from(PNG_1x1_B64, 'base64');
+const CONTENU_BASE64 = PNG_1x1_B64;
 const pj = await store.ajouterPieceJointe({
   entiteType: 'MACHINE', entiteId: machineB.id, categorie: 'PHOTO_PESEE',
   nomFichier: 'preuve.png', mimeType: 'image/png', base64: CONTENU_BASE64,
@@ -1673,6 +1678,14 @@ await verifierRejet('le SVG est refusé (surface XSS, IM-19)',
   store.ajouterPieceJointe({ entiteType: 'MACHINE', entiteId: machineB.id,
     nomFichier: 'x.svg', mimeType: 'image/svg+xml', base64: CONTENU_BASE64 }),
   'refusé');
+// Audit-proof : un contenu qui DÉMENT le type déclaré (ici du HTML annoncé
+// « image/png ») est refusé sur la signature binaire réelle, jamais sur le
+// seul MIME. Vaut des DEUX côtés du contrat (démo ET local).
+await verifierRejet('un contenu qui dément le type déclaré est refusé (signature binaire)',
+  store.ajouterPieceJointe({ entiteType: 'MACHINE', entiteId: machineB.id,
+    nomFichier: 'faux.png', mimeType: 'image/png',
+    base64: Buffer.from('<html>pas une image</html>').toString('base64') }),
+  'signature binaire');
 await verifierRejet('une pièce jointe sans contenu est refusée',
   store.ajouterPieceJointe({ entiteType: 'MACHINE', entiteId: machineB.id,
     nomFichier: 'x.png', mimeType: 'image/png' }));
@@ -1684,24 +1697,27 @@ await verifierRejet('une pièce jointe sans contenu est refusée',
 // du 14/07, le Mode Local enregistrait 9 octets de déchet, les hachait en
 // SHA-256 et les journalisait comme pièce probante, pendant que la Démo
 // refusait proprement. Ce cas est la sentinelle de cette divergence.
-const TEXTE_PJ = 'preuve binaire — pesée du 14/07 (accents : é à ü)';
-const OCTETS_ATTENDUS = new TextEncoder().encode(TEXTE_PJ).length;
+// Le Blob porte de VRAIS octets PNG (binaire non textuel, avec des 0x00) :
+// meilleur témoin encore que du texte pour la fidélité de l'aller-retour, et
+// il satisfait le contrôle de signature du type déclaré.
 const pjBlob = await store.ajouterPieceJointe({
   entiteType: 'MACHINE', entiteId: machineB.id, categorie: 'PHOTO_PESEE',
   nomFichier: 'signature.png', mimeType: 'image/png',
-  blob: new Blob([TEXTE_PJ], { type: 'image/png' }),
+  blob: new Blob([OCTETS_PNG], { type: 'image/png' }),
   ajoutePar: 'Testeur Contrat'
 });
 verifier('ajouterPieceJointe accepte un Blob et enregistre sa VRAIE taille',
-  pjBlob.taille === OCTETS_ATTENDUS,
-  `taille=${pjBlob.taille}, attendu=${OCTETS_ATTENDUS}`);
+  pjBlob.taille === OCTETS_PNG.length,
+  `taille=${pjBlob.taille}, attendu=${OCTETS_PNG.length}`);
 {
   const complete = await store.obtenirPieceJointe(pjBlob.id);
-  const relu = typeof complete.blob?.text === 'function'
-    ? await complete.blob.text()
-    : new TextDecoder().decode(complete.blob);
-  verifier('obtenirPieceJointe restitue le contenu du Blob à l’identique',
-    relu === TEXTE_PJ, `relu = ${JSON.stringify(relu).slice(0, 48)}`);
+  const relu = typeof complete.blob?.arrayBuffer === 'function'
+    ? new Uint8Array(await complete.blob.arrayBuffer())
+    : new Uint8Array(complete.blob);
+  const identique = relu.length === OCTETS_PNG.length
+    && relu.every((o, i) => o === OCTETS_PNG[i]);
+  verifier('obtenirPieceJointe restitue le contenu du Blob à l’identique (octets)',
+    identique, `taille relue=${relu.length}`);
 }
 await verifierRejet('un contenu non textuel est REFUSÉ (jamais décodé en déchet)',
   store.ajouterPieceJointe({ entiteType: 'MACHINE', entiteId: machineB.id,

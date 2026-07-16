@@ -83,9 +83,24 @@ export function creerLocalStore(transport) {
     },
 
     async init() {
-      const etat = await lire('init', {});
-      this.registreAltere = etat ?? null;
-      return etat;
+      // Lot A (audit-proof) : les lectures exigent une session. Au tout premier
+      // démarrage, AUCUNE session n'est encore ouverte — la fabrique du store
+      // (creerStore) appelle pourtant init() avant l'amorçage/connexion. On ne
+      // bloque donc pas le démarrage sur cette lecture : si le serveur répond
+      // « Session requise », on diffère (registreAltere inconnu). Le transport
+      // a déjà émis l'évènement « session requise » ; l'intégrité sera vérifiée
+      // APRÈS connexion (app.js reprendreDemarrageApresConnexion).
+      try {
+        const etat = await lire('init', {});
+        this.registreAltere = etat ?? null;
+        return etat;
+      } catch (erreur) {
+        if (String(erreur?.message).includes('Session requise')) {
+          this.registreAltere = null;
+          return null;
+        }
+        throw erreur;
+      }
     },
 
     // ------------------------------------------------------

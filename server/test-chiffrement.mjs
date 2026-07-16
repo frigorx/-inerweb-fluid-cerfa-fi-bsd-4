@@ -341,7 +341,17 @@ function famille6() {
   try {
     peupler();
 
-    // --- Sauvegarder une ARCHIVE CHIFFRÉE ---
+    // --- Politique audit-proof : phrase de sauvegarde ≥ 14 caractères ---
+    // (13 caractères : refusé AVANT tout effet ; le seuil ne vaut qu'à la
+    // création — restaurer/tester une ancienne sauvegarde n'y est pas soumis.)
+    verifier('une phrase de sauvegarde de 13 caractères est refusée à la création',
+      leve(() => sauvegarde.sauvegarderArchive(
+        { chiffrer: true, phrase: 'treize-carac.' })).leve);
+    verifier('… avec un message qui parle de longueur',
+      /trop courte/.test(leve(() => sauvegarde.sauvegarderArchive(
+        { chiffrer: true, phrase: 'treize-carac.' })).message));
+
+    // --- Sauvegarder une ARCHIVE CHIFFRÉE (phrase conforme, 23 caractères) ---
     const produit = sauvegarde.sauvegarderArchive({
       chiffrer: true, phrase: PHRASE, indice: 'coffre bureau + initiales'
     });

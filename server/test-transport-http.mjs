@@ -12,12 +12,14 @@
 // IWF_CHEMIN_BASE — cf. server/db.js — sur un port aléatoire haut), et fait
 // dialoguer les deux par un vrai fetch() Node.
 //
-// Authentification : NON nécessaire ici. Toutes les preuves demandées portent
-// sur des routes de LECTURE (getFluides) ou sur les gardes réseau/format, qui
-// s'exercent AVANT toute notion de session — et le contexte de connexion
-// loopback (contexteDeLaConnexion, serveur.js) laisse les lectures ouvertes
-// sans compte (confort mono-poste). Le circuit connexion/cookie est déjà
-// éprouvé bout en bout par test-routes-comptes.mjs ; pas de doublon ici.
+// Authentification : depuis le LOT A (audit-proof), une lecture anonyme est
+// REFUSÉE même en loopback. Cette suite prouve donc que le refus (403
+// « Session requise… ») remonte fidèlement à travers le VRAI transport fetch →
+// HTTP → serveur, mot pour mot. Une lecture AUTHENTIFIÉE sur un vrai socket est
+// couverte par test-routes-comptes.mjs (qui gère le cookie iwf_session) : le
+// fetch de Node n'a pas de bocal à cookies partagé entre appels, la session ne
+// peut donc pas transiter par le transport ici — c'est justement ce que le
+// refus démontre. Le circuit connexion/cookie est éprouvé bout en bout là-bas.
 //
 // Limite documentée (point 4 de la mission) : l'en-tête `Host` n'est PAS
 // falsifiable via `fetch()` — Node (comme un vrai navigateur) le recalcule
@@ -33,12 +35,15 @@
 //
 // Familles :
 //   1. Démarrage du vrai serveur (process enfant, port jetable, base jetable).
-//   2. Lecture réelle via transport-http.js : getFluides → tableau non vide,
-//      R-32 présent (seedé par schema.sql sur base vierge).
-//   3. Erreur API → Error avec le message français du serveur (mot pour mot).
-//   4. Garde d'origine : Origin étranger → requête fetch brute refusée (403).
+//   2. Lecture anonyme via transport-http.js : getFluides SANS session →
+//      refus 403 « Session requise… » relevé mot pour mot (lot A audit-proof).
+//   3. Méthode inconnue SANS session → 403 « Session requise… » (pas 501) :
+//      la garde de session précède le dispatch, aucun oracle de méthode.
+//   4. Garde d'origine : Origin étranger → refusé (403) ; Origin loopback
+//      légitime sur une route d'amorçage (etatInitial) → 200.
 //   5. Corps mal formé (champs à plat, sans l'enveloppe { params }) → erreur
-//      propre, ET le serveur survit (l'appel suivant fonctionne).
+//      propre, ET le serveur survit (ping suivant → 200).
+//   6. CSP servie en en-tête HTTP sur le front (frame-ancestors 'none').
 //
 // Robustesse : le process serveur est tué dans un `finally` (jamais de
 // processus orphelin même si une vérification lève), port aléatoire haut,
@@ -118,24 +123,34 @@ try {
     const transport = creerTransportHttp(BASE_API);
 
     // ============================================================
-    // 2. Lecture réelle via transport-http.js (le VRAI transport, importé
-    //    tel quel) : getFluides → tableau non vide, R-32 présent.
+    // 2. Lecture anonyme via transport-http.js (le VRAI transport, importé
+    //    tel quel) : depuis le lot A, getFluides SANS session est REFUSÉ même
+    //    en loopback. On prouve que le refus (403 « Session requise… ») remonte
+    //    à travers le vrai transport fetch → HTTP → serveur, mot pour mot.
+    //    (En Node il n'y a pas de `document` : le transport ne peut pas émettre
+    //    l'évènement de redirection, il relève directement le message serveur.)
     // ============================================================
     {
-      const fluides = await transport('getFluides', {});
-      verifier('transport-http.js : getFluides renvoie un tableau non vide',
-        Array.isArray(fluides) && fluides.length > 0,
-        JSON.stringify(fluides)?.slice(0, 200));
-      verifier('le résultat est bien DÉPLIÉ (pas d\'enveloppe {ok,resultat})',
-        fluides.ok === undefined && fluides.resultat === undefined);
-      verifier('R-32 est présent (seedé par schema.sql sur base vierge)',
-        fluides.some((f) => f.code === 'R-32'));
+      let leve = null;
+      try {
+        await transport('getFluides', {});
+      } catch (erreur) {
+        leve = erreur;
+      }
+      verifier('lecture anonyme (getFluides) refusée à travers le vrai transport [lot A]',
+        leve instanceof Error, String(leve));
+      verifier('le message de refus est CELUI DU SERVEUR, mot pour mot',
+        leve?.message === 'Session requise (connexion nécessaire).',
+        leve?.message);
     }
 
     // ============================================================
-    // 3. Erreur API → Error avec le message français du serveur, mot pour
-    //    mot (méthode inconnue : passe la garde réseau et la garde lecture
-    //    LAN — loopback — puis échoue dans api.appeler avec code 501).
+    // 3. Méthode INCONNUE sans session → 403 « Session requise… », PAS 501.
+    //    Depuis le lot A, une méthode non listée dans ROLES_MUTATION est
+    //    traitée comme une lecture : la garde de session la refuse AVANT le
+    //    dispatch d'api.appeler. Un appelant anonyme n'obtient donc jamais le
+    //    message « méthode non implémentée » — aucun oracle d'existence de
+    //    méthode ne fuit. (La garde de session PRÉCÈDE le dispatch.)
     // ============================================================
     {
       let leve = null;
@@ -146,9 +161,8 @@ try {
       }
       verifier('méthode inconnue → transport-http.js lève une Error',
         leve instanceof Error, String(leve));
-      verifier('le message est CELUI DU SERVEUR, mot pour mot',
-        leve?.message === 'Méthode « methodeTotalementInconnue » non encore ' +
-          'implémentée (chantier V9-E3).',
+      verifier('le message est « Session requise… » (garde AVANT dispatch, pas d\'oracle)',
+        leve?.message === 'Session requise (connexion nécessaire).',
         leve?.message);
     }
 
@@ -174,9 +188,11 @@ try {
         corps?.erreur);
 
       // Origin LOOPBACK légitime (celui que poserait le front lui-même,
-      // servi par ce même serveur) : doit passer — la garde cible bien
-      // l'origine étrangère, pas la présence de l'en-tête en soi.
-      const reponseOrigineLegitime = await fetch(`${BASE_API}/getFluides`, {
+      // servi par ce même serveur) : doit passer la garde d'origine. On le
+      // prouve sur une route d'AMORÇAGE (etatInitial), atteignable sans
+      // session — une lecture métier serait, elle, refusée par la garde de
+      // session (lot A), ce qui masquerait le verdict de la garde d'origine.
+      const reponseOrigineLegitime = await fetch(`${BASE_API}/etatInitial`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -184,7 +200,7 @@ try {
         },
         body: JSON.stringify({ params: {} }),
       });
-      verifier('Origin loopback légitime → 200 (la garde ne bloque pas tout)',
+      verifier('Origin loopback légitime → 200 (la garde d\'origine ne bloque pas tout)',
         reponseOrigineLegitime.status === 200);
 
       // Host étranger : NON falsifiable via fetch() (Node, comme un vrai
@@ -213,11 +229,35 @@ try {
         typeof corpsMalForme?.erreur === 'string' && corpsMalForme.erreur.length > 0,
         JSON.stringify(corpsMalForme));
 
-      // Le serveur survit : l'appel suivant (une vraie lecture, via le vrai
-      // transport) fonctionne toujours.
-      const fluidesApres = await transport('getFluides', {});
-      verifier('le serveur SURVIT au corps mal formé (lecture suivante OK)',
-        Array.isArray(fluidesApres) && fluidesApres.length > 0);
+      // Le serveur survit : l'appel suivant fonctionne toujours. On le prouve
+      // via /api/ping (atteignable sans session — une lecture métier serait
+      // refusée par la garde du lot A, ce qui ne dirait rien sur la survie).
+      const reponsePing = await fetch(`http://127.0.0.1:${PORT}/api/ping`);
+      const corpsPing = await reponsePing.json();
+      verifier('le serveur SURVIT au corps mal formé (ping suivant → 200)',
+        reponsePing.status === 200 && corpsPing?.ok === true,
+        JSON.stringify(corpsPing));
+    }
+
+    // ============================================================
+    // 6. CSP servie en EN-TÊTE HTTP sur le front (lot A audit-proof) : le
+    //    document HTML porte Content-Security-Policy, avec frame-ancestors
+    //    'none' (que la balise <meta> ne peut pas exprimer) — plus l'en-tête
+    //    anti-clickjacking hérité.
+    // ============================================================
+    {
+      const reponseHtml = await fetch(`http://127.0.0.1:${PORT}/v8/index.html`);
+      await reponseHtml.arrayBuffer(); // vide le corps (pas d'orphelin de socket)
+      const csp = reponseHtml.headers.get('content-security-policy');
+      verifier('le front est servi (200) avec un en-tête Content-Security-Policy',
+        reponseHtml.status === 200 && typeof csp === 'string' && csp.length > 0, csp);
+      verifier('la CSP en-tête pose frame-ancestors \'none\' (anti-clickjacking fort)',
+        !!csp && csp.includes("frame-ancestors 'none'"), csp);
+      verifier('la CSP en-tête garde default-src \'self\' et object-src \'none\'',
+        !!csp && csp.includes("default-src 'self'") && csp.includes("object-src 'none'"),
+        csp);
+      verifier('X-Frame-Options: SAMEORIGIN conservé (repli anciens navigateurs)',
+        reponseHtml.headers.get('x-frame-options') === 'SAMEORIGIN');
     }
   }
 } finally {

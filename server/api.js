@@ -1031,10 +1031,13 @@ const HANDLERS = {
    *    roleApp = le rôle de la SESSION (jamais celui de la fiche) : c'est ce
    *    rôle qui gouverne les gardes serveur (garderRole), le front
    *    (peutValider) doit raisonner sur le même.
-   *  - Aucune session (loopback en lecture ouverte, ou harnais de test qui ne
-   *    pose qu'un rôle) : repli HISTORIQUE = premier REFERENT du personnel,
-   *    Error s'il n'y en a pas — comportement d'avant E5, préservé pour le
-   *    contrat et le confort mono-poste (identique au DemoStore, sans session).
+   *  - Contexte sans session utilisateur mais avec un rôle (harnais de contrat,
+   *    ou DemoStore qui n'a aucune notion de session) : repli HISTORIQUE =
+   *    premier REFERENT du personnel, Error s'il n'y en a pas — comportement
+   *    d'avant E5, préservé pour la PARITÉ avec le DemoStore. NB : depuis le
+   *    lot A, ce repli n'est plus atteignable par une lecture HTTP anonyme
+   *    (traiterApi exige une session pour tout get*) ; seuls les appels
+   *    in-process (harnais-contrat) l'empruntent encore.
    */
   getUtilisateurCourant(_params, contexte) {
     const idCompte = contexte?.utilisateur ?? null;
@@ -1632,6 +1635,11 @@ const HANDLERS = {
     if (octets.length > PJ_TAILLE_MAX) {
       throw new Error(
         'Fichier trop volumineux : 5 Mo maximum par pièce jointe.');
+    }
+    // Audit-proof : la signature binaire réelle doit confirmer le type
+    // déclaré (pas de HTML/exécutable déguisé en PDF ou image).
+    if (!signatureConcordeAvecMime(octets, mime)) {
+      throw new Error(MSG_SIGNATURE_PJ);
     }
     const pieceJointe = {
       id: db.generateId('PJ'),
@@ -4705,6 +4713,43 @@ function decoderBase64Pj(contenu) {
     throw new Error('Contenu base64 illisible pour la pièce jointe.');
   }
   return Buffer.from(base64, 'base64');
+}
+
+/** Message levé quand le CONTENU d'une PJ dément le type déclaré (miroir front). */
+const MSG_SIGNATURE_PJ =
+  'Contenu du fichier incohérent avec le type déclaré ' +
+  '(signature binaire non conforme).';
+
+/**
+ * Signatures binaires des SEULS types de PJ acceptés — MIROIR EXACT de
+ * v8/js/data/contenu-pj.js (SIGNATURES_PJ). Ne jamais faire diverger.
+ */
+const SIGNATURES_PJ = {
+  'application/pdf': [{ pos: 0, octets: [0x25, 0x50, 0x44, 0x46] }],
+  'image/png': [{ pos: 0, octets: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] }],
+  'image/jpeg': [{ pos: 0, octets: [0xff, 0xd8, 0xff] }],
+  'image/webp': [
+    { pos: 0, octets: [0x52, 0x49, 0x46, 0x46] },
+    { pos: 8, octets: [0x57, 0x45, 0x42, 0x50] },
+  ],
+};
+
+/**
+ * La signature binaire réelle des `octets` concorde-t-elle avec le `mimeType`
+ * déclaré ? MIROIR EXACT de contenu-pj.js signatureConcordeAvecMime.
+ * @param {Buffer|Uint8Array} octets
+ * @param {string} mimeType
+ * @returns {boolean}
+ */
+function signatureConcordeAvecMime(octets, mimeType) {
+  const motifs = SIGNATURES_PJ[mimeType];
+  if (!motifs || !octets) return false;
+  for (const { pos, octets: attendus } of motifs) {
+    for (let i = 0; i < attendus.length; i += 1) {
+      if (octets[pos + i] !== attendus[i]) return false;
+    }
+  }
+  return true;
 }
 
 /** Dossier documents/ des pièces jointes, TOUJOURS à côté de la base. */

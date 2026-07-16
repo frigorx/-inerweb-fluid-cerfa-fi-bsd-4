@@ -246,7 +246,7 @@ const pieceJointe = await store.ajouterPieceJointe({
   categorie: 'CERTIFICAT',
   nomFichier: 'certificat-balance-mettler.pdf',
   mimeType: 'application/pdf',
-  base64: 'QUJDRA==' // « ABCD » : 4 octets
+  base64: 'JVBERg==' // « %PDF » : 4 octets, vraie signature PDF (audit-proof)
 });
 verifier('ajouterPieceJointe : métadonnées complètes (taille, SHA-256, date)',
   pieceJointe.taille === 4 &&
@@ -259,8 +259,8 @@ verifier('listerPiecesJointes : la pièce est listée pour son entité',
 
 const pjComplete = await store.obtenirPieceJointe(pieceJointe.id);
 const textePj = await pjComplete.blob.text();
-verifier('obtenirPieceJointe : contenu restitué intact (« ABCD »)',
-  textePj === 'ABCD');
+verifier('obtenirPieceJointe : contenu restitué intact (« %PDF »)',
+  textePj === '%PDF');
 
 await verifierRejet('ajouterPieceJointe rejette un fichier > 5 Mo',
   store.ajouterPieceJointe({
@@ -283,7 +283,9 @@ const pjMouvement = await store.ajouterPieceJointe({
   categorie: 'PHOTO_PESEE',
   nomFichier: 'pesee-fi-2026-0007.png',
   mimeType: 'image/png',
-  base64: 'QUJDRA=='
+  // Vraie signature PNG 1×1 (audit-proof) : le contenu doit confirmer le type.
+  base64: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk'
+    + 'YPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
 });
 await verifierRejet('supprimerPieceJointe refusée sur une écriture figée',
   store.supprimerPieceJointe(pjMouvement.id), 'figée');

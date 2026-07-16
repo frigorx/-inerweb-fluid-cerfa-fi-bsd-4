@@ -29,7 +29,7 @@ contre chacune.
 
 | Module | Rôle | Pièges |
 |---|---|---|
-| `serveur.js` | HTTP loopback (LAN si `IWF_LAN=1`), routage `/api/:methode`, statique `/v8/` | garde Host+Origin (CSRF/rebinding) obligatoire |
+| `serveur.js` | HTTP loopback (LAN si `IWF_LAN=1`), routage `/api/:methode`, statique `/v8/` | garde Host+Origin (CSRF/rebinding) obligatoire ; **lot A : TOUTE lecture exige une session (loopback compris), seuls ping + routes d'amorçage de routes-comptes passent sans** ; CSP servie en en-tête (`frame-ancestors 'none'`) |
 | `api.js` (~5000 l.) | LE dispatcher : un handler par méthode du contrat, `muter()` = transaction, `ROLES_MUTATION` | sémantique = copie EXACTE du DemoStore ; rôle jamais lu du corps |
 | `db.js` | ouverture PRAGMA coffre-fort, `journaliser()` SHA-256 CHAÎNÉ, transaction ré-entrante | `recursive_triggers=ON` VITAL (anti-REPLACE) |
 | `migrations.js` | registre 2→21, transactionnel, consécutif ; exporte `FICHE_REGLEMENTAIRE_FLUIDES` (table validée, consommée par la migration 21 ET l'import JSON d'api.js) | JAMAIS de DROP destructif ; trigger WORM à recréer si colonne mouvements ajoutée ; registre-commentaire en tête à tenir |
@@ -51,7 +51,7 @@ contre chacune.
 | `contrat.js` | LA vérité de surface : 77 méthodes documentées, messages canoniques |
 | `demo-store.js` (~4000 l.) | implémentation mémoire complète (référence sémantique) |
 | `local-store.js` | enveloppes 1-pour-1 vers l'API (ajouter CHAQUE nouvelle méthode ici) ; SEULE adaptation : le contenu binaire des PJ (base64 à l'aller, Blob au retour) |
-| `contenu-pj.js` | pur : contenu binaire des pièces jointes (`versBase64`/`versBlob`) — JSON réduit un Blob à `{}`, d'où 9 octets de déchet enregistrés comme preuve avant le 14/07 |
+| `contenu-pj.js` | pur : contenu binaire des pièces jointes (`versBase64`/`versBlob`) — JSON réduit un Blob à `{}`, d'où 9 octets de déchet enregistrés comme preuve avant le 14/07 ; **lot A : `signatureConcordeAvecMime` = contrôle des nombres magiques (PDF/PNG/JPEG/WebP), miroir littéral dans `api.js`, appelé par `ajouterPieceJointe` des deux côtés** |
 | `datastore.js` | fabrique : choisit DemoStore ou LocalStore selon que le serveur répond |
 | `demo-donnees.js` | le monde fictif de la Démo (données seules, aucune règle) |
 | `transport-http.js` | transport `fetch` du LocalStore (`POST /api/:methode`, enveloppe `{ok,resultat}`) |
@@ -92,3 +92,8 @@ contre chacune.
 5. **`??` vs `||`** : champs de rôle → `|| null` (chaîne vide = null).
 6. **Import** : triggers WORM retirés puis recréés DANS la transaction ;
    compléments de collections absentes À VIDE.
+7. **Lot A / démarrage sans session** : `LocalStore.init()` TOLÈRE « Session
+   requise » (le store se crée avant connexion) ; l'intégrité est re-vérifiée
+   APRÈS connexion dans `reprendreDemarrageApresConnexion`. Ne pas remettre de
+   lecture gatée « dure » dans `creerStore` — l'amorçage doit atteindre l'écran
+   de connexion/bootstrap sans planter.

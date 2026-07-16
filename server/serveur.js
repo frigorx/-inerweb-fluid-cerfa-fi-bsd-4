@@ -192,14 +192,14 @@ function estLoopback(requete) {
  * vérifié par sessions.verifierSession — jeton haché, comparé en temps
  * constant, expiration vérifiée à CHAQUE appel).
  *
- * Lectures vs mutations (décision non négociable) :
- *   - Sans session : en LOOPBACK, le contexte porte { loopback: true } sans
- *     rôle — les LECTURES restent ouvertes (confort mono-poste), les
- *     MUTATIONS tombent en 403 via garderRole (aucune méthode de mutation
- *     n'est dans ROLES_MUTATION avec un rôle `undefined`/`null` habilité).
- *   - Sans session, sur une origine LAN (non loopback) : contexte vide, ni
- *     rôle ni loopback — la route d'API distinguera lecture/mutation
- *     (cf. traiterApi : une lecture sans session est refusée hors loopback).
+ * Lectures vs mutations (décision non négociable, DURCIE au lot A audit-proof) :
+ *   - Sans session (loopback OU LAN) : pas de rôle. TOUTE lecture (get*) est
+ *     refusée par la garde de traiterApi (403 « Session requise… »), et les
+ *     MUTATIONS tombent de toute façon en 403 via garderRole. Le loopback
+ *     n'ouvre plus les lectures : l'accès anonyme mono-poste était le blocage
+ *     n°1 de l'audit externe (15/07), il est levé. Le drapeau { loopback }
+ *     reste posé, mais UNIQUEMENT pour les routes qui l'exigent encore par
+ *     construction (bootstrapAdmin : 1er admin réservé au loopback strict).
  *   - Avec session valide : { role, utilisateur } — le rôle est CELUI FIGÉ
  *     à l'ouverture de session, jamais recalculé depuis le corps.
  */
@@ -219,9 +219,10 @@ function contexteDeLaConnexion(requete) {
       return { ...base, role: verdict.role, utilisateur: verdict.utilisateur_id };
     }
   }
-  // Aucune session valide : pas de rôle. Le loopback reste distingué pour
-  // que les LECTURES (get*) restent ouvertes en confort mono-poste — les
-  // MUTATIONS, elles, exigent toujours un rôle habilité (garderRole).
+  // Aucune session valide : pas de rôle. Depuis le lot A, le loopback n'ouvre
+  // PLUS les lectures (traiterApi exige une session pour tout get*) ; le
+  // drapeau { loopback } ne sert plus qu'aux routes qui l'exigent encore par
+  // construction (bootstrapAdmin en loopback strict).
   return base;
 }
 
@@ -416,14 +417,18 @@ function traiterApi(requete, reponse, chemin) {
       return;
     }
 
-    // Garde lecture LAN (V9-E5) : sur une origine LAN (non loopback), une
-    // session valide est exigée MÊME pour une lecture (get*). En loopback,
-    // les lectures restent ouvertes sans session (confort mono-poste) — les
-    // mutations, elles, sont de toute façon bloquées par garderRole (aucun
-    // rôle n'est habilité sans session, quel que soit le loopback).
+    // Garde lecture (V9-E5 + lot A audit-proof) : TOUTE lecture (get*) exige
+    // une session valide, loopback COMPRIS. Un registre réglementaire doit
+    // pouvoir dire QUI a consulté quoi ; l'accès anonyme en loopback (l'ancien
+    // « confort mono-poste ») était le blocage n°1 de l'audit externe du
+    // 15/07 — il est levé ici. Les seules routes atteignables sans session
+    // sont, PAR CONSTRUCTION, aiguillées AVANT ce point : /api/ping (vie du
+    // serveur) et les routes d'amorçage/connexion de routes-comptes
+    // (etatInitial, bootstrapAdmin, connexion). Les mutations restent en outre
+    // bloquées par garderRole (aucun rôle n'est habilité sans session).
     const estMutation = Object.prototype.hasOwnProperty.call(
       api.ROLES_MUTATION, methode);
-    if (!estMutation && !contexte.role && !contexte.loopback) {
+    if (!estMutation && !contexte.role) {
       repondreJson(reponse, 403, {
         ok: false,
         erreur: 'Session requise (connexion nécessaire).',
@@ -454,6 +459,29 @@ function traiterApi(requete, reponse, chemin) {
 }
 
 // ----- Fichiers statiques (le front : index.html, css/, js/, img/…) -----
+
+// Content-Security-Policy servie en EN-TÊTE HTTP (lot A audit-proof). La
+// balise <meta> de v8/index.html reste en place — indispensable au Mode Démo
+// (GitHub Pages, aucun serveur pour poser un en-tête) — mais l'en-tête HTTP la
+// DOUBLE côté registre local : il est plus robuste (appliqué avant le moindre
+// octet de HTML, non contournable par une injection avant la balise) et sait
+// exprimer `frame-ancestors 'none'`, que <meta> ne peut pas (l'anti-clickjacking
+// ne repose donc plus sur le seul X-Frame-Options). Politique IDENTIQUE à la
+// meta pour le reste — les deux doivent rester alignées (leur intersection est
+// ce que le navigateur applique).
+const CSP_ENTETE = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self'",
+  "connect-src 'self'",
+  "worker-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join('; ');
 
 function traiterStatique(requete, reponse, chemin) {
   // Un chemin de dossier sert son index.html : '/' → la v7 (racine),
@@ -501,10 +529,13 @@ function traiterStatique(requete, reponse, chemin) {
       'Content-Type': typeContenu,
       'Content-Length': infos.size,
       'X-Content-Type-Options': 'nosniff',
-      // Anti-clickjacking : la page ne peut être cadrée que par le serveur
-      // lui-même (SAMEORIGIN), jamais par un site tiers. La meta-CSP de
-      // v8/index.html ne peut pas poser `frame-ancestors` (interdit en meta) —
-      // cet en-tête HTTP est donc le seul rempart contre le cadrage.
+      // CSP servie en en-tête (lot A) : rempart principal, `frame-ancestors
+      // 'none'` compris. Appliquée à TOUTES les réponses statiques (inoffensive
+      // sur css/js/images, décisive sur les documents HTML).
+      'Content-Security-Policy': CSP_ENTETE,
+      // Anti-clickjacking hérité, conservé pour les très vieux navigateurs qui
+      // ignorent `frame-ancestors` : la page ne peut être cadrée que par le
+      // serveur lui-même (SAMEORIGIN), jamais par un site tiers.
       'X-Frame-Options': 'SAMEORIGIN',
     });
 

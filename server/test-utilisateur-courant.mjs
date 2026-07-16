@@ -169,12 +169,18 @@ seederComptes([
 ]);
 
 // ============================================================
-// 1. Base fraîche, personnel VIDE, SANS session (loopback) → repli historique
+// 1. Base fraîche, SANS session (loopback) → 403 (lot A audit-proof)
+//    Avant le lot A, une lecture anonyme en loopback était tolérée et
+//    getUtilisateurCourant tombait sur son repli historique (« Aucun référent
+//    dans le personnel. »). Depuis le lot A, TOUTE lecture exige une session,
+//    loopback compris : la requête est refusée AVANT d'atteindre le handler.
+//    Le repli lui-même (parité DemoStore) reste couvert côté démo par
+//    v8/js/data/test-contrat.mjs (« getUtilisateurCourant retourne un référent »).
 // ============================================================
 {
   const r = await requeteJson(PORT, 'getUtilisateurCourant', {});
-  verifier('sans session + personnel vide → Error « Aucun référent » (repli historique)',
-    r.statut === 400 && r.corps?.erreur === 'Aucun référent dans le personnel.',
+  verifier('sans session (base fraîche) → 403 Session requise [lot A]',
+    r.statut === 403 && r.corps?.erreur === 'Session requise (connexion nécessaire).',
     JSON.stringify(r.corps));
 }
 
@@ -273,15 +279,17 @@ seederComptes([
 }
 
 // ============================================================
-// 5. Retour au loopback SANS session, personnel désormais peuplé → repli
-//    premier REFERENT (comportement d'avant E5, préservé).
+// 5. Retour au loopback SANS session, personnel désormais peuplé → 403.
+//    Même avec un personnel peuplé, l'absence de session interdit la lecture
+//    (lot A) : plus de repli « premier REFERENT » atteignable par HTTP. Ce
+//    repli demeure un comportement du DemoStore (sans notion de session),
+//    couvert côté démo — ici, la porte est fermée quoi qu'il y ait en base.
 // ============================================================
 {
   const r = await requeteJson(PORT, 'getUtilisateurCourant', {});
-  const u = r.corps?.resultat;
-  verifier('sans session, personnel peuplé → repli premier REFERENT (Jean Dupont)',
-    r.statut === 200 && u?.id === idFicheReferent && u?.roleApp === 'REFERENT',
-    JSON.stringify(u));
+  verifier('sans session, même personnel peuplé → 403 Session requise [lot A]',
+    r.statut === 403 && r.corps?.erreur === 'Session requise (connexion nécessaire).',
+    JSON.stringify(r.corps));
 }
 
 // ============================================================

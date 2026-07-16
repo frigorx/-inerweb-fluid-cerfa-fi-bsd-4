@@ -10,6 +10,7 @@ import {
   versBlob,
   base64VersOctets,
   estBase64,
+  signatureConcordeAvecMime,
   MSG_CONTENU_ATTENDU,
   MSG_BASE64_ILLISIBLE
 } from './contenu-pj.js';
@@ -136,6 +137,41 @@ verifier('estBase64 : refuse le déchet, accepte une vraie base64',
     estUnBlob && (await blob.text()) === TEXTE);
   verifier('versBlob : type par défaut si le MIME est absent',
     versBlob(base64DuBlob).type === 'application/octet-stream');
+}
+
+// ============================================================
+// 7. Signature binaire réelle : le contenu doit confirmer le type déclaré
+//    (audit-proof — ne jamais faire confiance au seul MIME annoncé)
+// ============================================================
+{
+  const octetsDe = (...o) => Uint8Array.from(o);
+  // Chaque type accepté concorde avec sa vraie signature…
+  verifier('PDF (%PDF) concorde avec application/pdf',
+    signatureConcordeAvecMime(octetsDe(0x25, 0x50, 0x44, 0x46, 0x2d), 'application/pdf'));
+  verifier('PNG (0x89 PNG…) concorde avec image/png',
+    signatureConcordeAvecMime(
+      octetsDe(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a), 'image/png'));
+  verifier('JPEG (FF D8 FF) concorde avec image/jpeg',
+    signatureConcordeAvecMime(octetsDe(0xff, 0xd8, 0xff, 0xe0), 'image/jpeg'));
+  verifier('WebP (RIFF … WEBP) concorde avec image/webp',
+    signatureConcordeAvecMime(
+      octetsDe(0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50), 'image/webp'));
+
+  // …et TOUT démenti est rejeté.
+  verifier('du HTML annoncé image/png est rejeté',
+    signatureConcordeAvecMime(octetsDe(0x3c, 0x68, 0x74, 0x6d, 0x6c), 'image/png') === false);
+  verifier('un PNG annoncé application/pdf est rejeté (type croisé)',
+    signatureConcordeAvecMime(
+      octetsDe(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a), 'application/pdf') === false);
+  verifier('un fichier trop court pour la signature est rejeté',
+    signatureConcordeAvecMime(octetsDe(0x25, 0x50), 'application/pdf') === false);
+  verifier('WebP sans l’ancre WEBP (RIFF seul) est rejeté',
+    signatureConcordeAvecMime(
+      octetsDe(0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0, 0, 0, 0), 'image/webp') === false);
+  verifier('un type hors liste blanche n’a pas de signature connue → refusé',
+    signatureConcordeAvecMime(octetsDe(0x25, 0x50, 0x44, 0x46), 'image/svg+xml') === false);
+  verifier('des octets absents (null) sont refusés sans lever',
+    signatureConcordeAvecMime(null, 'image/png') === false);
 }
 
 // ------------------------------------------------------------

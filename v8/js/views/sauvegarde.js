@@ -590,6 +590,13 @@ function ouvrirModaleSauvegarder(rafraichir) {
       champPhrase.focus();
       return;
     }
+    // Politique audit-proof : au moins 14 caractères (le serveur l'exige aussi).
+    if (chiffrer && phrase.length < 14) {
+      afficherErreur('Phrase trop courte : 14 caractères minimum '
+        + '(une phrase longue résiste à une attaque hors ligne).');
+      champPhrase.focus();
+      return;
+    }
 
     enCours = true;
     const boutonEnvoi = racine.querySelector('button[type="submit"]');

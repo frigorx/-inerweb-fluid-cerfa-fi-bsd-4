@@ -59,7 +59,8 @@ function paquetAvecPj(piecesJointes) {
 // ============================================================
 // 1. Une pièce jointe normale : écrite dans documents/, sous son id
 // ============================================================
-const CONTENU = Buffer.from('preuve authentique').toString('base64');
+// Vraie signature PDF (%PDF-1.4) : le store vérifie désormais les octets réels.
+const CONTENU = 'JVBERi0xLjQK';
 const pj = appeler('ajouterPieceJointe', {
   donneesPj: {
     entiteType: 'MACHINE', entiteId: 'M-1', categorie: 'AUTRE',

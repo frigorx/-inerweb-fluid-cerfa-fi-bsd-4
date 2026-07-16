@@ -2,6 +2,40 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔒 LOT A audit-proof — lectures sous session + trois durcissements (16/07 soir)
+Premier lot du CAP « registre réel en septembre » (voir `docs/PROMPT-REPRISE.md`). Objectif :
+fermer le blocage n°1 de l'audit externe du 15/07 (lecture anonyme en loopback) et poser trois
+durcissements ciblés. **Toutes les modifs ont été TIRÉES, pas seulement lues** : chaque nouvelle
+assertion échouerait contre le code d'avant le lot A.
+- **Lectures sous session (le cœur)** : `serveur.js` exigeait déjà une session pour les lectures sur
+  une origine LAN mais laissait le **loopback** ouvert (« confort mono-poste »). Supprimé : TOUTE
+  lecture `get*` exige désormais une session, loopback compris. Seules restent atteignables sans
+  session, par construction (aiguillées AVANT la garde) : `/api/ping`, et les routes d'amorçage/
+  connexion de `routes-comptes` (`etatInitial`, `bootstrapAdmin`, `connexion`). Les mutations
+  restaient bloquées par `garderRole`. Effet de bord voulu : une méthode INCONNUE sans session
+  renvoie 403 « Session requise » (pas 501) — aucun oracle d'existence de méthode pour un anonyme.
+  Preuves : `test-routes-comptes` (socket brut, famille 6 retournée), `test-transport-http` (vrai
+  transport navigateur), `test-utilisateur-courant` (familles 1 et 5). Le repli historique de
+  `getUtilisateurCourant` reste couvert côté démo (parité DemoStore).
+- **Régression front corrigée** : `creerStore()` appelait `LocalStore.init()` (lecture désormais
+  gatée) AVANT connexion → écran d'erreur au démarrage. `init()` tolère maintenant « Session
+  requise » (intégrité différée) ; l'intégrité du registre est **re-vérifiée après connexion**
+  (`reprendreDemarrageApresConnexion`) — sinon le bandeau audit-proof ne s'afficherait plus jamais
+  en mono-poste. Vérifié en direct (base + port jetables) : base fraîche → écran « Premier
+  lancement », console propre.
+- **Durcissement 1 — signature binaire réelle des pièces jointes** : le store ne se fie plus au
+  seul MIME déclaré. Nouvelle fonction pure `signatureConcordeAvecMime` (`contenu-pj.js`, miroir
+  littéral dans `api.js`) qui contrôle les nombres magiques (PDF `%PDF`, PNG, JPEG, WebP RIFF/WEBP).
+  Un HTML/exécutable déguisé en `.png` est refusé des DEUX côtés du contrat. Fixtures de test
+  corrigées (vrais octets PNG/PDF au lieu de texte).
+- **Durcissement 2 — CSP en en-tête HTTP** : `serveur.js` sert `Content-Security-Policy` sur toutes
+  les réponses statiques, avec `frame-ancestors 'none'` (que la balise `<meta>` ne peut pas
+  exprimer). La meta-CSP de `index.html` reste en place (indispensable au Mode Démo sur Pages).
+- **Durcissement 3 — phrase de sauvegarde ≥ 14 caractères** : `sauvegarde.sauvegarder()` refuse à la
+  CRÉATION une phrase chiffrée trop courte (le seuil ne touche jamais la restauration d'anciennes
+  sauvegardes, ni la sauvegarde auto qui ne chiffre pas). Validation front alignée (`views/sauvegarde.js`).
+- **Réglage** : Opus, effort élevé (incrément cadré non gaté). **TOUT VERT — 74 exécutions.**
+
 ### 💾 SAUVEGARDES RÉELLEMENT AUTOMATIQUES — condition 6 SOLDÉE (16/07 soir)
 Décisions Franck : **R-455A = 148 DÉFINITIF** (logiciel à usage interne — pas de question DGPR ni
 de signature formelle, la table réglementaire est **CLOSE**) et « **finir le logiciel** ». Sur les

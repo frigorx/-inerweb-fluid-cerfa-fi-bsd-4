@@ -115,3 +115,45 @@ export function versBlob(base64, mimeType) {
   if (typeof Blob === 'undefined') return octets;
   return new Blob([octets], { type: mimeType || 'application/octet-stream' });
 }
+
+/** Message levé quand le CONTENU réel d'une PJ dément le type déclaré. */
+export const MSG_SIGNATURE_PJ =
+  'Contenu du fichier incohérent avec le type déclaré ' +
+  '(signature binaire non conforme).';
+
+/**
+ * Signatures binaires (« nombres magiques ») des SEULS types de PJ acceptés
+ * (PDF, PNG, JPEG, WebP). Chaque entrée = une liste de motifs { pos, octets } :
+ * le fichier concorde si TOUS les motifs de son type sont présents aux bons
+ * décalages. WebP a besoin de deux ancres (RIFF au début, WEBP à l'octet 8).
+ */
+const SIGNATURES_PJ = {
+  'application/pdf': [{ pos: 0, octets: [0x25, 0x50, 0x44, 0x46] }],           // %PDF
+  'image/png': [{ pos: 0, octets: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] }],
+  'image/jpeg': [{ pos: 0, octets: [0xff, 0xd8, 0xff] }],
+  'image/webp': [
+    { pos: 0, octets: [0x52, 0x49, 0x46, 0x46] },                             // RIFF
+    { pos: 8, octets: [0x57, 0x45, 0x42, 0x50] },                             // WEBP
+  ],
+};
+
+/**
+ * La signature binaire RÉELLE des `octets` concorde-t-elle avec le `mimeType`
+ * DÉCLARÉ ? Ne fait confiance qu'aux octets, jamais au type annoncé — c'est le
+ * garde-fou audit-proof contre un fichier hostile déguisé (un exécutable ou du
+ * HTML renommé « .pdf »). Retourne false si le type n'a pas de signature connue
+ * ou si le fichier est trop court (un octet manquant vaut « ne concorde pas »).
+ * @param {Uint8Array} octets
+ * @param {string} mimeType (attendu déjà en minuscules, déjà dans la liste blanche)
+ * @returns {boolean}
+ */
+export function signatureConcordeAvecMime(octets, mimeType) {
+  const motifs = SIGNATURES_PJ[mimeType];
+  if (!motifs || !octets) return false;
+  for (const { pos, octets: attendus } of motifs) {
+    for (let i = 0; i < attendus.length; i += 1) {
+      if (octets[pos + i] !== attendus[i]) return false;
+    }
+  }
+  return true;
+}

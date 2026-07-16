@@ -272,7 +272,9 @@ let retourVidage;
   await store.ajouterPieceJointe({
     entiteType: 'MACHINE', entiteId: machineEssai.id, categorie: 'AUTRE',
     nomFichier: 'essai.png', mimeType: 'image/png',
-    base64: Buffer.from('essai mapping').toString('base64')
+    // Vraie signature PNG 1×1 : le store vérifie les octets réels (audit-proof).
+    base64: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk'
+      + 'YPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
   });
   const annee = new Date().getFullYear();
   const balance = await store.getBalanceMatiere(annee);

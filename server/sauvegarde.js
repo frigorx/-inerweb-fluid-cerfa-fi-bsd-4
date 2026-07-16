@@ -337,11 +337,23 @@ function collecterConfig() {
 function sauvegarder(type, options = {}) {
   const chiffrer = options.chiffrer === true;
   const phrase = options.phrase;
+  // Longueur minimale d'une phrase de sauvegarde chiffrée (lot A audit-proof).
+  const LONGUEUR_MIN_PHRASE = 14;
   // Refus AVANT tout effet : une sauvegarde chiffrée exige une phrase.
   if (chiffrer && (typeof phrase !== 'string' || phrase.length === 0)) {
     throw new Error(
       'Sauvegarde chiffrée demandée sans phrase : impossible. Fournissez ' +
       'une phrase (sans elle, rien à protéger ni à rouvrir).');
+  }
+  // Politique audit-proof : au moins 14 caractères. Le fichier « .zip.chiffre »
+  // est manipulable hors ligne par quiconque le détient ; un secret court s'y
+  // force. Le seuil ne vaut QU'À LA CRÉATION — restaurer ou tester une ancienne
+  // sauvegarde accepte toujours sa phrase d'origine (dechiffrer ne juge jamais
+  // la longueur), et la sauvegarde automatique ne chiffre pas.
+  if (chiffrer && phrase.length < LONGUEUR_MIN_PHRASE) {
+    throw new Error(
+      `Phrase de sauvegarde trop courte : ${LONGUEUR_MIN_PHRASE} caractères ` +
+      'minimum (une phrase longue résiste à une attaque hors ligne).');
   }
 
   const instant = new Date();

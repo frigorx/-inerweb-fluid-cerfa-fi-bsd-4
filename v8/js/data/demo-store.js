@@ -25,6 +25,9 @@ import { calculerTransitions, formaterEpisode, comparerEpisodes, estOuvert }
 import { REGIMES, CATEGORIES_2008, CATEGORIES_2025, comparerHabilitations,
   categorieCoherente, FLUIDES_MENTION, comparerMentions }
   from './habilitations.js';
+// Signature binaire réelle des pièces jointes (audit-proof) : le contenu doit
+// concorder avec le type déclaré, jamais le MIME annoncé seul (miroir serveur).
+import { signatureConcordeAvecMime, MSG_SIGNATURE_PJ } from './contenu-pj.js';
 
 const CLE_STOCKAGE = 'inerweb-fluide-v8-demo';
 
@@ -3523,6 +3526,11 @@ export function creerDemoStore() {
       if (octets.length > PJ_TAILLE_MAX) {
         throw new Error(
           'Fichier trop volumineux : 5 Mo maximum par pièce jointe.');
+      }
+      // Audit-proof : la signature binaire réelle doit confirmer le type
+      // déclaré (pas de HTML/exécutable déguisé en PDF ou image).
+      if (!signatureConcordeAvecMime(octets, mime)) {
+        throw new Error(MSG_SIGNATURE_PJ);
       }
       const pieceJointe = {
         id: genId('pj'),

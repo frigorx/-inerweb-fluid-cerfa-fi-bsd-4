@@ -608,6 +608,13 @@ function reprendreDemarrageApresConnexion() {
   store.surChangement(majBadgeAlertes);
   majBadgeAlertes();
 
+  // Intégrité du registre : re-vérifiée ICI car, depuis le lot A, tout
+  // démarrage passe par la connexion — la première tentative (demarrer, avant
+  // session) a été refusée et a basculé sur l'écran de connexion. Sans ce
+  // rappel, le bandeau audit-proof ne s'afficherait plus jamais en mono-poste.
+  // Idempotent (simple lecture + mise à jour du bandeau).
+  verifierIntegriteRegistre();
+
   routeur = creerRouteur({ surChangement: afficherVue });
   afficherVue(routeur.idCourant(), routeur.paramCourant());
 }
