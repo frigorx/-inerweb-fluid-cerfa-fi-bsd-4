@@ -1,9 +1,14 @@
 # Conditions bloquantes du mode Officiel — condition 2 du plan audit-proof
 
-> **Statut : PROPOSITION À RELIRE PAR FRANCK (lot B, 16/07/2026).** Établie depuis la
-> condition 2 de `PLAN-AUDIT-PROOF-2026.md` et l'avis technique du 16/07 (Q10 notamment).
-> Chaque ligne est codée dans le moteur `blocage-officiel.js` (un module pur, une condition
-> = une entrée) : rayer ou reformuler une ligne = une retouche triviale du moteur.
+> **Statut : ✅ VALIDÉE PAR FRANCK le 16/07/2026** (relecture faite le soir même — « ok »).
+> Les 3 questions ouvertes sont tranchées avec les propositions par défaut : ① matrice
+> d'habilitations NON bloquante tant qu'elle n'est pas validée ligne à ligne (la condition 7
+> bloque sur « habilitation active et valide » seulement) ; ② blocage SEC du fluide vierge
+> PRP ≥ 2500, la dérogation tracée attendra un cas réel ; ③ fiches officielles sur fluides
+> hors périmètre (R-744, R-290) NON bloquées (trace volontaire possible).
+> Établie depuis la condition 2 de `PLAN-AUDIT-PROOF-2026.md` et l'avis technique du 16/07
+> (Q10 notamment). Chaque ligne est codée dans le moteur `blocage-officiel.js` (un module
+> pur, une condition = une entrée) : toute retouche ultérieure reste triviale.
 >
 > Rappel du principe (décision Franck) : en mode **CONSEIL/FORMATION on ne bloque jamais** ;
 > le mode **OFFICIEL, lui, DOIT bloquer** — c'est sa définition. Le mode Officiel reste

@@ -1,9 +1,11 @@
 # Plan du LOT C — double signature réelle + empreinte renforcée + PDF conservé
 
-> **Statut : PLAN À RELIRE PAR FRANCK avant tout code (16/07/2026).** Conditions 3 et 4 du
-> plan audit-proof (`PLAN-AUDIT-PROOF-2026.md`), traitées ENSEMBLE parce que les deux touchent
+> **Statut : ✅ PLAN VALIDÉ PAR FRANCK le 16/07/2026 (brique C0 SOLDÉE).** Décision 1 (le
+> détenteur) actée explicitement ; décisions 2 à 5 confirmées telles quelles (« ok » du
+> 16/07 au soir — appliquer les propositions sans redemander). Conditions 3 et 4 du plan
+> audit-proof (`PLAN-AUDIT-PROOF-2026.md`), traitées ENSEMBLE parce que les deux touchent
 > le scellement. ⚠️ Ce lot touche `hash-mouvement.js` — la règle de la maison s'applique :
-> **plan écrit, migration, tests, AVANT de coder.** Effort MAXIMUM.
+> **plan écrit (fait), migration, tests, AVANT de coder.** Effort MAXIMUM.
 >
 > Calendrier : août. Le mode Officiel reste fermé (`VERROU_LIVRAISON`) pendant tout le lot ;
 > la bascule du verrou est la DERNIÈRE brique, après l'essai complet en données fictives.
@@ -181,7 +183,8 @@ refus de suppression sur mouvement figé (déjà en place), inclusion dans les s
 
 ## 7. Ordre des briques (une brique = code + tests verts + commit)
 
-1. **C0 — GATE** : Franck relit CE plan (les 5 décisions du §2). Rien ne se code avant.
+1. ✅ **C0 — GATE SOLDÉE (16/07)** : plan relu et validé par Franck (les 5 décisions du §2
+   sont tranchées). La brique C1 peut se coder directement.
 2. **C1 — Modèle + signatures** : migration 23, table WORM, méthodes de contrat
    (`signerMouvement(role, …)`, `getSignaturesMouvement`), invalidation par révision,
    critères d'illisibilité ; moteur blocage-officiel enrichi (2 faits signatures). Tests

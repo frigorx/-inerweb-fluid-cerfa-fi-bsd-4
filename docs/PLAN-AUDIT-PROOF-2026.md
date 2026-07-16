@@ -63,8 +63,9 @@ testée. **Contrôles à 3 moments** : passage en officiel, soumission, juste av
   (`simulerValidationOfficielle`, contrat 78) affichée dans la modale de validation. Le mode
   reste FERMÉ par le `VERROU_LIVRAISON` jusqu'aux lots C-D. Liste des conditions =
   `docs/CONDITIONS-BLOCANTES-OFFICIEL.md`.
-- **Gate** : ⏳ Franck RELIT la liste des conditions bloquantes (13 lignes + 3 questions
-  ouvertes) — chaque retouche = une entrée du moteur, trivial.
+- **Gate** : ✅ liste VALIDÉE par Franck le 16/07 au soir (3 questions tranchées avec les
+  défauts proposés — en-tête de `docs/CONDITIONS-BLOCANTES-OFFICIEL.md`). Condition 2
+  ENTIÈREMENT soldée.
 
 ### 3. Double signature RÉELLE
 Séparer : opérateur/technicien · détenteur de l'équipement · éventuellement validateur interne.

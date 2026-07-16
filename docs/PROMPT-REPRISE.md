@@ -4,12 +4,12 @@
 > exact, cap, prochaine brique, gates, méthode et consignes.
 >
 > **Session conseillée : selon le lot choisi** (voir « LE CAP RÉACTIVÉ »). **LOTS A, B et D
-> FAITS le 16/07** (A soldé `872d34b` ; B codé + prouvé, ⏳ **gate : Franck relit
-> `docs/CONDITIONS-BLOCANTES-OFFICIEL.md`** ; D soldé — témoin quotidien de scellement) —
-> prochaine brique = **LOT C** (août ; son PLAN écrit = `docs/PLAN-LOT-C.md` si présent, sinon
-> à écrire AVANT tout code). LOT C (réglementaire gaté, touche `hash-mouvement.js` → plan écrit
-> + migration + tests AVANT de coder) → **Opus effort MAXIMUM**. PAS d'ultracode hors point
-> critique.
+> SOLDÉS le 16/07** (A `872d34b` · B `96d7d5e` + liste des conditions VALIDÉE par Franck le
+> soir même · D `0e27f7e` témoin quotidien de scellement) — prochaine brique = **LOT C,
+> brique C1** : son plan `docs/PLAN-LOT-C.md` est ÉCRIT, relu adversarialement contre le code
+> ET **VALIDÉ par Franck (C0 soldée, les 5 décisions du §2 tranchées)** → on code directement
+> C1 en le suivant À LA LETTRE. LOT C touche `hash-mouvement.js` → **Opus effort MAXIMUM**.
+> PAS d'ultracode hors point critique.
 
 ---
 
@@ -96,21 +96,21 @@ lui, DOIT bloquer — c'est sa définition. **Ordre des lots** :
    posés : signature binaire réelle des PJ (nombres magiques, démo + serveur), CSP en en-tête HTTP
    (`frame-ancestors 'none'`), phrase de sauvegarde ≥ 14 caractères à la création. 74 exéc. vertes,
    vérifié en direct (base + port jetables). Détail = tête du `CHANGELOG.md`.
-2. ✅ **LOT B — CODÉ ET PROUVÉ le 16/07 (⏳ gate : relecture de la liste par Franck)** :
-   liste des 13 conditions bloquantes = `docs/CONDITIONS-BLOCANTES-OFFICIEL.md` (+ 3 questions
-   ouvertes : matrice habilitations, dérogation Q10, fluides hors périmètre). Moteur pur
+2. ✅ **LOT B — SOLDÉ le 16/07 (liste VALIDÉE par Franck le soir même)** :
+   liste des 13 conditions bloquantes = `docs/CONDITIONS-BLOCANTES-OFFICIEL.md` (les 3
+   questions ouvertes tranchées avec les défauts proposés — voir son en-tête). Moteur pur
    `blocage-officiel.js` (ESM + miroir serveur, parité stricte testée) branché aux 3 moments
    des deux stores ; **validateur de session** (serveur, TOUS modes, 403 — trou « déclaré ≠
    prouvé » fermé, tiré sur vrai HTTP) ; `simulerValidationOfficielle` (contrat 77→78, v4)
    affichée dans la modale de validation. Mode Officiel toujours FERMÉ par `VERROU_LIVRAISON`
-   (constante des 2 miroirs, à basculer aux lots C-D). 76 exécutions vertes. Toute retouche de
-   la liste après relecture = une entrée du moteur.
+   (constante des 2 miroirs, à basculer en fin de lot C — brique C5).
 3. **LOT C — Conditions 3+4 ensemble** (le gros morceau, août) : double signature réelle
-   (technicien PUIS détenteur, personne physique, date réelle ; toute modification invalide les
-   signatures), signature illisible jamais ignorée en officiel ; empreinte RENFORCÉE (hash des
-   signatures, exécutant réel, PRP figé, n° CERFA, hash des PJ, hash du PDF) + **PDF final
-   CONSERVÉ** (`FI-…pdf` + `.sha256` + manifeste). ⚠️ Touche `hash-mouvement.js` → plan écrit,
-   migration, tests, AVANT de coder. Effort MAXIMUM.
+   (technicien PUIS détenteur — au lycée le professeur signe détenteur PAR DÉLÉGATION, même
+   personne autorisée ; toute modification invalide les signatures), signature illisible
+   jamais ignorée en officiel ; empreinte RENFORCÉE v2 versionnée + **PDF final CONSERVÉ**.
+   ⚠️ Touche `hash-mouvement.js`. **LE PLAN EST ÉCRIT ET VALIDÉ = `docs/PLAN-LOT-C.md`**
+   (relu adversarialement contre le code, C0 soldée) : le suivre À LA LETTRE, briques C1→C5.
+   Effort MAXIMUM.
 4. ✅ **LOT D — SOLDÉ le 16/07** (livré dans la foulée du lot B) : témoin QUOTIDIEN
    `scellement/temoin-AAAA-MM-JJ.json` dans le dossier de sauvegarde configurable — têtes des
    chaînes, compteurs, intervalle de numéros, versions + empreinte du moteur réglementaire,
@@ -127,11 +127,11 @@ lui, DOIT bloquer — c'est sa définition. **Ordre des lots** :
 D'AUDIT fin août · **septembre en PARALLÈLE** (2-4 semaines) de la procédure actuelle, puis bascule
 avec secours papier/PDF. Jamais de bascule à sec le 1er septembre.
 
-**Restent GATÉS** : condition 2 — ⏳ RELECTURE par Franck de
-`docs/CONDITIONS-BLOCANTES-OFFICIEL.md` (13 lignes + 3 questions ouvertes ; le code est prêt,
-chaque retouche est triviale) ; 3 (double signature réelle), 4 (empreinte renforcée + PDF scellé
-conservé — touche `hash-mouvement.js` → plan + migration + tests). La version « réseau lycée »
-du scellement externe (DSI) attendra. + les **10 questions du §4** de la table pour le référent.
+**Restent GATÉS** : plus AUCUN gate ouvert pour les lots A→D (liste du lot B validée, plan du
+lot C validé — C0 soldée). Restent hors code : la version « réseau lycée » du scellement
+externe (DSI, plus tard), la relecture DPD de la notice RGPD (lot E), et la validation ligne à
+ligne de la matrice d'habilitations (SPEC-HABILITATIONS §2) AVANT de brancher la
+correspondance fine aptitude ↔ intervention (condition 7 en version simple d'ici là).
 
 ## LES GATES (blocages hors code — à obtenir de Franck, ne pas les contourner)
 
@@ -169,9 +169,9 @@ du scellement externe (DSI) attendra. + les **10 questions du §4** de la table 
 
 ## CE QUI ATTEND FRANCK (hors code — aucun bloquant)
 
-- **RELIRE `docs/CONDITIONS-BLOCANTES-OFFICIEL.md`** (5 minutes : 13 lignes + 3 questions
-  ouvertes) — c'est le gate du lot B ; le code est prêt, chaque retouche est triviale.
 - **UTILISER le logiciel** : essai en données fictives, puis en parallèle de la procédure actuelle.
+- **Pointer le dossier de sauvegarde vers un dossier synchronisé** (écran Sauvegarde) — le
+  témoin quotidien du lot D quitte alors le poste chaque jour.
 - Gestes de protection du poste (à son rythme) : **BitLocker**, un **exercice réel de
   restauration** (bouton « Tester » puis restaurer une sauvegarde sur un poste d'essai), pointer le
   **dossier de destination** des sauvegardes vers un dossier synchronisé (copie hors du poste).
