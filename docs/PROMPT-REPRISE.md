@@ -3,9 +3,9 @@
 > Copier tout ce qui suit comme PREMIER message d'un nouveau chat. Il est autonome : contexte, état
 > exact, cap, prochaine brique, gates, méthode et consignes.
 >
-> **Session conseillée : Fable + ultracode** (le lot qui vient est décomposable et non gaté — voir
-> RÉGLAGE). Bascule sur le modèle `claude-fable-5` dans le sélecteur (⚠️ `/fast` ne bascule PAS sur
-> Fable, il garde Opus).
+> **Session conseillée : selon le lot choisi** (voir PROCHAINE BRIQUE). Condition 2/3 (réglementaire,
+> gatée) → **Opus effort MAXIMUM**. Condition 6 (sauvegardes auto, non gatée) → **Opus effort élevé**
+> (incrément cadré, PAS d'ultracode).
 
 ---
 
@@ -21,20 +21,15 @@ Tu reprends **inerWeb Fluide**, logiciel **LOCAL** de traçabilité des fluides 
 Transformer inerWeb Fluide en **REGISTRE RÉGLEMENTAIRE DÉMONTRABLE**.
 
 **Cadrage Franck (16/07)** : priorité = un logiciel **opérationnel et IRRÉPROCHABLE** sur trois axes —
-**législation, sauvegarde, ergonomie** —, **fini vite et bien** (plus vite c'est bouclé, plus vite Franck
-teste et développe). « Septembre 2026 » est le **jalon personnel** de Franck, PAS un cap directeur : ne pas
-en faire une échéance qui pilote les choix. **OVH / `inerweb.ovh` / bascule DNS = repoussé** (GitHub Pages
-suffit ; à réévaluer plus tard, sans urgence).
-
-Objectif à rendre techniquement vrai **et couvert par des tests** :
+**législation, sauvegarde, ergonomie** —, **fini vite et bien**. « Septembre 2026 » est le **jalon
+personnel** de Franck, PAS un cap directeur. **OVH / `inerweb.ovh` / bascule DNS = repoussé.**
 
 > « Toute fiche officielle est contrôlée avant validation, signée par les bonnes personnes, figée avec
 > son PDF original, chaînée aux écritures précédentes, sauvegardée hors du poste, et restituable avec
 > toutes ses preuves. »
 
-On ne promet **pas** « inviolable » (aucun monoposte ne le peut) : on promet **démontrable**.
-**LA feuille de route complète = `docs/PLAN-AUDIT-PROOF-2026.md`** (6 conditions + dossier d'audit +
-sécurité/RGPD + plan temporel, chacun avec son état actuel et son point de blocage). **LIS-LA EN PREMIER.**
+On ne promet **pas** « inviolable » : on promet **démontrable**.
+**LA feuille de route = `docs/PLAN-AUDIT-PROOF-2026.md`. LIS-LA EN PREMIER.**
 
 ## À LIRE EN PREMIER (avant de coder)
 
@@ -46,106 +41,78 @@ sécurité/RGPD + plan temporel, chacun avec son état actuel et son point de bl
 5. **`docs/CARTE-CODE.md`** — l'architecture en une page, AVANT toute exploration.
 6. `git log` + `git status` — ⚠️ **des sessions parallèles écrivent sur ce dépôt** : vérifie avant d'écrire.
 
-## ÉTAT AU 15/07/2026 (dernier commit poussé `f8b7ea2`)
+## ÉTAT AU 16/07/2026
 
-- **CONDITION 1 — MOTEUR RÉGLEMENTAIRE UNIQUE : PREMIÈRE BRIQUE FAITE et poussée** (`1d114c9`).
-  Les 3 implémentations dupliquées et contradictoires du « cadre 7 » (seuils + fréquence de contrôle)
-  sont unifiées dans **`v8/js/data/reglementation-fluides.js`** (`categorieCadre7` + `evaluerControle`) =
-  source de vérité ; `plaque-fgas.js`, `cerfa/generateur.js` et `demo-store.js` la consomment, `server/api.js`
-  en garde une **copie littérale** (CommonJS), parité prouvée par `test-contrat.mjs` (demo ET local).
-  **Table par fluide VALIDÉE par Franck** (règles A/B/C, sources officielles) = `docs/TABLE-REGLEMENTAIRE-FLUIDES.md`.
-  **Deux bugs réglementaires corrigés** : (1) un **mélange HFC/HFO** (R-455A) est traité comme un **HFC**
-  (seuils en teqCO₂ ; on teste HFC/PFC **avant** HFO) — la notice CERFA le cite nommément ; (2) le seuil/la
-  fréquence se calculent sur la **charge NOMINALE déclarée**, plus sur `chargeActuelleKg`. Batterie de tests
-  aux valeurs limites (`test-reglementation-fluides.mjs`). **72 exécutions TOUT VERT.** Démo M5 clarifiée
-  (`f8b7ea2` : sous le seuil → aucune échéance périodique, fuite suivie à part).
-- **Règles réglementaires établies (sur textes officiels, à faire annoter par le référent)** : (A) mélange
-  contenant du HFC → catégorie **HFC** (teqCO₂ 5/50/500) ; (B) HFO **purs** → seuils en **kg** 1/10/100
-  (règl. UE **2024/573 F-Gas III** art. 5, depuis le 11/03/2024) ; (C) périodicité sur la **charge totale
-  déclarée** (FAQ DGPR). ⚠️ **Régime EN VIGUEUR = F-Gas III (2024/573)**, le 517/2014 est abrogé depuis le
-  31/12/2024 (le formulaire 15497*04 lui est antérieur → à confirmer avec le référent).
-- **Le mode Officiel est FERMÉ** (le serveur refuse `mode:'OFFICIEL'`) et le reste **jusqu'à ce que les
-  conditions 1→4 du plan soient prêtes ET testées**. On travaille en mode **CONSEIL**.
-- Rappel socle (audit externe) : sécurité **SAINE** prouvée en conditions réelles (127.0.0.1, garde
-  Host/Origin, scrypt + verrou 5 échecs, WORM inviolable même par SQL direct, AES-256-GCM réel). Rapports
+- **CONDITION 1 — MOTEUR RÉGLEMENTAIRE UNIQUE : SOLDÉE.** Moteur unique
+  `v8/js/data/reglementation-fluides.js` (miroir strict `server/api.js`), 2 bugs corrigés (mélange
+  HFC/HFO → HFC ; charge NOMINALE), **fiche EXPLICITE par fluide en base** (migration 21 : colonnes
+  `contient_hfc`/`contient_hfo`/`categorie_cadre7`/`source_prp`, constante partagée
+  `FICHE_REGLEMENTAIRE_FLUIDES` dans `migrations.js`, la colonne prime sur le libellé de famille,
+  repli sinon), **portée temporelle de la Règle B** (`dateIntervention` optionnelle : HFO purs
+  contrôlés seulement depuis le 11/03/2024, appelants câblés y compris le cadre 7 du CERFA),
+  **l'import d'un export ancien ne détruit plus la fiche actée** (recomplétée des deux côtés).
+  **Filet renforcé** : `server/test-gardes-roles.mjs` (25 gardes de rôle mises en défaut
+  dynamiquement) + `server/test-transport-http.mjs` (vrai client HTTP contre vrai serveur, garde
+  Origin) + charcutage proportionnel dans `test-sauvegarde`. **TOUT VERT — 74 exécutions.**
+- **Le mode Officiel est FERMÉ** (le serveur refuse `mode:'OFFICIEL'`) et le reste **jusqu'à ce que
+  les conditions 1→4 du plan soient prêtes ET testées**. On travaille en mode **CONSEIL**.
+- Rappel socle (audit externe 15/07) : sécurité **SAINE** prouvée en conditions réelles. Rapports
   **INTERNES gitignorés** `docs/AUDIT-COMPLET-2026-07-15.md` et `docs/DOSSIER-TECHNIQUE.md`.
 
-## PROCHAINE BRIQUE — suite de la condition 1 (NON gatée, décomposable → Fable + ultracode)
+## PROCHAINE BRIQUE (au choix, selon ce que Franck rapporte)
 
-Le moteur existe et est testé. Les valeurs sont **déjà validées** : ce lot est du **refacto cadré +
-migration + tests**, sans nouvelle décision réglementaire. Trois chantiers indépendants :
+- **SI le questionnaire référent F-Gas est revenu** → intégrer ses réponses (§4 de la table), puis
+  **condition 2 : blocage dur du mode Officiel** (liste des conditions bloquantes validée par Franck,
+  `peutPasserEnOfficiel` aux 3 moments, **validateur lu de la session** — le trou « qui déclaré ≠
+  prouvé »). **Opus effort MAXIMUM, réglementaire gaté.**
+- **SINON, lot NON gaté aligné sur l'axe « sauvegarde »** → **condition 6 : sauvegardes RÉELLEMENT
+  automatiques** (snapshot après chaque validation, archive quotidienne, alerte bloquante si aucune
+  sauvegarde récente, vérification auto après création — hors décision BitLocker qui reste à Franck).
+  Voir l'état/détail dans le plan. Incrément cadré : Opus effort élevé, relecture simple.
+- ⏳ Question ouverte NOUVELLE pour le référent (rattachée au §4 Q2) : quelle échéance suggérer pour
+  un contrôle HFO **ressaisi** d'avant le 11/03/2024 (aujourd'hui : aucune) — ne rien coder sans
+  validation.
 
-1. **Fiche EXPLICITE par fluide EN BASE (migration 21).** Aujourd'hui `categorieCadre7` dérive la catégorie
-   de `famille.includes(...)`. La rendre explicite : colonnes `contient_hfc`, `contient_hfo` (et au besoin
-   `categorie_cadre7`, `source_prp`) sur la table `fluides`, peuplées depuis les valeurs de
-   `docs/TABLE-REGLEMENTAIRE-FLUIDES.md` ; `categorieCadre7` lit la colonne quand elle existe (repli sur la
-   dérivation sinon). Objectif : ne plus dépendre d'un libellé de famille ambigu (« HFC/HFO » vs
-   « Mélange HFO/HFC »). **Parité `mapping.js`/demo/serveur** (déclarer les champs des DEUX côtés, `mapping`
-   lève sur clé inconnue). Migration `controles`-style **hors WORM** (table `fluides` n'est pas dans la chaîne).
-2. **Date d'intervention dans le moteur.** `evaluerControle(fluide, chargeNominale, detection, dateIntervention)` :
-   les **HFO purs** ne sont soumis au contrôle **qu'à partir du 11/03/2024** (F-Gas III). Aujourd'hui tout est
-   postérieur, mais le moteur doit **porter la règle** (et un test la fige). Ne rien casser des appelants
-   (paramètre optionnel, défaut = régime courant).
-3. **Renfort de couverture de tests** (audit-qualité, lot 1) : le filet ne met pas en défaut certaines gardes
-   de rôle, ne teste pas le vrai client HTTP (`transport-http.js`), ni plusieurs vues. Cibler d'abord ce qui
-   touche le réglementaire (les gardes du mode CONSEIL, le calcul d'échéance côté serveur).
-
-**Restent GATÉS (Opus effort MAX, quand Franck valide — PAS ce lot Fable)** : condition 2 (**blocage dur du
-mode Officiel** — la *liste des conditions bloquantes* à valider par Franck + référent), 3 (double signature
-réelle), 4 (empreinte renforcée + PDF scellé conservé — touche `hash-mouvement.js` → plan + migration + tests),
-5 (scellement externe quotidien — DSI), 6 (sauvegardes auto). + les **10 questions du §4** de la table pour le
-référent F-Gas. Ordre et dépendances : `docs/PLAN-AUDIT-PROOF-2026.md`.
+**Restent GATÉS** : condition 2 (liste des conditions bloquantes), 3 (double signature réelle),
+4 (empreinte renforcée + PDF scellé conservé — touche `hash-mouvement.js` → plan + migration + tests),
+5 (scellement externe quotidien — DSI). + les **10 questions du §4** de la table pour le référent.
 
 ## LES GATES (blocages hors code — à obtenir de Franck, ne pas les contourner)
 
-- **Franck + référent F-Gas** : annoter la table (§4), valider la liste des conditions bloquantes du mode
-  officiel, le parcours de double signature. **RÈGLE ABSOLUE : ne JAMAIS coder une valeur ou une règle
-  réglementaire NOUVELLE sans la validation de Franck.** (Les règles A/B/C, elles, sont déjà validées.)
-- **DPD du lycée** : relire la notice RGPD.
-- **DSI du lycée** : emplacement extérieur du scellement quotidien (condition 5).
+- **Franck + référent F-Gas** : annoter la table (§4), valider la liste des conditions bloquantes du
+  mode officiel, le parcours de double signature. **RÈGLE ABSOLUE : ne JAMAIS coder une valeur ou une
+  règle réglementaire NOUVELLE sans la validation de Franck.**
+- **DPD du lycée** : relire la notice RGPD. **DSI du lycée** : emplacement du scellement externe.
 
 ## MÉTHODE (règle d'or, ne rien casser)
 
-- **RÉGLAGE à annoncer avant chaque tâche de code** :
-  - Ce lot (migration/date/tests, valeurs déjà figées) → **Fable + ultracode**, orchestration effort
-    medium/high, **sous-agents Sonnet** (refacto/lecture) **+ Haiku** (mécanique/tests). Économe et agentique.
-  - Cœur réglementaire **NOUVEAU**, condition 2, RGPD, irréversible → **Opus effort MAX**.
-  - **Jamais Sonnet (ni Haiku) en xhigh/ultra.**
-- **carte → vérifier → modif chirurgicale → TESTS VERTS → commit.** `node outils/lancer-tests.mjs` doit être
-  **TOUT VERT (72 exécutions)** avant tout commit.
-- **Parité stricte DemoStore (`v8/js/data/demo-store.js`) / LocalStore (`server/api.js`)** : prouvée par
-  `test-contrat.mjs` joué contre **demo ET local**. `server/mapping.js` **lève sur toute clé inconnue**
-  (anti-dérive) → déclarer les nouveaux champs des deux côtés. Un module pur du front réutilisé côté serveur
-  est **recopié en littéral** (CommonJS) : garder les deux STRICTEMENT identiques + un test de parité qui
-  discrimine (ex. le moteur réglementaire : tester un mélange reclassé, pas seulement un HFC pur).
-- **Vérification dynamique** : serveur sur **PORT jetable** + **`IWF_CHEMIN_BASE` base jetable** (JAMAIS le
-  port 2011 ni le `data/` réel de Franck). Pour la démo (DemoStore) : `python -m http.server` sur un port
-  jetable, origine neuve. ⚠️ Le corps des requêtes API est enveloppé **`{params:{...}}`**. **Tirer les
-  failles, pas les lire.**
-- **Empreinte de hash des mouvements** (`server/hash-mouvement.js` = clone exact de `v8/js/core/utils.js`,
-  verrouillé par `server/test-hash-mouvement.mjs`) : NE PAS la modifier à la légère. La **condition 4** la
-  touchera → plan + migration + tests.
-- **Migrations** : registre `server/migrations.js` jusqu'à **20**, prochaine = **21**. Table `controles` et
-  table `fluides` = **hors WORM**. Les triggers WORM sur `mouvements`/`journal_audit` sont recréés à chaque
-  migration touchant `mouvements`. `PRAGMA recursive_triggers = ON` obligatoire (ne jamais retirer).
+- **RÉGLAGE à annoncer avant chaque tâche de code** (grille : mémoire `feedback_reglages_intelligence`).
+- **carte → vérifier → modif chirurgicale → TESTS VERTS → commit.** `node outils/lancer-tests.mjs`
+  doit être **TOUT VERT (74 exécutions)** avant tout commit.
+- **Parité stricte DemoStore (`v8/js/data/demo-store.js`) / LocalStore (`server/api.js`)** : prouvée
+  par `test-contrat.mjs` (demo ET local). `server/mapping.js` **lève sur toute clé inconnue** →
+  déclarer les nouveaux champs des deux côtés. Un module pur du front réutilisé côté serveur est
+  **recopié en littéral** (CommonJS) + un test de parité qui discrimine.
+- **Vérification dynamique** : serveur sur **PORT jetable** + **`IWF_CHEMIN_BASE` base jetable**
+  (JAMAIS le port 2011 ni le `data/` réel). Corps des requêtes API = **`{params:{...}}`**.
+  **Tirer les failles, pas les lire.**
+- **Empreinte des mouvements** (`server/hash-mouvement.js`) : NE PAS la modifier à la légère — la
+  condition 4 la touchera → plan + migration + tests.
+- **Migrations** : registre `server/migrations.js` jusqu'à **21**, prochaine = **22**. Triggers WORM
+  sur `mouvements`/`journal_audit` recréés à chaque migration touchant `mouvements` ;
+  `PRAGMA recursive_triggers = ON` obligatoire.
 - **Sessions parallèles** : `git log` + `git status` **avant** d'écrire ; commits multi-lignes via
-  `git commit -F` (jamais le here-string). Le dépôt est public : push quand Franck l'attend.
+  `git commit -F` (jamais le here-string).
 
 ## DÉCISIONS ACTÉES (ne pas rouvrir sans raison)
 
-- **Règles A/B/C validées** par Franck (mélange HFC/HFO → HFC ; HFO purs en kg via F-Gas III ; charge
-  nominale). Le **PRP figé** à la validation d'un mouvement reste **NON rétroactif** (protège l'historique).
-- **Licence** : PolyForm Noncommercial + **certificats nominatifs** gratuits accordés au cas par cas (PAS de DRM).
-- **Rapports internes gitignorés** (`docs/DOSSIER-TECHNIQUE.md`, `docs/AUDIT-COMPLET-2026-07-15.md`) : jamais
-  publics. Franck assume l'audit-qualité et la roadmap déjà publics.
+- **Règles A/B/C validées** par Franck. PRP figé **NON rétroactif**. **Licence** PolyForm
+  Noncommercial + certificats nominatifs. **Rapports internes gitignorés** jamais publics.
 
 ## CE QUI ATTEND FRANCK (hors code)
 
-**LE point qui débloque le réglementaire** : remplir le **questionnaire de validation** (règles A/B/C +
-table par fluide + 10 questions) avec le **référent F-Gas**, puis le renvoyer → intégration au moteur. Le
-`.docx` remplissable est sur le Bureau de Franck (`QUESTIONNAIRE-Table-reglementaire-fluides.docx`) ; version
-de référence versionnée = `docs/TABLE-REGLEMENTAIRE-FLUIDES.md`.
-Secondaire (non prioritaire) : relecture de `RGPD.md` (DPD), validation du texte de la vitrine. **OVH / DNS
-`inerweb.ovh` = repoussé** (pas sûr d'apporter plus que GitHub — à réévaluer plus tard, sans urgence).
-Quand Franck le décidera : essai en données fictives, puis fonctionnement **en parallèle** avec la procédure
-actuelle avant de s'en servir comme registre principal.
+**LE point qui débloque le réglementaire** : le **questionnaire de validation** (règles A/B/C + table
+par fluide + 10 questions) avec le **référent F-Gas** — le `.docx` remplissable est sur son Bureau
+(`QUESTIONNAIRE-Table-reglementaire-fluides.docx`). Secondaire : relecture `RGPD.md` (DPD), texte de
+la vitrine. Quand il le décidera : essai en données fictives, puis fonctionnement **en parallèle**
+avec la procédure actuelle.

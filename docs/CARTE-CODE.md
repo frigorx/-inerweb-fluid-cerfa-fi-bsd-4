@@ -32,7 +32,7 @@ contre chacune.
 | `serveur.js` | HTTP loopback (LAN si `IWF_LAN=1`), routage `/api/:methode`, statique `/v8/` | garde Host+Origin (CSRF/rebinding) obligatoire |
 | `api.js` (~5000 l.) | LE dispatcher : un handler par méthode du contrat, `muter()` = transaction, `ROLES_MUTATION` | sémantique = copie EXACTE du DemoStore ; rôle jamais lu du corps |
 | `db.js` | ouverture PRAGMA coffre-fort, `journaliser()` SHA-256 CHAÎNÉ, transaction ré-entrante | `recursive_triggers=ON` VITAL (anti-REPLACE) |
-| `migrations.js` | registre 2→18, transactionnel, consécutif | JAMAIS de DROP destructif ; trigger WORM à recréer si colonne mouvements ajoutée ; registre-commentaire en tête à tenir |
+| `migrations.js` | registre 2→21, transactionnel, consécutif ; exporte `FICHE_REGLEMENTAIRE_FLUIDES` (table validée, consommée par la migration 21 ET l'import JSON d'api.js) | JAMAIS de DROP destructif ; trigger WORM à recréer si colonne mouvements ajoutée ; registre-commentaire en tête à tenir |
 | `schema.sql` | socle v1 SEUL (les évolutions = migrations) | ne jamais l'éditer pour une évolution |
 | `mapping.js` | correspondance UNIQUE front(camel)↔SQL(snake), `CHAMPS_HASH_MOUVEMENT` = liste blanche du hasseur | toute colonne hors empreinte reste HORS de cette liste |
 | `hash-mouvement.js` | clone EXACT du hasseur front | ne jamais utiliser db.hashEcriture pour les mouvements |
@@ -56,7 +56,7 @@ contre chacune.
 | `transport-http.js` | transport `fetch` du LocalStore (`POST /api/:methode`, enveloppe `{ok,resultat}`) |
 | `code-machine.js` | pur : code lisible SITE-FAMILLE-NUMÉRO (JR-CF-001), générateur/validation |
 | `habilitations.js` | pur : moteur de conseil B2 (`verifierDroitIntervention`, matrice 2008+2025) |
-| `reglementation-fluides.js` | pur : MOTEUR RÉGLEMENTAIRE UNIQUE cadre 7 (`categorieCadre7` + `evaluerControle`) — source de vérité des seuils/fréquences F-Gas (règles A/B/C, `docs/TABLE-REGLEMENTAIRE-FLUIDES.md`), consommé par plaque-fgas/generateur/demo-store, copié en littéral côté serveur (`api.js` `frequenceControleMois`). Charge NOMINALE, HFC avant HFO |
+| `reglementation-fluides.js` | pur : MOTEUR RÉGLEMENTAIRE UNIQUE cadre 7 (`categorieCadre7` + `evaluerControle`) — source de vérité des seuils/fréquences F-Gas (règles A/B/C, `docs/TABLE-REGLEMENTAIRE-FLUIDES.md`), consommé par plaque-fgas/generateur/demo-store, copié en littéral côté serveur (`api.js` `frequenceControleMois`). Charge NOMINALE, HFC avant HFO ; fiche EXPLICITE par fluide prioritaire (`categorieCadre7`, migration 21, AUCUNE = hors périmètre) ; `dateIntervention` optionnelle (HFO purs contrôlés depuis le 11/03/2024 seulement) |
 | `feu-tricolore.js` | pur : consolide alertes/officiel/chaîne en 7 domaines VERT/ORANGE/ROUGE (`collecterConformite(store)`) |
 | `audit-guide.js` | pur : parcours d'audit en 9 étapes ordonnées (alertes par préfixe + faits de présence, `collecterAuditGuide(store)`) |
 | `filtre-mouvements.js` | pur : filtres de la vue Mouvements (index cherchable sans accents, correspondance, options présentes) |

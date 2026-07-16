@@ -2,6 +2,56 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### ⚖️ CONDITION 1 SOLDÉE — fiche explicite par fluide + portée temporelle HFO + filet renforcé (16/07)
+Suite et fin du lot « moteur réglementaire unique » (plan `docs/PLAN-AUDIT-PROOF-2026.md`,
+condition 1). Aucune décision réglementaire nouvelle : tout vient de la table validée
+`docs/TABLE-REGLEMENTAIRE-FLUIDES.md`.
+- **Fiche réglementaire EXPLICITE par fluide (migration 21)** : colonnes `contient_hfc`,
+  `contient_hfo`, `categorie_cadre7` (HFC/HFO/HCFC/**AUCUNE** = hors périmètre acté) et
+  `source_prp` sur la table `fluides` (hors WORM, hors chaîne de hash), remplies **par code**
+  pour les 9 fluides du référentiel depuis la constante partagée `FICHE_REGLEMENTAIRE_FLUIDES`
+  (exportée par `migrations.js`). Le moteur (`categorieCadre7`) lit la fiche **en priorité** ;
+  la dérivation du libellé de famille (`includes`) n'est plus qu'un **repli** pour un fluide
+  ajouté localement sans fiche (colonnes NULL). Fini la dépendance à un libellé ambigu
+  (« HFC/HFO » vs « Mélange HFO/HFC »). Miroir serveur strict (`categorieCadre7Fluide`),
+  mapping + données démo + doc du contrat alignés.
+- **Portée temporelle de la Règle B** : `evaluerControle`/`frequenceControleMois` acceptent une
+  `dateIntervention` optionnelle — les **HFO purs ne sont soumis au contrôle d'étanchéité que
+  depuis le 11/03/2024** (règl. UE 2024/573, art. 5) ; avant cette date : aucun niveau ni
+  fréquence. Date absente ou non ISO = régime courant (on ne désactive jamais un contrôle sur
+  une date illisible). Appelants câblés : `calculerProchainControle` (demo + serveur, la date du
+  contrôle fixe le régime) et le **cadre 7 du CERFA** (date d'intervention du mouvement — une
+  fiche HFO antérieure au 11/03/2024 ne coche plus aucune case de seuil). HFC/HCFC et mélanges
+  insensibles à la date (prouvé aux valeurs limites). ⏳ Question ouverte pour le référent
+  (rattachée au §4 Q2 de la table) : quelle échéance suggérer pour un contrôle HFO **ressaisi**
+  d'avant 2024 (aujourd'hui : aucune) — rien n'est codé sans validation.
+- **L'import ne détruit plus la fiche actée** (constat IMPORTANT de la revue adversariale,
+  prouvé par exécution) : un export ANTÉRIEUR au lot (fluides sans fiche) passait par
+  `INSERT OR REPLACE` → colonnes remises à NULL et divergence demo/local. L'import recomplète
+  désormais la fiche depuis la table validée, **des deux côtés** ; une fiche explicitement
+  importée n'est **jamais** écrasée ; un fluide inconnu reste sans fiche (4 clés à null —
+  repli du moteur). Au passage, PROUVÉ que le NULL traverse le mapping intact dans les deux
+  sens (le contre-diagnostic « versSql null→0 » du relecteur était faux, commentaire du
+  mapping corrigé en conséquence) — 🔥 une faille se prouve en la TIRANT, pas en la lisant.
+- **Filet renforcé (audit-qualité, lot 1)** : `server/test-gardes-roles.mjs` — les 25 méthodes
+  de `ROLES_MUTATION` mises en défaut **dynamiquement** (sans rôle + rôle insuffisant choisi
+  automatiquement, refus AVANT le handler, toute future méthode couverte d'office) ;
+  `server/test-transport-http.mjs` — le **vrai** client HTTP (`transport-http.js`) contre le
+  **vrai** serveur spawné (port jetable) : lecture dépliée, erreur du serveur propagée mot pour
+  mot, Origin étranger → 403 (loopback légitime accepté), corps sans enveloppe `{params}` →
+  erreur propre et le serveur survit. `test-sauvegarde` : le charcutage passe d'offsets figés
+  (400-900, tombés dans l'espace **non alloué** de la page 1 après la migration 21 —
+  `integrity_check` l'ignorait à bon droit) à une plage **proportionnelle 30-70 %** du fichier
+  (archive VACUUM INTO = toutes pages utilisées) + garde-fou de taille minimale.
+- **Parité prouvée** (`test-contrat` demo + local) : fiche identique des deux côtés (R-455A,
+  R-744, R-1234yf), y compris **après import d'un export ancien**, et règle de date honorée par
+  le miroir serveur (machine R-1234yf 12 kg : contrôle du 10/03/2024 → null ; du 11/03/2024 →
+  2024-09-11). **TOUT VERT — 74 exécutions.**
+- Méthode : Fable + ultracode (3 sous-agents Sonnet en parallèle sur fichiers disjoints, puis
+  2 relecteurs adversariaux — 0 bloquant, 1 IMPORTANT corrigé, 3 mineurs traités). Le mode
+  Officiel reste **fermé** (CONSEIL) ; prochaine étape = condition 2, **gatée** sur la liste
+  des conditions bloquantes à valider par Franck.
+
 ### ⚖️ MOTEUR RÉGLEMENTAIRE UNIQUE — condition 1, 2 bugs du cadre 7 corrigés (15/07 soir)
 Première brique du chantier « registre audit-proof » (`docs/PLAN-AUDIT-PROOF-2026.md`, condition 1).
 La règle du « cadre 7 » (seuils + fréquence de contrôle d'étanchéité) était **dupliquée en trois
