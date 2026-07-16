@@ -80,12 +80,17 @@ R.543-75 à 123). ⚠️ Avis technique documenté, **validation formelle non si
 | 2. HFO purs + date | **CONFIRMÉ** — 1/10/100 kg depuis le **11/03/2024**, moteur versionné par date | conforme (déjà codé, `dateIntervention`) |
 | 3. Charge de référence | **CONFIRMÉ** — charge nominale totale déclarée, jamais la quantité présente | conforme (déjà codé) |
 | 4. HCFC seuil bas | **CONFIRMÉ : 2 kg** (arrêté du 29/02/2016, paliers 2/30/300) — ne PAS revenir à 3 kg | conforme (déjà codé) |
-| 5. R-744 / R-290 / R-717 | **CONFIRMÉ AVEC LIMITATION** — hors cadre 7, mais ne pas afficher « aucune obligation réglementaire » en général (EN 378, ICPE, constructeur…) | ⏳ wording UI à revoir (gaté Franck) |
-| 6. PRP R-1234yf | **CORRECTION : 0,501** (F-Gas III à 100 ans) — la valeur 4 = ancien référentiel ; sans effet sur le déclenchement (kg) | ⏳ codé 4 (migration 20) — arbitrage Franck requis |
-| 7. Multi-circuits | **À DÉVELOPPER** — circuits identifiés + charge nominale par circuit + charge totale CALCULÉE | ⏳ chantier modèle de données (gaté) |
-| 8. Hermétiquement scellés | **À GÉRER** — champs « hermétique / marqué / résidentiel » ; exemptions < 10 t éq. (annexe I), < 2 kg (annexe II-1), < 3 kg (hermétique résidentiel) | ⏳ chantier moteur (gaté) |
-| 9. Version du CERFA | **CONFIRMÉ** — 15497*04 = version officielle actuelle, **valable depuis le 23/07/2024, intègre F-Gas III** ; enregistrer numéro + date de version du modèle | conforme ; ⏳ versionnage du modèle à tracer |
-| 10. R-404A fluide vierge | **BLOCAGE CONTRÔLÉ** — vierge PRP ≥ 2500 interdit en maintenance : réfrigération depuis le 01/01/2025, clim/PAC depuis le 01/01/2026 ; recyclé/régénéré jusqu'en 2030/2032 ; blocage AVEC dérogation tracée (motif, justificatif, identité, journal) | ⏳ chantier moteur (gaté) |
+| 5. R-744 / R-290 / R-717 | **CONFIRMÉ AVEC LIMITATION** — hors cadre 7, mais ne pas afficher « aucune obligation réglementaire » en général (EN 378, ICPE, constructeur…) | ✅ **FAIT 16/07** : la fiche machine affiche toujours la ligne « Fréquence de contrôle », libellé borné au cadre 7 |
+| 6. PRP R-1234yf | **CORRECTION : 0,501** (F-Gas III à 100 ans) — la valeur 4 = ancien référentiel ; sans effet sur le déclenchement (kg) | ✅ **FAIT 16/07** (migration 22, conditionnelle — jamais sur une valeur ajustée ; rejouée à l'import d'un export ancien) |
+| 7. Multi-circuits | **À DÉVELOPPER** — circuits identifiés + charge nominale par circuit + charge totale CALCULÉE | ⏳ DIFFÉRÉ (arbitrage Franck 16/07 : équipements simples au lycée ; chantier modèle à planifier) |
+| 8. Hermétiquement scellés | **À GÉRER** — champs « hermétique / marqué / résidentiel » ; exemptions < 10 t éq. (annexe I), < 2 kg (annexe II-1), < 3 kg (hermétique résidentiel) | ⏳ DIFFÉRÉ en choix CONSERVATEUR (pas d'exemption codée = jamais MOINS de contrôles qu'exigé) |
+| 9. Version du CERFA | **CONFIRMÉ** — 15497*04 = version officielle actuelle, **valable depuis le 23/07/2024, intègre F-Gas III** ; enregistrer numéro + date de version du modèle | conforme ; ⏳ versionnage du modèle → condition 4 du plan (empreinte renforcée) |
+| 10. R-404A fluide vierge | **BLOCAGE CONTRÔLÉ** — vierge PRP ≥ 2500 interdit en maintenance : réfrigération depuis le 01/01/2025, clim/PAC depuis le 01/01/2026 ; recyclé/régénéré jusqu'en 2030/2032 ; blocage AVEC dérogation tracée (motif, justificatif, identité, journal) | ✅ **FAIT 16/07 en version CONSEIL** (arbitrage Franck « jamais bloquant ») : bandeau d'avertissement à l'étape bouteille du wizard (CHARGE_APPOINT, PRP ≥ 2500), motif à consigner dans la cause ; le blocage dur éventuel ira avec le mode Officiel |
+
+**Arbitrage Franck du 16/07** (« fais au mieux du point de vue F-Gas, compromis le plus protecteur,
+on ne bloque pas sur les exceptions ») : appliqué ci-dessus. Note R-290 : la valeur **0,02** vient de
+la table consolidée §5 de l'avis (statut VALIDÉ) ; le propane n'étant pas un gaz fluoré, il ne figure
+pas dans une annexe du 2024/573 — source libellée **« AR6 GIEC (réf. règl. UE 2024/573) »**.
 
 **Réserve unique (bloque la clôture de la table)** : PRP par défaut du **R-455A** — 148 (historique
 AR4, plaques) ou ≈ 145,53 (recalcul F-Gas III : R-32 = 675, R-1234yf = 0,501, R-744 = 1) ? Question
@@ -117,25 +122,26 @@ trace immuable (⏳).
 Le principe du **moteur unique** : chaque fluide devient une fiche explicite (plus de
 `famille.includes("HFO")` dont l'ordre change le résultat d'un fichier à l'autre).
 
-| Code | Composition (familles) | contient HFC | contient HFO | Catégorie **cadre 7** | PRP (AR4) | Source PRP | Classe sécu. (NF EN 378) | Seuil déclencheur (charge nominale) |
+| Code | Composition (familles) | contient HFC | contient HFO | Catégorie **cadre 7** | PRP réglementaire | Source PRP | Classe sécu. (NF EN 378) | Seuil déclencheur (charge nominale) |
 |---|---|---|---|---|---|---|---|---|
 | **R-32** | HFC pur | oui | non | **HFC** (tCO₂eq) | 675 | AR4 / annexe F-Gas | A2L | ≈ 7,41 kg (= 5 tCO₂eq) |
 | **R-410A** | mélange HFC (R-32/R-125) | oui | non | **HFC** (tCO₂eq) | 2088 | AR4 | A1 | ≈ 2,39 kg |
 | **R-134a** | HFC pur | oui | non | **HFC** (tCO₂eq) | 1430 | AR4 | A1 | ≈ 3,50 kg |
 | **R-407C** | mélange HFC (R-32/125/134a) | oui | non | **HFC** (tCO₂eq) | 1774 | AR4 | A1 | ≈ 2,82 kg |
 | **R-404A** | mélange HFC (R-125/143a/134a) | oui | non | **HFC** (tCO₂eq) | 3922 | AR4 | A1 | ≈ 1,27 kg — *statut RESTREINT (PRP > 2500)* |
-| **R-1234yf** | **HFO pur** | non | oui | **HFO** (kg) *depuis 11/03/2024* | 4 | annexe F-Gas | A2L | 1 kg |
-| **R-455A** | **mélange HFC/HFO** (3 %·R744 + 21,5 %·R32 + 75,5 %·R1234yf) | oui | oui | **HFC** (tCO₂eq) — *Règle A* | 148 | moyenne pondérée massique (AR4) | A2L | ≈ 33,8 kg |
+| **R-1234yf** | **HFO pur** | non | oui | **HFO** (kg) *depuis 11/03/2024* | **0,501** | annexe règl. UE 2024/573 (F-Gas III) | A2L | 1 kg |
+| **R-455A** | **mélange HFC/HFO** (3 %·R744 + 21,5 %·R32 + 75,5 %·R1234yf) | oui | oui | **HFC** (tCO₂eq) — *Règle A* | **148** *conservatoire* | AR4 — 148 conservatoire (réserve DGPR) | A2L | ≈ 33,8 kg |
 | **R-744** | CO₂ (inorganique) | non | non | **hors périmètre** | 1 | définition | A1 | aucun |
-| **R-290** | HC (propane) | non | non | **hors périmètre** | 3 | AR4 | **A3** | aucun |
+| **R-290** | HC (propane) | non | non | **hors périmètre** | **0,02** | AR6 GIEC (réf. règl. UE 2024/573) | **A3** | aucun |
 
 Notes :
 - **R-455A** : le point sensible. Traité **HFC → tCO₂eq** (Règle A). À 3,2 kg (machine démo M5) :
   3,2 × 148 / 1000 = **0,47 tCO₂eq**, très en dessous de 5 → **aucun contrôle périodique obligatoire**.
   Le code du CERFA et des alertes le classe aujourd'hui en HFO/kg et lui impose à tort un contrôle
   annuel (voir §3).
-- **R-1234yf** : PRP **4** = valeur réglementaire (annexe F-Gas). Certaines sources scientifiques
-  citent < 1 ; on garde **4** (valeur opposable). À confirmer référent.
+- **R-1234yf** : PRP **0,501** = valeur réglementaire F-Gas III à 100 ans (avis du 16/07, Q6 —
+  la valeur 4 appartenait à l'ancien référentiel ; migration 22). Sans effet sur le déclenchement
+  du contrôle, qui reste fondé sur les kg.
 - **PRP figé** : à la validation d'un mouvement, le PRP du fluide est figé (`prpFige`) et **non
   rétroactif** — décision actée, protège l'historique. Inchangé.
 

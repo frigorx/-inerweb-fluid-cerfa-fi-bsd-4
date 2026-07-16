@@ -54,24 +54,33 @@ On ne promet **pas** « inviolable » : on promet **démontrable**.
   **Filet renforcé** : `server/test-gardes-roles.mjs` (25 gardes de rôle mises en défaut
   dynamiquement) + `server/test-transport-http.mjs` (vrai client HTTP contre vrai serveur, garde
   Origin) + charcutage proportionnel dans `test-sauvegarde`. **TOUT VERT — 74 exécutions.**
+- **AVIS RÉGLEMENTAIRE REÇU ET APPLIQUÉ (16/07 après-midi)** : « Avis de validation réglementaire »
+  (⚠️ section « Validation formelle » NON signée = avis technique, pas encore la validation du
+  référent). Règles A/B/C + seuils + date HFO + CERFA *04 CONFIRMÉS (code déjà conforme). Appliqué
+  (arbitrage Franck « au mieux F-Gas, compromis protecteur, jamais bloquant ») : **migration 22**
+  PRP F-Gas III (R-1234yf 0,501 ; R-290 0,02 AR6 ; R-455A garde 148 conservatoire — réserve DGPR),
+  correction REJOUÉE à l'import et au chargement localStorage (`corrigerPrpFgas3`), avertissement
+  CONSEIL fluide vierge PRP ≥ 2500 au wizard (Q10), wording « hors périmètre » borné (Q5),
+  affichage PRP à décimales adaptatives. DIFFÉRÉS conservateurs : multi-circuits (Q7),
+  exemptions hermétiques (Q8), versionnage du modèle CERFA (→ condition 4). Détail =
+  `docs/TABLE-REGLEMENTAIRE-FLUIDES.md` §1 bis. ⚠️ Une migration est IMMUABLE (littéraux figés).
 - **Le mode Officiel est FERMÉ** (le serveur refuse `mode:'OFFICIEL'`) et le reste **jusqu'à ce que
   les conditions 1→4 du plan soient prêtes ET testées**. On travaille en mode **CONSEIL**.
 - Rappel socle (audit externe 15/07) : sécurité **SAINE** prouvée en conditions réelles. Rapports
   **INTERNES gitignorés** `docs/AUDIT-COMPLET-2026-07-15.md` et `docs/DOSSIER-TECHNIQUE.md`.
 
-## PROCHAINE BRIQUE (au choix, selon ce que Franck rapporte)
+## PROCHAINE BRIQUE (au choix)
 
-- **SI le questionnaire référent F-Gas est revenu** → intégrer ses réponses (§4 de la table), puis
-  **condition 2 : blocage dur du mode Officiel** (liste des conditions bloquantes validée par Franck,
-  `peutPasserEnOfficiel` aux 3 moments, **validateur lu de la session** — le trou « qui déclaré ≠
-  prouvé »). **Opus effort MAXIMUM, réglementaire gaté.**
-- **SINON, lot NON gaté aligné sur l'axe « sauvegarde »** → **condition 6 : sauvegardes RÉELLEMENT
+- **Lot NON gaté aligné sur l'axe « sauvegarde »** → **condition 6 : sauvegardes RÉELLEMENT
   automatiques** (snapshot après chaque validation, archive quotidienne, alerte bloquante si aucune
   sauvegarde récente, vérification auto après création — hors décision BitLocker qui reste à Franck).
   Voir l'état/détail dans le plan. Incrément cadré : Opus effort élevé, relecture simple.
-- ⏳ Question ouverte NOUVELLE pour le référent (rattachée au §4 Q2) : quelle échéance suggérer pour
-  un contrôle HFO **ressaisi** d'avant le 11/03/2024 (aujourd'hui : aucune) — ne rien coder sans
-  validation.
+- **OU condition 2 : blocage dur du mode Officiel** — reste GATÉE sur la **liste des conditions
+  bloquantes à valider par Franck** (`peutPasserEnOfficiel` aux 3 moments, **validateur lu de la
+  session** — le trou « qui déclaré ≠ prouvé »). **Opus effort MAXIMUM, réglementaire.**
+- ⏳ Questions encore ouvertes côté référent : échéance d'un contrôle HFO **ressaisi** d'avant le
+  11/03/2024 (aujourd'hui : aucune — comportement conforme à la réponse Q2 de l'avis) ; réserve
+  R-455A (148 vs 145,53, question écrite DGPR §8 de l'avis). Ne rien coder sans validation.
 
 **Restent GATÉS** : condition 2 (liste des conditions bloquantes), 3 (double signature réelle),
 4 (empreinte renforcée + PDF scellé conservé — touche `hash-mouvement.js` → plan + migration + tests),
@@ -98,7 +107,9 @@ On ne promet **pas** « inviolable » : on promet **démontrable**.
   **Tirer les failles, pas les lire.**
 - **Empreinte des mouvements** (`server/hash-mouvement.js`) : NE PAS la modifier à la légère — la
   condition 4 la touchera → plan + migration + tests.
-- **Migrations** : registre `server/migrations.js` jusqu'à **21**, prochaine = **22**. Triggers WORM
+- **Migrations** : registre `server/migrations.js` jusqu'à **22**, prochaine = **23**. ⚠️ Une
+  migration est IMMUABLE : elle fige ses propres littéraux, jamais de constante partagée qui
+  évolue (leçon du 16/07). Triggers WORM
   sur `mouvements`/`journal_audit` recréés à chaque migration touchant `mouvements` ;
   `PRAGMA recursive_triggers = ON` obligatoire.
 - **Sessions parallèles** : `git log` + `git status` **avant** d'écrire ; commits multi-lignes via
@@ -111,8 +122,9 @@ On ne promet **pas** « inviolable » : on promet **démontrable**.
 
 ## CE QUI ATTEND FRANCK (hors code)
 
-**LE point qui débloque le réglementaire** : le **questionnaire de validation** (règles A/B/C + table
-par fluide + 10 questions) avec le **référent F-Gas** — le `.docx` remplissable est sur son Bureau
-(`QUESTIONNAIRE-Table-reglementaire-fluides.docx`). Secondaire : relecture `RGPD.md` (DPD), texte de
-la vitrine. Quand il le décidera : essai en données fictives, puis fonctionnement **en parallèle**
-avec la procédure actuelle.
+- **Envoyer la question écrite à la DGPR** (réserve R-455A : 148 vs ≈ 145,53 — le texte exact est
+  au §8 de l'avis du 16/07) et **faire signer la section 9 « Validation formelle »** de l'avis par
+  le référent F-Gas (aujourd'hui : avis technique non signé).
+- **Valider la liste des conditions bloquantes** du mode Officiel (débloque la condition 2).
+- Secondaire : relecture `RGPD.md` (DPD), texte de la vitrine. Quand il le décidera : essai en
+  données fictives, puis fonctionnement **en parallèle** avec la procédure actuelle.

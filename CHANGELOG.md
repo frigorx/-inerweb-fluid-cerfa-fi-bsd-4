@@ -2,6 +2,51 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### ⚖️ AVIS RÉGLEMENTAIRE DU 16/07 APPLIQUÉ — PRP F-Gas III + garde-fous protecteurs (16/07 après-midi)
+Un « Avis de validation réglementaire » (16/07/2026, reçu de Franck — avis technique documenté,
+validation formelle NON signée à ce stade) répond aux 10 questions du questionnaire. Arbitrage
+Franck : « au mieux du point de vue F-Gas, compromis le plus protecteur, jamais bloquant ».
+- **CONFIRMÉ sans changement** (le code était déjà conforme) : règles A/B/C, seuils dont HCFC
+  **2 kg**, date HFO **11/03/2024** + moteur versionné par date, CERFA 15497*04 = version
+  officielle actuelle. Deux affirmations fausses de nos documents corrigées (le 2024/573 est
+  directement applicable depuis le 11/03/2024 ; le CERFA *04 est postérieur et INTÈGRE F-Gas III).
+- **Migration 22 `prp_fgas3`** : PRP **R-1234yf 4 → 0,501** et **R-290 3 → 0,02** (annexes du
+  règl. UE 2024/573) — **conditionnels** (jamais d'écrasement d'une valeur ajustée localement,
+  motif migration 20), sources PRP alignées. **R-455A garde 148** = choix conservatoire (déclenche
+  le contrôle plus tôt), réserve écrite à lever auprès de la DGPR (148 vs ≈ 145,53 — texte prêt
+  au §8 de l'avis). Sans effet sur le déclenchement des contrôles (HFO/HC en kg ou hors périmètre)
+  ni sur le PRP FIGÉ des mouvements validés (non rétroactif, acté).
+- **Q10 R-404A — « blocage contrôlé » rendu en version CONSEIL** : bandeau d'avertissement NON
+  bloquant à l'étape bouteille du wizard quand une MAINTENANCE (CHARGE_APPOINT, pas la mise en
+  service d'un équipement neuf) porte sur un fluide à **PRP ≥ 2 500** — le fluide VIERGE est
+  interdit (réfrigération depuis le 01/01/2025, clim/PAC depuis le 01/01/2026), le
+  recyclé/régénéré reste autorisé sous conditions, le motif se consigne dans la cause. Chargement
+  du référentiel TOLÉRANT (sans lui : pas de bandeau, wizard intact).
+- **Q5 — wording « hors périmètre »** : la fiche machine affiche désormais TOUJOURS la ligne
+  « Fréquence de contrôle » — « Tous les X mois », « Aucun contrôle périodique F-Gas à cette
+  charge (sous le seuil) » ou « Hors contrôle d'étanchéité F-Gas — d'autres obligations peuvent
+  s'appliquer (EN 378, ICPE, constructeur) ». On ne laisse plus croire « aucune obligation ».
+- **Différés en choix CONSERVATEUR documenté** (`docs/TABLE-REGLEMENTAIRE-FLUIDES.md` §1 bis) :
+  exemptions hermétiques (Q8 — ne pas les coder = jamais MOINS de contrôles qu'exigé),
+  multi-circuits (Q7 — équipements simples au lycée), versionnage du modèle CERFA (ira avec la
+  condition 4 du plan).
+- **Relecture adversariale (1 agent) : 4 constats corrigés avant commit.** ① La migration 21
+  fige désormais SES littéraux (une migration est IMMUABLE — la constante partagée, elle, évolue
+  avec l'import) ; ② l'import JSON et la persistance démo REJOUENT la correction des PRP
+  (`corrigerPrpFgas3`, contenu de la migration 22 partagé serveur/démo) — sans quoi un export ou
+  un monde localStorage antérieurs réintroduisaient 4/3 pour toujours ; la source d'un PRP ajusté
+  localement n'est plus étiquetée F-Gas III (cohérence gwp/source, source inconnue = null) ;
+  ③ affichage : décimales ADAPTATIVES (0,501 s'affichait « 1 », 0,02 s'affichait « 0 » dans la vue
+  fluides, le bilan et son CSV) + en-têtes « GWP (AR4) » → « PRP réglementaire » ; ④ R-290 :
+  source correctement libellée « AR6 GIEC (réf. règl. UE 2024/573) » (le propane n'est pas dans
+  une annexe F-Gas ; valeur 0,02 = table §5 de l'avis, statut VALIDÉ).
+- Tests : migration 22 aux quatre chemins (conversion 4→0,501 ; commentaire seed corrigé ; valeur
+  ajustée JAMAIS écrasée NI réétiquetée ; fluide local intact) + parité PRP demo/local et
+  recorrection à l'import d'un export ancien (test-contrat) + bandeau PRP automatisé (test-wizard :
+  présent sur appoint PRP 3922, absent sur PRP 675, jamais bloquant). Vérifié navigateur (fiche
+  machine M1/M5, bandeau présent sur R-404A, absent sur R-32, zéro erreur console).
+  **TOUT VERT — 74 exécutions.**
+
 ### ⚖️ CONDITION 1 SOLDÉE — fiche explicite par fluide + portée temporelle HFO + filet renforcé (16/07)
 Suite et fin du lot « moteur réglementaire unique » (plan `docs/PLAN-AUDIT-PROOF-2026.md`,
 condition 1). Aucune décision réglementaire nouvelle : tout vient de la table validée
