@@ -3,9 +3,11 @@
 > Copier tout ce qui suit comme PREMIER message d'un nouveau chat. Il est autonome : contexte, état
 > exact, cap, prochaine brique, gates, méthode et consignes.
 >
-> **Session conseillée : selon le lot choisi** (voir « LE CAP RÉACTIVÉ »). **LOT A SOLDÉ le 16/07**
-> (commit `872d34b`) — prochaine brique = **LOT B**. LOTS B et C (réglementaire gaté, le C touche
-> `hash-mouvement.js`) → **Opus effort MAXIMUM**. PAS d'ultracode hors point critique.
+> **Session conseillée : selon le lot choisi** (voir « LE CAP RÉACTIVÉ »). **LOTS A ET B CODÉS le
+> 16/07** (A soldé `872d34b` ; B codé + prouvé, ⏳ **gate : Franck relit
+> `docs/CONDITIONS-BLOCANTES-OFFICIEL.md`**) — prochaine brique = **LOT C** (août). LOT C
+> (réglementaire gaté, touche `hash-mouvement.js` → plan écrit + migration + tests AVANT de
+> coder) → **Opus effort MAXIMUM**. PAS d'ultracode hors point critique.
 
 ---
 
@@ -92,10 +94,15 @@ lui, DOIT bloquer — c'est sa définition. **Ordre des lots** :
    posés : signature binaire réelle des PJ (nombres magiques, démo + serveur), CSP en en-tête HTTP
    (`frame-ancestors 'none'`), phrase de sauvegarde ≥ 14 caractères à la création. 74 exéc. vertes,
    vérifié en direct (base + port jetables). Détail = tête du `CHANGELOG.md`.
-2. **LOT B — Condition 2 : blocage dur du mode Officiel** : dresser la LISTE des conditions
-   bloquantes depuis le plan + l'avis (Franck relit ~10 lignes), `peutPasserEnOfficiel` appelé aux
-   3 moments (passage en officiel, soumission, avant validation), **validateur lu DE LA SESSION**
-   (jamais du corps). Simulation de validation (liste des blocages avant signature). Effort MAXIMUM.
+2. ✅ **LOT B — CODÉ ET PROUVÉ le 16/07 (⏳ gate : relecture de la liste par Franck)** :
+   liste des 13 conditions bloquantes = `docs/CONDITIONS-BLOCANTES-OFFICIEL.md` (+ 3 questions
+   ouvertes : matrice habilitations, dérogation Q10, fluides hors périmètre). Moteur pur
+   `blocage-officiel.js` (ESM + miroir serveur, parité stricte testée) branché aux 3 moments
+   des deux stores ; **validateur de session** (serveur, TOUS modes, 403 — trou « déclaré ≠
+   prouvé » fermé, tiré sur vrai HTTP) ; `simulerValidationOfficielle` (contrat 77→78, v4)
+   affichée dans la modale de validation. Mode Officiel toujours FERMÉ par `VERROU_LIVRAISON`
+   (constante des 2 miroirs, à basculer aux lots C-D). 76 exécutions vertes. Toute retouche de
+   la liste après relecture = une entrée du moteur.
 3. **LOT C — Conditions 3+4 ensemble** (le gros morceau, août) : double signature réelle
    (technicien PUIS détenteur, personne physique, date réelle ; toute modification invalide les
    signatures), signature illisible jamais ignorée en officiel ; empreinte RENFORCÉE (hash des
@@ -114,9 +121,11 @@ lui, DOIT bloquer — c'est sa définition. **Ordre des lots** :
 D'AUDIT fin août · **septembre en PARALLÈLE** (2-4 semaines) de la procédure actuelle, puis bascule
 avec secours papier/PDF. Jamais de bascule à sec le 1er septembre.
 
-**Restent GATÉS** : condition 2 (liste des conditions bloquantes), 3 (double signature réelle),
-4 (empreinte renforcée + PDF scellé conservé — touche `hash-mouvement.js` → plan + migration + tests),
-5 (scellement externe quotidien — DSI). + les **10 questions du §4** de la table pour le référent.
+**Restent GATÉS** : condition 2 — ⏳ RELECTURE par Franck de
+`docs/CONDITIONS-BLOCANTES-OFFICIEL.md` (13 lignes + 3 questions ouvertes ; le code est prêt,
+chaque retouche est triviale) ; 3 (double signature réelle), 4 (empreinte renforcée + PDF scellé
+conservé — touche `hash-mouvement.js` → plan + migration + tests), 5 (scellement externe
+quotidien — DSI). + les **10 questions du §4** de la table pour le référent.
 
 ## LES GATES (blocages hors code — à obtenir de Franck, ne pas les contourner)
 
@@ -154,6 +163,8 @@ avec secours papier/PDF. Jamais de bascule à sec le 1er septembre.
 
 ## CE QUI ATTEND FRANCK (hors code — aucun bloquant)
 
+- **RELIRE `docs/CONDITIONS-BLOCANTES-OFFICIEL.md`** (5 minutes : 13 lignes + 3 questions
+  ouvertes) — c'est le gate du lot B ; le code est prêt, chaque retouche est triviale.
 - **UTILISER le logiciel** : essai en données fictives, puis en parallèle de la procédure actuelle.
 - Gestes de protection du poste (à son rythme) : **BitLocker**, un **exercice réel de
   restauration** (bouton « Tester » puis restaurer une sauvegarde sur un poste d'essai), pointer le

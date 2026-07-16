@@ -37,7 +37,7 @@
 // ============================================================
 
 /** Version du contrat (à incrémenter à chaque évolution de surface). */
-export const VERSION_CONTRAT = 3;
+export const VERSION_CONTRAT = 4;
 
 /**
  * Message canonique opposé à toute tentative de modification d'une
@@ -274,6 +274,8 @@ export const METHODES_CONTRAT = {
   // --- mode officiel et échanges --------------------------------------
   peutPasserEnOfficiel: { genre: 'lecture',
     description: 'Les 4 vérifications bloquantes du mode OFFICIEL (SPEC §7.2) : { ok, motifs[] en français }.' },
+  simulerValidationOfficielle: { genre: 'lecture',
+    description: 'Simulation de validation OFFICIELLE d’un mouvement (lot B, condition 2 du plan audit-proof) : { ok, blocages:[{code, motif}] } comme si on validait la fiche en Officiel maintenant (liste docs/CONDITIONS-BLOCANTES-OFFICIEL.md, verrou de livraison compris) ; ne bloque jamais ; le serveur évalue en plus la sauvegarde du poste et le lien compte↔fiche de la session ; Error si le mouvement est introuvable.' },
   exporterJSON: { genre: 'lecture',
     description: 'Exporte l’état complet dans l’enveloppe { application, version, exporteLe, donnees }.' },
   importerJSON: { genre: 'mutation',

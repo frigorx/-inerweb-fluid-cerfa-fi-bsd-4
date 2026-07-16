@@ -56,10 +56,15 @@ testée. **Contrôles à 3 moments** : passage en officiel, soumission, juste av
 - **Le validateur DOIT venir de la session connectée** — l'API ne doit jamais accepter qu'un
   utilisateur déclare l'identité d'un autre validateur (le trou « qui déclaré ≠ prouvé »).
 - Prévoir une **« simulation de validation »** listant tous les blocages avant de signer.
-- **État actuel** : 🟡 première pierre posée (le serveur **refuse** désormais `mode:'OFFICIEL'` tant
-  que le mode n'est pas prêt, commit `d597582`). Le blocage dur complet (appeler `peutPasserEnOfficiel`
-  aux 3 moments + validateur de session) reste à faire — **dépend du moteur réglementaire (1)**.
-- **Gate** : Franck valide la liste des conditions bloquantes.
+- **État actuel** : ✅ **CODÉ ET PROUVÉ (lot B, 16/07)** — moteur pur `blocage-officiel.js`
+  (ESM + miroir serveur, parité testée) branché aux **3 moments** des deux stores ; **validateur
+  lu DE LA SESSION** (serveur, tous modes, 403 avant tout effet — trou « déclaré ≠ prouvé »
+  fermé, attaques tirées sur vrai HTTP) ; **simulation de validation**
+  (`simulerValidationOfficielle`, contrat 78) affichée dans la modale de validation. Le mode
+  reste FERMÉ par le `VERROU_LIVRAISON` jusqu'aux lots C-D. Liste des conditions =
+  `docs/CONDITIONS-BLOCANTES-OFFICIEL.md`.
+- **Gate** : ⏳ Franck RELIT la liste des conditions bloquantes (13 lignes + 3 questions
+  ouvertes) — chaque retouche = une entrée du moteur, trivial.
 
 ### 3. Double signature RÉELLE
 Séparer : opérateur/technicien · détenteur de l'équipement · éventuellement validateur interne.

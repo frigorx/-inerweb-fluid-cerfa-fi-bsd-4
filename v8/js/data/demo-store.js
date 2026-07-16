@@ -28,6 +28,10 @@ import { REGIMES, CATEGORIES_2008, CATEGORIES_2025, comparerHabilitations,
 // Signature binaire réelle des pièces jointes (audit-proof) : le contenu doit
 // concorder avec le type déclaré, jamais le MIME annoncé seul (miroir serveur).
 import { signatureConcordeAvecMime, MSG_SIGNATURE_PJ } from './contenu-pj.js';
+// Blocage dur du mode OFFICIEL (lot B, condition 2 du plan audit-proof) :
+// moteur PUR de la liste docs/CONDITIONS-BLOCANTES-OFFICIEL.md (miroir serveur).
+import { evaluerBlocagesOfficiel, messageRefusOfficiel, VERROU_LIVRAISON }
+  from './blocage-officiel.js';
 
 const CLE_STOCKAGE = 'inerweb-fluide-v8-demo';
 
@@ -930,6 +934,123 @@ export function creerDemoStore() {
         '(rôle requis : référent, enseignant ou administrateur).');
     }
     return personne;
+  }
+
+  // --------------------------------------------------------
+  // Blocage dur du mode OFFICIEL (lot B — condition 2 du plan)
+  // --------------------------------------------------------
+
+  /**
+   * Les 4 vérifications d'établissement du mode OFFICIEL (SPEC §7.2) —
+   * corps historique de peutPasserEnOfficiel, extrait pour nourrir AUSSI
+   * le moteur de blocage (conditions 1-4 de la liste, motifs inchangés).
+   */
+  function calculerPeutPasserEnOfficiel() {
+    const motifs = [];
+    const jour = aujourdHui();
+    const etab = donnees.etablissement;
+
+    if (!etab.numAttestationCapacite) {
+      motifs.push('Aucune attestation de capacité renseignée pour ' +
+        'l’établissement.');
+    } else if (etab.dateEcheanceCapacite &&
+               etab.dateEcheanceCapacite < jour) {
+      motifs.push('Attestation de capacité expirée depuis le ' +
+        `${fmtDate(etab.dateEcheanceCapacite)}.`);
+    }
+
+    const statuts = donnees.outillage.map((o) => ({
+      typeOutil: o.typeOutil,
+      statut: calculerStatutOutil(o, jour)
+    }));
+    if (!statuts.some((o) => o.typeOutil === 'BALANCE' &&
+                             o.statut === 'CONFORME')) {
+      motifs.push('Aucune balance conforme (vérification à jour requise).');
+    }
+    if (!statuts.some((o) => o.typeOutil === 'DETECTEUR' &&
+                             o.statut === 'CONFORME')) {
+      motifs.push('Aucun détecteur de fuite conforme (étalonnage à jour ' +
+        'requis).');
+    }
+
+    for (const ecart of ecartsNonJustifies()) {
+      motifs.push(`Écart de balance matière non justifié : ${ecart.fluide} ` +
+        `(${ecart.annee}, ${fmtKgSigne(ecart.ecartKg)}).`);
+    }
+
+    return { ok: motifs.length === 0, motifs };
+  }
+
+  /**
+   * Faits de la fiche pour le moteur de blocage OFFICIEL (conditions 6-11
+   * de la liste) : tout est PRÉCALCULÉ ici, le moteur reste pur. Un
+   * intervenant désigné mais introuvable est traité comme absent.
+   */
+  function cadreFicheOfficiel(mouvement) {
+    const jour = aujourdHui();
+    const machine = mouvement.machineId
+      ? donnees.machines.find((m) => m.id === mouvement.machineId) ?? null
+      : null;
+    const fluideRef = mouvement.fluide
+      ? donnees.fluides.find((f) => f.code === mouvement.fluide) ?? null
+      : null;
+    const bouteilleSrc = mouvement.bouteilleSrcId
+      ? donnees.bouteilles.find((b) => b.id === mouvement.bouteilleSrcId) ?? null
+      : null;
+    // Contrôle périodique requis : même moteur réglementaire que le
+    // cadre 7 du CERFA (fréquence non nulle = machine soumise).
+    let controlePeriodiqueRequis = false;
+    if (machine && fluideRef) {
+      const { frequenceMois } = evaluerControle(fluideRef,
+        machine.chargeNominaleKg, Boolean(machine.detectionPermanente),
+        mouvement.date ?? jour);
+      controlePeriodiqueRequis = Boolean(frequenceMois);
+    }
+    const personne = mouvement.executeParId
+      ? donnees.personnel.find((p) => p.id === mouvement.executeParId) ?? null
+      : null;
+    const intervenant = personne ? {
+      nom: `${personne.prenom} ${personne.nom}`,
+      actif: personne.actif !== false,
+      habilitationActive: (donnees.habilitations ?? []).some((h) =>
+        h.personneId === personne.id && h.actif &&
+        (!h.dateFin || h.dateFin >= jour))
+    } : null;
+    return {
+      type: mouvement.type,
+      machinePresente: Boolean(machine),
+      fluide: mouvement.fluide ?? null,
+      peseeAvantKg: mouvement.peseeAvantKg ?? null,
+      peseeApresKg: mouvement.peseeApresKg ?? null,
+      causePresente: Boolean(mouvement.causeMouvement &&
+        String(mouvement.causeMouvement).trim()),
+      controleStatut: mouvement.controle?.statutControle ?? 'SANS_OBJET',
+      controlePeriodiqueRequis,
+      fluideInflammable: Boolean(fluideRef?.classeSecurite &&
+        fluideRef.classeSecurite !== 'A1'),
+      sourceVierge: bouteilleSrc?.etatFluide === 'VIERGE',
+      prp: fluideRef?.gwpAr4 ?? null,
+      signaturePresente: Boolean(mouvement.signatureDataUrl),
+      technicienPresent: Boolean(mouvement.technicien &&
+        String(mouvement.technicien).trim()),
+      intervenant
+    };
+  }
+
+  /**
+   * Verdict OFFICIEL à un moment donné. Pas de session ni de poste en
+   * démonstration : sauvegarde et validateur sont SANS OBJET (null) —
+   * le serveur, lui, les évalue (parité assumée, comme les gardes de rôle).
+   */
+  function evaluerOfficiel(moment, fiche) {
+    return evaluerBlocagesOfficiel({
+      moment,
+      etablissementMotifs: calculerPeutPasserEnOfficiel().motifs,
+      sauvegarde: null,
+      validateur: null,
+      verrouLivraison: VERROU_LIVRAISON,
+      fiche
+    });
   }
 
   // --------------------------------------------------------
@@ -2565,16 +2686,18 @@ export function creerDemoStore() {
         throw new Error(
           `Type de mouvement obligatoire parmi : ${TYPES_MOUVEMENT.join(', ')}.`);
       }
-      // Verrou de sécurité (audit externe 15/07) : mode Officiel pas encore
-      // disponible (ni blocage dur, ni signature détenteur). On refuse une
-      // demande OFFICIEL forgée plutôt que de créer une fiche sans ses
-      // contrôles. Parité stricte avec le serveur (api.js creerMouvement).
+      // Blocage dur du mode OFFICIEL (lot B) : 1er des 3 moments (PASSAGE).
+      // Les conditions bloquantes (docs/CONDITIONS-BLOCANTES-OFFICIEL.md)
+      // sont évaluées ; le VERROU DE LIVRAISON (lots C et D non livrés)
+      // maintient le refus TOTAL — remplace le verrou du 15/07 en le
+      // motivant. Parité stricte avec le serveur (api.js creerMouvement).
       if (d.mode === 'OFFICIEL') {
-        throw new Error(
-          'Le mode Officiel n\'est pas encore disponible dans cette version : '
-          + 'les interventions sont enregistrées en mode Formation.');
+        const verdict = evaluerOfficiel('PASSAGE', null);
+        if (!verdict.ok) {
+          throw new Error(messageRefusOfficiel(verdict.blocages));
+        }
       }
-      const mode = 'FORMATION';
+      const mode = d.mode === 'OFFICIEL' ? 'OFFICIEL' : 'FORMATION';
       // Références vérifiées dès le brouillon si fournies
       const machine = d.machineId ? trouverMachine(d.machineId) : null;
       if (d.bouteilleSrcId) trouverBouteille(d.bouteilleSrcId, 'Bouteille source');
@@ -2665,6 +2788,14 @@ export function creerDemoStore() {
       if (mouvement.statut !== 'BROUILLON') {
         throw new Error('Seul un mouvement en brouillon peut être soumis.');
       }
+      // Blocage dur OFFICIEL (lot B) : 2e moment (SOUMISSION) — la fiche
+      // doit être complète et réglementairement recevable AVANT tout effet.
+      if (mouvement.mode === 'OFFICIEL') {
+        const verdict = evaluerOfficiel('SOUMISSION', cadreFicheOfficiel(mouvement));
+        if (!verdict.ok) {
+          throw new Error(messageRefusOfficiel(verdict.blocages));
+        }
+      }
       mouvement.statut = 'SOUMIS';
       // IM-3 : date de soumission (base de l'alerte « à valider »).
       // Champ HORS de l'empreinte : il ne fige rien.
@@ -2734,6 +2865,16 @@ export function creerDemoStore() {
         throw new Error('Seul un mouvement soumis peut être validé.');
       }
       const validateur = verifierValidateur(validateurId);
+      // Blocage dur OFFICIEL (lot B) : 3e moment (VALIDATION), AVANT tout
+      // effet — signature comprise. La démo n'a ni session ni poste : la
+      // condition « validateur = personne connectée » est portée par le
+      // serveur (comme les gardes de rôle).
+      if (mouvement.mode === 'OFFICIEL') {
+        const verdict = evaluerOfficiel('VALIDATION', cadreFicheOfficiel(mouvement));
+        if (!verdict.ok) {
+          throw new Error(messageRefusOfficiel(verdict.blocages));
+        }
+      }
 
       // Règles métier + effets stocks/charges (throw si violation)
       appliquerEffets(mouvement);
@@ -3926,39 +4067,21 @@ export function creerDemoStore() {
     // Phase C : blocage du mode OFFICIEL (SPEC §7.2)
     // ------------------------------------------------------
     async peutPasserEnOfficiel() {
-      const motifs = [];
-      const jour = aujourdHui();
-      const etab = donnees.etablissement;
+      // Corps extrait en fonction interne (lot B) : il nourrit AUSSI le
+      // moteur de blocage — conditions 1-4 de la liste, motifs inchangés.
+      return calculerPeutPasserEnOfficiel();
+    },
 
-      if (!etab.numAttestationCapacite) {
-        motifs.push('Aucune attestation de capacité renseignée pour ' +
-          'l’établissement.');
-      } else if (etab.dateEcheanceCapacite &&
-                 etab.dateEcheanceCapacite < jour) {
-        motifs.push('Attestation de capacité expirée depuis le ' +
-          `${fmtDate(etab.dateEcheanceCapacite)}.`);
-      }
-
-      const statuts = donnees.outillage.map((o) => ({
-        typeOutil: o.typeOutil,
-        statut: calculerStatutOutil(o, jour)
-      }));
-      if (!statuts.some((o) => o.typeOutil === 'BALANCE' &&
-                               o.statut === 'CONFORME')) {
-        motifs.push('Aucune balance conforme (vérification à jour requise).');
-      }
-      if (!statuts.some((o) => o.typeOutil === 'DETECTEUR' &&
-                               o.statut === 'CONFORME')) {
-        motifs.push('Aucun détecteur de fuite conforme (étalonnage à jour ' +
-          'requis).');
-      }
-
-      for (const ecart of ecartsNonJustifies()) {
-        motifs.push(`Écart de balance matière non justifié : ${ecart.fluide} ` +
-          `(${ecart.annee}, ${fmtKgSigne(ecart.ecartKg)}).`);
-      }
-
-      return { ok: motifs.length === 0, motifs };
+    /**
+     * Lot B — simulation de validation OFFICIELLE (lecture, ne bloque
+     * jamais) : la liste complète des blocages comme si on validait la
+     * fiche en mode Officiel MAINTENANT (niveau VALIDATION, verrou de
+     * livraison compris). Error si le mouvement est introuvable.
+     */
+    async simulerValidationOfficielle(mouvementId) {
+      const mouvement = trouverMouvement(mouvementId);
+      return copier(
+        evaluerOfficiel('VALIDATION', cadreFicheOfficiel(mouvement)));
     },
 
     // ------------------------------------------------------

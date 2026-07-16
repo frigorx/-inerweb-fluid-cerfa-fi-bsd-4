@@ -1,0 +1,71 @@
+# Conditions bloquantes du mode Officiel — condition 2 du plan audit-proof
+
+> **Statut : PROPOSITION À RELIRE PAR FRANCK (lot B, 16/07/2026).** Établie depuis la
+> condition 2 de `PLAN-AUDIT-PROOF-2026.md` et l'avis technique du 16/07 (Q10 notamment).
+> Chaque ligne est codée dans le moteur `blocage-officiel.js` (un module pur, une condition
+> = une entrée) : rayer ou reformuler une ligne = une retouche triviale du moteur.
+>
+> Rappel du principe (décision Franck) : en mode **CONSEIL/FORMATION on ne bloque jamais** ;
+> le mode **OFFICIEL, lui, DOIT bloquer** — c'est sa définition. Le mode Officiel reste
+> **FERMÉ** (condition n° 13) tant que les lots C (double signature) et D ne sont pas livrés :
+> cette liste prépare l'ouverture, elle n'ouvre rien.
+
+## LA LISTE (à relire — une ligne par condition)
+
+Moments : **P** = passage en officiel (création) · **S** = soumission · **V** = validation.
+La **simulation de validation** évalue tout (niveau V) sans rien bloquer.
+
+| n° | Condition bloquante | Moments |
+|---|---|---|
+| 1 | Attestation de capacité de l'établissement renseignée et non expirée | P·S·V |
+| 2 | Au moins une balance CONFORME (vérification à jour) | P·S·V |
+| 3 | Au moins un détecteur de fuite CONFORME (étalonnage à jour) | P·S·V |
+| 4 | Aucun écart de balance matière non justifié | P·S·V |
+| 5 | Sauvegarde vérifiée récente du poste (archive valide plus jeune que le seuil réglé, 24 h par défaut) — serveur seulement, sans objet en démonstration | P·S·V |
+| 6 | Intervenant désigné (« exécuté par ») présent sur la fiche et fiche personnel ACTIVE | S·V |
+| 7 | Au moins une habilitation F-Gas ACTIVE et en cours de validité pour l'intervenant | S·V |
+| 8 | Fiche complète : machine désignée (tout type sauf TRANSFERT), fluide renseigné, pesées avant/après renseignées et différentes, cause de l'appoint renseignée (CHARGE_APPOINT) | S·V |
+| 9 | Contrôle d'étanchéité renseigné (CONFORME ou FUITE, jamais « sans objet ») pour CHARGE_APPOINT et MISE_EN_SERVICE quand la machine est soumise au contrôle périodique OU que le fluide est inflammable (classe ≠ A1) | S·V |
+| 10 | Charge d'appoint en fluide VIERGE de PRP ≥ 2500 interdite (maintenance, règl. UE 2024/573 — avis Q10 ; les deux dates 01/01/2025 et 01/01/2026 sont échues) | S·V |
+| 11 | Signature du technicien présente (tracé + nom) | V |
+| 12 | Le validateur est la personne CONNECTÉE : compte de session lié à une fiche du personnel, identité déclarée = identité de session (serveur ; appliqué à `validerMouvement` ET `annulerParContreEcriture`, **dans tous les modes** — c'est de la sécurité, pas du métier) | V |
+| 13 | VERROU DE LIVRAISON : double signature réelle (condition 3) et empreinte renforcée + PDF conservé (condition 4) non livrées → le mode Officiel reste fermé | P·S·V |
+
+## Points gatés / arbitrages proposés (à confirmer en relisant)
+
+- **n° 7 — correspondance fine aptitude ↔ intervention** : le plan exige « aptitude
+  correspondant au type d'intervention ». La matrice catégorie ↔ opération ↔ fluide ↔ charge
+  (`SPEC-HABILITATIONS.md` §2, moteur `verifierDroitIntervention`) est un **brouillon que tu
+  n'as pas encore validé** — règle absolue : rien de nouveau sans ta validation. Le lot B
+  bloque donc sur « habilitation active et valide » (données existantes) ; la correspondance
+  fine sera branchée au même endroit dès que tu valides la matrice (avant l'ouverture réelle).
+- **n° 10 — dérogation** : l'avis Q10 prévoit un blocage AVEC dérogation tracée. Proposition
+  lot B : blocage sec (protecteur) ; le mécanisme de dérogation tracée sera ajouté si un cas
+  réel l'exige (lycée : improbable).
+- **Bouteille compatible / stocks / débordement / surcharge** : déjà bloquants dans TOUS les
+  modes par les contrôles de faisabilité de la validation (règle 5 du contrat : jamais de
+  mutation partielle). Pas re-vérifiés dans le moteur — pas de double source de vérité.
+- **Signature du détenteur, invalidation des signatures à toute modification, signature
+  illisible jamais ignorée** : condition 3 du plan = **lot C** (elles s'ajouteront à cette
+  liste au même endroit, niveau V).
+- **Fluides hors périmètre (R-744, R-290)** : une fiche CERFA officielle n'a pas d'objet pour
+  un fluide non fluoré. Non bloqué au lot B — question ouverte pour la relecture : faut-il
+  refuser une fiche OFFICIELLE sur R-744/R-290, ou la laisser possible comme trace volontaire ?
+
+## Mise en œuvre (lot B, technique)
+
+- **Moteur pur** `v8/js/data/blocage-officiel.js` (miroir littéral CommonJS
+  `server/blocage-officiel.js`, test de parité qui discrimine) : `evaluerBlocagesOfficiel(cadre)`
+  → `{ ok, blocages: [{ code, motif }] }`, filtré par moment. Une condition = une entrée.
+- Les conditions 1-4 restent portées par `peutPasserEnOfficiel` (SPEC §7.2, inchangé — aucune
+  régression sur les vues et tests existants) ; le moteur les reprend telles quelles.
+- **Les 3 moments** : `creerMouvement` (mode OFFICIEL demandé → refus motivé listant les
+  blocages), `soumettreMouvement` et `validerMouvement` (fiche OFFICIEL → mêmes refus).
+  En FORMATION : rien ne change, rien ne bloque.
+- **Validateur de session** (n° 12) : serveur, tous modes, avant tout effet (code 403). Le
+  repli sans session (harnais de test in-process) garde le comportement historique — même
+  motif que `getUtilisateurCourant` (parité du contrat).
+- **Simulation de validation** : nouvelle lecture du contrat `simulerValidationOfficielle
+  (mouvementId)` (contrat 77 → 78, `VERSION_CONTRAT` 4) — la liste complète des blocages
+  comme si on validait la fiche en Officiel maintenant. Affichée dans la modale de
+  validation (information, jamais bloquante en Formation).

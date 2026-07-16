@@ -114,8 +114,8 @@ verifier('aucune méthode intruse hors contrat (anti-dérive v7)',
 verifier('les propriétés du contrat sont présentes',
   surface.proprietesManquantes.length === 0,
   `manquent : ${surface.proprietesManquantes.join(', ')}`);
-verifier('le contrat compte bien 77 méthodes',
-  Object.keys(METHODES_CONTRAT).length === 77,
+verifier('le contrat compte bien 78 méthodes',
+  Object.keys(METHODES_CONTRAT).length === 78,
   `compté : ${Object.keys(METHODES_CONTRAT).length}`);
 verifier('modeLabel est une chaîne non vide',
   typeof store.modeLabel === 'string' && store.modeLabel.length > 0);
@@ -339,12 +339,16 @@ await verifierRejet('createMachine refuse une charge nominale négative ou nulle
 await verifierRejet('createMachine refuse un client introuvable',
   store.createMachine({ designation: 'X', fluide: FLUIDE, chargeNominaleKg: 1,
     clientId: 'cli-fantome' }));
-// Verrou de sécurité (audit externe 15/07) : le mode Officiel n'est pas encore
-// disponible → une demande OFFICIEL forgée via l'API est refusée (parité
-// demo/local), au lieu de créer une fiche « officielle » sans ses contrôles.
-await verifierRejet('creerMouvement refuse une demande en mode OFFICIEL (version formation)',
+// Blocage dur du mode OFFICIEL (lot B) : le verrou de livraison (lots C-D
+// non livrés) refuse toute demande OFFICIEL forgée via l'API, avec le
+// message canonique MOTIVÉ du moteur de blocage (parité demo/local — les
+// motifs de poste diffèrent, le début du message et le verrou jamais).
+await verifierRejet('creerMouvement refuse une demande en mode OFFICIEL (verrou motivé)',
   store.creerMouvement({ type: 'CHARGE_APPOINT', mode: 'OFFICIEL' }),
-  'Officiel');
+  'Mode Officiel refusé');
+await verifierRejet('le refus OFFICIEL cite le verrou de livraison (lots C et D)',
+  store.creerMouvement({ type: 'CHARGE_APPOINT', mode: 'OFFICIEL' }),
+  'pas encore ouvert');
 
 const machineB = await store.createMachine({
   designation: 'Groupe froid du contrat', fluide: FLUIDE,
@@ -1580,6 +1584,33 @@ verifier('le bilan a une ligne pour le fluide de nos écritures',
 const officiel = await store.peutPasserEnOfficiel();
 verifier('peutPasserEnOfficiel : { ok, motifs[] français }',
   typeof officiel.ok === 'boolean' && Array.isArray(officiel.motifs));
+
+// Lot B — simulation de validation OFFICIELLE (lecture, ne bloque jamais) :
+// forme du verdict, verrou de livraison toujours présent, conditions de
+// fiche signalées. Les motifs de POSTE (sauvegarde, session) sont propres
+// au serveur : on n'affirme ici que ce qui vaut pour les DEUX stores.
+{
+  const brouillonSim = await store.creerMouvement({
+    type: 'CHARGE_APPOINT', machineId: machineA.id, fluide: FLUIDE,
+    peseeAvantKg: 12, peseeApresKg: 11
+  });
+  const simulation = await store.simulerValidationOfficielle(brouillonSim.id);
+  verifier('simulerValidationOfficielle : { ok, blocages[] {code, motif} }',
+    simulation.ok === false && Array.isArray(simulation.blocages) &&
+    simulation.blocages.every((b) =>
+      typeof b.code === 'string' && typeof b.motif === 'string'),
+    JSON.stringify(simulation));
+  verifier('simulation : le verrou de livraison ferme toujours le mode Officiel',
+    simulation.blocages.some((b) => b.code === 'VERROU_LIVRAISON'));
+  verifier('simulation : intervenant non désigné signalé (condition 6)',
+    simulation.blocages.some((b) => b.code === 'INTERVENANT'));
+  verifier('simulation : signature du technicien absente signalée (condition 11)',
+    simulation.blocages.some((b) => b.code === 'SIGNATURE'));
+  await verifierRejet('simulerValidationOfficielle refuse un mouvement introuvable',
+    store.simulerValidationOfficielle('mvt-fantome'), 'introuvable');
+  // Brouillon de simulation supprimé : aucune trace parasite pour la suite.
+  await store.supprimerMouvement(brouillonSim.id);
+}
 
 // ============================================================
 // 16. Outillage : statut recalculé, réforme définitive

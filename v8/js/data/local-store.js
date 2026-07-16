@@ -127,6 +127,9 @@ export function creerLocalStore(transport) {
     getBsff() { return lire('getBsff', {}); },
     getRetoursFournisseur() { return lire('getRetoursFournisseur', {}); },
     peutPasserEnOfficiel() { return lire('peutPasserEnOfficiel', {}); },
+    simulerValidationOfficielle(mouvementId) {
+      return lire('simulerValidationOfficielle', { mouvementId });
+    },
     exporterJSON() { return lire('exporterJSON', {}); },
 
     getBilan(annee) { return lire('getBilan', { annee }); },

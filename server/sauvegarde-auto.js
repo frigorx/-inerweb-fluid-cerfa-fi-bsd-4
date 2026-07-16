@@ -144,11 +144,33 @@ function reinitialiserDebouncePourTests() {
   dernierSnapshotMs = 0;
 }
 
+/**
+ * État « sauvegarde vérifiée récente » du poste — condition 5 du blocage
+ * OFFICIEL (docs/CONDITIONS-BLOCANTES-OFFICIEL.md) : une ARCHIVE VALIDE
+ * plus jeune que le seuil réglé. Ne lève jamais (l'échec = pas récente).
+ * @returns {{recente: boolean, ageHeures: ?number, seuilHeures: number}}
+ */
+function etatSauvegardeRecente() {
+  const seuilHeures = heuresIntervalle();
+  try {
+    const derniere = derniereArchiveValide();
+    if (!derniere) return { recente: false, ageHeures: null, seuilHeures };
+    const ageHeures = (Date.now() - Date.parse(derniere)) / 3600000;
+    if (!Number.isFinite(ageHeures)) {
+      return { recente: false, ageHeures: null, seuilHeures };
+    }
+    return { recente: ageHeures < seuilHeures, ageHeures, seuilHeures };
+  } catch {
+    return { recente: false, ageHeures: null, seuilHeures };
+  }
+}
+
 module.exports = {
   archiveAuDemarrageSiDue,
   snapshotApresEcritureScellee,
   estActive,
   heuresIntervalle,
+  etatSauvegardeRecente,
   reinitialiserDebouncePourTests,
   CLE_ACTIVE,
   CLE_HEURES,

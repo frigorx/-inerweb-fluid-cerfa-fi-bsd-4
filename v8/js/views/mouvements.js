@@ -461,6 +461,7 @@ function ouvrirValidation(ctx, mv, utilisateur, outils, personnelParId) {
       + 'registre : elle devient définitive (correction uniquement par '
       + 'contre-écriture).</p>'
       + '<div style="margin-top:10px">' + blocValidateur + '</div>'
+      + '<div data-zone-simulation style="margin-top:10px"></div>'
       + '<div data-zone-erreur style="margin-top:10px"></div>',
     actionsHtml:
       '<button type="button" class="btn btn-secondaire" data-role="fermer">Annuler</button>'
@@ -468,12 +469,49 @@ function ouvrirValidation(ctx, mv, utilisateur, outils, personnelParId) {
         ? '<button type="button" class="btn btn-primaire" data-role="confirmer">Valider</button>'
         : '')
   });
+  // Lot B — simulation de validation OFFICIELLE : information (jamais
+  // bloquante en Formation), chargée après ouverture pour ne pas retarder
+  // la modale. Prépare le registre réel de septembre.
+  chargerSimulationOfficielle(ctx, mv, instance.racine);
   cablerConfirmation(instance, async function () {
     await ctx.store.validerMouvement(mv.id, utilisateur.id);
     instance.fermer();
     toast('Mouvement ' + mv.numero + ' validé et inscrit au registre.', 'succes');
     ctx.naviguer('mouvements');
   });
+}
+
+/**
+ * Panneau « Simulation mode Officiel » de la modale de validation (lot B) :
+ * liste ce que le mode Officiel refuserait aujourd'hui pour CETTE fiche
+ * (docs/CONDITIONS-BLOCANTES-OFFICIEL.md), hors verrou de livraison —
+ * purement informatif, la validation en Formation reste possible.
+ */
+async function chargerSimulationOfficielle(ctx, mv, racine) {
+  const zone = racine.querySelector('[data-zone-simulation]');
+  if (!zone) return;
+  try {
+    const verdict = await ctx.store.simulerValidationOfficielle(mv.id);
+    const visibles = verdict.blocages.filter(
+      function (b) { return b.code !== 'VERROU_LIVRAISON'; });
+    if (!visibles.length) {
+      zone.innerHTML = '<p style="font-size:13px;color:var(--texte-2)">'
+        + 'Simulation mode Officiel : aucun blocage — cette fiche passerait '
+        + 'les contrôles du registre officiel.</p>';
+      return;
+    }
+    zone.innerHTML = '<div class="bandeau-avertissement" style="display:block">'
+      + '<strong>Simulation mode Officiel</strong> — cette fiche serait '
+      + 'refusée en Officiel (information, la validation en Formation reste '
+      + 'possible) :'
+      + '<ul style="margin:6px 0 0 18px;padding:0">'
+      + visibles.map(function (b) { return '<li>' + esc(b.motif) + '</li>'; }).join('')
+      + '</ul></div>';
+  } catch (erreur) {
+    // Simulation indisponible (méthode absente, erreur réseau…) : on
+    // n'affiche rien — la validation en Formation n'en dépend jamais.
+    zone.innerHTML = '';
+  }
 }
 
 /** SOUMIS → modale de rejet (motif obligatoire, retour en brouillon). */

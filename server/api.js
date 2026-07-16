@@ -32,6 +32,11 @@ const mapping = require('./mapping.js');
 const { hasherMouvement } = require('./hash-mouvement.js');
 const { FICHE_REGLEMENTAIRE_FLUIDES, corrigerPrpFgas3 } = require('./migrations.js');
 const sauvegardeAuto = require('./sauvegarde-auto.js');
+// Blocage dur du mode OFFICIEL (lot B, condition 2 du plan audit-proof) :
+// moteur PUR de la liste docs/CONDITIONS-BLOCANTES-OFFICIEL.md (miroir du
+// module ESM du front, parité prouvée par test-blocage-officiel.mjs).
+const { evaluerBlocagesOfficiel, messageRefusOfficiel, VERROU_LIVRAISON } =
+  require('./blocage-officiel.js');
 
 // ------------------------------------------------------------
 // Identité de l'établissement singleton (le front le traite sans id).
@@ -2169,25 +2174,24 @@ const HANDLERS = {
    * rien. Les références (machine, bouteilles) sont vérifiées dès la saisie
    * si fournies. Reprend creerMouvement du DemoStore (msg mot pour mot).
    */
-  creerMouvement(params) {
+  creerMouvement(params, contexte) {
     const d = params.donneesMouvement || {};
     if (!TYPES_MOUVEMENT.includes(d.type)) {
       throw new Error(
         `Type de mouvement obligatoire parmi : ${TYPES_MOUVEMENT.join(', ')}.`);
     }
-    // Verrou de sécurité (audit externe 15/07) : le mode Officiel n'est pas
-    // encore disponible — il manque le blocage dur (peutPasserEnOfficiel appelé
-    // à la création/validation), la signature du détenteur et l'empreinte
-    // couvrant la signature. L'UI force déjà FORMATION ; on REFUSE ici une
-    // demande OFFICIEL forgée via l'API, plutôt que de fabriquer une fiche
-    // « officielle » sans ses contrôles réglementaires. Le mode Officiel complet
-    // viendra avec la distribution entreprise (choix Franck « pour plus tard »).
+    // Blocage dur du mode OFFICIEL (lot B) : 1er des 3 moments (PASSAGE).
+    // Les conditions bloquantes (docs/CONDITIONS-BLOCANTES-OFFICIEL.md)
+    // sont évaluées ; le VERROU DE LIVRAISON (lots C et D non livrés)
+    // maintient le refus TOTAL — remplace le verrou du 15/07 en le
+    // motivant. Parité stricte avec le DemoStore (creerMouvement).
     if (d.mode === 'OFFICIEL') {
-      throw new Error(
-        'Le mode Officiel n\'est pas encore disponible dans cette version : '
-        + 'les interventions sont enregistrées en mode Formation.');
+      const verdict = evaluerOfficiel('PASSAGE', null, contexte);
+      if (!verdict.ok) {
+        throw new Error(messageRefusOfficiel(verdict.blocages));
+      }
     }
-    const mode = 'FORMATION';
+    const mode = d.mode === 'OFFICIEL' ? 'OFFICIEL' : 'FORMATION';
     // Références vérifiées dès le brouillon si fournies (msg exact).
     const machine = d.machineId ? trouverMachine(d.machineId) : null;
     if (d.bouteilleSrcId) trouverBouteille(d.bouteilleSrcId, 'Bouteille source');
@@ -2293,7 +2297,7 @@ const HANDLERS = {
   },
 
   /** BROUILLON → SOUMIS + date de soumission (hors empreinte). */
-  soumettreMouvement(params) {
+  soumettreMouvement(params, contexte) {
     const { id } = params;
     const mouvement = trouverMouvement(id);
     if (mouvement.statut === 'VALIDE' || mouvement.statut === 'ANNULE') {
@@ -2301,6 +2305,15 @@ const HANDLERS = {
     }
     if (mouvement.statut !== 'BROUILLON') {
       throw new Error('Seul un mouvement en brouillon peut être soumis.');
+    }
+    // Blocage dur OFFICIEL (lot B) : 2e moment (SOUMISSION) — la fiche
+    // doit être complète et réglementairement recevable AVANT tout effet.
+    if (mouvement.mode === 'OFFICIEL') {
+      const verdict = evaluerOfficiel('SOUMISSION',
+        cadreFicheOfficiel(mouvement), contexte);
+      if (!verdict.ok) {
+        throw new Error(messageRefusOfficiel(verdict.blocages));
+      }
     }
     return muter(() => {
       majParId('mouvements', id, {
@@ -2372,7 +2385,7 @@ const HANDLERS = {
    * base le rôle du VALIDATEUR DÉSIGNÉ (un élève désigné est refusé, le
    * statut reste SOUMIS).
    */
-  validerMouvement(params) {
+  validerMouvement(params, contexte) {
     const { id, validateurId } = params;
     const mouvement = trouverMouvement(id);
     if (mouvement.statut === 'VALIDE' || mouvement.statut === 'ANNULE') {
@@ -2382,6 +2395,20 @@ const HANDLERS = {
       throw new Error('Seul un mouvement soumis peut être validé.');
     }
     const validateur = verifierValidateur(validateurId);
+    // Lot B (condition n° 12) : le validateur DOIT être la personne
+    // connectée — TOUS les modes, 403 AVANT tout effet (sécurité : le
+    // journal recoupait déjà, désormais l'API refuse). Sans session
+    // (harnais in-process), repli historique comme getUtilisateurCourant.
+    exigerValidateurDeSession(validateurId, contexte);
+    // Blocage dur OFFICIEL (lot B) : 3e moment (VALIDATION), AVANT tout
+    // effet — signature comprise.
+    if (mouvement.mode === 'OFFICIEL') {
+      const verdict = evaluerOfficiel('VALIDATION',
+        cadreFicheOfficiel(mouvement), contexte, validateurId);
+      if (!verdict.ok) {
+        throw new Error(messageRefusOfficiel(verdict.blocages));
+      }
+    }
     return muter(() => {
       // Règles métier + effets stocks/charges (throw si violation) : muter
       // fluide / machineLabel / quantiteKg sur l'objet logique.
@@ -2489,7 +2516,7 @@ const HANDLERS = {
    * permutées) et applique les effets inverses ; l'originale passe ANNULE
    * sans qu'une seule de ses données ne bouge (empreinte intacte).
    */
-  annulerParContreEcriture(params) {
+  annulerParContreEcriture(params, contexte) {
     const { id, motif, validateurId } = params;
     const original = trouverMouvement(id);
     if (original.statut === 'ANNULE') {
@@ -2503,6 +2530,9 @@ const HANDLERS = {
       throw new Error('Motif d’annulation obligatoire.');
     }
     const validateur = verifierValidateur(validateurId);
+    // Lot B (condition n° 12) : une contre-écriture est une écriture
+    // scellée — même exigence que la validation (session = validateur).
+    exigerValidateurDeSession(validateurId, contexte);
     const motifNet = String(motif).trim();
     return muter(() => {
       // Effets inverses AVANT de figer quoi que ce soit (throw si impossible).
@@ -2941,6 +2971,21 @@ const HANDLERS = {
   /** CR : 4 vérifs bloquantes avant le passage en mode OFFICIEL. */
   peutPasserEnOfficiel() {
     return calculerPeutPasserEnOfficiel();
+  },
+
+  /**
+   * Lot B — simulation de validation OFFICIELLE (lecture, ne bloque
+   * jamais) : la liste complète des blocages comme si on validait la
+   * fiche en mode Officiel MAINTENANT (niveau VALIDATION, verrou de
+   * livraison compris). Le serveur évalue AUSSI la sauvegarde du poste
+   * et le lien compte ↔ fiche du personnel de la session (validateurId
+   * null : « ce compte pourra-t-il valider sous sa propre identité ? »).
+   * Error si le mouvement est introuvable.
+   */
+  simulerValidationOfficielle(params, contexte) {
+    const mouvement = trouverMouvement(params.mouvementId);
+    return evaluerOfficiel('VALIDATION', cadreFicheOfficiel(mouvement),
+      contexte, null);
   },
 
   // === export / import (VAGUE 11 — format d'échange entre stores) ====
@@ -4839,6 +4884,131 @@ function verifierValidateur(validateurId) {
       '(rôle requis : référent, enseignant ou administrateur).');
   }
   return personne;
+}
+
+// ------------------------------------------------------------
+// Blocage dur du mode OFFICIEL (lot B — condition 2 du plan).
+// Le validateur DE SESSION est appliqué dans TOUS les modes (sécurité,
+// pas métier) ; le reste ne s'applique qu'aux fiches OFFICIEL.
+// ------------------------------------------------------------
+
+/**
+ * Lien validateur ↔ session — condition n° 12 de la liste : l'API
+ * n'accepte JAMAIS qu'un utilisateur déclare l'identité d'un autre
+ * validateur (le trou « qui déclaré ≠ prouvé » de l'audit du 15/07).
+ *  - null : pas de session (harnais in-process) → sans objet, repli
+ *    historique — même logique que getUtilisateurCourant (parité).
+ *  - validateurId null : « le compte pourra-t-il valider sous sa propre
+ *    identité ? » (simulation).
+ * @returns {?{lie: boolean, motif: ?string}}
+ */
+function lienValidateurSession(validateurId, contexte) {
+  const idCompte = contexte?.utilisateur ?? null;
+  if (!idCompte) return null;
+  const compte = db.get(
+    'SELECT personnel_id FROM utilisateurs_app WHERE id = ?', [idCompte]);
+  const personnelId = compte?.personnel_id ?? null;
+  if (!personnelId) {
+    return { lie: false, motif:
+      'Validation refusée : votre compte n’est lié à aucune fiche du ' +
+      'personnel — le validateur doit être la personne connectée ' +
+      '(demandez à l’administrateur de lier votre compte).' };
+  }
+  if (validateurId != null && validateurId !== personnelId) {
+    return { lie: false, motif:
+      'Validation refusée : le validateur déclaré n’est pas la personne ' +
+      'connectée — l’identité de session fait foi.' };
+  }
+  return { lie: true, motif: null };
+}
+
+/** Refuse (403, AVANT tout effet) un validateur qui n'est pas la session. */
+function exigerValidateurDeSession(validateurId, contexte) {
+  const lien = lienValidateurSession(validateurId, contexte);
+  if (lien && !lien.lie) {
+    const erreur = new Error(lien.motif);
+    erreur.code = 403;
+    throw erreur;
+  }
+}
+
+/**
+ * Faits de la fiche pour le moteur de blocage OFFICIEL (conditions 6-11
+ * de la liste) — MIROIR du cadreFicheOfficiel du DemoStore : tout est
+ * précalculé ici, le moteur reste pur. Un intervenant désigné mais
+ * introuvable est traité comme absent.
+ */
+function cadreFicheOfficiel(mouvement) {
+  const jour = aujourdHui();
+  const ligneMachine = mouvement.machineId
+    ? db.get('SELECT * FROM machines WHERE id = ?', [mouvement.machineId])
+    : null;
+  const machine = ligneMachine
+    ? mapping.versFront('machines', ligneMachine) : null;
+  const fluideRef = lireFluide(mouvement.fluide ?? null);
+  const ligneBouteille = mouvement.bouteilleSrcId
+    ? db.get('SELECT * FROM bouteilles WHERE id = ?', [mouvement.bouteilleSrcId])
+    : null;
+  const bouteilleSrc = ligneBouteille
+    ? mapping.versFront('bouteilles', ligneBouteille) : null;
+  // Contrôle périodique requis : même moteur réglementaire que le
+  // cadre 7 du CERFA (fréquence non nulle = machine soumise).
+  let controlePeriodiqueRequis = false;
+  if (machine && fluideRef) {
+    controlePeriodiqueRequis = Boolean(frequenceControleMois(fluideRef,
+      machine.chargeNominaleKg, Boolean(machine.detectionPermanente),
+      mouvement.date ?? jour));
+  }
+  const lignePersonne = mouvement.executeParId
+    ? db.get('SELECT * FROM personnel WHERE id = ?', [mouvement.executeParId])
+    : null;
+  const personne = lignePersonne
+    ? mapping.versFront('personnel', lignePersonne) : null;
+  const intervenant = personne ? {
+    nom: `${personne.prenom} ${personne.nom}`,
+    actif: personne.actif !== false,
+    habilitationActive: Boolean(db.get(
+      `SELECT id FROM habilitations
+       WHERE personne_id = ? AND actif = 1
+         AND (date_fin IS NULL OR date_fin >= ?)`,
+      [personne.id, jour]))
+  } : null;
+  return {
+    type: mouvement.type,
+    machinePresente: Boolean(machine),
+    fluide: mouvement.fluide ?? null,
+    peseeAvantKg: mouvement.peseeAvantKg ?? null,
+    peseeApresKg: mouvement.peseeApresKg ?? null,
+    causePresente: Boolean(mouvement.causeMouvement &&
+      String(mouvement.causeMouvement).trim()),
+    controleStatut: mouvement.controle?.statutControle ?? 'SANS_OBJET',
+    controlePeriodiqueRequis,
+    fluideInflammable: Boolean(fluideRef?.classeSecurite &&
+      fluideRef.classeSecurite !== 'A1'),
+    sourceVierge: bouteilleSrc?.etatFluide === 'VIERGE',
+    prp: fluideRef?.gwpAr4 ?? null,
+    signaturePresente: Boolean(mouvement.signatureDataUrl),
+    technicienPresent: Boolean(mouvement.technicien &&
+      String(mouvement.technicien).trim()),
+    intervenant
+  };
+}
+
+/**
+ * Verdict OFFICIEL à un moment donné — le serveur évalue AUSSI les
+ * conditions de poste (sauvegarde vérifiée récente) et de session
+ * (validateur), que la démo répute sans objet (parité assumée, comme
+ * les gardes de rôle).
+ */
+function evaluerOfficiel(moment, fiche, contexte, validateurId = null) {
+  return evaluerBlocagesOfficiel({
+    moment,
+    etablissementMotifs: calculerPeutPasserEnOfficiel().motifs,
+    sauvegarde: sauvegardeAuto.etatSauvegardeRecente(),
+    validateur: lienValidateurSession(validateurId, contexte),
+    verrouLivraison: VERROU_LIVRAISON,
+    fiche
+  });
 }
 
 /** BSFF par id (copie camelCase). */

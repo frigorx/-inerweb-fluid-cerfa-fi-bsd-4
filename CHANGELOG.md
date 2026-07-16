@@ -2,6 +2,41 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🚧 LOT B audit-proof — blocage dur du mode Officiel (condition 2 du plan, 16/07 soir)
+Deuxième lot du CAP « registre réel en septembre ». Le mode Officiel reste FERMÉ (verrou de
+livraison jusqu'aux lots C-D), mais toute sa mécanique de blocage est posée, testée et TIRÉE
+en conditions réelles. **⏳ GATE : la liste des conditions bloquantes attend la RELECTURE de
+Franck** (`docs/CONDITIONS-BLOCANTES-OFFICIEL.md` — 13 conditions, 1 ligne chacune ; chaque
+ligne = une entrée du moteur, retouche triviale).
+- **Moteur PUR `v8/js/data/blocage-officiel.js`** (+ miroir littéral CommonJS
+  `server/blocage-officiel.js`) : `evaluerBlocagesOfficiel(cadre)` → `{ ok, blocages:[{code,
+  motif}] }`, filtré par moment (PASSAGE < SOUMISSION < VALIDATION). Les conditions 1-4
+  restent portées par `peutPasserEnOfficiel` (SPEC §7.2, motifs inchangés — zéro régression) ;
+  le verrou de livraison est UNE constante (`VERROU_LIVRAISON`) à basculer au lot C-D.
+  Parité prouvée par `server/test-blocage-officiel.mjs` (31 vérifs : limites de chaque
+  condition + parité stricte ESM ↔ CJS sur 30 cadres discriminants).
+- **Les 3 moments branchés des DEUX côtés** (demo-store et api.js) : `creerMouvement` (mode
+  OFFICIEL demandé → refus motivé listant les blocages — remplace le refus sec du 15/07),
+  `soumettreMouvement` et `validerMouvement` (fiche OFFICIEL → mêmes refus, AVANT tout effet).
+  En FORMATION rien ne change : on ne bloque jamais (règle Franck).
+- **VALIDATEUR DE SESSION (serveur, TOUS modes)** — le trou « qui déclaré ≠ prouvé » de
+  l'audit du 15/07 est FERMÉ : `validerMouvement` et `annulerParContreEcriture` refusent
+  (403, avant tout effet) un validateur qui n'est pas la personne connectée, ou un compte
+  sans fiche du personnel. Sans session (harnais in-process) : repli historique, comme
+  `getUtilisateurCourant` (parité du contrat). Preuves : `server/test-validateur-session.mjs`
+  (12 vérifs, attaques tirées avec comptes et sessions réels).
+- **Contrat 77 → 78 (`VERSION_CONTRAT` 4)** : `simulerValidationOfficielle(mouvementId)`
+  (lecture, ne bloque jamais) — la liste complète des blocages comme si on validait la fiche
+  en Officiel MAINTENANT. Le serveur évalue en plus la sauvegarde du poste (condition 5,
+  satisfaite par l'archive automatique du démarrage — condition 6 en action) et le lien
+  compte ↔ fiche de la session. Affichée dans la MODALE DE VALIDATION (panneau « Simulation
+  mode Officiel », informatif, hors verrou de livraison) — prépare le parallèle de septembre.
+- **Preuve en conditions réelles** (serveur jetable, vrai HTTP, cookies) : validateur forgé
+  → 403 · compte sans fiche → 403 · OFFICIEL forgé → refus motivé · simulation sous session
+  OK et 403 anonyme (lot A tient) · cas légitime → VALIDE. 8/8.
+- **Réglage** : Opus, effort maximum (réglementaire gaté, comme convenu).
+  **TOUT VERT — 76 exécutions** (74 + 2 nouvelles suites).
+
 ### 🔒 LOT A audit-proof — lectures sous session + trois durcissements (16/07 soir)
 Premier lot du CAP « registre réel en septembre » (voir `docs/PROMPT-REPRISE.md`). Objectif :
 fermer le blocage n°1 de l'audit externe du 15/07 (lecture anonyme en loopback) et poser trois
