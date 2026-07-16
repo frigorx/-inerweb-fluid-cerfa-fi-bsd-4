@@ -18,7 +18,14 @@ Tu reprends **inerWeb Fluide**, logiciel **LOCAL** de traçabilité des fluides 
 
 ## LE CAP (le chantier)
 
-Transformer inerWeb Fluide en **REGISTRE RÉGLEMENTAIRE DÉMONTRABLE** pour la **rentrée septembre 2026**.
+Transformer inerWeb Fluide en **REGISTRE RÉGLEMENTAIRE DÉMONTRABLE**.
+
+**Cadrage Franck (16/07)** : priorité = un logiciel **opérationnel et IRRÉPROCHABLE** sur trois axes —
+**législation, sauvegarde, ergonomie** —, **fini vite et bien** (plus vite c'est bouclé, plus vite Franck
+teste et développe). « Septembre 2026 » est le **jalon personnel** de Franck, PAS un cap directeur : ne pas
+en faire une échéance qui pilote les choix. **OVH / `inerweb.ovh` / bascule DNS = repoussé** (GitHub Pages
+suffit ; à réévaluer plus tard, sans urgence).
+
 Objectif à rendre techniquement vrai **et couvert par des tests** :
 
 > « Toute fiche officielle est contrôlée avant validation, signée par les bonnes personnes, figée avec
@@ -134,8 +141,11 @@ référent F-Gas. Ordre et dépendances : `docs/PLAN-AUDIT-PROOF-2026.md`.
 
 ## CE QUI ATTEND FRANCK (hors code)
 
-Annoter le §4 de `docs/TABLE-REGLEMENTAIRE-FLUIDES.md` avec le **référent F-Gas** ; bascule DNS chez OVH pour
-`inerweb.ovh` (créer le fichier `CNAME` **APRÈS** propagation vérifiée) ; validation du texte de la vitrine ;
-relecture de `RGPD.md` ; + les **gates réglementaires** ci-dessus. **Rythme** : été (corriger + tester aux
-limites) → août (essai complet en données fictives + **journée de simulation d'audit** avec un professionnel) →
-**septembre : fonctionnement EN PARALLÈLE** 2 à 4 semaines avant bascule. **Ne pas basculer sans période parallèle.**
+**LE point qui débloque le réglementaire** : remplir le **questionnaire de validation** (règles A/B/C +
+table par fluide + 10 questions) avec le **référent F-Gas**, puis le renvoyer → intégration au moteur. Le
+`.docx` remplissable est sur le Bureau de Franck (`QUESTIONNAIRE-Table-reglementaire-fluides.docx`) ; version
+de référence versionnée = `docs/TABLE-REGLEMENTAIRE-FLUIDES.md`.
+Secondaire (non prioritaire) : relecture de `RGPD.md` (DPD), validation du texte de la vitrine. **OVH / DNS
+`inerweb.ovh` = repoussé** (pas sûr d'apporter plus que GitHub — à réévaluer plus tard, sans urgence).
+Quand Franck le décidera : essai en données fictives, puis fonctionnement **en parallèle** avec la procédure
+actuelle avant de s'en servir comme registre principal.
