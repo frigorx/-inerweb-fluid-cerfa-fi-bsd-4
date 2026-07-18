@@ -1736,6 +1736,29 @@ function imagePngTest(taille = 1200) {
   await verifierRejet('signerMouvement refuse une écriture figée',
     store.signerMouvement(figee.id, { role: 'TECHNICIEN', nom: 'A',
       prenom: 'B', imagePng: imagePngTest() }), MSG_ECRITURE_FIGEE);
+  // Lot C (C2) : toute écriture scellée par CETTE version porte l'empreinte
+  // RENFORCÉE et ses champs gelés (parité demo/local du parcours v2).
+  verifier('une écriture scellée porte l’empreinte v2 et ses champs gelés',
+    figee.versionEmpreinte === 2 && HASH_HEX.test(figee.hashSignatures) &&
+    HASH_HEX.test(figee.hashPiecesJointes) &&
+    Array.isArray(figee.outilsFiges) && figee.hashPdfFinal === null,
+    JSON.stringify({ v: figee.versionEmpreinte, o: figee.outilsFiges }));
+  // Parité du refus sur un fichier à DOUBLE faute (chaîne rompue ET fausse
+  // signature) : les deux stores vérifient la CHAÎNE d'abord — même
+  // message, dans le même ordre (revue adversariale C2).
+  const exportDouble = JSON.parse(await store.exporterJSON());
+  const cibleDouble = exportDouble.donnees.mouvements
+    .find((mv) => mv.id === figee.id);
+  cibleDouble.quantiteKg = (cibleDouble.quantiteKg ?? 0) + 1;
+  exportDouble.donnees.signaturesMouvement.push({
+    id: 'sig-double-faute', mouvementId: figee.id, role: 'TECHNICIEN',
+    nom: 'Faux', prenom: 'Signataire', qualite: null, organisation: null,
+    parDelegation: false, dateHeure: DEBUT_SUITE, declaration: 'Fausse.',
+    imagePng: 'AAAA', sessionCompteId: null, sessionPersonnelId: null,
+    sha256Document: 'beef', versionDocument: 0 });
+  await verifierRejet('fichier à DOUBLE faute : refusé par la CHAÎNE (même message des deux côtés)',
+    store.importerJSON(JSON.stringify(exportDouble)),
+    'chaîne d’intégrité rompue');
   await verifierRejet('getSignaturesMouvement refuse un mouvement introuvable',
     store.getSignaturesMouvement('mvt-fantome'), 'introuvable');
 

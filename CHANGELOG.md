@@ -2,6 +2,73 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔐 LOT C audit-proof — brique C2 : empreinte RENFORCÉE v2 (condition 4, 18/07)
+Le point délicat du lot (plan §6, suivi à la lettre) : **VERSIONNER, jamais recalculer**.
+Les écritures existantes gardent leur empreinte v1 pour toujours ; toute NOUVELLE écriture
+scellée est v2 et couvre désormais tout ce qui est significatif.
+- **Hasseurs versionnés** (`v8/js/core/utils.js` + miroir `server/hash-mouvement.js`,
+  évoluant ENSEMBLE) : `CHAMPS_HASH_MOUVEMENT` v1 (18 champs) **FIGÉE À JAMAIS** ;
+  `CHAMPS_HASH_MOUVEMENT_V2` = v1 + 9 champs (`prpFige`, `cerfaNumero`, les 3 rôles réels,
+  `outilsFiges`, `hashSignatures`, `hashPiecesJointes`, `hashPdfFinal`). La version de
+  l'ÉCRITURE choisit sa préimage ; basculer la version d'un export se détecte (empreintes
+  différentes). Nouvelles aides miroirs : `empreinteListeTriee` (liste triée + JSON,
+  vide → empreinte de « [] », jamais null) et `chaineCanoniqueSignature` (ordre de clés
+  fixe, image réduite au sha de ses octets).
+- **Champs GELÉS au scellement, jamais re-dérivés** (constat de la relecture adversariale
+  du plan) : calculés dans `validerMouvement`, attachés à l'objet AVANT `sceller()`,
+  stockés en colonnes (liste blanche WORM de la migration 23) — la vérification de chaîne
+  RELIT les valeurs stockées : un ajout légitime ultérieur (PJ sur mouvement figé, possible
+  jusqu'à C3) ne casse pas la chaîne (prouvé). Au serveur, le figeage des outils est
+  DÉPLACÉ AVANT le scellement (la démo figeait déjà avant — parité d'ordre rétablie) et
+  `objetLogiquePourHash` passe les champs v2 au travers (le 2e point serveur du plan).
+  Contre-écritures : scellées v2 SANS double signature (plan §9), listes gelées VIDES.
+- **QUATRE vérificateurs versionnés — le plan n'en comptait que trois** :
+  `verifierChaineMouvements` (serveur) · son miroir démo · `verifierChaineMouvementsCandidat`
+  (import) · **`server/verification.js`** (vérification des ARCHIVES du coffre-fort, oublié
+  du plan : sans lui, la première écriture v2 aurait rendu toute sauvegarde « invalide »
+  — donc plus de condition 5 ni d'archives vérifiées). Le vérificateur autonome des ZIP
+  n'est pas concerné (il hache des fichiers, confirmé).
+- **La dette « prpFige falsifiable via export JSON » est SOLDÉE** pour les écritures v2
+  (le PRP figé est dans l'empreinte) ; l'import RECOMPTE en plus les SIGNATURES gelées de
+  chaque écriture v2 (forme canonique + sha des images) : une signature retouchée, ajoutée
+  ou retirée dans le JSON → « fichier forgé » (les PJ, elles, peuvent évoluer légitimement
+  après scellement tant que C3 n'a pas fermé l'asymétrie : pas de recomptage, documenté).
+- **Chaîne MIXTE prouvée de bout en bout** (le cas de Franck en septembre) : registre
+  rétrogradé tout v1 importé → nouvelle écriture scellée v2 par-dessus → chaîne verte,
+  round-trip export/import vert. Un export ANCIEN (sans `versionEmpreinte`) = tout v1.
+- **Preuves** : `test-hash-mouvement` 20 → 32 vérifs (**empreintes v1 et v2 CONNUES,
+  FIGÉES en dur** — un rouge ici est une régression, jamais une « mise à jour » —,
+  v1 + champs v2 parasites = empreinte inchangée, parité v2, chaîne mixte, aides) ;
+  `test-signatures-mouvement` 37 → 50 (gel recompté à la main, PJ après scellement,
+  2 attaques de forge d'export, contre-écriture v2, chaîne mixte réelle + round-trip) ;
+  `test-contrat` (écriture scellée v2, demo ET local) ; `test-prp-fige` : la simulation
+  « vieil export » recrée désormais un VRAI fichier d'époque (v1 recalculée — retirer des
+  champs en gardant des empreintes v2 fabriquait un fichier qui n'existe pas).
+- **Revue adversariale multi-agents AVANT commit** (3 angles — intégrité/non-régression,
+  parité, forge — chaque constat contre-vérifié PAR EXÉCUTION sur bases jetables) :
+  5 constats confirmés, 4 réfutés. **Corrigés dans la foulée** :
+  ① 🔴 BLOQUANT — le gel serveur décodait l'imagePng avec `Buffer.from` (tolérant : préfixe
+  `data:` non retiré, caractères hors alphabet IGNORÉS — le piège que l'audit du 14/07
+  avait déjà payé) quand la démo décodait strict → le MÊME fichier hostile recevait deux
+  verdicts d'import OPPOSÉS, et le garbage adopté PERSISTAIT dans la table WORM. Décodage
+  STRICT unifié (`decoderBase64Pj`, illisible → octets vides) : pollué REFUSÉ des deux
+  côtés, préfixe `data:` (mêmes octets) toléré des deux côtés. Corrigé avant tout
+  scellement réel — les hash gelés en base en dépendaient.
+  ② 🟠 IMPORTANT — RÉTROGRADER une écriture v2 en v1 dans un export (champs gelés effacés,
+  chaîne v1 re-dérivée) désarmait le recomptage des signatures : la signature falsifiée
+  était adoptée. Fermé : une écriture scellée en v1 ne peut PAS porter de signatures (la
+  table naît avec la v2, le WORM refuse toute signature sur figé) → « fichier forgé ».
+  ③ 🟡 MINEUR — ordre des contrôles d'import aligné sur la démo (chaîne PUIS signatures) :
+  mêmes messages, dans le même ordre, sur un fichier à double faute.
+  Le constat « PJ CERFA_FINAL truquée dans un export adoptée sans casser la chaîne »
+  (réel, tiré) est ACTÉ au périmètre C3 (plan §7.4 enrichi : fermer l'asymétrie PUIS
+  recompter hashPiecesJointes à l'import). Les 3 attaques corrigées sont devenues des
+  tests permanents. Réfutés notables : « recomptage cosmétique car tout est re-dérivable
+  hors ligne » = la limite CONNUE et documentée (aucun secret embarqué — c'est le témoin
+  quotidien du lot D et le journal chaîné qui couvrent la réécriture totale).
+  **Comptes finaux : test-signatures-mouvement 53 vérifs · test-contrat 308 ×2 ·
+  test-hash-mouvement 32. TOUT VERT — 78 exécutions.**
+
 ### ✍️ LOT C audit-proof — brique C1 : signatures RÉELLES (condition 3, 18/07)
 Première brique du lot C (`docs/PLAN-LOT-C.md`, suivi à la lettre — C0 validée par Franck
 le 16/07). Le parcours de double signature existe, s'invalide à la moindre modification,

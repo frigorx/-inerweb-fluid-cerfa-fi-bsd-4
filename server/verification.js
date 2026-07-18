@@ -103,7 +103,22 @@ function objetLogiquePourHash(mouvement) {
     technicien: mouvement.technicien ?? null,
     validateurId: mouvement.validateurId ?? null,
     contreEcritureDe: mouvement.contreEcritureDe ?? null,
-    motif: mouvement.motif ?? null
+    motif: mouvement.motif ?? null,
+    // Lot C (C2) : version + champs v2 passés au travers — CLONE de
+    // api.js:objetLogiquePourHash. ⚠️ Ce vérificateur est le 4e hasseur
+    // versionné (le plan du lot C n'en comptait que trois) : sans cette
+    // extension, TOUTE archive contenant une écriture v2 serait jugée
+    // « chaîne registre rompue » — donc plus aucune sauvegarde vérifiée.
+    versionEmpreinte: mouvement.versionEmpreinte ?? null,
+    prpFige: mouvement.prpFige ?? null,
+    cerfaNumero: mouvement.cerfaNumero ?? null,
+    executeParId: mouvement.executeParId ?? null,
+    superviseurId: mouvement.superviseurId ?? null,
+    responsableRegistreId: mouvement.responsableRegistreId ?? null,
+    outilsFiges: mouvement.outilsFiges ?? null,
+    hashSignatures: mouvement.hashSignatures ?? null,
+    hashPiecesJointes: mouvement.hashPiecesJointes ?? null,
+    hashPdfFinal: mouvement.hashPdfFinal ?? null
   };
 }
 

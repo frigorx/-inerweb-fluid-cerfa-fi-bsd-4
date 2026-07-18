@@ -11,11 +11,15 @@
 // Node ≥ 18, sans DOM.
 // ============================================================
 
-import { hasherEcriture, CHAMPS_HASH_MOUVEMENT as CHAMPS_FRONT }
+import { hasherEcriture, CHAMPS_HASH_MOUVEMENT as CHAMPS_FRONT,
+  CHAMPS_HASH_MOUVEMENT_V2 as CHAMPS_FRONT_V2,
+  empreinteListeTriee as empreinteListeFront,
+  chaineCanoniqueSignature as canoniqueFront }
   from '../v8/js/core/utils.js';
 import hm from './hash-mouvement.js';
 
-const { hasherMouvement, CHAMPS_HASH_MOUVEMENT } = hm;
+const { hasherMouvement, CHAMPS_HASH_MOUVEMENT, CHAMPS_HASH_MOUVEMENT_V2,
+  empreinteListeTriee, chaineCanoniqueSignature } = hm;
 
 let nbOk = 0;
 let nbEchecs = 0;
@@ -35,6 +39,20 @@ function verifier(libelle, condition, detail = '') {
 verifier('les 18 champs hachés du serveur = ceux du front, même ordre',
   JSON.stringify(CHAMPS_HASH_MOUVEMENT) === JSON.stringify(CHAMPS_FRONT),
   `serveur=${CHAMPS_HASH_MOUVEMENT.length} front=${CHAMPS_FRONT.length}`);
+
+// Lot C (C2) : la liste v2 aussi — et elle DOIT être exactement la v1
+// suivie des 9 champs renforcés (l'ordre est la préimage).
+verifier('les 27 champs v2 du serveur = ceux du front, même ordre',
+  JSON.stringify(CHAMPS_HASH_MOUVEMENT_V2) === JSON.stringify(CHAMPS_FRONT_V2),
+  `serveur=${CHAMPS_HASH_MOUVEMENT_V2.length} front=${CHAMPS_FRONT_V2.length}`);
+verifier('la liste v2 = la liste v1 + les 9 champs renforcés, v1 en tête',
+  CHAMPS_HASH_MOUVEMENT_V2.length === 27 &&
+  JSON.stringify(CHAMPS_HASH_MOUVEMENT_V2.slice(0, 18)) ===
+    JSON.stringify(CHAMPS_HASH_MOUVEMENT) &&
+  JSON.stringify(CHAMPS_HASH_MOUVEMENT_V2.slice(18)) === JSON.stringify([
+    'prpFige', 'cerfaNumero', 'executeParId', 'superviseurId',
+    'responsableRegistreId', 'outilsFiges', 'hashSignatures',
+    'hashPiecesJointes', 'hashPdfFinal']));
 
 // Éventail de mouvements représentatifs : nominal, champs null, controle
 // imbriqué (avec et sans controleId), quantité négative, hashPrecedent null
@@ -128,6 +146,118 @@ for (const { titre, mvt, prec } of MOUVEMENTS) {
     && hasherMouvement(statutAjoute, null) === await hasherEcriture(statutAjoute, null));
 }
 
+// ============================================================
+// Lot C (C2) — empreinte RENFORCÉE v2 : non-régression v1 BIT À BIT
+// (empreintes CONNUES figées ici), parité v2, chaîne mixte, helpers.
+// ============================================================
+
+// 1. NON-RÉGRESSION v1 : ces empreintes ont été calculées et FIGÉES à la
+// livraison de la brique C2 (18/07/2026). Si l'une d'elles change, le
+// hasseur a dérivé et TOUTES les chaînes existantes de Franck casseraient :
+// ce test est le verrou. NE JAMAIS les recalculer « parce que le test est
+// rouge » — un rouge ici est une régression, pas une mise à jour.
+{
+  const attenduA = '482ff0ab5bd16a3cfbe7d06313a51bcd57b403117157f75c5200a5abf4ac0c46';
+  const attenduB = 'e4a45502f7a3d1e794129508157c3f294e2a10cc7751b6dfd595abadc6b9724d';
+  const obtenuA = hasherMouvement(MOUVEMENTS[0].mvt, null);
+  const obtenuB = hasherMouvement(MOUVEMENTS[4].mvt, 'd'.repeat(64));
+  verifier('empreinte v1 CONNUE (charge nominale) inchangée bit à bit',
+    obtenuA === attenduA && await hasherEcriture(MOUVEMENTS[0].mvt, null) === attenduA,
+    `obtenu=${obtenuA}`);
+  verifier('empreinte v1 CONNUE (contre-écriture chaînée) inchangée bit à bit',
+    obtenuB === attenduB, `obtenu=${obtenuB}`);
+}
+
+// 2. Vecteur v2 CONNU (figé à la livraison C2) + parité front/serveur.
+const MVT_V2 = { id: 'mvt-v2', numero: 'FI-2026-0100', date: '2026-08-01',
+  mode: 'OFFICIEL', type: 'CHARGE_APPOINT', machineId: 'mac-9',
+  fluide: 'R-32', quantiteKg: 1.2, peseeAvantKg: 12, peseeApresKg: 10.8,
+  bouteilleSrcId: 'bou-9', bouteilleDstId: null,
+  causeMouvement: 'Fuite réparée',
+  controle: { statutControle: 'CONFORME', detecteurId: 'out-d' },
+  technicien: 'Référent Signature', validateurId: 'per-ref',
+  contreEcritureDe: null, motif: null,
+  versionEmpreinte: 2, prpFige: 675, cerfaNumero: 'FI-2026-0100',
+  executeParId: 'per-eleve', superviseurId: 'per-prof',
+  responsableRegistreId: 'per-ref',
+  outilsFiges: ['out-b=CONFORME', 'out-d=EXPIRE'],
+  hashSignatures: 'a'.repeat(64), hashPiecesJointes: 'b'.repeat(64),
+  hashPdfFinal: null };
+{
+  const attendu = '634598ef17b68341605ba72cf91a2fcd317ebf4885e48810f50c5432c4891058';
+  const obtenu = hasherMouvement(MVT_V2, 'a'.repeat(64));
+  verifier('empreinte v2 CONNUE figée + identique front/serveur',
+    obtenu === attendu &&
+    await hasherEcriture(MVT_V2, 'a'.repeat(64)) === attendu,
+    `obtenu=${obtenu}`);
+
+  // v2 avec champs renforcés à null (contre-écriture typique hors listes).
+  const v2Nulls = { ...MOUVEMENTS[0].mvt, versionEmpreinte: 2 };
+  verifier('v2 aux champs renforcés null : identique front/serveur',
+    hasherMouvement(v2Nulls, null) === await hasherEcriture(v2Nulls, null));
+}
+
+// 3. VERSIONNEMENT : la version choisit la préimage — jamais de recalcul.
+{
+  const base = MOUVEMENTS[0].mvt;
+  // Un mouvement v1 qui GAGNE des champs v2 (imports, colonnes nouvelles) :
+  // empreinte STRICTEMENT inchangée (la liste blanche v1 les ignore).
+  const v1AvecChampsV2 = { ...base, prpFige: 2088,
+    outilsFiges: ['out-x=CONFORME'], hashSignatures: 'f'.repeat(64),
+    hashPiecesJointes: 'f'.repeat(64), hashPdfFinal: null,
+    versionEmpreinte: 1 };
+  verifier('v1 + champs v2 parasites : empreinte v1 INCHANGÉE (liste blanche)',
+    hasherMouvement(v1AvecChampsV2, null) === hasherMouvement(base, null) &&
+    await hasherEcriture(v1AvecChampsV2, null) === hasherMouvement(base, null));
+  // Le même contenu en v1 et en v2 donne des empreintes DIFFÉRENTES
+  // (préimages distinctes) : basculer la version d'une écriture se voit.
+  verifier('même contenu, version 1 vs 2 : empreintes différentes',
+    hasherMouvement({ ...base, versionEmpreinte: 2 }, null) !==
+    hasherMouvement(base, null));
+  // Sensibilité v2 : toucher un champ GELÉ change l'empreinte.
+  const geleTouche = { ...MVT_V2, hashSignatures: 'c'.repeat(64) };
+  const outilTouche = { ...MVT_V2, outilsFiges: ['out-b=EXPIRE', 'out-d=EXPIRE'] };
+  verifier('v2 : modifier hashSignatures ou outilsFiges change l’empreinte',
+    hasherMouvement(geleTouche, 'a'.repeat(64)) !== hasherMouvement(MVT_V2, 'a'.repeat(64)) &&
+    hasherMouvement(outilTouche, 'a'.repeat(64)) !== hasherMouvement(MVT_V2, 'a'.repeat(64)));
+}
+
+// 4. Chaîne MIXTE : une écriture v1 puis une v2 chaînée dessus — les deux
+// hasseurs suivent la même chaîne (le hashPrecedent traverse les versions).
+{
+  const teteV1 = hasherMouvement(MOUVEMENTS[0].mvt, null);
+  const suiteV2Serveur = hasherMouvement(MVT_V2, teteV1);
+  const suiteV2Front = await hasherEcriture(MVT_V2, teteV1);
+  verifier('chaîne mixte v1 → v2 : identique front/serveur',
+    suiteV2Serveur === suiteV2Front && /^[0-9a-f]{64}$/.test(suiteV2Serveur));
+}
+
+// 5. Aides du scellement v2 : empreinte de liste triée + forme canonique
+// d'une signature — parité stricte et insensibilité à l'ordre d'entrée.
+{
+  const attenduVide = '4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945';
+  verifier('empreinteListeTriee([]) : empreinte CONNUE de « [] », identique front/serveur',
+    empreinteListeTriee([]) === attenduVide &&
+    await empreinteListeFront([]) === attenduVide);
+  verifier('empreinteListeTriee : insensible à l’ordre d’entrée, sensible au contenu',
+    empreinteListeTriee(['b', 'a']) === empreinteListeTriee(['a', 'b']) &&
+    empreinteListeTriee(['b', 'a']) === await empreinteListeFront(['a', 'b']) &&
+    empreinteListeTriee(['a']) !== empreinteListeTriee(['b']));
+  const signature = { role: 'DETENTEUR', nom: 'Henninot', prenom: 'Franck',
+    qualite: 'Professeur, par délégation du détenteur',
+    dateHeure: '2026-07-18T10:00:00.000Z',
+    declaration: 'Je reconnais…, par délégation du détenteur (LP Raynaud).',
+    versionDocument: 1 };
+  verifier('chaineCanoniqueSignature : identique front/serveur, ordre de clés figé',
+    chaineCanoniqueSignature(signature, 'e'.repeat(64)) ===
+      canoniqueFront(signature, 'e'.repeat(64)) &&
+    chaineCanoniqueSignature(signature, 'e'.repeat(64)).startsWith('{"role":'));
+  verifier('chaineCanoniqueSignature : champs absents comptés null (import ancien)',
+    chaineCanoniqueSignature({ role: 'TECHNICIEN' }, null) ===
+      canoniqueFront({ role: 'TECHNICIEN' }, null) &&
+    chaineCanoniqueSignature({ role: 'TECHNICIEN' }, null).includes('"sha256Image":null'));
+}
+
 console.log(`\n${nbOk} vérifications réussies, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);
-console.log('Hasseurs de mouvement front ↔ serveur : strictement équivalents.');
+console.log('Hasseurs de mouvement front ↔ serveur : strictement équivalents (v1 figée, v2 renforcée).');

@@ -27,10 +27,12 @@ import { join } from 'node:path';
 import * as moduleEsm from '../v8/js/data/signatures-mouvement.js';
 
 const require = createRequire(import.meta.url);
+const crypto = require('node:crypto');
 const db = require('./db.js');
 const api = require('./api.js');
 const comptes = require('./comptes.js');
 const miroir = require('./signatures-mouvement.js');
+const hm = require('./hash-mouvement.js');
 
 let nbOk = 0;
 let nbEchecs = 0;
@@ -377,6 +379,181 @@ const signatureType = (surcharges = {}) => ({
       { texte: JSON.stringify(forge) }, sansSession), 'mouvement introuvable');
 }
 
+// ============================================================
+// 6. Lot C, brique C2 — empreinte RENFORCÉE v2 (gel au scellement)
+// ============================================================
+{
+  const scelle = api.appeler('getMouvements', {}, sansSession)
+    .find((mv) => mv.id === brouillon.id);
+  verifier('l’écriture scellée est v2 : champs GELÉS stockés en colonnes',
+    scelle.versionEmpreinte === 2 && Array.isArray(scelle.outilsFiges) &&
+    scelle.outilsFiges.length === 0 &&
+    /^[0-9a-f]{64}$/.test(scelle.hashSignatures) &&
+    /^[0-9a-f]{64}$/.test(scelle.hashPiecesJointes) &&
+    scelle.hashPdfFinal === null,
+    JSON.stringify({ v: scelle.versionEmpreinte, o: scelle.outilsFiges }));
+
+  // Gel EXACT : hashSignatures recompté À LA MAIN depuis les signatures en
+  // base (forme canonique + sha des octets de chaque image, liste triée).
+  const sigs = api.appeler('getSignaturesMouvement',
+    { mouvementId: brouillon.id }, sansSession);
+  const canoniques = sigs.map((sig) => hm.chaineCanoniqueSignature(sig,
+    crypto.createHash('sha256')
+      .update(Buffer.from(sig.imagePng, 'base64')).digest('hex')));
+  verifier('hashSignatures = empreinte triée des 4 signatures (recompté à la main)',
+    hm.empreinteListeTriee(canoniques) === scelle.hashSignatures);
+  const pjs = api.appeler('listerPiecesJointes',
+    { entiteType: 'MOUVEMENT', entiteId: brouillon.id }, sansSession);
+  verifier('hashPiecesJointes = empreinte triée des sha256 des PJ au scellement',
+    pjs.length === 1 &&
+    hm.empreinteListeTriee(pjs.map((pj) => pj.hashSha256 ?? '')) ===
+      scelle.hashPiecesJointes);
+  verifier('la chaîne (écriture v2) se vérifie',
+    api.appeler('verifierChaineHash', {}, sansSession).ok === true);
+
+  // LA raison d'être des champs gelés : une PJ ajoutée APRÈS le scellement
+  // (asymétrie encore ouverte jusqu'à C3) ne casse PAS la chaîne.
+  api.appeler('ajouterPieceJointe', { donneesPj: {
+    entiteType: 'MOUVEMENT', entiteId: brouillon.id,
+    nomFichier: 'apres-scellement.png', mimeType: 'image/png',
+    categorie: 'PHOTO_PESEE', base64: imagePng(2048) } }, session);
+  verifier('une PJ ajoutée APRÈS scellement ne casse pas la chaîne (gel)',
+    api.appeler('verifierChaineHash', {}, sansSession).ok === true);
+
+  // ATTAQUE (plan §8) : une signature RETOUCHÉE dans l'export ne colle
+  // plus au hashSignatures gelé → fichier forgé. Une signature RETIRÉE
+  // en douce est dénoncée pareil.
+  const exporteForge = api.appeler('exporterJSON', {}, sansSession);
+  const forgeRetouche = JSON.parse(exporteForge);
+  const sigCible = forgeRetouche.donnees.signaturesMouvement
+    .find((sig) => sig.mouvementId === brouillon.id);
+  sigCible.nom = 'Falsifié';
+  attendreRejet('signature RETOUCHÉE dans le JSON : « fichier forgé » (empreinte v2)',
+    () => api.appeler('importerJSON',
+      { texte: JSON.stringify(forgeRetouche) }, sansSession), 'fichier forgé');
+  const forgeRetrait = JSON.parse(exporteForge);
+  forgeRetrait.donnees.signaturesMouvement = forgeRetrait.donnees
+    .signaturesMouvement.filter((sig) => sig.id !== sigCible.id);
+  attendreRejet('signature RETIRÉE du JSON : « fichier forgé »',
+    () => api.appeler('importerJSON',
+      { texte: JSON.stringify(forgeRetrait) }, sansSession), 'fichier forgé');
+
+  // ATTAQUE (revue adversariale C2, constat IMPORTANT fermé) :
+  // RÉTROGRADER l'écriture en v1 pour désarmer le recomptage — signature
+  // falsifiée conservée, champs gelés effacés, chaîne v1 re-dérivée (le
+  // forgeur n'a aucun secret à casser). Refus : une écriture scellée en v1
+  // ne peut pas porter de signatures.
+  const forgeRetrograde = JSON.parse(exporteForge);
+  forgeRetrograde.donnees.signaturesMouvement
+    .find((sig) => sig.mouvementId === brouillon.id).nom = 'Falsifié';
+  const mvRetrograde = forgeRetrograde.donnees.mouvements
+    .find((mv) => mv.id === brouillon.id);
+  mvRetrograde.versionEmpreinte = 1;
+  mvRetrograde.outilsFiges = null;
+  mvRetrograde.hashSignatures = null;
+  mvRetrograde.hashPiecesJointes = null;
+  mvRetrograde.hashPdfFinal = null;
+  mvRetrograde.hashPrecedent = null;
+  mvRetrograde.hashEcriture = hm.hasherMouvement(mvRetrograde, null);
+  attendreRejet('RÉTROGRADATION v2→v1 avec signatures conservées : refus',
+    () => api.appeler('importerJSON',
+      { texte: JSON.stringify(forgeRetrograde) }, sansSession), 'scellée en v1');
+
+  // ATTAQUE (revue adversariale C2, constat BLOQUANT fermé) : le décodage
+  // du gel est STRICT des deux côtés — une imagePng polluée (caractères
+  // hors alphabet, que Buffer.from ignorait en silence) ne colle plus ; un
+  // préfixe data: (mêmes octets) reste toléré, à l'identique de la démo.
+  const forgePollution = JSON.parse(exporteForge);
+  forgePollution.donnees.signaturesMouvement
+    .find((sig) => sig.mouvementId === brouillon.id).imagePng =
+      `%%%%${sigCible.imagePng}`;
+  attendreRejet('imagePng POLLUÉE (hors alphabet base64) : refus (décodage strict)',
+    () => api.appeler('importerJSON',
+      { texte: JSON.stringify(forgePollution) }, sansSession), 'fichier forgé');
+  const importPrefixe = JSON.parse(exporteForge);
+  for (const sig of importPrefixe.donnees.signaturesMouvement) {
+    if (sig.mouvementId === brouillon.id) {
+      sig.imagePng = `data:image/png;base64,${sig.imagePng}`;
+    }
+  }
+  verifier('préfixe data: sur les images (mêmes octets) : import ADOPTÉ',
+    api.appeler('importerJSON',
+      { texte: JSON.stringify(importPrefixe) }, sansSession) === true);
+
+  // Contre-écriture : scellée v2 SANS double signature (plan §9), listes
+  // gelées VIDES — la chaîne reste verte.
+  const contre = api.appeler('annulerParContreEcriture', {
+    id: brouillon.id, motif: 'Preuve C2 : contre-écriture v2.',
+    validateurId: referent.id }, sansSession);
+  verifier('la contre-écriture scelle en v2, listes gelées VIDES, chaîne verte',
+    contre.versionEmpreinte === 2 && Array.isArray(contre.outilsFiges) &&
+    contre.outilsFiges.length === 0 &&
+    contre.hashSignatures === hm.empreinteListeTriee([]) &&
+    contre.hashPiecesJointes === hm.empreinteListeTriee([]) &&
+    contre.hashPdfFinal === null &&
+    api.appeler('verifierChaineHash', {}, sansSession).ok === true);
+}
+
+// ============================================================
+// 7. Chaîne MIXTE réelle : registre v1 existant + nouvelle écriture v2
+// (le cas de Franck en septembre : ses scellements d'avant C2 sont v1)
+// ============================================================
+{
+  const exporte = api.appeler('exporterJSON', {}, sansSession);
+  const paquet = JSON.parse(exporte);
+  // Rétrograder l'histoire : les écritures scellées redeviennent v1
+  // (hashes v1 recalculés, chaîne rejouée), signatures retirées (un
+  // registre d'époque n'en avait pas).
+  const figees = paquet.donnees.mouvements
+    .filter((mv) => mv.statut === 'VALIDE' || mv.statut === 'ANNULE')
+    .sort((a, b) => a.ordreValidation - b.ordreValidation);
+  let precedent = null;
+  for (const mv of figees) {
+    mv.versionEmpreinte = 1;
+    mv.outilsFiges = null;
+    mv.hashSignatures = null;
+    mv.hashPiecesJointes = null;
+    mv.hashPdfFinal = null;
+    mv.hashPrecedent = precedent;
+    mv.hashEcriture = hm.hasherMouvement(mv, precedent);
+    precedent = mv.hashEcriture;
+  }
+  paquet.donnees.signaturesMouvement = [];
+  const adopte = api.appeler('importerJSON',
+    { texte: JSON.stringify(paquet) }, sansSession);
+  verifier('un registre RÉTROGRADÉ tout v1 s’importe (chaîne v1 verte)',
+    adopte === true);
+  verifier('les écritures importées sont bien restées v1',
+    api.appeler('getMouvements', {}, sansSession)
+      .filter((mv) => mv.statut === 'VALIDE' || mv.statut === 'ANNULE')
+      .every((mv) => mv.versionEmpreinte === 1));
+
+  // Nouvelle écriture PAR-DESSUS : scellée v2, la chaîne MIXTE est verte.
+  const bouteilleCourante = api.appeler('getBouteilles', {}, sansSession)
+    .find((b) => b.id === bouteille.id);
+  const mvMixte = api.appeler('creerMouvement', { donneesMouvement: {
+    type: 'CHARGE_APPOINT', machineId: machine.id,
+    bouteilleSrcId: bouteille.id,
+    peseeAvantKg: bouteilleCourante.masseNetteKg,
+    peseeApresKg: bouteilleCourante.masseNetteKg - 0.5,
+    technicien: 'Référent Signature',
+    causeMouvement: 'Preuve de chaîne mixte' } }, sansSession);
+  api.appeler('soumettreMouvement', { id: mvMixte.id }, sansSession);
+  api.appeler('validerMouvement', { id: mvMixte.id,
+    validateurId: referent.id }, sansSession);
+  const chaineMixte = api.appeler('verifierChaineHash', {}, sansSession);
+  verifier('chaîne MIXTE v1 → v2 VERTE sur le vrai registre',
+    chaineMixte.ok === true, JSON.stringify(chaineMixte));
+  verifier('la nouvelle écriture au-dessus du v1 est scellée v2',
+    api.appeler('getMouvements', {}, sansSession)
+      .find((mv) => mv.id === mvMixte.id).versionEmpreinte === 2);
+  verifier('round-trip d’un registre MIXTE : adopté, chaîne toujours verte',
+    api.appeler('importerJSON',
+      { texte: api.appeler('exporterJSON', {}, sansSession) },
+      sansSession) === true &&
+    api.appeler('verifierChaineHash', {}, sansSession).ok === true);
+}
+
 console.log(`\n${nbOk} vérifications réussies, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);
-console.log('Signatures réelles : parité stricte, parcours et attaques tirées, WORM prouvé.');
+console.log('Signatures réelles : parité stricte, parcours et attaques tirées, WORM prouvé, empreinte v2 gelée.');

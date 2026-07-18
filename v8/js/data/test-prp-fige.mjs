@@ -7,8 +7,11 @@
 //   1. un mouvement VALIDÉ porte prpFige = gwpAr4 du fluide DU MOUVEMENT
 //      au moment de la validation (même moment que cerfaNumero) ;
 //   2. la contre-écriture fige AUSSI son PRP ;
-//   3. le champ est HORS empreinte : la chaîne de hash reste intacte,
-//      et un export→import le restitue sans « registre altéré » ;
+//   3. la chaîne de hash reste intacte et un export→import restitue le
+//      champ sans « registre altéré » (⚠️ depuis le lot C brique C2, le
+//      prpFige est DANS l'empreinte v2 des nouvelles écritures — la dette
+//      « falsifiable via export JSON » est soldée ; hors empreinte ne vaut
+//      plus que pour les écritures v1 d'avant) ;
 //   4. brouillon/soumis n'en portent pas (posé seulement au scellement).
 //
 // Suite DOUBLÉE au lanceur (demo puis local) : la parité est prouvée en
@@ -118,7 +121,7 @@ const reimporte = (await store.getMouvements())
   .find((m) => m.id === brouillon.id);
 verifier('après import : prpFige restitué à l’identique',
   reimporte && reimporte.prpFige === fluide.gwpAr4);
-verifier('après import : registre NON altéré (le champ est bien hors empreinte)',
+verifier('après import : registre NON altéré (round-trip fidèle, empreinte v2)',
   (await store.verifierChaineHash()).ok === true);
 
 // ---- 6. Échange CROISÉ démo → local (mode local seulement) --------
@@ -159,10 +162,32 @@ if (NOM_STORE === 'local') {
   verifier('croisé démo → local : registre NON altéré',
     (await store.verifierChaineHash()).ok === true);
 
-  // Vieil export « d'avant la brique » : on retire la clé prpFige à la
-  // main (comme un fichier produit par une version antérieure).
+  // Vieil export « d'avant la brique » : un fichier d'époque n'a NI clé
+  // prpFige, NI version d'empreinte, NI champs gelés (lot C, C2) — et ses
+  // empreintes sont des empreintes v1, telles que cette version-là les
+  // écrivait. On les recalcule donc en v1 (retirer prpFige en gardant les
+  // empreintes v2 fabriquerait un fichier incohérent qui n'existe pas :
+  // depuis C2, prpFige est DANS l'empreinte des nouvelles écritures).
+  const { hasherEcriture } = await import('../core/utils.js');
   const enveloppe = JSON.parse(exportDemo);
-  for (const mv of enveloppe.donnees.mouvements) delete mv.prpFige;
+  for (const mv of enveloppe.donnees.mouvements) {
+    delete mv.prpFige;
+    delete mv.versionEmpreinte;
+    delete mv.outilsFiges;
+    delete mv.hashSignatures;
+    delete mv.hashPiecesJointes;
+    delete mv.hashPdfFinal;
+  }
+  delete enveloppe.donnees.signaturesMouvement;
+  const figeesAnciennes = enveloppe.donnees.mouvements
+    .filter((mv) => mv.statut === 'VALIDE' || mv.statut === 'ANNULE')
+    .sort((a, b) => a.ordreValidation - b.ordreValidation);
+  let precedentAncien = null;
+  for (const mv of figeesAnciennes) {
+    mv.hashPrecedent = precedentAncien;
+    mv.hashEcriture = await hasherEcriture(mv, precedentAncien);
+    precedentAncien = mv.hashEcriture;
+  }
   await store.importerJSON(JSON.stringify(enveloppe));
   const ancien = (await store.getMouvements())
     .find((m) => m.id === mvtDemo.id);

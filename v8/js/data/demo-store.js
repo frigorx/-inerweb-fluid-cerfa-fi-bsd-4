@@ -12,7 +12,8 @@
 
 import { DEMO } from './demo-donnees.js';
 import { teqCO2, fmtDate, fmtNombre, fmtKgSigne, genId, hasherEcriture,
-  genererCodePublic } from '../core/utils.js';
+  genererCodePublic, empreinteListeTriee, chaineCanoniqueSignature }
+  from '../core/utils.js';
 // IM-1 : fréquence réglementaire des contrôles d'étanchéité —
 // logique UNIQUE partagée avec le cadre 7 du CERFA (aucun doublon).
 import { evaluerControle } from './reglementation-fluides.js';
@@ -548,6 +549,27 @@ async function hasherOctets(octets) {
   return [...new Uint8Array(empreinte)]
     .map((octet) => octet.toString(16).padStart(2, '0'))
     .join('');
+}
+
+/**
+ * Lot C (C2) : forme canonique des signatures d'une LISTE (camelCase) puis
+ * empreinte triée — sert au SCELLEMENT (gel de hashSignatures) ET au
+ * recomptage à l'IMPORT (une signature retouchée dans le JSON = forgée).
+ * L'image est réduite à l'empreinte de ses OCTETS ; une base64 illisible
+ * compte comme image vide (déterministe, miroir exact du serveur).
+ */
+async function empreinteListeSignatures(signatures) {
+  const canoniques = [];
+  for (const sig of signatures ?? []) {
+    let octets;
+    try {
+      octets = base64VersOctets(sig.imagePng ?? '');
+    } catch {
+      octets = new Uint8Array(0);
+    }
+    canoniques.push(chaineCanoniqueSignature(sig, await hasherOctets(octets)));
+  }
+  return empreinteListeTriee(canoniques);
 }
 
 /**
@@ -3107,6 +3129,24 @@ export function creerDemoStore() {
       // le référentiel peut évoluer, l'écriture validée garde sa valeur).
       mouvement.prpFige =
         indexFluides().get(mouvement.fluide)?.gwpAr4 ?? null;
+      // Lot C (C2) : champs GELÉS au scellement — calculés ICI, attachés à
+      // l'objet AVANT sceller(), JAMAIS re-dérivés (la vérification de
+      // chaîne relit les valeurs stockées ; un ajout légitime ultérieur,
+      // PJ comprise, ne casse pas la chaîne). Le PDF final sera posé par
+      // la brique C3 (mode Officiel). Miroir exact du serveur.
+      mouvement.outilsFiges = outilsFiges;
+      mouvement.hashSignatures = await empreinteListeSignatures(
+        (donnees.signaturesMouvement ?? [])
+          .filter((sig) => sig.mouvementId === mouvement.id));
+      mouvement.hashPiecesJointes = await empreinteListeTriee(
+        donnees.piecesJointes
+          .filter((pj) => pj.entiteType === 'MOUVEMENT' &&
+                          pj.entiteId === mouvement.id)
+          .map((pj) => pj.hashSha256 ?? ''));
+      mouvement.hashPdfFinal = null;
+      // Empreinte RENFORCÉE : toute NOUVELLE écriture scellée est v2 (les
+      // écritures existantes gardent leur v1 — jamais rétroactif).
+      mouvement.versionEmpreinte = 2;
       await sceller(mouvement);
 
       // Le PRP figé est consigné dans le journal (recoupement opposable —
@@ -3199,6 +3239,14 @@ export function creerDemoStore() {
       // deux valeurs témoignent chacune de leur époque).
       contreEcriture.prpFige =
         indexFluides().get(contreEcriture.fluide)?.gwpAr4 ?? null;
+      // Lot C (C2) : une contre-écriture se scelle en v2 SANS le parcours
+      // de double signature (plan §9) — listes gelées VIDES (empreinte de
+      // « [] », jamais null) et PDF final null. Miroir exact du serveur.
+      contreEcriture.outilsFiges = [];
+      contreEcriture.hashSignatures = await empreinteListeTriee([]);
+      contreEcriture.hashPiecesJointes = await empreinteListeTriee([]);
+      contreEcriture.hashPdfFinal = null;
+      contreEcriture.versionEmpreinte = 2;
       await sceller(contreEcriture);
       donnees.mouvements.push(contreEcriture);
 
@@ -4381,6 +4429,35 @@ export function creerDemoStore() {
           mv.hashEcriture = await hasherEcriture(mv, precedent);
           precedent = mv.hashEcriture;
           ordre += 1;
+        }
+      }
+
+      // (lot C, C2) : les SIGNATURES d'une écriture scellée v2 sont GELÉES
+      // dans son empreinte (hashSignatures). Recomptées sur le candidat :
+      // une signature retouchée, ajoutée ou retirée dans le JSON ne colle
+      // plus → fichier forgé. Une écriture scellée en v1 ne peut PAS porter
+      // de signatures (la table arrive avec la v2, le WORM refuse toute
+      // signature sur une écriture figée) : en trouver = rétrogradation
+      // forgée (revue adversariale C2). (Les PJ, elles, peuvent
+      // légitimement évoluer après scellement tant que C3 n'a pas fermé
+      // l'asymétrie : pas de recomptage — miroir exact du serveur.)
+      for (const mv of figees) {
+        if ((mv.versionEmpreinte ?? 1) < 2) {
+          if ((candidat.signaturesMouvement ?? [])
+            .some((sig) => sig.mouvementId === mv.id)) {
+            throw new Error(
+              `Import refusé — signatures sur l'écriture ${mv.numero} scellée ` +
+              'en v1 (antérieure à la double signature) : fichier forgé.');
+          }
+          continue;
+        }
+        const empreinte = await empreinteListeSignatures(
+          (candidat.signaturesMouvement ?? [])
+            .filter((sig) => sig.mouvementId === mv.id));
+        if (empreinte !== mv.hashSignatures) {
+          throw new Error(
+            `Import refusé — signatures du mouvement ${mv.numero} altérées : ` +
+            'fichier forgé.');
         }
       }
 

@@ -36,6 +36,18 @@ const CHAMPS_HASH_MOUVEMENT = [
 ];
 
 /**
+ * Champs de l'empreinte RENFORCÉE v2 (lot C, brique C2) — copie mot pour
+ * mot de utils.js:CHAMPS_HASH_MOUVEMENT_V2. La liste v1 ci-dessus est
+ * FIGÉE À JAMAIS (les écritures existantes gardent leur empreinte v1).
+ */
+const CHAMPS_HASH_MOUVEMENT_V2 = [
+  ...CHAMPS_HASH_MOUVEMENT,
+  'prpFige', 'cerfaNumero',
+  'executeParId', 'superviseurId', 'responsableRegistreId',
+  'outilsFiges', 'hashSignatures', 'hashPiecesJointes', 'hashPdfFinal'
+];
+
+/**
  * Empreinte SHA-256 hexadécimale d'une écriture de mouvement, chaînée à
  * l'empreinte de l'écriture validée précédente. Reproduit exactement
  * `utils.js:hasherEcriture` (mais en `node:crypto` synchrone, là où le
@@ -52,12 +64,52 @@ const CHAMPS_HASH_MOUVEMENT = [
  * @returns {string} Empreinte hexadécimale (64 caractères).
  */
 function hasherMouvement(mouvement, hashPrecedent) {
+  // Lot C (C2) : hasseur VERSIONNÉ — la version de l'ÉCRITURE choisit sa
+  // liste de champs (2 = renforcée ; 1 ou absente = historique, préimage
+  // STRICTEMENT inchangée bit à bit). Clone exact de utils.js.
+  const noms = (mouvement.versionEmpreinte ?? 1) >= 2
+    ? CHAMPS_HASH_MOUVEMENT_V2 : CHAMPS_HASH_MOUVEMENT;
   const champs = {};
-  for (const nom of CHAMPS_HASH_MOUVEMENT) {
+  for (const nom of noms) {
     champs[nom] = mouvement[nom] ?? null;
   }
   const texte = `${JSON.stringify(champs)}|${hashPrecedent ?? ''}`;
   return crypto.createHash('sha256').update(texte, 'utf8').digest('hex');
 }
 
-module.exports = { CHAMPS_HASH_MOUVEMENT, hasherMouvement };
+/**
+ * Empreinte SHA-256 d'une LISTE de chaînes, TRIÉE puis JSON-sérialisée —
+ * clone exact de utils.js:empreinteListeTriee (mais synchrone). Liste vide
+ * → empreinte de « [] », jamais null.
+ * @param {string[]} chaines
+ * @returns {string} empreinte hexadécimale (64 caractères)
+ */
+function empreinteListeTriee(chaines) {
+  const texte = JSON.stringify([...chaines].sort());
+  return crypto.createHash('sha256').update(texte, 'utf8').digest('hex');
+}
+
+/**
+ * Forme CANONIQUE d'une signature réelle pour l'empreinte v2 — clone exact
+ * de utils.js:chaineCanoniqueSignature (ordre de clés FIXE, absents → null).
+ */
+function chaineCanoniqueSignature(signature, sha256Image) {
+  return JSON.stringify({
+    role: signature.role ?? null,
+    nom: signature.nom ?? null,
+    prenom: signature.prenom ?? null,
+    qualite: signature.qualite ?? null,
+    dateHeure: signature.dateHeure ?? null,
+    declaration: signature.declaration ?? null,
+    sha256Image: sha256Image ?? null,
+    versionDocument: signature.versionDocument ?? null
+  });
+}
+
+module.exports = {
+  CHAMPS_HASH_MOUVEMENT,
+  CHAMPS_HASH_MOUVEMENT_V2,
+  hasherMouvement,
+  empreinteListeTriee,
+  chaineCanoniqueSignature
+};

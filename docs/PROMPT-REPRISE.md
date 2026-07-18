@@ -5,12 +5,16 @@
 >
 > **Session conseillée : selon le lot choisi** (voir « LE CAP RÉACTIVÉ »). **LOTS A, B et D
 > SOLDÉS le 16/07** (A `872d34b` · B `96d7d5e` + liste des conditions VALIDÉE par Franck le
-> soir même · D `0e27f7e` témoin quotidien de scellement). **LOT C EN COURS : brique C1
-> SOLDÉE le 18/07** (signatures réelles — migration 23 complète, contrat 80, invalidation
-> par révision, conditions 14-15 du moteur, 78 exécutions vertes) — prochaine brique =
-> **C2 (empreinte v2)** : suivre `docs/PLAN-LOT-C.md` §6 À LA LETTRE. C2 touche le CŒUR de
-> `hash-mouvement.js`/`utils.js` (versionnement, jamais de recalcul, non-régression v1 bit
-> à bit sur empreintes CONNUES) → **Opus effort MAXIMUM**. PAS d'ultracode hors point critique.
+> soir même · D `0e27f7e` témoin quotidien de scellement). **LOT C EN COURS : briques C1 ET
+> C2 SOLDÉES le 18/07** (C1 = signatures réelles, migration 23 complète, contrat 80,
+> conditions 14-15 ; C2 = empreinte RENFORCÉE v2 versionnée — v1 FIGÉE à jamais, empreintes
+> CONNUES verrouillées dans test-hash-mouvement, champs gelés au scellement, QUATRE
+> vérificateurs versionnés dont verification.js oublié du plan, import qui recompte les
+> signatures gelées, chaîne mixte prouvée — 78 exécutions vertes) — prochaine brique =
+> **C3 (PDF final conservé)** : suivre `docs/PLAN-LOT-C.md` §5 À LA LETTRE (canal PJ
+> catégorie CERFA_FINAL, `.sha256` + manifeste, hashPdfFinal posé AVANT sceller() en
+> Officiel, refus sans PDF, bouton CERFA qui SERT le conservé, fermeture de l'asymétrie
+> ajouterPieceJointe sur figé). **Opus effort maximum.** PAS d'ultracode hors point critique.
 
 ---
 

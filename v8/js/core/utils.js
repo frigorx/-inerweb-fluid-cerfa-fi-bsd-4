@@ -186,6 +186,22 @@ export const CHAMPS_HASH_MOUVEMENT = [
   'validateurId', 'contreEcritureDe', 'motif'
 ];
 
+/**
+ * Champs de l'empreinte RENFORCÉE v2 (lot C, brique C2 — condition 4 du
+ * plan audit-proof) : les 18 champs v1 PLUS le PRP figé, le numéro CERFA,
+ * les rôles réels de l'intervention, et les champs dérivés GELÉS au
+ * scellement (outils figés, empreinte des signatures, empreinte des pièces
+ * jointes, empreinte du PDF final). L'ORDRE est contractuel
+ * (JSON.stringify). La liste v1 ci-dessus est FIGÉE À JAMAIS : les
+ * écritures existantes gardent leur empreinte v1, on ne recalcule rien.
+ */
+export const CHAMPS_HASH_MOUVEMENT_V2 = [
+  ...CHAMPS_HASH_MOUVEMENT,
+  'prpFige', 'cerfaNumero',
+  'executeParId', 'superviseurId', 'responsableRegistreId',
+  'outilsFiges', 'hashSignatures', 'hashPiecesJointes', 'hashPdfFinal'
+];
+
 /** Retourne l'API SubtleCrypto (navigateur, ou repli Node ≥ 18). */
 async function obtenirSubtle() {
   if (globalThis.crypto && globalThis.crypto.subtle) {
@@ -204,8 +220,13 @@ async function obtenirSubtle() {
  * @returns {Promise<string>} empreinte hexadécimale (64 caractères)
  */
 export async function hasherEcriture(mouvement, hashPrecedent) {
+  // Lot C (C2) : hasseur VERSIONNÉ — la version de l'ÉCRITURE choisit sa
+  // liste de champs (2 = renforcée ; 1 ou absente = historique, préimage
+  // STRICTEMENT inchangée bit à bit). On ne recalcule JAMAIS une v1 en v2.
+  const noms = (mouvement.versionEmpreinte ?? 1) >= 2
+    ? CHAMPS_HASH_MOUVEMENT_V2 : CHAMPS_HASH_MOUVEMENT;
   const champs = {};
-  for (const nom of CHAMPS_HASH_MOUVEMENT) {
+  for (const nom of noms) {
     champs[nom] = mouvement[nom] ?? null;
   }
   const texte = `${JSON.stringify(champs)}|${hashPrecedent ?? ''}`;
@@ -215,4 +236,47 @@ export async function hasherEcriture(mouvement, hashPrecedent) {
   return [...new Uint8Array(empreinte)]
     .map((octet) => octet.toString(16).padStart(2, '0'))
     .join('');
+}
+
+/**
+ * Empreinte SHA-256 d'une LISTE de chaînes, TRIÉE puis JSON-sérialisée —
+ * LA forme canonique des champs gelés du scellement v2 (hashSignatures sur
+ * les formes canoniques des signatures, hashPiecesJointes sur les sha256
+ * des pièces jointes). Une liste VIDE donne l'empreinte de « [] » (jamais
+ * null : l'absence PROUVÉE se distingue de l'absence de calcul).
+ * Miroir CommonJS : server/hash-mouvement.js (ne jamais toucher l'un sans
+ * l'autre — parité prouvée par test-hash-mouvement).
+ * @param {string[]} chaines
+ * @returns {Promise<string>} empreinte hexadécimale (64 caractères)
+ */
+export async function empreinteListeTriee(chaines) {
+  const texte = JSON.stringify([...chaines].sort());
+  const subtle = await obtenirSubtle();
+  const empreinte = await subtle.digest('SHA-256',
+    new TextEncoder().encode(texte));
+  return [...new Uint8Array(empreinte)]
+    .map((octet) => octet.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+/**
+ * Forme CANONIQUE d'une signature réelle pour l'empreinte v2 (plan lot C
+ * §6) : ordre de clés FIXE, champs absents comptés null, l'image réduite à
+ * son empreinte (sha256Image = SHA-256 des octets du PNG). La délégation et
+ * l'organisation sont DÉJÀ portées par la déclaration figée.
+ * @param {object} signature Enregistrement camelCase de la signature.
+ * @param {?string} sha256Image Empreinte hexadécimale des octets de l'image.
+ * @returns {string} JSON canonique (une ligne de la liste triée).
+ */
+export function chaineCanoniqueSignature(signature, sha256Image) {
+  return JSON.stringify({
+    role: signature.role ?? null,
+    nom: signature.nom ?? null,
+    prenom: signature.prenom ?? null,
+    qualite: signature.qualite ?? null,
+    dateHeure: signature.dateHeure ?? null,
+    declaration: signature.declaration ?? null,
+    sha256Image: sha256Image ?? null,
+    versionDocument: signature.versionDocument ?? null
+  });
 }

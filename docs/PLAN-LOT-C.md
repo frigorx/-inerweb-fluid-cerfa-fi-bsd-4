@@ -193,12 +193,26 @@ refus de suppression sur mouvement figé (déjà en place), inclusion dans les s
    conditions 14-15 de la liste). Preuves : `test-signatures-mouvement` (37 vérifs,
    attaques tirées + WORM SQL direct + round-trip) + blocs test-contrat (demo ET local)
    + test-blocage-officiel étendu. TOUT VERT — 78 exécutions. Détail : CHANGELOG.
-3. **C2 — Empreinte v2** : hasseurs front/serveur versionnés, vérifications mixtes partout
-   (chaîne, import, vérificateur autonome), export/import. Tests d'empreintes CONNUES v1
-   (non-régression bit à bit) + round-trip + chaîne mixte.
+3. ✅ **C2 — SOLDÉE (18/07)** — Empreinte v2 : hasseurs front/serveur VERSIONNÉS (v1 figée
+   à jamais, v2 = 27 champs), champs gelés calculés au scellement et relus tels quels,
+   figeage serveur réordonné avant sceller(), contre-écritures v2 listes vides, import qui
+   recompte les signatures gelées (« fichier forgé »), chaîne mixte v1→v2 prouvée de bout
+   en bout + round-trip. ⚠️ ÉCART AU PLAN documenté : QUATRE vérificateurs versionnés, pas
+   trois — `server/verification.js` (archives du coffre-fort) hache aussi les mouvements ;
+   sans lui, la première écriture v2 invalidait toutes les sauvegardes vérifiées. Preuves :
+   test-hash-mouvement 32 vérifs (empreintes v1/v2 CONNUES figées en dur),
+   test-signatures-mouvement 50 vérifs, test-prp-fige (simulation « vieil export »
+   refaite en vrai fichier d'époque). TOUT VERT — 78 exécutions. Détail : CHANGELOG.
 4. **C3 — PDF final conservé** : réception à la validation, PJ système + `.sha256` +
    manifeste, `hashPdfFinal` dans l'empreinte v2, bouton CERFA servant le conservé, dossier
    d'audit enrichi. Tests + attaque (PDF altéré sur disque → sha divergent détecté).
+   ⚠️ **Ajout de la revue adversariale C2 (constat tiré, MINEUR car documenté)** : tant que
+   l'asymétrie des PJ est ouverte, une PJ CERFA_FINAL truquée dans un export (hashSha256 et
+   nomFichier réécrits) est ADOPTÉE sans casser la chaîne — hashPiecesJointes est relu tel
+   quel et l'import ne recompte pas les PJ. C3 DOIT donc : ① fermer l'asymétrie (plus
+   d'ajout de PJ sur mouvement figé) ; ② à l'import, RECOMPTER hashPiecesJointes des
+   écritures v2 (redevenu sain une fois ① fait) — ou a minima celui des CERFA_FINAL ;
+   ③ l'attaque « CERFA truquée dans l'export » devient un test permanent.
 5. **C4 — Parcours UI officiel** : écrans de signature (technicien puis détenteur,
    déclarations affichées, identité de session), simulation du lot B intégrée au parcours.
    Vérification navigateur (port jetable).

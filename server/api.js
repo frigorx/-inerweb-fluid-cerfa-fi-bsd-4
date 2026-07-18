@@ -29,7 +29,8 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const db = require('./db.js');
 const mapping = require('./mapping.js');
-const { hasherMouvement } = require('./hash-mouvement.js');
+const { hasherMouvement, empreinteListeTriee, chaineCanoniqueSignature } =
+  require('./hash-mouvement.js');
 const { FICHE_REGLEMENTAIRE_FLUIDES, corrigerPrpFgas3 } = require('./migrations.js');
 const sauvegardeAuto = require('./sauvegarde-auto.js');
 // Scellement externe simple (lot D) : témoin quotidien dans le dossier de
@@ -2621,12 +2622,13 @@ const HANDLERS = {
       // devient opposable (même moment que cerfaNumero, HORS empreinte —
       // le référentiel peut évoluer, l'écriture validée garde sa valeur).
       mouvement.prpFige = lireFluide(mouvement.fluide)?.gwpAr4 ?? null;
-      sceller(mouvement);
 
       // Brique produit n°2 : l'état des outils déclarés est FIGÉ au moment
       // où l'écriture devient opposable — AVANT le passage en VALIDE en
       // base (les triggers de la migration 18 interdisent toute retouche
-      // des liens d'un mouvement figé).
+      // des liens d'un mouvement figé). Lot C (C2) : déplacé AVANT le
+      // scellement (comme le DemoStore, qui figeait déjà avant) — la liste
+      // triée entre désormais dans l'empreinte v2 (champ gelé outilsFiges).
       const jourValidation = aujourdHui();
       const liensOutils = db.all(
         'SELECT id, outillage_id FROM mouvement_outillage WHERE mouvement_id = ?',
@@ -2647,8 +2649,23 @@ const HANDLERS = {
       }
       outilsFiges.sort();
 
+      // Lot C (C2) : champs GELÉS au scellement — calculés ICI, attachés à
+      // l'objet AVANT sceller(), stockés en colonnes, JAMAIS re-dérivés (la
+      // vérification de chaîne relit les valeurs stockées ; un ajout
+      // légitime ultérieur, PJ comprise, ne casse pas la chaîne). Le PDF
+      // final sera posé par la brique C3 (mode Officiel).
+      mouvement.outilsFiges = outilsFiges;
+      mouvement.hashSignatures = empreinteSignaturesMouvement(mouvement.id);
+      mouvement.hashPiecesJointes =
+        empreintePiecesJointesMouvement(mouvement.id);
+      mouvement.hashPdfFinal = null;
+      // Empreinte RENFORCÉE : toute NOUVELLE écriture scellée est v2 (les
+      // écritures existantes gardent leur v1 — jamais rétroactif).
+      mouvement.versionEmpreinte = 2;
+      sceller(mouvement);
+
       // Persistance : effets déjà écrits, ici on fige l'écriture (SOUMIS →
-      // VALIDE, quantité, contrôle aplati, scellement).
+      // VALIDE, quantité, contrôle aplati, champs gelés, scellement).
       persisterMouvementValide(mouvement);
 
       // Le PRP figé est consigné dans le journal CHAÎNÉ : prg_fige est hors
@@ -2754,6 +2771,16 @@ const HANDLERS = {
       // deux valeurs témoignent chacune de leur époque).
       contreEcriture.prpFige =
         lireFluide(contreEcriture.fluide)?.gwpAr4 ?? null;
+      // Lot C (C2) : une contre-écriture se scelle en v2 SANS le parcours
+      // de double signature (attestation d'identité du validateur, plan
+      // §9) — listes gelées VIDES (empreinte de « [] », jamais null) et
+      // PDF final null. Aucune signature ni PJ ne peut exister sur cet id
+      // fraîchement créé.
+      contreEcriture.outilsFiges = [];
+      contreEcriture.hashSignatures = empreinteListeTriee([]);
+      contreEcriture.hashPiecesJointes = empreinteListeTriee([]);
+      contreEcriture.hashPdfFinal = null;
+      contreEcriture.versionEmpreinte = 2;
       sceller(contreEcriture);
       insererMouvement(contreEcriture);
 
@@ -3232,7 +3259,9 @@ const HANDLERS = {
     // (4) Chaîne de hash des écritures figées, recalculée sur le CANDIDAT,
     // AVANT de toucher la base (le test forge une quantité → le hash ne
     // colle plus). Une sauvegarde antérieure à la chaîne (aucune empreinte)
-    // voit sa chaîne amorcée.
+    // voit sa chaîne amorcée. Chaîne MIXTE admise (lot C, C2) : le hasseur
+    // est versionné par écriture, un export ancien sans versionEmpreinte
+    // est tout v1.
     const figees = candidat.mouvements.filter((mv) =>
       mv.statut === 'VALIDE' || mv.statut === 'ANNULE');
     if (figees.some((mv) => mv.hashEcriture)) {
@@ -3244,6 +3273,39 @@ const HANDLERS = {
       }
     } else if (figees.length > 0) {
       amorcerChaineCandidat(figees);
+    }
+
+    // (4 bis — lot C, C2, APRÈS la chaîne comme le DemoStore : mêmes
+    // messages dans le même ordre sur un fichier à double faute — constat
+    // de la revue adversariale C2) : les SIGNATURES d'une écriture scellée
+    // v2 sont GELÉES dans son empreinte (hash_signatures). Recomptées sur
+    // le candidat : une signature retouchée, ajoutée ou retirée dans le
+    // JSON ne colle plus → fichier forgé. Une écriture scellée en v1 ne
+    // peut PAS porter de signatures (la table arrive avec la v2 et le WORM
+    // refuse toute signature sur une écriture figée) : en trouver dans le
+    // candidat = rétrogradation forgée (basculer versionEmpreinte à 1
+    // désarmait le recomptage — constat IMPORTANT de la revue, fermé ici).
+    // (Les PJ, elles, peuvent légitimement évoluer après scellement tant
+    // que C3 n'a pas fermé l'asymétrie : pas de recomptage — miroir exact
+    // du DemoStore.)
+    for (const mv of figees) {
+      if ((mv.versionEmpreinte ?? 1) < 2) {
+        if ((candidat.signaturesMouvement ?? [])
+          .some((sig) => sig.mouvementId === mv.id)) {
+          throw new Error(
+            `Import refusé — signatures sur l'écriture ${mv.numero} scellée ` +
+            'en v1 (antérieure à la double signature) : fichier forgé.');
+        }
+        continue;
+      }
+      const empreinte = empreinteListeSignatures(
+        (candidat.signaturesMouvement ?? [])
+          .filter((sig) => sig.mouvementId === mv.id));
+      if (empreinte !== mv.hashSignatures) {
+        throw new Error(
+          `Import refusé — signatures du mouvement ${mv.numero} altérées : ` +
+          'fichier forgé.');
+      }
     }
 
     // CR-4 : reprise des bouteilles sans masse d'entrée figée.
@@ -3897,6 +3959,14 @@ function persisterMouvementValide(mouvement) {
     hash_ecriture: mouvement.hashEcriture,
     hash_precedent: mouvement.hashPrecedent,
     ordre_validation: mouvement.ordreValidation,
+    // Lot C (C2) : version d'empreinte + champs GELÉS au scellement
+    // (outils_figes en JSON, comme le mapping tableauxJson le relit).
+    version_empreinte: mouvement.versionEmpreinte ?? 1,
+    outils_figes: mouvement.outilsFiges != null
+      ? JSON.stringify(mouvement.outilsFiges) : null,
+    hash_signatures: mouvement.hashSignatures ?? null,
+    hash_pieces_jointes: mouvement.hashPiecesJointes ?? null,
+    hash_pdf_final: mouvement.hashPdfFinal ?? null,
     ...aplatirControle(mouvement)
   };
   majParId('mouvements', mouvement.id, patch);
@@ -3969,9 +4039,68 @@ function objetLogiquePourHash(mouvement) {
     technicien: mouvement.technicien ?? null,
     validateurId: mouvement.validateurId ?? null,
     contreEcritureDe: mouvement.contreEcritureDe ?? null,
-    motif: mouvement.motif ?? null
+    motif: mouvement.motif ?? null,
+    // Lot C (C2) : version + champs v2 PASSÉS AU TRAVERS — le hasseur
+    // versionné choisit sa liste ; sur une écriture v1 ces clés sont
+    // ignorées par la projection (préimage v1 inchangée bit à bit).
+    // C'était LE piège relevé par la relecture adversariale du plan :
+    // cette liste blanche droppe silencieusement tout champ non déclaré.
+    versionEmpreinte: mouvement.versionEmpreinte ?? null,
+    prpFige: mouvement.prpFige ?? null,
+    cerfaNumero: mouvement.cerfaNumero ?? null,
+    executeParId: mouvement.executeParId ?? null,
+    superviseurId: mouvement.superviseurId ?? null,
+    responsableRegistreId: mouvement.responsableRegistreId ?? null,
+    outilsFiges: mouvement.outilsFiges ?? null,
+    hashSignatures: mouvement.hashSignatures ?? null,
+    hashPiecesJointes: mouvement.hashPiecesJointes ?? null,
+    hashPdfFinal: mouvement.hashPdfFinal ?? null
   };
   return objet;
+}
+
+/**
+ * Lot C (C2) : forme canonique des signatures d'une LISTE (camelCase) puis
+ * empreinte triée — sert au SCELLEMENT (gel de hash_signatures) ET au
+ * recomptage à l'IMPORT (une signature retouchée dans le JSON = forgée).
+ * L'image est réduite à l'empreinte de ses OCTETS ; une base64 illisible
+ * compte comme image vide (déterministe, miroir du DemoStore).
+ */
+function empreinteListeSignatures(signatures) {
+  const canoniques = (signatures ?? []).map((sig) => {
+    // Décodage STRICT, même discipline que la démo (base64VersOctets) :
+    // préfixe data: retiré, alphabet contrôlé, illisible → octets VIDES.
+    // JAMAIS Buffer.from direct : il ne lève jamais et IGNORE les
+    // caractères hors alphabet — le même fichier hostile recevait deux
+    // verdicts d'import OPPOSÉS démo/serveur (constat BLOQUANT de la
+    // revue adversariale C2, tiré sur base jetable, corrigé AVANT tout
+    // scellement réel : les hash gelés en base en dépendent).
+    let octets;
+    try {
+      octets = decoderBase64Pj(sig.imagePng ?? '');
+    } catch {
+      octets = Buffer.alloc(0);
+    }
+    const sha = crypto.createHash('sha256').update(octets).digest('hex');
+    return chaineCanoniqueSignature(sig, sha);
+  });
+  return empreinteListeTriee(canoniques);
+}
+
+/** Lot C (C2) : empreinte gelée des signatures d'un mouvement (en base). */
+function empreinteSignaturesMouvement(mouvementId) {
+  const lignes = db.all(
+    'SELECT * FROM signatures_mouvement WHERE mouvement_id = ?', [mouvementId]);
+  return empreinteListeSignatures(
+    lignes.map((ligne) => mapping.versFront('signatures_mouvement', ligne)));
+}
+
+/** Lot C (C2) : empreinte gelée des sha256 des PJ d'un mouvement (en base). */
+function empreintePiecesJointesMouvement(mouvementId) {
+  const lignes = db.all(
+    `SELECT hash_sha256 FROM pieces_jointes
+     WHERE entite_type = 'MOUVEMENT' AND entite_id = ?`, [mouvementId]);
+  return empreinteListeTriee(lignes.map((l) => l.hash_sha256 ?? ''));
 }
 
 /**
