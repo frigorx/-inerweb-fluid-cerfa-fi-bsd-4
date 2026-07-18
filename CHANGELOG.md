@@ -2,6 +2,46 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔐 LOT C audit-proof — brique C3b : témoins du PDF conservé + bouton CERFA qui SERT le conservé (condition 4, 18/07)
+Deuxième sous-brique de C3 (plan §5). Reste C3c (asymétrie PJ + recomptage import + attaque
+permanente).
+- **Témoins à côté du PDF dans `documents/`** : `<id>.sha256` (format sha256sum binaire,
+  vérifiable tel quel) + `<id>.manifeste.json` (fiche, signataires de la révision scellée,
+  empreinte scellée du mouvement, version du logiciel — même esprit que le témoin du lot D).
+  Construits DANS la transaction de `validerMouvement` (état scellé), écrits APRÈS elle :
+  best-effort ABSOLU, échec journalisé `TEMOINS_PDF_ECHEC` (`db.journaliser` direct,
+  entrée « système »), jamais bloquant. Rollback → zéro témoin (éprouvé en le tirant).
+- **`verifierPdfFinalConserve`** (serveur) : PJ CERFA_FINAL + fichier disque + `.sha256`
+  frère, tous contre l'empreinte SCELLÉE `hash_pdf_final` — sans objet si l'écriture n'a
+  pas de PDF scellé. Sera branché au dossier d'audit en C5.
+- **RÉGÉNÉRATION au démarrage** (`reecrireTemoinsPdfFinalManquants`, crochet serveur.js) :
+  les témoins se RE-DÉRIVENT des colonnes scellées — une RESTAURATION d'archive (le
+  coffre-fort ne transporte que les fichiers listés en table, la bascule remplace
+  `documents/` en bloc : constat IMPORTANT de la revue, éprouvé) ou un échec toléré les
+  laissent manquants → réécrits au prochain démarrage (`.sha256` identique bit à bit,
+  manifeste marqué `regenere` avec la date d'origine relue du journal chaîné). Un frère
+  PRÉSENT n'est JAMAIS écrasé : falsifié, il reste dénoncé.
+- **Bouton CERFA = le document CONSERVÉ, jamais le générateur** : nouveau module
+  `v8/js/cerfa/conserve.js` (`doitServirPdfConserve` + `resoudreMouvementConserve` +
+  `chargerPdfConserve`) branché dans `ouvrirCerfa` — l'empreinte du contenu relu est
+  vérifiée contre `hashPdfFinal` scellé (jamais les métadonnées) ; absent, binaire
+  indisponible ou altéré → message canonique, AUCUN repli vers le générateur ; bandeau
+  « original conservé ». ⚠️ **Constat de la revue FERMÉ AVANT commit** : la porte
+  « contrôle » (bouton CERFA d'un contrôle LIÉ, qui hérite du numéro et du mode de la
+  fiche) régénérait un document divergent au même numéro — les DEUX portes passent
+  désormais par `resoudreMouvementConserve` (contrôle autonome et FORMATION inchangés).
+  L'historique officiel d'avant le lot C (hashPdfFinal null) reste au générateur.
+- **Preuves** (TOUT VERT — 79 exécutions, nouvelle suite `test-conserve` auto-découverte) :
+  attaques tirées — PDF altéré sur disque DÉNONCÉ, `.sha256` réécrit/supprimé DÉNONCÉ,
+  contenu remplacé ou empreinte scellée divergente DÉNONCÉS côté front, falsifié jamais
+  écrasé par la régénération ; les deux portes du visualiseur figées par le test. Revue
+  adversariale AVANT commit (4 angles, workflow) : 2 constats IMPORTANTS corrigés (porte
+  contrôle, témoins perdus à la restauration) + 3 durcissements (message canonique sur
+  binaire manquant, journal direct, départage du tri) ; DIFFÉRÉS documentés : pluralité de
+  PJ CERFA_FINAL forgées (→ C3c, le recomptage la rendra impossible à l'import ; ajouter
+  la dénonciation de pluralité au vérificateur), couverture du bloc manifeste en
+  transaction (→ C5, verrou), PDF orphelin sur rollback (préexistant, inoffensif).
+
 ### 🔐 LOT C audit-proof — brique C3a : PDF final REÇU, contrôlé et conservé (condition 4, 18/07)
 Première des trois sous-briques de C3 (découpage Franck : C3a réception · C3b `.sha256` +
 manifeste + bouton CERFA servant le conservé · C3c fermeture de l'asymétrie PJ + recomptage

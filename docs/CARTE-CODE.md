@@ -38,7 +38,7 @@ contre chacune.
 | `hash-mouvement.js` | clone EXACT du hasseur front — VERSIONNÉ (lot C, C2) : v1 (18 champs) FIGÉE À JAMAIS, v2 = +9 champs (PRP figé, CERFA, rôles, champs gelés) ; aides empreinteListeTriee / chaineCanoniqueSignature | ne jamais utiliser db.hashEcriture pour les mouvements ; QUATRE vérificateurs versionnés (api ×2 + démo + verification.js) ; empreintes CONNUES figées dans test-hash-mouvement |
 | `blocage-officiel.js` | miroir littéral du moteur de blocage OFFICIEL (lot B) | `VERROU_LIVRAISON` à basculer ICI + côté ESM au lot C-D ; api.js ajoute sauvegarde du poste + validateur de session (tous modes, 403) au cadre |
 | `signatures-mouvement.js` | miroir littéral des signatures RÉELLES (lot C, C1) : déclarations figées + critères d'illisibilité | parité prouvée par test-signatures-mouvement ; ne jamais toucher un miroir sans l'autre |
-| `pdf-final.js` | miroir littéral du PDF FINAL conservé (lot C, C3a) : messages canoniques + contrôle %PDF/5 Mo + nom `CERFA-<numéro>.pdf` | parité prouvée par test-signatures-mouvement ; la conservation = `conserverPdfFinal` d'api.js (PJ système CERFA_FINAL, SANS bump de révision, exportée pour le test seulement) |
+| `pdf-final.js` | miroir littéral du PDF FINAL conservé (lot C, C3a) : messages canoniques + contrôle %PDF/5 Mo + nom `CERFA-<numéro>.pdf` | parité prouvée par test-signatures-mouvement ; la conservation = `conserverPdfFinal` d'api.js (PJ système CERFA_FINAL, SANS bump de révision) ; C3b : témoins `.sha256`+`.manifeste.json` frères (`ecrireTemoinsPdfFinal`, best-effort hors transaction) + `verifierPdfFinalConserve` + RÉGÉNÉRATION des témoins manquants au démarrage (`reecrireTemoinsPdfFinalManquants`, jamais d'écrasement — la restauration d'archive ne transporte pas les frères) ; tout exporté pour le test seulement |
 | `comptes.js` / `sessions.js` / `routes-comptes.js` | scrypt+NFC+leurre anti-timing, jetons hachés SHA-256, cookie HttpOnly | message d'échec UNIQUE ; session meurt si compte désactivé |
 | `sauvegarde.js` / `restauration.js` / `manifeste.js` / `verification.js` / `chiffrement.js` | coffre-fort : VACUUM INTO, restauration atomique, AES-256-GCM | jamais copier le .db à chaud ; phrase NFC ; rollback = reposer l'original ; ⚠️ verification.js hache les mouvements (4e vérificateur versionné v2 — l'oublier rendrait toute archive « invalide ») |
 | `sauvegarde-auto.js` | sauvegarde AUTOMATIQUE (condition 6) : archive au démarrage si > 24 h + VÉRIFIÉE, snapshot débouncé après écriture scellée (crochet dans api.appeler) | best-effort ABSOLU (jamais bloquant) ; hors transaction ; réglages `sauvegarde_auto_*` |
@@ -80,7 +80,10 @@ contre chacune.
   `.modale` — `modale()` retourne sa racine).
 - `wizard/` : les 6 étapes du mouvement (~1800 l.) + signature canvas.
 - `cerfa/` : `generateur.js` (72 champs, `calculerChampsCerfa` = vérité),
-  `correction.js` (correction copie élève), `visualiseur.js` (PDF.js).
+  `correction.js` (correction copie élève), `visualiseur.js` (PDF.js),
+  `conserve.js` (lot C C3b : sert le PDF CONSERVÉ d'une fiche officielle
+  figée — les DEUX portes, mouvement ET contrôle lié —, empreinte vérifiée
+  contre `hashPdfFinal` scellé, jamais le générateur, jamais de repli).
 - `documents/` : étiquettes QR, dossiers ZIP scellés SHA-256 (`dossier-commun.js`),
   `exports.js` (tous les CSV du dossier d'audit), `verificateur.js`
   (99-VERIFICATEUR.html embarqué), `plaque-fgas.js` (seuils tCO₂eq 5/50/500).

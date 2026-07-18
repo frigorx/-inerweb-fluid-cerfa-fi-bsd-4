@@ -13,6 +13,10 @@
 // ============================================================
 
 import { genererCerfaPdf } from './generateur.js';
+// Lot C (C3b) : une fiche OFFICIELLE figée avec PDF final scellé est
+// servie depuis le document CONSERVÉ (empreinte vérifiée), jamais
+// régénérée.
+import { resoudreMouvementConserve, chargerPdfConserve } from './conserve.js';
 import { ICONES } from '../core/icones.js';
 
 /** Facteur de sur-échantillonnage du rendu canvas (netteté). */
@@ -349,14 +353,30 @@ export async function ouvrirCerfa(ctx, { source, id }) {
   requestAnimationFrame(function () { fond.classList.add('visible'); });
   boutonFermer.focus();
 
-  // ---- Génération puis rendu du PDF officiel rempli ----
+  // ---- Obtention puis rendu du PDF officiel ----
+  // Lot C (C3b) : pour une écriture OFFICIELLE figée dont l'empreinte du
+  // PDF final est scellée, on sert le document CONSERVÉ (vérifié contre
+  // hashPdfFinal) — JAMAIS le générateur (plan lot C §5), par la porte
+  // « mouvement » COMME par celle de son contrôle LIÉ (même fiche).
+  // Absent ou altéré → l'erreur canonique s'affiche, rien n'est régénéré.
   try {
-    const { octets, nomFichier, numero } =
-      await genererCerfaPdf(ctx.store, { source, id });
+    let resultatPdf = null;
+    let estConserve = false;
+    const mouvementConserve =
+      await resoudreMouvementConserve(ctx.store, { source, id });
+    if (mouvementConserve) {
+      resultatPdf = await chargerPdfConserve(ctx.store, mouvementConserve);
+      estConserve = true;
+    }
+    if (!resultatPdf) {
+      resultatPdf = await genererCerfaPdf(ctx.store, { source, id });
+    }
+    const { octets, nomFichier, numero } = resultatPdf;
     if (fermee) return { fermer };
 
     fond.querySelector('.cerfa-visu-numero').textContent =
-      numero ? ' · ' + numero : '';
+      (numero ? ' · ' + numero : '')
+      + (estConserve ? ' · original conservé' : '');
     fond.setAttribute('aria-label',
       'Visualiseur CERFA 15497*04' + (numero ? ' — ' + numero : ''));
     nomFichierPdf = nomFichier;

@@ -210,8 +210,13 @@ refus de suppression sur mouvement figé (déjà en place), inclusion dans les s
    (réception + contrôles `%PDF`/5 Mo + PJ système CERFA_FINAL sans bump de révision +
    `hashPdfFinal` gelé avant sceller(), module pur `pdf-final.js` en 2 miroirs, contrat v6,
    refus tirés via vrai API verrou fermé, relecture adversariale COMMIT OK — détail
-   CHANGELOG) · **C3b** = `.sha256` + manifeste + bouton CERFA servant le conservé ·
-   **C3c** = les points ①②③ ci-dessous.
+   CHANGELOG) · ✅ **C3b SOLDÉE le 18/07 soir** (témoins `.sha256`+manifeste frères
+   best-effort + vérificateur + régénération au démarrage — la restauration d'archive ne
+   transporte pas les frères — + bouton CERFA servant le conservé par les DEUX portes,
+   mouvement ET contrôle lié ; revue 4 angles : 2 IMPORTANTS corrigés avant commit) ·
+   **C3c** = les points ①②③ ci-dessous, PLUS (constat différé de la revue C3b) la
+   dénonciation de la PLURALITÉ de PJ CERFA_FINAL dans `verifierPdfFinalConserve` ; la
+   couverture du bloc manifeste en transaction attendra l'ouverture (C5, verrou).
    ⚠️ **Ajout de la revue adversariale C2 (constat tiré, MINEUR car documenté)** : tant que
    l'asymétrie des PJ est ouverte, une PJ CERFA_FINAL truquée dans un export (hashSha256 et
    nomFichier réécrits) est ADOPTÉE sans casser la chaîne — hashPiecesJointes est relu tel

@@ -703,6 +703,24 @@ preparerCoffreFort();
   }
 }
 
+// Témoins des PDF conservés (lot C, brique C3b) : les frères .sha256 et
+// .manifeste.json se RE-DÉRIVENT des colonnes scellées — une restauration
+// d'archive (documents/ remplacé en bloc) ou un échec toléré
+// (TEMOINS_PDF_ECHEC) les laisse manquants, le démarrage les réécrit.
+// Un témoin présent n'est JAMAIS écrasé. Jamais fatal.
+{
+  try {
+    const bilan = api.reecrireTemoinsPdfFinalManquants();
+    if (bilan.reecrits > 0) {
+      console.log(
+        `  [pdf-final] Témoins réécrits : ${bilan.reecrits} PDF conservé(s) ` +
+        `sur ${bilan.examines} examiné(s).`);
+    }
+  } catch (erreur) {
+    console.warn(`  [pdf-final] Réécriture des témoins impossible : ${erreur.message}`);
+  }
+}
+
 serveur.listen(PORT, HOTE, () => {
   console.log('');
   console.log('  inerWeb Fluide v8 — serveur local démarré');

@@ -58,6 +58,9 @@ const { verifierOctetsPdfFinal, nomFichierPdfFinal, CATEGORIE_PDF_FINAL,
 // ------------------------------------------------------------
 const ID_ETABLISSEMENT = 'ETB-LOCAL';
 
+/** Tenir alignée avec serveur.js:VERSION (qui ne peut pas être requis). */
+const VERSION_LOGICIEL = '8.0.0-dev';
+
 // ------------------------------------------------------------
 // Constantes métier (reprises EXACTES du DemoStore).
 // ------------------------------------------------------------
@@ -2600,7 +2603,10 @@ const HANDLERS = {
         throw new Error(messageRefusOfficiel(verdict.blocages));
       }
     }
-    return muter(() => {
+    // Lot C (C3b) : manifeste du PDF conservé, construit DANS la
+    // transaction (état scellé), écrit APRÈS elle (best-effort).
+    let temoinPdfFinal = null;
+    const resultatValidation = muter(() => {
       // Règles métier + effets stocks/charges (throw si violation) : muter
       // fluide / machineLabel / quantiteKg sur l'objet logique.
       appliquerEffets(mouvement);
@@ -2674,9 +2680,12 @@ const HANDLERS = {
       // des champs gelés : son empreinte entre dans hashPiecesJointes ET
       // dans hashPdfFinal.
       let shaPdfFinal = null;
+      let pjIdPdfFinal = null;
       if (octetsPdfFinal) {
-        shaPdfFinal = conserverPdfFinal(mouvement, octetsPdfFinal,
+        const conserve = conserverPdfFinal(mouvement, octetsPdfFinal,
           `${validateur.prenom} ${validateur.nom}`);
+        shaPdfFinal = conserve.sha;
+        pjIdPdfFinal = conserve.pjId;
       }
       // Lot C (C2) : champs GELÉS au scellement — calculés ICI, attachés à
       // l'objet AVANT sceller(), stockés en colonnes, JAMAIS re-dérivés (la
@@ -2695,6 +2704,48 @@ const HANDLERS = {
       // Persistance : effets déjà écrits, ici on fige l'écriture (SOUMIS →
       // VALIDE, quantité, contrôle aplati, champs gelés, scellement).
       persisterMouvementValide(mouvement);
+
+      // Lot C (C3b) : le manifeste du PDF conservé se construit ICI
+      // (l'empreinte scellée du mouvement existe désormais) ; il sera
+      // écrit sur disque APRÈS la transaction. Signataires = ceux de la
+      // révision scellée, tri en JS (règle maison, jamais d'ORDER BY).
+      if (pjIdPdfFinal) {
+        const signataires = db.all(
+          `SELECT id, role, nom, prenom, qualite, par_delegation, date_heure
+           FROM signatures_mouvement
+           WHERE mouvement_id = ? AND version_document = ?`,
+          [mouvement.id, mouvement.revisionBrouillon ?? 0])
+          .sort((a, b) => (a.date_heure < b.date_heure ? -1
+            : a.date_heure > b.date_heure ? 1
+              : a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+          .map((ligne) => ({
+            role: ligne.role,
+            nom: ligne.nom,
+            prenom: ligne.prenom,
+            qualite: ligne.qualite ?? null,
+            parDelegation: Boolean(ligne.par_delegation),
+            dateHeure: ligne.date_heure
+          }));
+        temoinPdfFinal = {
+          type: 'PDF_FINAL_CERFA',
+          logiciel: 'inerWeb Fluide',
+          versionLogiciel: VERSION_LOGICIEL,
+          numeroFiche: mouvement.numero,
+          cerfaNumero: mouvement.cerfaNumero ?? null,
+          mouvementId: mouvement.id,
+          pieceJointeId: pjIdPdfFinal,
+          nomFichier: nomFichierPdfFinal(mouvement.numero),
+          sha256Pdf: shaPdfFinal,
+          dateValidation: new Date().toISOString(),
+          validateur: `${validateur.prenom} ${validateur.nom}`,
+          signataires,
+          empreinteMouvement: mouvement.hashEcriture,
+          hashPrecedent: mouvement.hashPrecedent ?? null,
+          versionEmpreinte: mouvement.versionEmpreinte,
+          hashSignatures: mouvement.hashSignatures,
+          hashPiecesJointes: mouvement.hashPiecesJointes
+        };
+      }
 
       // Le PRP figé est consigné dans le journal CHAÎNÉ : prg_fige est hors
       // empreinte (falsifiable dans un export édité à la main), cette ligne
@@ -2726,6 +2777,11 @@ const HANDLERS = {
       }
       return resultat;
     });
+    // Lot C (C3b) : témoins du PDF conservé (.sha256 + manifeste.json)
+    // écrits HORS transaction — l'écriture scellée est acquise, un échec
+    // est journalisé, jamais bloquant (même esprit que le lot D).
+    if (temoinPdfFinal) ecrireTemoinsPdfFinal(temoinPdfFinal);
+    return resultatValidation;
   },
 
   /**
@@ -5217,7 +5273,8 @@ function ecrirePieceJointeSurDisque(id, octets) {
  * @param {object} mouvement objet logique (id, numero)
  * @param {Buffer} octets contenu PDF déjà contrôlé (%PDF, taille)
  * @param {string} ajoutePar « Prénom Nom » du validateur
- * @returns {string} sha256 hexadécimal du PDF conservé
+ * @returns {{ pjId: string, sha: string }} identifiant de la pièce
+ *   jointe système et sha256 hexadécimal du PDF conservé
  */
 function conserverPdfFinal(mouvement, octets, ajoutePar) {
   const pieceJointe = {
@@ -5238,7 +5295,181 @@ function conserverPdfFinal(mouvement, octets, ajoutePar) {
   // `chemin` = nom RELATIF dans documents/ (= l'id), comme ajouterPieceJointe.
   ligne.chemin = pieceJointe.id;
   inserer('pieces_jointes', ligne);
-  return pieceJointe.hashSha256;
+  return { pjId: pieceJointe.id, sha: pieceJointe.hashSha256 };
+}
+
+/**
+ * Lot C (C3b) : écrit les TÉMOINS du PDF final conservé à côté du fichier
+ * dans documents/ — un `.sha256` frère (format sha256sum binaire,
+ * vérifiable tel quel : « sha256sum -c <id>.sha256 ») et un
+ * `.manifeste.json` (fiche, signataires, empreinte scellée du mouvement,
+ * version du logiciel — même esprit que le témoin quotidien du lot D).
+ * Appelée HORS transaction, APRÈS le scellement : best-effort ABSOLU —
+ * l'écriture scellée est acquise, un échec est JOURNALISÉ, jamais
+ * bloquant. Exportée pour le filet de test.
+ * @param {object} manifeste l'objet complet à écrire (contient
+ *   pieceJointeId et sha256Pdf)
+ */
+function ecrireTemoinsPdfFinal(manifeste) {
+  try {
+    const cheminPdf = cheminPieceJointe(manifeste.pieceJointeId);
+    fs.writeFileSync(`${cheminPdf}.sha256`,
+      `${manifeste.sha256Pdf} *${manifeste.pieceJointeId}\n`);
+    fs.writeFileSync(`${cheminPdf}.manifeste.json`,
+      JSON.stringify(manifeste, null, 2));
+  } catch (erreur) {
+    try {
+      // db.journaliser DIRECT (comme le lot D) : l'entrée reste attribuée
+      // à « système », sans réattribution par le témoin d'identité de la
+      // session courante.
+      db.journaliser({
+        qui: 'système',
+        action: 'TEMOINS_PDF_ECHEC',
+        cible: manifeste?.numeroFiche ?? '',
+        details: String(erreur?.message ?? erreur)
+      });
+    } catch {
+      // Jamais bloquant : l'écriture scellée est déjà acquise.
+    }
+  }
+}
+
+/**
+ * Lot C (C3b) : (ré)écrit les témoins MANQUANTS de tous les PDF conservés
+ * — appelée au DÉMARRAGE du serveur (best-effort, patron du lot D). Deux
+ * cas légitimes laissent des témoins absents : une RESTAURATION d'archive
+ * (le coffre-fort ne transporte que les fichiers listés en table, la
+ * bascule remplace documents/ en bloc) et un échec d'écriture toléré
+ * (TEMOINS_PDF_ECHEC). Tout se RE-DÉRIVE des colonnes scellées : le
+ * `.sha256` régénéré est identique bit à bit ; le manifeste régénéré est
+ * marqué `regenere: true` (la date de validation d'origine est relue du
+ * journal chaîné). Un témoin PRÉSENT n'est JAMAIS écrasé : un frère
+ * falsifié reste en place, dénoncé par verifierPdfFinalConserve.
+ * @returns {{ examines: number, reecrits: number }}
+ */
+function reecrireTemoinsPdfFinalManquants() {
+  const scelles = db.all(
+    `SELECT id, numero, cerfa_numero, hash_pdf_final, hash_ecriture,
+            hash_precedent, version_empreinte, hash_signatures,
+            hash_pieces_jointes, revision_brouillon, validateur_id
+     FROM mouvements WHERE hash_pdf_final IS NOT NULL`);
+  let reecrits = 0;
+  for (const mv of scelles) {
+    try {
+      const pj = db.get(
+        `SELECT id, nom_fichier FROM pieces_jointes
+         WHERE entite_type = 'MOUVEMENT' AND entite_id = ?
+           AND categorie = ?`, [mv.id, CATEGORIE_PDF_FINAL]);
+      if (!pj) continue;
+      const cheminPdf = cheminPieceJointe(pj.id);
+      const shaManque = !fs.existsSync(`${cheminPdf}.sha256`);
+      const manifesteManque = !fs.existsSync(`${cheminPdf}.manifeste.json`);
+      if (!shaManque && !manifesteManque) continue;
+      if (shaManque) {
+        fs.writeFileSync(`${cheminPdf}.sha256`,
+          `${mv.hash_pdf_final} *${pj.id}\n`);
+      }
+      if (manifesteManque) {
+        const signataires = db.all(
+          `SELECT id, role, nom, prenom, qualite, par_delegation, date_heure
+           FROM signatures_mouvement
+           WHERE mouvement_id = ? AND version_document = ?`,
+          [mv.id, mv.revision_brouillon ?? 0])
+          .sort((a, b) => (a.date_heure < b.date_heure ? -1
+            : a.date_heure > b.date_heure ? 1
+              : a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+          .map((ligne) => ({
+            role: ligne.role,
+            nom: ligne.nom,
+            prenom: ligne.prenom,
+            qualite: ligne.qualite ?? null,
+            parDelegation: Boolean(ligne.par_delegation),
+            dateHeure: ligne.date_heure
+          }));
+        // La date de validation d'origine, relue du journal CHAÎNÉ.
+        const entreeJournal = db.get(
+          `SELECT date_heure FROM journal_audit
+           WHERE action = 'VALIDATION_MOUVEMENT' AND cible = ?`,
+          [mv.numero]);
+        fs.writeFileSync(`${cheminPdf}.manifeste.json`, JSON.stringify({
+          type: 'PDF_FINAL_CERFA',
+          logiciel: 'inerWeb Fluide',
+          versionLogiciel: VERSION_LOGICIEL,
+          numeroFiche: mv.numero,
+          cerfaNumero: mv.cerfa_numero ?? null,
+          mouvementId: mv.id,
+          pieceJointeId: pj.id,
+          nomFichier: pj.nom_fichier,
+          sha256Pdf: mv.hash_pdf_final,
+          dateValidation: entreeJournal?.date_heure ?? null,
+          validateur: mv.validateur_id ?? null,
+          signataires,
+          empreinteMouvement: mv.hash_ecriture,
+          hashPrecedent: mv.hash_precedent ?? null,
+          versionEmpreinte: mv.version_empreinte,
+          hashSignatures: mv.hash_signatures,
+          hashPiecesJointes: mv.hash_pieces_jointes,
+          regenere: true,
+          dateRegeneration: new Date().toISOString()
+        }, null, 2));
+      }
+      reecrits += 1;
+    } catch {
+      // Best-effort ABSOLU : on passe au suivant, le démarrage continue.
+    }
+  }
+  return { examines: scelles.length, reecrits };
+}
+
+/**
+ * Lot C (C3b) : vérifie le PDF final CONSERVÉ d'une écriture — la pièce
+ * jointe CERFA_FINAL, le fichier sur disque et le `.sha256` frère doivent
+ * tous porter l'empreinte SCELLÉE dans l'écriture (hash_pdf_final, gelé
+ * dans l'empreinte v2). Sans objet si l'écriture n'a pas de PDF scellé.
+ * Exportée pour le filet de test ; sera branchée au dossier d'audit à
+ * l'ouverture du mode Officiel (brique C5).
+ * @param {string} mouvementId
+ * @returns {{ ok: boolean, sansObjet: boolean, motifs: string[] }}
+ */
+function verifierPdfFinalConserve(mouvementId) {
+  const mv = db.get(
+    'SELECT numero, hash_pdf_final FROM mouvements WHERE id = ?',
+    [mouvementId]);
+  if (!mv) throw new Error(`Mouvement introuvable : ${mouvementId}.`);
+  if (!mv.hash_pdf_final) return { ok: true, sansObjet: true, motifs: [] };
+  const motifs = [];
+  const pj = db.get(
+    `SELECT * FROM pieces_jointes
+     WHERE entite_type = 'MOUVEMENT' AND entite_id = ? AND categorie = ?`,
+    [mouvementId, CATEGORIE_PDF_FINAL]);
+  if (!pj) {
+    motifs.push('pièce jointe CERFA_FINAL introuvable en base');
+  } else {
+    if (pj.hash_sha256 !== mv.hash_pdf_final) {
+      motifs.push('empreinte de la pièce jointe ≠ empreinte scellée');
+    }
+    const chemin = pj.chemin ? cheminPieceJointe(pj.id) : null;
+    if (!chemin || !fs.existsSync(chemin)) {
+      motifs.push('fichier du PDF conservé absent du disque');
+    } else {
+      const shaDisque = crypto.createHash('sha256')
+        .update(fs.readFileSync(chemin)).digest('hex');
+      if (shaDisque !== mv.hash_pdf_final) {
+        motifs.push('PDF conservé sur disque ALTÉRÉ (sha divergent)');
+      }
+      const cheminSha = `${chemin}.sha256`;
+      if (!fs.existsSync(cheminSha)) {
+        motifs.push('fichier .sha256 frère absent');
+      } else {
+        const premierMot = String(fs.readFileSync(cheminSha, 'utf8'))
+          .trim().split(/\s+/)[0];
+        if (premierMot !== mv.hash_pdf_final) {
+          motifs.push('fichier .sha256 frère divergent de l’empreinte scellée');
+        }
+      }
+    }
+  }
+  return { ok: motifs.length === 0, sansObjet: false, motifs };
 }
 
 /** Machine par id (copie camelCase). */
@@ -5946,7 +6177,11 @@ module.exports = {
   METHODES,
   muter,
   appeler,
-  // Lot C (C3) : exporté pour le filet de test SEULEMENT (la validation
+  // Lot C (C3) : exportés pour le filet de test SEULEMENT (la validation
   // officielle réelle reste fermée par le verrou de livraison jusqu'à C5).
-  conserverPdfFinal
+  conserverPdfFinal,
+  ecrireTemoinsPdfFinal,
+  verifierPdfFinalConserve,
+  // Lot C (C3b) : appelée au démarrage par serveur.js (et par le test).
+  reecrireTemoinsPdfFinalManquants
 };

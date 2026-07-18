@@ -21,7 +21,8 @@
 // ============================================================
 
 import { createRequire } from 'node:module';
-import { mkdtempSync, mkdirSync, readFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync }
+  from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as moduleEsm from '../v8/js/data/signatures-mouvement.js';
@@ -641,7 +642,7 @@ const signatureType = (surcharges = {}) => ({
   const revAvant = db.get(
     'SELECT revision_brouillon FROM mouvements WHERE id = ?',
     [mvOff.id]).revision_brouillon;
-  const sha = api.conserverPdfFinal(
+  const { pjId, sha } = api.conserverPdfFinal(
     { id: mvOff.id, numero: mvOff.numero }, octetsPdf, 'Référent Signature');
   verifier('conserverPdfFinal renvoie le sha256 exact des octets',
     sha === crypto.createHash('sha256').update(octetsPdf).digest('hex'));
@@ -666,8 +667,113 @@ const signatureType = (surcharges = {}) => ({
     api.appeler('listerPiecesJointes',
       { entiteType: 'MOUVEMENT', entiteId: mvOff.id }, sansSession)
       .some((pj) => pj.categorie === 'CERFA_FINAL' && pj.hashSha256 === sha));
+
+  // ==========================================================
+  // 8.4 Lot C, brique C3b — témoins (.sha256 + manifeste) et
+  // vérificateur du PDF conservé, ATTAQUE « PDF altéré sur disque ».
+  // ==========================================================
+  // L'écriture porte l'empreinte scellée (posée en SQL : la brique se
+  // teste verrou fermé, hash_pdf_final d'un SOUMIS n'est pas protégé).
+  db.run('UPDATE mouvements SET hash_pdf_final = ? WHERE id = ?',
+    [sha, mvOff.id]);
+
+  const manifeste = {
+    type: 'PDF_FINAL_CERFA',
+    logiciel: 'inerWeb Fluide',
+    versionLogiciel: '8.0.0-dev',
+    numeroFiche: mvOff.numero,
+    cerfaNumero: mvOff.numero,
+    mouvementId: mvOff.id,
+    pieceJointeId: pjId,
+    nomFichier: `CERFA-${mvOff.numero}.pdf`,
+    sha256Pdf: sha,
+    dateValidation: '2026-07-18T00:00:00.000Z',
+    validateur: 'Référent Signature',
+    signataires: [],
+    empreinteMouvement: 'test',
+    hashPrecedent: null,
+    versionEmpreinte: 2,
+    hashSignatures: null,
+    hashPiecesJointes: null
+  };
+  api.ecrireTemoinsPdfFinal(manifeste);
+  const cheminPdfConserve = join(dossier, 'data', 'documents', pjId);
+  verifier('le .sha256 frère est écrit au format sha256sum binaire',
+    readFileSync(`${cheminPdfConserve}.sha256`, 'utf8') ===
+      `${sha} *${pjId}\n`);
+  const manifesteRelu = JSON.parse(
+    readFileSync(`${cheminPdfConserve}.manifeste.json`, 'utf8'));
+  verifier('le manifeste.json relu porte fiche, sha et empreinte scellée',
+    manifesteRelu.type === 'PDF_FINAL_CERFA' &&
+    manifesteRelu.numeroFiche === mvOff.numero &&
+    manifesteRelu.sha256Pdf === sha &&
+    manifesteRelu.pieceJointeId === pjId &&
+    'empreinteMouvement' in manifesteRelu &&
+    Array.isArray(manifesteRelu.signataires));
+
+  verifier('verifierPdfFinalConserve : TOUT CONCORDE → vert',
+    JSON.stringify(api.verifierPdfFinalConserve(mvOff.id)) ===
+      JSON.stringify({ ok: true, sansObjet: false, motifs: [] }));
+  verifier('verifierPdfFinalConserve : sans PDF scellé → sans objet',
+    api.verifierPdfFinalConserve(brouillon.id).sansObjet === true);
+
+  // ATTAQUE : altérer le PDF conservé sur disque → dénoncé.
+  writeFileSync(cheminPdfConserve,
+    Buffer.from('%PDF-1.4\nPDF FALSIFIE apres scellement\n%%EOF\n'));
+  const verdictAltere = api.verifierPdfFinalConserve(mvOff.id);
+  verifier('ATTAQUE : PDF altéré sur disque → dénoncé par le vérificateur',
+    verdictAltere.ok === false &&
+    verdictAltere.motifs.some((m) => m.includes('ALTÉRÉ')),
+    JSON.stringify(verdictAltere));
+  // Réparer (remettre l'original), puis casser le .sha256 frère seul.
+  writeFileSync(cheminPdfConserve, octetsPdf);
+  verifier('réparé : le vérificateur repasse au vert',
+    api.verifierPdfFinalConserve(mvOff.id).ok === true);
+  writeFileSync(`${cheminPdfConserve}.sha256`,
+    `${'0'.repeat(64)} *${pjId}\n`);
+  verifier('ATTAQUE : .sha256 frère réécrit → dénoncé (divergent)',
+    api.verifierPdfFinalConserve(mvOff.id).motifs
+      .some((m) => m.includes('.sha256 frère divergent')));
+  rmSync(`${cheminPdfConserve}.sha256`);
+  verifier('ATTAQUE : .sha256 frère supprimé → dénoncé (absent)',
+    api.verifierPdfFinalConserve(mvOff.id).motifs
+      .some((m) => m.includes('.sha256 frère absent')));
+
+  // ==========================================================
+  // 8.5 Lot C, brique C3b — RÉGÉNÉRATION des témoins manquants au
+  // démarrage (le cas RESTAURATION d'archive : le coffre-fort ne
+  // transporte pas les frères — et le cas TEMOINS_PDF_ECHEC toléré).
+  // ==========================================================
+  // État hérité de 8.4 : .sha256 supprimé, PDF original en place.
+  rmSync(`${cheminPdfConserve}.manifeste.json`);
+  const bilanRegen = api.reecrireTemoinsPdfFinalManquants();
+  verifier('témoins manquants réécrits au démarrage (bilan cohérent)',
+    bilanRegen.reecrits === 1 && bilanRegen.examines >= 1,
+    JSON.stringify(bilanRegen));
+  verifier('le .sha256 régénéré est identique bit à bit (pure dérivation)',
+    readFileSync(`${cheminPdfConserve}.sha256`, 'utf8') ===
+      `${sha} *${pjId}\n`);
+  const manifesteRegen = JSON.parse(
+    readFileSync(`${cheminPdfConserve}.manifeste.json`, 'utf8'));
+  verifier('le manifeste régénéré est marqué regenere et garde le sha scellé',
+    manifesteRegen.regenere === true &&
+    manifesteRegen.sha256Pdf === sha &&
+    manifesteRegen.numeroFiche === mvOff.numero &&
+    Array.isArray(manifesteRegen.signataires));
+  verifier('après régénération, le vérificateur repasse au vert',
+    api.verifierPdfFinalConserve(mvOff.id).ok === true);
+  // Un frère PRÉSENT n'est jamais écrasé : falsifié, il reste dénoncé.
+  writeFileSync(`${cheminPdfConserve}.sha256`, `${'0'.repeat(64)} *${pjId}\n`);
+  const bilanIntact = api.reecrireTemoinsPdfFinalManquants();
+  verifier('un .sha256 falsifié n’est PAS écrasé par la régénération',
+    bilanIntact.reecrits === 0 &&
+    readFileSync(`${cheminPdfConserve}.sha256`, 'utf8')
+      .startsWith('0'.repeat(64)) &&
+    api.verifierPdfFinalConserve(mvOff.id).ok === false);
+  // Remettre l'état sain (fin de section propre).
+  writeFileSync(`${cheminPdfConserve}.sha256`, `${sha} *${pjId}\n`);
 }
 
 console.log(`\n${nbOk} vérifications réussies, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);
-console.log('Signatures réelles : parité stricte, parcours et attaques tirées, WORM prouvé, empreinte v2 gelée, PDF final contrôlé et conservé (C3a).');
+console.log('Signatures réelles : parité stricte, parcours et attaques tirées, WORM prouvé, empreinte v2 gelée, PDF final contrôlé, conservé et témoigné (C3a+C3b).');

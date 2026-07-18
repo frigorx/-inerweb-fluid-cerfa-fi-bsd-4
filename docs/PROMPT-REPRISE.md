@@ -16,11 +16,17 @@
 > **C3a ✅ SOLDÉE le 18/07** (réception du PDF à la validation officielle + contrôle `%PDF`
 > + PJ système CERFA_FINAL sans bump de révision + `hashPdfFinal` gelé AVANT sceller() +
 > refus canoniques tirés via vrai API, module pur `pdf-final.js` en 2 miroirs, contrat v6,
-> relecture adversariale COMMIT OK — détail CHANGELOG) · **prochaine = C3b** (fichier
-> `.sha256` frère + `manifeste.json` + bouton CERFA qui SERT le conservé, jamais le
-> générateur) · **puis C3c** (fermer l'asymétrie ajouterPieceJointe sur figé + RECOMPTER
-> hashPiecesJointes à l'import + attaque « CERFA truquée dans l'export » en test permanent
-> — exigence §7.4 du plan). **Opus effort maximum.** PAS d'ultracode hors point critique.
+> relecture adversariale COMMIT OK) · **C3b ✅ SOLDÉE le 18/07 soir** (témoins `.sha256` +
+> `manifeste.json` frères best-effort hors transaction + `verifierPdfFinalConserve` +
+> RÉGÉNÉRATION des témoins manquants au démarrage — la restauration d'archive ne les
+> transporte pas, constat de la revue — + bouton CERFA servant le CONSERVÉ par les DEUX
+> portes, mouvement ET contrôle lié, `v8/js/cerfa/conserve.js` ; revue adversariale à
+> 4 angles AVANT commit : 2 IMPORTANTS corrigés + 3 durcissements ; TOUT VERT
+> 79 exécutions — détail CHANGELOG) · **prochaine = C3c** (fermer l'asymétrie
+> ajouterPieceJointe sur figé + RECOMPTER hashPiecesJointes à l'import + attaque « CERFA
+> truquée dans l'export » en test permanent — exigence §7.4 du plan ; y AJOUTER la
+> dénonciation de la PLURALITÉ de PJ CERFA_FINAL dans verifierPdfFinalConserve, constat
+> différé de la revue C3b). **Opus effort maximum.** PAS d'ultracode hors point critique.
 
 ---
 
