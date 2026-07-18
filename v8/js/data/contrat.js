@@ -37,7 +37,7 @@
 // ============================================================
 
 /** Version du contrat (à incrémenter à chaque évolution de surface). */
-export const VERSION_CONTRAT = 5;
+export const VERSION_CONTRAT = 6;
 
 /**
  * Message canonique opposé à toute tentative de modification d'une
@@ -163,7 +163,7 @@ export const METHODES_CONTRAT = {
   rejeterMouvement: { genre: 'mutation',
     description: 'SOUMIS → BROUILLON avec motifRejet obligatoire.' },
   validerMouvement: { genre: 'mutation',
-    description: 'SOUMIS → VALIDE par un rôle habilité : quantité signée calculée des pesées, effets stocks atomiques, scellement hash chaîné.' },
+    description: 'SOUMIS → VALIDE par un rôle habilité : quantité signée calculée des pesées, effets stocks atomiques, scellement hash chaîné. Lot C (C3) : 3e paramètre pdfFinalBase64 — OBLIGATOIRE en mode OFFICIEL (le PDF final présenté aux signataires, contrôlé : nombres magiques %PDF, 5 Mo maximum), conservé en pièce jointe SYSTÈME catégorie CERFA_FINAL (nom CERFA-<numéro>.pdf, sans incrément de révision) avec son empreinte GELÉE hashPdfFinal avant scellement (v2) ; fourni hors mode OFFICIEL → refus canonique (pdf-final.js), la FORMATION reste inchangée.' },
   annulerParContreEcriture: { genre: 'mutation',
     description: 'Crée l’écriture inverse scellée (quantité opposée, pesées permutées) et passe l’original en ANNULE (hash intact).' },
 

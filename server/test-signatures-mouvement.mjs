@@ -21,10 +21,11 @@
 // ============================================================
 
 import { createRequire } from 'node:module';
-import { mkdtempSync, mkdirSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as moduleEsm from '../v8/js/data/signatures-mouvement.js';
+import * as pdfEsm from '../v8/js/data/pdf-final.js';
 
 const require = createRequire(import.meta.url);
 const crypto = require('node:crypto');
@@ -32,6 +33,7 @@ const db = require('./db.js');
 const api = require('./api.js');
 const comptes = require('./comptes.js');
 const miroir = require('./signatures-mouvement.js');
+const pdfCjs = require('./pdf-final.js');
 const hm = require('./hash-mouvement.js');
 
 let nbOk = 0;
@@ -554,6 +556,118 @@ const signatureType = (surcharges = {}) => ({
     api.appeler('verifierChaineHash', {}, sansSession).ok === true);
 }
 
+// ============================================================
+// 8. Lot C, brique C3a — PDF final conservé : réception + contrôles
+// (la validation OFFICIELLE complète reste fermée par le verrou de
+// livraison — les REFUS se tirent via le vrai chemin API, la MÉCANIQUE
+// de conservation s'éprouve par l'aide exportée ; le parcours de bout
+// en bout sera tiré à l'ouverture, brique C5.)
+// ============================================================
+{
+  // 8.1 Parité stricte du module pur ESM ↔ miroir CommonJS.
+  verifier('pdf-final : constantes et messages identiques des deux côtés',
+    pdfCjs.CATEGORIE_PDF_FINAL === pdfEsm.CATEGORIE_PDF_FINAL &&
+    pdfCjs.PDF_FINAL_TAILLE_MAX === pdfEsm.PDF_FINAL_TAILLE_MAX &&
+    pdfCjs.MSG_PDF_FINAL_MANQUANT === pdfEsm.MSG_PDF_FINAL_MANQUANT &&
+    pdfCjs.MSG_PDF_FINAL_INVALIDE === pdfEsm.MSG_PDF_FINAL_INVALIDE &&
+    pdfCjs.MSG_PDF_FINAL_TROP_GROS === pdfEsm.MSG_PDF_FINAL_TROP_GROS &&
+    pdfCjs.MSG_PDF_FINAL_HORS_OFFICIEL === pdfEsm.MSG_PDF_FINAL_HORS_OFFICIEL &&
+    pdfCjs.nomFichierPdfFinal('FI-2026-0001') ===
+      pdfEsm.nomFichierPdfFinal('FI-2026-0001'));
+
+  const octetsPdf = Buffer.from('%PDF-1.4\nPreuve C3a du PDF conserve\n%%EOF\n');
+  const octetsHtml = Buffer.from('<html><body>Faux PDF</body></html>');
+  const octetsGros = Buffer.alloc(pdfCjs.PDF_FINAL_TAILLE_MAX + 1);
+  octetsGros.set([0x25, 0x50, 0x44, 0x46], 0);
+  const CAS_PDF = [null, Buffer.alloc(0), octetsPdf, octetsHtml, octetsGros];
+  let identiques = 0;
+  for (const octets of CAS_PDF) {
+    const a = pdfEsm.verifierOctetsPdfFinal(octets);
+    const b = pdfCjs.verifierOctetsPdfFinal(octets);
+    if (a.ok === b.ok && a.erreur === b.erreur) identiques += 1;
+  }
+  verifier(`pdf-final : verdicts identiques sur ${CAS_PDF.length} contenus discriminants`,
+    identiques === CAS_PDF.length);
+  verifier('pdf-final : les trois refus tombent sur le bon critère',
+    pdfCjs.verifierOctetsPdfFinal(Buffer.alloc(0)).erreur ===
+      pdfCjs.MSG_PDF_FINAL_MANQUANT &&
+    pdfCjs.verifierOctetsPdfFinal(octetsHtml).erreur ===
+      pdfCjs.MSG_PDF_FINAL_INVALIDE &&
+    pdfCjs.verifierOctetsPdfFinal(octetsGros).erreur ===
+      pdfCjs.MSG_PDF_FINAL_TROP_GROS &&
+    pdfCjs.verifierOctetsPdfFinal(octetsPdf).erreur === null);
+
+  // 8.2 Les REFUS par le VRAI chemin API — sur une fiche forcée OFFICIEL
+  // en SQL direct (un BROUILLON/SOUMIS n'est protégé par aucun trigger) :
+  // les contrôles PDF tombent AVANT le verdict du moteur, donc AVANT le
+  // verrou de livraison.
+  const bCourante = api.appeler('getBouteilles', {}, sansSession)
+    .find((b) => b.id === bouteille.id);
+  const mvOff = api.appeler('creerMouvement', { donneesMouvement: {
+    type: 'CHARGE_APPOINT', machineId: machine.id,
+    bouteilleSrcId: bouteille.id,
+    peseeAvantKg: bCourante.masseNetteKg,
+    peseeApresKg: bCourante.masseNetteKg - 0.25,
+    technicien: 'Référent Signature',
+    causeMouvement: 'Preuve PDF final C3a' } }, sansSession);
+  api.appeler('soumettreMouvement', { id: mvOff.id }, sansSession);
+  db.run("UPDATE mouvements SET mode = 'OFFICIEL' WHERE id = ?", [mvOff.id]);
+
+  attendreRejet('valider une fiche OFFICIELLE sans PDF → refus canonique',
+    () => api.appeler('validerMouvement', { id: mvOff.id,
+      validateurId: referent.id }, sansSession),
+    'PDF final de la fiche manquant');
+  attendreRejet('valider avec un HTML déguisé en PDF → refus canonique',
+    () => api.appeler('validerMouvement', { id: mvOff.id,
+      validateurId: referent.id,
+      pdfFinalBase64: octetsHtml.toString('base64') }, sansSession),
+    'n’est pas un PDF');
+  attendreRejet('avec un VRAI PDF, le refus suivant est celui du moteur (verrou)',
+    () => api.appeler('validerMouvement', { id: mvOff.id,
+      validateurId: referent.id,
+      pdfFinalBase64: octetsPdf.toString('base64') }, sansSession),
+    'Mode Officiel refusé');
+  verifier('la fiche est restée SOUMISE après les trois refus (aucun effet)',
+    db.get('SELECT statut FROM mouvements WHERE id = ?', [mvOff.id])
+      .statut === 'SOUMIS');
+  verifier('aucune PJ CERFA_FINAL n’a été conservée sur les refus',
+    !db.get(`SELECT id FROM pieces_jointes
+             WHERE entite_id = ? AND categorie = 'CERFA_FINAL'`, [mvOff.id]));
+
+  // 8.3 La MÉCANIQUE de conservation (aide exportée, appelée par
+  // validerMouvement dans la transaction) : PJ système en table, fichier
+  // sur disque, sha exact, AUCUN incrément de révision (les signatures
+  // jugées valides doivent le rester).
+  const revAvant = db.get(
+    'SELECT revision_brouillon FROM mouvements WHERE id = ?',
+    [mvOff.id]).revision_brouillon;
+  const sha = api.conserverPdfFinal(
+    { id: mvOff.id, numero: mvOff.numero }, octetsPdf, 'Référent Signature');
+  verifier('conserverPdfFinal renvoie le sha256 exact des octets',
+    sha === crypto.createHash('sha256').update(octetsPdf).digest('hex'));
+  const pjConservee = db.get(
+    `SELECT * FROM pieces_jointes
+     WHERE entite_id = ? AND categorie = 'CERFA_FINAL'`, [mvOff.id]);
+  verifier('la PJ système CERFA_FINAL est en table (nom dérivé du numéro)',
+    Boolean(pjConservee) &&
+    pjConservee.nom_fichier === `CERFA-${mvOff.numero}.pdf` &&
+    pjConservee.mime_type === 'application/pdf' &&
+    pjConservee.taille_octets === octetsPdf.length &&
+    pjConservee.hash_sha256 === sha &&
+    pjConservee.chemin === pjConservee.id);
+  const surDisque = readFileSync(
+    join(dossier, 'data', 'documents', pjConservee.id));
+  verifier('le PDF conservé sur disque est l’ORIGINAL octet pour octet',
+    surDisque.equals(octetsPdf));
+  verifier('la conservation n’incrémente PAS la révision du brouillon',
+    db.get('SELECT revision_brouillon FROM mouvements WHERE id = ?',
+      [mvOff.id]).revision_brouillon === revAvant);
+  verifier('la PJ conservée est visible par le canal contrat (lecture)',
+    api.appeler('listerPiecesJointes',
+      { entiteType: 'MOUVEMENT', entiteId: mvOff.id }, sansSession)
+      .some((pj) => pj.categorie === 'CERFA_FINAL' && pj.hashSha256 === sha));
+}
+
 console.log(`\n${nbOk} vérifications réussies, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);
-console.log('Signatures réelles : parité stricte, parcours et attaques tirées, WORM prouvé, empreinte v2 gelée.');
+console.log('Signatures réelles : parité stricte, parcours et attaques tirées, WORM prouvé, empreinte v2 gelée, PDF final contrôlé et conservé (C3a).');

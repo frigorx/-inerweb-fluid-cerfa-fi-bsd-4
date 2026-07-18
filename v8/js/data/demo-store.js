@@ -36,6 +36,10 @@ import { ROLES_SIGNATURE, declarationSignature, verifierImageSignature,
 // moteur PUR de la liste docs/CONDITIONS-BLOCANTES-OFFICIEL.md (miroir serveur).
 import { evaluerBlocagesOfficiel, messageRefusOfficiel, VERROU_LIVRAISON }
   from './blocage-officiel.js';
+// PDF final conservé à la validation OFFICIELLE (lot C, brique C3) :
+// contrôles et messages canoniques partagés (miroir serveur).
+import { verifierOctetsPdfFinal, nomFichierPdfFinal, CATEGORIE_PDF_FINAL,
+  MSG_PDF_FINAL_MANQUANT, MSG_PDF_FINAL_HORS_OFFICIEL } from './pdf-final.js';
 
 const CLE_STOCKAGE = 'inerweb-fluide-v8-demo';
 
@@ -3050,7 +3054,7 @@ export function creerDemoStore() {
           valide: (sig.versionDocument ?? 0) === revision }));
     },
 
-    async validerMouvement(id, validateurId) {
+    async validerMouvement(id, validateurId, pdfFinalBase64 = null) {
       const mouvement = trouverMouvement(id);
       if (mouvement.statut === 'VALIDE' || mouvement.statut === 'ANNULE') {
         throw new Error(MSG_ECRITURE_FIGEE);
@@ -3059,6 +3063,20 @@ export function creerDemoStore() {
         throw new Error('Seul un mouvement soumis peut être validé.');
       }
       const validateur = verifierValidateur(validateurId);
+      // Lot C (C3) : le PDF final présenté aux signataires est REÇU à la
+      // validation OFFICIELLE et contrôlé AVANT le verdict du moteur (les
+      // refus PDF restent ainsi éprouvables verrou de livraison fermé —
+      // même ordre que le serveur). En FORMATION, rien ne change : un PDF
+      // fourni est refusé (plan lot C §2.4).
+      let octetsPdfFinal = null;
+      if (mouvement.mode === 'OFFICIEL') {
+        if (!pdfFinalBase64) throw new Error(MSG_PDF_FINAL_MANQUANT);
+        octetsPdfFinal = await octetsDepuis(pdfFinalBase64);
+        const controlePdf = verifierOctetsPdfFinal(octetsPdfFinal);
+        if (!controlePdf.ok) throw new Error(controlePdf.erreur);
+      } else if (pdfFinalBase64) {
+        throw new Error(MSG_PDF_FINAL_HORS_OFFICIEL);
+      }
       // Blocage dur OFFICIEL (lot B) : 3e moment (VALIDATION), AVANT tout
       // effet — signature comprise. La démo n'a ni session ni poste : la
       // condition « validateur = personne connectée » est portée par le
@@ -3129,11 +3147,36 @@ export function creerDemoStore() {
       // le référentiel peut évoluer, l'écriture validée garde sa valeur).
       mouvement.prpFige =
         indexFluides().get(mouvement.fluide)?.gwpAr4 ?? null;
+      // Lot C (C3) : le PDF final contrôlé plus haut devient une pièce
+      // jointe SYSTÈME (catégorie CERFA_FINAL) — insérée DIRECTEMENT,
+      // sans passer par ajouterPieceJointe : pas d'incrément de révision
+      // (les signatures viennent d'être jugées valides par le moteur et
+      // doivent le RESTER), pas de refus « écriture figée » à fermer en
+      // C3c. Posée AVANT le calcul des champs gelés : son empreinte entre
+      // dans hashPiecesJointes ET dans hashPdfFinal.
+      let shaPdfFinal = null;
+      if (octetsPdfFinal) {
+        shaPdfFinal = await hasherOctets(octetsPdfFinal);
+        const pjPdfFinal = {
+          id: genId('pj'),
+          entiteType: 'MOUVEMENT',
+          entiteId: mouvement.id,
+          categorie: CATEGORIE_PDF_FINAL,
+          nomFichier: nomFichierPdfFinal(mouvement.numero),
+          mimeType: 'application/pdf',
+          taille: octetsPdfFinal.length,
+          hashSha256: shaPdfFinal,
+          dateAjout: new Date().toISOString(),
+          ajoutePar: `${validateur.prenom} ${validateur.nom}`
+        };
+        await ecrireContenuPj(pjPdfFinal.id,
+          { octets: octetsPdfFinal, mimeType: pjPdfFinal.mimeType });
+        donnees.piecesJointes.push(pjPdfFinal);
+      }
       // Lot C (C2) : champs GELÉS au scellement — calculés ICI, attachés à
       // l'objet AVANT sceller(), JAMAIS re-dérivés (la vérification de
       // chaîne relit les valeurs stockées ; un ajout légitime ultérieur,
-      // PJ comprise, ne casse pas la chaîne). Le PDF final sera posé par
-      // la brique C3 (mode Officiel). Miroir exact du serveur.
+      // PJ comprise, ne casse pas la chaîne). Miroir exact du serveur.
       mouvement.outilsFiges = outilsFiges;
       mouvement.hashSignatures = await empreinteListeSignatures(
         (donnees.signaturesMouvement ?? [])
@@ -3143,7 +3186,7 @@ export function creerDemoStore() {
           .filter((pj) => pj.entiteType === 'MOUVEMENT' &&
                           pj.entiteId === mouvement.id)
           .map((pj) => pj.hashSha256 ?? ''));
-      mouvement.hashPdfFinal = null;
+      mouvement.hashPdfFinal = shaPdfFinal;
       // Empreinte RENFORCÉE : toute NOUVELLE écriture scellée est v2 (les
       // écritures existantes gardent leur v1 — jamais rétroactif).
       mouvement.versionEmpreinte = 2;
@@ -3158,7 +3201,10 @@ export function creerDemoStore() {
         'VALIDATION_MOUVEMENT', mouvement.numero,
         `${mouvement.type} · ${mouvement.quantiteKg} kg ${mouvement.fluide}`
         + (mouvement.prpFige != null ? ` · PRP figé ${mouvement.prpFige}` : '')
-        + (outilsFiges.length ? ` · outils figés : ${outilsFiges.join(', ')}` : ''));
+        + (outilsFiges.length ? ` · outils figés : ${outilsFiges.join(', ')}` : '')
+        // Lot C (C3) : l'empreinte du PDF conservé au journal chaîné —
+        // point de recoupement opposable du document figé.
+        + (shaPdfFinal ? ` · PDF final conservé (sha256 ${shaPdfFinal})` : ''));
       persisterEtNotifier();
 
       // IM-4 : une récupération-démantèlement qui VIDE la machine

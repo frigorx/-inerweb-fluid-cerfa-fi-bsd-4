@@ -25,6 +25,8 @@ import {
   VERSION_CONTRAT, METHODES_CONTRAT, MSG_ECRITURE_FIGEE, FORMAT_EXPORT,
   TYPES_MOUVEMENT, STATUTS_MOUVEMENT, verifierSurface
 } from './contrat.js';
+// Lot C (C3) : refus canonique d'un PDF final hors mode OFFICIEL.
+import { MSG_PDF_FINAL_HORS_OFFICIEL } from './pdf-final.js';
 
 // ------------------------------------------------------------
 // Choix de l'implémentation à éprouver (demo par défaut).
@@ -580,6 +582,32 @@ await verifierRejet('supprimer une écriture VALIDE répond le message canonique
   store.supprimerMouvement(mvt1.id, 'Testeur'), MSG_ECRITURE_FIGEE);
 await verifierRejet('revalider une écriture VALIDE répond le message canonique',
   store.validerMouvement(mvt1.id, enseignant.id), MSG_ECRITURE_FIGEE);
+
+// --- lot C (C3) : PDF final réservé au mode OFFICIEL -------------
+// Bloc NEUTRE pour les stocks : le refus ne produit aucun effet, le
+// brouillon d'essai est rejeté puis supprimé (aucune validation ajoutée).
+{
+  // '%PDF-1.4' en base64 : un vrai début de PDF, suffisant pour la magie.
+  const pdfBase64 = 'JVBERi0xLjQKJSVFT0YK';
+  const brouillonPdf = await store.creerMouvement({
+    type: 'CHARGE_APPOINT', machineId: machineB.id, bouteilleSrcId: b1.id,
+    peseeAvantKg: 8, peseeApresKg: 7.5, technicien: 'Testeur Contrat',
+    causeMouvement: 'Preuve PDF hors officiel'
+  });
+  await store.soumettreMouvement(brouillonPdf.id);
+  await verifierRejet('un PDF final fourni en FORMATION répond le refus canonique',
+    store.validerMouvement(brouillonPdf.id, enseignant.id, pdfBase64),
+    MSG_PDF_FINAL_HORS_OFFICIEL);
+  verifier('l’écriture est restée SOUMISE après le refus du PDF hors officiel',
+    (await store.getMouvements()).find((m) => m.id === brouillonPdf.id)
+      .statut === 'SOUMIS');
+  verifier('FORMATION inchangée : hashPdfFinal null, aucune PJ CERFA_FINAL',
+    mvt1Valide.hashPdfFinal === null &&
+    !(await store.listerPiecesJointes('MOUVEMENT', mvt1Valide.id))
+      .some((pj) => pj.categorie === 'CERFA_FINAL'));
+  await store.rejeterMouvement(brouillonPdf.id, 'Fin de la preuve PDF');
+  await store.supprimerMouvement(brouillonPdf.id, 'Testeur');
+}
 
 // --- suppression d'un brouillon (CR-1) ---------------------------
 {

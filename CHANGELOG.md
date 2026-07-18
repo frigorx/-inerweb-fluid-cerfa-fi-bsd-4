@@ -2,6 +2,38 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔐 LOT C audit-proof — brique C3a : PDF final REÇU, contrôlé et conservé (condition 4, 18/07)
+Première des trois sous-briques de C3 (découpage Franck : C3a réception · C3b `.sha256` +
+manifeste + bouton CERFA servant le conservé · C3c fermeture de l'asymétrie PJ + recomptage
+à l'import + attaque permanente). Plan lot C §5 suivi à la lettre.
+- **Module pur en miroir `v8/js/data/pdf-final.js` ↔ `server/pdf-final.js`** : messages
+  canoniques (manquant · pas un PDF · trop gros · hors mode Officiel), contrôle des octets
+  (nombres magiques `%PDF`, plafond 5 Mo — même limite que les PJ), nom de la pièce
+  conservée `CERFA-<numéro>.pdf` dérivé du numéro SERVEUR (jamais reçu du client).
+- **`validerMouvement` gagne un 3e paramètre `pdfFinalBase64`** (contrat v5 → v6, surface
+  inchangée à 80 méthodes) : OBLIGATOIRE en mode OFFICIEL, REFUSÉ en FORMATION (rien ne
+  change pour les élèves). Les contrôles PDF tombent AVANT le verdict du moteur de blocage :
+  les refus restent éprouvables verrou de livraison fermé — et c'est l'ordre des deux stores
+  (parité stricte, messages mot pour mot).
+- **Conservation = pièce jointe SYSTÈME catégorie `CERFA_FINAL`** (canal existant : disque
+  `documents/`, hash SHA-256, sauvegardes, dossier d'audit), insérée DIRECTEMENT — sans
+  `ajouterPieceJointe`, donc SANS incrément de `revision_brouillon` : les signatures que le
+  moteur vient de juger valides le RESTENT. Posée AVANT le calcul des champs gelés : son
+  empreinte entre dans `hashPiecesJointes` ET dans `hashPdfFinal` (gelés, scellés v2).
+  L'empreinte du PDF est aussi consignée dans la ligne VALIDATION_MOUVEMENT du journal
+  chaîné (point de recoupement opposable).
+- **Aide serveur `conserverPdfFinal`** exportée pour le filet de test SEULEMENT (absente de
+  `HANDLERS` → 501 en HTTP, vérifié par la relecture adversariale).
+- **Preuves** (TOUT VERT — 78 exécutions) : parité stricte du module pur (constantes +
+  5 contenus discriminants), refus TIRÉS par le vrai chemin API sur une fiche forcée
+  OFFICIEL en SQL (sans PDF · HTML déguisé · vrai PDF → le refus suivant est bien celui du
+  verrou, fiche restée SOUMISE, aucune PJ conservée), mécanique de conservation éprouvée
+  (PJ en table, fichier disque octet pour octet, sha exact, révision NON incrémentée),
+  FORMATION inchangée (refus canonique + `hashPdfFinal` null + aucune PJ CERFA_FINAL,
+  joué demo ET local). Relecture adversariale AVANT commit (6 angles, dont transport :
+  corps HTTP 20 Mo > 6,7 Mo de base64 — le parcours réel de C5 passera) : COMMIT OK,
+  zéro correctif. La validation OFFICIELLE de bout en bout sera tirée à l'ouverture (C5).
+
 ### 🔐 LOT C audit-proof — brique C2 : empreinte RENFORCÉE v2 (condition 4, 18/07)
 Le point délicat du lot (plan §6, suivi à la lettre) : **VERSIONNER, jamais recalculer**.
 Les écritures existantes gardent leur empreinte v1 pour toujours ; toute NOUVELLE écriture

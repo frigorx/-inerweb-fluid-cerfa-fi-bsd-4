@@ -213,8 +213,12 @@ export function creerLocalStore(transport) {
     rejeterMouvement(id, motif) {
       return muter('rejeterMouvement', { id, motif });
     },
-    validerMouvement(id, validateurId) {
-      return muter('validerMouvement', { id, validateurId });
+    validerMouvement(id, validateurId, pdfFinalBase64 = null) {
+      // Lot C (C3) : le PDF final (base64) accompagne la validation d'une
+      // fiche OFFICIELLE ; absent (null) en FORMATION — clé omise du JSON.
+      return muter('validerMouvement', pdfFinalBase64
+        ? { id, validateurId, pdfFinalBase64 }
+        : { id, validateurId });
     },
     annulerParContreEcriture(id, motif, validateurId) {
       return muter('annulerParContreEcriture', { id, motif, validateurId });

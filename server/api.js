@@ -46,6 +46,12 @@ const { evaluerBlocagesOfficiel, messageRefusOfficiel, VERROU_LIVRAISON } =
 // test-signatures-mouvement.mjs).
 const { ROLES_SIGNATURE, declarationSignature, verifierImageSignature,
   MSG_TRACE_ABSENT, MSG_PAS_PNG } = require('./signatures-mouvement.js');
+// PDF final conservé à la validation OFFICIELLE (lot C, brique C3) :
+// contrôles et messages canoniques (miroir du module ESM du front, parité
+// prouvée par test-signatures-mouvement.mjs).
+const { verifierOctetsPdfFinal, nomFichierPdfFinal, CATEGORIE_PDF_FINAL,
+  MSG_PDF_FINAL_MANQUANT, MSG_PDF_FINAL_HORS_OFFICIEL } =
+  require('./pdf-final.js');
 
 // ------------------------------------------------------------
 // Identité de l'établissement singleton (le front le traite sans id).
@@ -2557,7 +2563,7 @@ const HANDLERS = {
    * statut reste SOUMIS).
    */
   validerMouvement(params, contexte) {
-    const { id, validateurId } = params;
+    const { id, validateurId, pdfFinalBase64 } = params;
     const mouvement = trouverMouvement(id);
     if (mouvement.statut === 'VALIDE' || mouvement.statut === 'ANNULE') {
       throw new Error(MSG_ECRITURE_FIGEE);
@@ -2571,6 +2577,20 @@ const HANDLERS = {
     // journal recoupait déjà, désormais l'API refuse). Sans session
     // (harnais in-process), repli historique comme getUtilisateurCourant.
     exigerValidateurDeSession(validateurId, contexte);
+    // Lot C (C3) : le PDF final présenté aux signataires est REÇU à la
+    // validation OFFICIELLE et contrôlé AVANT le verdict du moteur (les
+    // refus PDF restent ainsi éprouvables verrou de livraison fermé —
+    // même ordre que la démo). En FORMATION, rien ne change : un PDF
+    // fourni est refusé (plan lot C §2.4).
+    let octetsPdfFinal = null;
+    if (mouvement.mode === 'OFFICIEL') {
+      if (!pdfFinalBase64) throw new Error(MSG_PDF_FINAL_MANQUANT);
+      octetsPdfFinal = decoderBase64Pj(pdfFinalBase64);
+      const controlePdf = verifierOctetsPdfFinal(octetsPdfFinal);
+      if (!controlePdf.ok) throw new Error(controlePdf.erreur);
+    } else if (pdfFinalBase64) {
+      throw new Error(MSG_PDF_FINAL_HORS_OFFICIEL);
+    }
     // Blocage dur OFFICIEL (lot B) : 3e moment (VALIDATION), AVANT tout
     // effet — signature comprise.
     if (mouvement.mode === 'OFFICIEL') {
@@ -2649,16 +2669,24 @@ const HANDLERS = {
       }
       outilsFiges.sort();
 
+      // Lot C (C3) : le PDF final contrôlé plus haut devient une pièce
+      // jointe SYSTÈME (catégorie CERFA_FINAL), conservée AVANT le calcul
+      // des champs gelés : son empreinte entre dans hashPiecesJointes ET
+      // dans hashPdfFinal.
+      let shaPdfFinal = null;
+      if (octetsPdfFinal) {
+        shaPdfFinal = conserverPdfFinal(mouvement, octetsPdfFinal,
+          `${validateur.prenom} ${validateur.nom}`);
+      }
       // Lot C (C2) : champs GELÉS au scellement — calculés ICI, attachés à
       // l'objet AVANT sceller(), stockés en colonnes, JAMAIS re-dérivés (la
       // vérification de chaîne relit les valeurs stockées ; un ajout
-      // légitime ultérieur, PJ comprise, ne casse pas la chaîne). Le PDF
-      // final sera posé par la brique C3 (mode Officiel).
+      // légitime ultérieur, PJ comprise, ne casse pas la chaîne).
       mouvement.outilsFiges = outilsFiges;
       mouvement.hashSignatures = empreinteSignaturesMouvement(mouvement.id);
       mouvement.hashPiecesJointes =
         empreintePiecesJointesMouvement(mouvement.id);
-      mouvement.hashPdfFinal = null;
+      mouvement.hashPdfFinal = shaPdfFinal;
       // Empreinte RENFORCÉE : toute NOUVELLE écriture scellée est v2 (les
       // écritures existantes gardent leur v1 — jamais rétroactif).
       mouvement.versionEmpreinte = 2;
@@ -2678,7 +2706,10 @@ const HANDLERS = {
         'VALIDATION_MOUVEMENT', mouvement.numero,
         `${mouvement.type} · ${mouvement.quantiteKg} kg ${mouvement.fluide}`
         + (mouvement.prpFige != null ? ` · PRP figé ${mouvement.prpFige}` : '')
-        + (outilsFiges.length ? ` · outils figés : ${outilsFiges.join(', ')}` : ''));
+        + (outilsFiges.length ? ` · outils figés : ${outilsFiges.join(', ')}` : '')
+        // Lot C (C3) : l'empreinte du PDF conservé au journal chaîné —
+        // point de recoupement opposable du document figé.
+        + (shaPdfFinal ? ` · PDF final conservé (sha256 ${shaPdfFinal})` : ''));
 
       const resultat = reconstituerMouvement(lireLigneMouvement(id));
       // IM-4 : une récupération-démantèlement qui VIDE la machine invite
@@ -5173,6 +5204,43 @@ function ecrirePieceJointeSurDisque(id, octets) {
   return chemin;
 }
 
+/**
+ * Lot C (C3) : conserve le PDF FINAL d'une fiche officielle en pièce
+ * jointe SYSTÈME (catégorie CERFA_FINAL) — insertion DIRECTE, sans passer
+ * par ajouterPieceJointe : pas d'incrément de révision (les signatures
+ * viennent d'être jugées valides par le moteur et doivent le RESTER), pas
+ * de refus « écriture figée » à fermer en C3c. Appelée par
+ * validerMouvement DANS la transaction, AVANT le calcul des champs gelés
+ * (l'empreinte du PDF entre dans hashPiecesJointes ET hashPdfFinal).
+ * Exportée pour le filet de test (mécanique éprouvée verrou de livraison
+ * fermé) — JAMAIS exposée comme méthode du contrat.
+ * @param {object} mouvement objet logique (id, numero)
+ * @param {Buffer} octets contenu PDF déjà contrôlé (%PDF, taille)
+ * @param {string} ajoutePar « Prénom Nom » du validateur
+ * @returns {string} sha256 hexadécimal du PDF conservé
+ */
+function conserverPdfFinal(mouvement, octets, ajoutePar) {
+  const pieceJointe = {
+    id: db.generateId('PJ'),
+    entiteType: 'MOUVEMENT',
+    entiteId: mouvement.id,
+    categorie: CATEGORIE_PDF_FINAL,
+    nomFichier: nomFichierPdfFinal(mouvement.numero),
+    mimeType: 'application/pdf',
+    taille: octets.length,
+    hashSha256: crypto.createHash('sha256').update(octets).digest('hex'),
+    dateAjout: new Date().toISOString(),
+    ajoutePar: ajoutePar ?? null
+  };
+  ecrirePieceJointeSurDisque(pieceJointe.id, octets);
+  const ligne = mapping.versSql('pieces_jointes', pieceJointe);
+  ligne.etablissement_id = ID_ETABLISSEMENT;
+  // `chemin` = nom RELATIF dans documents/ (= l'id), comme ajouterPieceJointe.
+  ligne.chemin = pieceJointe.id;
+  inserer('pieces_jointes', ligne);
+  return pieceJointe.hashSha256;
+}
+
 /** Machine par id (copie camelCase). */
 function lireMachine(id) {
   return mapping.versFront('machines',
@@ -5877,5 +5945,8 @@ module.exports = {
   ROLES_MUTATION,
   METHODES,
   muter,
-  appeler
+  appeler,
+  // Lot C (C3) : exporté pour le filet de test SEULEMENT (la validation
+  // officielle réelle reste fermée par le verrou de livraison jusqu'à C5).
+  conserverPdfFinal
 };

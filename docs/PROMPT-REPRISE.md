@@ -11,10 +11,16 @@
 > CONNUES verrouillées dans test-hash-mouvement, champs gelés au scellement, QUATRE
 > vérificateurs versionnés dont verification.js oublié du plan, import qui recompte les
 > signatures gelées, chaîne mixte prouvée — 78 exécutions vertes) — prochaine brique =
-> **C3 (PDF final conservé)** : suivre `docs/PLAN-LOT-C.md` §5 À LA LETTRE (canal PJ
-> catégorie CERFA_FINAL, `.sha256` + manifeste, hashPdfFinal posé AVANT sceller() en
-> Officiel, refus sans PDF, bouton CERFA qui SERT le conservé, fermeture de l'asymétrie
-> ajouterPieceJointe sur figé). **Opus effort maximum.** PAS d'ultracode hors point critique.
+> **C3 (PDF final conservé)** : suivre `docs/PLAN-LOT-C.md` §5 À LA LETTRE, découpée en
+> TROIS sous-briques (décision Franck 18/07, une sous-brique = code + tests verts + commit) :
+> **C3a ✅ SOLDÉE le 18/07** (réception du PDF à la validation officielle + contrôle `%PDF`
+> + PJ système CERFA_FINAL sans bump de révision + `hashPdfFinal` gelé AVANT sceller() +
+> refus canoniques tirés via vrai API, module pur `pdf-final.js` en 2 miroirs, contrat v6,
+> relecture adversariale COMMIT OK — détail CHANGELOG) · **prochaine = C3b** (fichier
+> `.sha256` frère + `manifeste.json` + bouton CERFA qui SERT le conservé, jamais le
+> générateur) · **puis C3c** (fermer l'asymétrie ajouterPieceJointe sur figé + RECOMPTER
+> hashPiecesJointes à l'import + attaque « CERFA truquée dans l'export » en test permanent
+> — exigence §7.4 du plan). **Opus effort maximum.** PAS d'ultracode hors point critique.
 
 ---
 
