@@ -5,11 +5,12 @@
 >
 > **Session conseillée : selon le lot choisi** (voir « LE CAP RÉACTIVÉ »). **LOTS A, B et D
 > SOLDÉS le 16/07** (A `872d34b` · B `96d7d5e` + liste des conditions VALIDÉE par Franck le
-> soir même · D `0e27f7e` témoin quotidien de scellement) — prochaine brique = **LOT C,
-> brique C1** : son plan `docs/PLAN-LOT-C.md` est ÉCRIT, relu adversarialement contre le code
-> ET **VALIDÉ par Franck (C0 soldée, les 5 décisions du §2 tranchées)** → on code directement
-> C1 en le suivant À LA LETTRE. LOT C touche `hash-mouvement.js` → **Opus effort MAXIMUM**.
-> PAS d'ultracode hors point critique.
+> soir même · D `0e27f7e` témoin quotidien de scellement). **LOT C EN COURS : brique C1
+> SOLDÉE le 18/07** (signatures réelles — migration 23 complète, contrat 80, invalidation
+> par révision, conditions 14-15 du moteur, 78 exécutions vertes) — prochaine brique =
+> **C2 (empreinte v2)** : suivre `docs/PLAN-LOT-C.md` §6 À LA LETTRE. C2 touche le CŒUR de
+> `hash-mouvement.js`/`utils.js` (versionnement, jamais de recalcul, non-régression v1 bit
+> à bit sur empreintes CONNUES) → **Opus effort MAXIMUM**. PAS d'ultracode hors point critique.
 
 ---
 
@@ -110,7 +111,12 @@ lui, DOIT bloquer — c'est sa définition. **Ordre des lots** :
    jamais ignorée en officiel ; empreinte RENFORCÉE v2 versionnée + **PDF final CONSERVÉ**.
    ⚠️ Touche `hash-mouvement.js`. **LE PLAN EST ÉCRIT ET VALIDÉ = `docs/PLAN-LOT-C.md`**
    (relu adversarialement contre le code, C0 soldée) : le suivre À LA LETTRE, briques C1→C5.
-   Effort MAXIMUM.
+   Effort MAXIMUM. ✅ **C1 SOLDÉE le 18/07** (signatures réelles + socle migration 23 :
+   table WORM, révision d'invalidation, contrat 80, conditions 14-15, module pur
+   `signatures-mouvement.js` en 2 miroirs, 37 vérifs d'attaques tirées — détail CHANGELOG).
+   **Prochaine brique = C2 — empreinte v2** (plan §6 : versionner sans jamais recalculer,
+   3 hasseurs version-aware, réordonnancement du figeage côté serveur, champs gelés posés,
+   non-régression v1 sur empreintes CONNUES figées dans le test).
 4. ✅ **LOT D — SOLDÉ le 16/07** (livré dans la foulée du lot B) : témoin QUOTIDIEN
    `scellement/temoin-AAAA-MM-JJ.json` dans le dossier de sauvegarde configurable — têtes des
    chaînes, compteurs, intervalle de numéros, versions + empreinte du moteur réglementaire,
@@ -144,7 +150,7 @@ correspondance fine aptitude ↔ intervention (condition 7 en version simple d'i
 
 - **RÉGLAGE à annoncer avant chaque tâche de code** (grille : mémoire `feedback_reglages_intelligence`).
 - **carte → vérifier → modif chirurgicale → TESTS VERTS → commit.** `node outils/lancer-tests.mjs`
-  doit être **TOUT VERT (74 exécutions)** avant tout commit.
+  doit être **TOUT VERT (78 exécutions)** avant tout commit.
 - **Parité stricte DemoStore (`v8/js/data/demo-store.js`) / LocalStore (`server/api.js`)** : prouvée
   par `test-contrat.mjs` (demo ET local). `server/mapping.js` **lève sur toute clé inconnue** →
   déclarer les nouveaux champs des deux côtés. Un module pur du front réutilisé côté serveur est
@@ -154,7 +160,7 @@ correspondance fine aptitude ↔ intervention (condition 7 en version simple d'i
   **Tirer les failles, pas les lire.**
 - **Empreinte des mouvements** (`server/hash-mouvement.js`) : NE PAS la modifier à la légère — la
   condition 4 la touchera → plan + migration + tests.
-- **Migrations** : registre `server/migrations.js` jusqu'à **22**, prochaine = **23**. ⚠️ Une
+- **Migrations** : registre `server/migrations.js` jusqu'à **23**, prochaine = **24**. ⚠️ Une
   migration est IMMUABLE : elle fige ses propres littéraux, jamais de constante partagée qui
   évolue (leçon du 16/07). Triggers WORM
   sur `mouvements`/`journal_audit` recréés à chaque migration touchant `mouvements` ;

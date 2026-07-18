@@ -2,6 +2,58 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### ✍️ LOT C audit-proof — brique C1 : signatures RÉELLES (condition 3, 18/07)
+Première brique du lot C (`docs/PLAN-LOT-C.md`, suivi à la lettre — C0 validée par Franck
+le 16/07). Le parcours de double signature existe, s'invalide à la moindre modification,
+et se prouve ; l'empreinte v2 (C2), le PDF conservé (C3), l'interface (C4) et la bascule
+du verrou (C5) suivent. Le mode Officiel reste FERMÉ (`VERROU_LIVRAISON`).
+- **Migration 23 (COMPLÈTE pour tout le lot C — une migration est immuable)** :
+  `mouvements.version_empreinte` (DÉFAUT 1) · `revision_brouillon` (DÉFAUT 0) · 4 colonnes
+  de champs GELÉS au scellement (`outils_figes`, `hash_signatures`, `hash_pieces_jointes`,
+  `hash_pdf_final` — consommées par C2-C3) ; **table `signatures_mouvement` WORM**
+  (3 triggers : jamais d'UPDATE, DELETE réservé aux signatures d'un BROUILLON, INSERT
+  refusé sur écriture figée) ; `pieces_jointes` recréée (procédure migration 10) pour la
+  catégorie `CERFA_FINAL` ; trigger WORM des mouvements recréé (liste blanche + 6 colonnes).
+  Tout est HORS liste blanche v1 du hasseur : **chaînes existantes intactes, bit à bit**.
+- **Module PUR `v8/js/data/signatures-mouvement.js`** (+ miroir littéral CommonJS
+  `server/signatures-mouvement.js`) : déclarations signées EXACTES (décision §2.2 — la
+  mention « , par délégation du détenteur (raison sociale) » s'insère avant le point
+  final), critères d'illisibilité (décision §2.5 : jamais vide, PNG réel par nombres
+  magiques, ≥ 1 Ko — plus un plafond défensif de 1 Mo, arbitrage délégué protecteur).
+  La déclaration est composée par le STORE, jamais reçue du client.
+- **Contrat 78 → 80 (`VERSION_CONTRAT` 5)** : `signerMouvement(mouvementId, { role,
+  nom, prenom, qualite?, organisation?, parDelegation?, imagePng })` (BROUILLON seulement,
+  TECHNICIEN puis DETENTEUR sur la MÊME révision, personne physique obligatoire, image
+  contrôlée, empreinte du document + révision signée + identité de session en témoin —
+  côté serveur) et `getSignaturesMouvement(id)` (tri JS, copies, `valide` calculé =
+  versionDocument ↔ révision courante). Implémenté des DEUX côtés (parité test-contrat),
+  garde de rôle OPERATEUR (l'élève-technicien signe son travail ; couverture automatique
+  de test-gardes-roles).
+- **Invalidation par révision (plan §4)** : `rejeterMouvement`, `ajouterPieceJointe` et
+  `supprimerPieceJointe` (sur mouvement BROUILLON/SOUMIS) incrémentent
+  `revision_brouillon` — bump EXPLICITE pour les tables annexes ; la soumission, elle,
+  ne périme RIEN (parcours nominal signé → soumis → validé). Les signatures périmées
+  restent en table (trace) ; `supprimerMouvement` emporte celles d'un brouillon (seul
+  cas admis par le WORM, trace conservée au journal chaîné).
+- **Moteur `blocage-officiel` (2 miroirs) — conditions 14 et 15** (niveau V, annoncées
+  dans la liste validée) : faits tri-état `signatureTechnicienValide` /
+  `signatureDetenteurValide` (true | false | 'PERIMEE') ; une signature périmée n'est
+  JAMAIS ignorée — motif « Fiche modifiée après signature : recommencez les signatures ».
+  Visible dès maintenant dans `simulerValidationOfficielle` (panneau de la modale).
+- **Export/import** : collection `signaturesMouvement` portée par l'export des deux
+  stores, réimportée sous triggers retirés/recréés, complétée À VIDE sur les vieux
+  exports, invariants d'entrée (id unique, mouvement existant, rôle connu, révision
+  finie — signature orpheline refusée). La falsification FINE d'une signature sera
+  dénoncée par l'empreinte v2 (C2).
+- **Preuves** : `server/test-signatures-mouvement.mjs` (37 vérifs : parité stricte
+  ESM ↔ CJS des déclarations et critères, migration 23, attaques TIRÉES — désordre,
+  HTML déguisé en PNG, tracé < 1 Ko, > 1 Mo, PJ après signature → périmées + refus
+  détenteur, SOUMIS/figé, falsification SQL directe → 3 refus WORM, round-trip
+  export/import, orpheline refusée) + bloc signatures de `test-contrat` (demo ET local)
+  + `test-blocage-officiel` étendu (34 vérifs, parité sur 36 cadres).
+  **TOUT VERT — 78 exécutions.** Le refus dur en validation officielle réelle sera
+  re-tiré via HTTP à l'ouverture du verrou (brique C5, essai complet).
+
 ### 🏷️ LOT D audit-proof — scellement externe simple (condition 5, 16/07 soir)
 Le témoin daté HORS du poste, sans DSI — ferme la limite documentée de la chaîne interne
 (« une réécriture complète cohérente, disque en main, reste indétectable sans scellé conservé

@@ -27,7 +27,10 @@ import { REGIMES, CATEGORIES_2008, CATEGORIES_2025, comparerHabilitations,
   from './habilitations.js';
 // Signature binaire réelle des pièces jointes (audit-proof) : le contenu doit
 // concorder avec le type déclaré, jamais le MIME annoncé seul (miroir serveur).
-import { signatureConcordeAvecMime, MSG_SIGNATURE_PJ } from './contenu-pj.js';
+import { signatureConcordeAvecMime, MSG_SIGNATURE_PJ, base64VersOctets,
+  versBase64 } from './contenu-pj.js';
+import { ROLES_SIGNATURE, declarationSignature, verifierImageSignature,
+  MSG_TRACE_ABSENT, MSG_PAS_PNG } from './signatures-mouvement.js';
 // Blocage dur du mode OFFICIEL (lot B, condition 2 du plan audit-proof) :
 // moteur PUR de la liste docs/CONDITIONS-BLOCANTES-OFFICIEL.md (miroir serveur).
 import { evaluerBlocagesOfficiel, messageRefusOfficiel, VERROU_LIVRAISON }
@@ -404,6 +407,25 @@ function verifierInvariantsDonnees(candidat) {
     }
   }
 
+  // Signatures réelles (lot C, C1) : chaque signature référence un mouvement
+  // existant, un rôle connu, une révision signée finie — id jamais en double.
+  // (La falsification d'une signature sera dénoncée par l'empreinte v2, C2.)
+  const idsSignatures = new Set();
+  for (const sig of candidat.signaturesMouvement ?? []) {
+    const ref = sig.id ?? '?';
+    if (idsSignatures.has(sig.id)) return `signature ${ref} : id en double`;
+    idsSignatures.add(sig.id);
+    if (!statutParMouvement.has(sig.mouvementId)) {
+      return `signature ${ref} : mouvement introuvable (${sig.mouvementId})`;
+    }
+    if (!ROLES_SIGNATURE.includes(sig.role)) {
+      return `signature ${ref} : rôle inconnu (${sig.role})`;
+    }
+    if (!Number.isFinite(sig.versionDocument)) {
+      return `signature ${ref} : révision signée absente`;
+    }
+  }
+
   // Pièces jointes : l'id EST le nom du fichier sur disque (Mode Local). Un id
   // hors alphabet (« ../.. ») ouvrirait une traversée de chemin — refusé À
   // L'ENTRÉE, avant que la donnée n'existe. Règle identique côté serveur.
@@ -536,6 +558,13 @@ export function creerDemoStore() {
 
   // État interne : sauvegarde locale si présente, sinon copie du monde de démo
   let donnees = chargerDepuisStockage() || copier(DEMO);
+
+  // Lot C (C1) : collection des signatures réelles — absente du monde de
+  // démo comme des sauvegardes antérieures, TOUJOURS amorcée à vide (la
+  // structure de l'export doit rester identique à celle du serveur).
+  if (!Array.isArray(donnees.signaturesMouvement)) {
+    donnees.signaturesMouvement = [];
+  }
 
   // --------------------------------------------------------
   // IM-2 : abonnés au signal « données modifiées ». Simple liste
@@ -982,9 +1011,24 @@ export function creerDemoStore() {
   }
 
   /**
+   * Lot C (C1) : état d'une signature RÉELLE pour le moteur de blocage —
+   * true (une signature du rôle vaut pour la révision courante) | false
+   * (aucune signature du rôle) | 'PERIMEE' (posée puis fiche modifiée).
+   */
+  function etatSignatureReelle(mouvement, role) {
+    const revision = mouvement.revisionBrouillon ?? 0;
+    const duRole = (donnees.signaturesMouvement ?? []).filter((sig) =>
+      sig.mouvementId === mouvement.id && sig.role === role);
+    if (duRole.some((sig) => (sig.versionDocument ?? 0) === revision)) {
+      return true;
+    }
+    return duRole.length > 0 ? 'PERIMEE' : false;
+  }
+
+  /**
    * Faits de la fiche pour le moteur de blocage OFFICIEL (conditions 6-11
-   * de la liste) : tout est PRÉCALCULÉ ici, le moteur reste pur. Un
-   * intervenant désigné mais introuvable est traité comme absent.
+   * et 14-15 de la liste) : tout est PRÉCALCULÉ ici, le moteur reste pur.
+   * Un intervenant désigné mais introuvable est traité comme absent.
    */
   function cadreFicheOfficiel(mouvement) {
     const jour = aujourdHui();
@@ -1033,7 +1077,10 @@ export function creerDemoStore() {
       signaturePresente: Boolean(mouvement.signatureDataUrl),
       technicienPresent: Boolean(mouvement.technicien &&
         String(mouvement.technicien).trim()),
-      intervenant
+      intervenant,
+      // Lot C (C1) — conditions 14-15 : signatures réelles, tri-état.
+      signatureTechnicienValide: etatSignatureReelle(mouvement, 'TECHNICIEN'),
+      signatureDetenteurValide: etatSignatureReelle(mouvement, 'DETENTEUR')
     };
   }
 
@@ -2762,7 +2809,18 @@ export function creerDemoStore() {
         hashPrecedent: null,
         contreEcritureDe: null,
         statut: 'BROUILLON',
-        cerfaNumero: null
+        cerfaNumero: null,
+        // Lot C (C1, migration 23) : révision du brouillon (invalidation des
+        // signatures par comparaison), version d'empreinte (1 tant que C2
+        // n'est pas livrée) et champs dérivés GELÉS au scellement (C2-C3).
+        // Toujours présents (couverture mapping), HORS liste blanche v1 du
+        // hasseur : les chaînes existantes restent intactes.
+        revisionBrouillon: 0,
+        versionEmpreinte: 1,
+        outilsFiges: null,
+        hashSignatures: null,
+        hashPiecesJointes: null,
+        hashPdfFinal: null
       };
       donnees.mouvements.push(mouvement);
       for (const idOutil of outilsIds) {
@@ -2827,6 +2885,11 @@ export function creerDemoStore() {
       // Les liens d'outils d'un brouillon partent avec lui (aucun effet).
       donnees.mouvementOutillage = donnees.mouvementOutillage
         .filter((l) => l.mouvementId !== id);
+      // Lot C (C1) : ses signatures partent avec lui (seul cas de
+      // suppression admis par le WORM — la trace reste au journal chaîné,
+      // une entrée SIGNATURE_MOUVEMENT par signature posée).
+      donnees.signaturesMouvement = (donnees.signaturesMouvement ?? [])
+        .filter((sig) => sig.mouvementId !== id);
       journaliser(operateur ?? mouvement.technicien, 'SUPPRESSION_MOUVEMENT',
         mouvement.numero, `${mouvement.type} (brouillon supprimé)`);
       persisterEtNotifier();
@@ -2850,10 +2913,119 @@ export function creerDemoStore() {
       }
       mouvement.statut = 'BROUILLON';
       mouvement.motifRejet = String(motif).trim();
+      // Lot C (C1) : un rejet renvoie la fiche en correction — révision
+      // incrémentée, les signatures posées deviennent PÉRIMÉES (comparaison).
+      mouvement.revisionBrouillon = (mouvement.revisionBrouillon ?? 0) + 1;
       journaliser(null, 'REJET_MOUVEMENT', mouvement.numero,
         `${mouvement.type} · motif : ${mouvement.motifRejet}`);
       persisterEtNotifier();
       return copier(mouvement);
+    },
+
+    /**
+     * Lot C (brique C1) — signature RÉELLE d'un mouvement BROUILLON :
+     * TECHNICIEN d'abord, DETENTEUR ensuite (même révision — au lycée le
+     * professeur signe détenteur PAR DÉLÉGATION, décision Franck 16/07).
+     * La déclaration est composée ICI (signatures-mouvement.js), jamais
+     * reçue du client ; l'image est un PNG contrôlé (nombres magiques,
+     * ≥ 1 Ko, ≤ 1 Mo) ; la signature fige l'empreinte du document et la
+     * révision signée — toute modification ultérieure du brouillon la rend
+     * PÉRIMÉE (par comparaison : on ne retouche ni ne supprime JAMAIS une
+     * signature posée).
+     */
+    async signerMouvement(mouvementId, signature) {
+      const s = signature || {};
+      const mouvement = trouverMouvement(mouvementId);
+      if (mouvement.statut === 'VALIDE' || mouvement.statut === 'ANNULE') {
+        throw new Error(MSG_ECRITURE_FIGEE);
+      }
+      if (mouvement.statut !== 'BROUILLON') {
+        throw new Error('Seul un mouvement en brouillon peut être signé ' +
+          '(les signatures précèdent la soumission).');
+      }
+      if (!ROLES_SIGNATURE.includes(s.role)) {
+        throw new Error(`Rôle de signature inconnu : ${s.role} ` +
+          `(attendu : ${ROLES_SIGNATURE.join(', ')}).`);
+      }
+      const nom = String(s.nom ?? '').trim();
+      const prenom = String(s.prenom ?? '').trim();
+      if (!nom || !prenom) {
+        throw new Error('Nom et prénom du signataire obligatoires ' +
+          '(personne physique, jamais la raison sociale seule).');
+      }
+      const parDelegation = Boolean(s.parDelegation);
+      const organisation = String(s.organisation ?? '').trim() || null;
+      if (parDelegation && !organisation) {
+        throw new Error('Raison sociale du détenteur représenté obligatoire ' +
+          'pour une signature par délégation.');
+      }
+      const revision = mouvement.revisionBrouillon ?? 0;
+      if (s.role === 'DETENTEUR') {
+        const techValide = (donnees.signaturesMouvement ?? []).some((sig) =>
+          sig.mouvementId === mouvement.id && sig.role === 'TECHNICIEN' &&
+          (sig.versionDocument ?? 0) === revision);
+        if (!techValide) {
+          throw new Error('Signature du détenteur refusée : le technicien ' +
+            'signe en premier (signature du technicien absente ou périmée).');
+        }
+      }
+      if (!s.imagePng) throw new Error(MSG_TRACE_ABSENT);
+      let octets;
+      try {
+        octets = base64VersOctets(s.imagePng);
+      } catch {
+        throw new Error(MSG_PAS_PNG);
+      }
+      const illisible = verifierImageSignature(octets);
+      if (illisible) throw new Error(illisible);
+
+      const enregistrement = {
+        id: genId('sig'),
+        mouvementId: mouvement.id,
+        role: s.role,
+        nom,
+        prenom,
+        qualite: String(s.qualite ?? '').trim() || null,
+        organisation,
+        parDelegation,
+        dateHeure: new Date().toISOString(),
+        declaration: declarationSignature(s.role, parDelegation, organisation),
+        // Base64 CANONIQUE, ré-encodée des octets contrôlés (parité stricte
+        // avec le serveur, quel que soit le préfixe data: d'entrée).
+        imagePng: await versBase64(octets),
+        // Pas de session en démonstration : témoin d'identité porté par le
+        // serveur seulement (parité assumée, comme les gardes de rôle).
+        sessionCompteId: null,
+        sessionPersonnelId: null,
+        // Empreinte de la fiche TELLE QUE PRÉSENTÉE au signataire (objet
+        // logique, même projection que la chaîne, sans chaînage).
+        sha256Document: await hasherEcriture(mouvement, null),
+        versionDocument: revision
+      };
+      donnees.signaturesMouvement = donnees.signaturesMouvement ?? [];
+      donnees.signaturesMouvement.push(enregistrement);
+      journaliser(`${prenom} ${nom}`, 'SIGNATURE_MOUVEMENT', mouvement.numero,
+        `${s.role}${parDelegation ? ` (par délégation : ${organisation})` : ''}` +
+        ` · révision ${revision}` +
+        ` · document ${enregistrement.sha256Document.slice(0, 12)}…`);
+      persisterEtNotifier();
+      return { ...copier(enregistrement), valide: true };
+    },
+
+    /** Lot C (C1) : les signatures réelles d'un mouvement, avec leur état. */
+    async getSignaturesMouvement(mouvementId) {
+      const mouvement = trouverMouvement(mouvementId);
+      const revision = mouvement.revisionBrouillon ?? 0;
+      return (donnees.signaturesMouvement ?? [])
+        .filter((sig) => sig.mouvementId === mouvement.id)
+        .sort((a, b) => {
+          if (a.dateHeure !== b.dateHeure) {
+            return a.dateHeure < b.dateHeure ? -1 : 1;
+          }
+          return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0);
+        })
+        .map((sig) => ({ ...copier(sig),
+          valide: (sig.versionDocument ?? 0) === revision }));
     },
 
     async validerMouvement(id, validateurId) {
@@ -3008,7 +3180,16 @@ export function creerDemoStore() {
         statut: 'VALIDE',
         hashEcriture: null,
         hashPrecedent: null,
-        cerfaNumero: null
+        cerfaNumero: null,
+        // Lot C (C1) : mêmes clés que creerMouvement (couverture mapping).
+        // Une contre-écriture se scelle SANS le parcours de double
+        // signature (attestation d'identité du validateur, plan §9).
+        revisionBrouillon: 0,
+        versionEmpreinte: 1,
+        outilsFiges: null,
+        hashSignatures: null,
+        hashPiecesJointes: null,
+        hashPdfFinal: null
       };
       // IM-12 : même règle qu'à la validation — pas de CERFA pour un TRANSFERT
       contreEcriture.cerfaNumero =
@@ -3685,6 +3866,18 @@ export function creerDemoStore() {
         dateAjout: new Date().toISOString(),
         ajoutePar: d.ajoutePar ?? null
       };
+      // Lot C (C1) : une PJ ajoutée à un mouvement BROUILLON/SOUMIS modifie
+      // la fiche présentée aux signataires → révision incrémentée, les
+      // signatures posées deviennent PÉRIMÉES (invalidation par comparaison,
+      // plan lot C §4 — bump EXPLICITE : mutation par table annexe).
+      if (pieceJointe.entiteType === 'MOUVEMENT') {
+        const mouvement = donnees.mouvements.find(
+          (mv) => mv.id === pieceJointe.entiteId);
+        if (mouvement && (mouvement.statut === 'BROUILLON' ||
+                          mouvement.statut === 'SOUMIS')) {
+          mouvement.revisionBrouillon = (mouvement.revisionBrouillon ?? 0) + 1;
+        }
+      }
       await ecrireContenuPj(pieceJointe.id,
         { octets, mimeType: pieceJointe.mimeType });
       donnees.piecesJointes.push(pieceJointe);
@@ -3731,6 +3924,17 @@ export function creerDemoStore() {
           throw new Error(
             'Écriture figée : sa pièce justificative ne peut plus être ' +
             'supprimée.');
+        }
+      }
+      // Lot C (C1) : retirer une PJ d'un mouvement BROUILLON/SOUMIS modifie
+      // la fiche présentée aux signataires → révision incrémentée (le cas
+      // figé est déjà refusé ci-dessus).
+      if (pieceJointe.entiteType === 'MOUVEMENT') {
+        const mouvement = donnees.mouvements.find(
+          (mv) => mv.id === pieceJointe.entiteId);
+        if (mouvement && (mouvement.statut === 'BROUILLON' ||
+                          mouvement.statut === 'SOUMIS')) {
+          mouvement.revisionBrouillon = (mouvement.revisionBrouillon ?? 0) + 1;
         }
       }
       donnees.piecesJointes.splice(indice, 1);
@@ -4136,8 +4340,9 @@ export function creerDemoStore() {
       // démo porte désormais des habilitations/mentions fictives — les
       // recopier dans un export ancien INVENTERAIT des aptitudes, et un
       // registre étranger (sans per-fh/per-sb) serait REFUSÉ en orphelin.
+      // Idem signaturesMouvement (lot C) : jamais de signature inventée.
       for (const cle of ['habilitations', 'mentionsHabilitation',
-        'mouvementOutillage']) {
+        'mouvementOutillage', 'signaturesMouvement']) {
         if (!Array.isArray(candidat[cle])) candidat[cle] = [];
       }
       if (candidat.etablissement.numAttestationCapacite === undefined) {

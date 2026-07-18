@@ -220,6 +220,16 @@ export function creerLocalStore(transport) {
       return muter('annulerParContreEcriture', { id, motif, validateurId });
     },
 
+    // --- signatures réelles (lot C, brique C1) ------------
+    // imagePng est DÉJÀ une chaîne base64 (contrat) : aucun Blob à
+    // convertir, le transport JSON la porte telle quelle.
+    signerMouvement(mouvementId, signature) {
+      return muter('signerMouvement', { mouvementId, signature });
+    },
+    getSignaturesMouvement(mouvementId) {
+      return lire('getSignaturesMouvement', { mouvementId });
+    },
+
     // --- dossier opérateur --------------------------------
     updateEtablissement(patch) {
       return muter('updateEtablissement', { patch });

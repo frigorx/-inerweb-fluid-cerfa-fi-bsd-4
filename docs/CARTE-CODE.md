@@ -9,7 +9,7 @@
 Front vanilla ES modules sous `v8/` (démo navigateur OU client du serveur
 local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
 2011) ; les DEUX implémentent le MÊME contrat `v8/js/data/contrat.js`
-(78 méthodes, `VERSION_CONTRAT` 4) prouvé par `test-contrat.mjs` joué
+(80 méthodes, `VERSION_CONTRAT` 5) prouvé par `test-contrat.mjs` joué
 contre chacune.
 
 ## Flux clés
@@ -32,11 +32,12 @@ contre chacune.
 | `serveur.js` | HTTP loopback (LAN si `IWF_LAN=1`), routage `/api/:methode`, statique `/v8/` | garde Host+Origin (CSRF/rebinding) obligatoire ; **lot A : TOUTE lecture exige une session (loopback compris), seuls ping + routes d'amorçage de routes-comptes passent sans** ; CSP servie en en-tête (`frame-ancestors 'none'`) |
 | `api.js` (~5000 l.) | LE dispatcher : un handler par méthode du contrat, `muter()` = transaction, `ROLES_MUTATION` | sémantique = copie EXACTE du DemoStore ; rôle jamais lu du corps |
 | `db.js` | ouverture PRAGMA coffre-fort, `journaliser()` SHA-256 CHAÎNÉ, transaction ré-entrante | `recursive_triggers=ON` VITAL (anti-REPLACE) |
-| `migrations.js` | registre 2→21, transactionnel, consécutif ; exporte `FICHE_REGLEMENTAIRE_FLUIDES` (table validée, consommée par la migration 21 ET l'import JSON d'api.js) | JAMAIS de DROP destructif ; trigger WORM à recréer si colonne mouvements ajoutée ; registre-commentaire en tête à tenir |
+| `migrations.js` | registre 2→23, transactionnel, consécutif ; exporte `FICHE_REGLEMENTAIRE_FLUIDES` (table validée, consommée par la migration 21 ET l'import JSON d'api.js) | JAMAIS de DROP destructif ; trigger WORM à recréer si colonne mouvements ajoutée ; registre-commentaire en tête à tenir |
 | `schema.sql` | socle v1 SEUL (les évolutions = migrations) | ne jamais l'éditer pour une évolution |
 | `mapping.js` | correspondance UNIQUE front(camel)↔SQL(snake), `CHAMPS_HASH_MOUVEMENT` = liste blanche du hasseur | toute colonne hors empreinte reste HORS de cette liste |
 | `hash-mouvement.js` | clone EXACT du hasseur front | ne jamais utiliser db.hashEcriture pour les mouvements |
 | `blocage-officiel.js` | miroir littéral du moteur de blocage OFFICIEL (lot B) | `VERROU_LIVRAISON` à basculer ICI + côté ESM au lot C-D ; api.js ajoute sauvegarde du poste + validateur de session (tous modes, 403) au cadre |
+| `signatures-mouvement.js` | miroir littéral des signatures RÉELLES (lot C, C1) : déclarations figées + critères d'illisibilité | parité prouvée par test-signatures-mouvement ; ne jamais toucher un miroir sans l'autre |
 | `comptes.js` / `sessions.js` / `routes-comptes.js` | scrypt+NFC+leurre anti-timing, jetons hachés SHA-256, cookie HttpOnly | message d'échec UNIQUE ; session meurt si compte désactivé |
 | `sauvegarde.js` / `restauration.js` / `manifeste.js` / `verification.js` / `chiffrement.js` | coffre-fort : VACUUM INTO, restauration atomique, AES-256-GCM | jamais copier le .db à chaud ; phrase NFC ; rollback = reposer l'original |
 | `sauvegarde-auto.js` | sauvegarde AUTOMATIQUE (condition 6) : archive au démarrage si > 24 h + VÉRIFIÉE, snapshot débouncé après écriture scellée (crochet dans api.appeler) | best-effort ABSOLU (jamais bloquant) ; hors transaction ; réglages `sauvegarde_auto_*` |
@@ -50,7 +51,7 @@ contre chacune.
 
 | Module | Rôle |
 |---|---|
-| `contrat.js` | LA vérité de surface : 77 méthodes documentées, messages canoniques |
+| `contrat.js` | LA vérité de surface : 80 méthodes documentées, messages canoniques |
 | `demo-store.js` (~4000 l.) | implémentation mémoire complète (référence sémantique) |
 | `local-store.js` | enveloppes 1-pour-1 vers l'API (ajouter CHAQUE nouvelle méthode ici) ; SEULE adaptation : le contenu binaire des PJ (base64 à l'aller, Blob au retour) |
 | `contenu-pj.js` | pur : contenu binaire des pièces jointes (`versBase64`/`versBlob`) — JSON réduit un Blob à `{}`, d'où 9 octets de déchet enregistrés comme preuve avant le 14/07 ; **lot A : `signatureConcordeAvecMime` = contrôle des nombres magiques (PDF/PNG/JPEG/WebP), miroir littéral dans `api.js`, appelé par `ajouterPieceJointe` des deux côtés** |
@@ -60,7 +61,8 @@ contre chacune.
 | `code-machine.js` | pur : code lisible SITE-FAMILLE-NUMÉRO (JR-CF-001), générateur/validation |
 | `habilitations.js` | pur : moteur de conseil B2 (`verifierDroitIntervention`, matrice 2008+2025) |
 | `reglementation-fluides.js` | pur : MOTEUR RÉGLEMENTAIRE UNIQUE cadre 7 (`categorieCadre7` + `evaluerControle`) — source de vérité des seuils/fréquences F-Gas (règles A/B/C, `docs/TABLE-REGLEMENTAIRE-FLUIDES.md`), consommé par plaque-fgas/generateur/demo-store, copié en littéral côté serveur (`api.js` `frequenceControleMois`). Charge NOMINALE, HFC avant HFO ; fiche EXPLICITE par fluide prioritaire (`categorieCadre7`, migration 21, AUCUNE = hors périmètre) ; `dateIntervention` optionnelle (HFO purs contrôlés depuis le 11/03/2024 seulement) |
-| `blocage-officiel.js` | pur : moteur de blocage du mode OFFICIEL (lot B) — `evaluerBlocagesOfficiel(cadre)` applique la liste de `docs/CONDITIONS-BLOCANTES-OFFICIEL.md` filtrée par moment (PASSAGE/SOUMISSION/VALIDATION), `VERROU_LIVRAISON` ferme le mode jusqu'aux lots C-D ; branché aux 3 moments des deux stores + `simulerValidationOfficielle` (contrat) |
+| `blocage-officiel.js` | pur : moteur de blocage du mode OFFICIEL (lot B) — `evaluerBlocagesOfficiel(cadre)` applique la liste de `docs/CONDITIONS-BLOCANTES-OFFICIEL.md` filtrée par moment (PASSAGE/SOUMISSION/VALIDATION), `VERROU_LIVRAISON` ferme le mode jusqu'aux lots C-D ; branché aux 3 moments des deux stores + `simulerValidationOfficielle` (contrat) ; conditions 14-15 (lot C) = faits tri-état signatureTechnicienValide/signatureDetenteurValide |
+| `signatures-mouvement.js` | pur : signatures RÉELLES (lot C, C1) — déclarations signées EXACTES (`declarationSignature`, délégation dans la qualité ET la déclaration) + critères d'illisibilité (`verifierImageSignature` : PNG réel, ≥ 1 Ko, ≤ 1 Mo) ; consommé par signerMouvement des deux stores, recopié en littéral côté serveur |
 | `feu-tricolore.js` | pur : consolide alertes/officiel/chaîne en 7 domaines VERT/ORANGE/ROUGE (`collecterConformite(store)`) |
 | `audit-guide.js` | pur : parcours d'audit en 9 étapes ordonnées (alertes par préfixe + faits de présence, `collecterAuditGuide(store)`) |
 | `filtre-mouvements.js` | pur : filtres de la vue Mouvements (index cherchable sans accents, correspondance, options présentes) |

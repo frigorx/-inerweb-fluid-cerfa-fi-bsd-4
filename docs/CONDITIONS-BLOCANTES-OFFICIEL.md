@@ -35,6 +35,8 @@ La **simulation de validation** évalue tout (niveau V) sans rien bloquer.
 | 11 | Signature du technicien présente (tracé + nom) | V |
 | 12 | Le validateur est la personne CONNECTÉE : compte de session lié à une fiche du personnel, identité déclarée = identité de session (serveur ; appliqué à `validerMouvement` ET `annulerParContreEcriture`, **dans tous les modes** — c'est de la sécurité, pas du métier) | V |
 | 13 | VERROU DE LIVRAISON : double signature réelle (condition 3) et empreinte renforcée + PDF conservé (condition 4) non livrées → le mode Officiel reste fermé | P·S·V |
+| 14 | Signature RÉELLE du technicien présente et NON périmée — toute modification de la fiche après signature (champ, PJ, rejet) rend la signature périmée : « recommencez les signatures », jamais ignorée *(ajoutée par le lot C, brique C1, comme annoncé ci-dessous)* | V |
+| 15 | Signature RÉELLE du détenteur présente et NON périmée, posée APRÈS celle du technicien (même révision) — au lycée le professeur signe détenteur PAR DÉLÉGATION (décision Franck 16/07, même personne autorisée) *(lot C, brique C1)* | V |
 
 ## Points gatés / arbitrages proposés (à confirmer en relisant)
 
@@ -51,8 +53,11 @@ La **simulation de validation** évalue tout (niveau V) sans rien bloquer.
   modes par les contrôles de faisabilité de la validation (règle 5 du contrat : jamais de
   mutation partielle). Pas re-vérifiés dans le moteur — pas de double source de vérité.
 - **Signature du détenteur, invalidation des signatures à toute modification, signature
-  illisible jamais ignorée** : condition 3 du plan = **lot C** (elles s'ajouteront à cette
-  liste au même endroit, niveau V).
+  illisible jamais ignorée** : condition 3 du plan = **lot C**. ✅ **LIVRÉ (brique C1,
+  18/07)** : conditions 14 et 15 ci-dessus, moteur enrichi des faits tri-état
+  `signatureTechnicienValide` / `signatureDetenteurValide` (true | false | 'PERIMEE') ;
+  l'illisibilité est refusée À LA POSE (`signerMouvement` : PNG réel, ≥ 1 Ko, ≤ 1 Mo).
+  L'empreinte v2 (C2) et le PDF conservé (C3) suivent.
 - **Fluides hors périmètre (R-744, R-290)** : une fiche CERFA officielle n'a pas d'objet pour
   un fluide non fluoré. Non bloqué au lot B — question ouverte pour la relecture : faut-il
   refuser une fiche OFFICIELLE sur R-744/R-290, ou la laisser possible comme trace volontaire ?

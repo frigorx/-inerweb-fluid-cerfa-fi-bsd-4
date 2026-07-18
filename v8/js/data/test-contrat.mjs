@@ -4,7 +4,7 @@
 // Exécution : node v8/js/data/test-contrat.mjs [demo]
 //
 // Cette suite vérifie qu'une implémentation respecte contrat.js :
-// surface (77 méthodes, 2 propriétés, rien de plus), sémantique
+// surface (80 méthodes, 2 propriétés, rien de plus), sémantique
 // (formes de retour, garde-fous, messages français, effets stocks,
 // hash chaîné, machine à états des mouvements), et invariants
 // transverses (copies, notifications, journal append-only).
@@ -104,7 +104,7 @@ const store = await fabriquerStore(NOM_STORE);
 console.log(`Conformité au contrat DataStore — implémentation « ${NOM_STORE} »\n`);
 
 // ============================================================
-// 1. Surface du contrat : 77 méthodes, 2 propriétés, rien de plus
+// 1. Surface du contrat : 80 méthodes, 2 propriétés, rien de plus
 // ============================================================
 const surface = verifierSurface(store);
 verifier('toutes les méthodes du contrat sont présentes',
@@ -114,8 +114,8 @@ verifier('aucune méthode intruse hors contrat (anti-dérive v7)',
 verifier('les propriétés du contrat sont présentes',
   surface.proprietesManquantes.length === 0,
   `manquent : ${surface.proprietesManquantes.join(', ')}`);
-verifier('le contrat compte bien 78 méthodes',
-  Object.keys(METHODES_CONTRAT).length === 78,
+verifier('le contrat compte bien 80 méthodes',
+  Object.keys(METHODES_CONTRAT).length === 80,
   `compté : ${Object.keys(METHODES_CONTRAT).length}`);
 verifier('modeLabel est une chaîne non vide',
   typeof store.modeLabel === 'string' && store.modeLabel.length > 0);
@@ -1610,6 +1610,146 @@ verifier('peutPasserEnOfficiel : { ok, motifs[] français }',
     store.simulerValidationOfficielle('mvt-fantome'), 'introuvable');
   // Brouillon de simulation supprimé : aucune trace parasite pour la suite.
   await store.supprimerMouvement(brouillonSim.id);
+}
+
+// Lot C (brique C1) — signatures RÉELLES : ordre imposé, déclarations
+// figées, illisibilité, invalidation par révision, traces. Jouée demo ET
+// local : c'est la parité qui casse à la moindre divergence.
+/** Tracé PNG de test : nombres magiques + remplissage (taille au choix). */
+function imagePngTest(taille = 1200) {
+  const octets = new Uint8Array(taille);
+  [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
+    .forEach((o, i) => { octets[i] = o; });
+  for (let i = 8; i < taille; i += 1) octets[i] = i % 251;
+  return Buffer.from(octets).toString('base64');
+}
+{
+  const brouillonSig = await store.creerMouvement({
+    type: 'CHARGE_APPOINT', machineId: machineA.id, fluide: FLUIDE,
+    peseeAvantKg: 12, peseeApresKg: 11.5, causeMouvement: 'Fuite réparée',
+    technicien: 'Testeur Contrat'
+  });
+  verifier('un brouillon neuf porte revisionBrouillon 0 et versionEmpreinte 1',
+    brouillonSig.revisionBrouillon === 0 && brouillonSig.versionEmpreinte === 1,
+    JSON.stringify({ r: brouillonSig.revisionBrouillon,
+      v: brouillonSig.versionEmpreinte }));
+
+  // Ordre imposé et garde-fous, AVANT toute signature valide.
+  await verifierRejet('signerMouvement refuse le détenteur avant le technicien',
+    store.signerMouvement(brouillonSig.id, { role: 'DETENTEUR',
+      nom: 'Dupont', prenom: 'Marie', imagePng: imagePngTest() }),
+    'technicien signe en premier');
+  await verifierRejet('signerMouvement refuse un rôle inconnu',
+    store.signerMouvement(brouillonSig.id, { role: 'PATRON', nom: 'A',
+      prenom: 'B', imagePng: imagePngTest() }), 'Rôle de signature inconnu');
+  await verifierRejet('signerMouvement exige nom ET prénom (personne physique)',
+    store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN',
+      nom: 'Lycée Raynaud', prenom: '  ', imagePng: imagePngTest() }),
+    'personne physique');
+  await verifierRejet('signerMouvement refuse un tracé absent',
+    store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN', nom: 'A',
+      prenom: 'B' }), 'tracé absent');
+  await verifierRejet('signerMouvement refuse une image non PNG (HTML déguisé)',
+    store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN', nom: 'A',
+      prenom: 'B', imagePng: Buffer.from(
+        '<html>signature</html>'.padEnd(2000, '.')).toString('base64') }),
+    'PNG');
+  await verifierRejet('signerMouvement refuse un tracé de moins de 1 Ko',
+    store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN', nom: 'A',
+      prenom: 'B', imagePng: imagePngTest(512) }), 'probant');
+
+  // Signature du technicien : forme, déclaration figée, empreinte, révision.
+  const sigTech = await store.signerMouvement(brouillonSig.id, {
+    role: 'TECHNICIEN', nom: 'Contrat', prenom: 'Testeur',
+    qualite: 'Élève technicien', imagePng: imagePngTest()
+  });
+  verifier('signature technicien : valide, révision 0, empreinte du document',
+    sigTech.valide === true && sigTech.versionDocument === 0 &&
+    HASH_HEX.test(sigTech.sha256Document) && sigTech.role === 'TECHNICIEN' &&
+    typeof sigTech.dateHeure === 'string' &&
+    sigTech.declaration.startsWith('Je certifie avoir réalisé'),
+    JSON.stringify({ v: sigTech.valide, r: sigTech.versionDocument }));
+
+  // Détenteur par délégation (décision Franck 16/07) : la raison sociale
+  // est obligatoire, la mention entre dans la déclaration figée.
+  await verifierRejet('délégation sans raison sociale représentée refusée',
+    store.signerMouvement(brouillonSig.id, { role: 'DETENTEUR',
+      nom: 'Dupont', prenom: 'Marie', parDelegation: true,
+      imagePng: imagePngTest() }), 'Raison sociale');
+  const sigDet = await store.signerMouvement(brouillonSig.id, {
+    role: 'DETENTEUR', nom: 'Dupont', prenom: 'Marie',
+    qualite: 'Professeur, par délégation du détenteur', parDelegation: true,
+    organisation: 'LP Jacques Raynaud', imagePng: imagePngTest()
+  });
+  verifier('signature détenteur : déclaration avec la mention de délégation',
+    sigDet.valide === true && sigDet.parDelegation === true &&
+    sigDet.declaration.includes(
+      'par délégation du détenteur (LP Jacques Raynaud)'), sigDet.declaration);
+
+  const listeSignatures = await store.getSignaturesMouvement(brouillonSig.id);
+  verifier('getSignaturesMouvement : 2 signatures, toutes valides',
+    listeSignatures.length === 2 &&
+    listeSignatures.every((sig) => sig.valide === true));
+  listeSignatures[0].nom = 'FALSIFIÉ';
+  verifier('les signatures retournées sont des COPIES indépendantes',
+    (await store.getSignaturesMouvement(brouillonSig.id))[0].nom !== 'FALSIFIÉ');
+
+  // Invalidation : une PJ ajoutée au brouillon modifie la fiche présentée
+  // aux signataires → révision incrémentée, signatures PÉRIMÉES.
+  await store.ajouterPieceJointe({ entiteType: 'MOUVEMENT',
+    entiteId: brouillonSig.id, nomFichier: 'photo-pesee.png',
+    mimeType: 'image/png', categorie: 'PHOTO_PESEE',
+    base64: imagePngTest(2048) });
+  const apresPj = await store.getSignaturesMouvement(brouillonSig.id);
+  verifier('fiche modifiée (PJ ajoutée) : toutes les signatures périmées',
+    apresPj.length === 2 && apresPj.every((sig) => sig.valide === false));
+  await verifierRejet('détenteur refusé quand la signature technicien est périmée',
+    store.signerMouvement(brouillonSig.id, { role: 'DETENTEUR',
+      nom: 'Dupont', prenom: 'Marie', imagePng: imagePngTest() }),
+    'absente ou périmée');
+  const reSigne = await store.signerMouvement(brouillonSig.id, {
+    role: 'TECHNICIEN', nom: 'Contrat', prenom: 'Testeur',
+    imagePng: imagePngTest() });
+  verifier('le technicien re-signe la révision courante (1)',
+    reSigne.versionDocument === 1 && reSigne.valide === true);
+
+  // Le moteur OFFICIEL voit les signatures réelles (conditions 14-15).
+  const simulationSig = await store.simulerValidationOfficielle(brouillonSig.id);
+  verifier('simulation : détenteur périmé → « fiche modifiée après signature »',
+    simulationSig.blocages.some((b) => b.code === 'SIGNATURE_DETENTEUR' &&
+      b.motif.includes('Fiche modifiée après signature')),
+    JSON.stringify(simulationSig.blocages.map((b) => b.code)));
+  verifier('simulation : technicien re-signé → aucun blocage SIGNATURE_TECHNICIEN',
+    !simulationSig.blocages.some((b) => b.code === 'SIGNATURE_TECHNICIEN'));
+
+  // Machine à états : SOUMIS ne se signe pas, le rejet invalide, le figé
+  // oppose le message canonique.
+  await store.soumettreMouvement(brouillonSig.id);
+  await verifierRejet('signerMouvement refuse un mouvement SOUMIS',
+    store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN', nom: 'A',
+      prenom: 'B', imagePng: imagePngTest() }), 'brouillon');
+  await store.rejeterMouvement(brouillonSig.id, 'Reprise pour les signatures.');
+  verifier('le rejet incrémente la révision : signatures périmées',
+    (await store.getSignaturesMouvement(brouillonSig.id))
+      .every((sig) => sig.valide === false));
+  const figee = (await store.getMouvements()).find((mv) => mv.statut === 'VALIDE');
+  await verifierRejet('signerMouvement refuse une écriture figée',
+    store.signerMouvement(figee.id, { role: 'TECHNICIEN', nom: 'A',
+      prenom: 'B', imagePng: imagePngTest() }), MSG_ECRITURE_FIGEE);
+  await verifierRejet('getSignaturesMouvement refuse un mouvement introuvable',
+    store.getSignaturesMouvement('mvt-fantome'), 'introuvable');
+
+  // Suppression du brouillon : ses signatures partent avec lui — la trace
+  // reste au journal (une entrée SIGNATURE_MOUVEMENT par signature posée).
+  await store.supprimerMouvement(brouillonSig.id);
+  const exportSig = JSON.parse(await store.exporterJSON());
+  verifier('les signatures d’un brouillon supprimé partent avec lui',
+    Array.isArray(exportSig.donnees.signaturesMouvement) &&
+    exportSig.donnees.signaturesMouvement
+      .every((sig) => sig.mouvementId !== brouillonSig.id));
+  verifier('le journal d’audit garde la trace des signatures posées',
+    (await store.getJournalAudit())
+      .some((e) => e.action === 'SIGNATURE_MOUVEMENT'));
 }
 
 // ============================================================

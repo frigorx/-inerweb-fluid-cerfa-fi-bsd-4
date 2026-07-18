@@ -123,6 +123,19 @@
  *       R-1234yf 4 → 0,501 et R-290 3 → 0,02, conditionnels (jamais
  *       d'écrasement d'une valeur ajustée localement) ; sources PRP
  *       alignées ; R-455A garde 148 (conservatoire, réserve DGPR).
+ *  23 — LOT C (brique C1) : signatures réelles + socle du scellement v2.
+ *       mouvements.version_empreinte (DÉFAUT 1 = historique) /
+ *       revision_brouillon (DÉFAUT 0 — invalidation des signatures par
+ *       comparaison) / outils_figes / hash_signatures / hash_pieces_jointes
+ *       / hash_pdf_final (champs dérivés GELÉS au scellement, consommés par
+ *       C2-C3, HORS liste blanche v1 du hasseur → chaînes existantes
+ *       INTACTES). Table signatures_mouvement WORM (triggers : jamais
+ *       d'UPDATE ; DELETE réservé aux signatures d'un BROUILLON — la
+ *       suppression d'un brouillon emporte ses signatures, la trace reste
+ *       au journal chaîné ; INSERT refusé sur une écriture figée).
+ *       pieces_jointes RECRÉÉE (procédure migration 10) pour la catégorie
+ *       CERFA_FINAL (le PDF conservé, C3). Trigger WORM des mouvements
+ *       recréé, liste blanche étendue aux 6 nouvelles colonnes.
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -987,6 +1000,199 @@ END;`);
       // Contenu = corrigerPrpFgas3 (en tête de module), PARTAGÉ avec
       // l'import JSON (api.js) et FIGÉ avec cette migration.
       corrigerPrpFgas3((sql) => db.exec(sql));
+    }
+  },
+
+  23: {
+    nom: 'signatures_reelles_lot_c',
+    appliquer(db) {
+      // LOT C (conditions 3 et 4 du plan audit-proof, docs/PLAN-LOT-C.md §3)
+      // — le modèle de données COMPLET du lot est posé en UNE migration (une
+      // migration est IMMUABLE) : la brique C1 consomme la table des
+      // signatures et la révision du brouillon, C2 l'empreinte v2 et les
+      // champs gelés, C3 le PDF conservé (catégorie CERFA_FINAL).
+
+      // 1) mouvements : version d'empreinte (1 = historique, 2 = renforcée,
+      //    posée au scellement par C2), révision du brouillon (compteur
+      //    incrémenté à chaque modification — les signatures portent la
+      //    révision qu'elles ont signée, l'invalidation est une COMPARAISON,
+      //    jamais une retouche) et champs dérivés GELÉS au scellement
+      //    (calculés puis stockés, jamais re-dérivés à la vérification).
+      //    Tous HORS de la liste blanche v1 du hasseur (CHAMPS_HASH_MOUVEMENT
+      //    inchangée par cette migration) : aucune chaîne existante ne bouge.
+      db.exec('ALTER TABLE mouvements ADD COLUMN version_empreinte INTEGER NOT NULL DEFAULT 1;');
+      db.exec('ALTER TABLE mouvements ADD COLUMN revision_brouillon INTEGER NOT NULL DEFAULT 0;');
+      db.exec('ALTER TABLE mouvements ADD COLUMN outils_figes TEXT;');
+      db.exec('ALTER TABLE mouvements ADD COLUMN hash_signatures TEXT;');
+      db.exec('ALTER TABLE mouvements ADD COLUMN hash_pieces_jointes TEXT;');
+      db.exec('ALTER TABLE mouvements ADD COLUMN hash_pdf_final TEXT;');
+
+      // 2) Table des signatures RÉELLES (technicien PUIS détenteur — au
+      //    lycée le professeur signe détenteur PAR DÉLÉGATION, décision
+      //    Franck 16/07). Nom/prénom = personne PHYSIQUE (plus jamais la
+      //    raison sociale seule) ; la déclaration est le texte EXACT affiché
+      //    au moment de signer ; sha256_document = empreinte de la fiche
+      //    telle que présentée ; version_document = révision signée.
+      db.exec(`
+        CREATE TABLE signatures_mouvement (
+            id                   TEXT PRIMARY KEY,
+            etablissement_id     TEXT REFERENCES etablissements(id),
+            mouvement_id         TEXT NOT NULL REFERENCES mouvements(id),
+            role                 TEXT NOT NULL
+                CHECK (role IN ('TECHNICIEN','DETENTEUR')),
+            nom                  TEXT NOT NULL,
+            prenom               TEXT NOT NULL,
+            qualite              TEXT,
+            organisation         TEXT,
+            par_delegation       INTEGER NOT NULL DEFAULT 0
+                CHECK (par_delegation IN (0,1)),
+            date_heure           TEXT NOT NULL,
+            declaration          TEXT NOT NULL,
+            image_png            TEXT NOT NULL,
+            session_compte_id    TEXT,
+            session_personnel_id TEXT,
+            sha256_document      TEXT NOT NULL,
+            version_document     INTEGER NOT NULL
+        );
+      `);
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_signatures_mouvement
+                 ON signatures_mouvement (mouvement_id);`);
+
+      // WORM des signatures : une signature posée ne se modifie JAMAIS ;
+      // elle ne se supprime que si son mouvement est encore un BROUILLON
+      // (cascade de supprimerMouvement — la trace reste au journal chaîné) ;
+      // une écriture figée n'acquiert plus de signature (l'import JSON,
+      // opération admin, retire puis recrée ces triggers dans sa
+      // transaction, comme les autres WORM).
+      db.exec(`CREATE TRIGGER signatures_mouvement_interdire_update
+BEFORE UPDATE ON signatures_mouvement
+BEGIN
+    SELECT RAISE(ABORT, 'Signature scellée : une signature posée ne peut pas être modifiée.');
+END;`);
+      db.exec(`CREATE TRIGGER signatures_mouvement_interdire_delete
+BEFORE DELETE ON signatures_mouvement
+WHEN EXISTS (SELECT 1 FROM mouvements
+             WHERE id = OLD.mouvement_id AND statut IN ('VALIDE','ANNULE'))
+BEGIN
+    SELECT RAISE(ABORT, 'Signature scellée : les signatures d''une écriture figée sont conservées.');
+END;`);
+      db.exec(`CREATE TRIGGER signatures_mouvement_interdire_insert_fige
+BEFORE INSERT ON signatures_mouvement
+WHEN EXISTS (SELECT 1 FROM mouvements
+             WHERE id = NEW.mouvement_id AND statut IN ('VALIDE','ANNULE'))
+BEGIN
+    SELECT RAISE(ABORT, 'Écriture figée : elle ne peut plus recevoir de signature.');
+END;`);
+
+      // 3) pieces_jointes : la catégorie CERFA_FINAL (PDF final conservé,
+      //    brique C3). SQLite ne sait pas ALTERer un CHECK : on RECRÉE la
+      //    table (procédure officielle, à l'identique de la migration 10),
+      //    données et index préservés, copie par colonnes NOMMÉES. Toujours
+      //    aucun trigger ni FK entrante sur pieces_jointes.
+      db.exec(`
+        CREATE TABLE pieces_jointes_nouveau (
+            id             TEXT PRIMARY KEY,
+            etablissement_id TEXT REFERENCES etablissements(id),
+            entite_type    TEXT NOT NULL
+                CHECK (entite_type IN ('ETABLISSEMENT','AUDIT','NON_CONFORMITE','PERSONNEL','OUTILLAGE',
+                                       'MACHINE','BOUTEILLE','MOUVEMENT','CONTROLE','BSFF',
+                                       'CLIENT_DETENTEUR','INVENTAIRE')),
+            entite_id      TEXT NOT NULL,
+            categorie      TEXT NOT NULL DEFAULT 'AUTRE'
+                CHECK (categorie IN ('ATTESTATION','CERTIFICAT','FACTURE','BL','BON_DE_REPRISE','BSFF',
+                                     'PHOTO_PESEE','PLAQUE_SIGNALETIQUE','RAPPORT','AUTRE',
+                                     'SIGNATURE','ATTESTATION_APTITUDE','ATTESTATION_CAPACITE',
+                                     'BORDEREAU_BSFF','CERTIFICAT_ETALONNAGE','CERFA_FINAL')),
+            nom_fichier    TEXT NOT NULL,
+            mime_type      TEXT,
+            chemin         TEXT,
+            taille_octets  INTEGER,
+            hash_sha256    TEXT,
+            date_ajout     TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+            ajoute_par     TEXT
+        );
+      `);
+      db.exec(`
+        INSERT INTO pieces_jointes_nouveau
+            (id, etablissement_id, entite_type, entite_id, categorie,
+             nom_fichier, mime_type, chemin, taille_octets, hash_sha256,
+             date_ajout, ajoute_par)
+        SELECT id, etablissement_id, entite_type, entite_id, categorie,
+               nom_fichier, mime_type, chemin, taille_octets, hash_sha256,
+               date_ajout, ajoute_par
+          FROM pieces_jointes;
+      `);
+      db.exec('DROP TABLE pieces_jointes;');
+      db.exec('ALTER TABLE pieces_jointes_nouveau RENAME TO pieces_jointes;');
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_pj_entite
+                 ON pieces_jointes (entite_type, entite_id);`);
+
+      // 4) WORM des mouvements : trigger recréé avec la liste blanche
+      //    ÉTENDUE aux 6 nouvelles colonnes — la bascule VALIDE → ANNULE ne
+      //    peut retoucher NI la version d'empreinte, NI la révision, NI les
+      //    champs gelés d'une écriture scellée. Recréer un trigger ne touche
+      //    à AUCUNE donnée : aucun re-hash.
+      db.exec('DROP TRIGGER IF EXISTS mouvements_interdire_modification_validee;');
+      db.exec(`CREATE TRIGGER mouvements_interdire_modification_validee
+BEFORE UPDATE ON mouvements
+WHEN OLD.statut = 'VALIDE'
+ AND NOT (    NEW.statut = 'ANNULE'
+          AND NEW.id                    IS OLD.id
+          AND NEW.numero                IS OLD.numero
+          AND NEW.etablissement_id      IS OLD.etablissement_id
+          AND NEW.date_mouvement        IS OLD.date_mouvement
+          AND NEW.mode                  IS OLD.mode
+          AND NEW.type_operation        IS OLD.type_operation
+          AND NEW.cause                 IS OLD.cause
+          AND NEW.machine_id            IS OLD.machine_id
+          AND NEW.machine_label         IS OLD.machine_label
+          AND NEW.machine_destination_id IS OLD.machine_destination_id
+          AND NEW.bouteille_source_id   IS OLD.bouteille_source_id
+          AND NEW.bouteille_destination_id IS OLD.bouteille_destination_id
+          AND NEW.fluide                IS OLD.fluide
+          AND NEW.pesee_avant_kg        IS OLD.pesee_avant_kg
+          AND NEW.pesee_apres_kg        IS OLD.pesee_apres_kg
+          AND NEW.quantite_calculee_kg  IS OLD.quantite_calculee_kg
+          AND NEW.sens                  IS OLD.sens
+          AND NEW.quantite_chargee_kg               IS OLD.quantite_chargee_kg
+          AND NEW.quantite_recuperee_kg             IS OLD.quantite_recuperee_kg
+          AND NEW.quantite_cedee_kg                 IS OLD.quantite_cedee_kg
+          AND NEW.quantite_retournee_fournisseur_kg IS OLD.quantite_retournee_fournisseur_kg
+          AND NEW.quantite_detruite_regeneree_kg    IS OLD.quantite_detruite_regeneree_kg
+          AND NEW.origine_fluide        IS OLD.origine_fluide
+          AND NEW.destination_fluide    IS OLD.destination_fluide
+          AND NEW.technicien            IS OLD.technicien
+          AND NEW.technicien_id         IS OLD.technicien_id
+          AND NEW.validateur_id         IS OLD.validateur_id
+          AND NEW.statut_controle_declare IS OLD.statut_controle_declare
+          AND NEW.detecteur_declare_id  IS OLD.detecteur_declare_id
+          AND NEW.localisation_fuite_declaree IS OLD.localisation_fuite_declaree
+          AND NEW.controle_lie_id       IS OLD.controle_lie_id
+          AND NEW.signature_data_url    IS OLD.signature_data_url
+          AND NEW.cerfa_numero          IS OLD.cerfa_numero
+          AND NEW.bsff_id               IS OLD.bsff_id
+          AND NEW.observation           IS OLD.observation
+          AND NEW.date_soumission       IS OLD.date_soumission
+          AND NEW.motif_rejet           IS OLD.motif_rejet
+          AND NEW.motif                 IS OLD.motif
+          AND NEW.hash_ecriture         IS OLD.hash_ecriture
+          AND NEW.hash_precedent        IS OLD.hash_precedent
+          AND NEW.ordre_validation      IS OLD.ordre_validation
+          AND NEW.contre_ecriture_de    IS OLD.contre_ecriture_de
+          AND NEW.date_creation         IS OLD.date_creation
+          AND NEW.prg_fige              IS OLD.prg_fige
+          AND NEW.execute_par_id          IS OLD.execute_par_id
+          AND NEW.superviseur_id          IS OLD.superviseur_id
+          AND NEW.responsable_registre_id IS OLD.responsable_registre_id
+          AND NEW.version_empreinte     IS OLD.version_empreinte
+          AND NEW.revision_brouillon    IS OLD.revision_brouillon
+          AND NEW.outils_figes          IS OLD.outils_figes
+          AND NEW.hash_signatures       IS OLD.hash_signatures
+          AND NEW.hash_pieces_jointes   IS OLD.hash_pieces_jointes
+          AND NEW.hash_pdf_final        IS OLD.hash_pdf_final)
+BEGIN
+    SELECT RAISE(ABORT, 'Registre verrouillé : une écriture validée ne peut pas être modifiée (utiliser une contre-écriture).');
+END;`);
     }
   }
 };

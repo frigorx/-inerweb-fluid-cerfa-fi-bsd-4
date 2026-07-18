@@ -37,7 +37,7 @@
 // ============================================================
 
 /** Version du contrat (à incrémenter à chaque évolution de surface). */
-export const VERSION_CONTRAT = 4;
+export const VERSION_CONTRAT = 5;
 
 /**
  * Message canonique opposé à toute tentative de modification d'une
@@ -81,7 +81,7 @@ export const ROLES_VALIDEURS = ['REFERENT', 'ENSEIGNANT', 'ADMIN'];
 export const PROPRIETES_CONTRAT = ['modeLabel', 'registreAltere'];
 
 /**
- * Les 76 méthodes du contrat, dans l'ordre du cycle de vie.
+ * Les 80 méthodes du contrat, dans l'ordre du cycle de vie.
  * genre : 'abonnement' | 'initialisation' | 'lecture' | 'mutation'.
  * La sémantique fine (formes de retour, garde-fous, effets) est
  * décrite ici en une ligne et VÉRIFIÉE dans test-contrat.mjs.
@@ -166,6 +166,12 @@ export const METHODES_CONTRAT = {
     description: 'SOUMIS → VALIDE par un rôle habilité : quantité signée calculée des pesées, effets stocks atomiques, scellement hash chaîné.' },
   annulerParContreEcriture: { genre: 'mutation',
     description: 'Crée l’écriture inverse scellée (quantité opposée, pesées permutées) et passe l’original en ANNULE (hash intact).' },
+
+  // --- signatures réelles (lot C — condition 3 du plan audit-proof) ---
+  signerMouvement: { genre: 'mutation',
+    description: 'Pose une signature RÉELLE sur un mouvement BROUILLON : (mouvementId, { role TECHNICIEN|DETENTEUR, nom, prenom, qualite?, organisation?, parDelegation?, imagePng base64 }). Personne physique obligatoire (nom + prénom) ; DETENTEUR seulement après une signature TECHNICIEN de la même révision ; parDelegation exige la raison sociale représentée ; la déclaration est composée par le store (signatures-mouvement.js), jamais reçue du client ; image PNG contrôlée (nombres magiques, ≥ 1 Ko, ≤ 1 Mo — une signature illisible n’est jamais ignorée) ; enregistre l’horodatage réel, l’empreinte du document et la révision signée — toute modification ultérieure du brouillon rend la signature PÉRIMÉE (par comparaison, jamais de retouche ni de suppression) ; MSG_ECRITURE_FIGEE si figé.' },
+  getSignaturesMouvement: { genre: 'lecture',
+    description: 'Les signatures réelles d’un mouvement (id) : [{ id, mouvementId, role, nom, prenom, qualite, organisation, parDelegation, dateHeure ISO, declaration, imagePng, sessionCompteId, sessionPersonnelId, sha256Document, versionDocument, valide }] — valide = versionDocument égale la révision courante du brouillon ; tri dateHeure puis id (comparaison de chaînes simple) ; copies indépendantes ; Error si mouvement introuvable.' },
 
   // --- intégrité et synthèses -----------------------------------
   verifierChaineHash: { genre: 'lecture',

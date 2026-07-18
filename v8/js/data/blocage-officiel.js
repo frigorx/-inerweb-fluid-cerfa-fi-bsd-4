@@ -47,7 +47,10 @@ const NIVEAU_MOMENT = { PASSAGE: 1, SOUMISSION: 2, VALIDATION: 3 };
  *   { type, machinePresente, fluide, peseeAvantKg, peseeApresKg, causePresente,
  *     controleStatut, controlePeriodiqueRequis, fluideInflammable,
  *     sourceVierge, prp, signaturePresente, technicienPresent,
- *     intervenant: null | { nom, actif, habilitationActive } }
+ *     intervenant: null | { nom, actif, habilitationActive },
+ *     signatureTechnicienValide, signatureDetenteurValide — lot C (C1),
+ *     tri-état : true (valide) | false (absente) | 'PERIMEE' (posée puis
+ *     fiche modifiée, révision divergente) }
  * @returns {{ok: boolean, blocages: Array<{code: string, motif: string}>}}
  */
 export function evaluerBlocagesOfficiel(cadre) {
@@ -147,6 +150,28 @@ export function evaluerBlocagesOfficiel(cadre) {
         poser('SIGNATURE',
           'Nom du technicien absent : une fiche officielle doit porter ' +
           'l’identité de son signataire.');
+      }
+
+      // 14 et 15 — signatures RÉELLES (lot C, brique C1 — condition 3 du
+      // plan) : technicien PUIS détenteur, chacune valant pour la révision
+      // qu'elle a signée. Tri-état : true (valide) | false (absente) |
+      // 'PERIMEE' (fiche modifiée après signature) — une signature périmée
+      // n'est JAMAIS ignorée, elle se recommence.
+      if (fiche.signatureTechnicienValide !== true) {
+        poser('SIGNATURE_TECHNICIEN',
+          fiche.signatureTechnicienValide === 'PERIMEE'
+            ? 'Fiche modifiée après signature : recommencez les signatures ' +
+              '(signature du technicien périmée).'
+            : 'Signature réelle du technicien absente : le technicien signe ' +
+              'la fiche avant la validation officielle.');
+      }
+      if (fiche.signatureDetenteurValide !== true) {
+        poser('SIGNATURE_DETENTEUR',
+          fiche.signatureDetenteurValide === 'PERIMEE'
+            ? 'Fiche modifiée après signature : recommencez les signatures ' +
+              '(signature du détenteur périmée).'
+            : 'Signature réelle du détenteur absente : le détenteur (ou son ' +
+              'délégataire) signe la fiche avant la validation officielle.');
       }
     }
   }

@@ -41,6 +41,9 @@ function ficheSaine(surcharges = {}) {
     fluideInflammable: false, sourceVierge: false, prp: 2088,
     signaturePresente: true, technicienPresent: true,
     intervenant: { nom: 'Un Enseignant', actif: true, habilitationActive: true },
+    // Lot C (C1) — conditions 14-15 : signatures réelles valides (tri-état
+    // true | false | 'PERIMEE').
+    signatureTechnicienValide: true, signatureDetenteurValide: true,
     ...surcharges
   };
 }
@@ -218,6 +221,36 @@ const codes = (r) => r.blocages.map((b) => b.code).join(',');
     codes(validation));
 }
 
+// Conditions 14-15 (lot C, brique C1) : signatures RÉELLES — VALIDATION
+// seulement, tri-état (absente / valide / périmée), la périmée n'est
+// jamais ignorée.
+{
+  const absentes = evaluerBlocagesOfficiel({ moment: 'VALIDATION',
+    fiche: ficheSaine({ signatureTechnicienValide: false,
+      signatureDetenteurValide: false }) });
+  const perimees = evaluerBlocagesOfficiel({ moment: 'VALIDATION',
+    fiche: ficheSaine({ signatureTechnicienValide: 'PERIMEE',
+      signatureDetenteurValide: 'PERIMEE' }) });
+  const soumission = evaluerBlocagesOfficiel({ moment: 'SOUMISSION',
+    fiche: ficheSaine({ signatureTechnicienValide: false,
+      signatureDetenteurValide: false }) });
+  const valides = evaluerBlocagesOfficiel({ moment: 'VALIDATION',
+    fiche: ficheSaine() });
+  verifier('signatures réelles absentes : deux blocages dédiés à la VALIDATION',
+    absentes.blocages.some((b) => b.code === 'SIGNATURE_TECHNICIEN' &&
+      b.motif.includes('absente')) &&
+    absentes.blocages.some((b) => b.code === 'SIGNATURE_DETENTEUR' &&
+      b.motif.includes('absente')), codes(absentes));
+  verifier('signatures périmées : « fiche modifiée après signature », jamais ignorée',
+    perimees.blocages.some((b) => b.code === 'SIGNATURE_TECHNICIEN' &&
+      b.motif.includes('Fiche modifiée après signature')) &&
+    perimees.blocages.some((b) => b.code === 'SIGNATURE_DETENTEUR' &&
+      b.motif.includes('périmée')), codes(perimees));
+  verifier('signatures réelles : rien à la SOUMISSION, rien quand elles sont valides',
+    !soumission.blocages.some((b) => b.code.startsWith('SIGNATURE_')) &&
+    valides.ok === true, `${codes(soumission)} / ${codes(valides)}`);
+}
+
 // Condition 12 : validateur de session (VALIDATION seulement).
 {
   const delie = { lie: false, motif: 'Le validateur déclaré n’est pas la personne connectée.' };
@@ -281,6 +314,11 @@ const codes = (r) => r.blocages.map((b) => b.code).join(',');
       sourceVierge: true, prp: 3922, signaturePresente: false, technicienPresent: false }) });
     CADRES.push({ moment, fiche: ficheSaine({ intervenant: {
       nom: 'Personne Désactivée', actif: false, habilitationActive: false } }) });
+    // Lot C (C1) : signatures réelles — les trois états discriminés.
+    CADRES.push({ moment, fiche: ficheSaine({
+      signatureTechnicienValide: 'PERIMEE', signatureDetenteurValide: false }) });
+    CADRES.push({ moment, fiche: ficheSaine({
+      signatureTechnicienValide: true, signatureDetenteurValide: 'PERIMEE' }) });
   }
   let identiques = 0;
   for (const cadre of CADRES) {

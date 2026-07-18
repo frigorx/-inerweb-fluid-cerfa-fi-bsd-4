@@ -185,10 +185,14 @@ refus de suppression sur mouvement figé (déjà en place), inclusion dans les s
 
 1. ✅ **C0 — GATE SOLDÉE (16/07)** : plan relu et validé par Franck (les 5 décisions du §2
    sont tranchées). La brique C1 peut se coder directement.
-2. **C1 — Modèle + signatures** : migration 23, table WORM, méthodes de contrat
-   (`signerMouvement(role, …)`, `getSignaturesMouvement`), invalidation par révision,
-   critères d'illisibilité ; moteur blocage-officiel enrichi (2 faits signatures). Tests
-   demo + local + attaques (modifier après signature, signer dans le désordre, image forgée).
+2. ✅ **C1 — SOLDÉE (18/07)** — Modèle + signatures : migration 23 (COMPLÈTE pour le lot,
+   champs gelés C2-C3 et catégorie CERFA_FINAL compris), table WORM (3 triggers), contrat
+   78 → 80 (`signerMouvement`/`getSignaturesMouvement`, VERSION 5), invalidation par
+   révision (rejet + PJ ajoutée/retirée, bumps explicites), critères d'illisibilité
+   (module pur `signatures-mouvement.js` + miroir), moteur enrichi (faits tri-état,
+   conditions 14-15 de la liste). Preuves : `test-signatures-mouvement` (37 vérifs,
+   attaques tirées + WORM SQL direct + round-trip) + blocs test-contrat (demo ET local)
+   + test-blocage-officiel étendu. TOUT VERT — 78 exécutions. Détail : CHANGELOG.
 3. **C2 — Empreinte v2** : hasseurs front/serveur versionnés, vérifications mixtes partout
    (chaîne, import, vérificateur autonome), export/import. Tests d'empreintes CONNUES v1
    (non-régression bit à bit) + round-trip + chaîne mixte.

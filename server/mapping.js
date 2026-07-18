@@ -273,8 +273,20 @@ const TABLES = {
       // (référent). Nullable, HORS empreinte de hachage, figés par le WORM.
       executeParId: 'execute_par_id',
       superviseurId: 'superviseur_id',
-      responsableRegistreId: 'responsable_registre_id'
+      responsableRegistreId: 'responsable_registre_id',
+      // Lot C (migration 23) : version d'empreinte (1 = historique, 2 =
+      // renforcée — posée au scellement par C2), révision du brouillon
+      // (invalidation des signatures par comparaison) et champs dérivés
+      // GELÉS au scellement (C2-C3 : entreront dans l'empreinte v2, jamais
+      // re-dérivés à la vérification). Protégés par le trigger WORM.
+      versionEmpreinte: 'version_empreinte',
+      revisionBrouillon: 'revision_brouillon',
+      outilsFiges: 'outils_figes',
+      hashSignatures: 'hash_signatures',
+      hashPiecesJointes: 'hash_pieces_jointes',
+      hashPdfFinal: 'hash_pdf_final'
     },
+    tableauxJson: ['outilsFiges'],
     // proposerDemantelement : champ ÉPHÉMÈRE posé sur la COPIE retournée
     // par validerMouvement quand la récupération vide la machine — jamais
     // persisté, jamais relu.
@@ -292,6 +304,32 @@ const TABLES = {
       'statut_controle_declare', 'detecteur_declare_id',
       'localisation_fuite_declaree', 'controle_lie_id',
       'bsff_id', 'observation', 'date_creation']
+  },
+
+  // Lot C (brique C1, migration 23) : signatures RÉELLES d'un mouvement —
+  // table WORM append-only (triggers). `valide` est CALCULÉ à la lecture
+  // (versionDocument = révision courante du brouillon), jamais persisté.
+  signatures_mouvement: {
+    champs: {
+      id: 'id',
+      mouvementId: 'mouvement_id',
+      role: 'role',
+      nom: 'nom',
+      prenom: 'prenom',
+      qualite: 'qualite',
+      organisation: 'organisation',
+      parDelegation: 'par_delegation',
+      dateHeure: 'date_heure',
+      declaration: 'declaration',
+      imagePng: 'image_png',
+      sessionCompteId: 'session_compte_id',
+      sessionPersonnelId: 'session_personnel_id',
+      sha256Document: 'sha256_document',
+      versionDocument: 'version_document'
+    },
+    booleens: ['parDelegation'],
+    frontSeulement: ['valide'],
+    sqlSeulement: ['etablissement_id']
   },
 
   controles: {

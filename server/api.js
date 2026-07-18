@@ -40,6 +40,11 @@ const scellementExterne = require('./scellement-externe.js');
 // module ESM du front, parité prouvée par test-blocage-officiel.mjs).
 const { evaluerBlocagesOfficiel, messageRefusOfficiel, VERROU_LIVRAISON } =
   require('./blocage-officiel.js');
+// Signatures réelles (lot C, brique C1) : déclarations figées + critères
+// d'illisibilité (miroir du module ESM du front, parité prouvée par
+// test-signatures-mouvement.mjs).
+const { ROLES_SIGNATURE, declarationSignature, verifierImageSignature,
+  MSG_TRACE_ABSENT, MSG_PAS_PNG } = require('./signatures-mouvement.js');
 
 // ------------------------------------------------------------
 // Identité de l'établissement singleton (le front le traite sans id).
@@ -278,6 +283,10 @@ const ROLES_MUTATION = {
   soumettreMouvement: OPERATEUR,
   rejeterMouvement: OPERATEUR,
   supprimerMouvement: OPERATEUR,
+  // Lot C (C1) : l'élève-technicien signe son travail ; au lycée le
+  // professeur signe détenteur PAR DÉLÉGATION sous sa propre session
+  // (décision Franck 16/07) — l'identité de session est captée en témoin.
+  signerMouvement: OPERATEUR,
   createMachine: OPERATEUR,
   updateMachine: OPERATEUR,
   arreterMachine: OPERATEUR,
@@ -1662,6 +1671,19 @@ const HANDLERS = {
       ajoutePar: d.ajoutePar ?? null
     };
     return muter(() => {
+      // Lot C (C1) : une PJ ajoutée à un mouvement BROUILLON/SOUMIS modifie
+      // la fiche présentée aux signataires → révision incrémentée, les
+      // signatures posées deviennent PÉRIMÉES (invalidation par comparaison,
+      // plan lot C §4 — bump EXPLICITE : mutation par table annexe).
+      if (pieceJointe.entiteType === 'MOUVEMENT') {
+        const mv = db.get(
+          'SELECT statut, revision_brouillon FROM mouvements WHERE id = ?',
+          [pieceJointe.entiteId]);
+        if (mv && (mv.statut === 'BROUILLON' || mv.statut === 'SOUMIS')) {
+          db.run('UPDATE mouvements SET revision_brouillon = ? WHERE id = ?',
+            [(mv.revision_brouillon ?? 0) + 1, pieceJointe.entiteId]);
+        }
+      }
       ecrirePieceJointeSurDisque(pieceJointe.id, octets);
       const ligne = mapping.versSql('pieces_jointes', pieceJointe);
       ligne.etablissement_id = ID_ETABLISSEMENT;
@@ -1726,6 +1748,18 @@ const HANDLERS = {
       }
     }
     return muter(() => {
+      // Lot C (C1) : retirer une PJ d'un mouvement BROUILLON/SOUMIS modifie
+      // la fiche présentée aux signataires → révision incrémentée (le cas
+      // figé est déjà refusé ci-dessus, parité démo).
+      if (ligne.entite_type === 'MOUVEMENT') {
+        const mv = db.get(
+          'SELECT statut, revision_brouillon FROM mouvements WHERE id = ?',
+          [ligne.entite_id]);
+        if (mv && (mv.statut === 'BROUILLON' || mv.statut === 'SOUMIS')) {
+          db.run('UPDATE mouvements SET revision_brouillon = ? WHERE id = ?',
+            [(mv.revision_brouillon ?? 0) + 1, ligne.entite_id]);
+        }
+      }
       db.run('DELETE FROM pieces_jointes WHERE id = ?', [id]);
       // On ne supprime QUE dans documents/, jamais un chemin venu des données :
       // supprimerPieceJointe est ouvert au rôle OPERATEUR (donc à un ÉLÈVE).
@@ -2245,7 +2279,18 @@ const HANDLERS = {
         hashPrecedent: null,
         contreEcritureDe: null,
         statut: 'BROUILLON',
-        cerfaNumero: null
+        cerfaNumero: null,
+        // Lot C (C1, migration 23) : révision du brouillon (invalidation des
+        // signatures par comparaison), version d'empreinte (1 tant que C2
+        // n'est pas livrée) et champs dérivés GELÉS au scellement (C2-C3).
+        // Toujours présents (parité DemoStore), HORS liste blanche v1 du
+        // hasseur : les chaînes existantes restent intactes.
+        revisionBrouillon: 0,
+        versionEmpreinte: 1,
+        outilsFiges: null,
+        hashSignatures: null,
+        hashPiecesJointes: null,
+        hashPdfFinal: null
       };
       insererMouvement(mouvement);
       for (const idOutil of outilsIds) {
@@ -2346,7 +2391,10 @@ const HANDLERS = {
     return muter(() => {
       majParId('mouvements', id, {
         statut: 'BROUILLON',
-        motif_rejet: motifRejet
+        motif_rejet: motifRejet,
+        // Lot C (C1) : un rejet renvoie la fiche en correction — révision
+        // incrémentée, les signatures posées deviennent PÉRIMÉES (parité démo).
+        revision_brouillon: (mouvement.revisionBrouillon ?? 0) + 1
       });
       journaliser(null, 'REJET_MOUVEMENT', mouvement.numero,
         `${mouvement.type} · motif : ${motifRejet}`);
@@ -2373,11 +2421,130 @@ const HANDLERS = {
     return muter(() => {
       // Les liens d'outils d'un brouillon partent avec lui (FK d'abord).
       db.run('DELETE FROM mouvement_outillage WHERE mouvement_id = ?', [id]);
+      // Lot C (C1) : ses signatures partent avec lui — seul cas de
+      // suppression admis par le trigger WORM (le mouvement est encore un
+      // BROUILLON) ; la trace reste au journal chaîné.
+      db.run('DELETE FROM signatures_mouvement WHERE mouvement_id = ?', [id]);
       db.run('DELETE FROM mouvements WHERE id = ?', [id]);
       journaliser(params.par ?? mouvement.technicien, 'SUPPRESSION_MOUVEMENT',
         mouvement.numero, `${mouvement.type} (brouillon supprimé)`);
       return true;
     });
+  },
+
+  /**
+   * Lot C (brique C1) — signature RÉELLE d'un mouvement BROUILLON. Reprend
+   * signerMouvement du DemoStore (gardes et messages MOT POUR MOT) ; en
+   * plus, capte l'identité de SESSION (compte + fiche du personnel liée)
+   * au moment de signer — témoin opposable, sans objet en démonstration.
+   */
+  signerMouvement(params, contexte) {
+    const { mouvementId, signature } = params;
+    const s = signature || {};
+    const mouvement = trouverMouvement(mouvementId);
+    if (mouvement.statut === 'VALIDE' || mouvement.statut === 'ANNULE') {
+      throw new Error(MSG_ECRITURE_FIGEE);
+    }
+    if (mouvement.statut !== 'BROUILLON') {
+      throw new Error('Seul un mouvement en brouillon peut être signé ' +
+        '(les signatures précèdent la soumission).');
+    }
+    if (!ROLES_SIGNATURE.includes(s.role)) {
+      throw new Error(`Rôle de signature inconnu : ${s.role} ` +
+        `(attendu : ${ROLES_SIGNATURE.join(', ')}).`);
+    }
+    const nom = String(s.nom ?? '').trim();
+    const prenom = String(s.prenom ?? '').trim();
+    if (!nom || !prenom) {
+      throw new Error('Nom et prénom du signataire obligatoires ' +
+        '(personne physique, jamais la raison sociale seule).');
+    }
+    const parDelegation = Boolean(s.parDelegation);
+    const organisation = String(s.organisation ?? '').trim() || null;
+    if (parDelegation && !organisation) {
+      throw new Error('Raison sociale du détenteur représenté obligatoire ' +
+        'pour une signature par délégation.');
+    }
+    const revision = mouvement.revisionBrouillon ?? 0;
+    if (s.role === 'DETENTEUR') {
+      const techValide = db.get(
+        `SELECT id FROM signatures_mouvement
+         WHERE mouvement_id = ? AND role = 'TECHNICIEN'
+           AND version_document = ?`,
+        [mouvement.id, revision]);
+      if (!techValide) {
+        throw new Error('Signature du détenteur refusée : le technicien ' +
+          'signe en premier (signature du technicien absente ou périmée).');
+      }
+    }
+    if (!s.imagePng) throw new Error(MSG_TRACE_ABSENT);
+    let octets;
+    try {
+      octets = decoderBase64Pj(s.imagePng);
+    } catch {
+      throw new Error(MSG_PAS_PNG);
+    }
+    const illisible = verifierImageSignature(octets);
+    if (illisible) throw new Error(illisible);
+
+    // Identité de session au moment de signer (témoin) : le compte, et la
+    // fiche du personnel qui lui est liée s'il y en a une. Sans session
+    // (harnais in-process) : null, comme la démo.
+    const idCompte = contexte?.utilisateur ?? null;
+    const compte = idCompte
+      ? db.get('SELECT personnel_id FROM utilisateurs_app WHERE id = ?',
+        [idCompte])
+      : null;
+
+    const enregistrement = {
+      id: db.generateId('SIG'),
+      mouvementId: mouvement.id,
+      role: s.role,
+      nom,
+      prenom,
+      qualite: String(s.qualite ?? '').trim() || null,
+      organisation,
+      parDelegation,
+      dateHeure: new Date().toISOString(),
+      declaration: declarationSignature(s.role, parDelegation, organisation),
+      // Base64 CANONIQUE, ré-encodée des octets contrôlés (parité démo).
+      imagePng: Buffer.from(octets).toString('base64'),
+      sessionCompteId: idCompte,
+      sessionPersonnelId: compte?.personnel_id ?? null,
+      // Empreinte de la fiche TELLE QUE PRÉSENTÉE au signataire (objet
+      // logique, même projection que la chaîne, sans chaînage).
+      sha256Document: hasherMouvement(objetLogiquePourHash(mouvement), null),
+      versionDocument: revision
+    };
+    return muter(() => {
+      const ligne = mapping.versSql('signatures_mouvement', enregistrement);
+      ligne.etablissement_id = ID_ETABLISSEMENT;
+      inserer('signatures_mouvement', ligne);
+      journaliser(`${prenom} ${nom}`, 'SIGNATURE_MOUVEMENT', mouvement.numero,
+        `${s.role}${parDelegation ? ` (par délégation : ${organisation})` : ''}` +
+        ` · révision ${revision}` +
+        ` · document ${enregistrement.sha256Document.slice(0, 12)}…`);
+      return { ...enregistrement, valide: true };
+    });
+  },
+
+  /** Lot C (C1) : les signatures réelles d'un mouvement, avec leur état. */
+  getSignaturesMouvement(params) {
+    const { mouvementId } = params;
+    const mouvement = trouverMouvement(mouvementId);
+    const revision = mouvement.revisionBrouillon ?? 0;
+    return db.all(
+      'SELECT * FROM signatures_mouvement WHERE mouvement_id = ?',
+      [mouvementId])
+      .map((ligne) => mapping.versFront('signatures_mouvement', ligne))
+      .sort((a, b) => {
+        if (a.dateHeure !== b.dateHeure) {
+          return a.dateHeure < b.dateHeure ? -1 : 1;
+        }
+        return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0);
+      })
+      .map((sig) => ({ ...sig,
+        valide: (sig.versionDocument ?? 0) === revision }));
   },
 
   /**
@@ -2568,7 +2735,16 @@ const HANDLERS = {
         statut: 'VALIDE',
         hashEcriture: null,
         hashPrecedent: null,
-        cerfaNumero: null
+        cerfaNumero: null,
+        // Lot C (C1) : mêmes clés que creerMouvement (parité démo). Une
+        // contre-écriture se scelle SANS le parcours de double signature
+        // (attestation d'identité du validateur, plan §9).
+        revisionBrouillon: 0,
+        versionEmpreinte: 1,
+        outilsFiges: null,
+        hashSignatures: null,
+        hashPiecesJointes: null,
+        hashPdfFinal: null
       };
       // IM-12 : pas de CERFA pour un TRANSFERT.
       contreEcriture.cerfaNumero =
@@ -3125,6 +3301,10 @@ function construireDonneesExport() {
     outillage: HANDLERS.getOutillage(),
     mouvementOutillage: lireTablePlate('mouvement_outillage',
       'mouvement_outillage', 'rowid'),
+    // Signatures réelles (lot C, C1) : tri stable par pose (ISO + id ASCII,
+    // la collation SQL octet à octet équivaut ici au tri JS du contrat).
+    signaturesMouvement: lireTablePlate('signatures_mouvement',
+      'signatures_mouvement', 'date_heure, id'),
     stocksInitiaux: lireTablePlate('stocks_initiaux', 'stocks_initiaux',
       'annee, fluide'),
     bsff: HANDLERS.getBsff(),
@@ -3173,7 +3353,7 @@ function completerCandidat(donnees) {
   for (const cle of ['auditsOrganisme', 'nonConformites', 'outillage',
     'stocksInitiaux', 'bsff', 'inventaires', 'justificationsEcarts',
     'piecesJointes', 'retoursFournisseur', 'journalAudit', 'habilitations',
-    'mentionsHabilitation', 'mouvementOutillage']) {
+    'mentionsHabilitation', 'mouvementOutillage', 'signaturesMouvement']) {
     if (!Array.isArray(candidat[cle])) candidat[cle] = [];
   }
   return candidat;
@@ -3365,6 +3545,25 @@ function verifierInvariantsDonneesCandidat(candidat) {
     }
   }
 
+  // Signatures réelles (lot C, C1) : chaque signature référence un mouvement
+  // existant, un rôle connu, une révision signée finie — id jamais en double.
+  // (La falsification d'une signature sera dénoncée par l'empreinte v2, C2.)
+  const idsSignatures = new Set();
+  for (const sig of candidat.signaturesMouvement ?? []) {
+    const ref = sig.id ?? '?';
+    if (idsSignatures.has(sig.id)) return `signature ${ref} : id en double`;
+    idsSignatures.add(sig.id);
+    if (!statutParMouvement.has(sig.mouvementId)) {
+      return `signature ${ref} : mouvement introuvable (${sig.mouvementId})`;
+    }
+    if (!ROLES_SIGNATURE.includes(sig.role)) {
+      return `signature ${ref} : rôle inconnu (${sig.role})`;
+    }
+    if (!Number.isFinite(sig.versionDocument)) {
+      return `signature ${ref} : révision signée absente`;
+    }
+  }
+
   // Pièces jointes : l'id EST le nom du fichier sur disque (Mode Local). Un id
   // hors alphabet (« ../.. ») ouvrirait une traversée de chemin — refusé À
   // L'ENTRÉE, avant que la donnée n'existe. Règle identique côté DemoStore.
@@ -3392,7 +3591,8 @@ function declencheursWorm() {
   return db.all(
     `SELECT name, sql FROM sqlite_master
      WHERE type = 'trigger'
-       AND tbl_name IN ('mouvements', 'journal_audit', 'mouvement_outillage')`);
+       AND tbl_name IN ('mouvements', 'journal_audit', 'mouvement_outillage',
+                        'signatures_mouvement')`);
 }
 
 /**
@@ -3473,7 +3673,7 @@ function remplacerToutLEtat(candidat) {
 
     // Vidage TOTAL des tables métier (journal inclus : remplacement complet).
     const TABLES_A_VIDER = ['pieces_jointes', 'retours_fournisseur', 'bsff',
-      'controles', 'mouvement_outillage', 'mouvements',
+      'controles', 'signatures_mouvement', 'mouvement_outillage', 'mouvements',
       'justifications_ecarts', 'inventaires',
       'inventaires_bouteilles', 'inventaires_fuites',
       'stocks_initiaux', 'bouteilles', 'machines', 'clients_detenteurs',
@@ -3550,6 +3750,11 @@ function remplacerToutLEtat(candidat) {
     // de figeage sont retirés avec les WORM le temps de l'import).
     reinsererCollection('mouvement_outillage', 'mouvement_outillage',
       candidat.mouvementOutillage);
+    // Signatures réelles (lot C, C1) : APRÈS les mouvements (FK) — leurs
+    // triggers WORM sont retirés avec les autres le temps de l'import.
+    // Absentes des vieux exports → undefined toléré.
+    reinsererCollection('signatures_mouvement', 'signatures_mouvement',
+      candidat.signaturesMouvement);
     reinsererCollection('controles', 'controles', candidat.controles);
     reinsererCollection('bsff', 'bsff', candidat.bsff);
     reinsererCollection('retours_fournisseur', 'retours_fournisseur',
@@ -4936,9 +5141,27 @@ function exigerValidateurDeSession(validateurId, contexte) {
 }
 
 /**
+ * Lot C (C1) : état d'une signature RÉELLE pour le moteur de blocage —
+ * true (une signature du rôle vaut pour la révision courante) | false
+ * (aucune signature du rôle) | 'PERIMEE' (posée puis fiche modifiée).
+ * Miroir exact de etatSignatureReelle du DemoStore.
+ */
+function etatSignatureReelle(mouvement, role) {
+  const revision = mouvement.revisionBrouillon ?? 0;
+  const duRole = db.all(
+    `SELECT version_document FROM signatures_mouvement
+     WHERE mouvement_id = ? AND role = ?`,
+    [mouvement.id, role]);
+  if (duRole.some((l) => (l.version_document ?? 0) === revision)) {
+    return true;
+  }
+  return duRole.length > 0 ? 'PERIMEE' : false;
+}
+
+/**
  * Faits de la fiche pour le moteur de blocage OFFICIEL (conditions 6-11
- * de la liste) — MIROIR du cadreFicheOfficiel du DemoStore : tout est
- * précalculé ici, le moteur reste pur. Un intervenant désigné mais
+ * et 14-15 de la liste) — MIROIR du cadreFicheOfficiel du DemoStore : tout
+ * est précalculé ici, le moteur reste pur. Un intervenant désigné mais
  * introuvable est traité comme absent.
  */
 function cadreFicheOfficiel(mouvement) {
@@ -4993,7 +5216,10 @@ function cadreFicheOfficiel(mouvement) {
     signaturePresente: Boolean(mouvement.signatureDataUrl),
     technicienPresent: Boolean(mouvement.technicien &&
       String(mouvement.technicien).trim()),
-    intervenant
+    intervenant,
+    // Lot C (C1) — conditions 14-15 : signatures réelles, tri-état.
+    signatureTechnicienValide: etatSignatureReelle(mouvement, 'TECHNICIEN'),
+    signatureDetenteurValide: etatSignatureReelle(mouvement, 'DETENTEUR')
   };
 }
 
