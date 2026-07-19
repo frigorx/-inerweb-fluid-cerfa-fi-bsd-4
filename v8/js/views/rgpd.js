@@ -462,9 +462,14 @@ export async function render(conteneur, ctx) {
             + 'aucun enregistrement conservé ne s’y réfère.'],
           ['Journal d’audit',
             'Conservé avec le registre (même durée), non modifiable.'],
-          ['Données du mode formation (élèves)',
-            'Année scolaire en cours et l’année suivante au plus, puis '
-            + 'suppression (aucune obligation réglementaire).']
+          ['Identité de la fiche d’un élève parti',
+            'Année scolaire en cours et l’année suivante au plus, puis MISE '
+            + 'À L’ABRI CHIFFRÉE : la fiche n’affiche plus qu’un pseudonyme, '
+            + 'l’identité reste rouvrable en cas de besoin légal (chaque '
+            + 'ouverture est journalisée).'],
+          ['Écritures d’intervention du mode formation',
+            'Conservées avec le registre (elles partagent sa chaîne '
+            + 'd’intégrité), sous pseudonyme à l’affichage.']
         ])
       + '<p class="encart-aide rgpd-note">Les écritures validées du registre officiel ne sont '
       + 'ni modifiables ni effaçables (corrections par contre-écriture '
@@ -492,7 +497,9 @@ export async function render(conteneur, ctx) {
       + 'l’écran Personnel ; les écritures validées sont corrigées par '
       + 'contre-écriture.</li>'
       + '<li><strong>Effacement / limitation</strong> : désactivation du compte, '
-      + 'puis suppression une fois les durées légales échues.</li>'
+      + 'puis MISE À L’ABRI CHIFFRÉE de l’identité une fois la durée annoncée '
+      + 'échue (coffre des identités, ci-dessus) — pseudonymisation réversible, '
+      + 'compatible avec les obligations légales de conservation du registre.</li>'
       + '</ul>'
       + '<p>Vous exercez ces droits auprès de <strong>' + responsable + '</strong> '
       + '(chef d’établissement ou délégué à la protection des données).</p>')

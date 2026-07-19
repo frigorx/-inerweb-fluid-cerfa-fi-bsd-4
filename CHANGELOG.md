@@ -2,6 +2,30 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 📜 LOT E RGPD — brique E2e : LA DOCUMENTATION HONNÊTE — LE LOT E2 EST COMPLET (19/07 soir)
+- **`RGPD.md`** : durées réécrites en DEUX clauses honnêtes (« identité de la
+  fiche : mise à l'abri chiffrée après la durée » / « écritures d'intervention :
+  conservées sans limite avec le registre, sous pseudonyme à l'affichage ») ;
+  nouvelle section **§7 bis « Le coffre des identités »** — fonctionnement,
+  geste manuel motivé, séquestre papier, AVEU de périmètre (porteur du code,
+  accès hors application) et la liste COMPLÈTE des 8 résidus assumés
+  (technicien scellé, signatures + modale, PDF conservés, journal historique,
+  métadonnées de PJ figées, sauvegardes/exports antérieurs, habilitations
+  historiques, export E1 substitué) — le dossier que le DPD relira (gate E④).
+- **`SAUVEGARDE.md`** : les archives automatiques (claires) restent sur le
+  poste ; synchroniser UNIQUEMENT `backups/scellement/` (aucune donnée
+  nominative) ; après une mise à l'abri, restaurer une ARCHIVE, jamais un
+  instantané ; rétention des copies claires antérieures au geste.
+- **Notice de l'application** (vue Protection des données) alignée mot pour
+  mot sur les mêmes clauses. **TOUT VERT — 85 exécutions.**
+- **BILAN DU LOT E2** (plan `docs/PLAN-LOT-E2.md` suivi brique à brique) :
+  E2a primitives + module pur (36 vérifs) · E2b gestes réels + revue
+  adversariale 1 bloquant/6 importants fermés (65 vérifs) · E2c le coffre
+  voyage, bloquant n°1 prouvé fermé (18 vérifs) · E2d interface + essai
+  navigateur complet · E2e documentation. Conception : 12 agents (2
+  architectures, fusion, 5 critiques — 5 bloquants intégrés au plan AVANT le
+  code). Reste HORS code : relecture DPD (E④) et relecture Franck.
+
 ### 🖥️ LOT E RGPD — brique E2d : L'INTERFACE DU COFFRE + SUBSTITUTION D'AFFICHAGE (19/07 soir)
 - **Section « Coffre des identités » dans la vue Protection des données**
   (`rgpd.js`) : compteur, bandeau des fiches d'élèves désactivées en attente,

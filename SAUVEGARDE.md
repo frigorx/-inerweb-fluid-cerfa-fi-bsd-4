@@ -142,6 +142,27 @@ Cinq minutes par semaine suffisent. Gardez au moins les trois dernières copies 
 chaque support (inutile de tout garder : les ZIP sont datés, les plus anciens peuvent
 être supprimés).
 
+### ⚠️ Données personnelles et synchronisation (coffre des identités, lot E2)
+
+- **Les archives automatiques sont EN CLAIR** (elles portent le registre
+  complet, noms compris) et doivent **rester sur le poste**. Toute copie hors
+  du poste (clé USB, réseau, nuage) doit passer par une **sauvegarde manuelle
+  CHIFFRÉE** (section 4).
+- Si vous synchronisez un dossier vers un espace en ligne (geste recommandé
+  du témoin de scellement), **ne synchronisez QUE le sous-dossier
+  `backups/scellement/`** : les témoins quotidiens ne contiennent que des
+  empreintes et des compteurs — aucune donnée nominative. Jamais la racine
+  `backups/` entière.
+- **Après une mise à l'abri d'identités** (coffre, écran Protection des
+  données) : pour revenir en arrière, restaurez une **ARCHIVE** (base +
+  documents), jamais un simple instantané — les scans mis à l'abri ont été
+  retirés du disque et un instantané (base seule) restaurerait une base qui
+  pointe des fichiers disparus. La mise à l'abri produit d'ailleurs
+  elle-même une archive vérifiée avant d'agir.
+- Les sauvegardes et exports **antérieurs** à une mise à l'abri contiennent
+  les identités en clair : appliquez-leur la même durée de rétention que le
+  registre et supprimez les copies claires devenues inutiles.
+
 ---
 
 ## 7. Vérifier que ça marche : le test de rentrée

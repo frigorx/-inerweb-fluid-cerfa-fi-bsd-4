@@ -57,7 +57,8 @@ fonctionnement de l'application (principe de minimisation).
 | Registre du personnel, attestations d'aptitude | Durée d'activité de la personne + durée de conservation du registre auquel elles se rattachent | Justification des interventions passées |
 | Comptes utilisateurs | **Désactivés** dès le départ de la personne (l'historique reste attribué), puis **purgés** lorsque plus aucun enregistrement conservé ne s'y réfère | Minimisation |
 | Journal d'audit | Conservé avec le registre (même durée), non modifiable depuis l'application | Intégrité et valeur probante du registre |
-| Données du mode formation (élèves) | Année scolaire en cours + l'année suivante au plus, puis suppression | Pas d'obligation réglementaire, usage pédagogique seulement |
+| Identité de la fiche d'un élève parti | Année scolaire en cours + l'année suivante au plus, puis **mise à l'abri chiffrée** (pseudonymisation réversible — voir §7 bis) | Pas d'obligation réglementaire ; minimisation sans destruction de la capacité de réponse à une demande légale |
+| Écritures d'intervention du mode formation | Conservées **sans limite** avec le registre (elles partagent sa chaîne d'intégrité), sous **pseudonyme à l'affichage** | Intégrité du registre : une écriture scellée n'est ni modifiable ni effaçable |
 
 > ⚠️ Les écritures validées du registre officiel ne sont ni modifiables ni effaçables
 > (contre-écritures uniquement, cf. `docs/SPEC-V8.md`) : c'est une exigence d'intégrité
@@ -86,7 +87,54 @@ Dans l'application, l'administrateur ou le référent dispose des outils nécess
   attestations…) depuis l'écran Personnel ; les écritures validées du registre sont
   corrigées par contre-écriture ;
 - **Effacement / limitation** : désactivation du compte (la personne n'apparaît plus dans
-  les écrans courants), puis purge lorsque les durées légales de conservation sont échues.
+  les écrans courants), puis **mise à l'abri chiffrée de l'identité** lorsque la durée
+  annoncée est échue (coffre des identités, §7 bis) — pseudonymisation réversible,
+  compatible avec les obligations légales de conservation du registre.
+
+## 7 bis. Le coffre des identités (minimisation réversible)
+
+Depuis juillet 2026, l'application porte un **coffre des identités** : l'identité
+d'un élève parti (nom, prénom, courriel, attestation d'aptitude, scans, image de
+signature, identifiant de connexion) est **chiffrée** (AES-256-GCM, dérivation
+scrypt renforcée) dans une enveloppe protégée par un **code** que seul le
+responsable connaît. La fiche n'affiche plus qu'un **pseudonyme** (« Élève
+2026-01 ») — écrans, exports et dossiers d'audit suivent. Le code **rouvre**
+l'identité en cas de besoin légal : consultation ponctuelle ou restauration
+complète, **motif obligatoire**, chaque ouverture **journalisée de façon
+inaltérable** (la preuve d'usage opposable au DPD).
+
+- **Le geste est manuel** (bouton « Mettre à l'abri », fiches échues
+  pré-cochées, rappel automatique non bloquant) : un automatisme exigerait de
+  stocker le code, ce qui détruirait la protection.
+- **Code perdu = contenu du coffre définitivement illisible** (le registre,
+  lui, continue de fonctionner sous pseudonymes). Parade : le code est noté
+  sur papier, sous pli scellé, au coffre de l'établissement (imprimer
+  directement — ne jamais enregistrer le code dans un fichier).
+- **Aveu de périmètre** : quiconque détient le code peut techniquement
+  déchiffrer une copie de la base hors application ; la traçabilité (motif +
+  journal) ne vaut que pour les accès par l'application. Les gestes du coffre
+  sont refusés en accès réseau : le code ne traverse jamais le réseau du
+  lycée.
+
+**Résidus assumés** (ce que le coffre NE couvre PAS, conservé pour
+l'intégrité du registre et consigné ici en toute transparence) :
+
+1. le nom du technicien **scellé** dans les écritures validées (formation
+   comprise) — il entre dans l'empreinte chaînée du registre ;
+2. les **signatures réelles scellées** (nom + image) et leur affichage dans
+   la modale Signatures d'un mouvement consulté ;
+3. les **PDF CERFA conservés** (documents figés à la validation officielle) ;
+4. le **journal d'audit** antérieur à la mise à l'abri (événements historiques
+   pouvant citer un nom) — append-only, sa lecture est réservée aux valideurs ;
+5. les métadonnées des pièces jointes d'écritures figées (« ajouté par »,
+   nom de fichier), verrouillées par le registre ;
+6. les **sauvegardes et exports antérieurs** au geste (preuves gelées, jamais
+   retouchées) — politique de rétention : voir `SAUVEGARDE.md` ;
+7. les numéros d'attestation des **habilitations historiques** (rattachées à
+   la fiche par identifiant), conservés pour prouver l'aptitude de
+   l'intervenant lors d'un audit ;
+8. l'export RGPD individuel d'une personne à l'abri est **substitué**
+   (pseudonyme) et cesse de rapprocher les écritures par nom.
 
 ## 8. Mesures de sécurité
 
