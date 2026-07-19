@@ -325,6 +325,183 @@ function dechiffrer(enveloppe, phrase) {
   }
 }
 
+// ============================================================
+// COFFRE DES IDENTITÉS (lot E2) — enveloppes de CHAMP autoportantes.
+// ============================================================
+// Format binaire, plus simple que l'enveloppe de sauvegarde (pas de
+// manifeste : l'AAD est une chaîne de contexte fournie par l'appelant) :
+//   [magic]  13 octets : « IWF-COFFRE-1\n » (repère + version)
+//   [sel]    16 octets : sel scrypt (recopié du sel GLOBAL du coffre —
+//                        l'enveloppe reste déchiffrable SEULE, où qu'elle
+//                        voyage : export JSON, base restaurée, autre poste)
+//   [iv]     12 octets : IV GCM frais à chaque enveloppe
+//   [tag]    16 octets : tag d'authentification GCM
+//   [chiffré]  …       : le JSON d'identité chiffré (AES-256-GCM)
+//
+// DÉRIVATION DU COFFRE : scrypt N=131072 (2^17), r=8, p=1 — RENFORCÉE par
+// rapport aux sauvegardes (N=32768) : le format est neuf, un coffre
+// d'identités d'élèves mérite le meilleur coût de force brute hors ligne
+// (~0,5-1 s par dérivation ; l'appelant dérive UNE fois par opération et
+// chiffre/déchiffre N enveloppes avec la même clé).
+// L'AAD lie chaque enveloppe à son porteur (« coffre:v1:<id>:<pseudo> ») :
+// rejouer l'enveloppe d'une personne sur une autre casse le tag.
+// ------------------------------------------------------------
+
+/** Repère + version des enveloppes de champ du coffre (13 octets). */
+const MAGIC_COFFRE = Buffer.from('IWF-COFFRE-1\n', 'utf8');
+
+/** Paramètres scrypt du coffre (figés « v1 » — consignés en base). */
+const SCRYPT_N_COFFRE = 131072;
+const SCRYPT_MAXMEM_COFFRE = 128 * SCRYPT_N_COFFRE * SCRYPT_R * 2;
+
+/**
+ * Dérive la clé du COFFRE (32 octets) — mêmes règles que deriverCle
+ * (phrase non vide, NFC, sel de 16 octets) mais paramètres renforcés.
+ * @param {string} phrase
+ * @param {Buffer} sel - 16 octets
+ * @returns {Buffer} clé de 32 octets
+ */
+function deriverCleCoffre(phrase, sel) {
+  if (typeof phrase !== 'string' || phrase.length === 0) {
+    throw new Error(
+      'Phrase du coffre absente : impossible de dériver une clé sans phrase.');
+  }
+  if (!Buffer.isBuffer(sel) || sel.length !== LONGUEUR_SEL) {
+    throw new Error(
+      `Sel de dérivation invalide (attendu ${LONGUEUR_SEL} octets).`);
+  }
+  return crypto.scryptSync(phrase.normalize('NFC'), sel, LONGUEUR_CLE, {
+    N: SCRYPT_N_COFFRE, r: SCRYPT_R, p: SCRYPT_P, maxmem: SCRYPT_MAXMEM_COFFRE
+  });
+}
+
+/** Vrai si `octets` commence par le repère d'une enveloppe de champ du coffre. */
+function estEnveloppeCoffre(octets) {
+  if (!Buffer.isBuffer(octets) || octets.length < MAGIC_COFFRE.length) {
+    return false;
+  }
+  return octets.subarray(0, MAGIC_COFFRE.length).equals(MAGIC_COFFRE);
+}
+
+/**
+ * Décompose une enveloppe de champ du coffre. Lève un message clair sur
+ * tout ce qui ne colle pas — jamais un RangeError brut.
+ * @param {Buffer} enveloppe
+ * @returns {{sel: Buffer, iv: Buffer, tag: Buffer, ciphertext: Buffer}}
+ */
+function decomposerChampCoffre(enveloppe) {
+  if (!Buffer.isBuffer(enveloppe) || !estEnveloppeCoffre(enveloppe)) {
+    throw new Error(
+      'Enveloppe du coffre illisible (en-tête « IWF-COFFRE-1 » absent).');
+  }
+  let curseur = MAGIC_COFFRE.length;
+  const finBlocs = curseur + LONGUEUR_SEL + LONGUEUR_IV + LONGUEUR_TAG;
+  if (finBlocs > enveloppe.length) {
+    throw new Error('Enveloppe du coffre tronquée : sel/IV/tag incomplets.');
+  }
+  const sel = enveloppe.subarray(curseur, curseur + LONGUEUR_SEL);
+  curseur += LONGUEUR_SEL;
+  const iv = enveloppe.subarray(curseur, curseur + LONGUEUR_IV);
+  curseur += LONGUEUR_IV;
+  const tag = enveloppe.subarray(curseur, curseur + LONGUEUR_TAG);
+  curseur += LONGUEUR_TAG;
+  return { sel, iv, tag, ciphertext: enveloppe.subarray(curseur) };
+}
+
+/**
+ * Chiffre des octets en enveloppe de champ AUTOPORTANTE du coffre.
+ * La clé est PRÉ-DÉRIVÉE par l'appelant (une dérivation par opération,
+ * pas par enveloppe) ; `sel` est le sel qui a servi à la dériver — il est
+ * recopié dans l'enveloppe pour qu'elle reste déchiffrable seule.
+ * Garde-fou maison : l'enveloppe produite est RE-DÉCHIFFRÉE (avec la même
+ * clé — coût GCM seul, pas de scrypt) et comparée bit à bit avant retour.
+ * @param {Buffer} octets - contenu à chiffrer
+ * @param {Buffer} cle - clé de 32 octets (deriverCleCoffre)
+ * @param {Buffer} sel - sel de 16 octets ayant servi à dériver `cle`
+ * @param {string} aad - chaîne de contexte authentifiée (jamais vide)
+ * @returns {Buffer} enveloppe complète
+ */
+function chiffrerChampCoffre(octets, cle, sel, aad) {
+  if (!Buffer.isBuffer(octets)) {
+    throw new Error('chiffrerChampCoffre : octets attendus.');
+  }
+  if (!Buffer.isBuffer(cle) || cle.length !== LONGUEUR_CLE) {
+    throw new Error('chiffrerChampCoffre : clé de 32 octets attendue.');
+  }
+  if (!Buffer.isBuffer(sel) || sel.length !== LONGUEUR_SEL) {
+    throw new Error('chiffrerChampCoffre : sel de 16 octets attendu.');
+  }
+  if (typeof aad !== 'string' || aad.length === 0) {
+    throw new Error('chiffrerChampCoffre : contexte AAD obligatoire.');
+  }
+  const iv = crypto.randomBytes(LONGUEUR_IV);
+  const chiffreur = crypto.createCipheriv(ALGORITHME, cle, iv, {
+    authTagLength: LONGUEUR_TAG
+  });
+  chiffreur.setAAD(Buffer.from(aad, 'utf8'));
+  const ciphertext = Buffer.concat([
+    chiffreur.update(octets), chiffreur.final()
+  ]);
+  const tag = chiffreur.getAuthTag();
+  const enveloppe = Buffer.concat([MAGIC_COFFRE, sel, iv, tag, ciphertext]);
+
+  // Re-déchiffrement de vérification (bit à bit) avant toute écriture.
+  const reouvert = dechiffrerChampCoffreAvecCle(enveloppe, cle, aad);
+  if (!reouvert.equals(octets)) {
+    throw new Error(
+      'Chiffrement ABANDONNÉ : l\'enveloppe du coffre produite ne se ' +
+      're-déchiffre pas à l\'identique. Rien ne sera écrit.');
+  }
+  return enveloppe;
+}
+
+/**
+ * Déchiffre une enveloppe de champ avec une clé PRÉ-DÉRIVÉE (l'appelant a
+ * vérifié que le sel de l'enveloppe est celui de la clé — sinon, utiliser
+ * dechiffrerChampCoffre avec la phrase). Phrase fausse, octet altéré, AAD
+ * étrangère : MÊME message (anti-oracle), aucune donnée rendue.
+ * @param {Buffer} enveloppe
+ * @param {Buffer} cle - clé de 32 octets
+ * @param {string} aad - chaîne de contexte attendue
+ * @returns {Buffer} octets d'origine
+ */
+function dechiffrerChampCoffreAvecCle(enveloppe, cle, aad) {
+  const { iv, tag, ciphertext } = decomposerChampCoffre(enveloppe);
+  const dechiffreur = crypto.createDecipheriv(ALGORITHME, cle, iv, {
+    authTagLength: LONGUEUR_TAG
+  });
+  dechiffreur.setAAD(Buffer.from(String(aad ?? ''), 'utf8'));
+  dechiffreur.setAuthTag(tag);
+  try {
+    return Buffer.concat([
+      dechiffreur.update(ciphertext), dechiffreur.final()
+    ]);
+  } catch {
+    // Tag GCM invalide : code faux OU altération OU AAD étrangère — même
+    // message, jamais de bouillie (patron des sauvegardes).
+    throw new Error('Code incorrect ou coffre altéré.');
+  }
+}
+
+/**
+ * Déchiffre une enveloppe de champ à partir de la PHRASE : dérive la clé du
+ * sel EMBARQUÉ dans l'enveloppe (autoportance — fonctionne même si le sel
+ * global du poste diffère, cas d'une enveloppe importée).
+ * @param {Buffer} enveloppe
+ * @param {string} phrase
+ * @param {string} aad
+ * @returns {Buffer} octets d'origine
+ */
+function dechiffrerChampCoffre(enveloppe, phrase, aad) {
+  const { sel } = decomposerChampCoffre(enveloppe);
+  const cle = deriverCleCoffre(phrase, Buffer.from(sel));
+  try {
+    return dechiffrerChampCoffreAvecCle(enveloppe, cle, aad);
+  } finally {
+    cle.fill(0); // hygiène best-effort : la clé ne traîne pas en mémoire
+  }
+}
+
 module.exports = {
   MAGIC,
   deriverCle,
@@ -336,5 +513,14 @@ module.exports = {
   decomposer,
   LONGUEUR_SEL,
   LONGUEUR_IV,
-  LONGUEUR_TAG
+  LONGUEUR_TAG,
+  // Coffre des identités (lot E2) — enveloppes de champ autoportantes.
+  MAGIC_COFFRE,
+  SCRYPT_N_COFFRE,
+  deriverCleCoffre,
+  estEnveloppeCoffre,
+  decomposerChampCoffre,
+  chiffrerChampCoffre,
+  dechiffrerChampCoffreAvecCle,
+  dechiffrerChampCoffre
 };
