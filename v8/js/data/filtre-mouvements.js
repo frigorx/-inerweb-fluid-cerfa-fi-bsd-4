@@ -68,10 +68,16 @@ export function normaliserTexte(texte) {
  * @param {object} mv — mouvement (copie du store)
  * @param {Map<string, object>} [bouteillesParId] — pour résoudre les
  *   codes des transferts (même Map que la vue, CF-7)
+ * @param {Map<string, string>} [personnelParId] — id → « Prénom Nom »
+ *   VIVANT (lot E2 : le texte cherchable porte le libellé de la fiche —
+ *   pseudonyme si la personne est au coffre — jamais le nom figé quand un
+ *   identifiant existe : chercher le vrai nom d'un élève à l'abri ne
+ *   trouve rien, chercher son pseudonyme trouve)
  * @returns {{ statut: string, groupeType: string, fluide: string,
  *             annee: string, texte: string }}
  */
-export function indexerMouvement(mv, bouteillesParId = new Map()) {
+export function indexerMouvement(mv, bouteillesParId = new Map(),
+  personnelParId = new Map()) {
   let libelleMachine = mv.machineLabel || '';
   if (mv.type === 'TRANSFERT') {
     const src = bouteillesParId.get(mv.bouteilleSrcId);
@@ -79,13 +85,20 @@ export function indexerMouvement(mv, bouteillesParId = new Map()) {
     libelleMachine = [src ? src.code : '', dst ? dst.code : '']
       .filter(Boolean).join(' ');
   }
+  // Lot E2 : le libellé du technicien passe par l'identifiant quand il
+  // existe (contre-écriture : le technicien est le validateur).
+  const idPorteur = mv.executeParId
+    ?? (mv.contreEcritureDe ? mv.validateurId : null);
+  const technicienCherchable = idPorteur && personnelParId.has(idPorteur)
+    ? personnelParId.get(idPorteur) : mv.technicien;
   return {
     statut: String(mv.statut ?? ''),
     groupeType: groupeDuType(mv.type),
     fluide: String(mv.fluide ?? ''),
     annee: mv.date ? String(mv.date).slice(0, 4) : '',
     texte: normaliserTexte([mv.numero, mv.cerfaNumero, libelleMachine,
-      mv.fluide, mv.technicien, mv.motifRejet].filter(Boolean).join(' '))
+      mv.fluide, technicienCherchable, mv.motifRejet]
+      .filter(Boolean).join(' '))
   };
 }
 

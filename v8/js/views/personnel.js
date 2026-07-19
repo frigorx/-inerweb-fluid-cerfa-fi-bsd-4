@@ -130,10 +130,15 @@ function chipRoleApp(roleApp) {
 }
 
 /** Ligne de tableau pour une personne du registre. */
-function lignePersonne(personne, nbHabilitationsActives, nbMentionsActives) {
+function lignePersonne(personne, nbHabilitationsActives, nbMentionsActives,
+  auCoffre = false) {
   const estEleve = personne.typePersonne === 'ELEVE';
+  // Lot E2 : badge « au coffre » — la fiche vivante porte déjà le pseudonyme.
+  const badgeCoffre = auCoffre
+    ? ' <span class="chip chip-violet" title="Identité au coffre (Protection des données)">au coffre</span>'
+    : '';
   const nomComplet = esc(personne.prenom) + ' <span class="personnel-nom-secondaire">'
-    + esc(personne.nom) + '</span>';
+    + esc(personne.nom) + '</span>' + badgeCoffre;
   const numAptitude = (!estEleve && personne.numAttestationAptitude)
     ? '<span class="mono">' + esc(personne.numAttestationAptitude) + '</span>'
     : '—';
@@ -207,6 +212,17 @@ export async function render(conteneur, ctx) {
     nbMentionsActivesParPersonne.set(m.personneId, (nbMentionsActivesParPersonne.get(m.personneId) || 0) + 1);
   });
 
+  // Lot E2 : identités au coffre (badge) — état inaccessible (rôle) toléré.
+  let idsAuCoffre = new Set();
+  if (typeof ctx.store.etatCoffre === 'function') {
+    try {
+      const etatCoffre = await ctx.store.etatCoffre();
+      idsAuCoffre = new Set(etatCoffre.identites.map((i) => i.personnelId));
+    } catch {
+      // Rôle insuffisant : pas de badge, la vue reste entière.
+    }
+  }
+
   // Actifs d'abord (ordre alphabétique), inactifs grisés en fin de liste
   const tries = [...personnel].sort((a, b) => {
     if (a.actif !== b.actif) return a.actif ? -1 : 1;
@@ -220,7 +236,8 @@ export async function render(conteneur, ctx) {
     lignePersonne(
       personne,
       nbHabActivesParPersonne.get(personne.id) || 0,
-      nbMentionsActivesParPersonne.get(personne.id) || 0));
+      nbMentionsActivesParPersonne.get(personne.id) || 0,
+      idsAuCoffre.has(personne.id)));
 
   const contenuTableau = tableau({
     colonnes: [

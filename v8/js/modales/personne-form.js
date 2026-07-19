@@ -343,6 +343,21 @@ function validerFormulaire(racine) {
 export async function ouvrirFormPersonne(ctx, personneId = null) {
   const enModification = Boolean(personneId);
 
+  // Lot E2 : une fiche AU COFFRE ne s'édite pas (le store refuserait de
+  // toute façon) — on informe et on renvoie vers le geste dédié.
+  if (enModification && typeof ctx.store.etatCoffre === 'function') {
+    try {
+      const etatCoffre = await ctx.store.etatCoffre();
+      if (etatCoffre.identites.some((i) => i.personnelId === personneId)) {
+        toast('Fiche au coffre des identités : consultation et restauration '
+          + 'depuis « Protection des données ».', 'erreur');
+        return false;
+      }
+    } catch {
+      // État du coffre inaccessible (rôle) : le store tranchera.
+    }
+  }
+
   const personnel = enModification ? await ctx.store.getPersonnel() : [];
   const personneExistante = enModification
     ? personnel.find(function (p) { return p.id === personneId; })

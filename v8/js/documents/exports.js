@@ -232,12 +232,24 @@ function csvMouvements(mouvements, annee, personnel) {
     'Statut', 'N° CERFA', 'Contre-écriture de', 'Motif',
     'Exécuté par', 'Superviseur', 'Responsable registre'];
   const prefixe = `${annee}-`;
+  // Lot E2 : le technicien du CSV passe par l'IDENTIFIANT quand il existe
+  // (fiche vivante = pseudonyme si la personne est au coffre) ; sans
+  // identifiant, le champ figé tel quel (résidu consigné au plan E2 §9).
+  const technicienDe = (mv) => {
+    const idPorteur = mv.executeParId
+      ?? (mv.contreEcritureDe ? mv.validateurId : null);
+    if (idPorteur) {
+      const p = personnel.find((x) => x.id === idPorteur);
+      if (p) return p.prenom + ' ' + p.nom;
+    }
+    return mv.technicien;
+  };
   const lignes = mouvements
     .filter((mv) => (mv.date || '').startsWith(prefixe))
     .map((mv) => [
       mv.numero, fmtDate(mv.date), mv.mode, mv.type, mv.machineLabel,
       mv.fluide, nb(mv.quantiteKg), nb(mv.peseeAvantKg), nb(mv.peseeApresKg),
-      mv.technicien, mv.statut, mv.cerfaNumero, mv.contreEcritureDe, mv.motif,
+      technicienDe(mv), mv.statut, mv.cerfaNumero, mv.contreEcritureDe, mv.motif,
       nomDe(mv.executeParId), nomDe(mv.superviseurId), nomDe(mv.responsableRegistreId)
     ]);
   return construireCsv(entetes, lignes);

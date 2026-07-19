@@ -2,6 +2,32 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🖥️ LOT E RGPD — brique E2d : L'INTERFACE DU COFFRE + SUBSTITUTION D'AFFICHAGE (19/07 soir)
+- **Section « Coffre des identités » dans la vue Protection des données**
+  (`rgpd.js`) : compteur, bandeau des fiches d'élèves désactivées en attente,
+  et les 5 gestes en modales — Mettre à l'abri (liste à cocher, candidats
+  PRÉ-COCHÉS, double saisie de la phrase au premier geste + avertissement
+  « code perdu = identités illisibles » + consigne de séquestre papier),
+  Vérifier mon code, Consulter (phrase + motif, modale éphémère avec pièces
+  téléchargeables), Restaurer (pièces altérées signalées), Changer la phrase.
+  Bandeau démo explicite (« chiffrement simulé — jamais votre vraie phrase »).
+  État inaccessible (rôle) → encart informatif, jamais d'écran cassé.
+- **Badge « au coffre »** dans l'annuaire du personnel + **verrou d'écran** de
+  la fiche (l'édition renvoie vers le geste dédié — le store refusait déjà).
+- **Substitution d'affichage par IDENTIFIANT** (fiche vivante = pseudonyme) :
+  modale de détail des mouvements, CSV du dossier d'audit (technicien via
+  executeParId, validateurId pour les contre-écritures), et l'INDEX DE
+  RECHERCHE de la vue Mouvements (chercher le vrai nom d'un élève à l'abri ne
+  trouve plus rien, chercher son pseudonyme trouve). Le tableau de bord et
+  tous les affichages de contrôles suivaient déjà (identifiant → fiche
+  vivante ; opérateur réécrit en base depuis E2b).
+- **ESSAI NAVIGATEUR COMPLET** (mode démo, mêmes écrans que le réel) : mise à
+  l'abri par la modale réelle (candidat pré-coché, double saisie exigée,
+  avertissement affiché) → annuaire pseudonymisé (« Élève 2026-01 » + badge,
+  AUCUN nom réel) → verrou d'écran → consultation avec motif (identité réelle
+  restituée) → restauration (« Identité restaurée », badge parti, nom de
+  retour). **TOUT VERT — 85 exécutions.** Reste : E2e (documentation).
+
 ### 🚚 LOT E RGPD — brique E2c : LE COFFRE VOYAGE DANS L'EXPORT/IMPORT (19/07 soir)
 Le BLOQUANT n°1 de la conception est FERMÉ ET PROUVÉ : sans transport explicite,
 un import sur poste neuf rendait toutes les identités indéchiffrables à jamais.

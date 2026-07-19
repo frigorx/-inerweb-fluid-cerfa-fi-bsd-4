@@ -81,8 +81,13 @@ contre chacune.
 
 - `views/` : une vue par écran (routeur hash `#/vue` ; fiches paramétrées
   `#/m|b|cl|o|f/<code>`). `communs.js` = modale/toast/enteteVue/carteKpi.
-  `rgpd.js` (lot E ③) = notice d'information RGPD (art. 13/14), vue statique,
-  entrée de menu « Protection des données » (`app.js` VUES).
+  `rgpd.js` (lot E ③ + E2d) = notice d'information RGPD (art. 13/14) +
+  SECTION OPÉRATIONNELLE du coffre des identités (compteur, candidats
+  pré-cochés, les 5 gestes en modales, bandeau démo) ; entrée de menu
+  « Protection des données » (`app.js` VUES). Badge « au coffre » dans
+  `personnel.js`, verrou d'écran dans `personne-form.js`, substitution par
+  identifiant dans `mouvements.js` (modale + index de recherche,
+  `indexerMouvement` 3e param) et `documents/exports.js` (CSV).
 - `modales/` : formulaires (piège historique : jamais de sélecteur global
   `.modale` — `modale()` retourne sa racine). `signatures-modal.js`
   (lot C C4) = parcours de double signature d'un BROUILLON (bouton

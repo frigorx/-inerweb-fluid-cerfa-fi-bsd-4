@@ -310,7 +310,16 @@ function rappelMouvement(mv, outils = [], personnelParId = new Map()) {
       '<span class="cellule-mono">' + esc(fmtKg(mv.peseeAvantKg))
       + ' → ' + esc(fmtKg(mv.peseeApresKg)) + '</span>'));
   }
-  if (mv.technicien) lignes.push(ligneRappel('Technicien', esc(mv.technicien)));
+  if (mv.technicien) {
+    // Lot E2 : libellé par IDENTIFIANT quand il existe — la fiche vivante
+    // porte le pseudonyme d'une personne au coffre (le champ figé, lui,
+    // reste scellé). Contre-écriture : le technicien EST le validateur.
+    const idPorteur = mv.executeParId
+      ?? (mv.contreEcritureDe ? mv.validateurId : null);
+    const libelle = idPorteur && personnelParId.has(idPorteur)
+      ? personnelParId.get(idPorteur) : mv.technicien;
+    lignes.push(ligneRappel('Technicien', esc(libelle)));
+  }
   // Brique 3 : rôles réels de l'intervention (chantier B2), chacun absent
   // de la modale tant que le champ n'a pas été renseigné.
   if (mv.executeParId) {
@@ -599,10 +608,23 @@ export async function render(conteneur, ctx) {
 
   const parId = new Map(mouvements.map((mv) => [mv.id, mv]));
 
+  // Lot E2 : registre du personnel pour les libellés par IDENTIFIANT (la
+  // fiche vivante porte le pseudonyme d'une personne au coffre). Tolérant
+  // à l'échec : sans lui, l'index retombe sur le champ figé.
+  let personnelParId = new Map();
+  try {
+    const personnel = await ctx.store.getPersonnel();
+    personnelParId = new Map(
+      personnel.map((p) => [p.id, (p.prenom + ' ' + p.nom).trim()]));
+  } catch {
+    // Registre indisponible : recherche sur les champs figés.
+  }
+
   // Index de filtrage : la logique vit dans le module pur, la vue ne
   // fait que masquer/afficher les lignes (patron machines.js).
   const indexParId = new Map(
-    mouvements.map((mv) => [mv.id, indexerMouvement(mv, bouteillesParId)]));
+    mouvements.map((mv) =>
+      [mv.id, indexerMouvement(mv, bouteillesParId, personnelParId)]));
 
   // ---- En-tête : titre, sous-titre, bouton d'action principal ----
   const entete = enteteVue({
