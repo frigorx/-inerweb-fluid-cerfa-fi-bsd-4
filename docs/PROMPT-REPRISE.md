@@ -6,24 +6,26 @@
 > **Session conseillée : Opus, effort élevé** (le lot E est cadré ; passer à maximum
 > seulement sur un point RGPD délicat). PAS d'ultracode hors point critique.
 >
-> **ÉTAT (19/07) : LOTS A ✅ B ✅ C ✅ D ✅ — MODE OFFICIEL OUVERT. LOT E EN COURS :
-> E1 ✅ (export individuel RGPD, `12fc4c0`) + E3 ✅ (notice d'information, `238d58d`)
-> LIVRÉS ET TESTÉS (82 exécutions vertes). Reste E2 (purge — arbitrage Franck en
-> attente) et E4 (relecture DPD, hors code).**
+> **ÉTAT (19/07 tard) : LOTS A ✅ B ✅ C ✅ D ✅ E ✅ (CODE COMPLET) — MODE
+> OFFICIEL OUVERT, LOT E RGPD LIVRÉ EN ENTIER.**
+> E1 ✅ export individuel (`12fc4c0`) · E3 ✅ notice (`238d58d`) · **E2 ✅ LE
+> COFFRE DES IDENTITÉS, 5 briques** : E2a primitives+module pur (`8bba64c`) ·
+> E2b gestes réels + revue adversariale 1 bloquant/6 importants fermés
+> (`306b9d0`, migrations 25+26, contrat 87 v7) · E2c le coffre voyage dans
+> l'export/import, bloquant n°1 prouvé fermé (`c7d1df5`) · E2d interface +
+> essai navigateur complet (`25da227`) · E2e documentation honnête RGPD.md
+> §7 bis + résidus + SAUVEGARDE.md (`4cd4eea`). Plan suivi à la lettre =
+> `docs/PLAN-LOT-E2.md` (conception 12 agents, 5 bloquants intégrés AVANT le
+> code). **Filet : TOUT VERT — 85 exécutions** (`node outils/lancer-tests.mjs`).
 >
-> **LOT E — reste à faire :**
-> - **E2 (coffre-fort chiffré réversible des identités d'élèves) — LE PLAN EST
->   ÉCRIT : `docs/PLAN-LOT-E2.md` (19/07 soir), EN ATTENTE DE VALIDATION FRANCK.**
->   Conception ultracode (12 agents : 4 recon + 2 architectures + fusion + 5
->   critiques adversariales) ; 5 bloquants trouvés et TOUS intégrés au plan (dont :
->   le sel/témoin du coffre ne voyagent PAS dans l'export JSON → bloc `coffreConfig`
->   + enveloppes autoportantes ; restaurer un instantané après mise à l'abri
->   détruirait les scans purgés → archive complète EXIGÉE avant le geste).
->   Une fois le plan validé : le suivre À LA LETTRE, briques E2a→E2e, chacune
->   committée testée. Réglage : Opus/Fable, effort maximum. NE PAS CODER AVANT
->   LA VALIDATION DU PLAN.
-> - **E4 (relecture DPD)** : gate hors code, quand Franck peut (la notice E3 et,
->   après E2, le RGPD.md amendé).
+> **RESTE (hors code)** : ④ relecture DPD (RGPD.md, notamment §7 bis et ses
+> 8 résidus) · relecture Franck de la liste du lot B (demandée 19/07) ·
+> SIMULATION D'AUDIT fin août · septembre en PARALLÈLE. **Gestes Franck** :
+> pointer la synchronisation sur `backups/scellement/` SEULEMENT (précision
+> E2e du geste du lot D) ; à la première mise à l'abri : phrase NEUVE ≥ 14
+> caractères, séquestre papier au coffre de l'établissement.
+> **Reste consigné (préexistant, non bloquant)** : `createControle` accepte
+> un `mouvementId` arbitraire — à fermer à l'occasion.
 >
 > --- ci-dessous, le brief E d'origine (E1 et E3 désormais faits) ---
 > C5 soldée : `VERROU_LIVRAISON = false` (2 miroirs), exemption TRANSFERT du PDF final
