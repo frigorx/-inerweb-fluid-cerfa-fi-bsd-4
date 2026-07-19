@@ -2,6 +2,63 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔓 LOT C audit-proof — brique C5 : BASCULE DU VERROU — LE MODE OFFICIEL EST OUVERT (19/07 soir) — LOT C COMPLET
+Dernière brique du lot C (plan §7.6). **`VERROU_LIVRAISON = false` dans les DEUX miroirs**
+(`v8/js/data/blocage-officiel.js` + `server/blocage-officiel.js`, nulle part ailleurs — la
+mécanique reste en place, rebasculer à `true` referme le mode partout). Le mode Officiel est
+désormais gouverné par les SEULES conditions réelles 1-12 + 14-15.
+- **Exemption TRANSFERT du PDF final (arbitrage Franck 19/07, gate ①)** : un transfert ne
+  produit jamais de CERFA (IM-12) → `pdfFinalAttendu(type)` + `MSG_PDF_FINAL_TRANSFERT` dans
+  le module pur `pdf-final.js` (2 miroirs, parité prouvée), branchés dans `validerMouvement`
+  des 2 stores (un PDF fourni sur un transfert est REFUSÉ — aucune pièce non attendue
+  n'entre au registre) et dans la vue (pas de génération CERFA pour un transfert officiel).
+  L'écriture scelle en v2, chaînée, `hashPdfFinal` null.
+- **Migration 24 — WORM des pièces jointes d'une écriture figée** (différé C3c) : 3 triggers
+  sur `pieces_jointes` (INSERT/UPDATE/DELETE refusés quand la pièce appartient à un MOUVEMENT
+  VALIDE/ANNULE, reparentage compris ; les autres entités restent libres). Le canal système
+  `conserverPdfFinal` insère pendant que la ligne est SOUMIS : il passe. `declencheursWorm()`
+  étendu — l'import total retire puis recrée ces triggers (prouvé). ⚠️ toute future migration
+  qui recrée `pieces_jointes` devra recréer ces triggers.
+- **`verifierPdfFinalConserve` branché** (différé C3b) : ① au DÉMARRAGE serveur,
+  `verifierTousPdfFinalConserves()` contrôle TOUS les PDF conservés (pièce, disque, `.sha256`
+  contre l'empreinte scellée) — anomalie affichée ET journalisée (`PDF_FINAL_ANOMALIE`),
+  best-effort par écriture, jamais bloquant ; ② au DOSSIER D'AUDIT : une fiche officielle
+  scellée est restituée depuis le document CONSERVÉ (porte de `conserve.js`, jamais le
+  générateur), verdict par fiche dans `02-PDF-CONSERVES.txt` (couvert par le manifeste
+  d'empreintes), anomalie DÉNONCÉE (le CERFA altéré n'est jamais embarqué ni régénéré),
+  contrôle lié d'une fiche conservée SAUTÉ (pas de doublon). Au passage, bug préexistant
+  corrigé : un TRANSFERT au registre bloquait TOUTE la génération du dossier d'audit (le
+  générateur refuse les transferts) — désormais exclu de la boucle CERFA, tracé au CSV.
+- **Wizard : choix du mode à l'étape 6** (le chemin d'écran qui manquait — `mode:'FORMATION'`
+  était codé en dur) : Formation par défaut (zéro friction), Officiel proposé seulement si
+  `peutPasserEnOfficiel().ok` (mode réel uniquement, la Démo reste Formation). En OFFICIEL,
+  l'assistant s'arrête au BROUILLON (les signatures se posent sur le brouillon — modale
+  « Signatures » C4 — puis soumission, puis validation avec CERFA conservé) ; la reprise
+  d'un brouillon conserve son mode (rétrogradation SIGNALÉE si l'éligibilité est perdue).
+- **Revue adversariale avant commit — 4 constats fermés** : ① le mode d'une écriture déjà
+  créée est FIGÉ (basculer le select après un échec de validation ne ment plus) ; ② reprendre
+  un brouillon SIGNÉ demande confirmation (les signatures réelles seraient détruites) ;
+  ③ rétrogradation Officiel→Formation à la reprise jamais silencieuse (bandeau) ; ④ contrôle
+  du démarrage tolérant par fichier (un PDF illisible n'avorte plus les autres). Resté
+  ouvert (préexistant, consigné) : `createControle` accepte un `mouvementId` arbitraire —
+  un contrôle forgé lié à une fiche d'une autre année échapperait au dossier d'audit annuel.
+- **Preuves — TOUT VERT, 81 exécutions** : nouvelle suite `test-officiel-e2e.mjs` (41 vérifs :
+  décor complet des conditions, parcours officiel de bout en bout par la vraie API — création
+  ouverte, refus 14-15 tirés, double signature, validation avec PDF conservé + témoins +
+  manifeste EN TRANSACTION avec signataires [différé C3b], WORM migration 24 tiré sur
+  l'écriture réelle, TRANSFERT officiel validé SANS PDF et refusé AVEC, contre-écriture
+  officielle v2 sans parcours de signatures [« à confirmer à la bascule », plan §9 —
+  CONFIRMÉ], dossier d'audit servant le CONSERVÉ octet pour octet + attaque altération
+  dénoncée, round-trip export/import vert, triggers renaissants). **ESSAI COMPLET AU
+  NAVIGATEUR sur serveur réel jetable** (base + port jetables, compte admin CLI, compte
+  référent lié) : wizard → mode Officiel choisi → brouillon → panneau des contrôles guidant
+  (cause d'appoint manquante détectée) → reprise (mode conservé) → double signature à
+  l'écran (délégation lycée PRÉ-COCHÉE, déclarations complètes) → soumission → validation
+  (« aucun blocage ») → bouton CERFA affichant « original conservé » ; écriture vérifiée en
+  base : VALIDE/OFFICIEL/v2, sha disque = empreinte scellée, témoins frères présents.
+  Tests adaptés à la nouvelle vérité (le verrou ne doit PLUS apparaître) :
+  `test-contrat` (×2), `test-validateur-session`.
+
 ### 🔐 LOT C audit-proof — brique C4 : PARCOURS UI OFFICIEL (conditions 3-4, 19/07)
 Avant-dernière brique du lot C (plan §7.5). Reste C5 (bascule du verrou). AUCUN fichier
 serveur ni store touché : la brique est 100 % côté interface + générateur CERFA.

@@ -39,7 +39,8 @@ import { evaluerBlocagesOfficiel, messageRefusOfficiel, VERROU_LIVRAISON }
 // PDF final conservé à la validation OFFICIELLE (lot C, brique C3) :
 // contrôles et messages canoniques partagés (miroir serveur).
 import { verifierOctetsPdfFinal, nomFichierPdfFinal, CATEGORIE_PDF_FINAL,
-  MSG_PDF_FINAL_MANQUANT, MSG_PDF_FINAL_HORS_OFFICIEL } from './pdf-final.js';
+  MSG_PDF_FINAL_MANQUANT, MSG_PDF_FINAL_HORS_OFFICIEL,
+  MSG_PDF_FINAL_TRANSFERT, pdfFinalAttendu } from './pdf-final.js';
 
 const CLE_STOCKAGE = 'inerweb-fluide-v8-demo';
 
@@ -3069,13 +3070,17 @@ export function creerDemoStore() {
       // même ordre que le serveur). En FORMATION, rien ne change : un PDF
       // fourni est refusé (plan lot C §2.4).
       let octetsPdfFinal = null;
-      if (mouvement.mode === 'OFFICIEL') {
+      // Brique C5 : le TRANSFERT est EXEMPTÉ du PDF final (arbitrage
+      // Franck 19/07 — jamais de CERFA, IM-12) ; un PDF fourni malgré
+      // tout est refusé, comme hors mode Officiel.
+      if (mouvement.mode === 'OFFICIEL' && pdfFinalAttendu(mouvement.type)) {
         if (!pdfFinalBase64) throw new Error(MSG_PDF_FINAL_MANQUANT);
         octetsPdfFinal = await octetsDepuis(pdfFinalBase64);
         const controlePdf = verifierOctetsPdfFinal(octetsPdfFinal);
         if (!controlePdf.ok) throw new Error(controlePdf.erreur);
       } else if (pdfFinalBase64) {
-        throw new Error(MSG_PDF_FINAL_HORS_OFFICIEL);
+        throw new Error(mouvement.mode === 'OFFICIEL'
+          ? MSG_PDF_FINAL_TRANSFERT : MSG_PDF_FINAL_HORS_OFFICIEL);
       }
       // Blocage dur OFFICIEL (lot B) : 3e moment (VALIDATION), AVANT tout
       // effet — signature comprise. La démo n'a ni session ni poste : la

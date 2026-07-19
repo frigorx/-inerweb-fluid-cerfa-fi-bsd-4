@@ -721,6 +721,38 @@ preparerCoffreFort();
   }
 }
 
+// Brique C5 : les PDF conservés sont VÉRIFIÉS au démarrage (pièce jointe,
+// fichier disque, .sha256 frère — chacun contre l'empreinte SCELLÉE dans
+// l'écriture chaînée). Toute anomalie est affichée ET journalisée au
+// journal chaîné (PDF_FINAL_ANOMALIE) — jamais fatal, même patron que le
+// scellement externe du lot D.
+{
+  try {
+    const bilan = api.verifierTousPdfFinalConserves();
+    for (const anomalie of bilan.anomalies) {
+      const details = anomalie.motifs.join(' · ');
+      console.error(`  [pdf-final] ANOMALIE ${anomalie.numero} : ${details}`);
+      try {
+        db.journaliser({
+          qui: 'système',
+          action: 'PDF_FINAL_ANOMALIE',
+          cible: anomalie.numero,
+          details
+        });
+      } catch {
+        // Journal indisponible : la console a déjà parlé.
+      }
+    }
+    if (bilan.examines > 0 && bilan.anomalies.length === 0) {
+      console.log(
+        `  [pdf-final] ${bilan.examines} PDF conservé(s) vérifié(s) : intacts.`);
+    }
+  } catch (erreur) {
+    console.warn(
+      `  [pdf-final] Vérification des PDF conservés impossible : ${erreur.message}`);
+  }
+}
+
 serveur.listen(PORT, HOTE, () => {
   console.log('');
   console.log('  inerWeb Fluide v8 — serveur local démarré');

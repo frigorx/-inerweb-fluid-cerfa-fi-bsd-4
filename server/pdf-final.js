@@ -33,6 +33,24 @@ const MSG_PDF_FINAL_TROP_GROS =
   'PDF final trop volumineux : 5 Mo maximum.';
 const MSG_PDF_FINAL_HORS_OFFICIEL =
   'PDF final conservé : réservé à la validation d’une fiche OFFICIELLE.';
+const MSG_PDF_FINAL_TRANSFERT =
+  'PDF final conservé : sans objet pour un transfert — ce mouvement '
+  + 'interne ne produit jamais de CERFA (IM-12).';
+
+/**
+ * Un PDF final (CERFA) est-il ATTENDU à la validation officielle de ce
+ * type de mouvement ? Arbitrage Franck du 19/07 (plan lot C, brique C5) :
+ * le TRANSFERT est EXEMPTÉ — il ne produit jamais de CERFA (IM-12,
+ * aucun numéro de fiche). L'écriture scelle quand même en v2, chaînée,
+ * avec `hashPdfFinal` null : opposable, simplement sans pièce
+ * documentaire. Un PDF fourni malgré tout est REFUSÉ (compromis
+ * protecteur : aucune pièce non attendue n'entre au registre).
+ * @param {string} typeMouvement
+ * @returns {boolean}
+ */
+function pdfFinalAttendu(typeMouvement) {
+  return typeMouvement !== 'TRANSFERT';
+}
 
 /**
  * Nom de la pièce jointe système qui conserve le PDF final. Dérivé du
@@ -72,6 +90,8 @@ module.exports = {
   MSG_PDF_FINAL_INVALIDE,
   MSG_PDF_FINAL_TROP_GROS,
   MSG_PDF_FINAL_HORS_OFFICIEL,
+  MSG_PDF_FINAL_TRANSFERT,
   nomFichierPdfFinal,
-  verifierOctetsPdfFinal
+  verifierOctetsPdfFinal,
+  pdfFinalAttendu
 };

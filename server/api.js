@@ -50,7 +50,8 @@ const { ROLES_SIGNATURE, declarationSignature, verifierImageSignature,
 // contrôles et messages canoniques (miroir du module ESM du front, parité
 // prouvée par test-signatures-mouvement.mjs).
 const { verifierOctetsPdfFinal, nomFichierPdfFinal, CATEGORIE_PDF_FINAL,
-  MSG_PDF_FINAL_MANQUANT, MSG_PDF_FINAL_HORS_OFFICIEL } =
+  MSG_PDF_FINAL_MANQUANT, MSG_PDF_FINAL_HORS_OFFICIEL,
+  MSG_PDF_FINAL_TRANSFERT, pdfFinalAttendu } =
   require('./pdf-final.js');
 
 // ------------------------------------------------------------
@@ -2609,13 +2610,17 @@ const HANDLERS = {
     // même ordre que la démo). En FORMATION, rien ne change : un PDF
     // fourni est refusé (plan lot C §2.4).
     let octetsPdfFinal = null;
-    if (mouvement.mode === 'OFFICIEL') {
+    // Brique C5 : le TRANSFERT est EXEMPTÉ du PDF final (arbitrage
+    // Franck 19/07 — jamais de CERFA, IM-12) ; un PDF fourni malgré
+    // tout est refusé, comme hors mode Officiel.
+    if (mouvement.mode === 'OFFICIEL' && pdfFinalAttendu(mouvement.type)) {
       if (!pdfFinalBase64) throw new Error(MSG_PDF_FINAL_MANQUANT);
       octetsPdfFinal = decoderBase64Pj(pdfFinalBase64);
       const controlePdf = verifierOctetsPdfFinal(octetsPdfFinal);
       if (!controlePdf.ok) throw new Error(controlePdf.erreur);
     } else if (pdfFinalBase64) {
-      throw new Error(MSG_PDF_FINAL_HORS_OFFICIEL);
+      throw new Error(mouvement.mode === 'OFFICIEL'
+        ? MSG_PDF_FINAL_TRANSFERT : MSG_PDF_FINAL_HORS_OFFICIEL);
     }
     // Blocage dur OFFICIEL (lot B) : 3e moment (VALIDATION), AVANT tout
     // effet — signature comprise.
@@ -3804,7 +3809,7 @@ function declencheursWorm() {
     `SELECT name, sql FROM sqlite_master
      WHERE type = 'trigger'
        AND tbl_name IN ('mouvements', 'journal_audit', 'mouvement_outillage',
-                        'signatures_mouvement')`);
+                        'signatures_mouvement', 'pieces_jointes')`);
 }
 
 /**
@@ -5546,6 +5551,38 @@ function verifierPdfFinalConserve(mouvementId) {
   return { ok: motifs.length === 0, sansObjet: false, motifs };
 }
 
+/**
+ * Brique C5 : joue verifierPdfFinalConserve sur TOUTES les écritures
+ * scellées avec un PDF final — le contrôle du démarrage (serveur.js),
+ * même patron que la réécriture des témoins C3b : best-effort, jamais
+ * bloquant. Les anomalies remontent à l'appelant, qui les affiche et
+ * les journalise.
+ * @returns {{ examines: number,
+ *   anomalies: Array<{numero: string, motifs: string[]}> }}
+ */
+function verifierTousPdfFinalConserves() {
+  const scelles = db.all(
+    'SELECT id, numero FROM mouvements WHERE hash_pdf_final IS NOT NULL')
+    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const anomalies = [];
+  for (const mv of scelles) {
+    // Best-effort PAR écriture (revue adversariale) : un fichier
+    // illisible (verrou antivirus, disque) devient SON anomalie — il
+    // n'avorte jamais le contrôle des autres PDF conservés.
+    let verdict;
+    try {
+      verdict = verifierPdfFinalConserve(mv.id);
+    } catch (erreur) {
+      verdict = { ok: false, sansObjet: false,
+        motifs: [`vérification impossible : ${erreur.message}`] };
+    }
+    if (!verdict.ok) {
+      anomalies.push({ numero: mv.numero, motifs: verdict.motifs });
+    }
+  }
+  return { examines: scelles.length, anomalies };
+}
+
 /** Machine par id (copie camelCase). */
 function lireMachine(id) {
   return mapping.versFront('machines',
@@ -6256,6 +6293,7 @@ module.exports = {
   conserverPdfFinal,
   ecrireTemoinsPdfFinal,
   verifierPdfFinalConserve,
+  verifierTousPdfFinalConserves,
   // Lot C (C3b) : appelée au démarrage par serveur.js (et par le test).
   reecrireTemoinsPdfFinalManquants
 };

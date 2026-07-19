@@ -621,8 +621,16 @@ const signatureType = (surcharges = {}) => ({
     pdfCjs.MSG_PDF_FINAL_INVALIDE === pdfEsm.MSG_PDF_FINAL_INVALIDE &&
     pdfCjs.MSG_PDF_FINAL_TROP_GROS === pdfEsm.MSG_PDF_FINAL_TROP_GROS &&
     pdfCjs.MSG_PDF_FINAL_HORS_OFFICIEL === pdfEsm.MSG_PDF_FINAL_HORS_OFFICIEL &&
+    pdfCjs.MSG_PDF_FINAL_TRANSFERT === pdfEsm.MSG_PDF_FINAL_TRANSFERT &&
     pdfCjs.nomFichierPdfFinal('FI-2026-0001') ===
       pdfEsm.nomFichierPdfFinal('FI-2026-0001'));
+  // Brique C5 : l'exemption TRANSFERT est la MÊME vérité des deux côtés.
+  verifier('pdf-final : pdfFinalAttendu identique des deux côtés (exemption TRANSFERT)',
+    pdfCjs.pdfFinalAttendu('TRANSFERT') === false &&
+    pdfEsm.pdfFinalAttendu('TRANSFERT') === false &&
+    pdfCjs.pdfFinalAttendu('CHARGE_APPOINT') === true &&
+    pdfEsm.pdfFinalAttendu('CHARGE_APPOINT') === true &&
+    pdfCjs.pdfFinalAttendu('RECUPERATION') === pdfEsm.pdfFinalAttendu('RECUPERATION'));
 
   const octetsPdf = Buffer.from('%PDF-1.4\nPreuve C3a du PDF conserve\n%%EOF\n');
   const octetsHtml = Buffer.from('<html><body>Faux PDF</body></html>');
@@ -682,6 +690,34 @@ const signatureType = (surcharges = {}) => ({
   verifier('aucune PJ CERFA_FINAL n’a été conservée sur les refus',
     !db.get(`SELECT id FROM pieces_jointes
              WHERE entite_id = ? AND categorie = 'CERFA_FINAL'`, [mvOff.id]));
+
+  // 8.2 bis — Brique C5 : le TRANSFERT officiel est EXEMPTÉ du PDF final
+  // (arbitrage Franck 19/07 — jamais de CERFA, IM-12). Un PDF fourni est
+  // refusé ; SANS PDF, le refus suivant est celui du moteur (verrou), et
+  // PAS « PDF manquant » — l'exemption se prouve verrou encore fermé.
+  const bDstTransfert = api.appeler('createBouteille', { donneesBouteille: {
+    type: 'RECUPERATION', fluide: 'R-134a', tareKg: 10, masseBruteKg: 10,
+    contenanceMaxKg: 25 } }, sansSession);
+  const bSrcTransfert = api.appeler('getBouteilles', {}, sansSession)
+    .find((b) => b.id === bouteille.id);
+  const mvTransfertOff = api.appeler('creerMouvement', { donneesMouvement: {
+    type: 'TRANSFERT', bouteilleSrcId: bouteille.id,
+    bouteilleDstId: bDstTransfert.id,
+    peseeAvantKg: bSrcTransfert.masseNetteKg,
+    peseeApresKg: bSrcTransfert.masseNetteKg - 0.5,
+    technicien: 'Référent Signature' } }, sansSession);
+  api.appeler('soumettreMouvement', { id: mvTransfertOff.id }, sansSession);
+  db.run("UPDATE mouvements SET mode = 'OFFICIEL' WHERE id = ?",
+    [mvTransfertOff.id]);
+  attendreRejet('un PDF fourni sur un TRANSFERT officiel → refus canonique',
+    () => api.appeler('validerMouvement', { id: mvTransfertOff.id,
+      validateurId: referent.id,
+      pdfFinalBase64: octetsPdf.toString('base64') }, sansSession),
+    'sans objet pour un transfert');
+  attendreRejet('sans PDF, le refus du TRANSFERT officiel vient du moteur (exemption prouvée)',
+    () => api.appeler('validerMouvement', { id: mvTransfertOff.id,
+      validateurId: referent.id }, sansSession),
+    'Mode Officiel refusé');
 
   // 8.3 La MÉCANIQUE de conservation (aide exportée, appelée par
   // validerMouvement dans la transaction) : PJ système en table, fichier
@@ -839,6 +875,26 @@ const signatureType = (surcharges = {}) => ({
   db.run("DELETE FROM pieces_jointes WHERE id = 'pj-cerfa-double'");
   verifier('pluralité retirée : le vérificateur repasse au vert',
     api.verifierPdfFinalConserve(mvOff.id).ok === true);
+
+  // ==========================================================
+  // 8.7 Brique C5 — le contrôle GLOBAL du démarrage
+  // (verifierTousPdfFinalConserves, joué par serveur.js) : tous les
+  // PDF scellés sont examinés, une altération remonte avec le NUMÉRO.
+  // ==========================================================
+  const bilanGlobalVert = api.verifierTousPdfFinalConserves();
+  verifier('contrôle global : le PDF scellé du décor est examiné, zéro anomalie',
+    bilanGlobalVert.examines >= 1 && bilanGlobalVert.anomalies.length === 0,
+    JSON.stringify(bilanGlobalVert));
+  writeFileSync(cheminPdfConserve,
+    Buffer.from('%PDF-1.4\nPDF FALSIFIE pour le controle global\n%%EOF\n'));
+  const bilanGlobalRouge = api.verifierTousPdfFinalConserves();
+  verifier('ATTAQUE : l’altération est dénoncée par le contrôle global, numéro compris',
+    bilanGlobalRouge.anomalies.some((a) => a.numero === mvOff.numero &&
+      a.motifs.some((m) => m.includes('ALTÉRÉ'))),
+    JSON.stringify(bilanGlobalRouge));
+  writeFileSync(cheminPdfConserve, octetsPdf);
+  verifier('réparé : le contrôle global repasse au vert',
+    api.verifierTousPdfFinalConserves().anomalies.length === 0);
 }
 
 console.log(`\n${nbOk} vérifications réussies, ${nbEchecs} échec(s).`);

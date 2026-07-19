@@ -238,15 +238,18 @@ refus de suppression sur mouvement figé (déjà en place), inclusion dans les s
    commit : 2 IMPORTANTS fermés (correction élève sur blocs historiques ; canal PDF
    final sans catch silencieux). Vérifié au navigateur sur serveur réel jetable.
    Détail : CHANGELOG.
-6. **C5 — BASCULE** : essai complet en données fictives (parcours officiel de bout en bout),
-   puis `VERROU_LIVRAISON = false` (2 miroirs) + suite e2e officielle activée + relecture
-   finale de la liste du lot B par Franck. Ensuite : simulation d'audit fin août.
-   ⚠️ **Arbitrage à trancher AVANT la bascule (constat de la revue C4)** : impasse
-   TRANSFERT OFFICIEL — les deux stores exigent un PDF final pour TOUT mouvement
-   Officiel, mais un TRANSFERT ne produit jamais de CERFA (IM-12) → sa validation
-   officielle échouerait pour toujours. Proposition (compromis protecteur) : exemption
-   TRANSFERT du PDF final dans les DEUX miroirs (l'écriture reste scellée v2, chaînée,
-   sans pièce documentaire — cohérent avec « jamais un CERFA »).
+6. ✅ **C5 — BASCULE SOLDÉE (19/07 soir) — LOT C COMPLET.** Arbitrage TRANSFERT tranché
+   par Franck (gate ① : exemption du PDF final dans les DEUX miroirs, PDF fourni refusé,
+   écriture scellée v2 chaînée sans pièce). Livré : migration 24 (WORM pieces_jointes),
+   `verifierPdfFinalConserve` branché (démarrage serveur + dossier d'audit servant le
+   CONSERVÉ avec verdicts 02-PDF-CONSERVES.txt), choix du mode au wizard (étape 6, le
+   chemin d'écran manquant), suite e2e officielle `test-officiel-e2e.mjs` (41 vérifs,
+   couvre le manifeste en transaction — différé C3b — et la contre-écriture officielle
+   v2 sans signatures, « à confirmer » du §9 : CONFIRMÉ), essai complet au navigateur
+   sur serveur réel jetable, `VERROU_LIVRAISON = false` (2 miroirs). Revue adversariale :
+   4 constats fermés avant commit ; resté ouvert (préexistant consigné) : `createControle`
+   accepte un mouvementId arbitraire. Reste HORS CODE : relecture finale de la liste du
+   lot B par Franck (gate ⑤), puis simulation d'audit fin août. Détail : CHANGELOG.
 
 ## 8. Attaques à tirer (preuves exigées, pas seulement des tests verts)
 

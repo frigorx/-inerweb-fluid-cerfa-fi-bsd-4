@@ -136,6 +136,17 @@
  *       pieces_jointes RECRÉÉE (procédure migration 10) pour la catégorie
  *       CERFA_FINAL (le PDF conservé, C3). Trigger WORM des mouvements
  *       recréé, liste blanche étendue aux 6 nouvelles colonnes.
+ *  24 — LOT C (brique C5) : WORM des pièces jointes d'une écriture FIGÉE.
+ *       3 triggers sur pieces_jointes — INSERT/UPDATE/DELETE refusés quand
+ *       la pièce appartient à un MOUVEMENT VALIDE/ANNULE (reparentage vers
+ *       ou depuis une écriture figée compris) ; les pièces des autres
+ *       entités (machine, bouteille, personne…) restent libres. Le canal
+ *       SYSTÈME conserverPdfFinal insère PENDANT que la ligne est encore
+ *       SOUMIS en base : il passe. L'import total retire puis recrée ces
+ *       triggers comme les autres WORM (declencheursWorm d'api.js — filtre
+ *       tbl_name étendu à pieces_jointes). ⚠️ Toute future migration qui
+ *       RECRÉE pieces_jointes (procédure migration 10) devra recréer ces
+ *       triggers (« aucun trigger sur pieces_jointes » n'est plus vrai).
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -1192,6 +1203,50 @@ WHEN OLD.statut = 'VALIDE'
           AND NEW.hash_pdf_final        IS OLD.hash_pdf_final)
 BEGIN
     SELECT RAISE(ABORT, 'Registre verrouillé : une écriture validée ne peut pas être modifiée (utiliser une contre-écriture).');
+END;`);
+    }
+  },
+
+  // ------------------------------------------------------------
+  // 24 — LOT C (brique C5) : WORM des pièces jointes d'une écriture
+  // figée. Une pièce justificative d'un mouvement VALIDE/ANNULE ne se
+  // modifie plus, ne se supprime plus, et une écriture figée n'en
+  // acquiert plus (l'empreinte v2 gèle hashPiecesJointes au scellement —
+  // ces triggers ferment le canal SQL direct, symétrique des refus
+  // applicatifs de C3c). Le canal système conserverPdfFinal insère
+  // pendant que la ligne est encore SOUMIS : il passe. L'import total
+  // (opération admin) retire puis recrée ces triggers dans sa
+  // transaction, comme les autres WORM.
+  // ------------------------------------------------------------
+  24: {
+    nom: 'worm_pieces_jointes_lot_c',
+    appliquer(db) {
+      db.exec(`CREATE TRIGGER pieces_jointes_interdire_update_fige
+BEFORE UPDATE ON pieces_jointes
+WHEN (OLD.entite_type = 'MOUVEMENT' AND EXISTS (
+        SELECT 1 FROM mouvements
+        WHERE id = OLD.entite_id AND statut IN ('VALIDE','ANNULE')))
+  OR (NEW.entite_type = 'MOUVEMENT' AND EXISTS (
+        SELECT 1 FROM mouvements
+        WHERE id = NEW.entite_id AND statut IN ('VALIDE','ANNULE')))
+BEGIN
+    SELECT RAISE(ABORT, 'Pièce scellée : les pièces justificatives d''une écriture figée ne peuvent plus être modifiées.');
+END;`);
+      db.exec(`CREATE TRIGGER pieces_jointes_interdire_delete_fige
+BEFORE DELETE ON pieces_jointes
+WHEN OLD.entite_type = 'MOUVEMENT' AND EXISTS (
+        SELECT 1 FROM mouvements
+        WHERE id = OLD.entite_id AND statut IN ('VALIDE','ANNULE'))
+BEGIN
+    SELECT RAISE(ABORT, 'Pièce scellée : les pièces justificatives d''une écriture figée sont conservées.');
+END;`);
+      db.exec(`CREATE TRIGGER pieces_jointes_interdire_insert_fige
+BEFORE INSERT ON pieces_jointes
+WHEN NEW.entite_type = 'MOUVEMENT' AND EXISTS (
+        SELECT 1 FROM mouvements
+        WHERE id = NEW.entite_id AND statut IN ('VALIDE','ANNULE'))
+BEGIN
+    SELECT RAISE(ABORT, 'Écriture figée : elle ne peut plus recevoir de pièce justificative.');
 END;`);
     }
   }

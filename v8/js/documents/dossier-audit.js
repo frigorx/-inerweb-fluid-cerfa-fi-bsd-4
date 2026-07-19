@@ -19,6 +19,9 @@ import { creerZip } from '../core/zip.js';
 import { toutesLesTables } from './exports.js';
 import { genererCerfaPdf } from '../cerfa/generateur.js';
 import {
+  doitServirPdfConserve, chargerPdfConserve, resoudreMouvementConserve
+} from '../cerfa/conserve.js';
+import {
   versOctets, nomSur, octetsEntree, sha256Hex
 } from './dossier-commun.js';
 
@@ -66,6 +69,32 @@ async function redigerManifesteEmpreintes(entrees, annee) {
   }
   lignes.push('');
   return lignes.join('\r\n');
+}
+
+/**
+ * Rédige la pièce 02-PDF-CONSERVES.txt (brique C5) : le verdict, fiche
+ * par fiche, de la restitution des PDF finaux CONSERVÉS — conservé et
+ * vérifié (empreinte scellée), ou ANOMALIE dénoncée (document absent ou
+ * altéré, jamais régénéré).
+ * @param {string[]} verdicts - une ligne par fiche à PDF scellé
+ * @param {number} annee
+ * @returns {string}
+ */
+function redigerVerdictsConserves(verdicts, annee) {
+  return [
+    `PDF FINAUX CONSERVÉS — DOSSIER D'AUDIT ${annee}`,
+    '='.repeat(68),
+    '',
+    'Les fiches OFFICIELLES scellées avec leur PDF final sont restituées',
+    'depuis le document CONSERVÉ tel que présenté aux signataires (jamais',
+    'régénéré), vérifié contre l\'empreinte SHA-256 scellée dans',
+    'l\'écriture chaînée. Une anomalie ci-dessous signifie que le document',
+    'conservé manque ou a été modifié : restaurer une sauvegarde vérifiée.',
+    '',
+    '-'.repeat(68),
+    ...verdicts,
+    ''
+  ].join('\r\n');
 }
 
 /**
@@ -140,25 +169,69 @@ export async function genererDossierAudit(store, annee) {
     entrees.push({ nom: table.nom, contenu: table.contenu });
   }
 
-  // ---- 2. CERFA officiels remplis : mouvements inscrits au registre ----
+  // ---- 2. CERFA : mouvements inscrits au registre. Brique C5 : une
+  // fiche OFFICIELLE scellée avec son PDF final est restituée depuis le
+  // document CONSERVÉ (vérifié contre l'empreinte scellée — jamais le
+  // générateur, doctrine C3b) ; une anomalie est DÉNONCÉE dans
+  // 02-PDF-CONSERVES.txt, jamais maquillée par une régénération. Les
+  // autres fiches (Formation, historique sans PDF scellé, transferts)
+  // restent remplies par le générateur, comme avant. ----
+  const verdictsConserves = [];
+  // Un TRANSFERT entre contenants ne donne jamais lieu à un CERFA (IM-12,
+  // aucun numéro de fiche — le générateur le refuse) : il reste tracé dans
+  // mouvements.csv, sans PDF. Constat de la suite e2e C5 : sans ce filtre,
+  // le premier transfert au registre bloquait TOUT le dossier d'audit.
   const mouvementsRegistre = mouvements.filter((mv) =>
     STATUTS_REGISTRE.includes(mv.statut) &&
+    mv.type !== 'TRANSFERT' &&
     (mv.date || '').startsWith(prefixeAnnee));
   for (const mouvement of mouvementsRegistre) {
+    if (doitServirPdfConserve(mouvement)) {
+      try {
+        const conserve = await chargerPdfConserve(store, mouvement);
+        entrees.push({
+          nom: `cerfa/${nomSur(conserve.numero)}.pdf`,
+          contenu: conserve.octets
+        });
+        verdictsConserves.push(
+          `${mouvement.numero}  CONSERVÉ et vérifié `
+          + `(SHA-256 ${mouvement.hashPdfFinal})`);
+      } catch (erreur) {
+        verdictsConserves.push(`${mouvement.numero}  ANOMALIE : ${erreur.message}`);
+      }
+      continue;
+    }
     const { octets, numero } = await genererCerfaPdf(store, {
       source: 'mouvement', id: mouvement.id
     });
     entrees.push({ nom: `cerfa/${nomSur(numero)}.pdf`, contenu: octets });
   }
 
-  // ---- 3. CERFA officiels remplis : contrôles d'étanchéité de l'année ----
+  // ---- 3. CERFA : contrôles d'étanchéité de l'année. Un contrôle LIÉ à
+  // une fiche dont le PDF est conservé est la MÊME fiche (même numéro) :
+  // elle est déjà restituée par la boucle des mouvements — régénérer par
+  // cette porte contournerait le « jamais le générateur » (même règle que
+  // le visualiseur, C3b). ----
   const controlesAnnee = controles.filter((c) =>
     (c.date || '').startsWith(prefixeAnnee));
   for (const controle of controlesAnnee) {
+    const ficheConservee = await resoudreMouvementConserve(store, {
+      source: 'controle', id: controle.id
+    });
+    if (ficheConservee) continue;
     const { octets, numero } = await genererCerfaPdf(store, {
       source: 'controle', id: controle.id
     });
     entrees.push({ nom: `cerfa/${nomSur(numero)}.pdf`, contenu: octets });
+  }
+
+  // ---- 3 bis. Verdicts des PDF conservés (pièce présente dès qu'une
+  // fiche à PDF scellé est du dossier). ----
+  if (verdictsConserves.length) {
+    entrees.unshift({
+      nom: '02-PDF-CONSERVES.txt',
+      contenu: redigerVerdictsConserves(verdictsConserves, annee)
+    });
   }
 
   // ---- 4. Attestation de capacité de l'établissement (si déposée) ----

@@ -1218,6 +1218,91 @@ verifierLeve('le code public est unique (résolution QR sans ambiguïté)',
 }
 
 // ============================================================
+// 6quaterdecies. WORM des pièces jointes d'une écriture figée
+// (migration 024, brique C5) — base PRÉEXISTANTE (v23 → v24) : les
+// pièces d'un mouvement VALIDE/ANNULE sont intouchables (insert/
+// update/delete/reparentage), celles d'un BROUILLON ou d'une autre
+// entité (machine…) restent libres.
+// ============================================================
+{
+  const CHEMIN_WORM_PJ = join(DOSSIER, 'ancienne-worm-pj.db');
+  const ancienneWpj = new DatabaseSync(CHEMIN_WORM_PJ);
+  ancienneWpj.exec('PRAGMA recursive_triggers = ON;');
+  ancienneWpj.exec(readFileSync(new URL('./schema.sql', import.meta.url), 'utf8'));
+  ancienneWpj.exec(`PRAGMA user_version = ${migrations.VERSION_BASE};`);
+  const jusqua23 = {};
+  for (let v = 2; v <= 23; v += 1) jusqua23[v] = migrations.MIGRATIONS[v];
+  migrations.migrer(ancienneWpj, jusqua23); // portée à 23, PAS encore 24
+
+  ancienneWpj.exec(`INSERT INTO etablissements (id, raison_sociale)
+                    VALUES ('ETB-WPJ', 'Lycée WORM PJ');`);
+  // Un mouvement VALIDE scellé (figé) et un BROUILLON (pièces libres).
+  ancienneWpj.exec(`INSERT INTO mouvements (id, numero, etablissement_id,
+      date_mouvement, mode, type_operation, statut, quantite_calculee_kg,
+      hash_ecriture, hash_precedent, ordre_validation)
+    VALUES ('MVT-WPJ-V', 'FORM-2026-0101', 'ETB-WPJ', '2026-07-01',
+      'FORMATION', 'CHARGE_APPOINT', 'VALIDE', 1.5,
+      '${'e'.repeat(64)}', NULL, 1);`);
+  ancienneWpj.exec(`INSERT INTO mouvements (id, numero, etablissement_id,
+      date_mouvement, mode, type_operation, statut)
+    VALUES ('MVT-WPJ-B', 'FORM-2026-0102', 'ETB-WPJ', '2026-07-02',
+      'FORMATION', 'CHARGE_APPOINT', 'BROUILLON');`);
+  // Une pièce posée sur le mouvement figé AVANT la migration (historique
+  // v1 : ajout jadis légitime) et une pièce sur une MACHINE.
+  ancienneWpj.exec(`INSERT INTO pieces_jointes (id, etablissement_id,
+      entite_type, entite_id, categorie, nom_fichier)
+    VALUES ('PJ-WPJ-FIGEE', 'ETB-WPJ', 'MOUVEMENT', 'MVT-WPJ-V', 'RAPPORT', 'r.pdf'),
+           ('PJ-WPJ-MACHINE', 'ETB-WPJ', 'MACHINE', 'MAC-WPJ', 'PHOTO_PESEE', 'p.png');`);
+
+  const vWpj = migrations.migrer(ancienneWpj, { 24: migrations.MIGRATIONS[24] });
+  verifier('la migration 024 porte la base à la version 24',
+    vWpj === 24 && migrations.lireVersion(ancienneWpj) === 24);
+  verifier('les 3 triggers WORM de pieces_jointes sont en place',
+    ancienneWpj.prepare(`SELECT count(*) AS n FROM sqlite_master
+      WHERE type = 'trigger' AND tbl_name = 'pieces_jointes'`).get().n === 3);
+
+  // Pièce d'une écriture figée : intouchable, dans les trois sens.
+  verifierLeve('PJ d’un mouvement figé : modification interdite (SQL direct)',
+    () => ancienneWpj.exec(
+      `UPDATE pieces_jointes SET nom_fichier = 'forge.pdf' WHERE id = 'PJ-WPJ-FIGEE';`),
+    'Pièce scellée');
+  verifierLeve('PJ d’un mouvement figé : suppression interdite (SQL direct)',
+    () => ancienneWpj.exec(
+      `DELETE FROM pieces_jointes WHERE id = 'PJ-WPJ-FIGEE';`),
+    'Pièce scellée');
+  verifierLeve('PJ sur un mouvement figé : ajout interdit (SQL direct)',
+    () => ancienneWpj.exec(`INSERT INTO pieces_jointes (id, etablissement_id,
+        entite_type, entite_id, categorie, nom_fichier)
+      VALUES ('PJ-WPJ-FORGE', 'ETB-WPJ', 'MOUVEMENT', 'MVT-WPJ-V', 'AUTRE', 'f.pdf');`),
+    'figée');
+  verifierLeve('re-parenter une PJ de machine vers un mouvement figé est interdit',
+    () => ancienneWpj.exec(`UPDATE pieces_jointes
+      SET entite_type = 'MOUVEMENT', entite_id = 'MVT-WPJ-V'
+      WHERE id = 'PJ-WPJ-MACHINE';`),
+    'Pièce scellée');
+
+  // Un BROUILLON et les autres entités restent libres.
+  ancienneWpj.exec(`INSERT INTO pieces_jointes (id, etablissement_id,
+      entite_type, entite_id, categorie, nom_fichier)
+    VALUES ('PJ-WPJ-BROUILLON', 'ETB-WPJ', 'MOUVEMENT', 'MVT-WPJ-B', 'AUTRE', 'b.pdf');`);
+  ancienneWpj.exec(`UPDATE pieces_jointes SET nom_fichier = 'b2.pdf'
+    WHERE id = 'PJ-WPJ-BROUILLON';`);
+  ancienneWpj.exec(`DELETE FROM pieces_jointes WHERE id = 'PJ-WPJ-BROUILLON';`);
+  ancienneWpj.exec(`UPDATE pieces_jointes SET nom_fichier = 'p2.png'
+    WHERE id = 'PJ-WPJ-MACHINE';`);
+  ancienneWpj.exec(`DELETE FROM pieces_jointes WHERE id = 'PJ-WPJ-MACHINE';`);
+  verifier('PJ d’un BROUILLON et des autres entités : insert/update/delete libres',
+    ancienneWpj.prepare(`SELECT count(*) AS n FROM pieces_jointes
+      WHERE id IN ('PJ-WPJ-BROUILLON', 'PJ-WPJ-MACHINE')`).get().n === 0);
+  verifier('la pièce historique du mouvement figé est toujours là, intacte',
+    ancienneWpj.prepare(
+      "SELECT nom_fichier FROM pieces_jointes WHERE id = 'PJ-WPJ-FIGEE'")
+      .get().nom_fichier === 'r.pdf');
+
+  ancienneWpj.close();
+}
+
+// ============================================================
 // 7. Base pré-versionnage : refusée avec un message clair
 // ============================================================
 db.fermer();

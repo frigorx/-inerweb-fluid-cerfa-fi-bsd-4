@@ -405,6 +405,22 @@ export async function ouvrirWizard(ctx, options = {}) {
     // Conseil d'intervenant indisponible : le wizard reste utilisable.
   }
 
+  // Brique C5 : éligibilité du mode OFFICIEL, choisie à l'étape 6.
+  // Seulement en mode réel (la Démo reste FORMATION — le tableau de bord
+  // l'annonce) et si les prérequis de l'établissement sont réunis.
+  // Tolérant à l'échec : sans verdict, le choix reste FORMATION.
+  let officielEligible = false;
+  let officielMotifs = [];
+  if (store.modeLabel !== 'DÉMO') {
+    try {
+      const verdictOfficiel = await store.peutPasserEnOfficiel();
+      officielEligible = verdictOfficiel.ok === true;
+      officielMotifs = verdictOfficiel.motifs ?? [];
+    } catch {
+      // Éligibilité inconnue : le choix reste FORMATION, jamais bloquant.
+    }
+  }
+
   const techniciens = personnel.filter((p) => p.actif);
   const detecteurs = outillage.filter((o) => o.typeOutil === 'DETECTEUR');
   // Brique 2 : liste complète de l'outillage (tous types), triée par
@@ -461,7 +477,8 @@ export async function ouvrirWizard(ctx, options = {}) {
     statutControle: null,   // 'SANS_OBJET' | 'CONFORME' | 'FUITE'
     detecteurId: null,
     localisationFuite: '',  // R5 : localisation saisie si statutControle === 'FUITE'
-    outilsIds: []           // brique 2 : outils réglementaires déclarés (ids)
+    outilsIds: [],          // brique 2 : outils réglementaires déclarés (ids)
+    modeFiche: 'FORMATION'  // brique C5 : 'FORMATION' | 'OFFICIEL' (étape 6)
   };
 
   // Écriture déjà créée/soumise dont la validation a échoué (nouvel essai
@@ -470,9 +487,18 @@ export async function ouvrirWizard(ctx, options = {}) {
   let numeroMouvementCree = null;
   let mouvementSoumis = false;
   let finalisationEnCours = false;
+  // Brique C5 : mode RÉEL de l'écriture déjà créée — la branche OFFICIEL
+  // de finaliser() se décide sur CE mode, jamais sur le select (constat
+  // de la revue adversariale : basculer le select après un échec de
+  // validation Formation fermait le wizard sur un toast mensonger).
+  let modeFicheCree = null;
 
   // Instance du canvas de signature (recréée à chaque rendu de l'étape 6)
   let signature = null;
+
+  // Brique C5 : brouillon OFFICIEL repris alors que l'éligibilité est
+  // perdue → averti à l'étape 6 (la fiche repartirait en Formation).
+  let retrogradeDepuisOfficiel = false;
 
   // ---- CR-1 : reprise d'un brouillon existant (options.brouillonId) ----
   // Le store n'expose aucune modification de brouillon : la reprise
@@ -495,6 +521,14 @@ export async function ouvrirWizard(ctx, options = {}) {
         TRANSFERT: 'transfert'
       };
       etat.carteType = CARTE_PAR_TYPE[brouillon.type] || null;
+      // Brique C5 : un brouillon OFFICIEL repris reste officiel. Si
+      // l'éligibilité a été perdue entre-temps, le choix retombe en
+      // FORMATION — SIGNALÉ à l'étape 6 (revue adversariale : jamais de
+      // rétrogradation silencieuse d'une fiche destinée au registre).
+      etat.modeFiche = brouillon.mode === 'OFFICIEL' && officielEligible
+        ? 'OFFICIEL' : 'FORMATION';
+      retrogradeDepuisOfficiel =
+        brouillon.mode === 'OFFICIEL' && !officielEligible;
       etat.premiereCharge = brouillon.type === 'MISE_EN_SERVICE';
       etat.demantelement = brouillon.type === 'RECUPERATION_DEMANTELEMENT';
       etat.machineId = brouillon.machineId || null;
@@ -1718,6 +1752,13 @@ export async function ouvrirWizard(ctx, options = {}) {
       ? bandeauAvertissement('Élève en formation : ce mouvement sera soumis '
         + 'pour validation par un référent.')
       : '';
+    // Brique C5 : rétrogradation d'un brouillon OFFICIEL jamais silencieuse.
+    const bandeauRetrograde = retrogradeDepuisOfficiel
+      ? bandeauAvertissement('Ce brouillon était OFFICIEL, mais les '
+        + 'prérequis du mode Officiel ne sont plus réunis'
+        + (officielMotifs.length ? ' (' + officielMotifs[0] + ')' : '')
+        + ' : la fiche repartira en FORMATION.')
+      : '';
 
     // IM-14 : cause du mouvement (cadre 14 du CERFA), facultative
     const optionsCause = ['<option value="">— Non précisée —</option>']
@@ -1738,13 +1779,58 @@ export async function ouvrirWizard(ctx, options = {}) {
       + ' placeholder="Ex. : casse d’un bouchon fusible">'
       + '</div>';
 
+    // Brique C5 : mode de la fiche — FORMATION par défaut (zéro friction),
+    // OFFICIEL proposé seulement si les prérequis sont réunis (mode réel).
+    const blocMode = '<div class="wizard-bloc champ">'
+      + '<label for="wizard-mode">Mode de la fiche</label>'
+      + '<select id="wizard-mode">'
+      + '<option value="FORMATION"'
+      + (etat.modeFiche === 'OFFICIEL' ? '' : ' selected')
+      + '>Formation (entraînement)</option>'
+      + (officielEligible
+        ? '<option value="OFFICIEL"'
+          + (etat.modeFiche === 'OFFICIEL' ? ' selected' : '')
+          + '>Officiel (registre réglementaire)</option>'
+        : '')
+      + '</select>'
+      + (officielEligible
+        ? '<p style="font-size:12px;color:var(--texte-2);margin:6px 0 0">'
+          + 'En Officiel : la fiche reste en BROUILLON à la fin de '
+          + 'l’assistant — les deux signatures réelles se recueillent '
+          + 'ensuite (bouton « Signatures »), puis la validation conserve '
+          + 'le CERFA final scellé.</p>'
+        : (store.modeLabel !== 'DÉMO' && officielMotifs.length
+          ? '<p style="font-size:12px;color:var(--texte-2);margin:6px 0 0">'
+            + 'Mode Officiel indisponible : ' + esc(officielMotifs[0])
+            + '</p>'
+          : ''))
+      + '</div>';
+
     corpsEl.innerHTML =
       '<div class="wizard-recap">' + lignes.join('') + '</div>'
       + bandeauEleve
+      + bandeauRetrograde
+      + blocMode
       + blocCause
       // Le libellé « Signature du technicien » est rendu par creerSignature
       + '<div id="wizard-signature"></div>'
       + '<div class="wizard-bloc" id="wizard-finalisation-erreurs"></div>';
+
+    // Brique C5 : bascule du mode SANS re-rendu (même règle que la cause :
+    // le canvas de signature serait effacé). Une écriture déjà créée
+    // (nouvel essai après un échec) a son mode FIGÉ : le select est
+    // rétabli, jamais suivi.
+    const selectMode = corpsEl.querySelector('#wizard-mode');
+    selectMode.addEventListener('change', function (evenement) {
+      if (idMouvementCree) {
+        evenement.target.value =
+          modeFicheCree === 'OFFICIEL' ? 'OFFICIEL' : 'FORMATION';
+        return;
+      }
+      etat.modeFiche = evenement.target.value === 'OFFICIEL'
+        ? 'OFFICIEL' : 'FORMATION';
+      majPied();
+    });
 
     // IM-14 : listeneurs SANS re-rendu (le canvas de signature serait
     // effacé) — bascule d'affichage directe du champ « Préciser »
@@ -1813,7 +1899,9 @@ export async function ouvrirWizard(ctx, options = {}) {
       if (!idMouvementCree) {
         const mouvement = await store.creerMouvement({
           type: typeMouvement(),
-          mode: 'FORMATION',
+          // Brique C5 : le mode choisi à l'étape 6 (FORMATION par défaut ;
+          // OFFICIEL évalué par le moteur de blocage au moment PASSAGE).
+          mode: etat.modeFiche === 'OFFICIEL' ? 'OFFICIEL' : 'FORMATION',
           machineId: estTransfert() ? null : etat.machineId,
           bouteilleSrcId: estRecuperation() ? null : etat.bouteilleSrcId,
           bouteilleDstId: estCharge() ? null : etat.bouteilleDstId,
@@ -1849,6 +1937,31 @@ export async function ouvrirWizard(ctx, options = {}) {
         });
         idMouvementCree = mouvement.id;
         numeroMouvementCree = mouvement.numero;
+        // Brique C5 : le mode de l'écriture est FIGÉ à sa création.
+        modeFicheCree = mouvement.mode;
+      }
+
+      // Brique C5 — fiche OFFICIELLE : l'assistant s'arrête au BROUILLON.
+      // Les signatures réelles se posent sur le brouillon (modale
+      // « Signatures » de la vue Mouvements, brique C4) qui propose
+      // ensuite la soumission ; la validation génère et conserve le CERFA
+      // final. Soumettre ici interdirait toute signature (brouillon requis).
+      // Décision sur le mode RÉEL de l'écriture créée, jamais sur le select.
+      if (modeFicheCree === 'OFFICIEL') {
+        if (idBrouillonRepris && idBrouillonRepris !== idMouvementCree) {
+          try {
+            await store.supprimerMouvement(idBrouillonRepris);
+          } catch {
+            // Déjà supprimé ou statut changé entre-temps : sans gravité
+          }
+          idBrouillonRepris = null;
+        }
+        fermer();
+        ctx.naviguer(options.retour || 'mouvements');
+        toast('Brouillon OFFICIEL ' + numeroMouvementCree + ' créé — '
+          + 'ouvrez « Signatures » pour recueillir les deux signatures '
+          + 'avant la soumission.', 'succes');
+        return;
       }
 
       // 2. Soumission

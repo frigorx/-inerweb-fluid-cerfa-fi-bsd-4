@@ -22,6 +22,7 @@ import { indexerMouvement, correspond, optionsDisponibles, STATUTS_FILTRE }
 import { ouvrirWizard } from '../wizard/wizard.js';
 import { ouvrirCerfa } from '../cerfa/visualiseur.js';
 import { genererPdfFinalBase64 } from '../cerfa/generateur.js';
+import { pdfFinalAttendu } from '../data/pdf-final.js';
 import { ouvrirSignaturesMouvement, remplirSimulationOfficielle }
   from '../modales/signatures-modal.js';
 import { ouvrirCorrectionCerfa } from '../cerfa/correcteur.js';
@@ -473,11 +474,18 @@ function ouvrirValidation(ctx, mv, utilisateur, outils, personnelParId) {
       // Lot C (C4) : en OFFICIEL, le CERFA final est généré CÔTÉ CLIENT
       // à la confirmation, transmis avec la validation, contrôlé puis
       // CONSERVÉ tel quel par le store (plan lot C §2.3 et §5).
-      + (officiel
+      // Brique C5 : le TRANSFERT est exempté (jamais de CERFA, IM-12).
+      + (officiel && pdfFinalAttendu(mv.type)
         ? '<p style="font-size:13px;color:var(--texte-2)"><strong>Mode '
           + 'Officiel</strong> : le CERFA final (signatures comprises) '
           + 'sera généré, transmis et conservé tel quel avec l’écriture '
           + 'scellée.</p>'
+        : '')
+      + (officiel && !pdfFinalAttendu(mv.type)
+        ? '<p style="font-size:13px;color:var(--texte-2)"><strong>Mode '
+          + 'Officiel</strong> : un transfert entre contenants ne produit '
+          + 'pas de CERFA — l’écriture sera scellée et chaînée sans pièce '
+          + 'documentaire.</p>'
         : '')
       + '<div style="margin-top:10px">' + blocValidateur + '</div>'
       + '<div data-zone-simulation style="margin-top:10px"></div>'
@@ -494,7 +502,7 @@ function ouvrirValidation(ctx, mv, utilisateur, outils, personnelParId) {
   remplirSimulationOfficielle(ctx.store, mv,
     instance.racine.querySelector('[data-zone-simulation]'));
   cablerConfirmation(instance, async function () {
-    const pdfFinalBase64 = officiel
+    const pdfFinalBase64 = officiel && pdfFinalAttendu(mv.type)
       ? await genererPdfFinalBase64(ctx.store, mv)
       : null;
     await ctx.store.validerMouvement(mv.id, utilisateur.id, pdfFinalBase64);
@@ -728,10 +736,42 @@ export async function render(conteneur, ctx) {
       case 'feuille-mise-en-service':
         ouvrirFeuilleMiseEnService(ctx, mv.id);
         break;
-      case 'reprendre':
-        // CR-1 : rouvre le wizard préchargé avec les données du brouillon
+      case 'reprendre': {
+        // CR-1 : rouvre le wizard préchargé avec les données du brouillon.
+        // Brique C5 (revue adversariale) : un brouillon déjà SIGNÉ perd
+        // ses signatures à la reprise (la finalisation crée une écriture
+        // NEUVE et supprime l'ancien brouillon, signatures comprises) —
+        // confirmation explicite avant de détruire un recueil réel.
+        let signaturesPosees = 0;
+        try {
+          signaturesPosees =
+            (await ctx.store.getSignaturesMouvement(mv.id)).length;
+        } catch {
+          // Comptage indisponible : la reprise reste possible sans garde.
+        }
+        if (signaturesPosees > 0) {
+          const instance = modale({
+            titre: 'Reprendre un brouillon signé',
+            contenuHtml: '<p class="modale-intro">Ce brouillon porte '
+              + signaturesPosees + ' signature(s) réelle(s). Le reprendre '
+              + 'crée une écriture <strong>neuve</strong> : les signatures '
+              + 'seront détruites et devront être recueillies à '
+              + 'nouveau.</p>',
+            actionsHtml:
+              '<button type="button" class="btn btn-secondaire"'
+              + ' data-role="fermer">Annuler</button>'
+              + '<button type="button" class="btn btn-primaire"'
+              + ' data-role="confirmer">Reprendre quand même</button>'
+          });
+          cablerConfirmation(instance, async function () {
+            instance.fermer();
+            ouvrirWizard(ctx, { brouillonId: mv.id });
+          });
+          break;
+        }
         ouvrirWizard(ctx, { brouillonId: mv.id });
         break;
+      }
       case 'supprimer':
         ouvrirSuppression(ctx, mv, outils, personnelParId);
         break;

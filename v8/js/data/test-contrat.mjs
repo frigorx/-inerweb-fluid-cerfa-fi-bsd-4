@@ -341,16 +341,24 @@ await verifierRejet('createMachine refuse une charge nominale négative ou nulle
 await verifierRejet('createMachine refuse un client introuvable',
   store.createMachine({ designation: 'X', fluide: FLUIDE, chargeNominaleKg: 1,
     clientId: 'cli-fantome' }));
-// Blocage dur du mode OFFICIEL (lot B) : le verrou de livraison (lots C-D
-// non livrés) refuse toute demande OFFICIEL forgée via l'API, avec le
-// message canonique MOTIVÉ du moteur de blocage (parité demo/local — les
-// motifs de poste diffèrent, le début du message et le verrou jamais).
-await verifierRejet('creerMouvement refuse une demande en mode OFFICIEL (verrou motivé)',
+// Blocage dur du mode OFFICIEL (lot B) : une demande OFFICIEL forgée via
+// l'API reste refusée avec le message canonique MOTIVÉ du moteur — brique
+// C5 : le verrou de livraison est OUVERT, ce sont les conditions RÉELLES
+// de l'établissement qui bloquent ce décor (parité demo/local — les
+// motifs de poste diffèrent, le début du message jamais).
+await verifierRejet('creerMouvement refuse une demande en mode OFFICIEL (motivé)',
   store.creerMouvement({ type: 'CHARGE_APPOINT', mode: 'OFFICIEL' }),
   'Mode Officiel refusé');
-await verifierRejet('le refus OFFICIEL cite le verrou de livraison (lots C et D)',
-  store.creerMouvement({ type: 'CHARGE_APPOINT', mode: 'OFFICIEL' }),
-  'pas encore ouvert');
+{
+  let messageRefusOff = '';
+  try {
+    await store.creerMouvement({ type: 'CHARGE_APPOINT', mode: 'OFFICIEL' });
+  } catch (erreur) { messageRefusOff = erreur.message; }
+  verifier('le refus OFFICIEL ne cite PLUS le verrou de livraison (C5 : ouvert)',
+    messageRefusOff.startsWith('Mode Officiel refusé')
+    && !messageRefusOff.includes('pas encore ouvert'),
+    messageRefusOff);
+}
 
 const machineB = await store.createMachine({
   designation: 'Groupe froid du contrat', fluide: FLUIDE,
@@ -1623,9 +1631,11 @@ verifier('peutPasserEnOfficiel : { ok, motifs[] français }',
   typeof officiel.ok === 'boolean' && Array.isArray(officiel.motifs));
 
 // Lot B — simulation de validation OFFICIELLE (lecture, ne bloque jamais) :
-// forme du verdict, verrou de livraison toujours présent, conditions de
-// fiche signalées. Les motifs de POSTE (sauvegarde, session) sont propres
-// au serveur : on n'affirme ici que ce qui vaut pour les DEUX stores.
+// forme du verdict, conditions de fiche signalées. Brique C5 : le verrou
+// de livraison est OUVERT — il ne doit PLUS apparaître (sa mécanique reste
+// prouvée par test-blocage-officiel avec un cadre construit). Les motifs
+// de POSTE (sauvegarde, session) sont propres au serveur : on n'affirme
+// ici que ce qui vaut pour les DEUX stores.
 {
   const brouillonSim = await store.creerMouvement({
     type: 'CHARGE_APPOINT', machineId: machineA.id, fluide: FLUIDE,
@@ -1637,8 +1647,9 @@ verifier('peutPasserEnOfficiel : { ok, motifs[] français }',
     simulation.blocages.every((b) =>
       typeof b.code === 'string' && typeof b.motif === 'string'),
     JSON.stringify(simulation));
-  verifier('simulation : le verrou de livraison ferme toujours le mode Officiel',
-    simulation.blocages.some((b) => b.code === 'VERROU_LIVRAISON'));
+  verifier('simulation : le verrou de livraison est OUVERT (absent des blocages)',
+    !simulation.blocages.some((b) => b.code === 'VERROU_LIVRAISON'),
+    JSON.stringify(simulation.blocages.map((b) => b.code)));
   verifier('simulation : intervenant non désigné signalé (condition 6)',
     simulation.blocages.some((b) => b.code === 'INTERVENANT'));
   verifier('simulation : signature du technicien absente signalée (condition 11)',

@@ -3,34 +3,34 @@
 > Copier tout ce qui suit comme PREMIER message d'un nouveau chat. Il est autonome : contexte, état
 > exact, cap, prochaine brique, gates, méthode et consignes.
 >
-> **Session conseillée : Opus, effort maximum.** PAS d'ultracode hors point critique.
+> **Session conseillée : Opus, effort élevé** (le lot E est cadré ; passer à maximum
+> seulement sur un point RGPD délicat). PAS d'ultracode hors point critique.
 >
-> **ÉTAT (19/07 soir)** : lots **A ✅ B ✅ D ✅** (16/07) · **LOT C : C1 ✅ C2 ✅ C3 ✅
-> C4 ✅** — signatures réelles (contrat 80), empreinte v2 versionnée, PDF final conservé
-> + témoins + bouton CERFA servant le conservé, ET parcours UI complet : modale
-> « Signatures » (double signature, délégation lycée pré-cochée, péremption affichée,
-> soumission intégrée), validation OFFICIELLE avec PDF final généré côté client
-> (`genererPdfFinalBase64`, canal sans tolérance), CERFA porteur des signatures réelles,
-> correction élève préservée. Vérifié au navigateur sur serveur réel jetable. **Filet :
-> TOUT VERT — 80 exécutions** (`node outils/lancer-tests.mjs`). Détail : tête du
-> `CHANGELOG.md`.
+> **ÉTAT (19/07 soir) : LOTS A ✅ B ✅ C ✅ D ✅ — LE MODE OFFICIEL EST OUVERT.**
+> C5 soldée : `VERROU_LIVRAISON = false` (2 miroirs), exemption TRANSFERT du PDF final
+> (arbitrage Franck — jamais de CERFA, PDF fourni refusé, scellé v2 chaîné), migration
+> **24** (WORM pieces_jointes d'un mouvement figé, import qui recrée), vérification des
+> PDF conservés au DÉMARRAGE (journal `PDF_FINAL_ANOMALIE`) et au DOSSIER D'AUDIT
+> (restitution du CONSERVÉ + verdicts `02-PDF-CONSERVES.txt`, jamais de régénération),
+> **choix du mode au wizard** (étape 6 — le chemin d'écran qui manquait ; en Officiel
+> l'assistant s'arrête au BROUILLON, signatures d'abord), suite e2e
+> `server/test-officiel-e2e.mjs` (41 vérifs, parcours complet + attaques + contre-écriture
+> officielle CONFIRMÉE §9), essai complet AU NAVIGATEUR sur serveur réel jetable (double
+> signature à l'écran, délégation pré-cochée, validation « aucun blocage », bouton CERFA
+> « original conservé », base vérifiée). Revue adversariale : 4 constats fermés avant
+> commit. **Filet : TOUT VERT — 81 exécutions** (`node outils/lancer-tests.mjs`).
+> Détail : tête du `CHANGELOG.md`.
 >
-> **PROCHAINE BRIQUE = C5 — BASCULE DU VERROU** (`docs/PLAN-LOT-C.md` §7.6 — la
-> DERNIÈRE du lot C). Liste actée :
-> ① **Trancher l'impasse TRANSFERT OFFICIEL** (constat revue C4, consigné au plan §7.6) :
->   les deux stores exigent un PDF final pour TOUT mouvement Officiel, or un TRANSFERT
->   ne produit jamais de CERFA (IM-12) → proposition : exemption TRANSFERT dans les
->   DEUX miroirs (compromis protecteur). GATE Franck : valider cette exemption.
-> ② **Essai complet en données fictives** : parcours officiel de bout en bout (base
->   jetable, verrou basculé localement pour l'essai), y compris signatures → soumission
->   → validation avec PDF conservé → bouton CERFA servant le conservé.
-> ③ `VERROU_LIVRAISON = false` dans les **2 miroirs** (`v8/js/data/blocage-officiel.js`
->   + `server/blocage-officiel.js`, nulle part ailleurs).
-> ④ **Suite e2e officielle activée** (couvre aussi le bloc manifeste en transaction —
->   différé C3b) · **trigger WORM `pieces_jointes`** à poser dans `declencheursWorm`
->   (l'import le recrée) · **brancher `verifierPdfFinalConserve` au dossier d'audit**.
-> ⑤ **Relecture finale de la liste du lot B par Franck** (gate). Ensuite : simulation
->   d'audit fin août, puis septembre en PARALLÈLE.
+> **PROCHAINE ÉTAPE = LOT E — RGPD avant la rentrée** (des élèves y seront) :
+> ① export individuel des données d'une personne · ② purge des données de formation
+> selon la durée annoncée · ③ notice d'information affichée dans l'application ·
+> ④ relecture DPD quand Franck peut (gate hors code).
+> **HORS CODE, avant septembre** : relecture finale de la liste du lot B par Franck
+> (gate ⑤ de C5, demandée le 19/07) · SIMULATION D'AUDIT fin août · septembre en
+> PARALLÈLE de la procédure actuelle (2-4 semaines), puis bascule avec secours papier.
+> **Reste consigné (préexistant, non bloquant)** : `createControle` accepte un
+> `mouvementId` arbitraire (un contrôle forgé lié à une fiche d'une autre année
+> échapperait au dossier d'audit annuel) — à fermer à l'occasion.
 
 ---
 
@@ -98,9 +98,9 @@ On ne promet **pas** « inviolable » : on promet **démontrable**.
   réglementaire est CLOSE**. « Ne pas bloquer sur des détails, finir le logiciel. »
 - **LE LOGICIEL EST COMPLET POUR L'USAGE INTERNE** : les 3 axes du cadrage sont couverts
   (législation = moteur conforme à l'avis ; sauvegarde = automatique et vérifiée ; ergonomie = RAS).
-- **Le mode Officiel est FERMÉ** (le serveur refuse `mode:'OFFICIEL'`) et le reste **jusqu'à ce que
-  les conditions 1→4 du plan soient prêtes ET testées**. On travaille en mode **CONSEIL** — assumé
-  pour l'usage interne.
+- **Le mode Officiel est OUVERT depuis le 19/07 (brique C5)** : les conditions 1→4 du plan sont
+  livrées ET testées ; le mode est gouverné par les conditions réelles du moteur de blocage
+  (docs/CONDITIONS-BLOCANTES-OFFICIEL.md). Le mode CONSEIL/FORMATION reste le défaut du wizard.
 - Rappel socle (audit externe 15/07) : sécurité **SAINE** prouvée en conditions réelles. Rapports
   **INTERNES gitignorés** `docs/AUDIT-COMPLET-2026-07-15.md` et `docs/DOSSIER-TECHNIQUE.md`.
 
@@ -136,9 +136,10 @@ lui, DOIT bloquer — c'est sa définition. **Ordre des lots** :
    catégorie réservée + recomptage import + pluralité · ✅ **C4 (19/07)** parcours UI
    officiel (modale Signatures + validation officielle avec PDF final côté client +
    CERFA porteur des signatures réelles, revue adversariale : 2 IMPORTANTS fermés).
-   Chaque brique : revue adversariale avant commit. **RESTE : C5 (bascule du verrou)**
-   — le brief détaillé de C5 est dans l'en-tête de ce document, avec l'arbitrage
-   TRANSFERT OFFICIEL à faire trancher par Franck.
+   Chaque brique : revue adversariale avant commit. ✅ **C5 (19/07 soir) — LOT C
+   COMPLET** : bascule du verrou, exemption TRANSFERT (arbitrage Franck), migration 24,
+   vérificateur branché (démarrage + dossier d'audit), choix du mode au wizard, suite
+   e2e, essai navigateur complet — voir l'en-tête de ce document et le CHANGELOG.
 4. ✅ **LOT D — SOLDÉ le 16/07** (livré dans la foulée du lot B) : témoin QUOTIDIEN
    `scellement/temoin-AAAA-MM-JJ.json` dans le dossier de sauvegarde configurable — têtes des
    chaînes, compteurs, intervalle de numéros, versions + empreinte du moteur réglementaire,

@@ -20,12 +20,14 @@
 export const SEUIL_PRP_VIERGE = 2500;
 
 /**
- * VERROU DE LIVRAISON (condition n° 13 de la liste) : reste à `true` tant
- * que les lots C (double signature réelle) et D (scellement externe) ne
- * sont pas livrés — le mode Officiel est donc REFUSÉ partout. À basculer
- * ICI et dans le miroir serveur, nulle part ailleurs.
+ * VERROU DE LIVRAISON (condition n° 13 de la liste) : OUVERT le 19/07/2026
+ * (brique C5) — les lots C (double signature réelle + PDF final conservé)
+ * et D (scellement externe) sont livrés et prouvés ; le mode Officiel est
+ * désormais gouverné par les SEULES conditions 1 à 12 + 14-15. La
+ * mécanique du verrou reste en place (ici et dans le miroir serveur,
+ * nulle part ailleurs) : rebasculer à `true` referme le mode partout.
  */
-export const VERROU_LIVRAISON = true;
+export const VERROU_LIVRAISON = false;
 
 /** Les trois moments de contrôle (ordre croissant d'exigence). */
 export const MOMENTS_OFFICIEL = ['PASSAGE', 'SOUMISSION', 'VALIDATION'];
