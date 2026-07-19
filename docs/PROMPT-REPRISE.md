@@ -3,36 +3,39 @@
 > Copier tout ce qui suit comme PREMIER message d'un nouveau chat. Il est autonome : contexte, état
 > exact, cap, prochaine brique, gates, méthode et consignes.
 >
-> **Session conseillée : selon le lot choisi** (voir « LE CAP RÉACTIVÉ »). **LOTS A, B et D
-> SOLDÉS le 16/07** (A `872d34b` · B `96d7d5e` + liste des conditions VALIDÉE par Franck le
-> soir même · D `0e27f7e` témoin quotidien de scellement). **LOT C EN COURS : briques C1 ET
-> C2 SOLDÉES le 18/07** (C1 = signatures réelles, migration 23 complète, contrat 80,
-> conditions 14-15 ; C2 = empreinte RENFORCÉE v2 versionnée — v1 FIGÉE à jamais, empreintes
-> CONNUES verrouillées dans test-hash-mouvement, champs gelés au scellement, QUATRE
-> vérificateurs versionnés dont verification.js oublié du plan, import qui recompte les
-> signatures gelées, chaîne mixte prouvée — 78 exécutions vertes) — prochaine brique =
-> **C3 (PDF final conservé)** : suivre `docs/PLAN-LOT-C.md` §5 À LA LETTRE, découpée en
-> TROIS sous-briques (décision Franck 18/07, une sous-brique = code + tests verts + commit) :
-> **C3a ✅ SOLDÉE le 18/07** (réception du PDF à la validation officielle + contrôle `%PDF`
-> + PJ système CERFA_FINAL sans bump de révision + `hashPdfFinal` gelé AVANT sceller() +
-> refus canoniques tirés via vrai API, module pur `pdf-final.js` en 2 miroirs, contrat v6,
-> relecture adversariale COMMIT OK) · **C3b ✅ SOLDÉE le 18/07 soir** (témoins `.sha256` +
-> `manifeste.json` frères best-effort hors transaction + `verifierPdfFinalConserve` +
-> RÉGÉNÉRATION des témoins manquants au démarrage + bouton CERFA servant le CONSERVÉ par
-> les DEUX portes, mouvement ET contrôle lié ; revue 4 angles : 2 IMPORTANTS corrigés) ·
-> **C3c ✅ SOLDÉE le 19/07 — LA CONDITION 4 EST COMPLÈTE** (asymétrie FERMÉE + catégorie
-> CERFA_FINAL réservée au canal système API ET import — constat IMPORTANT de la revue C3c
-> fermé avant commit — + recomptage hashPiecesJointes à l'import des v2 + pluralité
-> dénoncée + attaques permanentes « CERFA truquée » ; TOUT VERT 79 exécutions — détail
-> CHANGELOG). **Prochaine brique = C4 — parcours UI officiel** (plan §7.5 : écrans de
-> signature technicien puis détenteur, déclarations affichées, identité de session,
-> simulation du lot B intégrée, génération du PDF final côté client transmise à
-> validerMouvement ; vérification NAVIGATEUR sur port jetable ; + différé C3c : masquer
-> le bouton d'ajout de PJ sur écriture figée). **Puis C5 — bascule** (essai complet
-> données fictives, VERROU_LIVRAISON false dans les 2 miroirs, suite e2e officielle,
-> trigger WORM pieces_jointes dans declencheursWorm, brancher verifierPdfFinalConserve au
-> dossier d'audit, couverture du bloc manifeste en transaction, relecture finale de la
-> liste lot B par Franck). **Opus effort maximum.** PAS d'ultracode hors point critique.
+> **Session conseillée : Opus, effort maximum.** PAS d'ultracode hors point critique.
+>
+> **ÉTAT (19/07)** : lots **A ✅ B ✅ D ✅** (16/07) · **LOT C : C1 ✅ C2 ✅ C3 ✅ COMPLET**
+> (C3a `7ae7d54` · C3b `d803e74` · C3c `d6b71c9`) — signatures réelles (contrat 80),
+> empreinte v2 versionnée, PDF final conservé + témoins + bouton CERFA servant le
+> conservé, asymétrie PJ fermée + recomptage à l'import. **Filet : TOUT VERT —
+> 79 exécutions** (`node outils/lancer-tests.mjs`). Détail : tête du `CHANGELOG.md`.
+>
+> **PROCHAINE BRIQUE = C4 — PARCOURS UI OFFICIEL** (`docs/PLAN-LOT-C.md` §4 + §7.5,
+> décisions Franck actées au §2 — ne rien redemander). Périmètre :
+> ① **Écrans de signature** TECHNICIEN puis DETENTEUR : déclarations composées par le
+>   STORE et AFFICHÉES au moment de signer (`signatures-mouvement.js`), pré-remplissage,
+>   `parDelegation` pré-cochée pour un équipement du lycée (même personne physique
+>   autorisée — décision Franck 16/07), identité de session visible. Branchés sur
+>   `signerMouvement`/`getSignaturesMouvement` — ⚠️ AUCUNE vue n'appelle encore
+>   `signerMouvement` ; réutiliser le canvas existant `v8/js/wizard/signature.js`.
+> ② **Modale de validation OFFICIELLE** : point d'accroche = la simulation du lot B déjà
+>   affichée (`v8/js/views/mouvements.js:494`, `simulerValidationOfficielle`). En
+>   OFFICIEL : générer le PDF final CÔTÉ CLIENT (`genererCerfaPdf`) et le transmettre —
+>   `validerMouvement(id, validateurId, pdfFinalBase64)` (OBLIGATOIRE en OFFICIEL,
+>   REFUSÉ en FORMATION, messages canoniques dans `pdf-final.js`).
+> ③ **Différé C3c** : masquer le bouton d'ajout de PJ sur une écriture FIGÉE (le refus
+>   canonique s'affiche déjà proprement — chercher le composant pieces-jointes).
+> ④ **Vérification NAVIGATEUR** sur port JETABLE NEUF (jamais 2011, jamais `data/`
+>   réel). Le verrou reste FERMÉ : écrans vérifiés en FORMATION + simulation ; en
+>   OFFICIEL le refus « verrou » est le comportement ATTENDU (l'ouverture = C5).
+> ⑤ **FORMATION : zéro friction ajoutée** (parcours actuel intact — règle du plan §9).
+>
+> **PUIS C5 — BASCULE** (liste actée) : essai complet en données fictives ·
+> `VERROU_LIVRAISON = false` dans les 2 miroirs · suite e2e officielle (couvre aussi le
+> bloc manifeste en transaction) · trigger WORM `pieces_jointes` à poser dans
+> `declencheursWorm` · brancher `verifierPdfFinalConserve` au dossier d'audit ·
+> relecture finale de la liste du lot B par Franck. Ensuite : simulation d'audit fin août.
 
 ---
 
@@ -127,18 +130,17 @@ lui, DOIT bloquer — c'est sa définition. **Ordre des lots** :
    prouvé » fermé, tiré sur vrai HTTP) ; `simulerValidationOfficielle` (contrat 77→78, v4)
    affichée dans la modale de validation. Mode Officiel toujours FERMÉ par `VERROU_LIVRAISON`
    (constante des 2 miroirs, à basculer en fin de lot C — brique C5).
-3. **LOT C — Conditions 3+4 ensemble** (le gros morceau, août) : double signature réelle
-   (technicien PUIS détenteur — au lycée le professeur signe détenteur PAR DÉLÉGATION, même
-   personne autorisée ; toute modification invalide les signatures), signature illisible
-   jamais ignorée en officiel ; empreinte RENFORCÉE v2 versionnée + **PDF final CONSERVÉ**.
-   ⚠️ Touche `hash-mouvement.js`. **LE PLAN EST ÉCRIT ET VALIDÉ = `docs/PLAN-LOT-C.md`**
-   (relu adversarialement contre le code, C0 soldée) : le suivre À LA LETTRE, briques C1→C5.
-   Effort MAXIMUM. ✅ **C1 SOLDÉE le 18/07** (signatures réelles + socle migration 23 :
-   table WORM, révision d'invalidation, contrat 80, conditions 14-15, module pur
-   `signatures-mouvement.js` en 2 miroirs, 37 vérifs d'attaques tirées — détail CHANGELOG).
-   **Prochaine brique = C2 — empreinte v2** (plan §6 : versionner sans jamais recalculer,
-   3 hasseurs version-aware, réordonnancement du figeage côté serveur, champs gelés posés,
-   non-régression v1 sur empreintes CONNUES figées dans le test).
+3. **LOT C — Conditions 3+4 ensemble** (le gros morceau) : plan écrit et VALIDÉ =
+   `docs/PLAN-LOT-C.md` (le suivre À LA LETTRE), briques C1→C5, effort MAXIMUM.
+   ✅ **C1 (18/07)** signatures réelles (migration 23, table WORM, contrat 80, conditions
+   14-15, invalidation par révision) · ✅ **C2 (18/07)** empreinte RENFORCÉE v2 (v1 figée
+   à jamais, champs gelés au scellement, 4 vérificateurs versionnés, import qui recompte
+   les signatures) · ✅ **C3 COMPLET (18-19/07)** PDF final conservé — C3a réception +
+   contrôle `%PDF` + `hashPdfFinal` gelé, C3b témoins `.sha256`+manifeste + régénération
+   au démarrage + bouton CERFA servant le CONSERVÉ (2 portes), C3c asymétrie PJ fermée +
+   catégorie réservée + recomptage import + pluralité. Chaque brique : revue adversariale
+   avant commit. **RESTE : C4 (parcours UI officiel) puis C5 (bascule du verrou)** — le
+   brief détaillé de C4 est dans l'en-tête de ce document.
 4. ✅ **LOT D — SOLDÉ le 16/07** (livré dans la foulée du lot B) : témoin QUOTIDIEN
    `scellement/temoin-AAAA-MM-JJ.json` dans le dossier de sauvegarde configurable — têtes des
    chaînes, compteurs, intervalle de numéros, versions + empreinte du moteur réglementaire,
