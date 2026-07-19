@@ -618,6 +618,12 @@ export function creerDemoStore() {
   if (typeof donnees.coffreCree !== 'boolean') {
     donnees.coffreCree = false;
   }
+  // coffreConfig : configuration OPAQUE d'un coffre RÉEL de passage (import
+  // d'un export serveur) — la démo la CONSERVE telle quelle et la ré-émet à
+  // l'export (aller-retour réel → démo → réel SANS perte) ; null en démo pure.
+  if (donnees.coffreConfig === undefined) {
+    donnees.coffreConfig = null;
+  }
   let phraseCoffreSession = null;
 
   // --------------------------------------------------------
@@ -4960,6 +4966,9 @@ export function creerDemoStore() {
       }
       if (typeof candidat.coffreCree !== 'boolean') {
         candidat.coffreCree = false;
+      }
+      if (candidat.coffreConfig === undefined) {
+        candidat.coffreConfig = null;
       }
 
       // Adoption : les vérifications sont passées. La phrase d'exercice de

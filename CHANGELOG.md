@@ -2,6 +2,30 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🚚 LOT E RGPD — brique E2c : LE COFFRE VOYAGE DANS L'EXPORT/IMPORT (19/07 soir)
+Le BLOQUANT n°1 de la conception est FERMÉ ET PROUVÉ : sans transport explicite,
+un import sur poste neuf rendait toutes les identités indéchiffrables à jamais.
+- **L'export JSON emporte le coffre** : `coffreIdentites` (enveloppes base64),
+  `coffreConfig` (sel + témoin + kdf), `coffreCompteurs` (MONOTONES — jamais de
+  pseudonyme réattribué après sinistre), `coffreCree`. L'import les REMPLACE
+  atomiquement dans la même transaction (cohérence sel ↔ enveloppes garantie).
+  Les gardes temporaires d'E2b sont levées.
+- **Validations à l'import** : enveloppes au repère réel exigé (illisible →
+  refus), identité ORPHELINE → refus, coffre de SIMULATION démo → rejet net
+  (jamais en base réelle), fichier SANS coffre sur un poste AU coffre → refus
+  PROTECTEUR (un import ne détruit pas des identités chiffrées par accident ;
+  deux coffres → remplacement, « un import restaure un instantané »).
+- **La démo transporte l'OPAQUE** : un export réel importé en démo conserve les
+  enveloppes telles quelles (consultation → message canonique), et les ré-émet
+  à l'export — le round-trip réel → démo → réel ne perd RIEN (prouvé).
+- **Preuves : suite `test-coffre-echange.mjs` 18 vérifs** — dont LE test du
+  bloquant (export → import sur base VIERGE → consultation avec la phrase
+  d'origine RÉUSSIT), restauration complète après aller-retour (scan octet pour
+  octet), enveloppe corrompue (l'import passe, la consultation échoue
+  proprement, le registre reste sain), compteur transporté. 2 tirs E2b mis à
+  la nouvelle vérité (ré-import du poste ACCEPTÉ, simulation rejetée).
+  **TOUT VERT — 85 exécutions.** Reste : E2d (interface), E2e (documentation).
+
 ### 🔐 LOT E RGPD — briques E2a + E2b : LE COFFRE DES IDENTITÉS (19/07 soir)
 Cœur du lot E2 (plan `docs/PLAN-LOT-E2.md`, validé par Franck) : minimisation
 RÉVERSIBLE des données d'élèves — les identités partent dans un coffre chiffré,

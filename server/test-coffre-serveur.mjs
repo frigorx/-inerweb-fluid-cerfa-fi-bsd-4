@@ -304,10 +304,15 @@ attendreRejet('createMention sur fiche au coffre → refus canonique',
   () => api.appeler('createMention', { donneesMention: {
     personneId: eleve.id, fluideMention: 'CO2' } }, referent),
   coffre.MSG_FICHE_AU_COFFRE);
-attendreRejet('importerJSON avec un coffre ACTIF → refus canonique (garde E2c)',
-  () => api.appeler('importerJSON',
-    { texte: api.appeler('exporterJSON', {}, referent) }, referent),
-  'identités sont au coffre');
+// E2c : l'export du poste PORTE désormais le coffre — le ré-import d'un
+// export sain du même poste est ACCEPTÉ et le coffre survit intact.
+{
+  const reImport = api.appeler('importerJSON',
+    { texte: api.appeler('exporterJSON', {}, referent) }, referent);
+  verifier('ré-import d\'un export au coffre : ACCEPTÉ, coffre intact (E2c)',
+    reImport === true
+    && api.appeler('etatCoffre', {}, referent).nombreAuCoffre === 1);
+}
 
 // ============================================================
 // 4. CONSULTATION (anti-oracle, motif, journal)
@@ -474,17 +479,17 @@ attendreRejet('consultation d\'une personne PAS au coffre → MSG_PAS_AU_COFFRE'
 }
 
 // ============================================================
-// 7 bis. IMPORT d'un fichier PORTEUR d'un coffre (coffre local VIDE)
+// 7 bis. IMPORT d'un fichier portant un coffre SIMULÉ (démo) → rejet
 // ============================================================
 {
   const forge = JSON.parse(api.appeler('exporterJSON', {}, referent));
   forge.donnees.coffreIdentites = [{ id: 'cof-x', personnelId: 'per-x',
     pseudonyme: 'Élève 2099-01', enveloppe: 'SIMULATION-COFFRE:eyJ4IjoxfQ==',
     dateMiseALabri: '2026-01-01T00:00:00Z' }];
-  attendreRejet('import d\'un fichier PORTEUR d\'un coffre → refus (garde E2c)',
+  attendreRejet('import d\'un coffre de SIMULATION → rejet net (E2c)',
     () => api.appeler('importerJSON',
       { texte: JSON.stringify(forge) }, referent),
-    'porte un coffre des identités');
+    coffre.MSG_SIMULATION_REJETEE);
 }
 
 // ============================================================

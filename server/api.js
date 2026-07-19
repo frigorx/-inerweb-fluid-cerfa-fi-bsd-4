@@ -3829,28 +3829,58 @@ const HANDLERS = {
     // (2) Structure étrangère → false.
     if (!estStructureValide(candidat)) return false;
 
-    // Lot E2 (garde TEMPORAIRE jusqu'à la brique E2c) : l'import ne sait
-    // pas encore transporter le coffre des identités. Deux protections :
-    // un coffre LOCAL non vide serait détruit par le remplacement (FK
-    // coffre_identites → personnel : l'import échouerait d'ailleurs en
-    // erreur SQLite brute) ; un coffre porté par le CANDIDAT (export démo
-    // simulé, futur export E2c) serait perdu silencieusement. Refus NET
-    // dans les deux cas — E2c lèvera cette garde en transportant tout.
-    if ((db.get('SELECT count(*) AS n FROM coffre_identites') ?? { n: 0 }).n > 0) {
-      throw new Error(
-        'Import indisponible tant que des identités sont au coffre : ' +
-        'restaurez-les d\'abord (Protection des données).');
-    }
-    if (Array.isArray(candidat.coffreIdentites)
-        && candidat.coffreIdentites.length > 0) {
-      throw new Error(
-        'Ce fichier porte un coffre des identités : son import n\'est pas ' +
-        'encore pris en charge (prochaine version).');
-    }
-
     // Compléments de reprise (imports d'anciennes phases) — mêmes clés que
     // le DemoStore, pour qu'une sauvegarde partielle reste importable.
     candidat = completerCandidat(candidat);
+
+    // Lot E2 (brique E2c) : validation du COFFRE porté par le candidat.
+    // ① Des enveloppes SIMULÉES (mode Démo) n'entrent JAMAIS en base réelle.
+    if (candidat.coffreIdentites.some((c) =>
+      String(c?.enveloppe ?? '').startsWith(coffre.PREFIXE_SIMULATION))) {
+      throw new Error(coffre.MSG_SIMULATION_REJETEE);
+    }
+    // ② Refus PROTECTEUR : écraser un coffre local par un monde SANS coffre
+    // détruirait des identités chiffrées d'élèves par un simple import.
+    // (Deux coffres → remplacement : « un import restaure un instantané ».)
+    const coffreLocal =
+      (db.get('SELECT count(*) AS n FROM coffre_identites') ?? { n: 0 }).n;
+    if (coffreLocal > 0 && candidat.coffreIdentites.length === 0) {
+      throw new Error(
+        'Import refusé : ce fichier ne porte aucun coffre des identités ' +
+        'alors que des identités sont à l\'abri sur ce poste. Restaurez-les ' +
+        'd\'abord (Protection des données), ou importez un fichier qui ' +
+        'porte le coffre.');
+    }
+    // ③ Un coffre porté exige sa configuration (sel + témoin — sans eux les
+    // enveloppes seraient indéchiffrables à jamais), des enveloppes au
+    // format réel, et AUCUN orphelin (chaque identité pointe une fiche).
+    if (candidat.coffreIdentites.length > 0) {
+      if (!candidat.coffreConfig || !candidat.coffreConfig.sel ||
+          !candidat.coffreConfig.temoin) {
+        throw new Error(
+          'Import refusé — coffre sans configuration (sel/témoin) : les ' +
+          'identités seraient indéchiffrables à jamais. Fichier incomplet.');
+      }
+      const idsPersonnel = new Set(
+        (candidat.personnel ?? []).map((p) => p && p.id));
+      for (const c of candidat.coffreIdentites) {
+        let octets = null;
+        try {
+          octets = Buffer.from(String(c.enveloppe ?? ''), 'base64');
+        } catch { octets = null; }
+        if (!octets || !chiffrementCoffre.estEnveloppeCoffre(octets)) {
+          throw new Error(
+            'Import refusé — enveloppe du coffre illisible ' +
+            `(${c?.pseudonyme ?? '?'}) : fichier altéré ou forgé.`);
+        }
+        if (!idsPersonnel.has(c.personnelId)) {
+          throw new Error(
+            'Import refusé — identité du coffre orpheline ' +
+            `(${c.pseudonyme ?? c.personnelId}) : aucune fiche du ` +
+            'personnel correspondante. Fichier incohérent.');
+        }
+      }
+    }
 
     // (3) Invariants métier AVANT d'adopter quoi que ce soit.
     const probleme = verifierInvariantsDonneesCandidat(candidat);
@@ -4023,7 +4053,32 @@ function construireDonneesExport() {
       'date_ajout, id'),
     retoursFournisseur: HANDLERS.getRetoursFournisseur(),
     alertes: HANDLERS.getAlertes(),
-    journalAudit: HANDLERS.getJournalAudit()
+    journalAudit: HANDLERS.getJournalAudit(),
+    // Lot E2 (brique E2c) : le COFFRE voyage dans l'export — enveloppes en
+    // base64 + configuration (sel/témoin/kdf) + compteurs MONOTONES. FAIT
+    // ÉTABLI par la revue de conception : la table parametres ne voyage PAS
+    // dans l'export JSON — sans ce bloc, un import sur poste neuf rendrait
+    // toutes les identités indéchiffrables à jamais avec la bonne phrase.
+    coffreIdentites: db.all(
+      'SELECT * FROM coffre_identites ORDER BY pseudonyme')
+      .map((l) => ({
+        id: l.id,
+        personnelId: l.personnel_id,
+        pseudonyme: l.pseudonyme,
+        enveloppe: Buffer.from(l.enveloppe).toString('base64'),
+        dateMiseALabri: l.date_mise_a_labri
+      })),
+    coffreConfig: parametres.lire('coffre_temoin') === null ? null : {
+      sel: parametres.lire('coffre_sel'),
+      temoin: parametres.lire('coffre_temoin'),
+      kdf: parametres.lire('coffre_kdf')
+    },
+    coffreCompteurs: Object.fromEntries(
+      db.all(`SELECT cle, valeur FROM parametres
+              WHERE cle LIKE 'coffre_compteur_%'`)
+        .map((l) => [l.cle.replace('coffre_compteur_', ''),
+          Number(l.valeur)])),
+    coffreCree: parametres.lire('coffre_temoin') !== null
   };
 }
 
@@ -4057,9 +4112,17 @@ function completerCandidat(donnees) {
   for (const cle of ['auditsOrganisme', 'nonConformites', 'outillage',
     'stocksInitiaux', 'bsff', 'inventaires', 'justificationsEcarts',
     'piecesJointes', 'retoursFournisseur', 'journalAudit', 'habilitations',
-    'mentionsHabilitation', 'mouvementOutillage', 'signaturesMouvement']) {
+    'mentionsHabilitation', 'mouvementOutillage', 'signaturesMouvement',
+    'coffreIdentites']) {
     if (!Array.isArray(candidat[cle])) candidat[cle] = [];
   }
+  // Lot E2 (E2c) : clés du coffre — un export antérieur n'en a pas.
+  if (candidat.coffreConfig === undefined) candidat.coffreConfig = null;
+  if (!candidat.coffreCompteurs ||
+      typeof candidat.coffreCompteurs !== 'object') {
+    candidat.coffreCompteurs = {};
+  }
+  if (typeof candidat.coffreCree !== 'boolean') candidat.coffreCree = false;
   return candidat;
 }
 
@@ -4376,7 +4439,11 @@ function remplacerToutLEtat(candidat) {
     for (const t of worm) db.run(`DROP TRIGGER IF EXISTS ${t.name}`);
 
     // Vidage TOTAL des tables métier (journal inclus : remplacement complet).
-    const TABLES_A_VIDER = ['pieces_jointes', 'retours_fournisseur', 'bsff',
+    // Lot E2 (E2c) : coffre_identites AVANT personnel (FK personnel_id) ;
+    // coffre_purge_en_attente vidée aussi (chemins propres au poste, jamais
+    // transportés).
+    const TABLES_A_VIDER = ['coffre_identites', 'coffre_purge_en_attente',
+      'pieces_jointes', 'retours_fournisseur', 'bsff',
       'controles', 'signatures_mouvement', 'mouvement_outillage', 'mouvements',
       'justifications_ecarts', 'inventaires',
       'inventaires_bouteilles', 'inventaires_fuites',
@@ -4431,6 +4498,36 @@ function remplacerToutLEtat(candidat) {
     corrigerPrpFgas3((sql) => db.run(sql));
 
     reinsererCollection('personnel', 'personnel', candidat.personnel);
+
+    // Lot E2 (E2c) : le COFFRE — insertion BRUTE (tables non mappées, patron
+    // reinsererJournal), configuration + compteurs REMPLACÉS atomiquement
+    // dans la MÊME transaction (cohérence sel ↔ enveloppes garantie : tout
+    // vient du même instantané). Un candidat SANS coffre efface les clés
+    // locales (un import restaure un instantané).
+    db.run(`DELETE FROM parametres WHERE cle LIKE 'coffre_%'`);
+    for (const c of candidat.coffreIdentites ?? []) {
+      db.run(
+        `INSERT INTO coffre_identites (id, personnel_id, pseudonyme,
+           enveloppe, date_mise_a_labri, etablissement_id)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [c.id ?? db.generateId('COF'), c.personnelId, c.pseudonyme,
+          Buffer.from(String(c.enveloppe), 'base64'),
+          c.dateMiseALabri ?? new Date().toISOString(), ID_ETABLISSEMENT]);
+    }
+    if (candidat.coffreConfig && candidat.coffreConfig.sel &&
+        candidat.coffreConfig.temoin) {
+      parametres.ecrire('coffre_sel', candidat.coffreConfig.sel);
+      parametres.ecrire('coffre_temoin', candidat.coffreConfig.temoin);
+      if (candidat.coffreConfig.kdf) {
+        parametres.ecrire('coffre_kdf', candidat.coffreConfig.kdf);
+      }
+    }
+    for (const [annee, n] of Object.entries(candidat.coffreCompteurs ?? {})) {
+      if (Number.isFinite(Number(n))) {
+        parametres.ecrire(`coffre_compteur_${annee}`, String(Number(n)));
+      }
+    }
+
     // Habilitations F-Gas (chantier B2) : APRÈS le personnel (FK personne_id ;
     // defer_foreign_keys est ON mais l'ordre reste logique). Absentes des
     // vieux exports → reinsererCollection tolère undefined.
