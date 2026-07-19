@@ -2,6 +2,23 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🛡️ LOT E RGPD — brique E3 : NOTICE D'INFORMATION AFFICHÉE DANS L'APPLICATION (19/07)
+Information des personnes concernées (RGPD art. 13/14) désormais accessible
+depuis l'application, plus seulement dans `RGPD.md`.
+- **Nouvelle vue** `v8/js/views/rgpd.js` (« Protection des données ») + entrée de
+  menu (icône `verrou`, après « Sauvegarde »). Contenu dérivé de `RGPD.md`
+  (source de vérité) mais reformulé POUR les personnes concernées (personnel,
+  élèves, contacts) : qui est responsable, quelles données, pourquoi, base
+  légale, durées de conservation, où, VOS DROITS + comment les exercer, cas
+  particulier des élèves. Bouton « Imprimer ». Le nom du responsable de
+  traitement est repris de l'établissement quand il est renseigné
+  (`getEtablissement`, repli générique sinon).
+- **Vue STATIQUE** (aucune écriture) ; réutilise les styles partagés `.tableau`
+  et `.encart-aide` + un bloc CSS compact `.rgpd-*` (`composants.css`).
+- Vérifié AU NAVIGATEUR (mode démo) : entrée de menu, 8 sections, 2 tableaux,
+  bouton imprimer, responsable renseigné. Filet inchangé : **TOUT VERT, 82
+  exécutions**. La relecture par le DPD reste un geste HORS code (gate E④).
+
 ### 🛡️ LOT E RGPD — brique E1 : EXPORT INDIVIDUEL DES DONNÉES D'UNE PERSONNE (19/07)
 Première brique du lot E (droits d'ACCÈS et de PORTABILITÉ, RGPD art. 15/20). Le
 `RGPD.md` §7 promettait « l'export des données d'une personne via les fonctions

@@ -79,6 +79,8 @@ contre chacune.
 
 - `views/` : une vue par écran (routeur hash `#/vue` ; fiches paramétrées
   `#/m|b|cl|o|f/<code>`). `communs.js` = modale/toast/enteteVue/carteKpi.
+  `rgpd.js` (lot E ③) = notice d'information RGPD (art. 13/14), vue statique,
+  entrée de menu « Protection des données » (`app.js` VUES).
 - `modales/` : formulaires (piège historique : jamais de sélecteur global
   `.modale` — `modale()` retourne sa racine). `signatures-modal.js`
   (lot C C4) = parcours de double signature d'un BROUILLON (bouton

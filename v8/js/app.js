@@ -32,7 +32,8 @@ const VUES = [
   { id: 'balance',    libelle: 'Balance matière',          icone: 'balance' },
   { id: 'fluides',    libelle: 'Fluides',                  icone: 'flocon' },
   { id: 'admin',      libelle: 'Administration',           icone: 'engrenage' },
-  { id: 'sauvegarde', libelle: 'Sauvegarde',               icone: 'sauvegarde' }
+  { id: 'sauvegarde', libelle: 'Sauvegarde',               icone: 'sauvegarde' },
+  { id: 'rgpd',       libelle: 'Protection des données',   icone: 'verrou' }
 ];
 
 // Icône hamburger (propre au menu mobile, hors bibliothèque partagée)
