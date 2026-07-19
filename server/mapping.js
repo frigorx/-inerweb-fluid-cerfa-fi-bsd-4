@@ -608,7 +608,12 @@ const TABLES_NON_MAPPEES = {
     'exposée au front',
   sessions: 'jetons de session (E5, migration 005) — réservée au serveur, ' +
     'jamais exposée au front',
-  parametres: 'clé/valeur interne du serveur'
+  parametres: 'clé/valeur interne du serveur',
+  coffre_identites: 'coffre des identités (lot E2) — enveloppes chiffrées, ' +
+    'jamais exposées au front (méthodes de contrat dédiées ; import/export ' +
+    'par insertion brute, pas par le mapping)',
+  coffre_purge_en_attente: 'liste de rattrapage des fichiers à purger ' +
+    '(lot E2) — chemins propres au poste, jamais exposés ni transportés'
 };
 
 /**

@@ -753,6 +753,18 @@ preparerCoffreFort();
   }
 }
 
+// Lot E2 (coffre des identités) : rattrapage de la purge disque — un
+// plantage entre COMMIT et purge ne laisse jamais un scan en clair
+// orphelin. Best-effort absolu (ne lève jamais).
+{
+  const bilan = api.rejouerPurgeCoffre();
+  if (bilan.purges > 0 || bilan.restants > 0) {
+    console.log(
+      `  [coffre] purge de rattrapage : ${bilan.purges} fichier(s) ` +
+      `supprimé(s), ${bilan.restants} restant(s).`);
+  }
+}
+
 serveur.listen(PORT, HOTE, () => {
   console.log('');
   console.log('  inerWeb Fluide v8 — serveur local démarré');

@@ -2,6 +2,57 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔐 LOT E RGPD — briques E2a + E2b : LE COFFRE DES IDENTITÉS (19/07 soir)
+Cœur du lot E2 (plan `docs/PLAN-LOT-E2.md`, validé par Franck) : minimisation
+RÉVERSIBLE des données d'élèves — les identités partent dans un coffre chiffré,
+l'application n'affiche plus que des pseudonymes, le code rouvre en cas de
+besoin légal. **Chaîne de hash, WORM, signatures scellées : rien ne bouge.**
+- **E2a (`8bba64c`) — primitives + module pur.** `server/chiffrement.js` :
+  enveloppes de CHAMP autoportantes (`IWF-COFFRE-1`, sel embarqué, AAD
+  `coffre:v1:<id>:<pseudo>`, scrypt RENFORCÉ N=131072, re-déchiffrement de
+  contrôle, message anti-oracle unique) — zéro régression sauvegardes.
+  `coffre-identites.js` (pur, 2 miroirs) : messages canoniques, pseudonymes
+  « Élève AAAA-NN », éligibilité (élève désactivé), pseudonymisation/
+  restauration bit à bit, libellé substitué par identifiant. 36 vérifs.
+- **E2b — les gestes réels.** Migration **25** (tables `coffre_identites` —
+  enveloppe BLOB, pseudonyme UNIQUE — et `coffre_purge_en_attente`, rejouée au
+  démarrage par serveur.js) ; migration **26** : entités de PJ élargies
+  (`personne`, `OUTIL`) — **bug PRÉEXISTANT corrigé** : en Mode Local, le CHECK
+  du socle refusait silencieusement les scans de fiche personnel (même mal que
+  la migration 10 pour les catégories) ; triggers WORM de la 24 recréés.
+  **6 méthodes de contrat** (81 → **87**, `VERSION_CONTRAT` 7) : `etatCoffre`
+  (VALIDEUR), `verifierCodeCoffre`, `mettreAuCoffre`, `consulterIdentiteCoffre`,
+  `restaurerIdentiteCoffre`, `changerPhraseCoffre` (REFERENT/ADMIN — le porteur
+  de la phrase peut tout déchiffrer, une séparation plus fine serait illusoire).
+  Tous les gestes REFUSÉS en accès réseau (`IWF_LAN=1` : la phrase ne traverse
+  jamais le réseau du lycée). Mise à l'abri : **archive complète vérifiée
+  EXIGÉE avant toute purge** (sinon produite sur-le-champ), enveloppe (fiche +
+  scans + identifiant de connexion), fiche pseudonymisée (`actif=0`, id intact),
+  brouillons ET contrôles d'étanchéité réécrits (clause anti-homonyme, révision
+  incrémentée → signatures posées PÉRIMÉES), compte renommé/désactivé, journal
+  `COFFRE_*` (pseudonyme + identifiant, JAMAIS le nom). Témoin GCM (rien de
+  dérivé de la phrase seule en base), compteur de pseudonymes MONOTONE,
+  démo = simulation balisée (phrase d'exercice en mémoire de session SEULEMENT).
+- **Revue adversariale AVANT commit (3 lentilles) — 1 BLOQUANT + 6 IMPORTANTS
+  fermés** : ① fuite PROUVÉE du nom par `controles[].operateur` (export E1 +
+  `getControles`) → l'opérateur des contrôles est RÉÉCRIT à la mise à l'abri
+  (table ni scellée ni WORM) ; ② restauration : hash vérifiés AVANT toute
+  écriture, pièce altérée SIGNALÉE et sautée (jamais d'identité verrouillée à
+  perpétuité), fichiers nettoyés si la transaction échoue ; ③ signatures d'un
+  brouillon réécrit rendues PÉRIMÉES (invariant C1) ; ④ garde TEMPORAIRE
+  d'import (un coffre actif ou un fichier porteur d'un coffre → refus clair,
+  levée en E2c) ; ⑤ `getJournalAudit` gaté VALIDEUR avec dégradation douce de
+  la fiche bouteille (session élève) ; ⑥ anti-oracle complet (sel/témoin
+  corrompus en base → message canonique) ; + verrous étendus (habilitations/
+  mentions sur fiche au coffre), clause anti-homonyme, parité démo alignée
+  (ordre des refus, hash, préparation avant mutation, compléments d'import).
+- **Preuves : suite `test-coffre-serveur.mjs` 65 vérifs** (dont chaîne VERTE
+  après mise à l'abri d'un élève à écritures figées, grep du journal sans nom
+  ni phrase, 403 élève/enseignant, rollback global, rattrapage de purge,
+  pièce altérée, homonyme intouché, imports refusés) + `test-coffre-identites.mjs`
+  36 vérifs. **TOUT VERT — 84 exécutions.** Reste : E2c (export/import du
+  coffre), E2d (interface + substitution d'affichage), E2e (documentation).
+
 ### 🛡️ LOT E RGPD — brique E3 : NOTICE D'INFORMATION AFFICHÉE DANS L'APPLICATION (19/07)
 Information des personnes concernées (RGPD art. 13/14) désormais accessible
 depuis l'application, plus seulement dans `RGPD.md`.

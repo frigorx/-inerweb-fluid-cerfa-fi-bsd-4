@@ -492,9 +492,13 @@ export async function render(conteneur, ctx) {
   const alertes = alertesToutes.filter((a) =>
     a.cible && a.cible.vue === 'bouteilles' && a.cible.id === bouteille.id);
 
+  // Lot E2 : getJournalAudit est réservé au niveau VALIDEUR (le journal
+  // porte des noms) — pour une session élève/technicien, la vie de la
+  // bouteille se construit SANS les événements du journal (dégradation
+  // douce, la fiche reste entière).
   const [mouvements, journal] = await Promise.all([
     store.getMouvements(),
-    store.getJournalAudit()
+    store.getJournalAudit().catch(function () { return []; })
   ]);
   const vie = construireVieBouteille(
     { bouteille, mouvements, journal, fluides, bouteilles });

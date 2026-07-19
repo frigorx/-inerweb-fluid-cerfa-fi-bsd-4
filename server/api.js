@@ -56,6 +56,14 @@ const { verifierOctetsPdfFinal, nomFichierPdfFinal, CATEGORIE_PDF_FINAL,
 // Export RGPD des données d'une personne (lot E ①) : assemblage PUR (miroir
 // du module ESM du front, parité prouvée par test-export-personne.mjs).
 const { assemblerExportPersonne } = require('./export-personne.js');
+// Coffre des identités (lot E2) : règles pures (miroir du module ESM du
+// front, parité prouvée par test-coffre-identites.mjs) + primitives crypto
+// (enveloppes de champ autoportantes) + archive de sécurité avant le geste.
+const coffre = require('./coffre-identites.js');
+const chiffrementCoffre = require('./chiffrement.js');
+const parametres = require('./parametres.js');
+const sauvegardeCoffre = require('./sauvegarde.js');
+const restaurationCoffre = require('./restauration.js');
 
 // ------------------------------------------------------------
 // Identité de l'établissement singleton (le front le traite sans id).
@@ -322,7 +330,16 @@ const ROLES_MUTATION = {
   // Rafraîchir la sentinelle est déclenché en consultant le tableau de bord :
   // tout utilisateur connecté peut l'appeler (best-effort, sans effet si rien
   // n'a changé). Acquitter, en revanche, engage le responsable → VALIDEUR.
-  rafraichirSentinelle: OPERATEUR
+  rafraichirSentinelle: OPERATEUR,
+
+  // Coffre des identités (lot E2) : gestes réservés REFERENT/ADMIN — la
+  // mise à l'abri comprise (le porteur de la phrase peut de toute façon
+  // tout déchiffrer : une séparation plus fine serait illusoire, cf.
+  // docs/PLAN-LOT-E2.md §5). Les gestes exigent AUSSI le poste local
+  // (verifierPosteLocalCoffre, dans les handlers).
+  mettreAuCoffre: REFERENT_ADMIN,
+  restaurerIdentiteCoffre: REFERENT_ADMIN,
+  changerPhraseCoffre: REFERENT_ADMIN
 };
 
 // ------------------------------------------------------------
@@ -333,7 +350,17 @@ const ROLES_MUTATION = {
 // du personnel. garderRole consulte cette table APRÈS ROLES_MUTATION.
 // ------------------------------------------------------------
 const ROLES_LECTURE_SENSIBLE = {
-  exporterDonneesPersonne: VALIDEUR
+  exporterDonneesPersonne: VALIDEUR,
+  // Lot E2 : l'état du coffre (pseudonymes, candidats) relève du niveau
+  // VALIDEUR ; la vérification du code et la CONSULTATION d'une identité
+  // déchiffrée, du seul niveau REFERENT/ADMIN.
+  etatCoffre: VALIDEUR,
+  verifierCodeCoffre: REFERENT_ADMIN,
+  consulterIdentiteCoffre: REFERENT_ADMIN,
+  // Lot E2 (constat RGPD de la revue) : le journal d'audit porte des noms
+  // (« qui » = libellé réel de session) — sa lecture n'est plus ouverte à
+  // tout connecté, un élève n'a pas à lire l'historique nominatif complet.
+  getJournalAudit: VALIDEUR
 };
 
 // ------------------------------------------------------------
@@ -1143,6 +1170,9 @@ const HANDLERS = {
     const { id } = params;
     const d = params.donneesPersonne || {};
     trouverPersonne(id);
+    // Lot E2 : une fiche au coffre est VERROUILLÉE côté store (l'écran
+    // seul ne suffit pas — « le store reste seul juge »).
+    if (estAuCoffreServeur(id)) throw new Error(coffre.MSG_FICHE_AU_COFFRE);
     if (d.typePersonne !== undefined &&
         !TYPES_PERSONNE.includes(d.typePersonne)) {
       throw new Error(
@@ -1181,6 +1211,8 @@ const HANDLERS = {
   desactiverPersonne(params) {
     const { id } = params;
     const personne = trouverPersonne(id);
+    // Lot E2 : fiche au coffre = intouchable (déjà inactive de toute façon).
+    if (estAuCoffreServeur(id)) throw new Error(coffre.MSG_FICHE_AU_COFFRE);
     if (!personne.actif) {
       throw new Error(
         `${personne.prenom} ${personne.nom} est déjà désactivé(e).`);
@@ -1192,6 +1224,371 @@ const HANDLERS = {
         'Désactivation (la personne reste au registre : aucune suppression)');
       return lirePersonne(id);
     });
+  },
+
+  // === coffre des identités (lot E2 — RGPD, minimisation réversible) ===
+  // Tous les gestes (sauf l'état) exigent le POSTE LOCAL (la phrase ne
+  // traverse jamais le réseau du lycée — HTTP sans chiffrement de
+  // transport) et le niveau REFERENT/ADMIN. Aides : bloc « coffre des
+  // identités » en bas de ce fichier.
+
+  etatCoffre() {
+    const lignes = db.all(
+      `SELECT personnel_id, pseudonyme, date_mise_a_labri
+       FROM coffre_identites`);
+    const identites = lignes
+      .map((l) => ({
+        personnelId: l.personnel_id,
+        pseudonyme: l.pseudonyme,
+        dateMiseALabri: l.date_mise_a_labri
+      }))
+      .sort((a, b) => (a.pseudonyme < b.pseudonyme ? -1 : 1));
+    const auCoffre = new Set(identites.map((i) => i.personnelId));
+    const candidats = HANDLERS.getPersonnel()
+      .filter((p) => coffre.estFicheEchue(p) && !auCoffre.has(p.id))
+      .map((p) => p.id);
+    return {
+      coffreCree: parametres.lire('coffre_temoin') !== null,
+      nombreAuCoffre: identites.length,
+      identites,
+      candidats
+    };
+  },
+
+  verifierCodeCoffre(params) {
+    verifierPosteLocalCoffre();
+    const cle = verifierPhraseCoffreServeur(params.phrase);
+    cle.fill(0);
+    return { ok: true };
+  },
+
+  mettreAuCoffre(params) {
+    verifierPosteLocalCoffre();
+    const ids = Array.isArray(params.personnelIds) ? params.personnelIds : [];
+    if (ids.length === 0) {
+      throw new Error('Aucune identité à mettre à l\'abri.');
+    }
+    const options = params.options || {};
+    const phrase = params.phrase;
+
+    // Vérifications AVANT tout effet : fiches existantes, aucune au coffre.
+    const personnes = ids.map((id) => trouverPersonne(id));
+    for (const p of personnes) {
+      if (estAuCoffreServeur(p.id)) {
+        throw new Error(coffre.MSG_DEJA_AU_COFFRE);
+      }
+    }
+
+    // BLOQUANT n°2 de la revue de conception : une ARCHIVE complète
+    // vérifiée AVANT toute purge disque — sans elle, restaurer un
+    // instantané (base seule) laisserait une base nominative pointant des
+    // scans disparus à jamais.
+    assurerArchiveFraichePourCoffre();
+
+    // Coffre : créé au premier geste (sel + témoin), vérifié ensuite.
+    // La dérivation scrypt (~1 s) se fait ICI, HORS transaction.
+    let sel;
+    let cle;
+    if (parametres.lire('coffre_temoin') === null) {
+      if (typeof phrase !== 'string' ||
+          phrase.length < coffre.LONGUEUR_MIN_PHRASE_COFFRE) {
+        throw new Error(coffre.MSG_PHRASE_TROP_COURTE);
+      }
+      sel = crypto.randomBytes(16);
+      cle = chiffrementCoffre.deriverCleCoffre(phrase, sel);
+    } else {
+      cle = verifierPhraseCoffreServeur(phrase);
+      sel = Buffer.from(parametres.lire('coffre_sel'), 'hex');
+    }
+
+    const annee = options.annee ?? new Date().getFullYear();
+    const misAuCoffre = [];
+    const cheminsAPurger = [];
+    try {
+      muter(() => {
+        // Création du coffre (premier geste) : sel + témoin + paramètres
+        // de dérivation consignés — DANS la transaction (tout ou rien).
+        if (parametres.lire('coffre_temoin') === null) {
+          parametres.ecrire('coffre_sel', sel.toString('hex'));
+          parametres.ecrire('coffre_kdf',
+            `scrypt-N${chiffrementCoffre.SCRYPT_N_COFFRE}-r8-p1`);
+          const temoin = chiffrementCoffre.chiffrerChampCoffre(
+            Buffer.from(coffre.TEXTE_TEMOIN, 'utf8'), cle, sel,
+            coffre.AAD_TEMOIN);
+          parametres.ecrire('coffre_temoin', temoin.toString('base64'));
+        }
+
+        for (const personne of personnes) {
+          const numero = prochainNumeroCoffreServeur(annee);
+          const pseudo = coffre.libellePseudonyme(annee, numero);
+          const libelleAvant = `${personne.prenom} ${personne.nom}`.trim();
+
+          // Octets des PJ de la personne (disque), embarqués chiffrés.
+          const lignesPj = db.all(
+            `SELECT * FROM pieces_jointes
+             WHERE entite_type = 'personne' AND entite_id = ?`,
+            [personne.id]);
+          const piecesJointes = lignesPj.map((l) => {
+            const pj = mapping.versFront('pieces_jointes', l);
+            let base64 = null;
+            try {
+              base64 = fs
+                .readFileSync(cheminPieceJointe(l.id)).toString('base64');
+            } catch {
+              base64 = null; // contenu disparu : métadonnées seules
+            }
+            return {
+              nomFichier: pj.nomFichier,
+              mimeType: pj.mimeType,
+              categorie: pj.categorie ?? null,
+              hashSha256: pj.hashSha256 ?? null,
+              base64
+            };
+          });
+
+          // Identifiant de connexion du compte lié (rangé dans l'enveloppe).
+          const compte = db.get(
+            'SELECT id, login FROM utilisateurs_app WHERE personnel_id = ?',
+            [personne.id]);
+
+          const identite = coffre.assemblerIdentite(personne, {
+            identifiantConnexion: compte ? compte.login : null,
+            piecesJointes
+          });
+          const enveloppe = chiffrementCoffre.chiffrerChampCoffre(
+            Buffer.from(JSON.stringify(identite), 'utf8'), cle, sel,
+            coffre.aadIdentite(personne.id, pseudo.libelle));
+
+          db.run(
+            `INSERT INTO coffre_identites (id, personnel_id, pseudonyme,
+               enveloppe, date_mise_a_labri, etablissement_id)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [db.generateId('COF'), personne.id, pseudo.libelle, enveloppe,
+              new Date().toISOString(), ID_ETABLISSEMENT]);
+
+          // Pseudonymisation de la fiche (id INTACT, actif=0 — la fiche
+          // sort des sélecteurs du wizard) — AVANT tout événement
+          // journalisé : plus aucun nom réel n'entre au journal.
+          majParId('personnel', personne.id, mapping.versSql('personnel',
+            coffre.pseudonymiserFiche(annee, numero)));
+          db.run(
+            'UPDATE personnel SET signature_chemin = NULL WHERE id = ?',
+            [personne.id]);
+
+          // Brouillons/soumis de la personne : le nom en clair est HORS
+          // empreinte tant que l'écriture n'est pas figée — réécrit. La
+          // branche par TEXTE ne vaut que sans porteur identifié (jamais
+          // le brouillon d'un homonyme) ; la révision est INCRÉMENTÉE :
+          // les signatures posées deviennent honnêtement PÉRIMÉES (le
+          // document présenté aux signataires a changé — invariant C1).
+          db.run(
+            `UPDATE mouvements SET technicien = ?,
+               revision_brouillon = COALESCE(revision_brouillon, 0) + 1
+             WHERE statut IN ('BROUILLON','SOUMIS')
+               AND (execute_par_id = ?
+                    OR (execute_par_id IS NULL AND technicien = ?))`,
+            [pseudo.libelle, personne.id, libelleAvant]);
+
+          // Contrôles d'étanchéité : la table n'est NI scellée NI WORM —
+          // l'opérateur en clair est réécrit (ferme AUSSI getControles et
+          // l'export E1 : fuite prouvée par la revue adversariale). Même
+          // clause anti-homonyme.
+          db.run(
+            `UPDATE controles SET operateur = ?
+             WHERE operateur_id = ?
+                OR (operateur_id IS NULL AND operateur = ?)`,
+            [pseudo.libelle, personne.id, libelleAvant]);
+
+          // PJ de la personne : lignes supprimées, fichiers en liste de
+          // purge (rejouée au démarrage — jamais de scan en clair orphelin).
+          for (const l of lignesPj) {
+            db.run('DELETE FROM pieces_jointes WHERE id = ?', [l.id]);
+            const chemin = cheminPieceJointe(l.id);
+            db.run(
+              `INSERT INTO coffre_purge_en_attente (id, chemin)
+               VALUES (?, ?)`,
+              [db.generateId('PRG'), chemin]);
+            cheminsAPurger.push(chemin);
+          }
+
+          // Compte lié : identifiant remplacé par le pseudonyme, compte
+          // désactivé (la session meurt — mécanique existante).
+          if (compte) {
+            db.run(
+              'UPDATE utilisateurs_app SET login = ?, actif = 0 WHERE id = ?',
+              [pseudo.connexion, compte.id]);
+          }
+
+          // Journal : pseudonyme + identifiant, JAMAIS le nom (piège n°1 —
+          // le journal est append-only à jamais).
+          journaliser(null, 'COFFRE_MISE_A_L_ABRI',
+            `${pseudo.libelle} (${personne.id})`,
+            'Identité mise à l\'abri (coffre chiffré)');
+          misAuCoffre.push({ personnelId: personne.id,
+            pseudonyme: pseudo.libelle });
+        }
+      });
+    } finally {
+      cle.fill(0);
+    }
+
+    // APRÈS COMMIT : purge disque best-effort ; tout raté est rattrapé au
+    // prochain démarrage (rejouerPurgeCoffre).
+    purgerFichiersCoffre(cheminsAPurger);
+    return { misAuCoffre };
+  },
+
+  consulterIdentiteCoffre(params) {
+    verifierPosteLocalCoffre();
+    const { personnelId, phrase, motif } = params;
+    if (typeof motif !== 'string' || !motif.trim()) {
+      throw new Error(coffre.MSG_MOTIF_OBLIGATOIRE);
+    }
+    const ligne = db.get(
+      'SELECT * FROM coffre_identites WHERE personnel_id = ?', [personnelId]);
+    if (!ligne) throw new Error(coffre.MSG_PAS_AU_COFFRE);
+    const identite = dechiffrerIdentiteCoffre(ligne, phrase);
+    journaliser(null, 'COFFRE_CONSULTATION',
+      `${ligne.pseudonyme} (${personnelId})`, `Motif : ${motif.trim()}`);
+    return identite;
+  },
+
+  restaurerIdentiteCoffre(params) {
+    verifierPosteLocalCoffre();
+    const { personnelId, phrase, motif } = params;
+    if (typeof motif !== 'string' || !motif.trim()) {
+      throw new Error(coffre.MSG_MOTIF_OBLIGATOIRE);
+    }
+    const ligne = db.get(
+      'SELECT * FROM coffre_identites WHERE personnel_id = ?', [personnelId]);
+    if (!ligne) throw new Error(coffre.MSG_PAS_AU_COFFRE);
+    const identite = dechiffrerIdentiteCoffre(ligne, phrase);
+
+    // Tri des pièces AVANT toute écriture : hash revérifié quand connu.
+    // Une pièce ALTÉRÉE n'empêche JAMAIS la restauration (sinon l'identité
+    // resterait verrouillée à perpétuité sous un message de code trompeur) :
+    // elle est SAUTÉE, signalée dans le retour et au journal.
+    const piecesSaines = [];
+    const piecesAlterees = [];
+    for (const pj of (identite.piecesJointes ?? [])) {
+      if (!pj.base64) continue;
+      const octets = Buffer.from(pj.base64, 'base64');
+      const hash = crypto.createHash('sha256').update(octets).digest('hex');
+      if (pj.hashSha256 && hash !== pj.hashSha256) {
+        piecesAlterees.push(pj.nomFichier);
+      } else {
+        piecesSaines.push({ pj, octets, hash });
+      }
+    }
+
+    // Le disque n'est pas transactionnel : les fichiers écrits sont
+    // COLLECTÉS et, si la transaction échoue, SUPPRIMÉS avant de relancer
+    // (jamais un scan en clair orphelin — symétrique de la mise à l'abri).
+    const fichiersEcrits = [];
+    let resultat;
+    try {
+      resultat = muter(() => {
+        // La fiche redevient ce qu'elle était (actif d'origine compris).
+        majParId('personnel', personnelId, mapping.versSql('personnel',
+          coffre.restaurerIdentite(identite)));
+
+        for (const { pj, octets, hash } of piecesSaines) {
+          const pjId = db.generateId('PJ');
+          ecrirePieceJointeSurDisque(pjId, octets);
+          fichiersEcrits.push(cheminPieceJointe(pjId));
+          db.run(
+            `INSERT INTO pieces_jointes (id, entite_type, entite_id,
+               categorie, nom_fichier, mime_type, taille_octets, hash_sha256,
+               date_ajout, ajoute_par, chemin, etablissement_id)
+             VALUES (?, 'personne', ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)`,
+            [pjId, personnelId, pj.categorie ?? 'AUTRE', pj.nomFichier,
+              pj.mimeType, octets.length, hash, new Date().toISOString(),
+              pjId, ID_ETABLISSEMENT]);
+        }
+
+        // Identifiant de connexion restauré — le compte RESTE désactivé (la
+        // restauration d'identité n'est pas une réactivation d'accès).
+        if (identite.identifiantConnexion) {
+          const compte = db.get(
+            'SELECT id FROM utilisateurs_app WHERE personnel_id = ?',
+            [personnelId]);
+          if (compte) {
+            db.run('UPDATE utilisateurs_app SET login = ? WHERE id = ?',
+              [identite.identifiantConnexion, compte.id]);
+          }
+        }
+
+        // La ligne du coffre disparaît ; le compteur MONOTONE ne redescend
+        // jamais (le pseudonyme n'est pas réattribué).
+        db.run('DELETE FROM coffre_identites WHERE personnel_id = ?',
+          [personnelId]);
+        journaliser(null, 'COFFRE_RESTAURATION',
+          `${ligne.pseudonyme} (${personnelId})`,
+          `Motif : ${motif.trim()}` + (piecesAlterees.length
+            ? ` · ${piecesAlterees.length} pièce(s) altérée(s) non restituée(s)`
+            : ''));
+        return lirePersonne(personnelId);
+      });
+    } catch (erreur) {
+      for (const chemin of fichiersEcrits) {
+        try { fs.rmSync(chemin, { force: true }); } catch { /* best-effort */ }
+      }
+      throw erreur;
+    }
+    if (piecesAlterees.length > 0) {
+      resultat.piecesAlterees = piecesAlterees;
+    }
+    return resultat;
+  },
+
+  changerPhraseCoffre(params) {
+    verifierPosteLocalCoffre();
+    const { anciennePhrase, nouvellePhrase } = params;
+    const ancienneCle = verifierPhraseCoffreServeur(anciennePhrase);
+    if (typeof nouvellePhrase !== 'string' ||
+        nouvellePhrase.length < coffre.LONGUEUR_MIN_PHRASE_COFFRE) {
+      ancienneCle.fill(0);
+      throw new Error(coffre.MSG_PHRASE_TROP_COURTE);
+    }
+    const ancienSel = Buffer.from(parametres.lire('coffre_sel'), 'hex');
+    const nouveauSel = crypto.randomBytes(16);
+    let nouvelleCle = null;
+    try {
+      nouvelleCle = chiffrementCoffre.deriverCleCoffre(
+        nouvellePhrase, nouveauSel);
+      return muter(() => {
+        const lignes = db.all('SELECT * FROM coffre_identites');
+        for (const ligne of lignes) {
+          // Déchiffrer (autoportance : le sel de l'enveloppe fait foi) puis
+          // re-sceller sous la nouvelle clé. Une enveloppe illisible LÈVE :
+          // ROLLBACK global, rien ne bouge, ancien témoin intact.
+          const aad = coffre.aadIdentite(ligne.personnel_id, ligne.pseudonyme);
+          const enveloppe = Buffer.from(ligne.enveloppe);
+          const selEnveloppe =
+            chiffrementCoffre.decomposerChampCoffre(enveloppe).sel;
+          const octets = selEnveloppe.equals(ancienSel)
+            ? chiffrementCoffre.dechiffrerChampCoffreAvecCle(
+              enveloppe, ancienneCle, aad)
+            : chiffrementCoffre.dechiffrerChampCoffre(
+              enveloppe, anciennePhrase, aad);
+          const neuve = chiffrementCoffre.chiffrerChampCoffre(
+            octets, nouvelleCle, nouveauSel, aad);
+          db.run('UPDATE coffre_identites SET enveloppe = ? WHERE id = ?',
+            [neuve, ligne.id]);
+        }
+        parametres.ecrire('coffre_sel', nouveauSel.toString('hex'));
+        const temoin = chiffrementCoffre.chiffrerChampCoffre(
+          Buffer.from(coffre.TEXTE_TEMOIN, 'utf8'), nouvelleCle, nouveauSel,
+          coffre.AAD_TEMOIN);
+        parametres.ecrire('coffre_temoin', temoin.toString('base64'));
+        journaliser(null, 'COFFRE_CHANGEMENT_PHRASE', 'coffre',
+          `${lignes.length} enveloppe(s) re-scellée(s)`);
+        return { ok: true, nombreRechiffre: lignes.length };
+      });
+    } finally {
+      ancienneCle.fill(0);
+      if (nouvelleCle) nouvelleCle.fill(0);
+    }
   },
 
   // === habilitations F-Gas (multi-régime 2008/2025) — chantier B2 ===
@@ -1208,6 +1605,12 @@ const HANDLERS = {
   createHabilitation(params) {
     const d = params.donneesHabilitation || {};
     const personne = trouverPersonne(d.personneId);
+    // Lot E2 : pas de NOUVEL identifiant indirect (n° d'attestation +
+    // organisme) sur une fiche au coffre ; la révocation, elle, reste
+    // permise (geste de conformité, aucune donnée nouvelle).
+    if (estAuCoffreServeur(personne.id)) {
+      throw new Error(coffre.MSG_FICHE_AU_COFFRE);
+    }
     verifierRegime(d.regime);
     verifierCategorieHabilitation(d.regime, d.categorie);
     const habilitation = {
@@ -1236,7 +1639,11 @@ const HANDLERS = {
   updateHabilitation(params) {
     const { id } = params;
     const d = params.donneesHabilitation || {};
-    trouverHabilitation(id);
+    const habilitation = trouverHabilitation(id);
+    // Lot E2 : fiche au coffre → pas de retouche d'identifiant indirect.
+    if (estAuCoffreServeur(habilitation.personneId)) {
+      throw new Error(coffre.MSG_FICHE_AU_COFFRE);
+    }
     // Régime et catégorie INTOUCHABLES (correction de coquille, pas d'identité).
     const CHAMPS = ['numeroAttestation', 'organismeDelivreur',
       'dateDebut', 'dateFin'];
@@ -1285,6 +1692,10 @@ const HANDLERS = {
   createMention(params) {
     const d = params.donneesMention || {};
     const personne = trouverPersonne(d.personneId);
+    // Lot E2 : fiche au coffre → pas de nouvel identifiant indirect.
+    if (estAuCoffreServeur(personne.id)) {
+      throw new Error(coffre.MSG_FICHE_AU_COFFRE);
+    }
     verifierFluideMention(d.fluideMention);
     const mention = {
       id: db.generateId('MEN'),
@@ -1661,6 +2072,11 @@ const HANDLERS = {
     }
     if (!d.nomFichier || !String(d.nomFichier).trim()) {
       throw new Error('Nom de fichier de la pièce jointe obligatoire.');
+    }
+    // Lot E2 : une fiche au coffre ne reçoit plus de pièce (un scan
+    // nominatif neuf casserait la pseudonymisation) — verrou de store.
+    if (d.entiteType === 'personne' && estAuCoffreServeur(d.entiteId)) {
+      throw new Error(coffre.MSG_FICHE_AU_COFFRE);
     }
     // Lot C (C3c) : la catégorie du PDF conservé est RÉSERVÉE au canal
     // système de validerMouvement — jamais posée par un client (sinon une
@@ -2616,8 +3032,21 @@ const HANDLERS = {
       piecesJointes: HANDLERS.listerPiecesJointes(
         { entiteType: 'personne', entiteId: personneId })
     };
-    return assemblerExportPersonne(
+    const exportPersonne = assemblerExportPersonne(
       personneId, sources, new Date().toISOString());
+    // Lot E2 : personne AU COFFRE → les noms réels des signatures scellées
+    // ne sortent pas par ce canal (il contournerait le motif + le journal
+    // de la consultation) — substitués par le pseudonyme (= la fiche
+    // vivante), avec mention dédiée.
+    if (estAuCoffreServeur(personneId)) {
+      const fiche = exportPersonne.personne;
+      exportPersonne.signatures = exportPersonne.signatures.map((s) => ({
+        ...s, nom: fiche.nom, prenom: fiche.prenom }));
+      exportPersonne.identiteAuCoffre =
+        'Identité au coffre : la consultation des données réelles passe ' +
+        'par le geste dédié (Protection des données), motif et journal.';
+    }
+    return exportPersonne;
   },
 
   /**
@@ -3399,6 +3828,25 @@ const HANDLERS = {
 
     // (2) Structure étrangère → false.
     if (!estStructureValide(candidat)) return false;
+
+    // Lot E2 (garde TEMPORAIRE jusqu'à la brique E2c) : l'import ne sait
+    // pas encore transporter le coffre des identités. Deux protections :
+    // un coffre LOCAL non vide serait détruit par le remplacement (FK
+    // coffre_identites → personnel : l'import échouerait d'ailleurs en
+    // erreur SQLite brute) ; un coffre porté par le CANDIDAT (export démo
+    // simulé, futur export E2c) serait perdu silencieusement. Refus NET
+    // dans les deux cas — E2c lèvera cette garde en transportant tout.
+    if ((db.get('SELECT count(*) AS n FROM coffre_identites') ?? { n: 0 }).n > 0) {
+      throw new Error(
+        'Import indisponible tant que des identités sont au coffre : ' +
+        'restaurez-les d\'abord (Protection des données).');
+    }
+    if (Array.isArray(candidat.coffreIdentites)
+        && candidat.coffreIdentites.length > 0) {
+      throw new Error(
+        'Ce fichier porte un coffre des identités : son import n\'est pas ' +
+        'encore pris en charge (prochaine version).');
+    }
 
     // Compléments de reprise (imports d'anciennes phases) — mêmes clés que
     // le DemoStore, pour qu'une sauvegarde partielle reste importable.
@@ -5360,6 +5808,162 @@ function cheminPieceJointe(id) {
   return path.join(dossierDocuments(), id);
 }
 
+// ------------------------------------------------------------
+// Coffre des identités (lot E2) — aides serveur.
+// ------------------------------------------------------------
+
+/** Vrai si la personne a une identité au coffre. */
+function estAuCoffreServeur(personnelId) {
+  return Boolean(db.get(
+    'SELECT 1 AS un FROM coffre_identites WHERE personnel_id = ?',
+    [personnelId]));
+}
+
+/**
+ * Les gestes du coffre exigent le POSTE LOCAL : en LAN (IWF_LAN=1), la
+ * phrase traverserait le réseau du lycée en clair (HTTP sans chiffrement
+ * de transport) — refus net, message canonique.
+ */
+function verifierPosteLocalCoffre() {
+  if (process.env.IWF_LAN === '1') {
+    throw new Error(coffre.MSG_COFFRE_LAN);
+  }
+}
+
+/**
+ * Vérifie la phrase du coffre contre le TÉMOIN (enveloppe GCM du texte
+ * fixe — rien de dérivé de la phrase seule n'est stocké) et renvoie la clé
+ * DÉRIVÉE (l'appelant la réutilise pour l'opération puis fait cle.fill(0)).
+ * Message UNIQUE en échec (anti-oracle).
+ * @param {string} phrase
+ * @returns {Buffer} clé de 32 octets
+ */
+function verifierPhraseCoffreServeur(phrase) {
+  const temoinBase64 = parametres.lire('coffre_temoin');
+  if (temoinBase64 === null) {
+    throw new Error(coffre.MSG_COFFRE_INEXISTANT);
+  }
+  if (typeof phrase !== 'string' || phrase.length === 0) {
+    throw new Error(coffre.MSG_CODE_INCORRECT);
+  }
+  // TOUT le chemin (lecture du sel, dérivation, déchiffrement du témoin)
+  // sous le MÊME message : un sel absent/corrompu en base ne doit pas
+  // faire fuiter une erreur brute de Node (contrat anti-oracle).
+  let cle = null;
+  try {
+    const sel = Buffer.from(String(parametres.lire('coffre_sel')), 'hex');
+    cle = chiffrementCoffre.deriverCleCoffre(phrase, sel);
+    const texte = chiffrementCoffre.dechiffrerChampCoffreAvecCle(
+      Buffer.from(temoinBase64, 'base64'), cle, coffre.AAD_TEMOIN);
+    if (texte.toString('utf8') !== coffre.TEXTE_TEMOIN) {
+      throw new Error(coffre.MSG_CODE_INCORRECT);
+    }
+  } catch {
+    if (cle) cle.fill(0);
+    throw new Error(coffre.MSG_CODE_INCORRECT);
+  }
+  return cle;
+}
+
+/**
+ * Déchiffre l'enveloppe d'une ligne du coffre (autoportance : si le sel
+ * embarqué n'est pas le sel global — enveloppe importée d'un autre poste —
+ * la dérivation se fait sur SON sel). Erreurs : message canonique unique.
+ * @param {object} ligne - ligne SQL de coffre_identites
+ * @param {string} phrase
+ * @returns {object} identité (JSON)
+ */
+function dechiffrerIdentiteCoffre(ligne, phrase) {
+  const cle = verifierPhraseCoffreServeur(phrase);
+  try {
+    const aad = coffre.aadIdentite(ligne.personnel_id, ligne.pseudonyme);
+    const enveloppe = Buffer.from(ligne.enveloppe);
+    const selGlobal = Buffer.from(parametres.lire('coffre_sel'), 'hex');
+    const selEnveloppe =
+      chiffrementCoffre.decomposerChampCoffre(enveloppe).sel;
+    const octets = selEnveloppe.equals(selGlobal)
+      ? chiffrementCoffre.dechiffrerChampCoffreAvecCle(enveloppe, cle, aad)
+      : chiffrementCoffre.dechiffrerChampCoffre(enveloppe, phrase, aad);
+    try {
+      return JSON.parse(octets.toString('utf8'));
+    } catch {
+      throw new Error(coffre.MSG_CODE_INCORRECT);
+    }
+  } finally {
+    cle.fill(0);
+  }
+}
+
+/** Prochain numéro MONOTONE de pseudonyme pour une année (parametres). */
+function prochainNumeroCoffreServeur(annee) {
+  const cle = `coffre_compteur_${annee}`;
+  const suivant = Number(parametres.lire(cle, '0')) + 1;
+  parametres.ecrire(cle, String(suivant));
+  return suivant;
+}
+
+/**
+ * Une ARCHIVE complète VÉRIFIÉE récente est le préalable de toute mise à
+ * l'abri (bloquant n°2 de la revue de conception : après la purge des
+ * scans, restaurer un INSTANTANÉ base-seule laisserait une base nominative
+ * pointant des fichiers disparus). Si aucune archive fraîche : on la
+ * PRODUIT et on la VÉRIFIE ici même ; tout échec = refus canonique.
+ */
+function assurerArchiveFraichePourCoffre() {
+  try {
+    const etat = sauvegardeAuto.etatSauvegardeRecente();
+    if (etat.recente) return;
+    const produit = sauvegardeCoffre.sauvegarderArchive(
+      { indice: 'avant mise à l\'abri (coffre des identités)' });
+    const verdict = restaurationCoffre.testerSauvegarde(produit.chemin);
+    if (verdict.verdict !== 'VERT') {
+      throw new Error('archive produite mais non vérifiée');
+    }
+  } catch {
+    throw new Error(coffre.MSG_ARCHIVE_REQUISE);
+  }
+}
+
+/** Purge disque best-effort d'une liste de chemins (après COMMIT). */
+function purgerFichiersCoffre(chemins) {
+  for (const chemin of chemins) {
+    try {
+      fs.rmSync(chemin, { force: true });
+      db.run('DELETE FROM coffre_purge_en_attente WHERE chemin = ?',
+        [chemin]);
+    } catch {
+      // Raté : la ligne reste, rejouée au prochain démarrage.
+    }
+  }
+}
+
+/**
+ * Rejoue la liste de rattrapage des fichiers à purger (appelé au DÉMARRAGE
+ * par serveur.js — un plantage entre COMMIT et purge disque ne laisse
+ * jamais un scan en clair orphelin). Best-effort ABSOLU : ne lève jamais.
+ * @returns {{purges: number, restants: number}}
+ */
+function rejouerPurgeCoffre() {
+  let purges = 0;
+  let restants = 0;
+  try {
+    const lignes = db.all('SELECT * FROM coffre_purge_en_attente');
+    for (const ligne of lignes) {
+      try {
+        fs.rmSync(ligne.chemin, { force: true });
+        db.run('DELETE FROM coffre_purge_en_attente WHERE id = ?',
+          [ligne.id]);
+        purges += 1;
+      } catch {
+        restants += 1;
+      }
+    }
+  } catch {
+    // Table absente (base antérieure à la migration 25) : rien à faire.
+  }
+  return { purges, restants };
+}
+
 /** Écrit le contenu d'une pièce jointe sur disque, renvoie le chemin. */
 function ecrirePieceJointeSurDisque(id, octets) {
   const chemin = cheminPieceJointe(id);
@@ -6335,5 +6939,7 @@ module.exports = {
   verifierPdfFinalConserve,
   verifierTousPdfFinalConserves,
   // Lot C (C3b) : appelée au démarrage par serveur.js (et par le test).
-  reecrireTemoinsPdfFinalManquants
+  reecrireTemoinsPdfFinalManquants,
+  // Lot E2 : rattrapage de la purge disque du coffre (démarrage serveur.js).
+  rejouerPurgeCoffre
 };

@@ -237,6 +237,26 @@ export function creerLocalStore(transport) {
     exporterDonneesPersonne(personneId) {
       return lire('exporterDonneesPersonne', { personneId });
     },
+    // Lot E2 : coffre des identités (gestes gatés côté serveur — VALIDEUR
+    // pour l'état, REFERENT/ADMIN + poste local pour tout le reste).
+    etatCoffre() {
+      return lire('etatCoffre', {});
+    },
+    verifierCodeCoffre(phrase) {
+      return lire('verifierCodeCoffre', { phrase });
+    },
+    mettreAuCoffre(personnelIds, phrase, options) {
+      return muter('mettreAuCoffre', { personnelIds, phrase, options });
+    },
+    consulterIdentiteCoffre(personnelId, phrase, motif) {
+      return lire('consulterIdentiteCoffre', { personnelId, phrase, motif });
+    },
+    restaurerIdentiteCoffre(personnelId, phrase, motif) {
+      return muter('restaurerIdentiteCoffre', { personnelId, phrase, motif });
+    },
+    changerPhraseCoffre(anciennePhrase, nouvellePhrase) {
+      return muter('changerPhraseCoffre', { anciennePhrase, nouvellePhrase });
+    },
 
     // --- dossier opérateur --------------------------------
     updateEtablissement(patch) {

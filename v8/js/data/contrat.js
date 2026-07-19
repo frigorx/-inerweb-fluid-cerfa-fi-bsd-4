@@ -37,7 +37,7 @@
 // ============================================================
 
 /** Version du contrat (à incrémenter à chaque évolution de surface). */
-export const VERSION_CONTRAT = 6;
+export const VERSION_CONTRAT = 7;
 
 /**
  * Message canonique opposé à toute tentative de modification d'une
@@ -207,7 +207,21 @@ export const METHODES_CONTRAT = {
   desactiverPersonne: { genre: 'mutation',
     description: 'Désactive (actif=false) — le personnel n’est JAMAIS supprimé, la trace reste.' },
   exporterDonneesPersonne: { genre: 'lecture',
-    description: 'Lot E ① — export RGPD des données d’UNE personne (droits d’accès et de portabilité, art. 15/20) : enveloppe { application, version, genereLe, personneId, personne, habilitations, mentions, signatures (métadonnées, SANS image), interventions et contrôles où elle apparaît, piecesJointes (métadonnées) }. AUCUN binaire (images/scans téléchargeables à part) ; le journal d’audit n’est pas repris (valeur probante du registre). Côté serveur, réservé au niveau VALIDEUR (jamais un élève). Error si la personne est introuvable.' },
+    description: 'Lot E ① — export RGPD des données d’UNE personne (droits d’accès et de portabilité, art. 15/20) : enveloppe { application, version, genereLe, personneId, personne, habilitations, mentions, signatures (métadonnées, SANS image), interventions et contrôles où elle apparaît, piecesJointes (métadonnées) }. AUCUN binaire (images/scans téléchargeables à part) ; le journal d’audit n’est pas repris (valeur probante du registre). Personne AU COFFRE (lot E2) : nom/prénom des signatures substitués par le pseudonyme + mention dédiée (la consultation réelle passe par le geste du coffre). Côté serveur, réservé au niveau VALIDEUR (jamais un élève). Error si la personne est introuvable.' },
+
+  // --- coffre des identités (lot E2 — RGPD, minimisation réversible) ---
+  etatCoffre: { genre: 'lecture',
+    description: 'Lot E2 — état du coffre des identités : { coffreCree, nombreAuCoffre, identites:[{ personnelId, pseudonyme, dateMiseALabri }], candidats:[personnelId] (fiches élèves désactivées non encore à l’abri, via estFicheEchue du module pur) } — JAMAIS une enveloppe ni un nom réel. Côté serveur : lecture SENSIBLE niveau VALIDEUR.' },
+  verifierCodeCoffre: { genre: 'lecture',
+    description: 'Lot E2 — vérifie la phrase du coffre contre le TÉMOIN (enveloppe GCM du texte fixe, rien de dérivé de la phrase n’est stocké) : { ok: true } ou Error MSG_CODE_INCORRECT (message UNIQUE, anti-oracle) ; Error MSG_COFFRE_INEXISTANT si aucun coffre. Côté serveur : REFERENT/ADMIN, refusé en accès réseau (MSG_COFFRE_LAN).' },
+  mettreAuCoffre: { genre: 'mutation',
+    description: 'Lot E2 — met À L’ABRI un lot d’identités : (personnelIds[], phrase, options?) — crée le coffre au premier geste (phrase ≥ 14 caractères, sel + témoin posés), puis pour CHAQUE personne, EN UNE transaction : enveloppe chiffrée (fiche + identifiant de connexion + octets des PJ de la personne), fiche PSEUDONYMISÉE (« Élève AAAA-NN », compteur MONOTONE par année, identifiants effacés, actif=false, id INTACT), technicien réécrit dans ses mouvements NON figés (hors empreinte), PJ de la personne supprimées (fichiers en liste de purge rejouée au démarrage), compte renommé/désactivé. EXIGE une archive complète vérifiée récente (sinon la produit ; échec → MSG_ARCHIVE_REQUISE). Journal COFFRE_MISE_A_L_ABRI (pseudonyme + identifiant, JAMAIS le nom). Refus : fiche déjà au coffre (MSG_DEJA_AU_COFFRE), personne introuvable, phrase fausse. Côté serveur : REFERENT/ADMIN, refusé en réseau.' },
+  consulterIdentiteCoffre: { genre: 'lecture',
+    description: 'Lot E2 — consultation PONCTUELLE d’une identité au coffre : (personnelId, phrase, motif) → l’identité déchiffrée { nom, prenom, email, …, piecesJointes:[{nomFichier, mimeType, base64}] } — rien n’est réécrit. Motif OBLIGATOIRE (MSG_MOTIF_OBLIGATOIRE), journal COFFRE_CONSULTATION (pseudonyme + identifiant + motif). Error MSG_PAS_AU_COFFRE ou MSG_CODE_INCORRECT. Côté serveur : REFERENT/ADMIN, refusé en réseau.' },
+  restaurerIdentiteCoffre: { genre: 'mutation',
+    description: 'Lot E2 — restauration COMPLÈTE d’une identité : (personnelId, phrase, motif) — la fiche redevient bit à bit ce qu’elle était (actif d’origine compris), PJ re-matérialisées (hash revérifié), identifiant de connexion restauré, ligne du coffre SUPPRIMÉE (le pseudonyme n’est jamais réattribué : compteur monotone). Motif obligatoire, journal COFFRE_RESTAURATION. Côté serveur : REFERENT/ADMIN, refusé en réseau.' },
+  changerPhraseCoffre: { genre: 'mutation',
+    description: 'Lot E2 — change la phrase du coffre : (anciennePhrase, nouvellePhrase) — ancienne exigée (témoin), nouvelle ≥ 14 caractères, TOUTES les enveloppes re-chiffrées + nouveau sel + nouveau témoin EN UNE transaction (une enveloppe illisible = ROLLBACK global, rien ne bouge), journal COFFRE_CHANGEMENT_PHRASE. Côté serveur : REFERENT/ADMIN, refusé en réseau.' },
 
   // --- habilitations F-Gas (multi-régime 2008/2025) ----------------
   getHabilitations: { genre: 'lecture',

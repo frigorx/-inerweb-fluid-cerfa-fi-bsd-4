@@ -22,6 +22,15 @@ import { evaluerControle } from './reglementation-fluides.js';
 import { normaliserCodeMachine, validerCodeMachine } from './code-machine.js';
 // Lot E ① : export RGPD des données d'une personne (module pur partagé).
 import { assemblerExportPersonne } from './export-personne.js';
+// Lot E2 : coffre des identités — règles pures partagées. La Démo SIMULE le
+// chiffrement (enveloppes balisées PREFIXE_SIMULATION, phrase d'exercice en
+// mémoire de session UNIQUEMENT — jamais persistée, ni même un dérivé) :
+// mêmes flux, mêmes refus, mêmes messages que le serveur réel.
+import { PREFIXE_SIMULATION, MSG_CODE_INCORRECT, MSG_FICHE_AU_COFFRE,
+  MSG_COFFRE_INEXISTANT, MSG_DEJA_AU_COFFRE, MSG_PAS_AU_COFFRE,
+  MSG_MOTIF_OBLIGATOIRE, MSG_PHRASE_TROP_COURTE, LONGUEUR_MIN_PHRASE_COFFRE,
+  estFicheEchue, libellePseudonyme, assemblerIdentite as assemblerIdentiteCoffre,
+  pseudonymiserFiche, restaurerIdentite } from './coffre-identites.js';
 import { calculerTransitions, formaterEpisode, comparerEpisodes, estOuvert }
   from './sentinelle.js';
 // Habilitations F-Gas : référentiels + tri (module pur, miroir serveur).
@@ -594,6 +603,22 @@ export function creerDemoStore() {
   if (!Array.isArray(donnees.signaturesMouvement)) {
     donnees.signaturesMouvement = [];
   }
+
+  // Lot E2 : coffre des identités (simulation) — collection + compteurs de
+  // pseudonymes MONOTONES par année (persistés : non sensibles). La phrase
+  // d'exercice, elle, ne vit QU'EN MÉMOIRE de session (jamais persistée) :
+  // après rechargement de page, les gestes du coffre démo répondent
+  // « Code incorrect » — limitation documentée au bandeau de la vue.
+  if (!Array.isArray(donnees.coffreIdentites)) {
+    donnees.coffreIdentites = [];
+  }
+  if (!donnees.coffreCompteurs || typeof donnees.coffreCompteurs !== 'object') {
+    donnees.coffreCompteurs = {};
+  }
+  if (typeof donnees.coffreCree !== 'boolean') {
+    donnees.coffreCree = false;
+  }
+  let phraseCoffreSession = null;
 
   // --------------------------------------------------------
   // IM-2 : abonnés au signal « données modifiées ». Simple liste
@@ -1781,6 +1806,52 @@ export function creerDemoStore() {
     journaliser(controle.operateur, 'CREATION_CONTROLE', machine.code,
       `${controle.typeControle} ${controle.methode} → ${controle.resultat}`);
     return controle;
+  }
+
+  // --------------------------------------------------------
+  // Coffre des identités (lot E2) — aides de simulation
+  // --------------------------------------------------------
+
+  /** Vrai si la personne a une identité au coffre. */
+  function estAuCoffre(personnelId) {
+    return (donnees.coffreIdentites ?? [])
+      .some((c) => c.personnelId === personnelId);
+  }
+
+  /** La ligne de coffre d'une personne, ou undefined. */
+  function ligneCoffre(personnelId) {
+    return (donnees.coffreIdentites ?? [])
+      .find((c) => c.personnelId === personnelId);
+  }
+
+  /** Octets → base64 (par tranches — btoa sature sur un gros tableau). */
+  function octetsVersBase64(octets) {
+    let binaire = '';
+    for (let i = 0; i < octets.length; i += 8192) {
+      binaire += String.fromCharCode(...octets.subarray(i, i + 8192));
+    }
+    return btoa(binaire);
+  }
+
+  /**
+   * Vérifie la phrase d'exercice du coffre SIMULÉ : le coffre doit exister
+   * et la phrase de SESSION (jamais persistée) doit correspondre. Mêmes
+   * messages canoniques que le serveur réel (parité des refus).
+   */
+  function verifierPhraseCoffreDemo(phrase) {
+    if (!donnees.coffreCree) throw new Error(MSG_COFFRE_INEXISTANT);
+    if (typeof phrase !== 'string' || phrase.length === 0 ||
+        phraseCoffreSession === null || phrase !== phraseCoffreSession) {
+      throw new Error(MSG_CODE_INCORRECT);
+    }
+  }
+
+  /** Prochain numéro MONOTONE de pseudonyme pour une année (persisté). */
+  function prochainNumeroCoffre(annee) {
+    const cle = String(annee);
+    const suivant = (donnees.coffreCompteurs[cle] ?? 0) + 1;
+    donnees.coffreCompteurs[cle] = suivant;
+    return suivant;
   }
 
   const store = {
@@ -3057,8 +3128,19 @@ export function creerDemoStore() {
         controles: await store.getControles(),
         piecesJointes: await store.listerPiecesJointes('personne', personneId)
       };
-      return assemblerExportPersonne(
+      const exportPersonne = assemblerExportPersonne(
         personneId, sources, new Date().toISOString());
+      // Lot E2 : personne AU COFFRE → noms des signatures substitués par le
+      // pseudonyme + mention (miroir exact du serveur).
+      if (estAuCoffre(personneId)) {
+        const fiche = exportPersonne.personne;
+        exportPersonne.signatures = exportPersonne.signatures.map((s) => ({
+          ...s, nom: fiche.nom, prenom: fiche.prenom }));
+        exportPersonne.identiteAuCoffre =
+          'Identité au coffre : la consultation des données réelles passe ' +
+          'par le geste dédié (Protection des données), motif et journal.';
+      }
+      return exportPersonne;
     },
 
     async getSignaturesMouvement(mouvementId) {
@@ -3700,6 +3782,9 @@ export function creerDemoStore() {
 
     async updatePersonne(id, donneesPersonne) {
       const personne = trouverPersonne(id);
+      // Lot E2 : une fiche au coffre est VERROUILLÉE côté store (l'écran
+      // seul ne suffit pas — « le store reste seul juge »).
+      if (estAuCoffre(id)) throw new Error(MSG_FICHE_AU_COFFRE);
       const d = donneesPersonne || {};
       if (d.typePersonne !== undefined &&
           !TYPES_PERSONNE.includes(d.typePersonne)) {
@@ -3732,6 +3817,8 @@ export function creerDemoStore() {
 
     async desactiverPersonne(id, operateur) {
       const personne = trouverPersonne(id);
+      // Lot E2 : fiche au coffre = intouchable (déjà inactive de toute façon).
+      if (estAuCoffre(id)) throw new Error(MSG_FICHE_AU_COFFRE);
       if (!personne.actif) {
         throw new Error(
           `${personne.prenom} ${personne.nom} est déjà désactivé(e).`);
@@ -3745,6 +3832,249 @@ export function creerDemoStore() {
     },
 
     // ------------------------------------------------------
+    // Coffre des identités (lot E2 — RGPD) : SIMULATION démo.
+    // Mêmes flux, mêmes refus, mêmes messages que le serveur ;
+    // enveloppes balisées PREFIXE_SIMULATION (jamais en base réelle),
+    // phrase d'exercice en mémoire de session UNIQUEMENT.
+    // ------------------------------------------------------
+
+    async etatCoffre() {
+      const identites = (donnees.coffreIdentites ?? [])
+        .map((c) => ({
+          personnelId: c.personnelId,
+          pseudonyme: c.pseudonyme,
+          dateMiseALabri: c.dateMiseALabri
+        }))
+        .sort((a, b) => (a.pseudonyme < b.pseudonyme ? -1 : 1));
+      const candidats = donnees.personnel
+        .filter((p) => estFicheEchue(p) && !estAuCoffre(p.id))
+        .map((p) => p.id);
+      return {
+        coffreCree: donnees.coffreCree === true,
+        nombreAuCoffre: identites.length,
+        identites,
+        candidats
+      };
+    },
+
+    async verifierCodeCoffre(phrase) {
+      verifierPhraseCoffreDemo(phrase);
+      return { ok: true };
+    },
+
+    async mettreAuCoffre(personnelIds, phrase, options = {}) {
+      const ids = Array.isArray(personnelIds) ? personnelIds : [];
+      if (ids.length === 0) {
+        throw new Error('Aucune identité à mettre à l\'abri.');
+      }
+      // MÊME ORDRE que le serveur : fiches d'abord, phrase ensuite.
+      const personnes = ids.map((id) => trouverPersonne(id));
+      for (const p of personnes) {
+        if (estAuCoffre(p.id)) throw new Error(MSG_DEJA_AU_COFFRE);
+      }
+      // Création du coffre au premier geste ; ensuite la phrase du coffre
+      // EXISTANT est exigée (jamais deux phrases pour un même coffre).
+      if (!donnees.coffreCree) {
+        if (typeof phrase !== 'string' ||
+            phrase.length < LONGUEUR_MIN_PHRASE_COFFRE) {
+          throw new Error(MSG_PHRASE_TROP_COURTE);
+        }
+      } else {
+        verifierPhraseCoffreDemo(phrase);
+      }
+      const annee = options.annee ?? new Date().getFullYear();
+
+      // PHASE 1 — préparation SANS mutation (les lectures asynchrones de
+      // contenus PJ peuvent échouer : rien ne doit avoir bougé — atomicité
+      // de fait, le reste est synchrone).
+      const preparation = [];
+      for (const personne of personnes) {
+        const lignesPj = donnees.piecesJointes
+          .filter((pj) => pj.entiteType === 'personne'
+            && pj.entiteId === personne.id);
+        const piecesJointes = [];
+        for (const pj of lignesPj) {
+          const contenu = await lireContenuPj(pj.id);
+          const octets = contenu ? await octetsDepuis(contenu) : null;
+          piecesJointes.push({
+            nomFichier: pj.nomFichier,
+            mimeType: pj.mimeType,
+            categorie: pj.categorie ?? null,
+            hashSha256: pj.hashSha256 ?? null,
+            base64: octets ? octetsVersBase64(octets) : null
+          });
+        }
+        preparation.push({ personne, lignesPj, piecesJointes });
+      }
+
+      // PHASE 2 — mutations (synchrones, d'un seul tenant).
+      const misAuCoffre = [];
+      for (const { personne, lignesPj, piecesJointes } of preparation) {
+        const numero = prochainNumeroCoffre(annee);
+        const pseudo = libellePseudonyme(annee, numero);
+        const libelleAvant = `${personne.prenom} ${personne.nom}`.trim();
+        const identite = assemblerIdentiteCoffre(personne, {
+          identifiantConnexion: null, // pas de comptes en démo
+          piecesJointes
+        });
+        // Enveloppe SIMULÉE : balise + base64 du JSON (aucune protection —
+        // le bandeau de la vue le dit ; jamais importée en base réelle).
+        const enveloppe = PREFIXE_SIMULATION
+          + octetsVersBase64(new TextEncoder().encode(JSON.stringify(identite)));
+
+        // Pseudonymisation de la fiche (id INTACT) + brouillons réécrits
+        // (révision INCRÉMENTÉE : signatures posées PÉRIMÉES — invariant
+        // C1 ; branche texte SANS porteur identifié — jamais l'homonyme).
+        Object.assign(personne, pseudonymiserFiche(annee, numero));
+        for (const mv of donnees.mouvements) {
+          if (mv.statut !== 'BROUILLON' && mv.statut !== 'SOUMIS') continue;
+          if (mv.executeParId === personne.id ||
+              (!mv.executeParId && mv.technicien === libelleAvant)) {
+            mv.technicien = pseudo.libelle;
+            mv.revisionBrouillon = (mv.revisionBrouillon ?? 0) + 1;
+          }
+        }
+        // Contrôles d'étanchéité : ni scellés ni WORM — opérateur réécrit
+        // (ferme getControles et l'export E1), même clause anti-homonyme.
+        for (const c of donnees.controles) {
+          if (c.operateurId === personne.id ||
+              (!c.operateurId && c.operateur === libelleAvant)) {
+            c.operateur = pseudo.libelle;
+          }
+        }
+        // Suppression des PJ de la personne (contenus compris).
+        for (const pj of lignesPj) {
+          const indice = donnees.piecesJointes.indexOf(pj);
+          if (indice >= 0) donnees.piecesJointes.splice(indice, 1);
+          await supprimerContenuPj(pj.id);
+        }
+        donnees.coffreIdentites.push({
+          id: genId('cof'),
+          personnelId: personne.id,
+          pseudonyme: pseudo.libelle,
+          enveloppe,
+          dateMiseALabri: new Date().toISOString()
+        });
+        // Journal : pseudonyme + identifiant, JAMAIS le nom (piège n°1).
+        journaliser(null, 'COFFRE_MISE_A_L_ABRI',
+          `${pseudo.libelle} (${personne.id})`,
+          'Identité mise à l\'abri (simulation démo)');
+        misAuCoffre.push({ personnelId: personne.id,
+          pseudonyme: pseudo.libelle });
+      }
+      donnees.coffreCree = true;
+      phraseCoffreSession = phrase;
+      persisterEtNotifier();
+      return { misAuCoffre };
+    },
+
+    async consulterIdentiteCoffre(personnelId, phrase, motif) {
+      if (typeof motif !== 'string' || !motif.trim()) {
+        throw new Error(MSG_MOTIF_OBLIGATOIRE);
+      }
+      // MÊME ORDRE que le serveur : la ligne d'abord, la phrase ensuite.
+      const ligne = ligneCoffre(personnelId);
+      if (!ligne) throw new Error(MSG_PAS_AU_COFFRE);
+      verifierPhraseCoffreDemo(phrase);
+      let identite;
+      try {
+        const base64 = ligne.enveloppe.slice(PREFIXE_SIMULATION.length);
+        identite = JSON.parse(
+          new TextDecoder().decode(base64VersOctets(base64)));
+      } catch {
+        throw new Error(MSG_CODE_INCORRECT);
+      }
+      journaliser(null, 'COFFRE_CONSULTATION',
+        `${ligne.pseudonyme} (${personnelId})`, `Motif : ${motif.trim()}`);
+      persisterEtNotifier();
+      return copier(identite);
+    },
+
+    async restaurerIdentiteCoffre(personnelId, phrase, motif) {
+      if (typeof motif !== 'string' || !motif.trim()) {
+        throw new Error(MSG_MOTIF_OBLIGATOIRE);
+      }
+      // MÊME ORDRE que le serveur : la ligne d'abord, la phrase ensuite.
+      const ligne = ligneCoffre(personnelId);
+      if (!ligne) throw new Error(MSG_PAS_AU_COFFRE);
+      verifierPhraseCoffreDemo(phrase);
+      const personne = trouverPersonne(personnelId);
+      let identite;
+      try {
+        const base64 = ligne.enveloppe.slice(PREFIXE_SIMULATION.length);
+        identite = JSON.parse(
+          new TextDecoder().decode(base64VersOctets(base64)));
+      } catch {
+        throw new Error(MSG_CODE_INCORRECT);
+      }
+      // Tri des pièces AVANT toute mutation : hash revérifié quand connu —
+      // une pièce altérée est SAUTÉE et signalée, jamais bloquante (parité
+      // avec le serveur : l'identité n'est pas verrouillée à perpétuité).
+      const piecesSaines = [];
+      const piecesAlterees = [];
+      for (const pj of (identite.piecesJointes ?? [])) {
+        if (!pj.base64) continue;
+        const octets = base64VersOctets(pj.base64);
+        const hash = await hasherOctets(octets);
+        if (pj.hashSha256 && hash !== pj.hashSha256) {
+          piecesAlterees.push(pj.nomFichier);
+        } else {
+          piecesSaines.push({ pj, octets, hash });
+        }
+      }
+      // La fiche redevient ce qu'elle était (actif d'origine compris).
+      Object.assign(personne, restaurerIdentite(identite));
+      for (const { pj, octets, hash } of piecesSaines) {
+        const nouvelle = {
+          id: genId('pj'),
+          entiteType: 'personne',
+          entiteId: personnelId,
+          categorie: pj.categorie ?? 'AUTRE',
+          nomFichier: pj.nomFichier,
+          mimeType: pj.mimeType,
+          taille: octets.length,
+          hashSha256: hash,
+          dateAjout: new Date().toISOString(),
+          ajoutePar: null
+        };
+        await ecrireContenuPj(nouvelle.id,
+          { octets, mimeType: nouvelle.mimeType });
+        donnees.piecesJointes.push(nouvelle);
+      }
+      // La ligne du coffre disparaît ; le compteur MONOTONE, lui, ne
+      // redescend jamais (le pseudonyme n'est pas réattribué).
+      donnees.coffreIdentites = donnees.coffreIdentites
+        .filter((c) => c.personnelId !== personnelId);
+      journaliser(null, 'COFFRE_RESTAURATION',
+        `${ligne.pseudonyme} (${personnelId})`,
+        `Motif : ${motif.trim()}` + (piecesAlterees.length
+          ? ` · ${piecesAlterees.length} pièce(s) altérée(s) non restituée(s)`
+          : ''));
+      persisterEtNotifier();
+      const resultat = copier(personne);
+      if (piecesAlterees.length > 0) {
+        resultat.piecesAlterees = piecesAlterees;
+      }
+      return resultat;
+    },
+
+    async changerPhraseCoffre(anciennePhrase, nouvellePhrase) {
+      verifierPhraseCoffreDemo(anciennePhrase);
+      if (typeof nouvellePhrase !== 'string' ||
+          nouvellePhrase.length < LONGUEUR_MIN_PHRASE_COFFRE) {
+        throw new Error(MSG_PHRASE_TROP_COURTE);
+      }
+      // Simulation : les enveloppes balisées ne dépendent pas de la phrase,
+      // seul le secret de session tourne (même contrat de retour qu'en réel).
+      phraseCoffreSession = nouvellePhrase;
+      journaliser(null, 'COFFRE_CHANGEMENT_PHRASE', 'coffre',
+        `${(donnees.coffreIdentites ?? []).length} enveloppe(s) re-scellée(s) (simulation)`);
+      persisterEtNotifier();
+      return { ok: true,
+        nombreRechiffre: (donnees.coffreIdentites ?? []).length };
+    },
+
+    // ------------------------------------------------------
     // Habilitations F-Gas (multi-régime 2008/2025) — chantier B2
     // ------------------------------------------------------
     async getHabilitations() {
@@ -3755,6 +4085,9 @@ export function creerDemoStore() {
     async createHabilitation(donneesHabilitation) {
       const d = donneesHabilitation || {};
       const personne = trouverPersonne(d.personneId);
+      // Lot E2 : pas de NOUVEL identifiant indirect sur une fiche au
+      // coffre (la révocation reste permise — geste de conformité).
+      if (estAuCoffre(personne.id)) throw new Error(MSG_FICHE_AU_COFFRE);
       verifierRegime(d.regime);
       verifierCategorieHabilitation(d.regime, d.categorie);
       const habilitation = {
@@ -3781,6 +4114,10 @@ export function creerDemoStore() {
 
     async updateHabilitation(id, donneesHabilitation) {
       const habilitation = trouverHabilitation(id);
+      // Lot E2 : fiche au coffre -> pas de retouche d'identifiant indirect.
+      if (estAuCoffre(habilitation.personneId)) {
+        throw new Error(MSG_FICHE_AU_COFFRE);
+      }
       const d = donneesHabilitation || {};
       // Régime et catégorie INTOUCHABLES : on corrige une coquille (n°, dates,
       // organisme), on ne réécrit jamais l'identité de l'attestation.
@@ -3829,6 +4166,8 @@ export function creerDemoStore() {
     async createMention(donneesMention) {
       const d = donneesMention || {};
       const personne = trouverPersonne(d.personneId);
+      // Lot E2 : pas de nouvel identifiant indirect sur une fiche au coffre.
+      if (estAuCoffre(personne.id)) throw new Error(MSG_FICHE_AU_COFFRE);
       verifierFluideMention(d.fluideMention);
       const mention = {
         id: genId('men'),
@@ -3950,6 +4289,11 @@ export function creerDemoStore() {
       }
       if (!d.nomFichier || !String(d.nomFichier).trim()) {
         throw new Error('Nom de fichier de la pièce jointe obligatoire.');
+      }
+      // Lot E2 : une fiche au coffre ne reçoit plus de pièce (un scan
+      // nominatif neuf casserait la pseudonymisation) — verrou de store.
+      if (d.entiteType === 'personne' && estAuCoffre(d.entiteId)) {
+        throw new Error(MSG_FICHE_AU_COFFRE);
       }
       // Lot C (C3c) : la catégorie du PDF conservé est RÉSERVÉE au canal
       // système de validerMouvement — jamais posée par un client (sinon
@@ -4604,8 +4948,24 @@ export function creerDemoStore() {
         }
       }
 
-      // Adoption : les vérifications sont passées
+      // Lot E2 : compléments des clés du coffre (un export antérieur au
+      // coffre n'en a pas — sans eux, le premier mettreAuCoffre planterait
+      // en TypeError au lieu du refus canonique).
+      if (!Array.isArray(candidat.coffreIdentites)) {
+        candidat.coffreIdentites = [];
+      }
+      if (!candidat.coffreCompteurs ||
+          typeof candidat.coffreCompteurs !== 'object') {
+        candidat.coffreCompteurs = {};
+      }
+      if (typeof candidat.coffreCree !== 'boolean') {
+        candidat.coffreCree = false;
+      }
+
+      // Adoption : les vérifications sont passées. La phrase d'exercice de
+      // session ne correspond plus forcément au coffre importé : oubliée.
       donnees = candidat;
+      phraseCoffreSession = null;
       this.registreAltere = null;
       journaliser('système', 'IMPORT_DONNEES', 'sauvegarde',
         'Restauration depuis un fichier JSON (intégrité vérifiée)');

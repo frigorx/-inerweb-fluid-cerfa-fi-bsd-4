@@ -147,6 +147,30 @@
  *       tbl_name étendu à pieces_jointes). ⚠️ Toute future migration qui
  *       RECRÉE pieces_jointes (procédure migration 10) devra recréer ces
  *       triggers (« aucun trigger sur pieces_jointes » n'est plus vrai).
+ *  26 — LOT E (brique E2b) : ENTITÉS de pièces jointes élargies — même
+ *       bug, même remède que la migration 10 (qui l'avait corrigé pour les
+ *       CATÉGORIES) : le CHECK du socle v1 sur pieces_jointes.entite_type
+ *       REFUSAIT en Mode Local deux valeurs POURTANT posées par le front
+ *       (la démo, sans liste blanche, les acceptait) :
+ *         personne  fiche du personnel (personne-form, scans + signature)
+ *         OUTIL     certificat d'étalonnage (outil-form ; fiche-outil dit
+ *                   OUTILLAGE — dette front à unifier, les DEUX passent)
+ *       Recréation de la table (procédure migration 10, colonnes nommées)
+ *       + RECRÉATION des 3 triggers WORM de la migration 24 (le DROP les
+ *       emporte — c'était l'avertissement explicite de la 24).
+ *  25 — LOT E (brique E2b) : COFFRE DES IDENTITÉS (RGPD, minimisation).
+ *       Deux tables : coffre_identites (une ligne = une identité d'élève
+ *       mise à l'abri — pseudonyme UNIQUE, enveloppe AES-256-GCM
+ *       AUTOPORTANTE sel|iv|tag|chiffré, cf. server/chiffrement.js
+ *       MAGIC_COFFRE) et coffre_purge_en_attente (chemins de fichiers à
+ *       supprimer, rejoués au démarrage — un plantage entre COMMIT et
+ *       purge disque ne laisse jamais un scan en clair orphelin). Les
+ *       clés coffre_sel / coffre_temoin / coffre_kdf / coffre_compteur_*
+ *       vivent dans `parametres` (posées à la création du coffre, PAS
+ *       ici). AUCUN trigger WORM : la restauration légitime fait un
+ *       DELETE (la parade contre la destruction = les sauvegardes).
+ *       Tables NON MAPPÉES (mapping.js) : le front ne voit jamais une
+ *       enveloppe — import/export par insertion brute dédiée (E2c).
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -1221,6 +1245,103 @@ END;`);
   24: {
     nom: 'worm_pieces_jointes_lot_c',
     appliquer(db) {
+      db.exec(`CREATE TRIGGER pieces_jointes_interdire_update_fige
+BEFORE UPDATE ON pieces_jointes
+WHEN (OLD.entite_type = 'MOUVEMENT' AND EXISTS (
+        SELECT 1 FROM mouvements
+        WHERE id = OLD.entite_id AND statut IN ('VALIDE','ANNULE')))
+  OR (NEW.entite_type = 'MOUVEMENT' AND EXISTS (
+        SELECT 1 FROM mouvements
+        WHERE id = NEW.entite_id AND statut IN ('VALIDE','ANNULE')))
+BEGIN
+    SELECT RAISE(ABORT, 'Pièce scellée : les pièces justificatives d''une écriture figée ne peuvent plus être modifiées.');
+END;`);
+      db.exec(`CREATE TRIGGER pieces_jointes_interdire_delete_fige
+BEFORE DELETE ON pieces_jointes
+WHEN OLD.entite_type = 'MOUVEMENT' AND EXISTS (
+        SELECT 1 FROM mouvements
+        WHERE id = OLD.entite_id AND statut IN ('VALIDE','ANNULE'))
+BEGIN
+    SELECT RAISE(ABORT, 'Pièce scellée : les pièces justificatives d''une écriture figée sont conservées.');
+END;`);
+      db.exec(`CREATE TRIGGER pieces_jointes_interdire_insert_fige
+BEFORE INSERT ON pieces_jointes
+WHEN NEW.entite_type = 'MOUVEMENT' AND EXISTS (
+        SELECT 1 FROM mouvements
+        WHERE id = NEW.entite_id AND statut IN ('VALIDE','ANNULE'))
+BEGIN
+    SELECT RAISE(ABORT, 'Écriture figée : elle ne peut plus recevoir de pièce justificative.');
+END;`);
+    }
+  },
+
+  // 25 — LOT E (brique E2b) : coffre des identités (RGPD). Deux tables,
+  // littéraux FIGÉS (une migration est immuable). Aucun trigger WORM
+  // (la restauration légitime supprime sa ligne) ; tables non mappées.
+  25: {
+    nom: 'coffre_identites_lot_e',
+    appliquer(db) {
+      db.exec(`CREATE TABLE IF NOT EXISTS coffre_identites (
+    id                 TEXT PRIMARY KEY,
+    personnel_id       TEXT UNIQUE NOT NULL REFERENCES personnel(id),
+    pseudonyme         TEXT UNIQUE NOT NULL,
+    enveloppe          BLOB NOT NULL,
+    date_mise_a_labri  TEXT NOT NULL,
+    etablissement_id   TEXT NOT NULL,
+    date_creation      TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+);`);
+      db.exec(`CREATE TABLE IF NOT EXISTS coffre_purge_en_attente (
+    id            TEXT PRIMARY KEY,
+    chemin        TEXT NOT NULL,
+    date_creation TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+);`);
+    }
+  },
+
+  // 26 — LOT E (brique E2b) : entités de PJ élargies (personne, OUTIL) —
+  // procédure de la migration 10 (recréation par colonnes nommées) + les
+  // 3 triggers WORM de la migration 24 RECRÉÉS (le DROP les emporte).
+  26: {
+    nom: 'entites_pieces_jointes_elargies',
+    appliquer(db) {
+      db.exec(`
+        CREATE TABLE pieces_jointes_nouveau (
+            id             TEXT PRIMARY KEY,
+            etablissement_id TEXT REFERENCES etablissements(id),
+            entite_type    TEXT NOT NULL
+                CHECK (entite_type IN ('ETABLISSEMENT','AUDIT','NON_CONFORMITE','PERSONNEL','OUTILLAGE',
+                                       'MACHINE','BOUTEILLE','MOUVEMENT','CONTROLE','BSFF',
+                                       'CLIENT_DETENTEUR','INVENTAIRE','personne','OUTIL')),
+            entite_id      TEXT NOT NULL,
+            categorie      TEXT NOT NULL DEFAULT 'AUTRE'
+                CHECK (categorie IN ('ATTESTATION','CERTIFICAT','FACTURE','BL','BON_DE_REPRISE','BSFF',
+                                     'PHOTO_PESEE','PLAQUE_SIGNALETIQUE','RAPPORT','AUTRE',
+                                     'SIGNATURE','ATTESTATION_APTITUDE','ATTESTATION_CAPACITE',
+                                     'BORDEREAU_BSFF','CERTIFICAT_ETALONNAGE','CERFA_FINAL')),
+            nom_fichier    TEXT NOT NULL,
+            mime_type      TEXT,
+            chemin         TEXT,
+            taille_octets  INTEGER,
+            hash_sha256    TEXT,
+            date_ajout     TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+            ajoute_par     TEXT
+        );
+      `);
+      db.exec(`
+        INSERT INTO pieces_jointes_nouveau
+            (id, etablissement_id, entite_type, entite_id, categorie,
+             nom_fichier, mime_type, chemin, taille_octets, hash_sha256,
+             date_ajout, ajoute_par)
+        SELECT id, etablissement_id, entite_type, entite_id, categorie,
+               nom_fichier, mime_type, chemin, taille_octets, hash_sha256,
+               date_ajout, ajoute_par
+          FROM pieces_jointes;
+      `);
+      db.exec('DROP TABLE pieces_jointes;');
+      db.exec('ALTER TABLE pieces_jointes_nouveau RENAME TO pieces_jointes;');
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_pj_entite
+                 ON pieces_jointes (entite_type, entite_id);`);
+      // Triggers WORM de la migration 24, RECRÉÉS à l'identique (littéraux).
       db.exec(`CREATE TRIGGER pieces_jointes_interdire_update_fige
 BEFORE UPDATE ON pieces_jointes
 WHEN (OLD.entite_type = 'MOUVEMENT' AND EXISTS (

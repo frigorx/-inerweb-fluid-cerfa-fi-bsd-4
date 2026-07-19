@@ -9,7 +9,7 @@
 Front vanilla ES modules sous `v8/` (démo navigateur OU client du serveur
 local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
 2011) ; les DEUX implémentent le MÊME contrat `v8/js/data/contrat.js`
-(81 méthodes, `VERSION_CONTRAT` 6) prouvé par `test-contrat.mjs` joué
+(87 méthodes, `VERSION_CONTRAT` 7) prouvé par `test-contrat.mjs` joué
 contre chacune.
 
 ## Flux clés
@@ -31,9 +31,10 @@ contre chacune.
 |---|---|---|
 | `serveur.js` | HTTP loopback (LAN si `IWF_LAN=1`), routage `/api/:methode`, statique `/v8/` | garde Host+Origin (CSRF/rebinding) obligatoire ; **lot A : TOUTE lecture exige une session (loopback compris), seuls ping + routes d'amorçage de routes-comptes passent sans** ; CSP servie en en-tête (`frame-ancestors 'none'`) |
 | `api.js` (~5000 l.) | LE dispatcher : un handler par méthode du contrat, `muter()` = transaction, `ROLES_MUTATION` | sémantique = copie EXACTE du DemoStore ; rôle jamais lu du corps ; **lot E ① : `ROLES_LECTURE_SENSIBLE` (lectures gatées par rôle) consulté par `garderRole` après `ROLES_MUTATION` — `exporterDonneesPersonne` = VALIDEUR** |
-| `export-personne.js` | miroir littéral de l'assemblage de l'export RGPD d'une personne (lot E ①) | parité prouvée par `test-export-personne.mjs` ; handler serveur = composition des getters existants + signatures brutes mappées |
+| `export-personne.js` | miroir littéral de l'assemblage de l'export RGPD d'une personne (lot E ①) | parité prouvée par `test-export-personne.mjs` ; handler serveur = composition des getters existants + signatures brutes mappées ; personne AU COFFRE → signatures substituées par le pseudonyme |
+| `coffre-identites.js` | miroir littéral des règles pures du COFFRE DES IDENTITÉS (lot E2) | parité prouvée par `test-coffre-identites.mjs` ; api.js porte les 6 gestes (REFERENT/ADMIN + poste local), le témoin GCM, l'archive préalable OBLIGATOIRE, la purge rattrapée au démarrage (`rejouerPurgeCoffre`), les verrous de fiche au coffre (updatePersonne/PJ/désactivation/habilitations/mentions) et la garde TEMPORAIRE d'import (levée en E2c) ; primitives crypto = `chiffrement.js` (enveloppes de champ autoportantes, scrypt N=131072) |
 | `db.js` | ouverture PRAGMA coffre-fort, `journaliser()` SHA-256 CHAÎNÉ, transaction ré-entrante | `recursive_triggers=ON` VITAL (anti-REPLACE) |
-| `migrations.js` | registre 2→24, transactionnel, consécutif ; exporte `FICHE_REGLEMENTAIRE_FLUIDES` (table validée, consommée par la migration 21 ET l'import JSON d'api.js) | JAMAIS de DROP destructif ; trigger WORM à recréer si colonne mouvements ajoutée ; registre-commentaire en tête à tenir ; **24 (C5) = WORM pieces_jointes d'un mouvement figé — à recréer si la table est recréée (procédure migration 10)** |
+| `migrations.js` | registre 2→26, transactionnel, consécutif ; exporte `FICHE_REGLEMENTAIRE_FLUIDES` (table validée, consommée par la migration 21 ET l'import JSON d'api.js) | JAMAIS de DROP destructif ; trigger WORM à recréer si colonne mouvements ajoutée ; registre-commentaire en tête à tenir ; **24 (C5) = WORM pieces_jointes d'un mouvement figé — à recréer si la table est recréée (procédure migration 10, fait par la 26)** ; **25-26 (E2b) = tables du coffre des identités + entités de PJ élargies (personne/OUTIL, bug préexistant)** |
 | `schema.sql` | socle v1 SEUL (les évolutions = migrations) | ne jamais l'éditer pour une évolution |
 | `mapping.js` | correspondance UNIQUE front(camel)↔SQL(snake), `CHAMPS_HASH_MOUVEMENT` = liste blanche du hasseur | toute colonne hors empreinte reste HORS de cette liste |
 | `hash-mouvement.js` | clone EXACT du hasseur front — VERSIONNÉ (lot C, C2) : v1 (18 champs) FIGÉE À JAMAIS, v2 = +9 champs (PRP figé, CERFA, rôles, champs gelés) ; aides empreinteListeTriee / chaineCanoniqueSignature | ne jamais utiliser db.hashEcriture pour les mouvements ; QUATRE vérificateurs versionnés (api ×2 + démo + verification.js) ; empreintes CONNUES figées dans test-hash-mouvement |
@@ -53,7 +54,7 @@ contre chacune.
 
 | Module | Rôle |
 |---|---|
-| `contrat.js` | LA vérité de surface : 80 méthodes documentées, messages canoniques |
+| `contrat.js` | LA vérité de surface : 87 méthodes documentées, messages canoniques |
 | `demo-store.js` (~4000 l.) | implémentation mémoire complète (référence sémantique) |
 | `local-store.js` | enveloppes 1-pour-1 vers l'API (ajouter CHAQUE nouvelle méthode ici) ; SEULE adaptation : le contenu binaire des PJ (base64 à l'aller, Blob au retour) |
 | `contenu-pj.js` | pur : contenu binaire des pièces jointes (`versBase64`/`versBlob`) — JSON réduit un Blob à `{}`, d'où 9 octets de déchet enregistrés comme preuve avant le 14/07 ; **lot A : `signatureConcordeAvecMime` = contrôle des nombres magiques (PDF/PNG/JPEG/WebP), miroir littéral dans `api.js`, appelé par `ajouterPieceJointe` des deux côtés** |
@@ -68,6 +69,7 @@ contre chacune.
 | `pdf-final.js` | pur : PDF FINAL conservé (lot C, C3a) — messages canoniques de refus + `verifierOctetsPdfFinal` (%PDF, 5 Mo) + `nomFichierPdfFinal` ; C5 : `pdfFinalAttendu(type)` = exemption TRANSFERT (jamais de CERFA, IM-12 — PDF fourni refusé) ; consommé par validerMouvement des deux stores (3e param `pdfFinalBase64`, OBLIGATOIRE en OFFICIEL hors transfert, refusé en FORMATION), recopié en littéral côté serveur |
 | `parcours-signature.js` | pur : décisions de l'écran de double signature (lot C, C4) — `etatParcoursSignatures` (tri-état par rôle, signature retenue, prêt pour soumission) + `preremplirSignature` (équipement du lycée = professeur PAR DÉLÉGATION pré-cochée) ; consommé par la modale ET le générateur CERFA |
 | `export-personne.js` | pur : assemble l'export RGPD des données d'UNE personne (lot E ①, `assemblerExportPersonne`) — accès/portabilité, SANS binaire ni journal ; recopié en littéral côté serveur ; `exporterDonneesPersonne` compose les getters existants dans les deux stores |
+| `coffre-identites.js` | pur : règles du COFFRE DES IDENTITÉS (lot E2) — messages canoniques, AAD, pseudonymes « Élève AAAA-NN », éligibilité (élève désactivé), pseudonymisation/restauration bit à bit, `libelleIntervenant` (substitution par identifiant via la fiche vivante) ; le DemoStore SIMULE (enveloppes balisées `SIMULATION-COFFRE`, phrase d'exercice en mémoire de session seulement, jamais persistée) |
 | `feu-tricolore.js` | pur : consolide alertes/officiel/chaîne en 7 domaines VERT/ORANGE/ROUGE (`collecterConformite(store)`) |
 | `audit-guide.js` | pur : parcours d'audit en 9 étapes ordonnées (alertes par préfixe + faits de présence, `collecterAuditGuide(store)`) |
 | `filtre-mouvements.js` | pur : filtres de la vue Mouvements (index cherchable sans accents, correspondance, options présentes) |
