@@ -9,7 +9,7 @@
 Front vanilla ES modules sous `v8/` (démo navigateur OU client du serveur
 local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
 2011) ; les DEUX implémentent le MÊME contrat `v8/js/data/contrat.js`
-(80 méthodes, `VERSION_CONTRAT` 6) prouvé par `test-contrat.mjs` joué
+(81 méthodes, `VERSION_CONTRAT` 6) prouvé par `test-contrat.mjs` joué
 contre chacune.
 
 ## Flux clés
@@ -30,7 +30,8 @@ contre chacune.
 | Module | Rôle | Pièges |
 |---|---|---|
 | `serveur.js` | HTTP loopback (LAN si `IWF_LAN=1`), routage `/api/:methode`, statique `/v8/` | garde Host+Origin (CSRF/rebinding) obligatoire ; **lot A : TOUTE lecture exige une session (loopback compris), seuls ping + routes d'amorçage de routes-comptes passent sans** ; CSP servie en en-tête (`frame-ancestors 'none'`) |
-| `api.js` (~5000 l.) | LE dispatcher : un handler par méthode du contrat, `muter()` = transaction, `ROLES_MUTATION` | sémantique = copie EXACTE du DemoStore ; rôle jamais lu du corps |
+| `api.js` (~5000 l.) | LE dispatcher : un handler par méthode du contrat, `muter()` = transaction, `ROLES_MUTATION` | sémantique = copie EXACTE du DemoStore ; rôle jamais lu du corps ; **lot E ① : `ROLES_LECTURE_SENSIBLE` (lectures gatées par rôle) consulté par `garderRole` après `ROLES_MUTATION` — `exporterDonneesPersonne` = VALIDEUR** |
+| `export-personne.js` | miroir littéral de l'assemblage de l'export RGPD d'une personne (lot E ①) | parité prouvée par `test-export-personne.mjs` ; handler serveur = composition des getters existants + signatures brutes mappées |
 | `db.js` | ouverture PRAGMA coffre-fort, `journaliser()` SHA-256 CHAÎNÉ, transaction ré-entrante | `recursive_triggers=ON` VITAL (anti-REPLACE) |
 | `migrations.js` | registre 2→24, transactionnel, consécutif ; exporte `FICHE_REGLEMENTAIRE_FLUIDES` (table validée, consommée par la migration 21 ET l'import JSON d'api.js) | JAMAIS de DROP destructif ; trigger WORM à recréer si colonne mouvements ajoutée ; registre-commentaire en tête à tenir ; **24 (C5) = WORM pieces_jointes d'un mouvement figé — à recréer si la table est recréée (procédure migration 10)** |
 | `schema.sql` | socle v1 SEUL (les évolutions = migrations) | ne jamais l'éditer pour une évolution |
@@ -66,6 +67,7 @@ contre chacune.
 | `signatures-mouvement.js` | pur : signatures RÉELLES (lot C, C1) — déclarations signées EXACTES (`declarationSignature`, délégation dans la qualité ET la déclaration) + critères d'illisibilité (`verifierImageSignature` : PNG réel, ≥ 1 Ko, ≤ 1 Mo) ; consommé par signerMouvement des deux stores, recopié en littéral côté serveur |
 | `pdf-final.js` | pur : PDF FINAL conservé (lot C, C3a) — messages canoniques de refus + `verifierOctetsPdfFinal` (%PDF, 5 Mo) + `nomFichierPdfFinal` ; C5 : `pdfFinalAttendu(type)` = exemption TRANSFERT (jamais de CERFA, IM-12 — PDF fourni refusé) ; consommé par validerMouvement des deux stores (3e param `pdfFinalBase64`, OBLIGATOIRE en OFFICIEL hors transfert, refusé en FORMATION), recopié en littéral côté serveur |
 | `parcours-signature.js` | pur : décisions de l'écran de double signature (lot C, C4) — `etatParcoursSignatures` (tri-état par rôle, signature retenue, prêt pour soumission) + `preremplirSignature` (équipement du lycée = professeur PAR DÉLÉGATION pré-cochée) ; consommé par la modale ET le générateur CERFA |
+| `export-personne.js` | pur : assemble l'export RGPD des données d'UNE personne (lot E ①, `assemblerExportPersonne`) — accès/portabilité, SANS binaire ni journal ; recopié en littéral côté serveur ; `exporterDonneesPersonne` compose les getters existants dans les deux stores |
 | `feu-tricolore.js` | pur : consolide alertes/officiel/chaîne en 7 domaines VERT/ORANGE/ROUGE (`collecterConformite(store)`) |
 | `audit-guide.js` | pur : parcours d'audit en 9 étapes ordonnées (alertes par préfixe + faits de présence, `collecterAuditGuide(store)`) |
 | `filtre-mouvements.js` | pur : filtres de la vue Mouvements (index cherchable sans accents, correspondance, options présentes) |

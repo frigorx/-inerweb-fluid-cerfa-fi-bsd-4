@@ -2,6 +2,37 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🛡️ LOT E RGPD — brique E1 : EXPORT INDIVIDUEL DES DONNÉES D'UNE PERSONNE (19/07)
+Première brique du lot E (droits d'ACCÈS et de PORTABILITÉ, RGPD art. 15/20). Le
+`RGPD.md` §7 promettait « l'export des données d'une personne via les fonctions
+d'export » : c'est désormais réel dans l'application.
+- **Module pur partagé** `v8/js/data/export-personne.js` (`assemblerExportPersonne`),
+  recopié EN LITTÉRAL dans `server/export-personne.js` — parité prouvée par
+  `test-export-personne.mjs`. À partir des collections déjà lues (personnel,
+  habilitations, mentions, signatures, mouvements, contrôles, pièces jointes), il
+  reconstitue tout ce qui concerne UNE personne : sa fiche, ses habilitations et
+  mentions, ses signatures réelles (métadonnées, SANS l'image), les interventions
+  et contrôles où elle apparaît (rapprochement par identifiant OU par nom
+  insensible casse/accents), les métadonnées de ses pièces jointes. Enveloppe
+  `{ application, version, genereLe, personneId, personne, … , avertissement }`.
+- **AUCUN binaire** dans l'export (images de signature, scans d'attestation restent
+  téléchargeables à part depuis la fiche) ; **le journal d'audit n'est pas repris**
+  (conservé pour sa valeur probante réglementaire — minimisation assumée, à faire
+  relire par le DPD, gate E④).
+- **Nouvelle méthode de contrat** `exporterDonneesPersonne(personneId)` (lecture,
+  81 méthodes désormais) : câblée DemoStore + LocalStore + serveur, composant les
+  getters existants (parité héritée). **Lecture SENSIBLE gatée VALIDEUR** côté
+  serveur : nouvelle table `ROLES_LECTURE_SENSIBLE` consultée par `garderRole`
+  (un élève est refusé — 403 — comme pour la gestion du personnel). L'attaque est
+  TIRÉE dans le test (ELEVE → 403, sans rôle → 403, REFERENT → export).
+- **UI** : bouton « Exporter (RGPD) » dans la fiche du personnel (modale
+  `personne-form.js`) → télécharge `export-rgpd-<prénom-nom>-<date>.json`. Vérifié
+  AU NAVIGATEUR en mode démo (bouton présent, téléchargement déclenché, toast).
+- **Preuves — TOUT VERT, 82 exécutions** (`node outils/lancer-tests.mjs`) :
+  nouvelle suite `test-export-personne.mjs` (22 vérifs : parité ESM/CJS + test
+  discriminant, filtrage par identité, absence de binaire, personne introuvable →
+  Error, garde de rôle 403/OK sur base jetable, composition serveur réelle).
+
 ### 🔓 LOT C audit-proof — brique C5 : BASCULE DU VERROU — LE MODE OFFICIEL EST OUVERT (19/07 soir) — LOT C COMPLET
 Dernière brique du lot C (plan §7.6). **`VERROU_LIVRAISON = false` dans les DEUX miroirs**
 (`v8/js/data/blocage-officiel.js` + `server/blocage-officiel.js`, nulle part ailleurs — la

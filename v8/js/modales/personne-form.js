@@ -13,6 +13,24 @@ import { esc } from '../core/utils.js';
 import { zonePiecesJointes } from '../composants/pieces-jointes.js';
 import { creerSignature } from '../wizard/signature.js';
 
+/**
+ * Lot E ① : slug de nom pour le fichier d'export RGPD (sans accent ni espace).
+ * Filtrage par point de code (aucune regex Unicode fragile).
+ */
+function nomFichierSain(personne) {
+  const brut = ((personne.prenom || '') + '-' + (personne.nom || ''))
+    .normalize('NFD');
+  let sortie = '';
+  for (const car of brut) {
+    const code = car.codePointAt(0);
+    if (code >= 0x0300 && code <= 0x036f) continue; // marques combinantes
+    sortie += car;
+  }
+  sortie = sortie.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return sortie || 'personne';
+}
+
 // Types de personne proposés au choix (contrat Phase C)
 const TYPES_PERSONNE = [
   { valeur: 'ENSEIGNANT', libelle: 'Enseignant' },
@@ -349,7 +367,8 @@ export async function ouvrirFormPersonne(ctx, personneId = null) {
       contenuHtml: gabaritFormulaire(valeursInitiales, enModification),
       actionsHtml:
         (enModification
-          ? '<button type="button" id="pf-desactiver" class="btn btn-danger-contour">Désactiver</button>'
+          ? '<button type="button" id="pf-exporter-rgpd" class="btn btn-secondaire">Exporter (RGPD)</button>'
+            + '<button type="button" id="pf-desactiver" class="btn btn-danger-contour">Désactiver</button>'
           : '')
         + '<button type="button" id="pf-annuler" class="btn btn-secondaire">Annuler</button>'
         + '<button type="button" id="pf-enregistrer" class="btn btn-primaire">Enregistrer</button>'
@@ -493,6 +512,38 @@ export async function ouvrirFormPersonne(ctx, personneId = null) {
     racine.querySelector('#pf-annuler').addEventListener('click', function () {
       fermer();
     });
+
+    // Lot E ① : export RGPD des données de la personne (droits d'accès et de
+    // portabilité). Télécharge un fichier JSON ; sans binaire (les images et
+    // scans restent téléchargeables depuis la fiche). Côté serveur, l'appel
+    // est réservé au niveau VALIDEUR : un refus s'affiche dans le bandeau.
+    const boutonExport = racine.querySelector('#pf-exporter-rgpd');
+    if (boutonExport) {
+      boutonExport.addEventListener('click', async function () {
+        boutonExport.disabled = true;
+        try {
+          const donnees = await ctx.store.exporterDonneesPersonne(personneId);
+          const texte = JSON.stringify(donnees, null, 2);
+          const blob = new Blob([texte], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const lien = document.createElement('a');
+          const jour = new Date().toISOString().slice(0, 10);
+          lien.href = url;
+          lien.download = 'export-rgpd-' + nomFichierSain(valeursInitiales)
+            + '-' + jour + '.json';
+          document.body.appendChild(lien);
+          lien.click();
+          lien.remove();
+          URL.revokeObjectURL(url);
+          toast('Export RGPD téléchargé.', 'succes');
+        } catch (erreur) {
+          afficherBandeau(erreur && erreur.message
+            ? erreur.message : 'Export impossible.');
+        } finally {
+          boutonExport.disabled = false;
+        }
+      });
+    }
 
     const boutonDesactiver = racine.querySelector('#pf-desactiver');
     if (boutonDesactiver) {

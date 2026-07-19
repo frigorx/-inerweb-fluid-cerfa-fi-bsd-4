@@ -20,6 +20,8 @@ import { evaluerControle } from './reglementation-fluides.js';
 // Sentinelle d'alertes persistées : diff pur + formatage (module partagé
 // avec le test unitaire ; le serveur en tient un miroir exact).
 import { normaliserCodeMachine, validerCodeMachine } from './code-machine.js';
+// Lot E ① : export RGPD des données d'une personne (module pur partagé).
+import { assemblerExportPersonne } from './export-personne.js';
 import { calculerTransitions, formaterEpisode, comparerEpisodes, estOuvert }
   from './sentinelle.js';
 // Habilitations F-Gas : référentiels + tri (module pur, miroir serveur).
@@ -3040,6 +3042,25 @@ export function creerDemoStore() {
     },
 
     /** Lot C (C1) : les signatures réelles d'un mouvement, avec leur état. */
+    /**
+     * Lot E ① : export RGPD des données d'une personne (accès/portabilité).
+     * Compose les getters existants (parité prouvée) + les signatures brutes,
+     * puis délègue l'assemblage au module pur partagé.
+     */
+    async exporterDonneesPersonne(personneId) {
+      const sources = {
+        personnel: await store.getPersonnel(),
+        habilitations: await store.getHabilitations(),
+        mentions: await store.getMentions(),
+        signaturesMouvement: (donnees.signaturesMouvement ?? []).map(copier),
+        mouvements: await store.getMouvements(),
+        controles: await store.getControles(),
+        piecesJointes: await store.listerPiecesJointes('personne', personneId)
+      };
+      return assemblerExportPersonne(
+        personneId, sources, new Date().toISOString());
+    },
+
     async getSignaturesMouvement(mouvementId) {
       const mouvement = trouverMouvement(mouvementId);
       const revision = mouvement.revisionBrouillon ?? 0;

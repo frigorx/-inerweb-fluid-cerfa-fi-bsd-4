@@ -233,6 +233,10 @@ export function creerLocalStore(transport) {
     getSignaturesMouvement(mouvementId) {
       return lire('getSignaturesMouvement', { mouvementId });
     },
+    // Lot E ① : export RGPD des données d'une personne (lecture gatée VALIDEUR).
+    exporterDonneesPersonne(personneId) {
+      return lire('exporterDonneesPersonne', { personneId });
+    },
 
     // --- dossier opérateur --------------------------------
     updateEtablissement(patch) {

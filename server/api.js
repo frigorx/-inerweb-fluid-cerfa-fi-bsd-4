@@ -53,6 +53,9 @@ const { verifierOctetsPdfFinal, nomFichierPdfFinal, CATEGORIE_PDF_FINAL,
   MSG_PDF_FINAL_MANQUANT, MSG_PDF_FINAL_HORS_OFFICIEL,
   MSG_PDF_FINAL_TRANSFERT, pdfFinalAttendu } =
   require('./pdf-final.js');
+// Export RGPD des données d'une personne (lot E ①) : assemblage PUR (miroir
+// du module ESM du front, parité prouvée par test-export-personne.mjs).
+const { assemblerExportPersonne } = require('./export-personne.js');
 
 // ------------------------------------------------------------
 // Identité de l'établissement singleton (le front le traite sans id).
@@ -320,6 +323,17 @@ const ROLES_MUTATION = {
   // tout utilisateur connecté peut l'appeler (best-effort, sans effet si rien
   // n'a changé). Acquitter, en revanche, engage le responsable → VALIDEUR.
   rafraichirSentinelle: OPERATEUR
+};
+
+// ------------------------------------------------------------
+// Lectures SENSIBLES gatées par rôle (lot E ①). La règle générale reste
+// « une lecture n'est pas restreinte », MAIS l'export des données à caractère
+// personnel d'une personne ne doit pas être accessible à un élève : il est
+// réservé au niveau VALIDEUR (REFERENT / ENSEIGNANT / ADMIN), comme la gestion
+// du personnel. garderRole consulte cette table APRÈS ROLES_MUTATION.
+// ------------------------------------------------------------
+const ROLES_LECTURE_SENSIBLE = {
+  exporterDonneesPersonne: VALIDEUR
 };
 
 // ------------------------------------------------------------
@@ -2579,6 +2593,31 @@ const HANDLERS = {
       })
       .map((sig) => ({ ...sig,
         valide: (sig.versionDocument ?? 0) === revision }));
+  },
+
+  /**
+   * Lot E ① : export RGPD des données d'une personne (accès/portabilité).
+   * Compose les lectures existantes (parité prouvée) + les signatures brutes
+   * mappées comme getSignaturesMouvement, puis délègue au module pur partagé.
+   * Lecture SENSIBLE : gatée VALIDEUR par garderRole (jamais un élève).
+   */
+  exporterDonneesPersonne(params) {
+    const { personneId } = params;
+    const signaturesMouvement = db
+      .all('SELECT * FROM signatures_mouvement')
+      .map((ligne) => mapping.versFront('signatures_mouvement', ligne));
+    const sources = {
+      personnel: HANDLERS.getPersonnel(),
+      habilitations: HANDLERS.getHabilitations(),
+      mentions: HANDLERS.getMentions(),
+      signaturesMouvement,
+      mouvements: HANDLERS.getMouvements(),
+      controles: HANDLERS.getControles(),
+      piecesJointes: HANDLERS.listerPiecesJointes(
+        { entiteType: 'personne', entiteId: personneId })
+    };
+    return assemblerExportPersonne(
+      personneId, sources, new Date().toISOString());
   },
 
   /**
@@ -6228,8 +6267,9 @@ const METHODES = Object.freeze([...Object.keys(HANDLERS)]);
  * tout effet. Les lectures ne sont pas restreintes en E3.
  */
 function garderRole(methode, contexte) {
-  const roles = ROLES_MUTATION[methode];
-  if (!roles) return; // lecture : aucune restriction
+  // Mutations d'abord, puis lectures SENSIBLES (lot E ① : export RGPD).
+  const roles = ROLES_MUTATION[methode] || ROLES_LECTURE_SENSIBLE[methode];
+  if (!roles) return; // lecture ordinaire : aucune restriction
   const role = contexte?.role ?? null;
   if (!roles.includes(role)) {
     const erreur = new Error(

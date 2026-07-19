@@ -206,6 +206,8 @@ export const METHODES_CONTRAT = {
     description: 'Patch partiel ; mêmes garde-fous.' },
   desactiverPersonne: { genre: 'mutation',
     description: 'Désactive (actif=false) — le personnel n’est JAMAIS supprimé, la trace reste.' },
+  exporterDonneesPersonne: { genre: 'lecture',
+    description: 'Lot E ① — export RGPD des données d’UNE personne (droits d’accès et de portabilité, art. 15/20) : enveloppe { application, version, genereLe, personneId, personne, habilitations, mentions, signatures (métadonnées, SANS image), interventions et contrôles où elle apparaît, piecesJointes (métadonnées) }. AUCUN binaire (images/scans téléchargeables à part) ; le journal d’audit n’est pas repris (valeur probante du registre). Côté serveur, réservé au niveau VALIDEUR (jamais un élève). Error si la personne est introuvable.' },
 
   // --- habilitations F-Gas (multi-régime 2008/2025) ----------------
   getHabilitations: { genre: 'lecture',
