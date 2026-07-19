@@ -414,14 +414,24 @@ const signatureType = (surcharges = {}) => ({
   verifier('la chaîne (écriture v2) se vérifie',
     api.appeler('verifierChaineHash', {}, sansSession).ok === true);
 
-  // LA raison d'être des champs gelés : une PJ ajoutée APRÈS le scellement
-  // (asymétrie encore ouverte jusqu'à C3) ne casse PAS la chaîne.
-  api.appeler('ajouterPieceJointe', { donneesPj: {
-    entiteType: 'MOUVEMENT', entiteId: brouillon.id,
-    nomFichier: 'apres-scellement.png', mimeType: 'image/png',
-    categorie: 'PHOTO_PESEE', base64: imagePng(2048) } }, session);
-  verifier('une PJ ajoutée APRÈS scellement ne casse pas la chaîne (gel)',
+  // Lot C (C3c) : l'ASYMÉTRIE est FERMÉE — une écriture scellée ne reçoit
+  // plus AUCUNE pièce justificative (le gel garde sa raison d'être : la
+  // vérification de chaîne RELIT les valeurs stockées, rien n'est
+  // re-dérivé ; et l'import RECOMPTE désormais hashPiecesJointes).
+  attendreRejet('une PJ ne s’ajoute PLUS à une écriture scellée (asymétrie fermée)',
+    () => api.appeler('ajouterPieceJointe', { donneesPj: {
+      entiteType: 'MOUVEMENT', entiteId: brouillon.id,
+      nomFichier: 'apres-scellement.png', mimeType: 'image/png',
+      categorie: 'PHOTO_PESEE', base64: imagePng(2048) } }, session),
+    'ne peut plus recevoir de pièce');
+  verifier('le refus ne touche à rien : la chaîne reste verte',
     api.appeler('verifierChaineHash', {}, sansSession).ok === true);
+  attendreRejet('la catégorie CERFA_FINAL est RÉSERVÉE au canal système',
+    () => api.appeler('ajouterPieceJointe', { donneesPj: {
+      entiteType: 'MOUVEMENT', entiteId: brouillon.id,
+      nomFichier: 'fausse-officielle.pdf', mimeType: 'application/pdf',
+      categorie: 'CERFA_FINAL', base64: 'JVBERi0xLjQK' } }, session),
+    'réservée au système');
 
   // ATTAQUE (plan §8) : une signature RETOUCHÉE dans l'export ne colle
   // plus au hashSignatures gelé → fichier forgé. Une signature RETIRÉE
@@ -440,6 +450,44 @@ const signatureType = (surcharges = {}) => ({
   attendreRejet('signature RETIRÉE du JSON : « fichier forgé »',
     () => api.appeler('importerJSON',
       { texte: JSON.stringify(forgeRetrait) }, sansSession), 'fichier forgé');
+
+  // ATTAQUES (plan §7.4 — lot C, C3c) : les PJ d'une écriture v2 se
+  // RECOMPTENT à l'import (asymétrie fermée) — la « CERFA truquée dans
+  // l'export » est désormais un test PERMANENT.
+  const forgePj = JSON.parse(exporteForge);
+  const pjCible = forgePj.donnees.piecesJointes.find((pj) =>
+    pj.entiteType === 'MOUVEMENT' && pj.entiteId === brouillon.id);
+  pjCible.hashSha256 = '0'.repeat(64);
+  pjCible.nomFichier = 'CERFA-truquee.pdf';
+  attendreRejet('PJ RETOUCHÉE dans le JSON (hash et nom réécrits) : « fichier forgé »',
+    () => api.appeler('importerJSON',
+      { texte: JSON.stringify(forgePj) }, sansSession),
+    'pièces jointes du mouvement');
+  const forgeInjection = JSON.parse(exporteForge);
+  forgeInjection.donnees.piecesJointes.push({
+    id: 'pj-cerfa-forgee', entiteType: 'MOUVEMENT', entiteId: brouillon.id,
+    categorie: 'CERFA_FINAL', nomFichier: 'CERFA-forgee.pdf',
+    mimeType: 'application/pdf', taille: 13,
+    hashSha256: 'beef'.repeat(16),
+    dateAjout: '2026-07-19T00:00:00.000Z', ajoutePar: 'Forgeur' });
+  attendreRejet('CERFA_FINAL INJECTÉE dans l’export : « fichier forgé »',
+    () => api.appeler('importerJSON',
+      { texte: JSON.stringify(forgeInjection) }, sansSession),
+    'pièces jointes du mouvement');
+  // Une CERFA_FINAL ÉGARÉE hors de tout mouvement figé v2 (ici : typée
+  // MACHINE, donc invisible du recomptage) est refusée par la garde
+  // « hors canal système » (constat IMPORTANT de la revue C3c, fermé).
+  const forgeHorsCanal = JSON.parse(exporteForge);
+  forgeHorsCanal.donnees.piecesJointes.push({
+    id: 'pj-cerfa-machine', entiteType: 'MACHINE', entiteId: machine.id,
+    categorie: 'CERFA_FINAL', nomFichier: 'CERFA-egaree.pdf',
+    mimeType: 'application/pdf', taille: 13,
+    hashSha256: 'dead'.repeat(16),
+    dateAjout: '2026-07-19T00:00:00.000Z', ajoutePar: 'Forgeur' });
+  attendreRejet('CERFA_FINAL égarée hors mouvement figé v2 : « hors canal système »',
+    () => api.appeler('importerJSON',
+      { texte: JSON.stringify(forgeHorsCanal) }, sansSession),
+    'hors canal système');
 
   // ATTAQUE (revue adversariale C2, constat IMPORTANT fermé) :
   // RÉTROGRADER l'écriture en v1 pour désarmer le recomptage — signature
@@ -772,6 +820,25 @@ const signatureType = (surcharges = {}) => ({
     api.verifierPdfFinalConserve(mvOff.id).ok === false);
   // Remettre l'état sain (fin de section propre).
   writeFileSync(`${cheminPdfConserve}.sha256`, `${sha} *${pjId}\n`);
+
+  // ==========================================================
+  // 8.6 Lot C, brique C3c — PLURALITÉ de PJ CERFA_FINAL dénoncée
+  // (constat différé de la revue C3b : une seule pièce par écriture,
+  // toute seconde = insertion hors canal système, SQL direct compris).
+  // ==========================================================
+  db.run(
+    `INSERT INTO pieces_jointes (id, entite_type, entite_id, categorie,
+       nom_fichier, hash_sha256) VALUES ('pj-cerfa-double', 'MOUVEMENT', ?,
+       'CERFA_FINAL', 'CERFA-double.pdf', ?)`, [mvOff.id, sha]);
+  const verdictPluralite = api.verifierPdfFinalConserve(mvOff.id);
+  verifier('ATTAQUE : deux PJ CERFA_FINAL → pluralité dénoncée',
+    verdictPluralite.ok === false &&
+    verdictPluralite.motifs
+      .some((m) => m.includes('plusieurs pièces jointes CERFA_FINAL')),
+    JSON.stringify(verdictPluralite));
+  db.run("DELETE FROM pieces_jointes WHERE id = 'pj-cerfa-double'");
+  verifier('pluralité retirée : le vérificateur repasse au vert',
+    api.verifierPdfFinalConserve(mvOff.id).ok === true);
 }
 
 console.log(`\n${nbOk} vérifications réussies, ${nbEchecs} échec(s).`);

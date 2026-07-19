@@ -276,19 +276,20 @@ await store.supprimerPieceJointe(pieceJointe.id);
 verifier('supprimerPieceJointe : la liste redevient vide (journalisé)',
   (await store.listerPiecesJointes('OUTIL', 'out-3')).length === 0);
 
-// Une pièce liée à une ÉCRITURE FIGÉE ne se supprime plus
-const pjMouvement = await store.ajouterPieceJointe({
-  entiteType: 'MOUVEMENT',
-  entiteId: 'mvt-0007', // FI-2026-0007, statut VALIDE
-  categorie: 'PHOTO_PESEE',
-  nomFichier: 'pesee-fi-2026-0007.png',
-  mimeType: 'image/png',
-  // Vraie signature PNG 1×1 (audit-proof) : le contenu doit confirmer le type.
-  base64: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk'
-    + 'YPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
-});
-await verifierRejet('supprimerPieceJointe refusée sur une écriture figée',
-  store.supprimerPieceJointe(pjMouvement.id), 'figée');
+// Une ÉCRITURE FIGÉE ne reçoit plus de pièce justificative (lot C, C3c :
+// asymétrie fermée — le refus de SUPPRESSION sur écriture figée est
+// prouvé par test-contrat, joué demo ET local).
+await verifierRejet('ajouterPieceJointe refusée sur une écriture figée',
+  store.ajouterPieceJointe({
+    entiteType: 'MOUVEMENT',
+    entiteId: 'mvt-0007', // FI-2026-0007, statut VALIDE
+    categorie: 'PHOTO_PESEE',
+    nomFichier: 'pesee-fi-2026-0007.png',
+    mimeType: 'image/png',
+    // Vraie signature PNG 1×1 (audit-proof) : le contenu doit confirmer le type.
+    base64: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk'
+      + 'YPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+  }), 'ne peut plus recevoir');
 
 // ============================================================
 // 6. Balance matière 2026 : AUCUN écart avant inventaire

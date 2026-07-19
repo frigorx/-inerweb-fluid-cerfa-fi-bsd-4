@@ -3925,6 +3925,29 @@ export function creerDemoStore() {
       if (!d.nomFichier || !String(d.nomFichier).trim()) {
         throw new Error('Nom de fichier de la pièce jointe obligatoire.');
       }
+      // Lot C (C3c) : la catégorie du PDF conservé est RÉSERVÉE au canal
+      // système de validerMouvement — jamais posée par un client (sinon
+      // une fausse « pièce officielle » se glisserait dans le registre).
+      if ((d.categorie ?? '') === CATEGORIE_PDF_FINAL) {
+        throw new Error(
+          'Catégorie CERFA_FINAL réservée au système (PDF final conservé '
+          + 'à la validation officielle).');
+      }
+      // Lot C (C3c) : ASYMÉTRIE FERMÉE — une écriture FIGÉE ne reçoit
+      // plus aucune pièce justificative (ses preuves sont scellées dans
+      // hashPiecesJointes, désormais RECOMPTÉ à l'import), symétrique du
+      // refus de suppression. Miroir exact du serveur.
+      if (d.entiteType === 'MOUVEMENT') {
+        const mouvementCible = donnees.mouvements.find(
+          (mv) => mv.id === d.entiteId);
+        if (mouvementCible &&
+            (mouvementCible.statut === 'VALIDE' ||
+             mouvementCible.statut === 'ANNULE')) {
+          throw new Error(
+            'Écriture figée : elle ne peut plus recevoir de pièce '
+            + 'justificative.');
+        }
+      }
       // IM-19 : liste blanche des types MIME appliquée AU STORE (le
       // composant d'interface filtre déjà, mais la garantie est ici).
       const mime = String(d.mimeType ?? '').toLowerCase();
@@ -4484,9 +4507,9 @@ export function creerDemoStore() {
       // plus → fichier forgé. Une écriture scellée en v1 ne peut PAS porter
       // de signatures (la table arrive avec la v2, le WORM refuse toute
       // signature sur une écriture figée) : en trouver = rétrogradation
-      // forgée (revue adversariale C2). (Les PJ, elles, peuvent
-      // légitimement évoluer après scellement tant que C3 n'a pas fermé
-      // l'asymétrie : pas de recomptage — miroir exact du serveur.)
+      // forgée (revue adversariale C2). (Lot C, C3c : l'asymétrie est
+      // FERMÉE — les PJ d'une écriture v2 sont figées avec elle,
+      // hashPiecesJointes se RECOMPTE aussi.)
       for (const mv of figees) {
         if ((mv.versionEmpreinte ?? 1) < 2) {
           if ((candidat.signaturesMouvement ?? [])
@@ -4504,6 +4527,47 @@ export function creerDemoStore() {
           throw new Error(
             `Import refusé — signatures du mouvement ${mv.numero} altérées : ` +
             'fichier forgé.');
+        }
+        // Lot C (C3c) : les PJ d'une écriture v2 sont GELÉES dans son
+        // empreinte (hashPiecesJointes) et l'asymétrie est fermée —
+        // recomptées sur le candidat : une PJ retouchée, ajoutée ou
+        // retirée dans le JSON (CERFA_FINAL truquée comprise, plan §7.4)
+        // ne colle plus → fichier forgé. Miroir exact du serveur.
+        const empreintePj = await empreinteListeTriee(
+          (candidat.piecesJointes ?? [])
+            .filter((pj) => pj.entiteType === 'MOUVEMENT' &&
+                            pj.entiteId === mv.id)
+            .map((pj) => pj.hashSha256 ?? ''));
+        if (empreintePj !== mv.hashPiecesJointes) {
+          throw new Error(
+            `Import refusé — pièces jointes du mouvement ${mv.numero} ` +
+            'altérées : fichier forgé.');
+        }
+      }
+
+      // Lot C (C3c) : la catégorie CERFA_FINAL est réservée au canal
+      // système — à l'IMPORT aussi (constat IMPORTANT de la revue C3c,
+      // fermé avant commit). Une pièce CERFA_FINAL n'est légitime QUE sur
+      // une écriture FIGÉE v2 dont l'empreinte du PDF est scellée
+      // (hashPdfFinal) ; partout ailleurs — brouillon, autre entité,
+      // écriture sans PDF scellé — c'est une fausse « pièce officielle » :
+      // fichier forgé. Miroir exact du serveur.
+      {
+        const mouvementsParId = new Map(
+          candidat.mouvements.map((mv) => [mv.id, mv]));
+        for (const pj of candidat.piecesJointes ?? []) {
+          if ((pj.categorie ?? '') !== CATEGORIE_PDF_FINAL) continue;
+          const proprietaire = pj.entiteType === 'MOUVEMENT'
+            ? mouvementsParId.get(pj.entiteId) : null;
+          if (!proprietaire ||
+              !(proprietaire.statut === 'VALIDE' ||
+                proprietaire.statut === 'ANNULE') ||
+              (proprietaire.versionEmpreinte ?? 1) < 2 ||
+              !proprietaire.hashPdfFinal) {
+            throw new Error(
+              'Import refusé — pièce jointe CERFA_FINAL hors canal '
+              + `système (${pj.nomFichier ?? pj.id}) : fichier forgé.`);
+          }
         }
       }
 

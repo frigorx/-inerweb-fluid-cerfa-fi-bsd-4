@@ -2,6 +2,46 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔐 LOT C audit-proof — brique C3c : asymétrie des PJ FERMÉE + recomptage à l'import (condition 4, 19/07) — C3 COMPLÈTE
+Troisième et dernière sous-brique de C3 (plan §5 + §7.4 enrichi). **La condition 4 est
+entièrement livrée** ; restent C4 (écrans) et C5 (bascule du verrou).
+- **Asymétrie FERMÉE** : `ajouterPieceJointe` (les 2 stores, ordre et messages miroir mot
+  pour mot) refuse désormais ① toute pièce sur une écriture FIGÉE (« Écriture figée : elle
+  ne peut plus recevoir de pièce justificative. » — symétrique du refus de suppression) et
+  ② la catégorie `CERFA_FINAL` posée par un client (« réservée au système ») — la
+  catégorie parle AVANT le figé, des deux côtés. Le canal SYSTÈME `conserverPdfFinal`
+  reste intact (insertion directe pendant que la ligne est encore SOUMIS en base).
+- **Recomptage à l'import** : pour chaque écriture figée v2 du candidat,
+  `hashPiecesJointes` est RECOMPTÉ (liste triée des sha256 des PJ du mouvement dans le
+  JSON) et comparé au champ GELÉ — PJ retouchée, ajoutée, retirée, déplacée ou re-typée →
+  « fichier forgé ». Les écritures v1 ne sont pas recomptées (PJ légitimement ajoutées
+  jadis). **L'attaque « CERFA truquée dans l'export » (plan §7.4) est un test PERMANENT.**
+- **Garde « hors canal système »** (constat IMPORTANT de la revue C3c, FERMÉ avant
+  commit, tiré) : une PJ `CERFA_FINAL` n'est légitime à l'import QUE sur une écriture
+  figée v2 dont `hashPdfFinal` est scellé — sur un brouillon, une machine ou une écriture
+  sans PDF scellé : « fichier forgé ». Ferme aussi le résidu « CERFA_FINAL typée MACHINE
+  inerte » relevé par l'angle import.
+- **Pluralité dénoncée** : `verifierPdfFinalConserve` passe à `db.all` + tri JS — deux
+  pièces `CERFA_FINAL` sur la même écriture = « insertion hors canal système » (attaque
+  SQL directe en test permanent).
+- **Le test C2 « une PJ ajoutée après scellement ne casse pas la chaîne » BASCULE** : le
+  refus devient la preuve (le gel garde sa raison d'être — la vérification RELIT les
+  valeurs stockées) ; `test-contrat` attache désormais la preuve de mvt2 AU BROUILLON.
+- **Preuves** (TOUT VERT — 79 exécutions) : PJ retouchée/injectée/égarée refusées via
+  vrai API, catégorie réservée refusée au canal API, pluralité SQL dénoncée, refus d'ajout
+  sur figé joué demo ET local, round-trip avec PJ gelée vert des deux côtés. Revue
+  adversariale AVANT commit (workflow, 2 rapports complets — le 3e relecteur est tombé
+  sur une erreur d'authentification, son périmètre étant couvert par la suite et les deux
+  autres) : tout éprouvé dynamiquement, parité stricte confirmée. **DIFFÉRÉS ACTÉS** :
+  trigger WORM sur `pieces_jointes` → à poser en C5 avec `declencheursWorm` (valeur
+  anti-bidouille interne ; l'export d'une base trafiquée en SQL est déjà refusé à l'import
+  et l'insertion SQL ne laisse aucune trace au journal chaîné = recoupement opposable) ;
+  masquage du bouton d'ajout de PJ sur écriture figée → C4 (le composant capte déjà le
+  refus proprement). ⚠️ Diagnostic à connaître : une écriture v2 scellée entre C2
+  (`17f9e6c`, 18/07) et ce commit qui aurait reçu une PJ légitime APRÈS scellement
+  (l'API l'acceptait encore) verrait son export refusé « fichier forgé » — fenêtre d'un
+  jour, aucun registre réel concerné.
+
 ### 🔐 LOT C audit-proof — brique C3b : témoins du PDF conservé + bouton CERFA qui SERT le conservé (condition 4, 18/07)
 Deuxième sous-brique de C3 (plan §5). Reste C3c (asymétrie PJ + recomptage import + attaque
 permanente).

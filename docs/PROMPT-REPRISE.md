@@ -18,15 +18,21 @@
 > refus canoniques tirés via vrai API, module pur `pdf-final.js` en 2 miroirs, contrat v6,
 > relecture adversariale COMMIT OK) · **C3b ✅ SOLDÉE le 18/07 soir** (témoins `.sha256` +
 > `manifeste.json` frères best-effort hors transaction + `verifierPdfFinalConserve` +
-> RÉGÉNÉRATION des témoins manquants au démarrage — la restauration d'archive ne les
-> transporte pas, constat de la revue — + bouton CERFA servant le CONSERVÉ par les DEUX
-> portes, mouvement ET contrôle lié, `v8/js/cerfa/conserve.js` ; revue adversariale à
-> 4 angles AVANT commit : 2 IMPORTANTS corrigés + 3 durcissements ; TOUT VERT
-> 79 exécutions — détail CHANGELOG) · **prochaine = C3c** (fermer l'asymétrie
-> ajouterPieceJointe sur figé + RECOMPTER hashPiecesJointes à l'import + attaque « CERFA
-> truquée dans l'export » en test permanent — exigence §7.4 du plan ; y AJOUTER la
-> dénonciation de la PLURALITÉ de PJ CERFA_FINAL dans verifierPdfFinalConserve, constat
-> différé de la revue C3b). **Opus effort maximum.** PAS d'ultracode hors point critique.
+> RÉGÉNÉRATION des témoins manquants au démarrage + bouton CERFA servant le CONSERVÉ par
+> les DEUX portes, mouvement ET contrôle lié ; revue 4 angles : 2 IMPORTANTS corrigés) ·
+> **C3c ✅ SOLDÉE le 19/07 — LA CONDITION 4 EST COMPLÈTE** (asymétrie FERMÉE + catégorie
+> CERFA_FINAL réservée au canal système API ET import — constat IMPORTANT de la revue C3c
+> fermé avant commit — + recomptage hashPiecesJointes à l'import des v2 + pluralité
+> dénoncée + attaques permanentes « CERFA truquée » ; TOUT VERT 79 exécutions — détail
+> CHANGELOG). **Prochaine brique = C4 — parcours UI officiel** (plan §7.5 : écrans de
+> signature technicien puis détenteur, déclarations affichées, identité de session,
+> simulation du lot B intégrée, génération du PDF final côté client transmise à
+> validerMouvement ; vérification NAVIGATEUR sur port jetable ; + différé C3c : masquer
+> le bouton d'ajout de PJ sur écriture figée). **Puis C5 — bascule** (essai complet
+> données fictives, VERROU_LIVRAISON false dans les 2 miroirs, suite e2e officielle,
+> trigger WORM pieces_jointes dans declencheursWorm, brancher verifierPdfFinalConserve au
+> dossier d'audit, couverture du bloc manifeste en transaction, relecture finale de la
+> liste lot B par Franck). **Opus effort maximum.** PAS d'ultracode hors point critique.
 
 ---
 

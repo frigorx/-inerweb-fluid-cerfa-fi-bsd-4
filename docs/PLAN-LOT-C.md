@@ -214,9 +214,13 @@ refus de suppression sur mouvement figé (déjà en place), inclusion dans les s
    best-effort + vérificateur + régénération au démarrage — la restauration d'archive ne
    transporte pas les frères — + bouton CERFA servant le conservé par les DEUX portes,
    mouvement ET contrôle lié ; revue 4 angles : 2 IMPORTANTS corrigés avant commit) ·
-   **C3c** = les points ①②③ ci-dessous, PLUS (constat différé de la revue C3b) la
-   dénonciation de la PLURALITÉ de PJ CERFA_FINAL dans `verifierPdfFinalConserve` ; la
-   couverture du bloc manifeste en transaction attendra l'ouverture (C5, verrou).
+   ✅ **C3c SOLDÉE le 19/07 — C3 COMPLÈTE** (asymétrie fermée + catégorie réservée au
+   canal API, recomptage hashPiecesJointes à l'import des v2 + garde « CERFA_FINAL hors
+   canal système » — constat IMPORTANT de la revue C3c fermé avant commit —, pluralité
+   dénoncée, attaques permanentes ; détail CHANGELOG). **DIFFÉRÉS ACTÉS** : trigger WORM
+   sur `pieces_jointes` → C5 (à poser dans `declencheursWorm`, l'import le recrée) ;
+   masquage du bouton d'ajout de PJ sur écriture figée → C4 ; couverture du bloc
+   manifeste en transaction → C5 (verrou).
    ⚠️ **Ajout de la revue adversariale C2 (constat tiré, MINEUR car documenté)** : tant que
    l'asymétrie des PJ est ouverte, une PJ CERFA_FINAL truquée dans un export (hashSha256 et
    nomFichier réécrits) est ADOPTÉE sans casser la chaîne — hashPiecesJointes est relu tel

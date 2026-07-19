@@ -657,6 +657,15 @@ const mvt2 = await store.creerMouvement({
   type: 'CHARGE_APPOINT', machineId: machineB.id, bouteilleSrcId: b1.id,
   peseeAvantKg: 20, peseeApresKg: 15, technicien: 'Testeur Contrat'
 });
+// Lot C (C3c) : la preuve s'attache AU BROUILLON — une fois l'écriture
+// figée, plus aucune PJ ne s'ajoute (asymétrie fermée). Cette pièce sert
+// plus bas (section pièces jointes) au refus de suppression sur figé.
+await store.ajouterPieceJointe({
+  entiteType: 'MOUVEMENT', entiteId: mvt2.id, categorie: 'PHOTO_PESEE',
+  nomFichier: 'preuve-mouvement.png', mimeType: 'image/png',
+  base64: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk'
+    + 'YPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+});
 await store.soumettreMouvement(mvt2.id);
 const mvt2Valide = await store.validerMouvement(mvt2.id, enseignant.id);
 verifier('deuxième charge validée (+5 kg)', PROCHE(mvt2Valide.quantiteKg, 5));
@@ -1951,13 +1960,25 @@ await verifierRejet('une base64 illisible est refusée',
     base64: '@@@ pas du base64 @@@' }),
   'illisible');
 
-const pjFigee = await store.ajouterPieceJointe({
-  entiteType: 'MOUVEMENT', entiteId: mvt2.id, categorie: 'PHOTO_PESEE',
-  nomFichier: 'preuve-mouvement.png', mimeType: 'image/png',
-  base64: CONTENU_BASE64
-});
+// Lot C (C3c) : la PJ posée sur mvt2 AU BROUILLON (voir sa création) est
+// devenue la preuve d'une écriture FIGÉE — intouchable, et plus rien ne
+// s'ajoute (asymétrie fermée), catégorie CERFA_FINAL réservée au système.
+const pjFigee = (await store.listerPiecesJointes('MOUVEMENT', mvt2.id))
+  .find((x) => x.nomFichier === 'preuve-mouvement.png');
+verifier('la preuve attachée au brouillon a suivi l’écriture figée',
+  Boolean(pjFigee));
 await verifierRejet('une PJ liée à une écriture figée est intouchable',
   store.supprimerPieceJointe(pjFigee.id, 'Testeur'));
+await verifierRejet('une écriture figée ne reçoit PLUS de pièce justificative',
+  store.ajouterPieceJointe({ entiteType: 'MOUVEMENT', entiteId: mvt2.id,
+    categorie: 'PHOTO_PESEE', nomFichier: 'apres-coup.png',
+    mimeType: 'image/png', base64: CONTENU_BASE64 }),
+  'ne peut plus recevoir');
+await verifierRejet('la catégorie CERFA_FINAL est réservée au système',
+  store.ajouterPieceJointe({ entiteType: 'MOUVEMENT', entiteId: mvt2.id,
+    categorie: 'CERFA_FINAL', nomFichier: 'fausse.pdf',
+    mimeType: 'application/pdf', base64: 'JVBERi0xLjQK' }),
+  'réservée au système');
 verifier('supprimerPieceJointe retire une PJ ordinaire',
   await store.supprimerPieceJointe(pj.id, 'Testeur') === true
   && !(await store.listerPiecesJointes('MACHINE', machineB.id))
