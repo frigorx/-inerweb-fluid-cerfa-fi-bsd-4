@@ -12,6 +12,8 @@
 // ============================================================
 
 import { evaluerControle } from '../data/reglementation-fluides.js';
+import { versBase64 } from '../data/contenu-pj.js';
+import { etatParcoursSignatures } from '../data/parcours-signature.js';
 
 /** Cache de la bibliothèque pdf-lib (une seule initialisation). */
 let promessePdfLib = null;
@@ -161,8 +163,15 @@ function trouverPersonneParNom(personnel, nomComplet) {
  * Rassemble tout le contexte nécessaire au remplissage du CERFA.
  * @param {object} store - magasin de données v8
  * @param {{source: 'mouvement'|'controle', id: string}} cible
+ * @param {{accepterSoumis?: boolean, sansSignaturesReelles?: boolean}}
+ *   [options] - accepterSoumis est RÉSERVÉ au canal du PDF FINAL (lot C,
+ *   C4) : la fiche officielle est générée sur l'écriture SOUMISE, juste
+ *   avant sa validation qui la conservera — tout autre appel garde le
+ *   refus historique ; ce canal EXIGE les deux signatures réelles.
+ *   sansSignaturesReelles = chemin de la correction élève (blocs
+ *   historiques garantis, quelles que soient les signatures posées).
  */
-async function assemblerContexte(store, { source, id }) {
+async function assemblerContexte(store, { source, id }, options = {}) {
   const [etablissement, machines, bouteilles, controles, fluides,
     personnel, clients, outillage, bsffListe] = await Promise.all([
     store.getEtablissement(),
@@ -194,13 +203,20 @@ async function assemblerContexte(store, { source, id }) {
     detecteur: null,             // outil DETECTEUR lié (cadre 5)
     operateurNom: null,
     signatureDataUrl: null,
+    // Signatures RÉELLES du parcours officiel (lot C, C4) — null tant
+    // que la fiche n'en porte pas : blocs de signature historiques.
+    signatureTechnicien: null,
+    signatureDetenteur: null,
     observations: []
   };
 
   if (source === 'mouvement') {
     const mouvement = (await store.getMouvements()).find((mv) => mv.id === id);
     if (!mouvement) throw new Error(`Mouvement introuvable : ${id}.`);
-    if (mouvement.statut !== 'VALIDE' && mouvement.statut !== 'ANNULE') {
+    const statutsAdmis = options.accepterSoumis
+      ? ['VALIDE', 'ANNULE', 'SOUMIS']
+      : ['VALIDE', 'ANNULE'];
+    if (!statutsAdmis.includes(mouvement.statut)) {
       throw new Error(
         'CERFA impossible : seul un mouvement validé (ou annulé) est ' +
         'inscrit au registre.');
@@ -253,6 +269,44 @@ async function assemblerContexte(store, { source, id }) {
     contexte.detecteur =
       outillage.find((o) => o.id === detecteurId) || null;
 
+    // Lot C (C4) : signatures RÉELLES du parcours officiel — la fiche
+    // finale porte les personnes PHYSIQUES, leur qualité (délégation
+    // comprise) et la date réelle de signature, jamais la raison sociale
+    // seule (défaut de l'audit corrigé, plan lot C §2.1). Seules les
+    // signatures VALIDES comptent (état partagé de parcours-signature.js).
+    // La correction élève les IGNORE (sansSignaturesReelles) : les
+    // valeurs attendues de l'élève ne changent jamais.
+    if (!options.sansSignaturesReelles) {
+      const retenir = (signatures) => {
+        const parcours = etatParcoursSignatures(signatures);
+        contexte.signatureTechnicien = parcours.technicien === 'VALIDE'
+          ? parcours.signatureTechnicien : null;
+        contexte.signatureDetenteur = parcours.detenteur === 'VALIDE'
+          ? parcours.signatureDetenteur : null;
+      };
+      if (options.accepterSoumis) {
+        // Canal du PDF FINAL : AUCUNE tolérance (constat de la revue
+        // adversariale C4). Un raté de lecture ici produirait un PDF
+        // conservé À JAMAIS avec les blocs historiques — le défaut
+        // d'audit réintroduit en silence. L'erreur remonte à l'écran,
+        // l'utilisateur revalide ; et les DEUX signatures doivent être
+        // valides (mêmes exigences que les conditions 14-15).
+        retenir(await store.getSignaturesMouvement(id));
+        if (!contexte.signatureTechnicien || !contexte.signatureDetenteur) {
+          throw new Error('PDF final impossible : les deux signatures '
+            + 'réelles (technicien puis détenteur) doivent être valides.');
+        }
+      } else {
+        // Affichage/relecture : tolérant — un store partiel ou une fiche
+        // sans parcours garde les blocs historiques.
+        try {
+          retenir(await store.getSignaturesMouvement(id));
+        } catch {
+          // Méthode absente ou mouvement sans parcours : blocs historiques.
+        }
+      }
+    }
+
   } else if (source === 'controle') {
     const controle = controles.find((c) => c.id === id);
     if (!controle) throw new Error(`Contrôle introuvable : ${id}.`);
@@ -293,12 +347,14 @@ async function assemblerContexte(store, { source, id }) {
  * générateur les écrit). Fonction séparée = une seule vérité de calcul.
  * @param {object} store - magasin de données v8
  * @param {{source: 'mouvement'|'controle', id: string}} cible
+ * @param {{accepterSoumis?: boolean}} [options] - voir assemblerContexte
  * @returns {Promise<{texte: Object<string,string>,
  *   cases: Object<string,boolean>, radio: '1'|'2'|null, numero: string,
- *   mode: string, signatureDataUrl: string|null}>}
+ *   mode: string, signatureDataUrl: string|null,
+ *   signatureTechnicienPng: string|null, signatureDetenteurPng: string|null}>}
  */
-export async function calculerChampsCerfa(store, { source, id }) {
-  const ctx = await assemblerContexte(store, { source, id });
+export async function calculerChampsCerfa(store, { source, id }, options = {}) {
+  const ctx = await assemblerContexte(store, { source, id }, options);
 
   const machine = ctx.machine;
   const client = machine?.clientId
@@ -445,6 +501,12 @@ export async function calculerChampsCerfa(store, { source, id }) {
         : 'Élève en formation')
     : '';
   const dateFr = fmtDateFr(ctx.date);
+  // Lot C (C4) : signatures RÉELLES prioritaires sur les blocs
+  // historiques — personne physique, qualité signée (délégation
+  // comprise), DATE RÉELLE de signature (jamais la date d'intervention).
+  const sigTech = ctx.signatureTechnicien;
+  const sigDet = ctx.signatureDetenteur;
+  const nomComplet = (s) => `${s.prenom} ${s.nom}`.trim();
 
   // ==========================================================
   // Remplissage : les 72 champs officiels sont TOUS traités
@@ -502,13 +564,22 @@ export async function calculerChampsCerfa(store, { source, id }) {
     '13_Instal': installationTexte,
     // Cadre 14 — observations
     '14_Observations': observations.join('\n'),
-    // Signatures
-    'Sign_Operateur_Nom': ctx.operateurNom ?? '',
-    'Sign_Operateur_Qualite': qualiteOperateur,
-    'Sign_Operateur_Date': ctx.operateurNom ? dateFr : '',
-    'Sign_Detenteur_Nom': detenteur.raisonSociale ?? '',
-    'Sign_Detenteur_Qualite': 'Détenteur de l’équipement',
-    'Sign_Detenteur_Date': dateFr
+    // Signatures (réelles en priorité — lot C, C4)
+    'Sign_Operateur_Nom': sigTech ? nomComplet(sigTech)
+      : (ctx.operateurNom ?? ''),
+    'Sign_Operateur_Qualite': sigTech
+      ? (sigTech.qualite ?? qualiteOperateur)
+      : qualiteOperateur,
+    'Sign_Operateur_Date': sigTech ? fmtDateFr(sigTech.dateHeure)
+      : (ctx.operateurNom ? dateFr : ''),
+    'Sign_Detenteur_Nom': sigDet ? nomComplet(sigDet)
+      : (detenteur.raisonSociale ?? ''),
+    'Sign_Detenteur_Qualite': sigDet
+      ? (sigDet.qualite ?? (sigDet.parDelegation
+        ? `Par délégation du détenteur (${sigDet.organisation})`
+        : 'Détenteur de l’équipement'))
+      : 'Détenteur de l’équipement',
+    'Sign_Detenteur_Date': sigDet ? fmtDateFr(sigDet.dateHeure) : dateFr
   };
 
   const cases = {
@@ -561,7 +632,11 @@ export async function calculerChampsCerfa(store, { source, id }) {
     radio: machine ? (machine.detectionPermanente ? '1' : '2') : null,
     numero: ctx.numero,
     mode: ctx.mode,
-    signatureDataUrl: ctx.signatureDataUrl ?? null
+    signatureDataUrl: ctx.signatureDataUrl ?? null,
+    // Tracés des signatures réelles (base64 PNG, lot C C4) — dessinés
+    // dans les zones opérateur et détenteur du formulaire.
+    signatureTechnicienPng: sigTech?.imagePng ?? null,
+    signatureDetenteurPng: sigDet?.imagePng ?? null
   };
 }
 
@@ -569,13 +644,14 @@ export async function calculerChampsCerfa(store, { source, id }) {
  * Génère le CERFA 15497*04 officiel rempli.
  * @param {object} store - magasin de données v8
  * @param {{source: 'mouvement'|'controle', id: string}} cible
+ * @param {{accepterSoumis?: boolean}} [options] - voir assemblerContexte
  * @returns {Promise<{octets: Uint8Array, nomFichier: string, numero: string}>}
  */
-export async function genererCerfaPdf(store, { source, id }) {
+export async function genererCerfaPdf(store, { source, id }, options = {}) {
   const PDFLib = await chargerPdfLib();
   const { PDFDocument, StandardFonts, rgb, degrees } = PDFLib;
 
-  const champs = await calculerChampsCerfa(store, { source, id });
+  const champs = await calculerChampsCerfa(store, { source, id }, options);
   const doc = await PDFDocument.load(await chargerModele());
   const form = doc.getForm();
   const page = doc.getPages()[0];
@@ -594,11 +670,13 @@ export async function genererCerfaPdf(store, { source, id }) {
     form.getRadioGroup('Bouton_Oui').select(champs.radio);
   }
 
-  // ---- Signature manuscrite (image PNG) sur la zone opérateur ----
-  if (champs.signatureDataUrl) {
+  // ---- Tracés manuscrits (images PNG) sur les zones de signature ----
+  // Zone opérateur : le tracé RÉEL du technicien (parcours officiel,
+  // lot C C4) en priorité, sinon la signature de wizard (Formation).
+  async function dessinerTrace(png, champAncre) {
     try {
-      const image = await doc.embedPng(champs.signatureDataUrl);
-      const gabarit = form.getTextField('Sign_Operateur_Date')
+      const image = await doc.embedPng(png);
+      const gabarit = form.getTextField(champAncre)
         .acroField.getWidgets()[0].getRectangle();
       const hauteur = 30;
       const largeur = Math.min(
@@ -612,6 +690,14 @@ export async function genererCerfaPdf(store, { source, id }) {
     } catch {
       // Signature illisible ou zone introuvable : le CERFA reste valide
     }
+  }
+  const traceOperateur =
+    champs.signatureTechnicienPng ?? champs.signatureDataUrl;
+  if (traceOperateur) {
+    await dessinerTrace(traceOperateur, 'Sign_Operateur_Date');
+  }
+  if (champs.signatureDetenteurPng) {
+    await dessinerTrace(champs.signatureDetenteurPng, 'Sign_Detenteur_Date');
   }
 
   // ---- Filigrane diagonal en mode FORMATION ----
@@ -638,4 +724,21 @@ export async function genererCerfaPdf(store, { source, id }) {
     nomFichier: `cerfa-15497-04_${champs.numero}.pdf`,
     numero: champs.numero
   };
+}
+
+/**
+ * PDF FINAL de la validation OFFICIELLE (lot C, C4) : le CERFA de la
+ * fiche SOUMISE, signatures réelles comprises, encodé en base64 pour le
+ * 3e paramètre de validerMouvement — le store le contrôle, le conserve
+ * (pièce CERFA_FINAL) et gèle son empreinte avant scellement (C3).
+ * @param {object} store - magasin de données v8
+ * @param {object} mouvement - le mouvement SOUMIS à valider
+ * @returns {Promise<?string>} base64 du PDF, ou null hors mode OFFICIEL
+ *   (en Formation, validerMouvement REFUSE tout PDF : on n'en envoie pas)
+ */
+export async function genererPdfFinalBase64(store, mouvement) {
+  if (!mouvement || mouvement.mode !== 'OFFICIEL') return null;
+  const { octets } = await genererCerfaPdf(store,
+    { source: 'mouvement', id: mouvement.id }, { accepterSoumis: true });
+  return versBase64(octets);
 }

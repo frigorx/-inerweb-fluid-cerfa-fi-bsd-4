@@ -480,7 +480,12 @@ export function comparerChamps(attendu, saisi) {
  *   formulaire: {conforme: boolean, manquants: string[], inconnus: string[]}}>}
  */
 export async function corrigerCerfaEleve(store, cible, octetsEleve) {
-  const attendu = await calculerChampsCerfa(store, cible);
+  // Lot C (C4) : la correction compare TOUJOURS les blocs de signature
+  // HISTORIQUES — une fiche Formation signée via le parcours réel ne doit
+  // pas changer les valeurs attendues de l'élève (il ne peut pas les
+  // connaître : date réelle de signature, mention de délégation…).
+  const attendu = await calculerChampsCerfa(store, cible,
+    { sansSignaturesReelles: true });
   const saisi = await lireChampsCerfaPdf(octetsEleve);
 
   const nomsAttendus = [

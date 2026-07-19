@@ -65,6 +65,7 @@ contre chacune.
 | `blocage-officiel.js` | pur : moteur de blocage du mode OFFICIEL (lot B) — `evaluerBlocagesOfficiel(cadre)` applique la liste de `docs/CONDITIONS-BLOCANTES-OFFICIEL.md` filtrée par moment (PASSAGE/SOUMISSION/VALIDATION), `VERROU_LIVRAISON` ferme le mode jusqu'aux lots C-D ; branché aux 3 moments des deux stores + `simulerValidationOfficielle` (contrat) ; conditions 14-15 (lot C) = faits tri-état signatureTechnicienValide/signatureDetenteurValide |
 | `signatures-mouvement.js` | pur : signatures RÉELLES (lot C, C1) — déclarations signées EXACTES (`declarationSignature`, délégation dans la qualité ET la déclaration) + critères d'illisibilité (`verifierImageSignature` : PNG réel, ≥ 1 Ko, ≤ 1 Mo) ; consommé par signerMouvement des deux stores, recopié en littéral côté serveur |
 | `pdf-final.js` | pur : PDF FINAL conservé (lot C, C3a) — messages canoniques de refus + `verifierOctetsPdfFinal` (%PDF, 5 Mo) + `nomFichierPdfFinal` ; consommé par validerMouvement des deux stores (3e param `pdfFinalBase64`, OBLIGATOIRE en OFFICIEL, refusé en FORMATION), recopié en littéral côté serveur |
+| `parcours-signature.js` | pur : décisions de l'écran de double signature (lot C, C4) — `etatParcoursSignatures` (tri-état par rôle, signature retenue, prêt pour soumission) + `preremplirSignature` (équipement du lycée = professeur PAR DÉLÉGATION pré-cochée) ; consommé par la modale ET le générateur CERFA |
 | `feu-tricolore.js` | pur : consolide alertes/officiel/chaîne en 7 domaines VERT/ORANGE/ROUGE (`collecterConformite(store)`) |
 | `audit-guide.js` | pur : parcours d'audit en 9 étapes ordonnées (alertes par préfixe + faits de présence, `collecterAuditGuide(store)`) |
 | `filtre-mouvements.js` | pur : filtres de la vue Mouvements (index cherchable sans accents, correspondance, options présentes) |
@@ -77,10 +78,19 @@ contre chacune.
 - `views/` : une vue par écran (routeur hash `#/vue` ; fiches paramétrées
   `#/m|b|cl|o|f/<code>`). `communs.js` = modale/toast/enteteVue/carteKpi.
 - `modales/` : formulaires (piège historique : jamais de sélecteur global
-  `.modale` — `modale()` retourne sa racine).
-- `wizard/` : les 6 étapes du mouvement (~1800 l.) + signature canvas.
-- `cerfa/` : `generateur.js` (72 champs, `calculerChampsCerfa` = vérité),
-  `correction.js` (correction copie élève), `visualiseur.js` (PDF.js),
+  `.modale` — `modale()` retourne sa racine). `signatures-modal.js`
+  (lot C C4) = parcours de double signature d'un BROUILLON (bouton
+  « Signatures » de la vue Mouvements, les deux modes) + panneau partagé
+  `remplirSimulationOfficielle` ; le store reste seul juge.
+- `wizard/` : les 6 étapes du mouvement (~1800 l.) + signature canvas
+  (`creerSignature(conteneur, libelle?)`, libellé par défaut inchangé).
+- `cerfa/` : `generateur.js` (72 champs, `calculerChampsCerfa` = vérité ;
+  lot C C4 : inscrit les signatures RÉELLES valides — personne physique,
+  qualité, date réelle, tracés — et `genererPdfFinalBase64` = PDF FINAL de
+  la validation officielle, option `accepterSoumis` RÉSERVÉE à ce canal,
+  SANS tolérance : deux signatures valides exigées, erreurs propagées),
+  `correction.js` (correction copie élève — TOUJOURS les blocs de
+  signature historiques, `sansSignaturesReelles`), `visualiseur.js` (PDF.js),
   `conserve.js` (lot C C3b : sert le PDF CONSERVÉ d'une fiche officielle
   figée — les DEUX portes, mouvement ET contrôle lié —, empreinte vérifiée
   contre `hashPdfFinal` scellé, jamais le générateur, jamais de repli).

@@ -567,6 +567,139 @@ verifier('cadre 7 : R-290 (HC) hors périmètre → aucune case',
   calculerCadre7({ famille: 'HC', gwpAr4: 3 }, 50, false).caseSeuil === null);
 
 // ============================================================
+// 7. Lot C (C4) — PDF FINAL officiel : fiche SOUMISE + signatures
+//    réelles (magasin factice bâti sur la démo, aucun verrou contourné :
+//    on teste le GÉNÉRATEUR, le store reste seul juge de la validation)
+// ============================================================
+const { genererPdfFinalBase64, calculerChampsCerfa } =
+  await import('./generateur.js');
+
+// PNG 1×1 valide (nombres magiques réels — le dessin doit aboutir).
+const PNG_MINI = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8'
+  + 'z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+
+const mouvementsDemo = await store.getMouvements();
+const modeleDemo = mouvementsDemo.find((m) => m.id === 'mvt-0005');
+const officielSoumis = { ...modeleDemo,
+  id: 'mvt-c4', numero: 'FI-2026-9999', mode: 'OFFICIEL', statut: 'SOUMIS' };
+
+const signatureTechnicienPerimee = { role: 'TECHNICIEN', nom: 'Perime',
+  prenom: 'Vieux', qualite: 'Élève en formation', parDelegation: false,
+  organisation: null, dateHeure: '2026-07-18T08:00:00.000Z',
+  declaration: 'Déclaration périmée.', imagePng: PNG_MINI, valide: false };
+const signatureTechnicien = { role: 'TECHNICIEN', nom: 'Eleve',
+  prenom: 'Un', qualite: 'Élève en formation', parDelegation: false,
+  organisation: null, dateHeure: '2026-07-19T09:12:00.000Z',
+  declaration: 'Je certifie…', imagePng: PNG_MINI, valide: true };
+const signatureDetenteur = { role: 'DETENTEUR', nom: 'Henninot',
+  prenom: 'Franck',
+  qualite: 'Professeur, par délégation du détenteur (LP Jacques Raynaud)',
+  parDelegation: true, organisation: 'LP Jacques Raynaud',
+  dateHeure: '2026-07-19T09:15:00.000Z',
+  declaration: 'Je reconnais…', imagePng: PNG_MINI, valide: true };
+
+const storeOfficiel = {
+  ...store,
+  getMouvements: async () => [...mouvementsDemo, officielSoumis],
+  getSignaturesMouvement: async (id) => (id === 'mvt-c4'
+    ? [signatureTechnicienPerimee, signatureTechnicien, signatureDetenteur]
+    : [])
+};
+
+// Non-régression : SANS le canal réservé, une fiche SOUMISE reste refusée.
+{
+  let message = '';
+  try {
+    await genererCerfaPdf(storeOfficiel, { source: 'mouvement', id: 'mvt-c4' });
+  } catch (erreur) { message = erreur.message; }
+  verifier('C4 : une fiche SOUMISE reste refusée hors canal du PDF final',
+    message.startsWith('CERFA impossible'), `message = « ${message} »`);
+}
+
+// Le PDF final : généré sur la fiche SOUMISE, signatures réelles inscrites.
+{
+  const base64 = await genererPdfFinalBase64(storeOfficiel, officielSoumis);
+  verifier('C4 : PDF final en base64, nombres magiques %PDF',
+    typeof base64 === 'string' && base64.startsWith('JVBERi'));
+  const relu = await relire(new Uint8Array(Buffer.from(base64, 'base64')));
+  verifier('C4 : détenteur = personne PHYSIQUE (jamais la raison sociale seule)',
+    relu.texte('Sign_Detenteur_Nom') === 'Franck Henninot',
+    `valeur = « ${relu.texte('Sign_Detenteur_Nom')} »`);
+  verifier('C4 : qualité du détenteur = la délégation signée',
+    relu.texte('Sign_Detenteur_Qualite') ===
+    'Professeur, par délégation du détenteur (LP Jacques Raynaud)');
+  verifier('C4 : date détenteur = date RÉELLE de signature (pas l’intervention)',
+    relu.texte('Sign_Detenteur_Date') === '19/07/2026');
+  verifier('C4 : opérateur = le signataire technicien VALIDE (le périmé est ignoré)',
+    relu.texte('Sign_Operateur_Nom') === 'Un Eleve',
+    `valeur = « ${relu.texte('Sign_Operateur_Nom')} »`);
+  verifier('C4 : qualité de l’opérateur = celle signée',
+    relu.texte('Sign_Operateur_Qualite') === 'Élève en formation');
+  verifier('C4 : date opérateur = date réelle de signature',
+    relu.texte('Sign_Operateur_Date') === '19/07/2026');
+}
+
+// Hors mode Officiel : AUCUN PDF final (la Formation n'en envoie jamais).
+{
+  const rien = await genererPdfFinalBase64(store, modeleDemo);
+  verifier('C4 : hors mode Officiel, genererPdfFinalBase64 rend null',
+    rien === null);
+}
+
+// Canal du PDF FINAL sans tolérance (revue adversariale C4) : signatures
+// incomplètes ou lecture en échec → REFUS, jamais de blocs historiques.
+{
+  const sansDetenteur = { ...storeOfficiel,
+    getSignaturesMouvement: async () =>
+      [signatureTechnicienPerimee, signatureTechnicien] };
+  let message = '';
+  try { await genererPdfFinalBase64(sansDetenteur, officielSoumis); }
+  catch (erreur) { message = erreur.message; }
+  verifier('C4 : PDF final REFUSÉ sans signature détenteur valide',
+    message.startsWith('PDF final impossible'), `message = « ${message} »`);
+}
+{
+  const lectureEnPanne = { ...storeOfficiel,
+    getSignaturesMouvement: async () => {
+      throw new Error('Panne réseau simulée.');
+    } };
+  let message = '';
+  try { await genererPdfFinalBase64(lectureEnPanne, officielSoumis); }
+  catch (erreur) { message = erreur.message; }
+  verifier('C4 : PDF final — un raté de lecture des signatures REMONTE '
+    + '(jamais de conservation silencieuse des blocs historiques)',
+    message === 'Panne réseau simulée.', `message = « ${message} »`);
+}
+
+// Chemin de la CORRECTION élève : les signatures réelles sont IGNORÉES —
+// les valeurs attendues de l'élève ne changent jamais (revue C4).
+{
+  const officielValide = { ...officielSoumis, statut: 'VALIDE' };
+  const storeValide = { ...storeOfficiel,
+    getMouvements: async () => [...mouvementsDemo, officielValide] };
+  const avec = await calculerChampsCerfa(storeValide,
+    { source: 'mouvement', id: 'mvt-c4' });
+  const sans = await calculerChampsCerfa(storeValide,
+    { source: 'mouvement', id: 'mvt-c4' }, { sansSignaturesReelles: true });
+  verifier('C4 : sansSignaturesReelles → blocs historiques malgré le parcours',
+    avec.texte['Sign_Detenteur_Nom'] === 'Franck Henninot'
+    && sans.texte['Sign_Detenteur_Nom'] !== 'Franck Henninot'
+    && sans.signatureTechnicienPng === null
+    && sans.signatureDetenteurPng === null);
+}
+
+// Une fiche VALIDÉE du parcours (démo, sans signatures réelles) garde
+// les blocs historiques — non-régression des CERFA existants.
+{
+  const champs = await calculerChampsCerfa(store,
+    { source: 'mouvement', id: 'mvt-0005' });
+  verifier('C4 : sans signatures réelles, blocs de signature historiques',
+    champs.texte['Sign_Detenteur_Nom'] === 'Boulangerie Le Fournil'
+    && champs.signatureTechnicienPng === null
+    && champs.signatureDetenteurPng === null);
+}
+
+// ============================================================
 // Bilan
 // ============================================================
 console.log('');

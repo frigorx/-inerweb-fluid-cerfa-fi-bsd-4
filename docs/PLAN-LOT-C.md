@@ -228,12 +228,25 @@ refus de suppression sur mouvement figé (déjà en place), inclusion dans les s
    d'ajout de PJ sur mouvement figé) ; ② à l'import, RECOMPTER hashPiecesJointes des
    écritures v2 (redevenu sain une fois ① fait) — ou a minima celui des CERFA_FINAL ;
    ③ l'attaque « CERFA truquée dans l'export » devient un test permanent.
-5. **C4 — Parcours UI officiel** : écrans de signature (technicien puis détenteur,
-   déclarations affichées, identité de session), simulation du lot B intégrée au parcours.
-   Vérification navigateur (port jetable).
+5. ✅ **C4 — SOLDÉE (19/07)** — Parcours UI officiel : modale « Signatures » (technicien
+   puis détenteur, déclarations composées par le module partagé et affichées, délégation
+   lycée pré-cochée, identité de session, péremption affichée, soumission intégrée) +
+   validation OFFICIELLE avec PDF final généré côté client (`genererPdfFinalBase64`,
+   `accepterSoumis` réservé, SANS tolérance : deux signatures valides exigées) + panneau
+   des contrôles Officiel partagé. Différé C3c (masquage bouton PJ sur figé) constaté
+   SANS OBJET (aucune vue ne monte de PJ sur un mouvement). Revue adversariale avant
+   commit : 2 IMPORTANTS fermés (correction élève sur blocs historiques ; canal PDF
+   final sans catch silencieux). Vérifié au navigateur sur serveur réel jetable.
+   Détail : CHANGELOG.
 6. **C5 — BASCULE** : essai complet en données fictives (parcours officiel de bout en bout),
    puis `VERROU_LIVRAISON = false` (2 miroirs) + suite e2e officielle activée + relecture
    finale de la liste du lot B par Franck. Ensuite : simulation d'audit fin août.
+   ⚠️ **Arbitrage à trancher AVANT la bascule (constat de la revue C4)** : impasse
+   TRANSFERT OFFICIEL — les deux stores exigent un PDF final pour TOUT mouvement
+   Officiel, mais un TRANSFERT ne produit jamais de CERFA (IM-12) → sa validation
+   officielle échouerait pour toujours. Proposition (compromis protecteur) : exemption
+   TRANSFERT du PDF final dans les DEUX miroirs (l'écriture reste scellée v2, chaînée,
+   sans pièce documentaire — cohérent avec « jamais un CERFA »).
 
 ## 8. Attaques à tirer (preuves exigées, pas seulement des tests verts)
 

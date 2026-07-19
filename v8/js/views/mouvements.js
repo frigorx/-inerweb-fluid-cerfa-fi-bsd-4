@@ -3,8 +3,10 @@
 // inerWeb Fluide v8 — vue « Mouvements de fluide »
 // Historique des charges, compléments et récupérations, avec
 // actions PAR STATUT (CR-1 / CR-2) :
-//   BROUILLON → Reprendre (wizard préchargé) · Supprimer ;
-//   SOUMIS    → Valider (modale de confirmation) · Rejeter (motif) ;
+//   BROUILLON → Reprendre (wizard préchargé) · Signatures (parcours
+//               de double signature réelle, lot C C4) · Supprimer ;
+//   SOUMIS    → Valider (modale de confirmation ; en OFFICIEL le CERFA
+//               final est généré côté client et transmis) · Rejeter (motif) ;
 //   VALIDE    → Visualiser CERFA (sauf transfert) · Annuler
 //               (contre-écriture, motif obligatoire) ;
 //   ANNULE    → Visualiser CERFA (sauf transfert).
@@ -19,6 +21,9 @@ import { indexerMouvement, correspond, optionsDisponibles, STATUTS_FILTRE }
   from '../data/filtre-mouvements.js';
 import { ouvrirWizard } from '../wizard/wizard.js';
 import { ouvrirCerfa } from '../cerfa/visualiseur.js';
+import { genererPdfFinalBase64 } from '../cerfa/generateur.js';
+import { ouvrirSignaturesMouvement, remplirSimulationOfficielle }
+  from '../modales/signatures-modal.js';
 import { ouvrirCorrectionCerfa } from '../cerfa/correcteur.js';
 import { ouvrirFeuilleMiseEnService, peutOuvrirFeuilleMiseEnService }
   from '../documents/feuille-mise-en-service.js';
@@ -56,6 +61,10 @@ function boutonsAction(mv) {
 
   if (mv.statut === 'BROUILLON') {
     boutons.push(boutonLigne('reprendre', 'Reprendre', mv.id, 'btn-contour'));
+    // Lot C (C4) : parcours de double signature réelle — requis en
+    // Officiel (conditions 14-15), facultatif en Formation (entraînement,
+    // aucune friction : rien n'est exigé du parcours actuel).
+    boutons.push(boutonLigne('signatures', 'Signatures', mv.id, 'btn-contour'));
     boutons.push(boutonLigne('supprimer', 'Supprimer', mv.id, 'btn-danger-contour'));
 
   } else if (mv.statut === 'SOUMIS') {
@@ -445,6 +454,7 @@ function ouvrirSuppression(ctx, mv, outils, personnelParId) {
 function ouvrirValidation(ctx, mv, utilisateur, outils, personnelParId) {
   const peutValider = Boolean(utilisateur
     && ROLES_VALIDEURS.includes(utilisateur.roleApp));
+  const officiel = mv.mode === 'OFFICIEL';
 
   const blocValidateur = peutValider
     ? ligneRappel('Validateur',
@@ -460,6 +470,15 @@ function ouvrirValidation(ctx, mv, utilisateur, outils, personnelParId) {
       + 'applique les effets sur les stocks et inscrit l’écriture au '
       + 'registre : elle devient définitive (correction uniquement par '
       + 'contre-écriture).</p>'
+      // Lot C (C4) : en OFFICIEL, le CERFA final est généré CÔTÉ CLIENT
+      // à la confirmation, transmis avec la validation, contrôlé puis
+      // CONSERVÉ tel quel par le store (plan lot C §2.3 et §5).
+      + (officiel
+        ? '<p style="font-size:13px;color:var(--texte-2)"><strong>Mode '
+          + 'Officiel</strong> : le CERFA final (signatures comprises) '
+          + 'sera généré, transmis et conservé tel quel avec l’écriture '
+          + 'scellée.</p>'
+        : '')
       + '<div style="margin-top:10px">' + blocValidateur + '</div>'
       + '<div data-zone-simulation style="margin-top:10px"></div>'
       + '<div data-zone-erreur style="margin-top:10px"></div>',
@@ -469,49 +488,20 @@ function ouvrirValidation(ctx, mv, utilisateur, outils, personnelParId) {
         ? '<button type="button" class="btn btn-primaire" data-role="confirmer">Valider</button>'
         : '')
   });
-  // Lot B — simulation de validation OFFICIELLE : information (jamais
+  // Lot B — panneau des contrôles du mode Officiel : information (jamais
   // bloquante en Formation), chargée après ouverture pour ne pas retarder
-  // la modale. Prépare le registre réel de septembre.
-  chargerSimulationOfficielle(ctx, mv, instance.racine);
+  // la modale. Partagé avec la modale « Signatures » (lot C C4).
+  remplirSimulationOfficielle(ctx.store, mv,
+    instance.racine.querySelector('[data-zone-simulation]'));
   cablerConfirmation(instance, async function () {
-    await ctx.store.validerMouvement(mv.id, utilisateur.id);
+    const pdfFinalBase64 = officiel
+      ? await genererPdfFinalBase64(ctx.store, mv)
+      : null;
+    await ctx.store.validerMouvement(mv.id, utilisateur.id, pdfFinalBase64);
     instance.fermer();
     toast('Mouvement ' + mv.numero + ' validé et inscrit au registre.', 'succes');
     ctx.naviguer('mouvements');
   });
-}
-
-/**
- * Panneau « Simulation mode Officiel » de la modale de validation (lot B) :
- * liste ce que le mode Officiel refuserait aujourd'hui pour CETTE fiche
- * (docs/CONDITIONS-BLOCANTES-OFFICIEL.md), hors verrou de livraison —
- * purement informatif, la validation en Formation reste possible.
- */
-async function chargerSimulationOfficielle(ctx, mv, racine) {
-  const zone = racine.querySelector('[data-zone-simulation]');
-  if (!zone) return;
-  try {
-    const verdict = await ctx.store.simulerValidationOfficielle(mv.id);
-    const visibles = verdict.blocages.filter(
-      function (b) { return b.code !== 'VERROU_LIVRAISON'; });
-    if (!visibles.length) {
-      zone.innerHTML = '<p style="font-size:13px;color:var(--texte-2)">'
-        + 'Simulation mode Officiel : aucun blocage — cette fiche passerait '
-        + 'les contrôles du registre officiel.</p>';
-      return;
-    }
-    zone.innerHTML = '<div class="bandeau-avertissement" style="display:block">'
-      + '<strong>Simulation mode Officiel</strong> — cette fiche serait '
-      + 'refusée en Officiel (information, la validation en Formation reste '
-      + 'possible) :'
-      + '<ul style="margin:6px 0 0 18px;padding:0">'
-      + visibles.map(function (b) { return '<li>' + esc(b.motif) + '</li>'; }).join('')
-      + '</ul></div>';
-  } catch (erreur) {
-    // Simulation indisponible (méthode absente, erreur réseau…) : on
-    // n'affiche rien — la validation en Formation n'en dépend jamais.
-    zone.innerHTML = '';
-  }
 }
 
 /** SOUMIS → modale de rejet (motif obligatoire, retour en brouillon). */
@@ -711,7 +701,8 @@ export async function render(conteneur, ctx) {
     // modale reste utilisable même si l'un des deux échoue).
     let outils = [];
     let personnelParId = new Map();
-    if (['supprimer', 'valider', 'rejeter', 'annuler'].includes(action)) {
+    if (['supprimer', 'valider', 'rejeter', 'annuler', 'signatures']
+      .includes(action)) {
       try {
         outils = await ctx.store.getOutilsMouvement(mv.id);
       } catch {
@@ -743,6 +734,13 @@ export async function render(conteneur, ctx) {
         break;
       case 'supprimer':
         ouvrirSuppression(ctx, mv, outils, personnelParId);
+        break;
+      case 'signatures':
+        // Lot C (C4) : parcours de double signature réelle du brouillon.
+        ouvrirSignaturesMouvement(ctx, mv, {
+          rappelHtml: rappelMouvement(mv, outils, personnelParId),
+          utilisateur
+        });
         break;
       case 'valider':
         ouvrirValidation(ctx, mv, utilisateur, outils, personnelParId);

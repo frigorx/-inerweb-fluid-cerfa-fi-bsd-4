@@ -2,6 +2,62 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔐 LOT C audit-proof — brique C4 : PARCOURS UI OFFICIEL (conditions 3-4, 19/07)
+Avant-dernière brique du lot C (plan §7.5). Reste C5 (bascule du verrou). AUCUN fichier
+serveur ni store touché : la brique est 100 % côté interface + générateur CERFA.
+- **Écrans de signature** (nouvelle modale `v8/js/modales/signatures-modal.js` + module
+  PUR `v8/js/data/parcours-signature.js`) : bouton « Signatures » sur tout mouvement
+  BROUILLON — requis en Officiel (conditions 14-15), facultatif en Formation
+  (entraînement ; AUCUNE friction : rien d'exigé du parcours actuel). Technicien PUIS
+  détenteur (ordre du store respecté à l'écran), déclaration composée par le module
+  partagé `signatures-mouvement.js` et AFFICHÉE en direct (jamais envoyée au store, qui
+  la recompose), pré-remplissage (technicien = l'intervenant déclaré ; détenteur d'un
+  équipement du LYCÉE = le professeur connecté PAR DÉLÉGATION, case PRÉ-COCHÉE, raison
+  sociale de l'établissement — décision Franck 16/07 ; client tiers = personne physique
+  à saisir), identité de SESSION visible, canvas réutilisé (`wizard/signature.js` gagne
+  un libellé paramétrable, défaut inchangé), signature périmée AFFICHÉE avec re-signature
+  proposée (l'ancienne reste tracée), et SOUMISSION proposée quand les deux signatures
+  sont valides. Panneau des contrôles Officiel partagé (`remplirSimulationOfficielle`,
+  wording adapté au mode de la fiche) — les conditions 14-15 s'affichent puis se lèvent
+  au fil des signatures.
+- **Validation OFFICIELLE** (`views/mouvements.js`) : à la confirmation, le CERFA FINAL
+  est généré CÔTÉ CLIENT (`genererPdfFinalBase64`) et transmis en 3e paramètre de
+  `validerMouvement` (canal C3) ; en FORMATION, null — strictement équivalent à l'appel
+  historique (clé omise du JSON, prouvé). Le générateur inscrit les signatures RÉELLES :
+  personne PHYSIQUE (jamais la raison sociale seule — défaut de l'audit corrigé, plan
+  §2.1), qualité signée (délégation comprise), DATE RÉELLE de signature, tracés PNG
+  dessinés dans les deux zones du formulaire. Option `accepterSoumis` RÉSERVÉE à ce
+  canal (la fiche est SOUMISE au moment de générer) — tout autre appel garde le refus
+  historique, confiné prouvé par grep et test.
+- **Revue adversariale AVANT commit — 2 constats IMPORTANTS fermés** : ① la correction
+  élève compare TOUJOURS les blocs de signature HISTORIQUES (`sansSignaturesReelles`
+  posée par `corrigerCerfaEleve`) — une fiche Formation signée via le parcours ne change
+  plus les valeurs attendues de l'élève (défaut prouvé : 100 % → 77 % sur la même copie) ;
+  ② le canal du PDF FINAL est SANS TOLÉRANCE : un raté de lecture des signatures REMONTE
+  à l'écran (jamais de conservation silencieuse des blocs historiques) et les DEUX
+  signatures valides sont EXIGÉES avant génération (mêmes exigences que les conditions
+  14-15). L'état « signature retenue » est partagé (`etatParcoursSignatures`), plus de
+  logique dupliquée.
+- **Différé C3c soldé SANS CODE** : le masquage du bouton d'ajout de PJ sur écriture
+  figée est SANS OBJET — vérifié : AUCUNE vue ne monte de zone de pièces jointes sur un
+  MOUVEMENT (les montages existants : machine, bouteille, outil, personne, établissement,
+  BSFF). Le refus canonique du store reste le filet si un canal apparaît un jour.
+- **⚠️ CONSTAT pour C5 (revue adversariale, à trancher AVANT la bascule)** : impasse
+  TRANSFERT OFFICIEL — les deux stores exigent un PDF final pour TOUT mouvement Officiel,
+  mais un TRANSFERT ne produit jamais de CERFA (IM-12) → sa validation officielle
+  échouerait pour toujours. Non atteignable aujourd'hui (verrou au PASSAGE) ; arbitrage
+  à la bascule : exemption TRANSFERT dans les DEUX miroirs, ou autre pièce finale.
+- **Preuves** (TOUT VERT — 80 exécutions ; nouvelle suite `test-parcours-signature`
+  12 vérifs, `test-generateur` 98 → 110) : PDF final relu avec pdf-lib (personne physique,
+  délégation, dates réelles, technicien périmé IGNORÉ), fiche SOUMISE refusée hors canal,
+  refus sans détenteur valide, panne de lecture propagée, correction élève inchangée
+  malgré le parcours, blocs historiques sans signatures. **Vérifié au NAVIGATEUR sur
+  serveur RÉEL jetable (port 2299, base jetable, sessions réelles)** : parcours complet
+  brouillon → 2 signatures → soumission → validation Formation, péremption affichée après
+  ajout d'une PJ, refus « tracé trop léger » TIRÉ en vrai HTTP, CERFA visualisé sans
+  erreur, refus « compte non lié au personnel » proprement affiché puis levé via un
+  compte lié.
+
 ### 🔐 LOT C audit-proof — brique C3c : asymétrie des PJ FERMÉE + recomptage à l'import (condition 4, 19/07) — C3 COMPLÈTE
 Troisième et dernière sous-brique de C3 (plan §5 + §7.4 enrichi). **La condition 4 est
 entièrement livrée** ; restent C4 (écrans) et C5 (bascule du verrou).

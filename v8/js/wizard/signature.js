@@ -49,14 +49,18 @@ function injecterStyle() {
 /**
  * Crée une zone de signature dans le conteneur fourni.
  * @param {HTMLElement} conteneur - Élément dans lequel injecter la zone de signature.
+ * @param {string} [libelle] - Libellé de la zone (défaut : wizard, technicien).
  * @returns {{ estVide: () => boolean, dataURL: () => string, effacer: () => void }}
  */
-export function creerSignature(conteneur) {
+export function creerSignature(conteneur, libelle = 'Signature du technicien') {
   injecterStyle();
+
+  const texteLibelle = document.createElement('div');
+  texteLibelle.textContent = libelle;
 
   conteneur.innerHTML = `
     <div class="zone-signature">
-      <div class="zone-signature__libelle">Signature du technicien</div>
+      <div class="zone-signature__libelle">${texteLibelle.innerHTML}</div>
       <div class="zone-signature__cadre">
         <canvas class="zone-signature__canvas"></canvas>
       </div>
