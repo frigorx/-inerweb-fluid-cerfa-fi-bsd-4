@@ -6,7 +6,37 @@
 > **Session conseillée : Opus, effort élevé** (le lot E est cadré ; passer à maximum
 > seulement sur un point RGPD délicat). PAS d'ultracode hors point critique.
 >
-> **ÉTAT (19/07 soir) : LOTS A ✅ B ✅ C ✅ D ✅ — LE MODE OFFICIEL EST OUVERT.**
+> **ÉTAT (19/07) : LOTS A ✅ B ✅ C ✅ D ✅ — MODE OFFICIEL OUVERT. LOT E EN COURS :
+> E1 ✅ (export individuel RGPD, `12fc4c0`) + E3 ✅ (notice d'information, `238d58d`)
+> LIVRÉS ET TESTÉS (82 exécutions vertes). Reste E2 (purge — arbitrage Franck en
+> attente) et E4 (relecture DPD, hors code).**
+>
+> **LOT E — reste à faire :**
+> - **E2 (minimisation des données d'élèves) — DIRECTION TRANCHÉE PAR FRANCK
+>   (19/07) : « COFFRE-FORT CHIFFRÉ RÉVERSIBLE ».** Constat technique établi : la
+>   formation partage la chaîne de hash des officiels ET le nom du technicien +
+>   `hashSignatures` sont dans l'empreinte (`CHAMPS_HASH_MOUVEMENT` v1/v2) → un
+>   mouvement de formation VALIDÉ ne peut être ni supprimé, ni anonymisé, sans
+>   casser l'intégrité du registre. **La fiche personnel, elle, N'est PAS dans
+>   l'empreinte → purgeable.** Choix Franck : plutôt qu'effacer, DÉPLACER les
+>   identités des élèves dans une **archive chiffrée protégée par un code** ; l'app
+>   n'affiche que des pseudonymes ; le code rouvre les vraies identités en cas de
+>   besoin légal. **Réglage : Opus, effort MAXIMUM.** ÉCRIRE UN PLAN
+>   (`docs/PLAN-LOT-E2.md`) VALIDÉ AVANT DE CODER (comme le lot C). Arbitrages à
+>   régler dans le plan : ① déclencheur (bouton manuel vs auto après la durée
+>   annoncée — année scolaire en cours + suivante, RGPD.md §5) ; ② le code/la clé
+>   (nouvelle phrase dédiée ? réutiliser le chiffrement du coffre-fort de
+>   sauvegarde `chiffrement.js` AES-256-GCM ?) ; ③ périmètre chiffré (fiche :
+>   nom/prénom/e-mail/scans/images de signature) + le pseudonyme stable qui
+>   remplace à l'écran ; ④ affichage pseudonymisé des mouvements de formation (le
+>   `technicien` en clair reste SCELLÉ dans la ligne/l'empreinte — le pseudonyme
+>   se substitue à l'AFFICHAGE via la correspondance, pas dans la donnée figée :
+>   RÉSIDU HONNÊTE à documenter pour le DPD) ; ⑤ réversibilité (rouvrir avec le
+>   code) sans jamais casser la chaîne ni les vérificateurs. Piège : NE PAS toucher
+>   à l'empreinte ni re-sceller quoi que ce soit.
+> - **E4 (relecture DPD)** : gate hors code, quand Franck peut.
+>
+> --- ci-dessous, le brief E d'origine (E1 et E3 désormais faits) ---
 > C5 soldée : `VERROU_LIVRAISON = false` (2 miroirs), exemption TRANSFERT du PDF final
 > (arbitrage Franck — jamais de CERFA, PDF fourni refusé, scellé v2 chaîné), migration
 > **24** (WORM pieces_jointes d'un mouvement figé, import qui recrée), vérification des
