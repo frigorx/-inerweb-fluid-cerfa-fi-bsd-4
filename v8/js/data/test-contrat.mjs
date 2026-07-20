@@ -360,6 +360,15 @@ await verifierRejet('creerMouvement refuse une demande en mode OFFICIEL (motivé
     messageRefusOff);
 }
 
+// P0-2 (audit externe #2) : un contrôle AUTONOME forgé en mode OFFICIEL est
+// refusé AVANT tout effet (le blocage précède la vérification de la machine —
+// machineId volontairement inexistant). Sans le correctif, il entrait comme
+// écriture « officielle » sans conditions, signatures, PDF ni WORM.
+await verifierRejet(
+  'createControle refuse un contrôle AUTONOME en mode OFFICIEL (avant tout effet)',
+  store.createControle({ machineId: 'mac-fantome', resultat: 'CONFORME', mode: 'OFFICIEL' }),
+  'Mode Officiel refusé');
+
 const machineB = await store.createMachine({
   designation: 'Groupe froid du contrat', fluide: FLUIDE,
   chargeNominaleKg: 10, localisation: 'Atelier B', operateur: 'Testeur Contrat'

@@ -2596,8 +2596,22 @@ const HANDLERS = {
    * insertion, effets, journal) vit dans enregistrerControle, partagé avec
    * CR-3 (validation d'un mouvement) — repris du DemoStore.
    */
-  createControle(params) {
-    return muter(() => enregistrerControle(params.donneesControle || {}));
+  createControle(params, contexte) {
+    const d = params.donneesControle || {};
+    // P0-2 (audit externe #2) : un contrôle AUTONOME en mode OFFICIEL doit
+    // franchir le MÊME blocage dur que les mouvements (1er moment, PASSAGE).
+    // Sans lui, un appel forgé créait une écriture « officielle » SANS
+    // conditions, signatures, PDF ni WORM. Verrou de livraison fermé (T1) →
+    // refus total. Le contrôle LIÉ (né d'une validation de mouvement)
+    // n'emprunte PAS ce handler : il reste couvert par le parcours officiel
+    // du mouvement. Parité stricte avec le DemoStore (createControle).
+    if (d.mode === 'OFFICIEL') {
+      const verdict = evaluerOfficiel('PASSAGE', null, contexte);
+      if (!verdict.ok) {
+        throw new Error(messageRefusOfficiel(verdict.blocages));
+      }
+    }
+    return muter(() => enregistrerControle(d));
   },
 
   /**

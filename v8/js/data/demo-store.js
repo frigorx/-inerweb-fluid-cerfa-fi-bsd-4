@@ -2767,7 +2767,17 @@ export function creerDemoStore() {
     // Mutations : contrôles d'étanchéité
     // ------------------------------------------------------
     async createControle(donneesControle) {
-      const controle = enregistrerControle(donneesControle || {});
+      const d = donneesControle || {};
+      // P0-2 (audit externe #2) : parité serveur — un contrôle AUTONOME en
+      // mode OFFICIEL franchit le blocage dur (PASSAGE). Verrou fermé (T1) →
+      // refus. Le contrôle LIÉ (validerMouvement) n'emprunte pas ce chemin.
+      if (d.mode === 'OFFICIEL') {
+        const verdict = evaluerOfficiel('PASSAGE', null);
+        if (!verdict.ok) {
+          throw new Error(messageRefusOfficiel(verdict.blocages));
+        }
+      }
+      const controle = enregistrerControle(d);
       persisterEtNotifier();
       return copier(controle);
     },
