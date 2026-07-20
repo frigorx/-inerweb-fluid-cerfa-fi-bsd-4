@@ -3,29 +3,54 @@
 > Copier tout ce qui suit comme PREMIER message d'un nouveau chat. Il est autonome : contexte, état
 > exact, cap, prochaine brique, gates, méthode et consignes.
 >
-> **Session conseillée : Opus, effort élevé** (le lot E est cadré ; passer à maximum
-> seulement sur un point RGPD délicat). PAS d'ultracode hors point critique.
+> **Session conseillée : Opus, effort xhigh** (chantier probatoire/réglementaire, petites
+> briques testées comme le lot C). PAS d'ultracode hors point critique.
 >
-> **ÉTAT (19/07 tard) : LOTS A ✅ B ✅ C ✅ D ✅ E ✅ (CODE COMPLET) — MODE
-> OFFICIEL OUVERT, LOT E RGPD LIVRÉ EN ENTIER.**
-> E1 ✅ export individuel (`12fc4c0`) · E3 ✅ notice (`238d58d`) · **E2 ✅ LE
-> COFFRE DES IDENTITÉS, 5 briques** : E2a primitives+module pur (`8bba64c`) ·
-> E2b gestes réels + revue adversariale 1 bloquant/6 importants fermés
-> (`306b9d0`, migrations 25+26, contrat 87 v7) · E2c le coffre voyage dans
-> l'export/import, bloquant n°1 prouvé fermé (`c7d1df5`) · E2d interface +
-> essai navigateur complet (`25da227`) · E2e documentation honnête RGPD.md
-> §7 bis + résidus + SAUVEGARDE.md (`4cd4eea`). Plan suivi à la lettre =
-> `docs/PLAN-LOT-E2.md` (conception 12 agents, 5 bloquants intégrés AVANT le
-> code). **Filet : TOUT VERT — 85 exécutions** (`node outils/lancer-tests.mjs`).
+> **ÉTAT (20/07) — CAP = REGISTRE OFFICIEL UNIQUE (barème maximal, tranché par Franck).**
+> Un 2ᵉ audit externe (ChatGPT) a été traité. Dépôt PROPRE, dernier commit **`8b5537f`**,
+> **TOUT VERT — 85 exécutions** (`node outils/lancer-tests.mjs --tout`). Fait + poussé cette session :
+> - **T1 ✅** (`a65ea4b`) — mode Officiel REFERMÉ (`VERROU_LIVRAISON=true`, 2 miroirs
+>   `server/blocage-officiel.js` + `v8/js/data/blocage-officiel.js`, NON configurable) le temps
+>   des P0. Suite `server/test-officiel-e2e.mjs` GELÉE par une garde en tête (à rejouer à la réouverture).
+> - **P0-2 ✅** (`8fdd5fb`) — `createControle` refuse le mode OFFICIEL forgé (chemin AUTONOME,
+>   `evaluerOfficiel('PASSAGE')`, 2 stores, test négatif). Fermait une vraie faille (table
+>   `controles` sans WORM ; le contrôle LIÉ via validation d'un mouvement reste couvert).
+> - **P0-7 option A (le contrôle d'étanchéité DEVIENT un mouvement) EN COURS** :
+>   **P7-a ✅** (`abe0003`) — `TYPES_MOUVEMENT` +2 types CONTROLE (contrat + 2 stores),
+>   `appliquerEffets` traite un mouvement CONTROLE comme « sec » (aucune pesée/effet stock),
+>   CR-3 dérive le `typeControle`. **P7-b ✅** (`ffbf29a`) — garde « résultat obligatoire »
+>   (CONFORME/FUITE) + libellés dashboard. **RESTE : P7-c** (`createControle` direct FORMATION-only) ·
+>   **P7-d** (wizard création d'un mouvement CONTROLE + CERFA de contrôle) · **P7-e** (immuabilité
+>   WORM + signatures officielles). Plan = `docs/PLAN-P0-INTEGRITE-CONTROLES.md`.
 >
-> **RESTE (hors code)** : ④ relecture DPD (RGPD.md, notamment §7 bis et ses
-> 8 résidus) · relecture Franck de la liste du lot B (demandée 19/07) ·
-> SIMULATION D'AUDIT fin août · septembre en PARALLÈLE. **Gestes Franck** :
-> pointer la synchronisation sur `backups/scellement/` SEULEMENT (précision
-> E2e du geste du lot D) ; à la première mise à l'abri : phrase NEUVE ≥ 14
-> caractères, séquestre papier au coffre de l'établissement.
-> **Reste consigné (préexistant, non bloquant)** : `createControle` accepte
-> un `mouvementId` arbitraire — à fermer à l'occasion.
+> **⭐ RC ChatGPT `8.1.0-rc.1` = SOURCE DE CODE** (zip sur le Bureau, SHA `e09ea34…`, intègre vérifié).
+> Travail RÉEL et large (contrat **v8** ≠ notre v7 ; ~1400 lignes de cœur api+demo ; module
+> `server/droit-intervention.js` branché ; cycle matière branché+WORM ; `createControle` colmaté
+> COMME nous = convergence ; HTTPS LAN ; scrypt N=2^17 ; déclaration 11 rubriques ; RGPD) — mais
+> **NON testée, hors git, R-455A resté 148**. **DÉCISION FRANCK 20/07 : notre dépôt git RESTE LA BASE ;
+> on pioche la RC brique par brique RE-testée, JAMAIS d'import en bloc.** Plan = `docs/PLAN-INTEGRATION-RC-CHATGPT.md`.
+> Pour piocher : ré-extraire le zip + `diff` le fichier contre l'archive d'audit ou notre dépôt.
+>
+> **PROCHAINE BRIQUE (au choix Franck)** : soit les **briques AUTONOMES de la RC** — P1-5 HTTPS LAN
+> (`server/serveur.js`), P2-3 scrypt N=2^17 (`server/comptes.js`), P1-6 anti-OneDrive — faciles, sans
+> conflit avec P7 ; soit **finir P7** (P7-c le plus rapide). Puis grosses briques métier reprises de la
+> RC : P0-3/4 cycle matière, P0-5 aptitude (`droit-intervention.js` + frontières 3/6 kg), P0-6 fuite
+> (24 h/1 mois), P0-8 déclaration 11 rubriques. **Hors code** : P0-9 (révocation clés v7), RGPD (notice/durées/DPD).
+>
+> **Décisions transverses en attente** : **T2** R-455A 148→146 (la RC a gardé 148 ; à re-trancher pour
+> la cible officielle) · **T3** relecture organisme agréé + DPD (délai long).
+>
+> **Docs à lire (dépôt)** : `docs/CONSTATS-AUDIT-EXTERNE-2026-07-20.md` (constats triés par gravité) ·
+> `docs/AUDIT-INERWEB-FLUIDE-2026-07-20.md` (rapport ChatGPT complet) · `docs/PLAN-P0-INTEGRITE-CONTROLES.md` ·
+> `docs/PLAN-INTEGRATION-RC-CHATGPT.md` · `docs/CARTE-CODE.md` (À LIRE AVANT d'explorer le code).
+>
+> **Reste consigné (préexistant)** : `createControle` accepte un `mouvementId` arbitraire — à fermer.
+>
+> **MÉTHODE / RÈGLES D'OR** : JAMAIS toucher au `data/` RÉEL (tester sur port + base JETABLES) · corps
+> API = `{params:{...}}` (pas à plat) · « une faille se prouve en la TIRANT, pas en la lisant » · une
+> brique = code + tests verts + revue adversariale AVANT commit · sessions parallèles → `git log`+`status`
+> AVANT d'écrire · source de vérité = `CHANGELOG.md` (dernier en tête) · messages de commit multi-lignes
+> via `git commit -F fichier` · parité STRICTE `server/api.js` ↔ `v8/js/data/demo-store.js`.
 >
 > --- ci-dessous, le brief E d'origine (E1 et E3 désormais faits) ---
 > C5 soldée : `VERROU_LIVRAISON = false` (2 miroirs), exemption TRANSFERT du PDF final
