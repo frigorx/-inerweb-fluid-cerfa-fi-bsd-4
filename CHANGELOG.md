@@ -2,6 +2,31 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🏁 P7-e (option A) — acceptation : LE CHANTIER P0-7 EST COMPLET (20/07 soir)
+- **Garde `createControle` direct** (2 stores, message mot pour mot) : un
+  `mouvementId` forgé est REFUSÉ — le lien contrôle ↔ mouvement naît
+  EXCLUSIVEMENT de la validation (CR-3). Fermait le « reste consigné » de
+  l'audit : le serveur insérait la valeur arbitraire, la démo l'ignorait
+  en silence (divergence unifiée en refus explicite).
+- **Garde d'import** (invariants des deux stores, miroirs exacts) : un
+  contrôle OFFICIEL orphelin (sans `mouvementId`) est refusé — dans la
+  cible option A, tout contrôle officiel naît d'un mouvement ; un
+  orphelin ne peut être que forgé ou issu d'un contournement.
+- **Tests d'acceptation (contrat, parité demo/local)** : mouvement
+  CONTROLE validé → suppression/revalidation refusées
+  (MSG_ECRITURE_FIGEE) ; contre-écriture = SEULE correction (scellée v2,
+  type conservé, quantité 0, aucun effet stock fantôme —
+  `appliquerEffetsInverses` ignore les types CONTROLE par construction) ;
+  le contrôle lié SURVIT à l'annulation et la machine n'est PAS retouchée
+  (comportements CONSIGNÉS au plan, alignés sur le contrôle accessoire) ;
+  import orphelin refusé.
+- **Part OFFICIELLE** (aptitude + signatures + PDF conservé sur le
+  parcours contrôle) : bloquée par le verrou → consigne de réouverture
+  ajoutée en tête de la suite e2e GELÉE (`server/test-officiel-e2e.mjs`,
+  commentaire seul, code intact) : ajouter le cas « mouvement CONTROLE
+  officiel » au rejeu ; `createControle` direct ne rouvrira JAMAIS (P7-c).
+  **TOUT VERT — 85 exécutions. P0-7 (P7-a→e) : COMPLET.**
+
 ### 🧱 P7-d2 (option A) — la carte « Contrôle d'étanchéité » du wizard (20/07)
 - **Étape 1** : 6ᵉ carte « Contrôle d'étanchéité » (icône loupe) +
   interrupteur « non périodique » (même idiome que première charge /

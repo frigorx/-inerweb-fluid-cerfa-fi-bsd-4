@@ -2610,6 +2610,14 @@ const HANDLERS = {
     if (d.mode === 'OFFICIEL') {
       throw new Error(MSG_CONTROLE_DIRECT_OFFICIEL);
     }
+    // P7-e : le lien contrôle ↔ mouvement naît EXCLUSIVEMENT de la
+    // validation d'un mouvement (CR-3) — un mouvementId forgé par le
+    // chemin direct fabriquerait un faux rattachement au registre scellé
+    // (reste consigné de l'audit, fermé ici). Parité stricte DemoStore.
+    if (d.mouvementId) {
+      throw new Error('Lien de mouvement refusé : le contrôle lié à une '
+        + 'écriture naît de sa validation, jamais du chemin direct.');
+    }
     return muter(() => enregistrerControle(d));
   },
 
@@ -4275,6 +4283,16 @@ function verifierInvariantsDonneesCandidat(candidat) {
       if (!Number.isFinite(mv.ordreValidation)) {
         return `mouvement ${ref} : ordre de validation absent`;
       }
+    }
+  }
+  // P7-e (option A) : un contrôle OFFICIEL naît TOUJOURS d'un mouvement
+  // (CR-3, parcours signé/scellé/WORM) — un contrôle officiel ORPHELIN
+  // (sans mouvementId) ne peut être que forgé ou issu d'un contournement.
+  // Miroir EXACT du DemoStore (verifierInvariantsDonnees).
+  for (const c of candidat.controles ?? []) {
+    if (c && c.mode === 'OFFICIEL' && !c.mouvementId) {
+      return `contrôle ${c.numero ?? c.id ?? '?'} : ` +
+        'OFFICIEL sans mouvement lié (orphelin)';
     }
   }
   // Habilitations et mentions (chantier B2) : miroir EXACT du DemoStore —

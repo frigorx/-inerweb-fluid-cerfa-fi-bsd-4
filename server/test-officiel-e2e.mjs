@@ -45,6 +45,14 @@ import { VERROU_LIVRAISON } from '../v8/js/data/blocage-officiel.js';
 // sera rejoué à la réouverture, après les priorités P0 (qui réécrivent le
 // parcours officiel : createControle dans l'agrégat WORM, contrôle autonome
 // officiel, etc.). Voir docs/CONSTATS-AUDIT-EXTERNE-2026-07-20.md.
+//
+// ⚠️ À LA RÉOUVERTURE (consigne P7-e, 20/07 soir) : AJOUTER au rejeu le cas
+// « mouvement de type CONTROLE en mode OFFICIEL » — brouillon → double
+// signature réelle → validation avec PDF final conservé → contrôle lié scellé
+// (P7-a→e ont livré le parcours ; seule sa déclinaison OFFICIELLE, bloquée
+// par le verrou, reste à prouver de bout en bout ici). NB : createControle
+// DIRECT en OFFICIEL est désormais refusé STRUCTURELLEMENT (P7-c,
+// MSG_CONTROLE_DIRECT_OFFICIEL) — le rejeu ne doit plus l'attendre ouvert.
 if (VERROU_LIVRAISON) {
   console.log('SUSPENDU — suite e2e officielle gelée : mode Officiel refermé '
     + '(T1). À rejouer à la réouverture du verrou, après les P0.');

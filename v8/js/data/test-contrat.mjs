@@ -2064,6 +2064,24 @@ verifier('importerJSON retourne FALSE pour une structure étrangère',
     apres.length === enveloppe.donnees.mouvements.length);
 }
 
+// P7-e (option A) : un contrôle OFFICIEL orphelin (sans mouvementId) injecté
+// dans un export est REFUSÉ à l'import — dans la cible, tout contrôle
+// officiel naît d'un mouvement (CR-3, parcours signé/scellé/WORM) : un
+// orphelin ne peut être que forgé ou issu d'un contournement.
+{
+  const forge = JSON.parse(exportPropre);
+  forge.donnees.controles.push({
+    id: 'ctl-forge-orphelin', numero: 'C-FI-2026-0099', mode: 'OFFICIEL',
+    date: '2026-07-20', machineId: forge.donnees.machines[0]?.id ?? 'M1',
+    machineLabel: 'Machine du forgeur', typeControle: 'PERIODIQUE',
+    methode: 'DIRECTE', resultat: 'CONFORME', operateur: 'Forgeur',
+    prochainControle: null, enRetard: false
+  });
+  await verifierRejet(
+    'P7-e : un contrôle OFFICIEL orphelin (sans mouvement lié) est refusé à l’import',
+    store.importerJSON(JSON.stringify(forge)), 'orphelin');
+}
+
 verifier('importerJSON adopte un export propre (true)',
   await store.importerJSON(exportPropre) === true);
 verifier('après import propre, le registre est déclaré sain',
@@ -2273,6 +2291,56 @@ verifier('l’état importé est fidèle (nos mouvements sont là)',
   await verifierRejet('P7-d : contrôle refusé sur une machine démantelée',
     store.validerMouvement(ctrlSurDem.id, enseignant.id),
     'Machine démantelée');
+
+  // --- P7-e : acceptation — immuabilité et correction du mouvement CONTROLE.
+  // 1) Écriture figée : mêmes protections que toute écriture validée.
+  await verifierRejet('P7-e : un mouvement CONTROLE validé refuse la suppression',
+    store.supprimerMouvement(ctrlFuite.id, 'Testeur'), MSG_ECRITURE_FIGEE);
+  await verifierRejet('P7-e : un mouvement CONTROLE validé refuse la revalidation',
+    store.validerMouvement(ctrlFuite.id, enseignant.id), MSG_ECRITURE_FIGEE);
+
+  // 2) Contre-écriture : SEULE correction possible — scellée, l'original
+  // passe ANNULE, aucun effet stock fantôme (mouvement sec). Le contrôle
+  // lié SURVIT à l'annulation (le geste a physiquement eu lieu ; rattaché
+  // à une écriture ANNULE, comportement aligné sur le contrôle accessoire
+  // et CONSIGNÉ au plan — les effets machine ne sont pas neutralisés).
+  const machineAvantAnnulation = (await store.getMachines())
+    .find((m) => m.id === machineCtrl.id);
+  const annulation = await store.annulerParContreEcriture(
+    ctrlRetour.id, 'Contrôle saisi par erreur (test P7-e).', enseignant.id);
+  verifier('P7-e : la contre-écriture d\'un mouvement CONTROLE est VALIDE, '
+    + 'type conservé, quantité 0',
+    annulation.statut === 'VALIDE'
+    && annulation.type === 'CONTROLE_NON_PERIODIQUE'
+    && annulation.quantiteKg === 0
+    && annulation.contreEcritureDe === ctrlRetour.id,
+    JSON.stringify({ statut: annulation.statut, type: annulation.type,
+      q: annulation.quantiteKg }));
+  const originalAnnule = (await store.getMouvements())
+    .find((m) => m.id === ctrlRetour.id);
+  verifier('P7-e : l\'original passe ANNULE (données intactes)',
+    originalAnnule.statut === 'ANNULE');
+  const lieToujours = (await store.getControles())
+    .find((c) => c.mouvementId === ctrlRetour.id);
+  verifier('P7-e : le contrôle lié SURVIT à l\'annulation (rattaché à '
+    + 'l\'écriture annulée)', Boolean(lieToujours));
+  const machineApresAnnulation = (await store.getMachines())
+    .find((m) => m.id === machineCtrl.id);
+  verifier('P7-e : l\'annulation ne retouche PAS la machine (mouvement sec — '
+    + 'statut/échéance conservés, comportement consigné)',
+    machineApresAnnulation.statut === machineAvantAnnulation.statut
+    && machineApresAnnulation.prochainControle
+      === machineAvantAnnulation.prochainControle
+    && machineApresAnnulation.dernierControle
+      === machineAvantAnnulation.dernierControle);
+
+  // 3) createControle direct : un mouvementId forgé fabriquerait un faux
+  // rattachement au registre scellé — refus (reste consigné de l'audit,
+  // fermé ; le serveur l'insérait, la démo l'ignorait en silence).
+  await verifierRejet('P7-e : createControle direct refuse un mouvementId forgé',
+    store.createControle({ machineId: machineCtrl.id, resultat: 'CONFORME',
+      mouvementId: ctrlPerio.id }),
+    'Lien de mouvement refusé');
 }
 
 // ============================================================

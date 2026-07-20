@@ -349,6 +349,16 @@ function verifierInvariantsDonnees(candidat) {
       }
     }
   }
+  // P7-e (option A) : un contrôle OFFICIEL naît TOUJOURS d'un mouvement
+  // (CR-3, parcours signé/scellé/WORM) — un contrôle officiel ORPHELIN
+  // (sans mouvementId) ne peut être que forgé ou issu d'un contournement.
+  // Miroir EXACT du serveur (verifierInvariantsDonneesCandidat).
+  for (const c of candidat.controles ?? []) {
+    if (c && c.mode === 'OFFICIEL' && !c.mouvementId) {
+      return `contrôle ${c.numero ?? c.id ?? '?'} : ` +
+        'OFFICIEL sans mouvement lié (orphelin)';
+    }
+  }
   // Habilitations et mentions (chantier B2) : refuser un registre importé
   // incohérent, à l'IDENTIQUE du serveur — CHECK + FK + PRIMARY KEY que
   // SQLite applique, ET forme canonique des DROITS : un `actif` absent
@@ -2805,6 +2815,15 @@ export function creerDemoStore() {
       // il hérite le mode du mouvement, gardé par les 3 moments officiels.
       if (d.mode === 'OFFICIEL') {
         throw new Error(MSG_CONTROLE_DIRECT_OFFICIEL);
+      }
+      // P7-e : le lien contrôle ↔ mouvement naît EXCLUSIVEMENT de la
+      // validation d'un mouvement (CR-3) — un mouvementId forgé par le
+      // chemin direct fabriquerait un faux rattachement au registre
+      // scellé (reste consigné de l'audit, fermé ici ; le serveur
+      // l'insérait, la démo l'ignorait : refus UNIFIÉ des deux côtés).
+      if (d.mouvementId) {
+        throw new Error('Lien de mouvement refusé : le contrôle lié à une '
+          + 'écriture naît de sa validation, jamais du chemin direct.');
       }
       const controle = enregistrerControle(d);
       persisterEtNotifier();
