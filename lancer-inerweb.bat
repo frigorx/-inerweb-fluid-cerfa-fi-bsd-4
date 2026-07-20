@@ -14,6 +14,14 @@ title inerWeb Fluide - Tracabilite F-Gas (serveur local)
 rem Se placer dans le dossier de ce script (application portable).
 cd /d "%~dp0"
 
+rem --- Charger la configuration locale simple (NOM=VALEUR, commentaires #). ---
+if exist ".env" (
+    for /f "usebackq eol=# tokens=1,* delims==" %%A in (".env") do set "%%A=%%B"
+)
+if not defined PORT set "PORT=2011"
+set "APP_URL=http://localhost:%PORT%"
+if "%IWF_LAN%"=="1" set "APP_URL=https://%IWF_HOTE_LAN%:%PORT%"
+
 echo.
 echo   ===========================================
 echo    inerWeb Fluide v8 - Tracabilite F-Gas
@@ -40,10 +48,17 @@ if not defined NODE_EXE (
     exit /b 1
 )
 
-rem --- Creer les dossiers de donnees s'ils n'existent pas ---
-if not exist "data"      mkdir "data"
-if not exist "documents" mkdir "documents"
-if not exist "backups"   mkdir "backups"
+rem --- Base vive HORS du dossier du programme et HORS OneDrive (P1-6). ---
+rem Une valeur IWF_CHEMIN_BASE definie par l'administrateur (.env) prime.
+rem CONTINUITE : une installation EXISTANTE (data\ deja a cote du programme)
+rem garde sa base la ou elle est ; seule une installation NEUVE part dans
+rem %LOCALAPPDATA% (hors cloud, hors dossier synchronise). Si la base
+rem existante est sous OneDrive, le serveur REFUSE de demarrer et explique.
+if not defined IWF_CHEMIN_BASE (
+    if not exist "data\inerweb-fluide.db" (
+        set "IWF_CHEMIN_BASE=%LOCALAPPDATA%\inerWeb-Fluide\data\inerweb-fluide.db"
+    )
+)
 
 rem --- Premiere utilisation ---
 rem Au tout premier lancement (aucun compte), l'application affiche
@@ -52,13 +67,14 @@ rem administrateur ". Plus aucune saisie dans cette fenetre noire : on
 rem demarre simplement le serveur, l'onboarding se fait a l'ecran.
 
 echo   Demarrage du serveur local...
-echo   L'application va s'ouvrir dans votre navigateur : http://localhost:2011
+echo   L'application va s'ouvrir dans votre navigateur : %APP_URL%
+if defined IWF_CHEMIN_BASE echo   Donnees locales : %IWF_CHEMIN_BASE%
 echo.
 echo   Fermez cette fenetre pour arreter inerWeb Fluide.
 echo.
 
 rem --- Ouvrir le navigateur apres 2 secondes (le temps que le serveur demarre) ---
-start "" /min cmd /c "timeout /t 2 /nobreak >nul & start "" http://localhost:2011"
+start "" /min cmd /c "timeout /t 2 /nobreak >nul & start "" %APP_URL%"
 
 rem --- Demarrer le serveur (au premier plan : fermer la fenetre = arreter) ---
 "%NODE_EXE%" "%~dp0server\serveur.js"

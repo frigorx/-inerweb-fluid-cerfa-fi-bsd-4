@@ -2,6 +2,35 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔒 P1-6 — base vive REFUSÉE sous OneDrive/Drive/Dropbox (reprise RC 8.1) (20/07 soir)
+- **3ᵉ brique piochée dans la RC ChatGPT 8.1.0-rc.1** — LES 3 BRIQUES
+  AUTONOMES DE LA RC SONT REPRISES (P1-5, P2-3, P1-6). L'ancien comportement
+  se contentait d'un avertissement console ; une base SQLite en WAL sous un
+  dossier synchronisé, c'est la corruption silencieuse (piège Windows n°5).
+- **`db.js`** : `cheminSousSynchronisation` (détection par SEGMENT de chemin —
+  onedrive/Mon Drive/My Drive/Google Drive/Dropbox, casse indifférente — ET
+  par RACINE d'environnement OneDrive/Dropbox/...) + `verifierEmplacementBase`
+  qui REFUSE avec un message actionnable (« Définissez IWF_CHEMIN_BASE vers un
+  dossier local hors cloud ») ; branché dans `db.ouvrir` ET au démarrage
+  serveur AVANT la reprise de restauration. Dérogation explicite
+  `IWF_AUTORISER_BASE_SYNCHRONISEE=1` (migration contrôlée) — l'avertissement
+  du démarrage reste alors (« Dérogation active »).
+- **`lancer-inerweb.bat`** : lecture d'un `.env` simple (NOM=VALEUR), URL
+  d'ouverture dérivée (LAN HTTPS compris — P1-5), et base vive des
+  installations NEUVES placée sous `%LOCALAPPDATA%\inerWeb-Fluide` (hors
+  cloud, hors dossier du programme). **⚠️ Adaptation PROTECTRICE vs la RC**
+  (arbitrage délégué « compromis protecteur ») : la RC redirigeait TOUT le
+  monde vers LOCALAPPDATA, ce qui aurait ORPHELINÉ en silence la base d'une
+  installation existante — chez nous, une installation avec `data\` déjà à
+  côté du programme GARDE sa base (et si elle est sous OneDrive, le serveur
+  refuse et explique — jamais de perte silencieuse).
+- **Nouvelle suite `server/test-emplacement-base.mjs` (20 vérifs, tout
+  TIRÉ)** : détections par segment et par racine d'environnement (+ faux
+  positifs écartés), refus actionnable, chemin sain absolu, dérogation,
+  `db.ouvrir` refusé puis base saine acceptée (aucun état résiduel), VRAI
+  serveur : exit 1 sur base sous faux OneDrive puis démarrage AVEC dérogation
+  et avertissement à la console. **TOUT VERT — 87 exécutions.**
+
 ### 🔒 P2-3 — scrypt N=2^17 + re-hachage transparent à la connexion (reprise RC 8.1) (20/07 soir)
 - **2ᵉ brique piochée dans la RC ChatGPT 8.1.0-rc.1**, adaptée puis prouvée
   chez nous. `comptes.js` : profil courant **N=2^17** (minimum scrypt OWASP,

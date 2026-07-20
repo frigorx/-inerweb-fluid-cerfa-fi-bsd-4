@@ -47,6 +47,60 @@ let base = null;
 let cheminBaseOuverte = null;
 
 /**
+ * Détecte les emplacements synchronisés connus (P1-6, reprise RC 8.1). Une
+ * base SQLite ouverte en WAL ne doit JAMAIS être synchronisée fichier par
+ * fichier : le fournisseur cloud peut observer la base et son WAL à des
+ * instants différents — corruption silencieuse (vision §4, piège Windows n°5).
+ * @param {string} chemin
+ * @returns {boolean}
+ */
+function cheminSousSynchronisation(chemin) {
+  const absolu = path.resolve(String(chemin || '')).toLowerCase();
+  const segments = absolu.split(/[\\/]+/);
+  if (segments.some((segment) =>
+    segment.includes('onedrive')
+    || segment === 'mon drive'
+    || segment === 'my drive'
+    || segment.includes('google drive')
+    || segment.includes('dropbox'))) {
+    return true;
+  }
+
+  const racinesConnues = [
+    process.env.OneDrive,
+    process.env.OneDriveCommercial,
+    process.env.OneDriveConsumer,
+    process.env.Dropbox,
+    process.env.DROPBOX,
+    process.env.GOOGLE_DRIVE,
+  ].filter(Boolean).map((racine) => path.resolve(racine).toLowerCase());
+
+  return racinesConnues.some((racine) =>
+    absolu === racine || absolu.startsWith(racine + path.sep));
+}
+
+/**
+ * Refuse par défaut une base VIVE sous OneDrive/Drive/Dropbox. La dérogation
+ * IWF_AUTORISER_BASE_SYNCHRONISEE=1 est réservée à une migration contrôlée,
+ * jamais à l'exploitation courante (l'avertissement du démarrage reste).
+ * @param {string} chemin
+ * @returns {string} le chemin absolu, si acceptable
+ */
+function verifierEmplacementBase(chemin) {
+  const absolu = path.resolve(chemin);
+  if (cheminSousSynchronisation(absolu)
+      && process.env.IWF_AUTORISER_BASE_SYNCHRONISEE !== '1') {
+    throw new Error(
+      'Base active placée dans un dossier synchronisé : ' + absolu + '. ' +
+      'SQLite/WAL peut être corrompu par OneDrive, Google Drive ou Dropbox. ' +
+      'Définissez IWF_CHEMIN_BASE vers un dossier local hors cloud. ' +
+      'La dérogation IWF_AUTORISER_BASE_SYNCHRONISEE=1 est réservée à une ' +
+      'migration contrôlée, jamais à l\'exploitation courante.');
+  }
+  return absolu;
+}
+
+/**
  * Ouvre (ou crée) la base et applique le schéma. Idempotent : les appels
  * suivants renvoient la même instance.
  * @param {string} [cheminBase] Chemin du fichier .db (utile pour les tests).
@@ -54,6 +108,8 @@ let cheminBaseOuverte = null;
  */
 function ouvrir(cheminBase = CHEMIN_BASE_DEFAUT) {
   if (base) return base;
+
+  cheminBase = verifierEmplacementBase(cheminBase);
 
   // Créer le dossier data/ au besoin.
   fs.mkdirSync(path.dirname(cheminBase), { recursive: true });
@@ -406,6 +462,8 @@ function hashEcriture(donnees, hashPrecedent = '') {
 module.exports = {
   CHEMIN_BASE_DEFAUT,
   VERSION_BASE,
+  cheminSousSynchronisation,
+  verifierEmplacementBase,
   ouvrir,
   fermer,
   estOuverte,

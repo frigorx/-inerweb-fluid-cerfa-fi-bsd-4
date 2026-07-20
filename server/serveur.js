@@ -653,27 +653,19 @@ const serveur = LAN_ACTIF
   : http.createServer(traiterRequete);
 
 /**
- * Détecte un `data/` sous OneDrive / « Mon Drive » (segment de chemin OU
- * variable d'environnement) et AVERTIT fortement : la synchro cloud corrompt
- * le WAL d'une base vive (vision §4, piège Windows n°5). Le cloud = pour des
- * ZIP figés, jamais pour la base ouverte. N'empêche pas le démarrage
- * (l'utilisateur peut savoir ce qu'il fait), mais le signale sans ambiguïté.
+ * P1-6 : depuis que db.verifierEmplacementBase REFUSE une base vive sous un
+ * espace synchronisé, ce chemin ne s'atteint plus qu'en DÉROGATION
+ * (IWF_AUTORISER_BASE_SYNCHRONISEE=1, migration contrôlée) — l'avertissement
+ * reste, sans ambiguïté, pour que la dérogation ne s'installe pas en silence.
  */
 function avertirSiDataSousOneDrive() {
-  const cheminData = path.resolve(RACINE, 'data');
-  const segments = cheminData.toLowerCase().split(/[\\/]/);
-  const motsCloud = ['onedrive', 'mon drive', 'my drive', 'google drive',
-    'dropbox'];
-  const trouve = segments.some((s) => motsCloud.includes(s))
-    || (process.env.OneDrive
-        && cheminData.toLowerCase().startsWith(
-          String(process.env.OneDrive).toLowerCase()));
-  if (trouve) {
+  const cheminBase = db.cheminOuvert();
+  if (db.cheminSousSynchronisation(cheminBase)) {
     console.warn('');
-    console.warn('  [AVERTISSEMENT] Le dossier des données semble se trouver');
-    console.warn(`  sous un espace synchronisé (cloud) : ${cheminData}`);
+    console.warn('  [AVERTISSEMENT] Dérogation active : la base se trouve');
+    console.warn(`  sous un espace synchronisé (cloud) : ${cheminBase}`);
     console.warn('  La synchronisation permanente peut CORROMPRE la base');
-    console.warn('  ouverte (journal WAL). Déplacez data/ hors du cloud ;');
+    console.warn('  ouverte (journal WAL). Déplacez la base hors du cloud ;');
     console.warn('  réservez le cloud aux SAUVEGARDES (fichiers ZIP figés).');
     console.warn('');
   }
@@ -692,6 +684,10 @@ function avertirSiDataSousOneDrive() {
  */
 function preparerCoffreFort() {
   try {
+    // P1-6 : refus AVANT même la reprise de restauration — aucune opération
+    // disque ne doit viser par inadvertance une base active sous
+    // synchronisation (le message de l'erreur dit quoi faire).
+    db.verifierEmplacementBase(db.CHEMIN_BASE_DEFAUT);
     const reprise = restauration.reprendreRestaurationInterrompue();
     if (reprise.repris) {
       console.log(`  [reprise] Restauration interrompue reprise : ${reprise.action}.`);
