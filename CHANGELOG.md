@@ -30,6 +30,18 @@
   `db.ouvrir` refusé puis base saine acceptée (aucun état résiduel), VRAI
   serveur : exit 1 sur base sous faux OneDrive puis démarrage AVEC dérogation
   et avertissement à la console. **TOUT VERT — 87 exécutions.**
+- **Revue adversariale (1 agent) sur les 3 briques P1-5/P2-3/P1-6 : AUCUN
+  bloquant, AUCUN important.** Le point délicat — l'asymétrie de coût du
+  double scrypt — est PROUVÉ inexploitable pour énumérer les logins (leurre
+  re-dérivé lui aussi au profil hérité : écart mesuré login absent/présent =
+  0,1 ms). 3 observations MINEURES consignées : ① HSTS inerte quand l'accès
+  LAN se fait par IP littérale (RFC 6797 — utile seulement si un jour nom
+  DNS + certificat valide) ; ② pour une installation NEUVE, `backups/` suit
+  la base sous LOCALAPPDATA → plus jamais synchronisé PAR ACCIDENT : inviter
+  à configurer le dossier de destination des sauvegardes à l'onboarding
+  (sinon le témoin du lot D reste sur le poste) ; ③ parseur `.env` du
+  lanceur : valeurs avec `#`/`%`/`"`/BOM non supportées (sans impact sur
+  PORT/IWF_*, à documenter dans un `.env` d'exemple).
 
 ### 🔒 P2-3 — scrypt N=2^17 + re-hachage transparent à la connexion (reprise RC 8.1) (20/07 soir)
 - **2ᵉ brique piochée dans la RC ChatGPT 8.1.0-rc.1**, adaptée puis prouvée

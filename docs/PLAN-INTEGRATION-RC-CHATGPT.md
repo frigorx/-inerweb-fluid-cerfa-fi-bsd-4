@@ -28,8 +28,8 @@ Travail **substantiel et réel** de ChatGPT (mesuré contre l'archive d'audit) :
 
 ## Ordre de récupération proposé
 
-1. **Briques AUTONOMES, faible risque, fort gain** (n'entrent pas en conflit avec notre parcours P7 en cours) :
-   - **P1-5 HTTPS LAN** (`serveur.js`) · **P2-3 scrypt** (`comptes.js`) · **P1-6 anti-OneDrive** (lanceur). → intégrer + test négatif, commits séparés.
+1. ✅ **Briques AUTONOMES — LES 3 SOLDÉES le 20/07 soir** (commits `065166a` P1-5 · `ec4ecf8` P2-3 · `d53ef91` P1-6, TOUT VERT 87 exéc., revue adversariale 1 agent : 0 bloquant/0 important, 3 mineurs consignés au CHANGELOG) :
+   - **P1-5 HTTPS LAN** (`serveur.js` + suite test-lan-https) · **P2-3 scrypt** (`comptes.js`/`routes-comptes.js` + familles 7/10) · **P1-6 anti-OneDrive** (`db.js`/`serveur.js`/lanceur + suite test-emplacement-base ; adaptation protectrice : continuité de la base des installations existantes, contrairement à la RC).
 2. **Finir notre P0-7** (contrôle = mouvement : P7-c/d/e) — chantier maison déjà engagé, à ne pas mélanger.
 3. **Grosses briques métier** (à reprendre de la RC en les articulant avec notre cœur, migrations ordonnées après les nôtres) :
    - **P0-3/P0-4 cycle matière** (le plus gros ; api + demo + migrations + mapping) ;

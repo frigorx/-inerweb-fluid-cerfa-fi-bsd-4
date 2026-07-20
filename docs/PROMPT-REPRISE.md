@@ -6,9 +6,24 @@
 > **Session conseillée : Opus, effort xhigh** (chantier probatoire/réglementaire, petites
 > briques testées comme le lot C). PAS d'ultracode hors point critique.
 >
-> **ÉTAT (20/07 soir) — CAP = REGISTRE OFFICIEL UNIQUE (barème maximal, tranché par Franck).**
-> Un 2ᵉ audit externe (ChatGPT) a été traité. Dépôt PROPRE, dernier commit **`f894cbc`**,
-> **TOUT VERT — 85 exécutions** (`node outils/lancer-tests.mjs --tout`). Fait + poussé :
+> **ÉTAT (20/07 nuit) — CAP = REGISTRE OFFICIEL UNIQUE (barème maximal, tranché par Franck).**
+> Un 2ᵉ audit externe (ChatGPT) a été traité. Dépôt PROPRE,
+> **TOUT VERT — 87 exécutions** (`node outils/lancer-tests.mjs --tout`). Fait + poussé :
+> - **⭐ LES 3 BRIQUES AUTONOMES DE LA RC SONT REPRISES ET PROUVÉES (20/07 nuit)** :
+>   **P1-5 ✅** (`065166a`) mode LAN = HTTPS OBLIGATOIRE (IWF_TLS_CERT/KEY, TLS ≥ 1.2, HSTS,
+>   refus de démarrer sans certificat, origine LAN https:// seule ; suite `test-lan-https`
+>   11 vérifs sur 127.0.0.2, loopback HTTP inchangé) · **P2-3 ✅** (`ec4ecf8`) scrypt
+>   **N=2^17** (OWASP) + re-hachage transparent du profil hérité N=2^15 à la connexion
+>   (même transaction, journal `RENFORCEMENT_HASH_MOT_DE_PASSE` ; ⚠️ `chiffrement.js` garde
+>   N=2^15, les archives existantes en dépendent ; preuves test-comptes fam. 7 +
+>   test-routes-comptes fam. 10 bout en bout) · **P1-6 ✅** (`d53ef91`) base vive REFUSÉE
+>   sous OneDrive/Drive/Dropbox (`db.verifierEmplacementBase` dans `db.ouvrir` + démarrage,
+>   dérogation `IWF_AUTORISER_BASE_SYNCHRONISEE=1` ; lanceur : `.env` + installs NEUVES sous
+>   `%LOCALAPPDATA%`, **continuité si `data\` existe déjà — adaptation protectrice vs la RC** ;
+>   suite `test-emplacement-base` 20 vérifs). **Revue adversariale (1 agent) : 0 bloquant,
+>   0 important** ; oracle de timing du double scrypt PROUVÉ inexploitable (0,1 ms) ;
+>   3 mineurs consignés au CHANGELOG (HSTS inerte sur IP · sauvegardes des installs neuves
+>   plus offsite par défaut, à rappeler à l'onboarding · cas limites du parseur `.env`).
 > - **T1 ✅** (`a65ea4b`) — mode Officiel REFERMÉ (`VERROU_LIVRAISON=true`, 2 miroirs
 >   `server/blocage-officiel.js` + `v8/js/data/blocage-officiel.js`, NON configurable) le temps
 >   des P0. Suite `server/test-officiel-e2e.mjs` GELÉE par une garde en tête (à rejouer à la réouverture).
@@ -42,12 +57,14 @@
 > on pioche la RC brique par brique RE-testée, JAMAIS d'import en bloc.** Plan = `docs/PLAN-INTEGRATION-RC-CHATGPT.md`.
 > Pour piocher : ré-extraire le zip + `diff` le fichier contre l'archive d'audit ou notre dépôt.
 >
-> **PROCHAINE BRIQUE (au choix Franck)** : les **briques AUTONOMES de la RC** — P1-5 HTTPS LAN
-> (`server/serveur.js`), P2-3 scrypt N=2^17 (`server/comptes.js`), P1-6 anti-OneDrive — faciles,
-> sans conflit. Puis grosses briques métier reprises de la RC : P0-3/4 cycle matière, P0-5 aptitude
-> (`droit-intervention.js` + frontières 3/6 kg), P0-6 fuite (24 h/1 mois — reprendra aussi l'écart
-> consigné « effets machine d'un contrôle annulé »), P0-8 déclaration 11 rubriques. **Hors code** :
-> P0-9 (révocation clés v7), RGPD (notice/durées/DPD).
+> **PROCHAINE BRIQUE (au choix Franck)** : les **grosses briques métier** reprises de la RC —
+> dans l'ordre conseillé du plan : **P0-3/4 cycle matière** (le plus gros ; api + demo +
+> migrations + mapping, contrat RC v8 ≠ notre v7 → prudence, migrations ordonnées après les
+> nôtres), **P0-5 aptitude** (`droit-intervention.js` + frontières 3/6 kg — comparateurs
+> `>=` vs `<` du bug trivial à corriger au passage), **P0-6 fuite** (24 h/1 mois — reprendra
+> aussi l'écart consigné « effets machine d'un contrôle annulé »), **P0-8 déclaration
+> 11 rubriques**. Chacune = UN chantier avec plan relu avant code (comme le lot C).
+> **Hors code** : P0-9 (révocation clés v7), RGPD (notice/durées/DPD).
 >
 > **Décisions transverses en attente** : **T2** R-455A 148→146 (la RC a gardé 148 ; à re-trancher pour
 > la cible officielle) · **T3** relecture organisme agréé + DPD (délai long).
@@ -56,7 +73,9 @@
 > `docs/AUDIT-INERWEB-FLUIDE-2026-07-20.md` (rapport ChatGPT complet) · `docs/PLAN-P0-INTEGRITE-CONTROLES.md` ·
 > `docs/PLAN-INTEGRATION-RC-CHATGPT.md` · `docs/CARTE-CODE.md` (À LIRE AVANT d'explorer le code).
 >
-> **Reste consigné (préexistant)** : `createControle` accepte un `mouvementId` arbitraire — à fermer.
+> **Reste consigné** : plus rien côté `createControle` (le `mouvementId` forgé est REFUSÉ
+> depuis P7-e) ; restent les 2 écarts du plan §7 (effets machine d'un contrôle annulé ·
+> échéance du contrôle accessoire) et les 3 mineurs de la revue du 20/07 (CHANGELOG).
 >
 > **MÉTHODE / RÈGLES D'OR** : JAMAIS toucher au `data/` RÉEL (tester sur port + base JETABLES) · corps
 > API = `{params:{...}}` (pas à plat) · « une faille se prouve en la TIRANT, pas en la lisant » · une
