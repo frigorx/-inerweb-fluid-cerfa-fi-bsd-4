@@ -2,6 +2,34 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧱 P7-d1 (option A) — effets machine + CERFA du mouvement CONTROLE (20/07)
+- **CR-3 enrichi (2 stores, parité stricte)** : le contrôle lié porte
+  désormais `operateurId` (= `executeParId` du mouvement, lien fiche
+  personnel B2 — perdu jusqu'ici sur le chemin mouvement) ; et pour un
+  mouvement DE TYPE CONTROLE, l'échéance suivante est **CALCULÉE** par la
+  logique réglementaire UNIQUE (cadre 7 — même résultat que
+  `calculerProchainControle`) et portée à `machine.prochainControle`.
+  Sans elle, les alertes (qui lisent l'échéance STOCKÉE) sonnaient
+  « en retard » après un contrôle tout frais. Jamais de saisie libre par
+  ce chemin ; le contrôle ACCESSOIRE (charge/récupération) garde le
+  comportement historique (aucune mise à jour d'échéance — écart consigné
+  au plan, à trancher). FUITE aussi datée : l'horloge périodique repart du
+  dernier contrôle, le suivi de fuite reste une échéance distincte.
+- **Garde métier** : machine DEMANTELEE (sortie du parc, fluide récupéré)
+  → contrôle d'étanchéité SANS OBJET, refusé à la validation — même
+  profil que la garde des charges ; ARRETEE reste contrôlable.
+- **Tests contrat (parité demo/local)** : FUITE → statut machine +
+  localisation + `operateurId` + `dernierControle` ; réparation tracée +
+  CONTROLE CONFORME → retour EN_SERVICE (R4) ; échéance machine = calcul
+  du contrat ; refus sur machine démantelée.
+- **Tests CERFA (PDF relu)** : mouvement CONTROLE validé — Case_CtrlPerio
+  seule cochée, cadre 5 (détecteur du contrôle lié), cadre 7
+  (seuil 5-50 t + 12 mois), cadre 10 (CONFORME → Case_Fuite_Non),
+  cadre 11 TOUT vide (contrôle « sec »), cadre 12 vide, mention FORMATION.
+  Aucune retouche du générateur : il savait déjà (preuve par test).
+  **TOUT VERT — 85 exécutions.** Reste P7-d2 : la carte « Contrôle » du
+  wizard (parcours de création à l'écran).
+
 ### 🧱 P7-c (option A) — `createControle` direct FORMATION-only PAR NATURE (20/07)
 - Le refus du contrôle AUTONOME en mode OFFICIEL n'est plus l'effet du verrou
   de livraison (colmatage conjoncturel P0-2) : c'est un **refus STRUCTUREL**

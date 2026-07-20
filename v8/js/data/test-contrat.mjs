@@ -2207,6 +2207,72 @@ verifier('l’état importé est fidèle (nos mouvements sont là)',
   await verifierRejet('P7-b : un mouvement CONTROLE sans résultat est refusé à la validation',
     store.validerMouvement(ctrlVide.id, enseignant.id),
     'exige un résultat');
+
+  // --- P7-d : effets machine du parcours mouvement STRICTEMENT identiques
+  // à enregistrerControle direct (plan §3.a-c) — le contrôle lié ne perd
+  // rien : lien personnel (B2), localisation, échéance déclarée.
+  // 1) FUITE via mouvement CONTROLE : machine en FUITE, tout propagé.
+  const ctrlFuite = await store.creerMouvement({
+    type: 'CONTROLE_NON_PERIODIQUE', machineId: machineCtrl.id,
+    technicien: 'Un Enseignant', executeParId: enseignant.id,
+    controle: { statutControle: 'FUITE', detecteurId: null,
+      localisationFuite: 'Raccord évaporateur' }
+  });
+  await store.soumettreMouvement(ctrlFuite.id);
+  const ctrlFuiteValide = await store.validerMouvement(ctrlFuite.id, enseignant.id);
+  const mFuite = (await store.getMachines()).find((m) => m.id === machineCtrl.id);
+  verifier('P7-d : un mouvement CONTROLE FUITE passe la machine en statut FUITE',
+    mFuite.statut === 'FUITE', `statut = ${mFuite?.statut}`);
+  verifier('P7-d : dernierControle de la machine = date du mouvement',
+    mFuite.dernierControle === ctrlFuiteValide.date,
+    JSON.stringify({ dernier: mFuite.dernierControle, date: ctrlFuiteValide.date }));
+  const lieFuite = (await store.getControles())
+    .find((c) => c.mouvementId === ctrlFuite.id);
+  verifier('P7-d : le contrôle lié porte localisation, operateurId (B2) et NON_PERIODIQUE',
+    Boolean(lieFuite) && lieFuite.localisationFuite === 'Raccord évaporateur'
+    && lieFuite.operateurId === enseignant.id
+    && lieFuite.typeControle === 'NON_PERIODIQUE', JSON.stringify(lieFuite));
+
+  // 2) R4 par le parcours mouvement : réparation TRACÉE puis mouvement
+  // CONTROLE CONFORME → retour EN_SERVICE ; l'échéance suivante est
+  // CALCULÉE par la logique réglementaire unique (cadre 7) et portée à la
+  // machine — même résultat que la méthode calculerProchainControle du
+  // contrat (jamais de saisie libre par le chemin mouvement).
+  await store.tracerReparation(lieFuite.id, {
+    dateReparation: ctrlFuiteValide.date,
+    natureReparation: 'Resserrage du raccord', reparateur: 'Un Enseignant' });
+  const ctrlRetour = await store.creerMouvement({
+    type: 'CONTROLE_NON_PERIODIQUE', machineId: machineCtrl.id,
+    technicien: 'Un Enseignant', executeParId: enseignant.id,
+    controle: { statutControle: 'CONFORME', detecteurId: null }
+  });
+  await store.soumettreMouvement(ctrlRetour.id);
+  const ctrlRetourValide = await store.validerMouvement(ctrlRetour.id, enseignant.id);
+  const mRetour = (await store.getMachines()).find((m) => m.id === machineCtrl.id);
+  verifier('P7-d : réparation tracée + mouvement CONTROLE CONFORME → EN_SERVICE (R4)',
+    mRetour.statut === 'EN_SERVICE', `statut = ${mRetour?.statut}`);
+  const echeanceAttendue = await store.calculerProchainControle(
+    machineCtrl.id, ctrlRetourValide.date);
+  verifier('P7-d : l\'échéance RÉGLEMENTAIRE (logique unique cadre 7) est portée à la machine',
+    echeanceAttendue !== null && mRetour.prochainControle === echeanceAttendue,
+    JSON.stringify({ machine: mRetour?.prochainControle, attendu: echeanceAttendue }));
+
+  // 3) Machine DÉMANTELÉE (sortie du parc) : un contrôle d'étanchéité n'a
+  // plus d'objet — refus à la validation, même garde que les charges.
+  const machineDemCtrl = await store.createMachine({
+    designation: 'Machine démantelée P7-d', fluide: FLUIDE,
+    chargeNominaleKg: 5, operateur: 'Testeur Contrat'
+  });
+  await store.demantelerMachine(machineDemCtrl.id, 'Testeur Contrat');
+  const ctrlSurDem = await store.creerMouvement({
+    type: 'CONTROLE_PERIODIQUE', machineId: machineDemCtrl.id,
+    technicien: 'Testeur Contrat',
+    controle: { statutControle: 'CONFORME', detecteurId: null }
+  });
+  await store.soumettreMouvement(ctrlSurDem.id);
+  await verifierRejet('P7-d : contrôle refusé sur une machine démantelée',
+    store.validerMouvement(ctrlSurDem.id, enseignant.id),
+    'Machine démantelée');
 }
 
 // ============================================================

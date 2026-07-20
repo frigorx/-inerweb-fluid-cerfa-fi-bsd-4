@@ -1450,6 +1450,13 @@ export function creerDemoStore() {
           'Un contrôle d’étanchéité exige un résultat : CONFORME ou FUITE.');
       }
       const machineControle = trouverMachine(mouvement.machineId);
+      // P7-d : une machine DÉMANTELÉE est sortie du parc (fluide récupéré) —
+      // un contrôle d'étanchéité dessus n'a plus d'objet (même garde que les
+      // charges ; ARRÊTÉE reste contrôlable, elle peut revenir en service).
+      if (machineControle.statut === 'DEMANTELEE') {
+        throw new Error('Machine démantelée : contrôle d’étanchéité sans '
+          + `objet sur ${machineControle.code}.`);
+      }
       mouvement.fluide = machineControle.fluide;
       mouvement.machineLabel = machineControle.designation;
       mouvement.quantiteKg = 0;
@@ -3246,6 +3253,27 @@ export function creerDemoStore() {
       if (mouvement.machineId &&
           (declare.statutControle === 'CONFORME' ||
            declare.statutControle === 'FUITE')) {
+        // P7-d : pour un mouvement DE TYPE CONTROLE (le contrôle est l'objet
+        // de l'écriture), l'échéance suivante est CALCULÉE par la logique
+        // réglementaire UNIQUE (cadre 7, même calcul que la méthode
+        // calculerProchainControle du contrat) — jamais saisie librement.
+        // Sans elle, la machine garderait son ancienne échéance et sonnerait
+        // « en retard » après un contrôle tout frais. Le contrôle ACCESSOIRE
+        // (charge/récupération) garde le comportement historique (aucune
+        // mise à jour d'échéance). Parité stricte avec le serveur.
+        let prochainCalcule = null;
+        if (mouvement.type === 'CONTROLE_PERIODIQUE' ||
+            mouvement.type === 'CONTROLE_NON_PERIODIQUE') {
+          const machineDuControle = trouverMachine(mouvement.machineId);
+          const fluideRef = donnees.fluides.find(
+            (f) => f.code === machineDuControle.fluide) ?? null;
+          const { frequenceMois } = evaluerControle(
+            fluideRef, machineDuControle.chargeNominaleKg,
+            Boolean(machineDuControle.detectionPermanente), mouvement.date);
+          if (frequenceMois) {
+            prochainCalcule = ajouterMois(mouvement.date, frequenceMois);
+          }
+        }
         const controleLie = enregistrerControle({
           machineId: mouvement.machineId,
           date: mouvement.date,
@@ -3261,6 +3289,11 @@ export function creerDemoStore() {
           // propagée jusqu'au contrôle enregistré (puis au CERFA cadre 10).
           localisationFuite: declare.localisationFuite ?? null,
           operateur: mouvement.technicien ?? null,
+          // P7-d : effets STRICTEMENT identiques à createControle direct —
+          // le lien à la fiche personnel (B2) et l'échéance RÉGLEMENTAIRE
+          // passent aussi par le chemin mouvement (le contrôle lié ne perd rien).
+          operateurId: mouvement.executeParId ?? null,
+          prochainControle: prochainCalcule,
           // Le contrôle lié EST la même fiche que le mouvement : il hérite de
           // son numéro et de son mode (CERFA identique de part et d'autre).
           numero: mouvement.numero,

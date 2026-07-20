@@ -700,6 +700,54 @@ const storeOfficiel = {
 }
 
 // ============================================================
+// 8. P7-d — CERFA d'un MOUVEMENT de type CONTROLE (option A) :
+//    le contrôle est l'objet de l'écriture — case cadre 4 du bon
+//    type, cadre 7 rempli, cadre 10 du résultat, quantités VIDES.
+// ============================================================
+{
+  // Machine dédiée : R-410A 12 kg → 25,06 t éq. CO₂ ⇒ cadre 7 : tranche
+  // 5-50 t (Case_HFC_5), fréquence 12 mois sans détection permanente.
+  const machineP7 = await store.createMachine({
+    designation: 'Vitrine P7-d', fluide: 'R-410A', chargeNominaleKg: 12,
+    localisation: 'Atelier P7', operateur: 'Marc Delorme'
+  });
+  const mvtCtrl = await store.creerMouvement({
+    type: 'CONTROLE_PERIODIQUE', mode: 'FORMATION',
+    machineId: machineP7.id, technicien: 'Marc Delorme',
+    controle: { statutControle: 'CONFORME', detecteurId: 'out-1' }
+  });
+  await store.soumettreMouvement(mvtCtrl.id);
+  await store.validerMouvement(mvtCtrl.id, 'per-fh');
+
+  const pdfCtrl = await genererCerfaPdf(store, {
+    source: 'mouvement', id: mvtCtrl.id
+  });
+  const p7 = await relire(pdfCtrl.octets);
+  verifier('P7-d : Fiche_no = numéro FORM- du mouvement CONTROLE',
+    pdfCtrl.numero.startsWith('FORM-')
+    && p7.texte('Fiche_no') === pdfCtrl.numero);
+  verifier('P7-d : cadre 4 — Case_CtrlPerio cochée, les 7 autres décochées',
+    p7.coche('Case_CtrlPerio') &&
+    ['Case_Assemblage', 'Case_MiseService', 'Case_Modif', 'Case_Maintenance',
+      'Case_CtrlNonPerio', 'Case_Demantel', 'Case_Autre']
+      .every((c) => !p7.coche(c)));
+  verifier('P7-d : cadre 5 — détecteur du contrôle lié renseigné',
+    p7.texte('Detecteur_ID').length > 0);
+  verifier('P7-d : cadre 7 — seuil 5-50 t (Case_HFC_5) + fréquence 12 mois',
+    p7.coche('Case_HFC_5') && p7.coche('Case_Sans_12m'));
+  verifier('P7-d : cadre 10 — CONFORME → Case_Fuite_Non seule',
+    p7.coche('Case_Fuite_Non') && !p7.coche('Case_Fuite_Oui'));
+  verifier('P7-d : cadre 11 — TOUTES les quantités vides (contrôle « sec »)',
+    ['11_QA', '11_QB', '11_QC', '11_QD', '11_QE', '11_QDE']
+      .every((n) => p7.texte(n) === ''));
+  verifier('P7-d : cadre 12 — aucune case transport (pas une récupération)',
+    ['Case_12_UN1078', 'Case_12_UN3161', 'Case_12_Autre140601',
+      'Case_12_Autre160504'].every((n) => !p7.coche(n)));
+  verifier('P7-d : cadre 14 — mention FORMATION présente',
+    p7.texte('14_Observations').includes('MODE FORMATION'));
+}
+
+// ============================================================
 // Bilan
 // ============================================================
 console.log('');
