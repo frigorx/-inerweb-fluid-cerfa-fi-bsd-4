@@ -1441,6 +1441,14 @@ export function creerDemoStore() {
     // (contrôle lié) ; on fige seulement fluide et libellé. Parité serveur.
     if (mouvement.type === 'CONTROLE_PERIODIQUE' ||
         mouvement.type === 'CONTROLE_NON_PERIODIQUE') {
+      // P7-b : un mouvement de CONTROLE DOIT porter un résultat (le contrôle
+      // est l'objet de l'écriture) — sinon un « contrôle vide » se validerait
+      // sans produire de contrôle lié (CR-3 se déclenche sur ce résultat).
+      const resultatControle = (mouvement.controle || {}).statutControle;
+      if (resultatControle !== 'CONFORME' && resultatControle !== 'FUITE') {
+        throw new Error(
+          'Un contrôle d’étanchéité exige un résultat : CONFORME ou FUITE.');
+      }
       const machineControle = trouverMachine(mouvement.machineId);
       mouvement.fluide = machineControle.fluide;
       mouvement.machineLabel = machineControle.designation;

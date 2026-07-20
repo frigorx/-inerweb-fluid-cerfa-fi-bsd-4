@@ -5172,6 +5172,14 @@ function appliquerEffets(mouvement) {
   // fluide et le libellé de la machine (CERFA). Parité stricte DemoStore.
   if (mouvement.type === 'CONTROLE_PERIODIQUE' ||
       mouvement.type === 'CONTROLE_NON_PERIODIQUE') {
+    // P7-b : un mouvement de CONTROLE DOIT porter un résultat (le contrôle est
+    // l'objet de l'écriture) — sinon on validerait un « contrôle vide » qui ne
+    // produirait aucun contrôle lié (CR-3 se déclenche sur ce résultat).
+    const resultatControle = (mouvement.controle || {}).statutControle;
+    if (resultatControle !== 'CONFORME' && resultatControle !== 'FUITE') {
+      throw new Error(
+        'Un contrôle d’étanchéité exige un résultat : CONFORME ou FUITE.');
+    }
     const machineControle = trouverMachine(mouvement.machineId);
     mouvement.fluide = machineControle.fluide;
     mouvement.machineLabel = machineControle.designation;

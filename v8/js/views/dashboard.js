@@ -19,7 +19,9 @@ const TYPES_MOUVEMENT = {
   CHARGE_APPOINT:             { libelle: 'Complément de charge',     pastille: 'charge',       icone: 'televerser' },
   RECUPERATION_MAINTENANCE:   { libelle: 'Récupération',             pastille: 'recuperation', icone: 'telecharger' },
   RECUPERATION_DEMANTELEMENT: { libelle: 'Récupération',             pastille: 'recuperation', icone: 'telecharger' },
-  TRANSFERT:                  { libelle: 'Transfert',                pastille: 'transfert',    icone: 'echange' }
+  TRANSFERT:                  { libelle: 'Transfert',                pastille: 'transfert',    icone: 'echange' },
+  CONTROLE_PERIODIQUE:        { libelle: 'Contrôle périodique',      pastille: 'transfert',    icone: 'controle' },
+  CONTROLE_NON_PERIODIQUE:    { libelle: 'Contrôle d’étanchéité',    pastille: 'transfert',    icone: 'controle' }
 };
 
 // Nombre de mouvements affichés dans la carte « Derniers mouvements »

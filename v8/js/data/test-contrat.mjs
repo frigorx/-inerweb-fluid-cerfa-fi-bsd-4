@@ -2184,6 +2184,17 @@ verifier('l’état importé est fidèle (nos mouvements sont là)',
   verifier('P7-a : le contrôle lié est PERIODIQUE et CONFORME',
     controleLie && controleLie.typeControle === 'PERIODIQUE'
     && controleLie.resultat === 'CONFORME', JSON.stringify(controleLie));
+
+  // P7-b : un mouvement de CONTROLE sans résultat déclaré (SANS_OBJET par
+  // défaut) est refusé à la validation — pas de « contrôle vide ».
+  const ctrlVide = await store.creerMouvement({
+    type: 'CONTROLE_PERIODIQUE', machineId: machineCtrl.id,
+    technicien: 'Testeur Contrat'
+  });
+  await store.soumettreMouvement(ctrlVide.id);
+  await verifierRejet('P7-b : un mouvement CONTROLE sans résultat est refusé à la validation',
+    store.validerMouvement(ctrlVide.id, enseignant.id),
+    'exige un résultat');
 }
 
 // ============================================================
