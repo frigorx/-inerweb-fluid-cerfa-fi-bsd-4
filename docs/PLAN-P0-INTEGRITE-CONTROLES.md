@@ -46,11 +46,15 @@ Ajouter empreinte, prev_hash, triggers, signatures et PDF sur `controles`. **Dup
 
 ---
 
-## 4. Décisions à trancher (gate Franck) avant de coder le fond
+## 4. Décisions — ✅ TRANCHÉES par Franck (20/07)
 
-1. **Architecture** : valider l'**option A** (contrôle officiel = mouvement type CONTROLE) plutôt que B ?
-2. **Handler direct** : une fois A en place, **interdire définitivement** `mode:'OFFICIEL'` sur `createControle` (le rendre FORMATION-only en dur), au lieu de le laisser dépendre du verrou ?
-3. **Modèle de données** : un contrôle périodique officiel SANS mouvement de fluide — mouvement type CONTROLE à quantité nulle, pesées facultatives : acceptable ?
+1. **Architecture = OPTION A** (contrôle officiel = mouvement type CONTROLE). Franck : « fais ce qu'il y a de mieux » → A **seule**, pas A+B (deux chaînes probatoires pour la même garantie = double travail + double surface de bug + parité à maintenir ; le mieux probatoire est UNE chaîne, la plus éprouvée).
+2. **`createControle` direct = FORMATION-only** (défaut retenu) : à terme, refus dur du mode OFFICIEL sur ce handler, l'officiel ne passant que par le parcours mouvement.
+3. **Contrôle sans fluide = mouvement type CONTROLE à quantité nulle**, pesées facultatives (défaut retenu).
+
+### Écart identifié (investigation 20/07)
+
+Aujourd'hui, un contrôle n'existe que comme **sous-produit** d'un mouvement déclarant un `statutControle` accessoire (CR-3, `api.js:3128`, `demo-store.js:3217`). Le type `CONTROLE_PERIODIQUE`/`NON_PERIODIQUE` existe (`TYPES_MOUVEMENT`, `generateur.js:85`) mais le parcours où **le contrôle EST l'objet principal** (sans mouvement de fluide) n'est pas éprouvé. À combler : validations de pesées/bouteilles tolérant un mouvement CONTROLE « sec », création du contrôle lié depuis un mouvement de type CONTROLE, CERFA cadre 7, effets machine.
 
 ---
 
@@ -71,10 +75,15 @@ Ajouter empreinte, prev_hash, triggers, signatures et PDF sur `controles`. **Dup
 
 ---
 
-## 7. Séquencement proposé
+## 7. Séquencement — P0-7 découpé en briques (style lot C : 1 brique = code + tests verts + commit)
 
-1. ✅ **P0-2** colmatage (fait).
-2. **Gate Franck** : décisions §4.
-3. **P0-7** option A : vérifier le parcours mouvement type CONTROLE (§3 « à vérifier »), combler les manques, tests d'acceptation §6.
-4. **P0-6** cycle fuite, **P0-5** matrice aptitude (parcours commun).
+1. ✅ **P0-2** colmatage (fait, `8fdd5fb`).
+2. ✅ **Gate archi** : option A tranchée (§4).
+3. **P0-7, en briques, Opus effort xhigh, petites étapes :**
+   - **P7-a** — parcours mouvement CONTROLE « sec » : un mouvement type CONTROLE_PERIODIQUE/NON_PERIODIQUE sans fluide (pesées/bouteilles nulles) traverse création → soumission → validation ; combler les validations si elles exigent des pesées. Tests parité.
+   - **P7-b** — le contrôle lié naît d'un mouvement de type CONTROLE (le contrôle est l'objet, pas un sous-produit accessoire) ; cohérence CR-3, mode hérité.
+   - **P7-c** — `createControle` direct FORMATION-only : le refus « par verrou » (P0-2) devient un refus dur du mode OFFICIEL. Tests négatifs.
+   - **P7-d** — CERFA cadre 7 du mouvement CONTROLE + effets machine (statut, échéances) identiques à `enregistrerControle`.
+   - **P7-e** — tests d'acceptation §6 (immuabilité WORM, contre-écriture, PDF conservé, aptitude+signatures exigées).
+4. **P0-6** cycle fuite (24 h/1 mois), **P0-5** matrice aptitude (parcours commun) — après P0-7.
 5. Réouverture du verrou seulement après P0-2→P0-8 livrés + testés + relecture organisme agréé/DPD.
