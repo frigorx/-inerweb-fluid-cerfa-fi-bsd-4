@@ -5,6 +5,25 @@
 >
 > **Session conseillée : Opus, effort très élevé** (chantier probatoire/réglementaire, briques
 > testées une à une). PAS d'ultracode hors point critique.
+>
+> **⭐ ÉTAT AU 20/07 SOIR — CYCLE MATIÈRE (P0-3/4) REFONDU, CM-1/CM-2 POUSSÉS (`55b8704`,
+> TOUT VERT 88 exéc.).** ⚠️ L'audit externe (ChatGPT) + la RC S'ÉTAIENT TROMPÉS : ils
+> bloquaient la charge depuis du récupéré et imposaient une table de traitement WORM. FAUX.
+> **Franck (frigoriste) a tranché la VRAIE règle = CONSERVATION PAR MACHINE D'ORIGINE** :
+> on a le DROIT de remettre dans une machine le fluide qu'on en a tiré (réemploi
+> maintenance), sans retraitement ; on ne réintroduit dans M que ce qui a été récupéré de M
+> (le reste part en déchet) ; tout complément = fluide ACHETÉ vierge/recyclé/**régénéré
+> certifié** (le régénéré s'INTÈGRE, jamais produit en interne). **Plan à LIRE =
+> `docs/PLAN-P0-3-4-CYCLE-MATIERE.md`** ; la table WORM de la RC et les bloquants des revues
+> du plan v2 sont CADUCS. **FAIT** : CM-1 = `v8/js/data/avoir-origine.js` (avoir par machine
+> d'origine DÉRIVÉ des mouvements, AUCUNE migration) ; CM-2 = alerte `alr-reemploi-` dans
+> `getAlertes()` (2 stores, parité) quand l'avoir devient négatif — signalé, JAMAIS bloqué
+> (conseil) ; bouteille NEUVE jamais concernée. **PROCHAINE = CM-3** (saisie/charge d'une
+> bouteille NEUVE régénérée/recyclée + certificat en PJ — ne PAS verrouiller l'état d'une
+> NEUVE) **puis CM-4** (surfaces : bandeau wizard « au moment de la charge », CERFA « forcé
+> manuellement », durcissement OFFICIEL = rectification exigée). Migrations restées à **26**.
+> ⚠️ Tout ce qui suit CE bloc est ANTÉRIEUR à la refonte et décrit le cycle matière à tort
+> comme « blocage + table de traitement » : s'en tenir au plan refondu.
 
 ---
 
