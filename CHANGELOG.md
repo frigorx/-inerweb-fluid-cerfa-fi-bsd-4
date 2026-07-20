@@ -2,6 +2,27 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔒 P2-3 — scrypt N=2^17 + re-hachage transparent à la connexion (reprise RC 8.1) (20/07 soir)
+- **2ᵉ brique piochée dans la RC ChatGPT 8.1.0-rc.1**, adaptée puis prouvée
+  chez nous. `comptes.js` : profil courant **N=2^17** (minimum scrypt OWASP,
+  ≈ 128 Mio), profil hérité N=2^15 conservé UNIQUEMENT pour reconnaître un
+  ancien compte (`verifierMotDePasseDetail` → `{valide, rehashageRequis}`,
+  `verifierMotDePasse` booléen inchangé pour les appelants existants).
+  ⚠️ `chiffrement.js` (archives du coffre-fort) garde N=2^15 : les archives
+  chiffrées existantes en dépendent — divergence désormais assumée et
+  documentée.
+- **`routes-comptes.js`** : à la connexion réussie d'un compte encore haché
+  à l'ancien profil, le hash est REMPLACÉ (sel frais, profil courant) dans la
+  MÊME transaction que l'ouverture de session — seul moment où le mot de
+  passe en clair est disponible ET prouvé — et tracé au journal chaîné
+  (`RENFORCEMENT_HASH_MOT_DE_PASSE`, jamais le mot de passe).
+- **Preuves** : test-comptes famille 7 (5 vérifs unitaires : les 2 profils
+  divergent, verdicts croisés bon/mauvais mot de passe, compatibilité
+  booléenne) ; test-routes-comptes famille 10 (8 vérifs de bout en bout sur
+  le VRAI serveur : hash rétrogradé d'autorité en SQL direct → connexion 200
+  → hash renforcé constaté en base → 1 entrée au journal → connexion
+  suivante sans re-hachage superflu). **TOUT VERT — 86 exécutions.**
+
 ### 🔒 P1-5 — le mode LAN exige HTTPS (reprise RC 8.1, re-testée) (20/07 soir)
 - **1ʳᵉ brique piochée dans la RC ChatGPT 8.1.0-rc.1** (plan
   `docs/PLAN-INTEGRATION-RC-CHATGPT.md`) : code repris de `server/serveur.js`

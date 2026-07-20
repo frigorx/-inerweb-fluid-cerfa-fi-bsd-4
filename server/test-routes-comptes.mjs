@@ -34,6 +34,13 @@ import { mkdtempSync, cpSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import http from 'node:http';
+import { DatabaseSync } from 'node:sqlite';
+import { createRequire } from 'node:module';
+
+// comptes.js (CommonJS) : uniquement pour DÉRIVER un hash à l'ancien profil
+// scrypt (famille 10) — aucune base n'est ouverte par cet import.
+const require = createRequire(import.meta.url);
+const comptes = require('./comptes.js');
 
 // ------------------------------------------------------------
 // Outillage de vérification (conventions maison des suites v8/v9).
@@ -596,6 +603,89 @@ let cookieEleve;
     { id: idAct9, actif: false });
   verifier('définirActivationCompte sans session → 403',
     rActivSansSession.statut === 403, JSON.stringify(rActivSansSession.corps));
+}
+
+// ============================================================
+// 10. P2-3 (reprise RC 8.1) : re-hachage transparent à la connexion.
+//     Un compte encore haché à l'ANCIEN profil scrypt (N=2^15) doit pouvoir
+//     se connecter, et son hash doit être RENFORCÉ (N=2^17) dans la même
+//     transaction, avec trace au journal chaîné. Preuve : on rétrograde le
+//     hash D'AUTORITÉ en SQL direct dans la base du serveur (WAL — écriture
+//     concurrente entre deux requêtes), puis on observe le remplacement.
+// ============================================================
+{
+  const CHEMIN_DB = join(DOSSIER, 'data', 'inerweb-fluide.db');
+  const MDP_HERITE = 'MotDePasseHerite-2026';
+
+  const rAdmin = await requeteJson(PORT, 'connexion',
+    { login: 'admin.amorce', motDePasse: 'MotDePasseAdmin-Amorce-2026' });
+  const cookieP23 = `iwf_session=${extraireJetonDuSetCookie(rAdmin.setCookie)}`;
+  const rCree = await requeteJson(PORT, 'creerCompte',
+    { login: 'herite.p23', motDePasseInitial: MDP_HERITE, role: 'ENSEIGNANT' },
+    { cookie: cookieP23 });
+  verifier('famille 10 : le compte témoin est créé (profil scrypt courant)',
+    rCree.statut === 200, JSON.stringify(rCree.corps));
+
+  // Rétrograder le hash à l'ancien profil, comme un compte d'avant P2-3.
+  let idHerite = null;
+  let hashHerite = null;
+  {
+    const bdd = new DatabaseSync(CHEMIN_DB);
+    const ligne = bdd.prepare(
+      `SELECT id, sel, hash_mot_de_passe FROM utilisateurs_app
+       WHERE login = 'herite.p23'`).get();
+    idHerite = ligne.id;
+    hashHerite = comptes.deriverHashHerite(
+      MDP_HERITE, Buffer.from(ligne.sel, 'hex')).toString('hex');
+    verifier('le hash à l\'ancien profil DIFFÈRE du hash courant (sinon rien à prouver)',
+      hashHerite !== ligne.hash_mot_de_passe);
+    bdd.prepare(
+      `UPDATE utilisateurs_app SET hash_mot_de_passe = ? WHERE id = ?`)
+      .run(hashHerite, idHerite);
+    bdd.close();
+  }
+
+  // Connexion : l'ancien profil est ACCEPTÉ (sans P2-3 ce serait un 400).
+  const rHerite = await requeteJson(PORT, 'connexion',
+    { login: 'herite.p23', motDePasse: MDP_HERITE });
+  verifier('un compte haché à l\'ancien profil (N=2^15) se connecte encore → 200',
+    rHerite.statut === 200, JSON.stringify(rHerite.corps));
+
+  // Le hash a été REMPLACÉ par le profil courant + trace au journal.
+  {
+    const bdd = new DatabaseSync(CHEMIN_DB);
+    const ligne = bdd.prepare(
+      `SELECT sel, hash_mot_de_passe FROM utilisateurs_app WHERE id = ?`)
+      .get(idHerite);
+    verifier('après connexion, le hash hérité a été remplacé',
+      ligne.hash_mot_de_passe !== hashHerite);
+    const verdict = comptes.verifierMotDePasseDetail(
+      MDP_HERITE, ligne.hash_mot_de_passe, ligne.sel);
+    verifier('le nouveau hash relève du profil COURANT (N=2^17, plus de re-hachage requis)',
+      verdict.valide === true && verdict.rehashageRequis === false,
+      JSON.stringify(verdict));
+    const trace = bdd.prepare(
+      `SELECT COUNT(*) AS n FROM journal_audit
+       WHERE action = 'RENFORCEMENT_HASH_MOT_DE_PASSE'`).get();
+    verifier('le renforcement est tracé au journal chaîné (1 entrée)',
+      trace.n === 1, `entrées : ${trace.n}`);
+    bdd.close();
+  }
+
+  // Une connexion suivante ne re-hache PLUS (idempotence).
+  const rSuivante = await requeteJson(PORT, 'connexion',
+    { login: 'herite.p23', motDePasse: MDP_HERITE });
+  verifier('la connexion suivante fonctionne toujours → 200',
+    rSuivante.statut === 200, JSON.stringify(rSuivante.corps));
+  {
+    const bdd = new DatabaseSync(CHEMIN_DB);
+    const trace = bdd.prepare(
+      `SELECT COUNT(*) AS n FROM journal_audit
+       WHERE action = 'RENFORCEMENT_HASH_MOT_DE_PASSE'`).get();
+    verifier('aucun re-hachage superflu à la connexion suivante (toujours 1 entrée)',
+      trace.n === 1, `entrées : ${trace.n}`);
+    bdd.close();
+  }
 }
 
 // ============================================================

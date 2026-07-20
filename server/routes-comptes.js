@@ -164,8 +164,9 @@ const HANDLERS = {
     // (un scrypt) soit payé sur TOUS les chemins d'un login existant et ne
     // réintroduise pas d'asymétrie de branche entre « verrouillé » et « pas
     // encore verrouillé ». Le verdict de la vérification n'est utilisé qu'après.
-    const motDePasseValide = comptes.verifierMotDePasse(
+    const verdictMotDePasse = comptes.verifierMotDePasseDetail(
       motDePasse, compte.hash_mot_de_passe, compte.sel);
+    const motDePasseValide = verdictMotDePasse.valide;
 
     // Un compte verrouillé refuse la tentative même avec le bon mot de passe :
     // ce refus prime sur le verdict ci-dessus (message de verrou explicite,
@@ -188,6 +189,24 @@ const HANDLERS = {
     // ouvre déjà la sienne, elle rejoint celle-ci).
     const ip = contexte?.ip ?? null;
     const jetonClair = db.transaction(() => {
+      // P2-3 : un compte encore haché à l'ancien profil scrypt (N=2^15) est
+      // re-haché ICI, au seul moment où le mot de passe en clair est
+      // disponible ET prouvé — même transaction que l'ouverture de session,
+      // journalisé (jamais le mot de passe, seulement le fait du renforcement).
+      if (verdictMotDePasse.rehashageRequis) {
+        const renforce = comptes.hacherMotDePasse(motDePasse);
+        db.run(
+          `UPDATE utilisateurs_app
+           SET hash_mot_de_passe = ?, sel = ?
+           WHERE id = ?`,
+          [renforce.hash, renforce.sel, compte.id]);
+        db.journaliser({
+          qui: compte.login,
+          action: 'RENFORCEMENT_HASH_MOT_DE_PASSE',
+          cible: compte.id,
+          details: `Migration transparente vers scrypt N=${comptes.SCRYPT_N}`,
+        });
+      }
       comptes.reinitialiserEchecs(compte.id);
       db.run(
         `UPDATE utilisateurs_app SET derniere_connexion = ? WHERE id = ?`,

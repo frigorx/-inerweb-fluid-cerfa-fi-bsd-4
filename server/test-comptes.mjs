@@ -232,6 +232,37 @@ function creerCompte(id, login, motDePasse, role = 'REFERENT') {
 }
 
 // ============================================================
+// 7. P2-3 (reprise RC 8.1) : profil scrypt hérité (N=2^15) reconnu,
+//    re-hachage SIGNALÉ — la migration effective vit dans routes-comptes
+//    (prouvée par test-routes-comptes, famille 10).
+// ============================================================
+{
+  const phrase = 'PhraseHeritee-P23-2026';
+  const { hash, sel } = comptes.hacherMotDePasse(phrase);
+
+  const verdictCourant = comptes.verifierMotDePasseDetail(phrase, hash, sel);
+  verifier('profil courant (N=2^17) : valide, AUCUN re-hachage requis',
+    verdictCourant.valide === true && verdictCourant.rehashageRequis === false);
+
+  const hashHerite = comptes.deriverHashHerite(
+    phrase, Buffer.from(sel, 'hex')).toString('hex');
+  verifier('les deux profils produisent des hash DIFFÉRENTS pour la même phrase',
+    hashHerite !== hash);
+
+  const verdictHerite = comptes.verifierMotDePasseDetail(phrase, hashHerite, sel);
+  verifier('profil hérité (N=2^15) : valide ET re-hachage requis',
+    verdictHerite.valide === true && verdictHerite.rehashageRequis === true);
+
+  const verdictFaux = comptes.verifierMotDePasseDetail(
+    'MauvaisePhrase-123', hashHerite, sel);
+  verifier('mauvais mot de passe sur un hash hérité : refusé, sans re-hachage',
+    verdictFaux.valide === false && verdictFaux.rehashageRequis === false);
+
+  verifier('verifierMotDePasse (booléen, compatibilité) accepte aussi le hash hérité',
+    comptes.verifierMotDePasse(phrase, hashHerite, sel) === true);
+}
+
+// ============================================================
 // Verdict
 // ============================================================
 db.fermer();

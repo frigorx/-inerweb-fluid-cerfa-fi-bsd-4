@@ -31,15 +31,21 @@ const crypto = require('node:crypto');
 const db = require('./db.js');
 
 // ------------------------------------------------------------
-// Paramètres KDF — IDENTIQUES à chiffrement.js:deriverCle (patron réutilisé,
-// pas de raison de diverger : mêmes garanties, même coût mémoire maîtrisé).
+// Paramètres KDF (P2-3, reprise RC 8.1). Le profil courant suit le minimum
+// scrypt OWASP : N=2^17, r=8, p=1 (environ 128 Mio). Le profil historique
+// N=2^15 (celui de chiffrement.js:deriverCle, qui NE CHANGE PAS — les
+// archives chiffrées existantes en dépendent) reste ici UNIQUEMENT pour
+// vérifier un ancien compte, puis le re-hacher dès sa connexion réussie
+// (migration transparente, cf. routes-comptes.js).
 // ------------------------------------------------------------
 const LONGUEUR_SEL = 16;
 const LONGUEUR_CLE = 32; // 256 bits
-const SCRYPT_N = 32768;
+const SCRYPT_N = 131072;
 const SCRYPT_R = 8;
 const SCRYPT_P = 1;
 const SCRYPT_MAXMEM = 128 * SCRYPT_N * SCRYPT_R * 2;
+const SCRYPT_N_HERITE = 32768;
+const SCRYPT_MAXMEM_HERITE = 128 * SCRYPT_N_HERITE * SCRYPT_R * 2;
 
 /** Règles de verrouillage (V9-E5, arrêtées — ne pas re-débattre). */
 const SEUIL_ECHECS = 5;
@@ -68,6 +74,21 @@ function deriverHash(motDePasse, sel) {
   });
 }
 
+/** Ancien profil (N=2^15), réservé à la migration transparente des comptes existants. */
+function deriverHashHerite(motDePasse, sel) {
+  if (typeof motDePasse !== 'string' || motDePasse.length === 0) {
+    throw new Error(
+      'Mot de passe absent : impossible de dériver un hash sans phrase.');
+  }
+  if (!Buffer.isBuffer(sel) || sel.length !== LONGUEUR_SEL) {
+    throw new Error(`Sel invalide (attendu ${LONGUEUR_SEL} octets).`);
+  }
+  return crypto.scryptSync(motDePasse.normalize('NFC'), sel, LONGUEUR_CLE, {
+    N: SCRYPT_N_HERITE, r: SCRYPT_R, p: SCRYPT_P,
+    maxmem: SCRYPT_MAXMEM_HERITE
+  });
+}
+
 /**
  * Hache un mot de passe EN CLAIR pour la création/modification d'un compte :
  * tire un sel aléatoire frais (16 octets, jamais réutilisé), dérive le hash,
@@ -88,29 +109,51 @@ function hacherMotDePasse(motDePasse) {
  * `===`, qui fuiterait la position du premier octet différent par mesure de
  * temps. Ne lève jamais sur une entrée invalide : renvoie `false` (un hash
  * ou sel corrompu en base ne doit pas planter la route de connexion).
+ * Verdict détaillé : `valide` (le mot de passe correspond, profil courant OU
+ * hérité) et `rehashageRequis` (correspondance obtenue via l'ANCIEN profil
+ * N=2^15 → routes-comptes remplace le hash à la connexion réussie).
  * @param {string} motDePasse - mot de passe EN CLAIR à vérifier
  * @param {string} hashHex - hash stocké (hexadécimal)
  * @param {string} selHex - sel stocké (hexadécimal)
- * @returns {boolean}
+ * @returns {{valide: boolean, rehashageRequis: boolean}}
  */
-function verifierMotDePasse(motDePasse, hashHex, selHex) {
-  if (typeof motDePasse !== 'string' || motDePasse.length === 0) return false;
-  if (typeof hashHex !== 'string' || typeof selHex !== 'string') return false;
+function verifierMotDePasseDetail(motDePasse, hashHex, selHex) {
+  if (typeof motDePasse !== 'string' || motDePasse.length === 0) {
+    return { valide: false, rehashageRequis: false };
+  }
+  if (typeof hashHex !== 'string' || typeof selHex !== 'string') {
+    return { valide: false, rehashageRequis: false };
+  }
   try {
+    if (!/^[0-9a-f]{64}$/i.test(hashHex) || !/^[0-9a-f]{32}$/i.test(selHex)) {
+      return { valide: false, rehashageRequis: false };
+    }
     const sel = Buffer.from(selHex, 'hex');
     const hashAttendu = Buffer.from(hashHex, 'hex');
     if (sel.length !== LONGUEUR_SEL || hashAttendu.length !== LONGUEUR_CLE) {
-      return false;
+      return { valide: false, rehashageRequis: false };
     }
-    const hashCalcule = deriverHash(motDePasse, sel);
+    const hashCourant = deriverHash(motDePasse, sel);
     // timingSafeEqual exige deux tampons de MÊME longueur (déjà garanti par
     // les contrôles ci-dessus : hashAttendu et hashCalcule font LONGUEUR_CLE).
-    return crypto.timingSafeEqual(hashCalcule, hashAttendu);
+    if (crypto.timingSafeEqual(hashCourant, hashAttendu)) {
+      return { valide: true, rehashageRequis: false };
+    }
+    // Compatibilité : un ancien hash n'est accepté que via l'ancien profil.
+    // Une réussite déclenche son remplacement atomique dans routes-comptes.
+    const hashHerite = deriverHashHerite(motDePasse, sel);
+    const valideHerite = crypto.timingSafeEqual(hashHerite, hashAttendu);
+    return { valide: valideHerite, rehashageRequis: valideHerite };
   } catch {
     // Hex malformé, sel/hash tronqués en base... : échec de vérification,
     // jamais une exception qui remonterait à l'appelant de la route.
-    return false;
+    return { valide: false, rehashageRequis: false };
   }
+}
+
+function verifierMotDePasse(motDePasse, hashHex, selHex) {
+  const verdict = verifierMotDePasseDetail(motDePasse, hashHex, selHex);
+  return Boolean(verdict && verdict.valide);
 }
 
 // ------------------------------------------------------------
@@ -185,10 +228,13 @@ module.exports = {
   DUREE_VERROU_MS,
   hacherMotDePasse,
   verifierMotDePasse,
+  verifierMotDePasseDetail,
   estVerrouille,
   enregistrerEchec,
   reinitialiserEchecs,
   // Exposé pour tests ciblés (dérivation déterministe à sel fixé).
   deriverHash,
+  deriverHashHerite,
   LONGUEUR_SEL,
+  SCRYPT_N,
 };
