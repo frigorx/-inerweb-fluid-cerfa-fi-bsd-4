@@ -76,6 +76,7 @@ contre chacune.
 | `dossiers-fuite.js` | pur : dossiers de fuite reconstruits des contrôles (épisodes, OUVERTE/REPAREE/FERMEE) |
 | `sentinelle.js` | pur : historisation temporelle des alertes (épisodes, acquittement) |
 | `vie-bouteille.js` | pur : chronologie d'une bouteille (mouvements appariés) |
+| `avoir-origine.js` | pur : avoir de fluide par machine d'origine dans une bouteille, DÉRIVÉ des mouvements (Σ récup − Σ réemploi ; VALIDE hors contre-écritures) — cycle matière CM-1 ; transfert ignoré V1 (brouille l'origine) ; aucune migration |
 
 ## v8/js/ (le reste)
 

@@ -2,6 +2,25 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧱 CM-1 (cycle matière) — module pur « avoir de fluide par machine d'origine » (20/07)
+- **Chantier cycle matière REFONDU après correction métier de Franck** (frigoriste) :
+  le fondement de l'audit externe (« interdire la charge depuis récupéré + table de
+  traitement WORM comme passage obligé ») était **FAUX** pour le réemploi en maintenance.
+  Règle réelle = **conservation par machine d'origine** — on réintroduit dans une machine
+  M au plus le fluide récupéré DE M ; tout complément est du fluide **acheté** (vierge,
+  ou recyclé/régénéré certifié fournisseur — le régénéré s'INTÈGRE, jamais produit en
+  interne). Surcharge = anomalie SIGNALÉE, forçable, CERFA « forcé manuellement » + erreur
+  à rectifier. Plan refondu = `docs/PLAN-P0-3-4-CYCLE-MATIERE.md`.
+- **Nouveau module PUR `v8/js/data/avoir-origine.js`** (patron `vie-bouteille.js`) :
+  `avoirParMachineOrigine` / `avoirOrigineDisponible` **DÉRIVENT** l'avoir de fluide par
+  machine d'origine dans une bouteille depuis les mouvements opposables (VALIDE, hors
+  contre-écritures) — **aucune migration, aucune colonne, rien de nouveau stocké** (la
+  vérité opposable reste les mouvements déjà scellés ; leçon « élaguer plutôt qu'empiler »).
+  Transfert ignoré en V1 (brouille l'origine), net négatif borné à 0.
+- **Suite `test-avoir-origine.mjs`** (13 vérifs : volet pur — crédit/débit, multi-origines,
+  contre-écritures et brouillons exclus, transfert, net négatif — + parcours DemoStore réel
+  mise en service → récupération → réemploi). **TOUT VERT — 88 exécutions.**
+
 ### 🔒 P1-6 — base vive REFUSÉE sous OneDrive/Drive/Dropbox (reprise RC 8.1) (20/07 soir)
 - **3ᵉ brique piochée dans la RC ChatGPT 8.1.0-rc.1** — LES 3 BRIQUES
   AUTONOMES DE LA RC SONT REPRISES (P1-5, P2-3, P1-6). L'ancien comportement
