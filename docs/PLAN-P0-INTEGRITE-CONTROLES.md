@@ -81,7 +81,7 @@ Aujourd'hui, un contrôle n'existe que comme **sous-produit** d'un mouvement dé
 2. ✅ **Gate archi** : option A tranchée (§4).
 3. **P0-7, en briques, Opus effort xhigh, petites étapes :**
    - **P7-a** — ✅ **FAIT** (`abe0003`, 85 exéc.) : `TYPES_MOUVEMENT` étendu (contrat + 2 stores ; le CHECK SQL les acceptait déjà), `appliquerEffets` traite un mouvement CONTROLE comme « sec » (aucune pesée, aucun effet stock), CR-3 dérive le `typeControle` du type du mouvement, test de parcours créer→soumettre→valider (parité demo/local). **RESTE découvert → à traiter en P7-d :** `dashboard.js` a son propre mapping de libellés SANS les types CONTROLE (trou d'affichage) ; le wizard ne propose pas encore la création d'un mouvement CONTROLE.
-   - **P7-b** — le contrôle lié naît d'un mouvement de type CONTROLE (le contrôle est l'objet, pas un sous-produit accessoire) ; cohérence CR-3, mode hérité.
+   - **P7-b** — ✅ **FAIT** (`ffbf29a`, 85 exéc.) : garde métier (un mouvement CONTROLE exige un résultat CONFORME/FUITE, sinon refus à la validation — pas de « contrôle vide ») + libellés dashboard (icône loupe) pour les 2 types CONTROLE. Le contrôle lié naissait déjà d'un mouvement CONTROLE (CR-3, fait en P7-a).
    - **P7-c** — `createControle` direct FORMATION-only : le refus « par verrou » (P0-2) devient un refus dur du mode OFFICIEL. Tests négatifs.
    - **P7-d** — CERFA cadre 7 du mouvement CONTROLE + effets machine (statut, échéances) identiques à `enregistrerControle`.
    - **P7-e** — tests d'acceptation §6 (immuabilité WORM, contre-écriture, PDF conservé, aptitude+signatures exigées).
