@@ -99,13 +99,15 @@ const CATEGORIES_ATTESTATION = ['I', 'II', 'III', 'IV'];
 /** Décisions possibles sur un fluide récupéré (SPEC §5.8). */
 const DECISIONS_FLUIDE = ['REUTILISABLE', 'A_ANALYSER', 'DECHET'];
 
-/** Types de mouvements admis par le registre. */
+/** Types de mouvements admis par le registre (P7-a : + contrôles autonomes). */
 const TYPES_MOUVEMENT = [
   'CHARGE_APPOINT',
   'MISE_EN_SERVICE',
   'RECUPERATION_MAINTENANCE',
   'RECUPERATION_DEMANTELEMENT',
-  'TRANSFERT'
+  'TRANSFERT',
+  'CONTROLE_PERIODIQUE',
+  'CONTROLE_NON_PERIODIQUE'
 ];
 
 /** Rôles autorisés à VALIDER une écriture (jamais un élève). */
@@ -1434,6 +1436,17 @@ export function creerDemoStore() {
 
   /** Applique les règles métier et les effets d'une écriture SOUMISE. */
   function appliquerEffets(mouvement) {
+    // P7-a : un CONTRÔLE d'étanchéité est un mouvement « sec » — aucun effet
+    // stock, aucune pesée. Le résultat et les effets machine viennent de CR-3
+    // (contrôle lié) ; on fige seulement fluide et libellé. Parité serveur.
+    if (mouvement.type === 'CONTROLE_PERIODIQUE' ||
+        mouvement.type === 'CONTROLE_NON_PERIODIQUE') {
+      const machineControle = trouverMachine(mouvement.machineId);
+      mouvement.fluide = machineControle.fluide;
+      mouvement.machineLabel = machineControle.designation;
+      mouvement.quantiteKg = 0;
+      return;
+    }
     const avant = Number(mouvement.peseeAvantKg);
     const apres = Number(mouvement.peseeApresKg);
     if (!Number.isFinite(avant) || !Number.isFinite(apres)) {
@@ -3227,7 +3240,11 @@ export function creerDemoStore() {
         const controleLie = enregistrerControle({
           machineId: mouvement.machineId,
           date: mouvement.date,
-          typeControle: 'NON_PERIODIQUE',
+          // P7-a : un mouvement de type CONTROLE_PERIODIQUE produit un
+          // contrôle PÉRIODIQUE ; le contrôle accessoire à une charge ou une
+          // récupération reste NON_PERIODIQUE (cas historique préservé).
+          typeControle: mouvement.type === 'CONTROLE_PERIODIQUE'
+            ? 'PERIODIQUE' : 'NON_PERIODIQUE',
           methode: 'DIRECTE',
           resultat: declare.statutControle,
           detecteurId: declare.detecteurId ?? null,

@@ -54,13 +54,17 @@ export const MSG_ECRITURE_FIGEE =
  */
 export const FORMAT_EXPORT = { application: 'inerWeb Fluide', version: 8 };
 
-/** Les cinq types de mouvement du registre. */
+/** Les sept types de mouvement du registre — dont les deux contrôles
+ *  d'étanchéité autonomes (P7-a, option A : le contrôle officiel réutilise
+ *  le parcours signé/scellé/WORM des mouvements). */
 export const TYPES_MOUVEMENT = [
   'CHARGE_APPOINT',
   'MISE_EN_SERVICE',
   'RECUPERATION_MAINTENANCE',
   'RECUPERATION_DEMANTELEMENT',
-  'TRANSFERT'
+  'TRANSFERT',
+  'CONTROLE_PERIODIQUE',
+  'CONTROLE_NON_PERIODIQUE'
 ];
 
 /** Machine à états stricte d'un mouvement (aucun autre chemin). */

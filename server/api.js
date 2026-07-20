@@ -99,9 +99,10 @@ const FLUIDES_MENTION = ['CO2', 'NH3', 'HC'];
 /** IM-4 : tolérance de charge résiduelle pour démanteler (± 0,05 kg). */
 const TOLERANCE_CHARGE_RESIDUELLE_KG = 0.05;
 
-/** Types de mouvements admis par le registre (SPEC §7.1). */
+/** Types de mouvements admis par le registre (SPEC §7.1 + P7-a : contrôles). */
 const TYPES_MOUVEMENT = ['CHARGE_APPOINT', 'MISE_EN_SERVICE',
-  'RECUPERATION_MAINTENANCE', 'RECUPERATION_DEMANTELEMENT', 'TRANSFERT'];
+  'RECUPERATION_MAINTENANCE', 'RECUPERATION_DEMANTELEMENT', 'TRANSFERT',
+  'CONTROLE_PERIODIQUE', 'CONTROLE_NON_PERIODIQUE'];
 
 /** Rôles autorisés à VALIDER une écriture (jamais un élève). */
 const ROLES_VALIDEURS = ['REFERENT', 'ENSEIGNANT', 'ADMIN'];
@@ -3131,7 +3132,11 @@ const HANDLERS = {
         const controleLie = enregistrerControle({
           machineId: mouvement.machineId,
           date: mouvement.date,
-          typeControle: 'NON_PERIODIQUE',
+          // P7-a : un mouvement de type CONTROLE_PERIODIQUE produit un
+          // contrôle PÉRIODIQUE ; le contrôle accessoire à une charge ou une
+          // récupération reste NON_PERIODIQUE (cas historique préservé).
+          typeControle: mouvement.type === 'CONTROLE_PERIODIQUE'
+            ? 'PERIODIQUE' : 'NON_PERIODIQUE',
           methode: 'DIRECTE',
           resultat: declare.statutControle,
           detecteurId: declare.detecteurId ?? null,
@@ -5161,6 +5166,18 @@ function estFuiteOuverte(controlesMachine) {
  * (SIGNÉE), et persiste les entités touchées. Throw = ROLLBACK global.
  */
 function appliquerEffets(mouvement) {
+  // P7-a : un CONTRÔLE d'étanchéité est un mouvement « sec » — aucun effet
+  // stock, aucune pesée. Le résultat du contrôle et les effets machine sont
+  // produits par CR-3 (contrôle lié) à la validation ; on fige seulement le
+  // fluide et le libellé de la machine (CERFA). Parité stricte DemoStore.
+  if (mouvement.type === 'CONTROLE_PERIODIQUE' ||
+      mouvement.type === 'CONTROLE_NON_PERIODIQUE') {
+    const machineControle = trouverMachine(mouvement.machineId);
+    mouvement.fluide = machineControle.fluide;
+    mouvement.machineLabel = machineControle.designation;
+    mouvement.quantiteKg = 0;
+    return;
+  }
   const avant = Number(mouvement.peseeAvantKg);
   const apres = Number(mouvement.peseeApresKg);
   if (!Number.isFinite(avant) || !Number.isFinite(apres)) {

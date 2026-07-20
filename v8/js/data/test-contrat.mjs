@@ -535,8 +535,8 @@ await store.updateBouteille(b1.id, { masseBruteKg: 20 }); // retour à 10 kg net
 // ============================================================
 // 9. Cycle de vie d'un mouvement : BROUILLON → SOUMIS → VALIDE
 // ============================================================
-verifier('le contrat fige les 5 types de mouvement',
-  TYPES_MOUVEMENT.length === 5 && STATUTS_MOUVEMENT.length === 4);
+verifier('le contrat fige les 7 types de mouvement (dont 2 contrôles)',
+  TYPES_MOUVEMENT.length === 7 && STATUTS_MOUVEMENT.length === 4);
 
 const mvt1 = await store.creerMouvement({
   type: 'CHARGE_APPOINT', machineId: machineB.id, bouteilleSrcId: b1.id,
@@ -2152,6 +2152,38 @@ verifier('l’état importé est fidèle (nos mouvements sont là)',
   const chaineCroisee = await autreStore.verifierChaineHash();
   verifier('échange croisé : la chaîne de hash se recalcule à l’identique',
     chaineCroisee.ok === true, `casse à ${chaineCroisee.casseA}`);
+}
+
+// ============================================================
+// P7-a (audit externe #2) — parcours du CONTRÔLE d'étanchéité comme mouvement
+// ============================================================
+// Un mouvement de type CONTROLE traverse création → soumission → validation
+// SANS pesées ni effet stock, et produit un contrôle lié du BON type. C'est la
+// fondation de l'option A (le contrôle officiel réutilisera ce parcours
+// signé/scellé/WORM). Placé EN FIN : une écriture ajoutée en queue ne décale
+// pas la chaîne de hash éprouvée plus haut. Machine dédiée : zéro effet de bord.
+{
+  const machineCtrl = await store.createMachine({
+    designation: 'Machine contrôle P7-a', fluide: FLUIDE,
+    chargeNominaleKg: 8, localisation: 'Atelier P7', operateur: 'Testeur Contrat'
+  });
+  const ctrlPerio = await store.creerMouvement({
+    type: 'CONTROLE_PERIODIQUE', machineId: machineCtrl.id,
+    technicien: 'Testeur Contrat',
+    controle: { statutControle: 'CONFORME', detecteurId: null }
+  });
+  await store.soumettreMouvement(ctrlPerio.id);
+  const ctrlValide = await store.validerMouvement(ctrlPerio.id, enseignant.id);
+  verifier('P7-a : un mouvement CONTROLE_PERIODIQUE se valide sans pesées (quantité 0)',
+    ctrlValide.statut === 'VALIDE' && ctrlValide.quantiteKg === 0,
+    JSON.stringify({ statut: ctrlValide.statut, q: ctrlValide.quantiteKg }));
+  const controleLie = (await store.getControles())
+    .find((c) => c.mouvementId === ctrlPerio.id);
+  verifier('P7-a : le mouvement CONTROLE a produit un contrôle lié',
+    Boolean(controleLie), 'aucun contrôle lié trouvé');
+  verifier('P7-a : le contrôle lié est PERIODIQUE et CONFORME',
+    controleLie && controleLie.typeControle === 'PERIODIQUE'
+    && controleLie.resultat === 'CONFORME', JSON.stringify(controleLie));
 }
 
 // ============================================================
