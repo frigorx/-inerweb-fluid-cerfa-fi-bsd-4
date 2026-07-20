@@ -2,6 +2,36 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧱 P7-d2 (option A) — la carte « Contrôle d'étanchéité » du wizard (20/07)
+- **Étape 1** : 6ᵉ carte « Contrôle d'étanchéité » (icône loupe) +
+  interrupteur « non périodique » (même idiome que première charge /
+  démantèlement) ; `typeMouvement()` → CONTROLE_PERIODIQUE par défaut.
+  Reprise CR-1 : les deux types CONTROLE reprennent la carte et
+  l'interrupteur.
+- **Parcours « sec »** : Bouteille (3) et Pesées (4) affichées « Sans
+  objet » au bandeau et SAUTÉES dans les deux sens (aller ET retour,
+  même idiome que le saut machine préréglée) ; à l'étape 5 la carte
+  « Sans objet » disparaît (le contrôle est l'objet de l'écriture,
+  garde P7-b reflétée à l'écran, bandeau explicatif) ; récap sans
+  pesées ni quantité ; finalisation avec pesées null EXPLICITES
+  (`nombreFr('')` vaut NaN, jamais stocké).
+- **Vues** : `chipType` (communs.js) apprend les 2 types CONTROLE (même
+  trou que le dashboard, corrigé en P7-b) ; vue Mouvements : quantité
+  « — » pour un contrôle (« +0,00 kg » était trompeur), tableau ET
+  rappel de fiche ; `TYPES_FILTRE` (module pur) : groupe « Contrôle
+  d'étanchéité » — l'option apparaît dès qu'un contrôle existe.
+- **Tests** : test-wizard +7 vérifications (carte proposée, étape 2
+  conservée, saut 2→5, « Sans objet » absent, étape 5 complète avec
+  résultat+détecteur, retour 5→2) — l'étape 6 (canvas) reste hors shim.
+  **Vérif NAVIGATEUR réelle sur port statique jetable (mode démo)** :
+  parcours complet carte→machine→contrôle→signature→validation, fiche
+  FORM- « Contrôle périodique » Signée, quantité « — », filtre
+  opérationnel (1 sur 8), contrôle lié né avec échéance réglementaire
+  +12 mois (P7-d1 à l'écran), CERFA du mouvement rendu au visualiseur,
+  zéro erreur console. **TOUT VERT — 85 exécutions.**
+  **LE PARCOURS CONTRÔLE EST COMPLET (P7-a→d2) ; reste P7-e
+  (acceptation immuabilité/WORM + garde d'import orphelin).**
+
 ### 🧱 P7-d1 (option A) — effets machine + CERFA du mouvement CONTROLE (20/07)
 - **CR-3 enrichi (2 stores, parité stricte)** : le contrôle lié porte
   désormais `operateurId` (= `executeParId` du mouvement, lien fiche

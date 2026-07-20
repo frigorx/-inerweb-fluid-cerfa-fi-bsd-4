@@ -95,6 +95,9 @@ contre chacune.
   `remplirSimulationOfficielle` ; le store reste seul juge.
 - `wizard/` : les 6 étapes du mouvement (~1800 l.) + signature canvas
   (`creerSignature(conteneur, libelle?)`, libellé par défaut inchangé).
+  P7-d2 : carte « Contrôle d'étanchéité » (6ᵉ, interrupteur non
+  périodique) = parcours « sec » — étapes 3-4 « Sans objet » SAUTÉES
+  aller/retour, « Sans objet » retiré de l'étape 5, pesées null.
   C5 : choix du MODE à l'étape 6 (`etat.modeFiche`, Formation par défaut,
   Officiel si `peutPasserEnOfficiel().ok` et store non-démo) ; en OFFICIEL
   la finalisation s'arrête au BROUILLON (signatures d'abord) ; le mode

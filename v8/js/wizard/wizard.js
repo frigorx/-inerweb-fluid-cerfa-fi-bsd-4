@@ -55,6 +55,12 @@ const CARTES_TYPE = [
     detail: 'Transfert de fluide entre deux bouteilles de même fluide.'
   },
   {
+    id: 'controle',
+    icone: 'controle',
+    titre: 'Contrôle d’étanchéité',
+    detail: 'Contrôle périodique ou non périodique, sans mouvement de fluide.'
+  },
+  {
     id: 'autre',
     icone: 'engrenage',
     titre: 'Autre intervention',
@@ -461,9 +467,10 @@ export async function ouvrirWizard(ctx, options = {}) {
   // ---- État du wizard ----
   const etat = {
     etape: 1,
-    carteType: carteTypeInitiale, // 'charge' | 'appoint' | 'recuperation' | 'transfert' | 'autre'
+    carteType: carteTypeInitiale, // 'charge' | 'appoint' | 'recuperation' | 'transfert' | 'controle' | 'autre'
     premiereCharge: false,  // interrupteur de la carte Charge / Mise en service
     demantelement: false,   // interrupteur de la carte Récupération
+    controleNonPeriodique: false, // P7-d2 : interrupteur de la carte Contrôle
     natureAutre: null,      // IM-15 : 'ASSEMBLAGE' | 'MODIFICATION' | 'AUTRE'
     natureAutreDetail: '',  // IM-15 : texte libre si natureAutre === 'AUTRE'
     causeMouvement: null,   // IM-14 : clé de CAUSES_MOUVEMENT (facultatif)
@@ -518,7 +525,10 @@ export async function ouvrirWizard(ctx, options = {}) {
         CHARGE_APPOINT: 'appoint',
         RECUPERATION_MAINTENANCE: 'recuperation',
         RECUPERATION_DEMANTELEMENT: 'recuperation',
-        TRANSFERT: 'transfert'
+        TRANSFERT: 'transfert',
+        // P7-d2 : les deux types CONTROLE reprennent la carte Contrôle.
+        CONTROLE_PERIODIQUE: 'controle',
+        CONTROLE_NON_PERIODIQUE: 'controle'
       };
       etat.carteType = CARTE_PAR_TYPE[brouillon.type] || null;
       // Brique C5 : un brouillon OFFICIEL repris reste officiel. Si
@@ -531,6 +541,7 @@ export async function ouvrirWizard(ctx, options = {}) {
         brouillon.mode === 'OFFICIEL' && !officielEligible;
       etat.premiereCharge = brouillon.type === 'MISE_EN_SERVICE';
       etat.demantelement = brouillon.type === 'RECUPERATION_DEMANTELEMENT';
+      etat.controleNonPeriodique = brouillon.type === 'CONTROLE_NON_PERIODIQUE';
       etat.machineId = brouillon.machineId || null;
       etat.bouteilleSrcId = brouillon.bouteilleSrcId || null;
       etat.bouteilleDstId = brouillon.bouteilleDstId || null;
@@ -594,16 +605,24 @@ export async function ouvrirWizard(ctx, options = {}) {
         : 'RECUPERATION_MAINTENANCE';
     }
     if (etat.carteType === 'transfert') return 'TRANSFERT';
+    // P7-d2 (option A) : le contrôle d'étanchéité est un mouvement « sec »
+    // à part entière — c'est CE parcours qui portera le contrôle officiel
+    // (signatures, PDF conservé, scellement, WORM).
+    if (etat.carteType === 'controle') {
+      return etat.controleNonPeriodique
+        ? 'CONTROLE_NON_PERIODIQUE' : 'CONTROLE_PERIODIQUE';
+    }
     // IM-15 : « Autre intervention » (assemblage, modification…) —
-    // le registre n'admet que 5 types : l'écriture prend les effets
-    // d'un complément de charge et la nature réelle part dans
-    // causeMouvement (cadre 14 du CERFA).
+    // l'écriture prend les effets d'un complément de charge et la nature
+    // réelle part dans causeMouvement (cadre 14 du CERFA).
     if (etat.carteType === 'autre') return 'CHARGE_APPOINT';
     return null;
   }
 
   function estTransfert() { return etat.carteType === 'transfert'; }
   function estRecuperation() { return etat.carteType === 'recuperation'; }
+  // P7-d2 : mouvement CONTROLE « sec » — étapes Bouteille et Pesées sans objet.
+  function estControle() { return etat.carteType === 'controle'; }
   function estCharge() {
     return etat.carteType === 'charge' || etat.carteType === 'appoint'
       || etat.carteType === 'autre';
@@ -632,8 +651,10 @@ export async function ouvrirWizard(ctx, options = {}) {
     return [
       'Type',
       estTransfert() ? 'Source' : 'Machine',
-      estTransfert() ? 'Destination' : 'Bouteille',
-      'Pesées',
+      // P7-d2 : un contrôle est « sec » — les étapes 3 et 4 sont sautées
+      // dans les deux sens (le bandeau le dit honnêtement).
+      estTransfert() ? 'Destination' : estControle() ? 'Sans objet' : 'Bouteille',
+      estControle() ? 'Sans objet' : 'Pesées',
       'Contrôle',
       'Signature'
     ];
@@ -834,12 +855,23 @@ export async function ouvrirWizard(ctx, options = {}) {
           ? Boolean(etat.bouteilleSrcId)
           : Boolean(etat.machineId);
       case 3:
+        // P7-d2 : contrôle « sec » — aucune bouteille, étape réputée
+        // acquise (la navigation la saute, la reprise CR-1 aussi).
+        if (estControle()) return true;
         return estCharge()
           ? Boolean(etat.bouteilleSrcId)
           : Boolean(etat.bouteilleDstId);
       case 4:
+        if (estControle()) return true; // P7-d2 : aucune pesée
         return verifierPesees().ok;
       case 5:
+        // P7-d2 : le contrôle est L'OBJET de l'écriture — un résultat
+        // réel est obligatoire (« Sans objet » interdit, garde P7-b du
+        // store reflétée à l'écran).
+        if (estControle()) {
+          return (etat.statutControle === 'CONFORME'
+            || etat.statutControle === 'FUITE') && Boolean(etat.detecteurId);
+        }
         return etat.statutControle === 'SANS_OBJET'
           || Boolean(etat.statutControle && etat.detecteurId);
       case 6:
@@ -966,6 +998,11 @@ export async function ouvrirWizard(ctx, options = {}) {
     // du registre (CR-1 : pas d'orphelin), on repartira d'une écriture neuve
     purgerEcritureEnCours();
     etat.etape -= 1;
+    // P7-d2 : contrôle « sec » — les étapes Bouteille (3) et Pesées (4)
+    // sont sautées au retour comme à l'aller.
+    if (estControle() && (etat.etape === 4 || etat.etape === 3)) {
+      etat.etape = 2;
+    }
     rendreEtape();
   });
 
@@ -982,6 +1019,11 @@ export async function ouvrirWizard(ctx, options = {}) {
       // rempli (ex. pesées conservées après un retour en arrière).
       if (etat.etape === 2 && options.machineId && !estTransfert() && etapeComplete()) {
         etat.etape += 1;
+      }
+      // P7-d2 : contrôle « sec » — Bouteille (3) et Pesées (4) sans objet,
+      // le parcours passe directement au Contrôle (5), l'objet de l'écriture.
+      if (estControle() && (etat.etape === 3 || etat.etape === 4)) {
+        etat.etape = 5;
       }
       rendreEtape();
     } else {
@@ -1049,6 +1091,15 @@ export async function ouvrirWizard(ctx, options = {}) {
         + '<input type="checkbox" id="wizard-interrupteur-choix"'
         + (etat.demantelement ? ' checked' : '') + '>'
         + '<span>Démantèlement de l’équipement (récupération totale)</span>'
+        + '</label>';
+    } else if (etat.carteType === 'controle') {
+      // P7-d2 : périodique (échéance réglementaire) par défaut ; la case
+      // bascule en non périodique (après réparation, suspicion de fuite…).
+      interrupteur = '<label class="wizard-interrupteur">'
+        + '<input type="checkbox" id="wizard-interrupteur-choix"'
+        + (etat.controleNonPeriodique ? ' checked' : '') + '>'
+        + '<span>Contrôle non périodique (hors échéance : après réparation, '
+        + 'suspicion de fuite…)</span>'
         + '</label>';
     } else if (etat.carteType === 'autre') {
       // IM-15 : sous-choix de la nature d'intervention
@@ -1138,6 +1189,11 @@ export async function ouvrirWizard(ctx, options = {}) {
           etat.bouteilleDstId = null;
           etat.peseeAvant = '';
           etat.peseeApres = '';
+          // P7-d2 : un résidu « Sans objet » (venu d'une autre carte) n'a
+          // pas de sens pour la carte Contrôle — le résultat est l'objet.
+          if (nouveau === 'controle' && etat.statutControle === 'SANS_OBJET') {
+            etat.statutControle = null;
+          }
         }
         rendreEtape();
       });
@@ -1148,6 +1204,7 @@ export async function ouvrirWizard(ctx, options = {}) {
       caseChoix.addEventListener('change', function () {
         if (etat.carteType === 'charge') etat.premiereCharge = caseChoix.checked;
         if (etat.carteType === 'recuperation') etat.demantelement = caseChoix.checked;
+        if (etat.carteType === 'controle') etat.controleNonPeriodique = caseChoix.checked;
         // Le libellé du conseil dépend de typeMouvement() : mise à jour
         // ciblée SANS re-rendu (le focus de la case survit).
         const zoneConseil = corpsEl.querySelector('#wizard-conseil');
@@ -1513,7 +1570,18 @@ export async function ouvrirWizard(ctx, options = {}) {
      ---------------------------------------------------------- */
 
   function rendreEtape5() {
-    const cartes = CARTES_CONTROLE.map(function (carte) {
+    // P7-d2 : le contrôle est L'OBJET d'un mouvement CONTROLE — la carte
+    // « Sans objet » disparaît (garde P7-b du store reflétée à l'écran).
+    const cartesProposees = estControle()
+      ? CARTES_CONTROLE.filter(function (c) { return c.id !== 'SANS_OBJET'; })
+      : CARTES_CONTROLE;
+    const bandeauObjet = estControle()
+      ? '<div class="wizard-bloc">'
+        + bandeauAvertissement('Le contrôle d’étanchéité est l’objet de '
+          + 'cette écriture : un résultat (conforme ou fuite) est obligatoire.')
+        + '</div>'
+      : '';
+    const cartes = cartesProposees.map(function (carte) {
       const classe = etat.statutControle === carte.id ? ' selectionnee' : '';
       return '<button type="button" class="carte-choix' + classe + '"'
         + ' data-controle="' + esc(carte.id) + '">'
@@ -1599,7 +1667,8 @@ export async function ouvrirWizard(ctx, options = {}) {
     }
 
     corpsEl.innerHTML =
-      '<div class="wizard-grille-choix wizard-grille-3">' + cartes + '</div>'
+      bandeauObjet
+      + '<div class="wizard-grille-choix wizard-grille-3">' + cartes + '</div>'
       + blocDetecteur
       + blocLocalisation
       + blocOutils;
@@ -1699,6 +1768,8 @@ export async function ouvrirWizard(ctx, options = {}) {
         estRecuperation() ? 'Bouteille de récupération' : 'Bouteille de destination',
         esc(destination.code + ' · ' + destination.fluide)));
     }
+    // P7-d2 : un contrôle est « sec » — ni pesées ni quantité au récap.
+    if (!estControle()) {
     lignes.push(ligneRecap('Pesées',
       '<span class="cellule-mono">' + esc(fmtKg(nombreFr(etat.peseeAvant)))
       + ' → ' + esc(fmtKg(nombreFr(etat.peseeApres))) + '</span>'));
@@ -1723,6 +1794,7 @@ export async function ouvrirWizard(ctx, options = {}) {
         + esc(quantiteSignee !== null ? fmtKgSigne(quantiteSignee) : '—')
         + '</span>'));
     }
+    } // fin !estControle() — P7-d2
 
     let texteControle = 'Sans objet';
     if (etat.statutControle === 'CONFORME' || etat.statutControle === 'FUITE') {
@@ -1905,8 +1977,10 @@ export async function ouvrirWizard(ctx, options = {}) {
           machineId: estTransfert() ? null : etat.machineId,
           bouteilleSrcId: estRecuperation() ? null : etat.bouteilleSrcId,
           bouteilleDstId: estCharge() ? null : etat.bouteilleDstId,
-          peseeAvantKg: nombreFr(etat.peseeAvant),
-          peseeApresKg: nombreFr(etat.peseeApres),
+          // P7-d2 : contrôle « sec » — null EXPLICITE (nombreFr('') vaut
+          // NaN, qu'on ne veut jamais stocker dans une écriture).
+          peseeAvantKg: estControle() ? null : nombreFr(etat.peseeAvant),
+          peseeApresKg: estControle() ? null : nombreFr(etat.peseeApres),
           causeMouvement: texteCause(), // IM-14 (+ nature IM-15)
           // R5 : localisation de la fuite (propagée jusqu'au contrôle
           // enregistré à la validation — CR-3 — puis au CERFA cadre 10).

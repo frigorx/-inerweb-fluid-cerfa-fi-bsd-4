@@ -25,7 +25,10 @@ export const TYPES_FILTRE = [
   { valeur: 'RECUPERATION', libelle: 'Récupération',
     types: ['RECUPERATION_MAINTENANCE', 'RECUPERATION_DEMANTELEMENT'] },
   { valeur: 'TRANSFERT', libelle: 'Transfert',
-    types: ['TRANSFERT'] }
+    types: ['TRANSFERT'] },
+  // P7-d2 : les deux types CONTROLE regroupés (comme les récupérations).
+  { valeur: 'CONTROLE', libelle: 'Contrôle d’étanchéité',
+    types: ['CONTROLE_PERIODIQUE', 'CONTROLE_NON_PERIODIQUE'] }
 ];
 
 /** Statuts proposés au filtre (libellés des chips de communs.js). */

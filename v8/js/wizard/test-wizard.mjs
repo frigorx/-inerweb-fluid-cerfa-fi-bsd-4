@@ -582,6 +582,81 @@ const MACHINE_TEST = {
     'bandeaux vus : ' + JSON.stringify(textes));
 }
 
+/* ============================================================
+   P7-d2 — carte « Contrôle d'étanchéité » : parcours « sec ».
+   L'étape 2 (machine) est suivie DIRECTEMENT de l'étape 5
+   (contrôle) — Bouteille (3) et Pesées (4) sautées dans les deux
+   sens ; « Sans objet » n'est pas proposé (le contrôle est l'objet
+   de l'écriture) ; le récap n'affiche ni pesées ni quantité.
+   ============================================================ */
+{
+  const store = creerStoreFactice({
+    machines: [MACHINE_TEST],
+    outillage: [{
+      id: 'out-det', typeOutil: 'DETECTEUR', marque: 'Inficon',
+      modele: 'D-TEK', numSerie: 'DT-42', statut: 'CONFORME',
+      prochaineEcheance: '2027-01-01'
+    }]
+  });
+  const ctx = { store, naviguer: () => {} };
+
+  await ouvrirWizard(ctx, {});
+  const fond = document.body.querySelectorAll('.modale-fond').at(-1);
+
+  // Étape 1 : carte Contrôle + technicien.
+  const carteControle = fond.querySelector('[data-carte-type="controle"]');
+  verifier('P7-d2 : la carte « Contrôle d’étanchéité » est proposée à l’étape 1',
+    Boolean(carteControle));
+  carteControle.declencher('click');
+  const selectTechnicien = fond.querySelector('#wizard-technicien');
+  selectTechnicien.value = 'p1';
+  selectTechnicien.declencher('change');
+  fond.querySelector('#wizard-continuer').declencher('click'); // → étape 2
+
+  let pastilleActive = fond.querySelector('.wizard-etape.active .wizard-pastille');
+  verifier('P7-d2 : après l’étape 1, le parcours passe par l’étape 2 (machine)',
+    pastilleActive && pastilleActive.textContent === '2',
+    'pastille active = ' + (pastilleActive && pastilleActive.textContent));
+
+  // Étape 2 : choisir la machine → Continuer doit SAUTER à l'étape 5.
+  fond.querySelector('[data-machine="mac-1"]').declencher('click');
+  fond.querySelector('#wizard-continuer').declencher('click');
+  pastilleActive = fond.querySelector('.wizard-etape.active .wizard-pastille');
+  verifier('P7-d2 : après la machine, saut direct à l’étape 5 (contrôle) — '
+    + 'Bouteille et Pesées sans objet',
+    pastilleActive && pastilleActive.textContent === '5',
+    'pastille active = ' + (pastilleActive && pastilleActive.textContent));
+
+  // Étape 5 : « Sans objet » ABSENT, Conforme/Fuite proposés.
+  verifier('P7-d2 : la carte « Sans objet » n’est pas proposée (le contrôle '
+    + 'est l’objet de l’écriture)',
+    !fond.querySelector('[data-controle="SANS_OBJET"]')
+    && Boolean(fond.querySelector('[data-controle="CONFORME"]'))
+    && Boolean(fond.querySelector('[data-controle="FUITE"]')));
+
+  // Résultat + détecteur : l'étape 5 devient complète (le bouton
+  // Continuer s'active). L'étape 6 (signature → canvas 2D) est HORS de
+  // portée du shim, comme documenté en tête : le récap sans pesées ni
+  // quantité se vérifie en navigateur réel (rapport P7-d2).
+  fond.querySelector('[data-controle="CONFORME"]').declencher('click');
+  const selectDetecteur = fond.querySelector('#wizard-detecteur');
+  selectDetecteur.value = 'out-det';
+  selectDetecteur.declencher('change');
+  const boutonContinuer = fond.querySelector('#wizard-continuer');
+  verifier('P7-d2 : résultat CONFORME + détecteur choisis → l’étape 5 est '
+    + 'complète (Continuer actif)',
+    boutonContinuer && boutonContinuer.disabled === false,
+    'disabled = ' + (boutonContinuer && boutonContinuer.disabled));
+
+  // Retour depuis l'étape 5 : SAUT direct à 2 (jamais 4 ni 3).
+  fond.querySelector('#wizard-retour').declencher('click'); // 5 → 2 (saut)
+  pastilleActive = fond.querySelector('.wizard-etape.active .wizard-pastille');
+  verifier('P7-d2 : le retour depuis l’étape 5 revient directement à '
+    + 'l’étape 2 (machine), sans repasser par Pesées ni Bouteille',
+    pastilleActive && pastilleActive.textContent === '2',
+    'pastille active = ' + (pastilleActive && pastilleActive.textContent));
+}
+
 // ---- Bilan ----
 console.log(`\n${nbOk} test(s) réussi(s), ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);

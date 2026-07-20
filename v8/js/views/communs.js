@@ -135,7 +135,10 @@ const CHIPS_TYPE_MOUVEMENT = {
   CHARGE_APPOINT:            { libelle: 'Complément de charge',     classe: 'chip-bleu' },
   RECUPERATION_MAINTENANCE:  { libelle: 'Récupération',             classe: 'chip-violet' },
   RECUPERATION_DEMANTELEMENT:{ libelle: 'Récupération',             classe: 'chip-violet' },
-  TRANSFERT:                 { libelle: 'Transfert',                classe: 'chip-teal' }
+  TRANSFERT:                 { libelle: 'Transfert',                classe: 'chip-teal' },
+  // P7-d2 : les deux types CONTROLE (même trou que le dashboard, P7-b).
+  CONTROLE_PERIODIQUE:       { libelle: 'Contrôle périodique',      classe: 'chip-teal' },
+  CONTROLE_NON_PERIODIQUE:   { libelle: 'Contrôle d’étanchéité',    classe: 'chip-teal' }
 };
 
 /**

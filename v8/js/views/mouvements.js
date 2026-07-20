@@ -166,7 +166,12 @@ function ligneMouvement(mouvement, bouteillesParId) {
     // Quantité signée colorée + code fluide gris
     + '<td class="cellule-mono">'
     + '<span class="' + classeQuantite + '"' + titreQuantite + '>'
-    + esc(mouvement.quantiteKg === null ? '—' : fmtKgSigne(mouvement.quantiteKg))
+    // P7-d2 : un mouvement CONTROLE est « sec » (quantité 0 par
+    // construction) — afficher « +0,00 kg » serait trompeur, « — » est honnête.
+    + esc(mouvement.quantiteKg === null
+      || mouvement.type === 'CONTROLE_PERIODIQUE'
+      || mouvement.type === 'CONTROLE_NON_PERIODIQUE'
+      ? '—' : fmtKgSigne(mouvement.quantiteKg))
     + '</span>'
     + ' <span style="color:var(--texte-3);font-size:12px">' + esc(mouvement.fluide || '') + '</span>'
     + '</td>'
@@ -301,7 +306,11 @@ function rappelMouvement(mv, outils = [], personnelParId = new Map()) {
     ligneRappel('Type', chipType(mv.type))
   ];
   if (mv.machineLabel) lignes.push(ligneRappel('Machine', esc(mv.machineLabel)));
-  if (mv.quantiteKg !== null && Number.isFinite(mv.quantiteKg)) {
+  // P7-d2 : un mouvement CONTROLE est « sec » — ni quantité ni pesées.
+  const estMouvementControle = mv.type === 'CONTROLE_PERIODIQUE'
+    || mv.type === 'CONTROLE_NON_PERIODIQUE';
+  if (!estMouvementControle
+      && mv.quantiteKg !== null && Number.isFinite(mv.quantiteKg)) {
     lignes.push(ligneRappel('Quantité',
       '<span class="cellule-mono"' + titreQuantiteRecuperation(mv) + '>'
       + esc(fmtKgSigne(mv.quantiteKg)) + '</span>'));
