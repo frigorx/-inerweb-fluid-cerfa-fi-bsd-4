@@ -33,6 +33,18 @@ export const VERROU_LIVRAISON = true;
 /** Les trois moments de contrôle (ordre croissant d'exigence). */
 export const MOMENTS_OFFICIEL = ['PASSAGE', 'SOUMISSION', 'VALIDATION'];
 
+/**
+ * P7-c (option A, docs/PLAN-P0-INTEGRITE-CONTROLES.md §4.2) : le handler
+ * DIRECT createControle est FORMATION-only PAR NATURE. Refus STRUCTUREL,
+ * indépendant du verrou de livraison : un contrôle d'étanchéité officiel
+ * s'enregistre comme un MOUVEMENT de type CONTROLE (parcours signé,
+ * scellé, WORM — P7-a/b), jamais par le chemin direct.
+ */
+export const MSG_CONTROLE_DIRECT_OFFICIEL =
+  'Contrôle direct refusé en mode Officiel : un contrôle d’étanchéité '
+  + 'officiel s’enregistre comme un mouvement de type CONTRÔLE '
+  + '(parcours signé, scellé et conservé).';
+
 const NIVEAU_MOMENT = { PASSAGE: 1, SOUMISSION: 2, VALIDATION: 3 };
 
 /**

@@ -45,8 +45,8 @@ import { ROLES_SIGNATURE, declarationSignature, verifierImageSignature,
   MSG_TRACE_ABSENT, MSG_PAS_PNG } from './signatures-mouvement.js';
 // Blocage dur du mode OFFICIEL (lot B, condition 2 du plan audit-proof) :
 // moteur PUR de la liste docs/CONDITIONS-BLOCANTES-OFFICIEL.md (miroir serveur).
-import { evaluerBlocagesOfficiel, messageRefusOfficiel, VERROU_LIVRAISON }
-  from './blocage-officiel.js';
+import { evaluerBlocagesOfficiel, messageRefusOfficiel, VERROU_LIVRAISON,
+  MSG_CONTROLE_DIRECT_OFFICIEL } from './blocage-officiel.js';
 // PDF final conservé à la validation OFFICIELLE (lot C, brique C3) :
 // contrôles et messages canoniques partagés (miroir serveur).
 import { verifierOctetsPdfFinal, nomFichierPdfFinal, CATEGORIE_PDF_FINAL,
@@ -2789,14 +2789,15 @@ export function creerDemoStore() {
     // ------------------------------------------------------
     async createControle(donneesControle) {
       const d = donneesControle || {};
-      // P0-2 (audit externe #2) : parité serveur — un contrôle AUTONOME en
-      // mode OFFICIEL franchit le blocage dur (PASSAGE). Verrou fermé (T1) →
-      // refus. Le contrôle LIÉ (validerMouvement) n'emprunte pas ce chemin.
+      // P7-c (option A) : le handler DIRECT est FORMATION-only PAR NATURE —
+      // refus STRUCTUREL du mode OFFICIEL, qui tient verrou de livraison
+      // ouvert OU fermé (remplace le colmatage conjoncturel P0-2). L'officiel
+      // ne passe QUE par le parcours mouvement de type CONTROLE (P7-a/b :
+      // signatures, PDF conservé, scellement, WORM). Le contrôle LIÉ (né de
+      // validerMouvement via enregistrerControle) n'emprunte pas ce chemin :
+      // il hérite le mode du mouvement, gardé par les 3 moments officiels.
       if (d.mode === 'OFFICIEL') {
-        const verdict = evaluerOfficiel('PASSAGE', null);
-        if (!verdict.ok) {
-          throw new Error(messageRefusOfficiel(verdict.blocages));
-        }
+        throw new Error(MSG_CONTROLE_DIRECT_OFFICIEL);
       }
       const controle = enregistrerControle(d);
       persisterEtNotifier();

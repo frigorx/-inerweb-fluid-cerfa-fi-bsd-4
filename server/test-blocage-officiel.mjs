@@ -13,7 +13,8 @@
 import { createRequire } from 'node:module';
 import {
   evaluerBlocagesOfficiel, messageRefusOfficiel,
-  SEUIL_PRP_VIERGE, MOMENTS_OFFICIEL, VERROU_LIVRAISON
+  SEUIL_PRP_VIERGE, MOMENTS_OFFICIEL, VERROU_LIVRAISON,
+  MSG_CONTROLE_DIRECT_OFFICIEL
 } from '../v8/js/data/blocage-officiel.js';
 
 const require = createRequire(import.meta.url);
@@ -297,6 +298,12 @@ const codes = (r) => r.blocages.map((b) => b.code).join(',');
     miroir.SEUIL_PRP_VIERGE === SEUIL_PRP_VIERGE &&
     miroir.VERROU_LIVRAISON === VERROU_LIVRAISON &&
     JSON.stringify(miroir.MOMENTS_OFFICIEL) === JSON.stringify(MOMENTS_OFFICIEL));
+
+  // P7-c : refus structurel du contrôle direct officiel — mot pour mot.
+  verifier('MSG_CONTROLE_DIRECT_OFFICIEL identique des deux côtés (P7-c)',
+    typeof MSG_CONTROLE_DIRECT_OFFICIEL === 'string' &&
+    MSG_CONTROLE_DIRECT_OFFICIEL.length > 0 &&
+    miroir.MSG_CONTROLE_DIRECT_OFFICIEL === MSG_CONTROLE_DIRECT_OFFICIEL);
 
   const CADRES = [];
   // Toutes les combinaisons simples de conditions, aux trois moments.

@@ -39,8 +39,8 @@ const scellementExterne = require('./scellement-externe.js');
 // Blocage dur du mode OFFICIEL (lot B, condition 2 du plan audit-proof) :
 // moteur PUR de la liste docs/CONDITIONS-BLOCANTES-OFFICIEL.md (miroir du
 // module ESM du front, parité prouvée par test-blocage-officiel.mjs).
-const { evaluerBlocagesOfficiel, messageRefusOfficiel, VERROU_LIVRAISON } =
-  require('./blocage-officiel.js');
+const { evaluerBlocagesOfficiel, messageRefusOfficiel, VERROU_LIVRAISON,
+  MSG_CONTROLE_DIRECT_OFFICIEL } = require('./blocage-officiel.js');
 // Signatures réelles (lot C, brique C1) : déclarations figées + critères
 // d'illisibilité (miroir du module ESM du front, parité prouvée par
 // test-signatures-mouvement.mjs).
@@ -2599,18 +2599,16 @@ const HANDLERS = {
    */
   createControle(params, contexte) {
     const d = params.donneesControle || {};
-    // P0-2 (audit externe #2) : un contrôle AUTONOME en mode OFFICIEL doit
-    // franchir le MÊME blocage dur que les mouvements (1er moment, PASSAGE).
-    // Sans lui, un appel forgé créait une écriture « officielle » SANS
-    // conditions, signatures, PDF ni WORM. Verrou de livraison fermé (T1) →
-    // refus total. Le contrôle LIÉ (né d'une validation de mouvement)
-    // n'emprunte PAS ce handler : il reste couvert par le parcours officiel
-    // du mouvement. Parité stricte avec le DemoStore (createControle).
+    // P7-c (option A) : le handler DIRECT est FORMATION-only PAR NATURE —
+    // refus STRUCTUREL du mode OFFICIEL, qui tient verrou de livraison
+    // ouvert OU fermé (remplace le colmatage conjoncturel P0-2). L'officiel
+    // ne passe QUE par le parcours mouvement de type CONTROLE (P7-a/b :
+    // signatures, PDF conservé, scellement, WORM). Le contrôle LIÉ (né de
+    // validerMouvement via enregistrerControle) n'emprunte pas ce handler :
+    // il hérite le mode du mouvement, gardé par les 3 moments officiels.
+    // Parité stricte avec le DemoStore (createControle).
     if (d.mode === 'OFFICIEL') {
-      const verdict = evaluerOfficiel('PASSAGE', null, contexte);
-      if (!verdict.ok) {
-        throw new Error(messageRefusOfficiel(verdict.blocages));
-      }
+      throw new Error(MSG_CONTROLE_DIRECT_OFFICIEL);
     }
     return muter(() => enregistrerControle(d));
   },

@@ -27,6 +27,8 @@ import {
 } from './contrat.js';
 // Lot C (C3) : refus canonique d'un PDF final hors mode OFFICIEL.
 import { MSG_PDF_FINAL_HORS_OFFICIEL } from './pdf-final.js';
+// P7-c : refus STRUCTUREL du contrôle direct en mode OFFICIEL.
+import { MSG_CONTROLE_DIRECT_OFFICIEL } from './blocage-officiel.js';
 
 // ------------------------------------------------------------
 // Choix de l'implémentation à éprouver (demo par défaut).
@@ -360,14 +362,24 @@ await verifierRejet('creerMouvement refuse une demande en mode OFFICIEL (motivé
     messageRefusOff);
 }
 
-// P0-2 (audit externe #2) : un contrôle AUTONOME forgé en mode OFFICIEL est
-// refusé AVANT tout effet (le blocage précède la vérification de la machine —
-// machineId volontairement inexistant). Sans le correctif, il entrait comme
-// écriture « officielle » sans conditions, signatures, PDF ni WORM.
-await verifierRejet(
-  'createControle refuse un contrôle AUTONOME en mode OFFICIEL (avant tout effet)',
-  store.createControle({ machineId: 'mac-fantome', resultat: 'CONFORME', mode: 'OFFICIEL' }),
-  'Mode Officiel refusé');
+// P7-c (option A, remplace le colmatage P0-2) : le handler DIRECT est
+// FORMATION-only PAR NATURE. Un contrôle AUTONOME forgé en mode OFFICIEL est
+// refusé AVANT tout effet (machineId volontairement inexistant : le refus
+// précède la vérification de la machine) avec le message canonique EXACT —
+// l'égalité stricte prouve que c'est le refus STRUCTUREL qui parle, pas le
+// verrou de livraison : ce refus tiendra verrou OUVERT, l'officiel ne
+// passant que par le parcours mouvement de type CONTROLE (P7-a/b).
+{
+  let messageControleOff = '';
+  try {
+    await store.createControle({
+      machineId: 'mac-fantome', resultat: 'CONFORME', mode: 'OFFICIEL' });
+  } catch (erreur) { messageControleOff = erreur.message; }
+  verifier('createControle refuse un contrôle AUTONOME en mode OFFICIEL '
+    + '(refus structurel P7-c, message canonique exact)',
+    messageControleOff === MSG_CONTROLE_DIRECT_OFFICIEL,
+    `message = « ${messageControleOff} »`);
+}
 
 const machineB = await store.createMachine({
   designation: 'Groupe froid du contrat', fluide: FLUIDE,

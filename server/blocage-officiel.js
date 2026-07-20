@@ -26,6 +26,12 @@ const VERROU_LIVRAISON = true;
 /** Les trois moments de contrôle (ordre croissant d'exigence). */
 const MOMENTS_OFFICIEL = ['PASSAGE', 'SOUMISSION', 'VALIDATION'];
 
+/** Miroir EXACT de MSG_CONTROLE_DIRECT_OFFICIEL (P7-c, voir le module ESM). */
+const MSG_CONTROLE_DIRECT_OFFICIEL =
+  'Contrôle direct refusé en mode Officiel : un contrôle d’étanchéité '
+  + 'officiel s’enregistre comme un mouvement de type CONTRÔLE '
+  + '(parcours signé, scellé et conservé).';
+
 const NIVEAU_MOMENT = { PASSAGE: 1, SOUMISSION: 2, VALIDATION: 3 };
 
 /** Miroir EXACT de evaluerBlocagesOfficiel (voir le module ESM). */
@@ -181,6 +187,7 @@ module.exports = {
   SEUIL_PRP_VIERGE,
   VERROU_LIVRAISON,
   MOMENTS_OFFICIEL,
+  MSG_CONTROLE_DIRECT_OFFICIEL,
   evaluerBlocagesOfficiel,
   messageRefusOfficiel
 };

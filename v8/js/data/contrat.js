@@ -151,7 +151,7 @@ export const METHODES_CONTRAT = {
 
   // --- contrôles d'étanchéité -----------------------------------
   createControle: { genre: 'mutation',
-    description: 'Crée un contrôle ; FUITE → machine en statut FUITE ; CONFORME → retour EN_SERVICE depuis FUITE seulement si la réparation est TRACÉE et que le contrôle date du jour de la réparation ou d’après (R4), ou depuis CONTROLE_DU sans retard.' },
+    description: 'Crée un contrôle DIRECT — FORMATION-only par nature (P7-c) : le mode OFFICIEL est refusé structurellement (MSG_CONTROLE_DIRECT_OFFICIEL), un contrôle officiel s’enregistre comme mouvement de type CONTROLE ; FUITE → machine en statut FUITE ; CONFORME → retour EN_SERVICE depuis FUITE seulement si la réparation est TRACÉE et que le contrôle date du jour de la réparation ou d’après (R4), ou depuis CONTROLE_DU sans retard.' },
   calculerProchainControle: { genre: 'lecture',
     description: 'Prochain contrôle selon charge×PRP et détection permanente (logique unique du cadre 7 CERFA) ; la date du contrôle (optionnelle, défaut aujourd’hui) fixe le régime applicable ; null si hors périmètre OU si HFO pur avant le 11/03/2024 (F-Gas III).' },
   tracerReparation: { genre: 'mutation',

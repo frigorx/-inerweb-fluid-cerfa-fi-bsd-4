@@ -2,6 +2,29 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧱 P7-c (option A) — `createControle` direct FORMATION-only PAR NATURE (20/07)
+- Le refus du contrôle AUTONOME en mode OFFICIEL n'est plus l'effet du verrou
+  de livraison (colmatage conjoncturel P0-2) : c'est un **refus STRUCTUREL**
+  qui tiendra verrou OUVERT — l'officiel ne passe QUE par le parcours
+  mouvement de type CONTROLE (P7-a/b : signatures, PDF conservé, scellement,
+  WORM). Message canonique **`MSG_CONTROLE_DIRECT_OFFICIEL`** posé dans les
+  DEUX miroirs `blocage-officiel.js` (parité mot pour mot ajoutée à
+  `test-blocage-officiel.mjs`).
+- Handlers `createControle` des deux stores (demo + serveur) : le passage par
+  `evaluerOfficiel('PASSAGE')` est remplacé par le refus dur, AVANT tout effet.
+  Le contrôle **LIÉ** (CR-3, `enregistrerControle` appelé hors handler par la
+  validation d'un mouvement) est **préservé** : il hérite le mode du mouvement,
+  gardé par les 3 moments officiels.
+- Test contrat durci : égalité **STRICTE** du message (prouve que c'est le
+  refus structurel qui parle, plus le verrou), machineId inexistant (refus
+  avant la vérification machine), parité demo/local. Description de
+  `createControle` mise à jour dans `contrat.js` (vérité de surface).
+- Revue adversariale : pas de contournement par casse (`enregistrerControle`
+  normalise tout mode ≠ 'OFFICIEL' en FORMATION) ; constat consigné pour
+  P7-e — l'import JSON pourrait introduire un contrôle OFFICIEL orphelin
+  (sans `mouvementId`), garde d'import à poser (plan §7).
+  **TOUT VERT — 85 exécutions.**
+
 ### 🔒 T1 (audit externe #2) — VERROU DE LIVRAISON REFERMÉ : le mode Officiel est de nouveau fermé (20/07)
 - Suite au 2ᵉ audit externe (`docs/AUDIT-INERWEB-FLUIDE-2026-07-20.md`) et au
   choix de cible **« registre officiel unique »** (Franck, 20/07), le mode
