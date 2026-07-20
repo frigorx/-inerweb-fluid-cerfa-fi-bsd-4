@@ -6,22 +6,30 @@
 > **Session conseillée : Opus, effort xhigh** (chantier probatoire/réglementaire, petites
 > briques testées comme le lot C). PAS d'ultracode hors point critique.
 >
-> **ÉTAT (20/07) — CAP = REGISTRE OFFICIEL UNIQUE (barème maximal, tranché par Franck).**
-> Un 2ᵉ audit externe (ChatGPT) a été traité. Dépôt PROPRE, dernier commit **`8b5537f`**,
-> **TOUT VERT — 85 exécutions** (`node outils/lancer-tests.mjs --tout`). Fait + poussé cette session :
+> **ÉTAT (20/07 soir) — CAP = REGISTRE OFFICIEL UNIQUE (barème maximal, tranché par Franck).**
+> Un 2ᵉ audit externe (ChatGPT) a été traité. Dépôt PROPRE, dernier commit **`f894cbc`**,
+> **TOUT VERT — 85 exécutions** (`node outils/lancer-tests.mjs --tout`). Fait + poussé :
 > - **T1 ✅** (`a65ea4b`) — mode Officiel REFERMÉ (`VERROU_LIVRAISON=true`, 2 miroirs
 >   `server/blocage-officiel.js` + `v8/js/data/blocage-officiel.js`, NON configurable) le temps
 >   des P0. Suite `server/test-officiel-e2e.mjs` GELÉE par une garde en tête (à rejouer à la réouverture).
-> - **P0-2 ✅** (`8fdd5fb`) — `createControle` refuse le mode OFFICIEL forgé (chemin AUTONOME,
->   `evaluerOfficiel('PASSAGE')`, 2 stores, test négatif). Fermait une vraie faille (table
->   `controles` sans WORM ; le contrôle LIÉ via validation d'un mouvement reste couvert).
-> - **P0-7 option A (le contrôle d'étanchéité DEVIENT un mouvement) EN COURS** :
->   **P7-a ✅** (`abe0003`) — `TYPES_MOUVEMENT` +2 types CONTROLE (contrat + 2 stores),
->   `appliquerEffets` traite un mouvement CONTROLE comme « sec » (aucune pesée/effet stock),
->   CR-3 dérive le `typeControle`. **P7-b ✅** (`ffbf29a`) — garde « résultat obligatoire »
->   (CONFORME/FUITE) + libellés dashboard. **RESTE : P7-c** (`createControle` direct FORMATION-only) ·
->   **P7-d** (wizard création d'un mouvement CONTROLE + CERFA de contrôle) · **P7-e** (immuabilité
->   WORM + signatures officielles). Plan = `docs/PLAN-P0-INTEGRITE-CONTROLES.md`.
+> - **P0-2 ✅** (`8fdd5fb`) — colmatage initial, REMPLACÉ depuis par P7-c (refus structurel).
+> - **P0-7 option A (le contrôle d'étanchéité DEVIENT un mouvement) — PARCOURS COMPLET P7-a→d2** :
+>   **P7-a ✅** (`abe0003`) types CONTROLE + « sec » + CR-3 · **P7-b ✅** (`ffbf29a`)
+>   garde résultat + libellés dashboard · **P7-c ✅** (`fc8b8f0`) `createControle` direct
+>   FORMATION-only PAR NATURE (`MSG_CONTROLE_DIRECT_OFFICIEL` dans les 2 miroirs blocage-officiel,
+>   refus STRUCTUREL qui tiendra verrou OUVERT, test d'égalité stricte du message) ·
+>   **P7-d1 ✅** (`8ab4a98`) effets machine identiques à createControle (CR-3 transmet `operateurId` ;
+>   échéance RÉGLEMENTAIRE calculée — logique unique cadre 7 — portée à la machine pour un mouvement
+>   CONTROLE ; garde machine DEMANTELEE) + CERFA du mouvement CONTROLE prouvé au PDF relu ·
+>   **P7-d2 ✅** (`f894cbc`) carte « Contrôle d'étanchéité » du wizard (parcours « sec », étapes 3-4
+>   sautées aller/retour, « Sans objet » retiré de l'étape 5) + chipType/quantité « — »/filtre
+>   CONTROLE dans les vues + VÉRIF NAVIGATEUR réelle complète (port statique jetable, mode démo).
+>   **RESTE : P7-e** — tests d'acceptation (immuabilité WORM d'un mouvement CONTROLE validé,
+>   contre-écriture, garde d'import « contrôle OFFICIEL orphelin sans mouvementId » consignée
+>   en revue P7-c) ; la part « signatures/PDF officiels du parcours contrôle » va dans la suite
+>   e2e GELÉE (rejouée à la réouverture). Plan = `docs/PLAN-P0-INTEGRITE-CONTROLES.md`.
+>   Écart consigné (P7-d1) : l'échéance du contrôle ACCESSOIRE (charge+contrôle déclaré) n'est
+>   toujours pas mise à jour (comportement historique) — à trancher avec Franck.
 >
 > **⭐ RC ChatGPT `8.1.0-rc.1` = SOURCE DE CODE** (zip sur le Bureau, SHA `e09ea34…`, intègre vérifié).
 > Travail RÉEL et large (contrat **v8** ≠ notre v7 ; ~1400 lignes de cœur api+demo ; module
@@ -31,11 +39,12 @@
 > on pioche la RC brique par brique RE-testée, JAMAIS d'import en bloc.** Plan = `docs/PLAN-INTEGRATION-RC-CHATGPT.md`.
 > Pour piocher : ré-extraire le zip + `diff` le fichier contre l'archive d'audit ou notre dépôt.
 >
-> **PROCHAINE BRIQUE (au choix Franck)** : soit les **briques AUTONOMES de la RC** — P1-5 HTTPS LAN
-> (`server/serveur.js`), P2-3 scrypt N=2^17 (`server/comptes.js`), P1-6 anti-OneDrive — faciles, sans
-> conflit avec P7 ; soit **finir P7** (P7-c le plus rapide). Puis grosses briques métier reprises de la
-> RC : P0-3/4 cycle matière, P0-5 aptitude (`droit-intervention.js` + frontières 3/6 kg), P0-6 fuite
-> (24 h/1 mois), P0-8 déclaration 11 rubriques. **Hors code** : P0-9 (révocation clés v7), RGPD (notice/durées/DPD).
+> **PROCHAINE BRIQUE (au choix Franck)** : soit **P7-e** (clore P7 : acceptation WORM + garde d'import
+> orphelin — la part officielle va dans la suite e2e gelée), soit les **briques AUTONOMES de la RC** —
+> P1-5 HTTPS LAN (`server/serveur.js`), P2-3 scrypt N=2^17 (`server/comptes.js`), P1-6 anti-OneDrive —
+> faciles, sans conflit avec P7. Puis grosses briques métier reprises de la RC : P0-3/4 cycle matière,
+> P0-5 aptitude (`droit-intervention.js` + frontières 3/6 kg), P0-6 fuite (24 h/1 mois), P0-8
+> déclaration 11 rubriques. **Hors code** : P0-9 (révocation clés v7), RGPD (notice/durées/DPD).
 >
 > **Décisions transverses en attente** : **T2** R-455A 148→146 (la RC a gardé 148 ; à re-trancher pour
 > la cible officielle) · **T3** relecture organisme agréé + DPD (délai long).
