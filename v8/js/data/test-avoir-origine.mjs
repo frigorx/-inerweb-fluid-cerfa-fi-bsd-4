@@ -177,5 +177,59 @@ verifier('réel : après réemploi de 1 kg, avoir(machine) = 2',
   PROCHE(avoirOrigineDisponible(recup.id, machine.id, mouvements), 2),
   `disponible = ${avoirOrigineDisponible(recup.id, machine.id, mouvements)}`);
 
+// --- Surcharge de réemploi (CM-2) : le cas de Franck — réintroduire dans
+// une machine PLUS que ce qu'on en a récupéré. Bouteille multi-origines :
+// 1 kg d'origine M1 + 2 kg d'origine M2 ; on réemploie 2 kg dans M1 → on
+// remet dans M1 1 kg qui ne vient pas d'elle → avoir(M1) = −1 → getAlertes
+// SIGNALE l'anomalie (sans jamais bloquer la validation).
+const m1 = await store.createMachine({
+  designation: 'Machine origine 1', fluide: fluides[0].code,
+  chargeNominaleKg: 10, operateur: 'Testeur'
+});
+const m2 = await store.createMachine({
+  designation: 'Machine origine 2', fluide: fluides[0].code,
+  chargeNominaleKg: 10, operateur: 'Testeur'
+});
+const neuve2 = await store.createBouteille({
+  type: 'NEUVE', fluide: fluides[0].code, tareKg: 10, masseBruteKg: 25,
+  contenanceMaxKg: 20
+});
+const bMix = await store.createBouteille({
+  type: 'RECUPERATION', fluide: fluides[0].code, tareKg: 8, masseBruteKg: 8,
+  contenanceMaxKg: 15
+});
+await passer({ type: 'MISE_EN_SERVICE', machineId: m1.id,
+  bouteilleSrcId: neuve2.id, peseeAvantKg: 15, peseeApresKg: 13,
+  technicien: 'Testeur' }); // M1 = 2
+await passer({ type: 'MISE_EN_SERVICE', machineId: m2.id,
+  bouteilleSrcId: neuve2.id, peseeAvantKg: 13, peseeApresKg: 10,
+  technicien: 'Testeur' }); // M2 = 3
+await passer({ type: 'RECUPERATION_MAINTENANCE', machineId: m1.id,
+  bouteilleDstId: bMix.id, peseeAvantKg: 0, peseeApresKg: 1,
+  technicien: 'Testeur' }); // bMix +1 d'origine M1
+await passer({ type: 'RECUPERATION_MAINTENANCE', machineId: m2.id,
+  bouteilleDstId: bMix.id, peseeAvantKg: 1, peseeApresKg: 3,
+  technicien: 'Testeur' }); // bMix +2 d'origine M2 (3 kg au total)
+await passer({ type: 'CHARGE_APPOINT', machineId: m1.id,
+  bouteilleSrcId: bMix.id, peseeAvantKg: 3, peseeApresKg: 1,
+  technicien: 'Testeur' }); // réemploi 2 kg dans M1 (dont 1 kg qui n'en vient pas)
+
+mouvements = await store.getMouvements();
+verifier('réel : réemploi 2 kg pour 1 kg récupéré de M1 → avoir(M1) = −1',
+  PROCHE(avoirParMachineOrigine(bMix.id, mouvements).get(m1.id), -1),
+  `avoir = ${avoirParMachineOrigine(bMix.id, mouvements).get(m1.id)}`);
+
+const alertes = await store.getAlertes();
+const alerteSurcharge = alertes.find(
+  (a) => a.id === `alr-reemploi-${bMix.id}-${m1.id}`);
+verifier('réel : getAlertes SIGNALE la réintroduction au-delà du récupéré',
+  alerteSurcharge != null && alerteSurcharge.niveau === 'IMPORTANT');
+verifier('réel : le détail nomme la machine et le surplus (1 kg)',
+  alerteSurcharge != null
+  && alerteSurcharge.detail.includes('Machine origine 1')
+  && alerteSurcharge.detail.includes('1'));
+verifier('réel : la charge depuis une bouteille NEUVE ne déclenche AUCUNE alerte de réemploi',
+  !alertes.some((a) => a.id.startsWith(`alr-reemploi-${neuve2.id}`)));
+
 console.log(`\n${nbOk} OK, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);

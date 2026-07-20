@@ -17,6 +17,10 @@ import { teqCO2, fmtDate, fmtNombre, fmtKgSigne, genId, hasherEcriture,
 // IM-1 : fréquence réglementaire des contrôles d'étanchéité —
 // logique UNIQUE partagée avec le cadre 7 du CERFA (aucun doublon).
 import { evaluerControle } from './reglementation-fluides.js';
+// CM-2 : avoir de fluide par machine d'origine (DÉRIVÉ des mouvements) —
+// signale une réintroduction au-delà du récupéré. Le serveur en tient un
+// MIROIR EXACT (api.js).
+import { avoirParMachineOrigine } from './avoir-origine.js';
 // Sentinelle d'alertes persistées : diff pur + formatage (module partagé
 // avec le test unitaire ; le serveur en tient un miroir exact).
 import { normaliserCodeMachine, validerCodeMachine } from './code-machine.js';
@@ -2369,6 +2373,39 @@ export function creerDemoStore() {
             detail: `${mv.numero} · ${mv.type} · créé le ${fmtDate(mv.date)}`,
             cible: { vue: 'mouvements', id: mv.id }
           });
+        }
+      }
+
+      // 9. Cycle matière (CM-2) : réintroduction de fluide au-delà de ce
+      // qui a été récupéré d'une machine — l'avoir d'origine devient
+      // NÉGATIF dans une bouteille de RÉCUPÉRATION. Anomalie SIGNALÉE (non
+      // bloquante en conseil), à rectifier par contre-écriture. Une charge
+      // depuis une bouteille NEUVE (fluide acheté : vierge / recyclé /
+      // régénéré certifié) n'est PAS un réemploi : jamais concernée.
+      const labelMachineReemploi = new Map();
+      for (const mv of donnees.mouvements) {
+        if (mv.machineId && mv.machineLabel
+            && !labelMachineReemploi.has(mv.machineId)) {
+          labelMachineReemploi.set(mv.machineId, mv.machineLabel);
+        }
+      }
+      for (const b of donnees.bouteilles) {
+        if (b.type !== 'RECUPERATION') continue;
+        const avoirOrigine = avoirParMachineOrigine(b.id, donnees.mouvements);
+        for (const [machineId, net] of avoirOrigine) {
+          if (net < -0.01) { // tolérance métrologique (10 g) contre les arrondis
+            const surplus = Math.round(-net * 1000) / 1000;
+            alertes.push({
+              id: `alr-reemploi-${b.id}-${machineId}`,
+              niveau: 'IMPORTANT',
+              titre: 'Réintroduction au-delà du fluide récupéré',
+              detail: `${b.code} · ${fmtNombre(surplus, 3)} kg réintroduits ` +
+                `sur ${labelMachineReemploi.get(machineId) ?? machineId} ` +
+                'au-delà du fluide récupéré de cette machine — ' +
+                'à rectifier (contre-écriture).',
+              cible: { vue: 'bouteilles', id: b.id }
+            });
+          }
         }
       }
 

@@ -2,6 +2,27 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧱 CM-2 (cycle matière) — signalement de la réintroduction au-delà du récupéré (20/07)
+- **Règle de conservation appliquée, en CONSEIL (jamais de blocage sec)** : réintroduire
+  dans une machine M plus de fluide que ce qui en a été récupéré (l'avoir d'origine de M
+  dans la bouteille de récupération devient NÉGATIF) est désormais **signalé** — nouvelle
+  famille d'alerte `alr-reemploi-<bouteille>-<machine>` (niveau IMPORTANT, « à rectifier
+  par contre-écriture ») dans `getAlertes()` des DEUX stores. **Parité stricte** : `api.js`
+  tient un miroir littéral de `avoirParMachineOrigine` (résultats identiques, prouvés par
+  `test-contrat` demo/local).
+- **Une charge depuis une bouteille NEUVE (fluide acheté : vierge / recyclé / régénéré
+  certifié) n'est JAMAIS concernée** — ce n'est pas un réemploi (garde `type === 'RECUPERATION'`).
+  Tolérance métrologique de 10 g contre les arrondis de pesée.
+- Préfixe rattaché au domaine « Bouteilles » du **feu tricolore** et à l'étape « fluides
+  récupérés » de l'**audit-guide** (l'écran ne ment pas par omission — le test des préfixes
+  l'a exigé).
+- **Suite `test-avoir-origine.mjs` étendue** (17 vérifs) : scénario réel multi-origines —
+  1 kg récupéré de M1 + 2 kg de M2 dans une bouteille, réemploi de 2 kg dans M1 →
+  avoir(M1) = −1 → alerte émise ; charge depuis une neuve → aucune alerte. **TOUT VERT —
+  88 exécutions.**
+- **Reste (surfaces, nouveau chat)** : bandeau « au moment de la charge » dans le wizard,
+  CERFA « forcé manuellement », durcissement du mode OFFICIEL (rectification exigée).
+
 ### 🧱 CM-1 (cycle matière) — module pur « avoir de fluide par machine d'origine » (20/07)
 - **Chantier cycle matière REFONDU après correction métier de Franck** (frigoriste) :
   le fondement de l'audit externe (« interdire la charge depuis récupéré + table de

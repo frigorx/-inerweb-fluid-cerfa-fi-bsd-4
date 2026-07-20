@@ -51,7 +51,7 @@ export const DOMAINES = [
     vue: 'balance', prefixes: ['alr-ecart-'] },
   { id: 'bouteilles', titre: 'Bouteilles et déchets',
     detail: 'Pesées récentes, délais de garde des fluides déchets.',
-    vue: 'bouteilles', prefixes: ['alr-garde-', 'alr-pesee-'] },
+    vue: 'bouteilles', prefixes: ['alr-garde-', 'alr-pesee-', 'alr-reemploi-'] },
   { id: 'registre', titre: 'Registre et écritures',
     detail: 'Intégrité de la chaîne, mouvements en souffrance.',
     vue: 'mouvements', prefixes: ['alr-soumis-', 'alr-brouillon-'] }

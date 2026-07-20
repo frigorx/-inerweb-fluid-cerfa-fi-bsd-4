@@ -998,6 +998,39 @@ const HANDLERS = {
       }
     }
 
+    // 9. Cycle matière (CM-2) : réintroduction de fluide au-delà de ce
+    // qui a été récupéré d'une machine — l'avoir d'origine devient NÉGATIF
+    // dans une bouteille de RÉCUPÉRATION. Anomalie SIGNALÉE (non bloquante
+    // en conseil), à rectifier par contre-écriture. Une charge depuis une
+    // bouteille NEUVE (fluide acheté) n'est PAS un réemploi : jamais
+    // concernée. MIROIR EXACT du DemoStore.
+    const labelMachineReemploi = new Map();
+    for (const mv of mouvements) {
+      if (mv.machineId && mv.machineLabel
+          && !labelMachineReemploi.has(mv.machineId)) {
+        labelMachineReemploi.set(mv.machineId, mv.machineLabel);
+      }
+    }
+    for (const b of bouteilles) {
+      if (b.type !== 'RECUPERATION') continue;
+      const avoirOrigine = avoirParMachineOrigine(b.id, mouvements);
+      for (const [machineId, net] of avoirOrigine) {
+        if (net < -0.01) { // tolérance métrologique (10 g) contre les arrondis
+          const surplus = Math.round(-net * 1000) / 1000;
+          alertes.push({
+            id: `alr-reemploi-${b.id}-${machineId}`,
+            niveau: 'IMPORTANT',
+            titre: 'Réintroduction au-delà du fluide récupéré',
+            detail: `${b.code} · ${fmtNombre(surplus, 3)} kg réintroduits ` +
+              `sur ${labelMachineReemploi.get(machineId) ?? machineId} ` +
+              'au-delà du fluide récupéré de cette machine — ' +
+              'à rectifier (contre-écriture).',
+            cible: { vue: 'bouteilles', id: b.id }
+          });
+        }
+      }
+    }
+
     // Les alertes critiques d'abord (tri stable)
     alertes.sort((a, b) =>
       (a.niveau === b.niveau) ? 0 : (a.niveau === 'CRITIQUE' ? -1 : 1));
@@ -5622,6 +5655,36 @@ function lireFluide(code) {
   if (code == null) return null;
   const ligne = db.get('SELECT * FROM fluides WHERE code = ?', [code]);
   return ligne ? mapping.versFront('fluides', ligne) : null;
+}
+
+// ============================================================
+// CM-2 — avoir de fluide par machine d'origine : MIROIR EXACT du module
+// front v8/js/data/avoir-origine.js (DÉRIVÉ des mouvements, aucun stock
+// nouveau). Le fluide récupéré d'une machine M ne se réemploie que sur M,
+// à concurrence du récupéré ; un avoir NÉGATIF = réintroduction au-delà,
+// signalée par getAlertes (alr-reemploi-…). Transfert ignoré (brouille
+// l'origine). Signes : récupération quantiteKg négatif, charge positif.
+// ============================================================
+const TYPES_RECUP_AVOIR = ['RECUPERATION_MAINTENANCE', 'RECUPERATION_DEMANTELEMENT'];
+const TYPES_CHARGE_AVOIR = ['CHARGE_APPOINT', 'MISE_EN_SERVICE'];
+
+function avoirParMachineOrigine(bouteilleId, mouvements) {
+  const avoir = new Map();
+  const actifs = (mouvements ?? []).filter((mv) =>
+    mv.statut === 'VALIDE' && !mv.contreEcritureDe);
+  for (const mv of actifs) {
+    if (mv.quantiteKg == null || mv.machineId == null) continue;
+    if (TYPES_RECUP_AVOIR.includes(mv.type)
+        && mv.bouteilleDstId === bouteilleId) {
+      avoir.set(mv.machineId,
+        Math.round(((avoir.get(mv.machineId) ?? 0) - mv.quantiteKg) * 1000) / 1000);
+    } else if (TYPES_CHARGE_AVOIR.includes(mv.type)
+        && mv.bouteilleSrcId === bouteilleId) {
+      avoir.set(mv.machineId,
+        Math.round(((avoir.get(mv.machineId) ?? 0) - mv.quantiteKg) * 1000) / 1000);
+    }
+  }
+  return avoir;
 }
 
 /**

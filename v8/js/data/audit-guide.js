@@ -95,9 +95,10 @@ export const ETAPES = [
     vue: 'dechets', vueLibelle: 'Déchets / BSFF',
     detail: 'Le fluide récupéré est décidé (réutilisable ou déchet), '
       + 'les délais de garde respectés, les BSFF émis et suivis.',
-    aFaire: 'Prenez les décisions en attente sur les fluides récupérés '
-      + 'et vérifiez les délais de garde.',
-    prefixes: ['alr-garde-']
+    aFaire: 'Prenez les décisions en attente sur les fluides récupérés, '
+      + 'vérifiez les délais de garde et rectifiez toute réintroduction '
+      + 'au-delà du fluide récupéré d’une machine.',
+    prefixes: ['alr-garde-', 'alr-reemploi-']
   },
   {
     id: 'balance', type: 'controle',
