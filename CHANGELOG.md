@@ -2,6 +2,27 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔒 P1-5 — le mode LAN exige HTTPS (reprise RC 8.1, re-testée) (20/07 soir)
+- **1ʳᵉ brique piochée dans la RC ChatGPT 8.1.0-rc.1** (plan
+  `docs/PLAN-INTEGRATION-RC-CHATGPT.md`) : code repris de `server/serveur.js`
+  de la RC, ADAPTÉ (pas de bump de version, partie anti-OneDrive laissée à la
+  brique P1-6) puis PROUVÉ chez nous — la RC n'apportait aucune recette.
+- **`IWF_LAN=1` exige désormais `IWF_TLS_CERT` + `IWF_TLS_KEY`** : sans
+  certificat le serveur REFUSE de démarrer (code 1, message explicite),
+  AUCUN repli HTTP en clair n'est jamais ouvert sur le réseau. TLS ≥ 1.2,
+  en-tête `Strict-Transport-Security` servi en mode LAN. Le loopback (sans
+  `IWF_LAN`) reste en HTTP, strictement inchangé.
+- **Garde d'origine durcie côté LAN** : l'origine `https://<hôte LAN>` est la
+  SEULE acceptée pour l'hôte réseau — un `Origin` `http://<hôte LAN>` (page
+  servie en clair) est refusé 403 ; les origines loopback restent en http.
+- **Nouvelle suite `server/test-lan-https.mjs` (11 vérifs, tout TIRÉ)** :
+  refus sans certificat + aucune écoute en clair ; HTTPS réel sur « IP LAN »
+  127.0.0.2 (bouclage — jamais le vrai réseau ni le pare-feu) avec TLS
+  vérifié sur le socket + HSTS + bannière ; requête HTTP en clair coupée à la
+  poignée de main ; les 3 verdicts d'origine. Certificat auto-signé de test
+  embarqué en littéral (clé sans aucune valeur, 100 ans).
+  **TOUT VERT — 86 exécutions.**
+
 ### 🏁 P7-e (option A) — acceptation : LE CHANTIER P0-7 EST COMPLET (20/07 soir)
 - **Garde `createControle` direct** (2 stores, message mot pour mot) : un
   `mouvementId` forgé est REFUSÉ — le lien contrôle ↔ mouvement naît

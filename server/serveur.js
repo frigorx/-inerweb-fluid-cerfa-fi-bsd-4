@@ -17,6 +17,7 @@
  */
 
 const http = require('node:http');
+const https = require('node:https');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -53,7 +54,8 @@ const VERSION = '8.0.0-dev';
  * n'écoute QUE le loopback, comme depuis l'origine. Activer l'écoute sur
  * l'IP LAN du poste (nécessaire pour qu'une tablette du lycée l'atteigne)
  * exige une CONFIGURATION EXPLICITE — jamais un comportement par défaut :
- *   IWF_LAN=1 IWF_HOTE_LAN=192.168.1.42 node server/serveur.js
+ *   IWF_LAN=1 IWF_HOTE_LAN=192.168.1.42 IWF_TLS_CERT=cert.pem
+ *   IWF_TLS_KEY=cle.pem node server/serveur.js
  * Sans IWF_LAN=1, IWF_HOTE_LAN est ignorée : on retombe sur 127.0.0.1 quoi
  * qu'il arrive. C'est le prix de la décision « LAN lycée = zone semi-fiable,
  * l'auth par compte reste la barrière » : ouvrir l'écoute SANS étendre du
@@ -64,6 +66,36 @@ const VERSION = '8.0.0-dev';
 const LAN_ACTIF = process.env.IWF_LAN === '1';
 const HOTE_LAN = process.env.IWF_HOTE_LAN || null;
 const HOTE = (LAN_ACTIF && HOTE_LAN) ? HOTE_LAN : '127.0.0.1';
+
+// Une exposition au LAN transporte des identités, des signatures et des
+// justificatifs réglementaires : HTTP en clair est donc interdit. Le mode
+// loopback reste en HTTP (trafic confiné au poste), mais IWF_LAN=1 exige un
+// certificat et sa clé privée. Il n'existe aucun repli silencieux vers HTTP.
+let OPTIONS_TLS = null;
+if (LAN_ACTIF) {
+  const cheminCertificat = process.env.IWF_TLS_CERT;
+  const cheminClePrivee = process.env.IWF_TLS_KEY;
+  if (!HOTE_LAN || !cheminCertificat || !cheminClePrivee) {
+    console.error('');
+    console.error('  [ERREUR] Le mode LAN exige HTTPS. Renseignez :');
+    console.error('  IWF_HOTE_LAN, IWF_TLS_CERT et IWF_TLS_KEY.');
+    console.error('  Aucun serveur HTTP en clair ne sera ouvert sur le réseau.');
+    console.error('');
+    process.exit(1);
+  }
+  try {
+    OPTIONS_TLS = {
+      cert: fs.readFileSync(path.resolve(cheminCertificat)),
+      key: fs.readFileSync(path.resolve(cheminClePrivee)),
+      minVersion: 'TLSv1.2',
+    };
+  } catch (erreur) {
+    console.error('');
+    console.error('  [ERREUR] Certificat HTTPS du mode LAN illisible :', erreur.message);
+    console.error('');
+    process.exit(1);
+  }
+}
 
 // Racine des fichiers statiques = racine du dépôt (dossier parent de server/)
 const RACINE = path.resolve(__dirname, '..');
@@ -290,8 +322,18 @@ const HOTES_AUTORISES = new Set([
 if (LAN_ACTIF && HOTE_LAN) {
   HOTES_AUTORISES.add(`${HOTE_LAN}:${PORT}`);
 }
-const ORIGINES_AUTORISEES = new Set([...HOTES_AUTORISES]
-  .map((h) => `http://${h}`));
+// Les origines loopback restent en http:// (le poste local n'est pas passé
+// au TLS) ; l'origine LAN, elle, est NÉCESSAIREMENT https:// — un front servi
+// en HTTPS n'émettra jamais d'Origin http, et l'accepter rouvrirait la porte
+// à une page hostile servie en clair sur le réseau.
+const ORIGINES_AUTORISEES = new Set([
+  `http://127.0.0.1:${PORT}`,
+  `http://localhost:${PORT}`,
+  `http://[::1]:${PORT}`,
+]);
+if (LAN_ACTIF && HOTE_LAN) {
+  ORIGINES_AUTORISEES.add(`https://${HOTE_LAN}:${PORT}`);
+}
 
 /**
  * Garde anti-CSRF / anti-DNS-rebinding sur /api (revue sécurité E3, CONSERVÉE
@@ -575,9 +617,13 @@ function rediriger(reponse, cible) {
   reponse.end();
 }
 
-const serveur = http.createServer((requete, reponse) => {
+const traiterRequete = (requete, reponse) => {
+  if (LAN_ACTIF) {
+    reponse.setHeader('Strict-Transport-Security', 'max-age=31536000');
+  }
   // On ne garde que le chemin (sans la chaîne de requête ?a=b)
-  const url = new URL(requete.url, `http://${requete.headers.host || 'localhost'}`);
+  const protocole = LAN_ACTIF ? 'https' : 'http';
+  const url = new URL(requete.url, `${protocole}://${requete.headers.host || 'localhost'}`);
   const chemin = url.pathname;
 
   // Seules les lectures sont autorisées pour l'instant (squelette Phase E)
@@ -600,7 +646,11 @@ const serveur = http.createServer((requete, reponse) => {
   }
 
   traiterStatique(requete, reponse, chemin);
-});
+};
+
+const serveur = LAN_ACTIF
+  ? https.createServer(OPTIONS_TLS, traiterRequete)
+  : http.createServer(traiterRequete);
 
 /**
  * Détecte un `data/` sous OneDrive / « Mon Drive » (segment de chemin OU
@@ -768,10 +818,10 @@ preparerCoffreFort();
 serveur.listen(PORT, HOTE, () => {
   console.log('');
   console.log('  inerWeb Fluide v8 — serveur local démarré');
-  console.log(`  Application : http://localhost:${PORT}`);
+  console.log(`  Application : ${LAN_ACTIF ? `https://${HOTE}:${PORT}` : `http://localhost:${PORT}`}`);
   if (LAN_ACTIF && HOTE_LAN) {
-    console.log(`  Mode        : LAN (écoute sur ${HOTE}) — auth obligatoire`);
-    console.log(`  Réseau      : http://${HOTE}:${PORT} (accessible depuis le LAN du lycée)`);
+    console.log(`  Mode        : LAN HTTPS (écoute sur ${HOTE}) — auth obligatoire`);
+    console.log(`  Réseau      : https://${HOTE}:${PORT} (TLS obligatoire, accessible depuis le LAN du lycée)`);
   } else {
     console.log(`  Mode        : local (écoute limitée à ${HOTE})`);
   }
