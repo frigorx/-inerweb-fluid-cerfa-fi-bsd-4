@@ -172,12 +172,12 @@ function mouvementSoumis() {
     JSON.stringify(simLiee.blocages.map((b) => b.code)));
   verifier('simulation : base jetable sans archive → blocage SAUVEGARDE (condition 5)',
     simLiee.blocages.some((b) => b.code === 'SAUVEGARDE'));
-  // Brique C5 : le verrou de livraison est OUVERT — il ne doit PLUS
-  // apparaître dans la simulation (le mode Officiel est gouverné par les
-  // conditions réelles ; la mécanique du verrou reste testée par
+  // T1 (20/07) : le verrou de livraison est REFERMÉ (audit externe, le
+  // temps des P0) — il DOIT réapparaître dans la simulation (le mode
+  // Officiel est refermé ; la mécanique reste aussi testée par
   // test-blocage-officiel avec un cadre construit).
-  verifier('simulation : le verrou de livraison est OUVERT (absent des blocages)',
-    !simLiee.blocages.some((b) => b.code === 'VERROU_LIVRAISON'),
+  verifier('simulation : le verrou de livraison est REFERMÉ (présent dans les blocages)',
+    simLiee.blocages.some((b) => b.code === 'VERROU_LIVRAISON'),
     JSON.stringify(simLiee.blocages.map((b) => b.code)));
   verifier('simulation : intervenant non désigné → blocage INTERVENANT (condition 6)',
     simLiee.blocages.some((b) => b.code === 'INTERVENANT'),

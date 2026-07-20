@@ -342,10 +342,10 @@ await verifierRejet('createMachine refuse un client introuvable',
   store.createMachine({ designation: 'X', fluide: FLUIDE, chargeNominaleKg: 1,
     clientId: 'cli-fantome' }));
 // Blocage dur du mode OFFICIEL (lot B) : une demande OFFICIEL forgée via
-// l'API reste refusée avec le message canonique MOTIVÉ du moteur — brique
-// C5 : le verrou de livraison est OUVERT, ce sont les conditions RÉELLES
-// de l'établissement qui bloquent ce décor (parité demo/local — les
-// motifs de poste diffèrent, le début du message jamais).
+// l'API reste refusée avec le message canonique MOTIVÉ du moteur — T1
+// (20/07) : le verrou de livraison est REFERMÉ, le message le cite à
+// nouveau EN PLUS des conditions réelles de l'établissement (parité
+// demo/local — les motifs de poste diffèrent, le début du message jamais).
 await verifierRejet('creerMouvement refuse une demande en mode OFFICIEL (motivé)',
   store.creerMouvement({ type: 'CHARGE_APPOINT', mode: 'OFFICIEL' }),
   'Mode Officiel refusé');
@@ -354,9 +354,9 @@ await verifierRejet('creerMouvement refuse une demande en mode OFFICIEL (motivé
   try {
     await store.creerMouvement({ type: 'CHARGE_APPOINT', mode: 'OFFICIEL' });
   } catch (erreur) { messageRefusOff = erreur.message; }
-  verifier('le refus OFFICIEL ne cite PLUS le verrou de livraison (C5 : ouvert)',
+  verifier('le refus OFFICIEL cite le verrou de livraison (T1 : refermé)',
     messageRefusOff.startsWith('Mode Officiel refusé')
-    && !messageRefusOff.includes('pas encore ouvert'),
+    && messageRefusOff.includes('pas encore ouvert'),
     messageRefusOff);
 }
 
@@ -1631,11 +1631,12 @@ verifier('peutPasserEnOfficiel : { ok, motifs[] français }',
   typeof officiel.ok === 'boolean' && Array.isArray(officiel.motifs));
 
 // Lot B — simulation de validation OFFICIELLE (lecture, ne bloque jamais) :
-// forme du verdict, conditions de fiche signalées. Brique C5 : le verrou
-// de livraison est OUVERT — il ne doit PLUS apparaître (sa mécanique reste
-// prouvée par test-blocage-officiel avec un cadre construit). Les motifs
-// de POSTE (sauvegarde, session) sont propres au serveur : on n'affirme
-// ici que ce qui vaut pour les DEUX stores.
+// forme du verdict, conditions de fiche signalées. T1 (20/07) : le verrou
+// de livraison est REFERMÉ (audit externe, le temps des P0) — il DOIT
+// réapparaître dans la simulation (sa mécanique reste aussi prouvée par
+// test-blocage-officiel avec un cadre construit). Les motifs de POSTE
+// (sauvegarde, session) sont propres au serveur : on n'affirme ici que ce
+// qui vaut pour les DEUX stores.
 {
   const brouillonSim = await store.creerMouvement({
     type: 'CHARGE_APPOINT', machineId: machineA.id, fluide: FLUIDE,
@@ -1647,8 +1648,8 @@ verifier('peutPasserEnOfficiel : { ok, motifs[] français }',
     simulation.blocages.every((b) =>
       typeof b.code === 'string' && typeof b.motif === 'string'),
     JSON.stringify(simulation));
-  verifier('simulation : le verrou de livraison est OUVERT (absent des blocages)',
-    !simulation.blocages.some((b) => b.code === 'VERROU_LIVRAISON'),
+  verifier('simulation : le verrou de livraison est REFERMÉ (présent dans les blocages)',
+    simulation.blocages.some((b) => b.code === 'VERROU_LIVRAISON'),
     JSON.stringify(simulation.blocages.map((b) => b.code)));
   verifier('simulation : intervenant non désigné signalé (condition 6)',
     simulation.blocages.some((b) => b.code === 'INTERVENANT'));

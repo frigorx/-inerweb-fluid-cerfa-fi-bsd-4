@@ -2,6 +2,27 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔒 T1 (audit externe #2) — VERROU DE LIVRAISON REFERMÉ : le mode Officiel est de nouveau fermé (20/07)
+- Suite au 2ᵉ audit externe (`docs/AUDIT-INERWEB-FLUIDE-2026-07-20.md`) et au
+  choix de cible **« registre officiel unique »** (Franck, 20/07), le mode
+  Officiel est **refermé** le temps de traiter les priorités P0
+  (`docs/CONSTATS-AUDIT-EXTERNE-2026-07-20.md`, décision transverse T1).
+- **`VERROU_LIVRAISON = true`** dans les DEUX miroirs (`server/blocage-officiel.js`
+  + `v8/js/data/blocage-officiel.js`, nulle part ailleurs), **NON configurable
+  par l'environnement** (zéro flag — volontaire pour l'audit). Rebasculer à
+  `false` rouvre partout. Geste RÉVERSIBLE : la mécanique C1→C5 (signatures
+  réelles, empreinte v2, PDF final conservé, parcours UI) reste intacte.
+- Filet ajusté sans régression fonctionnelle : les 3 assertions écrites
+  « verrou ouvert » redeviennent « verrou fermé » (test-contrat : message de
+  refus + simulation ; test-validateur-session : simulation) ; la suite
+  `server/test-officiel-e2e.mjs` (parcours officiel de bout en bout, prouvée
+  verte le 19/07) est **gelée** par une garde en tête tant que le verrou est
+  fermé — code conservé INTACT, à rejouer à la réouverture après les P0.
+  **TOUT VERT — 85 exécutions.**
+- Effet de bord vertueux : README (« Mode Officiel : pas encore ») et
+  `docs/CONDITIONS-BLOCANTES-OFFICIEL.md` (« fermé ») redeviennent exacts —
+  une des incohérences du §9 de l'audit se résorbe d'elle-même.
+
 ### 📜 LOT E RGPD — brique E2e : LA DOCUMENTATION HONNÊTE — LE LOT E2 EST COMPLET (19/07 soir)
 - **`RGPD.md`** : durées réécrites en DEUX clauses honnêtes (« identité de la
   fiche : mise à l'abri chiffrée après la durée » / « écritures d'intervention :

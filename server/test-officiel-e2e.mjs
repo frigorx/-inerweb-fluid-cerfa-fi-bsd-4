@@ -37,6 +37,19 @@ const sauvegardeAuto = require('./sauvegarde-auto.js');
 
 import { creerLocalStore } from '../v8/js/data/local-store.js';
 import { genererDossierAudit } from '../v8/js/documents/dossier-audit.js';
+import { VERROU_LIVRAISON } from '../v8/js/data/blocage-officiel.js';
+
+// T1 (20/07/2026, audit externe #2) — SUITE GELÉE tant que le mode Officiel
+// est refermé. Ce parcours e2e n'est franchissable qu'avec le verrou OUVERT ;
+// il a été prouvé vert le 19/07 (brique C5). Le code est conservé INTACT et
+// sera rejoué à la réouverture, après les priorités P0 (qui réécrivent le
+// parcours officiel : createControle dans l'agrégat WORM, contrôle autonome
+// officiel, etc.). Voir docs/CONSTATS-AUDIT-EXTERNE-2026-07-20.md.
+if (VERROU_LIVRAISON) {
+  console.log('SUSPENDU — suite e2e officielle gelée : mode Officiel refermé '
+    + '(T1). À rejouer à la réouverture du verrou, après les P0.');
+  process.exit(0);
+}
 
 let nbOk = 0;
 let nbEchecs = 0;
