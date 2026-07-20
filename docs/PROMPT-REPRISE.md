@@ -24,12 +24,15 @@
 >   **P7-d2 ✅** (`f894cbc`) carte « Contrôle d'étanchéité » du wizard (parcours « sec », étapes 3-4
 >   sautées aller/retour, « Sans objet » retiré de l'étape 5) + chipType/quantité « — »/filtre
 >   CONTROLE dans les vues + VÉRIF NAVIGATEUR réelle complète (port statique jetable, mode démo).
->   **RESTE : P7-e** — tests d'acceptation (immuabilité WORM d'un mouvement CONTROLE validé,
->   contre-écriture, garde d'import « contrôle OFFICIEL orphelin sans mouvementId » consignée
->   en revue P7-c) ; la part « signatures/PDF officiels du parcours contrôle » va dans la suite
->   e2e GELÉE (rejouée à la réouverture). Plan = `docs/PLAN-P0-INTEGRITE-CONTROLES.md`.
->   Écart consigné (P7-d1) : l'échéance du contrôle ACCESSOIRE (charge+contrôle déclaré) n'est
->   toujours pas mise à jour (comportement historique) — à trancher avec Franck.
+>   **P7-e ✅** (`28d670b`) acceptation : garde `createControle` direct (mouvementId forgé REFUSÉ,
+>   fermait le « reste consigné » de l'audit) + garde d'import (contrôle OFFICIEL orphelin refusé,
+>   invariants des 2 stores) + acceptation contrat (écriture figée, contre-écriture seule correction,
+>   contrôle lié survit à l'annulation — consigné) ; part OFFICIELLE → consigne de réouverture en
+>   tête de la suite e2e GELÉE. **P0-7 (P7-a→e) : COMPLET.** Plan = `docs/PLAN-P0-INTEGRITE-CONTROLES.md`.
+>   Écarts consignés à trancher avec Franck (non bloquants, plan §7) : (a) l'annulation d'un mouvement
+>   CONTROLE ne neutralise pas les effets machine du contrôle lié (aligné sur l'accessoire, préexistant,
+>   à revoir avec P0-6) ; (b) l'échéance du contrôle ACCESSOIRE (charge+contrôle déclaré) n'est
+>   toujours pas mise à jour (comportement historique, P7-d1).
 >
 > **⭐ RC ChatGPT `8.1.0-rc.1` = SOURCE DE CODE** (zip sur le Bureau, SHA `e09ea34…`, intègre vérifié).
 > Travail RÉEL et large (contrat **v8** ≠ notre v7 ; ~1400 lignes de cœur api+demo ; module
@@ -39,12 +42,12 @@
 > on pioche la RC brique par brique RE-testée, JAMAIS d'import en bloc.** Plan = `docs/PLAN-INTEGRATION-RC-CHATGPT.md`.
 > Pour piocher : ré-extraire le zip + `diff` le fichier contre l'archive d'audit ou notre dépôt.
 >
-> **PROCHAINE BRIQUE (au choix Franck)** : soit **P7-e** (clore P7 : acceptation WORM + garde d'import
-> orphelin — la part officielle va dans la suite e2e gelée), soit les **briques AUTONOMES de la RC** —
-> P1-5 HTTPS LAN (`server/serveur.js`), P2-3 scrypt N=2^17 (`server/comptes.js`), P1-6 anti-OneDrive —
-> faciles, sans conflit avec P7. Puis grosses briques métier reprises de la RC : P0-3/4 cycle matière,
-> P0-5 aptitude (`droit-intervention.js` + frontières 3/6 kg), P0-6 fuite (24 h/1 mois), P0-8
-> déclaration 11 rubriques. **Hors code** : P0-9 (révocation clés v7), RGPD (notice/durées/DPD).
+> **PROCHAINE BRIQUE (au choix Franck)** : les **briques AUTONOMES de la RC** — P1-5 HTTPS LAN
+> (`server/serveur.js`), P2-3 scrypt N=2^17 (`server/comptes.js`), P1-6 anti-OneDrive — faciles,
+> sans conflit. Puis grosses briques métier reprises de la RC : P0-3/4 cycle matière, P0-5 aptitude
+> (`droit-intervention.js` + frontières 3/6 kg), P0-6 fuite (24 h/1 mois — reprendra aussi l'écart
+> consigné « effets machine d'un contrôle annulé »), P0-8 déclaration 11 rubriques. **Hors code** :
+> P0-9 (révocation clés v7), RGPD (notice/durées/DPD).
 >
 > **Décisions transverses en attente** : **T2** R-455A 148→146 (la RC a gardé 148 ; à re-trancher pour
 > la cible officielle) · **T3** relecture organisme agréé + DPD (délai long).
