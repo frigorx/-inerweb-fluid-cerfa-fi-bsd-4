@@ -22,17 +22,33 @@
 // à la DERNIÈRE fuite de l'épisode :
 //  - pas de réparation tracée → OUVERTE (un CONFORME seul ne
 //    referme JAMAIS — garde anti-contournement R3c) ;
-//  - réparation tracée sans CONFORME postérieur → REPAREE, avec
-//    échéance de contrôle de suivi à 30 jours (R4) ;
-//  - réparation tracée + CONFORME dont la date est à la fois
-//    >= date de réparation et >= date de la fuite → FERMEE.
-//    Les dates étant au JOUR, à date ÉGALE le contrôle est réputé
-//    postérieur à la réparation (déroulé terrain : on répare puis
-//    on reteste dans la foulée).
+//  - réparation tracée sans CONFORME de clôture → REPAREE, avec
+//    échéance de contrôle de suivi à 1 MOIS CIVIL (P0-6) ;
+//  - réparation tracée + CONFORME STRICTEMENT postérieur AU JOUR de
+//    la réparation (et >= jour de la fuite) → FERMEE.
+//    P0-6 (audit 20/07, décision Franck 22/07) : le texte impose le
+//    contrôle de suivi AU PLUS TÔT après 24 h de fonctionnement —
+//    les dates métier étant au JOUR, J+1 est le proxy assumé ; la
+//    clôture « le jour même » (ancienne convention R4) ne vaut plus
+//    QUE pour un équipement MOBILE listé (exception réglementaire,
+//    consignée au dossier).
 // ============================================================
 
-/** Même délai réglementaire de suivi que les deux stores (R4). */
-export const DELAI_CONTROLE_SUIVI_JOURS = 30;
+/**
+ * Échéance du contrôle de suivi = réparation + 1 MOIS CIVIL (P0-6, au
+ * lieu des +30 jours calendaires d'origine). Débordement de fin de mois
+ * ramené au dernier jour du mois cible (31/01 → 28-29/02). COPIE
+ * LITTÉRALE d'`ajouterMois(iso, 1)` des deux stores — même arithmétique,
+ * ne jamais toucher l'un sans les autres.
+ */
+export function ajouterUnMoisCivil(iso) {
+  const [annee, mois, jour] = iso.split('-').map(Number);
+  const d = new Date(annee, mois, jour);
+  if (d.getDate() !== jour) d.setDate(0);
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const j = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${j}`;
+}
 
 /** Libellés français des statuts d'un dossier de fuite. */
 export const LIBELLES_STATUT_FUITE = {
@@ -53,13 +69,6 @@ const LIBELLES_TYPE_MOUVEMENT = {
 /** Forme attendue d'une date métier (jour). */
 const DATE_JOUR = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Date ISO (jour) décalée de `n` jours — sans dépendre du fuseau. */
-function ajouterJours(dateISO, n) {
-  const [a, m, j] = String(dateISO).slice(0, 10).split('-').map(Number);
-  const d = new Date(Date.UTC(a, m - 1, j + n));
-  return d.toISOString().slice(0, 10);
-}
-
 /**
  * Nombre de jours entiers entre deux dates ISO (jour) — null si
  * l'une des dates est inexploitable (donnée corrompue : le dossier
@@ -76,15 +85,20 @@ function ecartJours(debutISO, finISO) {
 
 /**
  * Premier contrôle CONFORME refermant une fuite donnée — même règle
- * que estFuiteOuverte : postérieur À LA FOIS à la réparation tracée
- * et au jour de la fuite (à date égale, le contrôle est réputé
- * postérieur). null si la fuite n'est pas réparée ou pas recontrôlée.
+ * que estFuiteOuverte : STRICTEMENT postérieur au jour de la
+ * réparation tracée (P0-6, proxy des 24 h de fonctionnement — J+1
+ * minimum, dates au jour) et au moins du jour de la fuite (jamais un
+ * conforme antérieur). Pour un équipement MOBILE listé (`machineMobile`),
+ * le contrôle immédiat est admis : le jour même suffit (exception
+ * réglementaire). null si la fuite n'est pas réparée ou pas recontrôlée.
  */
-function chercherCloture(fuite, controlesMachine) {
+function chercherCloture(fuite, controlesMachine, machineMobile = false) {
   if (!fuite.dateReparation) return null;
   const candidats = controlesMachine
     .filter((c) => c.resultat === 'CONFORME'
-      && c.date >= fuite.dateReparation
+      && (machineMobile
+        ? c.date >= fuite.dateReparation
+        : c.date > fuite.dateReparation)
       && c.date >= fuite.date)
     .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   return candidats[0] ?? null;
@@ -137,9 +151,17 @@ function evenementMouvement(mouvement) {
   };
 }
 
+/**
+ * Équipement MOBILE listé (exception P0-6 : contrôle immédiat admis).
+ * Absence de valeur = FIXE (défaut conservateur, jamais laxiste).
+ */
+export function estMachineMobile(machine) {
+  return machine?.typeInstallation === 'MOBILE';
+}
+
 /** Construit UN dossier depuis un ÉPISODE (groupe de contrôles FUITE). */
 function construireDossier(groupe, controlesMachine,
-  mouvementsMachine, aujourdhui) {
+  mouvementsMachine, aujourdhui, machineMobile = false) {
   const detection = groupe[0];
   const derniereFuite = groupe[groupe.length - 1];
 
@@ -155,7 +177,8 @@ function construireDossier(groupe, controlesMachine,
     }
     : null;
 
-  const clotureBrute = chercherCloture(derniereFuite, controlesMachine);
+  const clotureBrute = chercherCloture(derniereFuite, controlesMachine,
+    machineMobile);
   const controleCloture = clotureBrute
     ? {
       id: clotureBrute.id, date: clotureBrute.date,
@@ -170,9 +193,28 @@ function construireDossier(groupe, controlesMachine,
   // doit pas faire planter tout le dossier (l'échéance manque, c'est tout).
   const echeanceControleSuivi =
     (statut === 'REPAREE' && DATE_JOUR.test(String(reparation.date)))
-      ? ajouterJours(reparation.date, DELAI_CONTROLE_SUIVI_JOURS)
+      ? ajouterUnMoisCivil(reparation.date)
       : null;
   const dateFermeture = controleCloture ? controleCloture.date : null;
+
+  // P0-6 (décision G3) : une clôture AU-DELÀ de l'échéance d'1 mois civil
+  // reste acceptée (on n'empêche jamais d'enregistrer la réalité) mais le
+  // RETARD est CONSIGNÉ au dossier — non-conformité tracée, visible sur la
+  // fiche du dossier et dans l'export ZIP scellé.
+  const echeanceTheorique =
+    (reparation && DATE_JOUR.test(String(reparation.date)))
+      ? ajouterUnMoisCivil(reparation.date)
+      : null;
+  const clotureEnRetard = Boolean(dateFermeture && echeanceTheorique
+    && dateFermeture > echeanceTheorique);
+  const retardClotureJours = clotureEnRetard
+    ? ecartJours(echeanceTheorique, dateFermeture)
+    : null;
+  // P0-6 (G4) : MOTIF DE PÉRIMÈTRE consigné — la clôture du JOUR MÊME de
+  // la réparation n'est admise qu'au titre de l'exception « équipement
+  // mobile listé » ; le dossier le dit explicitement (fiche + ZIP scellé).
+  const exceptionMobile = Boolean(machineMobile && dateFermeture
+    && reparation && dateFermeture === reparation.date);
 
   // Fenêtre du dossier : de la détection à la fermeture (bornes
   // incluses), ou jusqu'à aujourd'hui tant que le dossier est ouvert.
@@ -279,6 +321,9 @@ function construireDossier(groupe, controlesMachine,
     echeanceControleSuivi,
     suiviEnRetard: Boolean(echeanceControleSuivi
       && aujourdhui > echeanceControleSuivi),
+    clotureEnRetard,
+    retardClotureJours,
+    exceptionMobile,
     dateFermeture,
     dureeJours: ecartJours(detection.date, dateFermeture ?? aujourdhui),
     mouvementsPendantFuite,
@@ -305,8 +350,16 @@ export function construireDossiersFuite(
   const jour = (aujourdhui ?? new Date().toISOString().slice(0, 10))
     .slice(0, 10);
 
+  const mobile = estMachineMobile(machine);
+  // P0-6 : un contrôle né d'un mouvement ANNULÉ est réputé annulé avec
+  // lui (fait dérivé — même règle que les stores) : il ne fonde ni ne
+  // referme aucun dossier. Un contrôle autonome (sans mouvementId) reste
+  // toujours actif. Les ZIP déjà exportés restent des instantanés valides.
+  const idsMouvementsAnnules = new Set((mouvements ?? [])
+    .filter((mv) => mv.statut === 'ANNULE').map((mv) => mv.id));
   const controlesMachine = (controles ?? [])
-    .filter((c) => c.machineId === machine.id);
+    .filter((c) => c.machineId === machine.id
+      && !(c.mouvementId && idsMouvementsAnnules.has(c.mouvementId)));
   const mouvementsMachine = (mouvements ?? [])
     .filter((mv) => mv.machineId === machine.id);
 
@@ -323,7 +376,7 @@ export function construireDossiersFuite(
     const groupe = groupes[groupes.length - 1];
     if (groupe) {
       const cloture = chercherCloture(
-        groupe[groupe.length - 1], controlesMachine);
+        groupe[groupe.length - 1], controlesMachine, mobile);
       if (!cloture || cloture.date > fuite.date) {
         groupe.push(fuite);
         continue;
@@ -334,7 +387,7 @@ export function construireDossiersFuite(
 
   const dossiers = groupes
     .map((g) => construireDossier(
-      g, controlesMachine, mouvementsMachine, jour))
+      g, controlesMachine, mouvementsMachine, jour, mobile))
     .sort((a, b) => (a.dateDetection < b.dateDetection ? 1
       : a.dateDetection > b.dateDetection ? -1 : 0));
 

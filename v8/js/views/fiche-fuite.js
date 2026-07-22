@@ -169,8 +169,16 @@ function blocSynthese(dossier) {
 
   const cloture =
     '<div><div class="fiche-detail-libelle">Clôture</div>'
-    + '<div class="fiche-detail-valeur">'
+    + '<div class="fiche-detail-valeur' + (dossier.clotureEnRetard ? ' df-retard' : '') + '">'
     + (dossier.dateFermeture ? esc(fmtDate(dossier.dateFermeture)) : 'En attente')
+    + (dossier.clotureEnRetard
+      ? ' — clôturée en retard (' + dossier.retardClotureJours
+        + ' jour' + (dossier.retardClotureJours > 1 ? 's' : '')
+        + ' après l’échéance)'
+      : '')
+    + (dossier.exceptionMobile
+      ? ' — clôture immédiate admise (équipement mobile listé)'
+      : '')
     + '</div></div>'
     + '<div><div class="fiche-detail-libelle">Échéance du contrôle de suivi</div>' + echeanceHtml + '</div>'
     + ligneDetail('Durée du dossier', dossier.dureeJours + ' jour' + (Math.abs(dossier.dureeJours) > 1 ? 's' : ''));

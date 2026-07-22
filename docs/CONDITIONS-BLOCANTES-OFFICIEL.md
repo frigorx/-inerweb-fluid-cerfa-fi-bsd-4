@@ -37,15 +37,18 @@ La **simulation de validation** évalue tout (niveau V) sans rien bloquer.
 | 13 | VERROU DE LIVRAISON : double signature réelle (condition 3) et empreinte renforcée + PDF conservé (condition 4) non livrées → le mode Officiel reste fermé | P·S·V |
 | 14 | Signature RÉELLE du technicien présente et NON périmée — toute modification de la fiche après signature (champ, PJ, rejet) rend la signature périmée : « recommencez les signatures », jamais ignorée *(ajoutée par le lot C, brique C1, comme annoncé ci-dessous)* | V |
 | 15 | Signature RÉELLE du détenteur présente et NON périmée, posée APRÈS celle du technicien (même révision) — au lycée le professeur signe détenteur PAR DÉLÉGATION (décision Franck 16/07, même personne autorisée) *(lot C, brique C1)* | V |
+| 16 | APTITUDE OPPOSABLE : l'habilitation de l'intervenant COUVRE cette intervention — matrice catégorie × opération × famille de fluide × charge NOMINALE de la machine (moteur `verifierDroitIntervention`, fait `intervenant.aptitude` précalculé par les stores) ; une attestation 2008 ne compte plus après le 31/12/2026 (`habilitationReconnue`, appliquée aussi à la n° 7) ; jamais posée en doublon de la n° 7 ; une réserve non bloquante du moteur (gravité CONSEIL) ne bloque JAMAIS *(P0-5, 22/07 — code `APTITUDE_PORTEE`)* | S·V |
 
 ## Points gatés / arbitrages proposés (à confirmer en relisant)
 
-- **n° 7 — correspondance fine aptitude ↔ intervention** : le plan exige « aptitude
-  correspondant au type d'intervention ». La matrice catégorie ↔ opération ↔ fluide ↔ charge
-  (`SPEC-HABILITATIONS.md` §2, moteur `verifierDroitIntervention`) est un **brouillon que tu
-  n'as pas encore validé** — règle absolue : rien de nouveau sans ta validation. Le lot B
-  bloque donc sur « habilitation active et valide » (données existantes) ; la correspondance
-  fine sera branchée au même endroit dès que tu valides la matrice (avant l'ouverture réelle).
+- **n° 7 — correspondance fine aptitude ↔ intervention** : **BRANCHÉE le 22/07 (P0-5,
+  condition n° 16 ci-dessus)**, comme prévu « au même endroit ». La matrice appliquée est
+  celle de `SPEC-HABILITATIONS.md` §2 (validée fonctionnellement le 14/07, cas
+  Bachir/Pierre), corrigée des deux erreurs relevées par l'audit du 20/07 : frontières
+  STRICTES (< 3 kg / < 6 kg — 3,000 pile refusé) et ancienne cat. II limitée. ⚠️ Reste à
+  RE-confirmer sur pièce par Franck avant la réouverture de l'Officiel (couvert par le
+  verrou n° 13) : les seuils 3/6 kg et la limite de la cat. II — voir
+  `docs/PLAN-P0-5-APTITUDE.md` (décisions D1-D5).
 - **n° 10 — dérogation** : l'avis Q10 prévoit un blocage AVEC dérogation tracée. Proposition
   lot B : blocage sec (protecteur) ; le mécanisme de dérogation tracée sera ajouté si un cas
   réel l'exige (lycée : improbable).

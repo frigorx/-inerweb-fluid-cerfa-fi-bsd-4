@@ -100,6 +100,17 @@ function evaluerBlocagesOfficiel(cadre) {
           'Aucune habilitation F-Gas active et en cours de validité pour ' +
           `${fiche.intervenant.nom}.`);
       }
+      // 16 — aptitude opposable (P0-5) : l'habilitation COUVRE cette
+      // intervention (catégorie × opération × fluide × charge, moteur
+      // d'aptitude — fait précalculé par le store, absent = sans objet).
+      // Jamais en doublon de la 7 : sans habilitation, elle seule parle.
+      if (fiche.intervenant.habilitationActive &&
+          fiche.intervenant.aptitude &&
+          fiche.intervenant.aptitude.autorise === false) {
+        poser('APTITUDE_PORTEE',
+          `Habilitation de ${fiche.intervenant.nom} inadaptée à cette ` +
+          `intervention : ${fiche.intervenant.aptitude.motif}.`);
+      }
     }
 
     // 9 — contrôle d'étanchéité exigé (machine soumise OU fluide inflammable).

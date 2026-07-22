@@ -2,6 +2,166 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧱 P0-6 — CYCLE FUITE (22/07, CF-1→CF-6, plan docs/PLAN-P0-6-CYCLE-FUITE.md)
+- **Le constat critique de l'audit du 20/07 est soldé** : le contrôle après
+  réparation était clôturable LE JOUR MÊME (convention R4 « à date égale, le
+  contrôle est réputé postérieur ») avec une échéance à +30 jours calendaires.
+  La règle : au plus tôt après **24 h de fonctionnement**, au plus tard
+  **1 mois civil**, exception « équipements mobiles listés ». Décisions G1-G6
+  arbitrées par Franck AVANT code (dont G1 qui REVIENT sur sa convention R4,
+  et G4 : le champ machine FIXE/MOBILE ajouté MAINTENANT, pas différé à P1-1).
+- **CF-1 — clôture stricte J+1 (G1)** : le CONFORME de clôture doit être
+  STRICTEMENT postérieur AU JOUR de la réparation (dates métier au jour →
+  J+1 = proxy assumé des 24 h ; compteur de marche consigné hors périmètre).
+  Un CONFORME du jour même reste ENREGISTRABLE mais ne referme rien (machine
+  en FUITE, alerte maintenue) — le « refusé » de l'audit porte sur la valeur
+  de clôture, pas sur l'enregistrement (G6 : AUCUNE nouvelle condition de
+  blocage Officiel). Retour EN_SERVICE aligné sur la clôture complète via
+  `estFuiteOuverte` rejouée (G2, source de vérité unique, plus de condition
+  ad hoc). Module pur + 2 stores, 4 sites d'appel par store.
+- **CF-2 — échéance de suivi = 1 MOIS CIVIL** : `ajouterMois(date, 1)`
+  existant des 2 stores (écrêtage fin de mois : 31/01 → 28-29/02) remplace
+  `ajouterJours(..., 30)` ; constante `DELAI_CONTROLE_SUIVI_JOURS` supprimée ;
+  copie littérale `ajouterUnMoisCivil` exportée par le module pur.
+- **CF-3 — clôture tardive CONSIGNÉE, jamais bloquée (G3)** : un CONFORME
+  au-delà de l'échéance ferme quand même l'épisode (on n'empêche jamais
+  d'enregistrer la réalité) ; nouveaux faits `clotureEnRetard` /
+  `retardClotureJours` au dossier, visibles fiche fuite + export ZIP scellé.
+- **CF-4 — machines FIXE/MOBILE (G4, migration 27)** :
+  `machines.type_installation` ('FIXE'/'MOBILE', DEFAULT FIXE = backfill
+  conservateur ; nom compatible P1-1 qui ajoutera le sous-type à part).
+  mapping + createMachine/updateMachine des 2 stores (garde de valeur) +
+  sélecteur machine-form. Un MOBILE listé est admis au contrôle immédiat
+  (fuite + réparation + CONFORME le même jour → EN_SERVICE) — les 4 cas
+  d'acceptation de l'audit §11 sont TOUS exécutables et prouvés.
+- **CF-5 — un contrôle ANNULÉ perd ses effets machine (G5, écart P0-7 §7(a)
+  SOLDÉ)** : un contrôle FUITE annulé laissait la machine en FUITE à jamais.
+  Contrôle annulé = fait DÉRIVÉ (son mouvement porteur est ANNULE — aucune
+  écriture sur `controles`, aucune migration, empreintes indifférentes ; un
+  contrôle autonome reste toujours actif). Lectures de fuite sur les
+  contrôles ACTIFS (demo : `controlesActifsDeLaMachine` ; serveur :
+  `controlesDeLaMachine` en LEFT JOIN ; module pur : filtre en tête — une
+  clôture annulée ROUVRE le dossier réparé, une fuite annulée ne fonde plus
+  rien, les ZIP déjà exportés restent des instantanés valides) +
+  `recalculerEffetsMachineApresAnnulation` (miroir 2 stores) en fin
+  d'`appliquerEffetsInverses` : dernierControle/prochainControle recalculés
+  des actifs restants (échéance antérieure au premier contrôle
+  inconnaissable : laissée en l'état, limite consignée), statut recalculé
+  (jamais pour ARRETEE/DEMANTELEE). L'écart §7(b) (échéance du contrôle
+  accessoire) RESTE consigné.
+- **Tests** : test-dossiers-fuite 46 → 61 vérifs (jour même/J+1/mobile +
+  motif de périmètre, mois civil + bissextile, retard de clôture consigné,
+  annulés/autonome) · test-contrat 345 → 364 vérifs DOUBLÉES demo/local
+  (jour même → reste FUITE + alerte de suivi, J+1 → EN_SERVICE, mobile
+  immédiat, FIXE défaut/garde, FUITE annulée → EN_SERVICE, clôture annulée
+  → la fuite réparée réapparaît, gardes de date, import miroir) ·
+  test-registre, lot1 et scénarios re-datés explicitement.
+  **TOUT VERT — 92 exécutions.**
+- **Revue adversariale du lot (1 agent) : 0 bloquant, 4 importants CORRIGÉS,
+  5 mineurs (2 corrigés, 3 consignés).** ① I-1 (le plus sérieux, PROUVÉ par
+  exécution) : la clôture stricte J+1 se contournait par la DATE DE
+  RÉPARATION non gardée (réparation antidatée d'hier → clôture le jour même
+  de la détection ; réparation future acceptée ; date de contrôle au format
+  HORAIRE « strictement postérieure » au jour même). Correctif miroir 2
+  stores : `tracerReparation` exige le format jour, refuse une réparation
+  antérieure au contrôle FUITE ou future ; `enregistrerControle` refuse une
+  date de contrôle hors format jour. ② I-2 : archive avec `typeInstallation`
+  hors grille — la démo l'acceptait EN SILENCE, le serveur levait un CHECK
+  SQL brut (divergence) ; invariant d'import miroir ajouté (message
+  français identique). ③ I-3 : le MOTIF DE PÉRIMÈTRE promis par le plan
+  (G4) n'était pas consigné — fait `exceptionMobile` au dossier (clôture
+  immédiate admise au titre de l'exception mobile), visible fiche + ZIP.
+  ④ I-4 : la vue Contrôles affichait un contrôle annulé sans marque et
+  proposait encore « Tracer réparation » — chip « Annulé (contre-écriture) »,
+  action masquée, ET refus du store (miroir) sur un contrôle annulé.
+  Mineurs corrigés : compte du CHANGELOG (46, pas 47) · 5ᵉ site serveur
+  (photo nominative) aligné sur le drapeau mobile du miroir. Consignés sans
+  code : tri non total à dates égales (clôture retenue dépendante de l'ordre
+  d'entrée — audit I8, déjà ouvert) · contre-annulation d'une annulation
+  acceptée mais asymétrique (suggestion : la refuser, à trancher) ·
+  échéance fantôme après annulation du seul contrôle porteur (limite G5
+  documentée ; la nuller serait plus juste, à trancher).
+- **Hors périmètre consigné** : compteur/horodatage de fonctionnement réel
+  (24 h à l'heure près) · sous-type mobile et reste du modèle P1-1 ·
+  exploitation du type `APRES_REPARATION` et de `controle_apres_reparation_id`
+  (chaînage explicite du contrôle de suivi) · écart P0-7 §7(b).
+
+### 🧱 P0-5 — APTITUDE OPPOSABLE (22/07, AP-1→AP-5, plan docs/PLAN-P0-5-APTITUDE.md)
+- **L'écart métier n° 2 de l'audit du 20/07 est soldé** : le mode Officiel ne
+  vérifiait que « au moins une habilitation active » (condition 7) — un cat. E
+  (étanchéité seule) passait devant une charge, un D (récupération seule) devant
+  une mise en service. La matrice du moteur d'aptitude (validée fonctionnellement
+  le 14/07, cas Bachir/Pierre) est désormais OPPOSABLE : **condition 16
+  `APTITUDE_PORTEE`** (S·V), « Habilitation de {nom} inadaptée à cette
+  intervention : {motif du moteur} ». Le zip RC n'étant pas disponible dans la
+  session, le moteur branché est LE NÔTRE (déjà testé), corrigé des deux erreurs
+  relevées par l'audit — pas le `droit-intervention.js` de la RC (non testé).
+- **AP-1 — frontières STRICTES** : le texte dit charge « INFÉRIEURE À » 3 kg
+  (6 kg hermétique scellé) ; les comparateurs inclusifs acceptaient 3,000 et
+  6,000 kg PILE, exactement hors couverture (cas existants à 2/5/8/10 kg).
+  Corrigé (`<`/`>=`) + tests frontière 2,999/3/5,999/6. Au passage, trou
+  `MAP_OPERATION` : les types `CONTROLE_PERIODIQUE`/`CONTROLE_NON_PERIODIQUE`
+  (P7-a) retombaient en MAINTENANCE — faux REFUS de conseil pour un cat. E sur
+  un contrôle, sa seule prérogative ; mappés ETANCHEITE.
+- **AP-2 — ancienne cat. II limitée** (< 3 kg, < 6 kg hermétique scellé
+  étiqueté) : elle était modélisée SANS limite, comme la I. ⚠️ Valeur issue du
+  plan de correction adopté — à RE-confirmer sur pièce par Franck avant
+  réouverture de l'Officiel (verrou T1 couvre ; décisions D1-D5 au plan).
+- **AP-3 — miroir serveur `server/droit-intervention.js`** (patron
+  signatures-mouvement : module CJS autonome, PAS de recopie dans api.js) +
+  suite `test-droit-intervention` : parité stricte par JSON (verdicts ET
+  messages) sur 125 entrées discriminantes. Nouveaux purs côté ESM :
+  `FIN_RECONNAISSANCE_2008` ('2026-12-31', valeur déjà en SPEC §1) et
+  `habilitationReconnue(h, dateReference)`.
+- **AP-4 — le fait et le blocage** : les deux `cadreFicheOfficiel` calculent
+  `intervenant.aptitude = null | { autorise, motif }` (habilitations RECONNUES —
+  une 2008 ne compte plus après le 31/12/2026, appliqué aussi au fait
+  `habilitationActive` — + mentions actives, opération = type du mouvement,
+  fluide du mouvement, charge NOMINALE de la machine — celle des seuils —,
+  garde stricte anti-null, hermétique=false tant que la fiche machine ne porte
+  pas le champ, P1-1). Condition 16 posée SEULEMENT si `habilitationActive` ET
+  `autorise === false` : jamais en doublon de la 7, fait absent = sans objet
+  (rétro-compatible), gravité CONSEIL ne bloque JAMAIS. Aucune migration,
+  `VERSION_CONTRAT` inchangée, filtres en JS des deux côtés (parité au
+  caractère près).
+- **AP-5 — semis démo pérenne** : M. Delorme reçoit une habilitation 2025 (A1)
+  à échéance RELATIVE (`jourDemo`) — même principe que les étalonnages (« un
+  exemplaire reconnu toujours ») : la démo reste praticable en Officiel simulé
+  après le 31/12/2026 ; Sophie Bianchi garde sa cat. I seule (cas pédagogique
+  de la transition). Fiche personnel alignée (`categorie2025: 'A1'`).
+- **Tests** : test-habilitations-moteur 44 → 64 · test-blocage-officiel 33 → 42
+  (+ 6 cadres de parité) · test-contrat +7 vérifs DOUBLÉES demo/local (14 au
+  total) via
+  `simulerValidationOfficielle` (cas d'acceptation de l'audit §11 : E + charge
+  → refus, D + appoint → refus, A2 sur machine 5 kg → refus, A1 → rien — la
+  parité des deux assembleurs casse à la moindre divergence) ·
+  test-droit-intervention (nouvelle suite) · test-demo-store adapté (3
+  habilitations). Aucune surface d'écran nouvelle : le motif s'affiche par le
+  panneau de simulation existant. **TOUT VERT — 92 exécutions.**
+- **Hors périmètre consigné** : cycle de remise à niveau (12/03/2029 puis ≤ 7
+  ans — aucun modèle de données, chantier dédié) · champ machine « hermétique
+  scellé étiqueté » (P1-1) · alignement du CONSEIL sur `habilitationReconnue`
+  (divergence indicative possible après le 01/01/2027, à revoir avec P1-1).
+- **Revue adversariale du lot (1 agent) : 0 bloquant, 2 importants CORRIGÉS,
+  2 mineurs consignés.** ① IMPORTANT corrigé : la fiche personnel validait
+  `categorie2025` contre la grille 2008 (I…IV) — le semis « A1 » était donc
+  REFUSÉ par les propres mutations des stores (import plus permissif que
+  create/update, message mensonger) et le sélecteur 2025 du formulaire
+  n'offrait pas A1…V (un enregistrement effaçait la valeur EN SILENCE).
+  Correctif : grille PAR CHAMP (`verifierCategorie` 3ᵉ param, 2 stores à
+  l'identique), sélecteurs du formulaire par régime, valeur héritée hors
+  grille PRÉSERVÉE à l'écran (doctrine CM-3 : l'écran ne ment pas, le store
+  refuse tant que non corrigée consciemment) ; test-contrat +3 vérifs
+  doublées (A1 accepté, grilles croisées refusées). ② IMPORTANT corrigé :
+  deux chiffres du présent CHANGELOG (+7 et 125, pas +9 et ~130).
+  Mineurs consignés SANS code : une charge non numérique (NaN) est jugée
+  différemment en synthèse (REFUS) et en opération (CONSEIL) — identique
+  dans les deux miroirs, inatteignable depuis les stores (garde stricte),
+  à normaliser en tête de moteur si un appelant direct apparaît ·
+  `habilitationReconnue` accepte une ligne sans `regime` (motif « fluide
+  hors champ » trompeur) — inatteignable, l'intégrité est imposée à la
+  création et à l'import.
+
 ### 🎭 Monde démo — dates d'étalonnage RELATIVES (22/07, demande Franck)
 - **Le monde fictif pourrissait** : ses dates FIGÉES ont vieilli au point que les DEUX
   détecteurs étaient expirés (et la pompe à 2 jours de l'être) — plus aucun parcours ne se

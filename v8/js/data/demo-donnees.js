@@ -536,7 +536,7 @@ export const DEMO = {
       dateObtention: '2024-03-15',
       dateFinValidite: '2027-03-14',
       categorie2008: 'I',
-      categorie2025: 'I',
+      categorie2025: 'A1',
       activitesAutorisees: ['MISE_EN_SERVICE', 'MAINTENANCE', 'CONTROLE',
         'RECUPERATION', 'DEMANTELEMENT'],
       actif: true,
@@ -553,7 +553,7 @@ export const DEMO = {
       dateObtention: '2023-09-01',
       dateFinValidite: '2028-08-31',
       categorie2008: 'I',
-      categorie2025: 'I',
+      categorie2025: null,
       activitesAutorisees: ['MISE_EN_SERVICE', 'MAINTENANCE', 'CONTROLE',
         'RECUPERATION'],
       actif: true,
@@ -614,6 +614,24 @@ export const DEMO = {
       organismeDelivreur: 'QualiFroid Cert',
       dateDebut: '2024-03-15',
       dateFin: '2027-03-14',
+      actif: true,
+      dateRevocation: null
+    },
+    {
+      // P0-5 : le professeur est passé au régime 2025 (A1) — les 2008 ne
+      // sont plus reconnues après le 31/12/2026 (habilitationReconnue) et
+      // la démo doit rester praticable en Officiel simulé quelle que soit
+      // la date. Même principe que les étalonnages : TOUJOURS un
+      // exemplaire reconnu, échéance RELATIVE (jourDemo). Sophie Bianchi
+      // garde son ancienne cat. I seule : cas pédagogique de la transition.
+      id: 'hab-demo-fh-2025',
+      personneId: 'per-fh',
+      regime: '2025',
+      categorie: 'A1',
+      numeroAttestation: 'AAF-A1-2026-0208',
+      organismeDelivreur: 'QualiFroid Cert',
+      dateDebut: jourDemo(-45),
+      dateFin: jourDemo(1780),
       actif: true,
       dateRevocation: null
     },

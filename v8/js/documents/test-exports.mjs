@@ -77,8 +77,8 @@ verifier('personnel.csv : 4 personnes + en-tête = 5 lignes',
 // Habilitations / mentions (chantier B2) : le monde de démo en SÈME
 // désormais (réserve B2, 14/07) — le CSV les porte avec le NOM RÉSOLU
 // de la personne (jamais un id brut), révoquées comprises et datées.
-verifier('habilitations.csv : les 2 habilitations semées, noms résolus',
-  lignesDe(parNom.get('habilitations.csv')).length === 3
+verifier('habilitations.csv : les 3 habilitations semées (P0-5 : + A1 2025), noms résolus',
+  lignesDe(parNom.get('habilitations.csv')).length === 4
   && parNom.get('habilitations.csv').includes('Marc Delorme')
   && !parNom.get('habilitations.csv').includes('per-fh'));
 verifier('mentions-habilitation.csv : les 2 mentions semées (dont la révoquée)',

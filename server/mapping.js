@@ -183,6 +183,9 @@ const TABLES = {
       dernierControle: 'date_dernier_controle',
       prochainControle: 'date_prochain_controle',
       statut: 'statut',
+      // type_installation (migration 27, P0-6) : FIXE/MOBILE — un mobile
+      // listé est admis au contrôle immédiat après réparation.
+      typeInstallation: 'type_installation',
       // code_public (migration 003 + backfill 006, V9.1) : généré à la
       // création (createMachine), jamais dans la liste CHAMPS d'updateMachine
       // — intouchable en pratique, comme code_interne.
@@ -346,7 +349,7 @@ const TABLES = {
       reparationImmediate: 'reparation_immediate',
       // R4 : échéance ANNONCÉE au moment de la fuite (posée par
       // enregistrerControle) — lisible côté front pour calculer/afficher
-      // le délai de 30 jours du contrôle de suivi après réparation tracée.
+      // le délai du contrôle de suivi après réparation tracée (1 mois civil, P0-6).
       dateReparationPrevue: 'date_reparation_prevue',
       // R3/R4 (migration 8) : réparation TRACÉE a posteriori (tracerReparation),
       // distincte de dateReparationPrevue ci-dessus (échéance annoncée).

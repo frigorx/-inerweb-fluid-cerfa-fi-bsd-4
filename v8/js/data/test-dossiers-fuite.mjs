@@ -22,7 +22,7 @@
 
 import {
   construireDossiersFuite, construireDossierFuite,
-  DELAI_CONTROLE_SUIVI_JOURS, LIBELLES_STATUT_FUITE
+  ajouterUnMoisCivil, LIBELLES_STATUT_FUITE
 } from './dossiers-fuite.js';
 
 const NOM_STORE = process.argv[2] ?? 'demo';
@@ -130,19 +130,111 @@ const MACHINE = { id: 'mac-1' };
   verifier('réparée sans CONFORME postérieur : statut REPAREE',
     enDelai.statut === 'REPAREE'
     && enDelai.reparation.nature === 'Remplacement raccord');
-  verifier(`échéance de suivi = réparation + ${DELAI_CONTROLE_SUIVI_JOURS} j`,
+  verifier('échéance de suivi = réparation + 1 MOIS CIVIL (P0-6)',
     enDelai.echeanceControleSuivi === '2026-07-07');
   verifier('dans le délai : pas de retard', enDelai.suiviEnRetard === false);
+
+  // P0-6 : arithmétique du mois civil — écrêtage fin de mois, bissextile.
+  verifier('mois civil : 31/01 → 28/02 (année commune)',
+    ajouterUnMoisCivil('2027-01-31') === '2027-02-28');
+  verifier('mois civil : 31/01 → 29/02 (bissextile)',
+    ajouterUnMoisCivil('2028-01-31') === '2028-02-29');
+  verifier('mois civil : 31/08 → 30/09 (écrêtage simple)',
+    ajouterUnMoisCivil('2026-08-31') === '2026-09-30');
+  verifier('mois civil : 15/03 → 15/04 (quantième conservé)',
+    ajouterUnMoisCivil('2026-03-15') === '2026-04-15');
 
   const enRetard = construireDossiersFuite({
     machine: MACHINE, controles, mouvements: [], aujourdhui: '2026-07-10'
   }).dossiers[0];
   verifier('échéance dépassée : suivi en retard', enRetard.suiviEnRetard === true);
+
+  // P0-6 (G3) : la clôture TARDIVE (> 1 mois civil après la réparation)
+  // reste acceptée mais le RETARD est CONSIGNÉ au dossier.
+  const tardif = construireDossiersFuite({
+    machine: MACHINE,
+    controles: controles.concat([{ id: 'ct', machineId: 'mac-1',
+      date: '2026-07-17', resultat: 'CONFORME', operateur: 'Un contrôleur' }]),
+    mouvements: [], aujourdhui: '2026-08-01'
+  }).dossiers[0];
+  verifier('clôture tardive : le dossier FERME quand même (jamais bloqué)',
+    tardif.statut === 'FERMEE' && tardif.dateFermeture === '2026-07-17');
+  verifier('clôture tardive : retard CONSIGNÉ (10 j après l’échéance du 07/07)',
+    tardif.clotureEnRetard === true && tardif.retardClotureJours === 10);
+
+  const aTemps = construireDossiersFuite({
+    machine: MACHINE,
+    controles: controles.concat([{ id: 'cok', machineId: 'mac-1',
+      date: '2026-06-17', resultat: 'CONFORME', operateur: 'Un contrôleur' }]),
+    mouvements: [], aujourdhui: '2026-08-01'
+  }).dossiers[0];
+  verifier('clôture dans le délai : aucun retard consigné',
+    aTemps.statut === 'FERMEE' && aTemps.clotureEnRetard === false
+    && aTemps.retardClotureJours === null);
 }
 
 {
-  // CONFORME le MÊME JOUR que la réparation → FERMEE (convention des
-  // dates au jour : le contrôle est réputé postérieur à la réparation).
+  // P0-6 (CF-5) : un contrôle né d'un mouvement ANNULÉ est réputé annulé
+  // avec lui — il ne fonde AUCUN dossier (une fuite annulée disparaît) et
+  // n'en referme aucun (une clôture annulée rouvre le dossier RÉPARÉ).
+  const controles = [
+    { id: 'cf', machineId: 'mac-1', date: '2026-06-01', resultat: 'FUITE',
+      mouvementId: 'mv-fuite', dateReparation: '2026-06-02',
+      natureReparation: 'Brasure', reparateur: 'R' },
+    { id: 'cc', machineId: 'mac-1', date: '2026-06-03', resultat: 'CONFORME',
+      mouvementId: 'mv-cloture' }
+  ];
+  const tousValides = construireDossiersFuite({
+    machine: MACHINE, controles,
+    mouvements: [
+      { id: 'mv-fuite', machineId: 'mac-1', statut: 'VALIDE' },
+      { id: 'mv-cloture', machineId: 'mac-1', statut: 'VALIDE' }
+    ],
+    aujourdhui: '2026-06-11'
+  });
+  verifier('contrôles actifs : le dossier existe et est FERMÉ',
+    tousValides.dossiers.length === 1
+    && tousValides.dossiers[0].statut === 'FERMEE');
+
+  const clotureAnnulee = construireDossiersFuite({
+    machine: MACHINE, controles,
+    mouvements: [
+      { id: 'mv-fuite', machineId: 'mac-1', statut: 'VALIDE' },
+      { id: 'mv-cloture', machineId: 'mac-1', statut: 'ANNULE' }
+    ],
+    aujourdhui: '2026-06-11'
+  });
+  verifier('clôture ANNULÉE : le dossier redevient RÉPARÉ (échéance de suivi)',
+    clotureAnnulee.dossiers.length === 1
+    && clotureAnnulee.dossiers[0].statut === 'REPAREE'
+    && clotureAnnulee.dossiers[0].echeanceControleSuivi === '2026-07-02');
+
+  const fuiteAnnulee = construireDossiersFuite({
+    machine: MACHINE, controles,
+    mouvements: [
+      { id: 'mv-fuite', machineId: 'mac-1', statut: 'ANNULE' },
+      { id: 'mv-cloture', machineId: 'mac-1', statut: 'VALIDE' }
+    ],
+    aujourdhui: '2026-06-11'
+  });
+  verifier('fuite ANNULÉE : plus aucun dossier (le contrôle annulé ne fonde rien)',
+    fuiteAnnulee.dossiers.length === 0);
+
+  const autonome = construireDossiersFuite({
+    machine: MACHINE,
+    controles: [{ id: 'ca', machineId: 'mac-1', date: '2026-06-01',
+      resultat: 'FUITE' }],
+    mouvements: [], aujourdhui: '2026-06-11'
+  });
+  verifier('contrôle AUTONOME (sans mouvementId) : toujours actif',
+    autonome.dossiers.length === 1 && autonome.dossiers[0].statut === 'OUVERTE');
+}
+
+{
+  // P0-6 (audit 20/07, cas d'acceptation) : sur un équipement FIXE, un
+  // CONFORME le MÊME JOUR que la réparation ne clôture PLUS (24 h de
+  // fonctionnement requises — J+1, dates au jour). L'ancienne convention
+  // « à date égale » ne vaut plus que pour un équipement MOBILE listé.
   const controles = [
     { id: 'cf', machineId: 'mac-1', date: '2026-06-01', resultat: 'FUITE',
       dateReparation: '2026-06-07', natureReparation: 'Brasure',
@@ -150,16 +242,36 @@ const MACHINE = { id: 'mac-1' };
     { id: 'cc', machineId: 'mac-1', date: '2026-06-07', resultat: 'CONFORME',
       operateur: 'Un contrôleur' }
   ];
-  const d = construireDossiersFuite({
+  const memeJour = construireDossiersFuite({
     machine: MACHINE, controles, mouvements: [], aujourdhui: '2026-06-11'
   }).dossiers[0];
-  verifier('CONFORME du jour de la réparation : dossier FERMÉ',
-    d.statut === 'FERMEE' && d.controleCloture.id === 'cc'
-    && d.dateFermeture === '2026-06-07');
-  verifier('durée du dossier fermé : détection → fermeture (6 j)',
-    d.dureeJours === 6);
+  verifier('fixe : CONFORME du jour de la réparation → PAS de clôture (RÉPARÉE)',
+    memeJour.statut === 'REPAREE' && memeJour.controleCloture === null);
+
+  const d = construireDossiersFuite({
+    machine: MACHINE,
+    controles: controles.concat([{ id: 'cl', machineId: 'mac-1',
+      date: '2026-06-08', resultat: 'CONFORME', operateur: 'Un contrôleur' }]),
+    mouvements: [], aujourdhui: '2026-06-11'
+  }).dossiers[0];
+  verifier('fixe : CONFORME du LENDEMAIN (J+1) : dossier FERMÉ',
+    d.statut === 'FERMEE' && d.controleCloture.id === 'cl'
+    && d.dateFermeture === '2026-06-08');
+  verifier('durée du dossier fermé : détection → fermeture (7 j)',
+    d.dureeJours === 7);
   verifier('la clôture est l’événement le plus récent de la chronologie',
     d.evenements[0].type === 'CLOTURE');
+
+  const mobile = construireDossiersFuite({
+    machine: { ...MACHINE, typeInstallation: 'MOBILE' }, controles,
+    mouvements: [], aujourdhui: '2026-06-11'
+  }).dossiers[0];
+  verifier('MOBILE listé : le contrôle immédiat clôture (exception de périmètre)',
+    mobile.statut === 'FERMEE' && mobile.controleCloture.id === 'cc');
+  verifier('MOBILE : le MOTIF DE PÉRIMÈTRE est consigné (exceptionMobile)',
+    mobile.exceptionMobile === true);
+  verifier('fixe clôturé à J+1 : aucun motif d’exception consigné',
+    d.exceptionMobile === false);
 }
 
 {
@@ -321,6 +433,9 @@ const MACHINE = { id: 'mac-1' };
   // Tri INTRA-JOUR : tout le même jour — détection, puis récupération,
   // puis réparation, puis complément (possible seulement après
   // réparation, R3c), puis contrôle de clôture. Chronologie décroissante.
+  // P0-6 : le scénario « tout le même jour » n'est clôturable que sur un
+  // équipement MOBILE listé (un fixe exige J+1) — la machine du cas est
+  // donc MOBILE, le tri intra-jour reste couvert.
   const controles = [
     { id: 'cf', machineId: 'mac-1', date: '2026-06-01', resultat: 'FUITE',
       dateReparation: '2026-06-01', natureReparation: 'Brasure',
@@ -336,7 +451,8 @@ const MACHINE = { id: 'mac-1' };
       numero: 'FORM-2026-0012' }
   ];
   const d = construireDossiersFuite({
-    machine: MACHINE, controles, mouvements, aujourdhui: '2026-06-11'
+    machine: { ...MACHINE, typeInstallation: 'MOBILE' }, controles,
+    mouvements, aujourdhui: '2026-06-11'
   }).dossiers[0];
   const ordre = d.evenements.map((e) => e.type === 'MOUVEMENT'
     ? e.sousType : e.type);
@@ -344,7 +460,7 @@ const MACHINE = { id: 'mac-1' };
     JSON.stringify(ordre) === JSON.stringify(['CLOTURE', 'CHARGE_APPOINT',
       'REPARATION', 'RECUPERATION_MAINTENANCE', 'DETECTION']),
     `ordre = ${ordre.join(' > ')}`);
-  verifier('même jour partout : le dossier est FERMÉ (convention date égale)',
+  verifier('même jour partout (MOBILE) : le dossier est FERMÉ (exception P0-6)',
     d.statut === 'FERMEE');
 }
 

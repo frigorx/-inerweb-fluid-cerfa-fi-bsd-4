@@ -107,10 +107,17 @@ verifier('importerJSON rejette un texte invalide',
   const mentions = await store.getMentions();
   const idsPersonnel = new Set((await store.getPersonnel()).map((p) => p.id));
 
-  verifier('monde démo : 2 habilitations semées, toutes actives',
-    habilitations.length === 2 && habilitations.every((h) => h.actif === true));
-  verifier('monde démo : semis cohérent avec les fiches (régime 2008, cat. I)',
-    habilitations.every((h) => h.regime === '2008' && h.categorie === 'I'));
+  verifier('monde démo : 3 habilitations semées, toutes actives',
+    habilitations.length === 3 && habilitations.every((h) => h.actif === true));
+  verifier('monde démo : semis cohérent avec les fiches (2008/I + une A1 2025)',
+    habilitations.filter((h) => h.regime === '2008' && h.categorie === 'I').length === 2
+    && habilitations.filter((h) => h.regime === '2025' && h.categorie === 'A1').length === 1);
+  // P0-5 : les 2008 ne sont plus reconnues après le 31/12/2026 — la démo
+  // garde TOUJOURS une habilitation d'un régime reconnu (même principe que
+  // « un détecteur CONFORME existe »), à échéance relative (jourDemo).
+  verifier('monde démo : une habilitation 2025 NON échue existe (démo praticable après 2026)',
+    habilitations.some((h) => h.regime === '2025' && h.actif === true
+      && (!h.dateFin || h.dateFin >= new Date().toISOString().slice(0, 10))));
   verifier('monde démo : chaque habilitation référence une personne existante',
     habilitations.every((h) => idsPersonnel.has(h.personneId)));
   verifier('monde démo : 2 mentions semées (1 CO2 active, 1 HC révoquée datée)',
@@ -130,7 +137,7 @@ verifier('importerJSON rejette un texte invalide',
   verifier('aller-retour : l’export du monde démo est réimportable',
     (await jumeau.importerJSON(exporte)) === true);
   verifier('aller-retour : les habilitations et mentions ont voyagé',
-    (await jumeau.getHabilitations()).length === 2
+    (await jumeau.getHabilitations()).length === 3
     && (await jumeau.getMentions()).length === 2);
 
   // LE PIÈGE : un export SANS les clés B2 (antérieur au chantier) doit

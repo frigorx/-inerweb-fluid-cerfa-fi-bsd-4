@@ -175,15 +175,17 @@ await verifierRejet(
 
 // R3a : réparation tracée sur le contrôle FUITE → le CHARGE_APPOINT
 // redevient possible.
+// P0-6 : réparation le jour de la fuite (03/07), CONFORME de suivi le
+// LENDEMAIN (04/07) — la clôture stricte J+1 interdit le jour même.
 await store.tracerReparation(controleLie.id, {
-  dateReparation: '2026-07-02', natureReparation: 'Resserrage du raccord',
+  dateReparation: '2026-07-03', natureReparation: 'Resserrage du raccord',
   reparateur: 'Frédéric Henninot'
 });
 
 // Contrôle CONFORME déclaré au wizard → la machine revient EN_SERVICE
 const mvtConforme = await store.creerMouvement({
   type: 'CHARGE_APPOINT',
-  date: '2026-07-03',
+  date: '2026-07-04',
   machineId: machine.id,
   bouteilleSrcId: bouteille.id,
   peseeAvantKg: 18.5,

@@ -243,11 +243,27 @@ await verifierRejet('createPersonne refuse un nom vide',
   store.createPersonne({ nom: '', prenom: 'X', typePersonne: 'ELEVE' }));
 await verifierRejet('createPersonne refuse un type de personne inconnu',
   store.createPersonne({ nom: 'X', prenom: 'X', typePersonne: 'ROBOT' }));
+// P0-5 (revue) : la grille est PAR CHAMP — avant, « A1 » était refusé pour
+// la grille 2025 (validée contre I…IV) et le message mentait.
+{
+  const attestee = await store.createPersonne({
+    nom: 'Grille', prenom: 'Christine', typePersonne: 'ENSEIGNANT',
+    categorie2008: 'I', categorie2025: 'A1'
+  });
+  verifier('createPersonne accepte categorie2025 de la VRAIE grille 2025 (A1)',
+    attestee.categorie2025 === 'A1' && attestee.categorie2008 === 'I');
+}
+await verifierRejet('createPersonne refuse une catégorie 2008 dans le champ 2025',
+  store.createPersonne({ nom: 'Grille', prenom: 'Yves',
+    typePersonne: 'ENSEIGNANT', categorie2025: 'I' }));
+await verifierRejet('createPersonne refuse une catégorie 2025 dans le champ 2008',
+  store.createPersonne({ nom: 'Grille', prenom: 'Zoé',
+    typePersonne: 'ENSEIGNANT', categorie2008: 'A1' }));
 
 const patchPersonne = await store.updatePersonne(enseignant.id,
-  { categorie2025: 'II' });
+  { categorie2025: 'A2' });
 verifier('updatePersonne applique un patch partiel',
-  patchPersonne.categorie2025 === 'II' && patchPersonne.nom === 'Contrat');
+  patchPersonne.categorie2025 === 'A2' && patchPersonne.nom === 'Contrat');
 await verifierRejet('updatePersonne refuse une catégorie inconnue',
   store.updatePersonne(enseignant.id, { categorie2025: 'IX' }));
 
@@ -765,8 +781,12 @@ verifier('calculerProchainControle : HFO pur, contrôle du 11/03/2024 → 6 mois
 await verifierRejet('calculerProchainControle refuse une machine introuvable',
   store.calculerProchainControle('mac-fantome', dateRelative(0)));
 
+// P0-6 (I-1) : fuite datée d'HIER — la réparation tracée plus bas est
+// datée d'hier aussi, et la garde refuse une réparation antérieure à la
+// détection de la fuite.
 const controleFuite = await store.createControle({
   machineId: machineB.id, resultat: 'FUITE', methode: 'DIRECTE',
+  date: dateRelative(-1),
   operateur: 'Testeur Contrat', localisationFuite: 'Raccord BP'
 });
 verifier('un contrôle FUITE passe la machine en statut FUITE',
@@ -880,6 +900,9 @@ verifier('R4 : un CONFORME postérieur à la réparation remet la machine en ser
 // 5 du wizard) est propagée jusqu'au VRAI contrôle enregistré par CR-3.
 const mvtNouvelleFuite = await store.creerMouvement({
   type: 'CHARGE_APPOINT', machineId: machineB.id, bouteilleSrcId: bAppointFuite.id,
+  // P0-6 (I-1) : fuite datée d'hier pour que la réparation d'hier et le
+  // CONFORME de nettoyage d'aujourd'hui (J+1) restent valides.
+  date: dateRelative(-1),
   peseeAvantKg: 19, peseeApresKg: 18.5, technicien: 'Testeur Contrat',
   controle: { statutControle: 'FUITE', detecteurId: null,
     localisationFuite: 'Vanne HP' }
@@ -1497,7 +1520,7 @@ await verifierRejet('createBouteille refuse MELANGE hors type RÉCUPÉRATION',
   });
   await store.createControle({
     machineId: machineFuite2.id, resultat: 'CONFORME', methode: 'DIRECTE',
-    date: dateRelative(0), operateur: 'Testeur Contrat'
+    date: dateRelative(-4), operateur: 'Testeur Contrat'
   });
   const appointComplaisance = await store.creerMouvement({
     type: 'CHARGE_APPOINT', machineId: machineFuite2.id,
@@ -1518,23 +1541,199 @@ await verifierRejet('createBouteille refuse MELANGE hors type RÉCUPÉRATION',
   await store.rejeterMouvement(appointComplaisance.id, 'Nettoyage (R3c bis)');
   await store.supprimerMouvement(appointComplaisance.id);
 
-  // MÊME JOUR : réparation tracée aujourd'hui + CONFORME daté d'aujourd'hui
-  // → machine EN_SERVICE (convention : à date égale, le contrôle est
-  // réputé postérieur à la réparation) et l'alerte se ferme.
+  // P0-6 (audit 20/07, cas d'acceptation §11 — remplace la convention
+  // « à date égale » de R4) : sur un équipement FIXE, un CONFORME daté
+  // du JOUR de la réparation ne clôture PAS (24 h de fonctionnement
+  // requises, dates au jour → J+1). Réparation antidatée d'hier :
+  // le CONFORME du même jour (hier) reste sans effet, celui
+  // d'aujourd'hui (J+1) referme.
   await store.tracerReparation(ctlFuite2.id, {
-    dateReparation: dateRelative(0), natureReparation: 'Brasure reprise',
+    dateReparation: dateRelative(-1), natureReparation: 'Brasure reprise',
     reparateur: 'Testeur Contrat'
   });
   await store.createControle({
     machineId: machineFuite2.id, resultat: 'CONFORME', methode: 'DIRECTE',
+    date: dateRelative(-1), operateur: 'Testeur Contrat'
+  });
+  verifier('P0-6 : réparation + CONFORME le MÊME JOUR → la machine RESTE en FUITE',
+    (await store.getMachines()).find((m) => m.id === machineFuite2.id)
+      .statut === 'FUITE');
+  {
+    const alerte = (await store.getAlertes())
+      .find((a) => a.id === `alr-fuite-${machineFuite2.id}`);
+    verifier('P0-6 : l’alerte reste « Contrôle de suivi à faire » (IMPORTANT, échéance affichée)',
+      alerte?.niveau === 'IMPORTANT'
+      && alerte?.titre === 'Contrôle de suivi à faire');
+  }
+  await store.createControle({
+    machineId: machineFuite2.id, resultat: 'CONFORME', methode: 'DIRECTE',
     date: dateRelative(0), operateur: 'Testeur Contrat'
   });
-  verifier('R4 : réparation + contrôle CONFORME le MÊME JOUR → machine EN_SERVICE',
+  verifier('P0-6 : CONFORME du LENDEMAIN de la réparation (J+1) → machine EN_SERVICE',
     (await store.getMachines()).find((m) => m.id === machineFuite2.id)
       .statut === 'EN_SERVICE');
-  verifier('R4 : plus d’alerte fuite après réparation + contrôle du même jour',
+  verifier('P0-6 : plus d’alerte fuite après la clôture à J+1',
     !(await store.getAlertes())
       .some((a) => a.id === `alr-fuite-${machineFuite2.id}`));
+}
+
+// --- P0-6 (CF-4) : type d'installation FIXE/MOBILE — exception mobile ---
+{
+  verifier('createMachine : typeInstallation par défaut = FIXE (conservateur)',
+    machineA.typeInstallation === 'FIXE');
+  await verifierRejet('createMachine refuse un type d’installation inconnu',
+    store.createMachine({ designation: 'Machine roulante ?', fluide: FLUIDE,
+      chargeNominaleKg: 2, typeInstallation: 'CAMION',
+      operateur: 'Testeur Contrat' }), 'installation inconnu');
+
+  // Équipement MOBILE listé : le contrôle immédiat après réparation est
+  // admis (cas d'acceptation n° 4 de l'audit §11) — fuite, réparation et
+  // CONFORME le MÊME JOUR → clôture, machine EN_SERVICE.
+  const machineMobile = await store.createMachine({
+    designation: 'Groupe mobile de transfert de clim', fluide: FLUIDE,
+    chargeNominaleKg: 2, typeInstallation: 'MOBILE',
+    operateur: 'Testeur Contrat'
+  });
+  verifier('createMachine : typeInstallation MOBILE enregistré',
+    machineMobile.typeInstallation === 'MOBILE');
+  const ctlFuiteMobile = await store.createControle({
+    machineId: machineMobile.id, resultat: 'FUITE', methode: 'DIRECTE',
+    date: dateRelative(0), operateur: 'Testeur Contrat'
+  });
+  await store.tracerReparation(ctlFuiteMobile.id, {
+    dateReparation: dateRelative(0), natureReparation: 'Remplacement flexible',
+    reparateur: 'Testeur Contrat'
+  });
+  await store.createControle({
+    machineId: machineMobile.id, resultat: 'CONFORME', methode: 'DIRECTE',
+    date: dateRelative(0), operateur: 'Testeur Contrat'
+  });
+  verifier('P0-6 : MOBILE listé — contrôle immédiat admis, machine EN_SERVICE le jour même',
+    (await store.getMachines()).find((m) => m.id === machineMobile.id)
+      .statut === 'EN_SERVICE');
+  verifier('P0-6 : MOBILE — plus d’alerte fuite après la clôture immédiate',
+    !(await store.getAlertes())
+      .some((a) => a.id === `alr-fuite-${machineMobile.id}`));
+
+  // Revue I-2 : archive portant un type d'installation hors grille refusée
+  // à l'IMPORT — même message des deux côtés (la démo l'acceptait en
+  // silence, le serveur levait un CHECK SQL brut : divergence).
+  const exportTI = JSON.parse(await store.exporterJSON());
+  exportTI.donnees.machines[0].typeInstallation = 'CAMION';
+  await verifierRejet('P0-6 : import d’un type d’installation hors grille refusé (miroir)',
+    store.importerJSON(JSON.stringify(exportTI)), 'installation invalide');
+}
+
+// --- P0-6 (CF-5) : l'annulation d'un mouvement CONTROLE neutralise ses ---
+// --- effets machine (écart P0-7 §7(a) soldé) -----------------------------
+{
+  const machineCtl = await store.createMachine({
+    designation: 'Machine contrôle annulé P0-6', fluide: FLUIDE,
+    chargeNominaleKg: 2, operateur: 'Testeur Contrat'
+  });
+
+  // 1) Un contrôle FUITE annulé ne laisse plus la machine en FUITE à jamais.
+  const mvtFuite = await store.creerMouvement({
+    type: 'CONTROLE_NON_PERIODIQUE', machineId: machineCtl.id,
+    date: dateRelative(-2), technicien: 'Un Enseignant',
+    executeParId: enseignant.id,
+    controle: { statutControle: 'FUITE', detecteurId: null,
+      localisationFuite: 'Vanne de service' }
+  });
+  await store.soumettreMouvement(mvtFuite.id);
+  await store.validerMouvement(mvtFuite.id, enseignant.id);
+  verifier('CF-5 : mouvement CONTROLE FUITE validé → machine en FUITE',
+    (await store.getMachines()).find((m) => m.id === machineCtl.id)
+      .statut === 'FUITE');
+  await store.annulerParContreEcriture(mvtFuite.id,
+    'Erreur de machine (mauvaise fiche)', enseignant.id);
+  const apresAnnulation = (await store.getMachines())
+    .find((m) => m.id === machineCtl.id);
+  verifier('CF-5 : contrôle FUITE ANNULÉ → la machine redevient EN_SERVICE',
+    apresAnnulation.statut === 'EN_SERVICE', `statut = ${apresAnnulation.statut}`);
+  verifier('CF-5 : l’alerte de fuite disparaît avec l’annulation',
+    !(await store.getAlertes())
+      .some((a) => a.id === `alr-fuite-${machineCtl.id}`));
+  verifier('CF-5 : dernierControle recalculé (aucun contrôle actif restant)',
+    apresAnnulation.dernierControle === null);
+
+  // 2) Un CONFORME de clôture annulé fait RÉAPPARAÎTRE la fuite réparée
+  // en attente de suivi (le dossier n'était refermé que par lui).
+  const mvtFuite2 = await store.creerMouvement({
+    type: 'CONTROLE_NON_PERIODIQUE', machineId: machineCtl.id,
+    date: dateRelative(-2), technicien: 'Un Enseignant',
+    executeParId: enseignant.id,
+    controle: { statutControle: 'FUITE', detecteurId: null,
+      localisationFuite: 'Brasure' }
+  });
+  await store.soumettreMouvement(mvtFuite2.id);
+  const mvtFuite2Valide = await store.validerMouvement(mvtFuite2.id, enseignant.id);
+  const ctlLie2 = (await store.getControles())
+    .find((c) => c.mouvementId === mvtFuite2.id);
+  await store.tracerReparation(ctlLie2.id, {
+    dateReparation: dateRelative(-1), natureReparation: 'Brasure reprise',
+    reparateur: 'Testeur Contrat'
+  });
+  const mvtCloture = await store.creerMouvement({
+    type: 'CONTROLE_NON_PERIODIQUE', machineId: machineCtl.id,
+    date: dateRelative(0), technicien: 'Un Enseignant',
+    executeParId: enseignant.id,
+    controle: { statutControle: 'CONFORME', detecteurId: null }
+  });
+  await store.soumettreMouvement(mvtCloture.id);
+  await store.validerMouvement(mvtCloture.id, enseignant.id);
+  verifier('CF-5 : clôture à J+1 par mouvement CONTROLE → EN_SERVICE',
+    (await store.getMachines()).find((m) => m.id === machineCtl.id)
+      .statut === 'EN_SERVICE');
+  await store.annulerParContreEcriture(mvtCloture.id,
+    'Contrôle mal réalisé (détecteur non conforme)', enseignant.id);
+  const apresAnnulCloture = (await store.getMachines())
+    .find((m) => m.id === machineCtl.id);
+  verifier('CF-5 : clôture ANNULÉE → la fuite réparée RÉAPPARAÎT (machine en FUITE)',
+    apresAnnulCloture.statut === 'FUITE', `statut = ${apresAnnulCloture.statut}`);
+  verifier('CF-5 : l’alerte « Contrôle de suivi à faire » revient avec l’annulation',
+    (await store.getAlertes()).some((a) =>
+      a.id === `alr-fuite-${machineCtl.id}`
+      && a.titre === 'Contrôle de suivi à faire'));
+  verifier('CF-5 : dernierControle recalculé = date du contrôle FUITE restant',
+    apresAnnulCloture.dernierControle === mvtFuite2Valide.date);
+
+  // Revue I-4 : un contrôle annulé ne reçoit plus de réparation tracée.
+  const ctlAnnule = (await store.getControles())
+    .find((c) => c.mouvementId === mvtFuite.id);
+  await verifierRejet('CF-5 : tracerReparation refusé sur un contrôle ANNULÉ',
+    store.tracerReparation(ctlAnnule.id, {
+      dateReparation: dateRelative(0), natureReparation: 'Tentative',
+      reparateur: 'Testeur Contrat'
+    }), 'annulé');
+
+  // Revue I-1 : la DATE DE RÉPARATION est la cheville de la clôture
+  // stricte J+1 — gardée (format jour, jamais antérieure à la fuite,
+  // jamais future), sinon l'antidatage contournait la règle des 24 h.
+  const ctlGarde = await store.createControle({
+    machineId: machineCtl.id, resultat: 'FUITE', methode: 'DIRECTE',
+    date: dateRelative(-3), operateur: 'Testeur Contrat'
+  });
+  await verifierRejet('I-1 : date de réparation au format HORAIRE refusée',
+    store.tracerReparation(ctlGarde.id, {
+      dateReparation: dateRelative(0) + 'T18:00',
+      natureReparation: 'Brasure', reparateur: 'Testeur Contrat'
+    }), 'format attendu');
+  await verifierRejet('I-1 : réparation ANTÉRIEURE au contrôle FUITE refusée',
+    store.tracerReparation(ctlGarde.id, {
+      dateReparation: dateRelative(-5),
+      natureReparation: 'Brasure', reparateur: 'Testeur Contrat'
+    }), 'antérieure au contrôle');
+  await verifierRejet('I-1 : réparation datée dans le FUTUR refusée',
+    store.tracerReparation(ctlGarde.id, {
+      dateReparation: dateRelative(2),
+      natureReparation: 'Brasure', reparateur: 'Testeur Contrat'
+    }), 'futur');
+  await verifierRejet('I-1 : date de contrôle au format HORAIRE refusée (createControle)',
+    store.createControle({
+      machineId: machineCtl.id, resultat: 'CONFORME', methode: 'DIRECTE',
+      date: dateRelative(0) + 'T18:00', operateur: 'Testeur Contrat'
+    }), 'format attendu');
 }
 
 // ============================================================
@@ -1680,6 +1879,52 @@ verifier('peutPasserEnOfficiel : { ok, motifs[] français }',
     store.simulerValidationOfficielle('mvt-fantome'), 'introuvable');
   // Brouillon de simulation supprimé : aucune trace parasite pour la suite.
   await store.supprimerMouvement(brouillonSim.id);
+}
+
+// P0-5 — aptitude OPPOSABLE (condition 16, APTITUDE_PORTEE) : la simulation
+// prouve l'assemblage du fait `aptitude` par les DEUX stores (suite doublée
+// demo/local — c'est la parité des deux cadreFicheOfficiel qui casse à la
+// moindre divergence). Cas d'acceptation de l'audit du 20/07 (§11) :
+// E + charge → refus ; D + autre chose que récupération → refus ; A2 sur une
+// machine au-delà de sa limite → refus ; A1 → rien. machineA : R-410A (HFC),
+// charge nominale 5 kg.
+{
+  const cas = [
+    ['E', 'étanchéité seule devant une charge', true],
+    ['D', 'récupération seule devant une charge', true],
+    ['A2', 'limite 3 kg devant une machine de 5 kg', true],
+    ['A1', 'toutes opérations sans limite', false]
+  ];
+  for (const [categorie, libelle, refusAttendu] of cas) {
+    const technicien = await store.createPersonne({
+      nom: `Aptitude ${categorie}`, prenom: 'Test', typePersonne: 'ENSEIGNANT'
+    });
+    await store.createHabilitation({
+      personneId: technicien.id, regime: '2025', categorie,
+      operateur: 'Testeur Contrat'
+    });
+    const brouillon = await store.creerMouvement({
+      type: 'CHARGE_APPOINT', machineId: machineA.id, fluide: FLUIDE,
+      peseeAvantKg: 12, peseeApresKg: 11, causeMouvement: 'Fuite réparée',
+      technicien: `Test Aptitude ${categorie}`, executeParId: technicien.id
+    });
+    const sim = await store.simulerValidationOfficielle(brouillon.id);
+    if (refusAttendu) {
+      verifier(`aptitude opposable : cat. ${categorie} (${libelle}) → APTITUDE_PORTEE nominatif`,
+        sim.blocages.some((b) => b.code === 'APTITUDE_PORTEE' &&
+          b.motif.includes(`Aptitude ${categorie}`)),
+        JSON.stringify(sim.blocages.map((b) => b.code)));
+      verifier(`aptitude opposable : cat. ${categorie} — jamais en doublon d'APTITUDE (la 7 se tait)`,
+        !sim.blocages.some((b) => b.code === 'APTITUDE'),
+        JSON.stringify(sim.blocages.map((b) => b.code)));
+    } else {
+      verifier(`aptitude opposable : cat. ${categorie} (${libelle}) → ni APTITUDE ni APTITUDE_PORTEE`,
+        !sim.blocages.some((b) =>
+          b.code === 'APTITUDE' || b.code === 'APTITUDE_PORTEE'),
+        JSON.stringify(sim.blocages.map((b) => b.code)));
+    }
+    await store.supprimerMouvement(brouillon.id);
+  }
 }
 
 // Lot C (brique C1) — signatures RÉELLES : ordre imposé, déclarations
@@ -2230,8 +2475,11 @@ verifier('l’état importé est fidèle (nos mouvements sont là)',
   // à enregistrerControle direct (plan §3.a-c) — le contrôle lié ne perd
   // rien : lien personnel (B2), localisation, échéance déclarée.
   // 1) FUITE via mouvement CONTROLE : machine en FUITE, tout propagé.
+  // P0-6 : fuite et réparation datées d'HIER — la clôture par le CONFORME
+  // d'aujourd'hui exige désormais J+1 strict après la réparation.
   const ctrlFuite = await store.creerMouvement({
     type: 'CONTROLE_NON_PERIODIQUE', machineId: machineCtrl.id,
+    date: dateRelative(-1),
     technicien: 'Un Enseignant', executeParId: enseignant.id,
     controle: { statutControle: 'FUITE', detecteurId: null,
       localisationFuite: 'Raccord évaporateur' }

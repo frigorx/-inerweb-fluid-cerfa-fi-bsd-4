@@ -6,6 +6,37 @@
 > **Session conseillée : Opus, effort très élevé** (chantier probatoire/réglementaire, briques
 > testées une à une). PAS d'ultracode hors point critique.
 >
+> **⭐⭐⭐ ÉTAT AU 22/07 (nuit) — P0-6 CYCLE FUITE TERMINÉ (CF-1→CF-6, plan
+> `docs/PLAN-P0-6-CYCLE-FUITE.md`, décisions G1-G6 arbitrées par Franck AVANT
+> code, TOUT VERT 92 exéc.)** : clôture d'une fuite STRICTE J+1 (fin de la
+> convention « à date égale » — G1 tranchée par Franck, jour même réservé aux
+> équipements MOBILES listés, migration 27 `machines.type_installation`
+> défaut FIXE — G4 : le champ MAINTENANT) · échéance de suivi = 1 MOIS CIVIL
+> (écrêtage fin de mois) · clôture tardive CONSIGNÉE jamais bloquée
+> (`clotureEnRetard`, fiche + ZIP scellé) · écart P0-7 §7(a) SOLDÉ (contrôle
+> annulé = fait dérivé, lectures de fuite sur contrôles ACTIFS,
+> `recalculerEffetsMachineApresAnnulation` miroir 2 stores ; §7(b) reste
+> consigné). Hors périmètre consigné : compteur de fonctionnement réel
+> (24 h à l'heure près, granularité jour = proxy assumé), sous-type mobile
+> (P1-1), exploitation du type APRES_REPARATION.
+> **PROCHAINE BRIQUE : P0-8 déclaration annuelle 11 rubriques** (dernière
+> grosse brique code des P0 ; restent ensuite P0-9 hors code + RGPD + T2/T3).
+>
+> **⭐⭐ ÉTAT AU 22/07 (soir) — P0-5 APTITUDE OPPOSABLE TERMINÉ (AP-1→AP-5, plan
+> `docs/PLAN-P0-5-APTITUDE.md`, TOUT VERT 92 exéc.)** : condition 16
+> `APTITUDE_PORTEE` (S·V) — la matrice d'aptitude (notre moteur, PAS le
+> `droit-intervention.js` de la RC, zip indisponible en session) est branchée en
+> blocage dur : fait `intervenant.aptitude` calculé par les 2 `cadreFicheOfficiel`
+> (charge NOMINALE machine, hermétique=false tant que P1-1), miroir serveur
+> `server/droit-intervention.js` + suite de parité. Corrections au passage :
+> frontières STRICTES (< 3 / < 6 kg, 3,000 pile refusé), cat. II (2008) limitée
+> (⚠️ à re-confirmer sur pièce avant réouverture — décisions D1-D5 au plan),
+> contrôles P7 mappés ETANCHEITE, `habilitationReconnue` (2008 non reconnue
+> après le 31/12/2026, semis démo doté d'une A1 2025 à échéance relative).
+> Hors périmètre consigné : cycle de remise à niveau 2029/7 ans (aucun modèle),
+> champ machine hermétique (P1-1), alignement du CONSEIL sur la fin de régime.
+> **PROCHAINE BRIQUE : P0-6 cycle fuite ou P0-8 déclaration annuelle.**
+>
 > **⭐ ÉTAT AU 22/07 — CYCLE MATIÈRE (P0-3/4) TERMINÉ : CM-1→CM-4 codés, TOUT VERT
 > 91 exéc.** ⚠️ L'audit externe (ChatGPT) + la RC S'ÉTAIENT TROMPÉS : ils bloquaient la
 > charge depuis du récupéré et imposaient une table de traitement WORM. FAUX.
@@ -88,10 +119,10 @@ Chacune = UN chantier avec **plan écrit et relu AVANT code** (comme le lot C), 
 conseillé :
 1. ~~**P0-3/P0-4 — cycle matière**~~ ✅ **TERMINÉ 22/07** (CM-1→CM-4, refondu — voir le
    bloc d'état en tête ; la description RC « blocage + WORM » était fausse).
-2. **P0-5 — aptitude opposable** (`server/droit-intervention.js` de la RC + frontières de
-   charge — au passage corriger le bug trivial des comparateurs `>=3`/`>=6 kg` au lieu de `<`).
-3. **P0-6 — cycle fuite** (24 h réelles/24 h fonctionnement, 1 mois civil — reprendra aussi
-   l'écart consigné « effets machine d'un contrôle annulé », plan P0-7 §7).
+2. ~~**P0-5 — aptitude opposable**~~ ✅ **TERMINÉ 22/07** (AP-1→AP-5, notre moteur
+   corrigé et branché — voir le bloc d'état en tête ; comparateurs et cat. II corrigés).
+3. ~~**P0-6 — cycle fuite**~~ ✅ **TERMINÉ 22/07** (CF-1→CF-6 — voir le bloc d'état en
+   tête ; l'écart « effets machine d'un contrôle annulé » du plan P0-7 §7(a) est soldé).
 4. **P0-8 — déclaration annuelle 11 rubriques**.
 **Hors code** : P0-9 (révocation clés v7) · volet RGPD (notice/durées/DPD).
 
@@ -121,7 +152,7 @@ la cible officielle — la RC a gardé 148) · **T3** relecture organisme agré�
 - **Parité STRICTE `server/api.js` ↔ `v8/js/data/demo-store.js`** (test-contrat, mapping qui
   lève sur clé inconnue → déclarer les nouveaux champs des deux côtés). Module pur du front
   réutilisé côté serveur = recopié en littéral (CommonJS) + test de parité qui discrimine.
-- **Migrations** : registre `server/migrations.js`, dernière = **24**, prochaine = **25**.
+- **Migrations** : registre `server/migrations.js`, dernière = **27**, prochaine = **28**.
   ⚠️ Une migration est IMMUABLE (littéraux figés, jamais de constante partagée qui évolue).
   Triggers WORM recréés à chaque migration qui touche leurs tables ;
   `PRAGMA recursive_triggers = ON` obligatoire.

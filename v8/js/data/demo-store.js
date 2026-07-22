@@ -38,8 +38,11 @@ import { PREFIXE_SIMULATION, MSG_CODE_INCORRECT, MSG_FICHE_AU_COFFRE,
 import { calculerTransitions, formaterEpisode, comparerEpisodes, estOuvert }
   from './sentinelle.js';
 // Habilitations F-Gas : référentiels + tri (module pur, miroir serveur).
+// P0-5 : + moteur d'aptitude pour le fait `aptitude` du cadre Officiel
+// (verifierDroitIntervention, habilitationReconnue, jetonsMentionsActives).
 import { REGIMES, CATEGORIES_2008, CATEGORIES_2025, comparerHabilitations,
-  categorieCoherente, FLUIDES_MENTION, comparerMentions }
+  categorieCoherente, FLUIDES_MENTION, comparerMentions,
+  verifierDroitIntervention, habilitationReconnue, jetonsMentionsActives }
   from './habilitations.js';
 // Signature binaire réelle des pièces jointes (audit-proof) : le contenu doit
 // concorder avec le type déclaré, jamais le MIME annoncé seul (miroir serveur).
@@ -160,9 +163,6 @@ const MSG_FUITE_OUVERTE =
   'Complément de gaz impossible : cette machine a une fuite déclarée non ' +
   'réparée. Tracez la réparation (date, nature, réparateur) puis déclarez ' +
   'un nouveau contrôle d’étanchéité avant de recharger.';
-
-/** R4 : délai réglementaire par défaut du contrôle de suivi après réparation. */
-const DELAI_CONTROLE_SUIVI_JOURS = 30;
 
 /** Copie profonde (structuredClone natif, repli JSON). */
 function copier(objet) {
@@ -357,6 +357,14 @@ function verifierInvariantsDonnees(candidat) {
     const ref = m.code ?? m.id ?? '?';
     if (!Number.isFinite(m.chargeActuelleKg) || m.chargeActuelleKg < 0) {
       return `machine ${ref} : chargeActuelleKg invalide (${m.chargeActuelleKg})`;
+    }
+    // P0-6 (revue I-2) : type d'installation hors grille refusé À L'IMPORT
+    // des deux côtés (sans cet invariant, la démo acceptait « CAMION » en
+    // silence et le serveur levait un CHECK SQL brut — divergence).
+    if (m.typeInstallation !== undefined && m.typeInstallation !== null
+        && !['FIXE', 'MOBILE'].includes(m.typeInstallation)) {
+      return `machine ${ref} : type d'installation invalide `
+        + `(${m.typeInstallation} — attendu : FIXE, MOBILE)`;
     }
     if (!Number.isFinite(m.chargeNominaleKg) || m.chargeNominaleKg <= 0) {
       return `machine ${ref} : chargeNominaleKg invalide (${m.chargeNominaleKg})`;
@@ -787,13 +795,18 @@ export function creerDemoStore() {
     return outil;
   }
 
-  /** Valide une catégorie d'attestation (null accepté : non attesté). */
-  function verifierCategorie(valeur, champ) {
+  /**
+   * Valide une catégorie d'attestation (null accepté : non attesté).
+   * P0-5 (revue) : la grille est PAR CHAMP — la 2025 (A1…V) n'est pas la
+   * 2008 (I…IV) ; avant, la fiche refusait « A1 » pour la grille 2025 et
+   * le message mentait.
+   */
+  function verifierCategorie(valeur, champ, grille = CATEGORIES_ATTESTATION) {
     if (valeur === null || valeur === undefined) return null;
-    if (!CATEGORIES_ATTESTATION.includes(valeur)) {
+    if (!grille.includes(valeur)) {
       throw new Error(
         `Catégorie d'attestation inconnue pour ${champ} : ${valeur} ` +
-        `(attendu : ${CATEGORIES_ATTESTATION.join(', ')}).`);
+        `(attendu : ${grille.join(', ')}).`);
     }
     return valeur;
   }
@@ -996,7 +1009,8 @@ export function creerDemoStore() {
     for (const m of donnees.machines) {
       if (m.statut !== 'FUITE') continue;
       const statutFuite = estFuiteOuverte(
-        donnees.controles.filter((c) => c.machineId === m.id));
+        controlesActifsDeLaMachine(m.id),
+        m.typeInstallation === 'MOBILE');
       // Même règle que getAlertes : « non résolue » = pas de réparation
       // tracée (une fuite réparée en attente de contrôle de suivi n'est
       // plus « ouverte » au sens de la photo).
@@ -1159,13 +1173,40 @@ export function creerDemoStore() {
     const personne = mouvement.executeParId
       ? donnees.personnel.find((p) => p.id === mouvement.executeParId) ?? null
       : null;
-    const intervenant = personne ? {
-      nom: `${personne.prenom} ${personne.nom}`,
-      actif: personne.actif !== false,
-      habilitationActive: (donnees.habilitations ?? []).some((h) =>
-        h.personneId === personne.id && h.actif &&
-        (!h.dateFin || h.dateFin >= jour))
-    } : null;
+    // P0-5 : habilitations qui COMPTENT (actives, non échues, régime encore
+    // reconnu — une 2008 ne compte plus après le 31/12/2026) + fait
+    // `aptitude` = verdict du moteur sur CE mouvement (opération = type,
+    // fluide du mouvement, charge NOMINALE de la machine — celle des seuils
+    // réglementaires). La fiche machine ne porte pas (encore) le caractère
+    // « hermétiquement scellé » (P1-1) : défaut prudent = seuil 3 kg.
+    let intervenant = null;
+    if (personne) {
+      const reconnues = (donnees.habilitations ?? []).filter((h) =>
+        h.personneId === personne.id && habilitationReconnue(h, jour));
+      const nominale = machine ? machine.chargeNominaleKg : null;
+      const verdict = reconnues.length === 0 ? null : verifierDroitIntervention({
+        habilitations: reconnues.map((h) =>
+          ({ regime: h.regime, categorie: h.categorie })),
+        mentions: jetonsMentionsActives((donnees.mentionsHabilitation ?? [])
+          .filter((m) => m.personneId === personne.id &&
+            (!m.dateFin || m.dateFin >= jour))),
+        operation: mouvement.type,
+        fluide: mouvement.fluide ?? null,
+        // Garde stricte : colonne nullable — un null deviendrait 0 via
+        // Number() et fabriquerait un faux refus (leçon conseil-intervenant).
+        chargeKg: typeof nominale === 'number' && Number.isFinite(nominale)
+          && nominale > 0 ? nominale : null,
+        hermetiqueScelle: false
+      });
+      intervenant = {
+        nom: `${personne.prenom} ${personne.nom}`,
+        actif: personne.actif !== false,
+        habilitationActive: reconnues.length > 0,
+        aptitude: verdict
+          ? { autorise: verdict.autorise, motif: verdict.motif }
+          : null
+      };
+    }
     return {
       type: mouvement.type,
       machinePresente: Boolean(machine),
@@ -1527,9 +1568,8 @@ export function creerDemoStore() {
       // déclarée sans réparation tracée postérieure) exige d'abord de
       // tracer la réparation puis de déclarer un nouveau contrôle.
       if (mouvement.type === 'CHARGE_APPOINT') {
-        const controlesMachine = donnees.controles
-          .filter((c) => c.machineId === machine.id);
-        if (estFuiteOuverte(controlesMachine).ouverte) {
+        if (estFuiteOuverte(controlesActifsDeLaMachine(machine.id),
+          machine.typeInstallation === 'MOBILE').ouverte) {
           throw new Error(MSG_FUITE_OUVERTE);
         }
       }
@@ -1764,6 +1804,76 @@ export function creerDemoStore() {
           false);
       }
     }
+
+    // P0-6 (écart P0-7 §7(a) soldé) : un mouvement porteur d'un contrôle
+    // lié qui s'annule retire les effets machine de CE contrôle — statut,
+    // dernierControle et prochainControle sont RECALCULÉS depuis les
+    // contrôles restés actifs. Le contrôle lié est réputé annulé AVEC son
+    // mouvement (fait dérivé, aucune écriture sur controles) ; il est
+    // exclu explicitement car la bascule ANNULE n'est posée qu'après.
+    const controleLieId = original.controle?.controleId ?? null;
+    if (controleLieId && original.machineId) {
+      recalculerEffetsMachineApresAnnulation(original.machineId,
+        controleLieId);
+    }
+  }
+
+  /**
+   * P0-6 : un contrôle est réputé ANNULÉ quand le mouvement qui l'a créé
+   * est ANNULE (fait DÉRIVÉ — la table des contrôles n'est jamais
+   * réécrite ; un contrôle autonome, sans mouvementId, reste toujours
+   * actif). Toute la logique de fuite (alertes, R3c, retour EN_SERVICE,
+   * dossiers, photo nominative) ne regarde que les contrôles ACTIFS.
+   */
+  function controleAnnule(controle) {
+    if (!controle.mouvementId) return false;
+    const mv = donnees.mouvements.find((m) => m.id === controle.mouvementId);
+    return Boolean(mv && mv.statut === 'ANNULE');
+  }
+
+  /** Contrôles ACTIFS d'une machine (P0-6 — les annulés sont exclus). */
+  function controlesActifsDeLaMachine(machineId) {
+    return donnees.controles.filter((c) =>
+      c.machineId === machineId && !controleAnnule(c));
+  }
+
+  /**
+   * P0-6 : recalcule les effets machine après l'annulation d'un mouvement
+   * porteur d'un contrôle lié — depuis les contrôles restés actifs, le
+   * contrôle annulé exclu. Règle sobre : dernierControle = plus récent
+   * actif ; prochainControle = échéance du plus récent actif qui en porte
+   * une, sinon LAISSÉ en l'état (l'échéance antérieure au premier contrôle
+   * est inconnaissable — limite consignée au plan P0-6) ; statut recalculé
+   * SEULEMENT depuis FUITE / EN_SERVICE / CONTROLE_DU (jamais une machine
+   * arrêtée ou démantelée).
+   */
+  function recalculerEffetsMachineApresAnnulation(machineId, controleExcluId) {
+    const machine = trouverMachine(machineId);
+    if (machine.statut !== 'FUITE' && machine.statut !== 'EN_SERVICE' &&
+        machine.statut !== 'CONTROLE_DU') {
+      return;
+    }
+    const actifs = controlesActifsDeLaMachine(machineId)
+      .filter((c) => c.id !== controleExcluId);
+    const tries = actifs.slice()
+      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+    machine.dernierControle = tries[0]?.date ?? null;
+    const porteurEcheance = tries.find((c) => c.prochainControle);
+    if (porteurEcheance) {
+      machine.prochainControle = porteurEcheance.prochainControle;
+    }
+    const statutFuite = estFuiteOuverte(actifs,
+      machine.typeInstallation === 'MOBILE');
+    const fuiteNonRefermee = Boolean(statutFuite.controleFuiteId &&
+      (statutFuite.ouverte || statutFuite.echeanceControleSuivi !== null));
+    if (fuiteNonRefermee) {
+      machine.statut = 'FUITE';
+    } else if (machine.prochainControle &&
+               machine.prochainControle < aujourdHui()) {
+      machine.statut = 'CONTROLE_DU';
+    } else {
+      machine.statut = 'EN_SERVICE';
+    }
   }
 
   /**
@@ -1778,15 +1888,17 @@ export function creerDemoStore() {
    *   une fuite sans réparation tracée (R4 : réparation + contrôle,
    *   jamais l'un sans l'autre — sinon un contrôle prématuré ou de
    *   complaisance contournerait le blocage R3c du complément de gaz).
-   * - dateReparation posée mais aucun CONFORME postérieur : « réparée en
-   *   attente de contrôle de suivi », échéance = dateReparation + 30 j.
-   * - réparation tracée + CONFORME postérieur à la réparation : refermée.
-   *   Les dates étant au JOUR, à date ÉGALE le contrôle est réputé
-   *   postérieur à la réparation (déroulé terrain : on répare puis on
-   *   reteste dans la foulée — l'utilisateur trace la réparation PUIS
-   *   déclare le contrôle).
+   * - dateReparation posée mais aucun CONFORME de clôture : « réparée en
+   *   attente de contrôle de suivi », échéance = réparation + 1 MOIS CIVIL
+   *   (P0-6 — écrêté fin de mois : 31/01 → 28/02).
+   * - réparation tracée + CONFORME de clôture : refermée. P0-6 (audit
+   *   20/07, décision Franck 22/07) : la clôture exige un CONFORME
+   *   STRICTEMENT postérieur AU JOUR de la réparation (proxy des 24 h de
+   *   fonctionnement, dates au jour → J+1 minimum). Exception : équipement
+   *   MOBILE listé (`machineMobile`) — le contrôle immédiat est admis, le
+   *   jour même suffit (ancienne convention R4, désormais réservée à ce cas).
    */
-  function estFuiteOuverte(controlesMachine) {
+  function estFuiteOuverte(controlesMachine, machineMobile = false) {
     const tries = controlesMachine.slice()
       .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
     const derniereFuite = tries.find((c) => c.resultat === 'FUITE');
@@ -1801,11 +1913,13 @@ export function creerDemoStore() {
     // Réparation tracée (R3a) : la machine n'est plus « ouverte » au sens
     // R3c (le complément de gaz redevient possible) — reste seulement,
     // tant qu'aucun CONFORME n'est venu après la réparation, une échéance
-    // de contrôle de suivi à 30 jours (R4). Le CONFORME doit aussi être
+    // de contrôle de suivi à 1 mois civil (P0-6). Le CONFORME doit aussi être
     // au moins du jour de la FUITE (jamais un conforme antérieur).
     const conformePostReparation = tries.some((c) =>
       c.resultat === 'CONFORME' &&
-      c.date >= derniereFuite.dateReparation &&
+      (machineMobile
+        ? c.date >= derniereFuite.dateReparation
+        : c.date > derniereFuite.dateReparation) &&
       c.date >= derniereFuite.date);
     return {
       ouverte: false,
@@ -1813,7 +1927,7 @@ export function creerDemoStore() {
       dateReparation: derniereFuite.dateReparation,
       echeanceControleSuivi: conformePostReparation
         ? null
-        : ajouterJours(derniereFuite.dateReparation, DELAI_CONTROLE_SUIVI_JOURS)
+        : ajouterMois(derniereFuite.dateReparation, 1)
     };
   }
 
@@ -1827,6 +1941,14 @@ export function creerDemoStore() {
     const machine = trouverMachine(d.machineId);
     if (d.resultat !== 'CONFORME' && d.resultat !== 'FUITE') {
       throw new Error('Résultat de contrôle obligatoire : CONFORME ou FUITE.');
+    }
+    // P0-6 (revue I-1) : les dates métier sont AU JOUR — un horodatage
+    // (« 2026-07-20T18:00 ») comparé en chaîne serait « strictement
+    // postérieur » au jour même et contournerait la clôture J+1.
+    if (d.date !== undefined && d.date !== null
+        && !/^\d{4}-\d{2}-\d{2}$/.test(String(d.date))) {
+      throw new Error('Date de contrôle invalide : format attendu '
+        + 'AAAA-MM-JJ (date au jour).');
     }
     // Mode + numéro de fiche du contrôle (CERFA). Un contrôle LIÉ hérite ceux
     // du mouvement (passés dans d) ; un contrôle AUTONOME prend un numéro dédié
@@ -1860,18 +1982,17 @@ export function creerDemoStore() {
     if (controle.resultat === 'FUITE') {
       machine.statut = 'FUITE';
     } else if (machine.statut === 'FUITE') {
-      // R4 : le retour EN_SERVICE depuis FUITE exige une réparation
-      // TRACÉE sur le dernier contrôle FUITE ET que CE contrôle CONFORME
-      // (celui qu'on vient d'enregistrer) lui soit postérieur — jamais un
-      // simple CONFORME sans réparation tracée au préalable. Convention
-      // des dates au jour : à date ÉGALE, le contrôle est réputé
-      // postérieur à la réparation (réparation immédiate + recontrôle
-      // dans la foulée, le déroulé terrain le plus courant).
-      const controlesMachine = donnees.controles
-        .filter((c) => c.machineId === machine.id);
-      const statutFuite = estFuiteOuverte(controlesMachine);
-      if (statutFuite.dateReparation &&
-          controle.date >= statutFuite.dateReparation) {
+      // R4 + P0-6 : le retour EN_SERVICE depuis FUITE suit EXACTEMENT la
+      // règle de clôture d'estFuiteOuverte, rejouée avec le contrôle qu'on
+      // vient d'insérer — source de vérité UNIQUE (fuite refermée =
+      // réparation tracée + CONFORME de clôture : strictement postérieur
+      // au jour de la réparation, jour même admis pour un équipement
+      // MOBILE listé). Plus de condition ad hoc divergente du dossier.
+      const statutFuite = estFuiteOuverte(
+        controlesActifsDeLaMachine(machine.id),
+        machine.typeInstallation === 'MOBILE');
+      if (!statutFuite.ouverte && statutFuite.dateReparation &&
+          statutFuite.echeanceControleSuivi === null) {
         machine.statut = 'EN_SERVICE';
       }
     } else if (machine.statut === 'CONTROLE_DU' &&
@@ -2276,10 +2397,10 @@ export function creerDemoStore() {
         if (m.statut === 'FUITE') {
           // R4 : distinguer fuite OUVERTE (aucune réparation tracée,
           // CRITIQUE) de fuite RÉPARÉE en attente de contrôle de suivi
-          // (IMPORTANT, échéance 30 jours depuis la réparation).
-          const controlesMachine = donnees.controles
-            .filter((c) => c.machineId === m.id);
-          const statutFuite = estFuiteOuverte(controlesMachine);
+          // (IMPORTANT, échéance 1 mois civil depuis la réparation, P0-6).
+          const statutFuite = estFuiteOuverte(
+            controlesActifsDeLaMachine(m.id),
+            m.typeInstallation === 'MOBILE');
           // R4 : l'alerte de SUIVI n'existe que si une réparation est
           // TRACÉE — sans elle, la fuite reste « non résolue » (jamais
           // de dates nulles affichées).
@@ -2495,6 +2616,13 @@ export function creerDemoStore() {
       if (!Number.isFinite(nominale) || nominale <= 0) {
         throw new Error('Charge nominale obligatoire (en kg, positive).');
       }
+      // P0-6 : FIXE/MOBILE — un mobile listé est admis au contrôle
+      // immédiat après réparation. Absent = FIXE (défaut conservateur).
+      if (d.typeInstallation !== undefined && d.typeInstallation !== null
+          && !['FIXE', 'MOBILE'].includes(d.typeInstallation)) {
+        throw new Error(`Type d'installation inconnu : ${d.typeInstallation} `
+          + '(attendu : FIXE, MOBILE).');
+      }
       const client = d.clientId
         ? donnees.clients.find((c) => c.id === d.clientId)
         : null;
@@ -2535,6 +2663,7 @@ export function creerDemoStore() {
         localisation: d.localisation ?? null,
         siteLabel: d.siteLabel ?? client?.raisonSociale ?? null,
         statut: d.statut ?? 'EN_SERVICE',
+        typeInstallation: d.typeInstallation ?? 'FIXE',
         detectionPermanente: Boolean(d.detectionPermanente),
         dateMiseEnService: d.dateMiseEnService ?? null,
         dernierControle: d.dernierControle ?? null,
@@ -2559,6 +2688,13 @@ export function creerDemoStore() {
       if (d.fluide !== undefined && !indexFluides().has(d.fluide)) {
         throw new Error(`Fluide inconnu au référentiel : ${d.fluide}.`);
       }
+      // P0-6 : FIXE/MOBILE — un mobile listé est admis au contrôle
+      // immédiat après réparation. Absent = FIXE (défaut conservateur).
+      if (d.typeInstallation !== undefined && d.typeInstallation !== null
+          && !['FIXE', 'MOBILE'].includes(d.typeInstallation)) {
+        throw new Error(`Type d'installation inconnu : ${d.typeInstallation} `
+          + '(attendu : FIXE, MOBILE).');
+      }
       // Code lisible modifiable (renommer « M1 » en « JR-CF-001 ») :
       // normalisé, validé, unique. Les libellés dénormalisés des
       // écritures scellées (machineLabel) restent figés, par principe.
@@ -2575,7 +2711,8 @@ export function creerDemoStore() {
       }
       const CHAMPS = ['designation', 'type', 'marque', 'modele', 'numSerie',
         'fluide', 'chargeNominaleKg', 'chargeActuelleKg', 'clientId',
-        'localisation', 'siteLabel', 'statut', 'detectionPermanente',
+        'localisation', 'siteLabel', 'statut', 'typeInstallation',
+        'detectionPermanente',
         'dateMiseEnService', 'dernierControle', 'prochainControle'];
       for (const champ of CHAMPS) {
         if (d[champ] !== undefined) machine[champ] = d[champ];
@@ -2926,6 +3063,25 @@ export function creerDemoStore() {
       if (!dateReparation || !natureReparation || !reparateur) {
         throw new Error(
           'Réparation incomplète : date, nature et réparateur sont obligatoires.');
+      }
+      // P0-6 (revue I-1) : la date de réparation est la CHEVILLE de la
+      // clôture stricte J+1 — sans ces gardes, une réparation antidatée
+      // ou au format horaire contournait la règle des 24 h.
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateReparation)) {
+        throw new Error('Date de réparation invalide : format attendu '
+          + 'AAAA-MM-JJ (date au jour).');
+      }
+      if (controle.date && dateReparation < controle.date) {
+        throw new Error('Date de réparation antérieure au contrôle FUITE '
+          + `(${controle.date}) : une fuite se répare après sa détection.`);
+      }
+      if (dateReparation > aujourdHui()) {
+        throw new Error('Date de réparation dans le futur : on trace une '
+          + 'réparation FAITE, jamais prévue.');
+      }
+      if (controleAnnule(controle)) {
+        throw new Error('Contrôle annulé (contre-écriture) : il ne peut '
+          + 'plus recevoir de réparation tracée.');
       }
       controle.dateReparation = dateReparation;
       controle.natureReparation = natureReparation;
@@ -3936,7 +4092,8 @@ export function creerDemoStore() {
         dateObtention: d.dateObtention ?? null,
         dateFinValidite: d.dateFinValidite ?? null,
         categorie2008: verifierCategorie(d.categorie2008, 'la grille 2008'),
-        categorie2025: verifierCategorie(d.categorie2025, 'la grille 2025'),
+        categorie2025: verifierCategorie(d.categorie2025, 'la grille 2025',
+          CATEGORIES_2025),
         activitesAutorisees: verifierActivites(d.activitesAutorisees),
         actif: d.actif !== false,
         email: d.email ?? null
@@ -3964,7 +4121,7 @@ export function creerDemoStore() {
         verifierCategorie(d.categorie2008, 'la grille 2008');
       }
       if (d.categorie2025 !== undefined) {
-        verifierCategorie(d.categorie2025, 'la grille 2025');
+        verifierCategorie(d.categorie2025, 'la grille 2025', CATEGORIES_2025);
       }
       if (d.activitesAutorisees !== undefined) {
         verifierActivites(d.activitesAutorisees);

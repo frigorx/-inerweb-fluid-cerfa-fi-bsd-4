@@ -57,6 +57,14 @@ Le logiciel doit être **le plus complet** (couvre TOUT le parc, pas seulement l
 
 **Correspondance ancien → nouveau** : I & II → A1/A2 · III → D · IV → E.
 
+**Profils du régime 2008 (P0-5 / AP-2, audit du 20/07 §4.3)** : I = toutes opérations
+sans limite · **II = toutes opérations mais charge < 3 kg (< 6 kg hermétique scellé
+étiqueté)** — elle était modélisée sans limite, c'était une erreur · III = récupération
+seule < 3 kg · IV = étanchéité seule. Familles natives 2008 = HFC/HFO seulement.
+
+**Frontières STRICTES (P0-5 / AP-1)** : « inférieure à » = 3,000 kg pile REFUSÉ,
+6,000 kg pile REFUSÉ (les comparateurs inclusifs étaient un bug, corrigé le 22/07).
+
 **Extension (mentions de formation complémentaire)** : indépendamment de la catégorie,
 une personne peut détenir une **mention par fluide** (CO₂, ammoniac, hydrocarbures) qui
 étend son droit d'intervenir sur ce fluide (ancien I-IV + stage). L'admin la coche.

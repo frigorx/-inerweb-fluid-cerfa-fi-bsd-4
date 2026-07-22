@@ -48,8 +48,21 @@ const ROLES_APP = [
   { valeur: 'ADMIN', libelle: 'Administrateur' }
 ];
 
-// Catégories d'attestation (grilles 2008 et 2025)
-const CATEGORIES = ['I', 'II', 'III', 'IV'];
+// Catégories d'attestation — une grille PAR régime (P0-5, revue : le
+// sélecteur 2025 offrait la grille 2008 et effaçait en silence une A1…V
+// enregistrée). Mêmes listes que habilitations.js / les stores.
+const CATEGORIES_2008 = ['I', 'II', 'III', 'IV'];
+const CATEGORIES_2025 = ['A1', 'A2', 'B', 'C', 'D', 'E', 'V'];
+
+// Une valeur ENREGISTRÉE hors grille (fiche héritée de l'ancienne grille
+// commune) est montrée telle quelle — l'écran ne ment pas (doctrine CM-3) ;
+// le store, lui, refusera l'enregistrement tant qu'elle n'est pas corrigée
+// consciemment.
+function optionsCategorie(grille, valeur) {
+  const liste = grille.slice();
+  if (valeur && liste.indexOf(valeur) === -1) liste.push(valeur);
+  return liste.map(function (c) { return { valeur: c, libelle: c }; });
+}
 
 // Activités réglementées (attestation de capacité et d'aptitude)
 const ACTIVITES = [
@@ -190,7 +203,7 @@ function gabaritFormulaire(personne, enModification) {
     + '<label for="pf-cat-2008">Catégorie 2008</label>'
     + '<select id="pf-cat-2008" name="categorie2008">'
     + '<option value="">— Aucune —</option>'
-    + optionsHtml(CATEGORIES.map(function (c) { return { valeur: c, libelle: c }; }),
+    + optionsHtml(optionsCategorie(CATEGORIES_2008, personne.categorie2008),
         personne.categorie2008 || '')
     + '</select>'
     + '</div>'
@@ -199,7 +212,7 @@ function gabaritFormulaire(personne, enModification) {
     + '<label for="pf-cat-2025">Catégorie 2025</label>'
     + '<select id="pf-cat-2025" name="categorie2025">'
     + '<option value="">— Aucune —</option>'
-    + optionsHtml(CATEGORIES.map(function (c) { return { valeur: c, libelle: c }; }),
+    + optionsHtml(optionsCategorie(CATEGORIES_2025, personne.categorie2025),
         personne.categorie2025 || '')
     + '</select>'
     + '</div>'

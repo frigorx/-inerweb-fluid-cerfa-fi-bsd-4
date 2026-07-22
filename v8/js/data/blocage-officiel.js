@@ -62,7 +62,9 @@ const NIVEAU_MOMENT = { PASSAGE: 1, SOUMISSION: 2, VALIDATION: 3 };
  *   { type, machinePresente, fluide, peseeAvantKg, peseeApresKg, causePresente,
  *     controleStatut, controlePeriodiqueRequis, fluideInflammable,
  *     sourceVierge, prp, signaturePresente, technicienPresent,
- *     intervenant: null | { nom, actif, habilitationActive },
+ *     intervenant: null | { nom, actif, habilitationActive,
+ *       aptitude: null | { autorise, motif } } — fait P0-5 (aptitude
+ *       opposable) calculé par le moteur d'aptitude ; null = sans objet,
  *     signatureTechnicienValide, signatureDetenteurValide — lot C (C1),
  *     tri-état : true (valide) | false (absente) | 'PERIMEE' (posée puis
  *     fiche modifiée, révision divergente) }
@@ -132,6 +134,17 @@ export function evaluerBlocagesOfficiel(cadre) {
         poser('APTITUDE',
           'Aucune habilitation F-Gas active et en cours de validité pour ' +
           `${fiche.intervenant.nom}.`);
+      }
+      // 16 — aptitude opposable (P0-5) : l'habilitation COUVRE cette
+      // intervention (catégorie × opération × fluide × charge, moteur
+      // d'aptitude — fait précalculé par le store, absent = sans objet).
+      // Jamais en doublon de la 7 : sans habilitation, elle seule parle.
+      if (fiche.intervenant.habilitationActive &&
+          fiche.intervenant.aptitude &&
+          fiche.intervenant.aptitude.autorise === false) {
+        poser('APTITUDE_PORTEE',
+          `Habilitation de ${fiche.intervenant.nom} inadaptée à cette ` +
+          `intervention : ${fiche.intervenant.aptitude.motif}.`);
       }
     }
 

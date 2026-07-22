@@ -141,6 +141,20 @@ function gabaritFormulaire(machine, fluides, clients) {
     + '</div>'
     + '</div>'
 
+    + '<div class="champ" data-champ="typeInstallation">'
+    + '<label for="mf-type-installation">Type d\u2019installation</label>'
+    + '<select id="mf-type-installation" name="typeInstallation">'
+    + [['FIXE', 'Fixe (contr\u00f4le de suivi apr\u00e8s 24 h de fonctionnement)'],
+       ['MOBILE', 'Mobile list\u00e9 (contr\u00f4le imm\u00e9diat admis)']]
+      .map(function (o) {
+        const selectionne = (machine.typeInstallation || 'FIXE') === o[0]
+          ? ' selected' : '';
+        return '<option value="' + o[0] + '"' + selectionne + '>'
+          + esc(o[1]) + '</option>';
+      }).join('')
+    + '</select>'
+    + '</div>'
+
     + '<div class="champ" data-champ="dateMiseEnService">'
     + '<label for="mf-date-mes">Date de mise en service</label>'
     + '<input type="date" id="mf-date-mes" name="dateMiseEnService" '
@@ -281,6 +295,7 @@ function validerFormulaire(racine, enModification) {
     clientId: clientId || null,
     localisation: localisation || null,
     dateMiseEnService: dateMiseEnService || null,
+    typeInstallation: donnees.get('typeInstallation') || 'FIXE',
     detectionPermanente: donnees.get('detectionPermanente') === 'on'
   };
 }
