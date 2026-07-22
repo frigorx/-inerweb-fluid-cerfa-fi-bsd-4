@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 import {
   normaliserTexte, nombreDepuisSaisie, dateDepuisSaisie, textesEquivalents,
   cadreDuChamp, TITRES_CADRES, comparerChamps, lireChampsCerfaPdf,
-  corrigerCerfaEleve
+  corrigerCerfaEleve, lignesEquivalentes
 } from './correction.js';
 import { chargerPdfLib, calculerChampsCerfa } from './generateur.js';
 import { creerStore } from '../data/datastore.js';
@@ -64,6 +64,13 @@ verifier('textesEquivalents : casse et apostrophes tolérées, fond strict',
   textesEquivalents('Titulaire attestation d’aptitude',
     "titulaire attestation d'aptitude") === true
   && textesEquivalents('Raccord HP', 'Raccord BP') === false);
+verifier('CM-4b : la mention d’anomalie de réemploi n’est jamais exigée de l’élève',
+  lignesEquivalentes(
+    'Cause : appoint\nAnomalie de réemploi signalée : 0,50 kg réintroduits '
+    + 'au-delà du fluide récupéré de cette machine — à rectifier par '
+    + 'contre-écriture.',
+    'Cause : appoint') === true
+  && lignesEquivalentes('Cause : appoint', 'Cause : autre chose') === false);
 
 // ============================================================
 // B. Volet BOUT EN BOUT — PDF élève réels

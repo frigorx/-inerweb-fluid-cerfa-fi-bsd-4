@@ -133,6 +133,13 @@ A2L/A2/A3 → UN 3161) quand le mouvement génère un transport de fluide récup
 | `14_Observations` | texte multiligne | observations libres ; **en mode FORMATION, le filigrane
 « MODE FORMATION — DOCUMENT NON OFFICIEL » est apposé en plus sur le rendu** |
 
+Mentions SYSTÈME du cadre 14 (posées par l'application, jamais exigées de l'élève à la
+correction) : la mention MODE FORMATION ci-dessus, et depuis CM-4b la mention **« Anomalie
+de réemploi signalée : X kg réintroduits au-delà du fluide récupéré de cette machine — à
+rectifier par contre-écriture. »** quand une charge depuis une bouteille de RÉCUPÉRATION
+dépasse l'avoir d'origine de la machine (cycle matière — signalée, jamais bloquée, tous
+modes ; décision du 22/07/2026).
+
 ### Signatures (6 champs)
 | `Sign_Operateur_Nom` / `Sign_Operateur_Qualite` / `Sign_Operateur_Date` | opérateur (technicien) |
 | `Sign_Detenteur_Nom` / `Sign_Detenteur_Qualite` / `Sign_Detenteur_Date` | détenteur (client) |

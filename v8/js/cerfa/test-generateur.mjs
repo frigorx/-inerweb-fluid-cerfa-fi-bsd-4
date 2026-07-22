@@ -493,6 +493,48 @@ verifier('R6 : mention du mélange reportée au cadre 14 (observations)',
   mR6.texte('14_Observations').toLowerCase().includes('mélang'));
 
 // ============================================================
+// 4 quinquies. CM-4b — mention d'anomalie de surcharge de réemploi
+//   au cadre 14. La charge R6 ci-dessus (0,5 kg réintroduits depuis
+//   une bouteille de RÉCUPÉRATION sans récupération préalable sur
+//   cette machine) EST une surcharge → mention présente. Un réemploi
+//   ≤ récupéré n'en porte pas. Signalée, JAMAIS bloquante (décision
+//   Franck 22/07) : la génération n'a d'ailleurs jamais levé.
+// ============================================================
+verifier('CM-4b : surcharge de réemploi → mention d’anomalie au cadre 14',
+  rR6.texte('14_Observations').includes('Anomalie de réemploi signalée')
+  && rR6.texte('14_Observations').includes('0,50 kg'),
+  `observations = ${rR6.texte('14_Observations')}`);
+
+// Parcours propre : récupération de 0,4 kg de machineR6 puis réemploi de
+// 0,2 kg sur la même machine (≤ récupéré) → aucune mention.
+const bouteilleReemploiOk = await store.createBouteille({
+  type: 'RECUPERATION', fluide: 'R-410A', etatFluide: 'RECUPERE',
+  tareKg: 5, masseBruteKg: 5, contenanceMaxKg: 10, operateur: 'per-fh'
+});
+const recupPourReemploi = await store.creerMouvement({
+  type: 'RECUPERATION_MAINTENANCE', mode: 'FORMATION',
+  machineId: machineR6.id, bouteilleDstId: bouteilleReemploiOk.id,
+  peseeAvantKg: 0, peseeApresKg: 0.4, technicien: 'Sophie Bianchi'
+});
+await store.soumettreMouvement(recupPourReemploi.id);
+await store.validerMouvement(recupPourReemploi.id, 'per-fh');
+await store.deciderFluideRecupere(
+  bouteilleReemploiOk.id, 'REUTILISABLE', 'per-fh');
+const reemploiDansAvoir = await store.creerMouvement({
+  type: 'CHARGE_APPOINT', mode: 'FORMATION', machineId: machineR6.id,
+  bouteilleSrcId: bouteilleReemploiOk.id,
+  peseeAvantKg: 0.4, peseeApresKg: 0.2, technicien: 'Sophie Bianchi'
+});
+await store.soumettreMouvement(reemploiDansAvoir.id);
+await store.validerMouvement(reemploiDansAvoir.id, 'per-fh');
+const pdfReemploiOk = await genererCerfaPdf(store,
+  { source: 'mouvement', id: reemploiDansAvoir.id });
+const okR = await relire(pdfReemploiOk.octets);
+verifier('CM-4b : réemploi ≤ récupéré → aucune mention d’anomalie',
+  !okR.texte('14_Observations').includes('Anomalie de réemploi'),
+  `observations = ${okR.texte('14_Observations')}`);
+
+// ============================================================
 // 5. Couverture : les 72 champs officiels de SPEC-CERFA sont
 //    TOUS traités par le module générateur (aucun oubli possible)
 // ============================================================

@@ -14,6 +14,7 @@
 import { evaluerControle } from '../data/reglementation-fluides.js';
 import { versBase64 } from '../data/contenu-pj.js';
 import { etatParcoursSignatures } from '../data/parcours-signature.js';
+import { avoirParMachineOrigine } from '../data/avoir-origine.js';
 
 /** Cache de la bibliothèque pdf-lib (une seule initialisation). */
 let promessePdfLib = null;
@@ -90,6 +91,12 @@ const TYPE_VERS_CASE = {
 /** Mention obligatoire du cadre 14 en mode formation. */
 export const MENTION_FORMATION = 'MODE FORMATION — DOCUMENT NON OFFICIEL — ' +
   'NE PAS UTILISER POUR UNE INTERVENTION RÉELLE';
+
+/** CM-4b : préfixe de la mention d'anomalie de surcharge de réemploi
+ *  (cadre 14) — mention SYSTÈME (comme MENTION_FORMATION), jamais exigée
+ *  de l'élève à la correction. La surcharge est SIGNALÉE, jamais bloquée
+ *  (décision Franck 22/07, tous modes — Officiel compris). */
+export const PREFIXE_MENTION_REEMPLOI = 'Anomalie de réemploi signalée';
 
 // ------------------------------------------------------------
 // Petits formatages locaux (indépendants du fuseau horaire)
@@ -211,7 +218,10 @@ async function assemblerContexte(store, { source, id }, options = {}) {
   };
 
   if (source === 'mouvement') {
-    const mouvement = (await store.getMouvements()).find((mv) => mv.id === id);
+    // CM-4b : la liste complète sert aussi au calcul de l'avoir d'origine
+    // (mention de réemploi) — ne pas la jeter après le find.
+    const mouvements = await store.getMouvements();
+    const mouvement = mouvements.find((mv) => mv.id === id);
     if (!mouvement) throw new Error(`Mouvement introuvable : ${id}.`);
     const statutsAdmis = options.accepterSoumis
       ? ['VALIDE', 'ANNULE', 'SOUMIS']
@@ -248,6 +258,34 @@ async function assemblerContexte(store, { source, id }, options = {}) {
     if (mouvement.statut === 'ANNULE') {
       contexte.observations.push(
         'Écriture annulée par contre-écriture (registre).');
+    }
+
+    // CM-4b : mention d'anomalie de surcharge de réemploi (cadre 14) —
+    // charge depuis une bouteille de RÉCUPÉRATION au-delà du fluide
+    // récupéré de CETTE machine. SIGNALÉE, jamais bloquante (décision
+    // Franck 22/07, tous modes). avoirParMachineOrigine ne compte que
+    // les VALIDE : la contribution d'un mouvement SOUMIS (canal du PDF
+    // final, accepterSoumis) est intégrée à la main ; une écriture
+    // ANNULE (effets neutralisés) ne porte jamais la mention. Bouteille
+    // NEUVE (fluide acheté) jamais concernée. Tolérance 10 g (CM-2).
+    if ((mouvement.type === 'CHARGE_APPOINT'
+        || mouvement.type === 'MISE_EN_SERVICE')
+        && mouvement.statut !== 'ANNULE'
+        && contexte.bouteilleSrc?.type === 'RECUPERATION'
+        && mouvement.machineId) {
+      let net = avoirParMachineOrigine(contexte.bouteilleSrc.id, mouvements)
+        .get(mouvement.machineId) ?? 0;
+      if (mouvement.statut !== 'VALIDE'
+          && Number.isFinite(Number(mouvement.quantiteKg))) {
+        net -= Math.abs(Number(mouvement.quantiteKg));
+      }
+      if (net < -0.01) {
+        const surplus = Math.round(-net * 1000) / 1000;
+        contexte.observations.push(
+          `${PREFIXE_MENTION_REEMPLOI} : ${fmtVirgule(surplus)} kg `
+          + 'réintroduits au-delà du fluide récupéré de cette machine — '
+          + 'à rectifier par contre-écriture.');
+      }
     }
 
     // Contrôle d'étanchéité lié : champ mouvement.controle en priorité,

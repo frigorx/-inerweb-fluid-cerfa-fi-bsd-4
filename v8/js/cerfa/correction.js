@@ -20,7 +20,8 @@
 // ============================================================
 
 import {
-  chargerPdfLib, calculerChampsCerfa, MENTION_FORMATION
+  chargerPdfLib, calculerChampsCerfa, MENTION_FORMATION,
+  PREFIXE_MENTION_REEMPLOI
 } from './generateur.js';
 
 // ------------------------------------------------------------
@@ -226,6 +227,12 @@ export function textesEquivalents(attendue, saisie) {
 /** Mention système du cadre 14, jamais exigée de l'élève. */
 const MENTION_FORMATION_NORMALISEE = normaliserTexte(MENTION_FORMATION);
 
+/** CM-4b : mention système d'anomalie de réemploi (cadre 14), posée par
+ *  l'application d'après l'avoir d'origine — l'élève n'a aucun moyen de
+ *  la calculer, elle est écartée de la comparaison comme MENTION_FORMATION
+ *  (filtrage par préfixe : la fin de la ligne porte le surplus en kg). */
+const PREFIXE_REEMPLOI_NORMALISE = normaliserTexte(PREFIXE_MENTION_REEMPLOI);
+
 /**
  * Ligne normalisée d'un pavé multi-lignes : « SIRET : » unifié (avec
  * ou sans deux-points), numéro SIRET comparé sans ses espaces de
@@ -245,7 +252,8 @@ function normaliserLigne(ligne) {
 function lignesComparables(valeur) {
   return String(valeur ?? '').split('\n')
     .map(normaliserLigne)
-    .filter((l) => l !== '' && l !== MENTION_FORMATION_NORMALISEE)
+    .filter((l) => l !== '' && l !== MENTION_FORMATION_NORMALISEE
+      && !l.startsWith(PREFIXE_REEMPLOI_NORMALISE))
     .sort();
 }
 
