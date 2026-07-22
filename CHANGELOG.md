@@ -2,6 +2,62 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧱 P0-5 — APTITUDE OPPOSABLE (22/07, AP-1→AP-5, plan docs/PLAN-P0-5-APTITUDE.md)
+- **L'écart métier n° 2 de l'audit du 20/07 est soldé** : le mode Officiel ne
+  vérifiait que « au moins une habilitation active » (condition 7) — un cat. E
+  (étanchéité seule) passait devant une charge, un D (récupération seule) devant
+  une mise en service. La matrice du moteur d'aptitude (validée fonctionnellement
+  le 14/07, cas Bachir/Pierre) est désormais OPPOSABLE : **condition 16
+  `APTITUDE_PORTEE`** (S·V), « Habilitation de {nom} inadaptée à cette
+  intervention : {motif du moteur} ». Le zip RC n'étant pas disponible dans la
+  session, le moteur branché est LE NÔTRE (déjà testé), corrigé des deux erreurs
+  relevées par l'audit — pas le `droit-intervention.js` de la RC (non testé).
+- **AP-1 — frontières STRICTES** : le texte dit charge « INFÉRIEURE À » 3 kg
+  (6 kg hermétique scellé) ; les comparateurs inclusifs acceptaient 3,000 et
+  6,000 kg PILE, exactement hors couverture (cas existants à 2/5/8/10 kg).
+  Corrigé (`<`/`>=`) + tests frontière 2,999/3/5,999/6. Au passage, trou
+  `MAP_OPERATION` : les types `CONTROLE_PERIODIQUE`/`CONTROLE_NON_PERIODIQUE`
+  (P7-a) retombaient en MAINTENANCE — faux REFUS de conseil pour un cat. E sur
+  un contrôle, sa seule prérogative ; mappés ETANCHEITE.
+- **AP-2 — ancienne cat. II limitée** (< 3 kg, < 6 kg hermétique scellé
+  étiqueté) : elle était modélisée SANS limite, comme la I. ⚠️ Valeur issue du
+  plan de correction adopté — à RE-confirmer sur pièce par Franck avant
+  réouverture de l'Officiel (verrou T1 couvre ; décisions D1-D5 au plan).
+- **AP-3 — miroir serveur `server/droit-intervention.js`** (patron
+  signatures-mouvement : module CJS autonome, PAS de recopie dans api.js) +
+  suite `test-droit-intervention` : parité stricte par JSON (verdicts ET
+  messages) sur ~130 entrées discriminantes. Nouveaux purs côté ESM :
+  `FIN_RECONNAISSANCE_2008` ('2026-12-31', valeur déjà en SPEC §1) et
+  `habilitationReconnue(h, dateReference)`.
+- **AP-4 — le fait et le blocage** : les deux `cadreFicheOfficiel` calculent
+  `intervenant.aptitude = null | { autorise, motif }` (habilitations RECONNUES —
+  une 2008 ne compte plus après le 31/12/2026, appliqué aussi au fait
+  `habilitationActive` — + mentions actives, opération = type du mouvement,
+  fluide du mouvement, charge NOMINALE de la machine — celle des seuils —,
+  garde stricte anti-null, hermétique=false tant que la fiche machine ne porte
+  pas le champ, P1-1). Condition 16 posée SEULEMENT si `habilitationActive` ET
+  `autorise === false` : jamais en doublon de la 7, fait absent = sans objet
+  (rétro-compatible), gravité CONSEIL ne bloque JAMAIS. Aucune migration,
+  `VERSION_CONTRAT` inchangée, filtres en JS des deux côtés (parité au
+  caractère près).
+- **AP-5 — semis démo pérenne** : M. Delorme reçoit une habilitation 2025 (A1)
+  à échéance RELATIVE (`jourDemo`) — même principe que les étalonnages (« un
+  exemplaire reconnu toujours ») : la démo reste praticable en Officiel simulé
+  après le 31/12/2026 ; Sophie Bianchi garde sa cat. I seule (cas pédagogique
+  de la transition). Fiche personnel alignée (`categorie2025: 'A1'`).
+- **Tests** : test-habilitations-moteur 44 → 64 · test-blocage-officiel 33 → 42
+  (+ 6 cadres de parité) · test-contrat +9 vérifs DOUBLÉES demo/local via
+  `simulerValidationOfficielle` (cas d'acceptation de l'audit §11 : E + charge
+  → refus, D + appoint → refus, A2 sur machine 5 kg → refus, A1 → rien — la
+  parité des deux assembleurs casse à la moindre divergence) ·
+  test-droit-intervention (nouvelle suite) · test-demo-store adapté (3
+  habilitations). Aucune surface d'écran nouvelle : le motif s'affiche par le
+  panneau de simulation existant. **TOUT VERT — 92 exécutions.**
+- **Hors périmètre consigné** : cycle de remise à niveau (12/03/2029 puis ≤ 7
+  ans — aucun modèle de données, chantier dédié) · champ machine « hermétique
+  scellé étiqueté » (P1-1) · alignement du CONSEIL sur `habilitationReconnue`
+  (divergence indicative possible après le 01/01/2027, à revoir avec P1-1).
+
 ### 🎭 Monde démo — dates d'étalonnage RELATIVES (22/07, demande Franck)
 - **Le monde fictif pourrissait** : ses dates FIGÉES ont vieilli au point que les DEUX
   détecteurs étaient expirés (et la pompe à 2 jours de l'être) — plus aucun parcours ne se
