@@ -1682,6 +1682,52 @@ verifier('peutPasserEnOfficiel : { ok, motifs[] français }',
   await store.supprimerMouvement(brouillonSim.id);
 }
 
+// P0-5 — aptitude OPPOSABLE (condition 16, APTITUDE_PORTEE) : la simulation
+// prouve l'assemblage du fait `aptitude` par les DEUX stores (suite doublée
+// demo/local — c'est la parité des deux cadreFicheOfficiel qui casse à la
+// moindre divergence). Cas d'acceptation de l'audit du 20/07 (§11) :
+// E + charge → refus ; D + autre chose que récupération → refus ; A2 sur une
+// machine au-delà de sa limite → refus ; A1 → rien. machineA : R-410A (HFC),
+// charge nominale 5 kg.
+{
+  const cas = [
+    ['E', 'étanchéité seule devant une charge', true],
+    ['D', 'récupération seule devant une charge', true],
+    ['A2', 'limite 3 kg devant une machine de 5 kg', true],
+    ['A1', 'toutes opérations sans limite', false]
+  ];
+  for (const [categorie, libelle, refusAttendu] of cas) {
+    const technicien = await store.createPersonne({
+      nom: `Aptitude ${categorie}`, prenom: 'Test', typePersonne: 'ENSEIGNANT'
+    });
+    await store.createHabilitation({
+      personneId: technicien.id, regime: '2025', categorie,
+      operateur: 'Testeur Contrat'
+    });
+    const brouillon = await store.creerMouvement({
+      type: 'CHARGE_APPOINT', machineId: machineA.id, fluide: FLUIDE,
+      peseeAvantKg: 12, peseeApresKg: 11, causeMouvement: 'Fuite réparée',
+      technicien: `Test Aptitude ${categorie}`, executeParId: technicien.id
+    });
+    const sim = await store.simulerValidationOfficielle(brouillon.id);
+    if (refusAttendu) {
+      verifier(`aptitude opposable : cat. ${categorie} (${libelle}) → APTITUDE_PORTEE nominatif`,
+        sim.blocages.some((b) => b.code === 'APTITUDE_PORTEE' &&
+          b.motif.includes(`Aptitude ${categorie}`)),
+        JSON.stringify(sim.blocages.map((b) => b.code)));
+      verifier(`aptitude opposable : cat. ${categorie} — jamais en doublon d'APTITUDE (la 7 se tait)`,
+        !sim.blocages.some((b) => b.code === 'APTITUDE'),
+        JSON.stringify(sim.blocages.map((b) => b.code)));
+    } else {
+      verifier(`aptitude opposable : cat. ${categorie} (${libelle}) → ni APTITUDE ni APTITUDE_PORTEE`,
+        !sim.blocages.some((b) =>
+          b.code === 'APTITUDE' || b.code === 'APTITUDE_PORTEE'),
+        JSON.stringify(sim.blocages.map((b) => b.code)));
+    }
+    await store.supprimerMouvement(brouillon.id);
+  }
+}
+
 // Lot C (brique C1) — signatures RÉELLES : ordre imposé, déclarations
 // figées, illisibilité, invalidation par révision, traces. Jouée demo ET
 // local : c'est la parité qui casse à la moindre divergence.

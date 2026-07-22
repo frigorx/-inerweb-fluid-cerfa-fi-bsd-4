@@ -38,8 +38,11 @@ import { PREFIXE_SIMULATION, MSG_CODE_INCORRECT, MSG_FICHE_AU_COFFRE,
 import { calculerTransitions, formaterEpisode, comparerEpisodes, estOuvert }
   from './sentinelle.js';
 // Habilitations F-Gas : référentiels + tri (module pur, miroir serveur).
+// P0-5 : + moteur d'aptitude pour le fait `aptitude` du cadre Officiel
+// (verifierDroitIntervention, habilitationReconnue, jetonsMentionsActives).
 import { REGIMES, CATEGORIES_2008, CATEGORIES_2025, comparerHabilitations,
-  categorieCoherente, FLUIDES_MENTION, comparerMentions }
+  categorieCoherente, FLUIDES_MENTION, comparerMentions,
+  verifierDroitIntervention, habilitationReconnue, jetonsMentionsActives }
   from './habilitations.js';
 // Signature binaire réelle des pièces jointes (audit-proof) : le contenu doit
 // concorder avec le type déclaré, jamais le MIME annoncé seul (miroir serveur).
@@ -1159,13 +1162,40 @@ export function creerDemoStore() {
     const personne = mouvement.executeParId
       ? donnees.personnel.find((p) => p.id === mouvement.executeParId) ?? null
       : null;
-    const intervenant = personne ? {
-      nom: `${personne.prenom} ${personne.nom}`,
-      actif: personne.actif !== false,
-      habilitationActive: (donnees.habilitations ?? []).some((h) =>
-        h.personneId === personne.id && h.actif &&
-        (!h.dateFin || h.dateFin >= jour))
-    } : null;
+    // P0-5 : habilitations qui COMPTENT (actives, non échues, régime encore
+    // reconnu — une 2008 ne compte plus après le 31/12/2026) + fait
+    // `aptitude` = verdict du moteur sur CE mouvement (opération = type,
+    // fluide du mouvement, charge NOMINALE de la machine — celle des seuils
+    // réglementaires). La fiche machine ne porte pas (encore) le caractère
+    // « hermétiquement scellé » (P1-1) : défaut prudent = seuil 3 kg.
+    let intervenant = null;
+    if (personne) {
+      const reconnues = (donnees.habilitations ?? []).filter((h) =>
+        h.personneId === personne.id && habilitationReconnue(h, jour));
+      const nominale = machine ? machine.chargeNominaleKg : null;
+      const verdict = reconnues.length === 0 ? null : verifierDroitIntervention({
+        habilitations: reconnues.map((h) =>
+          ({ regime: h.regime, categorie: h.categorie })),
+        mentions: jetonsMentionsActives((donnees.mentionsHabilitation ?? [])
+          .filter((m) => m.personneId === personne.id &&
+            (!m.dateFin || m.dateFin >= jour))),
+        operation: mouvement.type,
+        fluide: mouvement.fluide ?? null,
+        // Garde stricte : colonne nullable — un null deviendrait 0 via
+        // Number() et fabriquerait un faux refus (leçon conseil-intervenant).
+        chargeKg: typeof nominale === 'number' && Number.isFinite(nominale)
+          && nominale > 0 ? nominale : null,
+        hermetiqueScelle: false
+      });
+      intervenant = {
+        nom: `${personne.prenom} ${personne.nom}`,
+        actif: personne.actif !== false,
+        habilitationActive: reconnues.length > 0,
+        aptitude: verdict
+          ? { autorise: verdict.autorise, motif: verdict.motif }
+          : null
+      };
+    }
     return {
       type: mouvement.type,
       machinePresente: Boolean(machine),

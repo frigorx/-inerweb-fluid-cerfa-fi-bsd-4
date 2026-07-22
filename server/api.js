@@ -41,6 +41,12 @@ const scellementExterne = require('./scellement-externe.js');
 // module ESM du front, parité prouvée par test-blocage-officiel.mjs).
 const { evaluerBlocagesOfficiel, messageRefusOfficiel, VERROU_LIVRAISON,
   MSG_CONTROLE_DIRECT_OFFICIEL } = require('./blocage-officiel.js');
+// Moteur d'aptitude F-Gas (P0-5, aptitude opposable) : verdict de la matrice
+// catégorie × opération × fluide × charge pour le fait `aptitude` du cadre
+// Officiel (miroir du MOTEUR de v8/js/data/habilitations.js, parité prouvée
+// par test-droit-intervention.mjs).
+const { verifierDroitIntervention, habilitationReconnue,
+  jetonsMentionsActives } = require('./droit-intervention.js');
 // Signatures réelles (lot C, brique C1) : déclarations figées + critères
 // d'illisibilité (miroir du module ESM du front, parité prouvée par
 // test-signatures-mouvement.mjs).
@@ -6718,15 +6724,47 @@ function cadreFicheOfficiel(mouvement) {
     : null;
   const personne = lignePersonne
     ? mapping.versFront('personnel', lignePersonne) : null;
-  const intervenant = personne ? {
-    nom: `${personne.prenom} ${personne.nom}`,
-    actif: personne.actif !== false,
-    habilitationActive: Boolean(db.get(
-      `SELECT id FROM habilitations
-       WHERE personne_id = ? AND actif = 1
-         AND (date_fin IS NULL OR date_fin >= ?)`,
-      [personne.id, jour]))
-  } : null;
+  // P0-5 : habilitations qui COMPTENT (actives, non échues, régime encore
+  // reconnu — une 2008 ne compte plus après le 31/12/2026) + fait
+  // `aptitude` = verdict du moteur sur CE mouvement (opération = type,
+  // fluide du mouvement, charge NOMINALE de la machine — celle des seuils
+  // réglementaires). La fiche machine ne porte pas (encore) le caractère
+  // « hermétiquement scellé » (P1-1) : défaut prudent = seuil 3 kg.
+  // Filtres de date/régime en JS (habilitationReconnue), pas en SQL :
+  // parité au caractère près avec le DemoStore.
+  let intervenant = null;
+  if (personne) {
+    const reconnues = db.all(
+      'SELECT * FROM habilitations WHERE personne_id = ? AND actif = 1',
+      [personne.id])
+      .map((l) => mapping.versFront('habilitations', l))
+      .filter((h) => habilitationReconnue(h, jour));
+    const nominale = machine ? machine.chargeNominaleKg : null;
+    const verdict = reconnues.length === 0 ? null : verifierDroitIntervention({
+      habilitations: reconnues.map((h) =>
+        ({ regime: h.regime, categorie: h.categorie })),
+      mentions: jetonsMentionsActives(db.all(
+        'SELECT * FROM mentions_habilitation WHERE personne_id = ? AND actif = 1',
+        [personne.id])
+        .map((l) => mapping.versFront('mentions_habilitation', l))
+        .filter((m) => !m.dateFin || m.dateFin >= jour)),
+      operation: mouvement.type,
+      fluide: mouvement.fluide ?? null,
+      // Garde stricte : colonne nullable — un null deviendrait 0 via
+      // Number() et fabriquerait un faux refus (leçon conseil-intervenant).
+      chargeKg: typeof nominale === 'number' && Number.isFinite(nominale)
+        && nominale > 0 ? nominale : null,
+      hermetiqueScelle: false
+    });
+    intervenant = {
+      nom: `${personne.prenom} ${personne.nom}`,
+      actif: personne.actif !== false,
+      habilitationActive: reconnues.length > 0,
+      aptitude: verdict
+        ? { autorise: verdict.autorise, motif: verdict.motif }
+        : null
+    };
+  }
   return {
     type: mouvement.type,
     machinePresente: Boolean(machine),

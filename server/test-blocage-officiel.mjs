@@ -41,7 +41,9 @@ function ficheSaine(surcharges = {}) {
     controleStatut: 'CONFORME', controlePeriodiqueRequis: true,
     fluideInflammable: false, sourceVierge: false, prp: 2088,
     signaturePresente: true, technicienPresent: true,
-    intervenant: { nom: 'Un Enseignant', actif: true, habilitationActive: true },
+    // P0-5 : fait `aptitude` (aptitude opposable) — sain = couverte.
+    intervenant: { nom: 'Un Enseignant', actif: true, habilitationActive: true,
+      aptitude: { autorise: true, motif: 'Opération autorisée' } },
     // Lot C (C1) — conditions 14-15 : signatures réelles valides (tri-état
     // true | false | 'PERIMEE').
     signatureTechnicienValide: true, signatureDetenteurValide: true,
@@ -157,6 +159,57 @@ const codes = (r) => r.blocages.map((b) => b.code).join(',');
     inactif.blocages.some((b) => b.code === 'INTERVENANT' && b.motif.includes('Un Élève')) &&
     inactif.blocages.some((b) => b.code === 'APTITUDE' && b.motif.includes('Un Élève')),
     codes(inactif));
+}
+
+// Condition 16 (P0-5) : aptitude opposable — l'habilitation COUVRE l'intervention.
+{
+  const inadaptee = evaluerBlocagesOfficiel({ moment: 'SOUMISSION',
+    fiche: ficheSaine({ intervenant: { nom: 'Un Contrôleur', actif: true,
+      habilitationActive: true,
+      aptitude: { autorise: false,
+        motif: 'Contrôle d’étanchéité uniquement : pas de manipulation' } } }) });
+  verifier('aptitude non couvrante : blocage APTITUDE_PORTEE nominatif, motif embarqué',
+    inadaptee.blocages.some((b) => b.code === 'APTITUDE_PORTEE' &&
+      b.motif.includes('Un Contrôleur') &&
+      b.motif.includes('pas de manipulation')),
+    codes(inadaptee));
+  verifier('aptitude non couvrante : PAS de doublon APTITUDE (la 7 se tait)',
+    !inadaptee.blocages.some((b) => b.code === 'APTITUDE'), codes(inadaptee));
+
+  const sansFait = evaluerBlocagesOfficiel({ moment: 'SOUMISSION',
+    fiche: ficheSaine({ intervenant: { nom: 'Un Enseignant', actif: true,
+      habilitationActive: true, aptitude: null } }) });
+  verifier('fait aptitude null (sans objet) : aucun blocage APTITUDE_PORTEE',
+    !sansFait.blocages.some((b) => b.code === 'APTITUDE_PORTEE'), codes(sansFait));
+
+  const ancienCadre = evaluerBlocagesOfficiel({ moment: 'SOUMISSION',
+    fiche: ficheSaine({ intervenant: { nom: 'Un Enseignant', actif: true,
+      habilitationActive: true } }) });
+  verifier('fait aptitude ABSENT (cadre antérieur à P0-5) : rétro-compatible, rien',
+    !ancienCadre.blocages.some((b) => b.code === 'APTITUDE_PORTEE'), codes(ancienCadre));
+
+  const conseilSeul = evaluerBlocagesOfficiel({ moment: 'SOUMISSION',
+    fiche: ficheSaine({ intervenant: { nom: 'Un Enseignant', actif: true,
+      habilitationActive: true,
+      aptitude: { autorise: true,
+        motif: 'Intervention autorisée dans la limite de 3 kg' } } }) });
+  verifier('aptitude autorisée avec réserve (gravité CONSEIL) : ne bloque JAMAIS',
+    !conseilSeul.blocages.some((b) => b.code === 'APTITUDE_PORTEE'), codes(conseilSeul));
+
+  const sansHab = evaluerBlocagesOfficiel({ moment: 'SOUMISSION',
+    fiche: ficheSaine({ intervenant: { nom: 'Un Élève', actif: true,
+      habilitationActive: false,
+      aptitude: { autorise: false, motif: 'Aucune habilitation enregistrée' } } }) });
+  verifier('sans habilitation : APTITUDE seule parle (jamais APTITUDE_PORTEE en plus)',
+    sansHab.blocages.some((b) => b.code === 'APTITUDE') &&
+    !sansHab.blocages.some((b) => b.code === 'APTITUDE_PORTEE'), codes(sansHab));
+
+  const auPassage = evaluerBlocagesOfficiel({ moment: 'PASSAGE',
+    fiche: ficheSaine({ intervenant: { nom: 'Un Contrôleur', actif: true,
+      habilitationActive: true,
+      aptitude: { autorise: false, motif: 'Peu importe' } } }) });
+  verifier('PASSAGE : la fiche n’est pas encore jugée (condition 16 comprise)',
+    auPassage.blocages.every((b) => b.code !== 'APTITUDE_PORTEE'), codes(auPassage));
 }
 
 // Condition 9 : contrôle d'étanchéité exigé.
@@ -321,6 +374,14 @@ const codes = (r) => r.blocages.map((b) => b.code).join(',');
       sourceVierge: true, prp: 3922, signaturePresente: false, technicienPresent: false }) });
     CADRES.push({ moment, fiche: ficheSaine({ intervenant: {
       nom: 'Personne Désactivée', actif: false, habilitationActive: false } }) });
+    // P0-5 (condition 16) : aptitude non couvrante / fait sans objet.
+    CADRES.push({ moment, fiche: ficheSaine({ intervenant: {
+      nom: 'Un Contrôleur', actif: true, habilitationActive: true,
+      aptitude: { autorise: false,
+        motif: 'Récupération uniquement : opération non couverte' } } }) });
+    CADRES.push({ moment, fiche: ficheSaine({ intervenant: {
+      nom: 'Un Enseignant', actif: true, habilitationActive: true,
+      aptitude: null } }) });
     // Lot C (C1) : signatures réelles — les trois états discriminés.
     CADRES.push({ moment, fiche: ficheSaine({
       signatureTechnicienValide: 'PERIMEE', signatureDetenteurValide: false }) });
