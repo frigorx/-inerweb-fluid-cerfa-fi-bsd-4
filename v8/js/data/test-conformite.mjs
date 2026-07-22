@@ -149,21 +149,23 @@ const personne = await store.createPersonne({
   dateObtention: '2025-01-10',
   dateFinValidite: '2030-01-09',
   categorie2008: 'II',
-  categorie2025: 'II',
+  categorie2025: null,
   activitesAutorisees: ['MAINTENANCE', 'RECUPERATION'],
   email: 'paul.garnier@exemple.fr'
 });
-verifier('createPersonne : salarié créé, actif, catégories 2008 et 2025',
+verifier('createPersonne : salarié créé, actif, catégorie 2008 (grille par champ)',
   personne.actif === true && personne.typePersonne === 'SALARIE' &&
-  personne.categorie2008 === 'II' && personne.categorie2025 === 'II');
+  personne.categorie2008 === 'II' && personne.categorie2025 === null);
 
 await verifierRejet('createPersonne rejette un type de personne inconnu',
   store.createPersonne({ nom: 'X', prenom: 'Y', typePersonne: 'ROBOT' }),
   'Type de personne');
 
+// P0-5 (revue) : la grille est PAR CHAMP — « V » est désormais VALIDE pour
+// la 2025 ; une valeur de l'autre grille ou inconnue reste rejetée.
 await verifierRejet('createPersonne rejette une catégorie inconnue',
   store.createPersonne({
-    nom: 'X', prenom: 'Y', typePersonne: 'SALARIE', categorie2025: 'V'
+    nom: 'X', prenom: 'Y', typePersonne: 'SALARIE', categorie2025: 'IX'
   }), 'Catégorie');
 
 const personneModifiee = await store.updatePersonne(personne.id, {

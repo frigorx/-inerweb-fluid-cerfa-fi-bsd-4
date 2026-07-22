@@ -26,7 +26,7 @@
 - **AP-3 — miroir serveur `server/droit-intervention.js`** (patron
   signatures-mouvement : module CJS autonome, PAS de recopie dans api.js) +
   suite `test-droit-intervention` : parité stricte par JSON (verdicts ET
-  messages) sur ~130 entrées discriminantes. Nouveaux purs côté ESM :
+  messages) sur 125 entrées discriminantes. Nouveaux purs côté ESM :
   `FIN_RECONNAISSANCE_2008` ('2026-12-31', valeur déjà en SPEC §1) et
   `habilitationReconnue(h, dateReference)`.
 - **AP-4 — le fait et le blocage** : les deux `cadreFicheOfficiel` calculent
@@ -46,7 +46,8 @@
   après le 31/12/2026 ; Sophie Bianchi garde sa cat. I seule (cas pédagogique
   de la transition). Fiche personnel alignée (`categorie2025: 'A1'`).
 - **Tests** : test-habilitations-moteur 44 → 64 · test-blocage-officiel 33 → 42
-  (+ 6 cadres de parité) · test-contrat +9 vérifs DOUBLÉES demo/local via
+  (+ 6 cadres de parité) · test-contrat +7 vérifs DOUBLÉES demo/local (14 au
+  total) via
   `simulerValidationOfficielle` (cas d'acceptation de l'audit §11 : E + charge
   → refus, D + appoint → refus, A2 sur machine 5 kg → refus, A1 → rien — la
   parité des deux assembleurs casse à la moindre divergence) ·
@@ -57,6 +58,25 @@
   ans — aucun modèle de données, chantier dédié) · champ machine « hermétique
   scellé étiqueté » (P1-1) · alignement du CONSEIL sur `habilitationReconnue`
   (divergence indicative possible après le 01/01/2027, à revoir avec P1-1).
+- **Revue adversariale du lot (1 agent) : 0 bloquant, 2 importants CORRIGÉS,
+  2 mineurs consignés.** ① IMPORTANT corrigé : la fiche personnel validait
+  `categorie2025` contre la grille 2008 (I…IV) — le semis « A1 » était donc
+  REFUSÉ par les propres mutations des stores (import plus permissif que
+  create/update, message mensonger) et le sélecteur 2025 du formulaire
+  n'offrait pas A1…V (un enregistrement effaçait la valeur EN SILENCE).
+  Correctif : grille PAR CHAMP (`verifierCategorie` 3ᵉ param, 2 stores à
+  l'identique), sélecteurs du formulaire par régime, valeur héritée hors
+  grille PRÉSERVÉE à l'écran (doctrine CM-3 : l'écran ne ment pas, le store
+  refuse tant que non corrigée consciemment) ; test-contrat +3 vérifs
+  doublées (A1 accepté, grilles croisées refusées). ② IMPORTANT corrigé :
+  deux chiffres du présent CHANGELOG (+7 et 125, pas +9 et ~130).
+  Mineurs consignés SANS code : une charge non numérique (NaN) est jugée
+  différemment en synthèse (REFUS) et en opération (CONSEIL) — identique
+  dans les deux miroirs, inatteignable depuis les stores (garde stricte),
+  à normaliser en tête de moteur si un appelant direct apparaît ·
+  `habilitationReconnue` accepte une ligne sans `regime` (motif « fluide
+  hors champ » trompeur) — inatteignable, l'intégrité est imposée à la
+  création et à l'import.
 
 ### 🎭 Monde démo — dates d'étalonnage RELATIVES (22/07, demande Franck)
 - **Le monde fictif pourrissait** : ses dates FIGÉES ont vieilli au point que les DEUX

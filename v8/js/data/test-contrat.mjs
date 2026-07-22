@@ -243,11 +243,27 @@ await verifierRejet('createPersonne refuse un nom vide',
   store.createPersonne({ nom: '', prenom: 'X', typePersonne: 'ELEVE' }));
 await verifierRejet('createPersonne refuse un type de personne inconnu',
   store.createPersonne({ nom: 'X', prenom: 'X', typePersonne: 'ROBOT' }));
+// P0-5 (revue) : la grille est PAR CHAMP — avant, « A1 » était refusé pour
+// la grille 2025 (validée contre I…IV) et le message mentait.
+{
+  const attestee = await store.createPersonne({
+    nom: 'Grille', prenom: 'Christine', typePersonne: 'ENSEIGNANT',
+    categorie2008: 'I', categorie2025: 'A1'
+  });
+  verifier('createPersonne accepte categorie2025 de la VRAIE grille 2025 (A1)',
+    attestee.categorie2025 === 'A1' && attestee.categorie2008 === 'I');
+}
+await verifierRejet('createPersonne refuse une catégorie 2008 dans le champ 2025',
+  store.createPersonne({ nom: 'Grille', prenom: 'Yves',
+    typePersonne: 'ENSEIGNANT', categorie2025: 'I' }));
+await verifierRejet('createPersonne refuse une catégorie 2025 dans le champ 2008',
+  store.createPersonne({ nom: 'Grille', prenom: 'Zoé',
+    typePersonne: 'ENSEIGNANT', categorie2008: 'A1' }));
 
 const patchPersonne = await store.updatePersonne(enseignant.id,
-  { categorie2025: 'II' });
+  { categorie2025: 'A2' });
 verifier('updatePersonne applique un patch partiel',
-  patchPersonne.categorie2025 === 'II' && patchPersonne.nom === 'Contrat');
+  patchPersonne.categorie2025 === 'A2' && patchPersonne.nom === 'Contrat');
 await verifierRejet('updatePersonne refuse une catégorie inconnue',
   store.updatePersonne(enseignant.id, { categorie2025: 'IX' }));
 

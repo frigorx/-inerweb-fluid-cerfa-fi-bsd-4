@@ -553,7 +553,7 @@ export const DEMO = {
       dateObtention: '2023-09-01',
       dateFinValidite: '2028-08-31',
       categorie2008: 'I',
-      categorie2025: 'I',
+      categorie2025: null,
       activitesAutorisees: ['MISE_EN_SERVICE', 'MAINTENANCE', 'CONTROLE',
         'RECUPERATION'],
       actif: true,

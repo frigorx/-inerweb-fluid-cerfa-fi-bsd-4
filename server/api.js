@@ -202,13 +202,18 @@ function fmtNombre(n, dec = 2) {
   });
 }
 
-/** Valide une catégorie d'attestation (null accepté : non attesté). */
-function verifierCategorie(valeur, champ) {
+/**
+ * Valide une catégorie d'attestation (null accepté : non attesté).
+ * P0-5 (revue) : la grille est PAR CHAMP — la 2025 (A1…V) n'est pas la
+ * 2008 (I…IV) ; avant, la fiche refusait « A1 » pour la grille 2025 et
+ * le message mentait. Miroir EXACT du DemoStore.
+ */
+function verifierCategorie(valeur, champ, grille = CATEGORIES_ATTESTATION) {
   if (valeur === null || valeur === undefined) return null;
-  if (!CATEGORIES_ATTESTATION.includes(valeur)) {
+  if (!grille.includes(valeur)) {
     throw new Error(
       `Catégorie d'attestation inconnue pour ${champ} : ${valeur} ` +
-      `(attendu : ${CATEGORIES_ATTESTATION.join(', ')}).`);
+      `(attendu : ${grille.join(', ')}).`);
   }
   return valeur;
 }
@@ -1220,7 +1225,8 @@ const HANDLERS = {
       dateObtention: d.dateObtention ?? null,
       dateFinValidite: d.dateFinValidite ?? null,
       categorie2008: verifierCategorie(d.categorie2008, 'la grille 2008'),
-      categorie2025: verifierCategorie(d.categorie2025, 'la grille 2025'),
+      categorie2025: verifierCategorie(d.categorie2025, 'la grille 2025',
+        CATEGORIES_2025),
       activitesAutorisees: verifierActivites(d.activitesAutorisees),
       actif: d.actif !== false,
       email: d.email ?? null
@@ -1253,7 +1259,7 @@ const HANDLERS = {
       verifierCategorie(d.categorie2008, 'la grille 2008');
     }
     if (d.categorie2025 !== undefined) {
-      verifierCategorie(d.categorie2025, 'la grille 2025');
+      verifierCategorie(d.categorie2025, 'la grille 2025', CATEGORIES_2025);
     }
     if (d.activitesAutorisees !== undefined) {
       verifierActivites(d.activitesAutorisees);
