@@ -1570,6 +1570,45 @@ await verifierRejet('createBouteille refuse MELANGE hors type RÉCUPÉRATION',
       .some((a) => a.id === `alr-fuite-${machineFuite2.id}`));
 }
 
+// --- P0-6 (CF-4) : type d'installation FIXE/MOBILE — exception mobile ---
+{
+  verifier('createMachine : typeInstallation par défaut = FIXE (conservateur)',
+    machineA.typeInstallation === 'FIXE');
+  await verifierRejet('createMachine refuse un type d’installation inconnu',
+    store.createMachine({ designation: 'Machine roulante ?', fluide: FLUIDE,
+      chargeNominaleKg: 2, typeInstallation: 'CAMION',
+      operateur: 'Testeur Contrat' }), 'installation inconnu');
+
+  // Équipement MOBILE listé : le contrôle immédiat après réparation est
+  // admis (cas d'acceptation n° 4 de l'audit §11) — fuite, réparation et
+  // CONFORME le MÊME JOUR → clôture, machine EN_SERVICE.
+  const machineMobile = await store.createMachine({
+    designation: 'Groupe mobile de transfert de clim', fluide: FLUIDE,
+    chargeNominaleKg: 2, typeInstallation: 'MOBILE',
+    operateur: 'Testeur Contrat'
+  });
+  verifier('createMachine : typeInstallation MOBILE enregistré',
+    machineMobile.typeInstallation === 'MOBILE');
+  const ctlFuiteMobile = await store.createControle({
+    machineId: machineMobile.id, resultat: 'FUITE', methode: 'DIRECTE',
+    date: dateRelative(0), operateur: 'Testeur Contrat'
+  });
+  await store.tracerReparation(ctlFuiteMobile.id, {
+    dateReparation: dateRelative(0), natureReparation: 'Remplacement flexible',
+    reparateur: 'Testeur Contrat'
+  });
+  await store.createControle({
+    machineId: machineMobile.id, resultat: 'CONFORME', methode: 'DIRECTE',
+    date: dateRelative(0), operateur: 'Testeur Contrat'
+  });
+  verifier('P0-6 : MOBILE listé — contrôle immédiat admis, machine EN_SERVICE le jour même',
+    (await store.getMachines()).find((m) => m.id === machineMobile.id)
+      .statut === 'EN_SERVICE');
+  verifier('P0-6 : MOBILE — plus d’alerte fuite après la clôture immédiate',
+    !(await store.getAlertes())
+      .some((a) => a.id === `alr-fuite-${machineMobile.id}`));
+}
+
 // ============================================================
 // 14. Balance matière : inventaire et justification d'écart
 // ============================================================

@@ -171,6 +171,12 @@
  *       DELETE (la parade contre la destruction = les sauvegardes).
  *       Tables NON MAPPÉES (mapping.js) : le front ne voit jamais une
  *       enveloppe — import/export par insertion brute dédiée (E2c).
+ *  27 — P0-6 (cycle fuite, décision Franck 22/07) : machines.type_installation
+ *       ('FIXE'/'MOBILE', défaut FIXE, backfill par le DEFAULT) — un
+ *       équipement MOBILE listé est admis au contrôle immédiat après
+ *       réparation (exception réglementaire), un FIXE exige J+1 (proxy des
+ *       24 h de fonctionnement). Nom compatible avec le modèle complet
+ *       P1-1 (qui ajoutera le sous-type — colonne à part, pas de re-modelage).
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -1369,6 +1375,18 @@ WHEN NEW.entite_type = 'MOUVEMENT' AND EXISTS (
 BEGIN
     SELECT RAISE(ABORT, 'Écriture figée : elle ne peut plus recevoir de pièce justificative.');
 END;`);
+    }
+  },
+
+  // 27 — P0-6 : distinction FIXE/MOBILE de l'équipement (exception du
+  // contrôle immédiat après réparation pour les mobiles listés). DEFAULT
+  // 'FIXE' = backfill conservateur de tout le parc existant.
+  27: {
+    nom: 'machines_type_installation',
+    appliquer(db) {
+      db.exec(`ALTER TABLE machines ADD COLUMN type_installation TEXT
+                 NOT NULL DEFAULT 'FIXE'
+                 CHECK (type_installation IN ('FIXE','MOBILE'));`);
     }
   }
 };

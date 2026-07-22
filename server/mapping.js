@@ -183,6 +183,9 @@ const TABLES = {
       dernierControle: 'date_dernier_controle',
       prochainControle: 'date_prochain_controle',
       statut: 'statut',
+      // type_installation (migration 27, P0-6) : FIXE/MOBILE — un mobile
+      // listé est admis au contrôle immédiat après réparation.
+      typeInstallation: 'type_installation',
       // code_public (migration 003 + backfill 006, V9.1) : généré à la
       // création (createMachine), jamais dans la liste CHAMPS d'updateMachine
       // — intouchable en pratique, comme code_interne.

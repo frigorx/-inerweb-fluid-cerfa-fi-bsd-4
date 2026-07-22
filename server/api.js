@@ -2325,6 +2325,13 @@ const HANDLERS = {
     if (!Number.isFinite(nominale) || nominale <= 0) {
       throw new Error('Charge nominale obligatoire (en kg, positive).');
     }
+    // P0-6 : FIXE/MOBILE — un mobile listé est admis au contrôle
+    // immédiat après réparation. Absent = FIXE (défaut conservateur).
+    if (d.typeInstallation !== undefined && d.typeInstallation !== null
+        && !['FIXE', 'MOBILE'].includes(d.typeInstallation)) {
+      throw new Error(`Type d'installation inconnu : ${d.typeInstallation} `
+        + '(attendu : FIXE, MOBILE).');
+    }
     const client = d.clientId
       ? db.get('SELECT id, raison_sociale FROM clients_detenteurs WHERE id = ?',
         [d.clientId])
@@ -2362,6 +2369,7 @@ const HANDLERS = {
       localisation: d.localisation ?? null,
       siteLabel: d.siteLabel ?? client?.raison_sociale ?? null,
       statut: d.statut ?? 'EN_SERVICE',
+      typeInstallation: d.typeInstallation ?? 'FIXE',
       detectionPermanente: Boolean(d.detectionPermanente),
       dateMiseEnService: d.dateMiseEnService ?? null,
       dernierControle: d.dernierControle ?? null,
@@ -2391,6 +2399,13 @@ const HANDLERS = {
     if (d.fluide !== undefined && !fluideConnu(d.fluide)) {
       throw new Error(`Fluide inconnu au référentiel : ${d.fluide}.`);
     }
+    // P0-6 : FIXE/MOBILE — un mobile listé est admis au contrôle
+    // immédiat après réparation. Absent = FIXE (défaut conservateur).
+    if (d.typeInstallation !== undefined && d.typeInstallation !== null
+        && !['FIXE', 'MOBILE'].includes(d.typeInstallation)) {
+      throw new Error(`Type d'installation inconnu : ${d.typeInstallation} `
+        + '(attendu : FIXE, MOBILE).');
+    }
     // Code lisible modifiable (renommer « M1 » en « JR-CF-001 ») :
     // normalisé, validé, unique. Les libellés dénormalisés des écritures
     // scellées (machine_label) restent figés, par principe.
@@ -2407,7 +2422,8 @@ const HANDLERS = {
     }
     const CHAMPS = ['designation', 'type', 'marque', 'modele', 'numSerie',
       'fluide', 'chargeNominaleKg', 'chargeActuelleKg', 'clientId',
-      'localisation', 'siteLabel', 'statut', 'detectionPermanente',
+      'localisation', 'siteLabel', 'statut', 'typeInstallation',
+      'detectionPermanente',
       'dateMiseEnService', 'dernierControle', 'prochainControle'];
     const patch = {};
     for (const champ of CHAMPS) {

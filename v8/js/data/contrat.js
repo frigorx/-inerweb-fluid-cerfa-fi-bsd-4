@@ -125,9 +125,9 @@ export const METHODES_CONTRAT = {
 
   // --- machines ------------------------------------------------
   createMachine: { genre: 'mutation',
-    description: 'Crée une machine (code auto M{n}) ; Error si désignation vide, fluide inconnu, charge invalide, client introuvable.' },
+    description: 'Crée une machine (code auto M{n}) ; typeInstallation FIXE|MOBILE, défaut FIXE (P0-6 — un MOBILE listé est admis au contrôle immédiat après réparation) ; Error si désignation vide, fluide inconnu, charge invalide, client introuvable, type d’installation inconnu.' },
   updateMachine: { genre: 'mutation',
-    description: 'Patch partiel (id et code intouchables) ; Error si introuvable ou démantelée.' },
+    description: 'Patch partiel (id et code intouchables) ; Error si introuvable, démantelée ou type d’installation inconnu.' },
   arreterMachine: { genre: 'mutation',
     description: 'Passe EN_SERVICE → ARRETEE (reste au parc) ; Error si démantelée ou déjà arrêtée.' },
   demantelerMachine: { genre: 'mutation',
