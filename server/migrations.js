@@ -184,6 +184,9 @@
  *  29 — P0-8 (déclaration annuelle) : table cessions (sortie de fluide vers un
  *       tiers attesté, rubrique 10) — trace figée comme retours_fournisseur.
  *       Fin du cessions_kg = 0 codé en dur.
+ *  30 — P0-8 : la vue bilan_matiere COMPTE les cessions (DROP + CREATE à
+ *       l'identique + CTE cessions_agg) — sans quoi une cession créerait un
+ *       écart d'inventaire fantôme. Parité stricte avec calculerBalanceMatiere.
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -1443,6 +1446,109 @@ END;`);
                  ON cessions (bouteille_id);`);
       db.exec(`CREATE INDEX IF NOT EXISTS idx_cessions_fluide
                  ON cessions (fluide);`);
+    }
+  },
+
+  // 30 — P0-8 : la vue bilan_matiere COMPTE enfin les cessions (fin du
+  // « 0 AS cessions_kg »). Une cession décrémente physiquement la bouteille ;
+  // sans ce poste, la balance ferait apparaître un écart d'inventaire fantôme.
+  // La vue est RECRÉÉE à l'identique + un CTE cessions_agg (parité stricte avec
+  // demo-store calculerBalanceMatiere, qui soustrait déjà l.cessionsKg).
+  30: {
+    nom: 'bilan_matiere_cessions',
+    appliquer(db) {
+      db.exec('DROP VIEW IF EXISTS bilan_matiere;');
+      db.exec(`CREATE VIEW bilan_matiere AS
+WITH
+mvt AS (
+    SELECT etablissement_id,
+           fluide,
+           CAST(strftime('%Y', date_mouvement) AS INTEGER) AS annee,
+           SUM(CASE WHEN quantite_calculee_kg >= 0 THEN quantite_calculee_kg ELSE 0 END) AS charge_kg,
+           SUM(CASE WHEN quantite_calculee_kg <  0 THEN -quantite_calculee_kg ELSE 0 END) AS recupere_kg
+    FROM mouvements
+    WHERE statut IN ('VALIDE','ANNULE')
+      AND quantite_calculee_kg IS NOT NULL
+      AND type_operation <> 'TRANSFERT'
+      AND fluide IS NOT NULL
+    GROUP BY etablissement_id, fluide, annee
+),
+achats AS (
+    SELECT etablissement_id,
+           fluide,
+           CAST(strftime('%Y', date_entree_stock) AS INTEGER) AS annee,
+           SUM(COALESCE(masse_nette_entree_kg, masse_nette_kg, 0)) AS achats_kg
+    FROM bouteilles
+    WHERE type = 'NEUVE' AND date_entree_stock IS NOT NULL AND fluide IS NOT NULL
+    GROUP BY etablissement_id, fluide, annee
+),
+destructions AS (
+    SELECT etablissement_id,
+           fluide,
+           CAST(strftime('%Y', date_remise) AS INTEGER) AS annee,
+           SUM(COALESCE(masse_remise_kg, 0)) AS detruit_kg
+    FROM bsff
+    WHERE date_remise IS NOT NULL AND fluide IS NOT NULL
+    GROUP BY etablissement_id, fluide, annee
+),
+retours AS (
+    SELECT etablissement_id,
+           fluide,
+           CAST(strftime('%Y', date_retour) AS INTEGER) AS annee,
+           SUM(COALESCE(masse_kg, 0)) AS retourne_kg
+    FROM retours_fournisseur
+    WHERE date_retour IS NOT NULL AND fluide IS NOT NULL
+    GROUP BY etablissement_id, fluide, annee
+),
+cessions_agg AS (
+    SELECT etablissement_id,
+           fluide,
+           CAST(strftime('%Y', date_cession) AS INTEGER) AS annee,
+           SUM(COALESCE(masse_kg, 0)) AS cede_kg
+    FROM cessions
+    WHERE date_cession IS NOT NULL AND fluide IS NOT NULL
+    GROUP BY etablissement_id, fluide, annee
+),
+perimetre AS (
+    SELECT etablissement_id, fluide, annee FROM mvt
+    UNION SELECT etablissement_id, fluide, annee FROM achats
+    UNION SELECT etablissement_id, fluide, annee FROM destructions
+    UNION SELECT etablissement_id, fluide, annee FROM retours
+    UNION SELECT etablissement_id, fluide, annee FROM cessions_agg
+    UNION SELECT etablissement_id, fluide, annee FROM stocks_initiaux
+)
+SELECT
+    p.etablissement_id,
+    p.fluide,
+    p.annee,
+    COALESCE(si.stock_neuf_kg, 0)     AS stock_initial_neuf_kg,
+    COALESCE(si.stock_recupere_kg, 0) AS stock_initial_recupere_kg,
+    COALESCE(a.achats_kg, 0)          AS achats_kg,
+    COALESCE(m.recupere_kg, 0)        AS recuperations_kg,
+    COALESCE(m.charge_kg, 0)          AS charges_kg,
+    COALESCE(c.cede_kg, 0)            AS cessions_kg,
+    COALESCE(r.retourne_kg, 0)        AS retours_fournisseur_kg,
+    COALESCE(d.detruit_kg, 0)         AS destructions_kg,
+    ( COALESCE(si.stock_neuf_kg, 0) + COALESCE(si.stock_recupere_kg, 0)
+    + COALESCE(a.achats_kg, 0) + COALESCE(m.recupere_kg, 0)
+    - COALESCE(m.charge_kg, 0) - COALESCE(c.cede_kg, 0)
+    - COALESCE(r.retourne_kg, 0) - COALESCE(d.detruit_kg, 0) ) AS stock_theorique_kg,
+    i.stock_reel_kg                   AS stock_reel_kg,
+    ( i.stock_reel_kg
+    - ( COALESCE(si.stock_neuf_kg, 0) + COALESCE(si.stock_recupere_kg, 0)
+      + COALESCE(a.achats_kg, 0) + COALESCE(m.recupere_kg, 0)
+      - COALESCE(m.charge_kg, 0) - COALESCE(c.cede_kg, 0)
+      - COALESCE(r.retourne_kg, 0) - COALESCE(d.detruit_kg, 0) ) ) AS ecart_kg,
+    j.justification                   AS justification
+FROM perimetre p
+LEFT JOIN mvt          m  ON m.etablissement_id  = p.etablissement_id AND m.fluide  = p.fluide AND m.annee  = p.annee
+LEFT JOIN achats       a  ON a.etablissement_id  = p.etablissement_id AND a.fluide  = p.fluide AND a.annee  = p.annee
+LEFT JOIN destructions d  ON d.etablissement_id  = p.etablissement_id AND d.fluide  = p.fluide AND d.annee  = p.annee
+LEFT JOIN retours      r  ON r.etablissement_id  = p.etablissement_id AND r.fluide  = p.fluide AND r.annee  = p.annee
+LEFT JOIN cessions_agg c  ON c.etablissement_id  = p.etablissement_id AND c.fluide  = p.fluide AND c.annee  = p.annee
+LEFT JOIN stocks_initiaux si ON si.etablissement_id = p.etablissement_id AND si.fluide = p.fluide AND si.annee = p.annee
+LEFT JOIN inventaires  i  ON i.etablissement_id  = p.etablissement_id AND i.fluide  = p.fluide AND i.annee  = p.annee
+LEFT JOIN justifications_ecarts j ON j.etablissement_id = p.etablissement_id AND j.fluide = p.fluide AND j.annee = p.annee;`);
     }
   }
 };

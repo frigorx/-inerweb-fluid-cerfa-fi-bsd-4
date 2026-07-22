@@ -949,6 +949,15 @@ export function creerDemoStore() {
         arrondir(l.retoursFournisseurKg + retour.masseKg);
     }
 
+    // P0-8 : cessions de fluide à un tiers attesté dans l'année — sortie
+    // PHYSIQUE de stock (la bouteille est décrémentée à la création) : sans
+    // elle, une cession ferait apparaître un écart d'inventaire fantôme.
+    for (const cession of donnees.cessions || []) {
+      if (!(cession.date || '').startsWith(prefixe)) continue;
+      const l = ligne(cession.fluide);
+      l.cessionsKg = arrondir(l.cessionsKg + cession.masseKg);
+    }
+
     const lignes = [...parFluide.values()]
       .map((l) => {
         const stockTheoriqueKg = arrondir(
