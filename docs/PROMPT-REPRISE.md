@@ -25,8 +25,12 @@
 > CM-4b `b47944c` (mention SYSTÈME cadre 14 CERFA, écartée de la correction élève) ·
 > CM-4c `689baf7` (bloc avoir d'origine sur la fiche, partition des états dans la modale,
 > zone certificat fournisseur `categorieSeule`). Vérif navigateur faite (port jetable).
-> Migrations restées à **26**. **PROCHAINE BRIQUE (au choix Franck) : P0-5 aptitude
-> opposable · P0-6 cycle fuite · P0-8 déclaration annuelle** (§ plus bas). ⚠️ Tout ce qui
+> **Revue adversariale du lot faite : 1 bloquant corrigé (`3c411bc`, état hérité préservé
+> à l'écran) ; puis CM-5 = les TRANSFERTS propagent les lots d'origine au prorata
+> (l'important n° 3 de la revue — mention CERFA fausse sur consolidation — est SOLDÉ, la
+> gate avant réouverture Officiel est levée).** Migrations restées à **26**.
+> **PROCHAINE BRIQUE (au choix Franck) : P0-5 aptitude opposable · P0-6 cycle fuite ·
+> P0-8 déclaration annuelle** (§ plus bas). ⚠️ Tout ce qui
 > suit CE bloc et décrit le cycle matière comme « blocage + table de traitement » est
 > ANTÉRIEUR à la refonte : s'en tenir au plan refondu `docs/PLAN-P0-3-4-CYCLE-MATIERE.md`.
 

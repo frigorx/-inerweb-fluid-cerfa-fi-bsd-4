@@ -2,6 +2,52 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧱 CM-5 (cycle matière) — les TRANSFERTS propagent les lots d'origine (22/07)
+- **Le « point dur » du modèle est soldé** : la V1 ignorait les transferts, donc une
+  consolidation LÉGITIME (récup M → B1, transfert B1 → B2, recharge M depuis B2)
+  déclenchait à tort l'alerte `alr-reemploi` ET, depuis CM-4b, imprimait une mention
+  d'anomalie FAUSSE sur le CERFA (l'important n° 3 de la revue adversariale). **La gate
+  « avant réouverture de l'Officiel » est levée.**
+- **Convention (prorata physique)** : le gaz d'une bouteille étant mélangé, un transfert
+  de `q` kg emporte chaque lot d'origine au prorata de son solde POSITIF au moment du
+  transfert ; un solde négatif (surcharge déjà signalée) ne voyage jamais ; si `q` dépasse
+  le total attribué, l'excédent reste SANS origine (comme avant). Arrondi au gramme par lot.
+- **Ordre** : l'allocation dépend de l'instant → passe CHRONOLOGIQUE unique sur les actifs
+  (VALIDE hors contre-écritures), triés par la MÊME clé que la chaîne de scellement
+  (`date` puis `numero` croissants) — le module rétablit l'ordre lui-même (getMouvements
+  contractuel est décroissant), prouvé par test.
+- **Surface INCHANGÉE** : signature `avoirParMachineOrigine(bouteilleId, mouvements)`
+  conservée (calcul global interne `lotsParBouteille`) → wizard (CM-4a), fiche (CM-4c),
+  CERFA (CM-4b) et `getAlertes` (CM-2, 2 stores) corrigés SANS aucune modification chez
+  eux. Miroir littéral `server/api.js` réécrit à l'identique (⚠️ l'ancien filtre
+  `machineId == null` en tête de boucle y sautait les transferts — restructuré) ; parité
+  prouvée par diff normalisé. Aucune migration, rien de stocké.
+- **Tests** : `test-avoir-origine` 17 → **34 vérifs** (consolidation propre + ordre
+  contractuel décroissant toléré + prorata multi-origines + excédent + solde négatif
+  exclu + transfert antérieur + contre-écriture neutralisée + chaîne RÉELLE DemoStore
+  récup → transfert → recharge sans alerte) ; `test-generateur` +1 (121) : la
+  consolidation ne porte AUCUNE mention à tort. **TOUT VERT — 91 exécutions.**
+- **Revue adversariale CIBLÉE (1 agent) AVANT commit — 3 constats réels, tous traités** :
+  - **Arrondi (important, CORRIGÉ)** : l'arrondi au gramme PAR LOT, sans plafond global,
+    CRÉAIT de la matière tracée sur des micro-transferts répétés multi-origines (démonté
+    par l'agent : 0,998 kg tracés pour 0,5 kg réels sur 500 transferts d'1 g). Correctif :
+    plafond global — la somme des lots déplacés ne dépasse jamais la quantité transférée,
+    le lot le plus ancien absorbe l'arrondi. Prouvé par test (conservation exacte).
+  - **Chronologie (bloquant doc, TRANCHÉ)** : le commentaire prétendait à tort que
+    (date, numero) = la clé de la chaîne de scellement (vrai à l'amorçage seulement — en
+    régime courant la chaîne suit l'ordre de VALIDATION). Décision assumée : la dérivation
+    suit la **CHRONOLOGIE MÉTIER** (date d'opération puis numéro), délibérément PAS
+    l'ordre administratif des clics de validation — l'attribution des lots est
+    reproductible depuis les seules données des mouvements. Commentaires corrigés des
+    deux côtés, test « la date prime sur le numéro » ajouté.
+  - **Auto-transfert (mineur, CORRIGÉ)** : garde explicite `src === dst → rien ne bouge`
+    (l'innocuité n'était qu'une annulation algébrique accidentelle). Testé.
+  - **Consigné sans code** : un TRANSFERT tiers encore SOUMIS au moment de générer le PDF
+    final d'une recharge pourrait faire apparaître la mention à tort — cas INATTEIGNABLE
+    pour le document conservé : la garde de stock fait échouer la validation de la
+    recharge tant que le transfert n'est pas validé (masse physique nulle), donc le PDF
+    fautif n'est jamais conservé ; la régénération suivante recalcule juste.
+
 ### 🔍 Revue adversariale du lot CM-3/CM-4 (1 agent, 22/07) — 1 bloquant CORRIGÉ
 - **BLOQUANT (corrigé sur-le-champ)** : `optionsEtatPour` substituait SILENCIEUSEMENT
   « Vierge » à l'état enregistré d'une fiche héritée incohérente (ex. NEUVE+RECUPERE,

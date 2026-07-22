@@ -5694,33 +5694,96 @@ function lireFluide(code) {
 }
 
 // ============================================================
-// CM-2 — avoir de fluide par machine d'origine : MIROIR EXACT du module
-// front v8/js/data/avoir-origine.js (DÉRIVÉ des mouvements, aucun stock
-// nouveau). Le fluide récupéré d'une machine M ne se réemploie que sur M,
-// à concurrence du récupéré ; un avoir NÉGATIF = réintroduction au-delà,
-// signalée par getAlertes (alr-reemploi-…). Transfert ignoré (brouille
-// l'origine). Signes : récupération quantiteKg négatif, charge positif.
+// CM-2/CM-5 — avoir de fluide par machine d'origine : MIROIR EXACT du
+// module front v8/js/data/avoir-origine.js (DÉRIVÉ des mouvements, aucun
+// stock nouveau). Le fluide récupéré d'une machine M ne se réemploie que
+// sur M, à concurrence du récupéré ; un avoir NÉGATIF = réintroduction
+// au-delà, signalée par getAlertes (alr-reemploi-…). CM-5 : les TRANSFERTS
+// propagent les lots d'origine au prorata des soldes positifs de la source
+// (passe chronologique, clé date puis numero croissants — celle de la
+// chaîne de scellement). Signes : récupération quantiteKg négatif, charge
+// positif, transfert positif (src → dst).
 // ============================================================
 const TYPES_RECUP_AVOIR = ['RECUPERATION_MAINTENANCE', 'RECUPERATION_DEMANTELEMENT'];
 const TYPES_CHARGE_AVOIR = ['CHARGE_APPOINT', 'MISE_EN_SERVICE'];
 
-function avoirParMachineOrigine(bouteilleId, mouvements) {
-  const avoir = new Map();
-  const actifs = (mouvements ?? []).filter((mv) =>
-    mv.statut === 'VALIDE' && !mv.contreEcritureDe);
-  for (const mv of actifs) {
-    if (mv.quantiteKg == null || mv.machineId == null) continue;
+function arrondirGrammeAvoir(kg) {
+  return Math.round(kg * 1000) / 1000;
+}
+
+function mouvementsActifsChronologiquesAvoir(mouvements) {
+  return (mouvements ?? [])
+    .filter((mv) => mv.statut === 'VALIDE' && !mv.contreEcritureDe)
+    .slice()
+    .sort((a, b) =>
+      String(a.date ?? '').localeCompare(String(b.date ?? ''))
+      || String(a.numero ?? '').localeCompare(String(b.numero ?? '')));
+}
+
+function lotsParBouteilleAvoir(mouvements) {
+  const lots = new Map();
+  const carte = (bouteilleId) => {
+    let m = lots.get(bouteilleId);
+    if (!m) { m = new Map(); lots.set(bouteilleId, m); }
+    return m;
+  };
+  for (const mv of mouvementsActifsChronologiquesAvoir(mouvements)) {
+    if (mv.quantiteKg == null) continue;
     if (TYPES_RECUP_AVOIR.includes(mv.type)
-        && mv.bouteilleDstId === bouteilleId) {
+        && mv.machineId != null && mv.bouteilleDstId != null) {
+      const avoir = carte(mv.bouteilleDstId);
+      const gain = -mv.quantiteKg; // quantiteKg négatif → gain positif
       avoir.set(mv.machineId,
-        Math.round(((avoir.get(mv.machineId) ?? 0) - mv.quantiteKg) * 1000) / 1000);
+        arrondirGrammeAvoir((avoir.get(mv.machineId) ?? 0) + gain));
     } else if (TYPES_CHARGE_AVOIR.includes(mv.type)
-        && mv.bouteilleSrcId === bouteilleId) {
+        && mv.machineId != null && mv.bouteilleSrcId != null) {
+      const avoir = carte(mv.bouteilleSrcId);
+      const perte = mv.quantiteKg; // positif
       avoir.set(mv.machineId,
-        Math.round(((avoir.get(mv.machineId) ?? 0) - mv.quantiteKg) * 1000) / 1000);
+        arrondirGrammeAvoir((avoir.get(mv.machineId) ?? 0) - perte));
+    } else if (mv.type === 'TRANSFERT'
+        && mv.bouteilleSrcId != null && mv.bouteilleDstId != null
+        && mv.quantiteKg > 0) {
+      // CM-5 : les lots suivent le fluide, au prorata des soldes POSITIFS.
+      // Auto-transfert (source = destination) : rien ne se déplace — garde
+      // EXPLICITE (revue du 22/07 : l'annulation algébrique ne doit pas
+      // rester accidentelle).
+      if (mv.bouteilleSrcId === mv.bouteilleDstId) continue;
+      const source = lots.get(mv.bouteilleSrcId);
+      if (!source) continue; // rien d'attribué → rien à propager
+      let totalPositif = 0;
+      for (const solde of source.values()) {
+        if (solde > 0) totalPositif += solde;
+      }
+      if (totalPositif <= 0) continue;
+      const part = Math.min(1, mv.quantiteKg / totalPositif);
+      // Plafond GLOBAL (revue du 22/07) : la somme des lots déplacés ne
+      // dépasse JAMAIS la quantité transférée — sans lui, l'arrondi au
+      // gramme par lot CRÉAIT de la matière tracée sur des micro-transferts
+      // répétés multi-origines. Le lot le plus ancien absorbe l'arrondi.
+      let resteAPropager = part === 1
+        ? totalPositif : arrondirGrammeAvoir(mv.quantiteKg);
+      const destination = carte(mv.bouteilleDstId);
+      for (const [machineId, solde] of source) {
+        if (solde <= 0) continue; // une surcharge signalée ne voyage pas
+        if (resteAPropager <= 0) break;
+        const brut = part === 1 ? solde : arrondirGrammeAvoir(solde * part);
+        const deplace = Math.min(brut, solde, resteAPropager);
+        if (deplace <= 0) continue;
+        resteAPropager = arrondirGrammeAvoir(resteAPropager - deplace);
+        source.set(machineId, arrondirGrammeAvoir(solde - deplace));
+        destination.set(machineId,
+          arrondirGrammeAvoir((destination.get(machineId) ?? 0) + deplace));
+      }
+      // Si quantiteKg > totalPositif : l'excédent transféré n'a pas
+      // d'origine machine — il reste sans lot, comme avant CM-5.
     }
   }
-  return avoir;
+  return lots;
+}
+
+function avoirParMachineOrigine(bouteilleId, mouvements) {
+  return lotsParBouteilleAvoir(mouvements).get(bouteilleId) ?? new Map();
 }
 
 /**

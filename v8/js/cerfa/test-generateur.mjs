@@ -534,6 +534,47 @@ verifier('CM-4b : réemploi ≤ récupéré → aucune mention d’anomalie',
   !okR.texte('14_Observations').includes('Anomalie de réemploi'),
   `observations = ${okR.texte('14_Observations')}`);
 
+// CM-5 : la CONSOLIDATION légitime (récup → transfert → recharge) ne
+// porte plus de mention — les lots d'origine suivent le transfert (le
+// faux positif de la revue adversariale du 22/07, tué).
+const bConsoA = await store.createBouteille({
+  type: 'RECUPERATION', fluide: 'R-410A', etatFluide: 'RECUPERE',
+  tareKg: 5, masseBruteKg: 5, contenanceMaxKg: 10, operateur: 'per-fh'
+});
+const bConsoB = await store.createBouteille({
+  type: 'RECUPERATION', fluide: 'R-410A', etatFluide: 'RECUPERE',
+  tareKg: 5, masseBruteKg: 5, contenanceMaxKg: 10, operateur: 'per-fh'
+});
+const recupConso = await store.creerMouvement({
+  type: 'RECUPERATION_MAINTENANCE', mode: 'FORMATION',
+  machineId: machineR6.id, bouteilleDstId: bConsoA.id,
+  peseeAvantKg: 0, peseeApresKg: 0.2, technicien: 'Sophie Bianchi'
+});
+await store.soumettreMouvement(recupConso.id);
+await store.validerMouvement(recupConso.id, 'per-fh');
+await store.deciderFluideRecupere(bConsoA.id, 'REUTILISABLE', 'per-fh');
+const transfertConso = await store.creerMouvement({
+  type: 'TRANSFERT', mode: 'FORMATION', bouteilleSrcId: bConsoA.id,
+  bouteilleDstId: bConsoB.id, peseeAvantKg: 0.2, peseeApresKg: 0,
+  technicien: 'Sophie Bianchi'
+});
+await store.soumettreMouvement(transfertConso.id);
+await store.validerMouvement(transfertConso.id, 'per-fh');
+await store.deciderFluideRecupere(bConsoB.id, 'REUTILISABLE', 'per-fh');
+const rechargeConso = await store.creerMouvement({
+  type: 'CHARGE_APPOINT', mode: 'FORMATION', machineId: machineR6.id,
+  bouteilleSrcId: bConsoB.id, peseeAvantKg: 0.2, peseeApresKg: 0.1,
+  technicien: 'Sophie Bianchi'
+});
+await store.soumettreMouvement(rechargeConso.id);
+await store.validerMouvement(rechargeConso.id, 'per-fh');
+const pdfConso = await genererCerfaPdf(store,
+  { source: 'mouvement', id: rechargeConso.id });
+const cR = await relire(pdfConso.octets);
+verifier('CM-5 : consolidation (récup → transfert → recharge) → AUCUNE mention à tort',
+  !cR.texte('14_Observations').includes('Anomalie de réemploi'),
+  `observations = ${cR.texte('14_Observations')}`);
+
 // ============================================================
 // 5. Couverture : les 72 champs officiels de SPEC-CERFA sont
 //    TOUS traités par le module générateur (aucun oubli possible)

@@ -164,3 +164,38 @@ dans une bouteille B » s'en **dérive** directement, sans nouvelle structure :
 Le **transfert** entre bouteilles doit **propager les lots d'origine** (le fluide
 d'origine M passé de la bouteille B à B′ reste « d'origine M »), sinon on perdrait la
 traçabilité en déplaçant du fluide. C'est le seul endroit délicat du modèle.
+→ **Traité par CM-5 (ci-dessous).** La V1 « transfert ignoré » est remplacée.
+
+## CM-5 — Propager les lots d'origine à travers les TRANSFERTS (22/07)
+
+**Pourquoi** : la revue adversariale du lot CM a confirmé le point dur — avec la V1, un
+réemploi LÉGITIME passé par une bouteille de consolidation (récup M → B1, transfert
+B1 → B2, recharge M depuis B2) déclenche à tort l'alerte `alr-reemploi` ET, depuis CM-4b,
+imprime une mention d'anomalie fausse sur le CERFA. Gate levée avant toute réouverture
+du mode Officiel.
+
+**Convention retenue (prorata physique)** : le gaz d'une bouteille est physiquement
+mélangé — un transfert de `q` kg emporte chaque lot d'origine AU PRORATA de son solde
+positif au moment du transfert (les soldes négatifs — surcharges déjà signalées — ne
+propagent rien) ; si `q` dépasse le total attribué, tout le attribué part et l'excédent
+reste SANS origine (comme avant). Arrondi au gramme par lot.
+
+**Ordre** : l'allocation dépend de l'état des lots « au moment du transfert » → une seule
+passe chronologique sur les mouvements actifs (VALIDE, hors contre-écritures), triés par
+la MÊME clé que la chaîne de scellement (`date` puis `numero`, croissants —
+demo-store.js, pose d'`ordreValidation`). Le tri est fait DANS le module (getMouvements
+contractuel est décroissant).
+
+**Surface inchangée** : signature `avoirParMachineOrigine(bouteilleId, mouvements)`
+conservée (calcul global interne, retour de la carte demandée) → wizard (CM-4a), fiche
+(CM-4c), CERFA (CM-4b) et `getAlertes` (CM-2, 2 stores) profitent de la correction SANS
+modification. Miroir littéral `server/api.js` réécrit à l'identique (⚠️ le filtre
+`machineId == null` en tête de boucle sautait les transferts — restructuré). Aucune
+migration, rien de stocké.
+
+**Tests** : volet pur — consolidation propre (plus de faux négatif), prorata
+multi-origines, excédent sans origine, solde négatif exclu de l'allocation, transfert
+AVANT récupération (rien à propager), contre-écriture de transfert neutralisée, ordre
+décroissant d'entrée toléré ; volet DemoStore réel — chaîne récup → transfert → recharge
+sans alerte ; test-generateur — consolidation SANS mention CERFA (le faux positif de la
+revue, tué).
