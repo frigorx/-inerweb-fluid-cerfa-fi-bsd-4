@@ -2,6 +2,65 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧱 P0-6 — CYCLE FUITE (22/07, CF-1→CF-6, plan docs/PLAN-P0-6-CYCLE-FUITE.md)
+- **Le constat critique de l'audit du 20/07 est soldé** : le contrôle après
+  réparation était clôturable LE JOUR MÊME (convention R4 « à date égale, le
+  contrôle est réputé postérieur ») avec une échéance à +30 jours calendaires.
+  La règle : au plus tôt après **24 h de fonctionnement**, au plus tard
+  **1 mois civil**, exception « équipements mobiles listés ». Décisions G1-G6
+  arbitrées par Franck AVANT code (dont G1 qui REVIENT sur sa convention R4,
+  et G4 : le champ machine FIXE/MOBILE ajouté MAINTENANT, pas différé à P1-1).
+- **CF-1 — clôture stricte J+1 (G1)** : le CONFORME de clôture doit être
+  STRICTEMENT postérieur AU JOUR de la réparation (dates métier au jour →
+  J+1 = proxy assumé des 24 h ; compteur de marche consigné hors périmètre).
+  Un CONFORME du jour même reste ENREGISTRABLE mais ne referme rien (machine
+  en FUITE, alerte maintenue) — le « refusé » de l'audit porte sur la valeur
+  de clôture, pas sur l'enregistrement (G6 : AUCUNE nouvelle condition de
+  blocage Officiel). Retour EN_SERVICE aligné sur la clôture complète via
+  `estFuiteOuverte` rejouée (G2, source de vérité unique, plus de condition
+  ad hoc). Module pur + 2 stores, 4 sites d'appel par store.
+- **CF-2 — échéance de suivi = 1 MOIS CIVIL** : `ajouterMois(date, 1)`
+  existant des 2 stores (écrêtage fin de mois : 31/01 → 28-29/02) remplace
+  `ajouterJours(..., 30)` ; constante `DELAI_CONTROLE_SUIVI_JOURS` supprimée ;
+  copie littérale `ajouterUnMoisCivil` exportée par le module pur.
+- **CF-3 — clôture tardive CONSIGNÉE, jamais bloquée (G3)** : un CONFORME
+  au-delà de l'échéance ferme quand même l'épisode (on n'empêche jamais
+  d'enregistrer la réalité) ; nouveaux faits `clotureEnRetard` /
+  `retardClotureJours` au dossier, visibles fiche fuite + export ZIP scellé.
+- **CF-4 — machines FIXE/MOBILE (G4, migration 27)** :
+  `machines.type_installation` ('FIXE'/'MOBILE', DEFAULT FIXE = backfill
+  conservateur ; nom compatible P1-1 qui ajoutera le sous-type à part).
+  mapping + createMachine/updateMachine des 2 stores (garde de valeur) +
+  sélecteur machine-form. Un MOBILE listé est admis au contrôle immédiat
+  (fuite + réparation + CONFORME le même jour → EN_SERVICE) — les 4 cas
+  d'acceptation de l'audit §11 sont TOUS exécutables et prouvés.
+- **CF-5 — un contrôle ANNULÉ perd ses effets machine (G5, écart P0-7 §7(a)
+  SOLDÉ)** : un contrôle FUITE annulé laissait la machine en FUITE à jamais.
+  Contrôle annulé = fait DÉRIVÉ (son mouvement porteur est ANNULE — aucune
+  écriture sur `controles`, aucune migration, empreintes indifférentes ; un
+  contrôle autonome reste toujours actif). Lectures de fuite sur les
+  contrôles ACTIFS (demo : `controlesActifsDeLaMachine` ; serveur :
+  `controlesDeLaMachine` en LEFT JOIN ; module pur : filtre en tête — une
+  clôture annulée ROUVRE le dossier réparé, une fuite annulée ne fonde plus
+  rien, les ZIP déjà exportés restent des instantanés valides) +
+  `recalculerEffetsMachineApresAnnulation` (miroir 2 stores) en fin
+  d'`appliquerEffetsInverses` : dernierControle/prochainControle recalculés
+  des actifs restants (échéance antérieure au premier contrôle
+  inconnaissable : laissée en l'état, limite consignée), statut recalculé
+  (jamais pour ARRETEE/DEMANTELEE). L'écart §7(b) (échéance du contrôle
+  accessoire) RESTE consigné.
+- **Tests** : test-dossiers-fuite 47 → 59 vérifs (jour même/J+1/mobile,
+  mois civil + bissextile, retard de clôture consigné, annulés/autonome) ·
+  test-contrat +18 vérifs DOUBLÉES demo/local (jour même → reste FUITE +
+  alerte de suivi, J+1 → EN_SERVICE, mobile immédiat, FIXE défaut/garde,
+  FUITE annulée → EN_SERVICE, clôture annulée → la fuite réparée
+  réapparaît) · test-registre et scénarios re-datés explicitement.
+  **TOUT VERT — 92 exécutions.**
+- **Hors périmètre consigné** : compteur/horodatage de fonctionnement réel
+  (24 h à l'heure près) · sous-type mobile et reste du modèle P1-1 ·
+  exploitation du type `APRES_REPARATION` et de `controle_apres_reparation_id`
+  (chaînage explicite du contrôle de suivi) · écart P0-7 §7(b).
+
 ### 🧱 P0-5 — APTITUDE OPPOSABLE (22/07, AP-1→AP-5, plan docs/PLAN-P0-5-APTITUDE.md)
 - **L'écart métier n° 2 de l'audit du 20/07 est soldé** : le mode Officiel ne
   vérifiait que « au moins une habilitation active » (condition 7) — un cat. E
