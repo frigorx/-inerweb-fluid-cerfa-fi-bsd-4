@@ -71,6 +71,8 @@ function synthesePaires(machine, fluide, dossier) {
     ['Contrôle de clôture — date', dossier.controleCloture ? dossier.controleCloture.date : 'Aucun'],
     ['Échéance contrôle de suivi', dossier.echeanceControleSuivi ?? '—'],
     ['Contrôle de suivi en retard', dossier.suiviEnRetard ? 'oui' : 'non'],
+    ['Clôture en retard (P0-6, > 1 mois civil)', dossier.clotureEnRetard ? 'oui' : 'non'],
+    ['Retard de clôture (jours)', dossier.retardClotureJours ?? '—'],
     ['Durée du dossier (jours)', dossier.dureeJours]
   ];
 }

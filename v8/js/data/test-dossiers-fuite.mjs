@@ -148,6 +148,29 @@ const MACHINE = { id: 'mac-1' };
     machine: MACHINE, controles, mouvements: [], aujourdhui: '2026-07-10'
   }).dossiers[0];
   verifier('échéance dépassée : suivi en retard', enRetard.suiviEnRetard === true);
+
+  // P0-6 (G3) : la clôture TARDIVE (> 1 mois civil après la réparation)
+  // reste acceptée mais le RETARD est CONSIGNÉ au dossier.
+  const tardif = construireDossiersFuite({
+    machine: MACHINE,
+    controles: controles.concat([{ id: 'ct', machineId: 'mac-1',
+      date: '2026-07-17', resultat: 'CONFORME', operateur: 'Un contrôleur' }]),
+    mouvements: [], aujourdhui: '2026-08-01'
+  }).dossiers[0];
+  verifier('clôture tardive : le dossier FERME quand même (jamais bloqué)',
+    tardif.statut === 'FERMEE' && tardif.dateFermeture === '2026-07-17');
+  verifier('clôture tardive : retard CONSIGNÉ (10 j après l’échéance du 07/07)',
+    tardif.clotureEnRetard === true && tardif.retardClotureJours === 10);
+
+  const aTemps = construireDossiersFuite({
+    machine: MACHINE,
+    controles: controles.concat([{ id: 'cok', machineId: 'mac-1',
+      date: '2026-06-17', resultat: 'CONFORME', operateur: 'Un contrôleur' }]),
+    mouvements: [], aujourdhui: '2026-08-01'
+  }).dossiers[0];
+  verifier('clôture dans le délai : aucun retard consigné',
+    aTemps.statut === 'FERMEE' && aTemps.clotureEnRetard === false
+    && aTemps.retardClotureJours === null);
 }
 
 {

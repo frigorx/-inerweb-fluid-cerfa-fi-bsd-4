@@ -197,6 +197,20 @@ function construireDossier(groupe, controlesMachine,
       : null;
   const dateFermeture = controleCloture ? controleCloture.date : null;
 
+  // P0-6 (décision G3) : une clôture AU-DELÀ de l'échéance d'1 mois civil
+  // reste acceptée (on n'empêche jamais d'enregistrer la réalité) mais le
+  // RETARD est CONSIGNÉ au dossier — non-conformité tracée, visible sur la
+  // fiche du dossier et dans l'export ZIP scellé.
+  const echeanceTheorique =
+    (reparation && DATE_JOUR.test(String(reparation.date)))
+      ? ajouterUnMoisCivil(reparation.date)
+      : null;
+  const clotureEnRetard = Boolean(dateFermeture && echeanceTheorique
+    && dateFermeture > echeanceTheorique);
+  const retardClotureJours = clotureEnRetard
+    ? ecartJours(echeanceTheorique, dateFermeture)
+    : null;
+
   // Fenêtre du dossier : de la détection à la fermeture (bornes
   // incluses), ou jusqu'à aujourd'hui tant que le dossier est ouvert.
   const dansFenetre = (dateISO) => dateISO >= detection.date
@@ -302,6 +316,8 @@ function construireDossier(groupe, controlesMachine,
     echeanceControleSuivi,
     suiviEnRetard: Boolean(echeanceControleSuivi
       && aujourdhui > echeanceControleSuivi),
+    clotureEnRetard,
+    retardClotureJours,
     dateFermeture,
     dureeJours: ecartJours(detection.date, dateFermeture ?? aujourdhui),
     mouvementsPendantFuite,
