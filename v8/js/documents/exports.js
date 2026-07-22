@@ -323,10 +323,51 @@ function csvBalance(balance) {
 
 function csvBsff(bsff) {
   const entetes = ['N° BSFF', 'Bouteille', 'Fluide', 'Masse remise (kg)',
-    'Transporteur', 'Installation de destination', 'Date de remise'];
+    'Transporteur', 'Installation de destination', 'Date de remise',
+    // P0-8 : issue de traitement final attestée (BSFF ≠ destruction).
+    'Traitement final', 'Installation de traitement', 'Certificat',
+    'Date de traitement'];
   const lignes = bsff.map((b) => [
     b.numeroBsff, b.bouteilleCode, b.fluide, nb(b.masseRemiseKg),
-    b.transporteur, b.installationDestination, fmtDate(b.dateRemise)
+    b.transporteur, b.installationDestination, fmtDate(b.dateRemise),
+    b.issueTraitement || 'non attesté', b.installationTraitement || '',
+    b.certificatTraitement || '',
+    b.dateTraitement ? fmtDate(b.dateTraitement) : ''
+  ]);
+  return construireCsv(entetes, lignes);
+}
+
+/** Cessions de fluide à un tiers attesté (rubrique 10 de la déclaration). */
+function csvCessions(cessions) {
+  const entetes = ['Date', 'Bouteille', 'Fluide', 'Masse cédée (kg)',
+    'Type de destinataire', 'Destinataire (raison sociale)', 'Opérateur'];
+  const lignes = cessions.map((c) => [
+    fmtDate(c.date), c.bouteilleCode, c.fluide, nb(c.masseKg),
+    c.destinataireType, c.destinataireRaisonSociale, c.operateur
+  ]);
+  return construireCsv(entetes, lignes);
+}
+
+/** Déclaration annuelle réglementaire (11 rubriques par fluide, P0-8). */
+function csvDeclaration(declaration) {
+  const entetes = ['Fluide', 'Acquisitions (kg)', 'Charges équip. neufs (kg)',
+    'Charges maintenance (kg)', 'Récupérations hors usage (kg)',
+    'Récupérations maintenance (kg)', 'Remises distributeur (kg)',
+    'Recyclage responsabilité propre (kg)', 'Régénération (kg)',
+    'Installations régénération', 'Destruction (kg)',
+    'Installations destruction', 'Cessions (kg)',
+    'Stock 1/1 neuf (kg)', 'Stock 1/1 récupéré (kg)', 'Stock 1/1 déchet (kg)',
+    'Stock 31/12 neuf (kg)', 'Stock 31/12 récupéré (kg)',
+    'Stock 31/12 déchet (kg)'];
+  const lignes = declaration.lignes.map((l) => [
+    l.fluide, nb(l.acquisitionsKg), nb(l.chargesNeufKg),
+    nb(l.chargesMaintenanceKg), nb(l.recupHorsUsageKg),
+    nb(l.recupMaintenanceKg), nb(l.remisesDistributeurKg),
+    nb(l.recyclagePropreKg), nb(l.regenerationKg),
+    l.regenerationInstallations.join(' | '), nb(l.destructionKg),
+    l.destructionInstallations.join(' | '), nb(l.cessionsKg),
+    nb(l.stockDebutNeufKg), nb(l.stockDebutRecupKg), nb(l.stockDebutDechetKg),
+    nb(l.stockFinNeufKg), nb(l.stockFinRecupKg), nb(l.stockFinDechetKg)
   ]);
   return construireCsv(entetes, lignes);
 }
@@ -364,7 +405,7 @@ function fmtDateHeure(iso) {
 export async function toutesLesTables(store, annee) {
   const [personnel, outillage, bouteilles, machines, clients, mouvements,
     controles, balance, bsff, journalAudit, nominatif,
-    habilitations, mentions] = await Promise.all([
+    habilitations, mentions, cessions, declaration] = await Promise.all([
     store.getPersonnel(),
     store.getOutillage(),
     store.getBouteilles(),
@@ -377,7 +418,9 @@ export async function toutesLesTables(store, annee) {
     store.getJournalAudit(),
     store.getInventaireNominatif(annee),
     store.getHabilitations(),
-    store.getMentions()
+    store.getMentions(),
+    store.getCessions(),
+    store.getDeclarationAnnuelle(annee)
   ]);
 
   const tables = [
@@ -394,6 +437,10 @@ export async function toutesLesTables(store, annee) {
     { nom: 'controles.csv', contenu: csvControles(controles, annee) },
     { nom: 'balance-matiere.csv', contenu: csvBalance(balance) },
     { nom: 'bsff.csv', contenu: csvBsff(bsff) },
+    { nom: 'cessions.csv', contenu: csvCessions(cessions) },
+    // P0-8 : la déclaration annuelle réglementaire au dossier scellé.
+    { nom: `declaration-annuelle-${annee}.csv`,
+      contenu: csvDeclaration(declaration) },
     { nom: 'journal-audit.csv', contenu: csvJournalAudit(journalAudit) }
   ];
   // Brique ② (B7) : la photographie nominative de l'année, si elle a été
