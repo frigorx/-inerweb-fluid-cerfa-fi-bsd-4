@@ -906,7 +906,8 @@ const HANDLERS = {
       if (m.statut === 'FUITE') {
         // R4 : distinguer fuite OUVERTE (CRITIQUE) de fuite RÉPARÉE en
         // attente de contrôle de suivi (IMPORTANT, échéance 30 jours).
-        const statutFuite = estFuiteOuverte(controlesDeLaMachine(m.id));
+        const statutFuite = estFuiteOuverte(controlesDeLaMachine(m.id),
+          m.typeInstallation === 'MOBILE');
         // R4 : l'alerte de SUIVI n'existe que si une réparation est
         // TRACÉE — sans elle, la fuite reste « non résolue » (jamais de
         // dates nulles affichées).
@@ -5250,7 +5251,7 @@ function controlesDeLaMachine(machineId) {
  * enregistrerControle) : { ouverte, controleFuiteId, dateReparation,
  * echeanceControleSuivi }.
  */
-function estFuiteOuverte(controlesMachine) {
+function estFuiteOuverte(controlesMachine, machineMobile = false) {
   const tries = controlesMachine.slice()
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
   const derniereFuite = tries.find((c) => c.resultat === 'FUITE');
@@ -5261,16 +5262,21 @@ function estFuiteOuverte(controlesMachine) {
   // R3c/R4 : SANS réparation tracée, la fuite reste OUVERTE — un contrôle
   // CONFORME, même postérieur, ne la referme JAMAIS seul (sinon un
   // contrôle prématuré ou de complaisance contournerait le blocage du
-  // complément de gaz). Réparation tracée : refermée dès qu'un CONFORME
-  // date du jour de la réparation ou d'après (dates au JOUR — à date
-  // égale, le contrôle est réputé postérieur à la réparation).
+  // complément de gaz). P0-6 (audit 20/07, décision Franck 22/07) : la
+  // clôture exige un CONFORME STRICTEMENT postérieur AU JOUR de la
+  // réparation (proxy des 24 h de fonctionnement, dates au jour → J+1
+  // minimum). Exception : équipement MOBILE listé (`machineMobile`) — le
+  // contrôle immédiat est admis, le jour même suffit (ancienne convention
+  // R4, désormais réservée à ce cas).
   if (!derniereFuite.dateReparation) {
     return { ouverte: true, controleFuiteId: derniereFuite.id,
       dateReparation: null, echeanceControleSuivi: null };
   }
   const conformePostReparation = tries.some((c) =>
     c.resultat === 'CONFORME' &&
-    c.date >= derniereFuite.dateReparation &&
+    (machineMobile
+      ? c.date >= derniereFuite.dateReparation
+      : c.date > derniereFuite.dateReparation) &&
     c.date >= derniereFuite.date);
   return {
     ouverte: false,
@@ -5336,7 +5342,8 @@ function appliquerEffets(mouvement) {
     // déclarée sans réparation tracée postérieure) exige d'abord de
     // tracer la réparation puis de déclarer un nouveau contrôle.
     if (mouvement.type === 'CHARGE_APPOINT' &&
-        estFuiteOuverte(controlesDeLaMachine(machine.id)).ouverte) {
+        estFuiteOuverte(controlesDeLaMachine(machine.id),
+          machine.typeInstallation === 'MOBILE').ouverte) {
       throw new Error(MSG_FUITE_OUVERTE);
     }
     const source = trouverBouteille(mouvement.bouteilleSrcId,
@@ -5663,15 +5670,16 @@ function enregistrerControle(d) {
   if (controle.resultat === 'FUITE') {
     nouveauStatut = 'FUITE';
   } else if (machine.statut === 'FUITE') {
-    // R4 : le retour EN_SERVICE depuis FUITE exige une réparation TRACÉE
-    // sur le dernier contrôle FUITE ET que CE contrôle CONFORME (déjà
-    // inséré ci-dessus) lui soit postérieur — jamais un simple CONFORME
-    // sans réparation tracée au préalable. Convention des dates au jour :
-    // à date ÉGALE, le contrôle est réputé postérieur à la réparation
-    // (réparation immédiate + recontrôle dans la foulée).
-    const statutFuite = estFuiteOuverte(controlesDeLaMachine(machine.id));
-    if (statutFuite.dateReparation &&
-        controle.date >= statutFuite.dateReparation) {
+    // R4 + P0-6 : le retour EN_SERVICE depuis FUITE suit EXACTEMENT la
+    // règle de clôture d'estFuiteOuverte, rejouée avec le contrôle déjà
+    // inséré ci-dessus — source de vérité UNIQUE (fuite refermée =
+    // réparation tracée + CONFORME de clôture : strictement postérieur
+    // au jour de la réparation, jour même admis pour un équipement
+    // MOBILE listé). Plus de condition ad hoc divergente du dossier.
+    const statutFuite = estFuiteOuverte(controlesDeLaMachine(machine.id),
+      machine.typeInstallation === 'MOBILE');
+    if (!statutFuite.ouverte && statutFuite.dateReparation &&
+        statutFuite.echeanceControleSuivi === null) {
       nouveauStatut = 'EN_SERVICE';
     }
   } else if (machine.statut === 'CONTROLE_DU' &&

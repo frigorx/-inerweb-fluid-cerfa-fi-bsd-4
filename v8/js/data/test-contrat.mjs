@@ -1513,7 +1513,7 @@ await verifierRejet('createBouteille refuse MELANGE hors type RÉCUPÉRATION',
   });
   await store.createControle({
     machineId: machineFuite2.id, resultat: 'CONFORME', methode: 'DIRECTE',
-    date: dateRelative(0), operateur: 'Testeur Contrat'
+    date: dateRelative(-4), operateur: 'Testeur Contrat'
   });
   const appointComplaisance = await store.creerMouvement({
     type: 'CHARGE_APPOINT', machineId: machineFuite2.id,
@@ -1534,21 +1534,38 @@ await verifierRejet('createBouteille refuse MELANGE hors type RÉCUPÉRATION',
   await store.rejeterMouvement(appointComplaisance.id, 'Nettoyage (R3c bis)');
   await store.supprimerMouvement(appointComplaisance.id);
 
-  // MÊME JOUR : réparation tracée aujourd'hui + CONFORME daté d'aujourd'hui
-  // → machine EN_SERVICE (convention : à date égale, le contrôle est
-  // réputé postérieur à la réparation) et l'alerte se ferme.
+  // P0-6 (audit 20/07, cas d'acceptation §11 — remplace la convention
+  // « à date égale » de R4) : sur un équipement FIXE, un CONFORME daté
+  // du JOUR de la réparation ne clôture PAS (24 h de fonctionnement
+  // requises, dates au jour → J+1). Réparation antidatée d'hier :
+  // le CONFORME du même jour (hier) reste sans effet, celui
+  // d'aujourd'hui (J+1) referme.
   await store.tracerReparation(ctlFuite2.id, {
-    dateReparation: dateRelative(0), natureReparation: 'Brasure reprise',
+    dateReparation: dateRelative(-1), natureReparation: 'Brasure reprise',
     reparateur: 'Testeur Contrat'
   });
   await store.createControle({
     machineId: machineFuite2.id, resultat: 'CONFORME', methode: 'DIRECTE',
+    date: dateRelative(-1), operateur: 'Testeur Contrat'
+  });
+  verifier('P0-6 : réparation + CONFORME le MÊME JOUR → la machine RESTE en FUITE',
+    (await store.getMachines()).find((m) => m.id === machineFuite2.id)
+      .statut === 'FUITE');
+  {
+    const alerte = (await store.getAlertes())
+      .find((a) => a.id === `alr-fuite-${machineFuite2.id}`);
+    verifier('P0-6 : l’alerte reste « Contrôle de suivi à faire » (IMPORTANT, échéance affichée)',
+      alerte?.niveau === 'IMPORTANT'
+      && alerte?.titre === 'Contrôle de suivi à faire');
+  }
+  await store.createControle({
+    machineId: machineFuite2.id, resultat: 'CONFORME', methode: 'DIRECTE',
     date: dateRelative(0), operateur: 'Testeur Contrat'
   });
-  verifier('R4 : réparation + contrôle CONFORME le MÊME JOUR → machine EN_SERVICE',
+  verifier('P0-6 : CONFORME du LENDEMAIN de la réparation (J+1) → machine EN_SERVICE',
     (await store.getMachines()).find((m) => m.id === machineFuite2.id)
       .statut === 'EN_SERVICE');
-  verifier('R4 : plus d’alerte fuite après réparation + contrôle du même jour',
+  verifier('P0-6 : plus d’alerte fuite après la clôture à J+1',
     !(await store.getAlertes())
       .some((a) => a.id === `alr-fuite-${machineFuite2.id}`));
 }
@@ -2292,8 +2309,11 @@ verifier('l’état importé est fidèle (nos mouvements sont là)',
   // à enregistrerControle direct (plan §3.a-c) — le contrôle lié ne perd
   // rien : lien personnel (B2), localisation, échéance déclarée.
   // 1) FUITE via mouvement CONTROLE : machine en FUITE, tout propagé.
+  // P0-6 : fuite et réparation datées d'HIER — la clôture par le CONFORME
+  // d'aujourd'hui exige désormais J+1 strict après la réparation.
   const ctrlFuite = await store.creerMouvement({
     type: 'CONTROLE_NON_PERIODIQUE', machineId: machineCtrl.id,
+    date: dateRelative(-1),
     technicien: 'Un Enseignant', executeParId: enseignant.id,
     controle: { statutControle: 'FUITE', detecteurId: null,
       localisationFuite: 'Raccord évaporateur' }

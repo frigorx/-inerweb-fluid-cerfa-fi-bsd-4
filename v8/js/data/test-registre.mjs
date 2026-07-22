@@ -222,12 +222,17 @@ await verifierRejet('rejet d’une seconde annulation du même original',
   'déjà annulée');
 
 // --- Contrôle d'étanchéité : effets sur la machine ------------
+// P0-6 : la chaîne fuite (01/07) → réparation (02/07) → CONFORME (03/07)
+// doit être explicitement datée — la clôture exige désormais un CONFORME
+// STRICTEMENT postérieur au jour de la réparation ET au moins du jour de
+// la fuite (avant, la fuite prenait la date du jour d'exécution du test).
 const controleFuiteM3 = await store.createControle({
   machineId: 'M3',
   resultat: 'FUITE',
   typeControle: 'NON_PERIODIQUE',
   methode: 'DIRECTE',
   operateur: 'Marc Delorme',
+  date: '2026-07-01',
   prochainControle: '2026-08-05'
 });
 machines = await store.getMachines();
