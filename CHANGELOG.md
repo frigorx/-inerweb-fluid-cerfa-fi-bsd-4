@@ -2,6 +2,29 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🎭 Monde démo — dates d'étalonnage RELATIVES (22/07, demande Franck)
+- **Le monde fictif pourrissait** : ses dates FIGÉES ont vieilli au point que les DEUX
+  détecteurs étaient expirés (et la pompe à 2 jours de l'être) — plus aucun parcours ne se
+  déroulait « proprement » en démo, bandeaux d'étalonnage partout. **Correctif** : les
+  dates périssables (étalonnages, échéance de l'attestation de capacité) sont désormais
+  **calculées au chargement, relatives au jour** (`jourDemo(delta)` dans
+  `demo-donnees.js`).
+- **Équilibre pédagogique conservé** : le Testo reste VOLONTAIREMENT expiré et la pompe à
+  échéance proche (elles nourrissent alertes, feu tricolore, audit guidé) — mais chaque
+  famille d'outil garde AU MOINS un exemplaire CONFORME (l'Inficon D-TEK pour les
+  détecteurs) : **tous les parcours vont au bout, quelle que soit la date du jour.**
+- **5 suites adaptées au nouveau monde** (elles vérifiaient « les 2 détecteurs expirés »
+  ou des dates figées) : test-conformite (+1 vérif : l'invariant « un détecteur CONFORME
+  existe »), test-registre, test-scenario-c (les prérequis Officiel se réunissent
+  désormais une fois l'écart justifié), test-generateur (date d'étalonnage attendue
+  DÉRIVÉE de la fiche, plus jamais figée), test-feu-tricolore (assertion de cohérence
+  valable dans les deux variantes). Vérif navigateur faite (port jetable, localStorage
+  purgé) : Testo Expiré · Inficon Conforme · balance/station Conformes · pompe À vérifier.
+  **TOUT VERT — 91 exécutions.**
+- Suivi éventuel (non fait) : d'autres dates du monde démo restent figées (échéance de
+  non-conformité 2026-09-30, contrôles des machines…) — à rendre relatives si la même
+  frustration réapparaît ailleurs.
+
 ### 🧱 CM-5 (cycle matière) — les TRANSFERTS propagent les lots d'origine (22/07)
 - **Le « point dur » du modèle est soldé** : la V1 ignorait les transferts, donc une
   consolidation LÉGITIME (récup M → B1, transfert B1 → B2, recharge M depuis B2)

@@ -51,8 +51,8 @@ const store = await creerStore();
 // 1. Alertes dynamiques : les alertes de démo RESSORTENT du calcul
 // ============================================================
 const alertes = await store.getAlertes();
-verifier('alertes dynamiques : au moins 4 alertes calculées',
-  alertes.length >= 4, `nombre = ${alertes.length}`);
+verifier('alertes dynamiques : au moins 3 alertes calculées',
+  alertes.length >= 3, `nombre = ${alertes.length}`);
 verifier('alertes : fuite non résolue (M5) présente et CRITIQUE',
   alertes.some((a) => a.titre === 'Fuite non résolue' &&
     a.niveau === 'CRITIQUE'));
@@ -60,9 +60,12 @@ verifier('alertes : contrôle d’étanchéité en retard (M6) présent',
   alertes.some((a) => a.titre === 'Contrôle d’étanchéité en retard'));
 const alertesDetecteurs = alertes.filter(
   (a) => a.titre === 'Détecteur à réétalonner');
-verifier('alertes : les 2 détecteurs expirés ressortent, niveau CRITIQUE (SPEC §7.2)',
-  alertesDetecteurs.length === 2 &&
-  alertesDetecteurs.every((a) => a.niveau === 'CRITIQUE'),
+// 22/07 : le monde démo garde UN détecteur volontairement expiré (Testo)
+// et un CONFORME (Inficon) pour dérouler tous les parcours au bout.
+verifier('alertes : le détecteur expiré (Testo) ressort, niveau CRITIQUE (SPEC §7.2)',
+  alertesDetecteurs.length === 1 &&
+  alertesDetecteurs[0].niveau === 'CRITIQUE' &&
+  alertesDetecteurs[0].detail.includes('Testo'),
   JSON.stringify(alertesDetecteurs));
 verifier('alertes : les critiques d’abord',
   alertes.every((a, i) => i === 0 ||
@@ -76,7 +79,8 @@ verifier('getEtablissement enrichi : attestation de capacité complète',
   etablissement.numAttestationCapacite === 'AC-13-004567' &&
   etablissement.organisme === 'QualiFroid Cert' &&
   etablissement.dateDelivranceCapacite === '2022-03-15' &&
-  etablissement.dateEcheanceCapacite === '2027-03-14' &&
+  // 22/07 : échéance RELATIVE (toujours valide, quelle que soit la date)
+  etablissement.dateEcheanceCapacite > new Date().toISOString().slice(0, 10) &&
   etablissement.categoriesAutorisees.includes('I') &&
   etablissement.activitesAutorisees.length === 5);
 
@@ -191,11 +195,14 @@ verifier('getStats : nbOperateursActifs = personnes ACTIVES du registre (4)',
 // 4. Outillage : statut RECALCULÉ depuis l'échéance
 // ============================================================
 const outillage = await store.getOutillage();
-verifier('getOutillage : 5 outils, les 2 EXPIRE sont les détecteurs',
+verifier('getOutillage : 5 outils, le seul EXPIRE est le détecteur Testo',
   outillage.length === 5 &&
-  outillage.filter((o) => o.statut === 'EXPIRE').length === 2 &&
-  outillage.filter((o) => o.statut === 'EXPIRE')
-    .every((o) => o.typeOutil === 'DETECTEUR'));
+  outillage.filter((o) => o.statut === 'EXPIRE').length === 1 &&
+  outillage.find((o) => o.statut === 'EXPIRE').marque === 'Testo');
+// Invariant du 22/07 : chaque parcours doit pouvoir aller au bout →
+// il existe TOUJOURS un détecteur CONFORME dans le monde démo.
+verifier('getOutillage : un détecteur CONFORME existe (parcours complets possibles)',
+  outillage.some((o) => o.typeOutil === 'DETECTEUR' && o.statut === 'CONFORME'));
 verifier('getOutillage : station Promax RG6 CONFORME',
   outillage.some((o) => o.modele === 'RG6' && o.statut === 'CONFORME'));
 
@@ -346,10 +353,10 @@ verifier('alerte CRITIQUE « écart non justifié » levée pour R-404A',
     a.detail.includes('R-404A')));
 
 const blocage = await store.peutPasserEnOfficiel();
-verifier('peutPasserEnOfficiel : false, motifs détecteurs + écart',
+verifier('peutPasserEnOfficiel : false, motif = écart seul (outillage démo conforme depuis le 22/07)',
   blocage.ok === false &&
-  blocage.motifs.some((m) => m.includes('détecteur')) &&
-  blocage.motifs.some((m) => m.includes('Écart')),
+  blocage.motifs.some((m) => m.includes('Écart')) &&
+  !blocage.motifs.some((m) => m.includes('détecteur')),
   JSON.stringify(blocage.motifs));
 
 await verifierRejet('justifierEcart exige une justification non vide',

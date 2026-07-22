@@ -118,11 +118,13 @@ alertes = await store.getAlertes();
 verifier('l’alerte d’écart a disparu après justification',
   !alertes.some((a) => a.id === `alr-ecart-${ANNEE}-R-32`));
 
-// --- 6. Blocage OFFICIEL : reste le motif détecteurs ------------
+// --- 6. Prérequis OFFICIEL réunis dès la justification ----------
+// 22/07 : le monde démo garde un détecteur CONFORME (Inficon) — une
+// fois l'écart justifié, plus aucun motif ne bloque les prérequis
+// (le verrou de livraison, lui, reste une autre porte).
 officiel = await store.peutPasserEnOfficiel();
-verifier('OFFICIEL toujours bloqué : motif = aucun détecteur conforme',
-  officiel.ok === false && officiel.motifs.length === 1 &&
-  officiel.motifs[0].includes('détecteur'),
+verifier('prérequis OFFICIEL réunis : aucun motif restant',
+  officiel.ok === true && officiel.motifs.length === 0,
   JSON.stringify(officiel.motifs));
 
 // --- 7. Remplacement du détecteur expiré → motif levé -----------

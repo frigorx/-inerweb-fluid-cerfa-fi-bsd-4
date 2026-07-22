@@ -273,10 +273,16 @@ verifier('formation : mention obligatoire au cadre 14',
 verifier('cadre 5 : détecteur lié (Testo 316-3, n° série)',
   f.texte('Detecteur_ID').includes('Testo 316-3') &&
   f.texte('Detecteur_ID').includes('T316-45872'));
-verifier('cadre 5 : date d’étalonnage J/M/A (02/06/2025)',
-  f.texte('Controle_Jour') === '02' &&
-  f.texte('Controle_Mois') === '06' &&
-  f.texte('Controle_Annee') === '2025');
+// 22/07 : les dates d'étalonnage du monde démo sont RELATIVES au jour —
+// l'attendu se dérive de la fiche outillage, jamais d'une date figée.
+const testoDemo = (await store.getOutillage()).find((o) => o.id === 'out-1');
+const [anneeEtal, moisEtal, jourEtal] = testoDemo.dateEtalonnage.split('-');
+verifier('cadre 5 : date d’étalonnage J/M/A (celle du détecteur de démo)',
+  f.texte('Controle_Jour') === jourEtal &&
+  f.texte('Controle_Mois') === moisEtal &&
+  f.texte('Controle_Annee') === anneeEtal,
+  `attendu ${jourEtal}/${moisEtal}/${anneeEtal} — lu ${f.texte('Controle_Jour')}/`
+  + `${f.texte('Controle_Mois')}/${f.texte('Controle_Annee')}`);
 verifier('cadre 10 : contrôle du wizard CONFORME → Case_Fuite_Non',
   f.coche('Case_Fuite_Non') && !f.coche('Case_Fuite_Oui'));
 verifier('cadre 11 : 11_QA = 0,10 (pesées 13,9 → 13,8)',

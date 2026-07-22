@@ -228,8 +228,12 @@ if (NOM_STORE === 'demo') await store.init();
   const dEtab = r.domaines.find((d) => d.id === 'etablissement');
   verifier('attestation valide (>90 j) : domaine établissement VERT',
     dEtab.etat === 'VERT');
-  verifier('prérequis Officiel encore incomplets : global pas VERT',
-    r.global !== 'VERT' && r.officiel.ok === false);
+  // 22/07 : le monde DÉMO a désormais tous ses prérequis outillage —
+  // l'assertion vérifie la COHÉRENCE (jamais VERT si prérequis
+  // incomplets), valable pour les deux variantes ; le forçage ORANGE
+  // est déjà prouvé par le volet A pur.
+  verifier('cohérence : jamais VERT si les prérequis Officiel sont incomplets',
+    r.officiel.ok === true || r.global !== 'VERT');
 }
 
 {

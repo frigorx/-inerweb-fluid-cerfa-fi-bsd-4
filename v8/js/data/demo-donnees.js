@@ -3,7 +3,23 @@
 // inerWeb Fluide v8 — données de démonstration (Phase A)
 // Monde fictif EXACT de la maquette validée (Claude Design, 02/07/2026).
 // Toutes les dates sont en ISO (AAAA-MM-JJ). Masses en kg.
+//
+// Dates PÉRISSABLES (étalonnages, attestation de capacité) : RELATIVES
+// au jour de chargement (demande Franck 22/07 — les dates figées
+// pourrissaient : les deux détecteurs avaient fini par expirer et plus
+// aucun parcours ne se déroulait « proprement » en démo). Le monde
+// fictif garde VOLONTAIREMENT un détecteur expiré et une pompe à
+// échéance proche (pédagogie des alertes), mais chaque famille d'outil
+// a toujours AU MOINS un exemplaire conforme pour aller au bout de
+// tous les parcours, quelle que soit la date du jour.
 // ============================================================
+
+/** Date ISO à `delta` jours d'aujourd'hui (donnée de démo, pas une règle). */
+function jourDemo(delta) {
+  const d = new Date();
+  d.setDate(d.getDate() + delta);
+  return d.toISOString().slice(0, 10);
+}
 
 export const DEMO = {
 
@@ -17,7 +33,8 @@ export const DEMO = {
     numAttestationCapacite: 'AC-13-004567',
     organisme: 'QualiFroid Cert',
     dateDelivranceCapacite: '2022-03-15',
-    dateEcheanceCapacite: '2027-03-14',
+    // Relative : une attestation VALIDE quelle que soit la date du jour.
+    dateEcheanceCapacite: jourDemo(600),
     categoriesAutorisees: ['I'],
     activitesAutorisees: ['MISE_EN_SERVICE', 'MAINTENANCE', 'CONTROLE',
       'RECUPERATION', 'DEMANTELEMENT'],
@@ -644,8 +661,12 @@ export const DEMO = {
 
   // --------------------------------------------------------
   // Outillage réglementé (Phase B) : détecteurs et balance.
-  // Cohérent avec les alertes du tableau de bord : les deux
-  // détecteurs sont à échéance dépassée (EXPIRE).
+  // Dates RELATIVES au jour de chargement (22/07) : un détecteur
+  // EXPIRÉ (Testo) et une pompe à échéance PROCHE nourrissent les
+  // alertes du tableau de bord ; le reste est CONFORME pour que
+  // TOUS les parcours aillent au bout, quelle que soit la date.
+  // Les statuts figés ici ne sont qu'indicatifs : les lectures les
+  // RECALCULENT depuis prochaineEcheance (calculerStatutOutil).
   // --------------------------------------------------------
   outillage: [
     {
@@ -657,9 +678,10 @@ export const DEMO = {
       siteAtelier: 'Atelier froid — armoire outillage',
       precision: null,
       sensibilite: '4 g/an',
-      dateEtalonnage: '2025-06-02',
-      dateVerification: '2025-06-02',
-      prochaineEcheance: '2026-06-02',
+      // EXPIRÉ VOLONTAIREMENT (pédagogie : alertes, feu tricolore).
+      dateEtalonnage: jourDemo(-425),
+      dateVerification: jourDemo(-425),
+      prochaineEcheance: jourDemo(-60),
       statut: 'EXPIRE'
     },
     {
@@ -671,10 +693,11 @@ export const DEMO = {
       siteAtelier: 'Atelier froid — armoire outillage',
       precision: null,
       sensibilite: '3 g/an',
-      dateEtalonnage: '2024-11-10',
-      dateVerification: '2024-11-10',
-      prochaineEcheance: '2025-11-10',
-      statut: 'EXPIRE'
+      // CONFORME : le détecteur qui permet d'aller au bout du parcours.
+      dateEtalonnage: jourDemo(-90),
+      dateVerification: jourDemo(-90),
+      prochaineEcheance: jourDemo(275),
+      statut: 'CONFORME'
     },
     {
       id: 'out-3',
@@ -685,9 +708,9 @@ export const DEMO = {
       siteAtelier: 'Atelier froid — poste de charge',
       precision: '± 1 g',
       sensibilite: null,
-      dateEtalonnage: '2026-01-15',
-      dateVerification: '2026-01-15',
-      prochaineEcheance: '2027-01-15',
+      dateEtalonnage: jourDemo(-180),
+      dateVerification: jourDemo(-180),
+      prochaineEcheance: jourDemo(185),
       statut: 'CONFORME'
     },
     {
@@ -699,9 +722,9 @@ export const DEMO = {
       siteAtelier: 'Atelier froid — chariot de récupération',
       precision: null,
       sensibilite: null,
-      dateEtalonnage: '2026-02-10',
-      dateVerification: '2026-02-10',
-      prochaineEcheance: '2027-02-10',
+      dateEtalonnage: jourDemo(-150),
+      dateVerification: jourDemo(-150),
+      prochaineEcheance: jourDemo(215),
       statut: 'CONFORME'
     },
     {
@@ -713,10 +736,10 @@ export const DEMO = {
       siteAtelier: 'Atelier froid — poste 2',
       precision: null,
       sensibilite: null,
-      dateEtalonnage: '2025-07-24',
-      dateVerification: '2025-07-24',
+      dateEtalonnage: jourDemo(-350),
+      dateVerification: jourDemo(-350),
       // Échéance PROCHE (moins de 30 jours) → statut A_VERIFIER
-      prochaineEcheance: '2026-07-24',
+      prochaineEcheance: jourDemo(15),
       statut: 'A_VERIFIER'
     }
   ],

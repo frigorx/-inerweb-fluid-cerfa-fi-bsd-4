@@ -43,21 +43,23 @@ verifier('getUtilisateurCourant → Marc Delorme, rôle REFERENT',
   utilisateur.roleApp === 'REFERENT');
 
 const outillage = await store.getOutillage();
-// Phase C : outillage enrichi (5 outils) et statuts RECALCULÉS
-// depuis les échéances — seuls les 2 détecteurs sont expirés.
-verifier('getOutillage → 5 outils, seuls les 2 détecteurs EXPIRE',
+// Phase C : outillage enrichi (5 outils) et statuts RECALCULÉS depuis
+// les échéances — 22/07 : UN détecteur expiré (Testo, pédagogie des
+// alertes), l'autre CONFORME (les parcours vont au bout en démo).
+verifier('getOutillage → 5 outils, seul le détecteur Testo EXPIRE',
   outillage.length === 5 &&
-  outillage.filter((o) => o.statut === 'EXPIRE').length === 2 &&
-  outillage.filter((o) => o.statut === 'EXPIRE')
-    .every((o) => o.typeOutil === 'DETECTEUR') &&
+  outillage.filter((o) => o.statut === 'EXPIRE').length === 1 &&
+  outillage.find((o) => o.statut === 'EXPIRE').typeOutil === 'DETECTEUR' &&
+  outillage.some((o) => o.typeOutil === 'DETECTEUR' &&
+    o.statut === 'CONFORME') &&
   outillage.some((o) => o.typeOutil === 'BALANCE' &&
     o.statut === 'CONFORME'));
 
 const alertesInitiales = await store.getAlertes();
-verifier('alertes calculées : fuite M5 + contrôle M6 + 2 détecteurs',
+verifier('alertes calculées : fuite M5 + contrôle M6 + 1 détecteur',
   alertesInitiales.some((a) => a.titre === 'Fuite non résolue') &&
   alertesInitiales.some((a) => a.titre.includes('en retard')) &&
-  alertesInitiales.filter((a) => a.titre === 'Détecteur à réétalonner').length === 2,
+  alertesInitiales.filter((a) => a.titre === 'Détecteur à réétalonner').length === 1,
   JSON.stringify(alertesInitiales.map((a) => a.titre)));
 
 // --- Création machine / bouteille ----------------------------
