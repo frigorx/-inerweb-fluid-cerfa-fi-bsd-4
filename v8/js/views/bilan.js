@@ -2,7 +2,9 @@
 // ============================================================
 // inerWeb Fluide — vue « Bilan annuel »
 // Bilan annuel de traçabilité : tableau de suivi réglementaire
-// par fluide (déclaration ADEME), deux cartes de totaux dégradées,
+// par fluide, la déclaration annuelle réglementaire (11 rubriques, arrêté
+// du 21/11/2025 — matrice préparatoire à valider par l'organisme agréé),
+// deux cartes de totaux dégradées,
 // export CSV (séparateur « ; », BOM UTF-8) et impression.
 // IM-16 : synthèse « Audit en 5 minutes », page unique imprimable.
 // Lecture seule (Phase A) : tout vient de ctx.store.getBilan(année).
@@ -131,6 +133,20 @@ const STYLES_VUE = `
   }
   .vue-bilan .bilan-recupere-positif { color: var(--violet); font-weight: 600; }
   .vue-bilan .bilan-teq              { font-weight: 600; color: var(--texte); }
+
+  /* Déclaration annuelle réglementaire (11 rubriques, P0-8) */
+  .vue-bilan .decl-section { margin-top: 28px; }
+  .vue-bilan .decl-titre { font-size: 1.05rem; margin: 0 0 8px; }
+  .vue-bilan .decl-actions { margin-bottom: 10px; }
+  .vue-bilan .decl-note { font-size: 0.85rem; color: var(--texte-doux); margin: 0 0 10px; }
+  .vue-bilan .decl-bandeau { border-radius: var(--rayon-bouton); padding: 10px 14px; margin-bottom: 12px; font-size: 0.9rem; }
+  .vue-bilan .decl-ok { background: var(--fond-2); border: 1px solid var(--bordure); color: var(--texte-doux); }
+  .vue-bilan .decl-anomalies { background: #fdf3e7; border: 1px solid #e0a96d; color: #8a4b16; }
+  .vue-bilan .decl-anomalies ul { margin: 6px 0 0; padding-left: 20px; }
+  .vue-bilan .decl-scroll { overflow-x: auto; }
+  .vue-bilan .decl-table { min-width: 1100px; }
+  .vue-bilan .decl-legende { font-size: 0.8rem; color: var(--texte-doux); margin-top: 10px; }
+  .vue-bilan .decl-vide { color: var(--texte-doux); font-style: italic; }
 </style>`;
 
 /* ============================================================
@@ -196,17 +212,97 @@ function tableauBilan(bilan) {
   return tableau({ colonnes, lignesHtml });
 }
 
+/* ------------------------------------------------------------
+   Déclaration annuelle réglementaire (11 rubriques, P0-8)
+   ------------------------------------------------------------ */
+
+/** Masse en kg : « — » pour un zéro (nil réglementaire), sinon 2 décimales. */
+function celKg(x) {
+  return Math.abs(Number(x) || 0) < 1e-9 ? '—' : esc(fmtNombre(x, 2));
+}
+
+/** Note « préparatoire » + bandeau d'anomalies / complétude. */
+function bandeauDeclaration(declaration) {
+  const note = '<p class="decl-note">Matrice <strong>préparatoire</strong> — '
+    + 'à valider par l’organisme agréé avant tout dépôt. Ce n’est pas le '
+    + 'formulaire officiel.</p>';
+  if (!declaration.anomalies.length) {
+    return note + '<div class="decl-bandeau decl-ok">Aucune anomalie détectée '
+      + 'pour cette année (stocks établis, traitements finaux attestés).</div>';
+  }
+  const items = declaration.anomalies
+    .map((a) => `<li>${esc(a.message)}</li>`).join('');
+  return note + '<div class="decl-bandeau decl-anomalies">'
+    + `<strong>${declaration.anomalies.length} point(s) à régulariser :</strong>`
+    + `<ul>${items}</ul></div>`;
+}
+
+/** Le tableau des 11 rubriques (large, défilable horizontalement). */
+function tableauDeclaration(declaration) {
+  if (!declaration.lignes.length) {
+    return '<p class="decl-vide">Aucun mouvement de fluide déclarable pour '
+      + `${esc(declaration.annee)}.</p>`;
+  }
+  const enTete = ['Fluide', '1. Acquis.', '2. Ch. neuf', '3. Ch. maint.',
+    '4. Récup. HU', '5. Récup. maint.', '6. Remises distrib.',
+    '7. Recycl. propre', '8. Régénér.', '9. Destruction', '10. Cessions',
+    'Stock 1/1 (neuf·récup·déchet)', 'Stock 31/12 (neuf·récup·déchet)']
+    .map((t, i) => `<th${i === 0 ? '' : ' class="align-droite"'}>${esc(t)}</th>`)
+    .join('');
+  const cel = (x) => `<td class="cellule-mono align-droite">${celKg(x)}</td>`;
+  const lignes = declaration.lignes.map((l) => {
+    const instR = l.regenerationInstallations.join(' · ');
+    const instD = l.destructionInstallations.join(' · ');
+    const stockD = `${celKg(l.stockDebutNeufKg)} · ${celKg(l.stockDebutRecupKg)} · ${celKg(l.stockDebutDechetKg)}`;
+    const stockF = `${celKg(l.stockFinNeufKg)} · ${celKg(l.stockFinRecupKg)} · ${celKg(l.stockFinDechetKg)}`;
+    return '<tr>'
+      + `<td class="bilan-fluide">${esc(l.fluide)}</td>`
+      + cel(l.acquisitionsKg) + cel(l.chargesNeufKg)
+      + cel(l.chargesMaintenanceKg) + cel(l.recupHorsUsageKg)
+      + cel(l.recupMaintenanceKg) + cel(l.remisesDistributeurKg)
+      + cel(l.recyclagePropreKg)
+      + `<td class="cellule-mono align-droite"${instR ? ` title="${esc(instR)}"` : ''}>${celKg(l.regenerationKg)}</td>`
+      + `<td class="cellule-mono align-droite"${instD ? ` title="${esc(instD)}"` : ''}>${celKg(l.destructionKg)}</td>`
+      + cel(l.cessionsKg)
+      + `<td class="cellule-mono align-droite">${stockD}</td>`
+      + `<td class="cellule-mono align-droite">${stockF}</td>`
+      + '</tr>';
+  }).join('');
+  return '<div class="decl-scroll"><table class="tableau decl-table">'
+    + `<thead><tr>${enTete}</tr></thead><tbody>${lignes}</tbody></table></div>`;
+}
+
+/** Section « Déclaration annuelle réglementaire ». */
+function sectionDeclaration(declaration) {
+  return '<section class="decl-section">'
+    + '<h3 class="decl-titre">Déclaration annuelle réglementaire — '
+    + `11 rubriques (${esc(declaration.annee)})</h3>`
+    + '<div class="decl-actions no-print">'
+    + `<button type="button" id="btn-export-decl" class="btn btn-vert">${ICONES.telecharger}Export déclaration (CSV)</button>`
+    + '</div>'
+    + bandeauDeclaration(declaration)
+    + tableauDeclaration(declaration)
+    + '<p class="decl-legende">Rubrique 9 (destruction) : uniquement les BSFF '
+    + 'dont l’issue « destruction » est <strong>attestée</strong> (installation '
+    + 'en info-bulle). Une remise en filière sans issue attestée n’est jamais '
+    + 'comptée en destruction (voir anomalies). Rubrique 7 (recyclage sous '
+    + 'responsabilité propre) : sans objet ici — le recyclé / régénéré s’achète '
+    + 'certifié.</p>'
+    + '</section>';
+}
+
 /** Page complète de la vue pour un bilan donné. */
-function construireHtml(bilan, annees) {
+function construireHtml(bilan, declaration, annees) {
   return '<div class="vue-bilan anim-fade">'
     + STYLES_VUE
     + enteteVue({
       titre: 'Bilan annuel de traçabilité',
-      sousTitre: 'Tableau de suivi réglementaire par fluide — déclaration ADEME',
+      sousTitre: 'Synthèse annuelle par fluide et déclaration réglementaire',
       actionsHtml: actionsEntete(bilan.annee, annees)
     })
     + cartesTotaux(bilan)
     + tableauBilan(bilan)
+    + sectionDeclaration(declaration)
     + '</div>';
 }
 
@@ -255,6 +351,44 @@ function genererCsv(bilan) {
     '', ''].join(sep));
 
   // BOM UTF-8 en tête pour que les tableurs reconnaissent l'encodage
+  return '\uFEFF' + rangees.join('\r\n');
+}
+
+/**
+ * CSV de la d\u00E9claration annuelle (11 rubriques par fluide). M\u00EAme format que
+ * genererCsv (s\u00E9parateur \u00AB ; \u00BB, BOM UTF-8, CRLF). Les champs texte
+ * (installations) voient leur \u00AB ; \u00BB remplac\u00E9 par \u00AB , \u00BB pour ne pas casser
+ * les colonnes (le format existant ne cite pas les champs).
+ */
+function genererCsvDeclaration(declaration) {
+  const sep = ';';
+  const texte = (s) => String(s ?? '').replace(/;/g, ',');
+  const rangees = [];
+  rangees.push(['Fluide', 'Acquisitions (kg)', 'Charges equip. neufs (kg)',
+    'Charges maintenance (kg)', 'Recuperations hors usage (kg)',
+    'Recuperations maintenance (kg)', 'Remises distributeur (kg)',
+    'Recyclage responsabilite propre (kg)', 'Regeneration (kg)',
+    'Installations regeneration', 'Destruction (kg)',
+    'Installations destruction', 'Cessions (kg)',
+    'Stock 1/1 neuf (kg)', 'Stock 1/1 recupere (kg)', 'Stock 1/1 dechet (kg)',
+    'Stock 31/12 neuf (kg)', 'Stock 31/12 recupere (kg)',
+    'Stock 31/12 dechet (kg)'].join(sep));
+  for (const l of declaration.lignes) {
+    rangees.push([
+      texte(l.fluide),
+      nombreCsv(l.acquisitionsKg), nombreCsv(l.chargesNeufKg),
+      nombreCsv(l.chargesMaintenanceKg), nombreCsv(l.recupHorsUsageKg),
+      nombreCsv(l.recupMaintenanceKg), nombreCsv(l.remisesDistributeurKg),
+      nombreCsv(l.recyclagePropreKg), nombreCsv(l.regenerationKg),
+      texte(l.regenerationInstallations.join(' | ')),
+      nombreCsv(l.destructionKg),
+      texte(l.destructionInstallations.join(' | ')),
+      nombreCsv(l.cessionsKg),
+      nombreCsv(l.stockDebutNeufKg), nombreCsv(l.stockDebutRecupKg),
+      nombreCsv(l.stockDebutDechetKg), nombreCsv(l.stockFinNeufKg),
+      nombreCsv(l.stockFinRecupKg), nombreCsv(l.stockFinDechetKg)
+    ].join(sep));
+  }
   return '\uFEFF' + rangees.join('\r\n');
 }
 
@@ -559,12 +693,17 @@ async function ouvrirAudit5Minutes(ctx, annee) {
  */
 export async function render(conteneur, ctx) {
   let bilanCourant = null;
+  let declarationCourante = null;
   let anneesDisponibles = [];
 
   /** Charge le bilan de l'année demandée, rend la page et branche les écouteurs. */
   async function chargerEtAfficher(annee) {
-    bilanCourant = await ctx.store.getBilan(annee);
-    conteneur.innerHTML = construireHtml(bilanCourant, anneesDisponibles);
+    [bilanCourant, declarationCourante] = await Promise.all([
+      ctx.store.getBilan(annee),
+      ctx.store.getDeclarationAnnuelle(annee)
+    ]);
+    conteneur.innerHTML =
+      construireHtml(bilanCourant, declarationCourante, anneesDisponibles);
     attacherEcouteurs();
   }
 
@@ -610,6 +749,16 @@ export async function render(conteneur, ctx) {
       telechargerCsv(genererCsv(bilanCourant), nomFichier);
       toast(`Export « ${nomFichier} » téléchargé.`, 'succes');
     });
+
+    // P0-8 : export CSV de la déclaration annuelle (11 rubriques)
+    const boutonDecl = conteneur.querySelector('#btn-export-decl');
+    if (boutonDecl) {
+      boutonDecl.addEventListener('click', () => {
+        const nomFichier = `declaration-annuelle-${bilanCourant.annee}.csv`;
+        telechargerCsv(genererCsvDeclaration(declarationCourante), nomFichier);
+        toast(`Export « ${nomFichier} » téléchargé.`, 'succes');
+      });
+    }
 
     boutonImprimer.addEventListener('click', () => {
       window.print();

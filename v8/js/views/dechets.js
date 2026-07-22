@@ -163,7 +163,23 @@ function carteRecuperation(b, jour) {
  * @param {object} bsff
  * @returns {string} HTML
  */
+const LIBELLE_ISSUE = {
+  RECYCLAGE: 'Recyclage', REGENERATION: 'Régénération',
+  DESTRUCTION: 'Destruction', AUTRE: 'Autre'
+};
+
 function ligneBsff(bsff) {
+  const issue = bsff.issueTraitement
+    ? '<strong>' + esc(LIBELLE_ISSUE[bsff.issueTraitement]
+        || bsff.issueTraitement) + '</strong>'
+      + (bsff.installationTraitement
+        ? '<br><span class="mono issue-inst">'
+          + esc(bsff.installationTraitement) + '</span>' : '')
+    : '<span class="issue-absente">Non attestée</span>';
+  const action = '<button type="button" class="btn btn-contour btn-petit" '
+    + 'data-action="attester-issue" data-id="' + esc(bsff.id) + '">'
+    + (bsff.issueTraitement ? 'Modifier l’issue' : 'Attester l’issue')
+    + '</button>';
   return '<tr>'
     + '<td class="mono">' + esc(bsff.numeroBsff) + '</td>'
     + '<td>' + esc(fmtDate(bsff.dateRemise)) + '</td>'
@@ -172,7 +188,66 @@ function ligneBsff(bsff) {
     + '<td class="align-droite mono">' + esc(fmtNombre(bsff.masseRemiseKg, 2)) + ' kg</td>'
     + '<td>' + esc(bsff.transporteur || '—') + '</td>'
     + '<td>' + esc(bsff.installationDestination || '—') + '</td>'
+    + '<td>' + issue + '</td>'
+    + '<td class="no-print">' + action + '</td>'
     + '</tr>';
+}
+
+/**
+ * Modale d'attestation de l'ISSUE de traitement final d'un BSFF (P0-8).
+ * Corrige BSFF ≠ destruction : seule une issue « destruction » attestée
+ * (avec installation) alimente la rubrique 9 de la déclaration.
+ */
+function ouvrirAttestationIssue(ctx, bsff) {
+  const opts = ['RECYCLAGE', 'REGENERATION', 'DESTRUCTION', 'AUTRE']
+    .map((v) => '<option value="' + v + '"'
+      + (bsff.issueTraitement === v ? ' selected' : '') + '>'
+      + esc(LIBELLE_ISSUE[v]) + '</option>').join('');
+  const contenuHtml =
+    '<p class="modale-intro">BSFF <strong>' + esc(bsff.numeroBsff)
+    + '</strong> — ' + esc(fmtNombre(bsff.masseRemiseKg, 2)) + ' kg de '
+    + esc(bsff.fluide) + '. Attestez la <strong>nature du traitement '
+    + 'final</strong> tel que l’opérateur agréé la certifie.</p>'
+    + '<label class="champ-label">Issue de traitement'
+    + '<select id="issue-select">' + opts + '</select></label>'
+    + '<label class="champ-label">Installation de traitement '
+    + '(obligatoire pour régénération / destruction)'
+    + '<input type="text" id="issue-installation" value="'
+    + esc(bsff.installationTraitement || '') + '"></label>'
+    + '<label class="champ-label">N° de certificat (facultatif)'
+    + '<input type="text" id="issue-certificat" value="'
+    + esc(bsff.certificatTraitement || '') + '"></label>'
+    + '<div id="zone-erreur-issue"></div>';
+  const actionsHtml =
+    '<button type="button" class="btn btn-contour" data-action="annuler">Annuler</button>'
+    + '<button type="button" class="btn btn-marine" data-action="valider">Attester</button>';
+  const instance = modale({ titre: 'Attester le traitement final',
+    contenuHtml, actionsHtml });
+  const racine = document.getElementById('zone-modales') || document.body;
+  const zoneErreur = racine.querySelector('#zone-erreur-issue');
+  racine.querySelector('[data-action="annuler"]')
+    .addEventListener('click', function () { instance.fermer(); });
+  racine.querySelector('[data-action="valider"]')
+    .addEventListener('click', async function () {
+      zoneErreur.innerHTML = '';
+      try {
+        const u = await ctx.store.getUtilisateurCourant();
+        await ctx.store.attesterIssueBsff(bsff.id, {
+          issueTraitement: racine.querySelector('#issue-select').value,
+          installationTraitement: racine.querySelector('#issue-installation').value,
+          certificatTraitement:
+            racine.querySelector('#issue-certificat').value || null,
+          operateur: u.prenom + ' ' + u.nom
+        });
+        toast('Traitement final attesté.', 'succes');
+        instance.fermer();
+        if (typeof ctx.rafraichir === 'function') ctx.rafraichir();
+      } catch (erreur) {
+        zoneErreur.innerHTML = '<div class="bandeau-erreur">' + ICONES.alerte
+          + '<span>' + esc(erreur.message
+            || 'Impossible d’attester cette issue.') + '</span></div>';
+      }
+    });
 }
 
 /* ============================================================
@@ -317,7 +392,9 @@ export async function render(conteneur, ctx) {
         { cle: 'fluide', libelle: 'Fluide' },
         { cle: 'masse', libelle: 'Masse remise', align: 'droite' },
         { cle: 'transporteur', libelle: 'Transporteur' },
-        { cle: 'destination', libelle: 'Destination' }
+        { cle: 'destination', libelle: 'Destination' },
+        { cle: 'issue', libelle: 'Traitement final' },
+        { cle: 'action', libelle: '', align: 'droite' }
       ],
       lignesHtml: bsffListe.map(ligneBsff)
     })
@@ -346,6 +423,9 @@ export async function render(conteneur, ctx) {
       if (bouteille) ouvrirDecision(ctxAvecRafraichissement, bouteille);
     } else if (action === 'creer-bsff') {
       ouvrirFormBsff(ctxAvecRafraichissement, id);
+    } else if (action === 'attester-issue') {
+      const bsff = bsffListe.find((b) => b.id === id);
+      if (bsff) ouvrirAttestationIssue(ctxAvecRafraichissement, bsff);
     }
   });
 }
