@@ -2,6 +2,31 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔍 Revue adversariale du lot CM-3/CM-4 (1 agent, 22/07) — 1 bloquant CORRIGÉ
+- **BLOQUANT (corrigé sur-le-champ)** : `optionsEtatPour` substituait SILENCIEUSEMENT
+  « Vierge » à l'état enregistré d'une fiche héritée incohérente (ex. NEUVE+RECUPERE,
+  créable avant CM-3) au rendu initial de la modale — enregistrer un champ sans rapport
+  réécrivait alors l'état réel sans trace. **Correctif** : 3ᵉ paramètre `preserverHorsListe`
+  — au rendu initial, l'état ENREGISTRÉ hors liste est préservé et affiché tel quel
+  (l'écran ne ment pas) ; le store refuse l'enregistrement tant que l'incohérence n'est
+  pas résolue consciemment. Le repli au défaut ne joue plus qu'à la bascule VOLONTAIRE de
+  type. `test-bouteille-form` +3 vérifs (18). **TOUT VERT — 91 exécutions.**
+- **IMPORTANTS consignés (sans code, arbitrages)** : ① `importerJSON` n'applique pas
+  `verifierCoherenceEtatBouteille` — VOULU en l'état : on ne bloque JAMAIS la restauration
+  d'une archive ancienne ; depuis le correctif ci-dessus l'incohérence importée est
+  affichée telle quelle et infixable en silence (suivi possible : signalement à l'import).
+  ② La clause « ne revalide jamais l'existant » d'`updateBouteille` ne joue pas pour le
+  formulaire (qui envoie toujours type+état — désormais la VRAIE valeur stockée) : elle
+  protège les appelants non-UI (scripts, outils de masse) — rôle assumé. ③ **Mention
+  CERFA potentiellement à tort sur un réemploi légitime passé par un TRANSFERT de
+  consolidation** (limitation V1 documentée d'`avoir-origine.js` : le transfert ne propage
+  pas les lots d'origine). Exposition NULLE aujourd'hui (mode Officiel FERMÉ) ; **à
+  trancher par Franck avant réouverture de l'Officiel : propager les lots d'origine à
+  travers les transferts (le « point dur » §8 du plan) — candidate CM-5.**
+- **MINEUR consigné** : le bandeau wizard lit un instantané des mouvements chargé à
+  l'ouverture (une validation concurrente peut le périmer) — purement indicatif, jamais
+  bloquant, et le CERFA final recalcule à neuf.
+
 ### 🧱 CM-4 (cycle matière) — surfaces : bandeau wizard, mention CERFA, vues (22/07)
 - **⭐ Règle TRANCHÉE par Franck (22/07) : la surcharge de réemploi est SIGNALÉE, JAMAIS
   bloquée — y compris en mode OFFICIEL.** Pas de « forçage » à débloquer (rien n'est

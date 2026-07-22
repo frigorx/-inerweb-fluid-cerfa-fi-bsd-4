@@ -56,9 +56,17 @@ function optionsSelect(options, courante) {
  * Exportée pour le test.
  * @param {string} type - NEUVE | RECUPERATION
  * @param {string} courant - état actuellement sélectionné/enregistré
+ * @param {boolean} [preserverHorsListe] - true au RENDU INITIAL d'une fiche
+ *   existante : un état ENREGISTRÉ hors liste (donnée héritée incohérente,
+ *   ex. NEUVE+RECUPERE d'avant CM-3) est préservé et AFFICHÉ tel quel —
+ *   jamais substitué en silence (revue adversariale 22/07, bloquant corrigé) ;
+ *   le store refusera l'enregistrement tant que l'incohérence n'est pas
+ *   résolue consciemment. false (défaut) pour la bascule VOLONTAIRE de type :
+ *   le reliquat de l'autre partition retombe sur le défaut, sous les yeux de
+ *   l'utilisateur.
  * @returns {string} HTML des <option>
  */
-export function optionsEtatPour(type, courant) {
+export function optionsEtatPour(type, courant, preserverHorsListe = false) {
   const options = type === 'RECUPERATION'
     ? [
       { valeur: 'RECUPERE', libelle: LIBELLES_ETAT_FLUIDE.RECUPERE },
@@ -71,10 +79,13 @@ export function optionsEtatPour(type, courant) {
     ];
   let retenu = courant;
   if (!options.some(function (o) { return o.valeur === courant; })) {
-    if (type === 'RECUPERATION'
-        && (courant === 'DECHET' || courant === 'DOUTEUX')) {
-      // Fiche existante dont l'état vient d'une DÉCISION : préservé tel
-      // quel (l'écran ne ment pas) — jamais proposé sur une fiche saine.
+    const etatDeDecision = type === 'RECUPERATION'
+      && (courant === 'DECHET' || courant === 'DOUTEUX');
+    if (etatDeDecision
+        || (preserverHorsListe && LIBELLES_ETAT_FLUIDE[courant])) {
+      // État ENREGISTRÉ hors liste (décision déchet/douteux, ou donnée
+      // héritée incohérente au rendu initial) : préservé tel quel —
+      // l'écran ne ment pas, le store reste seul juge à l'enregistrement.
       options.push({ valeur: courant, libelle: LIBELLES_ETAT_FLUIDE[courant] });
     } else {
       // Reliquat de l'autre côté de la partition (ex. bascule NEUVE →
@@ -148,8 +159,10 @@ export async function ouvrirFormBouteille(ctx, bouteilleId = null) {
   // fonction de module optionsEtatPour) et le select est reconstruit au
   // changement de type (voir plus bas).
   const typeInitial = bouteille ? bouteille.type : 'NEUVE';
+  // Rendu initial : l'état ENREGISTRÉ est toujours affiché tel quel, même
+  // hors liste (preserverHorsListe) — jamais de substitution silencieuse.
   const optionsEtat = optionsEtatPour(typeInitial,
-    bouteille ? bouteille.etatFluide : 'VIERGE');
+    bouteille ? bouteille.etatFluide : 'VIERGE', true);
 
   const contenuHtml = '<form id="form-bouteille" class="formulaire" novalidate>'
     + '<div class="bandeau-erreur" hidden></div>'

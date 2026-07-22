@@ -69,6 +69,19 @@ console.log('--- A. optionsEtatPour (partition) ---');
     dechet.includes('value="DECHET" selected'));
   verifier('mais DECHET jamais proposé sur une fiche saine',
     !optionsEtatPour('RECUPERATION', 'RECUPERE').includes('value="DECHET"'));
+
+  // Revue adversariale 22/07 (BLOQUANT corrigé) : une fiche HÉRITÉE
+  // incohérente (NEUVE+RECUPERE, créable avant CM-3) doit être AFFICHÉE
+  // telle quelle au rendu initial — jamais silencieusement basculée sur
+  // VIERGE (sinon enregistrer un champ sans rapport réécrirait l'état
+  // réel sans trace). Le store, lui, refusera tant que non résolue.
+  const heritee = optionsEtatPour('NEUVE', 'RECUPERE', true);
+  verifier('fiche héritée NEUVE+RECUPERE : état enregistré PRÉSERVÉ au rendu initial',
+    heritee.includes('value="RECUPERE" selected'), heritee);
+  verifier('… et jamais de substitution silencieuse par VIERGE',
+    !heritee.includes('value="VIERGE" selected'));
+  verifier('la bascule VOLONTAIRE de type garde son repli (pas de préservation)',
+    !optionsEtatPour('NEUVE', 'RECUPERE').includes('value="RECUPERE"'));
 }
 
 // ============================================================
