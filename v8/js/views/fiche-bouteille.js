@@ -14,6 +14,7 @@ import { enteteVue, carteKpi, chipStatut, barreProgression, toast, ICONES }
   from './communs.js';
 import { esc, fmtKg, fmtDate, fmtNombre } from '../core/utils.js';
 import { construireVieBouteille } from '../data/vie-bouteille.js';
+import { avoirParMachineOrigine } from '../data/avoir-origine.js';
 import { ouvrirFormBouteille, ouvrirPesee } from '../modales/bouteille-form.js';
 import { ouvrirEtiquette } from '../documents/etiquette-bouteille.js';
 import { ouvrirCerfa } from '../cerfa/visualiseur.js';
@@ -354,6 +355,52 @@ function blocDetails(bouteille) {
 }
 
 /* ============================================================
+   Bloc 3 bis — Fluide d'origine machine (CM-4c, cycle matière)
+   Bouteille de RÉCUPÉRATION seulement : la règle de conservation
+   ventile le contenu par machine d'origine (avoir-origine.js, dérivé
+   des mouvements). Le net NÉGATIF reste AFFICHÉ tel quel : le cacher
+   masquerait l'anomalie que l'alerte alr-reemploi signale déjà
+   (on avertit, on ne bloque jamais — décision du 22/07).
+   Exporté pour le test (fonction pure HTML).
+   ============================================================ */
+
+export function blocAvoirOrigine(bouteille, mouvements) {
+  if (bouteille.type !== 'RECUPERATION') return '';
+  const avoir = avoirParMachineOrigine(bouteille.id, mouvements);
+  // Libellé machine sans jointure : machineLabel dénormalisé des mouvements
+  // (même motif que l'alerte alr-reemploi du store).
+  const labels = new Map();
+  for (const mv of mouvements ?? []) {
+    if (mv.machineId && mv.machineLabel && !labels.has(mv.machineId)) {
+      labels.set(mv.machineId, mv.machineLabel);
+    }
+  }
+  let corps;
+  if (avoir.size === 0) {
+    corps = '<div class="etat-vide">' + ICONES.bouteille
+      + '<p>Aucun lot d’origine : rien n’a encore été récupéré dans cette '
+      + 'bouteille.</p></div>';
+  } else {
+    corps = '<div class="fiche-details-corps">'
+      + [...avoir.entries()].map(function ([machineId, net]) {
+        const enDepassement = net < -0.01;
+        const disponible = net > 0 ? net : 0;
+        const valeur = enDepassement
+          ? fmtNombre(net, 2) + ' kg — réintroduction au-delà du récupéré '
+            + '(anomalie signalée, à rectifier par contre-écriture)'
+          : fmtNombre(disponible, 2) + ' kg disponibles pour un réemploi '
+            + 'sur cette machine';
+        return ligneDetail(labels.get(machineId) || machineId, valeur);
+      }).join('')
+      + '</div>';
+  }
+  return '<div class="fiche-section">'
+    + '<h3 class="fiche-section-titre">Fluide d’origine machine (réemploi)</h3>'
+    + '<div class="carte">' + corps + '</div>'
+    + '</div>';
+}
+
+/* ============================================================
    Bloc 4 — Alertes de la bouteille
    ============================================================ */
 
@@ -514,6 +561,7 @@ export async function render(conteneur, ctx) {
     + blocIdentite(bouteille, fluide, vie.nbPesees)
     + blocActions(sortie)
     + blocDetails(bouteille)
+    + blocAvoirOrigine(bouteille, mouvements)
     + blocAlertes(alertes)
     + blocVie(vie);
 

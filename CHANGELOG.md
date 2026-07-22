@@ -2,6 +2,43 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧱 CM-4 (cycle matière) — surfaces : bandeau wizard, mention CERFA, vues (22/07)
+- **⭐ Règle TRANCHÉE par Franck (22/07) : la surcharge de réemploi est SIGNALÉE, JAMAIS
+  bloquée — y compris en mode OFFICIEL.** Pas de « forçage » à débloquer (rien n'est
+  bloqué), pas de rectification imposée. Le « durcissement Officiel » du plan initial est
+  CADUC (plan corrigé, mémoire `feedback_surcharge_reemploi_avertir`). CM-4 = trois
+  surfaces d'avertissement/affichage, chacune commitée séparément :
+- **CM-4a — wizard (`6ff15d8`)** : à l'étape Pesées, charge depuis une bouteille de
+  RÉCUPÉRATION → bandeau ambre EN DIRECT quand la quantité dépasse l'avoir d'origine de la
+  machine (`avoirOrigineDisponible`, tolérance 10 g alignée CM-2). Zone dédiée
+  `#wizard-reemploi-avertissement`, JAMAIS versée dans les erreurs qui pilotent
+  `etapeComplete` (Continuer reste actif). Snapshot `getMouvements` au chargement du wizard
+  (aucun appel réseau par frappe). Bouteille NEUVE jamais concernée. `test-wizard` +6 (51).
+- **CM-4b — CERFA (`b47944c`)** : mention SYSTÈME au cadre 14 « Anomalie de réemploi
+  signalée : X kg réintroduits au-delà du fluide récupéré de cette machine — à rectifier
+  par contre-écriture ». Calculée dans `assemblerContexte` (la liste `getMouvements` n'est
+  plus jetée) ; contribution d'un mouvement SOUMIS (canal du PDF final) intégrée à la main ;
+  ANNULE jamais concerné ; la génération ne lève JAMAIS pour cette anomalie.
+  `PREFIXE_MENTION_REEMPLOI` exporté ; `correction.js` écarte la mention de la comparaison
+  élève (préfixe, comme MENTION_FORMATION) ; SPEC-CERFA documentée. `test-generateur` +2
+  (120), `test-correction` +1 (31).
+- **CM-4c — vues** : ① fiche bouteille : bloc « Fluide d'origine machine (réemploi) »
+  (RÉCUPÉRATION seule, `blocAvoirOrigine` exporté) — le net NÉGATIF est MONTRÉ tel quel
+  (le cacher masquerait l'anomalie de l'alerte `alr-reemploi`) ; libellés machine
+  dénormalisés des mouvements (aucune jointure). ② `bouteille-form` : partition des états
+  selon le type (`optionsEtatPour` au niveau module, exportée) — NEUVE = Vierge/Recyclé/
+  Régénéré « (acheté certifié) », RÉCUPÉRATION = Récupéré/Mélange ; repli sur le défaut du
+  type à la bascule ; états de DÉCISION (DECHET/DOUTEUX) préservés en édition (l'écran ne
+  ment pas, le store reste seul juge). ③ certificat/BL fournisseur : option
+  `categorieSeule` ajoutée à `zonePiecesJointes` (zone qui n'AFFICHE que sa catégorie — le
+  store ne filtre pas) ; la modale porte deux zones dédiées (CERTIFICAT visible pour une
+  NEUVE seulement, synchronisée au type ; PHOTO_PESEE) ; l'onglet Documents de la fiche
+  reste le fourre-tout. Nouvelle suite `test-bouteille-form.mjs` (15 vérifs).
+- **Vérif NAVIGATEUR (port jetable 4781, DemoStore)** : app sans erreur console ; fiche
+  B-03 (récupération) porte le bloc avec état vide explicite ; modale B-01 : 3 états
+  achetés + zone certificat visible ; bascule → RECUPERE/MELANGE + certificat masqué ;
+  wizard s'ouvre proprement. **TOUT VERT — 91 exécutions.**
+
 ### 🧱 CM-3 (cycle matière) — fluide acheté régénéré/recyclé + cohérence état↔type (22/07)
 - **Constat en ouvrant la brique : l'essentiel était DÉJÀ en place** — le schéma
   accepte `RECYCLE`/`REGENERE` (CHECK `etat_fluide`, aucune migration), le CERFA les

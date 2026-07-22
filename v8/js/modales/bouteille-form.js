@@ -20,7 +20,11 @@ const LIBELLES_ETAT_FLUIDE = {
   REGENERE: 'Régénéré',
   // R2 : bouteille de récupération au contenu probablement mélangé
   // (croisement de fluides autorisé uniquement vers elle).
-  MELANGE:  'Mélange (contenu incertain)'
+  MELANGE:  'Mélange (contenu incertain)',
+  // États posés par les décisions (jamais proposés à la saisie) — gardés
+  // au référentiel pour préserver l'état COURANT d'une fiche en édition.
+  DECHET:   'Déchet',
+  DOUTEUX:  'Douteux'
 };
 
 /* ============================================================
@@ -39,6 +43,46 @@ function optionsSelect(options, courante) {
     const selectionnee = o.valeur === courante ? ' selected' : '';
     return '<option value="' + esc(o.valeur) + '"' + selectionnee + '>' + esc(o.libelle) + '</option>';
   }).join('');
+}
+
+/**
+ * CM-4c : options d'état du fluide selon le TYPE de bouteille — miroir
+ * du garde-fou store (CM-3, verifierCoherenceEtatBouteille). Le fluide
+ * ACHETÉ (vierge / recyclé / régénéré certifié) est porté par une NEUVE ;
+ * une bouteille de RÉCUPÉRATION porte du récupéré (ou un mélange). DECHET
+ * et DOUTEUX sont posés par les décisions, jamais proposés — mais l'état
+ * COURANT d'une fiche en édition est TOUJOURS conservé dans la liste
+ * (l'écran ne ment pas, le store reste seul juge à l'enregistrement).
+ * Exportée pour le test.
+ * @param {string} type - NEUVE | RECUPERATION
+ * @param {string} courant - état actuellement sélectionné/enregistré
+ * @returns {string} HTML des <option>
+ */
+export function optionsEtatPour(type, courant) {
+  const options = type === 'RECUPERATION'
+    ? [
+      { valeur: 'RECUPERE', libelle: LIBELLES_ETAT_FLUIDE.RECUPERE },
+      { valeur: 'MELANGE', libelle: LIBELLES_ETAT_FLUIDE.MELANGE }
+    ]
+    : [
+      { valeur: 'VIERGE', libelle: LIBELLES_ETAT_FLUIDE.VIERGE },
+      { valeur: 'RECYCLE', libelle: 'Recyclé (acheté certifié)' },
+      { valeur: 'REGENERE', libelle: 'Régénéré (acheté certifié)' }
+    ];
+  let retenu = courant;
+  if (!options.some(function (o) { return o.valeur === courant; })) {
+    if (type === 'RECUPERATION'
+        && (courant === 'DECHET' || courant === 'DOUTEUX')) {
+      // Fiche existante dont l'état vient d'une DÉCISION : préservé tel
+      // quel (l'écran ne ment pas) — jamais proposé sur une fiche saine.
+      options.push({ valeur: courant, libelle: LIBELLES_ETAT_FLUIDE[courant] });
+    } else {
+      // Reliquat de l'autre côté de la partition (ex. bascule NEUVE →
+      // RÉCUPÉRATION avec « Vierge » sélectionné) : repli sur le défaut.
+      retenu = type === 'RECUPERATION' ? 'RECUPERE' : 'VIERGE';
+    }
+  }
+  return optionsSelect(options, retenu);
 }
 
 /**
@@ -100,21 +144,9 @@ export async function ouvrirFormBouteille(ctx, bouteilleId = null) {
     bouteille ? bouteille.fluide : (fluides[0] ? fluides[0].code : '')
   );
 
-  // R2 : MELANGE réservé aux bouteilles de type RÉCUPÉRATION (garde-fou
-  // store, cf. createBouteille) — l'option n'apparaît que pour ce type,
-  // et le select est reconstruit au changement de type (voir plus bas).
-  function optionsEtatPour(type, courant) {
-    const options = [
-      { valeur: 'VIERGE', libelle: 'Vierge' },
-      { valeur: 'RECUPERE', libelle: 'Récupéré' },
-      { valeur: 'RECYCLE', libelle: 'Recyclé' },
-      { valeur: 'REGENERE', libelle: 'Régénéré' }
-    ];
-    if (type === 'RECUPERATION') {
-      options.push({ valeur: 'MELANGE', libelle: LIBELLES_ETAT_FLUIDE.MELANGE });
-    }
-    return optionsSelect(options, courant);
-  }
+  // CM-4c : le jeu d'options d'état dépend du type (partition état↔type,
+  // fonction de module optionsEtatPour) et le select est reconstruit au
+  // changement de type (voir plus bas).
   const typeInitial = bouteille ? bouteille.type : 'NEUVE';
   const optionsEtat = optionsEtatPour(typeInitial,
     bouteille ? bouteille.etatFluide : 'VIERGE');
@@ -196,7 +228,17 @@ export async function ouvrirFormBouteille(ctx, bouteilleId = null) {
     + '</div>'
     + '</div>'
 
-    + '<div class="champ" id="bf-zone-pieces-jointes"></div>'
+    // CM-4c : deux zones DÉDIÉES (categorieSeule) — le certificat/BL du
+    // fluide acheté (bouteille NEUVE) et les photos de pesée. L'onglet
+    // Documents de la fiche reste le fourre-tout qui montre TOUT.
+    + '<div class="champ" id="bf-champ-certificat">'
+    + '<label>Certificat / bon de livraison fournisseur (fluide acheté)</label>'
+    + '<div id="bf-zone-certificat"></div>'
+    + '</div>'
+    + '<div class="champ" id="bf-champ-pieces-jointes">'
+    + '<label>Photos de pesée</label>'
+    + '<div id="bf-zone-pieces-jointes"></div>'
+    + '</div>'
 
     + '</form>';
 
@@ -222,24 +264,39 @@ export async function ouvrirFormBouteille(ctx, bouteilleId = null) {
     mentionMelange.hidden = selectEtat.value !== 'MELANGE';
   }
   selectType.addEventListener('change', function () {
-    const courant = selectEtat.value;
-    selectEtat.innerHTML = optionsEtatPour(selectType.value,
-      selectType.value === 'RECUPERATION' ? courant : 'VIERGE');
+    // CM-4c : optionsEtatPour gère elle-même le repli quand l'état courant
+    // n'existe pas pour le nouveau type (partition état↔type).
+    selectEtat.innerHTML = optionsEtatPour(selectType.value, selectEtat.value);
     synchroniserMentionMelange();
+    synchroniserZoneCertificat();
   });
   selectEtat.addEventListener('change', synchroniserMentionMelange);
 
-  // Pièces jointes (ex. photo de pesée, certificat) : uniquement en
-  // édition, la bouteille existant déjà avec un identifiant.
+  // Pièces jointes : uniquement en édition, la bouteille existant déjà
+  // avec un identifiant. CM-4c : deux zones dédiées par catégorie —
+  // certificat/BL fournisseur (bouteille NEUVE : fluide acheté vierge,
+  // recyclé ou régénéré certifié) et photos de pesée.
+  const champCertificat = racine.querySelector('#bf-champ-certificat');
+  function synchroniserZoneCertificat() {
+    champCertificat.hidden = !enEdition || selectType.value !== 'NEUVE';
+  }
   if (enEdition) {
+    zonePiecesJointes(racine.querySelector('#bf-zone-certificat'), ctx, {
+      entiteType: 'BOUTEILLE',
+      entiteId: bouteilleId,
+      categorie: 'CERTIFICAT',
+      categorieSeule: true
+    });
     zonePiecesJointes(racine.querySelector('#bf-zone-pieces-jointes'), ctx, {
       entiteType: 'BOUTEILLE',
       entiteId: bouteilleId,
-      categorie: 'PHOTO_PESEE'
+      categorie: 'PHOTO_PESEE',
+      categorieSeule: true
     });
   } else {
-    racine.querySelector('#bf-zone-pieces-jointes').hidden = true;
+    racine.querySelector('#bf-champ-pieces-jointes').hidden = true;
   }
+  synchroniserZoneCertificat();
 
   racine.querySelector('[data-role="annuler"]').addEventListener('click', fermer);
 

@@ -39,11 +39,16 @@ function tailleLisible(octets) {
  * Monte la zone « Pièces jointes » d'une entité dans un conteneur.
  * @param {HTMLElement} conteneur - élément hôte (vidé puis rempli)
  * @param {object} ctx - contexte de vue ({ store, naviguer })
- * @param {object} options - { entiteType, entiteId, categorie, lectureSeule }
+ * @param {object} options - { entiteType, entiteId, categorie, lectureSeule,
+ *   categorieSeule } — categorieSeule (CM-4c) : la liste n'affiche QUE les
+ *   pièces de `categorie` (zone dédiée, ex. certificat fournisseur) ; sans
+ *   elle, comportement historique : toutes les pièces de l'entité,
+ *   `categorie` n'étiquetant que les nouveaux ajouts.
  * @returns {{ rafraichir: function }} poignée de rafraîchissement
  */
 export function zonePiecesJointes(conteneur, ctx,
-  { entiteType, entiteId, categorie = 'AUTRE', lectureSeule = false }) {
+  { entiteType, entiteId, categorie = 'AUTRE', lectureSeule = false,
+    categorieSeule = false }) {
 
   const { store } = ctx;
 
@@ -78,7 +83,11 @@ export function zonePiecesJointes(conteneur, ctx,
 
   /** Redessine la liste des pièces jointes depuis le store. */
   async function rafraichir() {
-    const pieces = await store.listerPiecesJointes(entiteType, entiteId);
+    const toutes = await store.listerPiecesJointes(entiteType, entiteId);
+    // CM-4c : zone dédiée à UNE catégorie (le store ne filtre pas).
+    const pieces = categorieSeule
+      ? toutes.filter((pj) => pj.categorie === categorie)
+      : toutes;
     if (pieces.length === 0) {
       liste.innerHTML =
         '<p class="pj-vide">Aucune pièce jointe pour le moment.</p>';
