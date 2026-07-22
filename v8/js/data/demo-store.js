@@ -2113,7 +2113,7 @@ export function creerDemoStore() {
       // recopier dans une sauvegarde qui n'en avait pas INVENTERAIT des
       // aptitudes (droits) ou des faits (outils figés, épisodes d'alerte).
       for (const cle of ['sentinelleAlertes', 'habilitations',
-        'mentionsHabilitation', 'mouvementOutillage']) {
+        'mentionsHabilitation', 'mouvementOutillage', 'cessions']) {
         if (!Array.isArray(donnees[cle])) {
           donnees[cle] = [];
           modifie = true;
@@ -4955,6 +4955,76 @@ export function creerDemoStore() {
       return liste;
     },
 
+    /**
+     * P0-8 (DA-3) : CESSION de fluide à un tiers attesté (rubrique 10 de la
+     * déclaration annuelle). Sortie tracée figée (comme un retour fournisseur),
+     * depuis une bouteille : décrémente la masse cédée. Un déchet part par un
+     * BSFF, pas par une cession. Fin du `cessions_kg = 0` en dur.
+     */
+    async createCession(donneesCession) {
+      const d = donneesCession || {};
+      const bouteille = trouverBouteille(d.bouteilleId);
+      if (bouteille.statut === 'RETOURNEE') {
+        throw new Error(`Bouteille ${bouteille.code} déjà sortie du stock.`);
+      }
+      if (bouteille.statut === 'DECHET') {
+        throw new Error(
+          `Bouteille ${bouteille.code} déclarée déchet : la sortie passe par ` +
+          'un BSFF, pas par une cession.');
+      }
+      if (!DESTINATAIRES_CESSION.includes(d.destinataireType)) {
+        throw new Error(
+          `Type de destinataire inconnu : ${d.destinataireType} ` +
+          `(attendu : ${DESTINATAIRES_CESSION.join(', ')}).`);
+      }
+      const raison = String(d.destinataireRaisonSociale ?? '').trim();
+      if (!raison) {
+        throw new Error('Raison sociale du destinataire obligatoire.');
+      }
+      const masse = Number(d.masseKg);
+      if (!Number.isFinite(masse) || masse <= 0) {
+        throw new Error('Masse cédée obligatoire (en kg, positive).');
+      }
+      if (masse > bouteille.masseNetteKg + 1e-9) {
+        throw new Error(
+          `Masse cédée (${masse} kg) supérieure au contenu de la bouteille ` +
+          `${bouteille.code} (${bouteille.masseNetteKg} kg).`);
+      }
+      const cession = {
+        id: genId('cession'),
+        bouteilleId: bouteille.id,
+        bouteilleCode: bouteille.code,
+        fluide: bouteille.fluide,
+        destinataireType: d.destinataireType,
+        destinataireRaisonSociale: raison,
+        masseKg: arrondir(masse),
+        date: d.date ?? aujourdHui(),
+        operateur: d.operateur ?? null,
+        observation: d.observation ?? null
+      };
+      donnees.cessions.push(cession);
+      // La bouteille est décrémentée de la masse cédée (comme un BSFF partiel).
+      bouteille.masseNetteKg = arrondir(bouteille.masseNetteKg - cession.masseKg);
+      if (bouteille.masseNetteKg <= 1e-9) {
+        bouteille.masseNetteKg = 0;
+        bouteille.statut = 'RETOURNEE';
+      }
+      bouteille.masseBruteKg =
+        arrondir(bouteille.tareKg + bouteille.masseNetteKg);
+      bouteille.datePesee = aujourdHui();
+      journaliser(cession.operateur, 'CESSION', bouteille.code,
+        `Cession ${fmtKgSigne(-cession.masseKg)} ${cession.fluide} → ` +
+        `${raison} (${cession.destinataireType})`);
+      persisterEtNotifier();
+      return copier(cession);
+    },
+
+    async getCessions() {
+      const liste = copier(donnees.cessions);
+      liste.sort((a, b) => b.date.localeCompare(a.date));
+      return liste;
+    },
+
     // ------------------------------------------------------
     // Phase C : balance matière et inventaire (SPEC §6)
     // ------------------------------------------------------
@@ -5197,7 +5267,7 @@ export function creerDemoStore() {
       // registre étranger (sans per-fh/per-sb) serait REFUSÉ en orphelin.
       // Idem signaturesMouvement (lot C) : jamais de signature inventée.
       for (const cle of ['habilitations', 'mentionsHabilitation',
-        'mouvementOutillage', 'signaturesMouvement']) {
+        'mouvementOutillage', 'signaturesMouvement', 'cessions']) {
         if (!Array.isArray(candidat[cle])) candidat[cle] = [];
       }
       if (candidat.etablissement.numAttestationCapacite === undefined) {

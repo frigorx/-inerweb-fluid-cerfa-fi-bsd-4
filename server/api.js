@@ -342,6 +342,7 @@ const ROLES_MUTATION = {
   acquitterAlerte: VALIDEUR,
   createBsff: VALIDEUR,
   attesterIssueBsff: VALIDEUR,
+  createCession: VALIDEUR,
   retournerFournisseur: VALIDEUR,
   deciderFluideRecupere: VALIDEUR,
 
@@ -3766,6 +3767,80 @@ const HANDLERS = {
       mapping.versFront('retours_fournisseur', ligne));
   },
 
+  /**
+   * P0-8 (DA-3) : CESSION de fluide à un tiers attesté (rubrique 10).
+   * Miroir EXACT du DemoStore (gardes, décrément, journal). Trace figée.
+   */
+  createCession(params) {
+    const d = params.donneesCession || params || {};
+    const bouteille = trouverBouteille(d.bouteilleId);
+    if (bouteille.statut === 'RETOURNEE') {
+      throw new Error(`Bouteille ${bouteille.code} déjà sortie du stock.`);
+    }
+    if (bouteille.statut === 'DECHET') {
+      throw new Error(
+        `Bouteille ${bouteille.code} déclarée déchet : la sortie passe par ` +
+        'un BSFF, pas par une cession.');
+    }
+    if (!DESTINATAIRES_CESSION.includes(d.destinataireType)) {
+      throw new Error(
+        `Type de destinataire inconnu : ${d.destinataireType} ` +
+        `(attendu : ${DESTINATAIRES_CESSION.join(', ')}).`);
+    }
+    const raison = String(d.destinataireRaisonSociale ?? '').trim();
+    if (!raison) {
+      throw new Error('Raison sociale du destinataire obligatoire.');
+    }
+    const masse = Number(d.masseKg);
+    if (!Number.isFinite(masse) || masse <= 0) {
+      throw new Error('Masse cédée obligatoire (en kg, positive).');
+    }
+    if (masse > bouteille.masseNetteKg + 1e-9) {
+      throw new Error(
+        `Masse cédée (${masse} kg) supérieure au contenu de la bouteille ` +
+        `${bouteille.code} (${bouteille.masseNetteKg} kg).`);
+    }
+    const cession = {
+      id: db.generateId('CESSION'),
+      bouteilleId: bouteille.id,
+      bouteilleCode: bouteille.code,
+      fluide: bouteille.fluide,
+      destinataireType: d.destinataireType,
+      destinataireRaisonSociale: raison,
+      masseKg: arrondir(masse),
+      date: d.date ?? aujourdHui(),
+      operateur: d.operateur ?? null,
+      observation: d.observation ?? null
+    };
+    return muter(() => {
+      const ligne = mapping.versSql('cessions', cession);
+      ligne.etablissement_id = ID_ETABLISSEMENT;
+      inserer('cessions', ligne);
+
+      // La bouteille est décrémentée de la masse cédée (comme un BSFF partiel).
+      let nette = arrondir(bouteille.masseNetteKg - cession.masseKg);
+      const patch = { date_derniere_pesee: aujourdHui() };
+      if (nette <= 1e-9) {
+        nette = 0;
+        patch.statut = 'RETOURNEE';
+      }
+      patch.masse_brute_kg = arrondir(bouteille.tareKg + nette);
+      majParId('bouteilles', bouteille.id, patch);
+
+      journaliser(cession.operateur, 'CESSION', bouteille.code,
+        `Cession ${fmtKgSigne(-cession.masseKg)} ${cession.fluide} → ` +
+        `${raison} (${cession.destinataireType})`);
+      return mapping.versFront('cessions',
+        db.get('SELECT * FROM cessions WHERE id = ?', [cession.id]));
+    });
+  },
+
+  /** Toutes les cessions, triées date décroissante. */
+  getCessions() {
+    const lignes = db.all('SELECT * FROM cessions ORDER BY date_cession DESC');
+    return lignes.map((ligne) => mapping.versFront('cessions', ligne));
+  },
+
   // === balance matière + synthèses (VAGUE 8 — SPEC §6/§7) ===
 
   /** Balance matière annuelle par fluide (via la VUE bilan_matiere). */
@@ -4320,9 +4395,9 @@ function completerCandidat(donnees) {
   const candidat = { ...donnees };
   for (const cle of ['auditsOrganisme', 'nonConformites', 'outillage',
     'stocksInitiaux', 'bsff', 'inventaires', 'justificationsEcarts',
-    'piecesJointes', 'retoursFournisseur', 'journalAudit', 'habilitations',
-    'mentionsHabilitation', 'mouvementOutillage', 'signaturesMouvement',
-    'coffreIdentites']) {
+    'piecesJointes', 'retoursFournisseur', 'cessions', 'journalAudit',
+    'habilitations', 'mentionsHabilitation', 'mouvementOutillage',
+    'signaturesMouvement', 'coffreIdentites']) {
     if (!Array.isArray(candidat[cle])) candidat[cle] = [];
   }
   // Lot E2 (E2c) : clés du coffre — un export antérieur n'en a pas.
@@ -4670,7 +4745,7 @@ function remplacerToutLEtat(candidat) {
     // coffre_purge_en_attente vidée aussi (chemins propres au poste, jamais
     // transportés).
     const TABLES_A_VIDER = ['coffre_identites', 'coffre_purge_en_attente',
-      'pieces_jointes', 'retours_fournisseur', 'bsff',
+      'pieces_jointes', 'retours_fournisseur', 'cessions', 'bsff',
       'controles', 'signatures_mouvement', 'mouvement_outillage', 'mouvements',
       'justifications_ecarts', 'inventaires',
       'inventaires_bouteilles', 'inventaires_fuites',
@@ -4787,6 +4862,8 @@ function remplacerToutLEtat(candidat) {
     reinsererCollection('bsff', 'bsff', candidat.bsff);
     reinsererCollection('retours_fournisseur', 'retours_fournisseur',
       candidat.retoursFournisseur);
+    // P0-8 : cessions — FK bouteilles, réinsérées comme les retours fournisseur.
+    reinsererCollection('cessions', 'cessions', candidat.cessions);
     reinsererCollection('stocks_initiaux', 'stocks_initiaux',
       candidat.stocksInitiaux);
     reinsererCollection('inventaires', 'inventaires', candidat.inventaires);

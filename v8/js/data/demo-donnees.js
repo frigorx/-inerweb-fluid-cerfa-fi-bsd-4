@@ -790,6 +790,9 @@ export const DEMO = {
   // IM-9 : retours de bouteilles consignées au fournisseur
   // (alimente le poste « retours fournisseur » de la balance matière)
   retoursFournisseur: [],
+  // P0-8 : cessions de fluide à un tiers attesté (rubrique 10 de la
+  // déclaration annuelle ; vides au départ, alimentées par l'utilisation)
+  cessions: [],
 
   // --------------------------------------------------------
   // Alertes du tableau de bord (4)

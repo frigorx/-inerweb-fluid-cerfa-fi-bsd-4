@@ -297,6 +297,10 @@ export const METHODES_CONTRAT = {
     description: 'Retourne une bouteille non-déchet au fournisseur (nette à zéro) et trace le retour (poste de la balance matière).' },
   getRetoursFournisseur: { genre: 'lecture',
     description: 'Les retours fournisseur, triés date décroissante.' },
+  createCession: { genre: 'mutation',
+    description: 'Cède une masse de fluide d’une bouteille à un tiers attesté (OPERATEUR_ATTESTE | DISTRIBUTEUR | PRODUCTEUR) ; décrémente la bouteille, trace figée (rubrique 10) ; un déchet part par un BSFF, pas par une cession.' },
+  getCessions: { genre: 'lecture',
+    description: 'Les cessions de fluide, triées date décroissante.' },
 
   // --- balance matière -----------------------------------------------
   getBalanceMatiere: { genre: 'lecture',

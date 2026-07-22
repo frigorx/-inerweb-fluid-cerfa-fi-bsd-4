@@ -126,6 +126,7 @@ export function creerLocalStore(transport) {
     getNonConformites() { return lire('getNonConformites', {}); },
     getBsff() { return lire('getBsff', {}); },
     getRetoursFournisseur() { return lire('getRetoursFournisseur', {}); },
+    getCessions() { return lire('getCessions', {}); },
     peutPasserEnOfficiel() { return lire('peutPasserEnOfficiel', {}); },
     simulerValidationOfficielle(mouvementId) {
       return lire('simulerValidationOfficielle', { mouvementId });
@@ -352,6 +353,9 @@ export function creerLocalStore(transport) {
     },
     attesterIssueBsff(bsffId, attestation) {
       return muter('attesterIssueBsff', { bsffId, attestation });
+    },
+    createCession(donneesCession) {
+      return muter('createCession', { donneesCession });
     },
     retournerFournisseur(id, par) {
       return muter('retournerFournisseur', { id, par });

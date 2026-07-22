@@ -4,7 +4,7 @@
 // Exécution : node v8/js/data/test-contrat.mjs [demo]
 //
 // Cette suite vérifie qu'une implémentation respecte contrat.js :
-// surface (88 méthodes, 2 propriétés, rien de plus), sémantique
+// surface (90 méthodes, 2 propriétés, rien de plus), sémantique
 // (formes de retour, garde-fous, messages français, effets stocks,
 // hash chaîné, machine à états des mouvements), et invariants
 // transverses (copies, notifications, journal append-only).
@@ -119,7 +119,7 @@ verifier('les propriétés du contrat sont présentes',
   surface.proprietesManquantes.length === 0,
   `manquent : ${surface.proprietesManquantes.join(', ')}`);
 verifier('le contrat compte bien 87 méthodes',
-  Object.keys(METHODES_CONTRAT).length === 88,
+  Object.keys(METHODES_CONTRAT).length === 90,
   `compté : ${Object.keys(METHODES_CONTRAT).length}`);
 verifier('modeLabel est une chaîne non vide',
   typeof store.modeLabel === 'string' && store.modeLabel.length > 0);
@@ -1010,6 +1010,50 @@ await verifierRejet('attesterIssueBsff exige l’installation pour une régéné
   verifier('ré-attestation autorisée (AUTRE sans installation, correction)',
     reAtteste.issueTraitement === 'AUTRE'
     && reAtteste.installationTraitement === null);
+}
+
+// P0-8 (DA-3) : cession de fluide à un tiers attesté (rubrique 10, fin du 0 en dur)
+const bCession = await store.createBouteille({
+  type: 'NEUVE', fluide: FLUIDE, tareKg: 10, masseBruteKg: 18, contenanceMaxKg: 12
+});
+await verifierRejet('createCession refuse un destinataire hors grille',
+  store.createCession({ bouteilleId: bCession.id, destinataireType: 'AMI',
+    destinataireRaisonSociale: 'X', masseKg: 1 }));
+await verifierRejet('createCession exige la raison sociale du destinataire',
+  store.createCession({ bouteilleId: bCession.id,
+    destinataireType: 'DISTRIBUTEUR', destinataireRaisonSociale: '  ',
+    masseKg: 1 }), 'Raison sociale');
+await verifierRejet('createCession refuse une masse supérieure au contenu',
+  store.createCession({ bouteilleId: bCession.id,
+    destinataireType: 'DISTRIBUTEUR', destinataireRaisonSociale: 'Clim Sud',
+    masseKg: 999 }));
+{
+  const cession = await store.createCession({
+    bouteilleId: bCession.id, destinataireType: 'OPERATEUR_ATTESTE',
+    destinataireRaisonSociale: 'Régé-Fluides SAS', masseKg: 3,
+    operateur: 'Testeur Contrat'
+  });
+  verifier('createCession trace la cession (destinataire, type, masse, date)',
+    cession.destinataireType === 'OPERATEUR_ATTESTE'
+    && cession.destinataireRaisonSociale === 'Régé-Fluides SAS'
+    && PROCHE(cession.masseKg, 3) && DATE_JOUR.test(cession.date));
+  verifier('la cession décrémente la bouteille (8 → 5 kg)',
+    PROCHE((await store.getBouteilles()).find((b) => b.id === bCession.id)
+      .masseNetteKg, 5));
+  verifier('getCessions liste la cession créée',
+    (await store.getCessions()).some((c) => c.id === cession.id));
+}
+{
+  // Un déchet part par un BSFF, jamais par une cession.
+  const bDechetCession = await store.createBouteille({
+    type: 'RECUPERATION', fluide: FLUIDE, tareKg: 5, masseBruteKg: 8,
+    contenanceMaxKg: 10
+  });
+  await store.deciderFluideRecupere(bDechetCession.id, 'DECHET', 'Testeur');
+  await verifierRejet('createCession refuse une bouteille déchet (→ BSFF)',
+    store.createCession({ bouteilleId: bDechetCession.id,
+      destinataireType: 'DISTRIBUTEUR', destinataireRaisonSociale: 'X',
+      masseKg: 1 }), 'BSFF');
 }
 
 const b1Retournee = await store.retournerFournisseur(b1.id, 'Testeur Contrat');
