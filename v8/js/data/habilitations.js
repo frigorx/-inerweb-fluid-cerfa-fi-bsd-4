@@ -202,7 +202,10 @@ function profilDeCategorie(regime, categorie) {
   if (regime === '2008') {
     switch (categorie) {
       case 'I':   return { ops: T, limiteKg: null, familles: ['HFC', 'HFO', 'HFC/HFO'] };
-      case 'II':  return { ops: T, limiteKg: null, familles: ['HFC', 'HFO', 'HFC/HFO'] };
+      // II = toutes opérations mais charge LIMITÉE (< 3 kg, < 6 kg hermétique
+      // scellé étiqueté) — l'audit du 20/07 (§4.3) a relevé qu'elle était
+      // modélisée sans limite, comme la I. P0-5 / AP-2.
+      case 'II':  return { ops: T, limiteKg: SEUIL_CHARGE_LIMITEE_KG, familles: ['HFC', 'HFO', 'HFC/HFO'] };
       case 'III': return { ops: ['RECUPERATION'], limiteKg: SEUIL_CHARGE_LIMITEE_KG, familles: ['HFC', 'HFO', 'HFC/HFO'] };
       case 'IV':  return { ops: ['ETANCHEITE'], limiteKg: null, familles: ['HFC', 'HFO', 'HFC/HFO'] };
       default: return null;

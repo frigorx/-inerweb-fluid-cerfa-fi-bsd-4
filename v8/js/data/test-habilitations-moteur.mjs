@@ -189,6 +189,20 @@ verifier('operationNormalisee(CONTROLE_NON_PERIODIQUE) = ETANCHEITE',
 verifier('E · CONTROLE_PERIODIQUE · HFC → OK (le contrôleur contrôle)',
   grav({ habilitations: [H('2025', 'E')], operation: 'CONTROLE_PERIODIQUE', familleFluide: 'HFC' }) === 'OK');
 
+// --- Ancienne catégorie II : charge LIMITÉE (P0-5 / AP-2) ---------
+// L'audit du 20/07 (§4.3) : la II était modélisée sans limite, comme la I.
+// Règle : < 3 kg (< 6 kg hermétique scellé étiqueté). La I reste sans limite.
+verifier('II(2008) · appoint · HFC · 2 kg → CONSEIL (limite 3)',
+  grav({ habilitations: [H('2008', 'II')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 2 }) === 'CONSEIL');
+verifier('II(2008) · appoint · HFC · 10 kg → REFUS (limite 3 kg)',
+  grav({ habilitations: [H('2008', 'II')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 10 }) === 'REFUS');
+verifier('II(2008) · appoint · 3 kg PILE → REFUS (frontière stricte)',
+  grav({ habilitations: [H('2008', 'II')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 3 }) === 'REFUS');
+verifier('II(2008) · hermétique scellé · 5 kg → CONSEIL (limite 6)',
+  grav({ habilitations: [H('2008', 'II')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 5, hermetiqueScelle: true }) === 'CONSEIL');
+verifier('I(2008) · appoint · 10 kg → OK (la I reste sans limite)',
+  grav({ habilitations: [H('2008', 'I')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 10 }) === 'OK');
+
 // --- Identifiabilité (règle admin) ------------------------------
 verifier('identifiable : actif + 1 habilitation active → oui',
   estIntervenantIdentifiable({ actif: true }, [H('2025', 'A1')], []) === true);
