@@ -386,11 +386,34 @@ const TABLES = {
       transporteur: 'transporteur_collecteur',
       installationDestination: 'installation_destination',
       masseRemiseKg: 'masse_remise_kg',
-      dateRemise: 'date_remise'
+      dateRemise: 'date_remise',
+      // Issue de traitement final (migration 28, P0-8) : nature attestée du
+      // traitement du déchet remis. NULL = non attesté (BSFF ≠ destruction).
+      issueTraitement: 'issue_traitement',
+      installationTraitement: 'installation_traitement',
+      certificatTraitement: 'certificat_traitement',
+      dateTraitement: 'date_traitement'
     },
     sqlSeulement: ['etablissement_id', 'statut_fluide', 'decision_par',
       'date_decision', 'lien_trackdechets', 'statut', 'observation',
       'date_creation']
+  },
+
+  // Cessions de fluide à un tiers attesté (migration 29, P0-8, rubrique 10).
+  cessions: {
+    champs: {
+      id: 'id',
+      bouteilleId: 'bouteille_id',
+      bouteilleCode: 'bouteille_code',
+      fluide: 'fluide',
+      destinataireType: 'destinataire_type',
+      destinataireRaisonSociale: 'destinataire_raison_sociale',
+      masseKg: 'masse_kg',
+      date: 'date_cession',
+      operateur: 'operateur',
+      observation: 'observation'
+    },
+    sqlSeulement: ['etablissement_id', 'date_creation']
   },
 
   retours_fournisseur: {

@@ -177,6 +177,13 @@
  *       réparation (exception réglementaire), un FIXE exige J+1 (proxy des
  *       24 h de fonctionnement). Nom compatible avec le modèle complet
  *       P1-1 (qui ajoutera le sous-type — colonne à part, pas de re-modelage).
+ *  28 — P0-8 (déclaration annuelle) : bsff.issue_traitement (+ installation_
+ *       traitement, certificat_traitement, date_traitement, tous nullable) —
+ *       nature du traitement final d'un déchet remis (RECYCLAGE/REGENERATION/
+ *       DESTRUCTION/AUTRE), attestée séparément. Corrige BSFF ≠ destruction.
+ *  29 — P0-8 (déclaration annuelle) : table cessions (sortie de fluide vers un
+ *       tiers attesté, rubrique 10) — trace figée comme retours_fournisseur.
+ *       Fin du cessions_kg = 0 codé en dur.
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -1387,6 +1394,55 @@ END;`);
       db.exec(`ALTER TABLE machines ADD COLUMN type_installation TEXT
                  NOT NULL DEFAULT 'FIXE'
                  CHECK (type_installation IN ('FIXE','MOBILE'));`);
+    }
+  },
+
+  // 28 — P0-8 (déclaration annuelle) : ISSUE de traitement final d'un BSFF.
+  // Un BSFF n'atteste que la REMISE du déchet ; la nature du traitement
+  // (recyclage / régénération / destruction / autre) est attestée séparément,
+  // quand l'opérateur renvoie son certificat. Tout nullable = un BSFF déjà
+  // remis reste « traitement final non attesté » (anomalie) tant qu'on n'a
+  // pas la preuve — jamais compté à tort en destruction. Corrige la « double
+  // erreur de sens » de l'audit (BSFF ≠ destruction).
+  28: {
+    nom: 'bsff_issue_traitement',
+    appliquer(db) {
+      db.exec(`ALTER TABLE bsff ADD COLUMN issue_traitement TEXT
+                 CHECK (issue_traitement IS NULL OR issue_traitement IN
+                   ('RECYCLAGE','REGENERATION','DESTRUCTION','AUTRE'));`);
+      db.exec(`ALTER TABLE bsff ADD COLUMN installation_traitement TEXT;`);
+      db.exec(`ALTER TABLE bsff ADD COLUMN certificat_traitement TEXT;`);
+      db.exec(`ALTER TABLE bsff ADD COLUMN date_traitement TEXT;`);
+    }
+  },
+
+  // 29 — P0-8 (déclaration annuelle) : table CESSIONS. Sortie de fluide vers
+  // un tiers attesté (rubrique 10) — trace figée au même niveau de rigueur
+  // que retours_fournisseur (pas de WORM/hash-chain : durcissement éventuel
+  // renvoyé à P1-3, cohérent avec retours_fournisseur). Fin du cessions_kg=0.
+  29: {
+    nom: 'cessions',
+    appliquer(db) {
+      db.exec(`CREATE TABLE IF NOT EXISTS cessions (
+        id                        TEXT PRIMARY KEY,
+        etablissement_id          TEXT NOT NULL REFERENCES etablissements(id),
+        bouteille_id              TEXT REFERENCES bouteilles(id),
+        bouteille_code            TEXT,
+        fluide                    TEXT REFERENCES fluides(code),
+        destinataire_type         TEXT
+            CHECK (destinataire_type IN
+              ('OPERATEUR_ATTESTE','DISTRIBUTEUR','PRODUCTEUR')),
+        destinataire_raison_sociale TEXT,
+        masse_kg                  REAL,
+        date_cession              TEXT,
+        operateur                 TEXT,
+        observation               TEXT,
+        date_creation             TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+      );`);
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_cessions_bouteille
+                 ON cessions (bouteille_id);`);
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_cessions_fluide
+                 ON cessions (fluide);`);
     }
   }
 };
