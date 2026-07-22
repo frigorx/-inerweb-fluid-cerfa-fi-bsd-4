@@ -6,24 +6,29 @@
 > **Session conseillée : Opus, effort très élevé** (chantier probatoire/réglementaire, briques
 > testées une à une). PAS d'ultracode hors point critique.
 >
-> **⭐ ÉTAT AU 20/07 SOIR — CYCLE MATIÈRE (P0-3/4) REFONDU, CM-1/CM-2 POUSSÉS (`55b8704`,
-> TOUT VERT 88 exéc.).** ⚠️ L'audit externe (ChatGPT) + la RC S'ÉTAIENT TROMPÉS : ils
-> bloquaient la charge depuis du récupéré et imposaient une table de traitement WORM. FAUX.
+> **⭐ ÉTAT AU 22/07 — CYCLE MATIÈRE (P0-3/4) TERMINÉ : CM-1→CM-4 codés, TOUT VERT
+> 91 exéc.** ⚠️ L'audit externe (ChatGPT) + la RC S'ÉTAIENT TROMPÉS : ils bloquaient la
+> charge depuis du récupéré et imposaient une table de traitement WORM. FAUX.
 > **Franck (frigoriste) a tranché la VRAIE règle = CONSERVATION PAR MACHINE D'ORIGINE** :
 > on a le DROIT de remettre dans une machine le fluide qu'on en a tiré (réemploi
 > maintenance), sans retraitement ; on ne réintroduit dans M que ce qui a été récupéré de M
 > (le reste part en déchet) ; tout complément = fluide ACHETÉ vierge/recyclé/**régénéré
-> certifié** (le régénéré s'INTÈGRE, jamais produit en interne). **Plan à LIRE =
-> `docs/PLAN-P0-3-4-CYCLE-MATIERE.md`** ; la table WORM de la RC et les bloquants des revues
-> du plan v2 sont CADUCS. **FAIT** : CM-1 = `v8/js/data/avoir-origine.js` (avoir par machine
-> d'origine DÉRIVÉ des mouvements, AUCUNE migration) ; CM-2 = alerte `alr-reemploi-` dans
-> `getAlertes()` (2 stores, parité) quand l'avoir devient négatif — signalé, JAMAIS bloqué
-> (conseil) ; bouteille NEUVE jamais concernée. **PROCHAINE = CM-3** (saisie/charge d'une
-> bouteille NEUVE régénérée/recyclée + certificat en PJ — ne PAS verrouiller l'état d'une
-> NEUVE) **puis CM-4** (surfaces : bandeau wizard « au moment de la charge », CERFA « forcé
-> manuellement », durcissement OFFICIEL = rectification exigée). Migrations restées à **26**.
-> ⚠️ Tout ce qui suit CE bloc est ANTÉRIEUR à la refonte et décrit le cycle matière à tort
-> comme « blocage + table de traitement » : s'en tenir au plan refondu.
+> certifié** (jamais produit en interne). **2ᵉ décision Franck 22/07 : la surcharge de
+> réemploi est SIGNALÉE, JAMAIS BLOQUÉE — même en OFFICIEL** (pas de forçage, pas de
+> rectification imposée ; mémoire `feedback_surcharge_reemploi_avertir`). **FAIT** :
+> CM-1 `a799304` (module pur `avoir-origine.js`, AUCUNE migration) · CM-2 `55b8704`
+> (alerte `alr-reemploi-`, 2 stores) · CM-3 `3264f5b` (garde état↔type
+> `verifierCoherenceEtatBouteille` miroir 2 stores : NEUVE=acheté VIERGE/RECYCLE/REGENERE,
+> RECUPERATION=RECUPERE/MELANGE/DECHET/DOUTEUX, jamais de requalification interne ; état
+> d'une NEUVE non verrouillé ; le reste — schéma, CERFA QB/QC, PJ certificat — était DÉJÀ là) ·
+> CM-4a `6ff15d8` (bandeau réemploi wizard étape 4, zone dédiée jamais bloquante) ·
+> CM-4b `b47944c` (mention SYSTÈME cadre 14 CERFA, écartée de la correction élève) ·
+> CM-4c `689baf7` (bloc avoir d'origine sur la fiche, partition des états dans la modale,
+> zone certificat fournisseur `categorieSeule`). Vérif navigateur faite (port jetable).
+> Migrations restées à **26**. **PROCHAINE BRIQUE (au choix Franck) : P0-5 aptitude
+> opposable · P0-6 cycle fuite · P0-8 déclaration annuelle** (§ plus bas). ⚠️ Tout ce qui
+> suit CE bloc et décrit le cycle matière comme « blocage + table de traitement » est
+> ANTÉRIEUR à la refonte : s'en tenir au plan refondu `docs/PLAN-P0-3-4-CYCLE-MATIERE.md`.
 
 ---
 
@@ -77,9 +82,8 @@ Pour piocher : ré-extraire le zip dans un dossier jetable + `diff` le fichier c
 
 Chacune = UN chantier avec **plan écrit et relu AVANT code** (comme le lot C), dans l'ordre
 conseillé :
-1. **P0-3/P0-4 — cycle matière** (le plus gros : charge uniquement VIERGE/RECYCLE/REGENERE +
-   preuve de traitement WORM ; api + demo + migrations + mapping ; contrat RC v8 ≠ notre v7 →
-   migrations ordonnées APRÈS les nôtres, parité stricte).
+1. ~~**P0-3/P0-4 — cycle matière**~~ ✅ **TERMINÉ 22/07** (CM-1→CM-4, refondu — voir le
+   bloc d'état en tête ; la description RC « blocage + WORM » était fausse).
 2. **P0-5 — aptitude opposable** (`server/droit-intervention.js` de la RC + frontières de
    charge — au passage corriger le bug trivial des comparateurs `>=3`/`>=6 kg` au lieu de `<`).
 3. **P0-6 — cycle fuite** (24 h réelles/24 h fonctionnement, 1 mois civil — reprendra aussi
