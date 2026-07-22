@@ -210,6 +210,11 @@ function construireDossier(groupe, controlesMachine,
   const retardClotureJours = clotureEnRetard
     ? ecartJours(echeanceTheorique, dateFermeture)
     : null;
+  // P0-6 (G4) : MOTIF DE PÉRIMÈTRE consigné — la clôture du JOUR MÊME de
+  // la réparation n'est admise qu'au titre de l'exception « équipement
+  // mobile listé » ; le dossier le dit explicitement (fiche + ZIP scellé).
+  const exceptionMobile = Boolean(machineMobile && dateFermeture
+    && reparation && dateFermeture === reparation.date);
 
   // Fenêtre du dossier : de la détection à la fermeture (bornes
   // incluses), ou jusqu'à aujourd'hui tant que le dossier est ouvert.
@@ -318,6 +323,7 @@ function construireDossier(groupe, controlesMachine,
       && aujourdhui > echeanceControleSuivi),
     clotureEnRetard,
     retardClotureJours,
+    exceptionMobile,
     dateFermeture,
     dureeJours: ecartJours(detection.date, dateFermeture ?? aujourdhui),
     mouvementsPendantFuite,

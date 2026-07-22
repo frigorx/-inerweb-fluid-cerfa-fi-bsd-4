@@ -781,8 +781,12 @@ verifier('calculerProchainControle : HFO pur, contrôle du 11/03/2024 → 6 mois
 await verifierRejet('calculerProchainControle refuse une machine introuvable',
   store.calculerProchainControle('mac-fantome', dateRelative(0)));
 
+// P0-6 (I-1) : fuite datée d'HIER — la réparation tracée plus bas est
+// datée d'hier aussi, et la garde refuse une réparation antérieure à la
+// détection de la fuite.
 const controleFuite = await store.createControle({
   machineId: machineB.id, resultat: 'FUITE', methode: 'DIRECTE',
+  date: dateRelative(-1),
   operateur: 'Testeur Contrat', localisationFuite: 'Raccord BP'
 });
 verifier('un contrôle FUITE passe la machine en statut FUITE',
@@ -896,6 +900,9 @@ verifier('R4 : un CONFORME postérieur à la réparation remet la machine en ser
 // 5 du wizard) est propagée jusqu'au VRAI contrôle enregistré par CR-3.
 const mvtNouvelleFuite = await store.creerMouvement({
   type: 'CHARGE_APPOINT', machineId: machineB.id, bouteilleSrcId: bAppointFuite.id,
+  // P0-6 (I-1) : fuite datée d'hier pour que la réparation d'hier et le
+  // CONFORME de nettoyage d'aujourd'hui (J+1) restent valides.
+  date: dateRelative(-1),
   peseeAvantKg: 19, peseeApresKg: 18.5, technicien: 'Testeur Contrat',
   controle: { statutControle: 'FUITE', detecteurId: null,
     localisationFuite: 'Vanne HP' }
@@ -1607,6 +1614,14 @@ await verifierRejet('createBouteille refuse MELANGE hors type RÉCUPÉRATION',
   verifier('P0-6 : MOBILE — plus d’alerte fuite après la clôture immédiate',
     !(await store.getAlertes())
       .some((a) => a.id === `alr-fuite-${machineMobile.id}`));
+
+  // Revue I-2 : archive portant un type d'installation hors grille refusée
+  // à l'IMPORT — même message des deux côtés (la démo l'acceptait en
+  // silence, le serveur levait un CHECK SQL brut : divergence).
+  const exportTI = JSON.parse(await store.exporterJSON());
+  exportTI.donnees.machines[0].typeInstallation = 'CAMION';
+  await verifierRejet('P0-6 : import d’un type d’installation hors grille refusé (miroir)',
+    store.importerJSON(JSON.stringify(exportTI)), 'installation invalide');
 }
 
 // --- P0-6 (CF-5) : l'annulation d'un mouvement CONTROLE neutralise ses ---
@@ -1682,6 +1697,43 @@ await verifierRejet('createBouteille refuse MELANGE hors type RÉCUPÉRATION',
       && a.titre === 'Contrôle de suivi à faire'));
   verifier('CF-5 : dernierControle recalculé = date du contrôle FUITE restant',
     apresAnnulCloture.dernierControle === mvtFuite2Valide.date);
+
+  // Revue I-4 : un contrôle annulé ne reçoit plus de réparation tracée.
+  const ctlAnnule = (await store.getControles())
+    .find((c) => c.mouvementId === mvtFuite.id);
+  await verifierRejet('CF-5 : tracerReparation refusé sur un contrôle ANNULÉ',
+    store.tracerReparation(ctlAnnule.id, {
+      dateReparation: dateRelative(0), natureReparation: 'Tentative',
+      reparateur: 'Testeur Contrat'
+    }), 'annulé');
+
+  // Revue I-1 : la DATE DE RÉPARATION est la cheville de la clôture
+  // stricte J+1 — gardée (format jour, jamais antérieure à la fuite,
+  // jamais future), sinon l'antidatage contournait la règle des 24 h.
+  const ctlGarde = await store.createControle({
+    machineId: machineCtl.id, resultat: 'FUITE', methode: 'DIRECTE',
+    date: dateRelative(-3), operateur: 'Testeur Contrat'
+  });
+  await verifierRejet('I-1 : date de réparation au format HORAIRE refusée',
+    store.tracerReparation(ctlGarde.id, {
+      dateReparation: dateRelative(0) + 'T18:00',
+      natureReparation: 'Brasure', reparateur: 'Testeur Contrat'
+    }), 'format attendu');
+  await verifierRejet('I-1 : réparation ANTÉRIEURE au contrôle FUITE refusée',
+    store.tracerReparation(ctlGarde.id, {
+      dateReparation: dateRelative(-5),
+      natureReparation: 'Brasure', reparateur: 'Testeur Contrat'
+    }), 'antérieure au contrôle');
+  await verifierRejet('I-1 : réparation datée dans le FUTUR refusée',
+    store.tracerReparation(ctlGarde.id, {
+      dateReparation: dateRelative(2),
+      natureReparation: 'Brasure', reparateur: 'Testeur Contrat'
+    }), 'futur');
+  await verifierRejet('I-1 : date de contrôle au format HORAIRE refusée (createControle)',
+    store.createControle({
+      machineId: machineCtl.id, resultat: 'CONFORME', methode: 'DIRECTE',
+      date: dateRelative(0) + 'T18:00', operateur: 'Testeur Contrat'
+    }), 'format attendu');
 }
 
 // ============================================================

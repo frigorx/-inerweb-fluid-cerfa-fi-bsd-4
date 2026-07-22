@@ -268,6 +268,10 @@ const MACHINE = { id: 'mac-1' };
   }).dossiers[0];
   verifier('MOBILE listé : le contrôle immédiat clôture (exception de périmètre)',
     mobile.statut === 'FERMEE' && mobile.controleCloture.id === 'cc');
+  verifier('MOBILE : le MOTIF DE PÉRIMÈTRE est consigné (exceptionMobile)',
+    mobile.exceptionMobile === true);
+  verifier('fixe clôturé à J+1 : aucun motif d’exception consigné',
+    d.exceptionMobile === false);
 }
 
 {

@@ -176,6 +176,9 @@ function blocSynthese(dossier) {
         + ' jour' + (dossier.retardClotureJours > 1 ? 's' : '')
         + ' après l’échéance)'
       : '')
+    + (dossier.exceptionMobile
+      ? ' — clôture immédiate admise (équipement mobile listé)'
+      : '')
     + '</div></div>'
     + '<div><div class="fiche-detail-libelle">Échéance du contrôle de suivi</div>' + echeanceHtml + '</div>'
     + ligneDetail('Durée du dossier', dossier.dureeJours + ' jour' + (Math.abs(dossier.dureeJours) > 1 ? 's' : ''));

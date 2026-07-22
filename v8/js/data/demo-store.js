@@ -358,6 +358,14 @@ function verifierInvariantsDonnees(candidat) {
     if (!Number.isFinite(m.chargeActuelleKg) || m.chargeActuelleKg < 0) {
       return `machine ${ref} : chargeActuelleKg invalide (${m.chargeActuelleKg})`;
     }
+    // P0-6 (revue I-2) : type d'installation hors grille refusé À L'IMPORT
+    // des deux côtés (sans cet invariant, la démo acceptait « CAMION » en
+    // silence et le serveur levait un CHECK SQL brut — divergence).
+    if (m.typeInstallation !== undefined && m.typeInstallation !== null
+        && !['FIXE', 'MOBILE'].includes(m.typeInstallation)) {
+      return `machine ${ref} : type d'installation invalide `
+        + `(${m.typeInstallation} — attendu : FIXE, MOBILE)`;
+    }
     if (!Number.isFinite(m.chargeNominaleKg) || m.chargeNominaleKg <= 0) {
       return `machine ${ref} : chargeNominaleKg invalide (${m.chargeNominaleKg})`;
     }
@@ -1934,6 +1942,14 @@ export function creerDemoStore() {
     if (d.resultat !== 'CONFORME' && d.resultat !== 'FUITE') {
       throw new Error('Résultat de contrôle obligatoire : CONFORME ou FUITE.');
     }
+    // P0-6 (revue I-1) : les dates métier sont AU JOUR — un horodatage
+    // (« 2026-07-20T18:00 ») comparé en chaîne serait « strictement
+    // postérieur » au jour même et contournerait la clôture J+1.
+    if (d.date !== undefined && d.date !== null
+        && !/^\d{4}-\d{2}-\d{2}$/.test(String(d.date))) {
+      throw new Error('Date de contrôle invalide : format attendu '
+        + 'AAAA-MM-JJ (date au jour).');
+    }
     // Mode + numéro de fiche du contrôle (CERFA). Un contrôle LIÉ hérite ceux
     // du mouvement (passés dans d) ; un contrôle AUTONOME prend un numéro dédié
     // « C-FORM-/C-FI- » et le mode FORMATION par défaut (outil pédagogique).
@@ -3047,6 +3063,25 @@ export function creerDemoStore() {
       if (!dateReparation || !natureReparation || !reparateur) {
         throw new Error(
           'Réparation incomplète : date, nature et réparateur sont obligatoires.');
+      }
+      // P0-6 (revue I-1) : la date de réparation est la CHEVILLE de la
+      // clôture stricte J+1 — sans ces gardes, une réparation antidatée
+      // ou au format horaire contournait la règle des 24 h.
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateReparation)) {
+        throw new Error('Date de réparation invalide : format attendu '
+          + 'AAAA-MM-JJ (date au jour).');
+      }
+      if (controle.date && dateReparation < controle.date) {
+        throw new Error('Date de réparation antérieure au contrôle FUITE '
+          + `(${controle.date}) : une fuite se répare après sa détection.`);
+      }
+      if (dateReparation > aujourdHui()) {
+        throw new Error('Date de réparation dans le futur : on trace une '
+          + 'réparation FAITE, jamais prévue.');
+      }
+      if (controleAnnule(controle)) {
+        throw new Error('Contrôle annulé (contre-écriture) : il ne peut '
+          + 'plus recevoir de réparation tracée.');
       }
       controle.dateReparation = dateReparation;
       controle.natureReparation = natureReparation;

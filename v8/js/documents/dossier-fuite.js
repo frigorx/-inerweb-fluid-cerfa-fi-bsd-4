@@ -73,6 +73,8 @@ function synthesePaires(machine, fluide, dossier) {
     ['Contrôle de suivi en retard', dossier.suiviEnRetard ? 'oui' : 'non'],
     ['Clôture en retard (P0-6, > 1 mois civil)', dossier.clotureEnRetard ? 'oui' : 'non'],
     ['Retard de clôture (jours)', dossier.retardClotureJours ?? '—'],
+    ['Clôture immédiate admise (équipement MOBILE listé)',
+      dossier.exceptionMobile ? 'oui — motif de périmètre' : 'non'],
     ['Durée du dossier (jours)', dossier.dureeJours]
   ];
 }

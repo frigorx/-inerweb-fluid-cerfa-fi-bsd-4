@@ -38,7 +38,7 @@ function chipResultat(resultat) {
  * @param {object} controle — élément retourné par store.getControles()
  * @returns {string} HTML `<tr>…</tr>`
  */
-function ligneControle(controle) {
+function ligneControle(controle, annule) {
   const methode = LIBELLES_METHODE[controle.methode] || esc(controle.methode);
 
   // Prochaine échéance : rouge gras si le contrôle est en retard
@@ -50,14 +50,21 @@ function ligneControle(controle) {
   // R3/R4 : un contrôle FUITE sans réparation tracée propose l'action
   // dédiée (le formulaire de contrôle ne suffit pas : la réparation
   // se constate a posteriori, souvent bien après le contrôle).
-  const boutonReparation = (controle.resultat === 'FUITE' && !controle.dateReparation)
+  // P0-6 (revue I-4) : un contrôle né d'un mouvement ANNULÉ reste visible
+  // (le registre montre tout) mais il est MARQUÉ et perd son action de
+  // réparation — le store la refuse de toute façon (fait dérivé).
+  const boutonReparation = (controle.resultat === 'FUITE'
+    && !controle.dateReparation && !annule)
     ? '<button type="button" class="btn btn-contour btn-petit" '
       + 'data-action="reparation" data-id="' + esc(controle.id) + '">Tracer réparation</button>'
+    : '';
+  const marqueAnnule = annule
+    ? ' <span class="chip chip-gris">Annulé (contre-écriture)</span>'
     : '';
 
   return '<tr>'
     + '<td>' + fmtDate(controle.date) + '</td>'
-    + '<td><strong>' + esc(controle.machineLabel) + '</strong></td>'
+    + '<td><strong>' + esc(controle.machineLabel) + '</strong>' + marqueAnnule + '</td>'
     + '<td>' + methode + '</td>'
     + '<td>' + chipResultat(controle.resultat) + '</td>'
     + '<td>' + esc(controle.operateur) + '</td>'
@@ -77,6 +84,15 @@ function ligneControle(controle) {
  */
 export async function render(conteneur, ctx) {
   const controles = await ctx.store.getControles();
+  // P0-6 (revue I-4) : contrôles réputés annulés = ceux dont le mouvement
+  // porteur est ANNULE (même fait dérivé que les stores).
+  const mouvements = await ctx.store.getMouvements();
+  const idsMouvementsAnnules = new Set(mouvements
+    .filter(function (mv) { return mv.statut === 'ANNULE'; })
+    .map(function (mv) { return mv.id; }));
+  const estAnnule = function (c) {
+    return Boolean(c.mouvementId && idsMouvementsAnnules.has(c.mouvementId));
+  };
 
   // Affichage du plus récent au plus ancien (dates ISO comparables en texte)
   const tries = controles.slice().sort(function (a, b) {
@@ -101,7 +117,7 @@ export async function render(conteneur, ctx) {
       { cle: 'prochain', libelle: 'Prochain' },
       { cle: 'actions', libelle: '', align: 'droite' }
     ],
-    lignesHtml: tries.map(ligneControle)
+    lignesHtml: tries.map(function (c) { return ligneControle(c, estAnnule(c)); })
   });
 
   // Bouton « + Nouveau contrôle » : ouvre la modale de création
