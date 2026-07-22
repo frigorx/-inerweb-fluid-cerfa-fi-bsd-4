@@ -22,7 +22,7 @@
 
 import {
   construireDossiersFuite, construireDossierFuite,
-  DELAI_CONTROLE_SUIVI_JOURS, LIBELLES_STATUT_FUITE
+  ajouterUnMoisCivil, LIBELLES_STATUT_FUITE
 } from './dossiers-fuite.js';
 
 const NOM_STORE = process.argv[2] ?? 'demo';
@@ -130,9 +130,19 @@ const MACHINE = { id: 'mac-1' };
   verifier('réparée sans CONFORME postérieur : statut REPAREE',
     enDelai.statut === 'REPAREE'
     && enDelai.reparation.nature === 'Remplacement raccord');
-  verifier(`échéance de suivi = réparation + ${DELAI_CONTROLE_SUIVI_JOURS} j`,
+  verifier('échéance de suivi = réparation + 1 MOIS CIVIL (P0-6)',
     enDelai.echeanceControleSuivi === '2026-07-07');
   verifier('dans le délai : pas de retard', enDelai.suiviEnRetard === false);
+
+  // P0-6 : arithmétique du mois civil — écrêtage fin de mois, bissextile.
+  verifier('mois civil : 31/01 → 28/02 (année commune)',
+    ajouterUnMoisCivil('2027-01-31') === '2027-02-28');
+  verifier('mois civil : 31/01 → 29/02 (bissextile)',
+    ajouterUnMoisCivil('2028-01-31') === '2028-02-29');
+  verifier('mois civil : 31/08 → 30/09 (écrêtage simple)',
+    ajouterUnMoisCivil('2026-08-31') === '2026-09-30');
+  verifier('mois civil : 15/03 → 15/04 (quantième conservé)',
+    ajouterUnMoisCivil('2026-03-15') === '2026-04-15');
 
   const enRetard = construireDossiersFuite({
     machine: MACHINE, controles, mouvements: [], aujourdhui: '2026-07-10'

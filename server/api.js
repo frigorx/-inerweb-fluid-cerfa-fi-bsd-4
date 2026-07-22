@@ -184,9 +184,6 @@ const MSG_FUITE_OUVERTE =
   'réparée. Tracez la réparation (date, nature, réparateur) puis déclarez ' +
   'un nouveau contrôle d’étanchéité avant de recharger.';
 
-/** R4 : délai réglementaire par défaut du contrôle de suivi après réparation. */
-const DELAI_CONTROLE_SUIVI_JOURS = 30;
-
 /**
  * Formate un nombre en fr-FR avec un nombre fixe de décimales (« 4,20 »).
  * CLONE EXACT de v8/js/core/utils.js:fmtNombre : les messages d'erreur du
@@ -905,7 +902,7 @@ const HANDLERS = {
     for (const m of machines) {
       if (m.statut === 'FUITE') {
         // R4 : distinguer fuite OUVERTE (CRITIQUE) de fuite RÉPARÉE en
-        // attente de contrôle de suivi (IMPORTANT, échéance 30 jours).
+        // attente de contrôle de suivi (IMPORTANT, échéance 1 mois civil, P0-6).
         const statutFuite = estFuiteOuverte(controlesDeLaMachine(m.id),
           m.typeInstallation === 'MOBILE');
         // R4 : l'alerte de SUIVI n'existe que si une réparation est
@@ -5284,7 +5281,7 @@ function estFuiteOuverte(controlesMachine, machineMobile = false) {
     dateReparation: derniereFuite.dateReparation,
     echeanceControleSuivi: conformePostReparation
       ? null
-      : ajouterJours(derniereFuite.dateReparation, DELAI_CONTROLE_SUIVI_JOURS)
+      : ajouterMois(derniereFuite.dateReparation, 1)
   };
 }
 

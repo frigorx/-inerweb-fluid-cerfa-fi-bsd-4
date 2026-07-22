@@ -34,8 +34,21 @@
 //    consignée au dossier).
 // ============================================================
 
-/** Même délai réglementaire de suivi que les deux stores (R4). */
-export const DELAI_CONTROLE_SUIVI_JOURS = 30;
+/**
+ * Échéance du contrôle de suivi = réparation + 1 MOIS CIVIL (P0-6, au
+ * lieu des +30 jours calendaires d'origine). Débordement de fin de mois
+ * ramené au dernier jour du mois cible (31/01 → 28-29/02). COPIE
+ * LITTÉRALE d'`ajouterMois(iso, 1)` des deux stores — même arithmétique,
+ * ne jamais toucher l'un sans les autres.
+ */
+export function ajouterUnMoisCivil(iso) {
+  const [annee, mois, jour] = iso.split('-').map(Number);
+  const d = new Date(annee, mois, jour);
+  if (d.getDate() !== jour) d.setDate(0);
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const j = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${j}`;
+}
 
 /** Libellés français des statuts d'un dossier de fuite. */
 export const LIBELLES_STATUT_FUITE = {
@@ -55,13 +68,6 @@ const LIBELLES_TYPE_MOUVEMENT = {
 
 /** Forme attendue d'une date métier (jour). */
 const DATE_JOUR = /^\d{4}-\d{2}-\d{2}$/;
-
-/** Date ISO (jour) décalée de `n` jours — sans dépendre du fuseau. */
-function ajouterJours(dateISO, n) {
-  const [a, m, j] = String(dateISO).slice(0, 10).split('-').map(Number);
-  const d = new Date(Date.UTC(a, m - 1, j + n));
-  return d.toISOString().slice(0, 10);
-}
 
 /**
  * Nombre de jours entiers entre deux dates ISO (jour) — null si
@@ -187,7 +193,7 @@ function construireDossier(groupe, controlesMachine,
   // doit pas faire planter tout le dossier (l'échéance manque, c'est tout).
   const echeanceControleSuivi =
     (statut === 'REPAREE' && DATE_JOUR.test(String(reparation.date)))
-      ? ajouterJours(reparation.date, DELAI_CONTROLE_SUIVI_JOURS)
+      ? ajouterUnMoisCivil(reparation.date)
       : null;
   const dateFermeture = controleCloture ? controleCloture.date : null;
 

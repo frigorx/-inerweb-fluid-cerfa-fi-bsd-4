@@ -164,9 +164,6 @@ const MSG_FUITE_OUVERTE =
   'réparée. Tracez la réparation (date, nature, réparateur) puis déclarez ' +
   'un nouveau contrôle d’étanchéité avant de recharger.';
 
-/** R4 : délai réglementaire par défaut du contrôle de suivi après réparation. */
-const DELAI_CONTROLE_SUIVI_JOURS = 30;
-
 /** Copie profonde (structuredClone natif, repli JSON). */
 function copier(objet) {
   if (typeof structuredClone === 'function') return structuredClone(objet);
@@ -1816,7 +1813,8 @@ export function creerDemoStore() {
    *   jamais l'un sans l'autre — sinon un contrôle prématuré ou de
    *   complaisance contournerait le blocage R3c du complément de gaz).
    * - dateReparation posée mais aucun CONFORME de clôture : « réparée en
-   *   attente de contrôle de suivi », échéance = dateReparation + 30 j.
+   *   attente de contrôle de suivi », échéance = réparation + 1 MOIS CIVIL
+   *   (P0-6 — écrêté fin de mois : 31/01 → 28/02).
    * - réparation tracée + CONFORME de clôture : refermée. P0-6 (audit
    *   20/07, décision Franck 22/07) : la clôture exige un CONFORME
    *   STRICTEMENT postérieur AU JOUR de la réparation (proxy des 24 h de
@@ -1839,7 +1837,7 @@ export function creerDemoStore() {
     // Réparation tracée (R3a) : la machine n'est plus « ouverte » au sens
     // R3c (le complément de gaz redevient possible) — reste seulement,
     // tant qu'aucun CONFORME n'est venu après la réparation, une échéance
-    // de contrôle de suivi à 30 jours (R4). Le CONFORME doit aussi être
+    // de contrôle de suivi à 1 mois civil (P0-6). Le CONFORME doit aussi être
     // au moins du jour de la FUITE (jamais un conforme antérieur).
     const conformePostReparation = tries.some((c) =>
       c.resultat === 'CONFORME' &&
@@ -1853,7 +1851,7 @@ export function creerDemoStore() {
       dateReparation: derniereFuite.dateReparation,
       echeanceControleSuivi: conformePostReparation
         ? null
-        : ajouterJours(derniereFuite.dateReparation, DELAI_CONTROLE_SUIVI_JOURS)
+        : ajouterMois(derniereFuite.dateReparation, 1)
     };
   }
 
@@ -2316,7 +2314,7 @@ export function creerDemoStore() {
         if (m.statut === 'FUITE') {
           // R4 : distinguer fuite OUVERTE (aucune réparation tracée,
           // CRITIQUE) de fuite RÉPARÉE en attente de contrôle de suivi
-          // (IMPORTANT, échéance 30 jours depuis la réparation).
+          // (IMPORTANT, échéance 1 mois civil depuis la réparation, P0-6).
           const controlesMachine = donnees.controles
             .filter((c) => c.machineId === m.id);
           const statutFuite = estFuiteOuverte(controlesMachine,

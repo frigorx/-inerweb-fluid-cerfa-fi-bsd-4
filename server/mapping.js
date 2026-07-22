@@ -346,7 +346,7 @@ const TABLES = {
       reparationImmediate: 'reparation_immediate',
       // R4 : échéance ANNONCÉE au moment de la fuite (posée par
       // enregistrerControle) — lisible côté front pour calculer/afficher
-      // le délai de 30 jours du contrôle de suivi après réparation tracée.
+      // le délai du contrôle de suivi après réparation tracée (1 mois civil, P0-6).
       dateReparationPrevue: 'date_reparation_prevue',
       // R3/R4 (migration 8) : réparation TRACÉE a posteriori (tracerReparation),
       // distincte de dateReparationPrevue ci-dessus (échéance annoncée).
