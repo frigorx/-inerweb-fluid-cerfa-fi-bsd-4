@@ -46,7 +46,8 @@ const { ouvrirWizard } = await import('./wizard.js');
    ============================================================ */
 
 function creerStoreFactice({ machines = [], bouteilles = [],
-  habilitations = [], mentions = [], outillage = [], fluides = [] } = {}) {
+  habilitations = [], mentions = [], outillage = [], fluides = [],
+  mouvements = [] } = {}) {
   return {
     async getPersonnel() {
       return [{ id: 'p1', prenom: 'Jean', nom: 'Dupont', actif: true, roleApp: 'REFERENT' }];
@@ -55,7 +56,8 @@ function creerStoreFactice({ machines = [], bouteilles = [],
     async getBouteilles() { return bouteilles.slice(); },
     async getOutillage() { return outillage.slice(); },
     async getUtilisateurCourant() { return { id: 'u1', prenom: 'Jean', nom: 'Dupont', roleApp: 'REFERENT' }; },
-    async getMouvements() { return []; },
+    // CM-4a : instantané des mouvements (avoir d'origine du bandeau réemploi).
+    async getMouvements() { return mouvements.slice(); },
     // Chantier B2 : nourrit le conseil d'intervenant de l'étape 1.
     async getHabilitations() { return habilitations.slice(); },
     async getMentions() { return mentions.slice(); },
@@ -580,6 +582,94 @@ const MACHINE_TEST = {
   verifier('appoint sur PRP 675 : aucun bandeau PRP à l’étape 3',
     !textes.some((t) => t.includes('PRP')),
     'bandeaux vus : ' + JSON.stringify(textes));
+}
+
+/* ============================================================
+   CM-4a — bandeau « réemploi au-delà du récupéré » à l'étape 4 :
+   présent quand la quantité chargée depuis une bouteille de
+   RÉCUPÉRATION dépasse l'avoir d'origine de la machine, ABSENT
+   sous l'avoir et pour une bouteille NEUVE, et JAMAIS bloquant
+   (jamais dans #wizard-pesees-erreurs — décision Franck 22/07 :
+   on avertit, on ne bloque pas, tous modes).
+   ============================================================ */
+{
+  const machines = [{ ...MACHINE_TEST }];
+  // Bouteille de récupération : 2 kg dedans, dont 1 kg récupéré de mac-1
+  // (l'autre kg vient d'une machine tierce) — décision REUTILISABLE posée
+  // (sinon sourceUtilisable l'écarte de l'étape 3).
+  const bouteilles = [{
+    id: 'bou-r', code: 'BR', fluide: 'R404A', type: 'RECUPERATION',
+    masseNetteKg: 2, masseBruteKg: 10, tareKg: 8, contenanceMaxKg: 15,
+    statut: 'EN_STOCK', etatFluide: 'RECUPERE', decisionFluide: 'REUTILISABLE'
+  }, {
+    id: 'bou-n', code: 'BN', fluide: 'R404A', type: 'NEUVE',
+    masseNetteKg: 10, masseBruteKg: 20, tareKg: 10, contenanceMaxKg: 20,
+    statut: 'EN_STOCK', etatFluide: 'VIERGE', decisionFluide: null
+  }];
+  const mouvements = [
+    { id: 'r1', statut: 'VALIDE', type: 'RECUPERATION_MAINTENANCE',
+      machineId: 'mac-1', bouteilleDstId: 'bou-r', quantiteKg: -1 },
+    { id: 'r2', statut: 'VALIDE', type: 'RECUPERATION_MAINTENANCE',
+      machineId: 'mac-x', bouteilleDstId: 'bou-r', quantiteKg: -1 }
+  ];
+  const store = creerStoreFactice({ machines, bouteilles, mouvements });
+
+  /** Déroule appoint → bouteille choisie → étape 4, retourne le fond. */
+  async function ouvrirEtape4(bouteilleId) {
+    await ouvrirWizard({ store, naviguer: () => {} }, { machineId: 'mac-1' });
+    const fond = document.body.querySelectorAll('.modale-fond').at(-1);
+    fond.querySelector('[data-carte-type="appoint"]').declencher('click');
+    const selectTechnicien = fond.querySelector('#wizard-technicien');
+    selectTechnicien.value = 'p1';
+    selectTechnicien.declencher('change');
+    fond.querySelector('#wizard-continuer').declencher('click'); // -> étape 3
+    fond.querySelector('[data-bouteille-src="' + bouteilleId + '"]')
+      .declencher('click');
+    fond.querySelector('#wizard-continuer').declencher('click'); // -> étape 4
+    return fond;
+  }
+
+  function saisirPesees(fond, avant, apres) {
+    const champAvant = fond.querySelector('#wizard-pesee-avant');
+    const champApres = fond.querySelector('#wizard-pesee-apres');
+    champAvant.value = String(avant);
+    champAvant.declencher('input');
+    champApres.value = String(apres);
+    champApres.declencher('input');
+  }
+
+  // Cas 1 — réemploi de 1,5 kg pour 1 kg récupéré de mac-1 → bandeau,
+  // dans la zone dédiée, jamais dans les erreurs, Continuer actif.
+  let fond = await ouvrirEtape4('bou-r');
+  saisirPesees(fond, 10, 8.5);
+  const zoneReemploi = fond.querySelector('#wizard-reemploi-avertissement');
+  verifier('CM-4a : surcharge de réemploi (1,5 kg pour 1 kg récupéré) → bandeau affiché',
+    Boolean(zoneReemploi)
+    && zoneReemploi.innerHTML.includes('bandeau-avertissement')
+    && zoneReemploi.innerHTML.includes('au-delà du fluide récupéré'),
+    'zone = ' + (zoneReemploi ? zoneReemploi.innerHTML : 'absente'));
+  verifier('CM-4a : le surplus affiché est 0,50 kg',
+    zoneReemploi.innerHTML.includes('0,50'),
+    'zone = ' + zoneReemploi.innerHTML);
+  const zoneErreurs = fond.querySelector('#wizard-pesees-erreurs');
+  verifier('CM-4a : la surcharge de réemploi n’est JAMAIS une erreur bloquante',
+    !zoneErreurs.innerHTML.includes('au-delà du fluide récupéré'));
+  verifier('CM-4a : Continuer reste actionnable (on avertit, on ne bloque pas)',
+    !fond.querySelector('#wizard-continuer').disabled);
+
+  // Cas 2 — réemploi de 0,8 kg ≤ 1 kg récupéré : aucun bandeau.
+  fond = await ouvrirEtape4('bou-r');
+  saisirPesees(fond, 10, 9.2);
+  verifier('CM-4a : réemploi sous l’avoir d’origine → aucun bandeau',
+    !fond.querySelector('#wizard-reemploi-avertissement')
+      .innerHTML.includes('bandeau-avertissement'));
+
+  // Cas 3 — même quantité depuis la bouteille NEUVE : jamais concernée.
+  fond = await ouvrirEtape4('bou-n');
+  saisirPesees(fond, 20, 18.5);
+  verifier('CM-4a : charge depuis une bouteille NEUVE → aucun bandeau de réemploi',
+    !fond.querySelector('#wizard-reemploi-avertissement')
+      .innerHTML.includes('bandeau-avertissement'));
 }
 
 /* ============================================================

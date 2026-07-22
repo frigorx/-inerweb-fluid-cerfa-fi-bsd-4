@@ -13,6 +13,7 @@ import { esc, fmtNombre, fmtKg, fmtKgSigne, fmtDate, nombreFr } from '../core/ut
 import { creerSignature } from './signature.js';
 import { ouvrirFormMachine } from '../modales/machine-form.js';
 import { ouvrirFormBouteille } from '../modales/bouteille-form.js';
+import { avoirOrigineDisponible } from '../data/avoir-origine.js';
 import { verdictPourIntervenant, encartConseil, injecterStylesConseil,
   dateDuJour } from '../composants/conseil-intervenant.js';
 import { LIBELLES_TYPE_OUTIL } from '../views/outillage.js';
@@ -375,12 +376,15 @@ export async function ouvrirWizard(ctx, options = {}) {
     // Aucun utilisateur courant : la validation restera fermée (peutValider = false)
   }
 
-  const [personnel, machines, bouteilles, outillage] =
+  const [personnel, machines, bouteilles, outillage, mouvements] =
     await Promise.all([
       store.getPersonnel(),
       store.getMachines(),
       store.getBouteilles(),
-      store.getOutillage()
+      store.getOutillage(),
+      // CM-4a : instantané des mouvements pour l'avertissement de réemploi
+      // (avoir d'origine calculé en direct à l'étape Pesées, sans réseau).
+      store.getMouvements()
     ]);
 
   // Référentiel des fluides : nourrit l'avertissement PRP >= 2500 de
@@ -1513,6 +1517,16 @@ export async function ouvrirWizard(ctx, options = {}) {
       etat.peseeAvant = String(bouteille.masseBruteKg);
     }
 
+    // CM-4a : avoir d'origine encore disponible pour un réemploi quand on
+    // charge depuis une bouteille de RÉCUPÉRATION. Une bouteille NEUVE
+    // (fluide acheté) n'est jamais concernée. Calculé une fois par rendu
+    // (indépendant des pesées) ; borné à 0 par avoirOrigineDisponible.
+    const machineReemploi = machineChoisie();
+    const disponibleReemploi = (estCharge() && bouteille
+      && bouteille.type === 'RECUPERATION' && machineReemploi)
+      ? avoirOrigineDisponible(bouteille.id, machineReemploi.id, mouvements)
+      : null;
+
     const rappel = estRecuperation()
       ? 'La bouteille ' + (bouteille ? bouteille.code : '') + ' se remplit : '
         + 'la pesée après doit être supérieure à la pesée avant.'
@@ -1541,12 +1555,14 @@ export async function ouvrirWizard(ctx, options = {}) {
       + '<span class="wizard-encart-valeur" id="wizard-quantite">—</span>'
       + '</div>'
       + '<p class="wizard-sens">' + esc(rappel) + '</p>'
-      + '<div class="wizard-bloc" id="wizard-pesees-erreurs"></div>';
+      + '<div class="wizard-bloc" id="wizard-pesees-erreurs"></div>'
+      + '<div class="wizard-bloc" id="wizard-reemploi-avertissement"></div>';
 
     const champAvant = corpsEl.querySelector('#wizard-pesee-avant');
     const champApres = corpsEl.querySelector('#wizard-pesee-apres');
     const affichageQuantite = corpsEl.querySelector('#wizard-quantite');
     const zoneErreurs = corpsEl.querySelector('#wizard-pesees-erreurs');
+    const zoneReemploi = corpsEl.querySelector('#wizard-reemploi-avertissement');
 
     /** Recalcule quantité + erreurs en direct, sans re-rendre l'étape. */
     function majPesees() {
@@ -1557,6 +1573,21 @@ export async function ouvrirWizard(ctx, options = {}) {
         ? fmtKg(controle.quantite)
         : '—';
       zoneErreurs.innerHTML = controle.erreurs.map(bandeauErreur).join('');
+      // CM-4a : surcharge de réemploi — on SIGNALE, on ne BLOQUE JAMAIS
+      // (jamais versé dans `erreurs`/etapeComplete ; tous modes, Officiel
+      // compris — décision Franck 22/07). Tolérance 10 g alignée sur
+      // l'alerte alr-reemploi (CM-2).
+      if (disponibleReemploi !== null && controle.quantite !== null
+          && controle.quantite > disponibleReemploi + 0.01) {
+        const surplus = arrondir(controle.quantite - disponibleReemploi);
+        zoneReemploi.innerHTML = bandeauAvertissement(
+          'Réemploi au-delà du fluide récupéré : vous réintroduisez '
+          + fmtNombre(surplus, 2) + ' kg de plus que ce qui a été récupéré '
+          + 'de cette machine dans la bouteille ' + bouteille.code + '. Vous '
+          + 'pouvez continuer ; l’anomalie sera signalée (à rectifier).');
+      } else {
+        zoneReemploi.innerHTML = '';
+      }
       majPied();
     }
 
