@@ -345,8 +345,15 @@ export function construireDossiersFuite(
     .slice(0, 10);
 
   const mobile = estMachineMobile(machine);
+  // P0-6 : un contrôle né d'un mouvement ANNULÉ est réputé annulé avec
+  // lui (fait dérivé — même règle que les stores) : il ne fonde ni ne
+  // referme aucun dossier. Un contrôle autonome (sans mouvementId) reste
+  // toujours actif. Les ZIP déjà exportés restent des instantanés valides.
+  const idsMouvementsAnnules = new Set((mouvements ?? [])
+    .filter((mv) => mv.statut === 'ANNULE').map((mv) => mv.id));
   const controlesMachine = (controles ?? [])
-    .filter((c) => c.machineId === machine.id);
+    .filter((c) => c.machineId === machine.id
+      && !(c.mouvementId && idsMouvementsAnnules.has(c.mouvementId)));
   const mouvementsMachine = (mouvements ?? [])
     .filter((mv) => mv.machineId === machine.id);
 

@@ -174,6 +174,63 @@ const MACHINE = { id: 'mac-1' };
 }
 
 {
+  // P0-6 (CF-5) : un contrôle né d'un mouvement ANNULÉ est réputé annulé
+  // avec lui — il ne fonde AUCUN dossier (une fuite annulée disparaît) et
+  // n'en referme aucun (une clôture annulée rouvre le dossier RÉPARÉ).
+  const controles = [
+    { id: 'cf', machineId: 'mac-1', date: '2026-06-01', resultat: 'FUITE',
+      mouvementId: 'mv-fuite', dateReparation: '2026-06-02',
+      natureReparation: 'Brasure', reparateur: 'R' },
+    { id: 'cc', machineId: 'mac-1', date: '2026-06-03', resultat: 'CONFORME',
+      mouvementId: 'mv-cloture' }
+  ];
+  const tousValides = construireDossiersFuite({
+    machine: MACHINE, controles,
+    mouvements: [
+      { id: 'mv-fuite', machineId: 'mac-1', statut: 'VALIDE' },
+      { id: 'mv-cloture', machineId: 'mac-1', statut: 'VALIDE' }
+    ],
+    aujourdhui: '2026-06-11'
+  });
+  verifier('contrôles actifs : le dossier existe et est FERMÉ',
+    tousValides.dossiers.length === 1
+    && tousValides.dossiers[0].statut === 'FERMEE');
+
+  const clotureAnnulee = construireDossiersFuite({
+    machine: MACHINE, controles,
+    mouvements: [
+      { id: 'mv-fuite', machineId: 'mac-1', statut: 'VALIDE' },
+      { id: 'mv-cloture', machineId: 'mac-1', statut: 'ANNULE' }
+    ],
+    aujourdhui: '2026-06-11'
+  });
+  verifier('clôture ANNULÉE : le dossier redevient RÉPARÉ (échéance de suivi)',
+    clotureAnnulee.dossiers.length === 1
+    && clotureAnnulee.dossiers[0].statut === 'REPAREE'
+    && clotureAnnulee.dossiers[0].echeanceControleSuivi === '2026-07-02');
+
+  const fuiteAnnulee = construireDossiersFuite({
+    machine: MACHINE, controles,
+    mouvements: [
+      { id: 'mv-fuite', machineId: 'mac-1', statut: 'ANNULE' },
+      { id: 'mv-cloture', machineId: 'mac-1', statut: 'VALIDE' }
+    ],
+    aujourdhui: '2026-06-11'
+  });
+  verifier('fuite ANNULÉE : plus aucun dossier (le contrôle annulé ne fonde rien)',
+    fuiteAnnulee.dossiers.length === 0);
+
+  const autonome = construireDossiersFuite({
+    machine: MACHINE,
+    controles: [{ id: 'ca', machineId: 'mac-1', date: '2026-06-01',
+      resultat: 'FUITE' }],
+    mouvements: [], aujourdhui: '2026-06-11'
+  });
+  verifier('contrôle AUTONOME (sans mouvementId) : toujours actif',
+    autonome.dossiers.length === 1 && autonome.dossiers[0].statut === 'OUVERTE');
+}
+
+{
   // P0-6 (audit 20/07, cas d'acceptation) : sur un équipement FIXE, un
   // CONFORME le MÊME JOUR que la réparation ne clôture PLUS (24 h de
   // fonctionnement requises — J+1, dates au jour). L'ancienne convention

@@ -1001,7 +1001,7 @@ export function creerDemoStore() {
     for (const m of donnees.machines) {
       if (m.statut !== 'FUITE') continue;
       const statutFuite = estFuiteOuverte(
-        donnees.controles.filter((c) => c.machineId === m.id),
+        controlesActifsDeLaMachine(m.id),
         m.typeInstallation === 'MOBILE');
       // Même règle que getAlertes : « non résolue » = pas de réparation
       // tracée (une fuite réparée en attente de contrôle de suivi n'est
@@ -1560,9 +1560,7 @@ export function creerDemoStore() {
       // déclarée sans réparation tracée postérieure) exige d'abord de
       // tracer la réparation puis de déclarer un nouveau contrôle.
       if (mouvement.type === 'CHARGE_APPOINT') {
-        const controlesMachine = donnees.controles
-          .filter((c) => c.machineId === machine.id);
-        if (estFuiteOuverte(controlesMachine,
+        if (estFuiteOuverte(controlesActifsDeLaMachine(machine.id),
           machine.typeInstallation === 'MOBILE').ouverte) {
           throw new Error(MSG_FUITE_OUVERTE);
         }
@@ -1798,6 +1796,76 @@ export function creerDemoStore() {
           false);
       }
     }
+
+    // P0-6 (écart P0-7 §7(a) soldé) : un mouvement porteur d'un contrôle
+    // lié qui s'annule retire les effets machine de CE contrôle — statut,
+    // dernierControle et prochainControle sont RECALCULÉS depuis les
+    // contrôles restés actifs. Le contrôle lié est réputé annulé AVEC son
+    // mouvement (fait dérivé, aucune écriture sur controles) ; il est
+    // exclu explicitement car la bascule ANNULE n'est posée qu'après.
+    const controleLieId = original.controle?.controleId ?? null;
+    if (controleLieId && original.machineId) {
+      recalculerEffetsMachineApresAnnulation(original.machineId,
+        controleLieId);
+    }
+  }
+
+  /**
+   * P0-6 : un contrôle est réputé ANNULÉ quand le mouvement qui l'a créé
+   * est ANNULE (fait DÉRIVÉ — la table des contrôles n'est jamais
+   * réécrite ; un contrôle autonome, sans mouvementId, reste toujours
+   * actif). Toute la logique de fuite (alertes, R3c, retour EN_SERVICE,
+   * dossiers, photo nominative) ne regarde que les contrôles ACTIFS.
+   */
+  function controleAnnule(controle) {
+    if (!controle.mouvementId) return false;
+    const mv = donnees.mouvements.find((m) => m.id === controle.mouvementId);
+    return Boolean(mv && mv.statut === 'ANNULE');
+  }
+
+  /** Contrôles ACTIFS d'une machine (P0-6 — les annulés sont exclus). */
+  function controlesActifsDeLaMachine(machineId) {
+    return donnees.controles.filter((c) =>
+      c.machineId === machineId && !controleAnnule(c));
+  }
+
+  /**
+   * P0-6 : recalcule les effets machine après l'annulation d'un mouvement
+   * porteur d'un contrôle lié — depuis les contrôles restés actifs, le
+   * contrôle annulé exclu. Règle sobre : dernierControle = plus récent
+   * actif ; prochainControle = échéance du plus récent actif qui en porte
+   * une, sinon LAISSÉ en l'état (l'échéance antérieure au premier contrôle
+   * est inconnaissable — limite consignée au plan P0-6) ; statut recalculé
+   * SEULEMENT depuis FUITE / EN_SERVICE / CONTROLE_DU (jamais une machine
+   * arrêtée ou démantelée).
+   */
+  function recalculerEffetsMachineApresAnnulation(machineId, controleExcluId) {
+    const machine = trouverMachine(machineId);
+    if (machine.statut !== 'FUITE' && machine.statut !== 'EN_SERVICE' &&
+        machine.statut !== 'CONTROLE_DU') {
+      return;
+    }
+    const actifs = controlesActifsDeLaMachine(machineId)
+      .filter((c) => c.id !== controleExcluId);
+    const tries = actifs.slice()
+      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+    machine.dernierControle = tries[0]?.date ?? null;
+    const porteurEcheance = tries.find((c) => c.prochainControle);
+    if (porteurEcheance) {
+      machine.prochainControle = porteurEcheance.prochainControle;
+    }
+    const statutFuite = estFuiteOuverte(actifs,
+      machine.typeInstallation === 'MOBILE');
+    const fuiteNonRefermee = Boolean(statutFuite.controleFuiteId &&
+      (statutFuite.ouverte || statutFuite.echeanceControleSuivi !== null));
+    if (fuiteNonRefermee) {
+      machine.statut = 'FUITE';
+    } else if (machine.prochainControle &&
+               machine.prochainControle < aujourdHui()) {
+      machine.statut = 'CONTROLE_DU';
+    } else {
+      machine.statut = 'EN_SERVICE';
+    }
   }
 
   /**
@@ -1904,9 +1972,8 @@ export function creerDemoStore() {
       // réparation tracée + CONFORME de clôture : strictement postérieur
       // au jour de la réparation, jour même admis pour un équipement
       // MOBILE listé). Plus de condition ad hoc divergente du dossier.
-      const controlesMachine = donnees.controles
-        .filter((c) => c.machineId === machine.id);
-      const statutFuite = estFuiteOuverte(controlesMachine,
+      const statutFuite = estFuiteOuverte(
+        controlesActifsDeLaMachine(machine.id),
         machine.typeInstallation === 'MOBILE');
       if (!statutFuite.ouverte && statutFuite.dateReparation &&
           statutFuite.echeanceControleSuivi === null) {
@@ -2315,9 +2382,8 @@ export function creerDemoStore() {
           // R4 : distinguer fuite OUVERTE (aucune réparation tracée,
           // CRITIQUE) de fuite RÉPARÉE en attente de contrôle de suivi
           // (IMPORTANT, échéance 1 mois civil depuis la réparation, P0-6).
-          const controlesMachine = donnees.controles
-            .filter((c) => c.machineId === m.id);
-          const statutFuite = estFuiteOuverte(controlesMachine,
+          const statutFuite = estFuiteOuverte(
+            controlesActifsDeLaMachine(m.id),
             m.typeInstallation === 'MOBILE');
           // R4 : l'alerte de SUIVI n'existe que si une réparation est
           // TRACÉE — sans elle, la fuite reste « non résolue » (jamais

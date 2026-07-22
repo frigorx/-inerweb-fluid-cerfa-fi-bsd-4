@@ -5250,11 +5250,63 @@ function verifierSourceDeCharge(bouteille) {
 }
 
 /** Contrôles d'une machine (camelCase), triés date décroissante. */
+/**
+ * Contrôles ACTIFS d'une machine (P0-6) : un contrôle est réputé ANNULÉ
+ * quand le mouvement qui l'a créé est ANNULE (fait DÉRIVÉ — la table des
+ * contrôles n'est jamais réécrite ; un contrôle autonome, sans
+ * mouvement_id, reste toujours actif). Toute la logique de fuite
+ * (alertes, R3c, retour EN_SERVICE, photo nominative) ne regarde que les
+ * contrôles actifs — MIROIR de controlesActifsDeLaMachine du DemoStore.
+ */
 function controlesDeLaMachine(machineId) {
   return db.all(
-    'SELECT * FROM controles WHERE machine_id = ? ORDER BY date_controle DESC',
+    `SELECT c.* FROM controles c
+       LEFT JOIN mouvements m ON m.id = c.mouvement_id
+     WHERE c.machine_id = ? AND (m.id IS NULL OR m.statut <> 'ANNULE')
+     ORDER BY c.date_controle DESC`,
     [machineId]
   ).map((ligne) => mapping.versFront('controles', ligne));
+}
+
+/**
+ * P0-6 : recalcule les effets machine après l'annulation d'un mouvement
+ * porteur d'un contrôle lié — depuis les contrôles restés actifs, le
+ * contrôle annulé exclu. Règle sobre : dernierControle = plus récent
+ * actif ; prochainControle = échéance du plus récent actif qui en porte
+ * une, sinon LAISSÉ en l'état (l'échéance antérieure au premier contrôle
+ * est inconnaissable — limite consignée au plan P0-6) ; statut recalculé
+ * SEULEMENT depuis FUITE / EN_SERVICE / CONTROLE_DU (jamais une machine
+ * arrêtée ou démantelée). MIROIR EXACT du DemoStore.
+ */
+function recalculerEffetsMachineApresAnnulation(machineId, controleExcluId) {
+  const machine = trouverMachine(machineId);
+  if (machine.statut !== 'FUITE' && machine.statut !== 'EN_SERVICE' &&
+      machine.statut !== 'CONTROLE_DU') {
+    return;
+  }
+  const actifs = controlesDeLaMachine(machineId)
+    .filter((c) => c.id !== controleExcluId);
+  const tries = actifs.slice()
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  const patch = { date_dernier_controle: tries[0]?.date ?? null };
+  let prochain = machine.prochainControle;
+  const porteurEcheance = tries.find((c) => c.prochainControle);
+  if (porteurEcheance) {
+    prochain = porteurEcheance.prochainControle;
+    patch.date_prochain_controle = prochain;
+  }
+  const statutFuite = estFuiteOuverte(actifs,
+    machine.typeInstallation === 'MOBILE');
+  const fuiteNonRefermee = Boolean(statutFuite.controleFuiteId &&
+    (statutFuite.ouverte || statutFuite.echeanceControleSuivi !== null));
+  if (fuiteNonRefermee) {
+    patch.statut = 'FUITE';
+  } else if (prochain && prochain < aujourdHui()) {
+    patch.statut = 'CONTROLE_DU';
+  } else {
+    patch.statut = 'EN_SERVICE';
+  }
+  majParId('machines', machine.id, patch);
 }
 
 /**
@@ -5597,6 +5649,18 @@ function appliquerEffetsInverses(original) {
         false);
       persisterBouteille(source);
     }
+  }
+
+  // P0-6 (écart P0-7 §7(a) soldé) : un mouvement porteur d'un contrôle
+  // lié qui s'annule retire les effets machine de CE contrôle — statut,
+  // dernierControle et prochainControle sont RECALCULÉS depuis les
+  // contrôles restés actifs. Le contrôle lié est réputé annulé AVEC son
+  // mouvement (fait dérivé, aucune écriture sur controles) ; il est
+  // exclu explicitement car la bascule ANNULE n'est posée qu'après.
+  const controleLieId = original.controle?.controleId ?? null;
+  if (controleLieId && original.machineId) {
+    recalculerEffetsMachineApresAnnulation(original.machineId,
+      controleLieId);
   }
 }
 

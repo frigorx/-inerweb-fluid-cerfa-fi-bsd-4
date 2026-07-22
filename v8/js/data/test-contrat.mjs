@@ -1609,6 +1609,81 @@ await verifierRejet('createBouteille refuse MELANGE hors type RÉCUPÉRATION',
       .some((a) => a.id === `alr-fuite-${machineMobile.id}`));
 }
 
+// --- P0-6 (CF-5) : l'annulation d'un mouvement CONTROLE neutralise ses ---
+// --- effets machine (écart P0-7 §7(a) soldé) -----------------------------
+{
+  const machineCtl = await store.createMachine({
+    designation: 'Machine contrôle annulé P0-6', fluide: FLUIDE,
+    chargeNominaleKg: 2, operateur: 'Testeur Contrat'
+  });
+
+  // 1) Un contrôle FUITE annulé ne laisse plus la machine en FUITE à jamais.
+  const mvtFuite = await store.creerMouvement({
+    type: 'CONTROLE_NON_PERIODIQUE', machineId: machineCtl.id,
+    date: dateRelative(-2), technicien: 'Un Enseignant',
+    executeParId: enseignant.id,
+    controle: { statutControle: 'FUITE', detecteurId: null,
+      localisationFuite: 'Vanne de service' }
+  });
+  await store.soumettreMouvement(mvtFuite.id);
+  await store.validerMouvement(mvtFuite.id, enseignant.id);
+  verifier('CF-5 : mouvement CONTROLE FUITE validé → machine en FUITE',
+    (await store.getMachines()).find((m) => m.id === machineCtl.id)
+      .statut === 'FUITE');
+  await store.annulerParContreEcriture(mvtFuite.id,
+    'Erreur de machine (mauvaise fiche)', enseignant.id);
+  const apresAnnulation = (await store.getMachines())
+    .find((m) => m.id === machineCtl.id);
+  verifier('CF-5 : contrôle FUITE ANNULÉ → la machine redevient EN_SERVICE',
+    apresAnnulation.statut === 'EN_SERVICE', `statut = ${apresAnnulation.statut}`);
+  verifier('CF-5 : l’alerte de fuite disparaît avec l’annulation',
+    !(await store.getAlertes())
+      .some((a) => a.id === `alr-fuite-${machineCtl.id}`));
+  verifier('CF-5 : dernierControle recalculé (aucun contrôle actif restant)',
+    apresAnnulation.dernierControle === null);
+
+  // 2) Un CONFORME de clôture annulé fait RÉAPPARAÎTRE la fuite réparée
+  // en attente de suivi (le dossier n'était refermé que par lui).
+  const mvtFuite2 = await store.creerMouvement({
+    type: 'CONTROLE_NON_PERIODIQUE', machineId: machineCtl.id,
+    date: dateRelative(-2), technicien: 'Un Enseignant',
+    executeParId: enseignant.id,
+    controle: { statutControle: 'FUITE', detecteurId: null,
+      localisationFuite: 'Brasure' }
+  });
+  await store.soumettreMouvement(mvtFuite2.id);
+  const mvtFuite2Valide = await store.validerMouvement(mvtFuite2.id, enseignant.id);
+  const ctlLie2 = (await store.getControles())
+    .find((c) => c.mouvementId === mvtFuite2.id);
+  await store.tracerReparation(ctlLie2.id, {
+    dateReparation: dateRelative(-1), natureReparation: 'Brasure reprise',
+    reparateur: 'Testeur Contrat'
+  });
+  const mvtCloture = await store.creerMouvement({
+    type: 'CONTROLE_NON_PERIODIQUE', machineId: machineCtl.id,
+    date: dateRelative(0), technicien: 'Un Enseignant',
+    executeParId: enseignant.id,
+    controle: { statutControle: 'CONFORME', detecteurId: null }
+  });
+  await store.soumettreMouvement(mvtCloture.id);
+  await store.validerMouvement(mvtCloture.id, enseignant.id);
+  verifier('CF-5 : clôture à J+1 par mouvement CONTROLE → EN_SERVICE',
+    (await store.getMachines()).find((m) => m.id === machineCtl.id)
+      .statut === 'EN_SERVICE');
+  await store.annulerParContreEcriture(mvtCloture.id,
+    'Contrôle mal réalisé (détecteur non conforme)', enseignant.id);
+  const apresAnnulCloture = (await store.getMachines())
+    .find((m) => m.id === machineCtl.id);
+  verifier('CF-5 : clôture ANNULÉE → la fuite réparée RÉAPPARAÎT (machine en FUITE)',
+    apresAnnulCloture.statut === 'FUITE', `statut = ${apresAnnulCloture.statut}`);
+  verifier('CF-5 : l’alerte « Contrôle de suivi à faire » revient avec l’annulation',
+    (await store.getAlertes()).some((a) =>
+      a.id === `alr-fuite-${machineCtl.id}`
+      && a.titre === 'Contrôle de suivi à faire'));
+  verifier('CF-5 : dernierControle recalculé = date du contrôle FUITE restant',
+    apresAnnulCloture.dernierControle === mvtFuite2Valide.date);
+}
+
 // ============================================================
 // 14. Balance matière : inventaire et justification d'écart
 // ============================================================
