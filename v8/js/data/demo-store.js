@@ -21,6 +21,8 @@ import { evaluerControle } from './reglementation-fluides.js';
 // signale une réintroduction au-delà du récupéré. Le serveur en tient un
 // MIROIR EXACT (api.js).
 import { avoirParMachineOrigine } from './avoir-origine.js';
+// P0-8 : déclaration annuelle 11 rubriques (module pur, miroir serveur).
+import { calculerDeclarationAnnuelle } from './declaration-annuelle.js';
 // Sentinelle d'alertes persistées : diff pur + formatage (module partagé
 // avec le test unitaire ; le serveur en tient un miroir exact).
 import { normaliserCodeMachine, validerCodeMachine } from './code-machine.js';
@@ -5039,6 +5041,28 @@ export function creerDemoStore() {
     // ------------------------------------------------------
     async getBalanceMatiere(annee) {
       return copier(calculerBalanceMatiere(Number(annee)));
+    },
+
+    /**
+     * P0-8 : déclaration annuelle réglementaire (11 rubriques par fluide).
+     * Assemble les collections et délègue au module pur (miroir serveur).
+     * anneesPhotographiees = années qui ont un inventaire figé (photo).
+     */
+    async getDeclarationAnnuelle(annee) {
+      const anneesPhotographiees = [...new Set([
+        ...(donnees.inventaires || []).map((i) => i.annee),
+        ...(donnees.inventairesBouteilles || []).map((p) => p.annee)
+      ])];
+      return calculerDeclarationAnnuelle(Number(annee), {
+        mouvements: donnees.mouvements,
+        bouteilles: donnees.bouteilles,
+        bsff: donnees.bsff,
+        cessions: donnees.cessions,
+        retoursFournisseur: donnees.retoursFournisseur,
+        stocksInitiaux: donnees.stocksInitiaux,
+        photosBouteilles: donnees.inventairesBouteilles,
+        anneesPhotographiees
+      });
     },
 
     async saisirInventaire(annee, lignes, operateur) {

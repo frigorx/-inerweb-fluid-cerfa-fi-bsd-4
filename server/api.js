@@ -47,6 +47,9 @@ const { evaluerBlocagesOfficiel, messageRefusOfficiel, VERROU_LIVRAISON,
 // par test-droit-intervention.mjs).
 const { verifierDroitIntervention, habilitationReconnue,
   jetonsMentionsActives } = require('./droit-intervention.js');
+// Déclaration annuelle 11 rubriques (P0-8, miroir littéral du module ESM du
+// front, parité prouvée par test-declaration-annuelle.mjs).
+const { calculerDeclarationAnnuelle } = require('./declaration-annuelle.js');
 // Signatures réelles (lot C, brique C1) : déclarations figées + critères
 // d'illisibilité (miroir du module ESM du front, parité prouvée par
 // test-signatures-mouvement.mjs).
@@ -3846,6 +3849,31 @@ const HANDLERS = {
   /** Balance matière annuelle par fluide (via la VUE bilan_matiere). */
   getBalanceMatiere(params) {
     return calculerBalanceMatiere(Number(params.annee));
+  },
+
+  /**
+   * P0-8 : déclaration annuelle réglementaire (11 rubriques par fluide).
+   * Lit les collections et délègue au module pur (miroir du front, parité
+   * prouvée). anneesPhotographiees = années qui ont un inventaire figé.
+   */
+  getDeclarationAnnuelle(params) {
+    const lire = (table) => db.all(`SELECT * FROM ${table}`)
+      .map((l) => mapping.versFront(table, l));
+    const anneesPhotographiees = [...new Set([
+      ...db.all('SELECT DISTINCT annee FROM inventaires').map((r) => r.annee),
+      ...db.all('SELECT DISTINCT annee FROM inventaires_bouteilles')
+        .map((r) => r.annee)
+    ])];
+    return calculerDeclarationAnnuelle(Number(params.annee), {
+      mouvements: lire('mouvements'),
+      bouteilles: lire('bouteilles'),
+      bsff: lire('bsff'),
+      cessions: lire('cessions'),
+      retoursFournisseur: lire('retours_fournisseur'),
+      stocksInitiaux: lire('stocks_initiaux'),
+      photosBouteilles: lire('inventaires_bouteilles'),
+      anneesPhotographiees
+    });
   },
 
   /**

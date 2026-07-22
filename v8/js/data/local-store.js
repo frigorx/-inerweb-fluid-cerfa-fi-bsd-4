@@ -135,6 +135,9 @@ export function creerLocalStore(transport) {
 
     getBilan(annee) { return lire('getBilan', { annee }); },
     getBalanceMatiere(annee) { return lire('getBalanceMatiere', { annee }); },
+    getDeclarationAnnuelle(annee) {
+      return lire('getDeclarationAnnuelle', { annee });
+    },
     calculerProchainControle(machineId, dateControle) {
       return lire('calculerProchainControle', { machineId, dateControle });
     },

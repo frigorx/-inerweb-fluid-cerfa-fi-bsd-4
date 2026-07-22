@@ -4,7 +4,7 @@
 // Exécution : node v8/js/data/test-contrat.mjs [demo]
 //
 // Cette suite vérifie qu'une implémentation respecte contrat.js :
-// surface (90 méthodes, 2 propriétés, rien de plus), sémantique
+// surface (91 méthodes, 2 propriétés, rien de plus), sémantique
 // (formes de retour, garde-fous, messages français, effets stocks,
 // hash chaîné, machine à états des mouvements), et invariants
 // transverses (copies, notifications, journal append-only).
@@ -119,7 +119,7 @@ verifier('les propriétés du contrat sont présentes',
   surface.proprietesManquantes.length === 0,
   `manquent : ${surface.proprietesManquantes.join(', ')}`);
 verifier('le contrat compte bien 87 méthodes',
-  Object.keys(METHODES_CONTRAT).length === 90,
+  Object.keys(METHODES_CONTRAT).length === 91,
   `compté : ${Object.keys(METHODES_CONTRAT).length}`);
 verifier('modeLabel est une chaîne non vide',
   typeof store.modeLabel === 'string' && store.modeLabel.length > 0);
@@ -1054,6 +1054,23 @@ await verifierRejet('createCession refuse une masse supérieure au contenu',
     store.createCession({ bouteilleId: bDechetCession.id,
       destinataireType: 'DISTRIBUTEUR', destinataireRaisonSociale: 'X',
       masseKg: 1 }), 'BSFF');
+}
+
+// P0-8 (DA-5) : getDeclarationAnnuelle — câblage store → module pur (11 rubriques)
+{
+  const ANNEE_DECL = Number((await store.getCessions())[0].date.slice(0, 4));
+  const declaration = await store.getDeclarationAnnuelle(ANNEE_DECL);
+  verifier('getDeclarationAnnuelle : structure { annee, lignes, anomalies, complet }',
+    declaration.annee === ANNEE_DECL && Array.isArray(declaration.lignes)
+    && Array.isArray(declaration.anomalies)
+    && typeof declaration.complet === 'boolean');
+  const ligneFluide = declaration.lignes.find((l) => l.fluide === FLUIDE);
+  verifier('getDeclarationAnnuelle : la cession créée alimente la rubrique 10',
+    ligneFluide && ligneFluide.cessionsKg >= 3 - 1e-9);
+  verifier('getDeclarationAnnuelle : chaque ligne porte les rubriques attendues',
+    ligneFluide && 'acquisitionsKg' in ligneFluide
+    && 'chargesNeufKg' in ligneFluide && 'destructionKg' in ligneFluide
+    && 'stockFinDechetKg' in ligneFluide);
 }
 
 const b1Retournee = await store.retournerFournisseur(b1.id, 'Testeur Contrat');

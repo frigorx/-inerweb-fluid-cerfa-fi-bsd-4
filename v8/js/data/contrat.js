@@ -305,6 +305,8 @@ export const METHODES_CONTRAT = {
   // --- balance matière -----------------------------------------------
   getBalanceMatiere: { genre: 'lecture',
     description: 'La balance matière annuelle par fluide (stock théorique vs réel, écart, justification).' },
+  getDeclarationAnnuelle: { genre: 'lecture',
+    description: 'La déclaration annuelle réglementaire par fluide (11 rubriques : acquisitions, charges neuf/maintenance, récupérations hors-usage/maintenance, remises distributeur, recyclage propre, régénération, destruction, cessions, stocks neuf/déchet au 1er jan/31 déc) + anomalies + « complet ».' },
   saisirInventaire: { genre: 'mutation',
     description: 'Saisit l’inventaire physique (upsert par année et fluide) ET refige la PHOTOGRAPHIE nominative de l’année ; retourne la balance recalculée.' },
   justifierEcart: { genre: 'mutation',
