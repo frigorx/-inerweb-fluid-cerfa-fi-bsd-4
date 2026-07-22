@@ -350,6 +350,9 @@ export function creerLocalStore(transport) {
     createBsff(donneesBsff) {
       return muter('createBsff', { donneesBsff });
     },
+    attesterIssueBsff(bsffId, attestation) {
+      return muter('attesterIssueBsff', { bsffId, attestation });
+    },
     retournerFournisseur(id, par) {
       return muter('retournerFournisseur', { id, par });
     },

@@ -109,6 +109,11 @@ const TOLERANCE_CHARGE_RESIDUELLE_KG = 0.05;
 const TYPES_MOUVEMENT = ['CHARGE_APPOINT', 'MISE_EN_SERVICE',
   'RECUPERATION_MAINTENANCE', 'RECUPERATION_DEMANTELEMENT', 'TRANSFERT',
   'CONTROLE_PERIODIQUE', 'CONTROLE_NON_PERIODIQUE'];
+// P0-8 — miroirs des grilles du contrat (issue BSFF, destinataires cession).
+const ISSUES_TRAITEMENT_BSFF =
+  ['RECYCLAGE', 'REGENERATION', 'DESTRUCTION', 'AUTRE'];
+const DESTINATAIRES_CESSION =
+  ['OPERATEUR_ATTESTE', 'DISTRIBUTEUR', 'PRODUCTEUR'];
 
 /** Rôles autorisés à VALIDER une écriture (jamais un élève). */
 const ROLES_VALIDEURS = ['REFERENT', 'ENSEIGNANT', 'ADMIN'];
@@ -336,6 +341,7 @@ const ROLES_MUTATION = {
   saisirInventaire: VALIDEUR,
   acquitterAlerte: VALIDEUR,
   createBsff: VALIDEUR,
+  attesterIssueBsff: VALIDEUR,
   retournerFournisseur: VALIDEUR,
   deciderFluideRecupere: VALIDEUR,
 
@@ -3666,6 +3672,43 @@ const HANDLERS = {
   getBsff() {
     const lignes = db.all('SELECT * FROM bsff ORDER BY date_remise DESC');
     return lignes.map((ligne) => mapping.versFront('bsff', ligne));
+  },
+
+  /**
+   * P0-8 (DA-2) : atteste l'ISSUE de traitement final d'un BSFF émis.
+   * Miroir EXACT du DemoStore (grille, gardes, journal). Corrige BSFF ≠
+   * destruction : seule une issue DESTRUCTION alimentera la rubrique 9.
+   */
+  attesterIssueBsff(params) {
+    const { bsffId } = params;
+    const a = params.attestation || {};
+    const existe = db.get('SELECT id FROM bsff WHERE id = ?', [bsffId]);
+    if (!existe) throw new Error(`BSFF introuvable : ${bsffId}.`);
+    if (!ISSUES_TRAITEMENT_BSFF.includes(a.issueTraitement)) {
+      throw new Error(
+        `Issue de traitement inconnue : ${a.issueTraitement} ` +
+        `(attendu : ${ISSUES_TRAITEMENT_BSFF.join(', ')}).`);
+    }
+    const installation = String(a.installationTraitement ?? '').trim();
+    if ((a.issueTraitement === 'REGENERATION' ||
+         a.issueTraitement === 'DESTRUCTION') && !installation) {
+      throw new Error(
+        'Installation de traitement obligatoire pour une régénération ou ' +
+        'une destruction (coordonnées de l’installation exigées).');
+    }
+    return muter(() => {
+      const bsff = lireBsff(bsffId);
+      majParId('bsff', bsffId, {
+        issue_traitement: a.issueTraitement,
+        installation_traitement: installation || null,
+        certificat_traitement: a.certificatTraitement ?? null,
+        date_traitement: a.dateTraitement ?? aujourdHui()
+      });
+      journaliser(a.operateur, 'ISSUE_BSFF', bsff.bouteilleCode,
+        `BSFF ${bsff.numeroBsff} · traitement final : ${a.issueTraitement}` +
+        (installation ? ` (${installation})` : ''));
+      return lireBsff(bsffId);
+    });
   },
 
   /**

@@ -106,6 +106,13 @@ const CATEGORIES_ATTESTATION = ['I', 'II', 'III', 'IV'];
 /** Décisions possibles sur un fluide récupéré (SPEC §5.8). */
 const DECISIONS_FLUIDE = ['REUTILISABLE', 'A_ANALYSER', 'DECHET'];
 
+/** P0-8 — issues de traitement final d'un BSFF (miroir contrat.js). */
+const ISSUES_TRAITEMENT_BSFF =
+  ['RECYCLAGE', 'REGENERATION', 'DESTRUCTION', 'AUTRE'];
+/** P0-8 — destinataires attestés d'une cession (miroir contrat.js). */
+const DESTINATAIRES_CESSION =
+  ['OPERATEUR_ATTESTE', 'DISTRIBUTEUR', 'PRODUCTEUR'];
+
 /** CM-3 — Partition état↔type de la bouteille. Le fluide ACHETÉ (vierge,
  *  recyclé ou régénéré certifié) est porté par une bouteille NEUVE ; le
  *  fluide des machines (récupéré, mélangé, déchet, douteux) par une
@@ -4864,6 +4871,42 @@ export function creerDemoStore() {
       const liste = copier(donnees.bsff);
       liste.sort((a, b) => b.dateRemise.localeCompare(a.dateRemise));
       return liste;
+    },
+
+    /**
+     * P0-8 (DA-2) : atteste l'ISSUE de traitement final d'un BSFF déjà émis.
+     * Un BSFF ne prouve que la REMISE du déchet ; l'opérateur atteste ensuite
+     * la nature du traitement en renvoyant son certificat. Seule DESTRUCTION
+     * alimente la rubrique 9 de la déclaration ; REGENERATION → rubrique 8 ; un
+     * BSFF sans issue reste « traitement final non attesté » (jamais compté en
+     * destruction — correction du défaut d'audit BSFF ≠ destruction).
+     * Ré-attestation autorisée (correction) : la BSFF n'est pas WORM.
+     */
+    async attesterIssueBsff(bsffId, attestation) {
+      const a = attestation || {};
+      const bsff = donnees.bsff.find((b) => b.id === bsffId);
+      if (!bsff) throw new Error(`BSFF introuvable : ${bsffId}.`);
+      if (!ISSUES_TRAITEMENT_BSFF.includes(a.issueTraitement)) {
+        throw new Error(
+          `Issue de traitement inconnue : ${a.issueTraitement} ` +
+          `(attendu : ${ISSUES_TRAITEMENT_BSFF.join(', ')}).`);
+      }
+      const installation = String(a.installationTraitement ?? '').trim();
+      if ((a.issueTraitement === 'REGENERATION' ||
+           a.issueTraitement === 'DESTRUCTION') && !installation) {
+        throw new Error(
+          'Installation de traitement obligatoire pour une régénération ou ' +
+          'une destruction (coordonnées de l’installation exigées).');
+      }
+      bsff.issueTraitement = a.issueTraitement;
+      bsff.installationTraitement = installation || null;
+      bsff.certificatTraitement = a.certificatTraitement ?? null;
+      bsff.dateTraitement = a.dateTraitement ?? aujourdHui();
+      journaliser(a.operateur, 'ISSUE_BSFF', bsff.bouteilleCode,
+        `BSFF ${bsff.numeroBsff} · traitement final : ${bsff.issueTraitement}` +
+        (installation ? ` (${installation})` : ''));
+      persisterEtNotifier();
+      return copier(bsff);
     },
 
     /**

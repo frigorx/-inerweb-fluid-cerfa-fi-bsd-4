@@ -4,7 +4,7 @@
 // Exécution : node v8/js/data/test-contrat.mjs [demo]
 //
 // Cette suite vérifie qu'une implémentation respecte contrat.js :
-// surface (87 méthodes, 2 propriétés, rien de plus), sémantique
+// surface (88 méthodes, 2 propriétés, rien de plus), sémantique
 // (formes de retour, garde-fous, messages français, effets stocks,
 // hash chaîné, machine à états des mouvements), et invariants
 // transverses (copies, notifications, journal append-only).
@@ -119,7 +119,7 @@ verifier('les propriétés du contrat sont présentes',
   surface.proprietesManquantes.length === 0,
   `manquent : ${surface.proprietesManquantes.join(', ')}`);
 verifier('le contrat compte bien 87 méthodes',
-  Object.keys(METHODES_CONTRAT).length === 87,
+  Object.keys(METHODES_CONTRAT).length === 88,
   `compté : ${Object.keys(METHODES_CONTRAT).length}`);
 verifier('modeLabel est une chaîne non vide',
   typeof store.modeLabel === 'string' && store.modeLabel.length > 0);
@@ -975,6 +975,42 @@ verifier('getBsff trace les deux bordereaux',
     String(x.numeroBsff).startsWith(PREFIXE_BSFF)).length === 2);
 verifier('le numéro de BSFF est reporté sur la bouteille',
   (await store.getBouteilles()).find((b) => b.id === bR.id).numBsff?.length > 0);
+
+// P0-8 (DA-2) : issue de traitement final d'un BSFF (corrige BSFF ≠ destruction)
+await verifierRejet('attesterIssueBsff refuse un BSFF introuvable',
+  store.attesterIssueBsff('BSFF-INEXISTANT',
+    { issueTraitement: 'DESTRUCTION', installationTraitement: 'X' }),
+  'introuvable');
+await verifierRejet('attesterIssueBsff refuse une issue hors grille',
+  store.attesterIssueBsff(bsff1.id,
+    { issueTraitement: 'BROYAGE', installationTraitement: 'X' }));
+await verifierRejet('attesterIssueBsff exige l’installation pour une destruction',
+  store.attesterIssueBsff(bsff1.id, { issueTraitement: 'DESTRUCTION' }),
+  'Installation');
+await verifierRejet('attesterIssueBsff exige l’installation pour une régénération',
+  store.attesterIssueBsff(bsff1.id, { issueTraitement: 'REGENERATION' }),
+  'Installation');
+{
+  const atteste = await store.attesterIssueBsff(bsff1.id, {
+    issueTraitement: 'DESTRUCTION',
+    installationTraitement: 'Incinérateur agréé de Fos',
+    certificatTraitement: 'CERT-2026-42', operateur: 'Testeur Contrat'
+  });
+  verifier('attesterIssueBsff pose issue + installation + certificat + date',
+    atteste.issueTraitement === 'DESTRUCTION'
+    && atteste.installationTraitement === 'Incinérateur agréé de Fos'
+    && atteste.certificatTraitement === 'CERT-2026-42'
+    && DATE_JOUR.test(atteste.dateTraitement));
+  const relu = (await store.getBsff()).find((x) => x.id === bsff1.id);
+  verifier('l’issue attestée est persistée et relue par getBsff',
+    relu && relu.issueTraitement === 'DESTRUCTION'
+    && relu.installationTraitement === 'Incinérateur agréé de Fos');
+  const reAtteste = await store.attesterIssueBsff(bsff1.id,
+    { issueTraitement: 'AUTRE', operateur: 'Testeur Contrat' });
+  verifier('ré-attestation autorisée (AUTRE sans installation, correction)',
+    reAtteste.issueTraitement === 'AUTRE'
+    && reAtteste.installationTraitement === null);
+}
 
 const b1Retournee = await store.retournerFournisseur(b1.id, 'Testeur Contrat');
 verifier('retournerFournisseur vide la bouteille et la sort du stock',

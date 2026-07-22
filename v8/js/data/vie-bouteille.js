@@ -38,7 +38,9 @@ const ACTIONS_JOURNAL = {
   PESEE_BOUTEILLE: 'Pesée',
   DECISION_FLUIDE: 'Décision sur le fluide récupéré',
   SORTIE_BSFF: 'Sortie déchet (BSFF)',
-  RETOUR_FOURNISSEUR: 'Retour au fournisseur'
+  ISSUE_BSFF: 'Traitement final attesté (BSFF)',
+  RETOUR_FOURNISSEUR: 'Retour au fournisseur',
+  CESSION: 'Cession à un tiers'
 };
 
 /**
