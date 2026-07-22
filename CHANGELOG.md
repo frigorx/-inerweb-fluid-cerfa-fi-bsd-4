@@ -2,6 +2,35 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧱 CM-3 (cycle matière) — fluide acheté régénéré/recyclé + cohérence état↔type (22/07)
+- **Constat en ouvrant la brique : l'essentiel était DÉJÀ en place** — le schéma
+  accepte `RECYCLE`/`REGENERE` (CHECK `etat_fluide`, aucune migration), le CERFA les
+  mappe déjà (QB recyclé / QC régénéré, generateur.js), le certificat fournisseur en
+  pièce jointe est déjà supporté (entité `BOUTEILLE` + catégorie `CERTIFICAT`/`BL`), et
+  la modale de saisie propose déjà les quatre états. **Le seul trou était applicatif** :
+  aucune garde de cohérence entre le type de bouteille et l'état du fluide.
+- **Garde de partition posée (`verifierCoherenceEtatBouteille`, miroir littéral dans les
+  DEUX stores)** : une bouteille **NEUVE** porte du fluide **acheté**
+  (`VIERGE`/`RECYCLE`/`REGENERE`) ; une bouteille de **RÉCUPÉRATION** porte du fluide des
+  machines (`RECUPERE`/`MELANGE`/`DECHET`/`DOUTEUX`). **AUCUNE requalification interne** :
+  une bouteille de récupération ne « devient » jamais recyclée ni régénérée — le régénéré
+  s'**ACHÈTE** certifié fournisseur. Branchée à `createBouteille` (état effectif validé)
+  et à `updateBouteille` (uniquement si le patch touche le type ou l'état — jamais de
+  rejet rétroactif de l'existant). Généralise la garde `MELANGE` (R2), dont le message
+  spécifique et pédagogique est conservé.
+- **On ne verrouille PAS l'état d'une bouteille NEUVE** (conforme au plan) : `VIERGE` →
+  `REGENERE` reste autorisé ; c'est la promotion **interne** d'un récupéré qui est refusée.
+- **Suite doublée `test-coherence-etat-bouteille.mjs`** (15 vérifs × 2 stores) : NEUVE
+  régénérée/recyclée saisissable ; RÉCUPÉRATION → recyclé/régénéré refusé à la création ET
+  à la mise à jour ; NEUVE → récupéré/mélange refusé ; certificat fournisseur attaché et
+  listé sur la bouteille NEUVE régénérée ; charge (mise en service) depuis cette bouteille
+  validée sans alerte de réemploi. **Parité stricte prouvée par diff** (fonction +
+  constantes identiques). **TOUT VERT — 90 exécutions.**
+- **Reste (CM-4, surfaces — nouveau chat)** : bandeau « au moment de la charge » dans le
+  wizard, CERFA « forcé manuellement », durcissement du mode OFFICIEL (rectification
+  exigée), et vues (filtrer les états proposés selon le type, upload du certificat sur la
+  fiche bouteille, lot d'origine/avoir par machine visibles).
+
 ### 🧱 CM-2 (cycle matière) — signalement de la réintroduction au-delà du récupéré (20/07)
 - **Règle de conservation appliquée, en CONSEIL (jamais de blocage sec)** : réintroduire
   dans une machine M plus de fluide que ce qui en a été récupéré (l'avoir d'origine de M

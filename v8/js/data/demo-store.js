@@ -103,6 +103,36 @@ const CATEGORIES_ATTESTATION = ['I', 'II', 'III', 'IV'];
 /** Décisions possibles sur un fluide récupéré (SPEC §5.8). */
 const DECISIONS_FLUIDE = ['REUTILISABLE', 'A_ANALYSER', 'DECHET'];
 
+/** CM-3 — Partition état↔type de la bouteille. Le fluide ACHETÉ (vierge,
+ *  recyclé ou régénéré certifié) est porté par une bouteille NEUVE ; le
+ *  fluide des machines (récupéré, mélangé, déchet, douteux) par une
+ *  bouteille de RÉCUPÉRATION. AUCUNE requalification interne : une bouteille
+ *  de récupération ne « devient » jamais recyclée ou régénérée — le régénéré
+ *  s’ACHÈTE certifié fournisseur. Généralise la garde MÉLANGE (R2). */
+const ETATS_FLUIDE_ACHAT = ['VIERGE', 'RECYCLE', 'REGENERE'];
+const ETATS_FLUIDE_RECUPERATION = ['RECUPERE', 'MELANGE', 'DECHET', 'DOUTEUX'];
+
+function verifierCoherenceEtatBouteille(type, etatFluide) {
+  // Garde MÉLANGE historique (R2) — message spécifique conservé.
+  if (etatFluide === 'MELANGE' && type !== 'RECUPERATION') {
+    throw new Error(
+      'L’état MÉLANGE est réservé aux bouteilles de type RÉCUPÉRATION.');
+  }
+  if (type === 'NEUVE' && !ETATS_FLUIDE_ACHAT.includes(etatFluide)) {
+    throw new Error(
+      'Une bouteille NEUVE porte du fluide acheté : état VIERGE, RECYCLÉ ou '
+      + 'RÉGÉNÉRÉ uniquement.');
+  }
+  if (type === 'RECUPERATION'
+      && !ETATS_FLUIDE_RECUPERATION.includes(etatFluide)) {
+    throw new Error(
+      'Une bouteille de RÉCUPÉRATION porte du fluide récupéré (RÉCUPÉRÉ, '
+      + 'MÉLANGE, DÉCHET ou DOUTEUX). Le fluide RECYCLÉ ou RÉGÉNÉRÉ s’ACHÈTE '
+      + 'certifié fournisseur (bouteille NEUVE) : pas de requalification '
+      + 'interne.');
+  }
+}
+
 /** Types de mouvements admis par le registre (P7-a : + contrôles autonomes). */
 const TYPES_MOUVEMENT = [
   'CHARGE_APPOINT',
@@ -2700,13 +2730,11 @@ export function creerDemoStore() {
       if (d.type !== 'NEUVE' && d.type !== 'RECUPERATION') {
         throw new Error('Type de bouteille obligatoire : NEUVE ou RECUPERATION.');
       }
-      // R2 : etatFluide MELANGE réservé aux bouteilles de RÉCUPÉRATION
-      // (bouteille étiquetée au gaz majoritaire, croisement de fluides
-      // relâché UNIQUEMENT vers elle — cf. verserDansBouteille).
-      if (d.etatFluide === 'MELANGE' && d.type !== 'RECUPERATION') {
-        throw new Error(
-          'L’état MÉLANGE est réservé aux bouteilles de type RÉCUPÉRATION.');
-      }
+      // CM-3 : cohérence état↔type (généralise la garde MÉLANGE — R2). On
+      // valide l'état EFFECTIF (défaut appliqué), pas la seule valeur brute.
+      const etatFluide = d.etatFluide
+        ?? (d.type === 'RECUPERATION' ? 'RECUPERE' : 'VIERGE');
+      verifierCoherenceEtatBouteille(d.type, etatFluide);
       const tare = Number(d.tareKg);
       const contenance = Number(d.contenanceMaxKg);
       if (!Number.isFinite(tare) || tare < 0) {
@@ -2736,7 +2764,7 @@ export function creerDemoStore() {
         numeroReel: d.numeroReel ?? null,
         type: d.type,
         fluide: d.fluide,
-        etatFluide: d.etatFluide ?? (d.type === 'RECUPERATION' ? 'RECUPERE' : 'VIERGE'),
+        etatFluide,
         tareKg: tare,
         masseBruteKg: arrondir(brute),
         masseNetteKg: nette,
@@ -2775,6 +2803,15 @@ export function creerDemoStore() {
       const d = donneesBouteille || {};
       if (d.fluide !== undefined && !indexFluides().has(d.fluide)) {
         throw new Error(`Fluide inconnu au référentiel : ${d.fluide}.`);
+      }
+      // CM-3 : si le patch touche le type OU l'état, valider la cohérence du
+      // couple (type, état) APRÈS patch — jamais de requalification interne
+      // d'un récupéré en recyclé/régénéré. Un patch qui ne touche ni l'un ni
+      // l'autre ne revalide pas l'existant (pas de rejet rétroactif).
+      if (d.type !== undefined || d.etatFluide !== undefined) {
+        verifierCoherenceEtatBouteille(
+          d.type !== undefined ? d.type : bouteille.type,
+          d.etatFluide !== undefined ? d.etatFluide : bouteille.etatFluide);
       }
       const CHAMPS = ['numeroReel', 'type', 'fluide', 'etatFluide', 'tareKg',
         'masseBruteKg', 'contenanceMaxKg', 'proprietaire', 'lot',
