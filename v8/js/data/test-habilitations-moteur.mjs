@@ -161,6 +161,34 @@ verifier('verdict d’opération : le libellé dit « charge de l’installation
     v({ habilitations: [H('2025', 'D')], operation: 'RECUPERATION_MAINTENANCE',
       familleFluide: 'HFC', chargeKg: 2 }).conseil));
 
+// --- Frontières STRICTES de charge (P0-5, audit 20/07 §4.3) -------
+// Le texte dit charge « INFÉRIEURE À » 3 kg (6 kg hermétique scellé) :
+// la valeur pile est REFUSÉE. Ces cas manquaient — le bug de comparateurs
+// (`<=`/`>` au lieu de `<`/`>=`) vivait exactement hors de la couverture.
+verifier('A2 · appoint · 2,999 kg → CONSEIL (strictement sous la limite)',
+  grav({ habilitations: [H('2025', 'A2')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 2.999 }) === 'CONSEIL');
+verifier('A2 · appoint · 3 kg PILE → REFUS (« inférieure à 3 kg »)',
+  grav({ habilitations: [H('2025', 'A2')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 3 }) === 'REFUS');
+verifier('A2 · hermétique scellé · 5,999 kg → CONSEIL',
+  grav({ habilitations: [H('2025', 'A2')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 5.999, hermetiqueScelle: true }) === 'CONSEIL');
+verifier('A2 · hermétique scellé · 6 kg PILE → REFUS (« inférieure à 6 kg »)',
+  grav({ habilitations: [H('2025', 'A2')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 6, hermetiqueScelle: true }) === 'REFUS');
+verifier('D · récupération · 3 kg PILE → REFUS (frontière stricte)',
+  grav({ habilitations: [H('2025', 'D')], operation: 'RECUPERATION_MAINTENANCE', familleFluide: 'HFC', chargeKg: 3 }) === 'REFUS');
+verifier('synthèse : D sur une installation de 3 kg PILE → REFUS (même frontière)',
+  grav({ habilitations: [H('2025', 'D')], operation: null, familleFluide: 'HFC', chargeKg: 3 }) === 'REFUS');
+
+// --- Contrôles P7 dans MAP_OPERATION (P0-5, trou corrigé) ---------
+// Les types CONTROLE_PERIODIQUE / CONTROLE_NON_PERIODIQUE retombaient en
+// MAINTENANCE (repli prudent) : un cat. E se voyait refuser un contrôle
+// d'étanchéité — sa seule prérogative.
+verifier('operationNormalisee(CONTROLE_PERIODIQUE) = ETANCHEITE',
+  operationNormalisee('CONTROLE_PERIODIQUE') === 'ETANCHEITE');
+verifier('operationNormalisee(CONTROLE_NON_PERIODIQUE) = ETANCHEITE',
+  operationNormalisee('CONTROLE_NON_PERIODIQUE') === 'ETANCHEITE');
+verifier('E · CONTROLE_PERIODIQUE · HFC → OK (le contrôleur contrôle)',
+  grav({ habilitations: [H('2025', 'E')], operation: 'CONTROLE_PERIODIQUE', familleFluide: 'HFC' }) === 'OK');
+
 // --- Identifiabilité (règle admin) ------------------------------
 verifier('identifiable : actif + 1 habilitation active → oui',
   estIntervenantIdentifiable({ actif: true }, [H('2025', 'A1')], []) === true);

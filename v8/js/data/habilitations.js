@@ -131,7 +131,11 @@ export function jetonsMentionsActives(lignes) {
     .map((m) => m.fluideMention);
 }
 
-/** Seuils de charge (§2 ; à reconfirmer sur pièce — non bloquant en conseil). */
+/**
+ * Seuils de charge (§2 ; à reconfirmer sur pièce). Le texte dit charge
+ * « INFÉRIEURE À » 3 kg (6 kg si hermétiquement scellé) : la limite est
+ * STRICTE — 3,000 kg pile est REFUSÉ (audit du 20/07/2026, §4.3).
+ */
 export const SEUIL_CHARGE_LIMITEE_KG = 3;
 export const SEUIL_CHARGE_HERMETIQUE_KG = 6;
 
@@ -145,6 +149,8 @@ const MAP_OPERATION = {
   TRANSFERT: 'RECUPERATION',
   CONTROLE: 'ETANCHEITE',
   CONTROLE_ETANCHEITE: 'ETANCHEITE',
+  CONTROLE_PERIODIQUE: 'ETANCHEITE',
+  CONTROLE_NON_PERIODIQUE: 'ETANCHEITE',
   ETANCHEITE: 'ETANCHEITE',
   INSTALLATION: 'INSTALLATION',
   MAINTENANCE: 'MAINTENANCE',
@@ -308,7 +314,7 @@ export function verifierDroitIntervention({
   if (!op) {
     if (chargeKg === null || chargeKg === undefined) return synthese(profils);
     const dansLaLimite = profils.filter((pr) =>
-      pr.limiteKg === null || Number(chargeKg) <= pr.limiteKg);
+      pr.limiteKg === null || Number(chargeKg) < pr.limiteKg);
     if (dansLaLimite.length === 0) {
       const limite = Math.max(...profils.map((pr) => pr.limiteKg));
       return {
@@ -332,7 +338,7 @@ export function verifierDroitIntervention({
     const sansLimite = donneOp.some((pr) => pr.limiteKg === null);
     if (!sansLimite) {
       const limite = Math.max(...donneOp.map((pr) => pr.limiteKg));
-      if (Number(chargeKg) > limite) {
+      if (Number(chargeKg) >= limite) {
         return {
           autorise: false, gravite: 'REFUS',
           motif: `${cap(labelOp(op))} limitée à ${limite} kg`,
