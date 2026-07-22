@@ -5,6 +5,14 @@
 > un traitement recyclage/régénération prouvé ») était **FAUX** pour le réemploi en
 > maintenance. Ce plan repart de la règle métier réelle. Décisions §9 mineures
 > (je propose, Franck corrige). Rien n'est codé.
+>
+> **⭐ MISE À JOUR 22/07 — CM-3 FAIT ; règle de surcharge TRANCHÉE.** CM-3 (garde de
+> cohérence état↔type, commit `3264f5b`) est livrée. Franck a tranché la surcharge de
+> réemploi : **on AVERTIT, on ne BLOQUE JAMAIS — même en mode OFFICIEL** ; pas de
+> « forçage » à débloquer (rien n'est bloqué), le CERFA porte une **mention d'anomalie**.
+> Les mentions « forçable / forcé manuellement / rectification exigée en Officiel » des
+> §1, §4, §5, §9 ci-dessous sont **CADUQUES** : lire « surcharge SIGNALÉE, jamais bloquée,
+> mention d'anomalie au CERFA ».
 
 ## 0. Pourquoi cette refonte (le fondement a changé)
 
@@ -33,9 +41,10 @@ Le fluide qu'on peut charger dans une machine M vient de deux sources :
 
 Anomalies / interdits :
 - réintroduire dans M **plus que le lot d'origine M** disponible dans la bouteille →
-  **surcharge = anomalie** : signalée, **forçable** ; si forcée, le CERFA est marqué
-  **« forcé manuellement »** et une **erreur à rectifier** est enregistrée
-  (contre-écriture). Conseil en Formation ; en Officiel la rectification est exigée ;
+  **surcharge = anomalie** : **signalée, jamais bloquée** (bandeau au moment de la charge
+  + alerte `alr-reemploi-`), y compris en **Officiel** ; le CERFA porte une **mention
+  d'anomalie** (surcharge signalée). Rectification par contre-écriture possible mais **non
+  imposée** (décision Franck 22/07, cf. [[feedback_surcharge_reemploi_avertir]]) ;
 - **pas de production interne** de recyclé/régénéré : le récupéré reste `RECUPERE` →
   réemploi sur sa machine, sinon **déchet** (BSFF) ;
 - `MELANGE` / `DOUTEUX` / `DECHET` ne chargent jamais (déjà en place).
@@ -77,7 +86,7 @@ dans une bouteille B » s'en **dérive** directement, sans nouvelle structure :
 - **Saisie du fluide acheté** : une bouteille NEUVE `RECYCLE`/`REGENERE` reste autorisée,
   certificat/BL fournisseur en PJ.
 
-## 4. Règles à la charge (conseil Formation / anomalie forçable / Officiel exige rectif.)
+## 4. Règles à la charge (on avertit, on ne bloque jamais — tous modes)
 
 - Charge M depuis bouteille **NEUVE** (vierge/recyclé/régénéré acheté) : **libre**
   (croisement de fluide déjà vérifié).
@@ -85,7 +94,8 @@ dans une bouteille B » s'en **dérive** directement, sans nouvelle structure :
   `disponible_origine_M` (somme des lots de la bouteille dont l'origine est M) ; débit du
   lot de M.
   - dépassement → **anomalie surcharge** (on met du fluide qui ne vient pas de M dans M) :
-    signalée ; forçable ; si forcée → CERFA « forcé manuellement » + erreur à rectifier.
+    **signalée, JAMAIS bloquée** (bandeau en temps réel + alerte + mention CERFA), y
+    compris en Officiel. Décision Franck 22/07 ([[feedback_surcharge_reemploi_avertir]]).
 
 ## 5. CERFA
 
@@ -94,7 +104,8 @@ dans une bouteille B » s'en **dérive** directement, sans nouvelle structure :
 - Cadre matière : cases `QA` (vierge) / `QB` (recyclé) / `QC` (régénéré) déjà mappées sur
   `etat_fluide` de la source achetée. Le **réemploi du propre fluide de M** est neutre
   (fluide qui appartient déjà à l'installation) — traitement CERFA à préciser (§9).
-- Marque **« forcé manuellement »** + mention d'anomalie en cas de surcharge.
+- **Mention d'anomalie** (surcharge de réemploi signalée) en cas de surcharge — jamais un
+  blocage ni un « forçage » (rien n'est bloqué, décision Franck 22/07).
 
 ## 6. Ce qui TOMBE (vs plan v2 / RC)
 
@@ -144,8 +155,9 @@ dans une bouteille B » s'en **dérive** directement, sans nouvelle structure :
 - **`deciderFluideRecupere`** : on garde « à analyser » / « déchet » (utile pour orienter
   un récupéré douteux vers le déchet) ; « réutilisable » n'a plus de rôle bloquant (le
   réemploi est le défaut).
-- **Forçage de surcharge** : libre en Formation ; en Officiel, l'anomalie doit être
-  rectifiée avant clôture propre.
+- **Surcharge de réemploi** : **signalée, jamais bloquée, tous modes** (Formation ET
+  Officiel). Pas de rectification imposée (la contre-écriture reste possible à l'initiative
+  de l'opérateur). Décision Franck 22/07 ([[feedback_surcharge_reemploi_avertir]]).
 
 ## Point dur (§8, à traiter dans CM-1)
 
