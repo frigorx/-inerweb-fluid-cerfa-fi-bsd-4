@@ -162,5 +162,37 @@ console.log('--- C. bloc « fluide d’origine machine » ---');
 }
 
 // ============================================================
+// D. P1-2 (AF-6) — fluidesProposables : un fluide DÉSACTIVÉ sort des
+// listes de saisie, mais la valeur DÉJÀ ENREGISTRÉE est préservée (même
+// principe que la préservation des états hors liste ci-dessus : jamais
+// de substitution silencieuse d'une donnée réelle).
+// ============================================================
+console.log('--- D. fluidesProposables (fluides désactivés) ---');
+
+{
+  const { fluidesProposables } = await import('../core/utils.js');
+  const REFERENTIEL = [
+    { code: 'R-32', actif: true },
+    { code: 'R-22', actif: false },
+    { code: 'R-410A' } // fiche antérieure à la migration 31 : pas de champ
+  ];
+  const codes = (liste) => liste.map((f) => f.code).join(',');
+
+  verifier('un fluide désactivé n’est pas proposé à la saisie',
+    codes(fluidesProposables(REFERENTIEL)) === 'R-32,R-410A');
+  verifier('le fluide DÉJÀ ENREGISTRÉ sur la fiche reste proposé même désactivé',
+    codes(fluidesProposables(REFERENTIEL, 'R-22')) === 'R-32,R-22,R-410A');
+  verifier('l’ordre du référentiel est conservé',
+    codes(fluidesProposables(REFERENTIEL, 'R-22')).startsWith('R-32,R-22'));
+  verifier('un fluide sans champ actif (base antérieure) reste proposé',
+    fluidesProposables(REFERENTIEL).some((f) => f.code === 'R-410A'));
+  verifier('un code retenu inconnu du référentiel n’invente rien',
+    codes(fluidesProposables(REFERENTIEL, 'R-999')) === 'R-32,R-410A');
+  verifier('liste absente : aucun plantage, tableau vide',
+    fluidesProposables(null).length === 0
+    && fluidesProposables(undefined, 'R-22').length === 0);
+}
+
+// ============================================================
 console.log(`\n${nbOk} OK, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);

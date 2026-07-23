@@ -6,7 +6,7 @@
 // ============================================================
 
 import { modale, toast } from '../views/communs.js';
-import { esc, nombreFr } from '../core/utils.js';
+import { esc, nombreFr, fluidesProposables } from '../core/utils.js';
 import { familleDuType, codeSite, genererCodeMachine, normaliserCodeMachine, validerCodeMachine }
   from '../data/code-machine.js';
 
@@ -43,8 +43,12 @@ function optionsSimples(valeurs, valeurCourante) {
  * @returns {string} HTML
  */
 function gabaritFormulaire(machine, fluides, clients) {
+  // P1-2 : les fluides DÉSACTIVÉS ne sont plus proposés — sauf celui déjà
+  // enregistré sur cette machine (rouvrir une vieille machine au R-22 ne
+  // doit pas vider son fluide en silence).
+  const proposables = fluidesProposables(fluides, machine.fluide ?? null);
   const optionsFluides = '<option value="">— Sélectionner —</option>'
-    + fluides.map(function (f) {
+    + proposables.map(function (f) {
         const selectionne = f.code === machine.fluide ? ' selected' : '';
         return '<option value="' + esc(f.code) + '"' + selectionne + '>'
           + esc(f.code) + ' · ' + esc(f.famille) + '</option>';

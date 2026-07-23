@@ -268,6 +268,27 @@ export async function empreinteListeTriee(chaines) {
  * @param {?string} sha256Image Empreinte hexadécimale des octets de l'image.
  * @returns {string} JSON canonique (une ligne de la liste triée).
  */
+/**
+ * P1-2 — fluides PROPOSABLES à la saisie : les fluides ACTIFS du
+ * référentiel, plus, le cas échéant, celui déjà enregistré sur la fiche
+ * ouverte même s'il a été désactivé depuis.
+ *
+ * Sans cette exception, rouvrir une vieille machine au R-22 (fluide qu'on
+ * ne monte plus mais qu'on récupère encore) viderait son fluide en
+ * silence à l'enregistrement — une donnée réelle perdue par un effet de
+ * bord d'écran. Même principe que `preserverHorsListe` des états de
+ * bouteille (CM-4c) : on ne substitue JAMAIS une valeur enregistrée.
+ * L'ordre du référentiel est conservé.
+ *
+ * @param {Array<{code: string, actif?: boolean}>} fluides — getFluides()
+ * @param {string|null} [codeRetenu] — fluide déjà enregistré sur la fiche
+ * @returns {Array<object>} sous-ensemble proposable
+ */
+export function fluidesProposables(fluides, codeRetenu = null) {
+  return (fluides ?? []).filter((f) =>
+    f.actif !== false || (codeRetenu != null && f.code === codeRetenu));
+}
+
 export function chaineCanoniqueSignature(signature, sha256Image) {
   return JSON.stringify({
     role: signature.role ?? null,
