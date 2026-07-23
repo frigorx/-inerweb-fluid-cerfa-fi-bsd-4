@@ -16,7 +16,8 @@ import { teqCO2, fmtDate, fmtNombre, fmtKgSigne, genId, hasherEcriture,
   from '../core/utils.js';
 // IM-1 : fréquence réglementaire des contrôles d'étanchéité —
 // logique UNIQUE partagée avec le cadre 7 du CERFA (aucun doublon).
-import { evaluerControle } from './reglementation-fluides.js';
+import { evaluerControle, impactDepuisPrp, codeFluideNormalise,
+  verifierFicheFluide } from './reglementation-fluides.js';
 // CM-2 : avoir de fluide par machine d'origine (DÉRIVÉ des mouvements) —
 // signale une réintroduction au-delà du récupéré. Le serveur en tient un
 // MIROIR EXACT (api.js).
@@ -2278,12 +2279,16 @@ export function creerDemoStore() {
       // actif : miroir du DEFAULT 1 de la migration 31 — un fluide semé
       // ou persisté AVANT P1-2 n'a pas le champ ; il est ACTIF (backfill
       // conservateur). Seul un false explicite désactive.
+      // impact : DÉRIVÉ du PRP (P1-2, D3) — plus jamais un libellé figé
+      // dans les données. Avant, il n'existait que dans le monde démo :
+      // la colonne de la vue restait vide avec le serveur.
       const parc = machinesEnParc();
       return donnees.fluides.map((f) => completerFicheReglementaire({
         ...copier(f),
         classeSecurite: f.classeSecurite ??
           DEMO.fluides.find((r) => r.code === f.code)?.classeSecurite ?? null,
         actif: f.actif !== false,
+        impact: impactDepuisPrp(f.gwpAr4),
         nbMachines: parc.filter((m) => m.fluide === f.code).length
       }));
     },

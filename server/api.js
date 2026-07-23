@@ -763,6 +763,10 @@ const HANDLERS = {
         `SELECT count(*) AS n FROM machines
          WHERE fluide = ? AND statut <> 'DEMANTELEE'`, [ligne.code]);
       fluide.nbMachines = n;
+      // impact : DÉRIVÉ du PRP (P1-2, D3). Il n'existait auparavant que
+      // dans le monde démo — la colonne de la vue restait donc vide en
+      // mode serveur. Parité stricte avec le DemoStore.
+      fluide.impact = impactDepuisPrp(fluide.gwpAr4);
       return fluide;
     });
   },
@@ -6144,6 +6148,87 @@ function frequenceControleMois(fluideRef, chargeNominaleKg,
   if (niveau === 2) return detectionPermanente ? 12 : 6;
   if (niveau === 3) return detectionPermanente ? 6 : 3;
   return null;
+}
+
+// ============================================================
+// P1-2 — ADMINISTRATION DU RÉFÉRENTIEL DES FLUIDES.
+// MIROIR LITTÉRAL des règles pures de v8/js/data/reglementation-fluides.js
+// (CLASSES_SECURITE, STATUTS_REGLEMENTAIRES, CATEGORIES_CADRE7,
+// impactDepuisPrp, codeFluideNormalise, verifierFicheFluide). api.js étant
+// du CommonJS, la logique est réimplémentée ici À L'IDENTIQUE ; la parité,
+// verdicts ET messages, est prouvée par test-referentiel-fluides.mjs (joué
+// demo ET local). Ne jamais toucher un miroir sans l'autre.
+// ============================================================
+
+const CLASSES_SECURITE =
+  ['A1', 'A2L', 'A2', 'A3', 'B1', 'B2L', 'B2', 'B3'];
+const STATUTS_REGLEMENTAIRES = ['AUTORISE', 'RESTREINT', 'INTERDIT'];
+const CATEGORIES_CADRE7 = ['HFC', 'HFO', 'HCFC', 'AUCUNE'];
+
+/** Impact AFFICHÉ dérivé du PRP (D3) — bornes F-Gas 150/750/2500. */
+function impactDepuisPrp(prp) {
+  // ⚠️ Number(null) et Number('') valent 0 : un PRP ABSENT serait classé
+  // « FAIBLE », c'est-à-dire rassurant à tort. On les écarte d'abord.
+  if (prp === null || prp === undefined || prp === '') return null;
+  const valeur = Number(prp);
+  if (!Number.isFinite(valeur)) return null;
+  if (valeur < 150) return 'FAIBLE';
+  if (valeur < 750) return 'MODERE';
+  if (valeur < 2500) return 'ELEVE';
+  return 'TRES_ELEVE';
+}
+
+/** Code normalisé pour la COMPARAISON d'unicité (la casse saisie reste). */
+function codeFluideNormalise(code) {
+  return String(code ?? '').replace(/[\s.-]/g, '').toUpperCase();
+}
+
+/** Garde de saisie d'une fiche fluide COMPLÈTE — messages canoniques. */
+function verifierFicheFluide(fiche) {
+  const f = fiche || {};
+
+  if (!String(f.code ?? '').trim()) {
+    throw new Error('Code du fluide obligatoire (ex. R-449A).');
+  }
+  if (!String(f.famille ?? '').trim()) {
+    throw new Error('Famille du fluide obligatoire (ex. HFC, HFO, HC, CO2).');
+  }
+  const prp = Number(f.gwpAr4);
+  if (!Number.isFinite(prp) || prp < 0) {
+    throw new Error('PRP invalide : nombre positif ou nul attendu '
+      + '(le NH₃ vaut 0, le R-290 vaut 0,02).');
+  }
+  if (!CLASSES_SECURITE.includes(String(f.classeSecurite ?? ''))) {
+    throw new Error('Classe de sécurité inconnue : '
+      + `${CLASSES_SECURITE.join(', ')}.`);
+  }
+  const statut = f.statutReglementaire;
+  if (statut != null && String(statut) !== ''
+      && !STATUTS_REGLEMENTAIRES.includes(String(statut))) {
+    throw new Error('Statut réglementaire inconnu : '
+      + `${STATUTS_REGLEMENTAIRES.join(', ')}.`);
+  }
+  const categorie = f.categorieCadre7;
+  if (categorie == null || String(categorie) === '') return;
+  if (!CATEGORIES_CADRE7.includes(String(categorie))) {
+    throw new Error('Catégorie du cadre 7 inconnue : '
+      + `${CATEGORIES_CADRE7.join(', ')}.`);
+  }
+  const hfc = Boolean(f.contientHfc);
+  const hfo = Boolean(f.contientHfo);
+  if (categorie === 'HFC' && !hfc) {
+    throw new Error('Fiche incohérente : la catégorie HFC suppose un fluide '
+      + 'qui contient du HFC.');
+  }
+  if (categorie === 'HFO' && (!hfo || hfc)) {
+    throw new Error('Fiche incohérente : la catégorie HFO suppose un fluide '
+      + 'qui contient du HFO et pas de HFC — un mélange contenant du HFC '
+      + 'relève de la catégorie HFC (règle A).');
+  }
+  if ((categorie === 'HCFC' || categorie === 'AUCUNE') && (hfc || hfo)) {
+    throw new Error(`Fiche incohérente : la catégorie ${categorie} exclut `
+      + 'un fluide contenant du HFC ou du HFO.');
+  }
 }
 
 /**
