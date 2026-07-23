@@ -971,6 +971,40 @@ const HANDLERS = {
           cible: { vue: 'machines', id: m.id }
         });
       }
+
+      // P1-1 — SYSTÈME DE DÉTECTION de l'équipement (≠ détecteur portable
+      // de l'atelier, alerte « alr-outil- »). Miroir EXACT du DemoStore.
+      if (m.statut !== 'DEMANTELEE' && m.statut !== 'ARRETEE') {
+        const fluideRefM = lireFluide(m.fluide);
+        const detection = equipement.detectionEffective(m, jour);
+        // E2 — détection obligatoire au niveau haut et absente.
+        const niveauM = niveauCadre7(fluideRefM, m.chargeNominaleKg, jour);
+        if (equipement.detectionObligatoireDepuisNiveau(niveauM)
+            && !detection.declaree) {
+          alertes.push({
+            id: `alr-detection-obligatoire-${m.id}`,
+            niveau: 'CRITIQUE',
+            titre: 'Système de détection de fuites obligatoire absent',
+            detail: `${m.designation} · au-delà du seuil haut, un système `
+              + 'de détection permanente est exigé',
+            cible: { vue: 'machines', id: m.id }
+          });
+        }
+        // E1 — détection déclarée mais non vérifiée : l'allègement tombe.
+        if (detection.declaree && !detection.compte) {
+          alertes.push({
+            id: `alr-detection-verif-${m.id}`,
+            niveau: 'IMPORTANT',
+            titre: 'Détection de fuites à faire vérifier',
+            detail: `${m.designation} · `
+              + (detection.motif === 'JAMAIS_VERIFIEE'
+                ? 'aucune vérification enregistrée'
+                : `vérification échue le ${fmtDate(detection.echeance)}`)
+              + ' · la fréquence de contrôle n’est plus allégée',
+            cible: { vue: 'machines', id: m.id }
+          });
+        }
+      }
     }
 
     // 4. Outillage à échéance dépassée (statut recalculé)

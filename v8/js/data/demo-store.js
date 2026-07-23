@@ -2485,6 +2485,45 @@ export function creerDemoStore() {
             cible: { vue: 'machines', id: m.id }
           });
         }
+
+        // P1-1 — le SYSTÈME DE DÉTECTION de l'équipement (à ne pas
+        // confondre avec le détecteur portable de l'atelier, alerte
+        // « alr-outil- »). Une machine à l'arrêt ou démantelée n'est plus
+        // concernée : on n'invente pas d'obligation sur un équipement
+        // qui ne tourne pas.
+        if (m.statut !== 'DEMANTELEE' && m.statut !== 'ARRETEE') {
+          const fluideRefM = donnees.fluides.find((f) => f.code === m.fluide)
+            ?? null;
+          const detection = detectionEffective(m, jour);
+          // E2 — détection OBLIGATOIRE au niveau haut et absente : c'est
+          // une non-conformité réglementaire, pas un simple oubli.
+          if (detectionObligatoire(fluideRefM, m, jour) && !detection.declaree) {
+            alertes.push({
+              id: `alr-detection-obligatoire-${m.id}`,
+              niveau: 'CRITIQUE',
+              titre: 'Système de détection de fuites obligatoire absent',
+              detail: `${m.designation} · au-delà du seuil haut, un système `
+                + 'de détection permanente est exigé',
+              cible: { vue: 'machines', id: m.id }
+            });
+          }
+          // E1 — détection déclarée mais non vérifiée : l'allègement de
+          // fréquence est TOMBÉ. On le DIT, sinon la machine repasserait
+          // en silence à des contrôles deux fois plus fréquents.
+          if (detection.declaree && !detection.compte) {
+            alertes.push({
+              id: `alr-detection-verif-${m.id}`,
+              niveau: 'IMPORTANT',
+              titre: 'Détection de fuites à faire vérifier',
+              detail: `${m.designation} · `
+                + (detection.motif === 'JAMAIS_VERIFIEE'
+                  ? 'aucune vérification enregistrée'
+                  : `vérification échue le ${fmtDate(detection.echeance)}`)
+                + ' · la fréquence de contrôle n’est plus allégée',
+              cible: { vue: 'machines', id: m.id }
+            });
+          }
+        }
       }
 
       // 4. Outillage à échéance dépassée (statut recalculé)

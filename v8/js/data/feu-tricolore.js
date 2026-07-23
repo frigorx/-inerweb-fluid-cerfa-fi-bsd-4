@@ -41,8 +41,14 @@ export const DOMAINES = [
     // de formation complémentaire relèvent du même domaine.
     prefixes: ['alr-aptitude-', 'alr-habilitation-', 'alr-mention-'] },
   { id: 'controles', titre: 'Contrôles d’étanchéité et fuites',
-    detail: 'Échéances de contrôle des machines, fuites non résolues.',
-    vue: 'controles', prefixes: ['alr-controle-', 'alr-fuite-'] },
+    detail: 'Échéances de contrôle des machines, fuites non résolues, '
+      + 'systèmes de détection permanente.',
+    // P1-1 : le système de détection de l'équipement relève du même
+    // domaine que les contrôles — il commande leur fréquence (et il est
+    // obligatoire au-delà du seuil haut). À ne pas confondre avec le
+    // détecteur PORTABLE de l'atelier, qui reste dans « Outillage ».
+    vue: 'controles',
+    prefixes: ['alr-controle-', 'alr-fuite-', 'alr-detection-'] },
   { id: 'outillage', titre: 'Outillage réglementaire',
     detail: 'Balance, détecteur, station : vérifications et étalonnages.',
     vue: 'outillage', prefixes: ['alr-outil-'] },

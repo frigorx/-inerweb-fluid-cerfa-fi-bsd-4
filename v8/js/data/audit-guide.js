@@ -86,8 +86,11 @@ export const ETAPES = [
     detail: 'Échéances de contrôle par machine et dossiers de fuite : '
       + 'toute fuite doit être suivie jusqu’au recontrôle (dossier fermé).',
     aFaire: 'Traitez les contrôles en retard ; vérifiez que chaque '
-      + 'fuite a son dossier (bloc « Fuites » de la fiche machine).',
-    prefixes: ['alr-controle-', 'alr-fuite-']
+      + 'fuite a son dossier (bloc « Fuites » de la fiche machine) ; '
+      + 'faites vérifier les systèmes de détection permanente (leur '
+      + 'vérification vaut 12 mois — au-delà, la fréquence de contrôle '
+      + 'n’est plus allégée).',
+    prefixes: ['alr-controle-', 'alr-fuite-', 'alr-detection-']
   },
   {
     id: 'dechets', type: 'controle',
