@@ -6,9 +6,46 @@
 > **Session conseillée : Opus, effort très élevé** (chantier probatoire/réglementaire, briques
 > testées une à une). PAS d'ultracode hors point critique.
 >
-> **⭐⭐⭐⭐ ÉTAT AU 22/07 (nuit) — P0-8 DÉCLARATION ANNUELLE 11 RUBRIQUES TERMINÉ
-> (DA-1→DA-8, plan `docs/PLAN-P0-8-DECLARATION.md`, périmètre A validé Franck,
-> TOUT VERT 93 exéc., vérifié au NAVIGATEUR).** Le pseudo-bilan « déclaration
+> **⭐⭐⭐⭐⭐ PROCHAINE BRIQUE (décidée par Franck le 23/07) = P1-2 — ÉCRAN
+> D'ADMINISTRATION DU RÉFÉRENTIEL DES FLUIDES.** Besoin exprimé mot pour mot :
+> « on doit pouvoir accéder à un tableau où tous les gaz sont rentrés, en
+> ajouter de nouveaux ou modifier les informations » — Franck veut être
+> AUTONOME, ne plus dépendre d'une migration (donc d'un développeur) pour
+> corriger un PRP ou déclarer un fluide. C'était déjà demandé avant, et c'est
+> le constat P1-2 de l'audit (« référentiel trop court, 9 entrées, pas d'écran
+> d'administration, risque de repli PRP/famille pour un fluide hors table »).
+> **État de départ VÉRIFIÉ : le contrat n'a que `getFluides` (lecture) — AUCUNE
+> mutation fluide n'existe.** Tout est à créer : `createFluide`/`updateFluide`
+> (2 stores + parité + relais local-store + entrées METHODES_CONTRAT + bump du
+> compte dans test-contrat), écran d'édition, tests doublés.
+> ⚠️ **PIÈGES À NE PAS RE-PAYER (ils ont déjà coûté cher) :**
+> ① le **PRP est FIGÉ dans les écritures scellées** (`prpFige`, empreinte v2) —
+> modifier le référentiel ne doit JAMAIS réécrire une écriture passée ni
+> recalculer un CERFA déjà émis : le passé reste au PRP du jour de l'écriture ;
+> ② **une migration est IMMUABLE** — ne jamais faire évoluer une migration
+> existante pour changer une valeur (leçon du 16/07, migration 21 corrigée) ;
+> ③ la **fiche réglementaire par fluide** (migration 21 : `contient_hfc`,
+> `contient_hfo`, `categorie_cadre7`, `source_prp`) doit être saisissable —
+> c'est elle qui PRIME sur le libellé de famille dans le moteur ;
+> ④ le moteur `reglementation-fluides.js` (+ miroir serveur `api.js`) est la
+> SOURCE DE VÉRITÉ du cadre 7 : ne pas le contourner ;
+> ⑤ **un PRP ajusté localement ne doit jamais être réétiqueté « F-Gas III »**
+> (sa source reste honnêtement inconnue) et **l'import d'un export ancien ne
+> doit pas écraser la fiche actée** (constat de revue du 16/07, prouvé) ;
+> ⑥ un fluide **supprimé** ne doit pas casser les écritures qui le référencent
+> (préférer une désactivation à une suppression — à trancher au plan).
+>
+> **⭐ DÉCISION FRANCK 23/07 — T2 (R-455A) EST TRANCHÉ, LE VERROU TOMBE :** règle
+> générale = **en cas de valeurs concurrentes, retenir le PRP le PLUS ÉLEVÉ**
+> (principe de précaution : il déclenche les contrôles plus tôt). Pour le
+> R-455A cela **CONFIRME les 148 déjà en place** → **aucun changement de code**,
+> la table réglementaire est close sur ce point. La souplesse viendra de
+> l'écran d'administration ci-dessus, pas d'une nouvelle migration.
+>
+> **⭐⭐⭐⭐ ÉTAT AU 23/07 — P0-8 DÉCLARATION ANNUELLE 11 RUBRIQUES ✅ FUSIONNÉ
+> (PR #3, merge `102acf4`, DA-1→DA-8, plan `docs/PLAN-P0-8-DECLARATION.md`,
+> périmètre A validé Franck, main TOUT VERT 93 exéc., vérifié au NAVIGATEUR).
+> ⭐ LES 8 PREMIERS P0 SONT SOLDÉS CÔTÉ CODE — il ne reste que P0-9 (HORS code).** Le pseudo-bilan « déclaration
 > ADEME » (incomplet, `cessions_kg=0`, BSFF compté en destruction) est remplacé
 > par la déclaration réglementaire de l'arrêté du 21/11/2025. Migrations 28
 > (`bsff.issue_traitement`) / 29 (table `cessions`) / 30 (vue `bilan_matiere`
