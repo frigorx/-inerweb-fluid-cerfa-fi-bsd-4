@@ -331,6 +331,7 @@ const ROLES_MUTATION = {
   // réglementaires de l'établissement : ce n'est pas de la saisie
   // courante, et un élève n'y touche dans aucun scénario.
   createFluide: REFERENT_ADMIN,
+  updateFluide: REFERENT_ADMIN,
   updateEtablissement: VALIDEUR,
   createAuditOrganisme: VALIDEUR,
   createNonConformite: VALIDEUR,
@@ -1872,6 +1873,69 @@ const HANDLERS = {
         `PRP ${fluide.gwpAr4} · ${fluide.famille} · ${fluide.classeSecurite}`
         + (fluide.sourcePrp ? ` · source ${fluide.sourcePrp}` : ''));
       return ficheFluideComplete(fluide.code);
+    });
+  },
+
+  updateFluide(params) {
+    const code = params.code;
+    const fluide = lireFluide(code);
+    if (!fluide) {
+      throw new Error(`Fluide introuvable au référentiel : ${code}.`);
+    }
+    const d = params.donneesFluide || {};
+    // Le CODE est FIGÉ : il est la clé étrangère de huit tables, dont des
+    // écritures scellées. Le renommer les briserait. Corriger une faute de
+    // frappe = créer le bon code puis désactiver le mauvais.
+    if (d.code !== undefined && String(d.code).trim() !== code) {
+      throw new Error('Le code d’un fluide ne se modifie pas : il est '
+        + 'référencé par les machines, les bouteilles et les écritures '
+        + 'scellées. Créez le bon code, puis désactivez celui-ci.');
+    }
+    // D4 — dès que le PRP change, la SOURCE doit être saisie explicitement
+    // (miroir du DemoStore) : une valeur ajustée localement ne garde jamais
+    // l'étiquette officielle de l'ancienne.
+    const prpChange = d.gwpAr4 !== undefined
+      && Number(d.gwpAr4) !== Number(fluide.gwpAr4);
+    if (prpChange && (d.sourcePrp === undefined
+        || String(d.sourcePrp ?? '').trim() === '')) {
+      throw new Error('PRP modifié : la source du PRP doit être saisie '
+        + '(elle décrit la valeur retenue — une valeur ajustée localement '
+        + 'ne garde jamais l’étiquette d’une source officielle).');
+    }
+    const texteOuNull = (v) => (v !== undefined && v !== null
+      && String(v).trim() !== '' ? String(v).trim() : null);
+    const CHAMPS_TEXTE = ['famille', 'classeSecurite', 'statutReglementaire',
+      'commentaire', 'categorieCadre7', 'sourcePrp'];
+    const patch = {};
+    for (const champ of CHAMPS_TEXTE) {
+      if (d[champ] !== undefined) patch[champ] = texteOuNull(d[champ]);
+    }
+    if (d.gwpAr4 !== undefined) patch.gwpAr4 = Number(d.gwpAr4);
+    for (const champ of ['contientHfc', 'contientHfo']) {
+      if (d[champ] !== undefined) {
+        patch[champ] = d[champ] === null ? null : Boolean(d[champ]);
+      }
+    }
+    if (d.actif !== undefined) patch.actif = Boolean(d.actif);
+    // La fiche est vérifiée APRÈS fusion : une modification partielle ne
+    // doit pas pouvoir rendre l'ensemble incohérent.
+    verifierFicheFluide({ ...fluide, ...patch });
+    const modifies = Object.keys(patch);
+    return muter(() => {
+      if (modifies.length > 0) {
+        const ligne = mapping.versSql('fluides', patch);
+        const colonnes = Object.keys(ligne);
+        db.run(
+          `UPDATE fluides SET ${colonnes.map((c) => `${c} = ?`).join(', ')} `
+          + 'WHERE code = ?',
+          [...colonnes.map((c) => ligne[c]), code]);
+      }
+      const relu = ficheFluideComplete(code);
+      journaliser(d.operateur, 'MODIFICATION_FLUIDE', code,
+        `Champs : ${modifies.join(', ')}`
+        + (prpChange ? ` · PRP ${relu.gwpAr4} (source : ${relu.sourcePrp})`
+          : ''));
+      return relu;
     });
   },
 

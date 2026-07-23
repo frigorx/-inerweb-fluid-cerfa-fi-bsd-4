@@ -180,6 +180,9 @@ export function creerLocalStore(transport) {
     createFluide(donneesFluide) {
       return muter('createFluide', { donneesFluide });
     },
+    updateFluide(code, donneesFluide) {
+      return muter('updateFluide', { code, donneesFluide });
+    },
 
     // --- clients détenteurs -------------------------------
     createClient(donneesClient) {

@@ -2859,6 +2859,67 @@ export function creerDemoStore() {
         nbMachines: 0 });
     },
 
+    async updateFluide(code, donneesFluide) {
+      const fluide = donnees.fluides.find((f) => f.code === code);
+      if (!fluide) {
+        throw new Error(`Fluide introuvable au référentiel : ${code}.`);
+      }
+      const d = donneesFluide || {};
+      // Le CODE est FIGÉ : il est la clé étrangère de huit tables, dont
+      // des écritures scellées. Le renommer les briserait. Corriger une
+      // faute de frappe = créer le bon code puis désactiver le mauvais.
+      if (d.code !== undefined && String(d.code).trim() !== code) {
+        throw new Error('Le code d’un fluide ne se modifie pas : il est '
+          + 'référencé par les machines, les bouteilles et les écritures '
+          + 'scellées. Créez le bon code, puis désactivez celui-ci.');
+      }
+      // D4 — dès que le PRP change, la SOURCE doit être saisie
+      // explicitement : sans cela une valeur ajustée localement garderait
+      // l'étiquette officielle de l'ancienne (« annexe F-Gas III »), ce
+      // qui serait faux. Retaper la même source est un choix conscient,
+      // pas un oubli : on exige la présence, pas un changement.
+      const prpChange = d.gwpAr4 !== undefined
+        && Number(d.gwpAr4) !== Number(fluide.gwpAr4);
+      if (prpChange && (d.sourcePrp === undefined
+          || String(d.sourcePrp ?? '').trim() === '')) {
+        throw new Error('PRP modifié : la source du PRP doit être saisie '
+          + '(elle décrit la valeur retenue — une valeur ajustée localement '
+          + 'ne garde jamais l’étiquette d’une source officielle).');
+      }
+      const texteOuNull = (v) => (v !== undefined && v !== null
+        && String(v).trim() !== '' ? String(v).trim() : null);
+      const CHAMPS_TEXTE = ['famille', 'classeSecurite', 'statutReglementaire',
+        'commentaire', 'categorieCadre7', 'sourcePrp'];
+      const patch = {};
+      for (const champ of CHAMPS_TEXTE) {
+        if (d[champ] !== undefined) patch[champ] = texteOuNull(d[champ]);
+      }
+      if (d.gwpAr4 !== undefined) patch.gwpAr4 = Number(d.gwpAr4);
+      for (const champ of ['contientHfc', 'contientHfo']) {
+        if (d[champ] !== undefined) {
+          patch[champ] = d[champ] === null ? null : Boolean(d[champ]);
+        }
+      }
+      if (d.actif !== undefined) patch.actif = Boolean(d.actif);
+      // La fiche est vérifiée APRÈS fusion : une modification partielle ne
+      // doit pas pouvoir rendre l'ensemble incohérent (règle unique pour
+      // la création et la modification).
+      const fusion = { ...fluide, ...patch };
+      verifierFicheFluide(fusion);
+      Object.assign(fluide, patch);
+      const modifies = Object.keys(patch);
+      journaliser(d.operateur, 'MODIFICATION_FLUIDE', fluide.code,
+        `Champs : ${modifies.join(', ')}`
+        + (prpChange ? ` · PRP ${fluide.gwpAr4} (source : ${fluide.sourcePrp})`
+          : ''));
+      persisterEtNotifier();
+      const parc = machinesEnParc();
+      return copier({ ...fluide,
+        actif: fluide.actif !== false,
+        impact: impactDepuisPrp(fluide.gwpAr4),
+        nbMachines: parc.filter((m) => m.fluide === fluide.code).length });
+    },
+
     // ------------------------------------------------------
     // Mutations : clients / détenteurs (IM-11)
     // ------------------------------------------------------

@@ -118,8 +118,8 @@ verifier('aucune méthode intruse hors contrat (anti-dérive v7)',
 verifier('les propriétés du contrat sont présentes',
   surface.proprietesManquantes.length === 0,
   `manquent : ${surface.proprietesManquantes.join(', ')}`);
-verifier('le contrat compte bien 92 méthodes',
-  Object.keys(METHODES_CONTRAT).length === 92,
+verifier('le contrat compte bien 93 méthodes',
+  Object.keys(METHODES_CONTRAT).length === 93,
   `compté : ${Object.keys(METHODES_CONTRAT).length}`);
 verifier('modeLabel est une chaîne non vide',
   typeof store.modeLabel === 'string' && store.modeLabel.length > 0);
