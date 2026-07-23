@@ -18,6 +18,12 @@ import { teqCO2, fmtDate, fmtNombre, fmtKgSigne, genId, hasherEcriture,
 // logique UNIQUE partagée avec le cadre 7 du CERFA (aucun doublon).
 import { evaluerControle, impactDepuisPrp, codeFluideNormalise,
   verifierFicheFluide } from './reglementation-fluides.js';
+// P1-1 — modèle d'équipement : la détection permanente n'allège la
+// fréquence de contrôle que si elle a été VÉRIFIÉE depuis moins de 12 mois
+// (E1). Miroir serveur : server/equipement.js.
+import { detectionEffective, echeanceVerificationDetection,
+  verifierModeleEquipement, mobileListe, detectionObligatoire,
+  hermetiqueOpposable } from './equipement.js';
 // CM-2 : avoir de fluide par machine d'origine (DÉRIVÉ des mouvements) —
 // signale une réintroduction au-delà du récupéré. Le serveur en tient un
 // MIROIR EXACT (api.js).
@@ -214,6 +220,15 @@ function ajouterMois(iso, nbMois) {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const j = String(d.getDate()).padStart(2, '0');
   return `${d.getFullYear()}-${m}-${j}`;
+}
+
+/**
+ * P1-1 : texte non vide, sinon null (champs facultatifs du modèle
+ * d'équipement). Miroir serveur : même fonction dans api.js.
+ */
+function texteOuNullEquip(valeur) {
+  return valeur !== undefined && valeur !== null && String(valeur).trim() !== ''
+    ? String(valeur).trim() : null;
 }
 
 /** Ajoute un an à une date ISO (délai de garde des fluides déchets). */
@@ -1029,7 +1044,7 @@ export function creerDemoStore() {
       if (m.statut !== 'FUITE') continue;
       const statutFuite = estFuiteOuverte(
         controlesActifsDeLaMachine(m.id),
-        m.typeInstallation === 'MOBILE');
+        mobileListe(m));
       // Même règle que getAlertes : « non résolue » = pas de réparation
       // tracée (une fuite réparée en attente de contrôle de suivi n'est
       // plus « ouverte » au sens de la photo).
@@ -1184,8 +1199,13 @@ export function creerDemoStore() {
     // cadre 7 du CERFA (fréquence non nulle = machine soumise).
     let controlePeriodiqueRequis = false;
     if (machine && fluideRef) {
+      // P1-1 (E1) : détection EFFECTIVE — une détection non vérifiée
+      // n'allège rien. Sans effet sur ce booléen (les deux fréquences
+      // sont non nulles), mais on lit la détection d'UNE seule façon
+      // dans tout le logiciel.
       const { frequenceMois } = evaluerControle(fluideRef,
-        machine.chargeNominaleKg, Boolean(machine.detectionPermanente),
+        machine.chargeNominaleKg,
+        detectionEffective(machine, mouvement.date ?? jour).compte,
         mouvement.date ?? jour);
       controlePeriodiqueRequis = Boolean(frequenceMois);
     }
@@ -1215,7 +1235,12 @@ export function creerDemoStore() {
         // Number() et fabriquerait un faux refus (leçon conseil-intervenant).
         chargeKg: typeof nominale === 'number' && Number.isFinite(nominale)
           && nominale > 0 ? nominale : null,
-        hermetiqueScelle: false
+        // P1-1 (E4) — DETTE P0-5 SOLDÉE : la valeur était écrite en dur à
+        // false faute de champ. Elle vient désormais de la machine, et
+        // n'ouvre le seuil élargi (6 kg au lieu de 3) que si l'équipement
+        // est hermétiquement scellé ET ÉTIQUETÉ comme tel : le texte ne
+        // reconnaît pas un hermétique qui ne se déclare pas.
+        hermetiqueScelle: machine ? hermetiqueOpposable(machine) : false
       });
       intervenant = {
         nom: `${personne.prenom} ${personne.nom}`,
@@ -1236,6 +1261,13 @@ export function creerDemoStore() {
         String(mouvement.causeMouvement).trim()),
       controleStatut: mouvement.controle?.statutControle ?? 'SANS_OBJET',
       controlePeriodiqueRequis,
+      // P1-1 (E2) — fait : un système de détection est OBLIGATOIRE (charge
+      // au-delà du seuil haut) et il n'est pas déclaré. Précalculé ici,
+      // consommé par la condition 17 du moteur de blocage. Évalué à la
+      // date du mouvement (régime applicable).
+      detectionObligatoireAbsente: Boolean(machine && fluideRef
+        && detectionObligatoire(fluideRef, machine, mouvement.date ?? jour)
+        && !detectionEffective(machine, mouvement.date ?? jour).declaree),
       fluideInflammable: Boolean(fluideRef?.classeSecurite &&
         fluideRef.classeSecurite !== 'A1'),
       sourceVierge: bouteilleSrc?.etatFluide === 'VIERGE',
@@ -1588,7 +1620,7 @@ export function creerDemoStore() {
       // tracer la réparation puis de déclarer un nouveau contrôle.
       if (mouvement.type === 'CHARGE_APPOINT') {
         if (estFuiteOuverte(controlesActifsDeLaMachine(machine.id),
-          machine.typeInstallation === 'MOBILE').ouverte) {
+          mobileListe(machine)).ouverte) {
           throw new Error(MSG_FUITE_OUVERTE);
         }
       }
@@ -1882,7 +1914,7 @@ export function creerDemoStore() {
       machine.prochainControle = porteurEcheance.prochainControle;
     }
     const statutFuite = estFuiteOuverte(actifs,
-      machine.typeInstallation === 'MOBILE');
+      mobileListe(machine));
     const fuiteNonRefermee = Boolean(statutFuite.controleFuiteId &&
       (statutFuite.ouverte || statutFuite.echeanceControleSuivi !== null));
     if (fuiteNonRefermee) {
@@ -2009,7 +2041,7 @@ export function creerDemoStore() {
       // MOBILE listé). Plus de condition ad hoc divergente du dossier.
       const statutFuite = estFuiteOuverte(
         controlesActifsDeLaMachine(machine.id),
-        machine.typeInstallation === 'MOBILE');
+        mobileListe(machine));
       if (!statutFuite.ouverte && statutFuite.dateReparation &&
           statutFuite.echeanceControleSuivi === null) {
         machine.statut = 'EN_SERVICE';
@@ -2427,7 +2459,7 @@ export function creerDemoStore() {
           // (IMPORTANT, échéance 1 mois civil depuis la réparation, P0-6).
           const statutFuite = estFuiteOuverte(
             controlesActifsDeLaMachine(m.id),
-            m.typeInstallation === 'MOBILE');
+            mobileListe(m));
           // R4 : l'alerte de SUIVI n'existe que si une réparation est
           // TRACÉE — sans elle, la fuite reste « non résolue » (jamais
           // de dates nulles affichées).
@@ -2459,6 +2491,45 @@ export function creerDemoStore() {
             detail: `${m.designation} · échéance ${fmtDate(m.prochainControle)}`,
             cible: { vue: 'machines', id: m.id }
           });
+        }
+
+        // P1-1 — le SYSTÈME DE DÉTECTION de l'équipement (à ne pas
+        // confondre avec le détecteur portable de l'atelier, alerte
+        // « alr-outil- »). Une machine à l'arrêt ou démantelée n'est plus
+        // concernée : on n'invente pas d'obligation sur un équipement
+        // qui ne tourne pas.
+        if (m.statut !== 'DEMANTELEE' && m.statut !== 'ARRETEE') {
+          const fluideRefM = donnees.fluides.find((f) => f.code === m.fluide)
+            ?? null;
+          const detection = detectionEffective(m, jour);
+          // E2 — détection OBLIGATOIRE au niveau haut et absente : c'est
+          // une non-conformité réglementaire, pas un simple oubli.
+          if (detectionObligatoire(fluideRefM, m, jour) && !detection.declaree) {
+            alertes.push({
+              id: `alr-detection-obligatoire-${m.id}`,
+              niveau: 'CRITIQUE',
+              titre: 'Système de détection de fuites obligatoire absent',
+              detail: `${m.designation} · au-delà du seuil haut, un système `
+                + 'de détection permanente est exigé',
+              cible: { vue: 'machines', id: m.id }
+            });
+          }
+          // E1 — détection déclarée mais non vérifiée : l'allègement de
+          // fréquence est TOMBÉ. On le DIT, sinon la machine repasserait
+          // en silence à des contrôles deux fois plus fréquents.
+          if (detection.declaree && !detection.compte) {
+            alertes.push({
+              id: `alr-detection-verif-${m.id}`,
+              niveau: 'IMPORTANT',
+              titre: 'Détection de fuites à faire vérifier',
+              detail: `${m.designation} · `
+                + (detection.motif === 'JAMAIS_VERIFIEE'
+                  ? 'aucune vérification enregistrée'
+                  : `vérification échue le ${fmtDate(detection.echeance)}`)
+                + ' · la fréquence de contrôle n’est plus allégée',
+              cible: { vue: 'machines', id: m.id }
+            });
+          }
         }
       }
 
@@ -2650,6 +2721,17 @@ export function creerDemoStore() {
         throw new Error(`Type d'installation inconnu : ${d.typeInstallation} `
           + '(attendu : FIXE, MOBILE).');
       }
+      // P1-1 : garde du modèle d'équipement (sous-type listé et réservé aux
+      // MOBILES, étiquette qui suppose le scellement, date de vérification
+      // lisible et adossée à une détection déclarée).
+      verifierModeleEquipement({
+        typeInstallation: d.typeInstallation ?? 'FIXE',
+        sousTypeInstallation: d.sousTypeInstallation ?? null,
+        hermetiqueScelle: Boolean(d.hermetiqueScelle),
+        hermetiqueEtiquete: Boolean(d.hermetiqueEtiquete),
+        detectionPermanente: Boolean(d.detectionPermanente),
+        detectionVerifieeLe: d.detectionVerifieeLe ?? null
+      });
       const client = d.clientId
         ? donnees.clients.find((c) => c.id === d.clientId)
         : null;
@@ -2692,6 +2774,18 @@ export function creerDemoStore() {
         statut: d.statut ?? 'EN_SERVICE',
         typeInstallation: d.typeInstallation ?? 'FIXE',
         detectionPermanente: Boolean(d.detectionPermanente),
+        // P1-1 — modèle d'équipement. Défauts CONSERVATEURS : rien n'est
+        // hermétique, rien n'est étiqueté, rien n'est vérifié tant que ce
+        // n'est pas déclaré. L'échéance de vérification est CALCULÉE
+        // (12 mois civils), jamais saisie.
+        hermetiqueScelle: Boolean(d.hermetiqueScelle),
+        hermetiqueEtiquete: Boolean(d.hermetiqueEtiquete),
+        residentiel: Boolean(d.residentiel),
+        sousTypeInstallation: texteOuNullEquip(d.sousTypeInstallation),
+        detectionVerifieeLe: texteOuNullEquip(d.detectionVerifieeLe),
+        detectionProchaineVerif: echeanceVerificationDetection(
+          texteOuNullEquip(d.detectionVerifieeLe)),
+        detectionReference: texteOuNullEquip(d.detectionReference),
         dateMiseEnService: d.dateMiseEnService ?? null,
         dernierControle: d.dernierControle ?? null,
         prochainControle: d.prochainControle ?? null,
@@ -2736,13 +2830,43 @@ export function creerDemoStore() {
         }
         if (code !== machine.code) { ancienCode = machine.code; machine.code = code; }
       }
+      // P1-1 : garde du modèle d'équipement, appliquée sur la fiche
+      // FUSIONNÉE (existant + patch) — une modification partielle ne doit
+      // pas pouvoir rendre l'ensemble incohérent (ex. retirer la détection
+      // permanente en laissant une date de vérification).
+      const CHAMPS_EQUIPEMENT = ['hermetiqueScelle', 'hermetiqueEtiquete',
+        'residentiel', 'sousTypeInstallation', 'detectionVerifieeLe',
+        'detectionReference'];
+      const fusion = { ...machine };
+      for (const champ of [...CHAMPS_EQUIPEMENT, 'typeInstallation',
+        'detectionPermanente']) {
+        if (d[champ] !== undefined) fusion[champ] = d[champ];
+      }
+      verifierModeleEquipement(fusion);
+
       const CHAMPS = ['designation', 'type', 'marque', 'modele', 'numSerie',
         'fluide', 'chargeNominaleKg', 'chargeActuelleKg', 'clientId',
         'localisation', 'siteLabel', 'statut', 'typeInstallation',
-        'detectionPermanente',
+        'detectionPermanente', ...CHAMPS_EQUIPEMENT,
         'dateMiseEnService', 'dernierControle', 'prochainControle'];
       for (const champ of CHAMPS) {
         if (d[champ] !== undefined) machine[champ] = d[champ];
+      }
+      // Booléens du modèle d'équipement : jamais stockés en chaîne.
+      for (const champ of ['hermetiqueScelle', 'hermetiqueEtiquete',
+        'residentiel']) {
+        if (d[champ] !== undefined) machine[champ] = Boolean(d[champ]);
+      }
+      // Champs texte facultatifs : chaîne vide = effacement (null).
+      for (const champ of ['sousTypeInstallation', 'detectionVerifieeLe',
+        'detectionReference']) {
+        if (d[champ] !== undefined) machine[champ] = texteOuNullEquip(d[champ]);
+      }
+      // L'échéance de vérification est CALCULÉE, jamais saisie : elle suit
+      // la date de vérification à chaque modification.
+      if (d.detectionVerifieeLe !== undefined) {
+        machine.detectionProchaineVerif =
+          echeanceVerificationDetection(machine.detectionVerifieeLe);
       }
       const champsModifies = Object.keys(d).filter((c) => CHAMPS.includes(c));
       if (ancienCode) champsModifies.unshift(`code ${ancienCode} → ${machine.code}`);
@@ -3243,9 +3367,13 @@ export function creerDemoStore() {
       // La date du contrôle fixe le régime applicable (HFO purs contrôlés
       // seulement depuis le 11/03/2024) — miroir du serveur.
       const dateControle = dateControleISO ?? aujourdHui();
+      // P1-1 (E1) : la détection est évaluée À LA DATE DU CONTRÔLE — la
+      // question est « était-elle vérifiée ce jour-là ? », pas « l'est-elle
+      // aujourd'hui ? ». Non vérifiée → fréquence SANS détection (plus de
+      // contrôles, jamais moins).
       const { frequenceMois } = evaluerControle(
         fluideRef, machine.chargeNominaleKg,
-        Boolean(machine.detectionPermanente), dateControle);
+        detectionEffective(machine, dateControle).compte, dateControle);
       if (!frequenceMois) return null;
       return ajouterMois(dateControle, frequenceMois);
     },
@@ -3648,9 +3776,11 @@ export function creerDemoStore() {
           const machineDuControle = trouverMachine(mouvement.machineId);
           const fluideRef = donnees.fluides.find(
             (f) => f.code === machineDuControle.fluide) ?? null;
+          // P1-1 (E1) : détection EFFECTIVE à la date du mouvement.
           const { frequenceMois } = evaluerControle(
             fluideRef, machineDuControle.chargeNominaleKg,
-            Boolean(machineDuControle.detectionPermanente), mouvement.date);
+            detectionEffective(machineDuControle, mouvement.date).compte,
+            mouvement.date);
           if (frequenceMois) {
             prochainCalcule = ajouterMois(mouvement.date, frequenceMois);
           }

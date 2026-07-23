@@ -14,6 +14,9 @@ import { telechargerEtSceller } from '../documents/telecharger-dossier.js';
 import { ouvrirWizard } from '../wizard/wizard.js';
 import { ouvrirFormControle } from '../modales/controle-form.js';
 import { ouvrirPlaque, calculerFrequenceControle } from '../documents/plaque-fgas.js';
+// P1-1 : ce que l'équipement EST, et pourquoi sa fréquence vaut ce qu'elle vaut.
+import { detectionEffective, mobileListe, LIBELLE_SOUS_TYPE }
+  from '../data/equipement.js';
 import { ouvrirEtiquette } from '../documents/etiquette-machine.js';
 import { ouvrirBonIntervention } from '../documents/bon-intervention.js';
 import { ouvrirFicheIdentification } from '../documents/fiche-identification-machine.js';
@@ -336,6 +339,24 @@ function ligneDetail(libelle, valeur) {
 
 function blocDonneesTechniques(machine, fluide, client) {
   const frequence = calculerFrequenceControle(machine, fluide);
+  // P1-1 (E1) — état de la détection AUJOURD'HUI : c'est lui qui décide
+  // si la fréquence est allégée ou non.
+  const jour = new Date().toISOString().slice(0, 10);
+  const detection = detectionEffective(machine, jour);
+  const libelleDetection = detection.motif === 'JAMAIS_VERIFIEE'
+    ? 'Oui — jamais vérifiée'
+    : detection.compte
+      ? 'Oui — vérifiée, valable jusqu’au ' + fmtDate(detection.echeance)
+      : 'Oui — vérification échue le ' + fmtDate(detection.echeance);
+  // Motif de la fréquence : jamais de nombre sans explication.
+  const motifFrequence = !fluide || !frequence.frequenceMois
+    ? null
+    : detection.declaree
+      ? (detection.compte
+        ? 'Allégée par la détection permanente vérifiée (÷ 2)'
+        : 'NON allégée : la détection permanente n’est pas vérifiée '
+          + '(vérification valable 12 mois)')
+      : 'Sans détection permanente';
   // Q5 de l'avis réglementaire du 16/07/2026 : ne jamais laisser croire
   // « aucune obligation » — hors du périmètre F-Gas, d'autres textes
   // peuvent s'appliquer (EN 378, ICPE, notice constructeur). La ligne
@@ -360,8 +381,25 @@ function blocDonneesTechniques(machine, fluide, client) {
     ligneDetail('Localisation', machine.localisation),
     ligneDetail('Site', machine.siteLabel),
     ligneDetail('Client', client ? client.raisonSociale : null),
-    ligneDetail('Détection permanente', machine.detectionPermanente ? 'Oui' : null),
-    ligneDetail('Fréquence de contrôle', libelleFrequence)
+    // P1-1 — nature de l'équipement : ce qu'il EST commande ses
+    // obligations. Lignes affichées seulement si renseignées (une fiche
+    // muette ne raconte rien de faux).
+    ligneDetail('Installation', machine.typeInstallation === 'MOBILE'
+      ? 'Mobile' + (machine.sousTypeInstallation
+        ? ' — ' + LIBELLE_SOUS_TYPE[machine.sousTypeInstallation]
+          + (mobileListe(machine) ? ' (listé)' : ' (non listé)')
+        : ' — nature non précisée (non listé)')
+      : null),
+    ligneDetail('Hermétiquement scellé', machine.hermetiqueScelle
+      ? (machine.hermetiqueEtiquete ? 'Oui, étiqueté comme tel'
+        : 'Oui, mais NON étiqueté') : null),
+    ligneDetail('Usage résidentiel', machine.residentiel ? 'Oui' : null),
+    ligneDetail('Détection permanente', machine.detectionPermanente
+      ? libelleDetection : null),
+    ligneDetail('Fréquence de contrôle', libelleFrequence),
+    // ⭐ Une fréquence doit toujours être EXPLICABLE : on écrit pourquoi
+    // elle vaut ce qu'elle vaut.
+    ligneDetail('Motif de la fréquence', motifFrequence)
   ].join('');
 
   return '<div class="fiche-section">'

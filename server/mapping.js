@@ -191,12 +191,27 @@ const TABLES = {
       // type_installation (migration 27, P0-6) : FIXE/MOBILE — un mobile
       // listé est admis au contrôle immédiat après réparation.
       typeInstallation: 'type_installation',
+      // Modèle d'équipement (migration 32, P1-1). hermetiqueEtiquete ne vaut
+      // que si hermetiqueScelle : le texte ne reconnaît l'hermétique que
+      // MARQUÉ comme tel (seuil d'aptitude à 6 kg, exemptions futures).
+      // sousTypeInstallation : liste FERMÉE des mobiles — un mobile sans
+      // sous-type listé n'est PAS admis au contrôle immédiat.
+      // detectionVerifieeLe / detectionProchaineVerif : l'allègement de
+      // fréquence (÷ 2) n'est dû que si la vérification a moins de 12 mois.
+      hermetiqueScelle: 'hermetique_scelle',
+      hermetiqueEtiquete: 'hermetique_etiquete',
+      residentiel: 'residentiel',
+      sousTypeInstallation: 'sous_type_installation',
+      detectionVerifieeLe: 'detection_verifiee_le',
+      detectionProchaineVerif: 'detection_prochaine_verif',
+      detectionReference: 'detection_reference',
       // code_public (migration 003 + backfill 006, V9.1) : généré à la
       // création (createMachine), jamais dans la liste CHAMPS d'updateMachine
       // — intouchable en pratique, comme code_interne.
       codePublic: 'code_public'
     },
-    booleens: ['detectionPermanente'],
+    booleens: ['detectionPermanente', 'hermetiqueScelle', 'hermetiqueEtiquete',
+      'residentiel'],
     // site_id (migration 002) sera exposé au contrat par une prochaine vague
     // (multi-sites) — réservé serveur d'ici là.
     sqlSeulement: ['etablissement_id', 'justification_detection',

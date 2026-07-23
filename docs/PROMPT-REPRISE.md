@@ -6,9 +6,25 @@
 > **Session conseillée : Opus, effort très élevé** (chantier probatoire/réglementaire, briques
 > testées une à une). PAS d'ultracode hors point critique.
 >
-> **⭐⭐⭐⭐⭐ P1-2 (ÉCRAN D'ADMINISTRATION DU RÉFÉRENTIEL DES FLUIDES) EST
+> **⭐⭐⭐⭐⭐ P1-1 (MODÈLE D'ÉQUIPEMENT) EST TERMINÉ — 23/07, EQ-1→EQ-10, plan
+> `docs/PLAN-P1-1-MODELE-EQUIPEMENT.md`, TOUT VERT 98 exécutions, ⏳ PR à
+> relire/fusionner par Franck.** Décisions E1→E7 **déléguées** par Franck (« fais
+> au mieux, autonomie, le plus réglementaire ») → lecture « jamais moins de
+> contrôles qu'exigé ». **Le trou réel soldé** : cocher « détection permanente »
+> divisait par deux les contrôles sans preuve — l'allègement exige désormais une
+> vérification < 12 mois (E1). Migration 32 (hermétique/étiqueté/résidentiel/
+> sous-type mobile listé/vérif détection, backfill conservateur). Module pur
+> `equipement.js` + miroir. **Deux dettes soldées** : P0-5 (hermétique plus en
+> dur, seuil 6 kg si scellé ET étiqueté) et P0-6 (`estMachineMobile`→`mobileListe`,
+> mobile LISTÉ seulement). 2 alertes `alr-detection-*`, condition Officiel 17
+> **inerte tant que le verrou est fermé**. E3 = **aucune exemption codée** (les
+> 3 seuils non confirmés sur pièce ; `exemptionControle` activable sans réécriture
+> — geste Franck E3(b)). Contrat **v10 (93 méthodes)**. Consigné antérieur à P1-1 :
+> `machine.statut` figé si on rétrograde un mobile après clôture immédiate.
+>
+> **⭐⭐⭐⭐ P1-2 (ÉCRAN D'ADMINISTRATION DU RÉFÉRENTIEL DES FLUIDES) EST
 > TERMINÉ — 23/07, AF-1→AF-9, plan `docs/PLAN-P1-2-ADMIN-FLUIDES.md`, TOUT
-> VERT 95 exécutions, ⏳ PR à relire/fusionner par Franck.** Franck ajoute,
+> VERT 95 exécutions, PR #4.** Franck ajoute,
 > modifie et désactive ses gaz lui-même : `createFluide`/`updateFluide`
 > (2 stores + parité + REFERENT_ADMIN), migration 31 `fluides.actif`
 > (désactivation, JAMAIS de suppression), vue + modale, `impact` enfin
@@ -228,14 +244,14 @@ la cible officielle — la RC a gardé 148) · **T3** relecture organisme agré�
   `feedback_reglages_intelligence`).
 - **carte → vérifier → plan (grosses briques) → modif chirurgicale → TESTS VERTS → revue
   adversariale (sobre : soi-même ou 1 agent) → commit.** `node outils/lancer-tests.mjs --tout`
-  doit être **TOUT VERT (95 exécutions)** avant tout commit.
+  doit être **TOUT VERT (98 exécutions)** avant tout commit.
 - **JAMAIS toucher au `data/` RÉEL** : vérification dynamique = serveur sur PORT jetable +
   `IWF_CHEMIN_BASE` base jetable (jamais 2011). Corps des requêtes API = **`{params:{...}}`**.
   **« Une faille se prouve en la TIRANT, pas en la lisant. »**
 - **Parité STRICTE `server/api.js` ↔ `v8/js/data/demo-store.js`** (test-contrat, mapping qui
   lève sur clé inconnue → déclarer les nouveaux champs des deux côtés). Module pur du front
   réutilisé côté serveur = recopié en littéral (CommonJS) + test de parité qui discrimine.
-- **Migrations** : registre `server/migrations.js`, dernière = **31**, prochaine = **32**.
+- **Migrations** : registre `server/migrations.js`, dernière = **32**, prochaine = **33**.
   ⚠️ Une migration est IMMUABLE (littéraux figés, jamais de constante partagée qui évolue).
   Triggers WORM recréés à chaque migration qui touche leurs tables ;
   `PRAGMA recursive_triggers = ON` obligatoire.

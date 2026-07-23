@@ -113,6 +113,14 @@ function evaluerBlocagesOfficiel(cadre) {
       }
     }
 
+    // 17 — détection permanente OBLIGATOIRE absente (P1-1, E2). Miroir
+    // EXACT du module ESM. En CONSEIL, seule l'alerte le signale.
+    if (fiche.detectionObligatoireAbsente) {
+      poser('DETECTION_OBLIGATOIRE',
+        'Système de détection permanente de fuites obligatoire (charge ' +
+        'au-delà du seuil haut) mais absent de l’équipement.');
+    }
+
     // 9 — contrôle d'étanchéité exigé (machine soumise OU fluide inflammable).
     const controleExige =
       (fiche.type === 'CHARGE_APPOINT' || fiche.type === 'MISE_EN_SERVICE') &&

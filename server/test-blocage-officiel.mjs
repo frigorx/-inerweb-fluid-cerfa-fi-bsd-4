@@ -212,6 +212,42 @@ const codes = (r) => r.blocages.map((b) => b.code).join(',');
     auPassage.blocages.every((b) => b.code !== 'APTITUDE_PORTEE'), codes(auPassage));
 }
 
+// ============================================================
+// Condition 17 — détection permanente OBLIGATOIRE absente (P1-1, E2).
+// ============================================================
+{
+  const absente = evaluerBlocagesOfficiel({ moment: 'SOUMISSION',
+    fiche: ficheSaine({ detectionObligatoireAbsente: true }) });
+  verifier('détection obligatoire absente : blocage DETECTION_OBLIGATOIRE',
+    absente.blocages.some((b) => b.code === 'DETECTION_OBLIGATOIRE'),
+    codes(absente));
+
+  const presente = evaluerBlocagesOfficiel({ moment: 'SOUMISSION',
+    fiche: ficheSaine({ detectionObligatoireAbsente: false }) });
+  verifier('détection présente (ou non requise) : aucun blocage DETECTION_OBLIGATOIRE',
+    !presente.blocages.some((b) => b.code === 'DETECTION_OBLIGATOIRE'),
+    codes(presente));
+
+  // Sous le verrou de livraison, le mode est refusé DE TOUTE FAÇON : la
+  // condition 17 est câblée mais son effet propre attend la réouverture.
+  // On le prouve en évaluant AVEC le verrou (comme les stores) : la fiche
+  // saine est refusée, mais par VERROU_LIVRAISON, pas par la 17.
+  const sousVerrou = evaluerBlocagesOfficiel({ moment: 'SOUMISSION',
+    verrouLivraison: true, fiche: ficheSaine() });
+  verifier('sous verrou : mode refusé par VERROU_LIVRAISON, pas par la 17 '
+    + '(condition inerte tant que le verrou est fermé)',
+    sousVerrou.blocages.some((b) => b.code === 'VERROU_LIVRAISON')
+    && !sousVerrou.blocages.some((b) => b.code === 'DETECTION_OBLIGATOIRE'),
+    codes(sousVerrou));
+
+  // Parité ESM ↔ serveur sur la nouvelle condition (verdict ET message).
+  const c = { moment: 'SOUMISSION',
+    fiche: ficheSaine({ detectionObligatoireAbsente: true }) };
+  verifier('parité : condition 17, blocages identiques ESM ↔ serveur',
+    JSON.stringify(evaluerBlocagesOfficiel(c).blocages)
+      === JSON.stringify(miroir.evaluerBlocagesOfficiel(c).blocages));
+}
+
 // Condition 9 : contrôle d'étanchéité exigé.
 {
   const manque = evaluerBlocagesOfficiel({ moment: 'SOUMISSION',

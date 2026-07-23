@@ -37,7 +37,7 @@
 // ============================================================
 
 /** Version du contrat (à incrémenter à chaque évolution de surface). */
-export const VERSION_CONTRAT = 9;
+export const VERSION_CONTRAT = 10;
 
 /**
  * Message canonique opposé à toute tentative de modification d'une
@@ -142,9 +142,9 @@ export const METHODES_CONTRAT = {
 
   // --- machines ------------------------------------------------
   createMachine: { genre: 'mutation',
-    description: 'Crée une machine (code auto M{n}) ; typeInstallation FIXE|MOBILE, défaut FIXE (P0-6 — un MOBILE listé est admis au contrôle immédiat après réparation) ; Error si désignation vide, fluide inconnu, charge invalide, client introuvable, type d’installation inconnu.' },
+    description: 'Crée une machine (code auto M{n}) ; typeInstallation FIXE|MOBILE, défaut FIXE ; P1-1 — modèle d’équipement : sousTypeInstallation (liste fermée des mobiles, réservée aux MOBILES — seul un mobile LISTÉ est admis au contrôle immédiat après réparation), hermetiqueScelle, hermetiqueEtiquete (suppose le scellement ; seul l’hermétique ÉTIQUETÉ ouvre le seuil d’aptitude élargi), residentiel, detectionVerifieeLe + detectionReference (la détection permanente n’allège la fréquence que si elle est vérifiée depuis moins de 12 mois), detectionProchaineVerif CALCULÉE (+12 mois civils) jamais saisie ; défauts conservateurs (tout à faux/null) ; Error si désignation vide, fluide inconnu, charge invalide, client introuvable, type d’installation inconnu, sous-type inconnu ou posé sur un FIXE, étiquette sans scellement, date de vérification illisible ou sans détection déclarée.' },
   updateMachine: { genre: 'mutation',
-    description: 'Patch partiel (id et code intouchables) ; Error si introuvable, démantelée ou type d’installation inconnu.' },
+    description: 'Patch partiel (id et code intouchables) ; le modèle d’équipement (P1-1) est vérifié APRÈS fusion existant+patch ; detectionProchaineVerif recalculée dès que detectionVerifieeLe change ; chaîne vide = effacement des champs texte facultatifs ; Error si introuvable, démantelée, type d’installation inconnu, ou fiche d’équipement fusionnée incohérente.' },
   arreterMachine: { genre: 'mutation',
     description: 'Passe EN_SERVICE → ARRETEE (reste au parc) ; Error si démantelée ou déjà arrêtée.' },
   demantelerMachine: { genre: 'mutation',
