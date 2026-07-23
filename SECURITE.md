@@ -8,13 +8,27 @@
 
 ## ⚠️ Incident clés API v7 — procédure de révocation (à faire immédiatement)
 
+> **État au 23/07/2026 — INCIDENT TOUJOURS OUVERT.** Un contrôle technique complet
+> (constat P0-9) a établi, commandes `git` à l'appui, que **le dépôt est toujours PUBLIC**
+> et que les trois clés restent **lisibles dans l'historique**. La correction du 02/07 n'a
+> retiré les clés que du code courant. **Tant qu'elles n'ont pas été régénérées côté Google,
+> l'exposition est active**, pas historique.
+>
+> → Constat daté, empreintes des trois clés, procédure et **procès-verbal à signer** :
+> **`docs/P0-9-REVOCATION-CLES-V7.md`**.
+
 ### Ce qui s'est passé
 
 Le 02/07/2026, les **trois clés API du backend Apps Script v7** (lecture, écriture,
 administration) ont été découvertes **en clair** dans ce dépôt GitHub public :
 
 - fichiers `Code_API_v7.1.0.gs` et `apps-script/Code.gs` ;
-- ainsi que dans **tout l'historique git** (chaque version antérieure des fichiers).
+- ainsi que dans **tout l'historique git** (chaque version antérieure des fichiers) —
+  **`CHANGELOG.md` compris**, ce qu'une purge d'historique oublie systématiquement.
+
+**Chronologie établie le 23/07/2026** : clés introduites par le commit `f36d727` du
+**08/03/2026**, retirées du code courant par `77b9640` le **02/07/2026** — soit
+**116 jours d'exposition publique**, et une exposition qui se poursuit dans l'historique.
 
 Le code local a été corrigé : les clés en dur ont été supprimées, le script lit désormais
 les clés **uniquement** depuis les propriétés du script (Script Properties), et la fonction

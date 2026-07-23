@@ -2,6 +2,52 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 📋 T3 + P0-9 — DOSSIER DE RELECTURE EXTERNE ET CONSTAT DE RÉVOCATION (23/07, hors code)
+
+- **Deux livrables documentaires, aucune ligne de code touchée.** Demandés par Franck
+  « dans la foulée, sans intervention de ma part » : tout ce qui pouvait être préparé
+  sans ses identifiants ni sa signature l'a été ; le reste est nommé explicitement.
+- **⭐ P0-9 — le constat change la nature du problème.** L'audit du 20/07 demandait de
+  « prouver la révocation ». Le contrôle technique du 23/07, **tiré et non lu** (commandes
+  `git` sur le dépôt réel), établit pire que ça : **le dépôt `frigorx/-inerweb-fluid-cerfa-fi-bsd-4`
+  est TOUJOURS PUBLIC** et les trois clés restent lisibles dans l'historique. Ce n'est donc
+  pas un incident passé à documenter, c'est **une exposition active** tant que les clés ne
+  sont pas régénérées côté Google.
+  - Chronologie : introduites par `f36d727` (**08/03/2026**), retirées du code courant par
+    `77b9640` (**02/07/2026**) → **116 jours** d'exposition publique, puis exposition
+    continue par l'historique.
+  - Fichiers porteurs dans l'historique : `apps-script/Code.gs`, `Code_API_v7.1.0.gs` **et
+    `CHANGELOG.md`** — celui qu'une purge oublie toujours.
+  - **Code courant vérifié SAIN** : lecture depuis les Script Properties (`getApiKey_`),
+    `setClesAPI_temp()` supprimée, `genererClesAPI()` en place.
+  - Les trois clés sont identifiées par l'**empreinte SHA-256 de leur valeur** — jamais par
+    leur valeur : on ne republie pas un secret pour prouver qu'on l'a révoqué.
+  - `docs/P0-9-REVOCATION-CLES-V7.md` : constat, procédure pas à pas, **procès-verbal à
+    dater et signer**, et arbitrage proposé sur le sort de l'historique public (A. régénérer
+    seulement — **recommandé** · B. + dépôt privé · C. + réécriture d'historique —
+    **déconseillé** : casse l'antériorité git qui sert de preuve de paternité, pour un gain
+    nul puisque les clones existants conservent l'ancien historique).
+  - `SECURITE.md` : bandeau d'état « INCIDENT TOUJOURS OUVERT » + chronologie datée.
+- **T3 — dossier de relecture externe prêt à partir** (`docs/T3-DOSSIER-RELECTURE-EXTERNE.md`),
+  deux volets distincts qui partent **en parallèle** : **A.** organisme agréé (avis
+  réglementaire, 11 questions écrites, note de présentation, pièces à joindre, courriel type)
+  et **B.** DPD académique (note de saisine, 6 questions, pièces, courriel type — **sous
+  couvert du chef d'établissement**, seul responsable de traitement).
+  - ⭐ **Les 11 questions du volet A recoupent volontairement les questions Q1→Q9 posées à
+    Franck** (seuils 3/6 kg, cat. II 2008, fin de reconnaissance 2008, seuils et fréquences,
+    allègement détection, exemption hermétique, HCFC 2/3 kg, règle du PRP le plus élevé,
+    fluides hors périmètre, blocage sans dérogation). L'avis externe devient une
+    **confirmation opposable** de décisions déjà prises, au lieu d'un préalable qui bloque :
+    Franck répond, le code avance, l'organisme confirme.
+  - Rappel porté au dossier : le dossier d'audit joint doit être généré **depuis le mode
+    DÉMO**, jamais depuis la base réelle.
+- **Non fait, et dit comme tel** : la révocation elle-même (identifiants Google de Franck),
+  l'envoi des deux saisines (engagent l'établissement), le choix des destinataires (listes à
+  relever à la source). Un assistant ne se connecte pas à un compte à la place de son
+  titulaire : une preuve de révocation ne vaut que si elle émane de celui qui en répond.
+- **Contrôle complet joué — TOUT VERT, 99 exécutions** (aucune régression : rien de code
+  n'a été modifié).
+
 ### 🧹 P2-4 + P2-5 — DISTRIBUTION ALLOWLISTÉE ET DOCUMENTATION ALIGNÉE (23/07)
 - **P2-4 — le serveur ne distribue plus que l'application.** La règle était une
   liste NOIRE (`data`, `documents`, `backups`, `server`, `.git`, `.env`) : tout le
