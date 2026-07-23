@@ -37,14 +37,24 @@ const fichiers = await toutesLesTables(store, ANNEE);
 const NOMS_ATTENDUS = ['personnel.csv', 'habilitations.csv',
   'mentions-habilitation.csv', 'outillage.csv', 'bouteilles.csv',
   'machines.csv', 'mouvements.csv', 'controles.csv', 'balance-matiere.csv',
-  'bsff.csv', 'journal-audit.csv'];
-verifier('toutesLesTables retourne exactement 11 fichiers',
-  fichiers.length === 11, `reçu ${fichiers.length}`);
-verifier('les 11 noms de fichiers attendus sont présents',
+  'bsff.csv', 'cessions.csv', `declaration-annuelle-${ANNEE}.csv`,
+  'journal-audit.csv'];
+verifier('toutesLesTables retourne exactement 13 fichiers (P0-8 : +cessions +déclaration)',
+  fichiers.length === 13, `reçu ${fichiers.length}`);
+verifier('les 13 noms de fichiers attendus sont présents',
   NOMS_ATTENDUS.every((nom) => fichiers.some((f) => f.nom === nom)),
   JSON.stringify(fichiers.map((f) => f.nom)));
 
 const parNom = new Map(fichiers.map((f) => [f.nom, f.contenu]));
+
+// P0-8 : le dossier scellé porte la déclaration et les cessions.
+verifier('declaration-annuelle : en-tête des 11 rubriques présent',
+  /Acquisitions.*Destruction.*Cessions/s.test(
+    parNom.get(`declaration-annuelle-${ANNEE}.csv`) ?? ''));
+verifier('cessions.csv : en-tête présent (destinataire attesté)',
+  /Destinataire/.test(parNom.get('cessions.csv') ?? ''));
+verifier('bsff.csv : colonne « Traitement final » ajoutée (BSFF ≠ destruction)',
+  /Traitement final/.test(parNom.get('bsff.csv') ?? ''));
 
 // Brique 2 (outils multiples) : aucun mouvement du monde de démo ne porte
 // d'outil lié — outils-intervention.csv est CONDITIONNEL et doit donc être

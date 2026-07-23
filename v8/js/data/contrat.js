@@ -37,7 +37,7 @@
 // ============================================================
 
 /** Version du contrat (à incrémenter à chaque évolution de surface). */
-export const VERSION_CONTRAT = 7;
+export const VERSION_CONTRAT = 8;
 
 /**
  * Message canonique opposé à toute tentative de modification d'une
@@ -66,6 +66,23 @@ export const TYPES_MOUVEMENT = [
   'CONTROLE_PERIODIQUE',
   'CONTROLE_NON_PERIODIQUE'
 ];
+
+/**
+ * Issues de traitement final d'un déchet fluoré remis (BSFF, P0-8, migration
+ * 28). Un BSFF n'atteste que la REMISE ; l'issue (attestée séparément par
+ * l'opérateur) dit ce qu'il en advient. Seule DESTRUCTION alimente la rubrique
+ * 9 de la déclaration annuelle ; REGENERATION → rubrique 8. Duplicata figé
+ * côté stores (miroir), comme TYPES_MOUVEMENT.
+ */
+export const ISSUES_TRAITEMENT_BSFF =
+  ['RECYCLAGE', 'REGENERATION', 'DESTRUCTION', 'AUTRE'];
+
+/**
+ * Destinataires attestés d'une cession de fluide (P0-8, migration 29,
+ * rubrique 10 de la déclaration annuelle). Duplicata figé côté stores.
+ */
+export const DESTINATAIRES_CESSION =
+  ['OPERATEUR_ATTESTE', 'DISTRIBUTEUR', 'PRODUCTEUR'];
 
 /** Machine à états stricte d'un mouvement (aucun autre chemin). */
 export const STATUTS_MOUVEMENT = ['BROUILLON', 'SOUMIS', 'VALIDE', 'ANNULE'];
@@ -274,14 +291,22 @@ export const METHODES_CONTRAT = {
     description: 'Sortie déchet (BSFF interne — ne remplace PAS Trackdéchets) ; décrémente la bouteille, remise totale → RETOURNEE.' },
   getBsff: { genre: 'lecture',
     description: 'Les BSFF émis, triés date de remise décroissante.' },
+  attesterIssueBsff: { genre: 'mutation',
+    description: 'Atteste l’issue de traitement final d’un BSFF (RECYCLAGE | REGENERATION | DESTRUCTION | AUTRE, + installation/certificat/date) ; corrige BSFF ≠ destruction ; installation obligatoire pour régénération/destruction.' },
   retournerFournisseur: { genre: 'mutation',
     description: 'Retourne une bouteille non-déchet au fournisseur (nette à zéro) et trace le retour (poste de la balance matière).' },
   getRetoursFournisseur: { genre: 'lecture',
     description: 'Les retours fournisseur, triés date décroissante.' },
+  createCession: { genre: 'mutation',
+    description: 'Cède une masse de fluide d’une bouteille à un tiers attesté (OPERATEUR_ATTESTE | DISTRIBUTEUR | PRODUCTEUR) ; décrémente la bouteille, trace figée (rubrique 10) ; un déchet part par un BSFF, pas par une cession.' },
+  getCessions: { genre: 'lecture',
+    description: 'Les cessions de fluide, triées date décroissante.' },
 
   // --- balance matière -----------------------------------------------
   getBalanceMatiere: { genre: 'lecture',
     description: 'La balance matière annuelle par fluide (stock théorique vs réel, écart, justification).' },
+  getDeclarationAnnuelle: { genre: 'lecture',
+    description: 'La déclaration annuelle réglementaire par fluide (11 rubriques : acquisitions, charges neuf/maintenance, récupérations hors-usage/maintenance, remises distributeur, recyclage propre, régénération, destruction, cessions, stocks neuf/déchet au 1er jan/31 déc) + anomalies + « complet ».' },
   saisirInventaire: { genre: 'mutation',
     description: 'Saisit l’inventaire physique (upsert par année et fluide) ET refige la PHOTOGRAPHIE nominative de l’année ; retourne la balance recalculée.' },
   justifierEcart: { genre: 'mutation',

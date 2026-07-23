@@ -10,7 +10,7 @@
 // « Montrez-moi la vie de la B-04 » a désormais une réponse.
 // ============================================================
 
-import { enteteVue, carteKpi, chipStatut, barreProgression, toast, ICONES }
+import { enteteVue, carteKpi, chipStatut, barreProgression, toast, ICONES, modale }
   from './communs.js';
 import { esc, fmtKg, fmtDate, fmtNombre } from '../core/utils.js';
 import { construireVieBouteille } from '../data/vie-bouteille.js';
@@ -303,8 +303,68 @@ function blocActions(sortie) {
     + ICONES.engrenage + '<span>Modifier la fiche</span></button>'
     + '<button type="button" class="btn btn-contour" data-action="etiquette">'
     + ICONES.imprimer + '<span>Étiquette QR</span></button>'
+    + '<button type="button" class="btn btn-contour" data-action="ceder">'
+    + ICONES.telecharger + '<span>Céder à un tiers</span></button>'
     + '</div>'
     + '</div>';
+}
+
+/**
+ * Modale de CESSION de fluide à un tiers attesté (P0-8, rubrique 10).
+ * Décrémente la bouteille et trace la cession. Un déchet part par un BSFF
+ * (le store le refuse ici).
+ */
+function ouvrirCession(ctx, bouteille) {
+  const opts = [['OPERATEUR_ATTESTE', 'Opérateur attesté'],
+    ['DISTRIBUTEUR', 'Distributeur'], ['PRODUCTEUR', 'Producteur']]
+    .map(function (o) {
+      return '<option value="' + o[0] + '">' + esc(o[1]) + '</option>';
+    }).join('');
+  const contenuHtml =
+    '<p class="modale-intro">Cession d’une masse de <strong>'
+    + esc(bouteille.fluide) + '</strong> depuis la bouteille <strong>'
+    + esc(bouteille.code) + '</strong> (contenu : '
+    + esc(fmtNombre(bouteille.masseNetteKg, 2)) + ' kg).</p>'
+    + '<label class="champ-label">Destinataire'
+    + '<select id="cession-type">' + opts + '</select></label>'
+    + '<label class="champ-label">Raison sociale du destinataire'
+    + '<input type="text" id="cession-raison" placeholder="ex. Régé-Fluides SAS"></label>'
+    + '<label class="champ-label">Masse cédée (kg)'
+    + '<input type="number" id="cession-masse" min="0" step="0.001"></label>'
+    + '<label class="champ-label">Observation (facultatif)'
+    + '<input type="text" id="cession-observation"></label>'
+    + '<div id="zone-erreur-cession"></div>';
+  const actionsHtml =
+    '<button type="button" class="btn btn-contour" data-action="annuler">Annuler</button>'
+    + '<button type="button" class="btn btn-marine" data-action="valider">Céder</button>';
+  const instance = modale({ titre: 'Céder du fluide à un tiers',
+    contenuHtml, actionsHtml });
+  const racine = document.getElementById('zone-modales') || document.body;
+  const zoneErreur = racine.querySelector('#zone-erreur-cession');
+  racine.querySelector('[data-action="annuler"]')
+    .addEventListener('click', function () { instance.fermer(); });
+  racine.querySelector('[data-action="valider"]')
+    .addEventListener('click', async function () {
+      zoneErreur.innerHTML = '';
+      try {
+        const u = await ctx.store.getUtilisateurCourant();
+        await ctx.store.createCession({
+          bouteilleId: bouteille.id,
+          destinataireType: racine.querySelector('#cession-type').value,
+          destinataireRaisonSociale: racine.querySelector('#cession-raison').value,
+          masseKg: Number(racine.querySelector('#cession-masse').value),
+          observation: racine.querySelector('#cession-observation').value || null,
+          operateur: u.prenom + ' ' + u.nom
+        });
+        toast('Cession enregistrée.', 'succes');
+        instance.fermer();
+        if (typeof ctx.rafraichir === 'function') ctx.rafraichir();
+      } catch (erreur) {
+        zoneErreur.innerHTML = '<div class="bandeau-erreur">' + ICONES.alerte
+          + '<span>' + esc(erreur.message
+            || 'Impossible d’enregistrer la cession.') + '</span></div>';
+      }
+    });
 }
 
 /* ============================================================
@@ -610,6 +670,13 @@ export async function render(conteneur, ctx) {
       // La modale appelle déjà ctx.rafraichir() à l'enregistrement — ne
       // pas rappeler rafraichir ici (double re-rendu concurrent sinon).
       ouvrirFormBouteille(ctxModale, bouteille.id);
+    });
+  }
+
+  const boutonCeder = conteneur.querySelector('[data-action="ceder"]');
+  if (boutonCeder) {
+    boutonCeder.addEventListener('click', function () {
+      ouvrirCession(ctxModale, bouteille);
     });
   }
 

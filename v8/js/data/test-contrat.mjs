@@ -4,7 +4,7 @@
 // Exécution : node v8/js/data/test-contrat.mjs [demo]
 //
 // Cette suite vérifie qu'une implémentation respecte contrat.js :
-// surface (87 méthodes, 2 propriétés, rien de plus), sémantique
+// surface (91 méthodes, 2 propriétés, rien de plus), sémantique
 // (formes de retour, garde-fous, messages français, effets stocks,
 // hash chaîné, machine à états des mouvements), et invariants
 // transverses (copies, notifications, journal append-only).
@@ -119,7 +119,7 @@ verifier('les propriétés du contrat sont présentes',
   surface.proprietesManquantes.length === 0,
   `manquent : ${surface.proprietesManquantes.join(', ')}`);
 verifier('le contrat compte bien 87 méthodes',
-  Object.keys(METHODES_CONTRAT).length === 87,
+  Object.keys(METHODES_CONTRAT).length === 91,
   `compté : ${Object.keys(METHODES_CONTRAT).length}`);
 verifier('modeLabel est une chaîne non vide',
   typeof store.modeLabel === 'string' && store.modeLabel.length > 0);
@@ -975,6 +975,103 @@ verifier('getBsff trace les deux bordereaux',
     String(x.numeroBsff).startsWith(PREFIXE_BSFF)).length === 2);
 verifier('le numéro de BSFF est reporté sur la bouteille',
   (await store.getBouteilles()).find((b) => b.id === bR.id).numBsff?.length > 0);
+
+// P0-8 (DA-2) : issue de traitement final d'un BSFF (corrige BSFF ≠ destruction)
+await verifierRejet('attesterIssueBsff refuse un BSFF introuvable',
+  store.attesterIssueBsff('BSFF-INEXISTANT',
+    { issueTraitement: 'DESTRUCTION', installationTraitement: 'X' }),
+  'introuvable');
+await verifierRejet('attesterIssueBsff refuse une issue hors grille',
+  store.attesterIssueBsff(bsff1.id,
+    { issueTraitement: 'BROYAGE', installationTraitement: 'X' }));
+await verifierRejet('attesterIssueBsff exige l’installation pour une destruction',
+  store.attesterIssueBsff(bsff1.id, { issueTraitement: 'DESTRUCTION' }),
+  'Installation');
+await verifierRejet('attesterIssueBsff exige l’installation pour une régénération',
+  store.attesterIssueBsff(bsff1.id, { issueTraitement: 'REGENERATION' }),
+  'Installation');
+{
+  const atteste = await store.attesterIssueBsff(bsff1.id, {
+    issueTraitement: 'DESTRUCTION',
+    installationTraitement: 'Incinérateur agréé de Fos',
+    certificatTraitement: 'CERT-2026-42', operateur: 'Testeur Contrat'
+  });
+  verifier('attesterIssueBsff pose issue + installation + certificat + date',
+    atteste.issueTraitement === 'DESTRUCTION'
+    && atteste.installationTraitement === 'Incinérateur agréé de Fos'
+    && atteste.certificatTraitement === 'CERT-2026-42'
+    && DATE_JOUR.test(atteste.dateTraitement));
+  const relu = (await store.getBsff()).find((x) => x.id === bsff1.id);
+  verifier('l’issue attestée est persistée et relue par getBsff',
+    relu && relu.issueTraitement === 'DESTRUCTION'
+    && relu.installationTraitement === 'Incinérateur agréé de Fos');
+  const reAtteste = await store.attesterIssueBsff(bsff1.id,
+    { issueTraitement: 'AUTRE', operateur: 'Testeur Contrat' });
+  verifier('ré-attestation autorisée (AUTRE sans installation, correction)',
+    reAtteste.issueTraitement === 'AUTRE'
+    && reAtteste.installationTraitement === null);
+}
+
+// P0-8 (DA-3) : cession de fluide à un tiers attesté (rubrique 10, fin du 0 en dur)
+const bCession = await store.createBouteille({
+  type: 'NEUVE', fluide: FLUIDE, tareKg: 10, masseBruteKg: 18, contenanceMaxKg: 12
+});
+await verifierRejet('createCession refuse un destinataire hors grille',
+  store.createCession({ bouteilleId: bCession.id, destinataireType: 'AMI',
+    destinataireRaisonSociale: 'X', masseKg: 1 }));
+await verifierRejet('createCession exige la raison sociale du destinataire',
+  store.createCession({ bouteilleId: bCession.id,
+    destinataireType: 'DISTRIBUTEUR', destinataireRaisonSociale: '  ',
+    masseKg: 1 }), 'Raison sociale');
+await verifierRejet('createCession refuse une masse supérieure au contenu',
+  store.createCession({ bouteilleId: bCession.id,
+    destinataireType: 'DISTRIBUTEUR', destinataireRaisonSociale: 'Clim Sud',
+    masseKg: 999 }));
+{
+  const cession = await store.createCession({
+    bouteilleId: bCession.id, destinataireType: 'OPERATEUR_ATTESTE',
+    destinataireRaisonSociale: 'Régé-Fluides SAS', masseKg: 3,
+    operateur: 'Testeur Contrat'
+  });
+  verifier('createCession trace la cession (destinataire, type, masse, date)',
+    cession.destinataireType === 'OPERATEUR_ATTESTE'
+    && cession.destinataireRaisonSociale === 'Régé-Fluides SAS'
+    && PROCHE(cession.masseKg, 3) && DATE_JOUR.test(cession.date));
+  verifier('la cession décrémente la bouteille (8 → 5 kg)',
+    PROCHE((await store.getBouteilles()).find((b) => b.id === bCession.id)
+      .masseNetteKg, 5));
+  verifier('getCessions liste la cession créée',
+    (await store.getCessions()).some((c) => c.id === cession.id));
+}
+{
+  // Un déchet part par un BSFF, jamais par une cession.
+  const bDechetCession = await store.createBouteille({
+    type: 'RECUPERATION', fluide: FLUIDE, tareKg: 5, masseBruteKg: 8,
+    contenanceMaxKg: 10
+  });
+  await store.deciderFluideRecupere(bDechetCession.id, 'DECHET', 'Testeur');
+  await verifierRejet('createCession refuse une bouteille déchet (→ BSFF)',
+    store.createCession({ bouteilleId: bDechetCession.id,
+      destinataireType: 'DISTRIBUTEUR', destinataireRaisonSociale: 'X',
+      masseKg: 1 }), 'BSFF');
+}
+
+// P0-8 (DA-5) : getDeclarationAnnuelle — câblage store → module pur (11 rubriques)
+{
+  const ANNEE_DECL = Number((await store.getCessions())[0].date.slice(0, 4));
+  const declaration = await store.getDeclarationAnnuelle(ANNEE_DECL);
+  verifier('getDeclarationAnnuelle : structure { annee, lignes, anomalies, complet }',
+    declaration.annee === ANNEE_DECL && Array.isArray(declaration.lignes)
+    && Array.isArray(declaration.anomalies)
+    && typeof declaration.complet === 'boolean');
+  const ligneFluide = declaration.lignes.find((l) => l.fluide === FLUIDE);
+  verifier('getDeclarationAnnuelle : la cession créée alimente la rubrique 10',
+    ligneFluide && ligneFluide.cessionsKg >= 3 - 1e-9);
+  verifier('getDeclarationAnnuelle : chaque ligne porte les rubriques attendues',
+    ligneFluide && 'acquisitionsKg' in ligneFluide
+    && 'chargesNeufKg' in ligneFluide && 'destructionKg' in ligneFluide
+    && 'stockFinDechetKg' in ligneFluide);
+}
 
 const b1Retournee = await store.retournerFournisseur(b1.id, 'Testeur Contrat');
 verifier('retournerFournisseur vide la bouteille et la sort du stock',
@@ -2291,6 +2388,19 @@ verifier('exporterJSON : l’enveloppe contractuelle (format d’échange entre 
   && enveloppe.version === FORMAT_EXPORT.version
   && String(enveloppe.exporteLe).includes('T')
   && typeof enveloppe.donnees === 'object');
+
+// P0-8 (revue adversariale, constat BLOQUANT) : les CESSIONS voyagent dans
+// l'export. Sans elles, un aller-retour les perdrait alors que la bouteille
+// est déjà décrémentée → écart d'inventaire fantôme dans la base cible.
+{
+  const cessionsStore = await store.getCessions();
+  verifier('exporterJSON : la collection cessions est PRÉSENTE dans l’export',
+    Array.isArray(enveloppe.donnees.cessions));
+  verifier('exporterJSON : l’export porte autant de cessions que le store',
+    (enveloppe.donnees.cessions ?? []).length === cessionsStore.length
+    && cessionsStore.length >= 1,
+    `export ${(enveloppe.donnees.cessions ?? []).length} / store ${cessionsStore.length}`);
+}
 
 verifier('importerJSON retourne FALSE (sans lever) pour un texte illisible',
   await store.importerJSON('ceci n’est pas du JSON') === false);

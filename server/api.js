@@ -47,6 +47,9 @@ const { evaluerBlocagesOfficiel, messageRefusOfficiel, VERROU_LIVRAISON,
 // par test-droit-intervention.mjs).
 const { verifierDroitIntervention, habilitationReconnue,
   jetonsMentionsActives } = require('./droit-intervention.js');
+// Déclaration annuelle 11 rubriques (P0-8, miroir littéral du module ESM du
+// front, parité prouvée par test-declaration-annuelle.mjs).
+const { calculerDeclarationAnnuelle } = require('./declaration-annuelle.js');
 // Signatures réelles (lot C, brique C1) : déclarations figées + critères
 // d'illisibilité (miroir du module ESM du front, parité prouvée par
 // test-signatures-mouvement.mjs).
@@ -109,6 +112,11 @@ const TOLERANCE_CHARGE_RESIDUELLE_KG = 0.05;
 const TYPES_MOUVEMENT = ['CHARGE_APPOINT', 'MISE_EN_SERVICE',
   'RECUPERATION_MAINTENANCE', 'RECUPERATION_DEMANTELEMENT', 'TRANSFERT',
   'CONTROLE_PERIODIQUE', 'CONTROLE_NON_PERIODIQUE'];
+// P0-8 — miroirs des grilles du contrat (issue BSFF, destinataires cession).
+const ISSUES_TRAITEMENT_BSFF =
+  ['RECYCLAGE', 'REGENERATION', 'DESTRUCTION', 'AUTRE'];
+const DESTINATAIRES_CESSION =
+  ['OPERATEUR_ATTESTE', 'DISTRIBUTEUR', 'PRODUCTEUR'];
 
 /** Rôles autorisés à VALIDER une écriture (jamais un élève). */
 const ROLES_VALIDEURS = ['REFERENT', 'ENSEIGNANT', 'ADMIN'];
@@ -336,6 +344,8 @@ const ROLES_MUTATION = {
   saisirInventaire: VALIDEUR,
   acquitterAlerte: VALIDEUR,
   createBsff: VALIDEUR,
+  attesterIssueBsff: VALIDEUR,
+  createCession: VALIDEUR,
   retournerFournisseur: VALIDEUR,
   deciderFluideRecupere: VALIDEUR,
 
@@ -3669,6 +3679,43 @@ const HANDLERS = {
   },
 
   /**
+   * P0-8 (DA-2) : atteste l'ISSUE de traitement final d'un BSFF émis.
+   * Miroir EXACT du DemoStore (grille, gardes, journal). Corrige BSFF ≠
+   * destruction : seule une issue DESTRUCTION alimentera la rubrique 9.
+   */
+  attesterIssueBsff(params) {
+    const { bsffId } = params;
+    const a = params.attestation || {};
+    const existe = db.get('SELECT id FROM bsff WHERE id = ?', [bsffId]);
+    if (!existe) throw new Error(`BSFF introuvable : ${bsffId}.`);
+    if (!ISSUES_TRAITEMENT_BSFF.includes(a.issueTraitement)) {
+      throw new Error(
+        `Issue de traitement inconnue : ${a.issueTraitement} ` +
+        `(attendu : ${ISSUES_TRAITEMENT_BSFF.join(', ')}).`);
+    }
+    const installation = String(a.installationTraitement ?? '').trim();
+    if ((a.issueTraitement === 'REGENERATION' ||
+         a.issueTraitement === 'DESTRUCTION') && !installation) {
+      throw new Error(
+        'Installation de traitement obligatoire pour une régénération ou ' +
+        'une destruction (coordonnées de l’installation exigées).');
+    }
+    return muter(() => {
+      const bsff = lireBsff(bsffId);
+      majParId('bsff', bsffId, {
+        issue_traitement: a.issueTraitement,
+        installation_traitement: installation || null,
+        certificat_traitement: a.certificatTraitement ?? null,
+        date_traitement: a.dateTraitement ?? aujourdHui()
+      });
+      journaliser(a.operateur, 'ISSUE_BSFF', bsff.bouteilleCode,
+        `BSFF ${bsff.numeroBsff} · traitement final : ${a.issueTraitement}` +
+        (installation ? ` (${installation})` : ''));
+      return lireBsff(bsffId);
+    });
+  },
+
+  /**
    * IM-9 : retour d'une bouteille consignée au fournisseur. La masse nette
    * restante alimente le poste « retours fournisseur » de la balance ; la
    * bouteille sort du stock (RETOURNEE). Reprend retournerFournisseur du
@@ -3723,11 +3770,104 @@ const HANDLERS = {
       mapping.versFront('retours_fournisseur', ligne));
   },
 
+  /**
+   * P0-8 (DA-3) : CESSION de fluide à un tiers attesté (rubrique 10).
+   * Miroir EXACT du DemoStore (gardes, décrément, journal). Trace figée.
+   */
+  createCession(params) {
+    const d = params.donneesCession || params || {};
+    const bouteille = trouverBouteille(d.bouteilleId);
+    if (bouteille.statut === 'RETOURNEE') {
+      throw new Error(`Bouteille ${bouteille.code} déjà sortie du stock.`);
+    }
+    if (bouteille.statut === 'DECHET') {
+      throw new Error(
+        `Bouteille ${bouteille.code} déclarée déchet : la sortie passe par ` +
+        'un BSFF, pas par une cession.');
+    }
+    if (!DESTINATAIRES_CESSION.includes(d.destinataireType)) {
+      throw new Error(
+        `Type de destinataire inconnu : ${d.destinataireType} ` +
+        `(attendu : ${DESTINATAIRES_CESSION.join(', ')}).`);
+    }
+    const raison = String(d.destinataireRaisonSociale ?? '').trim();
+    if (!raison) {
+      throw new Error('Raison sociale du destinataire obligatoire.');
+    }
+    const masse = Number(d.masseKg);
+    if (!Number.isFinite(masse) || masse <= 0) {
+      throw new Error('Masse cédée obligatoire (en kg, positive).');
+    }
+    if (masse > bouteille.masseNetteKg + 1e-9) {
+      throw new Error(
+        `Masse cédée (${masse} kg) supérieure au contenu de la bouteille ` +
+        `${bouteille.code} (${bouteille.masseNetteKg} kg).`);
+    }
+    const cession = {
+      id: db.generateId('CESSION'),
+      bouteilleId: bouteille.id,
+      bouteilleCode: bouteille.code,
+      fluide: bouteille.fluide,
+      destinataireType: d.destinataireType,
+      destinataireRaisonSociale: raison,
+      masseKg: arrondir(masse),
+      date: d.date ?? aujourdHui(),
+      operateur: d.operateur ?? null,
+      observation: d.observation ?? null
+    };
+    return muter(() => {
+      const ligne = mapping.versSql('cessions', cession);
+      ligne.etablissement_id = ID_ETABLISSEMENT;
+      inserer('cessions', ligne);
+
+      // La bouteille est décrémentée de la masse cédée (comme un BSFF partiel).
+      let nette = arrondir(bouteille.masseNetteKg - cession.masseKg);
+      const patch = { date_derniere_pesee: aujourdHui() };
+      if (nette <= 1e-9) {
+        nette = 0;
+        patch.statut = 'RETOURNEE';
+      }
+      patch.masse_brute_kg = arrondir(bouteille.tareKg + nette);
+      majParId('bouteilles', bouteille.id, patch);
+
+      journaliser(cession.operateur, 'CESSION', bouteille.code,
+        `Cession ${fmtKgSigne(-cession.masseKg)} ${cession.fluide} → ` +
+        `${raison} (${cession.destinataireType})`);
+      return mapping.versFront('cessions',
+        db.get('SELECT * FROM cessions WHERE id = ?', [cession.id]));
+    });
+  },
+
+  /** Toutes les cessions, triées date décroissante. */
+  getCessions() {
+    const lignes = db.all('SELECT * FROM cessions ORDER BY date_cession DESC');
+    return lignes.map((ligne) => mapping.versFront('cessions', ligne));
+  },
+
   // === balance matière + synthèses (VAGUE 8 — SPEC §6/§7) ===
 
   /** Balance matière annuelle par fluide (via la VUE bilan_matiere). */
   getBalanceMatiere(params) {
     return calculerBalanceMatiere(Number(params.annee));
+  },
+
+  /**
+   * P0-8 : déclaration annuelle réglementaire (11 rubriques par fluide).
+   * Lit les collections et délègue au module pur (miroir du front, parité
+   * prouvée). La présence d'une photo se déduit de photosBouteilles.
+   */
+  getDeclarationAnnuelle(params) {
+    const lire = (table) => db.all(`SELECT * FROM ${table}`)
+      .map((l) => mapping.versFront(table, l));
+    return calculerDeclarationAnnuelle(Number(params.annee), {
+      mouvements: lire('mouvements'),
+      bouteilles: lire('bouteilles'),
+      bsff: lire('bsff'),
+      cessions: lire('cessions'),
+      retoursFournisseur: lire('retours_fournisseur'),
+      stocksInitiaux: lire('stocks_initiaux'),
+      photosBouteilles: lire('inventaires_bouteilles')
+    });
   },
 
   /**
@@ -4218,6 +4358,9 @@ function construireDonneesExport() {
     piecesJointes: lireTablePlate('pieces_jointes', 'pieces_jointes',
       'date_ajout, id'),
     retoursFournisseur: HANDLERS.getRetoursFournisseur(),
+    // P0-8 : les cessions voyagent dans l'export (sinon perdues au round-trip
+    // alors que la bouteille est déjà décrémentée → écart fantôme à l'import).
+    cessions: HANDLERS.getCessions(),
     alertes: HANDLERS.getAlertes(),
     journalAudit: HANDLERS.getJournalAudit(),
     // Lot E2 (brique E2c) : le COFFRE voyage dans l'export — enveloppes en
@@ -4277,9 +4420,9 @@ function completerCandidat(donnees) {
   const candidat = { ...donnees };
   for (const cle of ['auditsOrganisme', 'nonConformites', 'outillage',
     'stocksInitiaux', 'bsff', 'inventaires', 'justificationsEcarts',
-    'piecesJointes', 'retoursFournisseur', 'journalAudit', 'habilitations',
-    'mentionsHabilitation', 'mouvementOutillage', 'signaturesMouvement',
-    'coffreIdentites']) {
+    'piecesJointes', 'retoursFournisseur', 'cessions', 'journalAudit',
+    'habilitations', 'mentionsHabilitation', 'mouvementOutillage',
+    'signaturesMouvement', 'coffreIdentites']) {
     if (!Array.isArray(candidat[cle])) candidat[cle] = [];
   }
   // Lot E2 (E2c) : clés du coffre — un export antérieur n'en a pas.
@@ -4627,7 +4770,7 @@ function remplacerToutLEtat(candidat) {
     // coffre_purge_en_attente vidée aussi (chemins propres au poste, jamais
     // transportés).
     const TABLES_A_VIDER = ['coffre_identites', 'coffre_purge_en_attente',
-      'pieces_jointes', 'retours_fournisseur', 'bsff',
+      'pieces_jointes', 'retours_fournisseur', 'cessions', 'bsff',
       'controles', 'signatures_mouvement', 'mouvement_outillage', 'mouvements',
       'justifications_ecarts', 'inventaires',
       'inventaires_bouteilles', 'inventaires_fuites',
@@ -4744,6 +4887,8 @@ function remplacerToutLEtat(candidat) {
     reinsererCollection('bsff', 'bsff', candidat.bsff);
     reinsererCollection('retours_fournisseur', 'retours_fournisseur',
       candidat.retoursFournisseur);
+    // P0-8 : cessions — FK bouteilles, réinsérées comme les retours fournisseur.
+    reinsererCollection('cessions', 'cessions', candidat.cessions);
     reinsererCollection('stocks_initiaux', 'stocks_initiaux',
       candidat.stocksInitiaux);
     reinsererCollection('inventaires', 'inventaires', candidat.inventaires);

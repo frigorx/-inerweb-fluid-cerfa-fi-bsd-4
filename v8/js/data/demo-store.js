@@ -21,6 +21,8 @@ import { evaluerControle } from './reglementation-fluides.js';
 // signale une réintroduction au-delà du récupéré. Le serveur en tient un
 // MIROIR EXACT (api.js).
 import { avoirParMachineOrigine } from './avoir-origine.js';
+// P0-8 : déclaration annuelle 11 rubriques (module pur, miroir serveur).
+import { calculerDeclarationAnnuelle } from './declaration-annuelle.js';
 // Sentinelle d'alertes persistées : diff pur + formatage (module partagé
 // avec le test unitaire ; le serveur en tient un miroir exact).
 import { normaliserCodeMachine, validerCodeMachine } from './code-machine.js';
@@ -105,6 +107,13 @@ const CATEGORIES_ATTESTATION = ['I', 'II', 'III', 'IV'];
 
 /** Décisions possibles sur un fluide récupéré (SPEC §5.8). */
 const DECISIONS_FLUIDE = ['REUTILISABLE', 'A_ANALYSER', 'DECHET'];
+
+/** P0-8 — issues de traitement final d'un BSFF (miroir contrat.js). */
+const ISSUES_TRAITEMENT_BSFF =
+  ['RECYCLAGE', 'REGENERATION', 'DESTRUCTION', 'AUTRE'];
+/** P0-8 — destinataires attestés d'une cession (miroir contrat.js). */
+const DESTINATAIRES_CESSION =
+  ['OPERATEUR_ATTESTE', 'DISTRIBUTEUR', 'PRODUCTEUR'];
 
 /** CM-3 — Partition état↔type de la bouteille. Le fluide ACHETÉ (vierge,
  *  recyclé ou régénéré certifié) est porté par une bouteille NEUVE ; le
@@ -940,6 +949,15 @@ export function creerDemoStore() {
       const l = ligne(retour.fluide);
       l.retoursFournisseurKg =
         arrondir(l.retoursFournisseurKg + retour.masseKg);
+    }
+
+    // P0-8 : cessions de fluide à un tiers attesté dans l'année — sortie
+    // PHYSIQUE de stock (la bouteille est décrémentée à la création) : sans
+    // elle, une cession ferait apparaître un écart d'inventaire fantôme.
+    for (const cession of donnees.cessions || []) {
+      if (!(cession.date || '').startsWith(prefixe)) continue;
+      const l = ligne(cession.fluide);
+      l.cessionsKg = arrondir(l.cessionsKg + cession.masseKg);
     }
 
     const lignes = [...parFluide.values()]
@@ -2106,7 +2124,7 @@ export function creerDemoStore() {
       // recopier dans une sauvegarde qui n'en avait pas INVENTERAIT des
       // aptitudes (droits) ou des faits (outils figés, épisodes d'alerte).
       for (const cle of ['sentinelleAlertes', 'habilitations',
-        'mentionsHabilitation', 'mouvementOutillage']) {
+        'mentionsHabilitation', 'mouvementOutillage', 'cessions']) {
         if (!Array.isArray(donnees[cle])) {
           donnees[cle] = [];
           modifie = true;
@@ -4867,6 +4885,42 @@ export function creerDemoStore() {
     },
 
     /**
+     * P0-8 (DA-2) : atteste l'ISSUE de traitement final d'un BSFF déjà émis.
+     * Un BSFF ne prouve que la REMISE du déchet ; l'opérateur atteste ensuite
+     * la nature du traitement en renvoyant son certificat. Seule DESTRUCTION
+     * alimente la rubrique 9 de la déclaration ; REGENERATION → rubrique 8 ; un
+     * BSFF sans issue reste « traitement final non attesté » (jamais compté en
+     * destruction — correction du défaut d'audit BSFF ≠ destruction).
+     * Ré-attestation autorisée (correction) : la BSFF n'est pas WORM.
+     */
+    async attesterIssueBsff(bsffId, attestation) {
+      const a = attestation || {};
+      const bsff = donnees.bsff.find((b) => b.id === bsffId);
+      if (!bsff) throw new Error(`BSFF introuvable : ${bsffId}.`);
+      if (!ISSUES_TRAITEMENT_BSFF.includes(a.issueTraitement)) {
+        throw new Error(
+          `Issue de traitement inconnue : ${a.issueTraitement} ` +
+          `(attendu : ${ISSUES_TRAITEMENT_BSFF.join(', ')}).`);
+      }
+      const installation = String(a.installationTraitement ?? '').trim();
+      if ((a.issueTraitement === 'REGENERATION' ||
+           a.issueTraitement === 'DESTRUCTION') && !installation) {
+        throw new Error(
+          'Installation de traitement obligatoire pour une régénération ou ' +
+          'une destruction (coordonnées de l’installation exigées).');
+      }
+      bsff.issueTraitement = a.issueTraitement;
+      bsff.installationTraitement = installation || null;
+      bsff.certificatTraitement = a.certificatTraitement ?? null;
+      bsff.dateTraitement = a.dateTraitement ?? aujourdHui();
+      journaliser(a.operateur, 'ISSUE_BSFF', bsff.bouteilleCode,
+        `BSFF ${bsff.numeroBsff} · traitement final : ${bsff.issueTraitement}` +
+        (installation ? ` (${installation})` : ''));
+      persisterEtNotifier();
+      return copier(bsff);
+    },
+
+    /**
      * IM-9 : retour d'une bouteille consignée au fournisseur.
      * La masse nette restante alimente le poste « retours
      * fournisseur » de la balance matière (année de l'opération) ;
@@ -4912,11 +4966,98 @@ export function creerDemoStore() {
       return liste;
     },
 
+    /**
+     * P0-8 (DA-3) : CESSION de fluide à un tiers attesté (rubrique 10 de la
+     * déclaration annuelle). Sortie tracée figée (comme un retour fournisseur),
+     * depuis une bouteille : décrémente la masse cédée. Un déchet part par un
+     * BSFF, pas par une cession. Fin du `cessions_kg = 0` en dur.
+     */
+    async createCession(donneesCession) {
+      const d = donneesCession || {};
+      const bouteille = trouverBouteille(d.bouteilleId);
+      if (bouteille.statut === 'RETOURNEE') {
+        throw new Error(`Bouteille ${bouteille.code} déjà sortie du stock.`);
+      }
+      if (bouteille.statut === 'DECHET') {
+        throw new Error(
+          `Bouteille ${bouteille.code} déclarée déchet : la sortie passe par ` +
+          'un BSFF, pas par une cession.');
+      }
+      if (!DESTINATAIRES_CESSION.includes(d.destinataireType)) {
+        throw new Error(
+          `Type de destinataire inconnu : ${d.destinataireType} ` +
+          `(attendu : ${DESTINATAIRES_CESSION.join(', ')}).`);
+      }
+      const raison = String(d.destinataireRaisonSociale ?? '').trim();
+      if (!raison) {
+        throw new Error('Raison sociale du destinataire obligatoire.');
+      }
+      const masse = Number(d.masseKg);
+      if (!Number.isFinite(masse) || masse <= 0) {
+        throw new Error('Masse cédée obligatoire (en kg, positive).');
+      }
+      if (masse > bouteille.masseNetteKg + 1e-9) {
+        throw new Error(
+          `Masse cédée (${masse} kg) supérieure au contenu de la bouteille ` +
+          `${bouteille.code} (${bouteille.masseNetteKg} kg).`);
+      }
+      const cession = {
+        id: genId('cession'),
+        bouteilleId: bouteille.id,
+        bouteilleCode: bouteille.code,
+        fluide: bouteille.fluide,
+        destinataireType: d.destinataireType,
+        destinataireRaisonSociale: raison,
+        masseKg: arrondir(masse),
+        date: d.date ?? aujourdHui(),
+        operateur: d.operateur ?? null,
+        observation: d.observation ?? null
+      };
+      donnees.cessions.push(cession);
+      // La bouteille est décrémentée de la masse cédée (comme un BSFF partiel).
+      bouteille.masseNetteKg = arrondir(bouteille.masseNetteKg - cession.masseKg);
+      if (bouteille.masseNetteKg <= 1e-9) {
+        bouteille.masseNetteKg = 0;
+        bouteille.statut = 'RETOURNEE';
+      }
+      bouteille.masseBruteKg =
+        arrondir(bouteille.tareKg + bouteille.masseNetteKg);
+      bouteille.datePesee = aujourdHui();
+      journaliser(cession.operateur, 'CESSION', bouteille.code,
+        `Cession ${fmtKgSigne(-cession.masseKg)} ${cession.fluide} → ` +
+        `${raison} (${cession.destinataireType})`);
+      persisterEtNotifier();
+      return copier(cession);
+    },
+
+    async getCessions() {
+      const liste = copier(donnees.cessions);
+      liste.sort((a, b) => b.date.localeCompare(a.date));
+      return liste;
+    },
+
     // ------------------------------------------------------
     // Phase C : balance matière et inventaire (SPEC §6)
     // ------------------------------------------------------
     async getBalanceMatiere(annee) {
       return copier(calculerBalanceMatiere(Number(annee)));
+    },
+
+    /**
+     * P0-8 : déclaration annuelle réglementaire (11 rubriques par fluide).
+     * Assemble les collections et délègue au module pur (miroir serveur). La
+     * présence d'une photo se déduit de photosBouteilles (inventairesBouteilles).
+     */
+    async getDeclarationAnnuelle(annee) {
+      return calculerDeclarationAnnuelle(Number(annee), {
+        mouvements: donnees.mouvements,
+        bouteilles: donnees.bouteilles,
+        bsff: donnees.bsff,
+        cessions: donnees.cessions,
+        retoursFournisseur: donnees.retoursFournisseur,
+        stocksInitiaux: donnees.stocksInitiaux,
+        photosBouteilles: donnees.inventairesBouteilles
+      });
     },
 
     async saisirInventaire(annee, lignes, operateur) {
@@ -5154,7 +5295,7 @@ export function creerDemoStore() {
       // registre étranger (sans per-fh/per-sb) serait REFUSÉ en orphelin.
       // Idem signaturesMouvement (lot C) : jamais de signature inventée.
       for (const cle of ['habilitations', 'mentionsHabilitation',
-        'mouvementOutillage', 'signaturesMouvement']) {
+        'mouvementOutillage', 'signaturesMouvement', 'cessions']) {
         if (!Array.isArray(candidat[cle])) candidat[cle] = [];
       }
       if (candidat.etablissement.numAttestationCapacite === undefined) {

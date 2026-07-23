@@ -6,6 +6,27 @@
 > **Session conseillée : Opus, effort très élevé** (chantier probatoire/réglementaire, briques
 > testées une à une). PAS d'ultracode hors point critique.
 >
+> **⭐⭐⭐⭐ ÉTAT AU 22/07 (nuit) — P0-8 DÉCLARATION ANNUELLE 11 RUBRIQUES TERMINÉ
+> (DA-1→DA-8, plan `docs/PLAN-P0-8-DECLARATION.md`, périmètre A validé Franck,
+> TOUT VERT 93 exéc., vérifié au NAVIGATEUR).** Le pseudo-bilan « déclaration
+> ADEME » (incomplet, `cessions_kg=0`, BSFF compté en destruction) est remplacé
+> par la déclaration réglementaire de l'arrêté du 21/11/2025. Migrations 28
+> (`bsff.issue_traitement`) / 29 (table `cessions`) / 30 (vue `bilan_matiere`
+> recréée pour compter les cessions). 2 captures : `attesterIssueBsff`
+> (BSFF ≠ destruction — seule une issue DESTRUCTION attestée compte en rubrique 9)
+> + `createCession` (décrémente la bouteille, rubrique 10). Moteur PUR
+> `declaration-annuelle.js` (ESM + miroir CommonJS, parité prouvée,
+> `test-declaration-annuelle` 30 vérifs) : rubriques 2-5 agrégées PAR TYPE,
+> stocks 11 depuis photos N-1/N, anomalies (photos absentes, BSFF sans issue).
+> `getDeclarationAnnuelle` (2 stores). UI : `bilan.js` retire « ADEME » + section
+> 11 rubriques + CSV + bandeau anomalies ; `dechets.js` (attester l'issue) ;
+> `fiche-bouteille.js` (céder à un tiers). Dossier d'audit scellé + declaration/
+> cessions CSV + colonnes issue au bsff.csv. Contrat DataStore **v8** (91 méth.).
+> **PROCHAINE ÉTAPE : P0-9 (HORS code — preuve de révocation des clés v7) + volet
+> RGPD (surtout hors code, Franck+DPD) + décisions T2 (R-455A 148→146 pour la
+> cible officielle) / T3 (relecture organisme agréé).** Le mode Officiel reste
+> FERMÉ (`VERROU_LIVRAISON=true`). ⏳ **PR ouverte, à relire/fusionner par Franck.**
+>
 > **⭐⭐⭐ ÉTAT AU 22/07 (nuit) — P0-6 CYCLE FUITE TERMINÉ (CF-1→CF-6, plan
 > `docs/PLAN-P0-6-CYCLE-FUITE.md`, décisions G1-G6 arbitrées par Franck AVANT
 > code, TOUT VERT 92 exéc.)** : clôture d'une fuite STRICTE J+1 (fin de la
