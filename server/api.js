@@ -938,7 +938,7 @@ const HANDLERS = {
         // R4 : distinguer fuite OUVERTE (CRITIQUE) de fuite RÉPARÉE en
         // attente de contrôle de suivi (IMPORTANT, échéance 1 mois civil, P0-6).
         const statutFuite = estFuiteOuverte(controlesDeLaMachine(m.id),
-          m.typeInstallation === 'MOBILE');
+          equipement.mobileListe(m));
         // R4 : l'alerte de SUIVI n'existe que si une réparation est
         // TRACÉE — sans elle, la fuite reste « non résolue » (jamais de
         // dates nulles affichées).
@@ -5668,7 +5668,7 @@ function recalculerEffetsMachineApresAnnulation(machineId, controleExcluId) {
     patch.date_prochain_controle = prochain;
   }
   const statutFuite = estFuiteOuverte(actifs,
-    machine.typeInstallation === 'MOBILE');
+    equipement.mobileListe(machine));
   const fuiteNonRefermee = Boolean(statutFuite.controleFuiteId &&
     (statutFuite.ouverte || statutFuite.echeanceControleSuivi !== null));
   if (fuiteNonRefermee) {
@@ -5780,7 +5780,7 @@ function appliquerEffets(mouvement) {
     // tracer la réparation puis de déclarer un nouveau contrôle.
     if (mouvement.type === 'CHARGE_APPOINT' &&
         estFuiteOuverte(controlesDeLaMachine(machine.id),
-          machine.typeInstallation === 'MOBILE').ouverte) {
+          equipement.mobileListe(machine)).ouverte) {
       throw new Error(MSG_FUITE_OUVERTE);
     }
     const source = trouverBouteille(mouvement.bouteilleSrcId,
@@ -6134,7 +6134,7 @@ function enregistrerControle(d) {
     // au jour de la réparation, jour même admis pour un équipement
     // MOBILE listé). Plus de condition ad hoc divergente du dossier.
     const statutFuite = estFuiteOuverte(controlesDeLaMachine(machine.id),
-      machine.typeInstallation === 'MOBILE');
+      equipement.mobileListe(machine));
     if (!statutFuite.ouverte && statutFuite.dateReparation &&
         statutFuite.echeanceControleSuivi === null) {
       nouveauStatut = 'EN_SERVICE';
@@ -7342,7 +7342,11 @@ function cadreFicheOfficiel(mouvement) {
       // Number() et fabriquerait un faux refus (leçon conseil-intervenant).
       chargeKg: typeof nominale === 'number' && Number.isFinite(nominale)
         && nominale > 0 ? nominale : null,
-      hermetiqueScelle: false
+      // P1-1 (E4) — DETTE P0-5 SOLDÉE : la valeur était écrite en dur à
+      // false faute de champ. Elle vient de la machine, et n'ouvre le
+      // seuil élargi (6 kg) que si l'équipement est hermétiquement scellé
+      // ET ÉTIQUETÉ. Miroir du DemoStore.
+      hermetiqueScelle: machine ? equipement.hermetiqueOpposable(machine) : false
     });
     intervenant = {
       nom: `${personne.prenom} ${personne.nom}`,
@@ -7458,13 +7462,16 @@ function figerPhotoNominative(annee) {
     });
   }
 
+  // P1-1 (E5) : le sous-type est INDISPENSABLE ici — `mobileListe` exige un
+  // sous-type de la liste fermée. Le sélectionner à part serait un piège
+  // (colonne absente ⇒ jamais mobile) : on prend la ligne entière et on la
+  // passe par le mapping, comme partout ailleurs.
   const machines = db.all(
-    "SELECT id, designation, type_installation FROM machines WHERE statut = 'FUITE'")
-    .map((l) => ({ id: l.id, designation: l.designation,
-      typeInstallation: l.type_installation }));
+    "SELECT * FROM machines WHERE statut = 'FUITE'")
+    .map((l) => mapping.versFront('machines', l));
   for (const m of machines) {
     const statutFuite = estFuiteOuverte(controlesDeLaMachine(m.id),
-      m.typeInstallation === 'MOBILE');
+      equipement.mobileListe(m));
     if (!statutFuite.ouverte && statutFuite.dateReparation) continue;
     const controleFuite = statutFuite.controleFuiteId
       ? controlesDeLaMachine(m.id)

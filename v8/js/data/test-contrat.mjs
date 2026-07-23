@@ -1695,13 +1695,18 @@ await verifierRejet('createBouteille refuse MELANGE hors type RÉCUPÉRATION',
   // Équipement MOBILE listé : le contrôle immédiat après réparation est
   // admis (cas d'acceptation n° 4 de l'audit §11) — fuite, réparation et
   // CONFORME le MÊME JOUR → clôture, machine EN_SERVICE.
+  // P1-1 (E5) : « listé » se PROUVE désormais par le sous-type. Un MOBILE
+  // sans sous-type de la liste fermée n'ouvre plus l'exception (le cas
+  // négatif est couvert par test-equipement).
   const machineMobile = await store.createMachine({
     designation: 'Groupe mobile de transfert de clim', fluide: FLUIDE,
     chargeNominaleKg: 2, typeInstallation: 'MOBILE',
+    sousTypeInstallation: 'FOURGON_FRIGORIFIQUE',
     operateur: 'Testeur Contrat'
   });
-  verifier('createMachine : typeInstallation MOBILE enregistré',
-    machineMobile.typeInstallation === 'MOBILE');
+  verifier('createMachine : typeInstallation MOBILE + sous-type listé enregistrés',
+    machineMobile.typeInstallation === 'MOBILE'
+    && machineMobile.sousTypeInstallation === 'FOURGON_FRIGORIFIQUE');
   const ctlFuiteMobile = await store.createControle({
     machineId: machineMobile.id, resultat: 'FUITE', methode: 'DIRECTE',
     date: dateRelative(0), operateur: 'Testeur Contrat'

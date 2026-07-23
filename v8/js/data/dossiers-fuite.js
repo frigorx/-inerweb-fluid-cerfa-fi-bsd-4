@@ -34,6 +34,10 @@
 //    consignée au dossier).
 // ============================================================
 
+// P1-1 (E5) : « mobile LISTÉ » se vérifie enfin — le sous-type de la
+// liste fermée fait foi, plus le seul drapeau FIXE/MOBILE.
+import { mobileListe as mobileListeEquipement } from './equipement.js';
+
 /**
  * Échéance du contrôle de suivi = réparation + 1 MOIS CIVIL (P0-6, au
  * lieu des +30 jours calendaires d'origine). Débordement de fin de mois
@@ -152,11 +156,19 @@ function evenementMouvement(mouvement) {
 }
 
 /**
- * Équipement MOBILE listé (exception P0-6 : contrôle immédiat admis).
- * Absence de valeur = FIXE (défaut conservateur, jamais laxiste).
+ * Équipement MOBILE **LISTÉ** — exception P0-6 : contrôle de clôture admis
+ * le jour même de la réparation, sans attendre 24 h de fonctionnement.
+ *
+ * P1-1 (E5) — DETTE P0-6 SOLDÉE : le texte réserve cette exception aux
+ * équipements mobiles LISTÉS. Jusqu'ici, tout équipement marqué MOBILE en
+ * profitait, faute de sous-type : l'appartenance à la liste n'était pas
+ * vérifiable. Désormais il faut un sous-type de la liste fermée —
+ * AUTRE_MOBILE et l'absence de sous-type n'ouvrent aucun droit.
+ * **Plus strict qu'avant**, donc conforme à la doctrine : jamais moins de
+ * contrôles qu'exigé. Absence de valeur = FIXE (défaut conservateur).
  */
 export function estMachineMobile(machine) {
-  return machine?.typeInstallation === 'MOBILE';
+  return mobileListeEquipement(machine);
 }
 
 /** Construit UN dossier depuis un ÉPISODE (groupe de contrôles FUITE). */

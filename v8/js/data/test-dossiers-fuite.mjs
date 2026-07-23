@@ -263,7 +263,8 @@ const MACHINE = { id: 'mac-1' };
     d.evenements[0].type === 'CLOTURE');
 
   const mobile = construireDossiersFuite({
-    machine: { ...MACHINE, typeInstallation: 'MOBILE' }, controles,
+    machine: { ...MACHINE, typeInstallation: 'MOBILE',
+      sousTypeInstallation: 'CAMION_FRIGORIFIQUE' }, controles,
     mouvements: [], aujourdhui: '2026-06-11'
   }).dossiers[0];
   verifier('MOBILE listé : le contrôle immédiat clôture (exception de périmètre)',
@@ -451,7 +452,8 @@ const MACHINE = { id: 'mac-1' };
       numero: 'FORM-2026-0012' }
   ];
   const d = construireDossiersFuite({
-    machine: { ...MACHINE, typeInstallation: 'MOBILE' }, controles,
+    machine: { ...MACHINE, typeInstallation: 'MOBILE',
+      sousTypeInstallation: 'CAMION_FRIGORIFIQUE' }, controles,
     mouvements, aujourdhui: '2026-06-11'
   }).dossiers[0];
   const ordre = d.evenements.map((e) => e.type === 'MOUVEMENT'

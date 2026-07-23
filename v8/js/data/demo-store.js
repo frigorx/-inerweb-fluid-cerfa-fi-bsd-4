@@ -22,8 +22,8 @@ import { evaluerControle, impactDepuisPrp, codeFluideNormalise,
 // fréquence de contrôle que si elle a été VÉRIFIÉE depuis moins de 12 mois
 // (E1). Miroir serveur : server/equipement.js.
 import { detectionEffective, echeanceVerificationDetection,
-  verifierModeleEquipement, mobileListe, detectionObligatoire }
-  from './equipement.js';
+  verifierModeleEquipement, mobileListe, detectionObligatoire,
+  hermetiqueOpposable } from './equipement.js';
 // CM-2 : avoir de fluide par machine d'origine (DÉRIVÉ des mouvements) —
 // signale une réintroduction au-delà du récupéré. Le serveur en tient un
 // MIROIR EXACT (api.js).
@@ -1044,7 +1044,7 @@ export function creerDemoStore() {
       if (m.statut !== 'FUITE') continue;
       const statutFuite = estFuiteOuverte(
         controlesActifsDeLaMachine(m.id),
-        m.typeInstallation === 'MOBILE');
+        mobileListe(m));
       // Même règle que getAlertes : « non résolue » = pas de réparation
       // tracée (une fuite réparée en attente de contrôle de suivi n'est
       // plus « ouverte » au sens de la photo).
@@ -1235,7 +1235,12 @@ export function creerDemoStore() {
         // Number() et fabriquerait un faux refus (leçon conseil-intervenant).
         chargeKg: typeof nominale === 'number' && Number.isFinite(nominale)
           && nominale > 0 ? nominale : null,
-        hermetiqueScelle: false
+        // P1-1 (E4) — DETTE P0-5 SOLDÉE : la valeur était écrite en dur à
+        // false faute de champ. Elle vient désormais de la machine, et
+        // n'ouvre le seuil élargi (6 kg au lieu de 3) que si l'équipement
+        // est hermétiquement scellé ET ÉTIQUETÉ comme tel : le texte ne
+        // reconnaît pas un hermétique qui ne se déclare pas.
+        hermetiqueScelle: machine ? hermetiqueOpposable(machine) : false
       });
       intervenant = {
         nom: `${personne.prenom} ${personne.nom}`,
@@ -1608,7 +1613,7 @@ export function creerDemoStore() {
       // tracer la réparation puis de déclarer un nouveau contrôle.
       if (mouvement.type === 'CHARGE_APPOINT') {
         if (estFuiteOuverte(controlesActifsDeLaMachine(machine.id),
-          machine.typeInstallation === 'MOBILE').ouverte) {
+          mobileListe(machine)).ouverte) {
           throw new Error(MSG_FUITE_OUVERTE);
         }
       }
@@ -1902,7 +1907,7 @@ export function creerDemoStore() {
       machine.prochainControle = porteurEcheance.prochainControle;
     }
     const statutFuite = estFuiteOuverte(actifs,
-      machine.typeInstallation === 'MOBILE');
+      mobileListe(machine));
     const fuiteNonRefermee = Boolean(statutFuite.controleFuiteId &&
       (statutFuite.ouverte || statutFuite.echeanceControleSuivi !== null));
     if (fuiteNonRefermee) {
@@ -2029,7 +2034,7 @@ export function creerDemoStore() {
       // MOBILE listé). Plus de condition ad hoc divergente du dossier.
       const statutFuite = estFuiteOuverte(
         controlesActifsDeLaMachine(machine.id),
-        machine.typeInstallation === 'MOBILE');
+        mobileListe(machine));
       if (!statutFuite.ouverte && statutFuite.dateReparation &&
           statutFuite.echeanceControleSuivi === null) {
         machine.statut = 'EN_SERVICE';
@@ -2447,7 +2452,7 @@ export function creerDemoStore() {
           // (IMPORTANT, échéance 1 mois civil depuis la réparation, P0-6).
           const statutFuite = estFuiteOuverte(
             controlesActifsDeLaMachine(m.id),
-            m.typeInstallation === 'MOBILE');
+            mobileListe(m));
           // R4 : l'alerte de SUIVI n'existe que si une réparation est
           // TRACÉE — sans elle, la fuite reste « non résolue » (jamais
           // de dates nulles affichées).
