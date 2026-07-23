@@ -6,19 +6,36 @@ inerWeb Fluide permet de tenir un registre réglementaire complet des fluides fr
 
 La maquette validée (jetons de design, palette, captures d'écran) se trouve dans le dossier [`design/`](design/).
 
-## Les trois modes d'utilisation
+## Les deux modes d'utilisation
 
-Un seul code, trois façons de l'utiliser. Le mode est déterminé au démarrage.
+Un seul code, deux façons de l'utiliser. Le mode est déterminé au démarrage.
 
-| | Démo (GitHub Pages) | Local Lycée | Cloud Lycée |
-|---|---|---|---|
-| **Public visé** | Découverte, bac à sable pédagogique | Établissement (recommandé) | Établissement multi-postes |
-| **Installation** | Aucune (navigateur) | Dossier portable à copier, lancement par double-clic | Projet Supabase (hébergement UE) |
-| **Données** | Fictives uniquement, stockées dans le navigateur | Base SQLite locale + documents à côté de l'application | PostgreSQL + stockage de documents privé |
-| **Comptes utilisateurs** | Non | Oui (ADMIN / RÉFÉRENT / ENSEIGNANT / ÉLÈVE) | Oui (authentification Supabase) |
-| **Mode Officiel** | Non — filigrane « DÉMO / FORMATION » permanent | Pas encore — version formation (le mode officiel, avec blocage réglementaire et signature du détenteur, est prévu pour la diffusion en entreprise) | Prévu |
-| **Sauvegarde** | — | ZIP complet en un clic, restauration en un clic | Automatique planifiée + export local à tout moment |
-| **Réseau** | Site public statique | `localhost` uniquement, aucune donnée ne sort du poste | Multi-utilisateurs simultanés |
+| | Démo (GitHub Pages) | Local Lycée |
+|---|---|---|
+| **Public visé** | Découverte, bac à sable pédagogique | Établissement (recommandé) |
+| **Installation** | Aucune (navigateur) | Dossier portable à copier, lancement par double-clic |
+| **Données** | Fictives uniquement, stockées dans le navigateur | Base SQLite locale + documents à côté de l'application |
+| **Comptes utilisateurs** | Non | Oui (ADMIN / RÉFÉRENT / ENSEIGNANT / ÉLÈVE) |
+| **Mode Officiel** | Non — filigrane « DÉMO / FORMATION » permanent | **Codé, volontairement VERROUILLÉ** — voir ci-dessous |
+| **Sauvegarde** | — | ZIP complet en un clic, restauration en un clic ; archive automatique vérifiée |
+| **Réseau** | Site public statique | `localhost` par défaut ; réseau local possible, mais en HTTPS obligatoire |
+
+> **Un mode « Cloud Lycée » figurait ici.** Il n'est pas implémenté : le
+> programme ne parle à aucun service distant. La mention est retirée plutôt
+> que maintenue au futur (P2-5, 23/07) — annoncer un hébergement engage
+> l'établissement responsable de traitement au sens du RGPD.
+
+### Où en est le mode Officiel
+
+Il n'est pas « à venir » : **il est écrit, testé, et fermé à dessein.** Le
+parcours complet existe (double signature réelle, PDF final conservé et haché,
+écriture scellée en chaîne, contre-écriture, conditions de blocage
+réglementaires). Un verrou de livraison unique (`VERROU_LIVRAISON`) le
+maintient fermé le temps de solder les corrections issues de l'audit externe du
+20/07/2026 ; sa réouverture est une décision, pas un développement.
+
+En attendant, toute fiche produite porte le filigrane « DÉMO / FORMATION » :
+le logiciel ne peut pas être pris pour un registre opposable par accident.
 
 ## Fonctionnalités clés
 
@@ -37,7 +54,6 @@ Un seul code, trois façons de l'utiliser. Le mode est déterminé au démarrage
 ## Guides
 
 - [Installation simple (mode Local Lycée)](INSTALLATION_SIMPLE.md)
-- [Installation Cloud (mode Cloud Lycée)](INSTALLATION_CLOUD.md)
 - [Sauvegarde et restauration](SAUVEGARDE.md)
 - [Sécurité](SECURITE.md)
 - [RGPD et données personnelles](RGPD.md)

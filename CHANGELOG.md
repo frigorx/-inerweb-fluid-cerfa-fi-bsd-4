@@ -2,6 +2,41 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧹 P2-4 + P2-5 — DISTRIBUTION ALLOWLISTÉE ET DOCUMENTATION ALIGNÉE (23/07)
+- **P2-4 — le serveur ne distribue plus que l'application.** La règle était une
+  liste NOIRE (`data`, `documents`, `backups`, `server`, `.git`, `.env`) : tout le
+  reste du dépôt était servi. **Vérifié en le TIRANT avant correctif** —
+  `/docs/AUDIT-INERWEB-FLUIDE-2026-07-20.md` (le rapport qui ÉNUMÈRE les faiblesses
+  connues), `/CHANGELOG.md`, `/README.md`, `/Code_API_v7.1.0.gs` et
+  `/apps-script/Code.gs` répondaient **200**. Une liste noire est fausse par
+  construction : elle oublie tout ce qu'on ajoute ensuite au dépôt.
+  Désormais **liste BLANCHE** : `v8/`, `img/` et trois fichiers de racine
+  (`index.html`, `guide.html`, `manifest.json`). Le refus est un **404**, pas un
+  403 — on ne confirme pas l'existence d'un fichier privé.
+  Nouvelle suite `test-distribution-statique.mjs` (31 vérifs, filet 98 → **99**),
+  qui tient les DEUX bouts : l'application entièrement servie (un 404 sur une police
+  ou un module ES rendrait le logiciel muet) **et** rien d'autre, y compris des
+  chemins qui n'existent pas encore. Garde de traversée de chemin non régressée.
+- **P2-5 — la documentation dit ce que le programme fait.**
+  - `.env.example` annonçait **cinq réglages que le serveur ne lit pas** (`MODE`,
+    `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SAUVEGARDE_AUTO`, `SAUVEGARDE_CHIFFREE`).
+    Retirés : une option annoncée mais ignorée est pire qu'une option absente — elle
+    laisse croire qu'un comportement est piloté. Le fichier documente maintenant
+    `PORT`, `IWF_CHEMIN_BASE` et les `IWF_*` du mode LAN, tous réellement lus.
+  - `SECURITE.md` affirmait « 127.0.0.1 **uniquement** » alors que le mode LAN existe
+    depuis P1-5 : corrigé en « par défaut », avec les exigences HTTPS explicitées, et
+    la distribution allowlistée documentée.
+  - **Promesse « Cloud UE / Supabase » retirée partout** (README, SECURITE, RGPD, et
+    les 4 renvois résiduels) : le mode n'est pas implémenté, et annoncer un
+    hébergement engage l'établissement responsable de traitement — sous-traitant,
+    lieu de stockage, transferts. `INSTALLATION_CLOUD.md` est conservé mais coiffé
+    d'un bandeau « MODE NON IMPLÉMENTÉ — note de conception, pas une procédure » :
+    l'appliquer ferait déclarer au DPD un sous-traitant inexistant.
+  - **README** : le mode Officiel n'est plus « prévu » mais **« codé, volontairement
+    verrouillé »** — c'est exact et c'est autrement plus solide en audit. Le tableau
+    passe de trois modes à deux.
+- **TOUT VERT — 99 exécutions.**
+
 ### 🧱 P1-1 — LE MODÈLE D'ÉQUIPEMENT (23/07, EQ-1→EQ-10, plan docs/PLAN-P1-1-MODELE-EQUIPEMENT.md)
 - **La fiche machine sait enfin dire ce que l'équipement EST — et ce que l'être
   change pour ses obligations.** Décisions E1→E7 **déléguées par Franck** (« fais
