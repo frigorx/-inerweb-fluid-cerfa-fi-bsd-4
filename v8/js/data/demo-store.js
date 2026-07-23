@@ -18,6 +18,12 @@ import { teqCO2, fmtDate, fmtNombre, fmtKgSigne, genId, hasherEcriture,
 // logique UNIQUE partagée avec le cadre 7 du CERFA (aucun doublon).
 import { evaluerControle, impactDepuisPrp, codeFluideNormalise,
   verifierFicheFluide } from './reglementation-fluides.js';
+// P1-1 — modèle d'équipement : la détection permanente n'allège la
+// fréquence de contrôle que si elle a été VÉRIFIÉE depuis moins de 12 mois
+// (E1). Miroir serveur : server/equipement.js.
+import { detectionEffective, echeanceVerificationDetection,
+  verifierModeleEquipement, mobileListe, detectionObligatoire }
+  from './equipement.js';
 // CM-2 : avoir de fluide par machine d'origine (DÉRIVÉ des mouvements) —
 // signale une réintroduction au-delà du récupéré. Le serveur en tient un
 // MIROIR EXACT (api.js).
@@ -1184,8 +1190,13 @@ export function creerDemoStore() {
     // cadre 7 du CERFA (fréquence non nulle = machine soumise).
     let controlePeriodiqueRequis = false;
     if (machine && fluideRef) {
+      // P1-1 (E1) : détection EFFECTIVE — une détection non vérifiée
+      // n'allège rien. Sans effet sur ce booléen (les deux fréquences
+      // sont non nulles), mais on lit la détection d'UNE seule façon
+      // dans tout le logiciel.
       const { frequenceMois } = evaluerControle(fluideRef,
-        machine.chargeNominaleKg, Boolean(machine.detectionPermanente),
+        machine.chargeNominaleKg,
+        detectionEffective(machine, mouvement.date ?? jour).compte,
         mouvement.date ?? jour);
       controlePeriodiqueRequis = Boolean(frequenceMois);
     }
@@ -3243,9 +3254,13 @@ export function creerDemoStore() {
       // La date du contrôle fixe le régime applicable (HFO purs contrôlés
       // seulement depuis le 11/03/2024) — miroir du serveur.
       const dateControle = dateControleISO ?? aujourdHui();
+      // P1-1 (E1) : la détection est évaluée À LA DATE DU CONTRÔLE — la
+      // question est « était-elle vérifiée ce jour-là ? », pas « l'est-elle
+      // aujourd'hui ? ». Non vérifiée → fréquence SANS détection (plus de
+      // contrôles, jamais moins).
       const { frequenceMois } = evaluerControle(
         fluideRef, machine.chargeNominaleKg,
-        Boolean(machine.detectionPermanente), dateControle);
+        detectionEffective(machine, dateControle).compte, dateControle);
       if (!frequenceMois) return null;
       return ajouterMois(dateControle, frequenceMois);
     },
@@ -3648,9 +3663,11 @@ export function creerDemoStore() {
           const machineDuControle = trouverMachine(mouvement.machineId);
           const fluideRef = donnees.fluides.find(
             (f) => f.code === machineDuControle.fluide) ?? null;
+          // P1-1 (E1) : détection EFFECTIVE à la date du mouvement.
           const { frequenceMois } = evaluerControle(
             fluideRef, machineDuControle.chargeNominaleKg,
-            Boolean(machineDuControle.detectionPermanente), mouvement.date);
+            detectionEffective(machineDuControle, mouvement.date).compte,
+            mouvement.date);
           if (frequenceMois) {
             prochainCalcule = ajouterMois(mouvement.date, frequenceMois);
           }

@@ -2929,9 +2929,13 @@ const HANDLERS = {
     // La date du contrôle fixe le régime applicable (HFO purs contrôlés
     // seulement depuis le 11/03/2024) — miroir du DemoStore.
     const dateControle = params.dateControle ?? aujourdHui();
+    // P1-1 (E1) : la détection est évaluée À LA DATE DU CONTRÔLE — non
+    // vérifiée depuis 12 mois → fréquence SANS détection (plus de
+    // contrôles, jamais moins). Miroir du DemoStore.
     const frequenceMois = frequenceControleMois(
       fluideRef, machine.chargeNominaleKg,
-      Boolean(machine.detectionPermanente), dateControle);
+      equipement.detectionEffective(machine, dateControle).compte,
+      dateControle);
     if (!frequenceMois) return null;
     return ajouterMois(dateControle, frequenceMois);
   },
@@ -3397,9 +3401,12 @@ const HANDLERS = {
             mouvement.type === 'CONTROLE_NON_PERIODIQUE') {
           const machineDuControle = trouverMachine(mouvement.machineId);
           const fluideRef = lireFluide(machineDuControle.fluide);
+          // P1-1 (E1) : détection EFFECTIVE à la date du mouvement.
           const frequenceMois = frequenceControleMois(
             fluideRef, machineDuControle.chargeNominaleKg,
-            Boolean(machineDuControle.detectionPermanente), mouvement.date);
+            equipement.detectionEffective(machineDuControle,
+              mouvement.date).compte,
+            mouvement.date);
           if (frequenceMois) {
             prochainCalcule = ajouterMois(mouvement.date, frequenceMois);
           }
@@ -7236,8 +7243,12 @@ function cadreFicheOfficiel(mouvement) {
   // cadre 7 du CERFA (fréquence non nulle = machine soumise).
   let controlePeriodiqueRequis = false;
   if (machine && fluideRef) {
+    // P1-1 (E1) : détection EFFECTIVE — sans effet sur ce booléen (les
+    // deux fréquences sont non nulles), mais on lit la détection d'UNE
+    // seule façon dans tout le logiciel. Miroir du DemoStore.
     controlePeriodiqueRequis = Boolean(frequenceControleMois(fluideRef,
-      machine.chargeNominaleKg, Boolean(machine.detectionPermanente),
+      machine.chargeNominaleKg,
+      equipement.detectionEffective(machine, mouvement.date ?? jour).compte,
       mouvement.date ?? jour));
   }
   const lignePersonne = mouvement.executeParId

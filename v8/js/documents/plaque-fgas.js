@@ -11,6 +11,7 @@
 import { modale, ICONES } from '../views/communs.js';
 import { esc, fmtKg, fmtTeq, fmtDate, teqCO2 } from '../core/utils.js';
 import { evaluerControle } from '../data/reglementation-fluides.js';
+import { detectionEffective } from '../data/equipement.js';
 
 /* ============================================================
    Calcul de la fréquence de contrôle réglementaire (cadre 7 CERFA)
@@ -30,9 +31,14 @@ import { evaluerControle } from '../data/reglementation-fluides.js';
  * @returns {{ categorie: 'HFC'|'HFO'|'HCFC'|null, niveau: 1|2|3|null,
  *   frequenceMois: number|null }} categorie null = hors périmètre F-Gas
  */
-export function calculerFrequenceControle(machine, fluide) {
+export function calculerFrequenceControle(machine, fluide, jour) {
+  // P1-1 (E1) : la plaque affiche la fréquence QUI S'APPLIQUE — une
+  // détection permanente non vérifiée depuis 12 mois n'allège rien.
+  // `jour` par défaut = aujourd'hui (la plaque décrit l'état courant).
+  const reference = jour ?? new Date().toISOString().slice(0, 10);
   const { categorie, niveau, frequenceMois } = evaluerControle(
-    fluide, machine?.chargeNominaleKg, Boolean(machine?.detectionPermanente));
+    fluide, machine?.chargeNominaleKg,
+    detectionEffective(machine, reference).compte);
   return { categorie, niveau, frequenceMois };
 }
 

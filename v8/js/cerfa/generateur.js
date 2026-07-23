@@ -12,6 +12,7 @@
 // ============================================================
 
 import { evaluerControle } from '../data/reglementation-fluides.js';
+import { detectionEffective } from '../data/equipement.js';
 import { versBase64 } from '../data/contenu-pj.js';
 import { etatParcoursSignatures } from '../data/parcours-signature.js';
 import { avoirParMachineOrigine } from '../data/avoir-origine.js';
@@ -449,9 +450,14 @@ export async function calculerChampsCerfa(store, { source, id }, options = {}) {
 
   // ---- Cadre 7 — seuil et fréquence (charge NOMINALE déclarée, Règle C ;
   // le régime applicable est celui de la DATE d'intervention) ----
+  // P1-1 (E1) : la fréquence inscrite est celle qui S'APPLIQUE — une
+  // détection permanente non vérifiée depuis 12 mois n'allège rien. Le
+  // cadre 6 (présence d'un système) reste, lui, purement DÉCLARATIF : on
+  // ne masque pas un équipement installé, on refuse seulement d'en tirer
+  // un allègement non dû. Évaluée à la date d'intervention (stable).
   const cadre7 = machine
     ? calculerCadre7(fluideRef, machine.chargeNominaleKg,
-        Boolean(machine.detectionPermanente), ctx.date)
+        detectionEffective(machine, ctx.date).compte, ctx.date)
     : { caseSeuil: null, caseFrequence: null, frequenceMois: null };
 
   // ---- Cadre 10 — résultat du contrôle d'étanchéité ----

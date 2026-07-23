@@ -133,7 +133,14 @@ export const DEMO = {
       localisation: 'Atelier froid — poste 2',
       siteLabel: 'Lycée J. Raynaud — Atelier',
       statut: 'EN_SERVICE',
-      detectionPermanente: false,
+      // P1-1 (E1) — le cas d'école inverse de M5 : une détection permanente
+      // DÉCLARÉE mais dont la vérification a expiré (il y a 13 mois).
+      // L'allègement tombe : la machine repasse à la fréquence SANS
+      // détection, et une alerte le dit. C'est exactement la situation que
+      // le logiciel laissait passer avant P1-1.
+      detectionPermanente: true,
+      detectionVerifieeLe: jourDemo(-395),
+      detectionReference: 'Vérification annuelle — à renouveler',
       dernierControle: '2026-05-30',
       prochainControle: '2027-05-30'
     },
@@ -194,6 +201,11 @@ export const DEMO = {
       siteLabel: 'Boulangerie Le Fournil',
       statut: 'FUITE',
       detectionPermanente: true,
+      // P1-1 (E1) : détection VÉRIFIÉE il y a 3 mois — elle allège donc
+      // bien la fréquence. Date RELATIVE : le monde de démo doit rester
+      // vrai quelle que soit la date à laquelle on l'ouvre.
+      detectionVerifieeLe: jourDemo(-90),
+      detectionReference: 'Vérification annuelle — SAV Copeland',
       dernierControle: '2026-06-18',
       // Sous le seuil de contrôle périodique (R-455A traité HFC : 3,20 kg =
       // 0,47 t éq. CO₂ < 5) → AUCUNE échéance périodique. La fuite reste
