@@ -12,8 +12,11 @@ auteur et ne transmet aucune donnée à des tiers.
 
 Le **responsable de traitement est l'établissement utilisateur** (le lycée, ou l'entreprise
 en usage professionnel) : c'est lui qui décide des finalités et des moyens, qui crée les
-comptes, qui saisit les données et qui les héberge (sur son poste en Mode Local, dans son
-projet Supabase en Mode Cloud). Chaque établissement doit :
+comptes, qui saisit les données et qui les héberge — **sur son propre poste : le
+programme fonctionne entièrement en local et ne transmet aucune donnée à un
+service distant** (l'hébergement mutualisé annoncé dans les versions antérieures
+de ce document n'est pas implémenté ; mention retirée le 23/07, P2-5). Chaque
+établissement doit :
 
 - inscrire ce traitement à son registre des activités de traitement ;
 - en informer son délégué à la protection des données (DPD, généralement mutualisé au
@@ -69,7 +72,7 @@ fonctionnement de l'application (principe de minimisation).
 | Mode | Localisation des données |
 |---|---|
 | **Mode Local Lycée** | Uniquement sur le poste de l'établissement (base SQLite et documents dans le dossier de l'application). Rien ne sort de l'établissement. |
-| **Mode Cloud Lycée** | Projet Supabase créé par l'établissement dans une **région de l'Union européenne** (Francfort ou Paris — voir `INSTALLATION_CLOUD.md`). **Aucun transfert hors UE.** Supabase agit comme sous-traitant d'hébergement de l'établissement. |
+| **Hébergement distant** | **Aucun.** Le programme ne transmet de données à aucun service extérieur : il n'y a ni sous-traitant d'hébergement, ni transfert — hors UE comme dans l'UE. Un « mode Cloud » figurait dans les versions antérieures de ce document ; il n'est pas implémenté, la mention est retirée (23/07). |
 | **Mode Démo** | **Données fictives uniquement**, stockées dans le navigateur. Aucune donnée réelle ne doit y être saisie ; le filigrane « DÉMO / FORMATION » le rappelle en permanence. |
 
 ## 7. Droits des personnes
@@ -159,5 +162,4 @@ ce dossier de conformité.
 
 - `docs/SPEC-V8.md` — spécification (modèle de données, modes, règles réglementaires) ;
 - `SECURITE.md` — mesures de sécurité ;
-- `SAUVEGARDE.md` — sauvegardes et restauration ;
-- `INSTALLATION_CLOUD.md` — mise en place du Mode Cloud (hébergement UE).
+- `SAUVEGARDE.md` — sauvegardes et restauration.

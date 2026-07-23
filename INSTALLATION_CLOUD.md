@@ -1,4 +1,21 @@
-# Installation du Mode Cloud Lycée (optionnel)
+# Installation du Mode Cloud Lycée — ⚠️ MODE NON IMPLÉMENTÉ
+
+> **⛔ Ce guide décrit une intention, pas le logiciel livré (constat P2-5, 23/07).**
+>
+> **Le mode Cloud n'existe pas dans le programme** : inerWeb Fluide fonctionne
+> entièrement en local et ne transmet de données à aucun service distant.
+> N'appliquez pas ce guide — il ne branchera rien, et il vous ferait déclarer à
+> votre délégué à la protection des données un sous-traitant d'hébergement que
+> vous n'avez pas.
+>
+> Le document est conservé comme **note de conception** (l'intention, les
+> précautions envisagées, la région UE retenue), pas comme une procédure. S'il
+> devait être réalisé un jour, il faudrait d'abord : le contrat de sous-traitance,
+> la maîtrise des transferts, et la validation du DPD.
+>
+> Pour installer le logiciel, voir **`INSTALLATION_SIMPLE.md`**.
+
+---
 
 Ce guide décrit la mise en place du **Mode Cloud Lycée** d'inerWeb Fluide v8, fondé sur
 [Supabase](https://supabase.com) (base PostgreSQL hébergée dans l'Union européenne).

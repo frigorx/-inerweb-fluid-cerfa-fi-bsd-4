@@ -83,8 +83,7 @@ Règles applicables à tout le projet, sans exception :
   et il ne contient **que des noms de variables avec des valeurs factices**.
 - Les secrets vivent **côté serveur uniquement** :
   - backend Apps Script (v7) : **Script Properties** ;
-  - mode Local (v8) : configuration locale dans le dossier de données, hors dépôt ;
-  - mode Cloud (v8) : **variables d'environnement** du projet Supabase ou coffre de secrets.
+  - mode Local (v8) : configuration locale dans le dossier de données, hors dépôt.
 - Avant chaque commit, relire le diff : un secret qui part sur GitHub public doit être
   considéré comme compromis et **révoqué immédiatement** (cf. incident ci-dessus).
 
@@ -138,19 +137,38 @@ prêts dans `server/schema.sql`), où l'utilisateur du navigateur n'a plus la ma
 - **Filigrane permanent** « DÉMO / FORMATION » sur l'interface et sur tous les documents générés.
 
 ### Mode Local Lycée
-- Serveur Node.js à l'écoute de **127.0.0.1 uniquement** (localhost) : l'application
-  n'est pas exposée sur le réseau.
+- Serveur Node.js à l'écoute de **127.0.0.1 par défaut** (localhost) : l'application
+  n'est pas exposée sur le réseau, et ce comportement ne change JAMAIS tout seul.
+- **Écoute réseau local (LAN) — sur configuration explicite, et en HTTPS
+  obligatoire.** Pour qu'une tablette de l'établissement atteigne l'application, il
+  faut renseigner `IWF_LAN=1`, l'adresse du poste et un certificat
+  (`IWF_TLS_CERT` / `IWF_TLS_KEY`). Une écoute LAN transporte des identités, des
+  signatures et des justificatifs réglementaires : **HTTP en clair y est refusé**.
+  Sans certificat, le serveur refuse de démarrer — il n'existe aucun repli
+  silencieux vers le clair. TLS 1.2 minimum, en-tête HSTS, origine `https://`
+  seule acceptée.
+- **Le serveur ne distribue que l'application.** Seuls `v8/`, `img/` et trois
+  fichiers de page d'accueil sortent par HTTP ; le code serveur, les données, les
+  sauvegardes, la documentation interne et les fichiers de configuration ne sont
+  jamais servis (liste blanche, et non liste noire — un fichier ajouté au dossier
+  n'est donc pas exposé par accident).
 - Toutes les données restent **dans le dossier de l'application** (base SQLite, documents,
   sauvegardes) : rien ne sort de l'établissement.
 - Sauvegardes ZIP complètes, **chiffrables en AES-256-GCM** par phrase de passe,
   avec redondance recommandée (disque local + clé USB + espace de l'établissement).
 
-### Mode Cloud Lycée (optionnel)
-- Hébergement dans l'**Union européenne** (Supabase, projet UE).
-- Cloisonnement par établissement via les règles **RLS** (Row Level Security) de PostgreSQL.
-- Transport chiffré (**TLS**) de bout en bout.
-- Documents dans un **bucket privé** (aucun accès public), configuration par `.env`
-  jamais commité.
+### Mode Cloud — NON IMPLÉMENTÉ à ce jour
+Ce document annonçait un hébergement mutualisé (base partagée dans l'Union
+européenne, cloisonnement par établissement, documents en espace privé).
+**Ce mode n'existe pas dans le programme** : le serveur ne parle à aucun
+service distant, et aucune donnée ne quitte le poste.
+
+L'annonce est retirée (P2-5, 23/07) plutôt que maintenue au conditionnel :
+promettre une architecture d'hébergement — donc un sous-traitant, un lieu de
+stockage et des transferts — engage l'établissement responsable de traitement
+au sens du RGPD. Tant que le contrat de sous-traitance et les transferts ne
+sont pas maîtrisés, la seule affirmation exacte est celle-ci : **inerWeb Fluide
+fonctionne entièrement en local.**
 
 ## 5. Signaler une faille de sécurité
 

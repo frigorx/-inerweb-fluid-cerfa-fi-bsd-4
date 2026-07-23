@@ -100,8 +100,24 @@ if (LAN_ACTIF) {
 // Racine des fichiers statiques = racine du dépôt (dossier parent de server/)
 const RACINE = path.resolve(__dirname, '..');
 
-// Dossiers et fichiers JAMAIS servis par HTTP (données réelles, secrets, code serveur)
-const CHEMINS_INTERDITS = ['data', 'documents', 'backups', 'server', '.git', '.env'];
+// ------------------------------------------------------------
+// P2-4 — DISTRIBUTION ALLOWLISTÉE (23/07). La règle était une liste
+// NOIRE (data, documents, backups, server, .git, .env) : tout le reste
+// du dépôt était servi, donc `.env.example`, `apps-script/`,
+// `Code_API_v7.1.0.gs`, `CHANGELOG.md`, `docs/` — y compris les rapports
+// d'audit qui ÉNUMÈRENT les faiblesses connues. Une liste noire est
+// fausse par construction : elle oublie tout ce qu'on ajoute ensuite.
+//
+// Désormais : seul ce qui est NOMMÉ ici est servi. Un fichier ajouté au
+// dépôt demain n'est pas exposé par accident. Tout le reste répond 404
+// (et non 403 : on ne confirme pas l'existence d'un fichier privé).
+//
+// Le contenu vient des références RÉELLES des pages : v8/ porte
+// l'application (css, js, polices), img/ les captures du guide et les
+// icônes du manifeste, plus trois fichiers de racine.
+// ------------------------------------------------------------
+const DOSSIERS_SERVIS = ['v8', 'img'];
+const FICHIERS_RACINE_SERVIS = ['index.html', 'guide.html', 'manifest.json'];
 
 // Types de contenu par extension (UTF-8 pour tout ce qui est textuel)
 const TYPES_CONTENU = {
@@ -549,11 +565,16 @@ function traiterStatique(requete, reponse, chemin) {
     return;
   }
 
-  // Refuser l'accès aux dossiers sensibles (données réelles, secrets, code serveur)
+  // P2-4 : seul ce qui est explicitement servi l'est. Un chemin hors de
+  // la liste blanche répond 404 — on ne confirme pas l'existence d'un
+  // fichier privé (data/, server/, docs/, .env.example, apps-script/…).
   const cheminRelatif = path.relative(RACINE, cheminFichier);
-  const premierSegment = cheminRelatif.split(path.sep)[0].toLowerCase();
-  if (CHEMINS_INTERDITS.some((interdit) => premierSegment === interdit || premierSegment.startsWith('.env'))) {
-    repondreErreur(reponse, 403, 'Accès refusé.');
+  const segments = cheminRelatif.split(path.sep);
+  const autorise = segments.length === 1
+    ? FICHIERS_RACINE_SERVIS.includes(segments[0])
+    : DOSSIERS_SERVIS.includes(segments[0]);
+  if (!autorise) {
+    repondreErreur(reponse, 404, 'Fichier introuvable.');
     return;
   }
 

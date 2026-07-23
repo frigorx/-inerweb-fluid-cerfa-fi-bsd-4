@@ -244,7 +244,7 @@ la cible officielle — la RC a gardé 148) · **T3** relecture organisme agré�
   `feedback_reglages_intelligence`).
 - **carte → vérifier → plan (grosses briques) → modif chirurgicale → TESTS VERTS → revue
   adversariale (sobre : soi-même ou 1 agent) → commit.** `node outils/lancer-tests.mjs --tout`
-  doit être **TOUT VERT (98 exécutions)** avant tout commit.
+  doit être **TOUT VERT (99 exécutions)** avant tout commit.
 - **JAMAIS toucher au `data/` RÉEL** : vérification dynamique = serveur sur PORT jetable +
   `IWF_CHEMIN_BASE` base jetable (jamais 2011). Corps des requêtes API = **`{params:{...}}`**.
   **« Une faille se prouve en la TIRANT, pas en la lisant. »**
