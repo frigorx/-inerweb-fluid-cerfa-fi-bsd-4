@@ -1351,6 +1351,77 @@ verifierLeve('le code public est unique (résolution QR sans ambiguïté)',
 }
 
 // ============================================================
+// 6sexdecies. Modèle d'équipement (migration 032, P1-1) — base
+// PRÉEXISTANTE (v31 → v32) : les 7 colonnes sont ajoutées et le backfill
+// est CONSERVATEUR — aucun équipement existant n'est exempté de quoi que
+// ce soit, aucune détection n'est réputée vérifiée. Le sous-type mobile
+// n'admet que la liste fermée (ou NULL).
+// ============================================================
+{
+  const CHEMIN_EQUIP = join(DOSSIER, 'ancienne-modele-equipement.db');
+  const ancienneEq = new DatabaseSync(CHEMIN_EQUIP);
+  ancienneEq.exec(readFileSync(new URL('./schema.sql', import.meta.url), 'utf8'));
+  ancienneEq.exec(`PRAGMA user_version = ${migrations.VERSION_BASE};`);
+  const jusqua31 = {};
+  for (let v = 2; v <= 31; v += 1) jusqua31[v] = migrations.MIGRATIONS[v];
+  migrations.migrer(ancienneEq, jusqua31);
+
+  // Une machine EXISTANTE, avec détection permanente déclarée : elle ne doit
+  // hériter d'AUCUNE exemption ni d'aucune vérification réputée faite.
+  ancienneEq.exec(`INSERT INTO etablissements (id, raison_sociale)
+    VALUES ('ETB-EQ', 'Lycée test équipement');`);
+  ancienneEq.exec(`INSERT INTO machines (id, etablissement_id, designation,
+      detection_permanente)
+    VALUES ('MAC-EQ', 'ETB-EQ', 'Groupe froid hérité', 1);`);
+
+  verifier('avant migration 032 : machines n’a pas encore hermetique_scelle',
+    !ancienneEq.prepare('PRAGMA table_info(machines)').all()
+      .some((c) => c.name === 'hermetique_scelle'));
+
+  const vEq = migrations.migrer(ancienneEq, { 32: migrations.MIGRATIONS[32] });
+  verifier('la migration 032 porte la base à la version 32',
+    vEq === 32 && migrations.lireVersion(ancienneEq) === 32);
+
+  const COLONNES_32 = ['hermetique_scelle', 'hermetique_etiquete', 'residentiel',
+    'sous_type_installation', 'detection_verifiee_le',
+    'detection_prochaine_verif', 'detection_reference'];
+  verifier('032 : les 7 colonnes du modèle d’équipement existent',
+    COLONNES_32.every((c) => ancienneEq.prepare('PRAGMA table_info(machines)')
+      .all().some((col) => col.name === c)));
+
+  const heritee = ancienneEq.prepare(
+    'SELECT * FROM machines WHERE id = ?').get('MAC-EQ');
+  verifier('032 : backfill CONSERVATEUR — aucune exemption héritée '
+    + '(hermétique, étiqueté, résidentiel tous à 0)',
+    heritee.hermetique_scelle === 0 && heritee.hermetique_etiquete === 0
+    && heritee.residentiel === 0);
+  verifier('032 : backfill CONSERVATEUR — la détection déclarée n’est PAS '
+    + 'réputée vérifiée (dates NULL)',
+    heritee.detection_permanente === 1
+    && heritee.detection_verifiee_le === null
+    && heritee.detection_prochaine_verif === null);
+  verifier('032 : aucun sous-type d’installation hérité (NULL = non listé)',
+    heritee.sous_type_installation === null);
+
+  let refuseSousType = false;
+  try {
+    ancienneEq.exec(`UPDATE machines SET sous_type_installation = 'BATEAU'
+      WHERE id = 'MAC-EQ';`);
+  } catch (erreur) {
+    refuseSousType = /CHECK|constraint/i.test(erreur.message);
+  }
+  verifier('032 : le sous-type hors liste fermée est refusé', refuseSousType);
+
+  ancienneEq.exec(`UPDATE machines SET sous_type_installation = 'CAMION_FRIGORIFIQUE'
+    WHERE id = 'MAC-EQ';`);
+  verifier('032 : un sous-type de la liste est accepté',
+    ancienneEq.prepare('SELECT sous_type_installation AS s FROM machines '
+      + "WHERE id = 'MAC-EQ'").get().s === 'CAMION_FRIGORIFIQUE');
+
+  ancienneEq.close();
+}
+
+// ============================================================
 // 7. Base pré-versionnage : refusée avec un message clair
 // ============================================================
 db.fermer();

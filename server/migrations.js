@@ -192,6 +192,12 @@
  *       référencée par 8 tables, dont des écritures scellées) : il est
  *       DÉSACTIVÉ — il sort des listes de saisie, reste lisible partout où
  *       il est déjà référencé. Table fluides hors WORM et hors chaîne de hash.
+ *  32 — P1-1 (modèle d'équipement) : machines.hermetique_scelle /
+ *       hermetique_etiquete / residentiel / sous_type_installation (liste
+ *       FERMÉE des mobiles) / detection_verifiee_le / detection_prochaine_verif
+ *       / detection_reference. Booléens à 0 et dates à NULL = backfill
+ *       CONSERVATEUR : aucun équipement n'est exempté, aucune détection n'est
+ *       réputée vérifiée. Le parc devient plus contrôlé, jamais moins.
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -1573,6 +1579,44 @@ LEFT JOIN justifications_ecarts j ON j.etablissement_id = p.etablissement_id AND
     appliquer(db) {
       db.exec(`ALTER TABLE fluides ADD COLUMN actif INTEGER
                  NOT NULL DEFAULT 1 CHECK (actif IN (0,1));`);
+    }
+  },
+
+  // 32 — P1-1 : le MODÈLE D'ÉQUIPEMENT. La fiche machine ne savait pas dire
+  // ce que l'équipement EST (hermétiquement scellé, étiqueté comme tel,
+  // résidentiel, sous-type mobile), ni si son système de détection de fuites
+  // a été vérifié. Or ce dernier point commande un allègement de moitié des
+  // contrôles : sans preuve de vérification, l'allègement n'est pas dû.
+  //
+  // Tous les booléens à DEFAULT 0 et toutes les dates à NULL = backfill
+  // CONSERVATEUR : après migration, AUCUN équipement existant n'est exempté
+  // de quoi que ce soit, et aucune détection n'est réputée vérifiée. Le parc
+  // devient donc plus contrôlé, jamais moins — c'est le sens voulu.
+  //
+  // sous_type_installation : liste FERMÉE des équipements mobiles (l'exception
+  // du contrôle immédiat après réparation vise les équipements mobiles
+  // LISTÉS ; sans liste, elle n'était pas vérifiable). NULL admis = sous-type
+  // non renseigné, qui ne donne PAS droit à l'exception.
+  // Table machines hors WORM et hors chaîne de hash (comme les migrations 19,
+  // 21, 27 et 31) : aucun trigger à recréer.
+  32: {
+    nom: 'machines_modele_equipement',
+    appliquer(db) {
+      db.exec(`ALTER TABLE machines ADD COLUMN hermetique_scelle INTEGER
+                 NOT NULL DEFAULT 0 CHECK (hermetique_scelle IN (0,1));`);
+      db.exec(`ALTER TABLE machines ADD COLUMN hermetique_etiquete INTEGER
+                 NOT NULL DEFAULT 0 CHECK (hermetique_etiquete IN (0,1));`);
+      db.exec(`ALTER TABLE machines ADD COLUMN residentiel INTEGER
+                 NOT NULL DEFAULT 0 CHECK (residentiel IN (0,1));`);
+      db.exec(`ALTER TABLE machines ADD COLUMN sous_type_installation TEXT
+                 CHECK (sous_type_installation IS NULL
+                   OR sous_type_installation IN ('CAMION_FRIGORIFIQUE',
+                     'REMORQUE_FRIGORIFIQUE', 'FOURGON_FRIGORIFIQUE',
+                     'CONTENEUR_FRIGORIFIQUE', 'WAGON_FRIGORIFIQUE',
+                     'AUTRE_MOBILE'));`);
+      db.exec('ALTER TABLE machines ADD COLUMN detection_verifiee_le TEXT;');
+      db.exec('ALTER TABLE machines ADD COLUMN detection_prochaine_verif TEXT;');
+      db.exec('ALTER TABLE machines ADD COLUMN detection_reference TEXT;');
     }
   }
 };
