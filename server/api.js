@@ -50,6 +50,10 @@ const { verifierDroitIntervention, habilitationReconnue,
 // Déclaration annuelle 11 rubriques (P0-8, miroir littéral du module ESM du
 // front, parité prouvée par test-declaration-annuelle.mjs).
 const { calculerDeclarationAnnuelle } = require('./declaration-annuelle.js');
+// P1-1 — modèle d'équipement : miroir littéral de v8/js/data/equipement.js
+// (détection effective, détection obligatoire, hermétique opposable, mobile
+// listé, garde de saisie). Parité prouvée par test-equipement.mjs.
+const equipement = require('./equipement.js');
 // Signatures réelles (lot C, brique C1) : déclarations figées + critères
 // d'illisibilité (miroir du module ESM du front, parité prouvée par
 // test-signatures-mouvement.mjs).
@@ -6258,6 +6262,22 @@ const DEBUT_CONTROLE_HFO = '2024-03-11';
  */
 function frequenceControleMois(fluideRef, chargeNominaleKg,
   detectionPermanente, dateIntervention) {
+  const niveau = niveauCadre7(fluideRef, chargeNominaleKg, dateIntervention);
+  if (niveau === 1) return detectionPermanente ? 24 : 12;
+  if (niveau === 2) return detectionPermanente ? 12 : 6;
+  if (niveau === 3) return detectionPermanente ? 6 : 3;
+  return null;
+}
+
+/**
+ * NIVEAU réglementaire du cadre 7 (1 = bas, 2 = moyen, 3 = haut, null =
+ * hors périmètre) — extrait de frequenceControleMois SANS changement de
+ * comportement (P1-1) : les seuils restent écrits ICI et nulle part
+ * ailleurs côté serveur. Le niveau HAUT est aussi celui qui rend la
+ * détection permanente OBLIGATOIRE (E2, server/equipement.js) : on
+ * l'interroge au lieu de recopier 500 / 100 / 300 une fois de plus.
+ */
+function niveauCadre7(fluideRef, chargeNominaleKg, dateIntervention) {
   const categorie = categorieCadre7Fluide(fluideRef);
   const charge = Number(chargeNominaleKg) || 0;
 
@@ -6286,12 +6306,8 @@ function frequenceControleMois(fluideRef, chargeNominaleKg,
     else if (charge >= 30) niveau = 2;
     else if (charge >= 2) niveau = 1;
   }
-  // Hors périmètre (CO₂, HC… ou 'AUCUNE' explicite) : aucune fréquence.
-
-  if (niveau === 1) return detectionPermanente ? 24 : 12;
-  if (niveau === 2) return detectionPermanente ? 12 : 6;
-  if (niveau === 3) return detectionPermanente ? 6 : 3;
-  return null;
+  // Hors périmètre (CO₂, HC… ou 'AUCUNE' explicite) : aucun niveau.
+  return niveau;
 }
 
 // ============================================================
