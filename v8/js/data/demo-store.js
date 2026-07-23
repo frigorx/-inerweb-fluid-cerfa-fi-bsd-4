@@ -5389,6 +5389,19 @@ export function creerDemoStore() {
       // la recompléter depuis le référentiel (table validée), jamais
       // écraser une fiche importée ; fluide inconnu → 4 clés à null.
       for (const f of candidat.fluides) completerFicheReglementaire(f);
+      // P1-2 : la DISPONIBILITÉ À LA SAISIE d'un export ANTÉRIEUR est
+      // inconnue (la clé n'existait pas) — une clé absente ne vaut pas
+      // décision. On conserve alors l'état COURANT du poste : sans quoi
+      // réimporter une vieille sauvegarde ferait ressusciter un fluide
+      // que le référent avait retiré de la saisie, en silence (constat
+      // TIRÉ à la revue du 23/07, prouvé). Un fluide inconnu du poste
+      // reste actif, comme le DEFAULT 1 de la migration 31. Miroir de
+      // l'import serveur.
+      for (const f of candidat.fluides) {
+        if (f.actif !== undefined && f.actif !== null) continue;
+        const enPlace = donnees.fluides.find((x) => x.code === f.code);
+        f.actif = enPlace ? enPlace.actif !== false : true;
+      }
 
       // Compléments Phase B pour les imports Phase A
       if (!Array.isArray(candidat.outillage)) {

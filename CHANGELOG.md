@@ -2,6 +2,105 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧱 P1-2 — ADMINISTRATION DU RÉFÉRENTIEL DES FLUIDES (23/07, AF-1→AF-9, plan docs/PLAN-P1-2-ADMIN-FLUIDES.md)
+- **Franck n'a plus besoin d'un développeur pour son référentiel de gaz.**
+  Besoin exprimé mot pour mot : « on doit pouvoir accéder à un tableau où tous
+  les gaz sont rentrés, en ajouter de nouveaux ou modifier les informations ».
+  Constat P1-2 de l'audit soldé côté outil. Décisions D1→D7 validées par Franck
+  AVANT le code.
+- **D1 — pas de table versionnée à dates d'effet** (l'audit la demandait) : ce
+  serait redondant. Le PRP est déjà figé dans chaque écriture scellée
+  (`prpFige`, empreinte v2) et le journal d'audit tient le journal des
+  révisions. On n'ajoute pas une machinerie pour reproduire une garantie
+  qu'on a déjà.
+- **AF-1 — migration 31** : `fluides.actif` (DEFAULT 1, CHECK 0/1). **D2 : un
+  fluide n'est JAMAIS supprimé** — son code est la clé étrangère de huit
+  tables, dont des écritures scellées. Il est DÉSACTIVÉ : retiré des listes de
+  saisie, toujours lisible là où il est déjà référencé (cas réel du R-22, qu'on
+  ne monte plus mais qu'on récupère encore). Table fluides hors WORM et hors
+  chaîne de hash : aucun trigger à recréer.
+- **AF-2 — règles PURES** dans `reglementation-fluides.js` + miroir littéral
+  CommonJS dans `api.js` : `verifierFicheFluide` (garde de saisie),
+  `codeFluideNormalise` (unicité insensible aux espaces, tirets et casse — le
+  PRIMARY KEY seul laisserait passer « R32 » à côté de « R-32 », la casse
+  saisie restant conservée pour R-1234yf), `impactDepuisPrp` (**D3**, bornes
+  F-Gas 150/750/2500). **Trou bouché au passage : `impact` n'existait que dans
+  le monde démo** — en mode serveur la colonne de la vue était VIDE, et un
+  fluide saisi localement n'en aurait jamais eu. Il est désormais DÉRIVÉ des
+  deux côtés (les 9 valeurs figées du monde démo sont rendues à l'identique,
+  le champ figé est supprimé de `demo-donnees`).
+  **D6 — cohérence du cadre 7** limitée aux contradictions manifestes : HFC ⇒
+  contient du HFC ; HFO ⇒ contient du HFO et PAS de HFC (règle A) ; HCFC et
+  AUCUNE ⇒ ni l'un ni l'autre. Le R-455A (HFC contenant aussi du HFO, cas
+  nommé par la notice du CERFA) reste accepté.
+- **AF-3/AF-4 — `createFluide` et `updateFluide`** (2 stores, parité stricte,
+  local-store, **D5 : `REFERENT_ADMIN`** — un PRP pilote les tonnes équivalent
+  CO₂, donc les seuils de contrôle, donc les obligations de l'établissement).
+  Contrat **91 → 93 méthodes, VERSION_CONTRAT 8 → 9**.
+  **D6 : le CODE est FIGÉ** après création (message dédié qui donne la marche à
+  suivre : créer le bon code, désactiver le mauvais).
+  **D4 : dès que le PRP change, la source du PRP doit être saisie
+  explicitement** — sans quoi une valeur ajustée localement garderait
+  l'étiquette officielle de l'ancienne. Retaper la même source reste possible
+  (choix conscient, pas oubli) : une correction de faute de frappe sur une
+  valeur officielle reste donc réalisable. La fiche est vérifiée **APRÈS
+  fusion** de l'existant et du patch : une modification partielle ne peut pas
+  rendre l'ensemble incohérent, et la règle reste UNIQUE création/modification.
+- **AF-5 — la vue n'est plus en lecture seule** : tableau enrichi (source du
+  PRP, fiche cadre 7, classe, impact, machines), ajout / modification /
+  désactivation-réactivation, case « afficher les désactivés ». Modale
+  `modales/fluide-form.js` : code verrouillé en modification avec
+  l'explication, source pré-remplie « saisie locale du JJ/MM/AAAA » et signalée
+  dès que le PRP bouge, impact affiché en direct. Le store reste SEUL JUGE (son
+  message de refus s'affiche tel quel). Note de bas de carte : elle DIT que
+  corriger le référentiel ne retouche jamais un mouvement scellé ni un CERFA
+  émis. **Vérifié au NAVIGATEUR** (démo, port jetable, zéro erreur console).
+- **AF-6 — `fluidesProposables`** (`utils.js`) : un fluide désactivé sort des
+  sélecteurs machine et bouteille, SAUF s'il est la valeur déjà enregistrée de
+  la fiche ouverte — sinon rouvrir une vieille machine au R-22 viderait son
+  fluide en silence. Le wizard n'était PAS concerné (il ne liste jamais les
+  fluides, il les lit par code pour l'avertissement PRP) : le plan annonçait
+  trois sites de saisie, il n'y en avait que deux.
+- **AF-7 — suite DOUBLÉE `test-referentiel-fluides.mjs`** (55 vérifications
+  identiques demo/local ; filet 93 → **95 exécutions**). ⭐ Le test central :
+  une écriture est validée sur un fluide à PRP 1397, le référentiel est ensuite
+  corrigé à 1282 — `prpFige`, empreinte, numéro CERFA et chaîne de hash n'ont
+  PAS bougé, et la nouvelle valeur s'applique aux écritures SUIVANTES.
+  `test-gardes-roles` fige D5 nommément (refus à ELEVE, ENSEIGNANT, TECHNICIEN).
+- **AF-8 — `referentiel-fluides.csv` au dossier d'audit scellé** (13 → 14
+  fichiers fixes) : dès lors que le référentiel est modifiable, un auditeur doit
+  pouvoir constater QUEL PRP a servi aux calculs de l'année, avec sa source.
+- **AF-9 — revue adversariale, constats TIRÉS (pas lus) : 1 BLOQUANT et
+  1 IMPORTANT trouvés et corrigés**, tous deux invisibles pour la suite d'alors.
+  - **Un export ANTÉRIEUR à P1-2 faisait RESSUSCITER un fluide désactivé
+    (bloquant)** : la clé `actif` n'existait pas dans ces exports, et l'import
+    remplace la ligne entière — la colonne repartait au DEFAULT 1. Réimporter
+    une vieille sauvegarde remettait donc en saisie un gaz que le référent
+    avait retiré, **en silence**. C'est le piège connu de la fiche
+    réglementaire (16/07) transposé à un nouveau champ : **une clé absente ne
+    vaut pas décision.** Correctif : l'import conserve l'état COURANT du poste
+    quand la clé manque (miroir des 2 côtés) ; un fluide inconnu reste actif.
+    Régression figée dans la suite doublée, dans les deux sens (un export
+    RÉCENT qui porte `actif: false` le restitue bien).
+  - **Un PRP négatif ressortait « impact FAIBLE » (important)** : rassurant à
+    tort. La saisie refuse les PRP négatifs, mais l'import ne passe pas par la
+    garde — `impactDepuisPrp` rend désormais `null` (aucun impact affiché) pour
+    toute valeur négative, comme il le fait déjà pour un PRP absent.
+  - Mineurs consignés, non corrigés : effacer volontairement la catégorie du
+    cadre 7 est accepté (retour assumé au repli sur la famille, tri-état
+    documenté) · enregistrer sans modification un fluide sans fiche met ses
+    `contientHfc/Hfo` à `false` au lieu de `null` (sans effet : le tri-état
+    « fiche absente » est porté par `categorieCadre7`) · l'import accepte
+    toujours un PRP aberrant (comportement ANTÉRIEUR à cette brique : durcir
+    l'import risquerait de bloquer la restauration d'une sauvegarde légitime).
+- **Hors périmètre assumé (D7)** : le pré-remplissage du catalogue manquant
+  (R-448A, R-449A, R-452A/B, R-454A/B/C, R-513A, R-1234ze, R-717…) reste à
+  faire — chaque ligne est une valeur réglementaire nouvelle, à valider une par
+  une. L'écran rend justement Franck autonome pour les saisir. **T2 (R-455A)
+  est tranché depuis le 23/07** : PRP le plus élevé retenu, 148 conservé.
+- **Migrations 30 → 31.** Contrat **v9 (93 méthodes)**. **TOUT VERT — 95
+  exécutions** après chaque brique.
+
 ### 🧱 P0-8 — DÉCLARATION ANNUELLE 11 RUBRIQUES (22/07, DA-1→DA-8, plan docs/PLAN-P0-8-DECLARATION.md)
 - **Le pseudo-bilan « déclaration ADEME » (incomplet, `cessions_kg=0`, BSFF
   compté à tort en destruction) est remplacé par la déclaration réglementaire

@@ -187,6 +187,11 @@ export function impactDepuisPrp(prp) {
   if (prp === null || prp === undefined || prp === '') return null;
   const valeur = Number(prp);
   if (!Number.isFinite(valeur)) return null;
+  // Un PRP NÉGATIF est aberrant. La saisie le refuse, mais l'import d'une
+  // sauvegarde ne passe pas par la garde de saisie : il ne doit alors pas
+  // ressortir « FAIBLE », c'est-à-dire rassurant à tort (constat TIRÉ à la
+  // revue du 23/07). Aucun impact affiché : la valeur est illisible.
+  if (valeur < 0) return null;
   if (valeur < 150) return 'FAIBLE';
   if (valeur < 750) return 'MODERE';
   if (valeur < 2500) return 'ELEVE';

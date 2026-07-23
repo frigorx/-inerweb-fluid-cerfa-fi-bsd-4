@@ -4928,6 +4928,18 @@ function remplacerToutLEtat(candidat) {
         fluide.sourcePrp = fiche && Number(fluide.gwpAr4) === fiche.prp
           ? fiche.sourcePrp : null;
       }
+      // P1-2 : la DISPONIBILITÉ À LA SAISIE d'un export ANTÉRIEUR est
+      // inconnue (la clé n'existait pas) — une clé absente ne vaut pas
+      // décision. INSERT OR REPLACE remplace la LIGNE ENTIÈRE : sans
+      // cette reprise, la colonne absente repartirait au DEFAULT 1 et
+      // ferait ressusciter un fluide que le référent avait retiré de la
+      // saisie, en silence (constat TIRÉ à la revue du 23/07, prouvé).
+      // Un fluide inconnu du poste reste actif. Miroir du DemoStore.
+      if (fluide.actif === undefined || fluide.actif === null) {
+        const enPlace = db.get(
+          'SELECT actif FROM fluides WHERE code = ?', [fluide.code]);
+        fluide.actif = enPlace ? enPlace.actif === 1 : true;
+      }
       const ligne = mapping.versSql('fluides', fluide);
       const colonnes = Object.keys(ligne);
       const marques = colonnes.map(() => '?').join(', ');
@@ -6304,6 +6316,9 @@ function impactDepuisPrp(prp) {
   if (prp === null || prp === undefined || prp === '') return null;
   const valeur = Number(prp);
   if (!Number.isFinite(valeur)) return null;
+  // Un PRP NÉGATIF est aberrant : il ne doit pas ressortir « FAIBLE »,
+  // rassurant à tort (l'import ne passe pas par la garde de saisie).
+  if (valeur < 0) return null;
   if (valeur < 150) return 'FAIBLE';
   if (valeur < 750) return 'MODERE';
   if (valeur < 2500) return 'ELEVE';

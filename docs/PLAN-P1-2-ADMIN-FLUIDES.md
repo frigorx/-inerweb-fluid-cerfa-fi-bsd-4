@@ -1,8 +1,24 @@
 # PLAN P1-2 — ÉCRAN D'ADMINISTRATION DU RÉFÉRENTIEL DES FLUIDES
 
-> Statut : **PLAN — aucune ligne de code écrite.** Les décisions D1→D7 sont
-> **gatées Franck** : rien ne part avant ses arbitrages (méthode P0-6 : les
-> décisions AVANT le code, pas pendant).
+> **Statut : RÉALISÉ le 23/07 (AF-1 → AF-9), TOUT VERT 95 exécutions.**
+> Décisions D1→D7 **validées par Franck** avant le code (« De toute façon tu
+> dois tout faire de D1 à D7, donc feu dès que prêt »).
+>
+> **Trois écarts au plan, assumés et vérifiés :**
+> 1. **AF-6 ne touche que DEUX sites de saisie, pas trois.** Le wizard ne liste
+>    jamais les fluides : il les lit par code pour l'avertissement PRP ≥ 2500.
+>    Vérifié dans le code avant modification.
+> 2. **AF-8 (optionnel) a été fait** : `referentiel-fluides.csv` au dossier
+>    scellé (13 → 14 fichiers fixes).
+> 3. **La revue AF-9 a trouvé un BLOQUANT que ce plan n'avait pas prévu** : le
+>    piège ⑤ (« un export ancien ne doit pas écraser la fiche actée ») valait
+>    AUSSI pour le nouveau champ `actif` — un export antérieur faisait
+>    ressusciter un fluide désactivé, en silence. Corrigé et figé au test.
+>    Règle à retenir pour toute colonne future : **une clé absente ne vaut pas
+>    décision.**
+>
+> Le compte final : contrat **v9, 93 méthodes**, migration **31**, filet
+> **95 exécutions**.
 >
 > Besoin, mot pour mot : « on doit pouvoir accéder à un tableau où tous les gaz
 > sont rentrés, en ajouter de nouveaux ou modifier les informations ».

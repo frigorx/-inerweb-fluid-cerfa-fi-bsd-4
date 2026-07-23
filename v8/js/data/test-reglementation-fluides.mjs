@@ -147,6 +147,11 @@ verifier('PRP 3922 (R-404A) → TRES_ELEVE',
   impactDepuisPrp(3922) === 'TRES_ELEVE');
 verifier('PRP illisible → null', impactDepuisPrp('abc') === null
   && impactDepuisPrp(null) === null && impactDepuisPrp(undefined) === null);
+verifier('PRP NÉGATIF (valeur aberrante entrée par un import) → null, '
+  + 'jamais « FAIBLE » (revue du 23/07)',
+  impactDepuisPrp(-5000) === null && impactDepuisPrp(-0.5) === null);
+verifier('PRP 0 → FAIBLE (le NH₃ vaut 0, ce n’est pas aberrant)',
+  impactDepuisPrp(0) === 'FAIBLE');
 
 // ---- normalisation du code (comparaison d'unicité) ----
 verifier('« R-32 », « R32 » et « r 32 » désignent le même gaz',

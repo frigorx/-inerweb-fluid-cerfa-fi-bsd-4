@@ -361,6 +361,32 @@ verifier('après import : le PRP figé de l’écriture est toujours 1397',
   (await store.getMouvements()).find((m) => m.id === mouvement.id)
     .prpFige === 1397);
 
+// ⚠️ Régression figée (constat TIRÉ à la revue adversariale du 23/07) :
+// un export ANTÉRIEUR à P1-2 ne porte pas la clé actif. Comme l'import
+// remplace la ligne entière, la disponibilité repartait au défaut et
+// faisait RESSUSCITER un fluide que le référent avait retiré de la
+// saisie — en silence. Une clé absente ne vaut pas décision : on
+// conserve l'état courant du poste.
+{
+  const enveloppe = JSON.parse(await store.exporterJSON());
+  for (const f of enveloppe.donnees.fluides) delete f.actif;
+  const exportAncien = JSON.stringify(enveloppe);
+
+  await store.updateFluide('R-404A', { actif: false });
+  await store.importerJSON(exportAncien);
+  verifier('⚠️ un export ANTÉRIEUR (sans la clé actif) ne réactive PAS un '
+    + 'fluide désactivé',
+    (await store.getFluides()).find((f) => f.code === 'R-404A').actif === false);
+
+  // …et l'inverse : un export qui porte explicitement actif=false le dit.
+  const exportRecent = await store.exporterJSON();
+  await store.updateFluide('R-404A', { actif: true });
+  await store.importerJSON(exportRecent);
+  verifier('un export RÉCENT restitue bien la désactivation qu’il porte',
+    (await store.getFluides()).find((f) => f.code === 'R-404A').actif === false);
+  await store.updateFluide('R-404A', { actif: true });
+}
+
 // ============================================================
 console.log('');
 console.log(`Référentiel des fluides (${NOM_STORE}) : `
