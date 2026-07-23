@@ -64,7 +64,8 @@ const SUITES_DOUBLEES = new Set([
   'v8/js/data/test-outils-intervention.mjs',
   'v8/js/data/test-audit-guide.mjs',
   'v8/js/data/test-coherence-etat-bouteille.mjs',
-  'v8/js/data/test-referentiel-fluides.mjs'
+  'v8/js/data/test-referentiel-fluides.mjs',
+  'v8/js/data/test-equipement.mjs'
 ]);
 
 /** Une exécution = un fichier + des arguments éventuels. */
