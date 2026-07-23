@@ -9,7 +9,7 @@
 Front vanilla ES modules sous `v8/` (démo navigateur OU client du serveur
 local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
 2011) ; les DEUX implémentent le MÊME contrat `v8/js/data/contrat.js`
-(87 méthodes, `VERSION_CONTRAT` 7) prouvé par `test-contrat.mjs` joué
+(93 méthodes, `VERSION_CONTRAT` 9) prouvé par `test-contrat.mjs` joué
 contre chacune.
 
 ## Flux clés
@@ -34,7 +34,7 @@ contre chacune.
 | `export-personne.js` | miroir littéral de l'assemblage de l'export RGPD d'une personne (lot E ①) | parité prouvée par `test-export-personne.mjs` ; handler serveur = composition des getters existants + signatures brutes mappées ; personne AU COFFRE → signatures substituées par le pseudonyme |
 | `coffre-identites.js` | miroir littéral des règles pures du COFFRE DES IDENTITÉS (lot E2) | parité prouvée par `test-coffre-identites.mjs` ; api.js porte les 6 gestes (REFERENT/ADMIN + poste local), le témoin GCM, l'archive préalable OBLIGATOIRE, la purge rattrapée au démarrage (`rejouerPurgeCoffre`), les verrous de fiche au coffre (updatePersonne/PJ/désactivation/habilitations/mentions) et le transport export/import du coffre (E2c : coffreConfig sel/témoin/kdf + compteurs + enveloppes base64, remplacement atomique, simulation rejetée, refus protecteur si fichier sans coffre sur poste au coffre) ; primitives crypto = `chiffrement.js` (enveloppes de champ autoportantes, scrypt N=131072) |
 | `db.js` | ouverture PRAGMA coffre-fort, `journaliser()` SHA-256 CHAÎNÉ, transaction ré-entrante | `recursive_triggers=ON` VITAL (anti-REPLACE) ; **P1-6 : base vive REFUSÉE sous OneDrive/Drive/Dropbox** (`verifierEmplacementBase`, dérogation `IWF_AUTORISER_BASE_SYNCHRONISEE=1`, test-emplacement-base) |
-| `migrations.js` | registre 2→30, transactionnel, consécutif ; exporte `FICHE_REGLEMENTAIRE_FLUIDES` (table validée, consommée par la migration 21 ET l'import JSON d'api.js) | JAMAIS de DROP destructif ; trigger WORM à recréer si colonne mouvements ajoutée ; registre-commentaire en tête à tenir ; **24 (C5) = WORM pieces_jointes d'un mouvement figé — à recréer si la table est recréée (procédure migration 10, fait par la 26)** ; **25-26 (E2b) = tables du coffre des identités + entités de PJ élargies (personne/OUTIL, bug préexistant)** ; **27 (P0-6) = machines.type_installation FIXE/MOBILE** ; **28-30 (P0-8) = bsff.issue_traitement, table cessions, vue bilan_matiere RECRÉÉE (DROP+CREATE) pour compter les cessions (seul DROP VIEW du registre — non destructif de données)** |
+| `migrations.js` | registre 2→31, transactionnel, consécutif ; exporte `FICHE_REGLEMENTAIRE_FLUIDES` (table validée, consommée par la migration 21 ET l'import JSON d'api.js) | JAMAIS de DROP destructif ; trigger WORM à recréer si colonne mouvements ajoutée ; registre-commentaire en tête à tenir ; **24 (C5) = WORM pieces_jointes d'un mouvement figé — à recréer si la table est recréée (procédure migration 10, fait par la 26)** ; **25-26 (E2b) = tables du coffre des identités + entités de PJ élargies (personne/OUTIL, bug préexistant)** ; **27 (P0-6) = machines.type_installation FIXE/MOBILE** ; **28-30 (P0-8) = bsff.issue_traitement, table cessions, vue bilan_matiere RECRÉÉE (DROP+CREATE) pour compter les cessions (seul DROP VIEW du registre — non destructif de données)** ; **31 (P1-2) = fluides.actif (DEFAULT 1) — un fluide n'est jamais supprimé (clé étrangère de 8 tables, dont des écritures scellées), il est DÉSACTIVÉ** |
 | `schema.sql` | socle v1 SEUL (les évolutions = migrations) | ne jamais l'éditer pour une évolution |
 | `mapping.js` | correspondance UNIQUE front(camel)↔SQL(snake), `CHAMPS_HASH_MOUVEMENT` = liste blanche du hasseur | toute colonne hors empreinte reste HORS de cette liste |
 | `hash-mouvement.js` | clone EXACT du hasseur front — VERSIONNÉ (lot C, C2) : v1 (18 champs) FIGÉE À JAMAIS, v2 = +9 champs (PRP figé, CERFA, rôles, champs gelés) ; aides empreinteListeTriee / chaineCanoniqueSignature | ne jamais utiliser db.hashEcriture pour les mouvements ; QUATRE vérificateurs versionnés (api ×2 + démo + verification.js) ; empreintes CONNUES figées dans test-hash-mouvement |
@@ -65,7 +65,7 @@ contre chacune.
 | `transport-http.js` | transport `fetch` du LocalStore (`POST /api/:methode`, enveloppe `{ok,resultat}`) |
 | `code-machine.js` | pur : code lisible SITE-FAMILLE-NUMÉRO (JR-CF-001), générateur/validation |
 | `habilitations.js` | pur : moteur d'aptitude B2 (`verifierDroitIntervention`, matrice 2008+2025) — CONSEIL partout, et depuis P0-5 BLOCAGE en Officiel (fait `intervenant.aptitude` des deux `cadreFicheOfficiel` → condition 16 `APTITUDE_PORTEE` de blocage-officiel, charge NOMINALE machine, hermétique=false tant que P1-1) ; frontières STRICTES (< 3 / < 6 kg, 3,000 pile refusé), cat. II (2008) limitée, contrôles P7 mappés ETANCHEITE ; `habilitationReconnue` (2008 non reconnue après le 31/12/2026) ; miroir serveur = `server/droit-intervention.js` |
-| `reglementation-fluides.js` | pur : MOTEUR RÉGLEMENTAIRE UNIQUE cadre 7 (`categorieCadre7` + `evaluerControle`) — source de vérité des seuils/fréquences F-Gas (règles A/B/C, `docs/TABLE-REGLEMENTAIRE-FLUIDES.md`), consommé par plaque-fgas/generateur/demo-store, copié en littéral côté serveur (`api.js` `frequenceControleMois`). Charge NOMINALE, HFC avant HFO ; fiche EXPLICITE par fluide prioritaire (`categorieCadre7`, migration 21, AUCUNE = hors périmètre) ; `dateIntervention` optionnelle (HFO purs contrôlés depuis le 11/03/2024 seulement) |
+| `reglementation-fluides.js` | **P1-2 (23/07)** : porte AUSSI les règles d'ADMINISTRATION du référentiel — `verifierFicheFluide` (garde de saisie, messages canoniques, cohérence cadre 7 limitée aux contradictions manifestes), `codeFluideNormalise` (unicité insensible espaces/tirets/casse, casse saisie conservée), `impactDepuisPrp` (bornes F-Gas 150/750/2500 ; PRP absent OU NÉGATIF → null, jamais « FAIBLE » — rassurant à tort), listes `CLASSES_SECURITE`/`STATUTS_REGLEMENTAIRES`/`CATEGORIES_CADRE7`. Miroir littéral CommonJS dans `api.js`, parité prouvée par `test-referentiel-fluides` (doublée). ⏤ pur : MOTEUR RÉGLEMENTAIRE UNIQUE cadre 7 (`categorieCadre7` + `evaluerControle`) — source de vérité des seuils/fréquences F-Gas (règles A/B/C, `docs/TABLE-REGLEMENTAIRE-FLUIDES.md`), consommé par plaque-fgas/generateur/demo-store, copié en littéral côté serveur (`api.js` `frequenceControleMois`). Charge NOMINALE, HFC avant HFO ; fiche EXPLICITE par fluide prioritaire (`categorieCadre7`, migration 21, AUCUNE = hors périmètre) ; `dateIntervention` optionnelle (HFO purs contrôlés depuis le 11/03/2024 seulement) |
 | `blocage-officiel.js` | pur : moteur de blocage du mode OFFICIEL (lot B) — `evaluerBlocagesOfficiel(cadre)` applique la liste de `docs/CONDITIONS-BLOCANTES-OFFICIEL.md` filtrée par moment (PASSAGE/SOUMISSION/VALIDATION), `VERROU_LIVRAISON` ferme le mode jusqu'aux lots C-D ; branché aux 3 moments des deux stores + `simulerValidationOfficielle` (contrat) ; conditions 14-15 (lot C) = faits tri-état signatureTechnicienValide/signatureDetenteurValide ; P7-c : `MSG_CONTROLE_DIRECT_OFFICIEL` = refus STRUCTUREL de `createControle` en OFFICIEL (FORMATION-only par nature, l'officiel = mouvement type CONTROLE) |
 | `signatures-mouvement.js` | pur : signatures RÉELLES (lot C, C1) — déclarations signées EXACTES (`declarationSignature`, délégation dans la qualité ET la déclaration) + critères d'illisibilité (`verifierImageSignature` : PNG réel, ≥ 1 Ko, ≤ 1 Mo) ; consommé par signerMouvement des deux stores, recopié en littéral côté serveur |
 | `pdf-final.js` | pur : PDF FINAL conservé (lot C, C3a) — messages canoniques de refus + `verifierOctetsPdfFinal` (%PDF, 5 Mo) + `nomFichierPdfFinal` ; C5 : `pdfFinalAttendu(type)` = exemption TRANSFERT (jamais de CERFA, IM-12 — PDF fourni refusé) ; consommé par validerMouvement des deux stores (3e param `pdfFinalBase64`, OBLIGATOIRE en OFFICIEL hors transfert, refusé en FORMATION), recopié en littéral côté serveur |
@@ -124,7 +124,24 @@ contre chacune.
   C5 (`dossier-audit.js`) : fiche officielle scellée → PDF CONSERVÉ
   restitué (jamais régénéré), verdicts `02-PDF-CONSERVES.txt`, contrôle
   lié conservé sauté, TRANSFERT exclu de la boucle CERFA.
-- `core/` : `utils.js` (esc, fmtDate, nombreFr, hasherEcriture…), `zip.js`
+- **P1-2 (23/07) — administration du référentiel des fluides** :
+  `views/fluides.js` n'est plus en lecture seule (ajout / modification /
+  désactivation, gestes réservés à REFERENT+ADMIN via
+  `getUtilisateurCourant`, case « afficher les désactivés »)
+  + `modales/fluide-form.js` (code verrouillé en modification, source du
+  PRP exigée dès que le PRP bouge, impact en direct ; le store reste seul
+  juge). Mutations `createFluide`/`updateFluide` des 2 stores,
+  `ROLES_MUTATION` = REFERENT_ADMIN. `utils.js fluidesProposables` retire
+  les fluides désactivés des sélecteurs machine et bouteille SAUF la
+  valeur déjà enregistrée (le wizard ne liste pas les fluides).
+  `exports.js` ajoute `referentiel-fluides.csv` au dossier scellé (14
+  fichiers fixes). ⚠️ **Piège payé** : un export ANTÉRIEUR n'a pas la clé
+  `actif` et l'import remplace la ligne entière → il ressuscitait un
+  fluide désactivé ; l'import conserve désormais l'état courant quand la
+  clé manque (une clé absente ne vaut pas décision — même règle que la
+  fiche réglementaire).
+- `core/` : `utils.js` (esc, fmtDate, nombreFr, hasherEcriture,
+  fluidesProposables…), `zip.js`
   maison, `routeur.js`, `shim-dom-tests.mjs` (tests DOM sans navigateur).
 
 ## Pièges transverses (payés cher — ne pas re-payer)

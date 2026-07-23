@@ -37,7 +37,7 @@
 // ============================================================
 
 /** Version du contrat (à incrémenter à chaque évolution de surface). */
-export const VERSION_CONTRAT = 8;
+export const VERSION_CONTRAT = 9;
 
 /**
  * Message canonique opposé à toute tentative de modification d'une
@@ -151,6 +151,12 @@ export const METHODES_CONTRAT = {
     description: 'Passe → DEMANTELEE (DÉFINITIF) ; Error si charge résiduelle > 0,05 kg.' },
   remettreEnService: { genre: 'mutation',
     description: 'Passe ARRETEE → EN_SERVICE ; Error sinon.' },
+
+  // --- référentiel des fluides (P1-2 — administration par le référent) ---
+  createFluide: { genre: 'mutation',
+    description: 'Ajoute un fluide au référentiel { code, famille, gwpAr4, classeSecurite, statutReglementaire?, commentaire?, contientHfc?, contientHfo?, categorieCadre7?, sourcePrp? } ; actif=vrai ; Error si code déjà pris (comparaison insensible aux espaces, tirets et casse), code/famille vide, PRP < 0 ou illisible, classe de sécurité, statut ou catégorie du cadre 7 hors liste, fiche cadre 7 incohérente.' },
+  updateFluide: { genre: 'mutation',
+    description: 'Patch partiel du référentiel (famille, gwpAr4, classeSecurite, statutReglementaire, commentaire, contientHfc, contientHfo, categorieCadre7, sourcePrp, actif) ; désactivation via actif=false (jamais de suppression : le code est référencé par les écritures scellées) ; la fiche est vérifiée APRÈS fusion ; le PRP des écritures déjà validées n’est JAMAIS retouché (prpFige) ; Error si introuvable, si le code est modifié, si le PRP change sans que la source du PRP soit saisie, ou si la fiche fusionnée est invalide.' },
 
   // --- clients détenteurs ---------------------------------------
   createClient: { genre: 'mutation',

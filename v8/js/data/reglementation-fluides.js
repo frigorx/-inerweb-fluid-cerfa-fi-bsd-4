@@ -153,3 +153,127 @@ export function evaluerControle(fluideRef, chargeNominaleKg,
 
   return { categorie, niveau, caseSeuil, caseFrequence, frequenceMois };
 }
+
+// ============================================================
+// P1-2 — ADMINISTRATION DU RÉFÉRENTIEL (écran d'édition des gaz)
+// Le référent saisit lui-même ses fluides : ces règles gardent la
+// saisie. Elles sont PURES et recopiées en littéral dans server/api.js
+// (parité prouvée par test-referentiel-fluides, joué demo ET local).
+// ============================================================
+
+/** Classes de sécurité admises — CHECK du schéma (NF EN 378 / ASHRAE 34). */
+export const CLASSES_SECURITE =
+  ['A1', 'A2L', 'A2', 'A3', 'B1', 'B2L', 'B2', 'B3'];
+
+/** Statuts réglementaires admis — CHECK du schéma. */
+export const STATUTS_REGLEMENTAIRES = ['AUTORISE', 'RESTREINT', 'INTERDIT'];
+
+/** Catégories du cadre 7 saisissables — CHECK de la migration 21. */
+export const CATEGORIES_CADRE7 = ['HFC', 'HFO', 'HCFC', 'AUCUNE'];
+
+/**
+ * Impact environnemental AFFICHÉ, dérivé du PRP (décision D3, 23/07).
+ * Bornes 150 / 750 / 2500 = celles que le règlement F-Gas utilise déjà
+ * pour ses interdictions de mise sur le marché. C'est un affichage, pas
+ * une règle opposable : aucun moteur n'en dépend. Avant P1-2, `impact`
+ * n'existait QUE dans le monde démo — avec le serveur, la colonne de la
+ * vue était vide, et un fluide saisi localement n'en aurait jamais eu.
+ * @param {number|string|null|undefined} prp
+ * @returns {'FAIBLE'|'MODERE'|'ELEVE'|'TRES_ELEVE'|null} null = PRP illisible
+ */
+export function impactDepuisPrp(prp) {
+  // ⚠️ Number(null) et Number('') valent 0 : un PRP ABSENT serait classé
+  // « FAIBLE », c'est-à-dire rassurant à tort. On les écarte d'abord.
+  if (prp === null || prp === undefined || prp === '') return null;
+  const valeur = Number(prp);
+  if (!Number.isFinite(valeur)) return null;
+  // Un PRP NÉGATIF est aberrant. La saisie le refuse, mais l'import d'une
+  // sauvegarde ne passe pas par la garde de saisie : il ne doit alors pas
+  // ressortir « FAIBLE », c'est-à-dire rassurant à tort (constat TIRÉ à la
+  // revue du 23/07). Aucun impact affiché : la valeur est illisible.
+  if (valeur < 0) return null;
+  if (valeur < 150) return 'FAIBLE';
+  if (valeur < 750) return 'MODERE';
+  if (valeur < 2500) return 'ELEVE';
+  return 'TRES_ELEVE';
+}
+
+/**
+ * Code de fluide normalisé pour la COMPARAISON d'unicité : sans espaces
+ * ni tirets, en majuscules. « r 32 », « R-32 » et « R32 » désignent le
+ * même gaz. La CASSE SAISIE, elle, est conservée telle quelle (R-1234yf
+ * s'écrit avec des minuscules — la majusculiser serait une faute).
+ * @param {string|null|undefined} code
+ * @returns {string}
+ */
+export function codeFluideNormalise(code) {
+  return String(code ?? '').replace(/[\s.-]/g, '').toUpperCase();
+}
+
+/**
+ * Garde de saisie d'une fiche fluide (création ET modification : la
+ * modification fusionne l'existant et le patch AVANT d'appeler, si bien
+ * qu'une seule règle vaut pour les deux). LÈVE une Error au premier
+ * défaut, message canonique identique des deux côtés.
+ *
+ * Cohérence du cadre 7 (D6) : elle ne bloque que les contradictions
+ * MANIFESTES, celles qui rendraient la fiche mensongère au regard du
+ * moteur. Les champs contientHfc / contientHfo sont documentaires (aucun
+ * moteur ne les lit : categorieCadre7 puis famille font foi) — d'où une
+ * garde volontairement légère. Un contient* nul vaut « non » : le
+ * tri-état ne sert qu'à distinguer « fiche absente » (catégorie nulle,
+ * repli du moteur sur la famille), et dans ce cas rien n'est vérifié.
+ *
+ * @param {{ code?, famille?, gwpAr4?, classeSecurite?, statutReglementaire?,
+ *   categorieCadre7?, contientHfc?, contientHfo? }} fiche — fiche COMPLÈTE
+ * @throws {Error} message canonique
+ */
+export function verifierFicheFluide(fiche) {
+  const f = fiche || {};
+
+  if (!String(f.code ?? '').trim()) {
+    throw new Error('Code du fluide obligatoire (ex. R-449A).');
+  }
+  if (!String(f.famille ?? '').trim()) {
+    throw new Error('Famille du fluide obligatoire (ex. HFC, HFO, HC, CO2).');
+  }
+  const prp = Number(f.gwpAr4);
+  if (!Number.isFinite(prp) || prp < 0) {
+    throw new Error('PRP invalide : nombre positif ou nul attendu '
+      + '(le NH₃ vaut 0, le R-290 vaut 0,02).');
+  }
+  if (!CLASSES_SECURITE.includes(String(f.classeSecurite ?? ''))) {
+    throw new Error('Classe de sécurité inconnue : '
+      + `${CLASSES_SECURITE.join(', ')}.`);
+  }
+  // Statut réglementaire et catégorie du cadre 7 : facultatifs (une fiche
+  // ancienne ou un fluide sans fiche les laissent vides) — vérifiés
+  // SEULEMENT s'ils sont renseignés.
+  const statut = f.statutReglementaire;
+  if (statut != null && String(statut) !== ''
+      && !STATUTS_REGLEMENTAIRES.includes(String(statut))) {
+    throw new Error('Statut réglementaire inconnu : '
+      + `${STATUTS_REGLEMENTAIRES.join(', ')}.`);
+  }
+  const categorie = f.categorieCadre7;
+  if (categorie == null || String(categorie) === '') return;
+  if (!CATEGORIES_CADRE7.includes(String(categorie))) {
+    throw new Error('Catégorie du cadre 7 inconnue : '
+      + `${CATEGORIES_CADRE7.join(', ')}.`);
+  }
+  const hfc = Boolean(f.contientHfc);
+  const hfo = Boolean(f.contientHfo);
+  if (categorie === 'HFC' && !hfc) {
+    throw new Error('Fiche incohérente : la catégorie HFC suppose un fluide '
+      + 'qui contient du HFC.');
+  }
+  if (categorie === 'HFO' && (!hfo || hfc)) {
+    throw new Error('Fiche incohérente : la catégorie HFO suppose un fluide '
+      + 'qui contient du HFO et pas de HFC — un mélange contenant du HFC '
+      + 'relève de la catégorie HFC (règle A).');
+  }
+  if ((categorie === 'HCFC' || categorie === 'AUCUNE') && (hfc || hfo)) {
+    throw new Error(`Fiche incohérente : la catégorie ${categorie} exclut `
+      + 'un fluide contenant du HFC ou du HFO.');
+  }
+}

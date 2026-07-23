@@ -9,7 +9,7 @@
 // ============================================================
 
 import { modale, toast, ICONES } from '../views/communs.js';
-import { esc, fmtNombre, nombreFr } from '../core/utils.js';
+import { esc, fmtNombre, nombreFr, fluidesProposables } from '../core/utils.js';
 import { zonePiecesJointes } from '../composants/pieces-jointes.js';
 
 // Libellés français des états de fluide (mêmes clés que bouteilles.js)
@@ -150,9 +150,14 @@ export async function ouvrirFormBouteille(ctx, bouteilleId = null) {
     { valeur: 'RECUPERATION', libelle: 'Récupération' }
   ], bouteille ? bouteille.type : 'NEUVE');
 
+  // P1-2 : les fluides DÉSACTIVÉS ne sont plus proposés — sauf celui déjà
+  // enregistré sur cette bouteille (jamais de substitution silencieuse
+  // d'une valeur enregistrée, même principe que les états ci-dessous).
+  const fluidesOffre = fluidesProposables(fluides,
+    bouteille ? bouteille.fluide : null);
   const optionsFluide = optionsSelect(
-    fluides.map(function (f) { return { valeur: f.code, libelle: f.code }; }),
-    bouteille ? bouteille.fluide : (fluides[0] ? fluides[0].code : '')
+    fluidesOffre.map(function (f) { return { valeur: f.code, libelle: f.code }; }),
+    bouteille ? bouteille.fluide : (fluidesOffre[0] ? fluidesOffre[0].code : '')
   );
 
   // CM-4c : le jeu d'options d'état dépend du type (partition état↔type,

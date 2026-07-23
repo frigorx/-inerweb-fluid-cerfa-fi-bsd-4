@@ -325,6 +325,13 @@ const ROLES_MUTATION = {
   validerMouvement: VALIDEUR,
   annulerParContreEcriture: VALIDEUR,
   importerJSON: REFERENT_ADMIN,
+  // P1-2 (D5) : le référentiel des fluides est REFERENT+ADMIN, comme
+  // l'import qui réécrit déjà cette table. Un PRP pilote les tonnes
+  // équivalent CO₂, donc les seuils de contrôle, donc les obligations
+  // réglementaires de l'établissement : ce n'est pas de la saisie
+  // courante, et un élève n'y touche dans aucun scénario.
+  createFluide: REFERENT_ADMIN,
+  updateFluide: REFERENT_ADMIN,
   updateEtablissement: VALIDEUR,
   createAuditOrganisme: VALIDEUR,
   createNonConformite: VALIDEUR,
@@ -763,6 +770,10 @@ const HANDLERS = {
         `SELECT count(*) AS n FROM machines
          WHERE fluide = ? AND statut <> 'DEMANTELEE'`, [ligne.code]);
       fluide.nbMachines = n;
+      // impact : DÉRIVÉ du PRP (P1-2, D3). Il n'existait auparavant que
+      // dans le monde démo — la colonne de la vue restait donc vide en
+      // mode serveur. Parité stricte avec le DemoStore.
+      fluide.impact = impactDepuisPrp(fluide.gwpAr4);
       return fluide;
     });
   },
@@ -1817,6 +1828,114 @@ const HANDLERS = {
         `Mention ${mention.fluideMention}`,
         'Révocation (la mention reste au registre : aucune suppression)');
       return trouverMention(id);
+    });
+  },
+
+  // === référentiel des fluides (P1-2) =======================
+  // Le référent administre ses gaz LUI-MÊME : plus besoin d'une migration
+  // (donc d'un développeur) pour corriger un PRP ou déclarer un fluide.
+  // Sémantique = copie EXACTE du DemoStore (createFluide).
+
+  createFluide(params) {
+    const d = params.donneesFluide || {};
+    const code = String(d.code ?? '').trim();
+    const texteOuNull = (v) => (v !== undefined && v !== null
+      && String(v).trim() !== '' ? String(v).trim() : null);
+    const boolOuNull = (v) => (v === undefined || v === null
+      ? null : Boolean(v));
+    const fiche = {
+      code,
+      famille: String(d.famille ?? '').trim(),
+      gwpAr4: d.gwpAr4,
+      classeSecurite: String(d.classeSecurite ?? '').trim(),
+      statutReglementaire: texteOuNull(d.statutReglementaire) ?? 'AUTORISE',
+      commentaire: texteOuNull(d.commentaire),
+      contientHfc: boolOuNull(d.contientHfc),
+      contientHfo: boolOuNull(d.contientHfo),
+      categorieCadre7: texteOuNull(d.categorieCadre7),
+      sourcePrp: texteOuNull(d.sourcePrp)
+    };
+    verifierFicheFluide(fiche);
+    // Unicité du CODE : comparaison insensible aux espaces, tirets et
+    // casse (« R-32 » et « R32 » sont le même gaz), mais la casse saisie
+    // est conservée telle quelle (R-1234yf). Le PRIMARY KEY seul ne
+    // suffirait pas : il laisserait passer « R32 » à côté de « R-32 ».
+    const normalise = codeFluideNormalise(code);
+    const doublon = db.all('SELECT code FROM fluides')
+      .some((l) => codeFluideNormalise(l.code) === normalise);
+    if (doublon) {
+      throw new Error(`Code de fluide déjà utilisé : ${code}.`);
+    }
+    const fluide = { ...fiche, gwpAr4: Number(d.gwpAr4), actif: true };
+    return muter(() => {
+      inserer('fluides', mapping.versSql('fluides', fluide));
+      journaliser(d.operateur, 'CREATION_FLUIDE', fluide.code,
+        `PRP ${fluide.gwpAr4} · ${fluide.famille} · ${fluide.classeSecurite}`
+        + (fluide.sourcePrp ? ` · source ${fluide.sourcePrp}` : ''));
+      return ficheFluideComplete(fluide.code);
+    });
+  },
+
+  updateFluide(params) {
+    const code = params.code;
+    const fluide = lireFluide(code);
+    if (!fluide) {
+      throw new Error(`Fluide introuvable au référentiel : ${code}.`);
+    }
+    const d = params.donneesFluide || {};
+    // Le CODE est FIGÉ : il est la clé étrangère de huit tables, dont des
+    // écritures scellées. Le renommer les briserait. Corriger une faute de
+    // frappe = créer le bon code puis désactiver le mauvais.
+    if (d.code !== undefined && String(d.code).trim() !== code) {
+      throw new Error('Le code d’un fluide ne se modifie pas : il est '
+        + 'référencé par les machines, les bouteilles et les écritures '
+        + 'scellées. Créez le bon code, puis désactivez celui-ci.');
+    }
+    // D4 — dès que le PRP change, la SOURCE doit être saisie explicitement
+    // (miroir du DemoStore) : une valeur ajustée localement ne garde jamais
+    // l'étiquette officielle de l'ancienne.
+    const prpChange = d.gwpAr4 !== undefined
+      && Number(d.gwpAr4) !== Number(fluide.gwpAr4);
+    if (prpChange && (d.sourcePrp === undefined
+        || String(d.sourcePrp ?? '').trim() === '')) {
+      throw new Error('PRP modifié : la source du PRP doit être saisie '
+        + '(elle décrit la valeur retenue — une valeur ajustée localement '
+        + 'ne garde jamais l’étiquette d’une source officielle).');
+    }
+    const texteOuNull = (v) => (v !== undefined && v !== null
+      && String(v).trim() !== '' ? String(v).trim() : null);
+    const CHAMPS_TEXTE = ['famille', 'classeSecurite', 'statutReglementaire',
+      'commentaire', 'categorieCadre7', 'sourcePrp'];
+    const patch = {};
+    for (const champ of CHAMPS_TEXTE) {
+      if (d[champ] !== undefined) patch[champ] = texteOuNull(d[champ]);
+    }
+    if (d.gwpAr4 !== undefined) patch.gwpAr4 = Number(d.gwpAr4);
+    for (const champ of ['contientHfc', 'contientHfo']) {
+      if (d[champ] !== undefined) {
+        patch[champ] = d[champ] === null ? null : Boolean(d[champ]);
+      }
+    }
+    if (d.actif !== undefined) patch.actif = Boolean(d.actif);
+    // La fiche est vérifiée APRÈS fusion : une modification partielle ne
+    // doit pas pouvoir rendre l'ensemble incohérent.
+    verifierFicheFluide({ ...fluide, ...patch });
+    const modifies = Object.keys(patch);
+    return muter(() => {
+      if (modifies.length > 0) {
+        const ligne = mapping.versSql('fluides', patch);
+        const colonnes = Object.keys(ligne);
+        db.run(
+          `UPDATE fluides SET ${colonnes.map((c) => `${c} = ?`).join(', ')} `
+          + 'WHERE code = ?',
+          [...colonnes.map((c) => ligne[c]), code]);
+      }
+      const relu = ficheFluideComplete(code);
+      journaliser(d.operateur, 'MODIFICATION_FLUIDE', code,
+        `Champs : ${modifies.join(', ')}`
+        + (prpChange ? ` · PRP ${relu.gwpAr4} (source : ${relu.sourcePrp})`
+          : ''));
+      return relu;
     });
   },
 
@@ -4809,6 +4928,18 @@ function remplacerToutLEtat(candidat) {
         fluide.sourcePrp = fiche && Number(fluide.gwpAr4) === fiche.prp
           ? fiche.sourcePrp : null;
       }
+      // P1-2 : la DISPONIBILITÉ À LA SAISIE d'un export ANTÉRIEUR est
+      // inconnue (la clé n'existait pas) — une clé absente ne vaut pas
+      // décision. INSERT OR REPLACE remplace la LIGNE ENTIÈRE : sans
+      // cette reprise, la colonne absente repartirait au DEFAULT 1 et
+      // ferait ressusciter un fluide que le référent avait retiré de la
+      // saisie, en silence (constat TIRÉ à la revue du 23/07, prouvé).
+      // Un fluide inconnu du poste reste actif. Miroir du DemoStore.
+      if (fluide.actif === undefined || fluide.actif === null) {
+        const enPlace = db.get(
+          'SELECT actif FROM fluides WHERE code = ?', [fluide.code]);
+        fluide.actif = enPlace ? enPlace.actif === 1 : true;
+      }
       const ligne = mapping.versSql('fluides', fluide);
       const colonnes = Object.keys(ligne);
       const marques = colonnes.map(() => '?').join(', ');
@@ -5972,6 +6103,23 @@ function lireFluide(code) {
   return ligne ? mapping.versFront('fluides', ligne) : null;
 }
 
+/**
+ * P1-2 : fiche d'un fluide telle que la RETOURNE getFluides — avec les
+ * deux champs dérivés (nbMachines du parc courant, impact déduit du PRP).
+ * C'est ce que rendent createFluide et updateFluide, pour que l'appelant
+ * relise exactement la même forme d'objet des deux côtés.
+ */
+function ficheFluideComplete(code) {
+  const fluide = lireFluide(code);
+  if (!fluide) return null;
+  const { n } = db.get(
+    `SELECT count(*) AS n FROM machines
+     WHERE fluide = ? AND statut <> 'DEMANTELEE'`, [code]);
+  fluide.nbMachines = n;
+  fluide.impact = impactDepuisPrp(fluide.gwpAr4);
+  return fluide;
+}
+
 // ============================================================
 // CM-2/CM-5 — avoir de fluide par machine d'origine : MIROIR EXACT du
 // module front v8/js/data/avoir-origine.js (DÉRIVÉ des mouvements, aucun
@@ -6144,6 +6292,90 @@ function frequenceControleMois(fluideRef, chargeNominaleKg,
   if (niveau === 2) return detectionPermanente ? 12 : 6;
   if (niveau === 3) return detectionPermanente ? 6 : 3;
   return null;
+}
+
+// ============================================================
+// P1-2 — ADMINISTRATION DU RÉFÉRENTIEL DES FLUIDES.
+// MIROIR LITTÉRAL des règles pures de v8/js/data/reglementation-fluides.js
+// (CLASSES_SECURITE, STATUTS_REGLEMENTAIRES, CATEGORIES_CADRE7,
+// impactDepuisPrp, codeFluideNormalise, verifierFicheFluide). api.js étant
+// du CommonJS, la logique est réimplémentée ici À L'IDENTIQUE ; la parité,
+// verdicts ET messages, est prouvée par test-referentiel-fluides.mjs (joué
+// demo ET local). Ne jamais toucher un miroir sans l'autre.
+// ============================================================
+
+const CLASSES_SECURITE =
+  ['A1', 'A2L', 'A2', 'A3', 'B1', 'B2L', 'B2', 'B3'];
+const STATUTS_REGLEMENTAIRES = ['AUTORISE', 'RESTREINT', 'INTERDIT'];
+const CATEGORIES_CADRE7 = ['HFC', 'HFO', 'HCFC', 'AUCUNE'];
+
+/** Impact AFFICHÉ dérivé du PRP (D3) — bornes F-Gas 150/750/2500. */
+function impactDepuisPrp(prp) {
+  // ⚠️ Number(null) et Number('') valent 0 : un PRP ABSENT serait classé
+  // « FAIBLE », c'est-à-dire rassurant à tort. On les écarte d'abord.
+  if (prp === null || prp === undefined || prp === '') return null;
+  const valeur = Number(prp);
+  if (!Number.isFinite(valeur)) return null;
+  // Un PRP NÉGATIF est aberrant : il ne doit pas ressortir « FAIBLE »,
+  // rassurant à tort (l'import ne passe pas par la garde de saisie).
+  if (valeur < 0) return null;
+  if (valeur < 150) return 'FAIBLE';
+  if (valeur < 750) return 'MODERE';
+  if (valeur < 2500) return 'ELEVE';
+  return 'TRES_ELEVE';
+}
+
+/** Code normalisé pour la COMPARAISON d'unicité (la casse saisie reste). */
+function codeFluideNormalise(code) {
+  return String(code ?? '').replace(/[\s.-]/g, '').toUpperCase();
+}
+
+/** Garde de saisie d'une fiche fluide COMPLÈTE — messages canoniques. */
+function verifierFicheFluide(fiche) {
+  const f = fiche || {};
+
+  if (!String(f.code ?? '').trim()) {
+    throw new Error('Code du fluide obligatoire (ex. R-449A).');
+  }
+  if (!String(f.famille ?? '').trim()) {
+    throw new Error('Famille du fluide obligatoire (ex. HFC, HFO, HC, CO2).');
+  }
+  const prp = Number(f.gwpAr4);
+  if (!Number.isFinite(prp) || prp < 0) {
+    throw new Error('PRP invalide : nombre positif ou nul attendu '
+      + '(le NH₃ vaut 0, le R-290 vaut 0,02).');
+  }
+  if (!CLASSES_SECURITE.includes(String(f.classeSecurite ?? ''))) {
+    throw new Error('Classe de sécurité inconnue : '
+      + `${CLASSES_SECURITE.join(', ')}.`);
+  }
+  const statut = f.statutReglementaire;
+  if (statut != null && String(statut) !== ''
+      && !STATUTS_REGLEMENTAIRES.includes(String(statut))) {
+    throw new Error('Statut réglementaire inconnu : '
+      + `${STATUTS_REGLEMENTAIRES.join(', ')}.`);
+  }
+  const categorie = f.categorieCadre7;
+  if (categorie == null || String(categorie) === '') return;
+  if (!CATEGORIES_CADRE7.includes(String(categorie))) {
+    throw new Error('Catégorie du cadre 7 inconnue : '
+      + `${CATEGORIES_CADRE7.join(', ')}.`);
+  }
+  const hfc = Boolean(f.contientHfc);
+  const hfo = Boolean(f.contientHfo);
+  if (categorie === 'HFC' && !hfc) {
+    throw new Error('Fiche incohérente : la catégorie HFC suppose un fluide '
+      + 'qui contient du HFC.');
+  }
+  if (categorie === 'HFO' && (!hfo || hfc)) {
+    throw new Error('Fiche incohérente : la catégorie HFO suppose un fluide '
+      + 'qui contient du HFO et pas de HFC — un mélange contenant du HFC '
+      + 'relève de la catégorie HFC (règle A).');
+  }
+  if ((categorie === 'HCFC' || categorie === 'AUCUNE') && (hfc || hfo)) {
+    throw new Error(`Fiche incohérente : la catégorie ${categorie} exclut `
+      + 'un fluide contenant du HFC ou du HFO.');
+  }
 }
 
 /**

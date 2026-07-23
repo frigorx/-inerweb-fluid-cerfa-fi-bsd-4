@@ -1303,6 +1303,54 @@ verifierLeve('le code public est unique (résolution QR sans ambiguïté)',
 }
 
 // ============================================================
+// 6quindecies. Désactivation d'un fluide (migration 031, P1-2) — base
+// PRÉEXISTANTE (v30 → v31) : la colonne actif est ajoutée et TOUT
+// l'existant reste actif (backfill conservateur). Le CHECK n'admet que
+// 0/1. Un fluide n'est jamais supprimé : sa clé est référencée par des
+// écritures scellées.
+// ============================================================
+{
+  const CHEMIN_ACTIF = join(DOSSIER, 'ancienne-fluides-actif.db');
+  const ancienneAct = new DatabaseSync(CHEMIN_ACTIF);
+  ancienneAct.exec(readFileSync(new URL('./schema.sql', import.meta.url), 'utf8'));
+  ancienneAct.exec(`PRAGMA user_version = ${migrations.VERSION_BASE};`);
+  const jusqua30 = {};
+  for (let v = 2; v <= 30; v += 1) jusqua30[v] = migrations.MIGRATIONS[v];
+  migrations.migrer(ancienneAct, jusqua30);
+
+  verifier('avant migration 031 : fluides n’a pas encore la colonne actif',
+    !ancienneAct.prepare('PRAGMA table_info(fluides)').all()
+      .some((c) => c.name === 'actif'));
+
+  const vAct = migrations.migrer(ancienneAct,
+    { 31: migrations.MIGRATIONS[31] });
+  verifier('la migration 031 porte la base à la version 31',
+    vAct === 31 && migrations.lireVersion(ancienneAct) === 31);
+  verifier('031 : la colonne actif existe et vaut 1 pour TOUS les fluides '
+    + 'déjà en base (backfill conservateur)',
+    ancienneAct.prepare('PRAGMA table_info(fluides)').all()
+      .some((c) => c.name === 'actif')
+    && ancienneAct.prepare(
+      'SELECT count(*) AS n FROM fluides WHERE actif <> 1').get().n === 0
+    && ancienneAct.prepare('SELECT count(*) AS n FROM fluides').get().n > 0);
+
+  let refuse = false;
+  try {
+    ancienneAct.exec("UPDATE fluides SET actif = 2 WHERE code = 'R-32';");
+  } catch (erreur) {
+    refuse = /CHECK|constraint/i.test(erreur.message);
+  }
+  verifier('031 : le CHECK n’admet que 0 ou 1', refuse);
+
+  ancienneAct.exec("UPDATE fluides SET actif = 0 WHERE code = 'R-32';");
+  verifier('031 : un fluide DÉSACTIVÉ reste en base (aucune suppression)',
+    ancienneAct.prepare(
+      "SELECT actif FROM fluides WHERE code = 'R-32'").get().actif === 0);
+
+  ancienneAct.close();
+}
+
+// ============================================================
 // 7. Base pré-versionnage : refusée avec un message clair
 // ============================================================
 db.fermer();

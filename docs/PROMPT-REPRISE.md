@@ -6,8 +6,33 @@
 > **Session conseillée : Opus, effort très élevé** (chantier probatoire/réglementaire, briques
 > testées une à une). PAS d'ultracode hors point critique.
 >
-> **⭐⭐⭐⭐⭐ PROCHAINE BRIQUE (décidée par Franck le 23/07) = P1-2 — ÉCRAN
-> D'ADMINISTRATION DU RÉFÉRENTIEL DES FLUIDES.** Besoin exprimé mot pour mot :
+> **⭐⭐⭐⭐⭐ P1-2 (ÉCRAN D'ADMINISTRATION DU RÉFÉRENTIEL DES FLUIDES) EST
+> TERMINÉ — 23/07, AF-1→AF-9, plan `docs/PLAN-P1-2-ADMIN-FLUIDES.md`, TOUT
+> VERT 95 exécutions, ⏳ PR à relire/fusionner par Franck.** Franck ajoute,
+> modifie et désactive ses gaz lui-même : `createFluide`/`updateFluide`
+> (2 stores + parité + REFERENT_ADMIN), migration 31 `fluides.actif`
+> (désactivation, JAMAIS de suppression), vue + modale, `impact` enfin
+> dérivé du PRP des DEUX côtés (il n'existait que dans le monde démo),
+> `referentiel-fluides.csv` au dossier scellé, suite doublée de 55 vérifs
+> dont ⭐ « corriger le référentiel ne retouche NI le prpFige d'une écriture
+> validée, NI son empreinte, NI son CERFA, NI la chaîne ». Contrat **v9,
+> 93 méthodes**. Décisions D1→D7 validées par Franck AVANT le code (voir le
+> plan) ; revue adversariale : **1 bloquant** (un export ANTÉRIEUR
+> ressuscitait un fluide désactivé — une clé absente ne vaut pas décision)
+> et **1 important** (PRP négatif classé « impact FAIBLE ») corrigés.
+> **RESTE de P1-2 (hors code, D7)** : pré-remplir le catalogue manquant
+> (R-448A, R-449A, R-452A/B, R-454A/B/C, R-513A, R-1234ze, R-717…) — chaque
+> ligne est une valeur réglementaire à faire valider par Franck, une par
+> une ; l'écran le rend autonome pour les saisir au fil de l'eau.
+>
+> **PROCHAINE BRIQUE : au choix de Franck** — P0-9 (hors code, révocation
+> des clés v7) · volet RGPD (notice/durées/DPD, surtout hors code) ·
+> réouverture du mode Officiel (verrou T1) · T3 (relecture organisme
+> agréé) · autres constats P1 de l'audit.
+>
+> --- ci-dessous, l'énoncé d'origine de la brique, conservé pour mémoire ---
+>
+> Besoin exprimé mot pour mot :
 > « on doit pouvoir accéder à un tableau où tous les gaz sont rentrés, en
 > ajouter de nouveaux ou modifier les informations » — Franck veut être
 > AUTONOME, ne plus dépendre d'une migration (donc d'un développeur) pour
@@ -203,14 +228,14 @@ la cible officielle — la RC a gardé 148) · **T3** relecture organisme agré�
   `feedback_reglages_intelligence`).
 - **carte → vérifier → plan (grosses briques) → modif chirurgicale → TESTS VERTS → revue
   adversariale (sobre : soi-même ou 1 agent) → commit.** `node outils/lancer-tests.mjs --tout`
-  doit être **TOUT VERT (87 exécutions)** avant tout commit.
+  doit être **TOUT VERT (95 exécutions)** avant tout commit.
 - **JAMAIS toucher au `data/` RÉEL** : vérification dynamique = serveur sur PORT jetable +
   `IWF_CHEMIN_BASE` base jetable (jamais 2011). Corps des requêtes API = **`{params:{...}}`**.
   **« Une faille se prouve en la TIRANT, pas en la lisant. »**
 - **Parité STRICTE `server/api.js` ↔ `v8/js/data/demo-store.js`** (test-contrat, mapping qui
   lève sur clé inconnue → déclarer les nouveaux champs des deux côtés). Module pur du front
   réutilisé côté serveur = recopié en littéral (CommonJS) + test de parité qui discrimine.
-- **Migrations** : registre `server/migrations.js`, dernière = **27**, prochaine = **28**.
+- **Migrations** : registre `server/migrations.js`, dernière = **31**, prochaine = **32**.
   ⚠️ Une migration est IMMUABLE (littéraux figés, jamais de constante partagée qui évolue).
   Triggers WORM recréés à chaque migration qui touche leurs tables ;
   `PRAGMA recursive_triggers = ON` obligatoire.

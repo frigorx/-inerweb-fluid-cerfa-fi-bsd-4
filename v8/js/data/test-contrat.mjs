@@ -118,8 +118,8 @@ verifier('aucune méthode intruse hors contrat (anti-dérive v7)',
 verifier('les propriétés du contrat sont présentes',
   surface.proprietesManquantes.length === 0,
   `manquent : ${surface.proprietesManquantes.join(', ')}`);
-verifier('le contrat compte bien 87 méthodes',
-  Object.keys(METHODES_CONTRAT).length === 91,
+verifier('le contrat compte bien 93 méthodes',
+  Object.keys(METHODES_CONTRAT).length === 93,
   `compté : ${Object.keys(METHODES_CONTRAT).length}`);
 verifier('modeLabel est une chaîne non vide',
   typeof store.modeLabel === 'string' && store.modeLabel.length > 0);
@@ -195,6 +195,15 @@ verifier('gwpAr4 est un nombre (jamais une chaîne)',
     fluides.find((f) => f.code === 'R-1234yf')?.gwpAr4 === 0.501
     && fluides.find((f) => f.code === 'R-290')?.gwpAr4 === 0.02
     && fluides.find((f) => f.code === 'R-455A')?.gwpAr4 === 148);
+  // P1-2 : deux champs dérivés désormais servis des DEUX côtés — actif
+  // (migration 31, tout l'existant à vrai) et impact (déduit du PRP :
+  // avant, il n'existait que dans le monde démo).
+  verifier('P1-2 : tous les fluides du référentiel sont ACTIFS au départ',
+    fluides.every((f) => f.actif === true));
+  verifier('P1-2 : impact dérivé du PRP, servi par les deux stores',
+    fluides.find((f) => f.code === 'R-404A')?.impact === 'TRES_ELEVE'
+    && fluides.find((f) => f.code === 'R-32')?.impact === 'MODERE'
+    && fluides.find((f) => f.code === 'R-455A')?.impact === 'FAIBLE');
 }
 
 // Le scénario exige un HFC à fort PRP (périmètre F-Gas atteint dès

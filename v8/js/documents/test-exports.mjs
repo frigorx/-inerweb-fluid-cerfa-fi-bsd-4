@@ -34,14 +34,15 @@ const store = await creerStore();
 
 // --- 1. Onze fichiers, noms exacts ------------------------------
 const fichiers = await toutesLesTables(store, ANNEE);
-const NOMS_ATTENDUS = ['personnel.csv', 'habilitations.csv',
+const NOMS_ATTENDUS = ['referentiel-fluides.csv', 'personnel.csv',
+  'habilitations.csv',
   'mentions-habilitation.csv', 'outillage.csv', 'bouteilles.csv',
   'machines.csv', 'mouvements.csv', 'controles.csv', 'balance-matiere.csv',
   'bsff.csv', 'cessions.csv', `declaration-annuelle-${ANNEE}.csv`,
   'journal-audit.csv'];
-verifier('toutesLesTables retourne exactement 13 fichiers (P0-8 : +cessions +déclaration)',
-  fichiers.length === 13, `reçu ${fichiers.length}`);
-verifier('les 13 noms de fichiers attendus sont présents',
+verifier('toutesLesTables retourne exactement 14 fichiers (P1-2 : +référentiel)',
+  fichiers.length === 14, `reçu ${fichiers.length}`);
+verifier('les 14 noms de fichiers attendus sont présents',
   NOMS_ATTENDUS.every((nom) => fichiers.some((f) => f.nom === nom)),
   JSON.stringify(fichiers.map((f) => f.nom)));
 
@@ -55,6 +56,21 @@ verifier('cessions.csv : en-tête présent (destinataire attesté)',
   /Destinataire/.test(parNom.get('cessions.csv') ?? ''));
 verifier('bsff.csv : colonne « Traitement final » ajoutée (BSFF ≠ destruction)',
   /Traitement final/.test(parNom.get('bsff.csv') ?? ''));
+
+// P1-2 : le référentiel administré entre au dossier scellé — un auditeur
+// doit pouvoir constater QUEL PRP a servi aux calculs de l'année, avec sa
+// source, et voir les fluides mis hors saisie.
+{
+  const csv = parNom.get('referentiel-fluides.csv') ?? '';
+  verifier('referentiel-fluides.csv : en-tête complet (source du PRP, cadre 7, '
+    + 'disponibilité)',
+    /Source du PRP/.test(csv) && /Catégorie cadre 7/.test(csv)
+    && /Disponible à la saisie/.test(csv));
+  verifier('referentiel-fluides.csv : les 9 fluides du monde de démo y sont',
+    csv.split('\n').filter((l) => l.trim() !== '').length === 10);
+  verifier('referentiel-fluides.csv : le PRP et sa source sont portés',
+    /R-455A/.test(csv) && /conservatoire/.test(csv));
+}
 
 // Brique 2 (outils multiples) : aucun mouvement du monde de démo ne porte
 // d'outil lié — outils-intervention.csv est CONDITIONNEL et doit donc être

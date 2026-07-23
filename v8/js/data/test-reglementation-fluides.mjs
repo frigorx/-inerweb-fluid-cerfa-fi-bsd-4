@@ -6,7 +6,8 @@
 // (mélange HFC/HFO R-455A). Cf. docs/TABLE-REGLEMENTAIRE-FLUIDES.md.
 // ============================================================
 
-import { categorieCadre7, evaluerControle } from './reglementation-fluides.js';
+import { categorieCadre7, evaluerControle, impactDepuisPrp,
+  codeFluideNormalise, verifierFicheFluide } from './reglementation-fluides.js';
 
 let nbOk = 0;
 let nbEchecs = 0;
@@ -126,6 +127,96 @@ verifier('caseFrequence cohérente (HFC 5 t sans détection → Case_Sans_12m)',
   evaluerControle(hfc, 5, false).caseFrequence === 'Case_Sans_12m');
 verifier('categorie renvoyée dans le résultat (R-455A → HFC)',
   evaluerControle(r455a, 33.8, false).categorie === 'HFC');
+
+// ============================================================
+// P1-2 (AF-2) — règles d'ADMINISTRATION du référentiel : impact dérivé,
+// normalisation du code, garde de saisie. Suite PURE (la parité
+// demo/serveur des messages est prouvée par test-referentiel-fluides).
+// ============================================================
+
+// ---- impact dérivé du PRP (D3 : bornes F-Gas 150 / 750 / 2500) ----
+verifier('PRP 0,02 (R-290) → FAIBLE', impactDepuisPrp(0.02) === 'FAIBLE');
+verifier('PRP 148 (R-455A) → FAIBLE', impactDepuisPrp(148) === 'FAIBLE');
+verifier('PRP 150 pile → MODERE (borne stricte)',
+  impactDepuisPrp(150) === 'MODERE');
+verifier('PRP 675 (R-32) → MODERE', impactDepuisPrp(675) === 'MODERE');
+verifier('PRP 750 pile → ELEVE', impactDepuisPrp(750) === 'ELEVE');
+verifier('PRP 1774 (R-407C) → ELEVE', impactDepuisPrp(1774) === 'ELEVE');
+verifier('PRP 2500 pile → TRES_ELEVE', impactDepuisPrp(2500) === 'TRES_ELEVE');
+verifier('PRP 3922 (R-404A) → TRES_ELEVE',
+  impactDepuisPrp(3922) === 'TRES_ELEVE');
+verifier('PRP illisible → null', impactDepuisPrp('abc') === null
+  && impactDepuisPrp(null) === null && impactDepuisPrp(undefined) === null);
+verifier('PRP NÉGATIF (valeur aberrante entrée par un import) → null, '
+  + 'jamais « FAIBLE » (revue du 23/07)',
+  impactDepuisPrp(-5000) === null && impactDepuisPrp(-0.5) === null);
+verifier('PRP 0 → FAIBLE (le NH₃ vaut 0, ce n’est pas aberrant)',
+  impactDepuisPrp(0) === 'FAIBLE');
+
+// ---- normalisation du code (comparaison d'unicité) ----
+verifier('« R-32 », « R32 » et « r 32 » désignent le même gaz',
+  codeFluideNormalise('R-32') === codeFluideNormalise('R32')
+  && codeFluideNormalise('R-32') === codeFluideNormalise('r 32'));
+verifier('R-1234yf et R-1234ze restent distincts',
+  codeFluideNormalise('R-1234yf') !== codeFluideNormalise('R-1234ze'));
+
+// ---- garde de saisie ----
+const leve = (fiche, extrait) => {
+  try { verifierFicheFluide(fiche); return false; }
+  catch (erreur) { return erreur.message.includes(extrait); }
+};
+const ficheOk = {
+  code: 'R-449A', famille: 'HFC', gwpAr4: 1397, classeSecurite: 'A1',
+  statutReglementaire: 'AUTORISE', categorieCadre7: 'HFC',
+  contientHfc: true, contientHfo: false
+};
+verifier('une fiche complète et cohérente passe',
+  (() => { try { verifierFicheFluide(ficheOk); return true; }
+    catch { return false; } })());
+verifier('code vide refusé', leve({ ...ficheOk, code: '  ' }, 'Code du fluide'));
+verifier('famille vide refusée',
+  leve({ ...ficheOk, famille: '' }, 'Famille du fluide'));
+verifier('PRP négatif refusé', leve({ ...ficheOk, gwpAr4: -1 }, 'PRP invalide'));
+verifier('PRP non numérique refusé',
+  leve({ ...ficheOk, gwpAr4: 'beaucoup' }, 'PRP invalide'));
+verifier('PRP 0 ACCEPTÉ (NH₃)',
+  (() => { try { verifierFicheFluide({ ...ficheOk, gwpAr4: 0 }); return true; }
+    catch { return false; } })());
+verifier('classe de sécurité hors liste refusée',
+  leve({ ...ficheOk, classeSecurite: 'A4' }, 'Classe de sécurité inconnue'));
+verifier('statut réglementaire hors liste refusé',
+  leve({ ...ficheOk, statutReglementaire: 'PEUT-ETRE' },
+    'Statut réglementaire inconnu'));
+verifier('statut ABSENT toléré (fiche ancienne)',
+  (() => { const f = { ...ficheOk }; delete f.statutReglementaire;
+    try { verifierFicheFluide(f); return true; } catch { return false; } })());
+verifier('catégorie cadre 7 hors liste refusée',
+  leve({ ...ficheOk, categorieCadre7: 'PFC' }, 'Catégorie du cadre 7 inconnue'));
+verifier('catégorie ABSENTE tolérée (fluide sans fiche → repli du moteur)',
+  (() => { try {
+    verifierFicheFluide({ ...ficheOk, categorieCadre7: null,
+      contientHfc: null, contientHfo: null });
+    return true; } catch { return false; } })());
+verifier('HFC sans « contient du HFC » refusé',
+  leve({ ...ficheOk, contientHfc: false }, 'la catégorie HFC suppose'));
+verifier('HFO qui contient du HFC refusé (règle A)',
+  leve({ ...ficheOk, categorieCadre7: 'HFO', contientHfc: true,
+    contientHfo: true }, 'la catégorie HFO suppose'));
+verifier('HFO sans « contient du HFO » refusé',
+  leve({ ...ficheOk, categorieCadre7: 'HFO', contientHfc: false,
+    contientHfo: false }, 'la catégorie HFO suppose'));
+verifier('AUCUNE avec « contient du HFC » refusé',
+  leve({ ...ficheOk, categorieCadre7: 'AUCUNE', contientHfc: true,
+    contientHfo: false }, 'la catégorie AUCUNE exclut'));
+verifier('HCFC avec « contient du HFO » refusé',
+  leve({ ...ficheOk, categorieCadre7: 'HCFC', contientHfc: false,
+    contientHfo: true }, 'la catégorie HCFC exclut'));
+verifier('R-455A (HFC qui contient AUSSI du HFO) ACCEPTÉ — règle A',
+  (() => { try {
+    verifierFicheFluide({ code: 'R-455A', famille: 'HFC/HFO', gwpAr4: 148,
+      classeSecurite: 'A2L', categorieCadre7: 'HFC',
+      contientHfc: true, contientHfo: true });
+    return true; } catch { return false; } })());
 
 console.log('');
 console.log(`Moteur réglementaire : ${nbOk} réussies, ${nbEchecs} en échec.`);

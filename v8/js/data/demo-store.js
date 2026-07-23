@@ -16,7 +16,8 @@ import { teqCO2, fmtDate, fmtNombre, fmtKgSigne, genId, hasherEcriture,
   from '../core/utils.js';
 // IM-1 : fréquence réglementaire des contrôles d'étanchéité —
 // logique UNIQUE partagée avec le cadre 7 du CERFA (aucun doublon).
-import { evaluerControle } from './reglementation-fluides.js';
+import { evaluerControle, impactDepuisPrp, codeFluideNormalise,
+  verifierFicheFluide } from './reglementation-fluides.js';
 // CM-2 : avoir de fluide par machine d'origine (DÉRIVÉ des mouvements) —
 // signale une réintroduction au-delà du récupéré. Le serveur en tient un
 // MIROIR EXACT (api.js).
@@ -2275,11 +2276,19 @@ export function creerDemoStore() {
       // pour les sauvegardes antérieures à la Phase D.
       // Fiche réglementaire : complétée au même titre (mondes démo
       // persistés AVANT la migration 21), jamais écrasée si présente.
+      // actif : miroir du DEFAULT 1 de la migration 31 — un fluide semé
+      // ou persisté AVANT P1-2 n'a pas le champ ; il est ACTIF (backfill
+      // conservateur). Seul un false explicite désactive.
+      // impact : DÉRIVÉ du PRP (P1-2, D3) — plus jamais un libellé figé
+      // dans les données. Avant, il n'existait que dans le monde démo :
+      // la colonne de la vue restait vide avec le serveur.
       const parc = machinesEnParc();
       return donnees.fluides.map((f) => completerFicheReglementaire({
         ...copier(f),
         classeSecurite: f.classeSecurite ??
           DEMO.fluides.find((r) => r.code === f.code)?.classeSecurite ?? null,
+        actif: f.actif !== false,
+        impact: impactDepuisPrp(f.gwpAr4),
         nbMachines: parc.filter((m) => m.fluide === f.code).length
       }));
     },
@@ -2804,6 +2813,111 @@ export function creerDemoStore() {
         `${machine.designation} remise en service`);
       persisterEtNotifier();
       return copier(machine);
+    },
+
+    // ------------------------------------------------------
+    // Mutations : référentiel des fluides (P1-2)
+    // Le référent administre ses gaz LUI-MÊME : plus besoin d'une
+    // migration (donc d'un développeur) pour corriger un PRP ou
+    // déclarer un fluide. Les règles de saisie sont PURES
+    // (reglementation-fluides.js), le serveur en tient un miroir.
+    // ------------------------------------------------------
+    async createFluide(donneesFluide) {
+      const d = donneesFluide || {};
+      const code = String(d.code ?? '').trim();
+      const texteOuNull = (v) => (v !== undefined && v !== null
+        && String(v).trim() !== '' ? String(v).trim() : null);
+      const boolOuNull = (v) => (v === undefined || v === null
+        ? null : Boolean(v));
+      const fiche = {
+        code,
+        famille: String(d.famille ?? '').trim(),
+        gwpAr4: d.gwpAr4,
+        classeSecurite: String(d.classeSecurite ?? '').trim(),
+        statutReglementaire: texteOuNull(d.statutReglementaire) ?? 'AUTORISE',
+        commentaire: texteOuNull(d.commentaire),
+        contientHfc: boolOuNull(d.contientHfc),
+        contientHfo: boolOuNull(d.contientHfo),
+        categorieCadre7: texteOuNull(d.categorieCadre7),
+        sourcePrp: texteOuNull(d.sourcePrp)
+      };
+      verifierFicheFluide(fiche);
+      // Unicité du CODE : comparaison insensible aux espaces, tirets et
+      // casse (« R-32 » et « R32 » sont le même gaz), mais la casse
+      // saisie est conservée telle quelle (R-1234yf).
+      const normalise = codeFluideNormalise(code);
+      if (donnees.fluides.some((f) => codeFluideNormalise(f.code) === normalise)) {
+        throw new Error(`Code de fluide déjà utilisé : ${code}.`);
+      }
+      const fluide = { ...fiche, gwpAr4: Number(d.gwpAr4), actif: true };
+      donnees.fluides.push(fluide);
+      journaliser(d.operateur, 'CREATION_FLUIDE', fluide.code,
+        `PRP ${fluide.gwpAr4} · ${fluide.famille} · ${fluide.classeSecurite}`
+        + (fluide.sourcePrp ? ` · source ${fluide.sourcePrp}` : ''));
+      persisterEtNotifier();
+      return copier({ ...fluide, impact: impactDepuisPrp(fluide.gwpAr4),
+        nbMachines: 0 });
+    },
+
+    async updateFluide(code, donneesFluide) {
+      const fluide = donnees.fluides.find((f) => f.code === code);
+      if (!fluide) {
+        throw new Error(`Fluide introuvable au référentiel : ${code}.`);
+      }
+      const d = donneesFluide || {};
+      // Le CODE est FIGÉ : il est la clé étrangère de huit tables, dont
+      // des écritures scellées. Le renommer les briserait. Corriger une
+      // faute de frappe = créer le bon code puis désactiver le mauvais.
+      if (d.code !== undefined && String(d.code).trim() !== code) {
+        throw new Error('Le code d’un fluide ne se modifie pas : il est '
+          + 'référencé par les machines, les bouteilles et les écritures '
+          + 'scellées. Créez le bon code, puis désactivez celui-ci.');
+      }
+      // D4 — dès que le PRP change, la SOURCE doit être saisie
+      // explicitement : sans cela une valeur ajustée localement garderait
+      // l'étiquette officielle de l'ancienne (« annexe F-Gas III »), ce
+      // qui serait faux. Retaper la même source est un choix conscient,
+      // pas un oubli : on exige la présence, pas un changement.
+      const prpChange = d.gwpAr4 !== undefined
+        && Number(d.gwpAr4) !== Number(fluide.gwpAr4);
+      if (prpChange && (d.sourcePrp === undefined
+          || String(d.sourcePrp ?? '').trim() === '')) {
+        throw new Error('PRP modifié : la source du PRP doit être saisie '
+          + '(elle décrit la valeur retenue — une valeur ajustée localement '
+          + 'ne garde jamais l’étiquette d’une source officielle).');
+      }
+      const texteOuNull = (v) => (v !== undefined && v !== null
+        && String(v).trim() !== '' ? String(v).trim() : null);
+      const CHAMPS_TEXTE = ['famille', 'classeSecurite', 'statutReglementaire',
+        'commentaire', 'categorieCadre7', 'sourcePrp'];
+      const patch = {};
+      for (const champ of CHAMPS_TEXTE) {
+        if (d[champ] !== undefined) patch[champ] = texteOuNull(d[champ]);
+      }
+      if (d.gwpAr4 !== undefined) patch.gwpAr4 = Number(d.gwpAr4);
+      for (const champ of ['contientHfc', 'contientHfo']) {
+        if (d[champ] !== undefined) {
+          patch[champ] = d[champ] === null ? null : Boolean(d[champ]);
+        }
+      }
+      if (d.actif !== undefined) patch.actif = Boolean(d.actif);
+      // La fiche est vérifiée APRÈS fusion : une modification partielle ne
+      // doit pas pouvoir rendre l'ensemble incohérent (règle unique pour
+      // la création et la modification).
+      const fusion = { ...fluide, ...patch };
+      verifierFicheFluide(fusion);
+      Object.assign(fluide, patch);
+      const modifies = Object.keys(patch);
+      journaliser(d.operateur, 'MODIFICATION_FLUIDE', fluide.code,
+        `Champs : ${modifies.join(', ')}`
+        + (prpChange ? ` · PRP ${fluide.gwpAr4} (source : ${fluide.sourcePrp})`
+          : ''));
+      persisterEtNotifier();
+      const parc = machinesEnParc();
+      return copier({ ...fluide,
+        actif: fluide.actif !== false,
+        impact: impactDepuisPrp(fluide.gwpAr4),
+        nbMachines: parc.filter((m) => m.fluide === fluide.code).length });
     },
 
     // ------------------------------------------------------
@@ -5275,6 +5389,19 @@ export function creerDemoStore() {
       // la recompléter depuis le référentiel (table validée), jamais
       // écraser une fiche importée ; fluide inconnu → 4 clés à null.
       for (const f of candidat.fluides) completerFicheReglementaire(f);
+      // P1-2 : la DISPONIBILITÉ À LA SAISIE d'un export ANTÉRIEUR est
+      // inconnue (la clé n'existait pas) — une clé absente ne vaut pas
+      // décision. On conserve alors l'état COURANT du poste : sans quoi
+      // réimporter une vieille sauvegarde ferait ressusciter un fluide
+      // que le référent avait retiré de la saisie, en silence (constat
+      // TIRÉ à la revue du 23/07, prouvé). Un fluide inconnu du poste
+      // reste actif, comme le DEFAULT 1 de la migration 31. Miroir de
+      // l'import serveur.
+      for (const f of candidat.fluides) {
+        if (f.actif !== undefined && f.actif !== null) continue;
+        const enPlace = donnees.fluides.find((x) => x.code === f.code);
+        f.actif = enPlace ? enPlace.actif !== false : true;
+      }
 
       // Compléments Phase B pour les imports Phase A
       if (!Array.isArray(candidat.outillage)) {

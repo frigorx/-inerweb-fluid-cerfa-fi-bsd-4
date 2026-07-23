@@ -501,23 +501,23 @@ export const DEMO = {
   // par test-contrat).
   // --------------------------------------------------------
   fluides: [
-    { code: 'R-32', famille: 'HFC', gwpAr4: 675, impact: 'MODERE', classeSecurite: 'A2L', nbMachines: 0,
+    { code: 'R-32', famille: 'HFC', gwpAr4: 675, classeSecurite: 'A2L', nbMachines: 0,
       contientHfc: true, contientHfo: false, categorieCadre7: 'HFC', sourcePrp: 'AR4 / annexe F-Gas' },
-    { code: 'R-410A', famille: 'HFC', gwpAr4: 2088, impact: 'ELEVE', classeSecurite: 'A1', nbMachines: 0,
+    { code: 'R-410A', famille: 'HFC', gwpAr4: 2088, classeSecurite: 'A1', nbMachines: 0,
       contientHfc: true, contientHfo: false, categorieCadre7: 'HFC', sourcePrp: 'AR4' },
-    { code: 'R-134a', famille: 'HFC', gwpAr4: 1430, impact: 'ELEVE', classeSecurite: 'A1', nbMachines: 0,
+    { code: 'R-134a', famille: 'HFC', gwpAr4: 1430, classeSecurite: 'A1', nbMachines: 0,
       contientHfc: true, contientHfo: false, categorieCadre7: 'HFC', sourcePrp: 'AR4' },
-    { code: 'R-407C', famille: 'HFC', gwpAr4: 1774, impact: 'ELEVE', classeSecurite: 'A1', nbMachines: 0,
+    { code: 'R-407C', famille: 'HFC', gwpAr4: 1774, classeSecurite: 'A1', nbMachines: 0,
       contientHfc: true, contientHfo: false, categorieCadre7: 'HFC', sourcePrp: 'AR4' },
-    { code: 'R-404A', famille: 'HFC', gwpAr4: 3922, impact: 'TRES_ELEVE', classeSecurite: 'A1', nbMachines: 0,
+    { code: 'R-404A', famille: 'HFC', gwpAr4: 3922, classeSecurite: 'A1', nbMachines: 0,
       contientHfc: true, contientHfo: false, categorieCadre7: 'HFC', sourcePrp: 'AR4' },
-    { code: 'R-1234yf', famille: 'HFO', gwpAr4: 0.501, impact: 'FAIBLE', classeSecurite: 'A2L', nbMachines: 0,
+    { code: 'R-1234yf', famille: 'HFO', gwpAr4: 0.501, classeSecurite: 'A2L', nbMachines: 0,
       contientHfc: false, contientHfo: true, categorieCadre7: 'HFO', sourcePrp: 'annexe règl. UE 2024/573 (F-Gas III)' },
-    { code: 'R-455A', famille: 'HFC/HFO', gwpAr4: 148, impact: 'FAIBLE', classeSecurite: 'A2L', nbMachines: 0,
+    { code: 'R-455A', famille: 'HFC/HFO', gwpAr4: 148, classeSecurite: 'A2L', nbMachines: 0,
       contientHfc: true, contientHfo: true, categorieCadre7: 'HFC', sourcePrp: 'AR4 — 148 conservatoire (réserve DGPR)' },
-    { code: 'R-744', famille: 'CO2', gwpAr4: 1, impact: 'FAIBLE', classeSecurite: 'A1', nbMachines: 0,
+    { code: 'R-744', famille: 'CO2', gwpAr4: 1, classeSecurite: 'A1', nbMachines: 0,
       contientHfc: false, contientHfo: false, categorieCadre7: 'AUCUNE', sourcePrp: 'définition' },
-    { code: 'R-290', famille: 'HC', gwpAr4: 0.02, impact: 'FAIBLE', classeSecurite: 'A3', nbMachines: 0,
+    { code: 'R-290', famille: 'HC', gwpAr4: 0.02, classeSecurite: 'A3', nbMachines: 0,
       contientHfc: false, contientHfo: false, categorieCadre7: 'AUCUNE', sourcePrp: 'AR6 GIEC (réf. règl. UE 2024/573)' }
   ],
 

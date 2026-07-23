@@ -348,6 +348,34 @@ function csvCessions(cessions) {
   return construireCsv(entetes, lignes);
 }
 
+/**
+ * Référentiel des fluides TEL QU'IL EST au moment du dossier (P1-2).
+ * Depuis que le référent l'administre lui-même, un auditeur doit pouvoir
+ * constater QUEL référentiel produisait les tonnes équivalent CO₂ et les
+ * seuils de contrôle : la source de chaque PRP, la fiche du cadre 7 et
+ * les fluides désactivés en font partie. Les écritures, elles, portent
+ * chacune le PRP figé du jour de leur validation.
+ */
+function csvReferentielFluides(fluides) {
+  const entetes = ['Code', 'Famille', 'PRP réglementaire', 'Source du PRP',
+    'Classe de sécurité', 'Statut réglementaire', 'Catégorie cadre 7',
+    'Contient du HFC', 'Contient du HFO', 'Machines au parc',
+    'Disponible à la saisie', 'Commentaire'];
+  const lignes = fluides.map((f) => [
+    f.code, f.famille, nb(f.gwpAr4), f.sourcePrp || 'non renseignée',
+    f.classeSecurite || '', f.statutReglementaire || '',
+    f.categorieCadre7 || 'non renseignée',
+    f.contientHfc === null || f.contientHfc === undefined
+      ? '' : (f.contientHfc ? 'oui' : 'non'),
+    f.contientHfo === null || f.contientHfo === undefined
+      ? '' : (f.contientHfo ? 'oui' : 'non'),
+    String(f.nbMachines ?? 0),
+    f.actif === false ? 'non — désactivé' : 'oui',
+    f.commentaire || ''
+  ]);
+  return construireCsv(entetes, lignes);
+}
+
 /** Déclaration annuelle réglementaire (11 rubriques par fluide, P0-8). */
 function csvDeclaration(declaration) {
   const entetes = ['Fluide', 'Acquisitions (kg)', 'Charges équip. neufs (kg)',
@@ -405,7 +433,7 @@ function fmtDateHeure(iso) {
 export async function toutesLesTables(store, annee) {
   const [personnel, outillage, bouteilles, machines, clients, mouvements,
     controles, balance, bsff, journalAudit, nominatif,
-    habilitations, mentions, cessions, declaration] = await Promise.all([
+    habilitations, mentions, cessions, declaration, fluides] = await Promise.all([
     store.getPersonnel(),
     store.getOutillage(),
     store.getBouteilles(),
@@ -420,10 +448,15 @@ export async function toutesLesTables(store, annee) {
     store.getHabilitations(),
     store.getMentions(),
     store.getCessions(),
-    store.getDeclarationAnnuelle(annee)
+    store.getDeclarationAnnuelle(annee),
+    store.getFluides()
   ]);
 
   const tables = [
+    // P1-2 : le référentiel des fluides est désormais administré par le
+    // référent — il entre au dossier scellé, sans quoi un auditeur ne
+    // pourrait pas savoir quel PRP a servi aux calculs de l'année.
+    { nom: 'referentiel-fluides.csv', contenu: csvReferentielFluides(fluides) },
     { nom: 'personnel.csv', contenu: csvPersonnel(personnel) },
     // Chantier B2 : l'aptitude réglementaire au dossier d'audit — TOUJOURS
     // présentes, même vides (un auditeur voit « aucune ligne » plutôt
