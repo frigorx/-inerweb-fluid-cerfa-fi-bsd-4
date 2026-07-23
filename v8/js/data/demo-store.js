@@ -222,6 +222,15 @@ function ajouterMois(iso, nbMois) {
   return `${d.getFullYear()}-${m}-${j}`;
 }
 
+/**
+ * P1-1 : texte non vide, sinon null (champs facultatifs du modèle
+ * d'équipement). Miroir serveur : même fonction dans api.js.
+ */
+function texteOuNullEquip(valeur) {
+  return valeur !== undefined && valeur !== null && String(valeur).trim() !== ''
+    ? String(valeur).trim() : null;
+}
+
 /** Ajoute un an à une date ISO (délai de garde des fluides déchets). */
 function ajouterUnAn(iso) {
   const [annee, mois, jour] = iso.split('-').map(Number);
@@ -2661,6 +2670,17 @@ export function creerDemoStore() {
         throw new Error(`Type d'installation inconnu : ${d.typeInstallation} `
           + '(attendu : FIXE, MOBILE).');
       }
+      // P1-1 : garde du modèle d'équipement (sous-type listé et réservé aux
+      // MOBILES, étiquette qui suppose le scellement, date de vérification
+      // lisible et adossée à une détection déclarée).
+      verifierModeleEquipement({
+        typeInstallation: d.typeInstallation ?? 'FIXE',
+        sousTypeInstallation: d.sousTypeInstallation ?? null,
+        hermetiqueScelle: Boolean(d.hermetiqueScelle),
+        hermetiqueEtiquete: Boolean(d.hermetiqueEtiquete),
+        detectionPermanente: Boolean(d.detectionPermanente),
+        detectionVerifieeLe: d.detectionVerifieeLe ?? null
+      });
       const client = d.clientId
         ? donnees.clients.find((c) => c.id === d.clientId)
         : null;
@@ -2703,6 +2723,18 @@ export function creerDemoStore() {
         statut: d.statut ?? 'EN_SERVICE',
         typeInstallation: d.typeInstallation ?? 'FIXE',
         detectionPermanente: Boolean(d.detectionPermanente),
+        // P1-1 — modèle d'équipement. Défauts CONSERVATEURS : rien n'est
+        // hermétique, rien n'est étiqueté, rien n'est vérifié tant que ce
+        // n'est pas déclaré. L'échéance de vérification est CALCULÉE
+        // (12 mois civils), jamais saisie.
+        hermetiqueScelle: Boolean(d.hermetiqueScelle),
+        hermetiqueEtiquete: Boolean(d.hermetiqueEtiquete),
+        residentiel: Boolean(d.residentiel),
+        sousTypeInstallation: texteOuNullEquip(d.sousTypeInstallation),
+        detectionVerifieeLe: texteOuNullEquip(d.detectionVerifieeLe),
+        detectionProchaineVerif: echeanceVerificationDetection(
+          texteOuNullEquip(d.detectionVerifieeLe)),
+        detectionReference: texteOuNullEquip(d.detectionReference),
         dateMiseEnService: d.dateMiseEnService ?? null,
         dernierControle: d.dernierControle ?? null,
         prochainControle: d.prochainControle ?? null,
@@ -2747,13 +2779,43 @@ export function creerDemoStore() {
         }
         if (code !== machine.code) { ancienCode = machine.code; machine.code = code; }
       }
+      // P1-1 : garde du modèle d'équipement, appliquée sur la fiche
+      // FUSIONNÉE (existant + patch) — une modification partielle ne doit
+      // pas pouvoir rendre l'ensemble incohérent (ex. retirer la détection
+      // permanente en laissant une date de vérification).
+      const CHAMPS_EQUIPEMENT = ['hermetiqueScelle', 'hermetiqueEtiquete',
+        'residentiel', 'sousTypeInstallation', 'detectionVerifieeLe',
+        'detectionReference'];
+      const fusion = { ...machine };
+      for (const champ of [...CHAMPS_EQUIPEMENT, 'typeInstallation',
+        'detectionPermanente']) {
+        if (d[champ] !== undefined) fusion[champ] = d[champ];
+      }
+      verifierModeleEquipement(fusion);
+
       const CHAMPS = ['designation', 'type', 'marque', 'modele', 'numSerie',
         'fluide', 'chargeNominaleKg', 'chargeActuelleKg', 'clientId',
         'localisation', 'siteLabel', 'statut', 'typeInstallation',
-        'detectionPermanente',
+        'detectionPermanente', ...CHAMPS_EQUIPEMENT,
         'dateMiseEnService', 'dernierControle', 'prochainControle'];
       for (const champ of CHAMPS) {
         if (d[champ] !== undefined) machine[champ] = d[champ];
+      }
+      // Booléens du modèle d'équipement : jamais stockés en chaîne.
+      for (const champ of ['hermetiqueScelle', 'hermetiqueEtiquete',
+        'residentiel']) {
+        if (d[champ] !== undefined) machine[champ] = Boolean(d[champ]);
+      }
+      // Champs texte facultatifs : chaîne vide = effacement (null).
+      for (const champ of ['sousTypeInstallation', 'detectionVerifieeLe',
+        'detectionReference']) {
+        if (d[champ] !== undefined) machine[champ] = texteOuNullEquip(d[champ]);
+      }
+      // L'échéance de vérification est CALCULÉE, jamais saisie : elle suit
+      // la date de vérification à chaque modification.
+      if (d.detectionVerifieeLe !== undefined) {
+        machine.detectionProchaineVerif =
+          echeanceVerificationDetection(machine.detectionVerifieeLe);
       }
       const champsModifies = Object.keys(d).filter((c) => CHAMPS.includes(c));
       if (ancienCode) champsModifies.unshift(`code ${ancienCode} → ${machine.code}`);

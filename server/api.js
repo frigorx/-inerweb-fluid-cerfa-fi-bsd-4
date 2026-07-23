@@ -471,6 +471,15 @@ function ajouterMois(iso, nbMois) {
   return `${d.getFullYear()}-${m}-${j}`;
 }
 
+/**
+ * P1-1 : texte non vide, sinon null (champs facultatifs du modèle
+ * d'équipement). Miroir du DemoStore.
+ */
+function texteOuNullEquip(valeur) {
+  return valeur !== undefined && valeur !== null && String(valeur).trim() !== ''
+    ? String(valeur).trim() : null;
+}
+
 /** Ajoute (ou retire) des jours à une date ISO, sans fuseau horaire. */
 function ajouterJours(iso, nbJours) {
   const [annee, mois, jour] = iso.split('-').map(Number);
@@ -2465,6 +2474,15 @@ const HANDLERS = {
       throw new Error(`Type d'installation inconnu : ${d.typeInstallation} `
         + '(attendu : FIXE, MOBILE).');
     }
+    // P1-1 : garde du modèle d'équipement — miroir du DemoStore.
+    equipement.verifierModeleEquipement({
+      typeInstallation: d.typeInstallation ?? 'FIXE',
+      sousTypeInstallation: d.sousTypeInstallation ?? null,
+      hermetiqueScelle: Boolean(d.hermetiqueScelle),
+      hermetiqueEtiquete: Boolean(d.hermetiqueEtiquete),
+      detectionPermanente: Boolean(d.detectionPermanente),
+      detectionVerifieeLe: d.detectionVerifieeLe ?? null
+    });
     const client = d.clientId
       ? db.get('SELECT id, raison_sociale FROM clients_detenteurs WHERE id = ?',
         [d.clientId])
@@ -2504,6 +2522,17 @@ const HANDLERS = {
       statut: d.statut ?? 'EN_SERVICE',
       typeInstallation: d.typeInstallation ?? 'FIXE',
       detectionPermanente: Boolean(d.detectionPermanente),
+      // P1-1 — modèle d'équipement. Défauts CONSERVATEURS ; l'échéance de
+      // vérification est CALCULÉE (12 mois civils), jamais saisie.
+      // Miroir du DemoStore.
+      hermetiqueScelle: Boolean(d.hermetiqueScelle),
+      hermetiqueEtiquete: Boolean(d.hermetiqueEtiquete),
+      residentiel: Boolean(d.residentiel),
+      sousTypeInstallation: texteOuNullEquip(d.sousTypeInstallation),
+      detectionVerifieeLe: texteOuNullEquip(d.detectionVerifieeLe),
+      detectionProchaineVerif: equipement.echeanceVerificationDetection(
+        texteOuNullEquip(d.detectionVerifieeLe)),
+      detectionReference: texteOuNullEquip(d.detectionReference),
       dateMiseEnService: d.dateMiseEnService ?? null,
       dernierControle: d.dernierControle ?? null,
       prochainControle: d.prochainControle ?? null,
@@ -2553,14 +2582,41 @@ const HANDLERS = {
       }
       if (code !== machine.code) { ancienCode = machine.code; nouveauCode = code; }
     }
+    // P1-1 : garde du modèle d'équipement sur la fiche FUSIONNÉE (existant
+    // + patch) — miroir du DemoStore.
+    const CHAMPS_EQUIPEMENT = ['hermetiqueScelle', 'hermetiqueEtiquete',
+      'residentiel', 'sousTypeInstallation', 'detectionVerifieeLe',
+      'detectionReference'];
+    const fusion = { ...machine };
+    for (const champ of [...CHAMPS_EQUIPEMENT, 'typeInstallation',
+      'detectionPermanente']) {
+      if (d[champ] !== undefined) fusion[champ] = d[champ];
+    }
+    equipement.verifierModeleEquipement(fusion);
+
     const CHAMPS = ['designation', 'type', 'marque', 'modele', 'numSerie',
       'fluide', 'chargeNominaleKg', 'chargeActuelleKg', 'clientId',
       'localisation', 'siteLabel', 'statut', 'typeInstallation',
-      'detectionPermanente',
+      'detectionPermanente', ...CHAMPS_EQUIPEMENT,
       'dateMiseEnService', 'dernierControle', 'prochainControle'];
     const patch = {};
     for (const champ of CHAMPS) {
       if (d[champ] !== undefined) patch[champ] = d[champ];
+    }
+    // Booléens du modèle d'équipement : jamais stockés en chaîne.
+    for (const champ of ['hermetiqueScelle', 'hermetiqueEtiquete',
+      'residentiel']) {
+      if (d[champ] !== undefined) patch[champ] = Boolean(d[champ]);
+    }
+    // Champs texte facultatifs : chaîne vide = effacement (null).
+    for (const champ of ['sousTypeInstallation', 'detectionVerifieeLe',
+      'detectionReference']) {
+      if (d[champ] !== undefined) patch[champ] = texteOuNullEquip(d[champ]);
+    }
+    // L'échéance de vérification est CALCULÉE, jamais saisie.
+    if (d.detectionVerifieeLe !== undefined) {
+      patch.detectionProchaineVerif =
+        equipement.echeanceVerificationDetection(patch.detectionVerifieeLe);
     }
     if (ancienCode) patch.code = nouveauCode;
     return muter(() => {
