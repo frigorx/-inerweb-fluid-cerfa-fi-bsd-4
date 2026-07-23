@@ -1261,6 +1261,13 @@ export function creerDemoStore() {
         String(mouvement.causeMouvement).trim()),
       controleStatut: mouvement.controle?.statutControle ?? 'SANS_OBJET',
       controlePeriodiqueRequis,
+      // P1-1 (E2) — fait : un système de détection est OBLIGATOIRE (charge
+      // au-delà du seuil haut) et il n'est pas déclaré. Précalculé ici,
+      // consommé par la condition 17 du moteur de blocage. Évalué à la
+      // date du mouvement (régime applicable).
+      detectionObligatoireAbsente: Boolean(machine && fluideRef
+        && detectionObligatoire(fluideRef, machine, mouvement.date ?? jour)
+        && !detectionEffective(machine, mouvement.date ?? jour).declaree),
       fluideInflammable: Boolean(fluideRef?.classeSecurite &&
         fluideRef.classeSecurite !== 'A1'),
       sourceVierge: bouteilleSrc?.etatFluide === 'VIERGE',

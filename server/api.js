@@ -7401,6 +7401,14 @@ function cadreFicheOfficiel(mouvement) {
       String(mouvement.causeMouvement).trim()),
     controleStatut: mouvement.controle?.statutControle ?? 'SANS_OBJET',
     controlePeriodiqueRequis,
+    // P1-1 (E2) — détection obligatoire (niveau haut) et non déclarée.
+    // Miroir du DemoStore ; le serveur interroge son propre moteur.
+    detectionObligatoireAbsente: Boolean(machine && fluideRef
+      && equipement.detectionObligatoireDepuisNiveau(
+        niveauCadre7(fluideRef, machine.chargeNominaleKg,
+          mouvement.date ?? jour))
+      && !equipement.detectionEffective(machine,
+        mouvement.date ?? jour).declaree),
     fluideInflammable: Boolean(fluideRef?.classeSecurite &&
       fluideRef.classeSecurite !== 'A1'),
     sourceVierge: bouteilleSrc?.etatFluide === 'VIERGE',

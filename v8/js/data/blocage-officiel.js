@@ -148,6 +148,17 @@ export function evaluerBlocagesOfficiel(cadre) {
       }
     }
 
+    // 17 — détection permanente OBLIGATOIRE absente (P1-1, E2). Au-delà du
+    // seuil haut (500 tCO₂eq / 100 kg HFO / 300 kg HCFC), un système de
+    // détection est exigé : une fiche officielle ne peut pas acter une
+    // intervention sur un équipement qui n'en a pas. En CONSEIL, seule
+    // l'alerte « alr-detection-obligatoire- » le signale (jamais bloquant).
+    if (fiche.detectionObligatoireAbsente) {
+      poser('DETECTION_OBLIGATOIRE',
+        'Système de détection permanente de fuites obligatoire (charge ' +
+        'au-delà du seuil haut) mais absent de l’équipement.');
+    }
+
     // 9 — contrôle d'étanchéité exigé (machine soumise OU fluide inflammable).
     const controleExige =
       (fiche.type === 'CHARGE_APPOINT' || fiche.type === 'MISE_EN_SERVICE') &&
