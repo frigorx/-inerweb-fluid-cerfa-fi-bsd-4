@@ -174,6 +174,35 @@ for (const methode of gardes) {
     erreur ? `erreur inattendue : code ${erreur.code}, ${erreur.message}` : '');
 }
 
+// ============================================================
+// e) P1-2 (D5) — ADMINISTRER le référentiel des fluides est réservé au
+// RÉFÉRENT et à l'ADMIN. Un PRP pilote les tonnes équivalent CO₂, donc
+// les seuils de contrôle, donc les obligations de l'établissement : ni
+// un élève, ni même un enseignant valideur n'y touche. Décision figée
+// ici explicitement (la boucle générale ci-dessus ne dit pas QUELS
+// rôles sont attendus).
+// ============================================================
+{
+  for (const methode of ['createFluide', 'updateFluide']) {
+    const roles = api.ROLES_MUTATION[methode];
+    verifier(`« ${methode} » est réservée à REFERENT et ADMIN`,
+      Array.isArray(roles) && roles.length === 2
+      && roles.includes('REFERENT') && roles.includes('ADMIN'),
+      `rôles = ${Array.isArray(roles) ? roles.join(', ') : 'aucun'}`);
+    for (const roleRefuse of ['ELEVE', 'ENSEIGNANT', 'TECHNICIEN']) {
+      let refus = null;
+      try {
+        api.appeler(methode, {}, { role: roleRefuse });
+      } catch (e) {
+        refus = e;
+      }
+      verifier(`« ${methode} » est refusée au rôle « ${roleRefuse} »`,
+        refus !== null && refus.code === 403,
+        refus ? `code = ${refus.code}` : 'aucune erreur levée');
+    }
+  }
+}
+
 // ------------------------------------------------------------
 console.log(`\n${nbOk} OK, ${nbEchecs} échec(s) [gardes de rôle]`);
 process.exit(nbEchecs === 0 ? 0 : 1);
