@@ -6,7 +6,11 @@
 // ============================================================
 
 import { modale, toast } from '../views/communs.js';
-import { esc, nombreFr, fluidesProposables } from '../core/utils.js';
+import { esc, nombreFr, fluidesProposables, fmtDate } from '../core/utils.js';
+// P1-1 : la nature de l'équipement commande ses obligations (sous-type
+// mobile listé, étiquette hermétique, vérification de la détection).
+import { SOUS_TYPES_MOBILES, LIBELLE_SOUS_TYPE, detectionEffective }
+  from '../data/equipement.js';
 import { familleDuType, codeSite, genererCodeMachine, normaliserCodeMachine, validerCodeMachine }
   from '../data/code-machine.js';
 
@@ -149,7 +153,7 @@ function gabaritFormulaire(machine, fluides, clients) {
     + '<label for="mf-type-installation">Type d\u2019installation</label>'
     + '<select id="mf-type-installation" name="typeInstallation">'
     + [['FIXE', 'Fixe (contr\u00f4le de suivi apr\u00e8s 24 h de fonctionnement)'],
-       ['MOBILE', 'Mobile list\u00e9 (contr\u00f4le imm\u00e9diat admis)']]
+       ['MOBILE', 'Mobile (contr\u00f4le imm\u00e9diat si le sous-type est list\u00e9)']]
       .map(function (o) {
         const selectionne = (machine.typeInstallation || 'FIXE') === o[0]
           ? ' selected' : '';
@@ -159,22 +163,84 @@ function gabaritFormulaire(machine, fluides, clients) {
     + '</select>'
     + '</div>'
 
+    // P1-1 (E5) : le sous-type ne concerne que les MOBILES et conditionne
+    // l'exception du contrôle immédiat. Masqué pour un FIXE (voir plus bas).
+    + '<div class="champ" data-champ="sousTypeInstallation" id="mf-bloc-sous-type">'
+    + '<label for="mf-sous-type">Nature de l’équipement mobile</label>'
+    + '<select id="mf-sous-type" name="sousTypeInstallation">'
+    + '<option value="">— non précisée —</option>'
+    + SOUS_TYPES_MOBILES.map(function (s) {
+        const selectionne = machine.sousTypeInstallation === s ? ' selected' : '';
+        return '<option value="' + s + '"' + selectionne + '>'
+          + esc(LIBELLE_SOUS_TYPE[s]) + '</option>';
+      }).join('')
+    + '</select>'
+    + '<p class="mf-note">Seuls les équipements mobiles <strong>listés</strong> '
+    + 'peuvent être recontrôlés le jour même de la réparation. '
+    + '« Autre » et « non précisée » n’ouvrent pas ce droit.</p>'
+    + '</div>'
+
     + '<div class="champ" data-champ="dateMiseEnService">'
     + '<label for="mf-date-mes">Date de mise en service</label>'
     + '<input type="date" id="mf-date-mes" name="dateMiseEnService" '
     + 'value="' + esc(machine.dateMiseEnService || '') + '">'
     + '</div>'
 
-    + '<div class="champ">'
-    + '<label for="mf-detection" style="flex-direction:row;align-items:center;gap:8px;text-transform:none;'
-    + 'letter-spacing:normal;font-weight:500;font-size:13.5px;color:var(--texte-2);cursor:pointer;">'
-    + '<input type="checkbox" id="mf-detection" name="detectionPermanente" style="width:16px;height:16px;"'
-    + (machine.detectionPermanente ? ' checked' : '') + '>'
-    + '<span>Détection permanente de fuite</span>'
-    + '</label>'
-    + '</div>'
+    // P1-1 — nature de l'équipement (hermétique, étiquette, résidentiel).
+    + '<fieldset class="mf-bloc">'
+    + '<legend>Nature de l’équipement</legend>'
+    + '<label class="mf-case"><input type="checkbox" id="mf-hermetique" '
+    + 'name="hermetiqueScelle"' + (machine.hermetiqueScelle ? ' checked' : '')
+    + '> Hermétiquement scellé</label>'
+    + '<label class="mf-case"><input type="checkbox" id="mf-hermetique-etiq" '
+    + 'name="hermetiqueEtiquete"'
+    + (machine.hermetiqueEtiquete ? ' checked' : '')
+    + '> Étiqueté « hermétiquement scellé »</label>'
+    + '<label class="mf-case"><input type="checkbox" id="mf-residentiel" '
+    + 'name="residentiel"' + (machine.residentiel ? ' checked' : '')
+    + '> Usage résidentiel</label>'
+    + '<p class="mf-note">L’étiquette compte : seul un hermétique '
+    + '<strong>marqué comme tel</strong> ouvre le seuil d’aptitude '
+    + 'élargi (6 kg au lieu de 3).</p>'
+    + '</fieldset>'
 
-    + '</form>';
+    // P1-1 (E1) — détection de fuites : déclaration ET vérification.
+    + '<fieldset class="mf-bloc">'
+    + '<legend>Détection de fuites</legend>'
+    + '<label class="mf-case"><input type="checkbox" id="mf-detection" '
+    + 'name="detectionPermanente"'
+    + (machine.detectionPermanente ? ' checked' : '')
+    + '> Système de détection permanente installé</label>'
+    + '<div id="mf-bloc-detection">'
+    + '<div class="grille-form-2">'
+    + '<div class="champ" data-champ="detectionVerifieeLe">'
+    + '<label for="mf-detection-verif">Vérifié le</label>'
+    + '<input type="date" id="mf-detection-verif" name="detectionVerifieeLe" '
+    + 'value="' + esc(machine.detectionVerifieeLe || '') + '">'
+    + '<span class="champ-erreur" hidden></span>'
+    + '</div>'
+    + '<div class="champ" data-champ="detectionReference">'
+    + '<label for="mf-detection-ref">Référence / intervenant</label>'
+    + '<input type="text" id="mf-detection-ref" name="detectionReference" '
+    + 'maxlength="120" value="' + esc(machine.detectionReference || '') + '" '
+    + 'placeholder="Ex. SAV Daikin — bon n° 4412">'
+    + '</div>'
+    + '</div>'
+    + '<p class="mf-note" id="mf-note-detection"></p>'
+    + '</div>'
+    + '</fieldset>'
+
+    + '</form>'
+
+    + '<style>'
+    + '.mf-note{margin:5px 0 0;font-size:11.5px;color:var(--texte-3);line-height:1.45}'
+    + '.mf-bloc{border:1px solid var(--bordure-2);border-radius:8px;'
+    + 'padding:12px 14px;margin:0 0 14px}'
+    + '.mf-bloc legend{font-size:12px;font-weight:600;color:var(--texte-2);padding:0 6px}'
+    + '.mf-case{display:flex;align-items:center;gap:8px;font-size:13px;'
+    + 'color:var(--texte-2);margin:6px 0;cursor:pointer}'
+    + '.mf-case input{width:16px;height:16px}'
+    + '</style>';
 }
 
 /**
@@ -300,7 +366,22 @@ function validerFormulaire(racine, enModification) {
     localisation: localisation || null,
     dateMiseEnService: dateMiseEnService || null,
     typeInstallation: donnees.get('typeInstallation') || 'FIXE',
-    detectionPermanente: donnees.get('detectionPermanente') === 'on'
+    detectionPermanente: donnees.get('detectionPermanente') === 'on',
+    // P1-1 — modèle d'équipement. Le sous-type n'est transmis que pour un
+    // MOBILE (le store refuserait un sous-type sur un FIXE) ; la date de
+    // vérification n'est transmise que si un système est déclaré (même
+    // motif). Chaîne vide = effacement côté store.
+    sousTypeInstallation:
+      (donnees.get('typeInstallation') || 'FIXE') === 'MOBILE'
+        ? String(donnees.get('sousTypeInstallation') || '') : '',
+    hermetiqueScelle: donnees.get('hermetiqueScelle') === 'on',
+    hermetiqueEtiquete: donnees.get('hermetiqueScelle') === 'on'
+      && donnees.get('hermetiqueEtiquete') === 'on',
+    residentiel: donnees.get('residentiel') === 'on',
+    detectionVerifieeLe: donnees.get('detectionPermanente') === 'on'
+      ? String(donnees.get('detectionVerifieeLe') || '') : '',
+    detectionReference: donnees.get('detectionPermanente') === 'on'
+      ? String(donnees.get('detectionReference') || '') : ''
   };
 }
 
@@ -403,6 +484,62 @@ export async function ouvrirFormMachine(ctx, machineId = null, preset = null) {
         });
       }
     }
+
+    // P1-1 — l'écran DIT ce que la saisie déclenche, au lieu de laisser
+    // découvrir un refus ou un changement de fréquence après coup :
+    //  · le sous-type n'apparaît que pour un MOBILE ;
+    //  · les champs de vérification n'apparaissent que si un système est
+    //    déclaré ;
+    //  · l'état de la détection (échéance, allègement) est écrit en clair.
+    const blocSousType = racine.querySelector('#mf-bloc-sous-type');
+    const blocDetection = racine.querySelector('#mf-bloc-detection');
+    const noteDetection = racine.querySelector('#mf-note-detection');
+    const champTypeInstall = racine.querySelector('#mf-type-installation');
+    const champDetection = racine.querySelector('#mf-detection');
+    const champVerif = racine.querySelector('#mf-detection-verif');
+    const champHermetique = racine.querySelector('#mf-hermetique');
+    const champEtiquette = racine.querySelector('#mf-hermetique-etiq');
+
+    function rafraichirEquipement() {
+      if (blocSousType) {
+        blocSousType.hidden = champTypeInstall.value !== 'MOBILE';
+      }
+      if (blocDetection) blocDetection.hidden = !champDetection.checked;
+      // L'étiquette n'a de sens que sur un hermétique (le store refuse
+      // l'inverse) : on la neutralise plutôt que de laisser cocher.
+      if (champEtiquette) {
+        champEtiquette.disabled = !champHermetique.checked;
+        if (!champHermetique.checked) champEtiquette.checked = false;
+      }
+      if (!noteDetection) return;
+      if (!champDetection.checked) {
+        noteDetection.textContent = '';
+        return;
+      }
+      const jour = new Date().toISOString().slice(0, 10);
+      const etat = detectionEffective({ detectionPermanente: true,
+        detectionVerifieeLe: champVerif.value || null }, jour);
+      if (etat.motif === 'JAMAIS_VERIFIEE') {
+        noteDetection.textContent = 'Aucune vérification enregistrée : la '
+          + 'fréquence de contrôle n’est PAS allégée tant que la '
+          + 'vérification n’est pas saisie.';
+      } else if (etat.compte) {
+        noteDetection.textContent = 'Vérification valable jusqu’au '
+          + fmtDate(etat.echeance)
+          + ' : la fréquence de contrôle est allégée (÷ 2) jusqu’à cette date.';
+      } else {
+        noteDetection.textContent = 'Vérification échue le '
+          + fmtDate(etat.echeance)
+          + ' : la fréquence de contrôle n’est plus allégée.';
+      }
+    }
+    [champTypeInstall, champDetection, champVerif, champHermetique]
+      .forEach(function (champ) {
+        if (!champ) return;
+        champ.addEventListener('change', rafraichirEquipement);
+        champ.addEventListener('input', rafraichirEquipement);
+      });
+    rafraichirEquipement();
 
     let fermeeParEnregistrement = false;
     // Identifiant de la machine CRÉÉE (reste null en modification / annulation) :
