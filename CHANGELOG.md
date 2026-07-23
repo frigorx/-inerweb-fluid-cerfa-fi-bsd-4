@@ -2,6 +2,76 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧱 P1-1 — LE MODÈLE D'ÉQUIPEMENT (23/07, EQ-1→EQ-10, plan docs/PLAN-P1-1-MODELE-EQUIPEMENT.md)
+- **La fiche machine sait enfin dire ce que l'équipement EST — et ce que l'être
+  change pour ses obligations.** Décisions E1→E7 **déléguées par Franck** (« fais
+  au mieux, en autonomie, le plus réglementaire possible »). Lecture retenue de
+  « le plus réglementaire » dans un registre OPPOSABLE : **jamais moins de
+  contrôles qu'exigé** — pas « le plus permissif que le texte tolère ».
+- **⭐ Le trou réel, à demi nommé par l'audit** : cocher « détection permanente »
+  **divisait par deux le nombre de contrôles, définitivement et sans preuve**. Le
+  règlement impose de vérifier ces systèmes au moins tous les 12 mois. **EQ-3 :
+  l'allègement n'est désormais dû que si la détection a été vérifiée depuis moins
+  de 12 mois** (E1) — sinon retour à la fréquence sans détection, plus une alerte.
+- **EQ-1 — migration 32** : `machines.hermetique_scelle`, `hermetique_etiquete`,
+  `residentiel`, `sous_type_installation` (liste FERMÉE des mobiles),
+  `detection_verifiee_le` / `detection_prochaine_verif` / `detection_reference`.
+  **Backfill conservateur assumé** : booléens à 0, dates à NULL — après migration,
+  aucun équipement n'est exempté, aucune détection n'est réputée vérifiée. Le parc
+  devient plus contrôlé, jamais moins.
+- **EQ-2 — module pur `equipement.js`** (+ miroir littéral serveur, parité
+  prouvée) : `detectionEffective` (E1, quatre motifs lisibles), `detectionObligatoire`
+  (E2, **interroge le moteur** — aucun seuil recopié ; côté serveur `niveauCadre7`
+  extrait de `frequenceControleMois` sans changement de comportement),
+  `exemptionControle` (**E3 : rend TOUJOURS non exempté** — aucune exemption des
+  hermétiquement scellés codée, les 3 valeurs n'étant pas confirmées sur pièce ;
+  c'est le seul mécanisme qui aurait pu faire MANQUER un contrôle), `hermetiqueOpposable`
+  (E4, exige l'étiquette), `mobileListe` (E5, liste fermée), `verifierModeleEquipement`.
+- **EQ-4 — `createMachine`/`updateMachine`** portent les 7 champs, 2 stores +
+  parité, garde de saisie APRÈS fusion existant+patch, échéance de vérification
+  CALCULÉE (+12 mois civils, jamais saisie). Contrat **v9 → v10** (surface des
+  descriptions ; 93 méthodes inchangées).
+- **EQ-5 — deux dettes soldées** : **P0-5** — `hermetiqueScelle: false` n'est plus
+  écrit en dur dans les deux `cadreFicheOfficiel` (l'aptitude était plus SÉVÈRE que
+  la réalité) ; il vient de la machine, seuil élargi seulement si scellé ET étiqueté
+  (E4). **P0-6** — `estMachineMobile` exige un sous-type LISTÉ (E5) ; les neuf sites
+  qui testaient `typeInstallation === 'MOBILE'` en dur passent par le module. ⚠️ Un
+  site serveur sélectionnait `type_installation` seul (le sous-type absent aurait
+  rendu toute machine « non listée ») — corrigé en prenant la ligne entière.
+- **EQ-6 — deux alertes** : `alr-detection-obligatoire-` (CRITIQUE, E2 : au-delà du
+  seuil haut sans détection) et `alr-detection-verif-` (IMPORTANT, E1 : détection
+  déclarée non vérifiée — l'allègement est tombé). Muettes sur ARRETEE/DEMANTELEE.
+  Rattachées au feu tricolore (domaine Contrôles) et à l'audit guidé.
+- **EQ-7 — écrans** : `machine-form` gagne « Nature de l'équipement » et « Détection
+  de fuites », avec affichage conditionnel qui DIT ce que la saisie déclenche (note
+  en direct sur l'allègement) ; `fiche-machine` montre l'installation, l'hermétique,
+  la détection, et un **« Motif de la fréquence »** — une fréquence de contrôle ne
+  s'affiche plus sans être explicable. **Vérifié au NAVIGATEUR** (port jetable, zéro
+  erreur console).
+- **EQ-8 — condition Officiel 17 `DETECTION_OBLIGATOIRE`** (2 miroirs) : **préparée
+  mais INERTE** tant que `VERROU_LIVRAISON` est vrai — elle s'exercera à la
+  réouverture, comme l'aptitude de P0-5.
+- **EQ-9 — suite DOUBLÉE `test-equipement.mjs`** (13 vérifs demo/local ; filet 96 →
+  **98 exécutions**) : E1 aux valeurs limites au jour près, E2 (alerte), ⭐ E4 (un A2
+  bloqué sur 5 kg, débloqué si hermétique étiqueté), ⭐ E5 (mobile listé clôture le
+  jour même, AUTRE_MOBILE et sans sous-type non). + `test-equipement-pur` (43 vérifs,
+  parité). + condition 17 dans `test-blocage-officiel`.
+- **EQ-10 — revue adversariale, constats TIRÉS** : le bloquant candidat (échéance
+  figée dans une écriture validée) est **sain** — elle n'est jamais recalculée
+  rétroactivement, la chaîne reste intacte (comme le PRP figé). Le contournement en
+  deux temps de la garde d'étiquette est **bloqué** (garde sur l'état fusionné).
+  **Consigné, non corrigé (antérieur à P1-1, hors périmètre)** : rétrograder un
+  MOBILE listé en FIXE *après* une clôture immédiate laisse `machine.statut` figé à
+  EN_SERVICE (le statut stocké n'est pas recalculé sur un simple changement de
+  champ) — limitation d'architecture existante depuis la migration 27, à traiter
+  avec le modèle de statut de P0-6, pas ici.
+- **Hors périmètre assumé** : le multi-circuits (une charge nominale par machine
+  conservée) ; l'activation de l'exemption des hermétiquement scellés étiquetés
+  (E3(b), quand les 3 seuils seront confirmés sur pièce — une décision, pas une
+  réécriture). Réouverture du mode Officiel = jalon d'après, préparé (EQ-8) non
+  déclenché.
+- **Migration 32.** Contrat **v10 (93 méthodes)**. **TOUT VERT — 98 exécutions.**
+
 ### 🧱 P1-2 — ADMINISTRATION DU RÉFÉRENTIEL DES FLUIDES (23/07, AF-1→AF-9, plan docs/PLAN-P1-2-ADMIN-FLUIDES.md)
 - **Franck n'a plus besoin d'un développeur pour son référentiel de gaz.**
   Besoin exprimé mot pour mot : « on doit pouvoir accéder à un tableau où tous

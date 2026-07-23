@@ -1,5 +1,14 @@
 # PLAN P1-1 — LE MODÈLE D'ÉQUIPEMENT (hermétique, résidentiel, détection permanente)
 
+> **Statut : RÉALISÉ le 23/07 (EQ-1 → EQ-10), TOUT VERT 98 exécutions, PR
+> ouverte.** Décisions E1→E7 déléguées par Franck et tranchées « le plus
+> réglementaire » (voir le tableau ci-dessous). Contrat **v10 (93 méthodes)**,
+> migration **32**. Deux dettes soldées (P0-5, P0-6). Revue AF-10 : un bloquant
+> candidat écarté (échéance figée = saine), un contournement bloqué, un constat
+> **antérieur à P1-1** consigné (statut figé sur rétrogradation mobile→fixe).
+> E3(b) — l'exemption des hermétiques étiquetés — reste un geste Franck (seuils à
+> confirmer sur pièce), activable sans réécriture.
+
 > **Statut : décisions E1→E7 DÉLÉGUÉES par Franck le 23/07** (« fais au mieux,
 > tu travailles en autonomie, tu prends les décisions les plus réglementaires
 > possible »). La règle d'or « aucune valeur réglementaire nouvelle sans
