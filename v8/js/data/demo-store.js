@@ -2816,6 +2816,50 @@ export function creerDemoStore() {
     },
 
     // ------------------------------------------------------
+    // Mutations : référentiel des fluides (P1-2)
+    // Le référent administre ses gaz LUI-MÊME : plus besoin d'une
+    // migration (donc d'un développeur) pour corriger un PRP ou
+    // déclarer un fluide. Les règles de saisie sont PURES
+    // (reglementation-fluides.js), le serveur en tient un miroir.
+    // ------------------------------------------------------
+    async createFluide(donneesFluide) {
+      const d = donneesFluide || {};
+      const code = String(d.code ?? '').trim();
+      const texteOuNull = (v) => (v !== undefined && v !== null
+        && String(v).trim() !== '' ? String(v).trim() : null);
+      const boolOuNull = (v) => (v === undefined || v === null
+        ? null : Boolean(v));
+      const fiche = {
+        code,
+        famille: String(d.famille ?? '').trim(),
+        gwpAr4: d.gwpAr4,
+        classeSecurite: String(d.classeSecurite ?? '').trim(),
+        statutReglementaire: texteOuNull(d.statutReglementaire) ?? 'AUTORISE',
+        commentaire: texteOuNull(d.commentaire),
+        contientHfc: boolOuNull(d.contientHfc),
+        contientHfo: boolOuNull(d.contientHfo),
+        categorieCadre7: texteOuNull(d.categorieCadre7),
+        sourcePrp: texteOuNull(d.sourcePrp)
+      };
+      verifierFicheFluide(fiche);
+      // Unicité du CODE : comparaison insensible aux espaces, tirets et
+      // casse (« R-32 » et « R32 » sont le même gaz), mais la casse
+      // saisie est conservée telle quelle (R-1234yf).
+      const normalise = codeFluideNormalise(code);
+      if (donnees.fluides.some((f) => codeFluideNormalise(f.code) === normalise)) {
+        throw new Error(`Code de fluide déjà utilisé : ${code}.`);
+      }
+      const fluide = { ...fiche, gwpAr4: Number(d.gwpAr4), actif: true };
+      donnees.fluides.push(fluide);
+      journaliser(d.operateur, 'CREATION_FLUIDE', fluide.code,
+        `PRP ${fluide.gwpAr4} · ${fluide.famille} · ${fluide.classeSecurite}`
+        + (fluide.sourcePrp ? ` · source ${fluide.sourcePrp}` : ''));
+      persisterEtNotifier();
+      return copier({ ...fluide, impact: impactDepuisPrp(fluide.gwpAr4),
+        nbMachines: 0 });
+    },
+
+    // ------------------------------------------------------
     // Mutations : clients / détenteurs (IM-11)
     // ------------------------------------------------------
     async createClient(donneesClient) {

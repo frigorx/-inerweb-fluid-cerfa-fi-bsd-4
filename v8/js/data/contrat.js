@@ -152,6 +152,10 @@ export const METHODES_CONTRAT = {
   remettreEnService: { genre: 'mutation',
     description: 'Passe ARRETEE → EN_SERVICE ; Error sinon.' },
 
+  // --- référentiel des fluides (P1-2 — administration par le référent) ---
+  createFluide: { genre: 'mutation',
+    description: 'Ajoute un fluide au référentiel { code, famille, gwpAr4, classeSecurite, statutReglementaire?, commentaire?, contientHfc?, contientHfo?, categorieCadre7?, sourcePrp? } ; actif=vrai ; Error si code déjà pris (comparaison insensible aux espaces, tirets et casse), code/famille vide, PRP < 0 ou illisible, classe de sécurité, statut ou catégorie du cadre 7 hors liste, fiche cadre 7 incohérente.' },
+
   // --- clients détenteurs ---------------------------------------
   createClient: { genre: 'mutation',
     description: 'Crée un client { raisonSociale, adresse, siret?, contact?, email?, telephone? } ; actif=vrai ; Error si raison sociale/adresse vide ou SIRET renseigné ≠ 14 chiffres (SIRET optionnel).' },

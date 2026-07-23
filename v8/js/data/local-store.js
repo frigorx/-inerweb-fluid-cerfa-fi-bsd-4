@@ -176,6 +176,11 @@ export function creerLocalStore(transport) {
       return muter('remettreEnService', { id, par });
     },
 
+    // --- référentiel des fluides (P1-2) -------------------
+    createFluide(donneesFluide) {
+      return muter('createFluide', { donneesFluide });
+    },
+
     // --- clients détenteurs -------------------------------
     createClient(donneesClient) {
       return muter('createClient', { donneesClient });

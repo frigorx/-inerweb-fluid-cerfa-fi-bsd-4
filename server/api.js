@@ -325,6 +325,12 @@ const ROLES_MUTATION = {
   validerMouvement: VALIDEUR,
   annulerParContreEcriture: VALIDEUR,
   importerJSON: REFERENT_ADMIN,
+  // P1-2 (D5) : le référentiel des fluides est REFERENT+ADMIN, comme
+  // l'import qui réécrit déjà cette table. Un PRP pilote les tonnes
+  // équivalent CO₂, donc les seuils de contrôle, donc les obligations
+  // réglementaires de l'établissement : ce n'est pas de la saisie
+  // courante, et un élève n'y touche dans aucun scénario.
+  createFluide: REFERENT_ADMIN,
   updateEtablissement: VALIDEUR,
   createAuditOrganisme: VALIDEUR,
   createNonConformite: VALIDEUR,
@@ -1821,6 +1827,51 @@ const HANDLERS = {
         `Mention ${mention.fluideMention}`,
         'Révocation (la mention reste au registre : aucune suppression)');
       return trouverMention(id);
+    });
+  },
+
+  // === référentiel des fluides (P1-2) =======================
+  // Le référent administre ses gaz LUI-MÊME : plus besoin d'une migration
+  // (donc d'un développeur) pour corriger un PRP ou déclarer un fluide.
+  // Sémantique = copie EXACTE du DemoStore (createFluide).
+
+  createFluide(params) {
+    const d = params.donneesFluide || {};
+    const code = String(d.code ?? '').trim();
+    const texteOuNull = (v) => (v !== undefined && v !== null
+      && String(v).trim() !== '' ? String(v).trim() : null);
+    const boolOuNull = (v) => (v === undefined || v === null
+      ? null : Boolean(v));
+    const fiche = {
+      code,
+      famille: String(d.famille ?? '').trim(),
+      gwpAr4: d.gwpAr4,
+      classeSecurite: String(d.classeSecurite ?? '').trim(),
+      statutReglementaire: texteOuNull(d.statutReglementaire) ?? 'AUTORISE',
+      commentaire: texteOuNull(d.commentaire),
+      contientHfc: boolOuNull(d.contientHfc),
+      contientHfo: boolOuNull(d.contientHfo),
+      categorieCadre7: texteOuNull(d.categorieCadre7),
+      sourcePrp: texteOuNull(d.sourcePrp)
+    };
+    verifierFicheFluide(fiche);
+    // Unicité du CODE : comparaison insensible aux espaces, tirets et
+    // casse (« R-32 » et « R32 » sont le même gaz), mais la casse saisie
+    // est conservée telle quelle (R-1234yf). Le PRIMARY KEY seul ne
+    // suffirait pas : il laisserait passer « R32 » à côté de « R-32 ».
+    const normalise = codeFluideNormalise(code);
+    const doublon = db.all('SELECT code FROM fluides')
+      .some((l) => codeFluideNormalise(l.code) === normalise);
+    if (doublon) {
+      throw new Error(`Code de fluide déjà utilisé : ${code}.`);
+    }
+    const fluide = { ...fiche, gwpAr4: Number(d.gwpAr4), actif: true };
+    return muter(() => {
+      inserer('fluides', mapping.versSql('fluides', fluide));
+      journaliser(d.operateur, 'CREATION_FLUIDE', fluide.code,
+        `PRP ${fluide.gwpAr4} · ${fluide.famille} · ${fluide.classeSecurite}`
+        + (fluide.sourcePrp ? ` · source ${fluide.sourcePrp}` : ''));
+      return ficheFluideComplete(fluide.code);
     });
   },
 
@@ -5974,6 +6025,23 @@ function lireFluide(code) {
   if (code == null) return null;
   const ligne = db.get('SELECT * FROM fluides WHERE code = ?', [code]);
   return ligne ? mapping.versFront('fluides', ligne) : null;
+}
+
+/**
+ * P1-2 : fiche d'un fluide telle que la RETOURNE getFluides — avec les
+ * deux champs dérivés (nbMachines du parc courant, impact déduit du PRP).
+ * C'est ce que rendent createFluide et updateFluide, pour que l'appelant
+ * relise exactement la même forme d'objet des deux côtés.
+ */
+function ficheFluideComplete(code) {
+  const fluide = lireFluide(code);
+  if (!fluide) return null;
+  const { n } = db.get(
+    `SELECT count(*) AS n FROM machines
+     WHERE fluide = ? AND statut <> 'DEMANTELEE'`, [code]);
+  fluide.nbMachines = n;
+  fluide.impact = impactDepuisPrp(fluide.gwpAr4);
+  return fluide;
 }
 
 // ============================================================
