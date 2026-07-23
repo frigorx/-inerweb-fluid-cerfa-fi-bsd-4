@@ -65,8 +65,7 @@ const DONNEES = {
     // Photo N (clôture 2026) = stock au 31 décembre 2026
     { annee: 2026, fluide: 'R-410A', etatFluide: 'VIERGE', statut: 'EN_STOCK', masseNetteKg: 15 },
     { annee: 2026, fluide: 'R-32', etatFluide: 'RECUPERE', statut: 'DECHET', masseNetteKg: 2 }
-  ],
-  anneesPhotographiees: [2025, 2026]
+  ]
 };
 
 const decl = calculerDeclarationAnnuelle(2026, DONNEES);
@@ -122,7 +121,7 @@ verifier('déclaration NON complète (une anomalie subsiste)', decl.complet === 
 // ============================================================
 {
   const sansPhoto = calculerDeclarationAnnuelle(2026, {
-    ...DONNEES, photosBouteilles: [], anneesPhotographiees: []
+    ...DONNEES, photosBouteilles: []
   });
   const r410 = sansPhoto.lignes.find((x) => x.fluide === 'R-410A');
   verifier('sans photo N-1 : stock début repris de stocks_initiaux (neuf 20, récup 5)',
@@ -131,6 +130,34 @@ verifier('déclaration NON complète (une anomalie subsiste)', decl.complet === 
     P(r410.stockFinNeufKg, 0) && P(r410.stockFinDechetKg, 0));
   verifier('sans photo : 2 anomalies de photo (début + fin)',
     sansPhoto.anomalies.filter((a) => a.code.startsWith('PHOTO_')).length === 2);
+}
+
+// ============================================================
+// Régression (revue adversariale P0-8, constat BLOQUANT) : une année
+// INVENTORIÉE mais SANS photo nominative (base antérieure à la photo B7)
+// ne doit jamais laisser les stocks faussement à 0 sans repli ni anomalie.
+// La présence d'une photo se déduit de photosBouteilles SEUL.
+// ============================================================
+{
+  const photoFinSeule = calculerDeclarationAnnuelle(2026, {
+    ...DONNEES,
+    // Photo 2026 SEULE : rien pour 2025 (inventaire legacy sans photo).
+    photosBouteilles: DONNEES.photosBouteilles.filter((p) => p.annee === 2026)
+  });
+  const r410 = photoFinSeule.lignes.find((x) => x.fluide === 'R-410A');
+  verifier('photo N-1 absente : stock début REPLIÉ sur stocks_initiaux (20 · 5), jamais 0',
+    P(r410.stockDebutNeufKg, 20) && P(r410.stockDebutRecupKg, 5));
+  verifier('photo N-1 absente : anomalie PHOTO_DEBUT_ABSENTE levée, complet=false',
+    photoFinSeule.anomalies.some((a) => a.code === 'PHOTO_DEBUT_ABSENTE')
+    && photoFinSeule.complet === false);
+  verifier('photo N présente : le stock de fin reste établi depuis la photo 2026',
+    P(r410.stockFinNeufKg, 15));
+  verifier('parité ESM ↔ serveur (photo N-1 absente)',
+    JSON.stringify(photoFinSeule) === JSON.stringify(
+      miroir.calculerDeclarationAnnuelle(2026, {
+        ...DONNEES,
+        photosBouteilles: DONNEES.photosBouteilles.filter((p) => p.annee === 2026)
+      })));
 }
 
 // ============================================================

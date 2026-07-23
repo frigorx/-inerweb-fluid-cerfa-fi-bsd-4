@@ -5,8 +5,9 @@
 // année, les 11 rubriques + les stocks début/fin ventilés neuf/déchet, à
 // partir de collections DÉJÀ LUES. Entrées : (annee, donnees) où donnees
 // regroupe mouvements, bouteilles, bsff, cessions, retoursFournisseur,
-// stocksInitiaux, photosBouteilles (inventaires nominatifs) et
-// anneesPhotographiees. Sorties : { annee, lignes, anomalies, complet }.
+// stocksInitiaux et photosBouteilles (inventaires nominatifs). Sorties :
+// { annee, lignes, anomalies, complet }. La présence d'une photo pour une
+// année se DÉDUIT de photosBouteilles (jamais d'une autre table).
 // Dépendances : AUCUNE (pur, déterministe, sans horloge ni I/O). Pièges :
 // charges/récup agrégées PAR TYPE (jamais par signe) ; BSFF ventilé par
 // ISSUE attestée (jamais « remise = destruction ») ; contre-écritures
@@ -161,9 +162,15 @@ export function calculerDeclarationAnnuelle(annee, donnees) {
   ventiler(an, { neuf: 'stockFinNeufKg', recup: 'stockFinRecupKg',
     dechet: 'stockFinDechetKg' });
 
-  const anneesPhoto = (d.anneesPhotographiees || []).map(Number);
-  const photoDebutPresente = anneesPhoto.includes(an - 1);
-  const photoFinPresente = anneesPhoto.includes(an);
+  // « Photo présente » pour une année = il existe au moins une bouteille
+  // photographiée cette année-là — la SEULE source que `ventiler` lit. Ne
+  // jamais dériver ce fait d'une autre table (ex. `inventaires` legacy) :
+  // une année inventoriée AVANT la photo nominative laisserait sinon les
+  // stocks faussement à 0, sans repli ni anomalie (revue adversariale P0-8).
+  const anneeAUnePhoto = (a) =>
+    (d.photosBouteilles || []).some((p) => Number(p.annee) === a);
+  const photoDebutPresente = anneeAUnePhoto(an - 1);
+  const photoFinPresente = anneeAUnePhoto(an);
 
   // Repli du stock au 1er janvier sur « stocks initiaux » quand la photo
   // de clôture N-1 manque (moins probant — signalé en anomalie).

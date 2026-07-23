@@ -5045,14 +5045,10 @@ export function creerDemoStore() {
 
     /**
      * P0-8 : déclaration annuelle réglementaire (11 rubriques par fluide).
-     * Assemble les collections et délègue au module pur (miroir serveur).
-     * anneesPhotographiees = années qui ont un inventaire figé (photo).
+     * Assemble les collections et délègue au module pur (miroir serveur). La
+     * présence d'une photo se déduit de photosBouteilles (inventairesBouteilles).
      */
     async getDeclarationAnnuelle(annee) {
-      const anneesPhotographiees = [...new Set([
-        ...(donnees.inventaires || []).map((i) => i.annee),
-        ...(donnees.inventairesBouteilles || []).map((p) => p.annee)
-      ])];
       return calculerDeclarationAnnuelle(Number(annee), {
         mouvements: donnees.mouvements,
         bouteilles: donnees.bouteilles,
@@ -5060,8 +5056,7 @@ export function creerDemoStore() {
         cessions: donnees.cessions,
         retoursFournisseur: donnees.retoursFournisseur,
         stocksInitiaux: donnees.stocksInitiaux,
-        photosBouteilles: donnees.inventairesBouteilles,
-        anneesPhotographiees
+        photosBouteilles: donnees.inventairesBouteilles
       });
     },
 

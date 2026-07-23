@@ -2,6 +2,76 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧱 P0-8 — DÉCLARATION ANNUELLE 11 RUBRIQUES (22/07, DA-1→DA-8, plan docs/PLAN-P0-8-DECLARATION.md)
+- **Le pseudo-bilan « déclaration ADEME » (incomplet, `cessions_kg=0`, BSFF
+  compté à tort en destruction) est remplacé par la déclaration réglementaire
+  de l'arrêté du 21/11/2025 : 11 rubriques par fluide.** Périmètre A validé par
+  Franck : déclaration + 2 captures légères. Le mode Officiel reste FERMÉ.
+- **DA-1 — schéma (migrations 28/29/30)** : `bsff.issue_traitement`
+  (RECYCLAGE/REGENERATION/DESTRUCTION/AUTRE + installation/certificat/date,
+  nullable) ; table `cessions` (trace figée comme `retours_fournisseur`) ; vue
+  `bilan_matiere` RECRÉÉE pour compter les cessions (CTE `cessions_agg`) —
+  ⚠️ base v1 GELÉE, tout passe par migrations. `mapping.js` (colonnes + table).
+- **DA-2 — `attesterIssueBsff`** (2 stores, parité) : atteste l'issue de
+  traitement final d'un BSFF ; installation obligatoire pour régénération/
+  destruction. **Corrige BSFF ≠ destruction** : une remise sans issue attestée
+  n'est JAMAIS comptée en destruction (rubrique 9 = issues DESTRUCTION seules).
+- **DA-3 — `createCession`** (2 stores, parité) : cession d'une masse à un tiers
+  attesté depuis une bouteille (décrémente, trace figée) ; un déchet part par
+  un BSFF. Fin du `cessions_kg=0`. Plomberie export/import complète (collection
+  `cessions` : complétion, `TABLES_A_VIDER`, réinsertion, VIDE sur vieux exports).
+- **DA-4 — moteur pur `declaration-annuelle.js`** (ESM + miroir CommonJS serveur,
+  parité prouvée par `test-declaration-annuelle` 30 vérifs) : 11 rubriques par
+  fluide. **Rubriques 2-5 agrégées PAR TYPE** de mouvement (fin de l'agrégation
+  par signe pour la déclaration ; les contre-écritures, type conservé, se
+  neutralisent). BSFF ventilé par issue (destruction/régénération + installations,
+  recyclage-filière et AUTRE en informatif, remise non attestée en anomalie).
+  Rubrique 11 : stocks 1er jan (photo N-1) / 31 déc (photo N) ventilés
+  neuf-disponible / récupéré-en-attente / déchet, repli `stocks_initiaux` +
+  anomalie si photo absente. **Réconciliation** : la balance matière compte
+  enfin les cessions (loop démo + vue migration 30) — sans quoi une cession
+  créerait un écart d'inventaire fantôme.
+- **DA-5 — `getDeclarationAnnuelle(annee)`** (2 stores, parité local prouvée) :
+  assemble les collections et délègue au module pur ; `{ annee, lignes,
+  anomalies, complet }`.
+- **DA-6 — vue + captures + retrait ADEME** : `bilan.js` retire le libellé
+  « déclaration ADEME », ajoute la section « Déclaration annuelle réglementaire —
+  11 rubriques » (tableau large défilable, bandeau d'anomalies, note « matrice
+  préparatoire à valider par l'organisme agréé », CSV dédié). Captures légères :
+  `dechets.js` (colonne « Traitement final » + modale d'attestation d'issue),
+  `fiche-bouteille.js` (bouton « Céder à un tiers » + modale de cession).
+  **Vérifié au NAVIGATEUR** (mode démo, port jetable, zéro erreur console) :
+  déclaration rendue avec charges/récup ventilées par type ; cession live
+  (B-01 R-32, 7,40→5,40 kg) remontée en rubrique 10.
+- **DA-7 — dossier d'audit scellé** : `declaration-annuelle-AAAA.csv` +
+  `cessions.csv` ajoutés au ZIP ; `bsff.csv` enrichi des 4 colonnes d'issue.
+  `toutesLesTables` 11 → 13 fichiers fixes. Monde démo NON enrichi par des
+  données-graines (une cession figée créerait un écart de balance fantôme) : la
+  démo se fait par capture live.
+- **DA-8 — revue adversariale (2 relecteurs, angles distincts, constats TIRÉS)
+  AVANT le commit final : 2 BLOQUANTS trouvés et CORRIGÉS**, tous deux
+  invisibles pour la suite de tests d'alors :
+  - **Rubrique 11 faussement à 0 (bloquant)** : `anneesPhotographiees` était
+    l'UNION de `inventaires` (numérique, socle v1) et `inventaires_bouteilles`
+    (photo nominative, migration 14), alors que `ventiler()` ne lit QUE la
+    photo. Une année inventoriée SANS photo nominative (base antérieure à B7)
+    donnait donc « photo présente » ⇒ ni repli sur `stocks_initiaux`, ni
+    anomalie ⇒ stock d'ouverture **faussement nul** et `complet: true`.
+    **Correctif** : la présence d'une photo se DÉDUIT désormais de
+    `photosBouteilles` seul (source ⟺ donnée) ; l'entrée `anneesPhotographiees`
+    disparaît des 2 miroirs et des 2 stores. Régression figée au test.
+  - **Cessions perdues à l'export (bloquant)** : la plomberie d'IMPORT était
+    complète mais `construireDonneesExport()` (serveur) n'incluait pas
+    `cessions` ⇒ un aller-retour export/import les perdait alors que la
+    bouteille était déjà décrémentée — l'écart fantôme que la migration 30
+    entend justement éviter, recréé côté export. **Correctif** : `cessions`
+    ajoutées à l'export serveur (l'export démo, qui sérialise tout `donnees`,
+    n'était pas touché). Régression figée dans test-contrat (suite DOUBLÉE
+    demo/local : elle prouve le correctif serveur).
+- **Migrations 27 → 30.** Contrat DataStore v7 → **v8** (+3 méthodes : 88, 90,
+  91). **TOUT VERT — 93 exécutions** après chaque brique (test-declaration-annuelle
+  30 → 34 vérifs).
+
 ### 🧱 P0-6 — CYCLE FUITE (22/07, CF-1→CF-6, plan docs/PLAN-P0-6-CYCLE-FUITE.md)
 - **Le constat critique de l'audit du 20/07 est soldé** : le contrôle après
   réparation était clôturable LE JOUR MÊME (convention R4 « à date égale, le

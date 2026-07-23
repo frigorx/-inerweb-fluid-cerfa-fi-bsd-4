@@ -151,9 +151,15 @@ function calculerDeclarationAnnuelle(annee, donnees) {
   ventiler(an, { neuf: 'stockFinNeufKg', recup: 'stockFinRecupKg',
     dechet: 'stockFinDechetKg' });
 
-  const anneesPhoto = (d.anneesPhotographiees || []).map(Number);
-  const photoDebutPresente = anneesPhoto.includes(an - 1);
-  const photoFinPresente = anneesPhoto.includes(an);
+  // « Photo présente » pour une année = il existe au moins une bouteille
+  // photographiée cette année-là — la SEULE source que `ventiler` lit. Ne
+  // jamais dériver ce fait d'une autre table (ex. `inventaires` legacy) :
+  // une année inventoriée AVANT la photo nominative laisserait sinon les
+  // stocks faussement à 0, sans repli ni anomalie (revue adversariale P0-8).
+  const anneeAUnePhoto = (a) =>
+    (d.photosBouteilles || []).some((p) => Number(p.annee) === a);
+  const photoDebutPresente = anneeAUnePhoto(an - 1);
+  const photoFinPresente = anneeAUnePhoto(an);
 
   // Repli du stock au 1er janvier sur « stocks initiaux » quand la photo
   // de clôture N-1 manque (moins probant — signalé en anomalie).

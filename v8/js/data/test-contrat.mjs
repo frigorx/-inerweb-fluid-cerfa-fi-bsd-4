@@ -2389,6 +2389,19 @@ verifier('exporterJSON : l’enveloppe contractuelle (format d’échange entre 
   && String(enveloppe.exporteLe).includes('T')
   && typeof enveloppe.donnees === 'object');
 
+// P0-8 (revue adversariale, constat BLOQUANT) : les CESSIONS voyagent dans
+// l'export. Sans elles, un aller-retour les perdrait alors que la bouteille
+// est déjà décrémentée → écart d'inventaire fantôme dans la base cible.
+{
+  const cessionsStore = await store.getCessions();
+  verifier('exporterJSON : la collection cessions est PRÉSENTE dans l’export',
+    Array.isArray(enveloppe.donnees.cessions));
+  verifier('exporterJSON : l’export porte autant de cessions que le store',
+    (enveloppe.donnees.cessions ?? []).length === cessionsStore.length
+    && cessionsStore.length >= 1,
+    `export ${(enveloppe.donnees.cessions ?? []).length} / store ${cessionsStore.length}`);
+}
+
 verifier('importerJSON retourne FALSE (sans lever) pour un texte illisible',
   await store.importerJSON('ceci n’est pas du JSON') === false);
 verifier('importerJSON retourne FALSE pour une structure étrangère',

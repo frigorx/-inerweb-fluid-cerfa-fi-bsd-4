@@ -3854,16 +3854,11 @@ const HANDLERS = {
   /**
    * P0-8 : déclaration annuelle réglementaire (11 rubriques par fluide).
    * Lit les collections et délègue au module pur (miroir du front, parité
-   * prouvée). anneesPhotographiees = années qui ont un inventaire figé.
+   * prouvée). La présence d'une photo se déduit de photosBouteilles.
    */
   getDeclarationAnnuelle(params) {
     const lire = (table) => db.all(`SELECT * FROM ${table}`)
       .map((l) => mapping.versFront(table, l));
-    const anneesPhotographiees = [...new Set([
-      ...db.all('SELECT DISTINCT annee FROM inventaires').map((r) => r.annee),
-      ...db.all('SELECT DISTINCT annee FROM inventaires_bouteilles')
-        .map((r) => r.annee)
-    ])];
     return calculerDeclarationAnnuelle(Number(params.annee), {
       mouvements: lire('mouvements'),
       bouteilles: lire('bouteilles'),
@@ -3871,8 +3866,7 @@ const HANDLERS = {
       cessions: lire('cessions'),
       retoursFournisseur: lire('retours_fournisseur'),
       stocksInitiaux: lire('stocks_initiaux'),
-      photosBouteilles: lire('inventaires_bouteilles'),
-      anneesPhotographiees
+      photosBouteilles: lire('inventaires_bouteilles')
     });
   },
 
@@ -4364,6 +4358,9 @@ function construireDonneesExport() {
     piecesJointes: lireTablePlate('pieces_jointes', 'pieces_jointes',
       'date_ajout, id'),
     retoursFournisseur: HANDLERS.getRetoursFournisseur(),
+    // P0-8 : les cessions voyagent dans l'export (sinon perdues au round-trip
+    // alors que la bouteille est déjà décrémentée → écart fantôme à l'import).
+    cessions: HANDLERS.getCessions(),
     alertes: HANDLERS.getAlertes(),
     journalAudit: HANDLERS.getJournalAudit(),
     // Lot E2 (brique E2c) : le COFFRE voyage dans l'export — enveloppes en
