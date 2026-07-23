@@ -67,9 +67,14 @@ const TABLES = {
       contientHfc: 'contient_hfc',
       contientHfo: 'contient_hfo',
       categorieCadre7: 'categorie_cadre7',
-      sourcePrp: 'source_prp'
+      sourcePrp: 'source_prp',
+      // actif (migration 31, P1-2) : un fluide n'est JAMAIS supprimé — sa clé
+      // est référencée par 8 tables, dont des écritures scellées. Il est
+      // DÉSACTIVÉ : retiré des listes de saisie, toujours lisible là où il
+      // est déjà référencé. Même logique que clients et personnel.
+      actif: 'actif'
     },
-    booleens: ['contientHfc', 'contientHfo'],
+    booleens: ['contientHfc', 'contientHfo', 'actif'],
     frontSeulement: ['impact', 'nbMachines'],
     sqlSeulement: []
   },

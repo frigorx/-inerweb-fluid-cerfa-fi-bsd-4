@@ -2275,11 +2275,15 @@ export function creerDemoStore() {
       // pour les sauvegardes antérieures à la Phase D.
       // Fiche réglementaire : complétée au même titre (mondes démo
       // persistés AVANT la migration 21), jamais écrasée si présente.
+      // actif : miroir du DEFAULT 1 de la migration 31 — un fluide semé
+      // ou persisté AVANT P1-2 n'a pas le champ ; il est ACTIF (backfill
+      // conservateur). Seul un false explicite désactive.
       const parc = machinesEnParc();
       return donnees.fluides.map((f) => completerFicheReglementaire({
         ...copier(f),
         classeSecurite: f.classeSecurite ??
           DEMO.fluides.find((r) => r.code === f.code)?.classeSecurite ?? null,
+        actif: f.actif !== false,
         nbMachines: parc.filter((m) => m.fluide === f.code).length
       }));
     },

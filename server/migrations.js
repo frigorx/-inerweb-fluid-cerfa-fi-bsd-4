@@ -187,6 +187,11 @@
  *  30 — P0-8 : la vue bilan_matiere COMPTE les cessions (DROP + CREATE à
  *       l'identique + CTE cessions_agg) — sans quoi une cession créerait un
  *       écart d'inventaire fantôme. Parité stricte avec calculerBalanceMatiere.
+ *  31 — P1-2 (administration du référentiel) : fluides.actif (DEFAULT 1 =
+ *       backfill conservateur). Un fluide n'est jamais supprimé (sa clé est
+ *       référencée par 8 tables, dont des écritures scellées) : il est
+ *       DÉSACTIVÉ — il sort des listes de saisie, reste lisible partout où
+ *       il est déjà référencé. Table fluides hors WORM et hors chaîne de hash.
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -1549,6 +1554,25 @@ LEFT JOIN cessions_agg c  ON c.etablissement_id  = p.etablissement_id AND c.flui
 LEFT JOIN stocks_initiaux si ON si.etablissement_id = p.etablissement_id AND si.fluide = p.fluide AND si.annee = p.annee
 LEFT JOIN inventaires  i  ON i.etablissement_id  = p.etablissement_id AND i.fluide  = p.fluide AND i.annee  = p.annee
 LEFT JOIN justifications_ecarts j ON j.etablissement_id = p.etablissement_id AND j.fluide = p.fluide AND j.annee = p.annee;`);
+    }
+  },
+
+  // 31 — P1-2 (écran d'administration du référentiel) : fluides.actif.
+  // Le référentiel devient modifiable par le référent LUI-MÊME (plus de
+  // migration pour corriger un PRP ou déclarer un gaz). Un fluide n'est
+  // JAMAIS supprimé — sa clé est référencée par 8 tables, dont des
+  // écritures scellées : on le DÉSACTIVE. Un fluide inactif sort des
+  // listes de saisie (machine, bouteille, wizard) mais reste lisible
+  // partout où il est déjà référencé (cas réel du R-22 : on n'en monte
+  // plus, on en récupère encore). DEFAULT 1 = backfill conservateur,
+  // tout l'existant reste actif. Table fluides HORS WORM et hors chaîne
+  // de hash (comme les migrations 19 et 21) : ALTER sans risque sur le
+  // registre scellé.
+  31: {
+    nom: 'fluides_actif',
+    appliquer(db) {
+      db.exec(`ALTER TABLE fluides ADD COLUMN actif INTEGER
+                 NOT NULL DEFAULT 1 CHECK (actif IN (0,1));`);
     }
   }
 };
