@@ -40,8 +40,16 @@ Le logiciel doit être **le plus complet** (couvre TOUT le parc, pas seulement l
   art. R. 543-99. [Légifrance](https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000052993429)
 - **Règlement (UE) 2024/573** (« F-Gas III ») — remplace le 517/2014.
   [EUR-Lex](https://eur-lex.europa.eu/legal-content/FR/TXT/PDF/?uri=OJ:L_202400573)
-- **Bascule** : nouveau régime obligatoire au **01/01/2027** ; les attestations
-  « 2008 » (I–IV) restent reconnues **jusqu'au 31/12/2026** → coexistence à gérer.
+- **Bascule (corrigée L4/Q3, 24/07/2026 — art. 7 et 11 lus verbatim)** : nouveau
+  régime obligatoire au **01/01/2027** et fin de la DÉLIVRANCE 2008 au
+  **31/12/2026** — mais les attestations détenues **ne meurent pas** à cette
+  date. Elles restent reconnues **jusqu'au 12/03/2029** (butoir de la
+  **remise à niveau ponctuelle**, art. 7) ; au-delà, seules celles dont la
+  remise à niveau est enregistrée au plus tard le butoir comptent, puis cycle
+  périodique **≤ 7 ans** (règl. UE 2024/573, art. 10). Une remise à niveau
+  postérieure au butoir ne répare pas : examen à repasser (lecture stricte).
+  L'ancien couperet « reconnues jusqu'au 31/12/2026 » confondait délivrance
+  et validité : il aurait déclaré non habilités des techniciens en règle.
 
 ## 2. Matrice des catégories d'APTITUDE 2025 (validée fonctionnellement 14/07)
 
@@ -97,7 +105,10 @@ détection permanente ; détection obligatoire ≥ 500 t ; hermétique scellé <
   `id, personne_id, regime ('2008'|'2025'), categorie, date_debut, date_fin,
   organisme, numero`. Jamais supprimée (historisée).
 - **Personnel** : les catégories 2025 remplacent progressivement `I/II/III/IV` — les
-  deux coexistent via `habilitations.regime` jusqu'au 31/12/2026.
+  deux coexistent via `habilitations.regime` (délivrance 2008 close au
+  31/12/2026, reconnaissance selon la remise à niveau — voir §1) ; la remise
+  à niveau vit sur la ligne (`remise_niveau_le`/`remise_niveau_organisme`,
+  migration 33).
 - **Mouvements** : `execute_par_id` (qui fait le geste — ex. élève), `superviseur_id`
   (enseignant), `responsable_registre_id` (référent qui valide juridiquement). Distingue
   les trois rôles réels d'une intervention pédagogique.

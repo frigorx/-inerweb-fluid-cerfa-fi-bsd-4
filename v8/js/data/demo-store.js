@@ -52,7 +52,7 @@ import { calculerTransitions, formaterEpisode, comparerEpisodes, estOuvert }
 import { REGIMES, CATEGORIES_2008, CATEGORIES_2025, comparerHabilitations,
   categorieCoherente, FLUIDES_MENTION, comparerMentions,
   verifierDroitIntervention, habilitationReconnue, jetonsMentionsActives,
-  FIN_DELIVRANCE_2008 }
+  FIN_DELIVRANCE_2008, DATE_BUTOIR_REMISE_NIVEAU_2008 }
   from './habilitations.js';
 // Signature binaire réelle des pièces jointes (audit-proof) : le contenu doit
 // concorder avec le type déclaré, jamais le MIME annoncé seul (miroir serveur).
@@ -2450,6 +2450,32 @@ export function creerDemoStore() {
             cible: { vue: 'personnel', id: h.personneId }
           });
         }
+      }
+
+      // L4/Q3 (RN-3) — remise à niveau des attestations 2008 (arrêté du
+      // 21/11/2025, art. 7) : une ligne 2008 ACTIVE d'une personne ACTIVE,
+      // sans remise à niveau enregistrée, doit la faire AVANT le 12/03/2029.
+      // IMPORTANT tant que le butoir n'est pas passé (échéance connue l'avance
+      // — le titulaire a le temps, mais le registre le dit) ; CRITIQUE après
+      // (l'attestation n'est PLUS reconnue : habilitationReconnue). Une ligne
+      // échue par sa propre date se tait ici (alr-habilitation- la porte).
+      for (const h of donnees.habilitations ?? []) {
+        if (!h.actif || h.regime !== '2008' || h.remiseNiveauLe) continue;
+        if (!nomsPersonnelActif.has(h.personneId)) continue;
+        if (h.dateFin && h.dateFin < jour) continue;
+        const qui = nomsPersonnelActif.get(h.personneId);
+        const butoirPasse = jour > DATE_BUTOIR_REMISE_NIVEAU_2008;
+        alertes.push({
+          id: `alr-remise-niveau-${h.id}`,
+          niveau: butoirPasse ? 'CRITIQUE' : 'IMPORTANT',
+          titre: butoirPasse
+            ? 'Attestation 2008 non reconnue (remise à niveau absente)'
+            : 'Remise à niveau à faire avant le 12/03/2029',
+          detail: `${qui} · 2008 ${h.categorie} · ` + (butoirPasse
+            ? 'sans remise à niveau enregistrée au 12/03/2029 : examen à repasser'
+            : 'formation de remise à niveau ponctuelle exigée (arrêté du 21/11/2025)'),
+          cible: { vue: 'personnel', id: h.personneId }
+        });
       }
       const LIBELLES_MENTION_ALERTE = { CO2: 'CO₂', NH3: 'NH₃', HC: 'HC' };
       for (const m of donnees.mentionsHabilitation ?? []) {

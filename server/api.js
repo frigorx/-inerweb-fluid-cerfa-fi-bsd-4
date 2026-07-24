@@ -46,7 +46,8 @@ const { evaluerBlocagesOfficiel, messageRefusOfficiel, VERROU_LIVRAISON,
 // Officiel (miroir du MOTEUR de v8/js/data/habilitations.js, parité prouvée
 // par test-droit-intervention.mjs).
 const { verifierDroitIntervention, habilitationReconnue,
-  jetonsMentionsActives, FIN_DELIVRANCE_2008 } = require('./droit-intervention.js');
+  jetonsMentionsActives, FIN_DELIVRANCE_2008,
+  DATE_BUTOIR_REMISE_NIVEAU_2008 } = require('./droit-intervention.js');
 // Déclaration annuelle 11 rubriques (P0-8, miroir littéral du module ESM du
 // front, parité prouvée par test-declaration-annuelle.mjs).
 const { calculerDeclarationAnnuelle } = require('./declaration-annuelle.js');
@@ -915,6 +916,31 @@ const HANDLERS = {
           cible: { vue: 'personnel', id: h.personneId }
         });
       }
+    }
+
+    // L4/Q3 (RN-3) — remise à niveau des attestations 2008 (arrêté du
+    // 21/11/2025, art. 7) — MIROIR EXACT du DemoStore : une ligne 2008
+    // ACTIVE d'une personne ACTIVE, sans remise à niveau enregistrée, doit
+    // la faire AVANT le 12/03/2029. IMPORTANT avant le butoir, CRITIQUE
+    // après (l'attestation n'est PLUS reconnue). Une ligne échue par sa
+    // propre date se tait ici (alr-habilitation- la porte).
+    for (const h of habilitationsAlertes) {
+      if (!h.actif || h.regime !== '2008' || h.remiseNiveauLe) continue;
+      if (!nomsPersonnelActif.has(h.personneId)) continue;
+      if (h.dateFin && h.dateFin < jour) continue;
+      const qui = nomsPersonnelActif.get(h.personneId);
+      const butoirPasse = jour > DATE_BUTOIR_REMISE_NIVEAU_2008;
+      alertes.push({
+        id: `alr-remise-niveau-${h.id}`,
+        niveau: butoirPasse ? 'CRITIQUE' : 'IMPORTANT',
+        titre: butoirPasse
+          ? 'Attestation 2008 non reconnue (remise à niveau absente)'
+          : 'Remise à niveau à faire avant le 12/03/2029',
+        detail: `${qui} · 2008 ${h.categorie} · ` + (butoirPasse
+          ? 'sans remise à niveau enregistrée au 12/03/2029 : examen à repasser'
+          : 'formation de remise à niveau ponctuelle exigée (arrêté du 21/11/2025)'),
+        cible: { vue: 'personnel', id: h.personneId }
+      });
     }
     const LIBELLES_MENTION_ALERTE = { CO2: 'CO₂', NH3: 'NH₃', HC: 'HC' };
     const mentionsAlertes =

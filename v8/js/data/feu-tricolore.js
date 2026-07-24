@@ -39,7 +39,8 @@ export const DOMAINES = [
     vue: 'personnel',
     // Chantier B2 : les échéances des habilitations F-Gas et des mentions
     // de formation complémentaire relèvent du même domaine.
-    prefixes: ['alr-aptitude-', 'alr-habilitation-', 'alr-mention-'] },
+    prefixes: ['alr-aptitude-', 'alr-habilitation-', 'alr-mention-',
+      'alr-remise-niveau-'] },
   { id: 'controles', titre: 'Contrôles d’étanchéité et fuites',
     detail: 'Échéances de contrôle des machines, fuites non résolues, '
       + 'systèmes de détection permanente.',

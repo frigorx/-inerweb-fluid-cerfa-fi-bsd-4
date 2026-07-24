@@ -265,7 +265,8 @@ export async function render(conteneur, ctx) {
     + '<div class="encart-aide">'
     + '<strong>Attestation de CAPACITÉ</strong> = l’établissement (voir Administration). '
     + '<strong>Attestation d’APTITUDE</strong> = la personne. '
-    + 'Catégorie 2008 : valable jusqu’au 31/12/2026 · '
+    + 'Catégorie 2008 : plus de délivrance après le 31/12/2026, reconnue '
+    + 'jusqu’au 12/03/2029 puis seulement avec remise à niveau · '
     + 'Catégorie 2025 : obligatoire à partir du 01/01/2027.'
     + '</div>'
     + contenuTableau

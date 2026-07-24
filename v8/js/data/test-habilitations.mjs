@@ -400,6 +400,20 @@ verifier('mouvement : quantité calculée des pesées (+2 kg)',
   });
   verifier('le régime 2025 se délivre librement après 2026 (la garde ne vise que le 2008)',
     nouvelle2025.regime === '2025' && nouvelle2025.dateDebut === '2027-02-01');
+
+  // L'alerte de remise à niveau (RN-3) : la 2008 SANS remise sonne
+  // (IMPORTANT avant le butoir), celle AVEC remise se tait, la 2025 jamais.
+  {
+    const alertes = await store.getAlertes();
+    verifier('alerte alr-remise-niveau- posée pour la 2008 sans remise à niveau',
+      alertes.some((a) => a.id === `alr-remise-niveau-${sansDate.id}`
+        && a.niveau === 'IMPORTANT'
+        && /12\/03\/2029/.test(a.titre)));
+    verifier('aucune alerte de remise à niveau pour la ligne qui en a une',
+      !alertes.some((a) => a.id === `alr-remise-niveau-${avecRemise.id}`));
+    verifier('aucune alerte de remise à niveau pour une 2025',
+      !alertes.some((a) => a.id === `alr-remise-niveau-${nouvelle2025.id}`));
+  }
 }
 
 console.log(`\n${nbOk} OK, ${nbEchecs} échec(s).`);
