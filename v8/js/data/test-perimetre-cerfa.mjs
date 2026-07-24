@@ -95,5 +95,43 @@ async function codesPour(fluide, designation) {
     !codes.includes('HORS_PERIMETRE_FLUORE'), codes.join(','));
 }
 
+// ============================================================
+// Contournements FERMÉS par la revue adversariale du lot (24/07) : le fait
+// suit la CLASSIFICATION MOTEUR (repli famille compris), plus l'attribut
+// brut « AUCUNE » seul — un non-fluoré créé SANS fiche ne passe plus.
+// ============================================================
+{
+  // Un ammoniac créé sans fiche explicite (le choix PAR DÉFAUT du
+  // formulaire) : le repli famille NH3 → hors périmètre → condition posée.
+  await store.createFluide({
+    code: 'R-717', famille: 'NH3', gwpAr4: 0, classeSecurite: 'B2L',
+    operateur: 'Testeur Périmètre'
+  });
+  const codes = await codesPour('R-717', 'Groupe ammoniac (test périmètre)');
+  verifier('R-717 créé SANS fiche explicite : condition 18 posée (repli famille NH3)',
+    codes.includes('HORS_PERIMETRE_FLUORE'), codes.join(','));
+}
+{
+  // Vider la fiche du R-744 ne lève PLUS le blocage : le repli famille CO2
+  // classe toujours hors périmètre.
+  await store.updateFluide('R-744', {
+    categorieCadre7: null, operateur: 'Testeur Périmètre'
+  });
+  const codes = await codesPour('R-744', 'Chambre CO2 fiche vidée (test périmètre)');
+  verifier('R-744 dont la fiche est VIDÉE : condition 18 toujours posée (repli famille CO2)',
+    codes.includes('HORS_PERIMETRE_FLUORE'), codes.join(','));
+}
+{
+  // Contre-témoin : un gaz fluoré créé sans fiche (famille HFC) reste DANS
+  // le périmètre par le repli — pas de faux blocage. Code hors du semis.
+  await store.createFluide({
+    code: 'R-470A', famille: 'HFC', gwpAr4: 909, classeSecurite: 'A1',
+    operateur: 'Testeur Périmètre'
+  });
+  const codes = await codesPour('R-470A', 'Split R-470A (test périmètre)');
+  verifier('R-470A créé sans fiche (famille HFC) : AUCUNE condition 18 (repli famille)',
+    !codes.includes('HORS_PERIMETRE_FLUORE'), codes.join(','));
+}
+
 console.log(`\n${nbOk} OK, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);

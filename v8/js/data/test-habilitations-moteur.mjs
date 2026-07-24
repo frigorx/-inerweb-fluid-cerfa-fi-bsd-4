@@ -160,6 +160,33 @@ verifier('synthèse : D sur une installation de 2 kg → CONSEIL (dans la limite
 verifier('synthèse sans chargeKg : comportement INCHANGÉ (pas de refus fabriqué)',
   grav({ habilitations: [H('2025', 'D')], operation: null,
     familleFluide: 'HFC' }) === 'CONSEIL');
+
+// --- Cohérence des écrans (revue L1, 24/07) : le profil dépassé DÉGRADE ---
+// Un titulaire limité sur une machine trop chargée garde son droit de
+// CONTRÔLER (l'étanchéité ne manipule pas le circuit) : la synthèse de la
+// fiche machine doit dire la même chose que le verdict d'opération du
+// wizard — plus jamais REFUS d'un côté et « autorisé » de l'autre.
+{
+  const syntheseII = v({ habilitations: [H('2008', 'II')], operation: null,
+    familleFluide: 'HFC', chargeKg: 10 });
+  verifier('synthèse : II(2008) seul sur 10 kg → CONSEIL « étanchéité uniquement » (plus de REFUS)',
+    syntheseII.autorise === true && /étanchéité uniquement/i.test(syntheseII.conseil),
+    syntheseII.conseil);
+  const opII = v({ habilitations: [H('2008', 'II')], operation: 'CONTROLE_PERIODIQUE',
+    familleFluide: 'HFC', chargeKg: 10 });
+  verifier('cohérence : le verdict d’opération CONTROLE dit la même chose (autorisé)',
+    opII.autorise === true && opII.gravite === 'OK');
+}
+{
+  const syntheseA2 = v({ habilitations: [H('2025', 'A2')], operation: null,
+    familleFluide: 'HFC', chargeKg: 10 });
+  verifier('synthèse : A2 seul sur 10 kg → CONSEIL « étanchéité uniquement »',
+    syntheseA2.autorise === true && /étanchéité uniquement/i.test(syntheseA2.conseil),
+    syntheseA2.conseil);
+}
+verifier('synthèse : D seul sur 10 kg → REFUS conservé (la récupération ne porte pas l’étanchéité)',
+  grav({ habilitations: [H('2025', 'D')], operation: null,
+    familleFluide: 'HFC', chargeKg: 10 }) === 'REFUS');
 verifier('verdict d’opération : le libellé dit « charge de l’installation »',
   /charge de l'installation 2 kg/.test(
     v({ habilitations: [H('2025', 'D')], operation: 'RECUPERATION_MAINTENANCE',

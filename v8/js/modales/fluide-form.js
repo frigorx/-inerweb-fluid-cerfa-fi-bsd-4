@@ -125,7 +125,8 @@ function gabaritFormulaire(fluide) {
     + '<div class="champ" data-champ="categorieCadre7">'
     + '<label for="ff-categorie">Catégorie</label>'
     + '<select id="ff-categorie" name="categorieCadre7">'
-    + '<option value="">— non renseignée (repli sur la famille) —</option>'
+    + '<option value="">— non renseignée (repli sur la famille ; '
+    + 'famille non fluorée ou illisible = pas de fiche officielle) —</option>'
     + options(CATEGORIES_CADRE7, categorie, LIBELLE_CATEGORIE)
     + '</select>'
     + '</div>'

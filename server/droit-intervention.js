@@ -252,8 +252,21 @@ function verifierDroitIntervention({
   // contrôler ne manipule pas le circuit.
   if (!op) {
     if (chargeKg === null || chargeKg === undefined) return synthese(profils);
-    const dansLaLimite = profils.filter((pr) =>
-      pr.limiteKg === null || Number(chargeKg) < pr.limiteKg);
+    // Revue L1 (24/07) : un profil au-delà de sa limite ne disparaît pas en
+    // bloc — sa capacité de contrôle d'étanchéité SURVIT, dégradée à
+    // { ETANCHEITE, sans limite }, comme au verdict d'opération (qui saute
+    // le contrôle de charge pour l'étanchéité). Sans cela, la fiche machine
+    // disait REFUS à un cat. II sur 10 kg quand le wizard autorisait le
+    // contrôle : contradiction entre écrans (le précédent du 14/07, en sens
+    // inverse).
+    const dansLaLimite = [];
+    for (const pr of profils) {
+      if (pr.limiteKg === null || Number(chargeKg) < pr.limiteKg) {
+        dansLaLimite.push(pr);
+      } else if (pr.ops.includes('ETANCHEITE')) {
+        dansLaLimite.push({ ops: ['ETANCHEITE'], limiteKg: null });
+      }
+    }
     if (dansLaLimite.length === 0) {
       const limite = Math.max(...profils.map((pr) => pr.limiteKg));
       return {

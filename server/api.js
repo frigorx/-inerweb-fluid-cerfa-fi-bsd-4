@@ -7411,13 +7411,14 @@ function cadreFicheOfficiel(mouvement) {
         mouvement.date ?? jour).declaree),
     fluideInflammable: Boolean(fluideRef?.classeSecurite &&
       fluideRef.classeSecurite !== 'A1'),
-    // Q4 (L1b, 24/07) — fait : fluide explicitement HORS du périmètre
-    // fluoré (fiche réglementaire categorieCadre7 = 'AUCUNE' — l'attribut
-    // BRUT de la fiche, jamais la fonction categorieCadre7() qui replie
-    // « sans fiche » sur la dérivation du libellé). Consommé par la
-    // condition 18. Miroir du DemoStore.
-    fluideHorsPerimetreFluore: Boolean(fluideRef &&
-      fluideRef.categorieCadre7 === 'AUCUNE'),
+    // Q4 (L1b, 24/07 — corrigé par la revue adversariale du lot) — fait :
+    // fluide HORS du périmètre fluoré selon la CLASSIFICATION MOTEUR
+    // (fiche explicite prioritaire, repli sur la famille, inconnue = hors
+    // périmètre). L'attribut brut « AUCUNE » seul était contournable : un
+    // fluide CRÉÉ sans fiche (famille CO2/HC/NH3) passait, et vider la
+    // fiche du R-744 levait le blocage. Miroir du DemoStore.
+    fluideHorsPerimetreFluore: Boolean(fluideRef) &&
+      categorieCadre7Fluide(fluideRef) === null,
     sourceVierge: bouteilleSrc?.etatFluide === 'VIERGE',
     prp: fluideRef?.gwpAr4 ?? null,
     signaturePresente: Boolean(mouvement.signatureDataUrl),
