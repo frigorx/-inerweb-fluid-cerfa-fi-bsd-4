@@ -7,8 +7,10 @@
 //  - 2008 (arrêté du 13/10/2008) : catégories I / II / III / IV ;
 //  - 2025 (arrêté du 21/11/2025, F-Gas III / règlement UE 2024/573) :
 //    catégories A1 / A2 / B / C / D / E / V.
-// Les deux régimes COEXISTENT : les attestations 2008 restent reconnues
-// jusqu'au 31/12/2026, le régime 2025 est obligatoire au 01/01/2027.
+// Les deux régimes COEXISTENT : la DÉLIVRANCE 2008 cesse au 31/12/2026
+// (régime 2025 obligatoire au 01/01/2027), mais les attestations détenues
+// restent reconnues jusqu'au 12/03/2029 — puis seulement avec une remise à
+// niveau enregistrée (cycle 7 ans). Voir les constantes de transition.
 //
 // Ce module est PUR (aucune I/O, aucune horloge). Il est dupliqué à
 // l'identique côté serveur (server/api.js, CommonJS) : la parité de SORTIE
@@ -138,25 +140,64 @@ export function jetonsMentionsActives(lignes) {
 }
 
 /**
- * Fin de reconnaissance du régime 2008 (SPEC §1) : les attestations I-IV
- * restent reconnues jusqu'au 31/12/2026, le régime 2025 est obligatoire au
- * 01/01/2027. Appliquée par l'ASSEMBLAGE des faits du mode Officiel (P0-5) —
- * jamais par le moteur, qui reste sans horloge.
+ * Transition du régime 2008 vers le régime 2025 (L4/Q3, 24/07/2026 —
+ * arrêté du 21/11/2025 relatif aux attestations d'APTITUDE, art. 7 et 11,
+ * lus verbatim sur Légifrance ; règl. UE 2024/573 art. 10) :
+ *  - FIN_DELIVRANCE_2008 : après le 31/12/2026 plus AUCUNE attestation ne
+ *    peut être DÉLIVRÉE sous l'ancien régime (l'arrêté du 13/10/2008 est
+ *    abrogé) — mais les attestations déjà détenues ne meurent PAS à cette
+ *    date (l'ancien couperet FIN_RECONNAISSANCE_2008 était une erreur :
+ *    il confondait fin de délivrance et fin de validité) ;
+ *  - DATE_BUTOIR_REMISE_NIVEAU_2008 : les titulaires I-IV suivent une
+ *    formation de remise à niveau ponctuelle AU PLUS TARD le 12/03/2029 ;
+ *    à défaut, « l'attestation n'est plus valide, le titulaire est tenu de
+ *    repasser l'examen » — une remise à niveau POSTÉRIEURE au butoir ne
+ *    répare donc pas (lecture stricte consignée au plan L4) ;
+ *  - DUREE_CYCLE_FORMATION_ANS : après la remise à niveau, cycle périodique
+ *    d'au plus 7 ans (le même que les catégories 2025).
+ * Appliquées par l'ASSEMBLAGE des faits du mode Officiel (P0-5) — jamais
+ * par le moteur de verdict, qui reste sans horloge.
  */
-export const FIN_RECONNAISSANCE_2008 = '2026-12-31';
+export const FIN_DELIVRANCE_2008 = '2026-12-31';
+export const DATE_BUTOIR_REMISE_NIVEAU_2008 = '2029-03-12';
+export const DUREE_CYCLE_FORMATION_ANS = 7;
+
+/**
+ * Date ISO + n années, même mois et jour ; un 29/02 vers une année non
+ * bissextile est écrêté au 28/02 (convention du mois civil, comme
+ * `ajouterUnMoisCivil`). Entrée illisible → null.
+ */
+export function plusAnnees(dateIso, nbAnnees) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(dateIso ?? ''));
+  if (!m) return null;
+  const annee = Number(m[1]) + nbAnnees;
+  const mois = Number(m[2]);
+  let jour = Number(m[3]);
+  const bissextile = (annee % 4 === 0 && annee % 100 !== 0) || annee % 400 === 0;
+  if (mois === 2 && jour === 29 && !bissextile) jour = 28;
+  return `${annee}-${String(mois).padStart(2, '0')}-${String(jour).padStart(2, '0')}`;
+}
 
 /**
  * Une ligne d'habilitation du store COMPTE-t-elle à la date de référence
- * (AAAA-MM-JJ) ? = active, non échue, et pas d'un régime qui n'est plus
- * reconnu (2008 après le 31/12/2026). Pur : la date vient de l'appelant.
- * Consommé par les deux `cadreFicheOfficiel` (fait `habilitationActive` ET
- * fait `aptitude` — une attestation non reconnue n'est pas « en cours de
- * validité »).
+ * (AAAA-MM-JJ) ? = active, non échue par sa propre échéance, et — pour le
+ * régime 2008 — dans les clous de la transition : reconnue sans condition
+ * jusqu'au 12/03/2029, puis SEULEMENT si une remise à niveau ponctuelle a
+ * été enregistrée au plus tard le butoir (`remiseNiveauLe`, migration 33)
+ * et que le cycle de 7 ans n'est pas échu. Pur : la date vient de
+ * l'appelant. Consommé par les deux `cadreFicheOfficiel` (fait
+ * `habilitationActive` ET fait `aptitude`).
  */
 export function habilitationReconnue(h, dateReference) {
   if (!h || !h.actif) return false;
   if (h.dateFin && h.dateFin < dateReference) return false;
-  if (h.regime === '2008' && dateReference > FIN_RECONNAISSANCE_2008) return false;
+  if (h.regime === '2008') {
+    if (dateReference <= DATE_BUTOIR_REMISE_NIVEAU_2008) return true;
+    const remise = h.remiseNiveauLe ?? null;
+    if (!remise || remise > DATE_BUTOIR_REMISE_NIVEAU_2008) return false;
+    const echeanceCycle = plusAnnees(remise, DUREE_CYCLE_FORMATION_ANS);
+    return echeanceCycle !== null && dateReference <= echeanceCycle;
+  }
   return true;
 }
 

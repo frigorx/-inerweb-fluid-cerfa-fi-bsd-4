@@ -1213,7 +1213,7 @@ export function creerDemoStore() {
       ? donnees.personnel.find((p) => p.id === mouvement.executeParId) ?? null
       : null;
     // P0-5 : habilitations qui COMPTENT (actives, non échues, régime encore
-    // reconnu — une 2008 ne compte plus après le 31/12/2026) + fait
+    // reconnu — transition 2008 : butoir de remise à niveau 12/03/2029) + fait
     // `aptitude` = verdict du moteur sur CE mouvement (opération = type,
     // fluide du mouvement, charge NOMINALE de la machine — celle des seuils
     // réglementaires). La fiche machine ne porte pas (encore) le caractère

@@ -44,22 +44,50 @@ const SEUIL_CHARGE_HERMETIQUE_KG = 6;
 const SEUIL_CHARGE_2008_KG = 2;
 
 /**
- * Fin de reconnaissance du régime 2008 (SPEC §1) : les attestations I-IV
- * restent reconnues jusqu'au 31/12/2026, le régime 2025 est obligatoire au
- * 01/01/2027. Appliquée par l'ASSEMBLAGE des faits du mode Officiel (P0-5) —
- * jamais par le moteur, qui reste sans horloge.
+ * Transition du régime 2008 vers le régime 2025 (L4/Q3, 24/07/2026 —
+ * arrêté du 21/11/2025 relatif aux attestations d'APTITUDE, art. 7 et 11,
+ * lus verbatim sur Légifrance ; règl. UE 2024/573 art. 10). MIROIR LITTÉRAL
+ * de l'ESM — voir le commentaire complet dans habilitations.js.
  */
-const FIN_RECONNAISSANCE_2008 = '2026-12-31';
+const FIN_DELIVRANCE_2008 = '2026-12-31';
+const DATE_BUTOIR_REMISE_NIVEAU_2008 = '2029-03-12';
+const DUREE_CYCLE_FORMATION_ANS = 7;
+
+/**
+ * Date ISO + n années, même mois et jour ; un 29/02 vers une année non
+ * bissextile est écrêté au 28/02 (convention du mois civil, comme
+ * `ajouterUnMoisCivil`). Entrée illisible → null.
+ */
+function plusAnnees(dateIso, nbAnnees) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(dateIso ?? ''));
+  if (!m) return null;
+  const annee = Number(m[1]) + nbAnnees;
+  const mois = Number(m[2]);
+  let jour = Number(m[3]);
+  const bissextile = (annee % 4 === 0 && annee % 100 !== 0) || annee % 400 === 0;
+  if (mois === 2 && jour === 29 && !bissextile) jour = 28;
+  return `${annee}-${String(mois).padStart(2, '0')}-${String(jour).padStart(2, '0')}`;
+}
 
 /**
  * Une ligne d'habilitation du store COMPTE-t-elle à la date de référence
- * (AAAA-MM-JJ) ? = active, non échue, et pas d'un régime qui n'est plus
- * reconnu (2008 après le 31/12/2026). Pur : la date vient de l'appelant.
+ * (AAAA-MM-JJ) ? = active, non échue par sa propre échéance, et — pour le
+ * régime 2008 — dans les clous de la transition : reconnue sans condition
+ * jusqu'au 12/03/2029, puis SEULEMENT si une remise à niveau ponctuelle a
+ * été enregistrée au plus tard le butoir (`remiseNiveauLe`, migration 33)
+ * et que le cycle de 7 ans n'est pas échu. Pur : la date vient de
+ * l'appelant.
  */
 function habilitationReconnue(h, dateReference) {
   if (!h || !h.actif) return false;
   if (h.dateFin && h.dateFin < dateReference) return false;
-  if (h.regime === '2008' && dateReference > FIN_RECONNAISSANCE_2008) return false;
+  if (h.regime === '2008') {
+    if (dateReference <= DATE_BUTOIR_REMISE_NIVEAU_2008) return true;
+    const remise = h.remiseNiveauLe ?? null;
+    if (!remise || remise > DATE_BUTOIR_REMISE_NIVEAU_2008) return false;
+    const echeanceCycle = plusAnnees(remise, DUREE_CYCLE_FORMATION_ANS);
+    return echeanceCycle !== null && dateReference <= echeanceCycle;
+  }
   return true;
 }
 
@@ -368,7 +396,10 @@ module.exports = {
   SEUIL_CHARGE_LIMITEE_KG,
   SEUIL_CHARGE_HERMETIQUE_KG,
   SEUIL_CHARGE_2008_KG,
-  FIN_RECONNAISSANCE_2008,
+  FIN_DELIVRANCE_2008,
+  DATE_BUTOIR_REMISE_NIVEAU_2008,
+  DUREE_CYCLE_FORMATION_ANS,
+  plusAnnees,
   habilitationReconnue,
   jetonsMentionsActives,
   operationNormalisee,

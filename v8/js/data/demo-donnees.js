@@ -630,8 +630,8 @@ export const DEMO = {
       dateRevocation: null
     },
     {
-      // P0-5 : le professeur est passé au régime 2025 (A1) — les 2008 ne
-      // sont plus reconnues après le 31/12/2026 (habilitationReconnue) et
+      // P0-5 : le professeur est passé au régime 2025 (A1) — une 2008 sans
+      // remise à niveau cesse d'être reconnue après le 12/03/2029 (L4) et
       // la démo doit rester praticable en Officiel simulé quelle que soit
       // la date. Même principe que les étalonnages : TOUJOURS un
       // exemplaire reconnu, échéance RELATIVE (jourDemo). Sophie Bianchi
