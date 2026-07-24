@@ -272,6 +272,43 @@ function verifierDelivrance2008(regime, dateDebut) {
   }
 }
 
+// Report v7 — garde de saisie du registre des plaintes : MIROIR LITTÉRAL de
+// v8/js/data/plaintes.js (parité de comportement prouvée par la suite
+// doublée). L'existence du client (clientId) est vérifiée par les handlers.
+const ETATS_PLAINTE = ['RECUE', 'EN_COURS', 'TRAITEE'];
+
+function verifierPlainte(d, existant) {
+  const texteOuNull = (v) => (v !== undefined && v !== null
+    && String(v).trim() !== '' ? String(v).trim() : null);
+  const estDate = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v));
+  const champ = (nom) => (d[nom] !== undefined
+    ? texteOuNull(d[nom])
+    : (existant ? existant[nom] ?? null : null));
+
+  const objet = champ('objet');
+  if (!objet) throw new Error('Objet de la plainte obligatoire.');
+  const dateReception = champ('dateReception');
+  if (!dateReception || !estDate(dateReception)) {
+    throw new Error('Date de réception obligatoire (AAAA-MM-JJ).');
+  }
+  const etat = d.etat !== undefined
+    ? String(d.etat)
+    : (existant ? existant.etat : 'RECUE');
+  if (!ETATS_PLAINTE.includes(etat)) {
+    throw new Error(`État de plainte inconnu : ${etat} `
+      + `(attendu : ${ETATS_PLAINTE.join(', ')}).`);
+  }
+  const dateReponse = champ('dateReponse');
+  if (dateReponse && !estDate(dateReponse)) {
+    throw new Error('Date de réponse invalide (AAAA-MM-JJ).');
+  }
+  return {
+    clientId: champ('clientId'),
+    clientLibelle: champ('clientLibelle'),
+    dateReception, objet, reponse: champ('reponse'), dateReponse, etat
+  };
+}
+
 /**
  * Revue L4 — garde de SAISIE de la remise à niveau (miroir EXACT du
  * DemoStore) : format ancré AAAA-MM-JJ + date calendaire RÉELLE (un
@@ -418,6 +455,8 @@ const ROLES_MUTATION = {
   demantelerMachine: OPERATEUR,
   remettreEnService: OPERATEUR,
   createClient: OPERATEUR,
+  createPlainte: OPERATEUR,
+  updatePlainte: OPERATEUR,
   updateClient: OPERATEUR,
   createBouteille: OPERATEUR,
   updateBouteille: OPERATEUR,
@@ -2160,6 +2199,72 @@ const HANDLERS = {
       journaliser(d.operateur, 'MODIFICATION_CLIENT', client.raisonSociale,
         `Champs : ${Object.keys(patch).join(', ')}`);
       return client;
+    });
+  },
+
+  // === registre des plaintes (report v7) ====================
+
+  getPlaintes() {
+    return db.all('SELECT * FROM plaintes ORDER BY rowid')
+      .map((ligne) => mapping.versFront('plaintes', ligne))
+      .sort((a, b) => String(b.dateReception ?? '')
+        .localeCompare(String(a.dateReception ?? '')));
+  },
+
+  createPlainte(params) {
+    const d = params.donneesPlainte || {};
+    const p = verifierPlainte(d, null);
+    if (p.clientId && !db.get(
+      'SELECT id FROM clients_detenteurs WHERE id = ?', [p.clientId])) {
+      throw new Error(`Client / détenteur introuvable : ${p.clientId}.`);
+    }
+    const annee = String(p.dateReception).slice(0, 4);
+    return muter(() => {
+      const rang = db.get(
+        `SELECT count(*) AS n FROM plaintes WHERE numero LIKE ?`,
+        [`PL-${annee}-%`]).n + 1;
+      const plainte = {
+        id: db.generateId('PLT'),
+        numero: `PL-${annee}-${String(rang).padStart(4, '0')}`,
+        clientId: p.clientId,
+        clientLibelle: p.clientLibelle,
+        dateReception: p.dateReception,
+        objet: p.objet,
+        reponse: p.reponse,
+        dateReponse: p.dateReponse,
+        etat: p.etat
+      };
+      const ligne = mapping.versSql('plaintes', plainte);
+      ligne.etablissement_id = ID_ETABLISSEMENT;
+      inserer('plaintes', ligne);
+      journaliser(d.operateur, 'CREATION_PLAINTE', plainte.numero, plainte.objet);
+      return mapping.versFront('plaintes',
+        db.get('SELECT * FROM plaintes WHERE id = ?', [plainte.id]));
+    });
+  },
+
+  updatePlainte(params) {
+    const { id } = params;
+    const d = params.donneesPlainte || {};
+    const existant = db.get('SELECT * FROM plaintes WHERE id = ?', [id]);
+    if (!existant) throw new Error(`Plainte introuvable : ${id}.`);
+    const fusion = verifierPlainte(d, mapping.versFront('plaintes', existant));
+    if (fusion.clientId && !db.get(
+      'SELECT id FROM clients_detenteurs WHERE id = ?', [fusion.clientId])) {
+      throw new Error(`Client / détenteur introuvable : ${fusion.clientId}.`);
+    }
+    return muter(() => {
+      majParId('plaintes', id, mapping.versSql('plaintes', {
+        clientId: fusion.clientId, clientLibelle: fusion.clientLibelle,
+        dateReception: fusion.dateReception, objet: fusion.objet,
+        reponse: fusion.reponse, dateReponse: fusion.dateReponse,
+        etat: fusion.etat
+      }));
+      const plainte = mapping.versFront('plaintes',
+        db.get('SELECT * FROM plaintes WHERE id = ?', [id]));
+      journaliser(d.operateur, 'MODIFICATION_PLAINTE', plainte.numero,
+        `État : ${plainte.etat}`);
+      return plainte;
     });
   },
 
@@ -4693,6 +4798,8 @@ function construireDonneesExport() {
     // P0-8 : les cessions voyagent dans l'export (sinon perdues au round-trip
     // alors que la bouteille est déjà décrémentée → écart fantôme à l'import).
     cessions: HANDLERS.getCessions(),
+    // Report v7 : le registre des plaintes voyage dans l'export (sinon perdu).
+    plaintes: HANDLERS.getPlaintes(),
     alertes: HANDLERS.getAlertes(),
     journalAudit: HANDLERS.getJournalAudit(),
     // Lot E2 (brique E2c) : le COFFRE voyage dans l'export — enveloppes en
@@ -4752,9 +4859,9 @@ function completerCandidat(donnees) {
   const candidat = { ...donnees };
   for (const cle of ['auditsOrganisme', 'nonConformites', 'outillage',
     'stocksInitiaux', 'bsff', 'inventaires', 'justificationsEcarts',
-    'piecesJointes', 'retoursFournisseur', 'cessions', 'journalAudit',
-    'habilitations', 'mentionsHabilitation', 'mouvementOutillage',
-    'signaturesMouvement', 'coffreIdentites']) {
+    'piecesJointes', 'retoursFournisseur', 'cessions', 'plaintes',
+    'journalAudit', 'habilitations', 'mentionsHabilitation',
+    'mouvementOutillage', 'signaturesMouvement', 'coffreIdentites']) {
     if (!Array.isArray(candidat[cle])) candidat[cle] = [];
   }
   // Lot E2 (E2c) : clés du coffre — un export antérieur n'en a pas.
@@ -5130,6 +5237,8 @@ function remplacerToutLEtat(candidat) {
       'controles', 'signatures_mouvement', 'mouvement_outillage', 'mouvements',
       'justifications_ecarts', 'inventaires',
       'inventaires_bouteilles', 'inventaires_fuites',
+      // plaintes AVANT clients_detenteurs : FK plaintes → clients (report v7).
+      'plaintes',
       'stocks_initiaux', 'bouteilles', 'machines', 'clients_detenteurs',
       'outillage', 'non_conformites', 'audits_etablissement', 'habilitations',
       'mentions_habilitation', 'personnel', 'journal_audit', 'etablissements'];
@@ -5257,6 +5366,8 @@ function remplacerToutLEtat(candidat) {
       candidat.retoursFournisseur);
     // P0-8 : cessions — FK bouteilles, réinsérées comme les retours fournisseur.
     reinsererCollection('cessions', 'cessions', candidat.cessions);
+    // Report v7 : plaintes — FK clients_detenteurs (déjà réinsérés au-dessus).
+    reinsererCollection('plaintes', 'plaintes', candidat.plaintes);
     reinsererCollection('stocks_initiaux', 'stocks_initiaux',
       candidat.stocksInitiaux);
     reinsererCollection('inventaires', 'inventaires', candidat.inventaires);

@@ -168,6 +168,22 @@ const TABLES = {
     sqlSeulement: ['etablissement_id']
   },
 
+  // Report v7 (migration 35) : registre des plaintes / réclamations clients.
+  plaintes: {
+    champs: {
+      id: 'id',
+      numero: 'numero',
+      clientId: 'client_id',
+      clientLibelle: 'client_libelle',
+      dateReception: 'date_reception',
+      objet: 'objet',
+      reponse: 'reponse',
+      dateReponse: 'date_reponse',
+      etat: 'etat'
+    },
+    sqlSeulement: ['etablissement_id', 'date_creation']
+  },
+
   machines: {
     champs: {
       id: 'id',

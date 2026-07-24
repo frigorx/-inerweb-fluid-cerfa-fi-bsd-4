@@ -812,6 +812,23 @@ export const DEMO = {
   // P0-8 : cessions de fluide à un tiers attesté (rubrique 10 de la
   // déclaration annuelle ; vides au départ, alimentées par l'utilisation)
   cessions: [],
+  // Report v7 : registre des plaintes / réclamations clients. Deux exemples
+  // pour la démo — un traité, un en cours — liés à un client du semis.
+  plaintes: [
+    {
+      id: 'plt-demo-1', numero: 'PL-2026-0001', clientId: 'cli-fournil',
+      clientLibelle: null, dateReception: jourDemo(-40),
+      objet: 'Température de la chambre positive instable après intervention.',
+      reponse: 'Réglage du détendeur repris, contrôle de suivi conforme.',
+      dateReponse: jourDemo(-33), etat: 'TRAITEE'
+    },
+    {
+      id: 'plt-demo-2', numero: 'PL-2026-0002', clientId: 'cli-fournil',
+      clientLibelle: null, dateReception: jourDemo(-6),
+      objet: 'Bruit anormal du compresseur signalé par le boulanger.',
+      reponse: null, dateReponse: null, etat: 'EN_COURS'
+    }
+  ],
 
   // --------------------------------------------------------
   // Alertes du tableau de bord (4)

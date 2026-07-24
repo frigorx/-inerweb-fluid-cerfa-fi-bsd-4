@@ -70,6 +70,7 @@ import { evaluerBlocagesOfficiel, messageRefusOfficiel, VERROU_LIVRAISON,
 import { verifierOctetsPdfFinal, nomFichierPdfFinal, CATEGORIE_PDF_FINAL,
   MSG_PDF_FINAL_MANQUANT, MSG_PDF_FINAL_HORS_OFFICIEL,
   MSG_PDF_FINAL_TRANSFERT, pdfFinalAttendu } from './pdf-final.js';
+import { verifierPlainte } from './plaintes.js';
 
 const CLE_STOCKAGE = 'inerweb-fluide-v8-demo';
 
@@ -3249,6 +3250,58 @@ export function creerDemoStore() {
       return copier(client);
     },
 
+    // --- registre des plaintes (report v7) --------------------
+    async getPlaintes() {
+      return (donnees.plaintes ?? [])
+        .map((p) => copier(p))
+        .sort((a, b) => String(b.dateReception ?? '')
+          .localeCompare(String(a.dateReception ?? '')));
+    },
+
+    async createPlainte(donneesPlainte) {
+      const p = verifierPlainte(donneesPlainte || {}, null);
+      if (p.clientId && !donnees.clients.some((c) => c.id === p.clientId)) {
+        throw new Error(`Client / détenteur introuvable : ${p.clientId}.`);
+      }
+      const annee = String(p.dateReception).slice(0, 4);
+      const rang = (donnees.plaintes ?? [])
+        .filter((x) => String(x.numero ?? '').includes(`PL-${annee}-`)).length + 1;
+      const plainte = {
+        id: genId('plt'),
+        numero: `PL-${annee}-${String(rang).padStart(4, '0')}`,
+        clientId: p.clientId,
+        clientLibelle: p.clientLibelle,
+        dateReception: p.dateReception,
+        objet: p.objet,
+        reponse: p.reponse,
+        dateReponse: p.dateReponse,
+        etat: p.etat
+      };
+      if (!donnees.plaintes) donnees.plaintes = [];
+      donnees.plaintes.push(plainte);
+      journaliser((donneesPlainte || {}).operateur, 'CREATION_PLAINTE',
+        plainte.numero, plainte.objet);
+      persisterEtNotifier();
+      return copier(plainte);
+    },
+
+    async updatePlainte(id, donneesPlainte) {
+      const plainte = (donnees.plaintes ?? []).find((x) => x.id === id);
+      if (!plainte) throw new Error(`Plainte introuvable : ${id}.`);
+      const fusion = verifierPlainte(donneesPlainte || {}, plainte);
+      if (fusion.clientId && !donnees.clients.some((c) => c.id === fusion.clientId)) {
+        throw new Error(`Client / détenteur introuvable : ${fusion.clientId}.`);
+      }
+      for (const champ of ['clientId', 'clientLibelle', 'dateReception',
+        'objet', 'reponse', 'dateReponse', 'etat']) {
+        plainte[champ] = fusion[champ];
+      }
+      journaliser((donneesPlainte || {}).operateur, 'MODIFICATION_PLAINTE',
+        plainte.numero, `État : ${plainte.etat}`);
+      persisterEtNotifier();
+      return copier(plainte);
+    },
+
     // ------------------------------------------------------
     // Mutations : bouteilles
     // ------------------------------------------------------
@@ -5704,7 +5757,7 @@ export function creerDemoStore() {
       // registre étranger (sans per-fh/per-sb) serait REFUSÉ en orphelin.
       // Idem signaturesMouvement (lot C) : jamais de signature inventée.
       for (const cle of ['habilitations', 'mentionsHabilitation',
-        'mouvementOutillage', 'signaturesMouvement', 'cessions']) {
+        'mouvementOutillage', 'signaturesMouvement', 'cessions', 'plaintes']) {
         if (!Array.isArray(candidat[cle])) candidat[cle] = [];
       }
       if (candidat.etablissement.numAttestationCapacite === undefined) {

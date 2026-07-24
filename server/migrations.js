@@ -205,6 +205,9 @@
  *  34 — L3/R4 (usage thermique) : machines.usage_thermique (liste FERMÉE
  *       froid/clim/PAC, NULL = régime le plus strict). Commande les dates
  *       d'interdiction du vierge PRP >= 2500 (art. 13). Hors WORM.
+ *  35 — report v7 : table plaintes (registre des réclamations clients —
+ *       objet, réception, réponse, état RECUE/EN_COURS/TRAITEE ; client_id
+ *       FK nullable + client_libelle de secours). Jamais supprimée. Hors WORM.
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -1662,6 +1665,34 @@ LEFT JOIN justifications_ecarts j ON j.etablissement_id = p.etablissement_id AND
                  CHECK (usage_thermique IS NULL
                    OR usage_thermique IN ('FROID_COMMERCIAL',
                      'CLIMATISATION', 'POMPE_A_CHALEUR'));`);
+    }
+  },
+
+  // 35 — REPORT v7 : le REGISTRE DES PLAINTES / réclamations clients (la v7
+  // le tenait dans une feuille « PLAINTES »). Trace interne d'une
+  // réclamation (objet, réception, réponse, état), reliée à un détenteur du
+  // registre (client_id) ou saisie libre (client_libelle) pour un plaignant
+  // hors registre. Jamais supprimée (registre), état RECUE→EN_COURS→TRAITEE.
+  // Table hors WORM et hors chaîne de hash (comme clients).
+  35: {
+    nom: 'plaintes',
+    appliquer(db) {
+      db.exec(`CREATE TABLE IF NOT EXISTS plaintes (
+        id                TEXT PRIMARY KEY,
+        etablissement_id  TEXT NOT NULL REFERENCES etablissements(id),
+        numero            TEXT,
+        client_id         TEXT REFERENCES clients_detenteurs(id),
+        client_libelle    TEXT,
+        date_reception    TEXT,
+        objet             TEXT,
+        reponse           TEXT,
+        date_reponse      TEXT,
+        etat              TEXT NOT NULL DEFAULT 'RECUE'
+            CHECK (etat IN ('RECUE','EN_COURS','TRAITEE')),
+        date_creation     TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+      );`);
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_plaintes_etablissement
+                 ON plaintes (etablissement_id);`);
     }
   }
 };

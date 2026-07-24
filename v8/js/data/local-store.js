@@ -116,6 +116,7 @@ export function creerLocalStore(transport) {
     getFluides() { return lire('getFluides', {}); },
     getPersonnel() { return lire('getPersonnel', {}); },
     getClients() { return lire('getClients', {}); },
+    getPlaintes() { return lire('getPlaintes', {}); },
     getAlertes() { return lire('getAlertes', {}); },
     getJournalAudit() { return lire('getJournalAudit', {}); },
     verifierChaineHash() { return lire('verifierChaineHash', {}); },
@@ -190,6 +191,12 @@ export function creerLocalStore(transport) {
     },
     updateClient(id, donneesClient) {
       return muter('updateClient', { id, donneesClient });
+    },
+    createPlainte(donneesPlainte) {
+      return muter('createPlainte', { donneesPlainte });
+    },
+    updatePlainte(id, donneesPlainte) {
+      return muter('updatePlainte', { id, donneesPlainte });
     },
 
     // --- bouteilles ---------------------------------------
