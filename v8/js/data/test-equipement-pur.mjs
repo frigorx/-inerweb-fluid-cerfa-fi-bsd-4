@@ -25,6 +25,7 @@ import {
   SOUS_TYPES_MOBILES_ELIGIBLES, LIBELLE_SOUS_TYPE,
   ajouterMoisEquipement, echeanceVerificationDetection, detectionEffective,
   detectionObligatoire, detectionObligatoireDepuisNiveau, exemptionControle,
+  calculerExemption, EXEMPTION_HERMETIQUE_ACTIVE,
   hermetiqueOpposable, mobileListe, verifierModeleEquipement
 } from './equipement.js';
 
@@ -123,13 +124,65 @@ verifier('HFO pur AVANT le 11/03/2024 : hors régime, donc non obligatoire',
   detectionObligatoire(HFO, { chargeNominaleKg: 500 }, '2023-06-01') === false);
 
 // ============================================================
-// D. ⭐ E3 — aucune exemption codée (choix conservateur assumé)
+// D. ⭐ E3(b) / L5 — exemption CODÉE derrière drapeau FERMÉ
 // ============================================================
-verifier('⭐ un hermétique étiqueté de 0,1 kg n’est PAS exempté '
-  + '(aucune exemption codée tant que les seuils ne sont pas confirmés)',
-  (() => { const e = exemptionControle(HFC, { chargeNominaleKg: 0.1,
+verifier('⭐ drapeau FERMÉ : un hermétique étiqueté de 0,1 kg n’est PAS '
+  + 'exempté (comportement conservateur INCHANGÉ tant que le visa manque)',
+  EXEMPTION_HERMETIQUE_ACTIVE === false
+  && (() => { const e = exemptionControle('HFC', HFC, { chargeNominaleKg: 0.1,
     hermetiqueScelle: true, hermetiqueEtiquete: true, residentiel: true });
     return e.exempte === false && e.motif === null; })());
+
+// Le CALCUL, lui, se prouve indépendamment du drapeau (calculerExemption).
+{
+  const herm = { hermetiqueScelle: true, hermetiqueEtiquete: true };
+  const calc = (categorie, fluideRef, machine) =>
+    calculerExemption(categorie, fluideRef, machine);
+  // Gate : l'étiquette est OBLIGATOIRE.
+  verifier('calcul : scellé NON étiqueté → jamais exempté (le texte ne '
+    + 'reconnaît que l’hermétique marqué comme tel)',
+    calc('HFC', HFC, { chargeNominaleKg: 0.1, hermetiqueScelle: true,
+      hermetiqueEtiquete: false }).exempte === false);
+  // Annexe I (HFC) : < 10 t éq. CO₂, frontière STRICTE (PRP 1000).
+  verifier('calcul HFC : 9,999 kg × PRP 1000 = 9,999 t → exempté, motif chiffré',
+    (() => { const e = calc('HFC', HFC, { ...herm, chargeNominaleKg: 9.999 });
+      return e.exempte === true && /10/.test(e.motif) && /art\. 5/.test(e.motif);
+    })());
+  verifier('calcul HFC : 10 kg × PRP 1000 = 10 t PILE → NON exempté (strict)',
+    calc('HFC', HFC, { ...herm, chargeNominaleKg: 10 }).exempte === false);
+  // Annexe II section 1 (HFO pur) : < 2 kg, frontière STRICTE.
+  verifier('calcul HFO : 1,999 kg → exempté (annexe II, section 1)',
+    (() => { const e = calc('HFO', HFO, { ...herm, chargeNominaleKg: 1.999 });
+      return e.exempte === true && /annexe II/.test(e.motif); })());
+  verifier('calcul HFO : 2 kg PILE → NON exempté (strict)',
+    calc('HFO', HFO, { ...herm, chargeNominaleKg: 2 }).exempte === false);
+  // Résidentiel : < 3 kg de gaz fluoré — le « ou » du texte (cas R2 chiffré :
+  // 2,9 kg à PRP 3922 = 11,37 t, AU-DESSUS de 10 t, exempté par la branche
+  // résidentielle SEULE). Parc du lycée à residentiel=0 (backfill 32).
+  verifier('calcul résidentiel : 2,9 kg à PRP 3922 (11,4 t éq.) → exempté '
+    + 'PAR la branche résidentielle (cas R2, gaté Franck, consigné)',
+    (() => { const e = calc('HFC', { gwpAr4: 3922 },
+      { ...herm, chargeNominaleKg: 2.9, residentiel: true });
+      return e.exempte === true && /résidentiel/.test(e.motif); })());
+  verifier('calcul résidentiel : 3 kg PILE → NON exempté (strict)',
+    calc('HFC', { gwpAr4: 3922 },
+      { ...herm, chargeNominaleKg: 3, residentiel: true }).exempte === false);
+  verifier('calcul : NON résidentiel à 11,4 t éq. → NON exempté (la branche '
+    + 'tCO₂eq refuse, la résidentielle ne s’applique pas)',
+    calc('HFC', { gwpAr4: 3922 },
+      { ...herm, chargeNominaleKg: 2.9 }).exempte === false);
+  // HCFC et hors périmètre : jamais.
+  verifier('calcul HCFC : JAMAIS exempté (hors art. 5 — règl. 1005/2009)',
+    calc('HCFC', { gwpAr4: 1810 },
+      { ...herm, chargeNominaleKg: 0.5 }).exempte === false);
+  verifier('calcul hors périmètre (catégorie null) : sans objet',
+    calc(null, { gwpAr4: 1 }, { ...herm, chargeNominaleKg: 0.5 }).exempte === false);
+  // Gardes strictes.
+  verifier('calcul : charge inconnue, nulle ou PRP illisible → jamais exempté',
+    calc('HFC', HFC, { ...herm }).exempte === false
+    && calc('HFC', HFC, { ...herm, chargeNominaleKg: 0 }).exempte === false
+    && calc('HFC', { gwpAr4: null }, { ...herm, chargeNominaleKg: 1 }).exempte === false);
+}
 
 // ============================================================
 // E. ⭐ E4 — le seuil d’aptitude élargi exige l’ÉTIQUETTE
@@ -234,9 +287,29 @@ verifier('parité : constantes identiques',
 verifier('parité : detectionObligatoireDepuisNiveau',
   [1, 2, 3, null, undefined].every((n) =>
     detectionObligatoireDepuisNiveau(n) === miroir.detectionObligatoireDepuisNiveau(n)));
-verifier('parité : exemptionControle (toujours non exempté des 2 côtés)',
-  JSON.stringify(exemptionControle(HFC, { hermetiqueScelle: true }))
-    === JSON.stringify(miroir.exemptionControle(HFC, { hermetiqueScelle: true })));
+verifier('parité : exemptionControle drapeau fermé (toujours non exempté des 2 côtés)',
+  JSON.stringify(exemptionControle('HFC', HFC, { hermetiqueScelle: true }))
+    === JSON.stringify(miroir.exemptionControle('HFC', HFC, { hermetiqueScelle: true }))
+  && miroir.EXEMPTION_HERMETIQUE_ACTIVE === EXEMPTION_HERMETIQUE_ACTIVE);
+{
+  const herm = { hermetiqueScelle: true, hermetiqueEtiquete: true };
+  const CAS = [
+    ['HFC', HFC, { ...herm, chargeNominaleKg: 9.999 }],
+    ['HFC', HFC, { ...herm, chargeNominaleKg: 10 }],
+    ['HFO', HFO, { ...herm, chargeNominaleKg: 1.999 }],
+    ['HFO', HFO, { ...herm, chargeNominaleKg: 2 }],
+    ['HFC', { gwpAr4: 3922 }, { ...herm, chargeNominaleKg: 2.9, residentiel: true }],
+    ['HFC', { gwpAr4: 3922 }, { ...herm, chargeNominaleKg: 3, residentiel: true }],
+    ['HCFC', { gwpAr4: 1810 }, { ...herm, chargeNominaleKg: 0.5 }],
+    [null, { gwpAr4: 1 }, { ...herm, chargeNominaleKg: 0.5 }],
+    ['HFC', HFC, { chargeNominaleKg: 5, hermetiqueScelle: true }],
+    ['HFC', HFC, { ...herm }]
+  ];
+  verifier('parité : calculerExemption identique (verdicts ET motifs) sur 10 cas',
+    CAS.every(([c, f, m]) =>
+      JSON.stringify(calculerExemption(c, f, m))
+        === JSON.stringify(miroir.calculerExemption(c, f, m))));
+}
 verifier('parité : hermetiqueOpposable',
   [[true, true], [true, false], [false, true], [false, false]].every(([s, e]) =>
     hermetiqueOpposable({ hermetiqueScelle: s, hermetiqueEtiquete: e })

@@ -76,9 +76,53 @@ function detectionObligatoireDepuisNiveau(niveau) {
   return niveau === 3;
 }
 
-/** ⭐ E3 — AUCUNE exemption codée à ce jour (choix conservateur assumé). */
-function exemptionControle(_fluideRef, _machine) {
-  return { exempte: false, motif: null };
+/**
+ * ⭐ E3(b) / L5/Q6 — DRAPEAU d'activation de l'exemption des hermétiquement
+ * scellés étiquetés. MIROIR LITTÉRAL de l'ESM — voir le commentaire complet
+ * dans v8/js/data/equipement.js. FERMÉ jusqu'au visa T3.
+ */
+const EXEMPTION_HERMETIQUE_ACTIVE = false;
+
+/** Tonnes éq. CO₂ en français, 2 décimales au plus (littéral, sans Intl). */
+function fmtTonnesEqCo2(t) {
+  return String(Math.round(t * 100) / 100).replace('.', ',');
+}
+
+/** ⭐ L5/Q6 — le CALCUL de l'exemption (miroir littéral, catégorie fournie
+ * par l'appelant — même patron que detectionObligatoireDepuisNiveau). */
+function calculerExemption(categorie, fluideRef, machine) {
+  const aucune = { exempte: false, motif: null };
+  if (!hermetiqueOpposable(machine)) return aucune;
+  if (categorie !== 'HFC' && categorie !== 'HFO') return aucune;
+  const charge = Number(machine?.chargeNominaleKg);
+  if (!Number.isFinite(charge) || charge <= 0) return aucune;
+  if (categorie === 'HFC') {
+    const prp = Number(fluideRef?.gwpAr4);
+    if (Number.isFinite(prp) && prp > 0 && (charge * prp) / 1000 < 10) {
+      return { exempte: true, motif: 'Exempté du contrôle d’étanchéité : '
+        + 'hermétiquement scellé étiqueté, '
+        + fmtTonnesEqCo2((charge * prp) / 1000)
+        + ' t éq. CO₂ (moins de 10 — règl. UE 2024/573, art. 5).' };
+    }
+  }
+  if (categorie === 'HFO' && charge < 2) {
+    return { exempte: true, motif: 'Exempté du contrôle d’étanchéité : '
+      + 'hermétiquement scellé étiqueté, moins de 2 kg de gaz de '
+      + 'l’annexe II, section 1 (règl. UE 2024/573, art. 5).' };
+  }
+  if (Boolean(machine?.residentiel) && charge < 3) {
+    return { exempte: true, motif: 'Exempté du contrôle d’étanchéité : '
+      + 'hermétiquement scellé étiqueté en usage résidentiel, moins de '
+      + '3 kg de gaz fluoré (règl. UE 2024/573, art. 5).' };
+  }
+  return aucune;
+}
+
+/** ⭐ E3 — l'exemption OPPOSABLE : le calcul derrière le drapeau (fermé =
+ * toujours « non exempté », le choix conservateur historique). */
+function exemptionControle(categorie, fluideRef, machine) {
+  if (!EXEMPTION_HERMETIQUE_ACTIVE) return { exempte: false, motif: null };
+  return calculerExemption(categorie, fluideRef, machine);
 }
 
 /** ⭐ E4 — seuil d'aptitude élargi : hermétique ET étiqueté. */
@@ -128,10 +172,12 @@ module.exports = {
   SOUS_TYPES_MOBILES,
   SOUS_TYPES_MOBILES_ELIGIBLES,
   LIBELLE_SOUS_TYPE,
+  EXEMPTION_HERMETIQUE_ACTIVE,
   ajouterMoisEquipement,
   echeanceVerificationDetection,
   detectionEffective,
   detectionObligatoireDepuisNiveau,
+  calculerExemption,
   exemptionControle,
   hermetiqueOpposable,
   mobileListe,

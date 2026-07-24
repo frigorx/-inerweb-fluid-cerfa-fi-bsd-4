@@ -155,7 +155,31 @@ Ne dépend de RIEN — surtout pas de la fusion des stores.
   texte lu verbatim, mais un assouplissement quand même — il attend le visa pour s'exercer
   en Officiel.
 
-### L5 — Exemption des hermétiques scellés étiquetés (Q6) *(MOINS de contrôles — le lot le plus surveillé)*
+### L5 — FAIT le 24/07 (corps + drapeau) : exemption codée, INERTE, activation consignée
+
+**Livré** : `EXEMPTION_HERMETIQUE_ACTIVE = false` (2 miroirs `equipement.js`, même doctrine
+que `VERROU_LIVRAISON`) · `calculerExemption(categorie, fluideRef, machine)` — le calcul
+PUR, testable indépendamment du drapeau (3 seuils STRICTS conformes au tableau Q6 de
+Franck, gate scellé ET étiqueté, HCFC jamais, hors périmètre sans objet, gardes charge/PRP)
+· `exemptionControle` = le calcul derrière le drapeau (fermé = « non exempté », le
+comportement d'aujourd'hui ne bouge PAS d'un pouce). La catégorie du cadre 7 vient de
+l'appelant (patron `detectionObligatoireDepuisNiveau` : aucun seuil recopié). 55 vérifs
+dans `test-equipement-pur` dont le cas R2 CHIFFRÉ (2,9 kg de R-404A = 11,37 t éq. CO₂,
+exempté par la branche résidentielle SEULE — codé fidèle au « ou » du texte, parc à 0).
+
+**GESTE D'ACTIVATION (un lot dédié, APRÈS le visa T3 + la réponse R2)** :
+1. basculer la constante dans les DEUX miroirs (nulle part ailleurs) ;
+2. brancher les consommateurs de fréquence — liste exacte relevée le 24/07 :
+   `v8/js/cerfa/generateur.js:149` (cadre 7 CERFA) · `v8/js/documents/plaque-fgas.js:39`
+   · `v8/js/data/demo-store.js` :1249 (cadre Officiel), :3478 (prochain contrôle),
+   :3884 (alertes) · `server/api.js` :3134, :3604, :7448 (miroirs) — le motif d'exemption
+   s'AFFICHE partout (plaque, fiche machine, CERFA : jamais exempter en silence) ;
+3. trancher le cadre 7 d'un CERFA exempté et le sort des alertes `alr-detection-*` ;
+4. vérification NAVIGATEUR (port jetable) + revue adversariale du branchement.
+
+*(Description d'origine du lot conservée ci-dessous pour mémoire.)*
+
+### L5 (énoncé d'origine) — Exemption des hermétiques scellés étiquetés (Q6) *(MOINS de contrôles — le lot le plus surveillé)*
 - Corps de `exemptionControle` (les 3 seuils STRICTS : annexe I < 10 t éq. CO2 · annexe II
   section 1 < 2 kg · résidentiel < 3 kg ; gate scellé ET étiqueté) dans les deux miroirs.
 - ⚠️ Vérifié : la fonction n'a AUJOURD'HUI **AUCUN APPELANT**. L'écrire ne suffit pas : la
