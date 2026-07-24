@@ -46,7 +46,7 @@ const { evaluerBlocagesOfficiel, messageRefusOfficiel, VERROU_LIVRAISON,
 // Officiel (miroir du MOTEUR de v8/js/data/habilitations.js, parité prouvée
 // par test-droit-intervention.mjs).
 const { verifierDroitIntervention, habilitationReconnue,
-  jetonsMentionsActives } = require('./droit-intervention.js');
+  jetonsMentionsActives, FIN_DELIVRANCE_2008 } = require('./droit-intervention.js');
 // Déclaration annuelle 11 rubriques (P0-8, miroir littéral du module ESM du
 // front, parité prouvée par test-declaration-annuelle.mjs).
 const { calculerDeclarationAnnuelle } = require('./declaration-annuelle.js');
@@ -252,6 +252,22 @@ function verifierCategorieHabilitation(regime, categorie) {
       `(attendu : ${attendues.join(', ')}).`);
   }
   return categorie;
+}
+
+/**
+ * L4/Q3 (RN-2) — garde de DÉLIVRANCE (miroir EXACT du DemoStore) : après le
+ * 31/12/2026 plus aucune attestation ne peut être délivrée sous l'ancien
+ * régime (arrêté du 21/11/2025, art. 11). On enregistre l'HISTORIQUE
+ * librement (dateDebut absente = date de délivrance inconnue, admise) ;
+ * on refuse d'ACTER une délivrance 2008 postérieure — elle serait illégale.
+ */
+function verifierDelivrance2008(regime, dateDebut) {
+  if (regime === '2008' && dateDebut && dateDebut > FIN_DELIVRANCE_2008) {
+    throw new Error(
+      'Une attestation du régime 2008 ne peut plus être délivrée après le ' +
+      '31/12/2026 (arrêté du 21/11/2025, art. 11) : enregistrez une ' +
+      'catégorie du régime 2025.');
+  }
 }
 
 /** Ordre stable des habilitations (miroir EXACT du module pur, tri JS). */
@@ -1755,6 +1771,7 @@ const HANDLERS = {
     }
     verifierRegime(d.regime);
     verifierCategorieHabilitation(d.regime, d.categorie);
+    verifierDelivrance2008(d.regime, d.dateDebut);
     const habilitation = {
       id: db.generateId('HAB'),
       personneId: personne.id,
@@ -1764,6 +1781,10 @@ const HANDLERS = {
       organismeDelivreur: d.organismeDelivreur ?? null,
       dateDebut: d.dateDebut ?? null,
       dateFin: d.dateFin ?? null,
+      // L4/Q3 (RN-2) : remise à niveau ponctuelle (arrêté du 21/11/2025
+      // art. 7) — enregistrable dès la création (saisie d'historique).
+      remiseNiveauLe: d.remiseNiveauLe ?? null,
+      remiseNiveauOrganisme: d.remiseNiveauOrganisme ?? null,
       // Invariant : active à la création (désactivation via revoquerHabilitation).
       actif: true,
       dateRevocation: null
@@ -1787,8 +1808,9 @@ const HANDLERS = {
       throw new Error(coffre.MSG_FICHE_AU_COFFRE);
     }
     // Régime et catégorie INTOUCHABLES (correction de coquille, pas d'identité).
+    // L4/Q3 : la remise à niveau se corrige aussi (même statut qu'une date).
     const CHAMPS = ['numeroAttestation', 'organismeDelivreur',
-      'dateDebut', 'dateFin'];
+      'dateDebut', 'dateFin', 'remiseNiveauLe', 'remiseNiveauOrganisme'];
     const patch = {};
     for (const champ of CHAMPS) {
       if (d[champ] !== undefined) patch[champ] = d[champ];

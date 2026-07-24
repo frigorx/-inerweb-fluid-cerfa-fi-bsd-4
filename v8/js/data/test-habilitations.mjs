@@ -353,5 +353,54 @@ verifier('mouvement : quantité calculée des pesées (+2 kg)',
   }
 }
 
+// --- L4/Q3 (RN-2) : remise à niveau + garde de délivrance 2008 -----
+{
+  const titulaire = await store.createPersonne({
+    nom: 'Transition', prenom: 'Testeur', typePersonne: 'ENSEIGNANT',
+    roleApp: 'REFERENT'
+  });
+
+  // Le CRUD porte les nouveaux champs, aller-retour complet.
+  const avecRemise = await store.createHabilitation({
+    personneId: titulaire.id, regime: '2008', categorie: 'I',
+    dateDebut: '2020-05-10', remiseNiveauLe: '2028-06-01',
+    remiseNiveauOrganisme: 'QualiFroid Cert', operateur: 'Testeur Transition'
+  });
+  verifier('createHabilitation porte la remise à niveau (date + organisme)',
+    avecRemise.remiseNiveauLe === '2028-06-01'
+    && avecRemise.remiseNiveauOrganisme === 'QualiFroid Cert');
+  const relue = (await store.getHabilitations())
+    .find((h) => h.id === avecRemise.id);
+  verifier('la remise à niveau survit à la relecture du store',
+    relue && relue.remiseNiveauLe === '2028-06-01'
+    && relue.remiseNiveauOrganisme === 'QualiFroid Cert');
+
+  const corrigee = await store.updateHabilitation(avecRemise.id, {
+    remiseNiveauLe: '2028-09-15', operateur: 'Testeur Transition'
+  });
+  verifier('updateHabilitation corrige la remise à niveau (coquille de date)',
+    corrigee.remiseNiveauLe === '2028-09-15'
+    && corrigee.remiseNiveauOrganisme === 'QualiFroid Cert');
+
+  // Garde de délivrance : une 2008 datée APRÈS le 31/12/2026 est illégale.
+  await verifierRejet('createHabilitation refuse une délivrance 2008 datée de 2027',
+    store.createHabilitation({
+      personneId: titulaire.id, regime: '2008', categorie: 'I',
+      dateDebut: '2027-01-15', operateur: 'Testeur Transition'
+    }), 'ne peut plus être délivrée après le 31/12/2026');
+  const sansDate = await store.createHabilitation({
+    personneId: titulaire.id, regime: '2008', categorie: 'IV',
+    operateur: 'Testeur Transition'
+  });
+  verifier('une 2008 SANS date de début reste enregistrable (historique, date inconnue)',
+    sansDate.regime === '2008' && sansDate.actif === true);
+  const nouvelle2025 = await store.createHabilitation({
+    personneId: titulaire.id, regime: '2025', categorie: 'A1',
+    dateDebut: '2027-02-01', operateur: 'Testeur Transition'
+  });
+  verifier('le régime 2025 se délivre librement après 2026 (la garde ne vise que le 2008)',
+    nouvelle2025.regime === '2025' && nouvelle2025.dateDebut === '2027-02-01');
+}
+
 console.log(`\n${nbOk} OK, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);

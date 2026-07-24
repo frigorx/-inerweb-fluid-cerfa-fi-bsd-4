@@ -37,7 +37,7 @@
 // ============================================================
 
 /** Version du contrat (à incrémenter à chaque évolution de surface). */
-export const VERSION_CONTRAT = 10;
+export const VERSION_CONTRAT = 11;
 
 /**
  * Message canonique opposé à toute tentative de modification d'une
@@ -254,9 +254,9 @@ export const METHODES_CONTRAT = {
   getHabilitations: { genre: 'lecture',
     description: 'Toutes les habilitations (jamais supprimées : seulement révoquées), triées 2025 avant 2008 puis dateFin décroissante (null en tête) ; copies indépendantes ; sans argument.' },
   createHabilitation: { genre: 'mutation',
-    description: 'Crée une habilitation { personneId, regime 2008|2025, categorie, numeroAttestation?, organismeDelivreur?, dateDebut?, dateFin? } ; actif=vrai, dateRevocation=null ; cumul autorisé (2008 et 2025 coexistent, même catégorie renouvelable) ; Error si personne introuvable, régime inconnu ou catégorie incohérente avec le régime.' },
+    description: 'Crée une habilitation { personneId, regime 2008|2025, categorie, numeroAttestation?, organismeDelivreur?, dateDebut?, dateFin?, remiseNiveauLe?, remiseNiveauOrganisme? } ; actif=vrai, dateRevocation=null ; cumul autorisé (2008 et 2025 coexistent, même catégorie renouvelable) ; Error si personne introuvable, régime inconnu, catégorie incohérente avec le régime, ou délivrance 2008 datée APRÈS le 31/12/2026 (arrêté du 21/11/2025 art. 11 — L4/Q3).' },
   updateHabilitation: { genre: 'mutation',
-    description: 'Patch partiel (numeroAttestation, organismeDelivreur, dateDebut, dateFin) ; régime et catégorie INTOUCHABLES (correction de coquille, jamais réécriture d’identité) ; Error si introuvable.' },
+    description: 'Patch partiel (numeroAttestation, organismeDelivreur, dateDebut, dateFin, remiseNiveauLe, remiseNiveauOrganisme — L4/Q3 : la remise à niveau ponctuelle des attestations 2008 se corrige comme une date) ; régime et catégorie INTOUCHABLES (correction de coquille, jamais réécriture d’identité) ; Error si introuvable.' },
   revoquerHabilitation: { genre: 'mutation',
     description: 'Retire une habilitation : actif=false + dateRevocation (AAAA-MM-JJ), consigné au journal ; JAMAIS de suppression (la ligne reste dans getHabilitations, historisée) ; Error si introuvable ou déjà révoquée.' },
 
