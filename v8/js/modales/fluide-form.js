@@ -31,8 +31,12 @@ const LIBELLE_STATUT = {
   INTERDIT: 'Interdit'
 };
 const LIBELLE_CATEGORIE = {
-  HFC: 'HFC (seuils en tonnes équivalent CO₂)',
-  HFO: 'HFO pur (seuils en kilogrammes)',
+  // Q7/L1c (24/07) : la catégorie juridique des HFO purs est « gaz de
+  // l'annexe II, section 1 » (règl. UE 2024/573) — le libellé AFFICHÉ le
+  // dit ; la valeur ENREGISTRÉE reste 'HFO' (un renommage en base
+  // toucherait des sauvegardes et des écritures existantes pour un gain nul).
+  HFC: 'HFC — annexe I (seuils en tonnes équivalent CO₂)',
+  HFO: 'Gaz annexe II, section 1 — HFO pur (seuils en kilogrammes)',
   HCFC: 'HCFC (seuils en kilogrammes)',
   AUCUNE: 'Aucune — hors périmètre du contrôle d’étanchéité'
 };

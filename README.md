@@ -44,7 +44,7 @@ le logiciel ne peut pas être pris pour un registre opposable par accident.
 - **CERFA officiel rempli (PDF)** : le formulaire 15497\*04 officiel est rempli automatiquement, avec un aperçu à l'écran fidèle au document ; la référence imprimée et archivée est toujours le PDF officiel.
 - **Dossier audit annuel en un clic** : export ZIP complet (attestations, registres du personnel et de l'outillage, inventaires, mouvements, CERFA, contrôles d'étanchéité, BSFF, balance matière, journal d'audit) et vue « audit en 5 minutes ».
 - **Modes Formation et Officiel strictement séparés** : numérotation distincte, filigrane massif sur tout document de formation, validation enseignant obligatoire ; un élève ne peut jamais produire un document d'apparence officielle.
-- **Alertes réglementaires** : attestations expirées, étalonnages dépassés, contrôles d'étanchéité dus, délais de garde des fluides récupérés… Les alertes critiques bloquent le mode Officiel pour l'opération concernée. L'application intègre la transition réglementaire de l'arrêté du 21 novembre 2025 (nouvelle grille de catégories obligatoire au 1ᵉʳ janvier 2027, arrêté du 30 juin 2008 abrogé au 31 décembre 2026).
+- **Alertes réglementaires** : attestations expirées, étalonnages dépassés, contrôles d'étanchéité dus, délais de garde des fluides récupérés… Les alertes critiques bloquent le mode Officiel pour l'opération concernée. L'application intègre la transition réglementaire des arrêtés du 21 novembre 2025 (nouvelle grille de catégories d'aptitude obligatoire au 1ᵉʳ janvier 2027 ; les arrêtés de 2008 — 13 octobre pour l'aptitude des personnes, 30 juin pour la capacité des entreprises — sont abrogés au 31 décembre 2026).
 
 ## État du chantier
 
