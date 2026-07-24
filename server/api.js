@@ -2624,7 +2624,8 @@ const HANDLERS = {
       hermetiqueScelle: Boolean(d.hermetiqueScelle),
       hermetiqueEtiquete: Boolean(d.hermetiqueEtiquete),
       detectionPermanente: Boolean(d.detectionPermanente),
-      detectionVerifieeLe: d.detectionVerifieeLe ?? null
+      detectionVerifieeLe: d.detectionVerifieeLe ?? null,
+      usageThermique: d.usageThermique ?? null
     });
     const client = d.clientId
       ? db.get('SELECT id, raison_sociale FROM clients_detenteurs WHERE id = ?',
@@ -2672,6 +2673,8 @@ const HANDLERS = {
       hermetiqueEtiquete: Boolean(d.hermetiqueEtiquete),
       residentiel: Boolean(d.residentiel),
       sousTypeInstallation: texteOuNullEquip(d.sousTypeInstallation),
+      // L3/R4 : usage thermique — null = régime le plus strict (froid).
+      usageThermique: texteOuNullEquip(d.usageThermique),
       detectionVerifieeLe: texteOuNullEquip(d.detectionVerifieeLe),
       detectionProchaineVerif: equipement.echeanceVerificationDetection(
         texteOuNullEquip(d.detectionVerifieeLe)),
@@ -2729,7 +2732,7 @@ const HANDLERS = {
     // + patch) — miroir du DemoStore.
     const CHAMPS_EQUIPEMENT = ['hermetiqueScelle', 'hermetiqueEtiquete',
       'residentiel', 'sousTypeInstallation', 'detectionVerifieeLe',
-      'detectionReference'];
+      'detectionReference', 'usageThermique'];
     const fusion = { ...machine };
     for (const champ of [...CHAMPS_EQUIPEMENT, 'typeInstallation',
       'detectionPermanente']) {
@@ -2753,7 +2756,7 @@ const HANDLERS = {
     }
     // Champs texte facultatifs : chaîne vide = effacement (null).
     for (const champ of ['sousTypeInstallation', 'detectionVerifieeLe',
-      'detectionReference']) {
+      'detectionReference', 'usageThermique']) {
       if (d[champ] !== undefined) patch[champ] = texteOuNullEquip(d[champ]);
     }
     // L'échéance de vérification est CALCULÉE, jamais saisie.
@@ -7544,6 +7547,13 @@ function cadreFicheOfficiel(mouvement) {
         mouvement.date ?? jour).declaree),
     fluideInflammable: Boolean(fluideRef?.classeSecurite &&
       fluideRef.classeSecurite !== 'A1'),
+    // L3/R4 (25/07) — faits datés de la condition 10 : la date du
+    // mouvement et le début d'interdiction du vierge applicable à
+    // l'USAGE de la machine (usage absent = régime le plus strict).
+    // Miroir du DemoStore.
+    dateMouvement: mouvement.date ?? jour,
+    interdictionViergeDepuis: machine
+      ? equipement.debutInterdictionVierge(machine.usageThermique) : null,
     // Q4 (L1b, 24/07 — corrigé par la revue adversariale du lot) — fait :
     // fluide HORS du périmètre fluoré selon la CLASSIFICATION MOTEUR
     // (fiche explicite prioritaire, repli sur la famille, inconnue = hors

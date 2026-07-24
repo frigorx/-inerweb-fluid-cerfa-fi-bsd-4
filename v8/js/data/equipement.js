@@ -266,6 +266,40 @@ export function mobileListe(machine) {
 }
 
 /**
+ * L3/R4 (25/07/2026, décision Franck) — USAGE THERMIQUE de l'équipement
+ * (migration 34) : il commande les DATES d'interdiction du fluide VIERGE à
+ * PRP >= 2500 (règl. UE 2024/573, art. 13) — réfrigération depuis le
+ * 01/01/2025, climatisation et pompes à chaleur depuis le 01/01/2026.
+ * NULL = usage non renseigné → régime le plus STRICT (froid, 2025) :
+ * jamais moins de contrôles qu'exigé.
+ */
+export const USAGES_THERMIQUES = ['FROID_COMMERCIAL', 'CLIMATISATION',
+  'POMPE_A_CHALEUR'];
+
+/** Libellés lisibles des usages thermiques. */
+export const LIBELLE_USAGE_THERMIQUE = {
+  FROID_COMMERCIAL: 'Froid commercial',
+  CLIMATISATION: 'Climatisation',
+  POMPE_A_CHALEUR: 'Pompe à chaleur'
+};
+
+/** Débuts d'interdiction du fluide VIERGE à PRP >= 2500 (art. 13). */
+export const DEBUT_INTERDICTION_VIERGE_FROID = '2025-01-01';
+export const DEBUT_INTERDICTION_VIERGE_CLIM_PAC = '2026-01-01';
+
+/**
+ * ⭐ L3/R4 — date de début d'interdiction du fluide VIERGE applicable à CET
+ * usage. CLIMATISATION et POMPE_A_CHALEUR → 01/01/2026 ; FROID_COMMERCIAL,
+ * usage absent ou inconnu → 01/01/2025 (le plus strict).
+ */
+export function debutInterdictionVierge(usageThermique) {
+  return usageThermique === 'CLIMATISATION'
+    || usageThermique === 'POMPE_A_CHALEUR'
+    ? DEBUT_INTERDICTION_VIERGE_CLIM_PAC
+    : DEBUT_INTERDICTION_VIERGE_FROID;
+}
+
+/**
  * Garde de saisie du modèle d'équipement — LÈVE au premier défaut, message
  * canonique identique des deux côtés. Appliquée sur la fiche FUSIONNÉE
  * (existant + patch), comme pour le référentiel des fluides.
@@ -275,6 +309,13 @@ export function mobileListe(machine) {
 export function verifierModeleEquipement(machine) {
   const m = machine || {};
   const sousType = m.sousTypeInstallation;
+  // L3/R4 : usage thermique — liste FERMÉE, null admis (= régime strict).
+  const usage = m.usageThermique;
+  if (usage != null && String(usage) !== ''
+      && !USAGES_THERMIQUES.includes(String(usage))) {
+    throw new Error('Usage thermique inconnu : '
+      + `${USAGES_THERMIQUES.join(', ')}.`);
+  }
   if (sousType != null && String(sousType) !== ''
       && !SOUS_TYPES_MOBILES.includes(String(sousType))) {
     throw new Error('Sous-type d’installation inconnu : '

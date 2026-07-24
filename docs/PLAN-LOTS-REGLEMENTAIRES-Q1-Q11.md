@@ -125,7 +125,27 @@ refusé, appel direct à l'API pour contourner un blocage (exigence explicite de
 `mouvementId` forgé, source de charge douteuse, démarrage LAN sans HTTPS, base sous OneDrive.
 Ne dépend de RIEN — surtout pas de la fusion des stores.
 
-### L3 — R-404A contextuel, en CONSEIL (Q9) *(MIXTE)*
+### L3 — FAIT le 25/07 (R4 tranché par Franck) : usage thermique + condition 10 datée
+
+**Livré** : migration 34 (`machines.usage_thermique`, liste FERMÉE froid/clim/PAC, NULL =
+régime le plus strict) · `debutInterdictionVierge(usage)` dans les 2 miroirs `equipement`
+(clim/PAC → 01/01/2026, froid ou non renseigné → 01/01/2025) · CRUD machine des 2 stores
+(garde de liste fermée, chaîne vide = effacement) · **condition 10 DATÉE** : les faits
+`interdictionViergeDepuis` + `dateMouvement` précalculés par les cadres — un mouvement
+ANTÉRIEUR au début applicable ne se bloque plus, faits ABSENTS = comportement d'avant
+(jamais moins de contrôles) · écrans (sélecteur machine-form avec note, ligne
+fiche-machine, bandeau wizard qui DIT la date applicable à CETTE machine) · vérifié au
+NAVIGATEUR (port jetable, zéro erreur console). Tests : blocage-officiel 52 → 57 vérifs
+(condition datée + parité), test-equipement 13 → 21 ×2 stores (bout en bout R-404A vierge :
+clim 2025 passe, clim 2026 bloqué, sans usage 2025 bloqué, 2024 passe).
+**Consigné hors périmètre** : MISE_EN_SERVICE (équipement neuf) non couvert par la
+restriction (déjà exclu du bandeau wizard — au visa T3) · sursis recyclé/régénéré
+2030/2032 non modélisé en dur (l'origine bouteille le porte déjà, la date viendra
+avec la lecture verbatim de l'art. 13).
+
+*(Énoncé d'origine ci-dessous pour mémoire.)*
+
+### L3 (énoncé d'origine) — R-404A contextuel, en CONSEIL (Q9) *(MIXTE)*
 - Le socle existe : origine bouteille (VIERGE/RECYCLE/REGENERE — cycle matière CM-1→CM-5),
   seuil PRP ≥ 2500, condition 10.
 - Ajouter la logique de DATE : froid 01/01/2025 (vierge interdit) · clim/PAC 01/01/2026 ·
@@ -228,12 +248,14 @@ avec parenthèses — convention à documenter, pas de garde à coder).
 **DÉLÉGUÉES côté strict (révocables)** : cat. II hermétique = 2 kg · cat. III 2008 = 2 kg ·
 libellé Q7 par affichage seul · refus Q4 posé au PASSAGE et à la VALIDATION.
 
-**GATÉES** :
-- **R1** (Franck) : cat. II 2008 sur machine hermétique — 2 kg quand même, ou 6 kg ?
-- **R2** (Franck, puis visa) : la règle résidentielle < 3 kg peut-elle exempter un équipement
-  au-dessus du seuil tCO2eq (ex. chiffré : 2,9 kg de R-404A = 11,4 t) ?
-- **R4** (Franck) : ajoute-t-on le champ « usage thermique » (froid/clim/PAC, migration 33),
-  ou tout le parc au régime le plus strict ?
+**TRANCHÉES par Franck le 25/07 (les trois R)** :
+- **R1** : cat. II 2008 sur machine hermétique = **2 kg quand même** (le codé est confirmé,
+  plus une délégation révocable) ;
+- **R2** : l'exemption garde le **« ou » du texte** (la branche résidentielle peut exempter
+  au-delà de 10 t éq. CO2 — motif affiché, activation toujours gatée visa T3) ;
+- **R4** : le champ **« usage thermique »** est ajouté (lot L3, migration 34 — machines non
+  renseignées au régime le plus strict) ;
+- (même jour) **catalogue : R-452A = 2141**, règle du plus élevé au sens littéral.
 - **Visa T3** (organisme agréé) : Q3 (art. 7/11 sur pièce) · Q6 (art. 5 sur pièce) ·
   Q9 (art. 13 sur pièce, dates 2030/2032) · exceptions et MISE_EN_SERVICE.
 

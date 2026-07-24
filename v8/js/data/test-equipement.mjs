@@ -246,6 +246,68 @@ verifier('étiqueté sans scellement refusé par le store',
   })))?.includes('sans être hermétiquement scellé'));
 
 // ============================================================
+// L3/R4 (25/07) — l'USAGE THERMIQUE de bout en bout : CRUD, garde, et la
+// condition 10 DATÉE (via simulerValidationOfficielle, verrou fermé —
+// on vérifie la PRÉSENCE/ABSENCE de FLUIDE_VIERGE, jamais le reste).
+// ============================================================
+console.log('--- L3/R4 : usage thermique et condition 10 datée ---');
+
+verifier('usage thermique inconnu refusé par le store',
+  (await messageDeRefus(store.createMachine({
+    designation: 'X', fluide: FLUIDE, chargeNominaleKg: 1,
+    usageThermique: 'CHAUDIERE'
+  })))?.includes('Usage thermique inconnu'));
+
+const mClim = await store.createMachine({
+  designation: 'Split R-404A (test usage)', fluide: 'R-404A',
+  chargeNominaleKg: 2, usageThermique: 'CLIMATISATION',
+  operateur: 'Testeur usage'
+});
+verifier('createMachine porte l’usage thermique (relu du store)',
+  mClim.usageThermique === 'CLIMATISATION');
+const mFroid = await store.createMachine({
+  designation: 'Chambre R-404A (test usage)', fluide: 'R-404A',
+  chargeNominaleKg: 2, operateur: 'Testeur usage'
+});
+verifier('sans usage : null (régime le plus strict)',
+  mFroid.usageThermique === null);
+{
+  const efface = await store.updateMachine(mClim.id,
+    { usageThermique: '', operateur: 'Testeur usage' });
+  verifier('update : chaîne vide efface l’usage (retour au plus strict)',
+    efface.usageThermique === null);
+  await store.updateMachine(mClim.id,
+    { usageThermique: 'CLIMATISATION', operateur: 'Testeur usage' });
+}
+
+// Décor : une bouteille NEUVE VIERGE de R-404A (PRP 3922 ≥ 2500).
+const bVierge = await store.createBouteille({
+  type: 'NEUVE', fluide: 'R-404A', etatFluide: 'VIERGE',
+  tareKg: 10, masseBruteKg: 20, contenanceMaxKg: 20
+});
+
+/** FLUIDE_VIERGE présent à la validation simulée d'un brouillon daté ? */
+async function fluideViergePose(machineId, dateMouvement) {
+  const brouillon = await store.creerMouvement({
+    type: 'CHARGE_APPOINT', machineId, bouteilleSrcId: bVierge.id,
+    executeParId: operateur.id, technicien: 'Testeur usage',
+    fluide: 'R-404A', date: dateMouvement
+  });
+  const cadre = await store.simulerValidationOfficielle(brouillon.id);
+  await store.supprimerMouvement(brouillon.id);
+  return cadre.blocages.some((b) => b.code === 'FLUIDE_VIERGE');
+}
+
+verifier('machine CLIM : mouvement daté 2025 (avant le 01/01/2026) → pas de FLUIDE_VIERGE',
+  (await fluideViergePose(mClim.id, '2025-06-01')) === false);
+verifier('machine CLIM : mouvement de 2026 → FLUIDE_VIERGE posé',
+  (await fluideViergePose(mClim.id, '2026-02-01')) === true);
+verifier('machine SANS usage : mouvement daté 2025 → FLUIDE_VIERGE posé (régime strict froid)',
+  (await fluideViergePose(mFroid.id, '2025-06-01')) === true);
+verifier('machine SANS usage : mouvement de 2024 (avant toute interdiction) → pas de blocage',
+  (await fluideViergePose(mFroid.id, '2024-06-01')) === false);
+
+// ============================================================
 console.log('');
 console.log(`Modèle d’équipement de bout en bout (${NOM_STORE}) : `
   + `${nbOk} réussies, ${nbEchecs} en échec.`);

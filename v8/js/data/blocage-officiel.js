@@ -184,12 +184,26 @@ export function evaluerBlocagesOfficiel(cadre) {
         'inflammable).');
     }
 
-    // 10 — charge d'appoint en fluide vierge PRP ≥ 2500 (avis Q10).
+    // 10 — charge d'appoint en fluide vierge PRP ≥ 2500 (avis Q10 ;
+    // raffinée L3/R4 le 25/07) : l'interdiction court depuis une DATE qui
+    // dépend de l'USAGE de la machine (art. 13 — froid 01/01/2025, clim et
+    // PAC 01/01/2026). Les faits datés sont précalculés par les stores
+    // (interdictionViergeDepuis, dateMouvement) ; ABSENTS, la condition se
+    // pose comme avant — une clé absente ne vaut pas décision, jamais
+    // moins de contrôles.
     if (fiche.type === 'CHARGE_APPOINT' && fiche.sourceVierge &&
         Number(fiche.prp) >= SEUIL_PRP_VIERGE) {
-      poser('FLUIDE_VIERGE',
-        `Charge en fluide VIERGE de PRP ${fiche.prp} (≥ ${SEUIL_PRP_VIERGE}) ` +
-        'interdite en maintenance (règl. UE 2024/573).');
+      const debutVierge = fiche.interdictionViergeDepuis ?? null;
+      const dateMvt = fiche.dateMouvement ?? null;
+      const anterieur = Boolean(debutVierge && dateMvt && dateMvt < debutVierge);
+      if (!anterieur) {
+        poser('FLUIDE_VIERGE',
+          `Charge en fluide VIERGE de PRP ${fiche.prp} (≥ ${SEUIL_PRP_VIERGE}) ` +
+          'interdite en maintenance ' +
+          (debutVierge
+            ? `depuis le ${debutVierge.split('-').reverse().join('/')} pour cet usage ` : '') +
+          '(règl. UE 2024/573).');
+      }
     }
 
     // 11 — signature du technicien (à la VALIDATION seulement).

@@ -344,6 +344,37 @@ const codes = (r) => r.blocages.map((b) => b.code).join(',');
     !recycle.blocages.some((b) => b.code === 'FLUIDE_VIERGE') &&
     !miseEnService.blocages.some((b) => b.code === 'FLUIDE_VIERGE'),
     codes(miseEnService));
+
+  // L3/R4 (25/07) — la condition est DATÉE par l'usage : les faits
+  // interdictionViergeDepuis + dateMouvement, précalculés par les stores.
+  const climAvant = evaluerBlocagesOfficiel({ moment: 'SOUMISSION',
+    fiche: ficheSaine({ sourceVierge: true, prp: 3922,
+      interdictionViergeDepuis: '2026-01-01', dateMouvement: '2025-06-01' }) });
+  verifier('clim/PAC : mouvement daté AVANT le 01/01/2026 → pas de blocage',
+    !climAvant.blocages.some((b) => b.code === 'FLUIDE_VIERGE'),
+    codes(climAvant));
+  const climApres = evaluerBlocagesOfficiel({ moment: 'SOUMISSION',
+    fiche: ficheSaine({ sourceVierge: true, prp: 3922,
+      interdictionViergeDepuis: '2026-01-01', dateMouvement: '2026-02-01' }) });
+  verifier('clim/PAC : mouvement de 2026 → blocage, le motif dit la date et l’usage',
+    climApres.blocages.some((b) => b.code === 'FLUIDE_VIERGE'
+      && /depuis le 01\/01\/2026 pour cet usage/.test(b.motif)),
+    JSON.stringify(climApres.blocages));
+  const froidAvant2025 = evaluerBlocagesOfficiel({ moment: 'SOUMISSION',
+    fiche: ficheSaine({ sourceVierge: true, prp: 3922,
+      interdictionViergeDepuis: '2025-01-01', dateMouvement: '2024-06-01' }) });
+  verifier('froid : mouvement de 2024 (avant toute interdiction) → pas de blocage',
+    !froidAvant2025.blocages.some((b) => b.code === 'FLUIDE_VIERGE'));
+  const faitsAbsents = evaluerBlocagesOfficiel({ moment: 'SOUMISSION',
+    fiche: ficheSaine({ sourceVierge: true, prp: 3922 }) });
+  verifier('faits datés ABSENTS : la condition se pose comme avant (jamais moins de contrôles)',
+    faitsAbsents.blocages.some((b) => b.code === 'FLUIDE_VIERGE'));
+  const c10 = { moment: 'SOUMISSION',
+    fiche: ficheSaine({ sourceVierge: true, prp: 3922,
+      interdictionViergeDepuis: '2026-01-01', dateMouvement: '2026-02-01' }) };
+  verifier('parité : condition 10 datée, blocages identiques ESM ↔ serveur',
+    JSON.stringify(evaluerBlocagesOfficiel(c10).blocages)
+      === JSON.stringify(miroir.evaluerBlocagesOfficiel(c10).blocages));
 }
 
 // Condition 11 : signature exigée à la VALIDATION seulement.
