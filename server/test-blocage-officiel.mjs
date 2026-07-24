@@ -248,6 +248,52 @@ const codes = (r) => r.blocages.map((b) => b.code).join(',');
       === JSON.stringify(miroir.evaluerBlocagesOfficiel(c).blocages));
 }
 
+// ============================================================
+// Condition 18 — fluide HORS périmètre fluoré (Q4, L1b, 24/07).
+// Pas de CERFA officiel pour R-744 / R-290 / R-717 : le fait
+// fluideHorsPerimetreFluore vient de la fiche réglementaire EXPLICITE
+// (categorieCadre7 = 'AUCUNE'), précalculé par les deux stores.
+// ============================================================
+{
+  const co2 = evaluerBlocagesOfficiel({ moment: 'SOUMISSION',
+    fiche: ficheSaine({ fluide: 'R-744', fluideHorsPerimetreFluore: true }) });
+  verifier('fluide non fluoré (R-744) : blocage HORS_PERIMETRE_FLUORE',
+    co2.blocages.some((b) => b.code === 'HORS_PERIMETRE_FLUORE'), codes(co2));
+  verifier('le motif nomme le fluide et renvoie vers le mode Formation',
+    co2.blocages.some((b) => b.code === 'HORS_PERIMETRE_FLUORE'
+      && /R-744/.test(b.motif) && /mode Formation/.test(b.motif)),
+    JSON.stringify(co2.blocages));
+
+  const fluore = evaluerBlocagesOfficiel({ moment: 'SOUMISSION',
+    fiche: ficheSaine({ fluideHorsPerimetreFluore: false }) });
+  verifier('fluide fluoré : aucun blocage HORS_PERIMETRE_FLUORE',
+    !fluore.blocages.some((b) => b.code === 'HORS_PERIMETRE_FLUORE'),
+    codes(fluore));
+
+  const sansFait = evaluerBlocagesOfficiel({ moment: 'SOUMISSION',
+    fiche: ficheSaine() });
+  verifier('fait absent (fiche antérieure) : aucun blocage fabriqué',
+    !sansFait.blocages.some((b) => b.code === 'HORS_PERIMETRE_FLUORE'),
+    codes(sansFait));
+
+  // La condition vit dans le bloc fiche : elle s'exerce à la SOUMISSION et
+  // à la VALIDATION (au PASSAGE la fiche n'existe pas encore — fiche:null
+  // par construction des deux stores ; le panneau de simulation du wizard
+  // la montre en direct via simulerValidationOfficielle).
+  const validation = evaluerBlocagesOfficiel({ moment: 'VALIDATION',
+    fiche: ficheSaine({ fluide: 'R-290', fluideHorsPerimetreFluore: true }) });
+  verifier('à la VALIDATION aussi : blocage HORS_PERIMETRE_FLUORE (R-290)',
+    validation.blocages.some((b) => b.code === 'HORS_PERIMETRE_FLUORE'),
+    codes(validation));
+
+  // Parité ESM ↔ serveur (verdict ET message).
+  const c18 = { moment: 'SOUMISSION',
+    fiche: ficheSaine({ fluide: 'R-744', fluideHorsPerimetreFluore: true }) };
+  verifier('parité : condition 18, blocages identiques ESM ↔ serveur',
+    JSON.stringify(evaluerBlocagesOfficiel(c18).blocages)
+      === JSON.stringify(miroir.evaluerBlocagesOfficiel(c18).blocages));
+}
+
 // Condition 9 : contrôle d'étanchéité exigé.
 {
   const manque = evaluerBlocagesOfficiel({ moment: 'SOUMISSION',

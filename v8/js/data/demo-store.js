@@ -1270,6 +1270,13 @@ export function creerDemoStore() {
         && !detectionEffective(machine, mouvement.date ?? jour).declaree),
       fluideInflammable: Boolean(fluideRef?.classeSecurite &&
         fluideRef.classeSecurite !== 'A1'),
+      // Q4 (L1b, 24/07) — fait : fluide explicitement HORS du périmètre
+      // fluoré (fiche réglementaire categorieCadre7 = 'AUCUNE' — l'attribut
+      // BRUT de la fiche, jamais la fonction categorieCadre7() qui replie
+      // « sans fiche » sur la dérivation du libellé). Consommé par la
+      // condition 18 : pas de CERFA officiel pour R-744/R-290/R-717.
+      fluideHorsPerimetreFluore: Boolean(fluideRef &&
+        fluideRef.categorieCadre7 === 'AUCUNE'),
       sourceVierge: bouteilleSrc?.etatFluide === 'VIERGE',
       prp: fluideRef?.gwpAr4 ?? null,
       signaturePresente: Boolean(mouvement.signatureDataUrl),

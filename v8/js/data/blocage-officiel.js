@@ -107,6 +107,20 @@ export function evaluerBlocagesOfficiel(cadre) {
     if (!fiche.fluide) {
       poser('COMPLETUDE', 'Fiche incomplète : fluide non renseigné.');
     }
+
+    // 18 — fluide HORS périmètre fluoré (Q4, décision Franck 24/07/2026).
+    // Le CERFA 15497*04 vise les fluides fluorés (CFC/HCFC/HFC/PFC,
+    // HFO à titre volontaire) : une fiche OFFICIELLE n'a pas d'objet pour
+    // le CO2 (R-744), les hydrocarbures (R-290) ni l'ammoniac (R-717).
+    // Fait précalculé sur la fiche réglementaire EXPLICITE du fluide
+    // (categorieCadre7 = 'AUCUNE') ; la traçabilité volontaire passe par
+    // le mode Formation — c'est lui, la « fiche interne distincte ».
+    if (fiche.fluideHorsPerimetreFluore) {
+      poser('HORS_PERIMETRE_FLUORE',
+        `Fluide ${fiche.fluide} hors du périmètre du CERFA (non fluoré) : ` +
+        'pas de fiche officielle pour ce fluide — le mode Formation sert ' +
+        'de trace volontaire.');
+    }
     const av = fiche.peseeAvantKg;
     const ap = fiche.peseeApresKg;
     if (!Number.isFinite(av) || !Number.isFinite(ap) || av === ap) {
