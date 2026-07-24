@@ -9,6 +9,7 @@
 import { enteteVue, carteKpi, chipStatut, barreProgression, tableau, toast, ICONES } from './communs.js';
 import { esc, fmtKg, fmtTeq, fmtDate, fmtNombre, teqCO2 } from '../core/utils.js';
 import { construireDossiersFuite, LIBELLES_STATUT_FUITE } from '../data/dossiers-fuite.js';
+import { statutMacaron } from '../data/macaron-controle.js';
 import { genererDossierMachine } from '../documents/dossier-machine.js';
 import { telechargerEtSceller } from '../documents/telecharger-dossier.js';
 import { ouvrirWizard } from '../wizard/wizard.js';
@@ -37,6 +38,39 @@ export const titre = 'Fiche machine';
 
 const STYLES_VUE = `
 <style>
+  /* Macaron de contrôle (report v7) : pastille colorée en tête de fiche,
+     ce que le technicien voit d'abord au scan du QR. */
+  .fiche-macaron {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    border-radius: var(--rayon-carte, 12px);
+    border: 1px solid var(--macaron-bord);
+    background: var(--macaron-fond);
+  }
+  .fiche-macaron-pastille {
+    flex: 0 0 auto;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    border: 3px solid var(--macaron-accent);
+    background: var(--macaron-fond);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--macaron-accent);
+  }
+  .fiche-macaron-pastille svg { width: 28px; height: 28px; }
+  .fiche-macaron-texte { min-width: 0; }
+  .fiche-macaron-libelle {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--macaron-accent);
+  }
+  .fiche-macaron-date { font-size: 13px; color: var(--texte-2); margin-top: 2px; }
+  .fiche-macaron-detail { font-size: 12px; color: var(--texte-3); margin-top: 2px; }
   .fiche-retour {
     display: inline-flex;
     align-items: center;
@@ -481,6 +515,48 @@ function ligneDossierFuite(dossier) {
 }
 
 /** Bloc « Fuites », affiché seulement si la machine a au moins un dossier. */
+/* ============================================================
+   Macaron de contrôle (report v7) — pastille de tête au scan du QR
+   ============================================================ */
+
+const PALETTE_MACARON = {
+  BLEU: { accent: '#1565C0', icone: ICONES.coche },
+  ROUGE: { accent: '#C62828', icone: ICONES.alerte },
+  ORANGE: { accent: '#E65100', icone: ICONES.alerte },
+  GRIS: { accent: '#607D8B', icone: ICONES.controle }
+};
+
+/** #RRGGBB → rgba(r,g,b,alpha) (fond/bordure lisibles en clair ET sombre). */
+function teinteMacaron(hex, alpha) {
+  const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+  if (!m) return hex;
+  const [r, g, b] = [1, 2, 3].map((i) => parseInt(m[i], 16));
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+/**
+ * Pastille de contrôle en tête de fiche : ce que le technicien voit d'abord
+ * en scannant le QR (report du macaron v7, repensé par Franck 25/07). La
+ * couleur et le libellé viennent du module pur `statutMacaron`.
+ */
+function blocMacaron(statut) {
+  const p = PALETTE_MACARON[statut.couleur] || PALETTE_MACARON.GRIS;
+  const dateHtml = statut.dateVerification
+    ? '<div class="fiche-macaron-date">Dernière vérification le '
+      + esc(fmtDate(statut.dateVerification)) + '</div>'
+    : '';
+  return '<div class="fiche-macaron" role="status" style="'
+    + '--macaron-accent:' + p.accent + ';'
+    + '--macaron-fond:' + teinteMacaron(p.accent, 0.10) + ';'
+    + '--macaron-bord:' + teinteMacaron(p.accent, 0.35) + '">'
+    + '<span class="fiche-macaron-pastille" aria-hidden="true">' + p.icone + '</span>'
+    + '<div class="fiche-macaron-texte">'
+    + '<div class="fiche-macaron-libelle">' + esc(statut.libelle) + '</div>'
+    + dateHtml
+    + '<div class="fiche-macaron-detail">' + esc(statut.detail) + '</div>'
+    + '</div></div>';
+}
+
 function blocFuites(dossiers) {
   if (!dossiers.length) return '';
   return '<div class="fiche-section">'
@@ -647,6 +723,18 @@ export async function render(conteneur, ctx) {
   // passe les tableaux complets, comme pour genererDossierMachine ailleurs.
   const { dossiers: dossiersFuite } = construireDossiersFuite({ machine, controles, mouvements });
 
+  // Macaron de contrôle (report v7) : statut visible d'emblée au scan du QR.
+  // Calculé sur ce que la fiche a déjà chargé — contrôles de la machine
+  // (triés date décroissante par getControles), dossiers de fuite, fréquence
+  // du cadre 7 et échéance dénormalisée.
+  const macaron = statutMacaron({
+    controles: controlesMachine,
+    dossiersFuite,
+    frequenceMois: calculerFrequenceControle(machine, fluide).frequenceMois,
+    prochainControle: machine.prochainControle ?? null,
+    jour: dateDuJour()
+  });
+
   // Personnes actives, triées comme le registre du personnel.
   const personnesActives = personnel
     .filter(function (p) { return p.actif; })
@@ -657,6 +745,7 @@ export async function render(conteneur, ctx) {
   conteneur.innerHTML = STYLES_VUE
     + '<a href="#/machines" class="fiche-retour">' + ICONES.grille + '<span>Retour au parc</span></a>'
     + enteteVue({ titre: machine.designation, sousTitre: machine.code + ' · QR ' + machine.codePublic })
+    + blocMacaron(macaron)
     + blocIdentite(machine, fluide)
     + blocChargeIncomplete(machine)
     + blocIntervenant(personnesActives)
