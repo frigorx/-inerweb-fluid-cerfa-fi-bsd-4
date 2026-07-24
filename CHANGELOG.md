@@ -2,6 +2,56 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### ⚖️ LOTS RÉGLEMENTAIRES Q1→Q11 — L1 + L4 + L5 (24/07, session autonome, PR #9/#10/#11)
+
+Décisions Franck du 24/07 (analyse tierce) passées à la VÉRIFICATION CROISÉE
+(27 agents : écarts au code réel + contre-épreuves adversariales sur textes primaires)
+avant tout codage. Plan = `docs/PLAN-LOTS-REGLEMENTAIRES-Q1-Q11.md` (PR #8). Deux
+corrections À l'analyse tierce, établies sur texte lu verbatim : le 12/03/2029 est un
+BUTOIR DE REMISE À NIVEAU, pas un couperet de validité ; l'aptitude des personnes
+relève de l'arrêté du 13/10/2008 (le 30/06/2008 = capacité des entreprises). L'ordre
+« B→C→A » de l'analyse tierce RÉFUTÉ sur pièce (les règles vivent dans 15 modules purs
+partagés — fusionner les stores n'aurait rien réduit et tuait l'oracle de parité).
+
+- **L1 — durcissements (PR #9)** : cat. II 2008 à **2 kg** par opération, limite PAR
+  CATÉGORIE re-câblée (le seuil global écrasait tout — changer la constante seule
+  n'aurait RIEN fait), aucune variante hermétique en 2008, cat. III alignée (délégué
+  strict, R1 révocable) · condition **18** `HORS_PERIMETRE_FLUORE` (pas de CERFA
+  officiel pour R-744/R-290/R-717, la trace volontaire = mode Formation, revirement
+  assumé de l'arbitrage de juillet) · libellé « Gaz annexe II, section 1 » (affichage
+  seul) · suite doublée `test-perimetre-cerfa` · citation 13/10/2008 corrigée.
+  **Revue adversariale (12 constats tirés, fuzz 6 560 entrées)** : le critère brut de
+  la condition 18 était CONTOURNABLE (fluide créé sans fiche) → le fait suit la
+  CLASSIFICATION MOTEUR (repli famille, inclassable = hors périmètre) ; la synthèse
+  contredisait le verdict d'opération → profil dépassé DÉGRADÉ vers l'étanchéité seule ;
+  miroir `equipement` remis en littéral.
+- **L4 — transition 2008/2025 (PR #10, migration 33, contrat v11)** : **le couperet du
+  31/12/2026 était FAUX** (fin de DÉLIVRANCE ≠ fin de validité — l'ancien code aurait
+  déclaré non habilités des techniciens en règle dès janvier 2027). Mécanique en trois
+  temps codée (2 miroirs) : reconnue sans condition jusqu'au **12/03/2029** inclus, puis
+  remise à niveau enregistrée AU PLUS TARD le butoir + **cycle 7 ans** (`plusAnnees`,
+  écrêtage bissextile). Champs `remise_niveau_le`/`remise_niveau_organisme`, garde de
+  DÉLIVRANCE (2008 datée après 2026 refusée), alerte `alr-remise-niveau-`, modale +
+  bandeaux, vérifié au NAVIGATEUR. **Revue adversariale (13 constats tirés, 7 racines
+  corrigées)** : « 2028-99-99 » stocké sans validation RECONNAISSAIT l'attestation
+  jusqu'en 2035 dans le fait `aptitude` → fermé à DEUX étages (garde CRUD format +
+  calendrier réel + jamais dans le futur ; défense en profondeur du moteur pur) ;
+  contournement de la garde par update fermé ; alerte refondue sur l'ÉTAT RÉEL
+  (tardive/cycle échu = CRITIQUE motivé) ; défaut-REFUS du moteur (régime ou date
+  illisibles ne « reconnaissent » plus par accident).
+- **L5 — exemption hermétique (PR #11)** : le calcul est CODÉ (`calculerExemption`,
+  3 seuils STRICTS du tableau Q6, gate scellé ET étiqueté, HCFC jamais, cas R2 chiffré
+  2,9 kg R-404A = 11,37 t) derrière **`EXEMPTION_HERMETIQUE_ACTIVE = false`** (2 miroirs,
+  doctrine du verrou). Drapeau fermé = comportement STRICTEMENT inchangé. Geste
+  d'activation consigné (§L5 du plan : 8 sites de branchement listés, motif affiché
+  partout) — APRÈS visa T3 + réponse R2.
+- **Catalogue Q11** (`docs/CATALOGUE-FLUIDES-A-VALIDER.md`) : 10 fluides sourcés,
+  contre-vérifiés (0 litige), une case de validation par fiche — RIEN n'est semé.
+- **GATÉ Franck** : R1 (cat. II hermétique — codé 2 kg strict) · R2 (« ou » résidentiel)
+  · R4 (champ usage thermique pour Q9) · validation du catalogue ligne par ligne ·
+  visa T3 avant activation de l'exemption et réouverture.
+- **TOUT VERT — 101 exécutions** (99 → 101).
+
 ### 📋 T3 + P0-9 — DOSSIER DE RELECTURE EXTERNE ET CONSTAT DE RÉVOCATION (23/07, hors code)
 
 - **Deux livrables documentaires, aucune ligne de code touchée.** Demandés par Franck

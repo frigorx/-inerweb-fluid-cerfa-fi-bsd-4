@@ -6,6 +6,33 @@
 > **Session conseillée : Opus, effort très élevé** (chantier probatoire/réglementaire, briques
 > testées une à une). PAS d'ultracode hors point critique.
 >
+> **⭐⭐⭐⭐⭐⭐ 24/07 — LOTS RÉGLEMENTAIRES Q1→Q11 : L1 + L4 + L5 FUSIONNÉS
+> (PR #9/#10/#11), TOUT VERT 101 EXÉCUTIONS.** Les décisions Franck du 24/07
+> (issues d'une analyse tierce) ont été passées à la vérification croisée
+> AVANT codage (27 agents, textes primaires) : deux erreurs de l'analyse
+> corrigées sur pièce (**12/03/2029 = butoir de remise à niveau, PAS un
+> couperet** ; aptitude des personnes = **arrêté du 13/10/2008**) et son
+> ordre « B→C→A » réfuté (les règles vivent déjà dans les modules purs).
+> Plan de référence = **`docs/PLAN-LOTS-REGLEMENTAIRES-Q1-Q11.md`** (décisions
+> TRANCHÉES/DÉLÉGUÉES/GATÉES + les 2 revues adversariales §5 bis/5 ter).
+> **L1** : cat. II 2008 à 2 kg PAR CATÉGORIE (le seuil global écrasait tout),
+> condition 18 HORS_PERIMETRE_FLUORE (fait = CLASSIFICATION MOTEUR, repli
+> famille — l'attribut brut était contournable, prouvé puis fermé), libellé
+> annexe II section 1, suite doublée test-perimetre-cerfa. **L4** : migration
+> 33, contrat v11 — transition 2008/2025 VRAIE (reconnue jusqu'au 12/03/2029
+> puis remise à niveau + cycle 7 ans ; l'ancien couperet aurait bloqué des
+> techniciens en règle dès 2027), garde de délivrance, alerte fondée sur
+> l'état réel, « 2028-99-99 » ne ressuscite plus rien (2 étages de gardes).
+> **L5** : exemption hermétique CODÉE derrière `EXEMPTION_HERMETIQUE_ACTIVE
+> = false` (calculerExemption, 3 seuils stricts, cas R2 chiffré) — geste
+> d'activation consigné §L5 (8 sites), APRÈS visa T3 + R2. **Catalogue Q11**
+> livré (`docs/CATALOGUE-FLUIDES-A-VALIDER.md`, 10 fluides, 0 litige, RIEN
+> semé). **GATÉ Franck : R1 · R2 · R4 · catalogue ligne à ligne · visa T3.**
+> **RESTE en code : L2 (tests sécurité P2-2) · L3 (Q9 conseil + champ usage
+> thermique si R4) · réouverture (L6) après visa · fusion stores (L7) après
+> l'audit d'août. Suivi consigné : conseil-intervenant ne filtre pas encore
+> par habilitationReconnue (préexistant).**
+>
 > **⭐⭐⭐⭐⭐ P1-1 (MODÈLE D'ÉQUIPEMENT) EST TERMINÉ — 23/07, EQ-1→EQ-10, plan
 > `docs/PLAN-P1-1-MODELE-EQUIPEMENT.md`, TOUT VERT 98 exécutions, ⏳ PR à
 > relire/fusionner par Franck.** Décisions E1→E7 **déléguées** par Franck (« fais
