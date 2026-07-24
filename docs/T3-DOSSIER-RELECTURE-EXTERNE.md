@@ -79,11 +79,21 @@ fait **aujourd'hui**, et la question.
    3 kg** pour les catégories limitées, portée à **6 kg** si l'équipement est hermétiquement
    scellé **et étiqueté**. La frontière est stricte : 3,000 kg pile est refusé.
    *Ces valeurs et cette lecture stricte sont-elles exactes ?*
-2. **Ancienne catégorie II (arrêté de 2008).** Nous la traitons comme autorisant toutes les
-   opérations mais avec la limite de charge ci-dessus. Elle était initialement modélisée sans
-   limite, comme la catégorie I. *Quelle est la bonne lecture ?*
-3. **Fin de reconnaissance du régime 2008.** Nous cessons de reconnaître une attestation de
-   2008 après le **31/12/2026**. *Date confirmée ?*
+2. **Ancienne catégorie II (arrêté du 13/10/2008).** Nous la traitons comme autorisant les
+   opérations avec accès au circuit (maintenance, assemblage, mise en service, récupération)
+   sur les équipements de **moins de 2 kg** — frontière stricte, 2,000 kg refusé — et le
+   **contrôle d'étanchéité sans limite de charge** dès lors qu'il n'exige pas l'ouverture du
+   circuit. Nous n'appliquons **aucune variante hermétique** à cette catégorie (le texte de
+   2008 n'en prévoit pas). Nous alignons la catégorie III (récupération seule) sur la même
+   limite de 2 kg. *Ces lectures sont-elles exactes ?*
+3. **Transition du régime 2008 vers le régime 2025.** Notre lecture de l'arrêté du
+   21/11/2025 (aptitude, articles 7 et 11) : le **31/12/2026** est la fin de la
+   **délivrance** sous l'ancien régime, pas la fin de validité des attestations détenues ;
+   celles-ci restent reconnues **jusqu'au 12/03/2029**, date-butoir de la **remise à niveau
+   ponctuelle** ; après le 12/03/2029, une attestation ancienne n'est reconnue **que si la
+   remise à niveau est enregistrée**, puis cycle périodique d'au plus **7 ans** — le même
+   cycle que les nouvelles catégories A1/A2/D/E. *Confirmez-vous cette mécanique en trois
+   temps, sur le texte ?*
 
 **Contrôles d'étanchéité**
 
@@ -94,11 +104,14 @@ fait **aujourd'hui**, et la question.
 5. **Allègement pour détection permanente.** Nous n'accordons le doublement des intervalles
    que si le système de détection a été **vérifié depuis moins de 12 mois** ; sinon, retour
    à la fréquence sans détection. *Cette lecture est-elle correcte ?*
-6. **Exemption des équipements hermétiquement scellés.** Nous n'avons codé **aucune
-   exemption** — choix conservateur assumé, faute de valeurs confirmées. Les seuils
-   candidats sont : moins de 10 tonnes équivalent CO₂, moins de 2 kg, et moins de 3 kg pour
-   un hermétique résidentiel. *Ces seuils sont-ils les bons, et l'exemption suppose-t-elle
-   un étiquetage particulier ?*
+6. **Exemption des équipements hermétiquement scellés.** Nous prévoyons de l'accorder si
+   l'équipement est simultanément hermétiquement scellé, **étiqueté comme tel**, et sous
+   l'un de ces seuils (frontières strictes) : **moins de 10 tonnes équivalent CO₂** (gaz de
+   l'annexe I), **moins de 2 kg** (gaz de l'annexe II section 1), **moins de 3 kg** pour un
+   équipement hermétique en bâtiment résidentiel. *Ces seuils sont-ils les bons (article 5
+   du règlement 2024/573) ? Et la règle résidentielle en kilogrammes peut-elle exempter un
+   équipement dont la charge dépasse le seuil en tonnes équivalent CO₂ — par exemple 2,9 kg
+   de R-404A, soit plus de 11 tonnes équivalent CO₂ ?*
 7. **HCFC, seuil bas.** Nous appliquons **2 kg** ; la valeur historique était de 3 kg.
    L'enjeu est faible (recharge interdite depuis 2015). *Laquelle retenir ?*
 
@@ -108,9 +121,17 @@ fait **aujourd'hui**, et la question.
    élevé** (principe de précaution : les contrôles se déclenchent plus tôt). *Cette approche
    est-elle défendable en audit, ou faut-il impérativement la valeur de référence même
    lorsqu'elle est plus basse ?*
-9. **Fluides hors périmètre fluoré.** Une fiche CERFA officielle peut aujourd'hui être
-   établie pour du R-744 (CO₂) ou du R-290 (propane), qui ne relèvent pas du contrôle
-   d'étanchéité fluoré. *Faut-il l'interdire, ou est-ce acceptable comme trace volontaire ?*
+9. **Fluides hors périmètre fluoré.** Nous **refusons** désormais l'établissement d'une
+   fiche CERFA officielle pour du R-744 (CO₂), du R-290 (propane) ou du R-717 (ammoniac),
+   la notice du CERFA 15497*04 ne les prévoyant pas ; la traçabilité volontaire passe par
+   le mode formation. *Ce refus est-il la bonne lecture ?*
+9 bis. **Restrictions d'usage des fluides à fort PRP (R-404A).** Nous appliquons :
+   maintenance au fluide **vierge** interdite depuis le **01/01/2025** en réfrigération ;
+   pour la climatisation et les pompes à chaleur, interdiction des PRP ≥ 2500 depuis le
+   **01/01/2026** ; fluide **recyclé ou régénéré** admis sous conditions jusqu'au
+   **01/01/2030**. *Confirmez-vous ces trois dates et leurs périmètres exacts (article 13
+   du règlement 2024/573), ainsi que le traitement de la mise en service d'équipements
+   neufs ?*
 10. **Blocage sans dérogation.** Lorsqu'une condition réglementaire n'est pas réunie, le mode
     officiel **refuse sèchement** la validation : il n'existe aucun mécanisme permettant de
     passer outre en justifiant. *Est-ce le bon choix pour un registre opposable ?*
