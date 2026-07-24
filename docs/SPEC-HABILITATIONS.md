@@ -57,13 +57,19 @@ Le logiciel doit être **le plus complet** (couvre TOUT le parc, pas seulement l
 
 **Correspondance ancien → nouveau** : I & II → A1/A2 · III → D · IV → E.
 
-**Profils du régime 2008 (P0-5 / AP-2, audit du 20/07 §4.3)** : I = toutes opérations
-sans limite · **II = toutes opérations mais charge < 3 kg (< 6 kg hermétique scellé
-étiqueté)** — elle était modélisée sans limite, c'était une erreur · III = récupération
-seule < 3 kg · IV = étanchéité seule. Familles natives 2008 = HFC/HFO seulement.
+**Profils du régime 2008 (arrêté du 13/10/2008 — révisés le 24/07, décision Q2)** :
+I = toutes opérations sans limite · **II = toutes opérations avec accès au circuit
+sur charge < 2 kg** — le contrôle d'étanchéité SANS ouverture du circuit reste sans
+limite (porté par l'axe opération) et le texte 2008 ne prévoit **aucune variante
+hermétique** (le 6 kg est une règle du régime 2025) · III = récupération seule
+< 2 kg (aligné par délégation côté strict, R1 du PLAN-LOTS-REGLEMENTAIRES-Q1-Q11)
+· IV = étanchéité seule. Familles natives 2008 = HFC/HFO seulement.
+Historique : la II fut modélisée sans limite (relevé de l'audit du 20/07 §4.3),
+puis à 3 kg comme l'A2 (P0-5/AP-2) — les deux étaient des erreurs.
 
-**Frontières STRICTES (P0-5 / AP-1)** : « inférieure à » = 3,000 kg pile REFUSÉ,
-6,000 kg pile REFUSÉ (les comparateurs inclusifs étaient un bug, corrigé le 22/07).
+**Frontières STRICTES (P0-5 / AP-1, étendues L1a)** : « inférieure à » = la valeur
+pile est REFUSÉE — 2,000 kg (2008), 3,000 kg et 6,000 kg (2025) pile refusés
+(les comparateurs inclusifs étaient un bug, corrigé le 22/07).
 
 **Extension (mentions de formation complémentaire)** : indépendamment de la catégorie,
 une personne peut détenir une **mention par fluide** (CO₂, ammoniac, hydrocarbures) qui
