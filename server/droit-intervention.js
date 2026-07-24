@@ -64,9 +64,16 @@ function plusAnnees(dateIso, nbAnnees) {
   const annee = Number(m[1]) + nbAnnees;
   const mois = Number(m[2]);
   let jour = Number(m[3]);
+  // Revue L4 — le format ne suffit pas : '2028-99-99' matche \d{2}. On
+  // exige une date CALENDAIRE réelle (aller-retour UTC, sans horloge).
+  const controle = new Date(Date.UTC(Number(m[1]), mois - 1, Number(m[3])));
+  if (controle.getUTCMonth() !== mois - 1
+      || controle.getUTCDate() !== Number(m[3])) return null;
   const bissextile = (annee % 4 === 0 && annee % 100 !== 0) || annee % 400 === 0;
   if (mois === 2 && jour === 29 && !bissextile) jour = 28;
-  return `${annee}-${String(mois).padStart(2, '0')}-${String(jour).padStart(2, '0')}`;
+  // Revue L4 : l'année aussi est cadrée (une année < 1000 non paddée cassait
+  // l'ordre lexicographique et RESSUSCITAIT une attestation).
+  return `${String(annee).padStart(4, '0')}-${String(mois).padStart(2, '0')}-${String(jour).padStart(2, '0')}`;
 }
 
 /**
@@ -80,15 +87,27 @@ function plusAnnees(dateIso, nbAnnees) {
  */
 function habilitationReconnue(h, dateReference) {
   if (!h || !h.actif) return false;
+  // Revue L4 — jamais reconnaître par accident : une date de référence
+  // illisible ne compare pas, elle REFUSE ('' ou '13/03/2029' passaient
+  // les comparaisons de chaînes).
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateReference ?? ''))) return false;
   if (h.dateFin && h.dateFin < dateReference) return false;
+  if (h.regime === '2025') return true;
   if (h.regime === '2008') {
     if (dateReference <= DATE_BUTOIR_REMISE_NIVEAU_2008) return true;
-    const remise = h.remiseNiveauLe ?? null;
+    // Revue L4 — une remise illisible (datetime ISO, format libre) ne
+    // compare pas : elle ne compte pas. Le calendrier réel est contrôlé
+    // par plusAnnees (défense en profondeur, le CRUD garde l'entrée).
+    const remise = typeof h.remiseNiveauLe === 'string'
+      && /^\d{4}-\d{2}-\d{2}$/.test(h.remiseNiveauLe)
+      ? h.remiseNiveauLe : null;
     if (!remise || remise > DATE_BUTOIR_REMISE_NIVEAU_2008) return false;
     const echeanceCycle = plusAnnees(remise, DUREE_CYCLE_FORMATION_ANS);
     return echeanceCycle !== null && dateReference <= echeanceCycle;
   }
-  return true;
+  // Revue L4 — défaut-REFUS : un régime inconnu ('2008 ' avec espace, champ
+  // absent, nombre) n'est pas « reconnu sans condition », il ne compte pas.
+  return false;
 }
 
 /**

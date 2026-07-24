@@ -363,23 +363,23 @@ verifier('mouvement : quantité calculée des pesées (+2 kg)',
   // Le CRUD porte les nouveaux champs, aller-retour complet.
   const avecRemise = await store.createHabilitation({
     personneId: titulaire.id, regime: '2008', categorie: 'I',
-    dateDebut: '2020-05-10', remiseNiveauLe: '2028-06-01',
+    dateDebut: '2020-05-10', remiseNiveauLe: '2025-06-10',
     remiseNiveauOrganisme: 'QualiFroid Cert', operateur: 'Testeur Transition'
   });
   verifier('createHabilitation porte la remise à niveau (date + organisme)',
-    avecRemise.remiseNiveauLe === '2028-06-01'
+    avecRemise.remiseNiveauLe === '2025-06-10'
     && avecRemise.remiseNiveauOrganisme === 'QualiFroid Cert');
   const relue = (await store.getHabilitations())
     .find((h) => h.id === avecRemise.id);
   verifier('la remise à niveau survit à la relecture du store',
-    relue && relue.remiseNiveauLe === '2028-06-01'
+    relue && relue.remiseNiveauLe === '2025-06-10'
     && relue.remiseNiveauOrganisme === 'QualiFroid Cert');
 
   const corrigee = await store.updateHabilitation(avecRemise.id, {
-    remiseNiveauLe: '2028-09-15', operateur: 'Testeur Transition'
+    remiseNiveauLe: '2026-01-05', operateur: 'Testeur Transition'
   });
   verifier('updateHabilitation corrige la remise à niveau (coquille de date)',
-    corrigee.remiseNiveauLe === '2028-09-15'
+    corrigee.remiseNiveauLe === '2026-01-05'
     && corrigee.remiseNiveauOrganisme === 'QualiFroid Cert');
 
   // Garde de délivrance : une 2008 datée APRÈS le 31/12/2026 est illégale.
@@ -400,6 +400,43 @@ verifier('mouvement : quantité calculée des pesées (+2 kg)',
   });
   verifier('le régime 2025 se délivre librement après 2026 (la garde ne vise que le 2008)',
     nouvelle2025.regime === '2025' && nouvelle2025.dateDebut === '2027-02-01');
+
+  // Revue L4 — les contournements TIRÉS par la revue restent fermés.
+  await verifierRejet('remise à niveau « 2028-99-99 » (calendrier impossible) refusée',
+    store.createHabilitation({
+      personneId: titulaire.id, regime: '2008', categorie: 'I',
+      remiseNiveauLe: '2028-99-99', operateur: 'Testeur Transition'
+    }), 'invalide');
+  await verifierRejet('remise à niveau en horodatage ISO complet refusée (AAAA-MM-JJ attendu)',
+    store.createHabilitation({
+      personneId: titulaire.id, regime: '2008', categorie: 'I',
+      remiseNiveauLe: '2025-05-01T10:00:00Z', operateur: 'Testeur Transition'
+    }), 'invalide');
+  await verifierRejet('remise à niveau DANS LE FUTUR refusée (une formation ne s’atteste pas d’avance)',
+    store.createHabilitation({
+      personneId: titulaire.id, regime: '2008', categorie: 'I',
+      remiseNiveauLe: '2028-06-01', operateur: 'Testeur Transition'
+    }), 'futur');
+  await verifierRejet('contournement fermé : update d’une remise vers une date invalide refusé',
+    store.updateHabilitation(avecRemise.id, {
+      remiseNiveauLe: '2027-02-30', operateur: 'Testeur Transition'
+    }), 'invalide');
+  {
+    // Le contournement de la garde de délivrance : créer LÉGAL puis patcher
+    // ILLÉGAL — désormais refusé, la ligne reste intacte.
+    const legale = await store.createHabilitation({
+      personneId: titulaire.id, regime: '2008', categorie: 'III',
+      dateDebut: '2026-06-01', operateur: 'Testeur Transition'
+    });
+    await verifierRejet('contournement fermé : update de dateDebut vers 2027 sur une 2008 refusé',
+      store.updateHabilitation(legale.id, {
+        dateDebut: '2027-06-15', operateur: 'Testeur Transition'
+      }), 'ne peut plus être délivrée après le 31/12/2026');
+    const relueLegale = (await store.getHabilitations())
+      .find((h) => h.id === legale.id);
+    verifier('après le refus, la dateDebut d’origine est intacte',
+      relueLegale && relueLegale.dateDebut === '2026-06-01');
+  }
 
   // L'alerte de remise à niveau (RN-3) : la 2008 SANS remise sonne
   // (IMPORTANT avant le butoir), celle AVEC remise se tait, la 2025 jamais.

@@ -626,6 +626,13 @@ export const DEMO = {
       organismeDelivreur: 'QualiFroid Cert',
       dateDebut: '2024-03-15',
       dateFin: '2027-03-14',
+      // L4 (revue) : le professeur « conforme » a FAIT sa remise à niveau
+      // (date relative passée — leçon « dates démo qui pourrissent ») : sa
+      // ligne 2008 montre le champ rempli et ne porte aucune alerte.
+      // Sophie Bianchi, elle, reste SANS remise : le cas pédagogique de la
+      // transition, avec l'alerte IMPORTANT vivante dans la démo.
+      remiseNiveauLe: jourDemo(-60),
+      remiseNiveauOrganisme: 'QualiFroid Cert',
       actif: true,
       dateRevocation: null
     },

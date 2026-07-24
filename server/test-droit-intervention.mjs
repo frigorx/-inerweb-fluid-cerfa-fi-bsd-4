@@ -203,6 +203,30 @@ verifier('constantes de transition identiques (délivrance 2026-12-31, butoir 20
   verifier('plusAnnees : parité ESM ↔ serveur',
     ['2028-06-01', '2024-02-29', '2029-03-12', 'zut', null]
       .every((d) => plusAnnees(d, 7) === miroir.plusAnnees(d, 7)));
+
+  // Revue L4 — jamais reconnaître par accident (défense en profondeur du
+  // moteur PUR, indépendante des gardes de saisie du CRUD).
+  verifier('remise « 2028-99-99 » (calendrier impossible) : jamais reconnue',
+    habilitationReconnue(h2008({ remiseNiveauLe: '2028-99-99' }), '2035-12-31') === false
+    && plusAnnees('2028-99-99', 7) === null);
+  verifier('remise en horodatage ISO complet : jamais reconnue (format ancré)',
+    habilitationReconnue(h2008({ remiseNiveauLe: '2028-05-01T10:00:00Z' }), '2030-01-01') === false);
+  verifier('plusAnnees pad l’année (une année < 1000 ne ressuscite plus rien)',
+    plusAnnees('0993-01-01', 7) === '1000-01-01');
+  verifier('régime inconnu, absent ou mal typé : REFUS par défaut (jamais « reconnu sans condition »)',
+    habilitationReconnue({ actif: true, categorie: 'I' }, '2035-01-01') === false
+    && habilitationReconnue({ actif: true, regime: '2008 ', categorie: 'I' }, '2027-01-01') === false
+    && habilitationReconnue({ actif: true, regime: 2008, categorie: 'I' }, '2027-01-01') === false);
+  verifier('date de référence illisible (vide, format FR) : REFUS, jamais comparaison de chaînes',
+    habilitationReconnue(h2008(), '') === false
+    && habilitationReconnue(h2008(), '13/03/2029') === false
+    && habilitationReconnue({ actif: true, regime: '2025' }, '') === false);
+  verifier('robustesse : parité miroir sur les cas vicieux',
+    [[h2008({ remiseNiveauLe: '2028-99-99' }), '2035-12-31'],
+     [h2008({ remiseNiveauLe: '2028-05-01T10:00:00Z' }), '2030-01-01'],
+     [{ actif: true, categorie: 'I' }, '2035-01-01'],
+     [h2008(), ''], [h2008(), '13/03/2029']]
+      .every(([h, d]) => habilitationReconnue(h, d) === miroir.habilitationReconnue(h, d)));
 }
 
 console.log(`\n${nbOk} vérifications réussies, ${nbEchecs} échec(s).`);
