@@ -157,27 +157,87 @@ export function detectionObligatoireDepuisNiveau(niveau) {
 }
 
 /**
- * ⭐ E3 — exemption de contrôle des équipements hermétiquement scellés.
+ * ⭐ E3(b) / L5/Q6 (24/07/2026) — DRAPEAU d'activation de l'exemption des
+ * équipements hermétiquement scellés ÉTIQUETÉS (règl. UE 2024/573, art. 5).
+ * FERMÉ tant que le visa de l'organisme agréé (T3) n'est pas posé :
+ * l'exemption est la SEULE règle du logiciel qui RETIRE un contrôle — un
+ * seuil mal posé serait une infraction. L'activation = basculer CETTE
+ * constante (ici et dans le miroir serveur, nulle part ailleurs) PUIS jouer
+ * le lot d'activation : brancher les consommateurs de fréquence (liste
+ * exacte au PLAN-LOTS-REGLEMENTAIRES §L5) et vérifier au navigateur.
+ * NON configurable par l'environnement — même doctrine que VERROU_LIVRAISON.
+ */
+export const EXEMPTION_HERMETIQUE_ACTIVE = false;
+
+/** Tonnes éq. CO₂ en français, 2 décimales au plus (littéral, sans Intl). */
+function fmtTonnesEqCo2(t) {
+  return String(Math.round(t * 100) / 100).replace('.', ',');
+}
+
+/**
+ * ⭐ L5/Q6 — le CALCUL de l'exemption, qui calcule TOUJOURS (testable
+ * indépendamment du drapeau). Décision Franck 24/07 (tableau Q6) :
+ * hermétiquement scellé ET étiqueté (hermetiqueOpposable), PUIS l'un des
+ * seuils STRICTS (la valeur pile n'exempte pas) :
+ *  - catégorie HFC (annexe I) : charge × PRP < 10 t éq. CO₂ ;
+ *  - catégorie HFO (annexe II, section 1) : charge < 2 kg ;
+ *  - usage RÉSIDENTIEL déclaré : charge < 3 kg de gaz fluoré — le « ou »
+ *    du texte : cette branche peut exempter AU-DELÀ de 10 t éq. CO₂
+ *    (2,9 kg de R-404A = 11,4 t) ; cas R2 consigné au plan, gaté Franck,
+ *    parc du lycée à residentiel=0 (backfill migration 32).
+ * HCFC : JAMAIS exempté (hors art. 5 — règl. 1005/2009). Hors périmètre :
+ * sans objet. Charge inconnue ou nulle : jamais exempté (garde stricte).
+ * La CATÉGORIE du cadre 7 vient de l'appelant — même patron que
+ * detectionObligatoireDepuisNiveau : aucun seuil du moteur recopié ici.
  *
- * **AUCUNE exemption n'est codée à ce jour** : les trois valeurs citées par
- * la table réglementaire (< 10 tCO₂eq, < 2 kg, < 3 kg en résidentiel) n'ont
- * pas été confirmées sur pièce, et c'est le seul mécanisme de tout le
- * chantier qui pourrait faire MANQUER un contrôle obligatoire. Le choix
- * conservateur — celui que la table elle-même retenait — est donc maintenu :
- * on exige parfois un contrôle que le texte n'imposerait pas, ce qui est une
- * sévérité assumée, jamais une non-conformité.
- *
- * La fonction existe, elle est appelée, elle est testée : activer l'exemption
- * quand les seuils seront confirmés sera une DÉCISION, pas une réécriture.
- * Elle exigera alors l'ÉTIQUETAGE (le texte ne reconnaît que l'hermétique
- * marqué comme tel) — d'où le champ déjà posé.
- *
- * @param {object|null} _fluideRef
- * @param {object} _machine
+ * @param {'HFC'|'HFO'|'HCFC'|null} categorie  catégorie cadre 7 du fluide
+ * @param {object|null} fluideRef              fiche du fluide (gwpAr4)
+ * @param {object} machine                     fiche machine
  * @returns {{ exempte: boolean, motif: string|null }}
  */
-export function exemptionControle(_fluideRef, _machine) {
-  return { exempte: false, motif: null };
+export function calculerExemption(categorie, fluideRef, machine) {
+  const aucune = { exempte: false, motif: null };
+  if (!hermetiqueOpposable(machine)) return aucune;
+  if (categorie !== 'HFC' && categorie !== 'HFO') return aucune;
+  const charge = Number(machine?.chargeNominaleKg);
+  if (!Number.isFinite(charge) || charge <= 0) return aucune;
+  if (categorie === 'HFC') {
+    const prp = Number(fluideRef?.gwpAr4);
+    if (Number.isFinite(prp) && prp > 0 && (charge * prp) / 1000 < 10) {
+      return { exempte: true, motif: 'Exempté du contrôle d’étanchéité : '
+        + 'hermétiquement scellé étiqueté, '
+        + fmtTonnesEqCo2((charge * prp) / 1000)
+        + ' t éq. CO₂ (moins de 10 — règl. UE 2024/573, art. 5).' };
+    }
+  }
+  if (categorie === 'HFO' && charge < 2) {
+    return { exempte: true, motif: 'Exempté du contrôle d’étanchéité : '
+      + 'hermétiquement scellé étiqueté, moins de 2 kg de gaz de '
+      + 'l’annexe II, section 1 (règl. UE 2024/573, art. 5).' };
+  }
+  if (Boolean(machine?.residentiel) && charge < 3) {
+    return { exempte: true, motif: 'Exempté du contrôle d’étanchéité : '
+      + 'hermétiquement scellé étiqueté en usage résidentiel, moins de '
+      + '3 kg de gaz fluoré (règl. UE 2024/573, art. 5).' };
+  }
+  return aucune;
+}
+
+/**
+ * ⭐ E3 — exemption de contrôle OPPOSABLE : le calcul ci-dessus, derrière le
+ * drapeau. Tant que `EXEMPTION_HERMETIQUE_ACTIVE` est faux, TOUJOURS
+ * « non exempté » — le choix conservateur historique (on exige parfois un
+ * contrôle que le texte n'imposerait pas : sévérité assumée, jamais une
+ * non-conformité). Signature alignée sur le calcul (catégorie en tête).
+ *
+ * @param {'HFC'|'HFO'|'HCFC'|null} categorie
+ * @param {object|null} fluideRef
+ * @param {object} machine
+ * @returns {{ exempte: boolean, motif: string|null }}
+ */
+export function exemptionControle(categorie, fluideRef, machine) {
+  if (!EXEMPTION_HERMETIQUE_ACTIVE) return { exempte: false, motif: null };
+  return calculerExemption(categorie, fluideRef, machine);
 }
 
 /**
