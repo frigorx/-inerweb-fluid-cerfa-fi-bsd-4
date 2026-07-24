@@ -37,7 +37,7 @@
 // ============================================================
 
 /** Version du contrat (à incrémenter à chaque évolution de surface). */
-export const VERSION_CONTRAT = 11;
+export const VERSION_CONTRAT = 12;
 
 /**
  * Message canonique opposé à toute tentative de modification d'une
@@ -163,6 +163,14 @@ export const METHODES_CONTRAT = {
     description: 'Crée un client { raisonSociale, adresse, siret?, contact?, email?, telephone? } ; actif=vrai ; Error si raison sociale/adresse vide ou SIRET renseigné ≠ 14 chiffres (SIRET optionnel).' },
   updateClient: { genre: 'mutation',
     description: 'Patch partiel (raisonSociale, adresse, siret, contact, email, telephone, actif) ; désactivation via actif=false ; Error si introuvable ou SIRET renseigné invalide.' },
+
+  // --- registre des plaintes (report v7) ------------------------
+  getPlaintes: { genre: 'lecture',
+    description: 'Le registre des plaintes / réclamations, trié date de réception décroissante.' },
+  createPlainte: { genre: 'mutation',
+    description: 'Enregistre une plainte { objet, dateReception, clientId?, clientLibelle?, reponse?, dateReponse?, etat? } ; numéro auto « PL-AAAA-NNNN » ; état RECUE par défaut ; Error si objet ou date de réception vide, client introuvable, ou état hors liste (RECUE|EN_COURS|TRAITEE).' },
+  updatePlainte: { genre: 'mutation',
+    description: 'Patch partiel (objet, dateReception, clientId, clientLibelle, reponse, dateReponse, etat) ; jamais de suppression (registre) ; Error si introuvable, client introuvable, ou état hors liste.' },
 
   // --- bouteilles -----------------------------------------------
   createBouteille: { genre: 'mutation',

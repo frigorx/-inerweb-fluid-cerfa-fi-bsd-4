@@ -27,6 +27,7 @@ const VUES = [
   { id: 'outillage',  libelle: 'Outillage',                icone: 'outillage' },
   { id: 'personnel',  libelle: 'Personnel',                icone: 'utilisateur' },
   { id: 'clients',    libelle: 'Clients / détenteurs',     icone: 'client' },
+  { id: 'plaintes',   libelle: 'Registre des plaintes',    icone: 'alerte' },
   { id: 'stats',      libelle: 'Statistiques',             icone: 'stats' },
   { id: 'bilan',      libelle: 'Bilan annuel',             icone: 'bilan' },
   { id: 'balance',    libelle: 'Balance matière',          icone: 'balance' },

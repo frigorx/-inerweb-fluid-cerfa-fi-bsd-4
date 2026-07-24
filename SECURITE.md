@@ -16,6 +16,16 @@
 >
 > → Constat daté, empreintes des trois clés, procédure et **procès-verbal à signer** :
 > **`docs/P0-9-REVOCATION-CLES-V7.md`**.
+>
+> **Mise à jour 25/07/2026 — la v7 est ABANDONNÉE.** Franck a tranché : on ne
+> repart pas sur le backend Google Sheets (v7), entièrement digéré par la v8
+> locale (audit de parité fait — seuls le macaron et le registre des plaintes
+> restaient, désormais reportés en v8). Le code source v7 (`apps-script/`,
+> `Code_API_v7.1.0.gs`) est **retiré du dépôt** (l'historique git le conserve).
+> Côté Google, le geste qui clôt l'exposition n'est plus « régénérer les clés »
+> mais **mettre le service hors ligne** : archiver le classeur puis
+> **désactiver le déploiement Apps Script** — sans déploiement actif, les clés
+> publiées ne commandent plus rien. Geste de Franck (compte Google).
 
 ### Ce qui s'est passé
 
