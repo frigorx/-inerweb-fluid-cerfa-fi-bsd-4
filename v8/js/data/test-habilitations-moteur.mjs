@@ -78,8 +78,12 @@ verifier('A1 · mise en service · VEHICULE → REFUS (catégorie V requise)',
 // --- Ancien régime 2008 (via correspondance) --------------------
 verifier('I(2008) · mise en service · HFC · 12 kg → OK (traité A1)',
   grav({ habilitations: [H('2008', 'I')], operation: 'MISE_EN_SERVICE', familleFluide: 'HFC', chargeKg: 12 }) === 'OK');
-verifier('III(2008) · récupération · HFC · 10 kg → REFUS (> 3 kg)',
+verifier('III(2008) · récupération · HFC · 10 kg → REFUS (limite 2 kg)',
   grav({ habilitations: [H('2008', 'III')], operation: 'RECUPERATION_MAINTENANCE', familleFluide: 'HFC', chargeKg: 10 }) === 'REFUS');
+verifier('III(2008) · récupération · 2 kg PILE → REFUS (frontière stricte 2008)',
+  grav({ habilitations: [H('2008', 'III')], operation: 'RECUPERATION_MAINTENANCE', familleFluide: 'HFC', chargeKg: 2 }) === 'REFUS');
+verifier('III(2008) · récupération · 1,9 kg → CONSEIL (sous la limite 2008)',
+  grav({ habilitations: [H('2008', 'III')], operation: 'RECUPERATION_MAINTENANCE', familleFluide: 'HFC', chargeKg: 1.9 }) === 'CONSEIL');
 verifier('IV(2008) · synthèse · HFC → CONSEIL (étanchéité uniquement)',
   grav({ habilitations: [H('2008', 'IV')], operation: null, familleFluide: 'HFC' }) === 'CONSEIL');
 
@@ -156,6 +160,33 @@ verifier('synthèse : D sur une installation de 2 kg → CONSEIL (dans la limite
 verifier('synthèse sans chargeKg : comportement INCHANGÉ (pas de refus fabriqué)',
   grav({ habilitations: [H('2025', 'D')], operation: null,
     familleFluide: 'HFC' }) === 'CONSEIL');
+
+// --- Cohérence des écrans (revue L1, 24/07) : le profil dépassé DÉGRADE ---
+// Un titulaire limité sur une machine trop chargée garde son droit de
+// CONTRÔLER (l'étanchéité ne manipule pas le circuit) : la synthèse de la
+// fiche machine doit dire la même chose que le verdict d'opération du
+// wizard — plus jamais REFUS d'un côté et « autorisé » de l'autre.
+{
+  const syntheseII = v({ habilitations: [H('2008', 'II')], operation: null,
+    familleFluide: 'HFC', chargeKg: 10 });
+  verifier('synthèse : II(2008) seul sur 10 kg → CONSEIL « étanchéité uniquement » (plus de REFUS)',
+    syntheseII.autorise === true && /étanchéité uniquement/i.test(syntheseII.conseil),
+    syntheseII.conseil);
+  const opII = v({ habilitations: [H('2008', 'II')], operation: 'CONTROLE_PERIODIQUE',
+    familleFluide: 'HFC', chargeKg: 10 });
+  verifier('cohérence : le verdict d’opération CONTROLE dit la même chose (autorisé)',
+    opII.autorise === true && opII.gravite === 'OK');
+}
+{
+  const syntheseA2 = v({ habilitations: [H('2025', 'A2')], operation: null,
+    familleFluide: 'HFC', chargeKg: 10 });
+  verifier('synthèse : A2 seul sur 10 kg → CONSEIL « étanchéité uniquement »',
+    syntheseA2.autorise === true && /étanchéité uniquement/i.test(syntheseA2.conseil),
+    syntheseA2.conseil);
+}
+verifier('synthèse : D seul sur 10 kg → REFUS conservé (la récupération ne porte pas l’étanchéité)',
+  grav({ habilitations: [H('2025', 'D')], operation: null,
+    familleFluide: 'HFC', chargeKg: 10 }) === 'REFUS');
 verifier('verdict d’opération : le libellé dit « charge de l’installation »',
   /charge de l'installation 2 kg/.test(
     v({ habilitations: [H('2025', 'D')], operation: 'RECUPERATION_MAINTENANCE',
@@ -189,19 +220,45 @@ verifier('operationNormalisee(CONTROLE_NON_PERIODIQUE) = ETANCHEITE',
 verifier('E · CONTROLE_PERIODIQUE · HFC → OK (le contrôleur contrôle)',
   grav({ habilitations: [H('2025', 'E')], operation: 'CONTROLE_PERIODIQUE', familleFluide: 'HFC' }) === 'OK');
 
-// --- Ancienne catégorie II : charge LIMITÉE (P0-5 / AP-2) ---------
-// L'audit du 20/07 (§4.3) : la II était modélisée sans limite, comme la I.
-// Règle : < 3 kg (< 6 kg hermétique scellé étiqueté). La I reste sans limite.
-verifier('II(2008) · appoint · HFC · 2 kg → CONSEIL (limite 3)',
-  grav({ habilitations: [H('2008', 'II')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 2 }) === 'CONSEIL');
-verifier('II(2008) · appoint · HFC · 10 kg → REFUS (limite 3 kg)',
-  grav({ habilitations: [H('2008', 'II')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 10 }) === 'REFUS');
-verifier('II(2008) · appoint · 3 kg PILE → REFUS (frontière stricte)',
-  grav({ habilitations: [H('2008', 'II')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 3 }) === 'REFUS');
-verifier('II(2008) · hermétique scellé · 5 kg → CONSEIL (limite 6)',
-  grav({ habilitations: [H('2008', 'II')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 5, hermetiqueScelle: true }) === 'CONSEIL');
+// --- Ancienne catégorie II : charge LIMITÉE À 2 kg (L1a / Q2, 24/07) ------
+// Historique : modélisée sans limite (relevé par l'audit du 20/07 §4.3),
+// puis à 3 kg comme l'A2 (P0-5). L'arrêté du 13/10/2008 borne les opérations
+// avec accès au circuit à MOINS DE 2 kg, SANS variante hermétique (le 6 kg
+// est une règle du régime 2025). La I reste sans limite.
+verifier('II(2008) · appoint · HFC · 1,5 kg → CONSEIL (sous la limite 2008)',
+  grav({ habilitations: [H('2008', 'II')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 1.5 }) === 'CONSEIL');
+verifier('II(2008) · appoint · HFC · 1,999 kg → CONSEIL (strictement sous 2)',
+  grav({ habilitations: [H('2008', 'II')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 1.999 }) === 'CONSEIL');
+verifier('II(2008) · appoint · 2 kg PILE → REFUS (« moins de 2 kg », strict)',
+  grav({ habilitations: [H('2008', 'II')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 2 }) === 'REFUS');
+{
+  const ii = v({ habilitations: [H('2008', 'II')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 10 });
+  verifier('II(2008) · appoint · 10 kg → REFUS, le message nomme la limite de 2 kg',
+    ii.gravite === 'REFUS' && /limitée à 2 kg/.test(ii.conseil), ii.conseil);
+}
+verifier('II(2008) · HERMÉTIQUE scellé · 5 kg → REFUS (aucune variante 6 kg en 2008)',
+  grav({ habilitations: [H('2008', 'II')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 5, hermetiqueScelle: true }) === 'REFUS');
+verifier('II(2008) · HERMÉTIQUE scellé · 2 kg PILE → REFUS (l’hermétique ne change rien)',
+  grav({ habilitations: [H('2008', 'II')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 2, hermetiqueScelle: true }) === 'REFUS');
+verifier('II(2008) · HERMÉTIQUE scellé · 1,5 kg → CONSEIL (sous 2 kg, hermétique indifférent)',
+  grav({ habilitations: [H('2008', 'II')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 1.5, hermetiqueScelle: true }) === 'CONSEIL');
+verifier('II(2008) · contrôle d’étanchéité · 300 kg → OK (sans limite : pas d’ouverture du circuit)',
+  grav({ habilitations: [H('2008', 'II')], operation: 'CONTROLE_ETANCHEITE', familleFluide: 'HFC', chargeKg: 300 }) === 'OK');
 verifier('I(2008) · appoint · 10 kg → OK (la I reste sans limite)',
   grav({ habilitations: [H('2008', 'I')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 10 }) === 'OK');
+
+// --- Découplage des régimes : 2008 ≠ 2025 (le piège du seuil global) ------
+// Preuve que la limite est bien PAR CATÉGORIE : la même charge de 2,5 kg
+// est REFUSÉE à une cat. II (2008, < 2 kg) et ACCORDÉE à une A2 (2025,
+// < 3 kg) — et l'élargissement hermétique reste réservé au régime 2025.
+verifier('découplage : 2,5 kg → REFUS pour II(2008)…',
+  grav({ habilitations: [H('2008', 'II')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 2.5 }) === 'REFUS');
+verifier('découplage : … et CONSEIL pour A2(2025) sur la même machine',
+  grav({ habilitations: [H('2025', 'A2')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 2.5 }) === 'CONSEIL');
+verifier('découplage : A2 hermétique garde ses 6 kg (5 kg → CONSEIL)',
+  grav({ habilitations: [H('2025', 'A2')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 5, hermetiqueScelle: true }) === 'CONSEIL');
+verifier('cumul II(2008)+A2(2025) · 2,5 kg → CONSEIL (le meilleur profil domine, limite 3)',
+  grav({ habilitations: [H('2008', 'II'), H('2025', 'A2')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg: 2.5 }) === 'CONSEIL');
 
 // --- Identifiabilité (règle admin) ------------------------------
 verifier('identifiable : actif + 1 habilitation active → oui',

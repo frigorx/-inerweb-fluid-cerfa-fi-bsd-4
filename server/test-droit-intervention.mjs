@@ -13,6 +13,7 @@ import {
   habilitationReconnue,
   SEUIL_CHARGE_LIMITEE_KG,
   SEUIL_CHARGE_HERMETIQUE_KG,
+  SEUIL_CHARGE_2008_KG,
   FIN_RECONNAISSANCE_2008
 } from '../v8/js/data/habilitations.js';
 
@@ -30,9 +31,11 @@ const H = (regime, categorie) => ({ regime, categorie });
 // ============================================================
 // 1. Constantes identiques des deux côtés
 // ============================================================
-verifier('seuils de charge identiques (3 / 6 kg)',
+verifier('seuils de charge identiques (3 / 6 kg régime 2025, 2 kg régime 2008)',
   miroir.SEUIL_CHARGE_LIMITEE_KG === SEUIL_CHARGE_LIMITEE_KG
-  && miroir.SEUIL_CHARGE_HERMETIQUE_KG === SEUIL_CHARGE_HERMETIQUE_KG);
+  && miroir.SEUIL_CHARGE_HERMETIQUE_KG === SEUIL_CHARGE_HERMETIQUE_KG
+  && miroir.SEUIL_CHARGE_2008_KG === SEUIL_CHARGE_2008_KG
+  && SEUIL_CHARGE_2008_KG === 2);
 verifier('fin de reconnaissance 2008 identique (2026-12-31)',
   miroir.FIN_RECONNAISSANCE_2008 === FIN_RECONNAISSANCE_2008
   && FIN_RECONNAISSANCE_2008 === '2026-12-31');
@@ -55,12 +58,17 @@ verifier('fin de reconnaissance 2008 identique (2026-12-31)',
       ENTREES.push({ habilitations: [cat], operation: op, familleFluide: 'HFC', chargeKg: 10 });
     }
   }
-  // Les 4 frontières strictes (AP-1), hermétique vrai/faux.
-  for (const chargeKg of [2.999, 3, 5.999, 6]) {
+  // Les frontières strictes des DEUX régimes (AP-1 + L1a) : 2 kg (2008),
+  // 3 et 6 kg (2025), hermétique vrai/faux — y compris la preuve que
+  // l'hermétique n'élargit JAMAIS une catégorie 2008.
+  for (const chargeKg of [1.999, 2, 2.5, 2.999, 3, 5.999, 6]) {
     ENTREES.push({ habilitations: [H('2025', 'A2')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg });
     ENTREES.push({ habilitations: [H('2025', 'A2')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg, hermetiqueScelle: true });
     ENTREES.push({ habilitations: [H('2008', 'II')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg });
+    ENTREES.push({ habilitations: [H('2008', 'II')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg, hermetiqueScelle: true });
+    ENTREES.push({ habilitations: [H('2008', 'III')], operation: 'RECUPERATION_MAINTENANCE', familleFluide: 'HFC', chargeKg });
     ENTREES.push({ habilitations: [H('2025', 'D')], operation: null, familleFluide: 'HFC', chargeKg });
+    ENTREES.push({ habilitations: [H('2008', 'II'), H('2025', 'A2')], operation: 'CHARGE_APPOINT', familleFluide: 'HFC', chargeKg });
   }
   // Familles dédiées, mentions, dérivation de famille depuis le code fluide.
   ENTREES.push({ habilitations: [H('2025', 'B')], operation: 'CHARGE_APPOINT', familleFluide: 'CO2', chargeKg: 40 });

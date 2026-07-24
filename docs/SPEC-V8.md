@@ -16,7 +16,10 @@ exportable, avec pièces justificatives et balance matière »**.
 - Phrase-objectif côté audit : *« En un clic, je sors le dossier annuel complet de traçabilité fluides. »*
 - Échéance réglementaire structurante : arrêté du 21/11/2025, obligatoire au 01/01/2027
   (nouvelle grille de catégories, vérification outillages, registre du personnel, fiches d'intervention,
-  gestion des fluides récupérés). L'arrêté du 30/06/2008 est abrogé au 31/12/2026.
+  gestion des fluides récupérés). Les deux arrêtés de 2008 sont abrogés au 31/12/2026 :
+  celui du 13/10/2008 (aptitude des PERSONNES, catégories I-V — c'est lui que la grille
+  remplace) et celui du 30/06/2008 (capacité des ENTREPRISES). Ne pas les confondre
+  (correction L1e du 24/07/2026 : l'aptitude était attribuée au mauvais texte).
 
 ## 2. Les trois modes d'utilisation
 

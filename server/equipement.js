@@ -57,12 +57,11 @@ function echeanceVerificationDetection(verifieeLe) {
 
 /** ⭐ E1 — la détection compte-t-elle pour alléger la fréquence ? */
 function detectionEffective(machine, jour) {
-  const declaree = Boolean(machine && machine.detectionPermanente);
+  const declaree = Boolean(machine?.detectionPermanente);
   if (!declaree) {
     return { compte: false, declaree: false, echeance: null, motif: 'ABSENTE' };
   }
-  const echeance = echeanceVerificationDetection(
-    machine ? machine.detectionVerifieeLe : null);
+  const echeance = echeanceVerificationDetection(machine?.detectionVerifieeLe);
   if (echeance === null) {
     return { compte: false, declaree: true, echeance: null,
       motif: 'JAMAIS_VERIFIEE' };
@@ -84,17 +83,14 @@ function exemptionControle(_fluideRef, _machine) {
 
 /** ⭐ E4 — seuil d'aptitude élargi : hermétique ET étiqueté. */
 function hermetiqueOpposable(machine) {
-  return Boolean(machine && machine.hermetiqueScelle)
-    && Boolean(machine && machine.hermetiqueEtiquete);
+  return Boolean(machine?.hermetiqueScelle) && Boolean(machine?.hermetiqueEtiquete);
 }
 
 /** ⭐ E5 — mobile LISTÉ, admis au contrôle immédiat après réparation. */
 function mobileListe(machine) {
-  if (String((machine && machine.typeInstallation) || '') !== 'MOBILE') {
-    return false;
-  }
+  if (String(machine?.typeInstallation ?? '') !== 'MOBILE') return false;
   return SOUS_TYPES_MOBILES_ELIGIBLES.includes(
-    String((machine && machine.sousTypeInstallation) || ''));
+    String(machine?.sousTypeInstallation ?? ''));
 }
 
 /** Garde de saisie — messages canoniques identiques au module ESM. */
@@ -107,7 +103,7 @@ function verifierModeleEquipement(machine) {
       + `${SOUS_TYPES_MOBILES.join(', ')}.`);
   }
   if (sousType != null && String(sousType) !== ''
-      && String(m.typeInstallation != null ? m.typeInstallation : 'FIXE') !== 'MOBILE') {
+      && String(m.typeInstallation ?? 'FIXE') !== 'MOBILE') {
     throw new Error('Un sous-type d’installation ne se renseigne que sur un '
       + 'équipement MOBILE.');
   }

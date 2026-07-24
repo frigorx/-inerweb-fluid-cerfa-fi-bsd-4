@@ -161,12 +161,24 @@ export function habilitationReconnue(h, dateReference) {
 }
 
 /**
- * Seuils de charge (§2 ; à reconfirmer sur pièce). Le texte dit charge
- * « INFÉRIEURE À » 3 kg (6 kg si hermétiquement scellé) : la limite est
- * STRICTE — 3,000 kg pile est REFUSÉ (audit du 20/07/2026, §4.3).
+ * Seuils de charge du RÉGIME 2025 (§2). Le texte dit charge « INFÉRIEURE À »
+ * 3 kg (6 kg si hermétiquement scellé ET étiqueté) : la limite est STRICTE —
+ * 3,000 kg pile est REFUSÉ (audit du 20/07/2026, §4.3).
  */
 export const SEUIL_CHARGE_LIMITEE_KG = 3;
 export const SEUIL_CHARGE_HERMETIQUE_KG = 6;
+
+/**
+ * Seuil de charge du RÉGIME 2008 (arrêté du 13/10/2008) : les catégories II
+ * et III sont bornées à MOINS DE 2 kg (strict, 2,000 pile refusé) pour les
+ * opérations avec accès au circuit — le contrôle d'étanchéité sans ouverture
+ * du circuit reste sans limite (porté par l'axe opération). Le texte 2008 ne
+ * prévoit AUCUNE variante hermétique : le 6 kg est une règle du régime 2025.
+ * Décision Franck 24/07/2026 (Q2) ; « hermétique = 2 kg quand même » et
+ * « cat. III alignée » = délégations côté strict, consignées au
+ * PLAN-LOTS-REGLEMENTAIRES-Q1-Q11 (R1), révocables.
+ */
+export const SEUIL_CHARGE_2008_KG = 2;
 
 /** Type de mouvement du registre / libellé libre → opération normalisée. */
 const MAP_OPERATION = {
@@ -219,10 +231,13 @@ function profilDeCategorie(regime, categorie) {
   if (regime === '2025') {
     switch (categorie) {
       case 'A1': return { ops: T, limiteKg: null, familles: ['HFC', 'HFO', 'HFC/HFO', 'HC'] };
-      case 'A2': return { ops: T, limiteKg: SEUIL_CHARGE_LIMITEE_KG, familles: ['HFC', 'HFO', 'HFC/HFO', 'HC'] };
+      // hermetique6 : seules les catégories limitées du RÉGIME 2025 voient
+      // leur seuil porté à 6 kg sur un équipement hermétiquement scellé ET
+      // étiqueté (L1a, 24/07/2026).
+      case 'A2': return { ops: T, limiteKg: SEUIL_CHARGE_LIMITEE_KG, hermetique6: true, familles: ['HFC', 'HFO', 'HFC/HFO', 'HC'] };
       case 'B':  return { ops: T, limiteKg: null, familles: ['CO2'] };
       case 'C':  return { ops: T, limiteKg: null, familles: ['NH3'] };
-      case 'D':  return { ops: ['RECUPERATION'], limiteKg: SEUIL_CHARGE_LIMITEE_KG, familles: ['HFC', 'HFO', 'HFC/HFO'] };
+      case 'D':  return { ops: ['RECUPERATION'], limiteKg: SEUIL_CHARGE_LIMITEE_KG, hermetique6: true, familles: ['HFC', 'HFO', 'HFC/HFO'] };
       case 'E':  return { ops: ['ETANCHEITE'], limiteKg: null, familles: ['HFC', 'HFO', 'HFC/HFO'] };
       case 'V':  return { ops: T, limiteKg: null, familles: ['VEHICULE'] };
       default: return null;
@@ -231,11 +246,13 @@ function profilDeCategorie(regime, categorie) {
   if (regime === '2008') {
     switch (categorie) {
       case 'I':   return { ops: T, limiteKg: null, familles: ['HFC', 'HFO', 'HFC/HFO'] };
-      // II = toutes opérations mais charge LIMITÉE (< 3 kg, < 6 kg hermétique
-      // scellé étiqueté) — l'audit du 20/07 (§4.3) a relevé qu'elle était
-      // modélisée sans limite, comme la I. P0-5 / AP-2.
-      case 'II':  return { ops: T, limiteKg: SEUIL_CHARGE_LIMITEE_KG, familles: ['HFC', 'HFO', 'HFC/HFO'] };
-      case 'III': return { ops: ['RECUPERATION'], limiteKg: SEUIL_CHARGE_LIMITEE_KG, familles: ['HFC', 'HFO', 'HFC/HFO'] };
+      // II = toutes opérations mais charge LIMITÉE À MOINS DE 2 kg (arrêté du
+      // 13/10/2008 — décision Q2 du 24/07/2026 ; elle était d'abord modélisée
+      // sans limite, puis à 3 kg comme l'A2). AUCUNE variante hermétique en
+      // 2008 (hermetique6 absent) ; l'étanchéité passe par l'axe opération.
+      case 'II':  return { ops: T, limiteKg: SEUIL_CHARGE_2008_KG, familles: ['HFC', 'HFO', 'HFC/HFO'] };
+      // III = récupération seule, même borne de 2 kg (délégué côté strict).
+      case 'III': return { ops: ['RECUPERATION'], limiteKg: SEUIL_CHARGE_2008_KG, familles: ['HFC', 'HFO', 'HFC/HFO'] };
       case 'IV':  return { ops: ['ETANCHEITE'], limiteKg: null, familles: ['HFC', 'HFO', 'HFC/HFO'] };
       default: return null;
     }
@@ -310,7 +327,6 @@ export function verifierDroitIntervention({
 } = {}) {
   const famille = familleFluide || familleDuFluide(fluide);
   const mentionsFam = normaliserMentions(mentions);
-  const seuil = hermetiqueScelle ? SEUIL_CHARGE_HERMETIQUE_KG : SEUIL_CHARGE_LIMITEE_KG;
   const habs = Array.isArray(habilitations) ? habilitations : [];
 
   // 0. Personne sans aucune habilitation (mention seule ne suffit pas).
@@ -320,13 +336,21 @@ export function verifierDroitIntervention({
   }
 
   // 1. Profils atteignant CE fluide (familles natives ∪ mentions).
+  // Limite de charge PAR CATÉGORIE (L1a, 24/07/2026) : l'élargissement
+  // hermétique à 6 kg ne joue QUE pour les catégories 2025 qui le prévoient
+  // (`hermetique6` — A2/D) ; les catégories 2008 gardent leur borne de 2 kg
+  // en toutes circonstances. Avant ce correctif, un seuil GLOBAL (3 ou 6)
+  // écrasait la limite par catégorie : découpler 2008 de 2025 était
+  // impossible, et changer la constante seule n'aurait RIEN changé.
   const profils = [];
   for (const h of habs) {
     const p = profilDeCategorie(h.regime, h.categorie);
     if (!p) continue;
     const famEff = p.familles.concat(mentionsFam);
     if (!famille || famEff.includes(famille)) {
-      profils.push({ ops: p.ops, limiteKg: p.limiteKg === null ? null : seuil });
+      const limite = p.limiteKg === null ? null
+        : (p.hermetique6 && hermetiqueScelle ? SEUIL_CHARGE_HERMETIQUE_KG : p.limiteKg);
+      profils.push({ ops: p.ops, limiteKg: limite });
     }
   }
   if (profils.length === 0) {
@@ -345,8 +369,21 @@ export function verifierDroitIntervention({
   // contrôler ne manipule pas le circuit.
   if (!op) {
     if (chargeKg === null || chargeKg === undefined) return synthese(profils);
-    const dansLaLimite = profils.filter((pr) =>
-      pr.limiteKg === null || Number(chargeKg) < pr.limiteKg);
+    // Revue L1 (24/07) : un profil au-delà de sa limite ne disparaît pas en
+    // bloc — sa capacité de contrôle d'étanchéité SURVIT, dégradée à
+    // { ETANCHEITE, sans limite }, comme au verdict d'opération (qui saute
+    // le contrôle de charge pour l'étanchéité). Sans cela, la fiche machine
+    // disait REFUS à un cat. II sur 10 kg quand le wizard autorisait le
+    // contrôle : contradiction entre écrans (le précédent du 14/07, en sens
+    // inverse).
+    const dansLaLimite = [];
+    for (const pr of profils) {
+      if (pr.limiteKg === null || Number(chargeKg) < pr.limiteKg) {
+        dansLaLimite.push(pr);
+      } else if (pr.ops.includes('ETANCHEITE')) {
+        dansLaLimite.push({ ops: ['ETANCHEITE'], limiteKg: null });
+      }
+    }
     if (dansLaLimite.length === 0) {
       const limite = Math.max(...profils.map((pr) => pr.limiteKg));
       return {

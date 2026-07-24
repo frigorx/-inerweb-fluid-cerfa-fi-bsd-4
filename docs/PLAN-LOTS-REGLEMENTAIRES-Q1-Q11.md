@@ -213,6 +213,40 @@ libellé Q7 par affichage seul · refus Q4 posé au PASSAGE et à la VALIDATION.
 - **Visa T3** (organisme agréé) : Q3 (art. 7/11 sur pièce) · Q6 (art. 5 sur pièce) ·
   Q9 (art. 13 sur pièce, dates 2030/2032) · exceptions et MISE_EN_SERVICE.
 
+## 5 bis. Revue adversariale du lot L1 (24/07) — corrigé et consigné
+
+**12 constats, tous TIRÉS ; parité et frontières intactes** (6 560 entrées de fuzz sur le
+moteur d'aptitude, 0 divergence ; 2 000/3 000/6 000 g pile refusés partout).
+
+**Corrigé dans le lot** :
+- ⭐ le critère de la condition 18 (attribut brut « AUCUNE ») était **contournable** — un
+  fluide créé SANS fiche (le choix par défaut du formulaire, familles CO2/HC/NH3) passait,
+  et vider la fiche du R-744 levait le blocage. Prouvé en le tirant sur les DEUX stores,
+  puis FERMÉ : le fait suit la **classification moteur** (fiche explicite > repli famille >
+  inconnue = hors périmètre). Un fluide inclassable n'obtient pas de CERFA officiel.
+- la **synthèse « qui intervient ? » contredisait le verdict d'opération** : un cat. II
+  seul sur 10 kg lisait REFUS sur la fiche machine quand le wizard autorisait le contrôle
+  d'étanchéité. Le profil dépassé DÉGRADE désormais vers `{ ETANCHEITE, sans limite }`
+  au lieu de disparaître (préexistant pour l'A2, étendu par L1a — corrigé pour tous).
+- miroir `server/equipement.js` remis en LITTÉRAL (4 corps paraphrasés — préexistant P1-1,
+  0 divergence de comportement sur 216 appels, mais la doctrine exige le caractère près).
+- deux notes d'écran alignées (machine-form : le 6 kg est un privilège du régime 2025 ;
+  fluide-form : une famille non fluorée sans fiche = pas de fiche officielle).
+
+**Consigné, non corrigé (gaté ou mineur)** :
+- garde de saisie OPTIONNELLE : exiger une fiche explicite à la création d'un fluide de
+  famille CO2/HC/NH3 (durcit la création — **gaté Franck**, le repli moteur couvre déjà le
+  risque Officiel) ;
+- verdict INFIRMÉ : `updateFluide` qui vide une fiche n'est PAS une faille depuis le
+  correctif (le repli famille reprend la main) — journalisation dédiée en amélioration
+  possible ;
+- moteur pur : un `chargeKg` non numérique (NaN, « 1,5 » à la française) vaut « charge
+  inconnue » et n'empêche pas un verdict favorable — inoffensif via les stores (garde
+  stricte en amont qui replie sur null), consigné pour P2-2 ;
+- le fait périmètre se calcule sur le fluide du MOUVEMENT (clé étrangère du référentiel),
+  pas celui de la machine — l'incohérence machine/fluide relève d'une autre garde,
+  consignée.
+
 ## 6. Proxies et limites ASSUMÉS (consignés, pas cachés)
 
 - « Ouverture du circuit » (Q2) : dérivée du TYPE de mouvement (contrôle d'étanchéité =

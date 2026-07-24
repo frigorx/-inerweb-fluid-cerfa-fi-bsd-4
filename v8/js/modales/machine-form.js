@@ -201,7 +201,9 @@ function gabaritFormulaire(machine, fluides, clients) {
     + '> Usage résidentiel</label>'
     + '<p class="mf-note">L’étiquette compte : seul un hermétique '
     + '<strong>marqué comme tel</strong> ouvre le seuil d’aptitude '
-    + 'élargi (6 kg au lieu de 3).</p>'
+    + 'élargi (6 kg au lieu de 3) — pour les catégories du régime 2025 '
+    + 'seulement ; une ancienne catégorie II (2008) reste bornée à 2 kg '
+    + 'en toutes circonstances.</p>'
     + '</fieldset>'
 
     // P1-1 (E1) — détection de fuites : déclaration ET vérification.

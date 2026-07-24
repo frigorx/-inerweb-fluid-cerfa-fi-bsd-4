@@ -17,6 +17,7 @@ import { esc } from '../core/utils.js';
 import { ICONES } from '../core/icones.js';
 import { verifierDroitIntervention, familleDuFluide, jetonsMentionsActives }
   from '../data/habilitations.js';
+import { hermetiqueOpposable } from '../data/equipement.js';
 
 /** Vrai si la ligne est en cours de validité à la date donnée (AAAA-MM-JJ).
  * Sans date de référence ou sans échéance : toujours valide (le moteur reste
@@ -65,9 +66,11 @@ export function verdictPourIntervenant({
     // via Number() et fabriquerait un faux refus (constat de revue).
     chargeKg: typeof nominale === 'number' && Number.isFinite(nominale)
       && nominale > 0 ? nominale : null,
-    // Le parc ne porte pas (encore) le caractère « hermétiquement
-    // scellé » : défaut prudent = seuil ordinaire de 3 kg.
-    hermetiqueScelle: false
+    // Depuis P1-1, la machine PORTE le caractère hermétique : même vérité que
+    // les deux cadreFicheOfficiel (scellé ET étiqueté — hermetiqueOpposable).
+    // L'ancien défaut `false` en dur faisait diverger conseil et Officiel
+    // sur la même machine (L1a, 24/07/2026).
+    hermetiqueScelle: hermetiqueOpposable(machine)
   });
 }
 

@@ -39,6 +39,7 @@ La **simulation de validation** évalue tout (niveau V) sans rien bloquer.
 | 15 | Signature RÉELLE du détenteur présente et NON périmée, posée APRÈS celle du technicien (même révision) — au lycée le professeur signe détenteur PAR DÉLÉGATION (décision Franck 16/07, même personne autorisée) *(lot C, brique C1)* | V |
 | 16 | APTITUDE OPPOSABLE : l'habilitation de l'intervenant COUVRE cette intervention — matrice catégorie × opération × famille de fluide × charge NOMINALE de la machine (moteur `verifierDroitIntervention`, fait `intervenant.aptitude` précalculé par les stores) ; une attestation 2008 ne compte plus après le 31/12/2026 (`habilitationReconnue`, appliquée aussi à la n° 7) ; jamais posée en doublon de la n° 7 ; une réserve non bloquante du moteur (gravité CONSEIL) ne bloque JAMAIS *(P0-5, 22/07 — code `APTITUDE_PORTEE`)* | S·V |
 | 17 | DÉTECTION PERMANENTE OBLIGATOIRE présente : au-delà du seuil HAUT du moteur (500 tCO₂eq HFC / 100 kg HFO pur / 300 kg HCFC), un système de détection permanente est exigé (fait `detectionObligatoireAbsente` précalculé par les stores, `equipement.detectionObligatoire` interroge le moteur — aucun seuil recopié) ; une fiche officielle ne peut pas acter une intervention sur un équipement au-delà du seuil qui n'en a pas. En CONSEIL, seule l'alerte `alr-detection-obligatoire-` le signale (jamais bloquant) *(P1-1, 23/07 — code `DETECTION_OBLIGATOIRE`)* | S·V |
+| 18 | FLUIDE DANS LE PÉRIMÈTRE DU CERFA : le CERFA 15497*04 vise les fluides fluorés (CFC/HCFC/HFC/PFC, HFO à titre volontaire) — pas de fiche OFFICIELLE pour le CO₂ (R-744), les hydrocarbures (R-290) ni l'ammoniac (R-717). Fait `fluideHorsPerimetreFluore` précalculé par les stores sur la **CLASSIFICATION MOTEUR** (`categorieCadre7()` : fiche explicite prioritaire, repli sur la famille, famille inconnue = hors périmètre). ⚠️ Le critère initial (attribut brut `= 'AUCUNE'`) était contournable — un fluide CRÉÉ sans fiche passait ; corrigé par la revue adversariale du lot L1, contournements prouvés PUIS fermés (`test-perimetre-cerfa`, 7 vérifs ×2 stores). La traçabilité volontaire = le mode Formation. Au PASSAGE la fiche n'existe pas encore (`fiche:null`) : la condition s'exerce S·V, le panneau de simulation du wizard la montre en direct *(Q4/L1b + revue, 24/07 — code `HORS_PERIMETRE_FLUORE`)* | S·V |
 
 ## Points gatés / arbitrages proposés (à confirmer en relisant)
 
@@ -62,9 +63,11 @@ La **simulation de validation** évalue tout (niveau V) sans rien bloquer.
   `signatureTechnicienValide` / `signatureDetenteurValide` (true | false | 'PERIMEE') ;
   l'illisibilité est refusée À LA POSE (`signerMouvement` : PNG réel, ≥ 1 Ko, ≤ 1 Mo).
   L'empreinte v2 (C2) et le PDF conservé (C3) suivent.
-- **Fluides hors périmètre (R-744, R-290)** : une fiche CERFA officielle n'a pas d'objet pour
-  un fluide non fluoré. Non bloqué au lot B — question ouverte pour la relecture : faut-il
-  refuser une fiche OFFICIELLE sur R-744/R-290, ou la laisser possible comme trace volontaire ?
+- **Fluides hors périmètre (R-744, R-290, R-717)** : ~~question ouverte~~ **TRANCHÉ par
+  Franck le 24/07 (Q4) : REFUSÉ** — condition n° 18 `HORS_PERIMETRE_FLUORE` ci-dessus.
+  La notice du CERFA 15497*04 ne prévoit pas les fluides non fluorés ; la trace volontaire
+  passe par le mode Formation (aucun troisième objet). L'arbitrage de juillet (« laisser
+  passer ») est un revirement assumé, consigné au PLAN-LOTS-REGLEMENTAIRES-Q1-Q11.
 
 ## Mise en œuvre (lot B, technique)
 

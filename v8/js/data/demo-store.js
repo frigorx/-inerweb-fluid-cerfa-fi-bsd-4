@@ -17,7 +17,7 @@ import { teqCO2, fmtDate, fmtNombre, fmtKgSigne, genId, hasherEcriture,
 // IM-1 : fréquence réglementaire des contrôles d'étanchéité —
 // logique UNIQUE partagée avec le cadre 7 du CERFA (aucun doublon).
 import { evaluerControle, impactDepuisPrp, codeFluideNormalise,
-  verifierFicheFluide } from './reglementation-fluides.js';
+  verifierFicheFluide, categorieCadre7 } from './reglementation-fluides.js';
 // P1-1 — modèle d'équipement : la détection permanente n'allège la
 // fréquence de contrôle que si elle a été VÉRIFIÉE depuis moins de 12 mois
 // (E1). Miroir serveur : server/equipement.js.
@@ -1270,6 +1270,16 @@ export function creerDemoStore() {
         && !detectionEffective(machine, mouvement.date ?? jour).declaree),
       fluideInflammable: Boolean(fluideRef?.classeSecurite &&
         fluideRef.classeSecurite !== 'A1'),
+      // Q4 (L1b, 24/07 — corrigé par la revue adversariale du lot) — fait :
+      // fluide HORS du périmètre fluoré selon la CLASSIFICATION MOTEUR
+      // (fiche explicite prioritaire, repli sur la famille, inconnue = hors
+      // périmètre). L'attribut brut « AUCUNE » seul était contournable : un
+      // fluide CRÉÉ sans fiche (famille CO2/HC/NH3 — le choix par défaut du
+      // formulaire) passait, et vider la fiche du R-744 levait le blocage.
+      // Un registre officiel au barème maximal ne délivre pas de CERFA à un
+      // fluide non fluoré NI à un fluide inclassable. Condition 18.
+      fluideHorsPerimetreFluore: Boolean(fluideRef) &&
+        categorieCadre7(fluideRef) === null,
       sourceVierge: bouteilleSrc?.etatFluide === 'VIERGE',
       prp: fluideRef?.gwpAr4 ?? null,
       signaturePresente: Boolean(mouvement.signatureDataUrl),
