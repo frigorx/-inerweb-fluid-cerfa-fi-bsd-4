@@ -148,6 +148,31 @@ verifier('sans dateReference : comportement inchangé (pas de filtrage)',
     mentions: MENTIONS_DATEES, machine: null, operation: null
   }).autorise === true);
 
+// --- Suivi de la revue L4 : le conseil suit la TRANSITION 2008 ------------
+// Le filtre avec date de référence est habilitationReconnue — le MÊME que le
+// mode Officiel. Fini le « autorisé » en vert pour une attestation 2008 que
+// l'Officiel refuse.
+{
+  const personne2008 = { id: 'per-2008', prenom: 'Ancien', nom: 'Régime' };
+  const sansRemise = [{ id: 'h2008a', personneId: 'per-2008', regime: '2008',
+    categorie: 'I', actif: true, dateFin: null }];
+  const avecRemise = [{ id: 'h2008b', personneId: 'per-2008', regime: '2008',
+    categorie: 'I', actif: true, dateFin: null, remiseNiveauLe: '2028-06-01' }];
+  const verdictA = (habs, date) => verdictPourIntervenant({
+    personne: personne2008, habilitations: habs, mentions: [],
+    machine: null, operation: null, dateReference: date
+  });
+  verifier('2008 sans remise à niveau AVANT le butoir : prise en compte',
+    verdictA(sansRemise, '2028-01-01').autorise === true);
+  verifier('2008 sans remise à niveau APRÈS le 12/03/2029 : écartée '
+    + '(le conseil dit la même chose que l’Officiel)',
+    verdictA(sansRemise, '2029-03-13').autorise === false);
+  verifier('2008 remise à niveau faite : prise en compte après le butoir',
+    verdictA(avecRemise, '2029-03-13').autorise === true);
+  verifier('… mais plus après l’échéance du cycle de 7 ans',
+    verdictA(avecRemise, '2035-06-02').autorise === false);
+}
+
 // Personne sans rien : le moteur explique quoi faire.
 const vPersonneVide = verdictPourIntervenant({
   personne: { id: 'per-neuf', prenom: 'Sans', nom: 'Rien' },

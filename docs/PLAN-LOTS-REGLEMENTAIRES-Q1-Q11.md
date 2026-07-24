@@ -297,13 +297,16 @@ coup (c'est un FAIT ; le moteur la juge non réparatrice et l'alerte CRITIQUE le
 seul le déchet de format est refusé. Cohérent avec « avertir, jamais bloquer » pour les
 faits, « refuser » pour les impossibilités.
 
+**Consigné, puis SOLDÉ le 24/07 au soir (bricoles de fin de session)** :
+- ✅ l'écran de CONSEIL filtre désormais par `habilitationReconnue` quand la date est
+  fournie (fiche machine et wizard la passaient déjà) : le conseil dit la même chose que
+  l'Officiel sur la transition 2008 — `test-conseil-intervenant` 20 → 24 vérifs.
+- ✅ les gardes de délivrance et de remise à niveau sont REJOUÉES à l'import JSON des
+  deux stores (paquet forgé refusé, remise valide voyage — `test-habilitations`
+  62 → 65 vérifs ×2). Le contrôle « pas dans le futur » reste une règle de SAISIE
+  (un export ancien rejoué porte des faits, pas des saisies — choix consigné).
+
 **Consigné, non corrigé** :
-- HORS-LOT (préexistant P0-5) : l'écran de CONSEIL (`conseil-intervenant`) ne filtre pas
-  par `habilitationReconnue` — une 2008 non reconnue s'affiche « autorisée » en conseil
-  pendant que l'Officiel la refuse. À traiter dans un lot de suivi (le composant reçoit
-  `dateReference`, le branchement est prêt).
-- import JSON : les gardes de délivrance et de remise ne sont pas rejouées à l'import
-  (asymétrie MINEURE, même statut que d'autres invariants d'import — consigné pour P2-2).
 - rappel d'approche de l'échéance du cycle 7 ans (horizon) : à ajouter plus tard si utile.
 
 ## 6. Proxies et limites ASSUMÉS (consignés, pas cachés)
