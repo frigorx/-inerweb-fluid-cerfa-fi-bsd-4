@@ -16,7 +16,7 @@
 |----|--------|-------------------------------|-----------|--------|--------|----------------|-----------|---------------|
 | 1 | R-448A | R-32/125/1234yf/134a/1234ze(E) — 26/26/20/21/7 | **1387** | A1 | Annexe I | HFC (t éq. CO2) | Source primaire | ✅ |
 | 2 | R-449A | R-32/125/1234yf/134a — 24,3/24,7/25,3/25,7 | **1397** | A1 | Annexe I | HFC (t éq. CO2) | Source primaire | ✅ |
-| 3 | R-452A | R-32/125/1234yf — 11/59/30 | **2140** | A1 | Annexe I | HFC (t éq. CO2) | Sources secondaires convergentes | ✅ |
+| 3 | R-452A | R-32/125/1234yf — 11/59/30 | **2141** ⭐ | A1 | Annexe I | HFC (t éq. CO2) | Décision Franck 25/07 (règle du plus élevé) | ✅ |
 | 4 | R-452B | R-32/125/1234yf — 67/7/26 | **698** | A2L | Annexe I | HFC (t éq. CO2) | Source primaire | ✅ |
 | 5 | R-454A | R-32/1234yf — 35/65 | **239** | A2L | Annexe I | HFC (t éq. CO2) | Sources secondaires convergentes | ✅ |
 | 6 | R-454B | R-32/1234yf — 68,9/31,1 | **467** | A2L | Annexe I | HFC (t éq. CO2) | Sources secondaires convergentes | ✅ |
@@ -148,16 +148,16 @@
 - **Composition** : R-32 (CAS 75-10-5) 11 % / R-125 (CAS 354-33-6) 59 % / R-1234yf (CAS 754-12-1) 30 % en masse. Tolérances fiche Climalife : R-125 ±1,8 % ; R-1234yf +0,1/−1,0 % ; R-32 ±1,7 %.
 
 **PRP**
-- **PRP retenu : 2140** (le plus élevé des candidats sourcés — règle du projet).
-- **Source du PRP retenu** : fiches techniques Climalife FR et Gas Servei (06/2024), Climalife Royaume-Uni — cohérent avec le calcul annexe I du règl. 517/2014 (0,11×675 + 0,59×3500 + 0,30×4 = 2140,45).
+- **PRP retenu : 2141** — ⭐ **DÉCISION FRANCK 25/07/2026** : application LITTÉRALE de la règle du plus élevé (« entre 2140 et 2141 c'est de la sémantique, tu prends le plus gros et on n'en parle plus ») ; le tableau de paramétrage des gaz (écran d'administration P1-2) permet d'ajuster au fil de l'eau si la valeur officielle diverge.
+- **Source du 2141** : sources commerciales (Cooling Post, distributeurs) sans base de calcul traçable — retenu par PRÉCAUTION littérale, il déclenche les contrôles (marginalement) plus tôt. La valeur SOURCÉE la plus solide reste 2140 (Climalife FR/UK, Gas Servei, guide Chemours ; calcul annexe I 517/2014 : 0,11×675 + 0,59×3500 + 0,30×4 = 2140,45).
 
 | Valeur | Statut | Source |
 |--------|--------|--------|
-| **2140** | **RETENU** | GIEC AR4 (2007) — fiches Climalife FR, Gas Servei, Climalife Royaume-Uni |
+| 2140 | écarté (2e) | GIEC AR4 (2007) — fiches Climalife FR, Gas Servei, Climalife Royaume-Uni ; la valeur la mieux SOURCÉE |
 | 2139,4 | écarté | Calcul annexe VI du règl. (UE) 2024/573 (R-32 = 675, R-125 = 3500, R-1234yf = 0,501) ; méthode confirmée par le mémento AFCE oct. 2025 |
 | 1945 | écarté | GIEC AR5 (2013) — brochure Honeywell Solstice 452A, Climalife Royaume-Uni |
 | 1952 | écarté | hvac-gas.eu — valeur divergente NON corroborée (probable erreur de calcul), listée pour transparence |
-| 2141 | écarté | Sources commerciales secondaires (Cooling Post « autour de 2141 », distributeurs) — base de calcul non traçable, listée pour transparence — **voir Points d'attention** |
+| **2141** | **RETENU** (décision Franck 25/07) | Sources commerciales secondaires (Cooling Post, distributeurs) — base non traçable ; retenu par application littérale de la règle « le plus élevé » |
 
 **Classement réglementaire et technique**
 - **Annexe réglementaire** : Annexe I.
@@ -183,7 +183,7 @@
 **Notes**
 1. EUR-Lex inaccessible via l'outil : les valeurs d'annexe et l'article 13 sont corroborés via le mémento AFCE (oct. 2025) et des synthèses convergentes — à RE-VÉRIFIER sur pièce avant visa ; la valeur R-125 = 3500 n'apparaît pas explicitement dans l'extrait AFCE lu : **point précis à contrôler ligne à ligne**.
 2. Deux PRP « réglementaires » coexistent : 2140 (AR4 pur) et 2139,4 (calcul 2024/573) ; écart sans aucun effet sur les seuils ; règle projet → 2140, même logique que le T2 R-455A.
-3. Valeur 2141 trouvée uniquement dans des sources commerciales sans base de calcul traçable : listée mais non retenue — **si Franck veut l'ultra-précaution au sens littéral de la règle, c'est le seul candidat au-dessus de 2140, à trancher explicitement**.
+3. Valeur 2141 : sources commerciales sans base de calcul traçable — **RETENUE le 25/07 par décision Franck** (règle du plus élevé au sens littéral) ; le 2140 sourcé reste consigné ci-dessus si l'organisme agréé exige la valeur de référence.
 4. AR5 : 1945 (Honeywell, Climalife Royaume-Uni) fiable ; 1952 (hvac-gas.eu) divergent, probablement erroné.
 5. PIÈGE de nommage : R-452A (A1, 11/59/30) ≠ R-452B (A2L, 67/7/26) ; l'isomère du composant HFO est bien le R-1234yf, pas le R-1234ze(E).
 6. Zéotrope (glissement 3,79 K) : charge en phase liquide, fractionnement possible en cas de fuite vapeur — incidence pédagogique et sur l'analyse en cas de complément de charge.
@@ -589,7 +589,7 @@
 ### 3.1 Litiges et incertitudes
 - **Aucun litige de contre-vérification** : les 10 fluides passent les trois contrôles (PRP, classe, annexe).
 - **Aucune fiche classée INCERTAIN.** En revanche, **5 fiches sur 10 sont en « sources secondaires convergentes »** (R-452A, R-454A, R-454B, R-513A, R-717) parce que EUR-Lex a bloqué la lecture automatique du texte officiel : **le visa sur pièce (JO de l'UE, à l'écran) est obligatoire avant tout semis dans le logiciel** pour ces cinq-là.
-- **Un point à trancher explicitement par Franck** : pour le R-452A, une valeur 2141 circule dans des sources commerciales sans base de calcul traçable. C'est le seul candidat au-dessus du 2140 retenu. Application littérale de la règle « le plus élevé » = 2141 ; application raisonnée (valeur sourcée uniquement) = 2140. **Recommandation : rester à 2140** (aucun rapport GIEC ne soutient 2141), mais la décision revient à Franck.
+- ✅ **TRANCHÉ par Franck le 25/07** : R-452A = **2141** (application littérale de la règle « le plus élevé » — « c'est de la sémantique », l'écran d'administration des gaz permettra d'ajuster au fil de l'eau). Sans effet sur les seuils : 2140 comme 2141 restent sous 2500 et au-dessus de 750.
 - **Point ligne à ligne R-452A** : la valeur R-125 = 3500 n'apparaît pas explicitement dans l'extrait AFCE lu — à contrôler sur le texte JO.
 
 ### 3.2 Cases laissées ouvertes (volontairement non inventées)
