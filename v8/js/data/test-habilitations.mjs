@@ -351,6 +351,27 @@ verifier('mouvement : quantité calculée des pesées (+2 kg)',
     await verifierRejet('import refusé : deux habilitations sous le même id',
       cibleE.importerJSON(JSON.stringify(paquet)), 'id en double');
   }
+  // Revue L4 (suivi) : l'asymétrie d'import est fermée — ce que la saisie
+  // refuse, un paquet forgé ne le fait plus avaler.
+  const cibleF = await fabriquerStore(NOM_STORE);
+  await verifierRejet('import refusé : délivrance 2008 datée après le 31/12/2026',
+    cibleF.importerJSON(await forger({ dateDebut: '2027-06-15' })),
+    'délivrance 2008 datée après le 31/12/2026');
+  const cibleG = await fabriquerStore(NOM_STORE);
+  await verifierRejet('import refusé : remise à niveau au calendrier impossible (2028-99-99)',
+    cibleG.importerJSON(await forger({ remiseNiveauLe: '2028-99-99' })),
+    'remise à niveau invalide');
+  const cibleH = await fabriquerStore(NOM_STORE);
+  {
+    // Contre-témoin : une remise à niveau VALIDE voyage sans encombre.
+    const paquetSain = await forger({ dateDebut: '2020-05-10',
+      remiseNiveauLe: '2025-06-10' });
+    await cibleH.importerJSON(paquetSain);
+    const relue = (await cibleH.getHabilitations())
+      .find((h) => h.id === 'HAB-FORGE');
+    verifier('import : une remise à niveau valide voyage (round-trip)',
+      relue && relue.remiseNiveauLe === '2025-06-10');
+  }
 }
 
 // --- L4/Q3 (RN-2) : remise à niveau + garde de délivrance 2008 -----

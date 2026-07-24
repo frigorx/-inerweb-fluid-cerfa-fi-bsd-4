@@ -15,7 +15,8 @@
 
 import { esc } from '../core/utils.js';
 import { ICONES } from '../core/icones.js';
-import { verifierDroitIntervention, familleDuFluide, jetonsMentionsActives }
+import { verifierDroitIntervention, familleDuFluide, jetonsMentionsActives,
+  habilitationReconnue }
   from '../data/habilitations.js';
 import { hermetiqueOpposable } from '../data/equipement.js';
 
@@ -26,11 +27,21 @@ export function estEnCoursDeValidite(ligne, dateReference) {
   return !dateReference || !ligne.dateFin || ligne.dateFin >= dateReference;
 }
 
-/** Habilitations ACTIVES (et non échues) d'une personne (getHabilitations). */
+/**
+ * Habilitations qui COMPTENT pour une personne (getHabilitations). Avec une
+ * date de référence, le filtre est `habilitationReconnue` — le MÊME que les
+ * deux cadres du mode Officiel (actif + échéance propre + transition 2008 :
+ * butoir de remise à niveau du 12/03/2029, cycle 7 ans). Suivi de la revue
+ * L4 : l'écran de conseil affichait « autorisé » en vert pour une 2008 non
+ * reconnue pendant que l'Officiel la refusait — deux vérités pour la même
+ * personne. Sans date (moteur sans horloge) : actives seulement, comme avant.
+ */
 export function habilitationsActivesDe(personneId, habilitations, dateReference = null) {
   return (Array.isArray(habilitations) ? habilitations : [])
-    .filter((h) => h && h.actif && h.personneId === personneId
-      && estEnCoursDeValidite(h, dateReference));
+    .filter((h) => h && h.personneId === personneId
+      && (dateReference
+        ? habilitationReconnue(h, dateReference)
+        : h.actif));
 }
 
 /** Jetons de mention ACTIFS (et non échus) d'une personne (getMentions). */

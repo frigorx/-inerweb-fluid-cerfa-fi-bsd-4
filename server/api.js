@@ -4926,6 +4926,30 @@ function verifierInvariantsDonneesCandidat(candidat) {
     }
     const probleme = problemeAptitude('habilitation', h, idsHabilitations);
     if (probleme) return probleme;
+    // Revue L4 (suivi) : les gardes de création valent aussi à l'IMPORT —
+    // l'asymétrie « refusé à la saisie, avalé par un paquet forgé » est
+    // fermée. Une délivrance 2008 postérieure au 31/12/2026 est illégale
+    // (arrêté du 21/11/2025, art. 11) ; une remise à niveau au format ou au
+    // calendrier impossible fausserait l'affichage (le moteur, lui, la
+    // neutralise déjà — défense en profondeur). Le contrôle « pas dans le
+    // futur » reste une règle de SAISIE : un export ancien rejoué plus tard
+    // porte des faits, pas des saisies.
+    if (h.regime === '2008' && h.dateDebut
+        && h.dateDebut > FIN_DELIVRANCE_2008) {
+      return `habilitation ${ref} : délivrance 2008 datée après le ` +
+        '31/12/2026 (arrêté du 21/11/2025, art. 11)';
+    }
+    const remiseImport = h.remiseNiveauLe ?? null;
+    if (remiseImport !== null) {
+      const mR = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(remiseImport));
+      const controleR = mR && new Date(Date.UTC(
+        Number(mR[1]), Number(mR[2]) - 1, Number(mR[3])));
+      if (!mR || controleR.getUTCMonth() !== Number(mR[2]) - 1
+          || controleR.getUTCDate() !== Number(mR[3])) {
+        return `habilitation ${ref} : date de remise à niveau invalide ` +
+          '(AAAA-MM-JJ attendu)';
+      }
+    }
   }
   const idsMentions = new Set();
   for (const m of candidat.mentionsHabilitation ?? []) {
