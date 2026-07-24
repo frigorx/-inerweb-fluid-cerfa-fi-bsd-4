@@ -9,7 +9,8 @@ import { modale, toast } from '../views/communs.js';
 import { esc, nombreFr, fluidesProposables, fmtDate } from '../core/utils.js';
 // P1-1 : la nature de l'équipement commande ses obligations (sous-type
 // mobile listé, étiquette hermétique, vérification de la détection).
-import { SOUS_TYPES_MOBILES, LIBELLE_SOUS_TYPE, detectionEffective }
+import { SOUS_TYPES_MOBILES, LIBELLE_SOUS_TYPE, detectionEffective,
+  USAGES_THERMIQUES, LIBELLE_USAGE_THERMIQUE }
   from '../data/equipement.js';
 import { familleDuType, codeSite, genererCodeMachine, normaliserCodeMachine, validerCodeMachine }
   from '../data/code-machine.js';
@@ -199,6 +200,24 @@ function gabaritFormulaire(machine, fluides, clients) {
     + '<label class="mf-case"><input type="checkbox" id="mf-residentiel" '
     + 'name="residentiel"' + (machine.residentiel ? ' checked' : '')
     + '> Usage résidentiel</label>'
+    // L3/R4 (25/07) : l'usage thermique commande les DATES d'interdiction
+    // du fluide vierge à PRP >= 2500 (froid 2025, clim/PAC 2026). Non
+    // renseigné = régime le plus strict — la note le DIT.
+    + '<div class="champ" data-champ="usageThermique">'
+    + '<label for="mf-usage">Usage thermique</label>'
+    + '<select id="mf-usage" name="usageThermique">'
+    + '<option value="">— non renseigné (régime le plus strict : froid, '
+    + 'vierge interdit depuis 2025) —</option>'
+    + USAGES_THERMIQUES.map(function (u) {
+      return '<option value="' + u + '"'
+        + (machine.usageThermique === u ? ' selected' : '') + '>'
+        + esc(LIBELLE_USAGE_THERMIQUE[u]) + '</option>';
+    }).join('')
+    + '</select>'
+    + '</div>'
+    + '<p class="mf-note">Pour un fluide à PRP ≥ 2 500 (R-404A…), la '
+    + 'maintenance au fluide VIERGE est interdite depuis le 01/01/2025 en '
+    + 'froid, depuis le 01/01/2026 en climatisation et pompe à chaleur.</p>'
     + '<p class="mf-note">L’étiquette compte : seul un hermétique '
     + '<strong>marqué comme tel</strong> ouvre le seuil d’aptitude '
     + 'élargi (6 kg au lieu de 3) — pour les catégories du régime 2025 '
@@ -380,6 +399,8 @@ function validerFormulaire(racine, enModification) {
     hermetiqueEtiquete: donnees.get('hermetiqueScelle') === 'on'
       && donnees.get('hermetiqueEtiquete') === 'on',
     residentiel: donnees.get('residentiel') === 'on',
+    // L3/R4 : chaîne vide = effacement (retour au régime le plus strict).
+    usageThermique: String(donnees.get('usageThermique') || ''),
     detectionVerifieeLe: donnees.get('detectionPermanente') === 'on'
       ? String(donnees.get('detectionVerifieeLe') || '') : '',
     detectionReference: donnees.get('detectionPermanente') === 'on'

@@ -15,7 +15,8 @@ import { ouvrirWizard } from '../wizard/wizard.js';
 import { ouvrirFormControle } from '../modales/controle-form.js';
 import { ouvrirPlaque, calculerFrequenceControle } from '../documents/plaque-fgas.js';
 // P1-1 : ce que l'équipement EST, et pourquoi sa fréquence vaut ce qu'elle vaut.
-import { detectionEffective, mobileListe, LIBELLE_SOUS_TYPE }
+import { detectionEffective, mobileListe, LIBELLE_SOUS_TYPE,
+  LIBELLE_USAGE_THERMIQUE }
   from '../data/equipement.js';
 import { ouvrirEtiquette } from '../documents/etiquette-machine.js';
 import { ouvrirBonIntervention } from '../documents/bon-intervention.js';
@@ -394,6 +395,9 @@ function blocDonneesTechniques(machine, fluide, client) {
       ? (machine.hermetiqueEtiquete ? 'Oui, étiqueté comme tel'
         : 'Oui, mais NON étiqueté') : null),
     ligneDetail('Usage résidentiel', machine.residentiel ? 'Oui' : null),
+    // L3/R4 : l'usage commande les dates d'interdiction du vierge — il se LIT.
+    ligneDetail('Usage thermique', machine.usageThermique
+      ? LIBELLE_USAGE_THERMIQUE[machine.usageThermique] : null),
     ligneDetail('Détection permanente', machine.detectionPermanente
       ? libelleDetection : null),
     ligneDetail('Fréquence de contrôle', libelleFrequence),

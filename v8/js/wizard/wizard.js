@@ -14,6 +14,8 @@ import { creerSignature } from './signature.js';
 import { ouvrirFormMachine } from '../modales/machine-form.js';
 import { ouvrirFormBouteille } from '../modales/bouteille-form.js';
 import { avoirOrigineDisponible } from '../data/avoir-origine.js';
+import { debutInterdictionVierge, LIBELLE_USAGE_THERMIQUE }
+  from '../data/equipement.js';
 import { verdictPourIntervenant, encartConseil, injecterStylesConseil,
   dateDuJour } from '../composants/conseil-intervenant.js';
 import { LIBELLES_TYPE_OUTIL } from '../views/outillage.js';
@@ -1436,15 +1438,26 @@ export async function ouvrirWizard(ctx, options = {}) {
     if (typeMouvement() === 'CHARGE_APPOINT' && machine) {
       const fluideRef = fluides.find(function (f) { return f.code === machine.fluide; });
       if (fluideRef && Number(fluideRef.gwpAr4) >= 2500) {
+        // L3/R4 (25/07) : l'usage thermique de la fiche machine dit QUELLE
+        // date s'applique à CETTE machine — non renseigné = le plus strict.
+        const usage = machine.usageThermique ?? null;
+        const debut = debutInterdictionVierge(usage)
+          .split('-').reverse().join('/');
+        const precisionUsage = usage
+          ? ' Pour cette machine (' + LIBELLE_USAGE_THERMIQUE[usage]
+            + '), l’interdiction court depuis le ' + debut + '.'
+          : ' Usage thermique non renseigné sur la fiche machine : le régime '
+            + 'le plus strict s’applique (interdit depuis le ' + debut + ').';
         // bandeauAvertissement échappe déjà tout le message : pas de esc()
         // ici, sinon double échappement (constat de revue du 16/07).
         bandeauPrp = bandeauAvertissement('Fluide à PRP ≥ 2 500 ('
           + machine.fluide + ') : la maintenance au fluide VIERGE est '
           + 'interdite (réfrigération depuis le 01/01/2025, climatisation et '
-          + 'pompes à chaleur depuis le 01/01/2026 — règl. UE 2024/573). Le '
-          + 'fluide recyclé ou régénéré reste autorisé sous conditions. Si '
-          + 'vous devez charger du fluide vierge, consignez le motif dans la '
-          + 'cause du mouvement.');
+          + 'pompes à chaleur depuis le 01/01/2026 — règl. UE 2024/573).'
+          + precisionUsage
+          + ' Le fluide recyclé ou régénéré reste autorisé sous conditions. '
+          + 'Si vous devez charger du fluide vierge, consignez le motif dans '
+          + 'la cause du mouvement.');
       }
     }
 

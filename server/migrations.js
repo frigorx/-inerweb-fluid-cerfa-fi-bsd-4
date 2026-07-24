@@ -202,6 +202,9 @@
  *       remise_niveau_organisme (backfill NULL = rien de présumé fait).
  *       L'arrêté du 21/11/2025 art. 7 : remise à niveau AU PLUS TARD le
  *       12/03/2029, sinon l'attestation n'est plus valide. Hors WORM.
+ *  34 — L3/R4 (usage thermique) : machines.usage_thermique (liste FERMÉE
+ *       froid/clim/PAC, NULL = régime le plus strict). Commande les dates
+ *       d'interdiction du vierge PRP >= 2500 (art. 13). Hors WORM.
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -1641,6 +1644,24 @@ LEFT JOIN justifications_ecarts j ON j.etablissement_id = p.etablissement_id AND
     appliquer(db) {
       db.exec('ALTER TABLE habilitations ADD COLUMN remise_niveau_le TEXT;');
       db.exec('ALTER TABLE habilitations ADD COLUMN remise_niveau_organisme TEXT;');
+    }
+  },
+
+  // 34 — L3/R4 (décision Franck 25/07) : l'USAGE THERMIQUE de la machine
+  // (froid commercial / climatisation / pompe à chaleur). Il commande les
+  // DATES d'interdiction du fluide VIERGE à PRP >= 2500 (règl. UE 2024/573,
+  // art. 13) : réfrigération depuis le 01/01/2025, clim/PAC depuis le
+  // 01/01/2026. Backfill CONSERVATEUR : NULL = usage non renseigné → le
+  // régime le plus STRICT s'applique (froid, 2025) — le raffinement ne peut
+  // qu'ASSOUPLIR une machine explicitement déclarée en clim/PAC, jamais
+  // durcir par accident. Table machines hors WORM (comme 27, 31, 32).
+  34: {
+    nom: 'machines_usage_thermique',
+    appliquer(db) {
+      db.exec(`ALTER TABLE machines ADD COLUMN usage_thermique TEXT
+                 CHECK (usage_thermique IS NULL
+                   OR usage_thermique IN ('FROID_COMMERCIAL',
+                     'CLIMATISATION', 'POMPE_A_CHALEUR'));`);
     }
   }
 };

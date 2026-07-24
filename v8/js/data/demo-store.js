@@ -23,7 +23,7 @@ import { evaluerControle, impactDepuisPrp, codeFluideNormalise,
 // (E1). Miroir serveur : server/equipement.js.
 import { detectionEffective, echeanceVerificationDetection,
   verifierModeleEquipement, mobileListe, detectionObligatoire,
-  hermetiqueOpposable } from './equipement.js';
+  hermetiqueOpposable, debutInterdictionVierge } from './equipement.js';
 // CM-2 : avoir de fluide par machine d'origine (DÉRIVÉ des mouvements) —
 // signale une réintroduction au-delà du récupéré. Le serveur en tient un
 // MIROIR EXACT (api.js).
@@ -1337,6 +1337,12 @@ export function creerDemoStore() {
         && !detectionEffective(machine, mouvement.date ?? jour).declaree),
       fluideInflammable: Boolean(fluideRef?.classeSecurite &&
         fluideRef.classeSecurite !== 'A1'),
+      // L3/R4 (25/07) — faits datés de la condition 10 : la date du
+      // mouvement et le début d'interdiction du vierge applicable à
+      // l'USAGE de la machine (usage absent = régime le plus strict).
+      dateMouvement: mouvement.date ?? jour,
+      interdictionViergeDepuis: machine
+        ? debutInterdictionVierge(machine.usageThermique) : null,
       // Q4 (L1b, 24/07 — corrigé par la revue adversariale du lot) — fait :
       // fluide HORS du périmètre fluoré selon la CLASSIFICATION MOTEUR
       // (fiche explicite prioritaire, repli sur la famille, inconnue = hors
@@ -2858,7 +2864,8 @@ export function creerDemoStore() {
         hermetiqueScelle: Boolean(d.hermetiqueScelle),
         hermetiqueEtiquete: Boolean(d.hermetiqueEtiquete),
         detectionPermanente: Boolean(d.detectionPermanente),
-        detectionVerifieeLe: d.detectionVerifieeLe ?? null
+        detectionVerifieeLe: d.detectionVerifieeLe ?? null,
+        usageThermique: d.usageThermique ?? null
       });
       const client = d.clientId
         ? donnees.clients.find((c) => c.id === d.clientId)
@@ -2910,6 +2917,8 @@ export function creerDemoStore() {
         hermetiqueEtiquete: Boolean(d.hermetiqueEtiquete),
         residentiel: Boolean(d.residentiel),
         sousTypeInstallation: texteOuNullEquip(d.sousTypeInstallation),
+        // L3/R4 : usage thermique — null = régime le plus strict (froid).
+        usageThermique: texteOuNullEquip(d.usageThermique),
         detectionVerifieeLe: texteOuNullEquip(d.detectionVerifieeLe),
         detectionProchaineVerif: echeanceVerificationDetection(
           texteOuNullEquip(d.detectionVerifieeLe)),
@@ -2964,7 +2973,7 @@ export function creerDemoStore() {
       // permanente en laissant une date de vérification).
       const CHAMPS_EQUIPEMENT = ['hermetiqueScelle', 'hermetiqueEtiquete',
         'residentiel', 'sousTypeInstallation', 'detectionVerifieeLe',
-        'detectionReference'];
+        'detectionReference', 'usageThermique'];
       const fusion = { ...machine };
       for (const champ of [...CHAMPS_EQUIPEMENT, 'typeInstallation',
         'detectionPermanente']) {
@@ -2987,7 +2996,7 @@ export function creerDemoStore() {
       }
       // Champs texte facultatifs : chaîne vide = effacement (null).
       for (const champ of ['sousTypeInstallation', 'detectionVerifieeLe',
-        'detectionReference']) {
+        'detectionReference', 'usageThermique']) {
         if (d[champ] !== undefined) machine[champ] = texteOuNullEquip(d[champ]);
       }
       // L'échéance de vérification est CALCULÉE, jamais saisie : elle suit

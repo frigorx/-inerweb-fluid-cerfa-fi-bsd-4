@@ -202,6 +202,9 @@ const TABLES = {
       hermetiqueEtiquete: 'hermetique_etiquete',
       residentiel: 'residentiel',
       sousTypeInstallation: 'sous_type_installation',
+      // L3/R4 (migration 34) : usage thermique — commande les dates
+      // d'interdiction du vierge PRP >= 2500 ; NULL = régime le plus strict.
+      usageThermique: 'usage_thermique',
       detectionVerifieeLe: 'detection_verifiee_le',
       detectionProchaineVerif: 'detection_prochaine_verif',
       detectionReference: 'detection_reference',
