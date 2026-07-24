@@ -51,7 +51,9 @@ import { calculerTransitions, formaterEpisode, comparerEpisodes, estOuvert }
 // (verifierDroitIntervention, habilitationReconnue, jetonsMentionsActives).
 import { REGIMES, CATEGORIES_2008, CATEGORIES_2025, comparerHabilitations,
   categorieCoherente, FLUIDES_MENTION, comparerMentions,
-  verifierDroitIntervention, habilitationReconnue, jetonsMentionsActives }
+  verifierDroitIntervention, habilitationReconnue, jetonsMentionsActives,
+  FIN_DELIVRANCE_2008, DATE_BUTOIR_REMISE_NIVEAU_2008,
+  DUREE_CYCLE_FORMATION_ANS, plusAnnees }
   from './habilitations.js';
 // Signature binaire réelle des pièces jointes (audit-proof) : le contenu doit
 // concorder avec le type déclaré, jamais le MIME annoncé seul (miroir serveur).
@@ -878,6 +880,47 @@ export function creerDemoStore() {
     return categorie;
   }
 
+  /**
+   * L4/Q3 (RN-2) — garde de DÉLIVRANCE (miroir EXACT du serveur) : après le
+   * 31/12/2026 plus aucune attestation ne peut être délivrée sous l'ancien
+   * régime (arrêté du 21/11/2025, art. 11). On enregistre l'HISTORIQUE
+   * librement (dateDebut absente = date de délivrance inconnue, admise) ;
+   * on refuse d'ACTER une délivrance 2008 postérieure — elle serait illégale.
+   */
+  function verifierDelivrance2008(regime, dateDebut) {
+    if (regime === '2008' && dateDebut && dateDebut > FIN_DELIVRANCE_2008) {
+      throw new Error(
+        'Une attestation du régime 2008 ne peut plus être délivrée après le ' +
+        '31/12/2026 (arrêté du 21/11/2025, art. 11) : enregistrez une ' +
+        'catégorie du régime 2025.');
+    }
+  }
+
+  /**
+   * Revue L4 — garde de SAISIE de la remise à niveau (miroir EXACT du
+   * serveur) : format ancré AAAA-MM-JJ + date calendaire RÉELLE (un
+   * « 2028-99-99 » passait les comparaisons de chaînes et RECONNAISSAIT
+   * l'attestation jusqu'en 2035) + jamais dans le futur (une formation non
+   * faite ne s'atteste pas d'avance). Une remise POSTÉRIEURE au butoir
+   * reste enregistrable après coup : c'est un FAIT, le moteur la juge non
+   * réparatrice et l'alerte le dit.
+   */
+  function verifierRemiseNiveau(remiseNiveauLe) {
+    if (remiseNiveauLe == null || remiseNiveauLe === '') return;
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(remiseNiveauLe));
+    const controle = m && new Date(Date.UTC(
+      Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+    if (!m || controle.getUTCMonth() !== Number(m[2]) - 1
+        || controle.getUTCDate() !== Number(m[3])) {
+      throw new Error(
+        'Date de remise à niveau invalide (AAAA-MM-JJ attendu).');
+    }
+    if (remiseNiveauLe > aujourdHui()) {
+      throw new Error('Une remise à niveau ne s’atteste pas d’avance : ' +
+        'la date ne peut pas être dans le futur.');
+    }
+  }
+
   function trouverMention(id) {
     const m = donnees.mentionsHabilitation.find((x) => x.id === id);
     if (!m) throw new Error(`Mention introuvable : ${id}.`);
@@ -1213,7 +1256,7 @@ export function creerDemoStore() {
       ? donnees.personnel.find((p) => p.id === mouvement.executeParId) ?? null
       : null;
     // P0-5 : habilitations qui COMPTENT (actives, non échues, régime encore
-    // reconnu — une 2008 ne compte plus après le 31/12/2026) + fait
+    // reconnu — transition 2008 : butoir de remise à niveau 12/03/2029) + fait
     // `aptitude` = verdict du moteur sur CE mouvement (opération = type,
     // fluide du mouvement, charge NOMINALE de la machine — celle des seuils
     // réglementaires). La fiche machine ne porte pas (encore) le caractère
@@ -2430,6 +2473,57 @@ export function creerDemoStore() {
             niveau: 'IMPORTANT',
             titre: 'Habilitation F-Gas à renouveler',
             detail: `${qui} · ${h.regime} ${h.categorie} · échéance ${fmtDate(h.dateFin)}`,
+            cible: { vue: 'personnel', id: h.personneId }
+          });
+        }
+      }
+
+      // L4/Q3 (RN-3, refondue par la revue du lot) — remise à niveau des
+      // attestations 2008 (arrêté du 21/11/2025, art. 7). L'alerte est
+      // fondée sur l'ÉTAT RÉEL du moteur (habilitationReconnue), plus sur
+      // la seule présence du champ : une remise TARDIVE (postérieure au
+      // butoir) ou un cycle de 7 ans ÉCHU rendaient l'attestation morte
+      // SANS aucune alerte — le tableau contredisait le moteur.
+      // CRITIQUE = non reconnue (motif dit lequel) ; IMPORTANT = reconnue
+      // en sursis (pas de remise réparatrice enregistrée). Une ligne échue
+      // par sa propre date se tait ici (alr-habilitation- la porte).
+      for (const h of donnees.habilitations ?? []) {
+        if (!h.actif || h.regime !== '2008') continue;
+        if (!nomsPersonnelActif.has(h.personneId)) continue;
+        if (h.dateFin && h.dateFin < jour) continue;
+        const qui = nomsPersonnelActif.get(h.personneId);
+        const remise = h.remiseNiveauLe ?? null;
+        const remiseReparatrice = Boolean(remise
+          && remise <= DATE_BUTOIR_REMISE_NIVEAU_2008);
+        if (!habilitationReconnue(h, jour)) {
+          const motif = !remise
+            ? 'sans remise à niveau enregistrée au 12/03/2029 : examen à repasser'
+            : !remiseReparatrice
+              ? `remise à niveau du ${fmtDate(remise)} postérieure au butoir ` +
+                'du 12/03/2029 : examen à repasser'
+              : 'cycle de formation de 7 ans échu depuis le ' +
+                `${fmtDate(plusAnnees(remise, DUREE_CYCLE_FORMATION_ANS))} : ` +
+                'remise à niveau à refaire';
+          alertes.push({
+            id: `alr-remise-niveau-${h.id}`,
+            niveau: 'CRITIQUE',
+            titre: 'Attestation 2008 non reconnue',
+            detail: `${qui} · 2008 ${h.categorie} · ${motif}`,
+            cible: { vue: 'personnel', id: h.personneId }
+          });
+        } else if (!remiseReparatrice) {
+          // L'échéance AFFICHÉE est la plus proche : la propre date de fin
+          // de la ligne si elle tombe avant le butoir (faire la remise
+          // après serait sans objet pour cette attestation).
+          const echeance = h.dateFin && h.dateFin < DATE_BUTOIR_REMISE_NIVEAU_2008
+            ? h.dateFin : DATE_BUTOIR_REMISE_NIVEAU_2008;
+          alertes.push({
+            id: `alr-remise-niveau-${h.id}`,
+            niveau: 'IMPORTANT',
+            titre: 'Remise à niveau à faire avant le 12/03/2029',
+            detail: `${qui} · 2008 ${h.categorie} · formation de remise à ` +
+              `niveau ponctuelle exigée avant le ${fmtDate(echeance)} ` +
+              '(arrêté du 21/11/2025)',
             cible: { vue: 'personnel', id: h.personneId }
           });
         }
@@ -4687,6 +4781,8 @@ export function creerDemoStore() {
       if (estAuCoffre(personne.id)) throw new Error(MSG_FICHE_AU_COFFRE);
       verifierRegime(d.regime);
       verifierCategorieHabilitation(d.regime, d.categorie);
+      verifierDelivrance2008(d.regime, d.dateDebut);
+      verifierRemiseNiveau(d.remiseNiveauLe);
       const habilitation = {
         id: genId('hab'),
         personneId: personne.id,
@@ -4696,6 +4792,10 @@ export function creerDemoStore() {
         organismeDelivreur: d.organismeDelivreur ?? null,
         dateDebut: d.dateDebut ?? null,
         dateFin: d.dateFin ?? null,
+        // L4/Q3 (RN-2) : remise à niveau ponctuelle (arrêté du 21/11/2025
+        // art. 7) — enregistrable dès la création (saisie d'historique).
+        remiseNiveauLe: d.remiseNiveauLe ?? null,
+        remiseNiveauOrganisme: d.remiseNiveauOrganisme ?? null,
         // Invariant : à la création une habilitation est TOUJOURS active ; la
         // désactivation passe EXCLUSIVEMENT par revoquerHabilitation (qui pose
         // aussi la date). Interdit l'état incohérent « inactive sans date ».
@@ -4718,8 +4818,17 @@ export function creerDemoStore() {
       const d = donneesHabilitation || {};
       // Régime et catégorie INTOUCHABLES : on corrige une coquille (n°, dates,
       // organisme), on ne réécrit jamais l'identité de l'attestation.
+      // L4/Q3 : la remise à niveau se corrige aussi (même statut qu'une date).
+      // Revue L4 — les gardes de création valent AUSSI en correction : le
+      // contournement « créer légal puis patcher illégal » est fermé.
+      if (d.dateDebut !== undefined) {
+        verifierDelivrance2008(habilitation.regime, d.dateDebut);
+      }
+      if (d.remiseNiveauLe !== undefined) {
+        verifierRemiseNiveau(d.remiseNiveauLe);
+      }
       const CHAMPS = ['numeroAttestation', 'organismeDelivreur',
-        'dateDebut', 'dateFin'];
+        'dateDebut', 'dateFin', 'remiseNiveauLe', 'remiseNiveauOrganisme'];
       for (const champ of CHAMPS) {
         if (d[champ] !== undefined) habilitation[champ] = copier(d[champ]);
       }

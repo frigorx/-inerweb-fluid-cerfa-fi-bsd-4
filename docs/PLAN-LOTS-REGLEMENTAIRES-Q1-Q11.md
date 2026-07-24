@@ -247,6 +247,41 @@ moteur d'aptitude, 0 divergence ; 2 000/3 000/6 000 g pile refusés partout).
   pas celui de la machine — l'incohérence machine/fluide relève d'une autre garde,
   consignée.
 
+## 5 ter. Revue adversariale du lot L4 (24/07) — corrigé et consigné
+
+**13 constats, tous TIRÉS ; frontières de dates et parité INTACTES** (12/03/2029 pile,
+cycle 7 ans au jour près, parité totale). **7 racines confirmées, toutes corrigées** :
+- ⭐ `remiseNiveauLe` n'était jamais validée : « 2028-99-99 » passait les comparaisons de
+  chaînes et RECONNAISSAIT l'attestation jusqu'en 2035 (dans le fait `aptitude` du mode
+  Officiel !). Fermé à DEUX étages : garde de saisie au CRUD (format ancré + calendrier
+  réel + **jamais dans le futur** — une formation non faite ne s'atteste pas d'avance) et
+  défense en profondeur au moteur PUR (remise illisible = ne compte pas ; `plusAnnees`
+  contrôle le calendrier et cadre l'année sur 4 chiffres).
+- la garde de délivrance 2008 se contournait par `updateHabilitation` (créer légal, patcher
+  2027) : les gardes de création valent désormais AUSSI en correction (2 stores).
+- l'alerte était AVEUGLE dès qu'une remise existait : tardive ou cycle échu = attestation
+  morte SANS alerte, le tableau contredisait le moteur. Refondue sur l'ÉTAT RÉEL
+  (`habilitationReconnue`) : CRITIQUE motivé (sans remise / tardive / cycle échu),
+  IMPORTANT en sursis, échéance affichée = min(dateFin propre, butoir).
+- `habilitationReconnue` : défaut-REFUS (régime inconnu, date de référence illisible —
+  plus jamais « reconnu par accident »).
+- semis démo : le professeur porte désormais sa remise à niveau (date relative) — la démo
+  montre le champ rempli ET le cas Sophie (sans remise, alerte vivante).
+
+**Choix consigné** : une remise à niveau POSTÉRIEURE au butoir reste enregistrable après
+coup (c'est un FAIT ; le moteur la juge non réparatrice et l'alerte CRITIQUE le dit) —
+seul le déchet de format est refusé. Cohérent avec « avertir, jamais bloquer » pour les
+faits, « refuser » pour les impossibilités.
+
+**Consigné, non corrigé** :
+- HORS-LOT (préexistant P0-5) : l'écran de CONSEIL (`conseil-intervenant`) ne filtre pas
+  par `habilitationReconnue` — une 2008 non reconnue s'affiche « autorisée » en conseil
+  pendant que l'Officiel la refuse. À traiter dans un lot de suivi (le composant reçoit
+  `dateReference`, le branchement est prêt).
+- import JSON : les gardes de délivrance et de remise ne sont pas rejouées à l'import
+  (asymétrie MINEURE, même statut que d'autres invariants d'import — consigné pour P2-2).
+- rappel d'approche de l'échéance du cycle 7 ans (horizon) : à ajouter plus tard si utile.
+
 ## 6. Proxies et limites ASSUMÉS (consignés, pas cachés)
 
 - « Ouverture du circuit » (Q2) : dérivée du TYPE de mouvement (contrôle d'étanchéité =

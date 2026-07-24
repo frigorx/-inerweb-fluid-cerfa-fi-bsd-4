@@ -198,6 +198,10 @@
  *       / detection_reference. Booléens à 0 et dates à NULL = backfill
  *       CONSERVATEUR : aucun équipement n'est exempté, aucune détection n'est
  *       réputée vérifiée. Le parc devient plus contrôlé, jamais moins.
+ *  33 — L4/Q3 (remise à niveau 2008) : habilitations.remise_niveau_le /
+ *       remise_niveau_organisme (backfill NULL = rien de présumé fait).
+ *       L'arrêté du 21/11/2025 art. 7 : remise à niveau AU PLUS TARD le
+ *       12/03/2029, sinon l'attestation n'est plus valide. Hors WORM.
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -1617,6 +1621,26 @@ LEFT JOIN justifications_ecarts j ON j.etablissement_id = p.etablissement_id AND
       db.exec('ALTER TABLE machines ADD COLUMN detection_verifiee_le TEXT;');
       db.exec('ALTER TABLE machines ADD COLUMN detection_prochaine_verif TEXT;');
       db.exec('ALTER TABLE machines ADD COLUMN detection_reference TEXT;');
+    }
+  },
+
+  // 33 — L4/Q3 : la REMISE À NIVEAU des attestations 2008. L'arrêté du
+  // 21/11/2025 (aptitude, art. 7) impose aux titulaires I-IV une formation
+  // de remise à niveau ponctuelle AU PLUS TARD le 12/03/2029, faute de quoi
+  // l'attestation n'est plus valide ; le logiciel doit donc pouvoir
+  // l'ENREGISTRER (date + organisme) — sans champ, il aurait dû choisir
+  // entre la présumer faite (permissif : reconnaître des attestations que
+  // la loi a invalidées) ou expirer tout le monde (l'ancien couperet).
+  // Backfill CONSERVATEUR : NULL — aucune remise à niveau n'est réputée
+  // faite. Avant le 12/03/2029 la reconnaissance est de droit ; après,
+  // seule une ligne renseignée compte (habilitationReconnue, RN-1).
+  // Table habilitations hors WORM et hors chaîne de hash (comme la
+  // migration 16 qui l'a créée) : aucun trigger à recréer.
+  33: {
+    nom: 'habilitations_remise_niveau',
+    appliquer(db) {
+      db.exec('ALTER TABLE habilitations ADD COLUMN remise_niveau_le TEXT;');
+      db.exec('ALTER TABLE habilitations ADD COLUMN remise_niveau_organisme TEXT;');
     }
   }
 };

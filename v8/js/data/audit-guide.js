@@ -47,7 +47,8 @@ export const ETAPES = [
       + 'habilitations F-Gas (2008 et 2025) et mentions par fluide.',
     aFaire: 'Vérifiez que chaque intervenant a une aptitude à jour '
       + '(bouton « Habilitations » de chaque ligne).',
-    prefixes: ['alr-aptitude-', 'alr-habilitation-', 'alr-mention-']
+    prefixes: ['alr-aptitude-', 'alr-habilitation-', 'alr-mention-',
+      'alr-remise-niveau-']
   },
   {
     id: 'outillage', type: 'controle',

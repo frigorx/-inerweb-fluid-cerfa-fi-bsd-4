@@ -14,7 +14,10 @@ import {
   SEUIL_CHARGE_LIMITEE_KG,
   SEUIL_CHARGE_HERMETIQUE_KG,
   SEUIL_CHARGE_2008_KG,
-  FIN_RECONNAISSANCE_2008
+  FIN_DELIVRANCE_2008,
+  DATE_BUTOIR_REMISE_NIVEAU_2008,
+  DUREE_CYCLE_FORMATION_ANS,
+  plusAnnees
 } from '../v8/js/data/habilitations.js';
 
 const require = createRequire(import.meta.url);
@@ -36,9 +39,13 @@ verifier('seuils de charge identiques (3 / 6 kg régime 2025, 2 kg régime 2008)
   && miroir.SEUIL_CHARGE_HERMETIQUE_KG === SEUIL_CHARGE_HERMETIQUE_KG
   && miroir.SEUIL_CHARGE_2008_KG === SEUIL_CHARGE_2008_KG
   && SEUIL_CHARGE_2008_KG === 2);
-verifier('fin de reconnaissance 2008 identique (2026-12-31)',
-  miroir.FIN_RECONNAISSANCE_2008 === FIN_RECONNAISSANCE_2008
-  && FIN_RECONNAISSANCE_2008 === '2026-12-31');
+verifier('constantes de transition identiques (délivrance 2026-12-31, butoir 2029-03-12, cycle 7 ans)',
+  miroir.FIN_DELIVRANCE_2008 === FIN_DELIVRANCE_2008
+  && FIN_DELIVRANCE_2008 === '2026-12-31'
+  && miroir.DATE_BUTOIR_REMISE_NIVEAU_2008 === DATE_BUTOIR_REMISE_NIVEAU_2008
+  && DATE_BUTOIR_REMISE_NIVEAU_2008 === '2029-03-12'
+  && miroir.DUREE_CYCLE_FORMATION_ANS === DUREE_CYCLE_FORMATION_ANS
+  && DUREE_CYCLE_FORMATION_ANS === 7);
 
 // ============================================================
 // 2. Parité stricte du VERDICT sur un éventail discriminant
@@ -131,31 +138,95 @@ verifier('fin de reconnaissance 2008 identique (2026-12-31)',
 }
 
 // ============================================================
-// 4. habilitationReconnue — comportement ET parité (fin de régime 2008)
+// 4. habilitationReconnue — transition 2008→2025 (L4/Q3, 24/07)
+// La mécanique en trois temps de l'arrêté du 21/11/2025 (art. 7 et 11) :
+// fin de DÉLIVRANCE au 31/12/2026 ≠ fin de validité ; reconnaissance sans
+// condition jusqu'au butoir du 12/03/2029 ; ensuite remise à niveau
+// enregistrée AU PLUS TARD le butoir + cycle de 7 ans. L'ancien test
+// affirmait le couperet du 31/12/2026 : c'était l'erreur corrigée.
 // ============================================================
 {
+  const h2008 = (extra = {}) =>
+    ({ actif: true, regime: '2008', categorie: 'I', dateFin: null, ...extra });
   const CAS = [
-    // [ligne, dateReference]
     [{ actif: true, regime: '2025', categorie: 'A1', dateFin: null }, '2026-07-22'],
     [{ actif: true, regime: '2025', categorie: 'A1', dateFin: '2026-07-21' }, '2026-07-22'],
     [{ actif: true, regime: '2025', categorie: 'A1', dateFin: '2026-07-22' }, '2026-07-22'],
     [{ actif: false, regime: '2025', categorie: 'A1', dateFin: null }, '2026-07-22'],
-    [{ actif: true, regime: '2008', categorie: 'I', dateFin: '2028-01-01' }, '2026-12-31'],
-    [{ actif: true, regime: '2008', categorie: 'I', dateFin: '2028-01-01' }, '2027-01-01'],
-    [{ actif: true, regime: '2008', categorie: 'I', dateFin: null }, '2027-06-15'],
+    [h2008({ dateFin: '2028-01-01' }), '2026-12-31'],
+    [h2008({ dateFin: '2028-01-01' }), '2027-01-01'],
+    [h2008(), '2027-06-15'],
+    [h2008(), '2029-03-12'],
+    [h2008(), '2029-03-13'],
+    [h2008({ remiseNiveauLe: '2028-06-01' }), '2029-03-13'],
+    [h2008({ remiseNiveauLe: '2028-06-01' }), '2035-06-01'],
+    [h2008({ remiseNiveauLe: '2028-06-01' }), '2035-06-02'],
+    [h2008({ remiseNiveauLe: '2029-03-12' }), '2030-01-01'],
+    [h2008({ remiseNiveauLe: '2029-06-01' }), '2029-07-01'],
+    [h2008({ remiseNiveauLe: '2024-02-29' }), '2031-02-28'],
+    [h2008({ remiseNiveauLe: '2024-02-29' }), '2031-03-01'],
     [null, '2026-07-22']
   ];
-  verifier('habilitationReconnue : parité sur tous les cas',
+  verifier('habilitationReconnue : parité sur tous les cas de transition',
     CAS.every(([h, d]) => habilitationReconnue(h, d) === miroir.habilitationReconnue(h, d)));
-  verifier('2008 reconnue LE 31/12/2026 (dernier jour)',
-    habilitationReconnue({ actif: true, regime: '2008', dateFin: '2028-01-01' }, '2026-12-31') === true);
-  verifier('2008 NON reconnue le 01/01/2027 (même active et non échue)',
-    habilitationReconnue({ actif: true, regime: '2008', dateFin: '2028-01-01' }, '2027-01-01') === false);
-  verifier('2025 insensible à la fin de régime 2008',
+
+  verifier('⭐ 2008 RECONNUE le 01/01/2027 (le 31/12/2026 = fin de DÉLIVRANCE, pas de validité — l’ancien couperet était faux)',
+    habilitationReconnue(h2008({ dateFin: '2028-01-01' }), '2027-01-01') === true);
+  verifier('2008 reconnue le 12/03/2029 (butoir inclus, sans condition)',
+    habilitationReconnue(h2008(), '2029-03-12') === true);
+  verifier('2008 SANS remise à niveau : plus reconnue le 13/03/2029',
+    habilitationReconnue(h2008(), '2029-03-13') === false);
+  verifier('2008 remise à niveau 01/06/2028 : reconnue après le butoir…',
+    habilitationReconnue(h2008({ remiseNiveauLe: '2028-06-01' }), '2029-03-13') === true);
+  verifier('… jusqu’au bout du cycle de 7 ans (01/06/2035 inclus)',
+    habilitationReconnue(h2008({ remiseNiveauLe: '2028-06-01' }), '2035-06-01') === true
+    && habilitationReconnue(h2008({ remiseNiveauLe: '2028-06-01' }), '2035-06-02') === false);
+  verifier('remise à niveau LE JOUR du butoir : acceptée (« au plus tard »)',
+    habilitationReconnue(h2008({ remiseNiveauLe: '2029-03-12' }), '2030-01-01') === true);
+  verifier('remise à niveau APRÈS le butoir : ne répare pas (examen à repasser — lecture stricte)',
+    habilitationReconnue(h2008({ remiseNiveauLe: '2029-06-01' }), '2029-07-01') === false);
+  verifier('l’échéance PROPRE de la ligne prime toujours (dateFin passée → non reconnue, remise ou pas)',
+    habilitationReconnue(h2008({ dateFin: '2028-01-01', remiseNiveauLe: '2027-06-01' }), '2028-06-01') === false);
+  verifier('2025 insensible à la transition 2008',
     habilitationReconnue({ actif: true, regime: '2025', dateFin: null }, '2030-01-01') === true);
   verifier('échue hier → non reconnue ; échéance AUJOURD’HUI → reconnue',
     habilitationReconnue({ actif: true, regime: '2025', dateFin: '2026-07-21' }, '2026-07-22') === false
     && habilitationReconnue({ actif: true, regime: '2025', dateFin: '2026-07-22' }, '2026-07-22') === true);
+
+  // plusAnnees : comportement et parité (écrêtage bissextile compris).
+  verifier('plusAnnees : +7 ans jour pour jour, 29/02 écrêté au 28/02, entrée illisible → null',
+    plusAnnees('2028-06-01', 7) === '2035-06-01'
+    && plusAnnees('2024-02-29', 7) === '2031-02-28'
+    && plusAnnees('2024-02-29', 4) === '2028-02-29'
+    && plusAnnees('n-importe-quoi', 7) === null
+    && plusAnnees(null, 7) === null);
+  verifier('plusAnnees : parité ESM ↔ serveur',
+    ['2028-06-01', '2024-02-29', '2029-03-12', 'zut', null]
+      .every((d) => plusAnnees(d, 7) === miroir.plusAnnees(d, 7)));
+
+  // Revue L4 — jamais reconnaître par accident (défense en profondeur du
+  // moteur PUR, indépendante des gardes de saisie du CRUD).
+  verifier('remise « 2028-99-99 » (calendrier impossible) : jamais reconnue',
+    habilitationReconnue(h2008({ remiseNiveauLe: '2028-99-99' }), '2035-12-31') === false
+    && plusAnnees('2028-99-99', 7) === null);
+  verifier('remise en horodatage ISO complet : jamais reconnue (format ancré)',
+    habilitationReconnue(h2008({ remiseNiveauLe: '2028-05-01T10:00:00Z' }), '2030-01-01') === false);
+  verifier('plusAnnees pad l’année (une année < 1000 ne ressuscite plus rien)',
+    plusAnnees('0993-01-01', 7) === '1000-01-01');
+  verifier('régime inconnu, absent ou mal typé : REFUS par défaut (jamais « reconnu sans condition »)',
+    habilitationReconnue({ actif: true, categorie: 'I' }, '2035-01-01') === false
+    && habilitationReconnue({ actif: true, regime: '2008 ', categorie: 'I' }, '2027-01-01') === false
+    && habilitationReconnue({ actif: true, regime: 2008, categorie: 'I' }, '2027-01-01') === false);
+  verifier('date de référence illisible (vide, format FR) : REFUS, jamais comparaison de chaînes',
+    habilitationReconnue(h2008(), '') === false
+    && habilitationReconnue(h2008(), '13/03/2029') === false
+    && habilitationReconnue({ actif: true, regime: '2025' }, '') === false);
+  verifier('robustesse : parité miroir sur les cas vicieux',
+    [[h2008({ remiseNiveauLe: '2028-99-99' }), '2035-12-31'],
+     [h2008({ remiseNiveauLe: '2028-05-01T10:00:00Z' }), '2030-01-01'],
+     [{ actif: true, categorie: 'I' }, '2035-01-01'],
+     [h2008(), ''], [h2008(), '13/03/2029']]
+      .every(([h, d]) => habilitationReconnue(h, d) === miroir.habilitationReconnue(h, d)));
 }
 
 console.log(`\n${nbOk} vérifications réussies, ${nbEchecs} échec(s).`);

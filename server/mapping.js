@@ -577,7 +577,12 @@ const TABLES = {
       dateDebut: 'date_debut',
       dateFin: 'date_fin',
       actif: 'actif',
-      dateRevocation: 'date_revocation'
+      dateRevocation: 'date_revocation',
+      // L4/Q3 (migration 33) : remise à niveau ponctuelle des attestations
+      // 2008 (arrêté du 21/11/2025 art. 7) — date + organisme. NULL = non
+      // faite (rien de présumé), consommée par habilitationReconnue.
+      remiseNiveauLe: 'remise_niveau_le',
+      remiseNiveauOrganisme: 'remise_niveau_organisme'
     },
     booleens: ['actif'],
     sqlSeulement: ['etablissement_id', 'date_creation']

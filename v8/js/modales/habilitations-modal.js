@@ -159,6 +159,15 @@ function ligneHabilitation(h) {
   if (h.dateDebut || h.dateFin) {
     meta.push(esc(fmtDate(h.dateDebut)) + ' → ' + esc(fmtDate(h.dateFin)));
   }
+  // L4/Q3 (RN-4) : la remise à niveau d'une 2008 se LIT sur la ligne — et
+  // son absence se dit (c'est elle qui conditionne la reconnaissance après
+  // le 12/03/2029, alerte alr-remise-niveau-).
+  if (h.regime === '2008') {
+    meta.push(h.remiseNiveauLe
+      ? 'Remise à niveau le ' + esc(fmtDate(h.remiseNiveauLe))
+        + (h.remiseNiveauOrganisme ? ' (' + esc(h.remiseNiveauOrganisme) + ')' : '')
+      : 'Remise à niveau : à faire avant le 12/03/2029');
+  }
   const metaHtml = meta.length
     ? '<div class="hab-meta">' + meta.join(' · ') + '</div>'
     : '<div class="hab-meta">Aucune précision saisie.</div>';
@@ -215,7 +224,8 @@ function gabaritContenu() {
     + '</style>'
 
     + '<div class="encart-aide">'
-    + 'Régime 2008 : valable jusqu’au 31/12/2026 · '
+    + 'Régime 2008 : plus de délivrance après le 31/12/2026, reconnu '
+    + 'jusqu’au 12/03/2029 puis seulement avec remise à niveau · '
     + 'Régime 2025 (F-Gas III) : obligatoire à partir du 01/01/2027. '
     + 'Les deux peuvent coexister ; une habilitation révoquée reste au registre.'
     + '</div>'
@@ -262,6 +272,24 @@ function gabaritContenu() {
     + '<input type="date" id="hab-fin" name="dateFin">'
     + '</div>'
     + '</div>'
+
+    // L4/Q3 (RN-4) — remise à niveau ponctuelle des attestations 2008 :
+    // exigée au plus tard le 12/03/2029, sans quoi l'attestation cesse
+    // d'être reconnue (arrêté du 21/11/2025, art. 7). Champs libres — le
+    // store reste seul juge ; sans objet pour une catégorie 2025.
+    + '<div class="grille-form-2">'
+    + '<div class="champ" data-champ="remiseNiveauLe">'
+    + '<label for="hab-remise-date">Remise à niveau (régime 2008)</label>'
+    + '<input type="date" id="hab-remise-date" name="remiseNiveauLe">'
+    + '</div>'
+    + '<div class="champ" data-champ="remiseNiveauOrganisme">'
+    + '<label for="hab-remise-organisme">Organisme de la remise à niveau</label>'
+    + '<input type="text" id="hab-remise-organisme" '
+    + 'name="remiseNiveauOrganisme" maxlength="120">'
+    + '</div>'
+    + '</div>'
+    + '<p class="hab-vide">Une attestation 2008 sans remise à niveau '
+    + 'enregistrée au 12/03/2029 n’est plus reconnue (examen à repasser).</p>'
 
     + '<div class="hab-form-actions">'
     + '<button type="button" id="hab-ajouter" class="btn btn-primaire btn-petit">'
@@ -398,12 +426,16 @@ export async function ouvrirHabilitations(ctx, personneId) {
           organismeDelivreur: String(donnees.get('organismeDelivreur') || '').trim() || null,
           dateDebut: String(donnees.get('dateDebut') || '').trim() || null,
           dateFin: String(donnees.get('dateFin') || '').trim() || null,
+          remiseNiveauLe: String(donnees.get('remiseNiveauLe') || '').trim() || null,
+          remiseNiveauOrganisme:
+            String(donnees.get('remiseNiveauOrganisme') || '').trim() || null,
           operateur: operateur
         });
         auModifie = true;
         toast('Habilitation ajoutée.', 'succes');
         // Vide les champs optionnels, conserve le régime et la catégorie choisis.
-        ['numeroAttestation', 'organismeDelivreur', 'dateDebut', 'dateFin'].forEach(function (nom) {
+        ['numeroAttestation', 'organismeDelivreur', 'dateDebut', 'dateFin',
+          'remiseNiveauLe', 'remiseNiveauOrganisme'].forEach(function (nom) {
           const champ = form.elements[nom];
           if (champ) champ.value = '';
         });
