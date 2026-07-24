@@ -2,6 +2,33 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧹 ABANDON DE LA v7 — audit de parité, report des 2 derniers recoins, suppression (25/07)
+
+Franck : « on peut supprimer la v7 en entier, elle a été digérée dans la v8. On vérifie
+qu'il n'y ait rien d'oublié, et si on n'a rien oublié on supprime. » Fait dans cet ordre.
+
+- **Audit de parité v7 → v8** : les 113 fonctions du `Code.gs` v7 inventoriées et classées.
+  Cœur métier **intégralement en v8**, souvent amélioré (mouvements, machines, bouteilles,
+  contrôles, CERFA, fiche MES, plaque, bilan ADEME, stats, alertes, multi-site, BSFF,
+  auth/rôles, journal ; la **traçabilité croisée** v7 = les **dossiers ZIP scellés** v8).
+  Plomberie Google (Drive, menus Spreadsheet, routes Apps Script, clés API) : disparaît,
+  sans objet en local. **3 recoins sans équivalent**, tranchés par Franck : suivi
+  pédagogique élève → laissé VOLONTAIREMENT à inerWeb Édu ; macaron et registre des
+  plaintes → REPORTÉS ci-dessous.
+- **Macaron de contrôle (repensé)** : l'autocollant papier v7 (« conforme » bleu / « fuite »
+  rouge) devient NUMÉRIQUE — au scan du QR machine, une pastille de couleur + la date de
+  vérification en tête de fiche. Module pur `macaron-controle.js` (règle honnête : ROUGE
+  fuite non résolue · GRIS hors périmètre F-Gas · ORANGE échéance dépassée ou jamais
+  contrôlé — jamais un bleu « conforme » mensonger · BLEU conforme). Vérifié au navigateur.
+- **Registre des plaintes** : CRUD complet (migration 35, contrat **v11 → v12, 96 méthodes**,
+  garde pure + miroir, vue + modale + menu, export/import, tests doublés). Réclamations
+  clients : objet, réception, réponse, état RECUE/EN_COURS/TRAITEE. Vérifié au navigateur.
+- **Suppression** : `apps-script/` et `Code_API_v7.1.0.gs` retirés du dépôt (historique git
+  conservé). Note de clôture P0-9/SECURITE : la v7 étant abandonnée, l'exposition des clés
+  se clôt en **mettant le service Google hors ligne** (désactiver le déploiement), plus
+  simple que régénérer — geste de Franck.
+- **TOUT VERT — 104 exécutions** (99 → 104 sur la session).
+
 ### ⚖️ LOTS RÉGLEMENTAIRES Q1→Q11 — L1 + L4 + L5 (24/07, session autonome, PR #9/#10/#11)
 
 Décisions Franck du 24/07 (analyse tierce) passées à la VÉRIFICATION CROISÉE
