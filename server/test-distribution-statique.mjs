@@ -130,8 +130,12 @@ try {
     '/README.md',
     '/SECURITE.md',
     '/RGPD.md',
-    '/Code_API_v7.1.0.gs',              // code historique (clés d'API d'antan)
-    '/apps-script/Code.gs',             // idem
+    // Code v7 RETIRÉ du dépôt le 25/07/2026 (la v7 a été digérée par la v8) :
+    // l'entrée RESTE au test — un chemin qui n'existe même plus ne doit
+    // jamais être servi (le sens de la liste blanche : elle ne dépend pas
+    // de ce qui reste dans le dépôt).
+    '/Code_API_v7.1.0.gs',
+    '/apps-script/Code.gs',
     '/.env.example',                    // métadonnées de déploiement
     '/.gitignore',
     '/server/api.js',                   // le code serveur

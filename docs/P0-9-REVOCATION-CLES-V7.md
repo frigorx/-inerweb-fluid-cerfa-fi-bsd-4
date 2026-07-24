@@ -8,6 +8,34 @@
 > ⚠️ Les valeurs des clés ne figurent NULLE PART dans ce document. Chaque clé y est
 > identifiée par l'empreinte SHA-256 de sa valeur : cela suffit à prouver *de quelle
 > clé on parle* sans la republier une fois de plus.
+>
+> **⭐ Mise à jour 25/07/2026 — la v7 est ABANDONNÉE (Franck).** Décision : on ne
+> réutilise plus le backend Google Sheets. La v8 a digéré la v7 (audit de parité
+> fait). Conséquences pour ce constat :
+> - le code source v7 est **retiré du dépôt** (`apps-script/`, `Code_API_v7.1.0.gs`) ;
+> - le geste qui clôt l'exposition devient **plus simple que la révocation** : au lieu
+>   de régénérer trois clés sur un service qu'on garde, on **met le service hors
+>   ligne**. Voir l'§ « Abandon de la v7 » ci-dessous — il remplace, en pratique, la
+>   procédure de révocation du §3 (conservée pour mémoire).
+
+---
+
+## 0. Abandon de la v7 — la voie retenue (25/07/2026)
+
+Puisque le classeur v7 ne sert plus à rien, on ne le sécurise pas, on l'éteint. Gestes de
+Franck, sur son compte Google (un assistant ne se connecte pas à un compte à sa place) :
+
+1. **Archiver les données** si elles ont une valeur : ouvrir le classeur Google Sheets →
+   Fichier → Télécharger → Microsoft Excel (.xlsx) → ranger le fichier sur le poste.
+2. **Désactiver le déploiement Apps Script** : Extensions → Apps Script → Déployer →
+   Gérer les déploiements → **archiver / désactiver** le déploiement actif. **Sans
+   déploiement actif, les clés publiées ne commandent plus aucun accès** : la porte est
+   murée, aussi sûrement que par une révocation, et définitivement.
+3. **Optionnel** : passer l'ancien dépôt GitHub de la v7 en privé, ou le supprimer, s'il
+   n'a plus d'utilité (l'antériorité de la v8 vit dans SON dépôt, pas celui-là).
+
+Une fois ces gestes faits, remplir le procès-verbal du §4 (en cochant « service mis hors
+ligne » plutôt que « clés régénérées ») et me le dire : P0-9 est clos.
 
 ---
 
