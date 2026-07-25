@@ -6,6 +6,64 @@
 > **Session conseillée : Opus, effort très élevé** (chantier probatoire/réglementaire, briques
 > testées une à une). PAS d'ultracode hors point critique.
 >
+> **⭐⭐⭐⭐⭐⭐⭐ ÉTAT AU 25/07/2026 — main PROPRE, TOUT VERT 104 EXÉCUTIONS,
+> contrat v12, migration 35, dernier merge PR #16.** Session des 24-25/07 très
+> productive (PR #9→#16). Source de vérité = tête de `CHANGELOG.md` + le plan
+> `docs/PLAN-LOTS-REGLEMENTAIRES-Q1-Q11.md`. Fait dans la session :
+> - **Lots réglementaires Q1→Q11** (décisions Franck du 24/07 passées à la
+>   vérification croisée AVANT code : le 12/03/2029 est un BUTOIR de remise à
+>   niveau PAS un couperet ; aptitude = arrêté du 13/10/2008) :
+>   **L1** (cat. II 2008 à 2 kg par catégorie, condition 18 pas de CERFA
+>   officiel R-744/R-290/R-717, libellé annexe II section 1) ·
+>   **L4** (migration 33, transition 2008/2025 : reconnue jusqu'au 12/03/2029
+>   puis remise à niveau + cycle 7 ans, garde de délivrance, alerte
+>   `alr-remise-niveau-`) ·
+>   **L5** (exemption hermétique CODÉE derrière `EXEMPTION_HERMETIQUE_ACTIVE=false`,
+>   activation gatée visa T3 + réponses ci-dessous) ·
+>   **L3** (migration 34, champ `usageThermique` froid/clim/PAC, condition 10
+>   R-404A datée par usage : froid 01/01/2025, clim/PAC 01/01/2026).
+>   2 revues adversariales par workflow (25 constats tirés, toutes racines
+>   fermées) + bricoles de suivi (conseil-intervenant filtre par
+>   `habilitationReconnue`, gardes rejouées à l'import).
+> - **R-452A = 2141** tranché (règle du PRP le plus élevé au sens littéral).
+> - **⭐ v7 ABANDONNÉE + SUPPRIMÉE (PR #16)** : audit de parité v7→v8 fait
+>   (113 fonctions ; cœur intégralement en v8). 2 recoins reportés — **macaron**
+>   (numérique au scan du QR machine, `data/macaron-controle.js`, pastille
+>   couleur+date en tête de fiche) et **registre des plaintes** (CRUD complet,
+>   migration 35, contrat v12, vue+modale+menu). `apps-script/` +
+>   `Code_API_v7.1.0.gs` retirés du dépôt. Suivi pédago élève laissé à
+>   inerWeb Édu (volontaire).
+>
+> **CE QUI RESTE (à proposer à Franck, il choisit)** :
+> - **L2 — tests de sécurité négatifs (P2-2)** : suite nommée regroupant les
+>   tests négatifs existants + manquants (Officiel forgé, appel API direct pour
+>   contourner un blocage, base sous OneDrive, LAN sans HTTPS). Additif, sans
+>   migration, indépendant. Bon prochain lot code.
+> - **L6 — RÉOUVERTURE du mode Officiel** (bascule `VERROU_LIVRAISON`) : le vrai
+>   jalon, mais GATÉ visa T3 (les conditions 16/17/18 + condition 10 raffinée +
+>   aptitude 2008/2029 + exemption L5 s'activent alors). Ne PAS rouvrir avant le
+>   visa. Dégèle `server/test-officiel-e2e.mjs` (+ cas « CONTROLE en Officiel »).
+> - **L7 — fusion des stores (P2-1)** : APRÈS la simulation d'audit d'août
+>   (conserver l'oracle de parité). Plan à écrire.
+>
+> **HORS CODE, de Franck (lui rappeler sans harceler)** :
+> - **T3** relecture organisme agréé + DPD — CHEMIN CRITIQUE, dossier prêt
+>   (`docs/T3-DOSSIER-RELECTURE-EXTERNE.md`), à envoyer. Les 11 questions du
+>   volet A recoupent les décisions déjà prises → confirmation opposable.
+> - **P0-9** : la v7 étant abandonnée, le geste devient **désactiver le
+>   déploiement Apps Script** (pas régénérer les clés) — `docs/P0-9-…md` §0.
+> - **Catalogue Q11** validé (R-452A=2141) ; reste à SEMER les fluides via
+>   l'écran d'admin quand Franck le voudra (`docs/CATALOGUE-FLUIDES-A-VALIDER.md`).
+>
+> **GATES FRANCK (réponses du 25/07, codées) : R1 cat. II hermétique = 2 kg ·
+> R2 « ou » résidentiel gardé · R4 champ usage thermique ajouté.** Reste à
+> confirmer sur pièce au VISA : les seuils de L5 (exemption), la reconnaissance
+> 2008 (art. 7/11), les dates R-404A (art. 13). T2 R-455A 148→146 pour la cible
+> officielle si l'organisme l'exige (souplesse via l'écran d'admin des fluides,
+> jamais une migration).
+>
+> --- ci-dessous : l'historique détaillé des briques antérieures, conservé ---
+>
 > **⭐⭐⭐⭐⭐⭐ 24/07 — LOTS RÉGLEMENTAIRES Q1→Q11 : L1 + L4 + L5 FUSIONNÉS
 > (PR #9/#10/#11), TOUT VERT 101 EXÉCUTIONS.** Les décisions Franck du 24/07
 > (issues d'une analyse tierce) ont été passées à la vérification croisée
