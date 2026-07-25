@@ -878,17 +878,26 @@ const HANDLERS = {
     return mapping.versFront('etablissements', etablissementCourant());
   },
 
-  /** État d'intégrité constaté : { altere, casseA } (registre ET journal). */
+  /**
+   * État d'intégrité constaté : { altere, casseA, motif } (registre ET
+   * journal). `motif` (L2, 25/07) dit POURQUOI : EMPREINTE (la chaîne ne
+   * se recalcule plus), ANNULATION_ORPHELINE (une écriture annulée que
+   * personne ne désigne — annulation faite hors application) ou JOURNAL.
+   */
   getEtatRegistre() {
     const registre = verifierChaineMouvements();
     if (!registre.ok) {
-      return { altere: true, casseA: registre.casseA };
+      return {
+        altere: true, casseA: registre.casseA, motif: registre.motif ?? null
+      };
     }
     const journal = db.verifierChaineJournal();
     if (!journal.ok) {
-      return { altere: true, casseA: `journal n° ${journal.casseA}` };
+      return {
+        altere: true, casseA: `journal n° ${journal.casseA}`, motif: 'JOURNAL'
+      };
     }
-    return { altere: false, casseA: null };
+    return { altere: false, casseA: null, motif: null };
   },
 
   /**
@@ -5687,22 +5696,44 @@ function sceller(mouvement) {
  * CR-5 : re-parcourt la chaîne des écritures figées et recalcule chaque
  * empreinte ; casseA = numéro de la première rupture. Identique à
  * verifierChaineMouvements du DemoStore.
- * @returns {{ok: boolean, casseA: string|null}}
+ *
+ * ⭐ L2 (25/07) — DEUXIÈME contrôle : l'APPARIEMENT DES ANNULATIONS.
+ * Le passage VALIDE → ANNULE est le seul changement que le déclencheur WORM
+ * laisse passer (c'est le canal de la contre-écriture), et le statut est
+ * VOLONTAIREMENT hors empreinte (sans quoi toute annulation casserait la
+ * chaîne). Conséquence prouvée en la TIRANT : un `UPDATE mouvements SET
+ * statut='ANNULE'` en SQL direct faisait disparaître une intervention des
+ * totaux — empreinte intacte, chaîne verte, aucune alerte, aucune ligne de
+ * journal. Or le logiciel n'annule JAMAIS sans créer la contre-écriture qui
+ * désigne l'annulée : une annulée que personne ne désigne est donc,
+ * nécessairement, une modification faite hors de l'application.
+ * @returns {{ok: boolean, casseA: string|null, motif: string|null}}
  */
 function verifierChaineMouvements() {
+  const chaine = chaineValidee();
   let precedent = null;
-  for (const mouvement of chaineValidee()) {
+  for (const mouvement of chaine) {
     if ((mouvement.hashPrecedent ?? null) !== precedent) {
-      return { ok: false, casseA: mouvement.numero };
+      return { ok: false, casseA: mouvement.numero, motif: 'EMPREINTE' };
     }
     const attendu = hasherMouvement(
       objetLogiquePourHash(mouvement), precedent);
     if (attendu !== mouvement.hashEcriture) {
-      return { ok: false, casseA: mouvement.numero };
+      return { ok: false, casseA: mouvement.numero, motif: 'EMPREINTE' };
     }
     precedent = mouvement.hashEcriture;
   }
-  return { ok: true, casseA: null };
+  const designees = new Set(chaine
+    .map((mv) => mv.contreEcritureDe ?? null)
+    .filter(Boolean));
+  for (const mouvement of chaine) {
+    if (mouvement.statut === 'ANNULE' && !designees.has(mouvement.id)) {
+      return {
+        ok: false, casseA: mouvement.numero, motif: 'ANNULATION_ORPHELINE'
+      };
+    }
+  }
+  return { ok: true, casseA: null, motif: null };
 }
 
 // ------------------------------------------------------------

@@ -210,9 +210,9 @@ export const METHODES_CONTRAT = {
 
   // --- intégrité et synthèses -----------------------------------
   verifierChaineHash: { genre: 'lecture',
-    description: 'Re-parcourt la chaîne des écritures figées : { ok, casseA (numéro de la première rupture) }.' },
+    description: 'Re-parcourt la chaîne des écritures figées : { ok, casseA (numéro de la première rupture), motif }. Deux contrôles (L2) : les EMPREINTES se recalculent (motif EMPREINTE), et toute écriture ANNULE est DÉSIGNÉE par une contre-écriture (motif ANNULATION_ORPHELINE) — le statut étant hors empreinte, une annulation faite hors application laissait sinon la chaîne verte.' },
   getEtatRegistre: { genre: 'lecture',
-    description: 'État d’intégrité constaté au chargement : { altere, casseA } — bandeau, jamais de blocage.' },
+    description: 'État d’intégrité constaté au chargement : { altere, casseA, motif } — bandeau, jamais de blocage ; motif = EMPREINTE | ANNULATION_ORPHELINE | JOURNAL | INVARIANT.' },
   getStats: { genre: 'lecture',
     description: 'Le tableau de bord : parc, stocks, teqCO₂, conformité, flux mensuels (fenêtre glissante 6 mois).' },
   getAnneesDisponibles: { genre: 'lecture',

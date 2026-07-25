@@ -341,21 +341,41 @@ function ecrituresFigees(mouvements) {
  * Vérifie la chaîne de hash SHA-256 d'une liste de mouvements
  * (CR-5 : utilisable sur les données candidates d'un import AVANT
  * de les adopter, comme sur les données en place).
- * @returns {Promise<{ok: boolean, casseA: string|null}>}
+ *
+ * ⭐ L2 (25/07) — DEUXIÈME contrôle : l'APPARIEMENT DES ANNULATIONS.
+ * Le statut est VOLONTAIREMENT hors empreinte (sans quoi toute annulation
+ * casserait la chaîne), et côté serveur le déclencheur WORM laisse passer
+ * VALIDE → ANNULE : c'est le canal de la contre-écriture. Une écriture
+ * annulée que PERSONNE ne désigne n'a donc pas pu naître de l'application —
+ * elle vient d'une retouche extérieure (SQL direct, localStorage réécrit,
+ * fichier d'import forgé) qui faisait disparaître une intervention des
+ * totaux sans casser la chaîne. Miroir exact de api.js.
+ * @returns {Promise<{ok: boolean, casseA: string|null, motif: string|null}>}
  */
 async function verifierChaineMouvements(mouvements) {
+  const figees = ecrituresFigees(mouvements);
   let precedent = null;
-  for (const mouvement of ecrituresFigees(mouvements)) {
+  for (const mouvement of figees) {
     if ((mouvement.hashPrecedent ?? null) !== precedent) {
-      return { ok: false, casseA: mouvement.numero };
+      return { ok: false, casseA: mouvement.numero, motif: 'EMPREINTE' };
     }
     const attendu = await hasherEcriture(mouvement, precedent);
     if (attendu !== mouvement.hashEcriture) {
-      return { ok: false, casseA: mouvement.numero };
+      return { ok: false, casseA: mouvement.numero, motif: 'EMPREINTE' };
     }
     precedent = mouvement.hashEcriture;
   }
-  return { ok: true, casseA: null };
+  const designees = new Set(figees
+    .map((mv) => mv.contreEcritureDe ?? null)
+    .filter(Boolean));
+  for (const mouvement of figees) {
+    if (mouvement.statut === 'ANNULE' && !designees.has(mouvement.id)) {
+      return {
+        ok: false, casseA: mouvement.numero, motif: 'ANNULATION_ORPHELINE'
+      };
+    }
+  }
+  return { ok: true, casseA: null, motif: null };
 }
 
 /**
@@ -2332,11 +2352,13 @@ export function creerDemoStore() {
       this.registreAltere = null;
       const probleme = verifierInvariantsDonnees(donnees);
       if (probleme) {
-        this.registreAltere = { ok: false, casseA: probleme };
+        this.registreAltere = { ok: false, casseA: probleme, motif: 'INVARIANT' };
       } else {
         const chaine = await verifierChaineMouvements(donnees.mouvements);
         if (!chaine.ok) {
-          this.registreAltere = { ok: false, casseA: chaine.casseA };
+          this.registreAltere = {
+            ok: false, casseA: chaine.casseA, motif: chaine.motif ?? null
+          };
         }
       }
     },
@@ -4200,14 +4222,17 @@ export function creerDemoStore() {
     /**
      * État d'intégrité du registre constaté au dernier chargement /
      * import (CR-5). L'application n'est JAMAIS bloquée : l'interface
-     * peut afficher un bandeau « registre altéré ».
-     * @returns {Promise<{altere: boolean, casseA: string|null}>}
+     * peut afficher un bandeau « registre altéré ». `motif` (L2, 25/07)
+     * dit POURQUOI : EMPREINTE, ANNULATION_ORPHELINE ou JOURNAL.
+     * @returns {Promise<{altere: boolean, casseA: string|null,
+     *   motif: string|null}>}
      */
     async getEtatRegistre() {
       const etat = this.registreAltere;
       return {
         altere: Boolean(etat && etat.ok === false),
-        casseA: etat?.casseA ?? null
+        casseA: etat?.casseA ?? null,
+        motif: etat?.motif ?? null
       };
     },
 
