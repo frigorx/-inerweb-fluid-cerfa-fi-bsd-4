@@ -80,6 +80,18 @@ export async function ouvrirFormBsff(ctx, bouteilleId) {
     + '</div>'
     + '</div>'
 
+    // ⚠ Lot B2 — LE NUMÉRO RÉEL A SA PLACE : le bordereau officiel a son
+    // propre champ, jamais mélangé au numéro du suivi interne.
+    + '<div class="champ">'
+    + '<label for="bsff-externe">' + esc(LIBELLE_BORDEREAU_EXTERNE) + '</label>'
+    + '<input id="bsff-externe" name="bordereauExterne" type="text"'
+    + ' placeholder="numéro ou lien du bordereau dématérialisé">'
+    + '<span class="champ-erreur" style="color:var(--texte-faible)">'
+    + 'Reportez ici le numéro du bordereau établi sur la plateforme '
+    + 'nationale, et joignez-le en pièce jointe. Laissez vide s’il n’est '
+    + 'pas encore établi.</span>'
+    + '</div>'
+
     + '<div class="grille-form-2">'
     + '<div class="champ">'
     + '<label for="bsff-transporteur">Transporteur *</label>'
@@ -169,6 +181,7 @@ export async function ouvrirFormBsff(ctx, bouteilleId) {
 
     const donnees = new FormData(form);
     const numeroBsff = String(donnees.get('numeroBsff') || '').trim();
+    const bordereauExterne = String(donnees.get('bordereauExterne') || '').trim();
     const transporteur = String(donnees.get('transporteur') || '').trim();
     const installationDestination = String(donnees.get('installationDestination') || '').trim();
     const masseRemiseKg = nombreFr(donnees.get('masseRemiseKg'));
@@ -203,6 +216,7 @@ export async function ouvrirFormBsff(ctx, bouteilleId) {
       const bsff = await store.createBsff({
         bouteilleId: bouteille.id,
         numeroBsff,
+        bordereauExterne,
         transporteur,
         installationDestination,
         masseRemiseKg,

@@ -37,7 +37,7 @@
 // ============================================================
 
 /** Version du contrat (à incrémenter à chaque évolution de surface). */
-export const VERSION_CONTRAT = 12;
+export const VERSION_CONTRAT = 13;
 
 /**
  * Message canonique opposé à toute tentative de modification d'une
@@ -302,9 +302,9 @@ export const METHODES_CONTRAT = {
   deciderFluideRecupere: { genre: 'mutation',
     description: 'Décision sur fluide récupéré (REUTILISABLE | A_ANALYSER | DECHET) ; DECHET pose le délai de garde d’un an.' },
   createBsff: { genre: 'mutation',
-    description: 'Sortie déchet (BSFF interne — ne remplace PAS Trackdéchets) ; décrémente la bouteille, remise totale → RETOURNEE.' },
+    description: 'Sortie déchet — SUIVI INTERNE de remise en filière, il ne remplace PAS le bordereau dématérialisé obligatoire (dont le numéro se reporte dans `bordereauExterne`) ; décrémente la bouteille, remise totale → RETOURNEE.' },
   getBsff: { genre: 'lecture',
-    description: 'Les BSFF émis, triés date de remise décroissante.' },
+    description: 'Les suivis internes de remise en filière, triés date de remise décroissante.' },
   attesterIssueBsff: { genre: 'mutation',
     description: 'Atteste l’issue de traitement final d’un BSFF (RECYCLAGE | REGENERATION | DESTRUCTION | AUTRE, + installation/certificat/date) ; corrige BSFF ≠ destruction ; installation obligatoire pour régénération/destruction.' },
   retournerFournisseur: { genre: 'mutation',

@@ -5570,7 +5570,12 @@ export function creerDemoStore() {
         transporteur: d.transporteur ?? null,
         installationDestination: d.installationDestination ?? null,
         masseRemiseKg: arrondir(masse),
-        dateRemise: d.dateRemise ?? aujourdHui()
+        dateRemise: d.dateRemise ?? aujourdHui(),
+        // Lot B2 : le numéro du bordereau dématérialisé OFFICIEL, à sa
+        // place — jamais confondu avec le numéro du suivi interne. Non
+        // obligatoire (le bordereau peut être en cours) : on n'empêche
+        // jamais d'enregistrer la réalité, son absence se voit à l'écran.
+        bordereauExterne: String(d.bordereauExterne ?? '').trim() || null
       };
       donnees.bsff.push(bsff);
 

@@ -4377,7 +4377,10 @@ const HANDLERS = {
       transporteur: d.transporteur ?? null,
       installationDestination: d.installationDestination ?? null,
       masseRemiseKg: arrondir(masse),
-      dateRemise: d.dateRemise ?? aujourdHui()
+      dateRemise: d.dateRemise ?? aujourdHui(),
+      // Lot B2 (MIROIR du DemoStore) : numéro du bordereau dématérialisé
+      // OFFICIEL, distinct du numéro du suivi interne. Non obligatoire.
+      bordereauExterne: String(d.bordereauExterne ?? '').trim() || null
     };
     return muter(() => {
       const ligne = mapping.versSql('bsff', bsff);

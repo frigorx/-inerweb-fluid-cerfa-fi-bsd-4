@@ -105,5 +105,40 @@ verifier('son en-tête dit « N° suivi interne », plus « N° BSFF »',
   /N° suivi interne/.test(parNom.get('suivi-remise-filiere.csv') ?? '')
   && !/N° BSFF/.test(parNom.get('suivi-remise-filiere.csv') ?? ''));
 
+// ============================================================
+// D. Le numéro du bordereau OFFICIEL a sa colonne (B2-2)
+// ============================================================
+console.log('\n--- D. Colonne du bordereau officiel ---');
+
+const dechets = (await store.getBouteilles())
+  .filter((b) => b.statut === 'DECHET' && b.masseNetteKg > 1);
+await store.createBsff({
+  bouteilleId: dechets[0].id, numeroBsff: 'SI-VUE-001',
+  bordereauExterne: 'FF-2026-000123', transporteur: 'Collecteur agréé',
+  installationDestination: 'Centre de traitement agréé',
+  masseRemiseKg: 0.5, dateRemise: '2026-07-24', operateur: 'testeur'
+});
+await store.createBsff({
+  bouteilleId: dechets[0].id, numeroBsff: 'SI-VUE-002',
+  transporteur: 'Collecteur agréé',
+  installationDestination: 'Centre de traitement agréé',
+  masseRemiseKg: 0.5, dateRemise: '2026-07-24', operateur: 'testeur'
+});
+
+const conteneur2 = document.createElement('div');
+await render(conteneur2, ctx);
+const vue2 = conteneur2.innerHTML;
+verifier('la vue a une colonne « N° bordereau officiel » distincte',
+  vue2.includes('N° bordereau officiel') && vue2.includes('N° suivi interne'));
+verifier('le bordereau reporté s’affiche, son absence se dit « non reporté »',
+  vue2.includes('FF-2026-000123') && vue2.includes('non reporté'));
+
+const fichiers2 = await toutesLesTables(store, 2026);
+const csv = new Map(fichiers2.map((f) => [f.nom, f.contenu]))
+  .get('suivi-remise-filiere.csv') ?? '';
+verifier('le CSV scellé porte les deux numéros en colonnes séparées',
+  /N° suivi interne;N° bordereau officiel/.test(csv)
+  && csv.includes('FF-2026-000123') && csv.includes('non reporté'));
+
 console.log(`\n${nbOk} OK, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);

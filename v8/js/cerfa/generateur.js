@@ -598,7 +598,12 @@ export async function calculerChampsCerfa(store, { source, id }, options = {}) {
       ? (contenant.numeroReel ?? contenant.code ?? '')
         + (contenant.etatFluide === 'MELANGE' ? ' (mélange)' : '')
       : '',
-    '11_BSFF': bsffLie?.numeroBsff ?? ctx.bouteilleDst?.numBsff ?? '',
+    // ⚠ Lot B2 — le cadre 11 du CERFA demande le n° du BORDEREAU DE SUIVI
+    // DE DÉCHETS. On n'y écrit QUE le numéro du bordereau officiel reporté
+    // par l'utilisateur. Le numéro du SUIVI INTERNE n'y entre jamais : il
+    // aurait fait passer un identifiant maison pour une référence
+    // réglementaire sur un document officiel signé (constat A07).
+    '11_BSFF': bsffLie?.bordereauExterne ?? '',
     // Cadre 12 — champs libres transport (codes déchets européens)
     'Autre-FF-NON-inflammable': dechetNonInflammable
       ? 'Fluide frigorigène usagé — code déchet 14 06 01' : '',

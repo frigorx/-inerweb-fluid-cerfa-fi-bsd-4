@@ -325,14 +325,15 @@ function csvBalance(balance) {
 // Lot B2 — l'en-tête du CSV du dossier d'audit dit ce que la table EST :
 // un suivi INTERNE, pas le bordereau dématérialisé obligatoire.
 function csvBsff(bsff) {
-  const entetes = ['N° suivi interne', 'Bouteille', 'Fluide',
-    'Masse remise (kg)',
+  const entetes = ['N° suivi interne', 'N° bordereau officiel', 'Bouteille',
+    'Fluide', 'Masse remise (kg)',
     'Transporteur', 'Installation de destination', 'Date de remise',
     // P0-8 : issue de traitement final attestée (remise ≠ destruction).
     'Traitement final', 'Installation de traitement', 'Certificat',
     'Date de traitement'];
   const lignes = bsff.map((b) => [
-    b.numeroBsff, b.bouteilleCode, b.fluide, nb(b.masseRemiseKg),
+    b.numeroBsff, b.bordereauExterne || 'non reporté',
+    b.bouteilleCode, b.fluide, nb(b.masseRemiseKg),
     b.transporteur, b.installationDestination, fmtDate(b.dateRemise),
     b.issueTraitement || 'non attesté', b.installationTraitement || '',
     b.certificatTraitement || '',

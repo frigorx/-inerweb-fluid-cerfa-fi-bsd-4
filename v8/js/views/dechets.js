@@ -186,8 +186,14 @@ function ligneBsff(bsff) {
     + 'data-action="attester-issue" data-id="' + esc(bsff.id) + '">'
     + (bsff.issueTraitement ? 'Modifier l’issue' : 'Attester l’issue')
     + '</button>';
+  // Lot B2 : le bordereau OFFICIEL a sa propre colonne — son absence se
+  // voit (« non reporté »), elle ne se déduit pas d'un numéro interne.
+  const externe = bsff.bordereauExterne
+    ? '<span class="mono">' + esc(bsff.bordereauExterne) + '</span>'
+    : '<span class="issue-absente">non reporté</span>';
   return '<tr>'
     + '<td class="mono">' + esc(bsff.numeroBsff) + '</td>'
+    + '<td>' + externe + '</td>'
     + '<td>' + esc(fmtDate(bsff.dateRemise)) + '</td>'
     + '<td>' + esc(bsff.bouteilleCode) + '</td>'
     + '<td class="mono">' + esc(bsff.fluide) + '</td>'
@@ -401,6 +407,7 @@ export async function render(conteneur, ctx) {
     + tableau({
       colonnes: [
         { cle: 'numero', libelle: 'N° suivi interne' },
+        { cle: 'externe', libelle: 'N° bordereau officiel' },
         { cle: 'date', libelle: 'Date remise' },
         { cle: 'bouteille', libelle: 'Bouteille' },
         { cle: 'fluide', libelle: 'Fluide' },
