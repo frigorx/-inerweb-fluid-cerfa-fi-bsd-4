@@ -1331,6 +1331,30 @@ const HANDLERS = {
       }
     }
 
+    // 10. Lot B2 — LA BALANCE NE PEUT PLUS MENTIR. MIROIR EXACT du
+    // DemoStore : une bouteille qui regagne du fluide APRÈS une remise en
+    // filière déclarée, sans écriture du registre pour l'expliquer, est
+    // SIGNALÉE (jamais bloquée) — le rapprochement devient VISIBLE.
+    {
+      const suivis = HANDLERS.getBsff();
+      for (const b of bouteilles) {
+        const ecart = remiseFiliere.ecartApresRemise(b, suivis, mouvements);
+        if (!ecart) continue;
+        alertes.push({
+          id: `alr-remise-filiere-${b.id}`,
+          niveau: 'IMPORTANT',
+          titre: 'Bouteille regarnie après une remise en filière',
+          detail: `${b.code} · ${fmtNombre(ecart.gainKg, 3)} kg de plus que ` +
+            `les ${fmtNombre(ecart.masseApresKg, 3)} kg restants après la ` +
+            `remise du ${fmtDate(ecart.dateRemise)} ` +
+            `(suivi ${ecart.numeroSuivi}) — aucune écriture du registre ne ` +
+            'l’explique : à rapprocher (correction de tare, récupération à ' +
+            'enregistrer).',
+          cible: { vue: 'bouteilles', id: b.id }
+        });
+      }
+    }
+
     // Les alertes critiques d'abord (tri stable)
     alertes.sort((a, b) =>
       (a.niveau === b.niveau) ? 0 : (a.niveau === 'CRITIQUE' ? -1 : 1));
@@ -4394,15 +4418,13 @@ const HANDLERS = {
       installationDestination: d.installationDestination ?? null,
       masseRemiseKg: arrondir(masse),
       dateRemise: dateRemiseSuivi,
+      // Renseigné dans la transaction, après le calcul du reliquat.
+      masseBouteilleApresKg: null,
       // Lot B2 (MIROIR du DemoStore) : numéro du bordereau dématérialisé
       // OFFICIEL, distinct du numéro du suivi interne. Non obligatoire.
       bordereauExterne: String(d.bordereauExterne ?? '').trim() || null
     };
     return muter(() => {
-      const ligne = mapping.versSql('bsff', bsff);
-      ligne.etablissement_id = ID_ETABLISSEMENT;
-      inserer('bsff', ligne);
-
       // IM-8 : la bouteille est décrémentée de la masse REMISE.
       let nette = arrondir(bouteille.masseNetteKg - bsff.masseRemiseKg);
       const patch = { numero_bsff: bsff.numeroBsff, date_derniere_pesee: aujourdHui() };
@@ -4410,6 +4432,13 @@ const HANDLERS = {
         nette = 0;
         patch.statut = 'RETOURNEE';
       }
+      // ⭐ Lot B2 (migration 36, MIROIR du DemoStore) — REPÈRE DU
+      // RAPPROCHEMENT : masse nette restante FIGÉE juste après la remise.
+      bsff.masseBouteilleApresKg = nette;
+      const ligne = mapping.versSql('bsff', bsff);
+      ligne.etablissement_id = ID_ETABLISSEMENT;
+      inserer('bsff', ligne);
+
       patch.masse_brute_kg = arrondir(bouteille.tareKg + nette);
       majParId('bouteilles', bouteille.id, patch);
 

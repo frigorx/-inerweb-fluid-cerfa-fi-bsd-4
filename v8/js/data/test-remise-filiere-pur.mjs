@@ -21,7 +21,8 @@ import { createRequire } from 'node:module';
 import {
   PREFIXE_NUMERO_SUIVI, FORME_NUMERO_SUIVI, MSG_NUMERO_SUIVI_FORME,
   msgNumeroSuiviDoublon, cleNumeroSuivi, prochainNumeroSuivi,
-  verifierNumeroSuivi, problemeNumerosSuivi
+  verifierNumeroSuivi, problemeNumerosSuivi, ecartApresRemise,
+  TOLERANCE_REMISE_KG
 } from './remise-filiere.js';
 
 const require = createRequire(import.meta.url);
@@ -95,6 +96,64 @@ verifier('numéros absents ignorés (aucun faux doublon sur le vide)',
   problemeNumerosSuivi([{ numeroBsff: null }, { numeroBsff: '' }, {}])
   === null);
 
+console.log('\n--- E bis. Écart après remise en filière ---');
+{
+  const B = { id: 'bou-1', masseNetteKg: 5 };
+  const suivis = [
+    { bouteilleId: 'bou-1', numeroBsff: 'SIF-2026-0001',
+      dateRemise: '2026-07-24', masseBouteilleApresKg: 5 }
+  ];
+  verifier('bouteille au repère : aucun écart',
+    ecartApresRemise(B, suivis, []) === null);
+  verifier('bouteille re-gonflée sans écriture : écart chiffré',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 10 }, suivis, [])
+      ?.gainKg === 5);
+  verifier('le tirage cite le suivi et la date du repère',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 10 }, suivis, [])
+      ?.numeroSuivi === 'SIF-2026-0001');
+  verifier('une récupération VALIDE postérieure EXPLIQUE le gain (aucune alerte)',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 8 }, suivis, [
+      { statut: 'VALIDE', date: '2026-07-25', bouteilleDstId: 'bou-1',
+        quantiteKg: -3 }
+    ]) === null);
+  verifier('un BROUILLON n’explique rien (l’écart tient)',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 8 }, suivis, [
+      { statut: 'BROUILLON', date: '2026-07-25', bouteilleDstId: 'bou-1',
+        quantiteKg: -3 }
+    ])?.gainKg === 3);
+  verifier('une écriture ANTÉRIEURE à la remise n’explique rien',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 8 }, suivis, [
+      { statut: 'VALIDE', date: '2026-07-01', bouteilleDstId: 'bou-1',
+        quantiteKg: -3 }
+    ])?.gainKg === 3);
+  verifier('une écriture vers une AUTRE bouteille n’explique rien',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 8 }, suivis, [
+      { statut: 'VALIDE', date: '2026-07-25', bouteilleDstId: 'bou-2',
+        quantiteKg: -3 }
+    ])?.gainKg === 3);
+  verifier('une charge SORTANTE postérieure creuse l’écart au lieu de le combler',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 8 }, suivis, [
+      { statut: 'VALIDE', date: '2026-07-25', bouteilleSrcId: 'bou-1',
+        quantiteKg: 2 }
+    ])?.gainKg === 5);
+  verifier('suivi SANS repère (antérieur à la migration 36) : aucun soupçon',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 10 },
+      [{ bouteilleId: 'bou-1', numeroBsff: 'X', dateRemise: '2026-07-24',
+        masseBouteilleApresKg: null }], []) === null);
+  verifier('le repère retenu est la DERNIÈRE remise',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 4 }, [
+      { bouteilleId: 'bou-1', numeroBsff: 'SIF-2026-0001',
+        dateRemise: '2026-07-24', masseBouteilleApresKg: 5 },
+      { bouteilleId: 'bou-1', numeroBsff: 'SIF-2026-0002',
+        dateRemise: '2026-08-01', masseBouteilleApresKg: 2 }
+    ], [])?.gainKg === 2);
+  verifier('tolérance métrologique : 10 g d’arrondi ne déclenchent rien',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 5.01 }, suivis, [])
+      === null);
+  verifier('une bouteille SANS remise n’est jamais concernée',
+    ecartApresRemise({ id: 'bou-9', masseNetteKg: 99 }, suivis, []) === null);
+}
+
 console.log('\n--- F. Parité ESM ↔ CommonJS ---');
 verifier('constantes identiques',
   miroir.PREFIXE_NUMERO_SUIVI === PREFIXE_NUMERO_SUIVI
@@ -122,6 +181,28 @@ verifier('constantes identiques',
   for (const jeu of jeux) {
     if (problemeNumerosSuivi(jeu) !== miroir.problemeNumerosSuivi(jeu)) ecarts += 1;
   }
+  // Écart après remise : même verdict, même chiffre, des deux côtés.
+  const suivisParite = [
+    { bouteilleId: 'b1', numeroBsff: 'SIF-2026-0001', dateRemise: '2026-07-24',
+      masseBouteilleApresKg: 5 },
+    { bouteilleId: 'b1', numeroBsff: 'SIF-2026-0002', dateRemise: '2026-08-01',
+      masseBouteilleApresKg: 2 },
+    { bouteilleId: 'b2', numeroBsff: 'SIF-2026-0003', dateRemise: '2026-08-02',
+      masseBouteilleApresKg: null }
+  ];
+  const mvtsParite = [
+    { statut: 'VALIDE', date: '2026-08-02', bouteilleDstId: 'b1', quantiteKg: -1 },
+    { statut: 'BROUILLON', date: '2026-08-03', bouteilleDstId: 'b1', quantiteKg: -4 },
+    { statut: 'VALIDE', date: '2026-08-04', bouteilleSrcId: 'b1', quantiteKg: 0.5 }
+  ];
+  for (const masse of [0, 2, 2.5, 3, 10, NaN]) {
+    for (const id of ['b1', 'b2', 'b3']) {
+      const a = ecartApresRemise({ id, masseNetteKg: masse }, suivisParite, mvtsParite);
+      const b = miroir.ecartApresRemise({ id, masseNetteKg: masse }, suivisParite, mvtsParite);
+      if (JSON.stringify(a) !== JSON.stringify(b)) ecarts += 1;
+    }
+  }
+  if (TOLERANCE_REMISE_KG !== miroir.TOLERANCE_REMISE_KG) ecarts += 1;
   verifier('comportements et messages identiques des deux côtés',
     ecarts === 0, `${ecarts} écart(s)`);
 }

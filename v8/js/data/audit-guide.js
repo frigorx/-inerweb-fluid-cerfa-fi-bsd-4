@@ -104,7 +104,7 @@ export const ETAPES = [
     aFaire: 'Prenez les décisions en attente sur les fluides récupérés, '
       + 'vérifiez les délais de garde et rectifiez toute réintroduction '
       + 'au-delà du fluide récupéré d’une machine.',
-    prefixes: ['alr-garde-', 'alr-reemploi-']
+    prefixes: ['alr-garde-', 'alr-reemploi-', 'alr-remise-filiere-']
   },
   {
     id: 'balance', type: 'controle',

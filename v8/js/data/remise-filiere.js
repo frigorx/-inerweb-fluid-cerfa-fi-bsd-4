@@ -120,6 +120,73 @@ export function verifierNumeroSuivi(numero, numerosExistants) {
   return null;
 }
 
+/* ============================================================
+   B2-5 — LA BALANCE CESSE DE POUVOIR MENTIR
+   Attaque tirée : deux remises en filière déclarées (5 kg partis en
+   filière déchets), puis un simple `updateBouteille { masseBruteKg }`
+   fait repasser la bouteille de 5 à 10 kg. HTTP 200, modification
+   journalisée — mais RIEN ne rapproche les deux faits.
+   Le repère est la masse nette FIGÉE juste après la remise
+   (`masseBouteilleApresKg`, migration 36). Tout gain postérieur qui
+   n'est PAS expliqué par une écriture du registre est SIGNALÉ — jamais
+   bloqué : une correction de tare est légitime, et on n'empêche jamais
+   d'enregistrer la réalité. On rend le rapprochement VISIBLE.
+   ============================================================ */
+
+/** Tolérance métrologique (10 g), comme le reste du projet. */
+export const TOLERANCE_REMISE_KG = 0.01;
+
+/**
+ * Écart inexpliqué entre le contenu ACTUEL d'une bouteille et le repère
+ * figé lors de sa DERNIÈRE remise en filière.
+ *
+ * Le gain EXPLIQUÉ vient des écritures du registre postérieures à la
+ * remise (récupérations entrantes moins sorties, statut VALIDE seul :
+ * un brouillon n'explique rien, une écriture annulée non plus).
+ *
+ * @param {object} bouteille - { id, masseNetteKg }
+ * @param {object[]} suivis - suivis de remise en filière (tous)
+ * @param {object[]} mouvements - mouvements du registre (tous)
+ * @returns {{gainKg:number, numeroSuivi:string, dateRemise:string,
+ *            masseApresKg:number}|null} null si aucun repère ou aucun écart
+ */
+export function ecartApresRemise(bouteille, suivis, mouvements) {
+  if (!bouteille || !Number.isFinite(bouteille.masseNetteKg)) return null;
+  // Dernière remise PORTEUSE d'un repère (les suivis antérieurs à la
+  // migration 36 n'en ont pas : on ne leur invente pas de passé).
+  let repere = null;
+  for (const s of suivis ?? []) {
+    if (!s || s.bouteilleId !== bouteille.id) continue;
+    if (!Number.isFinite(s.masseBouteilleApresKg)) continue;
+    const cle = `${s.dateRemise ?? ''}|${s.numeroBsff ?? ''}`;
+    if (repere === null || cle > repere.cle) repere = { ...s, cle };
+  }
+  if (repere === null) return null;
+
+  let explique = 0;
+  for (const mv of mouvements ?? []) {
+    if (!mv || mv.statut !== 'VALIDE') continue;
+    if (String(mv.date ?? '') < String(repere.dateRemise ?? '')) continue;
+    const q = Number(mv.quantiteKg);
+    if (!Number.isFinite(q)) continue;
+    // Récupération vers cette bouteille : quantité NÉGATIVE (elle sort de
+    // la machine) — elle y ENTRE, donc elle explique un gain.
+    if (mv.bouteilleDstId === bouteille.id && q < 0) explique += -q;
+    // Charge depuis cette bouteille : elle en SORT, elle explique une perte.
+    if (mv.bouteilleSrcId === bouteille.id && q > 0) explique -= q;
+  }
+
+  const attendu = repere.masseBouteilleApresKg + explique;
+  const gain = Math.round((bouteille.masseNetteKg - attendu) * 1000) / 1000;
+  if (gain <= TOLERANCE_REMISE_KG) return null;
+  return {
+    gainKg: gain,
+    numeroSuivi: repere.numeroBsff ?? '?',
+    dateRemise: repere.dateRemise ?? '?',
+    masseApresKg: repere.masseBouteilleApresKg
+  };
+}
+
 /**
  * Invariant d'import : deux suivis ne peuvent pas porter le même numéro.
  * La FORME n'est PAS exigée ici — un registre antérieur reste importable

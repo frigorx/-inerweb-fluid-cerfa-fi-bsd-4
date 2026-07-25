@@ -242,8 +242,42 @@ async function bouteilleDechet(masseKg) {
 }
 
 // ============================================================
-// D. Le CERFA officiel (cadre 11) ne reçoit QUE le bordereau réel
+// C ter. B2-5 — LA BALANCE CESSE DE POUVOIR MENTIR
+// (attaque tirée : après une remise déclarée, un simple
+//  updateBouteille { masseBruteKg } re-gonfle la bouteille — HTTP 200,
+//  et RIEN ne rapproche les deux faits)
 // ============================================================
+{
+  const b = await bouteilleDechet(10);
+  const suivi = await store.createBsff({
+    bouteilleId: b.id, transporteur: 'Collecteur agréé',
+    installationDestination: 'Centre de traitement agréé',
+    masseRemiseKg: 5, dateRemise: '2026-07-24', operateur: 'testeur'
+  });
+  verifier('la masse restante est FIGÉE au suivi (repère du rapprochement)',
+    Math.abs(suivi.masseBouteilleApresKg - 5) < 1e-6,
+    String(suivi.masseBouteilleApresKg));
+
+  const sansEcart = (await store.getAlertes())
+    .filter((a) => a.id === `alr-remise-filiere-${b.id}`);
+  verifier('aucune alerte tant que la bouteille reste à son reliquat',
+    sansEcart.length === 0);
+
+  // LA RE-INFLATION : la bouteille repasse de 5 à 10 kg par un patch.
+  await store.updateBouteille(b.id, { masseBruteKg: 20 });
+  const apres = (await store.getBouteilles()).find((x) => x.id === b.id);
+  verifier('la modification RESTE possible (on n’empêche pas la réalité)',
+    Math.abs(apres.masseNetteKg - 10) < 1e-6, String(apres.masseNetteKg));
+
+  const alerte = (await store.getAlertes())
+    .find((a) => a.id === `alr-remise-filiere-${b.id}`);
+  verifier('le rapprochement est SIGNALÉ (alerte dédiée, niveau IMPORTANT)',
+    Boolean(alerte) && alerte.niveau === 'IMPORTANT');
+  verifier('l’alerte chiffre l’écart et cite le suivi concerné',
+    Boolean(alerte) && alerte.detail.includes('5') && alerte.detail
+      .includes(suivi.numeroBsff), alerte ? alerte.detail : 'aucune');
+}
+
 {
   const { calculerChampsCerfa } = await import('../cerfa/generateur.js');
   const referent = await store.createPersonne({

@@ -76,8 +76,8 @@ import { verifierOctetsPdfFinal, nomFichierPdfFinal, CATEGORIE_PDF_FINAL,
 import { verifierPlainte } from './plaintes.js';
 // Lot B2 — forme et unicité du numéro du SUIVI INTERNE de remise en
 // filière (miroir littéral CommonJS : server/remise-filiere.js).
-import { prochainNumeroSuivi, verifierNumeroSuivi, problemeNumerosSuivi }
-  from './remise-filiere.js';
+import { prochainNumeroSuivi, verifierNumeroSuivi, problemeNumerosSuivi,
+  ecartApresRemise } from './remise-filiere.js';
 
 const CLE_STOCKAGE = 'inerweb-fluide-v8-demo';
 
@@ -2911,6 +2911,28 @@ export function creerDemoStore() {
         }
       }
 
+      // 10. Lot B2 — LA BALANCE NE PEUT PLUS MENTIR. Une bouteille qui
+      // regagne du fluide APRÈS une remise en filière déclarée, sans qu'une
+      // écriture du registre l'explique, est SIGNALÉE (jamais bloquée : une
+      // correction de tare est légitime) — mais le rapprochement devient
+      // VISIBLE. MIROIR EXACT du serveur.
+      for (const b of donnees.bouteilles) {
+        const ecart = ecartApresRemise(b, donnees.bsff, donnees.mouvements);
+        if (!ecart) continue;
+        alertes.push({
+          id: `alr-remise-filiere-${b.id}`,
+          niveau: 'IMPORTANT',
+          titre: 'Bouteille regarnie après une remise en filière',
+          detail: `${b.code} · ${fmtNombre(ecart.gainKg, 3)} kg de plus que ` +
+            `les ${fmtNombre(ecart.masseApresKg, 3)} kg restants après la ` +
+            `remise du ${fmtDate(ecart.dateRemise)} ` +
+            `(suivi ${ecart.numeroSuivi}) — aucune écriture du registre ne ` +
+            'l’explique : à rapprocher (correction de tare, récupération à ' +
+            'enregistrer).',
+          cible: { vue: 'bouteilles', id: b.id }
+        });
+      }
+
       // Les alertes critiques d'abord (tri stable)
       alertes.sort((a, b) =>
         (a.niveau === b.niveau) ? 0 : (a.niveau === 'CRITIQUE' ? -1 : 1));
@@ -5599,7 +5621,11 @@ export function creerDemoStore() {
         // place — jamais confondu avec le numéro du suivi interne. Non
         // obligatoire (le bordereau peut être en cours) : on n'empêche
         // jamais d'enregistrer la réalité, son absence se voit à l'écran.
-        bordereauExterne: String(d.bordereauExterne ?? '').trim() || null
+        bordereauExterne: String(d.bordereauExterne ?? '').trim() || null,
+        // ⭐ Lot B2 (migration 36) — REPÈRE DU RAPPROCHEMENT : masse nette
+        // restante FIGÉE juste après cette remise. Renseignée après le
+        // calcul du reliquat, quelques lignes plus bas.
+        masseBouteilleApresKg: null
       };
       donnees.bsff.push(bsff);
 
@@ -5613,6 +5639,7 @@ export function creerDemoStore() {
         bouteille.masseNetteKg = 0;
         bouteille.statut = 'RETOURNEE';
       }
+      bsff.masseBouteilleApresKg = bouteille.masseNetteKg;
       bouteille.masseBruteKg =
         arrondir(bouteille.tareKg + bouteille.masseNetteKg);
       bouteille.numBsff = bsff.numeroBsff;

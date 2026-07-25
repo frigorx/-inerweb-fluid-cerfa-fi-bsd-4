@@ -436,7 +436,12 @@ const TABLES = {
       // dématérialisé OFFICIEL, distinct du numéro du suivi INTERNE
       // (`numeroBsff`). La colonne existait depuis le socle v1 et n'était
       // exposée nulle part : aucune migration. NULL = bordereau non reporté.
-      bordereauExterne: 'lien_trackdechets'
+      bordereauExterne: 'lien_trackdechets',
+      // Lot B2 (migration 36) : masse nette RESTANTE dans la bouteille juste
+      // après cette remise, FIGÉE à l'émission. Repère du rapprochement
+      // « la bouteille a-t-elle regagné du fluide depuis ? ». NULL = suivi
+      // antérieur à la migration : aucun repère, donc aucun soupçon.
+      masseBouteilleApresKg: 'masse_bouteille_apres_kg'
     },
     sqlSeulement: ['etablissement_id', 'statut_fluide', 'decision_par',
       'date_decision', 'statut', 'observation', 'date_creation']

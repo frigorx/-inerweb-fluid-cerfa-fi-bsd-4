@@ -60,6 +60,43 @@ function verifierNumeroSuivi(numero, numerosExistants) {
   return null;
 }
 
+/** Tolérance métrologique (10 g), comme le reste du projet. */
+const TOLERANCE_REMISE_KG = 0.01;
+
+/** Écart inexpliqué entre le contenu ACTUEL d'une bouteille et le repère
+ *  figé lors de sa DERNIÈRE remise en filière (miroir littéral). */
+function ecartApresRemise(bouteille, suivis, mouvements) {
+  if (!bouteille || !Number.isFinite(bouteille.masseNetteKg)) return null;
+  let repere = null;
+  for (const s of suivis ?? []) {
+    if (!s || s.bouteilleId !== bouteille.id) continue;
+    if (!Number.isFinite(s.masseBouteilleApresKg)) continue;
+    const cle = `${s.dateRemise ?? ''}|${s.numeroBsff ?? ''}`;
+    if (repere === null || cle > repere.cle) repere = { ...s, cle };
+  }
+  if (repere === null) return null;
+
+  let explique = 0;
+  for (const mv of mouvements ?? []) {
+    if (!mv || mv.statut !== 'VALIDE') continue;
+    if (String(mv.date ?? '') < String(repere.dateRemise ?? '')) continue;
+    const q = Number(mv.quantiteKg);
+    if (!Number.isFinite(q)) continue;
+    if (mv.bouteilleDstId === bouteille.id && q < 0) explique += -q;
+    if (mv.bouteilleSrcId === bouteille.id && q > 0) explique -= q;
+  }
+
+  const attendu = repere.masseBouteilleApresKg + explique;
+  const gain = Math.round((bouteille.masseNetteKg - attendu) * 1000) / 1000;
+  if (gain <= TOLERANCE_REMISE_KG) return null;
+  return {
+    gainKg: gain,
+    numeroSuivi: repere.numeroBsff ?? '?',
+    dateRemise: repere.dateRemise ?? '?',
+    masseApresKg: repere.masseBouteilleApresKg
+  };
+}
+
 /** Invariant d'import : aucun numéro de suivi en double. */
 function problemeNumerosSuivi(suivis) {
   const vus = new Set();
@@ -82,5 +119,7 @@ module.exports = {
   cleNumeroSuivi,
   prochainNumeroSuivi,
   verifierNumeroSuivi,
-  problemeNumerosSuivi
+  problemeNumerosSuivi,
+  TOLERANCE_REMISE_KG,
+  ecartApresRemise
 };
