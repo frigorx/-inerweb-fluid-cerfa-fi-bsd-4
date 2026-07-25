@@ -2,6 +2,76 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### ✍️ B3 — NE PLUS MENTIR SUR UNE SIGNATURE (25/07, session autonome)
+
+**Deux constats tirés, deux moitiés d'un même mensonge.** Le logiciel ne
+regardait pas les signatures : il regardait leur taille.
+
+- **B3-1/B3-2 — L'IMAGE N'ÉTAIT PAS UNE IMAGE (constat A04).**
+  `verifierImageSignature` comparait les 8 premiers octets aux nombres
+  magiques PNG, puis la seule LONGUEUR du tampon à deux bornes (1 Ko / 1 Mo).
+  Un bloc de **2 348 octets** fait de ces 8 octets suivis d'une phrase en clair
+  répétée était **ACCEPTÉ** par `signerMouvement`, côté serveur ET côté
+  DemoStore, pour les deux rôles. Et ce n'était pas cosmétique : les faits
+  `signatureTechnicienValide` / `signatureDetenteurValide` passaient à `true`
+  et **les conditions bloquantes 14/15 du moteur Officiel disparaissaient**.
+  Nouveau module pur **`v8/js/data/png.js`** + miroir `server/png.js` :
+  en-tête, parcours des chunks, **CRC-32 de chacun**, IHDR cohérent, IDAT
+  présent, IEND final, rien après — puis les PIXELS, via une décompression
+  **zlib/DEFLATE (RFC 1950/1951) et un dé-filtrage des 5 filtres PNG écrits
+  à la main** : le dépôt n'a aucune dépendance tierce et n'en prend pas pour
+  cela. Plafond défensif de surface (32 Mo) contre la bombe de décompression.
+- **B3-3 — LA CASE BLANCHE.** Un vrai décodeur ne règle que la moitié du
+  problème : de VRAIS PNG (CRC justes) mais **vides de sens** passaient —
+  1 400 × 700 blanc uni, et la réplique exacte du canvas jamais dessiné.
+  C'était **le seul cas où le logiciel MENTAIT** : « signature valide » sur
+  une case blanche. Une image **rigoureusement uniforme** est désormais
+  refusée (`MSG_ZONE_VIERGE`), des deux côtés, avec un message écrit pour un
+  élève en atelier. **DÉCISION DU PROPRIÉTAIRE : aucun seuil d'encre** — pas
+  de pourcentage de pixels, pas d'étendue minimale, pas de « tracé douteux » :
+  la frontière est « rien du tout » contre « quelque chose », une griffure
+  d'un seul pixel passe. Et sur un format qu'on ne sait pas relire
+  (entrelacé, profondeur < 8, flux illisible), la réponse est
+  INDETERMINABLE : **on ne conclut JAMAIS au vide sur un doute**.
+  La **borne basse de 1 Ko est RETIRÉE** : les mesures la condamnent (canvas
+  vierge 5 562 o, blanc pur 5 509 o, UN SEUL TRAIT 6 518 o, griffure de 1 à
+  10 pixels 5 584 o — les deux populations se chevauchent) et aucun texte ne
+  fixe de seuil d'encre. Le plafond de 1 Mo reste (mémoire), contrôlé AVANT
+  décodage.
+- **B3-4 — LE CANVAS PEIGNAIT LUI-MÊME SON DÉCOR.** Fond blanc + ligne de
+  base pointillée étaient tracés DANS le canvas : une case jamais touchée
+  produisait donc une image à deux couleurs, donc « non vide ». Le décor
+  passe en CSS, DERRIÈRE le canvas ; ce qui sort de `toDataURL()` est le
+  tracé du signataire, et rien d'autre. Aucun changement visible à l'écran.
+- **B3-5 — ON ARRÊTE DE JETER UNE PREUVE QU'ON POSSÈDE.** Le témoin
+  d'identité de session (compte connecté + fiche du personnel liée) est
+  capté et stocké depuis la brique C1, mais n'était affiché nulle part ni
+  porté au dossier d'audit. Il apparaît sur chaque signature valide de la
+  modale, et le dossier scellé reçoit **`signatures.csv`** (conditionnel) —
+  les signatures, pièce la plus probante du registre, n'étaient jusqu'ici
+  dans AUCUN fichier du dossier. La personne de session passe par la fiche
+  VIVANTE (donc par le pseudonyme si elle est au coffre). **DÉCISION DU
+  PROPRIÉTAIRE : qu'une seule session pose les deux signatures est NORMAL** —
+  aucun blocage, aucun avertissement, aucune comparaison ; les tests
+  vérifient AUSSI cette absence. Le témoin n'entre PAS dans l'empreinte
+  scellée (ce serait une v3 du hasseur, hors de ce lot).
+
+**PIÈGE PAYÉ** : les fixtures des suites fabriquaient de FAUX PNG et les
+faisaient ACCEPTER — **le filet vert attestait le comportement défaillant**.
+Nouvelle fabrique `server/fabrique-png-test.mjs` (vrais PNG, calage à la
+taille voulue par un chunk auxiliaire `tEXt` : la taille d'un fichier ne
+prouve plus rien), branchée sur les quatre suites concernées.
+
+**Aucune migration. Aucune nouvelle condition bloquante du mode Officiel.
+Le verrou de livraison reste FERMÉ.** Aucun contrôle rétroactif : les
+signatures déjà en base ne sont jamais re-jugées (`verifierImageSignature`
+n'est appelée qu'à la POSE) — un registre existant s'importe et se vérifie
+comme avant.
+
+Filet : **TOUT VERT, 109 exécutions** (3 suites ajoutées : `test-png`,
+`test-signature-canvas`, `test-signatures-modal`). Chaque brique a sa
+contre-épreuve tirée : correctif retiré → rouge, remis → vert.
+
 ### 🛡️ L2 — SUITE DE SÉCURITÉ NÉGATIVE ET NEUF TROUS FERMÉS (25/07, session autonome)
 
 **Méthode : on ne croit personne sur parole, on TIRE.** Un inventaire des surfaces
