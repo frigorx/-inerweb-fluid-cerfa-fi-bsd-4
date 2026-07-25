@@ -1,6 +1,12 @@
 // inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // Zone de signature manuscrite (canvas) pour le wizard « Nouveau mouvement ».
 // Aucune dépendance au store : usage autonome, brancher via creerSignature(conteneur).
+//
+// Lot B3 (25/07) : le canvas n'exporte QUE le tracé du signataire. Le
+// fond blanc et le repère de ligne de base sont du décor CSS posé
+// DERRIÈRE lui — une case restée vierge produit ainsi une image
+// rigoureusement uniforme, que le store refuse (« zone restée vierge »).
+// Preuve tirée : v8/js/wizard/test-signature-canvas.mjs.
 
 let styleInjecte = false;
 
@@ -32,8 +38,23 @@ function injecterStyle() {
       overflow: hidden;
       touch-action: none;
     }
+    /* Lot B3 : le repère de ligne de base est du DÉCOR, posé sous le
+       canvas — il ne doit JAMAIS entrer dans l'image exportée, sans
+       quoi une case restée vierge produirait un PNG « non vide ». */
+    .zone-signature__cadre::before {
+      content: '';
+      position: absolute;
+      left: 6%;
+      right: 6%;
+      top: 75%;
+      border-top: 1px dashed #cbd5e1;
+      z-index: 0;
+      pointer-events: none;
+    }
     .zone-signature__canvas {
       display: block;
+      position: relative;
+      z-index: 1;
       width: 100%;
       height: 100%;
       cursor: crosshair;
@@ -81,31 +102,14 @@ export function creerSignature(conteneur, libelle = 'Signature du technicien') {
   let enTrain = false;
   let dernierPoint = null;
 
-  function tracerLigneDeBase() {
-    const largeur = canvas.width;
-    const hauteur = canvas.height;
-    const y = hauteur * 0.75;
-    ctx.save();
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.lineWidth = 1 * RESOLUTION;
-    ctx.setLineDash([4 * RESOLUTION, 4 * RESOLUTION]);
-    ctx.beginPath();
-    ctx.moveTo(largeur * 0.06, y);
-    ctx.lineTo(largeur * 0.94, y);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  function fondBlanc() {
-    ctx.save();
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.restore();
-  }
-
-  function redessinerFond() {
-    fondBlanc();
-    tracerLigneDeBase();
+  // Lot B3 (25/07) — LE CANVAS N'EXPORTE QUE LE TRACÉ. Avant, il
+  // peignait lui-même un fond blanc et une ligne de base pointillée :
+  // une case JAMAIS DESSINÉE produisait donc une image « non vide »,
+  // que le refus du vide absolu laissait passer. Le fond et le repère
+  // sont maintenant du décor CSS, DERRIÈRE le canvas. On n'efface
+  // plus en repeignant : on efface, tout simplement.
+  function viderCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
 
   // Redimensionne le canvas selon la taille CSS réelle (ratio 2:1 imposé par le cadre).
@@ -126,7 +130,7 @@ export function creerSignature(conteneur, libelle = 'Signature du technicien') {
     // Un redimensionnement efface le trait existant (ex: rotation d'écran) :
     // on repart d'une zone vide propre plutôt que de garder un dessin déformé.
     dessinPresent = false;
-    redessinerFond();
+    viderCanvas();
   }
 
   function coordonneesRelatives(evenement) {
@@ -177,7 +181,7 @@ export function creerSignature(conteneur, libelle = 'Signature du technicien') {
 
   function effacer() {
     dessinPresent = false;
-    redessinerFond();
+    viderCanvas();
   }
 
   function estVide() {

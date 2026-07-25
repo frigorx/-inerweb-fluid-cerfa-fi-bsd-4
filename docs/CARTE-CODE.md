@@ -107,6 +107,13 @@ contre chacune.
   `remplirSimulationOfficielle` ; le store reste seul juge.
 - `wizard/` : les 6 étapes du mouvement (~1800 l.) + signature canvas
   (`creerSignature(conteneur, libelle?)`, libellé par défaut inchangé).
+  **Lot B3 (25/07) : le canvas n'exporte QUE le tracé** — le fond blanc
+  et le repère de ligne de base sont passés en DÉCOR CSS derrière lui
+  (`.zone-signature__cadre::before`), sans quoi une case jamais dessinée
+  produisait un PNG « non vide » qui passait le refus du vide absolu ;
+  preuve tirée par `test-signature-canvas.mjs` (contexte 2D
+  ENREGISTREUR : à l'ouverture et après « Effacer », zéro opération de
+  peinture).
   P7-d2 : carte « Contrôle d'étanchéité » (6ᵉ, interrupteur non
   périodique) = parcours « sec » — étapes 3-4 « Sans objet » SAUTÉES
   aller/retour, « Sans objet » retiré de l'étape 5, pesées null.
