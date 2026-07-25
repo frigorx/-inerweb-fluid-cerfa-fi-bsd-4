@@ -13,8 +13,12 @@
 //    vide, PNG RÉELLEMENT DÉCODÉ (lot B3 du 25/07 : en-tête IHDR,
 //    chaîne des chunks, CRC-32 de chacun, IDAT, IEND — avant, on
 //    comparait 8 octets et une longueur, et un bloc de texte de 2 Ko
-//    passait pour une signature), ≥ 1 Ko — plus un plafond défensif
-//    de 1 Mo (compromis protecteur, arbitrage délégué).
+//    passait pour une signature) — et JAMAIS rigoureusement vide (une
+//    case restée blanche n'est pas une signature) ; plafond défensif
+//    de 1 Mo (compromis protecteur, arbitrage délégué). La borne
+//    basse de 1 Ko a été RETIRÉE le 25/07 : les mesures montrent que
+//    les deux populations se chevauchent (canvas vierge 5 562 o,
+//    un seul trait 6 518 o), et aucun texte ne fixe de seuil d'encre.
 //
 // Aucune I/O ; seule dépendance : le module pur data/png.js.
 // Dupliqué en littéral CommonJS côté serveur
@@ -23,13 +27,10 @@
 // sans l'autre.
 // ============================================================
 
-import { verifierStructurePng } from './png.js';
+import { verifierStructurePng, analyseEncre } from './png.js';
 
 /** Les deux rôles de signature, dans l'ordre IMPOSÉ du parcours. */
 export const ROLES_SIGNATURE = ['TECHNICIEN', 'DETENTEUR'];
-
-/** En dessous : tracé trop léger pour être probant (décision §2.5). */
-export const SIGNATURE_TAILLE_MIN = 1024;
 
 /** Au-dessus : image déraisonnable pour un tracé (plafond défensif). */
 export const SIGNATURE_TAILLE_MAX = 1024 * 1024;
@@ -38,10 +39,12 @@ export const SIGNATURE_TAILLE_MAX = 1024 * 1024;
 export const MSG_TRACE_ABSENT = 'Signature illisible : tracé absent.';
 export const MSG_PAS_PNG =
   'Signature illisible : l’image n’est pas un PNG valide.';
-export const MSG_TROP_PETITE =
-  'Signature illisible : tracé trop léger pour être probant (moins de 1 Ko).';
 export const MSG_TROP_GROSSE =
   'Signature illisible : image trop volumineuse (1 Mo maximum).';
+/** Lot B3 : la case blanche, seul cas où le logiciel mentait. */
+export const MSG_ZONE_VIERGE =
+  'Signature refusée : la zone est restée vierge, aucun tracé n’a été ' +
+  'enregistré. Signez dans le cadre, puis recommencez.';
 
 /** Déclaration signée par le technicien (décision Franck 16/07, figée). */
 const DECLARATION_TECHNICIEN =
@@ -91,6 +94,14 @@ export function verifierImageSignature(octets) {
   // Plafond AVANT décodage : on ne décode pas ce qu'on refuse de tenir.
   if (octets.length > SIGNATURE_TAILLE_MAX) return MSG_TROP_GROSSE;
   if (!verifierStructurePng(octets).ok) return MSG_PAS_PNG;
-  if (octets.length < SIGNATURE_TAILLE_MIN) return MSG_TROP_PETITE;
+  // Le VIDE ABSOLU, et rien de plus : une image rigoureusement uniforme
+  // n'a rien dessus — c'est le seul cas où le logiciel disait
+  // « signature valide » sur une case blanche. AUCUN seuil de densité,
+  // aucun pourcentage, aucune boîte englobante (décision du
+  // propriétaire du 25/07 : c'est le signataire qui juge son tracé) —
+  // une griffure de deux pixels passe. Et sur un format que l'on ne
+  // sait pas relire, analyseEncre répond INDETERMINABLE : on ne conclut
+  // JAMAIS au vide sur un doute.
+  if (analyseEncre(octets) === 'VIDE') return MSG_ZONE_VIERGE;
   return null;
 }

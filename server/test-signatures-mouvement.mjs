@@ -27,7 +27,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as moduleEsm from '../v8/js/data/signatures-mouvement.js';
 import * as pdfEsm from '../v8/js/data/pdf-final.js';
-import { pngDeTest } from './fabrique-png-test.mjs';
+import { pngDeTest, pngVierge, pngUnSeulPixel }
+  from './fabrique-png-test.mjs';
 
 const require = createRequire(import.meta.url);
 const crypto = require('node:crypto');
@@ -86,12 +87,16 @@ function blocQuiSeFaitPasserPourPng(taille = 2348) {
   verifier('constantes identiques (rôles, tailles, messages)',
     JSON.stringify(miroir.ROLES_SIGNATURE) ===
       JSON.stringify(moduleEsm.ROLES_SIGNATURE) &&
-    miroir.SIGNATURE_TAILLE_MIN === moduleEsm.SIGNATURE_TAILLE_MIN &&
     miroir.SIGNATURE_TAILLE_MAX === moduleEsm.SIGNATURE_TAILLE_MAX &&
     miroir.MSG_TRACE_ABSENT === moduleEsm.MSG_TRACE_ABSENT &&
     miroir.MSG_PAS_PNG === moduleEsm.MSG_PAS_PNG &&
-    miroir.MSG_TROP_PETITE === moduleEsm.MSG_TROP_PETITE &&
+    miroir.MSG_ZONE_VIERGE === moduleEsm.MSG_ZONE_VIERGE &&
     miroir.MSG_TROP_GROSSE === moduleEsm.MSG_TROP_GROSSE);
+  verifier('la borne basse de 1 Ko a bien DISPARU des deux côtés',
+    miroir.SIGNATURE_TAILLE_MIN === undefined &&
+    moduleEsm.SIGNATURE_TAILLE_MIN === undefined &&
+    miroir.MSG_TROP_PETITE === undefined &&
+    moduleEsm.MSG_TROP_PETITE === undefined);
 
   const CAS_DECLARATION = [
     ['TECHNICIEN', false, null],
@@ -120,26 +125,42 @@ function blocQuiSeFaitPasserPourPng(taille = 2348) {
   verifier('même Error sur rôle inconnu des deux côtés',
     erreurEsm !== '' && erreurEsm === erreurCjs);
 
+  // Les images DISCRIMINANTES, nommées (jamais des index : une
+  // insertion au milieu ferait mentir la vérification suivante).
+  const jpegDeguise = (() => {
+    const o = octetsPng(4096); o[0] = 0xff; o[1] = 0xd8; o[2] = 0xff; return o;
+  })();
+  const crcRetouche = (() => {
+    const o = octetsPng(2048); o[o.length - 3] ^= 0xff; return o;
+  })();
+  const tronque = octetsPng(2048).slice(0, 900);
+  const apresIend = (() => {
+    const o = octetsPng(2048);
+    const cale = new Uint8Array(o.length + 4);
+    cale.set(o, 0);
+    cale.set([0x41, 0x42, 0x43, 0x44], o.length);
+    return cale;
+  })();
   const CAS_IMAGE = [
     null,
     new Uint8Array(0),
     octetsPng(1024),
     octetsPng(1023),
     octetsPng(4096),
-    (() => { const o = octetsPng(4096); o[0] = 0xff; o[1] = 0xd8; o[2] = 0xff; return o; })(),
+    jpegDeguise,
     octetsPng(moduleEsm.SIGNATURE_TAILLE_MAX + 1),
     // Lot B3 : les images qui ne SONT pas des images.
     blocQuiSeFaitPasserPourPng(),
     blocQuiSeFaitPasserPourPng(1500),
-    (() => { const o = octetsPng(2048); o[o.length - 3] ^= 0xff; return o; })(),
-    octetsPng(2048).slice(0, 900),
-    (() => {
-      const o = octetsPng(2048);
-      const cale = new Uint8Array(o.length + 4);
-      cale.set(o, 0);
-      cale.set([0x41, 0x42, 0x43, 0x44], o.length);
-      return cale;
-    })()
+    crcRetouche,
+    tronque,
+    apresIend,
+    // Lot B3 : les images qui SONT des images, mais vides de tout tracé.
+    pngVierge(),
+    pngVierge(96),
+    pngVierge(4096, [0, 0, 0, 0]),
+    pngDeTest(0),
+    pngUnSeulPixel()
   ];
   identiques = 0;
   for (const octets of CAS_IMAGE) {
@@ -150,11 +171,24 @@ function blocQuiSeFaitPasserPourPng(taille = 2348) {
     identiques === CAS_IMAGE.length);
   verifier('les quatre refus tombent sur le bon critère',
     miroir.verifierImageSignature(new Uint8Array(0)) === miroir.MSG_TRACE_ABSENT &&
-    miroir.verifierImageSignature(octetsPng(1023)) === miroir.MSG_TROP_PETITE &&
-    miroir.verifierImageSignature(CAS_IMAGE[5]) === miroir.MSG_PAS_PNG &&
+    miroir.verifierImageSignature(pngVierge()) === miroir.MSG_ZONE_VIERGE &&
+    miroir.verifierImageSignature(jpegDeguise) === miroir.MSG_PAS_PNG &&
     miroir.verifierImageSignature(octetsPng(miroir.SIGNATURE_TAILLE_MAX + 1))
       === miroir.MSG_TROP_GROSSE &&
     miroir.verifierImageSignature(octetsPng(1024)) === null);
+  // Lot B3 (brique 3) — le VIDE ABSOLU, et RIEN DE PLUS.
+  verifier('un PNG impeccable mais rigoureusement UNIFORME est REFUSÉ',
+    miroir.verifierImageSignature(pngVierge()) === miroir.MSG_ZONE_VIERGE &&
+    moduleEsm.verifierImageSignature(pngVierge()) === moduleEsm.MSG_ZONE_VIERGE &&
+    miroir.verifierImageSignature(pngVierge(4096, [0, 0, 0, 0]))
+      === miroir.MSG_ZONE_VIERGE);
+  verifier('DÉCISION D2 : la borne de 1 Ko a disparu — un VRAI tracé de 105 o passe',
+    pngDeTest(0).length < 1024 &&
+    miroir.verifierImageSignature(pngDeTest(0)) === null &&
+    moduleEsm.verifierImageSignature(pngDeTest(0)) === null);
+  verifier('DÉCISION D2 : aucun seuil d’encre — un SEUL pixel différent suffit',
+    miroir.verifierImageSignature(pngUnSeulPixel()) === null &&
+    moduleEsm.verifierImageSignature(pngUnSeulPixel()) === null);
   // Lot B3 (brique 2) : l'image est DÉCODÉE, plus reconnue à 8 octets.
   verifier('A04 : le bloc de 2 348 o aux bons octets magiques est REFUSÉ',
     miroir.verifierImageSignature(blocQuiSeFaitPasserPourPng())
@@ -162,11 +196,11 @@ function blocQuiSeFaitPasserPourPng(taille = 2348) {
     moduleEsm.verifierImageSignature(blocQuiSeFaitPasserPourPng())
       === moduleEsm.MSG_PAS_PNG);
   verifier('un PNG dont un CRC-32 a été retouché est REFUSÉ',
-    miroir.verifierImageSignature(CAS_IMAGE[9]) === miroir.MSG_PAS_PNG);
+    miroir.verifierImageSignature(crcRetouche) === miroir.MSG_PAS_PNG);
   verifier('un PNG tronqué (IEND coupé) est REFUSÉ',
-    miroir.verifierImageSignature(CAS_IMAGE[10]) === miroir.MSG_PAS_PNG);
+    miroir.verifierImageSignature(tronque) === miroir.MSG_PAS_PNG);
   verifier('un PNG suivi d’octets cachés après IEND est REFUSÉ',
-    miroir.verifierImageSignature(CAS_IMAGE[11]) === miroir.MSG_PAS_PNG);
+    miroir.verifierImageSignature(apresIend) === miroir.MSG_PAS_PNG);
 }
 
 // ============================================================
@@ -279,10 +313,15 @@ const signatureType = (surcharges = {}) => ({
     () => api.appeler('signerMouvement', { mouvementId: brouillon.id,
       signature: signatureType({ imagePng: Buffer.from(
         octetsPng(2048).slice(0, 900)).toString('base64') }) }, session), 'PNG');
-  attendreRejet('tracé de moins de 1 Ko : refus (pas probant)',
+  attendreRejet('zone restée VIERGE (PNG impeccable, aplat uni) : refus',
     () => api.appeler('signerMouvement', { mouvementId: brouillon.id,
-      signature: signatureType({ imagePng: imagePng(512) }) }, session),
-    'probant');
+      signature: signatureType({ imagePng: Buffer.from(pngVierge(5562))
+        .toString('base64') }) }, session), 'restée vierge');
+  attendreRejet('canvas TRANSPARENT jamais dessiné : refus',
+    () => api.appeler('signerMouvement', { mouvementId: brouillon.id,
+      signature: signatureType({ imagePng: Buffer.from(
+        pngVierge(4096, [0, 0, 0, 0])).toString('base64') }) }, session),
+    'restée vierge');
   attendreRejet('tracé absent : refus',
     () => api.appeler('signerMouvement', { mouvementId: brouillon.id,
       signature: signatureType({ imagePng: null }) }, session), 'tracé absent');

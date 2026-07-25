@@ -30,7 +30,8 @@ import { MSG_PDF_FINAL_HORS_OFFICIEL } from './pdf-final.js';
 // P7-c : refus STRUCTUREL du contrôle direct en mode OFFICIEL.
 import { MSG_CONTROLE_DIRECT_OFFICIEL } from './blocage-officiel.js';
 // Lot B3 : fabrique de VRAIS PNG (l'image de signature est décodée).
-import { pngDeTest } from '../../../server/fabrique-png-test.mjs';
+import { pngDeTest, pngVierge, pngUnSeulPixel }
+  from '../../../server/fabrique-png-test.mjs';
 
 // ------------------------------------------------------------
 // Choix de l'implémentation à éprouver (demo par défaut).
@@ -2104,9 +2105,17 @@ function imagePngTest(taille = 1200) {
         octets[octets.length - 3] ^= 0xff;
         return octets;
       })()).toString('base64') }), 'PNG');
-  await verifierRejet('signerMouvement refuse un tracé de moins de 1 Ko',
+  // Lot B3 (brique 3) — le VIDE ABSOLU : un PNG impeccable mais
+  // rigoureusement uniforme, c'est la case restée vierge. Seul cas où
+  // le logiciel disait « signature valide » sur une case blanche.
+  await verifierRejet('signerMouvement refuse une zone restée VIERGE (aplat uni)',
     store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN', nom: 'A',
-      prenom: 'B', imagePng: imagePngTest(512) }), 'probant');
+      prenom: 'B', imagePng: Buffer.from(pngVierge(5562)).toString('base64') }),
+    'restée vierge');
+  await verifierRejet('signerMouvement refuse un canvas TRANSPARENT jamais dessiné',
+    store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN', nom: 'A',
+      prenom: 'B', imagePng: Buffer.from(pngVierge(4096, [0, 0, 0, 0]))
+        .toString('base64') }), 'restée vierge');
 
   // Signature du technicien : forme, déclaration figée, empreinte, révision.
   const sigTech = await store.signerMouvement(brouillonSig.id, {
@@ -2126,10 +2135,15 @@ function imagePngTest(taille = 1200) {
     store.signerMouvement(brouillonSig.id, { role: 'DETENTEUR',
       nom: 'Dupont', prenom: 'Marie', parDelegation: true,
       imagePng: imagePngTest() }), 'Raison sociale');
+  // DÉCISION D2 (25/07) : aucun seuil d'encre. Ce détenteur signe avec
+  // un tracé d'UN SEUL pixel, dans un fichier de 105 octets — c'est-à-
+  // dire sous l'ancienne borne de 1 Ko, retirée. Le signataire seul
+  // juge son tracé : le logiciel ne refuse que le vide absolu.
   const sigDet = await store.signerMouvement(brouillonSig.id, {
     role: 'DETENTEUR', nom: 'Dupont', prenom: 'Marie',
     qualite: 'Professeur, par délégation du détenteur', parDelegation: true,
-    organisation: 'LP Jacques Raynaud', imagePng: imagePngTest()
+    organisation: 'LP Jacques Raynaud',
+    imagePng: Buffer.from(pngUnSeulPixel()).toString('base64')
   });
   verifier('signature détenteur : déclaration avec la mention de délégation',
     sigDet.valide === true && sigDet.parDelegation === true &&
