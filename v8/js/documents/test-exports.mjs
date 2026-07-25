@@ -38,7 +38,7 @@ const NOMS_ATTENDUS = ['referentiel-fluides.csv', 'personnel.csv',
   'habilitations.csv',
   'mentions-habilitation.csv', 'outillage.csv', 'bouteilles.csv',
   'machines.csv', 'mouvements.csv', 'controles.csv', 'balance-matiere.csv',
-  'bsff.csv', 'cessions.csv', `declaration-annuelle-${ANNEE}.csv`,
+  'suivi-remise-filiere.csv', 'cessions.csv', `declaration-annuelle-${ANNEE}.csv`,
   'journal-audit.csv'];
 verifier('toutesLesTables retourne exactement 14 fichiers (P1-2 : +référentiel)',
   fichiers.length === 14, `reçu ${fichiers.length}`);
@@ -54,8 +54,8 @@ verifier('declaration-annuelle : en-tête des 11 rubriques présent',
     parNom.get(`declaration-annuelle-${ANNEE}.csv`) ?? ''));
 verifier('cessions.csv : en-tête présent (destinataire attesté)',
   /Destinataire/.test(parNom.get('cessions.csv') ?? ''));
-verifier('bsff.csv : colonne « Traitement final » ajoutée (BSFF ≠ destruction)',
-  /Traitement final/.test(parNom.get('bsff.csv') ?? ''));
+verifier('suivi-remise-filiere.csv : colonne « Traitement final » (remise ≠ destruction)',
+  /Traitement final/.test(parNom.get('suivi-remise-filiere.csv') ?? ''));
 
 // P1-2 : le référentiel administré entre au dossier scellé — un auditeur
 // doit pouvoir constater QUEL PRP a servi aux calculs de l'année, avec sa
@@ -148,10 +148,10 @@ verifier('machines.csv : 6 machines + en-tête = 7 lignes',
 verifier('controles.csv : 3 contrôles de l’année + en-tête = 4 lignes',
   lignesDe(parNom.get('controles.csv')).length === 4);
 
-// bsff.csv et journal-audit.csv : aucun BSFF de démo au départ, mais un
-// journal d'audit non vide (le store journalise dès l'initialisation).
-verifier('bsff.csv : aucun BSFF en démo → 1 seule ligne (en-tête)',
-  lignesDe(parNom.get('bsff.csv')).length === 1);
+// suivi-remise-filiere.csv et journal-audit.csv : aucune remise de démo au
+// départ, mais un journal d'audit non vide (journalisé dès l'init).
+verifier('suivi-remise-filiere.csv : aucune remise en démo → 1 seule ligne (en-tête)',
+  lignesDe(parNom.get('suivi-remise-filiere.csv')).length === 1);
 verifier('journal-audit.csv : au moins une ligne de données au-delà de l’en-tête',
   lignesDe(parNom.get('journal-audit.csv')).length >= 1);
 

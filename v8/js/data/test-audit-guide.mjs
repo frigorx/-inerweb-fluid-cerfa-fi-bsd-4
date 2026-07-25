@@ -219,10 +219,10 @@ console.log('--- A. evaluerAuditGuide (pur) ---');
   verifier('mouvements : les non validés distinguent brouillon/soumis au libellé',
     faitsPourEtape('mouvements', comptes)[0]
       === '7 mouvements au registre, 0 encore non validé (brouillon ou soumis).');
-  verifier('déchets : BSFF toujours dit, bouteilles de récupération seulement si > 0',
+  verifier('déchets : suivi interne toujours dit, bouteilles de récupération si > 0',
     faitsPourEtape('dechets', comptes).length === 2
     && faitsPourEtape('dechets', comptes)[1]
-      === '1 bouteille de fluide récupéré à suivre (décision, délai de garde, BSFF).'
+      === '1 bouteille de fluide récupéré à suivre (décision, délai de garde, remise en filière).'
     && faitsPourEtape('dechets', { ...comptes, nbBouteillesRecuperation: 0 }).length === 1);
   verifier('comptes null → aucune phrase', faitsPourEtape('personnel', null).length === 0);
 }

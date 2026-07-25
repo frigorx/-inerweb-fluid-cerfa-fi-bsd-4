@@ -3,7 +3,8 @@
 // inerWeb Fluide v8 — exports CSV des tables (Phase D)
 // Produit les fichiers CSV du registre pour une année donnée :
 // personnel, outillage, bouteilles, machines, mouvements,
-// contrôles, balance matière, BSFF, journal d'audit.
+// contrôles, balance matière, suivi de remise en filière, journal
+// d'audit.
 // Séparateur « ; », BOM UTF-8, fin de ligne CRLF, en-têtes en
 // français, dates fr (JJ/MM/AAAA), nombres en virgule décimale.
 // Aucune dépendance externe. Module ES, testable sous Node.
@@ -321,10 +322,13 @@ function csvBalance(balance) {
   return construireCsv(entetes, lignes);
 }
 
+// Lot B2 — l'en-tête du CSV du dossier d'audit dit ce que la table EST :
+// un suivi INTERNE, pas le bordereau dématérialisé obligatoire.
 function csvBsff(bsff) {
-  const entetes = ['N° BSFF', 'Bouteille', 'Fluide', 'Masse remise (kg)',
+  const entetes = ['N° suivi interne', 'Bouteille', 'Fluide',
+    'Masse remise (kg)',
     'Transporteur', 'Installation de destination', 'Date de remise',
-    // P0-8 : issue de traitement final attestée (BSFF ≠ destruction).
+    // P0-8 : issue de traitement final attestée (remise ≠ destruction).
     'Traitement final', 'Installation de traitement', 'Certificat',
     'Date de traitement'];
   const lignes = bsff.map((b) => [
@@ -469,7 +473,9 @@ export async function toutesLesTables(store, annee) {
     { nom: 'mouvements.csv', contenu: csvMouvements(mouvements, annee, personnel) },
     { nom: 'controles.csv', contenu: csvControles(controles, annee) },
     { nom: 'balance-matiere.csv', contenu: csvBalance(balance) },
-    { nom: 'bsff.csv', contenu: csvBsff(bsff) },
+    // Lot B2 : le fichier dit ce qu'il est — un SUIVI INTERNE de remise
+    // en filière, pas le bordereau dématérialisé obligatoire.
+    { nom: 'suivi-remise-filiere.csv', contenu: csvBsff(bsff) },
     { nom: 'cessions.csv', contenu: csvCessions(cessions) },
     // P0-8 : la déclaration annuelle réglementaire au dossier scellé.
     { nom: `declaration-annuelle-${annee}.csv`,

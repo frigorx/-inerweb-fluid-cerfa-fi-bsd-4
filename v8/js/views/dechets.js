@@ -1,15 +1,21 @@
 // inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
-// inerWeb Fluide — vue « Déchets / BSFF » (Phase C, SPEC §5.8)
+// inerWeb Fluide — vue « Déchets / remise en filière » (Phase C, SPEC §5.8)
 // Chaîne complète : récupération → décision (réutilisable / à
-// analyser / déchet) → BSFF → enlèvement → sortie du stock.
+// analyser / déchet) → suivi interne de remise en filière →
+// enlèvement → sortie du stock.
+// ⚠ Lot B2 : le suivi interne NE REMPLACE PAS le bordereau de suivi
+// de déchets dématérialisé obligatoire (mention permanente ci-dessous).
 // ============================================================
 
 import { enteteVue, chipStatut, tableau, toast, modale, ICONES } from './communs.js';
 import { esc, fmtNombre, fmtDate } from '../core/utils.js';
 import { ouvrirFormBsff } from '../modales/bsff-form.js';
+import {
+  LIBELLE_SUIVI, MENTION_BORDEREAU_OFFICIEL, LIBELLE_BORDEREAU_EXTERNE
+} from '../data/remise-filiere.js';
 
-export const titre = 'Déchets / BSFF';
+export const titre = 'Déchets / remise en filière';
 
 /* ============================================================
    Décision sur le fluide récupéré : libellés + teintes de chip
@@ -127,7 +133,7 @@ function carteRecuperation(b, jour) {
 
   const boutonBsff = b.decisionFluide === 'DECHET'
     ? '<button type="button" class="btn btn-marine btn-petit" data-action="creer-bsff" data-id="' + esc(b.id) + '">'
-      + 'Créer le BSFF</button>'
+      + 'Enregistrer la remise en filière</button>'
     : '';
 
   // IM-7 : la décision « déchet » est réversible (store) — le bouton
@@ -155,7 +161,7 @@ function carteRecuperation(b, jour) {
 }
 
 /* ============================================================
-   Section 2 : tableau des bordereaux BSFF
+   Section 2 : tableau des suivis internes de remise en filière
    ============================================================ */
 
 /**
@@ -204,7 +210,7 @@ function ouvrirAttestationIssue(ctx, bsff) {
       + (bsff.issueTraitement === v ? ' selected' : '') + '>'
       + esc(LIBELLE_ISSUE[v]) + '</option>').join('');
   const contenuHtml =
-    '<p class="modale-intro">BSFF <strong>' + esc(bsff.numeroBsff)
+    '<p class="modale-intro">Suivi interne <strong>' + esc(bsff.numeroBsff)
     + '</strong> — ' + esc(fmtNombre(bsff.masseRemiseKg, 2)) + ' kg de '
     + esc(bsff.fluide) + '. Attestez la <strong>nature du traitement '
     + 'final</strong> tel que l’opérateur agréé la certifie.</p>'
@@ -289,7 +295,7 @@ function ouvrirDecision(ctx, bouteille) {
     + '</button>'
     + '<button type="button" class="carte-choix' + (decisionCourante === 'DECHET' ? ' selectionnee' : '')
     + '" data-decision="DECHET">'
-    + '<strong>Déchet</strong><span>Fluide non réutilisable, direction BSFF</span>'
+    + '<strong>Déchet</strong><span>Fluide non réutilisable, direction filière déchets</span>'
     + '</button>'
     + '</div>';
 
@@ -366,12 +372,20 @@ export async function render(conteneur, ctx) {
   const enAttente = bouteillesRecupPendantes(bouteilles);
 
   const entete = enteteVue({
-    titre: 'Déchets / BSFF',
-    sousTitre: 'Fluides récupérés : décision, bordereaux BSFF et sortie du stock'
+    titre: 'Déchets / remise en filière',
+    sousTitre: 'Fluides récupérés : décision, suivi interne de remise en '
+      + 'filière et sortie du stock'
   });
 
+  // ⚠ Lot B2 — MENTION PERMANENTE, jamais masquée, jamais repliée :
+  // l'écran ne doit pas laisser croire que ce suivi tient lieu de
+  // bordereau de suivi de déchets dématérialisé obligatoire.
+  const mentionOfficielle = '<div class="bandeau-avertissement">' + ICONES.alerte
+    + '<span>' + esc(MENTION_BORDEREAU_OFFICIEL) + '</span></div>';
+
   const encartAide = '<div class="encart-aide">'
-    + 'Récupération → décision (réutilisable / à analyser / déchet) → BSFF → enlèvement → sortie du stock.'
+    + 'Récupération → décision (réutilisable / à analyser / déchet) → '
+    + 'suivi interne de remise en filière → enlèvement → sortie du stock.'
     + '</div>';
 
   const sectionRecuperation = '<section class="carte">'
@@ -383,10 +397,10 @@ export async function render(conteneur, ctx) {
     + '</section>';
 
   const sectionBsff = '<section class="carte">'
-    + '<h3 class="carte-titre">Bordereaux BSFF</h3>'
+    + '<h3 class="carte-titre">' + esc(LIBELLE_SUIVI) + '</h3>'
     + tableau({
       colonnes: [
-        { cle: 'numero', libelle: 'N° BSFF' },
+        { cle: 'numero', libelle: 'N° suivi interne' },
         { cle: 'date', libelle: 'Date remise' },
         { cle: 'bouteille', libelle: 'Bouteille' },
         { cle: 'fluide', libelle: 'Fluide' },
@@ -403,6 +417,7 @@ export async function render(conteneur, ctx) {
   conteneur.innerHTML = STYLES_VUE
     + '<div class="vue-contenu vue-dechets anim-fade">'
     + entete
+    + mentionOfficielle
     + encartAide
     + sectionRecuperation
     + sectionBsff

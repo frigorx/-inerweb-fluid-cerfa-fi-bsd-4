@@ -95,10 +95,12 @@ export const ETAPES = [
   },
   {
     id: 'dechets', type: 'controle',
-    titre: 'Déchets et BSFF',
-    vue: 'dechets', vueLibelle: 'Déchets / BSFF',
+    titre: 'Déchets et remise en filière',
+    vue: 'dechets', vueLibelle: 'Déchets / remise en filière',
     detail: 'Le fluide récupéré est décidé (réutilisable ou déchet), '
-      + 'les délais de garde respectés, les BSFF émis et suivis.',
+      + 'les délais de garde respectés, les remises en filière suivies '
+      + '(le suivi interne ne remplace pas le bordereau dématérialisé '
+      + 'obligatoire).',
     aFaire: 'Prenez les décisions en attente sur les fluides récupérés, '
       + 'vérifiez les délais de garde et rectifiez toute réintroduction '
       + 'au-delà du fluide récupéré d’une machine.',
@@ -205,11 +207,12 @@ export function faitsPourEtape(id, comptes) {
         + `${accorder(comptes.nbControles, 'contrôle d’étanchéité enregistré', 'contrôles d’étanchéité enregistrés')}.`);
       break;
     case 'dechets':
-      faits.push(`${accorder(comptes.nbBsff, 'bordereau BSFF', 'bordereaux BSFF')} au registre.`);
+      faits.push(`${accorder(comptes.nbBsff, 'suivi interne de remise en filière',
+        'suivis internes de remise en filière')} au registre.`);
       if (comptes.nbBouteillesRecuperation > 0) {
         faits.push(`${accorder(comptes.nbBouteillesRecuperation,
           'bouteille de fluide récupéré', 'bouteilles de fluide récupéré')} `
-          + 'à suivre (décision, délai de garde, BSFF).');
+          + 'à suivre (décision, délai de garde, remise en filière).');
       }
       break;
     default:
