@@ -302,9 +302,11 @@ export async function csvOutilsIntervention(store, annee) {
  * signatures est NORMAL. Aucune comparaison, aucun signalement, aucune
  * colonne de verdict — on montre les faits, on ne juge pas.
  *
- * Le nom du SIGNATAIRE reste le champ FIGÉ de la signature scellée
- * (aucun identifiant ne le relie à une fiche : même résidu que le
- * technicien de mouvements.csv, consigné au plan E2 §9).
+ * Le nom du SIGNATAIRE passe par la fiche VIVANTE quand la signature est
+ * reliable à une personne (rôle TECHNICIEN + intervenant déclaré de la
+ * fiche) — donc par le pseudonyme si elle est au coffre, comme
+ * mouvements.csv. Sans identifiant, le champ figé tel quel (résidu
+ * consigné au plan B3 § 5).
  *
  * Comme outils-intervention.csv : prend le STORE (un aller-retour par
  * mouvement) et retourne null si l'année ne compte aucune signature —
@@ -321,6 +323,23 @@ export async function csvSignatures(store, annee, personnel) {
     if (!id) return null;
     return personnel.find((p) => p.id === id) || null;
   };
+  // ⭐ COFFRE DES IDENTITÉS (revue du 25/07) : ce fichier ne doit pas
+  // percer le coffre. Une signature n'a pas d'identifiant de signataire —
+  // on reprend donc EXACTEMENT le patron de `technicienDe` de
+  // mouvements.csv : pour le TECHNICIEN, l'intervenant DÉCLARÉ de la
+  // fiche, résolu par la fiche VIVANTE (donc le pseudonyme si la
+  // personne est au coffre). Sans cet identifiant, le champ figé tel
+  // quel — même résidu que mouvements.csv, consigné au plan B3 § 5.
+  // Sans cela, dans UNE SEULE archive scellée, un élève au coffre était
+  // « Élève AAAA-NN » dans personnel.csv et mouvements.csv, et sous son
+  // vrai nom ici.
+  const signataireDe = (mv, sig) => {
+    if (sig.role === 'TECHNICIEN' && mv.executeParId) {
+      const p = ficheDe(mv.executeParId);
+      if (p) return [p.prenom ?? '', p.nom ?? ''];
+    }
+    return [sig.prenom ?? '', sig.nom ?? ''];
+  };
   const entetes = ['Numéro mouvement', 'Date', 'Rôle', 'Prénom', 'Nom',
     'Qualité', 'Par délégation', 'Détenteur représenté', 'Signée le',
     'Révision signée', 'État', 'Empreinte du document signé',
@@ -336,8 +355,9 @@ export async function csvSignatures(store, annee, personnel) {
     }
     for (const sig of signatures) {
       const fiche = ficheDe(sig.sessionPersonnelId);
+      const [prenomSig, nomSig] = signataireDe(mv, sig);
       lignes.push([
-        mv.numero, fmtDate(mv.date), sig.role, sig.prenom, sig.nom,
+        mv.numero, fmtDate(mv.date), sig.role, prenomSig, nomSig,
         sig.qualite || '', ouiNon(sig.parDelegation), sig.organisation || '',
         fmtDateHeure(sig.dateHeure), String(sig.versionDocument ?? ''),
         sig.valide === true ? 'valide' : 'périmée',

@@ -245,6 +245,34 @@ attendreRejet('mettreAuCoffre : phrase trop courte au premier geste → refus',
   verifier('contrôle de l\'élève : opérateur RÉÉCRIT en pseudonyme (fuite fermée)',
     controleApres.operateur === 'Élève 2026-01');
 
+  // ⭐ LOT B3 / REVUE DU 25/07 — LE DOSSIER SCELLÉ NE PERCE PAS LE COFFRE.
+  // `signatures.csv` est entré au dossier d'audit avec le lot B3 : aucun
+  // nom de signataire n'y figurait avant. Il écrivait les champs FIGÉS
+  // bruts — dans UNE SEULE archive, l'élève au coffre était donc
+  // « Élève 2026-01 » dans personnel.csv et mouvements.csv, et « Léa
+  // Bonnet » dans signatures.csv.
+  {
+    const { csvSignatures } = await import('../v8/js/documents/exports.js');
+    const storeDuDossier = {
+      getMouvements: async () => api.appeler('getMouvements', {}, referent),
+      getSignaturesMouvement: async (id) => api.appeler(
+        'getSignaturesMouvement', { mouvementId: id }, referent)
+    };
+    const annee = Number(
+      api.appeler('getMouvements', {}, referent)
+        .find((m) => m.id === mvBrouillon.id).date.slice(0, 4));
+    const csv = await csvSignatures(storeDuDossier,
+      annee, api.appeler('getPersonnel', {}, referent));
+    verifier('signatures.csv est bien produit (une signature existe)',
+      typeof csv === 'string' && csv.length > 0);
+    verifier('⭐ le nom RÉEL de l\'élève au coffre n\'est PAS dans signatures.csv',
+      !String(csv).includes('Léa') && !String(csv).includes('Bonnet'),
+      String(csv).split('\r\n').find((l) => l.includes('TECHNICIEN')));
+    verifier('⭐ c\'est le PSEUDONYME qui y figure (même archive, même identité)',
+      String(csv).includes('Élève;2026-01'),
+      String(csv).split('\r\n').find((l) => l.includes('TECHNICIEN')));
+  }
+
   const pjs = api.appeler('listerPiecesJointes',
     { entiteType: 'personne', entiteId: eleve.id }, referent);
   verifier('PJ de la personne : lignes supprimées', pjs.length === 0);
