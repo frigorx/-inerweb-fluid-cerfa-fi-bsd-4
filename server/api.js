@@ -706,6 +706,48 @@ function garderQualificationMachine(d, reference, contexte) {
   throw erreur;
 }
 
+/**
+ * ⭐ B1 — LES BORNES DE LA CHARGE, AUX DEUX PORTES. `updateMachine` les
+ * portait depuis L2 ; `createMachine` coerçait en silence
+ * (`Number(...) || 0`) : 9999 kg actuels sur 10 kg nominaux passaient en
+ * 200, -50 kg aussi, et « beaucoup » devenait 0 kg sans un mot. Un registre
+ * qui invente une valeur est pire qu'un registre qui refuse.
+ * Miroir EXACT du DemoStore (refus MÉTIER : la parité s'applique).
+ * @returns {number} la charge actuelle normalisée
+ */
+function chargeActuelleNormalisee(valeur, nominale) {
+  if (valeur === undefined || valeur === null || valeur === '') return 0;
+  const actuelle = Number(valeur);
+  if (!Number.isFinite(actuelle) || actuelle < 0) {
+    throw new Error('Charge actuelle invalide (en kg, jamais négative).');
+  }
+  // La tolérance de 5 % couvre les écarts de pesée réels (elle existe déjà
+  // à la charge d'un mouvement).
+  if (Number.isFinite(nominale) && nominale > 0 && actuelle > nominale * 1.05) {
+    throw new Error(
+      `Charge actuelle impossible : ${actuelle} kg déclarés pour une `
+      + `charge nominale de ${nominale} kg (tolérance 5 %).`);
+  }
+  return actuelle;
+}
+
+/**
+ * ⭐ B1 — « une date est une date » (doctrine L2), SUR LA MACHINE AUSSI.
+ * `createControle` refusait déjà '2028-99-99' ; `createMachine` l'acceptait
+ * sur ses trois dates. Une échéance illisible ne se compare pas : elle ne
+ * doit pas entrer. Absente = donnée légitime. Miroir EXACT du DemoStore.
+ */
+function verifierDatesMachine(d) {
+  for (const [champ, libelle] of [
+    ['dateMiseEnService', 'Date de mise en service'],
+    ['dernierControle', 'Date du dernier contrôle'],
+    ['prochainControle', 'Date du prochain contrôle']]) {
+    if (!dates.estDateCalendaireOuVide(d[champ])) {
+      throw new Error(dates.messageDateInvalide(libelle));
+    }
+  }
+}
+
 /** Ajoute (ou retire) des jours à une date ISO, sans fuseau horaire. */
 function ajouterJours(iso, nbJours) {
   const [annee, mois, jour] = iso.split('-').map(Number);
@@ -2872,6 +2914,10 @@ const HANDLERS = {
     if (!Number.isFinite(nominale) || nominale <= 0) {
       throw new Error('Charge nominale obligatoire (en kg, positive).');
     }
+    // ⭐ B1 — mêmes bornes et mêmes dates qu'à la modification.
+    const chargeActuelle = chargeActuelleNormalisee(d.chargeActuelleKg,
+      nominale);
+    verifierDatesMachine(d);
     // P0-6 : FIXE/MOBILE — un mobile listé est admis au contrôle
     // immédiat après réparation. Absent = FIXE (défaut conservateur).
     if (d.typeInstallation !== undefined && d.typeInstallation !== null
@@ -2924,7 +2970,7 @@ const HANDLERS = {
       numSerie: d.numSerie ?? null,
       fluide: d.fluide,
       chargeNominaleKg: nominale,
-      chargeActuelleKg: Number(d.chargeActuelleKg) || 0,
+      chargeActuelleKg: chargeActuelle,
       clientId: d.clientId ?? null,
       localisation: d.localisation ?? null,
       siteLabel: d.siteLabel ?? client?.raison_sociale ?? null,
@@ -3053,23 +3099,16 @@ const HANDLERS = {
     // présente : ni négative, ni illisible, ni sans rapport avec la
     // machine. Attaque tirée : 9999 kg sur une machine de 10 kg nominaux —
     // le tableau de bord affichait 20 877 tonnes équivalent CO₂ et la
-    // balance matière devenait illisible. La tolérance de 5 % couvre les
-    // écarts de pesée réels (elle existe déjà à la charge d'un mouvement).
+    // balance matière devenait illisible.
+    // ⭐ B1 — la borne a MIGRÉ dans `chargeActuelleNormalisee` : la création
+    // empruntait la même colonne avec une simple coercion silencieuse.
     if (d.chargeActuelleKg !== undefined && d.chargeActuelleKg !== null) {
-      const actuelle = Number(d.chargeActuelleKg);
-      if (!Number.isFinite(actuelle) || actuelle < 0) {
-        throw new Error('Charge actuelle invalide (en kg, jamais négative).');
-      }
-      const nominaleFusion = Number(
-        d.chargeNominaleKg ?? machine.chargeNominaleKg);
-      if (Number.isFinite(nominaleFusion) && nominaleFusion > 0
-          && actuelle > nominaleFusion * 1.05) {
-        throw new Error(
-          `Charge actuelle impossible : ${actuelle} kg déclarés pour une `
-          + `charge nominale de ${nominaleFusion} kg (tolérance 5 %).`);
-      }
-      d.chargeActuelleKg = actuelle;
+      d.chargeActuelleKg = chargeActuelleNormalisee(d.chargeActuelleKg,
+        Number(d.chargeNominaleKg ?? machine.chargeNominaleKg));
     }
+    // ⭐ B1 — mêmes dates qu'à la création (ici, seule la date de mise en
+    // service peut encore entrer : les deux autres sont refusées plus haut).
+    verifierDatesMachine(d);
 
     const CHAMPS = ['designation', 'type', 'marque', 'modele', 'numSerie',
       'fluide', 'chargeNominaleKg', 'chargeActuelleKg', 'clientId',
