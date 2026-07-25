@@ -609,6 +609,103 @@ function texteOuNullEquip(valeur) {
     ? String(valeur).trim() : null;
 }
 
+// ------------------------------------------------------------
+// ⭐ LOT B1 (25/07) — UNE RÈGLE, PAS UNE PORTE.
+//
+// La garde de qualification réglementaire de la machine existait dans
+// `updateMachine` et NULLE PART AILLEURS. `createMachine`, ouvert au rôle
+// OPERATEUR (donc à l'ÉLÈVE), posait les MÊMES colonnes en un seul appel :
+// une session élève créait une machine « hermétiquement scellée et
+// étiquetée », et un titulaire A2/2025 borné à 3 kg n'était PLUS bloqué en
+// mode Officiel sur 5 kg de R-410A (chaîne : cadreFicheOfficiel →
+// equipement.hermetiqueOpposable → droit-intervention 6 kg →
+// blocage-officiel condition 16). Aggravant tiré : la qualification est un
+// cliquet à sens unique — posée à la création, l'élève ne peut plus la
+// RETIRER, `updateMachine` lui répondant 403.
+//
+// C'est la TROISIÈME occurrence du même motif dans ce dépôt (L2-i :
+// `getJournalAudit` gardé, `exporterJSON` non). D'où la forme retenue :
+// UNE liste, UN filtre, appliqué à TOUTES les portes d'écriture des mêmes
+// colonnes. Ajouter une porte sans passer par ce filtre rouvre le trou —
+// c'est le seul endroit à tenir à jour.
+//
+// Sont dans la liste, parce que chacun DÉPLACE UN SEUIL :
+//   - hermetiqueScelle / hermetiqueEtiquete : seuil d'aptitude 3 → 6 kg ;
+//   - residentiel / usageThermique : dates d'interdiction du fluide vierge ;
+//   - typeInstallation / sousTypeInstallation : clôture de fuite le jour
+//     même au lieu de J+1 ;
+//   - statut : ARRETEE et DEMANTELEE SORTENT la machine de l'alerte de
+//     contrôle en retard (getAlertes). Les gestes dédiés arreterMachine /
+//     demantelerMachine restent OPERATEUR : ils portent, eux, les gardes
+//     matérielles (pas de démantèlement avec du fluide dedans) et leur
+//     propre ligne de journal. Ce qui est fermé ici, c'est le RACCOURCI ;
+//   - dernierControle / prochainControle : l'échéance réglementaire. La
+//     reprise d'un parc existant reste POSSIBLE à la création — au niveau
+//     du responsable, comme le reste de la qualification.
+//
+// Le gating par rôle est SERVEUR-ONLY par construction (le DemoStore n'a
+// pas de comptes) : rien à recopier côté démo pour ce filtre-ci.
+// ------------------------------------------------------------
+const CHAMPS_QUALIFICATION_MACHINE = ['hermetiqueScelle', 'hermetiqueEtiquete',
+  'residentiel', 'typeInstallation', 'sousTypeInstallation',
+  'usageThermique', 'statut', 'dernierControle', 'prochainControle'];
+
+/**
+ * Fiche de référence d'une machine qui n'existe pas encore : les DÉFAUTS
+ * de `createMachine`. Une création qui ne s'en écarte pas ne qualifie rien,
+ * donc ne touche à aucun seuil — l'élève crée sa machine sans obstacle.
+ */
+const QUALIFICATION_MACHINE_NEUVE = {
+  hermetiqueScelle: false,
+  hermetiqueEtiquete: false,
+  residentiel: false,
+  typeInstallation: 'FIXE',
+  sousTypeInstallation: null,
+  usageThermique: null,
+  statut: 'EN_SERVICE',
+  dernierControle: null,
+  prochainControle: null
+};
+
+/**
+ * ⚠️ Revue L2 — COMPARER DES VALEURS NORMALISÉES, jamais la charge utile
+ * brute. Le formulaire renvoie toute sa fiche : une chaîne VIDE pour un
+ * champ texte non renseigné, un booléen pour les cases. En base, ces mêmes
+ * champs valent `null` et 0/1. Comparer brut ferait voir un changement
+ * partout, et la garde refuserait TOUTE modification de machine à un élève
+ * — l'écran deviendrait mort pour lui.
+ */
+function normaliserQualifMachine(champ, valeur) {
+  if (['hermetiqueScelle', 'hermetiqueEtiquete', 'residentiel']
+    .includes(champ)) return Boolean(valeur);
+  return valeur === '' || valeur === undefined ? null : valeur;
+}
+
+/**
+ * LE filtre unique. `reference` = la fiche en place (modification) ou
+ * QUALIFICATION_MACHINE_NEUVE (création) : dans les deux cas on ne regarde
+ * que ce qui CHANGE, jamais ce qui est simplement renvoyé tel quel.
+ * @param {object} d — données reçues
+ * @param {object} reference — fiche de comparaison
+ * @param {object} contexte — contexte d'appel (rôle de session)
+ */
+function garderQualificationMachine(d, reference, contexte) {
+  const touches = CHAMPS_QUALIFICATION_MACHINE.filter((champ) =>
+    d[champ] !== undefined
+    && normaliserQualifMachine(champ, d[champ])
+      !== normaliserQualifMachine(champ, reference[champ]));
+  if (touches.length === 0) return;
+  if (ROLES_VALIDEURS.includes(contexte?.role ?? null)) return;
+  const erreur = new Error(
+    'Qualification réglementaire de l’équipement réservée au responsable '
+    + `(${ROLES_VALIDEURS.join(', ')}) : ${touches.join(', ')}. `
+    + 'Ces caractéristiques déplacent des seuils réglementaires — elles '
+    + 'se constatent sur la plaque, elles ne se déclarent pas en '
+    + 'saisie courante.');
+  erreur.code = 403;
+  throw erreur;
+}
+
 /** Ajoute (ou retire) des jours à une date ISO, sans fuseau horaire. */
 function ajouterJours(iso, nbJours) {
   const [annee, mois, jour] = iso.split('-').map(Number);
@@ -2763,7 +2860,7 @@ const HANDLERS = {
 
   // === machines (VAGUE 4) ===================================
 
-  createMachine(params) {
+  createMachine(params, contexte) {
     const d = params.donneesMachine || {};
     if (!d.designation || !String(d.designation).trim()) {
       throw new Error('Désignation de la machine obligatoire.');
@@ -2782,6 +2879,9 @@ const HANDLERS = {
       throw new Error(`Type d'installation inconnu : ${d.typeInstallation} `
         + '(attendu : FIXE, MOBILE).');
     }
+    // ⭐ B1 — LE MÊME FILTRE QU'À LA MODIFICATION. La création n'est pas
+    // une porte dérobée vers les colonnes qui déplacent les seuils.
+    garderQualificationMachine(d, QUALIFICATION_MACHINE_NEUVE, contexte);
     // P1-1 : garde du modèle d'équipement — miroir du DemoStore.
     equipement.verifierModeleEquipement({
       typeInstallation: d.typeInstallation ?? 'FIXE',
@@ -2905,47 +3005,35 @@ const HANDLERS = {
     }
     equipement.verifierModeleEquipement(fusion);
 
+    // ⚠️ Revue L2 — REFUSER PLUTÔT QU'IGNORER. Ces deux dates ont été
+    // retirées des champs modifiables : les recevoir sans rien en faire
+    // rendait un succès trompeur — le professeur corrigeait une date de
+    // reprise de parc, le logiciel répondait « enregistré », et rien ne
+    // changeait. Un refus explicite dit où poser le geste.
+    // ⭐ B1 — ce refus MÉTIER (valable pour TOUS les rôles) passe AVANT le
+    // filtre de qualification, qui liste lui aussi ces deux dates : sans
+    // cela, un élève recevrait « réservée au responsable » là où le message
+    // utile est « le geste, c'est le contrôle d'étanchéité ».
+    for (const champ of ['dernierControle', 'prochainControle']) {
+      if (d[champ] !== undefined) {
+        throw new Error(
+          'Les dates de contrôle d’une machine ne se saisissent pas ici : '
+          + 'elles sont posées par l’enregistrement d’un contrôle '
+          + 'd’étanchéité, qui les calcule selon la périodicité '
+          + 'réglementaire. (Elles restent saisissables à la CRÉATION de la '
+          + 'machine, pour reprendre un parc existant.)');
+      }
+    }
+
     // ⭐ L2 (25/07) — LA QUALIFICATION RÉGLEMENTAIRE N'EST PAS DE LA SAISIE
-    // COURANTE. Déclarer un équipement « hermétiquement scellé et étiqueté »
-    // fait passer le seuil d'aptitude de 3 à 6 kg ; le déclarer MOBILE d'un
-    // sous-type listé ouvre la clôture de fuite le jour même ; l'usage
-    // thermique décale les dates d'interdiction du fluide vierge. Ce sont
-    // des FAITS OPPOSABLES qui déplacent des seuils, au même titre qu'une
-    // habilitation — laquelle est réservée au niveau VALIDEUR depuis
-    // toujours. Attaque tirée : une session ÉLÈVE cochait « hermétique
+    // COURANTE. Attaque tirée : une session ÉLÈVE cochait « hermétique
     // scellé + étiqueté » et l'intervention passait d'INTERDITE à AUTORISÉE
     // sans qu'aucune plaque n'ait été lue. La saisie courante (désignation,
     // charge, localisation, détection) reste ouverte à l'élève.
-    const CHAMPS_QUALIFICATION = ['hermetiqueScelle', 'hermetiqueEtiquete',
-      'residentiel', 'typeInstallation', 'sousTypeInstallation',
-      'usageThermique'];
-    // ⚠️ Revue L2 — COMPARER DES VALEURS NORMALISÉES, jamais la charge utile
-    // brute. Le formulaire renvoie toute sa fiche : une chaîne VIDE pour un
-    // champ texte non renseigné, un booléen pour les cases. En base, ces
-    // mêmes champs valent `null` et 0/1. Comparer brut faisait donc voir un
-    // changement partout, et cette garde refusait TOUTE modification de
-    // machine à un élève ou un technicien — l'écran devenait mort pour eux.
-    // Constat BLOQUANT de la revue adversariale, corrigé avant fusion.
-    const normaliserQualif = (champ, valeur) => {
-      if (['hermetiqueScelle', 'hermetiqueEtiquete', 'residentiel']
-        .includes(champ)) return Boolean(valeur);
-      return valeur === '' || valeur === undefined ? null : valeur;
-    };
-    const qualificationTouchee = CHAMPS_QUALIFICATION
-      .filter((champ) => d[champ] !== undefined
-        && normaliserQualif(champ, d[champ])
-          !== normaliserQualif(champ, machine[champ]));
-    if (qualificationTouchee.length > 0
-        && !ROLES_VALIDEURS.includes(contexte?.role ?? null)) {
-      const erreur = new Error(
-        'Qualification réglementaire de l’équipement réservée au responsable '
-        + `(${ROLES_VALIDEURS.join(', ')}) : ${qualificationTouchee.join(', ')}. `
-        + 'Ces caractéristiques déplacent des seuils réglementaires — elles '
-        + 'se constatent sur la plaque, elles ne se déclarent pas en '
-        + 'saisie courante.');
-      erreur.code = 403;
-      throw erreur;
-    }
+    // ⭐ B1 — la liste et le filtre ont MIGRÉ au niveau module
+    // (CHAMPS_QUALIFICATION_MACHINE / garderQualificationMachine) : la
+    // création empruntait les mêmes colonnes sans passer par ici.
+    garderQualificationMachine(d, machine, contexte);
 
     // ⭐ L2 (25/07) — LA MODIFICATION REVALIDE CE QUE LA CRÉATION EXIGE.
     // `createMachine` refuse une charge nominale nulle ou négative ;
@@ -2983,21 +3071,6 @@ const HANDLERS = {
       d.chargeActuelleKg = actuelle;
     }
 
-    // ⚠️ Revue L2 — REFUSER PLUTÔT QU'IGNORER. Ces deux dates ont été
-    // retirées des champs modifiables : les recevoir sans rien en faire
-    // rendait un succès trompeur — le professeur corrigeait une date de
-    // reprise de parc, le logiciel répondait « enregistré », et rien ne
-    // changeait. Un refus explicite dit où poser le geste.
-    for (const champ of ['dernierControle', 'prochainControle']) {
-      if (d[champ] !== undefined) {
-        throw new Error(
-          'Les dates de contrôle d’une machine ne se saisissent pas ici : '
-          + 'elles sont posées par l’enregistrement d’un contrôle '
-          + 'd’étanchéité, qui les calcule selon la périodicité '
-          + 'réglementaire. (Elles restent saisissables à la CRÉATION de la '
-          + 'machine, pour reprendre un parc existant.)');
-      }
-    }
     const CHAMPS = ['designation', 'type', 'marque', 'modele', 'numSerie',
       'fluide', 'chargeNominaleKg', 'chargeActuelleKg', 'clientId',
       'localisation', 'siteLabel', 'statut', 'typeInstallation',

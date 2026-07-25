@@ -1209,6 +1209,64 @@ try {
     referent);
     verifier('contre-épreuve : le responsable, lui, qualifie l’équipement',
       qualifie.hermetiqueScelle === true);
+
+    // ⭐ LOT B1 — L'AUTRE PORTE. Tout ce qui précède ne tirait que
+    // `updateMachine` : c'est exactement ce qui a laissé passer le trou.
+    // `createMachine` est OPERATEUR (donc ÉLÈVE) et posait les MÊMES
+    // colonnes en UN SEUL appel — la garde ne gardait qu'une porte sur deux.
+    attendreRejetApi('⭐⭐ un ÉLÈVE CRÉE directement la machine « hermétique '
+      + 'scellée et étiquetée » (l’autre porte) : REFUSÉ',
+    () => api.appeler('createMachine', { donneesMachine: {
+      designation: 'Groupe qualifié à la création', fluide: 'R-410A',
+      chargeNominaleKg: 5, hermetiqueScelle: true, hermetiqueEtiquete: true } },
+    eleve), 'réservée au responsable');
+    attendreRejetApi('⭐⭐ … MOBILE + sous-type listé dès la création '
+      + '(clôture de fuite le jour même) : REFUSÉ',
+    () => api.appeler('createMachine', { donneesMachine: {
+      designation: 'Camion à la création', fluide: 'R-410A',
+      chargeNominaleKg: 5, typeInstallation: 'MOBILE',
+      sousTypeInstallation: 'CAMION_FRIGORIFIQUE' } }, eleve),
+    'réservée au responsable');
+    attendreRejetApi('⭐⭐ … « résidentiel » et usage CLIM dès la création '
+      + '(dates d’interdiction du fluide vierge) : REFUSÉ',
+    () => api.appeler('createMachine', { donneesMachine: {
+      designation: 'Split résidentiel', fluide: 'R-410A',
+      chargeNominaleKg: 5, residentiel: true,
+      usageThermique: 'CLIMATISATION' } },
+    eleve), 'réservée au responsable');
+    attendreRejetApi('⭐⭐ … machine créée d’emblée DEMANTELEE (elle sort de '
+      + 'l’alerte de contrôle en retard) : REFUSÉ',
+    () => api.appeler('createMachine', { donneesMachine: {
+      designation: 'Née démantelée', fluide: 'R-410A',
+      chargeNominaleKg: 5, statut: 'DEMANTELEE' } }, eleve),
+    'réservée au responsable');
+    attendreRejetApi('⭐⭐ … échéance de contrôle posée à la création (reprise '
+      + 'de parc réservée au responsable) : REFUSÉ',
+    () => api.appeler('createMachine', { donneesMachine: {
+      designation: 'Reprise de parc', fluide: 'R-410A',
+      chargeNominaleKg: 5, dernierControle: '2026-01-05',
+      prochainControle: '2099-12-31' } }, eleve),
+    'réservée au responsable');
+
+    // Contre-épreuves : l'élève crée toujours une machine ORDINAIRE (sans
+    // quoi l'écran deviendrait mort pour lui), y compris en renvoyant les
+    // valeurs par DÉFAUT de tout le bloc « nature de l'équipement » — c'est
+    // ce que fait le formulaire ; et le responsable qualifie dès la création.
+    const ordinaire = api.appeler('createMachine', { donneesMachine: {
+      designation: 'Groupe d’atelier', fluide: 'R-410A',
+      chargeNominaleKg: 5, localisation: 'Atelier froid',
+      hermetiqueScelle: false, hermetiqueEtiquete: false, residentiel: false,
+      typeInstallation: 'FIXE', sousTypeInstallation: '', usageThermique: '',
+      detectionPermanente: false } }, eleve);
+    verifier('contre-épreuve : l’élève crée toujours une machine ordinaire '
+      + '(défauts renvoyés tels quels)', Boolean(ordinaire?.id));
+    const qualifieeDesLaCreation = api.appeler('createMachine', {
+      donneesMachine: { designation: 'Monobloc scellé', fluide: 'R-410A',
+        chargeNominaleKg: 5, hermetiqueScelle: true,
+        hermetiqueEtiquete: true } }, referent);
+    verifier('contre-épreuve : le responsable qualifie dès la création',
+      qualifieeDesLaCreation.hermetiqueScelle === true
+      && qualifieeDesLaCreation.hermetiqueEtiquete === true);
   }
 
   console.log('--- D4 quater. Purger le journal d’audit ---');
