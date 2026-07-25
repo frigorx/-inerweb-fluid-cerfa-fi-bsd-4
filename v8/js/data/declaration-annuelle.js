@@ -61,10 +61,11 @@ export function calculerDeclarationAnnuelle(annee, donnees) {
         recyclageFiliereKg: 0,        // BSFF issue RECYCLAGE (≠ rubrique 7)
         autreTraitementKg: 0,         // BSFF issue AUTRE
         remisNonAttesteKg: 0,         // remise sans issue attestée (anomalie)
-        // Lot B2 — issue DÉCLARÉE mais SANS PIÈCE : une affirmation nue ne
-        // vaut pas preuve. La masse n'alimente aucune rubrique de traitement
-        // tant qu'aucune pièce justificative n'est jointe au suivi.
-        remisIssueSansPreuveKg: 0
+        // Lot B2 — COMPTEUR D'ANOMALIE, JAMAIS UN POSTE DE MASSE : part des
+        // masses ci-dessus dont le suivi ne porte AUCUNE pièce jointe. Elle
+        // reste comptée dans sa rubrique (8, 9, recyclage, autre) — ce
+        // champ ne fait que dire au lecteur où la pièce manque.
+        remisIssueSansPieceKg: 0
       });
     }
     return parFluide.get(fluide);
@@ -113,14 +114,18 @@ export function calculerDeclarationAnnuelle(annee, donnees) {
   // Rubriques 8/9 (+ informatif) — BSFF remis dans l'année, ventilés par
   // ISSUE de traitement final ATTESTÉE. Une remise SANS issue reste
   // « non attestée » : jamais comptée en destruction (défaut d'audit).
-  // ⭐ Lot B2 — L'ISSUE S'APPUIE SUR UNE PIÈCE. « Destruction » s'attestait
-  // sur parole (installation inventée, certificat null, zéro pièce jointe)
-  // et tombait aussitôt dans la rubrique 9 de la déclaration réglementaire.
+  // ⭐ Lot B2 (corrigé après revue) — LA PIÈCE MANQUANTE EST UNE ANOMALIE,
+  // PAS UNE SOUSTRACTION. Une première version sortait des rubriques 8 et 9
+  // toute issue déclarée sans pièce jointe : sur le jeu d'essai, 5,5 kg de
+  // R-410A RÉELLEMENT détruits disparaissaient de la déclaration faite à
+  // l'autorité. C'est une SOUS-DÉCLARATION, et une règle probatoire que la
+  // réglementation n'écrit nulle part (elle n'a pas été soumise au
+  // propriétaire du registre : interdit).
   // Doctrine maison : le doute retire l'ALLÈGEMENT, jamais l'OBLIGATION —
-  // la saisie reste possible (on n'empêche jamais d'enregistrer la réalité),
-  // mais sans pièce jointe au suivi, l'issue ne VAUT PAS preuve : la masse
-  // reste « remise en filière », hors rubriques de traitement, et l'écran
-  // le dit. Un numéro de certificat SAISI n'est pas une pièce.
+  // et il ne fait JAMAIS disparaître une masse d'une déclaration. La masse
+  // reste donc EXACTEMENT dans sa rubrique ; l'absence totale de pièce
+  // jointe au suivi est SIGNALÉE en anomalie (BSFF_ISSUE_SANS_PIECE), ce
+  // qui dit au lecteur que la preuve reste à produire.
   const suivisAvecPiece = new Set(
     (d.piecesJointes || [])
       .filter((pj) => pj && String(pj.entiteType).toUpperCase() === 'BSFF')
@@ -131,8 +136,8 @@ export function calculerDeclarationAnnuelle(annee, donnees) {
     const masse = Number(bsff.masseRemiseKg) || 0;
     const inst = bsff.installationTraitement || null;
     if (bsff.issueTraitement && !suivisAvecPiece.has(bsff.id)) {
-      l.remisIssueSansPreuveKg = arrondir(l.remisIssueSansPreuveKg + masse);
-      continue;
+      // Compteur d'anomalie uniquement : la masse suit son cours ci-dessous.
+      l.remisIssueSansPieceKg = arrondir(l.remisIssueSansPieceKg + masse);
     }
     switch (bsff.issueTraitement) {
       case 'DESTRUCTION':
@@ -221,16 +226,18 @@ export function calculerDeclarationAnnuelle(annee, donnees) {
         `fin d'année ne sont pas établis.` });
   }
   for (const l of lignes) {
-    // Lot B2 — l'issue déclarée sans pièce est dénoncée À PART : ce n'est
-    // pas « rien de déclaré », c'est « déclaré, non prouvé ».
-    if (l.remisIssueSansPreuveKg > 0) {
+    // Lot B2 — l'anomalie dit EXACTEMENT ce qu'elle constate : aucune pièce
+    // jointe au suivi. Elle ne prétend pas qu'une pièce prouverait l'issue
+    // (n'importe quel fichier compte), et elle ne déplace aucun kilo.
+    if (l.remisIssueSansPieceKg > 0) {
       anomalies.push({ code: 'BSFF_ISSUE_SANS_PIECE', fluide: l.fluide,
-        masseKg: l.remisIssueSansPreuveKg,
-        message: `${l.fluide} : ${l.remisIssueSansPreuveKg} kg remis en ` +
-          `filière avec une issue de traitement déclarée mais AUCUNE pièce ` +
-          `justificative jointe (certificat de l'installation, bordereau ` +
-          `officiel). Sans pièce, l'issue ne vaut pas preuve : cette masse ` +
-          `n'est comptée ni en destruction, ni en régénération.` });
+        masseKg: l.remisIssueSansPieceKg,
+        message: `${l.fluide} : ${l.remisIssueSansPieceKg} kg remis en ` +
+          `filière avec une issue de traitement déclarée, sur des suivis ` +
+          `qui ne portent AUCUNE pièce jointe. La masse reste déclarée ` +
+          `dans sa rubrique ; c'est la pièce à produire en cas de ` +
+          `contrôle (certificat de l'installation, bordereau officiel) ` +
+          `qui manque au dossier.` });
     }
     if (l.remisNonAttesteKg > 0) {
       anomalies.push({ code: 'BSFF_SANS_ISSUE', fluide: l.fluide,

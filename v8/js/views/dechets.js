@@ -176,8 +176,9 @@ const LIBELLE_ISSUE = {
 };
 
 function ligneBsff(bsff, aUnePiece) {
-  // ⚠ Lot B2 : une issue déclarée SANS pièce jointe est affichée comme
-  // NON PROUVÉE — elle n'alimente aucune rubrique de traitement.
+  // ⚠ Lot B2 : l'écran dit ce qu'il CONSTATE — aucune pièce jointe à ce
+  // suivi. Il ne dit pas que l'issue serait fausse, et la masse reste
+  // déclarée dans sa rubrique : c'est le dossier qui est incomplet.
   const issue = bsff.issueTraitement
     ? '<strong>' + esc(LIBELLE_ISSUE[bsff.issueTraitement]
         || bsff.issueTraitement) + '</strong>'
@@ -185,8 +186,8 @@ function ligneBsff(bsff, aUnePiece) {
         ? '<br><span class="mono issue-inst">'
           + esc(bsff.installationTraitement) + '</span>' : '')
       + (aUnePiece ? ''
-        : '<br><span class="issue-absente">déclarée sans pièce — '
-          + 'non comptée comme preuve</span>')
+        : '<br><span class="issue-absente">aucune pièce jointe — '
+          + 'justificatif à produire</span>')
     : '<span class="issue-absente">Non attestée</span>';
   const action = '<button type="button" class="btn btn-contour btn-petit" '
     + 'data-action="attester-issue" data-id="' + esc(bsff.id) + '">'
@@ -226,14 +227,14 @@ function ouvrirAttestationIssue(ctx, bsff) {
     + '</strong> — ' + esc(fmtNombre(bsff.masseRemiseKg, 2)) + ' kg de '
     + esc(bsff.fluide) + '. Attestez la <strong>nature du traitement '
     + 'final</strong> tel que l’opérateur agréé la certifie.</p>'
-    // ⚠ Lot B2 — l'écran dit la règle AVANT la saisie : sans pièce, la
-    // masse ne sera comptée ni en destruction ni en régénération.
+    // ⚠ Lot B2 — l'écran dit la suite AVANT la saisie : la masse sera
+    // déclarée dans sa rubrique, et l'absence de pièce sera signalée.
     + '<div class="bandeau-avertissement">' + ICONES.alerte
-    + '<span>Sans <strong>pièce justificative jointe</strong> à ce suivi '
-    + '(certificat de l’installation, bordereau officiel), l’issue déclarée '
-    + 'ne vaut pas preuve : la masse restera « remise en filière » et '
-    + 'n’entrera dans aucune rubrique de traitement de la déclaration '
-    + 'annuelle. Un numéro de certificat saisi n’est pas une pièce.</span>'
+    + '<span>La masse sera comptée dans la rubrique correspondante de la '
+    + 'déclaration annuelle. Si aucune <strong>pièce justificative</strong> '
+    + 'n’est jointe à ce suivi (certificat de l’installation, bordereau '
+    + 'officiel), la déclaration signalera une anomalie : le justificatif '
+    + 'reste à produire en cas de contrôle.</span>'
     + '</div>'
     + '<label class="champ-label">Issue de traitement'
     + '<select id="issue-select">' + opts + '</select></label>'
@@ -268,17 +269,17 @@ function ouvrirAttestationIssue(ctx, bsff) {
         });
         toast('Traitement final attesté.', 'succes');
         // ⚠ Lot B2 : on enchaîne SUR la pièce justificative — c'est elle
-        // qui fait la preuve. La modale ne se ferme pas sur l'affirmation.
-        // Piège historique du projet : JAMAIS de sélecteur global sur
-        // « .modale » — on interroge la boîte de CET appel.
+        // qu'un contrôle demandera. La modale ne se ferme pas sur la seule
+        // affirmation. Piège historique du projet : JAMAIS de sélecteur
+        // global sur « .modale » — on interroge la boîte de CET appel.
         const corps = instance.racine.querySelector('.modale-corps');
         const actions = instance.racine.querySelector('.modale-actions');
         if (corps) {
           corps.innerHTML = '<p class="modale-intro">Joignez la '
             + '<strong>pièce justificative</strong> du traitement '
             + '(certificat de l’installation, bordereau officiel). Sans '
-            + 'elle, cette issue ne sera pas comptée comme preuve dans la '
-            + 'déclaration annuelle.</p><div id="zone-pj-issue"></div>';
+            + 'elle, la déclaration annuelle signalera une anomalie sur '
+            + 'cette masse.</p><div id="zone-pj-issue"></div>';
         }
         if (actions) {
           actions.innerHTML = '<button type="button" '

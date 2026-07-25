@@ -284,10 +284,11 @@ function sectionDeclaration(declaration) {
     + tableauDeclaration(declaration)
     + '<p class="decl-legende">Rubrique 9 (destruction) : uniquement les '
     + 'remises en filière dont l’issue « destruction » est '
-    + '<strong>attestée ET appuyée sur une pièce jointe</strong> '
-    + '(installation en info-bulle). Une remise sans issue attestée, ou dont '
-    + 'l’issue est déclarée sans pièce justificative, n’est jamais comptée '
-    + 'en destruction (voir anomalies). Rubrique 7 (recyclage sous '
+    + '<strong>attestée</strong> (installation en info-bulle). Une remise '
+    + 'sans issue attestée n’est jamais comptée en destruction. Une issue '
+    + 'attestée sur un suivi sans aucune pièce jointe reste comptée, mais '
+    + 'elle est signalée en anomalie : la pièce est à produire en cas de '
+    + 'contrôle. Rubrique 7 (recyclage sous '
     + 'responsabilité propre) : sans objet ici — le recyclé / régénéré s’achète '
     + 'certifié.</p>'
     + '</section>';

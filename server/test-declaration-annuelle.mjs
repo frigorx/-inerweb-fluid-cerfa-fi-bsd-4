@@ -177,29 +177,40 @@ verifier('réconciliation charges : neuf + maintenance = 7 (= total charges R-41
   P(l410.chargesNeufKg + l410.chargesMaintenanceKg, 7));
 verifier('réconciliation BSFF : la somme des issues = masse totale remise R-410A (5,5)',
   P(l410.destructionKg + l410.regenerationKg + l410.recyclageFiliereKg
-    + l410.autreTraitementKg + l410.remisNonAttesteKg
-    + l410.remisIssueSansPreuveKg, 5.5));
+    + l410.autreTraitementKg + l410.remisNonAttesteKg, 5.5));
 
 // ============================================================
-// Lot B2 — L'ISSUE S'APPUIE SUR UNE PIÈCE : le MÊME jeu, privé de ses
-// pièces justificatives. Aucun kilo ne s'évapore : il change de poste.
+// Lot B2 (corrigé après revue) — LA PIÈCE MANQUANTE NE FAIT DISPARAÎTRE
+// AUCUNE MASSE DE LA DÉCLARATION. Le MÊME jeu, privé de toutes ses pièces
+// justificatives : les rubriques réglementaires ne bougent pas d'un gramme,
+// seule une ANOMALIE apparaît. Retirer ce correctif (remettre le `continue`
+// qui sortait les masses des rubriques) rend ce bloc ROUGE : c'était une
+// sous-déclaration de 5,5 kg de R-410A réellement traités.
 // ============================================================
 {
   const sansPieces = { ...DONNEES, piecesJointes: [] };
   const decl2 = calculerDeclarationAnnuelle(2026, sansPieces);
   const a410 = decl2.lignes.find((l) => l.fluide === 'R-410A');
   const a32 = decl2.lignes.find((l) => l.fluide === 'R-32');
-  verifier('sans pièce : rubrique 9 (destruction) vidée',
-    P(a410.destructionKg, 0) && a410.destructionInstallations.length === 0);
-  verifier('sans pièce : rubrique 8 (régénération) vidée',
-    P(a410.regenerationKg, 0));
-  verifier('sans pièce : les masses partent en « déclaré sans preuve » (5,5)',
-    P(a410.remisIssueSansPreuveKg, 5.5));
-  verifier('sans pièce : aucun kilo perdu pour R-32 (1 sans preuve + 1,5 non attesté)',
-    P(a32.remisIssueSansPreuveKg, 1) && P(a32.remisNonAttesteKg, 1.5));
+  verifier('sans pièce : rubrique 9 (destruction) INCHANGÉE (3 kg déclarés)',
+    P(a410.destructionKg, 3)
+    && a410.destructionInstallations.includes('Incinérateur agréé de Fos'));
+  verifier('sans pièce : rubrique 8 (régénération) INCHANGÉE (2 kg déclarés)',
+    P(a410.regenerationKg, 2)
+    && a410.regenerationInstallations.includes('Régé-Fluides Lyon'));
+  verifier('sans pièce : R-32 garde son recyclage (1) et son non-attesté (1,5)',
+    P(a32.recyclageFiliereKg, 1) && P(a32.remisNonAttesteKg, 1.5));
+  verifier('sans pièce : réconciliation intacte (rubriques = 5,5 kg remis)',
+    P(a410.destructionKg + a410.regenerationKg + a410.recyclageFiliereKg
+      + a410.autreTraitementKg + a410.remisNonAttesteKg, 5.5));
+  verifier('sans pièce : le compteur d’anomalie chiffre les masses non appuyées',
+    P(a410.remisIssueSansPieceKg, 5.5) && P(a32.remisIssueSansPieceKg, 1));
   verifier('sans pièce : anomalie BSFF_ISSUE_SANS_PIECE sur les deux fluides',
     decl2.anomalies.filter((a) => a.code === 'BSFF_ISSUE_SANS_PIECE').length === 2
     && decl2.complet === false);
+  verifier('l’anomalie dit que la masse RESTE déclarée (elle n’accuse pas à faux)',
+    decl2.anomalies.find((a) => a.code === 'BSFF_ISSUE_SANS_PIECE')
+      .message.includes('reste déclarée dans sa rubrique'));
   verifier('sans pièce : anomalie BSFF_SANS_ISSUE toujours distincte',
     decl2.anomalies.some((a) => a.code === 'BSFF_SANS_ISSUE'));
   verifier('parité ESM ↔ serveur (sans pièces justificatives)',

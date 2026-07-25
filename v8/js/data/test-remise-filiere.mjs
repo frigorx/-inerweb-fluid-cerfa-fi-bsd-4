@@ -191,10 +191,12 @@ async function bouteilleDechet(masseKg) {
 }
 
 // ============================================================
-// C bis. B2-4 — L'ISSUE S'APPUIE SUR UNE PIÈCE
-// (attaque tirée : « DESTRUCTION » attestée sur parole, installation
-//  inventée, certificat null, zéro pièce → rubrique 9 de la
-//  déclaration réglementaire alimentée aussitôt)
+// C bis. B2-4 (corrigé après revue) — LA PIÈCE MANQUANTE EST SIGNALÉE,
+// LA MASSE RESTE DÉCLARÉE.
+// La première version sortait la masse des rubriques 8 et 9 tant qu'aucune
+// pièce n'était jointe : une masse réellement détruite disparaissait de la
+// déclaration faite à l'autorité (sous-déclaration). On ne fait JAMAIS
+// disparaître un kilo ; on dit que la pièce manque.
 // ============================================================
 {
   const b = await bouteilleDechet(8);
@@ -214,16 +216,18 @@ async function bouteilleDechet(masseKg) {
 
   const avant = await store.getDeclarationAnnuelle(2026);
   const ligneAvant = avant.lignes.find((l) => l.fluide === 'R-410A');
-  verifier('affirmation NUE : rien en rubrique 9 (destruction)',
-    ligneAvant.destructionKg === 0, String(ligneAvant.destructionKg));
-  verifier('la masse est isolée en « issue déclarée sans preuve »',
-    ligneAvant.remisIssueSansPreuveKg >= 8,
-    String(ligneAvant.remisIssueSansPreuveKg));
+  verifier('AUCUNE pièce jointe : la masse est TOUT DE MÊME en rubrique 9',
+    ligneAvant.destructionKg >= 8, String(ligneAvant.destructionKg));
+  verifier('l’installation de traitement est reportée avec la masse',
+    ligneAvant.destructionInstallations.includes('Installation inventée SA'));
+  verifier('le compteur d’anomalie chiffre la masse non appuyée',
+    ligneAvant.remisIssueSansPieceKg >= 8,
+    String(ligneAvant.remisIssueSansPieceKg));
   verifier('anomalie BSFF_ISSUE_SANS_PIECE levée, déclaration incomplète',
     avant.anomalies.some((a) => a.code === 'BSFF_ISSUE_SANS_PIECE'
       && a.fluide === 'R-410A') && avant.complet === false);
 
-  // La PIÈCE arrive : la preuve existe, la rubrique se remplit.
+  // La PIÈCE arrive : l'anomalie tombe, la masse n'a jamais bougé.
   await store.ajouterPieceJointe({
     entiteType: 'BSFF', entiteId: suivi.id, categorie: 'CERTIFICAT',
     nomFichier: 'certificat.png', mimeType: 'image/png',
@@ -232,13 +236,12 @@ async function bouteilleDechet(masseKg) {
   });
   const apres = await store.getDeclarationAnnuelle(2026);
   const ligneApres = apres.lignes.find((l) => l.fluide === 'R-410A');
-  verifier('pièce jointe déposée : la masse rejoint la rubrique 9',
-    ligneApres.destructionKg >= 8, String(ligneApres.destructionKg));
-  verifier('plus de masse « déclarée sans preuve » pour ce suivi',
-    ligneApres.remisIssueSansPreuveKg < ligneAvant.remisIssueSansPreuveKg,
-    `${ligneAvant.remisIssueSansPreuveKg} → ${ligneApres.remisIssueSansPreuveKg}`);
-  verifier('l’installation de traitement est reportée avec la masse',
-    ligneApres.destructionInstallations.includes('Installation inventée SA'));
+  verifier('pièce déposée : la rubrique 9 est INCHANGÉE (aucun kilo n’a bougé)',
+    Math.abs(ligneApres.destructionKg - ligneAvant.destructionKg) < 1e-9,
+    `${ligneAvant.destructionKg} → ${ligneApres.destructionKg}`);
+  verifier('pièce déposée : le compteur d’anomalie retombe pour ce suivi',
+    ligneApres.remisIssueSansPieceKg < ligneAvant.remisIssueSansPieceKg,
+    `${ligneAvant.remisIssueSansPieceKg} → ${ligneApres.remisIssueSansPieceKg}`);
 }
 
 // ============================================================
