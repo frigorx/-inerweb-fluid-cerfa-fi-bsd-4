@@ -279,6 +279,23 @@ async function bouteilleDechet(masseKg) {
   verifier('l’alerte chiffre l’écart et cite le suivi concerné',
     Boolean(alerte) && alerte.detail.includes('5') && alerte.detail
       .includes(suivi.numeroBsff), alerte ? alerte.detail : 'aucune');
+
+  // ⚠ L'ALERTE NE S'ÉTEINT PAS D'UN CLIC (2e attaque de la revue) :
+  // émettre un nouveau suivi bidon réécrivait le repère sur l'état gonflé,
+  // et rien ne permet de retirer ce suivi. Le repère d'origine tient.
+  const bidon = await store.createBsff({
+    bouteilleId: b.id, transporteur: 'Collecteur agréé',
+    installationDestination: 'Centre de traitement agréé',
+    masseRemiseKg: 0.001, dateRemise: '2026-07-25', operateur: 'testeur'
+  });
+  const encore = (await store.getAlertes())
+    .find((a) => a.id === `alr-remise-filiere-${b.id}`);
+  verifier('un suivi bidon posté après coup n’éteint PAS l’alerte',
+    Boolean(encore), 'alerte disparue');
+  verifier('l’alerte cite toujours le repère d’ORIGINE, pas le suivi bidon',
+    Boolean(encore) && encore.detail.includes(suivi.numeroBsff)
+    && !encore.detail.includes(bidon.numeroBsff),
+    encore ? encore.detail : 'aucune');
 }
 
 // ============================================================

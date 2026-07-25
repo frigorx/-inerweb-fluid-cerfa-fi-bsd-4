@@ -131,18 +131,40 @@ export function verifierNumeroSuivi(numero, numerosExistants) {
    n'est PAS expliqué par une écriture du registre est SIGNALÉ — jamais
    bloqué : une correction de tare est légitime, et on n'empêche jamais
    d'enregistrer la réalité. On rend le rapprochement VISIBLE.
+
+   Deuxième attaque (revue B2) : émettre un NOUVEAU suivi de 0,001 kg
+   après le gonflage réécrivait le repère sur l'état gonflé — l'alerte
+   s'éteignait d'un clic, et rien ne permet de retirer le suivi bidon.
+   Tous les repères de la bouteille sont donc éprouvés, pas seulement le
+   dernier : un repère ancien reste opposable.
    ============================================================ */
 
 /** Tolérance métrologique (10 g), comme le reste du projet. */
 export const TOLERANCE_REMISE_KG = 0.01;
 
 /**
- * Écart inexpliqué entre le contenu ACTUEL d'une bouteille et le repère
- * figé lors de sa DERNIÈRE remise en filière.
+ * Écart inexpliqué entre le contenu ACTUEL d'une bouteille et les repères
+ * figés lors de ses remises en filière.
+ *
+ * ⚠ TOUS les repères sont éprouvés, pas seulement le dernier. Attaque
+ * tirée par la revue : après le gonflage, il suffisait d'émettre un
+ * nouveau suivi bidon (0,001 kg) pour que le repère se réécrive sur l'état
+ * gonflé — l'alerte s'éteignait d'un clic, et aucun chemin d'annulation
+ * n'existe pour retirer le suivi bidon. Un repère ancien reste donc
+ * opposable : la masse attendue au titre de CE repère tient compte des
+ * remises POSTÉRIEURES (qui ont vidé la bouteille d'autant) et des
+ * écritures du registre. L'écart retenu est le PLUS GRAND — c'est le
+ * repère le plus ancien qui reste inexpliqué, donc l'origine du trou.
+ *
+ * Les remises « postérieures » se reconnaissent à leur DATE seule, jamais
+ * au numéro (mineur 4 de la revue : un registre importé peut porter des
+ * numéros antérieurs, et l'ordre du tableau diffère entre les magasins —
+ * le serveur trie par date décroissante). À date égale, on ne retranche
+ * rien : le doute retire l'ACCUSATION, jamais l'obligation.
  *
  * Le gain EXPLIQUÉ vient des écritures du registre postérieures à la
- * remise (récupérations entrantes moins sorties, statut VALIDE seul :
- * un brouillon n'explique rien, une écriture annulée non plus).
+ * remise (entrées moins sorties, VALIDE et ANNULE ; un brouillon
+ * n'explique rien).
  *
  * @param {object} bouteille - { id, masseNetteKg }
  * @param {object[]} suivis - suivis de remise en filière (tous)
@@ -152,18 +174,53 @@ export const TOLERANCE_REMISE_KG = 0.01;
  */
 export function ecartApresRemise(bouteille, suivis, mouvements) {
   if (!bouteille || !Number.isFinite(bouteille.masseNetteKg)) return null;
-  // Dernière remise PORTEUSE d'un repère (les suivis antérieurs à la
-  // migration 36 n'en ont pas : on ne leur invente pas de passé).
-  let repere = null;
-  for (const s of suivis ?? []) {
-    if (!s || s.bouteilleId !== bouteille.id) continue;
-    if (!Number.isFinite(s.masseBouteilleApresKg)) continue;
-    const cle = `${s.dateRemise ?? ''}|${s.numeroBsff ?? ''}`;
-    if (repere === null || cle > repere.cle) repere = { ...s, cle };
+  // Les remises de CETTE bouteille (toutes, repère ou non : même sans
+  // repère, une remise a bien retiré sa masse).
+  const siennes = (suivis ?? []).filter(
+    (s) => s && s.bouteilleId === bouteille.id);
+  let pire = null;
+  for (const repere of siennes) {
+    // Les suivis antérieurs à la migration 36 n'ont pas de repère : on ne
+    // leur invente pas de passé.
+    if (!Number.isFinite(repere.masseBouteilleApresKg)) continue;
+    const ecart = ecartPourRepere(bouteille, repere, siennes, mouvements);
+    if (ecart === null) continue;
+    if (pire === null || plusGrave(ecart, pire)) pire = ecart;
   }
-  if (repere === null) return null;
+  return pire;
+}
 
-  let explique = 0;
+/**
+ * Lequel des deux écarts est le plus grave. Le plus GROS d'abord ; à
+ * égalité le plus ANCIEN (l'origine du trou) ; puis le numéro, seulement
+ * pour que le verdict ne dépende JAMAIS de l'ordre du tableau reçu (le
+ * serveur trie par date décroissante, le magasin de démo par création).
+ * @returns {boolean} vrai si `a` doit remplacer `b`
+ */
+function plusGrave(a, b) {
+  if (a.gainKg !== b.gainKg) return a.gainKg > b.gainKg;
+  if (a.dateRemise !== b.dateRemise) return a.dateRemise < b.dateRemise;
+  return a.numeroSuivi < b.numeroSuivi;
+}
+
+/**
+ * Écart au titre d'UN repère donné (fonction interne).
+ * @returns {{gainKg:number, numeroSuivi:string, dateRemise:string,
+ *            masseApresKg:number}|null}
+ */
+function ecartPourRepere(bouteille, repere, siennes, mouvements) {
+  // Les remises POSTÉRIEURES ont sorti leur masse de la bouteille : elles
+  // ne sont pas un écart. Comparaison de DATE seule (voir en-tête).
+  let remisesApres = 0;
+  for (const autre of siennes) {
+    if (String(autre.dateRemise ?? '') <= String(repere.dateRemise ?? '')) {
+      continue;
+    }
+    const m = Number(autre.masseRemiseKg);
+    if (Number.isFinite(m)) remisesApres += m;
+  }
+
+  let explique = -remisesApres;
   for (const mv of mouvements ?? []) {
     // VALIDE **et** ANNULE : une écriture annulée a bien eu son effet, et sa
     // contre-écriture (même type, quantité opposée, VALIDE) le reprend — les

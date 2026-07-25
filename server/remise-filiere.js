@@ -63,20 +63,46 @@ function verifierNumeroSuivi(numero, numerosExistants) {
 /** Tolérance métrologique (10 g), comme le reste du projet. */
 const TOLERANCE_REMISE_KG = 0.01;
 
-/** Écart inexpliqué entre le contenu ACTUEL d'une bouteille et le repère
- *  figé lors de sa DERNIÈRE remise en filière (miroir littéral). */
+/** Écart inexpliqué entre le contenu ACTUEL d'une bouteille et les repères
+ *  figés lors de ses remises en filière (miroir littéral).
+ *  TOUS les repères sont éprouvés — un nouveau suivi ne réécrit plus le
+ *  repère sur un état gonflé : l'alerte ne s'éteint pas d'un clic. Les
+ *  remises postérieures se reconnaissent à leur DATE seule (jamais au
+ *  numéro : l'ordre des tableaux diffère entre les magasins). */
 function ecartApresRemise(bouteille, suivis, mouvements) {
   if (!bouteille || !Number.isFinite(bouteille.masseNetteKg)) return null;
-  let repere = null;
-  for (const s of suivis ?? []) {
-    if (!s || s.bouteilleId !== bouteille.id) continue;
-    if (!Number.isFinite(s.masseBouteilleApresKg)) continue;
-    const cle = `${s.dateRemise ?? ''}|${s.numeroBsff ?? ''}`;
-    if (repere === null || cle > repere.cle) repere = { ...s, cle };
+  const siennes = (suivis ?? []).filter(
+    (s) => s && s.bouteilleId === bouteille.id);
+  let pire = null;
+  for (const repere of siennes) {
+    if (!Number.isFinite(repere.masseBouteilleApresKg)) continue;
+    const ecart = ecartPourRepere(bouteille, repere, siennes, mouvements);
+    if (ecart === null) continue;
+    if (pire === null || plusGrave(ecart, pire)) pire = ecart;
   }
-  if (repere === null) return null;
+  return pire;
+}
 
-  let explique = 0;
+/** Le plus GROS écart d'abord, à égalité le plus ANCIEN, puis le numéro :
+ *  le verdict ne dépend jamais de l'ordre du tableau reçu (miroir littéral). */
+function plusGrave(a, b) {
+  if (a.gainKg !== b.gainKg) return a.gainKg > b.gainKg;
+  if (a.dateRemise !== b.dateRemise) return a.dateRemise < b.dateRemise;
+  return a.numeroSuivi < b.numeroSuivi;
+}
+
+/** Écart au titre d'UN repère donné (miroir littéral). */
+function ecartPourRepere(bouteille, repere, siennes, mouvements) {
+  let remisesApres = 0;
+  for (const autre of siennes) {
+    if (String(autre.dateRemise ?? '') <= String(repere.dateRemise ?? '')) {
+      continue;
+    }
+    const m = Number(autre.masseRemiseKg);
+    if (Number.isFinite(m)) remisesApres += m;
+  }
+
+  let explique = -remisesApres;
   for (const mv of mouvements ?? []) {
     // VALIDE **et** ANNULE : l'écriture annulée et sa contre-écriture se
     // neutralisent d'elles-mêmes. Un BROUILLON n'explique rien.

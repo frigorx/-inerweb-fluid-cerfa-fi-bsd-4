@@ -183,13 +183,58 @@ console.log('\n--- E bis. Écart après remise en filière ---');
     ecartApresRemise({ id: 'bou-1', masseNetteKg: 10 },
       [{ bouteilleId: 'bou-1', numeroBsff: 'X', dateRemise: '2026-07-24',
         masseBouteilleApresKg: null }], []) === null);
-  verifier('le repère retenu est la DERNIÈRE remise',
-    ecartApresRemise({ id: 'bou-1', masseNetteKg: 4 }, [
-      { bouteilleId: 'bou-1', numeroBsff: 'SIF-2026-0001',
+  verifier('deux remises cohérentes entre elles : aucun écart',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 2 }, [
+      { bouteilleId: 'bou-1', numeroBsff: 'SIF-2026-0001', masseRemiseKg: 5,
         dateRemise: '2026-07-24', masseBouteilleApresKg: 5 },
-      { bouteilleId: 'bou-1', numeroBsff: 'SIF-2026-0002',
+      { bouteilleId: 'bou-1', numeroBsff: 'SIF-2026-0002', masseRemiseKg: 3,
+        dateRemise: '2026-08-01', masseBouteilleApresKg: 2 }
+    ], []) === null);
+  verifier('l’écart se mesure aussi sur le DERNIER repère',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 4 }, [
+      { bouteilleId: 'bou-1', numeroBsff: 'SIF-2026-0001', masseRemiseKg: 5,
+        dateRemise: '2026-07-24', masseBouteilleApresKg: 5 },
+      { bouteilleId: 'bou-1', numeroBsff: 'SIF-2026-0002', masseRemiseKg: 3,
         dateRemise: '2026-08-01', masseBouteilleApresKg: 2 }
     ], [])?.gainKg === 2);
+  // ⚠ L'ALERTE NE S'ÉTEINT PAS D'UN CLIC (attaque tirée par la revue) :
+  // après le gonflage (5 → 10), un nouveau suivi de 0,001 kg réécrivait le
+  // repère sur l'état gonflé. Le repère ANCIEN reste opposable.
+  {
+    const apresBidon = ecartApresRemise({ id: 'bou-1', masseNetteKg: 9.999 }, [
+      { bouteilleId: 'bou-1', numeroBsff: 'SIF-2026-0001', masseRemiseKg: 5,
+        dateRemise: '2026-07-24', masseBouteilleApresKg: 5 },
+      { bouteilleId: 'bou-1', numeroBsff: 'SIF-2026-0002', masseRemiseKg: 0.001,
+        dateRemise: '2026-07-25', masseBouteilleApresKg: 9.999 }
+    ], []);
+    verifier('un suivi bidon n’efface PAS l’écart (le vieux repère tient)',
+      apresBidon?.gainKg === 5, JSON.stringify(apresBidon));
+    verifier('l’alerte cite le repère d’ORIGINE, pas le suivi bidon',
+      apresBidon?.numeroSuivi === 'SIF-2026-0001'
+      && apresBidon?.masseApresKg === 5);
+  }
+  verifier('même du MÊME jour, le suivi bidon n’efface pas l’écart',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 9.999 }, [
+      { bouteilleId: 'bou-1', numeroBsff: 'SIF-2026-0001', masseRemiseKg: 5,
+        dateRemise: '2026-07-24', masseBouteilleApresKg: 5 },
+      { bouteilleId: 'bou-1', numeroBsff: 'SIF-2026-0002', masseRemiseKg: 0.001,
+        dateRemise: '2026-07-24', masseBouteilleApresKg: 9.999 }
+    ], [])?.gainKg === 4.999);
+  // MINEUR 4 : l'ordre ne se lit plus au NUMÉRO. Un registre importé peut
+  // porter des numéros antérieurs, et le serveur trie par date décroissante.
+  verifier('ordre du tableau et numéros indifférents (même verdict)',
+    JSON.stringify(ecartApresRemise({ id: 'bou-1', masseNetteKg: 4 }, [
+      { bouteilleId: 'bou-1', numeroBsff: 'SIF-2026-0009', masseRemiseKg: 3,
+        dateRemise: '2026-08-01', masseBouteilleApresKg: 2 },
+      { bouteilleId: 'bou-1', numeroBsff: 'ANCIEN-42', masseRemiseKg: 5,
+        dateRemise: '2026-07-24', masseBouteilleApresKg: 5 }
+    ], []))
+    === JSON.stringify(ecartApresRemise({ id: 'bou-1', masseNetteKg: 4 }, [
+      { bouteilleId: 'bou-1', numeroBsff: 'ANCIEN-42', masseRemiseKg: 5,
+        dateRemise: '2026-07-24', masseBouteilleApresKg: 5 },
+      { bouteilleId: 'bou-1', numeroBsff: 'SIF-2026-0009', masseRemiseKg: 3,
+        dateRemise: '2026-08-01', masseBouteilleApresKg: 2 }
+    ], [])));
   verifier('tolérance métrologique : 10 g d’arrondi ne déclenchent rien',
     ecartApresRemise({ id: 'bou-1', masseNetteKg: 5.01 }, suivis, [])
       === null);
