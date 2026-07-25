@@ -3765,9 +3765,12 @@ export function creerDemoStore() {
       // fixe), puis RAPPELER tracerReparation avec une date antérieure — le
       // dossier de fuite se refermait rétroactivement. On trace un FAIT : il
       // se corrige par un nouveau contrôle, pas en réécrivant le précédent.
+      // ⚠️ Revue L2 — le RÉPARATEUR aussi : le verrou couvrait la date et la
+      // nature, mais on pouvait encore réécrire QUI avait réparé.
       if (controle.dateReparation
           && (controle.dateReparation !== dateReparation
-            || (controle.natureReparation ?? '') !== natureReparation)) {
+            || (controle.natureReparation ?? '') !== natureReparation
+            || (controle.reparateur ?? '') !== reparateur)) {
         throw new Error(
           `Réparation déjà tracée le ${controle.dateReparation} : elle ne se `
           + 'réécrit pas. Enregistrez un nouveau contrôle d’étanchéité pour '

@@ -3468,9 +3468,12 @@ const HANDLERS = {
       // dossier de fuite se refermait rétroactivement. Or on trace un FAIT
       // constaté : il se corrige par un nouveau contrôle, pas en réécrivant
       // le précédent. Une valeur IDENTIQUE reste admise (rejeu sans effet).
+      // ⚠️ Revue L2 — le RÉPARATEUR aussi : le verrou couvrait la date et la
+      // nature, mais on pouvait encore réécrire QUI avait réparé.
       if (controle.dateReparation
           && (controle.dateReparation !== dateReparation
-            || (controle.natureReparation ?? '') !== natureReparation)) {
+            || (controle.natureReparation ?? '') !== natureReparation
+            || (controle.reparateur ?? '') !== reparateur)) {
         throw new Error(
           `Réparation déjà tracée le ${controle.dateReparation} : elle ne se `
           + 'réécrit pas. Enregistrez un nouveau contrôle d’étanchéité pour '

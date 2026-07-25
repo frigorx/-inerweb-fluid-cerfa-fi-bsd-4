@@ -109,7 +109,8 @@ connues, pas des oublis) :
   diffusé. Il arrête une purge à la main, pas quelqu'un qui régénère le témoin. La vraie
   parade est de confronter le journal importé au **témoin de scellement externe quotidien**
   (`backups/scellement/`), qui vit hors du fichier — à faire dans un lot dédié ;
-- `tracerReparation` fige la date et la nature, pas le nom du réparateur ;
+- ~~`tracerReparation` fige la date et la nature, pas le nom du réparateur~~ — **corrigé
+  dans la foulée** : le verrou couvre désormais les trois ;
 - le bouton « Exporter une sauvegarde » reste offert à l'écran aux rôles qui n'y ont plus
   droit : le serveur refuse (403), l'écran devrait le masquer.
 
