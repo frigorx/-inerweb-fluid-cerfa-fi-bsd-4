@@ -738,17 +738,44 @@ function texteOuNullEquip(valeur) {
 //     reprise d'un parc existant reste POSSIBLE à la création — au niveau
 //     du responsable, comme le reste de la qualification.
 //
+// ⭐⭐ REVUE B1 (25/07) — LE LOT N'ÉTAIT PAS ALLÉ AU BOUT DE SA PROPRE
+// RÈGLE. Deux familles déplacent un seuil et restaient en saisie courante,
+// aux DEUX portes ; la revue les a TIRÉES :
+//   - detectionPermanente / detectionVerifieeLe / detectionReference : une
+//     détection permanente déclarée DIVISE PAR DEUX la fréquence des
+//     contrôles (frequenceControleMois). Tir : la même machine R-410A de
+//     60 kg passait d'une échéance au 2027-01-25 à 2027-07-25 sur la seule
+//     déclaration d'une session ÉLÈVE, sans qu'aucun rapport de
+//     vérification n'ait été lu. C'est un ALLÈGEMENT obtenu sans preuve —
+//     « le doute retire l'allègement, jamais l'obligation » l'interdit ;
+//   - chargeNominaleKg : elle fait SORTIR la machine du périmètre F-Gas.
+//     Tir : ramenée de 60 kg à 1 kg par une session ÉLÈVE, la machine
+//     n'avait plus d'échéance (prochainControle null) ni aucune alerte.
+//     Elle se lit sur la PLAQUE, exactement comme l'hermétique. Sa
+//     conséquence assumée : la fiche d'un équipement — sa carte d'identité
+//     réglementaire — se CRÉE au niveau du responsable, puisque la charge
+//     nominale y est obligatoire. L'écran le dit avant d'ouvrir (voir
+//     v8/js/modales/machine-form.js).
+// ⚠️ NUANCE : la charge ACTUELLE (la pesée du jour) reste OUVERTE à
+// l'élève — c'est de la saisie courante et c'est le geste même du TP. Ne
+// pas confondre nominale et actuelle.
+//
 // Le gating par rôle est SERVEUR-ONLY par construction (le DemoStore n'a
 // pas de comptes) : rien à recopier côté démo pour ce filtre-ci.
 // ------------------------------------------------------------
 const CHAMPS_QUALIFICATION_MACHINE = ['hermetiqueScelle', 'hermetiqueEtiquete',
   'residentiel', 'typeInstallation', 'sousTypeInstallation',
-  'usageThermique', 'statut', 'dernierControle', 'prochainControle'];
+  'usageThermique', 'statut', 'dernierControle', 'prochainControle',
+  'chargeNominaleKg', 'detectionPermanente', 'detectionVerifieeLe',
+  'detectionReference'];
 
 /**
  * Fiche de référence d'une machine qui n'existe pas encore : les DÉFAUTS
  * de `createMachine`. Une création qui ne s'en écarte pas ne qualifie rien,
- * donc ne touche à aucun seuil — l'élève crée sa machine sans obstacle.
+ * donc ne touche à aucun seuil.
+ * ⚠️ `chargeNominaleKg` n'a PAS de défaut : elle est obligatoire. Toute
+ * création en porte donc une, et toute création est de ce fait réservée au
+ * responsable — conséquence assumée de la revue B1.
  */
 const QUALIFICATION_MACHINE_NEUVE = {
   hermetiqueScelle: false,
@@ -759,7 +786,11 @@ const QUALIFICATION_MACHINE_NEUVE = {
   usageThermique: null,
   statut: 'EN_SERVICE',
   dernierControle: null,
-  prochainControle: null
+  prochainControle: null,
+  chargeNominaleKg: null,
+  detectionPermanente: false,
+  detectionVerifieeLe: null,
+  detectionReference: null
 };
 
 /**
@@ -771,8 +802,15 @@ const QUALIFICATION_MACHINE_NEUVE = {
  * — l'écran deviendrait mort pour lui.
  */
 function normaliserQualifMachine(champ, valeur) {
-  if (['hermetiqueScelle', 'hermetiqueEtiquete', 'residentiel']
-    .includes(champ)) return Boolean(valeur);
+  if (['hermetiqueScelle', 'hermetiqueEtiquete', 'residentiel',
+    'detectionPermanente'].includes(champ)) return Boolean(valeur);
+  // ⭐ Revue B1 — la charge nominale voyage en NOMBRE ou en CHAÎNE selon
+  // l'appelant (le formulaire poste « 60 », la base rend 60). Comparer
+  // sans convertir ferait voir un changement là où il n'y en a pas.
+  if (champ === 'chargeNominaleKg') {
+    return valeur === '' || valeur === undefined || valeur === null
+      ? null : Number(valeur);
+  }
   return valeur === '' || valeur === undefined ? null : valeur;
 }
 
@@ -3180,11 +3218,6 @@ const HANDLERS = {
     // scellé + étiqueté » et l'intervention passait d'INTERDITE à AUTORISÉE
     // sans qu'aucune plaque n'ait été lue. La saisie courante (désignation,
     // charge, localisation, détection) reste ouverte à l'élève.
-    // ⭐ B1 — la liste et le filtre ont MIGRÉ au niveau module
-    // (CHAMPS_QUALIFICATION_MACHINE / garderQualificationMachine) : la
-    // création empruntait les mêmes colonnes sans passer par ici.
-    garderQualificationMachine(d, machine, contexte);
-
     // ⭐ L2 (25/07) — LA MODIFICATION REVALIDE CE QUE LA CRÉATION EXIGE.
     // `createMachine` refuse une charge nominale nulle ou négative ;
     // `updateMachine`, lui, l'acceptait. Attaque tirée : ramener la charge
@@ -3192,6 +3225,10 @@ const HANDLERS = {
     // périmètre du contrôle d'étanchéité — plus de fréquence, plus
     // d'alerte, plus d'obligation. Le contournement « créer légal puis
     // patcher illégal » est le même qu'en L4 sur les habilitations.
+    // ⭐ Revue B1 — ce refus MÉTIER (valable pour TOUS les rôles) passe
+    // AVANT le filtre de qualification, qui liste désormais lui aussi la
+    // charge nominale : une valeur qui n'est pas un poids n'est pas un
+    // problème de rôle, et le message doit le dire.
     if (d.chargeNominaleKg !== undefined) {
       const nominale = Number(d.chargeNominaleKg);
       if (!Number.isFinite(nominale) || nominale <= 0) {
@@ -3199,6 +3236,12 @@ const HANDLERS = {
       }
       d.chargeNominaleKg = nominale;
     }
+
+    // ⭐ B1 — la liste et le filtre ont MIGRÉ au niveau module
+    // (CHAMPS_QUALIFICATION_MACHINE / garderQualificationMachine) : la
+    // création empruntait les mêmes colonnes sans passer par ici.
+    garderQualificationMachine(d, machine, contexte);
+
     // ⭐ L2 — la charge ACTUELLE est une quantité de fluide réellement
     // présente : ni négative, ni illisible, ni sans rapport avec la
     // machine. Attaque tirée : 9999 kg sur une machine de 10 kg nominaux —

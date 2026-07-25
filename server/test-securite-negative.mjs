@@ -502,6 +502,125 @@ try {
       && qualifieeDesLaCreation?.hermetiqueEtiquete === true);
   }
 
+  console.log('--- A5-a bis. Les deux seuils que le lot B1 avait laissés '
+    + 'ouverts (revue) ---');
+  {
+    // ⭐⭐ REVUE B1, constats importants n°1 et n°2. Le lot posait la règle
+    // « ce qui déplace un seuil réglementaire est réservé au responsable »
+    // et laissait dehors deux familles qui la déplacent pour de bon. Les
+    // deux sont tirées ICI, en montrant l'effet, pas seulement le refus.
+    const lireMachineHttp = async (idMachine) => {
+      const liste = resultatDe(await requete('getMachines', {},
+        { cookie: cookieReferent })) ?? [];
+      return liste.find((m) => m.id === idMachine) ?? null;
+    };
+
+    const mac = resultatDe(await requete('createMachine', { donneesMachine: {
+      designation: 'Groupe 60 kg — témoin de seuil', fluide: 'R-410A',
+      chargeNominaleKg: 60 } }, { cookie: cookieReferent }));
+    verifier('décor : une machine de 60 kg de R-410A, bien dans le périmètre',
+      Boolean(mac?.id));
+    await requete('createControle', { donneesControle: {
+      machineId: mac.id, date: dateRelative(0), resultat: 'CONFORME' } },
+    { cookie: cookieReferent });
+    const echeanceSansDetection = (await lireMachineHttp(mac.id))
+      ?.prochainControle ?? null;
+    verifier('décor : le moteur a posé une échéance de contrôle',
+      Boolean(echeanceSansDetection), String(echeanceSansDetection));
+
+    // --- La DÉTECTION PERMANENTE : elle DIVISE PAR DEUX la fréquence.
+    const declarationDetection = { detectionPermanente: true,
+      detectionVerifieeLe: dateRelative(-30),
+      detectionReference: 'Détecteur imaginaire' };
+    attendreRefus('⭐⭐ un ÉLÈVE déclare une DÉTECTION PERMANENTE (fréquence '
+      + 'des contrôles divisée par deux) : REFUSÉ',
+    await requete('updateMachine', { id: mac.id,
+      donneesMachine: { ...declarationDetection } }, { cookie: cookieEleve }),
+    403, 'réservée au responsable');
+    attendreRefus('⭐⭐ … et la même déclaration dès la CRÉATION (l’autre '
+      + 'porte) : REFUSÉ',
+    await requete('createMachine', { donneesMachine: {
+      designation: 'Née sous détection', fluide: 'R-410A',
+      chargeNominaleKg: 60, ...declarationDetection } },
+    { cookie: cookieEleve }), 403, 'réservée au responsable');
+    {
+      const apres = await lireMachineHttp(mac.id);
+      verifier('… et rien n’a bougé : ni la détection, ni l’échéance',
+        apres?.detectionPermanente !== true
+        && apres?.prochainControle === echeanceSansDetection,
+        JSON.stringify({ d: apres?.detectionPermanente,
+          e: apres?.prochainControle }));
+    }
+
+    // --- La CHARGE NOMINALE : elle fait SORTIR du périmètre F-Gas.
+    attendreRefus('⭐⭐ un ÉLÈVE ramène la CHARGE NOMINALE de 60 kg à 1 kg '
+      + '(la machine sortirait du périmètre) : REFUSÉ',
+    await requete('updateMachine', { id: mac.id,
+      donneesMachine: { chargeNominaleKg: 1 } }, { cookie: cookieEleve }),
+    403, 'réservée au responsable');
+    {
+      const apres = await lireMachineHttp(mac.id);
+      verifier('… et la machine porte toujours ses 60 kg et son échéance',
+        apres?.chargeNominaleKg === 60
+        && apres?.prochainControle === echeanceSansDetection,
+        JSON.stringify({ n: apres?.chargeNominaleKg,
+          e: apres?.prochainControle }));
+    }
+    attendreRefus('⭐⭐ … conséquence assumée : la fiche d’un équipement se '
+      + 'CRÉE au niveau du responsable (la charge nominale y est obligatoire)',
+    await requete('createMachine', { donneesMachine: {
+      designation: 'Machine créée par un élève', fluide: 'R-410A',
+      chargeNominaleKg: 5 } }, { cookie: cookieEleve }),
+    403, 'chargeNominaleKg');
+    // ⚠️ UNE VALEUR QUI N'EST PAS UN POIDS N'EST PAS UN PROBLÈME DE RÔLE :
+    // le refus MÉTIER passe avant le filtre, et le message le dit.
+    attendreRefus('… mais une charge nominale nulle reste un refus MÉTIER '
+      + '(le message doit rester utile, pas parler de rôle)',
+    await requete('updateMachine', { id: mac.id,
+      donneesMachine: { chargeNominaleKg: 0 } }, { cookie: cookieReferent }),
+    400, 'Charge nominale obligatoire');
+
+    // ⚠️ NUANCE À TENIR — la charge ACTUELLE (la pesée du jour) est le geste
+    // même du TP : elle reste OUVERTE à l'élève. Sans cette contre-épreuve,
+    // une garde qui refuserait tout satisferait la section.
+    const pesee = resultatDe(await requete('updateMachine', { id: mac.id,
+      donneesMachine: { chargeActuelleKg: 47.5 } }, { cookie: cookieEleve }));
+    verifier('contre-épreuve : l’élève pèse toujours la machine (charge '
+      + 'ACTUELLE, saisie courante)', pesee?.chargeActuelleKg === 47.5,
+    JSON.stringify(pesee?.chargeActuelleKg));
+    const renvoiIdentique = resultatDe(await requete('updateMachine', {
+      id: mac.id, donneesMachine: { chargeActuelleKg: 47.5,
+        chargeNominaleKg: 60, detectionPermanente: false,
+        detectionVerifieeLe: '', detectionReference: '' } },
+    { cookie: cookieEleve }));
+    verifier('contre-épreuve : … même en renvoyant la fiche ENTIÈRE '
+      + '(l’écran ne devient pas mort)', Boolean(renvoiIdentique?.id),
+    JSON.stringify(renvoiIdentique).slice(0, 160));
+
+    // Contre-épreuve d'EFFET : le responsable déclare la détection, et
+    // l'échéance du contrôle SUIVANT s'éloigne pour de bon. C'est bien un
+    // seuil qui bouge — donc bien une décision de responsable.
+    const declare = resultatDe(await requete('updateMachine', { id: mac.id,
+      donneesMachine: { ...declarationDetection } },
+    { cookie: cookieReferent }));
+    verifier('contre-épreuve : le responsable, lui, déclare la détection',
+      declare?.detectionPermanente === true);
+    await requete('createControle', { donneesControle: {
+      machineId: mac.id, date: dateRelative(0), resultat: 'CONFORME' } },
+    { cookie: cookieReferent });
+    const echeanceAvecDetection = (await lireMachineHttp(mac.id))
+      ?.prochainControle ?? null;
+    verifier('⭐ preuve du déplacement de seuil : sous détection déclarée, '
+      + 'l’échéance suivante s’ÉLOIGNE',
+    Boolean(echeanceAvecDetection)
+      && String(echeanceAvecDetection) > String(echeanceSansDetection),
+    `${echeanceSansDetection} → ${echeanceAvecDetection}`);
+    const rNominale = resultatDe(await requete('updateMachine', { id: mac.id,
+      donneesMachine: { chargeNominaleKg: 40 } }, { cookie: cookieReferent }));
+    verifier('contre-épreuve : le responsable corrige aussi la charge '
+      + 'nominale (relevé de plaque)', rNominale?.chargeNominaleKg === 40);
+  }
+
   console.log('--- A5-b. La fiche du personnel : gouvernance, preuves et '
     + 'état civil ---');
   {
@@ -1493,14 +1612,19 @@ try {
     const machine4 = api.appeler('createMachine', { donneesMachine: {
       designation: 'Machine seuil', fluide: 'R-410A',
       chargeNominaleKg: 10 } }, referent);
-    const eleve2 = { role: 'ELEVE' };
+    // ⚠️ Revue B1 — ce chemin se jouait avec un contexte ÉLÈVE. Depuis que
+    // la CHARGE NOMINALE est réservée au responsable (elle fait sortir du
+    // périmètre F-Gas : voir A5-a bis), l'élève n'y a plus la main. Le
+    // chemin reste valable et doit rester tiré : ce qu'il prouve n'est pas
+    // une question de rôle mais le RECALCUL de l'échéance quand le seuil
+    // revient — donc il se tire au niveau qui peut désormais le tenter.
     api.appeler('updateMachine', { id: machine4.id,
-      donneesMachine: { chargeNominaleKg: 0.001 } }, eleve2);
+      donneesMachine: { chargeNominaleKg: 0.001 } }, referent);
     api.appeler('createControle', { donneesControle: {
       machineId: machine4.id, resultat: 'CONFORME',
-      prochainControle: '2099-12-31' } }, eleve2);
+      prochainControle: '2099-12-31' } }, referent);
     api.appeler('updateMachine', { id: machine4.id,
-      donneesMachine: { chargeNominaleKg: 10 } }, eleve2);
+      donneesMachine: { chargeNominaleKg: 10 } }, referent);
     const finale = api.appeler('getMachines', {}, referent)
       .find((m) => m.id === machine4.id);
     verifier('⭐ charge abaissée → échéance 2099 → charge remise : l’échéance '
