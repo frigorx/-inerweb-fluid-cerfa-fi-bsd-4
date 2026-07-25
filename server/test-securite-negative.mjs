@@ -1306,6 +1306,68 @@ try {
   } catch { /* jonction ou fichier verrouillé : sans conséquence */ }
 }
 
+// ============================================================
+// F. LE RÉPERTOIRE DES PREUVES DÉJÀ TIRÉES AILLEURS
+//
+// Beaucoup de refus étaient déjà prouvés avant ce lot, dans les suites qui
+// ont accompagné chaque brique. Les rejouer ici coûterait du temps sans
+// rien apporter — mais les passer sous silence laisserait croire que cette
+// suite est la seule preuve, et un auditeur n'aurait aucun moyen de
+// retrouver les autres.
+//
+// D'où ce répertoire : chaque refus est RÉFÉRENCÉ (suite + intitulé exact
+// du cas), et la référence est VÉRIFIÉE — la suite doit exister et
+// contenir encore ce cas. Un renommage ou une suppression rend cette
+// suite-ci ROUGE. L'index ne peut donc pas devenir un mensonge avec le
+// temps, ce qui est le sort habituel des tableaux de correspondance.
+// ============================================================
+console.log('');
+console.log('=== F. Répertoire des preuves déjà tirées ailleurs ===');
+
+const REPERTOIRE = [
+  ['tout handler qui écrit a une garde de rôle, et aucune garde ne pointe '
+    + 'dans le vide', 'server/test-roles-mutations.mjs',
+  'aucune entrée de ROLES_MUTATION ne pointe dans le vide'],
+  ['… et un rôle autorisé franchit bien la garde (la garde ne refuse pas '
+    + 'tout le monde)', 'server/test-roles-mutations.mjs',
+  'un rôle AUTORISÉ franchit la garde (aucun 403 à tort)'],
+  ['lecture anonyme refusée à travers le VRAI transport HTTP',
+    'server/test-transport-http.mjs',
+    'lecture anonyme (getFluides) refusée à travers le vrai transport'],
+  ['le mode LAN sans certificat : le serveur REFUSE de démarrer',
+    'server/test-lan-https.mjs',
+    'IWF_LAN=1 sans certificat : le serveur refuse de démarrer'],
+  ['base vive refusée sous un dossier synchronisé (OneDrive & co.)',
+    'server/test-emplacement-base.mjs',
+    'segment « OneDrive » détecté (casse indifférente)'],
+  ['distribution en liste blanche : l’application est servie, rien d’autre',
+    'server/test-distribution-statique.mjs',
+    'Distribution allowlistée : l’application est servie, rien d’autre.'],
+  ['export RGPD d’une personne refusé (403) à un ÉLÈVE',
+    'server/test-export-personne.mjs', '403) une session ELEVE'],
+  ['journal d’audit nominatif gaté (403 pour un ÉLÈVE)',
+    'server/test-coffre-serveur.mjs',
+    'getJournalAudit est désormais gaté (403 pour un ELEVE)'],
+  ['le validateur doit être la personne CONNECTÉE (aucun effet avant la garde)',
+    'server/test-validateur-session.mjs',
+    'le mouvement est resté SOUMIS (aucun effet avant la garde)'],
+  ['pièces jointes : le fichier est écrit sous son id, jamais ailleurs',
+    'server/test-pieces-jointes-chemin.mjs',
+    'le fichier est écrit dans documents/, sous son id'],
+  ['empreintes de mouvement figées sur des valeurs CONNUES (v1 intouchable)',
+    'server/test-hash-mouvement.mjs', 'v1'],
+  ['périmètre du CERFA : pas de fiche officielle pour R-744 / R-290 / R-717',
+    'v8/js/data/test-perimetre-cerfa.mjs', 'HORS_PERIMETRE_FLUORE'],
+  ['cohérence état ↔ type d’une bouteille (aucune requalification interne)',
+    'v8/js/data/test-coherence-etat-bouteille.mjs', 'REGENERE'],
+  ['conditions bloquantes du mode Officiel, verrou compris',
+    'server/test-blocage-officiel.mjs', 'VERROU_LIVRAISON'],
+];
+
+for (const [quoi, suite, motif] of REPERTOIRE) {
+  verifierPreuveCitee(`preuve citée — ${quoi}`, suite, motif);
+}
+
 console.log('');
 console.log(`Sécurité négative : ${nbOk} réussies, ${nbEchecs} en échec.`);
 if (nbEchecs > 0) process.exit(1);
