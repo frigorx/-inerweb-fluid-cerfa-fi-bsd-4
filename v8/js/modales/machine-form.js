@@ -63,13 +63,19 @@ export function peutQualifierEquipement(utilisateur) {
  * dédiés arreterMachine / demantelerMachine le portent) et les deux dates
  * `dernierControle` / `prochainControle` (elles viennent du moteur, pas de
  * ce formulaire). Ce formulaire ne les émet PAS — vérifié : aucune
- * occurrence dans ce fichier. Ne pas « aligner » cette liste sur les neuf
+ * occurrence dans ce fichier. Ne pas « aligner » cette liste sur les treize
  * champs serveur : filtrer un champ jamais émis n'ajoute rien, et laisserait
  * croire que l'écran les porte.
+ * ⭐ Revue B1 — la charge NOMINALE et la triplette de DÉTECTION ont rejoint
+ * la liste serveur : elles déplacent un seuil (périmètre F-Gas d'un côté,
+ * fréquence des contrôles divisée par deux de l'autre). Cet écran les
+ * porte, donc il les filtre. ⚠️ La charge ACTUELLE, elle, n'y est PAS :
+ * la pesée du jour est le geste même du TP.
  */
 const CHAMPS_QUALIFICATION_ECRAN = ['typeInstallation',
   'sousTypeInstallation', 'hermetiqueScelle', 'hermetiqueEtiquete',
-  'residentiel', 'usageThermique'];
+  'residentiel', 'usageThermique', 'chargeNominaleKg',
+  'detectionPermanente', 'detectionVerifieeLe', 'detectionReference'];
 
 /**
  * Retire de la charge utile les champs de qualification quand
@@ -184,11 +190,23 @@ export function gabaritFormulaire(machine, fluides, clients,
     + '</div>'
 
     + '<div class="grille-form-2">'
+    // ⭐ Revue B1 — la charge NOMINALE se relève sur la PLAQUE et décide du
+    // périmètre F-Gas (ramenée à 1 kg, la machine n'a plus d'échéance ni
+    // d'alerte). Réservée au responsable, comme l'hermétique. Ici
+    // `readonly` et non `disabled` : la valeur doit rester dans le
+    // formulaire pour que la garde « charge actuelle ≤ nominale » continue
+    // de fonctionner à l'écran ; elle est retirée de la charge utile juste
+    // avant l'envoi (filtrerQualification).
     + '<div class="champ champ-unite" data-unite="kg" data-champ="chargeNominaleKg">'
     + '<label for="mf-charge-nominale">Charge nominale *</label>'
     + '<input type="number" id="mf-charge-nominale" name="chargeNominaleKg" step="0.01" min="0" '
-    + 'value="' + esc(machine.chargeNominaleKg ?? '') + '">'
+    + 'value="' + esc(machine.chargeNominaleKg ?? '') + '"'
+    + (peutQualifier ? '' : ' readonly') + '>'
     + '<span class="champ-erreur" hidden></span>'
+    + (peutQualifier ? ''
+      : '<p class="mf-note mf-reservee">Relevée sur la plaque : réservée au '
+        + 'responsable. La charge ACTUELLE, ci-contre, reste à saisir '
+        + 'à chaque pesée.</p>')
     + '</div>'
 
     + '<div class="champ champ-unite" data-unite="kg" data-champ="chargeActuelleKg">'
@@ -291,22 +309,28 @@ export function gabaritFormulaire(machine, fluides, clients,
     // P1-1 (E1) — détection de fuites : déclaration ET vérification.
     + '<fieldset class="mf-bloc">'
     + '<legend>Détection de fuites</legend>'
+    // ⭐ Revue B1 — déclarer une détection permanente DIVISE PAR DEUX la
+    // fréquence des contrôles : c'est un allègement d'obligation, il se
+    // constate sur un rapport de vérification, il ne se déclare pas en
+    // saisie courante.
+    + noteReservee
     + '<label class="mf-case"><input type="checkbox" id="mf-detection" '
     + 'name="detectionPermanente"'
-    + (machine.detectionPermanente ? ' checked' : '')
+    + (machine.detectionPermanente ? ' checked' : '') + verrou
     + '> Système de détection permanente installé</label>'
     + '<div id="mf-bloc-detection">'
     + '<div class="grille-form-2">'
     + '<div class="champ" data-champ="detectionVerifieeLe">'
     + '<label for="mf-detection-verif">Vérifié le</label>'
     + '<input type="date" id="mf-detection-verif" name="detectionVerifieeLe" '
-    + 'value="' + esc(machine.detectionVerifieeLe || '') + '">'
+    + 'value="' + esc(machine.detectionVerifieeLe || '') + '"' + verrou + '>'
     + '<span class="champ-erreur" hidden></span>'
     + '</div>'
     + '<div class="champ" data-champ="detectionReference">'
     + '<label for="mf-detection-ref">Référence / intervenant</label>'
     + '<input type="text" id="mf-detection-ref" name="detectionReference" '
-    + 'maxlength="120" value="' + esc(machine.detectionReference || '') + '" '
+    + 'maxlength="120" value="' + esc(machine.detectionReference || '') + '"'
+    + verrou + ' '
     + 'placeholder="Ex. SAV Daikin — bon n° 4412">'
     + '</div>'
     + '</div>'
@@ -503,6 +527,20 @@ export async function ouvrirFormMachine(ctx, machineId = null, preset = null) {
   }
   // ⭐ B1 — l'utilisateur courant était déjà lu ici, et INUTILISÉ.
   const peutQualifier = peutQualifierEquipement(utilisateur);
+
+  // ⭐⭐ Revue B1 — LA FICHE D'UN ÉQUIPEMENT EST SA CARTE D'IDENTITÉ
+  // RÉGLEMENTAIRE. La charge nominale y est OBLIGATOIRE et elle décide du
+  // périmètre F-Gas ; le store la réserve donc au responsable, aux deux
+  // portes. Ouvrir quand même le formulaire serait le piège déjà payé deux
+  // fois par ce dépôt : remplir vingt champs pour un 403 à la fin. On le
+  // dit AVANT, et on dit où va la main de l'élève.
+  if (!enModification && !peutQualifier) {
+    toast('Créer la fiche d’un équipement est réservé au responsable '
+      + '(référent, enseignant, administrateur) : charge nominale et nature '
+      + 'de l’équipement se relèvent sur la plaque. La saisie courante '
+      + '(pesées, mouvements, contrôles) reste ouverte.', 'erreur');
+    return false;
+  }
 
   const machineExistante = enModification
     ? machines.find(function (m) { return m.id === machineId; })

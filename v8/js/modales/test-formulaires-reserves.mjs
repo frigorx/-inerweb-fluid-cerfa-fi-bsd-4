@@ -38,6 +38,51 @@ installerDocumentFactice();
 const machineForm = await import('./machine-form.js');
 const personneForm = await import('./personne-form.js');
 
+// ------------------------------------------------------------
+// ⭐⭐ REVUE B1, constat important n°4 — NE PLUS CHERCHER DES MOTIFS DE
+// TEXTE FIGÉS. Les assertions de la première version cherchaient des
+// chaînes du genre « name="prenom" maxlength="80" disabled » : le gabarit
+// place l'attribut APRÈS `value="…"`, ce motif ne pouvait donc JAMAIS
+// apparaître — et l'assertion ne pouvait JAMAIS échouer. Un test qui ne
+// peut pas mordre est un mensonge (tiré : verrou posé sur prénom ET nom,
+// la suite restait verte).
+// On lit désormais la BALISE elle-même.
+// ------------------------------------------------------------
+
+/** Toutes les balises du gabarit qui portent `name="<champ>"`. */
+function balisesDuChamp(html, champ) {
+  const balises = [];
+  const marque = 'name="' + champ + '"';
+  let depuis = 0;
+  for (;;) {
+    const trouve = html.indexOf(marque, depuis);
+    if (trouve === -1) return balises;
+    const ouverture = html.lastIndexOf('<', trouve);
+    const fermeture = html.indexOf('>', trouve);
+    if (ouverture === -1 || fermeture === -1) return balises;
+    balises.push(html.slice(ouverture, fermeture + 1));
+    depuis = fermeture + 1;
+  }
+}
+
+/**
+ * Le champ existe-t-il dans le gabarit, et TOUTES ses balises portent-elles
+ * l'attribut de verrouillage ? Un champ ABSENT rend `false` : sans cela,
+ * renommer un champ rendrait l'assertion verte pour de mauvaises raisons.
+ */
+function champVerrouille(html, champ, attribut = 'disabled') {
+  const balises = balisesDuChamp(html, champ);
+  const motif = new RegExp('\\s' + attribut + '(\\s|>|=)');
+  return balises.length > 0 && balises.every((b) => motif.test(b));
+}
+
+/** Le champ existe et AUCUNE de ses balises n'est verrouillée. */
+function champOuvert(html, champ) {
+  const balises = balisesDuChamp(html, champ);
+  return balises.length > 0
+    && balises.every((b) => !/\s(disabled|readonly)(\s|>|=)/.test(b));
+}
+
 // ============================================================
 // A. Machine — qualification réglementaire
 // ============================================================
@@ -57,28 +102,36 @@ console.log('--- A bis. machine-form : la charge utile OMET la '
   + 'qualification ---');
 {
   const saisie = {
-    designation: 'Groupe d’atelier', chargeActuelleKg: 4,
-    localisation: 'Atelier froid', dateMiseEnService: '2020-01-05',
+    designation: 'Groupe d’atelier', chargeNominaleKg: 60,
+    chargeActuelleKg: 4, localisation: 'Atelier froid',
+    dateMiseEnService: '2020-01-05',
     detectionPermanente: true, detectionVerifieeLe: '2026-05-30',
+    detectionReference: 'SAV imaginaire',
     typeInstallation: 'FIXE', sousTypeInstallation: '',
     hermetiqueScelle: false, hermetiqueEtiquete: false, residentiel: false,
     usageThermique: ''
   };
   const filtre = machineForm.filtrerQualification(saisie, false);
+  // ⭐ Revue B1 — la liste est passée de 6 à 10 : la charge NOMINALE (elle
+  // fait sortir du périmètre F-Gas) et la triplette de DÉTECTION (elle
+  // divise par deux la fréquence des contrôles) déplacent un seuil, donc
+  // elles suivent la même règle que l'hermétique.
   const reserves = ['typeInstallation', 'sousTypeInstallation',
     'hermetiqueScelle', 'hermetiqueEtiquete', 'residentiel',
-    'usageThermique'];
-  verifier('rôle sans droit : les 6 champs de qualification sont ABSENTS '
+    'usageThermique', 'chargeNominaleKg', 'detectionPermanente',
+    'detectionVerifieeLe', 'detectionReference'];
+  verifier('rôle sans droit : les 10 champs de qualification sont ABSENTS '
     + '(omis, pas remis à leur défaut)',
   reserves.every((c) => !(c in filtre)),
   JSON.stringify(Object.keys(filtre)));
-  verifier('… et la saisie courante est intacte (désignation, charge, '
-    + 'localisation, date, détection)',
-  filtre.designation === 'Groupe d’atelier' && filtre.chargeActuelleKg === 4
+  verifier('⚠️ NUANCE : la charge ACTUELLE (la pesée du jour) passe '
+    + 'toujours — c’est le geste même du TP',
+  filtre.chargeActuelleKg === 4 && !('chargeNominaleKg' in filtre));
+  verifier('… et le reste de la saisie courante est intacte (désignation, '
+    + 'localisation, date de mise en service)',
+  filtre.designation === 'Groupe d’atelier'
     && filtre.localisation === 'Atelier froid'
-    && filtre.dateMiseEnService === '2020-01-05'
-    && filtre.detectionPermanente === true
-    && filtre.detectionVerifieeLe === '2026-05-30');
+    && filtre.dateMiseEnService === '2020-01-05');
   verifier('contre-épreuve : le responsable envoie la fiche ENTIÈRE',
     reserves.every((c) => c in machineForm.filtrerQualification(saisie, true)));
   verifier('… et l’objet d’origine n’est jamais modifié',
@@ -90,24 +143,42 @@ console.log('--- A ter. machine-form : le bloc est affiché, verrouillé ---');
   const machine = { designation: 'Camion', typeInstallation: 'MOBILE',
     sousTypeInstallation: 'CAMION_FRIGORIFIQUE', hermetiqueScelle: true,
     hermetiqueEtiquete: true, residentiel: false,
-    usageThermique: 'CLIMATISATION' };
+    usageThermique: 'CLIMATISATION', chargeNominaleKg: 60,
+    chargeActuelleKg: 47.5, detectionPermanente: true,
+    detectionVerifieeLe: '2026-05-30',
+    detectionReference: 'SAV Daikin — bon n° 4412' };
   const verrouille = machineForm.gabaritFormulaire(machine, [], [], false);
   const ouvert = machineForm.gabaritFormulaire(machine, [], [], true);
 
   const attendus = [
-    ['type d’installation', 'name="typeInstallation" disabled>'],
-    ['nature de l’équipement mobile', 'name="sousTypeInstallation" disabled>'],
-    ['hermétiquement scellé', 'name="hermetiqueScelle" checked disabled>'],
-    ['étiquette hermétique', 'name="hermetiqueEtiquete" checked disabled>'],
-    ['usage résidentiel', 'name="residentiel" disabled>'],
-    ['usage thermique', 'name="usageThermique" disabled>']
+    ['type d’installation', 'typeInstallation', 'disabled'],
+    ['nature de l’équipement mobile', 'sousTypeInstallation', 'disabled'],
+    ['hermétiquement scellé', 'hermetiqueScelle', 'disabled'],
+    ['étiquette hermétique', 'hermetiqueEtiquete', 'disabled'],
+    ['usage résidentiel', 'residentiel', 'disabled'],
+    ['usage thermique', 'usageThermique', 'disabled'],
+    // ⭐ Revue B1 — les deux familles ajoutées par la revue.
+    ['charge NOMINALE (périmètre F-Gas)', 'chargeNominaleKg', 'readonly'],
+    ['détection permanente (fréquence ÷ 2)', 'detectionPermanente',
+      'disabled'],
+    ['date de vérification de la détection', 'detectionVerifieeLe',
+      'disabled'],
+    ['référence de la détection', 'detectionReference', 'disabled']
   ];
-  for (const [libelle, motif] of attendus) {
+  for (const [libelle, champ, attribut] of attendus) {
     verifier(`rôle sans droit : ${libelle} VERROUILLÉ`,
-      verrouille.includes(motif), motif);
+      champVerrouille(verrouille, champ, attribut),
+      JSON.stringify(balisesDuChamp(verrouille, champ)));
     verifier(`contre-épreuve : ${libelle} ouvert au responsable`,
-      !ouvert.includes(motif));
+      champOuvert(ouvert, champ),
+      JSON.stringify(balisesDuChamp(ouvert, champ)));
   }
+  // ⚠️ NUANCE À TENIR — la charge ACTUELLE (la pesée du jour) reste OUVERTE
+  // à tous, dans les deux gabarits : c'est le geste même du TP.
+  verifier('⚠️ la charge ACTUELLE reste OUVERTE, même sans droit de '
+    + 'qualification', champOuvert(verrouille, 'chargeActuelleKg')
+    && champOuvert(ouvert, 'chargeActuelleKg'),
+  JSON.stringify(balisesDuChamp(verrouille, 'chargeActuelleKg')));
   verifier('rôle sans droit : l’écran DIT pourquoi (note « réservées au '
     + 'responsable »)',
   verrouille.includes('<p class="mf-note mf-reservee">')
@@ -117,7 +188,38 @@ console.log('--- A ter. machine-form : le bloc est affiché, verrouillé ---');
   verifier('la fiche reste LISIBLE pour tous : les valeurs qualifiées sont '
     + 'toujours affichées', verrouille.includes('value="MOBILE" selected')
     && verrouille.includes('value="CAMION_FRIGORIFIQUE" selected')
-    && verrouille.includes('value="CLIMATISATION" selected'));
+    && verrouille.includes('value="CLIMATISATION" selected')
+    && verrouille.includes('value="60"'));
+}
+
+console.log('--- A quater. machine-form : la CRÉATION est annoncée fermée, '
+  + 'jamais un formulaire mort ---');
+{
+  // ⭐⭐ Revue B1 — la charge nominale étant réservée ET obligatoire, un
+  // rôle sans droit ne peut plus créer de fiche d'équipement. Le piège
+  // déjà payé deux fois par ce dépôt serait d'ouvrir quand même vingt
+  // champs pour un 403 à la fin : la modale ne doit PAS s'ouvrir.
+  // `toast` écrit dans #zone-toasts (views/communs.js) : sans cette zone,
+  // le message part dans le vide et l'assertion ne prouverait rien.
+  const zoneToasts = document.createElement('div');
+  zoneToasts.id = 'zone-toasts';
+  document.body.appendChild(zoneToasts);
+  const machinesFactices = [];
+  const ctxPour = (roleApp) => ({
+    store: {
+      getMachines: async () => machinesFactices,
+      getFluides: async () => [],
+      getClients: async () => [],
+      getEtablissement: async () => ({ raisonSociale: 'Lycée' }),
+      getUtilisateurCourant: async () => ({ roleApp })
+    }
+  });
+  const refusEleve = await machineForm.ouvrirFormMachine(ctxPour('ELEVE'));
+  verifier('rôle sans droit : la création rend un refus (aucune modale '
+    + 'ouverte)', refusEleve === false, JSON.stringify(refusEleve));
+  verifier('… et l’écran a DIT pourquoi (message affiché)',
+    zoneToasts.textContent.includes('réservé au responsable'),
+    zoneToasts.textContent.slice(0, 200));
 }
 
 // ============================================================
