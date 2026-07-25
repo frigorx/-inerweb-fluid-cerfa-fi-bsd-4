@@ -171,7 +171,8 @@ export async function ouvrirFormBsff(ctx, bouteilleId) {
       + '<span>Remise partielle : un reliquat de <strong>'
       + esc(fmtNombre(reliquat, 2)) + ' kg</strong> restera en stock, '
       + 'toujours en statut déchet (délai de garde conservé). '
-      + 'Un second BSFF sera nécessaire pour le solde.</span></div>';
+      + 'Un second suivi de remise en filière sera nécessaire pour le '
+      + 'solde.</span></div>';
   }
   champMasse.addEventListener('input', majReliquat);
   majReliquat();
@@ -234,7 +235,8 @@ export async function ouvrirFormBsff(ctx, bouteilleId) {
       // Après création, propose d'attacher immédiatement le bordereau
       afficherFormPiecesJointes(bsff.id);
     } catch (erreur) {
-      afficherErreur(erreur.message || 'Impossible de créer ce BSFF.');
+      afficherErreur(erreur.message
+        || 'Impossible d’enregistrer cette remise en filière.');
     }
   });
 

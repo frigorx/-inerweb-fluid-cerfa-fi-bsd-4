@@ -184,7 +184,10 @@ function csvBouteilles(bouteilles) {
     'Tare (kg)', 'Masse brute (kg)', 'Masse nette (kg)',
     'Masse à l’entrée (kg)', 'Contenance max (kg)', 'Propriétaire', 'Lot',
     'Date d’entrée', 'Date de pesée', 'Statut', 'Décision fluide',
-    'Décidé par', 'Date de décision', 'Limite de garde', 'N° BSFF'];
+    // ⚠ Lot B2 : cette colonne porte le numéro du SUIVI INTERNE
+    // (b.numBsff), pas un numéro de bordereau officiel — dans le MÊME zip
+    // scellé dont le sommaire affirme que ce suivi n'en est pas un.
+    'Décidé par', 'Date de décision', 'Limite de garde', 'N° suivi interne'];
   const lignes = bouteilles.map((b) => [
     b.code, b.numeroReel, b.type, b.fluide, b.etatFluide,
     nb(b.tareKg), nb(b.masseBruteKg), nb(b.masseNetteKg),

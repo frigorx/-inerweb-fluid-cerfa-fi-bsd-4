@@ -403,7 +403,7 @@ function blocDetails(bouteille) {
     + ligneDetail('Décidée par', bouteille.decisionPar)
     + ligneDetail('Date de la décision', bouteille.decisionDate ? fmtDate(bouteille.decisionDate) : null)
     + ligneDetail('Limite de garde (déchet)', bouteille.dateLimiteGarde ? fmtDate(bouteille.dateLimiteGarde) : null)
-    + ligneDetail('N° BSFF', bouteille.numBsff)
+    + ligneDetail('N° suivi interne (remise en filière)', bouteille.numBsff)
     + detailComposition(bouteille);
 
   return '<div class="fiche-section">'
