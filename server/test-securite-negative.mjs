@@ -597,6 +597,51 @@ try {
       apres.casseA === scelle.numero
       && apres.motif === 'ANNULATION_ORPHELINE', JSON.stringify(apres));
   }
+
+  // ⚠️ Revue L2 (axe 4) — la contre-épreuve ci-dessus relit un registre DÉJÀ
+  // signalé par l'attaque : elle resterait verte même si le contrôle
+  // condamnait toutes les annulations. Elle ne prouve donc pas ce qu'elle
+  // annonce. La voici rejouée sur une base NEUVE, où la seule annulation est
+  // légitime — là, la chaîne DOIT être parfaitement verte.
+  {
+    const DOSSIER_B2 = mkdtempSync(join(tmpdir(), 'iwf-secneg-annul-'));
+    try {
+      db.fermer?.();
+      db.ouvrir(join(DOSSIER_B2, 'data', 'annulation.db'));
+      api.appeler('init', {}, referent);
+      const prof2 = api.appeler('createPersonne', { donneesPersonne: {
+        prenom: 'Référent', nom: 'Bêta', typePersonne: 'ENSEIGNANT',
+        roleApp: 'REFERENT' } }, referent);
+      const machine2 = api.appeler('createMachine', { donneesMachine: {
+        designation: 'Groupe annulation', fluide: 'R-134a',
+        chargeNominaleKg: 10 } }, referent);
+      const bouteille2 = api.appeler('createBouteille', { donneesBouteille: {
+        type: 'NEUVE', fluide: 'R-134a', tareKg: 10, masseBruteKg: 30,
+        contenanceMaxKg: 25 } }, referent);
+      const mv = api.appeler('creerMouvement', { donneesMouvement: {
+        type: 'CHARGE_APPOINT', machineId: machine2.id,
+        bouteilleSrcId: bouteille2.id, peseeAvantKg: 30, peseeApresKg: 29,
+        technicien: 'T', executeParId: prof2.id,
+        causeMouvement: 'à annuler proprement' } }, referent);
+      api.appeler('soumettreMouvement', { id: mv.id }, referent);
+      api.appeler('validerMouvement',
+        { id: mv.id, validateurId: prof2.id }, referent);
+      api.appeler('annulerParContreEcriture', { id: mv.id,
+        motif: 'Erreur de saisie', validateurId: prof2.id }, referent);
+      const verdict = api.appeler('verifierChaineHash', {}, referent);
+      verifier('⭐ contre-épreuve RÉELLE : sur un registre où la seule '
+        + 'annulation est légitime, la chaîne est PARFAITEMENT verte',
+      verdict.ok === true && verdict.motif === null,
+      JSON.stringify(verdict));
+    } finally {
+      try { db.fermer?.(); } catch { /* best-effort */ }
+      try {
+        rmSync(DOSSIER_B2, { recursive: true, force: true, maxRetries: 5,
+          retryDelay: 200 });
+      } catch { /* sans conséquence */ }
+      db.ouvrir(join(DOSSIER_B, 'data', 'worm.db'));
+    }
+  }
 } finally {
   try { db.fermer?.(); } catch { /* best-effort */ }
   try {
@@ -1007,7 +1052,7 @@ try {
 
   attendreRejetApi('requalifier l’état seul (RECUPERE → REGENERE) : refusé',
     () => api.appeler('updateBouteille', { id: recup.id, donneesBouteille: {
-      etatFluide: 'REGENERE' } }, referent), '');
+      etatFluide: 'REGENERE' } }, referent), 'RÉCUPÉRATION');
 
   attendreRejetApi('⭐ requalifier le type ET l’état dans le MÊME patch '
     + '(NEUVE + REGENERE) : REFUSÉ AUSSI',
@@ -1358,6 +1403,15 @@ try {
   // servi), et c'est exactement ce qui la rendait téléchargeable.
   writeFileSync(join(DOSSIER_H, 'prive', 'secret.txt'),
     'contenu privé qui ne doit jamais sortir');
+  // ⚠️ Revue L2 (axe 4) : ces fichiers étaient demandés au serveur sans
+  // exister — le 404 venait de leur absence, pas de la garde. Ils existent
+  // désormais pour de bon, et c'est bien la garde qui les retient.
+  writeFileSync(join(DOSSIER_H, 'v8', 'data', 'archive.zip'),
+    'PK faux paquet de sauvegarde');
+  writeFileSync(join(DOSSIER_H, 'v8', 'data', '.env'),
+    'IWF_SECRET=valeur-qui-ne-doit-pas-sortir');
+  writeFileSync(join(DOSSIER_H, 'v8', 'data', 'base.db-wal'), 'journal WAL');
+  writeFileSync(join(DOSSIER_H, 'v8', 'data', 'base.db-shm'), 'mémoire SHM');
 
   // La jonction : c'est ELLE qui trompait la liste blanche.
   let jonctionPosee = false;

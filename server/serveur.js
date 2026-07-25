@@ -587,8 +587,16 @@ function traiterStatique(requete, reponse, chemin) {
   // de raison d'être servi à un navigateur, où qu'il soit rangé.
   const EXTENSIONS_JAMAIS_SERVIES = ['.db', '.db-wal', '.db-shm', '.sqlite',
     '.sqlite3', '.zip', '.env', '.key', '.pem', '.pfx', '.bak'];
-  if (EXTENSIONS_JAMAIS_SERVIES.includes(
-    path.extname(cheminFichier).toLowerCase())) {
+  const nomFichier = path.basename(cheminFichier).toLowerCase();
+  // ⚠️ Revue L2 — UN NOM QUI COMMENCE PAR UN POINT N'A PAS D'EXTENSION.
+  // `path.extname('.env')` rend une chaîne VIDE : la liste ci-dessus ne
+  // voyait donc pas passer `.env`, et le fichier sortait en 200. Trouvé en
+  // corrigeant le test lui-même (il demandait un fichier qui n'existait pas,
+  // donc son 404 ne prouvait rien). Les fichiers cachés ne se servent pas :
+  // ce sont, par convention, des fichiers de configuration.
+  if (nomFichier.startsWith('.')
+      || EXTENSIONS_JAMAIS_SERVIES.includes(
+        path.extname(cheminFichier).toLowerCase())) {
     repondreErreur(reponse, 404, 'Fichier introuvable.');
     return;
   }

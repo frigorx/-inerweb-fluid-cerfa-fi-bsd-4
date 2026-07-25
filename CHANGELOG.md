@@ -77,7 +77,44 @@ Les neuf correctifs, chacun né d'une attaque prouvée :
   et la configuration du coffre (sel + témoin = matériel d'attaque hors ligne sur la
   phrase). Une confidentialité qui ne garde qu'une porte sur deux n'en est pas une.
 
-**TOUT VERT — 106 exécutions** (104 → 106 : `test-securite-negative` et `test-dates`).
+**REVUE ADVERSARIALE (5 agents, 5 axes) — 3 BLOQUANTS et 8 constats, tous corrigés.**
+Les agents ont cherché à réfuter le lot en le tirant, et ils ont trouvé :
+- une **régression que j'avais introduite** : la garde de qualification comparait la
+  charge utile brute du formulaire (`''`) au contenu de la base (`null`) — elle refusait
+  donc TOUTE modification de machine à un élève ; l'écran était mort pour lui ;
+- **L2-a n'était posé que sur un des deux chemins du serveur** (base vive gardée, candidat
+  d'import non gardé), et une contre-écriture se **fabriquait** depuis un brouillon
+  (aucun déclencheur ne garde un brouillon : on y posait `contre_ecriture_de`, le logiciel
+  scellait lui-même le désignant) ;
+- l'échéance se forgeait **en trois appels sans SQL** : charge nominale à 0,001 kg (hors
+  périmètre) → échéance volontaire à 2099 (conservée) → charge remise ;
+- la **réparation** et le **blanchiment de bouteille** passaient encore par l'import ;
+- la **borne monotone ne survivait pas à une restauration d'archive** — une protection
+  contre l'écrasement du registre ne peut pas vivre DANS le registre : elle est désormais
+  aussi dans un fichier voisin (`server/borne-scellement.js`) ;
+- la garde « la famille fait foi » était naïve (contournable en réécrivant la famille, et
+  refusait « Ammoniac — naturel, hors HFC » qui contient H, F, C) : remplacée par une règle
+  qui ne lit pas de texte libre — un fluide de PRP ≥ 150 n'est pas hors périmètre ;
+- deux durcissements **cassaient un usage légitime** : la photo du 31/12 se saisit en
+  janvier (donc sur un exercice « révolu ») et devenait incorrigible → elle est maintenant
+  RECTIFIABLE et TRACÉE ; une date de vérification horodatée, acceptée par la version
+  livrée, rendait les machines concernées inmodifiables → elle est NORMALISÉE, pas refusée ;
+- et trois de mes tests **ne pouvaient pas échouer** (contre-épreuve relisant l'état laissé
+  par l'attaque, fichiers demandés au serveur sans exister). En les corrigeant, un vrai trou
+  est apparu : `path.extname('.env')` rend une chaîne vide, donc `.env` sortait en 200.
+
+**RESTE CONSIGNÉ, non corrigé dans ce lot** (honnêteté du filet — ce sont des limites
+connues, pas des oublis) :
+- le **témoin de tête du journal se recalcule** : l'algorithme est dans le code, qui est
+  diffusé. Il arrête une purge à la main, pas quelqu'un qui régénère le témoin. La vraie
+  parade est de confronter le journal importé au **témoin de scellement externe quotidien**
+  (`backups/scellement/`), qui vit hors du fichier — à faire dans un lot dédié ;
+- `tracerReparation` fige la date et la nature, pas le nom du réparateur ;
+- le bouton « Exporter une sauvegarde » reste offert à l'écran aux rôles qui n'y ont plus
+  droit : le serveur refuse (403), l'écran devrait le masquer.
+
+**TOUT VERT — 106 exécutions** (104 → 106 : `test-securite-negative` et `test-dates`),
+**140 attaques et preuves** dans la suite de sécurité.
 Le mode Officiel reste FERMÉ. Aucune migration : aucun de ces correctifs n'a demandé de
 toucher au schéma.
 
