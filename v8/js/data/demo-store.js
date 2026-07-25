@@ -391,6 +391,15 @@ async function verifierChaineMouvements(mouvements) {
 function verifierInvariantsDonnees(candidat) {
   for (const b of candidat.bouteilles) {
     const ref = b.code ?? b.id ?? '?';
+    // ⭐ L2 (25/07) — les gardes du CRUD valent AUSSI à l'import. Attaque
+    // tirée : exporter, forcer { type:'NEUVE', etatFluide:'REGENERE' } sur
+    // une bouteille qui contient du récupéré, réimporter — le blanchiment
+    // du récupéré en régénéré passait par la porte de derrière.
+    try {
+      verifierCoherenceEtatBouteille(b.type, b.etatFluide);
+    } catch (erreur) {
+      return `bouteille ${ref} : ${erreur.message}`;
+    }
     for (const champ of ['tareKg', 'masseBruteKg', 'masseNetteKg']) {
       if (!Number.isFinite(b[champ]) || b[champ] < 0) {
         return `bouteille ${ref} : ${champ} invalide (${b[champ]})`;
@@ -450,6 +459,29 @@ function verifierInvariantsDonnees(candidat) {
     if (c && c.mode === 'OFFICIEL' && !c.mouvementId) {
       return `contrôle ${c.numero ?? c.id ?? '?'} : ` +
         'OFFICIEL sans mouvement lié (orphelin)';
+    }
+  }
+  // ⭐ L2 (25/07) — LE VERROU DE LIVRAISON GARDE AUSSI LA PORTE DE
+  // L'IMPORT. Attaque tirée : `creerMouvement { mode:'OFFICIEL' }` est
+  // refusé par les conditions bloquantes, mais un paquet JSON portant un
+  // mouvement { mode:'OFFICIEL', statut:'VALIDE' } avec une chaîne
+  // d'empreintes correctement recalculée entrait en base — une fiche
+  // officielle fabriquée de toutes pièces, sans double signature, sans PDF
+  // conservé, alors même que le mode Officiel n'est pas ouvert. Un verrou
+  // qui ne garde qu'une des deux portes n'est pas un verrou.
+  // À la RÉOUVERTURE (L6), cette garde tombe d'elle-même avec le drapeau.
+  if (VERROU_LIVRAISON) {
+    for (const mv of candidat.mouvements ?? []) {
+      if (mv && mv.mode === 'OFFICIEL') {
+        return `mouvement ${mv.numero ?? mv.id ?? '?'} : mode OFFICIEL alors `
+          + 'que le mode Officiel n’est pas ouvert sur ce poste';
+      }
+    }
+    for (const c of candidat.controles ?? []) {
+      if (c && c.mode === 'OFFICIEL') {
+        return `contrôle ${c.numero ?? c.id ?? '?'} : mode OFFICIEL alors `
+          + 'que le mode Officiel n’est pas ouvert sur ce poste';
+      }
     }
   }
   // Habilitations et mentions (chantier B2) : refuser un registre importé
@@ -3500,6 +3532,33 @@ export function creerDemoStore() {
           d.type !== undefined ? d.type : bouteille.type,
           d.etatFluide !== undefined ? d.etatFluide : bouteille.etatFluide);
       }
+      // ⭐ L2 (25/07) — LA TRANSITION COMPTE AUTANT QUE LE COUPLE (miroir
+      // du serveur). La garde CM-3 ne juge que l'état d'ARRIVÉE : en
+      // changeant le type ET l'état dans le MÊME patch, le couple final
+      // était légal et passait. Attaques tirées : une bouteille de
+      // RÉCUPÉRATION contenant du fluide récupéré devenait NEUVE/RÉGÉNÉRÉ
+      // (du récupéré blanchi en régénéré — le régénéré s'ACHÈTE certifié) ;
+      // et une bouteille déclarée DÉCHET revenait au stock par un patch.
+      if (d.etatFluide !== undefined || d.type !== undefined) {
+        const etatAvant = bouteille.etatFluide;
+        const etatApres = d.etatFluide !== undefined
+          ? d.etatFluide : bouteille.etatFluide;
+        if (ETATS_FLUIDE_RECUPERATION.includes(etatAvant)
+            && ETATS_FLUIDE_ACHAT.includes(etatApres)) {
+          throw new Error(
+            `Requalification refusée : le fluide de cette bouteille est `
+            + `${etatAvant} — il ne devient pas ${etatApres} par une `
+            + 'modification de fiche. Le fluide RECYCLÉ ou RÉGÉNÉRÉ s’ACHÈTE '
+            + 'certifié fournisseur ; le récupéré se réemploie sur sa machine '
+            + 'd’origine ou part en destruction.');
+        }
+        if (bouteille.decisionFluide === 'DECHET' && etatApres !== 'DECHET') {
+          throw new Error(
+            'Bouteille déclarée déchet : elle ne sort du déchet que par une '
+            + 'décision sur le fluide (réutilisable ou à analyser), qui est '
+            + 'journalisée, ou par un bordereau de suivi (BSFF).');
+        }
+      }
       const CHAMPS = ['numeroReel', 'type', 'fluide', 'etatFluide', 'tareKg',
         'masseBruteKg', 'contenanceMaxKg', 'proprietaire', 'lot',
         'dateEntree', 'datePesee', 'statut'];
@@ -5666,6 +5725,19 @@ export function creerDemoStore() {
             `Stock réel invalide pour ${l.fluide} (en kg, positif ou nul).`);
         }
       }
+      // ⭐ L2 (25/07) — UNE PHOTO D'EXERCICE CLOS NE SE REPREND PAS
+      // (miroir du serveur). La photographie de stock sert de stock
+      // d'ouverture à la déclaration annuelle : la reprendre après coup
+      // changeait rétroactivement les stocks déclarés, sans trace. L'année
+      // en cours, elle, se re-photographie autant que nécessaire.
+      const anneeCourante = Number(aujourdHui().slice(0, 4));
+      if (anneeNum < anneeCourante
+          && donnees.inventairesBouteilles.some((p) => p.annee === anneeNum)) {
+        throw new Error(
+          `Exercice ${anneeNum} déjà photographié et clos : sa photographie `
+          + 'de stock ne se reprend pas (elle sert de stock d’ouverture à la '
+          + 'déclaration annuelle). Corrigez l’exercice en cours.');
+      }
       for (const l of lignes) {
         const existant = donnees.inventaires.find(
           (i) => i.annee === anneeNum && i.fluide === l.fluide);
@@ -5901,6 +5973,24 @@ export function creerDemoStore() {
       if (candidat.etablissement.numAttestationCapacite === undefined) {
         candidat.etablissement =
           { ...copier(DEMO.etablissement), ...candidat.etablissement };
+      }
+
+      // ⭐ L2 (25/07) — LA TRANSITION DE MATIÈRE, comparée à ce qui est en
+      // place (miroir du serveur). Le blanchiment se fait en changeant type
+      // ET état ensemble : le couple d'arrivée est légal, les invariants
+      // internes ne peuvent rien voir. C'est la comparaison au fluide DÉJÀ
+      // en place qui dénonce l'opération.
+      for (const b of candidat.bouteilles ?? []) {
+        if (!b || !b.id) continue;
+        const enPlace = donnees.bouteilles.find((x) => x.id === b.id);
+        if (enPlace && ETATS_FLUIDE_RECUPERATION.includes(enPlace.etatFluide)
+            && ETATS_FLUIDE_ACHAT.includes(b.etatFluide)) {
+          throw new Error(
+            `Import refusé — bouteille ${b.code ?? b.id} : son fluide est `
+            + `${enPlace.etatFluide}, il ne devient pas ${b.etatFluide} par `
+            + 'un import (le fluide RECYCLÉ ou RÉGÉNÉRÉ s’ACHÈTE certifié '
+            + 'fournisseur).');
+        }
       }
 
       // CR-5 : invariants métier vérifiés AVANT d'adopter quoi que ce soit

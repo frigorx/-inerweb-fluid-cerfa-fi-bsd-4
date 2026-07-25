@@ -972,6 +972,122 @@ try {
   } catch { /* dossier temporaire encore verrouillé : sans conséquence */ }
 }
 
+// ============================================================
+// D. ⭐ RÉÉCRIRE LA MATIÈRE ET LE PASSÉ
+//
+// Ici l'attaquant n'est plus un intrus : c'est l'exploitant pressé. Le
+// fluide récupéré est encombrant (il faut le détruire, ou le réemployer
+// sur SA machine d'origine) ; le régénéré, lui, se revend. Entre les deux,
+// il n'y a qu'une étiquette — et c'est cette étiquette qu'on essaie de
+// changer. Même chose pour un exercice comptable clos, ou pour un fluide
+// qu'on voudrait « hors périmètre ».
+// ============================================================
+console.log('');
+console.log('=== D. Réécrire la matière et le passé ===');
+
+const DOSSIER_G = mkdtempSync(join(tmpdir(), 'iwf-secneg-matiere-'));
+try {
+  db.ouvrir(join(DOSSIER_G, 'data', 'matiere.db'));
+  const referent = { role: 'REFERENT' };
+  api.appeler('init', {}, referent);
+
+  console.log('--- D1. Blanchir du fluide récupéré en régénéré ---');
+  const recup = api.appeler('createBouteille', { donneesBouteille: {
+    type: 'RECUPERATION', fluide: 'R-134a', etatFluide: 'RECUPERE',
+    tareKg: 10, masseBruteKg: 14, contenanceMaxKg: 25 } }, referent);
+  verifier('décor : une bouteille de récupération contient 4 kg de récupéré',
+    Number(recup.masseNetteKg) === 4, JSON.stringify(recup.masseNetteKg));
+
+  attendreRejetApi('requalifier l’état seul (RECUPERE → REGENERE) : refusé',
+    () => api.appeler('updateBouteille', { id: recup.id, donneesBouteille: {
+      etatFluide: 'REGENERE' } }, referent), '');
+
+  attendreRejetApi('⭐ requalifier le type ET l’état dans le MÊME patch '
+    + '(NEUVE + REGENERE) : REFUSÉ AUSSI',
+  () => api.appeler('updateBouteille', { id: recup.id, donneesBouteille: {
+    type: 'NEUVE', etatFluide: 'REGENERE' } }, referent),
+  'Requalification refusée');
+
+  attendreRejetApi('… et par un paquet d’IMPORT édité à la main : refusé',
+    () => {
+      const exporte = JSON.parse(api.appeler('exporterJSON', {}, referent));
+      const cible = exporte.donnees.bouteilles.find((b) => b.id === recup.id);
+      cible.type = 'NEUVE';
+      cible.etatFluide = 'REGENERE';
+      api.appeler('importerJSON', { texte: JSON.stringify(exporte) }, referent);
+    }, 'bouteille');
+
+  console.log('--- D2. Faire ressortir une bouteille du déchet ---');
+  {
+    const dechet = api.appeler('createBouteille', { donneesBouteille: {
+      type: 'RECUPERATION', fluide: 'R-134a', etatFluide: 'RECUPERE',
+      tareKg: 10, masseBruteKg: 13, contenanceMaxKg: 25 } }, referent);
+    api.appeler('deciderFluideRecupere', {
+      id: dechet.id, decision: 'DECHET', par: 'Référent' }, referent);
+    attendreRejetApi('⭐ une bouteille déclarée DÉCHET ne revient pas au '
+      + 'stock par un simple patch',
+    () => api.appeler('updateBouteille', { id: dechet.id, donneesBouteille: {
+      etatFluide: 'RECUPERE' } }, referent), 'déclarée déchet');
+    // Contre-épreuve : la voie prévue reste ouverte.
+    const releve = api.appeler('deciderFluideRecupere', {
+      id: dechet.id, decision: 'REUTILISABLE', par: 'Référent' }, referent);
+    verifier('contre-épreuve : la décision sur le fluide, elle, sort bien du '
+      + 'déchet (geste journalisé)', releve.etatFluide === 'RECUPERE',
+    JSON.stringify(releve.etatFluide));
+  }
+
+  console.log('--- D3. Sortir tout un parc du périmètre F-Gas ---');
+  attendreRejetApi('⭐ requalifier le R-410A en « AUCUNE » (hors périmètre) : '
+    + 'REFUSÉ — la famille déclarée fait foi',
+  () => api.appeler('updateFluide', {
+    code: 'R-410A',
+    donneesFluide: { categorieCadre7: 'AUCUNE', contientHfc: false,
+      contientHfo: false, sourcePrp: 'x' } }, referent),
+  'contredit la famille déclarée');
+
+  console.log('--- D4. Reprendre la photo d’un exercice clos ---');
+  {
+    const anneeClose = new Date().getFullYear() - 1;
+    api.appeler('saisirInventaire', { annee: anneeClose,
+      lignes: [{ fluide: 'R-134a', stockReelKg: 4 }], par: 'Référent' },
+    referent);
+    attendreRejetApi('⭐ re-photographier un exercice révolu (le stock '
+      + 'd’ouverture de la déclaration annuelle) : REFUSÉ',
+    () => api.appeler('saisirInventaire', { annee: anneeClose,
+      lignes: [{ fluide: 'R-134a', stockReelKg: 0 }], par: 'Référent' },
+    referent), 'déjà photographié et clos');
+    // Contre-épreuve : l'exercice EN COURS se corrige librement.
+    const enCours = new Date().getFullYear();
+    api.appeler('saisirInventaire', { annee: enCours,
+      lignes: [{ fluide: 'R-134a', stockReelKg: 4 }], par: 'Référent' },
+    referent);
+    const corrige = api.appeler('saisirInventaire', { annee: enCours,
+      lignes: [{ fluide: 'R-134a', stockReelKg: 3 }], par: 'Référent' },
+    referent);
+    verifier('contre-épreuve : l’exercice EN COURS se re-photographie '
+      + 'librement', Boolean(corrige));
+  }
+
+  console.log('--- D5. Fabriquer une fiche OFFICIELLE par import ---');
+  {
+    const exporte = JSON.parse(api.appeler('exporterJSON', {}, referent));
+    exporte.donnees.mouvements.push({
+      id: 'MVT-FORGE-OFFICIEL', numero: 'FI-2026-0001', mode: 'OFFICIEL',
+      statut: 'BROUILLON', type: 'CHARGE_APPOINT', date: dateRelative(-1),
+      quantiteKg: 1 });
+    attendreRejetApi('⭐ mouvement en mode OFFICIEL introduit par import '
+      + 'alors que le verrou est fermé : REFUSÉ',
+    () => api.appeler('importerJSON', { texte: JSON.stringify(exporte) },
+      referent), 'mode Officiel n’est pas ouvert');
+  }
+} finally {
+  try { db.fermer?.(); } catch { /* best-effort */ }
+  try {
+    rmSync(DOSSIER_G, { recursive: true, force: true, maxRetries: 5,
+      retryDelay: 200 });
+  } catch { /* dossier temporaire encore verrouillé : sans conséquence */ }
+}
+
 console.log('');
 console.log(`Sécurité négative : ${nbOk} réussies, ${nbEchecs} en échec.`);
 if (nbEchecs > 0) process.exit(1);

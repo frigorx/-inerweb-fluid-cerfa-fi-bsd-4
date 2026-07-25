@@ -276,4 +276,22 @@ export function verifierFicheFluide(fiche) {
     throw new Error(`Fiche incohérente : la catégorie ${categorie} exclut `
       + 'un fluide contenant du HFC ou du HFO.');
   }
+  // ⭐ L2 (25/07) — LE LIBELLÉ DE FAMILLE FAIT FOI CONTRE LA FICHE.
+  // La cohérence ci-dessus se contentait des deux drapeaux `contient*` :
+  // en les remettant à faux DANS LE MÊME patch, on pouvait déclarer
+  // « AUCUNE » (hors périmètre F-Gas) un fluide dont la famille dit
+  // « Mélange HFC ». Attaque tirée : R-410A requalifié AUCUNE → TOUT le
+  // parc qui tourne à ce fluide sortait du contrôle d'étanchéité, sans
+  // fréquence, sans échéance, sans alerte. Une fiche ne peut pas
+  // contredire le nom du fluide qu'elle décrit : si la famille annonce du
+  // HFC, du HFO ou du HCFC, la catégorie du cadre 7 doit suivre.
+  const famille = String(f.famille ?? '').toUpperCase();
+  const familleAnnonce = (motif) => famille.includes(motif);
+  if (categorie === 'AUCUNE'
+      && (familleAnnonce('HFC') || familleAnnonce('HFO')
+        || familleAnnonce('HCFC'))) {
+    throw new Error('Fiche incohérente : la catégorie AUCUNE (hors périmètre '
+      + `F-Gas) contredit la famille déclarée « ${f.famille} ». Corrigez la `
+      + 'famille si le fluide est réellement hors périmètre.');
+  }
 }

@@ -3124,6 +3124,38 @@ const HANDLERS = {
         d.type !== undefined ? d.type : bouteille.type,
         d.etatFluide !== undefined ? d.etatFluide : bouteille.etatFluide);
     }
+    // ⭐ L2 (25/07) — LA TRANSITION COMPTE AUTANT QUE LE COUPLE.
+    // La garde CM-3 ci-dessus ne juge que l'état d'ARRIVÉE : en changeant
+    // le type ET l'état dans le MÊME patch, le couple final était légal et
+    // passait. Attaques tirées : une bouteille de RÉCUPÉRATION contenant
+    // 4 kg de fluide récupéré devenait NEUVE/RÉGÉNÉRÉ — du récupéré blanchi
+    // en régénéré, exactement ce que la règle métier interdit (le régénéré
+    // s'ACHÈTE certifié, il ne se fabrique pas en interne) ; et une
+    // bouteille déclarée DÉCHET revenait au stock par un simple patch.
+    // Le fluide, lui, n'a pas changé : c'est l'étiquette qu'on réécrivait.
+    if (d.etatFluide !== undefined || d.type !== undefined) {
+      const etatAvant = bouteille.etatFluide;
+      const etatApres = d.etatFluide !== undefined
+        ? d.etatFluide : bouteille.etatFluide;
+      const versAchat = ETATS_FLUIDE_ACHAT.includes(etatApres);
+      const depuisRecuperation = ETATS_FLUIDE_RECUPERATION.includes(etatAvant);
+      if (depuisRecuperation && versAchat) {
+        throw new Error(
+          `Requalification refusée : le fluide de cette bouteille est `
+          + `${etatAvant} — il ne devient pas ${etatApres} par une `
+          + 'modification de fiche. Le fluide RECYCLÉ ou RÉGÉNÉRÉ s’ACHÈTE '
+          + 'certifié fournisseur ; le récupéré se réemploie sur sa machine '
+          + 'd’origine ou part en destruction.');
+      }
+      // Le DÉCHET ne se relève pas d'un patch : il sort par une décision
+      // sur le fluide (journalisée) ou par un BSFF.
+      if (bouteille.decisionFluide === 'DECHET' && etatApres !== 'DECHET') {
+        throw new Error(
+          'Bouteille déclarée déchet : elle ne sort du déchet que par une '
+          + 'décision sur le fluide (réutilisable ou à analyser), qui est '
+          + 'journalisée, ou par un bordereau de suivi (BSFF).');
+      }
+    }
     const CHAMPS = ['numeroReel', 'type', 'fluide', 'etatFluide', 'tareKg',
       'masseBruteKg', 'contenanceMaxKg', 'proprietaire', 'lot',
       'dateEntree', 'datePesee', 'statut'];
@@ -4457,6 +4489,26 @@ const HANDLERS = {
           `Stock réel invalide pour ${l.fluide} (en kg, positif ou nul).`);
       }
     }
+    // ⭐ L2 (25/07) — UNE PHOTO D'EXERCICE CLOS NE SE REPREND PAS.
+    // La photographie de stock au 31/12 sert de stock d'ouverture à la
+    // déclaration annuelle réglementaire (rubrique 11). Attaque tirée :
+    // rappeler saisirInventaire pour l'année 2025 en 2026, avec un parc
+    // entre-temps modifié — la photo était RECONSTRUITE sur l'état du jour,
+    // et les stocks déclarés changeaient rétroactivement, sans trace. Une
+    // année révolue est close ; l'année en cours, elle, se re-photographie
+    // autant que nécessaire (elle n'est pas encore déclarée).
+    const anneeCourante = Number(aujourdHui().slice(0, 4));
+    if (anneeNum < anneeCourante) {
+      const dejaPhotographiee = db.get(
+        'SELECT count(*) AS n FROM inventaires_bouteilles WHERE annee = ?',
+        [anneeNum]);
+      if ((dejaPhotographiee?.n ?? 0) > 0) {
+        throw new Error(
+          `Exercice ${anneeNum} déjà photographié et clos : sa photographie `
+          + 'de stock ne se reprend pas (elle sert de stock d’ouverture à la '
+          + 'déclaration annuelle). Corrigez l’exercice en cours.');
+      }
+    }
     return muter(() => {
       for (const l of lignes) {
         upsertInventaire(anneeNum, l.fluide, arrondir(Number(l.stockReelKg)),
@@ -4747,6 +4799,27 @@ const HANDLERS = {
             `(${c.pseudonyme ?? c.personnelId}) : aucune fiche du ` +
             'personnel correspondante. Fichier incohérent.');
         }
+      }
+    }
+
+    // ⭐ L2 (25/07) — LA TRANSITION DE MATIÈRE, comparée à ce qui est en
+    // place. Le blanchiment se fait en changeant type ET état ensemble : le
+    // couple d'arrivée est légal, donc les invariants internes du candidat
+    // ne peuvent rien voir. C'est la comparaison au fluide DÉJÀ en place
+    // qui dénonce l'opération — une bouteille qui contient du récupéré ne
+    // devient pas « achetée » par un import. (Cette comparaison n'a de sens
+    // qu'ici : les invariants, eux, tournent aussi au chargement.)
+    for (const b of candidat.bouteilles ?? []) {
+      if (!b || !b.id) continue;
+      const enPlace = db.get(
+        'SELECT etat_fluide AS etat FROM bouteilles WHERE id = ?', [b.id]);
+      if (enPlace && ETATS_FLUIDE_RECUPERATION.includes(enPlace.etat)
+          && ETATS_FLUIDE_ACHAT.includes(b.etatFluide)) {
+        throw new Error(
+          `Import refusé — bouteille ${b.code ?? b.id} : son fluide est `
+          + `${enPlace.etat}, il ne devient pas ${b.etatFluide} par un `
+          + 'import (le fluide RECYCLÉ ou RÉGÉNÉRÉ s’ACHÈTE certifié '
+          + 'fournisseur).');
       }
     }
 
@@ -5099,6 +5172,15 @@ function amorcerChaineCandidat(figees) {
 function verifierInvariantsDonneesCandidat(candidat) {
   for (const b of candidat.bouteilles) {
     const ref = b.code ?? b.id ?? '?';
+    // ⭐ L2 (25/07) — les gardes du CRUD valent AUSSI à l'import. Attaque
+    // tirée : exporter, forcer { type:'NEUVE', etatFluide:'REGENERE' } sur
+    // une bouteille qui contient du récupéré, réimporter — le blanchiment
+    // du récupéré en régénéré passait par la porte de derrière.
+    try {
+      verifierCoherenceEtatBouteille(b.type, b.etatFluide);
+    } catch (erreur) {
+      return `bouteille ${ref} : ${erreur.message}`;
+    }
     for (const champ of ['tareKg', 'masseBruteKg', 'masseNetteKg']) {
       if (!Number.isFinite(b[champ]) || b[champ] < 0) {
         return `bouteille ${ref} : ${champ} invalide (${b[champ]})`;
@@ -5158,6 +5240,29 @@ function verifierInvariantsDonneesCandidat(candidat) {
     if (c && c.mode === 'OFFICIEL' && !c.mouvementId) {
       return `contrôle ${c.numero ?? c.id ?? '?'} : ` +
         'OFFICIEL sans mouvement lié (orphelin)';
+    }
+  }
+  // ⭐ L2 (25/07) — LE VERROU DE LIVRAISON GARDE AUSSI LA PORTE DE
+  // L'IMPORT. Attaque tirée : `creerMouvement { mode:'OFFICIEL' }` est
+  // refusé par les conditions bloquantes, mais un paquet JSON portant un
+  // mouvement { mode:'OFFICIEL', statut:'VALIDE' } avec une chaîne
+  // d'empreintes correctement recalculée entrait en base — une fiche
+  // officielle fabriquée de toutes pièces, sans double signature, sans PDF
+  // conservé, alors même que le mode Officiel n'est pas ouvert. Un verrou
+  // qui ne garde qu'une des deux portes n'est pas un verrou.
+  // À la RÉOUVERTURE (L6), cette garde tombe d'elle-même avec le drapeau.
+  if (VERROU_LIVRAISON) {
+    for (const mv of candidat.mouvements ?? []) {
+      if (mv && mv.mode === 'OFFICIEL') {
+        return `mouvement ${mv.numero ?? mv.id ?? '?'} : mode OFFICIEL alors `
+          + 'que le mode Officiel n’est pas ouvert sur ce poste';
+      }
+    }
+    for (const c of candidat.controles ?? []) {
+      if (c && c.mode === 'OFFICIEL') {
+        return `contrôle ${c.numero ?? c.id ?? '?'} : mode OFFICIEL alors `
+          + 'que le mode Officiel n’est pas ouvert sur ce poste';
+      }
     }
   }
   // Habilitations et mentions (chantier B2) : miroir EXACT du DemoStore —
@@ -6960,6 +7065,24 @@ function verifierFicheFluide(fiche) {
   if ((categorie === 'HCFC' || categorie === 'AUCUNE') && (hfc || hfo)) {
     throw new Error(`Fiche incohérente : la catégorie ${categorie} exclut `
       + 'un fluide contenant du HFC ou du HFO.');
+  }
+  // ⭐ L2 (25/07) — LE LIBELLÉ DE FAMILLE FAIT FOI CONTRE LA FICHE.
+  // La cohérence ci-dessus se contentait des deux drapeaux `contient*` :
+  // en les remettant à faux DANS LE MÊME patch, on pouvait déclarer
+  // « AUCUNE » (hors périmètre F-Gas) un fluide dont la famille dit
+  // « Mélange HFC ». Attaque tirée : R-410A requalifié AUCUNE → TOUT le
+  // parc qui tourne à ce fluide sortait du contrôle d'étanchéité, sans
+  // fréquence, sans échéance, sans alerte. Une fiche ne peut pas
+  // contredire le nom du fluide qu'elle décrit : si la famille annonce du
+  // HFC, du HFO ou du HCFC, la catégorie du cadre 7 doit suivre.
+  const famille = String(f.famille ?? '').toUpperCase();
+  const familleAnnonce = (motif) => famille.includes(motif);
+  if (categorie === 'AUCUNE'
+      && (familleAnnonce('HFC') || familleAnnonce('HFO')
+        || familleAnnonce('HCFC'))) {
+    throw new Error('Fiche incohérente : la catégorie AUCUNE (hors périmètre '
+      + `F-Gas) contredit la famille déclarée « ${f.famille} ». Corrigez la `
+      + 'famille si le fluide est réellement hors périmètre.');
   }
 }
 
