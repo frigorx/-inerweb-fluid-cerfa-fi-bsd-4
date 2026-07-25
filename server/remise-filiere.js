@@ -78,12 +78,18 @@ function ecartApresRemise(bouteille, suivis, mouvements) {
 
   let explique = 0;
   for (const mv of mouvements ?? []) {
-    if (!mv || mv.statut !== 'VALIDE') continue;
+    // VALIDE **et** ANNULE : l'écriture annulée et sa contre-écriture se
+    // neutralisent d'elles-mêmes. Un BROUILLON n'explique rien.
+    if (!mv || (mv.statut !== 'VALIDE' && mv.statut !== 'ANNULE')) continue;
     if (String(mv.date ?? '') < String(repere.dateRemise ?? '')) continue;
     const q = Number(mv.quantiteKg);
     if (!Number.isFinite(q)) continue;
-    if (mv.bouteilleDstId === bouteille.id && q < 0) explique += -q;
-    if (mv.bouteilleSrcId === bouteille.id && q > 0) explique -= q;
+    // Le SIGNE ne dit pas le sens : récupération NÉGATIVE, transfert
+    // POSITIF, et dans les deux cas le destinataire GAGNE (miroir littéral).
+    if (mv.bouteilleDstId === bouteille.id) {
+      explique += (mv.type === 'TRANSFERT' ? q : -q);
+    }
+    if (mv.bouteilleSrcId === bouteille.id) explique -= q;
   }
 
   const attendu = repere.masseBouteilleApresKg + explique;

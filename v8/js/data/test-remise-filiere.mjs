@@ -281,6 +281,53 @@ async function bouteilleDechet(masseKg) {
       .includes(suivi.numeroBsff), alerte ? alerte.detail : 'aucune');
 }
 
+// ============================================================
+// C quater. LE LOGICIEL N'ACCUSE PAS UNE ÉCRITURE LÉGITIME.
+// Tir de la revue : après une remise partielle, un TRANSFERT ENTRANT
+// validé (regroupement de déchets avant enlèvement) était dénoncé
+// « aucune écriture du registre ne l'explique » — alors que l'écriture
+// existe, qu'elle est valide, et qu'elle explique exactement la masse.
+// Chemin ENTIÈREMENT légitime : la décision « réutilisable » est
+// réversible (IM-7) et remet la bouteille en stock.
+// ============================================================
+{
+  const referentT = await store.createPersonne({
+    nom: 'Transfert', prenom: 'Référent', typePersonne: 'ENSEIGNANT',
+    roleApp: 'REFERENT'
+  });
+  const cible = await bouteilleDechet(10);
+  const suivi = await store.createBsff({
+    bouteilleId: cible.id, transporteur: 'Collecteur agréé',
+    installationDestination: 'Centre de traitement agréé',
+    masseRemiseKg: 5, dateRemise: '2026-07-24', operateur: 'testeur'
+  });
+  // Le fluide restant est finalement jugé réutilisable : retour en stock.
+  await store.deciderFluideRecupere(cible.id, 'REUTILISABLE', 'testeur');
+  const source = await store.createBouteille({
+    type: 'RECUPERATION', fluide: 'R-410A', etatFluide: 'RECUPERE',
+    tareKg: 10, masseBruteKg: 14, contenanceMaxKg: 50, proprietaire: 'Lycée'
+  });
+  const transfert = await store.creerMouvement({
+    type: 'TRANSFERT', bouteilleSrcId: source.id, bouteilleDstId: cible.id,
+    peseeAvantKg: 14, peseeApresKg: 12, technicien: 'Testeur B2',
+    causeMouvement: 'Regroupement avant enlèvement'
+  });
+  await store.soumettreMouvement(transfert.id);
+  await store.validerMouvement(transfert.id, referentT.id);
+
+  const apres = (await store.getBouteilles()).find((x) => x.id === cible.id);
+  verifier('le transfert entrant a bien rempli la bouteille (5 → 7 kg)',
+    Math.abs(apres.masseNetteKg - 7) < 1e-6, String(apres.masseNetteKg));
+  const accusation = (await store.getAlertes())
+    .find((a) => a.id === `alr-remise-filiere-${cible.id}`);
+  verifier('AUCUNE alerte : l’écriture du registre explique la masse',
+    accusation === undefined,
+    accusation ? accusation.detail : '');
+  verifier('le repère du suivi est intact (le suivi n’a pas été retouché)',
+    (await store.getBsff()).find((x) => x.id === suivi.id)
+      .masseBouteilleApresKg === 5);
+}
+
 {
   const { calculerChampsCerfa } = await import('../cerfa/generateur.js');
   const referent = await store.createPersonne({

@@ -165,15 +165,27 @@ export function ecartApresRemise(bouteille, suivis, mouvements) {
 
   let explique = 0;
   for (const mv of mouvements ?? []) {
-    if (!mv || mv.statut !== 'VALIDE') continue;
+    // VALIDE **et** ANNULE : une écriture annulée a bien eu son effet, et sa
+    // contre-écriture (même type, quantité opposée, VALIDE) le reprend — les
+    // deux se neutralisent d'elles-mêmes, comme dans la déclaration annuelle.
+    // Un BROUILLON, lui, n'explique rien : il n'a rien déplacé.
+    if (!mv || (mv.statut !== 'VALIDE' && mv.statut !== 'ANNULE')) continue;
     if (String(mv.date ?? '') < String(repere.dateRemise ?? '')) continue;
     const q = Number(mv.quantiteKg);
     if (!Number.isFinite(q)) continue;
-    // Récupération vers cette bouteille : quantité NÉGATIVE (elle sort de
-    // la machine) — elle y ENTRE, donc elle explique un gain.
-    if (mv.bouteilleDstId === bouteille.id && q < 0) explique += -q;
-    // Charge depuis cette bouteille : elle en SORT, elle explique une perte.
-    if (mv.bouteilleSrcId === bouteille.id && q > 0) explique -= q;
+    // ⚠ LE SIGNE NE SUFFIT PAS À DIRE LE SENS. La convention du registre
+    // n'est négative que pour la RÉCUPÉRATION (le fluide sort de la
+    // machine) ; le TRANSFERT, lui, est enregistré POSITIF. Dans les deux
+    // cas la bouteille DESTINATAIRE gagne du fluide. Lire le seul signe
+    // faisait passer un transfert entrant — regroupement de déchets avant
+    // enlèvement, opération réelle et validée — pour un gain inexpliqué :
+    // le logiciel accusait par écrit une écriture parfaitement légitime.
+    if (mv.bouteilleDstId === bouteille.id) {
+      explique += (mv.type === 'TRANSFERT' ? q : -q);
+    }
+    // Source : le fluide en SORT (charge, transfert sortant) — et une
+    // contre-écriture, de quantité opposée, le fait revenir.
+    if (mv.bouteilleSrcId === bouteille.id) explique -= q;
   }
 
   const attendu = repere.masseBouteilleApresKg + explique;

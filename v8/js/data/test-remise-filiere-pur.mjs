@@ -136,6 +136,49 @@ console.log('\n--- E bis. Écart après remise en filière ---');
       { statut: 'VALIDE', date: '2026-07-25', bouteilleSrcId: 'bou-1',
         quantiteKg: 2 }
     ])?.gainKg === 5);
+  // ⚠ Le SIGNE ne dit pas le sens : le TRANSFERT est enregistré POSITIF
+  // (demo-store.js « mouvement.quantiteKg = quantite »), la RÉCUPÉRATION
+  // NÉGATIVE. Un transfert entrant valide — regroupement de déchets avant
+  // enlèvement — était accusé d'être un gain inexpliqué.
+  verifier('un TRANSFERT ENTRANT valide explique le gain (aucune accusation)',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 7 }, suivis, [
+      { statut: 'VALIDE', type: 'TRANSFERT', date: '2026-07-25',
+        bouteilleSrcId: 'bou-2', bouteilleDstId: 'bou-1', quantiteKg: 2 }
+    ]) === null);
+  verifier('un transfert entrant n’explique QUE sa quantité (le reste tient)',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 9 }, suivis, [
+      { statut: 'VALIDE', type: 'TRANSFERT', date: '2026-07-25',
+        bouteilleSrcId: 'bou-2', bouteilleDstId: 'bou-1', quantiteKg: 2 }
+    ])?.gainKg === 2);
+  verifier('un TRANSFERT SORTANT creuse l’écart (la bouteille se vide)',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 5 }, suivis, [
+      { statut: 'VALIDE', type: 'TRANSFERT', date: '2026-07-25',
+        bouteilleSrcId: 'bou-1', bouteilleDstId: 'bou-2', quantiteKg: 2 }
+    ])?.gainKg === 2);
+  // Annulation : l'originale passe ANNULE, la contre-écriture (même type,
+  // quantité opposée) est VALIDE. Les deux doivent se neutraliser — sinon
+  // une annulation invente un écart, ou en efface un vrai.
+  verifier('récupération ANNULÉE + contre-écriture : effet net nul',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 5 }, suivis, [
+      { statut: 'ANNULE', type: 'RECUPERATION_MAINTENANCE',
+        date: '2026-07-25', bouteilleDstId: 'bou-1', quantiteKg: -3 },
+      { statut: 'VALIDE', type: 'RECUPERATION_MAINTENANCE',
+        date: '2026-07-26', bouteilleDstId: 'bou-1', quantiteKg: 3 }
+    ]) === null);
+  verifier('transfert entrant ANNULÉ + contre-écriture : effet net nul',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 5 }, suivis, [
+      { statut: 'ANNULE', type: 'TRANSFERT', date: '2026-07-25',
+        bouteilleSrcId: 'bou-2', bouteilleDstId: 'bou-1', quantiteKg: 2 },
+      { statut: 'VALIDE', type: 'TRANSFERT', date: '2026-07-26',
+        bouteilleSrcId: 'bou-2', bouteilleDstId: 'bou-1', quantiteKg: -2 }
+    ]) === null);
+  verifier('une annulation n’efface pas un écart réel (le gonflage reste vu)',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 12 }, suivis, [
+      { statut: 'ANNULE', type: 'TRANSFERT', date: '2026-07-25',
+        bouteilleSrcId: 'bou-2', bouteilleDstId: 'bou-1', quantiteKg: 2 },
+      { statut: 'VALIDE', type: 'TRANSFERT', date: '2026-07-26',
+        bouteilleSrcId: 'bou-2', bouteilleDstId: 'bou-1', quantiteKg: -2 }
+    ])?.gainKg === 7);
   verifier('suivi SANS repère (antérieur à la migration 36) : aucun soupçon',
     ecartApresRemise({ id: 'bou-1', masseNetteKg: 10 },
       [{ bouteilleId: 'bou-1', numeroBsff: 'X', dateRemise: '2026-07-24',
@@ -191,9 +234,18 @@ verifier('constantes identiques',
       masseBouteilleApresKg: null }
   ];
   const mvtsParite = [
-    { statut: 'VALIDE', date: '2026-08-02', bouteilleDstId: 'b1', quantiteKg: -1 },
-    { statut: 'BROUILLON', date: '2026-08-03', bouteilleDstId: 'b1', quantiteKg: -4 },
-    { statut: 'VALIDE', date: '2026-08-04', bouteilleSrcId: 'b1', quantiteKg: 0.5 }
+    { statut: 'VALIDE', type: 'RECUPERATION_MAINTENANCE', date: '2026-08-02',
+      bouteilleDstId: 'b1', quantiteKg: -1 },
+    { statut: 'BROUILLON', type: 'RECUPERATION_MAINTENANCE', date: '2026-08-03',
+      bouteilleDstId: 'b1', quantiteKg: -4 },
+    { statut: 'VALIDE', type: 'CHARGE_APPOINT', date: '2026-08-04',
+      bouteilleSrcId: 'b1', quantiteKg: 0.5 },
+    { statut: 'VALIDE', type: 'TRANSFERT', date: '2026-08-05',
+      bouteilleSrcId: 'b2', bouteilleDstId: 'b1', quantiteKg: 0.25 },
+    { statut: 'ANNULE', type: 'TRANSFERT', date: '2026-08-06',
+      bouteilleSrcId: 'b1', bouteilleDstId: 'b2', quantiteKg: 0.75 },
+    { statut: 'VALIDE', type: 'TRANSFERT', date: '2026-08-07',
+      bouteilleSrcId: 'b1', bouteilleDstId: 'b2', quantiteKg: -0.75 }
   ];
   for (const masse of [0, 2, 2.5, 3, 10, NaN]) {
     for (const id of ['b1', 'b2', 'b3']) {
