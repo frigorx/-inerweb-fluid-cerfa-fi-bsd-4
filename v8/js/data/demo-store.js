@@ -451,6 +451,9 @@ function verifierInvariantsDonnees(candidat) {
       }
     }
   }
+  // ⚠️ Revue L2 — le miroir de ce contrôle vit dans importerJSON côté
+  // démo (comme la transition de matière) : les invariants, eux,
+  // tournent aussi au chargement, où la comparaison n'a pas de sens.
   // P7-e (option A) : un contrôle OFFICIEL naît TOUJOURS d'un mouvement
   // (CR-3, parcours signé/scellé/WORM) — un contrôle officiel ORPHELIN
   // (sans mouvementId) ne peut être que forgé ou issu d'un contournement.
@@ -3118,6 +3121,21 @@ export function creerDemoStore() {
       // session ÉLÈVE repoussait l'échéance d'une machine en retard au
       // 31/12/2099 et l'alerte critique disparaissait. Ils restent
       // légitimes à la CRÉATION (reprise de parc) et à l'import.
+      // ⚠️ Revue L2 — REFUSER PLUTÔT QU'IGNORER. Ces deux dates ont été
+      // retirées des champs modifiables : les recevoir sans rien en faire
+      // rendait un succès trompeur — le professeur corrigeait une date de
+      // reprise de parc, le logiciel répondait « enregistré », et rien ne
+      // changeait. Un refus explicite dit où poser le geste.
+      for (const champ of ['dernierControle', 'prochainControle']) {
+        if (d[champ] !== undefined) {
+          throw new Error(
+            'Les dates de contrôle d’une machine ne se saisissent pas ici : '
+            + 'elles sont posées par l’enregistrement d’un contrôle '
+            + 'd’étanchéité, qui les calcule selon la périodicité '
+            + 'réglementaire. (Elles restent saisissables à la CRÉATION de la '
+            + 'machine, pour reprendre un parc existant.)');
+        }
+      }
       const CHAMPS = ['designation', 'type', 'marque', 'modele', 'numSerie',
         'fluide', 'chargeNominaleKg', 'chargeActuelleKg', 'clientId',
         'localisation', 'siteLabel', 'statut', 'typeInstallation',
@@ -3135,6 +3153,28 @@ export function creerDemoStore() {
       for (const champ of ['sousTypeInstallation', 'detectionVerifieeLe',
         'detectionReference', 'usageThermique']) {
         if (d[champ] !== undefined) machine[champ] = texteOuNullEquip(d[champ]);
+      }
+      // ⚠️ Revue L2 — RECALCULER L'ÉCHÉANCE QUAND LE SEUIL BOUGE (miroir du
+      // serveur). Chemin trouvé par la revue : abaisser la charge nominale
+      // (la machine sort du périmètre), poser une échéance volontaire à
+      // 2099 — conservée puisque « non soumise » —, puis remettre la charge.
+      // Le plafond du moteur n'était évalué qu'à l'instant du contrôle.
+      const CHAMPS_SEUIL = ['chargeNominaleKg', 'fluide',
+        'detectionPermanente', 'detectionVerifieeLe'];
+      if (CHAMPS_SEUIL.some((champ) => d[champ] !== undefined)) {
+        const dateReference = machine.dernierControle ?? aujourdHui();
+        const fluideRef = donnees.fluides.find(
+          (f) => f.code === machine.fluide) ?? null;
+        const { frequenceMois } = evaluerControle(
+          fluideRef, machine.chargeNominaleKg,
+          detectionEffective(machine, dateReference).compte, dateReference);
+        const echeanceMoteur = frequenceMois
+          ? ajouterMois(dateReference, frequenceMois) : null;
+        if (echeanceMoteur
+            && (!machine.prochainControle
+              || String(machine.prochainControle) > echeanceMoteur)) {
+          machine.prochainControle = echeanceMoteur;
+        }
       }
       // L'échéance de vérification est CALCULÉE, jamais saisie : elle suit
       // la date de vérification à chaque modification.
@@ -4113,6 +4153,24 @@ export function creerDemoStore() {
       }
       if (mouvement.statut !== 'SOUMIS') {
         throw new Error('Seul un mouvement soumis peut être validé.');
+      }
+    // ⚠️ Revue L2 — UNE CONTRE-ÉCRITURE NE NAÎT JAMAIS D'UN BROUILLON.
+      // Chemin alternatif trouvé par la revue, en trois gestes : poser
+      // `contre_ecriture_de` sur un BROUILLON en SQL direct (aucun
+      // déclencheur ne garde un brouillon — c'est normal, il n'est pas encore
+      // un fait), le faire VALIDER par le logiciel (qui scelle et calcule
+      // lui-même une empreinte juste), puis passer la victime à ANNULE. Le
+      // contrôle d'appariement voyait alors un désignant parfaitement scellé
+      // et laissait la chaîne verte : une charge de 3 kg disparaissait des
+      // totaux derrière un faux « leurre » de 0 kg.
+      // Une vraie contre-écriture est créée VALIDE par annulerParContreEcriture,
+      // elle ne passe jamais par ici. Ce champ n'a donc rien à faire sur un
+      // mouvement qu'on valide.
+      if (mouvement.contreEcritureDe) {
+        throw new Error(
+          'Écriture refusée : elle se présente comme la contre-écriture d’une '
+          + 'autre, alors qu’une contre-écriture ne se saisit pas — elle naît '
+          + 'de l’annulation d’une écriture validée. Fiche forgée.');
       }
       const validateur = verifierValidateur(validateurId);
       // Lot C (C3) : le PDF final présenté aux signataires est REÇU à la
@@ -5745,12 +5803,20 @@ export function creerDemoStore() {
       // changeait rétroactivement les stocks déclarés, sans trace. L'année
       // en cours, elle, se re-photographie autant que nécessaire.
       const anneeCourante = Number(aujourdHui().slice(0, 4));
-      if (anneeNum < anneeCourante
-          && donnees.inventairesBouteilles.some((p) => p.annee === anneeNum)) {
-        throw new Error(
-          `Exercice ${anneeNum} déjà photographié et clos : sa photographie `
-          + 'de stock ne se reprend pas (elle sert de stock d’ouverture à la '
-          + 'déclaration annuelle). Corrigez l’exercice en cours.');
+      // ⚠️ Revue L2 — RECTIFIER, PAS INTERDIRE (miroir du serveur) : la
+      // photographie du 31/12 se saisit EN JANVIER, donc sur un exercice
+      // déjà « révolu » ; un refus sec rendait toute faute de frappe
+      // incorrigible. La reprise est admise et JOURNALISÉE.
+      const anciennePhoto = (donnees.inventairesBouteilles ?? [])
+        .filter((p) => p.annee === anneeNum);
+      if (anneeNum < anneeCourante && anciennePhoto.length > 0) {
+        journaliser(operateur, 'RECTIFICATION_INVENTAIRE',
+          `exercice ${anneeNum}`,
+          `Exercice révolu re-photographié : la photographie précédente `
+          + `(${anciennePhoto.length} ligne(s), du `
+          + `${anciennePhoto[0].datePhoto ?? '?'}) est remplacée. Elle sert de `
+          + 'stock d’ouverture à la déclaration annuelle : la reprise doit '
+          + 'rester exceptionnelle et justifiée.');
       }
       for (const l of lignes) {
         const existant = donnees.inventaires.find(
@@ -5996,6 +6062,10 @@ export function creerDemoStore() {
       // en place qui dénonce l'opération.
       for (const b of candidat.bouteilles ?? []) {
         if (!b || !b.id) continue;
+        // NB (revue L2) : sur l'IDENTIFIANT seul — les codes de bouteilles
+        // sont réattribués, comparer dessus refusait des round-trips
+        // légitimes. Le renommage d'id fait disparaître la bouteille : c'est
+        // journalisé côté serveur.
         const enPlace = donnees.bouteilles.find((x) => x.id === b.id);
         if (enPlace && ETATS_FLUIDE_RECUPERATION.includes(enPlace.etatFluide)
             && ETATS_FLUIDE_ACHAT.includes(b.etatFluide)) {
@@ -6004,6 +6074,22 @@ export function creerDemoStore() {
             + `${enPlace.etatFluide}, il ne devient pas ${b.etatFluide} par `
             + 'un import (le fluide RECYCLÉ ou RÉGÉNÉRÉ s’ACHÈTE certifié '
             + 'fournisseur).');
+        }
+      }
+
+      // ⚠️ Revue L2 — LA RÉPARATION NE SE RÉÉCRIT PAS PAR L'IMPORT non plus
+      // (miroir du serveur) : exporter, ramener `dateReparation` à une date
+      // antérieure, réimporter refermait un dossier de fuite rétroactivement.
+      for (const c of candidat.controles ?? []) {
+        if (!c || !c.id || !c.dateReparation) continue;
+        const enPlace = donnees.controles.find((x) => x.id === c.id);
+        if (enPlace && enPlace.dateReparation
+            && enPlace.dateReparation !== c.dateReparation) {
+          throw new Error(
+            `Import refusé — contrôle ${c.numero ?? c.id} : la réparation `
+            + `tracée le ${enPlace.dateReparation} est déplacée au `
+            + `${c.dateReparation} par ce fichier — une réparation constatée `
+            + 'ne se réécrit pas.');
         }
       }
 

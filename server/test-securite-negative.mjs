@@ -914,17 +914,20 @@ try {
         date: '2026-02-30' } }, eleve), 'Date de contrôle invalide');
 
     attendreRejetApi('⭐ échéance de la machine repoussée directement '
-      + '(updateMachine) : le champ n’est plus saisissable',
-    () => {
-      api.appeler('updateMachine', { id: machine.id, donneesMachine: {
-        prochainControle: '2099-12-31' } }, eleve);
+      + '(updateMachine) : REFUSÉE, et le refus dit où poser le geste',
+    () => api.appeler('updateMachine', { id: machine.id, donneesMachine: {
+      prochainControle: '2099-12-31' } }, eleve),
+    'ne se saisissent pas ici');
+    {
+      // La revue a montré qu'ignorer ce champ EN SILENCE rendait un succès
+      // trompeur : le professeur corrigeait, le logiciel disait « enregistré »,
+      // et rien ne changeait.
       const apres = api.appeler('getMachines', {}, referent)
         .find((m) => m.id === machine.id);
-      if (apres.prochainControle === '2099-12-31') {
-        throw new Error('ÉCHÉANCE FORGÉE ACCEPTÉE');
-      }
-      throw new Error('échéance inchangée : ' + apres.prochainControle);
-    }, 'échéance inchangée');
+      verifier('… et l’échéance en base n’a pas bougé',
+        apres.prochainControle !== '2099-12-31',
+        String(apres.prochainControle));
+    }
 
     attendreRejetApi('⭐ charge nominale ramenée à 0 (la machine sortirait '
       + 'du périmètre) : REFUSÉ',
@@ -1042,12 +1045,35 @@ try {
 
   console.log('--- D3. Sortir tout un parc du périmètre F-Gas ---');
   attendreRejetApi('⭐ requalifier le R-410A en « AUCUNE » (hors périmètre) : '
-    + 'REFUSÉ — la famille déclarée fait foi',
+    + 'REFUSÉ — son PRP le contredit',
   () => api.appeler('updateFluide', {
     code: 'R-410A',
     donneesFluide: { categorieCadre7: 'AUCUNE', contientHfc: false,
       contientHfo: false, sourcePrp: 'x' } }, referent),
-  'contredit la famille déclarée');
+  'ne peut pas être déclaré hors périmètre');
+
+  // La revue adversariale a montré que la première version de cette garde
+  // (fondée sur le libellé de FAMILLE) se contournait en réécrivant la
+  // famille dans le même patch. Le PRP, lui, ne se contourne pas ainsi.
+  attendreRejetApi('… y compris en réécrivant la FAMILLE dans le même patch '
+    + '(le contournement trouvé par la revue)',
+  () => api.appeler('updateFluide', {
+    code: 'R-410A',
+    donneesFluide: { categorieCadre7: 'AUCUNE', contientHfc: false,
+      contientHfo: false, famille: 'Gaz naturel', sourcePrp: 'x' } }, referent),
+  'ne peut pas être déclaré hors périmètre');
+
+  // Contre-épreuve : les VRAIS fluides hors périmètre restent enregistrables,
+  // quel que soit le libellé de leur famille (« hors HFC » contient « HFC » :
+  // la première version les refusait à tort).
+  {
+    const nh3 = api.appeler('createFluide', { donneesFluide: {
+      code: 'R-717-TEST', famille: 'Ammoniac (NH3) — naturel, hors HFC',
+      gwpAr4: 0, classeSecurite: 'B2L', categorieCadre7: 'AUCUNE',
+      contientHfc: false, contientHfo: false } }, referent);
+    verifier('contre-épreuve : l’ammoniac reste accepté hors périmètre',
+      Boolean(nh3), JSON.stringify(nh3).slice(0, 120));
+  }
 
   console.log('--- D4. Reprendre la photo d’un exercice clos ---');
   {
@@ -1055,11 +1081,21 @@ try {
     api.appeler('saisirInventaire', { annee: anneeClose,
       lignes: [{ fluide: 'R-134a', stockReelKg: 4 }], par: 'Référent' },
     referent);
-    attendreRejetApi('⭐ re-photographier un exercice révolu (le stock '
-      + 'd’ouverture de la déclaration annuelle) : REFUSÉ',
-    () => api.appeler('saisirInventaire', { annee: anneeClose,
+    // ⚠️ La revue adversariale a corrigé la première version de ce cas : le
+    // refus SEC rendait incorrigible la photographie du 31/12, qui se saisit
+    // en janvier — donc sur un exercice déjà « révolu ». La règle retenue
+    // est celle du registre : on n'empêche pas d'enregistrer la réalité, on
+    // rend la reprise VISIBLE.
+    api.appeler('saisirInventaire', { annee: anneeClose,
       lignes: [{ fluide: 'R-134a', stockReelKg: 0 }], par: 'Référent' },
-    referent), 'déjà photographié et clos');
+    referent);
+    {
+      const journal = api.appeler('getJournalAudit', {}, referent);
+      const trace = (Array.isArray(journal) ? journal : journal?.lignes ?? [])
+        .some((l) => String(l.action ?? '') === 'RECTIFICATION_INVENTAIRE');
+      verifier('⭐ re-photographier un exercice révolu est POSSIBLE mais '
+        + 'TRACÉ (rectification journalisée)', trace);
+    }
     // Contre-épreuve : l'exercice EN COURS se corrige librement.
     const enCours = new Date().getFullYear();
     api.appeler('saisirInventaire', { annee: enCours,
@@ -1165,6 +1201,106 @@ try {
     verifier('contre-épreuve : le fichier intact s’importe normalement',
       api.appeler('importerJSON', { texte: JSON.stringify(exporte) },
         referent) === true);
+  }
+
+  console.log('--- D4 quinquies. Les chemins trouvés par la REVUE ---');
+  {
+    // ⭐ Chemin n° 1 : fabriquer la contre-écriture qui « couvre »
+    // l'annulation forgée. Aucun déclencheur ne garde un BROUILLON (c'est
+    // normal, il n'est pas encore un fait) : on y pose `contre_ecriture_de`
+    // en SQL, on le fait valider par le logiciel — qui scelle et calcule
+    // lui-même une empreinte juste — puis on passe la victime à ANNULE. Le
+    // contrôle d'appariement voyait alors un désignant parfaitement scellé.
+    const prof2 = api.appeler('createPersonne', { donneesPersonne: {
+      prenom: 'Valideur', nom: 'Test', typePersonne: 'ENSEIGNANT',
+      roleApp: 'REFERENT' } }, referent);
+    const machine2 = api.appeler('createMachine', { donneesMachine: {
+      designation: 'Machine contre-écriture', fluide: 'R-134a',
+      chargeNominaleKg: 10 } }, referent);
+    const bouteille2 = api.appeler('createBouteille', { donneesBouteille: {
+      type: 'NEUVE', fluide: 'R-134a', tareKg: 10, masseBruteKg: 30,
+      contenanceMaxKg: 25 } }, referent);
+    // La VICTIME : une charge bien réelle, qu'on veut faire disparaître.
+    const victime = api.appeler('creerMouvement', { donneesMouvement: {
+      type: 'CHARGE_APPOINT', machineId: machine2.id,
+      bouteilleSrcId: bouteille2.id, peseeAvantKg: 30, peseeApresKg: 27,
+      technicien: 'T', executeParId: prof2.id,
+      causeMouvement: 'charge à faire disparaître' } }, referent);
+    api.appeler('soumettreMouvement', { id: victime.id }, referent);
+    api.appeler('validerMouvement',
+      { id: victime.id, validateurId: prof2.id }, referent);
+    const leurre = api.appeler('creerMouvement', { donneesMouvement: {
+      type: 'CONTROLE_PERIODIQUE', machineId: machine2.id,
+      technicien: 'T', executeParId: prof2.id,
+      causeMouvement: 'leurre' } }, referent);
+    db.run('UPDATE mouvements SET contre_ecriture_de = ? WHERE id = ?',
+      [victime.id, leurre.id]);
+    api.appeler('soumettreMouvement', { id: leurre.id }, referent);
+    attendreRejetApi('⭐ valider une écriture qui se PRÉTEND contre-écriture '
+      + '(le chemin de la revue) : REFUSÉ',
+    () => api.appeler('validerMouvement',
+      { id: leurre.id, validateurId: prof2.id }, referent),
+    'ne se saisit pas');
+  }
+  {
+    // ⭐ Chemin n° 2 : déplacer une réparation par la porte de l'import.
+    const machine3 = api.appeler('createMachine', { donneesMachine: {
+      designation: 'Machine fuite import', fluide: 'R-410A',
+      chargeNominaleKg: 20 } }, referent);
+    const ctl = api.appeler('createControle', { donneesControle: {
+      machineId: machine3.id, resultat: 'FUITE', date: dateRelative(-10),
+      localisationFuite: 'Raccord' } }, referent);
+    api.appeler('tracerReparation', { controleId: ctl.id,
+      donneesReparation: { dateReparation: dateRelative(-2),
+        natureReparation: 'Remplacement', reparateur: 'T' } }, referent);
+    const paquet = JSON.parse(api.appeler('exporterJSON', {}, referent));
+    const cible = paquet.donnees.controles.find((c) => c.id === ctl.id);
+    cible.dateReparation = dateRelative(-9);
+    attendreRejetApi('⭐ déplacer la réparation par IMPORT (la garde du CRUD '
+      + 'tenait, la porte de derrière était ouverte) : REFUSÉ',
+    () => api.appeler('importerJSON', { texte: JSON.stringify(paquet) },
+      referent), 'ne se réécrit pas');
+  }
+  {
+    // ⭐ Chemin n° 3 : sortir du périmètre, poser l'échéance, revenir.
+    const machine4 = api.appeler('createMachine', { donneesMachine: {
+      designation: 'Machine seuil', fluide: 'R-410A',
+      chargeNominaleKg: 10 } }, referent);
+    const eleve2 = { role: 'ELEVE' };
+    api.appeler('updateMachine', { id: machine4.id,
+      donneesMachine: { chargeNominaleKg: 0.001 } }, eleve2);
+    api.appeler('createControle', { donneesControle: {
+      machineId: machine4.id, resultat: 'CONFORME',
+      prochainControle: '2099-12-31' } }, eleve2);
+    api.appeler('updateMachine', { id: machine4.id,
+      donneesMachine: { chargeNominaleKg: 10 } }, eleve2);
+    const finale = api.appeler('getMachines', {}, referent)
+      .find((m) => m.id === machine4.id);
+    verifier('⭐ charge abaissée → échéance 2099 → charge remise : l’échéance '
+      + 'est RECALCULÉE quand le seuil revient',
+    finale.prochainControle !== '2099-12-31',
+    `échéance finale : ${finale.prochainControle}`);
+  }
+  {
+    // ⭐ Chemin n° 4 : blanchir en renommant l'identifiant. L'import reste
+    // accepté (c'est une restauration, geste légitime), mais la disparition
+    // de la bouteille qui portait du récupéré est ÉCRITE au journal.
+    const recup2 = api.appeler('createBouteille', { donneesBouteille: {
+      type: 'RECUPERATION', fluide: 'R-134a', etatFluide: 'RECUPERE',
+      tareKg: 10, masseBruteKg: 15, contenanceMaxKg: 25 } }, referent);
+    const paquet = JSON.parse(api.appeler('exporterJSON', {}, referent));
+    const cible = paquet.donnees.bouteilles.find((b) => b.id === recup2.id);
+    cible.id = 'BOU-RENOMMEE-0001';
+    cible.type = 'NEUVE';
+    cible.etatFluide = 'REGENERE';
+    api.appeler('importerJSON', { texte: JSON.stringify(paquet) }, referent);
+    const journal = api.appeler('getJournalAudit', {}, referent);
+    const trace = (Array.isArray(journal) ? journal : journal?.lignes ?? [])
+      .find((l) => String(l.action ?? '') === 'BOUTEILLE_ABSENTE_DE_L_IMPORT');
+    verifier('⭐ blanchiment par renommage d’identifiant : la DISPARITION de '
+      + 'la bouteille est journalisée, et le fluide récupéré signalé',
+    Boolean(trace) && String(trace.details ?? '').includes('RÉCUPÉRÉ'),
+    JSON.stringify(trace ?? null).slice(0, 160));
   }
 
   console.log('--- D5. Fabriquer une fiche OFFICIELLE par import ---');

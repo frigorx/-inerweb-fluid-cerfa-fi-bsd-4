@@ -58,6 +58,25 @@ function echeanceVerificationDetection(verifieeLe) {
     DELAI_VERIF_DETECTION_MOIS);
 }
 
+/**
+ * ⭐ Revue L2 — NORMALISER AVANT DE JUGER, sinon on verrouille l'existant.
+ * La version livrée acceptait un horodatage complet (« 2026-04-26 08:30:00 »,
+ * « 2026-04-26T08:30:00.000Z ») : des fiches en base en portent. Refuser sec
+ * rendait ces machines INMODIFIABLES — toute correction de leur fiche était
+ * rejetée sur un champ qu'on ne touchait même pas. On coupe donc au JOUR
+ * (c'est déjà ce que fait le calcul d'échéance), et on ne refuse que ce qui
+ * n'est pas une date : « 2028-99-99 » reste refusé, « 2026-04-26 08:30 »
+ * devient « 2026-04-26 ».
+ * @param {unknown} valeur
+ * @returns {string|null} la date au jour, ou null si absente
+ */
+function normaliserDateVerification(valeur) {
+  if (valeur === null || valeur === undefined || valeur === '') return null;
+  const texte = String(valeur).trim();
+  const dixPremiers = texte.slice(0, 10);
+  return estDateCalendaire(dixPremiers) ? dixPremiers : texte;
+}
+
 /** ⭐ E1 — la détection compte-t-elle pour alléger la fréquence ? */
 function detectionEffective(machine, jour) {
   const declaree = Boolean(machine?.detectionPermanente);
@@ -71,9 +90,10 @@ function detectionEffective(machine, jour) {
   // vaut PAS vérification. Sinon « 2030-01-01 » ou « 2028-99-99 » divisait
   // par deux la fréquence de contrôle sans qu'aucune vérification ait eu
   // lieu. Le doute retire l'allègement : jamais moins de contrôles.
-  if (verifiee !== null && verifiee !== ''
-      && (!estDateCalendaire(String(verifiee))
-        || String(verifiee) > String(jour).slice(0, 10))) {
+  const verifieeJour = normaliserDateVerification(verifiee);
+  if (verifieeJour !== null
+      && (!estDateCalendaire(verifieeJour)
+        || verifieeJour > String(jour).slice(0, 10))) {
     return { compte: false, declaree: true, echeance: null,
       motif: 'JAMAIS_VERIFIEE' };
   }
@@ -221,8 +241,8 @@ function verifierModeleEquipement(machine) {
   //  ② une date FUTURE passait aussi (« 2030-01-01 ») : une vérification
   //    qui n'a pas eu lieu allégeait les obligations. Une vérification ne
   //    s'atteste pas d'avance — même règle que la remise à niveau (L4).
-  if (verifiee != null && String(verifiee) !== ''
-      && !estDateCalendaire(String(verifiee))) {
+  if (normaliserDateVerification(verifiee) !== null
+      && !estDateCalendaire(normaliserDateVerification(verifiee))) {
     throw new Error('Date de vérification de la détection invalide '
       + '(AAAA-MM-JJ attendu).');
   }
@@ -245,6 +265,7 @@ module.exports = {
   EXEMPTION_HERMETIQUE_ACTIVE,
   ajouterMoisEquipement,
   echeanceVerificationDetection,
+  normaliserDateVerification,
   detectionEffective,
   detectionObligatoireDepuisNiveau,
   calculerExemption,

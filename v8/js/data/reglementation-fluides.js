@@ -276,22 +276,29 @@ export function verifierFicheFluide(fiche) {
     throw new Error(`Fiche incohérente : la catégorie ${categorie} exclut `
       + 'un fluide contenant du HFC ou du HFO.');
   }
-  // ⭐ L2 (25/07) — LE LIBELLÉ DE FAMILLE FAIT FOI CONTRE LA FICHE.
+  // ⭐ L2 (25/07), corrigé par la revue — LE PRP CONTREDIT LA FICHE.
   // La cohérence ci-dessus se contentait des deux drapeaux `contient*` :
   // en les remettant à faux DANS LE MÊME patch, on pouvait déclarer
-  // « AUCUNE » (hors périmètre F-Gas) un fluide dont la famille dit
-  // « Mélange HFC ». Attaque tirée : R-410A requalifié AUCUNE → TOUT le
-  // parc qui tourne à ce fluide sortait du contrôle d'étanchéité, sans
-  // fréquence, sans échéance, sans alerte. Une fiche ne peut pas
-  // contredire le nom du fluide qu'elle décrit : si la famille annonce du
-  // HFC, du HFO ou du HCFC, la catégorie du cadre 7 doit suivre.
-  const famille = String(f.famille ?? '').toUpperCase();
-  const familleAnnonce = (motif) => famille.includes(motif);
-  if (categorie === 'AUCUNE'
-      && (familleAnnonce('HFC') || familleAnnonce('HFO')
-        || familleAnnonce('HCFC'))) {
-    throw new Error('Fiche incohérente : la catégorie AUCUNE (hors périmètre '
-      + `F-Gas) contredit la famille déclarée « ${f.famille} ». Corrigez la `
-      + 'famille si le fluide est réellement hors périmètre.');
+  // « AUCUNE » (hors périmètre F-Gas) un fluide comme le R-410A → TOUT le
+  // parc qui y tourne sortait du contrôle d'étanchéité, sans fréquence,
+  // sans échéance, sans alerte.
+  //
+  // Première tentative : croiser avec le libellé de FAMILLE. Mauvaise idée,
+  // et la revue l'a prouvé deux fois — le libellé est du texte libre, donc
+  // (a) il se réécrit dans le même patch, la garde tombe ; (b) il refusait
+  // des fiches légitimes, « Ammoniac (NH3) — naturel, hors HFC » contenant
+  // les trois lettres H, F, C. Une garde qui lit une phrase ne garde rien.
+  //
+  // Le PRP, lui, n'est pas du texte : les fluides réellement hors périmètre
+  // sont des gaz naturels de PRP quasi nul (CO₂ = 1, propane = 3, ammoniac
+  // = 0). Au-delà de 150 — la première borne du règlement, déjà utilisée
+  // pour l'impact affiché — « hors périmètre » n'est plus une description,
+  // c'est une erreur ou une manœuvre.
+  const prpFiche = Number(f.gwpAr4);
+  if (categorie === 'AUCUNE' && Number.isFinite(prpFiche) && prpFiche >= 150) {
+    throw new Error('Fiche incohérente : un fluide de PRP ' + prpFiche
+      + ' ne peut pas être déclaré hors périmètre F-Gas (catégorie AUCUNE). '
+      + 'Les fluides hors périmètre sont les gaz naturels — CO₂, '
+      + 'hydrocarbures, ammoniac — dont le PRP est quasi nul.');
   }
 }

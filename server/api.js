@@ -78,6 +78,7 @@ const coffre = require('./coffre-identites.js');
 const chiffrementCoffre = require('./chiffrement.js');
 const parametres = require('./parametres.js');
 const dates = require('./dates.js');
+const borneScellement = require('./borne-scellement.js');
 const sauvegardeCoffre = require('./sauvegarde.js');
 const restaurationCoffre = require('./restauration.js');
 
@@ -2918,9 +2919,22 @@ const HANDLERS = {
     const CHAMPS_QUALIFICATION = ['hermetiqueScelle', 'hermetiqueEtiquete',
       'residentiel', 'typeInstallation', 'sousTypeInstallation',
       'usageThermique'];
+    // ⚠️ Revue L2 — COMPARER DES VALEURS NORMALISÉES, jamais la charge utile
+    // brute. Le formulaire renvoie toute sa fiche : une chaîne VIDE pour un
+    // champ texte non renseigné, un booléen pour les cases. En base, ces
+    // mêmes champs valent `null` et 0/1. Comparer brut faisait donc voir un
+    // changement partout, et cette garde refusait TOUTE modification de
+    // machine à un élève ou un technicien — l'écran devenait mort pour eux.
+    // Constat BLOQUANT de la revue adversariale, corrigé avant fusion.
+    const normaliserQualif = (champ, valeur) => {
+      if (['hermetiqueScelle', 'hermetiqueEtiquete', 'residentiel']
+        .includes(champ)) return Boolean(valeur);
+      return valeur === '' || valeur === undefined ? null : valeur;
+    };
     const qualificationTouchee = CHAMPS_QUALIFICATION
       .filter((champ) => d[champ] !== undefined
-        && d[champ] !== machine[champ]);
+        && normaliserQualif(champ, d[champ])
+          !== normaliserQualif(champ, machine[champ]));
     if (qualificationTouchee.length > 0
         && !ROLES_VALIDEURS.includes(contexte?.role ?? null)) {
       const erreur = new Error(
@@ -2969,6 +2983,21 @@ const HANDLERS = {
       d.chargeActuelleKg = actuelle;
     }
 
+    // ⚠️ Revue L2 — REFUSER PLUTÔT QU'IGNORER. Ces deux dates ont été
+    // retirées des champs modifiables : les recevoir sans rien en faire
+    // rendait un succès trompeur — le professeur corrigeait une date de
+    // reprise de parc, le logiciel répondait « enregistré », et rien ne
+    // changeait. Un refus explicite dit où poser le geste.
+    for (const champ of ['dernierControle', 'prochainControle']) {
+      if (d[champ] !== undefined) {
+        throw new Error(
+          'Les dates de contrôle d’une machine ne se saisissent pas ici : '
+          + 'elles sont posées par l’enregistrement d’un contrôle '
+          + 'd’étanchéité, qui les calcule selon la périodicité '
+          + 'réglementaire. (Elles restent saisissables à la CRÉATION de la '
+          + 'machine, pour reprendre un parc existant.)');
+      }
+    }
     const CHAMPS = ['designation', 'type', 'marque', 'modele', 'numSerie',
       'fluide', 'chargeNominaleKg', 'chargeActuelleKg', 'clientId',
       'localisation', 'siteLabel', 'statut', 'typeInstallation',
@@ -2995,6 +3024,36 @@ const HANDLERS = {
     for (const champ of ['sousTypeInstallation', 'detectionVerifieeLe',
       'detectionReference', 'usageThermique']) {
       if (d[champ] !== undefined) patch[champ] = texteOuNullEquip(d[champ]);
+    }
+    // ⚠️ Revue L2 — RECALCULER L'ÉCHÉANCE QUAND LE SEUIL BOUGE.
+    // Chemin trouvé par la revue, en trois appels et sans SQL : abaisser la
+    // charge nominale à 0,001 kg (la machine sort du périmètre, le moteur ne
+    // rend plus d'échéance), enregistrer un contrôle avec une échéance
+    // volontaire à 2099 — conservée, puisque « machine non soumise » —, puis
+    // remettre la charge à sa vraie valeur. La machine redevenait soumise
+    // AVEC une échéance de 2099, et plus aucune alerte. Le plafond du moteur
+    // n'était évalué qu'à l'instant du contrôle, jamais ensuite.
+    // Désormais : dès qu'un champ qui déplace le seuil change (charge
+    // nominale, fluide, détection), l'échéance est recalculée depuis le
+    // dernier contrôle, et on retient la PLUS PROCHE. Jamais moins de
+    // contrôles qu'exigé.
+    const CHAMPS_SEUIL = ['chargeNominaleKg', 'fluide', 'detectionPermanente',
+      'detectionVerifieeLe'];
+    if (CHAMPS_SEUIL.some((champ) => d[champ] !== undefined)) {
+      const dateReference = machine.dernierControle ?? aujourdHui();
+      const machineFusionnee = { ...machine, ...patch };
+      const fluideRef = lireFluide(machineFusionnee.fluide);
+      const frequence = frequenceControleMois(
+        fluideRef, machineFusionnee.chargeNominaleKg,
+        equipement.detectionEffective(machineFusionnee, dateReference).compte,
+        dateReference);
+      const echeanceMoteur = frequence
+        ? ajouterMois(dateReference, frequence) : null;
+      if (echeanceMoteur
+          && (!machine.prochainControle
+            || String(machine.prochainControle) > echeanceMoteur)) {
+        patch.prochainControle = echeanceMoteur;
+      }
     }
     // L'échéance de vérification est CALCULÉE, jamais saisie.
     if (d.detectionVerifieeLe !== undefined) {
@@ -3860,6 +3919,24 @@ const HANDLERS = {
     if (mouvement.statut !== 'SOUMIS') {
       throw new Error('Seul un mouvement soumis peut être validé.');
     }
+    // ⚠️ Revue L2 — UNE CONTRE-ÉCRITURE NE NAÎT JAMAIS D'UN BROUILLON.
+    // Chemin alternatif trouvé par la revue, en trois gestes : poser
+    // `contre_ecriture_de` sur un BROUILLON en SQL direct (aucun
+    // déclencheur ne garde un brouillon — c'est normal, il n'est pas encore
+    // un fait), le faire VALIDER par le logiciel (qui scelle et calcule
+    // lui-même une empreinte juste), puis passer la victime à ANNULE. Le
+    // contrôle d'appariement voyait alors un désignant parfaitement scellé
+    // et laissait la chaîne verte : une charge de 3 kg disparaissait des
+    // totaux derrière un faux « leurre » de 0 kg.
+    // Une vraie contre-écriture est créée VALIDE par annulerParContreEcriture,
+    // elle ne passe jamais par ici. Ce champ n'a donc rien à faire sur un
+    // mouvement qu'on valide.
+    if (mouvement.contreEcritureDe) {
+      throw new Error(
+        'Écriture refusée : elle se présente comme la contre-écriture d’une '
+        + 'autre, alors qu’une contre-écriture ne se saisit pas — elle naît '
+        + 'de l’annulation d’une écriture validée. Fiche forgée.');
+    }
     const validateur = verifierValidateur(validateurId);
     // Lot B (condition n° 12) : le validateur DOIT être la personne
     // connectée — TOUS les modes, 403 AVANT tout effet (sécurité : le
@@ -4554,18 +4631,31 @@ const HANDLERS = {
     // année révolue est close ; l'année en cours, elle, se re-photographie
     // autant que nécessaire (elle n'est pas encore déclarée).
     const anneeCourante = Number(aujourdHui().slice(0, 4));
+    // ⚠️ Revue L2 — RECTIFIER, PAS INTERDIRE. La première version refusait
+    // sèchement toute re-saisie d'un exercice révolu. C'était trop raide, et
+    // la revue l'a montré : la photographie du 31/12 se saisit EN JANVIER de
+    // l'année suivante — donc sur un exercice déjà « révolu » —, et une
+    // faute de frappe devenait alors incorrigible à jamais. Le logiciel ne
+    // doit jamais empêcher d'enregistrer la réalité ; il doit rendre la
+    // reprise VISIBLE. Une re-photographie d'exercice clos est donc admise
+    // et JOURNALISÉE comme rectification, avec l'état qu'elle remplace.
+    let rectification = null;
     if (anneeNum < anneeCourante) {
-      const dejaPhotographiee = db.get(
-        'SELECT count(*) AS n FROM inventaires_bouteilles WHERE annee = ?',
-        [anneeNum]);
-      if ((dejaPhotographiee?.n ?? 0) > 0) {
-        throw new Error(
-          `Exercice ${anneeNum} déjà photographié et clos : sa photographie `
-          + 'de stock ne se reprend pas (elle sert de stock d’ouverture à la '
-          + 'déclaration annuelle). Corrigez l’exercice en cours.');
+      const ancienne = db.get(
+        `SELECT count(*) AS n, min(date_photo) AS le
+         FROM inventaires_bouteilles WHERE annee = ?`, [anneeNum]);
+      if ((ancienne?.n ?? 0) > 0) {
+        rectification = { lignes: ancienne.n, le: ancienne.le ?? '?' };
       }
     }
     return muter(() => {
+      if (rectification) {
+        journaliser(operateur, 'RECTIFICATION_INVENTAIRE', `exercice ${anneeNum}`,
+          `Exercice révolu re-photographié : la photographie précédente `
+          + `(${rectification.lignes} ligne(s), du ${rectification.le}) est `
+          + 'remplacée. Elle sert de stock d’ouverture à la déclaration '
+          + 'annuelle : la reprise doit rester exceptionnelle et justifiée.');
+      }
       for (const l of lignes) {
         upsertInventaire(anneeNum, l.fluide, arrondir(Number(l.stockReelKg)),
           operateur);
@@ -4867,6 +4957,14 @@ const HANDLERS = {
     // qu'ici : les invariants, eux, tournent aussi au chargement.)
     for (const b of candidat.bouteilles ?? []) {
       if (!b || !b.id) continue;
+      // NB (revue L2) : la comparaison se fait sur l'IDENTIFIANT seul. Elle a
+      // été tentée sur le CODE en plus — pour fermer le contournement « je
+      // renomme l'id » —, et c'était FAUX : les codes de bouteilles sont
+      // réattribués (B-01, B-02…), donc deux bouteilles distinctes peuvent
+      // porter le même code à deux moments, et un round-trip légitime se
+      // faisait refuser. Le renommage d'id est traité autrement, plus bas :
+      // il fait DISPARAÎTRE la bouteille d'origine du registre, et une
+      // disparition se journalise.
       const enPlace = db.get(
         'SELECT etat_fluide AS etat FROM bouteilles WHERE id = ?', [b.id]);
       if (enPlace && ETATS_FLUIDE_RECUPERATION.includes(enPlace.etat)
@@ -5052,7 +5150,21 @@ const HANDLERS = {
     // (5) Remplacement TOTAL, atomique (throw → ROLLBACK complet, y compris
     // les déclencheurs WORM recréés). La vérification de chaîne est déjà
     // passée : on ne touche la base qu'ici.
-    remplacerToutLEtat(candidat, chaineAmorcee, journalSansTemoin);
+    // ⚠️ Revue L2 — UNE BOUTEILLE QUI DISPARAÎT EST UN FAIT, PAS UN SILENCE.
+    // L'import remplace tout : une bouteille présente en base et absente du
+    // fichier s'efface sans bruit. C'est légitime pour une archive ancienne,
+    // mais c'est aussi la façon dont on blanchit du fluide en renommant un
+    // identifiant (la revue l'a tirée). On ne bloque donc pas — on écrit ce
+    // qui s'en va, en insistant sur ce qui portait du fluide récupéré.
+    const idsCandidat = new Set(
+      (candidat.bouteilles ?? []).map((b) => b && b.id).filter(Boolean));
+    const perdues = db.all(
+      `SELECT id, code_interne AS code, etat_fluide AS etat,
+              masse_nette_kg AS nette
+       FROM bouteilles`)
+      .filter((l) => !idsCandidat.has(l.id));
+
+    remplacerToutLEtat(candidat, chaineAmorcee, journalSansTemoin, perdues);
     return true;
   }
 };
@@ -5229,19 +5341,38 @@ function ecrituresFigeesCandidat(mouvements) {
  * @returns {{ok: boolean, casseA: string|null}}
  */
 function verifierChaineMouvementsCandidat(mouvements) {
+  const figees = ecrituresFigeesCandidat(mouvements);
   let precedent = null;
-  for (const mouvement of ecrituresFigeesCandidat(mouvements)) {
+  for (const mouvement of figees) {
     if ((mouvement.hashPrecedent ?? null) !== precedent) {
-      return { ok: false, casseA: mouvement.numero };
+      return { ok: false, casseA: mouvement.numero, motif: 'EMPREINTE' };
     }
     const attendu = hasherMouvement(
       objetLogiquePourHash(mouvement), precedent);
     if (attendu !== mouvement.hashEcriture) {
-      return { ok: false, casseA: mouvement.numero };
+      return { ok: false, casseA: mouvement.numero, motif: 'EMPREINTE' };
     }
     precedent = mouvement.hashEcriture;
   }
-  return { ok: true, casseA: null };
+  // ⚠️ Revue L2 — LE MÊME APPARIEMENT DES ANNULATIONS QUE SUR LA BASE VIVE.
+  // Le serveur a DEUX chemins de vérification (la base en place, et le
+  // candidat d'un import) là où la démo n'en a qu'un : le contrôle L2-a
+  // n'avait été posé que sur le premier. Conséquence prouvée par la revue :
+  // un fichier portant une écriture ANNULE que personne ne désigne était
+  // REFUSÉ par la démo et ADOPTÉ par le serveur — l'effacement d'une
+  // intervention passait par l'import au lieu du SQL. Constat BLOQUANT,
+  // corrigé avant fusion.
+  const designees = new Set(figees
+    .map((mv) => mv.contreEcritureDe ?? null)
+    .filter(Boolean));
+  for (const mouvement of figees) {
+    if (mouvement.statut === 'ANNULE' && !designees.has(mouvement.id)) {
+      return {
+        ok: false, casseA: mouvement.numero, motif: 'ANNULATION_ORPHELINE'
+      };
+    }
+  }
+  return { ok: true, casseA: null, motif: null };
 }
 
 /**
@@ -5333,6 +5464,23 @@ function verifierInvariantsDonneesCandidat(candidat) {
       if (!Number.isFinite(mv.ordreValidation)) {
         return `mouvement ${ref} : ordre de validation absent`;
       }
+    }
+  }
+  // ⚠️ Revue L2 — LA RÉPARATION NE SE RÉÉCRIT PAS DAVANTAGE PAR L'IMPORT.
+  // La garde du CRUD (tracerReparation) tient, mais la revue est passée par
+  // la porte de derrière : exporter, ramener `dateReparation` à une date
+  // antérieure, réimporter — et le dossier de fuite se refermait
+  // rétroactivement. Une réparation déjà tracée est un fait constaté ; un
+  // fichier qui la déplace est un fichier retouché.
+  for (const c of candidat.controles ?? []) {
+    if (!c || !c.id || !c.dateReparation) continue;
+    const enPlace = mapping.versFront('controles',
+      db.get('SELECT * FROM controles WHERE id = ?', [c.id]) ?? {});
+    if (enPlace && enPlace.dateReparation
+        && enPlace.dateReparation !== c.dateReparation) {
+      return `contrôle ${c.numero ?? c.id} : la réparation tracée le `
+        + `${enPlace.dateReparation} est déplacée au ${c.dateReparation} par `
+        + 'ce fichier — une réparation constatée ne se réécrit pas';
     }
   }
   // P7-e (option A) : un contrôle OFFICIEL naît TOUJOURS d'un mouvement
@@ -5618,7 +5766,7 @@ function reinsererJournal(entrees) {
  * référentielle fait échouer proprement (ROLLBACK global).
  */
 function remplacerToutLEtat(candidat, chaineAmorceeALImport = 0,
-  journalSansTemoin = false) {
+  journalSansTemoin = false, bouteillesPerdues = []) {
   muter(() => {
     // Reporte le contrôle des FK au COMMIT (autorisé DANS une transaction ;
     // se réinitialise en fin de transaction). Sans lui, l'ordre de
@@ -5794,6 +5942,15 @@ function remplacerToutLEtat(candidat, chaineAmorceeALImport = 0,
     // L2 : un amorçage de chaîne est un geste RARE et lourd de sens (le
     // logiciel scelle un passé qu'il n'a pas écrit). Il n'est plus possible
     // sur un poste déjà scellé ; quand il a lieu, il se voit.
+    for (const perdue of bouteillesPerdues) {
+      const recupere = ETATS_FLUIDE_RECUPERATION.includes(perdue.etat);
+      journaliser('système', 'BOUTEILLE_ABSENTE_DE_L_IMPORT',
+        perdue.code ?? perdue.id,
+        `La bouteille ${perdue.code ?? perdue.id} (${perdue.etat ?? '?'}, `
+        + `${perdue.nette ?? 0} kg) était au registre et ne figure pas dans le `
+        + `fichier importé : elle en disparaît.`
+        + (recupere ? ' ⚠️ Elle portait du fluide RÉCUPÉRÉ.' : ''));
+    }
     if (journalSansTemoin) {
       journaliser('système', 'JOURNAL_SANS_TEMOIN_A_L_IMPORT', 'sauvegarde',
         'Le fichier importé ne portait pas le témoin d’intégrité du journal '
@@ -6101,14 +6258,33 @@ function sceller(mouvement) {
   // se contourne EN DEUX TEMPS — prouvé en le tirant : importer d'abord un
   // registre VIDE (le poste n'a alors plus rien de scellé), puis le fichier
   // forgé sans empreintes. La borne, elle, se souvient.
-  parametres.ecrire('registre_scellees_max',
-    String(Math.max(nombreScelleesJamaisAtteint(), mouvement.ordreValidation)));
+  const borne = Math.max(nombreScelleesJamaisAtteint(),
+    mouvement.ordreValidation);
+  parametres.ecrire('registre_scellees_max', String(borne));
+  // ⭐ Revue L2 — ET dans un fichier VOISIN de la base. La restauration
+  // d'archive REMPLACE le fichier de base : une borne qui n'y vivrait que
+  // disparaîtrait avec lui, et le blanchiment redeviendrait possible juste
+  // après une restauration (prouvé en le tirant). Best-effort : si le
+  // fichier ne peut pas s'écrire, la validation aboutit quand même — le
+  // registre prime sur sa propre protection.
+  borneScellement.noter(db.cheminOuvert(), borne);
 }
 
-/** La borne monotone ci-dessus, relue (0 si le poste n'a jamais scellé). */
+/**
+ * La borne monotone ci-dessus, relue. Deux sources, on retient la PLUS
+ * HAUTE : la table `parametres` (qui survit à l'import, lequel ne purge que
+ * `coffre_%`) et le fichier voisin de la base (qui survit, lui, à la
+ * RESTAURATION d'archive — celle-ci remplace le fichier de base en entier).
+ * Chacune couvre l'angle mort de l'autre ; il faut effacer les deux pour
+ * rouvrir la porte, et effacer le fichier suppose déjà l'accès au disque.
+ * @returns {number} 0 si le poste n'a jamais scellé
+ */
 function nombreScelleesJamaisAtteint() {
-  const brut = Number(parametres.lire('registre_scellees_max', '0'));
-  return Number.isFinite(brut) && brut > 0 ? brut : 0;
+  const enBase = Number(parametres.lire('registre_scellees_max', '0'));
+  const enFichier = borneScellement.lire(db.cheminOuvert());
+  return Math.max(
+    Number.isFinite(enBase) && enBase > 0 ? enBase : 0,
+    enFichier);
 }
 
 /**
@@ -7197,23 +7373,30 @@ function verifierFicheFluide(fiche) {
     throw new Error(`Fiche incohérente : la catégorie ${categorie} exclut `
       + 'un fluide contenant du HFC ou du HFO.');
   }
-  // ⭐ L2 (25/07) — LE LIBELLÉ DE FAMILLE FAIT FOI CONTRE LA FICHE.
+  // ⭐ L2 (25/07), corrigé par la revue — LE PRP CONTREDIT LA FICHE.
   // La cohérence ci-dessus se contentait des deux drapeaux `contient*` :
   // en les remettant à faux DANS LE MÊME patch, on pouvait déclarer
-  // « AUCUNE » (hors périmètre F-Gas) un fluide dont la famille dit
-  // « Mélange HFC ». Attaque tirée : R-410A requalifié AUCUNE → TOUT le
-  // parc qui tourne à ce fluide sortait du contrôle d'étanchéité, sans
-  // fréquence, sans échéance, sans alerte. Une fiche ne peut pas
-  // contredire le nom du fluide qu'elle décrit : si la famille annonce du
-  // HFC, du HFO ou du HCFC, la catégorie du cadre 7 doit suivre.
-  const famille = String(f.famille ?? '').toUpperCase();
-  const familleAnnonce = (motif) => famille.includes(motif);
-  if (categorie === 'AUCUNE'
-      && (familleAnnonce('HFC') || familleAnnonce('HFO')
-        || familleAnnonce('HCFC'))) {
-    throw new Error('Fiche incohérente : la catégorie AUCUNE (hors périmètre '
-      + `F-Gas) contredit la famille déclarée « ${f.famille} ». Corrigez la `
-      + 'famille si le fluide est réellement hors périmètre.');
+  // « AUCUNE » (hors périmètre F-Gas) un fluide comme le R-410A → TOUT le
+  // parc qui y tourne sortait du contrôle d'étanchéité, sans fréquence,
+  // sans échéance, sans alerte.
+  //
+  // Première tentative : croiser avec le libellé de FAMILLE. Mauvaise idée,
+  // et la revue l'a prouvé deux fois — le libellé est du texte libre, donc
+  // (a) il se réécrit dans le même patch, la garde tombe ; (b) il refusait
+  // des fiches légitimes, « Ammoniac (NH3) — naturel, hors HFC » contenant
+  // les trois lettres H, F, C. Une garde qui lit une phrase ne garde rien.
+  //
+  // Le PRP, lui, n'est pas du texte : les fluides réellement hors périmètre
+  // sont des gaz naturels de PRP quasi nul (CO₂ = 1, propane = 3, ammoniac
+  // = 0). Au-delà de 150 — la première borne du règlement, déjà utilisée
+  // pour l'impact affiché — « hors périmètre » n'est plus une description,
+  // c'est une erreur ou une manœuvre.
+  const prpFiche = Number(f.gwpAr4);
+  if (categorie === 'AUCUNE' && Number.isFinite(prpFiche) && prpFiche >= 150) {
+    throw new Error('Fiche incohérente : un fluide de PRP ' + prpFiche
+      + ' ne peut pas être déclaré hors périmètre F-Gas (catégorie AUCUNE). '
+      + 'Les fluides hors périmètre sont les gaz naturels — CO₂, '
+      + 'hydrocarbures, ammoniac — dont le PRP est quasi nul.');
   }
 }
 
