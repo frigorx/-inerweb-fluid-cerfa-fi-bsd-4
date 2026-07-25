@@ -2893,11 +2893,55 @@ const HANDLERS = {
     }
     equipement.verifierModeleEquipement(fusion);
 
+    // ⭐ L2 (25/07) — LA MODIFICATION REVALIDE CE QUE LA CRÉATION EXIGE.
+    // `createMachine` refuse une charge nominale nulle ou négative ;
+    // `updateMachine`, lui, l'acceptait. Attaque tirée : ramener la charge
+    // nominale à 0 sur une machine de 10 kg de R-410A la faisait sortir du
+    // périmètre du contrôle d'étanchéité — plus de fréquence, plus
+    // d'alerte, plus d'obligation. Le contournement « créer légal puis
+    // patcher illégal » est le même qu'en L4 sur les habilitations.
+    if (d.chargeNominaleKg !== undefined) {
+      const nominale = Number(d.chargeNominaleKg);
+      if (!Number.isFinite(nominale) || nominale <= 0) {
+        throw new Error('Charge nominale obligatoire (en kg, positive).');
+      }
+      d.chargeNominaleKg = nominale;
+    }
+    // ⭐ L2 — la charge ACTUELLE est une quantité de fluide réellement
+    // présente : ni négative, ni illisible, ni sans rapport avec la
+    // machine. Attaque tirée : 9999 kg sur une machine de 10 kg nominaux —
+    // le tableau de bord affichait 20 877 tonnes équivalent CO₂ et la
+    // balance matière devenait illisible. La tolérance de 5 % couvre les
+    // écarts de pesée réels (elle existe déjà à la charge d'un mouvement).
+    if (d.chargeActuelleKg !== undefined && d.chargeActuelleKg !== null) {
+      const actuelle = Number(d.chargeActuelleKg);
+      if (!Number.isFinite(actuelle) || actuelle < 0) {
+        throw new Error('Charge actuelle invalide (en kg, jamais négative).');
+      }
+      const nominaleFusion = Number(
+        d.chargeNominaleKg ?? machine.chargeNominaleKg);
+      if (Number.isFinite(nominaleFusion) && nominaleFusion > 0
+          && actuelle > nominaleFusion * 1.05) {
+        throw new Error(
+          `Charge actuelle impossible : ${actuelle} kg déclarés pour une `
+          + `charge nominale de ${nominaleFusion} kg (tolérance 5 %).`);
+      }
+      d.chargeActuelleKg = actuelle;
+    }
+
     const CHAMPS = ['designation', 'type', 'marque', 'modele', 'numSerie',
       'fluide', 'chargeNominaleKg', 'chargeActuelleKg', 'clientId',
       'localisation', 'siteLabel', 'statut', 'typeInstallation',
       'detectionPermanente', ...CHAMPS_EQUIPEMENT,
-      'dateMiseEnService', 'dernierControle', 'prochainControle'];
+      'dateMiseEnService'];
+    // ⭐ L2 — `dernierControle` et `prochainControle` ont été RETIRÉS de
+    // cette liste. Ce sont des faits DÉRIVÉS : enregistrerControle les pose
+    // depuis le moteur réglementaire, exactement comme detectionProchaineVerif
+    // est calculée et jamais saisie. Attaque tirée : une session ÉLÈVE
+    // repoussait l'échéance d'une machine en retard au 31/12/2099 et
+    // l'alerte critique disparaissait — sans qu'aucun contrôle n'ait eu
+    // lieu. Ils restent légitimes à la CRÉATION (reprise d'un parc
+    // existant) et à l'import (données historiques).
     const patch = {};
     for (const champ of CHAMPS) {
       if (d[champ] !== undefined) patch[champ] = d[champ];
@@ -3201,7 +3245,40 @@ const HANDLERS = {
       throw new Error('Lien de mouvement refusé : le contrôle lié à une '
         + 'écriture naît de sa validation, jamais du chemin direct.');
     }
-    return muter(() => enregistrerControle(d));
+    // ⭐ L2 (25/07) — LE NUMÉRO EST ATTRIBUÉ PAR LE LOGICIEL, jamais reçu.
+    // Attaque tirée : un élève enregistrait un contrôle portant le numéro
+    // « C-FI-2026-0007 », qui imite un numéro de fiche OFFICIELLE — et le
+    // même numéro pouvait servir deux fois. Un registre dont les numéros
+    // sont dictés par l'appelant ne prouve plus rien. Le chemin LIÉ, lui,
+    // hérite légitimement le numéro du mouvement : il n'emprunte pas ici.
+    if (d.numero !== undefined && d.numero !== null && d.numero !== '') {
+      throw new Error('Numéro de contrôle refusé : il est attribué par le '
+        + 'registre, jamais fourni.');
+    }
+    // ⭐ L2 — L'ÉCHÉANCE EST CALCULÉE PAR LE MOTEUR RÉGLEMENTAIRE.
+    // Attaque tirée : `prochainControle: '2099-01-01'` était repris tel quel
+    // et écrasé sur la machine — plus aucune alerte d'échéance, jamais. La
+    // valeur reçue reste admise (l'écran la calcule et la transmet), mais
+    // elle ne peut plus REPOUSSER l'échéance réglementaire : on retient la
+    // plus PROCHE des deux, et rien du tout si le moteur dit « non soumis ».
+    // Doctrine « jamais moins de contrôles qu'exigé ».
+    if (!dates.estDateCalendaireOuVide(d.prochainControle)) {
+      throw new Error(dates.messageDateInvalide('Échéance de contrôle'));
+    }
+    const echeanceMoteur = HANDLERS.calculerProchainControle({
+      machineId: d.machineId, dateControle: d.date ?? aujourdHui() });
+    const donnees = { ...d };
+    // Machine NON soumise (sous le seuil) : le moteur ne rend rien, aucune
+    // obligation à protéger — une échéance volontaire reste celle de
+    // l'exploitant (au lycée, contrôler plus souvent est un choix
+    // pédagogique légitime). Machine SOUMISE : l'échéance réglementaire
+    // fait plafond, la valeur reçue ne peut que la rapprocher.
+    if (echeanceMoteur !== null
+        && (!donnees.prochainControle
+          || String(donnees.prochainControle) > echeanceMoteur)) {
+      donnees.prochainControle = echeanceMoteur;
+    }
+    return muter(() => enregistrerControle(donnees));
   },
 
   /**
@@ -6500,10 +6577,21 @@ function enregistrerControle(d) {
   // P0-6 (revue I-1) : les dates métier sont AU JOUR — un horodatage
   // (« 2026-07-20T18:00 ») comparé en chaîne serait « strictement
   // postérieur » au jour même et contournerait la clôture J+1. MIROIR demo.
-  if (d.date !== undefined && d.date !== null
-      && !/^\d{4}-\d{2}-\d{2}$/.test(String(d.date))) {
-    throw new Error('Date de contrôle invalide : format attendu '
-      + 'AAAA-MM-JJ (date au jour).');
+  // ⭐ L2 (25/07) : le format ne suffisait pas — « 2026-13-45 » et
+  // « 2026-02-30 » le passaient. Et surtout, un contrôle DANS LE FUTUR
+  // était accepté : daté du 01/01/2030, il repoussait l'échéance de la
+  // machine de cinq ans et éteignait toute alerte. Un contrôle
+  // d'étanchéité s'atteste APRÈS avoir été fait, jamais d'avance — même
+  // règle que la remise à niveau (L4) et que la vérification de détection.
+  if (d.date !== undefined && d.date !== null && d.date !== '') {
+    if (!dates.estDateCalendaire(String(d.date))) {
+      throw new Error('Date de contrôle invalide : format attendu '
+        + 'AAAA-MM-JJ (date au jour).');
+    }
+    if (String(d.date) > aujourdHui()) {
+      throw new Error('Un contrôle d’étanchéité ne s’atteste pas d’avance : '
+        + 'la date ne peut pas être dans le futur.');
+    }
   }
   // Mode + numéro de fiche du contrôle (CERFA). Un contrôle LIÉ hérite ceux
   // du mouvement (passés dans d) ; un contrôle AUTONOME prend un numéro dédié

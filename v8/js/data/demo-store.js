@@ -29,7 +29,8 @@ import { detectionEffective, echeanceVerificationDetection,
 // MIROIR EXACT (api.js).
 import { avoirParMachineOrigine } from './avoir-origine.js';
 // L2 (25/07) : « une date est une date » — format ancré ET calendrier réel.
-import { estDateCalendaireOuVide, messageDateInvalide } from './dates.js';
+import { estDateCalendaire, estDateCalendaireOuVide, messageDateInvalide }
+  from './dates.js';
 // P0-8 : déclaration annuelle 11 rubriques (module pur, miroir serveur).
 import { calculerDeclarationAnnuelle } from './declaration-annuelle.js';
 // Sentinelle d'alertes persistées : diff pur + formatage (module partagé
@@ -2138,10 +2139,20 @@ export function creerDemoStore() {
     // P0-6 (revue I-1) : les dates métier sont AU JOUR — un horodatage
     // (« 2026-07-20T18:00 ») comparé en chaîne serait « strictement
     // postérieur » au jour même et contournerait la clôture J+1.
-    if (d.date !== undefined && d.date !== null
-        && !/^\d{4}-\d{2}-\d{2}$/.test(String(d.date))) {
-      throw new Error('Date de contrôle invalide : format attendu '
-        + 'AAAA-MM-JJ (date au jour).');
+    // ⭐ L2 (25/07) : le format ne suffisait pas — « 2026-13-45 » et
+    // « 2026-02-30 » le passaient. Et un contrôle DANS LE FUTUR était
+    // accepté : daté du 01/01/2030, il repoussait l'échéance de cinq ans
+    // et éteignait toute alerte. Un contrôle s'atteste APRÈS, jamais
+    // d'avance (miroir du serveur).
+    if (d.date !== undefined && d.date !== null && d.date !== '') {
+      if (!estDateCalendaire(String(d.date))) {
+        throw new Error('Date de contrôle invalide : format attendu '
+          + 'AAAA-MM-JJ (date au jour).');
+      }
+      if (String(d.date) > aujourdHui()) {
+        throw new Error('Un contrôle d’étanchéité ne s’atteste pas d’avance : '
+          + 'la date ne peut pas être dans le futur.');
+      }
     }
     // Mode + numéro de fiche du contrôle (CERFA). Un contrôle LIÉ hérite ceux
     // du mouvement (passés dans d) ; un contrôle AUTONOME prend un numéro dédié
@@ -3042,11 +3053,44 @@ export function creerDemoStore() {
       }
       verifierModeleEquipement(fusion);
 
+      // ⭐ L2 (25/07) — LA MODIFICATION REVALIDE CE QUE LA CRÉATION EXIGE
+      // (miroir du serveur). Attaque tirée : ramener la charge nominale à 0
+      // faisait sortir la machine du périmètre du contrôle d'étanchéité.
+      if (d.chargeNominaleKg !== undefined) {
+        const nominale = Number(d.chargeNominaleKg);
+        if (!Number.isFinite(nominale) || nominale <= 0) {
+          throw new Error('Charge nominale obligatoire (en kg, positive).');
+        }
+        d.chargeNominaleKg = nominale;
+      }
+      // ⭐ L2 — charge ACTUELLE : ni négative, ni illisible, ni sans rapport
+      // avec la machine (9999 kg déclarés sur 10 kg nominaux affichaient
+      // 20 877 t éq. CO₂ au tableau de bord). Tolérance 5 % comme ailleurs.
+      if (d.chargeActuelleKg !== undefined && d.chargeActuelleKg !== null) {
+        const actuelle = Number(d.chargeActuelleKg);
+        if (!Number.isFinite(actuelle) || actuelle < 0) {
+          throw new Error('Charge actuelle invalide (en kg, jamais négative).');
+        }
+        const nominaleFusion = Number(
+          d.chargeNominaleKg ?? machine.chargeNominaleKg);
+        if (Number.isFinite(nominaleFusion) && nominaleFusion > 0
+            && actuelle > nominaleFusion * 1.05) {
+          throw new Error(
+            `Charge actuelle impossible : ${actuelle} kg déclarés pour une `
+            + `charge nominale de ${nominaleFusion} kg (tolérance 5 %).`);
+        }
+        d.chargeActuelleKg = actuelle;
+      }
+      // ⭐ L2 — `dernierControle` et `prochainControle` RETIRÉS de la liste :
+      // faits DÉRIVÉS posés par enregistrerControle depuis le moteur. Une
+      // session ÉLÈVE repoussait l'échéance d'une machine en retard au
+      // 31/12/2099 et l'alerte critique disparaissait. Ils restent
+      // légitimes à la CRÉATION (reprise de parc) et à l'import.
       const CHAMPS = ['designation', 'type', 'marque', 'modele', 'numSerie',
         'fluide', 'chargeNominaleKg', 'chargeActuelleKg', 'clientId',
         'localisation', 'siteLabel', 'statut', 'typeInstallation',
         'detectionPermanente', ...CHAMPS_EQUIPEMENT,
-        'dateMiseEnService', 'dernierControle', 'prochainControle'];
+        'dateMiseEnService'];
       for (const champ of CHAMPS) {
         if (d[champ] !== undefined) machine[champ] = d[champ];
       }
@@ -3542,7 +3586,34 @@ export function creerDemoStore() {
         throw new Error('Lien de mouvement refusé : le contrôle lié à une '
           + 'écriture naît de sa validation, jamais du chemin direct.');
       }
-      const controle = enregistrerControle(d);
+      // ⭐ L2 (25/07) — LE NUMÉRO EST ATTRIBUÉ PAR LE LOGICIEL, jamais reçu
+      // (miroir du serveur). Attaque tirée : un contrôle portant le numéro
+      // « C-FI-2026-0007 », qui imite une fiche OFFICIELLE, et réutilisable
+      // deux fois. Le chemin LIÉ hérite le numéro du mouvement : il
+      // n'emprunte pas ce chemin-ci.
+      if (d.numero !== undefined && d.numero !== null && d.numero !== '') {
+        throw new Error('Numéro de contrôle refusé : il est attribué par le '
+          + 'registre, jamais fourni.');
+      }
+      // ⭐ L2 — L'ÉCHÉANCE EST CALCULÉE PAR LE MOTEUR RÉGLEMENTAIRE : la
+      // valeur reçue ne peut plus la REPOUSSER (« 2099-01-01 » éteignait
+      // toute alerte d'échéance). On retient la plus PROCHE des deux, et
+      // rien du tout si le moteur dit « non soumis ».
+      if (!estDateCalendaireOuVide(d.prochainControle)) {
+        throw new Error(messageDateInvalide('Échéance de contrôle'));
+      }
+      const echeanceMoteur = await this.calculerProchainControle(
+        d.machineId, d.date ?? aujourdHui());
+      const donneesControle2 = { ...d };
+      // Machine NON soumise : aucune obligation à protéger, l'échéance
+      // volontaire reste celle de l'exploitant. Machine SOUMISE :
+      // l'échéance réglementaire fait plafond.
+      if (echeanceMoteur !== null
+          && (!donneesControle2.prochainControle
+            || String(donneesControle2.prochainControle) > echeanceMoteur)) {
+        donneesControle2.prochainControle = echeanceMoteur;
+      }
+      const controle = enregistrerControle(donneesControle2);
       persisterEtNotifier();
       return copier(controle);
     },

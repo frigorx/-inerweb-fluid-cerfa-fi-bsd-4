@@ -869,6 +869,89 @@ try {
       etatBon.compte === true, JSON.stringify(etatBon));
   }
 
+  console.log('--- C2 bis. Échéances et charges : ce que le moteur calcule '
+    + 'ne se saisit pas ---');
+  {
+    // Machine LARGEMENT au-dessus du seuil : 30 kg de R-410A ≈ 62 t éq. CO₂,
+    // donc réellement soumise au contrôle périodique.
+    const machine = api.appeler('createMachine', { donneesMachine: {
+      designation: 'Groupe soumis', fluide: 'R-410A', chargeNominaleKg: 30 } },
+    referent);
+    const eleve = { role: 'ELEVE' };
+
+    attendreRejetApi('⭐ échéance forgée au 2099-01-01 par un ÉLÈVE : le '
+      + 'moteur reprend la main',
+    () => {
+      api.appeler('createControle', { donneesControle: {
+        machineId: machine.id, resultat: 'CONFORME',
+        prochainControle: '2099-01-01' } }, eleve);
+      const apres = api.appeler('getMachines', {}, referent)
+        .find((m) => m.id === machine.id);
+      if (apres.prochainControle === '2099-01-01') {
+        throw new Error('ÉCHÉANCE FORGÉE ACCEPTÉE');
+      }
+      throw new Error('échéance ramenée à ' + apres.prochainControle);
+    }, 'échéance ramenée à');
+
+    attendreRejetApi('numéro de fiche usurpé (« C-FI-2026-0007 ») : REFUSÉ',
+      () => api.appeler('createControle', { donneesControle: {
+        machineId: machine.id, resultat: 'CONFORME',
+        numero: 'C-FI-2026-0007' } }, eleve),
+      'attribué par le registre');
+
+    attendreRejetApi('contrôle daté DANS LE FUTUR : REFUSÉ',
+      () => api.appeler('createControle', { donneesControle: {
+        machineId: machine.id, resultat: 'CONFORME',
+        date: dateRelative(400) } }, eleve), 'ne s’atteste pas d’avance');
+
+    attendreRejetApi('contrôle daté du 30 février : REFUSÉ',
+      () => api.appeler('createControle', { donneesControle: {
+        machineId: machine.id, resultat: 'CONFORME',
+        date: '2026-02-30' } }, eleve), 'Date de contrôle invalide');
+
+    attendreRejetApi('⭐ échéance de la machine repoussée directement '
+      + '(updateMachine) : le champ n’est plus saisissable',
+    () => {
+      api.appeler('updateMachine', { id: machine.id, donneesMachine: {
+        prochainControle: '2099-12-31' } }, eleve);
+      const apres = api.appeler('getMachines', {}, referent)
+        .find((m) => m.id === machine.id);
+      if (apres.prochainControle === '2099-12-31') {
+        throw new Error('ÉCHÉANCE FORGÉE ACCEPTÉE');
+      }
+      throw new Error('échéance inchangée : ' + apres.prochainControle);
+    }, 'échéance inchangée');
+
+    attendreRejetApi('⭐ charge nominale ramenée à 0 (la machine sortirait '
+      + 'du périmètre) : REFUSÉ',
+    () => api.appeler('updateMachine', { id: machine.id, donneesMachine: {
+      chargeNominaleKg: 0 } }, eleve), 'Charge nominale obligatoire');
+
+    for (const valeur of [-5, '', null, 'zéro']) {
+      attendreRejetApi(`… idem pour ${JSON.stringify(valeur)}`,
+        () => api.appeler('updateMachine', { id: machine.id, donneesMachine: {
+          chargeNominaleKg: valeur } }, eleve),
+        'Charge nominale obligatoire');
+    }
+
+    attendreRejetApi('⭐ charge actuelle gonflée à 9999 kg sur 30 kg '
+      + 'nominaux : REFUSÉE',
+    () => api.appeler('updateMachine', { id: machine.id, donneesMachine: {
+      chargeActuelleKg: 9999 } }, eleve), 'Charge actuelle impossible');
+
+    attendreRejetApi('… et une charge NÉGATIVE aussi',
+      () => api.appeler('updateMachine', { id: machine.id, donneesMachine: {
+        chargeActuelleKg: -3 } }, eleve), 'Charge actuelle invalide');
+
+    // Contre-épreuve : la saisie normale passe toujours.
+    {
+      const ok = api.appeler('updateMachine', { id: machine.id,
+        donneesMachine: { chargeActuelleKg: 29.5 } }, eleve);
+      verifier('contre-épreuve : une charge plausible est acceptée',
+        Number(ok.chargeActuelleKg) === 29.5, JSON.stringify(ok.chargeActuelleKg));
+    }
+  }
+
   console.log('--- C3. Les mêmes dates par IMPORT ---');
   {
     const exporte = JSON.parse(api.appeler('exporterJSON', {}, referent));
