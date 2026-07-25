@@ -320,6 +320,10 @@ try {
     ['updateEtablissement', { patch: { numAttestationCapacite: 'FAUX' } },
       'modifier l’attestation de capacité de l’établissement'],
     ['getJournalAudit', {}, 'lire le journal nominatif (lecture sensible)'],
+    // ⭐ La porte à côté : le journal était refusé en lecture directe, mais
+    // sortait ENTIER par l'export complet — avec le personnel nominatif et
+    // la configuration du coffre (sel + témoin). Tiré et prouvé le 25/07.
+    ['exporterJSON', {}, 'aspirer TOUT le registre par l’export complet'],
     ['exporterDonneesPersonne', { personneId: 'P-X' },
       'exporter les données personnelles d’un tiers'],
     ['etatCoffre', {}, 'consulter le coffre des identités'],

@@ -528,6 +528,17 @@ const ROLES_MUTATION = {
 // ------------------------------------------------------------
 const ROLES_LECTURE_SENSIBLE = {
   exporterDonneesPersonne: VALIDEUR,
+  // ⭐ L2 (25/07) — L'EXPORT COMPLET EST UNE LECTURE SENSIBLE, et c'était
+  // la plus large de toutes. `getJournalAudit` est réservé au niveau
+  // VALIDEUR depuis le lot E2 parce que le journal porte des NOMS ; mais
+  // `exporterJSON` rendait ce même journal, plus le personnel nominatif
+  // complet (nom, prénom, e-mail, n° d'attestation, dates) et, quand un
+  // coffre existe, sa CONFIGURATION — sel et témoin, c'est-à-dire le
+  // matériel exact d'une attaque hors ligne sur la phrase secrète. Tiré et
+  // prouvé le 25/07 : `getJournalAudit` refusé à l'élève, le même contenu
+  // obtenu par la porte à côté. Une décision de confidentialité qui ne
+  // garde qu'une porte sur deux n'en est pas une.
+  exporterJSON: VALIDEUR,
   // Lot E2 : l'état du coffre (pseudonymes, candidats) relève du niveau
   // VALIDEUR ; la vérification du code et la CONSULTATION d'une identité
   // déchiffrée, du seul niveau REFERENT/ADMIN.
