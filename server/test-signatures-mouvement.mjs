@@ -27,6 +27,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as moduleEsm from '../v8/js/data/signatures-mouvement.js';
 import * as pdfEsm from '../v8/js/data/pdf-final.js';
+import { pngDeTest } from './fabrique-png-test.mjs';
 
 const require = createRequire(import.meta.url);
 const crypto = require('node:crypto');
@@ -56,15 +57,27 @@ function attendreRejet(libelle, fn, extrait) {
   }
 }
 
-/** Octets d'un PNG de test : nombres magiques + remplissage. */
-function octetsPng(taille = 1200) {
-  const octets = new Uint8Array(taille);
+/**
+ * Octets d'un VRAI PNG de test, portant un tracé (lot B3, brique 2).
+ * AVANT : ces fixtures fabriquaient 8 octets magiques + du remplissage,
+ * et les faisaient ACCEPTER — le filet vert attestait le comportement
+ * défaillant. Le calage à la taille demandée passe désormais par un
+ * chunk auxiliaire tEXt : un fichier de la bonne taille ne prouve rien.
+ */
+const octetsPng = (taille = 1200) => pngDeTest(taille);
+const imagePng = (taille = 1200) => Buffer.from(octetsPng(taille)).toString('base64');
+
+/** L'ATTAQUE du constat A04 : les 8 octets magiques, puis du texte. */
+function blocQuiSeFaitPasserPourPng(taille = 2348) {
+  const octets = new Uint8Array(taille).fill(0x2e);
   [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
     .forEach((o, i) => { octets[i] = o; });
-  for (let i = 8; i < taille; i += 1) octets[i] = i % 251;
+  const phrase = 'signature de complaisance ';
+  for (let i = 8; i < taille; i += 1) {
+    octets[i] = phrase.charCodeAt((i - 8) % phrase.length);
+  }
   return octets;
 }
-const imagePng = (taille = 1200) => Buffer.from(octetsPng(taille)).toString('base64');
 
 // ============================================================
 // 1. Parité stricte module pur ESM ↔ miroir CommonJS
@@ -114,7 +127,19 @@ const imagePng = (taille = 1200) => Buffer.from(octetsPng(taille)).toString('bas
     octetsPng(1023),
     octetsPng(4096),
     (() => { const o = octetsPng(4096); o[0] = 0xff; o[1] = 0xd8; o[2] = 0xff; return o; })(),
-    octetsPng(moduleEsm.SIGNATURE_TAILLE_MAX + 1)
+    octetsPng(moduleEsm.SIGNATURE_TAILLE_MAX + 1),
+    // Lot B3 : les images qui ne SONT pas des images.
+    blocQuiSeFaitPasserPourPng(),
+    blocQuiSeFaitPasserPourPng(1500),
+    (() => { const o = octetsPng(2048); o[o.length - 3] ^= 0xff; return o; })(),
+    octetsPng(2048).slice(0, 900),
+    (() => {
+      const o = octetsPng(2048);
+      const cale = new Uint8Array(o.length + 4);
+      cale.set(o, 0);
+      cale.set([0x41, 0x42, 0x43, 0x44], o.length);
+      return cale;
+    })()
   ];
   identiques = 0;
   for (const octets of CAS_IMAGE) {
@@ -130,6 +155,18 @@ const imagePng = (taille = 1200) => Buffer.from(octetsPng(taille)).toString('bas
     miroir.verifierImageSignature(octetsPng(miroir.SIGNATURE_TAILLE_MAX + 1))
       === miroir.MSG_TROP_GROSSE &&
     miroir.verifierImageSignature(octetsPng(1024)) === null);
+  // Lot B3 (brique 2) : l'image est DÉCODÉE, plus reconnue à 8 octets.
+  verifier('A04 : le bloc de 2 348 o aux bons octets magiques est REFUSÉ',
+    miroir.verifierImageSignature(blocQuiSeFaitPasserPourPng())
+      === miroir.MSG_PAS_PNG &&
+    moduleEsm.verifierImageSignature(blocQuiSeFaitPasserPourPng())
+      === moduleEsm.MSG_PAS_PNG);
+  verifier('un PNG dont un CRC-32 a été retouché est REFUSÉ',
+    miroir.verifierImageSignature(CAS_IMAGE[9]) === miroir.MSG_PAS_PNG);
+  verifier('un PNG tronqué (IEND coupé) est REFUSÉ',
+    miroir.verifierImageSignature(CAS_IMAGE[10]) === miroir.MSG_PAS_PNG);
+  verifier('un PNG suivi d’octets cachés après IEND est REFUSÉ',
+    miroir.verifierImageSignature(CAS_IMAGE[11]) === miroir.MSG_PAS_PNG);
 }
 
 // ============================================================
@@ -226,6 +263,22 @@ const signatureType = (surcharges = {}) => ({
       signature: signatureType({ imagePng: Buffer.from(
         '<html>signature</html>'.padEnd(2000, '.')).toString('base64') }) },
     session), 'PNG');
+  // ATTAQUE A04, TIRÉE contre l'API : le bloc de texte préfixé des 8
+  // octets magiques était ACCEPTÉ, et faisait tomber les conditions
+  // bloquantes 14/15 du moteur Officiel.
+  attendreRejet('A04 TIRÉ : bloc de 2 348 o aux bons octets magiques → refus',
+    () => api.appeler('signerMouvement', { mouvementId: brouillon.id,
+      signature: signatureType({ imagePng: Buffer.from(
+        blocQuiSeFaitPasserPourPng()).toString('base64') }) }, session), 'PNG');
+  attendreRejet('PNG au CRC-32 retouché : refus',
+    () => api.appeler('signerMouvement', { mouvementId: brouillon.id,
+      signature: signatureType({ imagePng: Buffer.from((() => {
+        const o = octetsPng(2048); o[o.length - 3] ^= 0xff; return o;
+      })()).toString('base64') }) }, session), 'PNG');
+  attendreRejet('PNG tronqué (IEND coupé) : refus',
+    () => api.appeler('signerMouvement', { mouvementId: brouillon.id,
+      signature: signatureType({ imagePng: Buffer.from(
+        octetsPng(2048).slice(0, 900)).toString('base64') }) }, session), 'PNG');
   attendreRejet('tracé de moins de 1 Ko : refus (pas probant)',
     () => api.appeler('signerMouvement', { mouvementId: brouillon.id,
       signature: signatureType({ imagePng: imagePng(512) }) }, session),

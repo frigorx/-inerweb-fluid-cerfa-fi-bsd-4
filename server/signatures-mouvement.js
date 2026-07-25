@@ -13,11 +13,10 @@
  * l'autre.
  */
 
+const { verifierStructurePng } = require('./png.js');
+
 /** Les deux rôles de signature, dans l'ordre IMPOSÉ du parcours. */
 const ROLES_SIGNATURE = ['TECHNICIEN', 'DETENTEUR'];
-
-/** Nombres magiques PNG (copie locale : module autonome). */
-const MAGIQUES_PNG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
 /** En dessous : tracé trop léger pour être probant (décision §2.5). */
 const SIGNATURE_TAILLE_MIN = 1024;
@@ -61,10 +60,9 @@ function declarationSignature(role, parDelegation, organisation) {
 /** Critères d'illisibilité d'un tracé (clone du front). */
 function verifierImageSignature(octets) {
   if (!octets || octets.length === 0) return MSG_TRACE_ABSENT;
+  // Plafond AVANT décodage : on ne décode pas ce qu'on refuse de tenir.
   if (octets.length > SIGNATURE_TAILLE_MAX) return MSG_TROP_GROSSE;
-  for (let i = 0; i < MAGIQUES_PNG.length; i += 1) {
-    if (octets[i] !== MAGIQUES_PNG[i]) return MSG_PAS_PNG;
-  }
+  if (!verifierStructurePng(octets).ok) return MSG_PAS_PNG;
   if (octets.length < SIGNATURE_TAILLE_MIN) return MSG_TROP_PETITE;
   return null;
 }

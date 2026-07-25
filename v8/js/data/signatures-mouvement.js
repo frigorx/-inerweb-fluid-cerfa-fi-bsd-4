@@ -10,22 +10,23 @@
 //    signer, FIGÉS dans la signature, couverts par l'empreinte v2
 //    (brique C2) — jamais reçus du client ;
 //  - critères d'illisibilité d'un tracé (décision §2.5) : jamais
-//    vide, PNG réel (nombres magiques), ≥ 1 Ko — plus un plafond
-//    défensif de 1 Mo (compromis protecteur, arbitrage délégué).
+//    vide, PNG RÉELLEMENT DÉCODÉ (lot B3 du 25/07 : en-tête IHDR,
+//    chaîne des chunks, CRC-32 de chacun, IDAT, IEND — avant, on
+//    comparait 8 octets et une longueur, et un bloc de texte de 2 Ko
+//    passait pour une signature), ≥ 1 Ko — plus un plafond défensif
+//    de 1 Mo (compromis protecteur, arbitrage délégué).
 //
-// Aucune I/O, aucune dépendance (les nombres magiques PNG sont
-// recopiés de contenu-pj.js pour garder le module autonome).
+// Aucune I/O ; seule dépendance : le module pur data/png.js.
 // Dupliqué en littéral CommonJS côté serveur
 // (server/signatures-mouvement.js) — parité prouvée par
 // server/test-signatures-mouvement.mjs : ne jamais toucher l'un
 // sans l'autre.
 // ============================================================
 
+import { verifierStructurePng } from './png.js';
+
 /** Les deux rôles de signature, dans l'ordre IMPOSÉ du parcours. */
 export const ROLES_SIGNATURE = ['TECHNICIEN', 'DETENTEUR'];
-
-/** Nombres magiques PNG (copie locale de contenu-pj.js : module autonome). */
-const MAGIQUES_PNG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
 /** En dessous : tracé trop léger pour être probant (décision §2.5). */
 export const SIGNATURE_TAILLE_MIN = 1024;
@@ -78,16 +79,18 @@ export function declarationSignature(role, parDelegation, organisation) {
 /**
  * Critères d'illisibilité d'un tracé de signature (décision §2.5) : une
  * signature illisible n'est JAMAIS ignorée — elle est refusée à la pose.
- * Ne fait confiance qu'aux octets, jamais au type annoncé.
+ * Ne fait confiance qu'aux octets, jamais au type annoncé — et depuis le
+ * lot B3, l'image est VRAIMENT DÉCODÉE : reconnaître les 8 octets
+ * magiques ne prouve rien (un bloc de texte de 2 Ko préfixé de ces
+ * octets était accepté, constat A04 du 25/07).
  * @param {?Uint8Array} octets contenu décodé de l'image
  * @returns {?string} message de refus, ou null si le tracé est recevable
  */
 export function verifierImageSignature(octets) {
   if (!octets || octets.length === 0) return MSG_TRACE_ABSENT;
+  // Plafond AVANT décodage : on ne décode pas ce qu'on refuse de tenir.
   if (octets.length > SIGNATURE_TAILLE_MAX) return MSG_TROP_GROSSE;
-  for (let i = 0; i < MAGIQUES_PNG.length; i += 1) {
-    if (octets[i] !== MAGIQUES_PNG[i]) return MSG_PAS_PNG;
-  }
+  if (!verifierStructurePng(octets).ok) return MSG_PAS_PNG;
   if (octets.length < SIGNATURE_TAILLE_MIN) return MSG_TROP_PETITE;
   return null;
 }

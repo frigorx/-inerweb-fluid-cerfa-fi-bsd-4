@@ -29,6 +29,8 @@ import {
 import { MSG_PDF_FINAL_HORS_OFFICIEL } from './pdf-final.js';
 // P7-c : refus STRUCTUREL du contrôle direct en mode OFFICIEL.
 import { MSG_CONTROLE_DIRECT_OFFICIEL } from './blocage-officiel.js';
+// Lot B3 : fabrique de VRAIS PNG (l'image de signature est décodée).
+import { pngDeTest } from '../../../server/fabrique-png-test.mjs';
 
 // ------------------------------------------------------------
 // Choix de l'implémentation à éprouver (demo par défaut).
@@ -2041,13 +2043,14 @@ verifier('peutPasserEnOfficiel : { ok, motifs[] français }',
 // Lot C (brique C1) — signatures RÉELLES : ordre imposé, déclarations
 // figées, illisibilité, invalidation par révision, traces. Jouée demo ET
 // local : c'est la parité qui casse à la moindre divergence.
-/** Tracé PNG de test : nombres magiques + remplissage (taille au choix). */
+/**
+ * Tracé PNG de test : un VRAI PNG, portant un tracé (lot B3, 25/07).
+ * AVANT, cette fabrique posait 8 octets magiques puis du remplissage —
+ * et les DEUX stores l'acceptaient : le filet vert attestait le
+ * comportement défaillant (constat A04).
+ */
 function imagePngTest(taille = 1200) {
-  const octets = new Uint8Array(taille);
-  [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
-    .forEach((o, i) => { octets[i] = o; });
-  for (let i = 8; i < taille; i += 1) octets[i] = i % 251;
-  return Buffer.from(octets).toString('base64');
+  return Buffer.from(pngDeTest(taille)).toString('base64');
 }
 {
   const brouillonSig = await store.creerMouvement({
@@ -2080,6 +2083,27 @@ function imagePngTest(taille = 1200) {
       prenom: 'B', imagePng: Buffer.from(
         '<html>signature</html>'.padEnd(2000, '.')).toString('base64') }),
     'PNG');
+  // Lot B3 (brique 2) — l'ATTAQUE A04, tirée contre LES DEUX stores :
+  // 8 octets magiques + une phrase en clair répétée n'est pas une image.
+  await verifierRejet('signerMouvement refuse un bloc de texte aux octets magiques PNG',
+    store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN', nom: 'A',
+      prenom: 'B', imagePng: Buffer.from((() => {
+        const octets = new Uint8Array(2348);
+        [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
+          .forEach((o, i) => { octets[i] = o; });
+        const phrase = 'signature de complaisance ';
+        for (let i = 8; i < octets.length; i += 1) {
+          octets[i] = phrase.charCodeAt((i - 8) % phrase.length);
+        }
+        return octets;
+      })()).toString('base64') }), 'PNG');
+  await verifierRejet('signerMouvement refuse un PNG dont un CRC-32 est retouché',
+    store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN', nom: 'A',
+      prenom: 'B', imagePng: Buffer.from((() => {
+        const octets = pngDeTest(2048);
+        octets[octets.length - 3] ^= 0xff;
+        return octets;
+      })()).toString('base64') }), 'PNG');
   await verifierRejet('signerMouvement refuse un tracé de moins de 1 Ko',
     store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN', nom: 'A',
       prenom: 'B', imagePng: imagePngTest(512) }), 'probant');
