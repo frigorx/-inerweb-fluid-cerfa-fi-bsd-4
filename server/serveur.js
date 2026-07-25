@@ -578,6 +578,21 @@ function traiterStatique(requete, reponse, chemin) {
     return;
   }
 
+  // ⭐ L2 (25/07) — EXTENSIONS QUI NE SORTENT JAMAIS PAR LE WEB.
+  // La liste blanche raisonne sur l'ARBORESCENCE ; celle-ci raisonne sur la
+  // NATURE du fichier. Attaques tirées : une base vive placée sous
+  // `v8/data/` (ou un dossier de sauvegarde pointé sous `v8/`) devenait
+  // téléchargeable par un simple GET, sans la moindre session — tout le
+  // registre, données nominatives comprises. Aucun fichier de ce type n'a
+  // de raison d'être servi à un navigateur, où qu'il soit rangé.
+  const EXTENSIONS_JAMAIS_SERVIES = ['.db', '.db-wal', '.db-shm', '.sqlite',
+    '.sqlite3', '.zip', '.env', '.key', '.pem', '.pfx', '.bak'];
+  if (EXTENSIONS_JAMAIS_SERVIES.includes(
+    path.extname(cheminFichier).toLowerCase())) {
+    repondreErreur(reponse, 404, 'Fichier introuvable.');
+    return;
+  }
+
   // Lecture et envoi du fichier
   fs.stat(cheminFichier, (erreur, infos) => {
     if (erreur || !infos.isFile()) {
@@ -585,6 +600,38 @@ function traiterStatique(requete, reponse, chemin) {
       return;
     }
 
+    // ⭐ L2 (25/07) — LE CHEMIN RÉEL, PAS SEULEMENT LE CHEMIN DEMANDÉ.
+    // La liste blanche ci-dessus juge le chemin LOGIQUE. Attaque tirée :
+    // une jonction Windows (`mklink /J`, qui ne demande AUCUN privilège)
+    // posée dans `v8/` et pointant vers `server/` faisait servir le code
+    // source complet en 200, sans session. Un lien symbolique fait pareil
+    // sous Linux. On résout donc le chemin PHYSIQUE et on lui réapplique
+    // la même règle : ce qui sort doit être, RÉELLEMENT, dans un dossier
+    // servi.
+    fs.realpath(cheminFichier, (erreurLien, cheminReel) => {
+      if (erreurLien) {
+        repondreErreur(reponse, 404, 'Fichier introuvable.');
+        return;
+      }
+      const relatifReel = path.relative(RACINE, cheminReel);
+      const segmentsReels = relatifReel.split(path.sep);
+      const reelAutorise = !relatifReel.startsWith('..')
+        && !path.isAbsolute(relatifReel)
+        && (segmentsReels.length === 1
+          ? FICHIERS_RACINE_SERVIS.includes(segmentsReels[0])
+          : DOSSIERS_SERVIS.includes(segmentsReels[0]));
+      if (!reelAutorise) {
+        repondreErreur(reponse, 404, 'Fichier introuvable.');
+        return;
+      }
+      envoyerFichier(reponse, cheminFichier, infos);
+    });
+  });
+}
+
+/** Envoie un fichier statique déjà autorisé (en-têtes de sécurité compris). */
+function envoyerFichier(reponse, cheminFichier, infos) {
+  {
     const extension = path.extname(cheminFichier).toLowerCase();
     const typeContenu = TYPES_CONTENU[extension] || 'application/octet-stream';
 
@@ -608,7 +655,7 @@ function traiterStatique(requete, reponse, chemin) {
       reponse.destroy();
     });
     flux.pipe(reponse);
-  });
+  }
 }
 
 // ----- Serveur HTTP -----

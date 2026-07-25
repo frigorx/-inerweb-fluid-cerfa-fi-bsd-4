@@ -1088,6 +1088,125 @@ try {
   } catch { /* dossier temporaire encore verrouillé : sans conséquence */ }
 }
 
+// ============================================================
+// E. ⭐ FAIRE SORTIR UN FICHIER PRIVÉ PAR LE SERVEUR WEB
+//
+// La distribution est en liste BLANCHE depuis P2-4 : seuls `v8/` et `img/`
+// sont servis. Mais la liste blanche juge le chemin DEMANDÉ, pas le fichier
+// RÉEL. Deux attaques tirées le 25/07 :
+//   · une base vive rangée sous `v8/data/` (configuration possible, et le
+//     dossier de sauvegarde de même) devenait téléchargeable par un simple
+//     GET, sans session : tout le registre, données nominatives comprises ;
+//   · une jonction Windows (`mklink /J`, AUCUN privilège requis) posée dans
+//     `v8/` et pointant vers `server/` faisait servir le code source
+//     complet en 200.
+// Le serveur est lancé depuis une COPIE jetable : le dépôt n'est jamais
+// touché.
+// ============================================================
+console.log('');
+console.log('=== E. Faire sortir un fichier privé par le serveur web ===');
+
+const DOSSIER_H = mkdtempSync(join(tmpdir(), 'iwf-secneg-statique-'));
+let enfantE = null;
+try {
+  const { cpSync, mkdirSync, writeFileSync } = await import('node:fs');
+  const { execFileSync } = await import('node:child_process');
+
+  // Copie minimale : le serveur, une application factice, un dossier privé.
+  cpSync(import.meta.dirname, join(DOSSIER_H, 'server'), { recursive: true });
+  mkdirSync(join(DOSSIER_H, 'v8', 'data'), { recursive: true });
+  mkdirSync(join(DOSSIER_H, 'prive'), { recursive: true });
+  writeFileSync(join(DOSSIER_H, 'v8', 'index.html'),
+    '<!doctype html><title>copie de test</title>');
+  // La base vive est CRÉÉE PAR LE SERVEUR à cet emplacement : c'est une
+  // configuration réellement possible (IWF_CHEMIN_BASE sous un dossier
+  // servi), et c'est exactement ce qui la rendait téléchargeable.
+  writeFileSync(join(DOSSIER_H, 'prive', 'secret.txt'),
+    'contenu privé qui ne doit jamais sortir');
+
+  // La jonction : c'est ELLE qui trompait la liste blanche.
+  let jonctionPosee = false;
+  try {
+    execFileSync('cmd', ['/c', 'mklink', '/J',
+      join(DOSSIER_H, 'v8', 'lien_prive'), join(DOSSIER_H, 'prive')],
+    { stdio: 'ignore' });
+    jonctionPosee = true;
+  } catch { jonctionPosee = false; }
+
+  const PORT_E = 25500 + Math.floor(Math.random() * 400);
+  enfantE = spawn(process.execPath, [join(DOSSIER_H, 'server', 'serveur.js')], {
+    cwd: DOSSIER_H,
+    env: { ...process.env, PORT: String(PORT_E),
+      IWF_CHEMIN_BASE: join(DOSSIER_H, 'v8', 'data', 'base.db') },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let sortieE = '';
+  enfantE.stdout.on('data', (d) => { sortieE += d.toString(); });
+  enfantE.stderr.on('data', (d) => { sortieE += d.toString(); });
+
+  /** GET brut : rend { statut, corps }. */
+  const obtenir = (chemin) => new Promise((resoudre) => {
+    const req = http.get({ host: '127.0.0.1', port: PORT_E, path: chemin,
+      timeout: 8000, headers: { Host: `127.0.0.1:${PORT_E}` } }, (rep) => {
+      const morceaux = [];
+      rep.on('data', (m) => morceaux.push(m));
+      rep.on('end', () => resoudre({ statut: rep.statusCode,
+        corps: Buffer.concat(morceaux).toString('utf8').slice(0, 120) }));
+    });
+    req.on('error', () => resoudre({ statut: 0, corps: '' }));
+    req.on('timeout', () => { req.destroy(); resoudre({ statut: 0, corps: '' }); });
+  });
+
+  const pretE = await (async () => {
+    const debut = Date.now();
+    while (Date.now() - debut < 20000) {
+      const r = await obtenir('/v8/index.html');
+      if (r.statut === 200) return true;
+      await new Promise((r2) => setTimeout(r2, 150));
+    }
+    return false;
+  })();
+  verifier('décor : un serveur tourne sur une COPIE jetable du dépôt', pretE,
+    sortieE.slice(0, 300));
+
+  if (pretE) {
+    {
+      const r = await obtenir('/v8/data/base.db');
+      verifier('⭐ la base vive rangée sous un dossier servi ne sort PAS',
+        r.statut === 404, `statut ${r.statut} — ${r.corps}`);
+    }
+    for (const nom of ['base.db-wal', 'base.db-shm', 'archive.zip', '.env']) {
+      const r = await obtenir(`/v8/data/${nom}`);
+      verifier(`… ni ${nom}`, r.statut === 404, `statut ${r.statut}`);
+    }
+    if (jonctionPosee) {
+      const r = await obtenir('/v8/lien_prive/secret.txt');
+      verifier('⭐ une jonction posée dans v8/ ne fait plus sortir un dossier '
+        + 'privé', r.statut === 404, `statut ${r.statut} — ${r.corps}`);
+    } else {
+      verifier('(jonction Windows non créée sur ce poste — cas non joué)',
+        true);
+    }
+    // Contre-épreuve : l'application reste servie.
+    const r = await obtenir('/v8/index.html');
+    verifier('contre-épreuve : l’application est toujours servie',
+      r.statut === 200, `statut ${r.statut}`);
+  }
+} finally {
+  if (enfantE) {
+    const fini = new Promise((resoudre) => {
+      enfantE.on('exit', resoudre);
+      setTimeout(resoudre, 5000);
+    });
+    enfantE.kill();
+    await fini;
+  }
+  try {
+    rmSync(DOSSIER_H, { recursive: true, force: true, maxRetries: 5,
+      retryDelay: 200 });
+  } catch { /* jonction ou fichier verrouillé : sans conséquence */ }
+}
+
 console.log('');
 console.log(`Sécurité négative : ${nbOk} réussies, ${nbEchecs} en échec.`);
 if (nbEchecs > 0) process.exit(1);
