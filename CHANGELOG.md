@@ -2,6 +2,67 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🗑️ B2 — LE SUIVI DE REMISE EN FILIÈRE DIT CE QU'IL EST (25/07, session autonome)
+
+**Constat A07, tiré et confirmé.** L'objet interne du logiciel s'appelait « BSFF »
+partout où l'utilisateur le lit — écran « Déchets / BSFF », bouton « Créer le BSFF »,
+modale, colonne « N° BSFF », fichier `bsff.csv` du dossier d'audit scellé — sans
+en être un, et **aucune surface ne le disait**. Recherche exhaustive de
+« Trackdéchets » dans `v8/`, `server/`, `index.html`, `guide.html` : deux occurrences,
+aucune visible de l'utilisateur. Le propriétaire a confirmé que l'établissement est
+**producteur réel de déchets fluorés voire chlorés** (une bouteille de R-22 à mettre
+en réforme) : l'obligation du bordereau dématérialisé pèse réellement. Ce n'était pas
+un cas d'école.
+
+Cinq briques, chacune née d'une attaque tirée :
+
+- **B2-1 — l'honnêteté des libellés.** Nouveau module pur `v8/js/data/remise-filiere.js` :
+  vocabulaire (« Suivi interne de remise en filière ») et **mention permanente**, non
+  ambiguë, affichée sur l'écran, dans la modale, et **reportée au sommaire du dossier
+  d'audit scellé** (elle voyage avec le ZIP — un lecteur du dossier n'a pas le logiciel
+  sous les yeux). La mention ne cite **aucune date ni référence d'arrêté** : le fait
+  réglementaire précis relève du propriétaire. `bsff.csv` devient
+  `suivi-remise-filiere.csv`, l'en-tête dit « N° suivi interne ».
+- **B2-2 — le numéro réel a sa place.** Le seul numéro enregistré était l'interne, et
+  c'est **lui que le CERFA 15497*04 recevait au cadre 11 « n° de BSFF »** : un
+  identifiant maison passait pour une référence réglementaire sur un document officiel
+  signé. La colonne `lien_trackdechets` existait depuis le socle v1 et n'était exposée
+  nulle part : elle porte désormais `bordereauExterne` (**aucune migration**). Le cadre 11
+  ne reçoit QUE le bordereau officiel reporté ; à défaut il reste vide.
+  `VERSION_CONTRAT` 12 → 13.
+- **B2-3 — forme et unicité du numéro interne, en local et sans réseau.** `createBsff`
+  acceptait n'importe quelle chaîne, et **le même numéro deux fois** (aucune contrainte
+  UNIQUE en base). Le logiciel numérote désormais ce qui lui appartient :
+  `SIF-AAAA-NNNN`, attribué localement, unicité insensible à la casse et aux espaces.
+  Le doublon ne passe **ni par l'API, ni par l'import**. La FORME n'est pas exigée à
+  l'import : un registre antérieur reste reprenable.
+- **B2-4 — l'issue de traitement s'appuie sur une pièce.** « DESTRUCTION » s'attestait
+  sur parole — installation inventée, certificat null, zéro pièce jointe — et la masse
+  tombait aussitôt en **rubrique 9 de la déclaration annuelle réglementaire**. Doctrine
+  maison appliquée : *le doute retire l'allègement, jamais l'obligation*. La saisie reste
+  possible ; c'est la valeur probante qui tombe. Sans pièce jointe au suivi, la masse part
+  en `remisIssueSansPreuveKg` — poste **distinct** de `remisNonAttesteKg` (« déclaré, non
+  prouvé » ≠ « rien de déclaré ») — avec l'anomalie `BSFF_ISSUE_SANS_PIECE`. Un numéro de
+  certificat saisi n'est pas une pièce : il s'affirme aussi. La modale d'attestation
+  enchaîne désormais **sur** la pièce justificative.
+- **B2-5 — la balance cesse de pouvoir mentir.** Effet de bord découvert en tirant : après
+  deux remises déclarées (5 kg partis en filière), un simple
+  `updateBouteille { masseBruteKg: 20 }` faisait repasser la bouteille de 5 à 10 kg —
+  HTTP 200, modification journalisée, mais **rien ne rapprochait les deux faits**.
+  **Migration 36** : `bsff.masse_bouteille_apres_kg`, masse nette restante FIGÉE à
+  l'émission — le repère sans lequel l'écart n'est calculable par rien, même après un
+  export/import (NULL sur les suivis antérieurs : on n'invente pas un passé qu'on n'a pas
+  mesuré). Nouvelle alerte `alr-remise-filiere-` : gain **inexpliqué** par les écritures
+  VALIDE postérieures, chiffré, daté, rattaché au suivi. **Signalé, jamais bloqué** — une
+  correction de tare est légitime.
+
+Preuves : `v8/js/data/test-remise-filiere-pur.mjs` (41 vérifs, parité ESM ↔ CommonJS sur
+chaque fonction ET chaque message), `v8/js/data/test-remise-filiere.mjs` (DOUBLÉE
+demo/local, 28 vérifs), `v8/js/views/test-dechets-libelles.mjs` (les surfaces RÉELLES :
+rendu HTML de la vue, boîte de modale réellement posée, CSV produits).
+**Contre-épreuve faite brique par brique** : chaque correctif retiré rend sa suite rouge,
+remis la rend verte. **TOUT VERT 110 exécutions.**
+
 ### 🛡️ L2 — SUITE DE SÉCURITÉ NÉGATIVE ET NEUF TROUS FERMÉS (25/07, session autonome)
 
 **Méthode : on ne croit personne sur parole, on TIRE.** Un inventaire des surfaces
