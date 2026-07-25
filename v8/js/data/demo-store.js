@@ -6311,6 +6311,24 @@ export function creerDemoStore() {
           `${chaineAmorceeALImport} écriture(s) validée(s) sans empreinte : `
           + 'chaîne d’intégrité amorcée par le logiciel à l’import');
       }
+      // Revue du 25/07 : une image de signature ILLISIBLE entrée par le
+      // fichier est ACCEPTÉE (un registre existant s'importe comme avant)
+      // et elle ne vaut plus signature (etatSignatureReelle). Mais sans
+      // trace, le fait serait INVISIBLE : l'écran dirait seulement
+      // « signature absente », comme si personne n'avait jamais signé. Le
+      // journal nomme donc chaque cas — même patron que le témoin du
+      // journal (L2-h) : accepté, mais journalisé. Miroir du serveur.
+      const numeroParMouvement = new Map((donnees.mouvements ?? [])
+        .map((mv) => [mv.id, mv.numero ?? mv.id]));
+      for (const sig of donnees.signaturesMouvement ?? []) {
+        if (imageSignatureRecevable(sig.imagePng)) continue;
+        journaliser('système', 'SIGNATURE_ILLISIBLE_A_L_IMPORT',
+          numeroParMouvement.get(sig.mouvementId) ?? sig.mouvementId,
+          `Signature ${sig.role ?? '?'} de `
+          + `${sig.prenom ?? ''} ${sig.nom ?? ''}`.trimEnd()
+          + ' : l’image du fichier importé n’est pas un tracé lisible. Elle '
+          + 'est conservée telle quelle, mais elle ne vaut PAS signature.');
+      }
       persisterEtNotifier();
       return true;
     }

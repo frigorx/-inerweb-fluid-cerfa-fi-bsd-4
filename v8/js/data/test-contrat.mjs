@@ -2287,6 +2287,24 @@ function imagePngTest(taille = 1200) {
       apres.blocages.some((b) => b.code === 'SIGNATURE_TECHNICIEN')
       && apres.blocages.some((b) => b.code === 'SIGNATURE_DETENTEUR'),
       JSON.stringify(apres.blocages.map((b) => b.code)));
+    // … et le fait SE VOIT : sans trace, l'écran dirait seulement
+    // « signature absente », comme si personne n'avait jamais signé.
+    const journalApres = (await store.getJournalAudit())
+      .filter((e) => e.action === 'SIGNATURE_ILLISIBLE_A_L_IMPORT');
+    verifier('⭐ le journal nomme CHAQUE signature illisible entrée par le fichier',
+      journalApres.length === avantAttaque.length,
+      `${journalApres.length} entrée(s) pour ${avantAttaque.length} signature(s)`);
+    // ⚠️ `every` sur un tableau VIDE est vrai : sans le décompte, ces deux
+    // vérifications ne pourraient pas échouer (piège relevé par la revue).
+    verifier('… en disant qu’elle est conservée mais ne vaut pas signature',
+      journalApres.length > 0
+      && journalApres.every((e) => e.details.includes('ne vaut PAS signature')
+        && e.details.includes('conservée telle quelle')),
+      JSON.stringify(journalApres[0] ?? null));
+    verifier('… rattachée au NUMÉRO du mouvement concerné',
+      journalApres.length > 0
+      && journalApres.every((e) => e.cible === brouillonSig.numero),
+      JSON.stringify(journalApres.map((e) => e.cible)));
     verifier('… avec le message canonique EXISTANT (aucune condition ajoutée)',
       apres.blocages.filter((b) => b.code === 'SIGNATURE_TECHNICIEN'
         || b.code === 'SIGNATURE_DETENTEUR')
