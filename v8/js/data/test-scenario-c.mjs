@@ -56,7 +56,7 @@ verifier('décision DÉCHET : statut DECHET + date limite de garde à un an',
 // --- 2. Sortie BSFF ---------------------------------------------
 const bsff = await store.createBsff({
   bouteilleId: b03.id,
-  numeroBsff: 'BSFF-2026-TEST-001',
+  numeroBsff: 'SIF-2026-0001',
   transporteur: 'TransFluides Provence',
   installationDestination: 'Trédi Salaise-sur-Sanne',
   masseRemiseKg: 3.6,
@@ -64,12 +64,12 @@ const bsff = await store.createBsff({
   operateur: utilisateur.id
 });
 verifier('BSFF créé et listé', (await store.getBsff())
-  .some((b) => b.id === bsff.id && b.numeroBsff === 'BSFF-2026-TEST-001'));
+  .some((b) => b.id === bsff.id && b.numeroBsff === 'SIF-2026-0001'));
 
 const b03Apres = (await store.getBouteilles()).find((b) => b.id === b03.id);
 verifier('sortie de stock : B-03 RETOURNEE, masse nette 0, BSFF référencé',
   b03Apres.statut === 'RETOURNEE' && PROCHE(b03Apres.masseNetteKg, 0) &&
-  b03Apres.numBsff === 'BSFF-2026-TEST-001');
+  b03Apres.numBsff === 'SIF-2026-0001');
 
 const journal = await store.getJournalAudit();
 verifier('mouvement de sortie tracé au journal (SORTIE_BSFF)',

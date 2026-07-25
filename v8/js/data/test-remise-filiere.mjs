@@ -59,7 +59,7 @@ async function bouteilleDechet(masseKg) {
 {
   const b = await bouteilleDechet(6);
   const suivi = await store.createBsff({
-    bouteilleId: b.id, numeroBsff: 'SI-B2-001',
+    bouteilleId: b.id, numeroBsff: 'SIF-2026-0001',
     bordereauExterne: '  FF-2026-000123  ',
     transporteur: 'Collecteur agréé',
     installationDestination: 'Centre de traitement agréé',
@@ -68,12 +68,12 @@ async function bouteilleDechet(masseKg) {
   verifier('le numéro du bordereau officiel est conservé, espaces retirés',
     suivi.bordereauExterne === 'FF-2026-000123', String(suivi.bordereauExterne));
   verifier('il ne se confond pas avec le numéro du suivi interne',
-    suivi.numeroBsff === 'SI-B2-001'
+    suivi.numeroBsff === 'SIF-2026-0001'
     && suivi.numeroBsff !== suivi.bordereauExterne);
 
   const relu = (await store.getBsff()).find((x) => x.id === suivi.id);
   verifier('relu depuis le magasin : les deux numéros sont là',
-    relu.numeroBsff === 'SI-B2-001'
+    relu.numeroBsff === 'SIF-2026-0001'
     && relu.bordereauExterne === 'FF-2026-000123');
 }
 
@@ -83,7 +83,7 @@ async function bouteilleDechet(masseKg) {
 {
   const b = await bouteilleDechet(4);
   const suivi = await store.createBsff({
-    bouteilleId: b.id, numeroBsff: 'SI-B2-002',
+    bouteilleId: b.id, numeroBsff: 'SIF-2026-0002',
     transporteur: 'Collecteur agréé',
     installationDestination: 'Centre de traitement agréé',
     masseRemiseKg: 4, dateRemise: '2026-07-24', operateur: 'testeur'
@@ -91,13 +91,88 @@ async function bouteilleDechet(masseKg) {
   verifier('bordereau non reporté → null (jamais le numéro interne recopié)',
     suivi.bordereauExterne === null, String(suivi.bordereauExterne));
   const vide = await store.createBsff({
-    bouteilleId: (await bouteilleDechet(2)).id, numeroBsff: 'SI-B2-003',
+    bouteilleId: (await bouteilleDechet(2)).id, numeroBsff: 'SIF-2026-0003',
     bordereauExterne: '   ', transporteur: 'Collecteur agréé',
     installationDestination: 'Centre de traitement agréé',
     masseRemiseKg: 2, dateRemise: '2026-07-24', operateur: 'testeur'
   });
   verifier('chaîne d’espaces → null (une saisie vide ne vaut pas un numéro)',
     vide.bordereauExterne === null, String(vide.bordereauExterne));
+}
+
+// ============================================================
+// B bis. B2-3 — FORME ET UNICITÉ DU NUMÉRO INTERNE
+// (attaques tirées : numéro fantaisiste accepté, doublon accepté)
+// ============================================================
+{
+  const b = await bouteilleDechet(9);
+  // Numérotation LOCALE, sans réseau : le logiciel attribue le suivant.
+  const auto = await store.createBsff({
+    bouteilleId: b.id, transporteur: 'Collecteur agréé',
+    installationDestination: 'Centre de traitement agréé',
+    masseRemiseKg: 1, dateRemise: '2026-07-24', operateur: 'testeur'
+  });
+  verifier('numéro absent → attribué au format SIF-AAAA-NNNN',
+    /^SIF-2026-\d{4}$/.test(auto.numeroBsff), String(auto.numeroBsff));
+  const auto2 = await store.createBsff({
+    bouteilleId: b.id, transporteur: 'Collecteur agréé',
+    installationDestination: 'Centre de traitement agréé',
+    masseRemiseKg: 1, dateRemise: '2026-07-24', operateur: 'testeur'
+  });
+  verifier('deux attributions successives ne se marchent pas dessus',
+    auto2.numeroBsff !== auto.numeroBsff
+    && Number(auto2.numeroBsff.slice(-4)) === Number(auto.numeroBsff.slice(-4)) + 1,
+    `${auto.numeroBsff} puis ${auto2.numeroBsff}`);
+
+  let msgForme = null;
+  try {
+    await store.createBsff({
+      bouteilleId: b.id, numeroBsff: 'nimportequoi-42',
+      transporteur: 'Collecteur agréé',
+      installationDestination: 'Centre de traitement agréé',
+      masseRemiseKg: 1, dateRemise: '2026-07-24', operateur: 'testeur'
+    });
+  } catch (e) { msgForme = e.message; }
+  verifier('numéro fantaisiste REFUSÉ, message canonique',
+    msgForme !== null && msgForme.includes('attribué par le logiciel')
+    && msgForme.includes('SIF-AAAA-NNNN'), String(msgForme));
+
+  let msgDoublon = null;
+  try {
+    await store.createBsff({
+      bouteilleId: b.id, numeroBsff: auto.numeroBsff.toLowerCase(),
+      transporteur: 'Collecteur agréé',
+      installationDestination: 'Centre de traitement agréé',
+      masseRemiseKg: 1, dateRemise: '2026-07-24', operateur: 'testeur'
+    });
+  } catch (e) { msgDoublon = e.message; }
+  verifier('doublon REFUSÉ, casse comprise (« sif-… » = « SIF-… »)',
+    msgDoublon !== null && msgDoublon.includes('déjà utilisé'),
+    String(msgDoublon));
+
+  const suivis = await store.getBsff();
+  const cles = suivis.map((s) => String(s.numeroBsff).toUpperCase());
+  verifier('aucun numéro de suivi en double au registre',
+    new Set(cles).size === cles.length, cles.join(', '));
+}
+
+// ============================================================
+// B ter. Le doublon ne passe pas non plus PAR L'IMPORT
+// ============================================================
+{
+  const paquet = JSON.parse(await store.exporterJSON());
+  const donnees = paquet.donnees ?? paquet;
+  const premier = donnees.bsff[0];
+  donnees.bsff.push({ ...premier, id: `${premier.id}-copie` });
+  const cible = await fabriquerStore(NOM_STORE);
+  if (cible.init) await cible.init();
+  let msgImport = null;
+  try {
+    await cible.importerJSON(JSON.stringify(paquet));
+  } catch (e) { msgImport = e.message; }
+  verifier('import d’un registre à numéro dupliqué REFUSÉ',
+    msgImport !== null && msgImport.includes('numéro en double'),
+    String(msgImport));
 }
 
 // ============================================================
@@ -110,7 +185,7 @@ async function bouteilleDechet(masseKg) {
   verifier('import du registre exporté : accepté', ok !== false);
   const relus = await cible.getBsff();
   verifier('après import : le numéro du bordereau officiel a voyagé',
-    relus.some((x) => x.numeroBsff === 'SI-B2-001'
+    relus.some((x) => x.numeroBsff === 'SIF-2026-0001'
       && x.bordereauExterne === 'FF-2026-000123'),
     JSON.stringify(relus.map((x) => [x.numeroBsff, x.bordereauExterne])));
 }
@@ -147,7 +222,7 @@ async function bouteilleDechet(masseKg) {
     sans.texte['11_BSFF'] === '', String(sans.texte['11_BSFF']));
 
   await store.createBsff({
-    bouteilleId: bidon.id, numeroBsff: 'SI-B2-CERFA',
+    bouteilleId: bidon.id, numeroBsff: 'SIF-2026-0011',
     transporteur: 'Collecteur agréé',
     installationDestination: 'Centre de traitement agréé',
     masseRemiseKg: 1, dateRemise: '2026-07-24', operateur: 'testeur'
@@ -158,7 +233,7 @@ async function bouteilleDechet(masseKg) {
     interne.texte['11_BSFF'] === '', String(interne.texte['11_BSFF']));
 
   await store.createBsff({
-    bouteilleId: bidon.id, numeroBsff: 'SI-B2-CERFA-2',
+    bouteilleId: bidon.id, numeroBsff: 'SIF-2026-0012',
     bordereauExterne: 'FF-2026-000999',
     transporteur: 'Collecteur agréé',
     installationDestination: 'Centre de traitement agréé',

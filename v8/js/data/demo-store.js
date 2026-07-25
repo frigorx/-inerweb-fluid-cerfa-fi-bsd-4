@@ -74,6 +74,10 @@ import { verifierOctetsPdfFinal, nomFichierPdfFinal, CATEGORIE_PDF_FINAL,
   MSG_PDF_FINAL_MANQUANT, MSG_PDF_FINAL_HORS_OFFICIEL,
   MSG_PDF_FINAL_TRANSFERT, pdfFinalAttendu } from './pdf-final.js';
 import { verifierPlainte } from './plaintes.js';
+// Lot B2 — forme et unicité du numéro du SUIVI INTERNE de remise en
+// filière (miroir littéral CommonJS : server/remise-filiere.js).
+import { prochainNumeroSuivi, verifierNumeroSuivi, problemeNumerosSuivi }
+  from './remise-filiere.js';
 
 const CLE_STOCKAGE = 'inerweb-fluide-v8-demo';
 
@@ -463,6 +467,14 @@ function verifierInvariantsDonnees(candidat) {
       return `contrôle ${c.numero ?? c.id ?? '?'} : ` +
         'OFFICIEL sans mouvement lié (orphelin)';
     }
+  }
+  // ⭐ Lot B2 — UN DOUBLON NE PASSE NI PAR L'API, NI PAR L'IMPORT.
+  // Deux suivis de remise en filière portant le même numéro rendent la
+  // filière déchets illisible (quelle masse est partie sous quel numéro ?).
+  // Miroir EXACT du serveur (verifierInvariantsDonneesCandidat).
+  {
+    const probleme = problemeNumerosSuivi(candidat.bsff ?? []);
+    if (probleme) return probleme;
   }
   // ⭐ L2 (25/07) — LE VERROU DE LIVRAISON GARDE AUSSI LA PORTE DE
   // L'IMPORT. Attaque tirée : `creerMouvement { mode:'OFFICIEL' }` est
@@ -5549,8 +5561,20 @@ export function creerDemoStore() {
           'Sortie BSFF impossible : la bouteille doit d’abord être ' +
           'déclarée DÉCHET (décision sur le fluide récupéré).');
       }
-      if (!d.numeroBsff || !String(d.numeroBsff).trim()) {
-        throw new Error('Numéro de BSFF obligatoire.');
+      // ⭐ Lot B2 — LE LOGICIEL NUMÉROTE CE QUI LUI APPARTIENT. Le suivi
+      // est INTERNE : son numéro est attribué localement, sans réseau, au
+      // format SIF-AAAA-NNNN. Un numéro fourni doit respecter cette forme
+      // ET être libre — avant, n'importe quelle chaîne passait, doublons
+      // compris (attaque tirée : deux suivis du même numéro, HTTP 200).
+      const numerosExistants = donnees.bsff.map((b) => b.numeroBsff);
+      const dateRemise = d.dateRemise ?? aujourdHui();
+      let numeroSuivi = String(d.numeroBsff ?? '').trim();
+      if (!numeroSuivi) {
+        numeroSuivi = prochainNumeroSuivi(numerosExistants,
+          String(dateRemise).slice(0, 4));
+      } else {
+        const refus = verifierNumeroSuivi(numeroSuivi, numerosExistants);
+        if (refus) throw new Error(refus);
       }
       const masse = Number(d.masseRemiseKg);
       if (!Number.isFinite(masse) || masse <= 0) {
@@ -5566,11 +5590,11 @@ export function creerDemoStore() {
         bouteilleId: bouteille.id,
         bouteilleCode: bouteille.code,
         fluide: bouteille.fluide,
-        numeroBsff: String(d.numeroBsff).trim(),
+        numeroBsff: numeroSuivi,
         transporteur: d.transporteur ?? null,
         installationDestination: d.installationDestination ?? null,
         masseRemiseKg: arrondir(masse),
-        dateRemise: d.dateRemise ?? aujourdHui(),
+        dateRemise,
         // Lot B2 : le numéro du bordereau dématérialisé OFFICIEL, à sa
         // place — jamais confondu avec le numéro du suivi interne. Non
         // obligatoire (le bordereau peut être en cours) : on n'empêche

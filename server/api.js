@@ -56,6 +56,10 @@ const { calculerDeclarationAnnuelle } = require('./declaration-annuelle.js');
 // (détection effective, détection obligatoire, hermétique opposable, mobile
 // listé, garde de saisie). Parité prouvée par test-equipement.mjs.
 const equipement = require('./equipement.js');
+// Lot B2 — remise en filière déchets : forme et unicité du numéro du SUIVI
+// INTERNE (miroir littéral de v8/js/data/remise-filiere.js, parité prouvée
+// par test-remise-filiere-parite.mjs).
+const remiseFiliere = require('./remise-filiere.js');
 // Signatures réelles (lot C, brique C1) : déclarations figées + critères
 // d'illisibilité (miroir du module ESM du front, parité prouvée par
 // test-signatures-mouvement.mjs).
@@ -4356,8 +4360,20 @@ const HANDLERS = {
         'Sortie BSFF impossible : la bouteille doit d’abord être ' +
         'déclarée DÉCHET (décision sur le fluide récupéré).');
     }
-    if (!d.numeroBsff || !String(d.numeroBsff).trim()) {
-      throw new Error('Numéro de BSFF obligatoire.');
+    // ⭐ Lot B2 (MIROIR du DemoStore) — le logiciel numérote ce qui lui
+    // appartient : format SIF-AAAA-NNNN attribué localement, unicité
+    // garantie. Un numéro fourni doit respecter la forme ET être libre.
+    const numerosExistants = db.all('SELECT numero_bsff AS n FROM bsff')
+      .map((l) => l.n);
+    const dateRemiseSuivi = d.dateRemise ?? aujourdHui();
+    let numeroSuivi = String(d.numeroBsff ?? '').trim();
+    if (!numeroSuivi) {
+      numeroSuivi = remiseFiliere.prochainNumeroSuivi(numerosExistants,
+        String(dateRemiseSuivi).slice(0, 4));
+    } else {
+      const refus =
+        remiseFiliere.verifierNumeroSuivi(numeroSuivi, numerosExistants);
+      if (refus) throw new Error(refus);
     }
     const masse = Number(d.masseRemiseKg);
     if (!Number.isFinite(masse) || masse <= 0) {
@@ -4373,11 +4389,11 @@ const HANDLERS = {
       bouteilleId: bouteille.id,
       bouteilleCode: bouteille.code,
       fluide: bouteille.fluide,
-      numeroBsff: String(d.numeroBsff).trim(),
+      numeroBsff: numeroSuivi,
       transporteur: d.transporteur ?? null,
       installationDestination: d.installationDestination ?? null,
       masseRemiseKg: arrondir(masse),
-      dateRemise: d.dateRemise ?? aujourdHui(),
+      dateRemise: dateRemiseSuivi,
       // Lot B2 (MIROIR du DemoStore) : numéro du bordereau dématérialisé
       // OFFICIEL, distinct du numéro du suivi interne. Non obligatoire.
       bordereauExterne: String(d.bordereauExterne ?? '').trim() || null
@@ -5498,6 +5514,12 @@ function verifierInvariantsDonneesCandidat(candidat) {
       return `contrôle ${c.numero ?? c.id ?? '?'} : ` +
         'OFFICIEL sans mouvement lié (orphelin)';
     }
+  }
+  // ⭐ Lot B2 — UN DOUBLON NE PASSE NI PAR L'API, NI PAR L'IMPORT.
+  // Miroir EXACT du DemoStore (verifierInvariantsDonnees).
+  {
+    const probleme = remiseFiliere.problemeNumerosSuivi(candidat.bsff ?? []);
+    if (probleme) return probleme;
   }
   // ⭐ L2 (25/07) — LE VERROU DE LIVRAISON GARDE AUSSI LA PORTE DE
   // L'IMPORT. Attaque tirée : `creerMouvement { mode:'OFFICIEL' }` est

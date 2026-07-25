@@ -68,10 +68,15 @@ export async function ouvrirFormBsff(ctx, bouteilleId) {
     + 'sort du stock. Remise partielle : le reliquat reste en stock, '
     + 'toujours en statut déchet (délai de garde conservé).</span></div>'
 
+    // ⚠ Lot B2 — le numéro du SUIVI INTERNE n'est plus saisi : le logiciel
+    // l'attribue (SIF-AAAA-NNNN), donc il est unique et bien formé. Un
+    // champ libre invitait à y recopier un numéro officiel inexistant.
     + '<div class="grille-form-2">'
     + '<div class="champ">'
-    + '<label for="bsff-numero">N° du suivi interne *</label>'
-    + '<input id="bsff-numero" name="numeroBsff" type="text" required>'
+    + '<label>N° du suivi interne</label>'
+    + '<span class="champ-erreur" style="color:var(--texte-faible)">'
+    + 'Attribué automatiquement à l’enregistrement '
+    + '(format SIF-AAAA-NNNN).</span>'
     + '</div>'
     + '<div class="champ">'
     + '<label for="bsff-date">Date de remise *</label>'
@@ -180,17 +185,12 @@ export async function ouvrirFormBsff(ctx, bouteilleId) {
     effacerErreur();
 
     const donnees = new FormData(form);
-    const numeroBsff = String(donnees.get('numeroBsff') || '').trim();
     const bordereauExterne = String(donnees.get('bordereauExterne') || '').trim();
     const transporteur = String(donnees.get('transporteur') || '').trim();
     const installationDestination = String(donnees.get('installationDestination') || '').trim();
     const masseRemiseKg = nombreFr(donnees.get('masseRemiseKg'));
     const dateRemise = String(donnees.get('dateRemise') || '').trim();
 
-    if (!numeroBsff) {
-      afficherErreur('Le numéro du suivi interne est obligatoire.');
-      return;
-    }
     if (!transporteur) {
       afficherErreur('Le transporteur est obligatoire.');
       return;
@@ -215,7 +215,6 @@ export async function ouvrirFormBsff(ctx, bouteilleId) {
 
       const bsff = await store.createBsff({
         bouteilleId: bouteille.id,
-        numeroBsff,
         bordereauExterne,
         transporteur,
         installationDestination,

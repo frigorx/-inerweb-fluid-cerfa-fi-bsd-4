@@ -113,13 +113,13 @@ console.log('\n--- D. Colonne du bordereau officiel ---');
 const dechets = (await store.getBouteilles())
   .filter((b) => b.statut === 'DECHET' && b.masseNetteKg > 1);
 await store.createBsff({
-  bouteilleId: dechets[0].id, numeroBsff: 'SI-VUE-001',
+  bouteilleId: dechets[0].id, numeroBsff: 'SIF-2026-0001',
   bordereauExterne: 'FF-2026-000123', transporteur: 'Collecteur agréé',
   installationDestination: 'Centre de traitement agréé',
   masseRemiseKg: 0.5, dateRemise: '2026-07-24', operateur: 'testeur'
 });
 await store.createBsff({
-  bouteilleId: dechets[0].id, numeroBsff: 'SI-VUE-002',
+  bouteilleId: dechets[0].id, numeroBsff: 'SIF-2026-0002',
   transporteur: 'Collecteur agréé',
   installationDestination: 'Centre de traitement agréé',
   masseRemiseKg: 0.5, dateRemise: '2026-07-24', operateur: 'testeur'

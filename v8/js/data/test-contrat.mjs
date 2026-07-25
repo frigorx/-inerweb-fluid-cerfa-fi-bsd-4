@@ -961,27 +961,29 @@ verifier('décision DECHET : statut, état du fluide et délai de garde posés',
 
 await verifierRejet('createBsff refuse une bouteille qui n’est pas un déchet',
   store.createBsff({ bouteilleId: b1.id, numeroBsff: 'BSFF-X', masseRemiseKg: 1 }));
-// Préfixe UNIQUE par exécution : la suite doit rester rejouable contre
-// un store persistant (les numéros d'une passe précédente subsistent).
-const PREFIXE_BSFF = `BSFF-CONTRAT-${Date.now().toString(36).toUpperCase()}`;
+// Lot B2 : le numéro du suivi INTERNE est attribué par le logiciel
+// (SIF-AAAA-NNNN, unique) — la suite reste rejouable contre un store
+// persistant sans préfixe fabriqué, et l'unicité n'est plus notre affaire.
 const bsff1 = await store.createBsff({
-  bouteilleId: bR.id, numeroBsff: `${PREFIXE_BSFF}-001`,
+  bouteilleId: bR.id,
   transporteur: 'Transports du Sud', installationDestination: 'Récupfluides SA',
   masseRemiseKg: 0.5
 });
+verifier('createBsff attribue un numéro de suivi interne bien formé',
+  /^SIF-\d{4}-\d{4}$/.test(bsff1.numeroBsff), String(bsff1.numeroBsff));
 verifier('remise PARTIELLE : le reliquat reste en déchet (1,0 kg)',
   PROCHE((await store.getBouteilles()).find((b) => b.id === bR.id).masseNetteKg, 1)
   && (await store.getBouteilles()).find((b) => b.id === bR.id).statut === 'DECHET');
-await store.createBsff({
-  bouteilleId: bR.id, numeroBsff: `${PREFIXE_BSFF}-002`, masseRemiseKg: 1
+const bsff2 = await store.createBsff({
+  bouteilleId: bR.id, masseRemiseKg: 1
 });
 verifier('remise TOTALE : bouteille vidée et RETOURNEE',
   PROCHE((await store.getBouteilles()).find((b) => b.id === bR.id).masseNetteKg, 0)
   && (await store.getBouteilles()).find((b) => b.id === bR.id)
     .statut === 'RETOURNEE');
-verifier('getBsff trace les deux bordereaux',
+verifier('getBsff trace les deux suivis de remise en filière',
   (await store.getBsff()).filter((x) =>
-    String(x.numeroBsff).startsWith(PREFIXE_BSFF)).length === 2);
+    x.id === bsff1.id || x.id === bsff2.id).length === 2);
 verifier('le numéro de BSFF est reporté sur la bouteille',
   (await store.getBouteilles()).find((b) => b.id === bR.id).numBsff?.length > 0);
 
