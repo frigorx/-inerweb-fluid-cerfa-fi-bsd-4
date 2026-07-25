@@ -989,6 +989,73 @@ const signatureType = (surcharges = {}) => ({
     api.verifierTousPdfFinalConserves().anomalies.length === 0);
 }
 
+// ============================================================
+// 9. Lot B3 (brique 5) — LE TÉMOIN DE SESSION AU DOSSIER D'AUDIT
+// Le témoin est capté et stocké depuis la brique C1, mais il n'était
+// porté NULLE PART : on jetait une preuve qu'on possédait déjà. Il
+// entre au dossier scellé par signatures.csv. Tiré ici parce que
+// c'est le seul endroit du filet où des signatures existent AVEC une
+// vraie session (la Démo n'a pas de comptes).
+// ============================================================
+{
+  // Décor propre : la section 7 a rétrogradé le registre et retiré les
+  // signatures d'époque. On repose un brouillon SIGNÉ sous session.
+  const bCourante = api.appeler('getBouteilles', {}, sansSession)
+    .find((b) => b.id === bouteille.id);
+  const mvTemoin = api.appeler('creerMouvement', { donneesMouvement: {
+    type: 'CHARGE_APPOINT', machineId: machine.id, bouteilleSrcId: bouteille.id,
+    peseeAvantKg: bCourante.masseNetteKg,
+    peseeApresKg: bCourante.masseNetteKg - 0.2,
+    technicien: 'Référent Signature',
+    causeMouvement: 'Preuve du témoin de session' } }, sansSession);
+  api.appeler('signerMouvement', { mouvementId: mvTemoin.id,
+    signature: signatureType({ qualite: 'Professeur intervenant' }) }, session);
+  api.appeler('signerMouvement', { mouvementId: mvTemoin.id,
+    signature: signatureType({ role: 'DETENTEUR', parDelegation: true,
+      organisation: 'LP Jacques Raynaud' }) }, session);
+  // Une PJ ajoutée après coup PÉRIME les deux signatures : le dossier
+  // doit dire l'état de chacune, pas seulement leur existence.
+  api.appeler('ajouterPieceJointe', { donneesPj: {
+    entiteType: 'MOUVEMENT', entiteId: mvTemoin.id,
+    nomFichier: 'apres-signature.png', mimeType: 'image/png',
+    categorie: 'PHOTO_PESEE', base64: imagePng(2048) } }, session);
+  api.appeler('signerMouvement', { mouvementId: mvTemoin.id,
+    signature: signatureType() }, session);
+
+  const { csvSignatures } = await import('../v8/js/documents/exports.js');
+  const storeDuDossier = {
+    getMouvements: async () => api.appeler('getMouvements', {}, sansSession),
+    getSignaturesMouvement: async (id) => api.appeler(
+      'getSignaturesMouvement', { mouvementId: id }, sansSession)
+  };
+  const personnel = api.appeler('getPersonnel', {}, sansSession);
+  const annee = Number(new Date().toISOString().slice(0, 4));
+  const csv = await csvSignatures(storeDuDossier, annee, personnel);
+  verifier('signatures.csv est produit (des signatures existent cette année)',
+    typeof csv === 'string' && csv.length > 0);
+  const lignes = String(csv).replace(/^﻿/, '').split('\r\n')
+    .filter((l) => l !== '');
+  verifier('l’en-tête porte les DEUX colonnes du témoin de session',
+    lignes[0].includes('Session — personne')
+    && lignes[0].includes('Session — compte'), lignes[0]);
+  const ligneTechnicien = lignes.find((l) =>
+    l.includes(mvTemoin.numero) && l.includes('TECHNICIEN'));
+  verifier('la ligne du technicien porte la PERSONNE de session (fiche vivante)',
+    Boolean(ligneTechnicien) && ligneTechnicien.includes('Référent Signature'),
+    ligneTechnicien);
+  verifier('la ligne du technicien porte le COMPTE de session (témoin non ambigu)',
+    Boolean(ligneTechnicien) && ligneTechnicien.includes(session.utilisateur),
+    ligneTechnicien);
+  verifier('l’état de chaque signature est dit (valide / périmée)',
+    lignes.some((l) => l.includes('périmée')) &&
+    lignes.some((l) => l.includes('valide')),
+    lignes.slice(1, 3).join(' || '));
+  // DÉCISION D1 : deux signatures de la MÊME session, c'est normal —
+  // le dossier montre le fait et ne porte AUCUN verdict.
+  verifier('aucun verdict, aucun mot de suspicion dans le CSV',
+    !/suspect|douteu|anomalie de session|même session/i.test(String(csv)));
+}
+
 console.log(`\n${nbOk} vérifications réussies, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);
 console.log('Signatures réelles : parité stricte, parcours et attaques tirées, WORM prouvé, empreinte v2 gelée, PDF final contrôlé, conservé et témoigné (C3a+C3b).');

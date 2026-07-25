@@ -133,7 +133,11 @@ contre chacune.
   figée — les DEUX portes, mouvement ET contrôle lié —, empreinte vérifiée
   contre `hashPdfFinal` scellé, jamais le générateur, jamais de repli).
 - `documents/` : étiquettes QR, dossiers ZIP scellés SHA-256 (`dossier-commun.js`),
-  `exports.js` (tous les CSV du dossier d'audit), `verificateur.js`
+  `exports.js` (tous les CSV du dossier d'audit ; **lot B3 25/07 :
+  `signatures.csv` CONDITIONNEL — les signatures de l'année AVEC leur
+  TÉMOIN DE SESSION, personne résolue par la fiche VIVANTE donc
+  pseudonyme si elle est au coffre ; aucun verdict, aucune comparaison
+  de sessions — décision du propriétaire**), `verificateur.js`
   (99-VERIFICATEUR.html embarqué), `plaque-fgas.js` (seuils tCO₂eq 5/50/500).
   C5 (`dossier-audit.js`) : fiche officielle scellée → PDF CONSERVÉ
   restitué (jamais régénéré), verdicts `02-PDF-CONSERVES.txt`, contrôle

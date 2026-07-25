@@ -289,6 +289,68 @@ export async function csvOutilsIntervention(store, annee) {
   return construireCsv(entetes, lignes);
 }
 
+/**
+ * Lot B3 (25/07) — LES SIGNATURES AU DOSSIER D'AUDIT, avec leur TÉMOIN
+ * DE SESSION. Le témoin (compte connecté et fiche du personnel liée)
+ * est capté depuis la brique C1 et stocké en base, mais il n'était ni
+ * affiché ni porté nulle part : on jetait une preuve qu'on possédait
+ * déjà. Il est ici RENDU LISIBLE — la personne de session passe par la
+ * FICHE VIVANTE (donc par le pseudonyme si elle est au coffre), le
+ * compte reste l'identifiant technique, seul témoin non ambigu.
+ *
+ * DÉCISION DU PROPRIÉTAIRE (25/07) : que la même session pose les deux
+ * signatures est NORMAL. Aucune comparaison, aucun signalement, aucune
+ * colonne de verdict — on montre les faits, on ne juge pas.
+ *
+ * Le nom du SIGNATAIRE reste le champ FIGÉ de la signature scellée
+ * (aucun identifiant ne le relie à une fiche : même résidu que le
+ * technicien de mouvements.csv, consigné au plan E2 §9).
+ *
+ * Comme outils-intervention.csv : prend le STORE (un aller-retour par
+ * mouvement) et retourne null si l'année ne compte aucune signature —
+ * le fichier est alors omis du dossier.
+ * @param {object} store
+ * @param {number} annee
+ * @param {Array<object>} personnel
+ * @returns {Promise<string|null>}
+ */
+export async function csvSignatures(store, annee, personnel) {
+  const mouvements = await store.getMouvements();
+  const prefixe = `${annee}-`;
+  const ficheDe = (id) => {
+    if (!id) return null;
+    return personnel.find((p) => p.id === id) || null;
+  };
+  const entetes = ['Numéro mouvement', 'Date', 'Rôle', 'Prénom', 'Nom',
+    'Qualité', 'Par délégation', 'Détenteur représenté', 'Signée le',
+    'Révision signée', 'État', 'Empreinte du document signé',
+    'Déclaration signée', 'Session — personne', 'Session — compte'];
+  const lignes = [];
+  for (const mv of mouvements) {
+    if (!(mv.date || '').startsWith(prefixe)) continue;
+    let signatures = [];
+    try {
+      signatures = await store.getSignaturesMouvement(mv.id);
+    } catch {
+      signatures = [];
+    }
+    for (const sig of signatures) {
+      const fiche = ficheDe(sig.sessionPersonnelId);
+      lignes.push([
+        mv.numero, fmtDate(mv.date), sig.role, sig.prenom, sig.nom,
+        sig.qualite || '', ouiNon(sig.parDelegation), sig.organisation || '',
+        fmtDateHeure(sig.dateHeure), String(sig.versionDocument ?? ''),
+        sig.valide === true ? 'valide' : 'périmée',
+        sig.sha256Document || '', sig.declaration || '',
+        fiche ? `${fiche.prenom} ${fiche.nom}`.trim() : '',
+        sig.sessionCompteId || ''
+      ]);
+    }
+  }
+  if (!lignes.length) return null;
+  return construireCsv(entetes, lignes);
+}
+
 /** Contrôles d'étanchéité de l'année. */
 function csvControles(controles, annee) {
   const entetes = ['Date', 'Machine', 'Type de contrôle', 'Méthode',
@@ -424,8 +486,9 @@ function fmtDateHeure(iso) {
 // ------------------------------------------------------------
 
 /**
- * Construit les fichiers CSV du registre (11 fixes + jusqu'à 3 conditionnels :
- * photo nominative ×2, outils-intervention.csv — brique 2) pour l'année donnée.
+ * Construit les fichiers CSV du registre (14 fixes + jusqu'à 4 conditionnels :
+ * photo nominative ×2, outils-intervention.csv — brique 2 —, et
+ * signatures.csv — lot B3) pour l'année donnée.
  * @param {object} store - magasin de données v8 (contrat Phases A/B/C)
  * @param {number} annee - année de référence (mouvements, contrôles, balance)
  * @returns {Promise<Array<{ nom: string, contenu: string }>>}
@@ -495,6 +558,13 @@ export async function toutesLesTables(store, annee) {
   const csvOutils = await csvOutilsIntervention(store, annee);
   if (csvOutils !== null) {
     tables.push({ nom: 'outils-intervention.csv', contenu: csvOutils });
+  }
+  // Lot B3 : les signatures de l'année et leur TÉMOIN DE SESSION —
+  // même règle que ci-dessus (fichier omis si l'année n'en compte
+  // aucune, plutôt qu'un fichier vide au dossier scellé).
+  const csvSig = await csvSignatures(store, annee, personnel);
+  if (csvSig !== null) {
+    tables.push({ nom: 'signatures.csv', contenu: csvSig });
   }
   return tables;
 }

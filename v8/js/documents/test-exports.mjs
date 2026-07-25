@@ -321,6 +321,52 @@ verifier('genererJournalAuditPdf produit un PDF valide (en-tête %PDF-)',
     ligneMvRoles);
 }
 
+// --- 16. Lot B3 : signatures.csv entre au dossier scellé, avec le
+// témoin de session. CONDITIONNEL comme outils-intervention.csv : le
+// monde de démo n'a aucune signature réelle, donc pas de fichier.
+// (Le témoin RENSEIGNÉ se tire côté serveur, seul endroit du filet où
+// une vraie session existe : server/test-signatures-mouvement.mjs § 9.)
+{
+  verifier('signatures.csv absent tant qu’aucune signature réelle n’existe',
+    !(await toutesLesTables(store, ANNEE))
+      .some((f) => f.nom === 'signatures.csv'));
+
+  const fluideSig = (await store.getFluides())[0].code;
+  const machineSig = await store.createMachine({
+    designation: 'Machine export signatures', fluide: fluideSig,
+    chargeNominaleKg: 10
+  });
+  const bouteilleSig = await store.createBouteille({
+    type: 'NEUVE', fluide: fluideSig, tareKg: 10, masseBruteKg: 20,
+    contenanceMaxKg: 12
+  });
+  const mvSig = await store.creerMouvement({
+    type: 'CHARGE_APPOINT', machineId: machineSig.id,
+    bouteilleSrcId: bouteilleSig.id, peseeAvantKg: 20, peseeApresKg: 19,
+    technicien: 'Export Signatures'
+  });
+  const { pngDeTest } = await import('../../../server/fabrique-png-test.mjs');
+  await store.signerMouvement(mvSig.id, {
+    role: 'TECHNICIEN', nom: 'Signatures', prenom: 'Export',
+    qualite: 'Élève en formation',
+    imagePng: Buffer.from(pngDeTest()).toString('base64')
+  });
+
+  const fichiersSig = await toutesLesTables(store, ANNEE);
+  const tableSig = fichiersSig.find((f) => f.nom === 'signatures.csv');
+  verifier('signatures.csv apparaît dès qu’une signature réelle est posée',
+    Boolean(tableSig));
+  const lignesSig = tableSig ? lignesDe(tableSig.contenu) : [];
+  verifier('l’en-tête porte les deux colonnes du témoin de session',
+    Boolean(lignesSig[0]) && lignesSig[0].includes('Session — personne')
+    && lignesSig[0].includes('Session — compte'), lignesSig[0]);
+  const ligneSig = lignesSig.find((l) => l.startsWith(mvSig.numero + ';'));
+  verifier('la ligne porte le rôle, le signataire, l’état et l’empreinte signée',
+    Boolean(ligneSig) && ligneSig.includes('TECHNICIEN')
+    && ligneSig.includes('Export;Signatures') && ligneSig.includes(';valide;'),
+    ligneSig);
+}
+
 // --- Verdict ------------------------------------------------------
 console.log(`\n${nbOk} vérifications réussies, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);

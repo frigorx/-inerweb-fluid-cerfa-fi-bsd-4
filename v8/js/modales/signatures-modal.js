@@ -78,8 +78,18 @@ export async function remplirSimulationOfficielle(store, mv, zone) {
   }
 }
 
-/** Carte d'une signature posée et VALIDE (relecture, jamais d'édition). */
-function carteSignatureValide(sig) {
+/**
+ * Carte d'une signature posée et VALIDE (relecture, jamais d'édition).
+ * Lot B3 (25/07) : le TÉMOIN DE SESSION y est enfin porté. Il était
+ * capté et stocké depuis la brique C1, mais jamais montré — on jetait
+ * une preuve qu'on possédait déjà. DÉCISION DU PROPRIÉTAIRE : que la
+ * même session pose les deux signatures est NORMAL — aucun message,
+ * aucun avertissement, aucune comparaison. On montre le fait, c'est tout.
+ * @param {object} sig
+ * @param {?string} nomSession personne de la session (fiche VIVANTE :
+ *   pseudonyme si elle est au coffre), null si inconnue
+ */
+function carteSignatureValide(sig, nomSession) {
   const quand = sig.dateHeure
     ? fmtDate(sig.dateHeure.slice(0, 10)) : '';
   return '<div class="carte" style="padding:10px;margin-top:8px">'
@@ -93,6 +103,13 @@ function carteSignatureValide(sig) {
     + '</div>'
     + '<p style="font-size:12px;font-style:italic;color:var(--texte-2);'
     + 'margin:6px 0 0">« ' + esc(sig.declaration ?? '') + ' »</p>'
+    + (sig.sessionCompteId || nomSession
+      ? '<p style="font-size:12px;color:var(--texte-3);margin:6px 0 0">'
+        + 'Posée depuis la session '
+        + (nomSession ? '<strong>' + esc(nomSession) + '</strong> ' : '')
+        + '(compte ' + esc(sig.sessionCompteId || 'non enregistré') + ')'
+        + '</p>'
+      : '')
     + (sig.imagePng
       ? '<img alt="Tracé de la signature" style="max-height:48px;'
         + 'margin-top:6px;border:1px solid var(--bordure,#e2e8f0);'
@@ -169,13 +186,20 @@ export async function ouvrirSignaturesMouvement(ctx, mv, options = {}) {
       }
     }
   } catch {}
-  let intervenant = null;
-  try {
-    if (mv.executeParId) {
-      const personnel = await store.getPersonnel();
-      intervenant = personnel.find((p) => p.id === mv.executeParId) || null;
-    }
-  } catch {}
+  // Le personnel sert au pré-remplissage ET, depuis le lot B3, à
+  // nommer la session qui a posé chaque signature (fiche VIVANTE :
+  // pseudonyme si la personne est au coffre).
+  let personnel = [];
+  try { personnel = await store.getPersonnel(); } catch {}
+  const intervenant = mv.executeParId
+    ? (personnel.find((p) => p.id === mv.executeParId) || null)
+    : null;
+  const nomDeSession = (sig) => {
+    const fiche = sig && sig.sessionPersonnelId
+      ? personnel.find((p) => p.id === sig.sessionPersonnelId)
+      : null;
+    return fiche ? `${fiche.prenom} ${fiche.nom}`.trim() : null;
+  };
 
   const instance = modale({
     titre: 'Signatures de la fiche ' + mv.numero,
@@ -195,7 +219,7 @@ export async function ouvrirSignaturesMouvement(ctx, mv, options = {}) {
       ? parcours.signatureTechnicien : parcours.signatureDetenteur;
     let corps = '';
     if (etat === 'VALIDE') {
-      corps = carteSignatureValide(retenue);
+      corps = carteSignatureValide(retenue, nomDeSession(retenue));
     } else {
       if (etat === 'PERIMEE') {
         corps += '<div class="bandeau-avertissement" style="display:block">'
