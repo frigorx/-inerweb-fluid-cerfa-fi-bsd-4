@@ -128,6 +128,40 @@ function construirePng(o) {
     chunk('IEND', Buffer.alloc(0))]);
 }
 
+/**
+ * Fabrique un PNG en PALETTE 8 bits (type de couleur 3) : indices,
+ * PLTE, et éventuellement tRNS (alpha par entrée de palette).
+ * @param {object} o largeur, hauteur, indices (Uint8Array), palette
+ *   (octets RVB), trns (octets alpha, facultatif)
+ */
+function construirePngPalette(o) {
+  const parLigne = o.largeur;
+  const brut = Buffer.alloc(o.hauteur * (parLigne + 1));
+  for (let y = 0; y < o.hauteur; y += 1) {
+    brut[y * (parLigne + 1)] = 0;
+    Buffer.from(o.indices.subarray(y * parLigne, (y + 1) * parLigne))
+      .copy(brut, (y * (parLigne + 1)) + 1);
+  }
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(o.largeur, 0);
+  ihdr.writeUInt32BE(o.hauteur, 4);
+  ihdr[8] = 8;
+  ihdr[9] = 3;
+  const morceaux = [EN_TETE, chunk('IHDR', ihdr),
+    chunk('PLTE', Buffer.from(o.palette))];
+  if (o.trns) morceaux.push(chunk('tRNS', Buffer.from(o.trns)));
+  morceaux.push(chunk('IDAT', zlib.deflateSync(brut)));
+  morceaux.push(chunk('IEND', Buffer.alloc(0)));
+  return Buffer.concat(morceaux);
+}
+
+/** Damier d'indices de palette (une entrée sur deux). */
+function indicesDamier(largeur, hauteur, a, b) {
+  const p = new Uint8Array(largeur * hauteur);
+  for (let i = 0; i < p.length; i += 1) p[i] = (i % 2) ? b : a;
+  return p;
+}
+
 /** Image RGBA d'une seule couleur (canvas jamais dessiné). */
 function pixelsUnis(largeur, hauteur, couleur) {
   const p = new Uint8Array(largeur * hauteur * 4);
@@ -414,6 +448,135 @@ function pixelsUnis(largeur, hauteur, couleur) {
   const debut = Date.now();
   verifier('bombe de décompression 20 000 × 20 000 : INDETERMINABLE, sans décoder',
     miroir.analyseEncre(bombe) === 'INDETERMINABLE' && Date.now() - debut < 2000);
+}
+
+// ============================================================
+// 5. LES IMAGES VISUELLEMENT BLANCHES (revue adversariale du 25/07)
+//
+// Le module comparait les octets BRUTS, canal par canal — il répondait
+// donc « ENCRE » AVEC ASSURANCE sur deux familles d'images sur
+// lesquelles il n'y a RIGOUREUSEMENT RIEN à voir. Ce n'était pas un
+// doute assumé (INDETERMINABLE) : c'était le mensonge exact que le lot
+// prétend fermer, retourné contre lui. On compose l'alpha, on résout la
+// palette — et on vérifie que rien de VISIBLE n'a été perdu au passage.
+// ============================================================
+{
+  const lesDeux = (octets, attendu, libelle) => {
+    const a = moduleEsm.analyseEncre(new Uint8Array(octets));
+    const b = miroir.analyseEncre(new Uint8Array(octets));
+    verifier(libelle, a === attendu && b === attendu, `ESM ${a} · CJS ${b}`);
+  };
+
+  // FAMILLE A — alpha nul PARTOUT, couleurs qui varient. Rien ne se voit.
+  {
+    const p = new Uint8Array(400 * 200 * 4);
+    for (let i = 0; i < p.length; i += 4) {
+      p[i] = (i * 7) % 251;
+      p[i + 1] = (i * 13) % 241;
+      p[i + 2] = (i * 29) % 239;
+      p[i + 3] = 0; // invisible
+    }
+    lesDeux(construirePng({ largeur: 400, hauteur: 200, pixels: p }), 'VIDE',
+      '⭐ RGBA 400×200, alpha nul partout et couleurs qui varient → VIDE');
+  }
+  // … même chose en gris+alpha (type 4) et en 16 bits : la composition de
+  // l'alpha ne doit pas dépendre du format.
+  {
+    const p = new Uint8Array(60 * 30 * 2);
+    for (let i = 0; i < p.length; i += 2) { p[i] = (i * 11) % 253; p[i + 1] = 0; }
+    lesDeux(construirePng({ largeur: 60, hauteur: 30, pixels: p,
+      canaux: 2, typeCouleur: 4 }), 'VIDE',
+    'gris+alpha, alpha nul partout et gris qui varie → VIDE');
+  }
+  {
+    const p = new Uint8Array(20 * 10 * 8);
+    for (let i = 0; i < p.length; i += 8) {
+      p[i] = (i * 3) % 251; p[i + 1] = (i * 5) % 247;
+      p[i + 2] = (i * 7) % 241; p[i + 3] = (i * 11) % 239;
+      p[i + 4] = (i * 13) % 233; p[i + 5] = (i * 17) % 229;
+      p[i + 6] = 0; p[i + 7] = 0; // alpha 16 bits nul
+    }
+    lesDeux(construirePng({ largeur: 20, hauteur: 10, pixels: p,
+      canaux: 4, typeCouleur: 6, profondeur: 16 }), 'VIDE',
+    'RGBA 16 bits, alpha nul partout et couleurs qui varient → VIDE');
+  }
+  // CONTRE-ÉPREUVE : dès que l'alpha VARIE, quelque chose se voit.
+  {
+    const p = new Uint8Array(40 * 20 * 4);
+    for (let i = 0; i < p.length; i += 4) {
+      p[i] = 10; p[i + 1] = 20; p[i + 2] = 30; p[i + 3] = 0;
+    }
+    p[4 * 137 + 3] = 255; // un seul pixel opaque
+    lesDeux(construirePng({ largeur: 40, hauteur: 20, pixels: p }), 'ENCRE',
+      'contre-épreuve : UN pixel opaque sur fond transparent → ENCRE');
+  }
+
+  // FAMILLE B — palette dont toutes les entrées sont BLANCHES : les
+  // index varient, l'image est un aplat.
+  {
+    const png = construirePngPalette({ largeur: 64, hauteur: 32,
+      indices: indicesDamier(64, 32, 0, 1),
+      palette: [255, 255, 255, 255, 255, 255] });
+    lesDeux(png, 'VIDE',
+      '⭐ palette 8 bits, deux entrées TOUTES DEUX blanches, damier → VIDE');
+  }
+  // CONTRE-ÉPREUVE : deux entrées de couleurs DIFFÉRENTES → il y a un tracé.
+  {
+    const png = construirePngPalette({ largeur: 64, hauteur: 32,
+      indices: indicesDamier(64, 32, 0, 1),
+      palette: [255, 255, 255, 14, 42, 71] });
+    lesDeux(png, 'ENCRE',
+      'contre-épreuve : palette à deux couleurs DIFFÉRENTES → ENCRE');
+  }
+  // CONTRE-ÉPREUVE : mêmes couleurs, mais tRNS rend une entrée invisible —
+  // blanc opaque contre transparent, cela se voit.
+  {
+    const png = construirePngPalette({ largeur: 64, hauteur: 32,
+      indices: indicesDamier(64, 32, 0, 1),
+      palette: [255, 255, 255, 255, 255, 255], trns: [255, 0] });
+    lesDeux(png, 'ENCRE',
+      'contre-épreuve : palette blanche mais tRNS transparent sur une '
+      + 'entrée → ENCRE');
+  }
+  // … et si TOUTES les entrées sont transparentes, il n'y a rien.
+  {
+    const png = construirePngPalette({ largeur: 64, hauteur: 32,
+      indices: indicesDamier(64, 32, 0, 1),
+      palette: [255, 255, 255, 14, 42, 71], trns: [0, 0] });
+    lesDeux(png, 'VIDE',
+      'palette à deux couleurs mais tRNS transparent PARTOUT → VIDE');
+  }
+  // Palette illisible : on ne conclut RIEN (doute assumé, jamais « vide »).
+  {
+    const sansPlte = (() => {
+      const ihdr = Buffer.alloc(13);
+      ihdr.writeUInt32BE(4, 0);
+      ihdr.writeUInt32BE(4, 4);
+      ihdr[8] = 8; ihdr[9] = 3;
+      return Buffer.concat([EN_TETE, chunk('IHDR', ihdr),
+        chunk('IDAT', zlib.deflateSync(Buffer.alloc(4 * 5))),
+        chunk('IEND', Buffer.alloc(0))]);
+    })();
+    lesDeux(sansPlte, 'INDETERMINABLE',
+      'palette annoncée mais PLTE absent → INDETERMINABLE (jamais « vide »)');
+    const horsPalette = construirePngPalette({ largeur: 8, hauteur: 4,
+      indices: indicesDamier(8, 4, 0, 5), // l'index 5 n'existe pas
+      palette: [255, 255, 255, 0, 0, 0] });
+    lesDeux(horsPalette, 'INDETERMINABLE',
+      'index hors de la palette → INDETERMINABLE (jamais « vide »)');
+  }
+
+  // Une signature RÉELLE reste une signature : le tracé sombre sur fond
+  // transparent que produit le canvas du wizard depuis la brique 4.
+  {
+    const p = new Uint8Array(200 * 100 * 4);
+    for (let x = 20; x < 180; x += 1) {
+      const i = ((50 * 200) + x) * 4;
+      p[i] = 14; p[i + 1] = 42; p[i + 2] = 71; p[i + 3] = 255;
+    }
+    lesDeux(construirePng({ largeur: 200, hauteur: 100, pixels: p }), 'ENCRE',
+      'non-régression : un trait opaque sur canvas transparent → ENCRE');
+  }
 }
 
 // ============================================================

@@ -81,10 +81,15 @@ function lireU32(octets, position) {
  * moins un IDAT, IEND en fin, rien après.
  * @param {?Uint8Array} octets contenu binaire
  * @returns {{ok: boolean, motif: ?string, entete: ?object,
- *   idat: ?Array<{debut: number, fin: number}>}}
+ *   idat: ?Array<{debut: number, fin: number}>,
+ *   plte: ?{debut: number, fin: number}, nbPlte: number,
+ *   trns: ?{debut: number, fin: number}, nbTrns: number}}
  */
 function verifierStructurePng(octets) {
-  const refus = (motif) => ({ ok: false, motif, entete: null, idat: null });
+  const refus = (motif) => ({
+    ok: false, motif, entete: null, idat: null,
+    plte: null, nbPlte: 0, trns: null, nbTrns: 0
+  });
   if (!octets || octets.length < 8) return refus('tampon vide ou tronqué');
   for (let i = 0; i < MAGIQUES_PNG.length; i += 1) {
     if (octets[i] !== MAGIQUES_PNG[i]) return refus('en-tête PNG absent');
@@ -94,6 +99,15 @@ function verifierStructurePng(octets) {
   let vuIend = false;
   let nbChunks = 0;
   const idat = [];
+  // PLTE et tRNS sont RETENUS : sans eux, une image en palette ne peut
+  // pas être jugée (deux index différents peuvent désigner la MÊME
+  // couleur — l'image est alors un aplat). Leur NOMBRE est compté : la
+  // norme n'en admet qu'un, et un fichier qui en porte deux ne se lit
+  // pas de façon univoque (on ne conclura donc rien sur son encre).
+  let plte = null;
+  let nbPlte = 0;
+  let trns = null;
+  let nbTrns = 0;
   while (position < octets.length) {
     if (vuIend) return refus('octets après IEND');
     if (position + 8 > octets.length) return refus('chunk tronqué (en-tête)');
@@ -145,6 +159,14 @@ function verifierStructurePng(octets) {
         canaux: CANAUX_PAR_TYPE[typeCouleur]
       };
     }
+    if (type === 'PLTE') {
+      nbPlte += 1;
+      plte = { debut: position + 8, fin: finDonnees };
+    }
+    if (type === 'tRNS') {
+      nbTrns += 1;
+      trns = { debut: position + 8, fin: finDonnees };
+    }
     if (type === 'IDAT') idat.push({ debut: position + 8, fin: finDonnees });
     if (type === 'IEND') {
       if (taille !== 0) return refus('IEND non vide');
@@ -156,7 +178,7 @@ function verifierStructurePng(octets) {
   if (!entete) return refus('IHDR absent');
   if (!idat.length) return refus('aucune donnée d’image (IDAT)');
   if (!vuIend) return refus('IEND absent');
-  return { ok: true, motif: null, entete, idat };
+  return { ok: true, motif: null, entete, idat, plte, nbPlte, trns, nbTrns };
 }
 
 // ------------------------------------------------------------
@@ -421,16 +443,48 @@ function paeth(a, b, c) {
 function analyseEncre(octets) {
   const structure = verifierStructurePng(octets);
   if (!structure.ok) return 'INDETERMINABLE';
-  const { largeur, hauteur, profondeur, entrelacement, canaux } =
+  const { largeur, hauteur, profondeur, entrelacement, canaux, typeCouleur } =
     structure.entete;
   // Entrelacement Adam7 et profondeurs sous-octet : hors de ce que l'on
   // sait relire (un canvas n'en produit jamais). On ne conclut pas.
   if (entrelacement !== 0) return 'INDETERMINABLE';
   if (profondeur < 8) return 'INDETERMINABLE';
-  const octetsParPixel = canaux * (profondeur / 8);
+  const octetsParEchantillon = profondeur / 8;
+  const octetsParPixel = canaux * octetsParEchantillon;
   const octetsParLigne = largeur * octetsParPixel;
   const surface = hauteur * (octetsParLigne + 1);
   if (surface > SURFACE_MAX_OCTETS) return 'INDETERMINABLE';
+  // ⚠️ Revue du 25/07 — deux familles d'images RIGOUREUSEMENT invisibles
+  // étaient déclarées « ENCRE » avec assurance parce que l'on comparait
+  // les octets BRUTS, canal par canal :
+  //   · alpha nul PARTOUT, couleurs qui varient : rien ne se voit, et le
+  //     module criait « il y a de l'encre » sur une case blanche ;
+  //   · palette dont TOUTES les entrées sont de la même couleur : les
+  //     index varient, l'image est un aplat.
+  // On compose donc l'alpha (alpha nul = pixel invisible, quelle que
+  // soit sa couleur) et on RÉSOUT la palette avant de comparer.
+  const avecAlpha = typeCouleur === 4 || typeCouleur === 6;
+  let plteDebut = 0;
+  let nbEntreesPalette = 0;
+  let trnsDebut = 0;
+  let nbAlphasPalette = 0;
+  if (typeCouleur === 3) {
+    // Sans palette lisible (absente, en double, taille non multiple de 3)
+    // ou avec deux tRNS, on ne sait PAS ce qui est affiché : doute assumé.
+    if (!structure.plte || structure.nbPlte !== 1) return 'INDETERMINABLE';
+    if (structure.nbTrns > 1) return 'INDETERMINABLE';
+    const taillePlte = structure.plte.fin - structure.plte.debut;
+    if (taillePlte === 0 || taillePlte % 3 !== 0) return 'INDETERMINABLE';
+    plteDebut = structure.plte.debut;
+    nbEntreesPalette = taillePlte / 3;
+    if (structure.trns) {
+      trnsDebut = structure.trns.debut;
+      nbAlphasPalette = structure.trns.fin - structure.trns.debut;
+    }
+  }
+  // Les types SANS canal alpha (gris, RVB) n'ont pas besoin de tRNS ici :
+  // il n'y désigne qu'UNE seule valeur transparente, donc deux pixels
+  // d'octets différents restent deux rendus différents.
   // Les IDAT forment UN SEUL flux zlib, à recoller bout à bout.
   let total = 0;
   for (const bloc of structure.idat) total += bloc.fin - bloc.debut;
@@ -449,10 +503,13 @@ function analyseEncre(octets) {
     return 'INDETERMINABLE';
   }
   // Dé-filtrage ligne à ligne, en comparant au fur et à mesure au tout
-  // premier pixel : dès qu'un pixel diffère, il y a de l'encre.
+  // premier pixel : dès qu'un pixel VU DIFFÉREMMENT apparaît, il y a de
+  // l'encre.
   const ligne = new Uint8Array(octetsParLigne);
   const precedente = new Uint8Array(octetsParLigne);
-  const premier = new Uint8Array(octetsParPixel);
+  const tailleCle = typeCouleur === 3 ? 4 : octetsParPixel;
+  const cle = new Uint8Array(tailleCle);
+  const premier = new Uint8Array(tailleCle);
   let premierLu = false;
   let encre = false;
   for (let y = 0; y < hauteur; y += 1) {
@@ -473,14 +530,43 @@ function analyseEncre(octets) {
       ligne[x] = reconstitue & 0xff;
     }
     if (!encre) {
-      for (let x = 0; x < octetsParLigne; x += 1) {
-        const rang = x % octetsParPixel;
+      for (let p = 0; p < largeur; p += 1) {
+        const base = p * octetsParPixel;
+        if (typeCouleur === 3) {
+          const index = ligne[base];
+          // Un index hors palette n'est pas affichable : on ne conclut pas.
+          if (index >= nbEntreesPalette) return 'INDETERMINABLE';
+          const alpha = index < nbAlphasPalette ? octets[trnsDebut + index] : 255;
+          if (alpha === 0) {
+            cle[0] = 0; cle[1] = 0; cle[2] = 0; cle[3] = 0;
+          } else {
+            cle[0] = octets[plteDebut + (index * 3)];
+            cle[1] = octets[plteDebut + (index * 3) + 1];
+            cle[2] = octets[plteDebut + (index * 3) + 2];
+            cle[3] = alpha;
+          }
+        } else {
+          // Alpha nul (tous ses octets à zéro) : pixel RIGOUREUSEMENT
+          // invisible — sa couleur ne se voit pas, elle ne compte pas.
+          let invisible = avecAlpha;
+          if (invisible) {
+            for (let i = octetsParPixel - octetsParEchantillon;
+              i < octetsParPixel; i += 1) {
+              if (ligne[base + i] !== 0) { invisible = false; break; }
+            }
+          }
+          for (let i = 0; i < octetsParPixel; i += 1) {
+            cle[i] = invisible ? 0 : ligne[base + i];
+          }
+        }
         if (!premierLu) {
-          premier[rang] = ligne[x];
-          if (rang === octetsParPixel - 1) premierLu = true;
-        } else if (ligne[x] !== premier[rang]) {
-          encre = true;
-          break;
+          premier.set(cle);
+          premierLu = true;
+        } else {
+          for (let i = 0; i < tailleCle; i += 1) {
+            if (cle[i] !== premier[i]) { encre = true; break; }
+          }
+          if (encre) break;
         }
       }
     }
