@@ -2226,6 +2226,74 @@ function imagePngTest(taille = 1200) {
   await verifierRejet('getSignaturesMouvement refuse un mouvement introuvable',
     store.getSignaturesMouvement('mvt-fantome'), 'introuvable');
 
+  // ------------------------------------------------------------
+  // ⭐ REVUE DU 25/07 (IMPORTANT 1) — LA PORTE IMPORT N'ÉTAIT PAS GARDÉE.
+  // La POSE refuse le bloc de texte aux 8 octets magiques (A04). L'IMPORT,
+  // lui, ne regardait pas l'image : on exportait, on REMPLAÇAIT l'image
+  // des deux signatures par ce bloc, on réimportait — et les conditions
+  // bloquantes 14/15 du mode Officiel DISPARAISSAIENT. Une signature dont
+  // l'image est illisible n'est pas une signature : elle ne vaut nulle
+  // part, quelle que soit la porte par laquelle elle est entrée.
+  // ------------------------------------------------------------
+  {
+    // Le mouvement a été rejeté : on re-signe proprement la révision
+    // courante pour partir d'une fiche RÉELLEMENT signée (le témoin).
+    await store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN',
+      nom: 'Contrat', prenom: 'Testeur', imagePng: imagePngTest() });
+    await store.signerMouvement(brouillonSig.id, { role: 'DETENTEUR',
+      nom: 'Dupont', prenom: 'Marie', imagePng: imagePngTest() });
+    const avantAttaque = await store.getSignaturesMouvement(brouillonSig.id);
+    verifier('témoin : les deux signatures de la révision courante sont valides',
+      avantAttaque.filter((s) => s.valide === true).length === 2,
+      JSON.stringify(avantAttaque.map((s) => [s.role, s.valide])));
+    const temoin = await store.simulerValidationOfficielle(brouillonSig.id);
+    verifier('témoin : fiche réellement signée → aucun blocage de signature',
+      !temoin.blocages.some((b) => b.code === 'SIGNATURE_TECHNICIEN'
+        || b.code === 'SIGNATURE_DETENTEUR'),
+      JSON.stringify(temoin.blocages.map((b) => b.code)));
+
+    // L'attaque, mot pour mot celle du relecteur : le bloc que la POSE
+    // refuse est glissé à la place des deux tracés, par le fichier.
+    const bloc = new Uint8Array(2348).fill(0x2e);
+    [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
+      .forEach((o, i) => { bloc[i] = o; });
+    const blocBase64 = Buffer.from(bloc).toString('base64');
+    await verifierRejet('témoin : la POSE refuse ce bloc de 2 348 octets',
+      store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN',
+        nom: 'Contrat', prenom: 'Testeur', imagePng: blocBase64 }),
+      'n’est pas un PNG valide');
+
+    const forge = JSON.parse(await store.exporterJSON());
+    let forgees = 0;
+    for (const sig of forge.donnees.signaturesMouvement) {
+      if (sig.mouvementId === brouillonSig.id) {
+        sig.imagePng = blocBase64;
+        forgees += 1;
+      }
+    }
+    verifier('décor : toutes les images du brouillon sont remplacées',
+      forgees === avantAttaque.length, `${forgees} signature(s) touchée(s)`);
+    const importe = await store.importerJSON(JSON.stringify(forge));
+    verifier('le fichier est ACCEPTÉ (on n’empêche pas d’importer un registre)',
+      importe === true);
+
+    const apresImport = await store.getSignaturesMouvement(brouillonSig.id);
+    verifier('⭐ une signature à l’image illisible n’est PLUS déclarée valide',
+      apresImport.length === avantAttaque.length
+      && apresImport.every((s) => s.valide === false),
+      JSON.stringify(apresImport.map((s) => s.valide)));
+    const apres = await store.simulerValidationOfficielle(brouillonSig.id);
+    verifier('⭐ les conditions 14 et 15 du mode Officiel SONT DE RETOUR',
+      apres.blocages.some((b) => b.code === 'SIGNATURE_TECHNICIEN')
+      && apres.blocages.some((b) => b.code === 'SIGNATURE_DETENTEUR'),
+      JSON.stringify(apres.blocages.map((b) => b.code)));
+    verifier('… avec le message canonique EXISTANT (aucune condition ajoutée)',
+      apres.blocages.filter((b) => b.code === 'SIGNATURE_TECHNICIEN'
+        || b.code === 'SIGNATURE_DETENTEUR')
+        .every((b) => !b.motif.includes('Fiche modifiée après signature')),
+      JSON.stringify(apres.blocages.map((b) => b.motif)));
+  }
+
   // Suppression du brouillon : ses signatures partent avec lui — la trace
   // reste au journal (une entrée SIGNATURE_MOUVEMENT par signature posée).
   await store.supprimerMouvement(brouillonSig.id);

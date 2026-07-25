@@ -1319,14 +1319,40 @@ export function creerDemoStore() {
   }
 
   /**
+   * Lot B3 / revue du 25/07 : une signature ne vaut QUE si son image est
+   * recevable — la garde de la POSE (verifierImageSignature) vaut PARTOUT.
+   * Sans cela, une porte d'entrée qui ne la joue pas (l'import d'un JSON)
+   * suffisait à faire DISPARAÎTRE les conditions bloquantes 14/15 du mode
+   * Officiel : on exportait, on remplaçait l'image par le bloc de texte
+   * que la pose refuse, on réimportait, et la fiche se déclarait signée
+   * (attaque TIRÉE par la revue adversariale du lot).
+   *
+   * Une image illisible n'est pas une signature « périmée » : ce n'est
+   * PAS une signature. Elle est écartée AVANT le tri-état — la fiche
+   * retombe sur « signature absente », le message canonique existant,
+   * sans qu'aucune condition nouvelle soit ajoutée au moteur.
+   * Miroir exact du serveur.
+   */
+  function imageSignatureRecevable(imagePng) {
+    try {
+      return verifierImageSignature(base64VersOctets(imagePng ?? '')) === null;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Lot C (C1) : état d'une signature RÉELLE pour le moteur de blocage —
    * true (une signature du rôle vaut pour la révision courante) | false
    * (aucune signature du rôle) | 'PERIMEE' (posée puis fiche modifiée).
+   * Une signature dont l'IMAGE est illisible n'en est pas une (lot B3,
+   * revue du 25/07) : elle est écartée avant le tri-état.
    */
   function etatSignatureReelle(mouvement, role) {
     const revision = mouvement.revisionBrouillon ?? 0;
     const duRole = (donnees.signaturesMouvement ?? []).filter((sig) =>
-      sig.mouvementId === mouvement.id && sig.role === role);
+      sig.mouvementId === mouvement.id && sig.role === role
+      && imageSignatureRecevable(sig.imagePng));
     if (duRole.some((sig) => (sig.versionDocument ?? 0) === revision)) {
       return true;
     }
@@ -4146,7 +4172,11 @@ export function creerDemoStore() {
           return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0);
         })
         .map((sig) => ({ ...copier(sig),
-          valide: (sig.versionDocument ?? 0) === revision }));
+          // Lot B3 / revue du 25/07 : « valide » exige AUSSI une image
+          // recevable — sans quoi l'écran, le CERFA et le dossier d'audit
+          // répéteraient la validité d'une image que la pose refuse.
+          valide: (sig.versionDocument ?? 0) === revision
+            && imageSignatureRecevable(sig.imagePng) }));
     },
 
     async validerMouvement(id, validateurId, pdfFinalBase64 = null) {
