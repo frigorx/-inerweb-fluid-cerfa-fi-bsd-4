@@ -127,6 +127,49 @@ console.log('--- A bis. Les mêmes bornes à la MODIFICATION (déjà L2) ---');
     corrigee.chargeActuelleKg === 6);
 }
 
+console.log('--- A ter. Charge utile à DOUBLE violation : c’est le RANG '
+  + 'qui décide du message ---');
+{
+  // ⭐⭐ REVUE B1, constat important n°3 — LE TROU DE COUVERTURE.
+  // Le lot B1 avait remonté le refus des deux dates de contrôle AVANT les
+  // bornes de charge côté SERVEUR, et l'avait laissé APRÈS côté DÉMO. Les
+  // deux stores refusaient bien, mais avec des messages DIFFÉRENTS :
+  //   serveur → « Les dates de contrôle d'une machine… »
+  //   démo    → « Charge actuelle impossible : 9999 kg… »
+  // Aucune suite ne tirait de charge utile à DOUBLE violation : l'écart
+  // est passé. La parité, ce n'est pas « les deux refusent », c'est le
+  // MÊME message canonique, mot pour mot — donc le même RANG d'évaluation.
+  const m = await store.createMachine(fiche({ chargeActuelleKg: 5 }));
+  const MSG_DATES = 'Les dates de contrôle d’une machine ne se saisissent '
+    + 'pas ici';
+  await attendreRefus('double violation (charge hors bornes ET date de '
+    + 'contrôle) : c’est le refus des DATES qui sort',
+  store.updateMachine(m.id,
+    { chargeActuelleKg: 9999, dernierControle: '2026-01-05' }),
+  MSG_DATES);
+  await attendreRefus('… et l’ordre des clés de la charge utile n’y change '
+    + 'rien (c’est le rang du code, pas celui de l’objet)',
+  store.updateMachine(m.id,
+    { dernierControle: '2026-01-05', chargeActuelleKg: 9999 }),
+  MSG_DATES);
+  await attendreRefus('… même face à une charge NOMINALE nulle, qui est '
+    + 'pourtant elle aussi un refus métier',
+  store.updateMachine(m.id,
+    { chargeNominaleKg: 0, prochainControle: '2099-12-31' }),
+  MSG_DATES);
+  // Contre-épreuve : SANS la date, c'est bien le message de la charge qui
+  // sort — sans quoi l'assertion ci-dessus serait vraie pour de mauvaises
+  // raisons (un refus qui sortirait toujours le même message).
+  await attendreRefus('contre-épreuve : sans date dans la charge utile, '
+    + 'c’est bien le message de la CHARGE qui sort',
+  store.updateMachine(m.id, { chargeActuelleKg: 9999 }),
+  'Charge actuelle impossible');
+  await attendreRefus('contre-épreuve : … et celui de la charge NOMINALE '
+    + 'quand c’est elle qui cloche',
+  store.updateMachine(m.id, { chargeNominaleKg: 0 }),
+  'Charge nominale obligatoire');
+}
+
 // ============================================================
 // B. « Une date est une date » — sur la machine aussi
 // ============================================================
