@@ -39,6 +39,57 @@ function optionsSimples(valeurs, valeurCourante) {
   }).join('');
 }
 
+// ------------------------------------------------------------
+// ⭐ B1 (25/07) — L'ÉCRAN SUIT LA RÈGLE DU STORE.
+// La garde qui COMPTE est côté serveur (garderQualificationMachine, aux
+// deux portes). Ici on évite le PIÈGE ERGONOMIQUE déjà payé par la revue
+// L2 : fermer l'API sans toucher à l'écran, c'est laisser l'élève remplir
+// tout le bloc « Nature de l'équipement » pour prendre un 403 à la fin —
+// l'écran devient MORT pour lui. Patron repris de views/fluides.js
+// (gestes réservés via getUtilisateurCourant). Le store de démo répond
+// « référent » : la démo reste pleinement utilisable.
+// ------------------------------------------------------------
+const ROLES_QUALIFICATION = ['REFERENT', 'ENSEIGNANT', 'ADMIN'];
+
+/** L'utilisateur courant peut-il qualifier un équipement ? */
+export function peutQualifierEquipement(utilisateur) {
+  return ROLES_QUALIFICATION.includes(utilisateur && utilisateur.roleApp);
+}
+
+/**
+ * Champs de qualification portés par CET ÉCRAN.
+ * ⚠️ SOUS-ENSEMBLE ASSUMÉ de la liste serveur CHAMPS_QUALIFICATION_MACHINE
+ * (server/api.js), qui en compte trois de plus : `statut` (les gestes
+ * dédiés arreterMachine / demantelerMachine le portent) et les deux dates
+ * `dernierControle` / `prochainControle` (elles viennent du moteur, pas de
+ * ce formulaire). Ce formulaire ne les émet PAS — vérifié : aucune
+ * occurrence dans ce fichier. Ne pas « aligner » cette liste sur les neuf
+ * champs serveur : filtrer un champ jamais émis n'ajoute rien, et laisserait
+ * croire que l'écran les porte.
+ */
+const CHAMPS_QUALIFICATION_ECRAN = ['typeInstallation',
+  'sousTypeInstallation', 'hermetiqueScelle', 'hermetiqueEtiquete',
+  'residentiel', 'usageThermique'];
+
+/**
+ * Retire de la charge utile les champs de qualification quand
+ * l'utilisateur n'y a pas droit. On les OMET (undefined) : on ne renvoie
+ * PAS une valeur par défaut. Un contrôle désactivé ne figure pas dans le
+ * FormData — renvoyer « FIXE » sur une machine MOBILE ferait voir un
+ * changement au store et vaudrait justement le 403 qu'on veut éviter.
+ * @param {object} valeurs — sortie de validerFormulaire
+ * @param {boolean} peutQualifier
+ * @returns {object} charge utile filtrée
+ */
+export function filtrerQualification(valeurs, peutQualifier) {
+  if (peutQualifier) return valeurs;
+  const filtre = Object.assign({}, valeurs);
+  CHAMPS_QUALIFICATION_ECRAN.forEach(function (champ) {
+    delete filtre[champ];
+  });
+  return filtre;
+}
+
 /**
  * Construit le HTML du formulaire (mêmes valeurs qu'à l'ouverture ;
  * les erreurs de champ sont ajoutées/retirées dynamiquement ensuite).
@@ -47,7 +98,18 @@ function optionsSimples(valeurs, valeurCourante) {
  * @param {object[]} clients — référentiel des clients / détenteurs
  * @returns {string} HTML
  */
-function gabaritFormulaire(machine, fluides, clients) {
+export function gabaritFormulaire(machine, fluides, clients,
+  peutQualifier = true) {
+  // ⭐ B1 — bloc « Nature de l'équipement », type d'installation et usage
+  // thermique : AFFICHÉS pour tout le monde (la fiche doit rester lisible),
+  // modifiables par le seul responsable.
+  const verrou = peutQualifier ? '' : ' disabled';
+  const noteReservee = peutQualifier ? ''
+    : '<p class="mf-note mf-reservee">Caractéristiques réservées au '
+      + 'responsable (référent, enseignant, administrateur) : elles '
+      + 'déplacent des seuils réglementaires et se constatent sur la '
+      + 'plaque de l’équipement. Elles restent affichées, elles ne sont '
+      + 'pas modifiables ici.</p>';
   // P1-2 : les fluides DÉSACTIVÉS ne sont plus proposés — sauf celui déjà
   // enregistré sur cette machine (rouvrir une vieille machine au R-22 ne
   // doit pas vider son fluide en silence).
@@ -152,7 +214,7 @@ function gabaritFormulaire(machine, fluides, clients) {
 
     + '<div class="champ" data-champ="typeInstallation">'
     + '<label for="mf-type-installation">Type d\u2019installation</label>'
-    + '<select id="mf-type-installation" name="typeInstallation">'
+    + '<select id="mf-type-installation" name="typeInstallation"' + verrou + '>'
     + [['FIXE', 'Fixe (contr\u00f4le de suivi apr\u00e8s 24 h de fonctionnement)'],
        ['MOBILE', 'Mobile (contr\u00f4le imm\u00e9diat si le sous-type est list\u00e9)']]
       .map(function (o) {
@@ -168,7 +230,7 @@ function gabaritFormulaire(machine, fluides, clients) {
     // l'exception du contrôle immédiat. Masqué pour un FIXE (voir plus bas).
     + '<div class="champ" data-champ="sousTypeInstallation" id="mf-bloc-sous-type">'
     + '<label for="mf-sous-type">Nature de l’équipement mobile</label>'
-    + '<select id="mf-sous-type" name="sousTypeInstallation">'
+    + '<select id="mf-sous-type" name="sousTypeInstallation"' + verrou + '>'
     + '<option value="">— non précisée —</option>'
     + SOUS_TYPES_MOBILES.map(function (s) {
         const selectionne = machine.sousTypeInstallation === s ? ' selected' : '';
@@ -190,22 +252,23 @@ function gabaritFormulaire(machine, fluides, clients) {
     // P1-1 — nature de l'équipement (hermétique, étiquette, résidentiel).
     + '<fieldset class="mf-bloc">'
     + '<legend>Nature de l’équipement</legend>'
+    + noteReservee
     + '<label class="mf-case"><input type="checkbox" id="mf-hermetique" '
     + 'name="hermetiqueScelle"' + (machine.hermetiqueScelle ? ' checked' : '')
-    + '> Hermétiquement scellé</label>'
+    + verrou + '> Hermétiquement scellé</label>'
     + '<label class="mf-case"><input type="checkbox" id="mf-hermetique-etiq" '
     + 'name="hermetiqueEtiquete"'
-    + (machine.hermetiqueEtiquete ? ' checked' : '')
+    + (machine.hermetiqueEtiquete ? ' checked' : '') + verrou
     + '> Étiqueté « hermétiquement scellé »</label>'
     + '<label class="mf-case"><input type="checkbox" id="mf-residentiel" '
-    + 'name="residentiel"' + (machine.residentiel ? ' checked' : '')
+    + 'name="residentiel"' + (machine.residentiel ? ' checked' : '') + verrou
     + '> Usage résidentiel</label>'
     // L3/R4 (25/07) : l'usage thermique commande les DATES d'interdiction
     // du fluide vierge à PRP >= 2500 (froid 2025, clim/PAC 2026). Non
     // renseigné = régime le plus strict — la note le DIT.
     + '<div class="champ" data-champ="usageThermique">'
     + '<label for="mf-usage">Usage thermique</label>'
-    + '<select id="mf-usage" name="usageThermique">'
+    + '<select id="mf-usage" name="usageThermique"' + verrou + '>'
     + '<option value="">— non renseigné (régime le plus strict : froid, '
     + 'vierge interdit depuis 2025) —</option>'
     + USAGES_THERMIQUES.map(function (u) {
@@ -255,6 +318,7 @@ function gabaritFormulaire(machine, fluides, clients) {
 
     + '<style>'
     + '.mf-note{margin:5px 0 0;font-size:11.5px;color:var(--texte-3);line-height:1.45}'
+    + '.mf-reservee{margin:0 0 8px;font-weight:600;color:var(--texte-2)}'
     + '.mf-bloc{border:1px solid var(--bordure-2);border-radius:8px;'
     + 'padding:12px 14px;margin:0 0 14px}'
     + '.mf-bloc legend{font-size:12px;font-weight:600;color:var(--texte-2);padding:0 6px}'
@@ -437,6 +501,8 @@ export async function ouvrirFormMachine(ctx, machineId = null, preset = null) {
   } catch {
     // Aucun utilisateur courant : la modale reste utilisable en dégradé
   }
+  // ⭐ B1 — l'utilisateur courant était déjà lu ici, et INUTILISÉ.
+  const peutQualifier = peutQualifierEquipement(utilisateur);
 
   const machineExistante = enModification
     ? machines.find(function (m) { return m.id === machineId; })
@@ -462,7 +528,8 @@ export async function ouvrirFormMachine(ctx, machineId = null, preset = null) {
   return new Promise(function (resoudre) {
     const { fermer, racine } = modale({
       titre: enModification ? 'Modifier la machine' : 'Ajouter une machine',
-      contenuHtml: gabaritFormulaire(valeursInitiales, fluides, clients),
+      contenuHtml: gabaritFormulaire(valeursInitiales, fluides, clients,
+        peutQualifier),
       actionsHtml:
         '<button type="button" id="mf-annuler" class="btn btn-secondaire">Annuler</button>'
         + '<button type="button" id="mf-enregistrer" class="btn btn-primaire">Enregistrer</button>'
@@ -530,9 +597,13 @@ export async function ouvrirFormMachine(ctx, machineId = null, preset = null) {
       if (blocDetection) blocDetection.hidden = !champDetection.checked;
       // L'étiquette n'a de sens que sur un hermétique (le store refuse
       // l'inverse) : on la neutralise plutôt que de laisser cocher.
+      // ⭐ B1 — ne JAMAIS ré-ouvrir l'étiquette à qui ne qualifie pas : ce
+      // rafraîchissement repositionne `disabled` à chaque changement.
       if (champEtiquette) {
-        champEtiquette.disabled = !champHermetique.checked;
-        if (!champHermetique.checked) champEtiquette.checked = false;
+        champEtiquette.disabled = !peutQualifier || !champHermetique.checked;
+        if (!champHermetique.checked && peutQualifier) {
+          champEtiquette.checked = false;
+        }
       }
       if (!noteDetection) return;
       if (!champDetection.checked) {
@@ -574,8 +645,11 @@ export async function ouvrirFormMachine(ctx, machineId = null, preset = null) {
     });
 
     racine.querySelector('#mf-enregistrer').addEventListener('click', async function () {
-      const valeurs = validerFormulaire(racine, enModification);
-      if (!valeurs) return;
+      const brut = validerFormulaire(racine, enModification);
+      if (!brut) return;
+      // ⭐ B1 — ce que l'écran n'a pas le droit de changer, il ne l'envoie
+      // pas : le store ne juge que ce qui CHANGE.
+      const valeurs = filtrerQualification(brut, peutQualifier);
 
       const bouton = racine.querySelector('#mf-enregistrer');
       bouton.disabled = true;
