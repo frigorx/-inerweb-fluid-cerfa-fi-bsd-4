@@ -4387,9 +4387,16 @@ const HANDLERS = {
     // ⭐ Lot B2 (MIROIR du DemoStore) — le logiciel numérote ce qui lui
     // appartient : format SIF-AAAA-NNNN attribué localement, unicité
     // garantie. Un numéro fourni doit respecter la forme ET être libre.
+    // ⭐ Lot B2 (revue, MIROIR du DemoStore) — UNE DATE EST UNE DATE
+    // (doctrine L2). L'année du numéro se DÉRIVE de la date de remise :
+    // sans contrôle, « 24/07/2026 » faisait attribuer « SIF-24/0-0001 »,
+    // un numéro que la garde de saisie REFUSE elle-même.
+    if (!dates.estDateCalendaireOuVide(d.dateRemise)) {
+      throw new Error(dates.messageDateInvalide('Date de remise'));
+    }
     const numerosExistants = db.all('SELECT numero_bsff AS n FROM bsff')
       .map((l) => l.n);
-    const dateRemiseSuivi = d.dateRemise ?? aujourdHui();
+    const dateRemiseSuivi = d.dateRemise ? String(d.dateRemise) : aujourdHui();
     let numeroSuivi = String(d.numeroBsff ?? '').trim();
     if (!numeroSuivi) {
       numeroSuivi = remiseFiliere.prochainNumeroSuivi(numerosExistants,

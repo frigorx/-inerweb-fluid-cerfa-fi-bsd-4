@@ -5588,8 +5588,17 @@ export function creerDemoStore() {
       // format SIF-AAAA-NNNN. Un numéro fourni doit respecter cette forme
       // ET être libre — avant, n'importe quelle chaîne passait, doublons
       // compris (attaque tirée : deux suivis du même numéro, HTTP 200).
+      // ⭐ Lot B2 (revue) — UNE DATE EST UNE DATE (doctrine L2). L'année du
+      // numéro se DÉRIVE de la date de remise : sans contrôle, une date
+      // « 24/07/2026 » (API, import, tout appelant hors du champ date du
+      // formulaire) faisait attribuer « SIF-24/0-0001 » — un numéro que la
+      // garde de saisie du logiciel REFUSE elle-même, écrit au registre et
+      // exporté dans le CSV du dossier d'audit scellé.
+      if (!estDateCalendaireOuVide(d.dateRemise)) {
+        throw new Error(messageDateInvalide('Date de remise'));
+      }
       const numerosExistants = donnees.bsff.map((b) => b.numeroBsff);
-      const dateRemise = d.dateRemise ?? aujourdHui();
+      const dateRemise = d.dateRemise ? String(d.dateRemise) : aujourdHui();
       let numeroSuivi = String(d.numeroBsff ?? '').trim();
       if (!numeroSuivi) {
         numeroSuivi = prochainNumeroSuivi(numerosExistants,

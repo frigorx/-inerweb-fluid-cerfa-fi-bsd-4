@@ -137,6 +137,26 @@ async function bouteilleDechet(masseKg) {
     msgForme !== null && msgForme.includes('attribué par le logiciel')
     && msgForme.includes('SIF-AAAA-NNNN'), String(msgForme));
 
+  // ⚠ UNE DATE EST UNE DATE (doctrine L2) : l'année du numéro se dérive de
+  // la date de remise. Sans contrôle, « 24/07/2026 » faisait attribuer
+  // « SIF-24/0-0001 » — un numéro que la garde du logiciel refuse elle-même,
+  // écrit au registre et exporté dans le dossier d'audit scellé.
+  let msgDate = null;
+  try {
+    await store.createBsff({
+      bouteilleId: b.id, transporteur: 'Collecteur agréé',
+      installationDestination: 'Centre de traitement agréé',
+      masseRemiseKg: 1, dateRemise: '24/07/2026', operateur: 'testeur'
+    });
+  } catch (e) { msgDate = e.message; }
+  verifier('date de remise illisible REFUSÉE (aucun numéro difforme émis)',
+    msgDate !== null && msgDate.includes('Date de remise invalide'),
+    String(msgDate));
+  verifier('aucun suivi hors forme n’a été écrit au registre',
+    (await store.getBsff()).every(
+      (s) => /^SIF-\d{4}-\d{4}$/.test(String(s.numeroBsff))),
+    (await store.getBsff()).map((s) => s.numeroBsff).join(', '));
+
   let msgDoublon = null;
   try {
     await store.createBsff({
