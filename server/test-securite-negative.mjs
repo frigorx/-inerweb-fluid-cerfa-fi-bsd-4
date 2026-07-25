@@ -1068,6 +1068,64 @@ try {
       + 'librement', Boolean(corrige));
   }
 
+  console.log('--- D4 bis. Refermer un dossier de fuite après coup ---');
+  {
+    const machine = api.appeler('createMachine', { donneesMachine: {
+      designation: 'Groupe en fuite', fluide: 'R-410A',
+      chargeNominaleKg: 20 } }, referent);
+    // Fuite détectée il y a 10 jours, réparation tracée hier : la
+    // réécriture visée est une date INTERMÉDIAIRE (postérieure au contrôle,
+    // donc acceptable pour les gardes existantes) qui refermerait le
+    // dossier plus tôt.
+    const fuite = api.appeler('createControle', { donneesControle: {
+      machineId: machine.id, resultat: 'FUITE', date: dateRelative(-10),
+      localisationFuite: 'Raccord BP' } }, referent);
+    api.appeler('tracerReparation', { controleId: fuite.id,
+      donneesReparation: { dateReparation: dateRelative(-1),
+        natureReparation: 'Remplacement du raccord', reparateur: 'Technicien' } },
+    referent);
+    attendreRejetApi('⭐ réécrire la réparation pour refermer la fuite '
+      + 'rétroactivement : REFUSÉ',
+    () => api.appeler('tracerReparation', { controleId: fuite.id,
+      donneesReparation: { dateReparation: dateRelative(-8),
+        natureReparation: 'Autre version', reparateur: 'Technicien' } },
+    referent), 'ne se réécrit pas');
+    // Contre-épreuve : rejouer la MÊME réparation reste sans effet ni refus.
+    const rejeu = api.appeler('tracerReparation', { controleId: fuite.id,
+      donneesReparation: { dateReparation: dateRelative(-1),
+        natureReparation: 'Remplacement du raccord', reparateur: 'Technicien' } },
+    referent);
+    verifier('contre-épreuve : rejouer la même réparation reste admis',
+      Boolean(rejeu));
+  }
+
+  console.log('--- D4 ter. S’attribuer un régime réglementaire plus doux ---');
+  {
+    const machine = api.appeler('createMachine', { donneesMachine: {
+      designation: 'Groupe à requalifier', fluide: 'R-410A',
+      chargeNominaleKg: 5 } }, referent);
+    const eleve = { role: 'ELEVE' };
+    attendreRejetApi('⭐ un ÉLÈVE déclare la machine « hermétique scellée et '
+      + 'étiquetée » (seuil d’aptitude 3 → 6 kg) : REFUSÉ',
+    () => api.appeler('updateMachine', { id: machine.id, donneesMachine: {
+      hermetiqueScelle: true, hermetiqueEtiquete: true } }, eleve),
+    'réservée au responsable');
+    attendreRejetApi('… et « MOBILE » (clôture de fuite le jour même) : REFUSÉ',
+      () => api.appeler('updateMachine', { id: machine.id, donneesMachine: {
+        typeInstallation: 'MOBILE' } }, eleve), 'réservée au responsable');
+    // Contre-épreuves : la saisie courante reste ouverte à l'élève, et le
+    // responsable, lui, qualifie bien l'équipement.
+    const saisie = api.appeler('updateMachine', { id: machine.id,
+      donneesMachine: { localisation: 'Atelier froid — poste 2' } }, eleve);
+    verifier('contre-épreuve : l’élève modifie toujours la localisation',
+      saisie.localisation === 'Atelier froid — poste 2');
+    const qualifie = api.appeler('updateMachine', { id: machine.id,
+      donneesMachine: { hermetiqueScelle: true, hermetiqueEtiquete: true } },
+    referent);
+    verifier('contre-épreuve : le responsable, lui, qualifie l’équipement',
+      qualifie.hermetiqueScelle === true);
+  }
+
   console.log('--- D5. Fabriquer une fiche OFFICIELLE par import ---');
   {
     const exporte = JSON.parse(api.appeler('exporterJSON', {}, referent));

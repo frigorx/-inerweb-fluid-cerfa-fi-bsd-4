@@ -3719,6 +3719,20 @@ export function creerDemoStore() {
         throw new Error('Contrôle annulé (contre-écriture) : il ne peut '
           + 'plus recevoir de réparation tracée.');
       }
+      // ⭐ L2 (25/07) — UNE RÉPARATION TRACÉE NE SE RÉÉCRIT PAS (miroir du
+      // serveur). Attaque tirée : tracer la réparation au jour du contrôle
+      // FUITE (la règle J+1 empêche la clôture immédiate sur une machine
+      // fixe), puis RAPPELER tracerReparation avec une date antérieure — le
+      // dossier de fuite se refermait rétroactivement. On trace un FAIT : il
+      // se corrige par un nouveau contrôle, pas en réécrivant le précédent.
+      if (controle.dateReparation
+          && (controle.dateReparation !== dateReparation
+            || (controle.natureReparation ?? '') !== natureReparation)) {
+        throw new Error(
+          `Réparation déjà tracée le ${controle.dateReparation} : elle ne se `
+          + 'réécrit pas. Enregistrez un nouveau contrôle d’étanchéité pour '
+          + 'constater l’état actuel de la machine.');
+      }
       controle.dateReparation = dateReparation;
       controle.natureReparation = natureReparation;
       controle.reparateur = reparateur;

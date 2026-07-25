@@ -2850,7 +2850,7 @@ const HANDLERS = {
     });
   },
 
-  updateMachine(params) {
+  updateMachine(params, contexte) {
     const { id } = params;
     const machine = trouverMachine(id);
     if (machine.statut === 'DEMANTELEE') {
@@ -2892,6 +2892,35 @@ const HANDLERS = {
       if (d[champ] !== undefined) fusion[champ] = d[champ];
     }
     equipement.verifierModeleEquipement(fusion);
+
+    // ⭐ L2 (25/07) — LA QUALIFICATION RÉGLEMENTAIRE N'EST PAS DE LA SAISIE
+    // COURANTE. Déclarer un équipement « hermétiquement scellé et étiqueté »
+    // fait passer le seuil d'aptitude de 3 à 6 kg ; le déclarer MOBILE d'un
+    // sous-type listé ouvre la clôture de fuite le jour même ; l'usage
+    // thermique décale les dates d'interdiction du fluide vierge. Ce sont
+    // des FAITS OPPOSABLES qui déplacent des seuils, au même titre qu'une
+    // habilitation — laquelle est réservée au niveau VALIDEUR depuis
+    // toujours. Attaque tirée : une session ÉLÈVE cochait « hermétique
+    // scellé + étiqueté » et l'intervention passait d'INTERDITE à AUTORISÉE
+    // sans qu'aucune plaque n'ait été lue. La saisie courante (désignation,
+    // charge, localisation, détection) reste ouverte à l'élève.
+    const CHAMPS_QUALIFICATION = ['hermetiqueScelle', 'hermetiqueEtiquete',
+      'residentiel', 'typeInstallation', 'sousTypeInstallation',
+      'usageThermique'];
+    const qualificationTouchee = CHAMPS_QUALIFICATION
+      .filter((champ) => d[champ] !== undefined
+        && d[champ] !== machine[champ]);
+    if (qualificationTouchee.length > 0
+        && !ROLES_VALIDEURS.includes(contexte?.role ?? null)) {
+      const erreur = new Error(
+        'Qualification réglementaire de l’équipement réservée au responsable '
+        + `(${ROLES_VALIDEURS.join(', ')}) : ${qualificationTouchee.join(', ')}. `
+        + 'Ces caractéristiques déplacent des seuils réglementaires — elles '
+        + 'se constatent sur la plaque, elles ne se déclarent pas en '
+        + 'saisie courante.');
+      erreur.code = 403;
+      throw erreur;
+    }
 
     // ⭐ L2 (25/07) — LA MODIFICATION REVALIDE CE QUE LA CRÉATION EXIGE.
     // `createMachine` refuse une charge nominale nulle ou négative ;
@@ -3360,6 +3389,22 @@ const HANDLERS = {
         [controle.mouvementId])) {
         throw new Error('Contrôle annulé (contre-écriture) : il ne peut '
           + 'plus recevoir de réparation tracée.');
+      }
+      // ⭐ L2 (25/07) — UNE RÉPARATION TRACÉE NE SE RÉÉCRIT PAS.
+      // Les gardes de date ci-dessus supposaient un premier enregistrement.
+      // Attaque tirée : tracer la réparation au jour du contrôle FUITE (la
+      // règle J+1 empêche alors la clôture immédiate sur une machine fixe),
+      // puis RAPPELER tracerReparation avec une date antérieure — le
+      // dossier de fuite se refermait rétroactivement. Or on trace un FAIT
+      // constaté : il se corrige par un nouveau contrôle, pas en réécrivant
+      // le précédent. Une valeur IDENTIQUE reste admise (rejeu sans effet).
+      if (controle.dateReparation
+          && (controle.dateReparation !== dateReparation
+            || (controle.natureReparation ?? '') !== natureReparation)) {
+        throw new Error(
+          `Réparation déjà tracée le ${controle.dateReparation} : elle ne se `
+          + 'réécrit pas. Enregistrez un nouveau contrôle d’étanchéité pour '
+          + 'constater l’état actuel de la machine.');
       }
       majParId('controles', controleId, {
         date_reparation: dateReparation,
