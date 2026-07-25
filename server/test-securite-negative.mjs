@@ -404,6 +404,208 @@ try {
       `statut ${r.statut} — ${r.brut?.slice(0, 200)}`);
   }
 
+  // ============================================================
+  // A5. LA QUALIFICATION RÉGLEMENTAIRE, PAR UNE VRAIE SESSION
+  //
+  // ⭐⭐ REVUE B1 (constat mineur n°4) — ces cas vivaient dans la partie
+  // en processus (`api.appeler` avec un contexte de rôle FABRIQUÉ
+  // `{ role: 'ELEVE' }`). Un test de garde de RÔLE qui ne passe pas par
+  // une vraie session ne prouve pas la garde de rôle : il prouve qu'une
+  // fonction lit son argument. Ils sont donc TIRÉS ICI, par HTTP, avec les
+  // comptes réels ouverts en tête de suite (cookieEleve, cookieReferent) —
+  // le chemin complet connexion → session → rôle → handler.
+  // ============================================================
+  console.log('');
+  console.log('=== A5. Qualification réglementaire (vraies sessions) ===');
+
+  /** Raccourci : le résultat d'un appel HTTP réussi. */
+  const resultatDe = (r) => r.corps?.resultat ?? null;
+
+  console.log('--- A5-a. La machine : s’attribuer un régime plus doux ---');
+  {
+    const rBase = await requete('createMachine', { donneesMachine: {
+      designation: 'Groupe à requalifier', fluide: 'R-410A',
+      chargeNominaleKg: 5 } }, { cookie: cookieReferent });
+    const mac = resultatDe(rBase);
+    verifier('décor : le responsable crée la machine à requalifier',
+      Boolean(mac?.id), JSON.stringify(rBase.corps).slice(0, 200));
+
+    attendreRefus('⭐ un ÉLÈVE déclare la machine « hermétique scellée et '
+      + 'étiquetée » (seuil d’aptitude 3 → 6 kg) : REFUSÉ',
+    await requete('updateMachine', { id: mac.id, donneesMachine: {
+      hermetiqueScelle: true, hermetiqueEtiquete: true } },
+    { cookie: cookieEleve }), 403, 'réservée au responsable');
+    attendreRefus('… et « MOBILE » (clôture de fuite le jour même) : REFUSÉ',
+      await requete('updateMachine', { id: mac.id, donneesMachine: {
+        typeInstallation: 'MOBILE' } }, { cookie: cookieEleve }),
+      403, 'réservée au responsable');
+
+    // Contre-épreuves : la saisie courante reste ouverte à l'élève, et le
+    // responsable, lui, qualifie bien l'équipement.
+    const saisie = resultatDe(await requete('updateMachine', { id: mac.id,
+      donneesMachine: { localisation: 'Atelier froid — poste 2' } },
+    { cookie: cookieEleve }));
+    verifier('contre-épreuve : l’élève modifie toujours la localisation',
+      saisie?.localisation === 'Atelier froid — poste 2',
+      JSON.stringify(saisie).slice(0, 160));
+    const qualifie = resultatDe(await requete('updateMachine', { id: mac.id,
+      donneesMachine: { hermetiqueScelle: true, hermetiqueEtiquete: true } },
+    { cookie: cookieReferent }));
+    verifier('contre-épreuve : le responsable, lui, qualifie l’équipement',
+      qualifie?.hermetiqueScelle === true);
+
+    // ⭐ LOT B1 — L'AUTRE PORTE. Tout ce qui précède ne tirait que
+    // `updateMachine` : c'est exactement ce qui a laissé passer le trou.
+    // `createMachine` est OPERATEUR (donc ÉLÈVE) et posait les MÊMES
+    // colonnes en UN SEUL appel — la garde ne gardait qu'une porte sur deux.
+    attendreRefus('⭐⭐ un ÉLÈVE CRÉE directement la machine « hermétique '
+      + 'scellée et étiquetée » (l’autre porte) : REFUSÉ',
+    await requete('createMachine', { donneesMachine: {
+      designation: 'Groupe qualifié à la création', fluide: 'R-410A',
+      chargeNominaleKg: 5, hermetiqueScelle: true, hermetiqueEtiquete: true } },
+    { cookie: cookieEleve }), 403, 'réservée au responsable');
+    attendreRefus('⭐⭐ … MOBILE + sous-type listé dès la création '
+      + '(clôture de fuite le jour même) : REFUSÉ',
+    await requete('createMachine', { donneesMachine: {
+      designation: 'Camion à la création', fluide: 'R-410A',
+      chargeNominaleKg: 5, typeInstallation: 'MOBILE',
+      sousTypeInstallation: 'CAMION_FRIGORIFIQUE' } },
+    { cookie: cookieEleve }), 403, 'réservée au responsable');
+    attendreRefus('⭐⭐ … « résidentiel » et usage CLIM dès la création '
+      + '(dates d’interdiction du fluide vierge) : REFUSÉ',
+    await requete('createMachine', { donneesMachine: {
+      designation: 'Split résidentiel', fluide: 'R-410A',
+      chargeNominaleKg: 5, residentiel: true,
+      usageThermique: 'CLIMATISATION' } },
+    { cookie: cookieEleve }), 403, 'réservée au responsable');
+    attendreRefus('⭐⭐ … machine créée d’emblée DEMANTELEE (elle sort de '
+      + 'l’alerte de contrôle en retard) : REFUSÉ',
+    await requete('createMachine', { donneesMachine: {
+      designation: 'Née démantelée', fluide: 'R-410A',
+      chargeNominaleKg: 5, statut: 'DEMANTELEE' } },
+    { cookie: cookieEleve }), 403, 'réservée au responsable');
+    attendreRefus('⭐⭐ … échéance de contrôle posée à la création (reprise '
+      + 'de parc réservée au responsable) : REFUSÉ',
+    await requete('createMachine', { donneesMachine: {
+      designation: 'Reprise de parc', fluide: 'R-410A',
+      chargeNominaleKg: 5, dernierControle: '2026-01-05',
+      prochainControle: '2099-12-31' } },
+    { cookie: cookieEleve }), 403, 'réservée au responsable');
+
+    const rQualifiee = await requete('createMachine', { donneesMachine: {
+      designation: 'Monobloc scellé', fluide: 'R-410A', chargeNominaleKg: 5,
+      hermetiqueScelle: true, hermetiqueEtiquete: true } },
+    { cookie: cookieReferent });
+    const qualifieeDesLaCreation = resultatDe(rQualifiee);
+    verifier('contre-épreuve : le responsable qualifie dès la création',
+      qualifieeDesLaCreation?.hermetiqueScelle === true
+      && qualifieeDesLaCreation?.hermetiqueEtiquete === true);
+  }
+
+  console.log('--- A5-b. La fiche du personnel : gouvernance, preuves et '
+    + 'état civil ---');
+  {
+    const prof = resultatDe(await requete('createPersonne', {
+      donneesPersonne: { prenom: 'Professeur', nom: 'Titulaire',
+        typePersonne: 'ENSEIGNANT', roleApp: 'ENSEIGNANT',
+        numAttestationAptitude: 'ATT-2025-0001',
+        organismeDelivreur: 'Organisme réel', categorie2025: 'A2' } },
+    { cookie: cookieReferent }));
+    verifier('décor : la fiche du professeur existe', Boolean(prof?.id));
+
+    // ⭐ Trou (a) : desactiverPersonne est gardé VALIDEUR, mais `actif`
+    // figurait dans la liste blanche d'updatePersonne — même motif que
+    // L2-i (une porte gardée, l'autre non).
+    attendreRefus('⭐⭐ un ÉLÈVE désactive le professeur par la PORTE DE '
+      + 'DERRIÈRE (updatePersonne { actif:false }) : REFUSÉ',
+    await requete('updatePersonne', { id: prof.id,
+      donneesPersonne: { actif: false } }, { cookie: cookieEleve }),
+    403, 'réservées au responsable');
+    {
+      const liste = resultatDe(await requete('getPersonnel', {},
+        { cookie: cookieReferent })) ?? [];
+      verifier('… et la fiche est restée ACTIVE (aucun effet avant la garde)',
+        liste.find((p) => p.id === prof.id)?.actif !== false);
+    }
+    attendreRefus('contre-épreuve du même trou : la porte de DEVANT '
+      + '(desactiverPersonne) était déjà fermée',
+    await requete('desactiverPersonne', { id: prof.id },
+      { cookie: cookieEleve }), 403, 'réservée aux rôles habilités');
+
+    // ⭐ Trou (b) : le DÉNI DE SERVICE. verifierValidateur lit la FICHE.
+    attendreRefus('⭐⭐ un ÉLÈVE rétrograde la fiche du professeur '
+      + '(roleApp → ELEVE), qui ne pourrait plus valider : REFUSÉ',
+    await requete('updatePersonne', { id: prof.id,
+      donneesPersonne: { roleApp: 'ELEVE' } }, { cookie: cookieEleve }),
+    403, 'réservées au responsable');
+    {
+      const liste = resultatDe(await requete('getPersonnel', {},
+        { cookie: cookieReferent })) ?? [];
+      verifier('… et le professeur a gardé son rôle applicatif',
+        liste.find((p) => p.id === prof.id)?.roleApp === 'ENSEIGNANT');
+    }
+
+    // La PREUVE DÉCLARATIVE : décorative pour le moteur d'aptitude (qui ne
+    // lit que la table habilitations, gardée VALIDEUR), mais lue par un
+    // auditeur. Un numéro et un organisme inventés n'entrent pas en saisie
+    // courante.
+    attendreRefus('⭐⭐ un ÉLÈVE inscrit une attestation INVENTÉE sur la '
+      + 'fiche du professeur : REFUSÉ',
+    await requete('updatePersonne', { id: prof.id, donneesPersonne: {
+      numAttestationAptitude: 'ATT-INVENTEE', organismeDelivreur: 'Chez moi',
+      categorie2025: 'A1' } }, { cookie: cookieEleve }),
+    403, 'réservées au responsable');
+    attendreRefus('⭐⭐ … et se fabrique une fiche ADMIN de toutes pièces '
+      + '(l’AUTRE porte : createPersonne) : REFUSÉ',
+    await requete('createPersonne', { donneesPersonne: {
+      prenom: 'Faux', nom: 'Administrateur', typePersonne: 'SALARIE',
+      roleApp: 'ADMIN' } }, { cookie: cookieEleve }),
+    403, 'réservées au responsable');
+    attendreRefus('⭐⭐ … avec attestation, organisme et catégories dès la '
+      + 'création : REFUSÉ',
+    await requete('createPersonne', { donneesPersonne: {
+      prenom: 'Faux', nom: 'Titulaire', typePersonne: 'SOUS_TRAITANT',
+      numAttestationAptitude: 'ATT-9999', organismeDelivreur: 'Nulle part',
+      categorie2008: 'I', activitesAutorisees: ['MAINTENANCE'] } },
+    { cookie: cookieEleve }), 403, 'réservées au responsable');
+
+    // ⚠️ CONTRE-ÉPREUVES — l'écran ne doit pas devenir mort pour l'élève :
+    // l'état civil est de la saisie COURANTE et le reste.
+    const camarade = resultatDe(await requete('createPersonne', {
+      donneesPersonne: { prenom: 'Un', nom: 'Élève', typePersonne: 'ELEVE',
+        email: 'eleve@exemple.fr' } }, { cookie: cookieEleve }));
+    verifier('contre-épreuve : l’élève inscrit toujours un camarade '
+      + '(état civil seul)', Boolean(camarade?.id));
+    const camaradeBis = resultatDe(await requete('createPersonne', {
+      donneesPersonne: { prenom: 'Deux', nom: 'Élève', typePersonne: 'ELEVE',
+        roleApp: 'ELEVE', numAttestationAptitude: null,
+        organismeDelivreur: null, categorie2008: null, categorie2025: null,
+        activitesAutorisees: [] } }, { cookie: cookieEleve }));
+    verifier('contre-épreuve : … même en renvoyant TOUTE la fiche du '
+      + 'formulaire (valeurs par défaut)', Boolean(camaradeBis?.id));
+    const corrige = resultatDe(await requete('updatePersonne', { id: prof.id,
+      donneesPersonne: { prenom: 'Professeur', nom: 'Titulaire-Marié',
+        email: 'prof@exemple.fr', roleApp: 'ENSEIGNANT',
+        numAttestationAptitude: 'ATT-2025-0001',
+        organismeDelivreur: 'Organisme réel', categorie2025: 'A2' } },
+    { cookie: cookieEleve }));
+    verifier('contre-épreuve : l’élève corrige l’état civil en renvoyant la '
+      + 'fiche entière (preuves INCHANGÉES)',
+    corrige?.nom === 'Titulaire-Marié'
+      && corrige?.numAttestationAptitude === 'ATT-2025-0001',
+    JSON.stringify(corrige).slice(0, 200));
+    const requalifie = resultatDe(await requete('updatePersonne',
+      { id: prof.id, donneesPersonne: { categorie2025: 'A1' } },
+      { cookie: cookieReferent }));
+    verifier('contre-épreuve : le responsable, lui, tient les preuves',
+      requalifie?.categorie2025 === 'A1');
+    const desactive = resultatDe(await requete('updatePersonne',
+      { id: camarade.id, donneesPersonne: { actif: false } },
+      { cookie: cookieReferent }));
+    verifier('contre-épreuve : le responsable désactive toujours par la '
+      + 'fiche', desactive?.actif === false);
+  }
+
 } finally {
   if (enfant) {
     const fini = new Promise((resoudre) => {
@@ -1184,181 +1386,12 @@ try {
       Boolean(rejeu));
   }
 
-  console.log('--- D4 ter. S’attribuer un régime réglementaire plus doux ---');
-  {
-    const machine = api.appeler('createMachine', { donneesMachine: {
-      designation: 'Groupe à requalifier', fluide: 'R-410A',
-      chargeNominaleKg: 5 } }, referent);
-    const eleve = { role: 'ELEVE' };
-    attendreRejetApi('⭐ un ÉLÈVE déclare la machine « hermétique scellée et '
-      + 'étiquetée » (seuil d’aptitude 3 → 6 kg) : REFUSÉ',
-    () => api.appeler('updateMachine', { id: machine.id, donneesMachine: {
-      hermetiqueScelle: true, hermetiqueEtiquete: true } }, eleve),
-    'réservée au responsable');
-    attendreRejetApi('… et « MOBILE » (clôture de fuite le jour même) : REFUSÉ',
-      () => api.appeler('updateMachine', { id: machine.id, donneesMachine: {
-        typeInstallation: 'MOBILE' } }, eleve), 'réservée au responsable');
-    // Contre-épreuves : la saisie courante reste ouverte à l'élève, et le
-    // responsable, lui, qualifie bien l'équipement.
-    const saisie = api.appeler('updateMachine', { id: machine.id,
-      donneesMachine: { localisation: 'Atelier froid — poste 2' } }, eleve);
-    verifier('contre-épreuve : l’élève modifie toujours la localisation',
-      saisie.localisation === 'Atelier froid — poste 2');
-    const qualifie = api.appeler('updateMachine', { id: machine.id,
-      donneesMachine: { hermetiqueScelle: true, hermetiqueEtiquete: true } },
-    referent);
-    verifier('contre-épreuve : le responsable, lui, qualifie l’équipement',
-      qualifie.hermetiqueScelle === true);
-
-    // ⭐ LOT B1 — L'AUTRE PORTE. Tout ce qui précède ne tirait que
-    // `updateMachine` : c'est exactement ce qui a laissé passer le trou.
-    // `createMachine` est OPERATEUR (donc ÉLÈVE) et posait les MÊMES
-    // colonnes en UN SEUL appel — la garde ne gardait qu'une porte sur deux.
-    attendreRejetApi('⭐⭐ un ÉLÈVE CRÉE directement la machine « hermétique '
-      + 'scellée et étiquetée » (l’autre porte) : REFUSÉ',
-    () => api.appeler('createMachine', { donneesMachine: {
-      designation: 'Groupe qualifié à la création', fluide: 'R-410A',
-      chargeNominaleKg: 5, hermetiqueScelle: true, hermetiqueEtiquete: true } },
-    eleve), 'réservée au responsable');
-    attendreRejetApi('⭐⭐ … MOBILE + sous-type listé dès la création '
-      + '(clôture de fuite le jour même) : REFUSÉ',
-    () => api.appeler('createMachine', { donneesMachine: {
-      designation: 'Camion à la création', fluide: 'R-410A',
-      chargeNominaleKg: 5, typeInstallation: 'MOBILE',
-      sousTypeInstallation: 'CAMION_FRIGORIFIQUE' } }, eleve),
-    'réservée au responsable');
-    attendreRejetApi('⭐⭐ … « résidentiel » et usage CLIM dès la création '
-      + '(dates d’interdiction du fluide vierge) : REFUSÉ',
-    () => api.appeler('createMachine', { donneesMachine: {
-      designation: 'Split résidentiel', fluide: 'R-410A',
-      chargeNominaleKg: 5, residentiel: true,
-      usageThermique: 'CLIMATISATION' } },
-    eleve), 'réservée au responsable');
-    attendreRejetApi('⭐⭐ … machine créée d’emblée DEMANTELEE (elle sort de '
-      + 'l’alerte de contrôle en retard) : REFUSÉ',
-    () => api.appeler('createMachine', { donneesMachine: {
-      designation: 'Née démantelée', fluide: 'R-410A',
-      chargeNominaleKg: 5, statut: 'DEMANTELEE' } }, eleve),
-    'réservée au responsable');
-    attendreRejetApi('⭐⭐ … échéance de contrôle posée à la création (reprise '
-      + 'de parc réservée au responsable) : REFUSÉ',
-    () => api.appeler('createMachine', { donneesMachine: {
-      designation: 'Reprise de parc', fluide: 'R-410A',
-      chargeNominaleKg: 5, dernierControle: '2026-01-05',
-      prochainControle: '2099-12-31' } }, eleve),
-    'réservée au responsable');
-
-    // Contre-épreuves : l'élève crée toujours une machine ORDINAIRE (sans
-    // quoi l'écran deviendrait mort pour lui), y compris en renvoyant les
-    // valeurs par DÉFAUT de tout le bloc « nature de l'équipement » — c'est
-    // ce que fait le formulaire ; et le responsable qualifie dès la création.
-    const ordinaire = api.appeler('createMachine', { donneesMachine: {
-      designation: 'Groupe d’atelier', fluide: 'R-410A',
-      chargeNominaleKg: 5, localisation: 'Atelier froid',
-      hermetiqueScelle: false, hermetiqueEtiquete: false, residentiel: false,
-      typeInstallation: 'FIXE', sousTypeInstallation: '', usageThermique: '',
-      detectionPermanente: false } }, eleve);
-    verifier('contre-épreuve : l’élève crée toujours une machine ordinaire '
-      + '(défauts renvoyés tels quels)', Boolean(ordinaire?.id));
-    const qualifieeDesLaCreation = api.appeler('createMachine', {
-      donneesMachine: { designation: 'Monobloc scellé', fluide: 'R-410A',
-        chargeNominaleKg: 5, hermetiqueScelle: true,
-        hermetiqueEtiquete: true } }, referent);
-    verifier('contre-épreuve : le responsable qualifie dès la création',
-      qualifieeDesLaCreation.hermetiqueScelle === true
-      && qualifieeDesLaCreation.hermetiqueEtiquete === true);
-  }
-
-  console.log('--- D4 sexies. La fiche du personnel : gouvernance, '
-    + 'preuves et état civil ---');
-  {
-    const eleve = { role: 'ELEVE' };
-    const prof = api.appeler('createPersonne', { donneesPersonne: {
-      prenom: 'Professeur', nom: 'Titulaire', typePersonne: 'ENSEIGNANT',
-      roleApp: 'ENSEIGNANT', numAttestationAptitude: 'ATT-2025-0001',
-      organismeDelivreur: 'Organisme réel', categorie2025: 'A2' } },
-    referent);
-
-    // ⭐ Trou (a) : desactiverPersonne est gardé VALIDEUR, mais `actif`
-    // figurait dans la liste blanche d'updatePersonne — même motif que
-    // L2-i (une porte gardée, l'autre non).
-    attendreRejetApi('⭐⭐ un ÉLÈVE désactive le professeur par la PORTE DE '
-      + 'DERRIÈRE (updatePersonne { actif:false }) : REFUSÉ',
-    () => api.appeler('updatePersonne', { id: prof.id,
-      donneesPersonne: { actif: false } }, eleve),
-    'réservées au responsable');
-    verifier('… et la fiche est restée ACTIVE (aucun effet avant la garde)',
-      api.appeler('getPersonnel', {}, referent)
-        .find((p) => p.id === prof.id)?.actif !== false);
-    attendreRejetApi('contre-épreuve du même trou : la porte de DEVANT '
-      + '(desactiverPersonne) était déjà fermée',
-    () => api.appeler('desactiverPersonne', { id: prof.id }, eleve),
-    'réservée aux rôles habilités');
-
-    // ⭐ Trou (b) : le DÉNI DE SERVICE. verifierValidateur lit la FICHE.
-    attendreRejetApi('⭐⭐ un ÉLÈVE rétrograde la fiche du professeur '
-      + '(roleApp → ELEVE), qui ne pourrait plus valider : REFUSÉ',
-    () => api.appeler('updatePersonne', { id: prof.id,
-      donneesPersonne: { roleApp: 'ELEVE' } }, eleve),
-    'réservées au responsable');
-    verifier('… et le professeur a gardé son rôle applicatif',
-      api.appeler('getPersonnel', {}, referent)
-        .find((p) => p.id === prof.id)?.roleApp === 'ENSEIGNANT');
-
-    // La PREUVE DÉCLARATIVE : décorative pour le moteur d'aptitude (qui ne
-    // lit que la table habilitations, gardée VALIDEUR), mais lue par un
-    // auditeur. Un numéro et un organisme inventés n'entrent pas en saisie
-    // courante.
-    attendreRejetApi('⭐⭐ un ÉLÈVE inscrit une attestation INVENTÉE sur la '
-      + 'fiche du professeur : REFUSÉ',
-    () => api.appeler('updatePersonne', { id: prof.id, donneesPersonne: {
-      numAttestationAptitude: 'ATT-INVENTEE', organismeDelivreur: 'Chez moi',
-      categorie2025: 'A1' } }, eleve), 'réservées au responsable');
-    attendreRejetApi('⭐⭐ … et se fabrique une fiche ADMIN de toutes pièces '
-      + '(l’AUTRE porte : createPersonne) : REFUSÉ',
-    () => api.appeler('createPersonne', { donneesPersonne: {
-      prenom: 'Faux', nom: 'Administrateur', typePersonne: 'SALARIE',
-      roleApp: 'ADMIN' } }, eleve), 'réservées au responsable');
-    attendreRejetApi('⭐⭐ … avec attestation, organisme et catégories dès la '
-      + 'création : REFUSÉ',
-    () => api.appeler('createPersonne', { donneesPersonne: {
-      prenom: 'Faux', nom: 'Titulaire', typePersonne: 'SOUS_TRAITANT',
-      numAttestationAptitude: 'ATT-9999', organismeDelivreur: 'Nulle part',
-      categorie2008: 'I', activitesAutorisees: ['MAINTENANCE'] } }, eleve),
-    'réservées au responsable');
-
-    // ⚠️ CONTRE-ÉPREUVES — l'écran ne doit pas devenir mort pour l'élève :
-    // l'état civil est de la saisie COURANTE et le reste.
-    const camarade = api.appeler('createPersonne', { donneesPersonne: {
-      prenom: 'Un', nom: 'Élève', typePersonne: 'ELEVE',
-      email: 'eleve@exemple.fr' } }, eleve);
-    verifier('contre-épreuve : l’élève inscrit toujours un camarade '
-      + '(état civil seul)', Boolean(camarade?.id));
-    const camaradeBis = api.appeler('createPersonne', { donneesPersonne: {
-      prenom: 'Deux', nom: 'Élève', typePersonne: 'ELEVE', roleApp: 'ELEVE',
-      numAttestationAptitude: null, organismeDelivreur: null,
-      categorie2008: null, categorie2025: null,
-      activitesAutorisees: [] } }, eleve);
-    verifier('contre-épreuve : … même en renvoyant TOUTE la fiche du '
-      + 'formulaire (valeurs par défaut)', Boolean(camaradeBis?.id));
-    const corrige = api.appeler('updatePersonne', { id: prof.id,
-      donneesPersonne: { prenom: 'Professeur', nom: 'Titulaire-Marié',
-        email: 'prof@exemple.fr', roleApp: 'ENSEIGNANT',
-        numAttestationAptitude: 'ATT-2025-0001',
-        organismeDelivreur: 'Organisme réel', categorie2025: 'A2' } }, eleve);
-    verifier('contre-épreuve : l’élève corrige l’état civil en renvoyant la '
-      + 'fiche entière (preuves INCHANGÉES)',
-    corrige.nom === 'Titulaire-Marié'
-      && corrige.numAttestationAptitude === 'ATT-2025-0001');
-    const requalifie = api.appeler('updatePersonne', { id: prof.id,
-      donneesPersonne: { categorie2025: 'A1' } }, referent);
-    verifier('contre-épreuve : le responsable, lui, tient les preuves',
-      requalifie.categorie2025 === 'A1');
-    const desactive = api.appeler('updatePersonne', { id: camarade.id,
-      donneesPersonne: { actif: false } }, referent);
-    verifier('contre-épreuve : le responsable désactive toujours par la '
-      + 'fiche', desactive.actif === false);
-  }
+  // ⭐⭐ REVUE B1 — « D4 ter » (qualification de la machine) et « D4 sexies »
+  // (fiche du personnel) ONT DÉMÉNAGÉ en section A5, en HAUT de cette suite.
+  // Motif : ce sont des gardes de RÔLE, et elles étaient tirées ici avec un
+  // contexte FABRIQUÉ (`{ role: 'ELEVE' }` passé à `api.appeler`) — ce qui
+  // prouve qu'une fonction lit son argument, pas qu'une session d'élève est
+  // arrêtée. Elles passent désormais par le patron HTTP + comptes réels.
 
   console.log('--- D4 quater. Purger le journal d’audit ---');
   {
