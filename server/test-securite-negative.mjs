@@ -1126,6 +1126,43 @@ try {
       qualifie.hermetiqueScelle === true);
   }
 
+  console.log('--- D4 quater. Purger le journal d’audit ---');
+  {
+    const exporte = JSON.parse(api.appeler('exporterJSON', {}, referent));
+    const avant = exporte.donnees.journalAudit.length;
+    verifier('décor : le fichier d’export porte le témoin de tête du journal',
+      Boolean(exporte.donnees.journalAuditChaine)
+      && exporte.donnees.journalAuditChaine.nombre === avant,
+      JSON.stringify(exporte.donnees.journalAuditChaine));
+
+    // L'attaque : retirer les lignes gênantes à la main.
+    const purge = JSON.parse(JSON.stringify(exporte));
+    purge.donnees.journalAudit = purge.donnees.journalAudit
+      .filter((l) => String(l.action ?? '') !== 'CREATION_MACHINE');
+    verifier('… et l’attaquant en a bien retiré au moins une',
+      purge.donnees.journalAudit.length < avant,
+      `${purge.donnees.journalAudit.length} / ${avant}`);
+    attendreRejetApi('⭐ journal d’audit purgé par aller-retour export → '
+      + 'import : REFUSÉ',
+    () => api.appeler('importerJSON', { texte: JSON.stringify(purge) },
+      referent), 'journal');
+
+    // Variante plus fine : garder le compte, changer une ligne.
+    const retouche = JSON.parse(JSON.stringify(exporte));
+    if (retouche.donnees.journalAudit.length > 0) {
+      retouche.donnees.journalAudit[0].details = 'ligne réécrite';
+      attendreRejetApi('⭐ … et une simple LIGNE réécrite (le compte est '
+        + 'pourtant juste) : REFUSÉ AUSSI',
+      () => api.appeler('importerJSON', { texte: JSON.stringify(retouche) },
+        referent), 'journal d’audit altéré');
+    }
+
+    // Contre-épreuve : le fichier INTACT s'importe toujours.
+    verifier('contre-épreuve : le fichier intact s’importe normalement',
+      api.appeler('importerJSON', { texte: JSON.stringify(exporte) },
+        referent) === true);
+  }
+
   console.log('--- D5. Fabriquer une fiche OFFICIELLE par import ---');
   {
     const exporte = JSON.parse(api.appeler('exporterJSON', {}, referent));

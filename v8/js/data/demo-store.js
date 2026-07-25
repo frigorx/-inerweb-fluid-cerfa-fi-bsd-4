@@ -6163,6 +6163,16 @@ export function creerDemoStore() {
         candidat.coffreConfig = null;
       }
 
+      // ⭐ L2 (25/07) — LE TÉMOIN DE TÊTE DU JOURNAL NE SURVIT PAS ICI.
+      // Le chaînage du journal d'audit est une notion SERVEUR (db.js) ; le
+      // monde de démonstration n'en tient pas. S'il conservait le témoin
+      // d'un paquet venu du serveur, son propre ré-export porterait un
+      // témoin PÉRIMÉ (la démo journalise à son tour l'import) et le
+      // serveur refuserait ce fichier pourtant sain. On l'abandonne donc
+      // explicitement : le ré-export d'un monde démo se présentera comme
+      // « sans témoin », cas prévu et journalisé côté serveur.
+      delete candidat.journalAuditChaine;
+
       // Adoption : les vérifications sont passées. La phrase d'exercice de
       // session ne correspond plus forcément au coffre importé : oubliée.
       // ⭐ L2 : la BORNE MONOTONE de scellement ne suit PAS le fichier — elle

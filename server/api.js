@@ -4868,6 +4868,37 @@ const HANDLERS = {
       }
     }
 
+    // ⭐ L2 (25/07) — LE JOURNAL D'AUDIT EST VÉRIFIÉ CONTRE SON TÉMOIN.
+    // Si le fichier porte le témoin de tête (tout export produit depuis le
+    // 25/07), on rejoue la chaîne sur les lignes reçues : retirer une ligne
+    // — ou en changer une — déplace la tête, et l'import est refusé. Un
+    // fichier ANTÉRIEUR n'a pas de témoin : il reste importable (on ne
+    // condamne pas les sauvegardes existantes), mais le fait est
+    // JOURNALISÉ, faute de quoi le silence vaudrait acquittement.
+    let journalSansTemoin = false;
+    {
+      const temoin = candidat.journalAuditChaine ?? null;
+      const entrees = candidat.journalAudit ?? [];
+      if (temoin && typeof temoin === 'object') {
+        const nombreAttendu = Number(temoin.nombre);
+        if (Number.isFinite(nombreAttendu) && nombreAttendu !== entrees.length) {
+          throw new Error(
+            `Import refusé — journal d'audit incomplet : ${entrees.length} `
+            + `ligne(s) dans le fichier, ${nombreAttendu} annoncée(s) par son `
+            + 'témoin d’intégrité. Des lignes ont été retirées.');
+        }
+        const teteRecalculee = teteChaineJournal(entrees);
+        if ((temoin.tete ?? null) !== teteRecalculee) {
+          throw new Error(
+            'Import refusé — journal d’audit altéré : son empreinte de tête '
+            + 'ne correspond plus à son contenu (ligne modifiée, retirée ou '
+            + 'réordonnée).');
+        }
+      } else if (entrees.length > 0) {
+        journalSansTemoin = true;
+      }
+    }
+
     // (3) Invariants métier AVANT d'adopter quoi que ce soit.
     const probleme = verifierInvariantsDonneesCandidat(candidat);
     if (probleme) {
@@ -5010,7 +5041,7 @@ const HANDLERS = {
     // (5) Remplacement TOTAL, atomique (throw → ROLLBACK complet, y compris
     // les déclencheurs WORM recréés). La vérification de chaîne est déjà
     // passée : on ne touche la base qu'ici.
-    remplacerToutLEtat(candidat, chaineAmorcee);
+    remplacerToutLEtat(candidat, chaineAmorcee, journalSansTemoin);
     return true;
   }
 };
@@ -5079,6 +5110,22 @@ function construireDonneesExport() {
     plaintes: HANDLERS.getPlaintes(),
     alertes: HANDLERS.getAlertes(),
     journalAudit: HANDLERS.getJournalAudit(),
+    // ⭐ L2 (25/07) — TÉMOIN DE TÊTE DU JOURNAL. Le journal d'audit est
+    // chaîné en base (db.js), mais ce chaînage ne voyageait PAS dans
+    // l'export : à l'import, les lignes étaient RE-chaînées telles quelles.
+    // Attaque tirée : exporter, supprimer à la main les lignes gênantes
+    // (les trois VALIDATION_MOUVEMENT, par exemple), réimporter — le
+    // journal repartait vert, amputé, sans que rien ne le signale. Le
+    // témoin voyage donc avec le fichier : nombre de lignes et empreinte de
+    // tête. Retirer une ligne change l'un ou l'autre.
+    journalAuditChaine: (() => {
+      const lignes = db.all(
+        `SELECT hash FROM journal_audit ORDER BY id`);
+      return {
+        nombre: lignes.length,
+        tete: lignes.length > 0 ? (lignes[lignes.length - 1].hash ?? null) : null
+      };
+    })(),
     // Lot E2 (brique E2c) : le COFFRE voyage dans l'export — enveloppes en
     // base64 + configuration (sel/témoin/kdf) + compteurs MONOTONES. FAIT
     // ÉTABLI par la revue de conception : la table parametres ne voyage PAS
@@ -5507,6 +5554,27 @@ function reinsererMouvements(mouvements) {
  * hash via db.hashEcriture) pour que verifierChaineJournal reste au vert
  * après import — l'ordre d'origine est conservé.
  */
+/**
+ * Rejoue le chaînage du journal sur une liste d'entrées SANS rien écrire :
+ * même algorithme que `reinsererJournal` ci-dessous, d'où l'extraction. Rend
+ * l'empreinte de tête (null si aucune entrée). Le contenu et l'ordre étant
+ * les seuls ingrédients, deux listes identiques donnent la même tête — c'est
+ * ce qui permet de vérifier un fichier d'import contre son témoin.
+ */
+function teteChaineJournal(entrees) {
+  let precedent = '';
+  for (const entree of entrees ?? []) {
+    precedent = db.hashEcriture({
+      date_heure: entree.date ?? new Date().toISOString(),
+      utilisateur: entree.qui ?? 'système',
+      action: String(entree.action ?? 'IMPORT'),
+      cible: entree.cible ?? null,
+      details: entree.details ?? null
+    }, precedent);
+  }
+  return precedent || null;
+}
+
 function reinsererJournal(entrees) {
   let precedent = '';
   for (const entree of entrees ?? []) {
@@ -5538,7 +5606,8 @@ function reinsererJournal(entrees) {
  * l'ordre de vidage/insertion n'a plus d'importance et une incohérence
  * référentielle fait échouer proprement (ROLLBACK global).
  */
-function remplacerToutLEtat(candidat, chaineAmorceeALImport = 0) {
+function remplacerToutLEtat(candidat, chaineAmorceeALImport = 0,
+  journalSansTemoin = false) {
   muter(() => {
     // Reporte le contrôle des FK au COMMIT (autorisé DANS une transaction ;
     // se réinitialise en fin de transaction). Sans lui, l'ordre de
@@ -5714,6 +5783,12 @@ function remplacerToutLEtat(candidat, chaineAmorceeALImport = 0) {
     // L2 : un amorçage de chaîne est un geste RARE et lourd de sens (le
     // logiciel scelle un passé qu'il n'a pas écrit). Il n'est plus possible
     // sur un poste déjà scellé ; quand il a lieu, il se voit.
+    if (journalSansTemoin) {
+      journaliser('système', 'JOURNAL_SANS_TEMOIN_A_L_IMPORT', 'sauvegarde',
+        'Le fichier importé ne portait pas le témoin d’intégrité du journal '
+        + '(sauvegarde antérieure au 25/07/2026) : son contenu n’a pas pu '
+        + 'être vérifié');
+    }
     if (chaineAmorceeALImport > 0) {
       journaliser('système', 'CHAINE_AMORCEE_A_L_IMPORT', 'sauvegarde',
         `${chaineAmorceeALImport} écriture(s) validée(s) sans empreinte : `
