@@ -370,6 +370,101 @@ function verifierDatesPersonne(d) {
   }
 }
 
+// ------------------------------------------------------------
+// ⭐ LOT B1 (25/07) — LA FICHE DU PERSONNEL MÉLANGE TROIS NATURES.
+//
+// Constat A06, tiré. `createPersonne` et `updatePersonne` sont OPERATEUR
+// (donc ÉLÈVE) et gardent, sous UNE SEULE garde de rôle, trois choses qui
+// n'ont rien à voir :
+//
+//   1. L'ÉTAT CIVIL (nom, prénom, type de personne, courriel). Saisie
+//      courante LÉGITIME : un élève inscrit le camarade qui intervient
+//      avec lui sur un TP. On ne la casse pas.
+//   2. LA GOUVERNANCE (roleApp, actif). Deux trous RÉELS, tirés :
+//      (a) `desactiverPersonne` est gardé VALIDEUR, mais `actif` figurait
+//          dans la liste blanche d'`updatePersonne` — un élève désactivait
+//          n'importe qui par la porte de derrière, en HTTP 200. Motif
+//          identique à L2-i (getJournalAudit gardé, exporterJSON non) ;
+//      (b) DÉNI DE SERVICE : un élève rétrogradait la fiche du professeur
+//          (roleApp → ELEVE) et le professeur ne pouvait plus valider —
+//          `verifierValidateur` lit la FICHE. Réversible, mais un jour
+//          d'examen personne ne devine la cause.
+//   3. LA PREUVE DÉCLARATIVE (numéro d'attestation, organisme, dates,
+//      catégories, activités autorisées). ⚠️ À CONSIGNER : ces champs sont
+//      DÉCORATIFS pour le moteur d'aptitude opposable, qui ne lit QUE la
+//      table `habilitations` (gardée VALIDEUR) — vérifié dans les deux
+//      sens, aucune intervention interdite ne devient autorisée par là.
+//      Ils restent une PREUVE affichée, imprimée et lue par un auditeur :
+//      un numéro et un organisme inventés n'ont rien à faire en saisie
+//      courante. Le doute retire l'allègement, pas l'obligation.
+//
+// Comme pour la machine : UNE liste, UN filtre, les DEUX portes.
+// Gating par rôle = serveur-only (le DemoStore n'a pas de comptes).
+// ------------------------------------------------------------
+const CHAMPS_GOUVERNANCE_PERSONNE = ['roleApp', 'actif'];
+const CHAMPS_PREUVE_PERSONNE = ['numAttestationAptitude',
+  'organismeDelivreur', 'dateObtention', 'dateFinValidite',
+  'categorie2008', 'categorie2025', 'activitesAutorisees'];
+const CHAMPS_RESERVES_PERSONNE = [
+  ...CHAMPS_GOUVERNANCE_PERSONNE, ...CHAMPS_PREUVE_PERSONNE];
+
+/**
+ * Fiche de référence d'une personne qui n'existe pas encore : les DÉFAUTS
+ * de `createPersonne`. Le rôle applicatif par défaut se DÉDUIT du type de
+ * personne — le fournir à l'identique ne qualifie rien.
+ */
+function referencePersonneNeuve(typePersonne) {
+  return {
+    roleApp: typePersonne === 'ELEVE' ? 'ELEVE' : 'ENSEIGNANT',
+    actif: true,
+    numAttestationAptitude: null,
+    organismeDelivreur: null,
+    dateObtention: null,
+    dateFinValidite: null,
+    categorie2008: null,
+    categorie2025: null,
+    activitesAutorisees: []
+  };
+}
+
+/**
+ * Normalisation avant comparaison — même piège que sur la machine : le
+ * formulaire renvoie toute la fiche (chaînes vides, tableaux), la base
+ * rend `null` et 0/1. Comparer brut rendrait l'écran MORT pour l'élève.
+ */
+function normaliserChampPersonne(champ, valeur) {
+  if (champ === 'actif') return valeur !== false && valeur !== 0;
+  if (champ === 'activitesAutorisees') {
+    return JSON.stringify([...(valeur ?? [])].sort());
+  }
+  return valeur === '' || valeur === undefined ? null : valeur;
+}
+
+/**
+ * LE filtre unique de la fiche du personnel.
+ * @param {object} d — données reçues
+ * @param {object} reference — fiche en place, ou referencePersonneNeuve()
+ * @param {object} contexte — contexte d'appel (rôle de session)
+ */
+function garderFichePersonne(d, reference, contexte) {
+  const touches = CHAMPS_RESERVES_PERSONNE.filter((champ) =>
+    d[champ] !== undefined
+    && normaliserChampPersonne(champ, d[champ])
+      !== normaliserChampPersonne(champ, reference[champ]));
+  if (touches.length === 0) return;
+  if (ROLES_VALIDEURS.includes(contexte?.role ?? null)) return;
+  const erreur = new Error(
+    'Gouvernance et preuves d’aptitude de la fiche du personnel réservées '
+    + `au responsable (${ROLES_VALIDEURS.join(', ')}) : ${touches.join(', ')}. `
+    + 'Le rôle applicatif et l’activation désignent qui valide au registre ; '
+    + 'le numéro d’attestation, l’organisme, les dates, les catégories et '
+    + 'les activités autorisées sont des PREUVES — elles se constatent sur '
+    + 'pièce, elles ne se déclarent pas en saisie courante. L’état civil '
+    + '(nom, prénom, type de personne, courriel) reste ouvert.');
+  erreur.code = 403;
+  throw erreur;
+}
+
 /** Ordre stable des habilitations (miroir EXACT du module pur, tri JS). */
 function comparerHabilitations(a, b) {
   if (a.regime !== b.regime) return a.regime === '2025' ? -1 : 1;
@@ -1595,7 +1690,7 @@ const HANDLERS = {
    * Crée une personne. roleApp par défaut : ELEVE si typePersonne ELEVE,
    * sinon ENSEIGNANT (le test crée un référent via roleApp explicite).
    */
-  createPersonne(params) {
+  createPersonne(params, contexte) {
     const d = params.donneesPersonne || {};
     if (!d.nom || !String(d.nom).trim()) {
       throw new Error('Nom de la personne obligatoire.');
@@ -1607,6 +1702,9 @@ const HANDLERS = {
       throw new Error(
         `Type de personne obligatoire parmi : ${TYPES_PERSONNE.join(', ')}.`);
     }
+    // ⭐ B1 — LE MÊME FILTRE QU'À LA MODIFICATION : gouvernance et preuves
+    // ne s'obtiennent pas en créant la fiche d'un coup.
+    garderFichePersonne(d, referencePersonneNeuve(d.typePersonne), contexte);
     verifierDatesPersonne(d);
     const personne = {
       id: db.generateId('PER'),
@@ -1637,13 +1735,19 @@ const HANDLERS = {
     });
   },
 
-  updatePersonne(params) {
+  updatePersonne(params, contexte) {
     const { id } = params;
     const d = params.donneesPersonne || {};
-    trouverPersonne(id);
+    const personneEnPlace = trouverPersonne(id);
     // Lot E2 : une fiche au coffre est VERROUILLÉE côté store (l'écran
     // seul ne suffit pas — « le store reste seul juge »).
     if (estAuCoffreServeur(id)) throw new Error(coffre.MSG_FICHE_AU_COFFRE);
+    // ⭐ B1 — gouvernance (roleApp, actif) et preuves d'aptitude : mêmes
+    // colonnes, même filtre qu'à la création. `actif` était la porte de
+    // derrière de `desactiverPersonne` (gardé VALIDEUR, lui) ; `roleApp`
+    // servait à rétrograder la fiche du professeur, qui ne pouvait plus
+    // valider.
+    garderFichePersonne(d, personneEnPlace, contexte);
     if (d.typePersonne !== undefined &&
         !TYPES_PERSONNE.includes(d.typePersonne)) {
       throw new Error(

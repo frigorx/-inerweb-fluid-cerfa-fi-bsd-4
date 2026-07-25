@@ -1269,6 +1269,97 @@ try {
       && qualifieeDesLaCreation.hermetiqueEtiquete === true);
   }
 
+  console.log('--- D4 sexies. La fiche du personnel : gouvernance, '
+    + 'preuves et état civil ---');
+  {
+    const eleve = { role: 'ELEVE' };
+    const prof = api.appeler('createPersonne', { donneesPersonne: {
+      prenom: 'Professeur', nom: 'Titulaire', typePersonne: 'ENSEIGNANT',
+      roleApp: 'ENSEIGNANT', numAttestationAptitude: 'ATT-2025-0001',
+      organismeDelivreur: 'Organisme réel', categorie2025: 'A2' } },
+    referent);
+
+    // ⭐ Trou (a) : desactiverPersonne est gardé VALIDEUR, mais `actif`
+    // figurait dans la liste blanche d'updatePersonne — même motif que
+    // L2-i (une porte gardée, l'autre non).
+    attendreRejetApi('⭐⭐ un ÉLÈVE désactive le professeur par la PORTE DE '
+      + 'DERRIÈRE (updatePersonne { actif:false }) : REFUSÉ',
+    () => api.appeler('updatePersonne', { id: prof.id,
+      donneesPersonne: { actif: false } }, eleve),
+    'réservées au responsable');
+    verifier('… et la fiche est restée ACTIVE (aucun effet avant la garde)',
+      api.appeler('getPersonnel', {}, referent)
+        .find((p) => p.id === prof.id)?.actif !== false);
+    attendreRejetApi('contre-épreuve du même trou : la porte de DEVANT '
+      + '(desactiverPersonne) était déjà fermée',
+    () => api.appeler('desactiverPersonne', { id: prof.id }, eleve),
+    'réservée aux rôles habilités');
+
+    // ⭐ Trou (b) : le DÉNI DE SERVICE. verifierValidateur lit la FICHE.
+    attendreRejetApi('⭐⭐ un ÉLÈVE rétrograde la fiche du professeur '
+      + '(roleApp → ELEVE), qui ne pourrait plus valider : REFUSÉ',
+    () => api.appeler('updatePersonne', { id: prof.id,
+      donneesPersonne: { roleApp: 'ELEVE' } }, eleve),
+    'réservées au responsable');
+    verifier('… et le professeur a gardé son rôle applicatif',
+      api.appeler('getPersonnel', {}, referent)
+        .find((p) => p.id === prof.id)?.roleApp === 'ENSEIGNANT');
+
+    // La PREUVE DÉCLARATIVE : décorative pour le moteur d'aptitude (qui ne
+    // lit que la table habilitations, gardée VALIDEUR), mais lue par un
+    // auditeur. Un numéro et un organisme inventés n'entrent pas en saisie
+    // courante.
+    attendreRejetApi('⭐⭐ un ÉLÈVE inscrit une attestation INVENTÉE sur la '
+      + 'fiche du professeur : REFUSÉ',
+    () => api.appeler('updatePersonne', { id: prof.id, donneesPersonne: {
+      numAttestationAptitude: 'ATT-INVENTEE', organismeDelivreur: 'Chez moi',
+      categorie2025: 'A1' } }, eleve), 'réservées au responsable');
+    attendreRejetApi('⭐⭐ … et se fabrique une fiche ADMIN de toutes pièces '
+      + '(l’AUTRE porte : createPersonne) : REFUSÉ',
+    () => api.appeler('createPersonne', { donneesPersonne: {
+      prenom: 'Faux', nom: 'Administrateur', typePersonne: 'SALARIE',
+      roleApp: 'ADMIN' } }, eleve), 'réservées au responsable');
+    attendreRejetApi('⭐⭐ … avec attestation, organisme et catégories dès la '
+      + 'création : REFUSÉ',
+    () => api.appeler('createPersonne', { donneesPersonne: {
+      prenom: 'Faux', nom: 'Titulaire', typePersonne: 'SOUS_TRAITANT',
+      numAttestationAptitude: 'ATT-9999', organismeDelivreur: 'Nulle part',
+      categorie2008: 'I', activitesAutorisees: ['MAINTENANCE'] } }, eleve),
+    'réservées au responsable');
+
+    // ⚠️ CONTRE-ÉPREUVES — l'écran ne doit pas devenir mort pour l'élève :
+    // l'état civil est de la saisie COURANTE et le reste.
+    const camarade = api.appeler('createPersonne', { donneesPersonne: {
+      prenom: 'Un', nom: 'Élève', typePersonne: 'ELEVE',
+      email: 'eleve@exemple.fr' } }, eleve);
+    verifier('contre-épreuve : l’élève inscrit toujours un camarade '
+      + '(état civil seul)', Boolean(camarade?.id));
+    const camaradeBis = api.appeler('createPersonne', { donneesPersonne: {
+      prenom: 'Deux', nom: 'Élève', typePersonne: 'ELEVE', roleApp: 'ELEVE',
+      numAttestationAptitude: null, organismeDelivreur: null,
+      categorie2008: null, categorie2025: null,
+      activitesAutorisees: [] } }, eleve);
+    verifier('contre-épreuve : … même en renvoyant TOUTE la fiche du '
+      + 'formulaire (valeurs par défaut)', Boolean(camaradeBis?.id));
+    const corrige = api.appeler('updatePersonne', { id: prof.id,
+      donneesPersonne: { prenom: 'Professeur', nom: 'Titulaire-Marié',
+        email: 'prof@exemple.fr', roleApp: 'ENSEIGNANT',
+        numAttestationAptitude: 'ATT-2025-0001',
+        organismeDelivreur: 'Organisme réel', categorie2025: 'A2' } }, eleve);
+    verifier('contre-épreuve : l’élève corrige l’état civil en renvoyant la '
+      + 'fiche entière (preuves INCHANGÉES)',
+    corrige.nom === 'Titulaire-Marié'
+      && corrige.numAttestationAptitude === 'ATT-2025-0001');
+    const requalifie = api.appeler('updatePersonne', { id: prof.id,
+      donneesPersonne: { categorie2025: 'A1' } }, referent);
+    verifier('contre-épreuve : le responsable, lui, tient les preuves',
+      requalifie.categorie2025 === 'A1');
+    const desactive = api.appeler('updatePersonne', { id: camarade.id,
+      donneesPersonne: { actif: false } }, referent);
+    verifier('contre-épreuve : le responsable désactive toujours par la '
+      + 'fiche', desactive.actif === false);
+  }
+
   console.log('--- D4 quater. Purger le journal d’audit ---');
   {
     const exporte = JSON.parse(api.appeler('exporterJSON', {}, referent));
