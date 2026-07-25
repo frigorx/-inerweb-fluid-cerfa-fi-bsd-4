@@ -5806,7 +5806,12 @@ export function creerDemoStore() {
         cessions: donnees.cessions,
         retoursFournisseur: donnees.retoursFournisseur,
         stocksInitiaux: donnees.stocksInitiaux,
-        photosBouteilles: donnees.inventairesBouteilles
+        photosBouteilles: donnees.inventairesBouteilles,
+        // Lot B2 : seules les MÉTADONNÉES des pièces (type et entité) —
+        // aucun binaire n'entre dans le calcul de la déclaration.
+        piecesJointes: (donnees.piecesJointes ?? []).map((pj) => ({
+          entiteType: pj.entiteType, entiteId: pj.entiteId
+        }))
       });
     },
 

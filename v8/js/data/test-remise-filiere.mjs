@@ -191,6 +191,57 @@ async function bouteilleDechet(masseKg) {
 }
 
 // ============================================================
+// C bis. B2-4 — L'ISSUE S'APPUIE SUR UNE PIÈCE
+// (attaque tirée : « DESTRUCTION » attestée sur parole, installation
+//  inventée, certificat null, zéro pièce → rubrique 9 de la
+//  déclaration réglementaire alimentée aussitôt)
+// ============================================================
+{
+  const b = await bouteilleDechet(8);
+  const suivi = await store.createBsff({
+    bouteilleId: b.id, transporteur: 'Collecteur agréé',
+    installationDestination: 'Centre de traitement agréé',
+    masseRemiseKg: 8, dateRemise: '2026-07-24', operateur: 'testeur'
+  });
+  await store.attesterIssueBsff(suivi.id, {
+    issueTraitement: 'DESTRUCTION',
+    installationTraitement: 'Installation inventée SA',
+    certificatTraitement: null, operateur: 'testeur'
+  });
+  verifier('la saisie de l’issue reste POSSIBLE (on n’empêche pas la réalité)',
+    (await store.getBsff()).find((x) => x.id === suivi.id)
+      .issueTraitement === 'DESTRUCTION');
+
+  const avant = await store.getDeclarationAnnuelle(2026);
+  const ligneAvant = avant.lignes.find((l) => l.fluide === 'R-410A');
+  verifier('affirmation NUE : rien en rubrique 9 (destruction)',
+    ligneAvant.destructionKg === 0, String(ligneAvant.destructionKg));
+  verifier('la masse est isolée en « issue déclarée sans preuve »',
+    ligneAvant.remisIssueSansPreuveKg >= 8,
+    String(ligneAvant.remisIssueSansPreuveKg));
+  verifier('anomalie BSFF_ISSUE_SANS_PIECE levée, déclaration incomplète',
+    avant.anomalies.some((a) => a.code === 'BSFF_ISSUE_SANS_PIECE'
+      && a.fluide === 'R-410A') && avant.complet === false);
+
+  // La PIÈCE arrive : la preuve existe, la rubrique se remplit.
+  await store.ajouterPieceJointe({
+    entiteType: 'BSFF', entiteId: suivi.id, categorie: 'CERTIFICAT',
+    nomFichier: 'certificat.png', mimeType: 'image/png',
+    base64: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk'
+      + 'YPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+  });
+  const apres = await store.getDeclarationAnnuelle(2026);
+  const ligneApres = apres.lignes.find((l) => l.fluide === 'R-410A');
+  verifier('pièce jointe déposée : la masse rejoint la rubrique 9',
+    ligneApres.destructionKg >= 8, String(ligneApres.destructionKg));
+  verifier('plus de masse « déclarée sans preuve » pour ce suivi',
+    ligneApres.remisIssueSansPreuveKg < ligneAvant.remisIssueSansPreuveKg,
+    `${ligneAvant.remisIssueSansPreuveKg} → ${ligneApres.remisIssueSansPreuveKg}`);
+  verifier('l’installation de traitement est reportée avec la masse',
+    ligneApres.destructionInstallations.includes('Installation inventée SA'));
+}
+
+// ============================================================
 // D. Le CERFA officiel (cadre 11) ne reçoit QUE le bordereau réel
 // ============================================================
 {

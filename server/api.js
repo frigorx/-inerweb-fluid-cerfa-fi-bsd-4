@@ -4615,7 +4615,12 @@ const HANDLERS = {
       cessions: lire('cessions'),
       retoursFournisseur: lire('retours_fournisseur'),
       stocksInitiaux: lire('stocks_initiaux'),
-      photosBouteilles: lire('inventaires_bouteilles')
+      photosBouteilles: lire('inventaires_bouteilles'),
+      // Lot B2 (MIROIR du DemoStore) : seules les MÉTADONNÉES des pièces —
+      // jamais le contenu binaire (inutile ici, et coûteux).
+      piecesJointes: db.all(
+        'SELECT entite_type AS t, entite_id AS i FROM pieces_jointes')
+        .map((l) => ({ entiteType: l.t, entiteId: l.i }))
     });
   },
 

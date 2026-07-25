@@ -43,12 +43,22 @@ const DONNEES = {
   retoursFournisseur: [
     { fluide: 'R-410A', masseKg: 6, date: '2026-07-01' }
   ],
+  // Lot B2 : chaque suivi porte un id, et l'issue ne compte que si une
+  // PIÈCE JUSTIFICATIVE est jointe (piecesJointes plus bas).
   bsff: [
-    { fluide: 'R-410A', masseRemiseKg: 3, dateRemise: '2026-08-01', issueTraitement: 'DESTRUCTION', installationTraitement: 'Incinérateur agréé de Fos' },
-    { fluide: 'R-410A', masseRemiseKg: 2, dateRemise: '2026-08-02', issueTraitement: 'REGENERATION', installationTraitement: 'Régé-Fluides Lyon' },
-    { fluide: 'R-410A', masseRemiseKg: 0.5, dateRemise: '2026-08-03', issueTraitement: 'AUTRE', installationTraitement: null },
-    { fluide: 'R-32', masseRemiseKg: 1, dateRemise: '2026-08-04', issueTraitement: 'RECYCLAGE', installationTraitement: null },
-    { fluide: 'R-32', masseRemiseKg: 1.5, dateRemise: '2026-08-05', issueTraitement: null, installationTraitement: null }
+    { id: 'SF-1', fluide: 'R-410A', masseRemiseKg: 3, dateRemise: '2026-08-01', issueTraitement: 'DESTRUCTION', installationTraitement: 'Incinérateur agréé de Fos' },
+    { id: 'SF-2', fluide: 'R-410A', masseRemiseKg: 2, dateRemise: '2026-08-02', issueTraitement: 'REGENERATION', installationTraitement: 'Régé-Fluides Lyon' },
+    { id: 'SF-3', fluide: 'R-410A', masseRemiseKg: 0.5, dateRemise: '2026-08-03', issueTraitement: 'AUTRE', installationTraitement: null },
+    { id: 'SF-4', fluide: 'R-32', masseRemiseKg: 1, dateRemise: '2026-08-04', issueTraitement: 'RECYCLAGE', installationTraitement: null },
+    { id: 'SF-5', fluide: 'R-32', masseRemiseKg: 1.5, dateRemise: '2026-08-05', issueTraitement: null, installationTraitement: null }
+  ],
+  piecesJointes: [
+    { entiteType: 'BSFF', entiteId: 'SF-1' },
+    { entiteType: 'BSFF', entiteId: 'SF-2' },
+    { entiteType: 'BSFF', entiteId: 'SF-3' },
+    { entiteType: 'BSFF', entiteId: 'SF-4' },
+    // SF-5 n'a pas d'issue : la pièce n'y changerait rien.
+    { entiteType: 'MOUVEMENT', entiteId: 'MVT-1' }
   ],
   cessions: [
     { fluide: 'R-410A', masseKg: 4, date: '2026-09-01' },
@@ -167,7 +177,35 @@ verifier('réconciliation charges : neuf + maintenance = 7 (= total charges R-41
   P(l410.chargesNeufKg + l410.chargesMaintenanceKg, 7));
 verifier('réconciliation BSFF : la somme des issues = masse totale remise R-410A (5,5)',
   P(l410.destructionKg + l410.regenerationKg + l410.recyclageFiliereKg
-    + l410.autreTraitementKg + l410.remisNonAttesteKg, 5.5));
+    + l410.autreTraitementKg + l410.remisNonAttesteKg
+    + l410.remisIssueSansPreuveKg, 5.5));
+
+// ============================================================
+// Lot B2 — L'ISSUE S'APPUIE SUR UNE PIÈCE : le MÊME jeu, privé de ses
+// pièces justificatives. Aucun kilo ne s'évapore : il change de poste.
+// ============================================================
+{
+  const sansPieces = { ...DONNEES, piecesJointes: [] };
+  const decl2 = calculerDeclarationAnnuelle(2026, sansPieces);
+  const a410 = decl2.lignes.find((l) => l.fluide === 'R-410A');
+  const a32 = decl2.lignes.find((l) => l.fluide === 'R-32');
+  verifier('sans pièce : rubrique 9 (destruction) vidée',
+    P(a410.destructionKg, 0) && a410.destructionInstallations.length === 0);
+  verifier('sans pièce : rubrique 8 (régénération) vidée',
+    P(a410.regenerationKg, 0));
+  verifier('sans pièce : les masses partent en « déclaré sans preuve » (5,5)',
+    P(a410.remisIssueSansPreuveKg, 5.5));
+  verifier('sans pièce : aucun kilo perdu pour R-32 (1 sans preuve + 1,5 non attesté)',
+    P(a32.remisIssueSansPreuveKg, 1) && P(a32.remisNonAttesteKg, 1.5));
+  verifier('sans pièce : anomalie BSFF_ISSUE_SANS_PIECE sur les deux fluides',
+    decl2.anomalies.filter((a) => a.code === 'BSFF_ISSUE_SANS_PIECE').length === 2
+    && decl2.complet === false);
+  verifier('sans pièce : anomalie BSFF_SANS_ISSUE toujours distincte',
+    decl2.anomalies.some((a) => a.code === 'BSFF_SANS_ISSUE'));
+  verifier('parité ESM ↔ serveur (sans pièces justificatives)',
+    JSON.stringify(decl2)
+    === JSON.stringify(miroir.calculerDeclarationAnnuelle(2026, sansPieces)));
+}
 
 // ============================================================
 // Parité STRICTE ESM ↔ CommonJS sur les deux scénarios

@@ -11,6 +11,7 @@
 import { enteteVue, chipStatut, tableau, toast, modale, ICONES } from './communs.js';
 import { esc, fmtNombre, fmtDate } from '../core/utils.js';
 import { ouvrirFormBsff } from '../modales/bsff-form.js';
+import { zonePiecesJointes } from '../composants/pieces-jointes.js';
 import {
   LIBELLE_SUIVI, MENTION_BORDEREAU_OFFICIEL, LIBELLE_BORDEREAU_EXTERNE
 } from '../data/remise-filiere.js';
@@ -174,13 +175,18 @@ const LIBELLE_ISSUE = {
   DESTRUCTION: 'Destruction', AUTRE: 'Autre'
 };
 
-function ligneBsff(bsff) {
+function ligneBsff(bsff, aUnePiece) {
+  // ⚠ Lot B2 : une issue déclarée SANS pièce jointe est affichée comme
+  // NON PROUVÉE — elle n'alimente aucune rubrique de traitement.
   const issue = bsff.issueTraitement
     ? '<strong>' + esc(LIBELLE_ISSUE[bsff.issueTraitement]
         || bsff.issueTraitement) + '</strong>'
       + (bsff.installationTraitement
         ? '<br><span class="mono issue-inst">'
           + esc(bsff.installationTraitement) + '</span>' : '')
+      + (aUnePiece ? ''
+        : '<br><span class="issue-absente">déclarée sans pièce — '
+          + 'non comptée comme preuve</span>')
     : '<span class="issue-absente">Non attestée</span>';
   const action = '<button type="button" class="btn btn-contour btn-petit" '
     + 'data-action="attester-issue" data-id="' + esc(bsff.id) + '">'
@@ -220,6 +226,15 @@ function ouvrirAttestationIssue(ctx, bsff) {
     + '</strong> — ' + esc(fmtNombre(bsff.masseRemiseKg, 2)) + ' kg de '
     + esc(bsff.fluide) + '. Attestez la <strong>nature du traitement '
     + 'final</strong> tel que l’opérateur agréé la certifie.</p>'
+    // ⚠ Lot B2 — l'écran dit la règle AVANT la saisie : sans pièce, la
+    // masse ne sera comptée ni en destruction ni en régénération.
+    + '<div class="bandeau-avertissement">' + ICONES.alerte
+    + '<span>Sans <strong>pièce justificative jointe</strong> à ce suivi '
+    + '(certificat de l’installation, bordereau officiel), l’issue déclarée '
+    + 'ne vaut pas preuve : la masse restera « remise en filière » et '
+    + 'n’entrera dans aucune rubrique de traitement de la déclaration '
+    + 'annuelle. Un numéro de certificat saisi n’est pas une pièce.</span>'
+    + '</div>'
     + '<label class="champ-label">Issue de traitement'
     + '<select id="issue-select">' + opts + '</select></label>'
     + '<label class="champ-label">Installation de traitement '
@@ -252,8 +267,33 @@ function ouvrirAttestationIssue(ctx, bsff) {
           operateur: u.prenom + ' ' + u.nom
         });
         toast('Traitement final attesté.', 'succes');
-        instance.fermer();
-        if (typeof ctx.rafraichir === 'function') ctx.rafraichir();
+        // ⚠ Lot B2 : on enchaîne SUR la pièce justificative — c'est elle
+        // qui fait la preuve. La modale ne se ferme pas sur l'affirmation.
+        // Piège historique du projet : JAMAIS de sélecteur global sur
+        // « .modale » — on interroge la boîte de CET appel.
+        const corps = instance.racine.querySelector('.modale-corps');
+        const actions = instance.racine.querySelector('.modale-actions');
+        if (corps) {
+          corps.innerHTML = '<p class="modale-intro">Joignez la '
+            + '<strong>pièce justificative</strong> du traitement '
+            + '(certificat de l’installation, bordereau officiel). Sans '
+            + 'elle, cette issue ne sera pas comptée comme preuve dans la '
+            + 'déclaration annuelle.</p><div id="zone-pj-issue"></div>';
+        }
+        if (actions) {
+          actions.innerHTML = '<button type="button" '
+            + 'class="btn btn-marine btn-bloc" data-action="terminer">'
+            + 'Terminer</button>';
+          actions.querySelector('[data-action="terminer"]')
+            .addEventListener('click', function () {
+              instance.fermer();
+              if (typeof ctx.rafraichir === 'function') ctx.rafraichir();
+            });
+        }
+        zonePiecesJointes(instance.racine.querySelector('#zone-pj-issue'), ctx, {
+          entiteType: 'BSFF', entiteId: bsff.id, categorie: 'CERTIFICAT'
+        });
+        return;
       } catch (erreur) {
         zoneErreur.innerHTML = '<div class="bandeau-erreur">' + ICONES.alerte
           + '<span>' + esc(erreur.message
@@ -373,6 +413,13 @@ export async function render(conteneur, ctx) {
     ctx.store.getBouteilles(),
     ctx.store.getBsff()
   ]);
+  // Lot B2 : quels suivis portent une pièce justificative (métadonnées
+  // seules — la liste de PJ ne descend aucun binaire).
+  const avecPiece = new Set();
+  for (const s of bsffListe) {
+    const pieces = await ctx.store.listerPiecesJointes('BSFF', s.id);
+    if (pieces && pieces.length > 0) avecPiece.add(s.id);
+  }
 
   const jour = new Date().toISOString().slice(0, 10);
   const enAttente = bouteillesRecupPendantes(bouteilles);
@@ -417,7 +464,7 @@ export async function render(conteneur, ctx) {
         { cle: 'issue', libelle: 'Traitement final' },
         { cle: 'action', libelle: '', align: 'droite' }
       ],
-      lignesHtml: bsffListe.map(ligneBsff)
+      lignesHtml: bsffListe.map((s) => ligneBsff(s, avecPiece.has(s.id)))
     })
     + '</section>';
 

@@ -60,7 +60,11 @@ export function calculerDeclarationAnnuelle(annee, donnees) {
         // informatif / anomalies
         recyclageFiliereKg: 0,        // BSFF issue RECYCLAGE (≠ rubrique 7)
         autreTraitementKg: 0,         // BSFF issue AUTRE
-        remisNonAttesteKg: 0          // BSFF sans issue attestée (anomalie)
+        remisNonAttesteKg: 0,         // remise sans issue attestée (anomalie)
+        // Lot B2 — issue DÉCLARÉE mais SANS PIÈCE : une affirmation nue ne
+        // vaut pas preuve. La masse n'alimente aucune rubrique de traitement
+        // tant qu'aucune pièce justificative n'est jointe au suivi.
+        remisIssueSansPreuveKg: 0
       });
     }
     return parFluide.get(fluide);
@@ -109,11 +113,27 @@ export function calculerDeclarationAnnuelle(annee, donnees) {
   // Rubriques 8/9 (+ informatif) — BSFF remis dans l'année, ventilés par
   // ISSUE de traitement final ATTESTÉE. Une remise SANS issue reste
   // « non attestée » : jamais comptée en destruction (défaut d'audit).
+  // ⭐ Lot B2 — L'ISSUE S'APPUIE SUR UNE PIÈCE. « Destruction » s'attestait
+  // sur parole (installation inventée, certificat null, zéro pièce jointe)
+  // et tombait aussitôt dans la rubrique 9 de la déclaration réglementaire.
+  // Doctrine maison : le doute retire l'ALLÈGEMENT, jamais l'OBLIGATION —
+  // la saisie reste possible (on n'empêche jamais d'enregistrer la réalité),
+  // mais sans pièce jointe au suivi, l'issue ne VAUT PAS preuve : la masse
+  // reste « remise en filière », hors rubriques de traitement, et l'écran
+  // le dit. Un numéro de certificat SAISI n'est pas une pièce.
+  const suivisAvecPiece = new Set(
+    (d.piecesJointes || [])
+      .filter((pj) => pj && String(pj.entiteType).toUpperCase() === 'BSFF')
+      .map((pj) => pj.entiteId));
   for (const bsff of d.bsff || []) {
     if (!String(bsff.dateRemise || '').startsWith(prefixe)) continue;
     const l = ligne(bsff.fluide);
     const masse = Number(bsff.masseRemiseKg) || 0;
     const inst = bsff.installationTraitement || null;
+    if (bsff.issueTraitement && !suivisAvecPiece.has(bsff.id)) {
+      l.remisIssueSansPreuveKg = arrondir(l.remisIssueSansPreuveKg + masse);
+      continue;
+    }
     switch (bsff.issueTraitement) {
       case 'DESTRUCTION':
         l.destructionKg = arrondir(l.destructionKg + masse);
@@ -201,6 +221,17 @@ export function calculerDeclarationAnnuelle(annee, donnees) {
         `fin d'année ne sont pas établis.` });
   }
   for (const l of lignes) {
+    // Lot B2 — l'issue déclarée sans pièce est dénoncée À PART : ce n'est
+    // pas « rien de déclaré », c'est « déclaré, non prouvé ».
+    if (l.remisIssueSansPreuveKg > 0) {
+      anomalies.push({ code: 'BSFF_ISSUE_SANS_PIECE', fluide: l.fluide,
+        masseKg: l.remisIssueSansPreuveKg,
+        message: `${l.fluide} : ${l.remisIssueSansPreuveKg} kg remis en ` +
+          `filière avec une issue de traitement déclarée mais AUCUNE pièce ` +
+          `justificative jointe (certificat de l'installation, bordereau ` +
+          `officiel). Sans pièce, l'issue ne vaut pas preuve : cette masse ` +
+          `n'est comptée ni en destruction, ni en régénération.` });
+    }
     if (l.remisNonAttesteKg > 0) {
       anomalies.push({ code: 'BSFF_SANS_ISSUE', fluide: l.fluide,
         masseKg: l.remisNonAttesteKg,
