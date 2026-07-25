@@ -276,43 +276,51 @@ console.log('--- B ter. personne-form : les blocs réservés sont '
   const verrouille = personneForm.gabaritFormulaire(personne, true, false);
   const ouvert = personneForm.gabaritFormulaire(personne, true, true);
 
-  const attendus = [
-    ['rôle applicatif', 'name="roleApp" disabled>'],
-    ['catégorie 2008', 'name="categorie2008" disabled>'],
-    ['catégorie 2025', 'name="categorie2025" disabled>'],
-    ['activités autorisées', 'value="MAINTENANCE" checked disabled>']
-  ];
-  for (const [libelle, motif] of attendus) {
-    verifier(`rôle sans droit : ${libelle} VERROUILLÉ`,
-      verrouille.includes(motif), motif);
-    verifier(`contre-épreuve : ${libelle} ouvert au responsable`,
-      !ouvert.includes(motif));
-  }
-  // Les champs texte / date portent leur valeur avant l'attribut : on tire
-  // le motif complet, valeur comprise.
-  const textes = [
-    ['n° d’attestation', 'value="ATT-2025-0001" disabled>'],
-    ['organisme délivreur', 'value="Organisme réel" disabled>'],
-    ['date d’obtention', 'value="2025-09-01" disabled>'],
-    ['date de fin de validité', 'value="2032-09-01" disabled>']
-  ];
-  for (const [libelle, motif] of textes) {
-    verifier(`rôle sans droit : ${libelle} VERROUILLÉ`,
-      verrouille.includes(motif), motif);
-    verifier(`contre-épreuve : ${libelle} ouvert au responsable`,
-      !ouvert.includes(motif));
+  // ⭐⭐ Revue B1, constat n°4 — assertions refondues sur la BALISE. Les
+  // motifs figés d'avant (« value="ATT-2025-0001" disabled> ») dépendaient
+  // de l'ORDRE des attributs dans le gabarit : celui de l'état civil ne
+  // pouvait jamais apparaître, donc son assertion ne pouvait jamais mordre.
+  const reserves = ['roleApp', 'categorie2008', 'categorie2025',
+    'activitesAutorisees', 'numAttestationAptitude', 'organismeDelivreur',
+    'dateObtention', 'dateFinValidite'];
+  for (const champ of reserves) {
+    verifier(`rôle sans droit : ${champ} VERROUILLÉ`,
+      champVerrouille(verrouille, champ),
+      JSON.stringify(balisesDuChamp(verrouille, champ)));
+    verifier(`contre-épreuve : ${champ} ouvert au responsable`,
+      champOuvert(ouvert, champ),
+      JSON.stringify(balisesDuChamp(ouvert, champ)));
   }
   verifier('rôle sans droit : l’écran DIT pourquoi (note « réservés au '
     + 'responsable »)', verrouille.includes('<p class="pf-reservee">')
     && verrouille.includes('réservés au responsable'));
   verifier('contre-épreuve : aucune note pour le responsable',
     !ouvert.includes('<p class="pf-reservee">'));
-  verifier('l’état civil reste OUVERT à tous (prénom, nom, type, courriel '
-    + 'jamais verrouillés)',
-  !verrouille.includes('name="prenom"') || (
-    !verrouille.includes('name="prenom" maxlength="80" disabled')
-      && !verrouille.includes('id="pf-email" name="email" maxlength="160" '
-        + 'value="" disabled')));
+
+  // ⚠️ L'ASSERTION QUI DOIT MORDRE. Un élève inscrit son camarade de TP :
+  // si l'état civil se verrouillait, l'écran deviendrait mort pour lui.
+  // Chacun des quatre champs est vérifié SÉPARÉMENT — un libellé qui cite
+  // quatre champs et n'en teste qu'un est un mensonge.
+  for (const champ of ['prenom', 'nom', 'typePersonne', 'email']) {
+    verifier(`l’état civil reste OUVERT à tous : ${champ} jamais verrouillé`,
+      champOuvert(verrouille, champ) && champOuvert(ouvert, champ),
+      JSON.stringify(balisesDuChamp(verrouille, champ)));
+  }
+  // … y compris sur la fiche d'un ÉLÈVE, où le bloc « attestation » est
+  // masqué (constat mineur n°3 : la note y était invisible).
+  {
+    const ficheEleve = personneForm.gabaritFormulaire(
+      { prenom: 'Un', nom: 'Élève', typePersonne: 'ELEVE', roleApp: 'ELEVE' },
+      true, false);
+    for (const champ of ['prenom', 'nom', 'typePersonne', 'email']) {
+      verifier(`fiche d’ÉLÈVE : ${champ} reste ouvert`,
+        champOuvert(ficheEleve, champ),
+        JSON.stringify(balisesDuChamp(ficheEleve, champ)));
+    }
+    verifier('fiche d’ÉLÈVE : le rôle applicatif est bien verrouillé',
+      champVerrouille(ficheEleve, 'roleApp'),
+      JSON.stringify(balisesDuChamp(ficheEleve, 'roleApp')));
+  }
 }
 
 // ============================================================
