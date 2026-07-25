@@ -761,6 +761,134 @@ try {
   } catch { /* dossier temporaire encore verrouillé : sans conséquence */ }
 }
 
+// ============================================================
+// C. ⭐ FAIRE MENTIR LES DATES
+//
+// Le logiciel décide de choses opposables en comparant des chaînes de
+// caractères — c'est l'astuce du format AAAA-MM-JJ, et elle est bonne…
+// tant que la valeur EST une date. Trois attaques tirées le 25/07 :
+//   · une attestation portant « 31/12/2020 » était déclarée VALIDE
+//     (« 3 » est après « 2 » : la comparaison la voit dans le futur) ;
+//   · une attestation 2008 datée « 15/06/2027 » — illégale — passait la
+//     garde de délivrance pour la même raison, à l'envers ;
+//   · une détection « vérifiée » le « 2028-99-99 » ou le « 2030-01-01 »
+//     divisait par DEUX la fréquence des contrôles d'étanchéité.
+// ============================================================
+console.log('');
+console.log('=== C. Faire mentir les dates ===');
+
+const DOSSIER_F = mkdtempSync(join(tmpdir(), 'iwf-secneg-dates-'));
+try {
+  db.ouvrir(join(DOSSIER_F, 'data', 'dates.db'));
+  const referent = { role: 'REFERENT' };
+  api.appeler('init', {}, referent);
+  const personne = api.appeler('createPersonne', { donneesPersonne: {
+    prenom: 'Technicien', nom: 'Test', typePersonne: 'ENSEIGNANT',
+    roleApp: 'ENSEIGNANT' } }, referent);
+
+  console.log('--- C1. Habilitations ---');
+  attendreRejetApi('attestation périmée déguisée en date française '
+    + '(dateFin 31/12/2020) : REFUSÉE',
+  () => api.appeler('createHabilitation', { donneesHabilitation: {
+    personneId: personne.id, regime: '2025', categorie: 'A1',
+    numeroAttestation: 'FR-2015-PERIMEE', dateDebut: '2015-01-05',
+    dateFin: '31/12/2020' } }, referent), 'Date de fin invalide');
+
+  attendreRejetApi('délivrance 2008 illégale déguisée en date française '
+    + '(dateDebut 15/06/2027) : REFUSÉE',
+  () => api.appeler('createHabilitation', { donneesHabilitation: {
+    personneId: personne.id, regime: '2008', categorie: 'I',
+    numeroAttestation: 'FR-2027-ILLEGALE', dateDebut: '15/06/2027' } },
+  referent), 'Date de début invalide');
+
+  for (const mauvaise of ['2028-99-99', '2026-02-30', '0000-00-00',
+    '2026-13-45', '2026-7-5', '2026-07-25T00:00:00Z']) {
+    attendreRejetApi(`date hors calendrier « ${mauvaise} » : REFUSÉE`,
+      () => api.appeler('createHabilitation', { donneesHabilitation: {
+        personneId: personne.id, regime: '2025', categorie: 'A1',
+        dateFin: mauvaise } }, referent), 'invalide');
+  }
+
+  // La correction après coup ne rouvre pas la porte.
+  {
+    const bonne = api.appeler('createHabilitation', { donneesHabilitation: {
+      personneId: personne.id, regime: '2025', categorie: 'A1',
+      dateDebut: '2025-01-01', dateFin: '2030-01-01' } }, referent);
+    attendreRejetApi('… ni par une correction après coup (updateHabilitation)',
+      () => api.appeler('updateHabilitation', {
+        id: bonne.id, donneesHabilitation: { dateFin: '31/12/2020' } },
+      referent), 'Date de fin invalide');
+  }
+
+  // La fiche de la personne porte la même exigence : sa date de fin de
+  // validité pilote l'alerte « attestation d'aptitude expirée ».
+  attendreRejetApi('date de fin de validité d’une PERSONNE au format '
+    + 'français : REFUSÉE',
+  () => api.appeler('updatePersonne', { id: personne.id, donneesPersonne: {
+    dateFinValidite: '31/12/2020' } }, referent),
+  'Date de fin de validité invalide');
+
+  console.log('--- C2. Détection de fuites (allègement de fréquence) ---');
+  {
+    const machine = api.appeler('createMachine', { donneesMachine: {
+      designation: 'Groupe dates', fluide: 'R-410A', chargeNominaleKg: 30 } },
+    referent);
+    for (const mauvaise of ['2028-99-99', '2026-13-45', '2026-02-30']) {
+      attendreRejetApi(`détection « vérifiée » le ${mauvaise} : REFUSÉE`,
+        () => api.appeler('updateMachine', { id: machine.id, donneesMachine: {
+          detectionPermanente: true, detectionVerifieeLe: mauvaise } },
+        referent), 'Date de vérification de la détection invalide');
+    }
+    // Le futur : une vérification qui n'a pas eu lieu n'allège rien.
+    const dansLeFutur = dateRelative(400);
+    let poseeAuFutur = false;
+    try {
+      api.appeler('updateMachine', { id: machine.id, donneesMachine: {
+        detectionPermanente: true, detectionVerifieeLe: dansLeFutur } },
+      referent);
+      poseeAuFutur = true;
+    } catch { poseeAuFutur = false; }
+    if (poseeAuFutur) {
+      // Si la saisie passe, l'allègement, lui, ne doit PAS être accordé.
+      const { detectionEffective } = require('./equipement.js');
+      const etat = detectionEffective(
+        { detectionPermanente: true, detectionVerifieeLe: dansLeFutur },
+        new Date().toISOString().slice(0, 10));
+      verifier('⭐ une vérification datée DANS LE FUTUR n’allège rien',
+        etat.compte === false, JSON.stringify(etat));
+    } else {
+      verifier('⭐ une vérification datée DANS LE FUTUR est refusée à la '
+        + 'saisie', true);
+    }
+    // Contre-épreuve : une vérification RÉELLE et récente allège bien.
+    const { detectionEffective } = require('./equipement.js');
+    const etatBon = detectionEffective(
+      { detectionPermanente: true, detectionVerifieeLe: dateRelative(-30) },
+      new Date().toISOString().slice(0, 10));
+    verifier('contre-épreuve : une vérification récente allège toujours',
+      etatBon.compte === true, JSON.stringify(etatBon));
+  }
+
+  console.log('--- C3. Les mêmes dates par IMPORT ---');
+  {
+    const exporte = JSON.parse(api.appeler('exporterJSON', {}, referent));
+    exporte.donnees.habilitations.push({
+      id: 'HAB-FORGEE', personneId: personne.id, regime: '2025',
+      categorie: 'A1', numeroAttestation: 'FR-IMPORT', dateDebut: '2015-01-05',
+      dateFin: '31/12/2020', actif: true });
+    attendreRejetApi('⭐ la même attestation périmée par un paquet d’import : '
+      + 'REFUSÉE AUSSI (les gardes du CRUD sont rejouées)',
+    () => api.appeler('importerJSON', { texte: JSON.stringify(exporte) },
+      referent), 'date de fin invalide');
+  }
+} finally {
+  try { db.fermer?.(); } catch { /* best-effort */ }
+  try {
+    rmSync(DOSSIER_F, { recursive: true, force: true, maxRetries: 5,
+      retryDelay: 200 });
+  } catch { /* dossier temporaire encore verrouillé : sans conséquence */ }
+}
+
 console.log('');
 console.log(`Sécurité négative : ${nbOk} réussies, ${nbEchecs} en échec.`);
 if (nbEchecs > 0) process.exit(1);

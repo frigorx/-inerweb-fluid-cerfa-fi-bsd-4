@@ -19,6 +19,10 @@
  * participent pas au verdict.
  */
 
+// L2 (25/07) : « une date est une date » — miroir de l'import ESM du module
+// d'origine (v8/js/data/habilitations.js).
+const { estDateCalendaire } = require('./dates.js');
+
 /** Opérations normalisées de la matrice §2. */
 const OPERATIONS = ['ETANCHEITE', 'INSTALLATION', 'MAINTENANCE', 'RECUPERATION'];
 const OPS_TOUTES = ['ETANCHEITE', 'INSTALLATION', 'MAINTENANCE', 'RECUPERATION'];
@@ -91,7 +95,14 @@ function habilitationReconnue(h, dateReference) {
   // illisible ne compare pas, elle REFUSE ('' ou '13/03/2029' passaient
   // les comparaisons de chaînes).
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateReference ?? ''))) return false;
-  if (h.dateFin && h.dateFin < dateReference) return false;
+  // ⭐ L2 (25/07) — MÊME RÈGLE POUR LA DATE DE FIN, et pour la même raison.
+  // Attaque tirée : dateFin « 31/12/2020 » (format français) déclarée
+  // VALIDE — « 3 » est après « 2 », la comparaison de chaînes la voit dans
+  // le futur. Absente = pas d'échéance ; PRÉSENTE mais illisible = refus.
+  if (h.dateFin !== null && h.dateFin !== undefined && h.dateFin !== '') {
+    if (!estDateCalendaire(h.dateFin)) return false;
+    if (h.dateFin < dateReference) return false;
+  }
   if (h.regime === '2025') return true;
   if (h.regime === '2008') {
     if (dateReference <= DATE_BUTOIR_REMISE_NIVEAU_2008) return true;

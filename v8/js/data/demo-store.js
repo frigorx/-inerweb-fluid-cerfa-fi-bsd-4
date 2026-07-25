@@ -28,6 +28,8 @@ import { detectionEffective, echeanceVerificationDetection,
 // signale une réintroduction au-delà du récupéré. Le serveur en tient un
 // MIROIR EXACT (api.js).
 import { avoirParMachineOrigine } from './avoir-origine.js';
+// L2 (25/07) : « une date est une date » — format ancré ET calendrier réel.
+import { estDateCalendaireOuVide, messageDateInvalide } from './dates.js';
 // P0-8 : déclaration annuelle 11 rubriques (module pur, miroir serveur).
 import { calculerDeclarationAnnuelle } from './declaration-annuelle.js';
 // Sentinelle d'alertes persistées : diff pur + formatage (module partagé
@@ -963,6 +965,34 @@ export function creerDemoStore() {
     if (remiseNiveauLe > aujourdHui()) {
       throw new Error('Une remise à niveau ne s’atteste pas d’avance : ' +
         'la date ne peut pas être dans le futur.');
+    }
+  }
+
+  /**
+   * L2 (25/07) — les dates d'une habilitation sont des DATES (miroir EXACT
+   * du serveur). `verifierRemiseNiveau` gardait son champ depuis L4 ; ses
+   * voisins entraient bruts. Attaques tirees : dateFin « 31/12/2020 »
+   * (format francais) rendait une attestation perimee VALIDE, car « 3 » est
+   * apres « 2 » dans une comparaison de chaines ; dateDebut « 15/06/2027 »
+   * contournait la garde de delivrance 2008. Absente = donnee legitime.
+   */
+  function verifierDatesHabilitation(d) {
+    for (const [champ, libelle] of [
+      ['dateDebut', 'Date de début'], ['dateFin', 'Date de fin']]) {
+      if (!estDateCalendaireOuVide(d[champ])) {
+        throw new Error(messageDateInvalide(libelle));
+      }
+    }
+  }
+
+  /** L2 — memes dates, meme regle, sur la FICHE de la personne. */
+  function verifierDatesPersonne(d) {
+    for (const [champ, libelle] of [
+      ['dateObtention', 'Date d’obtention'],
+      ['dateFinValidite', 'Date de fin de validité']]) {
+      if (!estDateCalendaireOuVide(d[champ])) {
+        throw new Error(messageDateInvalide(libelle));
+      }
     }
   }
 
@@ -4565,6 +4595,7 @@ export function creerDemoStore() {
         throw new Error(
           `Type de personne obligatoire parmi : ${TYPES_PERSONNE.join(', ')}.`);
       }
+      verifierDatesPersonne(d);
       const personne = {
         id: genId('per'),
         nom: String(d.nom).trim(),
@@ -4611,6 +4642,7 @@ export function creerDemoStore() {
       if (d.activitesAutorisees !== undefined) {
         verifierActivites(d.activitesAutorisees);
       }
+      verifierDatesPersonne(d);
       const CHAMPS = ['nom', 'prenom', 'typePersonne', 'roleApp',
         'numAttestationAptitude', 'organismeDelivreur', 'dateObtention',
         'dateFinValidite', 'categorie2008', 'categorie2025',
@@ -4900,6 +4932,7 @@ export function creerDemoStore() {
       if (estAuCoffre(personne.id)) throw new Error(MSG_FICHE_AU_COFFRE);
       verifierRegime(d.regime);
       verifierCategorieHabilitation(d.regime, d.categorie);
+      verifierDatesHabilitation(d);
       verifierDelivrance2008(d.regime, d.dateDebut);
       verifierRemiseNiveau(d.remiseNiveauLe);
       const habilitation = {
@@ -4940,6 +4973,7 @@ export function creerDemoStore() {
       // L4/Q3 : la remise à niveau se corrige aussi (même statut qu'une date).
       // Revue L4 — les gardes de création valent AUSSI en correction : le
       // contournement « créer légal puis patcher illégal » est fermé.
+      verifierDatesHabilitation(d);
       if (d.dateDebut !== undefined) {
         verifierDelivrance2008(habilitation.regime, d.dateDebut);
       }

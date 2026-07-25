@@ -77,6 +77,7 @@ const { assemblerExportPersonne } = require('./export-personne.js');
 const coffre = require('./coffre-identites.js');
 const chiffrementCoffre = require('./chiffrement.js');
 const parametres = require('./parametres.js');
+const dates = require('./dates.js');
 const sauvegardeCoffre = require('./sauvegarde.js');
 const restaurationCoffre = require('./restauration.js');
 
@@ -331,6 +332,40 @@ function verifierRemiseNiveau(remiseNiveauLe) {
   if (remiseNiveauLe > aujourdHui()) {
     throw new Error('Une remise à niveau ne s’atteste pas d’avance : ' +
       'la date ne peut pas être dans le futur.');
+  }
+}
+
+/**
+ * ⭐ L2 (25/07) — les dates d'une habilitation sont des DATES.
+ * `verifierRemiseNiveau` ci-dessus gardait ce champ-là depuis L4 ; ses
+ * voisins, eux, entraient bruts. Attaques tirées : dateFin « 31/12/2020 »
+ * (format français) → attestation périmée déclarée VALIDE, car « 3 » est
+ * après « 2 » dans une comparaison de chaînes ; dateDebut « 15/06/2027 »
+ * → la garde de délivrance 2008 comparait « 1 » à « 2 » et laissait
+ * enregistrer une attestation illégale. Absente = donnée légitime.
+ */
+function verifierDatesHabilitation(d) {
+  for (const [champ, libelle] of [
+    ['dateDebut', 'Date de début'], ['dateFin', 'Date de fin']]) {
+    if (!dates.estDateCalendaireOuVide(d[champ])) {
+      throw new Error(dates.messageDateInvalide(libelle));
+    }
+  }
+}
+
+/**
+ * ⭐ L2 — mêmes dates, même règle, sur la FICHE de la personne.
+ * `dateFinValidite` porte l'alerte « attestation d'aptitude expirée » :
+ * une date au format français l'éteignait sans rien enregistrer de faux
+ * en apparence.
+ */
+function verifierDatesPersonne(d) {
+  for (const [champ, libelle] of [
+    ['dateObtention', 'Date d’obtention'],
+    ['dateFinValidite', 'Date de fin de validité']]) {
+    if (!dates.estDateCalendaireOuVide(d[champ])) {
+      throw new Error(dates.messageDateInvalide(libelle));
+    }
   }
 }
 
@@ -1421,6 +1456,7 @@ const HANDLERS = {
       throw new Error(
         `Type de personne obligatoire parmi : ${TYPES_PERSONNE.join(', ')}.`);
     }
+    verifierDatesPersonne(d);
     const personne = {
       id: db.generateId('PER'),
       nom: String(d.nom).trim(),
@@ -1472,6 +1508,7 @@ const HANDLERS = {
     if (d.activitesAutorisees !== undefined) {
       verifierActivites(d.activitesAutorisees);
     }
+    verifierDatesPersonne(d);
     const CHAMPS = ['nom', 'prenom', 'typePersonne', 'roleApp',
       'numAttestationAptitude', 'organismeDelivreur', 'dateObtention',
       'dateFinValidite', 'categorie2008', 'categorie2025',
@@ -1897,6 +1934,7 @@ const HANDLERS = {
     }
     verifierRegime(d.regime);
     verifierCategorieHabilitation(d.regime, d.categorie);
+    verifierDatesHabilitation(d);
     verifierDelivrance2008(d.regime, d.dateDebut);
     verifierRemiseNiveau(d.remiseNiveauLe);
     const habilitation = {
@@ -1938,6 +1976,7 @@ const HANDLERS = {
     // L4/Q3 : la remise à niveau se corrige aussi (même statut qu'une date).
     // Revue L4 — les gardes de création valent AUSSI en correction : le
     // contournement « créer légal puis patcher illégal » est fermé.
+    verifierDatesHabilitation(d);
     if (d.dateDebut !== undefined) {
       verifierDelivrance2008(habilitation.regime, d.dateDebut);
     }
@@ -5087,6 +5126,17 @@ function verifierInvariantsDonneesCandidat(candidat) {
     // neutralise déjà — défense en profondeur). Le contrôle « pas dans le
     // futur » reste une règle de SAISIE : un export ancien rejoué plus tard
     // porte des faits, pas des saisies.
+    // ⭐ L2 : les dates de DÉBUT et de FIN aussi — sans quoi la garde
+    // 2008 ci-dessous compare « 15/06/2027 » à « 2026-12-31 » et conclut
+    // « antérieur ». Tiré et prouvé : une attestation illégale et une
+    // attestation périmée entraient par un paquet d'import.
+    for (const [champ, libelle] of [
+      ['dateDebut', 'date de début'], ['dateFin', 'date de fin']]) {
+      if (!dates.estDateCalendaireOuVide(h[champ])) {
+        return `habilitation ${ref} : ${libelle} invalide ` +
+          '(AAAA-MM-JJ attendu, date réelle)';
+      }
+    }
     if (h.regime === '2008' && h.dateDebut
         && h.dateDebut > FIN_DELIVRANCE_2008) {
       return `habilitation ${ref} : délivrance 2008 datée après le ` +

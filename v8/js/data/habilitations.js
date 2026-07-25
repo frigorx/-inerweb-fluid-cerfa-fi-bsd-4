@@ -24,6 +24,10 @@
 // texte officiel AVANT tout blocage (Phase 3).
 // ============================================================
 
+// L2 (25/07) : « une date est une date » — le format ne suffit pas, il faut
+// le calendrier réel. Voir v8/js/data/dates.js (miroir server/dates.js).
+import { estDateCalendaire } from './dates.js';
+
 /** Les deux régimes de certification (ancien / nouveau). */
 export const REGIMES = ['2008', '2025'];
 
@@ -201,7 +205,18 @@ export function habilitationReconnue(h, dateReference) {
   // illisible ne compare pas, elle REFUSE ('' ou '13/03/2029' passaient
   // les comparaisons de chaînes).
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateReference ?? ''))) return false;
-  if (h.dateFin && h.dateFin < dateReference) return false;
+  // ⭐ L2 (25/07) — MÊME RÈGLE POUR LA DATE DE FIN, et pour la même raison.
+  // Elle valait déjà pour la date de référence et la remise à niveau ; la
+  // date de FIN, elle, était comparée telle quelle. Attaque tirée : une
+  // attestation portant dateFin « 31/12/2020 » (format français) était
+  // déclarée VALIDE — « 3 » est après « 2 », donc la comparaison de chaînes
+  // la voit dans le futur. Six ans de péremption effacés par un slash.
+  // Absente = pas d'échéance (donnée légitime) ; PRÉSENTE mais illisible =
+  // refus, jamais d'interprétation (défaut-refus).
+  if (h.dateFin !== null && h.dateFin !== undefined && h.dateFin !== '') {
+    if (!estDateCalendaire(h.dateFin)) return false;
+    if (h.dateFin < dateReference) return false;
+  }
   if (h.regime === '2025') return true;
   if (h.regime === '2008') {
     if (dateReference <= DATE_BUTOIR_REMISE_NIVEAU_2008) return true;
