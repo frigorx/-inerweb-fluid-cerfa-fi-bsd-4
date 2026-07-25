@@ -194,7 +194,47 @@ au sens du RGPD. Tant que le contrat de sous-traitance et les transferts ne
 sont pas maîtrisés, la seule affirmation exacte est celle-ci : **inerWeb Fluide
 fonctionne entièrement en local.**
 
-## 5. Signaler une faille de sécurité
+## 5. Ce que le logiciel REFUSE — et comment le vérifier soi-même
+
+Un registre opposable ne se juge pas à ce qu'il sait faire, mais à ce qu'il refuse. Ces
+refus ne sont pas décrits ici pour être crus sur parole : ils sont **exécutés** par une
+suite dédiée, que quiconque peut relancer.
+
+```
+node server/test-securite-negative.mjs
+```
+
+**118 attaques y sont TIRÉES** contre un vrai serveur (port et base jetables), contre la
+base en SQL direct, et contre une copie du dépôt portant une vraie jonction Windows.
+Elles couvrent notamment :
+
+| Ce qui est refusé | Comment c'est prouvé |
+|---|---|
+| Lire ou écrire sans session, avec un jeton forgé, depuis une origine tierce (CSRF) ou un hôte étranger (rebinding DNS) | requêtes HTTP réelles |
+| Un rôle « ADMIN » glissé dans le corps de la requête | le contexte vient de la connexion, jamais du client |
+| Ce qu'un ÉLÈVE ne peut pas faire : sceller, annuler, s'attribuer une aptitude, modifier un PRP, importer, lire le journal nominatif, exporter le registre | 15 gestes refusés, **plus une contre-épreuve** qui prouve que la saisie courante reste ouverte |
+| Modifier ou supprimer une écriture scellée, en SQL direct (`UPDATE`, `DELETE`, `REPLACE INTO`), y compris le journal d'audit | déclencheurs WORM, `PRAGMA recursive_triggers` |
+| **Faire disparaître une écriture** en la passant à ANNULE hors application | contrôle d'appariement des annulations (toute annulée est désignée par sa contre-écriture) |
+| **Réécrire le passé par un import** : quantités retouchées puis empreintes retirées | refus + borne monotone hors registre |
+| **Purger le journal d'audit** par aller-retour export → import | témoin de tête (nombre + empreinte) vérifié |
+| Faire mentir une date : `31/12/2020` pour une attestation périmée, `2028-99-99` pour une détection « vérifiée », une vérification datée dans le futur | module `dates.js` : format ancré **et** calendrier réel |
+| Forger une échéance de contrôle (`2099-01-01`), un numéro de fiche, une charge nominale à zéro | l'échéance vient du moteur réglementaire, le numéro du registre |
+| Blanchir du fluide récupéré en régénéré, sortir une bouteille du déchet, requalifier un HFC « hors périmètre », reprendre la photo d'un exercice clos | gardes de transition, la famille du fluide fait foi |
+| Fabriquer une fiche officielle par import alors que le mode Officiel est fermé | le verrou garde les deux portes |
+| Télécharger la base ou du code privé par le serveur web (y compris via une jonction Windows) | extensions jamais servies + chemin physique résolu |
+
+Chaque ligne du tableau correspond à une attaque qui **a réellement fonctionné** avant
+d'être corrigée : elles ont été trouvées en tirant, pas en relisant le code. Le détail de
+chacune, avec sa cause et son correctif, est en tête de `CHANGELOG.md` (lot L2).
+
+Deux principes guident ces refus, et méritent d'être connus des utilisateurs :
+
+- **on n'empêche jamais d'enregistrer la réalité** — un retard, une clôture tardive, une
+  surcharge de réemploi sont *signalés*, jamais bloqués ;
+- **le doute retire l'allègement, jamais l'obligation** — une donnée illisible ne « passe »
+  pas, elle fait retomber sur le régime le plus strict.
+
+## 6. Signaler une faille de sécurité
 
 Si vous découvrez une vulnérabilité dans inerWeb Fluide :
 

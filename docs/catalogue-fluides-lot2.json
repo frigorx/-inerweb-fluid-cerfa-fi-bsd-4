@@ -1,0 +1,122 @@
+[
+  {
+    "code": "R-448A",
+    "famille": "HFC/HFO (mélange zéotrope)",
+    "gwpAr4": 1387,
+    "classeSecurite": "A1",
+    "statutReglementaire": "RESTREINT",
+    "categorieCadre7": "HFC",
+    "contientHfc": true,
+    "contientHfo": true,
+    "sourcePrp": "GIEC AR4, calcul pondéré annexe VI du règl. 2024/573 (R-1234yf=4, R-1234ze=7) — valeur affichée par Climalife : 1387",
+    "commentaire": "Mélange zéotrope à 5 composants (R-32/125/1234yf/134a/1234ze(E), 26/26/20/21/7 %), classe A1, glissement fort (≈ 6 K), charge en phase liquide obligatoire. Interdiction du fluide vierge en entretien du froid fixe (hors refroidisseurs) au 1er janvier 2032 (PRP ≥ 750) ; régénéré/recyclé restent autorisés. Interdit dans le neuf autonome depuis le 1/1/2025 et en froid fixe neuf au 1/1/2030."
+  },
+  {
+    "code": "R-449A",
+    "famille": "HFC/HFO (mélange zéotrope)",
+    "gwpAr4": 1397,
+    "classeSecurite": "A1",
+    "statutReglementaire": "RESTREINT",
+    "categorieCadre7": "HFC",
+    "contientHfc": true,
+    "contientHfo": true,
+    "sourcePrp": "GIEC AR4 — fiche technique Climalife (concordante Chemours/Honeywell)",
+    "commentaire": "Mélange zéotrope quaternaire (R-32/125/1234yf/134a, 24,3/24,7/25,3/25,7 %), classe A1, glissement 5,72 K (charge liquide obligatoire). Interdiction du fluide vierge en entretien du froid fixe (hors refroidisseurs) au 1er janvier 2032 (PRP ≥ 750) ; régénéré/recyclé autorisés. Mise sur le marché neuf déjà restreinte depuis 2022 (multipostes ≥ 40 kW) et 2025 (autonome), puis 2030. Valeurs limites d'exposition non vérifiées sur source primaire."
+  },
+  {
+    "code": "R-452A",
+    "famille": "HFC/HFO (mélange zéotrope)",
+    "gwpAr4": 2141,
+    "classeSecurite": "A1",
+    "statutReglementaire": "RESTREINT",
+    "categorieCadre7": "HFC",
+    "contientHfc": true,
+    "contientHfo": true,
+    "sourcePrp": "Sources commerciales secondaires (Cooling Post, distributeurs) — retenu par décision Franck du 25/07/2026, application littérale de la règle du plus élevé ; la valeur la mieux sourcée reste 2140 (Climalife, GIEC AR4)",
+    "commentaire": "Mélange zéotrope (R-32/125/1234yf, 11/59/30 %), classe A1, glissement modéré (3,79 K). Interdiction du fluide vierge en entretien du froid fixe (hors refroidisseurs) au 1er janvier 2032 (PRP ≥ 750) ; le transport frigorifique (application dominante) n'est pas visé en l'état. Ne pas confondre avec le R-452B (A2L). Point de vigilance : la valeur retenue 2141 n'est traçable à aucun calcul réglementaire (2140 est la valeur sourcée la plus solide) ; à re-vérifier sur le texte JO avant visa (EUR-Lex inaccessible à l'outil pour cette fiche)."
+  },
+  {
+    "code": "R-452B",
+    "famille": "HFC/HFO (mélange zéotrope)",
+    "gwpAr4": 698,
+    "classeSecurite": "A2L",
+    "statutReglementaire": "AUTORISE",
+    "categorieCadre7": "HFC",
+    "contientHfc": true,
+    "contientHfo": true,
+    "sourcePrp": "GIEC AR4 — Honeywell (Solstice L41y) et National Refrigerants, quasi identique au calcul annexe VI du règl. 2024/573 (697,4)",
+    "commentaire": "Mélange zéotrope (R-32/125/1234yf, 67/7/26 %), classe A2L, glissement faible (≈ 1,2 K, à confirmer sur fiche technique si décimale affichée). PRP 698 sous les seuils 750 et 2500 : aucune interdiction d'entretien actuelle ni programmée, parc existant utilisable sans échéance. Restrictions de mise sur le marché neuf progressives entre 2027 et 2035 selon le type d'équipement. Ne pas confondre avec le R-452A (A1) ni le R-454B (A2L, PRP proche de 467)."
+  },
+  {
+    "code": "R-454A",
+    "famille": "HFC/HFO (mélange zéotrope)",
+    "gwpAr4": 239,
+    "classeSecurite": "A2L",
+    "statutReglementaire": "AUTORISE",
+    "categorieCadre7": "HFC",
+    "contientHfc": true,
+    "contientHfo": true,
+    "sourcePrp": "GIEC AR4 — fiche Chemours Opteon XL40 et National Refrigerants",
+    "commentaire": "Mélange zéotrope (R-32/1234yf, 35/65 %), classe A2L, glissement notable (≈ 5 K, charge en phase liquide obligatoire). PRP 239 sous les seuils 750 et 2500 : pas d'interdiction d'entretien, parc existant utilisable sans limite de date. Touché par les interdictions de mise sur le marché du neuf (autonome dès 2025, froid fixe dès 2030, seuil PRP ≥ 150). Ne pas confondre avec le R-454B (467) ni le R-454C (148)."
+  },
+  {
+    "code": "R-454B",
+    "famille": "HFC/HFO (mélange zéotrope)",
+    "gwpAr4": 467,
+    "classeSecurite": "A2L",
+    "statutReglementaire": "AUTORISE",
+    "categorieCadre7": "HFC",
+    "contientHfc": true,
+    "contientHfo": true,
+    "sourcePrp": "GIEC AR5 via Climalife Royaume-Uni (\"AR4/AR5 : 466/467\") ; le calcul annexe VI donne ≈ 465, écart sans effet sur les seuils",
+    "commentaire": "Mélange zéotrope (R-32/1234yf, 68,9/31,1 %), classe A2L, quasi-azéotrope (glissement ≈ 1 à 1,5 K). PRP ≈ 465-467, sous les seuils 750 et 2500 : aucune interdiction d'entretien. Mise sur le marché neuf restreinte progressivement entre 2027 et 2033 (seuil PRP ≥ 150). Points de vigilance : LII divergente selon les sources (11,5 % vol. contre 8,0 % v/v) et valeurs limites d'exposition non vérifiées sur source primaire, à trancher sur fiche de données de sécurité avant visa."
+  },
+  {
+    "code": "R-454C",
+    "famille": "HFC/HFO (mélange zéotrope)",
+    "gwpAr4": 148,
+    "classeSecurite": "A2L",
+    "statutReglementaire": "AUTORISE",
+    "categorieCadre7": "HFC",
+    "contientHfc": true,
+    "contientHfo": true,
+    "sourcePrp": "GIEC AR4 — fiches Chemours Opteon XL20 et Climalife",
+    "commentaire": "Mélange zéotrope (R-32/1234yf, 21,5/78,5 %), classe A2L, glissement fort (≈ 7,8 K, charge en phase liquide obligatoire). PRP 148, sous le seuil 150 : passe sous la plupart des interdictions de mise sur le marché du neuf ; aucune interdiction d'entretien ne le vise (sous 750 et 2500). Tolérances de composition ASHRAE et LII chiffrée non vérifiées sur source primaire, à reprendre depuis la fiche de données de sécurité avant affichage opposable."
+  },
+  {
+    "code": "R-513A",
+    "famille": "HFC/HFO (mélange azéotropique)",
+    "gwpAr4": 631,
+    "classeSecurite": "A1",
+    "statutReglementaire": "AUTORISE",
+    "categorieCadre7": "HFC",
+    "contientHfc": true,
+    "contientHfo": true,
+    "sourcePrp": "GIEC AR4, calcul de mélange (0,44×1430 + 0,56×4 = 631,4), publié par Chemours et convergent sur les fiches fournisseurs",
+    "commentaire": "Mélange azéotropique (R-1234yf/134a, 56/44 %), classe A1, glissement nul (véritable azéotrope). PRP 631 sous les seuils 750 et 2500 : aucune interdiction d'entretien, rôle de fluide de service en remplacement du R-134a. Mise sur le marché neuf déjà restreinte en froid autonome (2025) et refroidisseurs ≤ 12 kW (2027), mais permise dans les refroidisseurs > 12 kW neufs (seuil 750 non atteint). Attention : composition parfois inversée chez certains fournisseurs (le PRP calculé reste inchangé)."
+  },
+  {
+    "code": "R-1234ze(E)",
+    "famille": "HFO pur (hydrofluorooléfine, corps pur)",
+    "gwpAr4": 7,
+    "classeSecurite": "A2L",
+    "statutReglementaire": "AUTORISE",
+    "categorieCadre7": "HFO",
+    "contientHfc": false,
+    "contientHfo": true,
+    "sourcePrp": "Règl. (UE) 517/2014, annexe II (base AR4, abrogée) — repris par Climalife ; la valeur en vigueur au règl. 2024/573 (annexe II section 1, base AR6) est 1,37, sans incidence pratique car le régime se déclenche en kg",
+    "commentaire": "Corps pur HFO (trans, CAS 29118-24-9), classe A2L, glissement nul. Régime annexe II section 1 : contrôle d'étanchéité obligatoire en kg dès 1 kg, jamais en t éq. CO2. Aucune interdiction d'entretien ni de mise sur le marché liée au PRP (fluide de substitution). Ne pas confondre avec l'isomère (Z), aux propriétés très différentes (ébullition +9,8 °C contre -19 °C)."
+  },
+  {
+    "code": "R-717",
+    "famille": "Naturel hors F-Gas (corps pur, ammoniac)",
+    "gwpAr4": 0,
+    "classeSecurite": "B2L",
+    "statutReglementaire": "AUTORISE",
+    "categorieCadre7": "AUCUNE",
+    "contientHfc": false,
+    "contientHfo": false,
+    "sourcePrp": "EN 378-1 (annexe E) / tableaux ASHRAE 34 — PRP direct nul, substance non fluorée, confirmé par la fiche Climalife et les sources sectorielles convergentes",
+    "commentaire": "Corps pur (NH3), hors périmètre du règlement F-Gas 2024/573 (non listé aux annexes, cité comme solution de substitution) : aucun contrôle d'étanchéité F-Gas, aucun quota, aucune déclaration. Classe B2L : toxicité supérieure (risque dominant) avant l'inflammabilité faible ; incompatibilité totale avec le cuivre et ses alliages (circuit acier obligatoire). Traçabilité et suivi d'aptitude restent volontaires, convention interne du projet."
+  }
+]

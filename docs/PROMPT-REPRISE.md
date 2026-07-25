@@ -6,6 +6,44 @@
 > **Session conseillée : Opus, effort très élevé** (chantier probatoire/réglementaire, briques
 > testées une à une). PAS d'ultracode hors point critique.
 >
+> **⭐⭐⭐⭐⭐⭐⭐⭐ ÉTAT AU 25/07/2026 (soir) — LOT L2 LIVRÉ : SUITE DE SÉCURITÉ
+> NÉGATIVE + 9 TROUS FERMÉS. TOUT VERT 106 EXÉCUTIONS**, contrat v12, migration
+> 35 (aucune migration nouvelle : rien de tout cela n'a demandé de toucher au
+> schéma). Branche `claude/l2-securite-negative`, 9 commits.
+>
+> **Méthode : on ne croit personne sur parole, on TIRE.** Inventaire des surfaces
+> d'attaque (8 agents, 190 scénarios) → 36 candidats critiques non couverts → 10
+> agents les EXÉCUTENT en bac à sable → **26 attaques CONFIRMÉES**, 9 réfutées
+> (les gardes de transport, de rôles de mutation, le zip slip et la traversée de
+> chemin tiennent bien). Puis correction, puis retrait du correctif pour prouver
+> que le test devient rouge.
+>
+> **`server/test-securite-negative.mjs` — 118 attaques TIRÉES.** C'est l'endroit
+> où répondre à un auditeur qui demande « montrez-moi que ça résiste ».
+>
+> **Les 9 trous fermés** (détail complet en tête de `CHANGELOG.md`) : **L2-a**
+> annulation forgée en SQL direct (une écriture disparaissait des totaux, chaîne
+> VERTE) · **L2-b** blanchiment du registre par import (retirer les empreintes
+> faisait re-sceller des données falsifiées ; borne MONOTONE contre le
+> contournement en deux temps) · **L2-c** « une date est une date » — module pur
+> `dates.js` + 2 miroirs, racine commune à 8 attaques (`'31/12/2020'` déclarait
+> valide une attestation périmée) · **L2-d** échéance de contrôle forgée à 2099,
+> numéro usurpé, charge nominale à 0 · **L2-e** blanchiment du fluide récupéré en
+> régénéré, sortie du déchet, R-410A déclaré « hors périmètre », photo
+> d'inventaire d'exercice clos, fiche OFFICIELLE injectée par import malgré le
+> verrou · **L2-f** base vive et jonction Windows servies par le web · **L2-g**
+> réparation réécrite (refermait une fuite rétroactivement), qualification
+> réglementaire cochée par un élève · **L2-h** purge du journal d'audit par
+> aller-retour export/import · **L2-i** `exporterJSON` non gaté (un élève
+> aspirait le journal nominatif et la config du coffre).
+>
+> **CE QUI RESTE APRÈS L2** : **L6** (réouverture du mode Officiel — toujours
+> GATÉ par le visa T3 ; les gardes L2 posées sur l'import se désarment
+> automatiquement avec le drapeau) · **L7** (fusion des stores, après la
+> simulation d'audit d'août) · hors code : **T3**, **P0-9**, semis du catalogue.
+>
+> --- ci-dessous : l'état de la session précédente (24-25/07 matin) ---
+>
 > **⭐⭐⭐⭐⭐⭐⭐ ÉTAT AU 25/07/2026 — main PROPRE, TOUT VERT 104 EXÉCUTIONS,
 > contrat v12, migration 35, dernier merge PR #16.** Session des 24-25/07 très
 > productive (PR #9→#16). Source de vérité = tête de `CHANGELOG.md` + le plan

@@ -77,6 +77,8 @@ const { assemblerExportPersonne } = require('./export-personne.js');
 const coffre = require('./coffre-identites.js');
 const chiffrementCoffre = require('./chiffrement.js');
 const parametres = require('./parametres.js');
+const dates = require('./dates.js');
+const borneScellement = require('./borne-scellement.js');
 const sauvegardeCoffre = require('./sauvegarde.js');
 const restaurationCoffre = require('./restauration.js');
 
@@ -334,6 +336,40 @@ function verifierRemiseNiveau(remiseNiveauLe) {
   }
 }
 
+/**
+ * ⭐ L2 (25/07) — les dates d'une habilitation sont des DATES.
+ * `verifierRemiseNiveau` ci-dessus gardait ce champ-là depuis L4 ; ses
+ * voisins, eux, entraient bruts. Attaques tirées : dateFin « 31/12/2020 »
+ * (format français) → attestation périmée déclarée VALIDE, car « 3 » est
+ * après « 2 » dans une comparaison de chaînes ; dateDebut « 15/06/2027 »
+ * → la garde de délivrance 2008 comparait « 1 » à « 2 » et laissait
+ * enregistrer une attestation illégale. Absente = donnée légitime.
+ */
+function verifierDatesHabilitation(d) {
+  for (const [champ, libelle] of [
+    ['dateDebut', 'Date de début'], ['dateFin', 'Date de fin']]) {
+    if (!dates.estDateCalendaireOuVide(d[champ])) {
+      throw new Error(dates.messageDateInvalide(libelle));
+    }
+  }
+}
+
+/**
+ * ⭐ L2 — mêmes dates, même règle, sur la FICHE de la personne.
+ * `dateFinValidite` porte l'alerte « attestation d'aptitude expirée » :
+ * une date au format français l'éteignait sans rien enregistrer de faux
+ * en apparence.
+ */
+function verifierDatesPersonne(d) {
+  for (const [champ, libelle] of [
+    ['dateObtention', 'Date d’obtention'],
+    ['dateFinValidite', 'Date de fin de validité']]) {
+    if (!dates.estDateCalendaireOuVide(d[champ])) {
+      throw new Error(dates.messageDateInvalide(libelle));
+    }
+  }
+}
+
 /** Ordre stable des habilitations (miroir EXACT du module pur, tri JS). */
 function comparerHabilitations(a, b) {
   if (a.regime !== b.regime) return a.regime === '2025' ? -1 : 1;
@@ -493,6 +529,17 @@ const ROLES_MUTATION = {
 // ------------------------------------------------------------
 const ROLES_LECTURE_SENSIBLE = {
   exporterDonneesPersonne: VALIDEUR,
+  // ⭐ L2 (25/07) — L'EXPORT COMPLET EST UNE LECTURE SENSIBLE, et c'était
+  // la plus large de toutes. `getJournalAudit` est réservé au niveau
+  // VALIDEUR depuis le lot E2 parce que le journal porte des NOMS ; mais
+  // `exporterJSON` rendait ce même journal, plus le personnel nominatif
+  // complet (nom, prénom, e-mail, n° d'attestation, dates) et, quand un
+  // coffre existe, sa CONFIGURATION — sel et témoin, c'est-à-dire le
+  // matériel exact d'une attaque hors ligne sur la phrase secrète. Tiré et
+  // prouvé le 25/07 : `getJournalAudit` refusé à l'élève, le même contenu
+  // obtenu par la porte à côté. Une décision de confidentialité qui ne
+  // garde qu'une porte sur deux n'en est pas une.
+  exporterJSON: VALIDEUR,
   // Lot E2 : l'état du coffre (pseudonymes, candidats) relève du niveau
   // VALIDEUR ; la vérification du code et la CONSULTATION d'une identité
   // déchiffrée, du seul niveau REFERENT/ADMIN.
@@ -878,17 +925,26 @@ const HANDLERS = {
     return mapping.versFront('etablissements', etablissementCourant());
   },
 
-  /** État d'intégrité constaté : { altere, casseA } (registre ET journal). */
+  /**
+   * État d'intégrité constaté : { altere, casseA, motif } (registre ET
+   * journal). `motif` (L2, 25/07) dit POURQUOI : EMPREINTE (la chaîne ne
+   * se recalcule plus), ANNULATION_ORPHELINE (une écriture annulée que
+   * personne ne désigne — annulation faite hors application) ou JOURNAL.
+   */
   getEtatRegistre() {
     const registre = verifierChaineMouvements();
     if (!registre.ok) {
-      return { altere: true, casseA: registre.casseA };
+      return {
+        altere: true, casseA: registre.casseA, motif: registre.motif ?? null
+      };
     }
     const journal = db.verifierChaineJournal();
     if (!journal.ok) {
-      return { altere: true, casseA: `journal n° ${journal.casseA}` };
+      return {
+        altere: true, casseA: `journal n° ${journal.casseA}`, motif: 'JOURNAL'
+      };
     }
-    return { altere: false, casseA: null };
+    return { altere: false, casseA: null, motif: null };
   },
 
   /**
@@ -1412,6 +1468,7 @@ const HANDLERS = {
       throw new Error(
         `Type de personne obligatoire parmi : ${TYPES_PERSONNE.join(', ')}.`);
     }
+    verifierDatesPersonne(d);
     const personne = {
       id: db.generateId('PER'),
       nom: String(d.nom).trim(),
@@ -1463,6 +1520,7 @@ const HANDLERS = {
     if (d.activitesAutorisees !== undefined) {
       verifierActivites(d.activitesAutorisees);
     }
+    verifierDatesPersonne(d);
     const CHAMPS = ['nom', 'prenom', 'typePersonne', 'roleApp',
       'numAttestationAptitude', 'organismeDelivreur', 'dateObtention',
       'dateFinValidite', 'categorie2008', 'categorie2025',
@@ -1888,6 +1946,7 @@ const HANDLERS = {
     }
     verifierRegime(d.regime);
     verifierCategorieHabilitation(d.regime, d.categorie);
+    verifierDatesHabilitation(d);
     verifierDelivrance2008(d.regime, d.dateDebut);
     verifierRemiseNiveau(d.remiseNiveauLe);
     const habilitation = {
@@ -1929,6 +1988,7 @@ const HANDLERS = {
     // L4/Q3 : la remise à niveau se corrige aussi (même statut qu'une date).
     // Revue L4 — les gardes de création valent AUSSI en correction : le
     // contournement « créer légal puis patcher illégal » est fermé.
+    verifierDatesHabilitation(d);
     if (d.dateDebut !== undefined) {
       verifierDelivrance2008(habilitation.regime, d.dateDebut);
     }
@@ -2802,7 +2862,7 @@ const HANDLERS = {
     });
   },
 
-  updateMachine(params) {
+  updateMachine(params, contexte) {
     const { id } = params;
     const machine = trouverMachine(id);
     if (machine.statut === 'DEMANTELEE') {
@@ -2845,11 +2905,112 @@ const HANDLERS = {
     }
     equipement.verifierModeleEquipement(fusion);
 
+    // ⭐ L2 (25/07) — LA QUALIFICATION RÉGLEMENTAIRE N'EST PAS DE LA SAISIE
+    // COURANTE. Déclarer un équipement « hermétiquement scellé et étiqueté »
+    // fait passer le seuil d'aptitude de 3 à 6 kg ; le déclarer MOBILE d'un
+    // sous-type listé ouvre la clôture de fuite le jour même ; l'usage
+    // thermique décale les dates d'interdiction du fluide vierge. Ce sont
+    // des FAITS OPPOSABLES qui déplacent des seuils, au même titre qu'une
+    // habilitation — laquelle est réservée au niveau VALIDEUR depuis
+    // toujours. Attaque tirée : une session ÉLÈVE cochait « hermétique
+    // scellé + étiqueté » et l'intervention passait d'INTERDITE à AUTORISÉE
+    // sans qu'aucune plaque n'ait été lue. La saisie courante (désignation,
+    // charge, localisation, détection) reste ouverte à l'élève.
+    const CHAMPS_QUALIFICATION = ['hermetiqueScelle', 'hermetiqueEtiquete',
+      'residentiel', 'typeInstallation', 'sousTypeInstallation',
+      'usageThermique'];
+    // ⚠️ Revue L2 — COMPARER DES VALEURS NORMALISÉES, jamais la charge utile
+    // brute. Le formulaire renvoie toute sa fiche : une chaîne VIDE pour un
+    // champ texte non renseigné, un booléen pour les cases. En base, ces
+    // mêmes champs valent `null` et 0/1. Comparer brut faisait donc voir un
+    // changement partout, et cette garde refusait TOUTE modification de
+    // machine à un élève ou un technicien — l'écran devenait mort pour eux.
+    // Constat BLOQUANT de la revue adversariale, corrigé avant fusion.
+    const normaliserQualif = (champ, valeur) => {
+      if (['hermetiqueScelle', 'hermetiqueEtiquete', 'residentiel']
+        .includes(champ)) return Boolean(valeur);
+      return valeur === '' || valeur === undefined ? null : valeur;
+    };
+    const qualificationTouchee = CHAMPS_QUALIFICATION
+      .filter((champ) => d[champ] !== undefined
+        && normaliserQualif(champ, d[champ])
+          !== normaliserQualif(champ, machine[champ]));
+    if (qualificationTouchee.length > 0
+        && !ROLES_VALIDEURS.includes(contexte?.role ?? null)) {
+      const erreur = new Error(
+        'Qualification réglementaire de l’équipement réservée au responsable '
+        + `(${ROLES_VALIDEURS.join(', ')}) : ${qualificationTouchee.join(', ')}. `
+        + 'Ces caractéristiques déplacent des seuils réglementaires — elles '
+        + 'se constatent sur la plaque, elles ne se déclarent pas en '
+        + 'saisie courante.');
+      erreur.code = 403;
+      throw erreur;
+    }
+
+    // ⭐ L2 (25/07) — LA MODIFICATION REVALIDE CE QUE LA CRÉATION EXIGE.
+    // `createMachine` refuse une charge nominale nulle ou négative ;
+    // `updateMachine`, lui, l'acceptait. Attaque tirée : ramener la charge
+    // nominale à 0 sur une machine de 10 kg de R-410A la faisait sortir du
+    // périmètre du contrôle d'étanchéité — plus de fréquence, plus
+    // d'alerte, plus d'obligation. Le contournement « créer légal puis
+    // patcher illégal » est le même qu'en L4 sur les habilitations.
+    if (d.chargeNominaleKg !== undefined) {
+      const nominale = Number(d.chargeNominaleKg);
+      if (!Number.isFinite(nominale) || nominale <= 0) {
+        throw new Error('Charge nominale obligatoire (en kg, positive).');
+      }
+      d.chargeNominaleKg = nominale;
+    }
+    // ⭐ L2 — la charge ACTUELLE est une quantité de fluide réellement
+    // présente : ni négative, ni illisible, ni sans rapport avec la
+    // machine. Attaque tirée : 9999 kg sur une machine de 10 kg nominaux —
+    // le tableau de bord affichait 20 877 tonnes équivalent CO₂ et la
+    // balance matière devenait illisible. La tolérance de 5 % couvre les
+    // écarts de pesée réels (elle existe déjà à la charge d'un mouvement).
+    if (d.chargeActuelleKg !== undefined && d.chargeActuelleKg !== null) {
+      const actuelle = Number(d.chargeActuelleKg);
+      if (!Number.isFinite(actuelle) || actuelle < 0) {
+        throw new Error('Charge actuelle invalide (en kg, jamais négative).');
+      }
+      const nominaleFusion = Number(
+        d.chargeNominaleKg ?? machine.chargeNominaleKg);
+      if (Number.isFinite(nominaleFusion) && nominaleFusion > 0
+          && actuelle > nominaleFusion * 1.05) {
+        throw new Error(
+          `Charge actuelle impossible : ${actuelle} kg déclarés pour une `
+          + `charge nominale de ${nominaleFusion} kg (tolérance 5 %).`);
+      }
+      d.chargeActuelleKg = actuelle;
+    }
+
+    // ⚠️ Revue L2 — REFUSER PLUTÔT QU'IGNORER. Ces deux dates ont été
+    // retirées des champs modifiables : les recevoir sans rien en faire
+    // rendait un succès trompeur — le professeur corrigeait une date de
+    // reprise de parc, le logiciel répondait « enregistré », et rien ne
+    // changeait. Un refus explicite dit où poser le geste.
+    for (const champ of ['dernierControle', 'prochainControle']) {
+      if (d[champ] !== undefined) {
+        throw new Error(
+          'Les dates de contrôle d’une machine ne se saisissent pas ici : '
+          + 'elles sont posées par l’enregistrement d’un contrôle '
+          + 'd’étanchéité, qui les calcule selon la périodicité '
+          + 'réglementaire. (Elles restent saisissables à la CRÉATION de la '
+          + 'machine, pour reprendre un parc existant.)');
+      }
+    }
     const CHAMPS = ['designation', 'type', 'marque', 'modele', 'numSerie',
       'fluide', 'chargeNominaleKg', 'chargeActuelleKg', 'clientId',
       'localisation', 'siteLabel', 'statut', 'typeInstallation',
       'detectionPermanente', ...CHAMPS_EQUIPEMENT,
-      'dateMiseEnService', 'dernierControle', 'prochainControle'];
+      'dateMiseEnService'];
+    // ⭐ L2 — `dernierControle` et `prochainControle` ont été RETIRÉS de
+    // cette liste. Ce sont des faits DÉRIVÉS : enregistrerControle les pose
+    // depuis le moteur réglementaire, exactement comme detectionProchaineVerif
+    // est calculée et jamais saisie. Attaque tirée : une session ÉLÈVE
+    // repoussait l'échéance d'une machine en retard au 31/12/2099 et
+    // l'alerte critique disparaissait — sans qu'aucun contrôle n'ait eu
+    // lieu. Ils restent légitimes à la CRÉATION (reprise d'un parc
+    // existant) et à l'import (données historiques).
     const patch = {};
     for (const champ of CHAMPS) {
       if (d[champ] !== undefined) patch[champ] = d[champ];
@@ -2863,6 +3024,36 @@ const HANDLERS = {
     for (const champ of ['sousTypeInstallation', 'detectionVerifieeLe',
       'detectionReference', 'usageThermique']) {
       if (d[champ] !== undefined) patch[champ] = texteOuNullEquip(d[champ]);
+    }
+    // ⚠️ Revue L2 — RECALCULER L'ÉCHÉANCE QUAND LE SEUIL BOUGE.
+    // Chemin trouvé par la revue, en trois appels et sans SQL : abaisser la
+    // charge nominale à 0,001 kg (la machine sort du périmètre, le moteur ne
+    // rend plus d'échéance), enregistrer un contrôle avec une échéance
+    // volontaire à 2099 — conservée, puisque « machine non soumise » —, puis
+    // remettre la charge à sa vraie valeur. La machine redevenait soumise
+    // AVEC une échéance de 2099, et plus aucune alerte. Le plafond du moteur
+    // n'était évalué qu'à l'instant du contrôle, jamais ensuite.
+    // Désormais : dès qu'un champ qui déplace le seuil change (charge
+    // nominale, fluide, détection), l'échéance est recalculée depuis le
+    // dernier contrôle, et on retient la PLUS PROCHE. Jamais moins de
+    // contrôles qu'exigé.
+    const CHAMPS_SEUIL = ['chargeNominaleKg', 'fluide', 'detectionPermanente',
+      'detectionVerifieeLe'];
+    if (CHAMPS_SEUIL.some((champ) => d[champ] !== undefined)) {
+      const dateReference = machine.dernierControle ?? aujourdHui();
+      const machineFusionnee = { ...machine, ...patch };
+      const fluideRef = lireFluide(machineFusionnee.fluide);
+      const frequence = frequenceControleMois(
+        fluideRef, machineFusionnee.chargeNominaleKg,
+        equipement.detectionEffective(machineFusionnee, dateReference).compte,
+        dateReference);
+      const echeanceMoteur = frequence
+        ? ajouterMois(dateReference, frequence) : null;
+      if (echeanceMoteur
+          && (!machine.prochainControle
+            || String(machine.prochainControle) > echeanceMoteur)) {
+        patch.prochainControle = echeanceMoteur;
+      }
     }
     // L'échéance de vérification est CALCULÉE, jamais saisie.
     if (d.detectionVerifieeLe !== undefined) {
@@ -3032,6 +3223,38 @@ const HANDLERS = {
         d.type !== undefined ? d.type : bouteille.type,
         d.etatFluide !== undefined ? d.etatFluide : bouteille.etatFluide);
     }
+    // ⭐ L2 (25/07) — LA TRANSITION COMPTE AUTANT QUE LE COUPLE.
+    // La garde CM-3 ci-dessus ne juge que l'état d'ARRIVÉE : en changeant
+    // le type ET l'état dans le MÊME patch, le couple final était légal et
+    // passait. Attaques tirées : une bouteille de RÉCUPÉRATION contenant
+    // 4 kg de fluide récupéré devenait NEUVE/RÉGÉNÉRÉ — du récupéré blanchi
+    // en régénéré, exactement ce que la règle métier interdit (le régénéré
+    // s'ACHÈTE certifié, il ne se fabrique pas en interne) ; et une
+    // bouteille déclarée DÉCHET revenait au stock par un simple patch.
+    // Le fluide, lui, n'a pas changé : c'est l'étiquette qu'on réécrivait.
+    if (d.etatFluide !== undefined || d.type !== undefined) {
+      const etatAvant = bouteille.etatFluide;
+      const etatApres = d.etatFluide !== undefined
+        ? d.etatFluide : bouteille.etatFluide;
+      const versAchat = ETATS_FLUIDE_ACHAT.includes(etatApres);
+      const depuisRecuperation = ETATS_FLUIDE_RECUPERATION.includes(etatAvant);
+      if (depuisRecuperation && versAchat) {
+        throw new Error(
+          `Requalification refusée : le fluide de cette bouteille est `
+          + `${etatAvant} — il ne devient pas ${etatApres} par une `
+          + 'modification de fiche. Le fluide RECYCLÉ ou RÉGÉNÉRÉ s’ACHÈTE '
+          + 'certifié fournisseur ; le récupéré se réemploie sur sa machine '
+          + 'd’origine ou part en destruction.');
+      }
+      // Le DÉCHET ne se relève pas d'un patch : il sort par une décision
+      // sur le fluide (journalisée) ou par un BSFF.
+      if (bouteille.decisionFluide === 'DECHET' && etatApres !== 'DECHET') {
+        throw new Error(
+          'Bouteille déclarée déchet : elle ne sort du déchet que par une '
+          + 'décision sur le fluide (réutilisable ou à analyser), qui est '
+          + 'journalisée, ou par un bordereau de suivi (BSFF).');
+      }
+    }
     const CHAMPS = ['numeroReel', 'type', 'fluide', 'etatFluide', 'tareKg',
       'masseBruteKg', 'contenanceMaxKg', 'proprietaire', 'lot',
       'dateEntree', 'datePesee', 'statut'];
@@ -3153,7 +3376,40 @@ const HANDLERS = {
       throw new Error('Lien de mouvement refusé : le contrôle lié à une '
         + 'écriture naît de sa validation, jamais du chemin direct.');
     }
-    return muter(() => enregistrerControle(d));
+    // ⭐ L2 (25/07) — LE NUMÉRO EST ATTRIBUÉ PAR LE LOGICIEL, jamais reçu.
+    // Attaque tirée : un élève enregistrait un contrôle portant le numéro
+    // « C-FI-2026-0007 », qui imite un numéro de fiche OFFICIELLE — et le
+    // même numéro pouvait servir deux fois. Un registre dont les numéros
+    // sont dictés par l'appelant ne prouve plus rien. Le chemin LIÉ, lui,
+    // hérite légitimement le numéro du mouvement : il n'emprunte pas ici.
+    if (d.numero !== undefined && d.numero !== null && d.numero !== '') {
+      throw new Error('Numéro de contrôle refusé : il est attribué par le '
+        + 'registre, jamais fourni.');
+    }
+    // ⭐ L2 — L'ÉCHÉANCE EST CALCULÉE PAR LE MOTEUR RÉGLEMENTAIRE.
+    // Attaque tirée : `prochainControle: '2099-01-01'` était repris tel quel
+    // et écrasé sur la machine — plus aucune alerte d'échéance, jamais. La
+    // valeur reçue reste admise (l'écran la calcule et la transmet), mais
+    // elle ne peut plus REPOUSSER l'échéance réglementaire : on retient la
+    // plus PROCHE des deux, et rien du tout si le moteur dit « non soumis ».
+    // Doctrine « jamais moins de contrôles qu'exigé ».
+    if (!dates.estDateCalendaireOuVide(d.prochainControle)) {
+      throw new Error(dates.messageDateInvalide('Échéance de contrôle'));
+    }
+    const echeanceMoteur = HANDLERS.calculerProchainControle({
+      machineId: d.machineId, dateControle: d.date ?? aujourdHui() });
+    const donnees = { ...d };
+    // Machine NON soumise (sous le seuil) : le moteur ne rend rien, aucune
+    // obligation à protéger — une échéance volontaire reste celle de
+    // l'exploitant (au lycée, contrôler plus souvent est un choix
+    // pédagogique légitime). Machine SOUMISE : l'échéance réglementaire
+    // fait plafond, la valeur reçue ne peut que la rapprocher.
+    if (echeanceMoteur !== null
+        && (!donnees.prochainControle
+          || String(donnees.prochainControle) > echeanceMoteur)) {
+      donnees.prochainControle = echeanceMoteur;
+    }
+    return muter(() => enregistrerControle(donnees));
   },
 
   /**
@@ -3203,6 +3459,22 @@ const HANDLERS = {
         [controle.mouvementId])) {
         throw new Error('Contrôle annulé (contre-écriture) : il ne peut '
           + 'plus recevoir de réparation tracée.');
+      }
+      // ⭐ L2 (25/07) — UNE RÉPARATION TRACÉE NE SE RÉÉCRIT PAS.
+      // Les gardes de date ci-dessus supposaient un premier enregistrement.
+      // Attaque tirée : tracer la réparation au jour du contrôle FUITE (la
+      // règle J+1 empêche alors la clôture immédiate sur une machine fixe),
+      // puis RAPPELER tracerReparation avec une date antérieure — le
+      // dossier de fuite se refermait rétroactivement. Or on trace un FAIT
+      // constaté : il se corrige par un nouveau contrôle, pas en réécrivant
+      // le précédent. Une valeur IDENTIQUE reste admise (rejeu sans effet).
+      if (controle.dateReparation
+          && (controle.dateReparation !== dateReparation
+            || (controle.natureReparation ?? '') !== natureReparation)) {
+        throw new Error(
+          `Réparation déjà tracée le ${controle.dateReparation} : elle ne se `
+          + 'réécrit pas. Enregistrez un nouveau contrôle d’étanchéité pour '
+          + 'constater l’état actuel de la machine.');
       }
       majParId('controles', controleId, {
         date_reparation: dateReparation,
@@ -3646,6 +3918,24 @@ const HANDLERS = {
     }
     if (mouvement.statut !== 'SOUMIS') {
       throw new Error('Seul un mouvement soumis peut être validé.');
+    }
+    // ⚠️ Revue L2 — UNE CONTRE-ÉCRITURE NE NAÎT JAMAIS D'UN BROUILLON.
+    // Chemin alternatif trouvé par la revue, en trois gestes : poser
+    // `contre_ecriture_de` sur un BROUILLON en SQL direct (aucun
+    // déclencheur ne garde un brouillon — c'est normal, il n'est pas encore
+    // un fait), le faire VALIDER par le logiciel (qui scelle et calcule
+    // lui-même une empreinte juste), puis passer la victime à ANNULE. Le
+    // contrôle d'appariement voyait alors un désignant parfaitement scellé
+    // et laissait la chaîne verte : une charge de 3 kg disparaissait des
+    // totaux derrière un faux « leurre » de 0 kg.
+    // Une vraie contre-écriture est créée VALIDE par annulerParContreEcriture,
+    // elle ne passe jamais par ici. Ce champ n'a donc rien à faire sur un
+    // mouvement qu'on valide.
+    if (mouvement.contreEcritureDe) {
+      throw new Error(
+        'Écriture refusée : elle se présente comme la contre-écriture d’une '
+        + 'autre, alors qu’une contre-écriture ne se saisit pas — elle naît '
+        + 'de l’annulation d’une écriture validée. Fiche forgée.');
     }
     const validateur = verifierValidateur(validateurId);
     // Lot B (condition n° 12) : le validateur DOIT être la personne
@@ -4332,7 +4622,40 @@ const HANDLERS = {
           `Stock réel invalide pour ${l.fluide} (en kg, positif ou nul).`);
       }
     }
+    // ⭐ L2 (25/07) — UNE PHOTO D'EXERCICE CLOS NE SE REPREND PAS.
+    // La photographie de stock au 31/12 sert de stock d'ouverture à la
+    // déclaration annuelle réglementaire (rubrique 11). Attaque tirée :
+    // rappeler saisirInventaire pour l'année 2025 en 2026, avec un parc
+    // entre-temps modifié — la photo était RECONSTRUITE sur l'état du jour,
+    // et les stocks déclarés changeaient rétroactivement, sans trace. Une
+    // année révolue est close ; l'année en cours, elle, se re-photographie
+    // autant que nécessaire (elle n'est pas encore déclarée).
+    const anneeCourante = Number(aujourdHui().slice(0, 4));
+    // ⚠️ Revue L2 — RECTIFIER, PAS INTERDIRE. La première version refusait
+    // sèchement toute re-saisie d'un exercice révolu. C'était trop raide, et
+    // la revue l'a montré : la photographie du 31/12 se saisit EN JANVIER de
+    // l'année suivante — donc sur un exercice déjà « révolu » —, et une
+    // faute de frappe devenait alors incorrigible à jamais. Le logiciel ne
+    // doit jamais empêcher d'enregistrer la réalité ; il doit rendre la
+    // reprise VISIBLE. Une re-photographie d'exercice clos est donc admise
+    // et JOURNALISÉE comme rectification, avec l'état qu'elle remplace.
+    let rectification = null;
+    if (anneeNum < anneeCourante) {
+      const ancienne = db.get(
+        `SELECT count(*) AS n, min(date_photo) AS le
+         FROM inventaires_bouteilles WHERE annee = ?`, [anneeNum]);
+      if ((ancienne?.n ?? 0) > 0) {
+        rectification = { lignes: ancienne.n, le: ancienne.le ?? '?' };
+      }
+    }
     return muter(() => {
+      if (rectification) {
+        journaliser(operateur, 'RECTIFICATION_INVENTAIRE', `exercice ${anneeNum}`,
+          `Exercice révolu re-photographié : la photographie précédente `
+          + `(${rectification.lignes} ligne(s), du ${rectification.le}) est `
+          + 'remplacée. Elle sert de stock d’ouverture à la déclaration '
+          + 'annuelle : la reprise doit rester exceptionnelle et justifiée.');
+      }
       for (const l of lignes) {
         upsertInventaire(anneeNum, l.fluide, arrondir(Number(l.stockReelKg)),
           operateur);
@@ -4625,6 +4948,66 @@ const HANDLERS = {
       }
     }
 
+    // ⭐ L2 (25/07) — LA TRANSITION DE MATIÈRE, comparée à ce qui est en
+    // place. Le blanchiment se fait en changeant type ET état ensemble : le
+    // couple d'arrivée est légal, donc les invariants internes du candidat
+    // ne peuvent rien voir. C'est la comparaison au fluide DÉJÀ en place
+    // qui dénonce l'opération — une bouteille qui contient du récupéré ne
+    // devient pas « achetée » par un import. (Cette comparaison n'a de sens
+    // qu'ici : les invariants, eux, tournent aussi au chargement.)
+    for (const b of candidat.bouteilles ?? []) {
+      if (!b || !b.id) continue;
+      // NB (revue L2) : la comparaison se fait sur l'IDENTIFIANT seul. Elle a
+      // été tentée sur le CODE en plus — pour fermer le contournement « je
+      // renomme l'id » —, et c'était FAUX : les codes de bouteilles sont
+      // réattribués (B-01, B-02…), donc deux bouteilles distinctes peuvent
+      // porter le même code à deux moments, et un round-trip légitime se
+      // faisait refuser. Le renommage d'id est traité autrement, plus bas :
+      // il fait DISPARAÎTRE la bouteille d'origine du registre, et une
+      // disparition se journalise.
+      const enPlace = db.get(
+        'SELECT etat_fluide AS etat FROM bouteilles WHERE id = ?', [b.id]);
+      if (enPlace && ETATS_FLUIDE_RECUPERATION.includes(enPlace.etat)
+          && ETATS_FLUIDE_ACHAT.includes(b.etatFluide)) {
+        throw new Error(
+          `Import refusé — bouteille ${b.code ?? b.id} : son fluide est `
+          + `${enPlace.etat}, il ne devient pas ${b.etatFluide} par un `
+          + 'import (le fluide RECYCLÉ ou RÉGÉNÉRÉ s’ACHÈTE certifié '
+          + 'fournisseur).');
+      }
+    }
+
+    // ⭐ L2 (25/07) — LE JOURNAL D'AUDIT EST VÉRIFIÉ CONTRE SON TÉMOIN.
+    // Si le fichier porte le témoin de tête (tout export produit depuis le
+    // 25/07), on rejoue la chaîne sur les lignes reçues : retirer une ligne
+    // — ou en changer une — déplace la tête, et l'import est refusé. Un
+    // fichier ANTÉRIEUR n'a pas de témoin : il reste importable (on ne
+    // condamne pas les sauvegardes existantes), mais le fait est
+    // JOURNALISÉ, faute de quoi le silence vaudrait acquittement.
+    let journalSansTemoin = false;
+    {
+      const temoin = candidat.journalAuditChaine ?? null;
+      const entrees = candidat.journalAudit ?? [];
+      if (temoin && typeof temoin === 'object') {
+        const nombreAttendu = Number(temoin.nombre);
+        if (Number.isFinite(nombreAttendu) && nombreAttendu !== entrees.length) {
+          throw new Error(
+            `Import refusé — journal d'audit incomplet : ${entrees.length} `
+            + `ligne(s) dans le fichier, ${nombreAttendu} annoncée(s) par son `
+            + 'témoin d’intégrité. Des lignes ont été retirées.');
+        }
+        const teteRecalculee = teteChaineJournal(entrees);
+        if ((temoin.tete ?? null) !== teteRecalculee) {
+          throw new Error(
+            'Import refusé — journal d’audit altéré : son empreinte de tête '
+            + 'ne correspond plus à son contenu (ligne modifiée, retirée ou '
+            + 'réordonnée).');
+        }
+      } else if (entrees.length > 0) {
+        journalSansTemoin = true;
+      }
+    }
+
     // (3) Invariants métier AVANT d'adopter quoi que ce soit.
     const probleme = verifierInvariantsDonneesCandidat(candidat);
     if (probleme) {
@@ -4639,6 +5022,9 @@ const HANDLERS = {
     // est tout v1.
     const figees = candidat.mouvements.filter((mv) =>
       mv.statut === 'VALIDE' || mv.statut === 'ANNULE');
+    // Nombre d'écritures dont le logiciel a dû amorcer l'empreinte lui-même
+    // (reprise d'historique) — journalisé à l'adoption, voir plus bas.
+    let chaineAmorcee = 0;
     if (figees.some((mv) => mv.hashEcriture)) {
       const chaine = verifierChaineMouvementsCandidat(candidat.mouvements);
       if (!chaine.ok) {
@@ -4647,7 +5033,38 @@ const HANDLERS = {
           `${chaine.casseA} : fichier altéré ou forgé.`);
       }
     } else if (figees.length > 0) {
+      // ⭐ L2 (25/07) — CETTE BRANCHE ÉTAIT LA PORTE DU BLANCHIMENT.
+      // Elle existe pour reprendre un historique antérieur au scellement
+      // (sauvegarde Phase A, aucune empreinte) : le logiciel amorce alors
+      // la chaîne. Mais elle se déclenche sur un critère que l'attaquant
+      // contrôle — « aucune écriture ne porte d'empreinte ». Attaque tirée
+      // et prouvée : exporter, retoucher librement les quantités, PUIS
+      // retirer hashEcriture/hashPrecedent/ordreValidation de TOUTES les
+      // écritures figées ; le fichier ressemble alors à une sauvegarde
+      // ancienne, le logiciel re-scelle les données falsifiées et déclare
+      // le registre SAIN. Tout le passé réécrit, chaîne verte.
+      //
+      // Un poste qui tient DÉJÀ un registre scellé n'a aucune raison de
+      // recevoir un historique sans empreinte : le refus est ici, et la
+      // reprise d'historique reste possible sur un poste qui n'a pas
+      // encore de chaîne (premier import, migration). Miroir DemoStore.
+      const scelleesLocales = db.get(
+        `SELECT count(*) AS n FROM mouvements
+         WHERE statut IN ('VALIDE','ANNULE') AND hash_ecriture IS NOT NULL`);
+      // La borne MONOTONE prime sur l'état courant : un premier import qui
+      // vide le registre ne doit pas rouvrir la porte (contournement en deux
+      // temps, prouvé). L'import ne purge que les réglages « coffre_% » :
+      // cette clé-là traverse.
+      if ((scelleesLocales?.n ?? 0) > 0 || nombreScelleesJamaisAtteint() > 0) {
+        throw new Error(
+          'Import refusé — le fichier porte des écritures validées SANS ' +
+          'empreinte alors que ce poste tient déjà un registre scellé. ' +
+          'Un historique antérieur au scellement ne se reprend que sur un ' +
+          'poste vierge : restaurez une archive, ou repartez d’une ' +
+          'sauvegarde qui porte sa chaîne.');
+      }
       amorcerChaineCandidat(figees);
+      chaineAmorcee = figees.length;
     }
 
     // (4 bis — lot C, C2, APRÈS la chaîne comme le DemoStore : mêmes
@@ -4733,7 +5150,21 @@ const HANDLERS = {
     // (5) Remplacement TOTAL, atomique (throw → ROLLBACK complet, y compris
     // les déclencheurs WORM recréés). La vérification de chaîne est déjà
     // passée : on ne touche la base qu'ici.
-    remplacerToutLEtat(candidat);
+    // ⚠️ Revue L2 — UNE BOUTEILLE QUI DISPARAÎT EST UN FAIT, PAS UN SILENCE.
+    // L'import remplace tout : une bouteille présente en base et absente du
+    // fichier s'efface sans bruit. C'est légitime pour une archive ancienne,
+    // mais c'est aussi la façon dont on blanchit du fluide en renommant un
+    // identifiant (la revue l'a tirée). On ne bloque donc pas — on écrit ce
+    // qui s'en va, en insistant sur ce qui portait du fluide récupéré.
+    const idsCandidat = new Set(
+      (candidat.bouteilles ?? []).map((b) => b && b.id).filter(Boolean));
+    const perdues = db.all(
+      `SELECT id, code_interne AS code, etat_fluide AS etat,
+              masse_nette_kg AS nette
+       FROM bouteilles`)
+      .filter((l) => !idsCandidat.has(l.id));
+
+    remplacerToutLEtat(candidat, chaineAmorcee, journalSansTemoin, perdues);
     return true;
   }
 };
@@ -4802,6 +5233,22 @@ function construireDonneesExport() {
     plaintes: HANDLERS.getPlaintes(),
     alertes: HANDLERS.getAlertes(),
     journalAudit: HANDLERS.getJournalAudit(),
+    // ⭐ L2 (25/07) — TÉMOIN DE TÊTE DU JOURNAL. Le journal d'audit est
+    // chaîné en base (db.js), mais ce chaînage ne voyageait PAS dans
+    // l'export : à l'import, les lignes étaient RE-chaînées telles quelles.
+    // Attaque tirée : exporter, supprimer à la main les lignes gênantes
+    // (les trois VALIDATION_MOUVEMENT, par exemple), réimporter — le
+    // journal repartait vert, amputé, sans que rien ne le signale. Le
+    // témoin voyage donc avec le fichier : nombre de lignes et empreinte de
+    // tête. Retirer une ligne change l'un ou l'autre.
+    journalAuditChaine: (() => {
+      const lignes = db.all(
+        `SELECT hash FROM journal_audit ORDER BY id`);
+      return {
+        nombre: lignes.length,
+        tete: lignes.length > 0 ? (lignes[lignes.length - 1].hash ?? null) : null
+      };
+    })(),
     // Lot E2 (brique E2c) : le COFFRE voyage dans l'export — enveloppes en
     // base64 + configuration (sel/témoin/kdf) + compteurs MONOTONES. FAIT
     // ÉTABLI par la revue de conception : la table parametres ne voyage PAS
@@ -4894,19 +5341,38 @@ function ecrituresFigeesCandidat(mouvements) {
  * @returns {{ok: boolean, casseA: string|null}}
  */
 function verifierChaineMouvementsCandidat(mouvements) {
+  const figees = ecrituresFigeesCandidat(mouvements);
   let precedent = null;
-  for (const mouvement of ecrituresFigeesCandidat(mouvements)) {
+  for (const mouvement of figees) {
     if ((mouvement.hashPrecedent ?? null) !== precedent) {
-      return { ok: false, casseA: mouvement.numero };
+      return { ok: false, casseA: mouvement.numero, motif: 'EMPREINTE' };
     }
     const attendu = hasherMouvement(
       objetLogiquePourHash(mouvement), precedent);
     if (attendu !== mouvement.hashEcriture) {
-      return { ok: false, casseA: mouvement.numero };
+      return { ok: false, casseA: mouvement.numero, motif: 'EMPREINTE' };
     }
     precedent = mouvement.hashEcriture;
   }
-  return { ok: true, casseA: null };
+  // ⚠️ Revue L2 — LE MÊME APPARIEMENT DES ANNULATIONS QUE SUR LA BASE VIVE.
+  // Le serveur a DEUX chemins de vérification (la base en place, et le
+  // candidat d'un import) là où la démo n'en a qu'un : le contrôle L2-a
+  // n'avait été posé que sur le premier. Conséquence prouvée par la revue :
+  // un fichier portant une écriture ANNULE que personne ne désigne était
+  // REFUSÉ par la démo et ADOPTÉ par le serveur — l'effacement d'une
+  // intervention passait par l'import au lieu du SQL. Constat BLOQUANT,
+  // corrigé avant fusion.
+  const designees = new Set(figees
+    .map((mv) => mv.contreEcritureDe ?? null)
+    .filter(Boolean));
+  for (const mouvement of figees) {
+    if (mouvement.statut === 'ANNULE' && !designees.has(mouvement.id)) {
+      return {
+        ok: false, casseA: mouvement.numero, motif: 'ANNULATION_ORPHELINE'
+      };
+    }
+  }
+  return { ok: true, casseA: null, motif: null };
 }
 
 /**
@@ -4940,6 +5406,15 @@ function amorcerChaineCandidat(figees) {
 function verifierInvariantsDonneesCandidat(candidat) {
   for (const b of candidat.bouteilles) {
     const ref = b.code ?? b.id ?? '?';
+    // ⭐ L2 (25/07) — les gardes du CRUD valent AUSSI à l'import. Attaque
+    // tirée : exporter, forcer { type:'NEUVE', etatFluide:'REGENERE' } sur
+    // une bouteille qui contient du récupéré, réimporter — le blanchiment
+    // du récupéré en régénéré passait par la porte de derrière.
+    try {
+      verifierCoherenceEtatBouteille(b.type, b.etatFluide);
+    } catch (erreur) {
+      return `bouteille ${ref} : ${erreur.message}`;
+    }
     for (const champ of ['tareKg', 'masseBruteKg', 'masseNetteKg']) {
       if (!Number.isFinite(b[champ]) || b[champ] < 0) {
         return `bouteille ${ref} : ${champ} invalide (${b[champ]})`;
@@ -4991,6 +5466,23 @@ function verifierInvariantsDonneesCandidat(candidat) {
       }
     }
   }
+  // ⚠️ Revue L2 — LA RÉPARATION NE SE RÉÉCRIT PAS DAVANTAGE PAR L'IMPORT.
+  // La garde du CRUD (tracerReparation) tient, mais la revue est passée par
+  // la porte de derrière : exporter, ramener `dateReparation` à une date
+  // antérieure, réimporter — et le dossier de fuite se refermait
+  // rétroactivement. Une réparation déjà tracée est un fait constaté ; un
+  // fichier qui la déplace est un fichier retouché.
+  for (const c of candidat.controles ?? []) {
+    if (!c || !c.id || !c.dateReparation) continue;
+    const enPlace = mapping.versFront('controles',
+      db.get('SELECT * FROM controles WHERE id = ?', [c.id]) ?? {});
+    if (enPlace && enPlace.dateReparation
+        && enPlace.dateReparation !== c.dateReparation) {
+      return `contrôle ${c.numero ?? c.id} : la réparation tracée le `
+        + `${enPlace.dateReparation} est déplacée au ${c.dateReparation} par `
+        + 'ce fichier — une réparation constatée ne se réécrit pas';
+    }
+  }
   // P7-e (option A) : un contrôle OFFICIEL naît TOUJOURS d'un mouvement
   // (CR-3, parcours signé/scellé/WORM) — un contrôle officiel ORPHELIN
   // (sans mouvementId) ne peut être que forgé ou issu d'un contournement.
@@ -4999,6 +5491,29 @@ function verifierInvariantsDonneesCandidat(candidat) {
     if (c && c.mode === 'OFFICIEL' && !c.mouvementId) {
       return `contrôle ${c.numero ?? c.id ?? '?'} : ` +
         'OFFICIEL sans mouvement lié (orphelin)';
+    }
+  }
+  // ⭐ L2 (25/07) — LE VERROU DE LIVRAISON GARDE AUSSI LA PORTE DE
+  // L'IMPORT. Attaque tirée : `creerMouvement { mode:'OFFICIEL' }` est
+  // refusé par les conditions bloquantes, mais un paquet JSON portant un
+  // mouvement { mode:'OFFICIEL', statut:'VALIDE' } avec une chaîne
+  // d'empreintes correctement recalculée entrait en base — une fiche
+  // officielle fabriquée de toutes pièces, sans double signature, sans PDF
+  // conservé, alors même que le mode Officiel n'est pas ouvert. Un verrou
+  // qui ne garde qu'une des deux portes n'est pas un verrou.
+  // À la RÉOUVERTURE (L6), cette garde tombe d'elle-même avec le drapeau.
+  if (VERROU_LIVRAISON) {
+    for (const mv of candidat.mouvements ?? []) {
+      if (mv && mv.mode === 'OFFICIEL') {
+        return `mouvement ${mv.numero ?? mv.id ?? '?'} : mode OFFICIEL alors `
+          + 'que le mode Officiel n’est pas ouvert sur ce poste';
+      }
+    }
+    for (const c of candidat.controles ?? []) {
+      if (c && c.mode === 'OFFICIEL') {
+        return `contrôle ${c.numero ?? c.id ?? '?'} : mode OFFICIEL alors `
+          + 'que le mode Officiel n’est pas ouvert sur ce poste';
+      }
     }
   }
   // Habilitations et mentions (chantier B2) : miroir EXACT du DemoStore —
@@ -5044,6 +5559,17 @@ function verifierInvariantsDonneesCandidat(candidat) {
     // neutralise déjà — défense en profondeur). Le contrôle « pas dans le
     // futur » reste une règle de SAISIE : un export ancien rejoué plus tard
     // porte des faits, pas des saisies.
+    // ⭐ L2 : les dates de DÉBUT et de FIN aussi — sans quoi la garde
+    // 2008 ci-dessous compare « 15/06/2027 » à « 2026-12-31 » et conclut
+    // « antérieur ». Tiré et prouvé : une attestation illégale et une
+    // attestation périmée entraient par un paquet d'import.
+    for (const [champ, libelle] of [
+      ['dateDebut', 'date de début'], ['dateFin', 'date de fin']]) {
+      if (!dates.estDateCalendaireOuVide(h[champ])) {
+        return `habilitation ${ref} : ${libelle} invalide ` +
+          '(AAAA-MM-JJ attendu, date réelle)';
+      }
+    }
     if (h.regime === '2008' && h.dateDebut
         && h.dateDebut > FIN_DELIVRANCE_2008) {
       return `habilitation ${ref} : délivrance 2008 datée après le ` +
@@ -5187,6 +5713,27 @@ function reinsererMouvements(mouvements) {
  * hash via db.hashEcriture) pour que verifierChaineJournal reste au vert
  * après import — l'ordre d'origine est conservé.
  */
+/**
+ * Rejoue le chaînage du journal sur une liste d'entrées SANS rien écrire :
+ * même algorithme que `reinsererJournal` ci-dessous, d'où l'extraction. Rend
+ * l'empreinte de tête (null si aucune entrée). Le contenu et l'ordre étant
+ * les seuls ingrédients, deux listes identiques donnent la même tête — c'est
+ * ce qui permet de vérifier un fichier d'import contre son témoin.
+ */
+function teteChaineJournal(entrees) {
+  let precedent = '';
+  for (const entree of entrees ?? []) {
+    precedent = db.hashEcriture({
+      date_heure: entree.date ?? new Date().toISOString(),
+      utilisateur: entree.qui ?? 'système',
+      action: String(entree.action ?? 'IMPORT'),
+      cible: entree.cible ?? null,
+      details: entree.details ?? null
+    }, precedent);
+  }
+  return precedent || null;
+}
+
 function reinsererJournal(entrees) {
   let precedent = '';
   for (const entree of entrees ?? []) {
@@ -5218,7 +5765,8 @@ function reinsererJournal(entrees) {
  * l'ordre de vidage/insertion n'a plus d'importance et une incohérence
  * référentielle fait échouer proprement (ROLLBACK global).
  */
-function remplacerToutLEtat(candidat) {
+function remplacerToutLEtat(candidat, chaineAmorceeALImport = 0,
+  journalSansTemoin = false, bouteillesPerdues = []) {
   muter(() => {
     // Reporte le contrôle des FK au COMMIT (autorisé DANS une transaction ;
     // se réinitialise en fin de transaction). Sans lui, l'ordre de
@@ -5391,6 +5939,29 @@ function remplacerToutLEtat(candidat) {
     // Journalise l'import LUI-MÊME (chaîné à la chaîne de journal réamorcée).
     journaliser('système', 'IMPORT_DONNEES', 'sauvegarde',
       'Restauration depuis un fichier JSON (intégrité vérifiée)');
+    // L2 : un amorçage de chaîne est un geste RARE et lourd de sens (le
+    // logiciel scelle un passé qu'il n'a pas écrit). Il n'est plus possible
+    // sur un poste déjà scellé ; quand il a lieu, il se voit.
+    for (const perdue of bouteillesPerdues) {
+      const recupere = ETATS_FLUIDE_RECUPERATION.includes(perdue.etat);
+      journaliser('système', 'BOUTEILLE_ABSENTE_DE_L_IMPORT',
+        perdue.code ?? perdue.id,
+        `La bouteille ${perdue.code ?? perdue.id} (${perdue.etat ?? '?'}, `
+        + `${perdue.nette ?? 0} kg) était au registre et ne figure pas dans le `
+        + `fichier importé : elle en disparaît.`
+        + (recupere ? ' ⚠️ Elle portait du fluide RÉCUPÉRÉ.' : ''));
+    }
+    if (journalSansTemoin) {
+      journaliser('système', 'JOURNAL_SANS_TEMOIN_A_L_IMPORT', 'sauvegarde',
+        'Le fichier importé ne portait pas le témoin d’intégrité du journal '
+        + '(sauvegarde antérieure au 25/07/2026) : son contenu n’a pas pu '
+        + 'être vérifié');
+    }
+    if (chaineAmorceeALImport > 0) {
+      journaliser('système', 'CHAINE_AMORCEE_A_L_IMPORT', 'sauvegarde',
+        `${chaineAmorceeALImport} écriture(s) validée(s) sans empreinte : `
+        + 'chaîne d’intégrité amorcée par le logiciel à l’import');
+    }
   });
 }
 
@@ -5681,28 +6252,83 @@ function sceller(mouvement) {
   mouvement.hashPrecedent = derniere?.hashEcriture ?? null;
   mouvement.hashEcriture = hasherMouvement(
     objetLogiquePourHash(mouvement), mouvement.hashPrecedent);
+  // ⭐ L2 — BORNE MONOTONE « ce poste a déjà scellé ». Elle ne vit PAS dans
+  // le registre (que l'import remplace en entier) mais dans les réglages du
+  // poste, et elle ne redescend JAMAIS. Sans elle, la garde de ré-amorçage
+  // se contourne EN DEUX TEMPS — prouvé en le tirant : importer d'abord un
+  // registre VIDE (le poste n'a alors plus rien de scellé), puis le fichier
+  // forgé sans empreintes. La borne, elle, se souvient.
+  const borne = Math.max(nombreScelleesJamaisAtteint(),
+    mouvement.ordreValidation);
+  parametres.ecrire('registre_scellees_max', String(borne));
+  // ⭐ Revue L2 — ET dans un fichier VOISIN de la base. La restauration
+  // d'archive REMPLACE le fichier de base : une borne qui n'y vivrait que
+  // disparaîtrait avec lui, et le blanchiment redeviendrait possible juste
+  // après une restauration (prouvé en le tirant). Best-effort : si le
+  // fichier ne peut pas s'écrire, la validation aboutit quand même — le
+  // registre prime sur sa propre protection.
+  borneScellement.noter(db.cheminOuvert(), borne);
+}
+
+/**
+ * La borne monotone ci-dessus, relue. Deux sources, on retient la PLUS
+ * HAUTE : la table `parametres` (qui survit à l'import, lequel ne purge que
+ * `coffre_%`) et le fichier voisin de la base (qui survit, lui, à la
+ * RESTAURATION d'archive — celle-ci remplace le fichier de base en entier).
+ * Chacune couvre l'angle mort de l'autre ; il faut effacer les deux pour
+ * rouvrir la porte, et effacer le fichier suppose déjà l'accès au disque.
+ * @returns {number} 0 si le poste n'a jamais scellé
+ */
+function nombreScelleesJamaisAtteint() {
+  const enBase = Number(parametres.lire('registre_scellees_max', '0'));
+  const enFichier = borneScellement.lire(db.cheminOuvert());
+  return Math.max(
+    Number.isFinite(enBase) && enBase > 0 ? enBase : 0,
+    enFichier);
 }
 
 /**
  * CR-5 : re-parcourt la chaîne des écritures figées et recalcule chaque
  * empreinte ; casseA = numéro de la première rupture. Identique à
  * verifierChaineMouvements du DemoStore.
- * @returns {{ok: boolean, casseA: string|null}}
+ *
+ * ⭐ L2 (25/07) — DEUXIÈME contrôle : l'APPARIEMENT DES ANNULATIONS.
+ * Le passage VALIDE → ANNULE est le seul changement que le déclencheur WORM
+ * laisse passer (c'est le canal de la contre-écriture), et le statut est
+ * VOLONTAIREMENT hors empreinte (sans quoi toute annulation casserait la
+ * chaîne). Conséquence prouvée en la TIRANT : un `UPDATE mouvements SET
+ * statut='ANNULE'` en SQL direct faisait disparaître une intervention des
+ * totaux — empreinte intacte, chaîne verte, aucune alerte, aucune ligne de
+ * journal. Or le logiciel n'annule JAMAIS sans créer la contre-écriture qui
+ * désigne l'annulée : une annulée que personne ne désigne est donc,
+ * nécessairement, une modification faite hors de l'application.
+ * @returns {{ok: boolean, casseA: string|null, motif: string|null}}
  */
 function verifierChaineMouvements() {
+  const chaine = chaineValidee();
   let precedent = null;
-  for (const mouvement of chaineValidee()) {
+  for (const mouvement of chaine) {
     if ((mouvement.hashPrecedent ?? null) !== precedent) {
-      return { ok: false, casseA: mouvement.numero };
+      return { ok: false, casseA: mouvement.numero, motif: 'EMPREINTE' };
     }
     const attendu = hasherMouvement(
       objetLogiquePourHash(mouvement), precedent);
     if (attendu !== mouvement.hashEcriture) {
-      return { ok: false, casseA: mouvement.numero };
+      return { ok: false, casseA: mouvement.numero, motif: 'EMPREINTE' };
     }
     precedent = mouvement.hashEcriture;
   }
-  return { ok: true, casseA: null };
+  const designees = new Set(chaine
+    .map((mv) => mv.contreEcritureDe ?? null)
+    .filter(Boolean));
+  for (const mouvement of chaine) {
+    if (mouvement.statut === 'ANNULE' && !designees.has(mouvement.id)) {
+      return {
+        ok: false, casseA: mouvement.numero, motif: 'ANNULATION_ORPHELINE'
+      };
+    }
+  }
+  return { ok: true, casseA: null, motif: null };
 }
 
 // ------------------------------------------------------------
@@ -6363,10 +6989,21 @@ function enregistrerControle(d) {
   // P0-6 (revue I-1) : les dates métier sont AU JOUR — un horodatage
   // (« 2026-07-20T18:00 ») comparé en chaîne serait « strictement
   // postérieur » au jour même et contournerait la clôture J+1. MIROIR demo.
-  if (d.date !== undefined && d.date !== null
-      && !/^\d{4}-\d{2}-\d{2}$/.test(String(d.date))) {
-    throw new Error('Date de contrôle invalide : format attendu '
-      + 'AAAA-MM-JJ (date au jour).');
+  // ⭐ L2 (25/07) : le format ne suffisait pas — « 2026-13-45 » et
+  // « 2026-02-30 » le passaient. Et surtout, un contrôle DANS LE FUTUR
+  // était accepté : daté du 01/01/2030, il repoussait l'échéance de la
+  // machine de cinq ans et éteignait toute alerte. Un contrôle
+  // d'étanchéité s'atteste APRÈS avoir été fait, jamais d'avance — même
+  // règle que la remise à niveau (L4) et que la vérification de détection.
+  if (d.date !== undefined && d.date !== null && d.date !== '') {
+    if (!dates.estDateCalendaire(String(d.date))) {
+      throw new Error('Date de contrôle invalide : format attendu '
+        + 'AAAA-MM-JJ (date au jour).');
+    }
+    if (String(d.date) > aujourdHui()) {
+      throw new Error('Un contrôle d’étanchéité ne s’atteste pas d’avance : '
+        + 'la date ne peut pas être dans le futur.');
+    }
   }
   // Mode + numéro de fiche du contrôle (CERFA). Un contrôle LIÉ hérite ceux
   // du mouvement (passés dans d) ; un contrôle AUTONOME prend un numéro dédié
@@ -6735,6 +7372,31 @@ function verifierFicheFluide(fiche) {
   if ((categorie === 'HCFC' || categorie === 'AUCUNE') && (hfc || hfo)) {
     throw new Error(`Fiche incohérente : la catégorie ${categorie} exclut `
       + 'un fluide contenant du HFC ou du HFO.');
+  }
+  // ⭐ L2 (25/07), corrigé par la revue — LE PRP CONTREDIT LA FICHE.
+  // La cohérence ci-dessus se contentait des deux drapeaux `contient*` :
+  // en les remettant à faux DANS LE MÊME patch, on pouvait déclarer
+  // « AUCUNE » (hors périmètre F-Gas) un fluide comme le R-410A → TOUT le
+  // parc qui y tourne sortait du contrôle d'étanchéité, sans fréquence,
+  // sans échéance, sans alerte.
+  //
+  // Première tentative : croiser avec le libellé de FAMILLE. Mauvaise idée,
+  // et la revue l'a prouvé deux fois — le libellé est du texte libre, donc
+  // (a) il se réécrit dans le même patch, la garde tombe ; (b) il refusait
+  // des fiches légitimes, « Ammoniac (NH3) — naturel, hors HFC » contenant
+  // les trois lettres H, F, C. Une garde qui lit une phrase ne garde rien.
+  //
+  // Le PRP, lui, n'est pas du texte : les fluides réellement hors périmètre
+  // sont des gaz naturels de PRP quasi nul (CO₂ = 1, propane = 3, ammoniac
+  // = 0). Au-delà de 150 — la première borne du règlement, déjà utilisée
+  // pour l'impact affiché — « hors périmètre » n'est plus une description,
+  // c'est une erreur ou une manœuvre.
+  const prpFiche = Number(f.gwpAr4);
+  if (categorie === 'AUCUNE' && Number.isFinite(prpFiche) && prpFiche >= 150) {
+    throw new Error('Fiche incohérente : un fluide de PRP ' + prpFiche
+      + ' ne peut pas être déclaré hors périmètre F-Gas (catégorie AUCUNE). '
+      + 'Les fluides hors périmètre sont les gaz naturels — CO₂, '
+      + 'hydrocarbures, ammoniac — dont le PRP est quasi nul.');
   }
 }
 

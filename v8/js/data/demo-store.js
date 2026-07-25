@@ -28,6 +28,9 @@ import { detectionEffective, echeanceVerificationDetection,
 // signale une réintroduction au-delà du récupéré. Le serveur en tient un
 // MIROIR EXACT (api.js).
 import { avoirParMachineOrigine } from './avoir-origine.js';
+// L2 (25/07) : « une date est une date » — format ancré ET calendrier réel.
+import { estDateCalendaire, estDateCalendaireOuVide, messageDateInvalide }
+  from './dates.js';
 // P0-8 : déclaration annuelle 11 rubriques (module pur, miroir serveur).
 import { calculerDeclarationAnnuelle } from './declaration-annuelle.js';
 // Sentinelle d'alertes persistées : diff pur + formatage (module partagé
@@ -341,21 +344,41 @@ function ecrituresFigees(mouvements) {
  * Vérifie la chaîne de hash SHA-256 d'une liste de mouvements
  * (CR-5 : utilisable sur les données candidates d'un import AVANT
  * de les adopter, comme sur les données en place).
- * @returns {Promise<{ok: boolean, casseA: string|null}>}
+ *
+ * ⭐ L2 (25/07) — DEUXIÈME contrôle : l'APPARIEMENT DES ANNULATIONS.
+ * Le statut est VOLONTAIREMENT hors empreinte (sans quoi toute annulation
+ * casserait la chaîne), et côté serveur le déclencheur WORM laisse passer
+ * VALIDE → ANNULE : c'est le canal de la contre-écriture. Une écriture
+ * annulée que PERSONNE ne désigne n'a donc pas pu naître de l'application —
+ * elle vient d'une retouche extérieure (SQL direct, localStorage réécrit,
+ * fichier d'import forgé) qui faisait disparaître une intervention des
+ * totaux sans casser la chaîne. Miroir exact de api.js.
+ * @returns {Promise<{ok: boolean, casseA: string|null, motif: string|null}>}
  */
 async function verifierChaineMouvements(mouvements) {
+  const figees = ecrituresFigees(mouvements);
   let precedent = null;
-  for (const mouvement of ecrituresFigees(mouvements)) {
+  for (const mouvement of figees) {
     if ((mouvement.hashPrecedent ?? null) !== precedent) {
-      return { ok: false, casseA: mouvement.numero };
+      return { ok: false, casseA: mouvement.numero, motif: 'EMPREINTE' };
     }
     const attendu = await hasherEcriture(mouvement, precedent);
     if (attendu !== mouvement.hashEcriture) {
-      return { ok: false, casseA: mouvement.numero };
+      return { ok: false, casseA: mouvement.numero, motif: 'EMPREINTE' };
     }
     precedent = mouvement.hashEcriture;
   }
-  return { ok: true, casseA: null };
+  const designees = new Set(figees
+    .map((mv) => mv.contreEcritureDe ?? null)
+    .filter(Boolean));
+  for (const mouvement of figees) {
+    if (mouvement.statut === 'ANNULE' && !designees.has(mouvement.id)) {
+      return {
+        ok: false, casseA: mouvement.numero, motif: 'ANNULATION_ORPHELINE'
+      };
+    }
+  }
+  return { ok: true, casseA: null, motif: null };
 }
 
 /**
@@ -368,6 +391,15 @@ async function verifierChaineMouvements(mouvements) {
 function verifierInvariantsDonnees(candidat) {
   for (const b of candidat.bouteilles) {
     const ref = b.code ?? b.id ?? '?';
+    // ⭐ L2 (25/07) — les gardes du CRUD valent AUSSI à l'import. Attaque
+    // tirée : exporter, forcer { type:'NEUVE', etatFluide:'REGENERE' } sur
+    // une bouteille qui contient du récupéré, réimporter — le blanchiment
+    // du récupéré en régénéré passait par la porte de derrière.
+    try {
+      verifierCoherenceEtatBouteille(b.type, b.etatFluide);
+    } catch (erreur) {
+      return `bouteille ${ref} : ${erreur.message}`;
+    }
     for (const champ of ['tareKg', 'masseBruteKg', 'masseNetteKg']) {
       if (!Number.isFinite(b[champ]) || b[champ] < 0) {
         return `bouteille ${ref} : ${champ} invalide (${b[champ]})`;
@@ -419,6 +451,9 @@ function verifierInvariantsDonnees(candidat) {
       }
     }
   }
+  // ⚠️ Revue L2 — le miroir de ce contrôle vit dans importerJSON côté
+  // démo (comme la transition de matière) : les invariants, eux,
+  // tournent aussi au chargement, où la comparaison n'a pas de sens.
   // P7-e (option A) : un contrôle OFFICIEL naît TOUJOURS d'un mouvement
   // (CR-3, parcours signé/scellé/WORM) — un contrôle officiel ORPHELIN
   // (sans mouvementId) ne peut être que forgé ou issu d'un contournement.
@@ -427,6 +462,29 @@ function verifierInvariantsDonnees(candidat) {
     if (c && c.mode === 'OFFICIEL' && !c.mouvementId) {
       return `contrôle ${c.numero ?? c.id ?? '?'} : ` +
         'OFFICIEL sans mouvement lié (orphelin)';
+    }
+  }
+  // ⭐ L2 (25/07) — LE VERROU DE LIVRAISON GARDE AUSSI LA PORTE DE
+  // L'IMPORT. Attaque tirée : `creerMouvement { mode:'OFFICIEL' }` est
+  // refusé par les conditions bloquantes, mais un paquet JSON portant un
+  // mouvement { mode:'OFFICIEL', statut:'VALIDE' } avec une chaîne
+  // d'empreintes correctement recalculée entrait en base — une fiche
+  // officielle fabriquée de toutes pièces, sans double signature, sans PDF
+  // conservé, alors même que le mode Officiel n'est pas ouvert. Un verrou
+  // qui ne garde qu'une des deux portes n'est pas un verrou.
+  // À la RÉOUVERTURE (L6), cette garde tombe d'elle-même avec le drapeau.
+  if (VERROU_LIVRAISON) {
+    for (const mv of candidat.mouvements ?? []) {
+      if (mv && mv.mode === 'OFFICIEL') {
+        return `mouvement ${mv.numero ?? mv.id ?? '?'} : mode OFFICIEL alors `
+          + 'que le mode Officiel n’est pas ouvert sur ce poste';
+      }
+    }
+    for (const c of candidat.controles ?? []) {
+      if (c && c.mode === 'OFFICIEL') {
+        return `contrôle ${c.numero ?? c.id ?? '?'} : mode OFFICIEL alors `
+          + 'que le mode Officiel n’est pas ouvert sur ce poste';
+      }
     }
   }
   // Habilitations et mentions (chantier B2) : refuser un registre importé
@@ -946,6 +1004,34 @@ export function creerDemoStore() {
     }
   }
 
+  /**
+   * L2 (25/07) — les dates d'une habilitation sont des DATES (miroir EXACT
+   * du serveur). `verifierRemiseNiveau` gardait son champ depuis L4 ; ses
+   * voisins entraient bruts. Attaques tirees : dateFin « 31/12/2020 »
+   * (format francais) rendait une attestation perimee VALIDE, car « 3 » est
+   * apres « 2 » dans une comparaison de chaines ; dateDebut « 15/06/2027 »
+   * contournait la garde de delivrance 2008. Absente = donnee legitime.
+   */
+  function verifierDatesHabilitation(d) {
+    for (const [champ, libelle] of [
+      ['dateDebut', 'Date de début'], ['dateFin', 'Date de fin']]) {
+      if (!estDateCalendaireOuVide(d[champ])) {
+        throw new Error(messageDateInvalide(libelle));
+      }
+    }
+  }
+
+  /** L2 — memes dates, meme regle, sur la FICHE de la personne. */
+  function verifierDatesPersonne(d) {
+    for (const [champ, libelle] of [
+      ['dateObtention', 'Date d’obtention'],
+      ['dateFinValidite', 'Date de fin de validité']]) {
+      if (!estDateCalendaireOuVide(d[champ])) {
+        throw new Error(messageDateInvalide(libelle));
+      }
+    }
+  }
+
   function trouverMention(id) {
     const m = donnees.mentionsHabilitation.find((x) => x.id === id);
     if (!m) throw new Error(`Mention introuvable : ${id}.`);
@@ -1412,6 +1498,14 @@ export function creerDemoStore() {
     mouvement.hashPrecedent = derniere?.hashEcriture ?? null;
     mouvement.hashEcriture =
       await hasherEcriture(mouvement, mouvement.hashPrecedent);
+    // ⭐ L2 — BORNE MONOTONE « ce poste a déjà scellé » (miroir du réglage
+    // `registre_scellees_max` côté serveur) : elle ne redescend JAMAIS, et
+    // l'import la conserve. Sans elle, la garde de ré-amorçage se contourne
+    // en deux temps : importer d'abord un registre VIDE, puis le fichier
+    // forgé sans empreintes.
+    donnees.registreScelleesMax = Math.max(
+      Number(donnees.registreScelleesMax ?? 0) || 0,
+      mouvement.ordreValidation);
   }
 
   /** Prochain numéro de fiche : FORM-AAAA-NNNN ou FI-AAAA-NNNN. */
@@ -2080,10 +2174,20 @@ export function creerDemoStore() {
     // P0-6 (revue I-1) : les dates métier sont AU JOUR — un horodatage
     // (« 2026-07-20T18:00 ») comparé en chaîne serait « strictement
     // postérieur » au jour même et contournerait la clôture J+1.
-    if (d.date !== undefined && d.date !== null
-        && !/^\d{4}-\d{2}-\d{2}$/.test(String(d.date))) {
-      throw new Error('Date de contrôle invalide : format attendu '
-        + 'AAAA-MM-JJ (date au jour).');
+    // ⭐ L2 (25/07) : le format ne suffisait pas — « 2026-13-45 » et
+    // « 2026-02-30 » le passaient. Et un contrôle DANS LE FUTUR était
+    // accepté : daté du 01/01/2030, il repoussait l'échéance de cinq ans
+    // et éteignait toute alerte. Un contrôle s'atteste APRÈS, jamais
+    // d'avance (miroir du serveur).
+    if (d.date !== undefined && d.date !== null && d.date !== '') {
+      if (!estDateCalendaire(String(d.date))) {
+        throw new Error('Date de contrôle invalide : format attendu '
+          + 'AAAA-MM-JJ (date au jour).');
+      }
+      if (String(d.date) > aujourdHui()) {
+        throw new Error('Un contrôle d’étanchéité ne s’atteste pas d’avance : '
+          + 'la date ne peut pas être dans le futur.');
+      }
     }
     // Mode + numéro de fiche du contrôle (CERFA). Un contrôle LIÉ hérite ceux
     // du mouvement (passés dans d) ; un contrôle AUTONOME prend un numéro dédié
@@ -2332,11 +2436,13 @@ export function creerDemoStore() {
       this.registreAltere = null;
       const probleme = verifierInvariantsDonnees(donnees);
       if (probleme) {
-        this.registreAltere = { ok: false, casseA: probleme };
+        this.registreAltere = { ok: false, casseA: probleme, motif: 'INVARIANT' };
       } else {
         const chaine = await verifierChaineMouvements(donnees.mouvements);
         if (!chaine.ok) {
-          this.registreAltere = { ok: false, casseA: chaine.casseA };
+          this.registreAltere = {
+            ok: false, casseA: chaine.casseA, motif: chaine.motif ?? null
+          };
         }
       }
     },
@@ -2982,11 +3088,59 @@ export function creerDemoStore() {
       }
       verifierModeleEquipement(fusion);
 
+      // ⭐ L2 (25/07) — LA MODIFICATION REVALIDE CE QUE LA CRÉATION EXIGE
+      // (miroir du serveur). Attaque tirée : ramener la charge nominale à 0
+      // faisait sortir la machine du périmètre du contrôle d'étanchéité.
+      if (d.chargeNominaleKg !== undefined) {
+        const nominale = Number(d.chargeNominaleKg);
+        if (!Number.isFinite(nominale) || nominale <= 0) {
+          throw new Error('Charge nominale obligatoire (en kg, positive).');
+        }
+        d.chargeNominaleKg = nominale;
+      }
+      // ⭐ L2 — charge ACTUELLE : ni négative, ni illisible, ni sans rapport
+      // avec la machine (9999 kg déclarés sur 10 kg nominaux affichaient
+      // 20 877 t éq. CO₂ au tableau de bord). Tolérance 5 % comme ailleurs.
+      if (d.chargeActuelleKg !== undefined && d.chargeActuelleKg !== null) {
+        const actuelle = Number(d.chargeActuelleKg);
+        if (!Number.isFinite(actuelle) || actuelle < 0) {
+          throw new Error('Charge actuelle invalide (en kg, jamais négative).');
+        }
+        const nominaleFusion = Number(
+          d.chargeNominaleKg ?? machine.chargeNominaleKg);
+        if (Number.isFinite(nominaleFusion) && nominaleFusion > 0
+            && actuelle > nominaleFusion * 1.05) {
+          throw new Error(
+            `Charge actuelle impossible : ${actuelle} kg déclarés pour une `
+            + `charge nominale de ${nominaleFusion} kg (tolérance 5 %).`);
+        }
+        d.chargeActuelleKg = actuelle;
+      }
+      // ⭐ L2 — `dernierControle` et `prochainControle` RETIRÉS de la liste :
+      // faits DÉRIVÉS posés par enregistrerControle depuis le moteur. Une
+      // session ÉLÈVE repoussait l'échéance d'une machine en retard au
+      // 31/12/2099 et l'alerte critique disparaissait. Ils restent
+      // légitimes à la CRÉATION (reprise de parc) et à l'import.
+      // ⚠️ Revue L2 — REFUSER PLUTÔT QU'IGNORER. Ces deux dates ont été
+      // retirées des champs modifiables : les recevoir sans rien en faire
+      // rendait un succès trompeur — le professeur corrigeait une date de
+      // reprise de parc, le logiciel répondait « enregistré », et rien ne
+      // changeait. Un refus explicite dit où poser le geste.
+      for (const champ of ['dernierControle', 'prochainControle']) {
+        if (d[champ] !== undefined) {
+          throw new Error(
+            'Les dates de contrôle d’une machine ne se saisissent pas ici : '
+            + 'elles sont posées par l’enregistrement d’un contrôle '
+            + 'd’étanchéité, qui les calcule selon la périodicité '
+            + 'réglementaire. (Elles restent saisissables à la CRÉATION de la '
+            + 'machine, pour reprendre un parc existant.)');
+        }
+      }
       const CHAMPS = ['designation', 'type', 'marque', 'modele', 'numSerie',
         'fluide', 'chargeNominaleKg', 'chargeActuelleKg', 'clientId',
         'localisation', 'siteLabel', 'statut', 'typeInstallation',
         'detectionPermanente', ...CHAMPS_EQUIPEMENT,
-        'dateMiseEnService', 'dernierControle', 'prochainControle'];
+        'dateMiseEnService'];
       for (const champ of CHAMPS) {
         if (d[champ] !== undefined) machine[champ] = d[champ];
       }
@@ -2999,6 +3153,28 @@ export function creerDemoStore() {
       for (const champ of ['sousTypeInstallation', 'detectionVerifieeLe',
         'detectionReference', 'usageThermique']) {
         if (d[champ] !== undefined) machine[champ] = texteOuNullEquip(d[champ]);
+      }
+      // ⚠️ Revue L2 — RECALCULER L'ÉCHÉANCE QUAND LE SEUIL BOUGE (miroir du
+      // serveur). Chemin trouvé par la revue : abaisser la charge nominale
+      // (la machine sort du périmètre), poser une échéance volontaire à
+      // 2099 — conservée puisque « non soumise » —, puis remettre la charge.
+      // Le plafond du moteur n'était évalué qu'à l'instant du contrôle.
+      const CHAMPS_SEUIL = ['chargeNominaleKg', 'fluide',
+        'detectionPermanente', 'detectionVerifieeLe'];
+      if (CHAMPS_SEUIL.some((champ) => d[champ] !== undefined)) {
+        const dateReference = machine.dernierControle ?? aujourdHui();
+        const fluideRef = donnees.fluides.find(
+          (f) => f.code === machine.fluide) ?? null;
+        const { frequenceMois } = evaluerControle(
+          fluideRef, machine.chargeNominaleKg,
+          detectionEffective(machine, dateReference).compte, dateReference);
+        const echeanceMoteur = frequenceMois
+          ? ajouterMois(dateReference, frequenceMois) : null;
+        if (echeanceMoteur
+            && (!machine.prochainControle
+              || String(machine.prochainControle) > echeanceMoteur)) {
+          machine.prochainControle = echeanceMoteur;
+        }
       }
       // L'échéance de vérification est CALCULÉE, jamais saisie : elle suit
       // la date de vérification à chaque modification.
@@ -3396,6 +3572,33 @@ export function creerDemoStore() {
           d.type !== undefined ? d.type : bouteille.type,
           d.etatFluide !== undefined ? d.etatFluide : bouteille.etatFluide);
       }
+      // ⭐ L2 (25/07) — LA TRANSITION COMPTE AUTANT QUE LE COUPLE (miroir
+      // du serveur). La garde CM-3 ne juge que l'état d'ARRIVÉE : en
+      // changeant le type ET l'état dans le MÊME patch, le couple final
+      // était légal et passait. Attaques tirées : une bouteille de
+      // RÉCUPÉRATION contenant du fluide récupéré devenait NEUVE/RÉGÉNÉRÉ
+      // (du récupéré blanchi en régénéré — le régénéré s'ACHÈTE certifié) ;
+      // et une bouteille déclarée DÉCHET revenait au stock par un patch.
+      if (d.etatFluide !== undefined || d.type !== undefined) {
+        const etatAvant = bouteille.etatFluide;
+        const etatApres = d.etatFluide !== undefined
+          ? d.etatFluide : bouteille.etatFluide;
+        if (ETATS_FLUIDE_RECUPERATION.includes(etatAvant)
+            && ETATS_FLUIDE_ACHAT.includes(etatApres)) {
+          throw new Error(
+            `Requalification refusée : le fluide de cette bouteille est `
+            + `${etatAvant} — il ne devient pas ${etatApres} par une `
+            + 'modification de fiche. Le fluide RECYCLÉ ou RÉGÉNÉRÉ s’ACHÈTE '
+            + 'certifié fournisseur ; le récupéré se réemploie sur sa machine '
+            + 'd’origine ou part en destruction.');
+        }
+        if (bouteille.decisionFluide === 'DECHET' && etatApres !== 'DECHET') {
+          throw new Error(
+            'Bouteille déclarée déchet : elle ne sort du déchet que par une '
+            + 'décision sur le fluide (réutilisable ou à analyser), qui est '
+            + 'journalisée, ou par un bordereau de suivi (BSFF).');
+        }
+      }
       const CHAMPS = ['numeroReel', 'type', 'fluide', 'etatFluide', 'tareKg',
         'masseBruteKg', 'contenanceMaxKg', 'proprietaire', 'lot',
         'dateEntree', 'datePesee', 'statut'];
@@ -3482,7 +3685,34 @@ export function creerDemoStore() {
         throw new Error('Lien de mouvement refusé : le contrôle lié à une '
           + 'écriture naît de sa validation, jamais du chemin direct.');
       }
-      const controle = enregistrerControle(d);
+      // ⭐ L2 (25/07) — LE NUMÉRO EST ATTRIBUÉ PAR LE LOGICIEL, jamais reçu
+      // (miroir du serveur). Attaque tirée : un contrôle portant le numéro
+      // « C-FI-2026-0007 », qui imite une fiche OFFICIELLE, et réutilisable
+      // deux fois. Le chemin LIÉ hérite le numéro du mouvement : il
+      // n'emprunte pas ce chemin-ci.
+      if (d.numero !== undefined && d.numero !== null && d.numero !== '') {
+        throw new Error('Numéro de contrôle refusé : il est attribué par le '
+          + 'registre, jamais fourni.');
+      }
+      // ⭐ L2 — L'ÉCHÉANCE EST CALCULÉE PAR LE MOTEUR RÉGLEMENTAIRE : la
+      // valeur reçue ne peut plus la REPOUSSER (« 2099-01-01 » éteignait
+      // toute alerte d'échéance). On retient la plus PROCHE des deux, et
+      // rien du tout si le moteur dit « non soumis ».
+      if (!estDateCalendaireOuVide(d.prochainControle)) {
+        throw new Error(messageDateInvalide('Échéance de contrôle'));
+      }
+      const echeanceMoteur = await this.calculerProchainControle(
+        d.machineId, d.date ?? aujourdHui());
+      const donneesControle2 = { ...d };
+      // Machine NON soumise : aucune obligation à protéger, l'échéance
+      // volontaire reste celle de l'exploitant. Machine SOUMISE :
+      // l'échéance réglementaire fait plafond.
+      if (echeanceMoteur !== null
+          && (!donneesControle2.prochainControle
+            || String(donneesControle2.prochainControle) > echeanceMoteur)) {
+        donneesControle2.prochainControle = echeanceMoteur;
+      }
+      const controle = enregistrerControle(donneesControle2);
       persisterEtNotifier();
       return copier(controle);
     },
@@ -3528,6 +3758,20 @@ export function creerDemoStore() {
       if (controleAnnule(controle)) {
         throw new Error('Contrôle annulé (contre-écriture) : il ne peut '
           + 'plus recevoir de réparation tracée.');
+      }
+      // ⭐ L2 (25/07) — UNE RÉPARATION TRACÉE NE SE RÉÉCRIT PAS (miroir du
+      // serveur). Attaque tirée : tracer la réparation au jour du contrôle
+      // FUITE (la règle J+1 empêche la clôture immédiate sur une machine
+      // fixe), puis RAPPELER tracerReparation avec une date antérieure — le
+      // dossier de fuite se refermait rétroactivement. On trace un FAIT : il
+      // se corrige par un nouveau contrôle, pas en réécrivant le précédent.
+      if (controle.dateReparation
+          && (controle.dateReparation !== dateReparation
+            || (controle.natureReparation ?? '') !== natureReparation)) {
+        throw new Error(
+          `Réparation déjà tracée le ${controle.dateReparation} : elle ne se `
+          + 'réécrit pas. Enregistrez un nouveau contrôle d’étanchéité pour '
+          + 'constater l’état actuel de la machine.');
       }
       controle.dateReparation = dateReparation;
       controle.natureReparation = natureReparation;
@@ -3910,6 +4154,24 @@ export function creerDemoStore() {
       if (mouvement.statut !== 'SOUMIS') {
         throw new Error('Seul un mouvement soumis peut être validé.');
       }
+    // ⚠️ Revue L2 — UNE CONTRE-ÉCRITURE NE NAÎT JAMAIS D'UN BROUILLON.
+      // Chemin alternatif trouvé par la revue, en trois gestes : poser
+      // `contre_ecriture_de` sur un BROUILLON en SQL direct (aucun
+      // déclencheur ne garde un brouillon — c'est normal, il n'est pas encore
+      // un fait), le faire VALIDER par le logiciel (qui scelle et calcule
+      // lui-même une empreinte juste), puis passer la victime à ANNULE. Le
+      // contrôle d'appariement voyait alors un désignant parfaitement scellé
+      // et laissait la chaîne verte : une charge de 3 kg disparaissait des
+      // totaux derrière un faux « leurre » de 0 kg.
+      // Une vraie contre-écriture est créée VALIDE par annulerParContreEcriture,
+      // elle ne passe jamais par ici. Ce champ n'a donc rien à faire sur un
+      // mouvement qu'on valide.
+      if (mouvement.contreEcritureDe) {
+        throw new Error(
+          'Écriture refusée : elle se présente comme la contre-écriture d’une '
+          + 'autre, alors qu’une contre-écriture ne se saisit pas — elle naît '
+          + 'de l’annulation d’une écriture validée. Fiche forgée.');
+      }
       const validateur = verifierValidateur(validateurId);
       // Lot C (C3) : le PDF final présenté aux signataires est REÇU à la
       // validation OFFICIELLE et contrôlé AVANT le verdict du moteur (les
@@ -4200,14 +4462,17 @@ export function creerDemoStore() {
     /**
      * État d'intégrité du registre constaté au dernier chargement /
      * import (CR-5). L'application n'est JAMAIS bloquée : l'interface
-     * peut afficher un bandeau « registre altéré ».
-     * @returns {Promise<{altere: boolean, casseA: string|null}>}
+     * peut afficher un bandeau « registre altéré ». `motif` (L2, 25/07)
+     * dit POURQUOI : EMPREINTE, ANNULATION_ORPHELINE ou JOURNAL.
+     * @returns {Promise<{altere: boolean, casseA: string|null,
+     *   motif: string|null}>}
      */
     async getEtatRegistre() {
       const etat = this.registreAltere;
       return {
         altere: Boolean(etat && etat.ok === false),
-        casseA: etat?.casseA ?? null
+        casseA: etat?.casseA ?? null,
+        motif: etat?.motif ?? null
       };
     },
 
@@ -4532,6 +4797,7 @@ export function creerDemoStore() {
         throw new Error(
           `Type de personne obligatoire parmi : ${TYPES_PERSONNE.join(', ')}.`);
       }
+      verifierDatesPersonne(d);
       const personne = {
         id: genId('per'),
         nom: String(d.nom).trim(),
@@ -4578,6 +4844,7 @@ export function creerDemoStore() {
       if (d.activitesAutorisees !== undefined) {
         verifierActivites(d.activitesAutorisees);
       }
+      verifierDatesPersonne(d);
       const CHAMPS = ['nom', 'prenom', 'typePersonne', 'roleApp',
         'numAttestationAptitude', 'organismeDelivreur', 'dateObtention',
         'dateFinValidite', 'categorie2008', 'categorie2025',
@@ -4867,6 +5134,7 @@ export function creerDemoStore() {
       if (estAuCoffre(personne.id)) throw new Error(MSG_FICHE_AU_COFFRE);
       verifierRegime(d.regime);
       verifierCategorieHabilitation(d.regime, d.categorie);
+      verifierDatesHabilitation(d);
       verifierDelivrance2008(d.regime, d.dateDebut);
       verifierRemiseNiveau(d.remiseNiveauLe);
       const habilitation = {
@@ -4907,6 +5175,7 @@ export function creerDemoStore() {
       // L4/Q3 : la remise à niveau se corrige aussi (même statut qu'une date).
       // Revue L4 — les gardes de création valent AUSSI en correction : le
       // contournement « créer légal puis patcher illégal » est fermé.
+      verifierDatesHabilitation(d);
       if (d.dateDebut !== undefined) {
         verifierDelivrance2008(habilitation.regime, d.dateDebut);
       }
@@ -5528,6 +5797,27 @@ export function creerDemoStore() {
             `Stock réel invalide pour ${l.fluide} (en kg, positif ou nul).`);
         }
       }
+      // ⭐ L2 (25/07) — UNE PHOTO D'EXERCICE CLOS NE SE REPREND PAS
+      // (miroir du serveur). La photographie de stock sert de stock
+      // d'ouverture à la déclaration annuelle : la reprendre après coup
+      // changeait rétroactivement les stocks déclarés, sans trace. L'année
+      // en cours, elle, se re-photographie autant que nécessaire.
+      const anneeCourante = Number(aujourdHui().slice(0, 4));
+      // ⚠️ Revue L2 — RECTIFIER, PAS INTERDIRE (miroir du serveur) : la
+      // photographie du 31/12 se saisit EN JANVIER, donc sur un exercice
+      // déjà « révolu » ; un refus sec rendait toute faute de frappe
+      // incorrigible. La reprise est admise et JOURNALISÉE.
+      const anciennePhoto = (donnees.inventairesBouteilles ?? [])
+        .filter((p) => p.annee === anneeNum);
+      if (anneeNum < anneeCourante && anciennePhoto.length > 0) {
+        journaliser(operateur, 'RECTIFICATION_INVENTAIRE',
+          `exercice ${anneeNum}`,
+          `Exercice révolu re-photographié : la photographie précédente `
+          + `(${anciennePhoto.length} ligne(s), du `
+          + `${anciennePhoto[0].datePhoto ?? '?'}) est remplacée. Elle sert de `
+          + 'stock d’ouverture à la déclaration annuelle : la reprise doit '
+          + 'rester exceptionnelle et justifiée.');
+      }
       for (const l of lignes) {
         const existant = donnees.inventaires.find(
           (i) => i.annee === anneeNum && i.fluide === l.fluide);
@@ -5765,6 +6055,44 @@ export function creerDemoStore() {
           { ...copier(DEMO.etablissement), ...candidat.etablissement };
       }
 
+      // ⭐ L2 (25/07) — LA TRANSITION DE MATIÈRE, comparée à ce qui est en
+      // place (miroir du serveur). Le blanchiment se fait en changeant type
+      // ET état ensemble : le couple d'arrivée est légal, les invariants
+      // internes ne peuvent rien voir. C'est la comparaison au fluide DÉJÀ
+      // en place qui dénonce l'opération.
+      for (const b of candidat.bouteilles ?? []) {
+        if (!b || !b.id) continue;
+        // NB (revue L2) : sur l'IDENTIFIANT seul — les codes de bouteilles
+        // sont réattribués, comparer dessus refusait des round-trips
+        // légitimes. Le renommage d'id fait disparaître la bouteille : c'est
+        // journalisé côté serveur.
+        const enPlace = donnees.bouteilles.find((x) => x.id === b.id);
+        if (enPlace && ETATS_FLUIDE_RECUPERATION.includes(enPlace.etatFluide)
+            && ETATS_FLUIDE_ACHAT.includes(b.etatFluide)) {
+          throw new Error(
+            `Import refusé — bouteille ${b.code ?? b.id} : son fluide est `
+            + `${enPlace.etatFluide}, il ne devient pas ${b.etatFluide} par `
+            + 'un import (le fluide RECYCLÉ ou RÉGÉNÉRÉ s’ACHÈTE certifié '
+            + 'fournisseur).');
+        }
+      }
+
+      // ⚠️ Revue L2 — LA RÉPARATION NE SE RÉÉCRIT PAS PAR L'IMPORT non plus
+      // (miroir du serveur) : exporter, ramener `dateReparation` à une date
+      // antérieure, réimporter refermait un dossier de fuite rétroactivement.
+      for (const c of candidat.controles ?? []) {
+        if (!c || !c.id || !c.dateReparation) continue;
+        const enPlace = donnees.controles.find((x) => x.id === c.id);
+        if (enPlace && enPlace.dateReparation
+            && enPlace.dateReparation !== c.dateReparation) {
+          throw new Error(
+            `Import refusé — contrôle ${c.numero ?? c.id} : la réparation `
+            + `tracée le ${enPlace.dateReparation} est déplacée au `
+            + `${c.dateReparation} par ce fichier — une réparation constatée `
+            + 'ne se réécrit pas.');
+        }
+      }
+
       // CR-5 : invariants métier vérifiés AVANT d'adopter quoi que ce soit
       const probleme = verifierInvariantsDonnees(candidat);
       if (probleme) {
@@ -5777,6 +6105,9 @@ export function creerDemoStore() {
       // chaîne amorcée ; toute rupture est rejetée avec l'écriture en cause.
       const figees = candidat.mouvements.filter((mv) =>
         mv.statut === 'VALIDE' || mv.statut === 'ANNULE');
+      // Écritures dont le logiciel a dû amorcer l'empreinte lui-même
+      // (reprise d'historique) — journalisé à l'adoption.
+      let chaineAmorceeALImport = 0;
       if (figees.some((mv) => mv.hashEcriture)) {
         const chaine = await verifierChaineMouvements(candidat.mouvements);
         if (!chaine.ok) {
@@ -5785,6 +6116,30 @@ export function creerDemoStore() {
             `${chaine.casseA} : fichier altéré ou forgé.`);
         }
       } else if (figees.length > 0) {
+        // ⭐ L2 (25/07) — CETTE BRANCHE ÉTAIT LA PORTE DU BLANCHIMENT.
+        // Elle sert à reprendre un historique antérieur au scellement, mais
+        // son critère — « aucune écriture ne porte d'empreinte » — est aux
+        // mains de qui fabrique le fichier. Attaque tirée et prouvée :
+        // exporter, retoucher les quantités, PUIS retirer toutes les
+        // empreintes ; le logiciel re-scellait les données falsifiées et
+        // déclarait le registre sain. Un poste qui tient déjà un registre
+        // scellé n'a aucune raison de recevoir un historique sans
+        // empreinte. Miroir exact de api.js.
+        // La borne MONOTONE prime sur l'état courant : un premier import qui
+        // vide le registre ne rouvre pas la porte (contournement en deux
+        // temps, prouvé en le tirant).
+        const dejaScelle = donnees.mouvements.some((mv) =>
+          (mv.statut === 'VALIDE' || mv.statut === 'ANNULE')
+          && Boolean(mv.hashEcriture))
+          || Number(donnees.registreScelleesMax ?? 0) > 0;
+        if (dejaScelle) {
+          throw new Error(
+            'Import refusé — le fichier porte des écritures validées SANS ' +
+            'empreinte alors que ce poste tient déjà un registre scellé. ' +
+            'Un historique antérieur au scellement ne se reprend que sur un ' +
+            'poste vierge : restaurez une archive, ou repartez d’une ' +
+            'sauvegarde qui porte sa chaîne.');
+        }
         // Sauvegarde antérieure à la Phase B : amorçage de la chaîne
         figees.sort((a, b) =>
           a.date.localeCompare(b.date) || a.numero.localeCompare(b.numero));
@@ -5797,6 +6152,7 @@ export function creerDemoStore() {
           precedent = mv.hashEcriture;
           ordre += 1;
         }
+        chaineAmorceeALImport = figees.length;
       }
 
       // (lot C, C2) : les SIGNATURES d'une écriture scellée v2 sont GELÉES
@@ -5893,13 +6249,35 @@ export function creerDemoStore() {
         candidat.coffreConfig = null;
       }
 
+      // ⭐ L2 (25/07) — LE TÉMOIN DE TÊTE DU JOURNAL NE SURVIT PAS ICI.
+      // Le chaînage du journal d'audit est une notion SERVEUR (db.js) ; le
+      // monde de démonstration n'en tient pas. S'il conservait le témoin
+      // d'un paquet venu du serveur, son propre ré-export porterait un
+      // témoin PÉRIMÉ (la démo journalise à son tour l'import) et le
+      // serveur refuserait ce fichier pourtant sain. On l'abandonne donc
+      // explicitement : le ré-export d'un monde démo se présentera comme
+      // « sans témoin », cas prévu et journalisé côté serveur.
+      delete candidat.journalAuditChaine;
+
       // Adoption : les vérifications sont passées. La phrase d'exercice de
       // session ne correspond plus forcément au coffre importé : oubliée.
+      // ⭐ L2 : la BORNE MONOTONE de scellement ne suit PAS le fichier — elle
+      // appartient au poste et ne redescend jamais (miroir du réglage
+      // `registre_scellees_max` du serveur, que l'import ne purge pas).
+      const borneScellement = Math.max(
+        Number(donnees.registreScelleesMax ?? 0) || 0,
+        Number(candidat.registreScelleesMax ?? 0) || 0);
       donnees = candidat;
+      donnees.registreScelleesMax = borneScellement;
       phraseCoffreSession = null;
       this.registreAltere = null;
       journaliser('système', 'IMPORT_DONNEES', 'sauvegarde',
         'Restauration depuis un fichier JSON (intégrité vérifiée)');
+      if (chaineAmorceeALImport > 0) {
+        journaliser('système', 'CHAINE_AMORCEE_A_L_IMPORT', 'sauvegarde',
+          `${chaineAmorceeALImport} écriture(s) validée(s) sans empreinte : `
+          + 'chaîne d’intégrité amorcée par le logiciel à l’import');
+      }
       persisterEtNotifier();
       return true;
     }

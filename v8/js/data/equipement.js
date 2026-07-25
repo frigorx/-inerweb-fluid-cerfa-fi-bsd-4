@@ -30,6 +30,9 @@
 //        sous-type mobile LISTÉ.
 // ============================================================
 
+// L2 (25/07) : « une date est une date » — format ancré ET calendrier réel.
+import { estDateCalendaire } from './dates.js';
+
 import { evaluerControle } from './reglementation-fluides.js';
 
 /** Délai réglementaire de vérification d'un système de détection (mois). */
@@ -91,6 +94,25 @@ export function echeanceVerificationDetection(verifieeLe) {
 }
 
 /**
+ * ⭐ Revue L2 — NORMALISER AVANT DE JUGER, sinon on verrouille l'existant.
+ * La version livrée acceptait un horodatage complet (« 2026-04-26 08:30:00 »,
+ * « 2026-04-26T08:30:00.000Z ») : des fiches en base en portent. Refuser sec
+ * rendait ces machines INMODIFIABLES — toute correction de leur fiche était
+ * rejetée sur un champ qu'on ne touchait même pas. On coupe donc au JOUR
+ * (c'est déjà ce que fait le calcul d'échéance), et on ne refuse que ce qui
+ * n'est pas une date : « 2028-99-99 » reste refusé, « 2026-04-26 08:30 »
+ * devient « 2026-04-26 ».
+ * @param {unknown} valeur
+ * @returns {string|null} la date au jour, ou null si absente
+ */
+export function normaliserDateVerification(valeur) {
+  if (valeur === null || valeur === undefined || valeur === '') return null;
+  const texte = String(valeur).trim();
+  const dixPremiers = texte.slice(0, 10);
+  return estDateCalendaire(dixPremiers) ? dixPremiers : texte;
+}
+
+/**
  * ⭐ E1 — la détection permanente COMPTE-T-ELLE pour alléger la fréquence
  * de contrôle ?
  *
@@ -108,6 +130,20 @@ export function detectionEffective(machine, jour) {
   const declaree = Boolean(machine?.detectionPermanente);
   if (!declaree) {
     return { compte: false, declaree: false, echeance: null, motif: 'ABSENTE' };
+  }
+  const verifiee = machine?.detectionVerifieeLe ?? null;
+  // ⭐ L2 (25/07) — DÉFENSE EN PROFONDEUR (la garde de saisie est dans
+  // verifierModeleEquipement, mais un import ou une base retouchée entre
+  // par-derrière) : une date de vérification illisible OU dans le futur ne
+  // vaut PAS vérification. Sinon « 2030-01-01 » ou « 2028-99-99 » divisait
+  // par deux la fréquence de contrôle sans qu'aucune vérification ait eu
+  // lieu. Le doute retire l'allègement : jamais moins de contrôles.
+  const verifieeJour = normaliserDateVerification(verifiee);
+  if (verifieeJour !== null
+      && (!estDateCalendaire(verifieeJour)
+        || verifieeJour > String(jour).slice(0, 10))) {
+    return { compte: false, declaree: true, echeance: null,
+      motif: 'JAMAIS_VERIFIEE' };
   }
   const echeance = echeanceVerificationDetection(machine?.detectionVerifieeLe);
   if (echeance === null) {
@@ -331,8 +367,16 @@ export function verifierModeleEquipement(machine) {
       + 'scellé » sans être hermétiquement scellé.');
   }
   const verifiee = m.detectionVerifieeLe;
-  if (verifiee != null && String(verifiee) !== ''
-      && !/^\d{4}-\d{2}-\d{2}/.test(String(verifiee))) {
+  // ⭐ L2 (25/07) — DEUX trous fermés ici, tirés et prouvés :
+  //  ① la regex n'était PAS ancrée en fin (/^\d{4}-\d{2}-\d{2}/) et ne
+  //    contrôlait pas le calendrier : « 2026-13-45 », « 2028-99-99 » ou
+  //    « 2026-07-25 blabla » passaient — et une détection « vérifiée » au
+  //    99ᵉ jour du 99ᵉ mois DIVISE PAR DEUX la fréquence de contrôle ;
+  //  ② une date FUTURE passait aussi (« 2030-01-01 ») : une vérification
+  //    qui n'a pas eu lieu allégeait les obligations. Une vérification ne
+  //    s'atteste pas d'avance — même règle que la remise à niveau (L4).
+  if (normaliserDateVerification(verifiee) !== null
+      && !estDateCalendaire(normaliserDateVerification(verifiee))) {
     throw new Error('Date de vérification de la détection invalide '
       + '(AAAA-MM-JJ attendu).');
   }

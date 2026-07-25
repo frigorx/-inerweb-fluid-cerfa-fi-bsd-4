@@ -2,6 +2,122 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🛡️ L2 — SUITE DE SÉCURITÉ NÉGATIVE ET NEUF TROUS FERMÉS (25/07, session autonome)
+
+**Méthode : on ne croit personne sur parole, on TIRE.** Un inventaire des surfaces
+d'attaque (8 agents, 190 scénarios) a produit 36 candidats critiques non couverts ;
+10 agents les ont ensuite EXÉCUTÉS en bac à sable : **26 attaques CONFIRMÉES**, 9 réfutées
+(les gardes de transport, de rôles de mutation, le zip slip et la traversée de chemin
+tiennent). Chaque trou confirmé a été corrigé, puis retiré pour prouver la fermeture.
+
+**`server/test-securite-negative.mjs` — 118 attaques TIRÉES**, l'endroit unique où
+répondre à un auditeur qui demande « montrez-moi que le logiciel résiste ». Deux rôles :
+les attaques exécutées ici (vrai serveur sur port jetable, SQL direct sur base jetable,
+serveur lancé depuis une COPIE avec une vraie jonction Windows), et le RÉPERTOIRE des
+preuves déjà tirées ailleurs — référence vérifiée, donc un renommage rend la suite rouge.
+
+Les neuf correctifs, chacun né d'une attaque prouvée :
+
+- **L2-a — l'ANNULATION FORGÉE.** Le déclencheur WORM laisse passer `VALIDE → ANNULE`
+  (c'est le canal de la contre-écriture, il doit rester ouvert) et le statut est
+  volontairement hors empreinte (sans quoi toute annulation casserait la chaîne).
+  Conséquence : `UPDATE mouvements SET statut='ANNULE'` faisait disparaître une
+  intervention des totaux — empreinte intacte, **chaîne VERTE**, aucune alerte, aucun
+  journal. `verifierChaineHash` porte un DEUXIÈME contrôle : toute écriture ANNULE doit
+  être DÉSIGNÉE par une contre-écriture. Nouveau champ `motif` (EMPREINTE ·
+  ANNULATION_ORPHELINE · JOURNAL · INVARIANT) rendu aussi par `getEtatRegistre`.
+- **L2-b — le BLANCHIMENT PAR IMPORT.** Exporter, retoucher une quantité, puis retirer
+  TOUTES les empreintes : le fichier passait pour « antérieur au scellement », le
+  logiciel re-scellait les données falsifiées et déclarait le registre SAIN. Refus si le
+  poste a déjà scellé, **plus une borne MONOTONE** `registre_scellees_max` dans les
+  réglages (que l'import ne purge pas) — sans elle, la garde se contournait en deux temps
+  (importer d'abord un registre vide), ce qu'un agent a prouvé. L'amorçage légitime
+  (poste vierge) reste possible et devient TRACÉ (`CHAINE_AMORCEE_A_L_IMPORT`).
+- **L2-c — « une date est une date ».** Racine commune à HUIT attaques. `'31/12/2020'` est
+  « supérieur » à `'2026-07-25'` en comparaison de chaînes : une attestation périmée
+  depuis six ans était déclarée VALIDE. `'2028-99-99'` passe la regex : une détection
+  « vérifiée » au 99ᵉ jour du 99ᵉ mois divisait par deux la fréquence des contrôles.
+  Nouveau module pur **`v8/js/data/dates.js`** + miroir `server/dates.js` + suite de
+  parité `test-dates.mjs` (38 vérifs, dont le balayage des 366 jours de 2024). Branché
+  sur `habilitationReconnue`, les CRUD habilitation/personne, les invariants d'import et
+  `equipement.js` ×2 (où une date FUTURE n'allège plus rien).
+- **L2-d — ce que le moteur calcule ne se saisit plus.** `prochainControle: '2099-01-01'`
+  était écrasé sur la machine : plus aucune alerte, jamais. L'échéance vient du moteur ;
+  la valeur reçue ne peut que la RAPPROCHER (sur machine non soumise, l'échéance
+  volontaire de l'exploitant est conservée). Numéro de contrôle refusé (il imitait un
+  numéro de fiche officielle), date de contrôle calendaire et jamais future,
+  `dernierControle`/`prochainControle` retirés de `updateMachine`, charge nominale
+  revalidée (une charge à 0 sortait la machine du périmètre), charge actuelle bornée
+  (9999 kg sur 10 kg nominaux affichaient 20 877 t éq. CO₂).
+- **L2-e — on ne réécrit ni la matière ni le passé.** La garde CM-3 ne jugeait que l'état
+  d'ARRIVÉE : changer type ET état ensemble blanchissait du récupéré en régénéré (le
+  régénéré s'ACHÈTE certifié). La TRANSITION est gardée, par patch comme par import (là,
+  c'est la comparaison au fluide en place qui dénonce). Le DÉCHET ne se relève que par
+  une décision journalisée. Le libellé de FAMILLE fait foi contre la fiche fluide
+  (R-410A ne peut plus être déclaré « AUCUNE », ce qui sortait tout un parc du contrôle).
+  Une photo d'inventaire d'exercice RÉVOLU ne se reprend plus. Et le **verrou du mode
+  Officiel garde aussi la porte de l'IMPORT** — une fiche officielle forgée entrait sans
+  double signature ni PDF conservé.
+- **L2-f — la distribution juge le fichier RÉEL.** Une base vive rangée sous `v8/data/`
+  était téléchargeable sans session (475 Ko servis en 200) ; une jonction Windows
+  (`mklink /J`, aucun privilège) posée dans `v8/` servait tout `server/`. Extensions qui
+  ne sortent jamais (.db, .zip, .env…) + résolution du chemin physique (`fs.realpath`).
+- **L2-g — réparation et qualification.** Une réparation tracée se réécrivait, ce qui
+  refermait un dossier de fuite rétroactivement : elle est désormais immuable (le rejeu
+  identique reste admis). La qualification réglementaire d'un équipement (hermétique,
+  mobile, résidentiel, usage thermique) déplace des seuils : elle passe au niveau
+  VALIDEUR — un élève la cochait et une intervention passait d'INTERDITE à AUTORISÉE.
+- **L2-h — le journal d'audit voyage avec son témoin.** Sa purge par aller-retour
+  export → import était indétectable. L'export porte `journalAuditChaine {nombre, tete}`,
+  vérifié à l'import : retirer une ligne change le compte, en modifier une change la
+  tête. Fichier antérieur sans témoin : accepté (on ne condamne pas les sauvegardes
+  existantes) mais JOURNALISÉ.
+- **L2-i — l'export complet est une lecture SENSIBLE.** `getJournalAudit` était réservé au
+  VALIDEUR, mais `exporterJSON` rendait le même journal, le personnel nominatif complet
+  et la configuration du coffre (sel + témoin = matériel d'attaque hors ligne sur la
+  phrase). Une confidentialité qui ne garde qu'une porte sur deux n'en est pas une.
+
+**REVUE ADVERSARIALE (5 agents, 5 axes) — 3 BLOQUANTS et 8 constats, tous corrigés.**
+Les agents ont cherché à réfuter le lot en le tirant, et ils ont trouvé :
+- une **régression que j'avais introduite** : la garde de qualification comparait la
+  charge utile brute du formulaire (`''`) au contenu de la base (`null`) — elle refusait
+  donc TOUTE modification de machine à un élève ; l'écran était mort pour lui ;
+- **L2-a n'était posé que sur un des deux chemins du serveur** (base vive gardée, candidat
+  d'import non gardé), et une contre-écriture se **fabriquait** depuis un brouillon
+  (aucun déclencheur ne garde un brouillon : on y posait `contre_ecriture_de`, le logiciel
+  scellait lui-même le désignant) ;
+- l'échéance se forgeait **en trois appels sans SQL** : charge nominale à 0,001 kg (hors
+  périmètre) → échéance volontaire à 2099 (conservée) → charge remise ;
+- la **réparation** et le **blanchiment de bouteille** passaient encore par l'import ;
+- la **borne monotone ne survivait pas à une restauration d'archive** — une protection
+  contre l'écrasement du registre ne peut pas vivre DANS le registre : elle est désormais
+  aussi dans un fichier voisin (`server/borne-scellement.js`) ;
+- la garde « la famille fait foi » était naïve (contournable en réécrivant la famille, et
+  refusait « Ammoniac — naturel, hors HFC » qui contient H, F, C) : remplacée par une règle
+  qui ne lit pas de texte libre — un fluide de PRP ≥ 150 n'est pas hors périmètre ;
+- deux durcissements **cassaient un usage légitime** : la photo du 31/12 se saisit en
+  janvier (donc sur un exercice « révolu ») et devenait incorrigible → elle est maintenant
+  RECTIFIABLE et TRACÉE ; une date de vérification horodatée, acceptée par la version
+  livrée, rendait les machines concernées inmodifiables → elle est NORMALISÉE, pas refusée ;
+- et trois de mes tests **ne pouvaient pas échouer** (contre-épreuve relisant l'état laissé
+  par l'attaque, fichiers demandés au serveur sans exister). En les corrigeant, un vrai trou
+  est apparu : `path.extname('.env')` rend une chaîne vide, donc `.env` sortait en 200.
+
+**RESTE CONSIGNÉ, non corrigé dans ce lot** (honnêteté du filet — ce sont des limites
+connues, pas des oublis) :
+- le **témoin de tête du journal se recalcule** : l'algorithme est dans le code, qui est
+  diffusé. Il arrête une purge à la main, pas quelqu'un qui régénère le témoin. La vraie
+  parade est de confronter le journal importé au **témoin de scellement externe quotidien**
+  (`backups/scellement/`), qui vit hors du fichier — à faire dans un lot dédié ;
+- `tracerReparation` fige la date et la nature, pas le nom du réparateur ;
+- le bouton « Exporter une sauvegarde » reste offert à l'écran aux rôles qui n'y ont plus
+  droit : le serveur refuse (403), l'écran devrait le masquer.
+
+**TOUT VERT — 106 exécutions** (104 → 106 : `test-securite-negative` et `test-dates`),
+**140 attaques et preuves** dans la suite de sécurité.
+Le mode Officiel reste FERMÉ. Aucune migration : aucun de ces correctifs n'a demandé de
+toucher au schéma.
+
 ### 🧹 ABANDON DE LA v7 — audit de parité, report des 2 derniers recoins, suppression (25/07)
 
 Franck : « on peut supprimer la v7 en entier, elle a été digérée dans la v8. On vérifie
