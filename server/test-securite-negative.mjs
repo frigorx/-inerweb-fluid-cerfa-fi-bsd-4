@@ -70,6 +70,17 @@ function attendreRefus(libelle, reponse, codeAttendu, extraitMessage = '') {
     + `, réponse ${reponse.brut ?? ''}`);
 }
 
+/** L'appel API doit LEVER, avec un message qui contient l'extrait attendu. */
+function attendreRejetApi(libelle, fn, extrait = '') {
+  try {
+    fn();
+    verifier(libelle, false, 'aucune erreur levée');
+  } catch (erreur) {
+    verifier(libelle, String(erreur.message).includes(extrait),
+      `message « ${erreur.message} »`);
+  }
+}
+
 const RACINE = join(import.meta.dirname, '..');
 
 /**
@@ -505,17 +516,6 @@ try {
   console.log('');
   console.log('=== B2. Par l’API : l’écriture figée refuse tout ===');
 
-  /** L'appel API doit LEVER avec un message qui contient l'extrait. */
-  function attendreRejetApi(libelle, fn, extrait = '') {
-    try {
-      fn();
-      verifier(libelle, false, 'aucune erreur levée');
-    } catch (erreur) {
-      verifier(libelle, String(erreur.message).includes(extrait),
-        `message « ${erreur.message} »`);
-    }
-  }
-
   attendreRejetApi('supprimer une écriture scellée : refusé',
     () => api.appeler('supprimerMouvement', { id: mvt.id }, referent));
   attendreRejetApi('re-soumettre une écriture scellée : refusé',
@@ -597,6 +597,166 @@ try {
   try { db.fermer?.(); } catch { /* best-effort */ }
   try {
     rmSync(DOSSIER_B, { recursive: true, force: true, maxRetries: 5,
+      retryDelay: 200 });
+  } catch { /* dossier temporaire encore verrouillé : sans conséquence */ }
+}
+
+// ============================================================
+// B4. ⭐ LE BLANCHIMENT DU REGISTRE PAR IMPORT
+//
+// L'import sait reprendre un historique ANTÉRIEUR au scellement : quand
+// aucune écriture ne porte d'empreinte, le logiciel amorce la chaîne. Le
+// critère de déclenchement était donc entre les mains de qui fabrique le
+// fichier : exporter, retoucher les quantités, PUIS retirer toutes les
+// empreintes — et le logiciel re-scellait des données falsifiées en
+// déclarant le registre sain. Tout le passé réécrit, chaîne verte.
+// ============================================================
+console.log('');
+console.log('=== B4. Blanchiment du registre par import ===');
+
+const DOSSIER_C = mkdtempSync(join(tmpdir(), 'iwf-secneg-import-'));
+try {
+  db.ouvrir(join(DOSSIER_C, 'data', 'import.db'));
+  const referent = { role: 'REFERENT' };
+  api.appeler('init', {}, referent);
+  const prof = api.appeler('createPersonne', { donneesPersonne: {
+    prenom: 'Référent', nom: 'Alpha', typePersonne: 'ENSEIGNANT',
+    roleApp: 'REFERENT' } }, referent);
+  const machine = api.appeler('createMachine', { donneesMachine: {
+    designation: 'Groupe froid import', fluide: 'R-134a',
+    chargeNominaleKg: 10 } }, referent);
+  const bouteille = api.appeler('createBouteille', { donneesBouteille: {
+    type: 'NEUVE', fluide: 'R-134a', tareKg: 10, masseBruteKg: 40,
+    contenanceMaxKg: 35 } }, referent);
+  for (let i = 0; i < 3; i += 1) {
+    const mv = api.appeler('creerMouvement', { donneesMouvement: {
+      type: 'CHARGE_APPOINT', machineId: machine.id,
+      bouteilleSrcId: bouteille.id, peseeAvantKg: 40 - i, peseeApresKg: 39 - i,
+      technicien: 'Technicien', executeParId: prof.id,
+      causeMouvement: `Écriture ${i + 1}` } }, referent);
+    api.appeler('soumettreMouvement', { id: mv.id }, referent);
+    api.appeler('validerMouvement', { id: mv.id, validateurId: prof.id },
+      referent);
+  }
+  const avant = api.appeler('verifierChaineHash', {}, referent);
+  verifier('décor : trois écritures scellées, chaîne verte', avant.ok === true);
+
+  // Le fichier hostile : quantité retouchée PUIS toutes les empreintes
+  // retirées, pour imiter une sauvegarde antérieure au scellement.
+  const exporte = JSON.parse(api.appeler('exporterJSON', {}, referent));
+  const cible = exporte.donnees.mouvements.find((mv) => mv.statut === 'VALIDE');
+  cible.quantiteKg = 99.5;
+  cible.causeMouvement = 'MAQUILLAGE';
+  for (const mv of exporte.donnees.mouvements) {
+    if (mv.statut === 'VALIDE' || mv.statut === 'ANNULE') {
+      delete mv.hashEcriture;
+      delete mv.hashPrecedent;
+      delete mv.ordreValidation;
+    }
+  }
+  attendreRejetApi(
+    '⭐ registre blanchi (quantité retouchée + empreintes retirées) : REFUSÉ',
+    () => api.appeler('importerJSON', { texte: JSON.stringify(exporte) },
+      referent),
+    'tient déjà un registre scellé');
+
+  // ⭐ LE CONTOURNEMENT EN DEUX TEMPS — une garde qui ne regarderait que
+  // l'état COURANT du registre serait du théâtre : il suffirait d'importer
+  // d'abord un registre VIDE (plus rien de scellé en base), puis le fichier
+  // forgé. La borne de scellement ne vit donc pas dans le registre mais
+  // dans les réglages du poste, et elle ne redescend jamais.
+  {
+    const vide = JSON.parse(JSON.stringify(exporte));
+    vide.donnees.mouvements = [];
+    vide.donnees.signaturesMouvement = [];
+    vide.donnees.piecesJointes = [];
+    let temps1 = null;
+    try {
+      temps1 = api.appeler('importerJSON', { texte: JSON.stringify(vide) },
+        referent);
+    } catch { temps1 = 'refusé'; }
+    // Que le registre vide passe ou non n'est pas le sujet : le sujet est
+    // que le SECOND import reste refusé.
+    attendreRejetApi(
+      '⭐ contournement en deux temps (vider puis blanchir) : REFUSÉ AUSSI',
+      () => api.appeler('importerJSON', { texte: JSON.stringify(exporte) },
+        referent),
+      'tient déjà un registre scellé');
+    verifier('… (premier temps joué : ' + String(temps1) + ')', true);
+  }
+
+  // Et le registre en place n'a pas bougé d'un octet.
+  const apres = api.appeler('verifierChaineHash', {}, referent);
+  const quantites = db.all(
+    'SELECT quantite_calculee_kg AS q FROM mouvements WHERE statut = \'VALIDE\'')
+    .map((l) => l.q);
+  verifier('… et le registre en place est intact (chaîne verte, quantités '
+    + 'inchangées)',
+    apres.ok === true && !quantites.includes(99.5),
+    `${JSON.stringify(apres)} — quantités ${JSON.stringify(quantites)}`);
+} finally {
+  try { db.fermer?.(); } catch { /* best-effort */ }
+  try {
+    rmSync(DOSSIER_C, { recursive: true, force: true, maxRetries: 5,
+      retryDelay: 200 });
+  } catch { /* dossier temporaire encore verrouillé : sans conséquence */ }
+}
+
+// Contre-épreuve INDISPENSABLE : sur un poste VIERGE, reprendre un
+// historique antérieur au scellement reste possible (sinon le correctif
+// interdirait la migration d'un ancien registre), et le geste se VOIT au
+// journal.
+console.log('--- contre-épreuve : reprise d’historique sur poste vierge ---');
+const DOSSIER_D = mkdtempSync(join(tmpdir(), 'iwf-secneg-reprise-'));
+try {
+  db.ouvrir(join(DOSSIER_D, 'data', 'reprise.db'));
+  const referent = { role: 'REFERENT' };
+  api.appeler('init', {}, referent);
+  const prof = api.appeler('createPersonne', { donneesPersonne: {
+    prenom: 'Référent', nom: 'Alpha', typePersonne: 'ENSEIGNANT',
+    roleApp: 'REFERENT' } }, referent);
+  const machine = api.appeler('createMachine', { donneesMachine: {
+    designation: 'Groupe froid reprise', fluide: 'R-134a',
+    chargeNominaleKg: 10 } }, referent);
+  const bouteille = api.appeler('createBouteille', { donneesBouteille: {
+    type: 'NEUVE', fluide: 'R-134a', tareKg: 10, masseBruteKg: 40,
+    contenanceMaxKg: 35 } }, referent);
+  const mv = api.appeler('creerMouvement', { donneesMouvement: {
+    type: 'CHARGE_APPOINT', machineId: machine.id,
+    bouteilleSrcId: bouteille.id, peseeAvantKg: 40, peseeApresKg: 39,
+    technicien: 'Technicien', executeParId: prof.id,
+    causeMouvement: 'Historique' } }, referent);
+  api.appeler('soumettreMouvement', { id: mv.id }, referent);
+  api.appeler('validerMouvement', { id: mv.id, validateurId: prof.id }, referent);
+  const exporte = JSON.parse(api.appeler('exporterJSON', {}, referent));
+  for (const m of exporte.donnees.mouvements) {
+    delete m.hashEcriture; delete m.hashPrecedent; delete m.ordreValidation;
+  }
+  // Poste vierge : on repart d'une base neuve.
+  db.fermer();
+  const DOSSIER_E = mkdtempSync(join(tmpdir(), 'iwf-secneg-vierge-'));
+  db.ouvrir(join(DOSSIER_E, 'data', 'vierge.db'));
+  api.appeler('init', {}, referent);
+  const repris = api.appeler('importerJSON',
+    { texte: JSON.stringify(exporte) }, referent);
+  verifier('contre-épreuve : un poste VIERGE reprend l’historique sans '
+    + 'empreinte', repris === true, String(repris));
+  const chaine = api.appeler('verifierChaineHash', {}, referent);
+  verifier('… la chaîne est amorcée et verte', chaine.ok === true,
+    JSON.stringify(chaine));
+  const journal = api.appeler('getJournalAudit', {}, referent);
+  const trace = (Array.isArray(journal) ? journal : journal?.lignes ?? [])
+    .some((l) => String(l.action ?? '') === 'CHAINE_AMORCEE_A_L_IMPORT');
+  verifier('… et l’amorçage de chaîne est TRACÉ au journal (geste rare, '
+    + 'il doit se voir)', trace);
+  try {
+    rmSync(DOSSIER_E, { recursive: true, force: true, maxRetries: 5,
+      retryDelay: 200 });
+  } catch { /* sans conséquence */ }
+} finally {
+  try { db.fermer?.(); } catch { /* best-effort */ }
+  try {
+    rmSync(DOSSIER_D, { recursive: true, force: true, maxRetries: 5,
       retryDelay: 200 });
   } catch { /* dossier temporaire encore verrouillé : sans conséquence */ }
 }

@@ -1432,6 +1432,14 @@ export function creerDemoStore() {
     mouvement.hashPrecedent = derniere?.hashEcriture ?? null;
     mouvement.hashEcriture =
       await hasherEcriture(mouvement, mouvement.hashPrecedent);
+    // ⭐ L2 — BORNE MONOTONE « ce poste a déjà scellé » (miroir du réglage
+    // `registre_scellees_max` côté serveur) : elle ne redescend JAMAIS, et
+    // l'import la conserve. Sans elle, la garde de ré-amorçage se contourne
+    // en deux temps : importer d'abord un registre VIDE, puis le fichier
+    // forgé sans empreintes.
+    donnees.registreScelleesMax = Math.max(
+      Number(donnees.registreScelleesMax ?? 0) || 0,
+      mouvement.ordreValidation);
   }
 
   /** Prochain numéro de fiche : FORM-AAAA-NNNN ou FI-AAAA-NNNN. */
@@ -5802,6 +5810,9 @@ export function creerDemoStore() {
       // chaîne amorcée ; toute rupture est rejetée avec l'écriture en cause.
       const figees = candidat.mouvements.filter((mv) =>
         mv.statut === 'VALIDE' || mv.statut === 'ANNULE');
+      // Écritures dont le logiciel a dû amorcer l'empreinte lui-même
+      // (reprise d'historique) — journalisé à l'adoption.
+      let chaineAmorceeALImport = 0;
       if (figees.some((mv) => mv.hashEcriture)) {
         const chaine = await verifierChaineMouvements(candidat.mouvements);
         if (!chaine.ok) {
@@ -5810,6 +5821,30 @@ export function creerDemoStore() {
             `${chaine.casseA} : fichier altéré ou forgé.`);
         }
       } else if (figees.length > 0) {
+        // ⭐ L2 (25/07) — CETTE BRANCHE ÉTAIT LA PORTE DU BLANCHIMENT.
+        // Elle sert à reprendre un historique antérieur au scellement, mais
+        // son critère — « aucune écriture ne porte d'empreinte » — est aux
+        // mains de qui fabrique le fichier. Attaque tirée et prouvée :
+        // exporter, retoucher les quantités, PUIS retirer toutes les
+        // empreintes ; le logiciel re-scellait les données falsifiées et
+        // déclarait le registre sain. Un poste qui tient déjà un registre
+        // scellé n'a aucune raison de recevoir un historique sans
+        // empreinte. Miroir exact de api.js.
+        // La borne MONOTONE prime sur l'état courant : un premier import qui
+        // vide le registre ne rouvre pas la porte (contournement en deux
+        // temps, prouvé en le tirant).
+        const dejaScelle = donnees.mouvements.some((mv) =>
+          (mv.statut === 'VALIDE' || mv.statut === 'ANNULE')
+          && Boolean(mv.hashEcriture))
+          || Number(donnees.registreScelleesMax ?? 0) > 0;
+        if (dejaScelle) {
+          throw new Error(
+            'Import refusé — le fichier porte des écritures validées SANS ' +
+            'empreinte alors que ce poste tient déjà un registre scellé. ' +
+            'Un historique antérieur au scellement ne se reprend que sur un ' +
+            'poste vierge : restaurez une archive, ou repartez d’une ' +
+            'sauvegarde qui porte sa chaîne.');
+        }
         // Sauvegarde antérieure à la Phase B : amorçage de la chaîne
         figees.sort((a, b) =>
           a.date.localeCompare(b.date) || a.numero.localeCompare(b.numero));
@@ -5822,6 +5857,7 @@ export function creerDemoStore() {
           precedent = mv.hashEcriture;
           ordre += 1;
         }
+        chaineAmorceeALImport = figees.length;
       }
 
       // (lot C, C2) : les SIGNATURES d'une écriture scellée v2 sont GELÉES
@@ -5920,11 +5956,23 @@ export function creerDemoStore() {
 
       // Adoption : les vérifications sont passées. La phrase d'exercice de
       // session ne correspond plus forcément au coffre importé : oubliée.
+      // ⭐ L2 : la BORNE MONOTONE de scellement ne suit PAS le fichier — elle
+      // appartient au poste et ne redescend jamais (miroir du réglage
+      // `registre_scellees_max` du serveur, que l'import ne purge pas).
+      const borneScellement = Math.max(
+        Number(donnees.registreScelleesMax ?? 0) || 0,
+        Number(candidat.registreScelleesMax ?? 0) || 0);
       donnees = candidat;
+      donnees.registreScelleesMax = borneScellement;
       phraseCoffreSession = null;
       this.registreAltere = null;
       journaliser('système', 'IMPORT_DONNEES', 'sauvegarde',
         'Restauration depuis un fichier JSON (intégrité vérifiée)');
+      if (chaineAmorceeALImport > 0) {
+        journaliser('système', 'CHAINE_AMORCEE_A_L_IMPORT', 'sauvegarde',
+          `${chaineAmorceeALImport} écriture(s) validée(s) sans empreinte : `
+          + 'chaîne d’intégrité amorcée par le logiciel à l’import');
+      }
       persisterEtNotifier();
       return true;
     }

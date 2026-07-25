@@ -4648,6 +4648,9 @@ const HANDLERS = {
     // est tout v1.
     const figees = candidat.mouvements.filter((mv) =>
       mv.statut === 'VALIDE' || mv.statut === 'ANNULE');
+    // Nombre d'écritures dont le logiciel a dû amorcer l'empreinte lui-même
+    // (reprise d'historique) — journalisé à l'adoption, voir plus bas.
+    let chaineAmorcee = 0;
     if (figees.some((mv) => mv.hashEcriture)) {
       const chaine = verifierChaineMouvementsCandidat(candidat.mouvements);
       if (!chaine.ok) {
@@ -4656,7 +4659,38 @@ const HANDLERS = {
           `${chaine.casseA} : fichier altéré ou forgé.`);
       }
     } else if (figees.length > 0) {
+      // ⭐ L2 (25/07) — CETTE BRANCHE ÉTAIT LA PORTE DU BLANCHIMENT.
+      // Elle existe pour reprendre un historique antérieur au scellement
+      // (sauvegarde Phase A, aucune empreinte) : le logiciel amorce alors
+      // la chaîne. Mais elle se déclenche sur un critère que l'attaquant
+      // contrôle — « aucune écriture ne porte d'empreinte ». Attaque tirée
+      // et prouvée : exporter, retoucher librement les quantités, PUIS
+      // retirer hashEcriture/hashPrecedent/ordreValidation de TOUTES les
+      // écritures figées ; le fichier ressemble alors à une sauvegarde
+      // ancienne, le logiciel re-scelle les données falsifiées et déclare
+      // le registre SAIN. Tout le passé réécrit, chaîne verte.
+      //
+      // Un poste qui tient DÉJÀ un registre scellé n'a aucune raison de
+      // recevoir un historique sans empreinte : le refus est ici, et la
+      // reprise d'historique reste possible sur un poste qui n'a pas
+      // encore de chaîne (premier import, migration). Miroir DemoStore.
+      const scelleesLocales = db.get(
+        `SELECT count(*) AS n FROM mouvements
+         WHERE statut IN ('VALIDE','ANNULE') AND hash_ecriture IS NOT NULL`);
+      // La borne MONOTONE prime sur l'état courant : un premier import qui
+      // vide le registre ne doit pas rouvrir la porte (contournement en deux
+      // temps, prouvé). L'import ne purge que les réglages « coffre_% » :
+      // cette clé-là traverse.
+      if ((scelleesLocales?.n ?? 0) > 0 || nombreScelleesJamaisAtteint() > 0) {
+        throw new Error(
+          'Import refusé — le fichier porte des écritures validées SANS ' +
+          'empreinte alors que ce poste tient déjà un registre scellé. ' +
+          'Un historique antérieur au scellement ne se reprend que sur un ' +
+          'poste vierge : restaurez une archive, ou repartez d’une ' +
+          'sauvegarde qui porte sa chaîne.');
+      }
       amorcerChaineCandidat(figees);
+      chaineAmorcee = figees.length;
     }
 
     // (4 bis — lot C, C2, APRÈS la chaîne comme le DemoStore : mêmes
@@ -4742,7 +4776,7 @@ const HANDLERS = {
     // (5) Remplacement TOTAL, atomique (throw → ROLLBACK complet, y compris
     // les déclencheurs WORM recréés). La vérification de chaîne est déjà
     // passée : on ne touche la base qu'ici.
-    remplacerToutLEtat(candidat);
+    remplacerToutLEtat(candidat, chaineAmorcee);
     return true;
   }
 };
@@ -5227,7 +5261,7 @@ function reinsererJournal(entrees) {
  * l'ordre de vidage/insertion n'a plus d'importance et une incohérence
  * référentielle fait échouer proprement (ROLLBACK global).
  */
-function remplacerToutLEtat(candidat) {
+function remplacerToutLEtat(candidat, chaineAmorceeALImport = 0) {
   muter(() => {
     // Reporte le contrôle des FK au COMMIT (autorisé DANS une transaction ;
     // se réinitialise en fin de transaction). Sans lui, l'ordre de
@@ -5400,6 +5434,14 @@ function remplacerToutLEtat(candidat) {
     // Journalise l'import LUI-MÊME (chaîné à la chaîne de journal réamorcée).
     journaliser('système', 'IMPORT_DONNEES', 'sauvegarde',
       'Restauration depuis un fichier JSON (intégrité vérifiée)');
+    // L2 : un amorçage de chaîne est un geste RARE et lourd de sens (le
+    // logiciel scelle un passé qu'il n'a pas écrit). Il n'est plus possible
+    // sur un poste déjà scellé ; quand il a lieu, il se voit.
+    if (chaineAmorceeALImport > 0) {
+      journaliser('système', 'CHAINE_AMORCEE_A_L_IMPORT', 'sauvegarde',
+        `${chaineAmorceeALImport} écriture(s) validée(s) sans empreinte : `
+        + 'chaîne d’intégrité amorcée par le logiciel à l’import');
+    }
   });
 }
 
@@ -5690,6 +5732,20 @@ function sceller(mouvement) {
   mouvement.hashPrecedent = derniere?.hashEcriture ?? null;
   mouvement.hashEcriture = hasherMouvement(
     objetLogiquePourHash(mouvement), mouvement.hashPrecedent);
+  // ⭐ L2 — BORNE MONOTONE « ce poste a déjà scellé ». Elle ne vit PAS dans
+  // le registre (que l'import remplace en entier) mais dans les réglages du
+  // poste, et elle ne redescend JAMAIS. Sans elle, la garde de ré-amorçage
+  // se contourne EN DEUX TEMPS — prouvé en le tirant : importer d'abord un
+  // registre VIDE (le poste n'a alors plus rien de scellé), puis le fichier
+  // forgé sans empreintes. La borne, elle, se souvient.
+  parametres.ecrire('registre_scellees_max',
+    String(Math.max(nombreScelleesJamaisAtteint(), mouvement.ordreValidation)));
+}
+
+/** La borne monotone ci-dessus, relue (0 si le poste n'a jamais scellé). */
+function nombreScelleesJamaisAtteint() {
+  const brut = Number(parametres.lire('registre_scellees_max', '0'));
+  return Number.isFinite(brut) && brut > 0 ? brut : 0;
 }
 
 /**
