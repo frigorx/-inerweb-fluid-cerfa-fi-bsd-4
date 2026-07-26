@@ -42,16 +42,20 @@ permettront de décider ensuite.
 | Dernier commit modifiant le **code livré** | `2ca4aa0` du 26/07/2026 | `git log -1 --format=%h -- server v8 outils` |
 | Dernier commit du dépôt (**documentation comprise**) | à relever à la signature — la présente note et ses annexes sont commitées **après** la version qu'elles décrivent, aucun numéro fixe ne peut donc être écrit ici | `git log -1 --format=%h` |
 | Empreinte de l'archive livrée | ................................ (à relever à la livraison) | `node outils/fabriquer-paquet.mjs` écrit le fichier `.sha256` à côté de l'archive |
-| Filet de tests | **TOUT VERT — 121 exécutions en 98,8 s** (mesuré le 26/07/2026) | `node outils/lancer-tests.mjs --tout` |
+| Filet de tests | **TOUT VERT — 121 exécutions** ; durée de l'ordre de **100 secondes** (mesuré le 26/07/2026) | `node outils/lancer-tests.mjs --tout` |
 | Suite de refus (sécurité négative) | **207 réussies, 0 en échec** (mesuré le 26/07/2026) | `node server/test-securite-negative.mjs` |
 | Mode Officiel | **FERMÉ** par un verrou unique | `server/blocage-officiel.js:24` et `v8/js/data/blocage-officiel.js:31` |
-| Conséquence du verrou | aucune fiche opposable n'est produite ; **seul le CERFA** porte « MODE FORMATION — DOCUMENT NON OFFICIEL » (cadre 14 et filigrane). Les autres documents produits — dossier machine, dossier d'audit, plaque F-Gas, bon d'intervention, étiquettes — **ne portent aucune marque** *(voir § 5, ligne R26)* | `v8/js/cerfa/generateur.js:93`, `:538`, `:754` ; aucun fichier de `v8/js/documents/` ne contient le mot « FORMATION » |
+| Conséquence du verrou | aucune fiche opposable n'est produite ; **seul le CERFA** porte « MODE FORMATION — DOCUMENT NON OFFICIEL » (cadre 14 et filigrane). **Dix-neuf autres documents produits ne portent aucune marque** — ils sont énumérés un par un à l'[inventaire du § 5.3](#inventaire-documents-sans-marque) *(lignes R26 et R34)* | `v8/js/cerfa/generateur.js:93`, `:538`, `:754` ; inventaire et commande de vérification au § 5.3 |
 | Surface fonctionnelle | 96 méthodes de contrat (v13), 35 migrations de base (n° 2 à 36) | `v8/js/data/contrat.js`, `server/migrations.js` |
 
-> Les deux chiffres de tests ci-dessus ont été **mesurés le 26/07/2026 sur ce commit**, pas
-> repris d'un document antérieur. La suite de sécurité mêle des attaques réellement tirées
-> contre un serveur et des preuves citées ; `SECURITE.md` annonce 118 attaques tirées, chiffre
-> que nous n'avons pas recompté ligne à ligne.
+> Les deux chiffres de tests ci-dessus ont été **mesurés le 26/07/2026 sur cette version**,
+> pas repris d'un document antérieur. La **durée** du filet est écrite comme un ordre de
+> grandeur, et c'est volontaire : elle varie d'une exécution à l'autre — 96,8 s, 97,9 s et
+> 98,8 s à trois mesures du même jour sur la même version. Une mesure qui bouge ne se publie
+> pas au centième ; ce qui compte est le nombre d'exécutions, le verdict, et la commande qui
+> les refait. La suite de sécurité, elle, mêle des attaques réellement tirées contre un
+> serveur et des preuves citées ; `SECURITE.md` annonce 118 attaques tirées, chiffre que nous
+> n'avons pas recompté ligne à ligne.
 
 ---
 
@@ -86,11 +90,13 @@ permettront de décider ensuite.
 - **Des revues adversariales internes après chaque lot de développement**, qui ont trouvé des
   défauts **dans les correctifs eux-mêmes** — y compris un bloquant qui faisait disparaître
   5,5 kg de fluide détruit de la déclaration annuelle, corrigé avant livraison (`CHANGELOG.md`,
-  lot B2 ; `docs/REPONSE-AUDIT-EXTERNE-2026-07-25.md` § 5).
+  lot B2 ; `docs/REPONSE-AUDIT-EXTERNE-2026-07-25.md` § 5). **Ces 5,5 kg sont des masses du
+  jeu d'essai, pas du registre du lycée : aucune déclaration fausse n'a été transmise à
+  l'autorité.** Le défaut a été trouvé et refermé avant toute livraison.
 - **Un filet de tests rejoué intégralement** le 26/07/2026, avant l'établissement de la
-  présente note : `node outils/lancer-tests.mjs --tout` → « TOUT VERT — 121 exécutions en
-  97,9 s ». **Ce que cela prouve est borné** : l'absence de régression sur ce qui est déjà
-  testé, rien de plus (voir la ligne R22 du § 5).
+  présente note : `node outils/lancer-tests.mjs --tout` → « TOUT VERT — 121 exécutions »,
+  durée de l'ordre de 100 secondes. **Ce que cela prouve est borné** : l'absence de
+  régression sur ce qui est déjà testé, rien de plus (voir la ligne R22 du § 5).
 - **Un inventaire écrit des limites connues** : `docs/POINTS-DE-FRICTION.md` (établi le
   26/07/2026), qui décrit chaque limite, la source dans le code, son état et la condition dans
   laquelle il faudra la rouvrir. C'est de lui qu'est repris le § 5 ci-dessous.
@@ -130,14 +136,16 @@ nommément.
 > **Deux listes, et elles ne sont pas du même ordre.** Le § 5.1 énumère trois points qu'on
 > **ne peut pas accepter** : les cocher reviendrait à acter le maintien d'une exposition
 > active. Ils se traitent, ils ne s'acceptent pas. Le § 5.2 énumère les risques résiduels,
-> qui peuvent être acceptés — un par un.
+> qui peuvent être acceptés — un par un. Le § 5.3 n'est pas une troisième liste de risques :
+> c'est **l'inventaire nominatif** que portent les lignes R26 et R34, et sur lequel repose la
+> consigne « ces documents ne doivent pas être remis à un tiers ».
 >
 > Chaque ligne est reprise de l'inventaire détaillé `docs/POINTS-DE-FRICTION.md`, où elle est
 > expliquée, sourcée dans le code et assortie de sa condition de réveil. **Le « § » entre
 > parenthèses renvoie à une section de cet inventaire**, pas de la présente note ; les
 > sections ajoutées après sa première rédaction y portent un numéro *bis* ou *ter*. Les
-> valeurs réglementaires visées aux lignes R5 à R8 et R27 sont détaillées une par une dans
-> `docs/REGISTRE-DES-ARBITRAGES.md`.
+> valeurs réglementaires visées aux lignes R5 à R8, R27 et R31 sont détaillées une par une
+> dans `docs/REGISTRE-DES-ARBITRAGES.md`.
 
 ### 5.1 À traiter avant la mise en service — ces trois points ne se cochent pas
 
@@ -184,10 +192,24 @@ Observations sur le § 5.1 : ...................................................
       être validé sur une fiche opposable**. Il est écrit sur le document, pas empêché.
       *(§ 2 bis)*
 - [ ] **R26 — En dehors du CERFA, aucun document produit ne porte de marque de
-      non-officialité.** Dossier machine, dossier d'audit, plaque F-Gas, bon d'intervention,
-      étiquettes : rien ne les distingue à l'œil de leurs équivalents réglementaires, alors
-      que la mention de formation est aujourd'hui la **seule** chose qui fait cette
-      distinction. *(§ 1 ter)*
+      non-officialité — et il y en a dix-neuf.** Rien ne les distingue à l'œil de leurs
+      équivalents réglementaires, alors que la mention de formation est aujourd'hui la
+      **seule** chose qui fait cette distinction. Les plus exposés : la **fiche
+      d'identification machine**, feuille A4 faite pour être posée sur l'équipement avec une
+      case « Date de pose / Signature technicien » ; l'**impression du bilan annuel**, qui
+      porte le titre « Déclaration annuelle réglementaire — 11 rubriques » ; le **certificat
+      de scellement** portant une empreinte SHA-256 ; la **plaque F-Gas**. **La liste
+      complète est à l'[inventaire du § 5.3](#inventaire-documents-sans-marque), et c'est
+      elle qui porte la consigne d'attente.** *(§ 1 ter)*
+- [ ] **R34 — Le seul repère de mode visible à l'écran disparaît sur tout document
+      imprimé.** Le badge « DÉMO / FORMATION » ou « LOCAL / FORMATION » de l'en-tête
+      (`v8/index.html:58`, posé par `v8/js/app.js:628`) vit dans le `<header id="entete">`,
+      et la feuille de style d'impression masque cet en-tête
+      (`#entete { display: none !important; }`, `v8/css/coquille.css:392-399`) ; les imprimés
+      ouverts en aperçu masquent même **tout** ce qui n'est pas le document. Autrement dit,
+      le repère existe à l'écran et **ne s'imprime jamais**. C'est un **défaut du logiciel**,
+      pas une imprécision de rédaction : il aggrave R26 et il appelle une décision
+      distincte — marquer le papier, ou encadrer sa sortie par consigne écrite. *(§ 1 ter)*
 - [ ] **R2 — Ce qui devra franchir les conditions bloquantes le jour de l'ouverture n'est pas
       tranché** : toutes les interventions, ou les seules fiches officielles ? Décision de
       l'auteur, non prise à ce jour. *(§ 1)*
@@ -195,6 +217,12 @@ Observations sur le § 5.1 : ...................................................
       déchets dématérialisé**, qui reste à établir sur la plateforme nationale. *(§ 2)*
 - [ ] **R4 — Le mode Officiel n'a jamais tourné en production** : le parcours complet n'a
       jamais été exécuté sur le poste réel, avec sa base, son antivirus et son horloge. *(§ 8)*
+- [ ] **R32 — Rétrograder un équipement mobile en fixe laisse un dossier de fuite réputé
+      clos.** Un mobile listé peut être recontrôlé le jour même de la réparation ; un fixe
+      non. Le statut de la machine est une colonne **stockée**, jamais recalculée sur une
+      simple correction de fiche : la machine reste « en service » alors que la règle
+      désormais applicable dirait l'épisode ouvert. Défaut déclaré au journal des versions,
+      non corrigé, rattaché à un chantier ultérieur. *(§ 9 ter)*
 
 **Valeurs réglementaires**
 
@@ -219,6 +247,14 @@ Observations sur le § 5.1 : ...................................................
 - [ ] **R8 — Le catalogue des fluides n'est pas validé ligne par ligne** ; tant qu'une fiche
       n'est pas validée, elle n'existe pas pour le moteur
       (`docs/CATALOGUE-FLUIDES-A-VALIDER.md`).
+- [ ] **R31 — L'import accepte un PRP aberrant, et le PRP commande toutes les fréquences de
+      contrôle.** La saisie refuse un PRP absent ou négatif ; **l'import ne le regarde pas**
+      et l'écrit tel quel. Or le PRP convertit une charge en tonnes équivalent CO₂ : il
+      décide du niveau réglementaire, de la fréquence, des échéances et des alertes. Une
+      valeur fausse entrée par un import **allège tout un parc en silence** — le sens
+      d'erreur que la doctrine du projet (« jamais moins de contrôles qu'exigé ») interdit
+      partout ailleurs. Défaut **déclaré et volontairement non corrigé** : durcir l'import
+      risquerait de bloquer la restauration d'une sauvegarde légitime. *(§ 7 bis)*
 
 **Intégrité et sécurité**
 
@@ -247,6 +283,12 @@ Observations sur le § 5.1 : ...................................................
       ne remplirait pas le passé. *(§ 13)*
 - [ ] **R15 — Certains formats d'image de signature ne sont pas jugés** (réponse
       « indéterminable » : le doute profite au signataire). *(§ 13)*
+- [ ] **R33 — Le bouton « Exporter une sauvegarde » reste offert à l'écran à des rôles qui
+      n'y ont plus droit.** **Sans effet probant** : le serveur refuse en 403, rien ne fuit,
+      le refus tient. C'est un bouton mort, déclaré au journal des versions et non corrigé.
+      Il est nommé ici parce qu'il se trouve **trois lignes sous la référence exacte** vers
+      laquelle `LIMITE-DE-RESPONSABILITE.md` § 2 b) envoie déjà le lecteur : qui suit ce
+      renvoi le trouvera. *(§ 13)*
 
 **Organisation et obligations de l'établissement**
 
@@ -283,10 +325,10 @@ Observations sur le § 5.1 : ...................................................
 
 > Il n'y a **pas** de case « tous les risques sont acceptés en l'état », et c'est délibéré :
 > une acceptation globale ne vaut rien, et elle annulerait l'énumération qui fait la valeur
-> de cette section. L'acceptation se marque **ligne par ligne**, dans les cases R1 à R30
+> de cette section. L'acceptation se marque **ligne par ligne**, dans les cases R1 à R34
 > ci-dessus.
 
-Nombre de lignes cochées : ........ sur 27 *(R1 à R30, hors R10, R17 et R18 devenus T1, T2, T3)*
+Nombre de lignes cochées : ........ sur 31 *(R1 à R34, hors R10, R17 et R18 devenus T1, T2, T3)*
 
 ☐ Les lignes non cochées ci-dessus doivent être traitées avant la mise en service. Ce sont, à
 la date de la décision : ...........................................................................
@@ -299,6 +341,78 @@ service.
 
 Observations : ....................................................................................
 ....................................................................................................
+
+### 5.3 L'inventaire que portent les lignes R26 et R34
+
+> Cette liste est reprise **à l'identique** dans les quatre pièces du dossier
+> (`LIMITE-DE-RESPONSABILITE.md`, `docs/POINTS-DE-FRICTION.md`,
+> `docs/REGISTRE-DES-ARBITRAGES.md`, la présente note). Elle est ici parce qu'elle **porte
+> une consigne**, et qu'une consigne ne vaut que par sa liste : un document absent de la
+> liste échapperait à la consigne.
+
+<a id="inventaire-documents-sans-marque"></a>
+
+**Inventaire des documents qui sortent sans marque distinctive** — établi le 26/07/2026.
+
+**Imprimés sur papier** (aperçu à l'écran, puis bouton « Imprimer ») :
+
+1. **Fiche d'identification machine** — feuille A4 destinée à être **posée sur ou près de
+   l'équipement**, avec une case « Date de pose » et une case « Signature technicien » à
+   remplir à la main (`v8/js/documents/fiche-identification-machine.js:157`, `:161`,
+   `:413`). C'est l'imprimé qui ressemble le plus à une pièce officielle.
+2. **Plaque F-Gas** (`v8/js/documents/plaque-fgas.js:341`).
+3. **Bon d'intervention** (`v8/js/documents/bon-intervention.js:476`).
+4. **Feuille de mise en service** (`v8/js/documents/feuille-mise-en-service.js:514`).
+5. **Impression du bilan annuel**, qui porte en toutes lettres la section « **Déclaration
+   annuelle réglementaire — 11 rubriques** » (`v8/js/views/bilan.js:276-279` pour le titre,
+   `:779` pour l'impression).
+6. **Audit en 5 minutes** — synthèse d'une page (`v8/js/views/bilan.js:684`, `:696`).
+7. **Balance de matière** (`v8/js/views/balance.js:576`).
+8. **Certificat de scellement** d'une archive — il porte l'empreinte SHA-256 et il est fait
+   pour être imprimé et classé (`v8/js/documents/verificateur.js:468`, téléchargement
+   `v8/js/documents/telecharger-dossier.js:78-88`).
+9. **Étiquette de machine** (`v8/js/documents/etiquette-machine.js:303`).
+10. **Étiquette de bouteille** (`v8/js/documents/etiquette-bouteille.js:401`).
+11. **Étiquette de client** (`v8/js/documents/etiquette-client.js:268`).
+12. **Étiquette d'outil** (`v8/js/documents/etiquette-outil.js:267`).
+
+**Fichiers téléchargés** :
+
+13. **Dossier d'audit annuel**, archive ZIP scellée (`v8/js/documents/dossier-audit.js`).
+14. **Dossier machine**, archive ZIP scellée (`v8/js/documents/dossier-machine.js`).
+15. **Dossier client**, archive ZIP scellée (`v8/js/documents/dossier-client.js`).
+16. **Dossier de fuite**, archive ZIP scellée (`v8/js/documents/dossier-fuite.js`).
+17. **Vérificateur autonome** `99-VERIFICATEUR.html`, embarqué dans chacune de ces quatre
+    archives (`v8/js/documents/verificateur.js`).
+18. **Exports CSV des tables du registre** (`v8/js/documents/exports.js`).
+19. **Export CSV de la déclaration annuelle** (`v8/js/views/bilan.js:282`, `:773`).
+
+**Une précision, pour éviter un contresens.** À l'intérieur des quatre archives, les
+**fiches CERFA sont bien marquées** : elles sortent du même générateur
+(`v8/js/cerfa/generateur.js:538`, `:754`). Ce qui ne l'est pas, c'est tout le reste de
+l'archive — sommaire, fichiers CSV, chronologie, vérificateur — et le certificat qui
+l'accompagne.
+
+**Une seule sortie est hors de cette consigne**, et elle est nommée pour que l'inventaire
+soit complet : la **notice d'information des personnes** (protection des données), elle
+aussi imprimable sans marque (`v8/js/views/rgpd.js:534`). Elle est **faite pour être
+remise** aux élèves et aux familles, et nul ne peut la prendre pour une pièce du registre
+des fluides.
+
+**Vérification par soi-même**, couvrant bien ce qui est affirmé — tout `v8/js/`, et non le
+seul dossier `documents/` :
+
+```
+grep -rn "MENTION_FORMATION\|MODE FORMATION\|NON OFFICIEL\|non officiel" v8/js/ | grep -v "^v8/js/cerfa/"
+```
+
+Elle ne rend **rien**. La contre-épreuve est la même commande sans le filtre : elle rend
+vingt lignes, toutes dans `v8/js/cerfa/`.
+
+> **Consigne d'attente.** Tant que le point n'est pas tranché par l'établissement, **aucun
+> des dix-neuf documents ci-dessus ne doit être remis à un tiers**, et l'ajout de la ligne
+> R34 dit pourquoi la consigne ne peut pas se contenter d'un repère à l'écran : ce repère ne
+> s'imprime pas.
 
 ---
 
@@ -318,10 +432,11 @@ Ces conditions sont proposées ; l'établissement les arrête.
    bloquant.
 5. **Le mode Officiel reste fermé pendant tout le pilote.** L'ouverture ne peut résulter que
    d'une décision écrite prise au vu du § 7. **Attention : seul le CERFA porte la mention de
-   formation** (ligne R26) ; les autres documents produits n'en portent aucune. Tant que ce
-   point n'est pas corrigé, une consigne d'atelier doit dire où sont rangés les documents
-   produits en séance, et que rien de ce qui sort du logiciel ne va au classeur
-   réglementaire.
+   formation** (ligne R26) ; **dix-neuf autres documents n'en portent aucune** — la liste est
+   à l'[inventaire du § 5.3](#inventaire-documents-sans-marque) — et **le repère de mode
+   affiché à l'écran ne s'imprime pas** (ligne R34). Tant que ce point n'est pas corrigé, une
+   consigne d'atelier doit dire où sont rangés les documents produits en séance, et que rien
+   de ce qui sort du logiciel ne va au classeur réglementaire.
 6. **Conditions matérielles** : poste chiffré, base hors dossier synchronisé, sauvegardes
    sorties du poste et vérifiées — voir `LIMITE-DE-RESPONSABILITE.md` § 4. **C'est le point
    T1 du § 5.1 : il est préalable au pilote, pas concomitant.**
@@ -389,9 +504,11 @@ Elle est simple parce que le registre existant n'a jamais cessé d'être tenu pe
    rangée avec la présente note.
 4. **Les documents déjà produits** n'ont pas à être retirés d'un dossier réglementaire :
    produits verrou fermé, ils n'y ont pas leur place. **Mais seul le CERFA le dit sur
-   lui-même** (ligne R26) : les autres documents — dossier machine, dossier d'audit, plaque
-   F-Gas, bon d'intervention, étiquettes — ne portent aucune marque, et leur retrait éventuel
-   suppose de savoir où ils sont allés.
+   lui-même** (ligne R26) : les **dix-neuf autres** documents, énumérés à
+   l'[inventaire du § 5.3](#inventaire-documents-sans-marque), ne portent aucune marque — et
+   même leur impression ne conserve pas le repère de mode affiché à l'écran (ligne R34).
+   Leur retrait éventuel suppose donc de savoir où ils sont allés, et c'est le seul moyen de
+   le savoir.
 5. Si le mode Officiel avait été ouvert, la reprise au registre de référence des écritures
    officielles produites entre l'ouverture et l'arrêt est faite et datée avant clôture.
 

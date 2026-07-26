@@ -1,8 +1,11 @@
 # Points de friction — inventaire des limites connues d'inerWeb Fluide
 
-> **Établi le 26/07/2026** sur le dépôt `C:\git\inerweb-fluide`, branche `main`,
-> dernier commit lu `1cd457a` ; le dernier commit modifiant le code livré est `2ca4aa0`
-> (à revérifier par `git log -1 --format=%h -- server v8 outils`). Chaque affirmation de
+> **Établi le 26/07/2026** sur le dépôt `C:\git\inerweb-fluide`, branche `main`.
+> **Dernier commit modifiant le code livré** : `2ca4aa0` (à revérifier par
+> `git log -1 --format=%h -- server v8 outils`). Le numéro du dernier commit du dépôt
+> **n'est pas écrit ici** : ce document et les trois autres pièces du dossier sont
+> enregistrés **après** la version qu'ils décrivent, donc aucun numéro fixe ne tomberait
+> juste. Il se relève à la lecture par `git log -1 --format=%h`. Chaque affirmation de
 > ce document a été vérifiée dans le fichier qui la porte, et le fichier est cité avec sa
 > ligne. Ce qui n'a pas pu être vérifié est écrit comme tel, à la place où on l'attendrait.
 >
@@ -126,21 +129,105 @@ registre. **Cette décision n'est pas prise.**
 **Ce que c'est.** La mention « MODE FORMATION — DOCUMENT NON OFFICIEL — NE PAS UTILISER
 POUR UNE INTERVENTION RÉELLE » existe (`v8/js/cerfa/generateur.js:93`), mais elle n'est
 apposée **que sur le CERFA** : au cadre 14 des observations (`:538`) et en filigrane
-diagonal sur la page (`:754`). Vérifié : **aucun module de `v8/js/documents/` ne contient
-le mot « FORMATION »**. Le dossier machine, le dossier d'audit, la plaque F-Gas, le bon
-d'intervention, la feuille de mise en service, les étiquettes sortent sans aucune marque.
+diagonal sur la page (`:754`). **Dix-neuf autres documents sortent sans aucune marque.**
 
-**L'effet réel.** Tant que le verrou est fermé, cette mention est **la seule chose qui
+<a id="inventaire-documents-sans-marque"></a>
+
+> ### Inventaire des documents qui sortent sans marque distinctive
+>
+> *Établi le 26/07/2026. Cette liste est reprise **à l'identique** dans les quatre pièces du
+> dossier — `LIMITE-DE-RESPONSABILITE.md`, le présent inventaire,
+> `docs/REGISTRE-DES-ARBITRAGES.md` et `docs/NOTE-DECISION-ETABLISSEMENT.md` — parce qu'elle
+> porte une consigne : un document absent de la liste échapperait à la consigne.*
+>
+> **Imprimés sur papier** (aperçu à l'écran, puis bouton « Imprimer ») :
+>
+> 1. **Fiche d'identification machine** — feuille A4 destinée à être **posée sur ou près de
+>    l'équipement**, avec une case « Date de pose » et une case « Signature technicien » à
+>    remplir à la main (`v8/js/documents/fiche-identification-machine.js:157`, `:161`,
+>    `:413`). C'est l'imprimé qui ressemble le plus à une pièce officielle.
+> 2. **Plaque F-Gas** (`v8/js/documents/plaque-fgas.js:341`).
+> 3. **Bon d'intervention** (`v8/js/documents/bon-intervention.js:476`).
+> 4. **Feuille de mise en service** (`v8/js/documents/feuille-mise-en-service.js:514`).
+> 5. **Impression du bilan annuel**, qui porte en toutes lettres la section « **Déclaration
+>    annuelle réglementaire — 11 rubriques** » (`v8/js/views/bilan.js:276-279` pour le titre,
+>    `:779` pour l'impression).
+> 6. **Audit en 5 minutes** — synthèse d'une page (`v8/js/views/bilan.js:684`, `:696`).
+> 7. **Balance de matière** (`v8/js/views/balance.js:576`).
+> 8. **Certificat de scellement** d'une archive — il porte l'empreinte SHA-256 et il est fait
+>    pour être imprimé et classé (`v8/js/documents/verificateur.js:468`, téléchargement
+>    `v8/js/documents/telecharger-dossier.js:78-88`).
+> 9. **Étiquette de machine** (`v8/js/documents/etiquette-machine.js:303`).
+> 10. **Étiquette de bouteille** (`v8/js/documents/etiquette-bouteille.js:401`).
+> 11. **Étiquette de client** (`v8/js/documents/etiquette-client.js:268`).
+> 12. **Étiquette d'outil** (`v8/js/documents/etiquette-outil.js:267`).
+>
+> **Fichiers téléchargés** :
+>
+> 13. **Dossier d'audit annuel**, archive ZIP scellée (`v8/js/documents/dossier-audit.js`).
+> 14. **Dossier machine**, archive ZIP scellée (`v8/js/documents/dossier-machine.js`).
+> 15. **Dossier client**, archive ZIP scellée (`v8/js/documents/dossier-client.js`).
+> 16. **Dossier de fuite**, archive ZIP scellée (`v8/js/documents/dossier-fuite.js`).
+> 17. **Vérificateur autonome** `99-VERIFICATEUR.html`, embarqué dans chacune de ces quatre
+>     archives (`v8/js/documents/verificateur.js`).
+> 18. **Exports CSV des tables du registre** (`v8/js/documents/exports.js`).
+> 19. **Export CSV de la déclaration annuelle** (`v8/js/views/bilan.js:282`, `:773`).
+>
+> **Une précision, pour éviter un contresens.** À l'intérieur des quatre archives, les
+> **fiches CERFA sont bien marquées** : elles sortent du même générateur
+> (`v8/js/cerfa/generateur.js:538`, `:754`). Ce qui ne l'est pas, c'est tout le reste de
+> l'archive — sommaire, fichiers CSV, chronologie, vérificateur — et le certificat qui
+> l'accompagne.
+>
+> **Une seule sortie est hors de cette consigne**, et elle est nommée pour que l'inventaire
+> soit complet : la **notice d'information des personnes** (protection des données), elle
+> aussi imprimable sans marque (`v8/js/views/rgpd.js:534`). Elle est **faite pour être
+> remise** aux élèves et aux familles, et nul ne peut la prendre pour une pièce du registre
+> des fluides.
+
+**Vérification par soi-même.** La commande ci-dessous couvre bien ce qui est affirmé — tout
+`v8/js/`, et non le seul dossier `documents/` :
+
+```
+grep -rn "MENTION_FORMATION\|MODE FORMATION\|NON OFFICIEL\|non officiel" v8/js/ | grep -v "^v8/js/cerfa/"
+```
+
+Elle ne rend **rien**. La contre-épreuve est la même commande sans le filtre : elle rend
+vingt lignes, toutes dans `v8/js/cerfa/`. Pour retrouver les imprimables eux-mêmes :
+`grep -rn "window.print()" v8/js/ | grep -v "test-"` rend quinze lignes, dont trois sont des
+commentaires — donc **douze** déclencheurs d'impression réels. Ce sont les onze premiers
+imprimés de l'inventaire (n° 1 à 7 et 9 à 12), plus la notice de protection des personnes.
+Le douzième de la liste, le **certificat de scellement** (n° 8), n'y figure pas : c'est une
+page HTML téléchargée, puis imprimée depuis le navigateur. *(Une version antérieure de ces
+documents proposait `grep -r FORMATION v8/js/documents/` : trop étroite, des imprimables
+vivent aussi dans `v8/js/views/`.)*
+
+**Ce qui aggrave, et qui n'était écrit nulle part : le repère de mode disparaît justement à
+l'impression.** À l'écran, le seul repère permanent du mode est le badge de l'en-tête, rempli
+à « DÉMO / FORMATION » ou « LOCAL / FORMATION » (`v8/index.html:58`, posé par
+`v8/js/app.js:628`, à l'intérieur du `<header id="entete">` de `v8/index.html:50`). Or la
+feuille de style d'impression **masque cet en-tête** : `#entete { display: none !important; }`
+dans le bloc `@media print` de `v8/css/coquille.css:392-399`. Les imprimés produits depuis
+une modale d'aperçu vont plus loin encore : ils masquent **tout** ce qui n'est pas le
+document lui-même (`body * { visibility: hidden; }`, par exemple
+`v8/js/documents/fiche-identification-machine.js:348-352` ou `v8/js/views/bilan.js:498-500`).
+**Le repère de mode existe à l'écran et disparaît sur le papier.** C'est un défaut du
+logiciel, pas une imprécision de rédaction, et il n'est pas corrigé.
+
+**L'effet réel.** Tant que le verrou est fermé, la mention du CERFA est **la seule chose qui
 distingue à l'œil un document du logiciel d'un document réglementaire**. Un dossier
-machine ou une plaque F-Gas produits en séance sont donc indiscernables de leurs
-équivalents opposables, et rien n'empêche qu'ils se retrouvent dans un classeur.
+machine, une plaque F-Gas, une fiche d'identification posée sur une machine, une impression
+portant le titre « Déclaration annuelle réglementaire — 11 rubriques » sont donc
+indiscernables de leurs équivalents opposables, et rien n'empêche qu'ils se retrouvent dans
+un classeur. Et l'unique repère qui aurait pu les trahir ne s'imprime pas.
 
 **État.** Non corrigé. Aucun constat de `docs/TABLE-CONSTATS-AUDIT-2026-07-25.md` ne porte
 ce point : il est ajouté ici parce qu'il a été trouvé, pas parce qu'on nous l'a signalé.
 
 **Condition de réveil.** Avant toute séance produisant des documents destinés à sortir de
 l'atelier. La fermeture est simple dans son principe — porter la même mention à tous les
-documents produits hors mode Officiel — mais elle n'est pas faite.
+documents produits hors mode Officiel, **et faire en sorte qu'elle survive à l'impression** —
+mais elle n'est pas faite.
 
 ---
 
@@ -350,6 +437,50 @@ recyclés et régénérés, palier de 2032) ne sera codée sans lecture du texte
 
 ---
 
+## 7 bis. L'import accepte un PRP aberrant, et le PRP commande toutes les fréquences de contrôle
+
+**Ce que c'est.** Le potentiel de réchauffement (PRP) est la valeur qui convertit une
+charge en kilogrammes en tonnes équivalent CO₂ ; c'est donc **lui qui décide de la
+fréquence du contrôle d'étanchéité** de chaque machine (voir le § 4 de
+`docs/REGISTRE-DES-ARBITRAGES.md`). À la saisie, le formulaire des fluides refuse un PRP
+absent ou négatif : « PRP obligatoire : nombre positif ou nul »
+(`v8/js/modales/fluide-form.js:240-244`). **L'import d'un registre ne passe pas par cette
+garde** : `importerJSON` réécrit la table des fluides par un `INSERT OR REPLACE` qui reprend
+la valeur du fichier telle quelle, sans jamais l'examiner (`server/api.js:6285-6316`). Un
+R-404A importé à 39 au lieu de 3922 entre dans la base et sort du seuil de contrôle.
+
+**Ce n'est pas une découverte : c'est déclaré.** Le journal des versions l'écrit noir sur
+blanc à la fin du lot P1-2 : « l'import accepte toujours un PRP aberrant (comportement
+ANTÉRIEUR à cette brique : durcir l'import risquerait de bloquer la restauration d'une
+sauvegarde légitime) » (`CHANGELOG.md:905-907`). Le motif est réel — une garde trop raide
+empêcherait de rapatrier son propre historique — mais il ne referme pas la porte.
+
+**L'effet réel, et il est le plus large de tout ce document.** Le PRP ne se contente pas de
+s'afficher : il commande la conversion en tonnes équivalent CO₂, donc le niveau
+réglementaire, donc la fréquence (12 / 6 / 3 mois), donc les échéances, donc les alertes, et
+donc l'obligation de détection permanente au seuil haut. Une seule valeur fausse entrée par
+un import **allège silencieusement tout un parc**. C'est exactement le sens d'erreur que la
+règle générale du projet — « le doute retire l'allègement, jamais l'obligation » — prétend
+interdire partout ailleurs.
+
+**Ce qui a été refermé à côté, et qui montre que la porte-ci reste ouverte.** Le même lot a
+corrigé le cas voisin : un PRP négatif ressortait « impact FAIBLE », rassurant à tort ;
+`impactDepuisPrp` rend désormais `null` (`CHANGELOG.md:897-900`). Et la doctrine « une clé
+absente ne vaut pas décision » a été appliquée au champ mitoyen `actif`, pour qu'un export
+antérieur ne ressuscite pas un fluide désactivé (`server/api.js:6304-6312`). Les deux gardes
+sont posées **autour** du PRP ; le PRP lui-même n'en a aucune.
+
+**État.** Défaut déclaré, **volontairement non corrigé**. Aucun correctif n'est prévu à ce
+jour.
+
+**Condition de réveil.** À la première restauration d'une sauvegarde ou à la première reprise
+d'un registre antérieur, c'est-à-dire au geste même que la porte ouverte sert à ne pas
+gêner. La fermeture honnête n'est pas un refus sec — ce serait empêcher une restauration
+légitime — mais un **signalement** : comparer chaque PRP importé à la valeur du référentiel
+validé et lever une anomalie à l'écart. Elle n'est pas faite.
+
+---
+
 ## 8. Le mode Officiel n'a jamais tourné en production
 
 **Ce que c'est.** Le parcours officiel de bout en bout — passage en officiel,
@@ -448,6 +579,43 @@ deux réglages possibles n'est sans prix : celui-ci sous-détecte, l'autre accus
 contestation portant sur des masses. La fermeture propre suppose des dates **horodatées**
 et non plus au jour près, ce qui touche au format des écritures scellées : hors périmètre
 d'un correctif.
+
+---
+
+## 9 ter. Rétrograder un équipement mobile en fixe laisse un dossier de fuite réputé clos
+
+**Ce que c'est.** Le cycle d'une fuite impose de recontrôler **après** la réparation : le
+logiciel exige un contrôle conforme strictement postérieur au jour de la réparation
+(`v8/js/data/dossiers-fuite.js:99-109`). Une exception vise les équipements **mobiles
+listés**, admis au contrôle le jour même (`v8/js/data/equipement.js:298-302`, liste fermée
+de cinq sous-types). Or le statut de la machine est une colonne **stockée**, recalculée
+seulement à l'enregistrement ou à l'annulation d'un contrôle
+(`recalculerEffetsMachineApresAnnulation`, `server/api.js:7051-7079`). `updateMachine`
+(`server/api.js:3280`) écrit le type d'installation et le sous-type **sans jamais relancer
+ce calcul**. Une machine mobile listée dont la fuite a été close le jour même, puis
+repassée en FIXE par une simple correction de fiche, garde donc son statut figé à
+`EN_SERVICE` — alors que la règle applicable à un équipement fixe dirait l'épisode encore
+ouvert.
+
+**Ce n'est pas une découverte : c'est déclaré.** Le journal des versions le consigne à la
+revue adversariale du lot P1-1 : « **Consigné, non corrigé (antérieur à P1-1, hors
+périmètre)** : rétrograder un MOBILE listé en FIXE *après* une clôture immédiate laisse
+`machine.statut` figé à EN_SERVICE […] limitation d'architecture existante depuis la
+migration 27, à traiter avec le modèle de statut de P0-6, pas ici »
+(`CHANGELOG.md:805-809`).
+
+**L'effet réel.** Il est borné mais il touche une fonction réglementaire : le suivi d'une
+fuite. Une machine peut apparaître « en service » au tableau de conformité alors que la
+règle qui lui est désormais applicable n'a pas été satisfaite. Il faut une correction de
+fiche après coup pour l'obtenir, ce qui n'est ni fréquent ni impossible — une case de type
+d'installation cochée à la légère puis rectifiée suffit.
+
+**État.** Déclaré, non corrigé, rattaché à un chantier ultérieur (modèle de statut).
+
+**Condition de réveil.** À la première rectification du type d'installation d'une machine
+ayant connu une fuite. En attendant, le contrôle se fait à l'œil : un changement de
+FIXE / MOBILE sur une machine à historique de fuite mérite une relecture du dossier de
+fuite correspondant.
 
 ---
 
@@ -576,6 +744,18 @@ inconnue, pas nulle.
   l'application, mais **seule l'unicité** est exigée à l'import d'un registre
   antérieur. C'est une décision, pas un oubli : refuser la forme à l'import
   interdirait de rapatrier son propre historique.
+  *(Le troisième résidu d'import, lui, n'est pas mineur : l'import accepte un **PRP
+  aberrant**. Il a sa propre section, le § 7 bis.)*
+- **Le bouton « Exporter une sauvegarde » reste offert à l'écran à des rôles qui n'y ont
+  plus droit.** La modale de sauvegarde affiche l'action sans aucun contrôle de rôle
+  (`v8/js/app.js:502-506`, ouverte depuis `v8/js/app.js:121`) ; côté serveur, `exporterJSON`
+  est réservé aux rôles référent, enseignant et administrateur (`server/api.js:691`, liste
+  `server/api.js:567`), et refuse en 403 tout autre rôle. **Il n'y a donc aucun effet
+  probant** : rien ne fuit, le refus tient. C'est un bouton mort, pas un trou. Il est
+  déclaré ici pour une raison précise : il est écrit au journal des versions
+  (`CHANGELOG.md:581-582`, « l'écran devrait le masquer ») **trois lignes sous la référence
+  `CHANGELOG.md:575-578` vers laquelle `LIMITE-DE-RESPONSABILITE.md` § 2 b) envoie déjà le
+  lecteur**. Qui suit ce renvoi le trouvera ; mieux vaut qu'il l'ait lu ici d'abord.
 
 ---
 
@@ -586,7 +766,11 @@ change la façon de lire tout le reste.
 
 Le dépôt affiche « tout vert, 121 exécutions » (chiffre de `docs/CARTE-CODE.md:35`).
 **Ce chiffre a été rejoué le 26/07/2026 pour la rédaction de ce document**, par
-`node outils/lancer-tests.mjs --tout` : résultat « TOUT VERT — 121 exécutions en 97,9 s ».
+`node outils/lancer-tests.mjs --tout` : résultat « TOUT VERT — 121 exécutions ».
+La **durée** est de l'ordre de **100 secondes** — 96,8 s, 97,9 s et 98,8 s à trois mesures
+du même jour sur la même version. C'est un ordre de grandeur, pas une mesure : une durée
+qui varie d'une exécution à l'autre ne se publie pas au centième. Ce qui compte est le
+nombre d'exécutions et le verdict, et la commande qui les refait.
 **Cela prouve l'absence de régression sur ce qui est déjà testé. Cela ne prouve pas
 l'absence de défaut.**
 
@@ -651,8 +835,9 @@ Par honnêteté, les limites de l'inventaire lui-même.
   n'a encore trouvés, et la section 14 donne toutes les raisons de penser qu'il en
   reste.
 - Le filet de tests **a été rejoué** le 26/07/2026 pour la rédaction de ce document
-  (`node outils/lancer-tests.mjs --tout` → « TOUT VERT — 121 exécutions en 97,9 s »), et
-  ce résultat concorde avec `docs/CARTE-CODE.md:35`. Mais **cela ne vaut que ce que dit la
+  (`node outils/lancer-tests.mjs --tout` → « TOUT VERT — 121 exécutions », durée de l'ordre
+  de 100 secondes), et ce résultat concorde avec `docs/CARTE-CODE.md:35`. Mais **cela ne
+  vaut que ce que dit la
   section 14** : un filet vert ne prouve rien d'autre que l'absence de régression sur ce
   qui est déjà testé. Les comptes de défauts par lot, eux, ne sont pas rejouables : ils
   viennent du `CHANGELOG.md`.

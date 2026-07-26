@@ -78,6 +78,12 @@ pas la fréquence de contrôle par deux ; une clé absente d'un fichier importé
 réactive pas un fluide désactivé ; une remise à niveau au format douteux ne
 prolonge pas une attestation.
 
+⚠️ **Ce corollaire connaît une exception, et il faut la lire avant de se fier au
+reste : l'import n'examine pas le PRP.** Une valeur aberrante entrée par un
+fichier importé s'écrit telle quelle, et le PRP commande toutes les fréquences de
+contrôle. C'est un défaut déclaré et volontairement non corrigé — il est décrit à
+la fin de la famille A (§ 4) et au § 7 bis de `docs/POINTS-DE-FRICTION.md`.
+
 ---
 
 ## 3. Comment lire les tableaux
@@ -169,6 +175,34 @@ référencé par des écritures scellées qu'on ne réécrit pas.
 
 Les valeurs livrées d'origine, elles, viennent des migrations 21 et 22 :
 **une migration est immuable**, une correction future prend un nouveau numéro.
+
+### ⚠ La porte qui reste ouverte : l'import ne contrôle pas le PRP
+
+Tout ce qui précède décrit la porte de la **saisie**, et elle est gardée : le
+formulaire refuse un PRP absent ou négatif (`v8/js/modales/fluide-form.js:240-244`)
+et exige la source du PRP dès qu'il change (`:253-258`). **La porte de l'import
+n'est pas gardée.** `importerJSON` réécrit la table des fluides par un
+`INSERT OR REPLACE` qui reprend la valeur du fichier telle quelle, sans jamais
+l'examiner (`server/api.js:6285-6316`).
+
+Il faut le dire ici, et pas ailleurs, parce que **ce registre invoque la doctrine
+de la garde d'import pour le champ mitoyen sans dire que la porte du PRP, elle,
+reste ouverte** :
+« une clé absente ne vaut pas décision » a été appliquée au champ `actif`, pour
+qu'un export antérieur ne ressuscite pas un fluide désactivé
+(`server/api.js:6304-6312`), et le cas du PRP négatif affiché « impact FAIBLE » a
+été refermé (`CHANGELOG.md:897-900`). Les deux gardes sont posées **autour** du
+PRP ; le PRP lui-même n'en a aucune.
+
+Le comportement est **déclaré et volontairement non corrigé** : « l'import accepte
+toujours un PRP aberrant (comportement ANTÉRIEUR à cette brique : durcir l'import
+risquerait de bloquer la restauration d'une sauvegarde légitime) »
+(`CHANGELOG.md:905-907`). Le motif est réel. La conséquence l'est aussi : le PRP
+commande la conversion en tonnes équivalent CO₂, donc le niveau réglementaire, donc
+la fréquence de contrôle, donc les échéances et les alertes. **Une valeur fausse
+entrée par un import allège tout un parc en silence** — exactement le sens d'erreur
+que la règle générale du § 2 prétend interdire partout ailleurs. Détaillé au
+§ 7 bis de `docs/POINTS-DE-FRICTION.md`.
 
 ---
 
@@ -389,6 +423,28 @@ Si un compteur d'heures de fonctionnement devenait disponible un jour, le proxy
 J+1 pourrait être remplacé par la vraie règle des 24 h. C'est consigné comme
 hors périmètre, pas comme impossible (`docs/PLAN-P0-6-CYCLE-FUITE.md:80`).
 
+### ⚠ Une correction de fiche ne rejoue pas la règle : le défaut du statut figé
+
+Cette famille a un défaut connu, et il tient précisément à ce que la
+distinction fixe/mobile soit une **donnée corrigible à l'écran** pendant que le
+statut de la machine est une **colonne stockée**. Le statut n'est recalculé qu'à
+l'enregistrement ou à l'annulation d'un contrôle
+(`recalculerEffetsMachineApresAnnulation`, `server/api.js:7051-7079`) ;
+`updateMachine` (`server/api.js:3280`) écrit le type d'installation et le
+sous-type **sans jamais relancer ce calcul**. Une machine mobile listée dont la
+fuite a été close le jour même — l'exception de la ligne « mobiles listés »
+ci-dessus — puis repassée en FIXE par une simple correction de fiche, **garde son
+statut figé à `EN_SERVICE`**, alors que la règle du J+1, désormais applicable,
+dirait l'épisode encore ouvert.
+
+Déclaré et non corrigé au journal des versions, revue adversariale du lot P1-1 :
+« Consigné, non corrigé (antérieur à P1-1, hors périmètre) […] limitation
+d'architecture existante depuis la migration 27, à traiter avec le modèle de
+statut de P0-6, pas ici » (`CHANGELOG.md:805-809`). Détaillé au § 9 ter de
+`docs/POINTS-DE-FRICTION.md`. Tant qu'il n'est pas fermé, tout changement de
+FIXE / MOBILE sur une machine à historique de fuite appelle une relecture du
+dossier de fuite correspondant.
+
 ---
 
 ## 12. Famille I — Déclaration annuelle (11 rubriques par fluide)
@@ -422,7 +478,7 @@ conditions y **refusent** une validation. La liste complète et commentée est d
 
 | Ce qui est codé | Valeur retenue | Où (fichier:ligne) | Fondement | Degré de certitude | Risque si c'est faux |
 |---|---|---|---|---|---|
-| Le mode Officiel est **fermé** | `VERROU_LIVRAISON = true` | `v8/js/data/blocage-officiel.js:31` ; miroir `server/blocage-officiel.js:24` — **et nulle part ailleurs**, non modifiable par l'environnement | Refermé le 20/07 après un audit externe. Devait rouvrir après le visa (`docs/PLAN-LOTS-REGLEMENTAIRES-Q1-Q11.md:64` — le lot de réouverture était placé « après visa T3 » ; voir aussi `:218`). Le motif écrit dans la liste des conditions bloquantes (`docs/CONDITIONS-BLOCANTES-OFFICIEL.md:37`, condition 13) est autre : double signature réelle et empreinte renforcée non encore livrées — depuis livrées | — | **C'est le point que la décision de l'établissement doit trancher**, le visa n'arrivant pas |
+| Le mode Officiel est **fermé** | `VERROU_LIVRAISON = true` | `v8/js/data/blocage-officiel.js:31` ; miroir `server/blocage-officiel.js:24` — **et nulle part ailleurs**, non modifiable par l'environnement | Refermé le 20/07 après un audit externe. Devait rouvrir après le visa (`docs/PLAN-LOTS-REGLEMENTAIRES-Q1-Q11.md:64` — le lot L6 de réouverture y est placé « après visa T3 sur Q3/Q6 »). Le motif écrit dans la liste des conditions bloquantes (`docs/CONDITIONS-BLOCANTES-OFFICIEL.md:37`, condition 13) est autre : double signature réelle et empreinte renforcée non encore livrées — depuis livrées | — | **C'est le point que la décision de l'établissement doit trancher**, le visa n'arrivant pas |
 | Conditions 1 à 5 — établissement, balance conforme, détecteur conforme, balance matière sans écart, sauvegarde vérifiée récente | seuil de sauvegarde : 24 h par défaut | `v8/js/data/blocage-officiel.js:84-96` | Conditions du plan audit-proof, validées par Franck le 16/07 | DEDUIT | Une fiche officielle établie sans moyen de mesure vérifié |
 | Conditions 6 et 7 — intervenant désigné, actif, titulaire d'une habilitation active et valide | — | `v8/js/data/blocage-officiel.js:137-151` | Idem | DEDUIT | Fiche signée par une personne sans titre |
 | Condition 8 — complétude (machine, fluide, pesées avant/après **différentes**, cause de l'appoint) | — | `v8/js/data/blocage-officiel.js:101-135` | Idem | DEDUIT | Fiche officielle incomplète, donc inexploitable |
@@ -499,6 +555,96 @@ toucher à une seule écriture du passé.
 
 ---
 
+## 15 bis. Ce qui sort du logiciel pendant que le verrou est fermé
+
+Ce n'est pas un arbitrage réglementaire, et pourtant cette liste appartient à ce
+registre : elle est la **conséquence directe** de la famille J. Tant que le verrou
+du mode Officiel est fermé, tout ce que le logiciel produit est un document de
+formation — et **un seul de ces documents le dit sur lui-même**, la fiche CERFA
+(mention `v8/js/cerfa/generateur.js:93`, apposée au cadre 14 `:538`, filigrane
+`:754`). Les dix-neuf autres sortent sans marque.
+
+<a id="inventaire-documents-sans-marque"></a>
+
+> ### Inventaire des documents qui sortent sans marque distinctive
+>
+> *Établi le 26/07/2026. Cette liste est reprise **à l'identique** dans les quatre pièces du
+> dossier — `LIMITE-DE-RESPONSABILITE.md`, `docs/POINTS-DE-FRICTION.md`, le présent registre
+> et `docs/NOTE-DECISION-ETABLISSEMENT.md` — parce qu'elle porte une consigne : un document
+> absent de la liste échapperait à la consigne.*
+>
+> **Imprimés sur papier** (aperçu à l'écran, puis bouton « Imprimer ») :
+>
+> 1. **Fiche d'identification machine** — feuille A4 destinée à être **posée sur ou près de
+>    l'équipement**, avec une case « Date de pose » et une case « Signature technicien » à
+>    remplir à la main (`v8/js/documents/fiche-identification-machine.js:157`, `:161`,
+>    `:413`). C'est l'imprimé qui ressemble le plus à une pièce officielle.
+> 2. **Plaque F-Gas** (`v8/js/documents/plaque-fgas.js:341`).
+> 3. **Bon d'intervention** (`v8/js/documents/bon-intervention.js:476`).
+> 4. **Feuille de mise en service** (`v8/js/documents/feuille-mise-en-service.js:514`).
+> 5. **Impression du bilan annuel**, qui porte en toutes lettres la section « **Déclaration
+>    annuelle réglementaire — 11 rubriques** » (`v8/js/views/bilan.js:276-279` pour le titre,
+>    `:779` pour l'impression).
+> 6. **Audit en 5 minutes** — synthèse d'une page (`v8/js/views/bilan.js:684`, `:696`).
+> 7. **Balance de matière** (`v8/js/views/balance.js:576`).
+> 8. **Certificat de scellement** d'une archive — il porte l'empreinte SHA-256 et il est fait
+>    pour être imprimé et classé (`v8/js/documents/verificateur.js:468`, téléchargement
+>    `v8/js/documents/telecharger-dossier.js:78-88`).
+> 9. **Étiquette de machine** (`v8/js/documents/etiquette-machine.js:303`).
+> 10. **Étiquette de bouteille** (`v8/js/documents/etiquette-bouteille.js:401`).
+> 11. **Étiquette de client** (`v8/js/documents/etiquette-client.js:268`).
+> 12. **Étiquette d'outil** (`v8/js/documents/etiquette-outil.js:267`).
+>
+> **Fichiers téléchargés** :
+>
+> 13. **Dossier d'audit annuel**, archive ZIP scellée (`v8/js/documents/dossier-audit.js`).
+> 14. **Dossier machine**, archive ZIP scellée (`v8/js/documents/dossier-machine.js`).
+> 15. **Dossier client**, archive ZIP scellée (`v8/js/documents/dossier-client.js`).
+> 16. **Dossier de fuite**, archive ZIP scellée (`v8/js/documents/dossier-fuite.js`).
+> 17. **Vérificateur autonome** `99-VERIFICATEUR.html`, embarqué dans chacune de ces quatre
+>     archives (`v8/js/documents/verificateur.js`).
+> 18. **Exports CSV des tables du registre** (`v8/js/documents/exports.js`).
+> 19. **Export CSV de la déclaration annuelle** (`v8/js/views/bilan.js:282`, `:773`).
+>
+> **Une précision, pour éviter un contresens.** À l'intérieur des quatre archives, les
+> **fiches CERFA sont bien marquées** : elles sortent du même générateur
+> (`v8/js/cerfa/generateur.js:538`, `:754`). Ce qui ne l'est pas, c'est tout le reste de
+> l'archive — sommaire, fichiers CSV, chronologie, vérificateur — et le certificat qui
+> l'accompagne.
+>
+> **Une seule sortie est hors de cette consigne**, et elle est nommée pour que l'inventaire
+> soit complet : la **notice d'information des personnes** (protection des données), elle
+> aussi imprimable sans marque (`v8/js/views/rgpd.js:534`). Elle est **faite pour être
+> remise** aux élèves et aux familles, et nul ne peut la prendre pour une pièce du registre
+> des fluides.
+
+**Et le repère de mode ne survit pas à l'impression.** À l'écran, le seul repère
+permanent du mode est le badge de l'en-tête (`v8/index.html:58`, posé par
+`v8/js/app.js:628`, dans le `<header id="entete">` de `v8/index.html:50`). La
+feuille de style d'impression **masque cet en-tête** :
+`#entete { display: none !important; }` dans le bloc `@media print` de
+`v8/css/coquille.css:392-399` ; et les imprimés produits depuis une modale
+d'aperçu masquent **tout** ce qui n'est pas le document
+(`body * { visibility: hidden; }`, par exemple
+`v8/js/documents/fiche-identification-machine.js:348-352`). Défaut du logiciel,
+non corrigé, décrit au § 1 ter de `docs/POINTS-DE-FRICTION.md`.
+
+**Vérification par soi-même**, couvrant bien ce qui est affirmé — tout `v8/js/`,
+et non le seul dossier `documents/` :
+
+```
+grep -rn "MENTION_FORMATION\|MODE FORMATION\|NON OFFICIEL\|non officiel" v8/js/ | grep -v "^v8/js/cerfa/"
+```
+
+Elle ne rend rien. La contre-épreuve, la même commande sans le filtre, rend vingt
+lignes, toutes dans `v8/js/cerfa/`.
+
+**Tant que ce point n'est pas tranché, aucun des dix-neuf documents énumérés
+ci-dessus ne doit être remis à un tiers.** La décision appartient à
+l'établissement (`docs/NOTE-DECISION-ETABLISSEMENT.md`), pas à ce registre.
+
+---
+
 ## 16. Ce que ce registre ne couvre pas
 
 Par honnêteté, et parce qu'un inventaire qui prétend être complet ment :
@@ -563,4 +709,9 @@ quelle, pour qu'une réponse reçue se range sans traduction.*
   consigne au §17 avec sa date et son auteur, et le degré de certitude de la
   famille concernée est relevé en conséquence.
 
-*Registre établi le 26/07/2026 — dépôt `inerweb-fluide`, branche `main`.*
+*Registre établi le 26/07/2026 — dépôt `inerweb-fluide`, branche `main`. Dernier
+commit modifiant le code livré : `2ca4aa0`, à revérifier par
+`git log -1 --format=%h -- server v8 outils`. Le numéro du dernier commit du dépôt
+n'est pas écrit ici : ce registre et les trois autres pièces du dossier sont
+enregistrés **après** la version qu'ils décrivent, donc aucun numéro fixe ne
+tomberait juste — il se relève à la lecture par `git log -1 --format=%h`.*

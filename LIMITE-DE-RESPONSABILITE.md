@@ -1,6 +1,10 @@
 # Limite de responsabilité — inerWeb Fluide
 
-> **Logiciel** : inerWeb Fluide 8.0.0-dev, état du dépôt au commit `1cd457a` (26/07/2026).
+> **Logiciel** : inerWeb Fluide 8.0.0-dev. **Dernier commit modifiant le code livré** :
+> `2ca4aa0` du 26/07/2026 — à revérifier par `git log -1 --format=%h -- server v8 outils`.
+> Le numéro du dernier commit du dépôt **n'est pas écrit ici** : ce document et ses annexes
+> sont enregistrés **après** la version qu'ils décrivent, donc aucun numéro fixe ne tomberait
+> juste. Il se relève à la lecture par `git log -1 --format=%h`.
 > **Document établi le 26/07/2026**, à relire à chaque évolution du logiciel.
 > Écrit pour trois lecteurs : le chef d'établissement, un agent de contrôle, un futur
 > utilisateur. Chaque affirmation technique cite le fichier et la ligne qui la portent, pour
@@ -30,13 +34,15 @@ posera : **seule la fiche CERFA porte une marque distinctive**. La mention « MO
 — DOCUMENT NON OFFICIEL » n'existe qu'à un seul endroit du dépôt
 (`v8/js/cerfa/generateur.js:93`) ; elle est apposée au cadre 14 de la fiche
 (`v8/js/cerfa/generateur.js:538`) et doublée d'un filigrane sur le rendu (`:754`). **Tous les
-autres documents sortent sans marque** : aucun module de `v8/js/documents/` n'emploie le mot
-« FORMATION ». C'est une limite réelle, pas une nuance de rédaction : elle est décrite au
-§ 2 g), et elle appelle une décision.
+autres documents sortent sans marque**, et il y en a dix-neuf : ils sont énumérés un par un
+au § 2 g). C'est une limite réelle, pas une nuance de rédaction, et elle appelle une décision.
 
 Vérification par soi-même : `node outils/lancer-tests.mjs --tout` (filet complet) et
 `node server/test-securite-negative.mjs` (les refus, réellement exécutés contre un serveur,
-sur un port et une base jetables).
+sur un port et une base jetables). Le filet donne « TOUT VERT — 121 exécutions » ; sa durée
+est **de l'ordre de 100 secondes** et varie d'une exécution à l'autre (96,8 s, 97,9 s et
+98,8 s à trois mesures du 26/07/2026 sur la même version) : elle ne se publie pas au
+centième, c'est un ordre de grandeur.
 
 ## 2. Ce que le logiciel ne garantit PAS
 
@@ -58,7 +64,10 @@ remplacer ce fichier n'est arrêté par rien**. Le témoin d'intégrité du jour
 recalcule** — l'algorithme est dans le code, et le code est diffusé : il arrête une purge
 faite à la main, pas quelqu'un qui régénère le témoin après coup (`CHANGELOG.md:575-578`,
 détaillé dans `docs/POINTS-DE-FRICTION.md` § 9). Il n'existe **ni ancrage chez un tiers, ni
-horodatage qualifié**.
+horodatage qualifié**. *(Trois lignes sous cette référence, le même journal en déclare un
+autre, sans effet probant : le bouton d'export de sauvegarde reste offert à l'écran à des
+rôles qui n'y ont plus droit, le serveur refusant en 403. Il est décrit au § 13 de
+`docs/POINTS-DE-FRICTION.md` — mieux vaut le lire ici que le découvrir là-bas.)*
 
 **c) La disponibilité.** Le logiciel tourne sur **un seul poste**, sans redondance. Une panne
 rend le registre indisponible jusqu'à restauration d'une sauvegarde. Faire les sauvegardes,
@@ -81,17 +90,99 @@ conforme. Ce qui est fait, par qui, avec quelle aptitude et quel matériel ne d�
 
 **g) Que tout document sorti du logiciel se distingue d'un document officiel.** Seule la
 fiche CERFA porte la mention « MODE FORMATION — DOCUMENT NON OFFICIEL » et son filigrane
-(`v8/js/cerfa/generateur.js:93`, `:538`, `:754`). Le bon d'intervention, le dossier machine,
-le dossier client, le dossier de fuite, le dossier d'audit, la plaque F-Gas, les étiquettes,
-la feuille de mise en service et les exports sortent **sans aucune marque distinctive** : la
-chaîne « FORMATION » n'apparaît dans aucun module de `v8/js/documents/` (vérification :
-`grep -r FORMATION v8/js/documents/`). Un document produit pendant un cours ressemble donc
-à un document produit pour de bon.
+(`v8/js/cerfa/generateur.js:93`, `:538`, `:754`). Un document produit pendant un cours
+ressemble donc à un document produit pour de bon. Voici la liste, en entier.
+
+<a id="inventaire-documents-sans-marque"></a>
+
+> ### Inventaire des documents qui sortent sans marque distinctive
+>
+> *Établi le 26/07/2026. Cette liste est reprise **à l'identique** dans les quatre pièces du
+> dossier — la présente limite, `docs/POINTS-DE-FRICTION.md`,
+> `docs/REGISTRE-DES-ARBITRAGES.md` et `docs/NOTE-DECISION-ETABLISSEMENT.md` — parce qu'elle
+> porte une consigne : un document absent de la liste échapperait à la consigne.*
+>
+> **Imprimés sur papier** (aperçu à l'écran, puis bouton « Imprimer ») :
+>
+> 1. **Fiche d'identification machine** — feuille A4 destinée à être **posée sur ou près de
+>    l'équipement**, avec une case « Date de pose » et une case « Signature technicien » à
+>    remplir à la main (`v8/js/documents/fiche-identification-machine.js:157`, `:161`,
+>    `:413`). C'est l'imprimé qui ressemble le plus à une pièce officielle.
+> 2. **Plaque F-Gas** (`v8/js/documents/plaque-fgas.js:341`).
+> 3. **Bon d'intervention** (`v8/js/documents/bon-intervention.js:476`).
+> 4. **Feuille de mise en service** (`v8/js/documents/feuille-mise-en-service.js:514`).
+> 5. **Impression du bilan annuel**, qui porte en toutes lettres la section « **Déclaration
+>    annuelle réglementaire — 11 rubriques** » (`v8/js/views/bilan.js:276-279` pour le titre,
+>    `:779` pour l'impression).
+> 6. **Audit en 5 minutes** — synthèse d'une page (`v8/js/views/bilan.js:684`, `:696`).
+> 7. **Balance de matière** (`v8/js/views/balance.js:576`).
+> 8. **Certificat de scellement** d'une archive — il porte l'empreinte SHA-256 et il est fait
+>    pour être imprimé et classé (`v8/js/documents/verificateur.js:468`, téléchargement
+>    `v8/js/documents/telecharger-dossier.js:78-88`).
+> 9. **Étiquette de machine** (`v8/js/documents/etiquette-machine.js:303`).
+> 10. **Étiquette de bouteille** (`v8/js/documents/etiquette-bouteille.js:401`).
+> 11. **Étiquette de client** (`v8/js/documents/etiquette-client.js:268`).
+> 12. **Étiquette d'outil** (`v8/js/documents/etiquette-outil.js:267`).
+>
+> **Fichiers téléchargés** :
+>
+> 13. **Dossier d'audit annuel**, archive ZIP scellée (`v8/js/documents/dossier-audit.js`).
+> 14. **Dossier machine**, archive ZIP scellée (`v8/js/documents/dossier-machine.js`).
+> 15. **Dossier client**, archive ZIP scellée (`v8/js/documents/dossier-client.js`).
+> 16. **Dossier de fuite**, archive ZIP scellée (`v8/js/documents/dossier-fuite.js`).
+> 17. **Vérificateur autonome** `99-VERIFICATEUR.html`, embarqué dans chacune de ces quatre
+>     archives (`v8/js/documents/verificateur.js`).
+> 18. **Exports CSV des tables du registre** (`v8/js/documents/exports.js`).
+> 19. **Export CSV de la déclaration annuelle** (`v8/js/views/bilan.js:282`, `:773`).
+>
+> **Une précision, pour éviter un contresens.** À l'intérieur des quatre archives, les
+> **fiches CERFA sont bien marquées** : elles sortent du même générateur
+> (`v8/js/cerfa/generateur.js:538`, `:754`). Ce qui ne l'est pas, c'est tout le reste de
+> l'archive — sommaire, fichiers CSV, chronologie, vérificateur — et le certificat qui
+> l'accompagne.
+>
+> **Une seule sortie est hors de cette consigne**, et elle est nommée pour que l'inventaire
+> soit complet : la **notice d'information des personnes** (protection des données), elle
+> aussi imprimable sans marque (`v8/js/views/rgpd.js:534`). Elle est **faite pour être
+> remise** aux élèves et aux familles, et nul ne peut la prendre pour une pièce du registre
+> des fluides.
+
+**Et le repère de mode disparaît justement à l'impression.** À l'écran, le seul repère
+permanent du mode est le badge de l'en-tête, rempli à « DÉMO / FORMATION » ou
+« LOCAL / FORMATION » (`v8/index.html:58`, posé par `v8/js/app.js:628`, à l'intérieur du
+`<header id="entete">` de `v8/index.html:50`). Or la feuille de style d'impression **masque
+cet en-tête** : `#entete { display: none !important; }` dans le bloc `@media print` de
+`v8/css/coquille.css:392-399`. Les imprimés produits depuis une modale d'aperçu vont plus
+loin encore : ils masquent **tout** ce qui n'est pas le document lui-même
+(`body * { visibility: hidden; }`, par exemple
+`v8/js/documents/fiche-identification-machine.js:348-352` ou `v8/js/views/bilan.js:498-500`).
+Autrement dit : **le repère de mode existe à l'écran et disparaît sur le papier.** C'est un
+défaut du logiciel, pas une imprécision de rédaction ; il n'est pas corrigé, et il appelle
+une décision au même titre que l'absence de marque.
+
+**Vérification par soi-même**, et cette commande couvre bien ce qui est affirmé :
+
+```
+grep -rn "MENTION_FORMATION\|MODE FORMATION\|NON OFFICIEL\|non officiel" v8/js/ | grep -v "^v8/js/cerfa/"
+```
+
+Elle ne rend **rien** : hors du générateur CERFA, aucun module de `v8/js/` — ni
+`documents/`, ni `views/` — n'écrit de mention de non-officialité. La contre-épreuve est la
+même commande sans le filtre : elle rend vingt lignes, toutes dans `v8/js/cerfa/`. Pour
+retrouver les imprimables eux-mêmes : `grep -rn "window.print()" v8/js/ | grep -v "test-"`
+rend quinze lignes, dont trois sont des commentaires — donc **douze** déclencheurs
+d'impression réels. Ce sont les onze premiers imprimés de l'inventaire (n° 1 à 7 et 9 à 12),
+plus la notice de protection des personnes. Le douzième de la liste, le **certificat de
+scellement** (n° 8), n'y figure pas : c'est une page HTML téléchargée, puis imprimée depuis
+le navigateur. *(Une version antérieure de ce document proposait
+`grep -r FORMATION v8/js/documents/` : cette commande était trop étroite, des imprimables
+vivent aussi dans `v8/js/views/`.)*
 
 C'est **un défaut du logiciel**, et il appelle une décision de l'établissement : soit marquer
-tout document produit hors mode Officiel, soit encadrer par consigne écrite la sortie de ces
-documents hors de l'atelier. Tant que ce n'est pas tranché, ces documents ne doivent pas être
-remis à un tiers.
+tout document produit hors mode Officiel — y compris sur le papier, ce qui suppose de
+traiter la disparition du badge à l'impression —, soit encadrer par consigne écrite la sortie
+de ces documents hors de l'atelier. Tant que ce n'est pas tranché, **aucun des dix-neuf
+documents énumérés ci-dessus ne doit être remis à un tiers.**
 
 ## 3. Qui reste responsable
 
