@@ -27,7 +27,7 @@
 // sans l'autre.
 // ============================================================
 
-import { verifierStructurePng, analyseEncre } from './png.js';
+import { lireImagePng } from './png.js';
 
 /** Les deux rôles de signature, dans l'ordre IMPOSÉ du parcours. */
 export const ROLES_SIGNATURE = ['TECHNICIEN', 'DETENTEUR'];
@@ -93,15 +93,20 @@ export function verifierImageSignature(octets) {
   if (!octets || octets.length === 0) return MSG_TRACE_ABSENT;
   // Plafond AVANT décodage : on ne décode pas ce qu'on refuse de tenir.
   if (octets.length > SIGNATURE_TAILLE_MAX) return MSG_TROP_GROSSE;
-  if (!verifierStructurePng(octets).ok) return MSG_PAS_PNG;
+  // UN SEUL décodage pour les deux questions (revue du 25/07, MINEUR 6 :
+  // le fichier était relu deux fois sur le chemin qui juge les
+  // signatures). lireImagePng ne reçoit aucune valeur de l'appelant :
+  // la structure rendue est toujours celle de CES octets-là.
+  const { structure, encre } = lireImagePng(octets);
+  if (!structure.ok) return MSG_PAS_PNG;
   // Le VIDE ABSOLU, et rien de plus : une image rigoureusement uniforme
   // n'a rien dessus — c'est le seul cas où le logiciel disait
   // « signature valide » sur une case blanche. AUCUN seuil de densité,
   // aucun pourcentage, aucune boîte englobante (décision du
   // propriétaire du 25/07 : c'est le signataire qui juge son tracé) —
   // une griffure de deux pixels passe. Et sur un format que l'on ne
-  // sait pas relire, analyseEncre répond INDETERMINABLE : on ne conclut
+  // sait pas relire, la réponse est INDETERMINABLE : on ne conclut
   // JAMAIS au vide sur un doute.
-  if (analyseEncre(octets) === 'VIDE') return MSG_ZONE_VIERGE;
+  if (encre === 'VIDE') return MSG_ZONE_VIERGE;
   return null;
 }

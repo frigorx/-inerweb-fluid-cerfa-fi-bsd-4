@@ -496,6 +496,46 @@ function analyse(octets) {
 }
 
 // ============================================================
+// 4 bis. UN SEUL DÉCODAGE POUR LES DEUX QUESTIONS (revue du 25/07,
+// MINEUR 6). verifierImageSignature posait les deux questions l'une
+// après l'autre : le fichier était donc relu deux fois sur le chemin
+// qui juge les signatures. lireImagePng les pose en un passage — et il
+// doit rendre EXACTEMENT ce que rendent les deux fonctions séparées,
+// sans quoi le raccourci serait un changement de comportement déguisé.
+// ============================================================
+{
+  const uni = construirePng({ largeur: 30, hauteur: 12,
+    pixels: pixelsUnis(30, 12, [255, 255, 255, 255]) });
+  const trace = (() => {
+    const p = pixelsUnis(30, 12, [255, 255, 255, 255]);
+    p[4 * 77] = 3;
+    return construirePng({ largeur: 30, hauteur: 12, pixels: p });
+  })();
+  const bloc = Buffer.alloc(2348, 0x2e);
+  EN_TETE.copy(bloc, 0);
+  const entrelace = construirePng({ largeur: 8, hauteur: 8,
+    entrelacement: 1, pixels: pixelsUnis(8, 8, [1, 2, 3, 4]) });
+  const CAS_UN_PASSAGE = [null, new Uint8Array(0), new Uint8Array([1, 2, 3]),
+    bloc, uni, trace, entrelace,
+    Buffer.concat([trace, Buffer.from('après IEND')])];
+  let equivalents = 0;
+  for (const cas of CAS_UN_PASSAGE) {
+    for (const mod of [moduleEsm, miroir]) {
+      const lu = mod.lireImagePng(cas);
+      const attenduStructure = mod.verifierStructurePng(cas);
+      const attenduEncre = mod.analyseEncre(cas);
+      if (lu.structure.ok === attenduStructure.ok
+          && lu.structure.motif === attenduStructure.motif
+          && lu.encre === attenduEncre) equivalents += 1;
+    }
+  }
+  verifier(`lireImagePng = verifierStructurePng + analyseEncre, sur `
+    + `${CAS_UN_PASSAGE.length} cas × 2 modules`,
+  equivalents === CAS_UN_PASSAGE.length * 2,
+  `${equivalents} / ${CAS_UN_PASSAGE.length * 2}`);
+}
+
+// ============================================================
 // 5. LES IMAGES VISUELLEMENT BLANCHES (revue adversariale du 25/07)
 //
 // Le module comparait les octets BRUTS, canal par canal — il répondait

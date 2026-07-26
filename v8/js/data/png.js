@@ -461,7 +461,26 @@ function paeth(a, b, c) {
  * @returns {'ENCRE'|'VIDE'|'INDETERMINABLE'}
  */
 function analyseEncre(octets) {
+  return encreDeStructure(octets, verifierStructurePng(octets));
+}
+
+/**
+ * Les DEUX questions du module en UN SEUL passage : est-ce un PNG, et
+ * y a-t-il quelque chose dessus. Elles partagent le même décodage —
+ * les poser l'une après l'autre faisait relire le fichier deux fois
+ * sur le chemin qui juge les signatures (revue du 25/07, MINEUR 6).
+ * Aucune valeur n'est reçue de l'appelant : la structure rendue est
+ * TOUJOURS celle des octets fournis, on ne peut pas lui mentir.
+ * @param {?Uint8Array} octets contenu binaire d'un PNG
+ * @returns {{structure: object, encre: 'ENCRE'|'VIDE'|'INDETERMINABLE'}}
+ */
+function lireImagePng(octets) {
   const structure = verifierStructurePng(octets);
+  return { structure, encre: encreDeStructure(octets, structure) };
+}
+
+/** Le corps de l'analyse d'encre, sur une structure DÉJÀ lue. */
+function encreDeStructure(octets, structure) {
   if (!structure.ok) return 'INDETERMINABLE';
   const { largeur, hauteur, profondeur, entrelacement, canaux, typeCouleur } =
     structure.entete;
@@ -599,5 +618,6 @@ export {
   MAGIQUES_PNG,
   SURFACE_MAX_OCTETS,
   verifierStructurePng,
-  analyseEncre
+  analyseEncre,
+  lireImagePng
 };

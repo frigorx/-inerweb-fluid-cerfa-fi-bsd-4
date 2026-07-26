@@ -193,6 +193,29 @@ function blocQuiSeFaitPasserPourPng(taille = 2348) {
   verifier('DÉCISION D2 : aucun seuil d’encre — un SEUL pixel différent suffit',
     miroir.verifierImageSignature(pngUnSeulPixel()) === null &&
     moduleEsm.verifierImageSignature(pngUnSeulPixel()) === null);
+  // REVUE DU 25/07 (MINEUR 6) — UN SEUL DÉCODAGE. verifierImageSignature
+  // appelait verifierStructurePng PUIS analyseEncre, qui relit le
+  // fichier : le PNG était décodé deux fois sur le chemin qui juge les
+  // signatures. Les deux miroirs passent désormais par lireImagePng, qui
+  // pose les deux questions en un passage. Le test lit la SOURCE : c'est
+  // le seul moyen de prouver le nombre de lectures sans instrumenter du
+  // code de production (les verdicts, eux, sont figés juste au-dessus).
+  {
+    const { readFileSync } = await import('node:fs');
+    let conformes = 0;
+    for (const chemin of ['../v8/js/data/signatures-mouvement.js',
+      './signatures-mouvement.js']) {
+      const source = readFileSync(new URL(chemin, import.meta.url), 'utf8');
+      const corps = source.slice(source.indexOf('function verifierImageSignature'));
+      if (corps.includes('lireImagePng(octets)')
+          && !corps.includes('verifierStructurePng(')
+          && !corps.includes('analyseEncre(')) conformes += 1;
+    }
+    verifier('MINEUR 6 : les DEUX miroirs décodent le PNG UNE SEULE fois'
+      + ' (lireImagePng, jamais les deux fonctions séparées)',
+    conformes === 2, `${conformes} / 2`);
+  }
+
   // Lot B3 (brique 2) : l'image est DÉCODÉE, plus reconnue à 8 octets.
   verifier('A04 : le bloc de 2 348 o aux bons octets magiques est REFUSÉ',
     miroir.verifierImageSignature(blocQuiSeFaitPasserPourPng())
