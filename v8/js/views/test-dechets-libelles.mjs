@@ -301,5 +301,93 @@ console.log('\n--- F. Le rendu n’enchaîne plus les appels en série ---');
     interroges.length === attendus, `${interroges.length} pour ${attendus}`);
 }
 
+// ============================================================
+// G. Revue B2 (important 4) — LA LIMITE DU CONTRÔLE EST DITE
+//
+// La déclaration signale les issues attestées sur un suivi SANS pièce
+// jointe. Le contrôle s'arrête à la PRÉSENCE : n'importe quel fichier
+// l'éteint. La revue l'a tiré (destruction attestée sur une installation
+// inventée, certificat null, photo d'un pixel jointe → anomalie levée).
+// Le message d'anomalie dit ce qu'il constate ; c'est son SILENCE qui
+// trompait — sans mention, l'absence d'anomalie se lit « dossier prouvé ».
+// On tire donc les DEUX : l'attaque, et la présence de la mention là où
+// le résultat se lit.
+// ============================================================
+console.log('\n--- G. La limite du contrôle des pièces est dite ---');
+
+{
+  const { MENTION_PIECE_NON_PROBANTE } =
+    await import('../data/remise-filiere.js');
+
+  // 1. L'attaque de la revue, rejouée : une PHOTO éteint l'anomalie.
+  const FLUIDE_G = (await store.getFluides())[0].code;
+  const bG = await store.createBouteille({
+    type: 'RECUPERATION', fluide: FLUIDE_G,
+    etatFluide: 'RECUPERE', tareKg: 10, masseBruteKg: 18,
+    contenanceMaxKg: 25, proprietaire: 'Lycée'
+  });
+  await store.deciderFluideRecupere(bG.id, 'DECHET', 'testeur');
+  const suiviG = await store.createBsff({
+    bouteilleId: bG.id, transporteur: 'Collecteur agréé',
+    installationDestination: 'Installation inventée',
+    masseRemiseKg: 8, dateRemise: '2026-03-02', operateur: 'testeur'
+  });
+  await store.attesterIssueBsff(suiviG.id, {
+    issueTraitement: 'DESTRUCTION',
+    installationTraitement: 'Installation inventée',
+    certificatTraitement: null, operateur: 'testeur'
+  });
+
+  // D'autres sections ont pu laisser des suivis du même fluide : on suit
+  // la MASSE de la ligne, pas la simple présence de l'anomalie.
+  const anomalieDe = async () => {
+    const decl = await store.getDeclarationAnnuelle(2026);
+    return (decl.anomalies || []).find(
+      (a) => a.code === 'BSFF_ISSUE_SANS_PIECE' && a.fluide === FLUIDE_G);
+  };
+  const avant = await anomalieDe();
+  verifier('sans aucune pièce : l’anomalie « issue sans pièce » est levée, '
+    + 'nos 8 kg compris',
+  Boolean(avant) && avant.masseKg >= 8,
+  JSON.stringify(avant ?? null).slice(0, 140));
+  verifier('… et l’anomalie dit ce qu’elle CONSTATE (aucune pièce jointe), '
+    + 'sans prétendre qu’une pièce prouverait l’issue',
+  Boolean(avant) && avant.message.includes('AUCUNE pièce jointe')
+    && avant.message.includes('reste déclarée'), String(avant?.message));
+
+  // Une PHOTO DE PESÉE — pas un certificat — suffit à l'éteindre.
+  const PNG_1PX = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmM'
+    + 'IQAAAABJRU5ErkJggg==', 'base64').toString('base64');
+  await store.ajouterPieceJointe({
+    entiteType: 'BSFF', entiteId: suiviG.id, categorie: 'PHOTO',
+    nomFichier: 'pesee.png', mimeType: 'image/png', base64: PNG_1PX
+  });
+  const apres = await anomalieDe();
+  const masseApres = apres ? apres.masseKg : 0;
+  verifier('⭐ une simple PHOTO retire nos 8 kg de l’anomalie — le logiciel '
+    + 'COMPTE les pièces, il ne les lit pas (attaque de la revue, rejouée)',
+  Math.abs((avant.masseKg - masseApres) - 8) < 1e-9,
+  `${avant.masseKg} kg puis ${masseApres} kg`);
+
+  // 2. Puisque le contrôle ne vaut que ça, il le DIT, là où on le lit.
+  const conteneurG = document.createElement('div');
+  await render(conteneurG, ctx);
+  verifier('l’écran Déchets porte la mention de la limite du contrôle',
+    conteneurG.innerHTML.includes('vérifie qu’une pièce est JOINTE'),
+    'vue Déchets');
+
+  const { render: renderBilan } = await import('./bilan.js');
+  const conteneurBilan = document.createElement('div');
+  await renderBilan(conteneurBilan, ctx);
+  verifier('la légende de la déclaration annuelle la porte aussi',
+    conteneurBilan.innerHTML.includes('vérifie qu’une pièce est JOINTE'),
+    'vue Bilan');
+
+  verifier('les deux écrans portent la MÊME mention canonique',
+    MENTION_PIECE_NON_PROBANTE.includes('ne vaut pas dossier complet'),
+    MENTION_PIECE_NON_PROBANTE);
+}
+
 console.log(`\n${nbOk} OK, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);

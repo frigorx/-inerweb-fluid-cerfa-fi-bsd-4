@@ -13,6 +13,7 @@
 import { enteteVue, tableau, modale, toast, ICONES } from './communs.js';
 import { esc, fmtKg, fmtDate, fmtNombre } from '../core/utils.js';
 import { genererDossierAudit } from '../documents/dossier-audit.js';
+import { MENTION_PIECE_NON_PROBANTE } from '../data/remise-filiere.js';
 
 export const titre = 'Bilan annuel';
 
@@ -288,7 +289,7 @@ function sectionDeclaration(declaration) {
     + 'sans issue attestée n’est jamais comptée en destruction. Une issue '
     + 'attestée sur un suivi sans aucune pièce jointe reste comptée, mais '
     + 'elle est signalée en anomalie : la pièce est à produire en cas de '
-    + 'contrôle. Rubrique 7 (recyclage sous '
+    + 'contrôle. ' + esc(MENTION_PIECE_NON_PROBANTE) + ' Rubrique 7 (recyclage sous '
     + 'responsabilité propre) : sans objet ici — le recyclé / régénéré s’achète '
     + 'certifié.</p>'
     + '</section>';

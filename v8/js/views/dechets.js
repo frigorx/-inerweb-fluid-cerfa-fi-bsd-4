@@ -13,7 +13,8 @@ import { esc, fmtNombre, fmtDate } from '../core/utils.js';
 import { ouvrirFormBsff } from '../modales/bsff-form.js';
 import { zonePiecesJointes } from '../composants/pieces-jointes.js';
 import {
-  LIBELLE_SUIVI, MENTION_BORDEREAU_OFFICIEL, LIBELLE_BORDEREAU_EXTERNE
+  LIBELLE_SUIVI, MENTION_BORDEREAU_OFFICIEL, LIBELLE_BORDEREAU_EXTERNE,
+  MENTION_PIECE_NON_PROBANTE
 } from '../data/remise-filiere.js';
 
 export const titre = 'Déchets / remise en filière';
@@ -234,7 +235,10 @@ function ouvrirAttestationIssue(ctx, bsff) {
     + 'déclaration annuelle. Si aucune <strong>pièce justificative</strong> '
     + 'n’est jointe à ce suivi (certificat de l’installation, bordereau '
     + 'officiel), la déclaration signalera une anomalie : le justificatif '
-    + 'reste à produire en cas de contrôle.</span>'
+    + 'reste à produire en cas de contrôle. '
+    // ⚠ Revue B2 (important 4) : ne JAMAIS laisser croire qu’une pièce
+    // jointe prouve l’issue — le logiciel les COMPTE, il ne les lit pas.
+    + esc(MENTION_PIECE_NON_PROBANTE) + '</span>'
     + '</div>'
     + '<label class="champ-label">Issue de traitement'
     + '<select id="issue-select">' + opts + '</select></label>'
@@ -449,9 +453,13 @@ export async function render(conteneur, ctx) {
   const mentionOfficielle = '<div class="bandeau-avertissement">' + ICONES.alerte
     + '<span>' + esc(MENTION_BORDEREAU_OFFICIEL) + '</span></div>';
 
+  // ⚠ Revue B2 (important 4) — la colonne « Traitement final » signale les
+  // suivis SANS pièce jointe. Son silence ne doit pas se lire « dossier
+  // prouvé » : le logiciel compte les pièces, il ne les lit pas.
   const encartAide = '<div class="encart-aide">'
     + 'Récupération → décision (réutilisable / à analyser / déchet) → '
     + 'suivi interne de remise en filière → enlèvement → sortie du stock.'
+    + '<br>' + esc(MENTION_PIECE_NON_PROBANTE)
     + '</div>';
 
   const sectionRecuperation = '<section class="carte">'

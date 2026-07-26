@@ -40,6 +40,26 @@ export const MENTION_BORDEREAU_OFFICIEL =
 export const LIBELLE_BORDEREAU_EXTERNE =
   'N° du bordereau dématérialisé officiel';
 
+/**
+ * LA LIMITE DU CONTRÔLE, DITE À VOIX HAUTE (revue B2, important 4).
+ *
+ * La déclaration annuelle signale en anomalie les issues de traitement
+ * attestées sur un suivi qui ne porte AUCUNE pièce jointe. Le contrôle
+ * s'arrête là : il compte les pièces, il ne les lit pas. N'IMPORTE QUEL
+ * fichier l'éteint — une photo de pesée y suffit (tiré par la revue :
+ * destruction attestée sur une installation inventée, certificat null,
+ * PNG d'un pixel joint, plus aucune anomalie).
+ *
+ * Le message d'anomalie, lui, dit exactement ce qu'il constate. Le risque
+ * restant est dans son SILENCE : sans cette mention, l'absence d'anomalie
+ * se lit « dossier prouvé ». Elle est donc affichée EN PERMANENCE, à côté
+ * du compte des pièces, jamais seulement quand ça va mal.
+ */
+export const MENTION_PIECE_NON_PROBANTE =
+  'Le logiciel vérifie qu’une pièce est JOINTE, jamais ce qu’elle vaut : '
+  + 'aucune pièce ne prouve à elle seule l’issue déclarée, et l’absence '
+  + 'd’anomalie ne vaut pas dossier complet.';
+
 /* ============================================================
    B2-3 — FORME ET UNICITÉ DU NUMÉRO INTERNE
    Le logiciel est LOCAL par doctrine : il ne peut pas valider en
