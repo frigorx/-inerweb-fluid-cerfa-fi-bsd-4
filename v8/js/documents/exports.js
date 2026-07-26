@@ -3,7 +3,8 @@
 // inerWeb Fluide v8 — exports CSV des tables (Phase D)
 // Produit les fichiers CSV du registre pour une année donnée :
 // personnel, outillage, bouteilles, machines, mouvements,
-// contrôles, balance matière, BSFF, journal d'audit.
+// contrôles, balance matière, suivi de remise en filière, journal
+// d'audit.
 // Séparateur « ; », BOM UTF-8, fin de ligne CRLF, en-têtes en
 // français, dates fr (JJ/MM/AAAA), nombres en virgule décimale.
 // Aucune dépendance externe. Module ES, testable sous Node.
@@ -183,7 +184,10 @@ function csvBouteilles(bouteilles) {
     'Tare (kg)', 'Masse brute (kg)', 'Masse nette (kg)',
     'Masse à l’entrée (kg)', 'Contenance max (kg)', 'Propriétaire', 'Lot',
     'Date d’entrée', 'Date de pesée', 'Statut', 'Décision fluide',
-    'Décidé par', 'Date de décision', 'Limite de garde', 'N° BSFF'];
+    // ⚠ Lot B2 : cette colonne porte le numéro du SUIVI INTERNE
+    // (b.numBsff), pas un numéro de bordereau officiel — dans le MÊME zip
+    // scellé dont le sommaire affirme que ce suivi n'en est pas un.
+    'Décidé par', 'Date de décision', 'Limite de garde', 'N° suivi interne'];
   const lignes = bouteilles.map((b) => [
     b.code, b.numeroReel, b.type, b.fluide, b.etatFluide,
     nb(b.tareKg), nb(b.masseBruteKg), nb(b.masseNetteKg),
@@ -422,14 +426,18 @@ function csvBalance(balance) {
   return construireCsv(entetes, lignes);
 }
 
+// Lot B2 — l'en-tête du CSV du dossier d'audit dit ce que la table EST :
+// un suivi INTERNE, pas le bordereau dématérialisé obligatoire.
 function csvBsff(bsff) {
-  const entetes = ['N° BSFF', 'Bouteille', 'Fluide', 'Masse remise (kg)',
+  const entetes = ['N° suivi interne', 'N° bordereau officiel', 'Bouteille',
+    'Fluide', 'Masse remise (kg)',
     'Transporteur', 'Installation de destination', 'Date de remise',
-    // P0-8 : issue de traitement final attestée (BSFF ≠ destruction).
+    // P0-8 : issue de traitement final attestée (remise ≠ destruction).
     'Traitement final', 'Installation de traitement', 'Certificat',
     'Date de traitement'];
   const lignes = bsff.map((b) => [
-    b.numeroBsff, b.bouteilleCode, b.fluide, nb(b.masseRemiseKg),
+    b.numeroBsff, b.bordereauExterne || 'non reporté',
+    b.bouteilleCode, b.fluide, nb(b.masseRemiseKg),
     b.transporteur, b.installationDestination, fmtDate(b.dateRemise),
     b.issueTraitement || 'non attesté', b.installationTraitement || '',
     b.certificatTraitement || '',
@@ -571,7 +579,9 @@ export async function toutesLesTables(store, annee) {
     { nom: 'mouvements.csv', contenu: csvMouvements(mouvements, annee, personnel) },
     { nom: 'controles.csv', contenu: csvControles(controles, annee) },
     { nom: 'balance-matiere.csv', contenu: csvBalance(balance) },
-    { nom: 'bsff.csv', contenu: csvBsff(bsff) },
+    // Lot B2 : le fichier dit ce qu'il est — un SUIVI INTERNE de remise
+    // en filière, pas le bordereau dématérialisé obligatoire.
+    { nom: 'suivi-remise-filiere.csv', contenu: csvBsff(bsff) },
     { nom: 'cessions.csv', contenu: csvCessions(cessions) },
     // P0-8 : la déclaration annuelle réglementaire au dossier scellé.
     { nom: `declaration-annuelle-${annee}.csv`,

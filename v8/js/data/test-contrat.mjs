@@ -964,32 +964,35 @@ verifier('décision DECHET : statut, état du fluide et délai de garde posés',
 
 await verifierRejet('createBsff refuse une bouteille qui n’est pas un déchet',
   store.createBsff({ bouteilleId: b1.id, numeroBsff: 'BSFF-X', masseRemiseKg: 1 }));
-// Préfixe UNIQUE par exécution : la suite doit rester rejouable contre
-// un store persistant (les numéros d'une passe précédente subsistent).
-const PREFIXE_BSFF = `BSFF-CONTRAT-${Date.now().toString(36).toUpperCase()}`;
+// Lot B2 : le numéro du suivi INTERNE est attribué par le logiciel
+// (SIF-AAAA-NNNN, unique) — la suite reste rejouable contre un store
+// persistant sans préfixe fabriqué, et l'unicité n'est plus notre affaire.
 const bsff1 = await store.createBsff({
-  bouteilleId: bR.id, numeroBsff: `${PREFIXE_BSFF}-001`,
+  bouteilleId: bR.id,
   transporteur: 'Transports du Sud', installationDestination: 'Récupfluides SA',
   masseRemiseKg: 0.5
 });
+verifier('createBsff attribue un numéro de suivi interne bien formé',
+  /^SIF-\d{4}-\d{4}$/.test(bsff1.numeroBsff), String(bsff1.numeroBsff));
 verifier('remise PARTIELLE : le reliquat reste en déchet (1,0 kg)',
   PROCHE((await store.getBouteilles()).find((b) => b.id === bR.id).masseNetteKg, 1)
   && (await store.getBouteilles()).find((b) => b.id === bR.id).statut === 'DECHET');
-await store.createBsff({
-  bouteilleId: bR.id, numeroBsff: `${PREFIXE_BSFF}-002`, masseRemiseKg: 1
+const bsff2 = await store.createBsff({
+  bouteilleId: bR.id, masseRemiseKg: 1
 });
 verifier('remise TOTALE : bouteille vidée et RETOURNEE',
   PROCHE((await store.getBouteilles()).find((b) => b.id === bR.id).masseNetteKg, 0)
   && (await store.getBouteilles()).find((b) => b.id === bR.id)
     .statut === 'RETOURNEE');
-verifier('getBsff trace les deux bordereaux',
+verifier('getBsff trace les deux suivis de remise en filière',
   (await store.getBsff()).filter((x) =>
-    String(x.numeroBsff).startsWith(PREFIXE_BSFF)).length === 2);
+    x.id === bsff1.id || x.id === bsff2.id).length === 2);
 verifier('le numéro de BSFF est reporté sur la bouteille',
   (await store.getBouteilles()).find((b) => b.id === bR.id).numBsff?.length > 0);
 
-// P0-8 (DA-2) : issue de traitement final d'un BSFF (corrige BSFF ≠ destruction)
-await verifierRejet('attesterIssueBsff refuse un BSFF introuvable',
+// P0-8 (DA-2) : issue de traitement final d'un suivi de remise en filière
+// (corrige « remise en filière ≠ destruction »)
+await verifierRejet('attesterIssueBsff refuse un suivi introuvable',
   store.attesterIssueBsff('BSFF-INEXISTANT',
     { issueTraitement: 'DESTRUCTION', installationTraitement: 'X' }),
   'introuvable');
@@ -1056,16 +1059,16 @@ await verifierRejet('createCession refuse une masse supérieure au contenu',
     (await store.getCessions()).some((c) => c.id === cession.id));
 }
 {
-  // Un déchet part par un BSFF, jamais par une cession.
+  // Un déchet part par une remise en filière, jamais par une cession.
   const bDechetCession = await store.createBouteille({
     type: 'RECUPERATION', fluide: FLUIDE, tareKg: 5, masseBruteKg: 8,
     contenanceMaxKg: 10
   });
   await store.deciderFluideRecupere(bDechetCession.id, 'DECHET', 'Testeur');
-  await verifierRejet('createCession refuse une bouteille déchet (→ BSFF)',
+  await verifierRejet('createCession refuse une bouteille déchet (→ remise en filière)',
     store.createCession({ bouteilleId: bDechetCession.id,
       destinataireType: 'DISTRIBUTEUR', destinataireRaisonSociale: 'X',
-      masseKg: 1 }), 'BSFF');
+      masseKg: 1 }), 'remise en filière');
 }
 
 // P0-8 (DA-5) : getDeclarationAnnuelle — câblage store → module pur (11 rubriques)

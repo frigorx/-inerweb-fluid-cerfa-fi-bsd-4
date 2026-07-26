@@ -74,6 +74,10 @@ import { verifierOctetsPdfFinal, nomFichierPdfFinal, CATEGORIE_PDF_FINAL,
   MSG_PDF_FINAL_MANQUANT, MSG_PDF_FINAL_HORS_OFFICIEL,
   MSG_PDF_FINAL_TRANSFERT, pdfFinalAttendu } from './pdf-final.js';
 import { verifierPlainte } from './plaintes.js';
+// Lot B2 — forme et unicité du numéro du SUIVI INTERNE de remise en
+// filière (miroir littéral CommonJS : server/remise-filiere.js).
+import { prochainNumeroSuivi, verifierNumeroSuivi, problemeNumerosSuivi,
+  cleNumeroSuivi, ecartApresRemise } from './remise-filiere.js';
 
 const CLE_STOCKAGE = 'inerweb-fluide-v8-demo';
 
@@ -136,6 +140,16 @@ const DESTINATAIRES_CESSION =
  *  s’ACHÈTE certifié fournisseur. Généralise la garde MÉLANGE (R2). */
 const ETATS_FLUIDE_ACHAT = ['VIERGE', 'RECYCLE', 'REGENERE'];
 const ETATS_FLUIDE_RECUPERATION = ['RECUPERE', 'MELANGE', 'DECHET', 'DOUTEUX'];
+
+/** Message canonique — le déchet ne se relève pas d'une modification de
+ *  fiche. Une SEULE déclaration pour TOUTES les portes d'updateBouteille
+ *  (état, type, statut) : la revue B2 a montré qu'une garde recopiée sur
+ *  une porte et pas sur l'autre laisse un passage ouvert. Miroir littéral
+ *  dans server/api.js. */
+const MSG_DECHET_NE_SORT_PAS_PAR_PATCH =
+  'Bouteille déclarée déchet : elle ne sort du déchet que par une '
+  + 'décision sur le fluide (réutilisable ou à analyser), qui est '
+  + 'journalisée, ou par une remise en filière déchets.';
 
 function verifierCoherenceEtatBouteille(type, etatFluide) {
   // Garde MÉLANGE historique (R2) — message spécifique conservé.
@@ -463,6 +477,14 @@ function verifierInvariantsDonnees(candidat) {
       return `contrôle ${c.numero ?? c.id ?? '?'} : ` +
         'OFFICIEL sans mouvement lié (orphelin)';
     }
+  }
+  // ⭐ Lot B2 — UN DOUBLON NE PASSE NI PAR L'API, NI PAR L'IMPORT.
+  // Deux suivis de remise en filière portant le même numéro rendent la
+  // filière déchets illisible (quelle masse est partie sous quel numéro ?).
+  // Miroir EXACT du serveur (verifierInvariantsDonneesCandidat).
+  {
+    const probleme = problemeNumerosSuivi(candidat.bsff ?? []);
+    if (probleme) return probleme;
   }
   // ⭐ L2 (25/07) — LE VERROU DE LIVRAISON GARDE AUSSI LA PORTE DE
   // L'IMPORT. Attaque tirée : `creerMouvement { mode:'OFFICIEL' }` est
@@ -2964,6 +2986,28 @@ export function creerDemoStore() {
         }
       }
 
+      // 10. Lot B2 — LA BALANCE NE PEUT PLUS MENTIR. Une bouteille qui
+      // regagne du fluide APRÈS une remise en filière déclarée, sans qu'une
+      // écriture du registre l'explique, est SIGNALÉE (jamais bloquée : une
+      // correction de tare est légitime) — mais le rapprochement devient
+      // VISIBLE. MIROIR EXACT du serveur.
+      for (const b of donnees.bouteilles) {
+        const ecart = ecartApresRemise(b, donnees.bsff, donnees.mouvements);
+        if (!ecart) continue;
+        alertes.push({
+          id: `alr-remise-filiere-${b.id}`,
+          niveau: 'IMPORTANT',
+          titre: 'Bouteille regarnie après une remise en filière',
+          detail: `${b.code} · ${fmtNombre(ecart.gainKg, 3)} kg de plus que ` +
+            `les ${fmtNombre(ecart.masseApresKg, 3)} kg restants après la ` +
+            `remise du ${fmtDate(ecart.dateRemise)} ` +
+            `(suivi ${ecart.numeroSuivi}) — aucune écriture du registre ne ` +
+            'l’explique : à rapprocher (correction de tare, récupération à ' +
+            'enregistrer).',
+          cible: { vue: 'bouteilles', id: b.id }
+        });
+      }
+
       // Les alertes critiques d'abord (tri stable)
       alertes.sort((a, b) =>
         (a.niveau === b.niveau) ? 0 : (a.niveau === 'CRITIQUE' ? -1 : 1));
@@ -3680,11 +3724,24 @@ export function creerDemoStore() {
             + 'd’origine ou part en destruction.');
         }
         if (bouteille.decisionFluide === 'DECHET' && etatApres !== 'DECHET') {
-          throw new Error(
-            'Bouteille déclarée déchet : elle ne sort du déchet que par une '
-            + 'décision sur le fluide (réutilisable ou à analyser), qui est '
-            + 'journalisée, ou par un bordereau de suivi (BSFF).');
+          throw new Error(MSG_DECHET_NE_SORT_PAS_PAR_PATCH);
         }
+      }
+      // ⭐ REVUE B2 (mineur 6) — LA GARDE NE COUVRAIT QU'UNE PORTE, ET LE
+      // COMMENTAIRE ANNONÇAIT LE CONTRAIRE. Le bloc ci-dessus ne s'exécute
+      // que si le patch touche `etatFluide` ou `type` : un simple
+      // { statut: 'EN_STOCK' } passait à côté, alors que le commentaire L2
+      // donnait « une bouteille déclarée DÉCHET revenait au stock par un
+      // simple patch » pour fermé. TIRÉ, identique demo et local.
+      // Ce que ça coûtait vraiment : le statut redevenait EN_STOCK pendant
+      // que l'état et la décision restaient DÉCHET — l'alerte CRITIQUE
+      // « fluide déchet au-delà du délai de garde » s'éteignait (elle ne
+      // regarde que le statut), et la remise en filière devenait
+      // IMPOSSIBLE (createBsff exige le statut DECHET). Le déchet
+      // disparaissait des écrans sans jamais partir en filière.
+      if (d.statut !== undefined && bouteille.decisionFluide === 'DECHET'
+          && bouteille.statut === 'DECHET' && d.statut !== 'DECHET') {
+        throw new Error(MSG_DECHET_NE_SORT_PAS_PAR_PATCH);
       }
       const CHAMPS = ['numeroReel', 'type', 'fluide', 'etatFluide', 'tareKg',
         'masseBruteKg', 'contenanceMaxKg', 'proprietaire', 'lot',
@@ -5645,11 +5702,39 @@ export function creerDemoStore() {
       const bouteille = trouverBouteille(d.bouteilleId);
       if (bouteille.statut !== 'DECHET') {
         throw new Error(
-          'Sortie BSFF impossible : la bouteille doit d’abord être ' +
+          'Remise en filière impossible : la bouteille doit d’abord être ' +
           'déclarée DÉCHET (décision sur le fluide récupéré).');
       }
-      if (!d.numeroBsff || !String(d.numeroBsff).trim()) {
-        throw new Error('Numéro de BSFF obligatoire.');
+      // ⭐ Lot B2 — LE LOGICIEL NUMÉROTE CE QUI LUI APPARTIENT. Le suivi
+      // est INTERNE : son numéro est attribué localement, sans réseau, au
+      // format SIF-AAAA-NNNN. Un numéro fourni doit respecter cette forme
+      // ET être libre — avant, n'importe quelle chaîne passait, doublons
+      // compris (attaque tirée : deux suivis du même numéro, HTTP 200).
+      // ⭐ Lot B2 (revue) — UNE DATE EST UNE DATE (doctrine L2). L'année du
+      // numéro se DÉRIVE de la date de remise : sans contrôle, une date
+      // « 24/07/2026 » (API, import, tout appelant hors du champ date du
+      // formulaire) faisait attribuer « SIF-24/0-0001 » — un numéro que la
+      // garde de saisie du logiciel REFUSE elle-même, écrit au registre et
+      // exporté dans le CSV du dossier d'audit scellé.
+      if (!estDateCalendaireOuVide(d.dateRemise)) {
+        throw new Error(messageDateInvalide('Date de remise'));
+      }
+      const numerosExistants = donnees.bsff.map((b) => b.numeroBsff);
+      const dateRemise = d.dateRemise ? String(d.dateRemise) : aujourdHui();
+      let numeroSuivi = String(d.numeroBsff ?? '').trim();
+      if (!numeroSuivi) {
+        numeroSuivi = prochainNumeroSuivi(numerosExistants,
+          String(dateRemise).slice(0, 4));
+      } else {
+        const refus = verifierNumeroSuivi(numeroSuivi, numerosExistants);
+        if (refus) throw new Error(refus);
+        // ⭐ Revue B2 (mineur 2) — CE QUI EST ÉCRIT AU REGISTRE EST LA
+        // FORME CANONIQUE. L'unicité se jugeait déjà sur la clé
+        // normalisée, mais la valeur ÉCRITE restait celle tapée :
+        // « sif-2031-0007 » entrait tel quel, et le registre, le CSV du
+        // dossier scellé et la fiche mélangeaient les casses pour ce qui
+        // est le MÊME numéro. On enregistre donc la clé, pas la frappe.
+        numeroSuivi = cleNumeroSuivi(numeroSuivi);
       }
       const masse = Number(d.masseRemiseKg);
       if (!Number.isFinite(masse) || masse <= 0) {
@@ -5665,11 +5750,20 @@ export function creerDemoStore() {
         bouteilleId: bouteille.id,
         bouteilleCode: bouteille.code,
         fluide: bouteille.fluide,
-        numeroBsff: String(d.numeroBsff).trim(),
+        numeroBsff: numeroSuivi,
         transporteur: d.transporteur ?? null,
         installationDestination: d.installationDestination ?? null,
         masseRemiseKg: arrondir(masse),
-        dateRemise: d.dateRemise ?? aujourdHui()
+        dateRemise,
+        // Lot B2 : le numéro du bordereau dématérialisé OFFICIEL, à sa
+        // place — jamais confondu avec le numéro du suivi interne. Non
+        // obligatoire (le bordereau peut être en cours) : on n'empêche
+        // jamais d'enregistrer la réalité, son absence se voit à l'écran.
+        bordereauExterne: String(d.bordereauExterne ?? '').trim() || null,
+        // ⭐ Lot B2 (migration 36) — REPÈRE DU RAPPROCHEMENT : masse nette
+        // restante FIGÉE juste après cette remise. Renseignée après le
+        // calcul du reliquat, quelques lignes plus bas.
+        masseBouteilleApresKg: null
       };
       donnees.bsff.push(bsff);
 
@@ -5683,6 +5777,7 @@ export function creerDemoStore() {
         bouteille.masseNetteKg = 0;
         bouteille.statut = 'RETOURNEE';
       }
+      bsff.masseBouteilleApresKg = bouteille.masseNetteKg;
       bouteille.masseBruteKg =
         arrondir(bouteille.tareKg + bouteille.masseNetteKg);
       bouteille.numBsff = bsff.numeroBsff;
@@ -5716,7 +5811,7 @@ export function creerDemoStore() {
     async attesterIssueBsff(bsffId, attestation) {
       const a = attestation || {};
       const bsff = donnees.bsff.find((b) => b.id === bsffId);
-      if (!bsff) throw new Error(`BSFF introuvable : ${bsffId}.`);
+      if (!bsff) throw new Error(`Suivi de remise en filière introuvable : ${bsffId}.`);
       if (!ISSUES_TRAITEMENT_BSFF.includes(a.issueTraitement)) {
         throw new Error(
           `Issue de traitement inconnue : ${a.issueTraitement} ` +
@@ -5754,7 +5849,7 @@ export function creerDemoStore() {
       if (bouteille.statut === 'DECHET') {
         throw new Error(
           `Bouteille ${bouteille.code} déclarée déchet : la sortie passe ` +
-          'par un BSFF, pas par un retour fournisseur.');
+          'par une remise en filière, pas par un retour fournisseur.');
       }
       const masseKg = bouteille.masseNetteKg;
       const retour = {
@@ -5801,7 +5896,7 @@ export function creerDemoStore() {
       if (bouteille.statut === 'DECHET') {
         throw new Error(
           `Bouteille ${bouteille.code} déclarée déchet : la sortie passe par ` +
-          'un BSFF, pas par une cession.');
+          'une remise en filière, pas par une cession.');
       }
       if (!DESTINATAIRES_CESSION.includes(d.destinataireType)) {
         throw new Error(
@@ -5876,7 +5971,12 @@ export function creerDemoStore() {
         cessions: donnees.cessions,
         retoursFournisseur: donnees.retoursFournisseur,
         stocksInitiaux: donnees.stocksInitiaux,
-        photosBouteilles: donnees.inventairesBouteilles
+        photosBouteilles: donnees.inventairesBouteilles,
+        // Lot B2 : seules les MÉTADONNÉES des pièces (type et entité) —
+        // aucun binaire n'entre dans le calcul de la déclaration.
+        piecesJointes: (donnees.piecesJointes ?? []).map((pj) => ({
+          entiteType: pj.entiteType, entiteId: pj.entiteId
+        }))
       });
     },
 

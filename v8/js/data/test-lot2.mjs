@@ -219,7 +219,7 @@ const bDechet = await store.createBouteille({
 await store.deciderFluideRecupere(bDechet.id, 'DECHET', 'Frédéric Henninot');
 await store.createBsff({
   bouteilleId: bDechet.id,
-  numeroBsff: 'BSFF-2026-LOT2-A',
+  numeroBsff: 'SIF-2026-0001',
   transporteur: 'TransDéchets',
   installationDestination: 'Centre de traitement agréé',
   masseRemiseKg: 2.5,
@@ -236,7 +236,7 @@ verifier('IM-8 : BSFF partiel (2,5/4,0) → reliquat 1,5 kg en stock, ' +
 
 await store.createBsff({
   bouteilleId: bDechet.id,
-  numeroBsff: 'BSFF-2026-LOT2-B',
+  numeroBsff: 'SIF-2026-0002',
   masseRemiseKg: 1.5,
   dateRemise: '2026-07-03',
   operateur: 'Frédéric Henninot'

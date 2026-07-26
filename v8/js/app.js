@@ -23,7 +23,7 @@ const VUES = [
   { id: 'bouteilles', libelle: 'Stock bouteilles',         icone: 'bouteille' },
   { id: 'mouvements', libelle: 'Mouvements',               icone: 'echange' },
   { id: 'controles',  libelle: "Contrôles d'étanchéité",   icone: 'controle' },
-  { id: 'dechets',    libelle: 'Déchets / BSFF',           icone: 'dechets' },
+  { id: 'dechets',    libelle: 'Déchets / remise en filière', icone: 'dechets' },
   { id: 'outillage',  libelle: 'Outillage',                icone: 'outillage' },
   { id: 'personnel',  libelle: 'Personnel',                icone: 'utilisateur' },
   { id: 'clients',    libelle: 'Clients / détenteurs',     icone: 'client' },

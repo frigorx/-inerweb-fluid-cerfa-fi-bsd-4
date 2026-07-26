@@ -37,8 +37,10 @@ const ACTIONS_JOURNAL = {
   MODIFICATION_BOUTEILLE: 'Modification de la fiche',
   PESEE_BOUTEILLE: 'Pesée',
   DECISION_FLUIDE: 'Décision sur le fluide récupéré',
-  SORTIE_BSFF: 'Sortie déchet (BSFF)',
-  ISSUE_BSFF: 'Traitement final attesté (BSFF)',
+  // ⚠ Lot B2 : la clé du journal reste SORTIE_BSFF (donnée figée), le
+  // LIBELLÉ lu par l'utilisateur dit ce que l'objet est vraiment.
+  SORTIE_BSFF: 'Sortie déchet (remise en filière)',
+  ISSUE_BSFF: 'Traitement final attesté',
   RETOUR_FOURNISSEUR: 'Retour au fournisseur',
   CESSION: 'Cession à un tiers'
 };

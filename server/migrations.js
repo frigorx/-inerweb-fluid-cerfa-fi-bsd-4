@@ -208,6 +208,12 @@
  *  35 — report v7 : table plaintes (registre des réclamations clients —
  *       objet, réception, réponse, état RECUE/EN_COURS/TRAITEE ; client_id
  *       FK nullable + client_libelle de secours). Jamais supprimée. Hors WORM.
+ *  36 — lot B2 : bsff.masse_bouteille_apres_kg — masse nette RESTANTE dans
+ *       la bouteille juste après la remise en filière, FIGÉE à l'émission.
+ *       Sans ce repère, une bouteille « re-gonflée » par un simple
+ *       updateBouteille après une remise déclarée ne se rapproche de rien
+ *       (attaque tirée). Backfill NULL = aucun repère, donc aucune alerte
+ *       sur les suivis antérieurs (conservateur). Hors WORM.
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -1693,6 +1699,21 @@ LEFT JOIN justifications_ecarts j ON j.etablissement_id = p.etablissement_id AND
       );`);
       db.exec(`CREATE INDEX IF NOT EXISTS idx_plaintes_etablissement
                  ON plaintes (etablissement_id);`);
+    }
+  },
+
+  // 36 — LOT B2 : LA BALANCE CESSE DE POUVOIR MENTIR. Attaque tirée : après
+  // deux remises en filière déclarées (5 kg partis), un simple
+  // updateBouteille { masseBruteKg: 20 } faisait repasser la bouteille de
+  // 5 à 10 kg — HTTP 200, modification journalisée, mais RIEN ne rapprochait
+  // les deux faits. On fige donc, à l'émission du suivi, la masse nette
+  // RESTANTE : c'est le repère qui rend l'écart calculable pour toujours,
+  // y compris après un export/import. NULL sur les suivis antérieurs : pas
+  // de repère, pas d'alerte (on n'invente pas un passé qu'on n'a pas mesuré).
+  36: {
+    nom: 'masse de la bouteille figée après remise en filière',
+    appliquer(db) {
+      db.exec('ALTER TABLE bsff ADD COLUMN masse_bouteille_apres_kg REAL;');
     }
   }
 };

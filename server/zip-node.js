@@ -22,9 +22,10 @@
  *
  * ⚠ Le CRÉATEUR est un CLONE FIDÈLE de zip.js : mêmes constantes, même
  * sérialisation binaire, mêmes CRC — un ZIP écrit ici est identique à un
- * ZIP écrit par le front. `server/test-zip-node.mjs` (à venir) verrouille
- * l'équivalence. Zéro dépendance externe (uniquement `node:fs`,
- * `node:path`).
+ * ZIP écrit par le front. ⚠ AUCUNE suite ne verrouille aujourd'hui cette
+ * équivalence octet à octet : elle tient par la relecture des deux
+ * fichiers. Ne pas la croire prouvée. Zéro dépendance externe (uniquement
+ * `node:fs`, `node:path`).
  */
 
 const fs = require('node:fs');

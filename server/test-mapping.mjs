@@ -216,7 +216,7 @@ let retourVidage;
   });
   await store.deciderFluideRecupere(bouteille.id, 'DECHET', 'Test mapping');
   await store.createBsff({
-    bouteilleId: bouteille.id, numeroBsff: 'BSFF-MAPPING-001',
+    bouteilleId: bouteille.id, numeroBsff: 'SIF-2026-0001',
     transporteur: 'Transports du Sud', installationDestination: 'Récupfluides',
     masseRemiseKg: 1
   });

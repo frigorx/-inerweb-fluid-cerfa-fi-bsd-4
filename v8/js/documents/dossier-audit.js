@@ -24,6 +24,7 @@ import {
 import {
   versOctets, nomSur, octetsEntree, sha256Hex
 } from './dossier-commun.js';
+import { MENTION_BORDEREAU_OFFICIEL } from '../data/remise-filiere.js';
 
 /** Statuts de mouvement inscrits au registre (donc porteurs d'un CERFA). */
 const STATUTS_REGISTRE = ['VALIDE', 'ANNULE'];
@@ -134,6 +135,12 @@ function redigerSommaire(etablissement, annee, nomsFichiers, maintenant) {
     '15497*04 officielles remplies (mouvements inscrits au registre et',
     'contrôles d\'étanchéité de l\'année). Les fichiers *.csv sont les',
     'tables du registre (séparateur « ; », encodage UTF-8).',
+    '',
+    // ⚠ Lot B2 — la mention voyage AVEC le dossier scellé : un lecteur
+    // du ZIP ne doit pas prendre le suivi interne pour un bordereau.
+    'SUIVI DE REMISE EN FILIÈRE DÉCHETS',
+    '-'.repeat(68),
+    MENTION_BORDEREAU_OFFICIEL,
     ''
   ];
   return lignes.join('\r\n');

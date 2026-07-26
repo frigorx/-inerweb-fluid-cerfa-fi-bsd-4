@@ -10,6 +10,7 @@
 import { createHash } from 'node:crypto';
 import { creerStore } from '../data/datastore.js';
 import { genererDossierAudit } from './dossier-audit.js';
+import { MENTION_BORDEREAU_OFFICIEL } from '../data/remise-filiere.js';
 
 let nbOk = 0;
 let nbEchecs = 0;
@@ -97,12 +98,17 @@ verifier('le sommaire rappelle l\'origine (inerWeb Fluide) et l\'année',
   sommaire.includes('inerWeb Fluide') && sommaire.includes('2026'));
 verifier('le sommaire liste chaque fichier de l\'archive',
   noms.every((nom) => sommaire.includes(nom)));
+// Lot B2 : la mention « ce suivi ne remplace pas le bordereau officiel »
+// voyage DANS le dossier scellé — un lecteur du ZIP n'a pas le logiciel
+// sous les yeux pour la lire à l'écran.
+verifier('le sommaire porte la mention du bordereau dématérialisé obligatoire',
+  sommaire.includes(MENTION_BORDEREAU_OFFICIEL));
 
 // ---- 6. Les 11 tables CSV ----
 const CSV_ATTENDUS = ['personnel.csv', 'habilitations.csv',
   'mentions-habilitation.csv', 'outillage.csv', 'bouteilles.csv',
   'machines.csv', 'mouvements.csv', 'controles.csv', 'balance-matiere.csv',
-  'bsff.csv', 'journal-audit.csv'];
+  'suivi-remise-filiere.csv', 'journal-audit.csv'];
 verifier('les 9 CSV du registre sont présents',
   CSV_ATTENDUS.every((nom) => noms.includes(nom)),
   CSV_ATTENDUS.filter((nom) => !noms.includes(nom)).join(', '));

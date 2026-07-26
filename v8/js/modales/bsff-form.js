@@ -1,15 +1,20 @@
 // inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
-// inerWeb Fluide — modale « Créer le BSFF » (Phase C)
+// inerWeb Fluide — modale « Enregistrer la remise en filière » (Phase C)
 // Sortie de stock d'une bouteille de fluide récupéré déclarée
-// DÉCHET : n° BSFF, transporteur, installation de destination,
-// masse remise, date de remise. Opération tracée et non réversible
+// DÉCHET : transporteur, installation de destination, masse remise,
+// date de remise. Opération tracée et non réversible
 // (store.createBsff). Zone de pièces jointes après création.
+// ⚠ Lot B2 : ce suivi est INTERNE — il ne remplace pas le bordereau
+// de suivi de déchets dématérialisé obligatoire (mention permanente).
 // ============================================================
 
 import { modale, toast, ICONES } from '../views/communs.js';
 import { esc, fmtNombre, nombreFr } from '../core/utils.js';
 import { zonePiecesJointes } from '../composants/pieces-jointes.js';
+import {
+  LIBELLE_SUIVI, MENTION_BORDEREAU_OFFICIEL, LIBELLE_BORDEREAU_EXTERNE
+} from '../data/remise-filiere.js';
 
 /**
  * Date du jour au format ISO (AAAA-MM-JJ), cohérent avec le store.
@@ -54,21 +59,42 @@ export async function ouvrirFormBsff(ctx, bouteilleId) {
     + 'Fluide : <span class="mono">' + esc(bouteille.fluide) + '</span>'
     + ' · Masse nette actuelle : <span class="mono">' + esc(fmtNombre(bouteille.masseNetteKg, 2)) + ' kg</span></p>'
 
+    // ⚠ Lot B2 — MENTION PERMANENTE : ce que ce document n'est PAS.
+    + '<div class="bandeau-avertissement">' + ICONES.alerte
+    + '<span>' + esc(MENTION_BORDEREAU_OFFICIEL) + '</span></div>'
+
     + '<div class="bandeau-avertissement">' + ICONES.alerte
     + '<span>Opération tracée, non réversible. Remise totale : la bouteille '
     + 'sort du stock. Remise partielle : le reliquat reste en stock, '
     + 'toujours en statut déchet (délai de garde conservé).</span></div>'
 
+    // ⚠ Lot B2 — le numéro du SUIVI INTERNE n'est plus saisi : le logiciel
+    // l'attribue (SIF-AAAA-NNNN), donc il est unique et bien formé. Un
+    // champ libre invitait à y recopier un numéro officiel inexistant.
     + '<div class="grille-form-2">'
     + '<div class="champ">'
-    + '<label for="bsff-numero">N° BSFF *</label>'
-    + '<input id="bsff-numero" name="numeroBsff" type="text" required>'
+    + '<label>N° du suivi interne</label>'
+    + '<span class="champ-erreur" style="color:var(--texte-faible)">'
+    + 'Attribué automatiquement à l’enregistrement '
+    + '(format SIF-AAAA-NNNN).</span>'
     + '</div>'
     + '<div class="champ">'
     + '<label for="bsff-date">Date de remise *</label>'
     + '<input id="bsff-date" name="dateRemise" type="date" required'
     + ' value="' + esc(aujourdHuiIso()) + '">'
     + '</div>'
+    + '</div>'
+
+    // ⚠ Lot B2 — LE NUMÉRO RÉEL A SA PLACE : le bordereau officiel a son
+    // propre champ, jamais mélangé au numéro du suivi interne.
+    + '<div class="champ">'
+    + '<label for="bsff-externe">' + esc(LIBELLE_BORDEREAU_EXTERNE) + '</label>'
+    + '<input id="bsff-externe" name="bordereauExterne" type="text"'
+    + ' placeholder="numéro ou lien du bordereau dématérialisé">'
+    + '<span class="champ-erreur" style="color:var(--texte-faible)">'
+    + 'Reportez ici le numéro du bordereau établi sur la plateforme '
+    + 'nationale, et joignez-le en pièce jointe. Laissez vide s’il n’est '
+    + 'pas encore établi.</span>'
     + '</div>'
 
     + '<div class="grille-form-2">'
@@ -100,10 +126,10 @@ export async function ouvrirFormBsff(ctx, bouteilleId) {
   const actionsHtml = ''
     + '<button type="button" class="btn btn-contour" data-action="annuler">Annuler</button>'
     + '<button type="submit" form="form-bsff" class="btn btn-marine">'
-    + ICONES.coche + '<span>Créer le BSFF</span></button>';
+    + ICONES.coche + '<span>Enregistrer la remise en filière</span></button>';
 
   const instance = modale({
-    titre: 'Créer le BSFF — ' + bouteille.code,
+    titre: LIBELLE_SUIVI + ' — ' + bouteille.code,
     contenuHtml,
     actionsHtml
   });
@@ -145,7 +171,8 @@ export async function ouvrirFormBsff(ctx, bouteilleId) {
       + '<span>Remise partielle : un reliquat de <strong>'
       + esc(fmtNombre(reliquat, 2)) + ' kg</strong> restera en stock, '
       + 'toujours en statut déchet (délai de garde conservé). '
-      + 'Un second BSFF sera nécessaire pour le solde.</span></div>';
+      + 'Un second suivi de remise en filière sera nécessaire pour le '
+      + 'solde.</span></div>';
   }
   champMasse.addEventListener('input', majReliquat);
   majReliquat();
@@ -159,16 +186,12 @@ export async function ouvrirFormBsff(ctx, bouteilleId) {
     effacerErreur();
 
     const donnees = new FormData(form);
-    const numeroBsff = String(donnees.get('numeroBsff') || '').trim();
+    const bordereauExterne = String(donnees.get('bordereauExterne') || '').trim();
     const transporteur = String(donnees.get('transporteur') || '').trim();
     const installationDestination = String(donnees.get('installationDestination') || '').trim();
     const masseRemiseKg = nombreFr(donnees.get('masseRemiseKg'));
     const dateRemise = String(donnees.get('dateRemise') || '').trim();
 
-    if (!numeroBsff) {
-      afficherErreur('Le numéro de BSFF est obligatoire.');
-      return;
-    }
     if (!transporteur) {
       afficherErreur('Le transporteur est obligatoire.');
       return;
@@ -193,7 +216,7 @@ export async function ouvrirFormBsff(ctx, bouteilleId) {
 
       const bsff = await store.createBsff({
         bouteilleId: bouteille.id,
-        numeroBsff,
+        bordereauExterne,
         transporteur,
         installationDestination,
         masseRemiseKg,
@@ -205,20 +228,21 @@ export async function ouvrirFormBsff(ctx, bouteilleId) {
       const reliquatKg = Math.round(
         (bouteille.masseNetteKg - masseRemiseKg) * 1000) / 1000;
       toast(reliquatKg > 0
-        ? 'BSFF créé — reliquat de ' + fmtNombre(reliquatKg, 2)
+        ? 'Remise en filière enregistrée — reliquat de ' + fmtNombre(reliquatKg, 2)
           + ' kg conservé en stock (statut déchet).'
-        : 'BSFF créé — bouteille sortie du stock.', 'succes');
+        : 'Remise en filière enregistrée — bouteille sortie du stock.', 'succes');
 
       // Après création, propose d'attacher immédiatement le bordereau
       afficherFormPiecesJointes(bsff.id);
     } catch (erreur) {
-      afficherErreur(erreur.message || 'Impossible de créer ce BSFF.');
+      afficherErreur(erreur.message
+        || 'Impossible d’enregistrer cette remise en filière.');
     }
   });
 
   /**
    * Remplace le contenu de la modale par la zone de pièces jointes
-   * du BSFF fraîchement créé (catégorie BORDEREAU_BSFF).
+   * du suivi fraîchement créé (catégorie BORDEREAU_BSFF).
    * @param {string} bsffId
    */
   function afficherFormPiecesJointes(bsffId) {
@@ -227,7 +251,8 @@ export async function ouvrirFormBsff(ctx, bouteilleId) {
     if (!corps) return;
 
     corps.innerHTML = '<p class="modale-intro">'
-      + 'Vous pouvez joindre le bordereau BSFF signé (PDF ou photo).</p>'
+      + 'Joignez ici le <strong>bordereau dématérialisé officiel</strong> '
+      + '(PDF ou photo) : c’est lui qui fait foi, pas ce suivi interne.</p>'
       + '<div id="zone-pj-bsff"></div>';
     if (actions) {
       actions.innerHTML = '<button type="button" class="btn btn-marine btn-bloc" data-action="terminer">'

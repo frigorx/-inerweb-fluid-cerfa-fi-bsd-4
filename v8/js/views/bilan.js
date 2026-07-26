@@ -13,6 +13,7 @@
 import { enteteVue, tableau, modale, toast, ICONES } from './communs.js';
 import { esc, fmtKg, fmtDate, fmtNombre } from '../core/utils.js';
 import { genererDossierAudit } from '../documents/dossier-audit.js';
+import { MENTION_PIECE_NON_PROBANTE } from '../data/remise-filiere.js';
 
 export const titre = 'Bilan annuel';
 
@@ -282,10 +283,13 @@ function sectionDeclaration(declaration) {
     + '</div>'
     + bandeauDeclaration(declaration)
     + tableauDeclaration(declaration)
-    + '<p class="decl-legende">Rubrique 9 (destruction) : uniquement les BSFF '
-    + 'dont l’issue « destruction » est <strong>attestée</strong> (installation '
-    + 'en info-bulle). Une remise en filière sans issue attestée n’est jamais '
-    + 'comptée en destruction (voir anomalies). Rubrique 7 (recyclage sous '
+    + '<p class="decl-legende">Rubrique 9 (destruction) : uniquement les '
+    + 'remises en filière dont l’issue « destruction » est '
+    + '<strong>attestée</strong> (installation en info-bulle). Une remise '
+    + 'sans issue attestée n’est jamais comptée en destruction. Une issue '
+    + 'attestée sur un suivi sans aucune pièce jointe reste comptée, mais '
+    + 'elle est signalée en anomalie : la pièce est à produire en cas de '
+    + 'contrôle. ' + esc(MENTION_PIECE_NON_PROBANTE) + ' Rubrique 7 (recyclage sous '
     + 'responsabilité propre) : sans objet ici — le recyclé / régénéré s’achète '
     + 'certifié.</p>'
     + '</section>';

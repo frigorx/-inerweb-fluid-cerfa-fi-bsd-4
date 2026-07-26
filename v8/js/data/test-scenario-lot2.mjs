@@ -209,7 +209,7 @@ const bDechet = await store.createBouteille({
 await store.deciderFluideRecupere(bDechet.id, 'DECHET', OPERATEUR);
 await store.createBsff({
   bouteilleId: bDechet.id,
-  numeroBsff: 'BSFF-2026-SC2-A',
+  numeroBsff: 'SIF-2026-0001',
   transporteur: 'TransDéchets',
   installationDestination: 'Centre de traitement agréé',
   masseRemiseKg: 1.2,
@@ -228,7 +228,7 @@ await verifierRejet(
   'Second BSFF refusé au-delà du reliquat (5 kg demandés, 1,8 kg restants)',
   store.createBsff({
     bouteilleId: bDechet.id,
-    numeroBsff: 'BSFF-2026-SC2-B',
+    numeroBsff: 'SIF-2026-0002',
     masseRemiseKg: 5,
     operateur: OPERATEUR
   }), 'supérieure au contenu');

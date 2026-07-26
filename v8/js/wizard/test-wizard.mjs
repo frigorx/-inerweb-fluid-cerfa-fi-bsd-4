@@ -13,7 +13,7 @@
 //     de naviguer('mouvements')).
 //
 // Aucune dépendance nouvelle : le mini-DOM maison partagé
-// core/test-shim-dom.mjs (parseur HTML très simple + querySelector/
+// core/shim-dom-tests.mjs (parseur HTML très simple + querySelector/
 // querySelectorAll basiques sur #id/.classe/[attribut]) suffit pour
 // dérouler ouvrirWizard() jusqu'à l'étape affichée SANS jamais
 // atteindre l'étape 6 (signature → canvas 2D, hors de portée d'un

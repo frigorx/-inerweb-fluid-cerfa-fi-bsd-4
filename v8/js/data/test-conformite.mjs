@@ -407,7 +407,7 @@ await verifierRejet('createBsff rejette une bouteille non déclarée DÉCHET',
 
 const bsff = await store.createBsff({
   bouteilleId: 'B3',
-  numeroBsff: 'BSFF-2026-0001',
+  numeroBsff: 'SIF-2026-0001',
   transporteur: 'Chimirec Sud',
   installationDestination: 'Chimirec — Rognac (13)',
   masseRemiseKg: 3.6,
@@ -416,7 +416,7 @@ const bsff = await store.createBsff({
 const b3Apres = (await store.getBouteilles()).find((b) => b.id === 'B3');
 verifier('createBsff : bouteille RETOURNEE, masse nette 0, BSFF référencé',
   b3Apres.statut === 'RETOURNEE' && PROCHE(b3Apres.masseNetteKg, 0) &&
-  b3Apres.numBsff === 'BSFF-2026-0001');
+  b3Apres.numBsff === 'SIF-2026-0001');
 
 const listeBsff = await store.getBsff();
 verifier('getBsff : le bordereau est listé avec sa masse remise',

@@ -1,15 +1,23 @@
 // inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
 // ============================================================
-// inerWeb Fluide — vue « Déchets / BSFF » (Phase C, SPEC §5.8)
+// inerWeb Fluide — vue « Déchets / remise en filière » (Phase C, SPEC §5.8)
 // Chaîne complète : récupération → décision (réutilisable / à
-// analyser / déchet) → BSFF → enlèvement → sortie du stock.
+// analyser / déchet) → suivi interne de remise en filière →
+// enlèvement → sortie du stock.
+// ⚠ Lot B2 : le suivi interne NE REMPLACE PAS le bordereau de suivi
+// de déchets dématérialisé obligatoire (mention permanente ci-dessous).
 // ============================================================
 
 import { enteteVue, chipStatut, tableau, toast, modale, ICONES } from './communs.js';
 import { esc, fmtNombre, fmtDate } from '../core/utils.js';
 import { ouvrirFormBsff } from '../modales/bsff-form.js';
+import { zonePiecesJointes } from '../composants/pieces-jointes.js';
+import {
+  LIBELLE_SUIVI, MENTION_BORDEREAU_OFFICIEL, LIBELLE_BORDEREAU_EXTERNE,
+  MENTION_PIECE_NON_PROBANTE
+} from '../data/remise-filiere.js';
 
-export const titre = 'Déchets / BSFF';
+export const titre = 'Déchets / remise en filière';
 
 /* ============================================================
    Décision sur le fluide récupéré : libellés + teintes de chip
@@ -127,7 +135,7 @@ function carteRecuperation(b, jour) {
 
   const boutonBsff = b.decisionFluide === 'DECHET'
     ? '<button type="button" class="btn btn-marine btn-petit" data-action="creer-bsff" data-id="' + esc(b.id) + '">'
-      + 'Créer le BSFF</button>'
+      + 'Enregistrer la remise en filière</button>'
     : '';
 
   // IM-7 : la décision « déchet » est réversible (store) — le bouton
@@ -155,7 +163,7 @@ function carteRecuperation(b, jour) {
 }
 
 /* ============================================================
-   Section 2 : tableau des bordereaux BSFF
+   Section 2 : tableau des suivis internes de remise en filière
    ============================================================ */
 
 /**
@@ -168,20 +176,32 @@ const LIBELLE_ISSUE = {
   DESTRUCTION: 'Destruction', AUTRE: 'Autre'
 };
 
-function ligneBsff(bsff) {
+function ligneBsff(bsff, aUnePiece) {
+  // ⚠ Lot B2 : l'écran dit ce qu'il CONSTATE — aucune pièce jointe à ce
+  // suivi. Il ne dit pas que l'issue serait fausse, et la masse reste
+  // déclarée dans sa rubrique : c'est le dossier qui est incomplet.
   const issue = bsff.issueTraitement
     ? '<strong>' + esc(LIBELLE_ISSUE[bsff.issueTraitement]
         || bsff.issueTraitement) + '</strong>'
       + (bsff.installationTraitement
         ? '<br><span class="mono issue-inst">'
           + esc(bsff.installationTraitement) + '</span>' : '')
+      + (aUnePiece ? ''
+        : '<br><span class="issue-absente">aucune pièce jointe — '
+          + 'justificatif à produire</span>')
     : '<span class="issue-absente">Non attestée</span>';
   const action = '<button type="button" class="btn btn-contour btn-petit" '
     + 'data-action="attester-issue" data-id="' + esc(bsff.id) + '">'
     + (bsff.issueTraitement ? 'Modifier l’issue' : 'Attester l’issue')
     + '</button>';
+  // Lot B2 : le bordereau OFFICIEL a sa propre colonne — son absence se
+  // voit (« non reporté »), elle ne se déduit pas d'un numéro interne.
+  const externe = bsff.bordereauExterne
+    ? '<span class="mono">' + esc(bsff.bordereauExterne) + '</span>'
+    : '<span class="issue-absente">non reporté</span>';
   return '<tr>'
     + '<td class="mono">' + esc(bsff.numeroBsff) + '</td>'
+    + '<td>' + externe + '</td>'
     + '<td>' + esc(fmtDate(bsff.dateRemise)) + '</td>'
     + '<td>' + esc(bsff.bouteilleCode) + '</td>'
     + '<td class="mono">' + esc(bsff.fluide) + '</td>'
@@ -198,16 +218,44 @@ function ligneBsff(bsff) {
  * Corrige BSFF ≠ destruction : seule une issue « destruction » attestée
  * (avec installation) alimente la rubrique 9 de la déclaration.
  */
-function ouvrirAttestationIssue(ctx, bsff) {
+/**
+ * Modale « Attester le traitement final » d'un suivi de remise en filière.
+ * EXPORTÉE pour être TIRÉE telle quelle par la suite de surfaces (le clic
+ * de la vue passe par une délégation `closest`, hors de portée du DOM
+ * factice) — l'application, elle, continue de l'ouvrir par le tableau.
+ * @param {object} ctx - contexte de vue ({ store, rafraichir, … })
+ * @param {object} bsff - le suivi concerné
+ */
+export function ouvrirAttestationIssue(ctx, bsff) {
   const opts = ['RECYCLAGE', 'REGENERATION', 'DESTRUCTION', 'AUTRE']
     .map((v) => '<option value="' + v + '"'
       + (bsff.issueTraitement === v ? ' selected' : '') + '>'
       + esc(LIBELLE_ISSUE[v]) + '</option>').join('');
   const contenuHtml =
-    '<p class="modale-intro">BSFF <strong>' + esc(bsff.numeroBsff)
+    '<p class="modale-intro">Suivi interne <strong>' + esc(bsff.numeroBsff)
     + '</strong> — ' + esc(fmtNombre(bsff.masseRemiseKg, 2)) + ' kg de '
     + esc(bsff.fluide) + '. Attestez la <strong>nature du traitement '
     + 'final</strong> tel que l’opérateur agréé la certifie.</p>'
+    // ⚠ Lot B2 — l'écran dit la suite AVANT la saisie : la masse sera
+    // déclarée dans sa rubrique, et l'absence de pièce sera signalée.
+    // ⚠ Revue finale B2 — le texte disait « si aucune pièce justificative
+    // n'est jointe (certificat, bordereau), la déclaration signalera une
+    // anomalie ». C'était une PROMESSE que le logiciel ne tient pas sur le
+    // chemin normal : le parcours de création propose de joindre le
+    // bordereau officiel AUSSITÔT, donc le suivi porte déjà une pièce et
+    // l'anomalie ne se lèvera jamais, même sans le moindre certificat
+    // d'issue. L'écran dit désormais ce que l'anomalie compte VRAIMENT.
+    + '<div class="bandeau-avertissement">' + ICONES.alerte
+    + '<span>La masse sera comptée dans la rubrique correspondante de la '
+    + 'déclaration annuelle. Le <strong>justificatif de cette issue</strong> '
+    + '(certificat de l’installation, bordereau officiel) reste à produire '
+    + 'en cas de contrôle. La déclaration ne signale une anomalie que si ce '
+    + 'suivi ne porte AUCUNE pièce jointe — une pièce déjà déposée, quelle '
+    + 'qu’elle soit, suffit à l’éteindre. '
+    // ⚠ Revue B2 (important 4) : ne JAMAIS laisser croire qu’une pièce
+    // jointe prouve l’issue — le logiciel les COMPTE, il ne les lit pas.
+    + esc(MENTION_PIECE_NON_PROBANTE) + '</span>'
+    + '</div>'
     + '<label class="champ-label">Issue de traitement'
     + '<select id="issue-select">' + opts + '</select></label>'
     + '<label class="champ-label">Installation de traitement '
@@ -221,8 +269,21 @@ function ouvrirAttestationIssue(ctx, bsff) {
   const actionsHtml =
     '<button type="button" class="btn btn-contour" data-action="annuler">Annuler</button>'
     + '<button type="button" class="btn btn-marine" data-action="valider">Attester</button>';
-  const instance = modale({ titre: 'Attester le traitement final',
-    contenuHtml, actionsHtml });
+  // ⚠ Revue finale B2 : une fois l'issue attestée, l'écran doit se
+  // rafraîchir QUEL QUE SOIT le chemin de sortie — bouton « Terminer »,
+  // croix, clic sur le fond, touche Échap. Accroché au seul bouton, le
+  // rafraîchissement sautait dès que l'utilisateur fermait autrement :
+  // l'issue attestée restait invisible jusqu'au rechargement de la vue.
+  // `surFermeture` est le point de passage COMMUN aux quatre chemins.
+  let attestee = false;
+  const instance = modale({
+    titre: 'Attester le traitement final',
+    contenuHtml,
+    actionsHtml,
+    surFermeture: function () {
+      if (attestee && typeof ctx.rafraichir === 'function') ctx.rafraichir();
+    }
+  });
   const racine = document.getElementById('zone-modales') || document.body;
   const zoneErreur = racine.querySelector('#zone-erreur-issue');
   racine.querySelector('[data-action="annuler"]')
@@ -239,9 +300,35 @@ function ouvrirAttestationIssue(ctx, bsff) {
             racine.querySelector('#issue-certificat').value || null,
           operateur: u.prenom + ' ' + u.nom
         });
+        attestee = true;
         toast('Traitement final attesté.', 'succes');
-        instance.fermer();
-        if (typeof ctx.rafraichir === 'function') ctx.rafraichir();
+        // ⚠ Lot B2 : on enchaîne SUR la pièce justificative — c'est elle
+        // qu'un contrôle demandera. La modale ne se ferme pas sur la seule
+        // affirmation. Piège historique du projet : JAMAIS de sélecteur
+        // global sur « .modale » — on interroge la boîte de CET appel.
+        const corps = instance.racine.querySelector('.modale-corps');
+        const actions = instance.racine.querySelector('.modale-actions');
+        if (corps) {
+          // ⚠ Revue finale B2 : même promesse à corriger qu'en tête de
+          // modale — l'anomalie ne compte que les suivis SANS aucune pièce.
+          corps.innerHTML = '<p class="modale-intro">Joignez la '
+            + '<strong>pièce justificative</strong> du traitement '
+            + '(certificat de l’installation, bordereau officiel) : c’est '
+            + 'elle qu’un contrôle demandera. La déclaration annuelle, elle, '
+            + 'ne signale que les suivis qui ne portent AUCUNE pièce '
+            + 'jointe.</p><div id="zone-pj-issue"></div>';
+        }
+        if (actions) {
+          actions.innerHTML = '<button type="button" '
+            + 'class="btn btn-marine btn-bloc" data-action="terminer">'
+            + 'Terminer</button>';
+          actions.querySelector('[data-action="terminer"]')
+            .addEventListener('click', function () { instance.fermer(); });
+        }
+        zonePiecesJointes(instance.racine.querySelector('#zone-pj-issue'), ctx, {
+          entiteType: 'BSFF', entiteId: bsff.id, categorie: 'CERTIFICAT'
+        });
+        return;
       } catch (erreur) {
         zoneErreur.innerHTML = '<div class="bandeau-erreur">' + ICONES.alerte
           + '<span>' + esc(erreur.message
@@ -289,7 +376,7 @@ function ouvrirDecision(ctx, bouteille) {
     + '</button>'
     + '<button type="button" class="carte-choix' + (decisionCourante === 'DECHET' ? ' selectionnee' : '')
     + '" data-decision="DECHET">'
-    + '<strong>Déchet</strong><span>Fluide non réutilisable, direction BSFF</span>'
+    + '<strong>Déchet</strong><span>Fluide non réutilisable, direction filière déchets</span>'
     + '</button>'
     + '</div>';
 
@@ -361,17 +448,48 @@ export async function render(conteneur, ctx) {
     ctx.store.getBouteilles(),
     ctx.store.getBsff()
   ]);
+  // Lot B2 : quels suivis portent une pièce justificative (métadonnées
+  // seules — la liste de PJ ne descend aucun binaire).
+  // ⚠ Revue B2 (mineur 3) — N+1 APPELS RÉSEAU EN SÉRIE. La boucle
+  // interrogeait le store suivi par suivi, chacun attendant le précédent :
+  // en mode LocalStore, autant d'allers-retours HTTP mis bout à bout à
+  // CHAQUE affichage de l'écran. Deux économies, sans toucher au contrat :
+  //   · on n'interroge QUE les suivis dont l'issue est attestée — pour les
+  //     autres, la réponse ne change rien à l'affichage (voir ligneBsff) ;
+  //   · les appels restants partent ENSEMBLE au lieu de s'enchaîner.
+  // Retirer les N appels eux-mêmes demanderait une méthode de contrat
+  // (listage groupé) : consigné, hors de ce lot.
+  const aInterroger = bsffListe.filter((s) => s && s.issueTraitement);
+  const reponses = await Promise.all(
+    aInterroger.map((s) => ctx.store.listerPiecesJointes('BSFF', s.id)));
+  const avecPiece = new Set();
+  aInterroger.forEach(function (s, i) {
+    const pieces = reponses[i];
+    if (pieces && pieces.length > 0) avecPiece.add(s.id);
+  });
 
   const jour = new Date().toISOString().slice(0, 10);
   const enAttente = bouteillesRecupPendantes(bouteilles);
 
   const entete = enteteVue({
-    titre: 'Déchets / BSFF',
-    sousTitre: 'Fluides récupérés : décision, bordereaux BSFF et sortie du stock'
+    titre: 'Déchets / remise en filière',
+    sousTitre: 'Fluides récupérés : décision, suivi interne de remise en '
+      + 'filière et sortie du stock'
   });
 
+  // ⚠ Lot B2 — MENTION PERMANENTE, jamais masquée, jamais repliée :
+  // l'écran ne doit pas laisser croire que ce suivi tient lieu de
+  // bordereau de suivi de déchets dématérialisé obligatoire.
+  const mentionOfficielle = '<div class="bandeau-avertissement">' + ICONES.alerte
+    + '<span>' + esc(MENTION_BORDEREAU_OFFICIEL) + '</span></div>';
+
+  // ⚠ Revue B2 (important 4) — la colonne « Traitement final » signale les
+  // suivis SANS pièce jointe. Son silence ne doit pas se lire « dossier
+  // prouvé » : le logiciel compte les pièces, il ne les lit pas.
   const encartAide = '<div class="encart-aide">'
-    + 'Récupération → décision (réutilisable / à analyser / déchet) → BSFF → enlèvement → sortie du stock.'
+    + 'Récupération → décision (réutilisable / à analyser / déchet) → '
+    + 'suivi interne de remise en filière → enlèvement → sortie du stock.'
+    + '<br>' + esc(MENTION_PIECE_NON_PROBANTE)
     + '</div>';
 
   const sectionRecuperation = '<section class="carte">'
@@ -383,10 +501,11 @@ export async function render(conteneur, ctx) {
     + '</section>';
 
   const sectionBsff = '<section class="carte">'
-    + '<h3 class="carte-titre">Bordereaux BSFF</h3>'
+    + '<h3 class="carte-titre">' + esc(LIBELLE_SUIVI) + '</h3>'
     + tableau({
       colonnes: [
-        { cle: 'numero', libelle: 'N° BSFF' },
+        { cle: 'numero', libelle: 'N° suivi interne' },
+        { cle: 'externe', libelle: 'N° bordereau officiel' },
         { cle: 'date', libelle: 'Date remise' },
         { cle: 'bouteille', libelle: 'Bouteille' },
         { cle: 'fluide', libelle: 'Fluide' },
@@ -396,13 +515,14 @@ export async function render(conteneur, ctx) {
         { cle: 'issue', libelle: 'Traitement final' },
         { cle: 'action', libelle: '', align: 'droite' }
       ],
-      lignesHtml: bsffListe.map(ligneBsff)
+      lignesHtml: bsffListe.map((s) => ligneBsff(s, avecPiece.has(s.id)))
     })
     + '</section>';
 
   conteneur.innerHTML = STYLES_VUE
     + '<div class="vue-contenu vue-dechets anim-fade">'
     + entete
+    + mentionOfficielle
     + encartAide
     + sectionRecuperation
     + sectionBsff

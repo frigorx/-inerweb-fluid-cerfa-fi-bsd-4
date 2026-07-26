@@ -427,15 +427,24 @@ const TABLES = {
       masseRemiseKg: 'masse_remise_kg',
       dateRemise: 'date_remise',
       // Issue de traitement final (migration 28, P0-8) : nature attestée du
-      // traitement du déchet remis. NULL = non attesté (BSFF ≠ destruction).
+      // traitement du déchet remis. NULL = non attesté (remise ≠ destruction).
       issueTraitement: 'issue_traitement',
       installationTraitement: 'installation_traitement',
       certificatTraitement: 'certificat_traitement',
-      dateTraitement: 'date_traitement'
+      dateTraitement: 'date_traitement',
+      // Lot B2 — LE NUMÉRO RÉEL A SA PLACE : numéro (ou lien) du bordereau
+      // dématérialisé OFFICIEL, distinct du numéro du suivi INTERNE
+      // (`numeroBsff`). La colonne existait depuis le socle v1 et n'était
+      // exposée nulle part : aucune migration. NULL = bordereau non reporté.
+      bordereauExterne: 'lien_trackdechets',
+      // Lot B2 (migration 36) : masse nette RESTANTE dans la bouteille juste
+      // après cette remise, FIGÉE à l'émission. Repère du rapprochement
+      // « la bouteille a-t-elle regagné du fluide depuis ? ». NULL = suivi
+      // antérieur à la migration : aucun repère, donc aucun soupçon.
+      masseBouteilleApresKg: 'masse_bouteille_apres_kg'
     },
     sqlSeulement: ['etablissement_id', 'statut_fluide', 'decision_par',
-      'date_decision', 'lien_trackdechets', 'statut', 'observation',
-      'date_creation']
+      'date_decision', 'statut', 'observation', 'date_creation']
   },
 
   // Cessions de fluide à un tiers attesté (migration 29, P0-8, rubrique 10).
