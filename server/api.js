@@ -770,10 +770,15 @@ function texteOuNullEquip(valeur) {
 //   - typeInstallation / sousTypeInstallation : clôture de fuite le jour
 //     même au lieu de J+1 ;
 //   - statut : ARRETEE et DEMANTELEE SORTENT la machine de l'alerte de
-//     contrôle en retard (getAlertes). Les gestes dédiés arreterMachine /
-//     demantelerMachine restent OPERATEUR : ils portent, eux, les gardes
-//     matérielles (pas de démantèlement avec du fluide dedans) et leur
-//     propre ligne de journal. Ce qui est fermé ici, c'est le RACCOURCI ;
+//     contrôle en retard (getAlertes). ⚠️ Ce filtre ne ferme que le
+//     RACCOURCI par la fiche : les gestes dédiés arreterMachine /
+//     demantelerMachine sont une TROISIÈME porte vers le même seuil, et la
+//     revue B1 les a fait passer à VALIDEUR dans ROLES_MUTATION (voir le
+//     bloc « la troisième porte du même seuil », plus haut). Ils gardent
+//     leurs gardes matérielles (pas de démantèlement avec du fluide dedans)
+//     et leur ligne de journal : ils ont changé de main, pas de nature.
+//     `remettreEnService` reste OPERATEUR à dessein — il RAMÈNE
+//     l'obligation ;
 //   - dernierControle / prochainControle : l'échéance réglementaire. La
 //     reprise d'un parc existant reste POSSIBLE à la création — au niveau
 //     du responsable, comme le reste de la qualification.
