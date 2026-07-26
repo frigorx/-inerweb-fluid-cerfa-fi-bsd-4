@@ -236,7 +236,7 @@ parenthèses sont des propositions de l'auteur, non des décisions.
 
 | N° | Critère | Comment on le mesure | Seuil retenu |
 |---|---|---|---|
-| C1 | Durée réelle du pilote | calendrier | .......... semaines *(≥ 6)* |
+| C1 | Durée réelle du pilote | calendrier | .......... semaines *(≥ 6 ; le dossier de relecture externe évoquait deux à quatre semaines — la proposition est ici plus longue, la direction tranche)* |
 | C2 | Interventions réellement saisies dans les deux registres | comptage | .......... *(≥ 20)* |
 | C3 | Écarts **non expliqués** entre les deux registres | journal des écarts | .......... *(0 exigé)* |
 | C4 | Écarts expliqués et corrigés | journal des écarts | tous tracés |
@@ -248,6 +248,7 @@ parenthèses sont des propositions de l'auteur, non des décisions.
 | C10 | Empreinte SHA-256 de la version mise en service, relevée et consignée | fichier `.sha256` de l'archive | relevée |
 | C11 | Alertes rouges non traitées au tableau de conformité en fin de pilote | écran « feu tricolore » | .......... *(0)* |
 | C12 | Risques résiduels du § 5 relus en fin de pilote | présente note, datée et re-signée | fait |
+| C13 | Parcours officiel complet exécuté **sur le poste cible** (passage en officiel, soumission, signatures, validation, CERFA, scellement) avant toute exploitation en mode Officiel | compte rendu daté, fiche d'essai conservée | fait *(la répétition générale en environnement de test ne suffit pas — voir `docs/POINTS-DE-FRICTION.md` § 8)* |
 
 **Décision d'ouverture du mode Officiel** *(à ne prendre qu'au vu des résultats ci-dessus)* :
 
