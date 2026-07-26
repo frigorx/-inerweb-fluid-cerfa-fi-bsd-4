@@ -51,7 +51,7 @@ C'était le seul endroit du logiciel où il DISAIT quelque chose de faux —
 |---|---|
 | Le contrôle d'image tenait en trois lignes : 8 octets magiques + deux bornes de taille | `signatures-mouvement.js` avant le lot (commit `c32f8c0`) |
 | Le dépôt n'a **aucune dépendance tierce** — donc aucun décodeur PNG disponible : il n'y a ni `package.json` ni `node_modules` dans tout le dépôt | `find . -name package.json` = vide |
-| `verifierImageSignature` n'est appelée **qu'à la POSE** (aucun contrôle rétroactif) | grep des appelants, api.js + demo-store.js |
+| `verifierImageSignature` n'était appelée **qu'à la POSE** | grep des appelants avant le lot, api.js + demo-store.js. ⚠️ **C'est l'état de DÉPART, plus l'état d'arrivée** : la revue a exigé de fermer la porte IMPORT, et le contrôle est désormais rejoué à chaque **LECTURE** (§ 6). Cette ligne a servi de preuve à une affirmation devenue fausse — un grep ne prouve que le passé. |
 | Les conditions 14/15 du mode Officiel reposent entièrement sur ces faits | `docs/CONDITIONS-BLOCANTES-OFFICIEL.md:38-39` |
 | Le canvas du wizard peignait lui-même son fond blanc et sa ligne de base pointillée **dans** le canvas | `v8/js/wizard/signature.js` avant le lot |
 | Le témoin d'identité de session (compte + fiche liée) est capté et stocké **depuis la brique C1**, et affiché **nulle part** | colonnes `session_compte_id` / `session_personnel_id` |
@@ -228,11 +228,32 @@ prenne sur des faits :
 - il **ne bloque aucune écriture** : il refuse une pose, l'élève recommence ;
 - il **n'entre pas dans le moteur Officiel** : aucune condition bloquante
   nouvelle, `VERROU_LIVRAISON` reste `true` des deux côtés ;
-- il **n'est jamais rétroactif** : `verifierImageSignature` n'est appelée qu'à
-  la pose ; aucune signature déjà en base n'est re-jugée, aucun registre
-  existant ne devient « invalide » ;
+- il **ne bloque aucune écriture hors mode Officiel** : la validation en mode
+  NORMAL passe comme avant ;
 - il **ne s'applique qu'au vide ABSOLU** : une griffure de deux pixels passe
   (D2), et un format non relisible passe aussi.
+
+⚠️ **En revanche il N'EST PAS « seulement à la pose » — et c'est le point sur
+lequel il faut se prononcer en connaissance de cause.** Ce paragraphe affirmait
+le contraire jusqu'au 26/07 (« jamais rétroactif : `verifierImageSignature`
+n'est appelée qu'à la pose »). C'était vrai des quatre premières briques ; la
+revue a exigé de fermer la porte IMPORT, et la seule façon honnête de la fermer
+a été de rendre la VALIDITÉ elle-même exacte. Le contrôle est donc rejoué **à
+chaque LECTURE**, des deux côtés : `getSignaturesMouvement`
+(`server/api.js` · `demo-store.js`) et `etatSignatureReelle`, qui alimente le
+moteur Officiel.
+
+**Ce que cela change pour un registre EXISTANT**, dit en clair : une case
+blanche déjà en base — un vrai PNG de 5 506 o, que la version d'avant B3
+acceptait et stockait — voit sa signature **retomber sur « absente »**, et les
+**conditions 14/15 lui être opposées en mode Officiel**.
+
+**Ce que cela ne change pas**, et qui est TIRÉ (`v8/js/data/test-contrat.mjs`,
+joué contre les DEUX magasins) : le registre **s'importe toujours** (rien n'est
+refusé à l'entrée), la **chaîne d'empreintes reste verte** — aucun registre ne
+devient « invalide » —, **aucune masse ne bouge**, et **aucune condition
+bloquante nouvelle** n'apparaît : ce sont les codes existants, avec leur message
+canonique existant. Le doute retire l'**allègement**, jamais l'**obligation**.
 
 **Pourquoi il est proposé quand même :** c'est le seul cas où le logiciel
 DISAIT quelque chose de faux. Un registre opposable peut refuser un geste ; il

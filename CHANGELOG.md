@@ -73,10 +73,31 @@ taille voulue par un chunk auxiliaire `tEXt` : la taille d'un fichier ne
 prouve plus rien), branchée sur les quatre suites concernées.
 
 **Aucune migration. Aucune nouvelle condition bloquante du mode Officiel.
-Le verrou de livraison reste FERMÉ.** Aucun contrôle rétroactif : les
-signatures déjà en base ne sont jamais re-jugées (`verifierImageSignature`
-n'est appelée qu'à la POSE) — un registre existant s'importe et se vérifie
-comme avant.
+Le verrou de livraison reste FERMÉ.**
+
+**LE CONTRÔLE D'IMAGE S'APPLIQUE À LA LECTURE, PAS SEULEMENT À LA POSE — et
+il faut le savoir AVANT de viser ce lot.** *(Ce paragraphe disait le
+contraire jusqu'au 26/07 : « aucun contrôle rétroactif,
+`verifierImageSignature` n'est appelée qu'à la POSE ». C'était vrai des
+quatre premières briques, et devenu FAUX en fermant la porte IMPORT deux
+paragraphes plus bas — le lot « ne plus mentir sur une signature » mentait
+sur son propre compte. Corrigé.)* `getSignaturesMouvement` et l'état des
+signatures pour le moteur Officiel (`etatSignatureReelle`) rejouent le
+contrôle à CHAQUE lecture, des deux côtés : c'est exactement ce qui referme
+la porte IMPORT, une garde posée sur la seule pose ne tenait pas.
+
+Conséquence, dite en clair : **un registre EXISTANT qui contient une case
+blanche** — un vrai PNG de 5 506 o, le chiffre publié plus haut, que la
+version d'avant B3 acceptait et stockait — **voit sa signature retomber sur
+« absente », et les conditions 14/15 lui être opposées en mode Officiel.**
+Ce qui NE change pas, et qui a été TIRÉ (`test-contrat.mjs`, joué contre les
+DEUX magasins) : le registre **s'importe toujours** (rien n'est refusé à
+l'entrée), la **chaîne d'empreintes reste verte** (aucune écriture scellée
+n'est touchée, aucun registre ne devient « invalide »), **aucune masse ne
+bouge**, **aucune condition bloquante nouvelle** n'apparaît (les codes
+existants, avec leur message canonique existant), et hors mode Officiel la
+validation passe comme avant. Le doute retire l'ALLÈGEMENT, jamais
+l'OBLIGATION.
 
 **REVUE ADVERSARIALE PASSÉE ET SOLDÉE (25-26/07)** : 6 constats importants et
 7 mineurs, tous fermés. Les deux plus lourds : la **porte IMPORT** n'était pas
