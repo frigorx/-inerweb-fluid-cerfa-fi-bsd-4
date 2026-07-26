@@ -491,5 +491,152 @@ async function bouteilleDechet(masseKg) {
     avec.texte['11_BSFF'] === 'FF-2026-000999', String(avec.texte['11_BSFF']));
 }
 
+// ============================================================
+// C quinquies. LA DATE DU MÊME JOUR N'ACCUSE PAS NON PLUS.
+// Le repère (`masseBouteilleApresKg`) est figé À L'INSTANT de la remise,
+// mais les dates du registre sont au JOUR près : une écriture datée du
+// MÊME JOUR est déjà comptée dans le repère la plupart du temps. La
+// compter une seconde fois comme « postérieure » crée un faux gain dès
+// qu'elle est SORTANTE — et le logiciel écrit alors « aucune écriture du
+// registre ne l'explique » d'une écriture validée qui l'explique
+// exactement (regroupement de déchets avant enlèvement, puis remise le
+// jour même). L'accusation remonte au feu tricolore et au guide d'audit.
+//
+// RÈGLE DE RACINE, au même rang pour TOUT ce qui explique un écart :
+// à date ÉGALE, on ne retient que ce qui EXPLIQUE le gain, jamais ce qui
+// l'aggrave — le doute retire l'ACCUSATION, jamais l'obligation.
+// (C'était déjà la règle des remises postérieures ; elle vaut désormais
+// aussi pour les mouvements.)
+// ============================================================
+{
+  const JOUR = '2026-07-20';
+  const referentJ = await store.createPersonne({
+    nom: 'MemeJour', prenom: 'Référent', typePersonne: 'ENSEIGNANT',
+    roleApp: 'REFERENT'
+  });
+
+  /** Bouteille de récupération (PAS encore déchet : elle peut être source). */
+  async function bouteilleRecuperee(masseKg) {
+    const b = await store.createBouteille({
+      type: 'RECUPERATION', fluide: 'R-410A', etatFluide: 'RECUPERE',
+      tareKg: 10, masseBruteKg: 10 + masseKg, contenanceMaxKg: 50,
+      proprietaire: 'Lycée'
+    });
+    return (await store.getBouteilles()).find((x) => x.id === b.id);
+  }
+
+  // (a) TRANSFERT SORTANT validé le jour J, puis décision déchet et remise
+  //     en filière le MÊME jour J.
+  {
+    const a = await bouteilleRecuperee(10);
+    const regroupement = await bouteilleRecuperee(0);
+    const mvt = await store.creerMouvement({
+      type: 'TRANSFERT', bouteilleSrcId: a.id, bouteilleDstId: regroupement.id,
+      date: JOUR, peseeAvantKg: 10, peseeApresKg: 8,
+      technicien: 'Testeur B2', causeMouvement: 'Regroupement avant enlèvement'
+    });
+    await store.soumettreMouvement(mvt.id);
+    await store.validerMouvement(mvt.id, referentJ.id);
+    const apresTransfert = (await store.getBouteilles())
+      .find((x) => x.id === a.id);
+    verifier('(a) le transfert sortant a vidé la bouteille (10 → 8 kg)',
+      Math.abs(apresTransfert.masseNetteKg - 8) < 1e-6,
+      String(apresTransfert.masseNetteKg));
+
+    await store.deciderFluideRecupere(a.id, 'DECHET', 'testeur');
+    const suivi = await store.createBsff({
+      bouteilleId: a.id, transporteur: 'Collecteur agréé',
+      installationDestination: 'Centre de traitement agréé',
+      masseRemiseKg: 3, dateRemise: JOUR, operateur: 'testeur'
+    });
+    verifier('(a) le repère est figé sur le reliquat réel (5 kg)',
+      Math.abs(suivi.masseBouteilleApresKg - 5) < 1e-6,
+      String(suivi.masseBouteilleApresKg));
+
+    const accusation = (await store.getAlertes())
+      .find((al) => al.id === `alr-remise-filiere-${a.id}`);
+    verifier('(a) AUCUNE accusation : la sortie du jour est DÉJÀ dans le repère',
+      accusation === undefined, accusation ? accusation.detail : '');
+  }
+
+  // (b) CHARGE_APPOINT validée le jour J, puis décision déchet et remise
+  //     en filière le MÊME jour J.
+  {
+    const a = await bouteilleRecuperee(10);
+    const machine = await store.createMachine({
+      designation: 'Vitrine même jour', fluide: 'R-410A',
+      chargeNominaleKg: 10, chargeActuelleKg: 0, operateur: 'testeur'
+    });
+    const mvt = await store.creerMouvement({
+      type: 'CHARGE_APPOINT', machineId: machine.id, bouteilleSrcId: a.id,
+      date: JOUR, peseeAvantKg: 10, peseeApresKg: 8,
+      technicien: 'Testeur B2', causeMouvement: 'Appoint'
+    });
+    await store.soumettreMouvement(mvt.id);
+    await store.validerMouvement(mvt.id, referentJ.id);
+
+    await store.deciderFluideRecupere(a.id, 'DECHET', 'testeur');
+    const suivi = await store.createBsff({
+      bouteilleId: a.id, transporteur: 'Collecteur agréé',
+      installationDestination: 'Centre de traitement agréé',
+      masseRemiseKg: 3, dateRemise: JOUR, operateur: 'testeur'
+    });
+    verifier('(b) le repère est figé sur le reliquat réel (5 kg)',
+      Math.abs(suivi.masseBouteilleApresKg - 5) < 1e-6,
+      String(suivi.masseBouteilleApresKg));
+
+    const accusation = (await store.getAlertes())
+      .find((al) => al.id === `alr-remise-filiere-${a.id}`);
+    verifier('(b) AUCUNE accusation pour une charge validée le jour même',
+      accusation === undefined, accusation ? accusation.detail : '');
+  }
+
+  // (c) LE CONTRE-TIR : la re-inflation reste dénoncée. La règle du même
+  //     jour ne doit pas ouvrir de porte — un gain non expliqué du jour de
+  //     la remise reste un gain non expliqué.
+  {
+    const a = await bouteilleDechet(10);
+    const suivi = await store.createBsff({
+      bouteilleId: a.id, transporteur: 'Collecteur agréé',
+      installationDestination: 'Centre de traitement agréé',
+      masseRemiseKg: 5, dateRemise: JOUR, operateur: 'testeur'
+    });
+    await store.updateBouteille(a.id, { masseBruteKg: 20 });
+    const alerte = (await store.getAlertes())
+      .find((al) => al.id === `alr-remise-filiere-${a.id}`);
+    verifier('(c) la re-inflation SANS écriture reste signalée',
+      Boolean(alerte) && alerte.niveau === 'IMPORTANT'
+      && alerte.detail.includes(suivi.numeroBsff),
+      alerte ? alerte.detail : 'aucune alerte');
+  }
+
+  // (d) Une ENTRÉE datée du même jour continue d'expliquer un gain
+  //     (le doute retire l'accusation : on retient ce qui explique).
+  {
+    const a = await bouteilleDechet(10);
+    const suivi = await store.createBsff({
+      bouteilleId: a.id, transporteur: 'Collecteur agréé',
+      installationDestination: 'Centre de traitement agréé',
+      masseRemiseKg: 5, dateRemise: JOUR, operateur: 'testeur'
+    });
+    verifier('(d) repère figé à 5 kg', suivi.masseBouteilleApresKg === 5);
+    // Le fluide restant est jugé réutilisable : la bouteille repart en stock
+    // et reçoit un transfert entrant daté du MÊME jour que la remise.
+    await store.deciderFluideRecupere(a.id, 'REUTILISABLE', 'testeur');
+    const source = await bouteilleRecuperee(4);
+    const mvt = await store.creerMouvement({
+      type: 'TRANSFERT', bouteilleSrcId: source.id, bouteilleDstId: a.id,
+      date: JOUR, peseeAvantKg: 4, peseeApresKg: 2,
+      technicien: 'Testeur B2', causeMouvement: 'Regroupement avant enlèvement'
+    });
+    await store.soumettreMouvement(mvt.id);
+    await store.validerMouvement(mvt.id, referentJ.id);
+    const accusation = (await store.getAlertes())
+      .find((al) => al.id === `alr-remise-filiere-${a.id}`);
+    verifier('(d) l’entrée du même jour explique le gain : aucune accusation',
+      accusation === undefined, accusation ? accusation.detail : '');
+  }
+}
+
 console.log(`\n${nbOk} OK, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);

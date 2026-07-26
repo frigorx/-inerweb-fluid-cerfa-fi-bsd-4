@@ -67,8 +67,9 @@ const TOLERANCE_REMISE_KG = 0.01;
  *  figés lors de ses remises en filière (miroir littéral).
  *  TOUS les repères sont éprouvés — un nouveau suivi ne réécrit plus le
  *  repère sur un état gonflé : l'alerte ne s'éteint pas d'un clic. Les
- *  remises postérieures se reconnaissent à leur DATE seule (jamais au
- *  numéro : l'ordre des tableaux diffère entre les magasins). */
+ *  écritures postérieures se reconnaissent à leur DATE seule (jamais au
+ *  numéro : l'ordre des tableaux diffère entre les magasins) ; à date
+ *  ÉGALE, voir `contributionRetenue`. */
 function ecartApresRemise(bouteille, suivis, mouvements) {
   if (!bouteille || !Number.isFinite(bouteille.masseNetteKg)) return null;
   const siennes = (suivis ?? []).filter(
@@ -91,31 +92,47 @@ function plusGrave(a, b) {
   return a.numeroSuivi < b.numeroSuivi;
 }
 
+/** LA CONVENTION DE DATE, AU MÊME RANG POUR TOUT CE QUI EXPLIQUE UN ÉCART
+ *  (miroir littéral). Le repère est figé à l'INSTANT de la remise, les dates
+ *  du registre sont au JOUR près : antérieure = déjà dans le repère,
+ *  postérieure = comptée entière, MÊME JOUR = on ne retient que ce qui
+ *  EXPLIQUE le gain, jamais ce qui l'aggrave. Le doute retire
+ *  l'ACCUSATION, jamais l'obligation. */
+function contributionRetenue(contribution, dateEcriture, dateRepere) {
+  const quand = String(dateEcriture ?? '');
+  const repere = String(dateRepere ?? '');
+  if (quand < repere) return 0;
+  if (quand > repere) return contribution;
+  return contribution > 0 ? contribution : 0;
+}
+
 /** Écart au titre d'UN repère donné (miroir littéral). */
 function ecartPourRepere(bouteille, repere, siennes, mouvements) {
-  let remisesApres = 0;
+  let explique = 0;
+
+  // Les remises POSTÉRIEURES ont sorti leur masse : contribution NÉGATIVE,
+  // donc écartée d'elle-même au jour du repère.
   for (const autre of siennes) {
-    if (String(autre.dateRemise ?? '') <= String(repere.dateRemise ?? '')) {
-      continue;
-    }
     const m = Number(autre.masseRemiseKg);
-    if (Number.isFinite(m)) remisesApres += m;
+    if (!Number.isFinite(m)) continue;
+    explique += contributionRetenue(-m, autre.dateRemise, repere.dateRemise);
   }
 
-  let explique = -remisesApres;
   for (const mv of mouvements ?? []) {
     // VALIDE **et** ANNULE : l'écriture annulée et sa contre-écriture se
     // neutralisent d'elles-mêmes. Un BROUILLON n'explique rien.
     if (!mv || (mv.statut !== 'VALIDE' && mv.statut !== 'ANNULE')) continue;
-    if (String(mv.date ?? '') < String(repere.dateRemise ?? '')) continue;
     const q = Number(mv.quantiteKg);
     if (!Number.isFinite(q)) continue;
     // Le SIGNE ne dit pas le sens : récupération NÉGATIVE, transfert
     // POSITIF, et dans les deux cas le destinataire GAGNE (miroir littéral).
+    let contribution = 0;
     if (mv.bouteilleDstId === bouteille.id) {
-      explique += (mv.type === 'TRANSFERT' ? q : -q);
+      contribution += (mv.type === 'TRANSFERT' ? q : -q);
     }
-    if (mv.bouteilleSrcId === bouteille.id) explique -= q;
+    if (mv.bouteilleSrcId === bouteille.id) contribution -= q;
+    if (contribution === 0) continue;
+    explique += contributionRetenue(contribution, mv.date, repere.dateRemise);
   }
 
   const attendu = repere.masseBouteilleApresKg + explique;

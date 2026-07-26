@@ -235,6 +235,35 @@ console.log('\n--- E bis. Écart après remise en filière ---');
       { bouteilleId: 'bou-1', numeroBsff: 'SIF-2026-0009', masseRemiseKg: 3,
         dateRemise: '2026-08-01', masseBouteilleApresKg: 2 }
     ], [])));
+  // ⚠ LA DATE DU MÊME JOUR (revue finale B2). Le repère est figé à
+  // l'INSTANT de la remise, les dates du registre sont au JOUR près : une
+  // écriture datée du jour de la remise est déjà dans le repère. La
+  // recompter comme postérieure inventait un gain dès qu'elle SORTAIT — et
+  // le logiciel accusait par écrit une écriture validée qui l'explique.
+  // Règle unique : à date égale, on ne retient que ce qui EXPLIQUE.
+  verifier('une charge SORTANTE du MÊME JOUR n’accuse pas (déjà au repère)',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 5 }, suivis, [
+      { statut: 'VALIDE', type: 'CHARGE_APPOINT', date: '2026-07-24',
+        bouteilleSrcId: 'bou-1', quantiteKg: 2 }
+    ]) === null);
+  verifier('un TRANSFERT SORTANT du MÊME JOUR n’accuse pas non plus',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 5 }, suivis, [
+      { statut: 'VALIDE', type: 'TRANSFERT', date: '2026-07-24',
+        bouteilleSrcId: 'bou-1', bouteilleDstId: 'bou-2', quantiteKg: 2 }
+    ]) === null);
+  verifier('une ENTRÉE du même jour continue d’EXPLIQUER le gain',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 7 }, suivis, [
+      { statut: 'VALIDE', type: 'TRANSFERT', date: '2026-07-24',
+        bouteilleSrcId: 'bou-2', bouteilleDstId: 'bou-1', quantiteKg: 2 }
+    ]) === null);
+  verifier('… et n’explique QUE sa quantité (le reste du gain tient)',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 9 }, suivis, [
+      { statut: 'VALIDE', type: 'TRANSFERT', date: '2026-07-24',
+        bouteilleSrcId: 'bou-2', bouteilleDstId: 'bou-1', quantiteKg: 2 }
+    ])?.gainKg === 2);
+  verifier('CONTRE-TIR : la re-inflation SANS écriture reste dénoncée',
+    ecartApresRemise({ id: 'bou-1', masseNetteKg: 10 }, suivis, [])
+      ?.gainKg === 5);
   verifier('tolérance métrologique : 10 g d’arrondi ne déclenchent rien',
     ecartApresRemise({ id: 'bou-1', masseNetteKg: 5.01 }, suivis, [])
       === null);
@@ -290,7 +319,13 @@ verifier('constantes identiques',
     { statut: 'ANNULE', type: 'TRANSFERT', date: '2026-08-06',
       bouteilleSrcId: 'b1', bouteilleDstId: 'b2', quantiteKg: 0.75 },
     { statut: 'VALIDE', type: 'TRANSFERT', date: '2026-08-07',
-      bouteilleSrcId: 'b1', bouteilleDstId: 'b2', quantiteKg: -0.75 }
+      bouteilleSrcId: 'b1', bouteilleDstId: 'b2', quantiteKg: -0.75 },
+    // Écritures datées du JOUR MÊME d'un repère (b1 le 2026-07-24, b1 le
+    // 2026-08-01) : la convention de date doit être la même des deux côtés.
+    { statut: 'VALIDE', type: 'CHARGE_APPOINT', date: '2026-07-24',
+      bouteilleSrcId: 'b1', quantiteKg: 1.5 },
+    { statut: 'VALIDE', type: 'TRANSFERT', date: '2026-08-01',
+      bouteilleSrcId: 'b2', bouteilleDstId: 'b1', quantiteKg: 0.4 }
   ];
   for (const masse of [0, 2, 2.5, 3, 10, NaN]) {
     for (const id of ['b1', 'b2', 'b3']) {

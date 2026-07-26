@@ -176,11 +176,11 @@ export const TOLERANCE_REMISE_KG = 0.01;
  * écritures du registre. L'écart retenu est le PLUS GRAND — c'est le
  * repère le plus ancien qui reste inexpliqué, donc l'origine du trou.
  *
- * Les remises « postérieures » se reconnaissent à leur DATE seule, jamais
+ * Les écritures « postérieures » se reconnaissent à leur DATE seule, jamais
  * au numéro (mineur 4 de la revue : un registre importé peut porter des
  * numéros antérieurs, et l'ordre du tableau diffère entre les magasins —
- * le serveur trie par date décroissante). À date égale, on ne retranche
- * rien : le doute retire l'ACCUSATION, jamais l'obligation.
+ * le serveur trie par date décroissante). À date ÉGALE, voir
+ * `contributionRetenue` : on ne retient que ce qui EXPLIQUE le gain.
  *
  * Le gain EXPLIQUÉ vient des écritures du registre postérieures à la
  * remise (entrées moins sorties, VALIDE et ANNULE ; un brouillon
@@ -224,30 +224,61 @@ function plusGrave(a, b) {
 }
 
 /**
+ * LA CONVENTION DE DATE, AU MÊME RANG POUR TOUT CE QUI EXPLIQUE UN ÉCART.
+ *
+ * Le repère (`masseBouteilleApresKg`) est figé à l'INSTANT de la remise,
+ * mais les dates du registre sont au JOUR près : une écriture datée du
+ * MÊME JOUR est, dans le cas ordinaire, déjà comptée dans le repère. La
+ * recompter comme « postérieure » crée un gain qui n'a jamais existé dès
+ * qu'elle est SORTANTE — et le logiciel écrit alors « aucune écriture du
+ * registre ne l'explique » d'une écriture validée qui l'explique
+ * exactement (regroupement de déchets, puis remise le jour même).
+ * L'accusation remonte au feu tricolore et au guide d'audit.
+ *
+ * Règle unique, appliquée aux remises comme aux mouvements :
+ *  - date ANTÉRIEURE au repère : déjà dans le repère, contribution nulle ;
+ *  - date POSTÉRIEURE : contribution entière ;
+ *  - MÊME JOUR : on ne retient que ce qui EXPLIQUE le gain (contribution
+ *    positive), jamais ce qui l'aggrave — le doute retire l'ACCUSATION,
+ *    jamais l'obligation. Le prix est une sous-détection du jour de la
+ *    remise ; le prix inverse est une accusation écrite et fausse.
+ *
+ * @param {number} contribution - effet sur la masse ATTENDUE (kg)
+ * @param {string|null|undefined} dateEcriture
+ * @param {string|null|undefined} dateRepere
+ * @returns {number}
+ */
+function contributionRetenue(contribution, dateEcriture, dateRepere) {
+  const quand = String(dateEcriture ?? '');
+  const repere = String(dateRepere ?? '');
+  if (quand < repere) return 0;
+  if (quand > repere) return contribution;
+  return contribution > 0 ? contribution : 0;
+}
+
+/**
  * Écart au titre d'UN repère donné (fonction interne).
  * @returns {{gainKg:number, numeroSuivi:string, dateRemise:string,
  *            masseApresKg:number}|null}
  */
 function ecartPourRepere(bouteille, repere, siennes, mouvements) {
+  let explique = 0;
+
   // Les remises POSTÉRIEURES ont sorti leur masse de la bouteille : elles
-  // ne sont pas un écart. Comparaison de DATE seule (voir en-tête).
-  let remisesApres = 0;
+  // ne sont pas un écart. Leur contribution est toujours NÉGATIVE, donc la
+  // convention de date les écarte d'elle-même au jour du repère.
   for (const autre of siennes) {
-    if (String(autre.dateRemise ?? '') <= String(repere.dateRemise ?? '')) {
-      continue;
-    }
     const m = Number(autre.masseRemiseKg);
-    if (Number.isFinite(m)) remisesApres += m;
+    if (!Number.isFinite(m)) continue;
+    explique += contributionRetenue(-m, autre.dateRemise, repere.dateRemise);
   }
 
-  let explique = -remisesApres;
   for (const mv of mouvements ?? []) {
     // VALIDE **et** ANNULE : une écriture annulée a bien eu son effet, et sa
     // contre-écriture (même type, quantité opposée, VALIDE) le reprend — les
     // deux se neutralisent d'elles-mêmes, comme dans la déclaration annuelle.
     // Un BROUILLON, lui, n'explique rien : il n'a rien déplacé.
     if (!mv || (mv.statut !== 'VALIDE' && mv.statut !== 'ANNULE')) continue;
-    if (String(mv.date ?? '') < String(repere.dateRemise ?? '')) continue;
     const q = Number(mv.quantiteKg);
     if (!Number.isFinite(q)) continue;
     // ⚠ LE SIGNE NE SUFFIT PAS À DIRE LE SENS. La convention du registre
@@ -257,12 +288,15 @@ function ecartPourRepere(bouteille, repere, siennes, mouvements) {
     // faisait passer un transfert entrant — regroupement de déchets avant
     // enlèvement, opération réelle et validée — pour un gain inexpliqué :
     // le logiciel accusait par écrit une écriture parfaitement légitime.
+    let contribution = 0;
     if (mv.bouteilleDstId === bouteille.id) {
-      explique += (mv.type === 'TRANSFERT' ? q : -q);
+      contribution += (mv.type === 'TRANSFERT' ? q : -q);
     }
     // Source : le fluide en SORT (charge, transfert sortant) — et une
     // contre-écriture, de quantité opposée, le fait revenir.
-    if (mv.bouteilleSrcId === bouteille.id) explique -= q;
+    if (mv.bouteilleSrcId === bouteille.id) contribution -= q;
+    if (contribution === 0) continue;
+    explique += contributionRetenue(contribution, mv.date, repere.dateRemise);
   }
 
   const attendu = repere.masseBouteilleApresKg + explique;
