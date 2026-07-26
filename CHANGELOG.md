@@ -36,15 +36,27 @@ Cinq briques, chacune née d'une attaque tirée :
   `SIF-AAAA-NNNN`, attribué localement, unicité insensible à la casse et aux espaces.
   Le doublon ne passe **ni par l'API, ni par l'import**. La FORME n'est pas exigée à
   l'import : un registre antérieur reste reprenable.
-- **B2-4 — l'issue de traitement s'appuie sur une pièce.** « DESTRUCTION » s'attestait
-  sur parole — installation inventée, certificat null, zéro pièce jointe — et la masse
-  tombait aussitôt en **rubrique 9 de la déclaration annuelle réglementaire**. Doctrine
-  maison appliquée : *le doute retire l'allègement, jamais l'obligation*. La saisie reste
-  possible ; c'est la valeur probante qui tombe. Sans pièce jointe au suivi, la masse part
-  en `remisIssueSansPreuveKg` — poste **distinct** de `remisNonAttesteKg` (« déclaré, non
-  prouvé » ≠ « rien de déclaré ») — avec l'anomalie `BSFF_ISSUE_SANS_PIECE`. Un numéro de
-  certificat saisi n'est pas une pièce : il s'affirme aussi. La modale d'attestation
-  enchaîne désormais **sur** la pièce justificative.
+- **B2-4 — l'issue de traitement déclarée sans pièce est une ANOMALIE, jamais une masse
+  retirée.** ⚠ **La première version de cette brique a été DÉCLARÉE BLOQUANTE par la
+  revue adversariale, et REMPLACÉE** — ce paragraphe décrit l'état corrigé.
+  Ce qui était faux : « DESTRUCTION » s'attestait sur parole (installation inventée,
+  certificat null, zéro pièce jointe) et tombait en rubrique 9 ; la brique avait donc
+  **sorti des rubriques 8 et 9** toute issue déclarée sans pièce. Sur le jeu d'essai,
+  5,5 kg de R-410A **réellement détruits disparaissaient de la déclaration faite à
+  l'autorité** : une SOUS-DÉCLARATION, pas une prudence. C'était en outre une règle
+  probatoire NOUVELLE (« attestée + pièce »), écrite nulle part dans la réglementation
+  et jamais soumise au propriétaire (règle d'or 6). **Le doute retire l'ALLÈGEMENT,
+  jamais l'OBLIGATION — et jamais une masse.**
+  État retenu : la masse reste **EXACTEMENT dans sa rubrique**. L'absence TOTALE de
+  pièce jointe au suivi lève une anomalie `BSFF_ISSUE_SANS_PIECE` (mécanisme déjà visé
+  en P0-8, distincte de `BSFF_SANS_ISSUE` : « déclaré, pièce manquante » ≠ « rien de
+  déclaré ») et `remisIssueSansPieceKg` est un **compteur d'anomalie, jamais un poste de
+  masse**. Le message dit ce qu'il CONSTATE (« aucune pièce jointe ») et que la masse
+  reste déclarée. La modale d'attestation enchaîne sur la pièce justificative.
+  Et parce que le contrôle s'arrête à la PRÉSENCE d'une pièce — une photo de pesée
+  l'éteint, tiré — les écrans portent en permanence
+  `MENTION_PIECE_NON_PROBANTE` : *le logiciel vérifie qu'une pièce est JOINTE, jamais ce
+  qu'elle vaut ; l'absence d'anomalie ne vaut pas dossier complet*.
 - **B2-5 — la balance cesse de pouvoir mentir.** Effet de bord découvert en tirant : après
   deux remises déclarées (5 kg partis en filière), un simple
   `updateBouteille { masseBruteKg: 20 }` faisait repasser la bouteille de 5 à 10 kg —
@@ -62,6 +74,63 @@ demo/local, 28 vérifs), `v8/js/views/test-dechets-libelles.mjs` (les surfaces R
 rendu HTML de la vue, boîte de modale réellement posée, CSV produits).
 **Contre-épreuve faite brique par brique** : chaque correctif retiré rend sa suite rouge,
 remis la rend verte. **TOUT VERT 110 exécutions.**
+
+#### B2 — PASSE DE REVUE ADVERSARIALE (26/07)
+
+Verdict de la revue : **A_REPRENDRE** — 1 bloquant, 5 importants, 6 mineurs. Tout est
+soldé, une brique par constat, chaque correctif prouvé par un test qui **échoue quand on
+le retire** (contre-épreuve TIRÉE, jamais supposée). **TOUT VERT 111 exécutions.**
+
+- **BLOQUANT — une pièce manquante ne fait plus disparaître une masse** : voir B2-4
+  ci-dessus, réécrit. La règle probatoire nouvelle est retirée ; la masse reste dans sa
+  rubrique, le défaut de pièce ressort en anomalie.
+- **IMPORTANT 1 — le transfert entrant cessé d'être accusé à tort** : la convention de
+  signe n'est négative que pour la RÉCUPÉRATION ; un TRANSFERT est stocké POSITIF. Un
+  regroupement de déchets avant enlèvement — opération réelle et VALIDÉE — était
+  dénoncé par écrit comme un gain « qu'aucune écriture n'explique ».
+- **IMPORTANT 2 — l'alerte ne s'éteint plus d'un clic** : le repère était le suivi le
+  plus RÉCENT ; émettre un suivi bidon de 0,001 kg le réécrivait sur l'état gonflé, et
+  aucun chemin n'existe pour retirer un suivi. **TOUS** les repères sont désormais
+  éprouvés, l'écart retenu est le plus grand : un repère ancien reste opposable.
+- **IMPORTANT 3 — une date est une date avant d'en dériver l'année** : `dateRemise`
+  « 24/07/2026 » faisait attribuer le numéro « SIF-24/0-0001 », que la garde du logiciel
+  REFUSE elle-même, écrit au registre et exporté dans le ZIP scellé.
+- **IMPORTANT 4 — la limite du contrôle est dite** : le message d'anomalie dit ce qu'il
+  constate ; c'est son SILENCE qui trompait. Mention permanente
+  `MENTION_PIECE_NON_PROBANTE` sur l'écran Déchets, la modale d'attestation et la
+  légende de la déclaration. L'attaque de la revue (photo d'un pixel) est REJOUÉE en
+  suite : elle retire exactement les 8 kg de l'anomalie.
+- **IMPORTANT 5 — le zip scellé ne s'appelle plus BSFF à une colonne près** : le
+  balayage du lot s'était fait sur « Trackdéchets », pas sur « BSFF » ; `bouteilles.csv`
+  gardait une colonne « N° BSFF » portant le numéro INTERNE, dans le MÊME ZIP dont le
+  sommaire affirme « ce n'est pas un bordereau ». Fiche bouteille et formulaire alignés.
+- **MINEUR 1 — une suite citée existe réellement** : trois commentaires renvoyaient à
+  `server/test-remise-filiere-parite.mjs`, **inexistant**. La règle est désormais tenue
+  par une suite, `outils/test-references-suites.mjs`, qui relit tout le dépôt — elle a
+  trouvé **cinq** pointeurs morts, dont deux antérieurs au lot (`server/test-zip-node.mjs`
+  « à venir » qui n'existe pas, `core/test-shim-dom.mjs` pour `core/shim-dom-tests.mjs`).
+  Dans un dépôt dont la doctrine est la preuve citée, une référence morte fait croire à
+  un filet qu'on n'a pas.
+- **MINEUR 2 — le registre écrit la forme canonique** : l'unicité se jugeait sur la clé
+  normalisée, la valeur ÉCRITE restait la frappe (« sif-2031-0007 »). Le numéro retenu
+  est désormais `cleNumeroSuivi(...)`.
+- **MINEUR 3 — plus de N appels réseau en série** à chaque rendu de la vue Déchets :
+  seuls les suivis à l'issue attestée sont interrogés, et ENSEMBLE. Prouvé par une
+  BARRIÈRE que du code en série ne peut pas franchir. (Supprimer les N appels demanderait
+  une méthode de contrat : consigné.)
+- **MINEUR 4 — déjà soldé par l'IMPORTANT 2** : l'ordre ne se lit plus au numéro, la
+  date seule fait foi, et le verdict ne dépend plus de l'ordre du tableau reçu.
+- **MINEUR 5 — ce que l'utilisateur LIT ne dit plus « BSFF »** : description de contrat,
+  plus **quatre refus levés par les stores** (remise impossible, suivi introuvable, retour
+  fournisseur, cession). Les NOMS de table, champs et codes de journal restent — ce sont
+  des données, les renommer imposerait une migration pour un gain nul.
+- **MINEUR 6 — le déchet ne revient pas au stock par la porte du STATUT** : la garde L2
+  ne s'exécutait que si le patch touchait `type` ou `etatFluide` ; son commentaire
+  annonçait pourtant cette porte fermée. En tirant, ce n'était pas cosmétique : l'alerte
+  CRITIQUE de délai de garde s'éteignait et la remise en filière devenait **impossible**
+  (`createBsff` exige le statut DECHET) — le déchet disparaissait des écrans sans jamais
+  partir en filière. Message canonique unique pour TOUTES les portes ; attaque inscrite au
+  répertoire des tirs (`test-securite-negative` D2).
 
 ### 🛡️ L2 — SUITE DE SÉCURITÉ NÉGATIVE ET NEUF TROUS FERMÉS (25/07, session autonome)
 
