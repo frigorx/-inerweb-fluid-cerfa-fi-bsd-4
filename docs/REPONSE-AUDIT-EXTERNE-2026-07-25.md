@@ -34,8 +34,8 @@ listes P0/P1/P2.
 **L'inventaire nominatif est joint** : `docs/TABLE-CONSTATS-AUDIT-2026-07-25.md`. Il donne, pour
 chacun de vos numéros, l'intitulé abrégé, notre verdict et la section de ce mémoire où le lire.
 C'est aussi la seule pièce qui raccorde notre numérotation interne `A01…A31` à la vôtre. Neuf de
-ces codes seulement apparaissent dans les messages de commit et dans le `CHANGELOG.md` — ce sont
-ceux qui ont donné lieu à du code ; la table les nomme.
+ces codes seulement apparaissent ailleurs dans le dépôt — ce sont ceux qui ont donné lieu à du
+code ; la table les nomme et dit **où** chacun se retrouve, fichier par fichier.
 
 > ⚠️ **Une collision de numérotation à connaître avant de chercher vos numéros.** Ce paquet
 > transporte nos documents de travail, dont
@@ -62,8 +62,9 @@ pour que vous puissiez pointer votre propre rapport.
 | Traitement | Constats de votre rapport |
 |---|---|
 | **Confirmés par le tir, en tout ou en partie** | P0-03 (ses deux volets), P0-04 A (un volet réfuté), P0-04 B (partiellement — la gravité est réfutée), P0-05, P1-04. **Cinq corrigés dans ce paquet** ; P1-04 assumé et consigné (§4). |
-| **Désaccord de fond** | P0-02 (§3), le plus lourd du rapport. Un résidu de présentation qu'il contenait a néanmoins été corrigé (§3.7). |
+| **Désaccord de fond, mais partiel** | P0-02 (§3), le plus lourd du rapport. Nous maintenons le désaccord sur la **séparation des données**. Nous **reconnaissons en revanche le constat déplacé** : une fiche `FORM-` qui déplace du fluide réel ne franchit aujourd'hui **aucune condition bloquante** — « mouvement réel, régime nul » (§3.2). Un résidu de présentation qu'il contenait a par ailleurs été corrigé (§3.7). |
 | **Exacts, corrigés dans ce paquet** hors des six trous | P1-08 (ses deux volets, et plus grave que ce qu'il disait), P2-03, un volet de P1-06. §6. |
+| **Corrigé dans l'envoi lui-même**, pas dans le logiciel | P0-08 (la livraison n'était ni reproductible ni certifiable avec le paquet du 25/07). Ce paquet-ci joint une archive exécutable ; le SBOM formel et la recette sur poste cible restent à produire. §7 et annexe. |
 | **Exacts mais périmés ou déjà tranchés** avant l'audit | P0-07, P1-09. §6. |
 | **Exacts et délibérés** | P2-06. §6. |
 | **Qualité logicielle, non traités à ce stade, assumés** | P2-01, P2-02, P2-04, P2-05, P2-07. §6. |
@@ -116,12 +117,30 @@ Nous détaillons la méthode parce qu'elle conditionne la valeur de ce qui suit.
 5. **Revue adversariale de chaque lot**, puis contrôle final. Chacune des trois passes a
    introduit au moins un défaut nouveau — voir §5, nous les publions.
 
+> ⚠️ **Sur les identifiants de commit qui suivent, et pour ne pas vous faire chercher.** Ce
+> mémoire désigne treize correctifs par un identifiant court (`dcd29fd`, `2544577`, `d1cad05`,
+> `7b6ac98`, `7419303`, `027b546`, `f516a3d`, `58cc401`, `30d7a35`, `b0c708e`, `cc486aa`,
+> `0cdaa26`, `e4be3e4`). **Ces identifiants ne sont tirables ni depuis le paquet — qui ne
+> transporte pas l'historique `git` (annexe, point 4) — ni depuis le `CHANGELOG.md`, où aucun
+> des treize ne figure** (`grep dcd29fd CHANGELOG.md` ne rend rien, et de même pour les douze
+> autres). Ils ne valent donc **que sur le dépôt public**
+> (`https://github.com/frigorx/-inerweb-fluid-cerfa-fi-bsd-4`), et ils y sont marqués comme tels
+> à chaque fois. Chaque correctif est en revanche rattaché ci-après à une pièce **que vous avez
+> sous la main** : une section datée du `CHANGELOG.md`, une décision de `docs/PLAN-B3-SIGNATURE.md`,
+> ou la suite de tests qui le prouve. C'est cette pièce-là qui fait la preuve ; l'identifiant
+> n'est qu'un repère de traçabilité. **Quatre correctifs du 26/07 — `dcd29fd` (A02),
+> `cc486aa` et `0cdaa26` (A18), `e4be3e4` (A23) — ne sont pas encore consignés au `CHANGELOG.md`
+> : c'est une lacune de notre journal, nous la déclarons, et pour ceux-là la seule pièce vérifiable
+> depuis le paquet est la suite de tests nommée à chaque fois.** Aucune affirmation de ce mémoire
+> ne repose sur la lecture d'un message de commit : là où nous en citions un, nous avons remplacé
+> la citation par la pièce correspondante.
+
 ---
 
 ## 3. Le désaccord de fond : P0-02, « Formation et Officiel partagent les mêmes stocks »
 
-C'est le constat le plus lourd du rapport et **le seul que nous refusons de corriger**. Nous
-demandons au prochain auditeur de traiter cette section en priorité.
+C'est le constat le plus lourd du rapport et **le seul que nous ne corrigeons pas, et voici
+pourquoi**. Nous demandons au prochain auditeur de traiter cette section en priorité.
 
 ### 3.1 Le fait technique est exact — nous le confirmons
 
@@ -173,21 +192,57 @@ node docs/banc-contrefactuel-P0-02.mjs inerte
 node docs/banc-contrefactuel-P0-02.mjs vivant
 ```
 
-**L'inertie réclamée produit elle-même la contamination reprochée.**
+Autrement dit, l'inertie réclamée produit elle-même la contamination reprochée.
 
 > **La lecture la moins coûteuse de votre constat — et c'est la plus forte.**
 > On peut lire votre exigence autrement que comme « deux bases ». On peut la lire ainsi :
 > *le mouvement est OFFICIEL puisque la matière a bougé ; seul le DOCUMENT est pédagogique.*
-> Nous répondons que **c'est déjà ce que fait le logiciel livré**, et nous ne contestons donc
-> rien sous cette lecture. Une fiche Formation validée bouge la matière — c'est le fait du
-> §3.1 — et le CERFA qu'elle produit porte un filigrane diagonal « MODE FORMATION » et, au
-> cadre 14, la mention `MODE FORMATION — DOCUMENT NON OFFICIEL — NE PAS UTILISER POUR UNE
-> INTERVENTION RÉELLE` (`v8/js/cerfa/generateur.js` : constante `MENTION_FORMATION`, et le
-> filigrane posé quand `mode === 'FORMATION'`).
-> Sous cette lecture, le désaccord se réduit à ce qui était effectivement faux : le **comptage
-> affiché**, qui additionnait les fiches d'exercice au total « CERFA générés ». Nous l'avons
-> corrigé (§3.7). Ce qui reste en litige, c'est donc l'autre lecture — celle qui rend la fiche
-> inerte — et c'est elle que le contrefactuel mesure.
+>
+> ⚠️ **Nous avions écrit ici que c'était déjà ce que fait le logiciel livré. C'était faux, et
+> nous le retirons.** Vérifiez-le vous-même dans `server/api.js` : le moteur de blocage n'est
+> évalué qu'à l'intérieur de `if (mouvement.mode === 'OFFICIEL')` — aux deux seuls endroits qui
+> refusent quelque chose, `soumettreMouvement` (l'appel à `evaluerOfficiel('SOUMISSION', …)`) et
+> `validerMouvement` (l'appel à `evaluerOfficiel('VALIDATION', …)`). Le troisième appel,
+> `simulerValidationOfficielle`, est une lecture qui ne bloque jamais et le dit dans son propre
+> commentaire. L'aptitude n'est calculée que dans `cadreFicheOfficiel`, consommé par ces seuls
+> appels. **Conséquence exacte : une fiche `FORM-` qui déplace du fluide réel n'est opposée ni à
+> la condition 16 (aptitude du signataire), ni aux conditions 14/15 (signatures), ni à la
+> condition 18 (périmètre) — ces numéros sont ceux de `docs/CONDITIONS-BLOCANTES-OFFICIEL.md`,
+> qui part avec ce paquet.** Notre propre brief l'écrit d'ailleurs en toutes lettres : dans son
+> tableau des trois modes, ligne « Blocages », colonne **Formation**, on lit « **aucun** — on
+> n'empêche jamais d'enregistrer la réalité ».
+>
+> Ce que le logiciel fait réellement, sous cette lecture, s'arrête au document : une fiche
+> Formation validée bouge la matière — c'est le fait du §3.1 — et le CERFA qu'elle produit porte
+> un filigrane diagonal « MODE FORMATION » et, au cadre 14, la mention `MODE FORMATION —
+> DOCUMENT NON OFFICIEL — NE PAS UTILISER POUR UNE INTERVENTION RÉELLE`
+> (`v8/js/cerfa/generateur.js` : constante `MENTION_FORMATION`, et le filigrane posé quand
+> `mode === 'FORMATION'`). Le document est donc bien marqué. **Le mouvement, lui, n'est soumis à
+> aucun régime opposable.** La formule juste n'est pas « mouvement officiel, document
+> pédagogique » : c'est **« mouvement réel, régime nul »**, et nous l'écrivons ainsi parce que
+> c'est ce que le code fait.
+>
+> **Ce que nous en tirons, sans le minimiser.** Aujourd'hui, verrou de livraison fermé, **aucune
+> intervention n'est soumise au régime opposable — ni celles des élèves, ni les autres.** Ce
+> n'est pas un défaut caché : c'est l'état **déclaré** du produit, et c'est exactement la raison
+> pour laquelle le mode Officiel est verrouillé et pour laquelle la relecture par un organisme
+> agréé est le chemin critique du projet. Un registre dont aucune écriture ne franchit de porte
+> ne peut pas être présenté comme opposable, et nous ne le présentons pas ainsi (§1 : nous ne
+> contestons pas le NO-GO).
+>
+> **Ce que cela implique honnêtement pour la suite, et que nous ne tranchons pas ici.** Le jour
+> où le verrou s'ouvrira, il faudra décider ce qui, dans une intervention **réelle** d'atelier,
+> doit franchir les conditions bloquantes : toutes les interventions, quel que soit le mode de la
+> fiche ? Les seules fiches `FI-` ? Un régime intermédiaire opposant l'aptitude et les signatures
+> sans exiger le CERFA officiel ? **C'est une décision de l'auteur, détenteur du registre, pas
+> une décision technique.** La question lui est posée ; elle n'est pas tranchée, et nous ne la
+> tranchons pas dans ce mémoire. Nous la portons ici pour que vous puissiez y répondre avant
+> qu'elle ne le soit, et elle est reportée au dossier de relecture externe.
+>
+> Sous cette lecture, un point du constat était de surcroît exact et purement factuel : le
+> **comptage affiché**, qui additionnait les fiches d'exercice au total « CERFA générés ». Nous
+> l'avons corrigé (§3.7). Ce qui reste en litige, c'est l'autre lecture — celle qui rend la fiche
+> inerte — et c'est elle, et elle seule, que le contrefactuel mesure.
 >
 > ⚠️ **Nous signalons nous-mêmes une tension dans ce libellé.** « NE PAS UTILISER POUR UNE
 > INTERVENTION RÉELLE » dit plus que ce que nous soutenons ici : ce que la mention doit dire,
@@ -196,7 +251,7 @@ node docs/banc-contrefactuel-P0-02.mjs vivant
 > le correcteur pédagogique de CERFA (`v8/js/cerfa/correction.js`, `MENTION_FORMATION_NORMALISEE`),
 > une réécriture n'est donc pas un simple changement de texte. Nous la soumettons à votre avis.
 
-> **La variante qu'on nous opposera.** Objection prévisible : deux bases, plus une ressaisie
+> **La variante qu'on nous opposera.** Objection légitime : deux bases, plus une ressaisie
 > par le professeur dans la base officielle. Nous y répondons sur trois points.
 > ① Ce n'est plus une séparation, c'est une **double saisie** — c'est-à-dire le cahier tenu
 > en parallèle que le registre unique a précisément pour objet de supprimer, avec le risque
@@ -232,6 +287,19 @@ bouteille. Exclure les fiches `FORM-` rendrait la déclaration **fausse de la ma
 bougé pendant les TP** — c'est-à-dire de l'essentiel du mouvement de fluide de l'atelier. C'est
 la règle que nos propres revues nous ont imposée par ailleurs (§5, cas 1) : *le doute retire
 l'allègement, jamais l'obligation, et jamais une masse.*
+
+**Ce que l'argument ne couvre pas, et qu'il faut nommer.** Répondre « on déclare des masses, pas
+des documents » règle la nature de ce qui est déclaré, pas sa **qualité**. Les masses agrégées
+proviennent, pour l'essentiel, d'écritures qui n'ont franchi **aucune porte** : ni l'aptitude du
+signataire (condition 16), ni les signatures (conditions 14/15), ni le périmètre (condition 18) —
+c'est le fait établi au §3.2, et il vaut ici de plein droit puisque la déclaration ignore le mode.
+La déclaration est donc **exhaustive** en masse et **non contrôlée** en amont. Nous ne prétendons
+pas que ces deux propriétés se compensent : elles ne portent pas sur la même chose. Notre position
+est que l'exhaustivité est la seule des deux qui ne se rattrape pas après coup — une masse omise
+est irrécupérable, une porte manquante se pose — et que refermer les portes est précisément
+l'objet du chemin critique (visa, puis ouverture du verrou, puis la décision d'auteur exposée au
+§3.2). **C'est un ordre de traitement, pas une réfutation de votre point**, et nous demandons
+votre avis sur cet ordre.
 
 **Ce que nous ne prétendons pas.** L'argument tient tant que l'écriture correspond à un mouvement
 réel. Le cas où elle ne correspond à rien — l'exercice où aucun fluide n'a bougé — est la limite
@@ -316,10 +384,12 @@ les modes, le total « CERFA générés » du tableau de bord et de l'audit en c
 additionnait les fiches d'exercice : un lecteur pressé y lisait un volume officiel qui
 n'existe pas.
 
-**Corrigé dans ce paquet** (commit `dcd29fd`, 26/07) : la carte distingue le total des fiches
+**Corrigé dans ce paquet**, le 26/07 : la carte distingue le total des fiches
 numérotées, les CERFA officiels et les fiches d'exercice ; et la part officielle se lit au
-**mode scellé de l'écriture**, jamais au préfixe du numéro. Preuve :
-`v8/js/views/test-compteur-fiches.mjs`, 19 vérifications — 14 échecs sans le correctif.
+**mode scellé de l'écriture**, jamais au préfixe du numéro. **Preuve, dans le paquet** :
+`v8/js/views/test-compteur-fiches.mjs`, 19 vérifications — retirez le correctif, 14 tombent.
+*(Repère de traçabilité : commit `dcd29fd` — ⚠️ dépôt public, hors paquet, et non consigné au
+`CHANGELOG.md`.)*
 
 ---
 
@@ -340,7 +410,9 @@ signataire est le professeur lui-même ; la délégation est un geste normal, c�
 16/07. Exiger deux sessions bloquerait l'activité sans rien prouver de plus.
 
 **Ce qui a été corrigé** : le **témoin de session est porté sur la fiche et dans le dossier
-d'audit** (commit `2544577`). Auparavant, cette information — la seule que le client ne peut
+d'audit** — c'est la brique 5 du lot B3, décrite au tableau du § 5 de `docs/PLAN-B3-SIGNATURE.md`
+et à la section « B3 » du `CHANGELOG.md` (25/07), toutes deux dans ce paquet *(repère :
+`2544577` — ⚠️ dépôt public, hors paquet)*. Auparavant, cette information — la seule que le client ne peut
 pas falsifier — était enregistrée puis jetée : ni à l'écran, ni au CERFA, ni dans l'archive.
 Chaque signature valide de la modale porte désormais « Posée depuis la session <Prénom Nom>
 (compte …) », et le dossier scellé reçoit un `signatures.csv` qui portait jusque-là… rien :
@@ -349,12 +421,12 @@ dossier.
 
 **Ce que nous ne revendiquons pas, et qu'il serait facile de nous opposer** : le
 pré-remplissage du nom du signataire n'a pas bougé. Il **existait déjà dans la version que
-vous avez auditée** (`git show c32f8c0:v8/js/data/parcours-signature.js`) et le commit du
-correctif l'écrit lui-même : « DÉCISION D3 : le pré-remplissage du nom du technicien depuis
-la session connectée EXISTAIT DÉJÀ dans le module pur ». Décrit exactement, il prend
-**l'intervenant déclaré sur la fiche**, et seulement à défaut la personne connectée ; les
-champs restent saisissables (jamais `readonly`, jamais `disabled`). Le lot n'a fait que le
-mettre sous test à l'écran.
+vous avez auditée** (`git show c32f8c0:v8/js/data/parcours-signature.js` — ⚠️ dépôt public,
+hors paquet). Décrit exactement, il prend **l'intervenant déclaré sur la fiche**, et seulement
+à défaut la personne connectée ; les champs restent saisissables (jamais `readonly`, jamais
+`disabled`). C'est la décision D3, écrite telle quelle dans `docs/PLAN-B3-SIGNATURE.md` § 3,
+que vous avez dans ce paquet. Le lot n'a fait que la mettre sous test à l'écran
+(`v8/js/modales/test-signatures-modal.mjs`, section 4).
 
 Le journal d'audit chaîné, lui, consignait déjà l'auteur réel et signalait la discordance
 (`journaliser`, `server/api.js` : l'entrée est écrite au nom de l'auteur RÉEL, avec la
@@ -415,12 +487,25 @@ la bombe de décompression.
 
 **Sur la dépendance, la formulation exacte** : le décodage n'a introduit **aucune dépendance
 nouvelle** — le dépôt n'a ni `package.json` ni gestionnaire de paquets, et `png.js`
-n'importe rien. Il embarque en revanche, sous `v8/js/lib/`, **cinq fichiers de bibliothèques
-tierces minifiées issus de trois projets** (PDF.js, pdf-lib, qrcodejs — inventoriés dans
-`LICENCES-TIERCES.md`) : ils servent l'affichage et le remplissage du CERFA et les étiquettes
-QR, et **aucun n'intervient sur le chemin qui juge une signature**. *(Le commentaire de tête de
-`outils/paquet-audit.mjs` parle encore de « trois bibliothèques » : trois projets, cinq
-fichiers — nous le signalons pour lever la contradiction apparente.)*
+n'importe rien. Le dossier `v8/js/lib/` compte **cinq fichiers**, dont **quatre de
+bibliothèques tierces minifiées issus de trois projets** : `pdf.min.mjs` et
+`pdf.worker.min.mjs` (PDF.js), `pdf-lib.min.js` (pdf-lib), `qrcode-vendor.js` (qrcodejs). Ils
+servent l'affichage et le remplissage du CERFA et les étiquettes QR, et **aucun n'intervient sur
+le chemin qui juge une signature**.
+
+> ⚠️ **Le cinquième fichier n'est pas tiers, et notre propre inventaire de licences se trompe.
+> Nous le déclarons plutôt que de vous laisser le trouver.** `v8/js/lib/qrcode.js` est **du code
+> maison** : 37 lignes (`wc -l v8/js/lib/qrcode.js`), non minifiées, en-tête de commentaire
+> rédigé en français, une seule fonction exportée — `obtenirQRCode()` — qui se contente de lire
+> `window.QRCode` posé par le script tiers `qrcode-vendor.js`. Ouvrez-le, c'est une page.
+> Or `LICENCES-TIERCES.md`, qui part dans le même paquet, le range sous « qrcodejs, davidshimjs,
+> MIT » à côté du vrai fichier vendored. **C'est une erreur de notre inventaire** : ce fichier
+> relève de la licence du produit, pas de celle de qrcodejs. Nous ne corrigeons pas
+> `LICENCES-TIERCES.md` dans ce mémoire — il est hors du périmètre de cette réponse et sera
+> corrigé à part — mais l'erreur est ici nommée pour que vous ne partiez pas d'un inventaire
+> faux. *(Même remarque pour le commentaire de tête de `outils/paquet-audit.mjs`, qui parle de
+> « trois bibliothèques tierces minifiées (pdf.js, pdf-lib) » alors qu'il exclut un dossier de
+> cinq fichiers : trois projets, quatre fichiers tiers, un fichier à nous.)*
 
 **Aucun seuil d'encre n'a été posé**, et c'est délibéré (décision D2,
 `docs/PLAN-B3-SIGNATURE.md`) : aucun texte n'en fixe, le signataire voit ce qu'il trace et
@@ -629,17 +714,33 @@ du mode réseau local, jamais après. C'est écrit dans le document de reprise d
 Nous publions cette section volontairement. Elle nous paraît plus informative sur la qualité du
 processus que la liste des corrections réussies.
 
-**Le compte réel d'abord.** Les trois revues adversariales des lots B1, B2 et B3 ont levé
-**1 bloquant, 15 constats importants et 19 mineurs**, plus une passe de vérification finale qui
-a **rouvert** l'un des importants et ajouté un mineur et une observation. Le détail complet est
+**Le compte réel d'abord, et de quelle campagne il s'agit.** Ces chiffres sont ceux de la
+campagne des **lots B1, B2 et B3, menée les 25 et 26 juillet 2026** en réponse à votre rapport :
+une revue adversariale par lot, trois au total. Elles ont levé **1 bloquant, 15 constats
+importants et 19 mineurs**, plus une passe de vérification finale qui a **rouvert** l'un des
+importants et ajouté un mineur et une observation. Le détail complet est
 en tête de `CHANGELOG.md`, lot par lot, avec pour chacun le correctif et sa contre-épreuve.
+
+> ⚠️ **Ne les confondez pas avec les chiffres du brief, ce sont deux campagnes différentes et
+> aucune des deux pièces ne le disait.** Le brief qui accompagne ce paquet annonce « une revue
+> adversariale (5 relecteurs) : 3 bloquants et 8 constats ». Celle-là est **antérieure et porte
+> sur un autre périmètre** : c'est la revue du **lot L2** (suite de sécurité négative), du
+> **25 juillet 2026**, qui n'est pas une réponse à votre rapport. Elle est consignée à sa propre
+> section du `CHANGELOG.md` — « L2 — SUITE DE SÉCURITÉ NÉGATIVE ET NEUF TROUS FERMÉS (25/07) »,
+> paragraphe « REVUE ADVERSARIALE (5 agents, 5 axes) — 3 BLOQUANTS et 8 constats, tous
+> corrigés ». Deux campagnes, deux périmètres, deux comptes : **3 bloquants + 8 constats pour
+> L2 ; 1 bloquant + 15 importants + 19 mineurs pour B1/B2/B3.** Ils ne s'additionnent ni ne se
+> contredisent. Le brief part avec ce paquet sans porter cette précision ; elle est ajoutée ici.
 Une part de ces constats vient du code d'origine. Une autre — celle qui nous intéresse ici —
 a été **fabriquée par nos propres correctifs** : chacune des trois passes en a produit au moins
 un. En voici cinq, choisis pour ce qu'ils enseignent. **Aucun n'était visible au filet
 automatisé, qui restait vert** ; tous ont été trouvés par des relecteurs chargés de réfuter le
 travail, et corrigés avant fusion.
 
-1. **Une sous-déclaration** (lot B2, commits `30d7a35` puis `b0c708e`). Un correctif appliquait
+1. **Une sous-déclaration** — `CHANGELOG.md`, lot B2 (25/07), brique **B2-4**, dont le
+   paragraphe s'ouvre sur l'avertissement « la première version de cette brique a été DÉCLARÉE
+   BLOQUANTE par la revue adversariale, et REMPLACÉE » *(repères : `30d7a35` puis `b0c708e` —
+   ⚠️ dépôt public, hors paquet)*. Un correctif appliquait
    « sans pièce jointe, une issue de traitement ne vaut pas preuve » **au calcul de la
    déclaration annuelle**. Sur le jeu d'essai `server/test-declaration-annuelle.mjs`, **5,5 kg
    de R-410A réellement traités** (3 kg détruits, 2 kg régénérés, 0,5 kg autre traitement) **et
@@ -651,19 +752,29 @@ travail, et corrigés avant fusion.
    qu'aucune masse ne bouge. Contre-épreuve tirée : le `continue` remis dans les deux miroirs →
    5 échecs. D'où la règle inscrite dans nos consignes : *le doute retire l'allègement, jamais
    l'obligation, et jamais une masse.*
-2. **Le coffre des identités percé dans l'archive scellée** (lot B3, régression introduite par
-   sa propre brique 5 `2544577`, fermée par `d1cad05`). En portant les signatures au dossier
-   d'audit, un correctif y écrivait les noms bruts : dans une même archive, un élève au coffre
-   apparaissait pseudonymisé dans `personnel.csv` et `mouvements.csv`, et sous son vrai nom
-   dans `signatures.csv`. Contre-épreuve tirée et consignée dans le message de commit :
-   correctif retiré → 2 échecs, et la ligne fuitée s'affiche mot pour mot.
-3. **Un motif d'état devenu faux** (lot B3, `7b6ac98`). Rendre la validité honnête a fait
+2. **Le coffre des identités percé dans l'archive scellée** — `CHANGELOG.md`, lot B3, paragraphe
+   « REVUE ADVERSARIALE PASSÉE ET SOLDÉE (25-26/07) », qui le nomme : « `signatures.csv` perçait
+   le coffre des identités (régression de la brique 5) » *(repères : régression introduite par la
+   brique 5 `2544577`, fermée par `d1cad05` — ⚠️ dépôt public, hors paquet)*. En portant les
+   signatures au dossier d'audit, un correctif y écrivait les noms bruts : dans une même archive,
+   un élève au coffre apparaissait pseudonymisé dans `personnel.csv` et `mouvements.csv`, et sous
+   son vrai nom dans `signatures.csv`. Contre-épreuve tirée : correctif retiré → 2 échecs, et la
+   ligne fuitée s'affiche mot pour mot. **Rejouable dans le paquet** —
+   `node server/test-coffre-serveur.mjs` : la vérification s'y lit en toutes lettres, « le nom
+   RÉEL de l'élève au coffre n'est PAS dans `signatures.csv` ». *(Nous écrivions auparavant que
+   cette contre-épreuve était « consignée dans le message de commit » : vous ne pouvez pas le
+   lire, la mention est retirée.)*
+3. **Un motif d'état devenu faux** — `CHANGELOG.md`, lot B3, paragraphe « LA CORRECTION AVAIT SA
+   PROPRE CAUSE FAUSSE (26/07) » *(repère : `7b6ac98` — ⚠️ dépôt public, hors paquet)*. Rendre la validité honnête a fait
    ressortir toute image illisible sous le seul état qui restait : **PÉRIMÉE**, c'est-à-dire
    « la fiche a été modifiée après la signature » — alors que la fiche n'avait pas bougé. La
    ligne se contredisait elle-même : `signatures.csv` du dossier **scellé** rendait révision
    signée 0 et révision courante 0. **L'archive opposable portait donc une cause fausse.** Un
    quatrième état, `IMAGE_ILLISIBLE`, a été ajouté ; il nomme, il ne refuse rien de plus.
-4. **Une accusation écrite contre une opération légitime** (lot B2, `7419303` puis `027b546`).
+4. **Une accusation écrite contre une opération légitime** — `CHANGELOG.md`, lot B2, sections
+   « B2 — PASSE DE REVUE ADVERSARIALE (26/07) » puis « B2 — PASSE DE VÉRIFICATION FINALE
+   (26/07) », cette seconde section existant précisément parce que la première n'avait pas fermé
+   la racine *(repères : `7419303` puis `027b546` — ⚠️ dépôt public, hors paquet)*.
    Le contrôle de cohérence des remises en filière accusait un transfert entrant valide ; après
    un premier correctif, la passe de vérification finale a rouvert le constat, la racine n'étant
    pas fermée : toute écriture sortante datée du même jour que la remise — précisément le
@@ -671,7 +782,10 @@ travail, et corrigés avant fusion.
    pas dans un journal technique : elle remontait au feu tricolore et au guide d'audit,
    c'est-à-dire aux écrans qu'un contrôleur regarde en premier.** Le module portait même un
    commentaire affirmant l'inverse de ce que le code faisait.
-5. **Un écran rendu mort** (lot B1, `f516a3d`). Le filtre de qualification introduit par le lot
+5. **Un écran rendu mort** — `CHANGELOG.md`, lot B1 (25/07), brique **B1-e**, « ce que la revue
+   adversariale a trouvé, et qui est soldé » : le `typeInstallation` absent y est nommé, avec le
+   `NOT NULL` de la colonne *(repère : `f516a3d` — ⚠️ dépôt public, hors paquet)*.
+   Le filtre de qualification introduit par le lot
    comparait la charge utile brute du formulaire au contenu de la base : un `typeInstallation`
    **absent** était lu comme un changement, et l'élève prenait un 403 pour un non-changement.
    La contre-épreuve a montré plus que le constat : la même valeur nulle serait partie dans le
@@ -682,8 +796,11 @@ section qui publie ses défauts serait la contredire : **le correctif vedette du
 d'abord échoué exactement sur les images qu'il devait refuser.** `analyseEncre` comparait les
 octets bruts et répondait « il y a de l'encre », avec assurance, sur des images visuellement
 blanches — RGBA d'alpha nul partout, palette 8 bits dont toutes les entrées sont blanches. Le
-mensonge que le lot prétendait fermer, retourné contre lui. Trouvé par la revue, fermé par
-`58cc401` : le module compare désormais des **clés visibles**, pas des octets.
+mensonge que le lot prétendait fermer, retourné contre lui. Le `CHANGELOG.md` le consigne au
+lot B3, paragraphe de la revue adversariale : « `analyseEncre` répondait "ENCRE" AVEC ASSURANCE
+sur des images visuellement blanches (alpha nul partout, palette unie) » *(repère : `58cc401` —
+⚠️ dépôt public, hors paquet)*. Trouvé par la revue, fermé : le module compare désormais des
+**clés visibles**, pas des octets. Rejouable dans le paquet : `node server/test-png.mjs`.
 
 Nous en tirons une conclusion que nous soumettons au prochain auditeur : **dans ce logiciel, le
 filet vert ne prouve pas l'absence de défaut** — il prouve l'absence de régression sur ce qui
@@ -698,16 +815,19 @@ est déjà testé. C'est la revue adversariale qui trouve, pas la suite.
   `INSTALLATION_CLOUD.md` porte depuis le 23/07 un bandeau « ce guide décrit une intention, pas
   le logiciel livré » avant la procédure conservée comme note de conception : **périmé**.
   `SAUVEGARDE.md` promettait en revanche une sauvegarde automatique inexistante : **exact,
-  corrigé dans ce paquet** (`cc486aa`), avec une suite de balayage qui manquait,
-  `outils/test-promesses-cloud.mjs`.
+  corrigé dans ce paquet** le 26/07, avec une suite de balayage qui manquait :
+  `node outils/test-promesses-cloud.mjs` — c'est elle, et elle seule, qui fait la preuve depuis
+  le paquet *(repère : `cc486aa` — ⚠️ dépôt public, hors paquet, et non consigné au
+  `CHANGELOG.md`)*.
   Surtout, ce balayage a trouvé plus grave que ce qui nous était reproché — et ce point ferme
   aussi un volet de **P1-06** : la notice d'information RGPD **affichée dans l'application**
   (section « Où sont stockées vos données ») annonçait encore un hébergement dans l'Union
   européenne « en mode Cloud ». Ce mode n'existe pas. Un guide, on peut ne pas le lire ; une
   notice d'information est précisément le document sur lequel une personne concernée se fonde.
-  Corrigé (`0cdaa26`), et la racine élargie : le balayage automatique ne lisait que les `.md` de
+  Corrigé le 26/07, et la racine élargie : le balayage automatique ne lisait que les `.md` de
   la racine — il n'aurait donc pas attrapé cette occurrence — il couvre désormais aussi le code
-  livré.
+  livré, ce que la même suite `outils/test-promesses-cloud.mjs` vérifie *(repère : `0cdaa26` —
+  ⚠️ dépôt public, hors paquet, et non consigné au `CHANGELOG.md`)*.
   Vérifié par ailleurs, et cela reste vrai : **aucun de ces documents n'est servi par
   l'application** (liste blanche `server/serveur.js` : seuls `index.html`, `guide.html` et
   `manifest.json` à la racine, plus `v8/` et `img/` ; tout le reste répond 404, avec ou sans
@@ -735,9 +855,11 @@ est déjà testé. C'est la revue adversariale qui trouve, pas la suite.
   de `server/test-distribution-statique.mjs` convertissait l'URL du serveur en chemin par
   `pathname` puis retrait du slash de tête — correct sous Windows, chemin **relatif** sous
   Unix, donc serveur enfant qui ne démarre pas. Le code de distribution n'est pas en cause
-  (liste blanche et `realpath` sains). **Corrigé dans ce paquet** (`e4be3e4`), avec un balayage
+  (liste blanche et `realpath` sains). **Corrigé dans ce paquet** le 26/07, avec un balayage
   statique du même motif dans les sources — `server/`, `outils/` et `v8/` — ajouté à la suite
-  elle-même (section 0, « Portabilité du harnais »).
+  elle-même : `node server/test-distribution-statique.mjs`, section 0, « Portabilité du
+  harnais ». C'est cette section qui fait la preuve depuis le paquet *(repère : `e4be3e4` —
+  ⚠️ dépôt public, hors paquet, et non consigné au `CHANGELOG.md`)*.
 - **P2-01, P2-02, P2-04, P2-05, P2-07** (monolithes, outillage, version du moteur,
   terminologie, accessibilité) : **non traités à ce stade, assumés**. Ils n'affectent pas la
   valeur probante du registre. La fusion des deux implémentations est explicitement différée :
@@ -745,9 +867,15 @@ est déjà testé. C'est la revue adversariale qui trouve, pas la suite.
   l'instrument avant la mesure.
 - **P1-10 (dépendances et licences)** : **confirmé**. Le paquet de texte que vous aviez reçu ne
   permettait ni de voir les fichiers tiers ni de les dater. L'archive exécutable jointe cette
-  fois les porte réellement, avec `LICENCES-TIERCES.md` (PDF.js sous Apache 2.0, pdf-lib et
-  tslib sous MIT, qrcodejs sous MIT). Un SBOM formel et une politique de mise à jour restent à
-  produire : nous n'en revendiquons pas la fermeture.
+  fois les porte réellement, avec `LICENCES-TIERCES.md`. Les licences, telles que ce fichier les
+  porte — c'est lui qui fait foi, pas ce mémoire : **PDF.js sous Apache 2.0**, **pdf-lib sous
+  MIT**, **tslib (© Microsoft Corporation) sous Apache 2.0** — tslib est inclus dans le fichier
+  `pdf-lib.min.js`, sa notice conservée en tête —, **qrcodejs sous MIT**. *(Une version
+  antérieure de ce paragraphe donnait tslib « sous MIT » : c'était faux, et
+  `LICENCES-TIERCES.md`, qui voyage avec ce paquet, disait déjà le contraire. Corrigé ici.)*
+  Sur le classement erroné de `v8/js/lib/qrcode.js` dans ce même inventaire, voir §4. Un SBOM
+  formel et une politique de mise à jour restent à produire : nous n'en revendiquons pas la
+  fermeture.
 - **Les constats non contestés, hors code** — **P0-01** (le mode Officiel est volontairement
   fermé : c'est une protection, nous acceptons telles quelles vos exigences de sortie),
   **P0-06** (clôture par preuve externe de l'incident des clés du service historique — suivi
@@ -768,11 +896,13 @@ est déjà testé. C'est la revue adversariale qui trouve, pas la suite.
 
 ---
 
-## 7. Erreurs factuelles du rapport, et une de la nôtre
+## 7. Une erreur factuelle du rapport, et une de la nôtre
 
 Nous les signalons pour que le prochain audit parte de bases exactes. Chacune est datée : le
 paquet que vous recevez n'est plus celui qui a été audité, et un chiffre sans sa version n'a
-aucun sens.
+aucun sens. Le titre est au singulier à dessein : sur les trois chiffres examinés ci-dessous,
+**une seule erreur du rapport est établie** — les migrations. Sur les deux autres, le rapport a
+raison et c'est nous qui nous étions trompés ; nous le disons à leur place respective.
 
 - **« 32 migrations » (§3)** : le registre `server/migrations.js` est numéroté à partir de 2.
   Il allait jusqu'à la migration **n° 35** au moment de l'audit — soit **34 migrations**,
@@ -786,14 +916,16 @@ aucun sens.
   de notre part, corrigé par notre propre vérification. Nous le mentionnons parce qu'un audit
   se juge aussi à ce qu'on lui concède.
 - **Les 16 échecs de tests (§5)** : **l'affirmation du rapport est exacte — mais elle porte sur
-  le PAQUET, pas sur le logiciel.** Le générateur de paquet exclut par construction les cinq
-  fichiers de bibliothèques tierces, le gabarit CERFA (présent en deux exemplaires) et, plus
+  le PAQUET, pas sur le logiciel.** Le générateur de paquet exclut par construction le dossier
+  `v8/js/lib/` **entier** — cinq fichiers, dont quatre de bibliothèques tierces et un module
+  maison, voir §4 —, le gabarit CERFA (présent en deux exemplaires) et, plus
   largement, **tout fichier non-code** : il ne retient que neuf extensions. L'arithmétique,
   refaite sur l'arbre audité :
-  - en retirant de `c32f8c0` les bibliothèques et le gabarit CERFA, on obtient **exactement
+  - en retirant de `c32f8c0` le dossier `v8/js/lib/` et le gabarit CERFA, on obtient **exactement
     14 échecs sur 14 suites**, nommées ci-dessous ;
-  - en retirant **aussi les images** — le paquet ne transporte aucun `.png` —, une quinzième
-    tombe : `server/test-distribution-statique.mjs`, sur `/img/icon-192.png` en 404 ;
+  - en retirant **aussi les `.png`** — le paquet n'en transporte aucun —, une quinzième
+    tombe : `server/test-distribution-statique.mjs`, sur `/img/icon-192.png` en 404. Le retrait
+    des seuls `.png` suffit : c'est le seul fichier de `img/` que cette suite demande ;
   - **la seizième, nous ne la reproduisons pas, et nous ne savons pas laquelle c'est.** Nous
     avions d'abord cru pouvoir l'imputer au constat P2-03 — le harnais non portable hors
     Windows. C'est impossible : la suite en cause est `server/test-distribution-statique.mjs`,
@@ -850,7 +982,11 @@ aucun sens.
    l'exposait mal, et nous l'avons réécrite (§7). Si une exigence vous paraît évidente et que
    nous la discutons, c'est qu'elle produit peut-être en atelier un effet que nous n'avons pas
    su décrire — dites-le, nous répondrons.
-5. **Les points que nous savons ouverts** : le témoin d'intégrité du journal se recalcule
+5. **Les points que nous savons ouverts** : **aucune intervention n'est aujourd'hui soumise au
+   régime opposable — le verrou fermé, les conditions bloquantes ne s'exercent sur rien** (§3.2),
+   et le partage exact qu'il faudra faire à l'ouverture est une **décision de l'auteur non
+   tranchée**, sur laquelle votre avis nous serait utile avant qu'elle ne le soit ; le témoin
+   d'intégrité du journal se recalcule
    (l'algorithme est dans le code diffusé ; la parade — confrontation au témoin de scellement
    externe quotidien — n'est pas faite) ; le modèle de menace s'arrête à l'accès disque ; le
    mode Officiel n'a jamais tourné en production ; le poste est unique ; et **certaines valeurs
@@ -904,4 +1040,6 @@ aucun sens.
 | 34 migrations (n° 2→35) à l'audit ; 35 (n° 2→36) aujourd'hui | aujourd'hui : lire `server/migrations.js` dans l'archive ; à l'audit : `git show c32f8c0:server/migrations.js` | archive **+** ⚠️ dépôt public |
 | Le pré-remplissage du signataire existait avant l'audit | `git show c32f8c0:v8/js/data/parcours-signature.js` | ⚠️ **dépôt public, hors paquet** |
 | Les 14 échecs du paquet, reproduits | extraire `c32f8c0`, retirer `v8/js/lib/` et les deux `cerfa_15497-04_officiel.pdf`, relancer le filet | ⚠️ **dépôt public, hors paquet** |
-| Les 15 échecs, images comprises | même manipulation, en retirant aussi les `.png` et les `.svg` | ⚠️ **dépôt public, hors paquet** |
+| Les 15 échecs, images comprises | même manipulation, en retirant aussi les `.png` (les seuls en cause : la 15ᵉ suite ne demande que `/img/icon-192.png`) | ⚠️ **dépôt public, hors paquet** |
+| Les treize identifiants de commit cités dans ce mémoire | ils ne sont ni dans le paquet ni dans le `CHANGELOG.md` — voir l'avertissement du §2 : chaque correctif y est rattaché à une pièce du paquet | ⚠️ **dépôt public, hors paquet** |
+| `v8/js/lib/qrcode.js` est du code maison, pas du tiers | `wc -l v8/js/lib/qrcode.js` → 37 ; ouvrir le fichier : en-tête en français, non minifié, une fonction `obtenirQRCode()` qui lit `window.QRCode` | archive exécutable |
