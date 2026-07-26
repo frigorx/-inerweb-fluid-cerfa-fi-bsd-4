@@ -562,7 +562,7 @@ registre : elle est la **conséquence directe** de la famille J. Tant que le ver
 du mode Officiel est fermé, tout ce que le logiciel produit est un document de
 formation — et **un seul de ces documents le dit sur lui-même**, la fiche CERFA
 (mention `v8/js/cerfa/generateur.js:93`, apposée au cadre 14 `:538`, filigrane
-`:754`). Les dix-neuf autres sortent sans marque.
+`:754`). Les vingt et un autres sortent sans marque.
 
 <a id="inventaire-documents-sans-marque"></a>
 
@@ -605,6 +605,14 @@ formation — et **un seul de ces documents le dit sur lui-même**, la fiche CER
 >     archives (`v8/js/documents/verificateur.js`).
 > 18. **Exports CSV des tables du registre** (`v8/js/documents/exports.js`).
 > 19. **Export CSV de la déclaration annuelle** (`v8/js/views/bilan.js:282`, `:773`).
+> 20. **Journal d’audit en PDF** (`v8/js/documents/exports.js:688`) — page A4
+>     paginée, titrée « Journal d’audit — inerWeb Fluide » et sous-titrée de la **raison
+>     sociale de l’établissement** (`:720`, `:726-731`), produite par le bouton
+>     « Exporter en PDF » de l’écran d’administration (`v8/js/views/admin.js:397`).
+>     C’est la sortie qui ressemble le plus à une pièce officielle.
+> 21. **Export CSV du bilan annuel** (`v8/js/views/bilan.js:330`), fichier
+>     `bilan-fluides-AAAA.csv` — autre générateur que l’entrée n° 18, autre contenu que
+>     l’entrée n° 19.
 >
 > **Une précision, pour éviter un contresens.** À l'intérieur des quatre archives, les
 > **fiches CERFA sont bien marquées** : elles sortent du même générateur
@@ -612,11 +620,14 @@ formation — et **un seul de ces documents le dit sur lui-même**, la fiche CER
 > l'archive — sommaire, fichiers CSV, chronologie, vérificateur — et le certificat qui
 > l'accompagne.
 >
-> **Une seule sortie est hors de cette consigne**, et elle est nommée pour que l'inventaire
-> soit complet : la **notice d'information des personnes** (protection des données), elle
-> aussi imprimable sans marque (`v8/js/views/rgpd.js:534`). Elle est **faite pour être
-> remise** aux élèves et aux familles, et nul ne peut la prendre pour une pièce du registre
-> des fluides.
+> **Deux sorties sont hors de cette consigne**, et elles sont nommées pour que
+> l’inventaire soit complet. La **notice d’information des personnes** (protection des
+> données, `v8/js/views/rgpd.js:534`) : imprimable sans marque elle aussi, mais **faite pour
+> être remise** aux élèves et aux familles, et nul ne peut la prendre pour une pièce du
+> registre des fluides. Et l’**export des données d’une personne** au titre du droit d’accès
+> (fichier JSON, `v8/js/modales/personne-form.js:634`) : lui aussi destiné à être remis à
+> la personne qui le demande. Ce sont des fichiers de données, pas des documents qui
+> pourraient passer pour une pièce du registre.
 
 **Et le repère de mode ne survit pas à l'impression.** À l'écran, le seul repère
 permanent du mode est le badge de l'en-tête (`v8/index.html:58`, posé par
@@ -639,7 +650,7 @@ grep -rn "MENTION_FORMATION\|MODE FORMATION\|NON OFFICIEL\|non officiel" v8/js/ 
 Elle ne rend rien. La contre-épreuve, la même commande sans le filtre, rend vingt
 lignes, toutes dans `v8/js/cerfa/`.
 
-**Tant que ce point n'est pas tranché, aucun des dix-neuf documents énumérés
+**Tant que ce point n'est pas tranché, aucun des vingt et un documents énumérés
 ci-dessus ne doit être remis à un tiers.** La décision appartient à
 l'établissement (`docs/NOTE-DECISION-ETABLISSEMENT.md`), pas à ce registre.
 

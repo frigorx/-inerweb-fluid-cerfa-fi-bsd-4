@@ -172,6 +172,14 @@ diagonal sur la page (`:754`). **Dix-neuf autres documents sortent sans aucune m
 >     archives (`v8/js/documents/verificateur.js`).
 > 18. **Exports CSV des tables du registre** (`v8/js/documents/exports.js`).
 > 19. **Export CSV de la déclaration annuelle** (`v8/js/views/bilan.js:282`, `:773`).
+> 20. **Journal d’audit en PDF** (`v8/js/documents/exports.js:688`) — page A4
+>     paginée, titrée « Journal d’audit — inerWeb Fluide » et sous-titrée de la **raison
+>     sociale de l’établissement** (`:720`, `:726-731`), produite par le bouton
+>     « Exporter en PDF » de l’écran d’administration (`v8/js/views/admin.js:397`).
+>     C’est la sortie qui ressemble le plus à une pièce officielle.
+> 21. **Export CSV du bilan annuel** (`v8/js/views/bilan.js:330`), fichier
+>     `bilan-fluides-AAAA.csv` — autre générateur que l’entrée n° 18, autre contenu que
+>     l’entrée n° 19.
 >
 > **Une précision, pour éviter un contresens.** À l'intérieur des quatre archives, les
 > **fiches CERFA sont bien marquées** : elles sortent du même générateur
@@ -179,11 +187,14 @@ diagonal sur la page (`:754`). **Dix-neuf autres documents sortent sans aucune m
 > l'archive — sommaire, fichiers CSV, chronologie, vérificateur — et le certificat qui
 > l'accompagne.
 >
-> **Une seule sortie est hors de cette consigne**, et elle est nommée pour que l'inventaire
-> soit complet : la **notice d'information des personnes** (protection des données), elle
-> aussi imprimable sans marque (`v8/js/views/rgpd.js:534`). Elle est **faite pour être
-> remise** aux élèves et aux familles, et nul ne peut la prendre pour une pièce du registre
-> des fluides.
+> **Deux sorties sont hors de cette consigne**, et elles sont nommées pour que
+> l’inventaire soit complet. La **notice d’information des personnes** (protection des
+> données, `v8/js/views/rgpd.js:534`) : imprimable sans marque elle aussi, mais **faite pour
+> être remise** aux élèves et aux familles, et nul ne peut la prendre pour une pièce du
+> registre des fluides. Et l’**export des données d’une personne** au titre du droit d’accès
+> (fichier JSON, `v8/js/modales/personne-form.js:634`) : lui aussi destiné à être remis à
+> la personne qui le demande. Ce sont des fichiers de données, pas des documents qui
+> pourraient passer pour une pièce du registre.
 
 **Vérification par soi-même.** La commande ci-dessous couvre bien ce qui est affirmé — tout
 `v8/js/`, et non le seul dossier `documents/` :
@@ -197,7 +208,7 @@ vingt lignes, toutes dans `v8/js/cerfa/`. Pour retrouver les imprimables eux-mê
 `grep -rn "window.print()" v8/js/ | grep -v "test-"` rend quinze lignes, dont trois sont des
 commentaires — donc **douze** déclencheurs d'impression réels. Ce sont les onze premiers
 imprimés de l'inventaire (n° 1 à 7 et 9 à 12), plus la notice de protection des personnes.
-Le douzième de la liste, le **certificat de scellement** (n° 8), n'y figure pas : c'est une
+Le **certificat de scellement** (n° 8), n'y figure pas : c'est une
 page HTML téléchargée, puis imprimée depuis le navigateur. *(Une version antérieure de ces
 documents proposait `grep -r FORMATION v8/js/documents/` : trop étroite, des imprimables
 vivent aussi dans `v8/js/views/`.)*

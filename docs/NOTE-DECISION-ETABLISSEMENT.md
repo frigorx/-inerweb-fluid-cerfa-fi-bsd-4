@@ -192,7 +192,7 @@ Observations sur le § 5.1 : ...................................................
       être validé sur une fiche opposable**. Il est écrit sur le document, pas empêché.
       *(§ 2 bis)*
 - [ ] **R26 — En dehors du CERFA, aucun document produit ne porte de marque de
-      non-officialité — et il y en a dix-neuf.** Rien ne les distingue à l'œil de leurs
+      non-officialité — et il y en a vingt et un.** Rien ne les distingue à l'œil de leurs
       équivalents réglementaires, alors que la mention de formation est aujourd'hui la
       **seule** chose qui fait cette distinction. Les plus exposés : la **fiche
       d'identification machine**, feuille A4 faite pour être posée sur l'équipement avec une
@@ -386,6 +386,14 @@ Observations : .................................................................
     archives (`v8/js/documents/verificateur.js`).
 18. **Exports CSV des tables du registre** (`v8/js/documents/exports.js`).
 19. **Export CSV de la déclaration annuelle** (`v8/js/views/bilan.js:282`, `:773`).
+20. **Journal d’audit en PDF** (`v8/js/documents/exports.js:688`) — page A4
+    paginée, titrée « Journal d’audit — inerWeb Fluide » et sous-titrée de la **raison
+    sociale de l’établissement** (`:720`, `:726-731`), produite par le bouton
+    « Exporter en PDF » de l’écran d’administration (`v8/js/views/admin.js:397`).
+    C’est la sortie qui ressemble le plus à une pièce officielle.
+21. **Export CSV du bilan annuel** (`v8/js/views/bilan.js:330`), fichier
+    `bilan-fluides-AAAA.csv` — autre générateur que l’entrée n° 18, autre contenu que
+    l’entrée n° 19.
 
 **Une précision, pour éviter un contresens.** À l'intérieur des quatre archives, les
 **fiches CERFA sont bien marquées** : elles sortent du même générateur
@@ -393,11 +401,14 @@ Observations : .................................................................
 l'archive — sommaire, fichiers CSV, chronologie, vérificateur — et le certificat qui
 l'accompagne.
 
-**Une seule sortie est hors de cette consigne**, et elle est nommée pour que l'inventaire
-soit complet : la **notice d'information des personnes** (protection des données), elle
-aussi imprimable sans marque (`v8/js/views/rgpd.js:534`). Elle est **faite pour être
-remise** aux élèves et aux familles, et nul ne peut la prendre pour une pièce du registre
-des fluides.
+**Deux sorties sont hors de cette consigne**, et elles sont nommées pour que
+l’inventaire soit complet. La **notice d’information des personnes** (protection des
+données, `v8/js/views/rgpd.js:534`) : imprimable sans marque elle aussi, mais **faite pour
+être remise** aux élèves et aux familles, et nul ne peut la prendre pour une pièce du
+registre des fluides. Et l’**export des données d’une personne** au titre du droit d’accès
+(fichier JSON, `v8/js/modales/personne-form.js:634`) : lui aussi destiné à être remis à
+la personne qui le demande. Ce sont des fichiers de données, pas des documents qui
+pourraient passer pour une pièce du registre.
 
 **Vérification par soi-même**, couvrant bien ce qui est affirmé — tout `v8/js/`, et non le
 seul dossier `documents/` :
@@ -410,7 +421,7 @@ Elle ne rend **rien**. La contre-épreuve est la même commande sans le filtre :
 vingt lignes, toutes dans `v8/js/cerfa/`.
 
 > **Consigne d'attente.** Tant que le point n'est pas tranché par l'établissement, **aucun
-> des dix-neuf documents ci-dessus ne doit être remis à un tiers**, et l'ajout de la ligne
+> des vingt et un documents ci-dessus ne doit être remis à un tiers**, et l'ajout de la ligne
 > R34 dit pourquoi la consigne ne peut pas se contenter d'un repère à l'écran : ce repère ne
 > s'imprime pas.
 
@@ -432,7 +443,7 @@ Ces conditions sont proposées ; l'établissement les arrête.
    bloquant.
 5. **Le mode Officiel reste fermé pendant tout le pilote.** L'ouverture ne peut résulter que
    d'une décision écrite prise au vu du § 7. **Attention : seul le CERFA porte la mention de
-   formation** (ligne R26) ; **dix-neuf autres documents n'en portent aucune** — la liste est
+   formation** (ligne R26) ; **vingt et un autres documents n'en portent aucune** — la liste est
    à l'[inventaire du § 5.3](#inventaire-documents-sans-marque) — et **le repère de mode
    affiché à l'écran ne s'imprime pas** (ligne R34). Tant que ce point n'est pas corrigé, une
    consigne d'atelier doit dire où sont rangés les documents produits en séance, et que rien
@@ -504,7 +515,7 @@ Elle est simple parce que le registre existant n'a jamais cessé d'être tenu pe
    rangée avec la présente note.
 4. **Les documents déjà produits** n'ont pas à être retirés d'un dossier réglementaire :
    produits verrou fermé, ils n'y ont pas leur place. **Mais seul le CERFA le dit sur
-   lui-même** (ligne R26) : les **dix-neuf autres** documents, énumérés à
+   lui-même** (ligne R26) : les **vingt et un autres** documents, énumérés à
    l'[inventaire du § 5.3](#inventaire-documents-sans-marque), ne portent aucune marque — et
    même leur impression ne conserve pas le repère de mode affiché à l'écran (ligne R34).
    Leur retrait éventuel suppose donc de savoir où ils sont allés, et c'est le seul moyen de
