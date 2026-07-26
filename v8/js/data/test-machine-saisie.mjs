@@ -253,6 +253,36 @@ console.log('--- C. Un type d’installation ABSENT vaut « FIXE » (revue B1, '
     mobile.typeInstallation === 'MOBILE');
 }
 
+console.log('--- C bis. « Absent » ne veut pas dire « vide » : la CHAÎNE '
+  + 'VIDE est REFUSÉE en amont ---');
+{
+  // ⭐ VÉRIFICATION FINALE, constat n°3 — CE QUE LE CODE FAIT VRAIMENT.
+  // Trois commentaires annonçaient que `typeInstallation: ''` était lu
+  // comme absent, donc « FIXE » — au même titre que `null`. Ce n'est PAS
+  // observable : la garde de type, jouée AVANT le filtre de qualification
+  // et avant l'écriture (api.js createMachine/updateMachine, miroir
+  // demo-store), refuse toute valeur hors ['FIXE','MOBILE'] dès lors
+  // qu'elle n'est ni `undefined` ni `null` — et la chaîne vide n'est ni
+  // l'un ni l'autre. Les branches `=== ''` en aval sont donc MORTES.
+  // On l'ANCRE ici : si quelqu'un desserrait cette garde en amont en se
+  // fiant à ces commentaires, ces deux vérifications tomberaient.
+  const MSG_TYPE = 'Type d\'installation inconnu';
+  await attendreRefus('à la CRÉATION : une chaîne VIDE n’est pas un type '
+    + 'absent — REFUSÉE, elle n’est jamais convertie en « FIXE »',
+  store.createMachine(fiche({ typeInstallation: '' })), MSG_TYPE);
+  const m = await store.createMachine(fiche({}));
+  await attendreRefus('à la MODIFICATION : même refus, même message '
+    + 'canonique (l’autre porte)',
+  store.updateMachine(m.id, { typeInstallation: '' }), MSG_TYPE);
+  // Contre-épreuve : le refus vise bien la VALEUR, pas le geste — la même
+  // machine se modifie sans encombre dès que le type est absent ou réel.
+  const sansType = await store.updateMachine(m.id, { designation: 'Sans type' });
+  verifier('contre-épreuve : sans le champ, la modification passe et le '
+    + 'type reste « FIXE »',
+  sansType.typeInstallation === 'FIXE' && sansType.designation === 'Sans type',
+  `type = ${sansType.typeInstallation}`);
+}
+
 // ============================================================
 console.log('');
 console.log(`Saisie d’une machine (${NOM_STORE}) : `

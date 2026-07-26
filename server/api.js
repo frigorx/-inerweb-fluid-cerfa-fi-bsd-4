@@ -863,6 +863,15 @@ function normaliserQualifMachine(champ, valeur) {
   // création : un client d'API qui envoyait `null` prenait un 403 pour un
   // NON-CHANGEMENT. Le juge doit lire la valeur que le scribe écrira —
   // sans quoi il juge autre chose que ce qui est enregistré.
+  // ⚠️ « Absent » = `undefined` ou `null`, RIEN D'AUTRE. La chaîne vide est
+  // écrite ici par symétrie avec les autres champs, mais elle n'arrive
+  // JAMAIS jusqu'ici : la garde de type de createMachine / updateMachine,
+  // jouée AVANT ce filtre, refuse toute valeur hors ['FIXE','MOBILE'] qui
+  // ne soit ni `undefined` ni `null` — « Type d'installation inconnu ».
+  // Ne pas desserrer cette garde en amont en se fiant à cette ligne : la
+  // création n'a, elle, aucune conversion en aval et tomberait sur la
+  // contrainte CHECK de la colonne (tiré ; test-machine-saisie, section
+  // C bis).
   if (champ === 'typeInstallation') {
     return valeur === '' || valeur === undefined || valeur === null
       ? 'FIXE' : valeur;
@@ -3356,6 +3365,10 @@ const HANDLERS = {
     // un changement. Un type absent VAUT « fixe », à la modification comme
     // à la création — aucune règle nouvelle : c'est déjà le défaut de la
     // colonne et le backfill conservateur de la migration.
+    // ⚠️ Le cas `''` écrit ci-dessous n'est pas atteignable : la garde de
+    // type, plus haut dans ce même handler, l'a déjà refusé (« Type
+    // d'installation inconnu »). Il ne reste là que pour ne pas dépendre
+    // de l'ordre des gardes. « Absent », ici, veut dire `null`.
     if (patch.typeInstallation === null || patch.typeInstallation === '') {
       patch.typeInstallation = 'FIXE';
     }

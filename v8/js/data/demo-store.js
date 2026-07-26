@@ -3196,6 +3196,11 @@ export function creerDemoStore() {
       // comme à la création : côté serveur la colonne est `NOT NULL
       // DEFAULT 'FIXE'` (migration 27), ici c'est la même valeur qui doit
       // être lue par la garde et écrite par le store.
+      // ⚠️ Le cas `''` écrit ci-dessous n'est pas atteignable : la garde de
+      // type, plus haut dans cette même méthode, l'a déjà refusé (« Type
+      // d'installation inconnu », message identique mot pour mot des deux
+      // côtés). Il ne reste là que par miroir. « Absent », ici, veut dire
+      // `null` — voir test-machine-saisie, section C bis.
       if (machine.typeInstallation === null
           || machine.typeInstallation === '') {
         machine.typeInstallation = 'FIXE';
