@@ -203,5 +203,103 @@ verifier('plus aucune phrase d’interface du formulaire ne dit « BSFF »',
   !/créer ce BSFF/.test(sourceForm) && !/second BSFF/.test(sourceForm),
   'bsff-form.js');
 
+// ============================================================
+// F. Revue B2 (mineur 3) — LA VUE N'ENCHAÎNE PLUS N APPELS EN SÉRIE
+//
+// Le rendu interrogeait le store suivi par suivi, chacun attendant le
+// précédent : en LocalStore, autant d'allers-retours HTTP bout à bout à
+// chaque affichage. On éprouve DEUX choses, sur le rendu RÉEL :
+//   1. les suivis SANS issue attestée ne sont plus interrogés du tout ;
+//   2. les appels restants partent ENSEMBLE. La preuve se tire avec une
+//      BARRIÈRE : chaque appel attend que TOUS soient entrés. Du code en
+//      série ne peut pas la franchir — il reste bloqué sur le premier, et
+//      le garde-temps rend la suite ROUGE au lieu de la faire pendre.
+// ============================================================
+console.log('\n--- F. Le rendu n’enchaîne plus les appels en série ---');
+
+{
+  // Décor : quatre suivis neufs, dont DEUX à l'issue attestée. Il en faut
+  // au moins deux, sinon la barrière s'ouvrirait sur le premier appel et
+  // ne prouverait rien.
+  const fluideSerie = (await store.getFluides())[0].code;
+  for (let i = 0; i < 4; i += 1) {
+    const b = await store.createBouteille({
+      type: 'RECUPERATION', fluide: fluideSerie, etatFluide: 'RECUPERE',
+      tareKg: 10, masseBruteKg: 14, contenanceMaxKg: 25,
+      proprietaire: 'Lycée'
+    });
+    await store.deciderFluideRecupere(b.id, 'DECHET', 'testeur');
+    const s = await store.createBsff({
+      bouteilleId: b.id, transporteur: 'Collecteur agréé',
+      installationDestination: 'Centre de traitement agréé',
+      masseRemiseKg: 1, dateRemise: '2026-07-24', operateur: 'testeur'
+    });
+    if (i < 2) {
+      await store.attesterIssueBsff(s.id, {
+        issueTraitement: 'DESTRUCTION',
+        installationTraitement: 'Centre de traitement agréé',
+        certificatTraitement: null, operateur: 'testeur'
+      });
+    }
+  }
+  const suivis = await store.getBsff();
+  const avecIssue = suivis.filter((s) => s.issueTraitement);
+  const sansIssue = suivis.filter((s) => !s.issueTraitement);
+  verifier('décor : le registre porte des suivis AVEC et SANS issue attestée',
+    avecIssue.length >= 1 && sansIssue.length >= 2,
+    `${avecIssue.length} avec / ${sansIssue.length} sans`);
+
+  const attendus = avecIssue.length;
+  const interroges = [];
+  let entres = 0;
+  let ouvrirLaBarriere = null;
+  const barriere = new Promise(function (resoudre) { ouvrirLaBarriere = resoudre; });
+
+  const storeEspion = Object.create(store);
+  storeEspion.listerPiecesJointes = async function (type, id) {
+    interroges.push(`${type}:${id}`);
+    entres += 1;
+    // Tous entrés ? on ouvre. Sinon on attend les autres : du code en
+    // série n'arrivera jamais au deuxième appel.
+    if (entres >= attendus) ouvrirLaBarriere();
+    await barriere;
+    return store.listerPiecesJointes(type, id);
+  };
+
+  // ⚠ Le minuteur n'est PAS « unref » : sans cela, du code en série ne
+  // ferait pas rougir la suite, il la ferait simplement s'arrêter sur un
+  // await jamais résolu (« unsettled top-level await ») — un test qui ne
+  // peut pas échouer proprement est un mensonge. Il est libéré dès la fin
+  // de la course.
+  let minuteur = null;
+  const gardeTemps = new Promise(function (_, rejeter) {
+    minuteur = setTimeout(function () {
+      rejeter(new Error(`barrière non franchie : ${entres}/${attendus} appels `
+        + 'entrés — les appels sont enchaînés, pas lancés ensemble'));
+    }, 5000);
+  });
+
+  let erreurSerie = null;
+  const conteneurF = document.createElement('div');
+  try {
+    await Promise.race([
+      render(conteneurF, { store: storeEspion, naviguer() {}, rafraichir() {} }),
+      gardeTemps
+    ]);
+  } catch (e) {
+    erreurSerie = String((e && e.message) || e);
+  } finally {
+    if (minuteur !== null) clearTimeout(minuteur);
+  }
+
+  verifier('les appels de pièces jointes partent ENSEMBLE (barrière franchie)',
+    erreurSerie === null, String(erreurSerie));
+  verifier('aucun suivi SANS issue attestée n’est interrogé',
+    sansIssue.every((s) => !interroges.includes(`BSFF:${s.id}`)),
+    interroges.join(', '));
+  verifier('un appel par suivi AVEC issue attestée, pas un de plus',
+    interroges.length === attendus, `${interroges.length} pour ${attendus}`);
+}
+
 console.log(`\n${nbOk} OK, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);

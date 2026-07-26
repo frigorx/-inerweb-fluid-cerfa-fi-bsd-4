@@ -416,11 +416,23 @@ export async function render(conteneur, ctx) {
   ]);
   // Lot B2 : quels suivis portent une pièce justificative (métadonnées
   // seules — la liste de PJ ne descend aucun binaire).
+  // ⚠ Revue B2 (mineur 3) — N+1 APPELS RÉSEAU EN SÉRIE. La boucle
+  // interrogeait le store suivi par suivi, chacun attendant le précédent :
+  // en mode LocalStore, autant d'allers-retours HTTP mis bout à bout à
+  // CHAQUE affichage de l'écran. Deux économies, sans toucher au contrat :
+  //   · on n'interroge QUE les suivis dont l'issue est attestée — pour les
+  //     autres, la réponse ne change rien à l'affichage (voir ligneBsff) ;
+  //   · les appels restants partent ENSEMBLE au lieu de s'enchaîner.
+  // Retirer les N appels eux-mêmes demanderait une méthode de contrat
+  // (listage groupé) : consigné, hors de ce lot.
+  const aInterroger = bsffListe.filter((s) => s && s.issueTraitement);
+  const reponses = await Promise.all(
+    aInterroger.map((s) => ctx.store.listerPiecesJointes('BSFF', s.id)));
   const avecPiece = new Set();
-  for (const s of bsffListe) {
-    const pieces = await ctx.store.listerPiecesJointes('BSFF', s.id);
+  aInterroger.forEach(function (s, i) {
+    const pieces = reponses[i];
     if (pieces && pieces.length > 0) avecPiece.add(s.id);
-  }
+  });
 
   const jour = new Date().toISOString().slice(0, 10);
   const enAttente = bouteillesRecupPendantes(bouteilles);
