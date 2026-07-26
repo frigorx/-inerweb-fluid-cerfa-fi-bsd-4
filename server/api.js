@@ -410,12 +410,18 @@ const CHAMPS_RESERVES_PERSONNE = [
 
 /**
  * Fiche de référence d'une personne qui n'existe pas encore : les DÉFAUTS
- * de `createPersonne`. Le rôle applicatif par défaut se DÉDUIT du type de
- * personne — le fournir à l'identique ne qualifie rien.
+ * de `createPersonne`.
+ * ⭐⭐ REVUE B1, constat mineur n°2 — CETTE RÉFÉRENCE SE DÉDUISAIT DE LA
+ * CHARGE UTILE. Elle lisait `typePersonne` et rendait `roleApp:
+ * 'ENSEIGNANT'` dès que le type n'était pas ÉLÈVE : une session d'élève
+ * créait donc une fiche portant le rôle applicatif ENSEIGNANT sans que le
+ * filtre ne voie quoi que ce soit — la référence bougeait avec l'attaque.
+ * Une référence qui suit ce qu'on lui envoie ne compare plus rien.
+ * Elle vaut désormais le MOINDRE PRIVILÈGE, toujours.
  */
-function referencePersonneNeuve(typePersonne) {
+function referencePersonneNeuve() {
   return {
-    roleApp: typePersonne === 'ELEVE' ? 'ELEVE' : 'ENSEIGNANT',
+    roleApp: 'ELEVE',
     actif: true,
     numAttestationAptitude: null,
     organismeDelivreur: null,
@@ -1756,15 +1762,34 @@ const HANDLERS = {
     }
     // ⭐ B1 — LE MÊME FILTRE QU'À LA MODIFICATION : gouvernance et preuves
     // ne s'obtiennent pas en créant la fiche d'un coup.
-    garderFichePersonne(d, referencePersonneNeuve(d.typePersonne), contexte);
+    // ⭐⭐ REVUE B1, constat mineur n°2 — UN RÔLE NE SE DÉDUIT QUE POUR QUI
+    // A LE DROIT DE L'ATTRIBUER. Le rôle applicatif se déduisait du type de
+    // personne pour TOUT LE MONDE : une session d'élève créant une fiche
+    // « salarié » obtenait une fiche ENSEIGNANT, en silence, sans jamais
+    // écrire le mot. Hors du responsable, le défaut est désormais le
+    // MOINDRE PRIVILÈGE — et le filtre juge le rôle EFFECTIF, pas le seul
+    // rôle écrit noir sur blanc.
+    // ⚠️ ON NE REFUSE RIEN DE PLUS : l'élève inscrit toujours qui il veut,
+    // du type qu'il veut (on n'empêche jamais d'enregistrer la réalité) ;
+    // la fiche naît simplement sans pouvoir, et le responsable l'élève
+    // ensuite s'il y a lieu. Un refus ici aurait rendu l'écran mort.
+    // ⚠️ PARITÉ : le DemoStore n'a pas de comptes — il joue le responsable
+    // (« le store de démo répond référent »), donc il garde la déduction
+    // par type. Même règle, même résultat pour un responsable.
+    const peutAttribuerRole = ROLES_VALIDEURS.includes(contexte?.role ?? null);
+    const roleAppDemande = d.roleApp ?? (
+      d.typePersonne !== 'ELEVE' && peutAttribuerRole ? 'ENSEIGNANT' : 'ELEVE');
+    garderFichePersonne({ ...d, roleApp: roleAppDemande },
+      referencePersonneNeuve(), contexte);
     verifierDatesPersonne(d);
     const personne = {
       id: db.generateId('PER'),
       nom: String(d.nom).trim(),
       prenom: String(d.prenom).trim(),
       typePersonne: d.typePersonne,
-      roleApp: d.roleApp ??
-        (d.typePersonne === 'ELEVE' ? 'ELEVE' : 'ENSEIGNANT'),
+      // Le rôle EFFECTIF calculé plus haut : une seule dérivation, jugée
+      // par le filtre puis enregistrée telle quelle (revue B1, mineur n°2).
+      roleApp: roleAppDemande,
       numAttestationAptitude: d.numAttestationAptitude ?? null,
       organismeDelivreur: d.organismeDelivreur ?? null,
       dateObtention: d.dateObtention ?? null,

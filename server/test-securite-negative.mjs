@@ -796,6 +796,44 @@ try {
       { cookie: cookieReferent }));
     verifier('contre-épreuve : le responsable désactive toujours par la '
       + 'fiche', desactive?.actif === false);
+
+    // ⭐⭐ REVUE B1, constat mineur n°2 — LE RÔLE QU'ON N'ÉCRIT PAS.
+    // Les attaques ci-dessus écrivaient `roleApp` noir sur blanc, donc le
+    // filtre les voyait. Le relecteur a tiré la voie muette : ne rien
+    // demander, et laisser la DÉDUCTION faire le travail. Tout
+    // `typePersonne` autre qu'ÉLÈVE rendait une fiche ENSEIGNANT — la
+    // fiche que `verifierValidateur` lit. On ne REFUSE pas pour autant :
+    // la fiche s'enregistre, elle naît simplement SANS pouvoir.
+    const muette = resultatDe(await requete('createPersonne', {
+      donneesPersonne: { prenom: 'Rôle', nom: 'Jamais Demandé',
+        typePersonne: 'SALARIE' } }, { cookie: cookieEleve }));
+    verifier('⭐⭐ un ÉLÈVE crée une fiche « salarié » SANS écrire de rôle : '
+      + 'la fiche existe (on n’empêche pas d’enregistrer la réalité)',
+    Boolean(muette?.id), JSON.stringify(muette).slice(0, 200));
+    verifier('⭐⭐ … mais elle NAÎT SANS POUVOIR — le rôle applicatif ne se '
+      + 'déduit pas ENSEIGNANT pour qui ne peut pas l’attribuer',
+    muette?.roleApp === 'ELEVE', JSON.stringify(muette?.roleApp));
+    {
+      const liste = resultatDe(await requete('getPersonnel', {},
+        { cookie: cookieReferent })) ?? [];
+      verifier('… et c’est bien ce qui est ENREGISTRÉ, pas seulement rendu',
+        liste.find((p) => p.id === muette.id)?.roleApp === 'ELEVE',
+        JSON.stringify(liste.find((p) => p.id === muette.id)?.roleApp));
+    }
+    // ⚠️ CONTRE-ÉPREUVE — la déduction reste ENTIÈRE pour le responsable :
+    // il inscrit un collègue sans avoir à cocher son rôle à la main.
+    const collegue = resultatDe(await requete('createPersonne', {
+      donneesPersonne: { prenom: 'Collègue', nom: 'Sans Rôle Écrit',
+        typePersonne: 'SALARIE' } }, { cookie: cookieReferent }));
+    verifier('contre-épreuve : pour le RESPONSABLE, la déduction joue '
+      + 'toujours (fiche « salarié » → ENSEIGNANT)',
+    collegue?.roleApp === 'ENSEIGNANT', JSON.stringify(collegue?.roleApp));
+    const eleveMuet = resultatDe(await requete('createPersonne', {
+      donneesPersonne: { prenom: 'Trois', nom: 'Élève',
+        typePersonne: 'ELEVE' } }, { cookie: cookieEleve }));
+    verifier('contre-épreuve : une fiche d’ÉLÈVE reste inchangée des deux '
+      + 'côtés', eleveMuet?.roleApp === 'ELEVE',
+    JSON.stringify(eleveMuet?.roleApp));
   }
 
 } finally {
