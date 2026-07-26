@@ -228,6 +228,31 @@ console.log('--- B bis. La même date à la MODIFICATION ---');
     corrigee.dateMiseEnService === '2020-09-01');
 }
 
+console.log('--- C. Un type d’installation ABSENT vaut « FIXE » (revue B1, '
+  + 'mineur n°5) ---');
+{
+  // ⭐⭐ REVUE B1, constat mineur n°5. Les deux stores écrivent déjà
+  // `d.typeInstallation ?? 'FIXE'` à la CRÉATION, et côté serveur la
+  // colonne est `NOT NULL DEFAULT 'FIXE'` (migration 27) : un `null`
+  // explicite ne peut donc pas rester un `null`. Il valait pourtant un
+  // CHANGEMENT pour le filtre de qualification (403 pour un non-changement)
+  // et serait parti tel quel dans le patch de modification.
+  const neuve = await store.createMachine(fiche({ typeInstallation: null }));
+  verifier('à la CRÉATION : un type absent est enregistré « FIXE »',
+    neuve.typeInstallation === 'FIXE', `valeur = ${neuve.typeInstallation}`);
+  const modifiee = await store.updateMachine(neuve.id,
+    { typeInstallation: null });
+  verifier('à la MODIFICATION : le même type absent reste « FIXE » (le juge '
+    + 'et le scribe lisent la même valeur)',
+  modifiee.typeInstallation === 'FIXE',
+  `valeur = ${modifiee.typeInstallation}`);
+  // Contre-épreuve : la valeur RÉELLE, elle, s'enregistre toujours.
+  const mobile = await store.updateMachine(neuve.id,
+    { typeInstallation: 'MOBILE' });
+  verifier('contre-épreuve : « MOBILE » s’enregistre toujours',
+    mobile.typeInstallation === 'MOBILE');
+}
+
 // ============================================================
 console.log('');
 console.log(`Saisie d’une machine (${NOM_STORE}) : `

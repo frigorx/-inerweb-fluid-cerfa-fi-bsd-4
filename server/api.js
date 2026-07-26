@@ -831,6 +831,17 @@ function normaliserQualifMachine(champ, valeur) {
     return valeur === '' || valeur === undefined || valeur === null
       ? null : Number(valeur);
   }
+  // ⭐⭐ REVUE B1, constat mineur n°5 — UN TYPE ABSENT VAUT « FIXE ».
+  // `null` était vu comme un CHANGEMENT face à la référence 'FIXE', alors
+  // que la colonne est `NOT NULL DEFAULT 'FIXE'` (migration 27) et que les
+  // deux stores écrivent déjà `d.typeInstallation ?? 'FIXE'` à la
+  // création : un client d'API qui envoyait `null` prenait un 403 pour un
+  // NON-CHANGEMENT. Le juge doit lire la valeur que le scribe écrira —
+  // sans quoi il juge autre chose que ce qui est enregistré.
+  if (champ === 'typeInstallation') {
+    return valeur === '' || valeur === undefined || valeur === null
+      ? 'FIXE' : valeur;
+  }
   return valeur === '' || valeur === undefined ? null : valeur;
 }
 
@@ -3312,6 +3323,16 @@ const HANDLERS = {
     const patch = {};
     for (const champ of CHAMPS) {
       if (d[champ] !== undefined) patch[champ] = d[champ];
+    }
+    // ⭐⭐ REVUE B1, constat mineur n°5 — MÊME LECTURE POUR LE JUGE ET LE
+    // SCRIBE. `typeInstallation: null` passait tel quel dans le patch,
+    // alors que la colonne est `NOT NULL DEFAULT 'FIXE'` (migration 27) :
+    // la base l'aurait refusé, et le filtre de qualification, lui, y voyait
+    // un changement. Un type absent VAUT « fixe », à la modification comme
+    // à la création — aucune règle nouvelle : c'est déjà le défaut de la
+    // colonne et le backfill conservateur de la migration.
+    if (patch.typeInstallation === null || patch.typeInstallation === '') {
+      patch.typeInstallation = 'FIXE';
     }
     // Booléens du modèle d'équipement : jamais stockés en chaîne.
     for (const champ of ['hermetiqueScelle', 'hermetiqueEtiquete',

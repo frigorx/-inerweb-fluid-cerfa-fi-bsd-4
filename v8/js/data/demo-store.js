@@ -3191,6 +3191,15 @@ export function creerDemoStore() {
       for (const champ of CHAMPS) {
         if (d[champ] !== undefined) machine[champ] = d[champ];
       }
+      // ⭐⭐ REVUE B1, constat mineur n°5 — MIROIR LITTÉRAL DU SERVEUR.
+      // Un type d'installation absent VAUT « fixe », à la modification
+      // comme à la création : côté serveur la colonne est `NOT NULL
+      // DEFAULT 'FIXE'` (migration 27), ici c'est la même valeur qui doit
+      // être lue par la garde et écrite par le store.
+      if (machine.typeInstallation === null
+          || machine.typeInstallation === '') {
+        machine.typeInstallation = 'FIXE';
+      }
       // Booléens du modèle d'équipement : jamais stockés en chaîne.
       for (const champ of ['hermetiqueScelle', 'hermetiqueEtiquete',
         'residentiel']) {

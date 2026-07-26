@@ -588,6 +588,19 @@ try {
     verifier('contre-épreuve : l’élève pèse toujours la machine (charge '
       + 'ACTUELLE, saisie courante)', pesee?.chargeActuelleKg === 47.5,
     JSON.stringify(pesee?.chargeActuelleKg));
+    // ⭐⭐ REVUE B1, constat mineur n°5 — UN NON-CHANGEMENT N'EST PAS UNE
+    // ATTAQUE. `typeInstallation: null` valait 403 à un OPERATEUR alors
+    // que la valeur EFFECTIVE est « FIXE » des deux côtés (défaut de la
+    // colonne, migration 27) : le juge lisait autre chose que ce que le
+    // scribe écrit. Une garde qui refuse un non-changement finit par
+    // pousser à contourner l'écran.
+    const typeAbsent = resultatDe(await requete('updateMachine', {
+      id: mac.id, donneesMachine: { typeInstallation: null } },
+    { cookie: cookieEleve }));
+    verifier('⭐ un type d’installation ABSENT (null) n’est PAS un '
+      + 'changement : accepté, et la machine reste FIXE',
+    typeAbsent?.typeInstallation === 'FIXE',
+    JSON.stringify(typeAbsent?.typeInstallation ?? typeAbsent).slice(0, 200));
     const renvoiIdentique = resultatDe(await requete('updateMachine', {
       id: mac.id, donneesMachine: { chargeActuelleKg: 47.5,
         chargeNominaleKg: 60, detectionPermanente: false,
