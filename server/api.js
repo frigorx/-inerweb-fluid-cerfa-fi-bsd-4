@@ -552,6 +552,22 @@ const ROLES_MUTATION = {
   createNonConformite: VALIDEUR,
   solderNonConformite: VALIDEUR,
   desactiverPersonne: VALIDEUR,
+  // ⭐⭐ REVUE B1, constat mineur n°1 — LA TROISIÈME PORTE DU MÊME SEUIL.
+  // Le lot a fermé `statut` à la création ET à la modification de la
+  // machine (CHAMPS_QUALIFICATION_MACHINE), au motif qu'ARRETEE et
+  // DEMANTELEE SORTENT la machine de l'alerte de contrôle en retard. Le
+  // relecteur a tiré le contournement : refusé en un appel, le même
+  // déplacement de seuil s'obtenait en DEUX — createMachine (acceptée),
+  // puis demantelerMachine (aucun refus). Une règle, pas une porte : les
+  // deux gestes dédiés rejoignent donc le niveau du responsable. Ils
+  // restent ENTIERS (gardes matérielles, journal, confirmation d'écran) :
+  // ils changent de main, pas de nature.
+  // ⚠️ `remettreEnService` reste OPERATEUR À DESSEIN : il RAMÈNE la
+  // machine dans les alertes de contrôle. Le doute retire l'allègement,
+  // jamais l'obligation — fermer ce sens-là ne protégerait rien et
+  // empêcherait un élève d'enregistrer la réalité.
+  arreterMachine: VALIDEUR,
+  demantelerMachine: VALIDEUR,
   // Une habilitation = une aptitude réglementaire : sa gestion relève du
   // responsable (jamais d'un élève, qui s'auto-attribuerait une aptitude).
   createHabilitation: VALIDEUR,
@@ -582,8 +598,6 @@ const ROLES_MUTATION = {
   signerMouvement: OPERATEUR,
   createMachine: OPERATEUR,
   updateMachine: OPERATEUR,
-  arreterMachine: OPERATEUR,
-  demantelerMachine: OPERATEUR,
   remettreEnService: OPERATEUR,
   createClient: OPERATEUR,
   createPlainte: OPERATEUR,

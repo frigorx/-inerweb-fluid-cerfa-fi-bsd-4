@@ -621,6 +621,79 @@ try {
       + 'nominale (relevé de plaque)', rNominale?.chargeNominaleKg === 40);
   }
 
+  console.log('--- A5-a ter. La TROISIÈME porte du même seuil : les gestes '
+    + 'de statut (revue B1, mineur n°1) ---');
+  {
+    // ⭐⭐ REVUE B1, constat mineur n°1. Le lot fermait `statut` aux deux
+    // portes de la fiche machine, au motif qu'ARRETEE et DEMANTELEE font
+    // SORTIR la machine de l'alerte « contrôle d'étanchéité en retard »
+    // (api.js, getAlertes : `m.statut !== 'DEMANTELEE' && m.statut !==
+    // 'ARRETEE'`). Le relecteur a montré que le même déplacement de seuil
+    // s'obtenait en DEUX appels au lieu d'un : créer la machine, puis
+    // appeler le geste dédié. On tire ici l'EFFET, pas seulement le refus :
+    // l'alerte doit rester debout après l'attaque, et tomber quand c'est
+    // le responsable qui décide.
+    const alertesDe = async () => resultatDe(
+      await requete('getAlertes', {}, { cookie: cookieReferent })) ?? [];
+
+    const mac = resultatDe(await requete('createMachine', { donneesMachine: {
+      designation: 'Groupe en retard de contrôle', fluide: 'R-410A',
+      chargeNominaleKg: 60, dernierControle: dateRelative(-800),
+      prochainControle: dateRelative(-30) } }, { cookie: cookieReferent }));
+    verifier('décor : une machine dont l’échéance de contrôle est DÉPASSÉE',
+      Boolean(mac?.id), JSON.stringify(mac).slice(0, 160));
+    verifier('décor : elle porte bien l’alerte « contrôle en retard »',
+      (await alertesDe()).some((a) => a.id === `alr-controle-${mac.id}`),
+      JSON.stringify((await alertesDe()).map((a) => a.id)).slice(0, 300));
+
+    attendreRefus('⭐⭐ un ÉLÈVE met la machine À L’ARRÊT (elle sortirait de '
+      + 'l’alerte de contrôle en retard) : REFUSÉ',
+    await requete('arreterMachine', { id: mac.id, par: 'Élève' },
+      { cookie: cookieEleve }), 403, 'réservée aux rôles habilités');
+    attendreRefus('⭐⭐ … et la DÉMANTÈLE (même sortie, définitive) : REFUSÉ',
+      await requete('demantelerMachine', { id: mac.id, par: 'Élève' },
+        { cookie: cookieEleve }), 403, 'réservée aux rôles habilités');
+    {
+      const apres = await alertesDe();
+      verifier('⭐ … et l’alerte de contrôle en retard est TOUJOURS debout',
+        apres.some((a) => a.id === `alr-controle-${mac.id}`),
+        JSON.stringify(apres.map((a) => a.id)).slice(0, 300));
+    }
+
+    // ⚠️ CONTRE-ÉPREUVES — ces deux gestes sont LÉGITIMES : on les déplace
+    // de main, on ne les supprime pas. Sans elles, une garde qui refuserait
+    // tout le monde satisferait la section.
+    const arretee = resultatDe(await requete('arreterMachine',
+      { id: mac.id, par: 'Référent' }, { cookie: cookieReferent }));
+    verifier('contre-épreuve : le responsable, lui, met bien à l’arrêt',
+      arretee?.statut === 'ARRETEE', JSON.stringify(arretee?.statut));
+    verifier('⭐ preuve du déplacement de seuil : l’alerte tombe alors — '
+      + 'c’est bien une décision de responsable',
+    !(await alertesDe()).some((a) => a.id === `alr-controle-${mac.id}`));
+    const demantelee = resultatDe(await requete('demantelerMachine',
+      { id: mac.id, par: 'Référent' }, { cookie: cookieReferent }));
+    verifier('contre-épreuve : et le démantèlement reste ENTIER pour lui',
+      demantelee?.statut === 'DEMANTELEE',
+      JSON.stringify(demantelee?.statut));
+
+    // ⚠️ LE SENS INVERSE RESTE OUVERT : remettre en service RAMÈNE la
+    // machine dans les alertes. Le doute retire l'allègement, jamais
+    // l'obligation — un élève doit pouvoir enregistrer ce redémarrage.
+    const mac2 = resultatDe(await requete('createMachine', { donneesMachine: {
+      designation: 'Groupe arrêté puis relancé', fluide: 'R-410A',
+      chargeNominaleKg: 60, dernierControle: dateRelative(-800),
+      prochainControle: dateRelative(-30) } }, { cookie: cookieReferent }));
+    await requete('arreterMachine', { id: mac2.id, par: 'Référent' },
+      { cookie: cookieReferent });
+    const relancee = resultatDe(await requete('remettreEnService',
+      { id: mac2.id, par: 'Élève' }, { cookie: cookieEleve }));
+    verifier('contre-épreuve : l’ÉLÈVE remet en service (le sens qui RAMÈNE '
+      + 'l’obligation reste ouvert)', relancee?.statut === 'EN_SERVICE',
+    JSON.stringify(relancee?.statut));
+    verifier('… et l’alerte de contrôle en retard revient d’elle-même',
+      (await alertesDe()).some((a) => a.id === `alr-controle-${mac2.id}`));
+  }
+
   console.log('--- A5-b. La fiche du personnel : gouvernance, preuves et '
     + 'état civil ---');
   {
