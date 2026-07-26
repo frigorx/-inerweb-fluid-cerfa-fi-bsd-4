@@ -149,7 +149,7 @@ const ETATS_FLUIDE_RECUPERATION = ['RECUPERE', 'MELANGE', 'DECHET', 'DOUTEUX'];
 const MSG_DECHET_NE_SORT_PAS_PAR_PATCH =
   'Bouteille déclarée déchet : elle ne sort du déchet que par une '
   + 'décision sur le fluide (réutilisable ou à analyser), qui est '
-  + 'journalisée, ou par un bordereau de suivi (BSFF).';
+  + 'journalisée, ou par une remise en filière déchets.';
 
 function verifierCoherenceEtatBouteille(type, etatFluide) {
   // Garde MÉLANGE historique (R2) — message spécifique conservé.
@@ -5603,7 +5603,7 @@ export function creerDemoStore() {
       const bouteille = trouverBouteille(d.bouteilleId);
       if (bouteille.statut !== 'DECHET') {
         throw new Error(
-          'Sortie BSFF impossible : la bouteille doit d’abord être ' +
+          'Remise en filière impossible : la bouteille doit d’abord être ' +
           'déclarée DÉCHET (décision sur le fluide récupéré).');
       }
       // ⭐ Lot B2 — LE LOGICIEL NUMÉROTE CE QUI LUI APPARTIENT. Le suivi
@@ -5712,7 +5712,7 @@ export function creerDemoStore() {
     async attesterIssueBsff(bsffId, attestation) {
       const a = attestation || {};
       const bsff = donnees.bsff.find((b) => b.id === bsffId);
-      if (!bsff) throw new Error(`BSFF introuvable : ${bsffId}.`);
+      if (!bsff) throw new Error(`Suivi de remise en filière introuvable : ${bsffId}.`);
       if (!ISSUES_TRAITEMENT_BSFF.includes(a.issueTraitement)) {
         throw new Error(
           `Issue de traitement inconnue : ${a.issueTraitement} ` +
@@ -5750,7 +5750,7 @@ export function creerDemoStore() {
       if (bouteille.statut === 'DECHET') {
         throw new Error(
           `Bouteille ${bouteille.code} déclarée déchet : la sortie passe ` +
-          'par un BSFF, pas par un retour fournisseur.');
+          'par une remise en filière, pas par un retour fournisseur.');
       }
       const masseKg = bouteille.masseNetteKg;
       const retour = {
@@ -5797,7 +5797,7 @@ export function creerDemoStore() {
       if (bouteille.statut === 'DECHET') {
         throw new Error(
           `Bouteille ${bouteille.code} déclarée déchet : la sortie passe par ` +
-          'un BSFF, pas par une cession.');
+          'une remise en filière, pas par une cession.');
       }
       if (!DESTINATAIRES_CESSION.includes(d.destinataireType)) {
         throw new Error(

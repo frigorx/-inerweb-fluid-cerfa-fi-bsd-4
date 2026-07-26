@@ -197,6 +197,60 @@ async function bouteilleDechet(masseKg) {
 }
 
 // ============================================================
+// B quater. AUCUN REFUS DE LA CHAÎNE DÉCHETS NE DIT PLUS « BSFF »
+// (revue B2, mineur 5 : le lot avait nettoyé les écrans, mais les
+// messages levés par les stores — donc lus par l'utilisateur dans les
+// bandeaux d'erreur — appelaient encore le suivi INTERNE du nom du
+// document réglementaire qu'il n'est pas. C'est le constat A07 lui-même.)
+// Les quatre refus sont TIRÉS, pas relus dans la source.
+// ============================================================
+{
+  const messages = [];
+  const tirer = async (libelle, fn) => {
+    try { await fn(); messages.push([libelle, null]); }
+    catch (e) { messages.push([libelle, String((e && e.message) || e)]); }
+  };
+
+  // 1. Remise en filière d'une bouteille qui n'est pas déclarée déchet.
+  const pasDechet = await store.createBouteille({
+    type: 'RECUPERATION', fluide: 'R-410A', etatFluide: 'RECUPERE',
+    tareKg: 10, masseBruteKg: 15, contenanceMaxKg: 50, proprietaire: 'Lycée'
+  });
+  await tirer('remise en filière d’une bouteille non déchet',
+    () => store.createBsff({
+      bouteilleId: pasDechet.id, transporteur: 'Collecteur agréé',
+      installationDestination: 'Centre de traitement agréé',
+      masseRemiseKg: 1, dateRemise: '2026-07-24', operateur: 'testeur' }));
+
+  // 2. Attestation d'issue sur un suivi qui n'existe pas.
+  await tirer('attestation d’issue sur un suivi inexistant',
+    () => store.attesterIssueBsff('SUIVI-INEXISTANT', {
+      issueTraitement: 'DESTRUCTION',
+      installationTraitement: 'Centre de traitement agréé',
+      operateur: 'testeur' }));
+
+  // 3. Retour fournisseur d'une bouteille déclarée déchet.
+  const dechetRetour = await bouteilleDechet(4);
+  await tirer('retour fournisseur d’une bouteille déchet',
+    () => store.retournerFournisseur(dechetRetour.id,
+      { fournisseur: 'Distributeur', operateur: 'testeur' }));
+
+  // 4. Cession d'une bouteille déclarée déchet.
+  const dechetCession = await bouteilleDechet(4);
+  await tirer('cession d’une bouteille déchet',
+    () => store.createCession({
+      bouteilleId: dechetCession.id, destinataireType: 'DISTRIBUTEUR',
+      destinataireRaisonSociale: 'Distributeur', masseKg: 1,
+      date: '2026-07-24', operateur: 'testeur' }));
+
+  for (const [libelle, message] of messages) {
+    verifier(`${libelle} : refusé`, message !== null, 'aucun refus levé');
+    verifier(`${libelle} : le refus ne dit plus « BSFF »`,
+      message !== null && !message.includes('BSFF'), String(message));
+  }
+}
+
+// ============================================================
 // B ter. Le doublon ne passe pas non plus PAR L'IMPORT
 // ============================================================
 {

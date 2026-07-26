@@ -987,8 +987,9 @@ verifier('getBsff trace les deux suivis de remise en filière',
 verifier('le numéro de BSFF est reporté sur la bouteille',
   (await store.getBouteilles()).find((b) => b.id === bR.id).numBsff?.length > 0);
 
-// P0-8 (DA-2) : issue de traitement final d'un BSFF (corrige BSFF ≠ destruction)
-await verifierRejet('attesterIssueBsff refuse un BSFF introuvable',
+// P0-8 (DA-2) : issue de traitement final d'un suivi de remise en filière
+// (corrige « remise en filière ≠ destruction »)
+await verifierRejet('attesterIssueBsff refuse un suivi introuvable',
   store.attesterIssueBsff('BSFF-INEXISTANT',
     { issueTraitement: 'DESTRUCTION', installationTraitement: 'X' }),
   'introuvable');
@@ -1055,16 +1056,16 @@ await verifierRejet('createCession refuse une masse supérieure au contenu',
     (await store.getCessions()).some((c) => c.id === cession.id));
 }
 {
-  // Un déchet part par un BSFF, jamais par une cession.
+  // Un déchet part par une remise en filière, jamais par une cession.
   const bDechetCession = await store.createBouteille({
     type: 'RECUPERATION', fluide: FLUIDE, tareKg: 5, masseBruteKg: 8,
     contenanceMaxKg: 10
   });
   await store.deciderFluideRecupere(bDechetCession.id, 'DECHET', 'Testeur');
-  await verifierRejet('createCession refuse une bouteille déchet (→ BSFF)',
+  await verifierRejet('createCession refuse une bouteille déchet (→ remise en filière)',
     store.createCession({ bouteilleId: bDechetCession.id,
       destinataireType: 'DISTRIBUTEUR', destinataireRaisonSociale: 'X',
-      masseKg: 1 }), 'BSFF');
+      masseKg: 1 }), 'remise en filière');
 }
 
 // P0-8 (DA-5) : getDeclarationAnnuelle — câblage store → module pur (11 rubriques)

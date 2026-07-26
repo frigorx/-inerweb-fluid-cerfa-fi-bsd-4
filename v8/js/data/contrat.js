@@ -68,11 +68,19 @@ export const TYPES_MOUVEMENT = [
 ];
 
 /**
- * Issues de traitement final d'un déchet fluoré remis (BSFF, P0-8, migration
- * 28). Un BSFF n'atteste que la REMISE ; l'issue (attestée séparément par
- * l'opérateur) dit ce qu'il en advient. Seule DESTRUCTION alimente la rubrique
- * 9 de la déclaration annuelle ; REGENERATION → rubrique 8. Duplicata figé
- * côté stores (miroir), comme TYPES_MOUVEMENT.
+ * Issues de traitement final d'un déchet fluoré remis en filière (P0-8,
+ * migration 28). Le SUIVI INTERNE de remise en filière n'atteste que la
+ * REMISE ; l'issue (attestée séparément par l'opérateur agréé) dit ce qu'il
+ * en advient. Seule DESTRUCTION alimente la rubrique 9 de la déclaration
+ * annuelle ; REGENERATION → rubrique 8. Duplicata figé côté stores
+ * (miroir), comme TYPES_MOUVEMENT.
+ *
+ * ⚠ Revue B2 (mineur 5) : le NOM de la constante garde « BSFF », comme la
+ * table et les champs — les renommer imposerait une migration pour un gain
+ * nul côté données. Mais la DESCRIPTION, elle, est lue : elle dit
+ * désormais « suivi interne de remise en filière », pas « BSFF ». Décrire
+ * l'objet interne par le nom du document réglementaire qu'il n'est pas,
+ * c'est exactement la confusion que ce lot solde (constat A07).
  */
 export const ISSUES_TRAITEMENT_BSFF =
   ['RECYCLAGE', 'REGENERATION', 'DESTRUCTION', 'AUTRE'];
@@ -306,13 +314,13 @@ export const METHODES_CONTRAT = {
   getBsff: { genre: 'lecture',
     description: 'Les suivis internes de remise en filière, triés date de remise décroissante.' },
   attesterIssueBsff: { genre: 'mutation',
-    description: 'Atteste l’issue de traitement final d’un BSFF (RECYCLAGE | REGENERATION | DESTRUCTION | AUTRE, + installation/certificat/date) ; corrige BSFF ≠ destruction ; installation obligatoire pour régénération/destruction.' },
+    description: 'Atteste l’issue de traitement final d’un suivi interne de remise en filière (RECYCLAGE | REGENERATION | DESTRUCTION | AUTRE, + installation/certificat/date) ; corrige « remise en filière ≠ destruction » ; installation obligatoire pour régénération/destruction.' },
   retournerFournisseur: { genre: 'mutation',
     description: 'Retourne une bouteille non-déchet au fournisseur (nette à zéro) et trace le retour (poste de la balance matière).' },
   getRetoursFournisseur: { genre: 'lecture',
     description: 'Les retours fournisseur, triés date décroissante.' },
   createCession: { genre: 'mutation',
-    description: 'Cède une masse de fluide d’une bouteille à un tiers attesté (OPERATEUR_ATTESTE | DISTRIBUTEUR | PRODUCTEUR) ; décrémente la bouteille, trace figée (rubrique 10) ; un déchet part par un BSFF, pas par une cession.' },
+    description: 'Cède une masse de fluide d’une bouteille à un tiers attesté (OPERATEUR_ATTESTE | DISTRIBUTEUR | PRODUCTEUR) ; décrémente la bouteille, trace figée (rubrique 10) ; un déchet part par une remise en filière, pas par une cession.' },
   getCessions: { genre: 'lecture',
     description: 'Les cessions de fluide, triées date décroissante.' },
 
