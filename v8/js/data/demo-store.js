@@ -141,6 +141,16 @@ const DESTINATAIRES_CESSION =
 const ETATS_FLUIDE_ACHAT = ['VIERGE', 'RECYCLE', 'REGENERE'];
 const ETATS_FLUIDE_RECUPERATION = ['RECUPERE', 'MELANGE', 'DECHET', 'DOUTEUX'];
 
+/** Message canonique — le déchet ne se relève pas d'une modification de
+ *  fiche. Une SEULE déclaration pour TOUTES les portes d'updateBouteille
+ *  (état, type, statut) : la revue B2 a montré qu'une garde recopiée sur
+ *  une porte et pas sur l'autre laisse un passage ouvert. Miroir littéral
+ *  dans server/api.js. */
+const MSG_DECHET_NE_SORT_PAS_PAR_PATCH =
+  'Bouteille déclarée déchet : elle ne sort du déchet que par une '
+  + 'décision sur le fluide (réutilisable ou à analyser), qui est '
+  + 'journalisée, ou par un bordereau de suivi (BSFF).';
+
 function verifierCoherenceEtatBouteille(type, etatFluide) {
   // Garde MÉLANGE historique (R2) — message spécifique conservé.
   if (etatFluide === 'MELANGE' && type !== 'RECUPERATION') {
@@ -3627,11 +3637,24 @@ export function creerDemoStore() {
             + 'd’origine ou part en destruction.');
         }
         if (bouteille.decisionFluide === 'DECHET' && etatApres !== 'DECHET') {
-          throw new Error(
-            'Bouteille déclarée déchet : elle ne sort du déchet que par une '
-            + 'décision sur le fluide (réutilisable ou à analyser), qui est '
-            + 'journalisée, ou par un bordereau de suivi (BSFF).');
+          throw new Error(MSG_DECHET_NE_SORT_PAS_PAR_PATCH);
         }
+      }
+      // ⭐ REVUE B2 (mineur 6) — LA GARDE NE COUVRAIT QU'UNE PORTE, ET LE
+      // COMMENTAIRE ANNONÇAIT LE CONTRAIRE. Le bloc ci-dessus ne s'exécute
+      // que si le patch touche `etatFluide` ou `type` : un simple
+      // { statut: 'EN_STOCK' } passait à côté, alors que le commentaire L2
+      // donnait « une bouteille déclarée DÉCHET revenait au stock par un
+      // simple patch » pour fermé. TIRÉ, identique demo et local.
+      // Ce que ça coûtait vraiment : le statut redevenait EN_STOCK pendant
+      // que l'état et la décision restaient DÉCHET — l'alerte CRITIQUE
+      // « fluide déchet au-delà du délai de garde » s'éteignait (elle ne
+      // regarde que le statut), et la remise en filière devenait
+      // IMPOSSIBLE (createBsff exige le statut DECHET). Le déchet
+      // disparaissait des écrans sans jamais partir en filière.
+      if (d.statut !== undefined && bouteille.decisionFluide === 'DECHET'
+          && bouteille.statut === 'DECHET' && d.statut !== 'DECHET') {
+        throw new Error(MSG_DECHET_NE_SORT_PAS_PAR_PATCH);
       }
       const CHAMPS = ['numeroReel', 'type', 'fluide', 'etatFluide', 'tareKg',
         'masseBruteKg', 'contenanceMaxKg', 'proprietaire', 'lot',

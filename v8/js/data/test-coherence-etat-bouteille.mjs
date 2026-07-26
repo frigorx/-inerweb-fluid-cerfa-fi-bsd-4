@@ -207,5 +207,70 @@ verifier('la charge depuis la NEUVE régénérée ne déclenche AUCUNE alerte de
   !alertes.some((a) => String(a.id).startsWith(`alr-reemploi-${neuveRegeneree.id}`)));
 
 // ============================================================
+// E. Le DÉCHET ne revient pas au stock par un patch de STATUT
+//    (revue B2, mineur 6 : la garde L2 ne couvrait que `type` et
+//    `etatFluide` ; `{ statut: 'EN_STOCK' }` passait à côté alors que
+//    son commentaire annonçait cette porte fermée)
+// ============================================================
+console.log(`--- E. déchet et patch de statut (${NOM_STORE}) ---`);
+
+const dechet = await store.createBouteille({
+  type: 'RECUPERATION', fluide: FLUIDE, etatFluide: 'RECUPERE',
+  tareKg: 10, masseBruteKg: 16, contenanceMaxKg: 50, proprietaire: 'Lycée'
+});
+await store.deciderFluideRecupere(dechet.id, 'DECHET', 'Testeur');
+const litDechet = async () =>
+  (await store.getBouteilles()).find((b) => b.id === dechet.id);
+
+const apresDecision = await litDechet();
+verifier('décision DÉCHET : statut, état et décision alignés sur DECHET',
+  apresDecision.statut === 'DECHET' && apresDecision.etatFluide === 'DECHET'
+  && apresDecision.decisionFluide === 'DECHET',
+  `${apresDecision.statut}/${apresDecision.etatFluide}/${apresDecision.decisionFluide}`);
+
+await refuse('patch { statut: EN_STOCK } sur une bouteille DÉCHET : refusé',
+  () => store.updateBouteille(dechet.id, { statut: 'EN_STOCK' }),
+  'ne sort du déchet que par une décision sur le fluide');
+
+const apresPatch = await litDechet();
+verifier('le statut DÉCHET n’a pas bougé après le refus',
+  apresPatch.statut === 'DECHET', apresPatch.statut);
+
+// La conséquence réelle du trou : le statut redevenu EN_STOCK éteignait
+// l'alerte de délai de garde ET rendait la remise en filière impossible
+// (createBsff exige le statut DECHET). La bouteille doit donc rester
+// remisable en filière.
+let suivi = null;
+let refusSuivi = null;
+try {
+  suivi = await store.createBsff({
+    bouteilleId: dechet.id, transporteur: 'Collecteur agréé',
+    installationDestination: 'Centre de traitement agréé',
+    masseRemiseKg: 6, dateRemise: '2026-07-24', operateur: 'Testeur'
+  });
+} catch (e) { refusSuivi = String((e && e.message) || e); }
+verifier('la bouteille DÉCHET reste remisable en filière',
+  suivi != null && suivi.id != null, refusSuivi || 'aucun suivi créé');
+
+// On n'empêche JAMAIS d'enregistrer la réalité : la porte légitime, qui
+// est journalisée, reste ouverte — une nouvelle décision sur le fluide
+// remet bien la bouteille en stock.
+const dechet2 = await store.createBouteille({
+  type: 'RECUPERATION', fluide: FLUIDE, etatFluide: 'RECUPERE',
+  tareKg: 10, masseBruteKg: 14, contenanceMaxKg: 50, proprietaire: 'Lycée'
+});
+await store.deciderFluideRecupere(dechet2.id, 'DECHET', 'Testeur');
+await store.deciderFluideRecupere(dechet2.id, 'REUTILISABLE', 'Testeur');
+const releve = (await store.getBouteilles()).find((b) => b.id === dechet2.id);
+verifier('la décision sur le fluide (journalisée) relève bien le déchet',
+  releve.statut === 'EN_STOCK' && releve.etatFluide !== 'DECHET',
+  `${releve.statut}/${releve.etatFluide}`);
+
+// Un patch de statut sur une bouteille NON déchet reste libre.
+const libre = await store.updateBouteille(dechet2.id, { statut: 'EN_SERVICE' });
+verifier('patch de statut sur une bouteille non-déchet : accepté',
+  libre.statut === 'EN_SERVICE', libre.statut);
+
+// ============================================================
 console.log(`\n${nbOk} OK, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);

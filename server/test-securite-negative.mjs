@@ -1080,6 +1080,25 @@ try {
       + 'stock par un simple patch',
     () => api.appeler('updateBouteille', { id: dechet.id, donneesBouteille: {
       etatFluide: 'RECUPERE' } }, referent), 'déclarée déchet');
+    // ⭐ REVUE B2 (mineur 6) — LA MÊME ATTAQUE PAR L'AUTRE PORTE. Le cas
+    // ci-dessus ne tirait que sur `etatFluide` : la garde n'était posée
+    // que là, et un patch de STATUT seul passait. Ce que ça donnait :
+    // statut EN_STOCK avec état et décision restés DECHET, donc l'alerte
+    // CRITIQUE de délai de garde éteinte (elle ne lit que le statut) et
+    // la remise en filière rendue impossible (createBsff exige DECHET).
+    // Le déchet disparaissait des écrans sans jamais partir en filière.
+    // Leçon du catalogue : une garde posée sur UNE porte n'est pas une
+    // garde — on tire sur TOUTES les portes du même geste.
+    attendreRejetApi('⭐ … ni par un patch de STATUT seul (la 2ᵉ porte, '
+      + 'restée ouverte jusqu’à la revue B2)',
+    () => api.appeler('updateBouteille', { id: dechet.id, donneesBouteille: {
+      statut: 'EN_STOCK' } }, referent), 'déclarée déchet');
+    {
+      const apres = api.appeler('getBouteilles', {}, referent)
+        .find((b) => b.id === dechet.id);
+      verifier('… et le statut DÉCHET n’a pas bougé',
+        apres.statut === 'DECHET', JSON.stringify(apres.statut));
+    }
     // Contre-épreuve : la voie prévue reste ouverte.
     const releve = api.appeler('deciderFluideRecupere', {
       id: dechet.id, decision: 'REUTILISABLE', par: 'Référent' }, referent);
