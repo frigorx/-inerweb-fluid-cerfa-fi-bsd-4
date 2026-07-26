@@ -27,6 +27,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as moduleEsm from '../v8/js/data/signatures-mouvement.js';
 import * as pdfEsm from '../v8/js/data/pdf-final.js';
+import { pngDeTest, pngVierge, pngUnSeulPixel }
+  from './fabrique-png-test.mjs';
 
 const require = createRequire(import.meta.url);
 const crypto = require('node:crypto');
@@ -56,15 +58,27 @@ function attendreRejet(libelle, fn, extrait) {
   }
 }
 
-/** Octets d'un PNG de test : nombres magiques + remplissage. */
-function octetsPng(taille = 1200) {
-  const octets = new Uint8Array(taille);
+/**
+ * Octets d'un VRAI PNG de test, portant un tracé (lot B3, brique 2).
+ * AVANT : ces fixtures fabriquaient 8 octets magiques + du remplissage,
+ * et les faisaient ACCEPTER — le filet vert attestait le comportement
+ * défaillant. Le calage à la taille demandée passe désormais par un
+ * chunk auxiliaire tEXt : un fichier de la bonne taille ne prouve rien.
+ */
+const octetsPng = (taille = 1200) => pngDeTest(taille);
+const imagePng = (taille = 1200) => Buffer.from(octetsPng(taille)).toString('base64');
+
+/** L'ATTAQUE du constat A04 : les 8 octets magiques, puis du texte. */
+function blocQuiSeFaitPasserPourPng(taille = 2348) {
+  const octets = new Uint8Array(taille).fill(0x2e);
   [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
     .forEach((o, i) => { octets[i] = o; });
-  for (let i = 8; i < taille; i += 1) octets[i] = i % 251;
+  const phrase = 'signature de complaisance ';
+  for (let i = 8; i < taille; i += 1) {
+    octets[i] = phrase.charCodeAt((i - 8) % phrase.length);
+  }
   return octets;
 }
-const imagePng = (taille = 1200) => Buffer.from(octetsPng(taille)).toString('base64');
 
 // ============================================================
 // 1. Parité stricte module pur ESM ↔ miroir CommonJS
@@ -73,12 +87,16 @@ const imagePng = (taille = 1200) => Buffer.from(octetsPng(taille)).toString('bas
   verifier('constantes identiques (rôles, tailles, messages)',
     JSON.stringify(miroir.ROLES_SIGNATURE) ===
       JSON.stringify(moduleEsm.ROLES_SIGNATURE) &&
-    miroir.SIGNATURE_TAILLE_MIN === moduleEsm.SIGNATURE_TAILLE_MIN &&
     miroir.SIGNATURE_TAILLE_MAX === moduleEsm.SIGNATURE_TAILLE_MAX &&
     miroir.MSG_TRACE_ABSENT === moduleEsm.MSG_TRACE_ABSENT &&
     miroir.MSG_PAS_PNG === moduleEsm.MSG_PAS_PNG &&
-    miroir.MSG_TROP_PETITE === moduleEsm.MSG_TROP_PETITE &&
+    miroir.MSG_ZONE_VIERGE === moduleEsm.MSG_ZONE_VIERGE &&
     miroir.MSG_TROP_GROSSE === moduleEsm.MSG_TROP_GROSSE);
+  verifier('la borne basse de 1 Ko a bien DISPARU des deux côtés',
+    miroir.SIGNATURE_TAILLE_MIN === undefined &&
+    moduleEsm.SIGNATURE_TAILLE_MIN === undefined &&
+    miroir.MSG_TROP_PETITE === undefined &&
+    moduleEsm.MSG_TROP_PETITE === undefined);
 
   const CAS_DECLARATION = [
     ['TECHNICIEN', false, null],
@@ -107,14 +125,42 @@ const imagePng = (taille = 1200) => Buffer.from(octetsPng(taille)).toString('bas
   verifier('même Error sur rôle inconnu des deux côtés',
     erreurEsm !== '' && erreurEsm === erreurCjs);
 
+  // Les images DISCRIMINANTES, nommées (jamais des index : une
+  // insertion au milieu ferait mentir la vérification suivante).
+  const jpegDeguise = (() => {
+    const o = octetsPng(4096); o[0] = 0xff; o[1] = 0xd8; o[2] = 0xff; return o;
+  })();
+  const crcRetouche = (() => {
+    const o = octetsPng(2048); o[o.length - 3] ^= 0xff; return o;
+  })();
+  const tronque = octetsPng(2048).slice(0, 900);
+  const apresIend = (() => {
+    const o = octetsPng(2048);
+    const cale = new Uint8Array(o.length + 4);
+    cale.set(o, 0);
+    cale.set([0x41, 0x42, 0x43, 0x44], o.length);
+    return cale;
+  })();
   const CAS_IMAGE = [
     null,
     new Uint8Array(0),
     octetsPng(1024),
     octetsPng(1023),
     octetsPng(4096),
-    (() => { const o = octetsPng(4096); o[0] = 0xff; o[1] = 0xd8; o[2] = 0xff; return o; })(),
-    octetsPng(moduleEsm.SIGNATURE_TAILLE_MAX + 1)
+    jpegDeguise,
+    octetsPng(moduleEsm.SIGNATURE_TAILLE_MAX + 1),
+    // Lot B3 : les images qui ne SONT pas des images.
+    blocQuiSeFaitPasserPourPng(),
+    blocQuiSeFaitPasserPourPng(1500),
+    crcRetouche,
+    tronque,
+    apresIend,
+    // Lot B3 : les images qui SONT des images, mais vides de tout tracé.
+    pngVierge(),
+    pngVierge(96),
+    pngVierge(4096, [0, 0, 0, 0]),
+    pngDeTest(0),
+    pngUnSeulPixel()
   ];
   identiques = 0;
   for (const octets of CAS_IMAGE) {
@@ -123,13 +169,65 @@ const imagePng = (taille = 1200) => Buffer.from(octetsPng(taille)).toString('bas
   }
   verifier(`critères d'illisibilité identiques sur ${CAS_IMAGE.length} images discriminantes`,
     identiques === CAS_IMAGE.length);
-  verifier('les quatre refus tombent sur le bon critère',
+  // REVUE DU 25/07 (MINEUR 4) : le libellé disait « quatre » alors que
+  // la brique 3 en a ajouté un cinquième (la zone vierge), et un
+  // sixième cas atteste qu'un PNG recevable n'est PAS refusé.
+  verifier('les cinq refus tombent chacun sur son propre critère'
+    + ' (et un PNG recevable n’en déclenche aucun)',
     miroir.verifierImageSignature(new Uint8Array(0)) === miroir.MSG_TRACE_ABSENT &&
-    miroir.verifierImageSignature(octetsPng(1023)) === miroir.MSG_TROP_PETITE &&
-    miroir.verifierImageSignature(CAS_IMAGE[5]) === miroir.MSG_PAS_PNG &&
+    miroir.verifierImageSignature(pngVierge()) === miroir.MSG_ZONE_VIERGE &&
+    miroir.verifierImageSignature(jpegDeguise) === miroir.MSG_PAS_PNG &&
     miroir.verifierImageSignature(octetsPng(miroir.SIGNATURE_TAILLE_MAX + 1))
       === miroir.MSG_TROP_GROSSE &&
     miroir.verifierImageSignature(octetsPng(1024)) === null);
+  // Lot B3 (brique 3) — le VIDE ABSOLU, et RIEN DE PLUS.
+  verifier('un PNG impeccable mais rigoureusement UNIFORME est REFUSÉ',
+    miroir.verifierImageSignature(pngVierge()) === miroir.MSG_ZONE_VIERGE &&
+    moduleEsm.verifierImageSignature(pngVierge()) === moduleEsm.MSG_ZONE_VIERGE &&
+    miroir.verifierImageSignature(pngVierge(4096, [0, 0, 0, 0]))
+      === miroir.MSG_ZONE_VIERGE);
+  verifier('DÉCISION D2 : la borne de 1 Ko a disparu — un VRAI tracé de 105 o passe',
+    pngDeTest(0).length < 1024 &&
+    miroir.verifierImageSignature(pngDeTest(0)) === null &&
+    moduleEsm.verifierImageSignature(pngDeTest(0)) === null);
+  verifier('DÉCISION D2 : aucun seuil d’encre — un SEUL pixel différent suffit',
+    miroir.verifierImageSignature(pngUnSeulPixel()) === null &&
+    moduleEsm.verifierImageSignature(pngUnSeulPixel()) === null);
+  // REVUE DU 25/07 (MINEUR 6) — UN SEUL DÉCODAGE. verifierImageSignature
+  // appelait verifierStructurePng PUIS analyseEncre, qui relit le
+  // fichier : le PNG était décodé deux fois sur le chemin qui juge les
+  // signatures. Les deux miroirs passent désormais par lireImagePng, qui
+  // pose les deux questions en un passage. Le test lit la SOURCE : c'est
+  // le seul moyen de prouver le nombre de lectures sans instrumenter du
+  // code de production (les verdicts, eux, sont figés juste au-dessus).
+  {
+    const { readFileSync } = await import('node:fs');
+    let conformes = 0;
+    for (const chemin of ['../v8/js/data/signatures-mouvement.js',
+      './signatures-mouvement.js']) {
+      const source = readFileSync(new URL(chemin, import.meta.url), 'utf8');
+      const corps = source.slice(source.indexOf('function verifierImageSignature'));
+      if (corps.includes('lireImagePng(octets)')
+          && !corps.includes('verifierStructurePng(')
+          && !corps.includes('analyseEncre(')) conformes += 1;
+    }
+    verifier('MINEUR 6 : les DEUX miroirs décodent le PNG UNE SEULE fois'
+      + ' (lireImagePng, jamais les deux fonctions séparées)',
+    conformes === 2, `${conformes} / 2`);
+  }
+
+  // Lot B3 (brique 2) : l'image est DÉCODÉE, plus reconnue à 8 octets.
+  verifier('A04 : le bloc de 2 348 o aux bons octets magiques est REFUSÉ',
+    miroir.verifierImageSignature(blocQuiSeFaitPasserPourPng())
+      === miroir.MSG_PAS_PNG &&
+    moduleEsm.verifierImageSignature(blocQuiSeFaitPasserPourPng())
+      === moduleEsm.MSG_PAS_PNG);
+  verifier('un PNG dont un CRC-32 a été retouché est REFUSÉ',
+    miroir.verifierImageSignature(crcRetouche) === miroir.MSG_PAS_PNG);
+  verifier('un PNG tronqué (IEND coupé) est REFUSÉ',
+    miroir.verifierImageSignature(tronque) === miroir.MSG_PAS_PNG);
+  verifier('un PNG suivi d’octets cachés après IEND est REFUSÉ',
+    miroir.verifierImageSignature(apresIend) === miroir.MSG_PAS_PNG);
 }
 
 // ============================================================
@@ -226,10 +324,31 @@ const signatureType = (surcharges = {}) => ({
       signature: signatureType({ imagePng: Buffer.from(
         '<html>signature</html>'.padEnd(2000, '.')).toString('base64') }) },
     session), 'PNG');
-  attendreRejet('tracé de moins de 1 Ko : refus (pas probant)',
+  // ATTAQUE A04, TIRÉE contre l'API : le bloc de texte préfixé des 8
+  // octets magiques était ACCEPTÉ, et faisait tomber les conditions
+  // bloquantes 14/15 du moteur Officiel.
+  attendreRejet('A04 TIRÉ : bloc de 2 348 o aux bons octets magiques → refus',
     () => api.appeler('signerMouvement', { mouvementId: brouillon.id,
-      signature: signatureType({ imagePng: imagePng(512) }) }, session),
-    'probant');
+      signature: signatureType({ imagePng: Buffer.from(
+        blocQuiSeFaitPasserPourPng()).toString('base64') }) }, session), 'PNG');
+  attendreRejet('PNG au CRC-32 retouché : refus',
+    () => api.appeler('signerMouvement', { mouvementId: brouillon.id,
+      signature: signatureType({ imagePng: Buffer.from((() => {
+        const o = octetsPng(2048); o[o.length - 3] ^= 0xff; return o;
+      })()).toString('base64') }) }, session), 'PNG');
+  attendreRejet('PNG tronqué (IEND coupé) : refus',
+    () => api.appeler('signerMouvement', { mouvementId: brouillon.id,
+      signature: signatureType({ imagePng: Buffer.from(
+        octetsPng(2048).slice(0, 900)).toString('base64') }) }, session), 'PNG');
+  attendreRejet('zone restée VIERGE (PNG impeccable, aplat uni) : refus',
+    () => api.appeler('signerMouvement', { mouvementId: brouillon.id,
+      signature: signatureType({ imagePng: Buffer.from(pngVierge(5562))
+        .toString('base64') }) }, session), 'restée vierge');
+  attendreRejet('canvas TRANSPARENT jamais dessiné : refus',
+    () => api.appeler('signerMouvement', { mouvementId: brouillon.id,
+      signature: signatureType({ imagePng: Buffer.from(
+        pngVierge(4096, [0, 0, 0, 0])).toString('base64') }) }, session),
+    'restée vierge');
   attendreRejet('tracé absent : refus',
     () => api.appeler('signerMouvement', { mouvementId: brouillon.id,
       signature: signatureType({ imagePng: null }) }, session), 'tracé absent');
@@ -895,6 +1014,73 @@ const signatureType = (surcharges = {}) => ({
   writeFileSync(cheminPdfConserve, octetsPdf);
   verifier('réparé : le contrôle global repasse au vert',
     api.verifierTousPdfFinalConserves().anomalies.length === 0);
+}
+
+// ============================================================
+// 9. Lot B3 (brique 5) — LE TÉMOIN DE SESSION AU DOSSIER D'AUDIT
+// Le témoin est capté et stocké depuis la brique C1, mais il n'était
+// porté NULLE PART : on jetait une preuve qu'on possédait déjà. Il
+// entre au dossier scellé par signatures.csv. Tiré ici parce que
+// c'est le seul endroit du filet où des signatures existent AVEC une
+// vraie session (la Démo n'a pas de comptes).
+// ============================================================
+{
+  // Décor propre : la section 7 a rétrogradé le registre et retiré les
+  // signatures d'époque. On repose un brouillon SIGNÉ sous session.
+  const bCourante = api.appeler('getBouteilles', {}, sansSession)
+    .find((b) => b.id === bouteille.id);
+  const mvTemoin = api.appeler('creerMouvement', { donneesMouvement: {
+    type: 'CHARGE_APPOINT', machineId: machine.id, bouteilleSrcId: bouteille.id,
+    peseeAvantKg: bCourante.masseNetteKg,
+    peseeApresKg: bCourante.masseNetteKg - 0.2,
+    technicien: 'Référent Signature',
+    causeMouvement: 'Preuve du témoin de session' } }, sansSession);
+  api.appeler('signerMouvement', { mouvementId: mvTemoin.id,
+    signature: signatureType({ qualite: 'Professeur intervenant' }) }, session);
+  api.appeler('signerMouvement', { mouvementId: mvTemoin.id,
+    signature: signatureType({ role: 'DETENTEUR', parDelegation: true,
+      organisation: 'LP Jacques Raynaud' }) }, session);
+  // Une PJ ajoutée après coup PÉRIME les deux signatures : le dossier
+  // doit dire l'état de chacune, pas seulement leur existence.
+  api.appeler('ajouterPieceJointe', { donneesPj: {
+    entiteType: 'MOUVEMENT', entiteId: mvTemoin.id,
+    nomFichier: 'apres-signature.png', mimeType: 'image/png',
+    categorie: 'PHOTO_PESEE', base64: imagePng(2048) } }, session);
+  api.appeler('signerMouvement', { mouvementId: mvTemoin.id,
+    signature: signatureType() }, session);
+
+  const { csvSignatures } = await import('../v8/js/documents/exports.js');
+  const storeDuDossier = {
+    getMouvements: async () => api.appeler('getMouvements', {}, sansSession),
+    getSignaturesMouvement: async (id) => api.appeler(
+      'getSignaturesMouvement', { mouvementId: id }, sansSession)
+  };
+  const personnel = api.appeler('getPersonnel', {}, sansSession);
+  const annee = Number(new Date().toISOString().slice(0, 4));
+  const csv = await csvSignatures(storeDuDossier, annee, personnel);
+  verifier('signatures.csv est produit (des signatures existent cette année)',
+    typeof csv === 'string' && csv.length > 0);
+  const lignes = String(csv).replace(/^﻿/, '').split('\r\n')
+    .filter((l) => l !== '');
+  verifier('l’en-tête porte les DEUX colonnes du témoin de session',
+    lignes[0].includes('Session — personne')
+    && lignes[0].includes('Session — compte'), lignes[0]);
+  const ligneTechnicien = lignes.find((l) =>
+    l.includes(mvTemoin.numero) && l.includes('TECHNICIEN'));
+  verifier('la ligne du technicien porte la PERSONNE de session (fiche vivante)',
+    Boolean(ligneTechnicien) && ligneTechnicien.includes('Référent Signature'),
+    ligneTechnicien);
+  verifier('la ligne du technicien porte le COMPTE de session (témoin non ambigu)',
+    Boolean(ligneTechnicien) && ligneTechnicien.includes(session.utilisateur),
+    ligneTechnicien);
+  verifier('l’état de chaque signature est dit (valide / périmée)',
+    lignes.some((l) => l.includes('périmée')) &&
+    lignes.some((l) => l.includes('valide')),
+    lignes.slice(1, 3).join(' || '));
+  // DÉCISION D1 : deux signatures de la MÊME session, c'est normal —
+  // le dossier montre le fait et ne porte AUCUN verdict.
+  verifier('aucun verdict, aucun mot de suspicion dans le CSV',
+    !/suspect|douteu|anomalie de session|même session/i.test(String(csv)));
 }
 
 console.log(`\n${nbOk} vérifications réussies, ${nbEchecs} échec(s).`);

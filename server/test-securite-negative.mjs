@@ -2015,6 +2015,42 @@ const REPERTOIRE = [
     'v8/js/data/test-coherence-etat-bouteille.mjs', 'REGENERE'],
   ['conditions bloquantes du mode Officiel, verrou compris',
     'server/test-blocage-officiel.mjs', 'VERROU_LIVRAISON'],
+
+  // --- Lot B3, « ne plus mentir sur une signature » (25/07) ---------
+  // REVUE DU 25/07 (MINEUR 5) : ces attaques étaient tirées, mais nulle
+  // part inscrites — l'auditeur qui ouvre CETTE suite, présentée par
+  // docs/CARTE-CODE.md comme le répertoire unique des preuves, ne les y
+  // trouvait pas. Elles ne sont pas re-jouées ici (elles n'ont besoin
+  // ni de serveur ni de port : ce sont des modules purs et des stores),
+  // elles sont RÉFÉRENCÉES, et la référence est vérifiée.
+  ['constat A04 : un bloc de texte aux 8 octets magiques PNG refusé à la POSE',
+    'server/test-signatures-mouvement.mjs',
+    'A04 : le bloc de 2 348 o aux bons octets magiques est REFUSÉ'],
+  ['… et refusé par la PORTE IMPORT : les conditions 14/15 du mode Officiel'
+    + ' reviennent', 'v8/js/data/test-contrat.mjs',
+  'les conditions 14 et 15 du mode Officiel SONT DE RETOUR'],
+  ['… et l’entrée par le fichier est NOMMÉE au journal d’audit',
+    'v8/js/data/test-contrat.mjs',
+    'le journal nomme CHAQUE signature illisible entrée par le fichier'],
+  ['la case restée VIERGE : un PNG impeccable mais rigoureusement uniforme'
+    + ' est refusé', 'v8/js/data/test-contrat.mjs',
+  'signerMouvement refuse une zone restée VIERGE (aplat uni)'],
+  ['… canvas transparent jamais dessiné compris',
+    'v8/js/data/test-contrat.mjs',
+    'signerMouvement refuse un canvas TRANSPARENT jamais dessiné'],
+  ['un CRC-32 de chunk retouché fait REFUSER l’image',
+    'server/test-png.mjs', 'ATTAQUE : CRC-32 de l’IEND retouché → REFUSÉ'],
+  ['charge utile cachée APRÈS le chunk IEND → REFUSÉ',
+    'server/test-png.mjs', 'ATTAQUE : octets ajoutés APRÈS IEND → REFUSÉ'],
+  ['bombe de décompression (20 000 × 20 000 déclarés) : jamais décodée',
+    'server/test-png.mjs',
+    'bombe de décompression 20 000 × 20 000 : INDETERMINABLE, sans décoder'],
+  ['image visuellement blanche (alpha nul, palette unie) : plus jamais'
+    + ' « il y a de l’encre »', 'server/test-png.mjs',
+  'RGBA 400×200, alpha nul partout et couleurs qui varient → VIDE'],
+  ['signatures.csv du dossier scellé ne perce pas le coffre des identités',
+    'server/test-coffre-serveur.mjs',
+    'le PSEUDONYME qui y figure (même archive, même identité)'],
 ];
 
 for (const [quoi, suite, motif] of REPERTOIRE) {

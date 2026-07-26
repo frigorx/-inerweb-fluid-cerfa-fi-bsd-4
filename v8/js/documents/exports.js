@@ -289,6 +289,107 @@ export async function csvOutilsIntervention(store, annee) {
   return construireCsv(entetes, lignes);
 }
 
+/**
+ * Lot B3 (25/07) — LES SIGNATURES AU DOSSIER D'AUDIT, avec leur TÉMOIN
+ * DE SESSION. Le témoin (compte connecté et fiche du personnel liée)
+ * est capté depuis la brique C1 et stocké en base, mais il n'était ni
+ * affiché ni porté nulle part : on jetait une preuve qu'on possédait
+ * déjà. Il est ici RENDU LISIBLE — la personne de session passe par la
+ * FICHE VIVANTE (donc par le pseudonyme si elle est au coffre), le
+ * compte reste l'identifiant technique, seul témoin non ambigu.
+ *
+ * DÉCISION DU PROPRIÉTAIRE (25/07) : que la même session pose les deux
+ * signatures est NORMAL. Aucune comparaison, aucun signalement, aucune
+ * colonne de verdict — on montre les faits, on ne juge pas.
+ *
+ * Colonne « État » (revue du 26/07) : valide / périmée / image illisible.
+ * Trois valeurs et non deux — voir `etatSignature` plus bas.
+ *
+ * Le nom du SIGNATAIRE passe par la fiche VIVANTE quand la signature est
+ * reliable à une personne (rôle TECHNICIEN + intervenant déclaré de la
+ * fiche) — donc par le pseudonyme si elle est au coffre, comme
+ * mouvements.csv. Sans identifiant, le champ figé tel quel (résidu
+ * consigné au plan B3 § 5).
+ *
+ * Comme outils-intervention.csv : prend le STORE (un aller-retour par
+ * mouvement) et retourne null si l'année ne compte aucune signature —
+ * le fichier est alors omis du dossier.
+ * @param {object} store
+ * @param {number} annee
+ * @param {Array<object>} personnel
+ * @returns {Promise<string|null>}
+ */
+export async function csvSignatures(store, annee, personnel) {
+  const mouvements = await store.getMouvements();
+  const prefixe = `${annee}-`;
+  // Colonne « État » : trois valeurs, jamais deux. « périmée » NOMME une
+  // cause (la fiche a bougé après la signature) ; l'employer pour une
+  // image qu'on ne sait pas relire écrivait une cause FAUSSE dans une
+  // archive scellée. Une image dont la recevabilité n'est pas dite
+  // (store ancien) reste jugée sur la seule révision, comme avant.
+  const etatSignature = (sig) => {
+    if (sig.valide === true) return 'valide';
+    if (sig.imageRecevable === false) return 'image illisible';
+    return 'périmée';
+  };
+  const ficheDe = (id) => {
+    if (!id) return null;
+    return personnel.find((p) => p.id === id) || null;
+  };
+  // ⭐ COFFRE DES IDENTITÉS (revue du 25/07) : ce fichier ne doit pas
+  // percer le coffre. Une signature n'a pas d'identifiant de signataire —
+  // on reprend donc EXACTEMENT le patron de `technicienDe` de
+  // mouvements.csv : pour le TECHNICIEN, l'intervenant DÉCLARÉ de la
+  // fiche, résolu par la fiche VIVANTE (donc le pseudonyme si la
+  // personne est au coffre). Sans cet identifiant, le champ figé tel
+  // quel — même résidu que mouvements.csv, consigné au plan B3 § 5.
+  // Sans cela, dans UNE SEULE archive scellée, un élève au coffre était
+  // « Élève AAAA-NN » dans personnel.csv et mouvements.csv, et sous son
+  // vrai nom ici.
+  const signataireDe = (mv, sig) => {
+    if (sig.role === 'TECHNICIEN' && mv.executeParId) {
+      const p = ficheDe(mv.executeParId);
+      if (p) return [p.prenom ?? '', p.nom ?? ''];
+    }
+    return [sig.prenom ?? '', sig.nom ?? ''];
+  };
+  const entetes = ['Numéro mouvement', 'Date', 'Rôle', 'Prénom', 'Nom',
+    'Qualité', 'Par délégation', 'Détenteur représenté', 'Signée le',
+    'Révision signée', 'État', 'Empreinte du document signé',
+    'Déclaration signée', 'Session — personne', 'Session — compte'];
+  const lignes = [];
+  for (const mv of mouvements) {
+    if (!(mv.date || '').startsWith(prefixe)) continue;
+    let signatures = [];
+    try {
+      signatures = await store.getSignaturesMouvement(mv.id);
+    } catch {
+      signatures = [];
+    }
+    for (const sig of signatures) {
+      const fiche = ficheDe(sig.sessionPersonnelId);
+      const [prenomSig, nomSig] = signataireDe(mv, sig);
+      lignes.push([
+        mv.numero, fmtDate(mv.date), sig.role, prenomSig, nomSig,
+        sig.qualite || '', ouiNon(sig.parDelegation), sig.organisation || '',
+        fmtDateHeure(sig.dateHeure), String(sig.versionDocument ?? ''),
+        // ⭐ REVUE DU 26/07 : « périmée » veut dire « la fiche a été
+        // modifiée après la signature ». Depuis que `valide` intègre la
+        // recevabilité de l'image, une image illisible sortait ici sous
+        // ce motif, avec une révision signée ÉGALE à la révision
+        // courante — l'archive SCELLÉE portait donc une cause fausse.
+        // Trois états, comme à l'écran.
+        etatSignature(sig),
+        sig.sha256Document || '', sig.declaration || '',
+        fiche ? `${fiche.prenom} ${fiche.nom}`.trim() : '',
+        sig.sessionCompteId || ''
+      ]);
+    }
+  }
+  if (!lignes.length) return null;
+  return construireCsv(entetes, lignes);
+}
+
 /** Contrôles d'étanchéité de l'année. */
 function csvControles(controles, annee) {
   const entetes = ['Date', 'Machine', 'Type de contrôle', 'Méthode',
@@ -424,8 +525,9 @@ function fmtDateHeure(iso) {
 // ------------------------------------------------------------
 
 /**
- * Construit les fichiers CSV du registre (11 fixes + jusqu'à 3 conditionnels :
- * photo nominative ×2, outils-intervention.csv — brique 2) pour l'année donnée.
+ * Construit les fichiers CSV du registre (14 fixes + jusqu'à 4 conditionnels :
+ * photo nominative ×2, outils-intervention.csv — brique 2 —, et
+ * signatures.csv — lot B3) pour l'année donnée.
  * @param {object} store - magasin de données v8 (contrat Phases A/B/C)
  * @param {number} annee - année de référence (mouvements, contrôles, balance)
  * @returns {Promise<Array<{ nom: string, contenu: string }>>}
@@ -495,6 +597,13 @@ export async function toutesLesTables(store, annee) {
   const csvOutils = await csvOutilsIntervention(store, annee);
   if (csvOutils !== null) {
     tables.push({ nom: 'outils-intervention.csv', contenu: csvOutils });
+  }
+  // Lot B3 : les signatures de l'année et leur TÉMOIN DE SESSION —
+  // même règle que ci-dessus (fichier omis si l'année n'en compte
+  // aucune, plutôt qu'un fichier vide au dossier scellé).
+  const csvSig = await csvSignatures(store, annee, personnel);
+  if (csvSig !== null) {
+    tables.push({ nom: 'signatures.csv', contenu: csvSig });
   }
   return tables;
 }

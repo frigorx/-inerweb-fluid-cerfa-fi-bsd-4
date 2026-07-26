@@ -29,6 +29,9 @@ import {
 import { MSG_PDF_FINAL_HORS_OFFICIEL } from './pdf-final.js';
 // P7-c : refus STRUCTUREL du contrôle direct en mode OFFICIEL.
 import { MSG_CONTROLE_DIRECT_OFFICIEL } from './blocage-officiel.js';
+// Lot B3 : fabrique de VRAIS PNG (l'image de signature est décodée).
+import { pngDeTest, pngVierge, pngUnSeulPixel }
+  from '../../../server/fabrique-png-test.mjs';
 
 // ------------------------------------------------------------
 // Choix de l'implémentation à éprouver (demo par défaut).
@@ -2041,13 +2044,14 @@ verifier('peutPasserEnOfficiel : { ok, motifs[] français }',
 // Lot C (brique C1) — signatures RÉELLES : ordre imposé, déclarations
 // figées, illisibilité, invalidation par révision, traces. Jouée demo ET
 // local : c'est la parité qui casse à la moindre divergence.
-/** Tracé PNG de test : nombres magiques + remplissage (taille au choix). */
+/**
+ * Tracé PNG de test : un VRAI PNG, portant un tracé (lot B3, 25/07).
+ * AVANT, cette fabrique posait 8 octets magiques puis du remplissage —
+ * et les DEUX stores l'acceptaient : le filet vert attestait le
+ * comportement défaillant (constat A04).
+ */
 function imagePngTest(taille = 1200) {
-  const octets = new Uint8Array(taille);
-  [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
-    .forEach((o, i) => { octets[i] = o; });
-  for (let i = 8; i < taille; i += 1) octets[i] = i % 251;
-  return Buffer.from(octets).toString('base64');
+  return Buffer.from(pngDeTest(taille)).toString('base64');
 }
 {
   const brouillonSig = await store.creerMouvement({
@@ -2080,9 +2084,38 @@ function imagePngTest(taille = 1200) {
       prenom: 'B', imagePng: Buffer.from(
         '<html>signature</html>'.padEnd(2000, '.')).toString('base64') }),
     'PNG');
-  await verifierRejet('signerMouvement refuse un tracé de moins de 1 Ko',
+  // Lot B3 (brique 2) — l'ATTAQUE A04, tirée contre LES DEUX stores :
+  // 8 octets magiques + une phrase en clair répétée n'est pas une image.
+  await verifierRejet('signerMouvement refuse un bloc de texte aux octets magiques PNG',
     store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN', nom: 'A',
-      prenom: 'B', imagePng: imagePngTest(512) }), 'probant');
+      prenom: 'B', imagePng: Buffer.from((() => {
+        const octets = new Uint8Array(2348);
+        [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
+          .forEach((o, i) => { octets[i] = o; });
+        const phrase = 'signature de complaisance ';
+        for (let i = 8; i < octets.length; i += 1) {
+          octets[i] = phrase.charCodeAt((i - 8) % phrase.length);
+        }
+        return octets;
+      })()).toString('base64') }), 'PNG');
+  await verifierRejet('signerMouvement refuse un PNG dont un CRC-32 est retouché',
+    store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN', nom: 'A',
+      prenom: 'B', imagePng: Buffer.from((() => {
+        const octets = pngDeTest(2048);
+        octets[octets.length - 3] ^= 0xff;
+        return octets;
+      })()).toString('base64') }), 'PNG');
+  // Lot B3 (brique 3) — le VIDE ABSOLU : un PNG impeccable mais
+  // rigoureusement uniforme, c'est la case restée vierge. Seul cas où
+  // le logiciel disait « signature valide » sur une case blanche.
+  await verifierRejet('signerMouvement refuse une zone restée VIERGE (aplat uni)',
+    store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN', nom: 'A',
+      prenom: 'B', imagePng: Buffer.from(pngVierge(5562)).toString('base64') }),
+    'restée vierge');
+  await verifierRejet('signerMouvement refuse un canvas TRANSPARENT jamais dessiné',
+    store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN', nom: 'A',
+      prenom: 'B', imagePng: Buffer.from(pngVierge(4096, [0, 0, 0, 0]))
+        .toString('base64') }), 'restée vierge');
 
   // Signature du technicien : forme, déclaration figée, empreinte, révision.
   const sigTech = await store.signerMouvement(brouillonSig.id, {
@@ -2102,10 +2135,15 @@ function imagePngTest(taille = 1200) {
     store.signerMouvement(brouillonSig.id, { role: 'DETENTEUR',
       nom: 'Dupont', prenom: 'Marie', parDelegation: true,
       imagePng: imagePngTest() }), 'Raison sociale');
+  // DÉCISION D2 (25/07) : aucun seuil d'encre. Ce détenteur signe avec
+  // un tracé d'UN SEUL pixel, dans un fichier de 105 octets — c'est-à-
+  // dire sous l'ancienne borne de 1 Ko, retirée. Le signataire seul
+  // juge son tracé : le logiciel ne refuse que le vide absolu.
   const sigDet = await store.signerMouvement(brouillonSig.id, {
     role: 'DETENTEUR', nom: 'Dupont', prenom: 'Marie',
     qualite: 'Professeur, par délégation du détenteur', parDelegation: true,
-    organisation: 'LP Jacques Raynaud', imagePng: imagePngTest()
+    organisation: 'LP Jacques Raynaud',
+    imagePng: Buffer.from(pngUnSeulPixel()).toString('base64')
   });
   verifier('signature détenteur : déclaration avec la mention de délégation',
     sigDet.valide === true && sigDet.parDelegation === true &&
@@ -2187,6 +2225,201 @@ function imagePngTest(taille = 1200) {
     'chaîne d’intégrité rompue');
   await verifierRejet('getSignaturesMouvement refuse un mouvement introuvable',
     store.getSignaturesMouvement('mvt-fantome'), 'introuvable');
+
+  // ------------------------------------------------------------
+  // REVUE DU 25/07 (IMPORTANT 5) — contrat.js est « LA vérité de surface »
+  // (docs/CARTE-CODE.md) : c'est le SEUL fichier du dépôt dont le rôle est
+  // de ne pas mentir sur le comportement. Il annonçait encore « nombres
+  // magiques, ≥ 1 Ko » alors que l'image est décodée et que la borne basse
+  // a été SUPPRIMÉE — dans un lot intitulé « ne plus mentir ».
+  // ------------------------------------------------------------
+  {
+    const dit = METHODES_CONTRAT.signerMouvement.description;
+    verifier('le contrat n’annonce plus les « nombres magiques » (l’image est décodée)',
+      !dit.includes('nombres magiques'), dit.slice(0, 200));
+    verifier('le contrat n’annonce plus de borne basse de 1 Ko (elle est retirée)',
+      !/[≥>]=?\s*1\s*Ko/.test(dit), dit.slice(0, 200));
+    verifier('le contrat annonce le décodage réel et le refus de la zone vierge',
+      dit.includes('DÉCODÉE') && dit.includes('MSG_ZONE_VIERGE')
+      && dit.includes('CRC-32'), dit.slice(0, 200));
+    // Ce que le contrat annonce est TIRÉ juste ici : la borne basse n'existe
+    // plus (un vrai tracé de 105 octets passe, vérifié plus haut) et la zone
+    // vierge est refusée avec ce message.
+    await verifierRejet('… et ce qu’il annonce est vrai : la zone vierge est refusée',
+      store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN',
+        nom: 'Contrat', prenom: 'Testeur',
+        imagePng: Buffer.from(pngVierge(5562)).toString('base64') }),
+      'restée vierge');
+    const ditLecture = METHODES_CONTRAT.getSignaturesMouvement.description;
+    verifier('le contrat dit que « valide » exige AUSSI une image recevable',
+      ditLecture.includes('image recevable'), ditLecture.slice(0, 200));
+    verifier('le contrat annonce imageRecevable (la cause dite à part)',
+      ditLecture.includes('imageRecevable'), ditLecture.slice(0, 200));
+  }
+
+  // ------------------------------------------------------------
+  // ⭐ REVUE DU 25/07 (IMPORTANT 1) — LA PORTE IMPORT N'ÉTAIT PAS GARDÉE.
+  // La POSE refuse le bloc de texte aux 8 octets magiques (A04). L'IMPORT,
+  // lui, ne regardait pas l'image : on exportait, on REMPLAÇAIT l'image
+  // des deux signatures par ce bloc, on réimportait — et les conditions
+  // bloquantes 14/15 du mode Officiel DISPARAISSAIENT. Une signature dont
+  // l'image est illisible n'est pas une signature : elle ne vaut nulle
+  // part, quelle que soit la porte par laquelle elle est entrée.
+  // ------------------------------------------------------------
+  {
+    // Le mouvement a été rejeté : on re-signe proprement la révision
+    // courante pour partir d'une fiche RÉELLEMENT signée (le témoin).
+    await store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN',
+      nom: 'Contrat', prenom: 'Testeur', imagePng: imagePngTest() });
+    await store.signerMouvement(brouillonSig.id, { role: 'DETENTEUR',
+      nom: 'Dupont', prenom: 'Marie', imagePng: imagePngTest() });
+    const avantAttaque = await store.getSignaturesMouvement(brouillonSig.id);
+    verifier('témoin : les deux signatures de la révision courante sont valides',
+      avantAttaque.filter((s) => s.valide === true).length === 2,
+      JSON.stringify(avantAttaque.map((s) => [s.role, s.valide])));
+    const temoin = await store.simulerValidationOfficielle(brouillonSig.id);
+    verifier('témoin : fiche réellement signée → aucun blocage de signature',
+      !temoin.blocages.some((b) => b.code === 'SIGNATURE_TECHNICIEN'
+        || b.code === 'SIGNATURE_DETENTEUR'),
+      JSON.stringify(temoin.blocages.map((b) => b.code)));
+
+    // L'attaque, mot pour mot celle du relecteur : le bloc que la POSE
+    // refuse est glissé à la place des deux tracés, par le fichier.
+    const bloc = new Uint8Array(2348).fill(0x2e);
+    [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
+      .forEach((o, i) => { bloc[i] = o; });
+    const blocBase64 = Buffer.from(bloc).toString('base64');
+    await verifierRejet('témoin : la POSE refuse ce bloc de 2 348 octets',
+      store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN',
+        nom: 'Contrat', prenom: 'Testeur', imagePng: blocBase64 }),
+      'n’est pas un PNG valide');
+
+    const forge = JSON.parse(await store.exporterJSON());
+    let forgees = 0;
+    for (const sig of forge.donnees.signaturesMouvement) {
+      if (sig.mouvementId === brouillonSig.id) {
+        sig.imagePng = blocBase64;
+        forgees += 1;
+      }
+    }
+    verifier('décor : toutes les images du brouillon sont remplacées',
+      forgees === avantAttaque.length, `${forgees} signature(s) touchée(s)`);
+    const importe = await store.importerJSON(JSON.stringify(forge));
+    verifier('le fichier est ACCEPTÉ (on n’empêche pas d’importer un registre)',
+      importe === true);
+
+    const apresImport = await store.getSignaturesMouvement(brouillonSig.id);
+    verifier('⭐ une signature à l’image illisible n’est PLUS déclarée valide',
+      apresImport.length === avantAttaque.length
+      && apresImport.every((s) => s.valide === false),
+      JSON.stringify(apresImport.map((s) => s.valide)));
+    // ⭐ REVUE DU 26/07 — LA CAUSE EST DITE À PART, DES DEUX CÔTÉS.
+    // Repliée dans le seul « valide », elle ressortait partout en
+    // « périmée » (= la fiche a été modifiée après la signature), motif
+    // FAUX ici : la révision signée est ÉGALE à la révision courante.
+    // Ce motif faux allait jusque dans le dossier scellé.
+    verifier('⭐ le magasin dit POURQUOI : imageRecevable est false',
+      apresImport.every((s) => s.imageRecevable === false),
+      JSON.stringify(apresImport.map((s) => s.imageRecevable)));
+    verifier('… et la fiche n’a PAS bougé (révision signée = révision courante)',
+      apresImport.every((s) => (s.versionDocument ?? 0)
+        === (avantAttaque.find((a) => a.id === s.id)?.versionDocument ?? 0)),
+      JSON.stringify(apresImport.map((s) => s.versionDocument)));
+    verifier('témoin : avant l’attaque, l’image était déclarée recevable',
+      avantAttaque.every((s) => s.imageRecevable === true),
+      JSON.stringify(avantAttaque.map((s) => s.imageRecevable)));
+    const apres = await store.simulerValidationOfficielle(brouillonSig.id);
+    verifier('⭐ les conditions 14 et 15 du mode Officiel SONT DE RETOUR',
+      apres.blocages.some((b) => b.code === 'SIGNATURE_TECHNICIEN')
+      && apres.blocages.some((b) => b.code === 'SIGNATURE_DETENTEUR'),
+      JSON.stringify(apres.blocages.map((b) => b.code)));
+    // … et le fait SE VOIT : sans trace, l'écran dirait seulement
+    // « signature absente », comme si personne n'avait jamais signé.
+    const journalApres = (await store.getJournalAudit())
+      .filter((e) => e.action === 'SIGNATURE_ILLISIBLE_A_L_IMPORT');
+    verifier('⭐ le journal nomme CHAQUE signature illisible entrée par le fichier',
+      journalApres.length === avantAttaque.length,
+      `${journalApres.length} entrée(s) pour ${avantAttaque.length} signature(s)`);
+    // ⚠️ `every` sur un tableau VIDE est vrai : sans le décompte, ces deux
+    // vérifications ne pourraient pas échouer (piège relevé par la revue).
+    verifier('… en disant qu’elle est conservée mais ne vaut pas signature',
+      journalApres.length > 0
+      && journalApres.every((e) => e.details.includes('ne vaut PAS signature')
+        && e.details.includes('conservée telle quelle')),
+      JSON.stringify(journalApres[0] ?? null));
+    verifier('… rattachée au NUMÉRO du mouvement concerné',
+      journalApres.length > 0
+      && journalApres.every((e) => e.cible === brouillonSig.numero),
+      JSON.stringify(journalApres.map((e) => e.cible)));
+    verifier('… avec le message canonique EXISTANT (aucune condition ajoutée)',
+      apres.blocages.filter((b) => b.code === 'SIGNATURE_TECHNICIEN'
+        || b.code === 'SIGNATURE_DETENTEUR')
+        .every((b) => !b.motif.includes('Fiche modifiée après signature')),
+      JSON.stringify(apres.blocages.map((b) => b.motif)));
+  }
+
+  // ------------------------------------------------------------
+  // ⭐ REVUE DU 26/07 — LE REGISTRE EXISTANT, ET LA CASE BLANCHE.
+  // Le CHANGELOG et le plan du lot annonçaient « aucun contrôle
+  // rétroactif : verifierImageSignature n'est appelée qu'à la POSE ».
+  // C'est FAUX depuis que la porte IMPORT a été fermée : le contrôle
+  // est rejoué à chaque LECTURE (getSignaturesMouvement et l'état des
+  // signatures pour le moteur Officiel). C'est la pièce même sur
+  // laquelle le propriétaire doit se prononcer, elle se TIRE donc.
+  //
+  // Le cas n'est pas une attaque : c'est un registre HONNÊTE d'avant le
+  // lot. La version d'avant acceptait et stockait une case blanche —
+  // un VRAI PNG, CRC justes, 5 506 o, le chiffre publié au CHANGELOG.
+  // On l'insère en base par le fichier, exactement comme elle y serait.
+  // ------------------------------------------------------------
+  {
+    // On repart d'une fiche RÉELLEMENT signée (les images de la section
+    // précédente ont été remplacées par le bloc de texte).
+    await store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN',
+      nom: 'Contrat', prenom: 'Testeur', imagePng: imagePngTest() });
+    await store.signerMouvement(brouillonSig.id, { role: 'DETENTEUR',
+      nom: 'Dupont', prenom: 'Marie', imagePng: imagePngTest() });
+    const temoin = await store.simulerValidationOfficielle(brouillonSig.id);
+    verifier('témoin : fiche signée → aucun blocage de signature',
+      !temoin.blocages.some((b) => b.code === 'SIGNATURE_TECHNICIEN'
+        || b.code === 'SIGNATURE_DETENTEUR'),
+      JSON.stringify(temoin.blocages.map((b) => b.code)));
+
+    const caseBlanche = Buffer.from(pngVierge(5506)).toString('base64');
+    const registre = JSON.parse(await store.exporterJSON());
+    let posees = 0;
+    for (const sig of registre.donnees.signaturesMouvement) {
+      if (sig.mouvementId === brouillonSig.id) {
+        sig.imagePng = caseBlanche;
+        posees += 1;
+      }
+    }
+    verifier('décor : le registre porte des cases blanches de 5 506 o',
+      posees > 0 && Buffer.from(caseBlanche, 'base64').length === 5506,
+      `${posees} signature(s), ${Buffer.from(caseBlanche, 'base64').length} o`);
+
+    verifier('⭐ un registre existant s’importe TOUJOURS (rien n’est refusé)',
+      (await store.importerJSON(JSON.stringify(registre))) === true);
+    const relues = await store.getSignaturesMouvement(brouillonSig.id);
+    verifier('⭐ … mais sa signature retombe sur « absente » (image non lue)',
+      relues.length === posees
+      && relues.every((s) => s.valide === false && s.imageRecevable === false),
+      JSON.stringify(relues.map((s) => [s.valide, s.imageRecevable])));
+    const officiel = await store.simulerValidationOfficielle(brouillonSig.id);
+    verifier('⭐ … et les conditions 14/15 lui sont opposées en mode Officiel',
+      officiel.blocages.some((b) => b.code === 'SIGNATURE_TECHNICIEN')
+      && officiel.blocages.some((b) => b.code === 'SIGNATURE_DETENTEUR'),
+      JSON.stringify(officiel.blocages.map((b) => b.code)));
+    // Ce que ce contrôle à la lecture NE fait PAS, et qu'il faut pouvoir
+    // dire au propriétaire : il ne retire aucune masse, ne casse aucune
+    // écriture scellée, et ne rend aucun registre « invalide ».
+    verifier('… le registre ne devient PAS invalide : la chaîne reste verte',
+      (await store.verifierChaineHash()).ok === true);
+    verifier('… aucune condition bloquante NOUVELLE (les codes existants seuls)',
+      officiel.blocages.every((b) => b.code !== 'SIGNATURE_IMAGE'
+        && !b.motif.includes('illisible')),
+      JSON.stringify(officiel.blocages.map((b) => b.code)));
+  }
 
   // Suppression du brouillon : ses signatures partent avec lui — la trace
   // reste au journal (une entrée SIGNATURE_MOUVEMENT par signature posée).

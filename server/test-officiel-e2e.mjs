@@ -38,6 +38,7 @@ const sauvegardeAuto = require('./sauvegarde-auto.js');
 import { creerLocalStore } from '../v8/js/data/local-store.js';
 import { genererDossierAudit } from '../v8/js/documents/dossier-audit.js';
 import { VERROU_LIVRAISON } from '../v8/js/data/blocage-officiel.js';
+import { pngDeTest } from './fabrique-png-test.mjs';
 
 // T1 (20/07/2026, audit externe #2) — SUITE GELÉE tant que le mode Officiel
 // est refermé. Ce parcours e2e n'est franchissable qu'avec le verrou OUVERT ;
@@ -84,14 +85,11 @@ function dateRelative(jours) {
   return d.toISOString().slice(0, 10);
 }
 
-/** Octets d'un PNG de signature plausible (nombres magiques + 2 Ko). */
-function octetsPng(taille = 2048) {
-  const octets = new Uint8Array(taille);
-  [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
-    .forEach((o, i) => { octets[i] = o; });
-  for (let i = 8; i < taille; i += 1) octets[i] = i % 251;
-  return octets;
-}
+/**
+ * Octets d'un VRAI PNG de signature (lot B3, 25/07 : l'image est
+ * désormais DÉCODÉE — en-tête IHDR, chunks, CRC-32, IDAT, IEND).
+ */
+const octetsPng = (taille = 2048) => pngDeTest(taille);
 const imagePng = () => Buffer.from(octetsPng()).toString('base64');
 
 const octetsPdf = Buffer.from(

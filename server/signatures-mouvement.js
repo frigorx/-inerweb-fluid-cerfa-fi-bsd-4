@@ -8,19 +8,16 @@
  * ⚠ MIROIR LITTÉRAL de `v8/js/data/signatures-mouvement.js` (règle de la
  * maison : un module pur du front réutilisé côté serveur est recopié en
  * CommonJS). Les déclarations signées et les critères d'illisibilité
- * doivent être IDENTIQUES des deux côtés : la parité est prouvée par
+ * (PNG RÉELLEMENT décodé depuis le lot B3, et JAMAIS rigoureusement
+ * vide) doivent être IDENTIQUES des deux côtés : la parité est prouvée par
  * `server/test-signatures-mouvement.mjs` — ne jamais toucher l'un sans
  * l'autre.
  */
 
+const { lireImagePng } = require('./png.js');
+
 /** Les deux rôles de signature, dans l'ordre IMPOSÉ du parcours. */
 const ROLES_SIGNATURE = ['TECHNICIEN', 'DETENTEUR'];
-
-/** Nombres magiques PNG (copie locale : module autonome). */
-const MAGIQUES_PNG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
-
-/** En dessous : tracé trop léger pour être probant (décision §2.5). */
-const SIGNATURE_TAILLE_MIN = 1024;
 
 /** Au-dessus : image déraisonnable pour un tracé (plafond défensif). */
 const SIGNATURE_TAILLE_MAX = 1024 * 1024;
@@ -29,10 +26,12 @@ const SIGNATURE_TAILLE_MAX = 1024 * 1024;
 const MSG_TRACE_ABSENT = 'Signature illisible : tracé absent.';
 const MSG_PAS_PNG =
   'Signature illisible : l’image n’est pas un PNG valide.';
-const MSG_TROP_PETITE =
-  'Signature illisible : tracé trop léger pour être probant (moins de 1 Ko).';
 const MSG_TROP_GROSSE =
   'Signature illisible : image trop volumineuse (1 Mo maximum).';
+/** Lot B3 : la case blanche, seul cas où le logiciel mentait. */
+const MSG_ZONE_VIERGE =
+  'Signature refusée : la zone est restée vierge, aucun tracé n’a été ' +
+  'enregistré. Signez dans le cadre, puis recommencez.';
 
 /** Déclaration signée par le technicien (décision Franck 16/07, figée). */
 const DECLARATION_TECHNICIEN =
@@ -61,22 +60,33 @@ function declarationSignature(role, parDelegation, organisation) {
 /** Critères d'illisibilité d'un tracé (clone du front). */
 function verifierImageSignature(octets) {
   if (!octets || octets.length === 0) return MSG_TRACE_ABSENT;
+  // Plafond AVANT décodage : on ne décode pas ce qu'on refuse de tenir.
   if (octets.length > SIGNATURE_TAILLE_MAX) return MSG_TROP_GROSSE;
-  for (let i = 0; i < MAGIQUES_PNG.length; i += 1) {
-    if (octets[i] !== MAGIQUES_PNG[i]) return MSG_PAS_PNG;
-  }
-  if (octets.length < SIGNATURE_TAILLE_MIN) return MSG_TROP_PETITE;
+  // UN SEUL décodage pour les deux questions (revue du 25/07, MINEUR 6 :
+  // le fichier était relu deux fois sur le chemin qui juge les
+  // signatures). lireImagePng ne reçoit aucune valeur de l'appelant :
+  // la structure rendue est toujours celle de CES octets-là.
+  const { structure, encre } = lireImagePng(octets);
+  if (!structure.ok) return MSG_PAS_PNG;
+  // Le VIDE ABSOLU, et rien de plus : une image rigoureusement uniforme
+  // n'a rien dessus — c'est le seul cas où le logiciel disait
+  // « signature valide » sur une case blanche. AUCUN seuil de densité,
+  // aucun pourcentage, aucune boîte englobante (décision du
+  // propriétaire du 25/07 : c'est le signataire qui juge son tracé) —
+  // une griffure de deux pixels passe. Et sur un format que l'on ne
+  // sait pas relire, la réponse est INDETERMINABLE : on ne conclut
+  // JAMAIS au vide sur un doute.
+  if (encre === 'VIDE') return MSG_ZONE_VIERGE;
   return null;
 }
 
 module.exports = {
   ROLES_SIGNATURE,
-  SIGNATURE_TAILLE_MIN,
   SIGNATURE_TAILLE_MAX,
   MSG_TRACE_ABSENT,
   MSG_PAS_PNG,
-  MSG_TROP_PETITE,
   MSG_TROP_GROSSE,
+  MSG_ZONE_VIERGE,
   declarationSignature,
   verifierImageSignature
 };

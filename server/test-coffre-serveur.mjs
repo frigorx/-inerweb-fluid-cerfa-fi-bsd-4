@@ -14,6 +14,7 @@ import { createRequire } from 'node:module';
 import { mkdtempSync, mkdirSync, existsSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { pngDeTest } from './fabrique-png-test.mjs';
 
 const require = createRequire(import.meta.url);
 const db = require('./db.js');
@@ -98,9 +99,8 @@ const mvBrouillon = api.appeler('creerMouvement', { donneesMouvement: {
   type: 'CHARGE_APPOINT', machineId: machine.id,
   bouteilleSrcId: bouteille.id, technicien: 'Léa Bonnet',
   executeParId: eleve.id, causeMouvement: 'Brouillon en cours' } }, referent);
-const pngFactice = Buffer.concat([
-  Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-  Buffer.alloc(1200, 0x42)]);
+// Lot B3 (25/07) : un VRAI PNG — l'image de signature est décodée.
+const pngFactice = Buffer.from(pngDeTest(1200));
 api.appeler('signerMouvement', { mouvementId: mvBrouillon.id, signature: {
   role: 'TECHNICIEN', nom: 'Bonnet', prenom: 'Léa',
   imagePng: pngFactice.toString('base64') } }, referent);
@@ -244,6 +244,34 @@ attendreRejet('mettreAuCoffre : phrase trop courte au premier geste → refus',
     .find((c) => c.id === controleEleve.id);
   verifier('contrôle de l\'élève : opérateur RÉÉCRIT en pseudonyme (fuite fermée)',
     controleApres.operateur === 'Élève 2026-01');
+
+  // ⭐ LOT B3 / REVUE DU 25/07 — LE DOSSIER SCELLÉ NE PERCE PAS LE COFFRE.
+  // `signatures.csv` est entré au dossier d'audit avec le lot B3 : aucun
+  // nom de signataire n'y figurait avant. Il écrivait les champs FIGÉS
+  // bruts — dans UNE SEULE archive, l'élève au coffre était donc
+  // « Élève 2026-01 » dans personnel.csv et mouvements.csv, et « Léa
+  // Bonnet » dans signatures.csv.
+  {
+    const { csvSignatures } = await import('../v8/js/documents/exports.js');
+    const storeDuDossier = {
+      getMouvements: async () => api.appeler('getMouvements', {}, referent),
+      getSignaturesMouvement: async (id) => api.appeler(
+        'getSignaturesMouvement', { mouvementId: id }, referent)
+    };
+    const annee = Number(
+      api.appeler('getMouvements', {}, referent)
+        .find((m) => m.id === mvBrouillon.id).date.slice(0, 4));
+    const csv = await csvSignatures(storeDuDossier,
+      annee, api.appeler('getPersonnel', {}, referent));
+    verifier('signatures.csv est bien produit (une signature existe)',
+      typeof csv === 'string' && csv.length > 0);
+    verifier('⭐ le nom RÉEL de l\'élève au coffre n\'est PAS dans signatures.csv',
+      !String(csv).includes('Léa') && !String(csv).includes('Bonnet'),
+      String(csv).split('\r\n').find((l) => l.includes('TECHNICIEN')));
+    verifier('⭐ c\'est le PSEUDONYME qui y figure (même archive, même identité)',
+      String(csv).includes('Élève;2026-01'),
+      String(csv).split('\r\n').find((l) => l.includes('TECHNICIEN')));
+  }
 
   const pjs = api.appeler('listerPiecesJointes',
     { entiteType: 'personne', entiteId: eleve.id }, referent);
