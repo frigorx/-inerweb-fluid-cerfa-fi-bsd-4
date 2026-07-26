@@ -441,7 +441,27 @@ function referencePersonneNeuve() {
 function normaliserChampPersonne(champ, valeur) {
   if (champ === 'actif') return valeur !== false && valeur !== 0;
   if (champ === 'activitesAutorisees') {
-    return JSON.stringify([...(valeur ?? [])].sort());
+    // ⭐⭐ REVUE B1, constat mineur n°6 — CE QUI N'EST PAS UNE LISTE NE
+    // S'ÉTALE PAS. `[...(valeur ?? [])]` déroulait une CHAÎNE en
+    // caractères : « MAINTENANCE » devenait dix lettres triées, comparées
+    // à la vraie liste. Une valeur d'un autre type est désormais comparée
+    // TELLE QUELLE.
+    // ⚠️ On ne DÉPLACE pas pour autant le contrôle de forme
+    // (verifierActivites) devant le filtre : il est joué au même rang que
+    // côté démo, et l'avancer ici créerait la divergence de rang que la
+    // même revue a déjà reprochée au lot (constat important n°3). Pour un
+    // rôle sans droit, le refus de rôle EST la bonne réponse : ce champ ne
+    // lui est ouvert sous aucune forme. Pour un responsable, le filtre
+    // rend la main et le message métier arrive, identique des deux côtés.
+    // ⚠️ Et surtout : `[...valeur]` LEVAIT sur tout ce qui n'est pas
+    // itérable (un nombre, un objet) — la garde plantait au lieu de
+    // refuser. Une charge utile malformée doit se voir refuser, pas faire
+    // tomber le filtre qui la juge.
+    if (!Array.isArray(valeur)) {
+      return valeur === '' || valeur === undefined || valeur === null
+        ? '[]' : JSON.stringify(valeur);
+    }
+    return JSON.stringify([...valeur].sort());
   }
   return valeur === '' || valeur === undefined ? null : valeur;
 }

@@ -810,6 +810,39 @@ try {
     verifier('contre-épreuve : le responsable désactive toujours par la '
       + 'fiche', desactive?.actif === false);
 
+    // ⭐⭐ REVUE B1, constat mineur n°6 — LA GARDE NE DOIT PAS TOMBER SUR
+    // CE QU'ELLE JUGE. La normalisation faisait `[...valeur]` sur les
+    // activités réglementées : une CHAÎNE était étalée en caractères, et
+    // tout ce qui n'est pas itérable (un nombre, un objet) faisait LEVER
+    // le filtre au lieu de refuser. Une charge utile malformée se voit
+    // refuser ; elle ne fait pas tomber le juge.
+    attendreRefus('⭐ activités réglementées envoyées en NOMBRE : refus '
+      + 'propre, la garde ne plante pas',
+    await requete('updatePersonne', { id: prof.id,
+      donneesPersonne: { activitesAutorisees: 42 } },
+    { cookie: cookieEleve }), 403, 'réservées au responsable');
+    attendreRefus('⭐ … et en OBJET : refus propre lui aussi',
+      await requete('updatePersonne', { id: prof.id,
+        donneesPersonne: { activitesAutorisees: { MAINTENANCE: true } } },
+      { cookie: cookieEleve }), 403, 'réservées au responsable');
+    {
+      const liste = resultatDe(await requete('getPersonnel', {},
+        { cookie: cookieReferent })) ?? [];
+      const fiche = liste.find((p) => p.id === prof.id);
+      verifier('… et la fiche du professeur est intacte (aucun effet avant '
+        + 'la garde)', Array.isArray(fiche?.activitesAutorisees),
+      JSON.stringify(fiche?.activitesAutorisees));
+    }
+    // Contre-épreuve : une VRAIE liste, envoyée par le responsable, passe.
+    const activites = resultatDe(await requete('updatePersonne',
+      { id: prof.id, donneesPersonne: {
+        activitesAutorisees: ['MAINTENANCE', 'CONTROLE'] } },
+      { cookie: cookieReferent }));
+    verifier('contre-épreuve : le responsable inscrit bien une vraie liste '
+      + 'd’activités',
+    (activites?.activitesAutorisees ?? []).includes('MAINTENANCE'),
+    JSON.stringify(activites?.activitesAutorisees));
+
     // ⭐⭐ REVUE B1, constat mineur n°2 — LE RÔLE QU'ON N'ÉCRIT PAS.
     // Les attaques ci-dessus écrivaient `roleApp` noir sur blanc, donc le
     // filtre les voyait. Le relecteur a tiré la voie muette : ne rien
