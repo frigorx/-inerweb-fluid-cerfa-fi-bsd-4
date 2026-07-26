@@ -29,8 +29,8 @@
 // Exécution : node outils/test-promesses-cloud.mjs
 // ============================================================
 
-import { readdirSync, readFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { readdirSync, readFileSync, existsSync } from 'node:fs';
+import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -163,6 +163,58 @@ for (const nom of GUIDES) {
     infractions.length === 0,
     `paragraphe(s) : ${infractions.join(' | ')}`);
 }
+
+// ------------------------------------------------------------
+// 3. LE CODE LIVRÉ — la surface que l'utilisateur LIT À L'ÉCRAN.
+//
+// POURQUOI CE VOLET EXISTE. La première rédaction de cette suite ne
+// balayait que les .md de la racine. Elle n'aurait donc PAS attrapé
+// l'occurrence trouvée juste après, et c'était la pire de toutes :
+// la notice d'information RGPD affichée DANS l'application
+// (v8/js/views/rgpd.js, section « Où sont stockées vos données »)
+// annonçait « ou, en mode Cloud, dans un hébergement situé dans
+// l'Union européenne ». Un guide, on peut ne pas le lire ; une notice
+// d'information est précisément le document sur lequel une personne
+// concernée fonde son consentement.
+//
+// Leçon générale, et c'est celle du chantier entier : une garde posée
+// sur une seule porte n'est pas une garde. Un balayage qui ne couvre
+// que la documentation laisse passer l'écran.
+// ------------------------------------------------------------
+console.log('\n--- Le code livré (ce que l\'utilisateur lit à l\'écran) ---');
+
+/** Tous les fichiers servis à l'utilisateur, en descendant les dossiers. */
+function fichiersLivres(dossier, acc = []) {
+  for (const entree of readdirSync(dossier, { withFileTypes: true })) {
+    if (entree.name === 'lib') continue;            // bibliothèques tierces minifiées
+    const chemin = join(dossier, entree.name);
+    if (entree.isDirectory()) fichiersLivres(chemin, acc);
+    else if (/\.(js|mjs|html|css)$/i.test(entree.name)
+      && !/^test-/.test(entree.name)) acc.push(chemin);
+  }
+  return acc;
+}
+
+const CODE_LIVRE = [
+  ...fichiersLivres(join(RACINE, 'v8')),
+  ...fichiersLivres(join(RACINE, 'server')),
+  join(RACINE, 'index.html'),
+  join(RACINE, 'guide.html'),
+].filter((c) => existsSync(c));
+
+verifier('le code livré à balayer est bien trouvé (dont la notice RGPD de l\'application)',
+  CODE_LIVRE.some((c) => c.endsWith(join('views', 'rgpd.js'))),
+  `${CODE_LIVRE.length} fichier(s)`);
+
+const coupables = [];
+for (const chemin of CODE_LIVRE) {
+  const infractions = promessesDuTexte(readFileSync(chemin, 'utf8'));
+  if (infractions.length) {
+    coupables.push(`${relative(RACINE, chemin)} → ${infractions.join(' | ')}`);
+  }
+}
+verifier('aucun fichier du code livré ne promet un mode Cloud / Supabase / hébergement distant',
+  coupables.length === 0, coupables.join('\n      '));
 
 console.log(`\n${nbOk} OK, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);

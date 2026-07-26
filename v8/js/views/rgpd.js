@@ -476,12 +476,18 @@ export async function render(conteneur, ctx) {
       + 'uniquement) : c’est une exigence d’intégrité du registre réglementaire, '
       + 'compatible avec le RGPD au titre de l’obligation légale.</p>')
 
+    // A18 (26/07) — la notice annonçait « ou, en mode Cloud, dans un hébergement
+    // situé dans l'Union européenne ». Ce mode N'EXISTE PAS : la promesse a été
+    // retirée partout ailleurs le 23/07 (P2-4/P2-5) et celle-ci avait été
+    // oubliée. C'est la pire surface où l'oublier — la notice d'information est
+    // précisément le document sur lequel une personne concernée se fonde.
     + section('6. Où sont stockées vos données',
-      '<p>Selon le mode d’utilisation : <strong>sur le poste de '
-      + 'l’établissement</strong> (base locale et documents dans le dossier de '
-      + 'l’application) — rien ne sort de l’établissement — ou, en mode Cloud, '
-      + 'dans un hébergement situé dans <strong>l’Union européenne</strong> '
-      + '(aucun transfert hors UE). Le mode Démonstration n’utilise que des '
+      '<p><strong>Sur le poste de l’établissement</strong>, et nulle part '
+      + 'ailleurs : la base et les documents vivent dans le dossier de '
+      + 'l’application. <strong>Rien ne sort de l’établissement</strong> — '
+      + 'aucun service distant, aucun hébergement tiers, aucun transfert. '
+      + 'Les sauvegardes sont faites par l’établissement lui-même, sur ses '
+      + 'propres supports. Le mode Démonstration, lui, n’utilise que des '
       + 'données fictives.</p>')
 
     + section('7. Vos droits',
