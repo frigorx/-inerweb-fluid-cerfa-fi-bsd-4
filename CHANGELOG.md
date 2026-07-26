@@ -134,6 +134,23 @@ d'encre · D3 pré-remplissage modifiable), la mesure reproductible qui fait
 tomber la borne de 1 Ko, le GATE sur `MSG_ZONE_VIERGE` (refus NOUVEAU à la pose,
 en attente du visa) et les trois résidus assumés.
 
+**RÉSIDU RE-MESURÉ, NON FERMÉ, ET DIT (26/07)** — `signatures.csv` est le SEUL
+fichier du dossier scellé où entre un nom de SIGNATAIRE, et le coffre des
+identités n'y a pas de seconde barrière. `signataireDe` ne passe par la fiche
+vivante que pour le rôle TECHNICIEN **et** si `mv.executeParId` existe : le nom
+figé sort donc tel quel pour **toute signature DÉTENTEUR** et pour une
+signature **TECHNICIEN sur une fiche sans intervenant déclaré** (périmètre plus
+large que celui qui avait été noté). Ce n'est **pas fermable à peu de frais** :
+au moment de produire le dossier, le vrai nom d'une personne au coffre n'existe
+plus en clair (fiche pseudonymisée, nom réel dans l'enveloppe chiffrée), donc on
+ne peut pas reconnaître qu'un nom figé lui appartient. Les trois contournements
+possibles ont été écartés pour la raison même de ce lot : se rabattre sur la
+session **inventerait** un nom (les champs du signataire sont saisissables),
+et masquer au moindre doute **retirerait une preuve** du dossier d'audit. La
+seule fermeture honnête est la racine — relier chaque signature à une fiche du
+personnel, donc une migration, donc un autre lot, et elle ne remplirait pas le
+passé. **GATÉ PROPRIÉTAIRE** (plan § 8, résidu 1).
+
 Filet : **TOUT VERT, 111 exécutions** (4 suites ajoutées : `test-png`,
 `test-signature-canvas`, `test-signatures-modal`, `test-taille-signature`).
 Chaque brique a sa contre-épreuve tirée : correctif retiré → rouge, remis →

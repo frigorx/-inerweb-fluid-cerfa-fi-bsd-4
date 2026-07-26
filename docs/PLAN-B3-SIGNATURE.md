@@ -300,14 +300,41 @@ Ce lot ne touche qu'à la lecture d'un fichier image.
 
 ## 8. Résidus assumés, et questions ouvertes
 
-1. **`signatures.csv` : le signataire DÉTENTEUR reste figé sous son nom écrit.**
-   Une signature n'a pas d'identifiant de signataire — seule la signature
-   TECHNICIEN peut se relier à l'intervenant déclaré de la fiche
-   (`mv.executeParId`) et donc passer par la fiche vivante. C'est **le résidu
-   IDENTIQUE à celui de `mouvements.csv`**, connu et antérieur. Le fermer
-   supposerait de relier chaque signature à une fiche du personnel — un champ
-   nouveau, donc une migration, donc un autre lot.
-   *Question au propriétaire : faut-il l'ouvrir ?*
+1. **`signatures.csv` : un signataire non relié reste figé sous son nom écrit.**
+   *(Périmètre RE-MESURÉ le 26/07 — il est plus large que « le détenteur ».)*
+   `signataireDe` (`v8/js/documents/exports.js`) ne passe par la fiche VIVANTE
+   que si `sig.role === 'TECHNICIEN'` **et** que `mv.executeParId` existe. Le
+   nom figé sort donc tel quel dans **deux** cas : toute signature
+   **DÉTENTEUR**, et une signature **TECHNICIEN sur une fiche sans intervenant
+   déclaré**. C'est le résidu identique à `technicienDe` de `mouvements.csv`,
+   connu et antérieur — mais **`signatures.csv` est le SEUL fichier du dossier
+   scellé où un nom de SIGNATAIRE entre**, et le coffre n'y a pas de seconde
+   barrière.
+   **Pourquoi ce n'est PAS fermable à peu de frais** (cherché le 26/07, aucune
+   piste retenue) : au moment de produire le dossier, le vrai nom d'une
+   personne au coffre n'existe plus en clair — la fiche vivante porte le
+   pseudonyme, le nom réel est dans l'enveloppe chiffrée. On ne peut donc pas
+   reconnaître qu'un nom figé appartient à quelqu'un du coffre. Les trois
+   contournements envisagés ont tous été écartés, et pour la même raison que
+   celle qui a motivé ce lot :
+   - se rabattre sur `sig.sessionPersonnelId` **inventerait** un nom (les
+     champs du signataire sont saisissables : la session peut avoir tapé le
+     nom d'un représentant du client) — on écrirait une identité FAUSSE dans
+     une archive scellée ;
+   - reprendre la clause anti-homonyme de `mettreAuCoffre` (comparaison au
+     libellé d'avant) est impossible ici : ce libellé n'est plus lisible ;
+   - masquer le nom au moindre doute **retirerait une preuve** du dossier
+     d'audit — c'est la faute déjà commise une fois dans ce chantier
+     (des masses disparues d'une déclaration).
+   **La seule fermeture honnête est la racine** : relier chaque signature à une
+   fiche du personnel (`signature_personnel_id`), donc un champ nouveau, donc
+   une migration — et elle ne remplirait PAS le passé.
+   ⚠️ À noter aussi, dans le cas où la substitution s'applique : elle nomme
+   l'**intervenant déclaré de la fiche**, qui n'est pas forcément le
+   signataire. C'est le patron accepté de `mouvements.csv`, il protège le
+   coffre, mais il n'est exact que parce que les deux coïncident en pratique.
+   *Question au propriétaire : ouvre-t-on ce lot ? (migration + reprise
+   manuelle du passé, ou acceptation écrite du résidu.)*
 2. **Le témoin de session n'entre pas dans l'empreinte scellée.** Il est donc
    affiché et exporté, mais il n'est pas protégé par le chaînage. L'y mettre
    exigerait une v3 du hasseur — et la règle du dépôt est « aucune v3 ».
