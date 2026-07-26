@@ -111,6 +111,23 @@ de test était BINAIRE aux yeux de git donc exemptée de relecture, et
 `contrat.js` — le seul fichier dont le rôle est de ne pas mentir — n'avait pas
 été touché par le lot « ne plus mentir ».
 
+**LA CORRECTION AVAIT SA PROPRE CAUSE FAUSSE (26/07).** Rendre la validité
+honnête a fait ressortir toute image illisible sous le seul état qui restait :
+**PERIMEE**, c'est-à-dire « la fiche a été modifiée après la signature ». Faux
+quand la fiche n'a pas bougé — et la ligne se contredisait elle-même :
+`signatures.csv` du dossier **SCELLÉ** rendait `…;0;perimee;…`, révision signée
+0, révision courante 0. **L'archive opposable portait donc une cause fausse**,
+en plus de l'écran (« la fiche a été modifiée après la signature de X »).
+Quatrième état : **`IMAGE_ILLISIBLE`** à côté d'ABSENTE/VALIDE/PERIMEE, et une
+troisième valeur « image illisible » dans la colonne État du CSV. La cause est
+dite à part par **`imageRecevable`**, nouveau champ de `getSignaturesMouvement`
+dans les DEUX magasins : il **NOMME**, il ne refuse rien — le refus reste porté
+par `valide`, et par lui seul, et une recevabilité non dite rend le comportement
+d'avant mot pour mot. Les illisibles sont écartées avant le choix de la
+signature retenue, exactement comme le fait `etatSignatureReelle` du moteur :
+l'écran ne dit jamais autre chose que le moteur. Une signature vraiment périmée
+garde son message, mot pour mot (vérifié).
+
 **Le plan du lot existe enfin : `docs/PLAN-B3-SIGNATURE.md`.** Il consigne les
 trois décisions du propriétaire (D1 même session = normal · D2 aucun seuil
 d'encre · D3 pré-remplissage modifiable), la mesure reproductible qui fait

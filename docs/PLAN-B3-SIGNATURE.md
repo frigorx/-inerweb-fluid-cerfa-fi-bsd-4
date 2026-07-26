@@ -209,6 +209,16 @@ décompressée (32 Mo) protège de la bombe de décompression — et il répond
 | **`contrat.js` mentait encore** : il annonçait « nombres magiques, ≥ 1 Ko ». C'est le seul fichier du dépôt dont le rôle est de ne pas mentir sur le comportement, et le lot « ne plus mentir » ne l'avait pas touché. | `8c37544` |
 | 7 constats mineurs (assertions qui ne peuvent pas échouer, module ESM non interrogé, attaques non inscrites au répertoire des preuves, double décodage) | `5fe6b19`, `9d7e7de`, `3f07896`, `6dc8af1`, `446b1b6`, `c94e025` |
 
+### Ce que la vérification FINALE a trouvé — deux défauts nés des correctifs (26/07)
+
+Aucun constat rouvert, filet vert : les deux défauts sont **nés de la
+correction elle-même**, et tous deux sont exactement ce que ce lot combat.
+
+| Constat | Correctif |
+|---|---|
+| **Le motif affiché était FAUX pour une image illisible, et il entrait au dossier SCELLÉ.** Rendre la validité honnête a fait ressortir toute image illisible sous le seul état restant : `PERIMEE` = « la fiche a été modifiée après la signature ». Or la fiche n'avait pas bougé, et la ligne se contredisait : `signatures.csv` rendait `…;0;perimee;…`, révision signée 0 = révision courante 0. Écran (`signatures-modal.js`) **et** archive opposable (`exports.js`). | Quatrième état **`IMAGE_ILLISIBLE`** dans `parcours-signature.js`, troisième valeur « image illisible » dans la colonne État du CSV. La cause est dite à part par **`imageRecevable`**, nouveau champ de `getSignaturesMouvement` des DEUX magasins : il **NOMME**, il ne refuse rien (le refus reste dans `valide`, et là seulement ; recevabilité non dite = comportement d'avant). Les illisibles sont écartées avant le choix de la signature retenue, comme le fait `etatSignatureReelle` — l'écran ne dit jamais autre chose que le moteur. |
+| **Le texte du visa affirmait le contraire du code** (§ 2 et § 6 de ce plan, CHANGELOG) : « aucun contrôle rétroactif, `verifierImageSignature` n'est appelée qu'à la POSE ». Vrai des quatre premières briques, faux depuis la fermeture de la porte IMPORT. | § 6 réécrit : le contrôle s'applique à la **LECTURE**, et la conséquence pour un registre existant est dite en clair — puis **TIRÉE** (`test-contrat.mjs`, une case blanche de 5 506 o insérée par le fichier, jouée contre les deux magasins). |
+
 ---
 
 ## 6. GATE PROPRIÉTAIRE — `MSG_ZONE_VIERGE` est un refus NOUVEAU
