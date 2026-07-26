@@ -169,7 +169,11 @@ function blocQuiSeFaitPasserPourPng(taille = 2348) {
   }
   verifier(`critères d'illisibilité identiques sur ${CAS_IMAGE.length} images discriminantes`,
     identiques === CAS_IMAGE.length);
-  verifier('les quatre refus tombent sur le bon critère',
+  // REVUE DU 25/07 (MINEUR 4) : le libellé disait « quatre » alors que
+  // la brique 3 en a ajouté un cinquième (la zone vierge), et un
+  // sixième cas atteste qu'un PNG recevable n'est PAS refusé.
+  verifier('les cinq refus tombent chacun sur son propre critère'
+    + ' (et un PNG recevable n’en déclenche aucun)',
     miroir.verifierImageSignature(new Uint8Array(0)) === miroir.MSG_TRACE_ABSENT &&
     miroir.verifierImageSignature(pngVierge()) === miroir.MSG_ZONE_VIERGE &&
     miroir.verifierImageSignature(jpegDeguise) === miroir.MSG_PAS_PNG &&

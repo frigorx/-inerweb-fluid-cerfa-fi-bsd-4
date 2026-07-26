@@ -145,10 +145,19 @@ async function ouvrir(signatures, mouvement = MOUVEMENT) {
   const htmlInconnu = await ouvrir([
     signature('TECHNICIEN', { sessionPersonnelId: 'PER-disparu' })
   ]);
-  verifier('compte connu mais fiche introuvable : le compte est montré seul',
-    htmlInconnu.includes('Posée depuis la session')
-    && htmlInconnu.includes(COMPTE)
-    && !htmlInconnu.includes('PER-disparu'));
+  // REVUE DU 25/07 (MINEUR 3) : cette vérification s'assurait que
+  // « PER-disparu » n'était pas à l'écran — vrai PAR CONSTRUCTION, la
+  // carte n'affiche JAMAIS sessionPersonnelId. Elle ne pouvait pas
+  // échouer. Le vrai risque est ailleurs : que le témoin INVENTE un nom
+  // (celui du compte connecté, par exemple) quand la fiche liée
+  // n'existe plus. C'est cela qui est tiré ici — le témoin doit se
+  // réduire au compte, mot pour mot, et ne nommer personne.
+  // (Le nom, s'il était inventé, s'insérerait ENTRE « session » et
+  // « (compte » : exiger la phrase d'un seul tenant suffit à l'exclure.)
+  verifier('compte connu mais fiche introuvable : le compte est montré SEUL,'
+    + ' aucun nom n’est inventé',
+  htmlInconnu.includes('Posée depuis la session (compte ' + COMPTE + ')'),
+  htmlInconnu.slice(htmlInconnu.indexOf('Posée depuis'), 200));
 }
 
 // ------------------------------------------------------------
