@@ -4428,6 +4428,13 @@ const HANDLERS = {
       const refus =
         remiseFiliere.verifierNumeroSuivi(numeroSuivi, numerosExistants);
       if (refus) throw new Error(refus);
+      // ⭐ Revue B2 (mineur 2, MIROIR du DemoStore) — CE QUI EST ÉCRIT AU
+      // REGISTRE EST LA FORME CANONIQUE. L'unicité se jugeait déjà sur la
+      // clé normalisée, mais la valeur ÉCRITE restait celle tapée :
+      // « sif-2031-0007 » entrait tel quel, et le registre, le CSV du
+      // dossier scellé et la fiche mélangeaient les casses pour ce qui est
+      // le MÊME numéro. On enregistre donc la clé, pas la frappe.
+      numeroSuivi = remiseFiliere.cleNumeroSuivi(numeroSuivi);
     }
     const masse = Number(d.masseRemiseKg);
     if (!Number.isFinite(masse) || masse <= 0) {

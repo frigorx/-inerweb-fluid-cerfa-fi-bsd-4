@@ -170,10 +170,30 @@ async function bouteilleDechet(masseKg) {
     msgDoublon !== null && msgDoublon.includes('déjà utilisé'),
     String(msgDoublon));
 
+  // ⚠ Revue B2 (mineur 2) : l'unicité se jugeait sur la clé normalisée,
+  // mais la valeur ÉCRITE restait celle tapée. « sif-2031-0007 » entrait
+  // tel quel au registre, puis dans le CSV du dossier scellé et sur la
+  // fiche — deux casses pour un seul et même numéro.
+  const enMinuscules = await store.createBsff({
+    bouteilleId: b.id, numeroBsff: '  sif-2031-0007  ',
+    transporteur: 'Collecteur agréé',
+    installationDestination: 'Centre de traitement agréé',
+    masseRemiseKg: 1, dateRemise: '2026-07-24', operateur: 'testeur'
+  });
+  verifier('numéro fourni en minuscules : ENREGISTRÉ sous sa forme canonique',
+    enMinuscules.numeroBsff === 'SIF-2031-0007',
+    String(enMinuscules.numeroBsff));
+  verifier('… et c’est bien la forme canonique qui est relue au registre',
+    (await store.getBsff()).some((s) => s.numeroBsff === 'SIF-2031-0007'),
+    (await store.getBsff()).map((s) => s.numeroBsff).join(', '));
+
   const suivis = await store.getBsff();
   const cles = suivis.map((s) => String(s.numeroBsff).toUpperCase());
   verifier('aucun numéro de suivi en double au registre',
     new Set(cles).size === cles.length, cles.join(', '));
+  verifier('aucun numéro de suivi hors forme canonique au registre',
+    suivis.every((s) => String(s.numeroBsff) === String(s.numeroBsff).toUpperCase()),
+    suivis.map((s) => s.numeroBsff).join(', '));
 }
 
 // ============================================================

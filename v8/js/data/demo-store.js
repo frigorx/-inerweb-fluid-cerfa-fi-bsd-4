@@ -77,7 +77,7 @@ import { verifierPlainte } from './plaintes.js';
 // Lot B2 — forme et unicité du numéro du SUIVI INTERNE de remise en
 // filière (miroir littéral CommonJS : server/remise-filiere.js).
 import { prochainNumeroSuivi, verifierNumeroSuivi, problemeNumerosSuivi,
-  ecartApresRemise } from './remise-filiere.js';
+  cleNumeroSuivi, ecartApresRemise } from './remise-filiere.js';
 
 const CLE_STOCKAGE = 'inerweb-fluide-v8-demo';
 
@@ -5629,6 +5629,13 @@ export function creerDemoStore() {
       } else {
         const refus = verifierNumeroSuivi(numeroSuivi, numerosExistants);
         if (refus) throw new Error(refus);
+        // ⭐ Revue B2 (mineur 2) — CE QUI EST ÉCRIT AU REGISTRE EST LA
+        // FORME CANONIQUE. L'unicité se jugeait déjà sur la clé
+        // normalisée, mais la valeur ÉCRITE restait celle tapée :
+        // « sif-2031-0007 » entrait tel quel, et le registre, le CSV du
+        // dossier scellé et la fiche mélangeaient les casses pour ce qui
+        // est le MÊME numéro. On enregistre donc la clé, pas la frappe.
+        numeroSuivi = cleNumeroSuivi(numeroSuivi);
       }
       const masse = Number(d.masseRemiseKg);
       if (!Number.isFinite(masse) || masse <= 0) {
