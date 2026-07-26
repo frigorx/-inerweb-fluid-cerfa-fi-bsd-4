@@ -252,8 +252,17 @@ function pixelsUnis(largeur, hauteur, couleur) {
   const valide = construirePng({
     largeur: 6, hauteur: 6, pixels: pixelsUnis(6, 6, [9, 9, 9, 255]) });
 
+  // REVUE DU 25/07 (MINEUR 1) : ce tampon était fabriqué puis JAMAIS
+  // interrogé — l'échafaudage d'une vérification disparue. Il retouche
+  // désormais le dernier octet du CRC-32 de l'IEND : le chunk de
+  // fermeture est lui aussi vérifié, pas seulement l'en-tête.
   const crcCasse = Buffer.from(valide);
-  crcCasse[crcCasse.length - 5] ^= 0xff; // dernier octet des données IEND-1
+  crcCasse[crcCasse.length - 1] ^= 0xff; // dernier octet du CRC-32 de l'IEND
+  verifier('ATTAQUE : CRC-32 de l’IEND retouché → REFUSÉ',
+    miroir.verifierStructurePng(crcCasse).ok === false
+    && miroir.verifierStructurePng(crcCasse).motif === 'CRC-32 faux sur IEND',
+    miroir.verifierStructurePng(crcCasse).motif);
+
   const crcIhdr = Buffer.from(valide);
   crcIhdr[29] ^= 0x01; // un octet du CRC de l'IHDR
   verifier('ATTAQUE : CRC-32 de l’IHDR retouché → REFUSÉ',
