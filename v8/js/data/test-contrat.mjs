@@ -2227,6 +2227,35 @@ function imagePngTest(taille = 1200) {
     store.getSignaturesMouvement('mvt-fantome'), 'introuvable');
 
   // ------------------------------------------------------------
+  // REVUE DU 25/07 (IMPORTANT 5) — contrat.js est « LA vérité de surface »
+  // (docs/CARTE-CODE.md) : c'est le SEUL fichier du dépôt dont le rôle est
+  // de ne pas mentir sur le comportement. Il annonçait encore « nombres
+  // magiques, ≥ 1 Ko » alors que l'image est décodée et que la borne basse
+  // a été SUPPRIMÉE — dans un lot intitulé « ne plus mentir ».
+  // ------------------------------------------------------------
+  {
+    const dit = METHODES_CONTRAT.signerMouvement.description;
+    verifier('le contrat n’annonce plus les « nombres magiques » (l’image est décodée)',
+      !dit.includes('nombres magiques'), dit.slice(0, 200));
+    verifier('le contrat n’annonce plus de borne basse de 1 Ko (elle est retirée)',
+      !/[≥>]=?\s*1\s*Ko/.test(dit), dit.slice(0, 200));
+    verifier('le contrat annonce le décodage réel et le refus de la zone vierge',
+      dit.includes('DÉCODÉE') && dit.includes('MSG_ZONE_VIERGE')
+      && dit.includes('CRC-32'), dit.slice(0, 200));
+    // Ce que le contrat annonce est TIRÉ juste ici : la borne basse n'existe
+    // plus (un vrai tracé de 105 octets passe, vérifié plus haut) et la zone
+    // vierge est refusée avec ce message.
+    await verifierRejet('… et ce qu’il annonce est vrai : la zone vierge est refusée',
+      store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN',
+        nom: 'Contrat', prenom: 'Testeur',
+        imagePng: Buffer.from(pngVierge(5562)).toString('base64') }),
+      'restée vierge');
+    const ditLecture = METHODES_CONTRAT.getSignaturesMouvement.description;
+    verifier('le contrat dit que « valide » exige AUSSI une image recevable',
+      ditLecture.includes('image recevable'), ditLecture.slice(0, 200));
+  }
+
+  // ------------------------------------------------------------
   // ⭐ REVUE DU 25/07 (IMPORTANT 1) — LA PORTE IMPORT N'ÉTAIT PAS GARDÉE.
   // La POSE refuse le bloc de texte aux 8 octets magiques (A04). L'IMPORT,
   // lui, ne regardait pas l'image : on exportait, on REMPLAÇAIT l'image
