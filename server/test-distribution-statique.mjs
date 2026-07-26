@@ -29,9 +29,9 @@
 // ============================================================
 
 import { spawn } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, isAbsolute } from 'node:path';
 import http from 'node:http';
 
 let nbOk = 0;
@@ -47,8 +47,13 @@ function verifier(libelle, condition, detail = '') {
   }
 }
 
-const CHEMIN_SERVEUR = new URL('./serveur.js', import.meta.url).pathname
-  .replace(/^\//, '');
+// Conversion PORTABLE : même construction que les suites sœurs
+// (test-emplacement-base, test-lan-https, test-transport-http). L'ancienne
+// forme — « pathname » d'une URL de fichier, puis retrait du slash de
+// tête — ne marchait QUE sous Windows : sous Unix elle transformait le
+// chemin absolu en chemin relatif et un auditeur externe concluait à tort
+// que le logiciel était cassé (audit externe P2-03, constat A23).
+const CHEMIN_SERVEUR = join(import.meta.dirname, 'serveur.js');
 const PORT = 21000 + Math.floor(Math.random() * 2000);
 const DOSSIER = mkdtempSync(join(tmpdir(), 'iwf-dist-'));
 const CHEMIN_BASE = join(DOSSIER, 'data', 'jetable.db');
@@ -65,6 +70,40 @@ function codeDe(chemin) {
     requete.on('error', () => resoudre(0));
     requete.on('timeout', () => { requete.destroy(); resoudre(0); });
   });
+}
+
+// ============================================================
+// 0. PORTABILITÉ DU HARNAIS (audit externe P2-03, constat A23)
+// La conversion URL→chemin par « .pathname » + retrait du « / » de tête
+// est un piège : correcte sous Windows, elle rend un chemin RELATIF sous
+// Unix et fait échouer le lancement du serveur enfant. Deux gardes :
+//   a) balayage statique des sources — le motif ne doit réapparaître
+//      nulle part (c'est la racine qui compte, pas l'occurrence) ;
+//   b) le chemin du serveur enfant est ABSOLU sur la machine courante.
+// ============================================================
+console.log('--- 0. Portabilité du harnais de test ---');
+{
+  const RACINE = join(import.meta.dirname, '..');
+  const MOTIF_NON_PORTABLE = /\.pathname\s*\.replace\s*\(/;
+  const fichiersFautifs = [];
+  const balayer = (dossier) => {
+    for (const entree of readdirSync(dossier, { withFileTypes: true })) {
+      const chemin = join(dossier, entree.name);
+      if (entree.isDirectory()) {
+        if (entree.name === 'node_modules' || entree.name === '.git') continue;
+        balayer(chemin);
+      } else if (/\.(mjs|js)$/.test(entree.name)
+        && MOTIF_NON_PORTABLE.test(readFileSync(chemin, 'utf8'))) {
+        fichiersFautifs.push(chemin);
+      }
+    }
+  };
+  for (const dossier of ['server', 'outils', 'v8']) balayer(join(RACINE, dossier));
+  verifier('aucune conversion URL vers chemin par « pathname » plus retrait '
+    + 'du slash de tête dans les sources',
+    fichiersFautifs.length === 0, fichiersFautifs.join(', '));
+  verifier('le chemin du serveur enfant est absolu (portable Unix et Windows)',
+    isAbsolute(CHEMIN_SERVEUR), CHEMIN_SERVEUR);
 }
 
 let enfant = null;
