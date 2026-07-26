@@ -76,9 +76,15 @@ const CHAMPS_RESERVES_ECRAN = ['roleApp', 'numAttestationAptitude',
 
 /**
  * Retire de la charge utile les champs réservés quand l'utilisateur n'y a
- * pas droit. On les OMET : à la création le store applique ses défauts (le
- * rôle applicatif se déduit du type de personne), à la modification il ne
- * juge que ce qui change.
+ * pas droit. On les OMET : à la modification le store ne juge que ce qui
+ * CHANGE, et à la création il applique ses défauts.
+ * ⚠️ Défaut du rôle applicatif, depuis la revue B1 (5ec7ce1) : le rôle ne
+ * se déduit du type de personne QUE pour un appelant qui a le droit de
+ * l'attribuer (server/api.js, createPersonne). Ici, par construction, ce
+ * n'est pas le cas — `peutTenir` est faux. La fiche naît donc ÉLÈVE, quel
+ * que soit le type de personne saisi : moindre privilège. Elle
+ * s'enregistre quand même (on n'empêche jamais d'inscrire quelqu'un), et
+ * le responsable élève le rôle ensuite s'il y a lieu.
  * @param {object} valeurs — sortie de validerFormulaire
  * @param {boolean} peutTenir
  * @returns {object} charge utile filtrée
@@ -377,8 +383,10 @@ function validerFormulaire(racine, peutTenir = true) {
 
   // ⭐ B1 — un sélecteur VERROUILLÉ ne figure pas dans le FormData : ne pas
   // exiger ce que l'écran n'autorise pas à saisir, sans quoi l'élève ne
-  // pourrait plus inscrire un camarade. Le store applique alors son défaut
-  // (le rôle applicatif se déduit du type de personne).
+  // pourrait plus inscrire un camarade. Le store applique alors son défaut,
+  // qui est le MOINDRE PRIVILÈGE : la fiche naît ÉLÈVE (revue B1, 5ec7ce1
+  // — la déduction par type de personne ne joue plus que pour un appelant
+  // habilité à attribuer un rôle). Voir filtrerFichePersonne.
   const roleApp = String(donnees.get('roleApp') || '').trim();
   if (!roleApp && peutTenir) {
     marquerErreur(racine, 'roleApp', 'Le rôle applicatif est obligatoire.');
