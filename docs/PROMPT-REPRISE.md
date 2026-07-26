@@ -6,6 +6,70 @@
 > **Session conseillée : Opus, effort très élevé** (chantier probatoire/réglementaire, briques
 > testées une à une). PAS d'ultracode hors point critique.
 >
+> **⭐⭐⭐⭐⭐⭐⭐⭐⭐ ÉTAT AU 26/07/2026 — 3ᵉ AUDIT EXTERNE (verdict NO GO) TRAITÉ.
+> B1 + B2 + B3 FUSIONNÉS dans `main`. TOUT VERT — 119 exécutions** (106 → 119),
+> contrat v12, migration **36**, verrou Officiel toujours FERMÉ. 69 commits,
+> +9519/−453.
+>
+> **MÉTHODE — c'est elle qu'il faut retenir.** 31 constats inventoriés sans
+> filtre, puis **TIRÉS en bac à sable** (jamais lus), puis contre-épreuve
+> adversariale de chaque verdict. Résultat : **6 vrais trous** (A03 A04 A05
+> A06 A07 A14), **1 désaccord métier** (A02), plusieurs constats **périmés ou
+> déjà tranchés**. Puis 3 lots codés en worktrees isolés, 3 revues
+> adversariales, 3 passes de correction, 3 contrôles finaux.
+>
+> **⚠️ A02 — L'AUDITEUR S'EST TROMPÉ, comme celui du 20/07.** Il exigeait que
+> Formation et Officiel aient des stocks séparés. Le contrefactuel a été tiré :
+> avec une fiche Formation INERTE, le gaz part quand même dans la machine
+> pendant le TP → écart de balance non justifié → blocage du mode Officiel.
+> **Sa correction fabrique sa propre plainte.** Chez Franck, Formation = registre
+> RÉEL de l'atelier avec un document NON opposable ; le monde fictif, c'est le
+> mode DÉMO. Décision Franck (25/07) : « par défaut, s'ils utilisent
+> l'application c'est qu'ils ont manipulé du vrai fluide ; c'est moi qui valide
+> le CERFA à la fin ». **Ne pas rouvrir.**
+>
+> **CE QUE LES 3 LOTS FERMENT** (détail complet en tête de `CHANGELOG.md`) :
+> - **B1 — « une règle, pas une porte »** (A05+A06). TROISIÈME occurrence du
+>   motif L2-i. La garde vivait sur `updateMachine` seulement : un élève créait
+>   une machine « hermétique + étiquetée » et le seuil d'aptitude passait de 3 à
+>   6 kg (mesuré). Un filtre UNIQUE traverse les deux portes ; `detectionPermanente`
+>   et `chargeNominaleKg` y entrent aussi (ils déplacent un seuil) ; la charge
+>   ACTUELLE reste ouverte (geste du TP). Fiche personnel PARTITIONNÉE : état
+>   civil ouvert, gouvernance et preuves réservées — fermait aussi un déni de
+>   service (un élève rétrogradait la fiche du prof, qui ne pouvait plus valider).
+> - **B2 — le suivi de remise en filière dit ce qu'il est** (A07). Franck a
+>   confirmé le 25/07 : **le lycée émet réellement des déchets fluorés, voire
+>   chlorés (bouteille de R-22 à réformer)**. L'objet ne s'appelle plus comme le
+>   bordereau réglementaire, le numéro Trackdéchets a un champ distinct, unicité
+>   et forme du numéro interne, mention permanente.
+> - **B3 — ne plus mentir sur une signature** (A04). L'image est **vraiment
+>   décodée** (module pur `png.js` + miroir, sans dépendance tierce) ; la zone
+>   restée vierge est refusée ; le témoin de session est porté à la fiche et au
+>   dossier d'audit. Décisions Franck consignées : `docs/PLAN-B3-SIGNATURE.md`.
+>
+> **⚠️ CE QUE LES REVUES ONT RATTRAPÉ — à relire avant d'écrire une garde :**
+> à CHAQUE passe, un correctif a introduit un défaut. Une garde a fait
+> **DISPARAÎTRE d'une déclaration officielle des masses réellement détruites**
+> (sous-déclaration, bloquée avant fusion) ; une autre a **percé le coffre des
+> identités** dans le dossier scellé ; une autre a rendu **faux le motif
+> « signature périmée »** ; une autre accusait par écrit un **transfert entrant
+> légitime**. Aucune n'était visible au filet vert. D'où la règle : *le doute
+> retire l'ALLÉGEMENT, jamais l'OBLIGATION, et JAMAIS une masse.*
+>
+> **GATÉ FRANCK, à trancher** : (a) `MSG_ZONE_VIERGE` = refus NOUVEAU à la pose,
+> et le contrôle d'image est rejoué **à chaque lecture** — un registre existant
+> portant une case blanche verra sa signature retomber sur « absente »
+> (`docs/PLAN-B3-SIGNATURE.md` §6) ; (b) boutons « Arrêter »/« Démanteler » de la
+> vue Parc : griser ou laisser le refus en infobulle (présentation, pas sécurité).
+>
+> **RESTE DE L'AUDIT, hors code** : T3 (chemin critique) · P0-9 · chiffrement du
+> poste et sauvegarde hors site · RGPD/AIPD · paquet de livraison complet (SBOM,
+> licences, actifs) — le paquet d'audit exclut par construction les bibliothèques
+> et le gabarit CERFA, ce qui explique les 14 échecs de l'auditeur (reproduits à
+> l'identique : ce n'est PAS un défaut du logiciel). **En code, non bloquant** :
+> A14 déni de service sur la connexion (scrypt synchrone) — **à traiter AVANT
+> d'activer le mode LAN, jamais après**.
+>
 > **⭐⭐⭐⭐⭐⭐⭐⭐ ÉTAT AU 25/07/2026 (soir) — LOT L2 LIVRÉ : SUITE DE SÉCURITÉ
 > NÉGATIVE + 9 TROUS FERMÉS. TOUT VERT 106 EXÉCUTIONS**, contrat v12, migration
 > 35 (aucune migration nouvelle : rien de tout cela n'a demandé de toucher au
