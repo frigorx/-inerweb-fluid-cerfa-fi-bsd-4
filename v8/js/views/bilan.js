@@ -557,10 +557,19 @@ async function collecterDonneesAudit5Minutes(store, annee) {
   const ecartsJustifies = lignesInventoriees.filter((l) =>
     l.ecartKg !== null && Math.abs(l.ecartKg) > 0.01 && l.justification);
 
-  // CERFA générés sur l'année (mouvements validés/annulés avec numéro)
+  // A02 : le numéro de fiche est posé dans TOUS les modes (Formation
+  // comprise) — un total annoncé « CERFA » compterait donc aussi les
+  // exercices d'élèves, dans un document remis tel quel à un auditeur.
+  // On sépare : la part opposable se lit au MODE scellé de l'écriture,
+  // JAMAIS au préfixe du numéro (la Démo numérote « FI- » des fiches
+  // Formation). Tout mouvement dont le mode n'est pas OFFICIEL compte en
+  // exercice : on ne surestime jamais le chiffre officiel.
   const prefixeAnnee = `${annee}-`;
-  const nbCerfa = mouvements.filter((mv) =>
-    mv.cerfaNumero && mv.date.startsWith(prefixeAnnee)).length;
+  const fichesAnnee = mouvements.filter((mv) =>
+    mv.cerfaNumero && mv.date.startsWith(prefixeAnnee));
+  const nbCerfaOfficiels =
+    fichesAnnee.filter((mv) => mv.mode === 'OFFICIEL').length;
+  const nbFichesFormation = fichesAnnee.length - nbCerfaOfficiels;
 
   return {
     annee, etablissement, jour,
@@ -569,7 +578,7 @@ async function collecterDonneesAudit5Minutes(store, annee) {
     machinesActives, controlesEnRetard,
     alertesCritiques,
     ecartsJustifies, ecartsNonJustifies, lignesInventoriees,
-    nbCerfa
+    nbFichesAnnee: fichesAnnee.length, nbCerfaOfficiels, nbFichesFormation
   };
 }
 
@@ -651,9 +660,11 @@ function gabaritAudit5Minutes(d) {
     + '</div>'
 
     + '<div class="audit5min-section">'
-    + '<h3>CERFA</h3>'
+    + '<h3>Fiches d’intervention</h3>'
     + '<div class="audit5min-lignes">'
-    + ligneAudit5min('CERFA générés en ' + d.annee, String(d.nbCerfa))
+    + ligneAudit5min('Fiches numérotées en ' + d.annee, String(d.nbFichesAnnee))
+    + ligneAudit5min('CERFA officiels (mode Officiel)', String(d.nbCerfaOfficiels))
+    + ligneAudit5min('Fiches d’exercice (mode Formation)', String(d.nbFichesFormation))
     + '</div>'
     + '</div>'
 

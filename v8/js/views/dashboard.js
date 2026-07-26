@@ -632,6 +632,19 @@ export async function render(conteneur, ctx) {
 
   const derniersMouvements = mouvements.slice(0, NB_DERNIERS_MOUVEMENTS);
 
+  // A02 : le numéro de fiche est posé dans TOUS les modes (Formation
+  // comprise) — stats.nbCerfa compte donc AUSSI les exercices d'élèves.
+  // Affiché sous un libellé « CERFA », ce total mentirait à un auditeur.
+  // On libelle le compteur pour ce qu'il est (fiches d'intervention) et on
+  // distingue la part opposable (mode OFFICIEL, la seule qui produit un
+  // CERFA) de la part d'exercice. La part officielle se lit au MODE scellé
+  // de l'écriture, JAMAIS au préfixe du numéro : la Démo numérote « FI- »
+  // des fiches Formation.
+  const fichesNumerotees = mouvements.filter((mv) => mv.cerfaNumero);
+  const nbCerfaOfficiels =
+    fichesNumerotees.filter((mv) => mv.mode === 'OFFICIEL').length;
+  const nbFichesFormation = fichesNumerotees.length - nbCerfaOfficiels;
+
   // ---- En-tête de vue ----
   const entete = enteteVue({
     titre: 'Tableau de bord',
@@ -664,9 +677,11 @@ export async function render(conteneur, ctx) {
       teinte: 'vert'
     })
     + carteKpi({
-      libelle: 'CERFA générés',
-      valeur: String(stats.nbCerfa),
-      sousTexte: stats.nbFiches + ' fiches d’intervention',
+      libelle: 'Fiches d’intervention',
+      valeur: String(fichesNumerotees.length),
+      sousTexte: nbCerfaOfficiels + ' CERFA officiel'
+        + (nbCerfaOfficiels > 1 ? 's' : '') + ' · '
+        + nbFichesFormation + ' en mode Formation',
       icone: 'bilan',
       teinte: 'violet'
     })
