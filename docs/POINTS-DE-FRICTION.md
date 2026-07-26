@@ -1,9 +1,14 @@
 # Points de friction — inventaire des limites connues d'inerWeb Fluide
 
 > **Établi le 26/07/2026** sur le dépôt `C:\git\inerweb-fluide`, branche `main`,
-> dernier commit lu `1cd457a`. Chaque affirmation de ce document a été vérifiée dans
-> le fichier qui la porte, et le fichier est cité avec sa ligne. Ce qui n'a pas pu
-> être vérifié est écrit comme tel, à la place où on l'attendrait.
+> dernier commit lu `1cd457a` ; le dernier commit modifiant le code livré est `2ca4aa0`
+> (à revérifier par `git log -1 --format=%h -- server v8 outils`). Chaque affirmation de
+> ce document a été vérifiée dans le fichier qui la porte, et le fichier est cité avec sa
+> ligne. Ce qui n'a pas pu être vérifié est écrit comme tel, à la place où on l'attendrait.
+>
+> **Complété le 26/07/2026** après relecture. Les points ajoutés portent un numéro
+> **bis** ou **ter**, à la place que leur donne leur gravité : les numéros déjà cités
+> ailleurs ne bougent pas.
 
 ---
 
@@ -80,6 +85,65 @@ pas tranchée, et ce document ne la tranche pas.**
 
 ---
 
+## 1 bis. L'exercice où aucun fluide n'a réellement bougé fait quand même bouger les stocks
+
+**Ce que c'est.** Le registre n'a qu'une seule comptabilité de matière. Une écriture y
+déplace des masses, quelle que soit la réalité de l'atelier. Or une part du travail
+pédagogique consiste justement à faire les gestes **sans fluide** : un CERFA rempli à
+blanc, une charge **simulée à l'azote**, un banc démonté. Dans ces cas, l'écriture n'a
+aujourd'hui **aucun moyen de ne pas mentir aux stocks**. Le projet l'écrit lui-même au
+§ 3.6 de `docs/REPONSE-AUDIT-EXTERNE-2026-07-25.md` (lignes 370 à 377).
+
+**L'effet réel, et il n'est pas théorique.** La charge simulée à l'azote est **une séance
+du programme de cet établissement**, pas un cas d'école : c'est donc la situation
+quotidienne de l'atelier, pas l'exception. Et l'effet ne s'arrête pas au registre
+interne. **Ces masses entrent dans la déclaration annuelle faite à l'autorité** :
+`server/declaration-annuelle.js` retient toute écriture `VALIDE` ou `ANNULE` de l'année
+(ligne 78) et **ne connaît pas la notion de mode** — le mot « mode » n'apparaît nulle part
+dans ce fichier. Une écriture de formation compte donc comme une autre.
+
+**Le seul remède existant, et ce qu'il vaut.** L'annulation par contre-écriture ramène la
+balance à zéro : les deux écritures se neutralisent, y compris dans la déclaration
+annuelle. Mais le projet le dit lui-même — « nous ne prétendons pas que ce soit une
+garantie **structurelle** — c'est une garantie de geste »
+(`docs/REPONSE-AUDIT-EXTERNE-2026-07-25.md:310`) : elle suppose que quelqu'un pense à la
+faire, à chaque fois. Rien dans le logiciel ne l'impose ni ne la rappelle. Une
+contre-écriture oubliée est une masse fausse qui reste.
+
+**État.** Non corrigé, déclaré comme limite assumée dans la réponse au relecteur du 25/07,
+qui demandait précisément l'avis d'un prochain auditeur sur ce point.
+
+**Condition de réveil.** Immédiate et permanente, dès la première séance sans fluide. Elle
+appelle une consigne écrite d'atelier — quand contre-écrire, qui le vérifie — et, à terme,
+une décision de fond : soit le registre distingue enfin l'écriture qui déplace de la
+matière de celle qui n'en déplace pas, soit toute séance sans fluide reste hors du
+registre. **Cette décision n'est pas prise.**
+
+---
+
+## 1 ter. En dehors du CERFA, aucun document produit ne porte de marque de non-officialité
+
+**Ce que c'est.** La mention « MODE FORMATION — DOCUMENT NON OFFICIEL — NE PAS UTILISER
+POUR UNE INTERVENTION RÉELLE » existe (`v8/js/cerfa/generateur.js:93`), mais elle n'est
+apposée **que sur le CERFA** : au cadre 14 des observations (`:538`) et en filigrane
+diagonal sur la page (`:754`). Vérifié : **aucun module de `v8/js/documents/` ne contient
+le mot « FORMATION »**. Le dossier machine, le dossier d'audit, la plaque F-Gas, le bon
+d'intervention, la feuille de mise en service, les étiquettes sortent sans aucune marque.
+
+**L'effet réel.** Tant que le verrou est fermé, cette mention est **la seule chose qui
+distingue à l'œil un document du logiciel d'un document réglementaire**. Un dossier
+machine ou une plaque F-Gas produits en séance sont donc indiscernables de leurs
+équivalents opposables, et rien n'empêche qu'ils se retrouvent dans un classeur.
+
+**État.** Non corrigé. Aucun constat de `docs/TABLE-CONSTATS-AUDIT-2026-07-25.md` ne porte
+ce point : il est ajouté ici parce qu'il a été trouvé, pas parce qu'on nous l'a signalé.
+
+**Condition de réveil.** Avant toute séance produisant des documents destinés à sortir de
+l'atelier. La fermeture est simple dans son principe — porter la même mention à tous les
+documents produits hors mode Officiel — mais elle n'est pas faite.
+
+---
+
 ## 2. Le suivi interne de remise en filière ne remplace pas le bordereau de suivi de déchets
 
 **Ce que c'est.** Le logiciel tient un « suivi interne de remise en filière » avec son
@@ -104,6 +168,35 @@ bordereau officiel réellement reporté.
 **Condition de réveil.** Immédiate, et hors logiciel : la démarche Trackdéchets se fait
 en dehors d'inerWeb Fluide, dès qu'un déchet part. Le champ « bordereau externe » du
 logiciel sert à y reporter le numéro officiel une fois obtenu.
+
+---
+
+## 2 bis. La surcharge de réemploi est signalée, jamais bloquée — mode Officiel compris
+
+**Ce que c'est.** Le fluide récupéré sur une machine peut être réemployé sur **cette
+machine**, sans retraitement. Le logiciel tient donc un avoir par machine d'origine. Quand
+on réintroduit **plus** qu'on n'avait récupéré, il y a surcharge de réemploi : de la
+matière apparaît sans origine. Le logiciel la **signale** — une alerte `alr-reemploi-…`
+(`server/api.js:1668`, miroir `v8/js/data/demo-store.js:2976`) et une mention portée au
+cadre 14 du CERFA (`v8/js/cerfa/generateur.js:286`) — mais il **ne bloque rien**.
+
+**Ce n'est pas un défaut, c'est une décision.** Elle est expresse, datée du 22/07/2026, et
+écrite dans le code lui-même : « La surcharge est SIGNALÉE, jamais bloquée (décision
+Franck 22/07, tous modes — Officiel compris) » (`v8/js/cerfa/generateur.js:96-100`). Le
+motif est d'atelier : un blocage obligerait à rectifier une réalité constatée, alors qu'un
+signalement l'écrit. Elle est consignée au registre des arbitrages
+(`docs/REGISTRE-DES-ARBITRAGES.md`, ligne « surcharge de réemploi »).
+
+**L'effet réel.** Un **écart de matière peut être validé** sur une fiche opposable le jour
+où le verrou s'ouvrira. Il est écrit sur le document, ce qui est le contraire d'un
+silence — mais il est écrit, pas empêché. L'établissement doit donc accepter nommément que
+son registre puisse porter une fiche valide comportant un écart de matière assumé.
+
+**État.** Délibéré, non contesté, non refermé — et il n'est pas prévu de le refermer.
+
+**Condition de réveil.** À la première surcharge réellement constatée, et de toute façon à
+l'ouverture du mode Officiel : c'est le moment où la mention passe d'un document
+pédagogique à une pièce opposable.
 
 ---
 
@@ -144,14 +237,34 @@ en cas d'absence prolongée de l'auteur, plus personne ne sait pourquoi une règ
 beaucoup de documentation — `docs/CARTE-CODE.md`, les plans de lot, un `CHANGELOG.md`
 très détaillé — mais lire n'est pas savoir.
 
-**État.** Non corrigé, et aucun correctif logiciel ne le fermera. Le risque
-d'exploitation « poste unique » est par ailleurs listé au constat interne A30, accepté
-tel quel.
+**État.** Non corrigé, et aucun correctif logiciel ne le fermera.
+
+**Les autres risques d'exploitation du même constat, qui ne se réduisent pas au poste
+unique.** Le constat interne A30 est libellé « horloge, disque plein, antivirus,
+**migration interrompue**, poste unique » (`docs/TABLE-CONSTATS-AUDIT-2026-07-25.md`,
+ligne 79) et il est accepté tel quel, la garde d'exploitation devant figurer à la
+procédure d'ouverture. Ce document ne retenait au départ que le poste unique ; les autres
+sont écrits ici, et la migration interrompue mérite d'être détaillée :
+
+- **Migration interrompue.** Les migrations de base sont jouées au démarrage, **une par
+  une, chacune dans sa propre transaction** (`server/migrations.js:1738-1769`), et
+  `server/db.js:159` les lance **sans copie de sauvegarde préalable**. Une migration qui
+  échoue est bien annulée seule, sans dégât. Mais une coupure de courant, un disque plein
+  ou un arrêt forcé **entre deux migrations** laisse la base à une version intermédiaire :
+  un registre **à moitié converti**, cohérent au sens de la base mais pas au sens du
+  contrat. Le seul retour arrière est la restauration d'une sauvegarde — c'est-à-dire le
+  point 3, celui qui n'a jamais été testé.
+- **Horloge du poste.** Les dates et les échéances réglementaires sont calculées sur
+  l'horloge de la machine. Une horloge fausse produit des échéances fausses, sans alerte.
+- **Disque plein.** Il frappe l'écriture de la base, les sauvegardes et le témoin de
+  scellement quotidien au même moment.
+- **Antivirus.** Un antivirus d'établissement peut mettre en quarantaine un exécutable ou
+  un fichier de base : le logiciel ne démarre plus, ou démarre sur une base incomplète.
 
 **Condition de réveil.** Permanente. Elle appelle une décision d'organisation, pas de
 code : au minimum une seconde personne de l'établissement capable de restaurer une
-sauvegarde et de produire un dossier d'audit, et une consigne écrite de ce qu'il ne
-faut pas modifier.
+sauvegarde et de produire un dossier d'audit, une consigne écrite de ce qu'il ne faut pas
+modifier, et **une sauvegarde prise avant toute mise à jour du logiciel**.
 
 ---
 
@@ -286,12 +399,55 @@ il faut le savoir avant de présenter le registre comme inaltérable.
 **État.** Non corrigé, consigné avant l'audit externe et confirmé par lui (constat
 interne A13). Le mot « inaltérable » est employé dans la documentation du projet : il
 signifie « inaltérable par l'application », jamais « inaltérable par un administrateur
-du poste ».
+du poste ». **Et il n'est pas toujours qualifié.** `README.md:42` le borne correctement
+(« inaltérable **au sein de l'application** », avec le renvoi au chiffrement du disque) ;
+mais `index.html:243` porte le titre nu « Registre inaltérable », et `RGPD.md:107` comme
+`v8/js/views/rgpd.js:56` emploient le mot sans réserve. Ces trois emplois-là peuvent faire
+prendre le registre pour ce qu'il n'est pas.
 
 **Condition de réveil.** Le jour où le registre doit résister à une contestation
 sérieuse, ou dès qu'un tiers accède au poste. La fermeture demande un lot dédié
 (confrontation au témoin externe) puis, pour un vrai ancrage, un service
-d'horodatage tiers — hors périmètre du projet à ce jour.
+d'horodatage tiers — hors périmètre du projet à ce jour. Les trois emplois non qualifiés
+du mot « inaltérable », eux, se corrigent à la relecture des écrans et des notices.
+
+---
+
+## 9 bis. Le rapprochement de matière sous-détecte le jour même d'une remise en filière
+
+**Ce que c'est.** Quand une bouteille part en filière déchets, le logiciel fige un repère
+de masse et compare ensuite la masse réelle de la bouteille à ce que le registre explique.
+Les dates du registre sont **au jour près**, le repère est figé **à l'instant** de la
+remise. À date **égale** au repère, le logiciel ne retient donc que les contributions
+**positives** — celles qui expliquent un gain — et écarte les négatives :
+`contributionRetenue`, `v8/js/data/remise-filiere.js:251-257`, dont la dernière ligne est
+`return contribution > 0 ? contribution : 0;`.
+
+**Pourquoi c'est écrit ainsi.** Le choix est délibéré et documenté au même endroit
+(lignes 226 à 250), ainsi que dans le `CHANGELOG.md` — passe de vérification finale du lot
+B2, 26/07/2026 : « **le prix est une sous-détection du jour de la remise** ; le prix
+inverse est une accusation écrite et fausse ». Le
+comportement d'avant recomptait ces écritures et inventait un gain : le logiciel écrivait
+« aucune écriture du registre ne l'explique » d'une opération valide — un regroupement de
+déchets suivi de la remise le jour même — et l'accusation remontait au feu tricolore et au
+guide d'audit. La doctrine retenue est « le doute retire l'accusation, jamais
+l'obligation ».
+
+**L'effet réel, qui n'est pas nul.** Une écriture sortante datée du jour de la remise
+n'est pas retranchée de la masse attendue. Si, le même jour, la bouteille est **regonflée
+d'autant sans écriture**, l'écart se compense et **aucune alerte ne se déclenche**. Le
+contre-tir est vérifié et vrai — une re-inflation seule, sans écriture sortante du même
+jour, reste dénoncée — mais la combinaison, elle, passe. C'est un trou dans le
+rapprochement de matière, c'est-à-dire dans la fonction même d'un registre de traçabilité.
+Sa portée est bornée à **une seule journée par remise**, celle du repère.
+
+**État.** Délibéré et assumé, écrit dans le code et au journal des versions. Aucun des
+deux réglages possibles n'est sans prix : celui-ci sous-détecte, l'autre accuse à tort.
+
+**Condition de réveil.** Le jour où le registre doit servir de preuve dans une
+contestation portant sur des masses. La fermeture propre suppose des dates **horodatées**
+et non plus au jour près, ce qui touche au format des écritures scellées : hors périmètre
+d'un correctif.
 
 ---
 
@@ -344,8 +500,13 @@ version et l'écrire dans le paquet, à côté de l'empreinte SHA-256 déjà pro
 ## 12. Ce que le dernier audit a laissé ouvert et qui n'a pas été traité
 
 Repris de `docs/TABLE-CONSTATS-AUDIT-2026-07-25.md`, lignes « non traité », « assumé »
-et « hors code ». Aucun de ces points n'affecte la valeur probante du registre — c'est
-le motif écrit pour lesquels ils ont été laissés — mais ils sont réels.
+et « hors code ». Aucun de ces points n'a d'**effet connu** sur la valeur probante du
+registre — c'est le motif écrit pour lequel ils ont été laissés — mais ils sont réels.
+
+⚠️ **« Connu » n'est pas « nul », et la dernière ligne du tableau le montre.** L'un de ces
+points est un échec de test que **nous ne savons pas identifier**. On ne peut pas affirmer
+d'un défaut inconnu qu'il est sans effet : tant qu'il n'est pas nommé, sa portée est
+inconnue, pas nulle.
 
 | Point | Ce que c'est | État | Condition de réveil |
 |---|---|---|---|
@@ -423,10 +584,11 @@ le motif écrit pour lesquels ils ont été laissés — mais ils sont réels.
 Cette section est écrite noir sur blanc parce qu'elle est vraie, et parce qu'elle
 change la façon de lire tout le reste.
 
-Le dépôt affiche « tout vert, 121 exécutions » (chiffre de `docs/CARTE-CODE.md:35`,
-non rejoué pour la rédaction de ce document — la commande est
-`node outils/lancer-tests.mjs --tout`). **Cela prouve l'absence de régression sur ce
-qui est déjà testé. Cela ne prouve pas l'absence de défaut.**
+Le dépôt affiche « tout vert, 121 exécutions » (chiffre de `docs/CARTE-CODE.md:35`).
+**Ce chiffre a été rejoué le 26/07/2026 pour la rédaction de ce document**, par
+`node outils/lancer-tests.mjs --tout` : résultat « TOUT VERT — 121 exécutions en 97,9 s ».
+**Cela prouve l'absence de régression sur ce qui est déjà testé. Cela ne prouve pas
+l'absence de défaut.**
 
 Sur les trois derniers lots (B1, B2 et B3, menés les 25 et 26 juillet 2026), les
 revues adversariales ont levé **1 défaut bloquant, 15 constats importants et
@@ -488,9 +650,12 @@ Par honnêteté, les limites de l'inventaire lui-même.
 - Il recense les défauts **connus** au 26/07/2026. Il ne dit rien de ceux que personne
   n'a encore trouvés, et la section 14 donne toutes les raisons de penser qu'il en
   reste.
-- Le filet de tests n'a **pas été rejoué** pour la rédaction de ce document : les
-  chiffres de couverture cités viennent de `docs/CARTE-CODE.md` et du `CHANGELOG.md`,
-  qui les datent tous deux du 26/07/2026.
+- Le filet de tests **a été rejoué** le 26/07/2026 pour la rédaction de ce document
+  (`node outils/lancer-tests.mjs --tout` → « TOUT VERT — 121 exécutions en 97,9 s »), et
+  ce résultat concorde avec `docs/CARTE-CODE.md:35`. Mais **cela ne vaut que ce que dit la
+  section 14** : un filet vert ne prouve rien d'autre que l'absence de régression sur ce
+  qui est déjà testé. Les comptes de défauts par lot, eux, ne sont pas rejouables : ils
+  viennent du `CHANGELOG.md`.
 - Deux affirmations reposent sur des gestes qui se passent hors du dépôt et qu'aucune
   lecture de code ne peut vérifier : la désactivation du déploiement Google (point 5)
   et l'état réel des sauvegardes et du chiffrement du poste (point 3). Pour ces deux
