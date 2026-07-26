@@ -217,12 +217,43 @@ function pixelsUnis(largeur, hauteur, couleur) {
 }
 
 // ============================================================
+// REVUE DU 25/07 (MINEUR 2) — LES SECTIONS 2 À 4 N'INTERROGEAIENT QUE
+// LE MIROIR CommonJS. Le module que le NAVIGATEUR exécute (l'ESM
+// v8/js/data/png.js) n'était couvert que par les 8 cas de parité de la
+// section 1 : un défaut de décodage présent dans le seul ESM, hors de
+// ces 8 cas, n'aurait été vu par personne.
+//
+// Ces deux passe-plats posent désormais CHAQUE question aux DEUX
+// modules. La valeur rendue est celle de l'ESM (c'est lui le sujet), et
+// tout écart entre les deux est compté puis dénoncé en fin de section 4.
+// ============================================================
+let ecartsEsmCjs = [];
+
+function structure(octets) {
+  const a = moduleEsm.verifierStructurePng(octets);
+  const b = miroir.verifierStructurePng(octets);
+  if (a.ok !== b.ok || a.motif !== b.motif
+      || JSON.stringify(a.entete) !== JSON.stringify(b.entete)
+      || (a.idat ? a.idat.length : -1) !== (b.idat ? b.idat.length : -1)) {
+    ecartsEsmCjs.push(`structure : ESM ${a.ok}/${a.motif} · CJS ${b.ok}/${b.motif}`);
+  }
+  return a;
+}
+
+function analyse(octets) {
+  const a = moduleEsm.analyseEncre(octets);
+  const b = miroir.analyseEncre(octets);
+  if (a !== b) ecartsEsmCjs.push(`encre : ESM ${a} · CJS ${b}`);
+  return a;
+}
+
+// ============================================================
 // 2. Le décodage : un VRAI PNG est lu, son en-tête est rendu
 // ============================================================
 {
   const png = construirePng({
     largeur: 12, hauteur: 5, pixels: pixelsUnis(12, 5, [255, 255, 255, 255]) });
-  const verdict = miroir.verifierStructurePng(png);
+  const verdict = structure(png);
   verifier('un vrai PNG est accepté, IHDR relu (dimensions, canaux)',
     verdict.ok === true && verdict.entete.largeur === 12
     && verdict.entete.hauteur === 5 && verdict.entete.canaux === 4
@@ -231,10 +262,10 @@ function pixelsUnis(largeur, hauteur, couleur) {
   const decoupe = construirePng({
     largeur: 12, hauteur: 5, chunksIdat: 3,
     pixels: pixelsUnis(12, 5, [255, 255, 255, 255]) });
-  const verdictDecoupe = miroir.verifierStructurePng(decoupe);
+  const verdictDecoupe = structure(decoupe);
   verifier('un PNG à IDAT multiples est lu (le flux zlib est recollé)',
     verdictDecoupe.ok === true && verdictDecoupe.idat.length === 3
-    && miroir.analyseEncre(decoupe) === 'VIDE');
+    && analyse(decoupe) === 'VIDE');
 }
 
 // ============================================================
@@ -245,7 +276,7 @@ function pixelsUnis(largeur, hauteur, couleur) {
   const bloc = Buffer.alloc(2348, 0x2e);
   EN_TETE.copy(bloc, 0);
   Buffer.from('ceci n est pas une image').copy(bloc, 8);
-  const verdictBloc = miroir.verifierStructurePng(bloc);
+  const verdictBloc = structure(bloc);
   verifier('ATTAQUE A04 : bloc de 2 348 o aux bons octets magiques → REFUSÉ',
     verdictBloc.ok === false, JSON.stringify(verdictBloc.motif));
 
@@ -259,42 +290,42 @@ function pixelsUnis(largeur, hauteur, couleur) {
   const crcCasse = Buffer.from(valide);
   crcCasse[crcCasse.length - 1] ^= 0xff; // dernier octet du CRC-32 de l'IEND
   verifier('ATTAQUE : CRC-32 de l’IEND retouché → REFUSÉ',
-    miroir.verifierStructurePng(crcCasse).ok === false
-    && miroir.verifierStructurePng(crcCasse).motif === 'CRC-32 faux sur IEND',
-    miroir.verifierStructurePng(crcCasse).motif);
+    structure(crcCasse).ok === false
+    && structure(crcCasse).motif === 'CRC-32 faux sur IEND',
+    structure(crcCasse).motif);
 
   const crcIhdr = Buffer.from(valide);
   crcIhdr[29] ^= 0x01; // un octet du CRC de l'IHDR
   verifier('ATTAQUE : CRC-32 de l’IHDR retouché → REFUSÉ',
-    miroir.verifierStructurePng(crcIhdr).ok === false
-    && miroir.verifierStructurePng(crcIhdr).motif.includes('CRC-32'),
-    miroir.verifierStructurePng(crcIhdr).motif);
+    structure(crcIhdr).ok === false
+    && structure(crcIhdr).motif.includes('CRC-32'),
+    structure(crcIhdr).motif);
 
   const donneeIhdrRetouchee = Buffer.from(valide);
   donneeIhdrRetouchee[19] = 99; // largeur modifiée, CRC laissé tel quel
   verifier('ATTAQUE : dimension réécrite sans refaire le CRC → REFUSÉ',
-    miroir.verifierStructurePng(donneeIhdrRetouchee).ok === false);
+    structure(donneeIhdrRetouchee).ok === false);
 
   verifier('ATTAQUE : fichier tronqué (IEND coupé) → REFUSÉ',
-    miroir.verifierStructurePng(valide.subarray(0, valide.length - 6)).ok === false);
+    structure(valide.subarray(0, valide.length - 6)).ok === false);
 
   const sansIend = Buffer.concat([
     EN_TETE,
     valide.subarray(8, valide.length - 12)]);
   verifier('ATTAQUE : IEND absent → REFUSÉ',
-    miroir.verifierStructurePng(sansIend).ok === false
-    && miroir.verifierStructurePng(sansIend).motif === 'IEND absent');
+    structure(sansIend).ok === false
+    && structure(sansIend).motif === 'IEND absent');
 
   const apresIend = Buffer.concat([valide, Buffer.from('charge utile cachée')]);
   verifier('ATTAQUE : octets ajoutés APRÈS IEND → REFUSÉ',
-    miroir.verifierStructurePng(apresIend).ok === false
-    && miroir.verifierStructurePng(apresIend).motif === 'octets après IEND');
+    structure(apresIend).ok === false
+    && structure(apresIend).motif === 'octets après IEND');
 
   const sansIdat = Buffer.concat([
     EN_TETE, valide.subarray(8, 8 + 25), chunk('IEND', Buffer.alloc(0))]);
   verifier('ATTAQUE : aucun IDAT (en-tête seul) → REFUSÉ',
-    miroir.verifierStructurePng(sansIdat).ok === false
-    && miroir.verifierStructurePng(sansIdat).motif.includes('IDAT'));
+    structure(sansIdat).ok === false
+    && structure(sansIdat).motif.includes('IDAT'));
 
   const ihdrZero = Buffer.alloc(13);
   ihdrZero.writeUInt32BE(0, 0);
@@ -304,8 +335,8 @@ function pixelsUnis(largeur, hauteur, couleur) {
     EN_TETE, chunk('IHDR', ihdrZero), chunk('IDAT', zlib.deflateSync(Buffer.alloc(4))),
     chunk('IEND', Buffer.alloc(0))]);
   verifier('ATTAQUE : IHDR de dimension nulle (CRC juste) → REFUSÉ',
-    miroir.verifierStructurePng(dimensionNulle).ok === false
-    && miroir.verifierStructurePng(dimensionNulle).motif === 'dimension nulle');
+    structure(dimensionNulle).ok === false
+    && structure(dimensionNulle).motif === 'dimension nulle');
 
   const ihdrCouleur = Buffer.alloc(13);
   ihdrCouleur.writeUInt32BE(2, 0);
@@ -316,7 +347,7 @@ function pixelsUnis(largeur, hauteur, couleur) {
     chunk('IDAT', zlib.deflateSync(Buffer.alloc(4))),
     chunk('IEND', Buffer.alloc(0))]);
   verifier('ATTAQUE : type de couleur inexistant (CRC juste) → REFUSÉ',
-    miroir.verifierStructurePng(couleurIllegale).motif === 'type de couleur illégal');
+    structure(couleurIllegale).motif === 'type de couleur illégal');
 }
 
 // ============================================================
@@ -329,15 +360,15 @@ function pixelsUnis(largeur, hauteur, couleur) {
     largeur: 1400, hauteur: 700,
     pixels: pixelsUnis(1400, 700, [255, 255, 255, 255]) });
   verifier('canvas 1400×700 blanc uni (jamais dessiné) → VIDE',
-    miroir.analyseEncre(vierge) === 'VIDE');
+    analyse(vierge) === 'VIDE');
   const viergeTransparent = construirePng({
     largeur: 1400, hauteur: 700, pixels: pixelsUnis(1400, 700, [0, 0, 0, 0]) });
   verifier('canvas 1400×700 entièrement transparent → VIDE',
-    miroir.analyseEncre(viergeTransparent) === 'VIDE');
+    analyse(viergeTransparent) === 'VIDE');
   const noirUni = construirePng({
     largeur: 60, hauteur: 30, pixels: pixelsUnis(60, 30, [0, 0, 0, 255]) });
   verifier('image noire unie (aplat, aucun tracé) → VIDE',
-    miroir.analyseEncre(noirUni) === 'VIDE');
+    analyse(noirUni) === 'VIDE');
 
   // DÉCISION DU PROPRIÉTAIRE : aucun seuil d'encre. Une griffure d'UN
   // SEUL pixel est une signature — le signataire seul juge son tracé.
@@ -348,7 +379,7 @@ function pixelsUnis(largeur, hauteur, couleur) {
     p[position * 4 + 2] = 71;
     const png = construirePng({ largeur: 1400, hauteur: 700, pixels: p });
     verifier(`griffure d’UN SEUL pixel (position ${position}) → ENCRE`,
-      miroir.analyseEncre(png) === 'ENCRE');
+      analyse(png) === 'ENCRE');
   }
   // Une différence sur le SEUL canal alpha compte aussi (tracé sur fond
   // transparent : c'est ce que produit un canvas non peint en blanc).
@@ -356,7 +387,7 @@ function pixelsUnis(largeur, hauteur, couleur) {
     const p = pixelsUnis(200, 100, [0, 0, 0, 0]);
     p[4 * 512 + 3] = 1;
     verifier('un seul pixel d’alpha 1 sur fond transparent → ENCRE',
-      miroir.analyseEncre(construirePng({ largeur: 200, hauteur: 100, pixels: p }))
+      analyse(construirePng({ largeur: 200, hauteur: 100, pixels: p }))
         === 'ENCRE');
   }
 
@@ -367,9 +398,9 @@ function pixelsUnis(largeur, hauteur, couleur) {
     const encre = pixelsUnis(64, 32, [200, 210, 220, 255]);
     encre[4 * (17 * 64 + 33)] = 3;
     verifier(`filtre ${filtre} : uni → VIDE, un pixel différent → ENCRE`,
-      miroir.analyseEncre(construirePng(
+      analyse(construirePng(
         { largeur: 64, hauteur: 32, pixels: uni, filtre })) === 'VIDE'
-      && miroir.analyseEncre(construirePng(
+      && analyse(construirePng(
         { largeur: 64, hauteur: 32, pixels: encre, filtre })) === 'ENCRE');
   }
   const varie = new Uint8Array(64 * 32 * 4);
@@ -381,41 +412,41 @@ function pixelsUnis(largeur, hauteur, couleur) {
   ]) {
     const png = construirePng({ largeur: 64, hauteur: 32, pixels: varie, ...options });
     verifier(`DEFLATE ${nom} : image bruitée relue → ENCRE`,
-      miroir.analyseEncre(png) === 'ENCRE');
+      analyse(png) === 'ENCRE');
     const uni = construirePng({ largeur: 64, hauteur: 32,
       pixels: pixelsUnis(64, 32, [7, 7, 7, 255]), ...options });
     verifier(`DEFLATE ${nom} : image unie relue → VIDE`,
-      miroir.analyseEncre(uni) === 'VIDE');
+      analyse(uni) === 'VIDE');
   }
 
   // Autres formats de pixels : gris, gris+alpha, RVB, palette.
   const gris = new Uint8Array(20 * 10).fill(128);
   verifier('niveaux de gris unis → VIDE',
-    miroir.analyseEncre(construirePng({ largeur: 20, hauteur: 10,
+    analyse(construirePng({ largeur: 20, hauteur: 10,
       pixels: gris, canaux: 1, typeCouleur: 0 })) === 'VIDE');
   gris[57] = 0;
   verifier('niveaux de gris avec un pixel noir → ENCRE',
-    miroir.analyseEncre(construirePng({ largeur: 20, hauteur: 10,
+    analyse(construirePng({ largeur: 20, hauteur: 10,
       pixels: gris, canaux: 1, typeCouleur: 0 })) === 'ENCRE');
   const rvb = new Uint8Array(9 * 9 * 3).fill(64);
   verifier('RVB uni → VIDE',
-    miroir.analyseEncre(construirePng({ largeur: 9, hauteur: 9,
+    analyse(construirePng({ largeur: 9, hauteur: 9,
       pixels: rvb, canaux: 3, typeCouleur: 2 })) === 'VIDE');
   const seize = new Uint8Array(8 * 8 * 2).fill(0x33);
   verifier('gris 16 bits uni → VIDE',
-    miroir.analyseEncre(construirePng({ largeur: 8, hauteur: 8,
+    analyse(construirePng({ largeur: 8, hauteur: 8,
       pixels: seize, canaux: 1, typeCouleur: 0, profondeur: 16 })) === 'VIDE');
   seize[11] = 0x34;
   verifier('gris 16 bits avec un demi-pixel différent → ENCRE',
-    miroir.analyseEncre(construirePng({ largeur: 8, hauteur: 8,
+    analyse(construirePng({ largeur: 8, hauteur: 8,
       pixels: seize, canaux: 1, typeCouleur: 0, profondeur: 16 })) === 'ENCRE');
 
   // On ne conclut JAMAIS au vide sur un format que l'on ne sait pas lire.
   const entrelace = construirePng({ largeur: 16, hauteur: 16,
     entrelacement: 1, pixels: pixelsUnis(16, 16, [255, 255, 255, 255]) });
   verifier('PNG entrelacé (Adam7) : structure VALIDE mais encre INDETERMINABLE',
-    miroir.verifierStructurePng(entrelace).ok === true
-    && miroir.analyseEncre(entrelace) === 'INDETERMINABLE');
+    structure(entrelace).ok === true
+    && analyse(entrelace) === 'INDETERMINABLE');
   const palette = (() => {
     const ihdr = Buffer.alloc(13);
     ihdr.writeUInt32BE(8, 0);
@@ -427,8 +458,8 @@ function pixelsUnis(largeur, hauteur, couleur) {
       chunk('IDAT', zlib.deflateSync(brut)), chunk('IEND', Buffer.alloc(0))]);
   })();
   verifier('PNG en palette 4 bits : structure VALIDE mais encre INDETERMINABLE',
-    miroir.verifierStructurePng(palette).ok === true
-    && miroir.analyseEncre(palette) === 'INDETERMINABLE');
+    structure(palette).ok === true
+    && analyse(palette) === 'INDETERMINABLE');
 
   // Flux zlib menteur : structure impeccable, contenu indéchiffrable.
   const idatMenteur = (() => {
@@ -441,8 +472,8 @@ function pixelsUnis(largeur, hauteur, couleur) {
       chunk('IEND', Buffer.alloc(0))]);
   })();
   verifier('IDAT qui n’est pas du zlib : structure VALIDE, encre INDETERMINABLE',
-    miroir.verifierStructurePng(idatMenteur).ok === true
-    && miroir.analyseEncre(idatMenteur) === 'INDETERMINABLE');
+    structure(idatMenteur).ok === true
+    && analyse(idatMenteur) === 'INDETERMINABLE');
 
   // Bombe de décompression : surface déclarée démesurée → jamais décodée.
   const bombe = (() => {
@@ -456,7 +487,12 @@ function pixelsUnis(largeur, hauteur, couleur) {
   })();
   const debut = Date.now();
   verifier('bombe de décompression 20 000 × 20 000 : INDETERMINABLE, sans décoder',
-    miroir.analyseEncre(bombe) === 'INDETERMINABLE' && Date.now() - debut < 2000);
+    analyse(bombe) === 'INDETERMINABLE' && Date.now() - debut < 2000);
+
+  // REVUE DU 25/07 (MINEUR 2) — le compte rendu du passe-plat : toutes
+  // les questions des sections 2 à 4 ont été posées aux DEUX modules.
+  verifier('sections 2 à 4 : ESM et miroir CommonJS ont répondu la MÊME chose,'
+    + ' sur chaque cas', ecartsEsmCjs.length === 0, ecartsEsmCjs.join(' | '));
 }
 
 // ============================================================
