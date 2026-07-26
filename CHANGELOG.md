@@ -124,6 +124,30 @@ constat : sans le sien, la modification d'un `typeInstallation` absent **plante*
 `NOT NULL` de la colonne, et la garde des activités **tombait** en rendant son message
 interne.
 
+- **B1-f — quatre commentaires qui disaient le CONTRAIRE du code.** Dernière passe, après
+  contrôle final. Aucune ligne de comportement touchée (vérifié mécaniquement : le diff
+  filtré de ses lignes de commentaire ne rend rien). Dans un dépôt dont la doctrine est la
+  preuve citée **et vérifiée**, un commentaire faux rouvre le trou que le code a fermé — un
+  contributeur le lit et reconclut que la porte est ouverte. Les quatre : le bloc de tête du
+  filtre affirmait que `arreterMachine` / `demantelerMachine` « restent OPERATEUR » alors
+  que B1-e les a portés à VALIDEUR, **et ce bloc se déclare lui-même « le seul endroit à
+  tenir à jour »** ; l'écran de la fiche personne et la JSDoc de `createPersonne`
+  justifiaient encore le filtre par « le store applique alors son défaut (le rôle se déduit
+  du type de personne) », déduction qui ne joue plus pour un appelant sans droit
+  d'attribuer ; et le commentaire de `normaliserQualifMachine` annonçait que la chaîne vide
+  était lue comme absente — **moitié morte et inatteignable**, la garde de type la refuse en
+  amont aux quatre portes. La contre-épreuve de ce dernier point a montré que le commentaire
+  était **doublement** faux : en desserrant la garde amont comme il y invitait, la création
+  côté serveur tombe sur `CHECK constraint failed` (message brut de moteur au lieu d'un
+  refus métier) et la chaîne vide s'enregistre telle quelle côté démo. Nouvelle section
+  « C bis. *Absent* ne veut pas dire *vide* » dans la suite doublée `test-machine-saisie`.
+  **TOUT VERT — 109 exécutions.**
+  ⏳ **Question ouverte, non codée** : `v8/js/views/machines.js` affiche « Arrêter » et
+  « Démanteler » à tout le monde ; depuis que ces gestes sont au niveau du responsable, un
+  élève qui clique obtient un refus lisible en infobulle. Griser le bouton plutôt que
+  laisser échouer est un arbitrage de **présentation pédagogique**, pas de sécurité (la
+  garde serveur tient dans les deux cas) — il revient à Franck.
+
 ### 🛡️ L2 — SUITE DE SÉCURITÉ NÉGATIVE ET NEUF TROUS FERMÉS (25/07, session autonome)
 
 **Méthode : on ne croit personne sur parole, on TIRE.** Un inventaire des surfaces

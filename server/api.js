@@ -1790,8 +1790,13 @@ const HANDLERS = {
   // === personnel (VAGUE 3) ==================================
 
   /**
-   * Crée une personne. roleApp par défaut : ELEVE si typePersonne ELEVE,
-   * sinon ENSEIGNANT (le test crée un référent via roleApp explicite).
+   * Crée une personne. roleApp par défaut : le MOINDRE PRIVILÈGE, sauf pour un
+   * appelant qui a le droit d'attribuer un rôle. La déduction « typePersonne
+   * non ELEVE => ENSEIGNANT » ne joue que si peutAttribuerRole (voir plus bas,
+   * dans la méthode) ; pour tout autre appelant la fiche naît ELEVE quel que
+   * soit le typePersonne envoyé — sinon un élève fabriquait un ENSEIGNANT en
+   * saisissant « salarié ». La fiche s'enregistre quand même (on n'empêche
+   * jamais d'inscrire quelqu'un) et le responsable élève le rôle ensuite.
    */
   createPersonne(params, contexte) {
     const d = params.donneesPersonne || {};
