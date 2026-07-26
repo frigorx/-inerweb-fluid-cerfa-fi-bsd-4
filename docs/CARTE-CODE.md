@@ -24,6 +24,11 @@ contre chacune.
 - **Tests** : `node outils/lancer-tests.mjs` = TOUT le filet (~30 s, arrêt
   au premier rouge). Suites `SUITES_DOUBLEES` jouées demo PUIS local.
   Toute nouvelle suite `test-*.mjs` est auto-découverte.
+  `outils/test-references-suites.mjs` (revue B2, mineur 1) : **toute suite
+  CITÉE dans un commentaire ou du code doit exister** — 5 pointeurs morts
+  trouvés d'un coup (3 posés par B2, 2 antérieurs). Dans un dépôt dont la
+  doctrine est la preuve citée, une référence morte fait croire à un filet
+  qu'on n'a pas.
 
 ## server/ (CommonJS — les modules purs du front y sont DUPLIQUÉS en littéraux)
 

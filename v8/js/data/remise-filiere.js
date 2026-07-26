@@ -15,7 +15,7 @@
 // ne doit pas faire. Le logiciel dit désormais ce qu'il est.
 //
 // Miroir littéral CommonJS côté serveur : server/remise-filiere.js
-// (parité prouvée par server/test-remise-filiere-parite.mjs).
+// (parité prouvée par v8/js/data/test-remise-filiere-pur.mjs).
 // ============================================================
 
 /** Nom de l'objet interne, partout où l'utilisateur le lit. */

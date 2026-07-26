@@ -58,7 +58,7 @@ const { calculerDeclarationAnnuelle } = require('./declaration-annuelle.js');
 const equipement = require('./equipement.js');
 // Lot B2 — remise en filière déchets : forme et unicité du numéro du SUIVI
 // INTERNE (miroir littéral de v8/js/data/remise-filiere.js, parité prouvée
-// par test-remise-filiere-parite.mjs).
+// par v8/js/data/test-remise-filiere-pur.mjs).
 const remiseFiliere = require('./remise-filiere.js');
 // Signatures réelles (lot C, brique C1) : déclarations figées + critères
 // d'illisibilité (miroir du module ESM du front, parité prouvée par

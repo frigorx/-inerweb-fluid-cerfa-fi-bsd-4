@@ -6,7 +6,7 @@
  *
  * MIROIR LITTÉRAL CommonJS des règles pures de
  * v8/js/data/remise-filiere.js. Parité prouvée par
- * server/test-remise-filiere-parite.mjs : toute divergence de
+ * v8/js/data/test-remise-filiere-pur.mjs : toute divergence de
  * comportement OU de message rend la suite rouge.
  *
  * Ne toucher un miroir sans l'autre est la faute la plus chère du
