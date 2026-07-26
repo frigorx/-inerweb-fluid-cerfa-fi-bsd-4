@@ -484,5 +484,89 @@ console.log('\n--- H. Rafraîchissement par toutes les portes de sortie ---');
   }
 }
 
+// ============================================================
+// I. Revue finale B2 (observation 3) — L'ÉCRAN NE PROMET PLUS UNE
+// ANOMALIE QUI NE VIENDRA PAS.
+//
+// Le parcours normal propose de joindre le bordereau officiel AUSSITÔT
+// après la création du suivi : le suivi porte donc déjà une pièce avant
+// toute attestation, et `BSFF_ISSUE_SANS_PIECE` — qui ne compte que la
+// PRÉSENCE d'au moins une pièce — ne se lèvera jamais sur ce chemin.
+// La modale d'attestation, elle, annonçait : « si aucune pièce
+// justificative n'est jointe (certificat de l'installation, bordereau
+// officiel), la déclaration signalera une anomalie ». Faux sur le chemin
+// normal, et lu comme un CONTRÔLE du certificat d'issue.
+// On tire les DEUX : le fait (aucune anomalie sur le chemin normal) et le
+// texte (il dit ce que l'anomalie compte vraiment).
+// ============================================================
+console.log('\n--- I. L’écran ne promet plus une anomalie qui ne vient pas ---');
+
+{
+  const { ouvrirAttestationIssue } = await import('./dechets.js');
+  const PNG_1PX_I = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR'
+    + '42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+  const FLUIDE_I = (await store.getFluides())[0].code;
+
+  // 1. LE FAIT : chemin normal — bordereau joint à la création, PUIS issue
+  //    attestée sans le moindre certificat. Aucune anomalie ne se lève.
+  const bI = await store.createBouteille({
+    type: 'RECUPERATION', fluide: FLUIDE_I, etatFluide: 'RECUPERE',
+    tareKg: 10, masseBruteKg: 17, contenanceMaxKg: 25, proprietaire: 'Lycée'
+  });
+  await store.deciderFluideRecupere(bI.id, 'DECHET', 'testeur');
+  const suiviI = await store.createBsff({
+    bouteilleId: bI.id, transporteur: 'Collecteur agréé',
+    installationDestination: 'Installation inventée II',
+    masseRemiseKg: 7, dateRemise: '2026-05-04', operateur: 'testeur'
+  });
+  // Le parcours de création enchaîne SUR le bordereau officiel.
+  await store.ajouterPieceJointe({
+    entiteType: 'BSFF', entiteId: suiviI.id, categorie: 'BORDEREAU_BSFF',
+    nomFichier: 'bordereau.png', mimeType: 'image/png', base64: PNG_1PX_I
+  });
+  const anomalieAvant = (await store.getDeclarationAnnuelle(2026)).anomalies
+    .find((a) => a.code === 'BSFF_ISSUE_SANS_PIECE' && a.fluide === FLUIDE_I);
+  const masseAvant = anomalieAvant ? anomalieAvant.masseKg : 0;
+  await store.attesterIssueBsff(suiviI.id, {
+    issueTraitement: 'DESTRUCTION',
+    installationTraitement: 'Installation inventée II',
+    certificatTraitement: null, operateur: 'testeur'
+  });
+  const anomalieApres = (await store.getDeclarationAnnuelle(2026)).anomalies
+    .find((a) => a.code === 'BSFF_ISSUE_SANS_PIECE' && a.fluide === FLUIDE_I);
+  const masseApres = anomalieApres ? anomalieApres.masseKg : 0;
+  verifier('chemin NORMAL (bordereau joint à la création) : nos 7 kg attestés '
+    + 'sans certificat ne lèvent AUCUNE anomalie',
+  Math.abs(masseApres - masseAvant) < 1e-9,
+  `${masseAvant} → ${masseApres}`);
+
+  // 2. LE TEXTE : la modale ne promet plus l'anomalie, elle dit ce qui la
+  //    déclenche vraiment.
+  const suiviTexte = await store.createBsff({
+    bouteilleId: (await (async () => {
+      const b = await store.createBouteille({
+        type: 'RECUPERATION', fluide: FLUIDE_I, etatFluide: 'RECUPERE',
+        tareKg: 10, masseBruteKg: 13, contenanceMaxKg: 25,
+        proprietaire: 'Lycée'
+      });
+      await store.deciderFluideRecupere(b.id, 'DECHET', 'testeur');
+      return b;
+    })()).id,
+    transporteur: 'Collecteur agréé',
+    installationDestination: 'Centre de traitement agréé',
+    masseRemiseKg: 3, dateRemise: '2026-05-05', operateur: 'testeur'
+  });
+  ouvrirAttestationIssue({ store, naviguer() {}, rafraichir() {} }, suiviTexte);
+  const zoneI = document.getElementById('zone-modales') || document.body;
+  const fondsI = zoneI.querySelectorAll('.modale-fond');
+  const htmlI = fondsI[fondsI.length - 1].innerHTML;
+  verifier('la modale ne promet plus « la déclaration signalera une anomalie »',
+    !htmlI.includes('signalera une anomalie'), 'promesse encore présente');
+  verifier('… elle dit ce que l’anomalie compte vraiment (AUCUNE pièce jointe)',
+    htmlI.includes('AUCUNE pièce jointe'));
+  verifier('… et la mention permanente de la limite est toujours là',
+    htmlI.includes('vérifie qu’une pièce est JOINTE'));
+}
+
 console.log(`\n${nbOk} OK, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);

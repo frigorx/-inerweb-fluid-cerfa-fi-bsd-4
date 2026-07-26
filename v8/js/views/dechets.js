@@ -238,12 +238,20 @@ export function ouvrirAttestationIssue(ctx, bsff) {
     + 'final</strong> tel que l’opérateur agréé la certifie.</p>'
     // ⚠ Lot B2 — l'écran dit la suite AVANT la saisie : la masse sera
     // déclarée dans sa rubrique, et l'absence de pièce sera signalée.
+    // ⚠ Revue finale B2 — le texte disait « si aucune pièce justificative
+    // n'est jointe (certificat, bordereau), la déclaration signalera une
+    // anomalie ». C'était une PROMESSE que le logiciel ne tient pas sur le
+    // chemin normal : le parcours de création propose de joindre le
+    // bordereau officiel AUSSITÔT, donc le suivi porte déjà une pièce et
+    // l'anomalie ne se lèvera jamais, même sans le moindre certificat
+    // d'issue. L'écran dit désormais ce que l'anomalie compte VRAIMENT.
     + '<div class="bandeau-avertissement">' + ICONES.alerte
     + '<span>La masse sera comptée dans la rubrique correspondante de la '
-    + 'déclaration annuelle. Si aucune <strong>pièce justificative</strong> '
-    + 'n’est jointe à ce suivi (certificat de l’installation, bordereau '
-    + 'officiel), la déclaration signalera une anomalie : le justificatif '
-    + 'reste à produire en cas de contrôle. '
+    + 'déclaration annuelle. Le <strong>justificatif de cette issue</strong> '
+    + '(certificat de l’installation, bordereau officiel) reste à produire '
+    + 'en cas de contrôle. La déclaration ne signale une anomalie que si ce '
+    + 'suivi ne porte AUCUNE pièce jointe — une pièce déjà déposée, quelle '
+    + 'qu’elle soit, suffit à l’éteindre. '
     // ⚠ Revue B2 (important 4) : ne JAMAIS laisser croire qu’une pièce
     // jointe prouve l’issue — le logiciel les COMPTE, il ne les lit pas.
     + esc(MENTION_PIECE_NON_PROBANTE) + '</span>'
@@ -301,11 +309,14 @@ export function ouvrirAttestationIssue(ctx, bsff) {
         const corps = instance.racine.querySelector('.modale-corps');
         const actions = instance.racine.querySelector('.modale-actions');
         if (corps) {
+          // ⚠ Revue finale B2 : même promesse à corriger qu'en tête de
+          // modale — l'anomalie ne compte que les suivis SANS aucune pièce.
           corps.innerHTML = '<p class="modale-intro">Joignez la '
             + '<strong>pièce justificative</strong> du traitement '
-            + '(certificat de l’installation, bordereau officiel). Sans '
-            + 'elle, la déclaration annuelle signalera une anomalie sur '
-            + 'cette masse.</p><div id="zone-pj-issue"></div>';
+            + '(certificat de l’installation, bordereau officiel) : c’est '
+            + 'elle qu’un contrôle demandera. La déclaration annuelle, elle, '
+            + 'ne signale que les suivis qui ne portent AUCUNE pièce '
+            + 'jointe.</p><div id="zone-pj-issue"></div>';
         }
         if (actions) {
           actions.innerHTML = '<button type="button" '
