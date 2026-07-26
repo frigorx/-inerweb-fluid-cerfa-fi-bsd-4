@@ -5,8 +5,8 @@ Le registre des fluides est un document réglementaire : le perdre, c'est perdre
 traçabilité de l'établissement. Ce guide explique, simplement, comment l'application
 protège vos données et ce que vous devez mettre en place de votre côté.
 
-Ce guide concerne principalement le **Mode Local Lycée**. Les modes Démo et Cloud
-sont traités en fin de document.
+Ce guide concerne principalement le **Mode Local Lycée**. Le mode Démo est
+traité en fin de document, ainsi que le cas du « mode Cloud » (non implémenté).
 
 ---
 
@@ -195,9 +195,12 @@ navigateur. C'est voulu : le mode Démo est un bac à sable de formation, pas un
 Un **export au format `.json`** est toutefois possible pour conserver ou transmettre
 un exercice.
 
-### Mode Cloud Lycée
-En mode Cloud, les **sauvegardes automatiques sont assurées côté serveur** (Supabase,
-hébergement dans l'Union européenne) selon une planification régulière. Vous gardez
-en plus la main : un **export local complet est possible à tout moment** depuis
-l'application, pour conserver votre propre copie hors ligne — la règle 3-2-1
-s'applique aussi au cloud.
+### Mode Cloud Lycée — NON IMPLÉMENTÉ
+Ce mode n'existe pas dans le programme livré : inerWeb Fluide fonctionne
+entièrement en local et ne transmet vos données à aucun service distant.
+**Aucune sauvegarde n'est donc assurée « côté serveur »** : les sauvegardes
+reposent ENTIÈREMENT sur l'établissement, exactement comme en Mode Local —
+appliquez les sections 2 à 7 de ce guide (bouton Sauvegarde, sauvegardes
+automatiques du poste, redondance 3-2-1, test de rentrée). Le fichier
+`INSTALLATION_CLOUD.md` est conservé comme note de conception d'une
+intention non réalisée : ne l'appliquez pas.
