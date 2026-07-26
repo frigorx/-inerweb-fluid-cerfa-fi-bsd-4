@@ -72,6 +72,70 @@ const sig = (role, valide, id) =>
 }
 
 // ------------------------------------------------------------
+// 1 bis. ⭐ REVUE DU 26/07 — UNE IMAGE ILLISIBLE N'EST PAS UNE
+// SIGNATURE « PÉRIMÉE ».
+// Depuis que `valide` intègre la recevabilité de l'image (revue du
+// 25/07), tout « valide !== true » était annoncé PERIMEE — donc « la
+// fiche a été modifiée après la signature ». C'est FAUX quand la fiche
+// n'a pas bougé : le cas se reconnaît à ce que la RÉVISION SIGNÉE est
+// égale à la révision courante. Ce motif faux allait à l'écran ET dans
+// la colonne « État » de signatures.csv, au dossier SCELLÉ.
+// ------------------------------------------------------------
+const sigIllisible = (role, id, valide = false) =>
+  ({ ...sig(role, valide, id), imageRecevable: false });
+
+{
+  const p = etatParcoursSignatures([sigIllisible('TECHNICIEN', 's1')]);
+  verifier('⭐ image illisible : état IMAGE_ILLISIBLE, et JAMAIS « périmée »',
+    p.technicien === 'IMAGE_ILLISIBLE', p.technicien);
+  verifier('image illisible : la signature reste RETENUE (elle existe, on la nomme)',
+    p.signatureTechnicien !== null && p.signatureTechnicien.id === 's1');
+  verifier('image illisible : on peut re-signer, et la fiche n’est PAS prête',
+    p.roleSuivant === 'TECHNICIEN' && p.pretPourSoumission === false);
+}
+{
+  // Le cas exact du dossier scellé : révision signée = révision
+  // courante, donc rien n'a bougé — « périmée » était démontrablement
+  // faux. Ici « valide » est false pour la seule raison de l'image.
+  const p = etatParcoursSignatures([sigIllisible('DETENTEUR', 's2')]);
+  verifier('⭐ la fiche n’a pas bougé : l’état ne parle PAS de modification',
+    p.detenteur === 'IMAGE_ILLISIBLE' && p.detenteur !== 'PERIMEE');
+}
+{
+  // Non-régression : une périmée dont l'image se lit reste PERIMEE.
+  const p = etatParcoursSignatures([
+    { ...sig('TECHNICIEN', false, 's1'), imageRecevable: true }]);
+  verifier('périmée dont l’image se lit : toujours PERIMEE (rien n’a changé)',
+    p.technicien === 'PERIMEE');
+}
+{
+  // Recevabilité NON DITE (store ancien, appel de test) : comportement
+  // d'avant, mot pour mot. Ce champ nomme une cause, il n'ajoute
+  // aucun refus.
+  const p = etatParcoursSignatures([sig('TECHNICIEN', false, 's1')]);
+  verifier('recevabilité non dite : PERIMEE comme avant (aucun refus ajouté)',
+    p.technicien === 'PERIMEE');
+}
+{
+  // Illisible puis re-signée proprement : la retenue est la VALIDE.
+  const p = etatParcoursSignatures([
+    sigIllisible('TECHNICIEN', 's1'), sig('TECHNICIEN', true, 's2')]);
+  verifier('illisible puis re-signée : la retenue est la signature valide',
+    p.technicien === 'VALIDE' && p.signatureTechnicien.id === 's2');
+}
+{
+  // Une périmée LISIBLE et une illisible plus récente : l'état retenu
+  // est PERIMEE — même choix que le moteur (etatSignatureReelle des
+  // deux magasins écarte les illisibles AVANT le tri-état). L'écran ne
+  // doit pas dire autre chose que le moteur.
+  const p = etatParcoursSignatures([
+    { ...sig('TECHNICIEN', false, 's1'), imageRecevable: true },
+    sigIllisible('TECHNICIEN', 's2')]);
+  verifier('périmée lisible + illisible plus récente : PERIMEE, comme le moteur',
+    p.technicien === 'PERIMEE' && p.signatureTechnicien.id === 's1');
+}
+
+// ------------------------------------------------------------
 // 2. preremplirSignature
 // ------------------------------------------------------------
 const utilisateur = { nom: 'Henninot', prenom: 'Franck', roleApp: 'REFERENT' };

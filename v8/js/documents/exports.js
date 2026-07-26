@@ -302,6 +302,9 @@ export async function csvOutilsIntervention(store, annee) {
  * signatures est NORMAL. Aucune comparaison, aucun signalement, aucune
  * colonne de verdict — on montre les faits, on ne juge pas.
  *
+ * Colonne « État » (revue du 26/07) : valide / périmée / image illisible.
+ * Trois valeurs et non deux — voir `etatSignature` plus bas.
+ *
  * Le nom du SIGNATAIRE passe par la fiche VIVANTE quand la signature est
  * reliable à une personne (rôle TECHNICIEN + intervenant déclaré de la
  * fiche) — donc par le pseudonyme si elle est au coffre, comme
@@ -319,6 +322,16 @@ export async function csvOutilsIntervention(store, annee) {
 export async function csvSignatures(store, annee, personnel) {
   const mouvements = await store.getMouvements();
   const prefixe = `${annee}-`;
+  // Colonne « État » : trois valeurs, jamais deux. « périmée » NOMME une
+  // cause (la fiche a bougé après la signature) ; l'employer pour une
+  // image qu'on ne sait pas relire écrivait une cause FAUSSE dans une
+  // archive scellée. Une image dont la recevabilité n'est pas dite
+  // (store ancien) reste jugée sur la seule révision, comme avant.
+  const etatSignature = (sig) => {
+    if (sig.valide === true) return 'valide';
+    if (sig.imageRecevable === false) return 'image illisible';
+    return 'périmée';
+  };
   const ficheDe = (id) => {
     if (!id) return null;
     return personnel.find((p) => p.id === id) || null;
@@ -360,7 +373,13 @@ export async function csvSignatures(store, annee, personnel) {
         mv.numero, fmtDate(mv.date), sig.role, prenomSig, nomSig,
         sig.qualite || '', ouiNon(sig.parDelegation), sig.organisation || '',
         fmtDateHeure(sig.dateHeure), String(sig.versionDocument ?? ''),
-        sig.valide === true ? 'valide' : 'périmée',
+        // ⭐ REVUE DU 26/07 : « périmée » veut dire « la fiche a été
+        // modifiée après la signature ». Depuis que `valide` intègre la
+        // recevabilité de l'image, une image illisible sortait ici sous
+        // ce motif, avec une révision signée ÉGALE à la révision
+        // courante — l'archive SCELLÉE portait donc une cause fausse.
+        // Trois états, comme à l'écran.
+        etatSignature(sig),
         sig.sha256Document || '', sig.declaration || '',
         fiche ? `${fiche.prenom} ${fiche.nom}`.trim() : '',
         sig.sessionCompteId || ''

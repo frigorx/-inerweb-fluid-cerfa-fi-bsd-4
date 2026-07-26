@@ -5,7 +5,8 @@
 //
 // Rôle : les DÉCISIONS de l'écran de signature, sans aucun DOM —
 //  - l'état du parcours à partir des signatures relues du store
-//    (technicien PUIS détenteur, tri-état ABSENTE/VALIDE/PERIMEE) ;
+//    (technicien PUIS détenteur, quatre états ABSENTE/VALIDE/PERIMEE/
+//    IMAGE_ILLISIBLE) ;
 //  - le pré-remplissage des champs du signataire (décision Franck
 //    16/07 : équipement du lycée = le professeur signe détenteur
 //    PAR DÉLÉGATION de l'établissement, case pré-cochée).
@@ -18,12 +19,33 @@
 /**
  * L'état du parcours de double signature d'un mouvement.
  * La signature RETENUE pour un rôle est la dernière VALIDE ; à défaut,
- * la dernière posée (périmée : la fiche a été modifiée après).
+ * la dernière dont l'IMAGE se lit (périmée : la fiche a été modifiée
+ * après) ; à défaut la dernière posée (image illisible).
+ *
+ * ⭐ REVUE DU 26/07 — QUATRE ÉTATS, PLUS TROIS. Depuis que `valide`
+ * intègre la recevabilité de l'image (revue du 25/07), tout « valide
+ * !== true » était annoncé PERIMEE, c'est-à-dire « la fiche a été
+ * modifiée après la signature » : FAUX quand la fiche n'a pas bougé et
+ * que c'est l'image qui ne se lit pas (case restée vierge, fichier
+ * abîmé, image remplacée par un import). Ce motif faux s'affichait ET
+ * entrait dans la colonne « État » de signatures.csv, au dossier
+ * SCELLÉ. Une signature dont l'image ne se lit pas n'est pas une
+ * signature périmée : ce n'est pas une signature.
+ *
+ * L'ordre de choix reprend celui du moteur (etatSignatureReelle des
+ * deux magasins) : les images illisibles sont ÉCARTÉES d'abord, et
+ * l'état ne retombe sur IMAGE_ILLISIBLE que si le rôle n'a rien
+ * d'autre. Une image dont la recevabilité n'est pas dite (`undefined` —
+ * store ancien, appel de test) est traitée comme recevable : ce champ
+ * NOMME une cause, il n'ajoute aucun refus (le refus est déjà porté par
+ * `valide`, et par lui seul).
+ *
  * @param {Array<object>} signatures liste de getSignaturesMouvement
- *   (triée dateHeure puis id, chaque entrée porte `valide`)
+ *   (triée dateHeure puis id, chaque entrée porte `valide` et
+ *   `imageRecevable`)
  * @returns {{
- *   technicien: 'ABSENTE'|'VALIDE'|'PERIMEE',
- *   detenteur: 'ABSENTE'|'VALIDE'|'PERIMEE',
+ *   technicien: 'ABSENTE'|'VALIDE'|'PERIMEE'|'IMAGE_ILLISIBLE',
+ *   detenteur: 'ABSENTE'|'VALIDE'|'PERIMEE'|'IMAGE_ILLISIBLE',
  *   signatureTechnicien: ?object, signatureDetenteur: ?object,
  *   roleSuivant: ?('TECHNICIEN'|'DETENTEUR'),
  *   pretPourSoumission: boolean }}
@@ -32,12 +54,15 @@ export function etatParcoursSignatures(signatures) {
   const liste = Array.isArray(signatures) ? signatures : [];
   const retenue = (role) => {
     const duRole = liste.filter((s) => s && s.role === role);
-    const valides = duRole.filter((s) => s.valide === true);
+    const lisibles = duRole.filter((s) => s.imageRecevable !== false);
+    const valides = lisibles.filter((s) => s.valide === true);
     if (valides.length) return valides[valides.length - 1];
+    if (lisibles.length) return lisibles[lisibles.length - 1];
     return duRole.length ? duRole[duRole.length - 1] : null;
   };
   const etat = (sig) => {
     if (!sig) return 'ABSENTE';
+    if (sig.imageRecevable === false) return 'IMAGE_ILLISIBLE';
     return sig.valide === true ? 'VALIDE' : 'PERIMEE';
   };
   const signatureTechnicien = retenue('TECHNICIEN');
@@ -46,7 +71,7 @@ export function etatParcoursSignatures(signatures) {
   const detenteur = etat(signatureDetenteur);
   // Ordre IMPOSÉ du parcours : le technicien d'abord. Une signature
   // détenteur encore valide alors que celle du technicien est tombée
-  // est impossible (même révision) — le tri-état la montrerait périmée.
+  // est impossible (même révision) — l'état la montrerait périmée.
   const roleSuivant = technicien !== 'VALIDE'
     ? 'TECHNICIEN'
     : (detenteur !== 'VALIDE' ? 'DETENTEUR' : null);

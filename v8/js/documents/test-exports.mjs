@@ -365,6 +365,41 @@ verifier('genererJournalAuditPdf produit un PDF valide (en-tête %PDF-)',
     Boolean(ligneSig) && ligneSig.includes('TECHNICIEN')
     && ligneSig.includes('Export;Signatures') && ligneSig.includes(';valide;'),
     ligneSig);
+
+  // ⭐ REVUE DU 26/07 — L'ARCHIVE SCELLÉE NE PORTE PLUS UNE CAUSE FAUSSE.
+  // « périmée » veut dire « la fiche a été modifiée après la signature ».
+  // Depuis que `valide` intègre la recevabilité de l'image (revue du
+  // 25/07), une image illisible sortait ici sous ce motif — et la ligne
+  // se contredisait elle-même : révision signée 0, révision courante 0,
+  // donc rien n'avait bougé. Le fait est TIRÉ de bout en bout, par la
+  // porte qui produit vraiment ce cas : l'import d'un registre dont
+  // l'image des signatures a été remplacée.
+  const bloc = new Uint8Array(2348).fill(0x2e);
+  [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
+    .forEach((o, i) => { bloc[i] = o; });
+  const forge = JSON.parse(await store.exporterJSON());
+  let forgees = 0;
+  for (const s of forge.donnees.signaturesMouvement) {
+    if (s.mouvementId === mvSig.id) {
+      s.imagePng = Buffer.from(bloc).toString('base64');
+      forgees += 1;
+    }
+  }
+  verifier('décor : l’image de la signature est remplacée dans le fichier',
+    forgees === 1, `${forgees} signature(s) touchée(s)`);
+  await store.importerJSON(JSON.stringify(forge));
+
+  const { csvSignatures } = await import('./exports.js');
+  const csvApres = await csvSignatures(store, ANNEE,
+    await store.getPersonnel());
+  const ligneApres = lignesDe(String(csvApres))
+    .find((l) => l.startsWith(mvSig.numero + ';'));
+  verifier('⭐ signatures.csv dit « image illisible », JAMAIS « périmée »',
+    Boolean(ligneApres) && ligneApres.includes(';image illisible;')
+    && !ligneApres.includes(';périmée;'), ligneApres);
+  verifier('la contradiction est levée : révision signée = révision courante',
+    Boolean(ligneApres) && ligneApres.includes(';0;image illisible;'),
+    ligneApres);
 }
 
 // --- Verdict ------------------------------------------------------

@@ -3863,12 +3863,20 @@ const HANDLERS = {
         }
         return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0);
       })
-      .map((sig) => ({ ...sig,
+      .map((sig) => {
         // Lot B3 / revue du 25/07 : « valide » exige AUSSI une image
         // recevable — sans quoi l'écran, le CERFA et le dossier d'audit
         // répéteraient la validité d'une image que la pose refuse.
-        valide: (sig.versionDocument ?? 0) === revision
-          && imageSignatureRecevable(sig.imagePng) }));
+        // Revue du 26/07 : la CAUSE est dite à part. Repliée dans
+        // « valide », elle ressortait partout en « périmée », c'est-à-dire
+        // « la fiche a été modifiée après la signature » — ce qui est FAUX
+        // quand la fiche n'a pas bougé et que c'est l'image qui ne se lit
+        // pas. Ce motif entrait tel quel au dossier scellé.
+        const imageRecevable = imageSignatureRecevable(sig.imagePng);
+        return { ...sig,
+          imageRecevable,
+          valide: (sig.versionDocument ?? 0) === revision && imageRecevable };
+      });
   },
 
   /**

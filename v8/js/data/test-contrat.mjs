@@ -2253,6 +2253,8 @@ function imagePngTest(taille = 1200) {
     const ditLecture = METHODES_CONTRAT.getSignaturesMouvement.description;
     verifier('le contrat dit que « valide » exige AUSSI une image recevable',
       ditLecture.includes('image recevable'), ditLecture.slice(0, 200));
+    verifier('le contrat annonce imageRecevable (la cause dite à part)',
+      ditLecture.includes('imageRecevable'), ditLecture.slice(0, 200));
   }
 
   // ------------------------------------------------------------
@@ -2311,6 +2313,21 @@ function imagePngTest(taille = 1200) {
       apresImport.length === avantAttaque.length
       && apresImport.every((s) => s.valide === false),
       JSON.stringify(apresImport.map((s) => s.valide)));
+    // ⭐ REVUE DU 26/07 — LA CAUSE EST DITE À PART, DES DEUX CÔTÉS.
+    // Repliée dans le seul « valide », elle ressortait partout en
+    // « périmée » (= la fiche a été modifiée après la signature), motif
+    // FAUX ici : la révision signée est ÉGALE à la révision courante.
+    // Ce motif faux allait jusque dans le dossier scellé.
+    verifier('⭐ le magasin dit POURQUOI : imageRecevable est false',
+      apresImport.every((s) => s.imageRecevable === false),
+      JSON.stringify(apresImport.map((s) => s.imageRecevable)));
+    verifier('… et la fiche n’a PAS bougé (révision signée = révision courante)',
+      apresImport.every((s) => (s.versionDocument ?? 0)
+        === (avantAttaque.find((a) => a.id === s.id)?.versionDocument ?? 0)),
+      JSON.stringify(apresImport.map((s) => s.versionDocument)));
+    verifier('témoin : avant l’attaque, l’image était déclarée recevable',
+      avantAttaque.every((s) => s.imageRecevable === true),
+      JSON.stringify(avantAttaque.map((s) => s.imageRecevable)));
     const apres = await store.simulerValidationOfficielle(brouillonSig.id);
     verifier('⭐ les conditions 14 et 15 du mode Officiel SONT DE RETOUR',
       apres.blocages.some((b) => b.code === 'SIGNATURE_TECHNICIEN')

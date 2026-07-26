@@ -161,6 +161,36 @@ async function ouvrir(signatures, mouvement = MOUVEMENT) {
 }
 
 // ------------------------------------------------------------
+// 3 bis. ⭐ REVUE DU 26/07 — L'ÉCRAN NE DIT PLUS « PÉRIMÉE » POUR UNE
+// IMAGE ILLISIBLE.
+// « Signature périmée : la fiche a été modifiée après la signature de X »
+// est une CAUSE. Depuis que `valide` intègre la recevabilité de l'image,
+// une image illisible (case restée vierge, fichier abîmé, image
+// remplacée par un import) sortait sous ce motif alors que la fiche
+// n'avait pas bougé — la révision signée est ici ÉGALE à la révision
+// courante, la preuve est dans la donnée elle-même.
+// ------------------------------------------------------------
+{
+  const html = await ouvrir([signature('TECHNICIEN',
+    { valide: false, imageRecevable: false })]);
+  verifier('⭐ image illisible : l’écran ne parle PAS de fiche modifiée',
+    !html.includes('la fiche a été modifiée'),
+    html.slice(html.indexOf('bandeau-avertissement'), 260));
+  verifier('⭐ image illisible : l’écran dit la VRAIE cause',
+    html.includes('Image de signature illisible'));
+  verifier('image illisible : la signature est nommée, et on peut re-signer',
+    html.includes('Un Élève') && html.includes('data-champ="nom"'));
+
+  // Non-régression : une signature PÉRIMÉE (image lisible, fiche
+  // modifiée) garde son message, mot pour mot.
+  const htmlPerimee = await ouvrir([signature('TECHNICIEN',
+    { valide: false, imageRecevable: true })]);
+  verifier('périmée dont l’image se lit : le message d’origine est intact',
+    htmlPerimee.includes('Signature périmée : la fiche a été modifiée après '
+      + 'la signature de Un Élève'));
+}
+
+// ------------------------------------------------------------
 // 4. Pré-remplissage du signataire depuis la session (décision D3)
 // ------------------------------------------------------------
 {

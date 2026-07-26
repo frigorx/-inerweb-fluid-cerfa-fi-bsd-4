@@ -226,6 +226,17 @@ export async function ouvrirSignaturesMouvement(ctx, mv, options = {}) {
           + 'Signature périmée : la fiche a été modifiée après la signature '
           + 'de ' + esc((retenue.prenom + ' ' + retenue.nom).trim())
           + ' — elle se recommence (l’ancienne reste tracée).</div>';
+      } else if (etat === 'IMAGE_ILLISIBLE') {
+        // ⭐ REVUE DU 26/07 : ce cas était annoncé « périmée », donc
+        // « la fiche a été modifiée après la signature » — alors que la
+        // fiche n'a pas bougé. On dit la vraie cause.
+        corps += '<div class="bandeau-avertissement" style="display:block">'
+          + 'Image de signature illisible : l’image enregistrée pour '
+          + esc((retenue.prenom + ' ' + retenue.nom).trim())
+          + ' ne peut pas être relue (zone restée vierge, fichier abîmé ou '
+          + 'image remplacée). La fiche, elle, n’a pas été modifiée : c’est '
+          + 'la signature qui ne vaut pas. Elle se recommence (l’ancienne '
+          + 'reste tracée).</div>';
       }
       if (parcours.roleSuivant === role) {
         const prefill = preremplirSignature(role,
