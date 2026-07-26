@@ -218,7 +218,15 @@ function ligneBsff(bsff, aUnePiece) {
  * Corrige BSFF ≠ destruction : seule une issue « destruction » attestée
  * (avec installation) alimente la rubrique 9 de la déclaration.
  */
-function ouvrirAttestationIssue(ctx, bsff) {
+/**
+ * Modale « Attester le traitement final » d'un suivi de remise en filière.
+ * EXPORTÉE pour être TIRÉE telle quelle par la suite de surfaces (le clic
+ * de la vue passe par une délégation `closest`, hors de portée du DOM
+ * factice) — l'application, elle, continue de l'ouvrir par le tableau.
+ * @param {object} ctx - contexte de vue ({ store, rafraichir, … })
+ * @param {object} bsff - le suivi concerné
+ */
+export function ouvrirAttestationIssue(ctx, bsff) {
   const opts = ['RECYCLAGE', 'REGENERATION', 'DESTRUCTION', 'AUTRE']
     .map((v) => '<option value="' + v + '"'
       + (bsff.issueTraitement === v ? ' selected' : '') + '>'
@@ -253,8 +261,21 @@ function ouvrirAttestationIssue(ctx, bsff) {
   const actionsHtml =
     '<button type="button" class="btn btn-contour" data-action="annuler">Annuler</button>'
     + '<button type="button" class="btn btn-marine" data-action="valider">Attester</button>';
-  const instance = modale({ titre: 'Attester le traitement final',
-    contenuHtml, actionsHtml });
+  // ⚠ Revue finale B2 : une fois l'issue attestée, l'écran doit se
+  // rafraîchir QUEL QUE SOIT le chemin de sortie — bouton « Terminer »,
+  // croix, clic sur le fond, touche Échap. Accroché au seul bouton, le
+  // rafraîchissement sautait dès que l'utilisateur fermait autrement :
+  // l'issue attestée restait invisible jusqu'au rechargement de la vue.
+  // `surFermeture` est le point de passage COMMUN aux quatre chemins.
+  let attestee = false;
+  const instance = modale({
+    titre: 'Attester le traitement final',
+    contenuHtml,
+    actionsHtml,
+    surFermeture: function () {
+      if (attestee && typeof ctx.rafraichir === 'function') ctx.rafraichir();
+    }
+  });
   const racine = document.getElementById('zone-modales') || document.body;
   const zoneErreur = racine.querySelector('#zone-erreur-issue');
   racine.querySelector('[data-action="annuler"]')
@@ -271,6 +292,7 @@ function ouvrirAttestationIssue(ctx, bsff) {
             racine.querySelector('#issue-certificat').value || null,
           operateur: u.prenom + ' ' + u.nom
         });
+        attestee = true;
         toast('Traitement final attesté.', 'succes');
         // ⚠ Lot B2 : on enchaîne SUR la pièce justificative — c'est elle
         // qu'un contrôle demandera. La modale ne se ferme pas sur la seule
@@ -290,10 +312,7 @@ function ouvrirAttestationIssue(ctx, bsff) {
             + 'class="btn btn-marine btn-bloc" data-action="terminer">'
             + 'Terminer</button>';
           actions.querySelector('[data-action="terminer"]')
-            .addEventListener('click', function () {
-              instance.fermer();
-              if (typeof ctx.rafraichir === 'function') ctx.rafraichir();
-            });
+            .addEventListener('click', function () { instance.fermer(); });
         }
         zonePiecesJointes(instance.racine.querySelector('#zone-pj-issue'), ctx, {
           entiteType: 'BSFF', entiteId: bsff.id, categorie: 'CERTIFICAT'

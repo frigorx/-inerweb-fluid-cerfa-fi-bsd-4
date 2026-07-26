@@ -389,5 +389,100 @@ console.log('\n--- G. La limite du contrôle des pièces est dite ---');
     MENTION_PIECE_NON_PROBANTE);
 }
 
+// ============================================================
+// H. Revue finale B2 (mineur 2) — L'ÉCRAN SE RAFRAÎCHIT PAR TOUTES
+// LES PORTES.
+//
+// Après une attestation réussie, la modale enchaîne sur le dépôt de la
+// pièce justificative — c'est voulu. Mais le rafraîchissement de l'écran
+// était accroché au SEUL bouton « Terminer » injecté dans les actions :
+// fermé par la croix, par le fond ou par Échap, l'écran restait sur son
+// ancien rendu et l'issue attestée n'apparaissait pas tant que la vue
+// n'était pas rechargée. Aucune donnée perdue — mais l'utilisateur voit
+// un registre qui ment sur son propre contenu.
+// On tire la sortie par la CROIX, celle qui ne passe par aucun bouton
+// d'action, et le contre-tir (fermeture SANS attestation).
+// ============================================================
+console.log('\n--- H. Rafraîchissement par toutes les portes de sortie ---');
+
+{
+  const { ouvrirAttestationIssue } = await import('./dechets.js');
+
+  /** Déclenche les écouteurs « click » en ATTENDANT les asynchrones. */
+  async function cliquer(el) {
+    for (const fn of ((el && el.ecouteurs && el.ecouteurs.click) || [])) {
+      await fn({ target: el, preventDefault() {} });
+    }
+  }
+
+  /** La DERNIÈRE boîte posée (les sections précédentes ont laissé les leurs). */
+  function derniereModale() {
+    const zone = document.getElementById('zone-modales') || document.body;
+    const fonds = zone.querySelectorAll('.modale-fond');
+    return fonds[fonds.length - 1] || null;
+  }
+
+  async function suiviSansIssue(masseKg) {
+    const fluide = (await store.getFluides())[0].code;
+    const b = await store.createBouteille({
+      type: 'RECUPERATION', fluide, etatFluide: 'RECUPERE',
+      tareKg: 10, masseBruteKg: 10 + masseKg, contenanceMaxKg: 25,
+      proprietaire: 'Lycée'
+    });
+    await store.deciderFluideRecupere(b.id, 'DECHET', 'testeur');
+    return await store.createBsff({
+      bouteilleId: b.id, transporteur: 'Collecteur agréé',
+      installationDestination: 'Centre de traitement agréé',
+      masseRemiseKg: masseKg, dateRemise: '2026-07-24', operateur: 'testeur'
+    });
+  }
+
+  // 1. Attestation réussie, puis sortie par la CROIX.
+  {
+    const suivi = await suiviSansIssue(3);
+    let rafraichissements = 0;
+    const ctxH = {
+      store, naviguer() {}, rafraichir() { rafraichissements += 1; }
+    };
+    ouvrirAttestationIssue(ctxH, suivi);
+    const fond = derniereModale();
+    verifier('la modale d’attestation est bien posée', Boolean(fond));
+    fond.querySelector('#issue-select').value = 'DESTRUCTION';
+    fond.querySelector('#issue-installation').value = 'Centre de traitement agréé';
+    fond.querySelector('#issue-certificat').value = '';
+    await cliquer(fond.querySelector('[data-action="valider"]'));
+
+    verifier('l’issue est bien attestée au registre',
+      (await store.getBsff()).find((s) => s.id === suivi.id)
+        .issueTraitement === 'DESTRUCTION');
+    verifier('la modale enchaîne sur la pièce justificative (comportement gardé)',
+      Boolean(fond.querySelector('#zone-pj-issue')));
+    verifier('… et n’a PAS encore rafraîchi (l’utilisateur dépose sa pièce)',
+      rafraichissements === 0, String(rafraichissements));
+
+    // LA CROIX : aucun bouton d'action, c'est la porte qui sautait.
+    await cliquer(fond.querySelector('.modale-fermer'));
+    verifier('sortie par la CROIX : l’écran est rafraîchi',
+      rafraichissements === 1, String(rafraichissements));
+  }
+
+  // 2. CONTRE-TIR : fermer SANS attester ne doit rien rafraîchir (sinon la
+  //    simple consultation rechargerait la vue à chaque « Annuler »).
+  {
+    const suivi = await suiviSansIssue(2);
+    let rafraichissements = 0;
+    const ctxH = {
+      store, naviguer() {}, rafraichir() { rafraichissements += 1; }
+    };
+    ouvrirAttestationIssue(ctxH, suivi);
+    const fond = derniereModale();
+    await cliquer(fond.querySelector('[data-action="annuler"]'));
+    verifier('fermeture SANS attestation : aucun rafraîchissement',
+      rafraichissements === 0, String(rafraichissements));
+    verifier('… et le suivi est resté sans issue',
+      !(await store.getBsff()).find((s) => s.id === suivi.id).issueTraitement);
+  }
+}
+
 console.log(`\n${nbOk} OK, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);
