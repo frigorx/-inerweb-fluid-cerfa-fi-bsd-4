@@ -32,23 +32,30 @@ et climatisation.
 
 ---
 
-## 2. L'état exact au moment où tu prends la main
+## 2. L'état du dépôt AU JOUR OÙ CE PROMPT A ÉTÉ ÉCRIT (25/07/2026)
 
-- **`main` propre, TOUT VERT — 106 exécutions** (`node outils/lancer-tests.mjs --tout`, ~90 s).
-- Contrat DataStore **v12** (96 méthodes), dernière migration **35**.
+> ⚠️ **Chiffres d'époque, pas chiffres courants.** Ce document est un mode d'emploi, pas un
+> journal d'état : avant de t'en servir, **re-mesure**. Les commandes sont citées à côté de
+> chaque valeur, et c'est leur sortie du jour qui fait foi. L'état courant se lit en tête de
+> `docs/PROMPT-REPRISE.md`. Repère mesuré le 26/07/2026, après traitement de l'audit :
+> **121 exécutions, 207 attaques, contrat v13 (96 méthodes), dernière migration 36.**
+
+- **`main` propre, TOUT VERT — 106 exécutions au 25/07** (`node outils/lancer-tests.mjs --tout`).
+- Contrat DataStore **v12** (96 méthodes) et dernière migration **35** *à cette date*.
 - Le **mode Officiel est FERMÉ** (`VERROU_LIVRAISON = true`, dans les deux miroirs,
-  volontairement non configurable par l'environnement).
-- Dernières fusions : **PR #18** (lot L2 — sécurité négative), **#19** (finition),
+  volontairement non configurable par l'environnement). *Toujours vrai le 26/07.*
+- Dernières fusions au 25/07 : **PR #18** (lot L2 — sécurité négative), **#19** (finition),
   **#20** (paquet d'audit).
 
 ### Ce que le lot L2 vient de livrer (25/07)
 
-Une **suite de sécurité négative** — `server/test-securite-negative.mjs`, **140 attaques et
-preuves tirées** — et **dix trous fermés**, chacun après avoir été *exécuté* et prouvé :
-annulation forgée en SQL direct · blanchiment du registre par import · module de dates
-(« une date est une date ») · échéance de contrôle forgée · réécriture de la matière et du
-passé · fichiers privés servis par le web · réparation réécrite et qualification par un
-élève · purge du journal d'audit · export complet non gaté.
+Une **suite de sécurité négative** — `server/test-securite-negative.mjs` — et **neuf trous
+fermés** (L2-a à L2-i), chacun après avoir été *exécuté* et prouvé : annulation forgée en SQL
+direct · blanchiment du registre par import · module de dates (« une date est une date ») ·
+échéance de contrôle forgée · réécriture de la matière et du passé · fichiers privés servis par
+le web · réparation réécrite et qualification par un élève · purge du journal d'audit · export
+complet non gaté. Le nombre d'attaques de la suite **croît à chaque lot** : on ne le cite pas
+figé ici, on le lit en lançant la suite (**207 le 26/07/2026**).
 
 Puis une **revue adversariale** (5 relecteurs chargés de réfuter) a trouvé **3 bloquants et
 8 constats**, tous corrigés — dont une régression que le correctif lui-même avait introduite,
@@ -139,8 +146,10 @@ commit. Revue adversariale avant la PR.
   Franck.** Règle absolue du projet. Si le rapport dit « le seuil est 5 kg », tu vérifies sur
   le texte primaire, tu proposes, tu attends. Sauf délégation explicite — et dans ce cas,
   trancher **« le plus réglementaire » = jamais moins de contrôles qu'exigé**.
-- **Ne pas rouvrir le mode Officiel.** C'est gaté par le visa T3 (relecture par organisme
-  agréé). Même si le rapport le recommande.
+- **Ne pas rouvrir le mode Officiel de ta propre initiative.** La réouverture est gatée par le
+  visa T3 — la relecture par un organisme agréé, seule à pouvoir confirmer les valeurs
+  réglementaires encore en attente. Si le rapport recommande la réouverture, cela ne lève pas
+  le visa : on le consigne et on le remonte à Franck.
 - **Ne pas se précipiter sur le premier constat.** L'inventaire complet d'abord : c'est lui
   qui révèle les racines communes.
 
@@ -155,7 +164,9 @@ commit. Revue adversariale avant la PR.
   **deux** côtés, avec le **même message**. `test-contrat.mjs` casse à la moindre divergence.
   Un module pur du front réutilisé côté serveur est recopié en littéral, avec un test de
   parité dédié.
-- **Migrations** : registre `server/migrations.js`, dernière = **35**. Une migration est
+- **Migrations** : registre `server/migrations.js`, dernière = **36** au 26/07/2026 (elle
+  était à 35 le jour où ces lignes ont été écrites — se relit dans le registre, jamais de
+  mémoire). Une migration est
   **IMMUABLE** — jamais de retouche d'une migration existante. Triggers WORM recréés à chaque
   migration qui touche leurs tables ; `PRAGMA recursive_triggers = ON` obligatoire.
 - **Empreintes** (`hash-mouvement.js`) : v1 **figée à jamais**. Jamais de recalcul rétroactif.

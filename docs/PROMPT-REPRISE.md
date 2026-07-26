@@ -22,15 +22,20 @@
 > déjà tranchés**. Puis 3 lots codés en worktrees isolés, 3 revues
 > adversariales, 3 passes de correction, 3 contrôles finaux.
 >
-> **⚠️ A02 — L'AUDITEUR S'EST TROMPÉ, comme celui du 20/07.** Il exigeait que
-> Formation et Officiel aient des stocks séparés. Le contrefactuel a été tiré :
-> avec une fiche Formation INERTE, le gaz part quand même dans la machine
-> pendant le TP → écart de balance non justifié → blocage du mode Officiel.
-> **Sa correction fabrique sa propre plainte.** Chez Franck, Formation = registre
-> RÉEL de l'atelier avec un document NON opposable ; le monde fictif, c'est le
-> mode DÉMO. Décision Franck (25/07) : « par défaut, s'ils utilisent
-> l'application c'est qu'ils ont manipulé du vrai fluide ; c'est moi qui valide
-> le CERFA à la fin ». **Ne pas rouvrir.**
+> **⚠️ A02 — DÉSACCORD MÉTIER MAINTENU, ARGUMENTÉ ET MESURÉ.** Le constat
+> demandait que Formation et Officiel tiennent des stocks séparés. Le
+> contrefactuel a été TIRÉ : avec une fiche Formation rendue INERTE sur les
+> stocks, le gaz part quand même dans la machine pendant le TP → écart de
+> balance non justifié → blocage du mode Officiel. Autrement dit, la correction
+> demandée produit l'anomalie qu'elle veut prévenir. Le motif de fond est
+> métier : chez Franck, Formation = registre RÉEL de l'atelier portant un
+> document NON opposable ; le monde fictif, c'est le mode DÉMO. Décision Franck
+> (25/07) : « par défaut, s'ils utilisent l'application c'est qu'ils ont
+> manipulé du vrai fluide ; c'est moi qui valide le CERFA à la fin ».
+> **Consigne interne : décision prise et motivée, à ne pas rouvrir sans élément
+> nouveau.** La mesure du contrefactuel est reproductible, et l'avis de
+> l'auditeur sur cette mesure reste demandé — un élément nouveau, c'est
+> précisément cela.
 >
 > **CE QUE LES 3 LOTS FERMENT** (détail complet en tête de `CHANGELOG.md`) :
 > - **B1 — « une règle, pas une porte »** (A05+A06). TROISIÈME occurrence du
@@ -69,15 +74,26 @@
 > **RESTE DE L'AUDIT, hors code** : T3 (chemin critique) · P0-9 · chiffrement du
 > poste et sauvegarde hors site · RGPD/AIPD · paquet de livraison complet (SBOM,
 > licences, actifs) — le paquet d'audit exclut par construction les bibliothèques
-> et le gabarit CERFA, ce qui explique les 14 échecs de l'auditeur (reproduits à
-> l'identique : ce n'est PAS un défaut du logiciel). **En code, non bloquant** :
+> et le gabarit CERFA, ce qui explique les échecs de tests relevés par
+> l'auditeur : ce n'est PAS un défaut du logiciel. ⚠️ Chiffres exacts, à ne pas
+> arrondir : le rapport en annonçait **16** ; nous en reproduisons **14** en
+> retirant bibliothèques et gabarit CERFA, une **15ᵉ** en retirant aussi les
+> images — **la 16ᵉ n'est pas reproduite**, et nous refusons d'écrire
+> « reproduits à l'identique ». Suites nommées et manipulation exacte :
+> `docs/REPONSE-AUDIT-EXTERNE-2026-07-25.md`. **En code, non bloquant** :
 > A14 déni de service sur la connexion (scrypt synchrone) — **à traiter AVANT
 > d'activer le mode LAN, jamais après**.
 >
+> --- ci-dessous : blocs d'état ANTÉRIEURS, conservés tels quels. Les chiffres
+> qu'ils portent sont ceux de LEUR date, pas ceux d'aujourd'hui : l'état courant
+> est le bloc du 26/07 ci-dessus. ---
+>
 > **⭐⭐⭐⭐⭐⭐⭐⭐ ÉTAT AU 25/07/2026 (soir) — LOT L2 LIVRÉ : SUITE DE SÉCURITÉ
-> NÉGATIVE + 9 TROUS FERMÉS. TOUT VERT 106 EXÉCUTIONS**, contrat v12, migration
-> 35 (aucune migration nouvelle : rien de tout cela n'a demandé de toucher au
-> schéma). Branche `claude/l2-securite-negative`, 9 commits.
+> NÉGATIVE + 9 TROUS FERMÉS. TOUT VERT 106 EXÉCUTIONS *au 25/07 au soir*
+> (121 depuis)**, contrat v12 *à cette date* (v13 depuis), migration
+> 35 *à cette date* (36 depuis) — aucune migration nouvelle dans ce lot : rien de
+> tout cela n'a demandé de toucher au schéma. Branche
+> `claude/l2-securite-negative`, 9 commits.
 >
 > **Méthode : on ne croit personne sur parole, on TIRE.** Inventaire des surfaces
 > d'attaque (8 agents, 190 scénarios) → 36 candidats critiques non couverts → 10
@@ -86,8 +102,11 @@
 > chemin tiennent bien). Puis correction, puis retrait du correctif pour prouver
 > que le test devient rouge.
 >
-> **`server/test-securite-negative.mjs` — 118 attaques TIRÉES.** C'est l'endroit
-> où répondre à un auditeur qui demande « montrez-moi que ça résiste ».
+> **`server/test-securite-negative.mjs` — la suite d'attaques TIRÉES.** C'est
+> l'endroit où répondre à un auditeur qui demande « montrez-moi que ça résiste ».
+> Elle s'est étoffée à chaque lot depuis sa création : on ne cite donc PAS ici un
+> décompte figé, on lit celui du jour en la lançant
+> (`node server/test-securite-negative.mjs` — **207 le 26/07/2026**).
 >
 > **Les 9 trous fermés** (détail complet en tête de `CHANGELOG.md`) : **L2-a**
 > annulation forgée en SQL direct (une écriture disparaissait des totaux, chaîne
@@ -364,14 +383,15 @@ Tu reprends **inerWeb Fluide**, logiciel **LOCAL** de traçabilité des fluides 
 - **Auteur et utilisateur** : Franck Henninot (LP Jacques Raynaud, Marseille). Réponds en **français
   simple, zéro anglicisme, zéro emoji dans le code**.
 
-## LE CAP (tranché par Franck le 20/07 — ne pas rouvrir)
+## LE CAP (tranché par Franck le 20/07 — décision prise, à ne pas rouvrir sans élément nouveau)
 
 **REGISTRE OFFICIEL UNIQUE** (opposable, sans doublon papier) = barème MAXIMAL. Un 2ᵉ audit
-externe (ChatGPT) a donné NO GO en l'état comme registre unique → plan de correction en cours.
-Le mode Officiel est REFERMÉ (`VERROU_LIVRAISON=true`, décision T1) le temps des P0 ; la suite
+externe (ChatGPT, 20/07) avait donné NO GO en l'état comme registre unique ; un 3ᵉ audit externe
+a donné NO GO le 25/07. Les deux ont été traités (voir les blocs d'état en tête).
+Le mode Officiel est REFERMÉ (`VERROU_LIVRAISON=true`, décision T1) ; la suite
 `server/test-officiel-e2e.mjs` est GELÉE par une garde en tête (consigne de réouverture incluse).
 
-## ÉTAT (20/07 nuit) — dépôt PROPRE, TOUT VERT 87 exécutions, poussé jusqu'à `9dd9b6b`
+## ÉTAT (20/07 nuit) — *bloc d'époque, conservé* : TOUT VERT 87 exécutions **à cette date**, poussé jusqu'à `9dd9b6b`
 
 - **P0-2 ✅ et P0-7 COMPLET (P7-a→e)** : le contrôle d'étanchéité EST un mouvement (parcours
   signé/scellé/WORM, carte wizard, CERFA, gardes structurelles — `createControle` direct
@@ -403,7 +423,11 @@ notre dépôt git RESTE LA BASE ; on pioche la RC brique par brique RE-testée, 
 bloc.** Plan = `docs/PLAN-INTEGRATION-RC-CHATGPT.md` (étape 1 — briques autonomes — SOLDÉE).
 Pour piocher : ré-extraire le zip dans un dossier jetable + `diff` le fichier contre notre dépôt.
 
-## PROCHAINE BRIQUE (au choix Franck) : les GROSSES briques métier de la RC
+## ORDRE DE PASSAGE DES GROSSES BRIQUES MÉTIER DE LA RC — *liste d'époque (20/07), SOLDÉE*
+
+> ⚠️ Les quatre entrées ci-dessous sont **toutes terminées** depuis (P0-8 le 23/07).
+> Conservé pour l'ordre suivi, pas comme feuille de route : la suite se lit dans le bloc
+> d'état du 26/07, en tête de ce fichier.
 
 Chacune = UN chantier avec **plan écrit et relu AVANT code** (comme le lot C), dans l'ordre
 conseillé :
@@ -413,21 +437,28 @@ conseillé :
    corrigé et branché — voir le bloc d'état en tête ; comparateurs et cat. II corrigés).
 3. ~~**P0-6 — cycle fuite**~~ ✅ **TERMINÉ 22/07** (CF-1→CF-6 — voir le bloc d'état en
    tête ; l'écart « effets machine d'un contrôle annulé » du plan P0-7 §7(a) est soldé).
-4. **P0-8 — déclaration annuelle 11 rubriques**.
-**Hors code** : P0-9 (révocation clés v7) · volet RGPD (notice/durées/DPD).
+4. ~~**P0-8 — déclaration annuelle 11 rubriques**~~ ✅ **TERMINÉ 23/07** (PR #3).
+**Hors code** : P0-9 (révocation clés v7 — devenu « désactiver le déploiement Apps Script »,
+la v7 ayant été abandonnée le 25/07) · volet RGPD (notice/durées/DPD).
 
-**Décisions transverses en attente (gatées Franck)** : **T2** R-455A 148→146 (à re-trancher pour
-la cible officielle — la RC a gardé 148) · **T3** relecture organisme agréé + DPD (délai long).
+**Décisions transverses (état d'époque)** : **T2** R-455A 148→146 — **tranché le 23/07** :
+règle du PRP le PLUS ÉLEVÉ, les 148 restent, à re-trancher seulement si l'organisme l'exige
+pour la cible officielle · **T3** relecture organisme agréé + DPD (délai long) — **toujours
+ouvert, chemin critique**.
 
 ## À LIRE EN PREMIER (avant de coder)
 
 1. **Mémoire** (`G:\Mon Drive\claude-memoire\`) : `MEMORY.md` puis `project_inerweb_fluide.md`.
 2. Tête de **`CHANGELOG.md`** — dernier état.
 3. **`docs/CARTE-CODE.md`** — l'architecture en une page, AVANT toute exploration.
-4. Le plan de la brique choisie : `docs/PLAN-INTEGRATION-RC-CHATGPT.md` +
-   `docs/CONSTATS-AUDIT-EXTERNE-2026-07-20.md` (constats triés) +
-   `docs/AUDIT-INERWEB-FLUIDE-2026-07-20.md` (rapport complet).
-5. `git log` + `git status` — ⚠️ des sessions parallèles écrivent parfois sur ce dépôt.
+4. **`docs/REPONSE-AUDIT-EXTERNE-2026-07-25.md`** — le mémoire en réponse au 3ᵉ audit externe :
+   ce qui est concédé, ce qui est corrigé, ce qui est contesté et pourquoi. En cas de
+   divergence entre CE fichier-ci et le mémoire, **c'est le mémoire qui fait foi** : il est
+   écrit pour un tiers et chacune de ses affirmations est vérifiable sur le paquet envoyé.
+5. Le plan de la brique choisie : `docs/PLAN-INTEGRATION-RC-CHATGPT.md` +
+   `docs/CONSTATS-AUDIT-EXTERNE-2026-07-20.md` (constats triés du 2ᵉ audit) +
+   `docs/AUDIT-INERWEB-FLUIDE-2026-07-20.md` (rapport complet du 2ᵉ audit).
+6. `git log` + `git status` — ⚠️ des sessions parallèles écrivent parfois sur ce dépôt.
 
 ## MÉTHODE / RÈGLES D'OR (ne rien casser)
 
@@ -435,14 +466,17 @@ la cible officielle — la RC a gardé 148) · **T3** relecture organisme agré�
   `feedback_reglages_intelligence`).
 - **carte → vérifier → plan (grosses briques) → modif chirurgicale → TESTS VERTS → revue
   adversariale (sobre : soi-même ou 1 agent) → commit.** `node outils/lancer-tests.mjs --tout`
-  doit être **TOUT VERT (99 exécutions)** avant tout commit.
+  doit être **TOUT VERT** avant tout commit. Le nombre d'exécutions CROÎT à chaque lot : c'est
+  le « TOUT VERT » qui fait foi, pas le compte. Repère au 26/07/2026 : **121 exécutions** —
+  si le tien est inférieur, tu as perdu des suites en route.
 - **JAMAIS toucher au `data/` RÉEL** : vérification dynamique = serveur sur PORT jetable +
   `IWF_CHEMIN_BASE` base jetable (jamais 2011). Corps des requêtes API = **`{params:{...}}`**.
   **« Une faille se prouve en la TIRANT, pas en la lisant. »**
 - **Parité STRICTE `server/api.js` ↔ `v8/js/data/demo-store.js`** (test-contrat, mapping qui
   lève sur clé inconnue → déclarer les nouveaux champs des deux côtés). Module pur du front
   réutilisé côté serveur = recopié en littéral (CommonJS) + test de parité qui discrimine.
-- **Migrations** : registre `server/migrations.js`, dernière = **32**, prochaine = **33**.
+- **Migrations** : registre `server/migrations.js`, dernière = **36**, prochaine = **37**
+  (au 26/07/2026 — se relit dans le registre, jamais de mémoire).
   ⚠️ Une migration est IMMUABLE (littéraux figés, jamais de constante partagée qui évolue).
   Triggers WORM recréés à chaque migration qui touche leurs tables ;
   `PRAGMA recursive_triggers = ON` obligatoire.
@@ -454,9 +488,9 @@ la cible officielle — la RC a gardé 148) · **T3** relecture organisme agré�
 
 ## RESTE CONSIGNÉ (non bloquant)
 
-- Écarts du plan P0-7 §7 : l'annulation d'un mouvement CONTROLE ne neutralise pas les effets
-  machine du contrôle lié (à revoir avec P0-6) · l'échéance du contrôle ACCESSOIRE n'est pas
-  mise à jour (historique).
+- Écarts du plan P0-7 §7 : ~~l'annulation d'un mouvement CONTROLE ne neutralise pas les effets
+  machine du contrôle lié~~ **SOLDÉ le 22/07 par P0-6** (`recalculerEffetsMachineApresAnnulation`)
+  · reste §7(b) : l'échéance du contrôle ACCESSOIRE n'est pas mise à jour (historique).
 - 3 mineurs de la revue du 20/07 (voir CHANGELOG, bloc P1-6).
 - Hors code : relecture finale de la liste du lot B par Franck · simulation d'audit fin août ·
   septembre en PARALLÈLE de la procédure actuelle (2-4 semaines) puis bascule avec secours
