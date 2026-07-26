@@ -69,14 +69,49 @@ Points d'entrée : `docs/TABLE-REGLEMENTAIRE-FLUIDES.md`,
 
 ## 3. Comment le logiciel est bâti
 
-### Deux modes, strictement séparés
+### Deux modes — séparation DOCUMENTAIRE, registre UNIQUE
 
-| | **Formation** | **Officiel** |
-|---|---|---|
-| Pour qui | les élèves | le registre de l'établissement |
-| Documents | jamais d'apparence officielle | fiche CERFA opposable |
-| Blocages | **aucun**, jamais | une liste de conditions **bloque** la validation |
-| Écritures | modifiables | signées, scellées, non modifiables |
+⚠️ **Lisez ce paragraphe avant tout le reste : sa version précédente a induit en erreur
+l'audit du 25/07/2026, qui en a tiré son constat le plus lourd.**
+
+**Il n'y a qu'UN registre.** Le mode ne partitionne pas les données : il qualifie le
+DOCUMENT. Et c'est voulu, parce que la matière est réelle.
+
+Ici, « Formation » ne veut pas dire « bac à sable ». Les élèves interviennent sur le parc
+RÉEL de l'atelier, avec du VRAI fluide dans de VRAIES bouteilles. Quand un élève charge
+2 kg, la bouteille perd réellement 2 kg : l'obligation F-Gas porte sur la MATIÈRE, elle
+doit donc être tracée. Une fiche Formation est une fiche **non opposable** portant sur une
+intervention **réelle**. Le bac à sable, lui, existe et porte un autre nom : c'est le mode
+**Démo** (store en mémoire, monde fictif, aucune donnée réelle nulle part).
+
+| | **Démo** | **Formation** | **Officiel** |
+|---|---|---|---|
+| Nature | monde fictif | registre RÉEL, document non opposable | registre RÉEL, document opposable |
+| Pour qui | découverte, démonstration | les élèves, sous validation enseignant | le registre de l'établissement |
+| Matière | aucune | elle bouge, **et c'est le but** | elle bouge |
+| Documents | aucun | filigrane, numérotation `FORM-`, jamais d'apparence officielle | fiche CERFA |
+| Blocages | sans objet | **aucun** — on n'empêche jamais d'enregistrer la réalité | liste de conditions **bloquantes** |
+| Écritures | volatiles | brouillons modifiables ; **validées : signées, scellées, chaînées** | idem |
+
+**Point souvent mal lu** : une écriture Formation VALIDÉE n'est pas modifiable. Elle porte
+une empreinte chaînée et sa suppression est refusée (« correction uniquement par
+contre-écriture »), exactement comme une écriture officielle. Le logiciel est donc plus
+strict que ce que ce tableau annonçait auparavant, jamais plus laxiste.
+
+**Ce qui garde le mode Formation** n'est pas un cloisonnement de données, c'est la
+validation : `validerMouvement` est réservé à l'enseignant, et la saisie d'un
+inventaire physique l'est aussi. Un élève est arrêté **deux fois** : au niveau de la
+session, en **HTTP 403** (« Action « validerMouvement » réservée aux rôles habilités
+(REFERENT, ENSEIGNANT, ADMIN) — rôle courant : ELEVE. ») ; et au niveau métier, si
+l'on désigne une fiche d'élève comme validateur, en **HTTP 400** (« Validation
+refusée : un élève ne peut pas valider une écriture »).
+
+Si vous jugez malgré tout que deux univers de données séparés s'imposent, **dites-le en
+traitant d'abord ce cas** : le gaz part réellement dans la machine pendant le TP, la fiche
+Formation est rendue inerte, le professeur saisit l'inventaire physique du mois. Que se
+passe-t-il ? (Réponse mesurée sur banc : écart de balance non justifié, alerte critique, et
+blocage du mode Officiel — voir `docs/REPONSE-AUDIT-EXTERNE-2026-07-25.md` §3, constat
+P0-02, et le banc joint `docs/banc-contrefactuel-P0-02.mjs`, qui rejoue la mesure.)
 
 Le mode Officiel est **actuellement FERMÉ** par un verrou (`VERROU_LIVRAISON = true`,
 `v8/js/data/blocage-officiel.js` et son miroir serveur), volontairement **non configurable
@@ -124,7 +159,7 @@ Nous ne demandons pas qu'on nous croie sur parole. Tout ce qui suit est **exécu
 node outils/lancer-tests.mjs --tout
 ```
 
-**106 exécutions, tout vert**, en 90 secondes environ, sans aucune dépendance à installer.
+**121 exécutions, tout vert**, en deux minutes environ, sans aucune dépendance à installer.
 Chaque suite travaille sur une base jetable ; aucune ne touche les données réelles.
 
 ### La suite de sécurité négative
@@ -133,14 +168,17 @@ Chaque suite travaille sur une base jetable ; aucune ne touche les données rée
 node server/test-securite-negative.mjs
 ```
 
-**140 attaques et preuves.** C'est le fichier à lire en premier si vous voulez savoir ce que
+**207 attaques et preuves.** C'est le fichier à lire en premier si vous voulez savoir ce que
 le logiciel refuse : sans session, jeton forgé, requête inter-site, rôle injecté dans le
 corps, SQL direct sur la base (`UPDATE`, `DELETE`, `REPLACE INTO`), import forgé, fichiers
 privés demandés au serveur web. Chaque cas est **tiré**, pas décrit.
 
 ### Les audits déjà passés
 
-- **Deux audits techniques externes** (juillet 2026) : tous les constats bloquants corrigés.
+- **Trois audits techniques externes** (juillet 2026), dont celui du 25/07 auquel ce paquet
+  répond : voir `docs/REPONSE-AUDIT-EXTERNE-2026-07-25.md`, qui expose constat par constat
+  ce qui est corrigé, ce qui est réfuté, ce qui est assumé — et le seul point de désaccord
+  de fond.
 - **Une campagne d'attaques** (juillet 2026) : 190 scénarios inventoriés, 36 candidats
   critiques, **26 attaques confirmées en les exécutant**, toutes corrigées. Ce qui a tenu
   d'emblée : gardes de rôle sur les mutations, garde anti-CSRF et anti-rebinding DNS,

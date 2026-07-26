@@ -7,9 +7,13 @@
 > testées une à une). PAS d'ultracode hors point critique.
 >
 > **⭐⭐⭐⭐⭐⭐⭐⭐⭐ ÉTAT AU 26/07/2026 — 3ᵉ AUDIT EXTERNE (verdict NO GO) TRAITÉ.
-> B1 + B2 + B3 FUSIONNÉS dans `main`. TOUT VERT — 119 exécutions** (106 → 119),
-> contrat v12, migration **36**, verrou Officiel toujours FERMÉ. 69 commits,
-> +9519/−453.
+> B1 + B2 + B3 FUSIONNÉS dans `main`, puis les résidus A18 / A23 / A02.
+> TOUT VERT — 121 exécutions** (106 → 121, mesuré par
+> `node outils/lancer-tests.mjs --tout`), **207 attaques** à
+> `node server/test-securite-negative.mjs`, contrat v13, migration **36**
+> (35 migrations, numérotées de 2 à 36), verrou Officiel toujours FERMÉ.
+> ⚠️ Ce bloc part dans le paquet d'audit : tout chiffre qui y figure doit être
+> celui que la commande citée produit le jour de l'envoi.
 >
 > **MÉTHODE — c'est elle qu'il faut retenir.** 31 constats inventoriés sans
 > filtre, puis **TIRÉS en bac à sable** (jamais lus), puis contre-épreuve
