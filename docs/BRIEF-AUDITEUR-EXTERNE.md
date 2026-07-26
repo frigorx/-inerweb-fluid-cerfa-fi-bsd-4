@@ -143,9 +143,12 @@ dédié pour chacun.
 
 ### Ce qui tourne sur le poste
 
-Node.js ≥ 22, `node:sqlite`, **zéro dépendance de production**. Trois bibliothèques tierces
-minifiées servent uniquement à afficher et produire des PDF (voir `01-SOMMAIRE.md`) : elles
-ne touchent ni la base, ni le réseau, ni les droits.
+Node.js ≥ 22, `node:sqlite`, **zéro dépendance de production**. Le dépôt embarque **quatre
+fichiers tiers minifiés** (2,25 Mio), pour **trois projets** : PDF.js (afficher le CERFA),
+pdf-lib (le remplir), qrcodejs (les étiquettes QR des machines et bouteilles, hors ligne).
+Aucun ne touche à la base, au réseau ni aux droits. Ils sont nommés au `01-SOMMAIRE.md` et
+inventoriés — version lisible, licence RÉELLE, taille, fichier par fichier — dans
+`LICENCES-TIERCES.md`.
 
 ---
 
@@ -175,17 +178,33 @@ privés demandés au serveur web. Chaque cas est **tiré**, pas décrit.
 
 ### Les audits déjà passés
 
-- **Trois audits techniques externes** (juillet 2026), dont celui du 25/07 auquel ce paquet
-  répond : voir `docs/REPONSE-AUDIT-EXTERNE-2026-07-25.md`, qui expose constat par constat
-  ce qui est corrigé, ce qui est réfuté, ce qui est assumé — et le seul point de désaccord
-  de fond.
-- **Une campagne d'attaques** (juillet 2026) : 190 scénarios inventoriés, 36 candidats
-  critiques, **26 attaques confirmées en les exécutant**, toutes corrigées. Ce qui a tenu
-  d'emblée : gardes de rôle sur les mutations, garde anti-CSRF et anti-rebinding DNS,
-  zip slip à la restauration, traversée de chemin sous toutes ses formes.
-- **Une revue adversariale** (5 relecteurs indépendants chargés de *réfuter* les correctifs) :
-  3 bloquants et 8 constats, tous corrigés — dont une régression que le correctif lui-même
-  avait introduite, et trois tests qui **ne pouvaient pas échouer** (donc ne prouvaient rien).
+> ⚠️ **Deux campagnes de relecture distinctes** figurent ci-dessous, avec des chiffres
+> différents. Ce n'est pas une contradiction : ce sont **deux campagnes, à deux dates, sur
+> deux lots de travail**. Elles sont donc datées et nommées, et le mémoire les cite avec les
+> mêmes chiffres.
+
+- **Trois audits techniques externes** (juillet 2026), dont celui du **25/07/2026** auquel ce
+  paquet répond : voir `docs/REPONSE-AUDIT-EXTERNE-2026-07-25.md`, qui expose constat par
+  constat ce qui est corrigé, ce qui est réfuté, ce qui est assumé — et le seul point de
+  désaccord de fond. La correspondance entre **les 31 numéros du rapport** et nos codes
+  internes `A01…A31` est donnée par `docs/TABLE-CONSTATS-AUDIT-2026-07-25.md` : c'est la
+  **seule pièce** qui raccorde les deux numérotations, à ouvrir dès qu'un numéro de constat
+  vous intrigue.
+- **La campagne d'attaques du lot L2** (25/07/2026) : 190 scénarios inventoriés par 8
+  relecteurs, 36 candidats critiques, **26 attaques confirmées en les exécutant** par 10
+  relecteurs, toutes corrigées. Ce qui a tenu d'emblée : gardes de rôle sur les mutations,
+  garde anti-CSRF et anti-rebinding DNS, zip slip à la restauration, traversée de chemin
+  sous toutes ses formes. (Détail : `CHANGELOG.md`, section « L2 ».)
+- **La revue adversariale du lot L2** (25/07/2026, 5 relecteurs indépendants chargés de
+  *réfuter* les correctifs de ce lot) : **3 bloquants et 8 constats**, tous corrigés — dont
+  une régression que le correctif lui-même avait introduite, et trois tests qui **ne
+  pouvaient pas échouer** (donc ne prouvaient rien).
+- **Les revues adversariales des lots B1, B2 et B3** (25-26/07/2026, une revue par lot, plus
+  une passe de vérification finale) : **1 bloquant, 15 constats importants et 19 mineurs** au
+  total, la passe finale ayant **rouvert** l'un des importants et ajouté un mineur. Ce sont
+  ces trois lots que le mémoire dissèque en **§5** — la section où nous publions ce que nos
+  propres correctifs ont cassé. (Détail par lot : `CHANGELOG.md`, sections « B1 », « B2 »,
+  « B3 ».)
 
 ### Quelques défenses non évidentes, si vous voulez chercher là où c'est intéressant
 
@@ -288,6 +307,15 @@ Ils reviennent partout dans le code, et sans eux certaines décisions sembleraie
 - `v8/js/data/contrat.js` — la surface complète du logiciel : 96 méthodes documentées.
 - `docs/CONDITIONS-BLOCANTES-OFFICIEL.md` — la liste exacte de ce qui refuse une validation
   officielle, et à quel moment.
+- `docs/REPONSE-AUDIT-EXTERNE-2026-07-25.md` — le mémoire en réponse à l'audit du 25/07, et
+  `docs/TABLE-CONSTATS-AUDIT-2026-07-25.md`, son annexe : **les 31 constats du rapport**,
+  chacun avec son numéro d'origine, notre code interne `A01…A31`, le verdict et la section
+  du mémoire où le lire. ⚠️ Ne confondez pas ces numéros avec ceux de
+  `docs/CONSTATS-AUDIT-EXTERNE-2026-07-20.md`, qui voyage aussi dans les documents de
+  travail : il emploie des codes `P0-x` / `P1-x` de l'audit **précédent**, qui désignent
+  tout autre chose. La table le dit et donne la correspondance.
+- `LICENCES-TIERCES.md` — les quatre fichiers tiers embarqués, leur licence RÉELLE relue
+  dans le fichier, et ce que le fichier ne prouve pas.
 
 **Sur la forme.** Le code est écrit et commenté **en français**, y compris les noms de
 variables : le logiciel est maintenu par un enseignant de la filière, pas par une équipe de

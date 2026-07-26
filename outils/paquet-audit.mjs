@@ -18,10 +18,20 @@
 //   · `data/`, `documents/`, `backups/` : les données RÉELLES du poste —
 //     élèves, clients, interventions. Elles n'ont rien à faire dans un
 //     dossier qui part à l'extérieur. C'est la règle la plus importante ici.
-//   · `v8/js/lib/` : trois bibliothèques tierces MINIFIÉES (pdf.js,
-//     pdf-lib) — 2,3 Mo de code que nous n'avons pas écrit et que
-//     personne ne relira ligne à ligne. Elles sont NOMMÉES au sommaire,
-//     avec leur version, pour que l'auditeur sache ce qui tourne.
+//   · `v8/js/lib/` : le DOSSIER ENTIER est écarté (`DOSSIERS_TIERS`), et
+//     ses fichiers sont NOMMÉS au sommaire avec leur taille, pour que
+//     l'auditeur sache ce qui tourne. Il contient CINQ fichiers :
+//       - QUATRE fichiers TIERS (2 362 164 o, soit 2,25 Mio) pour TROIS
+//         projets — pdf.min.mjs + pdf.worker.min.mjs (PDF.js 4.10.38,
+//         Apache 2.0), pdf-lib.min.js (MIT, contient tslib en Apache 2.0),
+//         qrcode-vendor.js (qrcodejs, MIT). Les trois premiers sont
+//         MINIFIÉS ; qrcode-vendor.js l'est aussi, sous notre en-tête.
+//         Personne ne relira ligne à ligne du code qu'on n'a pas écrit.
+//       - UN fichier de NOUS, `qrcode.js` (38 lignes) : un adaptateur qui
+//         lit `window.QRCode`. Il part avec les autres parce que le filtre
+//         écarte le dossier, pas les fichiers un par un — c'est assumé, et
+//         c'est dit au sommaire. Inventaire complet et licences RÉELLES
+//         vérifiées fichier par fichier : `LICENCES-TIERCES.md`.
 //   · `.git/`, `node_modules/` : sans objet.
 //
 // Usage :  node outils/paquet-audit.mjs
