@@ -206,6 +206,15 @@ export function gabaritFormulaire(personne, enModification,
     + '</div>'
     + '</div>'
 
+    // ⭐⭐ REVUE B1, constat mineur n°3 — LA NOTE ÉTAIT ENFERMÉE DANS UN
+    // BLOC MASQUÉ. Elle vivait dans #pf-bloc-attestation, qui porte
+    // `hidden` dès que la personne est de type ÉLÈVE : sur la fiche d'un
+    // élève ouverte par un élève, le sélecteur « Rôle applicatif »
+    // ci-dessus était donc grisé SANS AUCUNE explication. Une note qui ne
+    // s'affiche pas ne dit rien. Elle est remontée ICI, juste sous le
+    // sélecteur qu'elle explique, hors de tout bloc conditionnel.
+    + noteReservee
+
     + '<div class="champ" data-champ="email">'
     + '<label for="pf-email">Courriel</label>'
     + '<input type="email" id="pf-email" name="email" maxlength="160" '
@@ -219,7 +228,6 @@ export function gabaritFormulaire(personne, enModification,
     + '</div>'
 
     + '<div id="pf-bloc-attestation"' + (estEleve ? ' hidden' : '') + '>'
-    + noteReservee
 
     + '<div class="champ" data-champ="numAttestationAptitude">'
     + '<label for="pf-num-aptitude">N° attestation d’aptitude</label>'

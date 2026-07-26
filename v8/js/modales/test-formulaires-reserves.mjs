@@ -76,6 +76,18 @@ function champVerrouille(html, champ, attribut = 'disabled') {
   return balises.length > 0 && balises.every((b) => motif.test(b));
 }
 
+/**
+ * Le morceau de gabarit qui va de `data-champ="<champ>"` jusqu'au champ
+ * SUIVANT — c'est-à-dire ce que l'utilisateur voit AUTOUR de ce champ.
+ * Sert à prouver qu'une note explicative est bien LÀ, et pas ailleurs.
+ */
+function blocDuChamp(html, champ) {
+  const debut = html.indexOf('data-champ="' + champ + '"');
+  if (debut === -1) return '';
+  const suivant = html.indexOf('data-champ="', debut + 12);
+  return html.slice(debut, suivant === -1 ? html.length : suivant);
+}
+
 /** Le champ existe et AUCUNE de ses balises n'est verrouillée. */
 function champOuvert(html, champ) {
   const balises = balisesDuChamp(html, champ);
@@ -185,6 +197,17 @@ console.log('--- A ter. machine-form : le bloc est affiché, verrouillé ---');
     && verrouille.includes('réservées au responsable'));
   verifier('contre-épreuve : aucune note pour le responsable',
     !ouvert.includes('<p class="mf-note mf-reservee">'));
+  // ⭐⭐ REVUE B1, constat mineur n°3 — UNE NOTE SE LIT LÀ OÙ EST LE
+  // VERROU. Le sélecteur « type d'installation » est grisé ici, mais la
+  // seule note qui l'expliquait vivait plus bas, dans le fieldset
+  // « Nature de l'équipement » ; celle du sous-type, elle, est dans un
+  // bloc masqué pour un équipement FIXE. Une note ailleurs ne dit rien.
+  verifier('⭐ rôle sans droit : le type d’installation porte SA PROPRE '
+    + 'note, dans le même bloc que le verrou',
+  blocDuChamp(verrouille, 'typeInstallation').includes('mf-reservee'),
+  blocDuChamp(verrouille, 'typeInstallation').slice(0, 200));
+  verifier('contre-épreuve : aucune note dans ce bloc pour le responsable',
+    !blocDuChamp(ouvert, 'typeInstallation').includes('mf-reservee'));
   verifier('la fiche reste LISIBLE pour tous : les valeurs qualifiées sont '
     + 'toujours affichées', verrouille.includes('value="MOBILE" selected')
     && verrouille.includes('value="CAMION_FRIGORIFIQUE" selected')
@@ -320,6 +343,21 @@ console.log('--- B ter. personne-form : les blocs réservés sont '
     verifier('fiche d’ÉLÈVE : le rôle applicatif est bien verrouillé',
       champVerrouille(ficheEleve, 'roleApp'),
       JSON.stringify(balisesDuChamp(ficheEleve, 'roleApp')));
+
+    // ⭐⭐ REVUE B1, constat mineur n°3 — LA NOTE ÉTAIT ENFERMÉE. Elle
+    // vivait dans #pf-bloc-attestation, qui porte `hidden` dès que la
+    // personne est un ÉLÈVE : le sélecteur ci-dessus était donc grisé
+    // SANS un mot d'explication. Une note qui ne s'affiche pas ne dit
+    // rien — elle doit être HORS de tout bloc conditionnel.
+    const debutBlocMasque = ficheEleve.indexOf('id="pf-bloc-attestation"');
+    verifier('décor : sur une fiche d’ÉLÈVE, le bloc des preuves est bien '
+      + 'MASQUÉ', /id="pf-bloc-attestation"\s+hidden/.test(ficheEleve),
+    ficheEleve.slice(debutBlocMasque, debutBlocMasque + 60));
+    const posNote = ficheEleve.indexOf('<p class="pf-reservee">');
+    verifier('⭐ fiche d’ÉLÈVE : la note qui explique le verrou est HORS du '
+      + 'bloc masqué (elle est donc VUE)',
+    posNote !== -1 && debutBlocMasque !== -1 && posNote < debutBlocMasque,
+    `note à ${posNote}, bloc masqué à ${debutBlocMasque}`);
   }
 }
 

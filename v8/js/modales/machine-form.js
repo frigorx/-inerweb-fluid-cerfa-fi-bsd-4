@@ -242,6 +242,16 @@ export function gabaritFormulaire(machine, fluides, clients,
           + esc(o[1]) + '</option>';
       }).join('')
     + '</select>'
+    // ⭐⭐ REVUE B1, constat mineur n°3 — LA NOTE ÉTAIT AILLEURS. Ce
+    // sélecteur et celui du sous-type sont verrouillés ici, mais la seule
+    // note qui l'expliquait vivait plus bas, dans le fieldset « Nature de
+    // l'équipement » ; et la note du sous-type est dans un bloc masqué
+    // pour un équipement FIXE. Un champ grisé sans explication est un
+    // écran qui ment par omission : la note vient là où est le verrou.
+    + (peutQualifier ? ''
+      : '<p class="mf-note mf-reservee">Type et nature de l’installation : '
+        + 'réservés au responsable — ils commandent le délai du contrôle '
+        + 'de suivi après réparation. Affichés, non modifiables ici.</p>')
     + '</div>'
 
     // P1-1 (E5) : le sous-type ne concerne que les MOBILES et conditionne
