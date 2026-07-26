@@ -1021,6 +1021,45 @@ export function creerDemoStore() {
     }
   }
 
+  /**
+   * B1 — LES BORNES DE LA CHARGE, AUX DEUX PORTES (miroir EXACT du
+   * serveur). updateMachine les portait depuis L2 ; createMachine coercait
+   * en silence (`Number(...) || 0`) : 9999 kg actuels sur 10 kg nominaux
+   * passaient, -50 kg aussi, et « beaucoup » devenait 0 kg sans un mot.
+   * @returns {number} la charge actuelle normalisee
+   */
+  function chargeActuelleNormalisee(valeur, nominale) {
+    if (valeur === undefined || valeur === null || valeur === '') return 0;
+    const actuelle = Number(valeur);
+    if (!Number.isFinite(actuelle) || actuelle < 0) {
+      throw new Error('Charge actuelle invalide (en kg, jamais négative).');
+    }
+    // Tolerance 5 % : elle couvre les ecarts de pesee reels.
+    if (Number.isFinite(nominale) && nominale > 0
+        && actuelle > nominale * 1.05) {
+      throw new Error(
+        `Charge actuelle impossible : ${actuelle} kg déclarés pour une `
+        + `charge nominale de ${nominale} kg (tolérance 5 %).`);
+    }
+    return actuelle;
+  }
+
+  /**
+   * B1 — « une date est une date » (doctrine L2), SUR LA MACHINE AUSSI
+   * (miroir EXACT du serveur). createControle refusait deja '2028-99-99' ;
+   * createMachine l'acceptait sur ses trois dates. Absente = legitime.
+   */
+  function verifierDatesMachine(d) {
+    for (const [champ, libelle] of [
+      ['dateMiseEnService', 'Date de mise en service'],
+      ['dernierControle', 'Date du dernier contrôle'],
+      ['prochainControle', 'Date du prochain contrôle']]) {
+      if (!estDateCalendaireOuVide(d[champ])) {
+        throw new Error(messageDateInvalide(libelle));
+      }
+    }
+  }
+
   /** L2 — memes dates, meme regle, sur la FICHE de la personne. */
   function verifierDatesPersonne(d) {
     for (const [champ, libelle] of [
@@ -2955,6 +2994,10 @@ export function creerDemoStore() {
       if (!Number.isFinite(nominale) || nominale <= 0) {
         throw new Error('Charge nominale obligatoire (en kg, positive).');
       }
+      // B1 — memes bornes et memes dates qu'a la modification.
+      const chargeActuelle = chargeActuelleNormalisee(d.chargeActuelleKg,
+        nominale);
+      verifierDatesMachine(d);
       // P0-6 : FIXE/MOBILE — un mobile listé est admis au contrôle
       // immédiat après réparation. Absent = FIXE (défaut conservateur).
       if (d.typeInstallation !== undefined && d.typeInstallation !== null
@@ -3009,7 +3052,7 @@ export function creerDemoStore() {
         numSerie: d.numSerie ?? null,
         fluide: d.fluide,
         chargeNominaleKg: nominale,
-        chargeActuelleKg: Number(d.chargeActuelleKg) || 0,
+        chargeActuelleKg: chargeActuelle,
         clientId: d.clientId ?? null,
         localisation: d.localisation ?? null,
         siteLabel: d.siteLabel ?? client?.raisonSociale ?? null,
@@ -3088,6 +3131,36 @@ export function creerDemoStore() {
       }
       verifierModeleEquipement(fusion);
 
+      // ⭐ L2 — `dernierControle` et `prochainControle` RETIRÉS de la liste :
+      // faits DÉRIVÉS posés par enregistrerControle depuis le moteur. Une
+      // session ÉLÈVE repoussait l'échéance d'une machine en retard au
+      // 31/12/2099 et l'alerte critique disparaissait. Ils restent
+      // légitimes à la CRÉATION (reprise de parc) et à l'import.
+      // ⚠️ Revue L2 — REFUSER PLUTÔT QU'IGNORER. Ces deux dates ont été
+      // retirées des champs modifiables : les recevoir sans rien en faire
+      // rendait un succès trompeur — le professeur corrigeait une date de
+      // reprise de parc, le logiciel répondait « enregistré », et rien ne
+      // changeait. Un refus explicite dit où poser le geste.
+      // ⭐⭐ REVUE B1 — CE REFUS EST ÉVALUÉ ICI, AU MÊME RANG QU'AU SERVEUR.
+      // Le lot B1 avait remonté ce bloc côté serveur (pour que le message
+      // utile passe avant le filtre de rôle) et l'avait laissé en place
+      // côté démo : sur une charge utile à DOUBLE violation
+      // ({ chargeActuelleKg: 9999, dernierControle: '2026-01-05' }), les
+      // deux stores refusaient — mais avec des messages DIFFÉRENTS. La
+      // parité, c'est le MÊME message canonique, mot pour mot, y compris
+      // quand plusieurs refus sont possibles : c'est le RANG qui décide
+      // lequel sort.
+      for (const champ of ['dernierControle', 'prochainControle']) {
+        if (d[champ] !== undefined) {
+          throw new Error(
+            'Les dates de contrôle d’une machine ne se saisissent pas ici : '
+            + 'elles sont posées par l’enregistrement d’un contrôle '
+            + 'd’étanchéité, qui les calcule selon la périodicité '
+            + 'réglementaire. (Elles restent saisissables à la CRÉATION de la '
+            + 'machine, pour reprendre un parc existant.)');
+        }
+      }
+
       // ⭐ L2 (25/07) — LA MODIFICATION REVALIDE CE QUE LA CRÉATION EXIGE
       // (miroir du serveur). Attaque tirée : ramener la charge nominale à 0
       // faisait sortir la machine du périmètre du contrôle d'étanchéité.
@@ -3100,42 +3173,16 @@ export function creerDemoStore() {
       }
       // ⭐ L2 — charge ACTUELLE : ni négative, ni illisible, ni sans rapport
       // avec la machine (9999 kg déclarés sur 10 kg nominaux affichaient
-      // 20 877 t éq. CO₂ au tableau de bord). Tolérance 5 % comme ailleurs.
+      // 20 877 t éq. CO₂ au tableau de bord).
+      // B1 — la borne a MIGRÉ dans `chargeActuelleNormalisee` : la création
+      // empruntait la même colonne avec une simple coercion silencieuse.
       if (d.chargeActuelleKg !== undefined && d.chargeActuelleKg !== null) {
-        const actuelle = Number(d.chargeActuelleKg);
-        if (!Number.isFinite(actuelle) || actuelle < 0) {
-          throw new Error('Charge actuelle invalide (en kg, jamais négative).');
-        }
-        const nominaleFusion = Number(
-          d.chargeNominaleKg ?? machine.chargeNominaleKg);
-        if (Number.isFinite(nominaleFusion) && nominaleFusion > 0
-            && actuelle > nominaleFusion * 1.05) {
-          throw new Error(
-            `Charge actuelle impossible : ${actuelle} kg déclarés pour une `
-            + `charge nominale de ${nominaleFusion} kg (tolérance 5 %).`);
-        }
-        d.chargeActuelleKg = actuelle;
+        d.chargeActuelleKg = chargeActuelleNormalisee(d.chargeActuelleKg,
+          Number(d.chargeNominaleKg ?? machine.chargeNominaleKg));
       }
-      // ⭐ L2 — `dernierControle` et `prochainControle` RETIRÉS de la liste :
-      // faits DÉRIVÉS posés par enregistrerControle depuis le moteur. Une
-      // session ÉLÈVE repoussait l'échéance d'une machine en retard au
-      // 31/12/2099 et l'alerte critique disparaissait. Ils restent
-      // légitimes à la CRÉATION (reprise de parc) et à l'import.
-      // ⚠️ Revue L2 — REFUSER PLUTÔT QU'IGNORER. Ces deux dates ont été
-      // retirées des champs modifiables : les recevoir sans rien en faire
-      // rendait un succès trompeur — le professeur corrigeait une date de
-      // reprise de parc, le logiciel répondait « enregistré », et rien ne
-      // changeait. Un refus explicite dit où poser le geste.
-      for (const champ of ['dernierControle', 'prochainControle']) {
-        if (d[champ] !== undefined) {
-          throw new Error(
-            'Les dates de contrôle d’une machine ne se saisissent pas ici : '
-            + 'elles sont posées par l’enregistrement d’un contrôle '
-            + 'd’étanchéité, qui les calcule selon la périodicité '
-            + 'réglementaire. (Elles restent saisissables à la CRÉATION de la '
-            + 'machine, pour reprendre un parc existant.)');
-        }
-      }
+      // B1 — memes dates qu'a la creation (ici, seule la date de mise en
+      // service peut encore entrer : les deux autres sont refusees plus haut).
+      verifierDatesMachine(d);
       const CHAMPS = ['designation', 'type', 'marque', 'modele', 'numSerie',
         'fluide', 'chargeNominaleKg', 'chargeActuelleKg', 'clientId',
         'localisation', 'siteLabel', 'statut', 'typeInstallation',
@@ -3143,6 +3190,20 @@ export function creerDemoStore() {
         'dateMiseEnService'];
       for (const champ of CHAMPS) {
         if (d[champ] !== undefined) machine[champ] = d[champ];
+      }
+      // ⭐⭐ REVUE B1, constat mineur n°5 — MIROIR LITTÉRAL DU SERVEUR.
+      // Un type d'installation absent VAUT « fixe », à la modification
+      // comme à la création : côté serveur la colonne est `NOT NULL
+      // DEFAULT 'FIXE'` (migration 27), ici c'est la même valeur qui doit
+      // être lue par la garde et écrite par le store.
+      // ⚠️ Le cas `''` écrit ci-dessous n'est pas atteignable : la garde de
+      // type, plus haut dans cette même méthode, l'a déjà refusé (« Type
+      // d'installation inconnu », message identique mot pour mot des deux
+      // côtés). Il ne reste là que par miroir. « Absent », ici, veut dire
+      // `null` — voir test-machine-saisie, section C bis.
+      if (machine.typeInstallation === null
+          || machine.typeInstallation === '') {
+        machine.typeInstallation = 'FIXE';
       }
       // Booléens du modèle d'équipement : jamais stockés en chaîne.
       for (const champ of ['hermetiqueScelle', 'hermetiqueEtiquete',

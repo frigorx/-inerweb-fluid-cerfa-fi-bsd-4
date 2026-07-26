@@ -2,6 +2,152 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔐 B1 — UNE RÈGLE, PAS UNE PORTE (25/07, session autonome)
+
+**Troisième occurrence du même motif dans ce dépôt.** La première fut L2-i
+(`getJournalAudit` gardé, `exporterJSON` rendant le même journal), d'où la formule
+« une confidentialité qui ne garde qu'une porte sur deux n'en est pas une ». Le motif
+recommençait ici sur deux familles : une règle posée sur **une seule** porte d'écriture,
+l'autre restée ouverte au rôle OPERATEUR — donc à l'ÉLÈVE.
+
+- **B1-a — la qualification d'un équipement (constat A05, tiré en session ÉLÈVE réelle).**
+  Le refus « Qualification réglementaire de l'équipement réservée au responsable »
+  existait dans `updateMachine` et **nulle part ailleurs** ; `createMachine` posait les
+  MÊMES colonnes en un seul appel, HTTP 200. Conséquence **mesurée**, pas théorique : sur
+  deux machines identiques de 5 kg de R-410A créées par le même élève, un titulaire
+  A2/2025 (limite 3 kg) était bloqué en Officiel sur la machine témoin et **plus du tout**
+  bloqué sur celle déclarée hermétique + étiquetée (`cadreFicheOfficiel` →
+  `equipement.hermetiqueOpposable` → `droit-intervention` 6 kg → condition 16). Aggravant :
+  cliquet à sens unique — une fois posée, l'élève ne pouvait plus la RETIRER
+  (`updateMachine` lui répondait 403). Il installait sans pouvoir défaire.
+  D'où la forme, qui est **tout le lot** : UNE liste (`CHAMPS_QUALIFICATION_MACHINE`),
+  UN filtre (`garderQualificationMachine`), les DEUX portes. Comparaison **normalisée**
+  contre la fiche en place — ou contre les défauts d'une machine neuve à la création :
+  renvoyer la fiche telle quelle ne déclenche rien, sans quoi l'écran deviendrait mort.
+  **Arbitrage assumé** : `statut` entre dans la liste (ARRETEE / DEMANTELEE sortent la
+  machine de l'alerte de contrôle en retard, `api.js:1153` — c'est un second déplacement
+  de seuil). ⚠️ La première rédaction de ce paragraphe **devançait le fait** : elle
+  présentait `statut` comme fermant ce déplacement alors que les gestes dédiés
+  `arreterMachine` / `demantelerMachine` restaient OPERATEUR et l'obtenaient en deux
+  appels (revue, mineur n°1 — voir B1-e). Les deux dates de contrôle aussi : la reprise d'un
+  parc existant reste possible **à la création**, au niveau du responsable — on ne ferme
+  pas trop fort.
+- **B1-b — les bornes de saisie de la machine, aux deux portes.** Même racine. Tiré :
+  9999 kg actuels sur 10 kg nominaux = 200 ; -50 kg = 200 ; la chaîne « beaucoup » = 200
+  **avec `chargeActuelle` à 0 par coercion silencieuse** (`Number(...) || 0`). Un registre
+  qui INVENTE une valeur est pire qu'un registre qui refuse. Et `createMachine` acceptait
+  `'2028-99-99'` là où `createControle` le refusait déjà — entorse à la doctrine L2
+  « une date est une date ». Deux fonctions partagées (`chargeActuelleNormalisee`,
+  tolérance de pesée 5 % conservée ; `verifierDatesMachine`), refus MÉTIER donc posés
+  **des deux côtés** avec le même message canonique.
+- **B1-c — la fiche du personnel PARTITIONNÉE (constat A06).** Elle mélangeait trois
+  natures sous une seule garde : l'ÉTAT CIVIL (saisie courante **légitime** — un élève
+  inscrit le camarade qui intervient sur son TP : inchangé), la GOUVERNANCE et la PREUVE
+  déclarative. L'audit annonçait une aptitude forgée : **réfuté** — le moteur opposable ne
+  lit que la table `habilitations`, gardée VALIDEUR, et le `roleApp` d'une FICHE ne donne
+  aucun pouvoir de session. Mais deux trous **réels** qu'il n'avait pas vus, tirés :
+  (a) `desactiverPersonne` est gardé VALIDEUR alors que `actif` figurait dans la liste
+  blanche d'`updatePersonne` — un élève désactivait n'importe qui par la porte de derrière,
+  en 200 (motif L2-i, à la lettre) ; (b) **déni de service** : un élève rétrogradait la
+  fiche du professeur (`roleApp` → ELEVE) et le professeur ne pouvait plus valider
+  (`verifierValidateur` lit la FICHE) — réversible, mais un jour d'examen personne ne
+  devine la cause. Les preuves déclaratives (numéro d'attestation, organisme, dates,
+  catégories, activités) rejoignent la gouvernance : décoratives pour le moteur, elles
+  restent **affichées, imprimées et lues par un auditeur** — un numéro et un organisme
+  inventés n'entrent pas en saisie courante.
+- **B1-d — et les ÉCRANS suivent, sinon ils meurent.** Piège ergonomique déjà payé par la
+  revue L2 : fermer l'API sans toucher à l'écran, c'est laisser l'élève remplir tout un
+  bloc pour prendre un 403 à la fin. Dans `machine-form.js`, l'utilisateur courant était
+  **déjà lu et inutilisé** ; il commande désormais le bloc « Nature de l'équipement ».
+  `personne-form.js` porte la même partition. Trois choix : **affiché et verrouillé**, pas
+  masqué (une fiche doit rester lisible, et l'écran DIT pourquoi) ; la charge utile **omet**
+  les champs réservés au lieu de renvoyer leur défaut (poster « FIXE » sur une machine
+  MOBILE vaudrait le 403 qu'on évite) ; le rôle applicatif n'est plus exigé quand son
+  sélecteur est verrouillé, sinon l'élève ne peut plus inscrire son camarade.
+
+- **B1-e — CE QUE LA REVUE ADVERSARIALE A TROUVÉ, et qui est soldé.** Le lot n'était pas
+  allé au bout de **sa propre règle** : le relecteur a tiré, en sessions réelles, dix
+  constats (0 bloquant, 4 importants, 6 mineurs). Tous fermés.
+  - **La liste était trop courte.** Deux familles déplacent un seuil et restaient en
+    saisie courante, aux DEUX portes : la **détection permanente** (fréquence des
+    contrôles divisée par deux — la même machine de 60 kg passait d'une échéance au
+    2027-01-25 à 2027-07-25 sur la seule déclaration d'un élève, sans qu'aucun rapport
+    de vérification n'ait été lu) et la **charge NOMINALE** (ramenée de 60 kg à 1 kg, la
+    machine sortait du périmètre F-Gas : plus d'échéance, plus d'alerte). Elles entrent
+    dans `CHAMPS_QUALIFICATION_MACHINE`, qui compte désormais **treize** champs.
+    Conséquence assumée : la charge nominale étant obligatoire, **créer** la fiche d'un
+    équipement devient un geste de responsable — et l'écran l'annonce AVANT d'ouvrir la
+    modale, au lieu d'offrir vingt champs pour un 403 à la fin. La charge **ACTUELLE**,
+    elle, reste ouverte : c'est le geste même du TP.
+  - **La troisième porte du même seuil** (mineur n°1). Refusé en un appel, le passage en
+    ARRETEE / DEMANTELEE s'obtenait en deux : créer la machine, puis appeler le geste
+    dédié. `arreterMachine` et `demantelerMachine` passent au niveau du responsable
+    (VALIDEUR) — entiers, avec leurs gardes matérielles et leur journal : ils changent de
+    main, pas de nature. ⚠️ `remettreEnService` reste OPERATEUR **à dessein** : il RAMÈNE
+    la machine dans les alertes. Le doute retire l'allègement, jamais l'obligation.
+  - **Le rôle qu'on n'écrit pas** (mineur n°2). Les attaques connues écrivaient `roleApp`
+    noir sur blanc. Il suffisait de ne rien demander : tout `typePersonne` autre qu'ÉLÈVE
+    faisait naître une fiche **ENSEIGNANT** — celle que `verifierValidateur` lit. Un rôle
+    ne se **déduit** désormais que pour qui a le droit de l'**attribuer** ; ailleurs, le
+    défaut est le moindre privilège. **On ne refuse rien de plus** : l'élève inscrit
+    toujours qui il veut, la fiche naît simplement sans pouvoir.
+  - **Une divergence de rang créée par le correctif lui-même** (important n°3) : le refus
+    des deux dates de contrôle avait été déplacé AVANT les bornes de charge côté serveur
+    et laissé APRÈS côté démo — même charge utile, deux messages. Remis au même rang.
+  - **Deux tests qui ne pouvaient pas mordre** (important n°4, mineur n°4) : une assertion
+    d'écran cherchait un motif de texte que le gabarit **ne peut jamais produire** (l'ordre
+    des attributs), et douze attaques de rôle étaient tirées avec un contexte FABRIQUÉ
+    au lieu d'une vraie session. Les assertions lisent maintenant la BALISE, et les gardes
+    de rôle passent par le chemin complet connexion → session → rôle → handler.
+  - **Deux notes d'écran posées là où on ne les voit pas** (mineur n°3) : celle de la fiche
+    du personnel vivait dans un bloc masqué pour les élèves — le sélecteur de rôle était
+    donc grisé sans un mot ; celle de la machine était deux blocs plus bas. Un champ grisé
+    sans explication est un écran qui ment par omission.
+  - **Deux gardes qui jugeaient mal ce qu'elles lisaient** (mineurs n°5 et n°6) : un
+    `typeInstallation: null` valait 403 pour un **non-changement** (la valeur effective est
+    « FIXE », défaut de la colonne) — et serait parti tel quel dans le patch, où la base
+    l'aurait refusé (`NOT NULL`) ; les activités réglementées étaient **étalées en
+    caractères**, et tout ce qui n'est pas itérable faisait **lever** le filtre au lieu de
+    refuser (400 + message interne au lieu d'un 403 propre).
+
+**Le gating par rôle reste serveur-only par construction** (le DemoStore n'a pas de
+comptes) ; la parité stricte a porté sur les refus MÉTIER de B1-b, posés des deux côtés.
+Aucune migration, aucune règle réglementaire nouvelle, verrou Officiel intact.
+Preuves : `test-securite-negative` D4 ter (les deux portes, enfin) et D4 sexies,
+suite doublée `v8/js/data/test-machine-saisie.mjs`, suite d'écran
+`v8/js/modales/test-formulaires-reserves.mjs`. Chaque brique a été **retirée pour vérifier
+le rouge** puis remise. **TOUT VERT — 109 exécutions.**
+Après la revue : les gardes de rôle sont tirées en **section A5** de
+`test-securite-negative` (vraies sessions), qui compte **195 attaques**. Contre-épreuves
+rejouées une par une, correctif par correctif — dont deux qui ont montré **plus** que le
+constat : sans le sien, la modification d'un `typeInstallation` absent **plante** sur le
+`NOT NULL` de la colonne, et la garde des activités **tombait** en rendant son message
+interne.
+
+- **B1-f — quatre commentaires qui disaient le CONTRAIRE du code.** Dernière passe, après
+  contrôle final. Aucune ligne de comportement touchée (vérifié mécaniquement : le diff
+  filtré de ses lignes de commentaire ne rend rien). Dans un dépôt dont la doctrine est la
+  preuve citée **et vérifiée**, un commentaire faux rouvre le trou que le code a fermé — un
+  contributeur le lit et reconclut que la porte est ouverte. Les quatre : le bloc de tête du
+  filtre affirmait que `arreterMachine` / `demantelerMachine` « restent OPERATEUR » alors
+  que B1-e les a portés à VALIDEUR, **et ce bloc se déclare lui-même « le seul endroit à
+  tenir à jour »** ; l'écran de la fiche personne et la JSDoc de `createPersonne`
+  justifiaient encore le filtre par « le store applique alors son défaut (le rôle se déduit
+  du type de personne) », déduction qui ne joue plus pour un appelant sans droit
+  d'attribuer ; et le commentaire de `normaliserQualifMachine` annonçait que la chaîne vide
+  était lue comme absente — **moitié morte et inatteignable**, la garde de type la refuse en
+  amont aux quatre portes. La contre-épreuve de ce dernier point a montré que le commentaire
+  était **doublement** faux : en desserrant la garde amont comme il y invitait, la création
+  côté serveur tombe sur `CHECK constraint failed` (message brut de moteur au lieu d'un
+  refus métier) et la chaîne vide s'enregistre telle quelle côté démo. Nouvelle section
+  « C bis. *Absent* ne veut pas dire *vide* » dans la suite doublée `test-machine-saisie`.
+  **TOUT VERT — 109 exécutions.**
+  ⏳ **Question ouverte, non codée** : `v8/js/views/machines.js` affiche « Arrêter » et
+  « Démanteler » à tout le monde ; depuis que ces gestes sont au niveau du responsable, un
+  élève qui clique obtient un refus lisible en infobulle. Griser le bouton plutôt que
+  laisser échouer est un arbitrage de **présentation pédagogique**, pas de sécurité (la
+  garde serveur tient dans les deux cas) — il revient à Franck.
+
 ### 🛡️ L2 — SUITE DE SÉCURITÉ NÉGATIVE ET NEUF TROUS FERMÉS (25/07, session autonome)
 
 **Méthode : on ne croit personne sur parole, on TIRE.** Un inventaire des surfaces

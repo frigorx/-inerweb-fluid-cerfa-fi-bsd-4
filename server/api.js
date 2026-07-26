@@ -370,6 +370,127 @@ function verifierDatesPersonne(d) {
   }
 }
 
+// ------------------------------------------------------------
+// ⭐ LOT B1 (25/07) — LA FICHE DU PERSONNEL MÉLANGE TROIS NATURES.
+//
+// Constat A06, tiré. `createPersonne` et `updatePersonne` sont OPERATEUR
+// (donc ÉLÈVE) et gardent, sous UNE SEULE garde de rôle, trois choses qui
+// n'ont rien à voir :
+//
+//   1. L'ÉTAT CIVIL (nom, prénom, type de personne, courriel). Saisie
+//      courante LÉGITIME : un élève inscrit le camarade qui intervient
+//      avec lui sur un TP. On ne la casse pas.
+//   2. LA GOUVERNANCE (roleApp, actif). Deux trous RÉELS, tirés :
+//      (a) `desactiverPersonne` est gardé VALIDEUR, mais `actif` figurait
+//          dans la liste blanche d'`updatePersonne` — un élève désactivait
+//          n'importe qui par la porte de derrière, en HTTP 200. Motif
+//          identique à L2-i (getJournalAudit gardé, exporterJSON non) ;
+//      (b) DÉNI DE SERVICE : un élève rétrogradait la fiche du professeur
+//          (roleApp → ELEVE) et le professeur ne pouvait plus valider —
+//          `verifierValidateur` lit la FICHE. Réversible, mais un jour
+//          d'examen personne ne devine la cause.
+//   3. LA PREUVE DÉCLARATIVE (numéro d'attestation, organisme, dates,
+//      catégories, activités autorisées). ⚠️ À CONSIGNER : ces champs sont
+//      DÉCORATIFS pour le moteur d'aptitude opposable, qui ne lit QUE la
+//      table `habilitations` (gardée VALIDEUR) — vérifié dans les deux
+//      sens, aucune intervention interdite ne devient autorisée par là.
+//      Ils restent une PREUVE affichée, imprimée et lue par un auditeur :
+//      un numéro et un organisme inventés n'ont rien à faire en saisie
+//      courante. Le doute retire l'allègement, pas l'obligation.
+//
+// Comme pour la machine : UNE liste, UN filtre, les DEUX portes.
+// Gating par rôle = serveur-only (le DemoStore n'a pas de comptes).
+// ------------------------------------------------------------
+const CHAMPS_GOUVERNANCE_PERSONNE = ['roleApp', 'actif'];
+const CHAMPS_PREUVE_PERSONNE = ['numAttestationAptitude',
+  'organismeDelivreur', 'dateObtention', 'dateFinValidite',
+  'categorie2008', 'categorie2025', 'activitesAutorisees'];
+const CHAMPS_RESERVES_PERSONNE = [
+  ...CHAMPS_GOUVERNANCE_PERSONNE, ...CHAMPS_PREUVE_PERSONNE];
+
+/**
+ * Fiche de référence d'une personne qui n'existe pas encore : les DÉFAUTS
+ * de `createPersonne`.
+ * ⭐⭐ REVUE B1, constat mineur n°2 — CETTE RÉFÉRENCE SE DÉDUISAIT DE LA
+ * CHARGE UTILE. Elle lisait `typePersonne` et rendait `roleApp:
+ * 'ENSEIGNANT'` dès que le type n'était pas ÉLÈVE : une session d'élève
+ * créait donc une fiche portant le rôle applicatif ENSEIGNANT sans que le
+ * filtre ne voie quoi que ce soit — la référence bougeait avec l'attaque.
+ * Une référence qui suit ce qu'on lui envoie ne compare plus rien.
+ * Elle vaut désormais le MOINDRE PRIVILÈGE, toujours.
+ */
+function referencePersonneNeuve() {
+  return {
+    roleApp: 'ELEVE',
+    actif: true,
+    numAttestationAptitude: null,
+    organismeDelivreur: null,
+    dateObtention: null,
+    dateFinValidite: null,
+    categorie2008: null,
+    categorie2025: null,
+    activitesAutorisees: []
+  };
+}
+
+/**
+ * Normalisation avant comparaison — même piège que sur la machine : le
+ * formulaire renvoie toute la fiche (chaînes vides, tableaux), la base
+ * rend `null` et 0/1. Comparer brut rendrait l'écran MORT pour l'élève.
+ */
+function normaliserChampPersonne(champ, valeur) {
+  if (champ === 'actif') return valeur !== false && valeur !== 0;
+  if (champ === 'activitesAutorisees') {
+    // ⭐⭐ REVUE B1, constat mineur n°6 — CE QUI N'EST PAS UNE LISTE NE
+    // S'ÉTALE PAS. `[...(valeur ?? [])]` déroulait une CHAÎNE en
+    // caractères : « MAINTENANCE » devenait dix lettres triées, comparées
+    // à la vraie liste. Une valeur d'un autre type est désormais comparée
+    // TELLE QUELLE.
+    // ⚠️ On ne DÉPLACE pas pour autant le contrôle de forme
+    // (verifierActivites) devant le filtre : il est joué au même rang que
+    // côté démo, et l'avancer ici créerait la divergence de rang que la
+    // même revue a déjà reprochée au lot (constat important n°3). Pour un
+    // rôle sans droit, le refus de rôle EST la bonne réponse : ce champ ne
+    // lui est ouvert sous aucune forme. Pour un responsable, le filtre
+    // rend la main et le message métier arrive, identique des deux côtés.
+    // ⚠️ Et surtout : `[...valeur]` LEVAIT sur tout ce qui n'est pas
+    // itérable (un nombre, un objet) — la garde plantait au lieu de
+    // refuser. Une charge utile malformée doit se voir refuser, pas faire
+    // tomber le filtre qui la juge.
+    if (!Array.isArray(valeur)) {
+      return valeur === '' || valeur === undefined || valeur === null
+        ? '[]' : JSON.stringify(valeur);
+    }
+    return JSON.stringify([...valeur].sort());
+  }
+  return valeur === '' || valeur === undefined ? null : valeur;
+}
+
+/**
+ * LE filtre unique de la fiche du personnel.
+ * @param {object} d — données reçues
+ * @param {object} reference — fiche en place, ou referencePersonneNeuve()
+ * @param {object} contexte — contexte d'appel (rôle de session)
+ */
+function garderFichePersonne(d, reference, contexte) {
+  const touches = CHAMPS_RESERVES_PERSONNE.filter((champ) =>
+    d[champ] !== undefined
+    && normaliserChampPersonne(champ, d[champ])
+      !== normaliserChampPersonne(champ, reference[champ]));
+  if (touches.length === 0) return;
+  if (ROLES_VALIDEURS.includes(contexte?.role ?? null)) return;
+  const erreur = new Error(
+    'Gouvernance et preuves d’aptitude de la fiche du personnel réservées '
+    + `au responsable (${ROLES_VALIDEURS.join(', ')}) : ${touches.join(', ')}. `
+    + 'Le rôle applicatif et l’activation désignent qui valide au registre ; '
+    + 'le numéro d’attestation, l’organisme, les dates, les catégories et '
+    + 'les activités autorisées sont des PREUVES — elles se constatent sur '
+    + 'pièce, elles ne se déclarent pas en saisie courante. L’état civil '
+    + '(nom, prénom, type de personne, courriel) reste ouvert.');
+  erreur.code = 403;
+  throw erreur;
+}
+
 /** Ordre stable des habilitations (miroir EXACT du module pur, tri JS). */
 function comparerHabilitations(a, b) {
   if (a.regime !== b.regime) return a.regime === '2025' ? -1 : 1;
@@ -457,6 +578,22 @@ const ROLES_MUTATION = {
   createNonConformite: VALIDEUR,
   solderNonConformite: VALIDEUR,
   desactiverPersonne: VALIDEUR,
+  // ⭐⭐ REVUE B1, constat mineur n°1 — LA TROISIÈME PORTE DU MÊME SEUIL.
+  // Le lot a fermé `statut` à la création ET à la modification de la
+  // machine (CHAMPS_QUALIFICATION_MACHINE), au motif qu'ARRETEE et
+  // DEMANTELEE SORTENT la machine de l'alerte de contrôle en retard. Le
+  // relecteur a tiré le contournement : refusé en un appel, le même
+  // déplacement de seuil s'obtenait en DEUX — createMachine (acceptée),
+  // puis demantelerMachine (aucun refus). Une règle, pas une porte : les
+  // deux gestes dédiés rejoignent donc le niveau du responsable. Ils
+  // restent ENTIERS (gardes matérielles, journal, confirmation d'écran) :
+  // ils changent de main, pas de nature.
+  // ⚠️ `remettreEnService` reste OPERATEUR À DESSEIN : il RAMÈNE la
+  // machine dans les alertes de contrôle. Le doute retire l'allègement,
+  // jamais l'obligation — fermer ce sens-là ne protégerait rien et
+  // empêcherait un élève d'enregistrer la réalité.
+  arreterMachine: VALIDEUR,
+  demantelerMachine: VALIDEUR,
   // Une habilitation = une aptitude réglementaire : sa gestion relève du
   // responsable (jamais d'un élève, qui s'auto-attribuerait une aptitude).
   createHabilitation: VALIDEUR,
@@ -487,8 +624,6 @@ const ROLES_MUTATION = {
   signerMouvement: OPERATEUR,
   createMachine: OPERATEUR,
   updateMachine: OPERATEUR,
-  arreterMachine: OPERATEUR,
-  demantelerMachine: OPERATEUR,
   remettreEnService: OPERATEUR,
   createClient: OPERATEUR,
   createPlainte: OPERATEUR,
@@ -607,6 +742,208 @@ function ajouterMois(iso, nbMois) {
 function texteOuNullEquip(valeur) {
   return valeur !== undefined && valeur !== null && String(valeur).trim() !== ''
     ? String(valeur).trim() : null;
+}
+
+// ------------------------------------------------------------
+// ⭐ LOT B1 (25/07) — UNE RÈGLE, PAS UNE PORTE.
+//
+// La garde de qualification réglementaire de la machine existait dans
+// `updateMachine` et NULLE PART AILLEURS. `createMachine`, ouvert au rôle
+// OPERATEUR (donc à l'ÉLÈVE), posait les MÊMES colonnes en un seul appel :
+// une session élève créait une machine « hermétiquement scellée et
+// étiquetée », et un titulaire A2/2025 borné à 3 kg n'était PLUS bloqué en
+// mode Officiel sur 5 kg de R-410A (chaîne : cadreFicheOfficiel →
+// equipement.hermetiqueOpposable → droit-intervention 6 kg →
+// blocage-officiel condition 16). Aggravant tiré : la qualification est un
+// cliquet à sens unique — posée à la création, l'élève ne peut plus la
+// RETIRER, `updateMachine` lui répondant 403.
+//
+// C'est la TROISIÈME occurrence du même motif dans ce dépôt (L2-i :
+// `getJournalAudit` gardé, `exporterJSON` non). D'où la forme retenue :
+// UNE liste, UN filtre, appliqué à TOUTES les portes d'écriture des mêmes
+// colonnes. Ajouter une porte sans passer par ce filtre rouvre le trou —
+// c'est le seul endroit à tenir à jour.
+//
+// Sont dans la liste, parce que chacun DÉPLACE UN SEUIL :
+//   - hermetiqueScelle / hermetiqueEtiquete : seuil d'aptitude 3 → 6 kg ;
+//   - residentiel / usageThermique : dates d'interdiction du fluide vierge ;
+//   - typeInstallation / sousTypeInstallation : clôture de fuite le jour
+//     même au lieu de J+1 ;
+//   - statut : ARRETEE et DEMANTELEE SORTENT la machine de l'alerte de
+//     contrôle en retard (getAlertes). ⚠️ Ce filtre ne ferme que le
+//     RACCOURCI par la fiche : les gestes dédiés arreterMachine /
+//     demantelerMachine sont une TROISIÈME porte vers le même seuil, et la
+//     revue B1 les a fait passer à VALIDEUR dans ROLES_MUTATION (voir le
+//     bloc « la troisième porte du même seuil », plus haut). Ils gardent
+//     leurs gardes matérielles (pas de démantèlement avec du fluide dedans)
+//     et leur ligne de journal : ils ont changé de main, pas de nature.
+//     `remettreEnService` reste OPERATEUR à dessein — il RAMÈNE
+//     l'obligation ;
+//   - dernierControle / prochainControle : l'échéance réglementaire. La
+//     reprise d'un parc existant reste POSSIBLE à la création — au niveau
+//     du responsable, comme le reste de la qualification.
+//
+// ⭐⭐ REVUE B1 (25/07) — LE LOT N'ÉTAIT PAS ALLÉ AU BOUT DE SA PROPRE
+// RÈGLE. Deux familles déplacent un seuil et restaient en saisie courante,
+// aux DEUX portes ; la revue les a TIRÉES :
+//   - detectionPermanente / detectionVerifieeLe / detectionReference : une
+//     détection permanente déclarée DIVISE PAR DEUX la fréquence des
+//     contrôles (frequenceControleMois). Tir : la même machine R-410A de
+//     60 kg passait d'une échéance au 2027-01-25 à 2027-07-25 sur la seule
+//     déclaration d'une session ÉLÈVE, sans qu'aucun rapport de
+//     vérification n'ait été lu. C'est un ALLÈGEMENT obtenu sans preuve —
+//     « le doute retire l'allègement, jamais l'obligation » l'interdit ;
+//   - chargeNominaleKg : elle fait SORTIR la machine du périmètre F-Gas.
+//     Tir : ramenée de 60 kg à 1 kg par une session ÉLÈVE, la machine
+//     n'avait plus d'échéance (prochainControle null) ni aucune alerte.
+//     Elle se lit sur la PLAQUE, exactement comme l'hermétique. Sa
+//     conséquence assumée : la fiche d'un équipement — sa carte d'identité
+//     réglementaire — se CRÉE au niveau du responsable, puisque la charge
+//     nominale y est obligatoire. L'écran le dit avant d'ouvrir (voir
+//     v8/js/modales/machine-form.js).
+// ⚠️ NUANCE : la charge ACTUELLE (la pesée du jour) reste OUVERTE à
+// l'élève — c'est de la saisie courante et c'est le geste même du TP. Ne
+// pas confondre nominale et actuelle.
+//
+// Le gating par rôle est SERVEUR-ONLY par construction (le DemoStore n'a
+// pas de comptes) : rien à recopier côté démo pour ce filtre-ci.
+// ------------------------------------------------------------
+const CHAMPS_QUALIFICATION_MACHINE = ['hermetiqueScelle', 'hermetiqueEtiquete',
+  'residentiel', 'typeInstallation', 'sousTypeInstallation',
+  'usageThermique', 'statut', 'dernierControle', 'prochainControle',
+  'chargeNominaleKg', 'detectionPermanente', 'detectionVerifieeLe',
+  'detectionReference'];
+
+/**
+ * Fiche de référence d'une machine qui n'existe pas encore : les DÉFAUTS
+ * de `createMachine`. Une création qui ne s'en écarte pas ne qualifie rien,
+ * donc ne touche à aucun seuil.
+ * ⚠️ `chargeNominaleKg` n'a PAS de défaut : elle est obligatoire. Toute
+ * création en porte donc une, et toute création est de ce fait réservée au
+ * responsable — conséquence assumée de la revue B1.
+ */
+const QUALIFICATION_MACHINE_NEUVE = {
+  hermetiqueScelle: false,
+  hermetiqueEtiquete: false,
+  residentiel: false,
+  typeInstallation: 'FIXE',
+  sousTypeInstallation: null,
+  usageThermique: null,
+  statut: 'EN_SERVICE',
+  dernierControle: null,
+  prochainControle: null,
+  chargeNominaleKg: null,
+  detectionPermanente: false,
+  detectionVerifieeLe: null,
+  detectionReference: null
+};
+
+/**
+ * ⚠️ Revue L2 — COMPARER DES VALEURS NORMALISÉES, jamais la charge utile
+ * brute. Le formulaire renvoie toute sa fiche : une chaîne VIDE pour un
+ * champ texte non renseigné, un booléen pour les cases. En base, ces mêmes
+ * champs valent `null` et 0/1. Comparer brut ferait voir un changement
+ * partout, et la garde refuserait TOUTE modification de machine à un élève
+ * — l'écran deviendrait mort pour lui.
+ */
+function normaliserQualifMachine(champ, valeur) {
+  if (['hermetiqueScelle', 'hermetiqueEtiquete', 'residentiel',
+    'detectionPermanente'].includes(champ)) return Boolean(valeur);
+  // ⭐ Revue B1 — la charge nominale voyage en NOMBRE ou en CHAÎNE selon
+  // l'appelant (le formulaire poste « 60 », la base rend 60). Comparer
+  // sans convertir ferait voir un changement là où il n'y en a pas.
+  if (champ === 'chargeNominaleKg') {
+    return valeur === '' || valeur === undefined || valeur === null
+      ? null : Number(valeur);
+  }
+  // ⭐⭐ REVUE B1, constat mineur n°5 — UN TYPE ABSENT VAUT « FIXE ».
+  // `null` était vu comme un CHANGEMENT face à la référence 'FIXE', alors
+  // que la colonne est `NOT NULL DEFAULT 'FIXE'` (migration 27) et que les
+  // deux stores écrivent déjà `d.typeInstallation ?? 'FIXE'` à la
+  // création : un client d'API qui envoyait `null` prenait un 403 pour un
+  // NON-CHANGEMENT. Le juge doit lire la valeur que le scribe écrira —
+  // sans quoi il juge autre chose que ce qui est enregistré.
+  // ⚠️ « Absent » = `undefined` ou `null`, RIEN D'AUTRE. La chaîne vide est
+  // écrite ici par symétrie avec les autres champs, mais elle n'arrive
+  // JAMAIS jusqu'ici : la garde de type de createMachine / updateMachine,
+  // jouée AVANT ce filtre, refuse toute valeur hors ['FIXE','MOBILE'] qui
+  // ne soit ni `undefined` ni `null` — « Type d'installation inconnu ».
+  // Ne pas desserrer cette garde en amont en se fiant à cette ligne : la
+  // création n'a, elle, aucune conversion en aval et tomberait sur la
+  // contrainte CHECK de la colonne (tiré ; test-machine-saisie, section
+  // C bis).
+  if (champ === 'typeInstallation') {
+    return valeur === '' || valeur === undefined || valeur === null
+      ? 'FIXE' : valeur;
+  }
+  return valeur === '' || valeur === undefined ? null : valeur;
+}
+
+/**
+ * LE filtre unique. `reference` = la fiche en place (modification) ou
+ * QUALIFICATION_MACHINE_NEUVE (création) : dans les deux cas on ne regarde
+ * que ce qui CHANGE, jamais ce qui est simplement renvoyé tel quel.
+ * @param {object} d — données reçues
+ * @param {object} reference — fiche de comparaison
+ * @param {object} contexte — contexte d'appel (rôle de session)
+ */
+function garderQualificationMachine(d, reference, contexte) {
+  const touches = CHAMPS_QUALIFICATION_MACHINE.filter((champ) =>
+    d[champ] !== undefined
+    && normaliserQualifMachine(champ, d[champ])
+      !== normaliserQualifMachine(champ, reference[champ]));
+  if (touches.length === 0) return;
+  if (ROLES_VALIDEURS.includes(contexte?.role ?? null)) return;
+  const erreur = new Error(
+    'Qualification réglementaire de l’équipement réservée au responsable '
+    + `(${ROLES_VALIDEURS.join(', ')}) : ${touches.join(', ')}. `
+    + 'Ces caractéristiques déplacent des seuils réglementaires — elles '
+    + 'se constatent sur la plaque, elles ne se déclarent pas en '
+    + 'saisie courante.');
+  erreur.code = 403;
+  throw erreur;
+}
+
+/**
+ * ⭐ B1 — LES BORNES DE LA CHARGE, AUX DEUX PORTES. `updateMachine` les
+ * portait depuis L2 ; `createMachine` coerçait en silence
+ * (`Number(...) || 0`) : 9999 kg actuels sur 10 kg nominaux passaient en
+ * 200, -50 kg aussi, et « beaucoup » devenait 0 kg sans un mot. Un registre
+ * qui invente une valeur est pire qu'un registre qui refuse.
+ * Miroir EXACT du DemoStore (refus MÉTIER : la parité s'applique).
+ * @returns {number} la charge actuelle normalisée
+ */
+function chargeActuelleNormalisee(valeur, nominale) {
+  if (valeur === undefined || valeur === null || valeur === '') return 0;
+  const actuelle = Number(valeur);
+  if (!Number.isFinite(actuelle) || actuelle < 0) {
+    throw new Error('Charge actuelle invalide (en kg, jamais négative).');
+  }
+  // La tolérance de 5 % couvre les écarts de pesée réels (elle existe déjà
+  // à la charge d'un mouvement).
+  if (Number.isFinite(nominale) && nominale > 0 && actuelle > nominale * 1.05) {
+    throw new Error(
+      `Charge actuelle impossible : ${actuelle} kg déclarés pour une `
+      + `charge nominale de ${nominale} kg (tolérance 5 %).`);
+  }
+  return actuelle;
+}
+
+/**
+ * ⭐ B1 — « une date est une date » (doctrine L2), SUR LA MACHINE AUSSI.
+ * `createControle` refusait déjà '2028-99-99' ; `createMachine` l'acceptait
+ * sur ses trois dates. Une échéance illisible ne se compare pas : elle ne
+ * doit pas entrer. Absente = donnée légitime. Miroir EXACT du DemoStore.
+ */
+function verifierDatesMachine(d) {
+  for (const [champ, libelle] of [
+    ['dateMiseEnService', 'Date de mise en service'],
+    ['dernierControle', 'Date du dernier contrôle'],
+    ['prochainControle', 'Date du prochain contrôle']]) {
+    if (!dates.estDateCalendaireOuVide(d[champ])) {
+      throw new Error(dates.messageDateInvalide(libelle));
+    }
+  }
 }
 
 /** Ajoute (ou retire) des jours à une date ISO, sans fuseau horaire. */
@@ -1453,10 +1790,15 @@ const HANDLERS = {
   // === personnel (VAGUE 3) ==================================
 
   /**
-   * Crée une personne. roleApp par défaut : ELEVE si typePersonne ELEVE,
-   * sinon ENSEIGNANT (le test crée un référent via roleApp explicite).
+   * Crée une personne. roleApp par défaut : le MOINDRE PRIVILÈGE, sauf pour un
+   * appelant qui a le droit d'attribuer un rôle. La déduction « typePersonne
+   * non ELEVE => ENSEIGNANT » ne joue que si peutAttribuerRole (voir plus bas,
+   * dans la méthode) ; pour tout autre appelant la fiche naît ELEVE quel que
+   * soit le typePersonne envoyé — sinon un élève fabriquait un ENSEIGNANT en
+   * saisissant « salarié ». La fiche s'enregistre quand même (on n'empêche
+   * jamais d'inscrire quelqu'un) et le responsable élève le rôle ensuite.
    */
-  createPersonne(params) {
+  createPersonne(params, contexte) {
     const d = params.donneesPersonne || {};
     if (!d.nom || !String(d.nom).trim()) {
       throw new Error('Nom de la personne obligatoire.');
@@ -1468,14 +1810,36 @@ const HANDLERS = {
       throw new Error(
         `Type de personne obligatoire parmi : ${TYPES_PERSONNE.join(', ')}.`);
     }
+    // ⭐ B1 — LE MÊME FILTRE QU'À LA MODIFICATION : gouvernance et preuves
+    // ne s'obtiennent pas en créant la fiche d'un coup.
+    // ⭐⭐ REVUE B1, constat mineur n°2 — UN RÔLE NE SE DÉDUIT QUE POUR QUI
+    // A LE DROIT DE L'ATTRIBUER. Le rôle applicatif se déduisait du type de
+    // personne pour TOUT LE MONDE : une session d'élève créant une fiche
+    // « salarié » obtenait une fiche ENSEIGNANT, en silence, sans jamais
+    // écrire le mot. Hors du responsable, le défaut est désormais le
+    // MOINDRE PRIVILÈGE — et le filtre juge le rôle EFFECTIF, pas le seul
+    // rôle écrit noir sur blanc.
+    // ⚠️ ON NE REFUSE RIEN DE PLUS : l'élève inscrit toujours qui il veut,
+    // du type qu'il veut (on n'empêche jamais d'enregistrer la réalité) ;
+    // la fiche naît simplement sans pouvoir, et le responsable l'élève
+    // ensuite s'il y a lieu. Un refus ici aurait rendu l'écran mort.
+    // ⚠️ PARITÉ : le DemoStore n'a pas de comptes — il joue le responsable
+    // (« le store de démo répond référent »), donc il garde la déduction
+    // par type. Même règle, même résultat pour un responsable.
+    const peutAttribuerRole = ROLES_VALIDEURS.includes(contexte?.role ?? null);
+    const roleAppDemande = d.roleApp ?? (
+      d.typePersonne !== 'ELEVE' && peutAttribuerRole ? 'ENSEIGNANT' : 'ELEVE');
+    garderFichePersonne({ ...d, roleApp: roleAppDemande },
+      referencePersonneNeuve(), contexte);
     verifierDatesPersonne(d);
     const personne = {
       id: db.generateId('PER'),
       nom: String(d.nom).trim(),
       prenom: String(d.prenom).trim(),
       typePersonne: d.typePersonne,
-      roleApp: d.roleApp ??
-        (d.typePersonne === 'ELEVE' ? 'ELEVE' : 'ENSEIGNANT'),
+      // Le rôle EFFECTIF calculé plus haut : une seule dérivation, jugée
+      // par le filtre puis enregistrée telle quelle (revue B1, mineur n°2).
+      roleApp: roleAppDemande,
       numAttestationAptitude: d.numAttestationAptitude ?? null,
       organismeDelivreur: d.organismeDelivreur ?? null,
       dateObtention: d.dateObtention ?? null,
@@ -1498,13 +1862,19 @@ const HANDLERS = {
     });
   },
 
-  updatePersonne(params) {
+  updatePersonne(params, contexte) {
     const { id } = params;
     const d = params.donneesPersonne || {};
-    trouverPersonne(id);
+    const personneEnPlace = trouverPersonne(id);
     // Lot E2 : une fiche au coffre est VERROUILLÉE côté store (l'écran
     // seul ne suffit pas — « le store reste seul juge »).
     if (estAuCoffreServeur(id)) throw new Error(coffre.MSG_FICHE_AU_COFFRE);
+    // ⭐ B1 — gouvernance (roleApp, actif) et preuves d'aptitude : mêmes
+    // colonnes, même filtre qu'à la création. `actif` était la porte de
+    // derrière de `desactiverPersonne` (gardé VALIDEUR, lui) ; `roleApp`
+    // servait à rétrograder la fiche du professeur, qui ne pouvait plus
+    // valider.
+    garderFichePersonne(d, personneEnPlace, contexte);
     if (d.typePersonne !== undefined &&
         !TYPES_PERSONNE.includes(d.typePersonne)) {
       throw new Error(
@@ -2763,7 +3133,7 @@ const HANDLERS = {
 
   // === machines (VAGUE 4) ===================================
 
-  createMachine(params) {
+  createMachine(params, contexte) {
     const d = params.donneesMachine || {};
     if (!d.designation || !String(d.designation).trim()) {
       throw new Error('Désignation de la machine obligatoire.');
@@ -2775,6 +3145,10 @@ const HANDLERS = {
     if (!Number.isFinite(nominale) || nominale <= 0) {
       throw new Error('Charge nominale obligatoire (en kg, positive).');
     }
+    // ⭐ B1 — mêmes bornes et mêmes dates qu'à la modification.
+    const chargeActuelle = chargeActuelleNormalisee(d.chargeActuelleKg,
+      nominale);
+    verifierDatesMachine(d);
     // P0-6 : FIXE/MOBILE — un mobile listé est admis au contrôle
     // immédiat après réparation. Absent = FIXE (défaut conservateur).
     if (d.typeInstallation !== undefined && d.typeInstallation !== null
@@ -2782,6 +3156,9 @@ const HANDLERS = {
       throw new Error(`Type d'installation inconnu : ${d.typeInstallation} `
         + '(attendu : FIXE, MOBILE).');
     }
+    // ⭐ B1 — LE MÊME FILTRE QU'À LA MODIFICATION. La création n'est pas
+    // une porte dérobée vers les colonnes qui déplacent les seuils.
+    garderQualificationMachine(d, QUALIFICATION_MACHINE_NEUVE, contexte);
     // P1-1 : garde du modèle d'équipement — miroir du DemoStore.
     equipement.verifierModeleEquipement({
       typeInstallation: d.typeInstallation ?? 'FIXE',
@@ -2824,7 +3201,7 @@ const HANDLERS = {
       numSerie: d.numSerie ?? null,
       fluide: d.fluide,
       chargeNominaleKg: nominale,
-      chargeActuelleKg: Number(d.chargeActuelleKg) || 0,
+      chargeActuelleKg: chargeActuelle,
       clientId: d.clientId ?? null,
       localisation: d.localisation ?? null,
       siteLabel: d.siteLabel ?? client?.raison_sociale ?? null,
@@ -2905,89 +3282,15 @@ const HANDLERS = {
     }
     equipement.verifierModeleEquipement(fusion);
 
-    // ⭐ L2 (25/07) — LA QUALIFICATION RÉGLEMENTAIRE N'EST PAS DE LA SAISIE
-    // COURANTE. Déclarer un équipement « hermétiquement scellé et étiqueté »
-    // fait passer le seuil d'aptitude de 3 à 6 kg ; le déclarer MOBILE d'un
-    // sous-type listé ouvre la clôture de fuite le jour même ; l'usage
-    // thermique décale les dates d'interdiction du fluide vierge. Ce sont
-    // des FAITS OPPOSABLES qui déplacent des seuils, au même titre qu'une
-    // habilitation — laquelle est réservée au niveau VALIDEUR depuis
-    // toujours. Attaque tirée : une session ÉLÈVE cochait « hermétique
-    // scellé + étiqueté » et l'intervention passait d'INTERDITE à AUTORISÉE
-    // sans qu'aucune plaque n'ait été lue. La saisie courante (désignation,
-    // charge, localisation, détection) reste ouverte à l'élève.
-    const CHAMPS_QUALIFICATION = ['hermetiqueScelle', 'hermetiqueEtiquete',
-      'residentiel', 'typeInstallation', 'sousTypeInstallation',
-      'usageThermique'];
-    // ⚠️ Revue L2 — COMPARER DES VALEURS NORMALISÉES, jamais la charge utile
-    // brute. Le formulaire renvoie toute sa fiche : une chaîne VIDE pour un
-    // champ texte non renseigné, un booléen pour les cases. En base, ces
-    // mêmes champs valent `null` et 0/1. Comparer brut faisait donc voir un
-    // changement partout, et cette garde refusait TOUTE modification de
-    // machine à un élève ou un technicien — l'écran devenait mort pour eux.
-    // Constat BLOQUANT de la revue adversariale, corrigé avant fusion.
-    const normaliserQualif = (champ, valeur) => {
-      if (['hermetiqueScelle', 'hermetiqueEtiquete', 'residentiel']
-        .includes(champ)) return Boolean(valeur);
-      return valeur === '' || valeur === undefined ? null : valeur;
-    };
-    const qualificationTouchee = CHAMPS_QUALIFICATION
-      .filter((champ) => d[champ] !== undefined
-        && normaliserQualif(champ, d[champ])
-          !== normaliserQualif(champ, machine[champ]));
-    if (qualificationTouchee.length > 0
-        && !ROLES_VALIDEURS.includes(contexte?.role ?? null)) {
-      const erreur = new Error(
-        'Qualification réglementaire de l’équipement réservée au responsable '
-        + `(${ROLES_VALIDEURS.join(', ')}) : ${qualificationTouchee.join(', ')}. `
-        + 'Ces caractéristiques déplacent des seuils réglementaires — elles '
-        + 'se constatent sur la plaque, elles ne se déclarent pas en '
-        + 'saisie courante.');
-      erreur.code = 403;
-      throw erreur;
-    }
-
-    // ⭐ L2 (25/07) — LA MODIFICATION REVALIDE CE QUE LA CRÉATION EXIGE.
-    // `createMachine` refuse une charge nominale nulle ou négative ;
-    // `updateMachine`, lui, l'acceptait. Attaque tirée : ramener la charge
-    // nominale à 0 sur une machine de 10 kg de R-410A la faisait sortir du
-    // périmètre du contrôle d'étanchéité — plus de fréquence, plus
-    // d'alerte, plus d'obligation. Le contournement « créer légal puis
-    // patcher illégal » est le même qu'en L4 sur les habilitations.
-    if (d.chargeNominaleKg !== undefined) {
-      const nominale = Number(d.chargeNominaleKg);
-      if (!Number.isFinite(nominale) || nominale <= 0) {
-        throw new Error('Charge nominale obligatoire (en kg, positive).');
-      }
-      d.chargeNominaleKg = nominale;
-    }
-    // ⭐ L2 — la charge ACTUELLE est une quantité de fluide réellement
-    // présente : ni négative, ni illisible, ni sans rapport avec la
-    // machine. Attaque tirée : 9999 kg sur une machine de 10 kg nominaux —
-    // le tableau de bord affichait 20 877 tonnes équivalent CO₂ et la
-    // balance matière devenait illisible. La tolérance de 5 % couvre les
-    // écarts de pesée réels (elle existe déjà à la charge d'un mouvement).
-    if (d.chargeActuelleKg !== undefined && d.chargeActuelleKg !== null) {
-      const actuelle = Number(d.chargeActuelleKg);
-      if (!Number.isFinite(actuelle) || actuelle < 0) {
-        throw new Error('Charge actuelle invalide (en kg, jamais négative).');
-      }
-      const nominaleFusion = Number(
-        d.chargeNominaleKg ?? machine.chargeNominaleKg);
-      if (Number.isFinite(nominaleFusion) && nominaleFusion > 0
-          && actuelle > nominaleFusion * 1.05) {
-        throw new Error(
-          `Charge actuelle impossible : ${actuelle} kg déclarés pour une `
-          + `charge nominale de ${nominaleFusion} kg (tolérance 5 %).`);
-      }
-      d.chargeActuelleKg = actuelle;
-    }
-
     // ⚠️ Revue L2 — REFUSER PLUTÔT QU'IGNORER. Ces deux dates ont été
     // retirées des champs modifiables : les recevoir sans rien en faire
     // rendait un succès trompeur — le professeur corrigeait une date de
     // reprise de parc, le logiciel répondait « enregistré », et rien ne
     // changeait. Un refus explicite dit où poser le geste.
+    // ⭐ B1 — ce refus MÉTIER (valable pour TOUS les rôles) passe AVANT le
+    // filtre de qualification, qui liste lui aussi ces deux dates : sans
+    // cela, un élève recevrait « réservée au responsable » là où le message
+    // utile est « le geste, c'est le contrôle d'étanchéité ».
     for (const champ of ['dernierControle', 'prochainControle']) {
       if (d[champ] !== undefined) {
         throw new Error(
@@ -2998,6 +3301,51 @@ const HANDLERS = {
           + 'machine, pour reprendre un parc existant.)');
       }
     }
+
+    // ⭐ L2 (25/07) — LA QUALIFICATION RÉGLEMENTAIRE N'EST PAS DE LA SAISIE
+    // COURANTE. Attaque tirée : une session ÉLÈVE cochait « hermétique
+    // scellé + étiqueté » et l'intervention passait d'INTERDITE à AUTORISÉE
+    // sans qu'aucune plaque n'ait été lue. La saisie courante (désignation,
+    // charge, localisation, détection) reste ouverte à l'élève.
+    // ⭐ L2 (25/07) — LA MODIFICATION REVALIDE CE QUE LA CRÉATION EXIGE.
+    // `createMachine` refuse une charge nominale nulle ou négative ;
+    // `updateMachine`, lui, l'acceptait. Attaque tirée : ramener la charge
+    // nominale à 0 sur une machine de 10 kg de R-410A la faisait sortir du
+    // périmètre du contrôle d'étanchéité — plus de fréquence, plus
+    // d'alerte, plus d'obligation. Le contournement « créer légal puis
+    // patcher illégal » est le même qu'en L4 sur les habilitations.
+    // ⭐ Revue B1 — ce refus MÉTIER (valable pour TOUS les rôles) passe
+    // AVANT le filtre de qualification, qui liste désormais lui aussi la
+    // charge nominale : une valeur qui n'est pas un poids n'est pas un
+    // problème de rôle, et le message doit le dire.
+    if (d.chargeNominaleKg !== undefined) {
+      const nominale = Number(d.chargeNominaleKg);
+      if (!Number.isFinite(nominale) || nominale <= 0) {
+        throw new Error('Charge nominale obligatoire (en kg, positive).');
+      }
+      d.chargeNominaleKg = nominale;
+    }
+
+    // ⭐ B1 — la liste et le filtre ont MIGRÉ au niveau module
+    // (CHAMPS_QUALIFICATION_MACHINE / garderQualificationMachine) : la
+    // création empruntait les mêmes colonnes sans passer par ici.
+    garderQualificationMachine(d, machine, contexte);
+
+    // ⭐ L2 — la charge ACTUELLE est une quantité de fluide réellement
+    // présente : ni négative, ni illisible, ni sans rapport avec la
+    // machine. Attaque tirée : 9999 kg sur une machine de 10 kg nominaux —
+    // le tableau de bord affichait 20 877 tonnes équivalent CO₂ et la
+    // balance matière devenait illisible.
+    // ⭐ B1 — la borne a MIGRÉ dans `chargeActuelleNormalisee` : la création
+    // empruntait la même colonne avec une simple coercion silencieuse.
+    if (d.chargeActuelleKg !== undefined && d.chargeActuelleKg !== null) {
+      d.chargeActuelleKg = chargeActuelleNormalisee(d.chargeActuelleKg,
+        Number(d.chargeNominaleKg ?? machine.chargeNominaleKg));
+    }
+    // ⭐ B1 — mêmes dates qu'à la création (ici, seule la date de mise en
+    // service peut encore entrer : les deux autres sont refusées plus haut).
+    verifierDatesMachine(d);
+
     const CHAMPS = ['designation', 'type', 'marque', 'modele', 'numSerie',
       'fluide', 'chargeNominaleKg', 'chargeActuelleKg', 'clientId',
       'localisation', 'siteLabel', 'statut', 'typeInstallation',
@@ -3014,6 +3362,20 @@ const HANDLERS = {
     const patch = {};
     for (const champ of CHAMPS) {
       if (d[champ] !== undefined) patch[champ] = d[champ];
+    }
+    // ⭐⭐ REVUE B1, constat mineur n°5 — MÊME LECTURE POUR LE JUGE ET LE
+    // SCRIBE. `typeInstallation: null` passait tel quel dans le patch,
+    // alors que la colonne est `NOT NULL DEFAULT 'FIXE'` (migration 27) :
+    // la base l'aurait refusé, et le filtre de qualification, lui, y voyait
+    // un changement. Un type absent VAUT « fixe », à la modification comme
+    // à la création — aucune règle nouvelle : c'est déjà le défaut de la
+    // colonne et le backfill conservateur de la migration.
+    // ⚠️ Le cas `''` écrit ci-dessous n'est pas atteignable : la garde de
+    // type, plus haut dans ce même handler, l'a déjà refusé (« Type
+    // d'installation inconnu »). Il ne reste là que pour ne pas dépendre
+    // de l'ordre des gardes. « Absent », ici, veut dire `null`.
+    if (patch.typeInstallation === null || patch.typeInstallation === '') {
+      patch.typeInstallation = 'FIXE';
     }
     // Booléens du modèle d'équipement : jamais stockés en chaîne.
     for (const champ of ['hermetiqueScelle', 'hermetiqueEtiquete',

@@ -103,9 +103,21 @@ appeler('createMachine', {
 // ============================================================
 // 2. L'ATTAQUE : un élève déclare son professeur comme auteur
 // ============================================================
+// ⚠️ Revue B1 — le geste tiré ici était une CRÉATION de machine par
+// l'élève. Depuis que la charge nominale est réservée au responsable (elle
+// fait sortir du périmètre F-Gas), la fiche d'un équipement se crée au
+// niveau du responsable. Ce que cette suite prouve n'est pas le droit de
+// créer, c'est que le journal nomme l'auteur RÉEL : on le tire donc sur un
+// geste de saisie courante, toujours ouvert à l'élève.
 const machineEleve = appeler('createMachine', {
   donneesMachine: {
-    designation: 'Vitrine', fluide: 'R-134a', chargeNominaleKg: 2,
+    designation: 'Vitrine', fluide: 'R-134a', chargeNominaleKg: 2
+  }
+}, sessionProf);
+appeler('updateMachine', {
+  id: machineEleve.id,
+  donneesMachine: {
+    localisation: 'Atelier froid — poste 2',
     operateur: 'Marc Dupont' // ← le nom du PROFESSEUR, déclaré par l'élève
   }
 }, sessionEleve);

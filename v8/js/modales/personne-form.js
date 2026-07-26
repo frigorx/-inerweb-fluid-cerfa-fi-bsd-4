@@ -48,6 +48,54 @@ const ROLES_APP = [
   { valeur: 'ADMIN', libelle: 'Administrateur' }
 ];
 
+// ------------------------------------------------------------
+// ⭐ B1 (25/07) — L'ÉCRAN SUIT LA PARTITION DE LA FICHE.
+// État civil = saisie courante, ouverte à tous. Gouvernance (rôle
+// applicatif) et PREUVES d'aptitude (attestation, organisme, dates,
+// catégories, activités) = responsable seul. La garde qui COMPTE est côté
+// serveur (garderFichePersonne, aux deux portes) ; ici on évite l'écran
+// MORT — remplir tout le bloc pour prendre un 403 à la fin.
+// ------------------------------------------------------------
+const ROLES_GOUVERNANCE_FICHE = ['REFERENT', 'ENSEIGNANT', 'ADMIN'];
+
+/** L'utilisateur courant tient-il la gouvernance et les preuves ? */
+export function peutTenirFichePersonne(utilisateur) {
+  return ROLES_GOUVERNANCE_FICHE.includes(utilisateur && utilisateur.roleApp);
+}
+
+/**
+ * Champs réservés portés par CET ÉCRAN.
+ * ⚠️ SOUS-ENSEMBLE ASSUMÉ de la liste serveur CHAMPS_RESERVES_PERSONNE
+ * (server/api.js), qui porte en plus `actif` : l'activation se fait par le
+ * geste dédié (desactiverPersonne, gardé VALIDEUR), jamais par ce
+ * formulaire — vérifié, aucune occurrence dans ce fichier.
+ */
+const CHAMPS_RESERVES_ECRAN = ['roleApp', 'numAttestationAptitude',
+  'organismeDelivreur', 'dateObtention', 'dateFinValidite',
+  'categorie2008', 'categorie2025', 'activitesAutorisees'];
+
+/**
+ * Retire de la charge utile les champs réservés quand l'utilisateur n'y a
+ * pas droit. On les OMET : à la modification le store ne juge que ce qui
+ * CHANGE, et à la création il applique ses défauts.
+ * ⚠️ Défaut du rôle applicatif, depuis la revue B1 (5ec7ce1) : le rôle ne
+ * se déduit du type de personne QUE pour un appelant qui a le droit de
+ * l'attribuer (server/api.js, createPersonne). Ici, par construction, ce
+ * n'est pas le cas — `peutTenir` est faux. La fiche naît donc ÉLÈVE, quel
+ * que soit le type de personne saisi : moindre privilège. Elle
+ * s'enregistre quand même (on n'empêche jamais d'inscrire quelqu'un), et
+ * le responsable élève le rôle ensuite s'il y a lieu.
+ * @param {object} valeurs — sortie de validerFormulaire
+ * @param {boolean} peutTenir
+ * @returns {object} charge utile filtrée
+ */
+export function filtrerFichePersonne(valeurs, peutTenir) {
+  if (peutTenir) return valeurs;
+  const filtre = Object.assign({}, valeurs);
+  CHAMPS_RESERVES_ECRAN.forEach(function (champ) { delete filtre[champ]; });
+  return filtre;
+}
+
 // Catégories d'attestation — une grille PAR régime (P0-5, revue : le
 // sélecteur 2025 offrait la grille 2008 et effaçait en silence une A1…V
 // enregistrée). Mêmes listes que habilitations.js / les stores.
@@ -95,14 +143,23 @@ function optionsHtml(options, valeurCourante, avecVide = false) {
  * @param {boolean} enModification
  * @returns {string} HTML
  */
-function gabaritFormulaire(personne, enModification) {
+export function gabaritFormulaire(personne, enModification,
+  peutTenir = true) {
   const activitesCourantes = personne.activitesAutorisees || [];
   const estEleve = personne.typePersonne === 'ELEVE';
+  // ⭐ B1 — affiché pour tous, modifiable par le seul responsable.
+  const verrou = peutTenir ? '' : ' disabled';
+  const noteReservee = peutTenir ? ''
+    : '<p class="pf-reservee">Rôle applicatif et preuves d’aptitude '
+      + '(attestation, organisme, dates, catégories, activités) réservés '
+      + 'au responsable (référent, enseignant, administrateur) : ils '
+      + 'désignent qui valide au registre et se constatent sur pièce. '
+      + 'L’état civil reste modifiable.</p>';
 
   const casesActivites = ACTIVITES.map(function (act) {
     const coche = activitesCourantes.includes(act.valeur) ? ' checked' : '';
     return '<label class="case-activite">'
-      + '<input type="checkbox" name="activitesAutorisees" value="' + esc(act.valeur) + '"' + coche + '>'
+      + '<input type="checkbox" name="activitesAutorisees" value="' + esc(act.valeur) + '"' + coche + verrou + '>'
       + '<span>' + esc(act.libelle) + '</span>'
       + '</label>';
   }).join('');
@@ -113,6 +170,8 @@ function gabaritFormulaire(personne, enModification) {
     + 'font-size: 13px; font-weight: 500; color: var(--texte-2); cursor: pointer; text-transform: none; letter-spacing: normal; }'
     + '.case-activite input { width: 16px; height: 16px; }'
     + '#pf-bandeau-eleve { margin-bottom: 4px; }'
+    + '.pf-reservee { margin: 0 0 10px; font-size: 12px; font-weight: 600; '
+    + 'color: var(--texte-2); line-height: 1.45; }'
     + '</style>'
 
     + '<form id="form-personne" class="formulaire" novalidate>'
@@ -146,12 +205,21 @@ function gabaritFormulaire(personne, enModification) {
 
     + '<div class="champ" data-champ="roleApp">'
     + '<label for="pf-role-app">Rôle applicatif *</label>'
-    + '<select id="pf-role-app" name="roleApp">'
+    + '<select id="pf-role-app" name="roleApp"' + verrou + '>'
     + optionsHtml(ROLES_APP, personne.roleApp || '', true)
     + '</select>'
     + '<span class="champ-erreur" hidden></span>'
     + '</div>'
     + '</div>'
+
+    // ⭐⭐ REVUE B1, constat mineur n°3 — LA NOTE ÉTAIT ENFERMÉE DANS UN
+    // BLOC MASQUÉ. Elle vivait dans #pf-bloc-attestation, qui porte
+    // `hidden` dès que la personne est de type ÉLÈVE : sur la fiche d'un
+    // élève ouverte par un élève, le sélecteur « Rôle applicatif »
+    // ci-dessus était donc grisé SANS AUCUNE explication. Une note qui ne
+    // s'affiche pas ne dit rien. Elle est remontée ICI, juste sous le
+    // sélecteur qu'elle explique, hors de tout bloc conditionnel.
+    + noteReservee
 
     + '<div class="champ" data-champ="email">'
     + '<label for="pf-email">Courriel</label>'
@@ -170,26 +238,26 @@ function gabaritFormulaire(personne, enModification) {
     + '<div class="champ" data-champ="numAttestationAptitude">'
     + '<label for="pf-num-aptitude">N° attestation d’aptitude</label>'
     + '<input type="text" id="pf-num-aptitude" name="numAttestationAptitude" maxlength="60" '
-    + 'value="' + esc(personne.numAttestationAptitude || '') + '">'
+    + 'value="' + esc(personne.numAttestationAptitude || '') + '"' + verrou + '>'
     + '</div>'
 
     + '<div class="champ" data-champ="organismeDelivreur">'
     + '<label for="pf-organisme">Organisme délivreur</label>'
     + '<input type="text" id="pf-organisme" name="organismeDelivreur" maxlength="120" '
-    + 'value="' + esc(personne.organismeDelivreur || '') + '">'
+    + 'value="' + esc(personne.organismeDelivreur || '') + '"' + verrou + '>'
     + '</div>'
 
     + '<div class="grille-form-2">'
     + '<div class="champ" data-champ="dateObtention">'
     + '<label for="pf-date-obtention">Date d’obtention</label>'
     + '<input type="date" id="pf-date-obtention" name="dateObtention" '
-    + 'value="' + esc(personne.dateObtention || '') + '">'
+    + 'value="' + esc(personne.dateObtention || '') + '"' + verrou + '>'
     + '</div>'
 
     + '<div class="champ" data-champ="dateFinValidite">'
     + '<label for="pf-date-fin">Date limite de validité</label>'
     + '<input type="date" id="pf-date-fin" name="dateFinValidite" '
-    + 'value="' + esc(personne.dateFinValidite || '') + '">'
+    + 'value="' + esc(personne.dateFinValidite || '') + '"' + verrou + '>'
     + '</div>'
     + '</div>'
 
@@ -201,7 +269,7 @@ function gabaritFormulaire(personne, enModification) {
     + '<div class="grille-form-2">'
     + '<div class="champ" data-champ="categorie2008">'
     + '<label for="pf-cat-2008">Catégorie 2008</label>'
-    + '<select id="pf-cat-2008" name="categorie2008">'
+    + '<select id="pf-cat-2008" name="categorie2008"' + verrou + '>'
     + '<option value="">— Aucune —</option>'
     + optionsHtml(optionsCategorie(CATEGORIES_2008, personne.categorie2008),
         personne.categorie2008 || '')
@@ -210,7 +278,7 @@ function gabaritFormulaire(personne, enModification) {
 
     + '<div class="champ" data-champ="categorie2025">'
     + '<label for="pf-cat-2025">Catégorie 2025</label>'
-    + '<select id="pf-cat-2025" name="categorie2025">'
+    + '<select id="pf-cat-2025" name="categorie2025"' + verrou + '>'
     + '<option value="">— Aucune —</option>'
     + optionsHtml(optionsCategorie(CATEGORIES_2025, personne.categorie2025),
         personne.categorie2025 || '')
@@ -286,7 +354,7 @@ function effacerErreur(racine, nomChamp) {
  * @param {HTMLElement} racine
  * @returns {object|null}
  */
-function validerFormulaire(racine) {
+function validerFormulaire(racine, peutTenir = true) {
   const form = racine.querySelector('#form-personne');
   const donnees = new FormData(form);
   let valide = true;
@@ -313,8 +381,14 @@ function validerFormulaire(racine) {
     valide = false;
   }
 
+  // ⭐ B1 — un sélecteur VERROUILLÉ ne figure pas dans le FormData : ne pas
+  // exiger ce que l'écran n'autorise pas à saisir, sans quoi l'élève ne
+  // pourrait plus inscrire un camarade. Le store applique alors son défaut,
+  // qui est le MOINDRE PRIVILÈGE : la fiche naît ÉLÈVE (revue B1, 5ec7ce1
+  // — la déduction par type de personne ne joue plus que pour un appelant
+  // habilité à attribuer un rôle). Voir filtrerFichePersonne.
   const roleApp = String(donnees.get('roleApp') || '').trim();
-  if (!roleApp) {
+  if (!roleApp && peutTenir) {
     marquerErreur(racine, 'roleApp', 'Le rôle applicatif est obligatoire.');
     valide = false;
   }
@@ -388,11 +462,15 @@ export async function ouvrirFormPersonne(ctx, personneId = null) {
   } catch {
     // Aucun utilisateur courant : la modale reste utilisable en dégradé
   }
+  // ⭐ B1 — gouvernance et preuves : responsable seul (l'état civil reste
+  // de la saisie courante).
+  const peutTenir = peutTenirFichePersonne(utilisateur);
 
   return new Promise(function (resoudre) {
     const { fermer, racine } = modale({
       titre: enModification ? 'Modifier la personne' : 'Ajouter une personne',
-      contenuHtml: gabaritFormulaire(valeursInitiales, enModification),
+      contenuHtml: gabaritFormulaire(valeursInitiales, enModification,
+        peutTenir),
       actionsHtml:
         (enModification
           ? '<button type="button" id="pf-exporter-rgpd" class="btn btn-secondaire">Exporter (RGPD)</button>'
@@ -530,8 +608,8 @@ export async function ouvrirFormPersonne(ctx, personneId = null) {
     ['pf-prenom', 'pf-nom', 'pf-type-personne', 'pf-role-app'].forEach(function (id) {
       const champ = racine.querySelector('#' + id);
       if (champ) {
-        champ.addEventListener('input', function () { validerFormulaire(racine); masquerBandeau(); });
-        champ.addEventListener('change', function () { validerFormulaire(racine); masquerBandeau(); });
+        champ.addEventListener('input', function () { validerFormulaire(racine, peutTenir); masquerBandeau(); });
+        champ.addEventListener('change', function () { validerFormulaire(racine, peutTenir); masquerBandeau(); });
       }
     });
 
@@ -600,8 +678,11 @@ export async function ouvrirFormPersonne(ctx, personneId = null) {
     }
 
     racine.querySelector('#pf-enregistrer').addEventListener('click', async function () {
-      const valeurs = validerFormulaire(racine);
-      if (!valeurs) return;
+      const brut = validerFormulaire(racine, peutTenir);
+      if (!brut) return;
+      // ⭐ B1 — ce que l'écran n'a pas le droit de changer, il ne l'envoie
+      // pas : le store ne juge que ce qui CHANGE.
+      const valeurs = filtrerFichePersonne(brut, peutTenir);
 
       const bouton = racine.querySelector('#pf-enregistrer');
       bouton.disabled = true;
