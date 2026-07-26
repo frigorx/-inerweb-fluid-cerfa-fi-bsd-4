@@ -33,11 +33,21 @@ regardait pas les signatures : il regardait leur taille.
   d'un seul pixel passe. Et sur un format qu'on ne sait pas relire
   (entrelacé, profondeur < 8, flux illisible), la réponse est
   INDETERMINABLE : **on ne conclut JAMAIS au vide sur un doute**.
-  La **borne basse de 1 Ko est RETIRÉE** : les mesures la condamnent (canvas
-  vierge 5 562 o, blanc pur 5 509 o, UN SEUL TRAIT 6 518 o, griffure de 1 à
-  10 pixels 5 584 o — les deux populations se chevauchent) et aucun texte ne
-  fixe de seuil d'encre. Le plafond de 1 Mo reste (mémoire), contrôlé AVANT
-  décodage.
+  La **borne basse de 1 Ko est RETIRÉE** : les mesures la condamnent, et
+  elles sont désormais REPRODUCTIBLES — `node outils/test-taille-signature.mjs`
+  (suite du filet, pas script de coin de table). Zone jamais touchée
+  **3 879 o**, blanche unie 5 506 o, griffure de deux pixels 3 893 o (5 517 o
+  sur fond blanc), un seul trait 4 892 o (6 559 o sur fond blanc). Deux faits :
+  la borne de 1 Ko **n'a jamais refusé une seule case blanche** (la plus légère
+  pèse 3 879 o), et **les deux populations se chevauchent** — aucun seuil, où
+  qu'on le place, ne sépare « rien » de « quelque chose ». Le plafond de 1 Mo
+  reste (mémoire), contrôlé AVANT décodage.
+  *(Les chiffres publiés ici le 25/07 — 5 562 / 5 509 / 6 518 / 5 584 o —
+  avaient été mesurés sur fond blanc avec un autre réglage et n'étaient
+  reproductibles par rien : ils sont remplacés par ceux que la suite produit.
+  L'encodeur d'un navigateur n'est pas node:zlib ; ce qui se transporte d'un
+  encodeur à l'autre, et qui est le seul point en cause, c'est le
+  chevauchement.)*
 - **B3-4 — LE CANVAS PEIGNAIT LUI-MÊME SON DÉCOR.** Fond blanc + ligne de
   base pointillée étaient tracés DANS le canvas : une case jamais touchée
   produisait donc une image à deux couleurs, donc « non vide ». Le décor
@@ -68,9 +78,28 @@ signatures déjà en base ne sont jamais re-jugées (`verifierImageSignature`
 n'est appelée qu'à la POSE) — un registre existant s'importe et se vérifie
 comme avant.
 
-Filet : **TOUT VERT, 109 exécutions** (3 suites ajoutées : `test-png`,
-`test-signature-canvas`, `test-signatures-modal`). Chaque brique a sa
-contre-épreuve tirée : correctif retiré → rouge, remis → vert.
+**REVUE ADVERSARIALE PASSÉE ET SOLDÉE (25-26/07)** : 6 constats importants et
+7 mineurs, tous fermés. Les deux plus lourds : la **porte IMPORT** n'était pas
+gardée (on remplaçait l'image des signatures dans un export, on réimportait, et
+les conditions 14/15 disparaissaient à nouveau — 3ᵉ occurrence du motif « une
+garde sur une porte » dans ce dépôt), et `analyseEncre` répondait « ENCRE » AVEC
+ASSURANCE sur des images **visuellement blanches** (alpha nul partout, palette
+unie) : le mensonge du lot, retourné contre lui. Aussi : `signatures.csv`
+perçait le coffre des identités (régression de la brique 5), la fabrique de PNG
+de test était BINAIRE aux yeux de git donc exemptée de relecture, et
+`contrat.js` — le seul fichier dont le rôle est de ne pas mentir — n'avait pas
+été touché par le lot « ne plus mentir ».
+
+**Le plan du lot existe enfin : `docs/PLAN-B3-SIGNATURE.md`.** Il consigne les
+trois décisions du propriétaire (D1 même session = normal · D2 aucun seuil
+d'encre · D3 pré-remplissage modifiable), la mesure reproductible qui fait
+tomber la borne de 1 Ko, le GATE sur `MSG_ZONE_VIERGE` (refus NOUVEAU à la pose,
+en attente du visa) et les trois résidus assumés.
+
+Filet : **TOUT VERT, 111 exécutions** (4 suites ajoutées : `test-png`,
+`test-signature-canvas`, `test-signatures-modal`, `test-taille-signature`).
+Chaque brique a sa contre-épreuve tirée : correctif retiré → rouge, remis →
+vert.
 
 ### 🛡️ L2 — SUITE DE SÉCURITÉ NÉGATIVE ET NEUF TROUS FERMÉS (25/07, session autonome)
 
