@@ -15,7 +15,7 @@ fonctionne **entièrement en local** : aucune donnée ne part vers un service ex
 |---|---|
 | **Il enregistre** équipements, bouteilles, interventions, contrôles d'étanchéité, personnel autorisé, pièces justificatives. | `v8/js/data/contrat.js` (96 méthodes, contrat v13) |
 | **Il scelle** : chaque écriture validée reçoit une empreinte SHA-256 chaînée à celle de l'écriture précédente. | `server/api.js:6739` (`sceller`), `server/db.js:455` |
-| **Écriture unique** : une écriture validée n'est ni modifiable ni effaçable, y compris en agissant directement sur la base. | `server/schema.sql:341`, `:355`, `:403` ; journal `:547`, `:553` |
+| **Écriture unique** : une écriture validée n'est ni modifiable ni effaçable. Des déclencheurs de la base refusent la suppression et la modification, y compris pour une commande passée directement à la base. Ces déclencheurs vivent **dans le fichier de base** : ils n'arrêtent pas quelqu'un qui remplace ce fichier (voir § 2 b). | `server/schema.sql:341`, `:355`, `:403` ; journal `:547`, `:553` |
 | **Correction par contre-écriture seulement** : une erreur ne s'efface pas, elle se corrige par une écriture inverse qui désigne l'écriture d'origine. | `v8/js/data/contrat.js:210` ; message du verrou `server/schema.sql:345` |
 | **Il détecte les altérations passées par le canal applicatif** : chaîne des empreintes et journal revérifiés, fichier d'import retouché refusé. | `server/api.js:6798`, `server/db.js:419`, `server/api.js:5496` |
 | **Il produit les fiches CERFA 15497\*04** en remplissant le formulaire officiel. | `v8/js/cerfa/generateur.js:59`, `:693` |
@@ -23,8 +23,16 @@ fonctionne **entièrement en local** : aucune donnée ne part vers un service ex
 
 **État à ce jour : le mode Officiel est fermé** par un verrou unique
 (`server/blocage-officiel.js:24`, `v8/js/data/blocage-officiel.js:31`). Tant qu'il est fermé,
-**aucun document opposable n'est produit** : tout document sorti du logiciel porte la mention
-« MODE FORMATION — DOCUMENT NON OFFICIEL » (`v8/js/cerfa/generateur.js:93`).
+**aucune fiche d'intervention opposable n'est validée**.
+
+Une précision qui compte, parce que c'est la première question qu'un agent de contrôle
+posera : **seule la fiche CERFA porte une marque distinctive**. La mention « MODE FORMATION
+— DOCUMENT NON OFFICIEL » n'existe qu'à un seul endroit du dépôt
+(`v8/js/cerfa/generateur.js:93`) ; elle est apposée au cadre 14 de la fiche
+(`v8/js/cerfa/generateur.js:538`) et doublée d'un filigrane sur le rendu (`:754`). **Tous les
+autres documents sortent sans marque** : aucun module de `v8/js/documents/` n'emploie le mot
+« FORMATION ». C'est une limite réelle, pas une nuance de rédaction : elle est décrite au
+§ 2 g), et elle appelle une décision.
 
 Vérification par soi-même : `node outils/lancer-tests.mjs --tout` (filet complet) et
 `node server/test-securite-negative.mjs` (les refus, réellement exécutés contre un serveur,
@@ -44,9 +52,12 @@ elle repose, avec quel degré de certitude — est tenu dans le **registre des a
 dans `docs/POINTS-DE-FRICTION.md`.
 
 **b) L'intégrité face à quelqu'un qui a la main sur le disque du poste.** Les protections
-visent le **canal applicatif** : application, interface de programmation, import. Qui peut
-ouvrir ou remplacer le fichier de base peut le remplacer (`SECURITE.md` § 3, « Limites »). Le
-témoin d'intégrité du journal se recalcule ; il n'existe **ni ancrage chez un tiers, ni
+visent le **canal applicatif** : application, interface de programmation, import. Les
+déclencheurs qui verrouillent les écritures vivent dans le fichier de base : **qui peut
+remplacer ce fichier n'est arrêté par rien**. Le témoin d'intégrité du journal **se
+recalcule** — l'algorithme est dans le code, et le code est diffusé : il arrête une purge
+faite à la main, pas quelqu'un qui régénère le témoin après coup (`CHANGELOG.md:575-578`,
+détaillé dans `docs/POINTS-DE-FRICTION.md` § 9). Il n'existe **ni ancrage chez un tiers, ni
 horodatage qualifié**.
 
 **c) La disponibilité.** Le logiciel tourne sur **un seul poste**, sans redondance. Une panne
@@ -67,6 +78,20 @@ ne prétendent le contraire.
 
 **f) La conformité juridique globale de l'exploitation.** Un logiciel ne rend pas un atelier
 conforme. Ce qui est fait, par qui, avec quelle aptitude et quel matériel ne dépend pas de lui.
+
+**g) Que tout document sorti du logiciel se distingue d'un document officiel.** Seule la
+fiche CERFA porte la mention « MODE FORMATION — DOCUMENT NON OFFICIEL » et son filigrane
+(`v8/js/cerfa/generateur.js:93`, `:538`, `:754`). Le bon d'intervention, le dossier machine,
+le dossier client, le dossier de fuite, le dossier d'audit, la plaque F-Gas, les étiquettes,
+la feuille de mise en service et les exports sortent **sans aucune marque distinctive** : la
+chaîne « FORMATION » n'apparaît dans aucun module de `v8/js/documents/` (vérification :
+`grep -r FORMATION v8/js/documents/`). Un document produit pendant un cours ressemble donc
+à un document produit pour de bon.
+
+C'est **un défaut du logiciel**, et il appelle une décision de l'établissement : soit marquer
+tout document produit hors mode Officiel, soit encadrer par consigne écrite la sortie de ces
+documents hors de l'atelier. Tant que ce n'est pas tranché, ces documents ne doivent pas être
+remis à un tiers.
 
 ## 3. Qui reste responsable
 
@@ -91,8 +116,10 @@ Elle ne se déplace ni vers un outil, ni vers l'auteur d'un outil.
 5. **La mise en service n'a lieu qu'après un fonctionnement en parallèle du registre
    existant**, celui-ci restant la référence pendant tout le pilote.
 
-Si l'une de ces conditions n'est pas tenue, les garanties du § 1 ne peuvent plus être
-invoquées.
+Si l'une de ces conditions n'est pas tenue, on ne peut plus se prévaloir de ce que décrit le
+§ 1. Le § 1 ne décrit pas des garanties — le logiciel est fourni sans garantie (§ 5) — mais
+des **fonctions** ; et ces fonctions ne produisent leur effet que si les cinq conditions
+ci-dessus sont tenues.
 
 ## 5. Statut de l'auteur
 

@@ -97,7 +97,12 @@ Six colonnes, pas une de plus.
 
 - **LU VERBATIM** — la phrase du texte réglementaire est **reproduite dans le
   dépôt**, le lecteur peut la relire lui-même. Ce niveau est employé de façon
-  volontairement avare : deux entrées seulement de tout ce registre y ont droit.
+  volontairement avare : **trois entrées seulement** de tout ce registre y ont
+  droit — la règle A de la famille B (§5), et deux entrées de la famille D (§7) :
+  le butoir du 12/03/2029 et la condition de remise à niveau. Une lecture
+  attentive du texte ne suffit pas à mériter ce degré : tant que la phrase n'est
+  pas recopiée dans le dépôt, l'entrée reste DEDUIT, même si personne ne doute
+  du fond.
 - **DEDUIT** — la règle est une lecture raisonnée de sources officielles, de
   notices, de foires aux questions administratives ou d'analyses de tiers, sans
   que la phrase du texte soit reproduite ici. C'est le cas le plus fréquent, et
@@ -240,8 +245,8 @@ parfaitement en règle**.
 
 | Ce qui est codé | Valeur retenue | Où (fichier:ligne) | Fondement | Degré de certitude | Risque si c'est faux |
 |---|---|---|---|---|---|
-| Fin de la **délivrance** sous l'ancien régime (et non fin de validité) | **31/12/2026** | `v8/js/data/habilitations.js:165` ; miroir `server/droit-intervention.js:56` | Arrêté du 21/11/2025 (JORFTEXT000053004604), articles 7 et 11, lus mot à mot le 24/07 (`docs/PLAN-LOTS-REGLEMENTAIRES-Q1-Q11.md:28-32`) | **LU VERBATIM** | La version antérieure du code confondait délivrance et validité : elle invalidait à tort tout un parc d'attestations |
-| Attestation de 2008 reconnue **sans condition** jusqu'au butoir | **12/03/2029** | `v8/js/data/habilitations.js:166`, `:222` ; miroir `server/droit-intervention.js:57` | Même arrêté, phrase reproduite dans le dépôt : « En l'absence de suivi des formations de remise à niveau ponctuelles avant le 12 mars 2029, l'attestation [...] n'est plus valide. » (`docs/PLAN-LOTS-REGLEMENTAIRES-Q1-Q11.md:34-36`) | **LU VERBATIM** | Coder « valable jusqu'au 12/03/2029 » serait faux **dans les deux sens** : invalide les remis à niveau, et ne sait rien décider après 2029 |
+| Fin de la **délivrance** sous l'ancien régime (et non fin de validité) | **31/12/2026** | `v8/js/data/habilitations.js:165` ; miroir `server/droit-intervention.js:56` | Arrêté du 21/11/2025 (JORFTEXT000053004604), articles 7 et 11, lus mot à mot le 24/07 — mais **seule la conclusion de cette lecture est consignée dans le dépôt, pas la phrase des articles** (`docs/PLAN-LOTS-REGLEMENTAIRES-Q1-Q11.md:28-33`) | DEDUIT — *reclassé le 26/07 : la définition du §3 exige que la phrase soit reproduite ici, elle ne l'est pas* | La version antérieure du code confondait délivrance et validité : elle invalidait à tort tout un parc d'attestations |
+| Attestation de 2008 : **aucune remise à niveau n'est exigée** jusqu'au butoir. « Sans condition » ne vaut que pour la remise à niveau : les conditions générales, elles, s'appliquent d'abord — habilitation active, date de référence au format strict, date de fin lisible et non échue (`v8/js/data/habilitations.js:203-219`) | **12/03/2029** | `v8/js/data/habilitations.js:166`, `:222` ; miroir `server/droit-intervention.js:57` | Même arrêté, phrase reproduite dans le dépôt : « En l'absence de suivi des formations de remise à niveau ponctuelles avant le 12 mars 2029, l'attestation [...] n'est plus valide. » (`docs/PLAN-LOTS-REGLEMENTAIRES-Q1-Q11.md:34-36`) | **LU VERBATIM** | Coder « valable jusqu'au 12/03/2029 » serait faux **dans les deux sens** : invalide les remis à niveau, et ne sait rien décider après 2029 |
 | Après le butoir : reconnue **uniquement** si une remise à niveau est enregistrée avant le butoir | date + organisme, migration 33 | `v8/js/data/habilitations.js:226-229` ; migration `server/migrations.js:1651-1656` | Même arrêté : c'est une **condition**, pas une échéance sèche | **LU VERBATIM** pour la condition, DEDUIT pour sa modélisation | Une remise à niveau tardive ne répare rien — c'est ce que dit le code, et l'alerte le motive |
 | Puis cycle périodique | **7 ans** | `v8/js/data/habilitations.js:167`, `:230` ; miroir `server/droit-intervention.js:58` | Même arrêté, mais la durée n'est **pas reproduite** dans le dépôt | DEDUIT | Un cycle trop long laisserait valider des fiches par un titulaire dont l'aptitude est échue |
 | Défaut de **refus** : régime inconnu ou date de référence illisible = non reconnu | — | `v8/js/data/habilitations.js:202-230` | Revue adversariale du 24/07 : « 2028-99-99 » passait les comparaisons de chaînes et reconnaissait une attestation jusqu'en 2035, **dans le fait d'aptitude du mode Officiel** | **CONSERVATOIRE** | Sans cela, une date fantaisiste prolongeait une aptitude morte |
@@ -257,10 +262,22 @@ Trois constantes, dans deux miroirs :
 (date, organisme) sont en base depuis la migration 33 : elles restent valables
 quelle que soit la règle qu'on leur applique ensuite.
 
-**Ce lot est le seul où la correction a été un assouplissement.** Il était prévu
-qu'il attende le visa externe pour s'exercer en mode Officiel
-(`docs/PLAN-LOTS-REGLEMENTAIRES-Q1-Q11.md:172-176`). Le visa n'arrivant pas,
-c'est un point que la décision de l'établissement doit reprendre **nommément**.
+### Pourquoi cette famille est à part
+
+**C'est la seule valeur du logiciel dont la correction a été un ASSOUPLISSEMENT.**
+Partout ailleurs, la règle du §2 a joué : le doute a retiré un allègement, et une
+erreur éventuelle nous rendrait plus sévères que le droit — gênant, jamais une
+infraction. Ici, c'est l'inverse. Le code appliquait un couperet au 31/12/2026 ;
+la relecture l'a levé. **Si notre lecture est fausse, l'erreur joue dans le sens
+permissif** : des attestations de 2008 seraient reconnues après le 01/01/2027
+alors qu'elles ne devraient plus l'être, et une fiche officielle pourrait être
+validée par une personne qui n'y a plus droit.
+
+C'est donc la seule famille où le filet du « conservatoire » ne nous protège pas.
+Elle était prévue pour attendre le visa externe avant de s'exercer en mode
+Officiel (`docs/PLAN-LOTS-REGLEMENTAIRES-Q1-Q11.md:172-176`). Le visa n'arrivant
+pas, **la décision de l'établissement doit reprendre ce point nommément** — pas
+au titre des risques résiduels en bloc, mais comme une ligne à part.
 
 ---
 
@@ -313,10 +330,17 @@ testée, et **désactivée**.
 
 **Basculer une constante dans les deux miroirs — et rien d'autre ne suffit.** Le
 geste d'activation est écrit d'avance, en quatre étapes, avec la **liste exacte
-des sept endroits** à brancher (`docs/PLAN-LOTS-REGLEMENTAIRES-Q1-Q11.md:190-198`),
-parce que la fonction d'exemption n'a **aujourd'hui aucun appelant** : l'écrire ne
-suffisait pas, il faut la brancher partout de la même façon, sans quoi une
-machine serait exemptée sur un écran et contrôlée sur un autre.
+des huit endroits** à brancher (`docs/PLAN-LOTS-REGLEMENTAIRES-Q1-Q11.md:190-198` :
+CERFA cadre 7, plaque F-Gas, trois points du magasin de démonstration, trois
+points du magasin serveur).
+
+C'est nécessaire parce que le calcul d'exemption **n'est branché nulle part**. Le
+drapeau `EXEMPTION_HERMETIQUE_ACTIVE` (`v8/js/data/equipement.js:206`) n'a qu'un
+seul appelant, `exemptionControle` (`:274-277`) ; et `exemptionControle`
+elle-même n'a **aucun consommateur de production** — seulement des vérifications
+(`v8/js/data/test-equipement-pur.mjs`). L'écrire ne suffisait donc pas : il faut
+la brancher partout de la même façon, sans quoi une machine serait exemptée sur
+un écran et contrôlée sur un autre.
 
 Règle posée pour cette activation : **jamais exempter en silence** — le motif
 d'exemption doit s'afficher sur la plaque, sur la fiche machine et sur le CERFA.
@@ -330,7 +354,7 @@ d'exemption doit s'afficher sur la plaque, sur la fiche machine et sur le CERFA.
 | L'allègement de fréquence n'est dû que si le système a été **vérifié depuis moins de 12 mois** | 12 mois civils | `v8/js/data/equipement.js:39`, `:88-94`, `:129-158` ; miroir `server/equipement.js:20` | Aucun texte reproduit ; c'est la question 5 du dossier resté sans réponse. **Retrait d'un allègement non dû**, pas un blocage | **CONSERVATOIRE** | Si le droit n'exige pas cette vérification, on impose deux fois plus de contrôles que nécessaire |
 | Détection déclarée mais jamais vérifiée, ou vérification périmée, ou date illisible, ou date **dans le futur** | l'allègement tombe | `v8/js/data/equipement.js:134-157` | Revue du 25/07 : « 2030-01-01 » ou « 2028-99-99 » divisaient par deux la fréquence sans qu'aucune vérification ait eu lieu | **CONSERVATOIRE** | Sans cela, une valeur entrée par un import contourne toute la règle |
 | Détection permanente **obligatoire** au-delà du seuil haut | niveau 3 du moteur (500 t éq. CO₂ / 100 kg HFO / 300 kg HCFC) | `v8/js/data/equipement.js:191-193` — **interroge le moteur, ne recopie aucun seuil** | Avis du 16/07 et audit du 20/07 | DEDUIT | Une intervention officielle actée sur un équipement qui devrait être sous détection permanente |
-| En mode Formation, l'obligation absente ne bloque pas : elle **alerte** | alerte dédiée | `v8/js/data/blocage-officiel.js:165-174` | Principe : on ne bloque jamais en formation | — | — |
+| En mode Formation, l'obligation absente ne bloque pas : elle **alerte** | alerte `alr-detection-obligatoire-`, gravité critique | `v8/js/data/demo-store.js:2837` ; miroir `server/api.js:1525`. *(La condition bloquante 17, elle, vit en `v8/js/data/blocage-officiel.js:165-174` — deux mécanismes distincts, ne pas les confondre.)* | Principe : on ne bloque jamais en formation | — | — |
 
 ### Comment la changer si elle se révèle fausse
 
@@ -398,7 +422,7 @@ conditions y **refusent** une validation. La liste complète et commentée est d
 
 | Ce qui est codé | Valeur retenue | Où (fichier:ligne) | Fondement | Degré de certitude | Risque si c'est faux |
 |---|---|---|---|---|---|
-| Le mode Officiel est **fermé** | `VERROU_LIVRAISON = true` | `v8/js/data/blocage-officiel.js:31` ; miroir `server/blocage-officiel.js:24` — **et nulle part ailleurs**, non modifiable par l'environnement | Refermé le 20/07 après un audit externe. Devait rouvrir après le visa (`docs/CONDITIONS-BLOCANTES-OFFICIEL.md:37`) | — | **C'est le point que la décision de l'établissement doit trancher**, le visa n'arrivant pas |
+| Le mode Officiel est **fermé** | `VERROU_LIVRAISON = true` | `v8/js/data/blocage-officiel.js:31` ; miroir `server/blocage-officiel.js:24` — **et nulle part ailleurs**, non modifiable par l'environnement | Refermé le 20/07 après un audit externe. Devait rouvrir après le visa (`docs/PLAN-LOTS-REGLEMENTAIRES-Q1-Q11.md:64` — le lot de réouverture était placé « après visa T3 » ; voir aussi `:218`). Le motif écrit dans la liste des conditions bloquantes (`docs/CONDITIONS-BLOCANTES-OFFICIEL.md:37`, condition 13) est autre : double signature réelle et empreinte renforcée non encore livrées — depuis livrées | — | **C'est le point que la décision de l'établissement doit trancher**, le visa n'arrivant pas |
 | Conditions 1 à 5 — établissement, balance conforme, détecteur conforme, balance matière sans écart, sauvegarde vérifiée récente | seuil de sauvegarde : 24 h par défaut | `v8/js/data/blocage-officiel.js:84-96` | Conditions du plan audit-proof, validées par Franck le 16/07 | DEDUIT | Une fiche officielle établie sans moyen de mesure vérifié |
 | Conditions 6 et 7 — intervenant désigné, actif, titulaire d'une habilitation active et valide | — | `v8/js/data/blocage-officiel.js:137-151` | Idem | DEDUIT | Fiche signée par une personne sans titre |
 | Condition 8 — complétude (machine, fluide, pesées avant/après **différentes**, cause de l'appoint) | — | `v8/js/data/blocage-officiel.js:101-135` | Idem | DEDUIT | Fiche officielle incomplète, donc inexploitable |
@@ -500,10 +524,14 @@ Par honnêteté, et parce qu'un inventaire qui prétend être complet ment :
 
 ## 17. Les questions restées sans réponse
 
-Ce sont les onze questions du dossier `docs/T3-DOSSIER-RELECTURE-EXTERNE.md`.
+Ce sont les onze questions du dossier `docs/T3-DOSSIER-RELECTURE-EXTERNE.md` § 2.3.
 Pour chacune : ce que le logiciel applique **en attendant**, et ce qui changerait
 si la réponse était différente. **C'est la section qu'on ressort le jour où
 quelqu'un répond enfin.**
+
+*Le tableau compte douze lignes pour onze questions : le dossier source numérote
+de 1 à 11 avec un « 9 bis ». La numérotation d'origine est conservée telle
+quelle, pour qu'une réponse reçue se range sans traduction.*
 
 | # | La question | Ce que le logiciel applique en attendant | Effet d'une réponse différente |
 |---|---|---|---|
