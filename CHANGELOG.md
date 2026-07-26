@@ -132,6 +132,45 @@ le retire** (contre-épreuve TIRÉE, jamais supposée). **TOUT VERT 111 exécuti
   partir en filière. Message canonique unique pour TOUTES les portes ; attaque inscrite au
   répertoire des tirs (`test-securite-negative` D2).
 
+#### B2 — PASSE DE VÉRIFICATION FINALE (26/07)
+
+Le vérificateur a **rouvert l'IMPORTANT 1** : le correctif avait fermé le déclencheur
+(le transfert ENTRANT), pas la RACINE. **TOUT VERT 111 exécutions.**
+
+- **IMPORTANT 1, RACINE — une écriture du MÊME JOUR n'accuse plus par écrit.** Le repère
+  du rapprochement (`masseBouteilleApresKg`) est figé à l'INSTANT de la remise, mais les
+  dates du registre sont au JOUR près : une écriture datée du jour de la remise est déjà
+  comptée dans le repère. Elle était pourtant recomptée comme postérieure, et dès qu'elle
+  SORTAIT de la bouteille le logiciel inventait un gain, puis écrivait « aucune écriture
+  du registre ne l'explique » d'une écriture VALIDÉE qui l'explique exactement —
+  regroupement de déchets avant enlèvement, puis remise le jour même. L'accusation
+  remontait au feu tricolore et au guide d'audit. Le commentaire du module affirmait déjà
+  la doctrine (« à date égale, on ne retranche rien »), mais elle n'était appliquée
+  qu'aux remises postérieures (`<=`) et pas aux mouvements (`<`) : **le commentaire
+  décrivait le contraire du code**. Convention de date désormais UNIQUE
+  (`contributionRetenue`), au même rang pour tout ce qui explique un écart, remises
+  comme mouvements — antérieure = déjà dans le repère, postérieure = comptée entière,
+  **MÊME JOUR = on ne retient que ce qui EXPLIQUE le gain, jamais ce qui l'aggrave**.
+  Le prix est une sous-détection du jour de la remise ; le prix inverse est une
+  accusation écrite et fausse. Les deux scénarios sont tirés, IDENTIQUES demo et local
+  (transfert sortant, puis charge d'appoint), avec le contre-tir (re-inflation SANS
+  écriture toujours dénoncée) et l'entrée du même jour qui explique toujours.
+- **MINEUR — l'écran se rafraîchit par toutes les portes de sortie** : après une
+  attestation réussie, le rafraîchissement était accroché au SEUL bouton « Terminer »
+  injecté dans les actions. Fermée par la croix, par le fond ou par Échap, la modale
+  laissait l'issue attestée invisible jusqu'au rechargement de la vue. Le
+  rafraîchissement passe par `surFermeture`, point de passage COMMUN aux quatre chemins,
+  gardé par un témoin posé à l'attestation (fermer sans attester ne recharge rien).
+- **OBSERVATION traitée en TEXTE — l'écran ne promet plus une anomalie qui ne viendra
+  pas.** Le parcours de création propose de joindre le bordereau officiel AUSSITÔT après
+  l'émission du suivi : le suivi porte donc déjà une pièce avant toute attestation, et
+  `BSFF_ISSUE_SANS_PIECE` — qui ne compte que la PRÉSENCE d'au moins une pièce — ne se
+  lèvera jamais sur ce chemin, même sans le moindre certificat d'issue. La modale
+  annonçait pourtant « la déclaration signalera une anomalie » : lue devant le champ
+  « N° de certificat », la phrase se comprend comme un contrôle du certificat. Texte
+  seul, aucune règle touchée ; le fait est tiré en suite (bordereau joint à la création,
+  puis issue attestée sans certificat : la masse de l'anomalie ne bouge pas d'un gramme).
+
 ### 🛡️ L2 — SUITE DE SÉCURITÉ NÉGATIVE ET NEUF TROUS FERMÉS (25/07, session autonome)
 
 **Méthode : on ne croit personne sur parole, on TIRE.** Un inventaire des surfaces
