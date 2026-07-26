@@ -26,8 +26,10 @@ l'autre restée ouverte au rôle OPERATEUR — donc à l'ÉLÈVE.
   renvoyer la fiche telle quelle ne déclenche rien, sans quoi l'écran deviendrait mort.
   **Arbitrage assumé** : `statut` entre dans la liste (ARRETEE / DEMANTELEE sortent la
   machine de l'alerte de contrôle en retard, `api.js:1153` — c'est un second déplacement
-  de seuil, et les gestes dédiés `arreterMachine` / `demantelerMachine` portent les gardes
-  matérielles et restent OPERATEUR). Les deux dates de contrôle aussi : la reprise d'un
+  de seuil). ⚠️ La première rédaction de ce paragraphe **devançait le fait** : elle
+  présentait `statut` comme fermant ce déplacement alors que les gestes dédiés
+  `arreterMachine` / `demantelerMachine` restaient OPERATEUR et l'obtenaient en deux
+  appels (revue, mineur n°1 — voir B1-e). Les deux dates de contrôle aussi : la reprise d'un
   parc existant reste possible **à la création**, au niveau du responsable — on ne ferme
   pas trop fort.
 - **B1-b — les bornes de saisie de la machine, aux deux portes.** Même racine. Tiré :
@@ -63,6 +65,51 @@ l'autre restée ouverte au rôle OPERATEUR — donc à l'ÉLÈVE.
   MOBILE vaudrait le 403 qu'on évite) ; le rôle applicatif n'est plus exigé quand son
   sélecteur est verrouillé, sinon l'élève ne peut plus inscrire son camarade.
 
+- **B1-e — CE QUE LA REVUE ADVERSARIALE A TROUVÉ, et qui est soldé.** Le lot n'était pas
+  allé au bout de **sa propre règle** : le relecteur a tiré, en sessions réelles, dix
+  constats (0 bloquant, 4 importants, 6 mineurs). Tous fermés.
+  - **La liste était trop courte.** Deux familles déplacent un seuil et restaient en
+    saisie courante, aux DEUX portes : la **détection permanente** (fréquence des
+    contrôles divisée par deux — la même machine de 60 kg passait d'une échéance au
+    2027-01-25 à 2027-07-25 sur la seule déclaration d'un élève, sans qu'aucun rapport
+    de vérification n'ait été lu) et la **charge NOMINALE** (ramenée de 60 kg à 1 kg, la
+    machine sortait du périmètre F-Gas : plus d'échéance, plus d'alerte). Elles entrent
+    dans `CHAMPS_QUALIFICATION_MACHINE`, qui compte désormais **treize** champs.
+    Conséquence assumée : la charge nominale étant obligatoire, **créer** la fiche d'un
+    équipement devient un geste de responsable — et l'écran l'annonce AVANT d'ouvrir la
+    modale, au lieu d'offrir vingt champs pour un 403 à la fin. La charge **ACTUELLE**,
+    elle, reste ouverte : c'est le geste même du TP.
+  - **La troisième porte du même seuil** (mineur n°1). Refusé en un appel, le passage en
+    ARRETEE / DEMANTELEE s'obtenait en deux : créer la machine, puis appeler le geste
+    dédié. `arreterMachine` et `demantelerMachine` passent au niveau du responsable
+    (VALIDEUR) — entiers, avec leurs gardes matérielles et leur journal : ils changent de
+    main, pas de nature. ⚠️ `remettreEnService` reste OPERATEUR **à dessein** : il RAMÈNE
+    la machine dans les alertes. Le doute retire l'allègement, jamais l'obligation.
+  - **Le rôle qu'on n'écrit pas** (mineur n°2). Les attaques connues écrivaient `roleApp`
+    noir sur blanc. Il suffisait de ne rien demander : tout `typePersonne` autre qu'ÉLÈVE
+    faisait naître une fiche **ENSEIGNANT** — celle que `verifierValidateur` lit. Un rôle
+    ne se **déduit** désormais que pour qui a le droit de l'**attribuer** ; ailleurs, le
+    défaut est le moindre privilège. **On ne refuse rien de plus** : l'élève inscrit
+    toujours qui il veut, la fiche naît simplement sans pouvoir.
+  - **Une divergence de rang créée par le correctif lui-même** (important n°3) : le refus
+    des deux dates de contrôle avait été déplacé AVANT les bornes de charge côté serveur
+    et laissé APRÈS côté démo — même charge utile, deux messages. Remis au même rang.
+  - **Deux tests qui ne pouvaient pas mordre** (important n°4, mineur n°4) : une assertion
+    d'écran cherchait un motif de texte que le gabarit **ne peut jamais produire** (l'ordre
+    des attributs), et douze attaques de rôle étaient tirées avec un contexte FABRIQUÉ
+    au lieu d'une vraie session. Les assertions lisent maintenant la BALISE, et les gardes
+    de rôle passent par le chemin complet connexion → session → rôle → handler.
+  - **Deux notes d'écran posées là où on ne les voit pas** (mineur n°3) : celle de la fiche
+    du personnel vivait dans un bloc masqué pour les élèves — le sélecteur de rôle était
+    donc grisé sans un mot ; celle de la machine était deux blocs plus bas. Un champ grisé
+    sans explication est un écran qui ment par omission.
+  - **Deux gardes qui jugeaient mal ce qu'elles lisaient** (mineurs n°5 et n°6) : un
+    `typeInstallation: null` valait 403 pour un **non-changement** (la valeur effective est
+    « FIXE », défaut de la colonne) — et serait parti tel quel dans le patch, où la base
+    l'aurait refusé (`NOT NULL`) ; les activités réglementées étaient **étalées en
+    caractères**, et tout ce qui n'est pas itérable faisait **lever** le filtre au lieu de
+    refuser (400 + message interne au lieu d'un 403 propre).
+
 **Le gating par rôle reste serveur-only par construction** (le DemoStore n'a pas de
 comptes) ; la parité stricte a porté sur les refus MÉTIER de B1-b, posés des deux côtés.
 Aucune migration, aucune règle réglementaire nouvelle, verrou Officiel intact.
@@ -70,6 +117,12 @@ Preuves : `test-securite-negative` D4 ter (les deux portes, enfin) et D4 sexies,
 suite doublée `v8/js/data/test-machine-saisie.mjs`, suite d'écran
 `v8/js/modales/test-formulaires-reserves.mjs`. Chaque brique a été **retirée pour vérifier
 le rouge** puis remise. **TOUT VERT — 109 exécutions.**
+Après la revue : les gardes de rôle sont tirées en **section A5** de
+`test-securite-negative` (vraies sessions), qui compte **195 attaques**. Contre-épreuves
+rejouées une par une, correctif par correctif — dont deux qui ont montré **plus** que le
+constat : sans le sien, la modification d'un `typeInstallation` absent **plante** sur le
+`NOT NULL` de la colonne, et la garde des activités **tombait** en rendant son message
+interne.
 
 ### 🛡️ L2 — SUITE DE SÉCURITÉ NÉGATIVE ET NEUF TROUS FERMÉS (25/07, session autonome)
 
