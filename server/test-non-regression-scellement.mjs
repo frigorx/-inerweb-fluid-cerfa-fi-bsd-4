@@ -24,6 +24,11 @@
 //      démarrage ne dit rien et n'écrit rien au journal.
 //   4. Best-effort : le serveur démarre quand même (le témoin quotidien,
 //      écrit APRÈS le constat, est bien là dans les trois cas).
+//   5. ⭐ REVUE ADVERSARIALE (27/07) — LE CAS LÉGITIME, TIRÉ : une
+//      RESTAURATION d'archive plus ancienne (geste prévu du coffre-fort,
+//      confirmé par `confirmePerte`) produit EXACTEMENT le même écart. Le
+//      constat reste juste, mais le message ne doit pas imputer le seul
+//      geste manuel : il énumère les causes et dit qu'il ne tranche pas.
 //
 // CE QUE LA MESURE NE PRÉTEND PAS. Elle compare DEUX NOMBRES. Si l'on
 // recopie la base ET son fichier voisin ensemble, l'écart est nul et rien
@@ -47,6 +52,10 @@ const require = createRequire(import.meta.url);
 const db = require('./db.js');
 const api = require('./api.js');
 const borneScellement = require('./borne-scellement.js');
+// Revue 27/07 : la restauration d'archive est le cas LÉGITIME qui produit le
+// même écart — on le tire pour de vrai (section 5), on ne le suppose pas.
+const sauvegarde = require('./sauvegarde.js');
+const restauration = require('./restauration.js');
 
 let nbOk = 0;
 let nbEchecs = 0;
@@ -204,12 +213,13 @@ function comptePorteurEmpreinte() {
   // (ici 1, celle de l'instantané) : elle concorde avec le registre. Un
   // fichier qu'on ne sait pas relire n'accuse personne — doctrine png.js.
   const cheminBorneAbimee = borneScellement.cheminBorne(BASE_REGRESSEE);
-  const sauvegarde = readFileSync(cheminBorneAbimee, 'utf8');
+  // (revue) nom explicite : `sauvegarde` est le MODULE du coffre-fort ici.
+  const contenuOriginal = readFileSync(cheminBorneAbimee, 'utf8');
   writeFileSync(cheminBorneAbimee, 'ceci n\'est pas du JSON', 'utf8');
   db.ouvrir(BASE_REGRESSEE);
   const abime = api.constaterBorneScellement();
   db.fermer();
-  writeFileSync(cheminBorneAbimee, sauvegarde, 'utf8');
+  writeFileSync(cheminBorneAbimee, contenuOriginal, 'utf8');
   verifier('borne illisible : aucune accusation (pas de motif REGRESSION)',
     abime.motif !== 'REGRESSION', JSON.stringify(abime));
 }
@@ -310,6 +320,60 @@ const attendre = (ms) => new Promise((r) => setTimeout(r, ms));
     !neuf.sortie.includes('[registre]'), neuf.sortie.slice(-600));
   verifier('poste neuf : aucune entrée REGISTRE_REGRESSION au journal',
     entreesRegression(BASE_NEUVE).length === 0);
+}
+
+// ============================================================
+// 5. ⭐ REVUE ADVERSARIALE (27/07) — LE CAS QUE FRANCK RENCONTRERA
+//    VRAIMENT : une RESTAURATION D'ARCHIVE LÉGITIME.
+//
+// Le geste est PRÉVU, documenté et journalisé : `restaurer(zip,
+// { confirmePerte: true })` accepte de revenir à une archive plus ancienne,
+// c'est-à-dire de perdre des écritures figées, dès lors que l'opérateur le
+// confirme explicitement (server/restauration.js, étape 0). La borne, elle,
+// vit dans un fichier VOISIN que la restauration ne touche pas : elle reste
+// donc HAUTE. L'écart est réel, le constat est juste — mais la première
+// version du message écrivait « une base ANTÉRIEURE a pu être remise en
+// place À LA MAIN », à chaque démarrage, pour toujours. C'est une cause que
+// la mesure ne constate pas, et c'est FAUX ici : le logiciel l'a fait
+// lui-même, sur confirmation. Un motif faux répété dans un registre de
+// preuve est un défaut au même titre qu'un bug (cf. « signature périmée »,
+// revue du 26/07). On le TIRE, on ne le lit pas.
+// ============================================================
+const BASE_RESTAUREE = preparerPoste('poste-restaure');
+{
+  db.ouvrir(BASE_RESTAUREE);
+  semer();
+  pesee = 30; // repartir de la masse brute de la bouteille neuve du poste
+  validerUnMouvement();
+  // Archive OFFICIELLE du coffre-fort, faite par le logiciel, à 1 écriture.
+  const archive = sauvegarde.sauvegarderArchive({});
+  validerUnMouvement();
+  validerUnMouvement();
+  verifier('banc restauration : 3 écritures scellées avant le retour arrière',
+    comptePorteurEmpreinte() === 3, String(comptePorteurEmpreinte()));
+  // LE GESTE LÉGITIME, par le logiciel, avec confirmation explicite.
+  const remise = restauration.restaurer(archive.chemin, { confirmePerte: true });
+  const apres = api.constaterBorneScellement();
+  db.fermer();
+
+  verifier('restauration légitime (confirmePerte) : elle ABOUTIT',
+    remise.ok === true && remise.verdict === 'VERT', JSON.stringify(remise));
+  verifier('⭐ après une restauration LÉGITIME, le constat dit quand même '
+    + 'RÉGRESSION (la mesure est juste : deux nombres)',
+  apres.ok === false && apres.motif === 'REGRESSION'
+      && apres.borne === 3 && apres.reelles === 1, JSON.stringify(apres));
+
+  const demarrage = await lancerServeur(BASE_RESTAUREE);
+  await attendre(500);
+  verifier('⭐ le message NOMME la restauration parmi les causes possibles',
+    /RESTAURATION/.test(demarrage.sortie), demarrage.sortie.slice(-900));
+  verifier('⭐ le message DIT qu\'il ne tranche pas la cause',
+    /ne tranche PAS la cause/.test(demarrage.sortie),
+    demarrage.sortie.slice(-900));
+  verifier('le message n\'impute JAMAIS le seul geste manuel : s\'il parle '
+    + 'de « à la main », la restauration est citée aussi',
+  !/à la main/.test(demarrage.sortie) || /RESTAURATION/.test(demarrage.sortie),
+  demarrage.sortie.slice(-900));
 }
 
 // ============================================================

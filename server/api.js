@@ -6801,6 +6801,16 @@ function nombreScelleesJamaisAtteint() {
  * abîmé), JAMAIS « régression ». Même doctrine que png.js : on ne conclut
  * pas au vide sur ce qu'on ne sait pas relire.
  *
+ * ⭐ REVUE (27/07) — UN MOTIF « REGRESSION » NE DÉSIGNE PAS UN COUPABLE.
+ * TIRÉ : une RESTAURATION d'archive plus ancienne, geste PRÉVU du
+ * coffre-fort confirmé par `confirmePerte` (restauration.js, étape 0),
+ * produit exactement le même écart — la restauration remplace la base, pas
+ * le fichier voisin qui porte la borne. Un IMPORT d'un registre plus court
+ * aussi. Le constat dit donc « les deux nombres ne concordent pas », JAMAIS
+ * « quelqu'un a remis une base à la main » : la cause n'est pas mesurée.
+ * L'appelant (serveur.js) énumère les causes possibles et dit qu'il ne
+ * tranche pas. Preuve : test-non-regression-scellement, section 5.
+ *
  * @returns {{ok: boolean|null, motif: string, borne: number, reelles: number}}
  *   ok vrai = concordent · faux = régression · null = indéterminé
  */

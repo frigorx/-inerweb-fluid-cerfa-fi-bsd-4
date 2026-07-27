@@ -825,6 +825,18 @@ preparerCoffreFort();
 // ensemble rend l'écart nul (limite CONNUE, cf. server/borne-scellement.js).
 // Borne absente ou illisible = INDÉTERMINÉ, jamais une accusation.
 //
+// ⭐ REVUE ADVERSARIALE (27/07) — LE MESSAGE NE NOMME PLUS UNE SEULE CAUSE.
+// La première version disait « une base ANTÉRIEURE a pu être remise en place
+// À LA MAIN ». C'est une cause que la mesure ne constate PAS, et ce n'est
+// même pas la plus fréquente : TIRÉ en le jouant (suite, section 5), une
+// RESTAURATION d'archive plus ancienne — geste NORMAL du coffre-fort, prévu,
+// journalisé, confirmé explicitement par `confirmePerte` — produit
+// exactement le même écart, et l'écrit alors à CHAQUE démarrage suivant.
+// Nommer le geste manuel revenait à accuser par écrit un usage légitime, sur
+// un fait qu'on n'a pas mesuré (même défaut que le motif « signature
+// périmée » du 26/07). Le constat énumère désormais les causes possibles et
+// DIT qu'il ne tranche pas.
+//
 // BEST-EFFORT ABSOLU : jamais fatal, jamais bloquant. Un registre qu'on ne
 // peut plus ouvrir serait pire que le défaut.
 {
@@ -838,8 +850,14 @@ preparerCoffreFort();
         `  [registre] Borne du poste : ${constat.borne} écriture(s) scellée(s) ` +
         `jamais atteinte(s) · registre actuel : ${constat.reelles}.`);
       console.error(
-        '  [registre] Une base ANTÉRIEURE a pu être remise en place à la main. ' +
-        'Vérifiez les archives du coffre-fort et les témoins de scellement.\n');
+        '  [registre] Le registre porte MOINS d\'écritures scellées que ce ' +
+        'poste en a déjà scellé. Le logiciel ne tranche PAS la cause ; elles ' +
+        'sont au moins trois : une RESTAURATION d\'archive plus ancienne ' +
+        'confirmée dans l\'écran Sauvegarde, un IMPORT d\'un registre plus ' +
+        'court, ou une base remise en place HORS du logiciel.');
+      console.error(
+        '  [registre] Rapprochez ce constat du journal (RESTAURATION, ' +
+        'IMPORT) et des témoins de scellement.\n');
       try {
         db.journaliser({
           qui: 'système',
