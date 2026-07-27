@@ -42,16 +42,17 @@ permettront de décider ensuite.
 | Dernier commit modifiant le **code livré** | `2ca4aa0` du 26/07/2026 | `git log -1 --format=%h -- server v8 outils` |
 | Dernier commit du dépôt (**documentation comprise**) | à relever à la signature — la présente note et ses annexes sont commitées **après** la version qu'elles décrivent, aucun numéro fixe ne peut donc être écrit ici | `git log -1 --format=%h` |
 | Empreinte de l'archive livrée | ................................ (à relever à la livraison) | `node outils/fabriquer-paquet.mjs` écrit le fichier `.sha256` à côté de l'archive |
-| Filet de tests | **TOUT VERT — 121 exécutions** ; durée de l'ordre de **100 secondes** (mesuré le 26/07/2026) | `node outils/lancer-tests.mjs --tout` |
-| Suite de refus (sécurité négative) | **207 réussies, 0 en échec** (mesuré le 26/07/2026) | `node server/test-securite-negative.mjs` |
+| Filet de tests | **TOUT VERT — 126 exécutions** ; durée de l'ordre de **100 secondes** (mesuré le 27/07/2026) | `node outils/lancer-tests.mjs --tout` |
+| Suite de refus (sécurité négative) | **207 réussies, 0 en échec** (mesuré le 27/07/2026) | `node server/test-securite-negative.mjs` |
 | Mode Officiel | **FERMÉ** par un verrou unique | `server/blocage-officiel.js:24` et `v8/js/data/blocage-officiel.js:31` |
 | Conséquence du verrou | aucune fiche opposable n'est produite ; **seul le CERFA** porte « MODE FORMATION — DOCUMENT NON OFFICIEL » (cadre 14 et filigrane). **Vingt et un autres documents produits ne portent aucune marque** — ils sont énumérés un par un à l'[inventaire du § 5.3](#inventaire-documents-sans-marque) *(lignes R26 et R34)* | `v8/js/cerfa/generateur.js:93`, `:538`, `:754` ; inventaire et commande de vérification au § 5.3 |
 | Surface fonctionnelle | 96 méthodes de contrat (v13), 35 migrations de base (n° 2 à 36) | `v8/js/data/contrat.js`, `server/migrations.js` |
 
-> Les deux chiffres de tests ci-dessus ont été **mesurés le 26/07/2026 sur cette version**,
+> Les deux chiffres de tests ci-dessus ont été **mesurés le 27/07/2026 sur cette version**,
 > pas repris d'un document antérieur. La **durée** du filet est écrite comme un ordre de
-> grandeur, et c'est volontaire : elle varie d'une exécution à l'autre — 96,8 s, 97,9 s et
-> 98,8 s à trois mesures du même jour sur la même version. Une mesure qui bouge ne se publie
+> grandeur, et c'est volontaire : elle varie d'une exécution à l'autre — 101,7 s à la mesure
+> du 27/07, et 96,8 s, 97,9 s et 98,8 s à trois mesures de la veille sur la version qui
+> comptait 121 exécutions. Une mesure qui bouge ne se publie
 > pas au centième ; ce qui compte est le nombre d'exécutions, le verdict, et la commande qui
 > les refait. La suite de sécurité, elle, mêle des attaques réellement tirées contre un
 > serveur et des preuves citées ; `SECURITE.md` annonce 118 attaques tirées, chiffre que nous
@@ -61,9 +62,11 @@ permettront de décider ensuite.
 
 ## 3. Ce qui a été vérifié, et par quel moyen
 
-- **Trois relectures externes successives**, toutes traitées. **Deux verdicts défavorables
-  en l'état sont établis dans le dépôt ; pour la troisième, aucun verdict n'y est
-  enregistré.** Le détail, tel qu'il est prouvable :
+- **Quatre relectures externes successives.** Les trois premières sont traitées ; **la
+  quatrième ne l'est que pour partie, et son verdict est défavorable** (voir le détail plus
+  bas et le § 5.1). **Trois verdicts défavorables en l'état sont établis dans le dépôt ;
+  pour la première relecture, aucun verdict n'y est enregistré.** Le détail, tel qu'il est
+  prouvable :
   - **15/07/2026** — relecture externe sur le code complet. **Aucun verdict n'est consigné.**
     Le dépôt n'en garde que le produit : elle a servi de source à la feuille de route du
     chantier réglementaire (`docs/PLAN-AUDIT-PROOF-2026.md`, en tête). Écrire qu'elle a été
@@ -77,6 +80,21 @@ permettront de décider ensuite.
   - **25/07/2026** — troisième relecture externe, **31 constats**, chacun traité et raccordé
     (`docs/TABLE-CONSTATS-AUDIT-2026-07-25.md`, réponse détaillée dans
     `docs/REPONSE-AUDIT-EXTERNE-2026-07-25.md`).
+  - **27/07/2026** — quatrième relecture externe, sur le paquet du 26/07. Verdict :
+    **« NO-GO comme registre officiel unique ; GO conditionnel pour la démonstration et la
+    formation locale »**, 16 constats. **Traitement en cours, et il n'est pas achevé.** Les
+    seize constats ont été instruits un par un et **tirés en bac à sable**, pas seulement
+    relus ; six corrections courtes sont livrées (le « lot 0 », `CHANGELOG.md` du
+    27/07/2026). **Restent ouverts, et ils comptent** : la portée de l'attestation de
+    capacité de l'établissement n'est confrontée à aucune intervention (le blocage n° 1 de
+    cette relecture, sans effet aujourd'hui puisque le mode Officiel est fermé, mais
+    bloquant avant toute réouverture) ; le CERFA produit pour une contre-écriture imprime la
+    quantité au signe inverse et des blocs de signature pré-remplis, **dès aujourd'hui, en
+    mode Formation** ; le verrouillage du compte après cinq essais est perpétuel et sans
+    porte de secours ; un équipement à plusieurs circuits ou à plusieurs fluides peut faire
+    disparaître une obligation de contrôle. Ces quatre points ne sont pas des risques à
+    accepter : ce sont des travaux à faire, et la présente note ne doit pas être signée en
+    laissant croire qu'ils sont réglés.
   **Attention : ces relectures ne sont pas des audits d'organisme agréé.** Le dépôt attribue
   les deux premières à un modèle de langue tiers (ChatGPT). Elles ont de la valeur — elles ont
   trouvé des défauts réels, dont plusieurs graves — mais elles **n'ont aucune portée
@@ -93,8 +111,8 @@ permettront de décider ensuite.
   lot B2 ; `docs/REPONSE-AUDIT-EXTERNE-2026-07-25.md` § 5). **Ces 5,5 kg sont des masses du
   jeu d'essai, pas du registre du lycée : aucune déclaration fausse n'a été transmise à
   l'autorité.** Le défaut a été trouvé et refermé avant toute livraison.
-- **Un filet de tests rejoué intégralement** le 26/07/2026, avant l'établissement de la
-  présente note : `node outils/lancer-tests.mjs --tout` → « TOUT VERT — 121 exécutions »,
+- **Un filet de tests rejoué intégralement** le 27/07/2026, après le lot 0 :
+  `node outils/lancer-tests.mjs --tout` → « TOUT VERT — 126 exécutions »,
   durée de l'ordre de 100 secondes. **Ce que cela prouve est borné** : l'absence de
   régression sur ce qui est déjà testé, rien de plus (voir la ligne R22 du § 5).
 - **Un inventaire écrit des limites connues** : `docs/POINTS-DE-FRICTION.md` (établi le
@@ -330,7 +348,7 @@ Observations sur le § 5.1 : ...................................................
       accessibilité jamais auditée.** *(§ 12)*
 - [ ] **R21 — Un échec de test signalé par la relecture du 25/07 n'a pas pu être reproduit ni
       identifié** ; il est déclaré plutôt que passé sous silence. *(§ 12)*
-- [ ] **R22 — Le filet vert ne prouve pas l'absence de défaut.** Les 121 exécutions prouvent
+- [ ] **R22 — Le filet vert ne prouve pas l'absence de défaut.** Les 126 exécutions prouvent
       l'absence de régression sur ce qui est déjà testé ; sur les trois derniers lots, six
       défauts ont été introduits par les correctifs eux-mêmes. *(§ 14)*
 - [ ] **R23 — Résidus mineurs déclarés** (feuille de route interne périmée, identifiants

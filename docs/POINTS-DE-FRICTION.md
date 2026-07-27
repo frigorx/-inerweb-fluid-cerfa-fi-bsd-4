@@ -43,7 +43,7 @@ qu'on y trouve déjà écrit rassure. Si un défaut réel manque à cette liste,
 omission, pas une dissimulation : elle sera ajoutée.
 
 **Avertissement particulier sur le filet de tests.** Le dépôt affiche « tout vert,
-121 exécutions ». Cette phrase ne veut pas dire ce qu'elle a l'air de dire, et la
+126 exécutions ». Cette phrase ne veut pas dire ce qu'elle a l'air de dire, et la
 section 14 explique pourquoi : sur les trois derniers lots, **six défauts ont été
 introduits par les correctifs eux-mêmes**, aucun n'était visible au filet. Lisez la
 section 14 avant de tirer une conclusion d'un voyant vert.
@@ -832,11 +832,12 @@ inconnue, pas nulle.
 Cette section est écrite noir sur blanc parce qu'elle est vraie, et parce qu'elle
 change la façon de lire tout le reste.
 
-Le dépôt affiche « tout vert, 121 exécutions » (chiffre de `docs/CARTE-CODE.md:35`).
-**Ce chiffre a été rejoué le 26/07/2026 pour la rédaction de ce document**, par
-`node outils/lancer-tests.mjs --tout` : résultat « TOUT VERT — 121 exécutions ».
-La **durée** est de l'ordre de **100 secondes** — 96,8 s, 97,9 s et 98,8 s à trois mesures
-du même jour sur la même version. C'est un ordre de grandeur, pas une mesure : une durée
+Le dépôt affiche « tout vert, 126 exécutions » (chiffre de `docs/CARTE-CODE.md:35`).
+**Ce chiffre a été rejoué le 27/07/2026 après le lot 0**, par
+`node outils/lancer-tests.mjs --tout` : résultat « TOUT VERT — 126 exécutions ».
+La **durée** est de l'ordre de **100 secondes** — 101,7 s à cette mesure, et 96,8 s, 97,9 s
+et 98,8 s à trois mesures de la veille sur la version qui en comptait 121. C'est un ordre de
+grandeur, pas une mesure : une durée
 qui varie d'une exécution à l'autre ne se publie pas au centième. Ce qui compte est le
 nombre d'exécutions et le verdict, et la commande qui les refait.
 **Cela prouve l'absence de régression sur ce qui est déjà testé. Cela ne prouve pas
@@ -918,8 +919,8 @@ Par honnêteté, les limites de l'inventaire lui-même.
 - Il recense les défauts **connus** au 26/07/2026. Il ne dit rien de ceux que personne
   n'a encore trouvés, et la section 14 donne toutes les raisons de penser qu'il en
   reste.
-- Le filet de tests **a été rejoué** le 26/07/2026 pour la rédaction de ce document
-  (`node outils/lancer-tests.mjs --tout` → « TOUT VERT — 121 exécutions », durée de l'ordre
+- Le filet de tests **a été rejoué** le 27/07/2026, après le lot 0
+  (`node outils/lancer-tests.mjs --tout` → « TOUT VERT — 126 exécutions », durée de l'ordre
   de 100 secondes), et ce résultat concorde avec `docs/CARTE-CODE.md:35`. Mais **cela ne
   vaut que ce que dit la
   section 14** : un filet vert ne prouve rien d'autre que l'absence de régression sur ce

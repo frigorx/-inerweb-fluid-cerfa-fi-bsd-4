@@ -5,7 +5,7 @@
 > ajouté/retiré, à CHAQUE incrément (comme le CHANGELOG).
 >
 > ⚠️ **Ce document décrit l'état COURANT** (dernière vérification des chiffres :
-> 26/07/2026). Ce n'est pas un journal : aucune valeur périmée ne doit y rester.
+> 27/07/2026). Ce n'est pas un journal : aucune valeur périmée ne doit y rester.
 > Les chiffres cités se re-mesurent par la commande indiquée à côté d'eux.
 
 ## Architecture en une phrase
@@ -32,7 +32,7 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   filet : il publie la mesure qui a fait tomber la borne de 1 Ko des
   signatures et devient rouge si quelqu'un remet un seuil de taille.
 - **Tests** : `node outils/lancer-tests.mjs --tout` = TOUT le filet
-  (**121 exécutions, ~100 s** au 26/07/2026 ; sans `--tout`, arrêt au
+  (**126 exécutions, ~100 s** au 27/07/2026 ; sans `--tout`, arrêt au
   premier rouge). Suites `SUITES_DOUBLEES` jouées demo PUIS local.
   Toute nouvelle suite `test-*.mjs` est auto-découverte.
   `outils/test-references-suites.mjs` (revue B2, mineur 1) : **toute suite

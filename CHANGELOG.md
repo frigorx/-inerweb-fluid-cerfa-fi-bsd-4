@@ -2,6 +2,151 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔎 QUATRIÈME RELECTURE EXTERNE (27/07) — LES 16 CONSTATS TIRÉS, PUIS LE « LOT 0 »
+
+**Verdict reçu : « NO-GO comme registre officiel unique ; GO conditionnel pour la
+démonstration et la formation locale »**, sur le paquet du 26/07. Instruction faite selon la
+méthode de la maison : les seize constats inventoriés **sans filtre**, **tirés en bac à
+sable** (jamais seulement relus), puis **contre-épreuve adversariale de chaque verdict** —
+chaque contradicteur rejouant lui-même les preuves du premier. Aucune écriture dans le dépôt
+pendant l'instruction, aucun essai sur `data/`.
+
+**Résultat : aucun constat inventé, aucun intégralement fondé tel qu'il est écrit — et, en
+tirant, on a trouvé PIRE que ce qu'il décrit dans 8 lots sur 12.** Le plus important d'abord :
+
+- **Le blocage n° 1 de la relecture est vrai, et il est TIRÉ.** La portée de l'attestation de
+  capacité de l'ÉTABLISSEMENT (`categoriesAutorisees`, `activitesAutorisees`) est saisie,
+  validée en forme, stockée, affichée — et **lue par aucune règle**. Avec le seul verrou
+  désarmé dans une copie jetable, une **récupération de 8 kg sur une machine de 50 kg est
+  devenue une fiche OFFICIELLE scellée** (`FI-2026-0001`, empreinte v2) alors que
+  l'établissement était déclaré « catégorie II, contrôle d'étanchéité seul » ;
+  `simulerValidationOfficielle` a répondu `{"ok":true,"blocages":[]}`. À ne pas confondre avec
+  l'aptitude de la PERSONNE, qui, elle, refuse bien (contre-épreuve tirée dans le même banc) :
+  c'est la capacité de l'ENTREPRISE qui n'est confrontée à rien. **Non exploitable aujourd'hui
+  — verrou fermé — bloquant avant toute réouverture.** Trois trous voisins trouvés en plus :
+  la garde « au moins une catégorie / une activité » n'existe que dans le NAVIGATEUR (l'API
+  accepte une portée vide, la base accepte NULL) ; l'**import JSON est une troisième porte**
+  qui écrit la portée sans aucune vérification ; l'établissement ne peut pas enregistrer une
+  capacité du **régime 2025** (A1/A2/B/C/D/E acceptés pour la personne, refusés pour
+  l'établissement), et les valeurs de la grille 2008 sont écrites dans une colonne SQL nommée
+  `categories_2025`.
+- **Le CERFA d'une contre-écriture dit le contraire de l'écriture, et cela arrive DÉJÀ,
+  verrou fermé.** Le champ quantité prend la valeur ABSOLUE : une contre-écriture de −0,50 kg
+  imprime « 0,50 kg de fluide vierge chargé », indiscernable de l'originale au numéro près, et
+  rien n'y dit qu'elle annule quoi que ce soit. Les blocs de signature sortent **pré-remplis**
+  (nom du validateur, qualité, dates du jour), tracé vide. Le PDF part dans le **dossier
+  d'audit scellé**. Et la contre-écriture officielle passe **même attestation de capacité
+  périmée** : c'est la seule porte qui produit une écriture officielle numérotée sans passer
+  le cadre du mode Officiel.
+- **Le verrouillage de compte est perpétuel et sans porte de secours.** Le compteur d'échecs
+  n'est pas remis à zéro à l'expiration : au bout de 15 minutes il vaut toujours 5, donc le
+  premier essai raté suivant re-verrouille (tiré). Si le compte bloqué est le **seul ADMIN**,
+  le registre devient inaccessible jusqu'à édition manuelle du fichier SQLite. Le message
+  d'échec unique est en outre défait par le message de verrou : cinq requêtes suffisent à
+  distinguer un identifiant qui existe d'un identifiant qui n'existe pas.
+- **Un équipement à plusieurs FLUIDES fait disparaître une obligation entière.** Une machine
+  en cascade n'a qu'un champ `fluide` : déclarée R-744 avec 8 kg au total, le moteur rend
+  « aucun contrôle » alors que le seul circuit HFC (R-134a, 4 kg = 5,72 tCO₂eq) impose
+  12 mois. Le doute retire ici une OBLIGATION — ce que la doctrine de la maison interdit.
+- **Le CERFA régénéré ne lit pas le PRP FIGÉ** (`grep prpFige v8/js/cerfa/` = 0 ligne) : après
+  correction du référentiel, une fiche scellée à 148 réimprime 3,20 tCO₂eq au lieu de 0,47,
+  chaîne intacte. « Une correction de référentiel ne réécrit pas une fiche déjà signée » est
+  donc vrai de la DONNÉE et faux du DOCUMENT — à corriger dans
+  `docs/REGISTRE-DES-ARBITRAGES.md`.
+- **`getMouvements` rend le nom réel d'une personne mise au coffre à un compte ÉLÈVE** : la
+  substitution ne vit que dans la vue. La décision de confidentialité du 25/07 avait fermé
+  deux portes au motif écrit qu'« une décision qui ne garde qu'une porte sur deux n'en est pas
+  une » — il en restait une troisième.
+
+**Deux conseils de la relecture sont refusés, preuve à l'appui** : découper `server/api.js` et
+`demo-store.js` (couverture mesurée : ce sont les fichiers les **mieux** couverts du dépôt ;
+le bas de tableau est la couche navigateur) ; et conclure « poste chiffré » depuis la clé de
+registre BitLocker (elle ne distingue pas *protection active* de *protection suspendue*).
+
+#### LE LOT 0 — six briques, aucune valeur réglementaire touchée
+
+Chacune codée dans un worktree isolé, **chacune prouvée par un test qui redevient ROUGE quand
+on retire le correctif** (contre-épreuve tirée dans les deux sens, jamais supposée), chacune
+passée à une revue adversariale. **TOUT VERT — 126 exécutions** (121 → 126) en 101,7 s,
+**207 attaques** inchangées à `node server/test-securite-negative.mjs`.
+
+- **B1 — le banc LAN ne peut plus être VERT sans avoir tiré sur la cible.** La relecture avait
+  rencontré un faux ROUGE (proxy d'environnement). En le tirant, on a trouvé le **faux VERT**,
+  bien plus grave : avec `HTTP_PROXY` renseigné et `HTTPS_PROXY` absent — configuration
+  banale d'un établissement — la suite affichait **11 OK / 0 échec** alors que les deux
+  vérifications qui portent toute la propriété « aucun repli HTTP en clair sur le port LAN »
+  étaient parties au proxy **sans jamais interroger le serveur** (journal du faux mandataire à
+  l'appui). Agents dédiés (`AGENT_HTTPS`/`AGENT_HTTP`) + une **cinquième famille de
+  vérifications sur l'herméticité du banc lui-même** : on relit l'agent que Node a réellement
+  attaché à la requête, pas les options qu'on croit avoir passées. 11 → 16 vérifications.
+  Élargir `NO_PROXY` a été explicitement refusé : cela dépendrait du poste de celui qui joue
+  la suite. **La revue a rattrapé un motif FAUX** que le correctif venait de fabriquer : quand
+  le serveur ne démarre pas pour une raison légitime (certificat illisible, port pris), la
+  suite accusait par écrit un intermédiaire qui n'existait pas — le motif déjà payé trois fois
+  ici.
+- **B2 — la borne de scellement est enfin CONFRONTÉE au registre, au démarrage.** Le détecteur
+  existait : après un retour en arrière au disque, le fichier voisin portait encore 3 pendant
+  que la base n'avait plus qu'une écriture scellée. Personne ne le lui demandait —
+  `nombreScelleesJamaisAtteint()` n'était consulté qu'à l'import. Constat best-effort **jamais
+  fatal** au démarrage, journal chaîné, et **INDÉTERMINÉ quand la borne est absente ou
+  illisible : jamais une accusation** (même doctrine que `png.js`). Ce que la mesure ne
+  promet pas est écrit : qui recopie la base ET son fichier voisin ne laisse aucun écart.
+  Suite neuve `server/test-non-regression-scellement.mjs` (26 vérifications).
+- **B3 — le dossier de destination des sauvegardes ne peut plus être un espace synchronisé
+  sans le dire.** Le dépôt refuse catégoriquement la base vive sous OneDrive/Drive/Dropbox
+  (`server/db.js:89`) mais acceptait d'y déposer les **archives automatiques, en clair et
+  nominatives** — et le commentaire du code **invitait au geste** pendant que `SAUVEGARDE.md`
+  l'interdisait : deux parties du dépôt se contredisaient, et c'est le code qui gagnait. Garde
+  posée dans le SERVEUR (vérifiée par appel API direct, 400), dérogation explicite au patron
+  de la base vive, commentaire mensonger corrigé. Suite neuve
+  `server/test-destination-synchronisee.mjs`. **La revue a rattrapé un texte qui laissait
+  croire que corriger le réglage suffisait** : ce qui est déjà parti dans le nuage y reste.
+- **B4 — les mots qui promettent plus que ce que le logiciel fait.** « mot de passe chiffré »
+  alors qu'il est **haché** (seul constat que la relecture classait fondé sans réserve — et le
+  mot faux sortait sur **papier**, la notice ayant un bouton d'impression) ; « journal d'audit
+  **inviolable** » dans `RGPD.md`, c'est-à-dire dans la pièce destinée au délégué à la
+  protection des données ; « preuve d'usage opposable » ; « inaltérable » sans réserve. **La
+  revue a montré que le balayage à la main se déclarait complet sans l'être** — il restait
+  « le registre redevient inviolable » dans `server/api.js`, sur le chemin d'**import**, et
+  « Toute altération se voit » deux lignes sous un titre qu'on venait de qualifier. D'où la
+  suite neuve `outils/test-mots-qui-promettent.mjs` : le balayage n'est plus tenu par la
+  vigilance du rédacteur. Les emplois EXACTS (le coffre des identités chiffre vraiment, en
+  AES-256-GCM) sont laissés intacts — l'erreur symétrique serait aussi grave.
+- **B5 — plus aucune condition ne pend au « visa T3 », abandonné le 26/07.** Le sens de
+  l'erreur était bon (tout restait fermé), mais une condition d'ouverture devenue impossible
+  à satisfaire finit soit en garde morte, soit en garde ouverte un jour sans critère. Renvois
+  raccordés au dispositif qui remplace le visa (décision écrite + pilote en parallèle +
+  risques acceptés nommément). **Aucune valeur ne bouge** : `EXEMPTION_HERMETIQUE_ACTIVE`
+  reste `false`, `VERROU_LIVRAISON` reste `true`. **La revue a rattrapé quatre conditions
+  vivantes encore suspendues au visa** — dont une dans une suite citée comme preuve — et
+  l'absence de contre-épreuve : suite neuve `outils/test-visa-abandonne.mjs`.
+- **B6 — le dossier remis à l'établissement compte juste, et ne conseille plus un geste
+  destructeur.** L'inventaire des documents sans marque de non-officialité en liste **vingt et
+  un** ; deux annonces disaient encore « dix-neuf », dont celle du **tableau d'état que le chef
+  d'établissement signe**. Suite neuve `outils/test-inventaire-documents-sans-marque.mjs` : le
+  nombre est **déduit de la liste, jamais écrit en dur** — ajouter une entrée ne casse rien,
+  oublier une annonce casse ; et la divergence entre les quatre copies de l'inventaire est
+  détectée. Surtout : `docs/P0-9-REVOCATION-CLES-V7.md` conseillait de **supprimer « l'ancien
+  dépôt GitHub de la v7 »** en affirmant que l'antériorité de la v8 vivait ailleurs. **C'est
+  faux : `git remote -v` ne rend qu'UN dépôt**, celui de la v8, et c'est de son historique que
+  les clés v7 ont été extraites. Appliqué, ce conseil détruisait la protection de paternité
+  retenue à la place du chiffrement du code. Conseil retiré et motivé ; **la revue a rattrapé
+  le motif faux du correctif lui-même** : passer un dépôt en privé ne touche pas à
+  l'historique — seules la suppression et la réécriture le détruisent.
+
+#### Ce qui reste ouvert de cette relecture (rien n'est refermé en douce)
+
+En code : la **portée de capacité** (avec ses trois portes et le régime 2025) · le **CERFA de
+la contre-écriture** · le **verrouillage de compte** et le déni de service scrypt (A14,
+toujours à traiter avant le mode LAN, jamais après) · le **multi-fluides** · le **PRP figé non
+lu par le générateur** · la **troisième porte du coffre des identités**. Hors code : les
+**clés v7** (T2, l'exposition reste réputée active tant que le procès-verbal n'est pas signé),
+la **saisine du DPD** sous couvert du chef d'établissement (T3), la publication d'une
+**couverture mesurée honnêtement**, le manifeste de paquet et l'inventaire des composants
+tiers. `docs/NOTE-DECISION-ETABLISSEMENT.md` § 3 nomme désormais cette quatrième relecture,
+son verdict, et les quatre travaux qui restent — la note ne doit pas être signée en laissant
+croire qu'ils sont réglés.
+
 ### 🗑️ B2 — LE SUIVI DE REMISE EN FILIÈRE DIT CE QU'IL EST (25/07, session autonome)
 
 **Constat A07, tiré et confirmé.** L'objet interne du logiciel s'appelait « BSFF »
