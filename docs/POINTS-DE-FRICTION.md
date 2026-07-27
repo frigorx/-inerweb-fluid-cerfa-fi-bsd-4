@@ -542,16 +542,43 @@ il faut le savoir avant de présenter le registre comme inaltérable.
 interne A13). Le mot « inaltérable » est employé dans la documentation du projet : il
 signifie « inaltérable par l'application », jamais « inaltérable par un administrateur
 du poste ». **Et il n'est pas toujours qualifié.** `README.md:42` le borne correctement
-(« inaltérable **au sein de l'application** », avec le renvoi au chiffrement du disque) ;
-mais `index.html:243` porte le titre nu « Registre inaltérable », et `RGPD.md:107` comme
-`v8/js/views/rgpd.js:56` emploient le mot sans réserve. Ces trois emplois-là peuvent faire
-prendre le registre pour ce qu'il n'est pas.
+(« inaltérable **au sein de l'application** », avec le renvoi au chiffrement du disque).
+Les trois emplois non qualifiés relevés ici (`index.html:243`, `RGPD.md:107`,
+`v8/js/views/rgpd.js:56`), ainsi que `docs/SPEC-V8.md:168` et `server/db.js:21` trouvés
+lors du balayage étendu, sont **corrigés (lot B4, 27/07)** : ils portent désormais la
+même précision que README.md.
 
-**Condition de réveil.** Le jour où le registre doit résister à une contestation
-sérieuse, ou dès qu'un tiers accède au poste. La fermeture demande un lot dédié
-(confrontation au témoin externe) puis, pour un vrai ancrage, un service
-d'horodatage tiers — hors périmètre du projet à ce jour. Les trois emplois non qualifiés
-du mot « inaltérable », eux, se corrigent à la relecture des écrans et des notices.
+**Extension B4 (27/07) — la famille ne s'arrête pas à « inaltérable ».** L'inventaire
+ci-dessus ne traquait que ce seul mot et a laissé passer « inviolable » (même promesse,
+mot différent) et « preuve opposable » (revendique une valeur probante forte que le
+projet n'a jamais visée — aucun ancrage tiers, aucun horodatage qualifié, cf.
+`LIMITE-DE-RESPONSABILITE.md` § 2 b). Balayage complet du dépôt (v8/, server/,
+index.html, guide.html, docs/, *.md racine) pour toute la famille
+(inviolable/infalsifiable/incorruptible/impossible à modifier/preuve opposable/certifié) :
+
+- **Faux, corrigés (lot B4)** : `v8/js/views/rgpd.js:426` (mot de passe « chiffré » →
+  « haché » — c'est un hash scrypt, jamais déchiffrable) ; `RGPD.md:145` (« journal
+  d'audit inviolable » → « non modifiable depuis l'application ») ; `RGPD.md:107`
+  (« la preuve d'usage opposable au DPD » → « une trace consultable par le DPD, sans
+  valeur probante forte ») ; `docs/SPEC-V8.md:168` et `server/db.js:21` (« registre
+  inviolable » → « inaltérable au sein de l'application ») ; `v8/js/views/conformite.js:213`
+  et `v8/js/data/contrat.js:345` (« preuve opposable » → « trace consultable/consignée ») ;
+  `server/coffre-identites.js:55` + son miroir `v8/js/data/coffre-identites.js:55`
+  (`MSG_MOTIF_OBLIGATOIRE` : « preuve opposable » → « trace journalisée »).
+- **Vu, non touché (hors périmètre B4)** : les emplois d'« inviolable » dans des
+  documents datés d'audit externe (`docs/AUDIT-2026-07-03.md`, `docs/SPEC-V8.md`
+  historique déjà cité par le CHANGELOG) sont des comptes-rendus d'époque, pas des
+  promesses vivantes — on ne réécrit pas l'histoire d'un audit. `docs/E4-PLAN.md:54` et
+  `docs/VISION-V9-V10.md:248` emploient « règle inviolable » dans un tout autre sens
+  (une règle de codage à suivre, pas une promesse faite à un tiers sur les données) :
+  laissé tel quel, à raison. `docs/PLAN-LOT-E2.md:27` et
+  `docs/PROMPT-AUTO-INSTALL-DEMO.md:86` portent encore « inaltérable » sans qualificatif
+  dans des documents de plan/installation : signalé, pas corrigé (hors périmètre du lot,
+  à traiter si ces documents redeviennent des surfaces vivantes).
+- **Exact, à ne pas toucher** : tous les emplois de « chiffré » ailleurs dans le dépôt
+  (coffre des identités AES-256-GCM, archives de sauvegarde AES-256-GCM) décrivent un
+  vrai chiffrement réversible par clé — les confondre avec le hachage des mots de passe
+  serait l'erreur symétrique.
 
 ---
 

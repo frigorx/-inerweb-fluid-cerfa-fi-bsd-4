@@ -342,7 +342,7 @@ export const METHODES_CONTRAT = {
   rafraichirSentinelle: { genre: 'mutation',
     description: 'Réconcilie la table avec getAlertes() : ouvre un épisode par alerte nouvellement apparue, clôt (resolueLe) les épisodes dont l’alerte a disparu. IDEMPOTENT (aucun effet si rien n’a changé) ; ne journalise PAS au registre chaîné. Retourne la sentinelle à jour.' },
   acquitterAlerte: { genre: 'mutation',
-    description: 'Marque « pris connaissance » l’épisode ouvert d’une alerte (acquitteeLe/acquitteePar) et le CONSIGNE au journal d’audit (preuve opposable) ; Error si aucune alerte active pour cet id ; idempotent si déjà acquitté. NE MASQUE RIEN : l’alerte reste active et visible.' },
+    description: 'Marque « pris connaissance » l’épisode ouvert d’une alerte (acquitteeLe/acquitteePar) et le CONSIGNE au journal d’audit (trace consignée) ; Error si aucune alerte active pour cet id ; idempotent si déjà acquitté. NE MASQUE RIEN : l’alerte reste active et visible.' },
 
   // --- mode officiel et échanges --------------------------------------
   peutPasserEnOfficiel: { genre: 'lecture',

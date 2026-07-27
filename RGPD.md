@@ -104,7 +104,8 @@ responsable connaît. La fiche n'affiche plus qu'un **pseudonyme** (« Élève
 2026-01 ») — écrans, exports et dossiers d'audit suivent. Le code **rouvre**
 l'identité en cas de besoin légal : consultation ponctuelle ou restauration
 complète, **motif obligatoire**, chaque ouverture **journalisée de façon
-inaltérable** (la preuve d'usage opposable au DPD).
+inaltérable au sein de l'application** (une trace consultable par le DPD,
+sans valeur probante forte — voir `LIMITE-DE-RESPONSABILITE.md` § 2 b).
 
 - **Le geste est manuel** (bouton « Mettre à l'abri », fiches échues
   pré-cochées, rappel automatique non bloquant) : un automatisme exigerait de
@@ -142,7 +143,7 @@ l'intégrité du registre et consigné ici en toute transparence) :
 ## 8. Mesures de sécurité
 
 Les mesures techniques et organisationnelles (mots de passe hachés, cloisonnement par
-établissement, journal d'audit inviolable, sauvegardes chiffrées, absence de secret dans
+établissement, journal d'audit non modifiable depuis l'application, sauvegardes chiffrées, absence de secret dans
 le dépôt public…) sont détaillées dans **`SECURITE.md`**, qui fait partie intégrante de
 ce dossier de conformité.
 

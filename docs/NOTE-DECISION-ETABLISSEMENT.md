@@ -266,11 +266,21 @@ Observations sur le § 5.1 : ...................................................
       bouteille est regonflée d'autant sans écriture, **aucune alerte ne se déclenche**. Le
       choix est délibéré — l'autre réglage accusait par écrit des opérations valides — mais
       c'est un trou dans le rapprochement, borné à une journée par remise. *(§ 9 bis)*
-- [ ] **R29 — Le mot « inaltérable » est employé sans réserve à trois endroits de la
+- [x] **R29 — Le mot « inaltérable » était employé sans réserve à trois endroits de la
       documentation et des écrans** (`index.html`, `RGPD.md`, la notice affichée dans
       l'application), alors qu'il ne signifie jamais que « inaltérable **par
       l'application** » : qui a la main sur le fichier de base peut le remplacer. C'est le
-      mot qui, seul, peut faire prendre le registre pour ce qu'il n'est pas. *(§ 9)*
+      mot qui, seul, peut faire prendre le registre pour ce qu'il n'est pas. **Corrigé
+      (lot B4, 27/07) : les trois emplois portent désormais la même précision que
+      README.md.** Le balayage étendu à la famille entière (le premier inventaire ne
+      traquait que ce seul mot et a laissé passer « inviolable ») a trouvé et corrigé
+      deux autres emplois d'« inviolable » (`docs/SPEC-V8.md:168`, `server/db.js:21`) et
+      plusieurs emplois de « preuve opposable » qui revendiquaient une valeur probante
+      forte non tenue (`RGPD.md:107`, `v8/js/views/conformite.js:213`,
+      `v8/js/data/contrat.js:345`, `MSG_MOTIF_OBLIGATOIRE` du coffre des identités
+      serveur+front), ainsi qu'un « mot de passe chiffré » qui devait dire « haché »
+      (`v8/js/views/rgpd.js:426` — le mot de passe est haché par scrypt, jamais
+      déchiffrable). Détail : `docs/POINTS-DE-FRICTION.md` § 9. *(§ 9)*
 - [ ] **R11 — Un déni de service sur l'écran de connexion est confirmé, mesuré et non
       corrigé** ; à traiter avant toute activation de l'accès par le réseau local. *(§ 10)*
 - [ ] **R12 — Les signatures ne sont pas des signatures électroniques avancées ou qualifiées**
