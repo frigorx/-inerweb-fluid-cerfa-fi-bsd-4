@@ -6406,7 +6406,8 @@ function remplacerToutLEtat(candidat, chaineAmorceeALImport = 0,
     reinsererJournal(candidat.journalAudit);
 
     // Recréation des déclencheurs WORM (SQL exact de sqlite_master) : le
-    // registre redevient inviolable dans la même transaction.
+    // registre redevient inaltérable au sein de l'application dans la
+    // même transaction.
     for (const t of worm) db.run(t.sql);
 
     // Journalise l'import LUI-MÊME (chaîné à la chaîne de journal réamorcée).

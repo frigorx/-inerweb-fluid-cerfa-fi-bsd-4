@@ -552,12 +552,13 @@ même précision que README.md.
 ci-dessus ne traquait que ce seul mot et a laissé passer « inviolable » (même promesse,
 mot différent) et « preuve opposable » (revendique une valeur probante forte que le
 projet n'a jamais visée — aucun ancrage tiers, aucun horodatage qualifié, cf.
-`LIMITE-DE-RESPONSABILITE.md` § 2 b). Balayage complet du dépôt (v8/, server/,
-index.html, guide.html, docs/, *.md racine) pour toute la famille
-(inviolable/infalsifiable/incorruptible/impossible à modifier/preuve opposable/certifié) :
+`LIMITE-DE-RESPONSABILITE.md` § 2 b). Balayage de toute la famille
+(inviolable/infalsifiable/incorruptible/preuve opposable/mot de passe « chiffré »/
+« toute altération se voit ») sur les surfaces vivantes — v8/, server/, index.html,
+guide.html, *.md de la racine :
 
-- **Faux, corrigés (lot B4)** : `v8/js/views/rgpd.js:426` (mot de passe « chiffré » →
-  « haché » — c'est un hash scrypt, jamais déchiffrable) ; `RGPD.md:145` (« journal
+- **Faux, corrigés (lot B4)** : `v8/js/views/rgpd.js:427` (mot de passe « chiffré » →
+  « haché » — c'est un hash scrypt, jamais déchiffrable) ; `RGPD.md:146` (« journal
   d'audit inviolable » → « non modifiable depuis l'application ») ; `RGPD.md:107`
   (« la preuve d'usage opposable au DPD » → « une trace consultable par le DPD, sans
   valeur probante forte ») ; `docs/SPEC-V8.md:168` et `server/db.js:21` (« registre
@@ -578,7 +579,36 @@ index.html, guide.html, docs/, *.md racine) pour toute la famille
 - **Exact, à ne pas toucher** : tous les emplois de « chiffré » ailleurs dans le dépôt
   (coffre des identités AES-256-GCM, archives de sauvegarde AES-256-GCM) décrivent un
   vrai chiffrement réversible par clé — les confondre avec le hachage des mots de passe
-  serait l'erreur symétrique.
+  serait l'erreur symétrique. De même, « toute altération a posteriori casse la chaîne »
+  (`server/db.js:448`) et « devient détectable » (`SECURITE.md:133`) nomment le
+  MÉCANISME et restent vrais : ce qui est faux, c'est la promesse de visibilité sans
+  réserve.
+
+**Ce que la revue adversariale a corrigé par-dessus (27/07).** Le balayage ci-dessus
+était fait à la main, sur une liste établie à la main — la cause racine exacte déjà
+payée par `outils/test-promesses-cloud.mjs`. Il se disait complet et il ne l'était pas :
+
+- `server/api.js:6409` disait « le registre redevient **inviolable** dans la même
+  transaction » — et le disait dans le chemin d'IMPORT, c'est-à-dire là où le logiciel
+  scelle un passé qu'il n'a pas écrit. Corrigé.
+- `index.html:244` promettait, deux lignes sous le titre que B4 venait de qualifier,
+  « **Toute altération se voit.** » C'est exactement ce que le § 9 ci-dessus dit être
+  faux (le témoin de tête se recalcule). Corrigé : « toute altération passée par
+  l'application se voit ; une modification directe du fichier de base, elle, relève du
+  chiffrement du poste » — la formule de `README.md:42`.
+- `v8/js/data/test-sentinelle.mjs:105` portait encore « preuve opposable » en
+  commentaire. Corrigé.
+- Deux renvois faux (`v8/js/views/rgpd.js:426` pour 427, `RGPD.md:145` pour 146 —
+  numéros relevés AVANT l'édition qui les décalait) : corrigés ci-dessus.
+
+**La règle est désormais tenue par une suite, plus par une relecture** :
+`outils/test-mots-qui-promettent.mjs` balaye les surfaces vivantes à chaque build,
+porte sa propre contre-épreuve (chaque phrase d'avant B4 y est rejouée et doit être
+détectée) et laisse passer les emplois légitimes voisins (« registre opposable » tout
+court, « sauvegarde chiffrée », le mécanisme de la chaîne). Elle ne juge pas `docs/`
+(plans et comptes rendus d'audit datés), `CHANGELOG.md` ni les suites `test-*.mjs` :
+le jour où un de ces documents redevient une surface vivante, il entre dans le
+balayage.
 
 ---
 

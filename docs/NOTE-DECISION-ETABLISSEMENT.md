@@ -279,8 +279,14 @@ Observations sur le § 5.1 : ...................................................
       forte non tenue (`RGPD.md:107`, `v8/js/views/conformite.js:213`,
       `v8/js/data/contrat.js:345`, `MSG_MOTIF_OBLIGATOIRE` du coffre des identités
       serveur+front), ainsi qu'un « mot de passe chiffré » qui devait dire « haché »
-      (`v8/js/views/rgpd.js:426` — le mot de passe est haché par scrypt, jamais
-      déchiffrable). Détail : `docs/POINTS-DE-FRICTION.md` § 9. *(§ 9)*
+      (`v8/js/views/rgpd.js:427` — le mot de passe est haché par scrypt, jamais
+      déchiffrable). **La revue adversariale du même jour a trouvé deux emplois que ce
+      balayage à la main déclarait pourtant avoir couverts** (`server/api.js:6409`
+      « le registre redevient inviolable », et `index.html:244` « Toute altération se
+      voit. », deux lignes sous le titre qui venait d'être qualifié) : corrigés à leur
+      tour, et la règle est désormais tenue par une suite qui balaye les surfaces
+      vivantes à chaque build (`outils/test-mots-qui-promettent.mjs`), plus par une
+      relecture. Détail : `docs/POINTS-DE-FRICTION.md` § 9. *(§ 9)*
 - [ ] **R11 — Un déni de service sur l'écran de connexion est confirmé, mesuré et non
       corrigé** ; à traiter avant toute activation de l'accès par le réseau local. *(§ 10)*
 - [ ] **R12 — Les signatures ne sont pas des signatures électroniques avancées ou qualifiées**
