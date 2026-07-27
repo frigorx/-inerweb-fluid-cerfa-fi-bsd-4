@@ -26,6 +26,8 @@ import { ouvrirFeuilleMiseEnService, peutOuvrirFeuilleMiseEnService }
   from '../documents/feuille-mise-en-service.js';
 import { ouvrirCerfa } from '../cerfa/visualiseur.js';
 import { ouvrirCorrectionCerfa } from '../cerfa/correcteur.js';
+import { estContreEcriture, ouvrirJustificatifRegularisation }
+  from '../documents/regularisation.js';
 import { zonePiecesJointes } from '../composants/pieces-jointes.js';
 import { verdictPourIntervenant, encartConseil, injecterStylesConseil,
   dateDuJour } from '../composants/conseil-intervenant.js';
@@ -601,16 +603,23 @@ function ligneMouvementFiche(mv) {
     + '<td>' + chipStatut(mv.statut) + '</td>'
     + '<td class="align-droite">'
     + '<span style="display:inline-flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">'
-    + '<button type="button" class="btn btn-contour btn-petit" data-action="cerfa-mouvement" '
-    + 'data-id="' + esc(mv.id) + '">CERFA</button>'
-    // Correction élève : seulement sur un mouvement FIGÉ hors transfert
-    // (même règle que la vue Mouvements — sinon l'enseignant importait
-    // un PDF avant d'apprendre que le mouvement n'était pas éligible).
-    + ((mv.statut === 'VALIDE' || mv.statut === 'ANNULE')
-        && mv.type !== 'TRANSFERT'
-      ? '<button type="button" class="btn btn-contour btn-petit" data-action="corriger-cerfa-mouvement" '
-        + 'data-id="' + esc(mv.id) + '">Correction élève</button>'
-      : '')
+    // Lot 1 branche A (27/07/2026) : une CONTRE-ÉCRITURE n'a plus de
+    // CERFA — ni à visualiser, ni à corriger. Elle a SA pièce, le
+    // justificatif de régularisation (même règle que la vue Mouvements).
+    + (estContreEcriture(mv)
+      ? '<button type="button" class="btn btn-contour btn-petit" '
+        + 'data-action="justificatif-regularisation" data-id="'
+        + esc(mv.id) + '">Justificatif de régularisation</button>'
+      : '<button type="button" class="btn btn-contour btn-petit" data-action="cerfa-mouvement" '
+        + 'data-id="' + esc(mv.id) + '">CERFA</button>'
+        // Correction élève : seulement sur un mouvement FIGÉ hors transfert
+        // (même règle que la vue Mouvements — sinon l'enseignant importait
+        // un PDF avant d'apprendre que le mouvement n'était pas éligible).
+        + ((mv.statut === 'VALIDE' || mv.statut === 'ANNULE')
+            && mv.type !== 'TRANSFERT'
+          ? '<button type="button" class="btn btn-contour btn-petit" data-action="corriger-cerfa-mouvement" '
+            + 'data-id="' + esc(mv.id) + '">Correction élève</button>'
+          : ''))
     + boutonFeuille
     + '</span>'
     + '</td>'
@@ -899,6 +908,17 @@ export async function render(conteneur, ctx) {
       ouvrirCorrectionCerfa(ctx, { source: 'mouvement', id: bouton.dataset.id });
     });
   });
+  // ---- Justificatif de régularisation d'une contre-écriture (lot 1 A) ----
+  conteneur.querySelectorAll('[data-action="justificatif-regularisation"]')
+    .forEach(function (bouton) {
+      bouton.addEventListener('click', function () {
+        ouvrirJustificatifRegularisation(ctx, bouton.dataset.id)
+          .catch(function (erreur) {
+            toast(erreur && erreur.message ? erreur.message
+              : 'Justificatif de régularisation indisponible.', 'erreur');
+          });
+      });
+    });
   // ---- Feuille de mise en service depuis l'historique (CF-1) ----
   conteneur.querySelectorAll('[data-action="feuille-mise-en-service"]').forEach(function (bouton) {
     bouton.addEventListener('click', function () {

@@ -124,12 +124,16 @@ registre. **Cette décision n'est pas prise.**
 
 ---
 
-## 1 ter. En dehors du CERFA, aucun document produit ne porte de marque de non-officialité
+## 1 ter. En dehors du CERFA et du justificatif de régularisation, aucun document produit ne porte de marque de non-officialité
 
 **Ce que c'est.** La mention « MODE FORMATION — DOCUMENT NON OFFICIEL — NE PAS UTILISER
-POUR UNE INTERVENTION RÉELLE » existe (`v8/js/cerfa/generateur.js:93`), mais elle n'est
-apposée **que sur le CERFA** : au cadre 14 des observations (`:538`) et en filigrane
-diagonal sur la page (`:754`). **Vingt et un autres documents sortent sans aucune marque.**
+POUR UNE INTERVENTION RÉELLE » est rédigée à un seul endroit
+(`v8/js/cerfa/generateur.js:93`) et n'est apposée que par deux sorties : le **CERFA**, au
+cadre 14 des observations (`:538`) et en filigrane diagonal sur la page (`:754`) ; et le
+**justificatif de régularisation** d'une écriture d'annulation
+(`v8/js/documents/regularisation.js`), depuis le 27/07/2026 — la mention y est portée par
+le document lui-même, et non par l'écran qui l'affiche, donc elle **survit à
+l'impression**. **Vingt et un autres documents sortent sans aucune marque.**
 
 <a id="inventaire-documents-sans-marque"></a>
 
@@ -200,11 +204,14 @@ diagonal sur la page (`:754`). **Vingt et un autres documents sortent sans aucun
 `v8/js/`, et non le seul dossier `documents/` :
 
 ```
-grep -rn "MENTION_FORMATION\|MODE FORMATION\|NON OFFICIEL\|non officiel" v8/js/ | grep -v "^v8/js/cerfa/"
+grep -rn "MENTION_FORMATION\|MODE FORMATION\|NON OFFICIEL\|non officiel" v8/js/ \
+  | grep -v "^v8/js/cerfa/" | grep -v "regularisation"
 ```
 
-Elle ne rend **rien**. La contre-épreuve est la même commande sans le filtre : elle rend
-vingt lignes, toutes dans `v8/js/cerfa/`. Pour retrouver les imprimables eux-mêmes :
+Elle ne rend **rien**. La contre-épreuve est la même commande sans les filtres : elle rend
+trente-trois lignes, toutes dans `v8/js/cerfa/` ou dans les deux fichiers de
+`regularisation` (le module du justificatif et sa suite de tests).
+Pour retrouver les imprimables eux-mêmes :
 `grep -rn "window.print()" v8/js/ | grep -v "test-"` rend quinze lignes, dont trois sont des
 commentaires — donc **douze** déclencheurs d'impression réels. Ce sont les onze premiers
 imprimés de l'inventaire (n° 1 à 7 et 9 à 12), plus la notice de protection des personnes.

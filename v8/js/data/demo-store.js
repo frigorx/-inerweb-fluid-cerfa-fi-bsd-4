@@ -4593,9 +4593,17 @@ export function creerDemoStore() {
         hashPiecesJointes: null,
         hashPdfFinal: null
       };
-      // IM-12 : même règle qu'à la validation — pas de CERFA pour un TRANSFERT
-      contreEcriture.cerfaNumero =
-        contreEcriture.type === 'TRANSFERT' ? null : contreEcriture.numero;
+      // Lot 1 branche A (décision du propriétaire, 27/07/2026) : une
+      // CONTRE-ÉCRITURE ne porte AUCUN numéro de fiche CERFA — quel que
+      // soit son type. Le CERFA 15497*04 est une fiche d'INTERVENTION sur
+      // un équipement ; aucune intervention n'a lieu le jour d'une
+      // annulation comptable. Le geste est celui du TRANSFERT, ligne d'à
+      // côté avant ce lot. Ce qui remplace la fiche : le JUSTIFICATIF DE
+      // RÉGULARISATION (v8/js/documents/regularisation.js).
+      // ⚠ Miroir STRICT de server/api.js — ce champ entre dans l'empreinte
+      // v2 : une valeur différente d'un côté casserait la chaîne au
+      // round-trip démo↔local.
+      contreEcriture.cerfaNumero = null;
       // Brique ② : la contre-écriture fige le PRP à SA validation (même
       // fluide que l'original ; si le référentiel a bougé entre-temps, les
       // deux valeurs témoignent chacune de leur époque).

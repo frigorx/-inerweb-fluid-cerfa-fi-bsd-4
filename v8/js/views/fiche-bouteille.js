@@ -18,6 +18,8 @@ import { avoirParMachineOrigine } from '../data/avoir-origine.js';
 import { ouvrirFormBouteille, ouvrirPesee } from '../modales/bouteille-form.js';
 import { ouvrirEtiquette } from '../documents/etiquette-bouteille.js';
 import { ouvrirCerfa } from '../cerfa/visualiseur.js';
+import { ouvrirJustificatifRegularisation }
+  from '../documents/regularisation.js';
 import { zonePiecesJointes } from '../composants/pieces-jointes.js';
 
 export const titre = 'Fiche bouteille';
@@ -516,11 +518,19 @@ function ligneEvenement(evt) {
   // CERFA aussi pour une écriture ANNULÉE : son document original reste
   // opposable (cerfaNumero posé à la validation) — même règle que la
   // fiche machine. Seul le TRANSFERT n'a pas de CERFA (IM-12).
-  const boutonCerfa = (estMouvement && evt.sousType !== 'TRANSFERT')
+  // Lot 1 branche A (27/07/2026) : une CONTRE-ÉCRITURE non plus — elle
+  // ouvre son JUSTIFICATIF DE RÉGULARISATION. La chronologie de la
+  // bouteille porte déjà `contreEcritureDe` (data/vie-bouteille.js), le
+  // fait n'a pas à être redéduit ici.
+  const boutonCerfa = (estMouvement && evt.contreEcritureDe)
     ? '<div class="vie-actions"><button type="button" class="btn btn-contour btn-petit" '
-      + 'data-action="cerfa-mouvement" data-id="' + esc(evt.mouvementId)
-      + '">CERFA</button></div>'
-    : '';
+      + 'data-action="justificatif-regularisation" data-id="'
+      + esc(evt.mouvementId) + '">Justificatif de régularisation</button></div>'
+    : ((estMouvement && evt.sousType !== 'TRANSFERT')
+      ? '<div class="vie-actions"><button type="button" class="btn btn-contour btn-petit" '
+        + 'data-action="cerfa-mouvement" data-id="' + esc(evt.mouvementId)
+        + '">CERFA</button></div>'
+      : '');
 
   return '<li class="vie-evenement' + (evt.annule ? ' vie-annule' : '') + '">'
     + '<span class="vie-pastille ' + sens + '" aria-hidden="true"></span>'
@@ -696,4 +706,15 @@ export async function render(conteneur, ctx) {
       ouvrirCerfa(ctx, { source: 'mouvement', id: bouton.dataset.id });
     });
   });
+  // ---- Justificatif de régularisation d'une contre-écriture (lot 1 A) ----
+  conteneur.querySelectorAll('[data-action="justificatif-regularisation"]')
+    .forEach(function (bouton) {
+      bouton.addEventListener('click', function () {
+        ouvrirJustificatifRegularisation(ctx, bouton.dataset.id)
+          .catch(function (erreur) {
+            toast(erreur && erreur.message ? erreur.message
+              : 'Justificatif de régularisation indisponible.', 'erreur');
+          });
+      });
+    });
 }

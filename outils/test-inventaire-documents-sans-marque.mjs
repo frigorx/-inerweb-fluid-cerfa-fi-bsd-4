@@ -224,10 +224,27 @@ function lignesQuiPortentLaMention(dossier, prefixe, resultat) {
   return resultat;
 }
 
+// ⚠ LOT 1 BRANCHE A (27/07/2026) — L'EXCEPTION EST NOMMÉE, PAS ÉLARGIE.
+// Jusqu'à ce jour, un SEUL document du logiciel portait la mention de
+// non-officialité : la fiche CERFA. Le justificatif de régularisation
+// (v8/js/documents/regularisation.js), créé pour remplacer le CERFA d'une
+// écriture d'annulation, la porte lui aussi — et c'est le RÉSULTAT VOULU :
+// s'il en était sorti sans, il serait devenu le VINGT-DEUXIÈME document de
+// l'inventaire ci-dessus, et la dette du dossier aurait grandi.
+// L'exception est donc NOMMÉE fichier par fichier : tout AUTRE module qui
+// se mettrait à porter la mention ferait rougir cette suite, comme avant.
+// Le mot « regularisation » couvre le module ET sa suite de tests, tous
+// deux cités par le § 5.3 de docs/NOTE-DECISION-ETABLISSEMENT.md.
+const DOCUMENTS_MARQUES = [
+  (chemin) => chemin.startsWith('cerfa/'),
+  (chemin) => chemin.includes('regularisation')
+];
 const porteuses = lignesQuiPortentLaMention(join(RACINE, 'v8', 'js'), '', []);
-const horsCerfa = porteuses.filter((c) => !c.startsWith('cerfa/'));
-verifier('hors de v8/js/cerfa/, aucune ligne ne porte la mention de formation (commande du § 5.3)',
-  horsCerfa.length === 0, [...new Set(horsCerfa)].join(', '));
+const horsMarques = porteuses.filter(
+  (c) => !DOCUMENTS_MARQUES.some((estMarque) => estMarque(c)));
+verifier('hors des deux documents MARQUÉS, aucune ligne ne porte la mention '
+  + 'de formation (commande du § 5.3)',
+horsMarques.length === 0, [...new Set(horsMarques)].join(', '));
 
 // Le document annonce le nombre de lignes que rend la contre-épreuve.
 const compteLignes = porteuses.length;

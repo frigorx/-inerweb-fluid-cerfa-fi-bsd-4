@@ -45,7 +45,7 @@ permettront de décider ensuite.
 | Filet de tests | **TOUT VERT — 128 exécutions** ; durée de l'ordre de **100 secondes** (mesuré le 27/07/2026) | `node outils/lancer-tests.mjs --tout` |
 | Suite de refus (sécurité négative) | **207 réussies, 0 en échec** (mesuré le 27/07/2026) | `node server/test-securite-negative.mjs` |
 | Mode Officiel | **FERMÉ** par un verrou unique | `server/blocage-officiel.js:24` et `v8/js/data/blocage-officiel.js:31` |
-| Conséquence du verrou | aucune fiche opposable n'est produite ; **seul le CERFA** porte « MODE FORMATION — DOCUMENT NON OFFICIEL » (cadre 14 et filigrane). **Vingt et un autres documents produits ne portent aucune marque** — ils sont énumérés un par un à l'[inventaire du § 5.3](#inventaire-documents-sans-marque) *(lignes R26 et R34)* | `v8/js/cerfa/generateur.js:93`, `:538`, `:754` ; inventaire et commande de vérification au § 5.3 |
+| Conséquence du verrou | aucune fiche opposable n'est produite ; **le CERFA et le justificatif de régularisation** portent « MODE FORMATION — DOCUMENT NON OFFICIEL » (cadre 14 et filigrane pour le premier ; bandeau intérieur, visible à l'impression, pour le second). **Vingt et un autres documents produits ne portent aucune marque** — ils sont énumérés un par un à l'[inventaire du § 5.3](#inventaire-documents-sans-marque) *(lignes R26 et R34)* | `v8/js/cerfa/generateur.js:93`, `:538`, `:754` ; `v8/js/documents/regularisation.js` ; inventaire et commande de vérification au § 5.3 |
 | Surface fonctionnelle | 96 méthodes de contrat (v13), 35 migrations de base (n° 2 à 36) | `v8/js/data/contrat.js`, `server/migrations.js` |
 
 > Les deux chiffres de tests ci-dessus ont été **mesurés le 27/07/2026 sur cette version**,
@@ -431,7 +431,10 @@ Observations : .................................................................
 
 **Une précision, pour éviter un contresens.** À l'intérieur des quatre archives, les
 **fiches CERFA sont bien marquées** : elles sortent du même générateur
-(`v8/js/cerfa/generateur.js:538`, `:754`). Ce qui ne l'est pas, c'est tout le reste de
+(`v8/js/cerfa/generateur.js:538`, `:754`). Depuis le 27/07/2026, les **justificatifs de
+régularisation** (`regularisations/*.html`, la pièce qui remplace le CERFA d'une écriture
+d'annulation) le sont aussi, et par le même texte
+(`v8/js/documents/regularisation.js`). Ce qui ne l'est pas, c'est tout le reste de
 l'archive — sommaire, fichiers CSV, chronologie, vérificateur — et le certificat qui
 l'accompagne.
 
@@ -445,14 +448,17 @@ la personne qui le demande. Ce sont des fichiers de données, pas des documents 
 pourraient passer pour une pièce du registre.
 
 **Vérification par soi-même**, couvrant bien ce qui est affirmé — tout `v8/js/`, et non le
-seul dossier `documents/` :
+seul dossier `documents/`. Les documents MARQUÉS — le CERFA et le justificatif de
+régularisation — sont écartés du filtre, et eux seuls :
 
 ```
-grep -rn "MENTION_FORMATION\|MODE FORMATION\|NON OFFICIEL\|non officiel" v8/js/ | grep -v "^v8/js/cerfa/"
+grep -rn "MENTION_FORMATION\|MODE FORMATION\|NON OFFICIEL\|non officiel" v8/js/ \
+  | grep -v "^v8/js/cerfa/" | grep -v "regularisation"
 ```
 
-Elle ne rend **rien**. La contre-épreuve est la même commande sans le filtre : elle rend
-vingt-cinq lignes, toutes dans `v8/js/cerfa/`.
+Elle ne rend **rien**. La contre-épreuve est la même commande sans les filtres : elle rend
+trente-trois lignes, toutes dans `v8/js/cerfa/` ou dans les deux fichiers de
+`regularisation` (le module du justificatif et sa suite de tests).
 
 > **Consigne d'attente.** Tant que le point n'est pas tranché par l'établissement, **aucun
 > des vingt et un documents ci-dessus ne doit être remis à un tiers**, et l'ajout de la ligne
@@ -476,7 +482,8 @@ Ces conditions sont proposées ; l'établissement les arrête.
    donnée), qu'il vienne du logiciel ou de la saisie. Un écart non expliqué est un écart
    bloquant.
 5. **Le mode Officiel reste fermé pendant tout le pilote.** L'ouverture ne peut résulter que
-   d'une décision écrite prise au vu du § 7. **Attention : seul le CERFA porte la mention de
+   d'une décision écrite prise au vu du § 7. **Attention : seuls le CERFA et le justificatif
+   de régularisation portent la mention de
    formation** (ligne R26) ; **vingt et un autres documents n'en portent aucune** — la liste est
    à l'[inventaire du § 5.3](#inventaire-documents-sans-marque) — et **le repère de mode
    affiché à l'écran ne s'imprime pas** (ligne R34). Tant que ce point n'est pas corrigé, une
@@ -548,8 +555,9 @@ Elle est simple parce que le registre existant n'a jamais cessé d'être tenu pe
    sont, par construction, non modifiables et non effaçables. Une archive chiffrée est faite et
    rangée avec la présente note.
 4. **Les documents déjà produits** n'ont pas à être retirés d'un dossier réglementaire :
-   produits verrou fermé, ils n'y ont pas leur place. **Mais seul le CERFA le dit sur
-   lui-même** (ligne R26) : les **vingt et un autres** documents, énumérés à
+   produits verrou fermé, ils n'y ont pas leur place. **Mais seuls le CERFA et le
+   justificatif de régularisation le disent sur
+   eux-mêmes** (ligne R26) : les **vingt et un autres** documents, énumérés à
    l'[inventaire du § 5.3](#inventaire-documents-sans-marque), ne portent aucune marque — et
    même leur impression ne conserve pas le repère de mode affiché à l'écran (ligne R34).
    Leur retrait éventuel suppose donc de savoir où ils sont allés, et c'est le seul moyen de

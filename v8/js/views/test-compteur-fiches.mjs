@@ -216,5 +216,82 @@ if (anneeAudit2 === '2026') {
     !htmlAudit2.includes('CERFA générés en'), anneeAudit2);
 }
 
+// ============================================================
+// E. LOT 1 BRANCHE A — UNE CONTRE-ÉCRITURE NE COMPTE PLUS COMME UNE
+//    FICHE NUMÉROTÉE.
+//
+// Depuis le 27/07/2026, une écriture d'annulation ne donne plus lieu à
+// une fiche CERFA : les nouvelles naissent avec `cerfaNumero = null`.
+// Mais les ANCIENNES gardent le leur, scellé dans l'empreinte v2 — on ne
+// réécrit pas le passé. Un compteur basé sur le seul `cerfaNumero`
+// continuerait donc d'annoncer une fiche que le logiciel ne sait plus
+// produire : le tableau de bord et le document diraient deux choses
+// différentes. Le compteur se lit sur le MÊME critère que le refus du
+// générateur — `contreEcritureDe`.
+//
+// Le monde de démonstration ne contient aucune contre-écriture ancienne
+// et le store n'en produit plus : le store espion est le seul moyen de
+// tirer le cas sans forger une base.
+// ============================================================
+console.log('\n--- E. Une contre-écriture ne compte pas comme une fiche ---');
+
+const contreEcritureAncienne = {
+  id: 'mvt-test-contre-ancienne',
+  numero: 'FI-2026-0098',
+  date: '2026-07-01',
+  mode: 'FORMATION',
+  type: 'CHARGE_APPOINT',
+  machineId: 'M1',
+  machineLabel: 'Machine de test',
+  fluide: 'R-32',
+  quantiteKg: -0.5,
+  technicien: 'Testeur',
+  statut: 'VALIDE',
+  // L'ANCIENNE forme : numéro de fiche scellé ET lien d'annulation.
+  cerfaNumero: 'FI-2026-0098',
+  contreEcritureDe: 'mvt-quelconque'
+};
+
+const storeEspionContre = Object.create(store);
+storeEspionContre.getMouvements = async function () {
+  return [contreEcritureAncienne, ...(await store.getMouvements())];
+};
+
+const conteneurTdb3 = document.createElement('div');
+await renderDashboard(conteneurTdb3,
+  { store: storeEspionContre, naviguer() {}, rafraichir() {} });
+const htmlTdb3 = conteneurTdb3.innerHTML;
+
+verifier('⭐ le total de fiches numérotées NE MONTE PAS d’une contre-écriture',
+  valeurKpi(htmlTdb3, 'Fiches d’intervention') === String(numerotees.length),
+  `affiché « ${valeurKpi(htmlTdb3, 'Fiches d’intervention')} » pour `
+    + `${numerotees.length} fiches attendues`);
+verifier('… et la part d’exercice ne bouge pas non plus',
+  htmlTdb3.includes(numerotees.length + ' en mode Formation'));
+verifier('… la part officielle reste à zéro',
+  htmlTdb3.includes('0 CERFA officiel'));
+verifier('… et aucun bouton CERFA ne lui est offert au tableau de bord',
+  !htmlTdb3.includes('data-id="mvt-test-contre-ancienne">CERFA<'),
+  'un bouton CERFA sur une contre-écriture produirait une erreur');
+verifier('… c’est « Justificatif » qui lui est offert à la place',
+  htmlTdb3.includes('tdb-btn-justificatif')
+  && htmlTdb3.includes('data-id="mvt-test-contre-ancienne">Justificatif<'));
+
+const conteneurBilan3 = document.createElement('div');
+await renderBilan(conteneurBilan3,
+  { store: storeEspionContre, naviguer() {}, rafraichir() {} });
+await cliquer(conteneurBilan3.querySelector('#btn-audit-5min'));
+const htmlAudit3 = derniereModale() ? derniereModale().innerHTML : '';
+const anneeAudit3 = (/Audit en 5 minutes — (\d{4})/.exec(htmlAudit3) || [])[1];
+if (anneeAudit3 === '2026') {
+  verifier('⭐ l’audit en 5 minutes ne la compte pas non plus',
+    valeurLigneAudit(htmlAudit3, 'CERFA officiels (mode Officiel)') === '0',
+    String(valeurLigneAudit(htmlAudit3, 'CERFA officiels (mode Officiel)')));
+} else {
+  verifier('année auditée ≠ 2026 : la ligne officielle reste à zéro',
+    valeurLigneAudit(htmlAudit3, 'CERFA officiels (mode Officiel)') === '0',
+    anneeAudit3);
+}
+
 console.log(`\n${nbOk} OK, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);

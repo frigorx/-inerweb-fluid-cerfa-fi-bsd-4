@@ -6,7 +6,10 @@
 //   identite-machine.csv   — fiche + données techniques + détenteur
 //   mouvements.csv         — mouvements de CETTE machine (tous statuts)
 //   controles.csv          — contrôles d'étanchéité de CETTE machine
-//   cerfa/<numero>.pdf     — CERFA 15497*04 rempli (mouvements figés + contrôles)
+//   cerfa/<numero>.pdf     — CERFA 15497*04 rempli (mouvements figés +
+//                            contrôles ; hors contre-écritures)
+//   regularisations/<numero>.html — justificatif des écritures d'annulation
+//                            (lot 1 branche A, 27/07/2026)
 //   pieces-jointes/*       — pièces jointes de la machine
 // Module ES, testable sous Node (n'utilise que le contrat DataStore + Web Crypto).
 // ============================================================
@@ -15,6 +18,9 @@ import { genererCerfaPdf } from '../cerfa/generateur.js';
 import {
   assemblerDossier, versOctets, nomSur, objetsVersCsv, paireCsv
 } from './dossier-commun.js';
+import {
+  estContreEcriture, assemblerJustificatif, justificatifHtmlAutonome
+} from './regularisation.js';
 
 /** Statuts de mouvement inscrits au registre (donc porteurs d'un CERFA). */
 const STATUTS_REGISTRE = ['VALIDE', 'ANNULE'];
@@ -80,8 +86,34 @@ export async function entreesMachine(
     nom: `${prefixe}controles.csv`, contenu: objetsVersCsv(controlesMachine)
   });
 
-  for (const mv of mouvementsMachine.filter((m) => STATUTS_REGISTRE.includes(m.statut))) {
+  // ⚠ Lot 1 branche A (27/07/2026) : une CONTRE-ÉCRITURE n'a plus de
+  // CERFA (aucune intervention n'a eu lieu à sa date). Sans ce filtre, le
+  // refus du générateur aurait rempli le dossier de fichiers « CERFA non
+  // généré », qui se lisent comme une panne alors que c'est une décision.
+  // La pièce n'est pas retirée : elle est REMPLACÉE par le justificatif.
+  const auRegistre = mouvementsMachine.filter(
+    (m) => STATUTS_REGISTRE.includes(m.statut));
+  for (const mv of auRegistre.filter((m) => !estContreEcriture(m))) {
     await ajouterCerfa(store, entrees, prefixe, 'mouvement', mv.id);
+  }
+  const annulations = auRegistre.filter(estContreEcriture);
+  if (annulations.length) {
+    const [tousMouvements, bouteilles, personnel, etablissement] =
+      await Promise.all([
+        store.getMouvements(), store.getBouteilles(), store.getPersonnel(),
+        store.getEtablissement()
+      ]);
+    for (const contre of annulations) {
+      const faits = assemblerJustificatif({
+        mouvement: contre, mouvements: tousMouvements, machines: [machine],
+        bouteilles, fluides: fluide ? [fluide] : [], personnel, etablissement
+      });
+      entrees.push({
+        nom: `${prefixe}regularisations/`
+          + `${nomSur(contre.numero ?? contre.id)}.html`,
+        contenu: justificatifHtmlAutonome(faits)
+      });
+    }
   }
   for (const ct of controlesMachine) {
     await ajouterCerfa(store, entrees, prefixe, 'controle', ct.id);

@@ -12,6 +12,9 @@
 //   ANNULE    → Visualiser CERFA (sauf transfert).
 // CF-1 + IM-12 : le bouton CERFA n'apparaît QUE pour les écritures
 // figées (VALIDE/ANNULE) d'un type qui produit une fiche (≠ TRANSFERT).
+// Lot 1 branche A (27/07/2026) : une CONTRE-ÉCRITURE n'a plus ni
+// « Visualiser CERFA » ni « Correction élève » — elle a « Justificatif
+// de régularisation » (documents/regularisation.js).
 // ============================================================
 
 import { enteteVue, chipStatut, chipType, tableau, modale, toast, ICONES }
@@ -26,6 +29,8 @@ import { pdfFinalAttendu } from '../data/pdf-final.js';
 import { ouvrirSignaturesMouvement, remplirSimulationOfficielle }
   from '../modales/signatures-modal.js';
 import { ouvrirCorrectionCerfa } from '../cerfa/correcteur.js';
+import { estContreEcriture, ouvrirJustificatifRegularisation }
+  from '../documents/regularisation.js';
 import { ouvrirFeuilleMiseEnService, peutOuvrirFeuilleMiseEnService }
   from '../documents/feuille-mise-en-service.js';
 import { LIBELLES_TYPE_OUTIL } from './outillage.js';
@@ -73,9 +78,18 @@ function boutonsAction(mv) {
     boutons.push(boutonLigne('rejeter', 'Rejeter', mv.id, 'btn-danger-contour'));
 
   } else if (mv.statut === 'VALIDE' || mv.statut === 'ANNULE') {
-    // CF-1 + IM-12 : CERFA seulement pour les écritures figées d'un
-    // type qui produit une fiche (le transfert reste interne au registre)
-    if (mv.type !== 'TRANSFERT') {
+    // Lot 1 branche A (27/07/2026) : une CONTRE-ÉCRITURE n'a plus de
+    // CERFA du tout — ni à visualiser, ni à corriger. Elle a SA pièce,
+    // le justificatif de régularisation. Le bouton « Correction élève »
+    // part avec : corriger la copie d'un élève sur une écriture
+    // d'annulation n'a pas de sens, et le sujet n'existe plus.
+    if (estContreEcriture(mv)) {
+      boutons.push(boutonLigne('justificatif-regularisation',
+        'Justificatif de régularisation', mv.id, 'btn-contour'));
+
+    } else if (mv.type !== 'TRANSFERT') {
+      // CF-1 + IM-12 : CERFA seulement pour les écritures figées d'un
+      // type qui produit une fiche (le transfert reste interne au registre)
       boutons.push(boutonLigne('voir-cerfa', 'Visualiser CERFA', mv.id, 'btn-contour'));
       boutons.push(boutonLigne('corriger-cerfa', 'Correction élève', mv.id, 'btn-contour'));
     }
@@ -763,6 +777,12 @@ export async function render(conteneur, ctx) {
         break;
       case 'corriger-cerfa':
         ouvrirCorrectionCerfa(ctx, { source: 'mouvement', id: mv.id });
+        break;
+      case 'justificatif-regularisation':
+        ouvrirJustificatifRegularisation(ctx, mv.id).catch(function (erreur) {
+          toast(erreur && erreur.message ? erreur.message
+            : 'Justificatif de régularisation indisponible.', 'erreur');
+        });
         break;
       case 'feuille-mise-en-service':
         ouvrirFeuilleMiseEnService(ctx, mv.id);
