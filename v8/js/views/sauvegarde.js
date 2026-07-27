@@ -408,8 +408,8 @@ function banniereAnciennete(liste, reglages) {
     return '<div style="' + style + '">' + ICONES.alerte
       + '<span><strong>Dernière sauvegarde il y a ' + ageJours + ' jour'
       + (ageJours > 1 ? 's' : '') + '</strong> (seuil d’alerte : ' + seuil
-      + ' jours). Pensez à sauvegarder — de préférence dans un dossier '
-      + 'synchronisé hors du poste.</span></div>';
+      + ' jours). Pensez à sauvegarder, puis à mettre une copie CHIFFRÉE '
+      + 'hors du poste.</span></div>';
   }
   return '';
 }
@@ -447,9 +447,11 @@ function sectionReglages(reglages) {
     + 'placeholder="Par défaut : ' + esc(parDefaut) + '" '
     + 'style="font-family:var(--police-mono);font-size:12.5px;">'
     + '<span class="aide" style="font-size:12px;color:var(--texte-3);">'
-    + 'Laissez vide pour le dossier par défaut. Vous pouvez indiquer un dossier '
-    + 'déjà synchronisé (OneDrive, Google Drive, serveur de l’établissement) pour '
-    + 'une copie hors du poste. Chemin ABSOLU, hors du dossier des données. '
+    + 'Laissez vide pour le dossier par défaut. Chemin ABSOLU, hors du dossier '
+    + 'des données, et <strong>hors espace synchronisé</strong> (OneDrive, '
+    + 'Google Drive, Dropbox) : les sauvegardes automatiques sont en clair et '
+    + 'nominatives, elles doivent rester sur le poste. Pour une copie hors du '
+    + 'poste, utilisez une sauvegarde manuelle CHIFFRÉE. '
     + 'Ne change que les <strong>prochaines</strong> sauvegardes. '
     + 'Destination actuelle : <strong style="font-family:var(--police-mono);">'
     + esc(effectif) + '</strong>.</span>'

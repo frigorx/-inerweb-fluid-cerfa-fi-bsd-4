@@ -49,13 +49,30 @@ const { construireManifeste, relireManifeste } = require('./manifeste.js');
  * Clés de réglage (table `parametres`) et défauts liés à la sauvegarde.
  *  - CLE_DOSSIER : dossier de destination des sauvegardes. Vide/absent =
  *    comportement historique (backups/ frère de data/). Renseigné = les
- *    archives vont dans ce dossier (typiquement déjà synchronisé Drive/OneDrive).
+ *    archives vont dans ce dossier, qui doit RESTER SUR LE POSTE : les
+ *    archives automatiques sont EN CLAIR et NOMINATIVES (registre complet,
+ *    noms des personnes), un dossier synchronisé Drive/OneDrive/Dropbox les
+ *    ferait quitter le poste sans chiffrement (SAUVEGARDE.md §6 ; refus par
+ *    `validerDossierDestination`, dérogation explicite ci-dessous). Pour une
+ *    copie hors du poste : sauvegarde MANUELLE CHIFFRÉE (SAUVEGARDE.md §4).
  *  - CLE_ALERTE_JOURS : seuil d'ancienneté (jours) au-delà duquel l'écran
  *    Sauvegarde signale que la dernière sauvegarde est trop ancienne.
  */
 const CLE_DOSSIER_DESTINATION = 'sauvegarde_dossier_destination';
 const CLE_ALERTE_JOURS = 'sauvegarde_alerte_jours';
 const ALERTE_JOURS_DEFAUT = 7;
+
+/**
+ * Dérogation explicite au refus d'une destination synchronisée — même patron
+ * que IWF_AUTORISER_BASE_SYNCHRONISEE pour la base vive (db.js) : la maison
+ * ne bloque jamais sans laisser une porte ASSUMÉE.
+ */
+const ENV_DEROGATION_DESTINATION = 'IWF_AUTORISER_SAUVEGARDE_SYNCHRONISEE';
+
+/** La dérogation est-elle active ? (lue à chaque appel : jamais figée au chargement) */
+function derogationDestinationSynchronisee() {
+  return process.env[ENV_DEROGATION_DESTINATION] === '1';
+}
 
 // ------------------------------------------------------------
 // Emplacements — TOUJOURS dérivés du .db ouvert (jetable en test, réel en
@@ -95,11 +112,60 @@ function dossierBackups() {
 }
 
 /**
+ * Message canonique du refus d'une destination synchronisée. Il dit POURQUOI
+ * (les archives automatiques sont en clair et nominatives), ce qu'il faut
+ * faire à la place, et où est la porte de sortie assumée.
+ * @param {string} resolu
+ * @returns {string}
+ */
+function MSG_DESTINATION_SYNCHRONISEE(resolu) {
+  return 'Ce dossier se trouve dans un espace synchronisé (OneDrive, Google '
+    + 'Drive, Dropbox) : ' + resolu + '. Les sauvegardes AUTOMATIQUES qui y '
+    + 'seraient déposées sont EN CLAIR et NOMINATIVES (le registre complet, '
+    + 'noms des personnes compris) : elles quitteraient le poste sans '
+    + 'chiffrement. La même règle interdit déjà d’y placer la base vive. Pour '
+    + 'une copie hors du poste, utilisez une sauvegarde MANUELLE CHIFFRÉE ; '
+    + 'pour le nuage, ne synchronisez que le sous-dossier backups/scellement/ '
+    + '(témoins non nominatifs). Choisissez un dossier local (autre disque, '
+    + 'clé USB). La dérogation ' + ENV_DEROGATION_DESTINATION + '=1 existe '
+    + 'pour un usage ASSUMÉ et documenté, jamais pour l’exploitation courante.';
+}
+
+/**
+ * Réglage DÉJÀ ENREGISTRÉ pointant vers un espace synchronisé : on AVERTIT,
+ * on n'empêche pas de démarrer. Un poste réglé ainsi avant cette garde doit
+ * continuer à sauvegarder (une sauvegarde qui ne se fait plus est pire que le
+ * défaut qu'on corrige) ; le prochain enregistrement du réglage, lui, sera
+ * refusé. Renvoie '' si rien à dire.
+ * @returns {string}
+ */
+function avertissementDestinationSynchronisee() {
+  if (!db.estOuverte()) return '';
+  const configure = String(parametres.lire(CLE_DOSSIER_DESTINATION, '') || '').trim();
+  if (!configure) return '';
+  const resolu = path.resolve(configure);
+  if (!db.cheminSousSynchronisation(resolu)) return '';
+  return 'Le dossier de sauvegarde configuré est dans un espace synchronisé : '
+    + resolu + '. Les archives automatiques y partent EN CLAIR et NOMINATIVES. '
+    + 'Changez ce réglage (écran Sauvegarde) pour un dossier local, et réservez '
+    + 'le nuage aux sauvegardes manuelles CHIFFRÉES.';
+}
+
+/**
  * Valide un dossier de destination candidat. Vide = « revenir au défaut »
  * (toujours accepté). Sinon : chemin ABSOLU, hors de data/ (ni data/ lui-même,
  * ni un sous-dossier — sinon les ZIP côtoieraient la base vive, risque de
- * synchro/corruption), et effectivement INSCRIPTIBLE (créé au besoin, test
- * d'écriture réel). Renvoie { ok, resolu?, message? }.
+ * synchro/corruption), HORS ESPACE SYNCHRONISÉ (voir plus bas) et
+ * effectivement INSCRIPTIBLE (créé au besoin, test d'écriture réel).
+ * Renvoie { ok, resolu?, message? }.
+ *
+ * ⚠️ Cette garde vit dans le SERVEUR, pas dans le formulaire : elle vaut donc
+ * pour l'écran ET pour le canal API (« une règle, pas une porte »).
+ *
+ * Le refus de l'espace synchronisé ferme un DEUX POIDS DEUX MESURES : la base
+ * vive est déjà refusée sous OneDrive/Drive/Dropbox (db.verifierEmplacementBase),
+ * alors que les ARCHIVES AUTOMATIQUES — qui portent EXACTEMENT la même donnée,
+ * en clair et nominative — y étaient acceptées sans un mot.
  * @param {string} cheminBrut
  * @returns {{ok: boolean, resolu?: string, message?: string}}
  */
@@ -108,7 +174,7 @@ function validerDossierDestination(cheminBrut) {
   if (!chemin) return { ok: true, resolu: '' }; // vide = défaut
   if (!path.isAbsolute(chemin)) {
     return { ok: false, message:
-      'Indiquez un chemin ABSOLU (ex. C:\\Users\\vous\\OneDrive\\Sauvegardes-Fluide).' };
+      'Indiquez un chemin ABSOLU (ex. D:\\Sauvegardes-Fluide, hors espace synchronisé).' };
   }
   const resolu = path.resolve(chemin);
   const data = path.resolve(dossierData());
@@ -116,6 +182,12 @@ function validerDossierDestination(cheminBrut) {
     return { ok: false, message:
       'Le dossier de sauvegarde ne doit pas être le dossier des données ni ' +
       's’y trouver (risque de corruption de la base).' };
+  }
+  // Refus AVANT toute création de dossier : on ne dépose rien, pas même un
+  // dossier vide, dans un espace qui part hors du poste.
+  if (db.cheminSousSynchronisation(resolu)
+      && !derogationDestinationSynchronisee()) {
+    return { ok: false, message: MSG_DESTINATION_SYNCHRONISEE(resolu) };
   }
   try {
     fs.mkdirSync(resolu, { recursive: true });
@@ -728,6 +800,8 @@ module.exports = {
   dossierDocuments,
   // Réglages de sauvegarde (dossier de destination + alerte d'ancienneté).
   validerDossierDestination,
+  avertissementDestinationSynchronisee,
+  ENV_DEROGATION_DESTINATION,
   alerteJours,
   CLE_DOSSIER_DESTINATION,
   CLE_ALERTE_JOURS,

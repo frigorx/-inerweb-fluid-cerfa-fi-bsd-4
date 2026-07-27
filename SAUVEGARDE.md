@@ -148,6 +148,16 @@ chaque support (inutile de tout garder : les ZIP sont datés, les plus anciens p
   complet, noms compris) et doivent **rester sur le poste**. Toute copie hors
   du poste (clé USB, réseau, nuage) doit passer par une **sauvegarde manuelle
   CHIFFRÉE** (section 4).
+- **Le logiciel l'applique désormais lui-même** (lot 0 / B3, 27/07/2026) : le
+  réglage « Dossier de destination des sauvegardes » **refuse** un dossier
+  situé sous OneDrive, Google Drive ou Dropbox, et le dit — même règle que
+  pour la base vive, qui y était déjà interdite (`IWF_CHEMIN_BASE`). Le refus
+  vit dans le serveur : il vaut pour l'écran **comme pour l'API**. Porte de
+  sortie assumée, réservée à un usage documenté :
+  `IWF_AUTORISER_SAUVEGARDE_SYNCHRONISEE=1`.
+  Un poste déjà réglé ainsi **continue de sauvegarder** : au démarrage, le
+  serveur affiche un avertissement, il ne bloque pas (une sauvegarde qui ne se
+  fait plus serait pire). Corrigez le réglage à la première occasion.
 - Si vous synchronisez un dossier vers un espace en ligne (geste recommandé
   du témoin de scellement), **ne synchronisez QUE le sous-dossier
   `backups/scellement/`** : les témoins quotidiens ne contiennent que des
