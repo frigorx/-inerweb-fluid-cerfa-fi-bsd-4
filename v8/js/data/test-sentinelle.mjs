@@ -102,7 +102,7 @@ verifier('idempotence : toujours 1 seul épisode ouvert', ouverts(sent, ID).leng
 verifier('idempotence : même id d’épisode (pas de doublon)',
   ouverts(sent, ID)[0].id === idEpisode1);
 
-// --- Acquittement (preuve opposable au journal) --------------------
+// --- Acquittement (trace consignée au journal) ---------------------
 const journalAvant = await compterActionJournal(store, 'ACQUITTEMENT_ALERTE', ID);
 const retour = await store.acquitterAlerte(ID, 'testeur');
 verifier('acquittement : retourne l’épisode acquitté',

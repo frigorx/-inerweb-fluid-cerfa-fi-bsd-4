@@ -165,7 +165,7 @@ destination fluide (machine / bouteille récup / fournisseur / déchet),
 technicien, **validateur** (référent — obligatoire en lycée), CERFA lié, BSFF lié,
 pièce justificative (PDF/photo pesée), observation,
 statut : **brouillon → soumis → validé → (annulé par contre-écriture)**,
-**hash d'écriture** (empreinte SHA-256 chaînée au hash précédent → registre inviolable).
+**hash d'écriture** (empreinte SHA-256 chaînée au hash précédent → registre inaltérable au sein de l'application).
 > **Une écriture validée n'est JAMAIS modifiée ni effacée.** Toute correction passe par une
 > **contre-écriture** de régularisation qui référence l'écriture d'origine.
 

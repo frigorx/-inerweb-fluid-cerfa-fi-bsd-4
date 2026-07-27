@@ -6125,7 +6125,7 @@ export function creerDemoStore() {
       if (episode.acquitteeLe) return formaterEpisode(episode);
       episode.acquitteeLe = new Date().toISOString();
       episode.acquitteePar = par ?? null;
-      // Preuve opposable : la prise de connaissance est consignée au journal.
+      // Trace consignée : la prise de connaissance est consignée au journal.
       journaliser(par, 'ACQUITTEMENT_ALERTE', idAlerte, episode.titre);
       persisterEtNotifier();
       return formaterEpisode(episode);

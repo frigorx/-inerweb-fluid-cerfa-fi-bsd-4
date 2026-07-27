@@ -40,6 +40,13 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   trouvés d'un coup (3 posés par B2, 2 antérieurs). Dans un dépôt dont la
   doctrine est la preuve citée, une référence morte fait croire à un filet
   qu'on n'a pas.
+  `outils/test-mots-qui-promettent.mjs` (lot B4 + sa revue, 27/07) : **aucun
+  mot des surfaces vivantes ne promet plus que ce que le logiciel fait** —
+  « inviolable », « inaltérable » sans réserve, « preuve opposable », « mot de
+  passe chiffré » (c'est un hachage), « toute altération se voit ». Même
+  cause racine que `test-promesses-cloud` : un balayage fait à la main ne se
+  rejoue pas et rate ce qu'il ne cherchait pas. Ne juge ni `docs/`, ni
+  `CHANGELOG.md`, ni les suites.
 
 ## server/ (CommonJS — les modules purs du front y sont DUPLIQUÉS en littéraux)
 
