@@ -2,6 +2,91 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧾 LOT 1 (27/07) — LE DOCUMENT PRODUIT POUR UNE CONTRE-ÉCRITURE CESSE DE MENTIR
+
+**Le mécanisme comptable n'était pas en cause** : une erreur ne s'efface pas, elle se corrige
+par une écriture inverse qui désigne l'écriture d'origine. C'est le **document** que le
+logiciel produisait pour cette écriture inverse qui était faux — et il l'était **déjà
+aujourd'hui, verrou fermé, en mode Formation**, dans le dossier d'audit scellé et sous les
+yeux des élèves.
+
+**Mesure faite avant de coder** : entre une écriture et sa contre-écriture, **4 champs
+diffèrent sur 71** en Formation, 5 sur 71 en Officiel — et aucun des quatre ne dit que le
+document annule quoi que ce soit. Tout le cadre 11 était identique, `11_QA = "0,50"` sur les
+deux, pour une contre-écriture de −0,50 kg.
+
+- **La quantité ne ment plus.** Piège trouvé en le tirant : reprendre le signe stocké ne
+  suffisait pas — une récupération est déjà NÉGATIVE au registre, donc sa contre-écriture est
+  positive et serait ressortie tout aussi indiscernable. Le signe se prend sur la **nature**
+  de l'écriture : l'annulante imprime toujours `-|q|`. **La case n'est jamais vidée** : vider
+  aurait fait disparaître d'un document officiel une masse réellement écrite au registre —
+  c'est le précédent des masses détruites évaporées de la déclaration annuelle. La masse reste
+  dans SA case, avec son signe.
+- **Le document dit qu'il annule, et quoi.** Mention en tête du cadre 14 avec le **numéro de
+  l'écriture annulée**, filigrane « ANNULATION » sur le rendu. L'écriture annulée, elle, garde
+  sa mention historique et ne prend pas celle de l'annulante.
+- **Le motif de l'annulation est enfin sur la fiche.** Il était scellé dans l'empreinte et au
+  journal, et n'apparaissait nulle part sur le document — alors que c'est lui qui justifie
+  l'annulation devant un contrôle.
+- **Plus de signature pré-remplie quand personne n'a signé.** Les six blocs sortaient avec le
+  nom du validateur, une qualité de repli et les dates du jour : une case de signature à
+  laquelle il ne manquait que le paraphe. ⚠️ **L'usage pédagogique est intact** : la fiche
+  d'exercice qu'un élève imprime pour la remplir à la main garde ses blocs, et la correction
+  de copie continue de s'appuyer sur les blocs historiques. Les **quatre** documents ont été
+  produits avant et après, champ par champ (mouvement signé, fiche d'exercice, correction de
+  copie, contre-écriture) : seuls les champs de la contre-écriture bougent.
+- **« Exécuté par » n'est plus vide dans le dossier scellé.** La contre-écriture porte
+  l'identité de la SESSION qui l'a demandée (jamais lue du corps de la requête). Le champ
+  entre dans l'empreinte v2 ; **aucun backfill** : les contre-écritures déjà enregistrées
+  gardent leur champ vide et leur empreinte au bit près — la tentative de backfill en SQL
+  direct est refusée **par la base**, pas par une politesse du code (tiré). Les deux formes
+  cohabitent dans un même `mouvements.csv`.
+
+**CE QUE LES REVUES ONT RATTRAPÉ — un BLOQUANT et trois importants, tous dans le correctif
+lui-même** (cinquième lot d'affilée où la passe de correction fabrique un défaut) :
+
+- **BLOQUANT — la fiche affirmait qu'une masse positive était retirée du registre.** La
+  mention annonçait « LES QUANTITÉS PORTÉES CI-DESSOUS SONT RETIRÉES DU REGISTRE (VALEURS
+  NÉGATIVES) ». Or le cadre 11 porte aussi la **charge NOMINALE de la machine**, positive et
+  intacte. Tiré sur la contre-écriture d'un **contrôle périodique** (erreur banale : contrôle
+  saisi sur la mauvaise machine) — aucune quantité d'intervention n'est imprimée, la seule
+  quantité « ci-dessous » était `11_Quantite = 10,00`. Même famille que le motif « signature
+  périmée » rendu faux au lot précédent. La mention n'est plus posée que si une case de
+  quantité est **réellement imprimée**, condition **dérivée de la sortie**, jamais recopiée du
+  type d'intervention.
+- **IMPORTANT — vider n'est pas effacer.** Après le correctif, le nom de qui avait passé
+  l'annulation ne figurait **plus nulle part** sur la fiche : le technicien n'apparaît sur le
+  CERFA que par le bloc de signature. L'identité revient comme un **fait du registre**, hors
+  de toute case de signature, avec la phrase qui explique pourquoi les cases sont vides.
+- **IMPORTANT — le coffre des identités était contourné.** Ce nom devait passer par la
+  **fiche vivante**, comme la colonne « Technicien » du CSV : au champ figé, une personne mise
+  au coffre aurait été pseudonymisée dans `mouvements.csv` et **re-nommée en clair sur le
+  CERFA voisin du même dossier scellé**.
+- **IMPORTANT — l'élève était interrogé sur les phrases de l'application.** Les mentions
+  d'annulation entraient dans la comparaison de la correction de copie : **95 %** sur une
+  copie par ailleurs parfaite, le cadre 14 compté faux parce que l'élève n'avait pas recopié
+  « ÉCRITURE D'ANNULATION — CETTE FICHE ANNULE L'ÉCRITURE… ». La « cause de l'écriture
+  annulée » reste exigée : c'est une DONNÉE, pas une phrase de l'application.
+
+**Preuves** : suite neuve `v8/js/cerfa/test-contre-ecriture.mjs` (doublée demo/local), contre-
+épreuve tirée en **quatre** manipulations distinctes — correctif entier retiré (23 OK/12
+échecs), signe seul retiré (31/4), vidage des blocs seul retiré (34/1), et **sur-correction**
+(garde de l'exercice retirée : 34/1) : la suite attrape aussi bien « ne pas corriger » que
+« casser l'usage quotidien ». **TOUT VERT — 128 exécutions** en 103,0 s, 207 attaques
+inchangées.
+
+**Trouvé en plus, non corrigé (consigné)** : le dossier d'audit scellé contient le **même
+CERFA deux fois** en mode Formation — le contrôle lié n'est sauté que s'il a un PDF conservé,
+ce qui n'arrive jamais en Formation. Trois fiches pour deux écritures.
+
+**⚠️ RESTE GATÉ — la question au propriétaire, plan `docs/PLAN-LOT1-CONTRE-ECRITURE.md` § 4** :
+une contre-écriture doit-elle sortir une **deuxième fiche CERFA numérotée**, ou un
+**justificatif interne** ? Le plan recommande le justificatif interne (coût M contre XL) sur
+un motif que la relecture n'avait pas vu : la fiche numérotée exigerait **deux signatures pour
+annuler une erreur**, alors que le dépôt documente déjà que le risque n° 1 sur ce terrain est
+qu'on **oublie** de contre-écrire. Durcir le seul remède, c'est aggraver le défaut connu pour
+améliorer une pièce. Rien de cette branche n'est codé tant que la réponse n'est pas donnée.
+
 ### 🔎 QUATRIÈME RELECTURE EXTERNE (27/07) — LES 16 CONSTATS TIRÉS, PUIS LE « LOT 0 »
 
 **Verdict reçu : « NO-GO comme registre officiel unique ; GO conditionnel pour la

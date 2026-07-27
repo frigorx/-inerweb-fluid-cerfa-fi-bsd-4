@@ -39,7 +39,7 @@ au § 2 g). C'est une limite réelle, pas une nuance de rédaction, et elle appe
 
 Vérification par soi-même : `node outils/lancer-tests.mjs --tout` (filet complet) et
 `node server/test-securite-negative.mjs` (les refus, réellement exécutés contre un serveur,
-sur un port et une base jetables). Le filet donne « TOUT VERT — 126 exécutions » ; sa durée
+sur un port et une base jetables). Le filet donne « TOUT VERT — 128 exécutions » ; sa durée
 est **de l'ordre de 100 secondes** et varie d'une exécution à l'autre (96,8 s, 97,9 s et
 98,8 s à trois mesures du 26/07/2026 sur la même version) : elle ne se publie pas au
 centième, c'est un ordre de grandeur.
