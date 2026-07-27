@@ -96,7 +96,20 @@ const REFUSES = [
     remede: 'écrire « trace consultable / consignée / journalisée » '
       + '(LIMITE-DE-RESPONSABILITE § 2 b : aucune valeur probante forte)' },
   { motif: /mots? de passe chiffres?/,
-    remede: 'écrire « haché » : scrypt, jamais déchiffrable (server/comptes.js)' }
+    remede: 'écrire « haché » : scrypt, jamais déchiffrable (server/comptes.js)' },
+  // ⭐ REVUE DU 27/07 (lot 1 branche A). Le justificatif de régularisation
+  // faisait dire à une empreinte qu'elle datait LE PAPIER : « elle prouve
+  // que ce justificatif n'a pas ete f-a-b-r-i-q-u-e a-p-r-e-s c-o-u-p »
+  // (phrase épelée ici pour ne pas se dénoncer elle-même). C'est faux : le
+  // document est composé à la demande, à chaque ouverture ; l'empreinte
+  // imprimée est une chaîne RECOPIÉE du registre. Elle soutient que
+  // l'ÉCRITURE était scellée à sa création, jamais que cette feuille-ci
+  // est d'époque. Même famille que « preuve opposable », que la liste
+  // ci-dessus refusait déjà — et même doctrine que borne-scellement.js :
+  // on ne dit jamais « le registre est intact ».
+  { motif: /(?:n'a pas ete|jamais) (?:fabrique|produit|redige|etabli|imprime) apres coup/,
+    remede: 'une empreinte porte sur l’ÉCRITURE, pas sur le papier : dire '
+      + 'ce qu’elle permet de RECOUPER (documents/regularisation.js)' }
 ];
 
 // Les mots LÉGAUX à condition d'être qualifiés, avec la fenêtre (en

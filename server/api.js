@@ -4695,9 +4695,19 @@ const HANDLERS = {
         hashPiecesJointes: null,
         hashPdfFinal: null
       };
-      // IM-12 : pas de CERFA pour un TRANSFERT.
-      contreEcriture.cerfaNumero =
-        contreEcriture.type === 'TRANSFERT' ? null : contreEcriture.numero;
+      // Lot 1 branche A (décision du propriétaire, 27/07/2026) : une
+      // CONTRE-ÉCRITURE ne porte AUCUN numéro de fiche CERFA — quel que
+      // soit son type. Le CERFA 15497*04 est une fiche d'INTERVENTION sur
+      // un équipement ; aucune intervention n'a lieu le jour d'une
+      // annulation comptable. Lui en donner un revenait à attester une
+      // intervention qui n'a pas eu lieu (4ᵉ audit externe, constat 1 : le
+      // dossier scellé embarquait deux CERFA numérotés à la suite,
+      // indiscernables sur 66 champs sur 71). Le geste est celui du
+      // TRANSFERT, ligne d'à côté avant ce lot : `cerfaNumero = null`.
+      // Ce qui remplace la fiche : le JUSTIFICATIF DE RÉGULARISATION
+      // (v8/js/documents/regularisation.js). ⚠ Miroir STRICT dans
+      // v8/js/data/demo-store.js.
+      contreEcriture.cerfaNumero = null;
       // Brique ② : la contre-écriture fige le PRP à SA validation (même
       // fluide que l'original ; si le référentiel a bougé entre-temps, les
       // deux valeurs témoignent chacune de leur époque).
@@ -9256,7 +9266,14 @@ function calculerStats() {
     stockBouteillesKg,
     nbBouteilles: bouteilles.length,
     teqCo2Parc,
-    nbCerfa: mouvements.filter((mv) => mv.cerfaNumero).length,
+    // Lot 1 branche A (27/07) : une CONTRE-ÉCRITURE n'a plus de fiche
+    // CERFA. Les NOUVELLES n'ont plus de `cerfaNumero` ; les ANCIENNES
+    // gardent le leur, scellé — mais le logiciel ne leur imprime plus
+    // rien. Les compter, c'est annoncer des fiches qui n'existent pas.
+    // MÊME critère que le refus du générateur et que le tableau de bord
+    // (`contreEcritureDe`). ⚠ Miroir STRICT de v8/js/data/demo-store.js.
+    nbCerfa: mouvements.filter(
+      (mv) => mv.cerfaNumero && !mv.contreEcritureDe).length,
     nbFiches: mouvements.length,
     nbMouvements: mouvements.length,
     nbControles,

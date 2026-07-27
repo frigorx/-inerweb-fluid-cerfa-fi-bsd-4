@@ -32,7 +32,7 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   filet : il publie la mesure qui a fait tomber la borne de 1 Ko des
   signatures et devient rouge si quelqu'un remet un seuil de taille.
 - **Tests** : `node outils/lancer-tests.mjs --tout` = TOUT le filet
-  (**128 exécutions, ~100 s** au 27/07/2026 ; sans `--tout`, arrêt au
+  (**132 exécutions, ~100 s** au 27/07/2026 ; sans `--tout`, arrêt au
   premier rouge). Suites `SUITES_DOUBLEES` jouées demo PUIS local.
   Toute nouvelle suite `test-*.mjs` est auto-découverte.
   `outils/test-references-suites.mjs` (revue B2, mineur 1) : **toute suite
@@ -62,7 +62,21 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   liste** et exige que toutes les annonces disent ce compte. Le nombre est
   DÉDUIT, jamais écrit en dur — ajouter une entrée ne casse rien, oublier
   une annonce casse. Elle vérifie aussi le compte de lignes que le § 5.3
-  promet à sa propre contre-épreuve.
+  promet à sa propre contre-épreuve. ⭐ Revue du lot 1 : l'exception porte
+  les CHEMINS EXACTS des trois fichiers du justificatif, au lieu du
+  fragment « regularisation » — une exception qui s'élargit toute seule
+  n'en est plus une.
+  `outils/test-nombre-executions.mjs` (revue du lot 1, 27/07) : **le
+  nombre d'exécutions ANNONCÉ est le nombre RÉEL.** Six pièces livrées
+  écrivent « TOUT VERT — N exécutions » et invitent à vérifier soi-même ;
+  elles disaient 128 pendant que la branche en jouait 131, et aucune suite
+  ne gardait ce nombre. Il est DÉDUIT de `outils/plan-tests.mjs`
+  (découverte + `SUITES_DOUBLEES`, extraites du lanceur pour être
+  importables), jamais écrit en dur. Exclusion NOMMÉE :
+  `docs/PROMPT-REPRISE.md` est un journal à blocs d'époque — on ne
+  réécrit pas l'histoire ; ailleurs, seule une tournure au passé
+  (« comptait », « bloc d'époque ») met une annonce hors jugement, car une
+  simple date ne distingue pas un état courant daté d'un état révolu.
 
 ## server/ (CommonJS — les modules purs du front y sont DUPLIQUÉS en littéraux)
 
@@ -188,60 +202,35 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   qualité, date réelle, tracés — et `genererPdfFinalBase64` = PDF FINAL de
   la validation officielle, option `accepterSoumis` RÉSERVÉE à ce canal,
   SANS tolérance : deux signatures valides exigées, erreurs propagées ;
-  **lot 1 / C1 (4e audit, 27/07) — le document d'une CONTRE-ÉCRITURE ne
-  dit plus le contraire de ce qu'elle est. Tout est derrière UN SEUL fait,
-  `ctx.contreEcriture` (rendu par `calculerChampsCerfa`) : une fiche
-  ordinaire sort inchangée. ① la quantité porte le SIGNE de la nature de
-  l'écriture — l'annulante est NÉGATIVE, la valeur absolue faisait
-  imprimer « 0,50 kg de fluide vierge chargé » sur une écriture qui RETIRE
-  0,50 kg (deux PDF indiscernables, au numéro près) ; le signe se prend sur
-  la NATURE et jamais sur le signe stocké, sinon l'annulation d'une
-  récupération — déjà négative au registre — restait indiscernable. ⚠ La
-  case n'est JAMAIS vidée : le doute retire un allègement, jamais une
-  masse. ② `MENTION_CONTRE_ECRITURE` en TÊTE du cadre 14 avec le NUMÉRO de
-  l'écriture annulée (mécanisme des observations, celui de
-  MENTION_FORMATION — pas un second) + filigrane « ANNULATION » sur le PDF,
-  le cadre 14 étant en bas de page. ③ `PREFIXE_MOTIF_ANNULATION` : le motif
-  était scellé et journalisé, imprimé nulle part ; la « cause » reprise de
-  l'origine devient `PREFIXE_CAUSE_ANNULEE`. ④ blocs de signature VIDES
-  (personne n'a signé une contre-écriture) — ⚠️ **UNIQUEMENT sur le
-  document qui SORT** : `sansSignaturesReelles` (la référence de correction
-  élève) garde les blocs historiques sur TOUTES les cibles, sans quoi
-  l'usage quotidien — le sujet d'exercice — serait cassé.
-  ⭐ **REVUE ADVERSARIALE du lot (3 constats tirés, corrigés) : (A) la
-  phrase « LES QUANTITÉS PORTÉES CI-DESSOUS SONT RETIRÉES DU REGISTRE
-  (VALEURS NÉGATIVES) » était FAUSSE — le cadre 11 porte AUSSI
-  `11_Quantite`, la charge NOMINALE, positive et intacte, et sur la
-  contre-écriture d'un CONTRÔLE c'était la SEULE quantité imprimée : le
-  document affirmait qu'une masse positive de 10,00 kg était retirée du
-  registre. La mention est scindée (`SUITE_MENTION_CONTRE_ECRITURE` = « ET
-  LA RETIRE DU REGISTRE. ») et `MENTION_QUANTITES_NEGATIVES` n'est posée
-  que si une case A/B/C/D/E/D+E est RÉELLEMENT imprimée — condition
-  DÉRIVÉE de la sortie, jamais recopiée du type d'intervention, d'où les
-  lignes du cadre 14 assemblées dans `calculerChampsCerfa` et non dans
-  `assemblerContexte`. (B) vider les blocs de signature faisait
-  DISPARAÎTRE du document le nom de qui a passé l'annulation (il y était
-  avant le lot, au mauvais endroit) : `PREFIXE_ENREGISTREE_PAR` le remet
-  comme un FAIT du registre, hors de toute case de signature, avec la
-  raison des cases vides — même donnée que la colonne « Technicien » de
-  `mouvements.csv`, qui la tire déjà du validateur. Le doute retire
-  l'allègement, jamais l'obligation. (C) les mentions d'annulation sont
-  écrites MOT POUR MOT par l'application : laissées dans la comparaison de
-  `correction.js`, elles étaient exigées de l'élève (mesuré : 95 % sur une
-  copie parfaite). `PREFIXES_SYSTEME_ANNULATION` les écarte des DEUX
-  côtés, comme MODE FORMATION et la mention de réemploi ; « Cause de
-  l'écriture annulée » reste exigée, c'est une DONNÉE. (D) ce nom est
-  résolu par la FICHE VIVANTE via `validateurId` (repli sur le champ figé
-  seulement s'il n'y a pas d'identifiant) — comme `mouvements.csv` : le
-  prendre au champ figé aurait re-nommé en clair, sur le CERFA voisin du
-  MÊME dossier scellé, une personne que le COFFRE DES IDENTITÉS venait de
-  pseudonymiser.
-  `test-contre-ecriture` (DOUBLÉE, 50 vérifs, les quatre cas tenus :
-  mouvement signé, non signé, correction de copie, contre-écriture)**),
+  **lot 1 / branche A (27/07, DÉCISION DU PROPRIÉTAIRE) — une
+  CONTRE-ÉCRITURE NE PRODUIT PLUS DE CERFA DU TOUT.** Le matin du 27/07,
+  le lot avait rendu ce CERFA « honnête » (quantité signée, mention
+  d'annulation, motif imprimé, filigrane, blocs de signature vidés). Le
+  propriétaire a tranché plus haut l'après-midi : *émettre un CERFA pour
+  un geste comptable, c'est attester une intervention qui n'a pas eu
+  lieu*. Le CERFA 15497*04 est une fiche d'INTERVENTION ; aucune
+  intervention n'a lieu le jour d'une annulation au registre. Donc refus
+  canonique `MSG_CERFA_CONTRE_ECRITURE`, posé dans `assemblerContexte`
+  **exactement comme celui du TRANSFERT** — il couvre du même geste
+  `genererCerfaPdf`, `calculerChampsCerfa` et la correction de copie
+  d'élève. ⚠️ **LE REFUS SE PORTE SUR `contreEcritureDe`, JAMAIS SUR
+  `cerfaNumero`** : les contre-écritures DÉJÀ enregistrées gardent leur
+  numéro scellé (le passé ne se réécrit pas, le WORM l'interdit) mais
+  cessent elles aussi d'être IMPRIMÉES, sans qu'une donnée bouge. Toute
+  la matière du CERFA d'annulation (signe, motif, auteur, numéro annulé,
+  filigrane) a MIGRÉ vers `documents/regularisation.js` : elle n'est pas
+  perdue, elle est passée d'un formulaire officiel à un document
+  honnête. Le code CERFA correspondant a été RETIRÉ plutôt que laissé
+  inatteignable — l'historique git le garde si la branche (B) du plan
+  devait être choisie. `test-contre-ecriture` (DOUBLÉE, 29 vérifs) tire
+  le refus par ses quatre portes, l'ANCIENNE forme comprise, et tient
+  les trois usages quotidiens (mouvement signé, fiche d'exercice,
+  correction de copie à 100 %)),
   `correction.js` (correction copie élève — TOUJOURS les blocs de
   signature historiques, `sansSignaturesReelles` ; mentions SYSTÈME du
-  cadre 14 écartées des deux côtés : MODE FORMATION, réemploi,
-  `PREFIXES_SYSTEME_ANNULATION`), `visualiseur.js` (PDF.js),
+  cadre 14 écartées des deux côtés : MODE FORMATION et réemploi — les
+  mentions d'annulation, elles, ont disparu avec le CERFA de
+  contre-écriture, lot 1 branche A), `visualiseur.js` (PDF.js),
   `conserve.js` (lot C C3b : sert le PDF CONSERVÉ d'une fiche officielle
   figée — les DEUX portes, mouvement ET contrôle lié —, empreinte vérifiée
   contre `hashPdfFinal` scellé, jamais le générateur, jamais de repli).
@@ -259,6 +248,63 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   C5 (`dossier-audit.js`) : fiche officielle scellée → PDF CONSERVÉ
   restitué (jamais régénéré), verdicts `02-PDF-CONSERVES.txt`, contrôle
   lié conservé sauté, TRANSFERT exclu de la boucle CERFA.
+  **`regularisation.js` (lot 1 branche A, 27/07) — LE JUSTIFICATIF DE
+  RÉGULARISATION, la pièce qui REMPLACE le CERFA d'une contre-écriture.**
+  Porte `estContreEcriture(mv)` — **la règle en UN SEUL endroit**,
+  consommée par `dossier-audit`, `dossier-machine`, `dossier-fuite`,
+  `views/mouvements`, `fiche-machine`, `fiche-bouteille`, `dashboard` et
+  `bilan` (le générateur, lui, teste `contreEcritureDe` en ligne, comme il
+  teste `type === 'TRANSFERT'` : pas de cycle d'imports). Le document dit
+  le numéro d'écriture INTERNE (jamais présenté comme réglementaire), la
+  date, l'AUTEUR **résolu par la fiche VIVANTE** (`executeParId` puis
+  `validateurId`, champ figé en dernier recours — sinon une personne au
+  COFFRE serait re-nommée en clair à côté d'un `mouvements.csv` qui la
+  pseudonymise), le MOTIF en évidence, le numéro ET la date de la fiche
+  annulée, **les deux masses avec leur signe du registre et leur somme**
+  (jamais de case vide : le doute retire un allègement, jamais une masse),
+  machine/fluide/contenants, l'empreinte scellée. ⭐ **REVUE DU 27/07 —
+  SIX CONSTATS TIRÉS, CORRIGÉS : (1) le bouton « Imprimer » sortait une
+  feuille AMPUTÉE — une page de 219 caractères au lieu de deux pages de
+  2 703 (impression réelle Chrome ET Edge), le motif, les masses, l'auteur
+  et l'empreinte ABSENTS DU PAPIER : les boîtes de la modale
+  (`max-height` + `overflow` + `backdrop-filter`, et un `transform` de
+  spécificité supérieure qui faisait de `.modale` le bloc conteneur des
+  éléments fixes) rognaient tout ; le patron recopié, `plaque-fgas.js`,
+  est calibré pour une étiquette de 100 mm qui tient en UNE page. (2) La
+  page 2 ne portait AUCUNE marque : un bandeau `.justif-repere`,
+  affiché à l'impression seulement et `position: fixed`, reparaît sur
+  CHAQUE feuille avec la mention de mode et l'identité de l'écriture
+  (mesuré : `display: table-header-group` ne se répète pas, `position:
+  fixed` oui). (3) Le DÉTENTEUR, souvent un TIERS, ne figurait nulle
+  part — seul le lycée était nommé, sans qualité : bloc « Détenteur de
+  l'équipement » + étiquette « Opérateur » + attestation de capacité +
+  marque/modèle/n° série + PRP figé + équivalent CO₂ (`teqCO2`, la seule
+  formule du dépôt). (4) `Number(null) === 0` faisait imprimer
+  « 0,00 kg » de charge nominale là où il n'y a AUCUN équipement
+  (contre-écriture d'un transfert) : `nombreOuNull` sépare l'absent du
+  zéro RÉEL, qui reste imprimé. (5) L'empreinte ne « prouve » plus que ce
+  papier-ci est d'époque — elle porte sur l'ÉCRITURE ; la tournure est
+  désormais refusée par `test-mots-qui-promettent`. (6) Repli de mode et
+  écriture annulée introuvable : le doute AJOUTE la marque
+  (`MENTION_MODE_INDETERMINE`) et n'AFFIRME plus rien qu'il n'ait
+  mesuré.** La modale d'aperçu a QUITTÉ ce module pour
+  `documents/regularisation-apercu.js` : trois modules d'export ZIP
+  s'annoncent « testables sous Node » et tiraient `views/communs.js` par
+  cet import. ⚠️ **LA MENTION DE MODE
+  EST DANS LE DOCUMENT, PAS AUTOUR** — `.justif-mode` est un enfant de
+  `.justif-document`, le bloc d'impression rend visibles le nœud ET tous
+  ses descendants ; le badge de mode de l'application, lui, est masqué par
+  `coquille.css`. Sans cela ce document neuf serait devenu le
+  VINGT-DEUXIÈME de l'inventaire des sorties sans marque. Deux rendus, un
+  gabarit : modale d'aperçu (patron `plaque-fgas`) et page HTML AUTONOME
+  `regularisations/<numéro>.html` dans les trois dossiers ZIP scellés
+  (patron `verificateur.js`) — le sommaire du dossier d'audit DIT ce qui a
+  changé. Aucun champ AcroForm, aucune reprise de la maquette officielle :
+  deux pièces qui ne se ressemblent pas, c'est tout le point.
+  `test-justificatif-regularisation` (DOUBLÉE, 106 vérifs) +
+  `views/test-boutons-contre-ecriture` (24) + section E de
+  `views/test-compteur-fiches` (les compteurs de fiches numérotées
+  excluent les contre-écritures, ANCIENNES comprises).
 - **P1-1 (23/07) — modèle d'équipement** : module pur `data/equipement.js`
   + miroir `server/equipement.js` (voir la ligne dédiée). Migration 32
   (7 champs, backfill conservateur). `machine-form` : blocs « Nature de

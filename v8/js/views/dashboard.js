@@ -10,6 +10,9 @@ import { esc, fmtNombre, fmtKgSigne, fmtDate } from '../core/utils.js';
 import { ouvrirWizard } from '../wizard/wizard.js';
 import { ouvrirCerfa } from '../cerfa/visualiseur.js';
 import { collecterConformite } from '../data/feu-tricolore.js';
+import { estContreEcriture } from '../documents/regularisation.js';
+import { ouvrirJustificatifRegularisation }
+  from '../documents/regularisation-apercu.js';
 
 export const titre = 'Tableau de bord';
 
@@ -399,10 +402,14 @@ function ligneMouvement(mouvement, personnelParId) {
     + '</div>'
     // CF-1 / IM-12 : le CERFA n'existe (et ne se visualise sans erreur) que pour
     // une écriture figée (VALIDE/ANNULE) hors TRANSFERT (pas de CERFA machine — registre).
-    + (peutAfficherCerfa(mouvement)
-      ? '<button type="button" class="btn btn-contour btn-petit tdb-btn-cerfa" '
-        + 'data-id="' + esc(mouvement.id) + '">CERFA</button>'
-      : '')
+    + (estContreEcriture(mouvement)
+      ? '<button type="button" class="btn btn-contour btn-petit '
+        + 'tdb-btn-justificatif" data-id="' + esc(mouvement.id)
+        + '">Justificatif</button>'
+      : (peutAfficherCerfa(mouvement)
+        ? '<button type="button" class="btn btn-contour btn-petit tdb-btn-cerfa" '
+          + 'data-id="' + esc(mouvement.id) + '">CERFA</button>'
+        : ''))
     + '</div>';
 }
 
@@ -415,7 +422,11 @@ function ligneMouvement(mouvement, personnelParId) {
  */
 function peutAfficherCerfa(mouvement) {
   return (mouvement.statut === 'VALIDE' || mouvement.statut === 'ANNULE')
-    && mouvement.type !== 'TRANSFERT';
+    && mouvement.type !== 'TRANSFERT'
+    // Lot 1 branche A (27/07/2026) : ni pour une CONTRE-ÉCRITURE — le
+    // générateur la refuse désormais, le bouton aurait produit une erreur
+    // là où l'écran doit offrir le justificatif de régularisation.
+    && !estContreEcriture(mouvement);
 }
 
 /**
@@ -640,7 +651,15 @@ export async function render(conteneur, ctx) {
   // CERFA) de la part d'exercice. La part officielle se lit au MODE scellé
   // de l'écriture, JAMAIS au préfixe du numéro : la Démo numérote « FI- »
   // des fiches Formation.
-  const fichesNumerotees = mouvements.filter((mv) => mv.cerfaNumero);
+  // ⚠ Lot 1 branche A (27/07/2026) : les CONTRE-ÉCRITURES sortent du
+  // compte. Les nouvelles n'ont plus de `cerfaNumero` ; les ANCIENNES
+  // gardent le leur, scellé — mais le logiciel ne leur imprime plus de
+  // fiche. Les compter, c'est annoncer des fiches qui n'existent plus.
+  // Le critère est le MÊME que celui du refus du générateur
+  // (estContreEcriture, sur `contreEcritureDe`), sans quoi le tableau de
+  // bord et le document diraient deux choses différentes.
+  const fichesNumerotees = mouvements.filter(
+    (mv) => mv.cerfaNumero && !estContreEcriture(mv));
   const nbCerfaOfficiels =
     fichesNumerotees.filter((mv) => mv.mode === 'OFFICIEL').length;
   const nbFichesFormation = fichesNumerotees.length - nbCerfaOfficiels;
@@ -758,6 +777,17 @@ export async function render(conteneur, ctx) {
   conteneur.querySelectorAll('.tdb-btn-cerfa').forEach(function (bouton) {
     bouton.addEventListener('click', function () {
       ouvrirCerfa(ctx, { source: 'mouvement', id: bouton.dataset.id });
+    });
+  });
+
+  // Boutons « Justificatif » : la pièce d'une écriture d'annulation
+  conteneur.querySelectorAll('.tdb-btn-justificatif').forEach(function (bouton) {
+    bouton.addEventListener('click', function () {
+      ouvrirJustificatifRegularisation(ctx, bouton.dataset.id)
+        .catch(function (erreur) {
+          toast(erreur && erreur.message ? erreur.message
+            : 'Justificatif de régularisation indisponible.', 'erreur');
+        });
     });
   });
 

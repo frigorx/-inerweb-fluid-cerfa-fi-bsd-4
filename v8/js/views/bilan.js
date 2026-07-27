@@ -13,6 +13,7 @@
 import { enteteVue, tableau, modale, toast, ICONES } from './communs.js';
 import { esc, fmtKg, fmtDate, fmtNombre } from '../core/utils.js';
 import { genererDossierAudit } from '../documents/dossier-audit.js';
+import { estContreEcriture } from '../documents/regularisation.js';
 import { MENTION_PIECE_NON_PROBANTE } from '../data/remise-filiere.js';
 
 export const titre = 'Bilan annuel';
@@ -565,8 +566,14 @@ async function collecterDonneesAudit5Minutes(store, annee) {
   // Formation). Tout mouvement dont le mode n'est pas OFFICIEL compte en
   // exercice : on ne surestime jamais le chiffre officiel.
   const prefixeAnnee = `${annee}-`;
+  // ⚠ Lot 1 branche A (27/07/2026) : les CONTRE-ÉCRITURES sortent du
+  // compte — même règle et même critère qu'au tableau de bord. Les
+  // nouvelles n'ont plus de `cerfaNumero`, les anciennes gardent le leur
+  // mais ne donnent plus de fiche : les compter annoncerait, dans un
+  // document remis tel quel à un auditeur, des fiches qui n'existent pas.
   const fichesAnnee = mouvements.filter((mv) =>
-    mv.cerfaNumero && mv.date.startsWith(prefixeAnnee));
+    mv.cerfaNumero && !estContreEcriture(mv)
+    && mv.date.startsWith(prefixeAnnee));
   const nbCerfaOfficiels =
     fichesAnnee.filter((mv) => mv.mode === 'OFFICIEL').length;
   const nbFichesFormation = fichesAnnee.length - nbCerfaOfficiels;

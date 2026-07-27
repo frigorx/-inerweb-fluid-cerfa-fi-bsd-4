@@ -30,16 +30,24 @@ fonctionne **entièrement en local** : aucune donnée ne part vers un service ex
 **aucune fiche d'intervention opposable n'est validée**.
 
 Une précision qui compte, parce que c'est la première question qu'un agent de contrôle
-posera : **seule la fiche CERFA porte une marque distinctive**. La mention « MODE FORMATION
-— DOCUMENT NON OFFICIEL » n'existe qu'à un seul endroit du dépôt
-(`v8/js/cerfa/generateur.js:93`) ; elle est apposée au cadre 14 de la fiche
-(`v8/js/cerfa/generateur.js:538`) et doublée d'un filigrane sur le rendu (`:754`). **Tous les
-autres documents sortent sans marque**, et il y en a vingt et un : ils sont énumérés un par un
-au § 2 g). C'est une limite réelle, pas une nuance de rédaction, et elle appelle une décision.
+posera : **la fiche CERFA et le justificatif de régularisation portent seuls une marque
+distinctive**. La mention « MODE FORMATION — DOCUMENT NON OFFICIEL » est rédigée à un seul
+endroit du dépôt (`v8/js/cerfa/generateur.js:93`), et elle est apposée par :
+
+- la **fiche CERFA**, au cadre 14 (`v8/js/cerfa/generateur.js:538`), doublée d'un filigrane
+  sur le rendu (`:754`) ;
+- le **justificatif de régularisation** d'une écriture d'annulation
+  (`v8/js/documents/regularisation.js`), créé le 27/07/2026 avec la marque **dès sa
+  naissance** : elle est portée par le document lui-même, pas par l'écran qui l'affiche, et
+  elle reste donc visible **à l'impression**.
+
+**Tous les autres documents sortent sans marque**, et il y en a vingt et un : ils sont
+énumérés un par un au § 2 g). C'est une limite réelle, pas une nuance de rédaction, et elle
+appelle une décision.
 
 Vérification par soi-même : `node outils/lancer-tests.mjs --tout` (filet complet) et
 `node server/test-securite-negative.mjs` (les refus, réellement exécutés contre un serveur,
-sur un port et une base jetables). Le filet donne « TOUT VERT — 128 exécutions » ; sa durée
+sur un port et une base jetables). Le filet donne « TOUT VERT — 132 exécutions » ; sa durée
 est **de l'ordre de 100 secondes** et varie d'une exécution à l'autre (96,8 s, 97,9 s et
 98,8 s à trois mesures du 26/07/2026 sur la même version) : elle ne se publie pas au
 centième, c'est un ordre de grandeur.

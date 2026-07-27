@@ -644,11 +644,15 @@ non corrigé, décrit au § 1 ter de `docs/POINTS-DE-FRICTION.md`.
 et non le seul dossier `documents/` :
 
 ```
-grep -rn "MENTION_FORMATION\|MODE FORMATION\|NON OFFICIEL\|non officiel" v8/js/ | grep -v "^v8/js/cerfa/"
+grep -rn "MENTION_FORMATION\|MODE FORMATION\|NON OFFICIEL\|non officiel" v8/js/ \
+  | grep -v "^v8/js/cerfa/" | grep -v "regularisation"
 ```
 
-Elle ne rend rien. La contre-épreuve, la même commande sans le filtre, rend vingt
-lignes, toutes dans `v8/js/cerfa/`.
+Elle ne rend rien. La contre-épreuve, la même commande sans les filtres, rend
+trente-trois lignes, toutes dans `v8/js/cerfa/` ou dans les deux fichiers de
+`regularisation` (le module du justificatif de régularisation et sa suite de tests —
+lot 1 branche A, 27/07/2026 : ce document porte SA marque dès sa naissance, il n'entre
+donc pas à l'inventaire ci-dessus, qui reste à vingt et un).
 
 **Tant que ce point n'est pas tranché, aucun des vingt et un documents énumérés
 ci-dessus ne doit être remis à un tiers.** La décision appartient à

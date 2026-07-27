@@ -43,7 +43,7 @@ qu'on y trouve déjà écrit rassure. Si un défaut réel manque à cette liste,
 omission, pas une dissimulation : elle sera ajoutée.
 
 **Avertissement particulier sur le filet de tests.** Le dépôt affiche « tout vert,
-128 exécutions ». Cette phrase ne veut pas dire ce qu'elle a l'air de dire, et la
+132 exécutions ». Cette phrase ne veut pas dire ce qu'elle a l'air de dire, et la
 section 14 explique pourquoi : sur les trois derniers lots, **six défauts ont été
 introduits par les correctifs eux-mêmes**, aucun n'était visible au filet. Lisez la
 section 14 avant de tirer une conclusion d'un voyant vert.
@@ -124,12 +124,16 @@ registre. **Cette décision n'est pas prise.**
 
 ---
 
-## 1 ter. En dehors du CERFA, aucun document produit ne porte de marque de non-officialité
+## 1 ter. En dehors du CERFA et du justificatif de régularisation, aucun document produit ne porte de marque de non-officialité
 
 **Ce que c'est.** La mention « MODE FORMATION — DOCUMENT NON OFFICIEL — NE PAS UTILISER
-POUR UNE INTERVENTION RÉELLE » existe (`v8/js/cerfa/generateur.js:93`), mais elle n'est
-apposée **que sur le CERFA** : au cadre 14 des observations (`:538`) et en filigrane
-diagonal sur la page (`:754`). **Vingt et un autres documents sortent sans aucune marque.**
+POUR UNE INTERVENTION RÉELLE » est rédigée à un seul endroit
+(`v8/js/cerfa/generateur.js:93`) et n'est apposée que par deux sorties : le **CERFA**, au
+cadre 14 des observations (`:538`) et en filigrane diagonal sur la page (`:754`) ; et le
+**justificatif de régularisation** d'une écriture d'annulation
+(`v8/js/documents/regularisation.js`), depuis le 27/07/2026 — la mention y est portée par
+le document lui-même, et non par l'écran qui l'affiche, donc elle **survit à
+l'impression**. **Vingt et un autres documents sortent sans aucune marque.**
 
 <a id="inventaire-documents-sans-marque"></a>
 
@@ -200,11 +204,14 @@ diagonal sur la page (`:754`). **Vingt et un autres documents sortent sans aucun
 `v8/js/`, et non le seul dossier `documents/` :
 
 ```
-grep -rn "MENTION_FORMATION\|MODE FORMATION\|NON OFFICIEL\|non officiel" v8/js/ | grep -v "^v8/js/cerfa/"
+grep -rn "MENTION_FORMATION\|MODE FORMATION\|NON OFFICIEL\|non officiel" v8/js/ \
+  | grep -v "^v8/js/cerfa/" | grep -v "regularisation"
 ```
 
-Elle ne rend **rien**. La contre-épreuve est la même commande sans le filtre : elle rend
-vingt lignes, toutes dans `v8/js/cerfa/`. Pour retrouver les imprimables eux-mêmes :
+Elle ne rend **rien**. La contre-épreuve est la même commande sans les filtres : elle rend
+trente-trois lignes, toutes dans `v8/js/cerfa/` ou dans les deux fichiers de
+`regularisation` (le module du justificatif et sa suite de tests).
+Pour retrouver les imprimables eux-mêmes :
 `grep -rn "window.print()" v8/js/ | grep -v "test-"` rend quinze lignes, dont trois sont des
 commentaires — donc **douze** déclencheurs d'impression réels. Ce sont les onze premiers
 imprimés de l'inventaire (n° 1 à 7 et 9 à 12), plus la notice de protection des personnes.
@@ -832,9 +839,9 @@ inconnue, pas nulle.
 Cette section est écrite noir sur blanc parce qu'elle est vraie, et parce qu'elle
 change la façon de lire tout le reste.
 
-Le dépôt affiche « tout vert, 128 exécutions » (chiffre de `docs/CARTE-CODE.md:35`).
+Le dépôt affiche « tout vert, 132 exécutions » (chiffre de `docs/CARTE-CODE.md:35`).
 **Ce chiffre a été rejoué le 27/07/2026 après le lot 0**, par
-`node outils/lancer-tests.mjs --tout` : résultat « TOUT VERT — 128 exécutions ».
+`node outils/lancer-tests.mjs --tout` : résultat « TOUT VERT — 132 exécutions ».
 La **durée** est de l'ordre de **100 secondes** — 103,0 s à cette mesure, et 96,8 s, 97,9 s
 et 98,8 s à trois mesures de la veille sur la version qui en comptait 121. C'est un ordre de
 grandeur, pas une mesure : une durée
@@ -920,7 +927,7 @@ Par honnêteté, les limites de l'inventaire lui-même.
   n'a encore trouvés, et la section 14 donne toutes les raisons de penser qu'il en
   reste.
 - Le filet de tests **a été rejoué** le 27/07/2026, après le lot 0
-  (`node outils/lancer-tests.mjs --tout` → « TOUT VERT — 128 exécutions », durée de l'ordre
+  (`node outils/lancer-tests.mjs --tout` → « TOUT VERT — 132 exécutions », durée de l'ordre
   de 100 secondes), et ce résultat concorde avec `docs/CARTE-CODE.md:35`. Mais **cela ne
   vaut que ce que dit la
   section 14** : un filet vert ne prouve rien d'autre que l'absence de régression sur ce

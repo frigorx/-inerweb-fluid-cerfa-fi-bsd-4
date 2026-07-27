@@ -42,10 +42,10 @@ permettront de décider ensuite.
 | Dernier commit modifiant le **code livré** | `2ca4aa0` du 26/07/2026 | `git log -1 --format=%h -- server v8 outils` |
 | Dernier commit du dépôt (**documentation comprise**) | à relever à la signature — la présente note et ses annexes sont commitées **après** la version qu'elles décrivent, aucun numéro fixe ne peut donc être écrit ici | `git log -1 --format=%h` |
 | Empreinte de l'archive livrée | ................................ (à relever à la livraison) | `node outils/fabriquer-paquet.mjs` écrit le fichier `.sha256` à côté de l'archive |
-| Filet de tests | **TOUT VERT — 128 exécutions** ; durée de l'ordre de **100 secondes** (mesuré le 27/07/2026) | `node outils/lancer-tests.mjs --tout` |
+| Filet de tests | **TOUT VERT — 132 exécutions** ; durée de l'ordre de **100 secondes** (mesuré le 27/07/2026) | `node outils/lancer-tests.mjs --tout` |
 | Suite de refus (sécurité négative) | **207 réussies, 0 en échec** (mesuré le 27/07/2026) | `node server/test-securite-negative.mjs` |
 | Mode Officiel | **FERMÉ** par un verrou unique | `server/blocage-officiel.js:24` et `v8/js/data/blocage-officiel.js:31` |
-| Conséquence du verrou | aucune fiche opposable n'est produite ; **seul le CERFA** porte « MODE FORMATION — DOCUMENT NON OFFICIEL » (cadre 14 et filigrane). **Vingt et un autres documents produits ne portent aucune marque** — ils sont énumérés un par un à l'[inventaire du § 5.3](#inventaire-documents-sans-marque) *(lignes R26 et R34)* | `v8/js/cerfa/generateur.js:93`, `:538`, `:754` ; inventaire et commande de vérification au § 5.3 |
+| Conséquence du verrou | aucune fiche opposable n'est produite ; **le CERFA et le justificatif de régularisation** portent « MODE FORMATION — DOCUMENT NON OFFICIEL » (cadre 14 et filigrane pour le premier ; bandeau intérieur, visible à l'impression, pour le second). **Vingt et un autres documents produits ne portent aucune marque** — ils sont énumérés un par un à l'[inventaire du § 5.3](#inventaire-documents-sans-marque) *(lignes R26 et R34)* | `v8/js/cerfa/generateur.js:93`, `:538`, `:754` ; `v8/js/documents/regularisation.js` ; inventaire et commande de vérification au § 5.3 |
 | Surface fonctionnelle | 96 méthodes de contrat (v13), 35 migrations de base (n° 2 à 36) | `v8/js/data/contrat.js`, `server/migrations.js` |
 
 > Les deux chiffres de tests ci-dessus ont été **mesurés le 27/07/2026 sur cette version**,
@@ -112,7 +112,7 @@ permettront de décider ensuite.
   jeu d'essai, pas du registre du lycée : aucune déclaration fausse n'a été transmise à
   l'autorité.** Le défaut a été trouvé et refermé avant toute livraison.
 - **Un filet de tests rejoué intégralement** le 27/07/2026, après le lot 0 :
-  `node outils/lancer-tests.mjs --tout` → « TOUT VERT — 128 exécutions »,
+  `node outils/lancer-tests.mjs --tout` → « TOUT VERT — 132 exécutions »,
   durée de l'ordre de 100 secondes. **Ce que cela prouve est borné** : l'absence de
   régression sur ce qui est déjà testé, rien de plus (voir la ligne R22 du § 5).
 - **Un inventaire écrit des limites connues** : `docs/POINTS-DE-FRICTION.md` (établi le
@@ -348,7 +348,7 @@ Observations sur le § 5.1 : ...................................................
       accessibilité jamais auditée.** *(§ 12)*
 - [ ] **R21 — Un échec de test signalé par la relecture du 25/07 n'a pas pu être reproduit ni
       identifié** ; il est déclaré plutôt que passé sous silence. *(§ 12)*
-- [ ] **R22 — Le filet vert ne prouve pas l'absence de défaut.** Les 128 exécutions prouvent
+- [ ] **R22 — Le filet vert ne prouve pas l'absence de défaut.** Les 132 exécutions prouvent
       l'absence de régression sur ce qui est déjà testé ; sur les trois derniers lots, six
       défauts ont été introduits par les correctifs eux-mêmes. *(§ 14)*
 - [ ] **R23 — Résidus mineurs déclarés** (feuille de route interne périmée, identifiants
@@ -431,7 +431,10 @@ Observations : .................................................................
 
 **Une précision, pour éviter un contresens.** À l'intérieur des quatre archives, les
 **fiches CERFA sont bien marquées** : elles sortent du même générateur
-(`v8/js/cerfa/generateur.js:538`, `:754`). Ce qui ne l'est pas, c'est tout le reste de
+(`v8/js/cerfa/generateur.js:538`, `:754`). Depuis le 27/07/2026, les **justificatifs de
+régularisation** (`regularisations/*.html`, la pièce qui remplace le CERFA d'une écriture
+d'annulation) le sont aussi, et par le même texte
+(`v8/js/documents/regularisation.js`). Ce qui ne l'est pas, c'est tout le reste de
 l'archive — sommaire, fichiers CSV, chronologie, vérificateur — et le certificat qui
 l'accompagne.
 
@@ -445,14 +448,21 @@ la personne qui le demande. Ce sont des fichiers de données, pas des documents 
 pourraient passer pour une pièce du registre.
 
 **Vérification par soi-même**, couvrant bien ce qui est affirmé — tout `v8/js/`, et non le
-seul dossier `documents/` :
+seul dossier `documents/`. Les documents MARQUÉS — le CERFA et le justificatif de
+régularisation — sont écartés du filtre, et eux seuls :
 
 ```
-grep -rn "MENTION_FORMATION\|MODE FORMATION\|NON OFFICIEL\|non officiel" v8/js/ | grep -v "^v8/js/cerfa/"
+grep -rn "MENTION_FORMATION\|MODE FORMATION\|NON OFFICIEL\|non officiel" v8/js/ \
+  | grep -v "^v8/js/cerfa/" | grep -v "regularisation"
 ```
 
-Elle ne rend **rien**. La contre-épreuve est la même commande sans le filtre : elle rend
-vingt-cinq lignes, toutes dans `v8/js/cerfa/`.
+Elle ne rend **rien**. La contre-épreuve est la même commande sans les filtres : elle rend
+trente-sept lignes, toutes dans `v8/js/cerfa/` ou dans les trois fichiers de
+`regularisation` (le module du justificatif, sa modale d'aperçu et sa suite de tests).
+
+> ⚠️ La suite `outils/test-inventaire-documents-sans-marque.mjs` ne se contente plus du
+> mot « regularisation » dans le chemin : elle nomme les **trois fichiers exactement**
+> (revue du 27/07/2026). Une exception qui s'élargit toute seule n'est plus une exception.
 
 > **Consigne d'attente.** Tant que le point n'est pas tranché par l'établissement, **aucun
 > des vingt et un documents ci-dessus ne doit être remis à un tiers**, et l'ajout de la ligne
@@ -476,7 +486,8 @@ Ces conditions sont proposées ; l'établissement les arrête.
    donnée), qu'il vienne du logiciel ou de la saisie. Un écart non expliqué est un écart
    bloquant.
 5. **Le mode Officiel reste fermé pendant tout le pilote.** L'ouverture ne peut résulter que
-   d'une décision écrite prise au vu du § 7. **Attention : seul le CERFA porte la mention de
+   d'une décision écrite prise au vu du § 7. **Attention : seuls le CERFA et le justificatif
+   de régularisation portent la mention de
    formation** (ligne R26) ; **vingt et un autres documents n'en portent aucune** — la liste est
    à l'[inventaire du § 5.3](#inventaire-documents-sans-marque) — et **le repère de mode
    affiché à l'écran ne s'imprime pas** (ligne R34). Tant que ce point n'est pas corrigé, une
@@ -548,8 +559,9 @@ Elle est simple parce que le registre existant n'a jamais cessé d'être tenu pe
    sont, par construction, non modifiables et non effaçables. Une archive chiffrée est faite et
    rangée avec la présente note.
 4. **Les documents déjà produits** n'ont pas à être retirés d'un dossier réglementaire :
-   produits verrou fermé, ils n'y ont pas leur place. **Mais seul le CERFA le dit sur
-   lui-même** (ligne R26) : les **vingt et un autres** documents, énumérés à
+   produits verrou fermé, ils n'y ont pas leur place. **Mais seuls le CERFA et le
+   justificatif de régularisation le disent sur
+   eux-mêmes** (ligne R26) : les **vingt et un autres** documents, énumérés à
    l'[inventaire du § 5.3](#inventaire-documents-sans-marque), ne portent aucune marque — et
    même leur impression ne conserve pas le repère de mode affiché à l'écran (ligne R34).
    Leur retrait éventuel suppose donc de savoir où ils sont allés, et c'est le seul moyen de
