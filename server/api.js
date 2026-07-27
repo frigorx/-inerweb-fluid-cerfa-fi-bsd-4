@@ -6779,6 +6779,58 @@ function nombreScelleesJamaisAtteint() {
 }
 
 /**
+ * ⭐ Lot 0 / brique B2 (audit externe #4, 27/07) — la borne est enfin
+ * CONFRONTÉE au registre.
+ *
+ * LE DÉFAUT CORRIGÉ. Le détecteur ci-dessus existait déjà, mais on ne
+ * l'interrogeait QU'À L'IMPORT et au scellement. Après un retour en arrière
+ * fait AU DISQUE (quelqu'un repose une ancienne copie de la base), le
+ * fichier voisin `borne-scellement.json` portait encore 3 pendant que le
+ * registre n'avait plus qu'UNE écriture scellée : l'écart était lisible en
+ * une soustraction, et personne ne la faisait. C'est ici qu'on la fait.
+ *
+ * CE QUE LE CONSTAT DIT — ET RIEN DE PLUS. Il compare DEUX NOMBRES : la
+ * borne monotone du poste, et le nombre d'écritures qui portent une
+ * empreinte. Il ne dit donc jamais « le registre est intact » : recopier la
+ * base ET son fichier voisin ensemble rend l'écart nul, c'est une limite
+ * CONNUE de la mesure (voir l'en-tête de server/borne-scellement.js). Il dit
+ * « la borne et le registre concordent » ou « ne concordent pas ».
+ *
+ * AUCUNE ACCUSATION QUAND ON NE SAIT PAS. Borne absente ou illisible = 0 :
+ * le constat rend INDETERMINE (premier démarrage d'un poste neuf, fichier
+ * abîmé), JAMAIS « régression ». Même doctrine que png.js : on ne conclut
+ * pas au vide sur ce qu'on ne sait pas relire.
+ *
+ * ⭐ REVUE (27/07) — UN MOTIF « REGRESSION » NE DÉSIGNE PAS UN COUPABLE.
+ * TIRÉ : une RESTAURATION d'archive plus ancienne, geste PRÉVU du
+ * coffre-fort confirmé par `confirmePerte` (restauration.js, étape 0),
+ * produit exactement le même écart — la restauration remplace la base, pas
+ * le fichier voisin qui porte la borne. Un IMPORT d'un registre plus court
+ * aussi. Le constat dit donc « les deux nombres ne concordent pas », JAMAIS
+ * « quelqu'un a remis une base à la main » : la cause n'est pas mesurée.
+ * L'appelant (serveur.js) énumère les causes possibles et dit qu'il ne
+ * tranche pas. Preuve : test-non-regression-scellement, section 5.
+ *
+ * @returns {{ok: boolean|null, motif: string, borne: number, reelles: number}}
+ *   ok vrai = concordent · faux = régression · null = indéterminé
+ */
+function constaterBorneScellement() {
+  const borne = nombreScelleesJamaisAtteint();
+  // Même critère de comptage que le témoin quotidien du lot D
+  // (scellement-externe.js) : « porte une empreinte ».
+  const compte = db.get(
+    'SELECT COUNT(*) AS n FROM mouvements WHERE hash_ecriture IS NOT NULL');
+  const reelles = Number(compte?.n ?? 0);
+  if (!(borne > 0)) {
+    return { ok: null, motif: 'INDETERMINE', borne: 0, reelles };
+  }
+  if (reelles < borne) {
+    return { ok: false, motif: 'REGRESSION', borne, reelles };
+  }
+  return { ok: true, motif: 'CONCORDANT', borne, reelles };
+}
+
+/**
  * CR-5 : re-parcourt la chaîne des écritures figées et recalcule chaque
  * empreinte ; casseA = numéro de la première rupture. Identique à
  * verifierChaineMouvements du DemoStore.
@@ -9407,6 +9459,9 @@ module.exports = {
   verifierTousPdfFinalConserves,
   // Lot C (C3b) : appelée au démarrage par serveur.js (et par le test).
   reecrireTemoinsPdfFinalManquants,
+  // Lot 0 / brique B2 : confrontation de la borne de scellement au registre,
+  // appelée au démarrage par serveur.js (et par test-non-regression-scellement).
+  constaterBorneScellement,
   // Lot E2 : rattrapage de la purge disque du coffre (démarrage serveur.js).
   rejouerPurgeCoffre
 };

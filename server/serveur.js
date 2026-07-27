@@ -811,6 +811,70 @@ preparerCoffreFort();
   }
 }
 
+// Lot 0, brique B2 (audit externe #4, 27/07) : la BORNE DE SCELLEMENT est
+// enfin CONFRONTÉE au registre, AU DÉMARRAGE — avant le témoin quotidien,
+// pour que le témoin du jour soit écrit APRÈS que l'anomalie a été dite et
+// journalisée. Le détecteur existait depuis le lot L2, mais on ne
+// l'interrogeait qu'à l'import et au scellement : un retour en arrière fait
+// AU DISQUE (ancienne copie de la base reposée à la main) laissait le
+// fichier voisin à 3 pendant que le registre n'avait plus qu'une écriture
+// scellée, et personne ne faisait la soustraction.
+//
+// ⚠️ CE QUI EST DIT, ET RIEN DE PLUS : deux nombres qui concordent ou non.
+// Jamais « le registre est intact » — recopier la base ET son fichier voisin
+// ensemble rend l'écart nul (limite CONNUE, cf. server/borne-scellement.js).
+// Borne absente ou illisible = INDÉTERMINÉ, jamais une accusation.
+//
+// ⭐ REVUE ADVERSARIALE (27/07) — LE MESSAGE NE NOMME PLUS UNE SEULE CAUSE.
+// La première version disait « une base ANTÉRIEURE a pu être remise en place
+// À LA MAIN ». C'est une cause que la mesure ne constate PAS, et ce n'est
+// même pas la plus fréquente : TIRÉ en le jouant (suite, section 5), une
+// RESTAURATION d'archive plus ancienne — geste NORMAL du coffre-fort, prévu,
+// journalisé, confirmé explicitement par `confirmePerte` — produit
+// exactement le même écart, et l'écrit alors à CHAQUE démarrage suivant.
+// Nommer le geste manuel revenait à accuser par écrit un usage légitime, sur
+// un fait qu'on n'a pas mesuré (même défaut que le motif « signature
+// périmée » du 26/07). Le constat énumère désormais les causes possibles et
+// DIT qu'il ne tranche pas.
+//
+// BEST-EFFORT ABSOLU : jamais fatal, jamais bloquant. Un registre qu'on ne
+// peut plus ouvrir serait pire que le défaut.
+{
+  try {
+    const constat = api.constaterBorneScellement();
+    if (constat.ok === false) {
+      console.error(
+        '\n  [registre] ANOMALIE — la borne de scellement de ce poste et le ' +
+        'registre NE CONCORDENT PAS.');
+      console.error(
+        `  [registre] Borne du poste : ${constat.borne} écriture(s) scellée(s) ` +
+        `jamais atteinte(s) · registre actuel : ${constat.reelles}.`);
+      console.error(
+        '  [registre] Le registre porte MOINS d\'écritures scellées que ce ' +
+        'poste en a déjà scellé. Le logiciel ne tranche PAS la cause ; elles ' +
+        'sont au moins trois : une RESTAURATION d\'archive plus ancienne ' +
+        'confirmée dans l\'écran Sauvegarde, un IMPORT d\'un registre plus ' +
+        'court, ou une base remise en place HORS du logiciel.');
+      console.error(
+        '  [registre] Rapprochez ce constat du journal (RESTAURATION, ' +
+        'IMPORT) et des témoins de scellement.\n');
+      try {
+        db.journaliser({
+          qui: 'système',
+          action: 'REGISTRE_REGRESSION',
+          cible: 'registre',
+          details: `borne ${constat.borne} · ecritures scellees ${constat.reelles}`
+        });
+      } catch {
+        // Journal indisponible : la console a déjà parlé.
+      }
+    }
+  } catch (erreur) {
+    console.warn(
+      `  [registre] Confrontation de la borne impossible : ${erreur.message}`);
+  }
+}
+
 // Scellement externe SIMPLE (lot D du plan audit-proof) : le témoin
 // quotidien — têtes des chaînes, compteurs, intervalle de numéros — est
 // écrit dans le dossier de sauvegarde (synchronisé = il quitte le poste).
