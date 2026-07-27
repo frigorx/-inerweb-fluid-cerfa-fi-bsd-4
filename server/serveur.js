@@ -748,6 +748,21 @@ function avertirSiDataSousOneDrive() {
 }
 
 /**
+ * Lot 0 / B3 : un poste réglé AVANT la garde peut encore pointer ses
+ * sauvegardes vers un espace synchronisé. On AVERTIT sans empêcher de
+ * démarrer — une sauvegarde qui ne se fait plus serait pire que le défaut
+ * qu'on corrige. Le prochain enregistrement du réglage, lui, sera refusé.
+ */
+function avertirSiDestinationSauvegardeSynchronisee() {
+  const message = sauvegarde.avertissementDestinationSynchronisee();
+  if (message) {
+    console.warn('');
+    console.warn('  [AVERTISSEMENT] ' + message);
+    console.warn('');
+  }
+}
+
+/**
  * Séquence de démarrage « coffre-fort » (E4), AVANT toute écoute et AVANT la
  * première ouverture de la base :
  *  1) REPRENDRE une restauration interrompue (data/inerweb-fluide.db absent
@@ -755,7 +770,8 @@ function avertirSiDataSousOneDrive() {
  *     recréerait sinon un socle vierge par-dessus une restauration en cours ;
  *  2) OUVRIR la base (socle v1 sur base vierge, migrations sinon) ;
  *  3) PURGER les .partiel / tmp orphelins (sauvegarde interrompue = n'existe pas) ;
- *  4) AVERTIR si data/ est sous un espace cloud.
+ *  4) AVERTIR si data/ — ou le dossier de sauvegarde réglé — est sous un
+ *     espace cloud.
  * Toute erreur ici est fatale et explicite (mieux qu'un démarrage douteux).
  */
 function preparerCoffreFort() {
@@ -782,6 +798,7 @@ function preparerCoffreFort() {
       console.log(`  [purge] ${sessionsSupprimees} session(s) obsolète(s) nettoyée(s).`);
     }
     avertirSiDataSousOneDrive();
+    avertirSiDestinationSauvegardeSynchronisee();
   } catch (erreur) {
     console.error(
       '\n  [ERREUR] Préparation du coffre-fort impossible :',
