@@ -93,6 +93,32 @@ const TYPE_VERS_CASE = {
 export const MENTION_FORMATION = 'MODE FORMATION — DOCUMENT NON OFFICIEL — ' +
   'NE PAS UTILISER POUR UNE INTERVENTION RÉELLE';
 
+/** Lot 1 / C1 (4e audit externe, 27/07) — mentions d'une CONTRE-ÉCRITURE.
+ *  Le mécanisme est celui qui existe déjà (les observations du cadre 14,
+ *  comme MENTION_FORMATION) ; ce qui change, c'est qu'une écriture
+ *  d'annulation le porte enfin ELLE AUSSI : jusqu'ici la seule mention
+ *  d'annulation était posée sur l'écriture ANNULÉE, jamais sur
+ *  l'annulante. Un inspecteur recevait deux fiches indiscernables.
+ *  La mention est en TÊTE du cadre 14 (pas dans un coin) et le PDF porte
+ *  en plus un filigrane « ANNULATION » (genererCerfaPdf). */
+export const MENTION_CONTRE_ECRITURE =
+  'ÉCRITURE D’ANNULATION — CETTE FICHE ANNULE L’ÉCRITURE';
+
+/** Suite de la mention ci-dessus, après le numéro de l'écriture annulée. */
+export const SUITE_MENTION_CONTRE_ECRITURE =
+  'LES QUANTITÉS PORTÉES CI-DESSOUS SONT RETIRÉES DU REGISTRE '
+  + '(VALEURS NÉGATIVES).';
+
+/** Lot 1 / C1 : le MOTIF de l'annulation était scellé dans l'empreinte et
+ *  consigné au journal, mais imprimé sur AUCUN document — alors que c'est
+ *  lui qui justifie l'annulation devant un contrôle. */
+export const PREFIXE_MOTIF_ANNULATION = 'Motif de l’annulation';
+
+/** Lot 1 / C1 : sur une contre-écriture, la « cause » reprise de
+ *  l'écriture d'origine est celle de l'opération ANNULÉE — le libellé le
+ *  dit, sans quoi elle se lit comme la cause de la présente fiche. */
+export const PREFIXE_CAUSE_ANNULEE = 'Cause de l’écriture annulée';
+
 /** CM-4b : préfixe de la mention d'anomalie de surcharge de réemploi
  *  (cadre 14) — mention SYSTÈME (comme MENTION_FORMATION), jamais exigée
  *  de l'élève à la correction. La surcharge est SIGNALÉE, jamais bloquée
@@ -177,7 +203,10 @@ function trouverPersonneParNom(personnel, nomComplet) {
  *   avant sa validation qui la conservera — tout autre appel garde le
  *   refus historique ; ce canal EXIGE les deux signatures réelles.
  *   sansSignaturesReelles = chemin de la correction élève (blocs
- *   historiques garantis, quelles que soient les signatures posées).
+ *   historiques garantis, quelles que soient les signatures posées — et,
+ *   depuis le lot 1 / C1, y compris sur une contre-écriture, dont le
+ *   document qui SORT a lui des blocs vides : les valeurs attendues d'un
+ *   élève ne changent pour aucune cible).
  */
 async function assemblerContexte(store, { source, id }, options = {}) {
   const [etablissement, machines, bouteilles, controles, fluides,
@@ -215,6 +244,10 @@ async function assemblerContexte(store, { source, id }, options = {}) {
     // que la fiche n'en porte pas : blocs de signature historiques.
     signatureTechnicien: null,
     signatureDetenteur: null,
+    // Lot 1 / C1 : renseigné UNIQUEMENT sur une écriture d'annulation —
+    // { numeroAnnule, motif }. Tout ce que ce lot change est derrière ce
+    // seul fait : une fiche ordinaire sort bit pour bit comme avant.
+    contreEcriture: null,
     observations: []
   };
 
@@ -252,9 +285,36 @@ async function assemblerContexte(store, { source, id }, options = {}) {
     contexte.quantiteKg = mouvement.quantiteKg;
     contexte.operateurNom = mouvement.technicien ?? null;
     contexte.signatureDataUrl = mouvement.signatureDataUrl ?? null;
+    // Lot 1 / C1 (4e audit externe, 27/07) : le document produit pour une
+    // CONTRE-ÉCRITURE disait le CONTRAIRE de ce qu'elle est. Il DIT
+    // désormais, en tête du cadre 14, qu'il annule, LAQUELLE (son numéro)
+    // et POURQUOI (le motif, jusqu'ici scellé dans l'empreinte et écrit
+    // au journal, imprimé sur aucune fiche).
+    if (mouvement.contreEcritureDe) {
+      const annulee = mouvements.find(
+        (mv) => mv.id === mouvement.contreEcritureDe) || null;
+      contexte.contreEcriture = {
+        numeroAnnule: annulee?.numero ?? null,
+        motif: mouvement.motif ? String(mouvement.motif).trim() : null
+      };
+      contexte.observations.push(
+        `${MENTION_CONTRE_ECRITURE} `
+        + `${contexte.contreEcriture.numeroAnnule
+          ?? '(numéro introuvable au registre)'} : `
+        + SUITE_MENTION_CONTRE_ECRITURE);
+      if (contexte.contreEcriture.motif) {
+        contexte.observations.push(
+          `${PREFIXE_MOTIF_ANNULATION} : ${contexte.contreEcriture.motif}`);
+      }
+    }
     if (mouvement.causeMouvement) {
-      // IM-14 : la cause saisie est reportée au cadre 14 (observations)
-      contexte.observations.push(`Cause : ${String(mouvement.causeMouvement)}`);
+      // IM-14 : la cause saisie est reportée au cadre 14 (observations).
+      // Sur une contre-écriture, cette cause est celle de l'opération
+      // ANNULÉE (elle est recopiée à l'identique par le store) : le
+      // libellé le dit, sinon elle se lit comme la cause de cette fiche.
+      contexte.observations.push(
+        `${contexte.contreEcriture ? PREFIXE_CAUSE_ANNULEE : 'Cause'} : `
+        + String(mouvement.causeMouvement));
     }
     if (mouvement.statut === 'ANNULE') {
       contexte.observations.push(
@@ -390,7 +450,8 @@ async function assemblerContexte(store, { source, id }, options = {}) {
  * @returns {Promise<{texte: Object<string,string>,
  *   cases: Object<string,boolean>, radio: '1'|'2'|null, numero: string,
  *   mode: string, signatureDataUrl: string|null,
- *   signatureTechnicienPng: string|null, signatureDetenteurPng: string|null}>}
+ *   signatureTechnicienPng: string|null, signatureDetenteurPng: string|null,
+ *   contreEcriture: {numeroAnnule: string|null, motif: string|null}|null}>}
  */
 export async function calculerChampsCerfa(store, { source, id }, options = {}) {
   const ctx = await assemblerContexte(store, { source, id }, options);
@@ -470,9 +531,24 @@ export async function calculerChampsCerfa(store, { source, id }, options = {}) {
   const estRecuperation =
     ctx.typeIntervention === 'RECUPERATION_MAINTENANCE' ||
     ctx.typeIntervention === 'RECUPERATION_DEMANTELEMENT';
-  const quantite = Number.isFinite(Number(ctx.quantiteKg))
+  // Lot 1 / C1 : la quantité inscrite NE MENT PLUS. Le registre porte la
+  // quantité SIGNÉE ; la valeur absolue faisait imprimer, sur la fiche
+  // d'une contre-écriture de −0,50 kg, « 0,50 kg de fluide vierge chargé »
+  // — exactement comme l'originale. Deux PDF indiscernables à l'œil, au
+  // numéro près (constat 2 du 4e audit).
+  // Le signe se prend sur la NATURE de l'écriture, pas sur le signe stocké
+  // (une récupération est déjà négative au registre : son annulation est
+  // positive, et sortirait tout aussi indiscernable après valeur absolue).
+  // Une écriture ordinaire garde exactement la valeur d'avant.
+  // ⚠ On ne VIDE pas la case : règle de la maison, le doute retire un
+  // allègement, jamais une masse. La masse reste dans SA case, avec son
+  // signe, et le cadre 14 dit en tête que la fiche est une annulation.
+  const quantiteAbsolue = Number.isFinite(Number(ctx.quantiteKg))
     ? Math.abs(Number(ctx.quantiteKg))
     : null;
+  const quantite = quantiteAbsolue === null
+    ? null
+    : (ctx.contreEcriture ? -quantiteAbsolue + 0 : quantiteAbsolue);
 
   let qA = '', qB = '', qC = '', qD = '', qE = '', qDE = '';
   let contenant = null;
@@ -552,6 +628,51 @@ export async function calculerChampsCerfa(store, { source, id }, options = {}) {
   const sigDet = ctx.signatureDetenteur;
   const nomComplet = (s) => `${s.prenom} ${s.nom}`.trim();
 
+  // Lot 1 / C1 (constat 4 du 4e audit) : une CONTRE-ÉCRITURE ne porte
+  // AUCUNE signature réelle — elle se scelle sur l'attestation d'identité
+  // du validateur (plan lot C §9, listes de signatures gelées VIDES).
+  // Elle sortait pourtant avec un nom (le validateur), une qualité (repli
+  // « Élève en formation ») et la date du jour aux DEUX blocs : une case
+  // de signature à laquelle il ne manquait que le paraphe.
+  //
+  // ⚠️ LE PRÉ-REMPLISSAGE N'EST PAS UN DÉFAUT PARTOUT. Le CERFA sert
+  // aussi de SUJET D'EXERCICE : l'élève imprime la fiche, la remplit et
+  // la signe à la main, et `correction.js` corrige sa copie contre les
+  // blocs de signature HISTORIQUES (option sansSignaturesReelles, dont le
+  // contrat est justement « TOUJOURS les blocs historiques, quelles que
+  // soient les signatures posées »). On ne vide donc les blocs QUE sur le
+  // document qui SORT, jamais sur la référence de correction : les
+  // valeurs attendues d'un élève ne bougent pour AUCUNE cible.
+  const blocsSignatureVides =
+    Boolean(ctx.contreEcriture) && !options.sansSignaturesReelles;
+
+  const champsSignature = blocsSignatureVides
+    ? {
+      'Sign_Operateur_Nom': '',
+      'Sign_Operateur_Qualite': '',
+      'Sign_Operateur_Date': '',
+      'Sign_Detenteur_Nom': '',
+      'Sign_Detenteur_Qualite': '',
+      'Sign_Detenteur_Date': ''
+    }
+    : {
+      'Sign_Operateur_Nom': sigTech ? nomComplet(sigTech)
+        : (ctx.operateurNom ?? ''),
+      'Sign_Operateur_Qualite': sigTech
+        ? (sigTech.qualite ?? qualiteOperateur)
+        : qualiteOperateur,
+      'Sign_Operateur_Date': sigTech ? fmtDateFr(sigTech.dateHeure)
+        : (ctx.operateurNom ? dateFr : ''),
+      'Sign_Detenteur_Nom': sigDet ? nomComplet(sigDet)
+        : (detenteur.raisonSociale ?? ''),
+      'Sign_Detenteur_Qualite': sigDet
+        ? (sigDet.qualite ?? (sigDet.parDelegation
+          ? `Par délégation du détenteur (${sigDet.organisation})`
+          : 'Détenteur de l’équipement'))
+        : 'Détenteur de l’équipement',
+      'Sign_Detenteur_Date': sigDet ? fmtDateFr(sigDet.dateHeure) : dateFr
+    };
+
   // ==========================================================
   // Remplissage : les 72 champs officiels sont TOUS traités
   // (texte « » = volontairement vide, case décochée = volontaire).
@@ -613,22 +734,9 @@ export async function calculerChampsCerfa(store, { source, id }, options = {}) {
     '13_Instal': installationTexte,
     // Cadre 14 — observations
     '14_Observations': observations.join('\n'),
-    // Signatures (réelles en priorité — lot C, C4)
-    'Sign_Operateur_Nom': sigTech ? nomComplet(sigTech)
-      : (ctx.operateurNom ?? ''),
-    'Sign_Operateur_Qualite': sigTech
-      ? (sigTech.qualite ?? qualiteOperateur)
-      : qualiteOperateur,
-    'Sign_Operateur_Date': sigTech ? fmtDateFr(sigTech.dateHeure)
-      : (ctx.operateurNom ? dateFr : ''),
-    'Sign_Detenteur_Nom': sigDet ? nomComplet(sigDet)
-      : (detenteur.raisonSociale ?? ''),
-    'Sign_Detenteur_Qualite': sigDet
-      ? (sigDet.qualite ?? (sigDet.parDelegation
-        ? `Par délégation du détenteur (${sigDet.organisation})`
-        : 'Détenteur de l’équipement'))
-      : 'Détenteur de l’équipement',
-    'Sign_Detenteur_Date': sigDet ? fmtDateFr(sigDet.dateHeure) : dateFr
+    // Signatures (réelles en priorité — lot C, C4 ; blocs VIDES sur une
+    // contre-écriture qui SORT — lot 1 / C1)
+    ...champsSignature
   };
 
   const cases = {
@@ -681,11 +789,20 @@ export async function calculerChampsCerfa(store, { source, id }, options = {}) {
     radio: machine ? (machine.detectionPermanente ? '1' : '2') : null,
     numero: ctx.numero,
     mode: ctx.mode,
-    signatureDataUrl: ctx.signatureDataUrl ?? null,
+    signatureDataUrl: blocsSignatureVides
+      ? null : (ctx.signatureDataUrl ?? null),
     // Tracés des signatures réelles (base64 PNG, lot C C4) — dessinés
-    // dans les zones opérateur et détenteur du formulaire.
-    signatureTechnicienPng: sigTech?.imagePng ?? null,
-    signatureDetenteurPng: sigDet?.imagePng ?? null
+    // dans les zones opérateur et détenteur du formulaire. Aucun tracé
+    // sur une contre-écriture qui sort (lot 1 / C1) : vider le nom et
+    // laisser un paraphe dessiné serait pire que tout.
+    signatureTechnicienPng: blocsSignatureVides
+      ? null : (sigTech?.imagePng ?? null),
+    signatureDetenteurPng: blocsSignatureVides
+      ? null : (sigDet?.imagePng ?? null),
+    // Lot 1 / C1 : { numeroAnnule, motif } si la fiche est une écriture
+    // d'annulation, null sinon — c'est ce fait qui pose le filigrane
+    // « ANNULATION » du PDF (genererCerfaPdf).
+    contreEcriture: ctx.contreEcriture
   };
 }
 
@@ -747,6 +864,24 @@ export async function genererCerfaPdf(store, { source, id }, options = {}) {
   }
   if (champs.signatureDetenteurPng) {
     await dessinerTrace(champs.signatureDetenteurPng, 'Sign_Detenteur_Date');
+  }
+
+  // ---- Filigrane diagonal « ANNULATION » (lot 1 / C1) ----
+  // La mention du cadre 14 dit tout, mais le cadre 14 est en bas de page.
+  // Deux CERFA posés côte à côte sur le bureau d'un inspecteur doivent se
+  // distinguer d'un coup d'œil : c'était le constat 2 du 4e audit
+  // (« indiscernables à l'œil, au numéro près »). Même mécanisme que le
+  // filigrane de formation, placé plus haut pour ne pas le recouvrir.
+  if (champs.contreEcriture) {
+    page.drawText('ANNULATION', {
+      x: 105,
+      y: 430,
+      size: 58,
+      font: police,
+      color: rgb(0.65, 0.1, 0.1),
+      opacity: 0.18,
+      rotate: degrees(45)
+    });
   }
 
   // ---- Filigrane diagonal en mode FORMATION ----
