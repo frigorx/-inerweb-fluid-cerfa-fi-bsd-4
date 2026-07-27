@@ -811,6 +811,52 @@ preparerCoffreFort();
   }
 }
 
+// Lot 0, brique B2 (audit externe #4, 27/07) : la BORNE DE SCELLEMENT est
+// enfin CONFRONTÉE au registre, AU DÉMARRAGE — avant le témoin quotidien,
+// pour que le témoin du jour soit écrit APRÈS que l'anomalie a été dite et
+// journalisée. Le détecteur existait depuis le lot L2, mais on ne
+// l'interrogeait qu'à l'import et au scellement : un retour en arrière fait
+// AU DISQUE (ancienne copie de la base reposée à la main) laissait le
+// fichier voisin à 3 pendant que le registre n'avait plus qu'une écriture
+// scellée, et personne ne faisait la soustraction.
+//
+// ⚠️ CE QUI EST DIT, ET RIEN DE PLUS : deux nombres qui concordent ou non.
+// Jamais « le registre est intact » — recopier la base ET son fichier voisin
+// ensemble rend l'écart nul (limite CONNUE, cf. server/borne-scellement.js).
+// Borne absente ou illisible = INDÉTERMINÉ, jamais une accusation.
+//
+// BEST-EFFORT ABSOLU : jamais fatal, jamais bloquant. Un registre qu'on ne
+// peut plus ouvrir serait pire que le défaut.
+{
+  try {
+    const constat = api.constaterBorneScellement();
+    if (constat.ok === false) {
+      console.error(
+        '\n  [registre] ANOMALIE — la borne de scellement de ce poste et le ' +
+        'registre NE CONCORDENT PAS.');
+      console.error(
+        `  [registre] Borne du poste : ${constat.borne} écriture(s) scellée(s) ` +
+        `jamais atteinte(s) · registre actuel : ${constat.reelles}.`);
+      console.error(
+        '  [registre] Une base ANTÉRIEURE a pu être remise en place à la main. ' +
+        'Vérifiez les archives du coffre-fort et les témoins de scellement.\n');
+      try {
+        db.journaliser({
+          qui: 'système',
+          action: 'REGISTRE_REGRESSION',
+          cible: 'registre',
+          details: `borne ${constat.borne} · ecritures scellees ${constat.reelles}`
+        });
+      } catch {
+        // Journal indisponible : la console a déjà parlé.
+      }
+    }
+  } catch (erreur) {
+    console.warn(
+      `  [registre] Confrontation de la borne impossible : ${erreur.message}`);
+  }
+}
+
 // Scellement externe SIMPLE (lot D du plan audit-proof) : le témoin
 // quotidien — têtes des chaînes, compteurs, intervalle de numéros — est
 // écrit dans le dossier de sauvegarde (synchronisé = il quitte le poste).
