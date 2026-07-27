@@ -401,11 +401,23 @@ try {
     mandataireHttps === null && mandataireClair === null,
     `https : ${mandataireHttps}, clair : ${mandataireClair}`);
 
-  verifier('la réponse HTTPS vient du serveur monté par le banc, pas d\'un intermédiaire',
-    pingRetenu !== null
-      && pingRetenu.pairDistant.adresse === HOTE_LAN
-      && pingRetenu.pairDistant.port === PORT,
-    pingRetenu ? JSON.stringify(pingRetenu.pairDistant) : 'aucun ping retenu');
+  // La PROVENANCE d'une réponse ne se juge que s'il y a EU une réponse.
+  // Quand le serveur n'a pas démarré (certificat illisible, port déjà pris),
+  // la panne est DÉJÀ dite plus haut par « le serveur LAN démarre… » et la
+  // suite est ROUGE : aucun faux vert n'est possible ici. Poser malgré tout
+  // l'échec ci-dessous écrivait un motif FAUX — il ACCUSE un intermédiaire
+  // alors qu'il n'y en a aucun. Or c'est justement le temps de diagnostic
+  // que cette brique cherche à rendre : un faux motif le reprend.
+  // Le `pingRetenu !== null` reste DANS la condition : si le ping cessait un
+  // jour d'être retenu alors que le serveur a démarré, la vérification vire
+  // au rouge au lieu de disparaître en silence.
+  if (pret) {
+    verifier('la réponse HTTPS vient du serveur monté par le banc, pas d\'un intermédiaire',
+      pingRetenu !== null
+        && pingRetenu.pairDistant.adresse === HOTE_LAN
+        && pingRetenu.pairDistant.port === PORT,
+      pingRetenu ? JSON.stringify(pingRetenu.pairDistant) : 'aucun ping retenu');
+  }
 } finally {
   if (enfant) enfant.kill();
   // Laisser le process libérer la base avant de balayer le dossier jetable.
