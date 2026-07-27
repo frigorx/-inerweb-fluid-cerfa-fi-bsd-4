@@ -31,8 +31,14 @@ Franck, sur son compte Google (un assistant ne se connecte pas à un compte à s
    Gérer les déploiements → **archiver / désactiver** le déploiement actif. **Sans
    déploiement actif, les clés publiées ne commandent plus aucun accès** : la porte est
    murée, aussi sûrement que par une révocation, et définitivement.
-3. **Optionnel** : passer l'ancien dépôt GitHub de la v7 en privé, ou le supprimer, s'il
-   n'a plus d'utilité (l'antériorité de la v8 vit dans SON dépôt, pas celui-là).
+3. **Ne rien faire au dépôt GitHub.** Il n'existe **qu'un seul dépôt** :
+   `git remote -v` rend `frigorx/-inerweb-fluid-cerfa-fi-bsd-4` — c'est **le même dépôt**
+   que celui de la v8, et c'est de là que les trois clés v7 ont été extraites (§1-2
+   ci-dessus, commit `77b9640^`). Il n'y a pas de « dépôt de la v7 » séparé à mettre en
+   privé ou à supprimer. Passer CE dépôt en privé ou le supprimer détruirait l'antériorité
+   git de la v8 elle-même — la protection de paternité que le propriétaire a retenue À LA
+   PLACE du chiffrement du code (voir §3, option C, qui le dit correctement). Le geste qui
+   ferme réellement l'exposition est le seul point 2 ci-dessus.
 
 Une fois ces gestes faits, remplir le procès-verbal du §4 (en cochant « service mis hors
 ligne » plutôt que « clés régénérées ») et me le dire : P0-9 est clos.
