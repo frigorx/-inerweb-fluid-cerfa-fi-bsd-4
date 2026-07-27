@@ -146,6 +146,13 @@ try {
   const avertissement = sauvegarde.avertissementDestinationSynchronisee();
   verifier('réglage synchronisé déjà en base → un AVERTISSEMENT est produit',
     avertissement.length > 0 && /nominativ/i.test(avertissement), avertissement);
+  // REVUE : l'avertissement est la SEULE chose que voit un poste déjà réglé
+  // ainsi. Lui dire « changez le réglage » sans plus, c'est laisser croire que
+  // le geste répare tout : les archives DÉJÀ synchronisées, elles, sont
+  // toujours dans le nuage, en clair et nominatives. Le texte doit le dire.
+  verifier('l’avertissement dit que les archives DÉJÀ parties ne reviennent pas',
+    /déjà synchronisées/i.test(avertissement) && /retirez-les/i.test(avertissement),
+    avertissement);
   verifier('réglage synchronisé déjà en base → dossierBackups reste utilisable',
     resolve(sauvegarde.dossierBackups()) === resolve(DEST_ONEDRIVE));
   const rReecriture = appelerRoute(routesSauvegarde, 'definirReglagesSauvegarde',

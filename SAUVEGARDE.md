@@ -135,7 +135,7 @@ Organisation recommandée (qui applique le principe 3-2-1) :
 |---|---|---|
 | 1 — l'originale | Le disque du poste (`backups/`) | **Automatique** : archive au démarrage (si la dernière a plus de 24 h, vérifiée aussitôt) + instantané après chaque écriture validée |
 | 2 — la clé USB | Une **clé USB dédiée**, rangée au bureau, qui ne sert qu'à ça | **Chaque semaine** : copier le dernier ZIP sur la clé |
-| 3 — hors site | L'espace réseau ou le cloud de l'établissement | **Chaque mois** : y déposer le dernier ZIP (chiffré de préférence) |
+| 3 — hors site | L'espace réseau ou le cloud de l'établissement | **Chaque mois** : y déposer le dernier ZIP, **obligatoirement CHIFFRÉ** (voir l'encadré « Données personnelles et synchronisation » plus bas) |
 
 Calendrier simple à retenir : **le vendredi, la clé USB ; le premier du mois, le réseau.**
 Cinq minutes par semaine suffisent. Gardez au moins les trois dernières copies sur
@@ -151,13 +151,18 @@ chaque support (inutile de tout garder : les ZIP sont datés, les plus anciens p
 - **Le logiciel l'applique désormais lui-même** (lot 0 / B3, 27/07/2026) : le
   réglage « Dossier de destination des sauvegardes » **refuse** un dossier
   situé sous OneDrive, Google Drive ou Dropbox, et le dit — même règle que
-  pour la base vive, qui y était déjà interdite (`IWF_CHEMIN_BASE`). Le refus
+  pour la base vive, qui y était déjà interdite (`db.verifierEmplacementBase`,
+  dérogation `IWF_AUTORISER_BASE_SYNCHRONISEE=1`). Le refus
   vit dans le serveur : il vaut pour l'écran **comme pour l'API**. Porte de
   sortie assumée, réservée à un usage documenté :
   `IWF_AUTORISER_SAUVEGARDE_SYNCHRONISEE=1`.
   Un poste déjà réglé ainsi **continue de sauvegarder** : au démarrage, le
   serveur affiche un avertissement, il ne bloque pas (une sauvegarde qui ne se
   fait plus serait pire). Corrigez le réglage à la première occasion.
+  ⚠️ **Corriger le réglage ne rappelle RIEN.** Les archives déjà déposées dans
+  l'espace synchronisé y restent, en clair et nominatives : allez les retirer
+  vous-même de cet espace (et de sa corbeille en ligne). Le logiciel arrête
+  l'hémorragie, il ne nettoie pas ce qui est déjà parti.
 - Si vous synchronisez un dossier vers un espace en ligne (geste recommandé
   du témoin de scellement), **ne synchronisez QUE le sous-dossier
   `backups/scellement/`** : les témoins quotidiens ne contiennent que des

@@ -148,7 +148,9 @@ function avertissementDestinationSynchronisee() {
   return 'Le dossier de sauvegarde configuré est dans un espace synchronisé : '
     + resolu + '. Les archives automatiques y partent EN CLAIR et NOMINATIVES. '
     + 'Changez ce réglage (écran Sauvegarde) pour un dossier local, et réservez '
-    + 'le nuage aux sauvegardes manuelles CHIFFRÉES.';
+    + 'le nuage aux sauvegardes manuelles CHIFFRÉES. Attention : changer le '
+    + 'réglage ne RAPPELLE rien — les archives DÉJÀ synchronisées restent dans '
+    + 'le nuage, en clair ; retirez-les vous-même de cet espace.';
 }
 
 /**
