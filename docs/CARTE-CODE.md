@@ -208,10 +208,40 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   document qui SORT** : `sansSignaturesReelles` (la référence de correction
   élève) garde les blocs historiques sur TOUTES les cibles, sans quoi
   l'usage quotidien — le sujet d'exercice — serait cassé.
-  `test-contre-ecriture` (DOUBLÉE, 35 vérifs, les quatre cas tenus :
+  ⭐ **REVUE ADVERSARIALE du lot (3 constats tirés, corrigés) : (A) la
+  phrase « LES QUANTITÉS PORTÉES CI-DESSOUS SONT RETIRÉES DU REGISTRE
+  (VALEURS NÉGATIVES) » était FAUSSE — le cadre 11 porte AUSSI
+  `11_Quantite`, la charge NOMINALE, positive et intacte, et sur la
+  contre-écriture d'un CONTRÔLE c'était la SEULE quantité imprimée : le
+  document affirmait qu'une masse positive de 10,00 kg était retirée du
+  registre. La mention est scindée (`SUITE_MENTION_CONTRE_ECRITURE` = « ET
+  LA RETIRE DU REGISTRE. ») et `MENTION_QUANTITES_NEGATIVES` n'est posée
+  que si une case A/B/C/D/E/D+E est RÉELLEMENT imprimée — condition
+  DÉRIVÉE de la sortie, jamais recopiée du type d'intervention, d'où les
+  lignes du cadre 14 assemblées dans `calculerChampsCerfa` et non dans
+  `assemblerContexte`. (B) vider les blocs de signature faisait
+  DISPARAÎTRE du document le nom de qui a passé l'annulation (il y était
+  avant le lot, au mauvais endroit) : `PREFIXE_ENREGISTREE_PAR` le remet
+  comme un FAIT du registre, hors de toute case de signature, avec la
+  raison des cases vides — même donnée que la colonne « Technicien » de
+  `mouvements.csv`, qui la tire déjà du validateur. Le doute retire
+  l'allègement, jamais l'obligation. (C) les mentions d'annulation sont
+  écrites MOT POUR MOT par l'application : laissées dans la comparaison de
+  `correction.js`, elles étaient exigées de l'élève (mesuré : 95 % sur une
+  copie parfaite). `PREFIXES_SYSTEME_ANNULATION` les écarte des DEUX
+  côtés, comme MODE FORMATION et la mention de réemploi ; « Cause de
+  l'écriture annulée » reste exigée, c'est une DONNÉE. (D) ce nom est
+  résolu par la FICHE VIVANTE via `validateurId` (repli sur le champ figé
+  seulement s'il n'y a pas d'identifiant) — comme `mouvements.csv` : le
+  prendre au champ figé aurait re-nommé en clair, sur le CERFA voisin du
+  MÊME dossier scellé, une personne que le COFFRE DES IDENTITÉS venait de
+  pseudonymiser.
+  `test-contre-ecriture` (DOUBLÉE, 50 vérifs, les quatre cas tenus :
   mouvement signé, non signé, correction de copie, contre-écriture)**),
   `correction.js` (correction copie élève — TOUJOURS les blocs de
-  signature historiques, `sansSignaturesReelles`), `visualiseur.js` (PDF.js),
+  signature historiques, `sansSignaturesReelles` ; mentions SYSTÈME du
+  cadre 14 écartées des deux côtés : MODE FORMATION, réemploi,
+  `PREFIXES_SYSTEME_ANNULATION`), `visualiseur.js` (PDF.js),
   `conserve.js` (lot C C3b : sert le PDF CONSERVÉ d'une fiche officielle
   figée — les DEUX portes, mouvement ET contrôle lié —, empreinte vérifiée
   contre `hashPdfFinal` scellé, jamais le générateur, jamais de repli).

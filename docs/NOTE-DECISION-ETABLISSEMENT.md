@@ -452,7 +452,7 @@ grep -rn "MENTION_FORMATION\|MODE FORMATION\|NON OFFICIEL\|non officiel" v8/js/ 
 ```
 
 Elle ne rend **rien**. La contre-épreuve est la même commande sans le filtre : elle rend
-vingt-trois lignes, toutes dans `v8/js/cerfa/`.
+vingt-cinq lignes, toutes dans `v8/js/cerfa/`.
 
 > **Consigne d'attente.** Tant que le point n'est pas tranché par l'établissement, **aucun
 > des vingt et un documents ci-dessus ne doit être remis à un tiers**, et l'ajout de la ligne

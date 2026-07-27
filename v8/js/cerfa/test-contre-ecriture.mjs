@@ -37,9 +37,10 @@
 import zlib from 'node:zlib';
 import {
   genererCerfaPdf, calculerChampsCerfa, chargerPdfLib,
-  MENTION_CONTRE_ECRITURE, PREFIXE_MOTIF_ANNULATION, PREFIXE_CAUSE_ANNULEE
+  MENTION_CONTRE_ECRITURE, PREFIXE_MOTIF_ANNULATION, PREFIXE_CAUSE_ANNULEE,
+  MENTION_QUANTITES_NEGATIVES, PREFIXE_ENREGISTREE_PAR
 } from './generateur.js';
-import { corrigerCerfaEleve } from './correction.js';
+import { corrigerCerfaEleve, comparerChamps } from './correction.js';
 
 const NOM_STORE = process.argv[2] ?? 'demo';
 
@@ -264,6 +265,35 @@ const pdfContreCharge = await genererCerfaPdf(store,
 const pdfContreRecup = await genererCerfaPdf(store,
   { source: 'mouvement', id: contreRecup.id });
 
+// (E) REVUE ADVERSARIALE — un CONTRÔLE PÉRIODIQUE : son cadre 11 ne porte
+// AUCUNE quantité d'intervention, seulement la charge NOMINALE de
+// l'équipement. C'est le cas qui a mis en défaut la première rédaction de
+// la mention (elle annonçait des « quantités ci-dessous » négatives alors
+// que la seule quantité imprimée était cette charge nominale, positive).
+// ⚠️ Sur une machine À PART : un contrôle du registre se recoupe avec tout
+// mouvement de MÊME machine et MÊME date (cadre 10), et changerait les
+// valeurs attendues des fiches (a) et (b) — le décor casserait la section 4
+// sans qu'aucun correctif soit en cause. Piège payé en le tirant.
+const machineCtrl = await store.createMachine({
+  designation: 'Chambre froide C1 (contrôle)', fluide: 'R-410A',
+  chargeNominaleKg: 12, chargeActuelleKg: 12, operateur: 'Testeur C1'
+});
+const brouillonCtrl = await store.creerMouvement({
+  mode: 'FORMATION', type: 'CONTROLE_PERIODIQUE', date: '2026-07-27',
+  machineId: machineCtrl.id, fluide: 'R-410A', quantiteKg: 0,
+  peseeAvantKg: null, peseeApresKg: null, technicien: 'Régis Delaunay',
+  controle: { statutControle: 'CONFORME', detecteurId: null }
+});
+await store.soumettreMouvement(brouillonCtrl.id);
+await store.validerMouvement(brouillonCtrl.id, validateur.id);
+const controlePerio = (await store.getMouvements())
+  .find((mv) => mv.id === brouillonCtrl.id);
+const contreControle = await store.annulerParContreEcriture(
+  controlePerio.id, 'Contrôle saisi sur la mauvaise machine', validateur.id);
+const pdfContreControle = await genererCerfaPdf(store,
+  { source: 'mouvement', id: contreControle.id });
+const litContreCtrl = await relire(pdfContreControle.octets);
+
 const litSigne = await relire(pdfSigneAvant.octets);
 const litExercice = await relire(pdfExercice.octets);
 const litRecup = await relire(pdfRecup.octets);
@@ -320,10 +350,55 @@ verifier('la mention d’annulation est en TÊTE du cadre 14',
 verifier('la mention nomme le NUMÉRO de l’écriture annulée',
   obsContre.includes(chargeSignee.numero),
   `numéro attendu = ${chargeSignee.numero}`);
-verifier('la mention dit que les quantités sont RETIRÉES du registre',
-  obsContre.includes('RETIRÉES DU REGISTRE'));
+verifier('la mention dit que l’écriture annulée est RETIRÉE du registre',
+  obsContre.includes('RETIRE DU REGISTRE'));
 verifier('le mécanisme réutilisé est celui des mentions du cadre 14 (pas un second)',
   obsContre.includes('MODE FORMATION'));
+
+// ⚠️ REVUE ADVERSARIALE — LA PHRASE NE PROMET QUE CE QU'ELLE TIENT.
+// Première rédaction : « LES QUANTITÉS PORTÉES CI-DESSOUS SONT RETIRÉES
+// DU REGISTRE (VALEURS NÉGATIVES) ». Or le cadre 11 porte AUSSI
+// `11_Quantite`, la charge NOMINALE de l'équipement — positive, intacte,
+// et toujours imprimée. Sur la contre-écriture d'un CONTRÔLE, c'était même
+// la SEULE quantité du cadre : le document affirmait qu'une masse positive
+// était retirée du registre. Le négatif n'est annoncé que s'il est écrit.
+verifier('l’annonce du NÉGATIF accompagne une contre-écriture qui en porte',
+  obsContre.includes(MENTION_QUANTITES_NEGATIVES),
+  `cadre 14 = « ${obsContre} »`);
+verifier('la charge NOMINALE du cadre 11 reste positive et intacte',
+  litContre('11_Quantite') === litSigne('11_Quantite')
+  && !litContre('11_Quantite').startsWith('-'),
+  `nominale origine=${litSigne('11_Quantite')} `
+  + `contre=${litContre('11_Quantite')}`);
+
+const obsContreCtrl = litContreCtrl('14_Observations');
+verifier('contre-écriture d’un CONTRÔLE : aucune quantité d’intervention imprimée',
+  ['11_QA', '11_QB', '11_QC', '11_QD', '11_QE', '11_QDE']
+    .every((nom) => litContreCtrl(nom) === ''),
+  ['11_QA', '11_QB', '11_QC', '11_QD', '11_QE', '11_QDE']
+    .map((n) => `${n}=${litContreCtrl(n)}`).join(' '));
+verifier('contre-écriture d’un CONTRÔLE : elle annonce quand même l’annulation',
+  obsContreCtrl.startsWith(MENTION_CONTRE_ECRITURE)
+  && obsContreCtrl.includes(controlePerio.numero));
+verifier('contre-écriture d’un CONTRÔLE : elle ne prétend RIEN retirer en négatif',
+  !obsContreCtrl.includes(MENTION_QUANTITES_NEGATIVES),
+  `cadre 14 = « ${obsContreCtrl} »`);
+// La garde ci-dessus ne suffit pas : la phrase fautive pouvait vivre dans
+// N'IMPORTE QUELLE ligne du cadre. L'invariant se dit en entier — le cadre
+// 14 parle de quantités négatives SI ET SEULEMENT SI le cadre 11 en porte.
+const parleDeNegatif = (texte) =>
+  /négatif|negatif|négative|negative|retirée|retiree/i.test(texte)
+  && /quantité|quantite/i.test(texte);
+verifier('cadre 14 : « quantités négatives » annoncées SI ET SEULEMENT SI écrites',
+  parleDeNegatif(obsContre) === true
+  && parleDeNegatif(obsContreCtrl) === false,
+  `avec quantité → ${parleDeNegatif(obsContre)} · `
+  + `sans quantité → ${parleDeNegatif(obsContreCtrl)} · `
+  + `cadre 14 du contrôle = « ${obsContreCtrl} »`);
+verifier('… alors que la charge nominale, elle, est bien imprimée et POSITIVE',
+  litContreCtrl('11_Quantite') !== ''
+  && !litContreCtrl('11_Quantite').startsWith('-'),
+  `11_Quantite = ${litContreCtrl('11_Quantite')}`);
 
 // Visible « pas dans un coin » : le cadre 14 est en bas de page, donc le
 // PDF porte AUSSI un filigrane en diagonale. Deux CERFA posés côte à côte
@@ -428,6 +503,90 @@ verifier('(d) contre-écriture : les six blocs de signature sont VIDES',
     { source: 'mouvement', id: chargeExercice.id });
   verifier('une écriture ordinaire n’est JAMAIS marquée contre-écriture',
     champs.contreEcriture === null);
+}
+
+// (e) ⚠️ REVUE ADVERSARIALE — VIDER N'EST PAS EFFACER.
+// Vider les blocs était juste : personne n'a signé. Mais le nom du
+// validateur ne figurait alors PLUS NULLE PART sur la fiche, alors qu'il
+// y était avant le lot (au mauvais endroit : dans la case de signature).
+// « Le doute retire l'ALLÈGEMENT, jamais l'OBLIGATION » : l'identité
+// revient comme un FAIT du registre, hors de toute case de signature —
+// c'est déjà ce que fait la colonne « Technicien » de mouvements.csv.
+verifier('(e) la fiche DIT qui a passé la contre-écriture',
+  obsContre.includes(`${PREFIXE_ENREGISTREE_PAR} : ${contreCharge.technicien}`),
+  `technicien au registre = ${contreCharge.technicien} · `
+  + `cadre 14 = « ${obsContre} »`);
+verifier('(e) … et elle explique POURQUOI les cases de signature sont vides',
+  obsContre.includes('aucune signature manuscrite'));
+verifier('(e) ce nom n’est INSCRIT dans AUCUNE case de signature',
+  CHAMPS_SIGNATURE.every((nom) => litContre(nom) === ''));
+verifier('(e) une écriture ordinaire ne porte jamais cette ligne',
+  !litExercice('14_Observations').includes(PREFIXE_ENREGISTREE_PAR));
+{
+  // ⚠️ RGPD (lot E2) : le nom vient de la FICHE VIVANTE, jamais du champ
+  // figé — sinon une personne mise AU COFFRE serait pseudonymisée dans
+  // `mouvements.csv` et re-nommée en clair sur le CERFA voisin, dans le
+  // MÊME dossier scellé. On le tire en renommant la fiche : le document
+  // suit, alors que le champ figé du registre, lui, ne bouge pas.
+  await store.updatePersonne(validateur.id, { nom: 'Élève', prenom: '2026-07' });
+  const apres = await calculerChampsCerfa(store,
+    { source: 'mouvement', id: contreCharge.id });
+  const gele = (await store.getMouvements())
+    .find((mv) => mv.id === contreCharge.id).technicien;
+  verifier('(e) le nom suit la FICHE VIVANTE (pseudonyme si la personne est au coffre)',
+    apres.texte['14_Observations']
+      .includes(`${PREFIXE_ENREGISTREE_PAR} : 2026-07 Élève`)
+    && gele === 'Régis Delaunay',
+    `champ figé au registre = « ${gele} » · cadre 14 = `
+    + `« ${apres.texte['14_Observations'].split('\n')[3] ?? ''} »`);
+  await store.updatePersonne(validateur.id,
+    { nom: 'Delaunay', prenom: 'Régis' });
+}
+
+// (f) ⚠️ REVUE ADVERSARIALE — L'USAGE QUOTIDIEN, MESURÉ.
+// Les lignes ajoutées au cadre 14 sont écrites MOT POUR MOT par
+// l'application, comme MODE FORMATION et comme la mention de réemploi.
+// Le lot les avait laissées dans la comparaison : un élève à qui l'on
+// donne une contre-écriture comme sujet était attendu sur la phrase
+// canonique « ÉCRITURE D'ANNULATION — … », qu'il ne peut pas écrire
+// (mesuré : 95 % sur une copie par ailleurs parfaite).
+{
+  const attendu = await calculerChampsCerfa(store,
+    { source: 'mouvement', id: contreCharge.id },
+    { sansSignaturesReelles: true });
+  const copie = {
+    texte: { ...attendu.texte },
+    cases: { ...attendu.cases },
+    radio: attendu.radio
+  };
+  // L'élève écrit la seule ligne qui soit une DONNÉE (la cause de
+  // l'écriture annulée) et ignore les phrases de l'application.
+  copie.texte['14_Observations'] =
+    String(attendu.texte['14_Observations'] ?? '').split('\n')
+      .filter((l) => l.startsWith(PREFIXE_CAUSE_ANNULEE)).join('\n');
+  const rendu = comparerChamps(attendu, copie);
+  const ligne14 = rendu.lignes.find((l) => l.nom === '14_Observations');
+  verifier('(f) les mentions SYSTÈME de l’annulation ne sont pas exigées de l’élève',
+    ligne14.statut === 'OK',
+    `statut du cadre 14 = ${ligne14.statut} · copie = `
+    + `« ${copie.texte['14_Observations']} »`);
+  verifier('(f) … et la DONNÉE, elle, reste exigée',
+    String(attendu.texte['14_Observations']).includes(PREFIXE_CAUSE_ANNULEE));
+}
+{
+  // Le même élève qui n'écrit RIEN au cadre 14 doit, lui, être repris :
+  // écarter les mentions système ne doit pas éteindre le champ.
+  const attendu = await calculerChampsCerfa(store,
+    { source: 'mouvement', id: contreCharge.id },
+    { sansSignaturesReelles: true });
+  const copie = {
+    texte: { ...attendu.texte, '14_Observations': '' },
+    cases: { ...attendu.cases }, radio: attendu.radio
+  };
+  const ligne14 = comparerChamps(attendu, copie).lignes
+    .find((l) => l.nom === '14_Observations');
+  verifier('(f) un cadre 14 laissé VIDE reste compté « Oublié »',
+    ligne14.statut === 'MANQUANT', `statut = ${ligne14.statut}`);
 }
 
 // ============================================================

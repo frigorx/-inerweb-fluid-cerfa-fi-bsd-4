@@ -104,15 +104,48 @@ export const MENTION_FORMATION = 'MODE FORMATION — DOCUMENT NON OFFICIEL — '
 export const MENTION_CONTRE_ECRITURE =
   'ÉCRITURE D’ANNULATION — CETTE FICHE ANNULE L’ÉCRITURE';
 
-/** Suite de la mention ci-dessus, après le numéro de l'écriture annulée. */
-export const SUITE_MENTION_CONTRE_ECRITURE =
-  'LES QUANTITÉS PORTÉES CI-DESSOUS SONT RETIRÉES DU REGISTRE '
-  + '(VALEURS NÉGATIVES).';
+/** Suite de la mention ci-dessus, après le numéro de l'écriture annulée.
+ *  ⚠️ REVUE ADVERSARIALE DU LOT : la première rédaction disait « LES
+ *  QUANTITÉS PORTÉES CI-DESSOUS SONT RETIRÉES DU REGISTRE (VALEURS
+ *  NÉGATIVES) », et c'était FAUX de deux façons, tiré sur pièces :
+ *  — le cadre 11 porte AUSSI `11_Quantite`, la quantité NOMINALE de
+ *    l'équipement (« 4,50 »), qui est positive et que rien ne retire ;
+ *  — sur la contre-écriture d'un CONTRÔLE, AUCUNE quantité d'intervention
+ *    n'est imprimée : la seule quantité « ci-dessous » était justement
+ *    cette charge nominale. Le document affirmait donc qu'une masse
+ *    positive de 10,00 kg était retirée du registre.
+ *  La phrase ne promet plus que ce qu'elle peut tenir ; le négatif est
+ *  annoncé à part, et SEULEMENT quand une case du cadre 11 le porte. */
+export const SUITE_MENTION_CONTRE_ECRITURE = 'ET LA RETIRE DU REGISTRE.';
+
+/** Lot 1 / C1 (revue) : annoncée UNIQUEMENT si une case de quantité
+ *  d'intervention du cadre 11 (A, B, C, D, E, D+E) est réellement
+ *  imprimée — la condition est DÉRIVÉE de ce qui sort, jamais recopiée
+ *  du type d'intervention. */
+export const MENTION_QUANTITES_NEGATIVES =
+  'Les quantités d’intervention du cadre 11 sont portées en NÉGATIF '
+  + '(retrait) ; la quantité nominale de l’équipement n’est pas affectée.';
 
 /** Lot 1 / C1 : le MOTIF de l'annulation était scellé dans l'empreinte et
  *  consigné au journal, mais imprimé sur AUCUN document — alors que c'est
  *  lui qui justifie l'annulation devant un contrôle. */
 export const PREFIXE_MOTIF_ANNULATION = 'Motif de l’annulation';
+
+/** Lot 1 / C1 (revue) : QUI a passé la contre-écriture. Vider les blocs
+ *  de signature était juste — personne n'a signé — mais le nom du
+ *  validateur ne figurait PLUS NULLE PART sur la fiche, alors qu'il y
+ *  était avant le lot (au mauvais endroit : dans la case de signature).
+ *  Le doute retire un allègement, jamais une obligation : l'identité
+ *  revient sur le document comme un FAIT du registre, hors de toute case
+ *  de signature, et la phrase dit pourquoi ces cases sont vides. Même
+ *  donnée que la colonne « Technicien » de `mouvements.csv`, qui la tire
+ *  déjà du validateur pour une contre-écriture. */
+export const PREFIXE_ENREGISTREE_PAR = 'Contre-écriture enregistrée par';
+
+/** Fin de la ligne ci-dessus : elle explique les cases vides. */
+export const SUITE_ENREGISTREE_PAR =
+  'aucune signature manuscrite n’est recueillie sur une contre-écriture, '
+  + 'elle est scellée sur l’identité du validateur.';
 
 /** Lot 1 / C1 : sur une contre-écriture, la « cause » reprise de
  *  l'écriture d'origine est celle de l'opération ANNULÉE — le libellé le
@@ -290,22 +323,32 @@ async function assemblerContexte(store, { source, id }, options = {}) {
     // désormais, en tête du cadre 14, qu'il annule, LAQUELLE (son numéro)
     // et POURQUOI (le motif, jusqu'ici scellé dans l'empreinte et écrit
     // au journal, imprimé sur aucune fiche).
+    // ⚠️ REVUE : les LIGNES de la mention ne se posent plus ici mais dans
+    // `calculerChampsCerfa`, seul endroit où l'on sait ce que le cadre 11
+    // porte VRAIMENT (une contre-écriture de contrôle n'imprime aucune
+    // quantité d'intervention). Ici, on ne pose que le FAIT.
     if (mouvement.contreEcritureDe) {
       const annulee = mouvements.find(
         (mv) => mv.id === mouvement.contreEcritureDe) || null;
+      // Qui a passé l'écriture d'annulation (le validateur : c'est lui que
+      // le store inscrit aussi en `technicien`).
+      // ⚠️ RÉSOLU PAR LA FICHE VIVANTE, exactement comme la colonne
+      // « Technicien » de `mouvements.csv` (lot E2) : si la personne est
+      // AU COFFRE DES IDENTITÉS, c'est son pseudonyme qui sort. Nommer la
+      // même personne autrement dans deux pièces du MÊME dossier scellé
+      // — et rendre au passage l'identité que le coffre venait de retirer
+      // — serait pire que le défaut corrigé. Repli sur le champ figé
+      // seulement s'il n'y a pas d'identifiant (résidu, plan E2 §9).
+      const auteur = mouvement.validateurId
+        ? personnel.find((p) => p.id === mouvement.validateurId) : null;
       contexte.contreEcriture = {
         numeroAnnule: annulee?.numero ?? null,
-        motif: mouvement.motif ? String(mouvement.motif).trim() : null
+        motif: mouvement.motif ? String(mouvement.motif).trim() : null,
+        enregistreePar: auteur
+          ? `${auteur.prenom} ${auteur.nom}`.trim()
+          : (mouvement.technicien
+            ? String(mouvement.technicien).trim() : null)
       };
-      contexte.observations.push(
-        `${MENTION_CONTRE_ECRITURE} `
-        + `${contexte.contreEcriture.numeroAnnule
-          ?? '(numéro introuvable au registre)'} : `
-        + SUITE_MENTION_CONTRE_ECRITURE);
-      if (contexte.contreEcriture.motif) {
-        contexte.observations.push(
-          `${PREFIXE_MOTIF_ANNULATION} : ${contexte.contreEcriture.motif}`);
-      }
     }
     if (mouvement.causeMouvement) {
       // IM-14 : la cause saisie est reportée au cadre 14 (observations).
@@ -610,6 +653,35 @@ export async function calculerChampsCerfa(store, { source, id }, options = {}) {
 
   // ---- Cadre 14 — observations (+ mention formation, + mention mélange) ----
   const observations = [...ctx.observations];
+  // Lot 1 / C1 + sa REVUE : les lignes d'une écriture d'ANNULATION sont
+  // posées ICI, en TÊTE du cadre, parce que c'est le seul endroit où l'on
+  // sait ce que le cadre 11 imprime réellement. La phrase des valeurs
+  // négatives est DÉRIVÉE des cases produites (jamais du type
+  // d'intervention) : sur la contre-écriture d'un CONTRÔLE, aucune case de
+  // quantité d'intervention ne sort, et l'annonce aurait désigné la seule
+  // quantité imprimée — la charge NOMINALE, positive et intacte.
+  if (ctx.contreEcriture) {
+    const quantiteImprimee = [qA, qB, qC, qD, qE, qDE]
+      .some((valeur) => valeur !== '');
+    const enTete = [
+      `${MENTION_CONTRE_ECRITURE} `
+      + `${ctx.contreEcriture.numeroAnnule
+        ?? '(numéro introuvable au registre)'} `
+      + SUITE_MENTION_CONTRE_ECRITURE
+    ];
+    if (quantiteImprimee) enTete.push(MENTION_QUANTITES_NEGATIVES);
+    if (ctx.contreEcriture.motif) {
+      enTete.push(
+        `${PREFIXE_MOTIF_ANNULATION} : ${ctx.contreEcriture.motif}`);
+    }
+    if (ctx.contreEcriture.enregistreePar) {
+      enTete.push(
+        `${PREFIXE_ENREGISTREE_PAR} : ${ctx.contreEcriture.enregistreePar}`
+        + `${ctx.date ? ` le ${fmtDateFr(ctx.date)}` : ''} — `
+        + SUITE_ENREGISTREE_PAR);
+    }
+    observations.unshift(...enTete);
+  }
   if (mentionMelange) observations.push(mentionMelange);
   if (formation) observations.push(MENTION_FORMATION);
 
