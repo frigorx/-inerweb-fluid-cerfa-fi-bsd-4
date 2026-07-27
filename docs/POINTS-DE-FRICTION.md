@@ -836,6 +836,22 @@ adversariale qui trouve, pas la suite de tests. Un correctif n'est pas un progr�
 qu'il n'a pas été attaqué. Et un voyant vert n'autorise à conclure qu'une chose : rien
 de ce qui était déjà surveillé n'a bougé.
 
+**Et parfois le voyant n'a même rien tiré (constat P2-1, audit externe #4 du
+27/07/2026).** Ce constat porte sur le **banc d'essai** `server/test-lan-https.mjs`,
+**jamais sur le produit** : le serveur, lui, n'a pas changé et refuse toujours le clair
+sur le port LAN. Le banc parlait à l'adresse de bouclage 127.0.0.2 par l'agent HTTP
+**global** de Node — détourné par `NODE_USE_ENV_PROXY`, alors que le `NO_PROXY` d'un
+poste ne couvre en général que 127.0.0.1. L'auditeur y a rencontré un **faux rouge**
+(la suite échouait sous mandataire complet). En le tirant, on a trouvé pire : un **faux
+vert**. Avec `HTTP_PROXY` renseigné et `HTTPS_PROXY` absent — un établissement qui ne
+filtre que le trafic en clair —, la suite affichait **11 OK / 0 échec** alors que les
+deux vérifications portant toute la propriété « aucun repli HTTP en clair sur le port
+LAN » étaient parties au mandataire et **n'avaient jamais interrogé le serveur**. Un
+faux rouge se voit ; un faux vert, non : c'est lui le danger. Fermé par des agents
+dédiés dans le code du test (jamais par un `NO_PROXY` élargi, qui dépendrait du poste)
+**et** par une cinquième famille de vérifications qui rend la suite rouge si ces agents
+disparaissent.
+
 ---
 
 ## Ce que ce document ne couvre pas
