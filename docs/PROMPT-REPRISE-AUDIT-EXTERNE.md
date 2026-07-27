@@ -70,7 +70,9 @@ et trois tests qui *ne pouvaient pas échouer*.
 2. le **modèle de menace s'arrête à l'accès disque** — qui a la main sur le fichier de base
    peut le remplacer ; les défenses visent le canal applicatif.
 3. le **mode Officiel n'a jamais tourné en production**.
-4. certaines **valeurs réglementaires attendent la confirmation externe** (dossier T3).
+4. certaines **valeurs réglementaires attendaient la confirmation externe** (dossier T3) —
+   **ce visa a été abandonné le 26/07/2026** : elles restent lues au plus strict, sans
+   confirmation extérieure à venir (§ 6).
 5. le **poste unique** est un point de défaillance.
 
 ---
@@ -146,10 +148,13 @@ commit. Revue adversariale avant la PR.
   Franck.** Règle absolue du projet. Si le rapport dit « le seuil est 5 kg », tu vérifies sur
   le texte primaire, tu proposes, tu attends. Sauf délégation explicite — et dans ce cas,
   trancher **« le plus réglementaire » = jamais moins de contrôles qu'exigé**.
-- **Ne pas rouvrir le mode Officiel de ta propre initiative.** La réouverture est gatée par le
-  visa T3 — la relecture par un organisme agréé, seule à pouvoir confirmer les valeurs
-  réglementaires encore en attente. Si le rapport recommande la réouverture, cela ne lève pas
-  le visa : on le consigne et on le remonte à Franck.
+- **Ne pas rouvrir le mode Officiel de ta propre initiative.** Le visa T3 (relecture par un
+  organisme agréé) a été abandonné le 26/07/2026 : un organisme agréé ne rend pas d'avis sur
+  l'outil d'un tiers. La réouverture est désormais gatée par la réunion de trois choses —
+  décision écrite de l'établissement, pilote mené en parallèle sans écart, risques résiduels
+  acceptés nommément (`docs/NOTE-DECISION-ETABLISSEMENT.md` §4, `docs/REGISTRE-DES-
+  ARBITRAGES.md:481`). Si le rapport recommande la réouverture, cela ne réunit pas ces trois
+  choses : on le consigne et on le remonte à Franck.
 - **Ne pas se précipiter sur le premier constat.** L'inventaire complet d'abord : c'est lui
   qui révèle les racines communes.
 
@@ -188,12 +193,16 @@ commit. Revue adversariale avant la PR.
 
 ## 6. Ce qui est gaté par Franck (ne pas décider à sa place)
 
-- **Réouverture du mode Officiel** — attend le visa T3 (organisme agréé). Le parcours est
-  prêt : `node outils/repetition-generale-officiel.mjs` le rejoue verrou ouvert dans une
-  copie (41 vérifications vertes) sans jamais toucher au verrou de production.
-- **T3** — dossier prêt à envoyer (`docs/T3-DOSSIER-RELECTURE-EXTERNE.md`), 11 questions à un
-  organisme agréé + 6 au délégué à la protection des données. **Chemin critique** : c'est le
-  seul délai qui ne dépend pas de nous.
+- **Réouverture du mode Officiel** — attend la réunion des trois choses qui remplacent le
+  visa T3 (abandonné le 26/07/2026, organisme agréé) : décision écrite de l'établissement,
+  pilote mené en parallèle sans écart, risques résiduels acceptés nommément
+  (`docs/NOTE-DECISION-ETABLISSEMENT.md` §4). Le parcours est prêt :
+  `node outils/repetition-generale-officiel.mjs` le rejoue verrou ouvert dans une copie
+  (41 vérifications vertes) sans jamais toucher au verrou de production.
+- **T3 abandonné le 26/07/2026** — un organisme agréé délivre des attestations de capacité,
+  il ne rend pas d'avis sur l'outil d'un tiers ; le dossier préparé
+  (`docs/T3-DOSSIER-RELECTURE-EXTERNE.md`) ne sera pas envoyé. Voir
+  `docs/NOTE-DECISION-ETABLISSEMENT.md` §4.
 - **P0-9** — la v7 étant abandonnée, désactiver le déploiement Apps Script
   (`docs/P0-9-REVOCATION-CLES-V7.md` §0).
 - **Catalogue de fluides lot 2** — `outils/semer-catalogue-fluides.mjs` (essai à blanc par

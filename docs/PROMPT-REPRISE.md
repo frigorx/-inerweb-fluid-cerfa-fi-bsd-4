@@ -71,7 +71,12 @@
 > (`docs/PLAN-B3-SIGNATURE.md` §6) ; (b) boutons « Arrêter »/« Démanteler » de la
 > vue Parc : griser ou laisser le refus en infobulle (présentation, pas sécurité).
 >
-> **RESTE DE L'AUDIT, hors code** : T3 (chemin critique) · P0-9 · chiffrement du
+> **RESTE DE L'AUDIT, hors code** : **T3 abandonné le 26/07/2026** (un organisme
+> agréé ne rend pas d'avis sur l'outil d'un tiers — la réouverture du mode
+> Officiel ne dépend plus d'un visa mais de la réunion de trois choses : décision
+> écrite de l'établissement, pilote mené en parallèle sans écart, risques
+> résiduels acceptés nommément ; voir `docs/NOTE-DECISION-ETABLISSEMENT.md` §4 et
+> `docs/REGISTRE-DES-ARBITRAGES.md:481`) · P0-9 · chiffrement du
 > poste et sauvegarde hors site · RGPD/AIPD · paquet de livraison complet (SBOM,
 > licences, actifs) — le paquet d'audit exclut par construction les bibliothèques
 > et le gabarit CERFA, ce qui explique les échecs de tests relevés par
