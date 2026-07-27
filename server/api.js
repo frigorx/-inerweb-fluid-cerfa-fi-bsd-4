@@ -4662,6 +4662,24 @@ const HANDLERS = {
         technicien: `${validateur.prenom} ${validateur.nom}`,
         motif: motifNet,
         validateurId,
+        // Lot 1 / C2 (27/07) : QUI a fait cette écriture. La colonne
+        // « Exécuté par » de mouvements.csv sortait VIDE pour toute
+        // contre-écriture, dans un dossier d'audit SCELLÉ : un inspecteur
+        // lisait une écriture qui a modifié le registre sans savoir de qui
+        // elle était. L'information EXISTE — c'est la personne qui a
+        // demandé l'annulation. On ne la lit PAS du corps de la requête
+        // (`params.executeParId` est ignoré ici, comme il l'est déjà) :
+        // on prend la fiche du VALIDATEUR, résolue par verifierValidateur
+        // et contrainte à la personne connectée par
+        // exigerValidateurDeSession — l'identité vient de la session.
+        // ⚠ Ce champ ENTRE dans l'empreinte v2 (CHAMPS_HASH_MOUVEMENT_V2).
+        // Rien n'est recalculé rétroactivement : l'empreinte est scellée à
+        // la CRÉATION, les contre-écritures déjà enregistrées gardent leur
+        // execute_par_id NULL et donc leur empreinte au bit près (le
+        // déclencheur WORM interdit d'ailleurs de la toucher). Le miroir
+        // DemoStore pose la MÊME valeur, sans quoi le round-trip
+        // démo↔local casserait la chaîne.
+        executeParId: validateur.id,
         contreEcritureDe: original.id,
         statut: 'VALIDE',
         hashEcriture: null,

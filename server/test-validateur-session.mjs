@@ -142,6 +142,30 @@ function mouvementSoumis() {
     sessionA);
   verifier('annulerParContreEcriture accepte le validateur de la session',
     contre.contreEcritureDe === mvt.id);
+
+  // Lot 1 / C2 (27/07) : l'écriture DIT QUI L'A FAITE — et cette identité
+  // vient de la SESSION, jamais du corps de la requête.
+  verifier('la contre-écriture porte l’identité de la SESSION (executeParId)',
+    contre.executeParId === valideurA.id,
+    JSON.stringify({ executeParId: contre.executeParId }));
+}
+
+// ============================================================
+// 4 bis. L'ATTAQUE sur le champ neuf : « Exécuté par » ne se DÉCLARE pas.
+// Le corps de la requête ne doit pas pouvoir désigner quelqu'un d'autre
+// comme auteur d'une écriture scellée — sans quoi on aurait remplacé une
+// colonne vide par une colonne MENSONGÈRE, ce qui est pire.
+// ============================================================
+{
+  const mvt = mouvementSoumis();
+  api.appeler('validerMouvement',
+    { id: mvt.id, validateurId: valideurA.id }, sessionA);
+  const contre = api.appeler('annulerParContreEcriture',
+    { id: mvt.id, motif: 'Tentative de désignation',
+      validateurId: valideurA.id, executeParId: valideurB.id }, sessionA);
+  verifier('executeParId DÉCLARÉ dans le corps est IGNORÉ (session seule)',
+    contre.executeParId === valideurA.id && contre.executeParId !== valideurB.id,
+    JSON.stringify({ executeParId: contre.executeParId }));
 }
 
 // ============================================================

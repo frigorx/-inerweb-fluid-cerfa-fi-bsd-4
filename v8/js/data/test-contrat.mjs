@@ -691,6 +691,21 @@ verifier('les pesées sont permutées',
   PROCHE(contre.peseeAvantKg, 18) && PROCHE(contre.peseeApresKg, 20));
 verifier('la contre-écriture référence l’originale',
   contre.contreEcritureDe === mvt1.id && contre.motif?.length > 0);
+// Lot 1 / C2 (27/07) : une contre-écriture DIT QUI L'A FAITE. Sans ce
+// champ, la colonne « Exécuté par » de mouvements.csv sortait vide dans le
+// dossier d'audit SCELLÉ : une écriture avait modifié le registre sans
+// qu'on sache de qui elle était. C'est l'identité du VALIDATEUR (côté
+// serveur : contrainte à la personne connectée par la garde de session) —
+// jamais une valeur lue du corps de la requête. PARITÉ : les deux magasins
+// posent la MÊME valeur, sinon le round-trip démo↔local casserait la
+// chaîne (le champ entre dans l'empreinte v2).
+verifier('la contre-écriture porte l’identité de qui l’a faite (executeParId)',
+  contre.executeParId === enseignant.id,
+  JSON.stringify({ executeParId: contre.executeParId, attendu: enseignant.id }));
+verifier('la contre-écriture reste scellée en v2 et la chaîne se vérifie',
+  contre.versionEmpreinte === 2
+  && /^[0-9a-f]{64}$/.test(String(contre.hashEcriture))
+  && (await store.verifierChaineHash()).ok === true);
 verifier('la contre-écriture est chaînée à l’écriture précédente',
   contre.hashPrecedent === mvt1Valide.hashEcriture
   && contre.ordreValidation === mvt1Valide.ordreValidation + 1);
