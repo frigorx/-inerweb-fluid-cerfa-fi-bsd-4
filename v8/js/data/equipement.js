@@ -195,12 +195,18 @@ export function detectionObligatoireDepuisNiveau(niveau) {
 /**
  * ⭐ E3(b) / L5/Q6 (24/07/2026) — DRAPEAU d'activation de l'exemption des
  * équipements hermétiquement scellés ÉTIQUETÉS (règl. UE 2024/573, art. 5).
- * FERMÉ tant que le visa de l'organisme agréé (T3) n'est pas posé :
- * l'exemption est la SEULE règle du logiciel qui RETIRE un contrôle — un
- * seuil mal posé serait une infraction. L'activation = basculer CETTE
- * constante (ici et dans le miroir serveur, nulle part ailleurs) PUIS jouer
- * le lot d'activation : brancher les consommateurs de fréquence (liste
- * exacte au PLAN-LOTS-REGLEMENTAIRES §L5) et vérifier au navigateur.
+ * FERMÉ tant que les trois conditions qui remplacent le visa d'organisme
+ * agréé (T3, abandonné le 26/07/2026 : un organisme agréé délivre des
+ * attestations de capacité, il ne rend pas d'avis sur l'outil d'un tiers —
+ * voir docs/NOTE-DECISION-ETABLISSEMENT.md §4) ne sont pas réunies : une
+ * décision écrite de l'établissement, un pilote mené en parallèle sans
+ * écart, les risques résiduels acceptés nommément
+ * (docs/REGISTRE-DES-ARBITRAGES.md:481). L'exemption est la SEULE règle du
+ * logiciel qui RETIRE un contrôle — un seuil mal posé serait une infraction.
+ * L'activation = basculer CETTE constante (ici et dans le miroir serveur,
+ * nulle part ailleurs) PUIS jouer le lot d'activation : brancher les
+ * consommateurs de fréquence (liste exacte au PLAN-LOTS-REGLEMENTAIRES §L5)
+ * et vérifier au navigateur.
  * NON configurable par l'environnement — même doctrine que VERROU_LIVRAISON.
  */
 export const EXEMPTION_HERMETIQUE_ACTIVE = false;

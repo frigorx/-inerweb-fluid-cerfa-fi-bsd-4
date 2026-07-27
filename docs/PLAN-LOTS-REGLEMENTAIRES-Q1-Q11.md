@@ -61,7 +61,10 @@ d'août — sur le cœur WORM. L'audit externe lui-même plaçait cette fusion e
 3. **L3 — Q9 en conseil** + champ « usage thermique » (si R4 = oui) ;
 4. **L4 — Q3 modèle de remise à niveau** (derrière le verrou) ;
 5. **L5 — Q6 exemption hermétique** (corps + branchement, inerte tant que verrou fermé) ;
-6. **L6 — A : réouverture du mode Officiel** (après visa T3 sur Q3/Q6) ;
+6. **L6 — A : réouverture du mode Officiel** (visa T3 abandonné le 26/07/2026 — condition
+   remplacée par la réunion des trois choses de `docs/NOTE-DECISION-ETABLISSEMENT.md` §4 :
+   décision écrite de l'établissement, pilote mené en parallèle sans écart, risques résiduels
+   acceptés nommément) ;
 7. **L7 — B : fusion des stores (P2-1)** — APRÈS la simulation d'audit, plan dédié.
 
 ---
@@ -139,7 +142,9 @@ NAVIGATEUR (port jetable, zéro erreur console). Tests : blocage-officiel 52 →
 (condition datée + parité), test-equipement 13 → 21 ×2 stores (bout en bout R-404A vierge :
 clim 2025 passe, clim 2026 bloqué, sans usage 2025 bloqué, 2024 passe).
 **Consigné hors périmètre** : MISE_EN_SERVICE (équipement neuf) non couvert par la
-restriction (déjà exclu du bandeau wizard — au visa T3) · sursis recyclé/régénéré
+restriction (déjà exclu du bandeau wizard — à la réouverture du mode Officiel, condition qui
+remplace le visa T3 abandonné le 26/07/2026, voir §4 de `docs/NOTE-DECISION-ETABLISSEMENT.md`)
+· sursis recyclé/régénéré
 2030/2032 non modélisé en dur (l'origine bouteille le porte déjà, la date viendra
 avec la lecture verbatim de l'art. 13).
 
@@ -169,11 +174,13 @@ avec la lecture verbatim de l'art. 13).
     dont le suivi 7 ans est posé au même lot).
 - Migration : colonnes de remise à niveau sur `habilitations` (33 ou 34 selon L3).
 - Semis démo : dates d'échéance RELATIVES (leçon « dates démo qui pourrissent »).
-- **GATÉ visa T3** : la mécanique est codée et testée mais le comportement OFFICIEL reste
-  inerte (verrou fermé) jusqu'à lecture confirmée sur pièce par l'organisme. C'est le seul
-  lot où le code actuel est TROP STRICT : le corriger est un assouplissement JUSTIFIÉ par
-  texte lu verbatim, mais un assouplissement quand même — il attend le visa pour s'exercer
-  en Officiel.
+- **GATÉ** : la mécanique est codée et testée mais le comportement OFFICIEL reste inerte
+  (verrou fermé) jusqu'à la réunion des trois conditions qui remplacent le visa T3
+  (abandonné le 26/07/2026 — `docs/NOTE-DECISION-ETABLISSEMENT.md` §4) : décision écrite de
+  l'établissement, pilote mené en parallèle sans écart, risques résiduels acceptés
+  nommément. C'est le seul lot où le code actuel est TROP STRICT : le corriger est un
+  assouplissement JUSTIFIÉ par texte lu verbatim, mais un assouplissement quand même — il
+  attend la réouverture pour s'exercer en Officiel.
 
 ### L5 — FAIT le 24/07 (corps + drapeau) : exemption codée, INERTE, activation consignée
 
@@ -187,7 +194,9 @@ l'appelant (patron `detectionObligatoireDepuisNiveau` : aucun seuil recopié). 5
 dans `test-equipement-pur` dont le cas R2 CHIFFRÉ (2,9 kg de R-404A = 11,37 t éq. CO₂,
 exempté par la branche résidentielle SEULE — codé fidèle au « ou » du texte, parc à 0).
 
-**GESTE D'ACTIVATION (un lot dédié, APRÈS le visa T3 + la réponse R2)** :
+**GESTE D'ACTIVATION (un lot dédié, APRÈS la réouverture du mode Officiel — conditions qui
+remplacent le visa T3 abandonné le 26/07/2026, voir §4 de `docs/NOTE-DECISION-
+ETABLISSEMENT.md` — + la réponse R2)** :
 1. basculer la constante dans les DEUX miroirs (nulle part ailleurs) ;
 2. brancher les consommateurs de fréquence — liste exacte relevée le 24/07 :
    `v8/js/cerfa/generateur.js:149` (cadre 7 CERFA) · `v8/js/documents/plaque-fgas.js:39`
@@ -215,7 +224,9 @@ exempté par la branche résidentielle SEULE — codé fidèle au « ou » du te
   contrôle de 5 t. Le OU est fidèle au texte, mais tant que R2 n'est pas répondu, la branche
   résidentielle est codée MAIS le champ `residentiel` reste à 0 sur tout le parc (backfill
   migration 32) — aucun équipement du lycée n'est résidentiel.
-- **GATÉ visa T3** : activation réelle à la réouverture seulement (verrou fermé = inerte).
+- **GATÉ** : activation réelle à la réouverture seulement (verrou fermé = inerte) — condition
+  qui remplace le visa T3 abandonné le 26/07/2026 (voir §4 de
+  `docs/NOTE-DECISION-ETABLISSEMENT.md`).
 - Piège consigné : les MÊMES booléens `hermetique_scelle`/`hermetique_etiquete` pilotent
   DEUX effets (aptitude 6 kg Q1 + exemption Q6). Cocher l'un ouvre l'autre : l'écran machine
   doit le DIRE (note en direct, comme P1-1 l'a fait pour la détection).
@@ -223,7 +234,9 @@ exempté par la branche résidentielle SEULE — codé fidèle au « ou » du te
 ### L6 — Réouverture du mode Officiel (A)
 `VERROU_LIVRAISON` → false (2 miroirs), dégel de `server/test-officiel-e2e.mjs` + ajout du
 cas « mouvement CONTROLE en Officiel » (consigne P7-e), 99+ exécutions vertes.
-**Prérequis** : L1 clos · visa T3 sur Q3/Q6 · gate cat. II confirmé (R1).
+**Prérequis** : L1 clos · les trois conditions qui remplacent le visa T3 sur Q3/Q6
+(abandonné le 26/07/2026 — décision écrite de l'établissement, pilote sans écart, risques
+acceptés nommément, `docs/NOTE-DECISION-ETABLISSEMENT.md` §4) · gate cat. II confirmé (R1).
 
 ### L7 — Fusion des stores (B / P2-1)
 APRÈS la simulation d'audit d'août. Plan dédié à écrire. Exigence : conserver un oracle de
@@ -252,7 +265,9 @@ libellé Q7 par affichage seul · refus Q4 posé au PASSAGE et à la VALIDATION.
 - **R1** : cat. II 2008 sur machine hermétique = **2 kg quand même** (le codé est confirmé,
   plus une délégation révocable) ;
 - **R2** : l'exemption garde le **« ou » du texte** (la branche résidentielle peut exempter
-  au-delà de 10 t éq. CO2 — motif affiché, activation toujours gatée visa T3) ;
+  au-delà de 10 t éq. CO2 — motif affiché, activation toujours gatée aux trois conditions
+  qui remplacent le visa T3, abandonné le 26/07/2026, voir §4 de
+  `docs/NOTE-DECISION-ETABLISSEMENT.md`) ;
 - **R4** : le champ **« usage thermique »** est ajouté (lot L3, migration 34 — machines non
   renseignées au régime le plus strict) ;
 - (même jour) **catalogue : R-452A = 2141**, règle du plus élevé au sens littéral.
