@@ -21,7 +21,9 @@
 
 import {
   chargerPdfLib, calculerChampsCerfa, MENTION_FORMATION,
-  PREFIXE_MENTION_REEMPLOI
+  PREFIXE_MENTION_REEMPLOI, MENTION_CONTRE_ECRITURE,
+  MENTION_QUANTITES_NEGATIVES, PREFIXE_MOTIF_ANNULATION,
+  PREFIXE_ENREGISTREE_PAR
 } from './generateur.js';
 
 // ------------------------------------------------------------
@@ -234,6 +236,26 @@ const MENTION_FORMATION_NORMALISEE = normaliserTexte(MENTION_FORMATION);
 const PREFIXE_REEMPLOI_NORMALISE = normaliserTexte(PREFIXE_MENTION_REEMPLOI);
 
 /**
+ * Lot 1 / C1, REVUE ADVERSARIALE — mentions SYSTÈME d'une écriture
+ * d'ANNULATION (cadre 14). Même nature que MODE FORMATION et que la
+ * mention de réemploi : c'est l'APPLICATION qui les rédige, mot pour
+ * mot, sur un document dont elle laisse par ailleurs les cases de
+ * signature vides. Le lot les avait laissées dans la comparaison :
+ * l'élève à qui l'on donne une contre-écriture comme sujet était donc
+ * attendu sur la phrase canonique « ÉCRITURE D'ANNULATION — CETTE FICHE
+ * ANNULE L'ÉCRITURE … », qu'il n'a aucun moyen d'écrire. Mesuré en le
+ * tirant : 95 % au lieu de 100 % sur une copie par ailleurs parfaite.
+ * ⚠️ « Cause de l'écriture annulée : … » n'est PAS dans cette liste :
+ * c'est une DONNÉE du registre (la cause de l'intervention d'origine),
+ * pas une phrase de l'application — elle reste exigée, comme avant le
+ * lot où elle s'appelait « Cause : … ».
+ */
+const PREFIXES_SYSTEME_ANNULATION = [
+  MENTION_CONTRE_ECRITURE, MENTION_QUANTITES_NEGATIVES,
+  PREFIXE_MOTIF_ANNULATION, PREFIXE_ENREGISTREE_PAR
+].map(normaliserTexte);
+
+/**
  * Ligne normalisée d'un pavé multi-lignes : « SIRET : » unifié (avec
  * ou sans deux-points), numéro SIRET comparé sans ses espaces de
  * groupement.
@@ -247,13 +269,15 @@ function normaliserLigne(ligne) {
 
 /**
  * Pavé multi-lignes → ensemble trié de lignes normalisées (lignes
- * vides et mention MODE FORMATION écartées des deux côtés).
+ * vides, mention MODE FORMATION, mention de réemploi et mentions
+ * système d'ANNULATION écartées des deux côtés).
  */
 function lignesComparables(valeur) {
   return String(valeur ?? '').split('\n')
     .map(normaliserLigne)
     .filter((l) => l !== '' && l !== MENTION_FORMATION_NORMALISEE
-      && !l.startsWith(PREFIXE_REEMPLOI_NORMALISE))
+      && !l.startsWith(PREFIXE_REEMPLOI_NORMALISE)
+      && !PREFIXES_SYSTEME_ANNULATION.some((p) => l.startsWith(p)))
     .sort();
 }
 

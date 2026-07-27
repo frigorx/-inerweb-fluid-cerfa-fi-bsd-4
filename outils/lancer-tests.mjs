@@ -69,7 +69,11 @@ const SUITES_DOUBLEES = new Set([
   'v8/js/data/test-machine-saisie.mjs',
   'v8/js/data/test-perimetre-cerfa.mjs',
   'v8/js/data/test-plaintes.mjs',
-  'v8/js/data/test-remise-filiere.mjs'
+  'v8/js/data/test-remise-filiere.mjs',
+  // Lot 1 / C1 : le document d'une contre-écriture. Le générateur lit un
+  // store, et c'est le store qui lui porte `contreEcritureDe` et `motif` —
+  // la preuve ne vaut que jouée contre les deux.
+  'v8/js/cerfa/test-contre-ecriture.mjs'
 ]);
 
 /** Une exécution = un fichier + des arguments éventuels. */
