@@ -4745,7 +4745,15 @@ export function creerDemoStore() {
         stockBouteillesKg,
         nbBouteilles: donnees.bouteilles.length,
         teqCo2Parc,
-        nbCerfa: donnees.mouvements.filter((mv) => mv.cerfaNumero).length,
+        // Lot 1 branche A (27/07) : une CONTRE-ÉCRITURE n'a plus de fiche
+        // CERFA. Les NOUVELLES n'ont plus de `cerfaNumero` ; les ANCIENNES
+        // gardent le leur, scellé — mais le logiciel ne leur imprime plus
+        // rien. Les compter, c'est annoncer des fiches qui n'existent pas.
+        // MÊME critère que le refus du générateur et que le tableau de
+        // bord (`contreEcritureDe`), sinon l'écran et ce compteur diraient
+        // deux choses différentes. ⚠ Miroir STRICT de server/api.js.
+        nbCerfa: donnees.mouvements.filter(
+          (mv) => mv.cerfaNumero && !mv.contreEcritureDe).length,
         nbFiches: donnees.mouvements.length,
         nbMouvements: donnees.mouvements.length,
         nbControles,

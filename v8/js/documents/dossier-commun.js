@@ -14,6 +14,24 @@
 import { creerZip } from '../core/zip.js';
 import { champCsv } from './exports.js';
 import { construireVerificateurHtml } from './verificateur.js';
+import { LIGNE_SOMMAIRE_REGULARISATIONS } from './regularisation.js';
+
+/** Découpe un paragraphe en lignes d'au plus `largeur` caractères, sans
+ *  couper un mot — un sommaire est un fichier texte lu tel quel.
+ *  (Même fonction que dans `dossier-audit.js`, qui rédige son propre
+ *  sommaire ; elle y reste, ce module ne l'importe pas pour ne pas créer
+ *  de dépendance entre deux rédacteurs de sommaire.) */
+function decouperLignes(texte, largeur) {
+  const lignes = [];
+  let courante = '';
+  for (const mot of String(texte).split(/\s+/).filter(Boolean)) {
+    if (courante === '') courante = mot;
+    else if ((courante + ' ' + mot).length <= largeur) courante += ' ' + mot;
+    else { lignes.push(courante); courante = mot; }
+  }
+  if (courante !== '') lignes.push(courante);
+  return lignes;
+}
 
 /**
  * Convertit un contenu de pièce jointe en Uint8Array pour le ZIP. Accepte :
@@ -124,7 +142,21 @@ export function redigerSommaire(titre, lignesInfos, nomsFichiers, maintenant) {
     '',
     'Les fichiers cerfa/*.pdf sont les fiches d\'intervention CERFA 15497*04',
     'officielles remplies. Les fichiers *.csv sont exportés en UTF-8, séparateur « ; ».',
-    ''
+    '',
+    // ⚠ REVUE DU 27/07 (lot 1 branche A) : le dossier d'AUDIT expliquait
+    // seul ce que sont les `regularisations/*.html` ; les dossiers MACHINE
+    // et FUITE, qui passent par CE sommaire générique, en embarquaient
+    // sans un mot. Un lecteur y voyait une écriture du registre sans
+    // CERFA et concluait à une pièce manquante — exactement ce que la
+    // ligne du dossier d'audit sert à éviter. La condition est DÉRIVÉE de
+    // la liste réelle des fichiers : le sommaire n'annonce jamais une
+    // pièce que l'archive ne contient pas.
+    ...(nomsFichiers.some((nom) => nom.includes('regularisations/'))
+      ? ['ÉCRITURES D\'ANNULATION (CONTRE-ÉCRITURES)',
+        '-'.repeat(68),
+        ...decouperLignes(LIGNE_SOMMAIRE_REGULARISATIONS, 68),
+        '']
+      : [])
   ].join('\r\n');
 }
 

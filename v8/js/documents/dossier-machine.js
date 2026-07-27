@@ -106,7 +106,12 @@ export async function entreesMachine(
     for (const contre of annulations) {
       const faits = assemblerJustificatif({
         mouvement: contre, mouvements: tousMouvements, machines: [machine],
-        bouteilles, fluides: fluide ? [fluide] : [], personnel, etablissement
+        bouteilles, fluides: fluide ? [fluide] : [], personnel,
+        // Le DÉTENTEUR de la machine : ce dossier l'a déjà résolu pour son
+        // `identite-machine.csv`, on le passe tel quel (jamais un second
+        // chargement, jamais une seconde vérité).
+        clients: client ? [client] : [],
+        etablissement
       });
       entrees.push({
         nom: `${prefixe}regularisations/`

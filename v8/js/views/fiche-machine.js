@@ -26,8 +26,9 @@ import { ouvrirFeuilleMiseEnService, peutOuvrirFeuilleMiseEnService }
   from '../documents/feuille-mise-en-service.js';
 import { ouvrirCerfa } from '../cerfa/visualiseur.js';
 import { ouvrirCorrectionCerfa } from '../cerfa/correcteur.js';
-import { estContreEcriture, ouvrirJustificatifRegularisation }
-  from '../documents/regularisation.js';
+import { estContreEcriture } from '../documents/regularisation.js';
+import { ouvrirJustificatifRegularisation }
+  from '../documents/regularisation-apercu.js';
 import { zonePiecesJointes } from '../composants/pieces-jointes.js';
 import { verdictPourIntervenant, encartConseil, injecterStylesConseil,
   dateDuJour } from '../composants/conseil-intervenant.js';

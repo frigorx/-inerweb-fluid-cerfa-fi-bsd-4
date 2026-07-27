@@ -207,10 +207,13 @@ export async function genererDossierFuite(store, machineRef, controleFuiteId) {
   }
   const annulations = auRegistre.filter(estContreEcriture);
   if (annulations.length) {
-    const [tousMouvements, bouteilles, personnel, etablissement] =
+    // `clients` : le DÉTENTEUR de l'équipement est souvent un TIERS ; sans
+    // lui le document ne nommerait que le lycée, et le lecteur croirait le
+    // matériel à lui.
+    const [tousMouvements, bouteilles, personnel, clients, etablissement] =
       await Promise.all([
         store.getMouvements(), store.getBouteilles(), store.getPersonnel(),
-        store.getEtablissement()
+        store.getClients(), store.getEtablissement()
       ]);
     for (const contre of annulations) {
       // La liste de la fenêtre de fuite est un EXTRAIT : l'écriture
@@ -218,7 +221,7 @@ export async function genererDossierFuite(store, machineRef, controleFuiteId) {
       const complet = tousMouvements.find((m) => m.id === contre.id) ?? contre;
       const faits = assemblerJustificatif({
         mouvement: complet, mouvements: tousMouvements, machines: [machine],
-        bouteilles, fluides, personnel, etablissement
+        bouteilles, fluides, personnel, clients, etablissement
       });
       entreesData.push({
         nom: `regularisations/${nomSur(complet.numero ?? complet.id)}.html`,

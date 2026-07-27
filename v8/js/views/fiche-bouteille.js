@@ -19,7 +19,7 @@ import { ouvrirFormBouteille, ouvrirPesee } from '../modales/bouteille-form.js';
 import { ouvrirEtiquette } from '../documents/etiquette-bouteille.js';
 import { ouvrirCerfa } from '../cerfa/visualiseur.js';
 import { ouvrirJustificatifRegularisation }
-  from '../documents/regularisation.js';
+  from '../documents/regularisation-apercu.js';
 import { zonePiecesJointes } from '../composants/pieces-jointes.js';
 
 export const titre = 'Fiche bouteille';

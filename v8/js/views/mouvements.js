@@ -29,8 +29,9 @@ import { pdfFinalAttendu } from '../data/pdf-final.js';
 import { ouvrirSignaturesMouvement, remplirSimulationOfficielle }
   from '../modales/signatures-modal.js';
 import { ouvrirCorrectionCerfa } from '../cerfa/correcteur.js';
-import { estContreEcriture, ouvrirJustificatifRegularisation }
-  from '../documents/regularisation.js';
+import { estContreEcriture } from '../documents/regularisation.js';
+import { ouvrirJustificatifRegularisation }
+  from '../documents/regularisation-apercu.js';
 import { ouvrirFeuilleMiseEnService, peutOuvrirFeuilleMiseEnService }
   from '../documents/feuille-mise-en-service.js';
 import { LIBELLES_TYPE_OUTIL } from './outillage.js';

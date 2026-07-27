@@ -10,8 +10,9 @@ import { esc, fmtNombre, fmtKgSigne, fmtDate } from '../core/utils.js';
 import { ouvrirWizard } from '../wizard/wizard.js';
 import { ouvrirCerfa } from '../cerfa/visualiseur.js';
 import { collecterConformite } from '../data/feu-tricolore.js';
-import { estContreEcriture, ouvrirJustificatifRegularisation }
-  from '../documents/regularisation.js';
+import { estContreEcriture } from '../documents/regularisation.js';
+import { ouvrirJustificatifRegularisation }
+  from '../documents/regularisation-apercu.js';
 
 export const titre = 'Tableau de bord';
 

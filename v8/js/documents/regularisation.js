@@ -34,14 +34,20 @@
 //
 // Deux sorties, un seul gabarit :
 //   — dans l'application, une modale d'aperçu avec bouton Imprimer
-//     (patron `plaque-fgas.js`) ;
+//     (`documents/regularisation-apercu.js` — le DOM vit là, jamais ici) ;
 //   — dans le dossier d'audit scellé, une page HTML AUTONOME
 //     (`regularisations/<numéro>.html`), qui se lit et s'imprime hors du
 //     logiciel (patron `documents/verificateur.js`).
+//
+// ⚠️ MODULE PUR : aucun accès au DOM, aucune importation de `views/`.
+// Trois modules d'export ZIP (dossier d'audit, machine, fuite) en
+// dépendent et s'annoncent « testables sous Node » ; la modale d'aperçu
+// est donc dans un fichier VOISIN, comme `documents/telecharger-dossier.js`
+// l'est pour `documents/dossier-commun.js` (constat de la revue du 27/07).
 // ============================================================
 
-import { modale, ICONES } from '../views/communs.js';
-import { esc, fmtKg, fmtKgSigne, fmtDate } from '../core/utils.js';
+import { esc, fmtKg, fmtKgSigne, fmtDate, fmtTeq, teqCO2 }
+  from '../core/utils.js';
 import { MENTION_FORMATION } from '../cerfa/generateur.js';
 
 /* ============================================================
@@ -86,11 +92,30 @@ export const MENTION_PAS_UNE_FICHE_CERFA =
   + 'écriture. Il justifie l’ANNULATION, au registre, de la fiche '
   + 'désignée ci-dessus.';
 
-/** Mention permanente : pourquoi il n'y a aucune case de signature. */
+/** Mention permanente : pourquoi il n'y a aucune case de signature.
+ *
+ *  ⚠️ REVUE DU 27/07 : elle disait « scellée sur l'identité du validateur,
+ *  NOMMÉ CI-DESSUS ». Tiré : sans `executeParId`, `validateurId` ni
+ *  `technicien`, la ligne « Enregistrée par » vaut « — » et la phrase
+ *  promettait un nom absent. Elle dit maintenant OÙ l'identité est
+ *  scellée, sans promettre qu'elle est imprimée. */
 export const MENTION_SANS_SIGNATURE =
   'Aucune signature manuscrite n’est recueillie sur une contre-écriture : '
-  + 'elle est scellée sur l’identité du validateur, nommé ci-dessus, et '
-  + 'inscrite au journal chaîné du registre.';
+  + 'l’identité du validateur est scellée dans l’empreinte de l’écriture '
+  + 'et inscrite au journal chaîné du registre.';
+
+/** Mention de mode POSÉE PAR DÉFAUT quand le registre ne dit pas dans quel
+ *  mode l'écriture a été passée.
+ *
+ *  ⚠️ REVUE DU 27/07 : le repli était `mode ?? 'OFFICIEL'`, c'est-à-dire le
+ *  repli le plus OUVERT — un mouvement sans mode sortait un document SANS
+ *  aucune marque (tiré). Le sens du repli est maintenant celui de la
+ *  maison : le doute AJOUTE la marque, il ne la retire pas. La mention ne
+ *  dit pas « mode formation » (ce serait affirmer ce qu'on ne sait pas),
+ *  elle dit ce qu'on sait : le mode n'est pas au registre. */
+export const MENTION_MODE_INDETERMINE =
+  'MODE NON RENSEIGNÉ AU REGISTRE — DOCUMENT NON OFFICIEL — '
+  + 'NE PAS UTILISER POUR UNE INTERVENTION RÉELLE';
 
 /** Refus canonique : la cible n'est pas une écriture d'annulation. */
 export const MSG_PAS_UNE_CONTRE_ECRITURE =
@@ -102,15 +127,21 @@ export const MSG_MOUVEMENT_INTROUVABLE =
   'Justificatif de régularisation impossible : écriture introuvable au '
   + 'registre.';
 
-/** Ce qui remplace le CERFA d'une contre-écriture au dossier scellé. */
+/** Ce qui remplace le CERFA d'une contre-écriture au dossier scellé.
+ *
+ *  ⚠️ REVUE DU 27/07 : la ligne disait « la masse RETIRÉE avec son signe ».
+ *  Faux deux fois sur quatre natures, tiré : l'annulation d'une
+ *  RÉCUPÉRATION porte une masse AJOUTÉE (+ 1,20 kg) et celle d'un CONTRÔLE
+ *  une masse nulle. Un sommaire de dossier scellé n'annonce que ce qu'il
+ *  peut tenir : la masse est PORTÉE, avec le signe qu'elle a au registre. */
 export const LIGNE_SOMMAIRE_REGULARISATIONS =
   'Les fichiers regularisations/*.html sont les JUSTIFICATIFS DE '
   + 'RÉGULARISATION des écritures d’annulation (contre-écritures) de '
   + 'l’année. Depuis le 27/07/2026 une contre-écriture ne donne plus lieu '
   + 'à une fiche CERFA — aucune intervention n’a eu lieu à sa date — mais '
   + 'à ce justificatif, qui nomme la fiche annulée, le motif, l’auteur et '
-  + 'la masse retirée avec son signe. Le dossier reste complet : la pièce '
-  + 'n’est pas retirée, elle est remplacée.';
+  + 'la masse portée au registre avec son signe. Le dossier reste complet : '
+  + 'la pièce n’est pas retirée, elle est remplacée.';
 
 /* ============================================================
    Assemblage des faits (pur — aucun accès au DOM, aucun store)
@@ -126,11 +157,35 @@ function libelleBouteille(bouteille) {
   return morceaux.filter(Boolean).join(' — ');
 }
 
+/**
+ * Nombre RÉELLEMENT porté par le registre, ou `null`.
+ *
+ * ⚠️ REVUE DU 27/07, CONSTAT TIRÉ. La garde précédente était
+ * `Number.isFinite(Number(valeur))` — et `Number(null) === 0`, qui est
+ * fini. Une valeur ABSENTE devenait donc le nombre ZÉRO, et le document
+ * imprimait « 0,00 kg » là où il n'y avait aucun équipement (contre-
+ * écriture d'un TRANSFERT). C'est l'image inversée du précédent de la
+ * maison : une garde avait fait DISPARAÎTRE une masse ; celle-ci en
+ * FAISAIT APPARAÎTRE une. Sur une pièce de preuve, « 0,00 kg » est une
+ * affirmation — et elle était fausse.
+ *
+ * Un zéro RÉELLEMENT écrit au registre (contrôle d'étanchéité) reste, lui,
+ * un zéro : il traverse cette fonction intact. Le doute ne retire jamais
+ * une masse, il refuse seulement d'en inventer une.
+ * @param {*} valeur
+ * @returns {number|null}
+ */
+function nombreOuNull(valeur) {
+  if (valeur === null || valeur === undefined || valeur === '') return null;
+  const nombre = Number(valeur);
+  return Number.isFinite(nombre) ? nombre : null;
+}
+
 /** Masse à afficher : TOUJOURS une valeur, jamais une case vide. */
 function masseAffichable(valeur) {
-  return Number.isFinite(Number(valeur))
-    ? fmtKgSigne(valeur)
-    : 'non renseignée au registre';
+  return valeur === null || valeur === undefined
+    ? 'non renseignée au registre'
+    : fmtKgSigne(valeur);
 }
 
 /** Libellés français des natures d'écriture. Le CODE du registre est
@@ -169,14 +224,22 @@ function natureLisible(code) {
  * de résolution que `csvMouvements` (`executeParId`, puis `validateurId`,
  * puis le champ figé en dernier recours seulement).
  *
+ * ⚠️ LE DÉTENTEUR EST UN TIERS, ET LE DOCUMENT DOIT LE DIRE. Constat de la
+ * revue du 27/07 : le seul nom d'entreprise imprimé était celui de
+ * l'établissement, en tête, SANS étiquette de qualité — un lecteur pressé
+ * en concluait que le matériel appartient au lycée. L'ancien CERFA, lui,
+ * distinguait le cadre 1 (opérateur) du cadre 2 (détenteur). Ce document
+ * reprend la MÊME résolution que `generateur.js` (client de la machine,
+ * sinon l'établissement) et NOMME les deux qualités.
+ *
  * @param {{ mouvement: object, mouvements: object[], machines: object[],
  *   bouteilles: object[], fluides: object[], personnel: object[],
- *   etablissement: object }} sources
+ *   clients: object[], etablissement: object }} sources
  * @returns {object} faits du document
  */
 export function assemblerJustificatif({
   mouvement, mouvements = [], machines = [], bouteilles = [], fluides = [],
-  personnel = [], etablissement = {}
+  personnel = [], clients = [], etablissement = {}
 }) {
   if (!mouvement) throw new Error(MSG_MOUVEMENT_INTROUVABLE);
   if (!estContreEcriture(mouvement)) {
@@ -187,6 +250,9 @@ export function assemblerJustificatif({
     mouvements.find((mv) => mv.id === mouvement.contreEcritureDe) || null;
   const machine = mouvement.machineId
     ? machines.find((m) => m.id === mouvement.machineId) || null
+    : null;
+  const client = machine?.clientId
+    ? clients.find((c) => c.id === machine.clientId) || null
     : null;
   const fluide = mouvement.fluide
     ? fluides.find((f) => f.code === mouvement.fluide) || null
@@ -210,26 +276,38 @@ export function assemblerJustificatif({
   // leur somme : trois nombres qu'un lecteur peut vérifier lui-même. On
   // n'affirme rien de plus — le doute retire un allègement, jamais une
   // masse, et jamais on ne remplace un chiffre par une promesse.
-  const masseEcriture = Number(mouvement.quantiteKg);
-  const masseAnnulee = annulee ? Number(annulee.quantiteKg) : NaN;
-  const somme = Number.isFinite(masseEcriture) && Number.isFinite(masseAnnulee)
+  const masseEcriture = nombreOuNull(mouvement.quantiteKg);
+  const masseAnnulee = annulee ? nombreOuNull(annulee.quantiteKg) : null;
+  const somme = masseEcriture !== null && masseAnnulee !== null
     ? Math.round((masseEcriture + masseAnnulee) * 1000) / 1000
     : null;
+
+  const chargeNominaleKg = machine ? nombreOuNull(machine.chargeNominaleKg)
+    : null;
+  const prpFige = nombreOuNull(mouvement.prpFige);
 
   return {
     // L'écriture d'annulation elle-même
     numero: mouvement.numero ?? null,
     date: mouvement.date ?? null,
-    mode: mouvement.mode ?? 'OFFICIEL',
+    // ⚠ AUCUN REPLI OUVERT : le mode est celui du registre, ou rien. Le
+    // gabarit MARQUE le document quand il n'est pas explicitement OFFICIEL.
+    mode: mouvement.mode ?? null,
     type: mouvement.type ?? null,
     auteur,
     motif: mouvement.motif ? String(mouvement.motif).trim() : null,
-    // La fiche annulée
+    // La fiche annulée. `annuleeTrouvee` sépare « le registre dit qu'il
+    // n'y avait rien » de « nous n'avons pas retrouvé l'écriture » — sans
+    // lui, le document AFFIRMAIT trois choses qu'il n'avait pas mesurées
+    // (doctrine png.js : INDÉTERMINABLE, jamais une accusation).
+    annuleeTrouvee: Boolean(annulee),
     numeroAnnule: annulee?.numero ?? null,
     dateAnnulee: annulee?.date ?? null,
     typeAnnule: annulee?.type ?? null,
     cerfaAnnule: annulee?.cerfaNumero ?? null,
     statutAnnule: annulee?.statut ?? null,
+    causeAnnulee: annulee?.causeMouvement
+      ? String(annulee.causeMouvement).trim() : null,
     // Les masses, signées
     masseEcriture,
     masseAnnulee,
@@ -238,21 +316,48 @@ export function assemblerJustificatif({
     machineLibelle: machine
       ? `${machine.code ?? machine.id} — ${machine.designation ?? ''}`.trim()
       : (mouvement.machineLabel ?? null),
-    chargeNominaleKg: machine ? machine.chargeNominaleKg : null,
+    machineModele: machine
+      ? ([machine.marque, machine.modele].filter(Boolean).join(' ') || null)
+      : null,
+    machineNumSerie: machine ? (machine.numSerie ?? null) : null,
+    chargeNominaleKg,
     fluideCode: mouvement.fluide ?? null,
-    fluideNom: fluide?.nom ?? null,
+    fluideFamille: fluide?.famille ?? null,
+    prpFige,
+    // Équivalent CO₂ de la charge NOMINALE, calculé par la seule fonction
+    // du dépôt (`teqCO2`, core/utils.js) et à partir du PRP FIGÉ à cette
+    // écriture — donc reproductible à la main par le lecteur. Absent dès
+    // qu'un des deux nombres manque : on ne complète jamais par un zéro.
+    teqNominale: chargeNominaleKg !== null && prpFige !== null
+      ? teqCO2(chargeNominaleKg, prpFige) : null,
     bouteilleSrc: libelleBouteille(bouteilleSrc),
     bouteilleDst: libelleBouteille(bouteilleDst),
     // Le scellement
     empreinte: mouvement.hashEcriture ?? null,
     empreintePrecedente: mouvement.hashPrecedent ?? null,
     versionEmpreinte: mouvement.versionEmpreinte ?? null,
-    // L'établissement
+    // L'opérateur (celui qui a réalisé l'opération annulée) et le
+    // DÉTENTEUR de l'équipement — deux qualités, jamais confondues.
     etablissement: {
       raisonSociale: etablissement?.raisonSociale ?? '',
       adresse: etablissement?.adresse ?? '',
-      siret: etablissement?.siret ?? ''
-    }
+      siret: etablissement?.siret ?? '',
+      numAttestationCapacite: etablissement?.numAttestationCapacite ?? ''
+    },
+    detenteur: machine
+      ? {
+        raisonSociale: client
+          ? (client.raisonSociale ?? '')
+          : (etablissement?.raisonSociale ?? ''),
+        adresse: client ? (client.adresse ?? '')
+          : (etablissement?.adresse ?? ''),
+        siret: client ? (client.siret ?? '') : (etablissement?.siret ?? ''),
+        // Le repli sur l'établissement est celui du CERFA (cadre 2) : il
+        // est REPRIS, pas inventé — mais il est DIT, pour qu'on ne prenne
+        // pas une absence de client pour une propriété constatée.
+        tiers: Boolean(client)
+      }
+      : null
   };
 }
 
@@ -264,14 +369,15 @@ export function assemblerJustificatif({
  * @returns {Promise<object>} faits du document
  */
 export async function construireJustificatif(store, mouvementId) {
-  const [mouvements, machines, bouteilles, fluides, personnel, etablissement] =
-    await Promise.all([
-      store.getMouvements(), store.getMachines(), store.getBouteilles(),
-      store.getFluides(), store.getPersonnel(), store.getEtablissement()
-    ]);
+  const [mouvements, machines, bouteilles, fluides, personnel, clients,
+    etablissement] = await Promise.all([
+    store.getMouvements(), store.getMachines(), store.getBouteilles(),
+    store.getFluides(), store.getPersonnel(), store.getClients(),
+    store.getEtablissement()
+  ]);
   const mouvement = mouvements.find((mv) => mv.id === mouvementId) || null;
   return assemblerJustificatif({
-    mouvement, mouvements, machines, bouteilles, fluides, personnel,
+    mouvement, mouvements, machines, bouteilles, fluides, personnel, clients,
     etablissement
   });
 }
@@ -307,36 +413,72 @@ function bloc(titre, contenuHtml, classe = '') {
  */
 export function gabaritJustificatif(j) {
   const formation = j.mode === 'FORMATION';
+  // ⚠ Le doute AJOUTE la marque : tout mode qui n'est pas explicitement
+  // OFFICIEL fait sortir le document marqué.
+  const texteMode = formation ? MENTION_FORMATION
+    : (j.mode === 'OFFICIEL' ? '' : MENTION_MODE_INDETERMINE);
 
   // ⚠️ LA MENTION DE MODE, PREMIER ENFANT DU DOCUMENT. Elle est du TEXTE
   // (pas un fond coloré, pas une image) : elle s'imprime même quand le
   // navigateur refuse les couleurs d'arrière-plan, réglage par défaut de
   // la plupart des postes.
-  const bandeauMode = formation
-    ? '<div class="justif-mode">' + esc(MENTION_FORMATION) + '</div>'
+  const bandeauMode = texteMode
+    ? '<div class="justif-mode">' + esc(texteMode) + '</div>'
     : '';
+
+  // ⚠️ UNE FEUILLE DÉTACHÉE PORTE SON IDENTITÉ. Ce bandeau ne s'affiche
+  // qu'à l'IMPRESSION et se répète sur CHAQUE page (position: fixed —
+  // mesuré : deux occurrences sur un document de deux pages, alors que
+  // `display: table-header-group` n'en donne qu'une). Sans lui, la page 2
+  // sortait sans mention de mode, sans titre et sans numéro : une feuille
+  // sans marque et sans identité, exactement ce que l'inventaire des
+  // documents non marqués sert à empêcher (revue du 27/07).
+  const repere = '<div class="justif-repere" aria-hidden="true">'
+    + '<span class="justif-repere-identite">'
+    + esc(TITRE_JUSTIFICATIF + ' — écriture n° ' + (j.numero ?? '—')
+      + (j.numeroAnnule ? ' — annule la fiche n° ' + j.numeroAnnule : ''))
+    + '</span>'
+    + (texteMode
+      ? '<span class="justif-repere-mode">' + esc(texteMode) + '</span>' : '')
+    + '</div>';
 
   const enTete = '<header class="justif-entete">'
     + '<div class="justif-titre">' + esc(TITRE_JUSTIFICATIF) + '</div>'
     + '<div class="justif-sous-titre">' + esc(SOUS_TITRE_JUSTIFICATIF)
     + '</div>'
     + (j.etablissement.raisonSociale
-      ? '<div class="justif-etab">' + esc(j.etablissement.raisonSociale)
+      ? '<div class="justif-etab">'
+        + '<span class="justif-qualite">Opérateur — entreprise qui a '
+        + 'réalisé l’opération annulée :</span> '
+        + esc(j.etablissement.raisonSociale)
         + (j.etablissement.adresse ? ' — ' + esc(j.etablissement.adresse) : '')
         + (j.etablissement.siret
           ? ' — SIRET ' + esc(j.etablissement.siret) : '')
+        + (j.etablissement.numAttestationCapacite
+          ? ' — attestation de capacité n° '
+            + esc(j.etablissement.numAttestationCapacite) : '')
         + '</div>'
       : '')
     + '</header>';
 
+  // ⚠ On ne dit « cette écriture n'en portait pas » que si l'écriture
+  // annulée a été RETROUVÉE. Sinon on dit qu'on ne l'a pas retrouvée : une
+  // pièce de preuve ne conclut pas sur ce qu'elle n'a pas lu.
+  const introuvable = 'écriture annulée non retrouvée au registre fourni';
   const blocAnnulee = bloc('Fiche annulée',
-    ligne('Numéro d’écriture au registre', j.numeroAnnule, 'justif-fort')
-    + ligne('N° de fiche CERFA annulée',
-      j.cerfaAnnule ?? 'aucune (cette écriture n’en portait pas)')
+    ligne('Numéro d’écriture au registre',
+      j.annuleeTrouvee ? j.numeroAnnule : introuvable, 'justif-fort')
+    + ligne('N° de fiche CERFA annulée', j.annuleeTrouvee
+      ? (j.cerfaAnnule ?? 'aucune (cette écriture n’en portait pas)')
+      : introuvable)
     + ligne('Date de l’écriture annulée', j.dateAnnulee
-      ? fmtDate(j.dateAnnulee) : null)
-    + ligne('Nature de l’opération annulée', natureLisible(j.typeAnnule))
-    + ligne('Statut au registre', j.statutAnnule),
+      ? fmtDate(j.dateAnnulee) : (j.annuleeTrouvee ? null : introuvable))
+    + ligne('Nature de l’opération annulée', j.annuleeTrouvee
+      ? natureLisible(j.typeAnnule) : introuvable)
+    + ligne('Statut au registre', j.annuleeTrouvee ? j.statutAnnule
+      : introuvable)
+    + ligne('Cause portée sur l’écriture annulée', j.annuleeTrouvee
+      ? j.causeAnnulee : introuvable),
     'justif-bloc-annule');
 
   const blocMotif = bloc('Motif de l’annulation',
@@ -348,8 +490,9 @@ export function gabaritJustificatif(j) {
     ligne('Numéro d’écriture INTERNE au registre', j.numero, 'justif-fort')
     + ligne('Date de l’écriture', j.date ? fmtDate(j.date) : null)
     + ligne('Enregistrée par', j.auteur)
-    + ligne('Mode', j.mode === 'FORMATION'
-      ? 'FORMATION (document non officiel)' : j.mode)
+    + ligne('Mode', formation
+      ? 'FORMATION (document non officiel)'
+      : (j.mode ?? 'non renseigné au registre'))
     // Le registre reprend la nature de l'opération annulée : c'est ce
     // qu'il porte, et le libellé le DIT — sans quoi le document laisserait
     // croire qu'une charge d'appoint a été faite ce jour-là.
@@ -357,33 +500,65 @@ export function gabaritJustificatif(j) {
       natureLisible(j.type)));
 
   const blocMasses = bloc('Masses portées au registre',
-    ligne('Masse de l’écriture annulée', masseAffichable(j.masseAnnulee))
+    ligne('Masse de l’écriture annulée', j.annuleeTrouvee
+      ? masseAffichable(j.masseAnnulee) : introuvable)
     + ligne('Masse de la présente écriture d’annulation',
       masseAffichable(j.masseEcriture), 'justif-fort')
     + ligne('Somme des deux écritures', j.somme === null
-      ? 'non calculable (masse absente)' : fmtKgSigne(j.somme))
+      ? (j.annuleeTrouvee ? 'non calculable (masse absente du registre)'
+        : 'non calculable (' + introuvable + ')')
+      : fmtKgSigne(j.somme))
     + '<p class="justif-note">Les masses sont portées avec le signe qu’elles '
     + 'ont AU REGISTRE. Aucune n’est arrondie à zéro ni retirée du '
     + 'document : ce justificatif dit ce que le registre porte.</p>');
 
+  const blocDetenteur = j.detenteur
+    ? bloc('Détenteur de l’équipement',
+      ligne('Détenteur', j.detenteur.raisonSociale || null, 'justif-fort')
+      + ligne('Adresse', j.detenteur.adresse || null)
+      + ligne('SIRET', j.detenteur.siret || null)
+      + (j.detenteur.tiers ? ''
+        : '<p class="justif-note">Aucun client détenteur n’est enregistré '
+          + 'pour cet équipement : c’est l’établissement opérateur qui est '
+          + 'porté ici, comme au cadre 2 de la fiche d’intervention.</p>'))
+    : '';
+
   const blocMateriel = bloc('Équipement, fluide et contenants',
     ligne('Équipement', j.machineLibelle)
+    + ligne('Marque et modèle', j.machineModele)
+    + ligne('N° de série', j.machineNumSerie)
     + ligne('Charge nominale de l’équipement',
-      Number.isFinite(Number(j.chargeNominaleKg))
-        ? fmtKg(j.chargeNominaleKg) : null)
+      j.chargeNominaleKg === null ? null : fmtKg(j.chargeNominaleKg))
     + ligne('Fluide', j.fluideCode
-      ? j.fluideCode + (j.fluideNom ? ` (${j.fluideNom})` : '') : null)
+      ? j.fluideCode + (j.fluideFamille ? ` (${j.fluideFamille})` : '') : null)
+    + ligne('PRP figé à cette écriture (AR4)', j.prpFige)
+    + ligne('Équivalent CO₂ de la charge nominale',
+      j.teqNominale === null ? null : fmtTeq(j.teqNominale))
     + ligne('Contenant source', j.bouteilleSrc)
     + ligne('Contenant destination', j.bouteilleDst));
 
+  // ⚠️ CE QUE L'EMPREINTE SOUTIENT, ET RIEN DE PLUS. La première rédaction
+  // faisait dire à l'empreinte qu'elle datait CE PAPIER. C'était faux : ce
+  // papier est composé à la demande, à chaque ouverture — l'empreinte,
+  // elle, porte sur l'ÉCRITURE au registre, pas sur la feuille. Même
+  // doctrine que `borne-scellement.js` : on ne dit jamais plus que ce que
+  // le mécanisme délivre. Et la note ne s'imprime QUE si l'empreinte est
+  // là — sans quoi le document vantait une preuve absente (tiré).
   const blocScellement = bloc('Scellement de l’écriture',
     ligne('Empreinte SHA-256 de l’écriture', j.empreinte, 'justif-mono')
     + ligne('Empreinte de l’écriture précédente', j.empreintePrecedente,
       'justif-mono')
     + ligne('Version d’empreinte', j.versionEmpreinte)
-    + '<p class="justif-note">L’empreinte est calculée et scellée à la '
-    + 'CRÉATION de l’écriture, puis chaînée à la précédente : elle prouve '
-    + 'que ce justificatif n’a pas été fabriqué après coup.</p>');
+    + (j.empreinte
+      ? '<p class="justif-note">L’empreinte ci-dessus a été calculée et '
+        + 'scellée à la CRÉATION de l’écriture, puis chaînée à la '
+        + 'précédente : elle porte sur l’ÉCRITURE au registre. Le présent '
+        + 'justificatif, lui, est composé à la demande à partir de cette '
+        + 'écriture scellée ; recalculer l’empreinte de l’écriture au '
+        + 'registre permet de le recouper.</p>'
+      : '<p class="justif-note">Aucune empreinte n’est portée par cette '
+        + 'écriture au registre : le recoupement par empreinte n’est pas '
+        + 'possible ici.</p>'));
 
   const pied = '<footer class="justif-pied">'
     + '<p>' + esc(MENTION_PAS_UNE_FICHE_CERFA) + '</p>'
@@ -391,14 +566,17 @@ export function gabaritJustificatif(j) {
     + '<p class="justif-origine">Document produit par inerWeb Fluide.</p>'
     + '</footer>';
 
-  return '<div class="justif-document" data-mode="' + esc(j.mode) + '">'
+  return '<div class="justif-document" data-mode="'
+    + esc(j.mode ?? 'INDETERMINE') + '">'
     + '<div class="justif-filigrane" aria-hidden="true">ANNULATION</div>'
+    + repere
     + bandeauMode
     + enTete
     + blocAnnulee
     + blocMotif
     + blocEcriture
     + blocMasses
+    + blocDetenteur
     + blocMateriel
     + blocScellement
     + pied
@@ -456,7 +634,13 @@ export const CSS_JUSTIFICATIF = `
   text-align: center;
 }
 
+/* LE BANDEAU RÉPÉTÉ SUR CHAQUE PAGE. Invisible à l'écran : il n'a de sens
+   que sur du papier, où une feuille peut se détacher des autres. */
+.justif-repere { display: none; }
+
 .justif-entete { position: relative; margin-bottom: 14px; }
+
+.justif-qualite { font-weight: 700; }
 
 .justif-titre {
   font-size: 21px;
@@ -542,7 +726,67 @@ export const CSS_JUSTIFICATIF = `
 .justif-pied p { margin: 0 0 4px; }
 
 .justif-origine { color: #3d4a5c; }
+
+/* ============================================================
+   CE QUI TIENT SUR LE PAPIER — commun à la modale et à la page
+   autonome (le document fait DEUX pages avec les marges par défaut).
+   ============================================================ */
+@media print {
+  /* Place réservée EN BAS de chaque feuille pour le bandeau répété. */
+  @page { margin: 10mm 8mm 20mm; }
+
+  /* ⚠️ LE BANDEAU QUI REPARAÎT SUR CHAQUE PAGE (mesuré : deux
+     occurrences sur un document de deux pages). Sans lui, la page 2
+     sortait sans mention de mode, sans titre et sans numéro. */
+  .justif-repere {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 3px 4px 0;
+    border-top: 1px solid #a51c1c;
+    background: #ffffff;
+    color: #a51c1c;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1.25;
+    text-align: center;
+  }
+
+  .justif-repere span { display: block; }
+
+  /* Un libellé ne part jamais sans sa valeur, ni un bloc sans son titre :
+     l'empreinte SHA-256 tombait page 2 pendant que son libellé restait
+     orphelin page 1. */
+  .justif-ligne,
+  .justif-motif,
+  .justif-note { break-inside: avoid; page-break-inside: avoid; }
+
+  .justif-bloc-titre { break-after: avoid; page-break-after: avoid; }
+
+  .justif-bloc-annule,
+  .justif-bloc-motif,
+  .justif-pied { break-inside: avoid; page-break-inside: avoid; }
+
+  /* Le cadre du document ne doit pas rogner ce qui passe à la page
+     suivante : la coupe du filigrane (overflow) sert à l'écran, elle n'a
+     plus lieu d'être sur le papier. */
+  .justif-document { overflow: visible; }
+}
 `;
+
+/**
+ * Les classes que `views/communs.js` pose entre `<body>` et le document,
+ * dans cet ordre. Ce sont EXACTEMENT les ancêtres à neutraliser à
+ * l'impression — et la suite vérifie que `modale()` les pose encore, sans
+ * quoi la neutralisation viserait à côté et la feuille redeviendrait
+ * muette sans que rien ne rougisse.
+ * @type {string[]}
+ */
+export const ANCETRES_MODALE = [
+  'modale-fond', 'modale', 'modale-corps', 'justif-apercu'
+];
 
 /** Aperçu à l'écran (modale) + IMPRESSION du seul document.
  *  EXPORTÉ pour être éprouvé : c'est ce bloc qui décide de ce qui reste
@@ -566,11 +810,73 @@ export const CSS_IMPRESSION_APERCU = `
   .justif-document,
   .justif-document * { visibility: visible; }
 
+  /* Rien de l'application ne PREND DE PLACE sur la feuille : la zone
+     principale reste dans le flux quand elle n'est qu'invisible, et le
+     document commençait alors après elle. Écrit en « body > * » plutôt
+     qu'en énumérant #entete/#sidebar/… : la règle ne peut pas oublier un
+     écran ajouté plus tard. Ce bloc ne vit que le temps de l'aperçu (le
+     style est retiré à la fermeture de la modale). */
+  body > * { display: none !important; }
+
+  body > #zone-modales,
+  body > .modale-fond { display: block !important; }
+
+  /* Dans la modale : ni barre de titre, ni boutons — ils sont invisibles,
+     mais ils occupaient le haut de la première feuille. */
+  .modale-entete,
+  .modale-actions { display: none !important; }
+
+  /* ⚠️⚠️ LA BOÎTE DE LA MODALE ROGNAIT LA FEUILLE — constat TIRÉ le
+     27/07 (impression réelle, Chrome et Edge) : le document sortait sur
+     UNE page de 219 caractères au lieu de deux pages complètes. Il n'y
+     restait que le bandeau de mode, le titre et le sous-titre ; le numéro
+     de la fiche annulée, le motif, les trois masses, l'auteur et
+     l'empreinte étaient ABSENTS DU PAPIER.
+     Cause : .modale porte max-height: calc(100vh - 40px) et
+     overflow: hidden, .modale-corps un overflow-y: auto, et
+     .modale-fond un backdrop-filter — qui en fait le bloc conteneur,
+     de sorte que même position: absolute ne sort pas le document de la
+     boîte. Le patron recopié (documents/plaque-fgas.js) est calibré pour une
+     étiquette de 100 mm qui tient sur une page : il ne pouvait pas le
+     dire. Rien ici n'est décoratif — chaque ligne retire une cause de
+     rognage mesurée. */
+  #zone-modales,
+  .modale-fond,
+  .modale,
+  .modale-corps,
+  .justif-apercu {
+    position: static;
+    display: block;
+    overflow: visible;
+    max-height: none;
+    max-width: none;
+    width: auto;
+    padding: 0;
+    margin: 0;
+    background: none;
+    border: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    transform: none;
+    opacity: 1;
+  }
+
+  /* ⚠ MESURÉ, ET C'EST LE PIÈGE LE PLUS FIN DU LOT. composants.css pose
+     .modale-fond.visible .modale { transform: translateY(0) } — deux
+     classes, donc une spécificité qui BAT la remise à plat ci-dessus, qui
+     n'en a qu'une. Or un ancêtre TRANSFORMÉ devient le bloc conteneur de
+     ses descendants position: fixed : le bandeau répété cessait alors de
+     se répéter (une seule occurrence sur deux feuilles, contre deux hors
+     de la modale). La règle est réécrite ici à la même spécificité. */
+  .modale-fond.visible .modale { transform: none; }
+
+  /* ⚠ Le document reste DANS LE FLUX : sorti en « position: absolute », il
+     ne se paginait plus de la même façon et le bandeau répété ne reparaissait
+     plus qu'une fois sur trois feuilles (mesuré). Il n'a plus besoin d'en
+     sortir, puisque plus rien ne le précède. */
   .justif-document {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
+    position: relative;
+    width: auto;
     max-width: 100%;
     margin: 0;
     border-width: 2px;
@@ -578,15 +884,10 @@ export const CSS_IMPRESSION_APERCU = `
 }
 `;
 
-const STYLE_JUSTIFICATIF_ID = 'style-justificatif-regularisation';
-
-function assurerStyleJustificatif() {
-  if (document.getElementById(STYLE_JUSTIFICATIF_ID)) return;
-  const style = document.createElement('style');
-  style.id = STYLE_JUSTIFICATIF_ID;
-  style.textContent = CSS_JUSTIFICATIF + CSS_IMPRESSION_APERCU;
-  document.head.appendChild(style);
-}
+/** Identifiant du nœud <style> posé par la modale d'aperçu (DOM :
+ *  `documents/regularisation-apercu.js`). Nommé ici pour rester à côté du
+ *  CSS qu'il transporte. */
+export const STYLE_JUSTIFICATIF_ID = 'style-justificatif-regularisation';
 
 /* ============================================================
    Page HTML AUTONOME (dossier d'audit scellé)
@@ -614,39 +915,3 @@ export function justificatifHtmlAutonome(j) {
     + '\n</body>\n</html>\n';
 }
 
-/* ============================================================
-   Ouverture de la modale d'aperçu (application)
-   ============================================================ */
-
-/**
- * Ouvre l'aperçu imprimable du justificatif de régularisation d'une
- * écriture d'annulation.
- * @param {{ store: object }} ctx
- * @param {string} mouvementId - id de la CONTRE-ÉCRITURE
- * @returns {Promise<void>}
- */
-export async function ouvrirJustificatifRegularisation(ctx, mouvementId) {
-  const faits = await construireJustificatif(ctx.store, mouvementId);
-  assurerStyleJustificatif();
-
-  const { fermer, racine } = modale({
-    titre: 'Justificatif de régularisation — '
-      + (faits.numero ?? 'écriture d’annulation'),
-    contenuHtml: '<div class="justif-apercu">'
-      + gabaritJustificatif(faits) + '</div>',
-    actionsHtml:
-      '<button type="button" id="justif-fermer" '
-      + 'class="btn btn-secondaire no-print">Fermer</button>'
-      + '<button type="button" id="justif-imprimer" '
-      + 'class="btn btn-marine no-print">'
-      + ICONES.imprimer + '<span>Imprimer</span></button>'
-  });
-
-  racine.querySelector('#justif-fermer').addEventListener('click', function () {
-    fermer();
-  });
-  racine.querySelector('#justif-imprimer')
-    .addEventListener('click', function () {
-      window.print();
-    });
-}

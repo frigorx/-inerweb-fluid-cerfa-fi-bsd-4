@@ -32,7 +32,7 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   filet : il publie la mesure qui a fait tomber la borne de 1 Ko des
   signatures et devient rouge si quelqu'un remet un seuil de taille.
 - **Tests** : `node outils/lancer-tests.mjs --tout` = TOUT le filet
-  (**128 exécutions, ~100 s** au 27/07/2026 ; sans `--tout`, arrêt au
+  (**132 exécutions, ~100 s** au 27/07/2026 ; sans `--tout`, arrêt au
   premier rouge). Suites `SUITES_DOUBLEES` jouées demo PUIS local.
   Toute nouvelle suite `test-*.mjs` est auto-découverte.
   `outils/test-references-suites.mjs` (revue B2, mineur 1) : **toute suite
@@ -62,7 +62,21 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   liste** et exige que toutes les annonces disent ce compte. Le nombre est
   DÉDUIT, jamais écrit en dur — ajouter une entrée ne casse rien, oublier
   une annonce casse. Elle vérifie aussi le compte de lignes que le § 5.3
-  promet à sa propre contre-épreuve.
+  promet à sa propre contre-épreuve. ⭐ Revue du lot 1 : l'exception porte
+  les CHEMINS EXACTS des trois fichiers du justificatif, au lieu du
+  fragment « regularisation » — une exception qui s'élargit toute seule
+  n'en est plus une.
+  `outils/test-nombre-executions.mjs` (revue du lot 1, 27/07) : **le
+  nombre d'exécutions ANNONCÉ est le nombre RÉEL.** Six pièces livrées
+  écrivent « TOUT VERT — N exécutions » et invitent à vérifier soi-même ;
+  elles disaient 128 pendant que la branche en jouait 131, et aucune suite
+  ne gardait ce nombre. Il est DÉDUIT de `outils/plan-tests.mjs`
+  (découverte + `SUITES_DOUBLEES`, extraites du lanceur pour être
+  importables), jamais écrit en dur. Exclusion NOMMÉE :
+  `docs/PROMPT-REPRISE.md` est un journal à blocs d'époque — on ne
+  réécrit pas l'histoire ; ailleurs, seule une tournure au passé
+  (« comptait », « bloc d'époque ») met une annonce hors jugement, car une
+  simple date ne distingue pas un état courant daté d'un état révolu.
 
 ## server/ (CommonJS — les modules purs du front y sont DUPLIQUÉS en littéraux)
 
@@ -248,7 +262,35 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   pseudonymise), le MOTIF en évidence, le numéro ET la date de la fiche
   annulée, **les deux masses avec leur signe du registre et leur somme**
   (jamais de case vide : le doute retire un allègement, jamais une masse),
-  machine/fluide/contenants, l'empreinte scellée. ⚠️ **LA MENTION DE MODE
+  machine/fluide/contenants, l'empreinte scellée. ⭐ **REVUE DU 27/07 —
+  SIX CONSTATS TIRÉS, CORRIGÉS : (1) le bouton « Imprimer » sortait une
+  feuille AMPUTÉE — une page de 219 caractères au lieu de deux pages de
+  2 703 (impression réelle Chrome ET Edge), le motif, les masses, l'auteur
+  et l'empreinte ABSENTS DU PAPIER : les boîtes de la modale
+  (`max-height` + `overflow` + `backdrop-filter`, et un `transform` de
+  spécificité supérieure qui faisait de `.modale` le bloc conteneur des
+  éléments fixes) rognaient tout ; le patron recopié, `plaque-fgas.js`,
+  est calibré pour une étiquette de 100 mm qui tient en UNE page. (2) La
+  page 2 ne portait AUCUNE marque : un bandeau `.justif-repere`,
+  affiché à l'impression seulement et `position: fixed`, reparaît sur
+  CHAQUE feuille avec la mention de mode et l'identité de l'écriture
+  (mesuré : `display: table-header-group` ne se répète pas, `position:
+  fixed` oui). (3) Le DÉTENTEUR, souvent un TIERS, ne figurait nulle
+  part — seul le lycée était nommé, sans qualité : bloc « Détenteur de
+  l'équipement » + étiquette « Opérateur » + attestation de capacité +
+  marque/modèle/n° série + PRP figé + équivalent CO₂ (`teqCO2`, la seule
+  formule du dépôt). (4) `Number(null) === 0` faisait imprimer
+  « 0,00 kg » de charge nominale là où il n'y a AUCUN équipement
+  (contre-écriture d'un transfert) : `nombreOuNull` sépare l'absent du
+  zéro RÉEL, qui reste imprimé. (5) L'empreinte ne « prouve » plus que ce
+  papier-ci est d'époque — elle porte sur l'ÉCRITURE ; la tournure est
+  désormais refusée par `test-mots-qui-promettent`. (6) Repli de mode et
+  écriture annulée introuvable : le doute AJOUTE la marque
+  (`MENTION_MODE_INDETERMINE`) et n'AFFIRME plus rien qu'il n'ait
+  mesuré.** La modale d'aperçu a QUITTÉ ce module pour
+  `documents/regularisation-apercu.js` : trois modules d'export ZIP
+  s'annoncent « testables sous Node » et tiraient `views/communs.js` par
+  cet import. ⚠️ **LA MENTION DE MODE
   EST DANS LE DOCUMENT, PAS AUTOUR** — `.justif-mode` est un enfant de
   `.justif-document`, le bloc d'impression rend visibles le nœud ET tous
   ses descendants ; le badge de mode de l'application, lui, est masqué par
@@ -259,7 +301,7 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   (patron `verificateur.js`) — le sommaire du dossier d'audit DIT ce qui a
   changé. Aucun champ AcroForm, aucune reprise de la maquette officielle :
   deux pièces qui ne se ressemblent pas, c'est tout le point.
-  `test-justificatif-regularisation` (DOUBLÉE, 59 vérifs) +
+  `test-justificatif-regularisation` (DOUBLÉE, 106 vérifs) +
   `views/test-boutons-contre-ecriture` (24) + section E de
   `views/test-compteur-fiches` (les compteurs de fiches numérotées
   excluent les contre-écritures, ANCIENNES comprises).

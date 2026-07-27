@@ -162,10 +162,18 @@ function redigerSommaire(etablissement, annee, nomsFichiers, maintenant) {
     // ⚠ Lot 1 branche A — le dossier scellé DIT ce qui a changé. Sans
     // cette ligne, un lecteur habitué aux archives antérieures chercherait
     // le CERFA d'une contre-écriture et conclurait à une pièce manquante.
-    'ÉCRITURES D\'ANNULATION (CONTRE-ÉCRITURES)',
-    '-'.repeat(68),
-    ...decouperLignes(LIGNE_SOMMAIRE_REGULARISATIONS, 68),
-    '',
+    // ⭐ REVUE DU 27/07 : le bloc était posé INCONDITIONNELLEMENT. Tiré sur
+    // une année SANS contre-écriture, l'archive ne contenait aucun
+    // `regularisations/…` et son sommaire annonçait pourtant ces fichiers :
+    // le lecteur cherchait une pièce inexistante — le symétrique exact du
+    // défaut que la ligne devait éviter. La condition est DÉRIVÉE de la
+    // liste réelle des fichiers, jamais d'un compteur tenu à la main.
+    ...(nomsFichiers.some((n) => n.includes('regularisations/'))
+      ? ['ÉCRITURES D\'ANNULATION (CONTRE-ÉCRITURES)',
+        '-'.repeat(68),
+        ...decouperLignes(LIGNE_SOMMAIRE_REGULARISATIONS, 68),
+        '']
+      : []),
     // ⚠ Lot B2 — la mention voyage AVEC le dossier scellé : un lecteur
     // du ZIP ne doit pas prendre le suivi interne pour un bordereau.
     'SUIVI DE REMISE EN FILIÈRE DÉCHETS',
@@ -281,14 +289,18 @@ export async function genererDossierAudit(store, annee) {
     estContreEcriture(mv) &&
     (mv.date || '').startsWith(prefixeAnnee));
   if (contreEcrituresAnnee.length) {
-    const [machines, bouteilles, fluides, personnel] = await Promise.all([
-      store.getMachines(), store.getBouteilles(), store.getFluides(),
-      store.getPersonnel()
-    ]);
+    // `clients` : le DÉTENTEUR de l'équipement est souvent un TIERS — sans
+    // cette liste, le seul nom d'entreprise du document serait celui du
+    // lycée et le lecteur en conclurait que le matériel lui appartient.
+    const [machines, bouteilles, fluides, personnel, clients] =
+      await Promise.all([
+        store.getMachines(), store.getBouteilles(), store.getFluides(),
+        store.getPersonnel(), store.getClients()
+      ]);
     for (const contre of contreEcrituresAnnee) {
       const faits = assemblerJustificatif({
         mouvement: contre, mouvements, machines, bouteilles, fluides,
-        personnel, etablissement
+        personnel, clients, etablissement
       });
       entrees.push({
         nom: `regularisations/${nomSur(contre.numero ?? contre.id)}.html`,

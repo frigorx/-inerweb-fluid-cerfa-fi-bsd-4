@@ -233,11 +233,20 @@ function lignesQuiPortentLaMention(dossier, prefixe, resultat) {
 // l'inventaire ci-dessus, et la dette du dossier aurait grandi.
 // L'exception est donc NOMMÉE fichier par fichier : tout AUTRE module qui
 // se mettrait à porter la mention ferait rougir cette suite, comme avant.
-// Le mot « regularisation » couvre le module ET sa suite de tests, tous
-// deux cités par le § 5.3 de docs/NOTE-DECISION-ETABLISSEMENT.md.
+// ⭐ REVUE DU 27/07 : l'exception était le FRAGMENT de chemin
+// « regularisation » — tout futur fichier dont le chemin contient ce mot
+// obtenait un laissez-passer sans que personne ne l'ait décidé. Une
+// exception qui s'élargit toute seule n'est plus une exception. Les
+// chemins sont donc EXACTS ; les trois fichiers concernés sont ceux que
+// cite le § 5.3 de docs/NOTE-DECISION-ETABLISSEMENT.md.
+const CHEMINS_MARQUES_EXACTS = new Set([
+  'documents/regularisation.js',
+  'documents/regularisation-apercu.js',
+  'documents/test-justificatif-regularisation.mjs'
+]);
 const DOCUMENTS_MARQUES = [
   (chemin) => chemin.startsWith('cerfa/'),
-  (chemin) => chemin.includes('regularisation')
+  (chemin) => CHEMINS_MARQUES_EXACTS.has(chemin)
 ];
 const porteuses = lignesQuiPortentLaMention(join(RACINE, 'v8', 'js'), '', []);
 const horsMarques = porteuses.filter(
