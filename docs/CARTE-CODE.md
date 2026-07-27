@@ -53,6 +53,16 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   code livré et dans CETTE carte doit être accompagnée du mot
   « abandonné », à portée de phrase. Périmètre et exclusions (journal daté,
   rapports d'audit, blocs d'époque des plans) nommés en tête de la suite.
+  `outils/test-inventaire-documents-sans-marque.mjs` (revue B6) : le dossier
+  remis à l'établissement **compte juste**. L'inventaire des documents sans
+  marque de non-officialité est repris à l'identique dans QUATRE pièces
+  (`LIMITE-DE-RESPONSABILITE.md`, `docs/POINTS-DE-FRICTION.md`,
+  `docs/REGISTRE-DES-ARBITRAGES.md`, `docs/NOTE-DECISION-ETABLISSEMENT.md`)
+  et chacune annonce son nombre en toutes lettres : la suite **compte la
+  liste** et exige que toutes les annonces disent ce compte. Le nombre est
+  DÉDUIT, jamais écrit en dur — ajouter une entrée ne casse rien, oublier
+  une annonce casse. Elle vérifie aussi le compte de lignes que le § 5.3
+  promet à sa propre contre-épreuve.
 
 ## server/ (CommonJS — les modules purs du front y sont DUPLIQUÉS en littéraux)
 

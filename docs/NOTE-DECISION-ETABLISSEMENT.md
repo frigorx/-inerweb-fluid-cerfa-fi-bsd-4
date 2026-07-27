@@ -45,7 +45,7 @@ permettront de décider ensuite.
 | Filet de tests | **TOUT VERT — 121 exécutions** ; durée de l'ordre de **100 secondes** (mesuré le 26/07/2026) | `node outils/lancer-tests.mjs --tout` |
 | Suite de refus (sécurité négative) | **207 réussies, 0 en échec** (mesuré le 26/07/2026) | `node server/test-securite-negative.mjs` |
 | Mode Officiel | **FERMÉ** par un verrou unique | `server/blocage-officiel.js:24` et `v8/js/data/blocage-officiel.js:31` |
-| Conséquence du verrou | aucune fiche opposable n'est produite ; **seul le CERFA** porte « MODE FORMATION — DOCUMENT NON OFFICIEL » (cadre 14 et filigrane). **Dix-neuf autres documents produits ne portent aucune marque** — ils sont énumérés un par un à l'[inventaire du § 5.3](#inventaire-documents-sans-marque) *(lignes R26 et R34)* | `v8/js/cerfa/generateur.js:93`, `:538`, `:754` ; inventaire et commande de vérification au § 5.3 |
+| Conséquence du verrou | aucune fiche opposable n'est produite ; **seul le CERFA** porte « MODE FORMATION — DOCUMENT NON OFFICIEL » (cadre 14 et filigrane). **Vingt et un autres documents produits ne portent aucune marque** — ils sont énumérés un par un à l'[inventaire du § 5.3](#inventaire-documents-sans-marque) *(lignes R26 et R34)* | `v8/js/cerfa/generateur.js:93`, `:538`, `:754` ; inventaire et commande de vérification au § 5.3 |
 | Surface fonctionnelle | 96 méthodes de contrat (v13), 35 migrations de base (n° 2 à 36) | `v8/js/data/contrat.js`, `server/migrations.js` |
 
 > Les deux chiffres de tests ci-dessus ont été **mesurés le 26/07/2026 sur cette version**,
