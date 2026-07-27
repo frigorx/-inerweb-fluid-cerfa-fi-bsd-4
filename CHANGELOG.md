@@ -79,13 +79,87 @@ inchangées.
 CERFA deux fois** en mode Formation — le contrôle lié n'est sauté que s'il a un PDF conservé,
 ce qui n'arrive jamais en Formation. Trois fiches pour deux écritures.
 
-**⚠️ RESTE GATÉ — la question au propriétaire, plan `docs/PLAN-LOT1-CONTRE-ECRITURE.md` § 4** :
-une contre-écriture doit-elle sortir une **deuxième fiche CERFA numérotée**, ou un
-**justificatif interne** ? Le plan recommande le justificatif interne (coût M contre XL) sur
-un motif que la relecture n'avait pas vu : la fiche numérotée exigerait **deux signatures pour
-annuler une erreur**, alors que le dépôt documente déjà que le risque n° 1 sur ce terrain est
-qu'on **oublie** de contre-écrire. Durcir le seul remède, c'est aggraver le défaut connu pour
-améliorer une pièce. Rien de cette branche n'est codé tant que la réponse n'est pas donnée.
+#### ⭐ BRANCHE (A) TRANCHÉE PAR LE PROPRIÉTAIRE (27/07) — PLUS AUCUN CERFA POUR UNE CONTRE-ÉCRITURE
+
+**Décision : une contre-écriture ne produit plus de fiche CERFA, mais un JUSTIFICATIF DE
+RÉGULARISATION** — « la fiche n° X est annulée, voici pourquoi ». Motif : émettre un CERFA
+pour un geste comptable, c'est **attester une intervention qui n'a pas eu lieu** ; et la
+branche concurrente aurait exigé **deux signatures pour annuler une erreur**, alors que le
+dépôt documente déjà que le risque n° 1 sur ce terrain est qu'on **oublie** de contre-écrire.
+Deuxième décision : la quantité s'imprime **avec son signe**, la case n'est jamais vidée.
+
+Nouveau module `v8/js/documents/regularisation.js` (pur) + `regularisation-apercu.js` (DOM) :
+deux rendus d'un seul gabarit — modale d'aperçu imprimable, et page HTML **autonome**
+`regularisations/<numéro>.html` versée aux archives ZIP scellées. Aucun champ AcroForm, aucune
+reprise de la maquette officielle : **deux pièces qui ne se ressemblent pas**, c'est tout le
+point. Le refus du CERFA est porté par `contreEcritureDe` et **non** par `cerfaNumero` : les
+contre-écritures **déjà scellées** cessent elles aussi d'être imprimées, sans qu'une seule
+donnée soit touchée — vérifié en rejouant le code neuf sur une base fabriquée par l'ancien :
+`cerfaNumero` scellé inchangé, **empreinte bit pour bit identique**, chaîne verte.
+
+**Ce que les deux revues ont rattrapé — un BLOQUANT que seule une impression RÉELLE pouvait
+voir :**
+
+- **BLOQUANT — le bouton « Imprimer » sortait une feuille amputée.** La mention de mode
+  survivait bien (le piège annoncé était tenu), **mais le document, lui, ne survivait pas** :
+  **227 caractères sur le papier au lieu de 2 703**. Absents de la feuille : le numéro de la
+  fiche annulée, le motif, les trois masses, l'auteur, l'empreinte. Trouvé en imprimant pour
+  de vrai — Chrome **et** Edge, texte ré-extrait du PDF — jamais en lisant le CSS. La cause
+  profonde n'était pas celle qu'on croyait : remettre les ancêtres à plat ne suffisait pas,
+  `composants.css` pose `.modale-fond.visible .modale { transform: … }`, **deux classes, donc
+  une spécificité qui bat la remise à plat**, et un ancêtre transformé devient le bloc
+  conteneur des descendants `position: fixed`. Bisection tirée pour l'établir.
+- **IMPORTANT — le détenteur de l'équipement manquait**, ainsi que marque, modèle, n° de
+  série, attestation de capacité et PRP figé. Ajoutés ; le repli sur l'établissement est
+  **dit** (« aucun client détenteur n'est enregistré ») : une absence de client n'est pas une
+  propriété constatée.
+- **IMPORTANT — une masse était inventée** : `chargeNominaleKg` absent s'imprimait
+  « 0,00 kg ». L'absent est désormais distingué du zéro — et un zéro **réellement** au
+  registre (contre-écriture d'un contrôle) traverse intact et s'imprime « + 0,00 kg ».
+  *Le doute n'invente pas une masse, et n'en retire aucune.*
+- **IMPORTANT — la page 2 sortait sans marque.** Bandeau répété par feuille : les trois
+  techniques possibles ont été **sondées** (témoin : 1 occurrence ; `table-header-group` : 1,
+  il ne se répète pas ; `position: fixed` + `@page` : **2, une par feuille**).
+- **IMPORTANT — le document affirmait une preuve non délivrée** : la phrase sur l'empreinte
+  s'imprimait même quand l'empreinte était absente. Elle ne s'imprime plus du tout dans ce cas.
+- **IMPORTANT — le dossier publiait « 128 exécutions » quand la branche en jouait 131.** Le
+  compte est désormais **gardé par une suite** (`outils/test-nombre-executions.mjs`, plan
+  extrait dans `outils/plan-tests.mjs`) qui recompte le plan et confronte chaque annonce
+  publiée. Les blocs d'état **datés** de `docs/PROMPT-REPRISE.md` sont exclus nommément : ce
+  dépôt ne réécrit pas son histoire.
+
+**Portée élargie au-delà des trois vues prévues** : le tableau de bord offrait lui aussi un
+bouton CERFA sur une contre-écriture (il aurait planté), et `dossier-machine.js` /
+`dossier-fuite.js` embarquent aussi des CERFA — sans filtre, ils auraient rangé un fichier
+« CERFA non généré » dans une archive scellée : un refus prévu aurait eu l'air d'une panne.
+Le sommaire des archives annonce les justificatifs **d'après la liste réelle des fichiers**,
+jamais d'après un compteur tenu à la main.
+
+**Le CERFA d'annulation écrit le matin même a été SUPPRIMÉ**, pas laissé : le refus étant posé
+en amont, ses ~200 lignes devenaient injoignables, donc intestables. Du code inatteignable qui
+prétend traiter un cas est un mensonge dans un dépôt dont la doctrine est la preuve ; git en
+garde la trace si la branche (B) devait un jour être choisie.
+
+**Preuves** : suites neuves `test-justificatif-regularisation.mjs` (doublée),
+`views/test-boutons-contre-ecriture.mjs` (sur le HTML réellement rendu des trois écrans),
+`outils/test-nombre-executions.mjs` ; `cerfa/test-contre-ecriture.mjs` réécrite pour tirer le
+refus par ses **quatre portes**, y compris sur une contre-écriture ancienne au `cerfaNumero`
+scellé. Contre-épreuves tirées dans les deux sens sur chaque correctif, dont l'impression
+réelle (`227 → 2 703` caractères). Usage quotidien mesuré et intact : CERFA d'un mouvement
+signé, fiche d'exercice non signée, correction de copie **100 %, 0 à tort**.
+**TOUT VERT — 132 exécutions** en 104,0 s, 207 attaques inchangées.
+
+**⚠️ TROUVÉ EN PLUS, SÉRIEUX, HORS PÉRIMÈTRE — la même cause frappe deux imprimés de
+l'atelier.** Le patron d'impression est recopié dans tout `documents/`, et il casse sur **tout
+document qui déborde d'une page**. Tiré avec le bloc `@media print` réel de chaque module :
+`bon-intervention.js` → **138 caractères sur le papier, fin du document ABSENTE** ;
+`feuille-mise-en-service.js` → **100 caractères, fin ABSENTE**. Ce sont deux documents A4
+pleine page destinés à l'atelier. Non corrigés ici : le remède est maintenant éprouvé, ils
+méritent leur propre passe.
+
+**⚠️ CONSÉQUENCE À CONNAÎTRE** : le bouton « Correction élève » n'est plus offert sur une
+contre-écriture — corriger la copie d'un élève sur une écriture d'annulation n'est plus
+possible. C'est la suite directe de la décision, elle est signalée au propriétaire.
 
 ### 🔎 QUATRIÈME RELECTURE EXTERNE (27/07) — LES 16 CONSTATS TIRÉS, PUIS LE « LOT 0 »
 

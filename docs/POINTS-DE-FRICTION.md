@@ -842,7 +842,7 @@ change la façon de lire tout le reste.
 Le dépôt affiche « tout vert, 132 exécutions » (chiffre de `docs/CARTE-CODE.md:35`).
 **Ce chiffre a été rejoué le 27/07/2026 après le lot 0**, par
 `node outils/lancer-tests.mjs --tout` : résultat « TOUT VERT — 132 exécutions ».
-La **durée** est de l'ordre de **100 secondes** — 103,0 s à cette mesure, et 96,8 s, 97,9 s
+La **durée** est de l'ordre de **100 secondes** — 104,0 s à cette mesure, et 96,8 s, 97,9 s
 et 98,8 s à trois mesures de la veille sur la version qui en comptait 121. C'est un ordre de
 grandeur, pas une mesure : une durée
 qui varie d'une exécution à l'autre ne se publie pas au centième. Ce qui compte est le

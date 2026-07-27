@@ -50,7 +50,7 @@ permettront de décider ensuite.
 
 > Les deux chiffres de tests ci-dessus ont été **mesurés le 27/07/2026 sur cette version**,
 > pas repris d'un document antérieur. La **durée** du filet est écrite comme un ordre de
-> grandeur, et c'est volontaire : elle varie d'une exécution à l'autre — 103,0 s à la mesure
+> grandeur, et c'est volontaire : elle varie d'une exécution à l'autre — 104,0 s à la mesure
 > du 27/07, et 96,8 s, 97,9 s et 98,8 s à trois mesures de la veille sur la version qui
 > comptait 121 exécutions. Une mesure qui bouge ne se publie
 > pas au centième ; ce qui compte est le nombre d'exécutions, le verdict, et la commande qui
