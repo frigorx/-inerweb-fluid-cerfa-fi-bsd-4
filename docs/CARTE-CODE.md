@@ -40,6 +40,16 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   trouvés d'un coup (3 posés par B2, 2 antérieurs). Dans un dépôt dont la
   doctrine est la preuve citée, une référence morte fait croire à un filet
   qu'on n'a pas.
+  `outils/test-inventaire-documents-sans-marque.mjs` (revue B6) : le dossier
+  remis à l'établissement **compte juste**. L'inventaire des documents sans
+  marque de non-officialité est repris à l'identique dans QUATRE pièces
+  (`LIMITE-DE-RESPONSABILITE.md`, `docs/POINTS-DE-FRICTION.md`,
+  `docs/REGISTRE-DES-ARBITRAGES.md`, `docs/NOTE-DECISION-ETABLISSEMENT.md`)
+  et chacune annonce son nombre en toutes lettres : la suite **compte la
+  liste** et exige que toutes les annonces disent ce compte. Le nombre est
+  DÉDUIT, jamais écrit en dur — ajouter une entrée ne casse rien, oublier
+  une annonce casse. Elle vérifie aussi le compte de lignes que le § 5.3
+  promet à sa propre contre-épreuve.
 
 ## server/ (CommonJS — les modules purs du front y sont DUPLIQUÉS en littéraux)
 
