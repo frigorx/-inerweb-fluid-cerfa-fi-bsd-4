@@ -7,7 +7,8 @@
 // ============================================================
 
 import { creerStore } from '../data/datastore.js';
-import { toutesLesTables, genererJournalAuditPdf, champCsv } from './exports.js';
+import { toutesLesTables, genererJournalAuditPdf, champCsv,
+  csvMouvements } from './exports.js';
 
 let nbOk = 0;
 let nbEchecs = 0;
@@ -319,6 +320,74 @@ verifier('genererJournalAuditPdf produit un PDF valide (en-tête %PDF-)',
     Boolean(ligneMvRoles) && ligneMvRoles.includes('Sacha Rolland')
     && !ligneMvRoles.includes(executantRoles.id),
     ligneMvRoles);
+}
+
+// --- 15 bis. Lot 1 / C2 (27/07) : la colonne « Exécuté par » cesse d'être
+// VIDE pour une contre-écriture, dans un dossier SCELLÉ. Un inspecteur
+// lisait une écriture qui a modifié le registre sans savoir de qui elle
+// était — alors que l'information existait (la personne qui a demandé
+// l'annulation). Les DEUX formes sont éprouvées : la NOUVELLE (identité
+// posée, produite par le store) et l'ANCIENNE (executeParId resté null,
+// colonne vide, aucune casse) — le passé ne se réécrit pas.
+{
+  const fluideCE = (await store.getFluides())[0].code;
+  const valideurCE = await store.createPersonne({
+    nom: 'Duval', prenom: 'Camille', typePersonne: 'ENSEIGNANT',
+    roleApp: 'REFERENT'
+  });
+  const machineCE = await store.createMachine({
+    designation: 'Machine contre-écriture', fluide: fluideCE,
+    chargeNominaleKg: 10
+  });
+  const bouteilleCE = await store.createBouteille({
+    type: 'NEUVE', fluide: fluideCE, tareKg: 10, masseBruteKg: 20,
+    contenanceMaxKg: 12
+  });
+  const mvCE = await store.creerMouvement({
+    type: 'CHARGE_APPOINT', machineId: machineCE.id,
+    bouteilleSrcId: bouteilleCE.id, peseeAvantKg: 20, peseeApresKg: 19,
+    technicien: 'Export Contre-écriture'
+  });
+  await store.soumettreMouvement(mvCE.id);
+  await store.validerMouvement(mvCE.id, valideurCE.id);
+  const contreCE = await store.annulerParContreEcriture(
+    mvCE.id, 'Erreur de pesée (essai export)', valideurCE.id);
+
+  const csvCE = (await toutesLesTables(store, ANNEE))
+    .find((f) => f.nom === 'mouvements.csv').contenu;
+  const ligneCE = lignesDe(csvCE).find((l) => l.startsWith(contreCE.numero + ';'));
+  const colonnesCE = (ligneCE || '').split(';');
+  const iExecute = lignesDe(csvCE)[0].split(';').indexOf('Exécuté par');
+  verifier('mouvements.csv : la contre-écriture porte enfin un « Exécuté par »',
+    iExecute > 0 && colonnesCE[iExecute] === 'Camille Duval', ligneCE);
+  verifier('c’est bien la personne qui a demandé l’annulation (le validateur)',
+    contreCE.executeParId === valideurCE.id
+    && contreCE.validateurId === valideurCE.id,
+    JSON.stringify({ executeParId: contreCE.executeParId }));
+
+  // L'ANCIENNE forme : une contre-écriture scellée AVANT ce correctif a
+  // gardé son executeParId null. Le monde de démo n'en contient aucune et
+  // le store n'en produit plus — on éprouve donc `csvMouvements`
+  // directement, plutôt que de forger une base (ce qui casserait la
+  // chaîne). La colonne doit sortir VIDE, sans rien casser autour.
+  const personnelCE = await store.getPersonnel();
+  const csvMixte = csvMouvements(
+    [{ ...contreCE, numero: 'ANCIENNE-0001', executeParId: null },
+      { ...contreCE, numero: 'NOUVELLE-0002' }], ANNEE, personnelCE);
+  const lignesMixte = lignesDe(csvMixte);
+  const nbColonnes = lignesMixte[0].split(';').length;
+  const ligneAncienne = lignesMixte.find((l) => l.startsWith('ANCIENNE-0001;'));
+  const ligneNouvelle = lignesMixte.find((l) => l.startsWith('NOUVELLE-0002;'));
+  verifier('contre-écriture ANCIENNE : « Exécuté par » VIDE, ligne intacte',
+    Boolean(ligneAncienne)
+    && ligneAncienne.split(';')[iExecute] === ''
+    && ligneAncienne.split(';').length === nbColonnes,
+    ligneAncienne);
+  verifier('les deux formes cohabitent dans le MÊME fichier, sans casse',
+    Boolean(ligneNouvelle)
+    && ligneNouvelle.split(';')[iExecute] === 'Camille Duval'
+    && ligneNouvelle.split(';').length === nbColonnes,
+    ligneNouvelle);
 }
 
 // --- 16. Lot B3 : signatures.csv entre au dossier scellé, avec le

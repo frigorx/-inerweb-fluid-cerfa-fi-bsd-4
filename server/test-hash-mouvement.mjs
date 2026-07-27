@@ -197,6 +197,53 @@ const MVT_V2 = { id: 'mvt-v2', numero: 'FI-2026-0100', date: '2026-08-01',
     hasherMouvement(v2Nulls, null) === await hasherEcriture(v2Nulls, null));
 }
 
+// 2 bis. Lot 1 / C2 (27/07) — LE PASSÉ NE SE RÉÉCRIT PAS. La contre-écriture
+// porte désormais `executeParId` (la colonne « Exécuté par » du dossier
+// scellé sortait vide). Ce champ ENTRE dans l'empreinte v2 : le verrou
+// ci-dessous fige l'empreinte d'une contre-écriture ANCIENNE — celle où
+// `executeParId` est resté null. Elle ne doit JAMAIS bouger : toutes les
+// contre-écritures déjà scellées chez Franck la calculeraient autrement et
+// leur chaîne se déclarerait cassée. Un rouge ici veut dire que quelqu'un a
+// touché la préimage, ou pire, backfillé le champ sur l'existant.
+const CE_ANCIENNE = { id: 'mvt-ce-ancienne', numero: 'FORM-2026-0042',
+  date: '2026-07-27', mode: 'FORMATION', type: 'CHARGE_APPOINT',
+  machineId: 'mac-9', fluide: 'R-32', quantiteKg: -0.5,
+  peseeAvantKg: 10.8, peseeApresKg: 12,
+  bouteilleSrcId: 'bou-9', bouteilleDstId: null,
+  causeMouvement: 'Fuite reparee',
+  controle: { statutControle: 'SANS_OBJET', detecteurId: null },
+  technicien: 'Referent Alpha', validateurId: 'per-ref',
+  contreEcritureDe: 'mvt-v2', motif: 'Erreur de pesee',
+  versionEmpreinte: 2, prpFige: 675, cerfaNumero: 'FORM-2026-0042',
+  executeParId: null, superviseurId: null, responsableRegistreId: null,
+  outilsFiges: [], hashSignatures: 'c'.repeat(64),
+  hashPiecesJointes: 'd'.repeat(64), hashPdfFinal: null };
+{
+  const attenduAncienne =
+    'b6f5f5b6a27355c6607bd80911c9ca989c4c6cfbe6591329843fa0cd3f7da8fb';
+  const obtenue = hasherMouvement(CE_ANCIENNE, 'e'.repeat(64));
+  verifier('contre-écriture ANCIENNE (executeParId null) : empreinte CONNUE '
+    + 'inchangée, front et serveur',
+    obtenue === attenduAncienne &&
+    await hasherEcriture(CE_ANCIENNE, 'e'.repeat(64)) === attenduAncienne,
+    `obtenu=${obtenue}`);
+
+  // Et la valeur est bel et bien SCELLÉE, pas décorative : renseigner
+  // `executeParId` change l'empreinte. C'est précisément pourquoi on ne
+  // backfille pas l'existant — le champ neuf n'existe que pour les
+  // contre-écritures créées à partir de maintenant.
+  const ceNouvelle = { ...CE_ANCIENNE, executeParId: 'per-ref' };
+  const attenduNouvelle =
+    '72f5d5dc90127914d4f5025d66a9b96fb3d001e65db1b66cd0f24896ef9635e7';
+  const obtenueNouvelle = hasherMouvement(ceNouvelle, 'e'.repeat(64));
+  verifier('contre-écriture NOUVELLE (executeParId posé) : empreinte '
+    + 'DIFFÉRENTE et identique front/serveur',
+    obtenueNouvelle === attenduNouvelle &&
+    obtenueNouvelle !== attenduAncienne &&
+    await hasherEcriture(ceNouvelle, 'e'.repeat(64)) === attenduNouvelle,
+    `obtenu=${obtenueNouvelle}`);
+}
+
 // 3. VERSIONNEMENT : la version choisit la préimage — jamais de recalcul.
 {
   const base = MOUVEMENTS[0].mvt;

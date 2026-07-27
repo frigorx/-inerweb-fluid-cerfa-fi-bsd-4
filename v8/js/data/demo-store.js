@@ -4567,6 +4567,17 @@ export function creerDemoStore() {
         technicien: `${validateur.prenom} ${validateur.nom}`,
         motif: String(motif).trim(),
         validateurId,
+        // Lot 1 / C2 (27/07) : QUI a fait cette écriture — miroir EXACT du
+        // serveur (server/api.js, annulerParContreEcriture). La colonne
+        // « Exécuté par » de mouvements.csv sortait VIDE pour toute
+        // contre-écriture, dans un dossier d'audit SCELLÉ. La valeur est
+        // la fiche du VALIDATEUR, résolue par verifierValidateur (côté
+        // serveur elle est en outre contrainte à la personne connectée).
+        // ⚠ Ce champ ENTRE dans l'empreinte v2 : la MÊME valeur doit être
+        // posée des deux côtés, sinon le round-trip démo↔local casse la
+        // chaîne. Rien de rétroactif : les contre-écritures déjà
+        // enregistrées gardent leur executeParId null et leur empreinte.
+        executeParId: validateur.id,
         contreEcritureDe: original.id,
         statut: 'VALIDE',
         hashEcriture: null,
