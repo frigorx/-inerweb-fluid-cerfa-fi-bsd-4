@@ -40,6 +40,12 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   trouvés d'un coup (3 posés par B2, 2 antérieurs). Dans un dépôt dont la
   doctrine est la preuve citée, une référence morte fait croire à un filet
   qu'on n'a pas.
+  `outils/test-visa-abandonne.mjs` (revue B5, lot 0) : **aucune condition
+  ne peut pendre à un événement qui n'arrivera pas** — le visa T3 étant
+  ABANDONNÉ le 26/07/2026, toute mention de « visa » ou de « T3 » dans le
+  code livré et dans CETTE carte doit être accompagnée du mot
+  « abandonné », à portée de phrase. Périmètre et exclusions (journal daté,
+  rapports d'audit, blocs d'époque des plans) nommés en tête de la suite.
 
 ## server/ (CommonJS — les modules purs du front y sont DUPLIQUÉS en littéraux)
 

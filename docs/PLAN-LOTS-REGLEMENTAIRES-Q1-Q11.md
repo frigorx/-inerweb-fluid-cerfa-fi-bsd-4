@@ -88,7 +88,9 @@ d'août — sur le cœur WORM. L'audit externe lui-même plaçait cette fusion e
   2008 ne prévoit AUCUNE variante hermétique ; le 6 kg actuel vient du seuil global 2025
   appliqué à tort). Révocable sur réponse R1.
 - **DÉLÉGUÉ (strict)** : cat. III 2008 (récupération seule) alignée à **2 kg** également —
-  même logique de texte ; à confirmer via T3 (question au dossier).
+  même logique de texte. La confirmation devait venir du visa T3, **abandonné le
+  26/07/2026** (`docs/NOTE-DECISION-ETABLISSEMENT.md` §4) : aucune confirmation externe
+  n'est plus attendue, la valeur reste au plus strict et sa révision relève du propriétaire.
 - Fichiers : `v8/js/data/habilitations.js` + miroir `server/droit-intervention.js` +
   `test-habilitations-moteur.mjs` (assertions 3 kg à réécrire) + `server/test-droit-intervention.mjs`
   (éventail 1,999 / 2,000 / 2,5 kg).
@@ -271,8 +273,12 @@ libellé Q7 par affichage seul · refus Q4 posé au PASSAGE et à la VALIDATION.
 - **R4** : le champ **« usage thermique »** est ajouté (lot L3, migration 34 — machines non
   renseignées au régime le plus strict) ;
 - (même jour) **catalogue : R-452A = 2141**, règle du plus élevé au sens littéral.
-- **Visa T3** (organisme agréé) : Q3 (art. 7/11 sur pièce) · Q6 (art. 5 sur pièce) ·
-  Q9 (art. 13 sur pièce, dates 2030/2032) · exceptions et MISE_EN_SERVICE.
+- **SANS confirmation externe — le visa T3 (organisme agréé) est abandonné depuis le
+  26/07/2026** (`docs/NOTE-DECISION-ETABLISSEMENT.md` §4) : Q3 (art. 7/11 sur pièce) ·
+  Q6 (art. 5 sur pièce) · Q9 (art. 13 sur pièce, dates 2030/2032) · exceptions et
+  MISE_EN_SERVICE restent lus **au plus strict**, sans pièce venue de l'extérieur ; leur
+  révision relève du propriétaire, et les risques sont acceptés nommément par
+  l'établissement.
 
 ## 5 bis. Revue adversariale du lot L1 (24/07) — corrigé et consigné
 

@@ -70,7 +70,9 @@ et trois tests qui *ne pouvaient pas échouer*.
 2. le **modèle de menace s'arrête à l'accès disque** — qui a la main sur le fichier de base
    peut le remplacer ; les défenses visent le canal applicatif.
 3. le **mode Officiel n'a jamais tourné en production**.
-4. certaines **valeurs réglementaires attendent la confirmation externe** (dossier T3).
+4. certaines **valeurs réglementaires attendaient la confirmation externe** (dossier T3) —
+   **ce visa a été abandonné le 26/07/2026** : elles restent lues au plus strict, sans
+   confirmation extérieure à venir (§ 6).
 5. le **poste unique** est un point de défaillance.
 
 ---
