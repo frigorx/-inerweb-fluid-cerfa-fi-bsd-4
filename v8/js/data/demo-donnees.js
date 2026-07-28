@@ -27,9 +27,9 @@ export const DEMO = {
   // Établissement (opérateur attesté) — dossier complet Phase C
   // --------------------------------------------------------
   etablissement: {
-    raisonSociale: 'Lycée Professionnel Jacques Raynaud',
-    siret: '191 300 456 00012',
-    adresse: 'Bd Rabatau, 13010 Marseille',
+    raisonSociale: 'Lycée Professionnel Antoine Vidal',
+    siret: '482 917 356 00028',
+    adresse: 'Avenue Jean-Jaurès, 30000 Nîmes',
     numAttestationCapacite: 'AC-13-004567',
     organisme: 'QualiFroid Cert',
     dateDelivranceCapacite: '2022-03-15',
@@ -38,7 +38,7 @@ export const DEMO = {
     categoriesAutorisees: ['I'],
     activitesAutorisees: ['MISE_EN_SERVICE', 'MAINTENANCE', 'CONTROLE',
       'RECUPERATION', 'DEMANTELEMENT'],
-    sitesCouverts: ['Lycée J. Raynaud — Atelier (Bd Rabatau, 13010 Marseille)'],
+    sitesCouverts: ['Lycée A. Vidal — Atelier (Avenue Jean-Jaurès, 30000 Nîmes)'],
     dernierAudit: '2026-01-12',
     prochainAudit: '2027-01-12'
   },
@@ -80,15 +80,15 @@ export const DEMO = {
     {
       id: 'cli-fournil',
       raisonSociale: 'Boulangerie Le Fournil',
-      adresse: '13006 Marseille',
+      adresse: '30900 Nîmes',
       siret: '824 519 002 00018',
       nbMachines: 1
     },
     {
       id: 'cli-lycee',
-      raisonSociale: 'Lycée J. Raynaud — Atelier',
-      adresse: '13010 Marseille',
-      siret: '191 300 456 00012',
+      raisonSociale: 'Lycée A. Vidal — Atelier',
+      adresse: 'Avenue Jean-Jaurès, 30000 Nîmes',
+      siret: '482 917 356 00028',
       nbMachines: 5
     }
   ],
@@ -111,7 +111,7 @@ export const DEMO = {
       chargeActuelleKg: 3.80,
       clientId: 'cli-lycee',
       localisation: 'Atelier froid — poste 1',
-      siteLabel: 'Lycée J. Raynaud — Atelier',
+      siteLabel: 'Lycée A. Vidal — Atelier',
       statut: 'EN_SERVICE',
       detectionPermanente: false,
       dernierControle: '2026-06-29',
@@ -131,7 +131,7 @@ export const DEMO = {
       chargeActuelleKg: 1.50,
       clientId: 'cli-lycee',
       localisation: 'Atelier froid — poste 2',
-      siteLabel: 'Lycée J. Raynaud — Atelier',
+      siteLabel: 'Lycée A. Vidal — Atelier',
       statut: 'EN_SERVICE',
       // P1-1 (E1) — le cas d'école inverse de M5 : une détection permanente
       // DÉCLARÉE mais dont la vérification a expiré (il y a 13 mois).
@@ -158,7 +158,7 @@ export const DEMO = {
       chargeActuelleKg: 1.80,
       clientId: 'cli-lycee',
       localisation: 'Plateforme extérieure',
-      siteLabel: 'Lycée J. Raynaud — Atelier',
+      siteLabel: 'Lycée A. Vidal — Atelier',
       statut: 'EN_SERVICE',
       detectionPermanente: false,
       dernierControle: '2026-06-12',
@@ -178,7 +178,7 @@ export const DEMO = {
       chargeActuelleKg: 0.70,
       clientId: 'cli-lycee',
       localisation: 'Salle B12',
-      siteLabel: 'Lycée J. Raynaud — Atelier',
+      siteLabel: 'Lycée A. Vidal — Atelier',
       statut: 'EN_SERVICE',
       detectionPermanente: false,
       dernierControle: null,
@@ -226,7 +226,7 @@ export const DEMO = {
       chargeActuelleKg: 3.00,
       clientId: 'cli-lycee',
       localisation: 'Bureaux administration',
-      siteLabel: 'Lycée J. Raynaud — Atelier',
+      siteLabel: 'Lycée A. Vidal — Atelier',
       statut: 'CONTROLE_DU',
       detectionPermanente: false,
       dernierControle: '2026-05-03',

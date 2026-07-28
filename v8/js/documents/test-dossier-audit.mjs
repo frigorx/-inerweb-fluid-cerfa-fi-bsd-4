@@ -93,7 +93,7 @@ verifier('00-SOMMAIRE.txt présent (première entrée)',
 const sommaire = new TextDecoder().decode(
   entrees.find((e) => e.nom === '00-SOMMAIRE.txt')?.octets ?? new Uint8Array());
 verifier('le sommaire mentionne l\'établissement',
-  sommaire.includes('Lycée Professionnel Jacques Raynaud'));
+  sommaire.includes('Lycée Professionnel Antoine Vidal'));
 verifier('le sommaire rappelle l\'origine (inerWeb Fluide) et l\'année',
   sommaire.includes('inerWeb Fluide') && sommaire.includes('2026'));
 verifier('le sommaire liste chaque fichier de l\'archive',

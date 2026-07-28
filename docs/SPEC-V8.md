@@ -12,7 +12,7 @@ Passer de « je fais des mouvements et je génère des CERFA » à :
 exportable, avec pièces justificatives et balance matière »**.
 
 - Publics : enseignants/référents (pilotage), élèves (mode formation), professionnels (usage réel).
-- Diffusion gratuite aux lycées professionnels froid/clim — vitrine pour le lycée Jacques Raynaud (Marseille).
+- Diffusion gratuite aux lycées professionnels froid/clim — vitrine pour le lycée Antoine Vidal (Nîmes).
 - Phrase-objectif côté audit : *« En un clic, je sors le dossier annuel complet de traçabilité fluides. »*
 - Échéance réglementaire structurante : arrêté du 21/11/2025, obligatoire au 01/01/2027
   (nouvelle grille de catégories, vérification outillages, registre du personnel, fiches d'intervention,

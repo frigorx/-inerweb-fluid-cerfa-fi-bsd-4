@@ -70,7 +70,7 @@ verifier('FI-2026-0005 : Fiche_no', r.texte('Fiche_no') === 'FI-2026-0005');
 
 // Cadre 1-2-3 : opérateur, détenteur, équipement non vides
 verifier('cadre 1 : opérateur = établissement (multiligne, SIRET)',
-  r.texte('Operateur').includes('Raynaud') &&
+  r.texte('Operateur').includes('Vidal') &&
   r.texte('Operateur').includes('SIRET'));
 verifier('cadre 1 : Attestation_no = capacité',
   r.texte('Attestation_no') === 'AC-13-004567');
@@ -682,8 +682,8 @@ const signatureTechnicien = { role: 'TECHNICIEN', nom: 'Eleve',
   declaration: 'Je certifie…', imagePng: PNG_MINI, valide: true };
 const signatureDetenteur = { role: 'DETENTEUR', nom: 'Henninot',
   prenom: 'Franck',
-  qualite: 'Professeur, par délégation du détenteur (LP Jacques Raynaud)',
-  parDelegation: true, organisation: 'LP Jacques Raynaud',
+  qualite: 'Professeur, par délégation du détenteur (LP Antoine Vidal)',
+  parDelegation: true, organisation: 'LP Antoine Vidal',
   dateHeure: '2026-07-19T09:15:00.000Z',
   declaration: 'Je reconnais…', imagePng: PNG_MINI, valide: true };
 
@@ -716,7 +716,7 @@ const storeOfficiel = {
     `valeur = « ${relu.texte('Sign_Detenteur_Nom')} »`);
   verifier('C4 : qualité du détenteur = la délégation signée',
     relu.texte('Sign_Detenteur_Qualite') ===
-    'Professeur, par délégation du détenteur (LP Jacques Raynaud)');
+    'Professeur, par délégation du détenteur (LP Antoine Vidal)');
   verifier('C4 : date détenteur = date RÉELLE de signature (pas l’intervention)',
     relu.texte('Sign_Detenteur_Date') === '19/07/2026');
   verifier('C4 : opérateur = le signataire technicien VALIDE (le périmé est ignoré)',

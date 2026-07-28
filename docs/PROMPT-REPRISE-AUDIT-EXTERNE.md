@@ -16,7 +16,7 @@ des fluides frigorigènes (F-Gas / CERFA 15497\*04) pour un lycée professionnel
 et climatisation.
 
 - **Dépôt** : `C:\git\inerweb-fluide` (branche `main`).
-- **Auteur et utilisateur** : Franck Henninot, LP Jacques Raynaud, Marseille. Enseignant, pas
+- **Auteur et utilisateur** : Franck Henninot, LP Antoine Vidal, Nîmes. Enseignant, pas
   développeur professionnel. **Réponds en français simple, zéro anglicisme, zéro emoji dans
   le code.**
 - **Le cap, tranché et non rouvert** : *registre officiel UNIQUE*, opposable, sans registre

@@ -3112,7 +3112,7 @@ des QR reste DISTINCT et inchangé.
 - **Module pur `v8/js/data/code-machine.js`** : `familleDuType` (Chambre froide → CF,
   Vitrine → VR, PAC → PC, Monosplit → MS, Multisplit → MM, Centrale → CE, défaut MA),
   `codeSite` (initiales des mots significatifs de la raison sociale — « Lycée Jacques
-  Raynaud » → JR, mots vides scolaires ignorés, replis sûrs), `genererCodeMachine`
+  Vidal » → AV, mots vides scolaires ignorés, replis sûrs), `genererCodeMachine`
   (prochain numéro libre PAR préfixe, 3 chiffres), `normaliserCodeMachine` (majuscules,
   accents dépouillés, espaces retirés) et `validerCodeMachine` (1-24 caractères,
   lettres/chiffres/tirets — les codes hérités « M1 » restent valides). Miroir partiel
@@ -4855,4 +4855,4 @@ Nouvelle étape **5 « Contrôle d'étanchéité + Détecteur »** insérée ent
 ---
 
 *inerWeb Fluide - Traçabilité F-Gas & CERFA 15497*04*
-*Lycée Professionnel Jacques Raynaud, Marseille*
+*Lycée Professionnel Antoine Vidal, Nîmes*

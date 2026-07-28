@@ -160,7 +160,7 @@ verifier('journal-audit.csv : au moins une ligne de données au-delà de l’en-
 const ligneM1 = lignesDe(parNom.get('machines.csv'))
   .find((l) => l.startsWith('M1;'));
 verifier('machines.csv : le client est résolu en raison sociale (pas un ID)',
-  Boolean(ligneM1) && ligneM1.includes('Lycée J. Raynaud'),
+  Boolean(ligneM1) && ligneM1.includes('Lycée A. Vidal'),
   ligneM1);
 
 // --- 7. Échappement CSV correct ----------------------------------

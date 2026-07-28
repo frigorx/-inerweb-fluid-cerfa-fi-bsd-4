@@ -296,7 +296,7 @@ verifier('getUtilisateurCourant retourne un référent',
 // ============================================================
 const client = await store.createClient({
   raisonSociale: 'Boulangerie du contrat',
-  adresse: '4 rue des Tests, 13010 Marseille',
+  adresse: '4 rue des Tests, 30000 Nîmes',
   siret: '12345678900011'
 });
 verifier('createClient : client créé avec nbMachines à zéro',
@@ -2092,7 +2092,7 @@ function imagePngTest(taille = 1200) {
       prenom: 'B', imagePng: imagePngTest() }), 'Rôle de signature inconnu');
   await verifierRejet('signerMouvement exige nom ET prénom (personne physique)',
     store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN',
-      nom: 'Lycée Raynaud', prenom: '  ', imagePng: imagePngTest() }),
+      nom: 'Lycée Vidal', prenom: '  ', imagePng: imagePngTest() }),
     'personne physique');
   await verifierRejet('signerMouvement refuse un tracé absent',
     store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN', nom: 'A',
@@ -2160,13 +2160,13 @@ function imagePngTest(taille = 1200) {
   const sigDet = await store.signerMouvement(brouillonSig.id, {
     role: 'DETENTEUR', nom: 'Dupont', prenom: 'Marie',
     qualite: 'Professeur, par délégation du détenteur', parDelegation: true,
-    organisation: 'LP Jacques Raynaud',
+    organisation: 'LP Antoine Vidal',
     imagePng: Buffer.from(pngUnSeulPixel()).toString('base64')
   });
   verifier('signature détenteur : déclaration avec la mention de délégation',
     sigDet.valide === true && sigDet.parDelegation === true &&
     sigDet.declaration.includes(
-      'par délégation du détenteur (LP Jacques Raynaud)'), sigDet.declaration);
+      'par délégation du détenteur (LP Antoine Vidal)'), sigDet.declaration);
 
   const listeSignatures = await store.getSignaturesMouvement(brouillonSig.id);
   verifier('getSignaturesMouvement : 2 signatures, toutes valides',

@@ -79,5 +79,5 @@ qrcodejs) restent sous **leur propre licence** : voir [LICENCES-TIERCES.md](LICE
 > Les versions publiées avant le 14/07/2026 l'ont été sous licence MIT. Cette licence-là reste
 > valable pour ces versions : le changement vaut pour la suite.
 
-**Franck Henninot** — Lycée professionnel Jacques Raynaud, Marseille.
+**Franck Henninot** — Lycée professionnel Antoine Vidal, Nîmes.
 Contact : inerweb.fh@gmail.com — <https://inerweb.ovh>

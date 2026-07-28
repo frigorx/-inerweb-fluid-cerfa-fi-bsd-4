@@ -152,7 +152,7 @@ LICENCE
 -------
 Gratuit pour l'enseignement (lycées, CFA, universités). Pour un usage
 professionnel, une licence d'utilisation nominative est offerte sur simple
-demande auprès du lycée Jacques Raynaud (inerweb.fh@gmail.com). Détails
+demande auprès du lycée Antoine Vidal (inerweb.fh@gmail.com). Détails
 dans le fichier « LICENSE ».
 
 DÉMARRER

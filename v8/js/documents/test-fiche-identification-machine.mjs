@@ -44,7 +44,7 @@ const MACHINE_TEST = {
 };
 
 const FLUIDE_TEST = { code: 'R404A', famille: 'HFC', gwpAr4: 3922, classeSecurite: 'A1' };
-const CLIENT_TEST = { id: 'cli-1', raisonSociale: 'Lycée Raynaud', adresse: '12 rue de la Formation, Marseille' };
+const CLIENT_TEST = { id: 'cli-1', raisonSociale: 'Lycée Vidal', adresse: '12 rue de la Formation, Nîmes' };
 
 /* ============================================================
    1. Contenu QR : chemin relatif hors-ligne, jamais une URL absolue.
@@ -108,7 +108,7 @@ const CLIENT_TEST = { id: 'cli-1', raisonSociale: 'Lycée Raynaud', adresse: '12
   verifier('la localisation est présente',
     fond.innerHTML.includes('Atelier 2'));
   verifier('le client est présent',
-    fond.innerHTML.includes('Lycée Raynaud'));
+    fond.innerHTML.includes('Lycée Vidal'));
   verifier('le fluide et sa famille sont présents',
     fond.innerHTML.includes('R404A') && fond.innerHTML.includes('HFC'));
   verifier('la charge nominale et actuelle sont présentes (formatage kg)',

@@ -43,7 +43,7 @@ const MACHINE_TEST = {
 };
 
 const CLIENT_TEST = {
-  id: 'cli-1', raisonSociale: 'Lycée Raynaud', adresse: '12 rue de la Formation, Marseille'
+  id: 'cli-1', raisonSociale: 'Lycée Vidal', adresse: '12 rue de la Formation, Nîmes'
 };
 
 /* ============================================================
@@ -101,9 +101,9 @@ const CLIENT_TEST = {
 
   // Client pré-rempli
   verifier('le client est pré-rempli (raison sociale)',
-    fond.innerHTML.includes('Lycée Raynaud'));
+    fond.innerHTML.includes('Lycée Vidal'));
   verifier('l’adresse du client est pré-remplie',
-    fond.innerHTML.includes('12 rue de la Formation, Marseille'));
+    fond.innerHTML.includes('12 rue de la Formation, Nîmes'));
 
   // Cases à cocher type d'intervention (3, non cochées)
   const cases = fond.querySelectorAll('.bi-case');
@@ -168,8 +168,8 @@ const CLIENT_TEST = {
 
   const fond = document.body.querySelector('.modale-fond');
   verifier('la modale s’ouvre bien même sans client rattaché', Boolean(fond));
-  verifier('le nom du client (Lycée Raynaud) n’apparaît pas quand la machine n’a pas de clientId',
-    !fond.innerHTML.includes('Lycée Raynaud'));
+  verifier('le nom du client (Lycée Vidal) n’apparaît pas quand la machine n’a pas de clientId',
+    !fond.innerHTML.includes('Lycée Vidal'));
 
   fond.remove();
 }

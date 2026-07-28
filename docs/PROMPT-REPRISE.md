@@ -385,7 +385,7 @@ Tu reprends **inerWeb Fluide**, logiciel **LOCAL** de traçabilité des fluides 
 (F-Gas / CERFA 15497*04) pour lycées professionnels (filière froid/clim).
 - **Dépôt** : `C:\git\inerweb-fluide` (clone de `frigorx/-inerweb-fluid-cerfa-fi-bsd-4`).
   Source de vérité = son `CHANGELOG.md` (dernier incrément en tête).
-- **Auteur et utilisateur** : Franck Henninot (LP Jacques Raynaud, Marseille). Réponds en **français
+- **Auteur et utilisateur** : Franck Henninot (LP Antoine Vidal, Nîmes). Réponds en **français
   simple, zéro anglicisme, zéro emoji dans le code**.
 
 ## LE CAP (tranché par Franck le 20/07 — décision prise, à ne pas rouvrir sans élément nouveau)

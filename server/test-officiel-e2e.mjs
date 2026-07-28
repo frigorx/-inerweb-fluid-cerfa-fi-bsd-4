@@ -221,7 +221,7 @@ api.appeler('signerMouvement', { mouvementId: fiche.id,
 api.appeler('signerMouvement', { mouvementId: fiche.id,
   signature: { ...signatureBase, role: 'DETENTEUR',
     qualite: 'Professeur référent', parDelegation: true,
-    organisation: 'Lycée Professionnel Jacques Raynaud' } }, session);
+    organisation: 'Lycée Professionnel Antoine Vidal' } }, session);
 api.appeler('soumettreMouvement', { id: fiche.id }, session);
 
 // ATTAQUES PDF : manquant, forgé — la fiche reste SOUMISE.
@@ -304,7 +304,7 @@ api.appeler('signerMouvement', { mouvementId: transfert.id,
 api.appeler('signerMouvement', { mouvementId: transfert.id,
   signature: { ...signatureBase, role: 'DETENTEUR',
     qualite: 'Professeur référent', parDelegation: true,
-    organisation: 'Lycée Professionnel Jacques Raynaud' } }, session);
+    organisation: 'Lycée Professionnel Antoine Vidal' } }, session);
 api.appeler('soumettreMouvement', { id: transfert.id }, session);
 attendreRejet('un PDF fourni sur le TRANSFERT officiel : refus canonique',
   () => api.appeler('validerMouvement', { id: transfert.id,

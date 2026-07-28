@@ -327,5 +327,5 @@ mémoire-là est la première à se perdre.
 
 ## 9. Contact
 
-Franck Henninot — enseignant froid et climatisation, LP Jacques Raynaud, Marseille.
+Franck Henninot — enseignant froid et climatisation, LP Antoine Vidal, Nîmes.
 Auteur et utilisateur du logiciel. Licence PolyForm Noncommercial (voir `LICENSE`).

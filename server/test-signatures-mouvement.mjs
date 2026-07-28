@@ -102,7 +102,7 @@ function blocQuiSeFaitPasserPourPng(taille = 2348) {
     ['TECHNICIEN', false, null],
     ['TECHNICIEN', true, 'Ignoré'],
     ['DETENTEUR', false, null],
-    ['DETENTEUR', true, 'LP Jacques Raynaud']
+    ['DETENTEUR', true, 'LP Antoine Vidal']
   ];
   let identiques = 0;
   for (const [role, delegation, organisation] of CAS_DECLARATION) {
@@ -114,8 +114,8 @@ function blocQuiSeFaitPasserPourPng(taille = 2348) {
   verifier(`déclarations identiques sur ${CAS_DECLARATION.length} cas discriminants`,
     identiques === CAS_DECLARATION.length);
   verifier('la déclaration du détenteur par délégation porte la mention et le point final',
-    miroir.declarationSignature('DETENTEUR', true, 'LP Jacques Raynaud')
-      .endsWith(', par délégation du détenteur (LP Jacques Raynaud).'));
+    miroir.declarationSignature('DETENTEUR', true, 'LP Antoine Vidal')
+      .endsWith(', par délégation du détenteur (LP Antoine Vidal).'));
 
   let erreurEsm = ''; let erreurCjs = '';
   try { moduleEsm.declarationSignature('PATRON', false, null); }
@@ -380,10 +380,10 @@ const signatureType = (surcharges = {}) => ({
   const sigDet = api.appeler('signerMouvement', { mouvementId: brouillon.id,
     signature: signatureType({ role: 'DETENTEUR',
       qualite: 'Professeur, par délégation du détenteur', parDelegation: true,
-      organisation: 'LP Jacques Raynaud' }) }, session);
+      organisation: 'LP Antoine Vidal' }) }, session);
   verifier('détenteur par délégation : mention dans la déclaration figée',
     sigDet.valide === true && sigDet.declaration.includes(
-      'par délégation du détenteur (LP Jacques Raynaud)'));
+      'par délégation du détenteur (LP Antoine Vidal)'));
 
   // ATTAQUE CENTRALE : modifier la fiche APRÈS les signatures.
   api.appeler('ajouterPieceJointe', { donneesPj: {
@@ -411,7 +411,7 @@ const signatureType = (surcharges = {}) => ({
     signature: signatureType() }, session);
   const reDet = api.appeler('signerMouvement', { mouvementId: brouillon.id,
     signature: signatureType({ role: 'DETENTEUR', parDelegation: true,
-      organisation: 'LP Jacques Raynaud' }) }, session);
+      organisation: 'LP Antoine Vidal' }) }, session);
   verifier('re-signature des deux rôles sur la révision 1',
     reTech.versionDocument === 1 && reDet.versionDocument === 1);
   api.appeler('soumettreMouvement', { id: brouillon.id }, sansSession);
@@ -1039,7 +1039,7 @@ const signatureType = (surcharges = {}) => ({
     signature: signatureType({ qualite: 'Professeur intervenant' }) }, session);
   api.appeler('signerMouvement', { mouvementId: mvTemoin.id,
     signature: signatureType({ role: 'DETENTEUR', parDelegation: true,
-      organisation: 'LP Jacques Raynaud' }) }, session);
+      organisation: 'LP Antoine Vidal' }) }, session);
   // Une PJ ajoutée après coup PÉRIME les deux signatures : le dossier
   // doit dire l'état de chacune, pas seulement leur existence.
   api.appeler('ajouterPieceJointe', { donneesPj: {

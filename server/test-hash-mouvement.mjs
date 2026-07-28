@@ -293,7 +293,7 @@ const CE_ANCIENNE = { id: 'mvt-ce-ancienne', numero: 'FORM-2026-0042',
   const signature = { role: 'DETENTEUR', nom: 'Henninot', prenom: 'Franck',
     qualite: 'Professeur, par délégation du détenteur',
     dateHeure: '2026-07-18T10:00:00.000Z',
-    declaration: 'Je reconnais…, par délégation du détenteur (LP Raynaud).',
+    declaration: 'Je reconnais…, par délégation du détenteur (LP Vidal).',
     versionDocument: 1 };
   verifier('chaineCanoniqueSignature : identique front/serveur, ordre de clés figé',
     chaineCanoniqueSignature(signature, 'e'.repeat(64)) ===
