@@ -4,13 +4,16 @@
 
 inerWeb Fluide permet de tenir un registre réglementaire complet des fluides frigorigènes (F-Gas) : traçable, justifiable, vérifiable et exportable, avec pièces justificatives et balance matière. Objectif : *« en un clic, je sors le dossier annuel complet de traçabilité fluides »*.
 
+**➡️ [Essayer la démonstration en ligne](https://frigorx.github.io/-inerweb-fluid-cerfa-fi-bsd-4/v8/)** — aucun compte, aucune installation, un clic.
+**➡️ [Guide pas à pas](https://frigorx.github.io/-inerweb-fluid-cerfa-fi-bsd-4/guide.html)** — écran par écran, de l'installation au dossier d'audit.
+
 La maquette validée (jetons de design, palette, captures d'écran) se trouve dans le dossier [`design/`](design/).
 
 ## Les deux modes d'utilisation
 
 Un seul code, deux façons de l'utiliser. Le mode est déterminé au démarrage.
 
-| | Démo (GitHub Pages) | Local Lycée |
+| | [Démo (GitHub Pages)](https://frigorx.github.io/-inerweb-fluid-cerfa-fi-bsd-4/v8/) | Local Lycée |
 |---|---|---|
 | **Public visé** | Découverte, bac à sable pédagogique | Établissement (recommandé) |
 | **Installation** | Aucune (navigateur) | Dossier portable à copier, lancement par double-clic |
@@ -53,6 +56,7 @@ le logiciel ne peut pas être pris pour un registre opposable par accident.
 
 ## Guides
 
+- **[Guide interactif — prendre en main inerWeb Fluide](https://frigorx.github.io/-inerweb-fluid-cerfa-fi-bsd-4/guide.html)** (écran par écran, avec captures)
 - [Installation simple (mode Local Lycée)](INSTALLATION_SIMPLE.md)
 - [Sauvegarde et restauration](SAUVEGARDE.md)
 - [Sécurité](SECURITE.md)
