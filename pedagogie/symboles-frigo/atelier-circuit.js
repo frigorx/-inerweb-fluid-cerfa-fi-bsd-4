@@ -34,7 +34,7 @@
   const COTE = 88;    // côté de l'emplacement cliquable
   const MASQUE = 76;  // fond blanc qui interrompt le tuyau sous le symbole
 
-  /* Le parcours du fluide — formulations reprises du document de référence. */
+  /* Le parcours du fluide — formulations du module. */
   const PARCOURS = [
     { q: "Entre le compresseur (1) et le condenseur (10), dans quel état se trouve le fluide frigorigène ?",
       c: ["Gaz haute pression, haute température", "Liquide haute pression",
@@ -50,7 +50,7 @@
       c: ["La pression a chuté : le fluide est liquide basse pression",
           "Le fluide est devenu gazeux haute pression",
           "La température a augmenté", "Rien : le détendeur ne fait que filtrer"], b: 0,
-      e: "Le document est explicite : le fluide entre à l'état liquide HP et ressort à l'état liquide BP. " +
+      e: "Le fluide entre à l'état liquide haute pression et ressort à l'état liquide basse pression. " +
          "C'est la détente." },
     { q: "Entre l'évaporateur (17) et le compresseur (1), dans quel état se trouve le fluide ?",
       c: ["Gaz basse pression", "Liquide basse pression",

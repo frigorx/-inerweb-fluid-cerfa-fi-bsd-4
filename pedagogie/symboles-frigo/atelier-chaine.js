@@ -159,6 +159,8 @@
         retour.innerHTML += '<div style="margin-top:8px;font-size:16px;opacity:.85">' +
                             APP.echapper(bon.indice) + '</div>';
       }
+      const idOrgane = config.estSequence ? bon.org : bon.id;
+      if (idOrgane) retour.innerHTML += '<div>' + APP.boutonFiche(idOrgane) + '</div>';
 
       const d = document.createElement('div');
       d.className = 'barre-actions';

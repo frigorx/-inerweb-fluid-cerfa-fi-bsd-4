@@ -67,7 +67,8 @@
         r.className = 'retour-info ' + (juste ? 'ok' : 'ko');
         r.innerHTML = '<strong>' + (juste ? 'Exact.' :
                       (e.dedans ? 'Non — il est sur le châssis.' : 'Non — il se monte sur site.')) +
-                      '</strong>' + APP.echapper(e.o.note);
+                      '</strong>' + APP.echapper(e.o.note) +
+                      '<div>' + APP.boutonFiche(e.o.id) + '</div>';
         const d = document.createElement('div');
         d.className = 'barre-actions';
         d.innerHTML = '<button class="b" id="suite">Suivant →</button>';

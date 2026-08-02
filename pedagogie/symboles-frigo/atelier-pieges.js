@@ -73,7 +73,9 @@
     const r = document.getElementById('retour');
     r.className = 'retour-info ' + (juste ? 'ok' : 'ko');
     r.innerHTML = '<strong>' + (juste ? 'Bien vu.' : 'Raté — et c\'est normal, c\'est le but.') + '</strong>' +
-                  APP.echapper(p.texte);
+                  APP.echapper(p.texte) +
+                  '<div>' + APP.boutonFiche(a.id, "C'est quoi, " + a.nom + " ?") + ' ' +
+                  APP.boutonFiche(b.id, "C'est quoi, " + b.nom + " ?") + '</div>';
 
     const d = document.createElement('div');
     d.innerHTML =
@@ -133,7 +135,8 @@
         const r = document.getElementById('retour');
         r.className = 'retour-info ' + (juste ? 'ok' : 'ko');
         r.innerHTML = '<strong>' + (juste ? 'Exact.' : 'C\'était : ' + APP.echapper(bon.nom) + '.') +
-                      '</strong>' + APP.echapper(bon.indice);
+                      '</strong>' + APP.echapper(bon.indice) +
+                      '<div>' + APP.boutonFiche(bon.id) + '</div>';
         const d = document.createElement('div');
         d.className = 'barre-actions';
         d.innerHTML = '<button class="b" id="suite">Suivant →</button>';

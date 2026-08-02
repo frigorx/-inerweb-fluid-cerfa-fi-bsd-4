@@ -203,7 +203,7 @@
     });
     h += '</div>';
     h += '<div class="barre-actions"><button class="b secondaire" data-aller="blanc">Refaire une épreuve (nouveau tirage)</button>' +
-         '<button class="b secondaire" onclick="window.print()">Imprimer mon corrigé</button></div>';
+         '<button class="b secondaire" data-imprimer>Imprimer mon corrigé</button></div>';
     hote.innerHTML = h;
   }
 

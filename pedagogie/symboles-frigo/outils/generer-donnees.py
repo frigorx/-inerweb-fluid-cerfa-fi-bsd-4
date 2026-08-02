@@ -5,10 +5,16 @@ Sources :
   - outils/inerweb-symboles/inerweb_symboles.json (bibliotheque maison, a cloner)
   - les symboles redessines d'apres le document de reference, pages 81 a 89
 
+Tous les TEXTES de ce fichier sont rediges pour ce module. Aucun n est
+repris d un document tiers : voir LICENCE.md, section 4.
+
     git clone https://github.com/frigorx/inerweb-symboles.git outils/inerweb-symboles
     python3 outils/generer-donnees.py
 """
-import json, io, os
+import json, io, os, sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from definitions import DEFINITIONS
 
 SP = os.path.dirname(os.path.abspath(__file__))
 LIB = json.load(open(os.path.join(SP, 'inerweb-symboles', 'inerweb_symboles.json')))
@@ -271,81 +277,94 @@ SYMBOLES = [
  # ---------------- A. Machines tournantes -------------------------------
  dict(id='compresseur_piston', nom='Compresseur à piston', groupe='A', regle='R1',
       src='bib:compresseur_piston', page=81,
-      fonction="Aspire le fluide frigorigène gazeux en BP et basse température, puis le comprime : il ressort gaz HP et haute température.",
+      fonction="Il prend la vapeur froide et détendue qui sort de l'évaporateur, en réduit le volume, et "
+               "la renvoie chaude et sous forte pression vers le condenseur.",
       indice="Dans le cercle, un piston vu de profil : une tige et sa tête plate.",
       role="Il fait circuler le fluide. C'est le cœur de l'installation."),
  dict(id='compresseur_vis', nom='Compresseur à vis', groupe='A', regle='R1',
       src='bib:compresseur_vis', page=81,
-      fonction="Même fonction : aspirer en BP, comprimer, refouler en HP. Technologie à deux rotors hélicoïdaux.",
+      fonction="Le même travail — aspirer bas, refouler haut — obtenu cette fois par deux rotors "
+               "hélicoïdaux qui s'engrènent.",
       indice="Dans le cercle, deux chevrons superposés : le filet des vis.",
       role="Fortes puissances, fonctionnement continu."),
  dict(id='compresseur_scroll', nom='Compresseur scroll', groupe='A', regle='R1',
       src='bib:compresseur_scroll', page=81,
-      fonction="Même fonction. Compression par deux spirales imbriquées, l'une fixe, l'autre orbitale.",
+      fonction="Le même travail, obtenu par deux spirales imbriquées : l'une reste fixe, l'autre décrit "
+               "une orbite.",
       indice="Dans le cercle, une spirale. Le dessin dit la technologie.",
       role="Très répandu en climatisation. Silencieux."),
  dict(id='compresseur_rotatif', nom='Compresseur à piston rotatif', groupe='A', regle='R1',
       src='bib:compresseur_rotatif', page=81,
-      fonction="Même fonction. Un rotor excentré balaie le volume de compression.",
+      fonction="Le même travail, obtenu par un rotor excentré qui balaie le volume à comprimer.",
       indice="Dans le cercle, un rotor décentré et sa palette.",
       role="Petites puissances : froid domestique, PAC air/air."),
  dict(id='compresseur_centrifuge', nom='Compresseur centrifuge', groupe='A', regle='R1',
       src='dess:compresseur_centrifuge', page=81,
-      fonction="Même fonction. La compression est obtenue par la force centrifuge d'une roue à très haute vitesse.",
+      fonction="Le même travail, obtenu par la vitesse : une roue tourne très vite et projette le gaz, "
+               "dont la vitesse se transforme en pression.",
       indice="Dans le cercle, une roue vue de face : un moyeu central et l'ouïe.",
       role="Très grosses puissances : groupes d'eau glacée industriels."),
  dict(id='moteur_electrique', nom='Moteur électrique', groupe='A', regle='R1',
       src='dess:moteur_electrique', page=81,
-      fonction="Convertit l'énergie électrique en énergie mécanique pour entraîner divers équipements.",
+      fonction="Il transforme le courant électrique en mouvement de rotation, pour entraîner ce qui doit "
+               "tourner.",
       indice="Un cercle et une lettre : la lettre suffit à dire ce que c'est.",
       role="Il entraîne le compresseur, le ventilateur ou la pompe."),
 
  # ---------------- B. Échangeurs ----------------------------------------
  dict(id='condenseur_a_air', nom='Condenseur à air', groupe='B', regle='R2',
       src='bib:echangeur_a_air', page=82, marque='CD',
-      fonction="Refroidit et condense le fluide frigorigène : il le fait passer de gaz HP à liquide HP.",
+      fonction="Il évacue vers l'air la chaleur du fluide frigorigène, qui passe ainsi de la vapeur "
+               "haute pression au liquide haute pression.",
       indice="Un rectangle, un peigne d'ailettes, une hélice. Et surtout : les deux lettres écrites dedans.",
       role="Il évacue la chaleur vers l'air extérieur.",
       piege='P1'),
  dict(id='evaporateur_a_air', nom='Évaporateur à air', groupe='B', regle='R2',
       src='bib:echangeur_a_air', page=82, marque='EV',
-      fonction="Vaporise le fluide frigorigène en absorbant de la chaleur : il le fait passer de liquide BP à gaz BP.",
+      fonction="Il prend la chaleur de l'air du local pour faire bouillir le fluide, qui passe du "
+               "liquide basse pression à la vapeur basse pression.",
       indice="Exactement le même dessin que le condenseur à air. Seules les lettres changent.",
       role="Il produit le froid dans la chambre ou le local.",
       piege='P1'),
  dict(id='condenseur_a_eau', nom='Condenseur à eau', groupe='B', regle='R3',
       src='dess:condenseur_a_eau', page=82,
-      fonction="Condense le fluide frigorigène en cédant sa chaleur à un circuit d'eau, sans contact direct entre les deux fluides.",
+      fonction="Il fait condenser le fluide frigorigène en confiant sa chaleur à un circuit d'eau, les "
+               "deux restant séparés.",
       indice="Un cercle, un zigzag (le fluide frigo) et une flèche traversante (l'eau).",
       role="Il transfère la chaleur vers un autre réseau ou un autre lieu.",
       piege='P2'),
  dict(id='evaporateur_a_eau', nom='Évaporateur à eau', groupe='B', regle='R3',
       src='dess:evaporateur_a_eau', page=82,
-      fonction="Vaporise le fluide frigorigène en prenant la chaleur d'un circuit d'eau, sans contact direct.",
+      fonction="Il fait bouillir le fluide frigorigène aux dépens de la chaleur d'un circuit d'eau, les "
+               "deux restant séparés.",
       indice="Le dessin est identique à celui du condenseur à eau.",
       role="Il refroidit l'eau d'un réseau (groupe d'eau glacée).",
       piege='P2'),
  dict(id='condenseur_a_plaque', nom='Condenseur à plaques', groupe='B', regle='R3',
       src='bib:echangeur_a_plaques', page=82,
-      fonction="Condense le fluide frigorigène. Les plaques empilées offrent une grande surface d'échange dans peu de volume.",
+      fonction="Il fait condenser le fluide frigorigène. L'empilement de plaques concentre beaucoup de "
+               "surface d'échange dans très peu de place.",
       indice="Un rectangle barré en croix : les plaques vues en coupe.",
       role="Échange compact, très efficace.",
       piege='P2'),
  dict(id='evaporateur_a_plaque', nom='Évaporateur à plaques', groupe='B', regle='R3',
       src='bib:echangeur_a_plaques', page=82,
-      fonction="Vaporise le fluide frigorigène. Même construction que le condenseur à plaques.",
+      fonction="Il fait bouillir le fluide frigorigène. Même construction en plaques empilées que son "
+               "homologue condenseur.",
       indice="Encore une fois : dessin identique au condenseur à plaques.",
       role="Refroidissement d'eau ou d'eau glycolée.",
       piege='P2'),
  dict(id='tour_refroidissement_ouverte', nom='Tour de refroidissement ouverte', groupe='B', regle='R2',
       src='dess:tour_refroidissement_ouverte', page=82,
-      fonction="Refroidit l'eau chaude issue des échangeurs avant de la réutiliser ou de la rejeter.",
+      fonction="Elle abaisse la température de l'eau qui revient chaude des échangeurs, avant qu'elle ne "
+               "reparte en circuit ou au rejet.",
       indice="Un trapèze, un ventilateur et une douchette : l'eau est pulvérisée directement dans l'air.",
       role="L'eau est en contact direct avec l'air : elle s'évapore en partie.",
       piege='P3'),
  dict(id='tour_refroidissement_fermee', nom='Tour de refroidissement fermée', groupe='B', regle='R2',
       src='dess:tour_refroidissement_fermee', page=83,
-      fonction="Même fonction que la tour ouverte : refroidir l'eau chaude issue des échangeurs.",
+      fonction="Le même service que la tour ouverte : abaisser la température de l'eau qui revient des "
+               "échangeurs.",
       indice="Même trapèze, même douchette, mais un serpentin en plus à l'intérieur.",
       role="Le serpentin isole l'eau du circuit de l'air : pas de contact direct.",
       piege='P3'),
@@ -353,19 +372,23 @@ SYMBOLES = [
  # ---------------- C. Détendeurs ----------------------------------------
  dict(id='detendeur_thermostatique', nom='Détendeur thermostatique (TC)', groupe='C', regle='R4',
       src='bib:detendeur_thermo_ext', page=83,
-      fonction="Détend le fluide frigorigène : il entre liquide HP et ressort liquide BP. Le bulbe mesure la surchauffe et pilote l'ouverture.",
+      fonction="Il fait chuter la pression du liquide : il reçoit du liquide haute pression et livre du "
+               "liquide basse pression. Le bulbe lit la surchauffe et règle son ouverture en "
+               "conséquence.",
       indice="Une vanne, et au-dessus un bulbe relié par un capillaire.",
       role="Il règle le débit de fluide admis dans l'évaporateur.",
       piege='P4'),
  dict(id='detendeur_capillaire', nom='Détendeur capillaire', groupe='C', regle='R4',
       src='bib:tube_capillaire', page=83,
-      fonction="Détend le fluide frigorigène : il entre liquide HP et ressort liquide BP.",
+      fonction="Il fait chuter la pression du liquide : entrée en haute pression, sortie en basse "
+               "pression.",
       indice="Une suite de boucles : c'est un long tube très fin, enroulé.",
       role="Détente fixe, non réglable. Froid domestique et petites puissances.",
       piege='P4'),
  dict(id='detendeur_electrique', nom='Détendeur électronique (TCE)', groupe='C', regle='R4',
       src='bib:detendeur_electronique', page=83,
-      fonction="Détend le fluide frigorigène. L'ouverture est commandée électroniquement par un régulateur.",
+      fonction="Il fait chuter la pression du liquide, mais son ouverture est dictée par un régulateur "
+               "électronique.",
       indice="Une vanne surmontée d'un cercle marqué TCE : la commande est électronique.",
       role="Détente pilotée, précise, adaptable à la charge.",
       piege='P4'),
@@ -373,35 +396,35 @@ SYMBOLES = [
  # ---------------- D. Filtration et contrôle visuel ---------------------
  dict(id='silencieux', nom='Silencieux', groupe='D', regle='R7',
       src='bib:silencieux', page=83,
-      fonction="Réduit le bruit provoqué par les pulsations du gaz dans les conduites de refoulement.",
+      fonction="Il atténue le bruit que les à-coups du gaz provoquent dans la tuyauterie de refoulement.",
       indice="Un corps allongé, cloisonné à l'intérieur.",
       role="Se place au refoulement du compresseur."),
  dict(id='filtre_huile', nom="Filtre à huile", groupe='D', regle='R5',
       src='dess:filtre_huile', page=83,
-      fonction="Filtre l'huile sur la ligne de retour d'huile au carter.",
+      fonction="Il arrête les particules que l'huile transporte sur son chemin de retour vers le carter.",
       indice="Un rectangle barré d'une croix, en traits pleins.",
       role="Il protège le compresseur des impuretés véhiculées par l'huile.",
       piege='P5'),
  dict(id='filtre_deshydrateur', nom='Filtre déshydrateur', groupe='D', regle='R5',
       src='dess:filtre_deshydrateur', page=83,
-      fonction="Enlève toute l'humidité et les impuretés présentes dans le fluide frigorigène.",
+      fonction="Il capte l'eau et les saletés que le fluide frigorigène charrie.",
       indice="Même rectangle barré d'une croix, mais les traits sont en pointillés : le pointillé, c'est le déshydratant.",
       role="Se place sur la ligne liquide. L'humidité est l'ennemi n°1 du circuit.",
       piege='P5'),
  dict(id='filtre_cartouche', nom="Filtre à cartouche (aspiration)", groupe='D', regle='R5',
       src='bib:filtre_cartouche', page=85,
-      fonction="Nettoie le fluide frigorigène à l'état gazeux avant qu'il ne soit aspiré par le compresseur.",
+      fonction="Il débarrasse la vapeur de ses impuretés juste avant que le compresseur ne l'aspire.",
       indice="Un corps avec une cartouche démontable dessinée à l'intérieur.",
       role="Dernier rempart avant le compresseur."),
  dict(id='voyant_liquide', nom='Voyant liquide', groupe='D', regle='R6',
       src='dess:voyant_liquide', page=84,
-      fonction="Permet de contrôler l'état et la teneur en humidité du fluide frigorigène.",
+      fonction="Il donne à voir dans quel état circule le fluide, et si de l'humidité y subsiste.",
       indice="Un corps avec un hublot rond, vide.",
       role="Des bulles dans le voyant = manque de fluide ou détente prématurée.",
       piege='P6'),
  dict(id='voyant_huile', nom='Voyant huile', groupe='D', regle='R6',
       src='dess:voyant_huile', page=84,
-      fonction="Permet de contrôler le niveau et l'état de l'huile.",
+      fonction="Il donne à voir combien il reste d'huile, et dans quel état elle est.",
       indice="Le même hublot, mais avec un point au centre.",
       role="Il se lit sur le carter du compresseur ou le réservoir d'huile.",
       piege='P6'),
@@ -409,155 +432,168 @@ SYMBOLES = [
  # ---------------- E. Vannes et sécurités mécaniques --------------------
  dict(id='vanne_isolement', nom="Vanne d'isolement", groupe='E', regle='R4',
       src='dess:vanne_isolement', page=84,
-      fonction="Permet d'ouvrir ou de fermer un réseau fluidique.",
+      fonction="Elle laisse passer ou coupe la circulation dans une portion de tuyauterie.",
       indice="Deux triangles pointe contre pointe, surmontés d'un volant en forme de H.",
       role="Le volant = commande manuelle. C'est un homme qui l'ouvre."),
  dict(id='prise_schrader', nom='Prise Schrader', groupe='E', regle='R8',
       src='dess:prise_schrader', page=84,
-      fonction="Permet de lire une pression et d'ajouter ou retirer du fluide frigorigène dans le système.",
+      fonction="Elle ouvre un point d'accès au circuit : pour y lire une pression, y introduire du "
+               "fluide ou en retirer.",
       indice="Un simple trait surmonté d'un gros chevron plein.",
       role="C'est là qu'on branche le manifold."),
  dict(id='electrovanne', nom='Électrovanne', groupe='E', regle='R4',
       src='bib:electrovanne_frigo', page=84,
-      fonction="Permet d'ouvrir ou de fermer un circuit fluidique.",
+      fonction="Elle laisse passer ou coupe la circulation, sur ordre électrique.",
       indice="Deux triangles pointe contre pointe, surmontés d'un rectangle : la bobine.",
       role="La bobine = commande électrique. C'est un contact qui l'ouvre."),
  dict(id='clapet_retenue', nom='Clapet de retenue', groupe='E', regle='R4',
       src='bib:clapet_anti_retour', page=84,
-      fonction="Permet de garder un sens unique de passage du fluide frigorigène.",
+      fonction="Il n'autorise le passage du fluide frigorigène que dans un seul sens.",
       indice="Un battant en travers du tuyau : il ne peut se coucher que d'un côté.",
       role="Anti-retour. Il n'a pas de réglage.",
       piege='P7'),
  dict(id='soupape_retenue', nom='Soupape de retenue', groupe='E', regle='R4',
       src='dess:soupape_retenue', page=84,
-      fonction="Permet de garder un sens unique de passage du fluide frigorigène et s'ouvre à une pression déterminée.",
+      fonction="Elle n'autorise le passage que dans un seul sens, et ne s'ouvre qu'au-delà d'une "
+               "pression fixée.",
       indice="Un corps de vanne complet, avec un point plein qui marque le siège.",
-      role="Le document lui donne la même fonction qu'au clapet ; ce qui change, c'est la technologie interne.",
+      role="Sa fonction est celle du clapet ; ce qui change, c'est la technologie interne.",
       piege='P7'),
  dict(id='v4v', nom='Vanne 4 voies (V4V)', groupe='E', regle='R4',
       src='dess:v4v', page=85,
-      fonction="Permet d'inverser le cycle thermodynamique (mode chaud et mode froid) dans le système.",
+      fonction="Elle retourne le sens du cycle, ce qui fait basculer l'installation du mode froid au "
+               "mode chaud.",
       indice="Un corps rectangulaire, une voie en haut et trois voies en bas.",
       role="C'est elle qui rend une PAC réversible."),
 
  # ---------------- F. Réservoirs et accessoires de ligne ----------------
  dict(id='eliminateur_vibration', nom='Éliminateur de vibrations', groupe='F', regle='R7',
       src='dess:eliminateur_vibration', page=85,
-      fonction="Réduit les vibrations et les bruits générés par le compresseur.",
+      fonction="Il absorbe les secousses et le bruit que le compresseur transmet à la tuyauterie.",
       indice="Un tronçon souple dessiné en accordéon entre deux brides.",
       role="Se pose au plus près du compresseur."),
  dict(id='separateur_huile', nom="Séparateur d'huile avec flotteur", groupe='F', regle='R7',
       src='bib:separateur_huile', page=85,
-      fonction="Récupère l'huile entraînée par le fluide frigorigène à l'état vapeur, à la sortie du compresseur.",
+      fonction="Il reprend, à la sortie du compresseur, l'huile que la vapeur a emportée avec elle.",
       indice="Un corps pointu vers le bas, avec un flotteur dessiné dedans.",
       role="L'huile tombe au fond, le flotteur la renvoie au carter.",
       piege='P8'),
  dict(id='bouteille_anticoup', nom='Bouteille anti-coup de liquide', groupe='F', regle='R7',
       src='dess:bouteille_anticoup', page=85,
-      fonction="Élimine le risque que le fluide frigorigène arrive encore à l'état liquide au compresseur.",
+      fonction="Elle empêche que du fluide encore liquide n'atteigne le compresseur.",
       indice="Le même corps pointu vers le bas, mais sans flotteur.",
       role="Se place sur l'aspiration. Le liquide reste au fond, seule la vapeur repart.",
       piege='P8'),
  dict(id='bouteille_liquide', nom='Bouteille (réservoir) liquide', groupe='F', regle='R7',
       src='bib:bouteille_liquide', page=85,
-      fonction="Élimine le risque que le fluide frigorigène soit encore à l'état gazeux en sortie de condenseur.",
+      fonction="Elle empêche que du fluide encore gazeux ne quitte le condenseur par la ligne liquide.",
       indice="Un corps cylindrique couché, à fonds bombés.",
       role="Réserve de liquide entre le condenseur et le détendeur.",
       piege='P9'),
  dict(id='reservoir_huile', nom="Réservoir d'huile", groupe='F', regle='R7',
       src='dess:reservoir_huile', page=88,
-      fonction="Stocke l'huile récupérée par le séparateur avant son renvoi aux carters.",
+      fonction="Il garde en réserve l'huile reprise par le séparateur, en attendant de la rendre aux "
+               "carters.",
       indice="Un simple corps vertical, sans rien dedans.",
       role="Présent sur les centrales à plusieurs compresseurs.",
       piege='P9'),
  dict(id='ventilateur', nom='Ventilateur', groupe='F', regle='R1',
       src='bib:ventilateur', page=85,
-      fonction="Distribue, par convection, le froid et le chaud dans un local ou à l'extérieur.",
+      fonction="Il met l'air en mouvement pour porter le froid ou le chaud dans le local, ou pour le "
+               "rejeter au-dehors.",
       indice="Une hélice vue de profil, entraînée par un moteur.",
       role="Sans lui, l'échangeur à air n'échange presque rien."),
  dict(id='regulateur_flotteur', nom='Régulateur à flotteur', groupe='F', regle='R7',
       src='dess:regulateur_flotteur', page=88,
-      fonction="Maintient un niveau de liquide constant en agissant sur le passage du fluide.",
+      fonction="Il tient le niveau de liquide constant, en ouvrant ou fermant le passage selon ce "
+               "niveau.",
       indice="Une vanne, et à côté une boule : le flotteur qui suit le niveau.",
       role="Repère 20 du schéma : il gère le niveau d'huile du carter."),
 
  # ---------------- G. Instruments (bulles ISA) --------------------------
  dict(id='bulle_PZL', nom='Pressostat BP de sécurité (PZL)', groupe='G', regle='R6',
       src='dess:bulle_PZL', page=86,
-      fonction="Protège l'installation en cas de pression anormalement basse.",
+      fonction="Il met l'installation à l'arrêt lorsque la pression descend anormalement bas.",
       indice="P = pression · Z = sécurité · L = seuil bas.",
       role="Il coupe l'installation. Souvent à réarmement manuel.",
       piege='P10'),
  dict(id='bulle_PZH', nom='Pressostat HP de sécurité (PZH)', groupe='G', regle='R6',
       src='dess:bulle_PZH', page=86,
-      fonction="Protège l'installation en cas de pression anormalement haute.",
+      fonction="Il met l'installation à l'arrêt lorsque la pression monte anormalement haut.",
       indice="P = pression · Z = sécurité · H = seuil haut.",
       role="Le dernier rempart avant la rupture. Il coupe.",
       piege='P10'),
  dict(id='bulle_PSL', nom='Pressostat BP de régulation (PSL)', groupe='G', regle='R6',
       src='dess:bulle_PSL', page=86,
-      fonction="Régule la pression pour optimiser le fonctionnement du système.",
+      fonction="Il pilote la pression du côté basse pression, pour tenir l'installation à son régime de "
+               "marche.",
       indice="P = pression · S = commutation (régulation) · L = seuil bas.",
       role="Il fait marcher et arrêter le compresseur en fonctionnement normal.",
       piege='P10'),
  dict(id='bulle_PSH', nom='Pressostat HP de régulation (PSH)', groupe='G', regle='R6',
       src='dess:bulle_PSH', page=86,
-      fonction="Régule la pression pour optimiser le fonctionnement du système.",
+      fonction="Il pilote la pression du côté haute pression, pour tenir l'installation à son régime de "
+               "marche.",
       indice="P = pression · S = commutation (régulation) · H = seuil haut.",
       role="Il enclenche par exemple le second ventilateur du condenseur.",
       piege='P10'),
  dict(id='bulle_PZLLHH', nom='Pressostat combiné (PZLLHH)', groupe='G', regle='R6',
       src='dess:bulle_PZLLHH', page=88,
-      fonction="Réunit dans un seul appareil la sécurité basse pression et la sécurité haute pression.",
+      fonction="Il rassemble dans un seul boîtier la sécurité basse pression et la sécurité haute "
+               "pression.",
       indice="Les lettres se cumulent : LL et HH, deux seuils bas et deux seuils hauts.",
       role="Repère 3 du schéma, monté directement sur le compresseur.",
       piege='P10'),
  dict(id='bulle_TC', nom='Thermostat de régulation (TC / TS)', groupe='G', regle='R6',
       src='dess:bulle_TC', page=86,
-      fonction="Contrôle et maintient une température stable dans un lieu.",
+      fonction="Il surveille la température d'un lieu et agit pour la maintenir à sa consigne.",
       indice="T = température · C ou S = contrôle / commutation.",
       role="C'est lui qui déclenche et arrête la production de froid.",
       piege='P11'),
  dict(id='bulle_TZ', nom='Thermostat de sécurité (TZ)', groupe='G', regle='R6',
       src='dess:bulle_TZ', page=86,
-      fonction="Empêche un équipement de dépasser une température dangereuse.",
+      fonction="Il interdit à un équipement de monter au-delà d'une température jugée dangereuse.",
       indice="T = température · Z = sécurité.",
       role="Il coupe. Il ne régule pas.",
       piege='P11'),
  dict(id='bulle_TI', nom='Thermomètre (TI)', groupe='G', regle='R6',
       src='dess:bulle_TI', page=86,
-      fonction="Permet de lire une température.",
+      fonction="Il affiche une température.",
       indice="T = température · I = indication. Il indique, il ne commande rien.",
       role="Simple afficheur. Aucun contact électrique.",
       piege='P11'),
  dict(id='bulle_TSHL', nom="Thermostat d'ambiance (TSHL)", groupe='G', regle='R6',
       src='dess:bulle_TSHL', page=88,
-      fonction="Maintient la température de la chambre entre un seuil bas et un seuil haut.",
+      fonction="Il tient la température de la chambre entre deux seuils, l'un bas, l'autre haut.",
       indice="T = température · S = commutation · H et L = les deux seuils.",
       role="Repère 16 du schéma : il commande l'électrovanne de ligne liquide."),
 
  # ---------------- H. Régulateurs de pression Danfoss -------------------
  dict(id='regulateur_kvr', nom='Régulateur de pression de condensation KVR', groupe='H', regle='R8',
       src='dess:regulateur_kvr', page=87,
-      fonction="Contrôle la pression de condensation afin d'assurer un fonctionnement stable et efficace.",
+      fonction="Il tient la pression de condensation à un niveau suffisant pour que l'installation reste "
+               "stable.",
       indice="Bulle PC = Pression de Condensation. Le pointillé va vers l'amont, côté condenseur.",
       role="Utile l'hiver : sans lui, la HP s'effondre et le détendeur ne fonctionne plus.",
       piege='P12'),
  dict(id='regulateur_kvp', nom="Régulateur de pression d'évaporation KVP", groupe='H', regle='R8',
       src='dess:regulateur_kvp', page=87,
-      fonction="Contrôle la pression d'évaporation afin d'assurer un fonctionnement stable et efficace.",
+      fonction="Il tient la pression d'évaporation à un niveau suffisant pour que l'installation reste "
+               "stable.",
       indice="Bulle PA = Pression d'évaporation. Il se monte en sortie d'évaporateur.",
       role="Il empêche la BP de descendre trop bas (givrage, produits sensibles).",
       piege='P12'),
  dict(id='regulateur_kvc', nom='Régulateur de capacité KVC', groupe='H', regle='R8',
       src='dess:regulateur_kvc', page=87,
-      fonction="Ajuste la charge frigorifique en contrôlant la pression d'aspiration, notamment lors des charges partielles.",
+      fonction="Il adapte la puissance produite à la demande, en agissant sur la pression d'aspiration "
+               "lorsque la charge devient partielle.",
       indice="Bulle RC = Régulation de Capacité. Il by-passe du refoulement vers l'aspiration.",
       role="Il évite les courts cycles quand la demande de froid baisse.",
       piege='P12'),
  dict(id='regulateur_kvl', nom='Régulateur de démarrage KVL', groupe='H', regle='R8',
       src='dess:regulateur_kvl', page=87,
-      fonction="Limite la pression d'aspiration lors du démarrage du compresseur, réduisant les contraintes mécaniques.",
+      fonction="Il bride la pression d'aspiration au démarrage, pour épargner des efforts au "
+               "compresseur.",
       indice="Bulle RD = Régulation de Démarrage. Il bride l'aspiration au lancement.",
       role="Il protège le moteur du compresseur au démarrage.",
       piege='P12'),
@@ -724,10 +760,21 @@ def resoudre(src):
 
 
 out = []
+manquantes = []
 for s in SYMBOLES:
     d = dict(s)
     d['svg'] = resoudre(d.pop('src'))
+    defi = DEFINITIONS.get(d['id'])
+    if not defi:
+        manquantes.append(d['id'])
+    else:
+        d.update(defi)
     out.append(d)
+if manquantes:
+    raise SystemExit('definition manquante pour : ' + ', '.join(manquantes))
+inutiles = set(DEFINITIONS) - {x['id'] for x in SYMBOLES}
+if inutiles:
+    raise SystemExit('definition sans symbole : ' + ', '.join(sorted(inutiles)))
 
 ids = [s['id'] for s in out]
 assert len(ids) == len(set(ids)), 'doublon d id'
@@ -736,7 +783,7 @@ for s in SCHEMA:
 
 data = dict(meta=dict(
                 titre="Symboles normalisés des éléments thermodynamiques",
-                source="Bibliothèque inerWeb Symboles (QElectroTech) + symboles redessinés d'après le document de référence, p. 81 à 89",
+                source="Symboles : bibliothèque inerWeb (collection QElectroTech, CC BY 3.0) + symboles redessinés. Tous les textes sont rédigés pour ce module — voir LICENCE.md.",
                 auteur="F. Henninot — inerWeb Édu",
                 nb=len(out)),
             groupes=GROUPES, regles=REGLES, pieges=PIEGES,

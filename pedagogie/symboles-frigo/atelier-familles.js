@@ -206,7 +206,8 @@
         r.className = 'retour-info ' + (juste ? 'ok' : 'ko');
         r.innerHTML = '<strong>' + (juste ? 'Rangé.' : 'Non — famille : ' +
                       APP.echapper(APP.groupeDe(s.groupe).nom) + '.') + '</strong>' +
-                      APP.echapper(s.indice);
+                      APP.echapper(s.indice) +
+                      '<div>' + APP.boutonFiche(s.id) + '</div>';
         const d = document.createElement('div');
         d.className = 'barre-actions';
         d.innerHTML = '<button class="b" id="suite">Suivant →</button>';

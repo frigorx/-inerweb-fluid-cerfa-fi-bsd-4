@@ -23,6 +23,30 @@ Ce parcours ne donne pas cette grammaire à l'élève. **Il la lui fait trouver*
 l'épreuve sur des symboles qu'il n'a jamais vus. À la fin du module 1, il n'a pas 53 dessins en
 tête : il a **8 règles**, et il sait lire n'importe quel symbole du chapitre.
 
+### Avant tout : savoir ce qu'est l'objet
+
+Apprendre à lire un symbole ne sert à rien si l'élève ne sait pas ce que le symbole désigne.
+Un déshydrateur, une bouteille anti-coup de liquide, un KVP : beaucoup d'élèves n'en ont jamais
+vu, et n'ont donc rien à quoi accrocher la fonction.
+
+D'où **le trousseau** : une fiche par organe, qui répond à quatre questions et s'arrête là.
+
+| | |
+|---|---|
+| **C'est quoi ?** | L'objet réel, dans la main. De quoi il est fait, à quoi il ressemble. |
+| **Pourquoi ça existe ?** | Le problème qu'il résout — ce qui se passerait sans lui. |
+| **Où ça se trouve ?** | Sa place sur l'installation. |
+| **À quoi ça sert ?** | Sa fonction, telle que la donne le document de référence. |
+
+Le **fonctionnement détaillé n'y figure pas** : courbes, réglages, diagnostic relèvent des séances
+suivantes. Ici on plante la définition et le rôle, rien de plus. C'est un choix, pas un oubli.
+
+Le trousseau est consultable à tout moment, y compris **au milieu d'un atelier** : un bouton
+« C'est quoi, au juste ? » apparaît dans chaque retour de correction et ouvre la fiche par-dessus
+l'écran, sans faire perdre sa place à l'élève.
+
+### Puis : la place et le moment
+
 Le module 2 part de là. Sur une installation réelle, savoir nommer ne suffit plus :
 
 > **Ce n'est plus le symbole qui compte. C'est sa place, et le moment où il agit.**
@@ -55,7 +79,7 @@ son choix.
 | `atelier-groupe.js` | Atelier 7 — groupe de condensation |
 | `atelier-regulateurs.js` | Atelier 9 — KVP · KVR · KVL · KVC |
 | `maison.js` | Entraînement maison — répétition espacée (Leitner, 5 boîtes) |
-| `biblio.js` | Bibliothèque de référence consultable |
+| `biblio.js` | Le trousseau — les 53 fiches consultables |
 | `sw.js`, `manifest.json`, `icone.svg` | Fonctionnement hors connexion et installation sur téléphone |
 
 ### Documents imprimables
@@ -67,6 +91,7 @@ son choix.
 | `interrogation.html` | **Généré** — sujet A4 (20 points) + corrigé et barème enseignant |
 | `carnet-eleve.html` | **Généré** — carnet de bord module 1, 4 pages, recto-verso |
 | `memo-frigoriste.html` | **Généré** — mémo module 2, 4 pages : ordres de montage, régulateurs, séquences |
+| `trousseau.html` | **Généré** — les 53 fiches organes, à imprimer et garder ouvert |
 
 ### Outils
 
@@ -76,6 +101,8 @@ son choix.
 | `outils/generer-documents.py` | Construit les trois documents imprimables |
 | `outils/carnet.py` | Partie « carnet élève » du générateur ci-dessus |
 | `outils/memo.py` | Partie « mémo frigoriste » du générateur ci-dessus |
+| `outils/trousseau.py` | Partie « trousseau » du générateur ci-dessus |
+| `outils/definitions.py` | Les 53 définitions : c'est quoi · pourquoi ça existe · où ça se trouve |
 
 ---
 
@@ -87,6 +114,9 @@ son choix.
   maison [`frigorx/inerweb-symboles`](https://github.com/frigorx/inerweb-symboles)
   (348 symboles CEI / frigo convertis depuis QElectroTech, `inerweb_symboles.json` v2.0).
   Aucune retouche.
+  **Attribution obligatoire en amont** : ces éléments viennent de la collection
+  [QElectroTech](https://qelectrotech.org/), publiée sous
+  [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/). Voir [`LICENCE.md`](LICENCE.md) § 2.
 
 - **Une vingtaine de symboles** absents de cette bibliothèque ont été **redessinés d'après le
   document de référence**, dans le même style graphique (trait noir, épaisseur 1, même convention
@@ -121,6 +151,34 @@ son choix.
   La seule exception est le sous-refroidissement usuel (4 à 8 K), donné avec sa réserve.
   Les états du fluide (gaz/liquide, HP/BP) reprennent littéralement les formulations du document,
   y compris « liquide BP » en sortie de détendeur.
+
+### Vérification des définitions
+
+Les 53 définitions du trousseau et le contenu du module 2 ont été **relus et corrigés contre
+[ABC CLIM](https://www.abcclim.net/)**, sur indication de F. Henninot. Aucun texte n'en est repris :
+le site a servi de source de vérification, pas de source de rédaction. Pages consultées, entre
+autres :
+
+| Point vérifié | Page |
+|---|---|
+| Bouteille anti-coup de liquide — elle réévapore le liquide piégé | [bouteille-acl](https://www.abcclim.net/bouteille-acl.html) |
+| Voyant liquide — pastille de sel chimique, vert sain / jaune saturé | [voyant-liquide](https://www.abcclim.net/voyant-liquide.html) |
+| Déshydrateur — les acides attaquent l'huile **et** le bobinage moteur | [deshydrateur](https://www.abcclim.net/deshydrateur.html) |
+| Séparateur d'huile — chicanes, flotteur à pointeau, film isolant sur les tubes | [separateur-piege-huile](https://www.abcclim.net/separateur-piege-huile.html) |
+| KVP — se monte sur l'évaporateur dont la pression est la plus élevée | [regulateurs-pression](https://www.abcclim.net/regulateurs-pression-evaporation-demarrage.html) |
+| Pump down — chaîne thermostat → électrovanne → pressostat BP | [regulation-pump-down](https://www.abcclim.net/regulation-pump-down.html) |
+| Pump down amélioré (*single pump down*) | [pum-down-ameliore](https://www.abcclim.net/pum-down-ameliore.html) |
+| Dégivrage gaz chauds — le point d'injection varie selon les montages | [fonctionnement-degivrage-gaz-chauds](https://www.abcclim.net/fonctionnement-degivrage-gaz-chauds.html) |
+| Pressostat différentiel d'huile — écart carter / pompe, temporisation | [pressostat-huile](https://www.abcclim.net/pressostat-huile.html) |
+
+### Pas de photos
+
+Les fiches sont **entièrement textuelles**. Aucune photographie de composant réel n'est fournie :
+celles du document de référence comme celles d'ABC CLIM sont soumises au droit d'auteur.
+Pour ajouter des photos, deux voies propres : photographier le matériel de l'atelier
+(pas de question de droits, et les élèves reconnaissent leur propre plateau technique), ou
+utiliser les visuels des catalogues constructeurs avec leur autorisation.
+Le champ est prévu dans les données : `outils/definitions.py` accepte une clé `photo` par organe.
 
 ### Ce qui existait déjà
 
@@ -159,6 +217,7 @@ application.
   imprimer les pages du sujet uniquement pour les élèves.
 - `carnet-eleve.html` → Ctrl+P, recto-verso, 4 pages.
 - `memo-frigoriste.html` → Ctrl+P, recto-verso, 4 pages. C'est la fiche que l'élève garde.
+- `trousseau.html` → Ctrl+P. Les 53 fiches organes, deux par page. À distribuer en début de séance 1.
 - Depuis l'application : boutons « Imprimer cette fiche » (clé de décodage), « Imprimer la
   bibliothèque » et « Imprimer mon corrigé ».
 
@@ -166,8 +225,8 @@ application.
 
 ## Régénérer les fichiers
 
-`donnees-symboles.js`, `interrogation.html`, `carnet-eleve.html` et `memo-frigoriste.html`
-sont **générés**. Ne pas les
+`donnees-symboles.js`, `interrogation.html`, `carnet-eleve.html`, `memo-frigoriste.html`
+et `trousseau.html` sont **générés**. Ne pas les
 éditer à la main : la modification serait perdue à la génération suivante.
 
 ```bash
@@ -239,6 +298,30 @@ Détail, adaptations par diplôme et grilles de positionnement : voir `FICHE-SEA
 et `FICHE-SEANCE-2.md`.
 
 ---
+
+## Licence et sécurité
+
+Le module suit la licence du dépôt — **PolyForm Noncommercial 1.0.0**, libre et gratuite pour
+tout établissement d'enseignement. Le détail, les obligations envers QElectroTech et **le point
+non réglé sur les textes repris du document de référence** sont dans [`LICENCE.md`](LICENCE.md).
+
+Côté technique, ce que le module garantit :
+
+- **Aucune requête sortante.** La politique de sécurité déclarée dans `index.html`
+  (`default-src 'none'; connect-src 'self'`) interdit au navigateur de contacter quoi que ce
+  soit d'extérieur — analytique, police, image, service tiers. Une tentative introduite par
+  erreur serait bloquée par le navigateur, pas seulement absente du code.
+- **Aucun script en ligne.** `script-src 'self'` : tout le JavaScript est dans des fichiers du
+  module. Aucun gestionnaire `onclick=` dans le HTML, aucun bloc `<script>` inline. Un script
+  injecté ne s'exécute pas.
+- **Échappement des attributs.** `APP.echapper()` échappe aussi les guillemets simples et
+  doubles : la valeur du champ de recherche est réinjectée dans un attribut `value="…"`, et sans
+  cela une saisie pouvait sortir de l'attribut.
+- **Progression validée à la lecture.** Le contenu du `localStorage` est vérifié dans sa forme
+  avant usage : altéré ou écrit par une version antérieure, il est ignoré et l'application
+  repart proprement plutôt que de planter.
+- **Cache limité au module.** Le service worker ne met en cache que les ressources de même
+  origine ; une réponse d'un autre domaine n'entre jamais dans le cache de l'application.
 
 ## Accessibilité et charte
 

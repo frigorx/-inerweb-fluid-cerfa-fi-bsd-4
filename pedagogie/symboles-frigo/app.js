@@ -48,16 +48,33 @@ const APP = (function () {
 
   const ATELIERS = PARCOURS.reduce(function (t, p) { return t.concat(p.ateliers); }, []);
 
+  // Déclaré AVANT le premier appel à charger() : une const n'est pas
+  // remontée comme une fonction, elle serait dans sa zone morte.
+  const ETAT_VIDE = { ateliers: {}, regles: [], maison: null };
+
   let etat = charger();
 
   /* ------------------------------------------------------------ stockage */
 
+  /* On ne fait pas confiance au contenu du navigateur : il peut avoir été
+     écrit par une version antérieure, tronqué, ou modifié à la main. On
+     vérifie la forme avant de s'en servir, sinon on repart propre. */
   function charger() {
     try {
       const brut = localStorage.getItem(CLE_STOCKAGE);
-      if (brut) return JSON.parse(brut);
-    } catch (e) { /* stockage indisponible : on continue en mémoire */ }
-    return { ateliers: {}, regles: [], maison: null };
+      if (!brut) return Object.assign({}, ETAT_VIDE);
+      const e = JSON.parse(brut);
+      if (!e || typeof e !== 'object' || Array.isArray(e)) return Object.assign({}, ETAT_VIDE);
+      return {
+        ateliers: (e.ateliers && typeof e.ateliers === 'object' && !Array.isArray(e.ateliers))
+                  ? e.ateliers : {},
+        regles: Array.isArray(e.regles)
+                ? e.regles.filter(function (c) { return typeof c === 'string'; }) : [],
+        maison: (e.maison && typeof e.maison === 'object' && !Array.isArray(e.maison))
+                ? e.maison : null
+      };
+    } catch (err) { /* stockage indisponible ou illisible : on continue en mémoire */ }
+    return Object.assign({}, ETAT_VIDE);
   }
 
   function sauver() {
@@ -186,6 +203,15 @@ const APP = (function () {
     return '<span class="symbole ' + (classe || '') + '">' + svgDe(id) + '</span>';
   }
 
+  /** Photographie de l'organe, si le dossier en fournit une.
+      Renvoie une chaîne vide sinon : le champ `photo` est facultatif. */
+  function photoDe(id, classe) {
+    const s = SYM[id];
+    if (!s || !s.photo) return '';
+    return '<img class="photo-organe ' + (classe || '') + '" src="' + s.photo +
+           '" alt="Photographie : ' + echapper(s.nom) + '" loading="lazy">';
+  }
+
   function groupeDe(cle) {
     return DONNEES.groupes.filter(function (g) { return g.cle === cle; })[0];
   }
@@ -201,8 +227,78 @@ const APP = (function () {
 
   function piocher(t, n) { return melanger(t).slice(0, n); }
 
+  /* Les guillemets DOIVENT être échappés : cette fonction sert aussi à
+     injecter dans des attributs HTML (value="…", alt="…"). Sans eux, une
+     saisie comme  " onfocus=… autofocus="  sort de l'attribut. */
   function echapper(s) {
-    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  /* --------------------------------------------------- aperçu d'une fiche
+
+     « C'est quoi ? » doit être à un clic depuis n'importe quel atelier, sans
+     jamais faire perdre sa place à l'élève : d'où un voile par-dessus l'écran
+     courant plutôt qu'une navigation. */
+
+  function boutonFiche(id, texte) {
+    if (!SYM[id]) return '';
+    return '<button type="button" class="lien-fiche" data-apercu="' + id + '">' +
+           (texte || "C'est quoi, au juste ?") + '</button>';
+  }
+
+  function fermerApercu() {
+    const v = document.getElementById('voile-fiche');
+    if (v) v.remove();
+    document.body.style.overflow = '';
+  }
+
+  function apercuFiche(id) {
+    const s = SYM[id];
+    if (!s) return;
+    fermerApercu();
+    const g = groupeDe(s.groupe);
+
+    function bloc(titre, texte, couleur) {
+      return '<div style="border-left:5px solid ' + couleur + ';padding:2px 0 2px 13px;margin-bottom:13px">' +
+             '<div style="font-family:\'Trebuchet MS\',sans-serif;font-weight:700;font-size:15px;' +
+             'color:' + couleur + ';margin-bottom:2px">' + titre + '</div>' +
+             '<p style="font-size:16px">' + echapper(texte) + '</p></div>';
+    }
+
+    const v = document.createElement('div');
+    v.id = 'voile-fiche';
+    v.innerHTML =
+      '<div class="fiche-flottante" role="dialog" aria-modal="true" aria-label="Fiche de l\'organe">' +
+      '<div class="fiche-entete">' +
+      '<div><div style="font-size:14px;opacity:.75;text-transform:uppercase;letter-spacing:.04em">' +
+      echapper(g.nom) + '</div>' +
+      '<div style="font-family:\'Trebuchet MS\',sans-serif;font-weight:700;font-size:20px">' +
+      echapper(s.nom) + '</div></div>' +
+      '<button type="button" class="fermer" aria-label="Fermer">✕</button></div>' +
+      '<div class="fiche-corps">' +
+      '<div class="duo-visuel">' + symbole(s.id, 'grand') + photoDe(s.id) + '</div>' +
+      bloc("C'est quoi ?", s.objet, 'var(--marine)') +
+      bloc("Pourquoi ça existe ?", s.probleme, 'var(--orange)') +
+      bloc("Où ça se trouve ?", s.ou, 'var(--vert)') +
+      bloc("À quoi ça sert ?", s.fonction, 'var(--marine-clair)') +
+      '</div>' +
+      '<div class="fiche-pied"><button type="button" class="b" data-fermer>Reprendre l\'atelier</button></div>' +
+      '</div>';
+
+    v.addEventListener('click', function (ev) {
+      if (ev.target === v || ev.target.closest('.fermer') || ev.target.closest('[data-fermer]')) {
+        fermerApercu();
+      }
+    });
+    document.body.appendChild(v);
+    document.body.style.overflow = 'hidden';
+    const f = v.querySelector('.fermer');
+    if (f) f.focus();
   }
 
   /** Barre de progression réutilisable. */
@@ -241,13 +337,22 @@ const APP = (function () {
     document.getElementById('btn-retour').addEventListener('click', function () { aller('hub'); });
 
     document.addEventListener('click', function (ev) {
+      const f = ev.target.closest('[data-apercu]');
+      if (f) { apercuFiche(f.getAttribute('data-apercu')); return; }
+      // Bouton d'impression délégué : aucun onclick inline, pour qu'une
+      // politique de sécurité stricte puisse interdire les scripts en ligne.
+      if (ev.target.closest('[data-imprimer]')) { window.print(); return; }
       const b = ev.target.closest('[data-aller]');
-      if (b) { aller(b.getAttribute('data-aller')); }
+      if (b) { fermerApercu(); aller(b.getAttribute('data-aller')); }
+    });
+
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape') fermerApercu();
     });
 
     document.getElementById('btn-raz').addEventListener('click', function () {
       if (confirm("Effacer toute ta progression sur cet appareil ?\nCette action est définitive.")) {
-        etat = { ateliers: {}, regles: [], maison: null };
+        etat = Object.assign({}, ETAT_VIDE);
         sauver();
         majHub();
       }
@@ -268,9 +373,10 @@ const APP = (function () {
     demarrer: demarrer, aller: aller, enregistrer: enregistrer,
     marquer: marquer, debloquerRegle: debloquerRegle,
     get etat() { return etat; }, sauver: sauver,
-    SYM: SYM, symbole: symbole, svgDe: svgDe, groupeDe: groupeDe,
+    SYM: SYM, symbole: symbole, svgDe: svgDe, photoDe: photoDe, groupeDe: groupeDe,
     PARCOURS: PARCOURS,
     melanger: melanger, piocher: piocher, echapper: echapper,
-    jauge: jauge, bilan: bilan, ATELIERS: ATELIERS
+    jauge: jauge, bilan: bilan, ATELIERS: ATELIERS,
+    boutonFiche: boutonFiche, apercuFiche: apercuFiche
   };
 })();
