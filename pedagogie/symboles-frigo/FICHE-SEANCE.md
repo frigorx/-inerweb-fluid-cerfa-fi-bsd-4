@@ -275,7 +275,7 @@ Toute reformulation exacte est acceptée. Ce qui compte, c'est l'idée, pas les 
 
 ### Le parcours du fluide — les quatre portions
 
-*Formulations reprises du document de référence, pages 81 à 83.*
+
 
 | Portion | État du fluide |
 |---|---|

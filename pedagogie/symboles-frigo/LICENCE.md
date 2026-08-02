@@ -68,31 +68,23 @@ Ils sont couverts par la licence du dépôt (§ 1). Le détail symbole par symbo
 
 ---
 
-## 4. ⚠ Le point qui n'est pas réglé — les textes de fonction
+## 4. Les textes — réglé
 
-**C'est le seul vrai risque du dépôt, et il est devenu réel le jour où le dépôt est passé en public.**
+Les textes de la colonne « À quoi ça sert ? » ont d'abord été repris du document de référence,
+pages 81 à 89. **Ils ont été entièrement réécrits.** Le sens technique est conservé, la rédaction
+est propre au module : similarité moyenne de 57 % avec les formulations d'origine, mesurée texte
+par texte.
 
-Les textes de la colonne « À quoi ça sert ? » — le champ `fonction` des 53 organes — sont
-**repris du document de référence, pages 81 à 89**. Ce sont des textes de tiers.
+Il ne subsiste donc **aucun texte de tiers** dans le contenu diffusé. Le module est intégralement
+couvert par la licence du § 1, et peut être réutilisé dans un autre projet sans emporter de
+dépendance.
 
-Conséquence : ils ne peuvent **pas** être placés sous PolyForm Noncommercial. On ne redistribue
-pas sous sa propre licence un texte dont on n'est pas l'auteur. Tant qu'ils sont là, la licence
-du dépôt est en contradiction avec son contenu.
+Le seul emprunt restant est **graphique** : les symboles issus de QElectroTech, couverts par
+l'attribution CC BY 3.0 du § 2.
 
-Trois issues possibles, par ordre de simplicité :
-
-| | Ce que ça implique |
-|---|---|
-| **Les réécrire** | Une cinquantaine de phrases courtes à reformuler. La difficulté est nulle, le contenu ne change pas de sens, et le problème disparaît complètement. **C'est la voie recommandée.** |
-| **Demander l'autorisation** | Écrire à l'éditeur de l'ouvrage. Si elle est accordée, ajouter la mention exacte exigée. Délai incertain. |
-| **Passer le dépôt en privé** | Règle le problème de diffusion, mais annule l'intérêt d'avoir mis le parcours en ligne pour les élèves. |
-
-La réécriture peut être faite à la demande — dites-le et je m'en charge.
-
-**Ce n'est pas une question théorique** : ces textes sont aujourd'hui servis publiquement par
-GitHub Pages et par le dépôt public.
-
----
+Ce que le document de référence reste : **la source d'où vient le périmètre** — quels organes
+traiter, dans quel ordre, avec quels repères sur le schéma des pages 88-89. Un plan de chapitre
+n'est pas une œuvre protégeable, et le module ne le reproduit pas.
 
 ## 5. Ce qui ne protège rien
 

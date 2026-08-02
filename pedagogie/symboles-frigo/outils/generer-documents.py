@@ -289,7 +289,7 @@ h.append(schema({}))
 h.append('<h2>Exercice 5 — 2 points</h2><table><tr><th>Portion</th><th>État attendu</th></tr>')
 for portion, etat in EX5:
     h.append('<tr><td>%s</td><td><strong>%s</strong></td></tr>' % (portion, etat))
-h.append('</table><p>0,5 pt par ligne. Formulations reprises du document de référence (p. 81 à 83). '
+h.append('</table><p>0,5 pt par ligne. '
          'Accepter « liquide BP » ou « liquide basse pression » indifféremment. '
          'Refuser « gaz BP » en sortie de détendeur.</p>')
 
