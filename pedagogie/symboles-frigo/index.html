@@ -23,17 +23,20 @@
 
   <!-- ============================================================ HUB -->
   <section class="ecran actif" id="ec-hub">
-    <h2 style="font-size:26px;margin-bottom:6px">Apprends seul les 49 symboles du circuit frigorifique</h2>
+    <h2 style="font-size:26px;margin-bottom:6px">Apprends seul à lire — puis à construire — un circuit frigorifique</h2>
     <p class="intro">
       Personne ne va te réciter le cours. Tu vas <strong>trouver toi-même</strong> les règles qui
-      permettent de lire n'importe quel symbole, puis les mettre à l'épreuve.
-      Compte <strong>2 heures</strong> pour les cinq ateliers. L'interrogation, c'est après.
+      permettent de lire n'importe quel symbole, puis passer du symbole au circuit réel :
+      ordres de montage, séquences de commande, régulateurs de pression.
+      Deux modules de <strong>2 heures</strong> chacun.
     </p>
 
     <div class="note">
-      <strong>Ta boussole :</strong> il n'y a pas 49 dessins à apprendre par cœur.
+      <strong>Ta boussole :</strong> il n'y a pas 53 dessins à apprendre par cœur.
       Il y a <strong>8 règles</strong>. Une fois les 8 règles trouvées, tu sais lire un symbole
       que tu n'as jamais vu. C'est tout l'enjeu de l'atelier 1 — ne le saute pas.
+      Le module 2 part de là : sur une installation réelle, ce n'est plus le symbole qui compte,
+      c'est <strong>sa place</strong> et <strong>le moment où il agit</strong>.
     </div>
 
     <div class="progression">
@@ -41,7 +44,7 @@
       <span class="compteur" id="compteur-global">0 / 5 ateliers validés</span>
     </div>
 
-    <div class="grille-ateliers" id="grille-ateliers"></div>
+    <div id="modules"></div>
 
     <div class="carte" style="margin-top:22px">
       <h3>Et à la maison ?</h3>
@@ -51,7 +54,7 @@
       </p>
       <div class="barre-actions">
         <button class="b" data-aller="maison">Ouvrir l'entraînement maison</button>
-        <button class="b secondaire" data-aller="biblio">Consulter la bibliothèque des 49 symboles</button>
+        <button class="b secondaire" data-aller="biblio">Consulter la bibliothèque des symboles</button>
         <button class="b secondaire" data-aller="cle">Voir ma clé de décodage</button>
       </div>
     </div>
@@ -76,10 +79,15 @@
   <section class="ecran" id="ec-maison"></section>
   <section class="ecran" id="ec-biblio"></section>
   <section class="ecran" id="ec-cle"></section>
+  <section class="ecran" id="ec-chaine"></section>
+  <section class="ecran" id="ec-sequence"></section>
+  <section class="ecran" id="ec-regulateurs"></section>
+  <section class="ecran" id="ec-groupe"></section>
 
 </main>
 
 <script src="donnees-symboles.js"></script>
+<script src="donnees-circuits.js"></script>
 <script src="app.js"></script>
 <script src="atelier-decodage.js"></script>
 <script src="atelier-familles.js"></script>
@@ -88,6 +96,9 @@
 <script src="atelier-blanc.js"></script>
 <script src="maison.js"></script>
 <script src="biblio.js"></script>
+<script src="atelier-chaine.js"></script>
+<script src="atelier-regulateurs.js"></script>
+<script src="atelier-groupe.js"></script>
 <script>
 APP.demarrer();
 // Mise en cache pour l'entraînement maison hors connexion.

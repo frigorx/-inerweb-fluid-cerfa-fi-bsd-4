@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Génère les documents imprimables A4 : interrogation.html et carnet-eleve.html.
+"""Génère les documents imprimables A4 : interrogation.html, carnet-eleve.html
+et memo-frigoriste.html.
 
 Le tirage est FIXE (pas d'aléatoire) : le sujet doit être identique d'une
 impression à l'autre et le corrigé doit lui correspondre exactement.
@@ -322,5 +323,10 @@ print('interrogation.html écrit (%.0f Ko)' % (os.path.getsize(dest) / 1024))
 # ===========================================================================
 #                          CARNET ÉLÈVE — 4 pages
 # ===========================================================================
-exec(io.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'carnet.py'),
-             encoding='utf-8').read())
+_ICI = os.path.dirname(os.path.abspath(__file__))
+exec(io.open(os.path.join(_ICI, 'carnet.py'), encoding='utf-8').read())
+
+# ===========================================================================
+#                     MÉMO FRIGORISTE — module 2, 4 pages
+# ===========================================================================
+exec(io.open(os.path.join(_ICI, 'memo.py'), encoding='utf-8').read())

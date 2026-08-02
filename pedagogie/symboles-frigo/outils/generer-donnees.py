@@ -242,6 +242,25 @@ DESSINES['regulateur_kvp'] = regulateur('PA', -1)
 DESSINES['regulateur_kvc'] = regulateur('RC', +1)
 DESSINES['regulateur_kvl'] = regulateur('RD', +1)
 
+# Vanne differentielle NRD : elle compare deux pressions, d ou les deux
+# liaisons d information, l une en amont, l autre en aval.
+DESSINES['nrd'] = svg('-32 -34 64 26',
+    '<polyline points="-11,-6 -11,6 0,0 11,6 11,-6 0,0 -11,-6" %s/>'
+    '<line x1="-11" y1="0" x2="-20" y2="0" %s/>'
+    '<line x1="-17" y1="-4" x2="-17" y2="4" %s/>'
+    '<line x1="11" y1="0" x2="20" y2="0" %s/>'
+    '<line x1="17" y1="-4" x2="17" y2="4" %s/>'
+    '<line x1="0" y1="0" x2="0" y2="-8" %s/>'
+    '<polyline points="-4,-9 4,-9 0,-2 -4,-9" fill="#000" %s/>'
+    '<circle cx="0" cy="-18" r="8" %s/>'
+    '<text x="0" y="-14" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" '
+    'font-size="9" font-weight="700" fill="#000">&#916;P</text>'
+    '<path d="M -8,-18 L -22,-18 L -22,-27" %s/>'
+    '<path d="M 8,-18 L 22,-18 L 22,-27" %s/>'
+    % (S, SF, SF, SF, SF, SF, SF, S, DASH, DASH))
+
+DESSINES['bulle_PDZ'] = bulle('PDZ', 48)
+
 
 # ---------------------------------------------------------------------------
 # Table pedagogique
@@ -542,6 +561,35 @@ SYMBOLES = [
       indice="Bulle RD = Régulation de Démarrage. Il bride l'aspiration au lancement.",
       role="Il protège le moteur du compresseur au démarrage.",
       piege='P12'),
+
+ # ---------------- I. Au-dela du document : circuits reels ---------------
+ # Ces quatre symboles ne figurent pas aux pages 81 a 89. Ils sont
+ # necessaires pour lire les schemas du module 2 (degivrage, circuit
+ # d huile, regulation de pression de condensation) et suivent les memes
+ # regles de lecture.
+ dict(id='nrd', nom='Vanne différentielle NRD', groupe='I', regle='R8',
+      src='dess:nrd', page=None,
+      fonction="Dérive du gaz chaud du refoulement vers la bouteille liquide pour y maintenir la pression "
+               "pendant que le KVR noie le condenseur.",
+      indice="Une vanne avec DEUX liaisons d'information : elle compare deux pressions (ΔP).",
+      role="Elle ne va jamais seule : c'est la coéquipière du KVR."),
+ dict(id='bulle_PDZ', nom="Pressostat différentiel d'huile (PDZ)", groupe='I', regle='R6',
+      src='dess:bulle_PDZ', page=None,
+      fonction="Compare la pression d'huile à la pression du carter et coupe le compresseur si l'écart "
+               "reste insuffisant pendant la temporisation.",
+      indice="P = pression · D = différentielle · Z = sécurité. La lettre D prolonge la logique des bulles "
+             "de la page 86, où elle n'apparaît pas.",
+      role="Sans lui, un compresseur tourne sans huile et se détruit."),
+ dict(id='resistance_degivrage', nom='Résistance de dégivrage', groupe='I', regle='R7',
+      src='bib:resistance_evaporation', page=None,
+      fonction="Chauffe la batterie de l'évaporateur pour faire fondre le givre.",
+      indice="Le zigzag anguleux classique de la résistance électrique.",
+      role="Se pose dans la batterie, dans l'égouttoir et sur l'écoulement — sinon l'eau regèle."),
+ dict(id='sonde_temperature', nom='Sonde de température', groupe='I', regle='R8',
+      src='bib:sonde_temperature', page=None,
+      fonction="Mesure une température et transmet l'information au régulateur.",
+      indice="Un corps sur la ligne, relié par un trait d'information.",
+      role="C'est elle qui met fin au dégivrage : dès que le givre a fondu, inutile de continuer."),
 ]
 
 # ---------------------------------------------------------------------------
@@ -633,6 +681,7 @@ GROUPES = [
  dict(cle='F', nom='Réservoirs et accessoires de ligne', couleur='#dc2626'),
  dict(cle='G', nom='Instruments (bulles)', couleur='#2563eb'),
  dict(cle='H', nom='Régulateurs de pression', couleur='#ff6b35'),
+ dict(cle='I', nom='Circuits réels (hors document)', couleur='#0f766e'),
 ]
 
 # ---------------------------------------------------------------------------

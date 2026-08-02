@@ -5,7 +5,7 @@ const DONNEES = {
   "titre": "Symboles normalisés des éléments thermodynamiques",
   "source": "Bibliothèque inerWeb Symboles (QElectroTech) + symboles redessinés d'après le document de référence, p. 81 à 89",
   "auteur": "F. Henninot — inerWeb Édu",
-  "nb": 49
+  "nb": 53
  },
  "groupes": [
   {
@@ -47,6 +47,11 @@ const DONNEES = {
    "cle": "H",
    "nom": "Régulateurs de pression",
    "couleur": "#ff6b35"
+  },
+  {
+   "cle": "I",
+   "nom": "Circuits réels (hors document)",
+   "couleur": "#0f766e"
   }
  ],
  "regles": [
@@ -783,6 +788,50 @@ const DONNEES = {
    "role": "Il protège le moteur du compresseur au démarrage.",
    "piege": "P12",
    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-32 -34 64 26\" overflow=\"visible\"><polyline points=\"-11,-6 -11,6 0,0 11,6 11,-6 0,0 -11,-6\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\"/><line x1=\"-11\" y1=\"0\" x2=\"-20\" y2=\"0\" stroke=\"#000\" stroke-width=\"1\"/><line x1=\"-17\" y1=\"-4\" x2=\"-17\" y2=\"4\" stroke=\"#000\" stroke-width=\"1\"/><line x1=\"11\" y1=\"0\" x2=\"20\" y2=\"0\" stroke=\"#000\" stroke-width=\"1\"/><line x1=\"17\" y1=\"-4\" x2=\"17\" y2=\"4\" stroke=\"#000\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"0\" y2=\"-8\" stroke=\"#000\" stroke-width=\"1\"/><polyline points=\"-4,-9 4,-9 0,-2 -4,-9\" fill=\"#000\" stroke=\"#000\" stroke-width=\"1\"/><circle cx=\"0\" cy=\"-18\" r=\"8\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\"/><text x=\"0\" y=\"-14\" text-anchor=\"middle\" font-family=\"Arial,Helvetica,sans-serif\" font-size=\"9\" font-weight=\"700\" fill=\"#000\">RD</text><path d=\"M 8,-18 L 22,-18 L 22,-27\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\" stroke-dasharray=\"3,2.5\"/></svg>"
+  },
+  {
+   "id": "nrd",
+   "nom": "Vanne différentielle NRD",
+   "groupe": "I",
+   "regle": "R8",
+   "page": null,
+   "fonction": "Dérive du gaz chaud du refoulement vers la bouteille liquide pour y maintenir la pression pendant que le KVR noie le condenseur.",
+   "indice": "Une vanne avec DEUX liaisons d'information : elle compare deux pressions (ΔP).",
+   "role": "Elle ne va jamais seule : c'est la coéquipière du KVR.",
+   "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-32 -34 64 26\" overflow=\"visible\"><polyline points=\"-11,-6 -11,6 0,0 11,6 11,-6 0,0 -11,-6\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\"/><line x1=\"-11\" y1=\"0\" x2=\"-20\" y2=\"0\" stroke=\"#000\" stroke-width=\"1\"/><line x1=\"-17\" y1=\"-4\" x2=\"-17\" y2=\"4\" stroke=\"#000\" stroke-width=\"1\"/><line x1=\"11\" y1=\"0\" x2=\"20\" y2=\"0\" stroke=\"#000\" stroke-width=\"1\"/><line x1=\"17\" y1=\"-4\" x2=\"17\" y2=\"4\" stroke=\"#000\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"0\" y2=\"-8\" stroke=\"#000\" stroke-width=\"1\"/><polyline points=\"-4,-9 4,-9 0,-2 -4,-9\" fill=\"#000\" stroke=\"#000\" stroke-width=\"1\"/><circle cx=\"0\" cy=\"-18\" r=\"8\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\"/><text x=\"0\" y=\"-14\" text-anchor=\"middle\" font-family=\"Arial,Helvetica,sans-serif\" font-size=\"9\" font-weight=\"700\" fill=\"#000\">&#916;P</text><path d=\"M -8,-18 L -22,-18 L -22,-27\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\" stroke-dasharray=\"3,2.5\"/><path d=\"M 8,-18 L 22,-18 L 22,-27\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\" stroke-dasharray=\"3,2.5\"/></svg>"
+  },
+  {
+   "id": "bulle_PDZ",
+   "nom": "Pressostat différentiel d'huile (PDZ)",
+   "groupe": "I",
+   "regle": "R6",
+   "page": null,
+   "fonction": "Compare la pression d'huile à la pression du carter et coupe le compresseur si l'écart reste insuffisant pendant la temporisation.",
+   "indice": "P = pression · D = différentielle · Z = sécurité. La lettre D prolonge la logique des bulles de la page 86, où elle n'apparaît pas.",
+   "role": "Sans lui, un compresseur tourne sans huile et se détruit.",
+   "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-27 -26 54 46\" overflow=\"visible\"><rect x=\"-24\" y=\"-24\" width=\"48\" height=\"20\" rx=\"10\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\"/><text x=\"0\" y=\"-9.5\" text-anchor=\"middle\" font-family=\"Arial,Helvetica,sans-serif\" font-size=\"12\" font-weight=\"700\" fill=\"#000\">PDZ</text><line x1=\"0\" y1=\"-4\" x2=\"0\" y2=\"16\" stroke=\"#000\" stroke-width=\"1\"/></svg>"
+  },
+  {
+   "id": "resistance_degivrage",
+   "nom": "Résistance de dégivrage",
+   "groupe": "I",
+   "regle": "R7",
+   "page": null,
+   "fonction": "Chauffe la batterie de l'évaporateur pour faire fondre le givre.",
+   "indice": "Le zigzag anguleux classique de la résistance électrique.",
+   "role": "Se pose dans la batterie, dans l'égouttoir et sur l'écoulement — sinon l'eau regèle.",
+   "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-29.0 -13.0 70 20\" overflow=\"visible\"><polyline points=\"-20,0 -12,0 -12,-9 -2,-9 -2,0 7,0 7,-9 17,-9 17,0 26,0 26,-9 35,-9 35,0 34,0\" fill=\"none\" stroke=\"#000\" stroke-width=\"1\"/>\n<circle cx=\"-21\" cy=\"0\" r=\"1.5\" fill=\"#000\"/></svg>"
+  },
+  {
+   "id": "sonde_temperature",
+   "nom": "Sonde de température",
+   "groupe": "I",
+   "regle": "R8",
+   "page": null,
+   "fonction": "Mesure une température et transmet l'information au régulateur.",
+   "indice": "Un corps sur la ligne, relié par un trait d'information.",
+   "role": "C'est elle qui met fin au dégivrage : dès que le givre a fondu, inutile de continuer.",
+   "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-30.0 -14.0 60 40\" overflow=\"visible\"><line x1=\"-20\" y1=\"0\" x2=\"20\" y2=\"0\" stroke=\"#000\" stroke-width=\"1\"/>\n<rect x=\"-10\" y=\"-5\" width=\"20\" height=\"10\" fill=\"white\" stroke=\"#000\" stroke-width=\"1\"/>\n<polyline points=\"-10,10 -5,10 5,-10 10,-10\" fill=\"none\" stroke=\"#000\" stroke-width=\"1\"/>\n<circle cx=\"-20\" cy=\"0\" r=\"1.5\" fill=\"#000\"/>\n<circle cx=\"20\" cy=\"0\" r=\"1.5\" fill=\"#000\"/></svg>"
   }
  ],
  "schema": [

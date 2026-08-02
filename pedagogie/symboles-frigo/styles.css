@@ -280,6 +280,53 @@ button.reponse:disabled { cursor: default; }
 .pioche .vignette { width: 118px; padding: 6px 4px; font-size: 13px; }
 .pioche .vignette .symbole { width: 58px; height: 58px; }
 
+/* ------------------------------------------- module 2 : chaînes d'organes */
+.fil { display: flex; flex-wrap: wrap; align-items: stretch; gap: 6px; }
+.maillon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 3px;
+  width: 118px;
+  padding: 7px 5px;
+  border: 2px solid var(--bordure);
+  border-radius: 9px;
+  font-size: 13px;
+  line-height: 1.2;
+  text-align: center;
+  position: relative;
+}
+.maillon span { font-weight: 700; }
+.maillon + .maillon::before {
+  content: "→";
+  position: absolute;
+  left: -13px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--orange);
+  font-size: 15px;
+  font-weight: 700;
+}
+.maillon.depart { background: #eef4f9; border-color: var(--marine); }
+.maillon.vide {
+  border-style: dashed;
+  color: var(--texte-faible);
+  font-family: "Trebuchet MS", sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  justify-content: center;
+  min-height: 86px;
+}
+.maillon.ok { background: var(--vert-fond); border-color: var(--vert); }
+.maillon.ko { background: var(--ambre-fond); border-color: var(--ambre); }
+
+ol.etapes { margin: 6px 0 0 22px; font-size: 16px; }
+ol.etapes li { padding: 5px 0 5px 6px; border-bottom: 1px solid var(--bordure); }
+ol.etapes li.ok { color: var(--texte); }
+ol.etapes li.ko { color: var(--ambre); font-weight: 700; }
+ol.etapes li.vide { list-style: none; margin-left: -22px; color: var(--texte-2); font-style: italic; }
+
 /* --------------------------------------------------------------- tableau */
 table.bilan { width: 100%; border-collapse: collapse; font-size: 17px; margin-top: 10px; }
 table.bilan th, table.bilan td { border-bottom: 1px solid var(--bordure); padding: 9px 8px; text-align: left; }

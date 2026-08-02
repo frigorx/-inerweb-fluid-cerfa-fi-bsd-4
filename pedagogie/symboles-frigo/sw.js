@@ -3,13 +3,14 @@
    chaque visite en ligne, donc l'élève travaille toujours sur la dernière
    version quand il a du réseau, et sur la dernière connue quand il n'en a pas. */
 
-const CACHE = 'circuit-fantome-v1';
+const CACHE = 'circuit-fantome-v2';
 
 const RESSOURCES = [
   './',
   './index.html',
   './styles.css',
   './donnees-symboles.js',
+  './donnees-circuits.js',
   './app.js',
   './atelier-decodage.js',
   './atelier-familles.js',
@@ -18,6 +19,9 @@ const RESSOURCES = [
   './atelier-blanc.js',
   './maison.js',
   './biblio.js',
+  './atelier-chaine.js',
+  './atelier-regulateurs.js',
+  './atelier-groupe.js',
   './manifest.json',
   './icone.svg'
 ];

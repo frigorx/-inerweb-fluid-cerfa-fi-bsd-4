@@ -5,23 +5,48 @@ const APP = (function () {
 
   const CLE_STOCKAGE = 'inerweb-circuit-fantome-v1';
 
-  const ATELIERS = [
-    { id: 'decodage', ecran: 'ec-decodage', num: 1, duree: '35 min',
-      titre: 'Le décodeur',
-      resume: "Huit règles à découvrir toi-même. À la fin, tu sais lire un symbole que tu n'as jamais vu." },
-    { id: 'familles', ecran: 'ec-familles', num: 2, duree: '25 min',
-      titre: 'Les huit familles',
-      resume: "Memory, puis tri rapide. Tu ranges les 49 symboles et tu accroches le nom au dessin." },
-    { id: 'pieges', ecran: 'ec-pieges', num: 3, duree: '20 min',
-      titre: 'Les douze duels',
-      resume: "Douze paires de symboles qui se ressemblent à s'y méprendre. C'est là que se jouent les points." },
-    { id: 'circuit', ecran: 'ec-circuit', num: 4, duree: '30 min',
-      titre: 'Le circuit fantôme',
-      resume: "Une installation complète, 22 emplacements vides. À toi de la remonter." },
-    { id: 'blanc', ecran: 'ec-blanc', num: 5, duree: '15 min',
-      titre: "L'épreuve blanche",
-      resume: "Vingt questions, corrigées à la fin, avec le diagnostic de ce qu'il te reste à revoir." }
+  const PARCOURS = [
+    {
+      cle: 'm1',
+      titre: 'Module 1 — Lire un symbole',
+      sous: "2 heures. Tu découvres les 8 règles, puis tu les mets à l'épreuve.",
+      ateliers: [
+        { id: 'decodage', num: 1, duree: '35 min', titre: 'Le décodeur',
+          resume: "Huit règles à découvrir toi-même. À la fin, tu sais lire un symbole que tu n'as jamais vu." },
+        { id: 'familles', num: 2, duree: '25 min', titre: 'Les huit familles',
+          resume: "Memory, puis tri rapide. Tu ranges les symboles et tu accroches le nom au dessin." },
+        { id: 'pieges', num: 3, duree: '20 min', titre: 'Les douze duels',
+          resume: "Douze paires qui se ressemblent à s'y méprendre. C'est là que se jouent les points." },
+        { id: 'circuit', num: 4, duree: '30 min', titre: 'Le circuit fantôme',
+          resume: "Une installation complète, 22 emplacements vides. À toi de la remonter." },
+        { id: 'blanc', num: 5, duree: '15 min', titre: "L'épreuve blanche",
+          resume: "Vingt questions, corrigées à la fin, avec le diagnostic de ce qu'il te reste à revoir." }
+      ]
+    },
+    {
+      cle: 'm2',
+      titre: 'Module 2 — Construire et lire un circuit réel',
+      sous: "2 heures. Tu passes du symbole au métier : ordres de montage, séquences, régulateurs.",
+      ateliers: [
+        { id: 'ligne-liquide', num: 6, duree: '25 min', titre: 'La ligne liquide',
+          resume: "Six organes entre le condenseur et le détendeur. Leur ordre n'est pas une question de goût." },
+        { id: 'groupe', num: 7, duree: '20 min', titre: 'Le groupe de condensation',
+          resume: "Ce qui arrive monté sur le châssis, et ce qui reste à poser sur site." },
+        { id: 'circuit-huile', num: 8, duree: '20 min', titre: "Le circuit d'huile",
+          resume: "Du refoulement au carter : la boucle complète, et la sécurité qui la surveille." },
+        { id: 'regulateurs', num: 9, duree: '25 min', titre: 'KVP · KVR · KVL · KVC',
+          resume: "Quatre régulateurs, une seule question pour les classer tous les quatre." },
+        { id: 'pump-down', num: 10, duree: '20 min', titre: "L'arrêt par tirage au vide",
+          resume: "Le pump down, étape par étape — et les deux câblages qui le rendent inopérant." },
+        { id: 'degivrage-electrique', num: 11, duree: '20 min', titre: 'Le dégivrage électrique',
+          resume: "Dix étapes, trois temporisations. Chacune a sa raison d'être." },
+        { id: 'degivrage-gaz-chauds', num: 12, duree: '25 min', titre: 'Le dégivrage par gaz chauds',
+          resume: "L'évaporateur devient condenseur. Rapide — et risqué pour le compresseur." }
+      ]
+    }
   ];
+
+  const ATELIERS = PARCOURS.reduce(function (t, p) { return t.concat(p.ateliers); }, []);
 
   let etat = charger();
 
@@ -91,29 +116,45 @@ const APP = (function () {
   /* ------------------------------------------------------------------ hub */
 
   function majHub() {
-    const g = document.getElementById('grille-ateliers');
-    if (!g) return;
-    g.innerHTML = '';
+    const hote = document.getElementById('modules');
+    if (!hote) return;
+    hote.innerHTML = '';
     let valides = 0;
 
-    ATELIERS.forEach(function (a) {
-      const p = etat.ateliers[a.id] || {};
-      if (p.valide) valides++;
-      const b = document.createElement('button');
-      b.className = 'tuile' + (p.valide ? ' fait' : '');
-      b.type = 'button';
-      let etatTxte = 'Pas encore commencé';
-      let cls = '';
-      if (p.valide) { etatTxte = '✓ Validé — ' + p.score + ' / ' + p.total; }
-      else if (p.vu && p.total) { etatTxte = 'À reprendre — ' + p.score + ' / ' + p.total; cls = ' encours'; }
-      else if (p.vu) { etatTxte = 'Commencé'; cls = ' encours'; }
-      b.innerHTML =
-        '<span class="duree">Atelier ' + a.num + ' · ' + a.duree + '</span>' +
-        '<h3>' + a.titre + '</h3>' +
-        '<p>' + a.resume + '</p>' +
-        '<div class="etat' + cls + '">' + etatTxte + '</div>';
-      b.addEventListener('click', function () { aller(a.id); });
-      g.appendChild(b);
+    PARCOURS.forEach(function (mod) {
+      const bloc = document.createElement('section');
+      bloc.style.marginBottom = '26px';
+      const entete = document.createElement('div');
+      entete.innerHTML = '<h3 style="font-size:21px;margin-bottom:2px">' + mod.titre + '</h3>' +
+                         '<p style="font-size:16px;color:var(--texte-2);margin-bottom:12px">' +
+                         mod.sous + '</p>';
+      bloc.appendChild(entete);
+
+      const g = document.createElement('div');
+      g.className = 'grille-ateliers';
+
+      mod.ateliers.forEach(function (a) {
+        const p = etat.ateliers[a.id] || {};
+        if (p.valide) valides++;
+        const b = document.createElement('button');
+        b.className = 'tuile' + (p.valide ? ' fait' : '');
+        b.type = 'button';
+        let etatTxte = 'Pas encore commencé';
+        let cls = '';
+        if (p.valide) { etatTxte = '✓ Validé — ' + p.score + ' / ' + p.total; }
+        else if (p.vu && p.total) { etatTxte = 'À reprendre — ' + p.score + ' / ' + p.total; cls = ' encours'; }
+        else if (p.vu) { etatTxte = 'Commencé'; cls = ' encours'; }
+        b.innerHTML =
+          '<span class="duree">Atelier ' + a.num + ' · ' + a.duree + '</span>' +
+          '<h3>' + a.titre + '</h3>' +
+          '<p>' + a.resume + '</p>' +
+          '<div class="etat' + cls + '">' + etatTxte + '</div>';
+        b.addEventListener('click', function () { aller(a.id); });
+        g.appendChild(b);
+      });
+
+      bloc.appendChild(g);
+      hote.appendChild(bloc);
     });
 
     const pct = Math.round(100 * valides / ATELIERS.length);
@@ -228,6 +269,7 @@ const APP = (function () {
     marquer: marquer, debloquerRegle: debloquerRegle,
     get etat() { return etat; }, sauver: sauver,
     SYM: SYM, symbole: symbole, svgDe: svgDe, groupeDe: groupeDe,
+    PARCOURS: PARCOURS,
     melanger: melanger, piocher: piocher, echapper: echapper,
     jauge: jauge, bilan: bilan, ATELIERS: ATELIERS
   };
