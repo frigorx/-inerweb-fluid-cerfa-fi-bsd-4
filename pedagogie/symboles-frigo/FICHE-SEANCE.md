@@ -57,11 +57,17 @@ L'élève coche avant de commencer. **Trois cases non cochées = ne pas lancer l
 
 1. Poste informatique ou tablette **par élève** (× 1 par élève)
 2. Casque audio non nécessaire — **la séance est silencieuse**
-3. Carnet élève imprimé recto-verso — `CARNET-ELEVE.md` (× 1 par élève)
-4. Stylo bleu + surligneur orange (× 1 par élève)
-5. Ouvrage de référence ouvert page 81, **en un seul exemplaire au bureau** (consommable pédagogique : il ne circule pas)
-6. Sujet d'interrogation imprimé — `INTERROGATION.md` (× 1 par élève, distribué en heure 3)
-7. Vidéoprojecteur pour le lancement et la synthèse (× 1)
+3. Carnet élève imprimé recto-verso — `carnet-eleve.html` (× 1 par élève)
+4. **Le trousseau imprimé** — `trousseau.html`, les 53 fiches organes (× 1 par élève)
+5. Stylo bleu + surligneur orange (× 1 par élève)
+6. Ouvrage de référence ouvert page 81, **en un seul exemplaire au bureau** (consommable pédagogique : il ne circule pas)
+7. Sujet d'interrogation imprimé — `interrogation.html` (× 1 par élève, distribué en heure 3)
+8. Vidéoprojecteur pour le lancement et la synthèse (× 1)
+
+> **Le trousseau, lui, reste ouvert.** Il ne donne aucun symbole à recopier : il dit seulement
+> ce qu'est chaque objet, pourquoi il existe et où il se trouve. Sans lui, un élève qui n'a jamais
+> vu un déshydrateur n'a rien à quoi accrocher la fonction. C'est le seul document autorisé
+> pendant les ateliers 1 à 4 — et il se ferme pour l'atelier 5.
 
 > **Volontairement absent** : le cours photocopié. Toute la séance repose sur le fait que l'élève **ne dispose pas** du tableau des symboles. S'il l'a sous les yeux, il recopie et n'apprend rien.
 
@@ -111,7 +117,12 @@ Annoncer le cadre :
 - **le silence est la règle** — la question se pose à l'enseignant, pas au voisin ;
 - l'interrogation est en heure 3.
 
-Distribuer le carnet élève. Faire cocher les prérequis (§ 3).
+Distribuer le carnet élève **et le trousseau**. Faire cocher les prérequis (§ 3).
+
+Dire clairement : *« Le trousseau ne vous donnera jamais la réponse d'un exercice. Il vous dit
+seulement ce qu'est l'objet. Servez-vous-en dès que vous butez sur un nom que vous ne connaissez
+pas — et dans l'application, le bouton "C'est quoi, au juste ?" fait la même chose sans vous
+faire quitter l'atelier. »*
 
 ---
 

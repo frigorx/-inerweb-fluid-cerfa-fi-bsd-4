@@ -23,6 +23,30 @@ Ce parcours ne donne pas cette grammaire à l'élève. **Il la lui fait trouver*
 l'épreuve sur des symboles qu'il n'a jamais vus. À la fin du module 1, il n'a pas 53 dessins en
 tête : il a **8 règles**, et il sait lire n'importe quel symbole du chapitre.
 
+### Avant tout : savoir ce qu'est l'objet
+
+Apprendre à lire un symbole ne sert à rien si l'élève ne sait pas ce que le symbole désigne.
+Un déshydrateur, une bouteille anti-coup de liquide, un KVP : beaucoup d'élèves n'en ont jamais
+vu, et n'ont donc rien à quoi accrocher la fonction.
+
+D'où **le trousseau** : une fiche par organe, qui répond à quatre questions et s'arrête là.
+
+| | |
+|---|---|
+| **C'est quoi ?** | L'objet réel, dans la main. De quoi il est fait, à quoi il ressemble. |
+| **Pourquoi ça existe ?** | Le problème qu'il résout — ce qui se passerait sans lui. |
+| **Où ça se trouve ?** | Sa place sur l'installation. |
+| **À quoi ça sert ?** | Sa fonction, telle que la donne le document de référence. |
+
+Le **fonctionnement détaillé n'y figure pas** : courbes, réglages, diagnostic relèvent des séances
+suivantes. Ici on plante la définition et le rôle, rien de plus. C'est un choix, pas un oubli.
+
+Le trousseau est consultable à tout moment, y compris **au milieu d'un atelier** : un bouton
+« C'est quoi, au juste ? » apparaît dans chaque retour de correction et ouvre la fiche par-dessus
+l'écran, sans faire perdre sa place à l'élève.
+
+### Puis : la place et le moment
+
 Le module 2 part de là. Sur une installation réelle, savoir nommer ne suffit plus :
 
 > **Ce n'est plus le symbole qui compte. C'est sa place, et le moment où il agit.**
@@ -55,7 +79,7 @@ son choix.
 | `atelier-groupe.js` | Atelier 7 — groupe de condensation |
 | `atelier-regulateurs.js` | Atelier 9 — KVP · KVR · KVL · KVC |
 | `maison.js` | Entraînement maison — répétition espacée (Leitner, 5 boîtes) |
-| `biblio.js` | Bibliothèque de référence consultable |
+| `biblio.js` | Le trousseau — les 53 fiches consultables |
 | `sw.js`, `manifest.json`, `icone.svg` | Fonctionnement hors connexion et installation sur téléphone |
 
 ### Documents imprimables
@@ -67,6 +91,7 @@ son choix.
 | `interrogation.html` | **Généré** — sujet A4 (20 points) + corrigé et barème enseignant |
 | `carnet-eleve.html` | **Généré** — carnet de bord module 1, 4 pages, recto-verso |
 | `memo-frigoriste.html` | **Généré** — mémo module 2, 4 pages : ordres de montage, régulateurs, séquences |
+| `trousseau.html` | **Généré** — les 53 fiches organes, à imprimer et garder ouvert |
 
 ### Outils
 
@@ -76,6 +101,8 @@ son choix.
 | `outils/generer-documents.py` | Construit les trois documents imprimables |
 | `outils/carnet.py` | Partie « carnet élève » du générateur ci-dessus |
 | `outils/memo.py` | Partie « mémo frigoriste » du générateur ci-dessus |
+| `outils/trousseau.py` | Partie « trousseau » du générateur ci-dessus |
+| `outils/definitions.py` | Les 53 définitions : c'est quoi · pourquoi ça existe · où ça se trouve |
 
 ---
 
@@ -159,6 +186,7 @@ application.
   imprimer les pages du sujet uniquement pour les élèves.
 - `carnet-eleve.html` → Ctrl+P, recto-verso, 4 pages.
 - `memo-frigoriste.html` → Ctrl+P, recto-verso, 4 pages. C'est la fiche que l'élève garde.
+- `trousseau.html` → Ctrl+P. Les 53 fiches organes, deux par page. À distribuer en début de séance 1.
 - Depuis l'application : boutons « Imprimer cette fiche » (clé de décodage), « Imprimer la
   bibliothèque » et « Imprimer mon corrigé ».
 
@@ -166,8 +194,8 @@ application.
 
 ## Régénérer les fichiers
 
-`donnees-symboles.js`, `interrogation.html`, `carnet-eleve.html` et `memo-frigoriste.html`
-sont **générés**. Ne pas les
+`donnees-symboles.js`, `interrogation.html`, `carnet-eleve.html`, `memo-frigoriste.html`
+et `trousseau.html` sont **générés**. Ne pas les
 éditer à la main : la modification serait perdue à la génération suivante.
 
 ```bash

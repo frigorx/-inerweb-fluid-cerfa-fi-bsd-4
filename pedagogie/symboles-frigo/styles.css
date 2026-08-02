@@ -344,6 +344,70 @@ table.bilan td.note { font-weight: 700; }
 .boite .n { font-family: "Trebuchet MS", sans-serif; font-size: 30px; font-weight: 700; color: var(--marine); }
 .boite .l { font-size: 14px; color: var(--texte-2); }
 
+/* ----------------------------------------------- aperçu « C'est quoi ? » */
+button.lien-fiche {
+  display: inline-block;
+  margin-top: 10px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--marine);
+  background: #fff;
+  border: 2px solid var(--marine);
+  border-radius: 999px;
+  padding: 4px 15px;
+  cursor: pointer;
+}
+button.lien-fiche::before { content: "? "; color: var(--orange); }
+button.lien-fiche:hover { background: var(--marine); color: #fff; }
+button.lien-fiche:hover::before { color: #fff; }
+
+#voile-fiche {
+  position: fixed;
+  inset: 0;
+  background: rgba(27, 58, 99, .55);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: apparait .18s ease-out;
+}
+.fiche-flottante {
+  background: var(--carte);
+  border-radius: 14px;
+  width: min(640px, 100%);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, .3);
+}
+.fiche-entete {
+  background: var(--marine);
+  color: #fff;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.fiche-entete .fermer {
+  margin-left: auto;
+  background: rgba(255, 255, 255, .16);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, .4);
+  border-radius: 8px;
+  font-size: 17px;
+  line-height: 1;
+  padding: 7px 11px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.fiche-entete .fermer:hover { background: rgba(255, 255, 255, .3); }
+.fiche-corps { padding: 16px 18px; overflow-y: auto; }
+.fiche-pied { padding: 12px 18px; border-top: 2px solid var(--bordure); }
+.fiche-pied .b { width: 100%; }
+
 /* -------------------------------------------------------------- messages */
 .note {
   background: #eef4f9;

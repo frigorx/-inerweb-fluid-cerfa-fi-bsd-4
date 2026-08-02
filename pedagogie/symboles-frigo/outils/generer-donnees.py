@@ -8,7 +8,10 @@ Sources :
     git clone https://github.com/frigorx/inerweb-symboles.git outils/inerweb-symboles
     python3 outils/generer-donnees.py
 """
-import json, io, os
+import json, io, os, sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from definitions import DEFINITIONS
 
 SP = os.path.dirname(os.path.abspath(__file__))
 LIB = json.load(open(os.path.join(SP, 'inerweb-symboles', 'inerweb_symboles.json')))
@@ -724,10 +727,21 @@ def resoudre(src):
 
 
 out = []
+manquantes = []
 for s in SYMBOLES:
     d = dict(s)
     d['svg'] = resoudre(d.pop('src'))
+    defi = DEFINITIONS.get(d['id'])
+    if not defi:
+        manquantes.append(d['id'])
+    else:
+        d.update(defi)
     out.append(d)
+if manquantes:
+    raise SystemExit('definition manquante pour : ' + ', '.join(manquantes))
+inutiles = set(DEFINITIONS) - {x['id'] for x in SYMBOLES}
+if inutiles:
+    raise SystemExit('definition sans symbole : ' + ', '.join(sorted(inutiles)))
 
 ids = [s['id'] for s in out]
 assert len(ids) == len(set(ids)), 'doublon d id'

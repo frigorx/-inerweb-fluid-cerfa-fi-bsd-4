@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Génère les documents imprimables A4 : interrogation.html, carnet-eleve.html
-et memo-frigoriste.html.
+"""Génère les documents imprimables A4 : interrogation.html, carnet-eleve.html,
+memo-frigoriste.html et trousseau.html.
 
 Le tirage est FIXE (pas d'aléatoire) : le sujet doit être identique d'une
 impression à l'autre et le corrigé doit lui correspondre exactement.
@@ -330,3 +330,8 @@ exec(io.open(os.path.join(_ICI, 'carnet.py'), encoding='utf-8').read())
 #                     MÉMO FRIGORISTE — module 2, 4 pages
 # ===========================================================================
 exec(io.open(os.path.join(_ICI, 'memo.py'), encoding='utf-8').read())
+
+# ===========================================================================
+#                     LE TROUSSEAU — une fiche par organe
+# ===========================================================================
+exec(io.open(os.path.join(_ICI, 'trousseau.py'), encoding='utf-8').read())

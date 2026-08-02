@@ -272,7 +272,8 @@
       const rr = document.getElementById('retour');
       rr.className = 'retour-info ' + (juste ? 'ok' : 'ko');
       rr.innerHTML = '<strong>' + (juste ? 'Exact.' : 'Non — relis la règle au-dessus.') + '</strong>' +
-                     APP.echapper(e.appliExplique);
+                     APP.echapper(e.appliExplique) +
+                     '<div>' + APP.boutonFiche(e.appliId) + '</div>';
       const d = document.createElement('div');
       d.className = 'barre-actions';
       d.innerHTML = '<button class="b" id="suite">' +

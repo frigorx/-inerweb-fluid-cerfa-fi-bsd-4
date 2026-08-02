@@ -3,7 +3,7 @@
    chaque visite en ligne, donc l'élève travaille toujours sur la dernière
    version quand il a du réseau, et sur la dernière connue quand il n'en a pas. */
 
-const CACHE = 'circuit-fantome-v2';
+const CACHE = 'circuit-fantome-v3';
 
 const RESSOURCES = [
   './',

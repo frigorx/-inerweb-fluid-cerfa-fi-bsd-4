@@ -205,6 +205,68 @@ const APP = (function () {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
+  /* --------------------------------------------------- aperçu d'une fiche
+
+     « C'est quoi ? » doit être à un clic depuis n'importe quel atelier, sans
+     jamais faire perdre sa place à l'élève : d'où un voile par-dessus l'écran
+     courant plutôt qu'une navigation. */
+
+  function boutonFiche(id, texte) {
+    if (!SYM[id]) return '';
+    return '<button type="button" class="lien-fiche" data-apercu="' + id + '">' +
+           (texte || "C'est quoi, au juste ?") + '</button>';
+  }
+
+  function fermerApercu() {
+    const v = document.getElementById('voile-fiche');
+    if (v) v.remove();
+    document.body.style.overflow = '';
+  }
+
+  function apercuFiche(id) {
+    const s = SYM[id];
+    if (!s) return;
+    fermerApercu();
+    const g = groupeDe(s.groupe);
+
+    function bloc(titre, texte, couleur) {
+      return '<div style="border-left:5px solid ' + couleur + ';padding:2px 0 2px 13px;margin-bottom:13px">' +
+             '<div style="font-family:\'Trebuchet MS\',sans-serif;font-weight:700;font-size:15px;' +
+             'color:' + couleur + ';margin-bottom:2px">' + titre + '</div>' +
+             '<p style="font-size:16px">' + echapper(texte) + '</p></div>';
+    }
+
+    const v = document.createElement('div');
+    v.id = 'voile-fiche';
+    v.innerHTML =
+      '<div class="fiche-flottante" role="dialog" aria-modal="true" aria-label="Fiche de l\'organe">' +
+      '<div class="fiche-entete">' +
+      '<div><div style="font-size:14px;opacity:.75;text-transform:uppercase;letter-spacing:.04em">' +
+      echapper(g.nom) + '</div>' +
+      '<div style="font-family:\'Trebuchet MS\',sans-serif;font-weight:700;font-size:20px">' +
+      echapper(s.nom) + '</div></div>' +
+      '<button type="button" class="fermer" aria-label="Fermer">✕</button></div>' +
+      '<div class="fiche-corps">' +
+      '<div style="text-align:center;margin-bottom:12px">' + symbole(s.id, 'grand') + '</div>' +
+      bloc("C'est quoi ?", s.objet, 'var(--marine)') +
+      bloc("Pourquoi ça existe ?", s.probleme, 'var(--orange)') +
+      bloc("Où ça se trouve ?", s.ou, 'var(--vert)') +
+      bloc("À quoi ça sert ?", s.fonction, 'var(--marine-clair)') +
+      '</div>' +
+      '<div class="fiche-pied"><button type="button" class="b" data-fermer>Reprendre l\'atelier</button></div>' +
+      '</div>';
+
+    v.addEventListener('click', function (ev) {
+      if (ev.target === v || ev.target.closest('.fermer') || ev.target.closest('[data-fermer]')) {
+        fermerApercu();
+      }
+    });
+    document.body.appendChild(v);
+    document.body.style.overflow = 'hidden';
+    const f = v.querySelector('.fermer');
+    if (f) f.focus();
+  }
+
   /** Barre de progression réutilisable. */
   function jauge(fait, total) {
     const pct = total ? Math.round(100 * fait / total) : 0;
@@ -241,8 +303,14 @@ const APP = (function () {
     document.getElementById('btn-retour').addEventListener('click', function () { aller('hub'); });
 
     document.addEventListener('click', function (ev) {
+      const f = ev.target.closest('[data-apercu]');
+      if (f) { apercuFiche(f.getAttribute('data-apercu')); return; }
       const b = ev.target.closest('[data-aller]');
-      if (b) { aller(b.getAttribute('data-aller')); }
+      if (b) { fermerApercu(); aller(b.getAttribute('data-aller')); }
+    });
+
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape') fermerApercu();
     });
 
     document.getElementById('btn-raz').addEventListener('click', function () {
@@ -271,6 +339,7 @@ const APP = (function () {
     SYM: SYM, symbole: symbole, svgDe: svgDe, groupeDe: groupeDe,
     PARCOURS: PARCOURS,
     melanger: melanger, piocher: piocher, echapper: echapper,
-    jauge: jauge, bilan: bilan, ATELIERS: ATELIERS
+    jauge: jauge, bilan: bilan, ATELIERS: ATELIERS,
+    boutonFiche: boutonFiche, apercuFiche: apercuFiche
   };
 })();
