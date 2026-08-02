@@ -114,6 +114,9 @@ son choix.
   maison [`frigorx/inerweb-symboles`](https://github.com/frigorx/inerweb-symboles)
   (348 symboles CEI / frigo convertis depuis QElectroTech, `inerweb_symboles.json` v2.0).
   Aucune retouche.
+  **Attribution obligatoire en amont** : ces éléments viennent de la collection
+  [QElectroTech](https://qelectrotech.org/), publiée sous
+  [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/). Voir [`LICENCE.md`](LICENCE.md) § 2.
 
 - **Une vingtaine de symboles** absents de cette bibliothèque ont été **redessinés d'après le
   document de référence**, dans le même style graphique (trait noir, épaisseur 1, même convention
@@ -295,6 +298,30 @@ Détail, adaptations par diplôme et grilles de positionnement : voir `FICHE-SEA
 et `FICHE-SEANCE-2.md`.
 
 ---
+
+## Licence et sécurité
+
+Le module suit la licence du dépôt — **PolyForm Noncommercial 1.0.0**, libre et gratuite pour
+tout établissement d'enseignement. Le détail, les obligations envers QElectroTech et **le point
+non réglé sur les textes repris du document de référence** sont dans [`LICENCE.md`](LICENCE.md).
+
+Côté technique, ce que le module garantit :
+
+- **Aucune requête sortante.** La politique de sécurité déclarée dans `index.html`
+  (`default-src 'none'; connect-src 'self'`) interdit au navigateur de contacter quoi que ce
+  soit d'extérieur — analytique, police, image, service tiers. Une tentative introduite par
+  erreur serait bloquée par le navigateur, pas seulement absente du code.
+- **Aucun script en ligne.** `script-src 'self'` : tout le JavaScript est dans des fichiers du
+  module. Aucun gestionnaire `onclick=` dans le HTML, aucun bloc `<script>` inline. Un script
+  injecté ne s'exécute pas.
+- **Échappement des attributs.** `APP.echapper()` échappe aussi les guillemets simples et
+  doubles : la valeur du champ de recherche est réinjectée dans un attribut `value="…"`, et sans
+  cela une saisie pouvait sortir de l'attribut.
+- **Progression validée à la lecture.** Le contenu du `localStorage` est vérifié dans sa forme
+  avant usage : altéré ou écrit par une version antérieure, il est ignoré et l'application
+  repart proprement plutôt que de planter.
+- **Cache limité au module.** Le service worker ne met en cache que les ressources de même
+  origine ; une réponse d'un autre domaine n'entre jamais dans le cache de l'application.
 
 ## Accessibilité et charte
 

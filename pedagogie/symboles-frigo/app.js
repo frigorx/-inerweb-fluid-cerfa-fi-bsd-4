@@ -48,16 +48,33 @@ const APP = (function () {
 
   const ATELIERS = PARCOURS.reduce(function (t, p) { return t.concat(p.ateliers); }, []);
 
+  // Déclaré AVANT le premier appel à charger() : une const n'est pas
+  // remontée comme une fonction, elle serait dans sa zone morte.
+  const ETAT_VIDE = { ateliers: {}, regles: [], maison: null };
+
   let etat = charger();
 
   /* ------------------------------------------------------------ stockage */
 
+  /* On ne fait pas confiance au contenu du navigateur : il peut avoir été
+     écrit par une version antérieure, tronqué, ou modifié à la main. On
+     vérifie la forme avant de s'en servir, sinon on repart propre. */
   function charger() {
     try {
       const brut = localStorage.getItem(CLE_STOCKAGE);
-      if (brut) return JSON.parse(brut);
-    } catch (e) { /* stockage indisponible : on continue en mémoire */ }
-    return { ateliers: {}, regles: [], maison: null };
+      if (!brut) return Object.assign({}, ETAT_VIDE);
+      const e = JSON.parse(brut);
+      if (!e || typeof e !== 'object' || Array.isArray(e)) return Object.assign({}, ETAT_VIDE);
+      return {
+        ateliers: (e.ateliers && typeof e.ateliers === 'object' && !Array.isArray(e.ateliers))
+                  ? e.ateliers : {},
+        regles: Array.isArray(e.regles)
+                ? e.regles.filter(function (c) { return typeof c === 'string'; }) : [],
+        maison: (e.maison && typeof e.maison === 'object' && !Array.isArray(e.maison))
+                ? e.maison : null
+      };
+    } catch (err) { /* stockage indisponible ou illisible : on continue en mémoire */ }
+    return Object.assign({}, ETAT_VIDE);
   }
 
   function sauver() {
@@ -210,8 +227,16 @@ const APP = (function () {
 
   function piocher(t, n) { return melanger(t).slice(0, n); }
 
+  /* Les guillemets DOIVENT être échappés : cette fonction sert aussi à
+     injecter dans des attributs HTML (value="…", alt="…"). Sans eux, une
+     saisie comme  " onfocus=… autofocus="  sort de l'attribut. */
   function echapper(s) {
-    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   /* --------------------------------------------------- aperçu d'une fiche
@@ -314,6 +339,9 @@ const APP = (function () {
     document.addEventListener('click', function (ev) {
       const f = ev.target.closest('[data-apercu]');
       if (f) { apercuFiche(f.getAttribute('data-apercu')); return; }
+      // Bouton d'impression délégué : aucun onclick inline, pour qu'une
+      // politique de sécurité stricte puisse interdire les scripts en ligne.
+      if (ev.target.closest('[data-imprimer]')) { window.print(); return; }
       const b = ev.target.closest('[data-aller]');
       if (b) { fermerApercu(); aller(b.getAttribute('data-aller')); }
     });
@@ -324,7 +352,7 @@ const APP = (function () {
 
     document.getElementById('btn-raz').addEventListener('click', function () {
       if (confirm("Effacer toute ta progression sur cet appareil ?\nCette action est définitive.")) {
-        etat = { ateliers: {}, regles: [], maison: null };
+        etat = Object.assign({}, ETAT_VIDE);
         sauver();
         majHub();
       }

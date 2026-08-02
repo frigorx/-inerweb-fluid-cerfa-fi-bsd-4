@@ -57,7 +57,7 @@
     h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px" id="grille"></div>';
 
     h += '<div class="barre-actions">' +
-         '<button class="b secondaire" onclick="window.print()">Imprimer le trousseau</button>' +
+         '<button class="b secondaire" data-imprimer>Imprimer le trousseau</button>' +
          '<button class="b secondaire" data-aller="hub">Retour au parcours</button></div>';
 
     hote.innerHTML = h;

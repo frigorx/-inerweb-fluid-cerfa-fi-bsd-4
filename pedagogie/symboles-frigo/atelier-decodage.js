@@ -348,7 +348,7 @@
                : '<p>🔒 À découvrir à l\'atelier 1.</p>') +
            '</div>';
     });
-    h += '<div class="barre-actions"><button class="b" onclick="window.print()">Imprimer cette fiche</button>' +
+    h += '<div class="barre-actions"><button class="b" data-imprimer>Imprimer cette fiche</button>' +
          '<button class="b secondaire" data-aller="hub">Retour au parcours</button></div>';
     el.innerHTML = h;
   });

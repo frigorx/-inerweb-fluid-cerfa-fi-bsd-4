@@ -8,6 +8,14 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1b3a63">
 <link rel="stylesheet" href="styles.css">
+<!-- Politique de sécurité du contenu. Tout est servi par le module lui-même :
+     aucun script, aucune police, aucune image ne vient d'ailleurs, et la page
+     n'envoie rien nulle part. 'unsafe-inline' n'est autorisé que pour les
+     styles (les attributs style= de la mise en page), jamais pour les scripts.
+     frame-ancestors n'y figure pas : cette directive n'a aucun effet en <meta>,
+     elle ne vaut qu'en en-tête HTTP — hors de portée de GitHub Pages. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; manifest-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
 </head>
 <body>
 
@@ -115,14 +123,6 @@
 <script src="atelier-chaine.js"></script>
 <script src="atelier-regulateurs.js"></script>
 <script src="atelier-groupe.js"></script>
-<script>
-APP.demarrer();
-// Mise en cache pour l'entraînement maison hors connexion.
-if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
-  window.addEventListener('load', function () {
-    navigator.serviceWorker.register('sw.js').catch(function () { /* sans effet si indisponible */ });
-  });
-}
-</script>
+<script src="demarrage.js"></script>
 </body>
 </html>

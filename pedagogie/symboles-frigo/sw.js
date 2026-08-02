@@ -3,7 +3,7 @@
    chaque visite en ligne, donc l'élève travaille toujours sur la dernière
    version quand il a du réseau, et sur la dernière connue quand il n'en a pas. */
 
-const CACHE = 'circuit-fantome-v3';
+const CACHE = 'circuit-fantome-v4';
 
 const RESSOURCES = [
   './',
@@ -19,6 +19,7 @@ const RESSOURCES = [
   './atelier-blanc.js',
   './maison.js',
   './biblio.js',
+  './demarrage.js',
   './atelier-chaine.js',
   './atelier-regulateurs.js',
   './atelier-groupe.js',
@@ -47,6 +48,10 @@ self.addEventListener('activate', function (e) {
 
 self.addEventListener('fetch', function (e) {
   if (e.request.method !== 'GET') return;
+  // On ne met en cache que ce qui vient du module lui-même. Une réponse
+  // d'un autre domaine est opaque : on ne sait pas ce qu'elle contient,
+  // et elle n'a rien à faire dans le cache de l'application.
+  if (new URL(e.request.url).origin !== self.location.origin) return;
   e.respondWith(
     fetch(e.request)
       .then(function (rep) {

@@ -253,7 +253,7 @@
          '<p style="margin-top:12px;font-weight:700;color:var(--orange)">' + APP.echapper(R.mnemo) + '</p>' +
          '<p style="margin-top:10px;font-size:16px;color:var(--texte-2)">' + APP.echapper(R.reserve) + '</p>' +
          '</div>';
-    h += '<div class="barre-actions"><button class="b secondaire" onclick="window.print()">Imprimer ce tableau</button>' +
+    h += '<div class="barre-actions"><button class="b secondaire" data-imprimer>Imprimer ce tableau</button>' +
          '<button class="b secondaire" data-aller="regulateurs">Refaire</button>' +
          '<button class="b secondaire" data-aller="hub">Retour au parcours</button></div>';
     hote.innerHTML = h;
