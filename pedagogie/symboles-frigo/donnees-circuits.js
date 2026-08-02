@@ -240,6 +240,12 @@ sequences: [
         "Si l'électrovanne ou le clapet de retenue fuit, la pression d'aspiration remonte toute seule à " +
         "l'arrêt et le pressositat BP redémarre le compresseur sans qu'aucun froid ne soit demandé. " +
         "Un compteur de démarrages anormalement élevé est le signe à chercher." },
+    { titre: "Il existe des variantes",
+      texte:
+        "Ce que tu viens de dérouler est le pump down classique. On rencontre aussi le pump down " +
+        "amélioré, dit single pump down, qui ne fait le tirage au vide qu'une fois à l'arrêt " +
+        "définitif et non à chaque cycle. Même logique, câblage différent : lis le schéma avant " +
+        "de conclure qu'une installation est mal faite." },
     { titre: "Pressostat de régulation, pas de sécurité",
       texte:
         "Le pump down se termine sur un pressostat BP de RÉGULATION (PSL), qui réenclenche tout seul. " +
@@ -353,7 +359,7 @@ sequences: [
     { t: "Arrêt des ventilateurs de l'évaporateur", org: 'ventilateur' },
     { t: "Ouverture de l'électrovanne de gaz chauds : le refoulement est dérivé vers l'évaporateur", org: 'electrovanne' },
     { t: "Le gaz chaud cède sa chaleur au givre et se condense dans la batterie", org: 'evaporateur_a_air' },
-    { t: "Le condensat repart vers l'aspiration et est retenu par la bouteille anti-coup de liquide", org: 'bouteille_anticoup' },
+    { t: "Le liquide formé est réévaporé, puis ce qui reste est retenu par la bouteille anti-coup", org: 'bouteille_anticoup' },
     { t: "Fin de dégivrage sur la sonde (ou sur la sécurité de temps maximal)", org: 'sonde_temperature' },
     { t: "Fermeture de l'électrovanne de gaz chauds", org: 'electrovanne' },
     { t: "Temporisation d'égouttage", org: 'sonde_temperature' },
@@ -374,6 +380,12 @@ sequences: [
       texte:
         "Sans lui, le gaz chaud injecté part aussi vers les évaporateurs voisins, qu'il réchauffe " +
         "au lieu de dégivrer celui qu'on visait." },
+    { titre: "Le point d'injection n'est pas le même partout",
+      texte:
+        "Selon les montages, le gaz chaud est injecté à l'entrée de l'évaporateur ou par un piquage " +
+        "sur la conduite d'aspiration, et le liquide qui se forme est réévaporé au passage par un " +
+        "détendeur prévu pour cela. Le principe et l'ordre des étapes ne changent pas ; " +
+        "le tracé, si. Toujours se reporter au schéma de l'installation." },
     { titre: "Ne pas confondre avec l'inversion de cycle",
       texte:
         "Le dégivrage par gaz chauds dérive une partie du refoulement par un by-pass. " +
@@ -428,11 +440,12 @@ regulateurs: {
   liste: [
     { id: 'regulateur_kvp', sigle: 'KVP', nom: "Régulateur de pression d'évaporation",
       surveille: 'amont',
-      monte: "Sur l'aspiration, en sortie d'évaporateur",
+      monte: "Sur l'aspiration, en sortie de l'évaporateur dont la pression est la plus élevée",
       role: "Empêche la pression d'évaporation de descendre sous une valeur réglée",
       protege: "L'évaporateur — et les produits sensibles au givrage",
-      quand: "Plusieurs chambres à températures différentes sur un même compresseur : " +
-             "le KVP tient la chambre la plus chaude au-dessus de la BP commune.",
+      quand: "Plusieurs chambres à températures différentes sur un même compresseur. Il se pose sur " +
+             "l'évaporateur dont la pression est la plus élevée — la chambre la moins froide — et " +
+             "l'empêche de suivre la BP commune, calée sur la chambre la plus froide.",
       scenario: { q: "Sur une chambre à légumes reliée à la même centrale qu'une chambre à viande, " +
                      "le KVP est bloqué grand ouvert. Que se passe-t-il ?",
                   c: ["La chambre à légumes descend trop bas en température et les produits gèlent",

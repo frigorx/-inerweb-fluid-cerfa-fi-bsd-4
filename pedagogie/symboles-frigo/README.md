@@ -149,6 +149,34 @@ son choix.
   Les états du fluide (gaz/liquide, HP/BP) reprennent littéralement les formulations du document,
   y compris « liquide BP » en sortie de détendeur.
 
+### Vérification des définitions
+
+Les 53 définitions du trousseau et le contenu du module 2 ont été **relus et corrigés contre
+[ABC CLIM](https://www.abcclim.net/)**, sur indication de F. Henninot. Aucun texte n'en est repris :
+le site a servi de source de vérification, pas de source de rédaction. Pages consultées, entre
+autres :
+
+| Point vérifié | Page |
+|---|---|
+| Bouteille anti-coup de liquide — elle réévapore le liquide piégé | [bouteille-acl](https://www.abcclim.net/bouteille-acl.html) |
+| Voyant liquide — pastille de sel chimique, vert sain / jaune saturé | [voyant-liquide](https://www.abcclim.net/voyant-liquide.html) |
+| Déshydrateur — les acides attaquent l'huile **et** le bobinage moteur | [deshydrateur](https://www.abcclim.net/deshydrateur.html) |
+| Séparateur d'huile — chicanes, flotteur à pointeau, film isolant sur les tubes | [separateur-piege-huile](https://www.abcclim.net/separateur-piege-huile.html) |
+| KVP — se monte sur l'évaporateur dont la pression est la plus élevée | [regulateurs-pression](https://www.abcclim.net/regulateurs-pression-evaporation-demarrage.html) |
+| Pump down — chaîne thermostat → électrovanne → pressostat BP | [regulation-pump-down](https://www.abcclim.net/regulation-pump-down.html) |
+| Pump down amélioré (*single pump down*) | [pum-down-ameliore](https://www.abcclim.net/pum-down-ameliore.html) |
+| Dégivrage gaz chauds — le point d'injection varie selon les montages | [fonctionnement-degivrage-gaz-chauds](https://www.abcclim.net/fonctionnement-degivrage-gaz-chauds.html) |
+| Pressostat différentiel d'huile — écart carter / pompe, temporisation | [pressostat-huile](https://www.abcclim.net/pressostat-huile.html) |
+
+### Pas de photos
+
+Les fiches sont **entièrement textuelles**. Aucune photographie de composant réel n'est fournie :
+celles du document de référence comme celles d'ABC CLIM sont soumises au droit d'auteur.
+Pour ajouter des photos, deux voies propres : photographier le matériel de l'atelier
+(pas de question de droits, et les élèves reconnaissent leur propre plateau technique), ou
+utiliser les visuels des catalogues constructeurs avec leur autorisation.
+Le champ est prévu dans les données : `outils/definitions.py` accepte une clé `photo` par organe.
+
 ### Ce qui existait déjà
 
 Le dépôt `frigorx/inerweb-symboles` contient déjà trois jeux génériques sur l'ensemble des

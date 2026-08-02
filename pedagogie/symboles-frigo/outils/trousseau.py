@@ -14,6 +14,7 @@ CSS_TROUSSEAU = CSS + """
        grid-template-columns:120px 1fr;gap:14px}
 .fiche .col-sym{text-align:center;border-right:1.5px solid #e3e7eb;padding-right:10px}
 .fiche .col-sym svg{display:block;margin:0 auto;overflow:visible}
+.fiche .col-sym .photo{max-width:100%;max-height:70px;margin-top:6px;border-radius:5px}
 .fiche .col-sym .fam{font-size:9pt;color:#5a6472;text-transform:uppercase;letter-spacing:.04em;
                      margin-top:6px;line-height:1.2}
 .fiche h3{font-size:13.5pt;margin:0 0 7px 0}
@@ -41,6 +42,11 @@ t.append('<div class="consigne">Une fiche par organe. Elle ne dit pas encore com
          'elle dit <strong>ce que c\'est</strong>, <strong>pourquoi ça existe</strong>, '
          '<strong>où ça se trouve</strong> et <strong>à quoi ça sert</strong>. '
          'C\'est ce qu\'il faut savoir avant tout le reste — le fonctionnement viendra ensuite.</div>')
+
+if not any(x.get('photo') for x in D['symboles']):
+    t.append('<div class="note" style="font-size:10.5pt">Ce trousseau ne contient que les symboles '
+             'normalisés. Pour y ajouter une photo de chaque organe — idéalement celui de l\'atelier — '
+             'voir <code>photos/LISEZ-MOI.md</code>.</div>')
 
 # --------------------------------------------------------------- sommaire
 t.append('<h3>Sommaire</h3><div class="sommaire">')
@@ -71,7 +77,7 @@ for s in D['symboles']:
 
     t.append(
         '<div class="fiche">'
-        '<div class="col-sym">%s<div class="fam">%s<br>%s</div></div>'
+        '<div class="col-sym">%s%s<div class="fam">%s<br>%s</div></div>'
         '<div>'
         '<h3><span class="num">%d</span>%s</h3>'
         '<div class="bl quoi"><b>C\'est quoi ?</b>%s</div>'
@@ -79,7 +85,9 @@ for s in D['symboles']:
         '<div class="bl ou"><b>Où ça se trouve ?</b>%s</div>'
         '<div class="bl sert"><b>À quoi ça sert ?</b>%s</div>'
         '%s</div></div>'
-        % (svg(s['id'], 92), groupes[s['groupe']]['nom'],
+        % (svg(s['id'], 92),
+           ('<img class="photo" src="%s" alt="">' % s['photo']) if s.get('photo') else '',
+           groupes[s['groupe']]['nom'],
            ('page %s' % s['page']) if s.get('page') else 'hors document',
            num, s['nom'], s['objet'], s['probleme'], s['ou'], s['fonction'], conf))
 

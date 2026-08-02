@@ -507,7 +507,7 @@ const DONNEES = {
    "piege": "P5",
    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-24 -13 48 26\" overflow=\"visible\"><rect x=\"-14\" y=\"-8\" width=\"28\" height=\"16\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\"/><line x1=\"-14\" y1=\"-8\" x2=\"14\" y2=\"8\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\" stroke-dasharray=\"3,2.5\"/><line x1=\"-14\" y1=\"8\" x2=\"14\" y2=\"-8\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\" stroke-dasharray=\"3,2.5\"/><line x1=\"-22\" y1=\"0\" x2=\"-14\" y2=\"0\" stroke=\"#000\" stroke-width=\"1\"/><line x1=\"14\" y1=\"0\" x2=\"22\" y2=\"0\" stroke=\"#000\" stroke-width=\"1\"/></svg>",
    "objet": "Un cylindre métallique brasé sur la ligne liquide, rempli de billes de déshydratant et d'un tamis filtrant. Une flèche gravée dessus indique le sens de montage.",
-   "probleme": "L'eau est l'ennemi numéro un d'un circuit frigorifique : elle gèle à l'orifice du détendeur et le bouche, et elle attaque l'huile. Le déshydratant la retient.",
+   "probleme": "L'eau est l'ennemi numéro un d'un circuit frigorifique. Elle gèle à l'orifice du détendeur et le bouche. Et en formant des acides, elle attaque à la fois l'huile de lubrification et le bobinage du moteur du compresseur. Le déshydratant la retient.",
    "ou": "Sur la ligne liquide, après la bouteille et avant le voyant."
   },
   {
@@ -535,8 +535,8 @@ const DONNEES = {
    "role": "Des bulles dans le voyant = manque de fluide ou détente prématurée.",
    "piege": "P6",
    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-24 -12 48 24\" overflow=\"visible\"><rect x=\"-14\" y=\"-7\" width=\"28\" height=\"14\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\"/><circle cx=\"0\" cy=\"0\" r=\"5.5\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\"/><line x1=\"-22\" y1=\"0\" x2=\"-14\" y2=\"0\" stroke=\"#000\" stroke-width=\"1\"/><line x1=\"14\" y1=\"0\" x2=\"22\" y2=\"0\" stroke=\"#000\" stroke-width=\"1\"/></svg>",
-   "objet": "Un petit corps en laiton avec un hublot en verre. Au centre, une pastille qui change de couleur selon la teneur en humidité du fluide.",
-   "probleme": "Le circuit est fermé et opaque : on ne voit rien de ce qui s'y passe. Le voyant est la seule fenêtre.",
+   "objet": "Un petit corps en laiton avec un hublot en verre. Au centre, une pastille de sel chimique qui change de couleur avec l'humidité : verte, le circuit est sain ; jaune, le déshydrateur est probablement saturé et doit être remplacé. L'échelle exacte est imprimée sur le voyant.",
+   "probleme": "Le circuit est fermé et opaque : on ne voit rien de ce qui s'y passe. Le voyant est la seule fenêtre — sur l'état du fluide comme sur celui du déshydrateur.",
    "ou": "Sur la ligne liquide, juste après le déshydrateur."
   },
   {
@@ -665,8 +665,8 @@ const DONNEES = {
    "role": "L'huile tombe au fond, le flotteur la renvoie au carter.",
    "piege": "P8",
    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-14.0 -18.0 30 40\" overflow=\"visible\"><polyline points=\"1,7 6,2 9,2\" fill=\"none\" stroke=\"#000\" stroke-width=\"1\"/>\n<line x1=\"0\" y1=\"-10\" x2=\"0\" y2=\"-2\" stroke=\"#000\" stroke-width=\"1\"/>\n<polyline points=\"-8,-13 8,-13 8,5 0,13 -8,5 -8,-13\" fill=\"none\" stroke=\"#000\" stroke-width=\"1\"/>\n<ellipse cx=\"0.0\" cy=\"8.0\" rx=\"2.0\" ry=\"1.0\" fill=\"none\" stroke=\"#000\" stroke-width=\"1\"/>\n<circle cx=\"0\" cy=\"14\" r=\"1.5\" fill=\"#000\"/>\n<circle cx=\"-9\" cy=\"-10\" r=\"1.5\" fill=\"#000\"/>\n<circle cx=\"9\" cy=\"-10\" r=\"1.5\" fill=\"#000\"/>\n<circle cx=\"9\" cy=\"2\" r=\"1.5\" fill=\"#000\"/></svg>",
-   "objet": "Un corps vertical où le gaz ralentit brutalement. L'huile, plus lourde, se sépare et tombe au fond ; un flotteur ouvre alors le retour vers le carter.",
-   "probleme": "L'huile part avec le gaz au refoulement. Si elle ne revient pas, elle s'accumule dans l'évaporateur — qui échange de moins en moins — et le compresseur s'assèche.",
+   "objet": "Un corps vertical garni de chicanes et d'un tamis. Le gaz y est mis en mouvement hélicoïdal, change brusquement de direction et ralentit : l'huile, plus lourde, se dépose au fond. Un flotteur à pointeau ouvre alors le retour vers le carter.",
+   "probleme": "Deux ennuis à la fois. Le compresseur s'assèche — et l'huile partie dans le circuit se dépose en film autour des tubes de l'évaporateur et du condenseur. Ce film isole : l'échange thermique chute et toute l'installation perd en performance.",
    "ou": "Au refoulement, juste après le compresseur."
   },
   {
@@ -680,9 +680,9 @@ const DONNEES = {
    "role": "Se place sur l'aspiration. Le liquide reste au fond, seule la vapeur repart.",
    "piege": "P8",
    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-24 -22 48 44\" overflow=\"visible\"><polyline points=\"-10,-15 10,-15 10,6 0,17 -10,6 -10,-15\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\"/><line x1=\"0\" y1=\"-11\" x2=\"0\" y2=\"7\" stroke=\"#000\" stroke-width=\"1\"/><line x1=\"-10\" y1=\"-10\" x2=\"-21\" y2=\"-10\" stroke=\"#000\" stroke-width=\"1\"/><line x1=\"-18\" y1=\"-14\" x2=\"-18\" y2=\"-6\" stroke=\"#000\" stroke-width=\"1\"/><line x1=\"10\" y1=\"-10\" x2=\"21\" y2=\"-10\" stroke=\"#000\" stroke-width=\"1\"/><line x1=\"18\" y1=\"-14\" x2=\"18\" y2=\"-6\" stroke=\"#000\" stroke-width=\"1\"/></svg>",
-   "objet": "Un réservoir monté sur la ligne d'aspiration, avec un tube plongeur qui ne reprend le gaz que par le haut. Un petit orifice au fond laisse remonter l'huile, doucement.",
-   "probleme": "Un compresseur comprime du gaz, pas du liquide. Un retour de liquide casse les clapets, voire une bielle.",
-   "ou": "Sur l'aspiration, avant le compresseur. Indispensable en dégivrage par gaz chauds."
+   "objet": "Un réservoir monté sur la ligne d'aspiration, avec un tube plongeur qui ne reprend le gaz que par le haut. Un petit orifice au fond laisse remonter l'huile, doucement. Le liquide piégé y reste le temps de se réévaporer.",
+   "probleme": "Un compresseur comprime du gaz, pas du liquide. Un retour de liquide casse les clapets, voire une bielle. Elle ne fait pas qu'arrêter le liquide : elle le retient le temps qu'il se revaporise.",
+   "ou": "Sur l'aspiration, avant le compresseur. Incontournable sur les installations à faible surchauffe, et sur les pompes à chaleur au moment de l'inversion de cycle — le compresseur y aspire brusquement du liquide."
   },
   {
    "id": "bouteille_liquide",
@@ -902,9 +902,9 @@ const DONNEES = {
    "role": "Il empêche la BP de descendre trop bas (givrage, produits sensibles).",
    "piege": "P12",
    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-32 -34 64 26\" overflow=\"visible\"><polyline points=\"-11,-6 -11,6 0,0 11,6 11,-6 0,0 -11,-6\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\"/><line x1=\"-11\" y1=\"0\" x2=\"-20\" y2=\"0\" stroke=\"#000\" stroke-width=\"1\"/><line x1=\"-17\" y1=\"-4\" x2=\"-17\" y2=\"4\" stroke=\"#000\" stroke-width=\"1\"/><line x1=\"11\" y1=\"0\" x2=\"20\" y2=\"0\" stroke=\"#000\" stroke-width=\"1\"/><line x1=\"17\" y1=\"-4\" x2=\"17\" y2=\"4\" stroke=\"#000\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"0\" y2=\"-8\" stroke=\"#000\" stroke-width=\"1\"/><polyline points=\"-4,-9 4,-9 0,-2 -4,-9\" fill=\"#000\" stroke=\"#000\" stroke-width=\"1\"/><circle cx=\"0\" cy=\"-18\" r=\"8\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\"/><text x=\"0\" y=\"-14\" text-anchor=\"middle\" font-family=\"Arial,Helvetica,sans-serif\" font-size=\"9\" font-weight=\"700\" fill=\"#000\">PA</text><path d=\"M -8,-18 L -22,-18 L -22,-27\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\" stroke-dasharray=\"3,2.5\"/></svg>",
-   "objet": "Une vanne en laiton avec une vis de réglage sous un capuchon vissé. Elle se ferme d'elle-même quand la pression descend trop.",
+   "objet": "Une vanne en laiton avec une vis de réglage sous un capuchon vissé. Elle se ferme quand la pression tombe sous sa consigne, et rouvre progressivement quand la pression remonte.",
    "probleme": "Sur une centrale, toutes les chambres partagent la même basse pression. Sans lui, la chambre la plus tempérée descendrait au niveau de la plus froide et gèlerait ses produits.",
-   "ou": "Sur l'aspiration, en sortie d'évaporateur de la chambre à protéger."
+   "ou": "Sur l'aspiration, après l'évaporateur — et sur celui dont la pression est la plus élevée, c'est-à-dire la chambre la moins froide."
   },
   {
    "id": "regulateur_kvc",

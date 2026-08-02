@@ -13,6 +13,19 @@ réglages, diagnostic) relève des séances suivantes : ici on plante la
 définition et le rôle, rien de plus.
 
 Aucune valeur chiffrée : ni dimension, ni pression, ni température.
+
+Ces définitions ont été relues et corrigées contre ABC CLIM (abcclim.net).
+Aucun texte n'en est repris : le site a servi de vérification, pas de
+rédaction. Le détail des points vérifiés est dans le README.
+
+Un quatrième champ facultatif est accepté et rendu par le trousseau :
+
+  photo — chemin d'une photographie de l'organe, relatif au dossier du
+          module. Aucune n'est fournie : les photos du document source et
+          celles d'ABC CLIM sont sous droit d'auteur. Photographier le
+          matériel de l'atelier est la voie la plus simple, et les élèves
+          reconnaissent alors leur propre plateau technique.
+
 Importé par outils/generer-donnees.py.
 """
 
@@ -152,8 +165,9 @@ DEFINITIONS = {
 'filtre_deshydrateur': dict(
     objet="Un cylindre métallique brasé sur la ligne liquide, rempli de billes de déshydratant "
           "et d'un tamis filtrant. Une flèche gravée dessus indique le sens de montage.",
-    probleme="L'eau est l'ennemi numéro un d'un circuit frigorifique : elle gèle à l'orifice du "
-             "détendeur et le bouche, et elle attaque l'huile. Le déshydratant la retient.",
+    probleme="L'eau est l'ennemi numéro un d'un circuit frigorifique. Elle gèle à l'orifice du "
+             "détendeur et le bouche. Et en formant des acides, elle attaque à la fois l'huile de "
+             "lubrification et le bobinage du moteur du compresseur. Le déshydratant la retient.",
     ou="Sur la ligne liquide, après la bouteille et avant le voyant."),
 
 'filtre_cartouche': dict(
@@ -163,10 +177,11 @@ DEFINITIONS = {
     ou="Sur l'aspiration, juste avant le compresseur."),
 
 'voyant_liquide': dict(
-    objet="Un petit corps en laiton avec un hublot en verre. Au centre, une pastille qui change de "
-          "couleur selon la teneur en humidité du fluide.",
-    probleme="Le circuit est fermé et opaque : on ne voit rien de ce qui s'y passe. Le voyant est "
-             "la seule fenêtre.",
+    objet="Un petit corps en laiton avec un hublot en verre. Au centre, une pastille de sel chimique "
+          "qui change de couleur avec l'humidité : verte, le circuit est sain ; jaune, le déshydrateur "
+          "est probablement saturé et doit être remplacé. L'échelle exacte est imprimée sur le voyant.",
+    probleme="Le circuit est fermé et opaque : on ne voit rien de ce qui s'y passe. Le voyant est la "
+             "seule fenêtre — sur l'état du fluide comme sur celui du déshydrateur.",
     ou="Sur la ligne liquide, juste après le déshydrateur."),
 
 'voyant_huile': dict(
@@ -226,18 +241,24 @@ DEFINITIONS = {
     ou="Au plus près du compresseur, sur l'aspiration et sur le refoulement."),
 
 'separateur_huile': dict(
-    objet="Un corps vertical où le gaz ralentit brutalement. L'huile, plus lourde, se sépare et "
-          "tombe au fond ; un flotteur ouvre alors le retour vers le carter.",
-    probleme="L'huile part avec le gaz au refoulement. Si elle ne revient pas, elle s'accumule dans "
-             "l'évaporateur — qui échange de moins en moins — et le compresseur s'assèche.",
+    objet="Un corps vertical garni de chicanes et d'un tamis. Le gaz y est mis en mouvement "
+          "hélicoïdal, change brusquement de direction et ralentit : l'huile, plus lourde, se dépose "
+          "au fond. Un flotteur à pointeau ouvre alors le retour vers le carter.",
+    probleme="Deux ennuis à la fois. Le compresseur s'assèche — et l'huile partie dans le circuit se "
+             "dépose en film autour des tubes de l'évaporateur et du condenseur. Ce film isole : "
+             "l'échange thermique chute et toute l'installation perd en performance.",
     ou="Au refoulement, juste après le compresseur."),
 
 'bouteille_anticoup': dict(
     objet="Un réservoir monté sur la ligne d'aspiration, avec un tube plongeur qui ne reprend le gaz "
-          "que par le haut. Un petit orifice au fond laisse remonter l'huile, doucement.",
+          "que par le haut. Un petit orifice au fond laisse remonter l'huile, doucement. Le liquide "
+          "piégé y reste le temps de se réévaporer.",
     probleme="Un compresseur comprime du gaz, pas du liquide. Un retour de liquide casse les clapets, "
-             "voire une bielle.",
-    ou="Sur l'aspiration, avant le compresseur. Indispensable en dégivrage par gaz chauds."),
+             "voire une bielle. Elle ne fait pas qu'arrêter le liquide : elle le retient le temps "
+             "qu'il se revaporise.",
+    ou="Sur l'aspiration, avant le compresseur. Incontournable sur les installations à faible "
+       "surchauffe, et sur les pompes à chaleur au moment de l'inversion de cycle — le compresseur "
+       "y aspire brusquement du liquide."),
 
 'bouteille_liquide': dict(
     objet="Un réservoir, souvent couché, placé après le condenseur. Un tube plongeur prend le liquide "
@@ -326,11 +347,12 @@ DEFINITIONS = {
 
 # --------------------------------------- H. Régulateurs de pression
 'regulateur_kvp': dict(
-    objet="Une vanne en laiton avec une vis de réglage sous un capuchon vissé. "
-          "Elle se ferme d'elle-même quand la pression descend trop.",
+    objet="Une vanne en laiton avec une vis de réglage sous un capuchon vissé. Elle se ferme quand la "
+          "pression tombe sous sa consigne, et rouvre progressivement quand la pression remonte.",
     probleme="Sur une centrale, toutes les chambres partagent la même basse pression. Sans lui, "
              "la chambre la plus tempérée descendrait au niveau de la plus froide et gèlerait ses produits.",
-    ou="Sur l'aspiration, en sortie d'évaporateur de la chambre à protéger."),
+    ou="Sur l'aspiration, après l'évaporateur — et sur celui dont la pression est la plus élevée, "
+       "c'est-à-dire la chambre la moins froide."),
 
 'regulateur_kvr': dict(
     objet="Une vanne en laiton à vis de réglage, montée sur la ligne liquide. En freinant la sortie "

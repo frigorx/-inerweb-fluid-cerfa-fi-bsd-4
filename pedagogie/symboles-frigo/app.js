@@ -186,6 +186,15 @@ const APP = (function () {
     return '<span class="symbole ' + (classe || '') + '">' + svgDe(id) + '</span>';
   }
 
+  /** Photographie de l'organe, si le dossier en fournit une.
+      Renvoie une chaîne vide sinon : le champ `photo` est facultatif. */
+  function photoDe(id, classe) {
+    const s = SYM[id];
+    if (!s || !s.photo) return '';
+    return '<img class="photo-organe ' + (classe || '') + '" src="' + s.photo +
+           '" alt="Photographie : ' + echapper(s.nom) + '" loading="lazy">';
+  }
+
   function groupeDe(cle) {
     return DONNEES.groupes.filter(function (g) { return g.cle === cle; })[0];
   }
@@ -247,7 +256,7 @@ const APP = (function () {
       echapper(s.nom) + '</div></div>' +
       '<button type="button" class="fermer" aria-label="Fermer">✕</button></div>' +
       '<div class="fiche-corps">' +
-      '<div style="text-align:center;margin-bottom:12px">' + symbole(s.id, 'grand') + '</div>' +
+      '<div class="duo-visuel">' + symbole(s.id, 'grand') + photoDe(s.id) + '</div>' +
       bloc("C'est quoi ?", s.objet, 'var(--marine)') +
       bloc("Pourquoi ça existe ?", s.probleme, 'var(--orange)') +
       bloc("Où ça se trouve ?", s.ou, 'var(--vert)') +
@@ -336,7 +345,7 @@ const APP = (function () {
     demarrer: demarrer, aller: aller, enregistrer: enregistrer,
     marquer: marquer, debloquerRegle: debloquerRegle,
     get etat() { return etat; }, sauver: sauver,
-    SYM: SYM, symbole: symbole, svgDe: svgDe, groupeDe: groupeDe,
+    SYM: SYM, symbole: symbole, svgDe: svgDe, photoDe: photoDe, groupeDe: groupeDe,
     PARCOURS: PARCOURS,
     melanger: melanger, piocher: piocher, echapper: echapper,
     jauge: jauge, bilan: bilan, ATELIERS: ATELIERS,

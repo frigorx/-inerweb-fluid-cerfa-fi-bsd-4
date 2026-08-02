@@ -114,7 +114,10 @@
     h += '<div class="carte" style="display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap;' +
          'border-left:7px solid ' + g.couleur + '">';
     h += '<div style="text-align:center">' + APP.symbole(s.id, 'grand') +
-         '<div style="font-size:14px;color:var(--texte-2);margin-top:4px">son symbole</div></div>';
+         '<div style="font-size:14px;color:var(--texte-2);margin-top:4px">son symbole</div>' +
+         (s.photo ? APP.photoDe(s.id) +
+                    '<div style="font-size:14px;color:var(--texte-2);margin-top:4px">en vrai</div>'
+                  : '') + '</div>';
     h += '<div style="flex:1;min-width:260px">';
     h += bloc("C'est quoi ?", s.objet, 'var(--marine)');
     h += bloc("Pourquoi ça existe ?", s.probleme, 'var(--orange)');

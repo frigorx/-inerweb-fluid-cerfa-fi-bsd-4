@@ -344,6 +344,25 @@ table.bilan td.note { font-weight: 700; }
 .boite .n { font-family: "Trebuchet MS", sans-serif; font-size: 30px; font-weight: 700; color: var(--marine); }
 .boite .l { font-size: 14px; color: var(--texte-2); }
 
+/* ------------------------------------------ photo de l'organe (optionnel) */
+img.photo-organe {
+  display: block;
+  max-width: 100%;
+  max-height: 150px;
+  margin: 8px auto 0;
+  border: 2px solid var(--bordure);
+  border-radius: 9px;
+}
+.duo-visuel {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.duo-visuel img.photo-organe { margin: 0; }
+
 /* ----------------------------------------------- aperçu « C'est quoi ? » */
 button.lien-fiche {
   display: inline-block;
