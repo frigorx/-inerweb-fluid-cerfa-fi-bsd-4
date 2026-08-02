@@ -1,0 +1,15 @@
+{
+  "name": "Le Circuit Fantôme — Symboles frigorifiques",
+  "short_name": "Circuit Fantôme",
+  "description": "Parcours d'auto-apprentissage des symboles normalisés des éléments thermodynamiques. inerWeb Édu.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5f5f0",
+  "theme_color": "#1b3a63",
+  "lang": "fr",
+  "icons": [
+    { "src": "icone.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le Circuit Fantôme — Symboles frigorifiques — inerWeb Édu</title>
+<meta name="description" content="Parcours d'auto-apprentissage des symboles normalisés des éléments thermodynamiques. inerWeb Édu — F. Henninot.">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1b3a63">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <span class="flocon">❄</span>
+  <h1>Le Circuit Fantôme</h1>
+  <span class="edu">Édu</span>
+  <button class="retour" id="btn-retour" hidden>← Retour au parcours</button>
+  <span class="signature">inerWeb · par F. Henninot</span>
+</header>
+
+<main>
+
+  <!-- ============================================================ HUB -->
+  <section class="ecran actif" id="ec-hub">
+    <h2 style="font-size:26px;margin-bottom:6px">Apprends seul les 49 symboles du circuit frigorifique</h2>
+    <p class="intro">
+      Personne ne va te réciter le cours. Tu vas <strong>trouver toi-même</strong> les règles qui
+      permettent de lire n'importe quel symbole, puis les mettre à l'épreuve.
+      Compte <strong>2 heures</strong> pour les cinq ateliers. L'interrogation, c'est après.
+    </p>
+
+    <div class="note">
+      <strong>Ta boussole :</strong> il n'y a pas 49 dessins à apprendre par cœur.
+      Il y a <strong>8 règles</strong>. Une fois les 8 règles trouvées, tu sais lire un symbole
+      que tu n'as jamais vu. C'est tout l'enjeu de l'atelier 1 — ne le saute pas.
+    </div>
+
+    <div class="progression">
+      <div class="jauge"><span id="jauge-globale" style="width:0%"></span></div>
+      <span class="compteur" id="compteur-global">0 / 5 ateliers validés</span>
+    </div>
+
+    <div class="grille-ateliers" id="grille-ateliers"></div>
+
+    <div class="carte" style="margin-top:22px">
+      <h3>Et à la maison ?</h3>
+      <p style="font-size:17px;color:var(--texte-2);margin-bottom:12px">
+        Sept jours, quelques minutes par jour. L'application te redonne les symboles que tu as ratés,
+        et espace ceux que tu maîtrises. Elle fonctionne <strong>sans connexion</strong> une fois ouverte.
+      </p>
+      <div class="barre-actions">
+        <button class="b" data-aller="maison">Ouvrir l'entraînement maison</button>
+        <button class="b secondaire" data-aller="biblio">Consulter la bibliothèque des 49 symboles</button>
+        <button class="b secondaire" data-aller="cle">Voir ma clé de décodage</button>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h3>Remise à zéro</h3>
+      <p style="font-size:16px;color:var(--texte-2)">
+        Ta progression est enregistrée <strong>sur cet appareil uniquement</strong>. Aucune donnée n'est envoyée nulle part.
+      </p>
+      <div class="barre-actions">
+        <button class="b secondaire" id="btn-raz">Effacer ma progression</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================== ATELIERS -->
+  <section class="ecran" id="ec-decodage"></section>
+  <section class="ecran" id="ec-familles"></section>
+  <section class="ecran" id="ec-pieges"></section>
+  <section class="ecran" id="ec-circuit"></section>
+  <section class="ecran" id="ec-blanc"></section>
+  <section class="ecran" id="ec-maison"></section>
+  <section class="ecran" id="ec-biblio"></section>
+  <section class="ecran" id="ec-cle"></section>
+
+</main>
+
+<script src="donnees-symboles.js"></script>
+<script src="app.js"></script>
+<script src="atelier-decodage.js"></script>
+<script src="atelier-familles.js"></script>
+<script src="atelier-pieges.js"></script>
+<script src="atelier-circuit.js"></script>
+<script src="atelier-blanc.js"></script>
+<script src="maison.js"></script>
+<script src="biblio.js"></script>
+<script>
+APP.demarrer();
+// Mise en cache pour l'entraînement maison hors connexion.
+if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () { /* sans effet si indisponible */ });
+  });
+}
+</script>
+</body>
+</html>

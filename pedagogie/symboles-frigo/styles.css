@@ -1,0 +1,331 @@
+/* inerWeb Édu — Le Circuit Fantôme
+   Charte inerWeb Édu : Calibri 14 pt mini, titres Trebuchet MS, fond clair.
+   Aucun mode sombre : la feuille de style ne définit volontairement
+   aucune règle prefers-color-scheme. */
+
+:root {
+  --marine: #1b3a63;
+  --marine-clair: #2d5688;
+  --orange: #ff6b35;
+  --orange-pale: #fff1eb;
+  --fond: #f5f5f0;
+  --carte: #ffffff;
+  --bordure: #d9d9d2;
+  --texte: #1b3a63;
+  --texte-2: #5a6472;
+  --vert: #16a34a;
+  --vert-fond: #eafaf1;
+  --rouge: #dc2626;
+  --rouge-fond: #fdf2f2;
+  --ambre: #b45309;
+  --ambre-fond: #fef3c7;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: Calibri, Carlito, "Segoe UI", sans-serif;
+  font-size: 18px;
+  line-height: 1.55;
+  background: var(--fond);
+  color: var(--texte);
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3, h4 {
+  font-family: "Trebuchet MS", Tahoma, sans-serif;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+/* ---------------------------------------------------------------- en-tête */
+header {
+  background: var(--marine);
+  color: #fff;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+header .flocon { font-size: 22px; }
+header h1 { font-size: 19px; }
+header .edu {
+  background: var(--orange);
+  color: #fff;
+  font-size: 13px;
+  padding: 2px 9px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-family: "Trebuchet MS", sans-serif;
+}
+header .signature { font-size: 13px; opacity: .65; margin-left: auto; }
+header button.retour {
+  background: rgba(255, 255, 255, .16);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, .4);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 16px;
+  font-family: inherit;
+  cursor: pointer;
+}
+header button.retour:hover { background: rgba(255, 255, 255, .28); }
+
+main { max-width: 1080px; margin: 0 auto; padding: 20px 16px 60px; }
+
+/* -------------------------------------------------------------- écrans */
+.ecran { display: none; }
+.ecran.actif { display: block; animation: apparait .25s ease-out; }
+@keyframes apparait { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.intro { font-size: 18px; color: var(--texte-2); margin: 6px 0 20px; max-width: 62ch; }
+
+/* --------------------------------------------------------------- cartes */
+.carte {
+  background: var(--carte);
+  border: 2px solid var(--bordure);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+.carte h3 { font-size: 19px; margin-bottom: 8px; }
+
+.grille-ateliers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+.tuile {
+  background: var(--carte);
+  border: 2px solid var(--bordure);
+  border-left: 7px solid var(--marine);
+  border-radius: 12px;
+  padding: 16px 18px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  font-size: 17px;
+  color: var(--texte);
+  display: block;
+  width: 100%;
+  transition: .15s;
+}
+.tuile:hover { border-color: var(--orange); border-left-color: var(--orange); transform: translateY(-2px); }
+.tuile h3 { font-size: 19px; margin-bottom: 4px; }
+.tuile .duree {
+  display: inline-block;
+  background: #eef4f9;
+  color: var(--marine);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 1px 10px;
+  border-radius: 999px;
+  margin-bottom: 6px;
+}
+.tuile p { font-size: 16px; color: var(--texte-2); }
+.tuile .etat { margin-top: 10px; font-size: 15px; font-weight: 700; }
+.tuile.fait { border-left-color: var(--vert); }
+.tuile.fait .etat { color: var(--vert); }
+.tuile .etat.encours { color: var(--ambre); }
+
+/* ------------------------------------------------------------ symboles */
+.symbole {
+  width: 96px;
+  height: 96px;
+  overflow: visible;
+  display: block;
+}
+.symbole svg { width: 100%; height: 100%; overflow: visible; }
+.symbole.petit { width: 66px; height: 66px; }
+.symbole.grand { width: 140px; height: 140px; }
+
+.vignette {
+  background: var(--carte);
+  border: 2px solid var(--bordure);
+  border-radius: 10px;
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+  font-size: 15px;
+  color: var(--texte);
+  cursor: pointer;
+  transition: .15s;
+}
+.vignette:hover { border-color: var(--orange); }
+.vignette .nom { font-weight: 700; text-align: center; line-height: 1.25; }
+.vignette.choisi { border-color: var(--marine); box-shadow: 0 0 0 3px rgba(27, 58, 99, .25); }
+.vignette.juste { border-color: var(--vert); background: var(--vert-fond); }
+.vignette.faux { border-color: var(--rouge); background: var(--rouge-fond); }
+.vignette:disabled { cursor: default; opacity: .6; }
+
+/* --------------------------------------------------------------- boutons */
+button.b {
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  padding: 11px 22px;
+  cursor: pointer;
+  background: var(--orange);
+  color: #fff;
+}
+button.b:hover { background: #e85a24; }
+button.b.secondaire { background: #e8ebef; color: var(--marine); }
+button.b.secondaire:hover { background: #d8dde3; }
+button.b:disabled { background: #cfd4da; color: #8a9099; cursor: default; }
+.barre-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+
+/* ------------------------------------------------------------ questions */
+.question {
+  background: var(--carte);
+  border: 2px solid var(--bordure);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 14px;
+}
+.consigne { font-size: 20px; font-weight: 700; font-family: "Trebuchet MS", sans-serif; margin-bottom: 12px; }
+.choix { display: grid; gap: 10px; }
+.choix.deux { grid-template-columns: 1fr 1fr; }
+button.reponse {
+  font-family: inherit;
+  font-size: 17px;
+  text-align: left;
+  background: var(--carte);
+  border: 2px solid var(--bordure);
+  border-radius: 10px;
+  padding: 13px 16px;
+  cursor: pointer;
+  color: var(--texte);
+  transition: .12s;
+}
+button.reponse:hover { border-color: var(--orange); background: var(--orange-pale); }
+button.reponse.juste { border-color: var(--vert); background: var(--vert-fond); font-weight: 700; }
+button.reponse.faux { border-color: var(--rouge); background: var(--rouge-fond); }
+button.reponse:disabled { cursor: default; }
+
+.retour-info {
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-top: 14px;
+  font-size: 17px;
+  border-left: 6px solid var(--marine);
+  background: #eef4f9;
+}
+.retour-info.ok { border-left-color: var(--vert); background: var(--vert-fond); }
+.retour-info.ko { border-left-color: var(--rouge); background: var(--rouge-fond); }
+.retour-info strong { display: block; margin-bottom: 4px; }
+
+/* ------------------------------------------------------------ progression */
+.progression { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.jauge { flex: 1; min-width: 160px; height: 10px; background: #e0e0da; border-radius: 6px; overflow: hidden; }
+.jauge span { display: block; height: 100%; background: var(--orange); transition: width .3s; }
+.compteur { font-size: 16px; font-weight: 700; color: var(--texte-2); white-space: nowrap; }
+
+/* ---------------------------------------------------------------- règles */
+.regle {
+  background: var(--carte);
+  border: 2px solid var(--bordure);
+  border-left: 7px solid var(--orange);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 12px;
+}
+.regle .cle {
+  display: inline-block;
+  background: var(--marine);
+  color: #fff;
+  font-family: "Trebuchet MS", sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  padding: 2px 10px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+.regle h3 { font-size: 19px; margin-bottom: 6px; }
+.regle p { font-size: 17px; }
+.regle.verrouille { opacity: .45; }
+
+/* ----------------------------------------------------------------- duels */
+.duel { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* --------------------------------------------------------------- circuit */
+#zone-schema { background: var(--carte); border: 2px solid var(--bordure); border-radius: 12px; padding: 8px; overflow-x: auto; }
+/* Sélecteur d'enfant direct obligatoire : les symboles posés sont des <svg>
+   imbriqués, dimensionnés par leurs attributs x/y/width/height. Une règle
+   `#zone-schema svg` les écraserait tous à 100 % de largeur. */
+#zone-schema > svg { display: block; min-width: 900px; width: 100%; height: auto; }
+/* pointer-events:all — un cadre sans remplissage doit rester cliquable
+   sur toute sa surface, pas seulement sur son trait. */
+.trou { fill: #fff; stroke: var(--marine); stroke-width: 2; stroke-dasharray: 5 4; cursor: pointer; pointer-events: all; }
+.trou.survol { fill: var(--orange-pale); stroke: var(--orange); }
+.trou.pose { stroke: var(--marine); stroke-dasharray: none; fill: none; }
+.trou.rempli { stroke: var(--vert); stroke-width: 3; stroke-dasharray: none; fill: none; }
+.trou.errone { stroke: var(--rouge); stroke-width: 3; stroke-dasharray: none; fill: none; }
+.num-repere { font-family: "Trebuchet MS", sans-serif; font-size: 15px; font-weight: 700; fill: var(--marine); }
+.tuyau { fill: none; stroke: #333; stroke-width: 2.2; }
+.tuyau.info { stroke-dasharray: 5 4; stroke-width: 1.6; }
+
+.pioche { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.pioche .vignette { width: 118px; padding: 6px 4px; font-size: 13px; }
+.pioche .vignette .symbole { width: 58px; height: 58px; }
+
+/* --------------------------------------------------------------- tableau */
+table.bilan { width: 100%; border-collapse: collapse; font-size: 17px; margin-top: 10px; }
+table.bilan th, table.bilan td { border-bottom: 1px solid var(--bordure); padding: 9px 8px; text-align: left; }
+table.bilan th { font-family: "Trebuchet MS", sans-serif; color: var(--texte-2); font-size: 15px; text-transform: uppercase; letter-spacing: .03em; }
+table.bilan td.note { font-weight: 700; }
+
+.pastille { display: inline-block; padding: 2px 11px; border-radius: 999px; font-size: 15px; font-weight: 700; }
+.pastille.ok { background: var(--vert-fond); color: var(--vert); }
+.pastille.moyen { background: var(--ambre-fond); color: var(--ambre); }
+.pastille.ko { background: var(--rouge-fond); color: var(--rouge); }
+
+/* ---------------------------------------------------------------- boîtes */
+.boites { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
+.boite { background: var(--carte); border: 2px solid var(--bordure); border-radius: 10px; padding: 12px; text-align: center; }
+.boite .n { font-family: "Trebuchet MS", sans-serif; font-size: 30px; font-weight: 700; color: var(--marine); }
+.boite .l { font-size: 14px; color: var(--texte-2); }
+
+/* -------------------------------------------------------------- messages */
+.note {
+  background: #eef4f9;
+  border-left: 6px solid var(--marine-clair);
+  border-radius: 8px;
+  padding: 12px 15px;
+  font-size: 16px;
+  margin: 14px 0;
+}
+.note.attention { background: var(--ambre-fond); border-left-color: var(--ambre); }
+
+ul.puces { margin: 8px 0 8px 22px; }
+ul.puces li { margin-bottom: 5px; }
+
+/* --------------------------------------------------------------- mobile */
+@media (max-width: 700px) {
+  body { font-size: 17px; }
+  header h1 { font-size: 17px; }
+  header .signature { display: none; }
+  main { padding: 14px 12px 50px; }
+  .choix.deux { grid-template-columns: 1fr; }
+  .duel { grid-template-columns: 1fr; }
+  .symbole { width: 80px; height: 80px; }
+}
+
+/* ------------------------------------------------------------ impression */
+@media print {
+  header, .barre-actions, button { display: none !important; }
+  body { background: #fff; font-size: 12pt; }
+  .carte, .regle { break-inside: avoid; border-color: #999; }
+  .ecran { display: block !important; }
+}
