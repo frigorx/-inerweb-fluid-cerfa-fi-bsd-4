@@ -4,6 +4,23 @@ Dossier d'archivage des supports qui nourriront la V10 (« l'assistant ») et
 au-delà. On archive ici la copie de référence au moment de la remise ; la
 source vivante reste chez son auteur.
 
+## _GALERIE.html — la bibliothèque visuelle (à tenir À CHAQUE remise)
+
+- **Créée le 04/08/2026 (demande Franck)** : l'archive VISUELLE — une carte par
+  support remis, aperçu intégré, frise des symboles validés. Objectif affiché :
+  la bibliothèque pour préparer l'habilitation fluide, à partager aux collègues
+  pour récolter leurs retours.
+- S'ouvre en double-clic (liens relatifs) ; une version Artefact (supports
+  incorporés en base64) est publiée depuis la même page pour le partage web —
+  la régénérer à chaque mise à jour (le générateur vit dans la session, le
+  patron : gabarits `<script type="text/plain" id="gabarit-*">` en base64).
+- **RÈGLE : chaque nouvelle remise de Franck = archivage ici + une carte
+  ajoutée à la galerie + republication de l'Artefact.** Rien ne se perd.
+- ⚠ Réparation d'archive du 04/08 : `frigolo-mollier.html` archivé le 04/07
+  portait deux `\!==` (échappement shell parasite introduit à l'archivage)
+  qui cassaient son bloc anti-copie — corrigé en `!==`, fidèle à la source
+  vivante ; `testo-ble-discovery.html` sain.
+
 ## bouteille-liquide-pedagogique/ — module inerWeb Édu (14 écrans)
 
 - **Remis par Franck le 04/08/2026** (zip), archivé après revue le jour même.
