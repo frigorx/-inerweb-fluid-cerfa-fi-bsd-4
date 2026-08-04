@@ -72,6 +72,28 @@
     figure img { width: 100%; border: 1px solid var(--trait); border-radius: 10px; box-shadow: 0 2px 10px rgba(14,42,71,.07); display: block; }
     figure figcaption { color: var(--texte-doux); font-size: .9rem; margin-top: 8px; text-align: center; font-style: italic; }
 
+    /* Animations et projets éducatifs */
+    .ressources { display: grid; gap: 16px; margin: 18px 0 6px; }
+    .ressource { border: 1px solid var(--trait); border-radius: 12px; background: var(--blanc); padding: 18px 20px; }
+    .ressource .haut { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+    .ressource .genre { font-size: .74rem; text-transform: uppercase; letter-spacing: .7px; font-weight: 700;
+                        padding: 3px 9px; border-radius: 999px; flex: none; }
+    .ressource .genre.outil { background: var(--orange-fond); color: var(--orange); }
+    .ressource .genre.parcours { background: var(--accent-fond); color: var(--accent-fort); }
+    .ressource .genre.support { background: var(--vert-fond); color: var(--vert); }
+    .ressource h3 { margin: 0; font-size: 1.12rem; color: var(--marine); }
+    .ressource .meta { color: var(--texte-doux); font-size: .88rem; }
+    .ressource p.res { margin: 8px 0 12px; }
+    .ressource ul { margin: 0 0 14px; padding-left: 22px; }
+    .ressource .aller { display: inline-block; text-decoration: none; font-weight: 600; padding: 9px 17px;
+                        border-radius: 9px; background: var(--accent-fort); color: #fff; }
+    .ressource .aller:hover { background: var(--accent); }
+    .ressource .aller.calme { background: transparent; color: var(--accent-fort); border: 1px solid var(--trait); }
+    .ressource .aller.calme:hover { border-color: var(--accent); background: var(--accent-fond); }
+    .ressource .liens { display: flex; gap: 10px; flex-wrap: wrap; }
+    .ajouter { border: 1px dashed var(--trait); border-radius: 12px; padding: 18px 20px; color: var(--texte-doux); }
+    .ajouter code { background: var(--fond); padding: 1px 6px; border-radius: 5px; font-size: .9em; }
+
     .encadre { border-radius: 10px; padding: 16px 18px; margin: 18px 0; border: 1px solid; }
     .encadre .etiq { font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: .95rem; }
     .encadre p { margin: 0; font-size: .96rem; }
@@ -132,6 +154,8 @@
       <a href="#audit"><span class="num">8</span>Le dossier d'audit</a>
       <a href="#sauvegarde"><span class="num">9</span>Sauvegarder et restaurer</a>
       <a href="#roles"><span class="num">10</span>Professeur et élève</a>
+      <h2>Ressources</h2>
+      <a href="#ressources"><span class="num">•</span>Animations et projets éducatifs</a>
       <h2>Quand ça bloque</h2>
       <a href="#blocages"><span class="num">•</span>Tous les points de blocage</a>
     </nav>
@@ -406,6 +430,37 @@
         </div>
       </section>
 
+
+      <!-- VIDÉOS ET SUPPORTS -->
+      <section class="etape" id="ressources">
+        <div class="titre-ligne"><span class="puce">•</span><h2>Animations et projets éducatifs</h2></div>
+        <p class="sous">Les modules interactifs et les documents qui accompagnent inerWeb Fluide en classe.</p>
+        <button class="btn-ecouter" onclick="ecouter(this)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>Écouter cette étape</button>
+        <p class="lire">inerWeb Fluide n'est pas qu'un registre : c'est aussi un support de cours. Voici les
+        <strong>animations et projets éducatifs</strong> du même domaine — froid, fluides frigorigènes,
+        habilitation — plus les documents à imprimer. Tous s'ouvrent dans le navigateur, <strong>sans compte
+        et sans installation</strong>.</p>
+
+        <div class="ressources" id="liste-ressources"></div>
+
+        <div class="ajouter">
+          <strong>Ajouter un projet.</strong> Une seule ligne dans le tableau <code>RESSOURCES</code>, en bas
+          de cette page : <code>{ genre: 'parcours', titre: '…', lien: 'https://…' }</code>.
+          Les genres disponibles sont <code>parcours</code>, <code>outil</code> et <code>support</code>.
+          Cette liste ne reprend que les projets du domaine froid et fluides — le catalogue complet est
+          sur le <a href="https://frigorx.github.io/tableau-de-bord/">tableau de bord inerWeb Édu</a>.
+        </div>
+
+        <div class="encadre astuce">
+          <div class="etiq">Licence</div>
+          <p>Ces ressources sont sous la même licence que le logiciel — <strong>PolyForm Noncommercial</strong> :
+          libres et gratuites pour tout établissement d'enseignement, licence distincte pour un usage
+          commercial. Les symboles frigorifiques du parcours viennent de la collection
+          <a href="https://qelectrotech.org/">QElectroTech</a>, sous
+          <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>.</p>
+        </div>
+      </section>
+
       <!-- BLOCAGES (RECAP) -->
       <section class="etape" id="blocages">
         <div class="titre-ligne"><span class="puce">•</span><h2>Tous les points de blocage</h2></div>
@@ -515,6 +570,149 @@
       }
       // On arrête proprement la lecture si l'utilisateur quitte la page.
       window.addEventListener('beforeunload', function () { window.speechSynthesis.cancel(); });
+    })();
+
+
+    // ---- Animations et projets éducatifs.
+    //
+    // Pour ajouter une ressource : une entrée dans ce tableau, et rien d'autre.
+    //   genre  'parcours' (animation interactive) | 'outil' | 'support' (imprimable)
+    //   lien   page à ouvrir — relative pour ce dépôt, absolue pour un projet hébergé ailleurs
+    //
+    // Cette liste ne couvre que le domaine froid et fluides. Le catalogue
+    // complet des projets inerWeb Édu est sur frigorx.github.io/tableau-de-bord/
+    (function () {
+      var RESSOURCES = [
+        {
+          genre: 'parcours',
+          titre: 'Le Circuit Fantôme — lire et construire un circuit frigorifique',
+          meta: '2 modules de 2 h · Bac Pro MFER, adaptable CAP IFCA et 2nde TNE',
+          resume: "L'élève ne reçoit pas les règles de lecture d'un symbole : il les trouve, puis les met "
+                + "à l'épreuve. Douze ateliers, progression enregistrée sur le poste, fonctionne hors "
+                + "connexion une fois ouvert.",
+          points: [
+            'Le trousseau : 53 fiches organes — ce que c\'est, pourquoi ça existe, où ça se trouve',
+            'Module 1 : les 8 règles de lecture, les 12 pièges, le schéma d\'installation à 22 repères',
+            'Module 2 : ligne liquide, groupe de condensation, circuit d\'huile, KVP/KVR/KVL/KVC, pump down, dégivrages',
+            'Entraînement maison à répétition espacée, installable sur téléphone'
+          ],
+          lien: 'pedagogie/symboles-frigo/',
+          libelleLien: 'Ouvrir le parcours'
+        },
+        {
+          genre: 'outil',
+          titre: 'inerWeb FRIGOLO — calculs frigorifiques et prévention',
+          meta: 'Outils de calcul · modules de prévention des risques professionnels',
+          resume: "La boîte à outils du frigoriste : les calculs du quotidien, et les modules de "
+                + "prévention des risques du métier.",
+          lien: 'https://frigorx.github.io/inerweb-frigolo/',
+          libelleLien: 'Ouvrir FRIGOLO'
+        },
+        {
+          genre: 'outil',
+          titre: 'Diagramme Enthalpique+',
+          meta: 'Tracé du cycle sur le diagramme log P / h',
+          resume: "Pour poser un cycle, lire les points, et faire comprendre ce que change un réglage. "
+                + "Le compagnon naturel d'une séance sur le cycle frigorifique.",
+          lien: 'https://frigorx.github.io/diagramme-enthalpique/',
+          libelleLien: 'Ouvrir le diagramme'
+        },
+        {
+          genre: 'parcours',
+          titre: 'TP Inventaire bouteilles',
+          meta: 'CAP IFCA · le TP qui prépare au registre',
+          resume: "Peser, relever, inventorier les bouteilles — exactement le geste que le registre "
+                + "inerWeb Fluide enregistre ensuite. À faire avant d'ouvrir le logiciel.",
+          lien: 'https://frigorx.github.io/inerweb-tp-peser-bouteilles/',
+          libelleLien: 'Ouvrir le TP'
+        },
+        {
+          genre: 'parcours',
+          titre: 'Mission F-GAZ — préparation à l\'attestation d\'aptitude',
+          meta: 'Parcours complet',
+          resume: "La réglementation des gaz fluorés et la préparation à l'attestation d'aptitude, "
+                + "sous forme de parcours.",
+          lien: 'https://frigorx.github.io/inerweb-fgaz/',
+          libelleLien: 'Ouvrir Mission F-GAZ'
+        },
+        {
+          genre: 'parcours',
+          titre: 'F-Gas III — cours interactif',
+          meta: 'Bac Pro MFER · deux modes d\'évaluation',
+          resume: "Le même domaine, en version cours interactif, avec deux modes d'évaluation.",
+          lien: 'https://frigorx.github.io/fgas-eval-mfer/',
+          libelleLien: 'Ouvrir le cours'
+        },
+        {
+          genre: 'parcours',
+          titre: 'inerWeb Pilote — habilitation fluides (démonstrateur)',
+          meta: 'Catégories A1, A2, D, E',
+          resume: "Démonstrateur de la formation habilitation fluides frigorigènes dans le moteur "
+                + "inerWeb Pilote.",
+          lien: 'https://frigorx.github.io/pilote-fluides/',
+          libelleLien: 'Ouvrir le démonstrateur'
+        },
+        {
+          genre: 'support',
+          titre: 'Le trousseau — 53 fiches organes à imprimer',
+          meta: 'À distribuer en début de séance · recto-verso',
+          resume: "Une fiche par organe, quatre questions dans un ordre fixe. C'est le seul document "
+                + "autorisé pendant les ateliers, et celui que l'élève garde.",
+          lien: 'pedagogie/symboles-frigo/trousseau.html',
+          libelleLien: 'Ouvrir le trousseau'
+        },
+        {
+          genre: 'support',
+          titre: 'Mémo frigoriste — ordres de montage, régulateurs, séquences',
+          meta: '4 pages · module 2',
+          resume: "L'ordre de la ligne liquide et du circuit d'huile avec la justification de chaque "
+                + "position, le tableau des régulateurs de pression, et les trois séquences de commande "
+                + "avec leurs pièges.",
+          lien: 'pedagogie/symboles-frigo/memo-frigoriste.html',
+          libelleLien: 'Ouvrir le mémo'
+        },
+        {
+          genre: 'support',
+          titre: 'Fiches de séance et interrogation — documents enseignant',
+          meta: 'Déroulé minute par minute, grille par compétence, corrigé et barème',
+          resume: "Les deux fiches de séance, l'interrogation sur 20 points avec son corrigé, et le "
+                + "carnet de bord élève. Adaptations CAP IFCA, TP BE CVC, 2nde TNE et TDAH/DYS.",
+          lien: 'https://github.com/frigorx/-inerweb-fluid-cerfa-fi-bsd-4/tree/main/pedagogie/symboles-frigo',
+          libelleLien: 'Voir les documents'
+        }
+      ];
+
+      var hote = document.getElementById('liste-ressources');
+      if (!hote) return;
+
+      function echapper(t) {
+        return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;');
+      }
+
+      var LIBELLES = { parcours: 'Animation', outil: 'Outil', support: 'Support imprimable' };
+
+      RESSOURCES.forEach(function (r) {
+        var d = document.createElement('article');
+        d.className = 'ressource';
+        var h = '<div class="haut"><span class="genre ' + r.genre + '">' +
+                (LIBELLES[r.genre] || r.genre) + '</span><h3>' + echapper(r.titre) + '</h3></div>';
+        if (r.meta) h += '<div class="meta">' + echapper(r.meta) + '</div>';
+        if (r.resume) h += '<p class="res">' + echapper(r.resume) + '</p>';
+        if (r.points && r.points.length) {
+          h += '<ul>' + r.points.map(function (p) { return '<li>' + echapper(p) + '</li>'; }).join('') + '</ul>';
+        }
+        if (r.lien) {
+          var externe = /^https?:/.test(r.lien);
+          h += '<div class="liens"><a class="aller' + (r.genre === 'support' ? ' calme' : '') +
+               '" href="' + echapper(r.lien) + '"' +
+               (externe ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' +
+               echapper(r.libelleLien || 'Ouvrir') + '</a></div>';
+        }
+        d.innerHTML = h;
+        hote.appendChild(d);
+      });
+
     })();
 
     // ---- Surlignage du lien de sommaire correspondant à la section visible.
