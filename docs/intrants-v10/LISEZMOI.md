@@ -4,6 +4,53 @@ Dossier d'archivage des supports qui nourriront la V10 (« l'assistant ») et
 au-delà. On archive ici la copie de référence au moment de la remise ; la
 source vivante reste chez son auteur.
 
+## _GALERIE.html — la bibliothèque visuelle (à tenir À CHAQUE remise)
+
+- **Créée le 04/08/2026 (demande Franck)** : l'archive VISUELLE — une carte par
+  support remis, aperçu intégré, frise des symboles validés. Objectif affiché :
+  la bibliothèque pour préparer l'habilitation fluide, à partager aux collègues
+  pour récolter leurs retours.
+- S'ouvre en double-clic (liens relatifs) ; une version Artefact (supports
+  incorporés en base64) est publiée depuis la même page pour le partage web —
+  la régénérer à chaque mise à jour (le générateur vit dans la session, le
+  patron : gabarits `<script type="text/plain" id="gabarit-*">` en base64).
+- **RÈGLE : chaque nouvelle remise de Franck = archivage ici + une carte
+  ajoutée à la galerie + republication de l'Artefact.** Rien ne se perd.
+- ⚠ Réparation d'archive du 04/08 : `frigolo-mollier.html` archivé le 04/07
+  portait deux `\!==` (échappement shell parasite introduit à l'archivage)
+  qui cassaient son bloc anti-copie — corrigé en `!==`, fidèle à la source
+  vivante ; `testo-ble-discovery.html` sain.
+
+## bouteille-liquide-pedagogique/ — module inerWeb Édu (14 écrans)
+
+- **Remis par Franck le 04/08/2026** (zip), archivé après revue le jour même.
+- Module autonome « Comprendre la bouteille liquide » : réservoir de liquide,
+  tube plongeur, vanne de départ Rotalock (P/P1), pump-down, variations de
+  niveau, dimensionnement, DESP. 14 écrans, hors ligne, zéro dépendance,
+  quiz final 6 questions (seuil 5/6), version imprimable.
+- **Revue du 04/08 (session inerWeb Fluide)** — verdict : module solide,
+  prêt pour validation métier.
+  - QA dynamique rejouée en navigateur (4 formats 1024/1366/390/360) :
+    aucun débordement, activités fonctionnelles, quiz 6/6, zéro erreur
+    console. Charte inerWeb Édu conforme (Calibri/Trebuchet, #1b3a63/#ff6b35,
+    fond clair, jamais justifié). Croix du Frigoriste respectée sur les
+    circuits. Contenu métier sans erreur relevée (DESP 2014/68/UE, PS/TS/V,
+    ordre de la ligne liquide, avertissement P1 sous pression), aucune
+    valeur inventée.
+  - ⚠️ **`tests/qa.mjs` du zip d'origine remplacé ICI par la version
+    corrigée** : la QA livrée visait une autre version du module (attendait
+    15 écrans au lieu de 14, jouait un corrigé de quiz étranger
+    `[1,0,2,1,0,2]` au lieu de `[1,0,2,0,0,0]`, attendait « sécurités »
+    dans le message final du pump-down au lieu de « le pressostat BP arrête
+    le compresseur ») — elle n'avait jamais pu passer contre ce livrable.
+    Le chemin Edge du poste de Franck est conservé.
+  - Seule nuance charte consignée : le texte de détail descend à 0,91 em
+    (~14,5 px), compensé par le réglage A−/A+ (`lisibilite.js`) — à remonter
+    si l'on veut coller strictement au « 14 pt minimum ».
+- Réutilisable côté Fluide : la coupe de bouteille et les symboles validés
+  (`assets/symboles/`) pour les fiches bouteilles/machines ; le mini-TP
+  « relever PS, TS, V » rejoint la logique de la fiche outillage/DESP.
+
 ## frigolo-mollier.html — traceur de diagramme log(p)-h
 
 - **Remis par Franck le 04/07/2026.**
