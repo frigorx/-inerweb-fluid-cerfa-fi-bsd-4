@@ -68,13 +68,33 @@ formulaire sans jamais pouvoir produire une pièce opposable.
 |---|---|
 | `TP-RECUPERATION.md` | Le TP complet, 9 sections, **corrigé inclus** (section 9). Document de référence. |
 | `FICHE-SEANCE.md` | Déroulé minute par minute, préparation de la veille, incidents prévisibles, **plan B si une seule station fonctionne** |
-| `tp.html` | **À imprimer.** Sujet élève + schéma de raccordement + feuille de relevés + questions, puis corrigé enseignant sur page séparée |
+| `TP-recuperation-MINIMAX-E.docx` | **Généré.** Version Word imprimable du TP : sujet élève (11 pages A4) puis corrigé enseignant sur page séparée |
+| `FICHE-SEANCE-recuperation.docx` | **Généré.** Version Word de la fiche de séance (5 pages A4) |
+| `tp.html` | **À imprimer.** Même contenu que le `.docx`, version navigateur |
 | `atelier-vannes.html` · `atelier-vannes.js` | Drill auto-corrigé : deux remises en ordre (mise en route, vidange) et dix pièges en vrai/faux. 10 min, en fin de séance ou à la maison. |
+| `outils/generer-docx.js` | Construit les deux `.docx` |
+| `outils/schema-raccordement.png` | Schéma inséré dans le `.docx`, rendu depuis le SVG de `tp.html` |
 
 ### Impression
 
-`tp.html` → Ctrl+P. Le corrigé est sur une page séparée par un saut de page
-forcé : **imprimer les pages du sujet uniquement pour les élèves.**
+**Word** — `TP-recuperation-MINIMAX-E.docx` : A4 portrait, marges 2 cm, Calibri
+14 pt, interligne 1,5, en-tête inerWeb Édu et pied de page numéroté sur chaque
+page. Le corrigé commence page 8, après un saut de page forcé : **imprimer les
+pages 1 à 7 pour les élèves.**
+
+**Navigateur** — `tp.html` → Ctrl+P. Même découpage : le corrigé est sur une page
+séparée par un saut de page forcé.
+
+### Régénérer les .docx
+
+Les deux `.docx` sont **générés**. Ne pas les éditer à la main : la modification
+serait perdue à la génération suivante. Le contenu de référence est
+`TP-RECUPERATION.md` et `FICHE-SEANCE.md`.
+
+```bash
+npm install docx
+node outils/generer-docx.js
+```
 
 ### Utilisation du drill
 
