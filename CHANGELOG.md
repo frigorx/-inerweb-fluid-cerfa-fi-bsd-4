@@ -2,6 +2,24 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 📦 LOT E (13/08, carte blanche) — L'ARCHIVE SCELLÉE NE PORTE PLUS LE MÊME CERFA DEUX FOIS
+
+**Consigné au lot 1, TIRÉ ici avant d'être corrigé** : un mouvement CONTROLE validé en
+Formation fabrique un contrôle LIÉ qui hérite de son numéro — la MÊME fiche. La boucle
+des contrôles du dossier d'audit ne sautait le lié que s'il avait un PDF CONSERVÉ, ce qui
+n'arrive JAMAIS en Formation : `cerfa/FORM-2026-0001.pdf` entrait DEUX fois dans
+l'archive scellée (mesuré). Trois fiches pour deux écritures, dans la pièce qu'un
+auditeur reçoit.
+
+- Le saut se porte désormais sur « **le porteur est au registre de l'année** » (sa fiche
+  — conservée OU régénérée — est déjà dans l'archive par la boucle des mouvements). La
+  garde du CONSERVÉ reste pour un porteur HORS année : « jamais le générateur » (C3b)
+  n'est pas affaibli. Un contrôle AUTONOME garde sa fiche propre, rien ne change pour lui.
+
+**Preuves** : `test-dossier-audit.mjs` **24 vérifications** — décor neuf (mouvement
+CONTROLE Formation validé → contrôle lié), la fiche figure UNE SEULE fois, aucun doublon
+de nom dans l'archive (contre-épreuve tirée : saut retiré → « × 2 » rouge ; remis → vert).
+
 ### 🖨️ LOT D (13/08, carte blanche) — LES DEUX IMPRIMÉS D'ATELIER SORTENT ENTIERS DU BAC
 
 **Trouvé au lot 1, hors périmètre alors, corrigé ici.** Le patron d'impression recopié

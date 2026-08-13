@@ -267,7 +267,19 @@ export async function genererDossierAudit(store, annee) {
   // le visualiseur, C3b). ----
   const controlesAnnee = controles.filter((c) =>
     (c.date || '').startsWith(prefixeAnnee));
+  // Lot E carte blanche (13/08, consigné au lot 1, TIRÉ) : un contrôle LIÉ
+  // à un mouvement DÉJÀ servi par la boucle ci-dessus est la MÊME fiche —
+  // il hérite de son numéro. L'ancien saut ne tenait qu'au PDF CONSERVÉ,
+  // qui n'existe JAMAIS en Formation : l'archive scellée portait le même
+  // CERFA deux fois (trois fiches pour deux écritures). Le saut se porte
+  // sur « le porteur est au registre de l'année » ; la garde du CONSERVÉ
+  // reste pour le porteur HORS année (jamais le générateur, C3b).
+  const idsMouvementsServis = new Set(mouvementsRegistre.map((mv) => mv.id));
   for (const controle of controlesAnnee) {
+    if (controle.mouvementId
+        && idsMouvementsServis.has(controle.mouvementId)) {
+      continue;
+    }
     const ficheConservee = await resoudreMouvementConserve(store, {
       source: 'controle', id: controle.id
     });

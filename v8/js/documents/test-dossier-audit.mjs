@@ -57,6 +57,31 @@ function lireZip(zip) {
 }
 
 const store = await creerStore();
+
+// ---- Décor lot E carte blanche (13/08) : un mouvement CONTROLE Formation
+// validé fabrique un contrôle LIÉ (même fiche, même numéro). C'est LE cas
+// du doublon consigné au lot 1 : en Formation, aucun PDF conservé, donc
+// l'ancien saut de la boucle des contrôles ne jouait jamais et l'archive
+// scellée portait le même CERFA deux fois. ----
+const validateurLotE = await store.createPersonne({
+  nom: 'Valideur', prenom: 'LotE', typePersonne: 'ENSEIGNANT',
+  roleApp: 'REFERENT'
+});
+const machineLotE = await store.createMachine({
+  designation: 'Vitrine lot E (doublon)', fluide: 'R-410A',
+  chargeNominaleKg: 10, chargeActuelleKg: 10, operateur: 'Testeur lot E'
+});
+const brouillonLotE = await store.creerMouvement({
+  mode: 'FORMATION', type: 'CONTROLE_PERIODIQUE', date: '2026-08-13',
+  machineId: machineLotE.id, fluide: 'R-410A', quantiteKg: 0,
+  peseeAvantKg: null, peseeApresKg: null, technicien: 'Testeur lot E',
+  controle: { statutControle: 'CONFORME', detecteurId: null }
+});
+await store.soumettreMouvement(brouillonLotE.id);
+await store.validerMouvement(brouillonLotE.id, validateurLotE.id);
+const mouvementLotE = (await store.getMouvements())
+  .find((mv) => mv.id === brouillonLotE.id);
+
 const { blob, nomFichier, nbDocuments, empreinte } = await genererDossierAudit(store, 2026);
 
 // ---- 1. Forme du résultat ----
@@ -131,6 +156,19 @@ verifier('un CERFA par contrôle de 2026',
   controles2026.length > 0 && controles2026.every((c) =>
     cerfas.includes(`cerfa/${c.numero ?? c.id}.pdf`)),
   `${controles2026.length} contrôles attendus`);
+
+// ---- 8 bis. Lot E (13/08) : le contrôle LIÉ ne double plus la fiche ----
+{
+  const controleLie = (await store.getControles())
+    .find((c) => c.mouvementId === mouvementLotE.id);
+  verifier('décor lot E : le mouvement CONTROLE a bien fabriqué un contrôle LIÉ',
+    Boolean(controleLie) && controleLie.numero === mouvementLotE.numero);
+  const nomFiche = `cerfa/${mouvementLotE.numero}.pdf`;
+  const occurrences = noms.filter((n) => n === nomFiche).length;
+  verifier('⭐ la fiche du mouvement CONTROLE figure UNE SEULE fois dans '
+    + 'l’archive (le contrôle lié est la MÊME fiche — plus jamais deux)',
+  occurrences === 1, `${nomFiche} × ${occurrences}`);
+}
 
 // ---- 9. Chaque PDF de l'archive est un vrai PDF ----
 verifier('chaque cerfa/*.pdf commence par « %PDF »',

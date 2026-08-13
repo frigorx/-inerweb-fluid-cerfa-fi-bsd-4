@@ -258,7 +258,10 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   (99-VERIFICATEUR.html embarqué), `plaque-fgas.js` (seuils tCO₂eq 5/50/500).
   C5 (`dossier-audit.js`) : fiche officielle scellée → PDF CONSERVÉ
   restitué (jamais régénéré), verdicts `02-PDF-CONSERVES.txt`, contrôle
-  lié conservé sauté, TRANSFERT exclu de la boucle CERFA.
+  lié conservé sauté, TRANSFERT exclu de la boucle CERFA. **Lot E carte
+  blanche (13/08) : un contrôle LIÉ à un mouvement du registre de l'année
+  est sauté MÊME sans PDF conservé — en Formation il n'y en a jamais, et
+  l'archive scellée portait la même fiche deux fois (tiré).**
   **`regularisation.js` (lot 1 branche A, 27/07) — LE JUSTIFICATIF DE
   RÉGULARISATION, la pièce qui REMPLACE le CERFA d'une contre-écriture.**
   Porte `estContreEcriture(mv)` — **la règle en UN SEUL endroit**,
