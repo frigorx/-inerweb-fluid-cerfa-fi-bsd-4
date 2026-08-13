@@ -139,7 +139,7 @@ const sigIllisible = (role, id, valide = false) =>
 // 2. preremplirSignature
 // ------------------------------------------------------------
 const utilisateur = { nom: 'Henninot', prenom: 'Franck', roleApp: 'REFERENT' };
-const etablissement = { raisonSociale: 'LP Jacques Raynaud' };
+const etablissement = { raisonSociale: 'LP Antoine Vidal' };
 
 {
   const p = preremplirSignature('TECHNICIEN', {
@@ -169,9 +169,9 @@ const etablissement = { raisonSociale: 'LP Jacques Raynaud' };
   const p = preremplirSignature('DETENTEUR', { utilisateur, etablissement });
   verifier('détenteur lycée : délégation PRÉ-COCHÉE, professeur pré-rempli',
     p.parDelegation === true && p.nom === 'Henninot'
-    && p.organisation === 'LP Jacques Raynaud'
+    && p.organisation === 'LP Antoine Vidal'
     && p.qualite ===
-      'Professeur, par délégation du détenteur (LP Jacques Raynaud)');
+      'Professeur, par délégation du détenteur (LP Antoine Vidal)');
 }
 {
   // Client tiers : personne physique à saisir, raison sociale

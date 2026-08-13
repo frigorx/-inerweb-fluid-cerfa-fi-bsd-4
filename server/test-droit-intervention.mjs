@@ -229,6 +229,46 @@ verifier('constantes de transition identiques (délivrance 2026-12-31, butoir 20
       .every(([h, d]) => habilitationReconnue(h, d) === miroir.habilitationReconnue(h, d)));
 }
 
+// ============================================================
+// Lot F carte blanche (13/08) : parité de la PORTÉE DE CAPACITÉ DE
+// L'ÉTABLISSEMENT — verdicts ET messages, éventail discriminant
+// (activité manquante, portée vide, charge au-delà de la catégorie,
+// couverture, régime 2025, hermétique).
+// ============================================================
+{
+  const { capaciteEtablissementCouvre, regimeDeCategorieCapacite,
+    ACTIVITE_PAR_OPERATION } = await import('../v8/js/data/habilitations.js');
+  verifier('lot F : mapping opération → activité identique des deux côtés',
+    JSON.stringify(ACTIVITE_PAR_OPERATION)
+    === JSON.stringify(miroir.ACTIVITE_PAR_OPERATION));
+  verifier('lot F : régime déduit identique (I → 2008, A1 → 2025)',
+    ['I', 'II', 'III', 'IV', 'A1', 'A2', 'B', 'C', 'D', 'E', 'V']
+      .every((c) => regimeDeCategorieCapacite(c)
+        === miroir.regimeDeCategorieCapacite(c)));
+  const vecteurs = [
+    { categories: ['II'], activites: ['CONTROLE'],
+      operation: 'RECUPERATION_MAINTENANCE', fluide: 'R-410A', chargeKg: 50 },
+    { categories: ['II'], activites: ['MAINTENANCE', 'RECUPERATION'],
+      operation: 'RECUPERATION_MAINTENANCE', fluide: 'R-410A', chargeKg: 50 },
+    { categories: [], activites: [], operation: 'CHARGE_APPOINT' },
+    { categories: ['I'],
+      activites: ['MISE_EN_SERVICE', 'MAINTENANCE', 'CONTROLE', 'RECUPERATION'],
+      operation: 'CHARGE_APPOINT', fluide: 'R-410A', chargeKg: 50 },
+    { categories: ['A1'], activites: ['MAINTENANCE'],
+      operation: 'CHARGE_APPOINT', fluide: 'R-410A', chargeKg: 20 },
+    { categories: ['A2'], activites: ['MAINTENANCE'],
+      operation: 'CHARGE_APPOINT', fluide: 'R-410A', chargeKg: 5,
+      hermetiqueScelle: true },
+    { categories: ['IV'], activites: ['CONTROLE'],
+      operation: 'CONTROLE_PERIODIQUE', fluide: 'R-410A', chargeKg: 300 }
+  ];
+  verifier('lot F : capaciteEtablissementCouvre — parité stricte sur '
+    + `${vecteurs.length} vecteurs (verdicts ET messages)`,
+  vecteurs.every((v) =>
+    JSON.stringify(capaciteEtablissementCouvre(v))
+    === JSON.stringify(miroir.capaciteEtablissementCouvre(v))));
+}
+
 console.log(`\n${nbOk} vérifications réussies, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);
 console.log('Moteur d’aptitude : parité ESM ↔ serveur stricte (verdicts, messages, faits).');

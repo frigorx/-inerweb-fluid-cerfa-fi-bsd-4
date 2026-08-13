@@ -210,7 +210,7 @@ function carteHistorique(sentinelle) {
     + '<div>'
     + '<div class="histo-titre">Historique des alertes</div>'
     + '<div class="histo-detail">Depuis quand chaque alerte est active, quand elle a été '
-    + 'résolue, et la trace de sa prise de connaissance (preuve opposable en audit).</div>'
+    + 'résolue, et la trace de sa prise de connaissance (trace consultable en audit).</div>'
     + '</div>'
     + '</div>'
     + '<ul class="histo-liste">' + liste + '</ul>'

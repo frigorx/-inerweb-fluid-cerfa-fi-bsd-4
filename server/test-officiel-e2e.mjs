@@ -14,11 +14,14 @@
 //      19/07) — validé SANS PDF, hashPdfFinal null, refusé AVEC ;
 //   4. contre-écriture d'une fiche officielle : scelle v2 SANS
 //      parcours de signatures (plan lot C §9 « à confirmer à la
-//      bascule » — confirmé ici) ;
+//      bascule » — confirmé ici) et SANS numéro de fiche CERFA
+//      (lot 1 branche A, 27/07/2026) ;
 //   5. WORM pieces_jointes (migration 24) tiré sur le VRAI parcours ;
 //   6. dossier d'audit (LocalStore in-process) : le CERFA de la fiche
 //      officielle est le PDF CONSERVÉ (octets identiques), verdict
-//      02-PDF-CONSERVES.txt, pas de doublon par le contrôle lié ;
+//      02-PDF-CONSERVES.txt, pas de doublon par le contrôle lié, et le
+//      justificatif de régularisation REMPLACE le CERFA de la
+//      contre-écriture (lot 1 branche A) ;
 //   7. export → import round-trip : registre sain, PDF toujours vert.
 // Exécution : node server/test-officiel-e2e.mjs — base JETABLE.
 // ============================================================
@@ -218,7 +221,7 @@ api.appeler('signerMouvement', { mouvementId: fiche.id,
 api.appeler('signerMouvement', { mouvementId: fiche.id,
   signature: { ...signatureBase, role: 'DETENTEUR',
     qualite: 'Professeur référent', parDelegation: true,
-    organisation: 'Lycée Professionnel Jacques Raynaud' } }, session);
+    organisation: 'Lycée Professionnel Antoine Vidal' } }, session);
 api.appeler('soumettreMouvement', { id: fiche.id }, session);
 
 // ATTAQUES PDF : manquant, forgé — la fiche reste SOUMISE.
@@ -301,7 +304,7 @@ api.appeler('signerMouvement', { mouvementId: transfert.id,
 api.appeler('signerMouvement', { mouvementId: transfert.id,
   signature: { ...signatureBase, role: 'DETENTEUR',
     qualite: 'Professeur référent', parDelegation: true,
-    organisation: 'Lycée Professionnel Jacques Raynaud' } }, session);
+    organisation: 'Lycée Professionnel Antoine Vidal' } }, session);
 api.appeler('soumettreMouvement', { id: transfert.id }, session);
 attendreRejet('un PDF fourni sur le TRANSFERT officiel : refus canonique',
   () => api.appeler('validerMouvement', { id: transfert.id,
@@ -337,6 +340,13 @@ verifier('la contre-écriture scelle en v2 avec hashPdfFinal null',
   contreRelue?.versionEmpreinte === 2 && contreRelue?.hashPdfFinal == null,
   JSON.stringify({ v: contreRelue?.versionEmpreinte,
     h: contreRelue?.hashPdfFinal }));
+// Lot 1 branche A (27/07/2026) : même en OFFICIEL, une contre-écriture ne
+// porte AUCUN numéro de fiche CERFA — le CERFA atteste une intervention,
+// et aucune n'a lieu le jour d'une annulation comptable. Ce qu'elle
+// produit est un JUSTIFICATIF DE RÉGULARISATION (vérifié au § 5).
+verifier('la contre-écriture OFFICIELLE ne porte aucun numéro de fiche CERFA',
+  (contreRelue?.cerfaNumero ?? null) === null,
+  JSON.stringify({ cerfaNumero: contreRelue?.cerfaNumero }));
 verifier('la chaîne reste INTACTE après la contre-écriture',
   api.appeler('verifierChaineHash', {}, session).ok === true);
 verifier('le PDF conservé de la fiche annulée est TOUJOURS vert (preuve gardée)',
@@ -410,6 +420,22 @@ function lireZip(zip) {
     new TextDecoder().decode(
       entrees.find((e) => e.nom === '00-SOMMAIRE.txt').octets)
       .includes('02-PDF-CONSERVES.txt'));
+
+  // Lot 1 branche A : la contre-écriture du § 4 n'a plus de CERFA dans
+  // l'archive scellée — elle a son JUSTIFICATIF DE RÉGULARISATION, qui
+  // porte le motif, l'auteur et la masse signée. Le dossier ne perd rien :
+  // la pièce est REMPLACÉE, et le sommaire le dit.
+  verifier('dossier d’audit : aucun CERFA pour la contre-écriture',
+    !noms.includes(`cerfa/${contreRelue.numero}.pdf`),
+    noms.filter((n) => n.startsWith('cerfa/')).join(', '));
+  const nomJustificatif = `regularisations/${contreRelue.numero}.html`;
+  verifier('dossier d’audit : le justificatif de régularisation la remplace',
+    noms.includes(nomJustificatif),
+    noms.filter((n) => n.startsWith('regularisations/')).join(', '));
+  const justificatif = entrees.find((e) => e.nom === nomJustificatif);
+  verifier('dossier d’audit : le justificatif porte le motif de l’annulation',
+    Boolean(justificatif) && new TextDecoder().decode(justificatif.octets)
+      .includes('Erreur de saisie (preuve e2e C5)'));
 }
 
 // ATTAQUE : PDF conservé ALTÉRÉ sur disque → le dossier d'audit DÉNONCE

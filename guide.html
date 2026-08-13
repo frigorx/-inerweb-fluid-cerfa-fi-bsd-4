@@ -51,6 +51,29 @@
     nav.sommaire a.actif { background: var(--accent-fond); color: var(--accent-fort); font-weight: 600; border-left-color: var(--accent); }
     nav.sommaire a .num { display: inline-block; width: 1.5em; color: var(--texte-doux); font-variant-numeric: tabular-nums; }
 
+    /* Recherche dans le guide */
+    .recherche-guide { margin-bottom: 18px; }
+    .recherche-guide input[type="search"] {
+      width: 100%; box-sizing: border-box; font: inherit; font-size: .92rem;
+      padding: 9px 12px; border: 1px solid var(--trait); border-radius: 8px;
+      background: #fff; color: var(--texte);
+    }
+    .recherche-guide input[type="search"]:focus {
+      outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-fond);
+    }
+    .resultats-recherche { margin-top: 8px; display: flex; flex-direction: column; gap: 3px; }
+    .resultats-recherche .resultat {
+      display: block; text-decoration: none; padding: 8px 10px; border-radius: 7px; border: 1px solid transparent;
+    }
+    .resultats-recherche .resultat:hover, .resultats-recherche .resultat:focus {
+      background: var(--fond); border-color: var(--trait);
+    }
+    .resultats-recherche .resultat-titre { display: block; font-weight: 600; color: var(--marine); font-size: .92rem; }
+    .resultats-recherche .resultat-extrait { display: block; color: var(--texte-doux); font-size: .82rem; margin-top: 2px; }
+    .resultats-recherche .resultat-note { font-style: italic; }
+    .resultats-recherche .aucun-resultat { color: var(--texte-doux); font-size: .88rem; padding: 8px 10px; margin: 0; }
+    .resultats-recherche mark { background: var(--accent-fond); color: var(--accent-fort); border-radius: 3px; padding: 0 2px; }
+
     main { padding: 32px 44px 96px; min-width: 0; }
     .intro-guide { background: var(--degrade); color: #eaf3fb; border-radius: 14px; padding: 30px 32px; margin-bottom: 40px; }
     .intro-guide h1 { margin: 0 0 10px; color: #fff; font-size: 1.9rem; }
@@ -140,6 +163,12 @@
   <div class="page">
 
     <nav class="sommaire" id="sommaire">
+      <div class="recherche-guide">
+        <input type="search" id="recherche-guide-champ" autocomplete="off"
+               placeholder="Rechercher (ex. bouteille, CERFA, sauvegarde…)"
+               aria-label="Rechercher dans le guide">
+        <div id="recherche-guide-resultats" class="resultats-recherche" hidden aria-live="polite"></div>
+      </div>
       <h2>Les grandes lignes</h2>
       <a href="#vue-ensemble"><span class="num">•</span>Vue d'ensemble</a>
       <h2>Installer et démarrer</h2>
@@ -490,7 +519,7 @@
       </section>
 
       <p style="margin-top:40px;color:var(--texte-doux);font-size:.92rem;border-top:1px solid var(--trait);padding-top:20px;">
-        inerWeb Fluide — © 2026 Franck Henninot · LP Jacques Raynaud, Marseille ·
+        inerWeb Fluide — © 2026 Franck Henninot · LP Antoine Vidal, Nîmes ·
         <a href="mailto:inerweb.fh@gmail.com">inerweb.fh@gmail.com</a> ·
         Licence PolyForm Noncommercial (gratuit pour l'enseignement). ·
         <a href="index.html">Retour à l'accueil</a>
@@ -729,6 +758,111 @@
         });
       }, { rootMargin: '-40% 0px -55% 0px' });
       sections.forEach(function (s) { obs.observe(s); });
+    })();
+
+    // ---- Recherche dans le guide : on tape un mot, ça saute à la bonne étape.
+    // Index construit sur le titre et le sous-titre déjà écrits de chaque
+    // section (pas de résumé inventé), plus le texte complet en repli pour
+    // les mots qui n'apparaissent que dans le corps d'une étape.
+    (function () {
+      var champ = document.getElementById('recherche-guide-champ');
+      var zoneResultats = document.getElementById('recherche-guide-resultats');
+      if (!champ || !zoneResultats) return;
+
+      // Comparaison insensible aux accents (« eleve » retrouve « élève »).
+      function normaliser(s) {
+        return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+      }
+      function echapperHtml(s) {
+        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+      function echapperRegExp(s) {
+        return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      }
+      // Surlignage sur le texte ORIGINAL (accents compris) : si la frappe
+      // exacte de l'utilisateur ne s'y trouve pas telle quelle (accents
+      // différents), on affiche le texte tel quel plutôt que de deviner.
+      function surligner(texte, requeteBrute) {
+        var motif = requeteBrute.trim();
+        if (!motif) return echapperHtml(texte);
+        try {
+          var re = new RegExp('(' + echapperRegExp(motif) + ')', 'i');
+          if (re.test(texte)) return echapperHtml(texte).replace(re, '<mark>$1</mark>');
+        } catch (e) { /* motif illégal en expression régulière : pas de surlignage */ }
+        return echapperHtml(texte);
+      }
+
+      var index = Array.prototype.slice.call(document.querySelectorAll('section.etape')).map(function (section) {
+        var elTitre = section.querySelector('h2');
+        var elSous = section.querySelector('.sous');
+        var titre = elTitre ? elTitre.textContent.trim() : '';
+        var sousTitre = elSous ? elSous.textContent.trim() : '';
+        var texteComplet = section.textContent.replace(/\s+/g, ' ').trim();
+        return {
+          id: section.id,
+          titre: titre,
+          sousTitre: sousTitre,
+          titreNormalise: normaliser(titre),
+          sousTitreNormalise: normaliser(sousTitre),
+          texteNormalise: normaliser(texteComplet)
+        };
+      }).filter(function (e) { return e.id && e.titre; });
+
+      function masquer() {
+        zoneResultats.hidden = true;
+        zoneResultats.innerHTML = '';
+      }
+
+      function rechercher(requeteBrute) {
+        var requete = requeteBrute.trim();
+        var requeteNormalisee = normaliser(requete);
+        if (requeteNormalisee.length < 2) { masquer(); return; }
+
+        var resultats = index.map(function (e) {
+          var dansTitre = e.titreNormalise.indexOf(requeteNormalisee) !== -1;
+          var dansSous = e.sousTitreNormalise.indexOf(requeteNormalisee) !== -1;
+          var dansTexte = e.texteNormalise.indexOf(requeteNormalisee) !== -1;
+          if (!dansTitre && !dansSous && !dansTexte) return null;
+          return { entree: e, priorite: dansTitre ? 0 : (dansSous ? 1 : 2), profond: !dansTitre && !dansSous };
+        }).filter(Boolean).sort(function (a, b) { return a.priorite - b.priorite; }).slice(0, 8);
+
+        if (!resultats.length) {
+          zoneResultats.innerHTML = '<p class="aucun-resultat">Aucune correspondance dans ce guide pour « '
+            + echapperHtml(requete) + ' ».</p>';
+          zoneResultats.hidden = false;
+          return;
+        }
+
+        zoneResultats.innerHTML = resultats.map(function (r) {
+          var e = r.entree;
+          var extrait = e.sousTitre
+            ? surligner(e.sousTitre, requete)
+            : '<span class="resultat-note">Mentionné dans cette étape.</span>';
+          if (r.profond) extrait += ' <span class="resultat-note">· et plus loin dans le texte.</span>';
+          return '<a class="resultat" href="#' + e.id + '">'
+            + '<span class="resultat-titre">' + surligner(e.titre, requete) + '</span>'
+            + '<span class="resultat-extrait">' + extrait + '</span>'
+            + '</a>';
+        }).join('');
+        zoneResultats.hidden = false;
+      }
+
+      champ.addEventListener('input', function () { rechercher(champ.value); });
+      champ.addEventListener('keydown', function (evt) {
+        if (evt.key === 'Escape') { champ.value = ''; masquer(); champ.blur(); }
+      });
+      zoneResultats.addEventListener('click', function (evt) {
+        var lien = evt.target.closest ? evt.target.closest('a.resultat') : null;
+        if (!lien) return;
+        // Laisse le navigateur suivre le lien (saut + activation du lien de
+        // sommaire par l'observateur existant), puis referme la recherche.
+        setTimeout(function () {
+          masquer();
+          champ.value = '';
+          var sommaireNav = document.querySelector('nav.sommaire');
+          if (sommaireNav) sommaireNav.classList.remove('ouvert');
+        }, 0);
+      });
     })();
   </script>
 </body>

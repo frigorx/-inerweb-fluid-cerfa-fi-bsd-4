@@ -88,7 +88,9 @@ const TABLES = {
       organisme: 'organisme_certificateur',
       dateDelivranceCapacite: 'date_delivrance',
       dateEcheanceCapacite: 'date_echeance',
-      categoriesAutorisees: 'categories_2025',
+      // Lot F (13/08, migration 37) : la colonne s'appelait
+      // `categories_2025` et portait la grille 2008 — le nom mentait.
+      categoriesAutorisees: 'categories_autorisees',
       activitesAutorisees: 'activites_autorisees',
       sitesCouverts: 'sites_couverts',
       dernierAudit: 'date_dernier_audit',
@@ -706,10 +708,12 @@ const DIVERGENCES = [
     constat: 'Objet imbriqué côté contrat ; colonnes aplaties côté SQL ' +
       '(statut_controle_declare, detecteur_declare_id, controle_lie_id). ' +
       'Le LocalStore fera l\'aplatissement et la reconstitution.' },
-  { objet: 'etablissements.categories_2008', echeance: 'E3',
-    constat: 'Le contrat ne porte qu\'une liste de catégories (mappée sur ' +
-      'categories_2025) ; le sort de la grille 2008 (transition jusqu\'au ' +
-      '31/12/2026) reste à confirmer avec Franck.' },
+  { objet: 'etablissements.categories_autorisees', echeance: 'RÉSORBÉE (lot F, 13/08)',
+    constat: 'Le contrat porte une liste de catégories des DEUX régimes ' +
+      '(I-IV et A1…V, grille élargie du lot F) ; la colonne — qui ' +
+      's\'appelait categories_2025 en portant la grille 2008 — a été ' +
+      'renommée par la migration 37, et la portée est désormais LUE ' +
+      '(condition 19 du mode Officiel).' },
   { objet: 'vue bilan_matiere', echeance: 'E3',
     constat: 'La vue SQL reproduit le calcul du contrat (écritures figées ' +
       'signées, TRANSFERT exclu, stocks initiaux, inventaire à plat) mais ' +

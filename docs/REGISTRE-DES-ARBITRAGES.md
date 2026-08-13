@@ -149,7 +149,7 @@ donc lui qui décide de la fréquence de contrôle.
 | PRP du R-744 (CO₂) | 1 | `server/migrations.js:269-270` | Valeur de définition de l'échelle du PRP | DEDUIT | Nul : le fluide est hors périmètre du contrôle d'étanchéité fluoré |
 | PRP du R-290 (propane) | 0,02 | `server/migrations.js:271-272`, `server/migrations.js:291-295` | Avis du 16/07 : le propane n'étant pas un gaz fluoré, il ne figure dans aucune annexe ; source libellée « AR6 GIEC (réf. règl. UE 2024/573) » | DEDUIT | Effet d'affichage seulement (hors périmètre) |
 | Règle générale : en cas de valeurs concurrentes, retenir le PRP **le plus élevé** | — | Appliquée au R-455A (148) et au R-452A du catalogue (2141) | Décision Franck du 23/07, réaffirmée le 25/07 (`docs/PLAN-LOTS-REGLEMENTAIRES-Q1-Q11.md:251-258`) | **CONSERVATOIRE** | Le logiciel peut exiger un contrôle que le droit n'exige pas encore. Jamais l'inverse |
-| Un PRP **figé** à la validation d'un mouvement, jamais rétroactif | champ `prpFige` | Décision actée, `docs/TABLE-REGLEMENTAIRE-FLUIDES.md:145-146` | Protection de l'historique : une correction de référentiel ne réécrit pas une fiche déjà signée | DEDUIT | Une fiche ancienne conserve un PRP corrigé depuis — c'est voulu, et c'est dit |
+| Un PRP **figé** à la validation d'un mouvement, jamais rétroactif | champ `prpFige` | Décision actée, `docs/TABLE-REGLEMENTAIRE-FLUIDES.md:145-146` ; depuis le 13/08/2026 le **document régénéré** le lit aussi (`v8/js/cerfa/generateur.js`, cadres 3 et 7) — la 4e relecture externe avait montré, en le tirant, que la protection était vraie de la donnée et fausse du document réimprimé | DEDUIT | Une écriture ANTÉRIEURE au figeage (sans `prpFige`) reste rendue au référentiel courant — dit et assumé, on n'invente pas un PRP d'époque qu'on n'a pas enregistré |
 | Impact environnemental **affiché** (bornes 150 / 750 / 2500) | FAIBLE / MODÉRÉ / ÉLEVÉ / TRÈS ÉLEVÉ | `v8/js/data/reglementation-fluides.js:184-199` | Bornes du règlement F-Gas reprises comme repère d'affichage | DEDUIT | Aucun : affichage seul, aucun moteur ne le lit. Un PRP absent ou négatif rend `null`, jamais « FAIBLE » |
 | Un fluide de PRP ≥ 150 ne peut pas être déclaré hors périmètre F-Gas | garde de saisie | `v8/js/data/reglementation-fluides.js:297-303` | Garde anti-manœuvre posée après une revue : déclarer le R-410A « hors périmètre » sortait tout le parc du contrôle | DEDUIT | Sans cette garde, une erreur de saisie supprimait silencieusement des obligations |
 
@@ -469,16 +469,18 @@ des précédentes.
 
 ---
 
-## 13. Famille J — Les 18 conditions bloquantes du mode Officiel
+## 13. Famille J — Les 19 conditions bloquantes du mode Officiel
 
 Le mode Officiel est le mode opposable : écritures signées, scellées par empreinte
-chaînée, non modifiables, correction par contre-écriture seulement. Dix-huit
-conditions y **refusent** une validation. La liste complète et commentée est dans
+chaînée, non modifiables, correction par contre-écriture seulement. Dix-neuf
+conditions y **refusent** une validation (la 19e — portée de la capacité de
+l'établissement — a été ajoutée le 13/08/2026, en réponse au blocage n° 1 de la
+4e relecture externe). La liste complète et commentée est dans
 `docs/CONDITIONS-BLOCANTES-OFFICIEL.md`.
 
 | Ce qui est codé | Valeur retenue | Où (fichier:ligne) | Fondement | Degré de certitude | Risque si c'est faux |
 |---|---|---|---|---|---|
-| Le mode Officiel est **fermé** | `VERROU_LIVRAISON = true` | `v8/js/data/blocage-officiel.js:31` ; miroir `server/blocage-officiel.js:24` — **et nulle part ailleurs**, non modifiable par l'environnement | Refermé le 20/07 après un audit externe. Devait rouvrir après le visa (`docs/PLAN-LOTS-REGLEMENTAIRES-Q1-Q11.md:64` — le lot L6 de réouverture y est placé « après visa T3 sur Q3/Q6 »). Le motif écrit dans la liste des conditions bloquantes (`docs/CONDITIONS-BLOCANTES-OFFICIEL.md:37`, condition 13) est autre : double signature réelle et empreinte renforcée non encore livrées — depuis livrées | — | **C'est le point que la décision de l'établissement doit trancher**, le visa n'arrivant pas |
+| Le mode Officiel est **fermé** | `VERROU_LIVRAISON = true` | `v8/js/data/blocage-officiel.js:31` ; miroir `server/blocage-officiel.js:24` — **et nulle part ailleurs**, non modifiable par l'environnement | Refermé le 20/07 après un audit externe. Devait rouvrir après le visa : le lot L6 de réouverture était placé « après visa T3 sur Q3/Q6 ». **Depuis l'abandon du visa le 26/07/2026, `docs/PLAN-LOTS-REGLEMENTAIRES-Q1-Q11.md:64` pose à la place les trois conditions de `docs/NOTE-DECISION-ETABLISSEMENT.md` §4** (décision écrite de l'établissement, pilote sans écart, risques acceptés nommément). Le motif écrit dans la liste des conditions bloquantes (`docs/CONDITIONS-BLOCANTES-OFFICIEL.md:37`, condition 13) est autre : double signature réelle et empreinte renforcée non encore livrées — depuis livrées | — | **C'est le point que la décision de l'établissement doit trancher**, le visa n'arrivant pas |
 | Conditions 1 à 5 — établissement, balance conforme, détecteur conforme, balance matière sans écart, sauvegarde vérifiée récente | seuil de sauvegarde : 24 h par défaut | `v8/js/data/blocage-officiel.js:84-96` | Conditions du plan audit-proof, validées par Franck le 16/07 | DEDUIT | Une fiche officielle établie sans moyen de mesure vérifié |
 | Conditions 6 et 7 — intervenant désigné, actif, titulaire d'une habilitation active et valide | — | `v8/js/data/blocage-officiel.js:137-151` | Idem | DEDUIT | Fiche signée par une personne sans titre |
 | Condition 8 — complétude (machine, fluide, pesées avant/après **différentes**, cause de l'appoint) | — | `v8/js/data/blocage-officiel.js:101-135` | Idem | DEDUIT | Fiche officielle incomplète, donc inexploitable |
@@ -489,6 +491,7 @@ conditions y **refusent** une validation. La liste complète et commentée est d
 | Conditions 14 et 15 — signatures **réelles** du technicien puis du détenteur, non périmées | voir famille K | `v8/js/data/blocage-officiel.js:222-243` | Famille K | DEDUIT | Famille K |
 | Condition 16 — **aptitude opposable** : l'habilitation couvre cette intervention précise | matrice catégorie × opération × famille de fluide × charge nominale | `v8/js/data/blocage-officiel.js:152-162` | Famille C. Distincte de la condition 7 : la 7 dit qu'une habilitation **existe**, la 16 qu'elle **couvre** | DEDUIT | Une personne habilitée sur le principe mais pas pour cette charge valide quand même |
 | Condition 17 — détection permanente obligatoire absente | voir famille G | `v8/js/data/blocage-officiel.js:165-174` | Famille G | DEDUIT | Famille G |
+| **Condition 19** — **portée de la capacité de l'ÉTABLISSEMENT** : l'attestation déclarée couvre l'intervention (catégories × activités × charge, MÊME matrice que l'aptitude de la personne — aucune grille nouvelle ; portée vide = rien d'autorisé) | fait `capaciteEtablissement` précalculé par les deux stores ; jamais en doublon des conditions 1-4 | `v8/js/data/blocage-officiel.js` (condition 19) ; moteur `habilitations.capaciteEtablissementCouvre` + miroir | Blocage n° 1 de la 4e relecture externe (27/07), TIRÉ : la portée était saisie, validée en forme, stockée, affichée — et lue par aucune règle. Lot F carte blanche du 13/08, plan `docs/PLAN-LOT-F-CAPACITE.md` | **CONSERVATOIRE** (délégation à la matrice d'aptitude, seule grille opposable du dépôt) | Si la grille de capacité d'entreprise diffère de la matrice d'aptitude, le logiciel refuse trop tôt — jamais trop tard. La délégation se remplace en UN endroit |
 | **Condition 18** — pas de fiche officielle pour un fluide **hors périmètre fluoré** (R-744, R-290, R-717) | refus | `v8/js/data/blocage-officiel.js:111-123` | Notice du CERFA 15497*04 : elle vise les fluides fluorés. Contre-épreuve du 24/07 « solide, notice lue mot à mot », mais **le verbatim n'est pas reproduit dans le dépôt** (`docs/PLAN-LOTS-REGLEMENTAIRES-Q1-Q11.md:21`). **Revirement assumé** : l'arbitrage de juillet disait l'inverse | DEDUIT | Refus d'une trace officielle qui serait admise. La traçabilité volontaire passe par le mode Formation |
 | Le critère de la condition 18 suit la **classification du moteur**, pas un attribut brut | fiche explicite, puis repli famille, puis « inconnue = hors périmètre » | `v8/js/data/blocage-officiel.js:111-123` | Revue adversariale du 24/07 : le critère d'origine était **contournable** — un fluide créé sans fiche passait, et vider la fiche du R-744 levait le blocage. Prouvé en le tirant, puis fermé | **CONSERVATOIRE** | Un fluide inclassable n'obtient pas de fiche officielle |
 | **Aucun mécanisme de dérogation** : quand une condition n'est pas réunie, le refus est sec | pas de contournement justifié | `v8/js/data/blocage-officiel.js:269-274` | Décision Q5 du 24/07 : le brouillon non validable existe déjà, sa justification se formule comme motif d'abandon, jamais comme contournement | DEDUIT | Si le droit attend une dérogation tracée, on est plus rigide que le droit. C'est la question 10 du dossier resté sans réponse |
@@ -519,6 +522,7 @@ décision écrite de l'établissement.
 | Deux signatures posées depuis la **même session** ne sont ni bloquées ni signalées | admis | Décision D1, `docs/PLAN-B3-SIGNATURE.md` | Décision de l'auteur, publiquement assumée face à l'audit du 25/07 : « exiger deux sessions bloquerait l'activité sans rien prouver de plus » (`docs/REPONSE-AUDIT-EXTERNE-2026-07-25.md:406-412`) | — | **Risque résiduel nommé** : une seule personne peut produire les deux signatures. Compensation : le **témoin de session** est désormais affiché sur la fiche et versé au dossier scellé |
 | Une signature est une **image réellement décodée**, pas un fichier de la bonne taille | décodage PNG complet, contrôle des sommes de vérification | `v8/js/data/png.js` ; `v8/js/data/signatures-mouvement.js` | Constat d'audit du 25/07 : un bloc de 2 348 octets fait de 8 octets d'en-tête et d'une phrase répétée était **accepté**, et les conditions 14 et 15 disparaissaient (`docs/PLAN-B3-SIGNATURE.md:25-40`) | DEDUIT | C'était le seul endroit où le logiciel **disait quelque chose de faux** |
 | Une case de signature **rigoureusement vierge** est refusée | refus du vide absolu | `v8/js/data/signatures-mouvement.js` | Même lot | DEDUIT | Un PNG parfaitement valide mais entièrement blanc passait pour une signature |
+| Le contrôle d'image est **rejoué à chaque lecture** : un registre EXISTANT portant une case blanche voit sa signature retomber sur « absente » | comportement conservé | `v8/js/data/signatures-mouvement.js` ; gate (a) de `docs/PLAN-B3-SIGNATURE.md` §6 | **Tranché le 13/08 (carte blanche)** : la case EST vide — le dire est un constat factuel, jamais une accusation (doctrine `png.js`) ; taire le vide d'une archive au motif qu'elle est ancienne ferait dire au logiciel autre chose que ce qu'il mesure | DEDUIT | Si un registre repris portait des cases blanches LÉGITIMES d'un autre outil, il verrait ses signatures « absentes » — état honnête : elles le sont |
 | **Aucun seuil de quantité d'encre** | borne basse de 1 Ko **retirée** | `v8/js/data/signatures-mouvement.js` | Mesure reproductible : zone jamais touchée 3 879 octets, griffure 3 893, case blanche unie 5 506 — **les populations se chevauchent**, un seuil de taille ne sépare rien. Et aucun texte ne fixe de seuil d'encre. Décision du propriétaire : une griffure de deux pixels doit passer | DEDUIT | Un seuil aurait refusé des signatures légitimes en croyant mesurer quelque chose |
 | Le logiciel ne revendique **pas** une signature avancée ou qualifiée au sens du règlement eIDAS | — | Vérifié : aucun écran, aucun document produit n'emploie ces termes (`docs/REPONSE-AUDIT-EXTERNE-2026-07-25.md:434-440`) | Honnêteté de vocabulaire | — | Revendiquer eIDAS sans le mettre en œuvre serait la faute la plus facile à opposer |
 
@@ -644,11 +648,15 @@ non corrigé, décrit au § 1 ter de `docs/POINTS-DE-FRICTION.md`.
 et non le seul dossier `documents/` :
 
 ```
-grep -rn "MENTION_FORMATION\|MODE FORMATION\|NON OFFICIEL\|non officiel" v8/js/ | grep -v "^v8/js/cerfa/"
+grep -rn "MENTION_FORMATION\|MODE FORMATION\|NON OFFICIEL\|non officiel" v8/js/ \
+  | grep -v "^v8/js/cerfa/" | grep -v "regularisation"
 ```
 
-Elle ne rend rien. La contre-épreuve, la même commande sans le filtre, rend vingt
-lignes, toutes dans `v8/js/cerfa/`.
+Elle ne rend rien. La contre-épreuve, la même commande sans les filtres, rend
+trente-trois lignes, toutes dans `v8/js/cerfa/` ou dans les deux fichiers de
+`regularisation` (le module du justificatif de régularisation et sa suite de tests —
+lot 1 branche A, 27/07/2026 : ce document porte SA marque dès sa naissance, il n'entre
+donc pas à l'inventaire ci-dessus, qui reste à vingt et un).
 
 **Tant que ce point n'est pas tranché, aucun des vingt et un documents énumérés
 ci-dessus ne doit être remis à un tiers.** La décision appartient à

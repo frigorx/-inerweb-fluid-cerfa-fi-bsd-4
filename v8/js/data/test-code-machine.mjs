@@ -61,7 +61,7 @@ verifier('familleDuType : Vitrine réfrigérée → VR', familleDuType('Vitrine 
 verifier('familleDuType : type inconnu → MA (défaut)', familleDuType('Groupe à eau glacée') === 'MA');
 verifier('familleDuType : vide → MA', familleDuType('') === 'MA');
 
-verifier('codeSite : Lycée Jacques Raynaud → JR', codeSite('Lycée Jacques Raynaud') === 'JR');
+verifier('codeSite : Lycée Antoine Vidal → AV', codeSite('Lycée Antoine Vidal') === 'AV');
 verifier('codeSite : mots vides ignorés (Lycée professionnel de la Mer → M + repli)',
   codeSite('Lycée professionnel de la Mer').length >= 2);
 verifier('codeSite : vide → ST (repli)', codeSite('') === 'ST');

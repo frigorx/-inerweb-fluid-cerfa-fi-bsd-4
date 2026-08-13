@@ -52,7 +52,7 @@ const MSG_DEJA_AU_COFFRE = 'Cette identité est déjà au coffre.';
 const MSG_PAS_AU_COFFRE = 'Cette identité n\'est pas au coffre.';
 const MSG_MOTIF_OBLIGATOIRE =
   'Motif obligatoire : chaque ouverture du coffre est journalisée avec sa ' +
-  'raison (preuve opposable).';
+  'raison (trace journalisée).';
 const MSG_PHRASE_TROP_COURTE =
   'Phrase du coffre trop courte : 14 caractères minimum. Conseil : 4 ou 5 ' +
   'mots choisis au hasard.';

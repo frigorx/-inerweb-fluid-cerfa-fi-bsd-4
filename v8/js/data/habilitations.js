@@ -561,3 +561,74 @@ export function estIntervenantIdentifiable(personne, habilitationsActives, menti
     && (((habilitationsActives && habilitationsActives.length) || 0) > 0
       || ((mentionsActives && mentionsActives.length) || 0) > 0));
 }
+
+/* ============================================================
+   Lot F carte blanche (13/08/2026) — PORTÉE DE LA CAPACITÉ DE
+   L'ÉTABLISSEMENT (4e relecture externe, blocage n° 1, tiré)
+   ============================================================ */
+
+/** Opération normalisée → activité réglementée de l'attestation de capacité. */
+export const ACTIVITE_PAR_OPERATION = Object.freeze({
+  INSTALLATION: 'MISE_EN_SERVICE',
+  MAINTENANCE: 'MAINTENANCE',
+  ETANCHEITE: 'CONTROLE',
+  RECUPERATION: 'RECUPERATION'
+});
+
+/** Régime déduit d'une catégorie de capacité (bijectif : I-IV / A1…V). */
+export function regimeDeCategorieCapacite(categorie) {
+  return CATEGORIES_2008.includes(categorie) ? '2008' : '2025';
+}
+
+/**
+ * La PORTÉE de l'attestation de capacité de l'ÉTABLISSEMENT couvre-t-elle
+ * cette intervention ? Réutilise la MATRICE D'APTITUDE
+ * (`verifierDroitIntervention` — mêmes catégories, mêmes seuils, mêmes
+ * messages) : la grille de l'arrêté n'est écrite qu'à UN endroit du dépôt.
+ * Les `categoriesAutorisees` déclarées y entrent comme des habilitations,
+ * le régime étant déduit de chaque catégorie. En PLUS de la matrice :
+ * l'activité réglementée requise par le type d'intervention doit figurer
+ * dans `activitesAutorisees`. Une portée VIDE n'autorise rien — le doute
+ * retire l'allègement, jamais l'obligation. Avant ce lot, ces deux champs
+ * étaient saisis, validés en forme, stockés, affichés — et lus par AUCUNE
+ * règle : une récupération de 8 kg passait sur un établissement déclaré
+ * « catégorie II, contrôle d'étanchéité seul » (tiré, 27/07/2026).
+ * @param {object} p
+ * @param {string[]} [p.categories]   categoriesAutorisees de l'établissement
+ * @param {string[]} [p.activites]    activitesAutorisees de l'établissement
+ * @param {string}   [p.operation]    type de mouvement du registre
+ * @param {string}   [p.fluide]       code fluide (messages, famille)
+ * @param {number}   [p.chargeKg]     charge NOMINALE de la machine
+ * @param {boolean}  [p.hermetiqueScelle] équipement hermétique opposable
+ * @returns {{autorise:boolean, motif:string}}
+ */
+export function capaciteEtablissementCouvre({
+  categories = [], activites = [], operation = null,
+  fluide = null, chargeKg = null, hermetiqueScelle = false
+} = {}) {
+  const cats = Array.isArray(categories) ? categories.filter(Boolean) : [];
+  if (cats.length === 0) {
+    return {
+      autorise: false,
+      motif: 'aucune catégorie de capacité déclarée pour l’établissement'
+    };
+  }
+  const op = operation ? operationNormalisee(operation) : null;
+  const activiteRequise = op ? (ACTIVITE_PAR_OPERATION[op] ?? null) : null;
+  const declarees = Array.isArray(activites) ? activites : [];
+  if (activiteRequise && !declarees.includes(activiteRequise)) {
+    return {
+      autorise: false,
+      motif: `activité ${activiteRequise} absente des activités déclarées `
+        + `de l’attestation (${declarees.length ? declarees.join(', ') : 'aucune'})`
+    };
+  }
+  const verdict = verifierDroitIntervention({
+    habilitations: cats.map((categorie) => ({
+      regime: regimeDeCategorieCapacite(categorie), categorie
+    })),
+    mentions: [],
+    operation, fluide, chargeKg, hermetiqueScelle
+  });
+  return { autorise: verdict.autorise, motif: verdict.motif };
+}

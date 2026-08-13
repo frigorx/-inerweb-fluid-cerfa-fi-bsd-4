@@ -56,7 +56,7 @@ import { REGIMES, CATEGORIES_2008, CATEGORIES_2025, comparerHabilitations,
   categorieCoherente, FLUIDES_MENTION, comparerMentions,
   verifierDroitIntervention, habilitationReconnue, jetonsMentionsActives,
   FIN_DELIVRANCE_2008, DATE_BUTOIR_REMISE_NIVEAU_2008,
-  DUREE_CYCLE_FORMATION_ANS, plusAnnees }
+  DUREE_CYCLE_FORMATION_ANS, plusAnnees, capaciteEtablissementCouvre }
   from './habilitations.js';
 // Signature binaire réelle des pièces jointes (audit-proof) : le contenu doit
 // concorder avec le type déclaré, jamais le MIME annoncé seul (miroir serveur).
@@ -79,7 +79,10 @@ import { verifierPlainte } from './plaintes.js';
 import { prochainNumeroSuivi, verifierNumeroSuivi, problemeNumerosSuivi,
   cleNumeroSuivi, ecartApresRemise } from './remise-filiere.js';
 
-const CLE_STOCKAGE = 'inerweb-fluide-v8-demo';
+// Exportée depuis le MODE EXERCICE (13/08) : l'effacement total du bac à
+// sable doit viser LA clé réelle de persistance, jamais une copie qui
+// divergerait en silence.
+export const CLE_STOCKAGE = 'inerweb-fluide-v8-demo';
 
 /** Base IndexedDB des contenus de pièces jointes (repli mémoire sous Node). */
 const NOM_BASE_PJ = 'inerweb-fluide-v8-pj';
@@ -121,6 +124,12 @@ const ACTIVITES_REGLEMENTEES = ['MISE_EN_SERVICE', 'MAINTENANCE', 'CONTROLE',
 
 /** Catégories d'attestation (grilles 2008 et 2025). */
 const CATEGORIES_ATTESTATION = ['I', 'II', 'III', 'IV'];
+
+// Lot F (13/08) : la capacité de l'ÉTABLISSEMENT accepte les DEUX régimes
+// (la 4e relecture l'a tiré : « A1 » passait pour une personne et était
+// refusé pour l'établissement, pendant la même transition réglementaire).
+// Miroir EXACT du serveur.
+const GRILLE_CAPACITE_ETABLISSEMENT = [...CATEGORIES_2008, ...CATEGORIES_2025];
 
 /** Décisions possibles sur un fluide récupéré (SPEC §5.8). */
 const DECISIONS_FLUIDE = ['REUTILISABLE', 'A_ANALYSER', 'DECHET'];
@@ -403,6 +412,21 @@ async function verifierChaineMouvements(mouvements) {
  * @returns {string|null} description du premier problème, ou null si sain
  */
 function verifierInvariantsDonnees(candidat) {
+  // ⭐ Lot F (13/08) — LA PORTÉE DE CAPACITÉ NE S'ÉCRIT PAS HORS GRILLE
+  // PAR L'IMPORT (4e relecture, tiré : troisième porte après l'écran et
+  // l'API). Miroir EXACT du serveur (verifierInvariantsDonneesCandidat).
+  if (candidat.etablissement) {
+    for (const categorie of candidat.etablissement.categoriesAutorisees ?? []) {
+      if (!GRILLE_CAPACITE_ETABLISSEMENT.includes(categorie)) {
+        return `établissement : catégorie de capacité inconnue (${categorie})`;
+      }
+    }
+    for (const activite of candidat.etablissement.activitesAutorisees ?? []) {
+      if (!ACTIVITES_REGLEMENTEES.includes(activite)) {
+        return `établissement : activité réglementée inconnue (${activite})`;
+      }
+    }
+  }
   for (const b of candidat.bouteilles) {
     const ref = b.code ?? b.id ?? '?';
     // ⭐ L2 (25/07) — les gardes du CRUD valent AUSSI à l'import. Attaque
@@ -1533,6 +1557,27 @@ export function creerDemoStore() {
       technicienPresent: Boolean(mouvement.technicien &&
         String(mouvement.technicien).trim()),
       intervenant,
+      // Lot F carte blanche (13/08, 4e relecture — blocage n° 1) : la
+      // PORTÉE de l'attestation de capacité de l'ÉTABLISSEMENT est enfin
+      // LUE — condition 19, même matrice que l'aptitude de la personne
+      // (charge NOMINALE, hermétique opposable). `attestee` : sans
+      // attestation déclarée, les conditions 1-4 parlent déjà — la 19 se
+      // tait. Miroir du serveur.
+      capaciteEtablissement: donnees.etablissement ? {
+        attestee: Boolean(donnees.etablissement.numAttestationCapacite),
+        verdict: capaciteEtablissementCouvre({
+          categories: donnees.etablissement.categoriesAutorisees ?? [],
+          activites: donnees.etablissement.activitesAutorisees ?? [],
+          operation: mouvement.type,
+          fluide: mouvement.fluide ?? null,
+          chargeKg: machine
+            && typeof machine.chargeNominaleKg === 'number'
+            && Number.isFinite(machine.chargeNominaleKg)
+            && machine.chargeNominaleKg > 0
+            ? machine.chargeNominaleKg : null,
+          hermetiqueScelle: machine ? hermetiqueOpposable(machine) : false
+        })
+      } : null,
       // Lot C (C1) — conditions 14-15 : signatures réelles, tri-état.
       signatureTechnicienValide: etatSignatureReelle(mouvement, 'TECHNICIEN'),
       signatureDetenteurValide: etatSignatureReelle(mouvement, 'DETENTEUR')
@@ -2349,6 +2394,25 @@ export function creerDemoStore() {
       .find((c) => c.personnelId === personnelId);
   }
 
+  /**
+   * Lot C carte blanche (13/08) : champ `technicien` substitué par la fiche
+   * VIVANTE quand le porteur (executeParId, ou validateurId pour une
+   * contre-écriture — même règle que la vue) est AU COFFRE. Reçoit une
+   * COPIE (getMouvements copie avant tri) : la donnée stockée ne bouge pas.
+   * Miroir sémantique strict de `substituerTechnicienCoffre` d'api.js.
+   */
+  function substituerTechnicienAuCoffre(mouvement) {
+    if (!mouvement || !mouvement.technicien) return mouvement;
+    const idPorteur = mouvement.executeParId
+      ?? (mouvement.contreEcritureDe ? mouvement.validateurId : null);
+    if (!idPorteur || !estAuCoffre(idPorteur)) return mouvement;
+    const fiche = donnees.personnel.find((p) => p.id === idPorteur);
+    const libelle = fiche
+      ? `${fiche.prenom ?? ''} ${fiche.nom ?? ''}`.trim() : '';
+    if (libelle) mouvement.technicien = libelle;
+    return mouvement;
+  }
+
   /** Octets → base64 (par tranches — btoa sature sur un gros tableau). */
   function octetsVersBase64(octets) {
     let binaire = '';
@@ -2570,7 +2634,12 @@ export function creerDemoStore() {
       const liste = copier(donnees.mouvements);
       liste.sort((a, b) =>
         b.date.localeCompare(a.date) || b.numero.localeCompare(a.numero));
-      return liste;
+      // Lot C carte blanche (13/08, 4e relecture, tiré) : un porteur AU
+      // COFFRE est rendu par sa fiche vivante (pseudonyme) — la
+      // substitution ne vivait que dans la VUE, l'appel direct du contrat
+      // rendait le nom réel à un compte ÉLÈVE (3e porte). exporterJSON,
+      // lui, lit `donnees` directement : le transport reste BRUT.
+      return liste.map((mv) => substituerTechnicienAuCoffre(mv));
     },
 
     async getControles() {
@@ -4567,6 +4636,17 @@ export function creerDemoStore() {
         technicien: `${validateur.prenom} ${validateur.nom}`,
         motif: String(motif).trim(),
         validateurId,
+        // Lot 1 / C2 (27/07) : QUI a fait cette écriture — miroir EXACT du
+        // serveur (server/api.js, annulerParContreEcriture). La colonne
+        // « Exécuté par » de mouvements.csv sortait VIDE pour toute
+        // contre-écriture, dans un dossier d'audit SCELLÉ. La valeur est
+        // la fiche du VALIDATEUR, résolue par verifierValidateur (côté
+        // serveur elle est en outre contrainte à la personne connectée).
+        // ⚠ Ce champ ENTRE dans l'empreinte v2 : la MÊME valeur doit être
+        // posée des deux côtés, sinon le round-trip démo↔local casse la
+        // chaîne. Rien de rétroactif : les contre-écritures déjà
+        // enregistrées gardent leur executeParId null et leur empreinte.
+        executeParId: validateur.id,
         contreEcritureDe: original.id,
         statut: 'VALIDE',
         hashEcriture: null,
@@ -4582,9 +4662,17 @@ export function creerDemoStore() {
         hashPiecesJointes: null,
         hashPdfFinal: null
       };
-      // IM-12 : même règle qu'à la validation — pas de CERFA pour un TRANSFERT
-      contreEcriture.cerfaNumero =
-        contreEcriture.type === 'TRANSFERT' ? null : contreEcriture.numero;
+      // Lot 1 branche A (décision du propriétaire, 27/07/2026) : une
+      // CONTRE-ÉCRITURE ne porte AUCUN numéro de fiche CERFA — quel que
+      // soit son type. Le CERFA 15497*04 est une fiche d'INTERVENTION sur
+      // un équipement ; aucune intervention n'a lieu le jour d'une
+      // annulation comptable. Le geste est celui du TRANSFERT, ligne d'à
+      // côté avant ce lot. Ce qui remplace la fiche : le JUSTIFICATIF DE
+      // RÉGULARISATION (v8/js/documents/regularisation.js).
+      // ⚠ Miroir STRICT de server/api.js — ce champ entre dans l'empreinte
+      // v2 : une valeur différente d'un côté casserait la chaîne au
+      // round-trip démo↔local.
+      contreEcriture.cerfaNumero = null;
       // Brique ② : la contre-écriture fige le PRP à SA validation (même
       // fluide que l'original ; si le référentiel a bougé entre-temps, les
       // deux valeurs témoignent chacune de leur époque).
@@ -4726,7 +4814,15 @@ export function creerDemoStore() {
         stockBouteillesKg,
         nbBouteilles: donnees.bouteilles.length,
         teqCo2Parc,
-        nbCerfa: donnees.mouvements.filter((mv) => mv.cerfaNumero).length,
+        // Lot 1 branche A (27/07) : une CONTRE-ÉCRITURE n'a plus de fiche
+        // CERFA. Les NOUVELLES n'ont plus de `cerfaNumero` ; les ANCIENNES
+        // gardent le leur, scellé — mais le logiciel ne leur imprime plus
+        // rien. Les compter, c'est annoncer des fiches qui n'existent pas.
+        // MÊME critère que le refus du générateur et que le tableau de
+        // bord (`contreEcritureDe`), sinon l'écran et ce compteur diraient
+        // deux choses différentes. ⚠ Miroir STRICT de server/api.js.
+        nbCerfa: donnees.mouvements.filter(
+          (mv) => mv.cerfaNumero && !mv.contreEcritureDe).length,
         nbFiches: donnees.mouvements.length,
         nbMouvements: donnees.mouvements.length,
         nbControles,
@@ -4827,7 +4923,9 @@ export function creerDemoStore() {
       const d = donneesEtab || {};
       if (d.categoriesAutorisees !== undefined) {
         for (const categorie of d.categoriesAutorisees ?? []) {
-          verifierCategorie(categorie, 'l’établissement');
+          // Lot F (13/08) : grille élargie aux deux régimes (I-IV et A1…V).
+          verifierCategorie(categorie, 'l’établissement',
+            GRILLE_CAPACITE_ETABLISSEMENT);
         }
       }
       if (d.activitesAutorisees !== undefined) {
@@ -6125,7 +6223,7 @@ export function creerDemoStore() {
       if (episode.acquitteeLe) return formaterEpisode(episode);
       episode.acquitteeLe = new Date().toISOString();
       episode.acquitteePar = par ?? null;
-      // Preuve opposable : la prise de connaissance est consignée au journal.
+      // Trace consignée : la prise de connaissance est consignée au journal.
       journaliser(par, 'ACQUITTEMENT_ALERTE', idAlerte, episode.titre);
       persisterEtNotifier();
       return formaterEpisode(episode);

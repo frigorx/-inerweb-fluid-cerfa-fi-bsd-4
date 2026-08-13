@@ -42,16 +42,17 @@ permettront de décider ensuite.
 | Dernier commit modifiant le **code livré** | `2ca4aa0` du 26/07/2026 | `git log -1 --format=%h -- server v8 outils` |
 | Dernier commit du dépôt (**documentation comprise**) | à relever à la signature — la présente note et ses annexes sont commitées **après** la version qu'elles décrivent, aucun numéro fixe ne peut donc être écrit ici | `git log -1 --format=%h` |
 | Empreinte de l'archive livrée | ................................ (à relever à la livraison) | `node outils/fabriquer-paquet.mjs` écrit le fichier `.sha256` à côté de l'archive |
-| Filet de tests | **TOUT VERT — 121 exécutions** ; durée de l'ordre de **100 secondes** (mesuré le 26/07/2026) | `node outils/lancer-tests.mjs --tout` |
-| Suite de refus (sécurité négative) | **207 réussies, 0 en échec** (mesuré le 26/07/2026) | `node server/test-securite-negative.mjs` |
+| Filet de tests | **TOUT VERT — 137 exécutions** ; durée de l'ordre de **100 secondes** (mesuré le 27/07/2026) | `node outils/lancer-tests.mjs --tout` |
+| Suite de refus (sécurité négative) | **207 réussies, 0 en échec** (mesuré le 27/07/2026) | `node server/test-securite-negative.mjs` |
 | Mode Officiel | **FERMÉ** par un verrou unique | `server/blocage-officiel.js:24` et `v8/js/data/blocage-officiel.js:31` |
-| Conséquence du verrou | aucune fiche opposable n'est produite ; **seul le CERFA** porte « MODE FORMATION — DOCUMENT NON OFFICIEL » (cadre 14 et filigrane). **Dix-neuf autres documents produits ne portent aucune marque** — ils sont énumérés un par un à l'[inventaire du § 5.3](#inventaire-documents-sans-marque) *(lignes R26 et R34)* | `v8/js/cerfa/generateur.js:93`, `:538`, `:754` ; inventaire et commande de vérification au § 5.3 |
+| Conséquence du verrou | aucune fiche opposable n'est produite ; **le CERFA et le justificatif de régularisation** portent « MODE FORMATION — DOCUMENT NON OFFICIEL » (cadre 14 et filigrane pour le premier ; bandeau intérieur, visible à l'impression, pour le second). **Vingt et un autres documents produits ne portent aucune marque** — ils sont énumérés un par un à l'[inventaire du § 5.3](#inventaire-documents-sans-marque) *(lignes R26 et R34)* | `v8/js/cerfa/generateur.js:93`, `:538`, `:754` ; `v8/js/documents/regularisation.js` ; inventaire et commande de vérification au § 5.3 |
 | Surface fonctionnelle | 96 méthodes de contrat (v13), 35 migrations de base (n° 2 à 36) | `v8/js/data/contrat.js`, `server/migrations.js` |
 
-> Les deux chiffres de tests ci-dessus ont été **mesurés le 26/07/2026 sur cette version**,
+> Les deux chiffres de tests ci-dessus ont été **mesurés le 27/07/2026 sur cette version**,
 > pas repris d'un document antérieur. La **durée** du filet est écrite comme un ordre de
-> grandeur, et c'est volontaire : elle varie d'une exécution à l'autre — 96,8 s, 97,9 s et
-> 98,8 s à trois mesures du même jour sur la même version. Une mesure qui bouge ne se publie
+> grandeur, et c'est volontaire : elle varie d'une exécution à l'autre — 104,0 s à la mesure
+> du 27/07, et 96,8 s, 97,9 s et 98,8 s à trois mesures de la veille sur la version qui
+> comptait 121 exécutions. Une mesure qui bouge ne se publie
 > pas au centième ; ce qui compte est le nombre d'exécutions, le verdict, et la commande qui
 > les refait. La suite de sécurité, elle, mêle des attaques réellement tirées contre un
 > serveur et des preuves citées ; `SECURITE.md` annonce 118 attaques tirées, chiffre que nous
@@ -61,9 +62,11 @@ permettront de décider ensuite.
 
 ## 3. Ce qui a été vérifié, et par quel moyen
 
-- **Trois relectures externes successives**, toutes traitées. **Deux verdicts défavorables
-  en l'état sont établis dans le dépôt ; pour la troisième, aucun verdict n'y est
-  enregistré.** Le détail, tel qu'il est prouvable :
+- **Quatre relectures externes successives.** Les trois premières sont traitées ; **la
+  quatrième ne l'est que pour partie, et son verdict est défavorable** (voir le détail plus
+  bas et le § 5.1). **Trois verdicts défavorables en l'état sont établis dans le dépôt ;
+  pour la première relecture, aucun verdict n'y est enregistré.** Le détail, tel qu'il est
+  prouvable :
   - **15/07/2026** — relecture externe sur le code complet. **Aucun verdict n'est consigné.**
     Le dépôt n'en garde que le produit : elle a servi de source à la feuille de route du
     chantier réglementaire (`docs/PLAN-AUDIT-PROOF-2026.md`, en tête). Écrire qu'elle a été
@@ -77,6 +80,21 @@ permettront de décider ensuite.
   - **25/07/2026** — troisième relecture externe, **31 constats**, chacun traité et raccordé
     (`docs/TABLE-CONSTATS-AUDIT-2026-07-25.md`, réponse détaillée dans
     `docs/REPONSE-AUDIT-EXTERNE-2026-07-25.md`).
+  - **27/07/2026** — quatrième relecture externe, sur le paquet du 26/07. Verdict :
+    **« NO-GO comme registre officiel unique ; GO conditionnel pour la démonstration et la
+    formation locale »**, 16 constats. **Traitement en cours, et il n'est pas achevé.** Les
+    seize constats ont été instruits un par un et **tirés en bac à sable**, pas seulement
+    relus ; six corrections courtes sont livrées (le « lot 0 », `CHANGELOG.md` du
+    27/07/2026). **Restent ouverts, et ils comptent** : la portée de l'attestation de
+    capacité de l'établissement n'est confrontée à aucune intervention (le blocage n° 1 de
+    cette relecture, sans effet aujourd'hui puisque le mode Officiel est fermé, mais
+    bloquant avant toute réouverture) ; le CERFA produit pour une contre-écriture imprime la
+    quantité au signe inverse et des blocs de signature pré-remplis, **dès aujourd'hui, en
+    mode Formation** ; le verrouillage du compte après cinq essais est perpétuel et sans
+    porte de secours ; un équipement à plusieurs circuits ou à plusieurs fluides peut faire
+    disparaître une obligation de contrôle. Ces quatre points ne sont pas des risques à
+    accepter : ce sont des travaux à faire, et la présente note ne doit pas être signée en
+    laissant croire qu'ils sont réglés.
   **Attention : ces relectures ne sont pas des audits d'organisme agréé.** Le dépôt attribue
   les deux premières à un modèle de langue tiers (ChatGPT). Elles ont de la valeur — elles ont
   trouvé des défauts réels, dont plusieurs graves — mais elles **n'ont aucune portée
@@ -93,8 +111,8 @@ permettront de décider ensuite.
   lot B2 ; `docs/REPONSE-AUDIT-EXTERNE-2026-07-25.md` § 5). **Ces 5,5 kg sont des masses du
   jeu d'essai, pas du registre du lycée : aucune déclaration fausse n'a été transmise à
   l'autorité.** Le défaut a été trouvé et refermé avant toute livraison.
-- **Un filet de tests rejoué intégralement** le 26/07/2026, avant l'établissement de la
-  présente note : `node outils/lancer-tests.mjs --tout` → « TOUT VERT — 121 exécutions »,
+- **Un filet de tests rejoué intégralement** le 27/07/2026, après le lot 0 :
+  `node outils/lancer-tests.mjs --tout` → « TOUT VERT — 137 exécutions »,
   durée de l'ordre de 100 secondes. **Ce que cela prouve est borné** : l'absence de
   régression sur ce qui est déjà testé, rien de plus (voir la ligne R22 du § 5).
 - **Un inventaire écrit des limites connues** : `docs/POINTS-DE-FRICTION.md` (établi le
@@ -266,11 +284,27 @@ Observations sur le § 5.1 : ...................................................
       bouteille est regonflée d'autant sans écriture, **aucune alerte ne se déclenche**. Le
       choix est délibéré — l'autre réglage accusait par écrit des opérations valides — mais
       c'est un trou dans le rapprochement, borné à une journée par remise. *(§ 9 bis)*
-- [ ] **R29 — Le mot « inaltérable » est employé sans réserve à trois endroits de la
+- [x] **R29 — Le mot « inaltérable » était employé sans réserve à trois endroits de la
       documentation et des écrans** (`index.html`, `RGPD.md`, la notice affichée dans
       l'application), alors qu'il ne signifie jamais que « inaltérable **par
       l'application** » : qui a la main sur le fichier de base peut le remplacer. C'est le
-      mot qui, seul, peut faire prendre le registre pour ce qu'il n'est pas. *(§ 9)*
+      mot qui, seul, peut faire prendre le registre pour ce qu'il n'est pas. **Corrigé
+      (lot B4, 27/07) : les trois emplois portent désormais la même précision que
+      README.md.** Le balayage étendu à la famille entière (le premier inventaire ne
+      traquait que ce seul mot et a laissé passer « inviolable ») a trouvé et corrigé
+      deux autres emplois d'« inviolable » (`docs/SPEC-V8.md:168`, `server/db.js:21`) et
+      plusieurs emplois de « preuve opposable » qui revendiquaient une valeur probante
+      forte non tenue (`RGPD.md:107`, `v8/js/views/conformite.js:213`,
+      `v8/js/data/contrat.js:345`, `MSG_MOTIF_OBLIGATOIRE` du coffre des identités
+      serveur+front), ainsi qu'un « mot de passe chiffré » qui devait dire « haché »
+      (`v8/js/views/rgpd.js:427` — le mot de passe est haché par scrypt, jamais
+      déchiffrable). **La revue adversariale du même jour a trouvé deux emplois que ce
+      balayage à la main déclarait pourtant avoir couverts** (`server/api.js:6409`
+      « le registre redevient inviolable », et `index.html:244` « Toute altération se
+      voit. », deux lignes sous le titre qui venait d'être qualifié) : corrigés à leur
+      tour, et la règle est désormais tenue par une suite qui balaye les surfaces
+      vivantes à chaque build (`outils/test-mots-qui-promettent.mjs`), plus par une
+      relecture. Détail : `docs/POINTS-DE-FRICTION.md` § 9. *(§ 9)*
 - [ ] **R11 — Un déni de service sur l'écran de connexion est confirmé, mesuré et non
       corrigé** ; à traiter avant toute activation de l'accès par le réseau local. *(§ 10)*
 - [ ] **R12 — Les signatures ne sont pas des signatures électroniques avancées ou qualifiées**
@@ -314,7 +348,7 @@ Observations sur le § 5.1 : ...................................................
       accessibilité jamais auditée.** *(§ 12)*
 - [ ] **R21 — Un échec de test signalé par la relecture du 25/07 n'a pas pu être reproduit ni
       identifié** ; il est déclaré plutôt que passé sous silence. *(§ 12)*
-- [ ] **R22 — Le filet vert ne prouve pas l'absence de défaut.** Les 121 exécutions prouvent
+- [ ] **R22 — Le filet vert ne prouve pas l'absence de défaut.** Les 137 exécutions prouvent
       l'absence de régression sur ce qui est déjà testé ; sur les trois derniers lots, six
       défauts ont été introduits par les correctifs eux-mêmes. *(§ 14)*
 - [ ] **R23 — Résidus mineurs déclarés** (feuille de route interne périmée, identifiants
@@ -397,7 +431,10 @@ Observations : .................................................................
 
 **Une précision, pour éviter un contresens.** À l'intérieur des quatre archives, les
 **fiches CERFA sont bien marquées** : elles sortent du même générateur
-(`v8/js/cerfa/generateur.js:538`, `:754`). Ce qui ne l'est pas, c'est tout le reste de
+(`v8/js/cerfa/generateur.js:538`, `:754`). Depuis le 27/07/2026, les **justificatifs de
+régularisation** (`regularisations/*.html`, la pièce qui remplace le CERFA d'une écriture
+d'annulation) le sont aussi, et par le même texte
+(`v8/js/documents/regularisation.js`). Ce qui ne l'est pas, c'est tout le reste de
 l'archive — sommaire, fichiers CSV, chronologie, vérificateur — et le certificat qui
 l'accompagne.
 
@@ -411,14 +448,21 @@ la personne qui le demande. Ce sont des fichiers de données, pas des documents 
 pourraient passer pour une pièce du registre.
 
 **Vérification par soi-même**, couvrant bien ce qui est affirmé — tout `v8/js/`, et non le
-seul dossier `documents/` :
+seul dossier `documents/`. Les documents MARQUÉS — le CERFA et le justificatif de
+régularisation — sont écartés du filtre, et eux seuls :
 
 ```
-grep -rn "MENTION_FORMATION\|MODE FORMATION\|NON OFFICIEL\|non officiel" v8/js/ | grep -v "^v8/js/cerfa/"
+grep -rn "MENTION_FORMATION\|MODE FORMATION\|NON OFFICIEL\|non officiel" v8/js/ \
+  | grep -v "^v8/js/cerfa/" | grep -v "regularisation"
 ```
 
-Elle ne rend **rien**. La contre-épreuve est la même commande sans le filtre : elle rend
-vingt lignes, toutes dans `v8/js/cerfa/`.
+Elle ne rend **rien**. La contre-épreuve est la même commande sans les filtres : elle rend
+trente-sept lignes, toutes dans `v8/js/cerfa/` ou dans les trois fichiers de
+`regularisation` (le module du justificatif, sa modale d'aperçu et sa suite de tests).
+
+> ⚠️ La suite `outils/test-inventaire-documents-sans-marque.mjs` ne se contente plus du
+> mot « regularisation » dans le chemin : elle nomme les **trois fichiers exactement**
+> (revue du 27/07/2026). Une exception qui s'élargit toute seule n'est plus une exception.
 
 > **Consigne d'attente.** Tant que le point n'est pas tranché par l'établissement, **aucun
 > des vingt et un documents ci-dessus ne doit être remis à un tiers**, et l'ajout de la ligne
@@ -442,7 +486,8 @@ Ces conditions sont proposées ; l'établissement les arrête.
    donnée), qu'il vienne du logiciel ou de la saisie. Un écart non expliqué est un écart
    bloquant.
 5. **Le mode Officiel reste fermé pendant tout le pilote.** L'ouverture ne peut résulter que
-   d'une décision écrite prise au vu du § 7. **Attention : seul le CERFA porte la mention de
+   d'une décision écrite prise au vu du § 7. **Attention : seuls le CERFA et le justificatif
+   de régularisation portent la mention de
    formation** (ligne R26) ; **vingt et un autres documents n'en portent aucune** — la liste est
    à l'[inventaire du § 5.3](#inventaire-documents-sans-marque) — et **le repère de mode
    affiché à l'écran ne s'imprime pas** (ligne R34). Tant que ce point n'est pas corrigé, une
@@ -514,8 +559,9 @@ Elle est simple parce que le registre existant n'a jamais cessé d'être tenu pe
    sont, par construction, non modifiables et non effaçables. Une archive chiffrée est faite et
    rangée avec la présente note.
 4. **Les documents déjà produits** n'ont pas à être retirés d'un dossier réglementaire :
-   produits verrou fermé, ils n'y ont pas leur place. **Mais seul le CERFA le dit sur
-   lui-même** (ligne R26) : les **vingt et un autres** documents, énumérés à
+   produits verrou fermé, ils n'y ont pas leur place. **Mais seuls le CERFA et le
+   justificatif de régularisation le disent sur
+   eux-mêmes** (ligne R26) : les **vingt et un autres** documents, énumérés à
    l'[inventaire du § 5.3](#inventaire-documents-sans-marque), ne portent aucune marque — et
    même leur impression ne conserve pas le repère de mode affiché à l'écran (ligne R34).
    Leur retrait éventuel suppose donc de savoir où ils sont allés, et c'est le seul moyen de

@@ -93,6 +93,26 @@ const TYPE_VERS_CASE = {
 export const MENTION_FORMATION = 'MODE FORMATION — DOCUMENT NON OFFICIEL — ' +
   'NE PAS UTILISER POUR UNE INTERVENTION RÉELLE';
 
+/** Lot 1 branche A (décision du propriétaire, 27/07/2026) — refus canonique
+ *  d'une fiche CERFA pour une CONTRE-ÉCRITURE. Le message ne se contente
+ *  pas de refuser : il RENVOIE vers la pièce qui existe.
+ *
+ *  HISTORIQUE, pour qui rouvrirait le sujet. Le matin du 27/07, ce module
+ *  a porté pendant quelques heures un CERFA « honnête » de contre-écriture
+ *  (quantité signée, mention d'annulation avec le numéro annulé, motif
+ *  imprimé, filigrane, blocs de signature vidés). Le propriétaire a
+ *  tranché l'après-midi : le fond du problème n'était pas la rédaction du
+ *  CERFA, c'était le CERFA lui-même. Toute cette matière vit désormais
+ *  dans `documents/regularisation.js`, sur un document qui ne ressemble
+ *  pas à un formulaire officiel — c'est tout le point de la décision.
+ *  L'historique git garde la variante CERFA si la branche (B) du plan
+ *  devait un jour être choisie (elle exige de toute façon une réécriture
+ *  de la machine à états du registre). */
+export const MSG_CERFA_CONTRE_ECRITURE =
+  'Une écriture d’annulation (contre-écriture) ne donne pas lieu à une '
+  + 'fiche d’intervention CERFA : aucune intervention n’a eu lieu à sa '
+  + 'date. Ouvrez le JUSTIFICATIF DE RÉGULARISATION de cette écriture.';
+
 /** CM-4b : préfixe de la mention d'anomalie de surcharge de réemploi
  *  (cadre 14) — mention SYSTÈME (comme MENTION_FORMATION), jamais exigée
  *  de l'élève à la correction. La surcharge est SIGNALÉE, jamais bloquée
@@ -204,6 +224,9 @@ async function assemblerContexte(store, { source, id }, options = {}) {
     bouteilleSrc: null,
     bouteilleDst: null,
     quantiteKg: null,
+    // Lot B carte blanche (13/08) : PRP figé à la validation du mouvement,
+    // null si l'écriture n'en porte pas (antérieure au figeage, brouillon).
+    prpFige: null,
     // Résultat du contrôle d'étanchéité lié (cadre 10)
     resultatControle: null,      // 'CONFORME' | 'FUITE' | null
     localisationFuite: null,
@@ -239,6 +262,24 @@ async function assemblerContexte(store, { source, id }, options = {}) {
         'Un transfert entre contenants ne donne pas lieu à une fiche ' +
         'd’intervention machine : consultez le registre des mouvements.');
     }
+    // Lot 1 branche A (décision du propriétaire, 27/07/2026) : une
+    // CONTRE-ÉCRITURE ne donne lieu à AUCUNE fiche CERFA. Le CERFA
+    // 15497*04 atteste une INTERVENTION sur un équipement ; le jour d'une
+    // annulation, aucune intervention n'a lieu. Ce qu'elle produit est un
+    // JUSTIFICATIF DE RÉGULARISATION (documents/regularisation.js), qui
+    // nomme la fiche annulée, le motif, l'auteur et la masse signée.
+    //
+    // ⚠️ LE REFUS SE PORTE SUR `contreEcritureDe`, JAMAIS SUR
+    // `cerfaNumero` : les contre-écritures DÉJÀ enregistrées gardent leur
+    // `cerfaNumero` scellé (le passé ne se réécrit pas, le déclencheur
+    // WORM l'interdit), mais elles cessent elles aussi d'être IMPRIMÉES
+    // en CERFA — sans qu'une seule donnée soit touchée. Le refus est posé
+    // ICI, dans assemblerContexte, exactement comme celui du TRANSFERT :
+    // il couvre donc du même geste genererCerfaPdf, calculerChampsCerfa
+    // et la correction de copie d'élève.
+    if (mouvement.contreEcritureDe) {
+      throw new Error(MSG_CERFA_CONTRE_ECRITURE);
+    }
     contexte.numero = mouvement.numero;
     contexte.mode = mouvement.mode ?? 'OFFICIEL';
     contexte.typeIntervention = mouvement.type;
@@ -250,10 +291,19 @@ async function assemblerContexte(store, { source, id }, options = {}) {
     contexte.bouteilleDst =
       bouteilles.find((b) => b.id === mouvement.bouteilleDstId) || null;
     contexte.quantiteKg = mouvement.quantiteKg;
+    // Lot B carte blanche (13/08, 4e relecture) : le PRP FIGÉ voyage
+    // jusqu'au document. Sans lui, une fiche scellée se réimprimait au PRP
+    // COURANT du référentiel : « une correction de référentiel ne réécrit
+    // pas une fiche déjà signée » était vrai de la DONNÉE et faux du
+    // DOCUMENT. `!= null` : un PRP figé de 0 (R-744...) est une valeur
+    // RÉELLE, jamais confondue avec l'absence.
+    contexte.prpFige = mouvement.prpFige != null
+      && Number.isFinite(Number(mouvement.prpFige))
+      ? Number(mouvement.prpFige) : null;
     contexte.operateurNom = mouvement.technicien ?? null;
     contexte.signatureDataUrl = mouvement.signatureDataUrl ?? null;
     if (mouvement.causeMouvement) {
-      // IM-14 : la cause saisie est reportée au cadre 14 (observations)
+      // IM-14 : la cause saisie est reportée au cadre 14 (observations).
       contexte.observations.push(`Cause : ${String(mouvement.causeMouvement)}`);
     }
     if (mouvement.statut === 'ANNULE') {
@@ -390,7 +440,8 @@ async function assemblerContexte(store, { source, id }, options = {}) {
  * @returns {Promise<{texte: Object<string,string>,
  *   cases: Object<string,boolean>, radio: '1'|'2'|null, numero: string,
  *   mode: string, signatureDataUrl: string|null,
- *   signatureTechnicienPng: string|null, signatureDetenteurPng: string|null}>}
+ *   signatureTechnicienPng: string|null,
+ *   signatureDetenteurPng: string|null}>}
  */
 export async function calculerChampsCerfa(store, { source, id }, options = {}) {
   const ctx = await assemblerContexte(store, { source, id }, options);
@@ -401,6 +452,13 @@ export async function calculerChampsCerfa(store, { source, id }, options = {}) {
     : null;
   const fluideCode = machine?.fluide ?? ctx.bouteilleSrc?.fluide ?? null;
   const fluideRef = ctx.fluides.find((f) => f.code === fluideCode) || null;
+  // Lot B carte blanche (13/08) : le document d'une écriture qui porte un
+  // PRP FIGÉ se calcule sur LUI (cadre 3 teqCO2 ET cadre 7 seuils), jamais
+  // sur le référentiel courant — corrigé depuis, il raconterait une autre
+  // fiche. Sans PRP figé : repli au référentiel, comportement d'avant.
+  const fluideDocument = ctx.prpFige !== null && fluideRef
+    ? { ...fluideRef, gwpAr4: ctx.prpFige }
+    : fluideRef;
   const formation = ctx.mode === 'FORMATION';
 
   // ---- Cadre 1 — opérateur (établissement, multiligne) ----
@@ -429,8 +487,8 @@ export async function calculerChampsCerfa(store, { source, id }, options = {}) {
     machine.numSerie ? `N° série : ${machine.numSerie}` : ''
   ].filter(Boolean).join('\n') : '';
   const chargeNominale = Number(machine?.chargeNominaleKg);
-  const teqNominale = Number.isFinite(chargeNominale) && fluideRef
-    ? chargeNominale * (Number(fluideRef.gwpAr4) || 0) / 1000
+  const teqNominale = Number.isFinite(chargeNominale) && fluideDocument
+    ? chargeNominale * (Number(fluideDocument.gwpAr4) || 0) / 1000
     : null;
 
   // ---- Cadre 4 — nature de l'intervention (table unique) ----
@@ -456,7 +514,7 @@ export async function calculerChampsCerfa(store, { source, id }, options = {}) {
   // ne masque pas un équipement installé, on refuse seulement d'en tirer
   // un allègement non dû. Évaluée à la date d'intervention (stable).
   const cadre7 = machine
-    ? calculerCadre7(fluideRef, machine.chargeNominaleKg,
+    ? calculerCadre7(fluideDocument, machine.chargeNominaleKg,
         detectionEffective(machine, ctx.date).compte, ctx.date)
     : { caseSeuil: null, caseFrequence: null, frequenceMois: null };
 
@@ -470,6 +528,12 @@ export async function calculerChampsCerfa(store, { source, id }, options = {}) {
   const estRecuperation =
     ctx.typeIntervention === 'RECUPERATION_MAINTENANCE' ||
     ctx.typeIntervention === 'RECUPERATION_DEMANTELEMENT';
+  // La case du cadre 11 porte la quantité de l'intervention en valeur
+  // absolue : le SENS est déjà dit par la case elle-même (A = fluide
+  // vierge chargé, D/E = fluide récupéré). Une écriture d'annulation
+  // n'atteint jamais ce point : elle est refusée en tête de
+  // `assemblerContexte`, et sa masse — signée — est portée par le
+  // JUSTIFICATIF DE RÉGULARISATION (documents/regularisation.js).
   const quantite = Number.isFinite(Number(ctx.quantiteKg))
     ? Math.abs(Number(ctx.quantiteKg))
     : null;
@@ -552,6 +616,28 @@ export async function calculerChampsCerfa(store, { source, id }, options = {}) {
   const sigDet = ctx.signatureDetenteur;
   const nomComplet = (s) => `${s.prenom} ${s.nom}`.trim();
 
+  // ⚠️ LE PRÉ-REMPLISSAGE DES BLOCS N'EST PAS UN DÉFAUT : le CERFA sert
+  // aussi de SUJET D'EXERCICE (l'élève imprime la fiche, la remplit et la
+  // signe à la main), et `correction.js` corrige sa copie contre ces blocs
+  // HISTORIQUES. C'est l'usage QUOTIDIEN du logiciel — ne pas y toucher.
+  const champsSignature = {
+    'Sign_Operateur_Nom': sigTech ? nomComplet(sigTech)
+      : (ctx.operateurNom ?? ''),
+    'Sign_Operateur_Qualite': sigTech
+      ? (sigTech.qualite ?? qualiteOperateur)
+      : qualiteOperateur,
+    'Sign_Operateur_Date': sigTech ? fmtDateFr(sigTech.dateHeure)
+      : (ctx.operateurNom ? dateFr : ''),
+    'Sign_Detenteur_Nom': sigDet ? nomComplet(sigDet)
+      : (detenteur.raisonSociale ?? ''),
+    'Sign_Detenteur_Qualite': sigDet
+      ? (sigDet.qualite ?? (sigDet.parDelegation
+        ? `Par délégation du détenteur (${sigDet.organisation})`
+        : 'Détenteur de l’équipement'))
+      : 'Détenteur de l’équipement',
+    'Sign_Detenteur_Date': sigDet ? fmtDateFr(sigDet.dateHeure) : dateFr
+  };
+
   // ==========================================================
   // Remplissage : les 72 champs officiels sont TOUS traités
   // (texte « » = volontairement vide, case décochée = volontaire).
@@ -614,21 +700,7 @@ export async function calculerChampsCerfa(store, { source, id }, options = {}) {
     // Cadre 14 — observations
     '14_Observations': observations.join('\n'),
     // Signatures (réelles en priorité — lot C, C4)
-    'Sign_Operateur_Nom': sigTech ? nomComplet(sigTech)
-      : (ctx.operateurNom ?? ''),
-    'Sign_Operateur_Qualite': sigTech
-      ? (sigTech.qualite ?? qualiteOperateur)
-      : qualiteOperateur,
-    'Sign_Operateur_Date': sigTech ? fmtDateFr(sigTech.dateHeure)
-      : (ctx.operateurNom ? dateFr : ''),
-    'Sign_Detenteur_Nom': sigDet ? nomComplet(sigDet)
-      : (detenteur.raisonSociale ?? ''),
-    'Sign_Detenteur_Qualite': sigDet
-      ? (sigDet.qualite ?? (sigDet.parDelegation
-        ? `Par délégation du détenteur (${sigDet.organisation})`
-        : 'Détenteur de l’équipement'))
-      : 'Détenteur de l’équipement',
-    'Sign_Detenteur_Date': sigDet ? fmtDateFr(sigDet.dateHeure) : dateFr
+    ...champsSignature
   };
 
   const cases = {

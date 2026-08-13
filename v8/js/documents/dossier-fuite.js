@@ -11,6 +11,8 @@
 //   04-CONTROLES.csv                   — détection + contrôles intermédiaires/clôture
 //   05-MOUVEMENTS-PENDANT-FUITE.csv    — mouvements opposables de la fenêtre
 //   cerfa/<numero>.pdf                 — CERFA 15497*04 des mouvements de la fenêtre
+//   regularisations/<numero>.html      — justificatif des écritures d'annulation
+//                                        de la fenêtre (lot 1 branche A)
 // Le calcul du dossier lui-même vient de data/dossiers-fuite.js (module cœur,
 // non modifié ici) : ce module ne fait que le mettre en forme pour l'export.
 // Module ES, testable sous Node (contrat DataStore + Web Crypto).
@@ -21,6 +23,9 @@ import { genererCerfaPdf } from '../cerfa/generateur.js';
 import {
   assemblerDossier, nomSur, objetsVersCsv, paireCsv
 } from './dossier-commun.js';
+import {
+  estContreEcriture, assemblerJustificatif, justificatifHtmlAutonome
+} from './regularisation.js';
 
 /** Statuts de mouvement inscrits au registre (donc porteurs d'un CERFA). */
 const STATUTS_REGISTRE = ['VALIDE', 'ANNULE'];
@@ -189,9 +194,40 @@ export async function genererDossierFuite(store, machineRef, controleFuiteId) {
     contenu: objetsVersCsv(dossier.mouvementsPendantFuite)
   });
 
-  for (const mv of dossier.mouvementsPendantFuite.filter(
-    (m) => STATUTS_REGISTRE.includes(m.statut))) {
+  // ⚠ Lot 1 branche A (27/07/2026) : même règle qu'au dossier d'audit —
+  // une CONTRE-ÉCRITURE ne donne pas de CERFA (aucune intervention n'a eu
+  // lieu à sa date). Sans ce filtre, le générateur refusait et l'archive
+  // scellée embarquait un fichier « CERFA non généré » : un refus PRÉVU
+  // aurait eu l'air d'une panne. La pièce n'est pas retirée, elle est
+  // REMPLACÉE par le justificatif de régularisation.
+  const auRegistre = dossier.mouvementsPendantFuite.filter(
+    (m) => STATUTS_REGISTRE.includes(m.statut));
+  for (const mv of auRegistre.filter((m) => !estContreEcriture(m))) {
     await ajouterCerfa(store, entreesData, 'mouvement', mv.id);
+  }
+  const annulations = auRegistre.filter(estContreEcriture);
+  if (annulations.length) {
+    // `clients` : le DÉTENTEUR de l'équipement est souvent un TIERS ; sans
+    // lui le document ne nommerait que le lycée, et le lecteur croirait le
+    // matériel à lui.
+    const [tousMouvements, bouteilles, personnel, clients, etablissement] =
+      await Promise.all([
+        store.getMouvements(), store.getBouteilles(), store.getPersonnel(),
+        store.getClients(), store.getEtablissement()
+      ]);
+    for (const contre of annulations) {
+      // La liste de la fenêtre de fuite est un EXTRAIT : l'écriture
+      // annulée peut être hors fenêtre, d'où le registre complet ici.
+      const complet = tousMouvements.find((m) => m.id === contre.id) ?? contre;
+      const faits = assemblerJustificatif({
+        mouvement: complet, mouvements: tousMouvements, machines: [machine],
+        bouteilles, fluides, personnel, clients, etablissement
+      });
+      entreesData.push({
+        nom: `regularisations/${nomSur(complet.numero ?? complet.id)}.html`,
+        contenu: justificatifHtmlAutonome(faits)
+      });
+    }
   }
 
   const code = machine.codePublic || machine.id;

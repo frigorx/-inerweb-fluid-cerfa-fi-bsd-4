@@ -30,9 +30,21 @@
  * Sécurité (règles V9-E5 non négociables) :
  *   - Le rôle vient TOUJOURS de la session serveur, jamais du corps de la
  *     requête (creerCompte lit contexte.role, jamais params.role appelant).
- *   - Message d'échec de connexion UNIQUE, que le login existe ou non.
- *   - Verrouillage vérifié AVANT toute tentative de vérification du mot de
- *     passe (un compte verrouillé refuse même le bon mot de passe).
+ *   - Message d'échec de connexion UNIQUE, que le login existe ou non —
+ *     VERROU COMPRIS depuis la 4e relecture externe (27/07/2026, corrigé le
+ *     13/08) : l'ancien « Compte verrouillé. » ne sortait que pour un login
+ *     EXISTANT — cinq requêtes suffisaient à énumérer les identifiants
+ *     malgré le message unique. L'état de verrou reste visible de l'ADMIN
+ *     (listerComptes) ; le CLI server/secours-compte.js déverrouille depuis
+ *     le poste.
+ *   - Verrouillage : un compte verrouillé refuse même le bon mot de passe
+ *     (décision V9-E5 maintenue) ; le coût d'un scrypt est payé sur TOUS
+ *     les chemins de refus, verrou compris (aucune asymétrie de temps).
+ *   - A14 (13/08) : la vérification du mot de passe est ASYNCHRONE
+ *     (comptes.verifierMotDePasseDetailAsync — crypto.scrypt dans le pool
+ *     de threads, file bornée) : un déluge de connexions ne fige plus la
+ *     boucle d'événements du serveur ; la file pleine répond 503, jamais
+ *     un gel.
  *   - Écritures multi-tables (échecs/déverrouillage/dernière connexion +
  *     création de session) dans db.transaction() (ré-entrante).
  *   - Poser/lever le cookie iwf_session est laissé à serveur.js (qui connaît
@@ -48,8 +60,16 @@ const comptes = require('./comptes.js');
 const sessions = require('./sessions.js');
 const { creerPremierAdmin } = require('./creer-admin.js');
 
-/** Message d'échec de connexion UNIQUE (règle non négociable V9-E5). */
-const MSG_ECHEC_CONNEXION = 'Identifiant ou mot de passe incorrect.';
+/**
+ * Message d'échec de connexion UNIQUE (règle non négociable V9-E5),
+ * rendu sur TOUS les refus : login inexistant, compte désactivé, mot de
+ * passe faux, compte verrouillé. Il n'AFFIRME aucune cause (en désigner
+ * une serait fausse dans les autres cas — motif faux, doctrine maison) et
+ * les énonce toutes : rien à apprendre en comparant les réponses.
+ */
+const MSG_ECHEC_CONNEXION =
+  'Connexion refusée : vérifiez l\'identifiant et le mot de passe. Après ' +
+  'plusieurs échecs, le compte est temporairement verrouillé (15 minutes).';
 
 /**
  * Couple hash+sel LEURRE, dérivé une seule fois au chargement du module. Sert
@@ -130,7 +150,7 @@ const HANDLERS = {
    * — c'est serveur.js qui pose le cookie iwf_session à partir de
    * jetonClair (ce module ne connaît pas la réponse HTTP).
    */
-  connexion(params, contexte) {
+  async connexion(params, contexte) {
     const login = typeof params?.login === 'string' ? params.login.trim() : '';
     const motDePasse = typeof params?.motDePasse === 'string'
       ? params.motDePasse : '';
@@ -154,7 +174,7 @@ const HANDLERS = {
     // réponse trahirait l'existence d'un identifiant (oracle de timing), alors
     // même que le message d'échec textuel est unique.
     if (!compte || !compte.actif) {
-      comptes.verifierMotDePasse(motDePasse, HASH_LEURRE, SEL_LEURRE);
+      await comptes.verifierMotDePasseAsync(motDePasse, HASH_LEURRE, SEL_LEURRE);
       const erreur = new Error(MSG_ECHEC_CONNEXION);
       erreur.code = 400;
       throw erreur;
@@ -164,16 +184,19 @@ const HANDLERS = {
     // (un scrypt) soit payé sur TOUS les chemins d'un login existant et ne
     // réintroduise pas d'asymétrie de branche entre « verrouillé » et « pas
     // encore verrouillé ». Le verdict de la vérification n'est utilisé qu'après.
-    const verdictMotDePasse = comptes.verifierMotDePasseDetail(
+    const verdictMotDePasse = await comptes.verifierMotDePasseDetailAsync(
       motDePasse, compte.hash_mot_de_passe, compte.sel);
     const motDePasseValide = verdictMotDePasse.valide;
 
-    // Un compte verrouillé refuse la tentative même avec le bon mot de passe :
-    // ce refus prime sur le verdict ci-dessus (message de verrou explicite,
-    // décision arrêtée V9-E5).
+    // Un compte verrouillé refuse la tentative même avec le bon mot de passe
+    // (décision V9-E5 maintenue) — mais avec le MÊME message et le MÊME code
+    // que tout autre refus : l'ancien « Compte verrouillé. » (403) ne sortait
+    // que pour un login EXISTANT, et confirmait donc l'identifiant en cinq
+    // requêtes (4e relecture externe, tiré). L'échec n'est PAS enregistré
+    // pendant le verrou : marteler un compte verrouillé ne prolonge rien.
     if (comptes.estVerrouille(compte)) {
-      const erreur = new Error('Compte verrouillé.');
-      erreur.code = 403;
+      const erreur = new Error(MSG_ECHEC_CONNEXION);
+      erreur.code = 400;
       throw erreur;
     }
 
@@ -184,17 +207,20 @@ const HANDLERS = {
       throw erreur;
     }
 
+    // P2-3 : un compte encore haché à l'ancien profil scrypt (N=2^15) est
+    // re-haché au seul moment où le mot de passe en clair est disponible ET
+    // prouvé. La DÉRIVATION (coûteuse) se fait ici, HORS transaction ;
+    // l'ÉCRITURE reste dans la transaction ci-dessous.
+    const renforce = verdictMotDePasse.rehashageRequis
+      ? await comptes.hacherMotDePasseAsync(motDePasse)
+      : null;
+
     // Succès : remise à zéro des échecs, dernière connexion, ouverture de
     // session — le tout dans une même transaction (ré-entrante : creerSession
     // ouvre déjà la sienne, elle rejoint celle-ci).
     const ip = contexte?.ip ?? null;
     const jetonClair = db.transaction(() => {
-      // P2-3 : un compte encore haché à l'ancien profil scrypt (N=2^15) est
-      // re-haché ICI, au seul moment où le mot de passe en clair est
-      // disponible ET prouvé — même transaction que l'ouverture de session,
-      // journalisé (jamais le mot de passe, seulement le fait du renforcement).
-      if (verdictMotDePasse.rehashageRequis) {
-        const renforce = comptes.hacherMotDePasse(motDePasse);
+      if (renforce) {
         db.run(
           `UPDATE utilisateurs_app
            SET hash_mot_de_passe = ?, sel = ?
@@ -534,12 +560,15 @@ const HANDLERS = {
  * (connexion/deconnexion restent ouvertes — c'est leur rôle), puis le
  * handler. Renvoie le RÉSULTAT nu ; l'enveloppe { ok, resultat } est posée
  * par serveur.js (identique à traiterApi / routes-sauvegarde).
+ * ASYNCHRONE depuis A14 (13/08) : `connexion` attend ses scrypt hors de la
+ * boucle d'événements ; les autres handlers, synchrones, sont simplement
+ * enveloppés dans la promesse.
  * @param {string} methode - sans le préfixe /api/
  * @param {object} params
  * @param {{role?: string, ip?: string}} contexte
- * @returns {object} résultat sérialisable
+ * @returns {Promise<object>} résultat sérialisable
  */
-function appeler(methode, params, contexte) {
+async function appeler(methode, params, contexte) {
   const handler = HANDLERS[methode];
   if (!handler) {
     const erreur = new Error(`Route de compte inconnue : ${methode}.`);

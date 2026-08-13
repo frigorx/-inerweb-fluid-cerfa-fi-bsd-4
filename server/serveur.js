@@ -43,6 +43,7 @@ const sauvegarde = require('./sauvegarde.js');
 const restauration = require('./restauration.js');
 const routesSauvegarde = require('./routes-sauvegarde.js');
 const routesComptes = require('./routes-comptes.js');
+const routesExercice = require('./routes-exercice.js');
 const sessions = require('./sessions.js');
 
 // ----- Configuration -----
@@ -401,7 +402,7 @@ function traiterApi(requete, reponse, chemin) {
 
   const methode = chemin.slice('/api/'.length);
 
-  lireCorps(requete).then((brut) => {
+  lireCorps(requete).then(async (brut) => {
     let enveloppe;
     try {
       enveloppe = brut ? JSON.parse(brut) : {};
@@ -423,7 +424,9 @@ function traiterApi(requete, reponse, chemin) {
     // iwf_session ; creerCompte porte sa propre garde ADMIN.
     if (routesComptes.gereMethode(methode)) {
       try {
-        const resultat = routesComptes.appeler(
+        // A14 : appeler est asynchrone (les scrypt de la connexion tournent
+        // dans le pool de threads) — le serveur reste réactif pendant.
+        const resultat = await routesComptes.appeler(
           methode, enveloppe.params ?? {}, contexte);
         const entetes = { 'Content-Type': 'application/json; charset=utf-8' };
         // connexion ET bootstrapAdmin ouvrent une session (renvoient un
@@ -448,6 +451,22 @@ function traiterApi(requete, reponse, chemin) {
         entetes['Cache-Control'] = 'no-store';
         reponse.writeHead(200, entetes);
         reponse.end(corps);
+      } catch (erreur) {
+        const code = codeHttpErreur(erreur);
+        repondreJson(reponse, code, {
+          ok: false, erreur: erreur.message, code,
+        });
+      }
+      return;
+    }
+
+    // Routes du MODE EXERCICE (13/08) : dédiées, HORS du contrat DataStore,
+    // mêmes gardes réseau. Asynchrones (scrypt du code en pool de threads).
+    if (routesExercice.gereMethode(methode)) {
+      try {
+        const resultat = await routesExercice.appeler(
+          methode, enveloppe.params ?? {}, contexte);
+        repondreJson(reponse, 200, { ok: true, resultat });
       } catch (erreur) {
         const code = codeHttpErreur(erreur);
         repondreJson(reponse, code, {
@@ -748,6 +767,21 @@ function avertirSiDataSousOneDrive() {
 }
 
 /**
+ * Lot 0 / B3 : un poste réglé AVANT la garde peut encore pointer ses
+ * sauvegardes vers un espace synchronisé. On AVERTIT sans empêcher de
+ * démarrer — une sauvegarde qui ne se fait plus serait pire que le défaut
+ * qu'on corrige. Le prochain enregistrement du réglage, lui, sera refusé.
+ */
+function avertirSiDestinationSauvegardeSynchronisee() {
+  const message = sauvegarde.avertissementDestinationSynchronisee();
+  if (message) {
+    console.warn('');
+    console.warn('  [AVERTISSEMENT] ' + message);
+    console.warn('');
+  }
+}
+
+/**
  * Séquence de démarrage « coffre-fort » (E4), AVANT toute écoute et AVANT la
  * première ouverture de la base :
  *  1) REPRENDRE une restauration interrompue (data/inerweb-fluide.db absent
@@ -755,7 +789,8 @@ function avertirSiDataSousOneDrive() {
  *     recréerait sinon un socle vierge par-dessus une restauration en cours ;
  *  2) OUVRIR la base (socle v1 sur base vierge, migrations sinon) ;
  *  3) PURGER les .partiel / tmp orphelins (sauvegarde interrompue = n'existe pas) ;
- *  4) AVERTIR si data/ est sous un espace cloud.
+ *  4) AVERTIR si data/ — ou le dossier de sauvegarde réglé — est sous un
+ *     espace cloud.
  * Toute erreur ici est fatale et explicite (mieux qu'un démarrage douteux).
  */
 function preparerCoffreFort() {
@@ -782,6 +817,7 @@ function preparerCoffreFort() {
       console.log(`  [purge] ${sessionsSupprimees} session(s) obsolète(s) nettoyée(s).`);
     }
     avertirSiDataSousOneDrive();
+    avertirSiDestinationSauvegardeSynchronisee();
   } catch (erreur) {
     console.error(
       '\n  [ERREUR] Préparation du coffre-fort impossible :',
@@ -808,6 +844,70 @@ preparerCoffreFort();
     console.warn(`  [sauvegarde] Sauvegarde automatique impossible : ${auto.erreur}`);
   } else {
     console.log(`  [sauvegarde] ${auto.raison}.`);
+  }
+}
+
+// Lot 0, brique B2 (audit externe #4, 27/07) : la BORNE DE SCELLEMENT est
+// enfin CONFRONTÉE au registre, AU DÉMARRAGE — avant le témoin quotidien,
+// pour que le témoin du jour soit écrit APRÈS que l'anomalie a été dite et
+// journalisée. Le détecteur existait depuis le lot L2, mais on ne
+// l'interrogeait qu'à l'import et au scellement : un retour en arrière fait
+// AU DISQUE (ancienne copie de la base reposée à la main) laissait le
+// fichier voisin à 3 pendant que le registre n'avait plus qu'une écriture
+// scellée, et personne ne faisait la soustraction.
+//
+// ⚠️ CE QUI EST DIT, ET RIEN DE PLUS : deux nombres qui concordent ou non.
+// Jamais « le registre est intact » — recopier la base ET son fichier voisin
+// ensemble rend l'écart nul (limite CONNUE, cf. server/borne-scellement.js).
+// Borne absente ou illisible = INDÉTERMINÉ, jamais une accusation.
+//
+// ⭐ REVUE ADVERSARIALE (27/07) — LE MESSAGE NE NOMME PLUS UNE SEULE CAUSE.
+// La première version disait « une base ANTÉRIEURE a pu être remise en place
+// À LA MAIN ». C'est une cause que la mesure ne constate PAS, et ce n'est
+// même pas la plus fréquente : TIRÉ en le jouant (suite, section 5), une
+// RESTAURATION d'archive plus ancienne — geste NORMAL du coffre-fort, prévu,
+// journalisé, confirmé explicitement par `confirmePerte` — produit
+// exactement le même écart, et l'écrit alors à CHAQUE démarrage suivant.
+// Nommer le geste manuel revenait à accuser par écrit un usage légitime, sur
+// un fait qu'on n'a pas mesuré (même défaut que le motif « signature
+// périmée » du 26/07). Le constat énumère désormais les causes possibles et
+// DIT qu'il ne tranche pas.
+//
+// BEST-EFFORT ABSOLU : jamais fatal, jamais bloquant. Un registre qu'on ne
+// peut plus ouvrir serait pire que le défaut.
+{
+  try {
+    const constat = api.constaterBorneScellement();
+    if (constat.ok === false) {
+      console.error(
+        '\n  [registre] ANOMALIE — la borne de scellement de ce poste et le ' +
+        'registre NE CONCORDENT PAS.');
+      console.error(
+        `  [registre] Borne du poste : ${constat.borne} écriture(s) scellée(s) ` +
+        `jamais atteinte(s) · registre actuel : ${constat.reelles}.`);
+      console.error(
+        '  [registre] Le registre porte MOINS d\'écritures scellées que ce ' +
+        'poste en a déjà scellé. Le logiciel ne tranche PAS la cause ; elles ' +
+        'sont au moins trois : une RESTAURATION d\'archive plus ancienne ' +
+        'confirmée dans l\'écran Sauvegarde, un IMPORT d\'un registre plus ' +
+        'court, ou une base remise en place HORS du logiciel.');
+      console.error(
+        '  [registre] Rapprochez ce constat du journal (RESTAURATION, ' +
+        'IMPORT) et des témoins de scellement.\n');
+      try {
+        db.journaliser({
+          qui: 'système',
+          action: 'REGISTRE_REGRESSION',
+          cible: 'registre',
+          details: `borne ${constat.borne} · ecritures scellees ${constat.reelles}`
+        });
+      } catch {
+        // Journal indisponible : la console a déjà parlé.
+      }
+    }
+  } catch (erreur) {
+    console.warn(
+      `  [registre] Confrontation de la borne impossible : ${erreur.message}`);
   }
 }
 

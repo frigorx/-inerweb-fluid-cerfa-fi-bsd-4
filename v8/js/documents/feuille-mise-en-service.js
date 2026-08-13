@@ -232,6 +232,77 @@ function gabaritFeuille(donnees) {
 
 const STYLE_ID = 'style-feuille-mise-en-service';
 
+/**
+ * Bloc d'impression de la feuille de mise en service — EXPORTÉ pour être
+ * éprouvé (`test-feuille-mise-en-service.mjs`). Lot D carte blanche
+ * (13/08) : l'ancien bloc posait `position: fixed; inset: 0` sur
+ * `.fmes-apercu` — document CLOUÉ à la première feuille, mesuré au lot 1 :
+ * **100 caractères sur le papier, fin ABSENTE**. Même remède éprouvé que
+ * le justificatif de régularisation (lot 1) et le bon d'intervention.
+ */
+export const CSS_IMPRESSION_FMES = `
+    @media print {
+      body * { visibility: hidden; }
+
+      .fmes-feuille,
+      .fmes-feuille * { visibility: visible; }
+
+      /* Rien de l'application ne PREND DE PLACE sur la feuille. */
+      body > * { display: none !important; }
+
+      body > #zone-modales,
+      body > .modale-fond { display: block !important; }
+
+      .modale-entete,
+      .modale-actions { display: none !important; }
+
+      /* Les boîtes qui rognaient la feuille (max-height + overflow +
+         backdrop-filter) sont remises à plat. */
+      #zone-modales,
+      .modale-fond,
+      .modale,
+      .modale-corps,
+      .fmes-apercu {
+        position: static;
+        display: block;
+        overflow: visible;
+        max-height: none;
+        max-width: none;
+        width: auto;
+        padding: 0;
+        margin: 0;
+        background: none;
+        border: 0;
+        box-shadow: none;
+        backdrop-filter: none;
+        transform: none;
+        opacity: 1;
+      }
+
+      /* composants.css pose .modale-fond.visible .modale { transform } à
+         DEUX classes : réécrit ici à la même spécificité (un ancêtre
+         transformé devient le bloc conteneur des descendants fixes). */
+      .modale-fond.visible .modale { transform: none; }
+
+      /* La feuille reste DANS LE FLUX : c'est le position: fixed qui la
+         clouait à la première page. */
+      .fmes-feuille {
+        position: relative;
+        width: auto;
+        max-width: 100%;
+        margin: 0;
+        border: none;
+        padding: 0;
+      }
+
+      /* Un champ manuscrit ne se coupe pas entre deux pages. */
+      .fmes-champ,
+      .fmes-ligne-quadruple,
+      .fmes-ligne-pressostats,
+      .fmes-logos-reserves { break-inside: avoid; page-break-inside: avoid; }
+    }
+`;
+
 function assurerStyle() {
   if (document.getElementById(STYLE_ID)) return;
 
@@ -438,25 +509,8 @@ function assurerStyle() {
       .fmes-entete { flex-direction: column; }
     }
 
-    /* Impression : uniquement la feuille, à sa taille A4. */
-    @media print {
-      body * { visibility: hidden; }
-
-      .fmes-apercu, .fmes-apercu * { visibility: visible; }
-
-      .fmes-apercu {
-        position: fixed;
-        inset: 0;
-        margin: auto;
-        background: #ffffff;
-        padding: 10mm;
-      }
-      .fmes-feuille {
-        max-width: 100%;
-        border: none;
-        padding: 0;
-      }
-    }
+    /* Impression : uniquement la feuille — bloc exporté et éprouvé. */
+    ${CSS_IMPRESSION_FMES}
   `;
   document.head.appendChild(style);
 }

@@ -43,7 +43,7 @@ qu'on y trouve déjà écrit rassure. Si un défaut réel manque à cette liste,
 omission, pas une dissimulation : elle sera ajoutée.
 
 **Avertissement particulier sur le filet de tests.** Le dépôt affiche « tout vert,
-121 exécutions ». Cette phrase ne veut pas dire ce qu'elle a l'air de dire, et la
+137 exécutions ». Cette phrase ne veut pas dire ce qu'elle a l'air de dire, et la
 section 14 explique pourquoi : sur les trois derniers lots, **six défauts ont été
 introduits par les correctifs eux-mêmes**, aucun n'était visible au filet. Lisez la
 section 14 avant de tirer une conclusion d'un voyant vert.
@@ -124,12 +124,16 @@ registre. **Cette décision n'est pas prise.**
 
 ---
 
-## 1 ter. En dehors du CERFA, aucun document produit ne porte de marque de non-officialité
+## 1 ter. En dehors du CERFA et du justificatif de régularisation, aucun document produit ne porte de marque de non-officialité
 
 **Ce que c'est.** La mention « MODE FORMATION — DOCUMENT NON OFFICIEL — NE PAS UTILISER
-POUR UNE INTERVENTION RÉELLE » existe (`v8/js/cerfa/generateur.js:93`), mais elle n'est
-apposée **que sur le CERFA** : au cadre 14 des observations (`:538`) et en filigrane
-diagonal sur la page (`:754`). **Dix-neuf autres documents sortent sans aucune marque.**
+POUR UNE INTERVENTION RÉELLE » est rédigée à un seul endroit
+(`v8/js/cerfa/generateur.js:93`) et n'est apposée que par deux sorties : le **CERFA**, au
+cadre 14 des observations (`:538`) et en filigrane diagonal sur la page (`:754`) ; et le
+**justificatif de régularisation** d'une écriture d'annulation
+(`v8/js/documents/regularisation.js`), depuis le 27/07/2026 — la mention y est portée par
+le document lui-même, et non par l'écran qui l'affiche, donc elle **survit à
+l'impression**. **Vingt et un autres documents sortent sans aucune marque.**
 
 <a id="inventaire-documents-sans-marque"></a>
 
@@ -200,11 +204,14 @@ diagonal sur la page (`:754`). **Dix-neuf autres documents sortent sans aucune m
 `v8/js/`, et non le seul dossier `documents/` :
 
 ```
-grep -rn "MENTION_FORMATION\|MODE FORMATION\|NON OFFICIEL\|non officiel" v8/js/ | grep -v "^v8/js/cerfa/"
+grep -rn "MENTION_FORMATION\|MODE FORMATION\|NON OFFICIEL\|non officiel" v8/js/ \
+  | grep -v "^v8/js/cerfa/" | grep -v "regularisation"
 ```
 
-Elle ne rend **rien**. La contre-épreuve est la même commande sans le filtre : elle rend
-vingt lignes, toutes dans `v8/js/cerfa/`. Pour retrouver les imprimables eux-mêmes :
+Elle ne rend **rien**. La contre-épreuve est la même commande sans les filtres : elle rend
+trente-trois lignes, toutes dans `v8/js/cerfa/` ou dans les deux fichiers de
+`regularisation` (le module du justificatif et sa suite de tests).
+Pour retrouver les imprimables eux-mêmes :
 `grep -rn "window.print()" v8/js/ | grep -v "test-"` rend quinze lignes, dont trois sont des
 commentaires — donc **douze** déclencheurs d'impression réels. Ce sont les onze premiers
 imprimés de l'inventaire (n° 1 à 7 et 9 à 12), plus la notice de protection des personnes.
@@ -542,16 +549,73 @@ il faut le savoir avant de présenter le registre comme inaltérable.
 interne A13). Le mot « inaltérable » est employé dans la documentation du projet : il
 signifie « inaltérable par l'application », jamais « inaltérable par un administrateur
 du poste ». **Et il n'est pas toujours qualifié.** `README.md:42` le borne correctement
-(« inaltérable **au sein de l'application** », avec le renvoi au chiffrement du disque) ;
-mais `index.html:243` porte le titre nu « Registre inaltérable », et `RGPD.md:107` comme
-`v8/js/views/rgpd.js:56` emploient le mot sans réserve. Ces trois emplois-là peuvent faire
-prendre le registre pour ce qu'il n'est pas.
+(« inaltérable **au sein de l'application** », avec le renvoi au chiffrement du disque).
+Les trois emplois non qualifiés relevés ici (`index.html:243`, `RGPD.md:107`,
+`v8/js/views/rgpd.js:56`), ainsi que `docs/SPEC-V8.md:168` et `server/db.js:21` trouvés
+lors du balayage étendu, sont **corrigés (lot B4, 27/07)** : ils portent désormais la
+même précision que README.md.
 
-**Condition de réveil.** Le jour où le registre doit résister à une contestation
-sérieuse, ou dès qu'un tiers accède au poste. La fermeture demande un lot dédié
-(confrontation au témoin externe) puis, pour un vrai ancrage, un service
-d'horodatage tiers — hors périmètre du projet à ce jour. Les trois emplois non qualifiés
-du mot « inaltérable », eux, se corrigent à la relecture des écrans et des notices.
+**Extension B4 (27/07) — la famille ne s'arrête pas à « inaltérable ».** L'inventaire
+ci-dessus ne traquait que ce seul mot et a laissé passer « inviolable » (même promesse,
+mot différent) et « preuve opposable » (revendique une valeur probante forte que le
+projet n'a jamais visée — aucun ancrage tiers, aucun horodatage qualifié, cf.
+`LIMITE-DE-RESPONSABILITE.md` § 2 b). Balayage de toute la famille
+(inviolable/infalsifiable/incorruptible/preuve opposable/mot de passe « chiffré »/
+« toute altération se voit ») sur les surfaces vivantes — v8/, server/, index.html,
+guide.html, *.md de la racine :
+
+- **Faux, corrigés (lot B4)** : `v8/js/views/rgpd.js:427` (mot de passe « chiffré » →
+  « haché » — c'est un hash scrypt, jamais déchiffrable) ; `RGPD.md:146` (« journal
+  d'audit inviolable » → « non modifiable depuis l'application ») ; `RGPD.md:107`
+  (« la preuve d'usage opposable au DPD » → « une trace consultable par le DPD, sans
+  valeur probante forte ») ; `docs/SPEC-V8.md:168` et `server/db.js:21` (« registre
+  inviolable » → « inaltérable au sein de l'application ») ; `v8/js/views/conformite.js:213`
+  et `v8/js/data/contrat.js:345` (« preuve opposable » → « trace consultable/consignée ») ;
+  `server/coffre-identites.js:55` + son miroir `v8/js/data/coffre-identites.js:55`
+  (`MSG_MOTIF_OBLIGATOIRE` : « preuve opposable » → « trace journalisée »).
+- **Vu, non touché (hors périmètre B4)** : les emplois d'« inviolable » dans des
+  documents datés d'audit externe (`docs/AUDIT-2026-07-03.md`, `docs/SPEC-V8.md`
+  historique déjà cité par le CHANGELOG) sont des comptes-rendus d'époque, pas des
+  promesses vivantes — on ne réécrit pas l'histoire d'un audit. `docs/E4-PLAN.md:54` et
+  `docs/VISION-V9-V10.md:248` emploient « règle inviolable » dans un tout autre sens
+  (une règle de codage à suivre, pas une promesse faite à un tiers sur les données) :
+  laissé tel quel, à raison. `docs/PLAN-LOT-E2.md:27` et
+  `docs/PROMPT-AUTO-INSTALL-DEMO.md:86` portent encore « inaltérable » sans qualificatif
+  dans des documents de plan/installation : signalé, pas corrigé (hors périmètre du lot,
+  à traiter si ces documents redeviennent des surfaces vivantes).
+- **Exact, à ne pas toucher** : tous les emplois de « chiffré » ailleurs dans le dépôt
+  (coffre des identités AES-256-GCM, archives de sauvegarde AES-256-GCM) décrivent un
+  vrai chiffrement réversible par clé — les confondre avec le hachage des mots de passe
+  serait l'erreur symétrique. De même, « toute altération a posteriori casse la chaîne »
+  (`server/db.js:448`) et « devient détectable » (`SECURITE.md:133`) nomment le
+  MÉCANISME et restent vrais : ce qui est faux, c'est la promesse de visibilité sans
+  réserve.
+
+**Ce que la revue adversariale a corrigé par-dessus (27/07).** Le balayage ci-dessus
+était fait à la main, sur une liste établie à la main — la cause racine exacte déjà
+payée par `outils/test-promesses-cloud.mjs`. Il se disait complet et il ne l'était pas :
+
+- `server/api.js:6409` disait « le registre redevient **inviolable** dans la même
+  transaction » — et le disait dans le chemin d'IMPORT, c'est-à-dire là où le logiciel
+  scelle un passé qu'il n'a pas écrit. Corrigé.
+- `index.html:244` promettait, deux lignes sous le titre que B4 venait de qualifier,
+  « **Toute altération se voit.** » C'est exactement ce que le § 9 ci-dessus dit être
+  faux (le témoin de tête se recalcule). Corrigé : « toute altération passée par
+  l'application se voit ; une modification directe du fichier de base, elle, relève du
+  chiffrement du poste » — la formule de `README.md:42`.
+- `v8/js/data/test-sentinelle.mjs:105` portait encore « preuve opposable » en
+  commentaire. Corrigé.
+- Deux renvois faux (`v8/js/views/rgpd.js:426` pour 427, `RGPD.md:145` pour 146 —
+  numéros relevés AVANT l'édition qui les décalait) : corrigés ci-dessus.
+
+**La règle est désormais tenue par une suite, plus par une relecture** :
+`outils/test-mots-qui-promettent.mjs` balaye les surfaces vivantes à chaque build,
+porte sa propre contre-épreuve (chaque phrase d'avant B4 y est rejouée et doit être
+détectée) et laisse passer les emplois légitimes voisins (« registre opposable » tout
+court, « sauvegarde chiffrée », le mécanisme de la chaîne). Elle ne juge pas `docs/`
+(plans et comptes rendus d'audit datés), `CHANGELOG.md` ni les suites `test-*.mjs` :
+le jour où un de ces documents redevient une surface vivante, il entre dans le
+balayage.
 
 ---
 
@@ -775,11 +839,12 @@ inconnue, pas nulle.
 Cette section est écrite noir sur blanc parce qu'elle est vraie, et parce qu'elle
 change la façon de lire tout le reste.
 
-Le dépôt affiche « tout vert, 121 exécutions » (chiffre de `docs/CARTE-CODE.md:35`).
-**Ce chiffre a été rejoué le 26/07/2026 pour la rédaction de ce document**, par
-`node outils/lancer-tests.mjs --tout` : résultat « TOUT VERT — 121 exécutions ».
-La **durée** est de l'ordre de **100 secondes** — 96,8 s, 97,9 s et 98,8 s à trois mesures
-du même jour sur la même version. C'est un ordre de grandeur, pas une mesure : une durée
+Le dépôt affiche « tout vert, 137 exécutions » (chiffre de `docs/CARTE-CODE.md:35`).
+**Ce chiffre a été rejoué le 27/07/2026 après le lot 0**, par
+`node outils/lancer-tests.mjs --tout` : résultat « TOUT VERT — 137 exécutions ».
+La **durée** est de l'ordre de **100 secondes** — 104,0 s à cette mesure, et 96,8 s, 97,9 s
+et 98,8 s à trois mesures de la veille sur la version qui en comptait 121. C'est un ordre de
+grandeur, pas une mesure : une durée
 qui varie d'une exécution à l'autre ne se publie pas au centième. Ce qui compte est le
 nombre d'exécutions et le verdict, et la commande qui les refait.
 **Cela prouve l'absence de régression sur ce qui est déjà testé. Cela ne prouve pas
@@ -836,6 +901,22 @@ adversariale qui trouve, pas la suite de tests. Un correctif n'est pas un progr�
 qu'il n'a pas été attaqué. Et un voyant vert n'autorise à conclure qu'une chose : rien
 de ce qui était déjà surveillé n'a bougé.
 
+**Et parfois le voyant n'a même rien tiré (constat P2-1, audit externe #4 du
+27/07/2026).** Ce constat porte sur le **banc d'essai** `server/test-lan-https.mjs`,
+**jamais sur le produit** : le serveur, lui, n'a pas changé et refuse toujours le clair
+sur le port LAN. Le banc parlait à l'adresse de bouclage 127.0.0.2 par l'agent HTTP
+**global** de Node — détourné par `NODE_USE_ENV_PROXY`, alors que le `NO_PROXY` d'un
+poste ne couvre en général que 127.0.0.1. L'auditeur y a rencontré un **faux rouge**
+(la suite échouait sous mandataire complet). En le tirant, on a trouvé pire : un **faux
+vert**. Avec `HTTP_PROXY` renseigné et `HTTPS_PROXY` absent — un établissement qui ne
+filtre que le trafic en clair —, la suite affichait **11 OK / 0 échec** alors que les
+deux vérifications portant toute la propriété « aucun repli HTTP en clair sur le port
+LAN » étaient parties au mandataire et **n'avaient jamais interrogé le serveur**. Un
+faux rouge se voit ; un faux vert, non : c'est lui le danger. Fermé par des agents
+dédiés dans le code du test (jamais par un `NO_PROXY` élargi, qui dépendrait du poste)
+**et** par une cinquième famille de vérifications qui rend la suite rouge si ces agents
+disparaissent.
+
 ---
 
 ## Ce que ce document ne couvre pas
@@ -845,8 +926,8 @@ Par honnêteté, les limites de l'inventaire lui-même.
 - Il recense les défauts **connus** au 26/07/2026. Il ne dit rien de ceux que personne
   n'a encore trouvés, et la section 14 donne toutes les raisons de penser qu'il en
   reste.
-- Le filet de tests **a été rejoué** le 26/07/2026 pour la rédaction de ce document
-  (`node outils/lancer-tests.mjs --tout` → « TOUT VERT — 121 exécutions », durée de l'ordre
+- Le filet de tests **a été rejoué** le 27/07/2026, après le lot 0
+  (`node outils/lancer-tests.mjs --tout` → « TOUT VERT — 137 exécutions », durée de l'ordre
   de 100 secondes), et ce résultat concorde avec `docs/CARTE-CODE.md:35`. Mais **cela ne
   vaut que ce que dit la
   section 14** : un filet vert ne prouve rien d'autre que l'absence de régression sur ce

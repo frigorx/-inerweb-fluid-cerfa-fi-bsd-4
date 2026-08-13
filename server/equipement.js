@@ -115,7 +115,11 @@ function detectionObligatoireDepuisNiveau(niveau) {
 /**
  * ⭐ E3(b) / L5/Q6 — DRAPEAU d'activation de l'exemption des hermétiquement
  * scellés étiquetés. MIROIR LITTÉRAL de l'ESM — voir le commentaire complet
- * dans v8/js/data/equipement.js. FERMÉ jusqu'au visa T3.
+ * dans v8/js/data/equipement.js. FERMÉ tant que les trois conditions qui
+ * remplacent le visa T3 (abandonné le 26/07/2026, docs/NOTE-DECISION-
+ * ETABLISSEMENT.md §4) ne sont pas réunies : décision écrite de
+ * l'établissement, pilote mené en parallèle sans écart, risques résiduels
+ * acceptés nommément (docs/REGISTRE-DES-ARBITRAGES.md:481).
  */
 const EXEMPTION_HERMETIQUE_ACTIVE = false;
 

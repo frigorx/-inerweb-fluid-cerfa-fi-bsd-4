@@ -173,7 +173,7 @@ fuite, habilitations B2 (mode **conseil**), outillage, BSFF, coffre-fort chiffr�
 scellé + vérificateur autonome embarqué, feu tricolore, parcours d'audit guidé en 9 étapes, comptes
 et rôles (**les 43 verrous sont prouvés par un test**), mode démo et mode formation.
 **Licence : PolyForm Noncommercial 1.0.0** — gratuit pour l'enseignement, payant pour le commerce.
-**Auteur : Franck Henninot** (LP Jacques Raynaud, Marseille) — `inerweb.fh@gmail.com`, `inerweb.ovh`.
+**Auteur : Franck Henninot** (LP Antoine Vidal, Nîmes) — `inerweb.fh@gmail.com`, `inerweb.ovh`.
 
 ⚠️ **Ce qu'il ne faut PAS promettre dans la vitrine** : le mode « Officiel » à blocage dur n'est
 pas activé (le logiciel **conseille**, il ne bloque pas), et la grille réglementaire n'a jamais été

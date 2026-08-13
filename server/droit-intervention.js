@@ -421,6 +421,65 @@ function conseilOpInterdite(profils) {
   return 'Opération hors de votre champ : confiez-la à un titulaire habilité.';
 }
 
+/* ============================================================
+   Lot F carte blanche (13/08/2026) — PORTÉE DE LA CAPACITÉ DE
+   L'ÉTABLISSEMENT. Miroir LITTÉRAL de v8/js/data/habilitations.js
+   (parité prouvée par test-droit-intervention).
+   ============================================================ */
+
+/** Opération normalisée → activité réglementée de l'attestation de capacité. */
+const ACTIVITE_PAR_OPERATION = Object.freeze({
+  INSTALLATION: 'MISE_EN_SERVICE',
+  MAINTENANCE: 'MAINTENANCE',
+  ETANCHEITE: 'CONTROLE',
+  RECUPERATION: 'RECUPERATION'
+});
+
+const CATEGORIES_2008_CAPACITE = ['I', 'II', 'III', 'IV'];
+
+/** Régime déduit d'une catégorie de capacité (bijectif : I-IV / A1…V). */
+function regimeDeCategorieCapacite(categorie) {
+  return CATEGORIES_2008_CAPACITE.includes(categorie) ? '2008' : '2025';
+}
+
+/**
+ * La PORTÉE de l'attestation de capacité de l'ÉTABLISSEMENT couvre-t-elle
+ * cette intervention ? Miroir littéral du module pur — voir la doctrine
+ * complète dans v8/js/data/habilitations.js (une portée VIDE n'autorise
+ * rien ; l'activité requise doit être déclarée ; la matrice d'aptitude est
+ * la seule grille du dépôt).
+ */
+function capaciteEtablissementCouvre({
+  categories = [], activites = [], operation = null,
+  fluide = null, chargeKg = null, hermetiqueScelle = false
+} = {}) {
+  const cats = Array.isArray(categories) ? categories.filter(Boolean) : [];
+  if (cats.length === 0) {
+    return {
+      autorise: false,
+      motif: 'aucune catégorie de capacité déclarée pour l’établissement'
+    };
+  }
+  const op = operation ? operationNormalisee(operation) : null;
+  const activiteRequise = op ? (ACTIVITE_PAR_OPERATION[op] ?? null) : null;
+  const declarees = Array.isArray(activites) ? activites : [];
+  if (activiteRequise && !declarees.includes(activiteRequise)) {
+    return {
+      autorise: false,
+      motif: `activité ${activiteRequise} absente des activités déclarées `
+        + `de l’attestation (${declarees.length ? declarees.join(', ') : 'aucune'})`
+    };
+  }
+  const verdict = verifierDroitIntervention({
+    habilitations: cats.map((categorie) => ({
+      regime: regimeDeCategorieCapacite(categorie), categorie
+    })),
+    mentions: [],
+    operation, fluide, chargeKg, hermetiqueScelle
+  });
+  return { autorise: verdict.autorise, motif: verdict.motif };
+}
+
 module.exports = {
   OPERATIONS,
   SEUIL_CHARGE_LIMITEE_KG,
@@ -429,10 +488,13 @@ module.exports = {
   FIN_DELIVRANCE_2008,
   DATE_BUTOIR_REMISE_NIVEAU_2008,
   DUREE_CYCLE_FORMATION_ANS,
+  ACTIVITE_PAR_OPERATION,
   plusAnnees,
   habilitationReconnue,
   jetonsMentionsActives,
   operationNormalisee,
   familleDuFluide,
+  regimeDeCategorieCapacite,
+  capaciteEtablissementCouvre,
   verifierDroitIntervention
 };

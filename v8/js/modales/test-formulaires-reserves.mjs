@@ -213,6 +213,18 @@ console.log('--- A ter. machine-form : le bloc est affiché, verrouillé ---');
     && verrouille.includes('value="CAMION_FRIGORIFIQUE" selected')
     && verrouille.includes('value="CLIMATISATION" selected')
     && verrouille.includes('value="60"'));
+  // ⭐ Lot G carte blanche (13/08, 4e relecture) : le champ FLUIDE porte
+  // la règle « une fiche = UN circuit » — une cascade déclarée dans UNE
+  // fiche au fluide du circuit CO2 sortait tout l'équipement du contrôle
+  // d'étanchéité (le circuit HFC disparaissait avec son obligation,
+  // tiré). La note vaut pour TOUS les rôles : le piège ignore les droits.
+  verifier('⭐ le champ fluide porte la règle « une fiche = un seul '
+    + 'circuit » (cascade, dans le bloc du champ)',
+  blocDuChamp(ouvert, 'fluide').includes('un seul circuit')
+    && blocDuChamp(ouvert, 'fluide').includes('circuit par circuit'),
+  blocDuChamp(ouvert, 'fluide').slice(0, 200));
+  verifier('… pour le rôle sans droit aussi',
+    blocDuChamp(verrouille, 'fluide').includes('un seul circuit'));
 }
 
 console.log('--- A quater. machine-form : la CRÉATION est annoncée fermée, '

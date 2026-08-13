@@ -338,8 +338,8 @@ try {
   // le monde satisferait la section entière. L'élève doit pouvoir saisir.
   {
     const r = await requete('createClient', {
-      donneesClient: { raisonSociale: 'Lycée Jacques Raynaud',
-        adresse: '13012 Marseille' },
+      donneesClient: { raisonSociale: 'Lycée Antoine Vidal',
+        adresse: '30000 Nîmes' },
     }, { cookie: cookieEleve });
     verifier('contre-épreuve : l’élève PEUT créer un client (saisie courante)',
       r.statut === 200 && r.corps?.ok === true, `statut ${r.statut}`);

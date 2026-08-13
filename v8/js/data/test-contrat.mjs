@@ -296,7 +296,7 @@ verifier('getUtilisateurCourant retourne un référent',
 // ============================================================
 const client = await store.createClient({
   raisonSociale: 'Boulangerie du contrat',
-  adresse: '4 rue des Tests, 13010 Marseille',
+  adresse: '4 rue des Tests, 30000 Nîmes',
   siret: '12345678900011'
 });
 verifier('createClient : client créé avec nbMachines à zéro',
@@ -691,6 +691,21 @@ verifier('les pesées sont permutées',
   PROCHE(contre.peseeAvantKg, 18) && PROCHE(contre.peseeApresKg, 20));
 verifier('la contre-écriture référence l’originale',
   contre.contreEcritureDe === mvt1.id && contre.motif?.length > 0);
+// Lot 1 / C2 (27/07) : une contre-écriture DIT QUI L'A FAITE. Sans ce
+// champ, la colonne « Exécuté par » de mouvements.csv sortait vide dans le
+// dossier d'audit SCELLÉ : une écriture avait modifié le registre sans
+// qu'on sache de qui elle était. C'est l'identité du VALIDATEUR (côté
+// serveur : contrainte à la personne connectée par la garde de session) —
+// jamais une valeur lue du corps de la requête. PARITÉ : les deux magasins
+// posent la MÊME valeur, sinon le round-trip démo↔local casserait la
+// chaîne (le champ entre dans l'empreinte v2).
+verifier('la contre-écriture porte l’identité de qui l’a faite (executeParId)',
+  contre.executeParId === enseignant.id,
+  JSON.stringify({ executeParId: contre.executeParId, attendu: enseignant.id }));
+verifier('la contre-écriture reste scellée en v2 et la chaîne se vérifie',
+  contre.versionEmpreinte === 2
+  && /^[0-9a-f]{64}$/.test(String(contre.hashEcriture))
+  && (await store.verifierChaineHash()).ok === true);
 verifier('la contre-écriture est chaînée à l’écriture précédente',
   contre.hashPrecedent === mvt1Valide.hashEcriture
   && contre.ordreValidation === mvt1Valide.ordreValidation + 1);
@@ -2077,7 +2092,7 @@ function imagePngTest(taille = 1200) {
       prenom: 'B', imagePng: imagePngTest() }), 'Rôle de signature inconnu');
   await verifierRejet('signerMouvement exige nom ET prénom (personne physique)',
     store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN',
-      nom: 'Lycée Raynaud', prenom: '  ', imagePng: imagePngTest() }),
+      nom: 'Lycée Vidal', prenom: '  ', imagePng: imagePngTest() }),
     'personne physique');
   await verifierRejet('signerMouvement refuse un tracé absent',
     store.signerMouvement(brouillonSig.id, { role: 'TECHNICIEN', nom: 'A',
@@ -2145,13 +2160,13 @@ function imagePngTest(taille = 1200) {
   const sigDet = await store.signerMouvement(brouillonSig.id, {
     role: 'DETENTEUR', nom: 'Dupont', prenom: 'Marie',
     qualite: 'Professeur, par délégation du détenteur', parDelegation: true,
-    organisation: 'LP Jacques Raynaud',
+    organisation: 'LP Antoine Vidal',
     imagePng: Buffer.from(pngUnSeulPixel()).toString('base64')
   });
   verifier('signature détenteur : déclaration avec la mention de délégation',
     sigDet.valide === true && sigDet.parDelegation === true &&
     sigDet.declaration.includes(
-      'par délégation du détenteur (LP Jacques Raynaud)'), sigDet.declaration);
+      'par délégation du détenteur (LP Antoine Vidal)'), sigDet.declaration);
 
   const listeSignatures = await store.getSignaturesMouvement(brouillonSig.id);
   verifier('getSignaturesMouvement : 2 signatures, toutes valides',
@@ -2467,8 +2482,18 @@ await verifierRejet('reformerOutil refuse un outil déjà réformé',
 const etabMaj = await store.updateEtablissement({ sitesCouverts: 'Atelier + labo' });
 verifier('updateEtablissement applique le patch',
   etabMaj.sitesCouverts === 'Atelier + labo');
+// Lot F (13/08) : la grille de capacité accepte les DEUX régimes — « V »
+// (véhicules, 2025) était refusé pour l'établissement pendant que la même
+// valeur passait pour une personne (4e relecture, tiré). Le refus se
+// prouve désormais sur une catégorie réellement inconnue.
+const etabDeuxRegimes = await store.updateEtablissement(
+  { categoriesAutorisees: ['I', 'A1'] });
+verifier('updateEtablissement accepte les DEUX régimes (I et A1) [lot F]',
+  (etabDeuxRegimes.categoriesAutorisees ?? []).includes('I')
+  && (etabDeuxRegimes.categoriesAutorisees ?? []).includes('A1'));
 await verifierRejet('updateEtablissement refuse une catégorie inconnue',
-  store.updateEtablissement({ categoriesAutorisees: ['I', 'V'] }));
+  store.updateEtablissement({ categoriesAutorisees: ['I', 'IX'] }));
+await store.updateEtablissement({ categoriesAutorisees: ['I'] });
 
 const audit = await store.createAuditOrganisme({
   date: dateRelative(0), organisme: 'QualiFroid Cert', resultat: 'CONFORME'
