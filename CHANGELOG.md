@@ -2,6 +2,28 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### ❄️ LOT G (13/08, carte blanche) — CASCADES : LE MODE D'EMPLOI DU PIÈGE EST FERMÉ, LE FOND EST POSÉ
+
+**Constat de la 4e relecture, tiré** : une machine en cascade n'a qu'un champ `fluide` —
+déclarée R-744 avec 8 kg au total, le moteur rend « aucun contrôle » alors que le seul
+circuit HFC (R-134a, 4 kg = 5,72 tCO₂eq) impose 12 mois.
+
+Le défaut ne vit PAS dans le moteur (pour un équipement réellement au CO₂ pur, « aucun
+contrôle fluoré » est la bonne réponse) : il vit dans la DÉCLARATION — deux circuits
+rangés dans une seule fiche, alors que l'obligation s'apprécie PAR CIRCUIT et que le
+logiciel sait déjà porter une fiche par circuit.
+
+- **Fait (aucune règle réglementaire nouvelle)** : le champ Fluide du formulaire machine
+  porte la règle, dans le bloc du champ (règle des notes, revue B1) — « une fiche = un
+  seul circuit ; un équipement à plusieurs circuits (cascade, bi-étagé) se déclare
+  circuit par circuit ». Prouvé par `test-formulaires-reserves` (**73 vérifications**),
+  pour tous les rôles.
+- **Gaté (décision de fond, propriétaire)** : entériner « un circuit = une fiche » et
+  l'outiller (champ « ensemble » d'affichage — recommandé), ou modèle `machine_circuits`
+  structurel. Les questions d'atelier à trancher sont posées dans
+  `docs/PLAN-LOT-G-MULTI-FLUIDES.md` — la règle d'or 6 interdit de coder un modèle
+  réglementaire nouveau sans validation.
+
 ### 🏛️ LOT F (13/08, carte blanche) — LA PORTÉE DE CAPACITÉ DE L'ÉTABLISSEMENT EST ENFIN LUE
 
 **Le blocage n° 1 de la 4e relecture externe, TIRÉ par elle** : `categoriesAutorisees` /

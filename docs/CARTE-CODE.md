@@ -158,7 +158,12 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   identifiant dans `mouvements.js` (modale + index de recherche,
   `indexerMouvement` 3e param) et `documents/exports.js` (CSV).
 - `modales/` : formulaires (piège historique : jamais de sélecteur global
-  `.modale` — `modale()` retourne sa racine). **B1 (25/07) : `machine-form.js`
+  `.modale` — `modale()` retourne sa racine). **Lot G carte blanche
+  (13/08) : le champ Fluide de `machine-form.js` porte la règle « une
+  fiche = UN circuit » (une cascade déclarée au fluide CO2 sortait tout
+  l'équipement du contrôle, 4e relecture) ; le fond — grappe d'affichage
+  ou modèle multi-circuits — est GATÉ Franck
+  (`docs/PLAN-LOT-G-MULTI-FLUIDES.md`).** **B1 (25/07) : `machine-form.js`
   (bloc « Nature de l'équipement », type/sous-type d'installation, usage
   thermique) et `personne-form.js` (rôle applicatif + preuves d'aptitude)
   suivent la règle du store — blocs AFFICHÉS mais VERROUILLÉS hors
