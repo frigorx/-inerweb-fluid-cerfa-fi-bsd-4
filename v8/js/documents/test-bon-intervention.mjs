@@ -199,6 +199,47 @@ const CLIENT_TEST = {
     nbModalesApres === nbModalesAvant);
 }
 
+/* ============================================================
+   Lot D carte blanche (13/08) : LE PAPIER PORTE TOUT LE DOCUMENT.
+   L'ancien bloc d'impression clouait `.bi-document` en position: fixed
+   sur la première feuille — mesuré au lot 1 : 138 caractères sur le
+   papier, fin du document ABSENTE. Ce que cette section garde, c'est le
+   patron ÉPROUVÉ du justificatif de régularisation (lot 1), appliqué ici.
+   ============================================================ */
+{
+  const { CSS_IMPRESSION_BON } = await import('./bon-intervention.js');
+
+  verifier('impression : le bloc masque tout le reste de la page',
+    /@media print[\s\S]*body \* \{ visibility: hidden; \}/
+      .test(CSS_IMPRESSION_BON));
+  verifier('impression : le document ET SES DESCENDANTS restent visibles',
+    /\.bi-document,\s*\n?\s*\.bi-document \* \{ visibility: visible; \}/
+      .test(CSS_IMPRESSION_BON));
+  verifier('⭐ le document reste DANS LE FLUX (plus jamais position: fixed '
+    + '— c’est lui qui clouait tout à la première feuille)',
+  /\.bi-document \{[^}]*position: relative;/.test(CSS_IMPRESSION_BON)
+    && !/\.bi-document \{[^}]*position: fixed/.test(CSS_IMPRESSION_BON));
+  for (const classe of ['modale-fond', 'modale', 'modale-corps',
+    'bi-doc-apercu']) {
+    verifier(`⭐ l’ancêtre .${classe} est remis à plat à l’impression`,
+      new RegExp(`\\.${classe}[,\\s]`).test(CSS_IMPRESSION_BON));
+  }
+  for (const propriete of ['position: static', 'overflow: visible',
+    'max-height: none', 'backdrop-filter: none']) {
+    verifier(`⭐ … et la remise à plat porte « ${propriete} »`,
+      CSS_IMPRESSION_BON.includes(propriete));
+  }
+  verifier('⭐ le transform de la modale est réécrit à la MÊME spécificité '
+    + 'que composants.css',
+  /\.modale-fond\.visible \.modale \{ transform: none; \}/
+    .test(CSS_IMPRESSION_BON));
+  verifier('⭐ rien de l’application ne prend de place sur la feuille',
+    /body > \* \{ display: none !important; \}/.test(CSS_IMPRESSION_BON)
+    && /body > #zone-modales/.test(CSS_IMPRESSION_BON));
+  verifier('un champ manuscrit ne se coupe pas entre deux pages',
+    /\.bi-doc-champ,[\s\S]*?break-inside: avoid/.test(CSS_IMPRESSION_BON));
+}
+
 // ---- Bilan ----
 console.log('\nÀ VALIDER EN NAVIGATEUR (non testable sous Node) : le rendu '
   + 'canvas réel du QR et le rendu d’impression (@media print) — voir '

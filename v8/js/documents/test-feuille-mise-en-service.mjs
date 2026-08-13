@@ -238,5 +238,46 @@ function mouvement(overrides) {
     exceptionRemontee === null);
 }
 
+/* ============================================================
+   Lot D carte blanche (13/08) : LE PAPIER PORTE TOUTE LA FEUILLE.
+   L'ancien bloc d'impression clouait `.fmes-apercu` en position: fixed
+   sur la première page — mesuré au lot 1 : 100 caractères sur le papier,
+   fin ABSENTE. Patron éprouvé du justificatif de régularisation (lot 1).
+   ============================================================ */
+{
+  const { CSS_IMPRESSION_FMES } = await import('./feuille-mise-en-service.js');
+
+  verifier('impression : le bloc masque tout le reste de la page',
+    /@media print[\s\S]*body \* \{ visibility: hidden; \}/
+      .test(CSS_IMPRESSION_FMES));
+  verifier('impression : la feuille ET SES DESCENDANTS restent visibles',
+    /\.fmes-feuille,\s*\n?\s*\.fmes-feuille \* \{ visibility: visible; \}/
+      .test(CSS_IMPRESSION_FMES));
+  verifier('⭐ la feuille reste DANS LE FLUX (plus jamais position: fixed '
+    + '— c’est lui qui clouait tout à la première page)',
+  /\.fmes-feuille \{[^}]*position: relative;/.test(CSS_IMPRESSION_FMES)
+    && !/\.fmes-feuille \{[^}]*position: fixed/.test(CSS_IMPRESSION_FMES)
+    && !/\.fmes-apercu \{[^}]*position: fixed/.test(CSS_IMPRESSION_FMES));
+  for (const classe of ['modale-fond', 'modale', 'modale-corps',
+    'fmes-apercu']) {
+    verifier(`⭐ l’ancêtre .${classe} est remis à plat à l’impression`,
+      new RegExp(`\\.${classe}[,\\s]`).test(CSS_IMPRESSION_FMES));
+  }
+  for (const propriete of ['position: static', 'overflow: visible',
+    'max-height: none', 'backdrop-filter: none']) {
+    verifier(`⭐ … et la remise à plat porte « ${propriete} »`,
+      CSS_IMPRESSION_FMES.includes(propriete));
+  }
+  verifier('⭐ le transform de la modale est réécrit à la MÊME spécificité '
+    + 'que composants.css',
+  /\.modale-fond\.visible \.modale \{ transform: none; \}/
+    .test(CSS_IMPRESSION_FMES));
+  verifier('⭐ rien de l’application ne prend de place sur la feuille',
+    /body > \* \{ display: none !important; \}/.test(CSS_IMPRESSION_FMES)
+    && /body > #zone-modales/.test(CSS_IMPRESSION_FMES));
+  verifier('un champ manuscrit ne se coupe pas entre deux pages',
+    /\.fmes-champ,[\s\S]*?break-inside: avoid/.test(CSS_IMPRESSION_FMES));
+}
+
 console.log(`\n${nbOk} test(s) réussi(s), ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);

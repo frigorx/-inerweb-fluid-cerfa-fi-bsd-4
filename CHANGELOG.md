@@ -2,6 +2,30 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🖨️ LOT D (13/08, carte blanche) — LES DEUX IMPRIMÉS D'ATELIER SORTENT ENTIERS DU BAC
+
+**Trouvé au lot 1, hors périmètre alors, corrigé ici.** Le patron d'impression recopié
+dans `documents/` cassait tout document qui déborde d'une page — le lot 1 l'avait TIRÉ
+avec le bloc `@media print` réel de chaque module : `bon-intervention.js` sortait
+**138 caractères sur le papier, fin du document ABSENTE** ; `feuille-mise-en-service.js`,
+**100 caractères, fin ABSENTE**. Deux documents A4 pleine page destinés à l'atelier.
+La cause était double : le document CLOUÉ en `position: fixed; inset: 0` sur la première
+feuille, et les boîtes de la modale (`max-height` + `overflow` + `backdrop-filter` +
+le `transform` de spécificité supérieure de `composants.css`) qui rognaient le reste.
+
+- Le remède est le patron ÉPROUVÉ du justificatif de régularisation (lot 1), appliqué
+  aux deux modules : remise à plat des ancêtres de la modale, `transform` réécrit à la
+  MÊME spécificité, document laissé **dans le flux** pour se paginer, champs manuscrits
+  protégés de la coupe entre deux pages (`break-inside`).
+- Les deux blocs d'impression sont désormais **exportés** (`CSS_IMPRESSION_BON`,
+  `CSS_IMPRESSION_FMES`) : une règle d'impression ne se relit pas, elle se tire — le
+  filet garde chaque cause de rognage nommément (plus jamais `position: fixed` sur le
+  document, ancêtres à plat, spécificité).
+
+**Preuves** : `test-bon-intervention.mjs` **40 vérifications**,
+`test-feuille-mise-en-service.mjs` **56** ; contre-épreuve tirée : `position: fixed`
+réintroduit sur `.bi-document` → rouge ; retiré → vert.
+
 ### 🗝️ LOT C (13/08, carte blanche) — LA TROISIÈME PORTE DU COFFRE DES IDENTITÉS EST FERMÉE
 
 **Constat de la 4e relecture, tiré** : `getMouvements` rendait le nom RÉEL d'une personne

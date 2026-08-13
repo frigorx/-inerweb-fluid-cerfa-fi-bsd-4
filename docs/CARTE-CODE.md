@@ -239,7 +239,13 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   `conserve.js` (lot C C3b : sert le PDF CONSERVÉ d'une fiche officielle
   figée — les DEUX portes, mouvement ET contrôle lié —, empreinte vérifiée
   contre `hashPdfFinal` scellé, jamais le générateur, jamais de repli).
-- `documents/` : étiquettes QR, dossiers ZIP scellés SHA-256 (`dossier-commun.js`),
+- `documents/` : **lot D carte blanche (13/08) : `bon-intervention.js` et
+  `feuille-mise-en-service.js` impriment ENTIERS en multi-pages — l'ancien
+  patron (position: fixed) clouait le document à la première feuille
+  (138 et 100 caractères sur le papier, mesuré au lot 1) ; blocs
+  d'impression EXPORTÉS (`CSS_IMPRESSION_BON`/`CSS_IMPRESSION_FMES`) et
+  gardés par leurs suites, patron du justificatif de régularisation.**
+  Étiquettes QR, dossiers ZIP scellés SHA-256 (`dossier-commun.js`),
   `exports.js` (tous les CSV du dossier d'audit ; **lot B3 25/07 :
   `signatures.csv` CONDITIONNEL — les signatures de l'année AVEC leur
   TÉMOIN DE SESSION, personne résolue par la fiche VIVANTE donc
