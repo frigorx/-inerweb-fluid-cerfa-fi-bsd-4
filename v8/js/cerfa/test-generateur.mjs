@@ -837,6 +837,75 @@ const storeOfficiel = {
 }
 
 // ============================================================
+// Lot B carte blanche (13/08, 4e relecture) : la réimpression d'une fiche
+// scellée lit le PRP FIGÉ du mouvement — corriger le référentiel ne
+// réécrit ni la donnée NI le document. Un mouvement SANS prpFige
+// (antérieur au figeage) suit, lui, le référentiel courant (repli).
+// ============================================================
+{
+  const prpAvant = Number(
+    (await store.getFluides()).find((f) => f.code === 'R-410A').gwpAr4);
+
+  const validateurB = await store.createPersonne({
+    nom: 'Valideur', prenom: 'LotB', typePersonne: 'ENSEIGNANT',
+    roleApp: 'REFERENT'
+  });
+  const machineB = await store.createMachine({
+    designation: 'Vitrine lot B (PRP figé)', fluide: 'R-410A',
+    chargeNominaleKg: 10, chargeActuelleKg: 0, operateur: 'Testeur lot B'
+  });
+  const bouteilleB = await store.createBouteille({
+    type: 'NEUVE', fluide: 'R-410A', etatFluide: 'VIERGE',
+    tareKg: 10, masseBruteKg: 40, contenanceMaxKg: 50, proprietaire: 'Lycée'
+  });
+  const brouillonB = await store.creerMouvement({
+    mode: 'FORMATION', type: 'CHARGE_APPOINT', date: '2026-08-13',
+    machineId: machineB.id, bouteilleSrcId: bouteilleB.id,
+    fluide: 'R-410A', peseeAvantKg: 40, peseeApresKg: 38,
+    causeMouvement: 'Appoint (preuve PRP figé)', technicien: 'Testeur lot B',
+    controle: { statutControle: 'SANS_OBJET', detecteurId: null }
+  });
+  await store.soumettreMouvement(brouillonB.id);
+  await store.validerMouvement(brouillonB.id, validateurB.id);
+  const mouvementB = (await store.getMouvements())
+    .find((mv) => mv.id === brouillonB.id);
+  verifier('lot B : la validation a FIGÉ le PRP du jour sur le mouvement',
+    Number(mouvementB.prpFige) === prpAvant,
+    `prpFige = ${mouvementB.prpFige}, attendu ${prpAvant}`);
+
+  // Le référentiel est « corrigé » APRÈS le scellement (le geste réel de
+  // l'écran d'administration des fluides, P1-2).
+  const prpCorrige = prpAvant + 1000;
+  await store.updateFluide('R-410A',
+    { gwpAr4: prpCorrige, sourcePrp: 'Valeur d’essai (preuve lot B)' });
+
+  const fmt = (n) => (Math.round(n * 100) / 100).toFixed(2).replace('.', ',');
+  const pdfFige = await genererCerfaPdf(store,
+    { source: 'mouvement', id: mouvementB.id });
+  const lectureFige = await relire(pdfFige.octets);
+  verifier('lot B : la fiche scellée réimprime le teqCO2 au PRP FIGÉ, pas au corrigé',
+    lectureFige.texte('Equipement_teqCO2') === fmt(10 * prpAvant / 1000),
+    `teq imprimé = ${lectureFige.texte('Equipement_teqCO2')}, `
+    + `attendu ${fmt(10 * prpAvant / 1000)} (corrigé aurait donné `
+    + `${fmt(10 * prpCorrige / 1000)})`);
+
+  // Repli : un mouvement de démonstration SANS prpFige (antérieur au
+  // figeage) suit le référentiel COURANT — comportement d'avant, conservé.
+  const prpR455 = Number(
+    (await store.getFluides()).find((f) => f.code === 'R-455A').gwpAr4);
+  await store.updateFluide('R-455A',
+    { gwpAr4: prpR455 + 500, sourcePrp: 'Valeur d’essai (preuve lot B)' });
+  const pdfRepli = await genererCerfaPdf(store,
+    { source: 'mouvement', id: 'mvt-0005' });
+  const lectureRepli = await relire(pdfRepli.octets);
+  verifier('lot B : un mouvement SANS prpFige suit le référentiel courant (repli)',
+    lectureRepli.texte('Equipement_teqCO2') === fmt(3.20 * (prpR455 + 500) / 1000),
+    `teq imprimé = ${lectureRepli.texte('Equipement_teqCO2')}`);
+  await store.updateFluide('R-455A',
+    { gwpAr4: prpR455, sourcePrp: 'Valeur d’essai (preuve lot B, retour)' });
+}
+
+// ============================================================
 // Bilan
 // ============================================================
 console.log('');

@@ -224,6 +224,9 @@ async function assemblerContexte(store, { source, id }, options = {}) {
     bouteilleSrc: null,
     bouteilleDst: null,
     quantiteKg: null,
+    // Lot B carte blanche (13/08) : PRP figé à la validation du mouvement,
+    // null si l'écriture n'en porte pas (antérieure au figeage, brouillon).
+    prpFige: null,
     // Résultat du contrôle d'étanchéité lié (cadre 10)
     resultatControle: null,      // 'CONFORME' | 'FUITE' | null
     localisationFuite: null,
@@ -288,6 +291,15 @@ async function assemblerContexte(store, { source, id }, options = {}) {
     contexte.bouteilleDst =
       bouteilles.find((b) => b.id === mouvement.bouteilleDstId) || null;
     contexte.quantiteKg = mouvement.quantiteKg;
+    // Lot B carte blanche (13/08, 4e relecture) : le PRP FIGÉ voyage
+    // jusqu'au document. Sans lui, une fiche scellée se réimprimait au PRP
+    // COURANT du référentiel : « une correction de référentiel ne réécrit
+    // pas une fiche déjà signée » était vrai de la DONNÉE et faux du
+    // DOCUMENT. `!= null` : un PRP figé de 0 (R-744...) est une valeur
+    // RÉELLE, jamais confondue avec l'absence.
+    contexte.prpFige = mouvement.prpFige != null
+      && Number.isFinite(Number(mouvement.prpFige))
+      ? Number(mouvement.prpFige) : null;
     contexte.operateurNom = mouvement.technicien ?? null;
     contexte.signatureDataUrl = mouvement.signatureDataUrl ?? null;
     if (mouvement.causeMouvement) {
@@ -440,6 +452,13 @@ export async function calculerChampsCerfa(store, { source, id }, options = {}) {
     : null;
   const fluideCode = machine?.fluide ?? ctx.bouteilleSrc?.fluide ?? null;
   const fluideRef = ctx.fluides.find((f) => f.code === fluideCode) || null;
+  // Lot B carte blanche (13/08) : le document d'une écriture qui porte un
+  // PRP FIGÉ se calcule sur LUI (cadre 3 teqCO2 ET cadre 7 seuils), jamais
+  // sur le référentiel courant — corrigé depuis, il raconterait une autre
+  // fiche. Sans PRP figé : repli au référentiel, comportement d'avant.
+  const fluideDocument = ctx.prpFige !== null && fluideRef
+    ? { ...fluideRef, gwpAr4: ctx.prpFige }
+    : fluideRef;
   const formation = ctx.mode === 'FORMATION';
 
   // ---- Cadre 1 — opérateur (établissement, multiligne) ----
@@ -468,8 +487,8 @@ export async function calculerChampsCerfa(store, { source, id }, options = {}) {
     machine.numSerie ? `N° série : ${machine.numSerie}` : ''
   ].filter(Boolean).join('\n') : '';
   const chargeNominale = Number(machine?.chargeNominaleKg);
-  const teqNominale = Number.isFinite(chargeNominale) && fluideRef
-    ? chargeNominale * (Number(fluideRef.gwpAr4) || 0) / 1000
+  const teqNominale = Number.isFinite(chargeNominale) && fluideDocument
+    ? chargeNominale * (Number(fluideDocument.gwpAr4) || 0) / 1000
     : null;
 
   // ---- Cadre 4 — nature de l'intervention (table unique) ----
@@ -495,7 +514,7 @@ export async function calculerChampsCerfa(store, { source, id }, options = {}) {
   // ne masque pas un équipement installé, on refuse seulement d'en tirer
   // un allègement non dû. Évaluée à la date d'intervention (stable).
   const cadre7 = machine
-    ? calculerCadre7(fluideRef, machine.chargeNominaleKg,
+    ? calculerCadre7(fluideDocument, machine.chargeNominaleKg,
         detectionEffective(machine, ctx.date).compte, ctx.date)
     : { caseSeuil: null, caseFrequence: null, frequenceMois: null };
 

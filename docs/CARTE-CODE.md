@@ -199,6 +199,10 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   d'une écriture déjà créée est FIGÉ ; reprise = mode conservé,
   rétrogradation signalée.
 - `cerfa/` : `generateur.js` (72 champs, `calculerChampsCerfa` = vérité ;
+  **lot B carte blanche 13/08 : une écriture qui porte un `prpFige` est
+  RENDUE SUR LUI — cadre 3 teqCO2 et cadre 7 seuils/fréquence — jamais sur
+  le référentiel courant, corrigé depuis ; sans `prpFige` (écriture
+  antérieure au figeage), repli au référentiel courant, dit et assumé ;**
   lot C C4 : inscrit les signatures RÉELLES valides — personne physique,
   qualité, date réelle, tracés — et `genererPdfFinalBase64` = PDF FINAL de
   la validation officielle, option `accepterSoumis` RÉSERVÉE à ce canal,

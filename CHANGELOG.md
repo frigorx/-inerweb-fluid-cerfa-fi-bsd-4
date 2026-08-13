@@ -2,6 +2,31 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧊 LOT B (13/08, carte blanche) — LE DOCUMENT RÉIMPRIMÉ LIT ENFIN LE PRP FIGÉ
+
+**Constat de la 4e relecture, tiré et confirmé** : `grep prpFige v8/js/cerfa/` rendait
+0 ligne. Le PRP était FIGÉ sur l'écriture à la validation (brique ② du 13/07, empreinte
+v2) — et le GÉNÉRATEUR ne le lisait pas : après une correction du référentiel via l'écran
+d'administration (P1-2), une fiche scellée réimprimait son équivalent CO₂ au PRP COURANT.
+« Une correction de référentiel ne réécrit pas une fiche déjà signée » était vrai de la
+DONNÉE et faux du DOCUMENT — chaîne intacte, personne averti.
+
+- `assemblerContexte` porte désormais `prpFige` (`!= null` : un PRP figé de 0 — R-744 —
+  est une valeur RÉELLE, jamais confondue avec l'absence) ; `calculerChampsCerfa` rend le
+  **cadre 3 (teqCO2) ET le cadre 7 (seuils tCO₂eq, fréquence)** sur une fiche fluide dont
+  le PRP est celui du jour de la validation. La correction de copie d'élève passe par le
+  même calcul : une seule vérité.
+- **Repli dit et assumé** : une écriture ANTÉRIEURE au figeage (aucun `prpFige`) reste
+  rendue au référentiel courant — on n'invente pas un PRP d'époque qu'on n'a pas
+  enregistré (prouvé sur un mouvement de démonstration).
+- `docs/REGISTRE-DES-ARBITRAGES.md` (ligne « PRP figé ») complété : la protection vaut
+  désormais de la donnée ET du document.
+
+**Preuves** : `test-generateur.mjs` **124 vérifications** — le PRP est figé à la
+validation, le référentiel est corrigé APRÈS, la fiche réimprime au PRP figé (contre-
+épreuve tirée : correctif retiré → « teq imprimé = 30,88, attendu 20,88 », exactement le
+défaut décrit ; remis → vert), et le repli sans `prpFige` suit le courant.
+
 ### 🔐 LOT A (13/08, carte blanche) — LE VERROU DE COMPTE CESSE D'ÊTRE PERPÉTUEL, LA CONNEXION CESSE DE POUVOIR FIGER LE SERVEUR
 
 Reprise du chantier après deux semaines, sur carte blanche du propriétaire (13/08) : les
