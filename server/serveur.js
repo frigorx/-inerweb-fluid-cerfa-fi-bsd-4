@@ -401,7 +401,7 @@ function traiterApi(requete, reponse, chemin) {
 
   const methode = chemin.slice('/api/'.length);
 
-  lireCorps(requete).then((brut) => {
+  lireCorps(requete).then(async (brut) => {
     let enveloppe;
     try {
       enveloppe = brut ? JSON.parse(brut) : {};
@@ -423,7 +423,9 @@ function traiterApi(requete, reponse, chemin) {
     // iwf_session ; creerCompte porte sa propre garde ADMIN.
     if (routesComptes.gereMethode(methode)) {
       try {
-        const resultat = routesComptes.appeler(
+        // A14 : appeler est asynchrone (les scrypt de la connexion tournent
+        // dans le pool de threads) — le serveur reste réactif pendant.
+        const resultat = await routesComptes.appeler(
           methode, enveloppe.params ?? {}, contexte);
         const entetes = { 'Content-Type': 'application/json; charset=utf-8' };
         // connexion ET bootstrapAdmin ouvrent une session (renvoient un

@@ -2,7 +2,57 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
-### 🧾 LOT 1 (27/07) — LE DOCUMENT PRODUIT POUR UNE CONTRE-ÉCRITURE CESSE DE MENTIR
+### 🔐 LOT A (13/08, carte blanche) — LE VERROU DE COMPTE CESSE D'ÊTRE PERPÉTUEL, LA CONNEXION CESSE DE POUVOIR FIGER LE SERVEUR
+
+Reprise du chantier après deux semaines, sur carte blanche du propriétaire (13/08) : les
+restes EN CODE de la 4e relecture externe, en commençant par le seul qui bloque une mise
+entre les mains de TESTEURS EXTERNES (artisans) — l'organe de connexion. Trois défauts
+relevés par la relecture, un quatrième (A14) consigné depuis le 26/07, chacun corrigé puis
+prouvé par un test qui redevient ROUGE quand on retire le correctif (contre-épreuve tirée).
+
+- **Le verrou de compte n'est plus perpétuel.** Le compteur d'échecs ne redescendait
+  JAMAIS hors connexion réussie : après l'expiration des 15 minutes, il valait toujours 5,
+  et le premier essai raté re-verrouillait aussitôt — le titulaire légitime, y compris le
+  SEUL ADMIN du poste, n'avait plus droit qu'à un essai par quart d'heure, à perpétuité.
+  Désormais un verrou EXPIRÉ rouvre une fenêtre COMPLÈTE : l'échec suivant compte pour UN
+  (`enregistrerEchec`, `server/comptes.js`). La borne ne se désarme pas pour autant :
+  5 échecs dans la nouvelle fenêtre reposent le verrou (prouvé).
+- **Le refus de verrou ne confirme plus l'existence d'un identifiant.** « Compte
+  verrouillé. » (403) ne sortait que pour un login EXISTANT : cinq requêtes suffisaient à
+  énumérer les identifiants malgré le message d'échec unique. Tous les refus de connexion
+  rendent désormais le MÊME statut (400) et le MÊME message — qui n'AFFIRME aucune cause
+  (en désigner une serait un motif FAUX dans les autres cas, le piège déjà payé trois
+  fois) et les énonce toutes. La non-énumération est TIRÉE : la réponse d'un compte
+  verrouillé au bon mot de passe est comparée octet pour octet à celle d'un login
+  fantôme. L'état de verrou reste visible où il est légitime : l'écran de gestion des
+  comptes (ADMIN), qui le portait déjà. Le refus d'un compte verrouillé au bon mot de
+  passe demeure (décision V9-E5 maintenue) ; le coût d'un scrypt reste payé sur TOUS les
+  chemins de refus (aucune asymétrie de temps réintroduite).
+- **La porte de secours existe** (`server/secours-compte.js`, CLI) : déverrouiller un
+  compte, ou remplacer son mot de passe (saisie masquée sur terminal, mêmes longueurs
+  minimales par rôle que les routes, sessions ouvertes révoquées). L'autorité est celle
+  de `creer-admin.js` : être devant le poste. Jusqu'ici, le geste « prévu » pour un ADMIN
+  verrouillé était d'éditer le fichier SQLite à la main — sur la base d'un registre
+  réglementaire. Chaque geste du CLI est journalisé (journal chaîné, jamais le mot de
+  passe).
+- **A14 — un déluge de connexions ne fige plus le serveur.** `scryptSync` (N=2^17,
+  ~128 Mio par dérivation) bloquait la boucle d'événements à CHAQUE tentative, y compris
+  pour un login inexistant (le leurre anti-timing coûte pareil, c'est son rôle) : quelques
+  requêtes de connexion simultanées suspendaient TOUTES les routes pour tous les
+  utilisateurs — à traiter AVANT le mode LAN, c'est fait avant. Le chemin de connexion
+  passe par `crypto.scrypt` (pool de threads) derrière une file à UNE dérivation à la
+  fois, BORNÉE à 64 tentatives en attente : au-delà, refus immédiat 503 (« réessayez »),
+  jamais un gel, jamais d'empilement mémoire. Les verdicts asynchrones sont prouvés
+  IDENTIQUES aux synchrones (bon/mauvais/hérité/malformé, re-hachage transparent
+  compris) ; les versions synchrones restent aux CLI et au leurre de chargement.
+
+**Preuves** : `test-comptes.mjs` **51 vérifications** (fenêtre + parité asynchrone +
+file saine sous demandes simultanées + les deux gestes du CLI, journal compris),
+`test-routes-comptes.mjs` **74** (message indiscernable d'un échec ordinaire,
+non-énumération login fantôme, fenêtre nouvelle de bout en bout : échec post-expiration
+compte pour UN puis le bon mot de passe se connecte). Contre-épreuve tirée : fenêtre
+retirée → 3 rouges (« compteur = 6 », re-verrou immédiat). **207 attaques** de
+`test-securite-negative.mjs` inchangées.
 
 **Le mécanisme comptable n'était pas en cause** : une erreur ne s'efface pas, elle se corrige
 par une écriture inverse qui désigne l'écriture d'origine. C'est le **document** que le

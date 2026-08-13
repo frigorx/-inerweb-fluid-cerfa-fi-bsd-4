@@ -263,4 +263,6 @@ module.exports = {
   analyserArguments,
   creerPremierAdmin,
   LONGUEUR_MIN_MOT_DE_PASSE_ADMIN,
+  // Réutilisée par secours-compte.js (même saisie masquée, même TTY).
+  lireLigneMasquee,
 };

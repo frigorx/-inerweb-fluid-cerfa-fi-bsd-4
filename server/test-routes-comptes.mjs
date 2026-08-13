@@ -19,8 +19,10 @@
 //      → passe la garde de rôle (peut échouer plus loin pour raison métier,
 //      mais PAS 403).
 //   4. creerCompte : non-admin → 403 ; admin → 200 (compte utilisable).
-//   5. Verrou : 5 échecs consécutifs → 403 « Compte verrouillé » même avec
-//      le bon mot de passe ensuite.
+//   5. Verrou : 5 échecs consécutifs → refus MÊME avec le bon mot de passe,
+//      réponse INDISCERNABLE d'un échec ordinaire ou d'un login inexistant
+//      (4e relecture externe : l'ancien « Compte verrouillé » 403 énumérait
+//      les identifiants) ; verrou expiré = fenêtre NOUVELLE de 5 essais.
 //   6. Lecture (get*) : loopback sans session → 200 ; « LAN » (Host distinct
 //      simulé) sans session → 403 (session exigée même en lecture).
 //   7. Déconnexion : après logout, le cookie ne porte plus de rôle (une
@@ -230,9 +232,12 @@ let cookieAdmin;
 {
   const rEchec = await requeteJson(PORT, 'connexion',
     { login: 'admin.amorce', motDePasse: 'MauvaisMotDePasse' });
+  // Le texte est lu de routes-comptes.js (message canonique) : la suite
+  // prouve que la ROUTE le rend tel quel, pas que le texte n'a pas changé.
+  const routesComptes = require('./routes-comptes.js');
   verifier('connexion avec mauvais mot de passe → 400, message unique',
     rEchec.statut === 400 &&
-    rEchec.corps?.erreur === 'Identifiant ou mot de passe incorrect.');
+    rEchec.corps?.erreur === routesComptes.MSG_ECHEC_CONNEXION);
 
   const rLoginInexistant = await requeteJson(PORT, 'connexion',
     { login: 'nexiste-pas-du-tout', motDePasse: 'peu-importe-12345' });
@@ -336,8 +341,9 @@ let cookieEleve;
 }
 
 // ============================================================
-// 5. Verrou : 5 échecs consécutifs → compte verrouillé (même bon mot de
-//    passe ensuite refusé, 403 explicite « Compte verrouillé »)
+// 5. Verrou : 5 échecs consécutifs → refus MÊME avec le bon mot de passe,
+//    mais réponse INDISCERNABLE d'un échec ordinaire (message unique,
+//    4e relecture externe) ; verrou expiré = fenêtre NOUVELLE de 5 essais.
 // ============================================================
 {
   const rCree = await requeteJson(PORT, 'creerCompte',
@@ -347,20 +353,76 @@ let cookieEleve;
     rCree.statut === 200, JSON.stringify(rCree.corps));
 
   let dernierStatut = null;
+  let dernierMessage = null;
   for (let i = 0; i < 5; i += 1) {
     const r = await requeteJson(PORT, 'connexion',
       { login: 'verrou.test5', motDePasse: 'MauvaisMotDePasse' });
     dernierStatut = r.statut;
+    dernierMessage = r.corps?.erreur;
   }
   verifier('les 5 échecs consécutifs sont bien refusés (400, message unique)',
     dernierStatut === 400);
 
+  // Pendant le verrou, MÊME le bon mot de passe est refusé (décision V9-E5
+  // maintenue) — mais la réponse est INDISCERNABLE d'un échec ordinaire.
+  // L'ancien « Compte verrouillé. » (403) ne sortait que pour un login
+  // EXISTANT : cinq requêtes suffisaient à énumérer les identifiants
+  // (4e relecture externe, tirée). Ces assertions redeviennent rouges si
+  // le refus différencié revient.
   const rBonMdpApresVerrou = await requeteJson(PORT, 'connexion',
     { login: 'verrou.test5', motDePasse: 'MotDePasseVerrou-2026' });
-  verifier('après 5 échecs : même le BON mot de passe est refusé (403, compte verrouillé)',
-    rBonMdpApresVerrou.statut === 403 &&
-    rBonMdpApresVerrou.corps?.erreur === 'Compte verrouillé.',
+  verifier('après 5 échecs : même le BON mot de passe est refusé',
+    rBonMdpApresVerrou.statut === 400,
     JSON.stringify(rBonMdpApresVerrou.corps));
+  verifier('le refus de verrou ne se distingue pas d’un échec ordinaire',
+    rBonMdpApresVerrou.corps?.erreur === dernierMessage,
+    JSON.stringify(rBonMdpApresVerrou.corps));
+
+  // Non-énumération TIRÉE : un login INEXISTANT répond exactement pareil
+  // (statut ET message) que le compte verrouillé ci-dessus.
+  const rInexistant = await requeteJson(PORT, 'connexion',
+    { login: 'login.fantome5', motDePasse: 'MotDePasseVerrou-2026' });
+  verifier('login inexistant : statut identique au compte verrouillé',
+    rInexistant.statut === rBonMdpApresVerrou.statut,
+    `${rInexistant.statut} vs ${rBonMdpApresVerrou.statut}`);
+  verifier('login inexistant : message identique au compte verrouillé',
+    rInexistant.corps?.erreur === rBonMdpApresVerrou.corps?.erreur,
+    JSON.stringify(rInexistant.corps));
+
+  // Verrou EXPIRÉ = fenêtre NOUVELLE (correctif de la 4e relecture) : on
+  // force l'échéance dans le passé (accès direct à la base jetable, patron
+  // de la famille 10), puis UN échec — il compte pour UN et ne re-verrouille
+  // pas ; le bon mot de passe passe ensuite. Avant le correctif, le compteur
+  // restait à 5 : cet échec re-verrouillait 15 minutes et la connexion
+  // suivante échouait (contre-épreuve tirée en retirant la fenêtre).
+  const cheminBase = join(DOSSIER, 'data', 'inerweb-fluide.db');
+  {
+    const bdd = new DatabaseSync(cheminBase);
+    bdd.prepare(
+      `UPDATE utilisateurs_app SET verrouille_jusqua = ?
+       WHERE login = 'verrou.test5'`)
+      .run(new Date(Date.now() - 1000).toISOString());
+    bdd.close();
+  }
+  const rEchecApresExpiration = await requeteJson(PORT, 'connexion',
+    { login: 'verrou.test5', motDePasse: 'MauvaisMotDePasse' });
+  verifier('après expiration du verrou : un échec est refusé normalement',
+    rEchecApresExpiration.statut === 400);
+  {
+    const bdd = new DatabaseSync(cheminBase);
+    const ligneCompte = bdd.prepare(
+      `SELECT echecs_consecutifs, verrouille_jusqua FROM utilisateurs_app
+       WHERE login = 'verrou.test5'`).get();
+    bdd.close();
+    verifier('cet échec COMPTE POUR UN : fenêtre nouvelle, pas de re-verrou',
+      ligneCompte.echecs_consecutifs === 1
+      && ligneCompte.verrouille_jusqua === null,
+      `compteur=${ligneCompte.echecs_consecutifs}, verrou=${ligneCompte.verrouille_jusqua}`);
+  }
+  const rBonMdpFenetre = await requeteJson(PORT, 'connexion',
+    { login: 'verrou.test5', motDePasse: 'MotDePasseVerrou-2026' });
+  verifier('le BON mot de passe se connecte après expiration (plus de verrou perpétuel)',
+    rBonMdpFenetre.statut === 200, JSON.stringify(rBonMdpFenetre.corps));
 }
 
 // ============================================================
