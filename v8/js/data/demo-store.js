@@ -2349,6 +2349,25 @@ export function creerDemoStore() {
       .find((c) => c.personnelId === personnelId);
   }
 
+  /**
+   * Lot C carte blanche (13/08) : champ `technicien` substitué par la fiche
+   * VIVANTE quand le porteur (executeParId, ou validateurId pour une
+   * contre-écriture — même règle que la vue) est AU COFFRE. Reçoit une
+   * COPIE (getMouvements copie avant tri) : la donnée stockée ne bouge pas.
+   * Miroir sémantique strict de `substituerTechnicienCoffre` d'api.js.
+   */
+  function substituerTechnicienAuCoffre(mouvement) {
+    if (!mouvement || !mouvement.technicien) return mouvement;
+    const idPorteur = mouvement.executeParId
+      ?? (mouvement.contreEcritureDe ? mouvement.validateurId : null);
+    if (!idPorteur || !estAuCoffre(idPorteur)) return mouvement;
+    const fiche = donnees.personnel.find((p) => p.id === idPorteur);
+    const libelle = fiche
+      ? `${fiche.prenom ?? ''} ${fiche.nom ?? ''}`.trim() : '';
+    if (libelle) mouvement.technicien = libelle;
+    return mouvement;
+  }
+
   /** Octets → base64 (par tranches — btoa sature sur un gros tableau). */
   function octetsVersBase64(octets) {
     let binaire = '';
@@ -2570,7 +2589,12 @@ export function creerDemoStore() {
       const liste = copier(donnees.mouvements);
       liste.sort((a, b) =>
         b.date.localeCompare(a.date) || b.numero.localeCompare(a.numero));
-      return liste;
+      // Lot C carte blanche (13/08, 4e relecture, tiré) : un porteur AU
+      // COFFRE est rendu par sa fiche vivante (pseudonyme) — la
+      // substitution ne vivait que dans la VUE, l'appel direct du contrat
+      // rendait le nom réel à un compte ÉLÈVE (3e porte). exporterJSON,
+      // lui, lit `donnees` directement : le transport reste BRUT.
+      return liste.map((mv) => substituerTechnicienAuCoffre(mv));
     },
 
     async getControles() {

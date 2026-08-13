@@ -1747,12 +1747,19 @@ const HANDLERS = {
     return lignes.map((ligne) => mapping.versFront('bouteilles', ligne));
   },
 
-  /** Tous les mouvements, triés date puis numéro décroissants. */
+  /**
+   * Tous les mouvements, triés date puis numéro décroissants.
+   * Lot C carte blanche (13/08, 4e relecture, tiré) : le champ TEXTE
+   * `technicien` d'un mouvement dont le PORTEUR est AU COFFRE est rendu
+   * par la fiche VIVANTE (= le pseudonyme). La substitution ne vivait que
+   * dans la VUE : l'appel direct du contrat rendait le nom réel à un
+   * compte ÉLÈVE — la 3e porte du coffre, après les deux fermées le 25/07.
+   * La donnée STOCKÉE ne bouge pas (elle est sous l'empreinte scellée) ;
+   * l'export JSON lit `lireMouvementsBruts` (fidélité du transport).
+   */
   getMouvements() {
-    const lignes = db.all(
-      `SELECT * FROM mouvements
-       ORDER BY date_mouvement DESC, numero DESC`);
-    return lignes.map((ligne) => reconstituerMouvement(ligne));
+    return lireMouvementsBruts()
+      .map((mouvement) => substituerTechnicienCoffre(mouvement));
   },
 
   /** Tous les contrôles d'étanchéité, triés date décroissante. */
@@ -5687,6 +5694,32 @@ function lireTablePlate(nomTable, sqlTable, tri) {
  * collection réutilise la reconstitution déjà éprouvée (getMouvements,
  * getBouteilles…) : formes camelCase strictement identiques au contrat.
  */
+/** Lecture BRUTE des mouvements (tri du contrat), sans substitution coffre. */
+function lireMouvementsBruts() {
+  const lignes = db.all(
+    `SELECT * FROM mouvements
+     ORDER BY date_mouvement DESC, numero DESC`);
+  return lignes.map((ligne) => reconstituerMouvement(ligne));
+}
+
+/**
+ * Lot C carte blanche (13/08) : rend le mouvement avec son champ
+ * `technicien` substitué par la fiche VIVANTE quand le porteur (executeParId,
+ * ou validateurId pour une contre-écriture — même règle que la vue) est AU
+ * COFFRE. Hors coffre, ou sans identifiant : le mouvement tel quel, au bit
+ * près — on ne réécrit pas ce qu'on n'a pas à protéger.
+ */
+function substituerTechnicienCoffre(mouvement) {
+  if (!mouvement || !mouvement.technicien) return mouvement;
+  const idPorteur = mouvement.executeParId
+    ?? (mouvement.contreEcritureDe ? mouvement.validateurId : null);
+  if (!idPorteur || !estAuCoffreServeur(idPorteur)) return mouvement;
+  const fiche = lirePersonne(idPorteur);
+  const libelle = fiche
+    ? `${fiche.prenom ?? ''} ${fiche.nom ?? ''}`.trim() : '';
+  return libelle ? { ...mouvement, technicien: libelle } : mouvement;
+}
+
 function construireDonneesExport() {
   return {
     etablissement: HANDLERS.getEtablissement(),
@@ -5695,7 +5728,10 @@ function construireDonneesExport() {
     clients: HANDLERS.getClients(),
     machines: HANDLERS.getMachines(),
     bouteilles: HANDLERS.getBouteilles(),
-    mouvements: HANDLERS.getMouvements(),
+    // Lot C (13/08) : l'export lit les mouvements BRUTS — la substitution
+    // coffre de getMouvements n'a pas sa place dans un transport dont
+    // l'import re-vérifie les empreintes ; ce canal est gaté VALIDEUR.
+    mouvements: lireMouvementsBruts(),
     controles: HANDLERS.getControles(),
     fluides: HANDLERS.getFluides(),
     personnel: HANDLERS.getPersonnel(),

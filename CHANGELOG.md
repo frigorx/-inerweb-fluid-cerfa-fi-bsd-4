@@ -2,6 +2,36 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🗝️ LOT C (13/08, carte blanche) — LA TROISIÈME PORTE DU COFFRE DES IDENTITÉS EST FERMÉE
+
+**Constat de la 4e relecture, tiré** : `getMouvements` rendait le nom RÉEL d'une personne
+mise au coffre à un compte ÉLÈVE — la substitution ne vivait que dans la VUE, et l'ancienne
+suite le consacrait même en « résidu assumé ». La décision de confidentialité du 25/07
+avait fermé deux portes au motif écrit qu'« une décision qui ne garde qu'une porte sur
+deux n'en est pas une » ; il en restait une troisième.
+
+- **La LECTURE du contrat rend la fiche VIVANTE.** `getMouvements` (les DEUX stores,
+  sémantique miroir stricte) substitue le champ TEXTE `technicien` par le libellé de la
+  fiche vivante — donc le pseudonyme — quand le PORTEUR (`executeParId`, ou `validateurId`
+  pour une contre-écriture : la même règle que la vue) est AU COFFRE. Hors coffre, ou sans
+  identifiant : le mouvement au bit près, rien ne change.
+- **La DONNÉE scellée ne bouge pas d'un bit** (empreinte, WORM — prouvé par lecture SQL
+  directe et par la chaîne de hash INTACTE après substitution).
+- **Le transport reste BRUT.** `exporterJSON` (gaté VALIDEUR depuis L2-i) lit désormais
+  `lireMouvementsBruts()` côté serveur — un aller-retour export/import doit pouvoir
+  rejouer les empreintes ; le DemoStore exportait déjà ses données brutes. Substituer là
+  aurait cassé la chaîne à l'import : le piège a été identifié AVANT d'être payé.
+- Fermeture collatérale : l'export RGPD d'une personne (`exporterDonneesPersonne`)
+  assemblait ses mouvements par `getMouvements` — le champ `technicien` en clair y
+  passait aussi ; il est désormais substitué à la source.
+
+**Preuves** : `server/test-coffre-serveur.mjs` **70 vérifications** — l'ancien « résidu
+assumé » y devient son contraire : lecture = pseudonyme, base = « Léa Bonnet » au bit
+près, export brut, chaîne verte, homonyme intouché (contre-épreuve tirée : substitution
+neutralisée → « technicien = Léa Bonnet » rouge ; remise → vert). Suite NEUVE
+`v8/js/data/test-coffre-lecture.mjs` (5 vérifications) : la même règle prouvée sur le
+DemoStore — lecture substituée, export brut, chaîne intacte, porteur hors coffre inchangé.
+
 ### 🧊 LOT B (13/08, carte blanche) — LE DOCUMENT RÉIMPRIMÉ LIT ENFIN LE PRP FIGÉ
 
 **Constat de la 4e relecture, tiré et confirmé** : `grep prpFige v8/js/cerfa/` rendait
