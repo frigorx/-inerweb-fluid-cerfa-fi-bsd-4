@@ -13,6 +13,7 @@
 // ============================================================
 
 import { creerDemoStore } from './demo-store.js';
+import * as modeExercice from './mode-exercice.js';
 
 /** Sonde le serveur local : true si /api/ping répond « mode local ». */
 async function serveurLocalPresent() {
@@ -34,6 +35,31 @@ async function serveurLocalPresent() {
  * @returns {Promise<object>} store conforme au contrat DataStore
  */
 export async function creerStore() {
+  // MODE EXERCICE (13/08, plan docs/PLAN-MODE-EXERCICE.md) : le drapeau
+  // posé force le BAC À SABLE (DemoStore) MÊME quand le serveur répond —
+  // c'est toute la fonction : travailler sur la photo du réel sans jamais
+  // écrire au registre. Au premier chargement, le bac est semé de la photo
+  // par le canal OFFICIEL (importerJSON : invariants joués, persistance
+  // localStorage) ; ensuite l'exercice vit sa vie jusqu'à l'effacement.
+  if (modeExercice.estActif()) {
+    const bac = creerDemoStore();
+    if (typeof bac.init === 'function') await bac.init();
+    if (modeExercice.doitSemer()) {
+      const photo = modeExercice.photoASemer();
+      if (photo) {
+        try {
+          const adopte = await bac.importerJSON(photo);
+          if (adopte === true) modeExercice.marquerSeme();
+          else console.error('Mode exercice : photo illisible, bac non semé.');
+        } catch (erreur) {
+          // Photo forgée/incohérente : le bac reste sur son état courant,
+          // le marqueur reste posé (nouvel essai au prochain chargement).
+          console.error('Mode exercice : semis refusé —', erreur.message);
+        }
+      }
+    }
+    return bac;
+  }
   let store;
   if (await serveurLocalPresent()) {
     const [{ creerLocalStore }, { creerTransportHttp }] = await Promise.all([

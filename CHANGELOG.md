@@ -2,6 +2,44 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🎓 MODE EXERCICE (13/08) — LE BAC À SABLE PÉDAGOGIQUE SUR DONNÉES RÉELLES
+
+**Demande de Franck, direction validée puis production lancée le jour même** (plan
+`docs/PLAN-MODE-EXERCICE.md`) : former des techniciens SUR le logiciel — CERFA de
+démonstration, manipulations, exercices — sans jamais rien écrire au registre certifié
+conforme, en partant des valeurs RÉELLES du parc. **Faisabilité TIRÉE avant conception** :
+l'architecture à deux stores et un contrat portait déjà 80 % de la fonction.
+
+- **Le bac à sable est le monde Démo du navigateur, semé d'une PHOTO du réel** (l'export
+  JSON complet — décision du propriétaire : « on garde le réel ») importée par le canal
+  OFFICIEL (`importerJSON` : invariants joués, chaîne d'empreintes VERTE au bac). Les
+  CERFA d'exercice s'impriment avec le filigrane « DÉMO / FORMATION », tout est
+  effaçable — et le registre réel n'en voit JAMAIS rien (étanchéité prouvée).
+- **La clé est un CODE DE DÉBLOCAGE** (décision : « celui qui a le code ») :
+  `server/routes-exercice.js` — le code est défini par ADMIN/RÉFÉRENT, haché scrypt
+  (asynchrone, A14), jamais en clair nulle part ; le démarrage exige une session (tout
+  rôle) ET le code ; « code faux » et « code non défini » sont INDISCERNABLES ; chaque
+  tirage de photo est JOURNALISÉ nominativement (`DEMARRAGE_EXERCICE`) — la garde
+  VALIDEUR d'`exporterJSON` (L2-i) n'est pas affaiblie : ce chemin-ci exige le code et
+  trace, l'appel direct ne tracerait pas.
+- **Cycle de vie** (`v8/js/data/mode-exercice.js`, stockage injectable) : l'exercice
+  PERSISTE entre les sessions du navigateur ; il se SAUVEGARDE en fichier et se
+  recharge ; « Réinitialiser » re-sème la photo d'origine ; « Terminer » DÉTRUIT TOUT
+  d'un geste — bac, photo, drapeau : le stockage est VIDE, mesuré (« toute trace a été
+  détruite » ; limite dite : un fichier téléchargé vit sur le disque, hors de portée).
+- **À l'écran** : carte « Mode exercice » dans l'écran Sauvegarde (état du code, les
+  deux gestes) ; badge d'en-tête « EXERCICE / FORMATION » ; bandeau permanent en tête de
+  page (« rien ne s'écrit au registre », date de la photo, les trois gestes) — jamais
+  imprimé (les blocs d'impression des documents masquent tout le reste).
+
+**Preuves** : `v8/js/data/test-mode-exercice.mjs` **17 vérifications** (cycle complet sur
+stockage factice + étanchéité de bout en bout : registre réel → photo → bac — le tir de
+faisabilité devenu filet) · `server/test-routes-exercice.mjs` **20** (serveur HTTP réel :
+gardes de rôle et de session, refus indiscernables, photo complète délivrée à un ÉLÈVE
+muni du code — la décision —, journal tracé, code jamais en clair) · parcours VÉRIFIÉ AU
+NAVIGATEUR sur banc jetable : connexion → code → bascule (badge, bandeau, parc réel au
+bac) → terminer → stockage vide → retour LOCAL. **TOUT VERT — 137 exécutions.**
+
 ### ❄️ LOT G (13/08, carte blanche) — CASCADES : LE MODE D'EMPLOI DU PIÈGE EST FERMÉ, LE FOND EST POSÉ
 
 **Constat de la 4e relecture, tiré** : une machine en cascade n'a qu'un champ `fluide` —

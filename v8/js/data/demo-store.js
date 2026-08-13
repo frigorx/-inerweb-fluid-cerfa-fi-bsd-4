@@ -79,7 +79,10 @@ import { verifierPlainte } from './plaintes.js';
 import { prochainNumeroSuivi, verifierNumeroSuivi, problemeNumerosSuivi,
   cleNumeroSuivi, ecartApresRemise } from './remise-filiere.js';
 
-const CLE_STOCKAGE = 'inerweb-fluide-v8-demo';
+// Exportée depuis le MODE EXERCICE (13/08) : l'effacement total du bac à
+// sable doit viser LA clé réelle de persistance, jamais une copie qui
+// divergerait en silence.
+export const CLE_STOCKAGE = 'inerweb-fluide-v8-demo';
 
 /** Base IndexedDB des contenus de pièces jointes (repli mémoire sous Node). */
 const NOM_BASE_PJ = 'inerweb-fluide-v8-pj';

@@ -43,6 +43,7 @@ const sauvegarde = require('./sauvegarde.js');
 const restauration = require('./restauration.js');
 const routesSauvegarde = require('./routes-sauvegarde.js');
 const routesComptes = require('./routes-comptes.js');
+const routesExercice = require('./routes-exercice.js');
 const sessions = require('./sessions.js');
 
 // ----- Configuration -----
@@ -450,6 +451,22 @@ function traiterApi(requete, reponse, chemin) {
         entetes['Cache-Control'] = 'no-store';
         reponse.writeHead(200, entetes);
         reponse.end(corps);
+      } catch (erreur) {
+        const code = codeHttpErreur(erreur);
+        repondreJson(reponse, code, {
+          ok: false, erreur: erreur.message, code,
+        });
+      }
+      return;
+    }
+
+    // Routes du MODE EXERCICE (13/08) : dédiées, HORS du contrat DataStore,
+    // mêmes gardes réseau. Asynchrones (scrypt du code en pool de threads).
+    if (routesExercice.gereMethode(methode)) {
+      try {
+        const resultat = await routesExercice.appeler(
+          methode, enveloppe.params ?? {}, contexte);
+        repondreJson(reponse, 200, { ok: true, resultat });
       } catch (erreur) {
         const code = codeHttpErreur(erreur);
         repondreJson(reponse, code, {

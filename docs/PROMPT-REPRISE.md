@@ -8,7 +8,7 @@
 >
 > **⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐ ÉTAT AU 13/08/2026 — CARTE BLANCHE : LES 7 RESTES EN CODE
 > DE LA 4ᵉ RELECTURE SONT TRAITÉS (lots A→G, 7 commits, un lot = un commit
-> prouvé). TOUT VERT — 135 exécutions** (`node outils/lancer-tests.mjs --tout`),
+> prouvé). TOUT VERT — 137 exécutions** (`node outils/lancer-tests.mjs --tout`),
 > **207 attaques**, contrat v13 inchangé, **migration 37** (36 migrations, 2→37),
 > verrou Officiel toujours FERMÉ. Chaque lot : correctif → test qui redevient
 > ROUGE quand on le retire (contre-épreuve tirée) → TOUT VERT → commit.
@@ -43,12 +43,18 @@
 > expliqué en infobulle — un bouton grisé n'explique rien, l'application est
 > pédagogique.
 >
+> **⭐ MODE EXERCICE livré le même jour** (demande Franck, plan
+> `docs/PLAN-MODE-EXERCICE.md`) : bac à sable pédagogique semé d'une PHOTO du
+> registre réel, démarré par CODE DE DÉBLOCAGE (routes-exercice), étanche du
+> registre (prouvé), effacement TOTAL d'un geste, exercices sauvegardables ;
+> parcours vérifié au navigateur sur banc jetable.
+>
 > **RESTE, hors code (de Franck)** : décision écrite de l'établissement
 > (`docs/NOTE-DECISION-ETABLISSEMENT.md`) · PV clés v7 / couper le déploiement
 > Apps Script (P0-9) · saisine du DPD · paquet de livraison (inventaire des
 > composants, couverture mesurée) · semis du catalogue (écran d'admin) ·
-> simulation d'audit (« fin août ») · décision lot G (cascades) · **33 + 7 =
-> 40 commits non poussés** (gel du 31/07, décision Franck).
+> simulation d'audit (« fin août ») · décision lot G (cascades) · **42 commits
+> non poussés** (gel du 31/07, décision Franck).
 >
 > --- ci-dessous : blocs d'état ANTÉRIEURS, conservés tels quels. ---
 >
@@ -518,7 +524,7 @@ ouvert, chemin critique**.
 - **carte → vérifier → plan (grosses briques) → modif chirurgicale → TESTS VERTS → revue
   adversariale (sobre : soi-même ou 1 agent) → commit.** `node outils/lancer-tests.mjs --tout`
   doit être **TOUT VERT** avant tout commit. Le nombre d'exécutions CROÎT à chaque lot : c'est
-  le « TOUT VERT » qui fait foi, pas le compte. Repère au 13/08/2026 : **135 exécutions** —
+  le « TOUT VERT » qui fait foi, pas le compte. Repère au 13/08/2026 : **137 exécutions** —
   si le tien est inférieur, tu as perdu des suites en route.
 - **JAMAIS toucher au `data/` RÉEL** : vérification dynamique = serveur sur PORT jetable +
   `IWF_CHEMIN_BASE` base jetable (jamais 2011). Corps des requêtes API = **`{params:{...}}`**.
