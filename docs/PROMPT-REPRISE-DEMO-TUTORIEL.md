@@ -1,5 +1,19 @@
 # Prompt de reprise — MISE À JOUR DE LA DÉMO EN LIGNE + TUTORIEL INTÉGRÉ (à coller dans un nouveau chat)
 
+> ⚠️ **CHANTIER 1 EXÉCUTÉ le 13/08/2026 au soir — ne pas le refaire.** PR #26 et
+> PR #27 (deux sessions parallèles, réconciliées) fusionnées en merge ordinaire ;
+> TOUT VERT 137 exécutions + 207 attaques re-mesurés ; SITE vérifié (démo,
+> guide avec la partie Animations, racine, pédagogie) ; en complément de carte
+> blanche : **version de semis du monde démo** (commit `8fd57ee` — le
+> localStorage d'un visiteur d'avant le 28/07 rejouait l'identité réelle).
+> **CHANTIER 2 EXÉCUTÉ le 13/08 au soir (session en ligne) — ne pas le
+> refaire.** Conception VALIDÉE par Franck dans la session en ligne (les deux
+> mécaniques combinées, les TROIS parcours au choix du visiteur, première
+> visite + bouton permanent), réalisée dans
+> `v8/js/composants/visite-guidee.js` (plan `docs/PLAN-VISITE-GUIDEE.md`,
+> suite dédiée, filet porté à 138 exécutions, sentinelle du compte alignée).
+> Voir CHANGELOG (tête) pour le détail.
+>
 > Copier tout ce qui suit comme PREMIER message d'un nouveau chat. Il est autonome.
 >
 > **Réglage conseillé : opus, effort élevé** (un geste de publication vérifié + un

@@ -37,6 +37,34 @@ visite (mémoire locale) + bouton permanent au pied de la barre latérale.
   passe à **138 exécutions** ; les six pièces opposables qui annoncent le compte sont
   alignées (sentinelle `outils/test-nombre-executions.mjs` verte).
 
+### 🧹 VERSION DE SEMIS DU MONDE DÉMO (13/08 soir, complément de carte blanche)
+
+Le monde démo persisté au localStorage est désormais **timbré** (`VERSION_SEMIS`,
+posé par COPIE à la persistance, retiré au chargement — l'état vivant et les
+exports JSON restent bruts) ; un monde d'un autre semis est **jeté et re-semé**.
+Ferme la trouvaille du soir : le navigateur d'un visiteur d'AVANT le 28/07
+rejouait indéfiniment l'identité réelle de l'établissement, la restauration ne
+datant pas le semis. Coût assumé : chaque visiteur d'avant le timbre perd UNE
+FOIS ses manipulations de démo. **Preuves** : `test-lot1.mjs` **36 vérifications**
+(monde sans timbre jeté — contre-épreuve tirée : contrôle retiré, le test
+rougit —, timbre posé à la persistance, export resté brut) ;
+`test-scenario-lot1.mjs` rejoue son parcours TIMBRÉ (il teste la survie au
+rechargement, pas la version). **TOUT VERT 137 exécutions, 207 attaques.**
+
+### 🔀 FUSION ET DÉMO EN LIGNE (13/08 soir) — LE FEU VERT EXÉCUTÉ
+
+PR #26 fusionnée en **merge ordinaire** (l'historique des lots prouvés reste intact) :
+les 43 commits locaux (carte blanche + mode exercice) rejoignent les 9 commits
+pédagogie en ligne — `guide.html` seul fichier commun, fusion sans conflit, les deux
+apports conservés. Après fusion : **TOUT VERT 137 exécutions, 207 attaques**. SITE
+vérifié au navigateur (pas seulement le push) : démo publique à jour (identité
+fictive au re-semis, modules du justificatif servis), guide avec la partie
+« Animations et projets éducatifs », **aucun résidu du mode exercice en démo
+publique** (l'écran Sauvegarde démo n'en dit pas un mot, mesuré). ⚠️ Trouvaille à
+trancher : le monde démo d'un visiteur d'AVANT le 28/07 reste figé dans SON
+localStorage avec l'identité réelle de l'établissement — `chargerDepuisStockage`
+restaure sans numéro de version de semis, donc le re-semis n'a jamais lieu chez lui.
+
 ### 🎓 MODE EXERCICE (13/08) — LE BAC À SABLE PÉDAGOGIQUE SUR DONNÉES RÉELLES
 
 **Demande de Franck, direction validée puis production lancée le jour même** (plan

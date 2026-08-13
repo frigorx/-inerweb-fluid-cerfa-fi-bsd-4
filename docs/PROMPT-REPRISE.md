@@ -53,8 +53,16 @@
 > (`docs/NOTE-DECISION-ETABLISSEMENT.md`) · PV clés v7 / couper le déploiement
 > Apps Script (P0-9) · saisine du DPD · paquet de livraison (inventaire des
 > composants, couverture mesurée) · semis du catalogue (écran d'admin) ·
-> simulation d'audit (« fin août ») · décision lot G (cascades) · **42 commits
-> non poussés** (gel du 31/07, décision Franck).
+> simulation d'audit (« fin août ») · décision lot G (cascades).
+>
+> **⭐ DÉMO EN LIGNE À JOUR (13/08 au soir, feu vert Franck — gel du 31/07 levé
+> pour CE dépôt seulement)** : les 43 commits locaux sont poussés et FUSIONNÉS
+> dans `main` avec la pédagogie publiée entre-temps (#21-#23) — fusion simple,
+> AUCUNE réécriture d'historique. Re-prouvés sur l'arbre fusionné AVANT
+> publication : TOUT VERT (137 exécutions) + banc navigateur jetable (guide :
+> section pédagogie ET recherche par mot-clé ensemble ; démo : badge DÉMO,
+> identité fictive affichée, AUCUN résidu du mode exercice). La démo GitHub
+> Pages suit `main`.
 >
 > --- ci-dessous : blocs d'état ANTÉRIEURS, conservés tels quels. ---
 >

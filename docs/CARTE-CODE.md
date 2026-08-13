@@ -25,6 +25,8 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
 - **Choix du store** (front) : `v8/js/data/datastore.js` — DemoStore
   (mémoire+localStorage) par défaut, LocalStore (`local-store.js` →
   `transport-http.js` → `POST /api/:methode`) si le serveur répond.
+  Monde persisté TIMBRÉ (`VERSION_SEMIS`, 13/08) : un monde d'un autre
+  semis est jeté et re-semé ; le timbre ne vit que dans localStorage.
 - **Plans de lot** : `docs/PLAN-*.md`, un par lot (P0-5, P0-6, P0-8, P1-2,
   Q1-Q11, **B3-SIGNATURE**) — décisions du propriétaire, mesures et gates.
 - **Outils hors filet** : `outils/` (paquet, captures, répétition générale,

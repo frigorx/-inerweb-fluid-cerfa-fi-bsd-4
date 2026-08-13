@@ -17,6 +17,7 @@
 // ============================================================
 
 import { creerStore } from './datastore.js';
+import { VERSION_SEMIS } from './demo-store.js';
 import { genererCerfaPdf } from '../cerfa/generateur.js';
 
 let nbOk = 0;
@@ -249,9 +250,12 @@ verifier('8. après le rejet, la donnée en place est intacte',
 // ============================================================
 // 9. Rechargement : l'état du registre reste SAIN
 // ============================================================
+const donneesRejouees = JSON.parse(exportPropre).donnees;
+// Timbre de version du semis : ce scénario teste la SURVIE du parcours au
+// rechargement, pas la version — sans timbre, le monde serait re-semé.
+donneesRejouees.versionSemis = VERSION_SEMIS;
 const memoire = new Map(
-  [['inerweb-fluide-v8-demo',
-    JSON.stringify(JSON.parse(exportPropre).donnees)]]);
+  [['inerweb-fluide-v8-demo', JSON.stringify(donneesRejouees)]]);
 globalThis.localStorage = {
   getItem: (cle) => (memoire.has(cle) ? memoire.get(cle) : null),
   setItem: (cle, valeur) => { memoire.set(cle, String(valeur)); },
