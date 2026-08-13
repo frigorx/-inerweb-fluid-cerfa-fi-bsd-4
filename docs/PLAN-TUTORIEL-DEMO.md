@@ -74,9 +74,7 @@ fait. Plus simple, moins fragile, mais ne montre pas OÙ cliquer.
    cochable) ?
 3. L'invite à la première visite (discrète, en coin d'écran) convient-elle, ou
    préférez-vous que la visite ne parte QUE de la barre latérale ?
-4. À trancher aussi, hors tutoriel : le monde démo des visiteurs d'AVANT le
-   28/07 garde l'identité réelle de l'établissement dans LEUR localStorage
-   (aucun numéro de version de semis — `chargerDepuisStockage` restaure tout
-   état valide). Correctif proposé : numéro de version du monde démo, tout
-   état plus ancien est jeté et re-semé (le visiteur perd ses manipulations de
-   démo — acceptable ?). Petit lot, prouvable par test.
+4. ~~Le monde démo des visiteurs d'AVANT le 28/07 garde l'identité réelle~~ —
+   **RÉGLÉ le 13/08 au soir** (complément de carte blanche, commit `8fd57ee`) :
+   version de semis du monde démo, tout état d'un autre semis est jeté et
+   re-semé ; contre-épreuve tirée, vérifié en production sur le site.

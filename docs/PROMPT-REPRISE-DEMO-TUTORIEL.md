@@ -1,5 +1,15 @@
 # Prompt de reprise — MISE À JOUR DE LA DÉMO EN LIGNE + TUTORIEL INTÉGRÉ (à coller dans un nouveau chat)
 
+> ⚠️ **CHANTIER 1 EXÉCUTÉ le 13/08/2026 au soir — ne pas le refaire.** PR #26 et
+> PR #27 (deux sessions parallèles, réconciliées) fusionnées en merge ordinaire ;
+> TOUT VERT 137 exécutions + 207 attaques re-mesurés ; SITE vérifié (démo,
+> guide avec la partie Animations, racine, pédagogie) ; en complément de carte
+> blanche : **version de semis du monde démo** (commit `8fd57ee` — le
+> localStorage d'un visiteur d'avant le 28/07 rejouait l'identité réelle).
+> **RESTE le chantier 2 (tutoriel intégré)** : conception posée dans
+> `docs/PLAN-TUTORIEL-DEMO.md`, EN ATTENTE DE VALIDATION FRANCK — y répondre
+> avant d'écrire la moindre ligne. Voir CHANGELOG (tête) pour le détail.
+>
 > Copier tout ce qui suit comme PREMIER message d'un nouveau chat. Il est autonome.
 >
 > **Réglage conseillé : opus, effort élevé** (un geste de publication vérifié + un
