@@ -2,6 +2,20 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔀 FUSION ET DÉMO EN LIGNE (13/08 soir) — LE FEU VERT EXÉCUTÉ
+
+PR #26 fusionnée en **merge ordinaire** (l'historique des lots prouvés reste intact) :
+les 43 commits locaux (carte blanche + mode exercice) rejoignent les 9 commits
+pédagogie en ligne — `guide.html` seul fichier commun, fusion sans conflit, les deux
+apports conservés. Après fusion : **TOUT VERT 137 exécutions, 207 attaques**. SITE
+vérifié au navigateur (pas seulement le push) : démo publique à jour (identité
+fictive au re-semis, modules du justificatif servis), guide avec la partie
+« Animations et projets éducatifs », **aucun résidu du mode exercice en démo
+publique** (l'écran Sauvegarde démo n'en dit pas un mot, mesuré). ⚠️ Trouvaille à
+trancher : le monde démo d'un visiteur d'AVANT le 28/07 reste figé dans SON
+localStorage avec l'identité réelle de l'établissement — `chargerDepuisStockage`
+restaure sans numéro de version de semis, donc le re-semis n'a jamais lieu chez lui.
+
 ### 🎓 MODE EXERCICE (13/08) — LE BAC À SABLE PÉDAGOGIQUE SUR DONNÉES RÉELLES
 
 **Demande de Franck, direction validée puis production lancée le jour même** (plan
