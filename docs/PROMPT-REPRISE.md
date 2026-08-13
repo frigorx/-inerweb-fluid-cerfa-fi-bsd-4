@@ -6,6 +6,52 @@
 > **Session conseillée : Opus, effort très élevé** (chantier probatoire/réglementaire, briques
 > testées une à une). PAS d'ultracode hors point critique.
 >
+> **⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐ ÉTAT AU 13/08/2026 — CARTE BLANCHE : LES 7 RESTES EN CODE
+> DE LA 4ᵉ RELECTURE SONT TRAITÉS (lots A→G, 7 commits, un lot = un commit
+> prouvé). TOUT VERT — 135 exécutions** (`node outils/lancer-tests.mjs --tout`),
+> **207 attaques**, contrat v13 inchangé, **migration 37** (36 migrations, 2→37),
+> verrou Officiel toujours FERMÉ. Chaque lot : correctif → test qui redevient
+> ROUGE quand on le retire (contre-épreuve tirée) → TOUT VERT → commit.
+>
+> - **Lot A** — le verrou de compte n'est plus perpétuel (fenêtre nouvelle à
+>   l'expiration), message d'échec UNIQUE verrou compris (l'ancien « Compte
+>   verrouillé » énumérait les identifiants), porte de secours CLI
+>   `server/secours-compte.js`, **A14 soldé** (scrypt asynchrone, file bornée —
+>   le prérequis LAN est tombé AVANT le LAN).
+> - **Lot B** — le document réimprimé lit le **PRP figé** (cadres 3 ET 7) ;
+>   sans `prpFige`, repli au référentiel courant, dit et assumé.
+> - **Lot C** — 3ᵉ porte du coffre fermée : `getMouvements` (2 stores) rend la
+>   fiche VIVANTE (pseudonyme) quand le porteur est au coffre ; la donnée
+>   scellée ne bouge pas ; l'export JSON reste BRUT (empreintes rejouables).
+> - **Lot D** — `bon-intervention` et `feuille-mise-en-service` impriment
+>   ENTIERS en multi-pages (l'ancien `position: fixed` clouait tout à la
+>   première feuille) ; blocs d'impression EXPORTÉS et gardés.
+> - **Lot E** — l'archive scellée ne porte plus le même CERFA deux fois (le
+>   contrôle LIÉ d'un mouvement déjà servi est sauté, Formation comprise).
+> - **Lot F** — **le blocage n° 1 est fermé** : condition 19
+>   `CAPACITE_ETABLISSEMENT` (portée lue, MÊME matrice que l'aptitude, portée
+>   vide = rien), grille de saisie aux DEUX régimes, import JSON qui valide la
+>   portée, colonne renommée (migration 37). Plan : `docs/PLAN-LOT-F-CAPACITE.md`.
+> - **Lot G** — cascades : le mode d'emploi du piège est fermé (note « une
+>   fiche = un circuit » au champ Fluide) ; **le fond reste GATÉ Franck**
+>   (`docs/PLAN-LOT-G-MULTI-FLUIDES.md` : grappe d'affichage ou multi-circuits).
+>
+> **Les deux gates du 27/07 sont TRANCHÉS (carte blanche, consignés au
+> REGISTRE-DES-ARBITRAGES)** : (a) le contrôle d'image rejoué à chaque lecture
+> est CONSERVÉ — une case blanche est dite « absente », constat factuel, jamais
+> une accusation ; (b) les boutons « Arrêter »/« Démanteler » gardent le refus
+> expliqué en infobulle — un bouton grisé n'explique rien, l'application est
+> pédagogique.
+>
+> **RESTE, hors code (de Franck)** : décision écrite de l'établissement
+> (`docs/NOTE-DECISION-ETABLISSEMENT.md`) · PV clés v7 / couper le déploiement
+> Apps Script (P0-9) · saisine du DPD · paquet de livraison (inventaire des
+> composants, couverture mesurée) · semis du catalogue (écran d'admin) ·
+> simulation d'audit (« fin août ») · décision lot G (cascades) · **33 + 7 =
+> 40 commits non poussés** (gel du 31/07, décision Franck).
+>
+> --- ci-dessous : blocs d'état ANTÉRIEURS, conservés tels quels. ---
+>
 > **⭐⭐⭐⭐⭐⭐⭐⭐⭐ ÉTAT AU 26/07/2026 — 3ᵉ AUDIT EXTERNE (verdict NO GO) TRAITÉ.
 > B1 + B2 + B3 FUSIONNÉS dans `main`, puis les résidus A18 / A23 / A02.
 > TOUT VERT — 121 exécutions** (106 → 121, mesuré par
@@ -472,7 +518,7 @@ ouvert, chemin critique**.
 - **carte → vérifier → plan (grosses briques) → modif chirurgicale → TESTS VERTS → revue
   adversariale (sobre : soi-même ou 1 agent) → commit.** `node outils/lancer-tests.mjs --tout`
   doit être **TOUT VERT** avant tout commit. Le nombre d'exécutions CROÎT à chaque lot : c'est
-  le « TOUT VERT » qui fait foi, pas le compte. Repère au 27/07/2026 : **132 exécutions** —
+  le « TOUT VERT » qui fait foi, pas le compte. Repère au 13/08/2026 : **135 exécutions** —
   si le tien est inférieur, tu as perdu des suites en route.
 - **JAMAIS toucher au `data/` RÉEL** : vérification dynamique = serveur sur PORT jetable +
   `IWF_CHEMIN_BASE` base jetable (jamais 2011). Corps des requêtes API = **`{params:{...}}`**.
@@ -480,8 +526,8 @@ ouvert, chemin critique**.
 - **Parité STRICTE `server/api.js` ↔ `v8/js/data/demo-store.js`** (test-contrat, mapping qui
   lève sur clé inconnue → déclarer les nouveaux champs des deux côtés). Module pur du front
   réutilisé côté serveur = recopié en littéral (CommonJS) + test de parité qui discrimine.
-- **Migrations** : registre `server/migrations.js`, dernière = **36**, prochaine = **37**
-  (au 26/07/2026 — se relit dans le registre, jamais de mémoire).
+- **Migrations** : registre `server/migrations.js`, dernière = **37**, prochaine = **38**
+  (au 13/08/2026 — se relit dans le registre, jamais de mémoire).
   ⚠️ Une migration est IMMUABLE (littéraux figés, jamais de constante partagée qui évolue).
   Triggers WORM recréés à chaque migration qui touche leurs tables ;
   `PRAGMA recursive_triggers = ON` obligatoire.
