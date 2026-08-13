@@ -2,6 +2,20 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧹 VERSION DE SEMIS DU MONDE DÉMO (13/08 soir, complément de carte blanche)
+
+Le monde démo persisté au localStorage est désormais **timbré** (`VERSION_SEMIS`,
+posé par COPIE à la persistance, retiré au chargement — l'état vivant et les
+exports JSON restent bruts) ; un monde d'un autre semis est **jeté et re-semé**.
+Ferme la trouvaille du soir : le navigateur d'un visiteur d'AVANT le 28/07
+rejouait indéfiniment l'identité réelle de l'établissement, la restauration ne
+datant pas le semis. Coût assumé : chaque visiteur d'avant le timbre perd UNE
+FOIS ses manipulations de démo. **Preuves** : `test-lot1.mjs` **36 vérifications**
+(monde sans timbre jeté — contre-épreuve tirée : contrôle retiré, le test
+rougit —, timbre posé à la persistance, export resté brut) ;
+`test-scenario-lot1.mjs` rejoue son parcours TIMBRÉ (il teste la survie au
+rechargement, pas la version). **TOUT VERT 137 exécutions, 207 attaques.**
+
 ### 🔀 FUSION ET DÉMO EN LIGNE (13/08 soir) — LE FEU VERT EXÉCUTÉ
 
 PR #26 fusionnée en **merge ordinaire** (l'historique des lots prouvés reste intact) :

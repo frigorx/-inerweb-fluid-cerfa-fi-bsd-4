@@ -84,6 +84,17 @@ import { prochainNumeroSuivi, verifierNumeroSuivi, problemeNumerosSuivi,
 // divergerait en silence.
 export const CLE_STOCKAGE = 'inerweb-fluide-v8-demo';
 
+// Version du SEMIS du monde de démo (13/08/2026). Un monde persisté d'une
+// autre version est JETÉ au chargement et re-semé : constat du 13/08 — le
+// navigateur d'un visiteur d'AVANT le 28/07 rejouait indéfiniment l'identité
+// RÉELLE de l'établissement (remplacée depuis dans demo-donnees.js), car la
+// restauration ne datait pas le semis. Monter ce numéro à CHAQUE purge
+// nécessaire du monde persisté des visiteurs (donnée sensible corrigée dans
+// le semis) ; le visiteur perd ses manipulations de démo, jamais plus.
+// Le timbre ne vit QUE dans localStorage (posé par copie à la persistance,
+// retiré au chargement) : l'état vivant et les exports JSON restent BRUTS.
+export const VERSION_SEMIS = 2;
+
 /** Base IndexedDB des contenus de pièces jointes (repli mémoire sous Node). */
 const NOM_BASE_PJ = 'inerweb-fluide-v8-pj';
 
@@ -316,6 +327,9 @@ function chargerDepuisStockage() {
     if (!brut) return null;
     const donnees = JSON.parse(brut);
     if (!estValide(donnees)) return null;
+    // Monde d'un AUTRE semis (ou d'avant le timbre) : jeté, re-semé.
+    if (donnees.versionSemis !== VERSION_SEMIS) return null;
+    delete donnees.versionSemis; // le timbre ne vit que dans localStorage
     // Monde persisté AVANT le lot du 16/07 : anciens PRP corrigés
     // (conditionnel — un PRP ajusté par l'utilisateur reste intact).
     corrigerPrpFgas3(donnees.fluides);
@@ -329,7 +343,9 @@ function chargerDepuisStockage() {
 /** Écrit l'état courant dans localStorage (silencieux si indisponible). */
 function persister(donnees) {
   try {
-    localStorage.setItem(CLE_STOCKAGE, JSON.stringify(donnees));
+    // Timbre de version posé par COPIE : jamais dans l'état vivant.
+    localStorage.setItem(CLE_STOCKAGE,
+      JSON.stringify({ ...donnees, versionSemis: VERSION_SEMIS }));
   } catch {
     // Persistance optionnelle : rien à faire si le stockage est indisponible
   }

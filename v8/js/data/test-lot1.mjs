@@ -11,6 +11,7 @@
 // ============================================================
 
 import { creerStore } from './datastore.js';
+import { VERSION_SEMIS } from './demo-store.js';
 import { genererCerfaPdf } from '../cerfa/generateur.js';
 
 let nbOk = 0;
@@ -311,6 +312,9 @@ const cibleLocale = donneesAlterees.mouvements.find((mv) =>
   mv.statut === 'VALIDE' && Number.isFinite(mv.quantiteKg));
 cibleLocale.quantiteKg = 123.456;
 delete donneesAlterees.bouteilles[0].masseEntreeKg; // reprise CR-4 au passage
+// Timbre de version du semis : ce scénario teste l'ALTÉRATION, pas la
+// version — sans timbre, le monde serait jeté avant d'être examiné.
+donneesAlterees.versionSemis = VERSION_SEMIS;
 const memoire = new Map(
   [['inerweb-fluide-v8-demo', JSON.stringify(donneesAlterees)]]);
 globalThis.localStorage = {
@@ -329,6 +333,34 @@ try {
   verifier('CR-4 : reprise d’une sauvegarde sans masseEntreeKg au chargement',
     (await storeAltere.getBouteilles()).every((b) =>
       Number.isFinite(b.masseEntreeKg)));
+
+  // e) monde persisté SANS version de semis (visiteur d'avant le timbre,
+  // 13/08) : JETÉ et re-semé — un semis corrigé ne doit plus jamais être
+  // recouvert par un vieux monde rejoué depuis localStorage
+  const mondeSansTimbre = JSON.parse(exportPropre).donnees;
+  mondeSansTimbre.etablissement.raisonSociale = 'MONDE PERSISTÉ D’ÉPOQUE';
+  memoire.set('inerweb-fluide-v8-demo', JSON.stringify(mondeSansTimbre));
+  const storeResemme = await creerStore();
+  verifier('VS : monde persisté sans version de semis → jeté et re-semé',
+    (await storeResemme.getEtablissement()).raisonSociale
+      !== 'MONDE PERSISTÉ D’ÉPOQUE');
+
+  // f) la persistance TIMBRE la version ; l'état vivant et l'export JSON
+  // restent BRUTS (aucune pollution des structures rejouables)
+  await storeResemme.createBouteille({
+    type: 'NEUVE',
+    fluide: 'R-134a',
+    tareKg: 11.0,
+    masseBruteKg: 21.0,
+    contenanceMaxKg: 12,
+    dateEntree: '2026-07-03',
+    operateur: 'Frédéric Henninot'
+  });
+  const mondeRejoue = JSON.parse(memoire.get('inerweb-fluide-v8-demo'));
+  verifier('VS : le monde persisté porte la version de semis courante',
+    mondeRejoue.versionSemis === VERSION_SEMIS);
+  verifier('VS : l’export JSON reste brut (aucun timbre dans les données)',
+    !('versionSemis' in JSON.parse(await storeResemme.exporterJSON()).donnees));
 } finally {
   delete globalThis.localStorage;
 }
