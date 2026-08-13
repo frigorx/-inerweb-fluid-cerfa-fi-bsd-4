@@ -48,7 +48,7 @@ const { evaluerBlocagesOfficiel, messageRefusOfficiel, VERROU_LIVRAISON,
 const { verifierDroitIntervention, habilitationReconnue,
   jetonsMentionsActives, FIN_DELIVRANCE_2008,
   DATE_BUTOIR_REMISE_NIVEAU_2008, DUREE_CYCLE_FORMATION_ANS,
-  plusAnnees } = require('./droit-intervention.js');
+  plusAnnees, capaciteEtablissementCouvre } = require('./droit-intervention.js');
 // Déclaration annuelle 11 rubriques (P0-8, miroir littéral du module ESM du
 // front, parité prouvée par test-declaration-annuelle.mjs).
 const { calculerDeclarationAnnuelle } = require('./declaration-annuelle.js');
@@ -115,6 +115,10 @@ const CATEGORIES_ATTESTATION = ['I', 'II', 'III', 'IV'];
 const REGIMES = ['2008', '2025'];
 const CATEGORIES_2008 = ['I', 'II', 'III', 'IV'];
 const CATEGORIES_2025 = ['A1', 'A2', 'B', 'C', 'D', 'E', 'V'];
+// Lot F (13/08) : la capacité de l'ÉTABLISSEMENT accepte les DEUX régimes
+// (la 4e relecture l'a tiré : « A1 » passait pour une personne et était
+// refusé pour l'établissement, pendant la même transition réglementaire).
+const GRILLE_CAPACITE_ETABLISSEMENT = [...CATEGORIES_2008, ...CATEGORIES_2025];
 const FLUIDES_MENTION = ['CO2', 'NH3', 'HC'];
 
 /** IM-4 : tolérance de charge résiduelle pour démanteler (± 0,05 kg). */
@@ -2754,7 +2758,9 @@ const HANDLERS = {
     const d = params.patch || {};
     if (d.categoriesAutorisees !== undefined) {
       for (const categorie of d.categoriesAutorisees ?? []) {
-        verifierCategorie(categorie, 'l’établissement');
+        // Lot F (13/08) : grille élargie aux deux régimes (I-IV et A1…V).
+        verifierCategorie(categorie, 'l’établissement',
+          GRILLE_CAPACITE_ETABLISSEMENT);
       }
     }
     if (d.activitesAutorisees !== undefined) {
@@ -5935,6 +5941,23 @@ function amorcerChaineCandidat(figees) {
  * @returns {string|null} description du premier problème, ou null si sain.
  */
 function verifierInvariantsDonneesCandidat(candidat) {
+  // ⭐ Lot F (13/08) — LA PORTÉE DE CAPACITÉ NE S'ÉCRIT PAS HORS GRILLE
+  // PAR L'IMPORT. La 4e relecture l'a tiré : l'import écrivait
+  // categoriesAutorisees / activitesAutorisees sans AUCUNE vérification —
+  // la troisième porte, après l'écran (gardé) et l'API (gardée).
+  // Miroir EXACT de la démo (verifierInvariantsDonnees).
+  if (candidat.etablissement) {
+    for (const categorie of candidat.etablissement.categoriesAutorisees ?? []) {
+      if (!GRILLE_CAPACITE_ETABLISSEMENT.includes(categorie)) {
+        return `établissement : catégorie de capacité inconnue (${categorie})`;
+      }
+    }
+    for (const activite of candidat.etablissement.activitesAutorisees ?? []) {
+      if (!ACTIVITES_REGLEMENTEES.includes(activite)) {
+        return `établissement : activité réglementée inconnue (${activite})`;
+      }
+    }
+  }
   for (const b of candidat.bouteilles) {
     const ref = b.code ?? b.id ?? '?';
     // ⭐ L2 (25/07) — les gardes du CRUD valent AUSSI à l'import. Attaque
@@ -8936,6 +8959,28 @@ function cadreFicheOfficiel(mouvement) {
         : null
     };
   }
+  // Lot F carte blanche (13/08, 4e relecture — blocage n° 1) : la PORTÉE
+  // de l'attestation de capacité de l'ÉTABLISSEMENT est enfin LUE. Verdict
+  // précalculé pour la condition 19 (même matrice que l'aptitude de la
+  // personne, charge NOMINALE, hermétique opposable). `attestee` : sans
+  // attestation déclarée, les conditions 1-4 parlent déjà — la 19 se tait.
+  // Miroir du DemoStore.
+  const etab = HANDLERS.getEtablissement();
+  const nominaleEtab = machine ? machine.chargeNominaleKg : null;
+  const capaciteEtablissement = etab ? {
+    attestee: Boolean(etab.numAttestationCapacite),
+    verdict: capaciteEtablissementCouvre({
+      categories: etab.categoriesAutorisees ?? [],
+      activites: etab.activitesAutorisees ?? [],
+      operation: mouvement.type,
+      fluide: mouvement.fluide ?? null,
+      chargeKg: typeof nominaleEtab === 'number'
+        && Number.isFinite(nominaleEtab) && nominaleEtab > 0
+        ? nominaleEtab : null,
+      hermetiqueScelle: machine
+        ? equipement.hermetiqueOpposable(machine) : false
+    })
+  } : null;
   return {
     type: mouvement.type,
     machinePresente: Boolean(machine),
@@ -8977,6 +9022,9 @@ function cadreFicheOfficiel(mouvement) {
     technicienPresent: Boolean(mouvement.technicien &&
       String(mouvement.technicien).trim()),
     intervenant,
+    // Lot F (13/08) — condition 19 : portée de la capacité de
+    // l'établissement (fait précalculé ci-dessus).
+    capaciteEtablissement,
     // Lot C (C1) — conditions 14-15 : signatures réelles, tri-état.
     signatureTechnicienValide: etatSignatureReelle(mouvement, 'TECHNICIEN'),
     signatureDetenteurValide: etatSignatureReelle(mouvement, 'DETENTEUR')

@@ -135,6 +135,18 @@ function evaluerBlocagesOfficiel(cadre) {
         'au-delà du seuil haut) mais absent de l’équipement.');
     }
 
+    // 19 — portée de la CAPACITÉ DE L'ÉTABLISSEMENT (lot F carte blanche,
+    // 13/08/2026). Miroir EXACT du module ESM — voir la doctrine complète
+    // dans v8/js/data/blocage-officiel.js.
+    if (fiche.capaciteEtablissement &&
+        fiche.capaciteEtablissement.attestee &&
+        fiche.capaciteEtablissement.verdict &&
+        fiche.capaciteEtablissement.verdict.autorise === false) {
+      poser('CAPACITE_ETABLISSEMENT',
+        'Attestation de capacité de l’établissement inadaptée à cette ' +
+        `intervention : ${fiche.capaciteEtablissement.verdict.motif}.`);
+    }
+
     // 9 — contrôle d'étanchéité exigé (machine soumise OU fluide inflammable).
     const controleExige =
       (fiche.type === 'CHARGE_APPOINT' || fiche.type === 'MISE_EN_SERVICE') &&

@@ -2,6 +2,38 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🏛️ LOT F (13/08, carte blanche) — LA PORTÉE DE CAPACITÉ DE L'ÉTABLISSEMENT EST ENFIN LUE
+
+**Le blocage n° 1 de la 4e relecture externe, TIRÉ par elle** : `categoriesAutorisees` /
+`activitesAutorisees` étaient saisies, validées en forme, stockées, affichées — et lues
+par AUCUNE règle. Verrou désarmé en bac à sable, une récupération de 8 kg sur une machine
+de 50 kg devenait une fiche OFFICIELLE scellée sur un établissement déclaré « catégorie
+II, contrôle d'étanchéité seul ». Sans effet aujourd'hui (verrou fermé) ; bloquant avant
+toute réouverture. Plan : `docs/PLAN-LOT-F-CAPACITE.md`.
+
+- **Condition 19 `CAPACITE_ETABLISSEMENT`** (moteur pur + miroir, S·V) : l'attestation
+  déclarée doit COUVRIR l'intervention. AUCUNE grille nouvelle : les catégories déclarées
+  entrent dans la MÊME matrice que l'aptitude de la personne
+  (`capaciteEtablissementCouvre` délègue à `verifierDroitIntervention`, régime déduit de
+  chaque catégorie — I-IV → 2008, A1…V → 2025), et l'activité réglementée requise par le
+  type d'intervention doit être déclarée. Une portée VIDE n'autorise RIEN. Jamais en
+  doublon des conditions 1-4 : sans attestation, elles seules parlent.
+- **Les trois portes voisines, fermées** : la grille de saisie accepte les DEUX régimes
+  (« A1 » passait pour une personne et était refusé pour l'établissement — même
+  transition réglementaire) ; l'import JSON REFUSE une portée hors grille (invariant
+  doublé, il écrivait sans aucune vérification) ; la colonne SQL `categories_2025`, qui
+  portait la grille 2008, est renommée `categories_autorisees` (**migration 37**, RENAME
+  COLUMN — aucune donnée touchée, aucun déclencheur WORM sur cette table). La divergence
+  consignée dans `mapping.js` est RÉSORBÉE.
+
+**Preuves** : suite NEUVE DOUBLÉE `test-capacite-etablissement` (9 vérifications × 2
+stores) — le scénario exact du constat bloqué et motivé, la portée vide bloquée, la
+portée couvrante SANS sur-blocage, le régime 2025 enregistrable, l'import forgé refusé
+(contre-épreuve tirée : condition neutralisée → 4 rouges de chaque côté).
+`test-droit-intervention` **28 vérifications** (parité stricte du verdict ET des messages
+sur 7 vecteurs, mapping et régimes compris). `test-migrations` **173** (la 37 passe et se
+rejoue). `docs/CONDITIONS-BLOCANTES-OFFICIEL.md` porte la condition 19.
+
 ### 📦 LOT E (13/08, carte blanche) — L'ARCHIVE SCELLÉE NE PORTE PLUS LE MÊME CERFA DEUX FOIS
 
 **Consigné au lot 1, TIRÉ ici avant d'être corrigé** : un mouvement CONTROLE validé en

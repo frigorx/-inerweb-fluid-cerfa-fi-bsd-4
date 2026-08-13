@@ -2482,8 +2482,18 @@ await verifierRejet('reformerOutil refuse un outil déjà réformé',
 const etabMaj = await store.updateEtablissement({ sitesCouverts: 'Atelier + labo' });
 verifier('updateEtablissement applique le patch',
   etabMaj.sitesCouverts === 'Atelier + labo');
+// Lot F (13/08) : la grille de capacité accepte les DEUX régimes — « V »
+// (véhicules, 2025) était refusé pour l'établissement pendant que la même
+// valeur passait pour une personne (4e relecture, tiré). Le refus se
+// prouve désormais sur une catégorie réellement inconnue.
+const etabDeuxRegimes = await store.updateEtablissement(
+  { categoriesAutorisees: ['I', 'A1'] });
+verifier('updateEtablissement accepte les DEUX régimes (I et A1) [lot F]',
+  (etabDeuxRegimes.categoriesAutorisees ?? []).includes('I')
+  && (etabDeuxRegimes.categoriesAutorisees ?? []).includes('A1'));
 await verifierRejet('updateEtablissement refuse une catégorie inconnue',
-  store.updateEtablissement({ categoriesAutorisees: ['I', 'V'] }));
+  store.updateEtablissement({ categoriesAutorisees: ['I', 'IX'] }));
+await store.updateEtablissement({ categoriesAutorisees: ['I'] });
 
 const audit = await store.createAuditOrganisme({
   date: dateRelative(0), organisme: 'QualiFroid Cert', resultat: 'CONFORME'

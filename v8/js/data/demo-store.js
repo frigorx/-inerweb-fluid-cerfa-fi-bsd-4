@@ -56,7 +56,7 @@ import { REGIMES, CATEGORIES_2008, CATEGORIES_2025, comparerHabilitations,
   categorieCoherente, FLUIDES_MENTION, comparerMentions,
   verifierDroitIntervention, habilitationReconnue, jetonsMentionsActives,
   FIN_DELIVRANCE_2008, DATE_BUTOIR_REMISE_NIVEAU_2008,
-  DUREE_CYCLE_FORMATION_ANS, plusAnnees }
+  DUREE_CYCLE_FORMATION_ANS, plusAnnees, capaciteEtablissementCouvre }
   from './habilitations.js';
 // Signature binaire réelle des pièces jointes (audit-proof) : le contenu doit
 // concorder avec le type déclaré, jamais le MIME annoncé seul (miroir serveur).
@@ -121,6 +121,12 @@ const ACTIVITES_REGLEMENTEES = ['MISE_EN_SERVICE', 'MAINTENANCE', 'CONTROLE',
 
 /** Catégories d'attestation (grilles 2008 et 2025). */
 const CATEGORIES_ATTESTATION = ['I', 'II', 'III', 'IV'];
+
+// Lot F (13/08) : la capacité de l'ÉTABLISSEMENT accepte les DEUX régimes
+// (la 4e relecture l'a tiré : « A1 » passait pour une personne et était
+// refusé pour l'établissement, pendant la même transition réglementaire).
+// Miroir EXACT du serveur.
+const GRILLE_CAPACITE_ETABLISSEMENT = [...CATEGORIES_2008, ...CATEGORIES_2025];
 
 /** Décisions possibles sur un fluide récupéré (SPEC §5.8). */
 const DECISIONS_FLUIDE = ['REUTILISABLE', 'A_ANALYSER', 'DECHET'];
@@ -403,6 +409,21 @@ async function verifierChaineMouvements(mouvements) {
  * @returns {string|null} description du premier problème, ou null si sain
  */
 function verifierInvariantsDonnees(candidat) {
+  // ⭐ Lot F (13/08) — LA PORTÉE DE CAPACITÉ NE S'ÉCRIT PAS HORS GRILLE
+  // PAR L'IMPORT (4e relecture, tiré : troisième porte après l'écran et
+  // l'API). Miroir EXACT du serveur (verifierInvariantsDonneesCandidat).
+  if (candidat.etablissement) {
+    for (const categorie of candidat.etablissement.categoriesAutorisees ?? []) {
+      if (!GRILLE_CAPACITE_ETABLISSEMENT.includes(categorie)) {
+        return `établissement : catégorie de capacité inconnue (${categorie})`;
+      }
+    }
+    for (const activite of candidat.etablissement.activitesAutorisees ?? []) {
+      if (!ACTIVITES_REGLEMENTEES.includes(activite)) {
+        return `établissement : activité réglementée inconnue (${activite})`;
+      }
+    }
+  }
   for (const b of candidat.bouteilles) {
     const ref = b.code ?? b.id ?? '?';
     // ⭐ L2 (25/07) — les gardes du CRUD valent AUSSI à l'import. Attaque
@@ -1533,6 +1554,27 @@ export function creerDemoStore() {
       technicienPresent: Boolean(mouvement.technicien &&
         String(mouvement.technicien).trim()),
       intervenant,
+      // Lot F carte blanche (13/08, 4e relecture — blocage n° 1) : la
+      // PORTÉE de l'attestation de capacité de l'ÉTABLISSEMENT est enfin
+      // LUE — condition 19, même matrice que l'aptitude de la personne
+      // (charge NOMINALE, hermétique opposable). `attestee` : sans
+      // attestation déclarée, les conditions 1-4 parlent déjà — la 19 se
+      // tait. Miroir du serveur.
+      capaciteEtablissement: donnees.etablissement ? {
+        attestee: Boolean(donnees.etablissement.numAttestationCapacite),
+        verdict: capaciteEtablissementCouvre({
+          categories: donnees.etablissement.categoriesAutorisees ?? [],
+          activites: donnees.etablissement.activitesAutorisees ?? [],
+          operation: mouvement.type,
+          fluide: mouvement.fluide ?? null,
+          chargeKg: machine
+            && typeof machine.chargeNominaleKg === 'number'
+            && Number.isFinite(machine.chargeNominaleKg)
+            && machine.chargeNominaleKg > 0
+            ? machine.chargeNominaleKg : null,
+          hermetiqueScelle: machine ? hermetiqueOpposable(machine) : false
+        })
+      } : null,
       // Lot C (C1) — conditions 14-15 : signatures réelles, tri-état.
       signatureTechnicienValide: etatSignatureReelle(mouvement, 'TECHNICIEN'),
       signatureDetenteurValide: etatSignatureReelle(mouvement, 'DETENTEUR')
@@ -4878,7 +4920,9 @@ export function creerDemoStore() {
       const d = donneesEtab || {};
       if (d.categoriesAutorisees !== undefined) {
         for (const categorie of d.categoriesAutorisees ?? []) {
-          verifierCategorie(categorie, 'l’établissement');
+          // Lot F (13/08) : grille élargie aux deux régimes (I-IV et A1…V).
+          verifierCategorie(categorie, 'l’établissement',
+            GRILLE_CAPACITE_ETABLISSEMENT);
         }
       }
       if (d.activitesAutorisees !== undefined) {

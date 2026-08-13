@@ -214,6 +214,10 @@
  *       updateBouteille après une remise déclarée ne se rapproche de rien
  *       (attaque tirée). Backfill NULL = aucun repère, donc aucune alerte
  *       sur les suivis antérieurs (conservateur). Hors WORM.
+ *  37 — lot F carte blanche (13/08) : etablissements.categories_2025
+ *       RENOMMÉE categories_autorisees — elle portait la grille 2008 sous
+ *       un nom 2025 (4e relecture). RENAME COLUMN, aucune donnée touchée,
+ *       aucun déclencheur WORM sur cette table. Hors WORM.
  */
 
 /** Version de base posée par schema.sql (base vierge). */
@@ -1714,6 +1718,20 @@ LEFT JOIN justifications_ecarts j ON j.etablissement_id = p.etablissement_id AND
     nom: 'masse de la bouteille figée après remise en filière',
     appliquer(db) {
       db.exec('ALTER TABLE bsff ADD COLUMN masse_bouteille_apres_kg REAL;');
+    }
+  },
+
+  // 37 — LOT F carte blanche (13/08) : LE NOM DE LA COLONNE CESSE DE MENTIR.
+  // La 4e relecture externe l'a relevé : les catégories de capacité de
+  // l'établissement — grille 2008 (I-IV) comme 2025 (A1…V) depuis ce même
+  // lot — étaient écrites dans une colonne nommée `categories_2025`.
+  // RENAME COLUMN : non destructif, aucune donnée ne bouge. La table
+  // etablissements ne porte aucun déclencheur WORM (rien à recréer).
+  37: {
+    nom: 'la colonne des catégories de capacité porte son vrai nom',
+    appliquer(db) {
+      db.exec('ALTER TABLE etablissements RENAME COLUMN categories_2025 '
+        + 'TO categories_autorisees;');
     }
   }
 };
