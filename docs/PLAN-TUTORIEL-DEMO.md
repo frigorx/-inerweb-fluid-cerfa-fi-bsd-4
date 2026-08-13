@@ -1,6 +1,14 @@
 # PLAN — Visite guidée intégrée à la démo en ligne
 
-> **Statut : PROPOSITION — en attente de validation Franck.** Rien n'est codé.
+> **Statut : RÉSOLU le 13/08 au soir — validé par Franck dans la session en
+> ligne**, qui a tranché AU-DELÀ de l'alternative proposée ici : les DEUX
+> mécaniques COMBINÉES (pastilles-guides + liste de mission cochable), les
+> TROIS parcours proposés au choix du visiteur au lancement (essentiel 4
+> étapes · complète 7 · frigoriste 9), proposition à la première visite +
+> bouton permanent. Réalisé dans `v8/js/composants/visite-guidee.js`
+> (plan d'exécution : `docs/PLAN-VISITE-GUIDEE.md`, suite
+> `test-visite-guidee.mjs`). Ce fichier est la proposition d'ORIGINE,
+> conservée pour mémoire — ne pas la re-proposer.
 > Demande d'origine (13/08/2026) : un parcours guidé DANS l'application de
 > démonstration (pas une page à part — `guide.html` existe et reste), pour qu'un
 > visiteur (collègue, artisan, enseignant) découvre les gestes clés sans lecture

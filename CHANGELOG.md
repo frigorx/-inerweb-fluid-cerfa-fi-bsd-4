@@ -2,6 +2,41 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧭 VISITE GUIDÉE DE LA DÉMONSTRATION (13/08 au soir, session en ligne)
+
+**Demande de Franck (13/08) : un tutoriel INTÉGRÉ à la démo en ligne** — pas une page à
+part (le `guide.html` pas-à-pas reste) — pour qu'un visiteur découvre les gestes clés
+sans lecture préalable. **Conception validée par Franck AVANT le code** (plan
+`docs/PLAN-VISITE-GUIDEE.md`) : pastilles-guides + liste de mission COMBINÉES · les
+TROIS parcours proposés au choix du visiteur au lancement · proposée à la première
+visite (mémoire locale) + bouton permanent au pied de la barre latérale.
+
+- **`v8/js/composants/visite-guidee.js`** : trois parcours (« L'essentiel », 4 étapes ·
+  « La visite complète », 7 · « La visite du frigoriste », 9 — le geste « balance +
+  audit » est découpé en deux étapes pour que chacune garde UNE cible), chaque étape =
+  un geste réel : consigne « où cliquer », « ce que vous devez voir », et avancement au
+  GESTE quand il se détecte honnêtement — navigation (`hashchange`) et compteurs du
+  magasin (`surChangement`) — au bouton « Suivant » sinon. Jamais bloquant : Suivant
+  toujours disponible, « Quitter » visible, Échap quitte (sauf modale ouverte : c'est
+  elle que la touche ferme, garde `.modale-fond`).
+- **L'élément visé n'est JAMAIS recouvert ni rendu incliquable** : repère de
+  surbrillance en `pointer-events: none` (liseré + étiquette texte — la couleur ne
+  porte jamais seule), panneau d'étape posé dans un coin qui ne recoupe pas la cible
+  (`choisirCoin`, géométrie pure éprouvée par la suite). `prefers-reduced-motion`
+  respecté : halo statique, l'animation ne porte aucun contenu.
+- **DÉMO seulement** (`visiteDisponible` = `modeLabel !== 'LOCAL'`) : aucun bouton,
+  aucune proposition, aucun code actif en mode Local — le mode exercice (un mode Local)
+  n'est pas concerné par cette v1, le prédicat est prêt à s'élargir. Aucune migration,
+  aucun contrat touché, aucun code serveur.
+- **Suite `v8/js/composants/test-visite-guidee.mjs` — 42 vérifs en rendu HTML réel**
+  (patron `test-dechets-libelles`) : parcours bien formés, géométrie du coin libre,
+  disponibilité par magasin, proposition UNIQUE à la première visite, panneau
+  (mission, étape, boutons, sauts), ⭐ **une machine réellement créée au magasin coche
+  l'étape (le geste, pas le bouton)**, arrêt propre, et les invariants de surface
+  (`pointer-events: none` du repère, branchement `app.js` gaté démo seule). Le filet
+  passe à **138 exécutions** ; les six pièces opposables qui annoncent le compte sont
+  alignées (sentinelle `outils/test-nombre-executions.mjs` verte).
+
 ### 🧹 VERSION DE SEMIS DU MONDE DÉMO (13/08 soir, complément de carte blanche)
 
 Le monde démo persisté au localStorage est désormais **timbré** (`VERSION_SEMIS`,

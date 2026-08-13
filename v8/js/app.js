@@ -13,6 +13,7 @@ import { creerRouteur } from './core/routeur.js';
 import { ICONES } from './core/icones.js';
 import { esc } from './core/utils.js';
 import { modale, toast, confirmer } from './views/communs.js';
+import { creerVisiteGuidee, visiteDisponible } from './composants/visite-guidee.js';
 import { render as rendreConnexion } from './views/connexion.js';
 import { render as rendreBootstrap } from './views/bootstrap-admin.js';
 
@@ -47,6 +48,9 @@ const ICONE_MENU = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" 
 // État global de l'application
 let store = null;
 let routeur = null;
+// Visite guidée de la DÉMO (13/08) : contrôleur créé au démarrage en
+// mode démonstration seulement — jamais un obstacle en mode Local.
+let visiteGuidee = null;
 
 /* ============================================================
    Session (V9-E5, vague 5)
@@ -109,6 +113,11 @@ function construireSidebar() {
     + '</div>'
     + '<nav class="sidebar-nav" aria-label="Vues de l\'application">' + liens + '</nav>'
     + '<div class="sidebar-pied">'
+    // Visite guidée : bouton permanent en DÉMO seulement (décision 13/08)
+    + (visiteDisponible(store)
+      ? '<button id="bouton-visite-guidee" class="btn-sauvegarde no-print" type="button">'
+        + ICONES.parcours + '<span>Visite guidée</span></button>'
+      : '')
     + '<button id="bouton-sauvegarde" class="btn-sauvegarde no-print" type="button">'
     + ICONES.sauvegarde + '<span>Sauvegarde</span>'
     + '</button>'
@@ -121,6 +130,12 @@ function construireSidebar() {
     + '</div>';
 
   document.getElementById('bouton-sauvegarde').addEventListener('click', ouvrirModaleSauvegarde);
+  const boutonVisite = document.getElementById('bouton-visite-guidee');
+  if (boutonVisite) {
+    boutonVisite.addEventListener('click', function () {
+      if (visiteGuidee) visiteGuidee.proposer();
+    });
+  }
   majPiedSession();
 
   // Sur mobile, un clic sur un lien referme le tiroir
@@ -603,6 +618,12 @@ async function verifierIntegriteRegistre() {
  * que cette suite n'ait eu la main.
  */
 function reprendreDemarrageApresConnexion() {
+  // Visite guidée (13/08) : créée AVANT la sidebar (dont le bouton s'y
+  // adosse), en démonstration seulement.
+  if (visiteDisponible(store) && !visiteGuidee) {
+    visiteGuidee = creerVisiteGuidee({ store: store, naviguer: naviguer });
+  }
+
   construireSidebar();
   initialiserTiroir();
 
@@ -621,6 +642,10 @@ function reprendreDemarrageApresConnexion() {
 
   routeur = creerRouteur({ surChangement: afficherVue });
   afficherVue(routeur.idCourant(), routeur.paramCourant());
+
+  // Proposition discrète à la PREMIÈRE visite de la démo (mémoire
+  // localStorage) — jamais re-proposée d'office, le bouton reste là.
+  if (visiteGuidee) visiteGuidee.proposerAuPremierChargement();
 }
 
 async function demarrer() {

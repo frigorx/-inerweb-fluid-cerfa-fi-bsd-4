@@ -34,7 +34,7 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   filet : il publie la mesure qui a fait tomber la borne de 1 Ko des
   signatures et devient rouge si quelqu'un remet un seuil de taille.
 - **Tests** : `node outils/lancer-tests.mjs --tout` = TOUT le filet
-  (**137 exécutions, ~100 s** au 27/07/2026 ; sans `--tout`, arrêt au
+  (**138 exécutions, ~100 s** au 27/07/2026 ; sans `--tout`, arrêt au
   premier rouge). Suites `SUITES_DOUBLEES` jouées demo PUIS local.
   Toute nouvelle suite `test-*.mjs` est auto-découverte.
   `outils/test-references-suites.mjs` (revue B2, mineur 1) : **toute suite
@@ -361,9 +361,14 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   fluidesProposables…), `zip.js`
   maison, `routeur.js`, `icones.js`, `shim-dom-tests.mjs` (tests DOM sans navigateur).
 - `composants/` : morceaux d'écran réutilisés par plusieurs vues —
-  `pieces-jointes.js` (`zonePiecesJointes`, option `categorieSeule`) et
+  `pieces-jointes.js` (`zonePiecesJointes`, option `categorieSeule`),
   `conseil-intervenant.js` (le CONSEIL d'aptitude, partout ; le BLOCAGE, lui,
-  n'existe qu'en Officiel et vient du store).
+  n'existe qu'en Officiel et vient du store) et `visite-guidee.js` (13/08 :
+  la VISITE GUIDÉE de la démo, plan `docs/PLAN-VISITE-GUIDEE.md` — 3 parcours
+  au choix, pastilles + liste de mission, DÉMO seule via `visiteDisponible`,
+  repère `pointer-events:none` : ne recouvre jamais la cible ; branchée dans
+  `app.js` — bouton du pied de sidebar + proposition à la première visite ;
+  suite `test-visite-guidee.mjs`).
 - `lib/` : **les seuls fichiers du dépôt que nous n'avons pas écrits** — 4 fichiers
   tiers (PDF.js 4.10.38 ×2, pdf-lib, qrcodejs), plus `qrcode.js` qui est de NOUS
   (38 l., adaptateur qui lit `window.QRCode`). Licences réelles relues fichier par

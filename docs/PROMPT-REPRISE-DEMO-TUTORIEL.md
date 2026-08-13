@@ -6,9 +6,13 @@
 > guide avec la partie Animations, racine, pédagogie) ; en complément de carte
 > blanche : **version de semis du monde démo** (commit `8fd57ee` — le
 > localStorage d'un visiteur d'avant le 28/07 rejouait l'identité réelle).
-> **RESTE le chantier 2 (tutoriel intégré)** : conception posée dans
-> `docs/PLAN-TUTORIEL-DEMO.md`, EN ATTENTE DE VALIDATION FRANCK — y répondre
-> avant d'écrire la moindre ligne. Voir CHANGELOG (tête) pour le détail.
+> **CHANTIER 2 EXÉCUTÉ le 13/08 au soir (session en ligne) — ne pas le
+> refaire.** Conception VALIDÉE par Franck dans la session en ligne (les deux
+> mécaniques combinées, les TROIS parcours au choix du visiteur, première
+> visite + bouton permanent), réalisée dans
+> `v8/js/composants/visite-guidee.js` (plan `docs/PLAN-VISITE-GUIDEE.md`,
+> suite dédiée, filet porté à 138 exécutions, sentinelle du compte alignée).
+> Voir CHANGELOG (tête) pour le détail.
 >
 > Copier tout ce qui suit comme PREMIER message d'un nouveau chat. Il est autonome.
 >
