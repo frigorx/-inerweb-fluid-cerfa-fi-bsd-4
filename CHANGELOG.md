@@ -2,6 +2,549 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🎓 MODE EXERCICE (13/08) — LE BAC À SABLE PÉDAGOGIQUE SUR DONNÉES RÉELLES
+
+**Demande de Franck, direction validée puis production lancée le jour même** (plan
+`docs/PLAN-MODE-EXERCICE.md`) : former des techniciens SUR le logiciel — CERFA de
+démonstration, manipulations, exercices — sans jamais rien écrire au registre certifié
+conforme, en partant des valeurs RÉELLES du parc. **Faisabilité TIRÉE avant conception** :
+l'architecture à deux stores et un contrat portait déjà 80 % de la fonction.
+
+- **Le bac à sable est le monde Démo du navigateur, semé d'une PHOTO du réel** (l'export
+  JSON complet — décision du propriétaire : « on garde le réel ») importée par le canal
+  OFFICIEL (`importerJSON` : invariants joués, chaîne d'empreintes VERTE au bac). Les
+  CERFA d'exercice s'impriment avec le filigrane « DÉMO / FORMATION », tout est
+  effaçable — et le registre réel n'en voit JAMAIS rien (étanchéité prouvée).
+- **La clé est un CODE DE DÉBLOCAGE** (décision : « celui qui a le code ») :
+  `server/routes-exercice.js` — le code est défini par ADMIN/RÉFÉRENT, haché scrypt
+  (asynchrone, A14), jamais en clair nulle part ; le démarrage exige une session (tout
+  rôle) ET le code ; « code faux » et « code non défini » sont INDISCERNABLES ; chaque
+  tirage de photo est JOURNALISÉ nominativement (`DEMARRAGE_EXERCICE`) — la garde
+  VALIDEUR d'`exporterJSON` (L2-i) n'est pas affaiblie : ce chemin-ci exige le code et
+  trace, l'appel direct ne tracerait pas.
+- **Cycle de vie** (`v8/js/data/mode-exercice.js`, stockage injectable) : l'exercice
+  PERSISTE entre les sessions du navigateur ; il se SAUVEGARDE en fichier et se
+  recharge ; « Réinitialiser » re-sème la photo d'origine ; « Terminer » DÉTRUIT TOUT
+  d'un geste — bac, photo, drapeau : le stockage est VIDE, mesuré (« toute trace a été
+  détruite » ; limite dite : un fichier téléchargé vit sur le disque, hors de portée).
+- **À l'écran** : carte « Mode exercice » dans l'écran Sauvegarde (état du code, les
+  deux gestes) ; badge d'en-tête « EXERCICE / FORMATION » ; bandeau permanent en tête de
+  page (« rien ne s'écrit au registre », date de la photo, les trois gestes) — jamais
+  imprimé (les blocs d'impression des documents masquent tout le reste).
+
+**Preuves** : `v8/js/data/test-mode-exercice.mjs` **17 vérifications** (cycle complet sur
+stockage factice + étanchéité de bout en bout : registre réel → photo → bac — le tir de
+faisabilité devenu filet) · `server/test-routes-exercice.mjs` **20** (serveur HTTP réel :
+gardes de rôle et de session, refus indiscernables, photo complète délivrée à un ÉLÈVE
+muni du code — la décision —, journal tracé, code jamais en clair) · parcours VÉRIFIÉ AU
+NAVIGATEUR sur banc jetable : connexion → code → bascule (badge, bandeau, parc réel au
+bac) → terminer → stockage vide → retour LOCAL. **TOUT VERT — 137 exécutions.**
+
+### ❄️ LOT G (13/08, carte blanche) — CASCADES : LE MODE D'EMPLOI DU PIÈGE EST FERMÉ, LE FOND EST POSÉ
+
+**Constat de la 4e relecture, tiré** : une machine en cascade n'a qu'un champ `fluide` —
+déclarée R-744 avec 8 kg au total, le moteur rend « aucun contrôle » alors que le seul
+circuit HFC (R-134a, 4 kg = 5,72 tCO₂eq) impose 12 mois.
+
+Le défaut ne vit PAS dans le moteur (pour un équipement réellement au CO₂ pur, « aucun
+contrôle fluoré » est la bonne réponse) : il vit dans la DÉCLARATION — deux circuits
+rangés dans une seule fiche, alors que l'obligation s'apprécie PAR CIRCUIT et que le
+logiciel sait déjà porter une fiche par circuit.
+
+- **Fait (aucune règle réglementaire nouvelle)** : le champ Fluide du formulaire machine
+  porte la règle, dans le bloc du champ (règle des notes, revue B1) — « une fiche = un
+  seul circuit ; un équipement à plusieurs circuits (cascade, bi-étagé) se déclare
+  circuit par circuit ». Prouvé par `test-formulaires-reserves` (**73 vérifications**),
+  pour tous les rôles.
+- **Gaté (décision de fond, propriétaire)** : entériner « un circuit = une fiche » et
+  l'outiller (champ « ensemble » d'affichage — recommandé), ou modèle `machine_circuits`
+  structurel. Les questions d'atelier à trancher sont posées dans
+  `docs/PLAN-LOT-G-MULTI-FLUIDES.md` — la règle d'or 6 interdit de coder un modèle
+  réglementaire nouveau sans validation.
+
+### 🏛️ LOT F (13/08, carte blanche) — LA PORTÉE DE CAPACITÉ DE L'ÉTABLISSEMENT EST ENFIN LUE
+
+**Le blocage n° 1 de la 4e relecture externe, TIRÉ par elle** : `categoriesAutorisees` /
+`activitesAutorisees` étaient saisies, validées en forme, stockées, affichées — et lues
+par AUCUNE règle. Verrou désarmé en bac à sable, une récupération de 8 kg sur une machine
+de 50 kg devenait une fiche OFFICIELLE scellée sur un établissement déclaré « catégorie
+II, contrôle d'étanchéité seul ». Sans effet aujourd'hui (verrou fermé) ; bloquant avant
+toute réouverture. Plan : `docs/PLAN-LOT-F-CAPACITE.md`.
+
+- **Condition 19 `CAPACITE_ETABLISSEMENT`** (moteur pur + miroir, S·V) : l'attestation
+  déclarée doit COUVRIR l'intervention. AUCUNE grille nouvelle : les catégories déclarées
+  entrent dans la MÊME matrice que l'aptitude de la personne
+  (`capaciteEtablissementCouvre` délègue à `verifierDroitIntervention`, régime déduit de
+  chaque catégorie — I-IV → 2008, A1…V → 2025), et l'activité réglementée requise par le
+  type d'intervention doit être déclarée. Une portée VIDE n'autorise RIEN. Jamais en
+  doublon des conditions 1-4 : sans attestation, elles seules parlent.
+- **Les trois portes voisines, fermées** : la grille de saisie accepte les DEUX régimes
+  (« A1 » passait pour une personne et était refusé pour l'établissement — même
+  transition réglementaire) ; l'import JSON REFUSE une portée hors grille (invariant
+  doublé, il écrivait sans aucune vérification) ; la colonne SQL `categories_2025`, qui
+  portait la grille 2008, est renommée `categories_autorisees` (**migration 37**, RENAME
+  COLUMN — aucune donnée touchée, aucun déclencheur WORM sur cette table). La divergence
+  consignée dans `mapping.js` est RÉSORBÉE.
+
+**Preuves** : suite NEUVE DOUBLÉE `test-capacite-etablissement` (9 vérifications × 2
+stores) — le scénario exact du constat bloqué et motivé, la portée vide bloquée, la
+portée couvrante SANS sur-blocage, le régime 2025 enregistrable, l'import forgé refusé
+(contre-épreuve tirée : condition neutralisée → 4 rouges de chaque côté).
+`test-droit-intervention` **28 vérifications** (parité stricte du verdict ET des messages
+sur 7 vecteurs, mapping et régimes compris). `test-migrations` **173** (la 37 passe et se
+rejoue). `docs/CONDITIONS-BLOCANTES-OFFICIEL.md` porte la condition 19.
+
+### 📦 LOT E (13/08, carte blanche) — L'ARCHIVE SCELLÉE NE PORTE PLUS LE MÊME CERFA DEUX FOIS
+
+**Consigné au lot 1, TIRÉ ici avant d'être corrigé** : un mouvement CONTROLE validé en
+Formation fabrique un contrôle LIÉ qui hérite de son numéro — la MÊME fiche. La boucle
+des contrôles du dossier d'audit ne sautait le lié que s'il avait un PDF CONSERVÉ, ce qui
+n'arrive JAMAIS en Formation : `cerfa/FORM-2026-0001.pdf` entrait DEUX fois dans
+l'archive scellée (mesuré). Trois fiches pour deux écritures, dans la pièce qu'un
+auditeur reçoit.
+
+- Le saut se porte désormais sur « **le porteur est au registre de l'année** » (sa fiche
+  — conservée OU régénérée — est déjà dans l'archive par la boucle des mouvements). La
+  garde du CONSERVÉ reste pour un porteur HORS année : « jamais le générateur » (C3b)
+  n'est pas affaibli. Un contrôle AUTONOME garde sa fiche propre, rien ne change pour lui.
+
+**Preuves** : `test-dossier-audit.mjs` **24 vérifications** — décor neuf (mouvement
+CONTROLE Formation validé → contrôle lié), la fiche figure UNE SEULE fois, aucun doublon
+de nom dans l'archive (contre-épreuve tirée : saut retiré → « × 2 » rouge ; remis → vert).
+
+### 🖨️ LOT D (13/08, carte blanche) — LES DEUX IMPRIMÉS D'ATELIER SORTENT ENTIERS DU BAC
+
+**Trouvé au lot 1, hors périmètre alors, corrigé ici.** Le patron d'impression recopié
+dans `documents/` cassait tout document qui déborde d'une page — le lot 1 l'avait TIRÉ
+avec le bloc `@media print` réel de chaque module : `bon-intervention.js` sortait
+**138 caractères sur le papier, fin du document ABSENTE** ; `feuille-mise-en-service.js`,
+**100 caractères, fin ABSENTE**. Deux documents A4 pleine page destinés à l'atelier.
+La cause était double : le document CLOUÉ en `position: fixed; inset: 0` sur la première
+feuille, et les boîtes de la modale (`max-height` + `overflow` + `backdrop-filter` +
+le `transform` de spécificité supérieure de `composants.css`) qui rognaient le reste.
+
+- Le remède est le patron ÉPROUVÉ du justificatif de régularisation (lot 1), appliqué
+  aux deux modules : remise à plat des ancêtres de la modale, `transform` réécrit à la
+  MÊME spécificité, document laissé **dans le flux** pour se paginer, champs manuscrits
+  protégés de la coupe entre deux pages (`break-inside`).
+- Les deux blocs d'impression sont désormais **exportés** (`CSS_IMPRESSION_BON`,
+  `CSS_IMPRESSION_FMES`) : une règle d'impression ne se relit pas, elle se tire — le
+  filet garde chaque cause de rognage nommément (plus jamais `position: fixed` sur le
+  document, ancêtres à plat, spécificité).
+
+**Preuves** : `test-bon-intervention.mjs` **40 vérifications**,
+`test-feuille-mise-en-service.mjs` **56** ; contre-épreuve tirée : `position: fixed`
+réintroduit sur `.bi-document` → rouge ; retiré → vert.
+
+### 🗝️ LOT C (13/08, carte blanche) — LA TROISIÈME PORTE DU COFFRE DES IDENTITÉS EST FERMÉE
+
+**Constat de la 4e relecture, tiré** : `getMouvements` rendait le nom RÉEL d'une personne
+mise au coffre à un compte ÉLÈVE — la substitution ne vivait que dans la VUE, et l'ancienne
+suite le consacrait même en « résidu assumé ». La décision de confidentialité du 25/07
+avait fermé deux portes au motif écrit qu'« une décision qui ne garde qu'une porte sur
+deux n'en est pas une » ; il en restait une troisième.
+
+- **La LECTURE du contrat rend la fiche VIVANTE.** `getMouvements` (les DEUX stores,
+  sémantique miroir stricte) substitue le champ TEXTE `technicien` par le libellé de la
+  fiche vivante — donc le pseudonyme — quand le PORTEUR (`executeParId`, ou `validateurId`
+  pour une contre-écriture : la même règle que la vue) est AU COFFRE. Hors coffre, ou sans
+  identifiant : le mouvement au bit près, rien ne change.
+- **La DONNÉE scellée ne bouge pas d'un bit** (empreinte, WORM — prouvé par lecture SQL
+  directe et par la chaîne de hash INTACTE après substitution).
+- **Le transport reste BRUT.** `exporterJSON` (gaté VALIDEUR depuis L2-i) lit désormais
+  `lireMouvementsBruts()` côté serveur — un aller-retour export/import doit pouvoir
+  rejouer les empreintes ; le DemoStore exportait déjà ses données brutes. Substituer là
+  aurait cassé la chaîne à l'import : le piège a été identifié AVANT d'être payé.
+- Fermeture collatérale : l'export RGPD d'une personne (`exporterDonneesPersonne`)
+  assemblait ses mouvements par `getMouvements` — le champ `technicien` en clair y
+  passait aussi ; il est désormais substitué à la source.
+
+**Preuves** : `server/test-coffre-serveur.mjs` **70 vérifications** — l'ancien « résidu
+assumé » y devient son contraire : lecture = pseudonyme, base = « Léa Bonnet » au bit
+près, export brut, chaîne verte, homonyme intouché (contre-épreuve tirée : substitution
+neutralisée → « technicien = Léa Bonnet » rouge ; remise → vert). Suite NEUVE
+`v8/js/data/test-coffre-lecture.mjs` (5 vérifications) : la même règle prouvée sur le
+DemoStore — lecture substituée, export brut, chaîne intacte, porteur hors coffre inchangé.
+
+### 🧊 LOT B (13/08, carte blanche) — LE DOCUMENT RÉIMPRIMÉ LIT ENFIN LE PRP FIGÉ
+
+**Constat de la 4e relecture, tiré et confirmé** : `grep prpFige v8/js/cerfa/` rendait
+0 ligne. Le PRP était FIGÉ sur l'écriture à la validation (brique ② du 13/07, empreinte
+v2) — et le GÉNÉRATEUR ne le lisait pas : après une correction du référentiel via l'écran
+d'administration (P1-2), une fiche scellée réimprimait son équivalent CO₂ au PRP COURANT.
+« Une correction de référentiel ne réécrit pas une fiche déjà signée » était vrai de la
+DONNÉE et faux du DOCUMENT — chaîne intacte, personne averti.
+
+- `assemblerContexte` porte désormais `prpFige` (`!= null` : un PRP figé de 0 — R-744 —
+  est une valeur RÉELLE, jamais confondue avec l'absence) ; `calculerChampsCerfa` rend le
+  **cadre 3 (teqCO2) ET le cadre 7 (seuils tCO₂eq, fréquence)** sur une fiche fluide dont
+  le PRP est celui du jour de la validation. La correction de copie d'élève passe par le
+  même calcul : une seule vérité.
+- **Repli dit et assumé** : une écriture ANTÉRIEURE au figeage (aucun `prpFige`) reste
+  rendue au référentiel courant — on n'invente pas un PRP d'époque qu'on n'a pas
+  enregistré (prouvé sur un mouvement de démonstration).
+- `docs/REGISTRE-DES-ARBITRAGES.md` (ligne « PRP figé ») complété : la protection vaut
+  désormais de la donnée ET du document.
+
+**Preuves** : `test-generateur.mjs` **124 vérifications** — le PRP est figé à la
+validation, le référentiel est corrigé APRÈS, la fiche réimprime au PRP figé (contre-
+épreuve tirée : correctif retiré → « teq imprimé = 30,88, attendu 20,88 », exactement le
+défaut décrit ; remis → vert), et le repli sans `prpFige` suit le courant.
+
+### 🔐 LOT A (13/08, carte blanche) — LE VERROU DE COMPTE CESSE D'ÊTRE PERPÉTUEL, LA CONNEXION CESSE DE POUVOIR FIGER LE SERVEUR
+
+Reprise du chantier après deux semaines, sur carte blanche du propriétaire (13/08) : les
+restes EN CODE de la 4e relecture externe, en commençant par le seul qui bloque une mise
+entre les mains de TESTEURS EXTERNES (artisans) — l'organe de connexion. Trois défauts
+relevés par la relecture, un quatrième (A14) consigné depuis le 26/07, chacun corrigé puis
+prouvé par un test qui redevient ROUGE quand on retire le correctif (contre-épreuve tirée).
+
+- **Le verrou de compte n'est plus perpétuel.** Le compteur d'échecs ne redescendait
+  JAMAIS hors connexion réussie : après l'expiration des 15 minutes, il valait toujours 5,
+  et le premier essai raté re-verrouillait aussitôt — le titulaire légitime, y compris le
+  SEUL ADMIN du poste, n'avait plus droit qu'à un essai par quart d'heure, à perpétuité.
+  Désormais un verrou EXPIRÉ rouvre une fenêtre COMPLÈTE : l'échec suivant compte pour UN
+  (`enregistrerEchec`, `server/comptes.js`). La borne ne se désarme pas pour autant :
+  5 échecs dans la nouvelle fenêtre reposent le verrou (prouvé).
+- **Le refus de verrou ne confirme plus l'existence d'un identifiant.** « Compte
+  verrouillé. » (403) ne sortait que pour un login EXISTANT : cinq requêtes suffisaient à
+  énumérer les identifiants malgré le message d'échec unique. Tous les refus de connexion
+  rendent désormais le MÊME statut (400) et le MÊME message — qui n'AFFIRME aucune cause
+  (en désigner une serait un motif FAUX dans les autres cas, le piège déjà payé trois
+  fois) et les énonce toutes. La non-énumération est TIRÉE : la réponse d'un compte
+  verrouillé au bon mot de passe est comparée octet pour octet à celle d'un login
+  fantôme. L'état de verrou reste visible où il est légitime : l'écran de gestion des
+  comptes (ADMIN), qui le portait déjà. Le refus d'un compte verrouillé au bon mot de
+  passe demeure (décision V9-E5 maintenue) ; le coût d'un scrypt reste payé sur TOUS les
+  chemins de refus (aucune asymétrie de temps réintroduite).
+- **La porte de secours existe** (`server/secours-compte.js`, CLI) : déverrouiller un
+  compte, ou remplacer son mot de passe (saisie masquée sur terminal, mêmes longueurs
+  minimales par rôle que les routes, sessions ouvertes révoquées). L'autorité est celle
+  de `creer-admin.js` : être devant le poste. Jusqu'ici, le geste « prévu » pour un ADMIN
+  verrouillé était d'éditer le fichier SQLite à la main — sur la base d'un registre
+  réglementaire. Chaque geste du CLI est journalisé (journal chaîné, jamais le mot de
+  passe).
+- **A14 — un déluge de connexions ne fige plus le serveur.** `scryptSync` (N=2^17,
+  ~128 Mio par dérivation) bloquait la boucle d'événements à CHAQUE tentative, y compris
+  pour un login inexistant (le leurre anti-timing coûte pareil, c'est son rôle) : quelques
+  requêtes de connexion simultanées suspendaient TOUTES les routes pour tous les
+  utilisateurs — à traiter AVANT le mode LAN, c'est fait avant. Le chemin de connexion
+  passe par `crypto.scrypt` (pool de threads) derrière une file à UNE dérivation à la
+  fois, BORNÉE à 64 tentatives en attente : au-delà, refus immédiat 503 (« réessayez »),
+  jamais un gel, jamais d'empilement mémoire. Les verdicts asynchrones sont prouvés
+  IDENTIQUES aux synchrones (bon/mauvais/hérité/malformé, re-hachage transparent
+  compris) ; les versions synchrones restent aux CLI et au leurre de chargement.
+
+**Preuves** : `test-comptes.mjs` **51 vérifications** (fenêtre + parité asynchrone +
+file saine sous demandes simultanées + les deux gestes du CLI, journal compris),
+`test-routes-comptes.mjs` **74** (message indiscernable d'un échec ordinaire,
+non-énumération login fantôme, fenêtre nouvelle de bout en bout : échec post-expiration
+compte pour UN puis le bon mot de passe se connecte). Contre-épreuve tirée : fenêtre
+retirée → 3 rouges (« compteur = 6 », re-verrou immédiat). **207 attaques** de
+`test-securite-negative.mjs` inchangées.
+
+**Le mécanisme comptable n'était pas en cause** : une erreur ne s'efface pas, elle se corrige
+par une écriture inverse qui désigne l'écriture d'origine. C'est le **document** que le
+logiciel produisait pour cette écriture inverse qui était faux — et il l'était **déjà
+aujourd'hui, verrou fermé, en mode Formation**, dans le dossier d'audit scellé et sous les
+yeux des élèves.
+
+**Mesure faite avant de coder** : entre une écriture et sa contre-écriture, **4 champs
+diffèrent sur 71** en Formation, 5 sur 71 en Officiel — et aucun des quatre ne dit que le
+document annule quoi que ce soit. Tout le cadre 11 était identique, `11_QA = "0,50"` sur les
+deux, pour une contre-écriture de −0,50 kg.
+
+- **La quantité ne ment plus.** Piège trouvé en le tirant : reprendre le signe stocké ne
+  suffisait pas — une récupération est déjà NÉGATIVE au registre, donc sa contre-écriture est
+  positive et serait ressortie tout aussi indiscernable. Le signe se prend sur la **nature**
+  de l'écriture : l'annulante imprime toujours `-|q|`. **La case n'est jamais vidée** : vider
+  aurait fait disparaître d'un document officiel une masse réellement écrite au registre —
+  c'est le précédent des masses détruites évaporées de la déclaration annuelle. La masse reste
+  dans SA case, avec son signe.
+- **Le document dit qu'il annule, et quoi.** Mention en tête du cadre 14 avec le **numéro de
+  l'écriture annulée**, filigrane « ANNULATION » sur le rendu. L'écriture annulée, elle, garde
+  sa mention historique et ne prend pas celle de l'annulante.
+- **Le motif de l'annulation est enfin sur la fiche.** Il était scellé dans l'empreinte et au
+  journal, et n'apparaissait nulle part sur le document — alors que c'est lui qui justifie
+  l'annulation devant un contrôle.
+- **Plus de signature pré-remplie quand personne n'a signé.** Les six blocs sortaient avec le
+  nom du validateur, une qualité de repli et les dates du jour : une case de signature à
+  laquelle il ne manquait que le paraphe. ⚠️ **L'usage pédagogique est intact** : la fiche
+  d'exercice qu'un élève imprime pour la remplir à la main garde ses blocs, et la correction
+  de copie continue de s'appuyer sur les blocs historiques. Les **quatre** documents ont été
+  produits avant et après, champ par champ (mouvement signé, fiche d'exercice, correction de
+  copie, contre-écriture) : seuls les champs de la contre-écriture bougent.
+- **« Exécuté par » n'est plus vide dans le dossier scellé.** La contre-écriture porte
+  l'identité de la SESSION qui l'a demandée (jamais lue du corps de la requête). Le champ
+  entre dans l'empreinte v2 ; **aucun backfill** : les contre-écritures déjà enregistrées
+  gardent leur champ vide et leur empreinte au bit près — la tentative de backfill en SQL
+  direct est refusée **par la base**, pas par une politesse du code (tiré). Les deux formes
+  cohabitent dans un même `mouvements.csv`.
+
+**CE QUE LES REVUES ONT RATTRAPÉ — un BLOQUANT et trois importants, tous dans le correctif
+lui-même** (cinquième lot d'affilée où la passe de correction fabrique un défaut) :
+
+- **BLOQUANT — la fiche affirmait qu'une masse positive était retirée du registre.** La
+  mention annonçait « LES QUANTITÉS PORTÉES CI-DESSOUS SONT RETIRÉES DU REGISTRE (VALEURS
+  NÉGATIVES) ». Or le cadre 11 porte aussi la **charge NOMINALE de la machine**, positive et
+  intacte. Tiré sur la contre-écriture d'un **contrôle périodique** (erreur banale : contrôle
+  saisi sur la mauvaise machine) — aucune quantité d'intervention n'est imprimée, la seule
+  quantité « ci-dessous » était `11_Quantite = 10,00`. Même famille que le motif « signature
+  périmée » rendu faux au lot précédent. La mention n'est plus posée que si une case de
+  quantité est **réellement imprimée**, condition **dérivée de la sortie**, jamais recopiée du
+  type d'intervention.
+- **IMPORTANT — vider n'est pas effacer.** Après le correctif, le nom de qui avait passé
+  l'annulation ne figurait **plus nulle part** sur la fiche : le technicien n'apparaît sur le
+  CERFA que par le bloc de signature. L'identité revient comme un **fait du registre**, hors
+  de toute case de signature, avec la phrase qui explique pourquoi les cases sont vides.
+- **IMPORTANT — le coffre des identités était contourné.** Ce nom devait passer par la
+  **fiche vivante**, comme la colonne « Technicien » du CSV : au champ figé, une personne mise
+  au coffre aurait été pseudonymisée dans `mouvements.csv` et **re-nommée en clair sur le
+  CERFA voisin du même dossier scellé**.
+- **IMPORTANT — l'élève était interrogé sur les phrases de l'application.** Les mentions
+  d'annulation entraient dans la comparaison de la correction de copie : **95 %** sur une
+  copie par ailleurs parfaite, le cadre 14 compté faux parce que l'élève n'avait pas recopié
+  « ÉCRITURE D'ANNULATION — CETTE FICHE ANNULE L'ÉCRITURE… ». La « cause de l'écriture
+  annulée » reste exigée : c'est une DONNÉE, pas une phrase de l'application.
+
+**Preuves** : suite neuve `v8/js/cerfa/test-contre-ecriture.mjs` (doublée demo/local), contre-
+épreuve tirée en **quatre** manipulations distinctes — correctif entier retiré (23 OK/12
+échecs), signe seul retiré (31/4), vidage des blocs seul retiré (34/1), et **sur-correction**
+(garde de l'exercice retirée : 34/1) : la suite attrape aussi bien « ne pas corriger » que
+« casser l'usage quotidien ». **TOUT VERT — 128 exécutions** en 103,0 s, 207 attaques
+inchangées.
+
+**Trouvé en plus, non corrigé (consigné)** : le dossier d'audit scellé contient le **même
+CERFA deux fois** en mode Formation — le contrôle lié n'est sauté que s'il a un PDF conservé,
+ce qui n'arrive jamais en Formation. Trois fiches pour deux écritures.
+
+#### ⭐ BRANCHE (A) TRANCHÉE PAR LE PROPRIÉTAIRE (27/07) — PLUS AUCUN CERFA POUR UNE CONTRE-ÉCRITURE
+
+**Décision : une contre-écriture ne produit plus de fiche CERFA, mais un JUSTIFICATIF DE
+RÉGULARISATION** — « la fiche n° X est annulée, voici pourquoi ». Motif : émettre un CERFA
+pour un geste comptable, c'est **attester une intervention qui n'a pas eu lieu** ; et la
+branche concurrente aurait exigé **deux signatures pour annuler une erreur**, alors que le
+dépôt documente déjà que le risque n° 1 sur ce terrain est qu'on **oublie** de contre-écrire.
+Deuxième décision : la quantité s'imprime **avec son signe**, la case n'est jamais vidée.
+
+Nouveau module `v8/js/documents/regularisation.js` (pur) + `regularisation-apercu.js` (DOM) :
+deux rendus d'un seul gabarit — modale d'aperçu imprimable, et page HTML **autonome**
+`regularisations/<numéro>.html` versée aux archives ZIP scellées. Aucun champ AcroForm, aucune
+reprise de la maquette officielle : **deux pièces qui ne se ressemblent pas**, c'est tout le
+point. Le refus du CERFA est porté par `contreEcritureDe` et **non** par `cerfaNumero` : les
+contre-écritures **déjà scellées** cessent elles aussi d'être imprimées, sans qu'une seule
+donnée soit touchée — vérifié en rejouant le code neuf sur une base fabriquée par l'ancien :
+`cerfaNumero` scellé inchangé, **empreinte bit pour bit identique**, chaîne verte.
+
+**Ce que les deux revues ont rattrapé — un BLOQUANT que seule une impression RÉELLE pouvait
+voir :**
+
+- **BLOQUANT — le bouton « Imprimer » sortait une feuille amputée.** La mention de mode
+  survivait bien (le piège annoncé était tenu), **mais le document, lui, ne survivait pas** :
+  **227 caractères sur le papier au lieu de 2 703**. Absents de la feuille : le numéro de la
+  fiche annulée, le motif, les trois masses, l'auteur, l'empreinte. Trouvé en imprimant pour
+  de vrai — Chrome **et** Edge, texte ré-extrait du PDF — jamais en lisant le CSS. La cause
+  profonde n'était pas celle qu'on croyait : remettre les ancêtres à plat ne suffisait pas,
+  `composants.css` pose `.modale-fond.visible .modale { transform: … }`, **deux classes, donc
+  une spécificité qui bat la remise à plat**, et un ancêtre transformé devient le bloc
+  conteneur des descendants `position: fixed`. Bisection tirée pour l'établir.
+- **IMPORTANT — le détenteur de l'équipement manquait**, ainsi que marque, modèle, n° de
+  série, attestation de capacité et PRP figé. Ajoutés ; le repli sur l'établissement est
+  **dit** (« aucun client détenteur n'est enregistré ») : une absence de client n'est pas une
+  propriété constatée.
+- **IMPORTANT — une masse était inventée** : `chargeNominaleKg` absent s'imprimait
+  « 0,00 kg ». L'absent est désormais distingué du zéro — et un zéro **réellement** au
+  registre (contre-écriture d'un contrôle) traverse intact et s'imprime « + 0,00 kg ».
+  *Le doute n'invente pas une masse, et n'en retire aucune.*
+- **IMPORTANT — la page 2 sortait sans marque.** Bandeau répété par feuille : les trois
+  techniques possibles ont été **sondées** (témoin : 1 occurrence ; `table-header-group` : 1,
+  il ne se répète pas ; `position: fixed` + `@page` : **2, une par feuille**).
+- **IMPORTANT — le document affirmait une preuve non délivrée** : la phrase sur l'empreinte
+  s'imprimait même quand l'empreinte était absente. Elle ne s'imprime plus du tout dans ce cas.
+- **IMPORTANT — le dossier publiait « 128 exécutions » quand la branche en jouait 131.** Le
+  compte est désormais **gardé par une suite** (`outils/test-nombre-executions.mjs`, plan
+  extrait dans `outils/plan-tests.mjs`) qui recompte le plan et confronte chaque annonce
+  publiée. Les blocs d'état **datés** de `docs/PROMPT-REPRISE.md` sont exclus nommément : ce
+  dépôt ne réécrit pas son histoire.
+
+**Portée élargie au-delà des trois vues prévues** : le tableau de bord offrait lui aussi un
+bouton CERFA sur une contre-écriture (il aurait planté), et `dossier-machine.js` /
+`dossier-fuite.js` embarquent aussi des CERFA — sans filtre, ils auraient rangé un fichier
+« CERFA non généré » dans une archive scellée : un refus prévu aurait eu l'air d'une panne.
+Le sommaire des archives annonce les justificatifs **d'après la liste réelle des fichiers**,
+jamais d'après un compteur tenu à la main.
+
+**Le CERFA d'annulation écrit le matin même a été SUPPRIMÉ**, pas laissé : le refus étant posé
+en amont, ses ~200 lignes devenaient injoignables, donc intestables. Du code inatteignable qui
+prétend traiter un cas est un mensonge dans un dépôt dont la doctrine est la preuve ; git en
+garde la trace si la branche (B) devait un jour être choisie.
+
+**Preuves** : suites neuves `test-justificatif-regularisation.mjs` (doublée),
+`views/test-boutons-contre-ecriture.mjs` (sur le HTML réellement rendu des trois écrans),
+`outils/test-nombre-executions.mjs` ; `cerfa/test-contre-ecriture.mjs` réécrite pour tirer le
+refus par ses **quatre portes**, y compris sur une contre-écriture ancienne au `cerfaNumero`
+scellé. Contre-épreuves tirées dans les deux sens sur chaque correctif, dont l'impression
+réelle (`227 → 2 703` caractères). Usage quotidien mesuré et intact : CERFA d'un mouvement
+signé, fiche d'exercice non signée, correction de copie **100 %, 0 à tort**.
+**TOUT VERT — 132 exécutions** en 104,0 s, 207 attaques inchangées.
+
+**⚠️ TROUVÉ EN PLUS, SÉRIEUX, HORS PÉRIMÈTRE — la même cause frappe deux imprimés de
+l'atelier.** Le patron d'impression est recopié dans tout `documents/`, et il casse sur **tout
+document qui déborde d'une page**. Tiré avec le bloc `@media print` réel de chaque module :
+`bon-intervention.js` → **138 caractères sur le papier, fin du document ABSENTE** ;
+`feuille-mise-en-service.js` → **100 caractères, fin ABSENTE**. Ce sont deux documents A4
+pleine page destinés à l'atelier. Non corrigés ici : le remède est maintenant éprouvé, ils
+méritent leur propre passe.
+
+**⚠️ CONSÉQUENCE À CONNAÎTRE** : le bouton « Correction élève » n'est plus offert sur une
+contre-écriture — corriger la copie d'un élève sur une écriture d'annulation n'est plus
+possible. C'est la suite directe de la décision, elle est signalée au propriétaire.
+
+### 🔎 QUATRIÈME RELECTURE EXTERNE (27/07) — LES 16 CONSTATS TIRÉS, PUIS LE « LOT 0 »
+
+**Verdict reçu : « NO-GO comme registre officiel unique ; GO conditionnel pour la
+démonstration et la formation locale »**, sur le paquet du 26/07. Instruction faite selon la
+méthode de la maison : les seize constats inventoriés **sans filtre**, **tirés en bac à
+sable** (jamais seulement relus), puis **contre-épreuve adversariale de chaque verdict** —
+chaque contradicteur rejouant lui-même les preuves du premier. Aucune écriture dans le dépôt
+pendant l'instruction, aucun essai sur `data/`.
+
+**Résultat : aucun constat inventé, aucun intégralement fondé tel qu'il est écrit — et, en
+tirant, on a trouvé PIRE que ce qu'il décrit dans 8 lots sur 12.** Le plus important d'abord :
+
+- **Le blocage n° 1 de la relecture est vrai, et il est TIRÉ.** La portée de l'attestation de
+  capacité de l'ÉTABLISSEMENT (`categoriesAutorisees`, `activitesAutorisees`) est saisie,
+  validée en forme, stockée, affichée — et **lue par aucune règle**. Avec le seul verrou
+  désarmé dans une copie jetable, une **récupération de 8 kg sur une machine de 50 kg est
+  devenue une fiche OFFICIELLE scellée** (`FI-2026-0001`, empreinte v2) alors que
+  l'établissement était déclaré « catégorie II, contrôle d'étanchéité seul » ;
+  `simulerValidationOfficielle` a répondu `{"ok":true,"blocages":[]}`. À ne pas confondre avec
+  l'aptitude de la PERSONNE, qui, elle, refuse bien (contre-épreuve tirée dans le même banc) :
+  c'est la capacité de l'ENTREPRISE qui n'est confrontée à rien. **Non exploitable aujourd'hui
+  — verrou fermé — bloquant avant toute réouverture.** Trois trous voisins trouvés en plus :
+  la garde « au moins une catégorie / une activité » n'existe que dans le NAVIGATEUR (l'API
+  accepte une portée vide, la base accepte NULL) ; l'**import JSON est une troisième porte**
+  qui écrit la portée sans aucune vérification ; l'établissement ne peut pas enregistrer une
+  capacité du **régime 2025** (A1/A2/B/C/D/E acceptés pour la personne, refusés pour
+  l'établissement), et les valeurs de la grille 2008 sont écrites dans une colonne SQL nommée
+  `categories_2025`.
+- **Le CERFA d'une contre-écriture dit le contraire de l'écriture, et cela arrive DÉJÀ,
+  verrou fermé.** Le champ quantité prend la valeur ABSOLUE : une contre-écriture de −0,50 kg
+  imprime « 0,50 kg de fluide vierge chargé », indiscernable de l'originale au numéro près, et
+  rien n'y dit qu'elle annule quoi que ce soit. Les blocs de signature sortent **pré-remplis**
+  (nom du validateur, qualité, dates du jour), tracé vide. Le PDF part dans le **dossier
+  d'audit scellé**. Et la contre-écriture officielle passe **même attestation de capacité
+  périmée** : c'est la seule porte qui produit une écriture officielle numérotée sans passer
+  le cadre du mode Officiel.
+- **Le verrouillage de compte est perpétuel et sans porte de secours.** Le compteur d'échecs
+  n'est pas remis à zéro à l'expiration : au bout de 15 minutes il vaut toujours 5, donc le
+  premier essai raté suivant re-verrouille (tiré). Si le compte bloqué est le **seul ADMIN**,
+  le registre devient inaccessible jusqu'à édition manuelle du fichier SQLite. Le message
+  d'échec unique est en outre défait par le message de verrou : cinq requêtes suffisent à
+  distinguer un identifiant qui existe d'un identifiant qui n'existe pas.
+- **Un équipement à plusieurs FLUIDES fait disparaître une obligation entière.** Une machine
+  en cascade n'a qu'un champ `fluide` : déclarée R-744 avec 8 kg au total, le moteur rend
+  « aucun contrôle » alors que le seul circuit HFC (R-134a, 4 kg = 5,72 tCO₂eq) impose
+  12 mois. Le doute retire ici une OBLIGATION — ce que la doctrine de la maison interdit.
+- **Le CERFA régénéré ne lit pas le PRP FIGÉ** (`grep prpFige v8/js/cerfa/` = 0 ligne) : après
+  correction du référentiel, une fiche scellée à 148 réimprime 3,20 tCO₂eq au lieu de 0,47,
+  chaîne intacte. « Une correction de référentiel ne réécrit pas une fiche déjà signée » est
+  donc vrai de la DONNÉE et faux du DOCUMENT — à corriger dans
+  `docs/REGISTRE-DES-ARBITRAGES.md`.
+- **`getMouvements` rend le nom réel d'une personne mise au coffre à un compte ÉLÈVE** : la
+  substitution ne vit que dans la vue. La décision de confidentialité du 25/07 avait fermé
+  deux portes au motif écrit qu'« une décision qui ne garde qu'une porte sur deux n'en est pas
+  une » — il en restait une troisième.
+
+**Deux conseils de la relecture sont refusés, preuve à l'appui** : découper `server/api.js` et
+`demo-store.js` (couverture mesurée : ce sont les fichiers les **mieux** couverts du dépôt ;
+le bas de tableau est la couche navigateur) ; et conclure « poste chiffré » depuis la clé de
+registre BitLocker (elle ne distingue pas *protection active* de *protection suspendue*).
+
+#### LE LOT 0 — six briques, aucune valeur réglementaire touchée
+
+Chacune codée dans un worktree isolé, **chacune prouvée par un test qui redevient ROUGE quand
+on retire le correctif** (contre-épreuve tirée dans les deux sens, jamais supposée), chacune
+passée à une revue adversariale. **TOUT VERT — 126 exécutions** (121 → 126) en 101,7 s,
+**207 attaques** inchangées à `node server/test-securite-negative.mjs`.
+
+- **B1 — le banc LAN ne peut plus être VERT sans avoir tiré sur la cible.** La relecture avait
+  rencontré un faux ROUGE (proxy d'environnement). En le tirant, on a trouvé le **faux VERT**,
+  bien plus grave : avec `HTTP_PROXY` renseigné et `HTTPS_PROXY` absent — configuration
+  banale d'un établissement — la suite affichait **11 OK / 0 échec** alors que les deux
+  vérifications qui portent toute la propriété « aucun repli HTTP en clair sur le port LAN »
+  étaient parties au proxy **sans jamais interroger le serveur** (journal du faux mandataire à
+  l'appui). Agents dédiés (`AGENT_HTTPS`/`AGENT_HTTP`) + une **cinquième famille de
+  vérifications sur l'herméticité du banc lui-même** : on relit l'agent que Node a réellement
+  attaché à la requête, pas les options qu'on croit avoir passées. 11 → 16 vérifications.
+  Élargir `NO_PROXY` a été explicitement refusé : cela dépendrait du poste de celui qui joue
+  la suite. **La revue a rattrapé un motif FAUX** que le correctif venait de fabriquer : quand
+  le serveur ne démarre pas pour une raison légitime (certificat illisible, port pris), la
+  suite accusait par écrit un intermédiaire qui n'existait pas — le motif déjà payé trois fois
+  ici.
+- **B2 — la borne de scellement est enfin CONFRONTÉE au registre, au démarrage.** Le détecteur
+  existait : après un retour en arrière au disque, le fichier voisin portait encore 3 pendant
+  que la base n'avait plus qu'une écriture scellée. Personne ne le lui demandait —
+  `nombreScelleesJamaisAtteint()` n'était consulté qu'à l'import. Constat best-effort **jamais
+  fatal** au démarrage, journal chaîné, et **INDÉTERMINÉ quand la borne est absente ou
+  illisible : jamais une accusation** (même doctrine que `png.js`). Ce que la mesure ne
+  promet pas est écrit : qui recopie la base ET son fichier voisin ne laisse aucun écart.
+  Suite neuve `server/test-non-regression-scellement.mjs` (26 vérifications).
+- **B3 — le dossier de destination des sauvegardes ne peut plus être un espace synchronisé
+  sans le dire.** Le dépôt refuse catégoriquement la base vive sous OneDrive/Drive/Dropbox
+  (`server/db.js:89`) mais acceptait d'y déposer les **archives automatiques, en clair et
+  nominatives** — et le commentaire du code **invitait au geste** pendant que `SAUVEGARDE.md`
+  l'interdisait : deux parties du dépôt se contredisaient, et c'est le code qui gagnait. Garde
+  posée dans le SERVEUR (vérifiée par appel API direct, 400), dérogation explicite au patron
+  de la base vive, commentaire mensonger corrigé. Suite neuve
+  `server/test-destination-synchronisee.mjs`. **La revue a rattrapé un texte qui laissait
+  croire que corriger le réglage suffisait** : ce qui est déjà parti dans le nuage y reste.
+- **B4 — les mots qui promettent plus que ce que le logiciel fait.** « mot de passe chiffré »
+  alors qu'il est **haché** (seul constat que la relecture classait fondé sans réserve — et le
+  mot faux sortait sur **papier**, la notice ayant un bouton d'impression) ; « journal d'audit
+  **inviolable** » dans `RGPD.md`, c'est-à-dire dans la pièce destinée au délégué à la
+  protection des données ; « preuve d'usage opposable » ; « inaltérable » sans réserve. **La
+  revue a montré que le balayage à la main se déclarait complet sans l'être** — il restait
+  « le registre redevient inviolable » dans `server/api.js`, sur le chemin d'**import**, et
+  « Toute altération se voit » deux lignes sous un titre qu'on venait de qualifier. D'où la
+  suite neuve `outils/test-mots-qui-promettent.mjs` : le balayage n'est plus tenu par la
+  vigilance du rédacteur. Les emplois EXACTS (le coffre des identités chiffre vraiment, en
+  AES-256-GCM) sont laissés intacts — l'erreur symétrique serait aussi grave.
+- **B5 — plus aucune condition ne pend au « visa T3 », abandonné le 26/07.** Le sens de
+  l'erreur était bon (tout restait fermé), mais une condition d'ouverture devenue impossible
+  à satisfaire finit soit en garde morte, soit en garde ouverte un jour sans critère. Renvois
+  raccordés au dispositif qui remplace le visa (décision écrite + pilote en parallèle +
+  risques acceptés nommément). **Aucune valeur ne bouge** : `EXEMPTION_HERMETIQUE_ACTIVE`
+  reste `false`, `VERROU_LIVRAISON` reste `true`. **La revue a rattrapé quatre conditions
+  vivantes encore suspendues au visa** — dont une dans une suite citée comme preuve — et
+  l'absence de contre-épreuve : suite neuve `outils/test-visa-abandonne.mjs`.
+- **B6 — le dossier remis à l'établissement compte juste, et ne conseille plus un geste
+  destructeur.** L'inventaire des documents sans marque de non-officialité en liste **vingt et
+  un** ; deux annonces disaient encore « dix-neuf », dont celle du **tableau d'état que le chef
+  d'établissement signe**. Suite neuve `outils/test-inventaire-documents-sans-marque.mjs` : le
+  nombre est **déduit de la liste, jamais écrit en dur** — ajouter une entrée ne casse rien,
+  oublier une annonce casse ; et la divergence entre les quatre copies de l'inventaire est
+  détectée. Surtout : `docs/P0-9-REVOCATION-CLES-V7.md` conseillait de **supprimer « l'ancien
+  dépôt GitHub de la v7 »** en affirmant que l'antériorité de la v8 vivait ailleurs. **C'est
+  faux : `git remote -v` ne rend qu'UN dépôt**, celui de la v8, et c'est de son historique que
+  les clés v7 ont été extraites. Appliqué, ce conseil détruisait la protection de paternité
+  retenue à la place du chiffrement du code. Conseil retiré et motivé ; **la revue a rattrapé
+  le motif faux du correctif lui-même** : passer un dépôt en privé ne touche pas à
+  l'historique — seules la suppression et la réécriture le détruisent.
+
+#### Ce qui reste ouvert de cette relecture (rien n'est refermé en douce)
+
+En code : la **portée de capacité** (avec ses trois portes et le régime 2025) · le **CERFA de
+la contre-écriture** · le **verrouillage de compte** et le déni de service scrypt (A14,
+toujours à traiter avant le mode LAN, jamais après) · le **multi-fluides** · le **PRP figé non
+lu par le générateur** · la **troisième porte du coffre des identités**. Hors code : les
+**clés v7** (T2, l'exposition reste réputée active tant que le procès-verbal n'est pas signé),
+la **saisine du DPD** sous couvert du chef d'établissement (T3), la publication d'une
+**couverture mesurée honnêtement**, le manifeste de paquet et l'inventaire des composants
+tiers. `docs/NOTE-DECISION-ETABLISSEMENT.md` § 3 nomme désormais cette quatrième relecture,
+son verdict, et les quatre travaux qui restent — la note ne doit pas être signée en laissant
+croire qu'ils sont réglés.
+
 ### 🗑️ B2 — LE SUIVI DE REMISE EN FILIÈRE DIT CE QU'IL EST (25/07, session autonome)
 
 **Constat A07, tiré et confirmé.** L'objet interne du logiciel s'appelait « BSFF »
@@ -2808,7 +3351,7 @@ des QR reste DISTINCT et inchangé.
 - **Module pur `v8/js/data/code-machine.js`** : `familleDuType` (Chambre froide → CF,
   Vitrine → VR, PAC → PC, Monosplit → MS, Multisplit → MM, Centrale → CE, défaut MA),
   `codeSite` (initiales des mots significatifs de la raison sociale — « Lycée Jacques
-  Raynaud » → JR, mots vides scolaires ignorés, replis sûrs), `genererCodeMachine`
+  Vidal » → AV, mots vides scolaires ignorés, replis sûrs), `genererCodeMachine`
   (prochain numéro libre PAR préfixe, 3 chiffres), `normaliserCodeMachine` (majuscules,
   accents dépouillés, espaces retirés) et `validerCodeMachine` (1-24 caractères,
   lettres/chiffres/tirets — les codes hérités « M1 » restent valides). Miroir partiel
@@ -4551,4 +5094,4 @@ Nouvelle étape **5 « Contrôle d'étanchéité + Détecteur »** insérée ent
 ---
 
 *inerWeb Fluide - Traçabilité F-Gas & CERFA 15497*04*
-*Lycée Professionnel Jacques Raynaud, Marseille*
+*Lycée Professionnel Antoine Vidal, Nîmes*

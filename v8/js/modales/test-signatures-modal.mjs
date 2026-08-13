@@ -82,7 +82,7 @@ function storeFactice(signatures) {
   return {
     getSignaturesMouvement: async () => signatures,
     getUtilisateurCourant: async () => PROF,
-    getEtablissement: async () => ({ raisonSociale: 'LP Jacques Raynaud' }),
+    getEtablissement: async () => ({ raisonSociale: 'LP Antoine Vidal' }),
     getMachines: async () => [],
     getClients: async () => [],
     getPersonnel: async () => [PROF, ELEVE],

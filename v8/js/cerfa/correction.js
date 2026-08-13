@@ -234,6 +234,17 @@ const MENTION_FORMATION_NORMALISEE = normaliserTexte(MENTION_FORMATION);
 const PREFIXE_REEMPLOI_NORMALISE = normaliserTexte(PREFIXE_MENTION_REEMPLOI);
 
 /**
+ * Lot 1 branche A (27/07/2026) : il n'y a plus de mentions SYSTÈME
+ * d'annulation à écarter ici. Une CONTRE-ÉCRITURE ne produit plus de
+ * CERFA du tout (`generateur.js`, MSG_CERFA_CONTRE_ECRITURE) : elle ne
+ * peut donc plus être donnée comme sujet d'exercice, et le bouton
+ * « Correction élève » lui a été retiré dans les vues. Ce qui reste
+ * écarté de la comparaison, ce sont les deux mentions que l'application
+ * rédige sur des fiches ORDINAIRES : MODE FORMATION et la mention
+ * d'anomalie de réemploi.
+ */
+
+/**
  * Ligne normalisée d'un pavé multi-lignes : « SIRET : » unifié (avec
  * ou sans deux-points), numéro SIRET comparé sans ses espaces de
  * groupement.
@@ -246,8 +257,8 @@ function normaliserLigne(ligne) {
 }
 
 /**
- * Pavé multi-lignes → ensemble trié de lignes normalisées (lignes
- * vides et mention MODE FORMATION écartées des deux côtés).
+ * Pavé multi-lignes → ensemble trié de lignes normalisées (lignes vides,
+ * mention MODE FORMATION et mention de réemploi écartées des deux côtés).
  */
 function lignesComparables(valeur) {
   return String(valeur ?? '').split('\n')

@@ -173,6 +173,23 @@ export function evaluerBlocagesOfficiel(cadre) {
         'au-delà du seuil haut) mais absent de l’équipement.');
     }
 
+    // 19 — portée de la CAPACITÉ DE L'ÉTABLISSEMENT (lot F carte blanche,
+    // 13/08/2026 — blocage n° 1 de la 4e relecture externe, tiré) :
+    // l'attestation déclarée COUVRE cette intervention (catégories ×
+    // activités × charge, MÊME matrice que l'aptitude de la personne —
+    // fait précalculé par le store, absent = sans objet). Jamais en
+    // doublon des conditions 1-4 : sans attestation déclarée (`attestee`
+    // faux), elles seules parlent. Une portée VIDE, elle, n'autorise
+    // RIEN : le doute retire l'allègement, jamais l'obligation.
+    if (fiche.capaciteEtablissement &&
+        fiche.capaciteEtablissement.attestee &&
+        fiche.capaciteEtablissement.verdict &&
+        fiche.capaciteEtablissement.verdict.autorise === false) {
+      poser('CAPACITE_ETABLISSEMENT',
+        'Attestation de capacité de l’établissement inadaptée à cette ' +
+        `intervention : ${fiche.capaciteEtablissement.verdict.motif}.`);
+    }
+
     // 9 — contrôle d'étanchéité exigé (machine soumise OU fluide inflammable).
     const controleExige =
       (fiche.type === 'CHARGE_APPOINT' || fiche.type === 'MISE_EN_SERVICE') &&

@@ -21,6 +21,7 @@
 // ============================================================
 
 import { enteteVue, tableau, toast, modale, chipStatut, ICONES } from './communs.js';
+import { activer as activerModeExercice } from '../data/mode-exercice.js';
 import { esc, fmtNombre } from '../core/utils.js';
 
 export const titre = 'Sauvegarde';
@@ -408,8 +409,8 @@ function banniereAnciennete(liste, reglages) {
     return '<div style="' + style + '">' + ICONES.alerte
       + '<span><strong>Dernière sauvegarde il y a ' + ageJours + ' jour'
       + (ageJours > 1 ? 's' : '') + '</strong> (seuil d’alerte : ' + seuil
-      + ' jours). Pensez à sauvegarder — de préférence dans un dossier '
-      + 'synchronisé hors du poste.</span></div>';
+      + ' jours). Pensez à sauvegarder, puis à mettre une copie CHIFFRÉE '
+      + 'hors du poste.</span></div>';
   }
   return '';
 }
@@ -447,9 +448,11 @@ function sectionReglages(reglages) {
     + 'placeholder="Par défaut : ' + esc(parDefaut) + '" '
     + 'style="font-family:var(--police-mono);font-size:12.5px;">'
     + '<span class="aide" style="font-size:12px;color:var(--texte-3);">'
-    + 'Laissez vide pour le dossier par défaut. Vous pouvez indiquer un dossier '
-    + 'déjà synchronisé (OneDrive, Google Drive, serveur de l’établissement) pour '
-    + 'une copie hors du poste. Chemin ABSOLU, hors du dossier des données. '
+    + 'Laissez vide pour le dossier par défaut. Chemin ABSOLU, hors du dossier '
+    + 'des données, et <strong>hors espace synchronisé</strong> (OneDrive, '
+    + 'Google Drive, Dropbox) : les sauvegardes automatiques sont en clair et '
+    + 'nominatives, elles doivent rester sur le poste. Pour une copie hors du '
+    + 'poste, utilisez une sauvegarde manuelle CHIFFRÉE. '
     + 'Ne change que les <strong>prochaines</strong> sauvegardes. '
     + 'Destination actuelle : <strong style="font-family:var(--police-mono);">'
     + esc(effectif) + '</strong>.</span>'
@@ -492,7 +495,44 @@ function construireHtmlLocal(liste, reglages) {
     + '</div>'
     + tableauSauvegardes(liste)
     + sectionReglages(reglages)
+    + sectionModeExercice()
     + '</div>';
+}
+
+/* ============================================================
+   MODE EXERCICE (13/08, plan docs/PLAN-MODE-EXERCICE.md) : la carte de
+   démarrage du bac à sable pédagogique. Le démarrage exige le CODE DE
+   DÉBLOCAGE (décision du propriétaire : « celui qui a le code ») ; la
+   définition du code est réservée ADMIN/RÉFÉRENT — c'est le SERVEUR qui
+   garde, l'écran ne fait que le dire.
+   ============================================================ */
+
+function sectionModeExercice() {
+  return '<section class="carte" style="padding:20px; margin-top:18px" id="carte-exercice">'
+    + '<h3 style="margin-top:0">Mode exercice (bac à sable pédagogique)</h3>'
+    + '<p>Travailler sur une <strong>photo des données réelles</strong> sans '
+    + 'rien écrire au registre : CERFA de démonstration, manipulations, '
+    + 'exercices de formation — tout est effaçable, et l’exercice se '
+    + 'sauvegarde en fichier jusqu’à l’effacement. Le registre certifié '
+    + 'conforme n’est jamais touché.</p>'
+    + '<p id="exo-etat" class="texte-secondaire">Lecture de l’état…</p>'
+    + '<div class="barre-actions" style="align-items:center">'
+    + '<input type="password" id="exo-code" placeholder="Code de déblocage" '
+    + 'autocomplete="off" style="max-width:220px">'
+    + '<button type="button" id="btn-exo-demarrer" class="btn btn-marine">'
+    + 'Passer en mode exercice</button>'
+    + '</div>'
+    + '<details style="margin-top:10px">'
+    + '<summary>Définir ou remplacer le code (ADMIN / RÉFÉRENT)</summary>'
+    + '<div class="barre-actions" style="align-items:center; margin-top:8px">'
+    + '<input type="password" id="exo-nouveau-code" '
+    + 'placeholder="Nouveau code (4 caractères minimum)" autocomplete="off" '
+    + 'style="max-width:260px">'
+    + '<button type="button" id="btn-exo-definir" class="btn btn-secondaire">'
+    + 'Enregistrer le code</button>'
+    + '</div>'
+    + '</details>'
+    + '</section>';
 }
 
 /* ============================================================
@@ -980,6 +1020,42 @@ export async function render(conteneur, ctx) {
     boutonRafraichir.addEventListener('click', () => {
       chargerEtAfficher();
     });
+
+    // Mode exercice (13/08) : état du code + les deux gestes. Les refus
+    // (rôle, code) viennent du serveur, mot pour mot.
+    const etatExo = conteneur.querySelector('#exo-etat');
+    if (etatExo) {
+      appelerCoffre('etatExercice', {}).then((etat) => {
+        etatExo.textContent = etat.codeDefini
+          ? 'Un code de déblocage est défini sur ce poste.'
+          : 'Aucun code de déblocage défini : définissez-le ci-dessous '
+            + 'avant le premier exercice.';
+      }).catch((erreur) => { etatExo.textContent = erreur.message; });
+      conteneur.querySelector('#btn-exo-demarrer')
+        .addEventListener('click', async () => {
+          const code = conteneur.querySelector('#exo-code').value;
+          try {
+            const resultat = await appelerCoffre('demarrerExercice', { code });
+            activerModeExercice(resultat.photo, resultat.date);
+            toast('Mode exercice activé : rechargement…', 'succes');
+            window.location.reload();
+          } catch (erreur) {
+            toast(erreur.message, 'erreur');
+          }
+        });
+      conteneur.querySelector('#btn-exo-definir')
+        .addEventListener('click', async () => {
+          const code = conteneur.querySelector('#exo-nouveau-code').value;
+          try {
+            await appelerCoffre('definirCodeExercice', { code });
+            toast('Code du mode exercice enregistré.', 'succes');
+            etatExo.textContent = 'Un code de déblocage est défini sur ce poste.';
+            conteneur.querySelector('#exo-nouveau-code').value = '';
+          } catch (erreur) {
+            toast(erreur.message, 'erreur');
+          }
+        });
+    }
 
     // Réglages : le champ d'intervalle suit l'interrupteur automatique.
     const caseAuto = conteneur.querySelector('#reg-auto-active');

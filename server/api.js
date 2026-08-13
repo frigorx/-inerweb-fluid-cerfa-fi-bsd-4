@@ -48,7 +48,7 @@ const { evaluerBlocagesOfficiel, messageRefusOfficiel, VERROU_LIVRAISON,
 const { verifierDroitIntervention, habilitationReconnue,
   jetonsMentionsActives, FIN_DELIVRANCE_2008,
   DATE_BUTOIR_REMISE_NIVEAU_2008, DUREE_CYCLE_FORMATION_ANS,
-  plusAnnees } = require('./droit-intervention.js');
+  plusAnnees, capaciteEtablissementCouvre } = require('./droit-intervention.js');
 // Déclaration annuelle 11 rubriques (P0-8, miroir littéral du module ESM du
 // front, parité prouvée par test-declaration-annuelle.mjs).
 const { calculerDeclarationAnnuelle } = require('./declaration-annuelle.js');
@@ -115,6 +115,10 @@ const CATEGORIES_ATTESTATION = ['I', 'II', 'III', 'IV'];
 const REGIMES = ['2008', '2025'];
 const CATEGORIES_2008 = ['I', 'II', 'III', 'IV'];
 const CATEGORIES_2025 = ['A1', 'A2', 'B', 'C', 'D', 'E', 'V'];
+// Lot F (13/08) : la capacité de l'ÉTABLISSEMENT accepte les DEUX régimes
+// (la 4e relecture l'a tiré : « A1 » passait pour une personne et était
+// refusé pour l'établissement, pendant la même transition réglementaire).
+const GRILLE_CAPACITE_ETABLISSEMENT = [...CATEGORIES_2008, ...CATEGORIES_2025];
 const FLUIDES_MENTION = ['CO2', 'NH3', 'HC'];
 
 /** IM-4 : tolérance de charge résiduelle pour démanteler (± 0,05 kg). */
@@ -1747,12 +1751,19 @@ const HANDLERS = {
     return lignes.map((ligne) => mapping.versFront('bouteilles', ligne));
   },
 
-  /** Tous les mouvements, triés date puis numéro décroissants. */
+  /**
+   * Tous les mouvements, triés date puis numéro décroissants.
+   * Lot C carte blanche (13/08, 4e relecture, tiré) : le champ TEXTE
+   * `technicien` d'un mouvement dont le PORTEUR est AU COFFRE est rendu
+   * par la fiche VIVANTE (= le pseudonyme). La substitution ne vivait que
+   * dans la VUE : l'appel direct du contrat rendait le nom réel à un
+   * compte ÉLÈVE — la 3e porte du coffre, après les deux fermées le 25/07.
+   * La donnée STOCKÉE ne bouge pas (elle est sous l'empreinte scellée) ;
+   * l'export JSON lit `lireMouvementsBruts` (fidélité du transport).
+   */
   getMouvements() {
-    const lignes = db.all(
-      `SELECT * FROM mouvements
-       ORDER BY date_mouvement DESC, numero DESC`);
-    return lignes.map((ligne) => reconstituerMouvement(ligne));
+    return lireMouvementsBruts()
+      .map((mouvement) => substituerTechnicienCoffre(mouvement));
   },
 
   /** Tous les contrôles d'étanchéité, triés date décroissante. */
@@ -2747,7 +2758,9 @@ const HANDLERS = {
     const d = params.patch || {};
     if (d.categoriesAutorisees !== undefined) {
       for (const categorie of d.categoriesAutorisees ?? []) {
-        verifierCategorie(categorie, 'l’établissement');
+        // Lot F (13/08) : grille élargie aux deux régimes (I-IV et A1…V).
+        verifierCategorie(categorie, 'l’établissement',
+          GRILLE_CAPACITE_ETABLISSEMENT);
       }
     }
     if (d.activitesAutorisees !== undefined) {
@@ -4662,6 +4675,24 @@ const HANDLERS = {
         technicien: `${validateur.prenom} ${validateur.nom}`,
         motif: motifNet,
         validateurId,
+        // Lot 1 / C2 (27/07) : QUI a fait cette écriture. La colonne
+        // « Exécuté par » de mouvements.csv sortait VIDE pour toute
+        // contre-écriture, dans un dossier d'audit SCELLÉ : un inspecteur
+        // lisait une écriture qui a modifié le registre sans savoir de qui
+        // elle était. L'information EXISTE — c'est la personne qui a
+        // demandé l'annulation. On ne la lit PAS du corps de la requête
+        // (`params.executeParId` est ignoré ici, comme il l'est déjà) :
+        // on prend la fiche du VALIDATEUR, résolue par verifierValidateur
+        // et contrainte à la personne connectée par
+        // exigerValidateurDeSession — l'identité vient de la session.
+        // ⚠ Ce champ ENTRE dans l'empreinte v2 (CHAMPS_HASH_MOUVEMENT_V2).
+        // Rien n'est recalculé rétroactivement : l'empreinte est scellée à
+        // la CRÉATION, les contre-écritures déjà enregistrées gardent leur
+        // execute_par_id NULL et donc leur empreinte au bit près (le
+        // déclencheur WORM interdit d'ailleurs de la toucher). Le miroir
+        // DemoStore pose la MÊME valeur, sans quoi le round-trip
+        // démo↔local casserait la chaîne.
+        executeParId: validateur.id,
         contreEcritureDe: original.id,
         statut: 'VALIDE',
         hashEcriture: null,
@@ -4677,9 +4708,19 @@ const HANDLERS = {
         hashPiecesJointes: null,
         hashPdfFinal: null
       };
-      // IM-12 : pas de CERFA pour un TRANSFERT.
-      contreEcriture.cerfaNumero =
-        contreEcriture.type === 'TRANSFERT' ? null : contreEcriture.numero;
+      // Lot 1 branche A (décision du propriétaire, 27/07/2026) : une
+      // CONTRE-ÉCRITURE ne porte AUCUN numéro de fiche CERFA — quel que
+      // soit son type. Le CERFA 15497*04 est une fiche d'INTERVENTION sur
+      // un équipement ; aucune intervention n'a lieu le jour d'une
+      // annulation comptable. Lui en donner un revenait à attester une
+      // intervention qui n'a pas eu lieu (4ᵉ audit externe, constat 1 : le
+      // dossier scellé embarquait deux CERFA numérotés à la suite,
+      // indiscernables sur 66 champs sur 71). Le geste est celui du
+      // TRANSFERT, ligne d'à côté avant ce lot : `cerfaNumero = null`.
+      // Ce qui remplace la fiche : le JUSTIFICATIF DE RÉGULARISATION
+      // (v8/js/documents/regularisation.js). ⚠ Miroir STRICT dans
+      // v8/js/data/demo-store.js.
+      contreEcriture.cerfaNumero = null;
       // Brique ② : la contre-écriture fige le PRP à SA validation (même
       // fluide que l'original ; si le référentiel a bougé entre-temps, les
       // deux valeurs témoignent chacune de leur époque).
@@ -5659,6 +5700,32 @@ function lireTablePlate(nomTable, sqlTable, tri) {
  * collection réutilise la reconstitution déjà éprouvée (getMouvements,
  * getBouteilles…) : formes camelCase strictement identiques au contrat.
  */
+/** Lecture BRUTE des mouvements (tri du contrat), sans substitution coffre. */
+function lireMouvementsBruts() {
+  const lignes = db.all(
+    `SELECT * FROM mouvements
+     ORDER BY date_mouvement DESC, numero DESC`);
+  return lignes.map((ligne) => reconstituerMouvement(ligne));
+}
+
+/**
+ * Lot C carte blanche (13/08) : rend le mouvement avec son champ
+ * `technicien` substitué par la fiche VIVANTE quand le porteur (executeParId,
+ * ou validateurId pour une contre-écriture — même règle que la vue) est AU
+ * COFFRE. Hors coffre, ou sans identifiant : le mouvement tel quel, au bit
+ * près — on ne réécrit pas ce qu'on n'a pas à protéger.
+ */
+function substituerTechnicienCoffre(mouvement) {
+  if (!mouvement || !mouvement.technicien) return mouvement;
+  const idPorteur = mouvement.executeParId
+    ?? (mouvement.contreEcritureDe ? mouvement.validateurId : null);
+  if (!idPorteur || !estAuCoffreServeur(idPorteur)) return mouvement;
+  const fiche = lirePersonne(idPorteur);
+  const libelle = fiche
+    ? `${fiche.prenom ?? ''} ${fiche.nom ?? ''}`.trim() : '';
+  return libelle ? { ...mouvement, technicien: libelle } : mouvement;
+}
+
 function construireDonneesExport() {
   return {
     etablissement: HANDLERS.getEtablissement(),
@@ -5667,7 +5734,10 @@ function construireDonneesExport() {
     clients: HANDLERS.getClients(),
     machines: HANDLERS.getMachines(),
     bouteilles: HANDLERS.getBouteilles(),
-    mouvements: HANDLERS.getMouvements(),
+    // Lot C (13/08) : l'export lit les mouvements BRUTS — la substitution
+    // coffre de getMouvements n'a pas sa place dans un transport dont
+    // l'import re-vérifie les empreintes ; ce canal est gaté VALIDEUR.
+    mouvements: lireMouvementsBruts(),
     controles: HANDLERS.getControles(),
     fluides: HANDLERS.getFluides(),
     personnel: HANDLERS.getPersonnel(),
@@ -5871,6 +5941,23 @@ function amorcerChaineCandidat(figees) {
  * @returns {string|null} description du premier problème, ou null si sain.
  */
 function verifierInvariantsDonneesCandidat(candidat) {
+  // ⭐ Lot F (13/08) — LA PORTÉE DE CAPACITÉ NE S'ÉCRIT PAS HORS GRILLE
+  // PAR L'IMPORT. La 4e relecture l'a tiré : l'import écrivait
+  // categoriesAutorisees / activitesAutorisees sans AUCUNE vérification —
+  // la troisième porte, après l'écran (gardé) et l'API (gardée).
+  // Miroir EXACT de la démo (verifierInvariantsDonnees).
+  if (candidat.etablissement) {
+    for (const categorie of candidat.etablissement.categoriesAutorisees ?? []) {
+      if (!GRILLE_CAPACITE_ETABLISSEMENT.includes(categorie)) {
+        return `établissement : catégorie de capacité inconnue (${categorie})`;
+      }
+    }
+    for (const activite of candidat.etablissement.activitesAutorisees ?? []) {
+      if (!ACTIVITES_REGLEMENTEES.includes(activite)) {
+        return `établissement : activité réglementée inconnue (${activite})`;
+      }
+    }
+  }
   for (const b of candidat.bouteilles) {
     const ref = b.code ?? b.id ?? '?';
     // ⭐ L2 (25/07) — les gardes du CRUD valent AUSSI à l'import. Attaque
@@ -6406,7 +6493,8 @@ function remplacerToutLEtat(candidat, chaineAmorceeALImport = 0,
     reinsererJournal(candidat.journalAudit);
 
     // Recréation des déclencheurs WORM (SQL exact de sqlite_master) : le
-    // registre redevient inviolable dans la même transaction.
+    // registre redevient inaltérable au sein de l'application dans la
+    // même transaction.
     for (const t of worm) db.run(t.sql);
 
     // Journalise l'import LUI-MÊME (chaîné à la chaîne de journal réamorcée).
@@ -6776,6 +6864,58 @@ function nombreScelleesJamaisAtteint() {
   return Math.max(
     Number.isFinite(enBase) && enBase > 0 ? enBase : 0,
     enFichier);
+}
+
+/**
+ * ⭐ Lot 0 / brique B2 (audit externe #4, 27/07) — la borne est enfin
+ * CONFRONTÉE au registre.
+ *
+ * LE DÉFAUT CORRIGÉ. Le détecteur ci-dessus existait déjà, mais on ne
+ * l'interrogeait QU'À L'IMPORT et au scellement. Après un retour en arrière
+ * fait AU DISQUE (quelqu'un repose une ancienne copie de la base), le
+ * fichier voisin `borne-scellement.json` portait encore 3 pendant que le
+ * registre n'avait plus qu'UNE écriture scellée : l'écart était lisible en
+ * une soustraction, et personne ne la faisait. C'est ici qu'on la fait.
+ *
+ * CE QUE LE CONSTAT DIT — ET RIEN DE PLUS. Il compare DEUX NOMBRES : la
+ * borne monotone du poste, et le nombre d'écritures qui portent une
+ * empreinte. Il ne dit donc jamais « le registre est intact » : recopier la
+ * base ET son fichier voisin ensemble rend l'écart nul, c'est une limite
+ * CONNUE de la mesure (voir l'en-tête de server/borne-scellement.js). Il dit
+ * « la borne et le registre concordent » ou « ne concordent pas ».
+ *
+ * AUCUNE ACCUSATION QUAND ON NE SAIT PAS. Borne absente ou illisible = 0 :
+ * le constat rend INDETERMINE (premier démarrage d'un poste neuf, fichier
+ * abîmé), JAMAIS « régression ». Même doctrine que png.js : on ne conclut
+ * pas au vide sur ce qu'on ne sait pas relire.
+ *
+ * ⭐ REVUE (27/07) — UN MOTIF « REGRESSION » NE DÉSIGNE PAS UN COUPABLE.
+ * TIRÉ : une RESTAURATION d'archive plus ancienne, geste PRÉVU du
+ * coffre-fort confirmé par `confirmePerte` (restauration.js, étape 0),
+ * produit exactement le même écart — la restauration remplace la base, pas
+ * le fichier voisin qui porte la borne. Un IMPORT d'un registre plus court
+ * aussi. Le constat dit donc « les deux nombres ne concordent pas », JAMAIS
+ * « quelqu'un a remis une base à la main » : la cause n'est pas mesurée.
+ * L'appelant (serveur.js) énumère les causes possibles et dit qu'il ne
+ * tranche pas. Preuve : test-non-regression-scellement, section 5.
+ *
+ * @returns {{ok: boolean|null, motif: string, borne: number, reelles: number}}
+ *   ok vrai = concordent · faux = régression · null = indéterminé
+ */
+function constaterBorneScellement() {
+  const borne = nombreScelleesJamaisAtteint();
+  // Même critère de comptage que le témoin quotidien du lot D
+  // (scellement-externe.js) : « porte une empreinte ».
+  const compte = db.get(
+    'SELECT COUNT(*) AS n FROM mouvements WHERE hash_ecriture IS NOT NULL');
+  const reelles = Number(compte?.n ?? 0);
+  if (!(borne > 0)) {
+    return { ok: null, motif: 'INDETERMINE', borne: 0, reelles };
+  }
+  if (reelles < borne) {
+    return { ok: false, motif: 'REGRESSION', borne, reelles };
+  }
+  return { ok: true, motif: 'CONCORDANT', borne, reelles };
 }
 
 /**
@@ -8819,6 +8959,28 @@ function cadreFicheOfficiel(mouvement) {
         : null
     };
   }
+  // Lot F carte blanche (13/08, 4e relecture — blocage n° 1) : la PORTÉE
+  // de l'attestation de capacité de l'ÉTABLISSEMENT est enfin LUE. Verdict
+  // précalculé pour la condition 19 (même matrice que l'aptitude de la
+  // personne, charge NOMINALE, hermétique opposable). `attestee` : sans
+  // attestation déclarée, les conditions 1-4 parlent déjà — la 19 se tait.
+  // Miroir du DemoStore.
+  const etab = HANDLERS.getEtablissement();
+  const nominaleEtab = machine ? machine.chargeNominaleKg : null;
+  const capaciteEtablissement = etab ? {
+    attestee: Boolean(etab.numAttestationCapacite),
+    verdict: capaciteEtablissementCouvre({
+      categories: etab.categoriesAutorisees ?? [],
+      activites: etab.activitesAutorisees ?? [],
+      operation: mouvement.type,
+      fluide: mouvement.fluide ?? null,
+      chargeKg: typeof nominaleEtab === 'number'
+        && Number.isFinite(nominaleEtab) && nominaleEtab > 0
+        ? nominaleEtab : null,
+      hermetiqueScelle: machine
+        ? equipement.hermetiqueOpposable(machine) : false
+    })
+  } : null;
   return {
     type: mouvement.type,
     machinePresente: Boolean(machine),
@@ -8860,6 +9022,9 @@ function cadreFicheOfficiel(mouvement) {
     technicienPresent: Boolean(mouvement.technicien &&
       String(mouvement.technicien).trim()),
     intervenant,
+    // Lot F (13/08) — condition 19 : portée de la capacité de
+    // l'établissement (fait précalculé ci-dessus).
+    capaciteEtablissement,
     // Lot C (C1) — conditions 14-15 : signatures réelles, tri-état.
     signatureTechnicienValide: etatSignatureReelle(mouvement, 'TECHNICIEN'),
     signatureDetenteurValide: etatSignatureReelle(mouvement, 'DETENTEUR')
@@ -9185,7 +9350,14 @@ function calculerStats() {
     stockBouteillesKg,
     nbBouteilles: bouteilles.length,
     teqCo2Parc,
-    nbCerfa: mouvements.filter((mv) => mv.cerfaNumero).length,
+    // Lot 1 branche A (27/07) : une CONTRE-ÉCRITURE n'a plus de fiche
+    // CERFA. Les NOUVELLES n'ont plus de `cerfaNumero` ; les ANCIENNES
+    // gardent le leur, scellé — mais le logiciel ne leur imprime plus
+    // rien. Les compter, c'est annoncer des fiches qui n'existent pas.
+    // MÊME critère que le refus du générateur et que le tableau de bord
+    // (`contreEcritureDe`). ⚠ Miroir STRICT de v8/js/data/demo-store.js.
+    nbCerfa: mouvements.filter(
+      (mv) => mv.cerfaNumero && !mv.contreEcritureDe).length,
     nbFiches: mouvements.length,
     nbMouvements: mouvements.length,
     nbControles,
@@ -9407,6 +9579,9 @@ module.exports = {
   verifierTousPdfFinalConserves,
   // Lot C (C3b) : appelée au démarrage par serveur.js (et par le test).
   reecrireTemoinsPdfFinalManquants,
+  // Lot 0 / brique B2 : confrontation de la borne de scellement au registre,
+  // appelée au démarrage par serveur.js (et par test-non-regression-scellement).
+  constaterBorneScellement,
   // Lot E2 : rattrapage de la purge disque du coffre (démarrage serveur.js).
   rejouerPurgeCoffre
 };

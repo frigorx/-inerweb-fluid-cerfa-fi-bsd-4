@@ -202,6 +202,84 @@ function gabaritBonIntervention(machine, client) {
 
 const STYLE_ID = 'style-bon-intervention';
 
+/**
+ * Bloc d'impression du bon d'intervention — EXPORTÉ pour être éprouvé
+ * (`test-bon-intervention.mjs`) : une règle d'impression ne se relit pas,
+ * elle se tire. Lot D carte blanche (13/08) : l'ancien bloc posait
+ * `position: fixed; inset: 0` sur `.bi-document` — un document CLOUÉ à la
+ * première feuille, mesuré au lot 1 : **138 caractères sur le papier, fin
+ * du document ABSENTE**. Remède = le patron ÉPROUVÉ du justificatif de
+ * régularisation (documents/regularisation.js, lot 1) : remise à plat des
+ * ancêtres de la modale, transform réécrit à la même spécificité que
+ * composants.css, document laissé DANS LE FLUX pour se paginer.
+ */
+export const CSS_IMPRESSION_BON = `
+    @media print {
+      body * { visibility: hidden; }
+
+      .bi-document,
+      .bi-document * { visibility: visible; }
+
+      /* Rien de l'application ne PREND DE PLACE sur la feuille. */
+      body > * { display: none !important; }
+
+      body > #zone-modales,
+      body > .modale-fond { display: block !important; }
+
+      .modale-entete,
+      .modale-actions { display: none !important; }
+
+      /* Les boîtes qui rognaient la feuille (max-height + overflow +
+         backdrop-filter — la modale est une boîte d'UNE page) sont
+         remises à plat. */
+      #zone-modales,
+      .modale-fond,
+      .modale,
+      .modale-corps,
+      .bi-doc-apercu {
+        position: static;
+        display: block;
+        overflow: visible;
+        max-height: none;
+        max-width: none;
+        width: auto;
+        padding: 0;
+        margin: 0;
+        background: none;
+        border: 0;
+        box-shadow: none;
+        backdrop-filter: none;
+        transform: none;
+        opacity: 1;
+      }
+
+      /* composants.css pose .modale-fond.visible .modale { transform } à
+         DEUX classes — un ancêtre transformé devient le bloc conteneur
+         des descendants fixes : réécrit ici à la même spécificité. */
+      .modale-fond.visible .modale { transform: none; }
+
+      /* Le document reste DANS LE FLUX : c'est le position: fixed qui le
+         clouait à la première feuille. */
+      .bi-document {
+        position: relative;
+        width: auto;
+        max-width: 210mm;
+        margin: 0 auto;
+        padding: 0;
+        box-shadow: none;
+        border: none;
+        border-radius: 0;
+      }
+
+      /* Un champ de saisie manuscrite ne se coupe pas entre deux pages,
+         un titre de bloc ne part jamais sans son bloc. */
+      .bi-doc-champ,
+      .bi-doc-reserve { break-inside: avoid; page-break-inside: avoid; }
+
+      .bi-doc-bloc-titre { break-after: avoid; page-break-after: avoid; }
+    }
+`;
+
 function assurerStyle() {
   if (document.getElementById(STYLE_ID)) return;
 
@@ -407,25 +485,8 @@ function assurerStyle() {
       box-shadow: var(--ombre-douce);
     }
 
-    /* Impression : uniquement le document, à la taille A4 */
-    @media print {
-      body * { visibility: hidden; }
-
-      .bi-document, .bi-document * {
-        visibility: visible;
-      }
-
-      .bi-document {
-        position: fixed;
-        inset: 0;
-        margin: 0 auto;
-        width: 210mm;
-        max-width: 210mm;
-        box-shadow: none;
-        border: none;
-        border-radius: 0;
-      }
-    }
+    /* Impression : uniquement le document — bloc exporté et éprouvé. */
+    ${CSS_IMPRESSION_BON}
   `;
   document.head.appendChild(style);
 }

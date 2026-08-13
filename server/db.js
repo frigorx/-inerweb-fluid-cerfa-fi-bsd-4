@@ -18,7 +18,7 @@
  * - Fournit aussi les deux aides transverses du registre :
  *   `generateId(prefixe)` (identifiants préfixés MAC-, BTL-, MVT-…) et
  *   `hashEcriture(donnees, hashPrecedent)` (empreinte SHA-256 chaînée,
- *   SPEC-V8 §5.6 : registre inviolable).
+ *   SPEC-V8 §5.6 : registre inaltérable au sein de l'application).
  */
 
 const { DatabaseSync } = require('node:sqlite');

@@ -12,7 +12,7 @@ Passer de « je fais des mouvements et je génère des CERFA » à :
 exportable, avec pièces justificatives et balance matière »**.
 
 - Publics : enseignants/référents (pilotage), élèves (mode formation), professionnels (usage réel).
-- Diffusion gratuite aux lycées professionnels froid/clim — vitrine pour le lycée Jacques Raynaud (Marseille).
+- Diffusion gratuite aux lycées professionnels froid/clim — vitrine pour le lycée Antoine Vidal (Nîmes).
 - Phrase-objectif côté audit : *« En un clic, je sors le dossier annuel complet de traçabilité fluides. »*
 - Échéance réglementaire structurante : arrêté du 21/11/2025, obligatoire au 01/01/2027
   (nouvelle grille de catégories, vérification outillages, registre du personnel, fiches d'intervention,
@@ -165,7 +165,7 @@ destination fluide (machine / bouteille récup / fournisseur / déchet),
 technicien, **validateur** (référent — obligatoire en lycée), CERFA lié, BSFF lié,
 pièce justificative (PDF/photo pesée), observation,
 statut : **brouillon → soumis → validé → (annulé par contre-écriture)**,
-**hash d'écriture** (empreinte SHA-256 chaînée au hash précédent → registre inviolable).
+**hash d'écriture** (empreinte SHA-256 chaînée au hash précédent → registre inaltérable au sein de l'application).
 > **Une écriture validée n'est JAMAIS modifiée ni effacée.** Toute correction passe par une
 > **contre-écriture** de régularisation qui référence l'écriture d'origine.
 

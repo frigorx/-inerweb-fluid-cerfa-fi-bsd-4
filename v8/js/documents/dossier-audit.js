@@ -7,6 +7,11 @@
 //   cerfa/<numero>.pdf     — CERFA 15497*04 officiel rempli pour
 //                            chaque mouvement VALIDE/ANNULE de
 //                            l'année ET chaque contrôle de l'année
+//                            (hors TRANSFERT et hors CONTRE-ÉCRITURE)
+//   regularisations/<numero>.html — JUSTIFICATIF DE RÉGULARISATION de
+//                            chaque écriture d'annulation de l'année
+//                            (lot 1 branche A, 27/07/2026) : la pièce
+//                            qui REMPLACE le CERFA d'une contre-écriture
 //   pieces-jointes/attestation-capacite/* — attestation de capacité
 //                            de l'établissement si déposée
 // Aucune dépendance externe nouvelle : pdf-lib est chargé
@@ -25,9 +30,27 @@ import {
   versOctets, nomSur, octetsEntree, sha256Hex
 } from './dossier-commun.js';
 import { MENTION_BORDEREAU_OFFICIEL } from '../data/remise-filiere.js';
+import {
+  estContreEcriture, assemblerJustificatif, justificatifHtmlAutonome,
+  LIGNE_SOMMAIRE_REGULARISATIONS
+} from './regularisation.js';
 
 /** Statuts de mouvement inscrits au registre (donc porteurs d'un CERFA). */
 const STATUTS_REGISTRE = ['VALIDE', 'ANNULE'];
+
+/** Découpe un paragraphe en lignes d'au plus `largeur` caractères, sans
+ *  couper un mot — le sommaire est un fichier texte lu tel quel. */
+function decouperLignes(texte, largeur) {
+  const lignes = [];
+  let courante = '';
+  for (const mot of String(texte).split(/\s+/).filter(Boolean)) {
+    if (courante === '') courante = mot;
+    else if ((courante + ' ' + mot).length <= largeur) courante += ' ' + mot;
+    else { lignes.push(courante); courante = mot; }
+  }
+  if (courante !== '') lignes.push(courante);
+  return lignes;
+}
 
 /** Date ISO « AAAA-MM-JJ » → « JJ/MM/AAAA » (sans objet Date, sans fuseau). */
 function fmtDateFr(iso) {
@@ -136,6 +159,21 @@ function redigerSommaire(etablissement, annee, nomsFichiers, maintenant) {
     'contrôles d\'étanchéité de l\'année). Les fichiers *.csv sont les',
     'tables du registre (séparateur « ; », encodage UTF-8).',
     '',
+    // ⚠ Lot 1 branche A — le dossier scellé DIT ce qui a changé. Sans
+    // cette ligne, un lecteur habitué aux archives antérieures chercherait
+    // le CERFA d'une contre-écriture et conclurait à une pièce manquante.
+    // ⭐ REVUE DU 27/07 : le bloc était posé INCONDITIONNELLEMENT. Tiré sur
+    // une année SANS contre-écriture, l'archive ne contenait aucun
+    // `regularisations/…` et son sommaire annonçait pourtant ces fichiers :
+    // le lecteur cherchait une pièce inexistante — le symétrique exact du
+    // défaut que la ligne devait éviter. La condition est DÉRIVÉE de la
+    // liste réelle des fichiers, jamais d'un compteur tenu à la main.
+    ...(nomsFichiers.some((n) => n.includes('regularisations/'))
+      ? ['ÉCRITURES D\'ANNULATION (CONTRE-ÉCRITURES)',
+        '-'.repeat(68),
+        ...decouperLignes(LIGNE_SOMMAIRE_REGULARISATIONS, 68),
+        '']
+      : []),
     // ⚠ Lot B2 — la mention voyage AVEC le dossier scellé : un lecteur
     // du ZIP ne doit pas prendre le suivi interne pour un bordereau.
     'SUIVI DE REMISE EN FILIÈRE DÉCHETS',
@@ -188,9 +226,17 @@ export async function genererDossierAudit(store, annee) {
   // aucun numéro de fiche — le générateur le refuse) : il reste tracé dans
   // mouvements.csv, sans PDF. Constat de la suite e2e C5 : sans ce filtre,
   // le premier transfert au registre bloquait TOUT le dossier d'audit.
+  // ⚠ Lot 1 branche A (27/07/2026) : une CONTRE-ÉCRITURE quitte elle aussi
+  // la boucle CERFA — même geste, même ligne. Le CERFA atteste une
+  // intervention ; le jour d'une annulation, aucune n'a eu lieu. Le filtre
+  // se porte sur `contreEcritureDe` (estContreEcriture), JAMAIS sur
+  // `cerfaNumero` : les contre-écritures ANCIENNES gardent leur numéro
+  // scellé et sortiraient encore une fiche. Le dossier ne perd rien : la
+  // pièce est REMPLACÉE par le justificatif de régularisation, plus bas.
   const mouvementsRegistre = mouvements.filter((mv) =>
     STATUTS_REGISTRE.includes(mv.statut) &&
     mv.type !== 'TRANSFERT' &&
+    !estContreEcriture(mv) &&
     (mv.date || '').startsWith(prefixeAnnee));
   for (const mouvement of mouvementsRegistre) {
     if (doitServirPdfConserve(mouvement)) {
@@ -221,7 +267,19 @@ export async function genererDossierAudit(store, annee) {
   // le visualiseur, C3b). ----
   const controlesAnnee = controles.filter((c) =>
     (c.date || '').startsWith(prefixeAnnee));
+  // Lot E carte blanche (13/08, consigné au lot 1, TIRÉ) : un contrôle LIÉ
+  // à un mouvement DÉJÀ servi par la boucle ci-dessus est la MÊME fiche —
+  // il hérite de son numéro. L'ancien saut ne tenait qu'au PDF CONSERVÉ,
+  // qui n'existe JAMAIS en Formation : l'archive scellée portait le même
+  // CERFA deux fois (trois fiches pour deux écritures). Le saut se porte
+  // sur « le porteur est au registre de l'année » ; la garde du CONSERVÉ
+  // reste pour le porteur HORS année (jamais le générateur, C3b).
+  const idsMouvementsServis = new Set(mouvementsRegistre.map((mv) => mv.id));
   for (const controle of controlesAnnee) {
+    if (controle.mouvementId
+        && idsMouvementsServis.has(controle.mouvementId)) {
+      continue;
+    }
     const ficheConservee = await resoudreMouvementConserve(store, {
       source: 'controle', id: controle.id
     });
@@ -232,7 +290,38 @@ export async function genererDossierAudit(store, annee) {
     entrees.push({ nom: `cerfa/${nomSur(numero)}.pdf`, contenu: octets });
   }
 
-  // ---- 3 bis. Verdicts des PDF conservés (pièce présente dès qu'une
+  // ---- 3 bis. JUSTIFICATIFS DE RÉGULARISATION (lot 1 branche A) : la
+  // pièce qui REMPLACE le CERFA d'une écriture d'annulation. Une par
+  // contre-écriture de l'année, page HTML autonome — elle se lit et
+  // s'imprime hors du logiciel, et elle porte SA mention de mode.
+  // Le dossier scellé reste COMPLET : on ne retire pas une pièce, on la
+  // remplace par la bonne. ----
+  const contreEcrituresAnnee = mouvements.filter((mv) =>
+    STATUTS_REGISTRE.includes(mv.statut) &&
+    estContreEcriture(mv) &&
+    (mv.date || '').startsWith(prefixeAnnee));
+  if (contreEcrituresAnnee.length) {
+    // `clients` : le DÉTENTEUR de l'équipement est souvent un TIERS — sans
+    // cette liste, le seul nom d'entreprise du document serait celui du
+    // lycée et le lecteur en conclurait que le matériel lui appartient.
+    const [machines, bouteilles, fluides, personnel, clients] =
+      await Promise.all([
+        store.getMachines(), store.getBouteilles(), store.getFluides(),
+        store.getPersonnel(), store.getClients()
+      ]);
+    for (const contre of contreEcrituresAnnee) {
+      const faits = assemblerJustificatif({
+        mouvement: contre, mouvements, machines, bouteilles, fluides,
+        personnel, clients, etablissement
+      });
+      entrees.push({
+        nom: `regularisations/${nomSur(contre.numero ?? contre.id)}.html`,
+        contenu: justificatifHtmlAutonome(faits)
+      });
+    }
+  }
+
+  // ---- 3 ter. Verdicts des PDF conservés (pièce présente dès qu'une
   // fiche à PDF scellé est du dossier). ----
   if (verdictsConserves.length) {
     entrees.unshift({

@@ -181,8 +181,9 @@ const HANDLERS = {
 
   /**
    * Définit les réglages de sauvegarde. Champs OPTIONNELS (on ne modifie que
-   * ceux présents) : `dossierDestination` (validé absolu + hors data/ +
-   * inscriptible ; chaîne vide = revenir au dossier par défaut) et
+   * ceux présents) : `dossierDestination` (validé absolu + hors data/ + HORS
+   * ESPACE SYNCHRONISÉ + inscriptible ; chaîne vide = revenir au dossier par
+   * défaut — la garde est ICI, donc valable pour l'écran comme pour l'API) et
    * `alerteJours` (entier 1..3650). Journalise, puis renvoie les réglages à jour.
    */
   definirReglagesSauvegarde(params, contexte) {

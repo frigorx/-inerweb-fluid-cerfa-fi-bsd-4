@@ -127,7 +127,8 @@ verifier('HFO pur AVANT le 11/03/2024 : hors régime, donc non obligatoire',
 // D. ⭐ E3(b) / L5 — exemption CODÉE derrière drapeau FERMÉ
 // ============================================================
 verifier('⭐ drapeau FERMÉ : un hermétique étiqueté de 0,1 kg n’est PAS '
-  + 'exempté (comportement conservateur INCHANGÉ tant que le visa manque)',
+  + 'exempté (comportement conservateur INCHANGÉ tant que les conditions '
+  + 'de réouverture ne sont pas réunies)',
   EXEMPTION_HERMETIQUE_ACTIVE === false
   && (() => { const e = exemptionControle('HFC', HFC, { chargeNominaleKg: 0.1,
     hermetiqueScelle: true, hermetiqueEtiquete: true, residentiel: true });

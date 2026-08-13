@@ -162,7 +162,7 @@ Nous ne demandons pas qu'on nous croie sur parole. Tout ce qui suit est **exécu
 node outils/lancer-tests.mjs --tout
 ```
 
-**121 exécutions, tout vert**, en deux minutes environ, sans aucune dépendance à installer.
+**137 exécutions, tout vert**, en deux minutes environ, sans aucune dépendance à installer.
 Chaque suite travaille sur une base jetable ; aucune ne touche les données réelles.
 
 ### La suite de sécurité négative
@@ -327,5 +327,5 @@ mémoire-là est la première à se perdre.
 
 ## 9. Contact
 
-Franck Henninot — enseignant froid et climatisation, LP Jacques Raynaud, Marseille.
+Franck Henninot — enseignant froid et climatisation, LP Antoine Vidal, Nîmes.
 Auteur et utilisateur du logiciel. Licence PolyForm Noncommercial (voir `LICENSE`).

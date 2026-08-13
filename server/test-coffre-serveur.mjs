@@ -228,10 +228,29 @@ attendreRejet('mettreAuCoffre : phrase trop courte au premier geste → refus',
     .find((m) => m.id === mvBrouillon.id);
   verifier('brouillon de l\'élève : technicien RÉÉCRIT en pseudonyme',
     brouillon.technicien === 'Élève 2026-01');
+  // Lot C carte blanche (13/08) : l'ancien « résidu assumé » — le champ
+  // scellé sortait BRUT du contrat — était la 3e porte du coffre, TIRÉE
+  // par la 4e relecture externe : un compte ÉLÈVE lisait le nom réel par
+  // simple appel API, quand la substitution ne vivait que dans la vue.
+  // La LECTURE du contrat rend désormais la fiche VIVANTE (pseudonyme) ;
+  // la DONNÉE scellée, elle, ne bouge pas d'un bit (empreinte, WORM) et
+  // l'export JSON (VALIDEUR) reste BRUT : un aller-retour export/import
+  // doit pouvoir rejouer les empreintes.
   const fige = api.appeler('getMouvements', {}, referent)
     .find((m) => m.id === mvFige.id);
-  verifier('mouvement FIGÉ : technicien scellé INCHANGÉ (résidu assumé)',
-    fige.technicien === 'Léa Bonnet');
+  verifier('mouvement FIGÉ : la LECTURE du contrat rend le PSEUDONYME (3e porte fermée)',
+    fige.technicien === 'Élève 2026-01', `technicien = ${fige.technicien}`);
+  const figeEnBase = db.get(
+    'SELECT technicien FROM mouvements WHERE id = ?', [mvFige.id]);
+  verifier('mouvement FIGÉ : la DONNÉE scellée reste « Léa Bonnet » au bit près',
+    figeEnBase.technicien === 'Léa Bonnet',
+    `en base = ${figeEnBase.technicien}`);
+  const exportBrut = JSON.parse(api.appeler('exporterJSON', {}, referent));
+  const mvExporte = exportBrut.donnees.mouvements
+    .find((m) => m.id === mvFige.id);
+  verifier('exporterJSON (gaté VALIDEUR) : le transport reste BRUT (empreintes rejouables)',
+    mvExporte.technicien === 'Léa Bonnet',
+    `exporté = ${mvExporte.technicien}`);
   const brouillonHomonyme = api.appeler('getMouvements', {}, referent)
     .find((m) => m.id === mvHomonyme.id);
   verifier('HOMONYME : son brouillon (porteur identifié) n\'est PAS touché',

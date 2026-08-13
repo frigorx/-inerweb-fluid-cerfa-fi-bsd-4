@@ -58,7 +58,7 @@ function depouiller(texte) {
 /**
  * Code site proposé d'après la raison sociale de l'établissement :
  * initiales des mots significatifs (2 à 3 lettres).
- * « Lycée Jacques Raynaud » → « JR ». Repli : deux premières lettres
+ * « Lycée Antoine Vidal » → « AV ». Repli : deux premières lettres
  * du nom dépouillé, sinon « ST ».
  * @param {string} raisonSociale
  * @returns {string}

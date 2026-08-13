@@ -12,7 +12,16 @@
  *   2) la vérification d'un mot de passe (comparaison EN TEMPS CONSTANT) ;
  *   3) la logique de verrouillage : 5 échecs consécutifs → verrou 15 minutes,
  *      compteur PAR COMPTE (jamais par IP), remis à zéro sur connexion
- *      réussie (règle posée pour V9-E5, non négociable).
+ *      réussie (règle posée pour V9-E5, non négociable). Depuis la 4e
+ *      relecture externe (27/07/2026, corrigé le 13/08) : un verrou EXPIRÉ
+ *      rouvre une fenêtre COMPLÈTE de 5 essais — le compteur repart de
+ *      l'échec courant, sinon le premier essai raté après l'attente
+ *      re-verrouillait immédiatement, à perpétuité (tiré) ;
+ *   4) les mêmes dérivations en ASYNCHRONE (A14) : `crypto.scrypt` hors de
+ *      la boucle d'événements, une dérivation À LA FOIS (file bornée) — un
+ *      déluge de tentatives de connexion fait attendre LES CONNEXIONS,
+ *      jamais le serveur entier ni sa mémoire (chaque scrypt N=2^17 pèse
+ *      ~128 Mio : deux en parallèle suffisaient à doubler l'empreinte).
  *
  * Sécurité :
  *   - Sel ALÉATOIRE de 16 octets par compte (jamais réutilisé entre comptes).
@@ -157,6 +166,134 @@ function verifierMotDePasse(motDePasse, hashHex, selHex) {
 }
 
 // ------------------------------------------------------------
+// Dérivations ASYNCHRONES (A14) — le chemin des ROUTES de connexion.
+// `crypto.scrypt` travaille dans le pool de threads de Node : la boucle
+// d'événements reste libre pendant la dérivation. La file ci-dessous
+// sérialise les dérivations (UNE à la fois) et se BORNE : au-delà, refus
+// immédiat avec `.code = 503` — mieux vaut refuser une tentative que figer
+// le serveur entier ou empiler des scrypt de 128 Mio chacun.
+// Les versions synchrones ci-dessus RESTENT : CLI (creer-admin,
+// secours-compte), leurre dérivé au chargement du module, tests ciblés.
+// ------------------------------------------------------------
+
+/** Dérivations simultanées admises (au-delà : file d'attente). */
+const CONCURRENCE_SCRYPT = 1;
+/** Tentatives en attente admises (au-delà : refus 503, jamais un gel). */
+const FILE_SCRYPT_MAX = 64;
+
+let scryptActifs = 0;
+const fileScrypt = [];
+
+/** Joue la prochaine dérivation en attente si un créneau est libre. */
+function jouerScryptSuivant() {
+  if (scryptActifs >= CONCURRENCE_SCRYPT) return;
+  const tache = fileScrypt.shift();
+  if (!tache) return;
+  scryptActifs += 1;
+  crypto.scrypt(tache.phrase, tache.sel, LONGUEUR_CLE, tache.options,
+    (erreur, cle) => {
+      scryptActifs -= 1;
+      if (erreur) tache.rejeter(erreur);
+      else tache.resoudre(cle);
+      jouerScryptSuivant();
+    });
+}
+
+/**
+ * Même dérivation que `deriverHash` (mêmes contrôles, mêmes paramètres),
+ * mais asynchrone et SÉRIALISÉE par la file bornée ci-dessus.
+ * @param {string} motDePasse
+ * @param {Buffer} sel - 16 octets
+ * @param {{herite?: boolean}} [options] - `herite` = ancien profil N=2^15
+ * @returns {Promise<Buffer>} hash de 32 octets
+ */
+function deriverHashAsync(motDePasse, sel, { herite = false } = {}) {
+  if (typeof motDePasse !== 'string' || motDePasse.length === 0) {
+    return Promise.reject(new Error(
+      'Mot de passe absent : impossible de dériver un hash sans phrase.'));
+  }
+  if (!Buffer.isBuffer(sel) || sel.length !== LONGUEUR_SEL) {
+    return Promise.reject(
+      new Error(`Sel invalide (attendu ${LONGUEUR_SEL} octets).`));
+  }
+  if (fileScrypt.length >= FILE_SCRYPT_MAX) {
+    const erreur = new Error(
+      'Trop de tentatives de connexion en attente : réessayez dans un instant.');
+    erreur.code = 503;
+    return Promise.reject(erreur);
+  }
+  const options = herite
+    ? { N: SCRYPT_N_HERITE, r: SCRYPT_R, p: SCRYPT_P, maxmem: SCRYPT_MAXMEM_HERITE }
+    : { N: SCRYPT_N, r: SCRYPT_R, p: SCRYPT_P, maxmem: SCRYPT_MAXMEM };
+  return new Promise((resoudre, rejeter) => {
+    fileScrypt.push({
+      phrase: motDePasse.normalize('NFC'), sel, options, resoudre, rejeter,
+    });
+    jouerScryptSuivant();
+  });
+}
+
+/**
+ * Verdict identique à `verifierMotDePasseDetail` (mêmes contrôles, même
+ * sémantique profil courant puis hérité, mêmes replis silencieux), obtenu
+ * sans bloquer la boucle d'événements. SEULE exception au « ne lève
+ * jamais » : le refus de charge (`.code = 503`) de la file pleine est
+ * PROPAGÉ — le confondre avec « mot de passe faux » enregistrerait un
+ * échec que personne n'a commis.
+ * @param {string} motDePasse
+ * @param {string} hashHex
+ * @param {string} selHex
+ * @returns {Promise<{valide: boolean, rehashageRequis: boolean}>}
+ */
+async function verifierMotDePasseDetailAsync(motDePasse, hashHex, selHex) {
+  if (typeof motDePasse !== 'string' || motDePasse.length === 0) {
+    return { valide: false, rehashageRequis: false };
+  }
+  if (typeof hashHex !== 'string' || typeof selHex !== 'string') {
+    return { valide: false, rehashageRequis: false };
+  }
+  try {
+    if (!/^[0-9a-f]{64}$/i.test(hashHex) || !/^[0-9a-f]{32}$/i.test(selHex)) {
+      return { valide: false, rehashageRequis: false };
+    }
+    const sel = Buffer.from(selHex, 'hex');
+    const hashAttendu = Buffer.from(hashHex, 'hex');
+    if (sel.length !== LONGUEUR_SEL || hashAttendu.length !== LONGUEUR_CLE) {
+      return { valide: false, rehashageRequis: false };
+    }
+    const hashCourant = await deriverHashAsync(motDePasse, sel);
+    if (crypto.timingSafeEqual(hashCourant, hashAttendu)) {
+      return { valide: true, rehashageRequis: false };
+    }
+    const hashHerite = await deriverHashAsync(motDePasse, sel, { herite: true });
+    const valideHerite = crypto.timingSafeEqual(hashHerite, hashAttendu);
+    return { valide: valideHerite, rehashageRequis: valideHerite };
+  } catch (erreur) {
+    if (erreur && erreur.code === 503) throw erreur;
+    return { valide: false, rehashageRequis: false };
+  }
+}
+
+/** Forme booléenne de la vérification asynchrone (leurre de la route). */
+async function verifierMotDePasseAsync(motDePasse, hashHex, selHex) {
+  const verdict = await verifierMotDePasseDetailAsync(
+    motDePasse, hashHex, selHex);
+  return Boolean(verdict && verdict.valide);
+}
+
+/**
+ * Même geste que `hacherMotDePasse` (sel frais + dérivation), sans bloquer
+ * la boucle d'événements — chemin du re-hachage transparent à la connexion.
+ * @param {string} motDePasse
+ * @returns {Promise<{hash: string, sel: string}>}
+ */
+async function hacherMotDePasseAsync(motDePasse) {
+  const sel = crypto.randomBytes(LONGUEUR_SEL);
+  const hash = await deriverHashAsync(motDePasse, sel);
+  return { hash: hash.toString('hex'), sel: sel.toString('hex') };
+}
+
+// ------------------------------------------------------------
 // Verrouillage après échecs — compteur PAR COMPTE (jamais par IP).
 // ------------------------------------------------------------
 
@@ -183,6 +320,13 @@ function estVerrouille(compte, maintenant = new Date()) {
  * monter au-delà du seuil (rejouer le verrou à chaque nouvel essai pendant
  * qu'il est actif) — l'appelant (route de connexion) doit de toute façon
  * refuser AVANT d'appeler ceci si `estVerrouille` est déjà vrai.
+ *
+ * ⚠ Verrou EXPIRÉ = fenêtre NOUVELLE (4e relecture externe, tiré) : si un
+ * verrou avait été posé et que son échéance est passée, l'échec courant
+ * COMPTE POUR UN, il ne s'ajoute pas aux 5 d'avant. Sans cela, le compteur
+ * restait ≥ 5 pour toujours : chaque essai raté re-verrouillait 15 minutes,
+ * et le titulaire légitime — y compris le SEUL ADMIN du poste — n'avait
+ * plus jamais droit qu'à un essai par quart d'heure.
  * @param {string} utilisateurId
  * @param {Date} [maintenant]
  * @returns {{echecs: number, verrouilleJusqua: string|null}} nouvel état
@@ -190,13 +334,16 @@ function estVerrouille(compte, maintenant = new Date()) {
 function enregistrerEchec(utilisateurId, maintenant = new Date()) {
   return db.transaction((bdd) => {
     const compte = bdd.prepare(
-      'SELECT echecs_consecutifs FROM utilisateurs_app WHERE id = ?')
+      `SELECT echecs_consecutifs, verrouille_jusqua
+       FROM utilisateurs_app WHERE id = ?`)
       .get(utilisateurId);
     if (!compte) {
       throw new Error(
         `Compte introuvable (id ${utilisateurId}) : échec non enregistré.`);
     }
-    const echecs = (compte.echecs_consecutifs ?? 0) + 1;
+    const verrouExpire = Boolean(compte.verrouille_jusqua)
+      && !estVerrouille(compte, maintenant);
+    const echecs = verrouExpire ? 1 : (compte.echecs_consecutifs ?? 0) + 1;
     const verrouilleJusqua = echecs >= SEUIL_ECHECS
       ? new Date(maintenant.getTime() + DUREE_VERROU_MS).toISOString()
       : null;
@@ -227,14 +374,18 @@ module.exports = {
   SEUIL_ECHECS,
   DUREE_VERROU_MS,
   hacherMotDePasse,
+  hacherMotDePasseAsync,
   verifierMotDePasse,
   verifierMotDePasseDetail,
+  verifierMotDePasseAsync,
+  verifierMotDePasseDetailAsync,
   estVerrouille,
   enregistrerEchec,
   reinitialiserEchecs,
   // Exposé pour tests ciblés (dérivation déterministe à sel fixé).
   deriverHash,
   deriverHashHerite,
+  deriverHashAsync,
   LONGUEUR_SEL,
   SCRYPT_N,
 };

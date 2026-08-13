@@ -31,8 +31,21 @@ Franck, sur son compte Google (un assistant ne se connecte pas à un compte à s
    Gérer les déploiements → **archiver / désactiver** le déploiement actif. **Sans
    déploiement actif, les clés publiées ne commandent plus aucun accès** : la porte est
    murée, aussi sûrement que par une révocation, et définitivement.
-3. **Optionnel** : passer l'ancien dépôt GitHub de la v7 en privé, ou le supprimer, s'il
-   n'a plus d'utilité (l'antériorité de la v8 vit dans SON dépôt, pas celui-là).
+3. **Ne pas supprimer le dépôt GitHub, et ne pas réécrire son historique.** Il n'existe
+   **qu'un seul dépôt** : `git remote -v` rend `frigorx/-inerweb-fluid-cerfa-fi-bsd-4` —
+   c'est **le même dépôt** que celui de la v8, et c'est de là que les trois clés v7 ont été
+   extraites (§ 1-2 ci-dessus, commit `77b9640^`). Il n'y a donc **pas de « dépôt de la
+   v7 » séparé** dont on pourrait se débarrasser sans conséquence : le supprimer, ou en
+   réécrire l'historique, détruirait l'antériorité git de **la v8 elle-même** — la
+   protection de paternité retenue À LA PLACE du chiffrement du code. C'est ce que dit
+   déjà le § 3, **option C**.
+
+   **Passer le dépôt en privé est autre chose**, et ce point 3 ne le tranche pas :
+   cela ne touche pas à l'historique, cela le soustrait seulement au regard du public — sans
+   rien révoquer et sans rattraper les clones déjà faits. C'est l'**option B du § 3**, qui la
+   juge raisonnable *si la publication du dépôt n'a pas d'autre utilité* ; c'est une
+   **décision de Franck**, à cocher au procès-verbal du § 4 — pas un geste de la présente
+   procédure d'extinction. Ce qui ferme l'exposition, ici, est le seul point 2 ci-dessus.
 
 Une fois ces gestes faits, remplir le procès-verbal du §4 (en cochant « service mis hors
 ligne » plutôt que « clés régénérées ») et me le dire : P0-9 est clos.

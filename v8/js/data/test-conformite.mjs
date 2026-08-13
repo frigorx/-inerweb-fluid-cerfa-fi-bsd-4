@@ -91,8 +91,12 @@ verifier('updateEtablissement : champ modifié, le reste intact',
   etabModifie.prochainAudit === '2027-01-15' &&
   etabModifie.siret === etablissement.siret);
 
+// Lot F (13/08) : « V » (régime 2025) est désormais LÉGITIME pour
+// l'établissement — la grille refusait tout le régime 2025 pendant la
+// transition (4e relecture, tiré). Le rejet se prouve sur une valeur
+// réellement inconnue.
 await verifierRejet('updateEtablissement rejette une catégorie inconnue',
-  store.updateEtablissement({ categoriesAutorisees: ['V'] }), 'Catégorie');
+  store.updateEtablissement({ categoriesAutorisees: ['IX'] }), 'Catégorie');
 
 const auditsInitiaux = await store.getAuditsOrganisme();
 verifier('getAuditsOrganisme : audit QualiFroid du 12/01/2026 présent',

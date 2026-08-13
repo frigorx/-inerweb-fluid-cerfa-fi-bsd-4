@@ -6,6 +6,8 @@
 // ============================================================
 
 import { creerStore } from './data/datastore.js';
+import { estActif as modeExerciceActif } from './data/mode-exercice.js';
+import { poserBandeauExercice } from './views/bandeau-exercice.js';
 import { creerTransportHttp, EVENEMENT_SESSION_REQUISE } from './data/transport-http.js';
 import { creerRouteur } from './core/routeur.js';
 import { ICONES } from './core/icones.js';
@@ -624,8 +626,12 @@ function reprendreDemarrageApresConnexion() {
 async function demarrer() {
   store = await creerStore();
 
-  // Badge de mode dans l'en-tête (« ● DÉMO / FORMATION »)
-  document.getElementById('badge-mode').textContent = store.modeLabel + ' / FORMATION';
+  // Badge de mode dans l'en-tête (« ● DÉMO / FORMATION »). En MODE
+  // EXERCICE (13/08), le bac est un DemoStore mais le badge dit EXERCICE —
+  // et le bandeau dédié (posé ci-dessous) porte le cycle de vie complet.
+  document.getElementById('badge-mode').textContent =
+    (modeExerciceActif() ? 'EXERCICE' : store.modeLabel) + ' / FORMATION';
+  poserBandeauExercice(store);
 
   // Session (V9-E5) : uniquement en Mode Local (store HTTP, back par
   // sessions). Le Mode Démo n'a ni serveur ni cookie — rien à écouter.

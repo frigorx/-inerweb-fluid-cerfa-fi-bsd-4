@@ -169,6 +169,16 @@ export function gabaritFormulaire(machine, fluides, clients,
     + '<div class="champ" data-champ="fluide">'
     + '<label for="mf-fluide">Fluide *</label>'
     + '<select id="mf-fluide" name="fluide">' + optionsFluides + '</select>'
+    // Lot G carte blanche (13/08, 4e relecture, tiré) : une CASCADE
+    // déclarée dans UNE fiche au fluide du circuit haute température
+    // (R-744…) sortait TOUT l'équipement du contrôle d'étanchéité — le
+    // circuit HFC disparaissait avec son obligation. Une fiche = UN
+    // circuit ; la note vient là où est le champ (règle des notes, B1).
+    + '<p class="mf-note">Une fiche = <strong>un seul circuit</strong> '
+    + 'frigorifique. Un équipement à plusieurs circuits (cascade, '
+    + 'bi-étagé) se déclare <strong>circuit par circuit</strong> — une '
+    + 'fiche machine par circuit, chacun avec son fluide et sa charge : '
+    + 'les obligations de contrôle s’apprécient par circuit.</p>'
     + '<span class="champ-erreur" hidden></span>'
     + '</div>'
 

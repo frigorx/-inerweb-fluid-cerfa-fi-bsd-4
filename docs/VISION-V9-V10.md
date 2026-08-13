@@ -6,7 +6,7 @@
 > `docs/AUDIT-2026-07-03.md`, `CHANGELOG.md`.
 > Il intègre 7 contributions d'experts, arbitre leurs désaccords, et ajoute la vision d'ensemble.
 >
-> **Auteur du projet :** Franck Henninot (LP Jacques Raynaud, Marseille).
+> **Auteur du projet :** Franck Henninot (LP Antoine Vidal, Nîmes).
 > **Cap :** Phase E (mode Local) fiabilisée avant l'été 2026 ; V10 dans la foulée.
 
 ---
@@ -729,5 +729,5 @@ jamais frontale.
 
 ---
 
-*inerWeb Fluide — Traçabilité F-Gas & CERFA 15497*04 · LP Jacques Raynaud, Marseille.*
+*inerWeb Fluide — Traçabilité F-Gas & CERFA 15497*04 · LP Antoine Vidal, Nîmes.*
 *Ce document est la boussole V9/V10. Il tranche ; il n'attend pas d'être re-validé point par point.*

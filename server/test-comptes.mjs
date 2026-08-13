@@ -18,7 +18,13 @@
 //      une entrée malformée (hex tronqué, longueur incorrecte) — renvoie
 //      false proprement, jamais une exception.
 //   5. Verrouillage : montée du compteur d'échecs, verrou posé au 5e échec,
-//      compte détecté verrouillé, remise à zéro sur connexion réussie.
+//      compte détecté verrouillé, remise à zéro sur connexion réussie —
+//      et depuis la 4e relecture externe (13/08) : un verrou EXPIRÉ rouvre
+//      une fenêtre COMPLÈTE de 5 essais (l'échec suivant compte pour UN).
+//   8. A14 : dérivations ASYNCHRONES — verdicts identiques au synchrone,
+//      file bornée saine sous demandes simultanées.
+//   9. Porte de secours (secours-compte.js) : déverrouillage et
+//      réinitialisation locale, journalisés.
 //
 // Node ≥ 22 (node:sqlite, node:crypto), sans DOM.
 // ============================================================
@@ -210,6 +216,26 @@ function creerCompte(id, login, motDePasse, role = 'REFERENT') {
   verifier('un verrou déjà expiré n’est plus considéré actif',
     !comptes.estVerrouille(ligne()));
 
+  // Fenêtre NOUVELLE (4e relecture externe, corrigé 13/08) : sur un verrou
+  // EXPIRÉ, l'échec suivant COMPTE POUR UN. Avant le correctif, le compteur
+  // passait à 6 (≥ 5) et re-verrouillait aussitôt : le titulaire — y compris
+  // le seul ADMIN du poste — n'avait plus droit qu'à UN essai par quart
+  // d'heure, à perpétuité. Retirer la fenêtre d'enregistrerEchec rend les
+  // deux assertions suivantes rouges (contre-épreuve tirée).
+  comptes.enregistrerEchec(compte.id);
+  verifier('échec sur verrou expiré : le compteur repart à 1 (fenêtre nouvelle)',
+    ligne().echecs_consecutifs === 1,
+    `compteur = ${ligne().echecs_consecutifs}`);
+  verifier('échec sur verrou expiré : aucun re-verrou immédiat',
+    ligne().verrouille_jusqua === null && !comptes.estVerrouille(ligne()));
+
+  // La nouvelle fenêtre reste une VRAIE fenêtre : 4 échecs de plus (5 au
+  // total) reposent le verrou — l'assouplissement ne désarme pas la borne.
+  for (let i = 0; i < 4; i += 1) comptes.enregistrerEchec(compte.id);
+  verifier('5 échecs dans la nouvelle fenêtre : le verrou se repose',
+    ligne().echecs_consecutifs === 5 && comptes.estVerrouille(ligne()));
+  comptes.reinitialiserEchecs(compte.id);
+
   verifierLeve('enregistrerEchec refuse un compte introuvable',
     () => comptes.enregistrerEchec('UTI-INEXISTANT'), 'introuvable');
 }
@@ -260,6 +286,103 @@ function creerCompte(id, login, motDePasse, role = 'REFERENT') {
 
   verifier('verifierMotDePasse (booléen, compatibilité) accepte aussi le hash hérité',
     comptes.verifierMotDePasse(phrase, hashHerite, sel) === true);
+}
+
+// ============================================================
+// 8. A14 : dérivations ASYNCHRONES — mêmes verdicts que le synchrone,
+//    file bornée qui sérialise sans figer la boucle d'événements.
+// ============================================================
+{
+  const phrase = 'PariteAsync-2026!';
+  const { hash, sel } = comptes.hacherMotDePasse(phrase);
+
+  const vBon = await comptes.verifierMotDePasseDetailAsync(phrase, hash, sel);
+  verifier('async : bon mot de passe accepté, sans re-hachage',
+    vBon.valide === true && vBon.rehashageRequis === false);
+
+  const vFaux = await comptes.verifierMotDePasseDetailAsync(
+    'Mauvaise-999', hash, sel);
+  verifier('async : mauvais mot de passe refusé',
+    vFaux.valide === false && vFaux.rehashageRequis === false);
+
+  const hashHerite = comptes.deriverHashHerite(
+    phrase, Buffer.from(sel, 'hex')).toString('hex');
+  const vHerite = await comptes.verifierMotDePasseDetailAsync(
+    phrase, hashHerite, sel);
+  verifier('async : profil hérité reconnu ET re-hachage signalé (parité stricte)',
+    vHerite.valide === true && vHerite.rehashageRequis === true);
+
+  const vMalforme = await comptes.verifierMotDePasseDetailAsync(
+    phrase, 'zzzz-pas-du-hex', sel);
+  verifier('async : entrée malformée → false, jamais un rejet',
+    vMalforme.valide === false && vMalforme.rehashageRequis === false);
+
+  const asynchrone = await comptes.hacherMotDePasseAsync(phrase);
+  verifier('async : hacherMotDePasseAsync produit un hash vérifiable en synchrone',
+    comptes.verifierMotDePasse(phrase, asynchrone.hash, asynchrone.sel));
+
+  // La file sérialise (une dérivation à la fois) : quatre vérifications
+  // lancées ENSEMBLE aboutissent toutes, chacune à SON verdict — aucun
+  // mélange de résultats entre tâches, aucun gel.
+  const verdicts = await Promise.all([
+    comptes.verifierMotDePasseAsync(phrase, hash, sel),
+    comptes.verifierMotDePasseAsync('Autre-intruse-1', hash, sel),
+    comptes.verifierMotDePasseAsync(phrase, hash, sel),
+    comptes.verifierMotDePasseAsync('Autre-intruse-2', hash, sel),
+  ]);
+  verifier('async : 4 vérifications simultanées → verdicts tous corrects (file saine)',
+    verdicts[0] === true && verdicts[1] === false
+    && verdicts[2] === true && verdicts[3] === false);
+}
+
+// ============================================================
+// 9. Porte de secours (CLI secours-compte.js) : déverrouillage et
+//    réinitialisation LOCALE — le geste prévu qui remplace l'édition
+//    manuelle du fichier SQLite (4e relecture externe).
+// ============================================================
+{
+  const secours = require('./secours-compte.js');
+  const compte = creerCompte(
+    'UTI-T5', 'prof.secours', 'MotDePasseProf-1', 'ENSEIGNANT');
+  const ligne = () => db.get(
+    'SELECT echecs_consecutifs, verrouille_jusqua FROM utilisateurs_app WHERE id = ?',
+    [compte.id]);
+
+  for (let i = 0; i < 5; i += 1) comptes.enregistrerEchec(compte.id);
+  verifier('outillage : le compte de test est verrouillé',
+    comptes.estVerrouille(ligne()));
+
+  const deverrouille = secours.deverrouillerCompte('prof.secours');
+  verifier('deverrouillerCompte : compteur remis à zéro, verrou levé',
+    deverrouille.login === 'prof.secours'
+    && ligne().echecs_consecutifs === 0
+    && ligne().verrouille_jusqua === null);
+  const traceDeverrouillage = db.get(
+    `SELECT COUNT(*) AS n FROM journal_audit
+     WHERE action = 'DEVERROUILLAGE_COMPTE'`);
+  verifier('deverrouillerCompte : geste JOURNALISÉ (journal chaîné)',
+    traceDeverrouillage.n === 1, `entrées : ${traceDeverrouillage.n}`);
+
+  verifierLeve('deverrouillerCompte refuse un login inconnu',
+    () => secours.deverrouillerCompte('personne.ici'), 'Aucun compte');
+  verifierLeve('reinitialiserMotDePasseParLogin refuse un mot de passe trop court',
+    () => secours.reinitialiserMotDePasseParLogin('prof.secours', 'court'),
+    'trop court');
+
+  secours.reinitialiserMotDePasseParLogin(
+    'prof.secours', 'NouveauMotDePasse-1');
+  const apres = db.get(
+    'SELECT hash_mot_de_passe AS hash, sel FROM utilisateurs_app WHERE id = ?',
+    [compte.id]);
+  verifier('réinitialisation : l’ANCIEN mot de passe ne vérifie plus',
+    !comptes.verifierMotDePasse('MotDePasseProf-1', apres.hash, apres.sel));
+  verifier('réinitialisation : le NOUVEAU mot de passe vérifie',
+    comptes.verifierMotDePasse('NouveauMotDePasse-1', apres.hash, apres.sel));
+  const traceReinit = db.get(
+    `SELECT COUNT(*) AS n FROM journal_audit
+     WHERE action = 'REINIT_MOT_DE_PASSE'`);
+  verifier('réinitialisation : geste JOURNALISÉ (journal chaîné)',
+    traceReinit.n === 1, `entrées : ${traceReinit.n}`);
 }
 
 // ============================================================

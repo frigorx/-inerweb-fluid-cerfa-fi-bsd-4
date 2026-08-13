@@ -221,11 +221,18 @@ function csvMachines(machines, clients) {
  * Brique 3 (rôles réels) : trois colonnes finales résolvent
  * executeParId/superviseurId/responsableRegistreId en « Prénom Nom »
  * (chaîne vide si le champ n'est pas renseigné), jamais un id brut.
+ *
+ * Lot 1 / C2 (27/07) : EXPORTÉE pour être éprouvée sur les DEUX formes de
+ * contre-écriture — l'ANCIENNE (executeParId resté null, colonne vide, le
+ * passé ne se réécrit pas) et la NOUVELLE (identité posée). Le monde de
+ * démo ne contient aucune contre-écriture ancienne et le store n'en produit
+ * plus : l'appel direct est le seul moyen de tirer le cas sans forger une
+ * base. Même motif que `champCsv`, déjà exportée pour ses tests.
  * @param {Array<object>} mouvements
  * @param {number} annee
  * @param {Array<object>} personnel - retour de store.getPersonnel()
  */
-function csvMouvements(mouvements, annee, personnel) {
+export function csvMouvements(mouvements, annee, personnel) {
   const nomDe = (id) => {
     if (!id) return '';
     const p = personnel.find((x) => x.id === id);

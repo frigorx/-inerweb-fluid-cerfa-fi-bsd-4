@@ -53,7 +53,8 @@ function gabaritCoffre(etat, enDemo) {
     + '<p>Minimisation RÉVERSIBLE : l\'identité d\'un élève parti est '
     + 'chiffrée dans le coffre, sa fiche n\'affiche plus qu\'un pseudonyme '
     + '(« Élève 2026-01 »), et votre code la rouvre en cas de besoin légal — '
-    + 'chaque ouverture est journalisée de façon inaltérable.</p>'
+    + 'chaque ouverture est journalisée de façon inaltérable au sein de '
+    + 'l\'application.</p>'
     + bandeauDemo + bandeauCandidats
     + '<p><strong>' + etat.nombreAuCoffre + '</strong> identité(s) au coffre'
     + (etat.coffreCree ? '' : ' — le coffre sera créé au premier geste (une '
@@ -423,7 +424,7 @@ export async function render(conteneur, ctx) {
             'Fiches d’intervention (CERFA), mouvements de fluide, contrôles '
             + 'd’étanchéité, avec l’identité du technicien et du validateur.'],
           ['Comptes et journal',
-            'Identifiants de connexion (mot de passe chiffré, jamais en clair), '
+            'Identifiants de connexion (mot de passe haché, jamais en clair), '
             + 'journal d’audit (qui, quoi, quand).']
         ])
       + '<p class="encart-aide rgpd-note">Aucune donnée sensible au sens de l’article 9 du '
