@@ -1,6 +1,14 @@
 # PLAN — Visite guidée intégrée à la démo en ligne
 
-> **Statut : PROPOSITION — en attente de validation Franck.** Rien n'est codé.
+> **Statut : EXÉCUTÉ le 13/08/2026 au soir, sur carte blanche complémentaire de
+> Franck** (« carte blanche pour terminer — demain matin je teste »). Décisions
+> prises en carte blanche : **option A** (pastilles-guides), parcours porté de 6
+> à **7 étapes** (balance et dossier d'audit séparés — deux écrans, deux
+> étapes), invite discrète à la première visite ET relance par la barre
+> latérale. Livré : `v8/js/views/tutoriel.js` + `test-tutoriel.mjs`
+> (40 vérifications, contre-épreuve tirée), banc navigateur complet. Voir
+> CHANGELOG (entrée « Visite guidée ») pour les preuves.
+>
 > Demande d'origine (13/08/2026) : un parcours guidé DANS l'application de
 > démonstration (pas une page à part — `guide.html` existe et reste), pour qu'un
 > visiteur (collègue, artisan, enseignant) découvre les gestes clés sans lecture

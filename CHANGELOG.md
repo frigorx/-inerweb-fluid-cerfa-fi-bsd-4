@@ -2,6 +2,30 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧭 VISITE GUIDÉE DE LA DÉMONSTRATION (13/08 soir, carte blanche complémentaire)
+
+**Le chantier 2 du prompt de reprise, exécuté sur carte blanche** (« tout doit être
+fini, je teste demain ») : un parcours guidé DANS la démo (`v8/js/views/tutoriel.js`,
+patron de surcouche bandeau-exercice, vanilla, aucune dépendance) — **7 étapes**, un
+geste réel par étape (tableau de bord → machine → bouteille → mouvement → document →
+balance → dossier d'audit). Pastilles-guides sur l'écran réel : liseré + étiquette
+« Ici » (jamais la couleur seule), panneau d'étape TOUJOURS au coin OPPOSÉ de la
+cible (fonction pure `coinOppose`, testée), jamais bloquant (Échap, Quitter,
+Précédent/Suivant), reprise à l'étape quittée, invite discrète à la première visite,
+bouton « Visite guidée » au pied de la barre latérale. DÉMO SEULEMENT (double garde :
+app.js ET auto-défense du module) ; `prefers-reduced-motion` : liseré statique,
+jamais retiré ; clé localStorage dédiée, hors monde démo timbré. **Trouvaille du banc
+navigateur** : la surbrillance perdait la course contre le re-rendu asynchrone des
+vues — la recherche est devenue une VEILLE (40 × 250 ms) qui repose le liseré.
+**Preuves** : `test-tutoriel.mjs` **40 vérifications** — dont : chaque CIBLE existe
+dans le RENDU RÉEL de sa vue (contre-épreuve tirée : cible faussée → 3 rouges qui
+désignent le défaut), auto-défense Mode Local, coin opposé aux 4 quadrants,
+animation SOUS la garde no-preference, reprise. Banc navigateur COMPLET (port
+jetable 4173, `/data` refusé 403) : parcours 1→7 mesuré pas à pas, zéro
+chevauchement panneau/cible en pixels réels, Échap, console propre. **TOUT VERT —
+138 exécutions** (137 + la suite), 207 attaques ; les six pièces qui annoncent le
+compte sont passées à 138 (`test-nombre-executions` re-VERT).
+
 ### 🧹 VERSION DE SEMIS DU MONDE DÉMO (13/08 soir, complément de carte blanche)
 
 Le monde démo persisté au localStorage est désormais **timbré** (`VERSION_SEMIS`,

@@ -8,6 +8,7 @@
 import { creerStore } from './data/datastore.js';
 import { estActif as modeExerciceActif } from './data/mode-exercice.js';
 import { poserBandeauExercice } from './views/bandeau-exercice.js';
+import { poserVisiteGuidee } from './views/tutoriel.js';
 import { creerTransportHttp, EVENEMENT_SESSION_REQUISE } from './data/transport-http.js';
 import { creerRouteur } from './core/routeur.js';
 import { ICONES } from './core/icones.js';
@@ -621,6 +622,10 @@ function reprendreDemarrageApresConnexion() {
 
   routeur = creerRouteur({ surChangement: afficherVue });
   afficherVue(routeur.idCourant(), routeur.paramCourant());
+
+  // Visite guidée de la DÉMONSTRATION (13/08) : jamais en Mode Local —
+  // le module refuse aussi de lui-même (double garde).
+  if (!modeLocalActif()) poserVisiteGuidee(store, naviguer);
 }
 
 async function demarrer() {

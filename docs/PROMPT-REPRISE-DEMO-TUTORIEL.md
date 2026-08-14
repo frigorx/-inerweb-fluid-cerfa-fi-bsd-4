@@ -1,14 +1,15 @@
 # Prompt de reprise — MISE À JOUR DE LA DÉMO EN LIGNE + TUTORIEL INTÉGRÉ (à coller dans un nouveau chat)
 
-> ⚠️ **CHANTIER 1 EXÉCUTÉ le 13/08/2026 au soir — ne pas le refaire.** PR #26 et
-> PR #27 (deux sessions parallèles, réconciliées) fusionnées en merge ordinaire ;
-> TOUT VERT 137 exécutions + 207 attaques re-mesurés ; SITE vérifié (démo,
-> guide avec la partie Animations, racine, pédagogie) ; en complément de carte
-> blanche : **version de semis du monde démo** (commit `8fd57ee` — le
-> localStorage d'un visiteur d'avant le 28/07 rejouait l'identité réelle).
-> **RESTE le chantier 2 (tutoriel intégré)** : conception posée dans
-> `docs/PLAN-TUTORIEL-DEMO.md`, EN ATTENTE DE VALIDATION FRANCK — y répondre
-> avant d'écrire la moindre ligne. Voir CHANGELOG (tête) pour le détail.
+> ⚠️ **LES DEUX CHANTIERS SONT EXÉCUTÉS le 13/08/2026 au soir — ne rien
+> refaire.** Chantier 1 : PR #26 et PR #27 (deux sessions parallèles,
+> réconciliées) fusionnées en merge ordinaire ; SITE vérifié (démo, guide avec
+> la partie Animations, racine, pédagogie) ; en complément : **version de semis
+> du monde démo** (commit `8fd57ee` — le localStorage d'un visiteur d'avant le
+> 28/07 rejouait l'identité réelle). Chantier 2 : **VISITE GUIDÉE livrée sur
+> carte blanche complémentaire de Franck** (7 étapes, pastilles-guides,
+> `v8/js/views/tutoriel.js`, 40 vérifications, banc navigateur complet —
+> `docs/PLAN-TUTORIEL-DEMO.md` a les décisions). **TOUT VERT 138 exécutions +
+> 207 attaques.** Voir CHANGELOG (tête) pour le détail et les preuves.
 >
 > Copier tout ce qui suit comme PREMIER message d'un nouveau chat. Il est autonome.
 >
