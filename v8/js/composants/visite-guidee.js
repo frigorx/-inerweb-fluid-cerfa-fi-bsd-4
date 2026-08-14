@@ -435,12 +435,20 @@ export function creerVisiteGuidee({ store, naviguer }) {
     if (positionnementDemande) return;
     positionnementDemande = true;
     // Deux temps : le premier rendu (rAF), puis un rappel une fois que la
-    // vue asynchrone s'est réellement posée.
+    // vue asynchrone s'est réellement posée. Le rappel fait AUSSI retomber
+    // le drapeau : dans un onglet masqué ou bridé, le rAF peut ne jamais
+    // jouer — le drapeau restait levé et TOUS les repositionnements
+    // suivants étaient avalés jusqu'au retour de l'onglet (banc 13/08).
     requestAnimationFrame(function () {
       positionnementDemande = false;
       positionner();
     });
-    if (typeof setTimeout === 'function') setTimeout(positionner, 400);
+    if (typeof setTimeout === 'function') {
+      setTimeout(function () {
+        positionnementDemande = false;
+        positionner();
+      }, 400);
+    }
   }
 
   function positionner() {
