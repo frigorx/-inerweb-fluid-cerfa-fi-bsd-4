@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Validateur DE SESSION (lot B — condition n° 12 de la liste
 // docs/CONDITIONS-BLOCANTES-OFFICIEL.md) : l'API n'accepte JAMAIS qu'un

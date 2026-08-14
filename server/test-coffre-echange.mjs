@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Coffre des identités — brique E2c (lot E2, RGPD) : l'ALLER-RETOUR
 // export/import du coffre, attaques TIRÉES sur bases JETABLES :

@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // VISITE GUIDÉE DE LA DÉMONSTRATION (13/08/2026)
 // docs/PLAN-VISITE-GUIDEE.md — décisions du propriétaire : pastilles +

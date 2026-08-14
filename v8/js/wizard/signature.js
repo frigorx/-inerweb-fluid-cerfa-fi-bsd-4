@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // Zone de signature manuscrite (canvas) pour le wizard « Nouveau mouvement ».
 // Aucune dépendance au store : usage autonome, brancher via creerSignature(conteneur).
 //

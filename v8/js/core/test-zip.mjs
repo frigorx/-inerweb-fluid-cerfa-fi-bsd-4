@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Mini-test du module ZIP (exécution : node test-zip.mjs)
 // Vérifie la structure binaire du format ZIP « stored » produit par zip.js :

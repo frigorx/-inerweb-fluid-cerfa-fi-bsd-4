@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // LOT 1 BRANCHE A — LES ÉCRANS N'OFFRENT PLUS DE CERFA SUR UNE
 // CONTRE-ÉCRITURE (décision du propriétaire, 27/07/2026).

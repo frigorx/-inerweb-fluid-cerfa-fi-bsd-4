@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide v8 — création de fichiers ZIP (Phase D, dossier d'audit)
 // ZIP « stored » (sans compression) écrit en JS pur, zéro dépendance externe.

@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — PREUVE du mode LAN HTTPS obligatoire (P1-5, RC 8.1 reprise)
 // Exécution : node server/test-lan-https.mjs

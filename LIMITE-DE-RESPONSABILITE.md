@@ -47,7 +47,7 @@ appelle une décision.
 
 Vérification par soi-même : `node outils/lancer-tests.mjs --tout` (filet complet) et
 `node server/test-securite-negative.mjs` (les refus, réellement exécutés contre un serveur,
-sur un port et une base jetables). Le filet donne « TOUT VERT — 139 exécutions » ; sa durée
+sur un port et une base jetables). Le filet donne « TOUT VERT — 140 exécutions » ; sa durée
 est **de l'ordre de 100 secondes** et varie d'une exécution à l'autre (96,8 s, 97,9 s et
 98,8 s à trois mesures du 26/07/2026 sur la même version) : elle ne se publie pas au
 centième, c'est un ordre de grandeur.
@@ -236,9 +236,10 @@ L'auteur est **enseignant** en froid et climatisation au lycée professionnel Ja
 (Marseille). Il a écrit ce logiciel pour son atelier et **l'exploite lui-même**. Il n'est ni
 éditeur de logiciel, ni bureau d'études, ni juriste.
 
-Le logiciel est fourni **en l'état**, sous licence **PolyForm Noncommercial 1.0.0** (voir
-`LICENSE`) : libre et gratuit pour l'enseignement, les administrations et les associations ;
-licence distincte pour tout usage commercial. **Ce n'est pas un produit commercial : ni
+Le logiciel est fourni **en l'état**, sous licence **« code visible »** (voir
+`LICENSE`) : la lecture du code est libre ; l'usage passe par une licence nominative,
+gratuite pour l'enseignement, les administrations et les associations, sur accord écrit
+pour tout usage commercial. **Ce n'est pas un produit commercial : ni
 garantie, ni support contractuel, ni engagement de correction dans un délai donné.**
 
 ## 6. Prudence

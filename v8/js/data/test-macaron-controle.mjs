@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // Test UNITAIRE du macaron de contrôle (module pur). Aucun store, aucune
 // horloge : la date de référence est passée. Tourne une seule fois.
 

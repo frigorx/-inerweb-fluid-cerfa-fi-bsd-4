@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 //
 // FABRIQUER LE LOT AUDIO DE LA VISITE GUIDÉE — outil d'emballage, jamais
 // du produit (patron `build/voix/generer-audios-piper.py` de Pilote

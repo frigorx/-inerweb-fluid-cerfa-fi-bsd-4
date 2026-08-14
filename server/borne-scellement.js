@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // BORNE DE SCELLEMENT — « ce poste a déjà scellé des écritures »
 // (lot L2, posée le 25/07, DÉPLACÉE hors de la base après revue).

@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Shim DOM minimal partagé par les tests (V9.1). Aucune dépendance
 // nouvelle : mini-parseur HTML + querySelector/querySelectorAll

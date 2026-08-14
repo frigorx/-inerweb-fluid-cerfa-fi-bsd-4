@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — étiquette QR d'une bouteille (V9.2, vague 2)
 // Modale d'aperçu imprimable : étiquette individuelle 50×70 mm (code

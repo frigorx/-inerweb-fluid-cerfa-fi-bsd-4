@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Déclaration annuelle réglementaire — 11 rubriques par fluide.
 // MIROIR LITTÉRAL (CommonJS) de v8/js/data/declaration-annuelle.js :

@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // Déclaration annuelle 11 rubriques (P0-8, DA-4) : sémantique + parité STRICTE
 // v8/js/data/declaration-annuelle.js (ESM) ↔ server/declaration-annuelle.js
 // (miroir littéral CommonJS). Comparaison par JSON.stringify. Non doublé.

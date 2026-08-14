@@ -1,6 +1,7 @@
 # Bibliothèques tierces embarquées dans inerWeb Fluide
 
-inerWeb Fluide est distribué sous **PolyForm Noncommercial License 1.0.0** (voir `LICENSE`).
+inerWeb Fluide est distribué sous **licence « code visible »** (voir `LICENSE`) : le code se
+lit librement, l'usage du logiciel passe par une licence nominative.
 Cette licence ne couvre **pas** les bibliothèques ci-dessous : chacune reste sous **sa propre
 licence**, et ces licences vous sont accordées directement par leurs auteurs.
 
@@ -30,7 +31,7 @@ Le dépôt embarque **QUATRE fichiers tiers** (2 362 164 octets, soit 2,25 Mio),
 | `v8/js/lib/pdf.worker.min.mjs` | PDF.js (Mozilla) | **4.10.38** (build `f9bea397f`) | **Apache 2.0** | 1 417 586 o (1 384 Kio) |
 | `v8/js/lib/pdf-lib.min.js` | pdf-lib (Hopding) | **aucune** — le fichier ne porte pas de numéro de version | **MIT** (en amont) ; contient `tslib` sous **Apache 2.0** | 525 115 o (513 Kio) |
 | `v8/js/lib/qrcode-vendor.js` | qrcodejs (davidshimjs) | **aucune** | **MIT** (en amont) | 21 226 o (21 Kio) |
-| `v8/js/lib/qrcode.js` | **inerWeb Fluide — code MAISON** | sans objet | PolyForm Noncommercial (comme le reste du dépôt) | 1 947 o (38 lignes) |
+| `v8/js/lib/qrcode.js` | **inerWeb Fluide — code MAISON** | sans objet | Tous droits réservés (comme le reste du dépôt) | 1 947 o (38 lignes) |
 
 **Ce qui a changé le 26/07/2026** : la version précédente de ce document rangeait
 `v8/js/lib/qrcode.js` sous « qrcodejs, davidshimjs, MIT ». **C'était faux.** Ce fichier fait

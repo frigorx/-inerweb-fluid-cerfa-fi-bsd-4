@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // PREUVE du correctif verification.js (brique ②) : la re-vérification
 // d'une base/sauvegarde contenant un mouvement FUITE avec LOCALISATION

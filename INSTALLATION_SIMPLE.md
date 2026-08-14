@@ -11,15 +11,19 @@ aucune donnée ne quitte le poste.
 
 | Vous avez… | Suivez… |
 |---|---|
-| Le **paquet portable** (dossier « clé en main » fourni par un collègue ou téléchargé) | La voie A : **rien à installer**, Node.js est déjà dedans |
-| Le **dossier du projet** téléchargé depuis GitHub (« Code » → « Download ZIP ») | La voie B : installer d'abord Node.js (5 minutes, une seule fois) |
+| Le **paquet portable** reçu **à votre nom** (sur demande à inerweb.fh@gmail.com) | La voie A : **rien à installer**, Node.js est déjà dedans |
+| Le **dossier du projet** téléchargé depuis GitHub (« Code » → « Download ZIP ») | La voie B : réservée à la lecture du code et au développement |
 
 > 💡 Dans le doute, regardez dans votre dossier : s'il contient un sous-dossier `node\`
 > et un fichier `LISEZ-MOI.txt`, c'est le paquet portable (voie A).
 
-### Voie A — le paquet portable (recommandée)
+### Voie A — le paquet portable (la voie normale)
 
 Il n'y a **aucun prérequis** : le « moteur » Node.js est déjà inclus dans le dossier.
+Le paquet contient aussi votre **licence nominative** (`licence-inerweb.json`), que le
+logiciel vérifie au démarrage, entièrement sur le poste : ne supprimez pas ce fichier.
+La licence est personnelle : un collègue intéressé demande **son** paquet (gratuit) à
+inerweb.fh@gmail.com plutôt que de copier le vôtre.
 Passez directement au point 2.
 
 ### Voie B — le dossier GitHub : installer Node.js (une seule fois par poste)
@@ -111,7 +115,8 @@ Quand une nouvelle version paraît :
 1. **Faites d'abord une sauvegarde** (bouton « Sauvegarde » dans l'application —
    voir [`SAUVEGARDE.md`](SAUVEGARDE.md)).
 2. Fermez l'application (fermez la fenêtre noire du serveur).
-3. Téléchargez la nouvelle version (ZIP GitHub ou clé USB).
+3. Demandez le paquet à jour (même adresse : inerweb.fh@gmail.com) — il arrive
+   avec votre licence, par courriel ou clé USB.
 4. **Remplacez uniquement les fichiers du programme** dans votre dossier
    (`index.html`, `css/`, `js/`, `server/`, `lancer-inerweb.bat`, etc.).
 5. **Ne touchez surtout pas** aux dossiers `data/`, `documents/` et `backups/` :
@@ -134,6 +139,13 @@ redémarrez le poste.
 - **Dossier GitHub (voie B)** : Node.js n'est pas installé (ou pas dans une version
   suffisante). Reprenez le point 1 : installez la version LTS depuis <https://nodejs.org>
   (version 22 minimum), puis relancez.
+
+### « Ce paquet exige une licence nominative… » au démarrage
+Le fichier `licence-inerweb.json` manque, a été modifié, ou vient d'un autre paquet.
+Recopiez votre paquet **en entier** depuis l'archive reçue ; si le message persiste,
+écrivez à inerweb.fh@gmail.com (remplacement gratuit). Si la licence est simplement
+**expirée**, l'application démarre quand même : vos données restent consultables et
+exportables, seules les nouvelles saisies attendent le renouvellement (gratuit).
 
 ### L'antivirus bloque le lancement
 Certains antivirus se méfient des fichiers `.bat`. Si un message s'affiche, choisissez

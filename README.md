@@ -64,20 +64,24 @@ le logiciel ne peut pas être pris pour un registre à valeur probante par accid
 
 ## Licence et auteur
 
-**Gratuit pour l'enseignement, payant pour le commerce.**
+**Code visible : lire est libre ; utiliser demande une licence nominative — gratuite pour
+l'enseignement.**
 
-- **Lycées, CFA, universités, administrations, associations** : usage, copie, modification et
-  diffusion **libres et gratuits**. La licence le dit explicitement : l'usage par une institution
-  éducative est un usage permis, quelle que soit sa source de financement.
-- **Usage commercial** (société de froid et climatisation, bureau d'études, organisme de formation
-  privé à but lucratif, éditeur de logiciel…) : une licence distincte est nécessaire —
-  écrire à **inerweb.fh@gmail.com**.
+- **Lire, étudier, auditer** le code de ce dépôt : libre pour tous.
+- **Utiliser le logiciel** : licence nominative délivrée par l'auteur — **gratuite** pour
+  l'évaluation, l'enseignement (lycées, CFA, universités), les administrations et les
+  associations ; sur **accord écrit** pour tout usage commercial (société de froid et
+  climatisation, bureau d'études, organisme de formation privé à but lucratif, éditeur de
+  logiciel…). Demande : **inerweb.fh@gmail.com**.
+- **Redistribuer** (copie, publication, hébergement, paquet, inclusion dans un autre produit) :
+  interdit sans accord écrit.
 
-Licence : [PolyForm Noncommercial 1.0.0](LICENSE). Les bibliothèques embarquées (PDF.js, pdf-lib,
+Licence : [LICENSE](LICENSE). Les bibliothèques embarquées (PDF.js, pdf-lib,
 qrcodejs) restent sous **leur propre licence** : voir [LICENCES-TIERCES.md](LICENCES-TIERCES.md).
 
-> Les versions publiées avant le 14/07/2026 l'ont été sous licence MIT. Cette licence-là reste
-> valable pour ces versions : le changement vaut pour la suite.
+> Historique des régimes : MIT avant le 14/07/2026 ; PolyForm Noncommercial 1.0.0 du 14/07/2026
+> à la v1.0.1 (15/07/2026) ; « code visible » depuis le 14/08/2026. Chaque copie reçue garde les
+> droits de la licence sous laquelle elle a été publiée : un changement vaut pour la suite.
 
 **Franck Henninot** — Lycée professionnel Antoine Vidal, Nîmes.
 Contact : inerweb.fh@gmail.com — <https://inerweb.ovh>

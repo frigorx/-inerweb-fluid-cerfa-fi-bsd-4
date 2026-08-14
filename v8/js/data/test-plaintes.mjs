@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // REGISTRE DES PLAINTES (report v7) — CRUD + gardes, DOUBLÉ demo/local.
 // Prouve à l'identique sur les deux stores : création (numéro auto, état

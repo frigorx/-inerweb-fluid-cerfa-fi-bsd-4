@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 'use strict';
 
 /**
@@ -45,6 +45,7 @@ const routesSauvegarde = require('./routes-sauvegarde.js');
 const routesComptes = require('./routes-comptes.js');
 const routesExercice = require('./routes-exercice.js');
 const sessions = require('./sessions.js');
+const licence = require('./licence.js');
 
 // ----- Configuration -----
 const PORT = Number(process.env.PORT) || 2011; // port par défaut du Mode Local
@@ -100,6 +101,35 @@ if (LAN_ACTIF) {
 
 // Racine des fichiers statiques = racine du dépôt (dossier parent de server/)
 const RACINE = path.resolve(__dirname, '..');
+
+// ------------------------------------------------------------
+// Licence d'évaluation nominative (plan docs/PLAN-LICENCE-NOMINATIVE.md).
+// La décision est PURE et testée dans server/licence.js (test-licence) ;
+// ici on ne fait que l'appliquer, AVANT toute ouverture de la base :
+//   non requise (dépôt de développement) → rien ne change ;
+//   valide → démarre, identité affichée ;
+//   absente ou invalide → refus, message + contact ;
+//   expirée → LECTURE SEULE (mutations du contrat fermées plus bas,
+//   au même endroit que la garde de session — jamais de registre en otage).
+// ------------------------------------------------------------
+const ETAT_LICENCE = licence.evaluerDemarrageLicence({
+  racine: RACINE, env: process.env,
+});
+if (!ETAT_LICENCE.demarrer) {
+  console.error('');
+  console.error('  [ERREUR] ' + ETAT_LICENCE.message);
+  console.error('');
+  process.exit(1);
+}
+if (ETAT_LICENCE.motif === licence.MOTIF_VALIDE) {
+  console.log(
+    `  [licence] Licence n° ${ETAT_LICENCE.licence.numero} — délivrée à `
+    + `${ETAT_LICENCE.licence.titulaire} — expire le ${ETAT_LICENCE.licence.expireLe}.`);
+} else if (ETAT_LICENCE.lectureSeule) {
+  console.warn('');
+  console.warn('  [licence] ' + ETAT_LICENCE.message);
+  console.warn('');
+}
 
 // ------------------------------------------------------------
 // P2-4 — DISTRIBUTION ALLOWLISTÉE (23/07). La règle était une liste
@@ -388,9 +418,19 @@ function traiterApi(requete, reponse, chemin) {
     return;
   }
 
-  // Vérification de vie du serveur : utilisée par le front pour détecter le Mode Local
+  // Vérification de vie du serveur : utilisée par le front pour détecter le Mode Local.
+  // Sur un paquet sous licence, l'écho porte le numéro et l'échéance (jamais
+  // le titulaire : son identité s'affiche en console, pas sur le réseau).
   if (chemin === '/api/ping') {
-    repondreJson(reponse, 200, { ok: true, version: VERSION, mode: 'local' });
+    const corps = { ok: true, version: VERSION, mode: 'local' };
+    if (ETAT_LICENCE.requise && ETAT_LICENCE.licence) {
+      corps.licence = {
+        numero: ETAT_LICENCE.licence.numero,
+        expireLe: ETAT_LICENCE.licence.expireLe,
+        lectureSeule: ETAT_LICENCE.lectureSeule,
+      };
+    }
+    repondreJson(reponse, 200, corps);
     return;
   }
 
@@ -509,6 +549,19 @@ function traiterApi(requete, reponse, chemin) {
       repondreJson(reponse, 403, {
         ok: false,
         erreur: 'Session requise (connexion nécessaire).',
+        code: 403,
+      });
+      return;
+    }
+
+    // Licence expirée = LECTURE SEULE : toute méthode de mutation du contrat
+    // répond 403 avec le message canonique. Consultations, exports et
+    // sauvegardes (routes dédiées, aiguillées plus haut) restent ouverts —
+    // un registre ne se prend jamais en otage.
+    if (estMutation && ETAT_LICENCE.lectureSeule) {
+      repondreJson(reponse, 403, {
+        ok: false,
+        erreur: licence.messageLectureSeule(ETAT_LICENCE.licence),
         code: 403,
       });
       return;

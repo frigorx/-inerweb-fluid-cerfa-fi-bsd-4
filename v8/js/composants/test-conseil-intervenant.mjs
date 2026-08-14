@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // Suite PURE du composant « conseil d'intervenant » (chantier B2,
 // briques 3-4). Tourne une seule fois (non doublée) : aucune donnée de
 // store, aucun DOM — préparation des données, verdicts de référence

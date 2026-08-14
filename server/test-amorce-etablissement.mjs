@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — PREUVE de l'amorçage GÉNÉRALISÉ de l'établissement
 // (Séance 0, revue 10/07 : ~14 insertions posaient etablissement_id

@@ -1,10 +1,18 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — Fabrication du PAQUET PORTABLE « clé en main »
-// (Phase 2, Lot 1)
+// (Phase 2, Lot 1 ; licence nominative depuis le 14/08/2026 —
+// plan docs/PLAN-LICENCE-NOMINATIVE.md)
 //
 // Assemble un dossier autonome que l'on peut copier sur un poste VIERGE
 // (sans Node.js installé) et lancer d'un double-clic sur lancer-inerweb.bat.
+//
+// DEPUIS LE 14/08/2026, LA LICENCE EST OBLIGATOIRE : chaque paquet est
+// fabriqué POUR un destinataire nommé (--licence <fichier délivré par
+// outils/delivrer-licence.mjs>). Le fichier signé est embarqué, le
+// LISEZ-MOI porte le titulaire, le zip porte le numéro, et l'empreinte
+// SHA-256 du zip est reportée au registre des livraisons. Aucun paquet
+// déverrouillé ne peut sortir de cet outil par accident.
 //
 // Principe (décidé au plan Phase 2, `docs/PLAN-PHASE-2.md`) : Node.js EMBARQUÉ
 // dans le dossier de l'appli, PAS pkg/SEA. On copie tout simplement le
@@ -23,8 +31,8 @@
 // données réelles (data/ documents/ backups/ sont à la racine, hors périmètre).
 //
 // Usage :
-//   node outils/fabriquer-paquet.mjs [dossierSortie] [--zip]
-//   (défaut : ../inerWeb-Fluide-portable, à côté du dépôt)
+//   node outils/fabriquer-paquet.mjs --licence <licence.json> [dossierSortie] [--zip]
+//   (défaut : ../paquets/inerWeb-Fluide-<numéro de licence>)
 // ============================================================
 
 import { createRequire } from 'node:module';
@@ -34,13 +42,45 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const require = createRequire(import.meta.url);
+const licenceModule = require('../server/licence.js');
 
 const RACINE = path.resolve(import.meta.dirname, '..');
 const args = process.argv.slice(2);
 const FAIRE_ZIP = args.includes('--zip');
-const cibleArg = args.find((a) => !a.startsWith('--'));
-const SORTIE = path.resolve(cibleArg
-  ?? path.join(RACINE, '..', 'inerWeb-Fluide-portable'));
+
+// ------------------------------------------------------------
+// La licence nominative du destinataire : OBLIGATOIRE, et vérifiée avec la
+// clé publique EMBARQUÉE (celle que le paquet utilisera lui-même) AVANT
+// d'assembler quoi que ce soit. Fabriquer un paquet dont la licence serait
+// refusée au premier démarrage n'aurait aucun sens.
+// ------------------------------------------------------------
+const indexLicence = args.indexOf('--licence');
+const cheminLicence = indexLicence >= 0 ? args[indexLicence + 1] : null;
+if (!cheminLicence) {
+  console.error('[ERREUR] La licence du destinataire est obligatoire :');
+  console.error('  node outils/fabriquer-paquet.mjs --licence <licence.json> [dossierSortie] [--zip]');
+  console.error('  (délivrez-la d\'abord : node outils/delivrer-licence.mjs "Nom" courriel)');
+  process.exit(1);
+}
+let LICENCE;
+try {
+  LICENCE = JSON.parse(fs.readFileSync(path.resolve(cheminLicence), 'utf8'));
+} catch (erreur) {
+  console.error(`[ERREUR] Licence illisible (${erreur.message}) : ${cheminLicence}`);
+  process.exit(1);
+}
+{
+  const verdict = licenceModule.verifierLicence(LICENCE, licenceModule.dateDuJour());
+  if (!verdict.ok) {
+    console.error(`[ERREUR] Licence refusée (${verdict.motif}${verdict.detail ? ` : ${verdict.detail}` : ''}).`);
+    console.error('         Le paquet démarrerait sur un refus — fabrication interrompue.');
+    process.exit(1);
+  }
+}
+
+const positionnels = args.filter((a, i) => !a.startsWith('--') && i !== indexLicence + 1);
+const SORTIE = path.resolve(positionnels[0]
+  ?? path.join(RACINE, '..', 'paquets', `inerWeb-Fluide-${LICENCE.numero}`));
 
 // ------------------------------------------------------------
 // Garde-fous
@@ -129,8 +169,10 @@ console.log('  [ok] v8/ (sans les suites de test)');
 // 3) Les fichiers d'accompagnement (best-effort : on saute ceux absents).
 // LICENCES-TIERCES.md est OBLIGATOIRE dans le paquet : la licence Apache 2.0 de
 // PDF.js exige que ses notices voyagent avec toute redistribution du logiciel.
+// Le paquet est régi par LICENCE-EVALUATION.txt (le contrat d'évaluation),
+// pas par le LICENSE du dépôt — un seul texte fait foi chez le destinataire.
 const FICHIERS = ['lancer-inerweb.bat', 'cerfa_15497-04_officiel.pdf',
-  '.env.example', 'LICENSE', 'LICENCES-TIERCES.md'];
+  '.env.example', 'LICENCES-TIERCES.md'];
 for (const f of FICHIERS) {
   const src = path.join(RACINE, f);
   if (fs.existsSync(src)) {
@@ -141,19 +183,44 @@ for (const f of FICHIERS) {
   }
 }
 
-// 4) Le mode d'emploi pour l'utilisateur final.
+// 3 bis) Le contrat d'évaluation et la licence nominative signée — tous deux
+// OBLIGATOIRES : sans eux le paquet refuse de démarrer, autant échouer ICI.
+const cheminContrat = path.join(RACINE, 'LICENCE-EVALUATION.txt');
+if (!fs.existsSync(cheminContrat)) {
+  console.error('  [ERREUR] LICENCE-EVALUATION.txt introuvable au dépôt — paquet interrompu.');
+  process.exit(1);
+}
+fs.copyFileSync(cheminContrat, path.join(SORTIE, 'LICENCE-EVALUATION.txt'));
+console.log('  [ok] LICENCE-EVALUATION.txt (le contrat qui régit ce paquet)');
+fs.writeFileSync(path.join(SORTIE, licenceModule.NOM_FICHIER_LICENCE),
+  JSON.stringify(LICENCE, null, 2) + '\n', 'utf8');
+console.log(`  [ok] ${licenceModule.NOM_FICHIER_LICENCE} — n° ${LICENCE.numero}, `
+  + `${LICENCE.titulaire}, expire le ${LICENCE.expireLe}`);
+
+// 4) Le mode d'emploi pour l'utilisateur final — personnalisé au titulaire.
 const LISEZMOI = `inerWeb Fluide — Traçabilité F-Gas / CERFA
 ==========================================
 
 Application locale et autonome : toutes vos données restent sur CE poste,
 rien n'est envoyé sur Internet.
 
-LICENCE
--------
-Gratuit pour l'enseignement (lycées, CFA, universités). Pour un usage
-professionnel, une licence d'utilisation nominative est offerte sur simple
-demande auprès du lycée Antoine Vidal (inerweb.fh@gmail.com). Détails
-dans le fichier « LICENSE ».
+VOTRE LICENCE
+-------------
+Ce paquet a été fabriqué pour :
+
+  ${LICENCE.titulaire}
+  Licence d'évaluation n° ${LICENCE.numero}, valable jusqu'au ${LICENCE.expireLe}.
+
+Elle est PERSONNELLE : vous pouvez installer ce paquet sur vos postes,
+mais pas le transmettre à quelqu'un d'autre — chaque collègue intéressé
+reçoit gratuitement son propre paquet à son nom, sur simple demande à
+inerweb.fh@gmail.com. Le contrat complet est dans le fichier
+« LICENCE-EVALUATION.txt » ; le fichier « licence-inerweb.json » est votre
+licence signée : ne le supprimez pas, le logiciel le vérifie au démarrage.
+
+Après la date d'échéance, vos données restent consultables et exportables
+sans limite de temps ; seules les nouvelles saisies se ferment, jusqu'au
+renouvellement (gratuit, même adresse).
 
 DÉMARRER
 --------
@@ -176,26 +243,41 @@ rien à installer. Sa licence figure dans « node\\LICENSE ».
 
 VOS DONNÉES
 -----------
-Elles vivent dans ce dossier, à côté de l'application :
-  - data\\        la base de données (le registre)
-  - documents\\   les pièces jointes (photos, attestations, PDF…)
-  - backups\\     les sauvegardes
+Au tout premier lancement, l'application range votre registre dans votre
+profil Windows, hors de tout dossier synchronisé :
+
+  %LOCALAPPDATA%\\inerWeb-Fluide\\data\\       la base de données (le
+      registre) et, à l'intérieur, documents\\ (photos, attestations, PDF…)
+  %LOCALAPPDATA%\\inerWeb-Fluide\\backups\\    les sauvegardes
+
+Le chemin exact s'affiche dans la fenêtre noire au démarrage, à la ligne
+« Donnees locales : ». Autrement dit : ces données ne sont PAS dans le
+dossier du programme, et copier ce dossier ne les emporte pas.
+
+Si un dossier data\\ existe déjà à côté du programme (installation plus
+ancienne), l'application continue de l'utiliser : c'est lui qui fait foi.
 
 SAUVEGARDE
 ----------
-Depuis l'application, utilisez l'écran « Sauvegarde ». Pour une copie
-manuelle, il suffit de copier les dossiers data\\, documents\\ et
-backups\\ sur une clé USB ou un espace synchronisé.
+Depuis l'application, utilisez l'écran « Sauvegarde » : il produit un
+fichier ZIP complet et vérifié. C'est la seule méthode qui garantit une
+copie cohérente du registre.
 
-IMPORTANT : ne placez pas le dossier data\\ dans un dossier synchronisé
-en permanence (OneDrive, Google Drive…) — la synchronisation d'une base
-ouverte peut la corrompre. Le cloud sert aux sauvegardes (fichiers ZIP),
-pas à la base en cours d'utilisation.
+Pour une copie manuelle, fermez d'abord l'application (fenêtre noire),
+puis copiez le dossier %LOCALAPPDATA%\\inerWeb-Fluide en entier.
 
-DÉPLACER / PARTAGER
--------------------
-Ce dossier est portable : vous pouvez le copier entier sur un autre
-poste Windows et le lancer de la même façon.
+IMPORTANT : ne placez jamais la base dans un dossier synchronisé en
+permanence (OneDrive, Google Drive…) — la synchronisation d'une base
+ouverte peut la corrompre ; l'application refuse d'ailleurs de démarrer
+dans ce cas. Le cloud sert aux sauvegardes (fichiers ZIP), pas à la base
+en cours d'utilisation.
+
+DÉPLACER / CHANGER DE POSTE
+---------------------------
+Le programme est portable : copiez ce dossier sur l'autre poste Windows
+et lancez-le de la même façon. Vos données, elles, ne suivent pas toutes
+seules : faites une sauvegarde ZIP depuis l'application avant de partir,
+puis restaurez-la sur le nouveau poste (écran « Sauvegarde »).
 `;
 fs.writeFileSync(path.join(SORTIE, 'LISEZ-MOI.txt'), LISEZMOI, 'utf8');
 console.log('  [ok] LISEZ-MOI.txt');
@@ -311,12 +393,41 @@ if (FAIRE_ZIP) {
   const nomZip = path.basename(cheminZip);
   fs.writeFileSync(`${cheminZip}.sha256`, `${empreinte}  ${nomZip}\n`, 'utf8');
   console.log(`  [ok] Empreinte : ${cheminZip}.sha256`);
+
+  // Report au registre des livraisons : la ligne du numéro reçoit la date de
+  // fabrication et l'empreinte du zip. C'est CE rapprochement qui rend une
+  // copie qui circule attribuable à sa livraison d'origine. Best-effort : un
+  // registre absent (licence fabriquée ailleurs) est DIT, jamais silencieux.
+  const cheminRegistre = path.join(
+    RACINE, '..', 'paquets', 'licences', 'registre-livraisons.csv');
+  if (fs.existsSync(cheminRegistre)) {
+    const lignes = fs.readFileSync(cheminRegistre, 'utf8').split(/\r?\n/);
+    let reporte = false;
+    const nouvelles = lignes.map((ligne) => {
+      if (!ligne.startsWith(`${LICENCE.numero};`)) return ligne;
+      const champs = ligne.split(';');
+      champs[5] = licenceModule.dateDuJour();
+      champs[6] = empreinte;
+      reporte = true;
+      return champs.join(';');
+    });
+    if (reporte) {
+      fs.writeFileSync(cheminRegistre, nouvelles.join('\n'), 'utf8');
+      console.log(`  [ok] Registre des livraisons mis à jour (${LICENCE.numero}).`);
+    } else {
+      console.warn(`  [!]  ${LICENCE.numero} absent du registre — empreinte NON reportée.`);
+    }
+  } else {
+    console.warn(`  [!]  Registre introuvable (${cheminRegistre}) — empreinte NON reportée.`);
+  }
+
   console.log('');
   console.log('  ------------------------------------------------------------');
-  console.log('   PUBLIEZ CETTE EMPREINTE À CÔTÉ DU LIEN DE TÉLÉCHARGEMENT :');
+  console.log(`   Paquet nominatif ${LICENCE.numero} — ${LICENCE.titulaire}`);
+  console.log('   JOIGNEZ CETTE EMPREINTE AU COURRIEL D\'ENVOI :');
   console.log(`   SHA-256 : ${empreinte}`);
   console.log('');
-  console.log('   Qui télécharge peut la vérifier, sans rien installer :');
+  console.log('   Le destinataire peut la vérifier, sans rien installer :');
   console.log(`     certutil -hashfile ${nomZip} SHA256      (Windows)`);
   console.log(`     sha256sum ${nomZip}                       (Linux / Mac)`);
   console.log('  ------------------------------------------------------------');

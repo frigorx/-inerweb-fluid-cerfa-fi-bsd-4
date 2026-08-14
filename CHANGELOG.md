@@ -2,6 +2,50 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔑 LICENCE NOMINATIVE : LE PAQUET COMPLET NE S'OBTIENT PLUS QU'À SON NOM (14/08)
+
+Décisions du propriétaire (plan `docs/PLAN-LICENCE-NOMINATIVE.md`) : les
+releases publiques v1.0.0/v1.0.1 sont retirées, la vitrine GitHub Pages reste,
+la licence des versions futures devient **« code visible »** (lecture libre,
+usage sur licence nominative gratuite pour l'enseignement, redistribution
+interdite sans accord — LICENSE réécrit, bannière des 278 fichiers source mise
+à jour, copies reçues sous PolyForm ≤ v1.0.1 : droits conservés pour CES
+versions). Le mode Officiel reste FERMÉ dans les paquets d'évaluation.
+
+**Le dispositif, honnête** : il rend le partage NOMINATIF et TRAÇABLE, pas
+techniquement impossible (le code s'exécute chez l'utilisateur — doctrine du
+14/07, jamais d'obfuscation ; l'horloge reculée repousse l'expiration, limite
+CONNUE). Vérification 100 % locale, aucun appel réseau.
+
+- **`server/licence.js`** : licence `licence-inerweb.json` signée Ed25519
+  (clé privée chez le propriétaire, HORS dépôt ; clé publique n° 1 embarquée,
+  table à rotation ADDITIVE). Exigée quand `node\node.exe` est à côté du
+  serveur (la signature de fabrication du paquet) ou `IWF_LICENCE_REQUISE=1`
+  (pour la tirer en test) — le dépôt de développement, le filet et la démo
+  en ligne sont hors champ. Absente/falsifiée → refus de démarrer, contact
+  affiché ; **expirée → LECTURE SEULE** (consultations, exports, sauvegardes
+  ouverts À VIE ; les méthodes de `ROLES_MUTATION` répondent 403 — jamais de
+  registre en otage). `serveur.js` applique la décision PURE
+  (`evaluerDemarrageLicence`) et `ping` porte numéro/échéance (jamais le
+  titulaire sur le réseau). Suite `server/test-licence.mjs` (37 vérifs,
+  paire JETABLE générée par la suite — la clé privée réelle ne touche jamais
+  le filet ; contre-épreuve : chaque champ altéré après signature rougit).
+- **Outillage propriétaire** : `outils/generer-cles-licence.mjs` (une fois,
+  refuse d'écraser), `outils/delivrer-licence.mjs` (numérote EVAL-AAAA-NNN,
+  signe, auto-contrôle contre la clé publique embarquée, consigne au registre
+  local `..\paquets\licences\registre-livraisons.csv` — NOMINATIF, jamais au
+  dépôt), `outils/fabriquer-paquet.mjs` **exige `--licence`** (aucun paquet
+  déverrouillé par accident), embarque licence + `LICENCE-EVALUATION.txt`
+  (le contrat d'évaluation remplace LICENSE dans le paquet), personnalise le
+  LISEZ-MOI (titulaire, échéance, données dans `%LOCALAPPDATA%` — l'ancien
+  texte annonçait les données « à côté de l'application », faux pour une
+  installation neuve depuis P1-6), nomme le zip du numéro et reporte son
+  empreinte SHA-256 au registre.
+- **Surfaces** : vitrine `index.html` (« Obtenir » sur demande nominative,
+  liens release retirés), `guide.html`, `README.md`, `INSTALLATION_SIMPLE.md`
+  (voie A = paquet nominatif, dépannage licence), `LIMITE-DE-RESPONSABILITE.md`,
+  `LICENCES-TIERCES.md`, module symboles.
+
 ### 🎙️ LE LOT AUDIO EST FABRIQUÉ, ET LA PONCTUATION NE SE LIT PAS (14/08 matin, sur le poste)
 
 Le reste annoncé par la v2 (« Piper vit sur le poste ») est soldé :
@@ -3235,7 +3279,7 @@ de l'auteur — se traite, et se traite ici :
   **Contrôle croisé fait** : l'empreinte annoncée et celle calculée par `certutil` sont identiques.
   C'est le même principe que le scellement des dossiers d'audit — appliqué au logiciel lui-même.
 - **Ligne de licence en tête de 168 fichiers source** (`v8/`, `server/`, `outils/`, `index.html`) :
-  « inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh ».
+  « inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh ».
   Qui ouvre un fichier sait immédiatement à qui il appartient et à quelles conditions.
   ⚠️ **`v8/js/lib/` est INTOUCHÉ** (PDF.js, pdf-lib, qrcodejs : bibliothèques tierces, leurs
   notices leur appartiennent). Pièges traités : le shebang de `creer-admin.js` reste en ligne 1,

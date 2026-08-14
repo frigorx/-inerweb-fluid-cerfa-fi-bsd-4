@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Lot F carte blanche (13/08/2026) — LA PORTÉE DE CAPACITÉ DE
 // L'ÉTABLISSEMENT EST LUE (4e relecture externe, blocage n° 1, tiré).

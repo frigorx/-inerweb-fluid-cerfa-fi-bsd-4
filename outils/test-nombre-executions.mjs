@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // LE NOMBRE D'EXÉCUTIONS ANNONCÉ EST LE NOMBRE RÉEL.
 // Exécution : node outils/test-nombre-executions.mjs

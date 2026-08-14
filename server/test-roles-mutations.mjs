@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // Suite « verrous d'autorisation » (Lot 1 de l'audit du 14/07).
 //
 // POURQUOI. La garde de rôle du serveur est une LISTE BLANCHE : toute méthode

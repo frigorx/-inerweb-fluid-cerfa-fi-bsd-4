@@ -38,7 +38,7 @@ et climatisation.
 > journal d'état : avant de t'en servir, **re-mesure**. Les commandes sont citées à côté de
 > chaque valeur, et c'est leur sortie du jour qui fait foi. L'état courant se lit en tête de
 > `docs/PROMPT-REPRISE.md`. Repère mesuré le 26/07/2026, après traitement de l'audit :
-> **139 exécutions, 207 attaques, contrat v13 (96 méthodes), dernière migration 36.**
+> **140 exécutions, 207 attaques, contrat v13 (96 méthodes), dernière migration 36.**
 
 - **`main` propre : le filet comptait 106 exécutions au 25/07** (`node outils/lancer-tests.mjs --tout`).
 - Contrat DataStore **v12** (96 méthodes) et dernière migration **35** *à cette date*.

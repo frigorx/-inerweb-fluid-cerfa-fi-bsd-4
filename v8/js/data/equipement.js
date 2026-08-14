@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // MODÈLE D'ÉQUIPEMENT (P1-1) — ce que l'équipement EST, et ce que cela
 // change pour ses obligations de contrôle d'étanchéité.

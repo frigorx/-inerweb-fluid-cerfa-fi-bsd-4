@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — LA BORNE DE SCELLEMENT EST CONFRONTÉE AU REGISTRE,
 // AU DÉMARRAGE (lot 0, brique B2 — audit externe #4 du 27/07/2026)

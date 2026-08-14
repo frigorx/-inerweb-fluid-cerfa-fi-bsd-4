@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // Suite « code machine lisible » (brique produit JR-CF-001) — doublée
 // demo + local via outils/lancer-tests.mjs. Prouve : le module pur
 // (familles, code site, générateur, normalisation, validation) et la

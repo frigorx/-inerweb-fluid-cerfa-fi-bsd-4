@@ -301,9 +301,10 @@ et `FICHE-SEANCE-2.md`.
 
 ## Licence et sécurité
 
-Le module suit la licence du dépôt — **PolyForm Noncommercial 1.0.0**, libre et gratuite pour
-tout établissement d'enseignement. Le détail, les obligations envers QElectroTech et **le point
-non réglé sur les textes repris du document de référence** sont dans [`LICENCE.md`](LICENCE.md).
+Le module suit la licence du dépôt — **« code visible »** : lecture libre, usage gratuit pour
+tout établissement d'enseignement sur licence nominative. Le détail, les obligations envers
+QElectroTech et **le point non réglé sur les textes repris du document de référence** sont
+dans [`LICENCE.md`](LICENCE.md).
 
 Côté technique, ce que le module garantit :
 

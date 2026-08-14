@@ -1,0 +1,61 @@
+inerWeb Fluide — LICENCE D'ÉVALUATION NOMINATIVE
+=================================================
+© 2026 Franck Henninot — tous droits réservés.
+Contact : inerweb.fh@gmail.com — https://inerweb.ovh
+
+Ce paquet vous a été remis personnellement pour ESSAYER inerWeb Fluide et
+donner votre avis. Le fichier « licence-inerweb.json » joint au paquet porte
+votre nom, votre numéro de licence et sa date d'échéance : c'est votre
+licence, signée numériquement. Le logiciel la vérifie à chaque démarrage,
+entièrement sur votre poste, sans aucune connexion à internet.
+
+1. CE QUE VOUS POUVEZ FAIRE
+---------------------------
+- Installer et utiliser ce paquet sur les postes que vous utilisez
+  vous-même (établissement, domicile), pendant la durée de la licence.
+- L'essayer avec des données réelles ou fictives, imprimer les documents,
+  faire des sauvegardes, exporter vos données à tout moment.
+- Envoyer vos remarques, questions et idées à inerweb.fh@gmail.com —
+  c'est le but de cette version d'évaluation.
+
+2. CE QUE VOUS NE POUVEZ PAS FAIRE
+----------------------------------
+- Transmettre ce paquet, ou votre fichier de licence, à quelqu'un d'autre :
+  la licence est personnelle et non cessible. Chaque collègue intéressé
+  reçoit GRATUITEMENT son propre paquet à son nom, sur simple demande.
+- Publier ce paquet ou le mettre à disposition (site, réseau, dépôt,
+  espace partagé), en tout ou partie.
+- L'utiliser dans un cadre commercial (société, bureau d'études, organisme
+  de formation à but lucratif) sans accord écrit préalable.
+- Retirer ou modifier les mentions de licence, le fichier de licence, ou
+  la vérification de licence du logiciel.
+
+3. CE QUE CETTE VERSION N'EST PAS
+---------------------------------
+Version d'ÉVALUATION : les documents produits (CERFA, registres) portent
+la mention du mode Formation et ne remplacent pas votre registre
+réglementaire actuel. N'abandonnez aucune procédure existante sur la foi
+de cette version.
+
+4. DURÉE, ET APRÈS
+------------------
+La licence expire à la date inscrite dans « licence-inerweb.json ».
+Après cette date, VOS DONNÉES RESTENT À VOUS : consultation, exports et
+sauvegardes restent ouverts sans limite de temps ; seules les nouvelles
+saisies se ferment. Le renouvellement est gratuit sur simple demande.
+
+5. GARANTIE
+-----------
+Version d'évaluation fournie EN L'ÉTAT, sans garantie d'aucune sorte.
+Faites des sauvegardes (l'écran « Sauvegarde » du logiciel les fait pour
+vous et les vérifie).
+
+6. PROPRIÉTÉ
+------------
+Le logiciel, son code, ses textes et sa marque restent la propriété
+exclusive de leur auteur. La présente licence ne vous transfère aucun
+droit autre que ceux du point 1, et prend fin immédiatement en cas de
+manquement au point 2.
+
+Bibliothèques tierces embarquées : voir LICENCES-TIERCES.md (PDF.js —
+Apache 2.0, pdf-lib — MIT, qrcodejs — MIT) et node\LICENSE (Node.js — MIT).

@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Test du MODULE PUR « remise en filière » (lot B2) + PARITÉ stricte
 // avec son miroir CommonJS server/remise-filiere.js.

@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // SUITE E2E OFFICIELLE (lot C, brique C5) — le parcours du mode
 // Officiel de BOUT EN BOUT, verrou de livraison OUVERT, contre la

@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // PÉRIMÈTRE DU CERFA (Q4 / L1b, décision Franck 24/07/2026) — de bout en
 // bout contre le VRAI store : le fait `fluideHorsPerimetreFluore` est

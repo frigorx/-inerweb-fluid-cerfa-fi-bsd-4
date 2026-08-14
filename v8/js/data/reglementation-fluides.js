@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // MOTEUR RÉGLEMENTAIRE UNIQUE — cadre 7 F-Gas (seuils + fréquence
 // de contrôle d'étanchéité). SOURCE DE VÉRITÉ : ce module remplace

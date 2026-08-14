@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — vue « Fiche outil vivante » (QR outillage, Phase 2)
 // Vue hors sidebar, atteinte par la route paramétrée '#/o/<CODE>'

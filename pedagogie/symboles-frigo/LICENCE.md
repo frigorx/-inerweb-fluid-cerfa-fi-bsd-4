@@ -7,7 +7,8 @@ Ce fichier ne remplace pas la licence du dépôt : il précise ce qui s'applique
 
 ## 1. La licence du module
 
-Le module suit la licence du dépôt : **PolyForm Noncommercial License 1.0.0**,
+Le module suit la licence du dépôt : **« code visible »** (lecture libre, usage par
+licence nominative, redistribution soumise à accord écrit),
 © 2026 Franck Henninot — voir [`LICENSE`](../../LICENSE) à la racine.
 
 En clair, et c'est le texte de la racine qui fait foi :

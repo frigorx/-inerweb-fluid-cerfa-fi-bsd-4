@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide v8 — modale « Signatures de la fiche » (lot C, C4)
 // Parcours de DOUBLE SIGNATURE réelle d'un mouvement BROUILLON :

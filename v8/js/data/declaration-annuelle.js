@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Déclaration annuelle réglementaire — 11 rubriques par fluide
 // (arrêté du 21/11/2025). Contrat : rôle = produire, PAR FLUIDE et par

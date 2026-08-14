@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Scénario d'INTÉGRATION du Lot 2 — vie d'atelier de bout en bout.
 // Exécution : node test-scenario-lot2.mjs (Node ≥ 18, sans DOM).

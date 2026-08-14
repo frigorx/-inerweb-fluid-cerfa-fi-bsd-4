@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // LECTURE RÉELLE D'UNE IMAGE PNG (lot B3, brique 1) :
 //   1. PARITÉ STRICTE du module pur ESM (v8/js/data/png.js) et de son

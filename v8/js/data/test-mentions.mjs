@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // Suite CONTRACTUELLE des mentions de formation complémentaire — chantier B2,
 // Phase 2b brique 1. Doublée demo + local via outils/lancer-tests.mjs. Prouve,
 // à l'identique sur les deux stores : CRUD + garde-fous, cumul/renouvellement,

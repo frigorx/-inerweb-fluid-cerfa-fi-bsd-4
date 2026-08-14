@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // Parité STRICTE du moteur d'aptitude : v8/js/data/habilitations.js (ESM)
 // ↔ server/droit-intervention.js (miroir littéral CommonJS, brique P0-5).
 // Éventail discriminant comparé par JSON.stringify : tout écart de verdict,

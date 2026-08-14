@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // AUCUNE CONDITION NE PEUT DÉPENDRE D'UN ÉVÉNEMENT QUI N'ARRIVERA PAS
 // (brique B5 du lot 0, 4e audit externe — revue adversariale).

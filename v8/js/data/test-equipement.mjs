@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Test P1-1 — LE MODÈLE D'ÉQUIPEMENT, DE BOUT EN BOUT (via un store).
 // Exécution : node v8/js/data/test-equipement.mjs [demo|local]

@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // MIROIR LITTÉRAL CommonJS de v8/js/data/dates.js (lot L2, 25/07/2026).
 // « Une date est une date » : format AAAA-MM-JJ ET calendrier réel.

@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Test B1 — LA SAISIE D'UNE MACHINE : MÊMES BORNES AUX DEUX PORTES.
 // Exécution : node v8/js/data/test-machine-saisie.mjs [demo|local]

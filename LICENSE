@@ -2,157 +2,64 @@ inerWeb Fluide — traçabilité des fluides frigorigènes (F-Gas / CERFA 15497*
 Copyright (c) 2026 Franck Henninot — tous droits réservés.
 Contact : inerweb.fh@gmail.com — https://inerweb.ovh
 
-CE QUE VOUS POUVEZ FAIRE, EN DEUX PHRASES
------------------------------------------
-Les LYCÉES, CFA, universités et tout établissement d'enseignement, ainsi que les
-administrations et les associations, peuvent utiliser, copier, modifier et
-diffuser ce logiciel LIBREMENT ET GRATUITEMENT (voir « Noncommercial
-Organizations » ci-dessous : l'usage par une institution éducative est un usage
-permis, quelle que soit sa source de financement).
+LICENCE « CODE VISIBLE » — applicable à compter du 14 août 2026
+===============================================================
 
-Toute utilisation COMMERCIALE (société de froid et climatisation, bureau
-d'études, organisme de formation privé à but lucratif, éditeur de logiciel…)
-nécessite une licence distincte : écrire à inerweb.fh@gmail.com.
+EN DEUX PHRASES
+---------------
+Le code est publié pour être LU : chacun peut le consulter, l'étudier et
+l'auditer librement. UTILISER le logiciel, en revanche, demande une licence
+nominative — gratuite pour l'évaluation et pour l'enseignement, sur simple
+demande à inerweb.fh@gmail.com — et le REDISTRIBUER est interdit sans
+accord écrit.
 
-Le texte qui fait foi est la PolyForm Noncommercial License 1.0.0, reproduite
-intégralement ci-dessous.
+1. CE QUI EST LIBRE
+-------------------
+- Lire, étudier et auditer le code source de ce dépôt.
+- Le citer brièvement (avec attribution) à des fins d'enseignement, de
+  critique ou de recherche.
+- Utiliser la démonstration en ligne publique.
 
-BIBLIOTHÈQUES TIERCES
----------------------
-Ce logiciel embarque des bibliothèques qui restent sous LEUR propre licence
-(PDF.js — Apache 2.0, pdf-lib — MIT, qrcodejs — MIT). Elles ne sont pas
-couvertes par la licence ci-dessous : voir LICENCES-TIERCES.md.
+2. CE QUI DEMANDE UNE LICENCE NOMINATIVE
+----------------------------------------
+Installer ou exécuter le logiciel, en totalité ou en partie, sur quelque
+poste que ce soit. La licence est délivrée par l'auteur, au nom d'une
+personne ou d'un établissement :
+- GRATUITE pour l'évaluation, l'enseignement (lycées, CFA, universités),
+  les administrations et les associations ;
+- sur ACCORD ÉCRIT (conditions convenues au cas par cas) pour tout usage
+  commercial (société de froid et climatisation, bureau d'études, organisme
+  de formation à but lucratif, éditeur de logiciel…).
 
-================================================================
+3. CE QUI EST INTERDIT SANS ACCORD ÉCRIT DE L'AUTEUR
+----------------------------------------------------
+- Redistribuer le logiciel ou le code, en tout ou partie, sous quelque
+  forme que ce soit (copie, publication, hébergement, dépôt dérivé,
+  paquet, inclusion dans un autre produit).
+- Retirer ou modifier les mentions de propriété, de licence, ou la
+  vérification de licence du logiciel.
+- Exploiter commercialement le logiciel ou un travail qui en dérive.
 
-# PolyForm Noncommercial License 1.0.0
+4. VERSIONS ANTÉRIEURES
+-----------------------
+Les copies obtenues sous la PolyForm Noncommercial License 1.0.0 (versions
+distribuées jusqu'à la v1.0.1 du 15 juillet 2026) conservent, POUR CES
+VERSIONS, les droits que cette licence leur accordait. La présente licence
+s'applique à toute version publiée à compter du 14 août 2026.
 
-<https://polyformproject.org/licenses/noncommercial/1.0.0>
+5. BIBLIOTHÈQUES TIERCES
+------------------------
+Le logiciel embarque des bibliothèques qui restent sous LEUR propre licence
+(PDF.js — Apache 2.0, pdf-lib — MIT, qrcodejs — MIT) : voir
+LICENCES-TIERCES.md. Les paquets portables embarquent en outre Node.js
+(licence MIT, reproduite dans node\LICENSE).
 
-## Acceptance
+6. ABSENCE DE GARANTIE
+----------------------
+Dans les limites permises par la loi, le logiciel est fourni EN L'ÉTAT,
+sans garantie d'aucune sorte ; l'auteur ne saurait être tenu responsable
+d'aucun dommage résultant de son usage.
 
-In order to get any license under these terms, you must agree
-to them as both strict obligations and conditions to all
-your licenses.
-
-## Copyright License
-
-The licensor grants you a copyright license for the
-software to do everything you might do with the software
-that would otherwise infringe the licensor's copyright
-in it for any permitted purpose.  However, you may
-only distribute the software according to [Distribution
-License](#distribution-license) and make changes or new works
-based on the software according to [Changes and New Works
-License](#changes-and-new-works-license).
-
-## Distribution License
-
-The licensor grants you an additional copyright license
-to distribute copies of the software.  Your license
-to distribute covers distributing the software with
-changes and new works permitted by [Changes and New Works
-License](#changes-and-new-works-license).
-
-## Notices
-
-You must ensure that anyone who gets a copy of any part of
-the software from you also gets a copy of these terms or the
-URL for them above, as well as copies of any plain-text lines
-beginning with `Required Notice:` that the licensor provided
-with the software.  For example:
-
-> Required Notice: Copyright Yoyodyne, Inc. (http://example.com)
-
-## Changes and New Works License
-
-The licensor grants you an additional copyright license to
-make changes and new works based on the software for any
-permitted purpose.
-
-## Patent License
-
-The licensor grants you a patent license for the software that
-covers patent claims the licensor can license, or becomes able
-to license, that you would infringe by using the software.
-
-## Noncommercial Purposes
-
-Any noncommercial purpose is a permitted purpose.
-
-## Personal Uses
-
-Personal use for research, experiment, and testing for
-the benefit of public knowledge, personal study, private
-entertainment, hobby projects, amateur pursuits, or religious
-observance, without any anticipated commercial application,
-is use for a permitted purpose.
-
-## Noncommercial Organizations
-
-Use by any charitable organization, educational institution,
-public research organization, public safety or health
-organization, environmental protection organization,
-or government institution is use for a permitted purpose
-regardless of the source of funding or obligations resulting
-from the funding.
-
-## Fair Use
-
-You may have "fair use" rights for the software under the
-law. These terms do not limit them.
-
-## No Other Rights
-
-These terms do not allow you to sublicense or transfer any of
-your licenses to anyone else, or prevent the licensor from
-granting licenses to anyone else.  These terms do not imply
-any other licenses.
-
-## Patent Defense
-
-If you make any written claim that the software infringes or
-contributes to infringement of any patent, your patent license
-for the software granted under these terms ends immediately. If
-your company makes such a claim, your patent license ends
-immediately for work on behalf of your company.
-
-## Violations
-
-The first time you are notified in writing that you have
-violated any of these terms, or done anything with the software
-not covered by your licenses, your licenses can nonetheless
-continue if you come into full compliance with these terms,
-and take practical steps to correct past violations, within
-32 days of receiving notice.  Otherwise, all your licenses
-end immediately.
-
-## No Liability
-
-***As far as the law allows, the software comes as is, without
-any warranty or condition, and the licensor will not be liable
-to you for any damages arising out of these terms or the use
-or nature of the software, under any kind of legal claim.***
-
-## Definitions
-
-The **licensor** is the individual or entity offering these
-terms, and the **software** is the software the licensor makes
-available under these terms.
-
-**You** refers to the individual or entity agreeing to these
-terms.
-
-**Your company** is any legal entity, sole proprietorship,
-or other kind of organization that you work for, plus all
-organizations that have control over, are under the control of,
-or are under common control with that organization.  **Control**
-means ownership of substantially all the assets of an entity,
-or the power to direct its management and policies by vote,
-contract, or otherwise.  Control can be direct or indirect.
-
-**Your licenses** are all the licenses granted to you for the
-software under these terms.
-
-**Use** means anything you do with the software requiring one
-of your licenses.
+7. CONTACT
+----------
+Toute demande de licence, question ou signalement : inerweb.fh@gmail.com

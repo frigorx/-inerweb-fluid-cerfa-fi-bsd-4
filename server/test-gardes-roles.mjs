@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // Suite « le filet ne met jamais en défaut les gardes de rôle » (constat lot 1
 // de docs/AUDIT-QUALITE-2026-07.md, brique 5 : I3 — « 40 des 43 gardes de
 // rôle ne sont jamais mises en défaut par un test »).

@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Scellement externe simple (lot D — condition 5 du plan audit-proof) :
 // le témoin quotidien constate les têtes des chaînes + compteurs dans le

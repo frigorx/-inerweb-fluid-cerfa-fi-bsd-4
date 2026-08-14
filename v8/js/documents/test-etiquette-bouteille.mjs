@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // Test de l'étiquette QR bouteille (V9.2, vague 2 — bouteilles)
 // Exécution : node v8/js/documents/test-etiquette-bouteille.mjs

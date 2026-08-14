@@ -1,4 +1,4 @@
-// inerWeb Fluide — © 2026 Franck Henninot — PolyForm Noncommercial (voir LICENSE) — inerweb.ovh
+// inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // PDF final CONSERVÉ, côté service (lot C, brique C3b) :
 //   1. doitServirPdfConserve — table de vérité (le conservé n'est
