@@ -56,8 +56,12 @@ export const TEXTE_FIN =
   + 'disponible depuis la page d’accueil.';
 
 /**
- * Les textes qu'une étape fait dire — EXACTEMENT ceux que le panneau
- * affiche (titre, consigne, attendu). Consommé par le narrateur ET par
+ * Les textes qu'une étape fait dire — ceux que le panneau affiche
+ * (titre, consigne, attendu), JAMAIS PLUS que l'écran. Depuis le 14/08
+ * (demande de Franck : une formatrice ne lit pas les petites lignes),
+ * la voix dit MOINS : l'attendu se dit SANS son chapeau rituel « Ce que
+ * vous devez voir : » — répété à chaque étape, il n'apprend rien à
+ * l'oreille ; l'ÉCRAN, lui, le garde. Consommé par le narrateur ET par
  * l'outil de fabrication du lot audio : une seule source de vérité.
  * @param {{titre?: string, consigne?: string, attendu?: string}|null} etape
  * @returns {string[]}
@@ -69,7 +73,7 @@ export function textesNarrationEtape(etape) {
     textes.push(/[.!?…]$/.test(etape.titre) ? etape.titre : etape.titre + '.');
   }
   if (etape.consigne) textes.push(etape.consigne);
-  if (etape.attendu) textes.push('Ce que vous devez voir : ' + etape.attendu);
+  if (etape.attendu) textes.push(etape.attendu);
   return textes;
 }
 
@@ -99,8 +103,14 @@ export function normaliserTexte(valeur) {
 export function texteADire(valeur) {
   return normaliserTexte(valeur)
     .replace(/[«»"()*·]/g, ' ')
-    .replace(/[—–]/g, ', ')
+    .replace(/[—–;]/g, ', ')
     .replace(/…/g, '.')
+    // Filet final — LISTE BLANCHE de ce qui a le droit de se dire :
+    // lettres (accents et ligatures compris), chiffres, espace, et la
+    // ponctuation de pause. TOUT autre signe s'efface (barre, dièse,
+    // chevrons… même ceux qu'un texte futur inventera) : une voix de
+    // formatrice ne prononce jamais un signe.
+    .replace(/[^0-9a-zA-ZÀ-ÖØ-öø-ÿŒœ .,:!?'-]/g, ' ')
     .replace(/\s+/g, ' ')
     .replace(/\s+([,.!?:;])/g, '$1')
     .replace(/,(\s*,)+/g, ',')

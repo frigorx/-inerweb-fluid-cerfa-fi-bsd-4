@@ -106,14 +106,16 @@ for (const parcours of PARCOURS_VISITE) {
 }
 verifier('chaque étape de chaque parcours dit trois textes pleins '
   + '(titre, consigne, attendu)', corpusComplet, detailCorpus);
-verifier('les textes dits sont CEUX du panneau (titre ponctué, consigne, '
-  + '« Ce que vous devez voir : »)',
+verifier('les textes dits sont CEUX du panneau — jamais plus : l\'attendu '
+  + 'se dit SANS son chapeau rituel (Franck, 14/08 : une formatrice ne '
+  + 'lit pas les petites lignes)',
 (function () {
   const etape = PARCOURS_VISITE[0].etapes[0];
   const textes = textesNarrationEtape(etape);
   return textes[0] === etape.titre + '.'
       && textes[1] === etape.consigne
-      && textes[2] === 'Ce que vous devez voir : ' + etape.attendu;
+      && textes[2] === etape.attendu
+      && !textes.some((t) => t.includes('Ce que vous devez voir'));
 })());
 verifier('le speech de présentation existe, simple et honnête '
   + '(démonstration, fictif, aucun superlatif hors sujet)',
@@ -452,6 +454,30 @@ empreinteTexte('a « b »') !== empreinteTexte(texteADire('a « b »')));
   await nDiction.direTextes(['Inconnu « à signes » — donc (repli)…']);
   verifier('le repli navigateur reçoit le texte nettoyé, jamais les signes',
     sDiction.dits.join('|') === 'Inconnu à signes, donc repli.');
+}
+
+verifier('texteADire : le point-virgule devient la pause, la barre et le '
+  + 'dièse s\'effacent (liste blanche : un signe ne se prononce jamais)',
+texteADire('PAC air/eau ; réf. #12 <ou> [15] {seize}')
+  === 'PAC air eau, réf. 12 ou 15 seize');
+
+// LA liste blanche, prouvée sur TOUT le corpus réel : aucun signe qui
+// s'épelle ne survit dans ce que la voix dit — aujourd'hui et demain
+// (un texte futur qui introduit un signe non traité fait rougir ce test).
+{
+  const corpusEntier = [TEXTE_PRESENTATION, TEXTE_FIN];
+  for (const parcours of PARCOURS_VISITE) {
+    for (const etape of parcours.etapes) {
+      corpusEntier.push(...textesNarrationEtape(etape));
+    }
+  }
+  const dits = corpusEntier.map(texteADire).join(' ');
+  const horsListe = [...new Set(dits)]
+    .filter((c) => !/[0-9a-zA-ZÀ-ÖØ-öø-ÿŒœ .,:!?'-]/.test(c));
+  verifier('tout le corpus dit tient dans la liste blanche (aucun signe '
+    + 'prononçable)', horsListe.length === 0, JSON.stringify(horsListe));
+  verifier('le chapeau « Ce que vous devez voir » ne se dit plus nulle part',
+    !dits.includes('Ce que vous devez voir'));
 }
 
 // La fabrication : Piper reçoit texteADire, la clé reste l'écran.

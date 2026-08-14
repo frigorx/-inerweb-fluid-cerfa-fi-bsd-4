@@ -10,15 +10,10 @@ export const INDEX_VOIX_VISITE = {
   "debitKbps": 48,
   "narrationsAttendues": 29,
   "entrees": {
-    "0e120611-80": {
-      "fichier": "audio/0e120611-80.mp3",
-      "sha256": "ab958a5070fe78c8",
-      "octets": 40350
-    },
-    "1ac614ab-107": {
-      "fichier": "audio/1ac614ab-107.mp3",
-      "sha256": "a477c27630b0850f",
-      "octets": 41290
+    "102739c8-84": {
+      "fichier": "audio/102739c8-84.mp3",
+      "sha256": "176de8e60f0d8150",
+      "octets": 56964
     },
     "1d3a0857-50": {
       "fichier": "audio/1d3a0857-50.mp3",
@@ -30,25 +25,25 @@ export const INDEX_VOIX_VISITE = {
       "sha256": "978aa4ccc2eeeacc",
       "octets": 58218
     },
-    "2ca9d588-113": {
-      "fichier": "audio/2ca9d588-113.mp3",
-      "sha256": "bf56b63891b2de04",
-      "octets": 55240
+    "30bea53b-82": {
+      "fichier": "audio/30bea53b-82.mp3",
+      "sha256": "9bfd1ee5977c95be",
+      "octets": 35178
     },
     "30ea867d-182": {
       "fichier": "audio/30ea867d-182.mp3",
       "sha256": "4727bd5843662f4f",
       "octets": 75772
     },
+    "3fb3aac8-73": {
+      "fichier": "audio/3fb3aac8-73.mp3",
+      "sha256": "5d1c94ac58aa57fb",
+      "octets": 38469
+    },
     "47a8f926-133": {
       "fichier": "audio/47a8f926-133.mp3",
       "sha256": "dd0a8da73799ccf9",
       "octets": 75929
-    },
-    "4ed8a3f8-98": {
-      "fichier": "audio/4ed8a3f8-98.mp3",
-      "sha256": "d7df96553e11d2f2",
-      "octets": 50851
     },
     "53e07c4e-42": {
       "fichier": "audio/53e07c4e-42.mp3",
@@ -65,55 +60,50 @@ export const INDEX_VOIX_VISITE = {
       "sha256": "d0b43ffbe5efbf3a",
       "octets": 27654
     },
-    "73d0d07b-128": {
-      "fichier": "audio/73d0d07b-128.mp3",
-      "sha256": "a3d6391f5bc243c7",
-      "octets": 55083
+    "75f1e908-122": {
+      "fichier": "audio/75f1e908-122.mp3",
+      "sha256": "57282e4a852936cd",
+      "octets": 66838
     },
     "7a0f35a3-143": {
       "fichier": "audio/7a0f35a3-143.mp3",
       "sha256": "4166fdc877cbdc55",
       "octets": 66054
     },
-    "9d172998-147": {
-      "fichier": "audio/9d172998-147.mp3",
-      "sha256": "15d1778f9d3a949e",
-      "octets": 75302
+    "8cce71cb-103": {
+      "fichier": "audio/8cce71cb-103.mp3",
+      "sha256": "ea555cee54713081",
+      "octets": 46776
     },
     "9fa9a648-693": {
       "fichier": "audio/9fa9a648-693.mp3",
       "sha256": "ae31c25bdd68eace",
       "octets": 315576
     },
-    "a1257515-99": {
-      "fichier": "audio/a1257515-99.mp3",
-      "sha256": "aa51d5b4d4844f72",
-      "octets": 43798
-    },
     "a61d3580-32": {
       "fichier": "audio/a61d3580-32.mp3",
       "sha256": "4f75bbbd8bb084f8",
       "octets": 34394
-    },
-    "a78f0d94-152": {
-      "fichier": "audio/a78f0d94-152.mp3",
-      "sha256": "a6df6beee07cb2f8",
-      "octets": 68405
     },
     "ab457082-24": {
       "fichier": "audio/ab457082-24.mp3",
       "sha256": "bbe03f1786297fd4",
       "octets": 14018
     },
+    "b0b258e4-127": {
+      "fichier": "audio/b0b258e4-127.mp3",
+      "sha256": "9f67c5a1321d57c5",
+      "octets": 58531
+    },
     "b4748206-46": {
       "fichier": "audio/b4748206-46.mp3",
       "sha256": "2ff9ba5db6aa04e6",
       "octets": 35648
     },
-    "b713df58-109": {
-      "fichier": "audio/b713df58-109.mp3",
-      "sha256": "e96b620ca576a3d9",
-      "octets": 62136
+    "bfc2a545-74": {
+      "fichier": "audio/bfc2a545-74.mp3",
+      "sha256": "dc2a3a41aea3c19f",
+      "octets": 35334
     },
     "cb56df7b-164": {
       "fichier": "audio/cb56df7b-164.mp3",
@@ -134,6 +124,16 @@ export const INDEX_VOIX_VISITE = {
       "fichier": "audio/d71f9132-27.mp3",
       "sha256": "af979728dce6b114",
       "octets": 8533
+    },
+    "dccab841-55": {
+      "fichier": "audio/dccab841-55.mp3",
+      "sha256": "6cfa21eba1fdc8df",
+      "octets": 31729
+    },
+    "de311dd8-88": {
+      "fichier": "audio/de311dd8-88.mp3",
+      "sha256": "17fc7197f80d8da6",
+      "octets": 46933
     },
     "e2069c06-24": {
       "fichier": "audio/e2069c06-24.mp3",

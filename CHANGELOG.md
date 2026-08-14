@@ -24,9 +24,20 @@ l'ÉCRAN** : les clés du lot ne bougent pas quand la diction s'affine. Le lot a
 d'une voix de navigateur non française — le lot MP3 la rend marginale, et
 `direSynthese` choisit déjà une voix française quand le poste en a une.
 
-**Preuves** : `test-voix-visite.mjs` **43 vérifications** (+7 : la diction —
-contre-épreuve tirée : nettoyage retiré du repli, la suite rougit ; l'outil
-donne `texteADire` à Piper et garde la clé de l'écran, lu dans sa source).
+**Second passage (retour de Franck sur pièce : « une formatrice ne lit pas
+les petites lignes »)** : `texteADire` finit par une **LISTE BLANCHE** — seuls
+lettres, chiffres, espace, pause (`.,:!?'-`) ont le droit de se dire ; barre,
+dièse, chevrons et tout signe qu'un texte futur inventera s'effacent (prouvé
+sur TOUT le corpus réel par la suite, qui rougira si un texte nouveau importe
+un signe non traité). Et le chapeau rituel « Ce que vous devez voir : »,
+répété 20 fois par visite, **ne se dit plus** — l'écran le garde, la voix va
+droit au contenu. 9 attendus refabriqués, 20 narrations conservées (les clés
+stables à l'écran ont fait leur preuve).
+
+**Preuves** : `test-voix-visite.mjs` **46 vérifications** (+10 : la diction —
+contre-épreuve tirée : nettoyage retiré du repli, la suite rougit ; liste
+blanche jouée sur le corpus entier ; l'outil donne `texteADire` à Piper et
+garde la clé de l'écran, lu dans sa source).
 TOUT VERT **139 exécutions** (la suite voix valide l'index CONTRE les
 fichiers), 207 attaques ; banc navigateur (port jetable 4175) : « Écouter la
 présentation » charge son MP3 (200) et le bouton passe à « Arrêter la
