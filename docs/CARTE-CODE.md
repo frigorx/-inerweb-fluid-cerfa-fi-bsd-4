@@ -34,7 +34,7 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   filet : il publie la mesure qui a fait tomber la borne de 1 Ko des
   signatures et devient rouge si quelqu'un remet un seuil de taille.
 - **Tests** : `node outils/lancer-tests.mjs --tout` = TOUT le filet
-  (**138 exécutions, ~100 s** au 27/07/2026 ; sans `--tout`, arrêt au
+  (**139 exécutions, ~100 s** au 27/07/2026 ; sans `--tout`, arrêt au
   premier rouge). Suites `SUITES_DOUBLEES` jouées demo PUIS local.
   Toute nouvelle suite `test-*.mjs` est auto-découverte.
   `outils/test-references-suites.mjs` (revue B2, mineur 1) : **toute suite
@@ -368,7 +368,22 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   au choix, pastilles + liste de mission, DÉMO seule via `visiteDisponible`,
   repère `pointer-events:none` : ne recouvre jamais la cible ; branchée dans
   `app.js` — bouton du pied de sidebar + proposition à la première visite ;
-  suite `test-visite-guidee.mjs`).
+  suite `test-visite-guidee.mjs`). **v2 (14/08) — `voix-visite.js`, LA VOIX
+  DE LA DÉMONSTRATION** : principe des tutos animés de Pilote Fluides — MP3
+  locaux fabriqués par Piper (`fr_FR-siwis-medium`) via
+  `outils/generer-voix-visite.mjs` (hors filet), index généré
+  `v8/res/voix-visite/index.js` (empreinte de texte → fichier, recette
+  FNV-1a IDENTIQUE à Pilote, GELÉE par test), REPLI voix du navigateur
+  (la visite ne dépend jamais du lot), jamais un son sans geste humain,
+  bouton couper/remettre mémorisé ; le corpus EST l'écran
+  (`textesNarrationEtape`, speech `TEXTE_PRESENTATION` affiché dans la
+  modale de choix). La visite y gagne la SOURIS-ENSEIGNANT (flèche qui
+  glisse vers la cible + onde + bip fabriqué sur place, décorative :
+  absente sous `prefers-reduced-motion`, `pointer-events:none`).
+  Suite `test-voix-visite.mjs` (34 vérifs). ⚠️ Lot audio : à fabriquer
+  sur le poste (Piper + ffmpeg) puis inscrire la licence de la voix à
+  `LICENCES-TIERCES.md` — tant qu'il n'existe pas, la démo parle en
+  voix de navigateur, c'est prévu.
 - `lib/` : **les seuls fichiers du dépôt que nous n'avons pas écrits** — 4 fichiers
   tiers (PDF.js 4.10.38 ×2, pdf-lib, qrcodejs), plus `qrcode.js` qui est de NOUS
   (38 l., adaptateur qui lit `window.QRCode`). Licences réelles relues fichier par

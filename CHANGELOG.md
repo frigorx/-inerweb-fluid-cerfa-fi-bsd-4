@@ -2,6 +2,50 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🔊 VISITE GUIDÉE v2 — LA VOIX DE LA DÉMONSTRATION (14/08 matin, session en ligne)
+
+**Demande de Franck (13/08 au soir, décisions au 14/08 matin)** : un vocal DE
+QUALITÉ dans la démo, « le même principe que les tutos animés du programme
+d'habilitation fluide », un petit speech de présentation — et, « si c'est
+simple à coder », la souris qu'on voit se déplacer jusqu'au bouton avec le
+bruit du clic, immersif « comme un enseignant qui montre devant nous ».
+
+- **Le principe de Pilote Fluides, transposé** (mesuré sur pièce dans
+  `pilote-fluides` en ligne) : les narrations sont des MP3 locaux fabriqués À
+  LA CONSTRUCTION (Piper, voix `fr_FR-siwis-medium`) par
+  `outils/generer-voix-visite.mjs` ; un index généré
+  (`v8/res/voix-visite/index.js`, jamais édité à la main) relie l'empreinte
+  d'un texte à son fichier — recette FNV-1a IDENTIQUE à celle de Pilote,
+  GELÉE par un vecteur figé en test ; tout texte hors index RETOMBE sur la
+  voix du navigateur : la visite ne dépend JAMAIS du lot audio. ⚠️ Le lot
+  n'est pas encore fabriqué (Piper vit sur le poste) : en attendant, la démo
+  parle avec la voix du navigateur — c'est le repli PRÉVU, pas un manque.
+- **Le déroulé décidé** : l'étape se DIT à l'arrivée — titre, consigne,
+  attendu, EXACTEMENT les textes du panneau (le corpus EST l'écran, jamais un
+  mot à l'oreille qui ne soit pas sous les yeux) ; « Suivant » est le bouton
+  pour passer (la voix se coupe, la suivante se dit) ; le speech de
+  présentation vit AFFICHÉ dans la modale de choix du parcours et ne part
+  tout seul QUE si la modale s'est ouverte sur un clic (bouton de la barre
+  latérale) — à l'ouverture automatique de la première visite, c'est le
+  bouton « Écouter la présentation » qui est le geste ; le mot de fin est
+  AFFICHÉ (toast) et DIT à l'identique. Jamais un son sans geste humain ;
+  bouton couper/remettre la voix au panneau, préférence mémorisée
+  (`inerweb-fluide-v8-visite-voix`).
+- **La souris-enseignant** (le rêve, tenu parce que c'était simple : la
+  visite calculait déjà tous les rectangles cibles) : une flèche en
+  `pointer-events:none` glisse jusqu'à l'élément visé (transition 0,8 s)
+  puis montre le clic — onde + petit bip d'oscillateur fabriqué sur place
+  (aucun fichier) ; le geste RÉEL reste au visiteur, la flèche ne clique
+  jamais. Décorative par nature (consigne, liseré et étiquette disent déjà
+  tout) : absente sous `prefers-reduced-motion`.
+- **Preuves** : `v8/js/composants/test-voix-visite.mjs` — 34 vérifs
+  (empreinte gelée, corpus complet des 3 parcours, fichier joué/repli/erreur,
+  rien à la construction, coupure persistée, couture complète de la visite,
+  surfaces de la feuille de style) ; le speech reste un PROJET à corriger par
+  Franck (ses mots), le lot MP3 et la ligne de licence de la voix
+  (`LICENCES-TIERCES.md`) suivent la fabrication sur le poste.
+  **TOUT VERT — 139 exécutions.**
+
 ### ⚖️ DEUX VISITES GUIDÉES EN PARALLÈLE : ARBITRAGE, BANC NAVIGATEUR ET DURCISSEMENT (13/08, fin de soirée)
 
 **Deux sessions ont codé le chantier « tutoriel intégré » en même temps sans se

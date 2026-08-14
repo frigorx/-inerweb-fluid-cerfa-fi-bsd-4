@@ -73,12 +73,23 @@ gestes clés sans lecture préalable.
 
 ---
 
-## v2 en PROPOSITION — la voix de la démonstration (13/08 au soir)
+## v2 — la voix de la démonstration (proposée le 13/08 au soir, VALIDÉE et réalisée le 14/08)
 
-> **Statut : PROPOSITION — en attente de validation Franck. Rien n'est codé.**
-> Demande de Franck (13/08 au soir) : un vocal DE QUALITÉ dans la démo, « comme
-> si quelqu'un faisait la démonstration et expliquait tout », avec un petit
-> speech de présentation — « le même principe que les tutos animés du
+> **Statut : décisions rendues par Franck le 14/08 au matin, réalisation
+> livrée le jour même.** Ses réponses : ① la voix de qualité est celle déjà
+> validée ensemble (le principe Pilote — « pas une voix robotique, ça tu
+> connais ») ; ② l'étape se dit à l'arrivée, avec le bouton pour passer au
+> chapitre suivant (« Suivant ») ; ③ le speech s'écrit d'abord À L'ÉCRIT —
+> livré en projet ci-dessous, SES CORRECTIONS restent attendues ; ④ en rêve
+> dit « si c'est simple » : la souris qu'on voit se déplacer et cliquer —
+> c'était simple (les rectangles cibles existaient), la SOURIS-ENSEIGNANT
+> est faite. Restent : les corrections du speech, la fabrication du lot MP3
+> sur le poste (`outils/generer-voix-visite.mjs`), et la ligne de licence de
+> la voix à `LICENCES-TIERCES.md` au moment où le lot entre au dépôt.
+>
+> Demande d'origine (13/08 au soir) : un vocal DE QUALITÉ dans la démo,
+> « comme si quelqu'un faisait la démonstration et expliquait tout », avec un
+> petit speech de présentation — « le même principe que les tutos animés du
 > programme d'habilitation fluide ».
 
 ### Le principe de Pilote Fluides, mesuré sur pièce (06/08)
@@ -148,7 +159,7 @@ cinq minutes, la visite complète en quinze, ou la visite du frigoriste, la
 plus poussée. À chaque étape, l'écran vous montre où cliquer, et vous pouvez
 quitter quand vous voulez. Bonne visite. »
 
-### Questions à Franck (la réalisation part de ses réponses)
+### Questions à Franck — répondues le 14/08 au matin (réponses au statut, en tête de section ; conservées ici comme trace)
 
 1. **La voix** : Piper `fr_FR-siwis-medium` — la même que Pilote, cohérence
    de la voix « maison » d'un projet à l'autre, fabrication locale

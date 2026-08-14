@@ -23,11 +23,24 @@
 //   texte ; étape faite = coche dessinée + libellé d'état) ;
 // - prefers-reduced-motion : halo statique (géré dans la feuille de
 //   style, aucune animation ne porte de contenu).
+//
+// v2 — LA VOIX DE LA DÉMONSTRATION (14/08, demande Franck) : chaque
+// étape se DIT à l'arrivée (textes de l'écran, module voix-visite.js,
+// MP3 Piper quand le lot existe, voix du navigateur sinon), speech de
+// présentation dans la modale de choix (auto sur GESTE seulement),
+// bouton couper/remettre la voix (préférence mémorisée), et la
+// souris-enseignant : une flèche glisse jusqu'à l'élément visé et
+// montre le clic (onde + petit son) — comme un enseignant devant
+// l'élève. Sous prefers-reduced-motion, la flèche n'apparaît pas
+// (décorative : consigne, liseré et étiquette disent déjà tout).
 // ============================================================
 
 import { ICONES } from '../core/icones.js';
 import { esc } from '../core/utils.js';
 import { modale, toast } from '../views/communs.js';
+import {
+  creerNarrateur, textesNarrationEtape, TEXTE_PRESENTATION, TEXTE_FIN
+} from './voix-visite.js';
 
 /** Clé de mémoire locale : la proposition n'est faite qu'à la première visite. */
 export const CLE_MEMOIRE_VISITE = 'inerweb-fluide-v8-visite-guidee';
@@ -232,11 +245,33 @@ const ICONE_CHEVRON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 2
   + 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
   + 'aria-hidden="true" focusable="false"><path d="M6 9l6 6 6-6"></path></svg>';
 
+// Haut-parleur (voix active) et haut-parleur barré (voix coupée) — propres
+// au panneau, comme le chevron. L'état est AUSSI porté par aria-pressed et
+// aria-label : jamais l'icône seule.
+const ICONE_VOIX = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" '
+  + 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
+  + 'aria-hidden="true" focusable="false"><path d="M11 5 6 9H2v6h4l5 4V5Z"/>'
+  + '<path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+const ICONE_VOIX_COUPEE = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" '
+  + 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
+  + 'aria-hidden="true" focusable="false"><path d="M11 5 6 9H2v6h4l5 4V5Z"/>'
+  + '<path d="m16 9 6 6"/><path d="m22 9-6 6"/></svg>';
+
+// La flèche de la souris-enseignant : pointe dessinée à l'origine (0,0) du
+// dessin, pour que la translation posée par positionnerSouris amène la
+// pointe exactement sur le centre de l'élément visé.
+const ICONE_SOURIS = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26" '
+  + 'aria-hidden="true" focusable="false"><path d="M1 1l7.5 20 2.7-8L19 10.3Z" fill="#ffffff" '
+  + 'stroke="#1f3a5f" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+
 /**
  * Crée le contrôleur de la visite guidée.
- * @param {{ store: object, naviguer: (hash: string) => void }} contexte
+ * @param {{ store: object, naviguer: (hash: string) => void, narrateur?: object }} contexte
+ *   `narrateur` est injectable (suites de tests) ; par défaut, celui de
+ *   `voix-visite.js` — la voix de la démonstration (v2, 14/08).
  */
-export function creerVisiteGuidee({ store, naviguer }) {
+export function creerVisiteGuidee({ store, naviguer, narrateur }) {
+  const voix = narrateur || creerNarrateur();
   let parcours = null;       // parcours en cours (objet de PARCOURS_VISITE)
   let index = 0;             // étape courante
   const faites = new Set();  // ids des étapes accomplies
@@ -245,6 +280,8 @@ export function creerVisiteGuidee({ store, naviguer }) {
   let terminaisonPropre = false;
   let panneau = null;
   let repere = null;
+  let souris = null;             // la flèche-enseignant (jamais un obstacle)
+  let etapeSourisMontree = null; // id d'étape dont le clic a déjà été montré
   let replie = false;
   let ecoutesPosees = false;
 
@@ -359,6 +396,13 @@ export function creerVisiteGuidee({ store, naviguer }) {
       + '<span class="visite-entete-icone" aria-hidden="true">' + ICONES.parcours + '</span>'
       + '<span class="visite-entete-titre">Visite guidée</span>'
       + '<span class="visite-entete-parcours">' + esc(parcours.titre) + '</span>'
+      + (voix.disponible()
+        ? '<button type="button" class="visite-replier visite-voix" data-action="voix" '
+          + 'aria-pressed="' + (voix.estCoupee() ? 'true' : 'false') + '" '
+          + 'title="' + (voix.estCoupee() ? 'Remettre la voix' : 'Couper la voix') + '" '
+          + 'aria-label="' + (voix.estCoupee() ? 'Remettre la voix' : 'Couper la voix') + '">'
+          + (voix.estCoupee() ? ICONE_VOIX_COUPEE : ICONE_VOIX) + '</button>'
+        : '')
       + '<button type="button" class="visite-replier" data-action="replier" '
       + 'aria-expanded="' + (replie ? 'false' : 'true') + '" '
       + 'aria-label="' + (replie ? 'Déplier la visite guidée' : 'Replier la visite guidée') + '">'
@@ -416,6 +460,13 @@ export function creerVisiteGuidee({ store, naviguer }) {
       replie = !replie;
       rafraichirPanneau();
     });
+    const boutonVoix = panneau.querySelector('[data-action="voix"]');
+    if (boutonVoix) {
+      boutonVoix.addEventListener('click', function () {
+        voix.basculer();
+        rafraichirPanneau();
+      });
+    }
   }
 
   /* ---------- repère de surbrillance (jamais un obstacle) ---------- */
@@ -481,6 +532,73 @@ export function creerVisiteGuidee({ store, naviguer }) {
       hauteur: panneau.offsetHeight || 420
     };
     panneau.setAttribute('data-coin', choisirCoin(rect, fenetre, taille));
+    positionnerSouris(rect, fenetre);
+  }
+
+  /* ---------- la souris-enseignant (v2, 14/08 — rêve de Franck) ----------
+     Une flèche visible glisse jusqu'à l'élément visé puis « clique »
+     (onde + petit son), comme un enseignant qui montre le geste devant
+     l'élève. Décorative par nature : la consigne, le liseré et
+     l'étiquette portent déjà toute l'information — sous
+     prefers-reduced-motion elle n'apparaît donc pas du tout, et elle est
+     en pointer-events:none (jamais un obstacle, jamais un vrai clic :
+     le geste réel reste au visiteur). */
+
+  function mouvementReduit() {
+    try {
+      return Boolean(typeof window !== 'undefined'
+        && typeof window.matchMedia === 'function'
+        && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    } catch (erreur) {
+      return false;
+    }
+  }
+
+  function positionnerSouris(rect, fenetre) {
+    if (mouvementReduit()) {
+      if (souris) { souris.remove(); souris = null; }
+      return;
+    }
+    if (!rect) {
+      if (souris) souris.hidden = true;
+      return;
+    }
+    if (!souris) {
+      souris = document.createElement('div');
+      souris.id = 'visite-souris';
+      souris.className = 'visite-souris no-print';
+      souris.setAttribute('aria-hidden', 'true');
+      souris.innerHTML = ICONE_SOURIS + '<span class="visite-souris-onde"></span>';
+      // Départ du bord bas-droit : la glisse vers la cible se voit.
+      souris.style.transform = 'translate(' + Math.round(fenetre.largeur - 60)
+        + 'px, ' + Math.round(fenetre.hauteur - 120) + 'px)';
+      document.body.appendChild(souris);
+      if (souris.offsetWidth !== undefined) { /* pose le point de départ avant la transition */ }
+    }
+    souris.hidden = false;
+    const x = Math.round((rect.gauche + rect.droite) / 2);
+    const y = Math.round((rect.haut + rect.bas) / 2);
+    souris.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+    const etape = etapeCourante();
+    if (etape && etapeSourisMontree !== etape.id) {
+      etapeSourisMontree = etape.id;
+      // La transition CSS dure 0,8 s : le clic se montre à l'arrivée.
+      if (typeof setTimeout === 'function') {
+        setTimeout(function () { montrerClic(etape.id); }, 850);
+      }
+    }
+  }
+
+  function montrerClic(idEtape) {
+    const etape = etapeCourante();
+    if (!actif || !souris || !etape || etape.id !== idEtape) return;
+    const onde = souris.querySelector('.visite-souris-onde');
+    if (onde && onde.classList) {
+      onde.classList.remove('visite-souris-onde--active');
+      if (onde.offsetWidth !== undefined) { /* la relance repart de zéro */ }
+      onde.classList.add('visite-souris-onde--active');
+    }
+    voix.jouerClic();
   }
 
   /* ---------- cycle de vie ---------- */
@@ -493,7 +611,13 @@ export function creerVisiteGuidee({ store, naviguer }) {
     if (etape.fait && etape.fait.type === 'navigation' && vueCourante() === etape.vue) {
       faites.add(etape.id);
     }
+    // v2 (14/08) : le clic-enseignant se remontre à chaque nouvelle étape…
+    etapeSourisMontree = null;
     rafraichirPanneau();
+    // …et l'étape se DIT à l'arrivée (chaque arrivée est un geste : choix
+    // du parcours, Suivant, Précédent, clic de mission). Les textes dits
+    // sont EXACTEMENT ceux que le panneau affiche.
+    voix.direTextes(textesNarrationEtape(etape));
   }
 
   function demarrer(idParcours) {
@@ -528,11 +652,16 @@ export function creerVisiteGuidee({ store, naviguer }) {
   function arreter() {
     if (!actif) return;
     actif = false;
+    voix.arreter();
     if (panneau) { panneau.remove(); panneau = null; }
     if (repere) { repere.remove(); repere = null; }
+    if (souris) { souris.remove(); souris = null; }
+    etapeSourisMontree = null;
     if (terminaisonPropre) {
-      toast('Visite terminée — bonne découverte ! Le guide complet reste '
-        + 'disponible depuis la page d\'accueil.', 'succes');
+      // Le mot de fin : AFFICHÉ (toast) et DIT (voix), à l'identique —
+      // jamais un mot à l'oreille qui ne soit pas sous les yeux.
+      toast(TEXTE_FIN, 'succes');
+      voix.direTextes([TEXTE_FIN]);
     } else {
       toast('Visite quittée. Relancez-la quand vous voulez : bouton '
         + '« Visite guidée », en bas de la barre latérale.', 'info');
@@ -542,7 +671,13 @@ export function creerVisiteGuidee({ store, naviguer }) {
 
   /* ---------- proposition ---------- */
 
-  function proposer() {
+  function proposer(options) {
+    // v2 (14/08) : `gesteHumain` est vrai quand la modale s'ouvre sur un
+    // clic (bouton de la barre latérale) — le speech de présentation part
+    // alors tout seul. À l'ouverture AUTOMATIQUE de la première visite,
+    // aucun son (règle maison ET règle des navigateurs) : le bouton
+    // « Écouter la présentation » est le geste.
+    const gesteHumain = Boolean(options && options.gesteHumain);
     const cartes = PARCOURS_VISITE.map(function (p) {
       return '<button type="button" class="option-sauvegarde visite-choix" '
         + 'data-parcours="' + esc(p.id) + '">'
@@ -556,14 +691,50 @@ export function creerVisiteGuidee({ store, naviguer }) {
     const instance = modale({
       titre: 'Visite guidée de la démonstration',
       contenuHtml:
-        '<p class="modale-intro">Choisissez votre parcours : chaque étape est '
+        '<div class="visite-presentation">'
+        + '<p class="visite-presentation-texte">' + esc(TEXTE_PRESENTATION) + '</p>'
+        + (voix.disponible()
+          ? '<button type="button" class="btn btn-secondaire btn-petit" '
+            + 'data-role="ecouter-presentation">Écouter la présentation</button>'
+          : '')
+        + '</div>'
+        + '<p class="modale-intro">Choisissez votre parcours : chaque étape est '
         + 'un geste réel dans l\'application, et rien n\'est bloquant — vous '
         + 'quittez quand vous voulez (bouton « Quitter » ou touche Échap).</p>'
         + '<div class="options-sauvegarde">' + cartes + '</div>',
       actionsHtml:
         '<button type="button" class="btn btn-secondaire btn-bloc" '
-        + 'data-role="plus-tard">Plus tard</button>'
+        + 'data-role="plus-tard">Plus tard</button>',
+      surFermeture: function () { voix.arreter(); }
     });
+
+    const boutonEcouter = instance.racine.querySelector('[data-role="ecouter-presentation"]');
+    let lectureEnCours = false;
+    function majBoutonEcouter() {
+      if (!boutonEcouter) return;
+      boutonEcouter.textContent = lectureEnCours
+        ? 'Arrêter la lecture' : 'Écouter la présentation';
+    }
+    function lirePresentation() {
+      lectureEnCours = true;
+      majBoutonEcouter();
+      voix.direTextes([TEXTE_PRESENTATION]).then(function () {
+        lectureEnCours = false;
+        majBoutonEcouter();
+      });
+    }
+    if (boutonEcouter) {
+      boutonEcouter.addEventListener('click', function () {
+        if (lectureEnCours) {
+          voix.arreter();
+          lectureEnCours = false;
+          majBoutonEcouter();
+        } else {
+          lirePresentation();
+        }
+      });
+    }
+    if (gesteHumain && voix.disponible() && !voix.estCoupee()) lirePresentation();
 
     instance.racine.querySelectorAll('.visite-choix').forEach(function (carte) {
       carte.addEventListener('click', function () {
