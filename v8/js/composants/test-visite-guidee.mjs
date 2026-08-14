@@ -225,6 +225,52 @@ verifier('« Suivant » passe à l\'étape 2 (créer une machine)',
   panneau.innerHTML.includes('Étape 2 sur 7')
   && panneau.innerHTML.includes('Créer une machine'));
 
+// INVARIANT (banc navigateur 13/08) : Suivant/Précédent SANS navigation
+// — aucun hashchange, aucun scroll — doit repositionner le repère par
+// lui-même (aujourd'hui : programmerPositionnement en fin de
+// rafraichirPanneau). Cette vérification FIGE ce contrat observable.
+await attendre(450); // purge des minuteurs posés au démarrage de la visite
+const cibleEtape2 = document.createElement('button');
+cibleEtape2.id = 'bouton-ajouter-machine';
+cibleEtape2.getBoundingClientRect = () => (
+  { left: 100, top: 200, right: 220, bottom: 232, width: 120, height: 32 });
+document.body.appendChild(cibleEtape2);
+await cliquer(panneau.querySelector('[data-action="precedent"]'));
+await cliquer(panneau.querySelector('[data-action="suivant"]'));
+await attendre(50);
+const repere = document.getElementById('visite-repere');
+verifier('l\'entrée d\'étape REPOSITIONNE le repère (cible de l\'étape '
+  + 'courante calée, sans navigation ni défilement)',
+Boolean(repere) && repere.hidden === false
+  && repere.style.left === '94px' && repere.style.top === '194px');
+cibleEtape2.remove();
+
+// Onglet masqué ou bridé : le rAF peut ne JAMAIS jouer. Le drapeau de
+// demande ne doit pas rester coincé — sinon TOUS les repositionnements
+// suivants sont avalés jusqu'au retour de l'onglet (vu au banc 13/08 :
+// repère figé sur la cible de l'étape quittée). Protocole : rAF rendu
+// muet, une première demande épuise son minuteur de secours, puis une
+// SECONDE demande doit encore savoir caler le repère.
+const rafReel = globalThis.requestAnimationFrame;
+globalThis.requestAnimationFrame = () => 0; // muet : ne joue jamais
+await cliquer(panneau.querySelector('[data-action="precedent"]'));
+await attendre(450); // le minuteur de la demande d'entrée d'étape joue
+const cibleDrapeau = document.createElement('button');
+cibleDrapeau.id = 'bouton-ajouter-machine';
+cibleDrapeau.getBoundingClientRect = () => (
+  { left: 300, top: 400, right: 420, bottom: 432, width: 120, height: 32 });
+document.body.appendChild(cibleDrapeau);
+await cliquer(panneau.querySelector('[data-action="suivant"]'));
+await attendre(450);
+const repereDrapeau = document.getElementById('visite-repere');
+verifier('rAF muet (onglet masqué) : le drapeau retombe au minuteur de '
+  + 'secours, la demande SUIVANTE repositionne encore',
+Boolean(repereDrapeau) && repereDrapeau.hidden === false
+  && repereDrapeau.style.left === '294px'
+  && repereDrapeau.style.top === '394px');
+cibleDrapeau.remove();
+globalThis.requestAnimationFrame = rafReel;
+
 const missions = panneau.querySelectorAll('.visite-mission');
 await cliquer(missions[4]);
 verifier('la liste de mission est une table des matières : sauter à la 5e étape',

@@ -52,6 +52,34 @@ bruit du clic, immersif « comme un enseignant qui montre devant nous ».
   ligne de licence de la voix (`LICENCES-TIERCES.md`) suivent la fabrication
   sur le poste. **TOUT VERT — 139 exécutions.**
 
+### ⚖️ DEUX VISITES GUIDÉES EN PARALLÈLE : ARBITRAGE, BANC NAVIGATEUR ET DURCISSEMENT (13/08, fin de soirée)
+
+**Deux sessions ont codé le chantier « tutoriel intégré » en même temps sans se
+voir** : la session en ligne (`composants/visite-guidee.js`, PR #28/#29 —
+**conception VALIDÉE par Franck avant le code**) et la session du poste
+(`views/tutoriel.js`, 7 étapes fixes, codée sur carte blanche « pour terminer »,
+banc navigateur complet). Deux visites dans la même démo n'ont aucun sens :
+**l'implémentation à conception validée est retenue**, l'autre est RETIRÉE au
+merge d'arbitrage (jamais en silence — ce bloc en est la trace). Les apports
+uniques de la version retirée ont été REJOUÉS sur la retenue :
+
+- **Banc navigateur de bout en bout** (ports jetables 4173/4174, `/data` refusé
+  403, jamais 2011) : modale des trois parcours, panneau/liste de mission,
+  Précédent/Suivant/sauts, Échap (panneau ET repère retirés), console propre.
+  Un espion `getBoundingClientRect` a PROUVÉ que chaque entrée d'étape
+  interroge la BONNE cible et écrit le BON style — la « géométrie figée » vue
+  d'abord au banc était un artefact de mesure (onglet jamais composité : les
+  rectangles mesurés sont fossiles, le style inline, lui, est juste).
+- **Durcissement réel trouvé au banc** : dans un onglet masqué ou bridé, le
+  `requestAnimationFrame` de `programmerPositionnement` peut ne jamais jouer —
+  le drapeau de demande restait COINCÉ et tous les repositionnements suivants
+  étaient avalés jusqu'au retour de l'onglet. Le minuteur de secours fait
+  désormais retomber le drapeau. **Contre-épreuve tirée** (retombée retirée →
+  la suite rougit).
+- `test-visite-guidee.mjs` : **44 vérifications** (+2 : l'invariant « l'entrée
+  d'étape repositionne le repère » est FIGÉ ; le scénario « rAF muet » garde le
+  drapeau). **TOUT VERT — 138 exécutions, 207 attaques.**
+
 ### 🧭 VISITE GUIDÉE DE LA DÉMONSTRATION (13/08 au soir, session en ligne)
 
 **Demande de Franck (13/08) : un tutoriel INTÉGRÉ à la démo en ligne** — pas une page à
