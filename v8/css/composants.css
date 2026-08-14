@@ -1441,6 +1441,54 @@
   }
 }
 
+/* La souris-enseignant (v2 voix, 14/08) : la flèche qui glisse jusqu'à
+   l'élément visé puis montre le clic. Décorative par nature (consigne,
+   liseré et étiquette portent déjà tout) : sous prefers-reduced-motion,
+   elle n'apparaît pas. Jamais un obstacle : pointer-events none, même
+   couche que le repère (sous le panneau). */
+.visite-souris {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 69;
+  pointer-events: none;
+  transition: transform 0.8s ease-in-out;
+  filter: drop-shadow(0 2px 4px rgba(15, 40, 70, 0.45));
+}
+.visite-souris svg { display: block; }
+.visite-souris-onde {
+  position: absolute;
+  left: -14px;
+  top: -14px;
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--accent);
+  border-radius: 50%;
+  opacity: 0;
+}
+.visite-souris-onde--active { animation: visite-souris-clic 0.5s ease-out; }
+@keyframes visite-souris-clic {
+  0%   { opacity: 0.9; transform: scale(0.4); }
+  100% { opacity: 0;   transform: scale(1.6); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .visite-souris { display: none; }
+}
+
+/* Le speech de présentation dans la modale de choix du parcours (v2 voix) */
+.visite-presentation {
+  background: var(--fond-2);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-bouton);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.visite-presentation-texte {
+  margin: 0 0 8px;
+  font-size: 0.92rem;
+  color: var(--texte-2);
+}
+
 /* La durée dans les cartes de choix du parcours */
 .visite-choix-duree {
   font-weight: 400;

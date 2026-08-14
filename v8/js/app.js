@@ -133,7 +133,10 @@ function construireSidebar() {
   const boutonVisite = document.getElementById('bouton-visite-guidee');
   if (boutonVisite) {
     boutonVisite.addEventListener('click', function () {
-      if (visiteGuidee) visiteGuidee.proposer();
+      // Le clic est le GESTE HUMAIN : le speech de présentation peut partir
+      // (v2 voix, 14/08). À l'ouverture automatique de la première visite,
+      // proposerAuPremierChargement ne le passe pas — aucun son sans geste.
+      if (visiteGuidee) visiteGuidee.proposer({ gesteHumain: true });
     });
   }
   majPiedSession();
