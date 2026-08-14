@@ -87,6 +87,26 @@ export function normaliserTexte(valeur) {
     .trim();
 }
 
+/**
+ * Le texte tel qu'il se DIT : la ponctuation décorative ne se lit pas
+ * (constat de Franck, 14/08 — le repli navigateur épelait des signes).
+ * Guillemets, parenthèses, astérisque, point médian s'effacent ; les
+ * tirets deviennent une virgule (la pause) ; les points de suspension
+ * un point. L'APOSTROPHE reste : elle porte le mot (« l'essentiel »).
+ * L'EMPREINTE, elle, se calcule TOUJOURS sur le texte de l'écran :
+ * les clés du lot audio ne bougent pas quand la diction s'affine.
+ */
+export function texteADire(valeur) {
+  return normaliserTexte(valeur)
+    .replace(/[«»"()*·]/g, ' ')
+    .replace(/[—–]/g, ', ')
+    .replace(/…/g, '.')
+    .replace(/\s+/g, ' ')
+    .replace(/\s+([,.!?:;])/g, '$1')
+    .replace(/,(\s*,)+/g, ',')
+    .trim();
+}
+
 /** Empreinte FNV-1a (hex sur 8) + longueur — la clé de l'index audio. */
 export function empreinteTexte(valeur) {
   const texte = normaliserTexte(valeur);
@@ -208,7 +228,8 @@ export function creerNarrateur(options = {}) {
         return;
       }
       let phrase;
-      try { phrase = new ClasseUtterance(texte); } catch (erreur) { fin(); return; }
+      // La synthèse reçoit le texte tel qu'il se DIT, jamais les signes.
+      try { phrase = new ClasseUtterance(texteADire(texte)); } catch (erreur) { fin(); return; }
       phrase.lang = 'fr-FR';
       try {
         const voix = (typeof synth.getVoices === 'function' && synth.getVoices()) || [];

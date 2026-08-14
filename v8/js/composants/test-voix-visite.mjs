@@ -55,7 +55,7 @@ globalThis.localStorage = {
 
 const {
   creerNarrateur, textesNarrationEtape, empreinteTexte, normaliserTexte,
-  TEXTE_PRESENTATION, TEXTE_FIN, CLE_MEMOIRE_VOIX
+  texteADire, TEXTE_PRESENTATION, TEXTE_FIN, CLE_MEMOIRE_VOIX
 } = await import('./voix-visite.js');
 const { PARCOURS_VISITE, creerVisiteGuidee } = await import('./visite-guidee.js');
 const { creerStore } = await import('../data/datastore.js');
@@ -426,6 +426,43 @@ enregistreur.appels.some((a) => a.geste === 'basculer')
   && derniersDits(enregistreur).join('|') === TEXTE_PRESENTATION);
 await cliquer(modaleCoupee.querySelector('[data-role="plus-tard"]'));
 enregistreur.coupee = false;
+
+// ============================================================
+// D-ter. La diction — la ponctuation ne se lit pas (Franck, 14/08)
+// ============================================================
+console.log('\n--- D-ter. La diction ---');
+
+verifier('texteADire : guillemets, parenthèses, astérisque, point médian '
+  + 'ne se disent pas',
+texteADire('Ouvrez « Parc machines » (CERFA 15497*04) · voilà.')
+  === 'Ouvrez Parc machines CERFA 15497 04 voilà.');
+verifier('texteADire : le tiret devient la pause (virgule), les points de '
+  + 'suspension un point',
+texteADire('Visite terminée — bonne découverte…')
+  === 'Visite terminée, bonne découverte.');
+verifier('texteADire : l\'apostrophe RESTE, elle porte le mot',
+  texteADire('L\'essentiel de l\'audit.') === 'L\'essentiel de l\'audit.');
+verifier('l\'empreinte reste celle de l\'ÉCRAN (nettoyer changerait la clé '
+  + '— preuve que la diction n\'entre pas dans l\'index)',
+empreinteTexte('a « b »') !== empreinteTexte(texteADire('a « b »')));
+
+// Le repli navigateur dit le texte NETTOYÉ (capture de l'utterance).
+{
+  const { narrateur: nDiction, synthese: sDiction } = fabriquerNarrateur();
+  await nDiction.direTextes(['Inconnu « à signes » — donc (repli)…']);
+  verifier('le repli navigateur reçoit le texte nettoyé, jamais les signes',
+    sDiction.dits.join('|') === 'Inconnu à signes, donc repli.');
+}
+
+// La fabrication : Piper reçoit texteADire, la clé reste l'écran.
+{
+  const sourceOutil = readFileSync(join(dirname(fileURLToPath(import.meta.url)),
+    '..', '..', '..', 'outils', 'generer-voix-visite.mjs'), 'utf8');
+  verifier('l\'outil de fabrication donne à Piper le texte tel qu\'il se dit',
+    sourceOutil.includes('input: texteADire(texte)'));
+  verifier('…et la clé du fichier reste l\'empreinte du texte de l\'écran',
+    sourceOutil.includes('empreinteTexte(normalise)'));
+}
 
 // ============================================================
 // E. Les surfaces (feuille de style)

@@ -2,6 +2,37 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🎙️ LE LOT AUDIO EST FABRIQUÉ, ET LA PONCTUATION NE SE LIT PAS (14/08 matin, sur le poste)
+
+Le reste annoncé par la v2 (« Piper vit sur le poste ») est soldé :
+**29 narrations MP3 fabriquées** par `outils/generer-voix-visite.mjs` (Piper,
+voix `fr_FR-siwis-medium` — le MÊME modèle que Pilote Fluides, retrouvé dans
+son cache local), index réécrit par l'outil, **1,8 Mo**, textes du lot 1 de la
+revue compris. Outillage JETABLE hors dépôt (venv de session : `piper-tts`
+1.4.1 + `pathvalidate` — dépendance transitive manquante du paquet, découverte
+à l'essai — + le ffmpeg embarqué d'`imageio-ffmpeg`) : rien d'installé sur le
+système, rien de nouveau dans le dépôt.
+
+**Diction (constat de Franck au premier test : le repli navigateur épelait
+des signes — « accent circonflexe » — et lisait la ponctuation)** :
+`texteADire` retire au moment de DIRE ce qui ne se dit pas — guillemets,
+parenthèses, astérisque, point médian ; tirets → virgule (la pause), points de
+suspension → point ; l'APOSTROPHE reste, elle porte le mot. Appliquée au repli
+navigateur ET au texte donné à Piper ; **l'empreinte reste celle du texte de
+l'ÉCRAN** : les clés du lot ne bougent pas quand la diction s'affine. Le lot a
+été REFABRIQUÉ entier avec cette diction. NB : l'épellation des accents venait
+d'une voix de navigateur non française — le lot MP3 la rend marginale, et
+`direSynthese` choisit déjà une voix française quand le poste en a une.
+
+**Preuves** : `test-voix-visite.mjs` **43 vérifications** (+7 : la diction —
+contre-épreuve tirée : nettoyage retiré du repli, la suite rougit ; l'outil
+donne `texteADire` à Piper et garde la clé de l'écran, lu dans sa source).
+TOUT VERT **139 exécutions** (la suite voix valide l'index CONTRE les
+fichiers), 207 attaques ; banc navigateur (port jetable 4175) : « Écouter la
+présentation » charge son MP3 (200) et le bouton passe à « Arrêter la
+lecture », l'étape 1 charge ses narrations (200) — la voix du navigateur
+n'est plus que le repli prévu.
+
 ### 🧾 REVUE EXTERNE DU 14/08 (relayée par Franck) — LOT 1 : les mots, les dates, l'écran
 
 **Une revue extérieure complète de la démo**, relayée et priorisée par le

@@ -45,7 +45,7 @@ installerDocumentFactice();
 const { PARCOURS_VISITE } = await import('../v8/js/composants/visite-guidee.js');
 const {
   textesNarrationEtape, TEXTE_PRESENTATION, TEXTE_FIN,
-  empreinteTexte, normaliserTexte
+  empreinteTexte, normaliserTexte, texteADire
 } = await import('../v8/js/composants/voix-visite.js');
 
 /* ---------- le corpus : l'écran, rien que l'écran ---------- */
@@ -110,8 +110,9 @@ for (const { cle, texte } of corpus) {
   if (fs.existsSync(cibleMp3)) { conserves += 1; continue; }
 
   const wav = path.join(dossierTravail, cle + '.wav');
+  // Piper reçoit le texte tel qu'il se DIT (la clé, elle, reste l'écran).
   const piper = spawnSync(PIPER, ['--model', MODELE, '--output_file', wav], {
-    input: texte, encoding: 'utf8'
+    input: texteADire(texte), encoding: 'utf8'
   });
   if (piper.status !== 0 || !fs.existsSync(wav)) {
     rates.push({ cle, etape: 'piper', detail: (piper.stderr || '').slice(0, 200) });
