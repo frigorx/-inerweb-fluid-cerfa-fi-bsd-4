@@ -178,6 +178,31 @@
   border-bottom: 1px solid var(--bordure);
 }
 
+/* Le bouton-phare de la DÉMO : la visite guidée en haut au centre, grosse
+   et explicite (décision Franck 14/08 — « donner envie et faire
+   comprendre »). Orange du logo de la charte ; jamais présent en Local
+   (app.js ne le révèle qu'en démo). */
+.bouton-visite-entete {
+  margin-inline: auto;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 999px;
+  background: #e8914a;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(232, 145, 74, .45);
+}
+.bouton-visite-entete:hover { filter: brightness(1.07); }
+@media (max-width: 1100px) {
+  .bouton-visite-entete .visite-entete-detail { display: none; }
+}
+@media (max-width: 640px) {
+  .bouton-visite-entete { font-size: 13px; padding: 8px 14px; }
+}
 /* Bouton hamburger : masqué sur grand écran */
 .bouton-menu {
   display: none;

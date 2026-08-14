@@ -138,6 +138,16 @@ function construireSidebar() {
       if (visiteGuidee) visiteGuidee.proposer({ gesteHumain: true });
     });
   }
+  // Le CŒUR de la démo en haut de l'écran (décision Franck 14/08) : le
+  // bouton-phare de l'en-tête, DÉMO seulement — celui de la barre latérale
+  // demeure. Même geste, même règle du son.
+  const boutonVisiteEntete = document.getElementById('bouton-visite-entete');
+  if (boutonVisiteEntete && visiteDisponible(store)) {
+    boutonVisiteEntete.hidden = false;
+    boutonVisiteEntete.addEventListener('click', function () {
+      if (visiteGuidee) visiteGuidee.proposer({ gesteHumain: true });
+    });
+  }
   majPiedSession();
 
   // Sur mobile, un clic sur un lien referme le tiroir
