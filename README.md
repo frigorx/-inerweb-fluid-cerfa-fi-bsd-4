@@ -38,11 +38,11 @@ maintient fermé le temps de solder les corrections issues de l'audit externe du
 20/07/2026 ; sa réouverture est une décision, pas un développement.
 
 En attendant, toute fiche produite porte le filigrane « DÉMO / FORMATION » :
-le logiciel ne peut pas être pris pour un registre opposable par accident.
+le logiciel ne peut pas être pris pour un registre à valeur probante par accident.
 
 ## Fonctionnalités clés
 
-- **Registre verrouillé à contre-écritures** : une écriture validée n'est jamais modifiée ni effacée ; toute correction passe par une contre-écriture de régularisation, avec empreintes chaînées (SHA-256) rendant le registre **inaltérable au sein de l'application** (toute modification via l'application est refusée et toute rupture de la chaîne est détectable ; une manipulation directe du fichier de base par un tiers reste, elle, du ressort du chiffrement du disque).
+- **Registre verrouillé à contre-écritures** : une écriture validée n'est jamais modifiée ni effacée ; toute correction passe par une contre-écriture de régularisation, avec empreintes chaînées (SHA-256) rendant **toute altération détectable au sein de l'application** (toute modification via l'application est refusée et toute rupture de la chaîne est détectable ; une manipulation directe du fichier de base par un tiers reste, elle, du ressort du chiffrement du disque).
 - **Balance matière annuelle par fluide** : stock théorique calculé (achats, récupérations, charges, cessions, retours, destructions) comparé au stock réel pesé au 31/12 ; tout écart exige une justification.
 - **CERFA officiel rempli (PDF)** : le formulaire 15497\*04 officiel est rempli automatiquement, avec un aperçu à l'écran fidèle au document ; la référence imprimée et archivée est toujours le PDF officiel.
 - **Dossier audit annuel en un clic** : export ZIP complet (attestations, registres du personnel et de l'outillage, inventaires, mouvements, CERFA, contrôles d'étanchéité, BSFF, balance matière, journal d'audit) et vue « audit en 5 minutes ».

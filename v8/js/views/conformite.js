@@ -124,9 +124,13 @@ function bandeauGlobal(r, jour) {
 
 /** Carte « Mode Officiel » : les prérequis bloquants de la SPEC §7.2. */
 function carteOfficiel(officiel) {
+  // Revue du 14/08 : « tous les prérequis réunis » sous un « Non conforme »
+  // se lisait comme une contradiction. La carte parle de la CONFIGURATION
+  // d'activation du mode Officiel, pas de la conformité métier — le libellé
+  // le dit désormais.
   const contenu = officiel.ok
     ? '<p class="officiel-ok">' + ICONES.coche
-      + '<span>Tous les prérequis du mode Officiel sont réunis.</span></p>'
+      + '<span>Configuration minimale du mode Officiel renseignée.</span></p>'
     : '<ul class="officiel-motifs">'
       + officiel.motifs.map((m) => '<li>' + esc(m) + '</li>').join('')
       + '</ul>';
@@ -135,7 +139,7 @@ function carteOfficiel(officiel) {
     + pastille(officiel.ok ? 'VERT' : 'ORANGE', true)
     + '<div>'
     + '<div class="domaine-titre">Prérequis du mode Officiel</div>'
-    + '<div class="domaine-detail">Les vérifications bloquantes avant tout passage en réel (SPEC §7.2).</div>'
+    + '<div class="domaine-detail">Les vérifications bloquantes avant tout passage en réel.</div>'
     + '</div>'
     + '</div>'
     + contenu

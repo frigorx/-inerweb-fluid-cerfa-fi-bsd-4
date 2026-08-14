@@ -74,7 +74,7 @@ export const ETAPES = [
     id: 'mouvements', type: 'controle',
     titre: 'Registre des mouvements',
     vue: 'mouvements', vueLibelle: 'Mouvements',
-    detail: 'LE registre opposable : chaque intervention scellée '
+    detail: 'LE registre à intégrité vérifiable : chaque intervention figée '
       + '(hash chaîné), CERFA généré, rôles réels consignés.',
     aFaire: 'Soldez les brouillons et mouvements soumis en attente ; '
       + 'l’intégrité de la chaîne doit être intacte.',

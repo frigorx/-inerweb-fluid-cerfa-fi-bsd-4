@@ -216,7 +216,7 @@ Elle ne se déplace ni vers un outil, ni vers l'auteur d'un outil.
 ## 4. Les conditions d'emploi — sans elles, ce qui précède ne vaut plus
 
 1. **Le verrou du mode Officiel** : tant qu'il est fermé, le logiciel ne peut pas être pris
-   pour un registre opposable ; sa réouverture est une décision écrite, pas une manipulation.
+   pour un registre à valeur probante ; sa réouverture est une décision écrite, pas une manipulation.
 2. **Le poste est chiffré** et son accès physique contrôlé.
 3. **Les sauvegardes sont faites, sorties du poste et vérifiées** — une restauration au moins
    a été réellement essayée, pas seulement configurée.

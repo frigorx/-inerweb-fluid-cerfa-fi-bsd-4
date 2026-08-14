@@ -109,7 +109,16 @@ const REFUSES = [
   // on ne dit jamais « le registre est intact ».
   { motif: /(?:n'a pas ete|jamais) (?:fabrique|produit|redige|etabli|imprime) apres coup/,
     remede: 'une empreinte porte sur l’ÉCRITURE, pas sur le papier : dire '
-      + 'ce qu’elle permet de RECOUPER (documents/regularisation.js)' }
+      + 'ce qu’elle permet de RECOUPER (documents/regularisation.js)' },
+  // ⭐ REVUE EXTERNE DU 14/08 (relayée par le propriétaire). « Opposable »
+  // affirmé d'un registre revendique une force probante que le chaînage
+  // SHA-256 seul ne confère pas (art. 1367 C. civ., eIDAS : identification
+  // du signataire + fiabilité du procédé). Les COLLOCATIONS affirmatives
+  // sont refusées ; le mot reste libre en usage interne (commentaires,
+  // « part opposable » du moteur) et dans les tournures de PRUDENCE.
+  { motif: /(?:registre|trace|dossier|archive) opposable|simple et opposable/,
+    remede: 'écrire « à intégrité vérifiable » / « journal chaîné permettant '
+      + 'de détecter une altération » (revue du 14/08, art. 1367 C. civ.)' }
 ];
 
 // Les mots LÉGAUX à condition d'être qualifiés, avec la fenêtre (en
@@ -186,8 +195,12 @@ verifier('une chaîne JavaScript coupée en deux est recollée avant jugement (v
 verifier('« sauvegardes chiffrées » et « coffre chiffré » restent légaux (AES-256-GCM, vrai chiffrement)',
   infractionsDuTexte("Une copie complète et chiffrée ; l'identité est chiffrée dans le coffre.").length === 0);
 
-verifier('« registre opposable » tout court reste légal (SECURITE.md:127 — c’est la cible du projet)',
+verifier('« conçu pour être opposable » (l’AMBITION, dite comme telle) reste légal',
   infractionsDuTexte('Le registre des mouvements de fluides est conçu pour être **opposable**.').length === 0);
+
+verifier('« registre opposable » AFFIRMÉ est refusé depuis la revue du 14/08 '
+  + '(le chaînage seul ne confère pas la force probante — art. 1367 C. civ.)',
+infractionsDuTexte('Le dossier annuel sort du registre opposable.').length === 1);
 
 verifier("« toute altération passée par l'application se voit » reste légal",
   infractionsDuTexte("Toute altération passée par l'application se voit.").length === 0);

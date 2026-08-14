@@ -445,8 +445,10 @@ function peutAfficherCerfa(mouvement) {
  */
 function bandeauModeOfficiel(etatOfficiel) {
   if (etatOfficiel.ok) {
+    // Même clarification que la carte de l'écran Conformité (revue du
+    // 14/08) : configuration d'activation, pas conformité métier.
     return '<div class="tdb-officiel-ok">' + ICONES.coche
-      + '<span>Prérequis du mode Officiel : tous réunis.</span></div>';
+      + '<span>Configuration minimale du mode Officiel renseignée.</span></div>';
   }
   const motifs = etatOfficiel.motifs.map((motif) => '<li>' + esc(motif) + '</li>').join('');
   return '<div class="bandeau-avertissement tdb-officiel">'
