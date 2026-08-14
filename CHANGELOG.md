@@ -26,6 +26,11 @@
 - **Le logo de la charte inerWeb** (référence figée) remplace l'ancienne
   marque simplifiée : vitrine, guide, application et documents imprimés
   portent le même SVG (`v8/js/core/logo.js`, copie dans `img/`).
+- **Premier démarrage tenu par la main** : chaque paquet embarque
+  `PREMIER-DEMARRAGE.html` (une page illustrée : extraction, avertissement
+  Windows, premier compte), un script optionnel de raccourci Bureau, et le
+  lanceur explique lui-même l'erreur du « double-clic dans le ZIP non
+  extrait ».
 
 ## Avant le 14/08/2026
 

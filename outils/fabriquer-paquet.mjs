@@ -202,7 +202,8 @@ console.log('  [ok] v8/ (sans les suites de test)');
 // PDF.js exige que ses notices voyagent avec toute redistribution du logiciel.
 // Le paquet est régi par LICENCE-EVALUATION.txt (le contrat d'évaluation),
 // pas par le LICENSE du dépôt — un seul texte fait foi chez le destinataire.
-const FICHIERS = ['lancer-inerweb.bat', 'cerfa_15497-04_officiel.pdf',
+const FICHIERS = ['lancer-inerweb.bat', 'creer-raccourci-bureau.bat',
+  'PREMIER-DEMARRAGE.html', 'cerfa_15497-04_officiel.pdf',
   '.env.example', 'LICENCES-TIERCES.md'];
 for (const f of FICHIERS) {
   const src = path.join(RACINE, f);
@@ -266,6 +267,10 @@ renouvellement (gratuit, même adresse).
 
 DÉMARRER
 --------
+Le plus simple : ouvrez « PREMIER-DEMARRAGE.html » (double-clic) — une
+page illustrée qui montre chaque étape, avertissement Windows compris.
+
+En résumé :
 1. Double-cliquez sur « lancer-inerweb.bat ».
 2. Le navigateur s'ouvre sur http://localhost:2011
 3. Au tout premier lancement, l'application affiche un écran
@@ -276,9 +281,10 @@ DÉMARRER
 
 Windows peut afficher un avertissement « SmartScreen » au premier
 lancement (application téléchargée non signée) : cliquez sur
-« Informations complémentaires » puis « Exécuter quand même ». Vous
-pouvez aussi débloquer le dossier via clic droit → Propriétés →
-« Débloquer » avant de lancer.
+« Informations complémentaires » puis « Exécuter quand même ».
+
+Pour un raccourci sur votre Bureau : double-cliquez une fois sur
+« creer-raccourci-bureau.bat ».
 
 Node.js est DÉJÀ inclus dans ce dossier (sous « node\\ ») : il n'y a
 rien à installer. Sa licence figure dans « node\\LICENSE ».

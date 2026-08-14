@@ -19,6 +19,10 @@ aucune donnée ne quitte le poste.
 
 ### Voie A — le paquet portable (la voie normale)
 
+> 💡 Le paquet contient **`PREMIER-DEMARRAGE.html`** : une page illustrée qui
+> montre chaque étape (extraction, avertissement Windows, premier compte) —
+> ouvrez-la en premier, elle suffit dans la plupart des cas.
+
 Il n'y a **aucun prérequis** : le « moteur » Node.js est déjà inclus dans le dossier.
 Le paquet contient aussi votre **licence nominative** (`licence-inerweb.json`), que le
 logiciel vérifie au démarrage, entièrement sur le poste : ne supprimez pas ce fichier.

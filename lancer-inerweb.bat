@@ -14,6 +14,27 @@ title inerWeb Fluide - Tracabilite F-Gas (serveur local)
 rem Se placer dans le dossier de ce script (application portable).
 cd /d "%~dp0"
 
+rem Garde ZIP : si le programme n'est pas a cote de ce fichier, c'est
+rem presque toujours un double-clic DEPUIS le ZIP non extrait (Windows ne
+rem sort alors que le .bat). On le dit clairement, avant tout le reste.
+if not exist "%~dp0server\serveur.js" (
+    echo.
+    echo   [ERREUR] Le logiciel n'est pas a cote de ce fichier.
+    echo.
+    echo   CAUSE LA PLUS PROBABLE : vous avez double-clique depuis le fichier
+    echo   ZIP sans l'extraire. Fermez cette fenetre, puis :
+    echo.
+    echo     1. Clic DROIT sur le fichier ZIP recu
+    echo     2. "Extraire tout..." puis "Extraire"
+    echo     3. Ouvrez le dossier extrait et double-cliquez lancer-inerweb.bat
+    echo.
+    echo   La feuille PREMIER-DEMARRAGE.html du dossier explique tout.
+    echo   Besoin d'aide : inerweb.fh@gmail.com
+    echo.
+    pause
+    exit /b 1
+)
+
 rem --- Charger la configuration locale simple (NOM=VALEUR, commentaires #). ---
 if exist ".env" (
     for /f "usebackq eol=# tokens=1,* delims==" %%A in (".env") do set "%%A=%%B"
@@ -38,11 +59,19 @@ if exist "%~dp0node\node.exe" (
     where node >nul 2>nul && set "NODE_EXE=node"
 )
 if not defined NODE_EXE (
-    echo   [ERREUR] Node.js est introuvable sur ce poste.
+    echo   [ERREUR] Le moteur du logiciel est introuvable a cote de ce fichier.
     echo.
-    echo   Utilisez le paquet portable inerWeb Fluide ^(il contient tout,
-    echo   rien a installer^), ou installez Node.js LTS ^(gratuit^) sur
-    echo   https://nodejs.org/fr puis relancez ce fichier.
+    rem Cause la plus frequente : double-clic DEPUIS le fichier ZIP, sans
+    rem l'avoir extrait. Windows ne sort alors que le .bat, jamais le reste.
+    echo   CAUSE LA PLUS PROBABLE : vous avez double-clique depuis le fichier
+    echo   ZIP sans l'extraire. Fermez cette fenetre, puis :
+    echo.
+    echo     1. Clic DROIT sur le fichier ZIP recu
+    echo     2. "Extraire tout..." puis "Extraire"
+    echo     3. Ouvrez le dossier extrait et double-cliquez lancer-inerweb.bat
+    echo.
+    echo   La feuille PREMIER-DEMARRAGE.html du dossier explique tout, image
+    echo   par image. Besoin d'aide : inerweb.fh@gmail.com
     echo.
     pause
     exit /b 1
