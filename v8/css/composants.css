@@ -1284,3 +1284,173 @@
   font-size: 13px;
   color: var(--texte-faible);
 }
+
+/* ============================================================
+   Visite guidée de la démonstration (13/08/2026)
+   docs/PLAN-VISITE-GUIDEE.md — le repère ne bloque JAMAIS un clic
+   (pointer-events: none), le panneau se pose dans un coin libre
+   (data-coin, choisi par choisirCoin pour ne pas recouvrir la cible).
+   ============================================================ */
+
+.visite-panneau {
+  position: fixed;
+  z-index: 70; /* sous les modales (80+) : une boîte ouverte passe devant */
+  width: min(340px, calc(100vw - 32px));
+  background: var(--carte);
+  border: 1px solid var(--bordure-2);
+  border-radius: var(--rayon-carte);
+  box-shadow: var(--ombre-haute);
+  font-size: 13px;
+}
+.visite-panneau[data-coin="bas-droite"]  { right: 16px; bottom: 16px; }
+.visite-panneau[data-coin="bas-gauche"]  { left: 16px;  bottom: 16px; }
+.visite-panneau[data-coin="haut-droite"] { right: 16px; top: 16px; }
+.visite-panneau[data-coin="haut-gauche"] { left: 16px;  top: 16px; }
+
+.visite-entete {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--bordure);
+}
+.visite-entete-icone { color: var(--accent); display: inline-flex; }
+.visite-entete-icone svg { width: 18px; height: 18px; }
+.visite-entete-titre {
+  font-family: var(--police-titres);
+  font-weight: 600;
+  color: var(--marine-900);
+}
+.visite-entete-parcours {
+  color: var(--texte-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.visite-replier,
+.visite-fermer {
+  border: none;
+  background: none;
+  color: var(--texte-2);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: inline-flex;
+}
+.visite-replier:hover,
+.visite-fermer:hover { background: var(--fond-2); color: var(--marine-900); }
+.visite-replier svg, .visite-fermer svg { width: 16px; height: 16px; }
+.visite-replier[aria-expanded="false"] svg { transform: rotate(180deg); }
+
+.visite-corps { padding: 10px 12px 12px; }
+
+.visite-missions {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  max-height: 168px;
+  overflow-y: auto;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-bouton);
+}
+.visite-mission {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 6px 8px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: var(--texte-2);
+}
+.visite-mission:hover { background: var(--fond-2); }
+.visite-mission--courante { background: var(--accent-fond); color: var(--marine-900); }
+.visite-mission--faite .visite-mission-titre { color: var(--succes); }
+.visite-mission-etat { display: inline-flex; width: 16px; justify-content: center; }
+.visite-mission-etat svg { width: 14px; height: 14px; color: var(--succes); }
+.visite-mission-rond {
+  width: 10px; height: 10px;
+  border: 2px solid var(--bordure-3);
+  border-radius: 50%;
+  display: inline-block;
+}
+.visite-mission-titre { flex: 1; }
+.visite-mission-libelle { font-size: 11px; color: var(--texte-2); }
+
+.visite-etape-numero {
+  font-size: 11px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--texte-2);
+  margin-bottom: 2px;
+}
+.visite-etape-titre {
+  margin: 0 0 6px;
+  font-family: var(--police-titres);
+  font-size: 15px;
+  color: var(--marine-900);
+}
+.visite-consigne { margin: 0 0 6px; color: var(--texte-2); }
+.visite-attendu {
+  margin: 0;
+  padding: 8px;
+  background: var(--fond-2);
+  border-radius: var(--rayon-bouton);
+  color: var(--texte-2);
+}
+
+.visite-pied {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.visite-pied .btn { flex: 1; justify-content: center; }
+.visite-suivant--pret { box-shadow: 0 0 0 3px var(--accent-halo); }
+
+/* Le repère : un liseré posé PAR-DESSUS l'écran mais transparent aux
+   clics — l'élément visé reste pleinement cliquable, rien n'est voilé. */
+.visite-repere {
+  position: fixed;
+  z-index: 69; /* sous le panneau, au-dessus du contenu */
+  pointer-events: none;
+  border: 3px solid var(--accent);
+  border-radius: 10px;
+  box-shadow: 0 0 0 4px var(--accent-halo);
+}
+.visite-repere-etiquette {
+  position: absolute;
+  top: -26px;
+  left: 0;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .visite-repere { animation: visite-halo 1.6s ease-in-out infinite; }
+  @keyframes visite-halo {
+    0%, 100% { box-shadow: 0 0 0 4px var(--accent-halo); }
+    50%      { box-shadow: 0 0 0 9px var(--accent-halo); }
+  }
+}
+
+/* La durée dans les cartes de choix du parcours */
+.visite-choix-duree {
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--texte-2);
+}
+
+/* Petits écrans : le panneau devient une bande en bas, repliable */
+@media (max-width: 720px) {
+  .visite-panneau { width: calc(100vw - 16px); }
+  .visite-panneau[data-coin] { left: 8px; right: 8px; bottom: 8px; top: auto; }
+  .visite-missions { max-height: 96px; }
+}

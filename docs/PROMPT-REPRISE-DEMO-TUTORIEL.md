@@ -1,15 +1,18 @@
 # Prompt de reprise — MISE À JOUR DE LA DÉMO EN LIGNE + TUTORIEL INTÉGRÉ (à coller dans un nouveau chat)
 
-> ⚠️ **LES DEUX CHANTIERS SONT EXÉCUTÉS le 13/08/2026 au soir — ne rien
-> refaire.** Chantier 1 : PR #26 et PR #27 (deux sessions parallèles,
-> réconciliées) fusionnées en merge ordinaire ; SITE vérifié (démo, guide avec
-> la partie Animations, racine, pédagogie) ; en complément : **version de semis
-> du monde démo** (commit `8fd57ee` — le localStorage d'un visiteur d'avant le
-> 28/07 rejouait l'identité réelle). Chantier 2 : **VISITE GUIDÉE livrée sur
-> carte blanche complémentaire de Franck** (7 étapes, pastilles-guides,
-> `v8/js/views/tutoriel.js`, 40 vérifications, banc navigateur complet —
-> `docs/PLAN-TUTORIEL-DEMO.md` a les décisions). **TOUT VERT 138 exécutions +
-> 207 attaques.** Voir CHANGELOG (tête) pour le détail et les preuves.
+> ⚠️ **CHANTIER 1 EXÉCUTÉ le 13/08/2026 au soir — ne pas le refaire.** PR #26 et
+> PR #27 (deux sessions parallèles, réconciliées) fusionnées en merge ordinaire ;
+> TOUT VERT 137 exécutions + 207 attaques re-mesurés ; SITE vérifié (démo,
+> guide avec la partie Animations, racine, pédagogie) ; en complément de carte
+> blanche : **version de semis du monde démo** (commit `8fd57ee` — le
+> localStorage d'un visiteur d'avant le 28/07 rejouait l'identité réelle).
+> **CHANTIER 2 EXÉCUTÉ le 13/08 au soir (session en ligne) — ne pas le
+> refaire.** Conception VALIDÉE par Franck dans la session en ligne (les deux
+> mécaniques combinées, les TROIS parcours au choix du visiteur, première
+> visite + bouton permanent), réalisée dans
+> `v8/js/composants/visite-guidee.js` (plan `docs/PLAN-VISITE-GUIDEE.md`,
+> suite dédiée, filet porté à 138 exécutions, sentinelle du compte alignée).
+> Voir CHANGELOG (tête) pour le détail.
 >
 > Copier tout ce qui suit comme PREMIER message d'un nouveau chat. Il est autonome.
 >

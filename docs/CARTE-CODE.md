@@ -154,12 +154,6 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
 
 - `views/` : une vue par écran (routeur hash `#/vue` ; fiches paramétrées
   `#/m|b|cl|o|f/<code>`). `communs.js` = modale/toast/enteteVue/carteKpi.
-  `tutoriel.js` (13/08, plan `docs/PLAN-TUTORIEL-DEMO.md`) = VISITE GUIDÉE
-  de la DÉMO seulement (double garde app.js + auto-défense) : 7 étapes sur
-  l'écran réel, liseré + étiquette « Ici », panneau au coin OPPOSÉ de la
-  cible (`coinOppose` pure), veille de surbrillance 40 × 250 ms contre le
-  re-rendu des vues, clé localStorage dédiée `inerweb-fluide-v8-visite` ;
-  chaque cible prouvée dans le rendu réel de sa vue par `test-tutoriel.mjs`.
   `rgpd.js` (lot E ③ + E2d) = notice d'information RGPD (art. 13/14) +
   SECTION OPÉRATIONNELLE du coffre des identités (compteur, candidats
   pré-cochés, les 5 gestes en modales, bandeau démo) ; entrée de menu
@@ -367,9 +361,14 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   fluidesProposables…), `zip.js`
   maison, `routeur.js`, `icones.js`, `shim-dom-tests.mjs` (tests DOM sans navigateur).
 - `composants/` : morceaux d'écran réutilisés par plusieurs vues —
-  `pieces-jointes.js` (`zonePiecesJointes`, option `categorieSeule`) et
+  `pieces-jointes.js` (`zonePiecesJointes`, option `categorieSeule`),
   `conseil-intervenant.js` (le CONSEIL d'aptitude, partout ; le BLOCAGE, lui,
-  n'existe qu'en Officiel et vient du store).
+  n'existe qu'en Officiel et vient du store) et `visite-guidee.js` (13/08 :
+  la VISITE GUIDÉE de la démo, plan `docs/PLAN-VISITE-GUIDEE.md` — 3 parcours
+  au choix, pastilles + liste de mission, DÉMO seule via `visiteDisponible`,
+  repère `pointer-events:none` : ne recouvre jamais la cible ; branchée dans
+  `app.js` — bouton du pied de sidebar + proposition à la première visite ;
+  suite `test-visite-guidee.mjs`).
 - `lib/` : **les seuls fichiers du dépôt que nous n'avons pas écrits** — 4 fichiers
   tiers (PDF.js 4.10.38 ×2, pdf-lib, qrcodejs), plus `qrcode.js` qui est de NOUS
   (38 l., adaptateur qui lit `window.QRCode`). Licences réelles relues fichier par
