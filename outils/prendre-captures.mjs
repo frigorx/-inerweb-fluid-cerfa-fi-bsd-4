@@ -212,6 +212,18 @@ fs.mkdirSync(SORTIE, { recursive: true });
 // Laisser l'application démarrer (chargement des modules + du monde fictif).
 await attendre(2500);
 
+// La démo PROPOSE sa visite guidée à l'arrivée (depuis le 13/08) : on
+// referme cette fenêtre AVANT toute capture — la vitrine doit montrer le
+// LOGICIEL, pas la proposition de visite (remarque de Franck du 14/08 :
+// la capture du flyer montrait « l'écran du choix vocal »). Sans bouton
+// trouvé (la proposition a pu changer ou disparaître), on ne fait rien.
+await cdp.evaluer(`(() => {
+  const boutons = [...document.querySelectorAll('button')];
+  const plusTard = boutons.find((b) => /plus tard/i.test(b.textContent));
+  if (plusTard) plusTard.click();
+})()`);
+await attendre(600);
+
 let prises = 0;
 for (const scene of SCENES) {
   try {
