@@ -1,0 +1,21 @@
+# inerWeb Fluide — contrôle continu (suivi de la revue externe du 14/08/2026 :
+# « aucun contrôle continu n'empêche un paquet non conforme d'être publié »).
+# Le filet COMPLET est joué sur chaque poussée et chaque demande de fusion,
+# sur Windows (l'environnement réel du produit) avec Node 24 (celui du paquet).
+# Le compte d'exécutions n'est pas écrit ici : il est gardé par
+# outils/test-nombre-executions.mjs, qui fait partie du filet.
+name: filet
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  filet:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Filet complet (TOUT VERT exigé)
+        run: node outils/lancer-tests.mjs --tout
