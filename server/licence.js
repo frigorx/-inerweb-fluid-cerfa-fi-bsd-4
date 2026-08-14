@@ -47,13 +47,16 @@ const PORTEES_CONNUES = ['EVALUATION'];
 // propriétaire, hors dépôt. Le champ « cle » de la licence désigne cette
 // entrée : une rotation future AJOUTE une clé, elle n'en remplace jamais une
 // (les licences déjà émises doivent rester vérifiables).
-// ⚠️ ROTATION du 14/08/2026 (revue externe) : la première clé du jour a été
-// LUE par un outil d'analyse tiers pendant son audit — considérée compromise,
-// détruite, remplacée par celle-ci AVANT toute livraison externe. Aucune
-// licence de l'ancienne clé n'a circulé (seul EVAL-2026-001, réémis).
+// ⚠️ ROTATION FINALE du 14/08/2026 (après le 2e passage de la revue
+// externe, sur son GO technique) : les deux clés précédentes du jour ont
+// existé PENDANT des audits ayant accès au poste — détruites l'une après
+// l'autre. Celle-ci est née APRÈS le dernier passage de l'auditeur ; règle
+// opérationnelle : le dossier des clés ne croise plus JAMAIS un outil
+// d'analyse. Aucune licence des clés détruites n'a circulé
+// (seul EVAL-2026-001, réémis à chaque rotation).
 const CLES_PUBLIQUES_LICENCE = {
   1: '-----BEGIN PUBLIC KEY-----\n'
-    + 'MCowBQYDK2VwAyEA2gijiuBaCI8Bq5oitm4/4kEcDCWO+7dDrcbzrBttlMo=\n'
+    + 'MCowBQYDK2VwAyEAgAzY6Q3ujzsJsSPNwPG+rpG/pcmI63RNGyuM0LqJ7jU=\n'
     + '-----END PUBLIC KEY-----\n',
 };
 
