@@ -702,12 +702,18 @@ export function creerVisiteGuidee({ store, naviguer, narrateur }) {
 
     const boutonEcouter = instance.racine.querySelector('[data-role="ecouter-presentation"]');
     let lectureEnCours = false;
+    // Le bouton DIT l'état : si la voix a été coupée (préférence mémorisée),
+    // il l'annonce — et le clic la REMET avant de lire. Un geste explicite
+    // « écouter » vaut plus que la coupure mémorisée ; sans cela, le bouton
+    // restait muet sans explication (défaut constaté par Franck le 14/08).
     function majBoutonEcouter() {
       if (!boutonEcouter) return;
-      boutonEcouter.textContent = lectureEnCours
-        ? 'Arrêter la lecture' : 'Écouter la présentation';
+      if (lectureEnCours) boutonEcouter.textContent = 'Arrêter la lecture';
+      else if (voix.estCoupee()) boutonEcouter.textContent = 'Remettre la voix et écouter la présentation';
+      else boutonEcouter.textContent = 'Écouter la présentation';
     }
     function lirePresentation() {
+      if (voix.estCoupee()) voix.basculer();
       lectureEnCours = true;
       majBoutonEcouter();
       voix.direTextes([TEXTE_PRESENTATION]).then(function () {
@@ -716,6 +722,7 @@ export function creerVisiteGuidee({ store, naviguer, narrateur }) {
       });
     }
     if (boutonEcouter) {
+      majBoutonEcouter();
       boutonEcouter.addEventListener('click', function () {
         if (lectureEnCours) {
           voix.arreter();

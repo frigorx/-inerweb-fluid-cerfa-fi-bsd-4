@@ -38,13 +38,19 @@ bruit du clic, immersif « comme un enseignant qui montre devant nous ».
   (aucun fichier) ; le geste RÉEL reste au visiteur, la flèche ne clique
   jamais. Décorative par nature (consigne, liseré et étiquette disent déjà
   tout) : absente sous `prefers-reduced-motion`.
-- **Preuves** : `v8/js/composants/test-voix-visite.mjs` — 34 vérifs
+- **Correctif du jour même (constat Franck, « je n'ai plus la possibilité
+  d'écouter ») : un bouton ne reste jamais muet sans le dire.** La coupure de
+  voix mémorisée rendait « Écouter la présentation » inerte — le bouton
+  porte désormais l'état (« Remettre la voix et écouter la présentation »)
+  et le clic explicite REMET la voix avant de lire : un geste d'écoute vaut
+  plus qu'une préférence mémorisée.
+- **Preuves** : `v8/js/composants/test-voix-visite.mjs` — 36 vérifs
   (empreinte gelée, corpus complet des 3 parcours, fichier joué/repli/erreur,
-  rien à la construction, coupure persistée, couture complète de la visite,
-  surfaces de la feuille de style) ; le speech reste un PROJET à corriger par
-  Franck (ses mots), le lot MP3 et la ligne de licence de la voix
-  (`LICENCES-TIERCES.md`) suivent la fabrication sur le poste.
-  **TOUT VERT — 139 exécutions.**
+  rien à la construction, coupure persistée ET levée par le geste d'écoute,
+  couture complète de la visite, surfaces de la feuille de style) ; le
+  speech reste un PROJET à corriger par Franck (ses mots), le lot MP3 et la
+  ligne de licence de la voix (`LICENCES-TIERCES.md`) suivent la fabrication
+  sur le poste. **TOUT VERT — 139 exécutions.**
 
 ### 🧭 VISITE GUIDÉE DE LA DÉMONSTRATION (13/08 au soir, session en ligne)
 

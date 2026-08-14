@@ -413,7 +413,18 @@ enregistreur.appels.length = 0;
 controleur.proposer({ gesteHumain: true });
 verifier('voix coupée : même sur geste, le speech ne part pas tout seul',
   enregistreur.appels.filter((a) => a.geste === 'dire').length === 0);
-await cliquer(derniereModale().querySelector('[data-role="plus-tard"]'));
+const modaleCoupee = derniereModale();
+const boutonEcouterCoupe = modaleCoupee.querySelector('[data-role="ecouter-presentation"]');
+verifier('voix coupée : le bouton d\'écoute LE DIT (« Remettre la voix… »), '
+  + 'jamais un bouton muet sans explication (défaut du 14/08)',
+boutonEcouterCoupe.textContent === 'Remettre la voix et écouter la présentation');
+await cliquer(boutonEcouterCoupe);
+verifier('le clic « écouter » REMET la voix puis lit le speech (le geste '
+  + 'explicite vaut plus que la coupure mémorisée)',
+enregistreur.appels.some((a) => a.geste === 'basculer')
+  && enregistreur.coupee === false
+  && derniersDits(enregistreur).join('|') === TEXTE_PRESENTATION);
+await cliquer(modaleCoupee.querySelector('[data-role="plus-tard"]'));
 enregistreur.coupee = false;
 
 // ============================================================

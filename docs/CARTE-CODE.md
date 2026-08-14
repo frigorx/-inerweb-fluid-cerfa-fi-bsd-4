@@ -380,7 +380,7 @@ local), serveur Node CommonJS sous `server/` (SQLite `node:sqlite`, port
   modale de choix). La visite y gagne la SOURIS-ENSEIGNANT (flèche qui
   glisse vers la cible + onde + bip fabriqué sur place, décorative :
   absente sous `prefers-reduced-motion`, `pointer-events:none`).
-  Suite `test-voix-visite.mjs` (34 vérifs). ⚠️ Lot audio : à fabriquer
+  Suite `test-voix-visite.mjs` (36 vérifs). ⚠️ Lot audio : à fabriquer
   sur le poste (Piper + ffmpeg) puis inscrire la licence de la voix à
   `LICENCES-TIERCES.md` — tant qu'il n'existe pas, la démo parle en
   voix de navigateur, c'est prévu.
