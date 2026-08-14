@@ -39,7 +39,8 @@ import { ICONES } from '../core/icones.js';
 import { esc } from '../core/utils.js';
 import { modale, toast } from '../views/communs.js';
 import {
-  creerNarrateur, textesNarrationEtape, TEXTE_PRESENTATION, TEXTE_FIN
+  creerNarrateur, textesNarrationEtape, TEXTE_PRESENTATION, TEXTE_FIN,
+  lotAudioPresent
 } from './voix-visite.js';
 
 /** Clé de mémoire locale : la proposition n'est faite qu'à la première visite. */
@@ -498,6 +499,13 @@ export function creerVisiteGuidee({ store, naviguer, narrateur }) {
       setTimeout(function () {
         positionnementDemande = false;
         positionner();
+        // Revue du 14/08 : une vue lente à se poser laissait le repère sur
+        // l'ANCIEN élément (constaté à l'étape Mouvements — le bouton
+        // « Nouveau mouvement » n'était pas encore dans le DOM à 400 ms).
+        // Deux rappels de rattrapage : le repère ET la souris rejoignent la
+        // cible réelle dès qu'elle existe.
+        setTimeout(positionner, 800);
+        setTimeout(positionner, 2000);
       }, 400);
     }
   }
@@ -664,7 +672,7 @@ export function creerVisiteGuidee({ store, naviguer, narrateur }) {
       voix.direTextes([TEXTE_FIN]);
     } else {
       toast('Visite quittée. Relancez-la quand vous voulez : bouton '
-        + '« Visite guidée », en bas de la barre latérale.', 'info');
+        + '« Visite guidée avec voix », en bas de la barre latérale.', 'info');
     }
     terminaisonPropre = false;
   }
@@ -696,6 +704,13 @@ export function creerVisiteGuidee({ store, naviguer, narrateur }) {
         + (voix.disponible()
           ? '<button type="button" class="btn btn-secondaire btn-petit" '
             + 'data-role="ecouter-presentation">Écouter la présentation</button>'
+          : '')
+        // Tant que le lot audio fabriqué n'est pas embarqué, la voix est
+        // celle du navigateur : l'écran le dit (revue du 14/08), la mention
+        // disparaît d'elle-même quand le lot arrive.
+        + (voix.disponible() && !lotAudioPresent()
+          ? '<p class="visite-presentation-note">Voix provisoire du navigateur '
+            + '— la voix définitive est en cours de fabrication.</p>'
           : '')
         + '</div>'
         + '<p class="modale-intro">Choisissez votre parcours : chaque étape est '

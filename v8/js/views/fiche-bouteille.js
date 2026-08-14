@@ -292,7 +292,8 @@ function blocActions(sortie) {
     return '<div class="fiche-section">'
       + '<div class="carte" style="padding:12px 16px;font-size:13px;color:var(--texte-2)">'
       + 'Bouteille sortie du stock : fiche en consultation seule '
-      + '(la chronologie ci-dessous reste la trace opposable).'
+      + '(la chronologie ci-dessous reste la trace de référence, '
+      + 'à intégrité vérifiable).'
       + '</div>'
       + '</div>';
   }

@@ -31,15 +31,23 @@ export const CLE_MEMOIRE_VOIX = 'inerweb-fluide-v8-visite-voix';
 
 export const TEXTE_PRESENTATION =
   'Bonjour, et bienvenue dans l’interface de démonstration d’inerWeb '
-  + 'Fluide. Ce logiciel est né dans un lycée professionnel pour une chose '
-  + 'simple : tenir, sans rien oublier, le registre des fluides frigorigènes '
-  + '— les machines, les bouteilles, chaque mouvement de fluide — et sortir '
-  + 'les documents obligatoires, comme le CERFA, remplis automatiquement. '
-  + 'Ici, tout est fictif : essayez librement, rien ne sort de votre '
-  + 'navigateur. Choisissez votre parcours : l’essentiel, en cinq '
-  + 'minutes ; la visite complète, en un quart d’heure ; ou la visite du '
-  + 'frigoriste, la plus poussée. À chaque étape, je vous explique le geste, '
-  + 'et l’écran vous montre où cliquer. C’est parti.';
+  + 'Fluide. Ce logiciel transforme les obligations réglementaires des '
+  + 'fluides frigorigènes en gestes guidés, et évite les oublis avant '
+  + 'l’audit : le parc de machines, le stock de bouteilles, chaque '
+  + 'mouvement de fluide, les contrôles d’étanchéité — et les documents '
+  + 'obligatoires, comme le CERFA, remplis automatiquement. Ici, tout est '
+  + 'fictif : essayez librement, rien ne sort de votre navigateur. '
+  + 'Choisissez votre parcours : l’essentiel, en cinq minutes ; la visite '
+  + 'complète, en un quart d’heure ; ou la visite du frigoriste, la plus '
+  + 'poussée. À chaque étape, je vous explique le geste, et l’écran vous '
+  + 'montre où cliquer. C’est parti.';
+
+/** Vrai si le lot audio fabriqué (Piper) est embarqué — sinon la démo
+ *  parle avec la voix du navigateur, et l'écran le dit. */
+export function lotAudioPresent() {
+  return Boolean(INDEX_VOIX_VISITE && INDEX_VOIX_VISITE.entrees
+    && Object.keys(INDEX_VOIX_VISITE.entrees).length > 0);
+}
 
 export const TEXTE_FIN =
   'Visite terminée — bonne découverte ! Tout ce que vous venez de faire, un '

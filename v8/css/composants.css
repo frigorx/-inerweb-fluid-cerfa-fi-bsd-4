@@ -1488,6 +1488,23 @@
   font-size: 0.92rem;
   color: var(--texte-2);
 }
+.visite-presentation-note {
+  margin: 8px 0 0;
+  font-size: 0.82rem;
+  font-style: italic;
+  color: var(--texte-2);
+}
+
+/* Revue du 14/08 : sur petit écran (téléphone), les cartes « Derniers
+   mouvements » et « Alertes réglementaires » débordaient d'environ 30 px —
+   le contenu large défile DANS sa carte, jamais la page entière. */
+@media (max-width: 480px) {
+  .carte[aria-label="Derniers mouvements"],
+  .carte[aria-label="Alertes réglementaires"] {
+    overflow-x: auto;
+    min-width: 0;
+  }
+}
 
 /* La durée dans les cartes de choix du parcours */
 .visite-choix-duree {

@@ -116,7 +116,7 @@ function construireSidebar() {
     // Visite guidée : bouton permanent en DÉMO seulement (décision 13/08)
     + (visiteDisponible(store)
       ? '<button id="bouton-visite-guidee" class="btn-sauvegarde no-print" type="button">'
-        + ICONES.parcours + '<span>Visite guidée</span></button>'
+        + ICONES.parcours + '<span>Visite guidée avec voix</span></button>'
       : '')
     + '<button id="bouton-sauvegarde" class="btn-sauvegarde no-print" type="button">'
     + ICONES.sauvegarde + '<span>Sauvegarde</span>'

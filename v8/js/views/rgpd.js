@@ -53,8 +53,8 @@ function gabaritCoffre(etat, enDemo) {
     + '<p>Minimisation RÉVERSIBLE : l\'identité d\'un élève parti est '
     + 'chiffrée dans le coffre, sa fiche n\'affiche plus qu\'un pseudonyme '
     + '(« Élève 2026-01 »), et votre code la rouvre en cas de besoin légal — '
-    + 'chaque ouverture est journalisée de façon inaltérable au sein de '
-    + 'l\'application.</p>'
+    + 'chaque ouverture est consignée dans un journal chaîné qui permet de '
+    + 'détecter toute altération au sein de l\'application.</p>'
     + bandeauDemo + bandeauCandidats
     + '<p><strong>' + etat.nombreAuCoffre + '</strong> identité(s) au coffre'
     + (etat.coffreCree ? '' : ' — le coffre sera créé au premier geste (une '
@@ -497,9 +497,13 @@ export async function render(conteneur, ctx) {
       + 'limites des obligations légales de conservation), de '
       + '<strong>limitation</strong> et d’<strong>opposition</strong>.</p>'
       + '<ul>'
-      + '<li><strong>Accès / portabilité</strong> : l’administrateur ou le '
+      + '<li><strong>Accès</strong> : l’administrateur ou le '
       + 'référent peut éditer l’export des données vous concernant depuis la '
-      + 'fiche du personnel (bouton « Exporter (RGPD) »).</li>'
+      + 'fiche du personnel (bouton « Exporter (RGPD) »). Nuance sur la '
+      + '<strong>portabilité</strong> : ce droit ne s’applique qu’aux '
+      + 'traitements fondés sur le consentement ou un contrat — pour le '
+      + 'registre réglementaire, fondé sur une obligation légale, c’est le '
+      + 'droit d’accès (et sa copie) qui s’exerce.</li>'
       + '<li><strong>Rectification</strong> : correction de votre fiche depuis '
       + 'l’écran Personnel ; les écritures validées sont corrigées par '
       + 'contre-écriture.</li>'
@@ -509,7 +513,11 @@ export async function render(conteneur, ctx) {
       + 'compatible avec les obligations légales de conservation du registre.</li>'
       + '</ul>'
       + '<p>Vous exercez ces droits auprès de <strong>' + responsable + '</strong> '
-      + '(chef d’établissement ou délégué à la protection des données).</p>')
+      + '(chef d’établissement ou délégué à la protection des données — ses '
+      + 'coordonnées précises sont affichées par l’établissement '
+      + 'utilisateur). Si vous estimez, après l’avoir contacté, que vos '
+      + 'droits ne sont pas respectés, vous pouvez adresser une réclamation '
+      + 'à la CNIL (cnil.fr).</p>')
 
     + section('8. Cas particulier des élèves',
       '<ul>'

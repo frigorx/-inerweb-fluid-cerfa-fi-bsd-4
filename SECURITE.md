@@ -196,7 +196,7 @@ fonctionne entièrement en local.**
 
 ## 5. Ce que le logiciel REFUSE — et comment le vérifier soi-même
 
-Un registre opposable ne se juge pas à ce qu'il sait faire, mais à ce qu'il refuse. Ces
+Un registre digne de confiance ne se juge pas à ce qu'il sait faire, mais à ce qu'il refuse. Ces
 refus ne sont pas décrits ici pour être crus sur parole : ils sont **exécutés** par une
 suite dédiée, que quiconque peut relancer.
 

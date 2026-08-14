@@ -1430,16 +1430,24 @@ const HANDLERS = {
       } else if (!remiseReparatrice) {
         // L'échéance AFFICHÉE est la plus proche : la propre date de fin
         // de la ligne si elle tombe avant le butoir (faire la remise
-        // après serait sans objet pour cette attestation).
-        const echeance = h.dateFin && h.dateFin < DATE_BUTOIR_REMISE_NIVEAU_2008
+        // après serait sans objet pour cette attestation). Revue du
+        // 14/08 : une date plus proche que le butoir se lisait comme une
+        // contradiction — le détail DIT désormais la nature de chacune.
+        const finPropreAvantButoir = Boolean(h.dateFin
+          && h.dateFin < DATE_BUTOIR_REMISE_NIVEAU_2008);
+        const echeance = finPropreAvantButoir
           ? h.dateFin : DATE_BUTOIR_REMISE_NIVEAU_2008;
+        const natureEcheance = finPropreAvantButoir
+          ? ` (fin de validité propre à cette attestation, qui tombe ` +
+            `avant le butoir réglementaire du 12/03/2029)`
+          : ' (butoir réglementaire de la transition)';
         alertes.push({
           id: `alr-remise-niveau-${h.id}`,
           niveau: 'IMPORTANT',
           titre: 'Remise à niveau à faire avant le 12/03/2029',
           detail: `${qui} · 2008 ${h.categorie} · formation de remise à ` +
-            `niveau ponctuelle exigée avant le ${fmtDate(echeance)} ` +
-            '(arrêté du 21/11/2025)',
+            `niveau ponctuelle exigée avant le ${fmtDate(echeance)}` +
+            `${natureEcheance} — arrêté du 21/11/2025`,
           cible: { vue: 'personnel', id: h.personneId }
         });
       }

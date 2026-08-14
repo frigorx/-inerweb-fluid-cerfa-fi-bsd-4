@@ -2,6 +2,60 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🧾 REVUE EXTERNE DU 14/08 (relayée par Franck) — LOT 1 : les mots, les dates, l'écran
+
+**Une revue extérieure complète de la démo**, relayée et priorisée par le
+propriétaire (« d'abord les formulations réglementaires, puis le débordement
+mobile, puis la simplification du premier parcours »). Ce lot traite J1, J3,
+J4 et l'ergonomie rapide. **J2 — le délai de 4 jours ouvrés de l'article 7
+de l'arrêté du 29/02/2016 après détection d'une fuite — est la PROCHAINE
+brique** (moteur + alerte + miroirs des deux magasins : elle mérite son
+propre cycle prouvé). Le menu simplifié de la démo (E1) et l'exception de
+charte de la barre latérale sombre (E6) attendent l'arbitrage de Franck.
+
+- **J1 — les mots qui revendiquaient une force probante.** « Simple et
+  opposable » (le TITRE de la vitrine), « registre/trace/dossier opposable »,
+  « inaltérable », « scellé » nus quittent les surfaces client → « à
+  intégrité vérifiable », « journal chaîné permettant de détecter une
+  altération », « manifeste d'empreintes SHA-256 » (art. 1367 C. civ. : le
+  chaînage seul ne confère ni présomption d'intégrité ni signature — la
+  force probante suppose l'identification du signataire et la fiabilité du
+  procédé). **La règle est TENUE, pas promise : `test-mots-qui-promettent`
+  refuse désormais l'adjacence affirmative** — et son balayage a trouvé
+  QUATRE emplois de plus que la lecture à la main (audit-guide, demo-store,
+  LIMITE-DE-RESPONSABILITE, SECURITE) : la leçon B4, revécue. « Conçu pour
+  être opposable » (l'ambition, dite comme telle) reste légal,
+  contre-épreuve à l'appui.
+- **J3 — le « 31/08/2028 » élucidé, aucune règle à corriger.** Ce n'était
+  pas une échéance sans source : c'est la fin de validité PROPRE de
+  l'attestation fictive de démonstration (2023 + 5 ans), plus proche que le
+  butoir du 12/03/2029, donc affichée en premier — le code était juste,
+  l'écran ne le DISAIT pas. Le détail de l'alerte nomme désormais la nature
+  de chaque date (« fin de validité propre à cette attestation » vs
+  « butoir réglementaire de la transition ») ; miroir serveur aligné.
+- **J4 — RGPD nuancé.** La portabilité ne s'applique pas aux traitements
+  fondés sur l'obligation légale (c'est le droit d'accès et sa copie qui
+  s'exercent) ; la voie de réclamation CNIL est nommée ; le renvoi au DPD
+  précise que ses coordonnées sont affichées par l'établissement
+  utilisateur ; « journalisée de façon inaltérable » → « journal chaîné qui
+  permet de détecter toute altération ».
+- **Vitrine et speech.** L'accroche adopte la proposition la plus forte de
+  la revue — « inerWeb Fluide transforme les obligations réglementaires en
+  gestes guidés et évite les oublis avant l'audit » — et le speech de la
+  visite la porte aussi. **Décision Franck : plus de « né dans un lycée
+  professionnel »** (le logiciel appartient à son auteur, pas à l'école).
+- **Ergonomie.** « Configuration minimale du mode Officiel renseignée » (le
+  bandeau vert ne semble plus contredire le « Non conforme » métier —
+  tableau de bord ET écran Conformité) ; « SPEC §7.2 » ne s'affiche plus
+  (référence interne) ; bouton renommé « **Visite guidée avec voix** » (pas
+  de surprise sonore au bureau) ; mention « Voix provisoire du navigateur —
+  la voix définitive est en cours de fabrication » (elle disparaît d'elle-
+  même quand le lot audio arrive) ; le repère et la souris-enseignant
+  RATTRAPENT une vue lente à se poser (rappels à 1,2 s et 2,4 s — à 400 ms
+  le bouton « Nouveau mouvement » n'existait pas encore, constat de la
+  revue) ; débordement mobile ≤ 480 px : « Derniers mouvements » et
+  « Alertes réglementaires » défilent DANS leur carte, jamais la page.
+
 ### 🔊 VISITE GUIDÉE v2 — LA VOIX DE LA DÉMONSTRATION (14/08 matin, session en ligne)
 
 **Demande de Franck (13/08 au soir, décisions au 14/08 matin)** : un vocal DE
