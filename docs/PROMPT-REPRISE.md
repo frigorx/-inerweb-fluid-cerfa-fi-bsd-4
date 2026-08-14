@@ -532,7 +532,7 @@ ouvert, chemin critique**.
 - **carte → vérifier → plan (grosses briques) → modif chirurgicale → TESTS VERTS → revue
   adversariale (sobre : soi-même ou 1 agent) → commit.** `node outils/lancer-tests.mjs --tout`
   doit être **TOUT VERT** avant tout commit. Le nombre d'exécutions CROÎT à chaque lot : c'est
-  le « TOUT VERT » qui fait foi, pas le compte. Repère au 13/08/2026 : **137 exécutions** —
+  le « TOUT VERT » qui fait foi, pas le compte. Repère au 14/08/2026 : **139 exécutions** —
   si le tien est inférieur, tu as perdu des suites en route.
 - **JAMAIS toucher au `data/` RÉEL** : vérification dynamique = serveur sur PORT jetable +
   `IWF_CHEMIN_BASE` base jetable (jamais 2011). Corps des requêtes API = **`{params:{...}}`**.
