@@ -47,11 +47,27 @@ const PORTEES_CONNUES = ['EVALUATION'];
 // propriétaire, hors dépôt. Le champ « cle » de la licence désigne cette
 // entrée : une rotation future AJOUTE une clé, elle n'en remplace jamais une
 // (les licences déjà émises doivent rester vérifiables).
+// ⚠️ ROTATION du 14/08/2026 (revue externe) : la première clé du jour a été
+// LUE par un outil d'analyse tiers pendant son audit — considérée compromise,
+// détruite, remplacée par celle-ci AVANT toute livraison externe. Aucune
+// licence de l'ancienne clé n'a circulé (seul EVAL-2026-001, réémis).
 const CLES_PUBLIQUES_LICENCE = {
   1: '-----BEGIN PUBLIC KEY-----\n'
-    + 'MCowBQYDK2VwAyEAiR2G6ITvfxjVv65rZadIiZOuInlhRcod9EEMGtJMAkY=\n'
+    + 'MCowBQYDK2VwAyEA2gijiuBaCI8Bq5oitm4/4kEcDCWO+7dDrcbzrBttlMo=\n'
     + '-----END PUBLIC KEY-----\n',
 };
+
+// Clé n° 0 « D'ESSAI » — son unique usage : permettre au filet de test de
+// jouer un serveur RÉEL en mode licence sans toucher à la clé privée du
+// propriétaire (la paire d'essai est PUBLIQUE, committée dans la suite).
+// Pourquoi c'est SANS DANGER : elle n'est honorée que lorsque l'exigence de
+// licence vient de l'ENVIRONNEMENT (IWF_LICENCE_REQUISE=1) ET qu'aucun
+// node\node.exe n'est à côté du serveur — c'est-à-dire uniquement hors
+// paquet, là où AUCUNE licence n'est exigée de toute façon. Dans un paquet
+// distribué (node\node.exe présent), elle n'ouvre RIEN.
+const CLE_PUBLIQUE_ESSAI = '-----BEGIN PUBLIC KEY-----\n'
+  + 'MCowBQYDK2VwAyEAHohP5tjidxrRGz/VK+IiD5ltF7qnB6rFG2Bm4S3ISVw=\n'
+  + '-----END PUBLIC KEY-----\n';
 
 // L'ordre des champs est FIGÉ : c'est lui qui définit la chaîne signée
 // (patron chaineCanoniqueSignature de hash-mouvement.js). En changer
@@ -156,9 +172,8 @@ function verifierLicence(objet, aujourdHui, options = {}) {
   return { ok: true, motif: MOTIF_VALIDE, licence };
 }
 
-/** Lit le fichier de licence d'un dossier. Absent ≠ illisible. */
-function chargerLicence(dossier) {
-  const chemin = path.join(dossier, NOM_FICHIER_LICENCE);
+/** Lit un fichier de licence à un chemin COMPLET. Absent ≠ illisible. */
+function chargerLicenceDepuis(chemin) {
   if (!fs.existsSync(chemin)) return { present: false };
   try {
     return { present: true, objet: JSON.parse(fs.readFileSync(chemin, 'utf8')) };
@@ -167,10 +182,73 @@ function chargerLicence(dossier) {
   }
 }
 
+/** Lit le fichier de licence d'un dossier. Absent ≠ illisible. */
+function chargerLicence(dossier) {
+  return chargerLicenceDepuis(path.join(dossier, NOM_FICHIER_LICENCE));
+}
+
+/** Le poste est-il un PAQUET portable ? (node\node.exe = signature de fabrication) */
+function estPaquet(racine) {
+  return fs.existsSync(path.join(racine, 'node', 'node.exe'));
+}
+
 /** La licence est-elle exigée sur CE poste ? (paquet portable, ou forçage test) */
 function licenceRequise(racine, env) {
   if (env && env.IWF_LICENCE_REQUISE === '1') return true;
-  return fs.existsSync(path.join(racine, 'node', 'node.exe'));
+  return estPaquet(racine);
+}
+
+/**
+ * Table des clés honorées sur CE poste : la clé d'essai n° 0 ne s'ajoute que
+ * HORS paquet (voir son commentaire) — dans un paquet distribué, seules les
+ * clés réelles comptent.
+ */
+function clesPourPoste(racine, env) {
+  if (!estPaquet(racine) && env && env.IWF_LICENCE_REQUISE === '1') {
+    return { ...CLES_PUBLIQUES_LICENCE, 0: CLE_PUBLIQUE_ESSAI };
+  }
+  return CLES_PUBLIQUES_LICENCE;
+}
+
+// ------------------------------------------------------------
+// LECTURE SEULE — classification COMPLÈTE des routes hors contrat.
+// La revue externe du 14/08 a tiré le trou : la garde vivait APRÈS les
+// routeurs spécialisés, donc bootstrapAdmin et definirCodeExercice
+// écrivaient encore en mode expiré (motif L2-i « une règle, pas une
+// porte », énième occurrence). La règle vit désormais ICI, en une liste
+// FERMÉE et une liste OUVERTE dont l'union est prouvée ÉGALE aux méthodes
+// des trois routeurs par test-licence : une route nouvelle non classée
+// rend le filet rouge.
+// ------------------------------------------------------------
+const ROUTES_FERMEES_LECTURE_SEULE = Object.freeze([
+  // Créer des comptes, c'est écrire dans la base — fermé. Conséquence
+  // assumée : une installation VIERGE à licence expirée ne peut pas créer
+  // son premier ADMIN (le message renvoie au contact, il n'y a de toute
+  // façon rien à consulter dans une base vierge).
+  'bootstrapAdmin', 'creerCompte',
+  // Le réglage du code d'exercice écrit dans les paramètres du poste.
+  'definirCodeExercice',
+]);
+const ROUTES_OUVERTES_LECTURE_SEULE = Object.freeze([
+  // Consulter EXIGE une session : la porte d'entrée reste ouverte.
+  'connexion', 'deconnexion', 'etatInitial',
+  // La GOUVERNANCE D'ACCÈS reste ouverte : un mot de passe oublié ne doit
+  // pas priver quelqu'un de SES données (promesse du contrat), et révoquer
+  // l'accès d'un compte est un geste de sécurité qu'on ne suspend pas.
+  // Seule la CRÉATION d'identités nouvelles est fermée (ci-dessus).
+  'listerComptes', 'reinitialiserMotDePasse', 'definirActivationCompte',
+  // Le bac à sable d'exercice LIT (photo du registre) et vit côté client.
+  'etatExercice', 'demarrerExercice',
+  // Le coffre-fort reste ENTIER : la promesse du contrat d'évaluation est
+  // « vos données restent à vous » — sauvegarder, restaurer, tester et
+  // régler la destination servent cette promesse, pas le registre.
+  'sauvegarder', 'listerSauvegardes', 'restaurer', 'testerSauvegarde',
+  'lireReglagesSauvegarde', 'definirReglagesSauvegarde',
+]);
+
+/** Une route HORS contrat est-elle fermée en lecture seule ? */
+function routeFermeeEnLectureSeule(methode) {
+  return ROUTES_FERMEES_LECTURE_SEULE.includes(methode);
 }
 
 /** Message canonique du refus des écritures en lecture seule. */
@@ -204,7 +282,18 @@ function evaluerDemarrageLicence({ racine, env, aujourdHui, options } = {}) {
   if (!licenceRequise(racine, env ?? {})) {
     return { requise: false, demarrer: true, lectureSeule: false, motif: MOTIF_NON_REQUISE };
   }
-  const charge = chargerLicence(racine);
+  // Clés honorées sur ce poste (clé d'essai hors paquet seulement) — une
+  // table injectée par les tests unitaires prime.
+  const optionsEffectives = options && options.clesPubliques
+    ? options
+    : { ...options, clesPubliques: clesPourPoste(racine, env ?? {}) };
+  // IWF_LICENCE_FICHIER : chemin de fichier alternatif (bancs et filet).
+  // Sans danger : le fichier pointé doit toujours porter une signature
+  // valide d'une clé honorée — l'emplacement ne donne aucun droit.
+  const cheminFichier = (env && env.IWF_LICENCE_FICHIER)
+    ? env.IWF_LICENCE_FICHIER
+    : path.join(racine, NOM_FICHIER_LICENCE);
+  const charge = chargerLicenceDepuis(cheminFichier);
   if (!charge.present) {
     return {
       requise: true, demarrer: false, lectureSeule: false,
@@ -217,7 +306,7 @@ function evaluerDemarrageLicence({ racine, env, aujourdHui, options } = {}) {
       motif: MOTIF_ILLISIBLE, message: messageRefus(MOTIF_ILLISIBLE),
     };
   }
-  const verdict = verifierLicence(charge.objet, aujourdHui, options);
+  const verdict = verifierLicence(charge.objet, aujourdHui, optionsEffectives);
   if (verdict.motif === MOTIF_EXPIREE) {
     return {
       requise: true, demarrer: true, lectureSeule: true,
@@ -252,11 +341,18 @@ module.exports = {
   MOTIF_EXPIREE,
   MOTIF_VALIDE,
   MOTIF_NON_REQUISE,
+  CLE_PUBLIQUE_ESSAI,
+  ROUTES_FERMEES_LECTURE_SEULE,
+  ROUTES_OUVERTES_LECTURE_SEULE,
   chaineCanoniqueLicence,
   dateDuJour,
   verifierLicence,
   chargerLicence,
+  chargerLicenceDepuis,
+  estPaquet,
   licenceRequise,
+  clesPourPoste,
+  routeFermeeEnLectureSeule,
   messageLectureSeule,
   messageRefus,
   evaluerDemarrageLicence,

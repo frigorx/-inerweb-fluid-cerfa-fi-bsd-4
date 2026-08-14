@@ -183,7 +183,18 @@ for (const f of FICHIERS) {
   }
 }
 
-// 3 bis) Le contrat d'évaluation et la licence nominative signée — tous deux
+// 3 bis) Les TEXTES des licences tierces (LICENSES/) — OBLIGATOIRES : MIT,
+// Apache 2.0 et OFL exigent que notices et textes accompagnent toute
+// redistribution (revue externe du 14/08).
+const dossierLicences = path.join(RACINE, 'LICENSES');
+if (!fs.existsSync(path.join(dossierLicences, 'Apache-2.0.txt'))) {
+  console.error('  [ERREUR] LICENSES/ incomplet au dépôt — paquet interrompu.');
+  process.exit(1);
+}
+fs.cpSync(dossierLicences, path.join(SORTIE, 'LICENSES'), { recursive: true });
+console.log('  [ok] LICENSES/ (textes des licences tierces)');
+
+// 3 ter) Le contrat d'évaluation et la licence nominative signée — tous deux
 // OBLIGATOIRES : sans eux le paquet refuse de démarrer, autant échouer ICI.
 const cheminContrat = path.join(RACINE, 'LICENCE-EVALUATION.txt');
 if (!fs.existsSync(cheminContrat)) {

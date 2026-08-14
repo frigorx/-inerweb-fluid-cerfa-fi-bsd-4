@@ -9,6 +9,10 @@ Ce logiciel n'utilise **aucune dépendance npm** : ces quelques bibliothèques s
 telles quelles dans `v8/js/lib/`, pour que l'application fonctionne **hors ligne**, sans
 installation et sans chaîne de compilation.
 
+**Les textes complets des licences vivent dans le dossier [`LICENSES/`](LICENSES/)**
+(Apache 2.0, MIT par composant, OFL 1.1 des polices) : il accompagne le dépôt ET chaque
+paquet distribué — c'est une obligation de ces licences, ne le supprimez pas.
+
 > **Comment ce document a été établi** (constat P1-10 de l'audit du 25/07/2026). Chaque
 > ligne a été relue **contre le fichier lui-même** : en-tête de licence présent ou absent,
 > chaîne de version présente ou absente, taille mesurée. Quand le fichier ne porte pas la
@@ -22,8 +26,10 @@ installation et sans chaîne de compilation.
 
 ## L'inventaire, en un tableau
 
-Le dépôt embarque **QUATRE fichiers tiers** (2 362 164 octets, soit 2,25 Mio), pour
-**trois projets**. Le cinquième fichier du dossier `v8/js/lib/` est de nous.
+Le dossier `v8/js/lib/` embarque **QUATRE fichiers tiers** (2 362 164 octets, soit
+2,25 Mio), pour **trois projets** ; son cinquième fichier est de nous. S'y ajoutent les
+**dix polices** de `v8/polices/` (section dédiée plus bas) et, dans le paquet portable
+seulement, le moteur Node.js.
 
 | Fichier | Projet | Version lisible dans le fichier | Licence RÉELLE | Taille |
 |---|---|---|---|---|
@@ -90,12 +96,11 @@ présentait `tslib` sous MIT ; `tslib` est **Apache 2.0**, et le fichier le dit.
 - Rôle : produire les QR codes des étiquettes de machines et de bouteilles, sans aucun appel
   réseau (aucune donnée ne sort du poste).
 
-⚠️ **Notice absente du fichier.** `qrcode-vendor.js` ne contient **aucune notice de
-copyright d'origine** : la seule mention de l'auteur est celle de **notre** en-tête en
-français (« lib QR code vendored (davidshimjs/qrcodejs) »). La licence MIT demande que la
-notice de copyright soit conservée à la redistribution. C'est **une dette identifiée**, non
-soldée à ce jour : elle se referme en recopiant l'en-tête MIT du projet d'origine en tête du
-fichier vendoré. Elle est écrite ici plutôt que passée sous silence.
+**Notice restaurée le 14/08/2026** (constat repris par la revue externe du même jour) :
+`qrcode-vendor.js` ne portait **aucune notice de copyright d'origine** — la licence MIT exige
+sa conservation à la redistribution. La dette, consignée ici depuis le 26/07, est **soldée** :
+l'en-tête MIT du projet d'origine est recopié en tête du fichier vendorisé, et le texte
+complet est dans `LICENSES/MIT-qrcodejs.txt`.
 
 ## Ce qui, dans `v8/js/lib/`, est de NOUS
 
@@ -109,6 +114,24 @@ fichier vendoré. Elle est écrite ici plutôt que passée sous silence.
 > filtre du générateur écarte le **dossier entier**, pas les seuls fichiers tiers. Un
 > auditeur qui veut le lire le trouve dans le dépôt, à ce chemin.
 
+## Polices de caractères — IBM Plex et Space Grotesk (v8/polices/)
+
+> Section ajoutée le 14/08/2026 : la revue externe a relevé, à raison, que les **dix
+> fichiers de polices** distribués avec l'application n'apparaissaient ni dans cet
+> inventaire, ni avec leur texte de licence. C'est réparé ici.
+
+- Fichiers : `v8/polices/*.woff2` — **10 fichiers** : IBM Plex Sans (400/500/600/700),
+  IBM Plex Mono (400/500/600), Space Grotesk (500/600/700).
+- **IBM Plex** — © 2017 IBM Corp., « Reserved Font Name "Plex" » —
+  **SIL Open Font License 1.1** — <https://github.com/IBM/plex> —
+  texte complet : `LICENSES/OFL-IBM-Plex.txt`.
+- **Space Grotesk** — © 2020 The Space Grotesk Project Authors —
+  **SIL Open Font License 1.1** — <https://github.com/floriankarsten/space-grotesk> —
+  texte complet : `LICENSES/OFL-Space-Grotesk.txt`.
+- L'OFL autorise l'usage et la redistribution avec le logiciel à condition que la notice de
+  copyright et le texte de licence accompagnent les polices : c'est le rôle des deux
+  fichiers ci-dessus, embarqués dans le dépôt ET dans chaque paquet.
+
 ## Node.js — moteur d'exécution (paquet portable uniquement)
 
 - Fichier : `node/node.exe` — présent **uniquement dans le paquet portable** (jamais dans le
@@ -116,7 +139,10 @@ fichier vendoré. Elle est écrite ici plutôt que passée sous silence.
 - Auteur : **les contributeurs de Node.js** (Node.js contributors)
 - Licence : **MIT**. Le binaire embarque aussi ses propres composants (V8, libuv, OpenSSL, ICU,
   zlib, c-ares…), **chacun sous sa licence** (BSD, Apache 2.0…).
-- Source : <https://github.com/nodejs/node> — version embarquée : **v24.16.0**
+- Source : <https://github.com/nodejs/node> — version embarquée : **v24.19.0** (téléchargée
+  depuis nodejs.org le 14/08/2026, empreinte SHA-256 vérifiée contre le SHASUMS256.txt
+  officiel ; remplace la 24.16.0 des fabrications antérieures, en retard de trois versions
+  correctives — constat de la revue externe du 14/08)
 - Rôle : exécuter le serveur local ; c'est grâce à lui que l'utilisateur n'a **rien à installer**.
 - Le texte **complet** de la licence (Node.js et l'ensemble de ses composants) accompagne le
   binaire dans le paquet portable, sous **`node/LICENSE`** — comme l'exige la licence MIT

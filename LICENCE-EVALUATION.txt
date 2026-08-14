@@ -13,8 +13,11 @@ entièrement sur votre poste, sans aucune connexion à internet.
 ---------------------------
 - Installer et utiliser ce paquet sur les postes que vous utilisez
   vous-même (établissement, domicile), pendant la durée de la licence.
-- L'essayer avec des données réelles ou fictives, imprimer les documents,
-  faire des sauvegardes, exporter vos données à tout moment.
+- L'essayer, imprimer les documents, faire des sauvegardes, exporter vos
+  données à tout moment. Pour cette phase d'évaluation, travaillez avec des
+  données FICTIVES ou pseudonymisées : n'y saisissez pas de données
+  personnelles réelles (noms d'élèves ou de clients réels) — le logiciel ne
+  chiffre pas sa base lui-même, c'est le poste qui doit être protégé.
 - Envoyer vos remarques, questions et idées à inerweb.fh@gmail.com —
   c'est le but de cette version d'évaluation.
 
@@ -56,6 +59,16 @@ Le logiciel, son code, ses textes et sa marque restent la propriété
 exclusive de leur auteur. La présente licence ne vous transfère aucun
 droit autre que ceux du point 1, et prend fin immédiatement en cas de
 manquement au point 2.
+
+7. VOS COORDONNÉES (INFORMATION RGPD)
+-------------------------------------
+Pour délivrer et suivre les licences, l'auteur tient un registre local
+contenant : votre nom, votre courriel, le numéro et les dates de votre
+licence, et l'empreinte du paquet qui vous a été remis. Finalité : la seule
+gestion des licences d'évaluation. Ces données ne sont transmises à
+personne, ne quittent pas le poste de l'auteur, et sont conservées pendant
+la durée de la licence puis trois ans (délai de prescription). Pour y
+accéder, les rectifier ou les faire supprimer : inerweb.fh@gmail.com.
 
 Bibliothèques tierces embarquées : voir LICENCES-TIERCES.md (PDF.js —
 Apache 2.0, pdf-lib — MIT, qrcodejs — MIT) et node\LICENSE (Node.js — MIT).

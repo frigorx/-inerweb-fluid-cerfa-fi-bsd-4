@@ -40,12 +40,18 @@ personne ou d'un établissement :
   vérification de licence du logiciel.
 - Exploiter commercialement le logiciel ou un travail qui en dérive.
 
-4. VERSIONS ANTÉRIEURES
------------------------
-Les copies obtenues sous la PolyForm Noncommercial License 1.0.0 (versions
-distribuées jusqu'à la v1.0.1 du 15 juillet 2026) conservent, POUR CES
-VERSIONS, les droits que cette licence leur accordait. La présente licence
-s'applique à toute version publiée à compter du 14 août 2026.
+4. VERSIONS ANTÉRIEURES ET HISTORIQUE PUBLIC
+--------------------------------------------
+Chaque version de ce logiciel est régie par la licence inscrite DANS cette
+version : MIT avant le 14 juillet 2026, PolyForm Noncommercial 1.0.0 du
+14 juillet 2026 à la v1.0.1 (15 juillet 2026), la présente licence à
+compter du 14 août 2026.
+
+Ce dépôt public conserve son historique — c'est la preuve d'antériorité de
+l'auteur. Les versions d'époque restent donc téléchargeables (archives de
+tags ou de commits) et demeurent régies par LEUR licence d'époque : c'est
+assumé. Le changement de licence vaut pour les versions publiées à compter
+du 14 août 2026, sans effet rétroactif sur les copies antérieures.
 
 5. BIBLIOTHÈQUES TIERCES
 ------------------------

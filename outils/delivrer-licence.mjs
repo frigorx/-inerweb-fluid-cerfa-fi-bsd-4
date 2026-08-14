@@ -50,6 +50,28 @@ if (!titulaire || !courriel || !courriel.includes('@')
   console.error('Usage : node outils/delivrer-licence.mjs "Prénom Nom" courriel@exemple.fr [--mois 6]');
   process.exit(1);
 }
+
+// Durcissement (revue externe du 14/08) : le registre est un CSV « ; » lu
+// par un tableur — un nom peut y injecter un séparateur, un saut de ligne
+// ou une FORMULE (=, +, -, @ en tête de cellule). On refuse net, plutôt
+// que d'échapper : un nom de personne n'a besoin d'aucun de ces signes.
+function champRefuse(valeur, nom) {
+  if (/[;\r\n\t"]/.test(valeur)) return `« ${nom} » contient ; " tabulation ou saut de ligne`;
+  if (/^[=+\-@]/.test(valeur.trim())) return `« ${nom} » commence par un signe de formule (= + - @)`;
+  if (valeur.trim().length > 80) return `« ${nom} » dépasse 80 caractères`;
+  return null;
+}
+for (const [valeur, nom] of [[titulaire, 'titulaire'], [courriel, 'courriel']]) {
+  const refus = champRefuse(valeur, nom);
+  if (refus) {
+    console.error(`[ERREUR] ${refus} — licence NON délivrée.`);
+    process.exit(1);
+  }
+}
+if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(courriel.trim())) {
+  console.error('[ERREUR] Le courriel n\'a pas une forme valable — licence NON délivrée.');
+  process.exit(1);
+}
 if (!fs.existsSync(CHEMIN_PRIVEE)) {
   console.error(`[ERREUR] Clé privée introuvable : ${CHEMIN_PRIVEE}`);
   console.error('         Générez-la d\'abord : node outils/generer-cles-licence.mjs');
@@ -83,6 +105,14 @@ if (fs.existsSync(CHEMIN_REGISTRE)) {
   }
 }
 const numero = `EVAL-${annee}-${String(rang + 1).padStart(3, '0')}`;
+
+// Anti-collision : si le fichier de licence du numéro existe déjà (deux
+// délivrances lancées en même temps, ou registre incohérent), on s'arrête.
+if (fs.existsSync(path.join(DOSSIER_LICENCES, `${numero}-licence-inerweb.json`))) {
+  console.error(`[ERREUR] ${numero} existe déjà sur le disque — registre et dossier`);
+  console.error('         ne concordent pas. Réglez l\'écart avant de délivrer.');
+  process.exit(1);
+}
 
 // ------------------------------------------------------------
 // Signature et écriture
@@ -131,4 +161,10 @@ console.log(`  Registre  : ${CHEMIN_REGISTRE}`);
 console.log('');
 console.log('  Étape suivante — fabriquer le paquet de ce destinataire :');
 console.log(`    node outils/fabriquer-paquet.mjs --licence "${cheminLicence}" --zip`);
+console.log('');
+console.log('  Dans le courriel d\'envoi, demandez l\'ACCEPTATION EXPLICITE :');
+console.log('  « Merci de répondre à ce message par la phrase :');
+console.log(`    J'accepte la licence d'évaluation n° ${numero} (validité au ${expireLe})`);
+console.log('    après lecture du fichier LICENCE-EVALUATION.txt joint au paquet. »');
+console.log('  Conservez la réponse : elle vaut acceptation datée du contrat.');
 console.log('');

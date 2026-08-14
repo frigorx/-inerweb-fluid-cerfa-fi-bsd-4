@@ -2,6 +2,66 @@
 
 ## [8.0.0-dev] - 2026-07-02 — Ouverture du chantier v8 « Registre opposable »
 
+### 🛡️ REVUE EXTERNE DU DISPOSITIF DE LICENCE (14/08 après-midi) : 5 BLOCAGES CONFIRMÉS EN LES TIRANT, 5 TRAITÉS
+
+Un audit externe (ChatGPT, verdict NON-DIFFUSION) a relu le paquet
+EVAL-2026-001 quelques heures après sa fabrication. Méthode maison : chaque
+constat TIRÉ avant d'être cru — les cinq blocages étaient réels.
+
+- **① Lecture seule percée (CONFIRMÉ en le rejouant : `bootstrapAdmin` 200,
+  `definirCodeExercice` 200 en mode expiré).** La garde vivait APRÈS les
+  routeurs spécialisés — motif L2-i « une règle, pas une porte », énième
+  occurrence. Désormais UNE règle en AMONT de tous les aiguillages
+  (serveur.js), nourrie par une classification COMPLÈTE des routes hors
+  contrat dans `licence.js` (FERMÉES : bootstrapAdmin, creerCompte,
+  definirCodeExercice — la création d'identités ; OUVERTES : connexion,
+  gouvernance d'ACCÈS — mot de passe, activation —, exercice en lecture,
+  tout le coffre-fort). `test-licence` prouve la classification EXHAUSTIVE
+  contre les `METHODES` exportées des trois routeurs (une route nouvelle non
+  classée = rouge — et la preuve a mordu à la première exécution : elle a
+  attrapé listerComptes, reinitialiserMotDePasse, definirActivationCompte),
+  puis JOUE un serveur réel expiré : bootstrapAdmin/definirCodeExercice/
+  mutation → 403 licence, etatInitial/connexion atteignables, licence
+  absente → sortie 1. La clé n° 0 « d'essai » rend ce banc possible sans la
+  clé privée réelle : honorée UNIQUEMENT hors paquet (là où aucune licence
+  n'est exigée de toute façon) — dans un paquet elle n'ouvre rien.
+  Suite : 37 → **50 vérifications**.
+- **② Node embarqué 24.16.0 en retard de 3 versions correctives.** v24.19.0
+  téléchargée de nodejs.org, empreinte vérifiée contre le SHASUMS256.txt
+  officiel, paquet refabriqué avec elle ; `NODE-LICENSE.txt` remplacé par le
+  LICENSE exact de cette version.
+- **③ Clé privée : doublon (copie .txt de 11 h 13) + ACL larges + LUE par
+  l'outil d'audit → considérée COMPROMISE.** Rotation complète : ancienne
+  paire détruite, paire neuve, clé publique n° 1 remplacée dans
+  `licence.js`, EVAL-2026-001 réémise, ACL du dossier restreintes
+  (propriétaire/SYSTEM/administrateurs), notice RGPD du registre posée à
+  côté (`NOTICE-RGPD-REGISTRE.md`). Aucune licence de l'ancienne clé
+  n'avait circulé.
+- **④ Obligations tierces incomplètes.** Dossier `LICENSES/` créé (textes
+  canoniques : Apache 2.0, MIT pdf-lib/qrcodejs/core-js, OFL IBM Plex et
+  Space Grotesk — les DIX polices n'étaient inventoriées nulle part),
+  embarqué OBLIGATOIREMENT dans chaque paquet ; la dette de la notice MIT
+  de `qrcode-vendor.js` (consignée depuis le 26/07) est SOLDÉE — l'en-tête
+  d'origine est restauré ; LICENCES-TIERCES.md à jour (polices, core-js,
+  Node 24.19.0).
+- **⑤ « Robinet fermé » surestimé : les archives de tags restaient
+  téléchargeables (tiré : 302).** Décision du propriétaire : ASSUMER PAR
+  ÉCRIT — un dépôt public conserve son historique (c'est la preuve
+  d'antériorité), chaque version d'époque reste régie par SA licence ;
+  LICENSE § 4 le dit désormais noir sur blanc. Jamais de réécriture
+  d'historique.
+- **Durcissements connexes** : `delivrer-licence.mjs` refuse séparateurs,
+  sauts de ligne et signes de formule dans les champs (registre CSV lu par
+  un tableur), anti-collision de numéro ; le contrat d'évaluation demande
+  des données FICTIVES pour la phase d'évaluation et porte l'information
+  RGPD du registre (§ 7) ; le courriel d'envoi demande une ACCEPTATION
+  EXPLICITE datée (modèle imprimé par l'outil de délivrance).
+- **Suivis consignés, non traités** : signature du paquet par une clé de
+  publication distincte (l'empreinte envoyée avec le zip n'authentifie pas
+  l'expéditeur) · contrôle continu GitHub · mineurs d'affichage mobile,
+  libellés et focus · l'attribution d'une fuite désigne un PAQUET livré,
+  pas une personne au sens probatoire.
+
 ### 🔑 LICENCE NOMINATIVE : LE PAQUET COMPLET NE S'OBTIENT PLUS QU'À SON NOM (14/08)
 
 Décisions du propriétaire (plan `docs/PLAN-LICENCE-NOMINATIVE.md`) : les

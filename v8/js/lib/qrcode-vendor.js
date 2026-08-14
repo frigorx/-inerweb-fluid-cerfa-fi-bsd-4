@@ -1,6 +1,14 @@
+/*!
+ * QRCode.js — https://github.com/davidshimjs/qrcodejs
+ * Copyright (c) 2012 davidshimjs
+ * Licensed under the MIT license (texte complet : LICENSES/MIT-qrcodejs.txt).
+ * Notice recopiée du projet d'origine le 14/08/2026 — elle manquait à la
+ * copie vendorisée (dette consignée dans LICENCES-TIERCES.md, soldée ici).
+ */
 // ============================================================
 // inerWeb Fluide v8 — lib QR code vendored (davidshimjs/qrcodejs),
-// copie BRUTE et INCHANGÉE de C:\git\inerweb-fluide\js\qrcode-lib.min.js
+// copie BRUTE de C:\git\inerweb-fluide\js\qrcode-lib.min.js (seule la
+// notice MIT ci-dessus a été ajoutée depuis)
 // (autonome, hors-ligne, aucune requête réseau — la même bibliothèque
 // que le v7 utilisait déjà en <script> global).
 //

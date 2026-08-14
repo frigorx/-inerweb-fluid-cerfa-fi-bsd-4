@@ -1,0 +1,17 @@
+Textes des licences tierces — inerWeb Fluide
+=============================================
+
+Ce dossier accompagne LICENCES-TIERCES.md (l'inventaire commenté, à la
+racine). Chaque composant embarqué reste sous SA licence ; les textes
+complets exigés par ces licences sont ici :
+
+  Apache-2.0.txt        PDF.js (Mozilla) et tslib (Microsoft, dans pdf-lib.min.js)
+  MIT-pdf-lib.txt       pdf-lib (Andrew Dillon)
+  MIT-qrcodejs.txt      qrcodejs (davidshimjs) — v8/js/lib/qrcode-vendor.js
+  MIT-core-js.txt       core-js (Denis Pushkarev, dans les fichiers PDF.js)
+  OFL-IBM-Plex.txt      polices IBM Plex Sans et IBM Plex Mono (v8/polices/)
+  OFL-Space-Grotesk.txt police Space Grotesk (v8/polices/)
+
+Le moteur Node.js du paquet portable a sa propre licence dans node\LICENSE.
+Ne supprimez aucun de ces fichiers : leur présence est une obligation des
+licences concernées.

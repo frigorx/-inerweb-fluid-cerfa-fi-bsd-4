@@ -457,6 +457,24 @@ function traiterApi(requete, reponse, chemin) {
 
     const contexte = contexteDeLaConnexion(requete);
 
+    // LECTURE SEULE (licence expirée) : UNE règle, en AMONT de TOUS les
+    // aiguillages. La revue externe du 14/08 a tiré le trou : la première
+    // garde vivait après les routeurs spécialisés, et bootstrapAdmin comme
+    // definirCodeExercice écrivaient encore en 200 (motif L2-i « une règle,
+    // pas une porte »). La classification des routes hors contrat vit dans
+    // licence.js, prouvée COMPLÈTE par test-licence ; les mutations du
+    // contrat se reconnaissent à ROLES_MUTATION.
+    if (ETAT_LICENCE.lectureSeule
+      && (licence.routeFermeeEnLectureSeule(methode)
+        || Object.prototype.hasOwnProperty.call(api.ROLES_MUTATION, methode))) {
+      repondreJson(reponse, 403, {
+        ok: false,
+        erreur: licence.messageLectureSeule(ETAT_LICENCE.licence),
+        code: 403,
+      });
+      return;
+    }
+
     // Routes d'authentification (V9-E5) : dédiées, HORS du contrat DataStore
     // ET hors routes-sauvegarde, aiguillées EN PREMIER (avant même la garde
     // de lecture LAN ci-dessous — se connecter ne peut pas exiger d'être
@@ -549,19 +567,6 @@ function traiterApi(requete, reponse, chemin) {
       repondreJson(reponse, 403, {
         ok: false,
         erreur: 'Session requise (connexion nécessaire).',
-        code: 403,
-      });
-      return;
-    }
-
-    // Licence expirée = LECTURE SEULE : toute méthode de mutation du contrat
-    // répond 403 avec le message canonique. Consultations, exports et
-    // sauvegardes (routes dédiées, aiguillées plus haut) restent ouverts —
-    // un registre ne se prend jamais en otage.
-    if (estMutation && ETAT_LICENCE.lectureSeule) {
-      repondreJson(reponse, 403, {
-        ok: false,
-        erreur: licence.messageLectureSeule(ETAT_LICENCE.licence),
         code: 403,
       });
       return;
