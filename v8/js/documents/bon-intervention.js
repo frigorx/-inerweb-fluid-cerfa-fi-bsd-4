@@ -21,6 +21,7 @@
 import { modale, ICONES } from '../views/communs.js';
 import { esc } from '../core/utils.js';
 import { obtenirQRCode } from '../lib/qrcode.js';
+import { logoInerwebFluide } from '../core/logo.js';
 
 /** Taille en pixels du QR généré (avant mise à l'échelle CSS). */
 const QR_PIXELS = 120;
@@ -77,11 +78,8 @@ function genererQRDansConteneur(conteneur, texte) {
 function enteteDocument() {
   return '<div class="bi-doc-entete">'
     + '<div class="sidebar-logo bi-doc-entete-logo">'
-    + '<span class="logo-carre">' + ICONES.flocon + '</span>'
-    + '<div class="logo-textes">'
-    + '<div class="logo-nom">inerWeb <span class="logo-fluide">Fluide</span></div>'
+    + logoInerwebFluide()
     + '<div class="logo-sous-titre">Traçabilité F-Gas</div>'
-    + '</div>'
     + '</div>'
     + '<div class="bi-doc-entete-reserves">'
     + '<div class="bi-doc-reserve">'
@@ -305,13 +303,10 @@ function assurerStyle() {
     }
     .bi-doc-entete-logo { flex: none; }
 
-    /* Logo inerWeb Fluide sur fond BLANC (document imprimable) : les
-       classes globales .logo-nom/.logo-fluide/.logo-sous-titre sont
-       calibrées pour le fond marine sombre de la sidebar (voir
-       css/coquille.css) — on les surcharge ici, scopées à l'en-tête
-       du document, pour rester lisibles sur papier blanc. */
-    .bi-doc-entete-logo .logo-nom { color: var(--texte); }
-    .bi-doc-entete-logo .logo-nom .logo-fluide { color: var(--accent-fort); }
+    /* Logo de la CHARTE sur fond BLANC (document imprimable) : le SVG
+       porte ses propres couleurs figées, il ne reste qu'à le dimensionner
+       et à rendre le sous-titre lisible sur papier. */
+    .bi-doc-entete-logo .logo-inerweb { width: 200px; height: auto; display: block; }
     .bi-doc-entete-logo .logo-sous-titre { color: var(--texte-3); }
 
     .bi-doc-entete-reserves {

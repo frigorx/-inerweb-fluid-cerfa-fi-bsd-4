@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 50" role="img" aria-label="inerWeb Fluide">
+  <!-- Copie conforme de la référence figée de la charte inerWeb (§ 3.4),
+       version compacte, cartouche « Fluide ». Source de vérité :
+       usine-contenu\00-charte\logo-inerweb.html — ne pas retoucher ici. -->
+  <text fill="#1b3a63" font-size="28px" x="4" y="34">❄️</text>
+  <text fill="#1b3a63" font-family="Trebuchet MS, Trebuchet, sans-serif" font-size="26px" font-weight="bold" x="44" y="32">iner</text>
+  <text fill="#1b3a63" font-family="Segoe Script, Brush Script MT, cursive" font-size="26px" x="94" y="32">Web</text>
+  <line stroke="#e8914a" stroke-width="2" x1="44" x2="150" y1="35" y2="35"/>
+  <rect fill="#e8914a" x="155" y="10" rx="5" ry="5" width="80" height="24"/>
+  <text fill="#ffffff" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="14px" font-weight="bold" x="195" y="27" text-anchor="middle">Fluide</text>
+</svg>

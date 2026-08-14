@@ -88,9 +88,9 @@ const CLIENT_TEST = {
     /Bon d.intervention/.test(fond.innerHTML));
 
   // Logo inerWeb Fluide (patron app.js) présent
-  verifier('le logo inerWeb Fluide (sidebar-logo/logo-carre) est présent en en-tête',
+  verifier('le logo de la charte (sidebar-logo/logo-inerweb) est présent en en-tête',
     Boolean(fond.querySelector('.bi-doc-entete .sidebar-logo'))
-    && Boolean(fond.querySelector('.bi-doc-entete .logo-carre')));
+    && Boolean(fond.querySelector('.bi-doc-entete .logo-inerweb')));
 
   // Deux emplacements réservés vides
   const reserves = fond.querySelectorAll('.bi-doc-reserve');

@@ -22,42 +22,18 @@
 
 /* ---- Logo ---- */
 
+/* Le logo de la CHARTE (SVG en ligne, référence figée § 3.4) : il porte
+   ses couleurs — le conteneur ne fait que l'espacer et le dimensionner. */
 .sidebar-logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 20px 18px 18px;
+  padding: 20px 18px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, .08);
 }
 
-.logo-carre {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  flex: none;
-  border-radius: var(--rayon-bouton);
-  background: var(--degrade-bouton);
-  color: #ffffff;
-  box-shadow: 0 4px 12px rgba(18, 181, 201, .35);
-}
-
-.logo-carre svg {
-  width: 22px;
-  height: 22px;
-}
-
-.logo-nom {
-  font-family: var(--police-titres);
-  font-weight: 700;
-  font-size: 17px;
-  color: #ffffff;
-  line-height: 1.2;
-}
-
-.logo-nom .logo-fluide {
-  color: var(--accent-clair);
+.sidebar-logo .logo-inerweb {
+  width: 100%;
+  max-width: 204px;
+  height: auto;
+  display: block;
 }
 
 .logo-sous-titre {

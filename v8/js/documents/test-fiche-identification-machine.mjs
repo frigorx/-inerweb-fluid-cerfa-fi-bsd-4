@@ -89,9 +89,9 @@ const CLIENT_TEST = { id: 'cli-1', raisonSociale: 'Lycée Vidal', adresse: '12 r
     /Fiche d.identification équipement/.test(fond.innerHTML));
 
   // Logo inerWeb Fluide + deux emplacements réservés (classes fim-doc-*)
-  verifier('le logo inerWeb Fluide est présent en en-tête',
+  verifier('le logo de la charte est présent en en-tête',
     Boolean(fond.querySelector('.fim-doc-entete .sidebar-logo'))
-    && Boolean(fond.querySelector('.fim-doc-entete .logo-carre')));
+    && Boolean(fond.querySelector('.fim-doc-entete .logo-inerweb')));
   const reserves = fond.querySelectorAll('.fim-doc-reserve');
   verifier('les deux emplacements réservés (établissement/groupement) sont présents',
     reserves.length === 2);

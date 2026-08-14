@@ -23,6 +23,9 @@
   GitHub Actions sur chaque poussée.
 - **Documentation triée** : le dépôt ne raconte plus le chantier ; il
   documente le produit (voir `docs/INDEX.md`).
+- **Le logo de la charte inerWeb** (référence figée) remplace l'ancienne
+  marque simplifiée : vitrine, guide, application et documents imprimés
+  portent le même SVG (`v8/js/core/logo.js`, copie dans `img/`).
 
 ## Avant le 14/08/2026
 

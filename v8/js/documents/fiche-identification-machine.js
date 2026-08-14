@@ -19,6 +19,7 @@
 import { modale, ICONES } from '../views/communs.js';
 import { esc, fmtKg, fmtTeq, fmtDate, teqCO2 } from '../core/utils.js';
 import { obtenirQRCode } from '../lib/qrcode.js';
+import { logoInerwebFluide } from '../core/logo.js';
 import { calculerFrequenceControle } from './plaque-fgas.js';
 
 /** Taille en pixels du QR généré (avant mise à l'échelle CSS) — en grand. */
@@ -70,11 +71,8 @@ function genererQRDansConteneur(conteneur, texte) {
 function enteteDocument() {
   return '<div class="fim-doc-entete">'
     + '<div class="sidebar-logo fim-doc-entete-logo">'
-    + '<span class="logo-carre">' + ICONES.flocon + '</span>'
-    + '<div class="logo-textes">'
-    + '<div class="logo-nom">inerWeb <span class="logo-fluide">Fluide</span></div>'
+    + logoInerwebFluide()
     + '<div class="logo-sous-titre">Traçabilité F-Gas</div>'
-    + '</div>'
     + '</div>'
     + '<div class="fim-doc-entete-reserves">'
     + '<div class="fim-doc-reserve">'
@@ -206,8 +204,7 @@ function assurerStyle() {
        calibrées pour le fond marine sombre de la sidebar (voir
        css/coquille.css) — on les surcharge ici, scopées à l'en-tête
        du document, pour rester lisibles sur papier blanc. */
-    .fim-doc-entete-logo .logo-nom { color: var(--texte); }
-    .fim-doc-entete-logo .logo-nom .logo-fluide { color: var(--accent-fort); }
+    .fim-doc-entete-logo .logo-inerweb { width: 200px; height: auto; display: block; }
     .fim-doc-entete-logo .logo-sous-titre { color: var(--texte-3); }
 
     .fim-doc-entete-reserves {

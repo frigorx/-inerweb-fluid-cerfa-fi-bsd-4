@@ -33,6 +33,7 @@
     header.barre { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,.94); backdrop-filter: blur(6px); border-bottom: 1px solid var(--trait); }
     .barre-inner { display: flex; align-items: center; gap: 14px; padding: 12px 22px; }
     .marque { display: flex; align-items: center; gap: 11px; text-decoration: none; }
+    .marque .logo-inerweb { height: 34px; width: auto; display: block; }
     .marque .carre { width: 36px; height: 36px; border-radius: 9px; background: var(--degrade); color: #fff; display: grid; place-items: center; flex: none; }
     .marque .carre svg { width: 21px; height: 21px; }
     .marque .nom { font-weight: 600; color: var(--marine); }
@@ -151,9 +152,9 @@
 <body>
 
   <header class="barre">
-    <a class="marque" href="index.html">
-      <span class="carre"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"/><path d="m9.5 5 2.5 2 2.5-2"/><path d="m9.5 19 2.5-2 2.5 2"/><path d="m4.2 7.5 15.6 9"/><path d="M4.8 10.6 7.9 9.7l.3-3.2"/><path d="m19.2 13.4-3.1.9-.3 3.2"/><path d="m19.8 7.5-15.6 9"/><path d="m19.2 10.6-3.1-.9-.3-3.2"/><path d="m4.8 13.4 3.1.9.3 3.2"/></svg></span>
-      <span class="nom">inerWeb <b>Fluide</b></span>
+    <a class="marque" href="index.html" aria-label="inerWeb Fluide — retour à l'accueil">
+      <!-- Logo de la charte inerWeb (référence figée § 3.4), compact, cartouche Fluide -->
+      <svg class="logo-inerweb" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 50" role="img" aria-label="inerWeb Fluide"><text fill="#1b3a63" font-size="28px" x="4" y="34">❄️</text><text fill="#1b3a63" font-family="Trebuchet MS, Trebuchet, sans-serif" font-size="26px" font-weight="bold" x="44" y="32">iner</text><text fill="#1b3a63" font-family="Segoe Script, Brush Script MT, cursive" font-size="26px" x="94" y="32">Web</text><line stroke="#e8914a" stroke-width="2" x1="44" x2="150" y1="35" y2="35"/><rect fill="#e8914a" x="155" y="10" rx="5" ry="5" width="80" height="24"/><text fill="#ffffff" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="14px" font-weight="bold" x="195" y="27" text-anchor="middle">Fluide</text></svg>
     </a>
     <span class="fil">Guide d'installation et mode d'emploi</span>
     <a class="retour" href="index.html">Retour à l'accueil</a>

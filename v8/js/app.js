@@ -11,6 +11,7 @@ import { poserBandeauExercice } from './views/bandeau-exercice.js';
 import { creerTransportHttp, EVENEMENT_SESSION_REQUISE } from './data/transport-http.js';
 import { creerRouteur } from './core/routeur.js';
 import { ICONES } from './core/icones.js';
+import { logoInerwebFluide } from './core/logo.js';
 import { esc } from './core/utils.js';
 import { modale, toast, confirmer } from './views/communs.js';
 import { creerVisiteGuidee, visiteDisponible } from './composants/visite-guidee.js';
@@ -104,12 +105,10 @@ function construireSidebar() {
   }).join('');
 
   sidebar.innerHTML =
+    // Le logo de la CHARTE (référence figée § 3.4), variante fond sombre.
     '<div class="sidebar-logo">'
-    + '<span class="logo-carre">' + ICONES.flocon + '</span>'
-    + '<div class="logo-textes">'
-    + '<div class="logo-nom">inerWeb <span class="logo-fluide">Fluide</span></div>'
+    + logoInerwebFluide({ fondSombre: true })
     + '<div class="logo-sous-titre">Traçabilité F-Gas</div>'
-    + '</div>'
     + '</div>'
     + '<nav class="sidebar-nav" aria-label="Vues de l\'application">' + liens + '</nav>'
     + '<div class="sidebar-pied">'
