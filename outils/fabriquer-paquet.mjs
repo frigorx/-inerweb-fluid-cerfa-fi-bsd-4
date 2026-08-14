@@ -90,15 +90,46 @@ if (!/node(\.exe)?$/i.test(nodeExe)) {
   console.error(`[ERREUR] Exécutable Node introuvable (process.execPath = ${nodeExe}).`);
   process.exit(1);
 }
-// Le node.exe embarqué est celui de CETTE machine de build : il doit être en
-// version 22+ (module intégré node:sqlite requis par le Mode Local), sinon on
-// produirait un paquet qui plante au démarrage sur un poste vierge.
-const majeurBuild = Number(process.versions.node.split('.')[0]);
-if (Number.isNaN(majeurBuild) || majeurBuild < 22) {
-  console.error(`[ERREUR] Node ${process.versions.node} est trop ancien pour être embarqué.`);
-  console.error('         inerWeb Fluide (Mode Local) exige Node 22+ (module node:sqlite).');
-  console.error('         Relancez la fabrication avec Node 22 ou plus récent.');
+// Le node.exe embarqué est celui qui EXÉCUTE cette commande. Revue du
+// 14/08 : « en version 22+ » laissait embarquer n'importe quel Node du
+// poste de build (un collègue sous Node 25 aurait livré Node 25, jamais
+// éprouvé). On exige désormais la version VALIDÉE, à l'octet de version
+// près — celle que le filet et les bancs ont réellement prouvée
+// (source : server/version.js, téléchargement vérifié contre le
+// SHASUMS256.txt officiel de nodejs.org).
+const { NODE_VALIDE, VERSION_LOGICIEL } = require('../server/version.js');
+if (process.versions.node !== NODE_VALIDE) {
+  console.error(`[ERREUR] Ce build tourne sous Node ${process.versions.node} ; la version`);
+  console.error(`         VALIDÉE pour être embarquée est ${NODE_VALIDE} (server/version.js).`);
+  console.error('         Lancez la fabrication avec le runtime validé, par exemple :');
+  console.error(`         <dossier-node-${NODE_VALIDE}>\\node.exe outils\\fabriquer-paquet.mjs …`);
   process.exit(1);
+}
+// La version du produit a UNE source (server/version.js) ; package.json la
+// recopie pour l'outillage standard. Une divergence = un paquet qui ment.
+{
+  const paquetJson = JSON.parse(
+    fs.readFileSync(path.join(RACINE, 'package.json'), 'utf8'));
+  if (paquetJson.version !== VERSION_LOGICIEL) {
+    console.error(`[ERREUR] Versions divergentes : package.json dit « ${paquetJson.version} »,`);
+    console.error(`         server/version.js dit « ${VERSION_LOGICIEL} ». Alignez-les.`);
+    process.exit(1);
+  }
+}
+// Le gabarit CERFA existe en DEUX copies (racine, servie au front sous
+// v8/) : la fabrication refuse qu'elles divergent (revue du 14/08).
+{
+  const empreinteDe = (chemin) => createHash('sha256')
+    .update(fs.readFileSync(chemin)).digest('hex');
+  const racinePdf = path.join(RACINE, 'cerfa_15497-04_officiel.pdf');
+  const v8Pdf = path.join(RACINE, 'v8', 'cerfa_15497-04_officiel.pdf');
+  if (empreinteDe(racinePdf) !== empreinteDe(v8Pdf)) {
+    console.error('[ERREUR] Les deux copies du gabarit CERFA divergent :');
+    console.error(`         ${racinePdf}`);
+    console.error(`         ${v8Pdf}`);
+    console.error('         Refaites-en une copie unique avant de fabriquer.');
+    process.exit(1);
+  }
 }
 if (SORTIE === RACINE || SORTIE.startsWith(RACINE + path.sep)) {
   console.error('[ERREUR] Le dossier de sortie ne doit pas être DANS le dépôt.');

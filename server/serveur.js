@@ -2,18 +2,17 @@
 'use strict';
 
 /**
- * inerWeb Fluide v8 — serveur local (Mode Local Lycée, Phase E)
- * =============================================================
- * Serveur Node.js pur (module http natif), ZÉRO dépendance externe.
- * - Écoute sur 127.0.0.1 uniquement (jamais exposé au réseau).
- * - Sert les fichiers statiques du front depuis la racine du dépôt.
- * - Expose l'espace /api/* (JSON) — pour l'instant seul /api/ping répond.
+ * inerWeb Fluide v8 — serveur local (Mode Local Lycée)
+ * =====================================================
+ * Serveur Node.js pur (modules natifs http/https), ZÉRO dépendance externe.
+ * - Écoute sur 127.0.0.1 par défaut ; LAN uniquement sur configuration
+ *   explicite ET en HTTPS (IWF_LAN=1 + certificat, jamais de repli en clair).
+ * - Sert le front en liste BLANCHE (v8/, img/, trois fichiers de racine).
+ * - Expose /api/* : les 96 méthodes du contrat (api.js, SQLite node:sqlite)
+ *   plus les routes dédiées hors contrat (comptes, sauvegarde, exercice).
+ * - Applique la licence nominative des paquets portables (licence.js).
  *
- * Référence : docs/SPEC-V8.md (§2.2 Mode Local Lycée, §3 Architecture, §8 Sécurité).
- *
- * TODO Phase E : brancher la base SQLite via require('./db.js')
- * (module node:sqlite, Node ≥ 22) — fichier créé séparément, ne pas
- * l'importer tant que le contrat n'est pas stabilisé.
+ * L'architecture complète se lit dans docs/CARTE-CODE.md.
  */
 
 const http = require('node:http');
@@ -49,7 +48,8 @@ const licence = require('./licence.js');
 
 // ----- Configuration -----
 const PORT = Number(process.env.PORT) || 2011; // port par défaut du Mode Local
-const VERSION = '8.0.0-dev';
+// Source UNIQUE de version (revue du 14/08) : server/version.js.
+const { VERSION_LOGICIEL: VERSION } = require('./version.js');
 
 /**
  * Écoute LAN (V9-E5, vague 4 — vision §16.6/§10.6) : par défaut le serveur
@@ -779,7 +779,6 @@ const traiterRequete = (requete, reponse) => {
   const url = new URL(requete.url, `${protocole}://${requete.headers.host || 'localhost'}`);
   const chemin = url.pathname;
 
-  // Seules les lectures sont autorisées pour l'instant (squelette Phase E)
   if (chemin.startsWith('/api/')) {
     traiterApi(requete, reponse, chemin);
     return;

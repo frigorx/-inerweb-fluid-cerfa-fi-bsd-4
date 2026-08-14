@@ -143,15 +143,17 @@ const GUIDES = readdirSync(RACINE)
   .filter((nom) => /\.md$/i.test(nom) && nom !== 'CHANGELOG.md')
   .sort();
 
-verifier('les guides à balayer sont bien trouvés (dont SAUVEGARDE.md et INSTALLATION_CLOUD.md)',
-  GUIDES.includes('SAUVEGARDE.md') && GUIDES.includes('INSTALLATION_CLOUD.md'),
-  GUIDES.join(', '));
+// Tri du 14/08/2026 : INSTALLATION_CLOUD.md (la note de conception
+// Supabase, jamais appliquée) a quitté la version courante — s'il
+// REVENAIT, il serait jugé comme n'importe quel guide, bandeau compris.
+verifier('les guides à balayer sont bien trouvés (dont SAUVEGARDE.md)',
+  GUIDES.includes('SAUVEGARDE.md'), GUIDES.join(', '));
 
 for (const nom of GUIDES) {
   const texte = readFileSync(join(RACINE, nom), 'utf8');
 
   if (nom === 'INSTALLATION_CLOUD.md') {
-    // Note de conception conservée : son bandeau couvre tout le fichier.
+    // Revenant d'archives : son bandeau doit couvrir tout le fichier.
     const entete = normaliser(texte.split(/\r?\n/).slice(0, 20).join('\n'));
     verifier("INSTALLATION_CLOUD.md porte son bandeau « NON IMPLÉMENTÉ — n'appliquez pas ce guide » en tête",
       /non implemente/.test(entete) && /n'appliquez pas ce guide/.test(entete));

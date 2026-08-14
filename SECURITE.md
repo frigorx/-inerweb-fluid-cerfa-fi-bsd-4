@@ -2,7 +2,11 @@
 
 > Ce document décrit la politique de sécurité du projet inerWeb Fluide (v8) et la procédure
 > de traitement de l'incident du 02/07/2026 concernant les clés API du backend v7.
-> Il complète la spécification `docs/SPEC-V8.md` (§8 Sécurité).
+>
+> **Où en est-on (14/08/2026)** : la v7 est **abandonnée et retirée du dépôt** depuis le
+> 25/07/2026 — l'incident historique ci-dessous est donc consigné pour mémoire, et il n'en
+> reste qu'UN geste, hors code : couper le déploiement Apps Script de la v7 (constat P0-9).
+> Tant que ce geste n'est pas fait, l'incident ne se déclare pas clos.
 
 ---
 

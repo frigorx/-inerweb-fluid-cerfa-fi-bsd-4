@@ -91,8 +91,8 @@ const restaurationCoffre = require('./restauration.js');
 // ------------------------------------------------------------
 const ID_ETABLISSEMENT = 'ETB-LOCAL';
 
-/** Tenir alignée avec serveur.js:VERSION (qui ne peut pas être requis). */
-const VERSION_LOGICIEL = '8.0.0-dev';
+// Source UNIQUE de version (revue du 14/08) : server/version.js.
+const { VERSION_LOGICIEL } = require('./version.js');
 
 // ------------------------------------------------------------
 // Constantes métier (reprises EXACTES du DemoStore).

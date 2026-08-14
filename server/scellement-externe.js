@@ -29,8 +29,8 @@ const db = require('./db.js');
 const sauvegarde = require('./sauvegarde.js');
 const { FICHE_REGLEMENTAIRE_FLUIDES } = require('./migrations.js');
 
-/** Tenir alignée avec serveur.js:VERSION (qui ne peut pas être requis). */
-const VERSION_LOGICIEL = '8.0.0-dev';
+// Source UNIQUE de version (revue du 14/08) : server/version.js.
+const { VERSION_LOGICIEL } = require('./version.js');
 
 const PREFIXE_TEMOIN = 'temoin-';
 const MOTIF_TEMOIN = /^temoin-(\d{4}-\d{2}-\d{2})\.json$/;

@@ -16,6 +16,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          # La version VALIDÉE (server/version.js NODE_VALIDE) — épinglée,
+          # jamais une borne flottante : le filet prouve CE runtime.
+          node-version: '24.19.0'
       - name: Filet complet (TOUT VERT exigé)
         run: node outils/lancer-tests.mjs --tout

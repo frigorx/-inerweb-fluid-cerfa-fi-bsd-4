@@ -1,0 +1,18 @@
+{
+  "name": "inerweb-fluide",
+  "version": "8.0.0-dev",
+  "private": true,
+  "description": "Traçabilité des fluides frigorigènes (F-Gas / CERFA 15497*04) — logiciel local, zéro dépendance d'exécution.",
+  "author": "Franck Henninot <inerweb.fh@gmail.com>",
+  "license": "SEE LICENSE IN LICENSE",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node outils/lancer-tests.mjs --tout",
+    "test:securite": "node server/test-securite-negative.mjs",
+    "check": "node --check server/serveur.js",
+    "start": "node server/serveur.js",
+    "paquet": "node outils/fabriquer-paquet.mjs"
+  }
+}

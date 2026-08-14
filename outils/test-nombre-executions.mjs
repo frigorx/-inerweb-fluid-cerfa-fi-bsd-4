@@ -43,22 +43,17 @@ verifier(`le plan du filet se recompte (${attendu} exécutions)`,
 // Les pièces qui ANNONCENT le nombre COMME ÉTAT COURANT. Toute pièce
 // livrée qui écrit « N exécutions » au présent doit dire le bon N —
 // même exigence que pour l'inventaire des documents sans marque.
+// Tri du 14/08/2026 : les pièces de CHANTIER (briefs et prompts d'audit,
+// journal de reprise) ont quitté la version courante du dépôt — la liste
+// ne garde que les pièces VIVANTES. Le journal `docs/PROMPT-REPRISE.md`,
+// jadis EXCLU nommément (ses « blocs d'époque » ne se réécrivent pas),
+// est parti aux archives avec cette exclusion.
 const PIECES = [
   'docs/CARTE-CODE.md',
   'docs/NOTE-DECISION-ETABLISSEMENT.md',
   'docs/POINTS-DE-FRICTION.md',
-  'docs/BRIEF-AUDITEUR-EXTERNE.md',
-  'docs/PROMPT-REPRISE-AUDIT-EXTERNE.md',
   'LIMITE-DE-RESPONSABILITE.md'
 ];
-
-// ⚠ EXCLUSION NOMMÉE, comme le fait outils/test-visa-abandonne.mjs.
-// `docs/PROMPT-REPRISE.md` est un JOURNAL : il conserve à dessein des
-// « blocs d'époque » datés (87, 95, 98, 101, 104, 106, 121 exécutions).
-// Exiger d'eux le compte du jour reviendrait à RÉÉCRIRE L'HISTOIRE, ce
-// que ce dépôt ne fait pas. Son repère courant (§ « Repère au … ») se
-// tient donc à la main — c'est un choix, pas un oubli.
-const JOURNAUX_EXCLUS = ['docs/PROMPT-REPRISE.md'];
 
 // Une annonce est HISTORIQUE — donc hors jugement — quand sa ligne le DIT
 // au passé. ⚠ Une simple date ne suffit pas à distinguer : « 132
@@ -95,10 +90,9 @@ for (const piece of PIECES) {
   fausses.length === 0, fausses.join(' | '));
 }
 
-verifier('l’exclusion du journal daté est NOMMÉE, jamais un motif large',
-  JOURNAUX_EXCLUS.length === 1
-  && JOURNAUX_EXCLUS[0] === 'docs/PROMPT-REPRISE.md'
-  && !PIECES.includes(JOURNAUX_EXCLUS[0]));
+verifier('aucun journal d\'époque ne traîne dans les pièces jugées',
+  !PIECES.includes('docs/PROMPT-REPRISE.md')
+  && !existsSync(join(RACINE, 'docs/PROMPT-REPRISE.md')));
 
 verifier('au moins une pièce annonce le nombre (le motif mord encore)',
   annoncesVues > 0, `${annoncesVues} annonce(s)`);

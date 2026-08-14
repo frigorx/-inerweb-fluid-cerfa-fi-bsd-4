@@ -49,10 +49,16 @@ le logiciel ne peut pas être pris pour un registre à valeur probante par accid
 - **Modes Formation et Officiel strictement séparés** : numérotation distincte, filigrane massif sur tout document de formation, validation enseignant obligatoire ; un élève ne peut jamais produire un document d'apparence officielle.
 - **Alertes réglementaires** : attestations expirées, étalonnages dépassés, contrôles d'étanchéité dus, délais de garde des fluides récupérés… Les alertes critiques bloquent le mode Officiel pour l'opération concernée. L'application intègre la transition réglementaire des arrêtés du 21 novembre 2025 (nouvelle grille de catégories d'aptitude obligatoire au 1ᵉʳ janvier 2027 ; les arrêtés de 2008 — 13 octobre pour l'aptitude des personnes, 30 juin pour la capacité des entreprises — sont abrogés au 31 décembre 2026).
 
-## État du chantier
+## État du produit
 
-- **v8 : en construction.** La source de vérité du chantier est la spécification [`docs/SPEC-V8.md`](docs/SPEC-V8.md) (trois modes, modèle de données, règles réglementaires, sécurité).
-- **v7 : fonctionnelle** et conservée en référence (version antérieure, gelée). Règle d'or du chantier : brancher le neuf avant de retirer l'ancien.
+- **Version candidate — bêta Formation nominative.** Le moteur est complet (96 méthodes de
+  contrat, prouvées sur les deux modes), le filet de tests passe TOUT VERT en contrôle
+  continu, et le paquet portable se délivre nominativement (voir « Licence et auteur »).
+- **Le mode Officiel reste fermé** : sa réouverture est une décision
+  d'exploitation (validation métier F-Gas, DPD), pas un chantier de code.
+- L'ancienne v7 est **abandonnée et retirée** depuis le 25/07/2026 ; le présent dépôt ne
+  contient que la v8.
+- L'architecture se lit en une page : [`docs/CARTE-CODE.md`](docs/CARTE-CODE.md).
 
 ## Guides
 

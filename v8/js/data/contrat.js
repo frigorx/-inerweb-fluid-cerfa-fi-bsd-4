@@ -110,7 +110,9 @@ export const ROLES_VALIDEURS = ['REFERENT', 'ENSEIGNANT', 'ADMIN'];
 export const PROPRIETES_CONTRAT = ['modeLabel', 'registreAltere'];
 
 /**
- * Les 80 méthodes du contrat, dans l'ordre du cycle de vie.
+ * Les méthodes du contrat, dans l'ordre du cycle de vie. Leur COMPTE ne
+ * s'écrit pas ici (il a déjà menti) : il se relit par
+ * Object.keys(METHODES_CONTRAT).length, et VERSION_CONTRAT date la surface.
  * genre : 'abonnement' | 'initialisation' | 'lecture' | 'mutation'.
  * La sémantique fine (formes de retour, garde-fous, effets) est
  * décrite ici en une ligne et VÉRIFIÉE dans test-contrat.mjs.
