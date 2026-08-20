@@ -70,23 +70,13 @@ la charte, pas à copier.
 
 ## Les affirmations métier à faire contrôler en priorité
 
-1. **Le groupe de maintien** (« parking unit ») et son comportement en coupure longue —
-   escale 12. Décrit d'après la source ; à confirmer sur une centrale réelle.
-2. **Les technologies de compresseur** (piston semi-hermétique dominant, scroll en petites
-   puissances, vis en cascade) — escale 10. Le module renvoie explicitement au catalogue
-   constructeur, mais l'affirmation générale reste à valider.
-3. **Le symptôme de la vanne de gaz de détente bloquée ouverte** — escale 7. Raisonnement
-   déduit du fonctionnement, non observé.
-4. **Les plages de surchauffe et de sous-refroidissement en R744 subcritique** — escale 4.
-   Reprises des usages HFC ; à confirmer pour le CO₂.
-5. **Le mot « éjecteur de liquide » et « éjecteur de gaz »** — escale 11 et code 11.06 :
-   le référentiel les distingue, le module ne développe pas la différence.
-6. ⚠️ **Une divergence à trancher, dans le même site.** La fiche du pack « CO₂ : deux dangers
-   mortels » (carte `cl3`) refuse délibérément de donner un chiffre de pression : « ce qu'il
-   faut retenir sans aucun chiffre, c'est qu'aucun réflexe acquis sur un R-134a ou un R-410A
-   ne se transpose ici ». La ligne CO₂, elle, annonce « jusqu'à 120 bar » comme ordre de
-   grandeur, avec renvoi à la plaque. Les deux se défendent, mais **le même site dit deux
-   choses différentes au même stagiaire** : à arbitrer.
+**Cette liste a été traitée le 20 août 2026 : voir `RELECTURE-METIER.md`**, qui porte les six
+points, la décision prise sur chacun et ce qui a été modifié. Deux confirmés sans changement,
+un diagnostic retiré, un écran ajouté, et l'alignement du site sur les 120 bar.
+
+Ne pas se fier aux numéros d'escale qui figuraient ici : ils dataient d'avant la scission en
+deux branches et l'ajout de l'escale « Le point triple ». `RELECTURE-METIER.md` repère les
+passages par leur identifiant, qui ne bouge pas.
 
 ## Ce que le module ne prétend pas enseigner
 

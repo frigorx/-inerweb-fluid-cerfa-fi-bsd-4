@@ -1174,10 +1174,8 @@ window.__INERWEB_COURSE__ = {
       lead: "La vapeur séparée doit bien repartir quelque part. Une vanne la renvoie à l'aspiration moyenne température, sans passer par les évaporateurs.",
       bullets: [
         "La vanne de gaz de détente court-circuite les meubles : cette vapeur n'a rien à y faire.",
-        "Elle règle en même temps la pression de la bouteille intermédiaire.",
-        "Si elle reste ouverte en grand, la centrale consomme sans produire de froid."
+        "Elle règle en même temps la pression de la bouteille intermédiaire."
       ],
-      callout: { type: "warning", title: "Un symptôme à connaître", text: "Une vanne de gaz de détente bloquée ouverte fait tourner les compresseurs moyenne température sans effet sur les meubles. Le défaut ne se voit pas côté meuble, mais sur la consommation." },
       visual: { type: "chaine", titre: "Le trajet de la vapeur",
         etapes: ["Détendeur HP", "Bouteille flash", "Vanne de gaz de détente", "Aspiration moyenne température"] },
       caption: "Le chemin de la vapeur de détente, du détendeur haute pression jusqu'à l'aspiration."
@@ -1221,17 +1219,6 @@ window.__INERWEB_COURSE__ = {
       ],
       answer: 2,
       explanation: "C'est ce qui fait le mot « booster » : deux étages en série, chacun avec un taux de compression raisonnable."
-    },
-    {
-      id: "b-q3",
-      question: "La vanne de gaz de détente d'une centrale reste bloquée grande ouverte. Quel effet attendre ?",
-      choices: [
-        "Les meubles négatifs dégivrent en permanence et remontent en température",
-        "La centrale consomme sans produire davantage de froid",
-        "La haute pression tombe sous le point triple"
-      ],
-      answer: 1,
-      explanation: "La vapeur court-circuite les évaporateurs : les compresseurs travaillent, mais ce débit ne refroidit aucun meuble."
     }
   ],
   final: {
@@ -1632,7 +1619,7 @@ window.__INERWEB_COURSE__ = {
   branche: "centrales",
   court: "L'éjecteur",
   titre: "L'éjecteur : récupérer l'énergie de la détente",
-  minutes: 7,
+  minutes: 9,
   resume: "Une tuyère, aucune pièce mobile, de l'énergie reprise.",
   lessons: [
     {
@@ -1649,6 +1636,26 @@ window.__INERWEB_COURSE__ = {
       callout: { type: "key", title: "Le point clé", text: "C'est la vitesse au col de la tuyère qui crée la dépression. Aucun moteur n'intervient : l'énergie vient du fluide haute pression lui-même." },
       visual: { type: "svg", nom: "ejecteur" },
       caption: "Coupe schématique d'un éjecteur : tuyère, col, chambre de mélange, diffuseur, et l'allure de la pression le long du parcours."
+    },
+    {
+      id: "deux-types",
+      short: "Deux types",
+      kicker: "Ce que le référentiel distingue",
+      title: "Éjecteur de gaz, éjecteur de liquide : même tuyère, deux emplois",
+      lead: "Le principe ne change pas d'un type à l'autre : un fluide moteur haute pression en entraîne un second. Ce qui change, c'est le débit aspiré — et donc ce à quoi l'éjecteur sert.",
+      bullets: [
+        "L'éjecteur de gaz aspire la vapeur de la bouteille flash : elle remonte à la pression intermédiaire sans passer par le compresseur moyenne température.",
+        "L'éjecteur de liquide aspire le mélange qui sort des évaporateurs, repris au séparateur basse pression.",
+        "Dans les deux cas, le fluide moteur est le même : le CO₂ haute pression qui sort du refroidisseur de gaz."
+      ],
+      callout: { type: "key", title: "Ce que l'éjecteur de liquide permet", text: "Faire circuler dans l'évaporateur plus de liquide qu'il n'en évapore, sans pompe de circulation. L'échange s'améliore, et la sortie de meuble n'est plus en vapeur surchauffée mais en mélange." },
+      visual: { type: "comparatif", titre: "Les deux types d'éjecteur",
+        colonnes: ["Type", "Ce qu'il aspire, et pour quoi faire"],
+        lignes: [
+          ["Éjecteur de gaz", "la vapeur de la bouteille flash, pour soulager le compresseur moyenne température"],
+          ["Éjecteur de liquide", "le mélange repris au séparateur basse pression, pour suralimenter les évaporateurs"]
+        ] },
+      caption: "Les deux types d'éjecteur : le débit aspiré diffère, la tuyère est la même."
     },
     {
       id: "sur-le-cycle",
@@ -1719,6 +1726,7 @@ window.__INERWEB_COURSE__ = {
     lead: "Il récupère une partie de l'énergie de la détente, sans moteur ni pièce mobile. Il ne se règle pas, et son gain dépend de la saison.",
     bullets: [
       "Trois temps : détente dans la tuyère, entraînement, recompression dans le diffuseur.",
+      "Deux types : l'éjecteur de gaz aspire la vapeur de la bouteille, l'éjecteur de liquide aspire au séparateur basse pression.",
       "La maintenance porte sur les vannes de commande et les sondes, pas sur l'éjecteur.",
       "Référentiel travaillé : 11.06 — technologie des éjecteurs, éjecteur de liquide et de gaz. En appui : 11.04 et 13.17."
     ],

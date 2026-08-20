@@ -5,10 +5,10 @@ window.PILOTE_VOIX_INDEX = {
   "moteur": "Piper 1.4.1 / VITS",
   "modeleFabrication": "fr_FR-siwis-medium.onnx",
   "empreinteCorpus": "6fd9c8722cc41ef9",
-  "narrationsAttendues": 168,
+  "narrationsAttendues": 171,
   "frequenceHz": 22050,
   "debitKbps": 48,
-  "vitesse": 1.0,
+  "vitesse": 1,
   "entrees": {
     "0053bdff-182": {
       "fichier": "audio/0053bdff-182.mp3",
@@ -849,7 +849,22 @@ window.PILOTE_VOIX_INDEX = {
       "fichier": "audio/ff96d254-129.mp3",
       "sha256": "2bfd612befb7413e",
       "octets": 46707
+    },
+    "0a31b098-472": {
+      "fichier": "audio/0a31b098-472.mp3",
+      "sha256": "55c0ee827ad5e52c",
+      "octets": 163004
+    },
+    "4f5b3c64-983": {
+      "fichier": "audio/4f5b3c64-983.mp3",
+      "sha256": "2e580ff3a3b65574",
+      "octets": 343092
+    },
+    "dab67147-818": {
+      "fichier": "audio/dab67147-818.mp3",
+      "sha256": "5ec83999d3ee2b48",
+      "octets": 309237
     }
   },
-  "_portee": "Ligne CO₂ / R744 seulement — extrait de l’index du site (pilote-fluides/moteur/voix-index.js), qui en compte 1591."
+  "_portee": "Ligne CO₂ / R744 seulement — extrait de l’index du site (pilote-fluides/moteur/voix-index.js), qui en compte 1563."
 };
