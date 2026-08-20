@@ -5,6 +5,25 @@
 > conservé par l'auteur hors de ce dépôt ; l'historique git du dépôt reste,
 > lui, complet et non réécrit.
 
+## 2026-08-20 — la ligne CO₂ / R744 dans le logiciel, et sa relecture métier
+
+- **Un module CO₂ / R744 embarqué et autonome** (`pedagogie/co2-r744/`) : treize
+  escales, 67 écrans, 33 questions, **171 narrations enregistrées** — la voix
+  Piper du site, pas la synthèse du navigateur. Chaque escale s'ouvre seule par
+  `index.html?e=<identifiant>`. Le module tourne hors ligne, polices et sons
+  compris.
+- **Le fait qui commande ce module** : le R-744 relève de la **catégorie B**
+  créée par l'arrêté du 21 novembre 2025, pas de la catégorie D qui ne couvre
+  que la récupération des gaz fluorés.
+- **Relecture métier passée** : six affirmations soumises à F. Henninot, chacune
+  sur son texte. Le diagnostic de la vanne de gaz de détente bloquée ouverte a
+  été **retiré** (déduit du fonctionnement, jamais observé sur machine) ; un
+  écran distinguant l'**éjecteur de gaz de l'éjecteur de liquide** a été ajouté
+  pour couvrir réellement le code 11.06. Le détail vit dans
+  `pedagogie/co2-r744/RELECTURE-METIER.md`.
+- ⚠️ Le nouvel écran sur les deux types d'éjecteur **n'a pas encore été relu par
+  un frigoriste** ; le module porte toujours `status: "Relecture métier à faire"`.
+
 ## 2026-08-14 — version candidate, bêta Formation nominative
 
 - **Distribution nominative** : le paquet portable ne se délivre plus qu'au
