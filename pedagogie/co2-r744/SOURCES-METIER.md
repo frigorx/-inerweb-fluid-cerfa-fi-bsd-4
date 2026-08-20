@@ -47,9 +47,10 @@ et ne connaissait pas de catégorie CO₂.
 ## Les sources d'illustration consultées, et ce qui en a été fait
 
 **intarcon.com — « Réfrigération au CO₂ transcritique »**, lien fourni par F. Henninot le
-20/08/2026. Consultée pour vérifier le fond, PAS pour en reprendre les images : ce sont des
-illustrations d'un site commercial, elles ne peuvent pas entrer dans un module diffusé sous
-licence inerWeb. C'est la règle déjà appliquée au tutoriel Coolselector, resté non diffusable
+20/08/2026 : <https://www.intarcon.com/fr/refrigeration-au-co2-transcritique/>
+
+Consultée pour vérifier le fond, PAS pour en reprendre les images : ce sont des illustrations
+d'un site commercial, elles ne peuvent pas entrer dans un module diffusé sous licence inerWeb. C'est la règle déjà appliquée au tutoriel Coolselector, resté non diffusable
 à cause des captures Danfoss.
 
 Ce que la consultation a apporté :

@@ -32,10 +32,11 @@ fabriqué dans `visuels.js` : il n'existait pas dans la source.
 
 ## Ce qui a été consulté et NON repris
 
-**intarcon.com — « Réfrigération au CO₂ transcritique »** (lien fourni par F. Henninot le
-20/08/2026). Schémas de centrales, diagrammes, courbes de COP, coupe d'éjecteur. Ces images
-appartiennent à un site commercial : **elles ne sont pas dans le module**, et ne doivent pas y
-entrer. Elles ont servi à vérifier le fond et ont apporté un point qui manquait — le maximum de
+**intarcon.com — « Réfrigération au CO₂ transcritique »**, lien fourni par F. Henninot le
+20/08/2026 : <https://www.intarcon.com/fr/refrigeration-au-co2-transcritique/>
+
+Schémas de centrales, diagrammes, courbes de COP, coupe d'éjecteur. Ces images appartiennent à
+un site commercial : **elles ne sont pas dans le module**, et ne doivent pas y entrer. Elles ont servi à vérifier le fond et ont apporté un point qui manquait — le maximum de
 COP et le maximum de puissance frigorifique ne sont pas à la même haute pression. Détail dans
 `SOURCES-METIER.md`.
 
