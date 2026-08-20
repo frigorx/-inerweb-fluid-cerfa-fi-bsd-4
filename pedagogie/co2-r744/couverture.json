@@ -1,0 +1,117 @@
+{
+  "cours": "co2-r744",
+  "titre": "La ligne CO₂ / R744 — le fluide en huit escales, les centrales en cinq",
+  "_adossement": "Adossement proposé par lecture des libellés du référentiel, à valider par F. Henninot. Le R-744 relève de la CATÉGORIE B (arrêté du 21 novembre 2025) et du groupe G13, qui n'est évalué que dans cette catégorie — pas de la catégorie D, qui ne couvre que la récupération des gaz à effet de serre fluorés. Le pack couvre aujourd'hui A1/A2/D/E : cette ligne ouvre le périmètre B et ne change donc rien à la matrice 94/94.",
+  "_ce_que_ce_module_ne_tient_pas": "Les codes 13.06 à 13.14 sont des épreuves PRATIQUES : analyse de risques, préparation de la zone, épreuve de pression, essai sous vide, récupération, charge en phase gazeuse, contrôle d'étanchéité direct, rapport d'intervention, vérification des mesures de santé et de sécurité sur site. Un module d'écran ne les tient pas et ne les revendique pas. 13.05 (calcul de charge) et 13.02 en situation demandent également un support de chantier.",
+  "reference": "arrêté du 21 novembre 2025, annexe II — attestation d'aptitude fluides frigorigènes, groupes G11 et G13",
+  "ecrans": 100,
+  "escales": 13,
+  "codes": {
+    "11.01": [
+      "pourquoi/reglement",
+      "pourquoi/securite",
+      "familles/cinq-familles"
+    ],
+    "11.04": [
+      "pourquoi/contrepartie",
+      "pourquoi/fil",
+      "familles/cinq-familles",
+      "ejecteur/sur-le-cycle"
+    ],
+    "11.06": [
+      "transcritique/trace-trans",
+      "transcritique/consequences",
+      "booster/architecture",
+      "booster/bouteille-flash",
+      "booster/bypass",
+      "booster/deux-etages",
+      "familles/cinq-familles",
+      "familles/cascade",
+      "familles/ou-part-le-flash",
+      "compresseurs/technologies",
+      "ejecteur/principe",
+      "ejecteur/sur-le-cycle",
+      "ejecteur/en-pratique"
+    ],
+    "13.02": [
+      "booster/architecture",
+      "booster-diagramme/double-vue",
+      "booster-diagramme/separation",
+      "booster-diagramme/melange-mt"
+    ],
+    "13.04": [
+      "securite/risque-pression",
+      "securite/bouteilles"
+    ],
+    "13.15": [
+      "identite/fiche",
+      "identite/diagramme-etat",
+      "point-critique/point-triple",
+      "point-triple/trois-etats",
+      "point-triple/neige",
+      "point-triple/premiere-charge",
+      "point-triple/autre-sens",
+      "securite/risque-froid"
+    ],
+    "13.16": [
+      "securite/risque-asphyxie",
+      "securite/protection-locale",
+      "securite/arret-securite",
+      "identite/arret"
+    ],
+    "13.17": [
+      "hp-optimale/pourquoi-optimum",
+      "hp-optimale/lire-courbe",
+      "hp-optimale/energie",
+      "familles/adiabatique"
+    ],
+    "13.01": [
+      "securite/bouteilles"
+    ],
+    "13.03": [
+      "securite/bouteilles",
+      "point-triple/double-vanne"
+    ]
+  },
+  "appui": {
+    "1.00": [
+      "securite/categorie-b",
+      "pourquoi/reglement"
+    ],
+    "1.02": [
+      "identite/diagramme-etat",
+      "point-critique/cloche",
+      "subcritique/trace",
+      "transcritique/trace-trans"
+    ],
+    "1.03": [
+      "point-critique/cloche",
+      "subcritique/trace",
+      "transcritique/mesures",
+      "booster-diagramme/exercice"
+    ],
+    "2.02": [
+      "pourquoi/reglement"
+    ],
+    "6.01": [
+      "compresseurs/technologies",
+      "compresseurs/pilotage",
+      "booster/deux-etages"
+    ],
+    "11.03": [
+      "securite/risque-pression",
+      "securite/risque-asphyxie"
+    ],
+    "13.11": [
+      "point-triple/premiere-charge",
+      "point-triple/double-vanne"
+    ],
+    "5.02": [
+      "point-triple/autre-sens"
+    ],
+    "13.14": [
+      "securite/protection-locale"
+    ]
+  },
+  "_branches": "Deux groupes : « le fluide » (8 escales, de la réglementation à la sécurité) et « les centrales » (5 escales, les machines qui l'emploient). Découpage demandé par F. Henninot le 20/08 — « il y a trop de choses pour le CO₂ »."
+}

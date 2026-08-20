@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 330" role="img"
+     aria-label="Pourquoi une bouteille ne se remplit jamais à ras. À gauche, une bouteille remplie à ras : quand la température monte, le liquide se dilate mais n'a pas de place, et la pression grimpe très vite jusqu'à la rupture. À droite, une bouteille au taux de remplissage respecté : un volume libre reste au-dessus du liquide et absorbe la dilatation. En bas, les gestes interdits : chauffer une bouteille, la laisser au soleil ou dans un véhicule fermé, et mettre un circuit en pression à l'oxygène ou à l'air comprimé — azote seul, toujours avec un mano-détendeur.">
+<metadata>
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+           xmlns:cc="http://creativecommons.org/ns#"
+           xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <cc:Work rdf:about="">
+      <dc:title>Pourquoi une bouteille ne se remplit jamais à ras</dc:title>
+      <dc:creator><cc:Agent><dc:title>inerWeb — F. Henninot</dc:title></cc:Agent></dc:creator>
+      <dc:rights><cc:Agent><dc:title>© 2026 inerWeb — F. Henninot — tous droits réservés sur l’illustration</dc:title></cc:Agent></dc:rights>
+      <dc:publisher><cc:Agent><dc:title>inerWeb</dc:title></cc:Agent></dc:publisher>
+      <dc:date>2026</dc:date>
+      <dc:identifier>inerweb.fh@gmail.com</dc:identifier>
+      <cc:license rdf:resource="https://creativecommons.org/licenses/by-nc-nd/4.0/"/>
+    </cc:Work>
+    <cc:License rdf:about="https://creativecommons.org/licenses/by-nc-nd/4.0/">
+      <cc:permits rdf:resource="http://creativecommons.org/ns#Reproduction"/>
+      <cc:permits rdf:resource="http://creativecommons.org/ns#Distribution"/>
+      <cc:requires rdf:resource="http://creativecommons.org/ns#Notice"/>
+      <cc:requires rdf:resource="http://creativecommons.org/ns#Attribution"/>
+      <cc:prohibits rdf:resource="http://creativecommons.org/ns#CommercialUse"/>
+      <cc:prohibits rdf:resource="http://creativecommons.org/ns#DerivativeWorks"/>
+    </cc:License>
+  </rdf:RDF>
+</metadata>
+  <title>La bouteille : jamais à ras, jamais chauffée</title>
+  <style>
+    .t   { font:700 19px Calibri,Segoe UI,sans-serif; fill:#1b3a63; }
+    .st  { font:700 15px Calibri,Segoe UI,sans-serif; fill:#1b3a63; }
+    .lg  { font:400 13.5px Calibri,Segoe UI,sans-serif; fill:#4a5b6e; }
+    .bad { font:700 15px Calibri,Segoe UI,sans-serif; fill:#c9451a; }
+    .p   { fill:none; stroke:#1b3a63; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
+    .acc { fill:none; stroke:#c9451a; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
+    /* Au repos, l'image est complète : l'animation ne fait que la mettre en scène. */
+    @media print { .final { opacity: 1 !important; } }
+  </style>
+
+  <rect width="900" height="330" fill="#ffffff"/>
+  <text class="t" x="30" y="32">Pourquoi une bouteille ne se remplit JAMAIS à ras</text>
+
+  <!-- ===== MAUVAIS ===== -->
+  <g transform="translate(30,52)">
+    <rect x="0" y="0" width="400" height="180" rx="8" fill="#fdf1ed" stroke="#e8b9a8" stroke-width="1.5"/>
+
+    <!-- bouteille pleine : elle vibre quand la pression monte -->
+    <g transform="translate(48,24)">
+      <animateTransform attributeName="transform" type="translate"
+        values="48,24; 50,24; 46,24; 50,24; 47,24; 48,24"
+        dur="0.5s" begin="3.2s;3.9s" fill="remove"/>
+      <rect class="acc" x="14" y="-12" width="16" height="14" rx="2"/>
+      <path class="acc" d="M6,2 h32 a8,8 0 0 1 8,8 v112 a8,8 0 0 1 -8,8 h-32 a8,8 0 0 1 -8,-8 v-112 a8,8 0 0 1 8,-8 z"/>
+      <rect x="0" y="8" width="44" height="120" rx="6" fill="#8fb8d6" opacity="0.85"/>
+      <text x="22" y="76" text-anchor="middle" style="font:700 13px Calibri;fill:#123a5c">liquide</text>
+    </g>
+
+    <!-- soleil : les rayons pulsent -->
+    <g transform="translate(150,40)">
+      <circle class="acc" cx="0" cy="0" r="13"/>
+      <g>
+        <animate attributeName="opacity" values="0.35;1;0.35" dur="1.6s" begin="1.4s" repeatCount="3" fill="remove"/>
+        <path class="acc" d="M0,-22 v6 M0,16 v6 M-22,0 h6 M16,0 h6 M-16,-16 l4,4 M12,12 l4,4 M-16,16 l4,-4 M12,-12 l4,-4"/>
+      </g>
+    </g>
+    <text class="lg final" x="150" y="80" text-anchor="middle" opacity="0">
+      <animate attributeName="opacity" values="0;1" dur="0.5s" begin="1.6s" fill="freeze"/>
+      la température monte
+    </text>
+
+    <path class="acc final" opacity="0" d="M215,66 h44 m-10,-8 l10,8 -10,8">
+      <animate attributeName="opacity" values="0;1" dur="0.4s" begin="2.6s" fill="freeze"/>
+    </path>
+
+    <g class="final" opacity="0">
+      <animate attributeName="opacity" values="0;1" dur="0.5s" begin="3s" fill="freeze"/>
+      <text class="bad" x="330" y="60" text-anchor="middle">Pas de place</text>
+      <text class="bad" x="330" y="80" text-anchor="middle">pour se dilater</text>
+      <text class="lg" x="330" y="106" text-anchor="middle">la pression grimpe</text>
+      <text class="lg" x="330" y="124" text-anchor="middle">très vite</text>
+    </g>
+
+    <!-- l'éclatement -->
+    <path class="acc final" opacity="0" d="M300,138 l10,14 m10,-14 l-4,16 m14,-16 l6,14">
+      <animate attributeName="opacity" values="0;1" dur="0.3s" begin="4.4s" fill="freeze"/>
+    </path>
+    <text class="bad final" x="222" y="166" text-anchor="middle" opacity="0">
+      <animate attributeName="opacity" values="0;1" dur="0.4s" begin="4.6s" fill="freeze"/>
+      ✗ remplie à ras
+    </text>
+  </g>
+
+  <!-- ===== BON ===== -->
+  <g transform="translate(470,52)">
+    <rect x="0" y="0" width="400" height="180" rx="8" fill="#eef6f1" stroke="#a9cdb8" stroke-width="1.5"/>
+    <g transform="translate(48,24)">
+      <rect class="p" x="14" y="-12" width="16" height="14" rx="2"/>
+      <path class="p" d="M6,2 h32 a8,8 0 0 1 8,8 v112 a8,8 0 0 1 -8,8 h-32 a8,8 0 0 1 -8,-8 v-112 a8,8 0 0 1 8,-8 z"/>
+      <!-- le liquide se dilate, et il a la place -->
+      <rect x="0" y="38" width="44" height="90" rx="6" fill="#8fb8d6" opacity="0.85">
+        <animate attributeName="y" values="44;38" dur="1.6s" begin="5.2s" fill="freeze"/>
+        <animate attributeName="height" values="84;90" dur="1.6s" begin="5.2s" fill="freeze"/>
+      </rect>
+      <line x1="0" y1="44" x2="44" y2="44" stroke="#1b3a63" stroke-width="2" stroke-dasharray="5 4"/>
+      <text x="22" y="30" text-anchor="middle" style="font:700 12px Calibri;fill:#1b3a63">volume</text>
+      <text x="22" y="42" text-anchor="middle" style="font:700 12px Calibri;fill:#1b3a63">libre</text>
+    </g>
+    <g transform="translate(150,40)">
+      <circle class="p" cx="0" cy="0" r="13"/>
+      <path class="p" d="M0,-22 v6 M0,16 v6 M-22,0 h6 M16,0 h6 M-16,-16 l4,4 M12,12 l4,4 M-16,16 l4,-4 M12,-12 l4,-4"/>
+    </g>
+    <text class="lg" x="150" y="80" text-anchor="middle">la température monte</text>
+    <path class="p" d="M215,66 h44 m-10,-8 l10,8 -10,8"/>
+
+    <g class="final" opacity="0">
+      <animate attributeName="opacity" values="0;1" dur="0.6s" begin="5.6s" fill="freeze"/>
+      <text class="st" x="330" y="60" text-anchor="middle">Le liquide a</text>
+      <text class="st" x="330" y="80" text-anchor="middle">où se dilater</text>
+      <text class="lg" x="330" y="112" text-anchor="middle">taux de remplissage</text>
+      <text class="lg" x="330" y="130" text-anchor="middle">selon le fabricant</text>
+      <text class="st" x="222" y="166" text-anchor="middle" style="fill:#2f7a4f">✓ volume libre respecté</text>
+    </g>
+  </g>
+
+  <!-- interdits -->
+  <g class="final" opacity="0">
+    <animate attributeName="opacity" values="0;1" dur="0.7s" begin="7s" fill="freeze"/>
+    <rect x="30" y="248" width="840" height="58" rx="8" fill="#ffffff" stroke="#e8b9a8" stroke-width="1.5"/>
+    <text class="bad" x="50" y="272">JAMAIS :</text>
+    <text class="lg" x="120" y="272">chauffer une bouteille (ni flamme, ni eau chaude, ni radiateur) · la laisser au soleil ou dans un véhicule fermé</text>
+    <text class="lg" x="120" y="294">mettre un circuit en pression à l'oxygène ou à l'air comprimé — <tspan style="font-weight:700;fill:#c9451a">azote seul, et toujours avec un mano-détendeur</tspan></text>
+  </g>
+</svg>

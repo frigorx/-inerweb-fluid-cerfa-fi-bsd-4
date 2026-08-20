@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 400" role="img"
+     aria-label="À gauche, la carte du R-744, le CO2, classé A1 : la classe ne couvre que le poison et le feu. Trois flèches mènent à trois risques que la classe ne couvre pas : des pressions sans commune mesure avec les autres fluides ; le froid, avec la neige carbonique vers moins 78,5 degrés en cas de détente brutale ; et un gaz physiologiquement actif, qui ne fait pas que chasser l'oxygène.">
+<metadata>
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+           xmlns:cc="http://creativecommons.org/ns#"
+           xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <cc:Work rdf:about="">
+      <dc:title>À gauche, la carte du R-744, le CO2, classé A1 : la classe ne couvre que le poison et le feu</dc:title>
+      <dc:creator><cc:Agent><dc:title>inerWeb — F. Henninot</dc:title></cc:Agent></dc:creator>
+      <dc:rights><cc:Agent><dc:title>© 2026 inerWeb — F. Henninot — tous droits réservés sur l’illustration</dc:title></cc:Agent></dc:rights>
+      <dc:publisher><cc:Agent><dc:title>inerWeb</dc:title></cc:Agent></dc:publisher>
+      <dc:date>2026</dc:date>
+      <dc:identifier>inerweb.fh@gmail.com</dc:identifier>
+      <cc:license rdf:resource="https://creativecommons.org/licenses/by-nc-nd/4.0/"/>
+    </cc:Work>
+    <cc:License rdf:about="https://creativecommons.org/licenses/by-nc-nd/4.0/">
+      <cc:permits rdf:resource="http://creativecommons.org/ns#Reproduction"/>
+      <cc:permits rdf:resource="http://creativecommons.org/ns#Distribution"/>
+      <cc:requires rdf:resource="http://creativecommons.org/ns#Notice"/>
+      <cc:requires rdf:resource="http://creativecommons.org/ns#Attribution"/>
+      <cc:prohibits rdf:resource="http://creativecommons.org/ns#CommercialUse"/>
+      <cc:prohibits rdf:resource="http://creativecommons.org/ns#DerivativeWorks"/>
+    </cc:License>
+  </rdf:RDF>
+</metadata>
+  <title>R-744 classé A1 — trois risques que la classe ne couvre pas</title>
+  <style>
+    .t   { font:700 21px Trebuchet MS,Calibri,sans-serif; fill:#1b3a63; }
+    .st  { font:700 16px Trebuchet MS,Calibri,sans-serif; }
+    .tx  { font:400 16px Trebuchet MS,Calibri,sans-serif; fill:#10233c; }
+    .cls { font:700 28px Trebuchet MS,Calibri,sans-serif; fill:#1e7e54; }
+    .fl  { fill:none; stroke:#c9451a; stroke-width:2.6; stroke-linecap:round; }
+    .fin { font:700 17px Trebuchet MS,Calibri,sans-serif; fill:#1b3a63; }
+  </style>
+
+  <rect width="700" height="400" fill="#fffdf8"/>
+  <text class="t" x="350" y="34" text-anchor="middle">A1 ne dit pas tout du R-744</text>
+
+  <!-- Carte A1 -->
+  <g>
+    <rect x="34" y="106" width="200" height="160" rx="10" fill="#fffdf8" stroke="#1e7e54" stroke-width="3"/>
+    <text class="st" x="134" y="140" text-anchor="middle" fill="#1b3a63">R-744 (CO₂)</text>
+    <text class="cls" x="134" y="182" text-anchor="middle">A1</text>
+    <text class="tx" x="134" y="216" text-anchor="middle">peu toxique</text>
+    <text class="tx" x="134" y="238" text-anchor="middle">ne brûle pas</text>
+  </g>
+
+  <!-- Flèches vers les trois risques -->
+  <path class="fl" d="M234,150 C 268,120 288,108 314,102 m0,0 l-13,-2 m13,2 l-11,8"/>
+  <path class="fl" d="M234,186 h80 m0,0 l-12,-7 m12,7 l-12,7"/>
+  <path class="fl" d="M234,222 C 268,252 288,264 314,270 m0,0 l-13,2 m13,-2 l-11,-8"/>
+
+  <!-- Risque 1 : pression -->
+  <g>
+    <rect x="322" y="62" width="348" height="66" rx="10" fill="#fbe7e4" stroke="#c0392b" stroke-width="2.6" stroke-dasharray="10 6"/>
+    <text class="st" x="342" y="90" fill="#c0392b">LA PRESSION</text>
+    <text class="tx" x="342" y="114">sans commune mesure avec les autres fluides</text>
+  </g>
+
+  <!-- Risque 2 : le froid -->
+  <g>
+    <rect x="322" y="146" width="348" height="66" rx="10" fill="#fbe7e4" stroke="#c0392b" stroke-width="2.6" stroke-dasharray="10 6"/>
+    <text class="st" x="342" y="174" fill="#c0392b">LE FROID</text>
+    <text class="tx" x="342" y="198">détente brutale → neige carbonique vers −78,5 °C</text>
+  </g>
+
+  <!-- Risque 3 : physiologiquement actif -->
+  <g>
+    <rect x="322" y="230" width="348" height="66" rx="10" fill="#fbe7e4" stroke="#c0392b" stroke-width="2.6" stroke-dasharray="10 6"/>
+    <text class="st" x="342" y="258" fill="#c0392b">PHYSIOLOGIQUEMENT ACTIF</text>
+    <text class="tx" x="342" y="282">il ne fait pas que chasser l'oxygène</text>
+  </g>
+
+  <line x1="60" y1="326" x2="640" y2="326" stroke="#8fa3b8" stroke-width="1.6" stroke-dasharray="5 5"/>
+  <text class="fin" x="350" y="358" text-anchor="middle">La classe ne couvre que le poison et le feu.</text>
+  <text class="tx" x="350" y="384" text-anchor="middle">Pression, froid, asphyxie : d'autres risques, à évaluer séparément.</text>
+</svg>

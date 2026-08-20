@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 464" role="img"
+     aria-label="Une bouteille en coupe, debout. En haut, la vapeur ; en bas, le liquide. Le robinet vapeur prélève directement dans la partie haute. Le robinet liquide est relié à un tube plongeur qui descend jusqu'au fond : le liquide remonte dans ce tube, bouteille debout. Attention à l'idée fausse : il ne s'agit pas d'une vanne basse pression et d'une vanne haute pression — dans la bouteille au repos, les deux phases sont à la même pression, celle d'équilibre du fluide.">
+<metadata>
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+           xmlns:cc="http://creativecommons.org/ns#"
+           xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <cc:Work rdf:about="">
+      <dc:title>Une bouteille en coupe, debout</dc:title>
+      <dc:creator><cc:Agent><dc:title>inerWeb — F. Henninot</dc:title></cc:Agent></dc:creator>
+      <dc:rights><cc:Agent><dc:title>© 2026 inerWeb — F. Henninot — tous droits réservés sur l’illustration</dc:title></cc:Agent></dc:rights>
+      <dc:publisher><cc:Agent><dc:title>inerWeb</dc:title></cc:Agent></dc:publisher>
+      <dc:date>2026</dc:date>
+      <dc:identifier>inerweb.fh@gmail.com</dc:identifier>
+      <cc:license rdf:resource="https://creativecommons.org/licenses/by-nc-nd/4.0/"/>
+    </cc:Work>
+    <cc:License rdf:about="https://creativecommons.org/licenses/by-nc-nd/4.0/">
+      <cc:permits rdf:resource="http://creativecommons.org/ns#Reproduction"/>
+      <cc:permits rdf:resource="http://creativecommons.org/ns#Distribution"/>
+      <cc:requires rdf:resource="http://creativecommons.org/ns#Notice"/>
+      <cc:requires rdf:resource="http://creativecommons.org/ns#Attribution"/>
+      <cc:prohibits rdf:resource="http://creativecommons.org/ns#CommercialUse"/>
+      <cc:prohibits rdf:resource="http://creativecommons.org/ns#DerivativeWorks"/>
+    </cc:License>
+  </rdf:RDF>
+</metadata>
+  <title>Deux robinets = deux phases — jamais deux pressions</title>
+  <style>
+    .t   { font:700 19px Calibri,Segoe UI,sans-serif; fill:#1b3a63; }
+    .st  { font:700 14px Calibri,Segoe UI,sans-serif; fill:#1b3a63; }
+    .lg  { font:400 13.5px Calibri,Segoe UI,sans-serif; fill:#4a5b6e; }
+    .sm  { font:400 12px Calibri,Segoe UI,sans-serif; fill:#4a5b6e; }
+    .bad { font:700 13px Calibri,Segoe UI,sans-serif; fill:#c9451a; }
+    .p   { fill:none; stroke:#1b3a63; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
+    .acc { fill:none; stroke:#c9451a; stroke-width:2.8; stroke-linecap:round; stroke-linejoin:round; }
+    .blu { fill:none; stroke:#1b6ea8; stroke-width:2.8; stroke-linecap:round; stroke-linejoin:round; }
+    .dash{ fill:none; stroke:#8fa3b8; stroke-width:1.6; stroke-dasharray:5 5; }
+  </style>
+
+  <rect width="880" height="464" fill="#ffffff"/>
+  <text class="t" x="30" y="32">Deux robinets, deux PHASES — et une seule pression</text>
+
+  <!-- ============ LA BOUTEILLE EN COUPE ============ -->
+  <g transform="translate(330,0)">
+    <!-- corps -->
+    <path class="p" d="M-90,400 v-230 a90,74 0 0 1 180,0 v230 z" fill="#f6f9fc" stroke-width="3"/>
+    <!-- liquide (bas) -->
+    <rect x="-86" y="270" width="172" height="126" fill="#cfe6f5"/>
+    <text class="st" x="0" y="340" text-anchor="middle" fill="#1b6ea8">LIQUIDE</text>
+    <!-- vapeur (haut) -->
+    <text class="st" x="0" y="200" text-anchor="middle" fill="#a8410f">VAPEUR</text>
+    <g fill="#e8a58c">
+      <circle cx="-40" cy="230" r="5"><animate attributeName="cy" values="230;218;230" dur="2.6s" repeatCount="indefinite"/></circle>
+      <circle cx="34" cy="222" r="5"><animate attributeName="cx" values="34;46;34" dur="3s" repeatCount="indefinite"/></circle>
+      <circle cx="-6" cy="244" r="5"><animate attributeName="cy" values="244;254;244" dur="2.2s" repeatCount="indefinite"/></circle>
+    </g>
+
+    <!-- robinet VAPEUR (gauche) : prélève en haut -->
+    <rect x="-64" y="108" width="26" height="30" rx="4" fill="#ffffff" stroke="#c9451a" stroke-width="2.6"/>
+    <path class="acc" d="M-51,138 v42"/>
+    <path class="acc" d="M-51,108 v-24 h-56"/>
+    <text class="bad" x="-118" y="72" text-anchor="middle">robinet VAPEUR</text>
+    <text class="sm" x="-118" y="92" text-anchor="middle">prélève en haut</text>
+    <!-- flux vapeur sortant -->
+    <circle r="4" fill="#c9451a"><animateMotion dur="2s" repeatCount="indefinite" path="M-51,180 v-72 h-56"/></circle>
+
+    <!-- robinet LIQUIDE (droite) : tube plongeur -->
+    <rect x="38" y="108" width="26" height="30" rx="4" fill="#ffffff" stroke="#1b6ea8" stroke-width="2.6"/>
+    <path class="blu" d="M51,138 v244"/>
+    <path class="blu" d="M51,108 v-24 h56"/>
+    <text class="st" x="118" y="72" text-anchor="middle" fill="#1b6ea8">robinet LIQUIDE</text>
+    <text class="sm" x="118" y="92" text-anchor="middle">relié au tube plongeur</text>
+    <text class="sm" x="86" y="380">le tube descend</text>
+    <text class="sm" x="86" y="396">jusqu'au fond</text>
+    <!-- flux liquide remontant -->
+    <circle r="4" fill="#1b6ea8"><animateMotion dur="2.4s" repeatCount="indefinite" path="M51,378 v-270 h56"/></circle>
+  </g>
+
+  <!-- ============ LA MÊME PRESSION ============ -->
+  <g transform="translate(680,220)">
+    <rect x="-70" y="-58" width="150" height="150" rx="10" fill="#eef3f9" stroke="#1b3a63" stroke-width="2.2"/>
+    <circle cx="5" cy="-6" r="34" fill="#ffffff" stroke="#1b3a63" stroke-width="2.4"/>
+    <path d="M5,-6 L26,-24" stroke="#c9451a" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="5" cy="-6" r="4" fill="#1b3a63"/>
+    <text class="st" x="5" y="52" text-anchor="middle">UNE seule pression</text>
+    <text class="sm" x="5" y="72" text-anchor="middle">celle d'équilibre du fluide</text>
+  </g>
+
+  <!-- morale -->
+  <path class="dash" d="M60,424 h760"/>
+  <text class="st" x="440" y="450" text-anchor="middle">Ce n'est PAS une vanne BP et une vanne HP : au repos, les deux phases sont à la même pression. Bouteille DEBOUT.</text>
+</svg>

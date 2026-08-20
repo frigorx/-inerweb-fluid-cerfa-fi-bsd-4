@@ -1,0 +1,15 @@
+Police « Lexend » (fichier Lexend-variable.woff2)
+Copyright 2018 The Lexend Project Authors (https://github.com/googlefonts/lexend)
+
+Distribuée sous licence SIL Open Font License 1.1 (OFL) :
+https://openfontlicense.org
+
+La licence OFL autorise l'usage, l'étude, la modification et la redistribution
+de la police, y compris embarquée dans un logiciel ou un site, à condition de
+conserver cette mention. Elle interdit de vendre la police seule.
+
+Pourquoi cette police : Lexend est une police VARIABLE (graisse 100 à 900 dans
+un seul fichier de 39 Ko) dessinée pour la fluidité de lecture — formes
+ouvertes, lettres non ambiguës, espacement généreux. Elle sert ici de « police
+adaptée (DYS) », activable par l'élève ou le formateur depuis le bouton « Aa »
+(moteur/lisibilite.js). Elle n'est jamais téléchargée tant qu'on ne l'active pas.

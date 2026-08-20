@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 380" role="img"
+     aria-label="Animation : dans un local en contrebas, le CO2 étant plus lourd que l'air, il s'écoule vers le bas et la nappe monte depuis le sol. Un technicien descend l'escalier et entre dans la nappe. Une zone peut être respirable à hauteur de visage et déjà mortelle en bas de l'escalier.">
+<metadata>
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+           xmlns:cc="http://creativecommons.org/ns#"
+           xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <cc:Work rdf:about="">
+      <dc:title>Animation : dans un local en contrebas, le CO2 étant plus lourd que l'air, il s'écoule vers le bas et la nappe monte depuis le sol</dc:title>
+      <dc:creator><cc:Agent><dc:title>inerWeb — F. Henninot</dc:title></cc:Agent></dc:creator>
+      <dc:rights><cc:Agent><dc:title>© 2026 inerWeb — F. Henninot — tous droits réservés sur l’illustration</dc:title></cc:Agent></dc:rights>
+      <dc:publisher><cc:Agent><dc:title>inerWeb</dc:title></cc:Agent></dc:publisher>
+      <dc:date>2026</dc:date>
+      <dc:identifier>inerweb.fh@gmail.com</dc:identifier>
+      <cc:license rdf:resource="https://creativecommons.org/licenses/by-nc-nd/4.0/"/>
+    </cc:Work>
+    <cc:License rdf:about="https://creativecommons.org/licenses/by-nc-nd/4.0/">
+      <cc:permits rdf:resource="http://creativecommons.org/ns#Reproduction"/>
+      <cc:permits rdf:resource="http://creativecommons.org/ns#Distribution"/>
+      <cc:requires rdf:resource="http://creativecommons.org/ns#Notice"/>
+      <cc:requires rdf:resource="http://creativecommons.org/ns#Attribution"/>
+      <cc:prohibits rdf:resource="http://creativecommons.org/ns#CommercialUse"/>
+      <cc:prohibits rdf:resource="http://creativecommons.org/ns#DerivativeWorks"/>
+    </cc:License>
+  </rdf:RDF>
+</metadata>
+  <title>Le CO₂ s'accumule en point bas — on descend dedans sans le voir</title>
+  <style>
+    .t   { font:700 19px Calibri,Segoe UI,sans-serif; fill:#1b3a63; }
+    .st  { font:700 14px Calibri,Segoe UI,sans-serif; fill:#1b3a63; }
+    .lg  { font:400 13.5px Calibri,Segoe UI,sans-serif; fill:#4a5b6e; }
+    .bad { font:700 14px Calibri,Segoe UI,sans-serif; fill:#c9451a; }
+    .p   { fill:none; stroke:#1b3a63; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
+    .acc { fill:none; stroke:#c9451a; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
+    /* Ici l'élément animé EST l'information (la nappe qui monte) : on ne peut
+       pas le masquer comme sur les autres planches. À L'IMPRESSION, on neutralise
+       donc les animations elles-mêmes — un élément d'animation en display:none ne
+       s'exécute pas — et les valeurs de base, réglées sur l'état final, laissent
+       une image juste et immobile.
+       Cette neutralisation ne dépend PLUS de `prefers-reduced-motion` : elle
+       supprimait la montée de la nappe à l'écran sur toute machine aux effets
+       d'animation Windows désactivés, c'est-à-dire précisément la démonstration. */
+    @media print { animate { display: none; } }
+  </style>
+
+  <rect width="880" height="380" fill="#ffffff"/>
+  <text class="t" x="30" y="32">Le CO₂ est plus lourd que l'air : il coule vers le bas</text>
+
+  <!-- ================= LOCAL EN COUPE ================= -->
+  <g transform="translate(30,54)">
+    <rect x="0" y="0" width="560" height="252" rx="8" fill="#f7fafc" stroke="#c9d4de" stroke-width="1.5"/>
+
+    <!-- murs -->
+    <path class="p" d="M40,26 v196 h480 v-196"/>
+    <line class="p" x1="30" y1="222" x2="530" y2="222"/>
+    <!-- plafond -->
+    <line class="p" x1="40" y1="26" x2="520" y2="26"/>
+
+    <!-- escalier descendant depuis la porte -->
+    <path class="p" d="M40,96 h44 v26 h44 v26 h44 v26 h44 v48"/>
+    <!-- porte en haut -->
+    <rect x="16" y="52" width="24" height="46" fill="#e8eef4" stroke="#1b3a63" stroke-width="2"/>
+    <circle cx="22" cy="76" r="2.5" fill="#1b3a63"/>
+    <text class="lg" x="6" y="46">entrée</text>
+
+    <!-- fuite (source) -->
+    <g transform="translate(430,60)">
+      <rect class="p" x="0" y="0" width="52" height="42" rx="5"/>
+      <text x="26" y="26" text-anchor="middle" style="font:700 12px Calibri;fill:#1b3a63">CO₂</text>
+      <path class="acc" d="M26,44 v14 m-5,-5 l5,5 5,-5"/>
+    </g>
+
+    <!-- NAPPE qui monte.
+         Valeurs de base = ÉTAT FINAL (nappe haute) et non état initial : si le
+         navigateur n'exécute pas l'animation — lecteur arrivé après le premier
+         passage, impression, capture d'écran — la planche doit rester JUSTE.
+         Une nappe dessinée au ras du sol ferait croire à un local sûr. -->
+    <g>
+      <rect x="42" y="120" width="476" height="102" fill="#7fa9c9" opacity="0.85">
+        <animate attributeName="y" values="216;216;120;120;216" dur="11s" repeatCount="indefinite"/>
+        <animate attributeName="height" values="6;6;102;102;6" dur="11s" repeatCount="indefinite"/>
+      </rect>
+      <line x1="42" y1="120" x2="518" y2="120" stroke="#3f7fae" stroke-width="2.5">
+        <animate attributeName="y1" values="216;216;120;120;216" dur="11s" repeatCount="indefinite"/>
+        <animate attributeName="y2" values="216;216;120;120;216" dur="11s" repeatCount="indefinite"/>
+      </line>
+    </g>
+
+    <!-- AUCUN CAPTEUR SUR CETTE PLANCHE (retiré le 27/07, F. Henninot) : la
+         détection, les ppm et le placement du capteur relèvent de la fiche de
+         protection, plus loin dans le parcours. Ici on démontre UNE chose — le
+         gaz coule vers le bas, et on descend dedans. Une planche qui répond à
+         une question que l'élève ne s'est pas encore posée disperse. -->
+
+    <!-- personne qui descend -->
+    <g transform="translate(150,150)">
+      <circle class="p" cx="0" cy="0" r="11"/>
+      <path class="p" d="M0,11 v26 M0,17 l-14,9 M0,17 l14,7 M0,37 l-10,20 M0,37 l11,19"/>
+    </g>
+    <text class="lg" x="150" y="132" text-anchor="middle" style="font-size:12px">il descend</text>
+  </g>
+
+  <!-- ================= EXPLICATION ================= -->
+  <g transform="translate(618,54)">
+    <rect x="0" y="0" width="232" height="252" rx="8" fill="#fdf1ed" stroke="#e8b9a8" stroke-width="1.5"/>
+    <text class="st" x="18" y="30">Ce que montre l'animation</text>
+
+    <circle cx="26" cy="58" r="4" fill="#c9451a"/>
+    <text class="lg" x="40" y="62">Le gaz ne monte pas :</text>
+    <text class="lg" x="40" y="80">il remplit par le bas.</text>
+
+    <circle cx="26" cy="106" r="4" fill="#c9451a"/>
+    <text class="lg" x="40" y="110">Respirable à hauteur</text>
+    <text class="lg" x="40" y="128">de visage, mortel en</text>
+    <text class="lg" x="40" y="146">bas de l'escalier.</text>
+
+    <circle cx="26" cy="172" r="4" fill="#c9451a"/>
+    <text class="lg" x="40" y="176">On ne le voit pas :</text>
+    <text class="lg" x="40" y="194">on descend dedans.</text>
+
+    <line x1="18" y1="212" x2="214" y2="212" stroke="#e8b9a8" stroke-width="1.5"/>
+    <text class="st" x="18" y="234" style="fill:#c9451a">Le danger est EN BAS.</text>
+  </g>
+
+  <text class="lg" x="30" y="336">Cette règle vaut pour le CO₂ et la plupart des fluides fluorés — <tspan style="font-weight:700;fill:#c9451a">mais pas pour l'ammoniac</tspan>, plus léger que l'air, qui lui monte.</text>
+  <text class="lg" x="30" y="358">Aucune odeur, aucune couleur : ce que vous ressentirez (souffle court, mal de tête) arrivera quand vous serez déjà dans la nappe.</text>
+</svg>

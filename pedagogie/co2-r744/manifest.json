@@ -1,0 +1,16 @@
+{
+  "product": "inerWeb Édu — CO₂ / R744",
+  "version": "1.1.0-brouillon",
+  "status": "Relecture métier à faire",
+  "generatedOn": "2026-08-20",
+  "offline": true,
+  "escales": 13,
+  "lessonSteps": 53,
+  "quizQuestions": 34,
+  "entrypoint": "index.html",
+  "escalePar": "index.html?e=<identifiant>",
+  "branches": {
+    "fluide": 8,
+    "centrales": 5
+  }
+}
