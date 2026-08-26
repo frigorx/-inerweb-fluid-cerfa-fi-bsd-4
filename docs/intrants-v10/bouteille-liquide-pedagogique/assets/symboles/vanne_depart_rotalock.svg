@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 70" overflow="visible">
+  <title>Vanne de départ liquide de type Rotalock</title>
+  <desc>Représentation compacte inerWeb avec raccord inférieur vers la bouteille, sortie latérale, tige sous capuchon et prise de service protégée.</desc>
+  <circle cx="50" cy="66" r="2.4" fill="#000"/>
+  <circle cx="94" cy="35" r="2.4" fill="#000"/>
+  <path d="M50 66V49M75 35H94" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M28 22H72L84 35 72 48H28L16 35Z" fill="#efbd98" stroke="#1b3a63" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M25 35H79M50 35V62" fill="none" stroke="#fff6eb" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M38 48H63L69 57 63 66H38L32 57Z" fill="#f1b06f" stroke="#1b3a63" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M17 35H6" fill="none" stroke="#1b3a63" stroke-width="6" stroke-linecap="round"/>
+  <rect x="1" y="23" width="12" height="24" rx="4" fill="#56616a" stroke="#1b3a63" stroke-width="2"/>
+  <path d="M0 19H12L18 25V45L12 51H0Z" fill="#29343e" stroke="#1b3a63" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M4 22V48M8 22V48" fill="none" stroke="#79848d" stroke-width="1.4"/>
+  <path d="M66 23V10H77V23" fill="#fffdf8" stroke="#1b3a63" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="63" y="5" width="17" height="7" rx="3" fill="#29343e" stroke="#1b3a63" stroke-width="1.7"/>
+</svg>

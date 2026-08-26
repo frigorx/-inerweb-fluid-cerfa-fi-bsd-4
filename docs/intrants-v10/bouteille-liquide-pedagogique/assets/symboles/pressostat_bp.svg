@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-14 -23 30 30" overflow="visible">
+  <rect x="-9" y="-17.4863" width="18.85" height="9.24314" fill="none" stroke="#000" stroke-width="1"/>
+  <line x1="-0.3" y1="-8.24314" x2="-0.3" y2="-0.320448" stroke="#000" stroke-width="1"/>
+  <circle cx="0" cy="0" r="1.5" fill="#000"/>
+  <text x="-6" y="-12" font-family="sans-serif" font-size="6" fill="#333">PB</text>
+</svg>
