@@ -242,8 +242,16 @@ const logoPng = async (mot) => {
    chapitre, puis on complète dans l'ordre des identifiants. La liste
    est écrite sur disque : le corrigé formateur reprend LA MÊME. */
 const SELECTION = {};
+/* Une explication qui ne dit rien de plus que « retenez la formulation »
+   n'apprend rien sur papier : à question égale, on prend celle qui
+   explique vraiment. (25 des 180 questions de la banque sont dans ce
+   cas — signalé à F. Henninot pour la source.) */
+const creuse = (q) => /Retenez la notion-clé/.test(q.explication || '') || !q.explication;
 const choisirQuestions = (ch) => {
-  const pool = [...ch.questions].sort((a, b) => String(a.code || '').localeCompare(String(b.code || '')) || String(a.id).localeCompare(String(b.id)));
+  const pool = [...ch.questions].sort((a, b) =>
+    (creuse(a) - creuse(b))
+    || String(a.code || '').localeCompare(String(b.code || ''))
+    || String(a.id).localeCompare(String(b.id)));
   const prises = []; const codesVus = new Set();
   for (const q of pool) {
     if (prises.length >= 6) break;
