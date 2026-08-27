@@ -1,7 +1,11 @@
 # Table de redirections du livret « Habilitation Fluide » — tome 1
-# Générée par livret/build/qr.mjs — à poser à la racine de inerweb.fr
-# (ou à fusionner dans le .htaccess existant). Un alias par chapitre :
-# le QR papier ne change jamais, seule cette table bouge.
+# Générée par livret/build/qr.mjs.
+#
+# ⚠️ ARCHIVE : inerweb.fr est servi par GitHub Pages, qui IGNORE les
+# directives Apache — ce fichier n'y redirige rien. La table qui
+# fonctionne est `redirections-pages/f/<slug>/index.html` (une page de
+# redirection statique par alias). Ce .htaccess n'aurait d'usage que
+# si le site déménageait un jour derrière un vrai Apache.
 
 Redirect 302 /f/securite https://inerweb.fr/packs/fluides/res/capsules/index.html?c=s1
 Redirect 302 /f/securite-1 https://inerweb.fr/packs/fluides/res/capsules/index.html?c=s1

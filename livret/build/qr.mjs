@@ -7,10 +7,26 @@
    que l'on redirige (spécification posée par le storyboard H0, ici
    enfin réalisée).
 
-   Ce maillon produit trois choses :
-     qr.gen/<slug>.png        les 19 codes, prêts pour le papier
+   Ce maillon produit quatre choses :
+     qr.gen/<slug>.png        les codes, prêts pour le papier
      qr.gen.json              le manifeste : alias, cible réelle, titre
-     redirections.gen.htaccess  la table à poser sur inerweb.fr (OVH)
+     redirections-pages/f/<slug>/index.html
+                              LA table qui fonctionne : une page de
+                              redirection statique par alias, à copier
+                              à la racine du dépôt pilote-fluides
+     redirections.gen.htaccess  archive Apache — NE FONCTIONNE PAS sur
+                              l'hébergement actuel, gardée pour le jour
+                              où le site quitterait GitHub Pages
+
+   ⚠️ POURQUOI des pages statiques et pas le .htaccess : inerweb.fr est
+   servi par GitHub Pages (en-tête `server: GitHub.com` vérifié le
+   27/08/2026 ; le CNAME vit dans frigorx/pilote-fluides). GitHub Pages
+   n'exécute AUCUNE directive Apache : un .htaccess déposé à la racine
+   y est servi comme un fichier ordinaire et ne redirige rien. La seule
+   redirection que Pages sache servir est une page HTML statique —
+   meta-refresh immédiat + relais JavaScript + lien de secours. Un
+   dossier par alias : changer une cible plus tard = changer UN petit
+   fichier ; le papier, lui, ne bouge pas.
 
    La CIBLE de chaque alias suit une règle déterministe :
      · la CAPSULE narrée du chapitre si sa première fiche en a une
@@ -34,6 +50,7 @@ const SOURCE = process.env.PILOTE_FLUIDES || 'C:/git/pilote-fluides';
 const DEHORS = path.join(ICI, '..', 'qr.gen');
 const MANIFESTE = path.join(ICI, '..', 'qr.gen.json');
 const HTACCESS = path.join(ICI, '..', 'redirections.gen.htaccess');
+const PAGES = path.join(ICI, '..', 'redirections-pages');
 
 /* L'appli élève, telle qu'elle est servie aujourd'hui : à la racine
    d'inerweb.fr (GitHub Pages y redirige en 301, vérifié le 27/08/2026).
@@ -94,12 +111,68 @@ for (const e of entrees) {
 
 fs.writeFileSync(MANIFESTE, JSON.stringify(entrees, null, 1), 'utf8');
 
-/* ---------------- La table de redirections ---------------- */
+/* ---------------- Les pages de redirection (GitHub Pages) ----------------
+   La table qui fonctionne réellement : un dossier `f/<slug>/` par alias,
+   avec un index.html qui redirige. Trois relais superposés, du plus
+   robuste au plus confortable : le meta-refresh (aucun JavaScript
+   requis), location.replace (ne pollue pas l'historique du téléphone),
+   et un lien cliquable si tout le reste échoue. `noindex` : un alias
+   n'est pas une page, les moteurs n'ont rien à y faire. */
+const echapper = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+const pageRedirection = (e) => `<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta http-equiv="refresh" content="0; url=${echapper(e.cible)}">
+<link rel="canonical" href="${echapper(e.cible)}">
+<title>${echapper(e.titre)} — inerWeb HabFluide</title>
+<style>body{font-family:Calibri,Carlito,'Segoe UI',sans-serif;color:#1b3a63;background:#fff;margin:0;display:grid;min-height:100vh;place-items:center;text-align:center;padding:24px}a{color:#1b3a63;font-weight:700}p{color:#5a6472}</style>
+</head>
+<body>
+<div>
+<p>Livret « Habilitation Fluide » — un instant…</p>
+<p><a href="${echapper(e.cible)}">${echapper(e.titre)}</a></p>
+</div>
+<script>location.replace(${JSON.stringify(e.cible)});</script>
+</body>
+</html>
+`;
+
+fs.rmSync(PAGES, { recursive: true, force: true });
+for (const e of entrees) {
+  const dossier = path.join(PAGES, 'f', e.slug);
+  fs.mkdirSync(dossier, { recursive: true });
+  fs.writeFileSync(path.join(dossier, 'index.html'), pageRedirection(e), 'utf8');
+}
+fs.writeFileSync(path.join(PAGES, 'LISEZMOI.md'), [
+  '# Redirections du livret « Habilitation Fluide » — à déployer',
+  '',
+  'Copier le dossier `f/` tel quel **à la racine du dépôt `frigorx/pilote-fluides`**',
+  '(le dépôt qui sert inerweb.fr par GitHub Pages). Chaque alias imprimé dans le',
+  'livret — `https://inerweb.fr/f/<slug>` — devient alors une page de redirection',
+  'statique, la seule forme de redirection que GitHub Pages sache servir : un',
+  '`.htaccess` y est ignoré (aucun Apache derrière, en-tête `server: GitHub.com`).',
+  '',
+  'Changer la cible d’un QR déjà imprimé = rééditer le `index.html` de son alias',
+  'dans pilote-fluides, jamais le livret. Ce dossier se régénère en entier par',
+  '`npm run qr` ; ne pas l’éditer à la main ici.',
+  '',
+].join('\n'), 'utf8');
+
+/* ---------------- L'archive Apache (ne sert pas aujourd'hui) ---------------- */
 const lignes = [
   '# Table de redirections du livret « Habilitation Fluide » — tome 1',
-  '# Générée par livret/build/qr.mjs — à poser à la racine de inerweb.fr',
-  '# (ou à fusionner dans le .htaccess existant). Un alias par chapitre :',
-  '# le QR papier ne change jamais, seule cette table bouge.',
+  '# Générée par livret/build/qr.mjs.',
+  '#',
+  '# ⚠️ ARCHIVE : inerweb.fr est servi par GitHub Pages, qui IGNORE les',
+  '# directives Apache — ce fichier n\'y redirige rien. La table qui',
+  '# fonctionne est `redirections-pages/f/<slug>/index.html` (une page de',
+  '# redirection statique par alias). Ce .htaccess n\'aurait d\'usage que',
+  '# si le site déménageait un jour derrière un vrai Apache.',
   '',
   ...entrees.map((e) => `Redirect 302 /f/${e.slug} ${e.cible}`),
   '',
@@ -110,4 +183,4 @@ const capsules = entrees.filter((e) => e.cible.includes('capsules')).length;
 const parChapitre = entrees.filter((e) => !e.lecon).length;
 console.log('QR codes du livret — tome 1\n');
 console.log(`  ${parChapitre} alias de chapitre + ${entrees.length - parChapitre} alias de leçon`);
-console.log(`\n✔ ${entrees.length} codes (${capsules} vers une capsule narrée) · qr.gen.json · redirections.gen.htaccess`);
+console.log(`\n✔ ${entrees.length} codes (${capsules} vers une capsule narrée) · qr.gen.json · redirections-pages/ (${entrees.length} pages GitHub Pages) · redirections.gen.htaccess (archive)`);
