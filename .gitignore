@@ -48,3 +48,4 @@ exports/
 # Livret : PNG derives, regeneres par npm run visuels (le manifeste, lui, est suivi)
 livret/visuels.gen/
 livret/qr.gen/
+livret/dist/
