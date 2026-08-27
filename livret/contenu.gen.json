@@ -2116,6 +2116,148 @@
   {
    "num": 4,
    "genere": "categories",
+   "lecons": [
+    {
+     "t": "Sept catégories, un seul texte",
+     "src": "referentiel-2025.json",
+     "titre_source": "Arrêté du 21 novembre 2025 relatif à la délivrance des attestations d'aptitude prévues à l'article R. 543-106 du code de l'environnement",
+     "paras": [
+      "Tout part d'un seul texte : l'<b>Arrêté du 21 novembre 2025</b>, publié au JORF du 10 décembre 2025. Il applique en France le <b>règlement (UE) 2024/573</b> sur les gaz à effet de serre fluorés. Ce texte définit <b>sept catégories</b> d'attestation d'aptitude : chacune dit ce que son titulaire a le droit de faire, et sur quels fluides.",
+      "L'attestation est <b>personnelle</b>. Elle ne dit pas ce que vous savez faire : elle dit ce que vous avez <b>le droit</b> de faire. Lisez chaque ligne du tableau en cherchant votre cas."
+     ],
+     "tableau": {
+      "titre": "Les sept catégories de l’arrêté",
+      "entetes": [
+       "Catégorie",
+       "Ce qu’elle autorise",
+       "Limite de charge",
+       "Ancienne catégorie (2008)"
+      ],
+      "lignes": [
+       [
+        "A1",
+        "Toutes les activités de l'article 4, pour les gaz à effet de serre fluorés et les hydrocarbures",
+        "aucune",
+        "I"
+       ],
+       [
+        "A2",
+        "Toutes les activités de l'article 4, pour les gaz à effet de serre fluorés et les hydrocarbures, limitées aux équipements de faible charge",
+        "moins de 3 kg (6 kg si hermétiquement scellé et étiqueté)",
+        "II"
+       ],
+       [
+        "B",
+        "Toutes les activités de l'article 4, pour le dioxyde de carbone (R-744/CO2)",
+        "aucune",
+        "(nouvelle)"
+       ],
+       [
+        "C",
+        "Toutes les activités de l'article 4, pour l'ammoniac (R-717/NH3)",
+        "aucune",
+        "(nouvelle)"
+       ],
+       [
+        "D",
+        "Article 4 point d uniquement — récupération des gaz à effet de serre fluorés",
+        "moins de 3 kg (6 kg si hermétiquement scellé et étiqueté)",
+        "III"
+       ],
+       [
+        "E",
+        "Article 4 point a uniquement — contrôles d'étanchéité, à condition que l'activité ne nécessite pas d'accéder au circuit frigorifique",
+        "aucune",
+        "IV"
+       ],
+       [
+        "V",
+        "Article 4 point e — climatisation des véhicules, engins et matériels mentionnés à l'article R. 311-1 du code de la route",
+        "aucune",
+        "V"
+       ]
+      ]
+     },
+     "blocs": [],
+     "question": null
+    },
+    {
+     "t": "Ce que dure l’épreuve, et ce qu’elle tire au sort",
+     "src": "referentiel-2025.json",
+     "titre_source": "Annexe II — Modalités d'évaluation des compétences et des connaissances",
+     "paras": [
+      "Pour les catégories A1, A2, B et C, l'épreuve commence par un <b>tronc commun</b> : 1 h de théorie et 2 h de pratique, puis une partie spécifique à la catégorie. Les catégories D et E ont leur épreuve propre, plus courte.",
+      "L'épreuve porte toujours sur les groupes 1, 2, 3, 4, 5, 10, 11 — et sur <b>au moins un</b> des groupes 6, 7, 8, 9, <b>tiré au sort le jour de l'épreuve</b>. Le candidat ne sait pas, avant l'évaluation, sur lequel de ces quatre groupes il sera évalué. Conséquence simple : les quatre groupes d'organes s'apprennent tous."
+     ],
+     "tableau": {
+      "titre": "Les durées d’épreuve (réglementaires)",
+      "entetes": [
+       "Catégorie",
+       "Théorie",
+       "Pratique",
+       "Total"
+      ],
+      "lignes": [
+       [
+        "A1",
+        "1 h + 15 min",
+        "2 h + 1 h",
+        "4 h 15"
+       ],
+       [
+        "A2",
+        "1 h + 15 min",
+        "2 h + 40 min",
+        "3 h 55"
+       ],
+       [
+        "B",
+        "1 h + 15 min",
+        "2 h + 30 min",
+        "3 h 45"
+       ],
+       [
+        "C",
+        "1 h + 15 min",
+        "2 h + 45 min",
+        "4 h"
+       ],
+       [
+        "D",
+        "30 min",
+        "1 h",
+        "1 h 30"
+       ],
+       [
+        "E",
+        "30 min",
+        "1 h",
+        "1 h 30"
+       ]
+      ]
+     },
+     "blocs": [
+      {
+       "type": "cle",
+       "t": "Un aménagement existe, demandez-le",
+       "html": "<p>En cas de handicap ou de trouble de l'apprentissage reconnu (RQTH, MDPH, aménagement déjà accordé par l'Éducation nationale, ou certificat de moins de six mois), la durée de l'examen peut être majorée jusqu'à <b>un tiers du temps total de l'examen</b>. La demande se prépare <b>avant</b> l'inscription, avec le justificatif.</p>"
+      }
+     ],
+     "question": null
+    },
+    {
+     "t": "La bascule de 2027 — et la date de 2029",
+     "src": "referentiel-2025.json",
+     "titre_source": "Arrêté du 21 novembre 2025 relatif à la délivrance des attestations d'aptitude prévues à l'article R. 543-106 du code de l'environnement",
+     "paras": [
+      "L'ancien système (arrêté de 2008, catégories I à V) s'éteint : il est abrogé au <b>31 décembre 2026</b>, et le nouveau référentiel devient <b>obligatoire le 1er janvier 2027</b>. Jusqu'au 31/12/2026, les attestations peuvent encore être délivrées selon l'arrêté du 13 octobre 2008 ; elles restent soumises à l'obligation de remise à niveau ponctuelle de l'article 7.",
+      "Si vous détenez déjà une attestation des anciennes catégories I à IV, elle a une <b>date butoir</b> : le <b>12 mars 2029</b>. Avant cette date, une <b>remise à niveau ponctuelle</b> chez un organisme formateur certifié vous fait passer dans la catégorie correspondante du tableau de la première leçon. Après cette date : l'attestation délivrée sous le régime (UE) 2015/2067 ou (CE) 303/2008 n'est plus valide ; le titulaire doit repasser l'examen de l'article 1er.",
+      "Le nouveau régime n'est pas acquis pour toujours : une <b>remise à niveau périodique</b> est due <b>tous les 7 ans à partir de la date de délivrance de l'attestation d'aptitude ou de remise à niveau ponctuelle</b>. À défaut : suspension de l'attestation."
+     ],
+     "blocs": [],
+     "question": null
+    }
+   ],
    "questions": [
     {
      "id": "q-g1-31",

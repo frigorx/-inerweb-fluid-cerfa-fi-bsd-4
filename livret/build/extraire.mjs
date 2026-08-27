@@ -34,6 +34,7 @@ import path from 'node:path';
 import { execSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { CHAPITRES } from './plan-chapitres.mjs';
+import { leconsCategories } from './contenu-categories.mjs';
 
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const SORTIE = path.join(ICI, '..', 'contenu.gen.json');
@@ -51,6 +52,7 @@ if (!fs.existsSync(path.join(PACK, 'cartes.js'))) {
 
 const { CARTES } = await import(pathToFileURL(path.join(PACK, 'cartes.js')).href);
 const BANQUE = JSON.parse(fs.readFileSync(path.join(PACK, 'banque.gen.json'), 'utf8'));
+const REF = JSON.parse(fs.readFileSync(path.join(PACK, 'referentiel-2025.json'), 'utf8'));
 
 /* La trace de source : quel commit de pilote-fluides a fourni le texte.
    Sans elle, impossible de savoir quel livret correspond à quel état
@@ -121,8 +123,12 @@ const chapitres = CHAPITRES.map((ch) => {
   const questions = questionsDe(ch);
   if (!questions.length) erreurs.push(`${ou} : aucune question dans la banque pour ${JSON.stringify(ch.groupesQ)}`);
 
+  if (ch.genere === 'categories') {
+    return { num: ch.num, genere: ch.genere, lecons: leconsCategories(REF), questions };
+  }
   if (ch.genere) {
-    return { num: ch.num, genere: ch.genere, questions };
+    erreurs.push(`${ou} : générateur « ${ch.genere} » inconnu`);
+    return { num: ch.num, genere: ch.genere, lecons: [], questions };
   }
 
   const lecons = (ch.lecons || []).map((l, i) => {
@@ -161,11 +167,11 @@ let nParas = 0; let nBlocs = 0; let nQ = 0;
 console.log('Extraction du livret — tome 1\n');
 for (const c of chapitres) {
   const plan = CHAPITRES.find((p) => p.num === c.num);
-  if (c.genere) { console.log(`  ch ${String(c.num).padStart(2)} — (généré : ${c.genere}) · ${c.questions.length} q.`); nQ += c.questions.length; continue; }
   const paras = c.lecons.reduce((s, l) => s + l.paras.length, 0) + (c.activite?.paras.length || 0);
   const blocs = c.lecons.reduce((s, l) => s + l.blocs.length, 0);
   nParas += paras; nBlocs += blocs; nQ += c.questions.length;
-  console.log(`  ch ${String(c.num).padStart(2)} — ${c.lecons.length} leçons · ${paras} § · ${blocs} blocs · ${c.questions.length} q.  (${plan.titre})`);
+  const marque = c.genere ? ` [généré : ${c.genere}]` : '';
+  console.log(`  ch ${String(c.num).padStart(2)} — ${c.lecons.length} leçons · ${paras} § · ${blocs} blocs · ${c.questions.length} q.  (${plan.titre})${marque}`);
 }
 console.log(`\n✔ ${chapitres.length} chapitres · ${nParas} paragraphes · ${nBlocs} blocs · ${nQ} questions`);
 console.log(`  source : ${sourceCommit} → ${path.relative(process.cwd(), SORTIE)}`);
