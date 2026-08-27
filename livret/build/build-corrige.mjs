@@ -72,10 +72,12 @@ let total = 0;
 for (const ch of CHAPITRES) {
   const c = CONTENU.chapitres.find((x) => x.num === ch.num);
   const ids = CHOISIES[ch.num] || [];
-  const questions = ids.map((id) => {
-    const q = c.questions.find((x) => x.id === id);
-    if (!q) throw new Error(`question ${id} absente du contenu du chapitre ${ch.num} — relancer npm run livret`);
-    return q;
+  /* Mêmes questions ET même ordre de choix que le livret élève : sans
+     cela, la lettre du corrigé ne désignerait pas la bonne ligne. */
+  const questions = ids.map((sel) => {
+    const q = c.questions.find((x) => x.id === sel.id);
+    if (!q) throw new Error(`question ${sel.id} absente du contenu du chapitre ${ch.num} — relancer npm run livret`);
+    return { ...q, choix: sel.ordre.map((i) => q.choix[i]), bonne: sel.bonne };
   });
   total += questions.length;
 
@@ -145,5 +147,19 @@ if (fs.existsSync(soffice)) {
   execFileSync(soffice, ['--headless', '--convert-to', 'pdf', '--outdir', DIST, docx], { stdio: 'ignore', timeout: 180000 });
 }
 
+/* Le rang de la bonne réponse doit rester réparti : un candidat qui coche
+   toujours la même lettre ne doit pas réussir. On le vérifie ici, sur le
+   document final, et non sur l'intention. */
+const rangs = { A: 0, B: 0, C: 0, D: 0 };
+for (const liste of Object.values(CHOISIES)) for (const s of liste) rangs['ABCD'[s.bonne]]++;
+const pire = Math.max(...Object.values(rangs)) / total;
+if (pire > 0.4) {
+  console.error(`
+✖ Rang des bonnes réponses mal réparti : ${JSON.stringify(rangs)}`);
+  console.error(`  Cocher la même lettre partout donnerait ${Math.round(pire * 100)} %. Seuil : 40 %.`);
+  process.exit(1);
+}
+
 console.log(`Corrigé formateur — ${total} questions corrigées, mêmes tirages que le livret élève`);
+console.log(`  rang des bonnes réponses : ${Object.entries(rangs).map(([l, n]) => l + ' ' + n).join(' · ')} (le plus fréquent : ${Math.round(pire * 100)} %)`);
 console.log(`✔ ${path.relative(process.cwd(), docx)}${fs.existsSync(soffice) ? ' (+ PDF)' : ''}`);

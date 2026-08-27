@@ -198,7 +198,12 @@ export const construireFlux = () => {
       }
 
       /* 1 — Testez-vous */
-      const questions = (CHOISIES[ch.num] || []).map((id) => c.questions.find((q) => q.id === id)).filter(Boolean);
+      /* L'ordre des choix vient de la sélection, pas de la banque : la
+         bonne réponse y a été répartie sur les quatre rangs. */
+      const questions = (CHOISIES[ch.num] || []).map((sel) => {
+        const q = c.questions.find((x) => x.id === sel.id);
+        return q && { ...q, choix: sel.ordre.map((i) => q.choix[i]), bonne: sel.bonne };
+      }).filter(Boolean);
       /* Le QCM tient d'un seul tenant, sur sa propre page : autrement on
          ne voit ni combien de questions il y a, ni où il s'arrête — et
          se tester devient impossible (remarque de F. Henninot). */

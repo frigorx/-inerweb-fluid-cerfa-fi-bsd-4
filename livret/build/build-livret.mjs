@@ -243,6 +243,41 @@ const logoPng = async (mot) => {
    chapitre, puis on complète dans l'ordre des identifiants. La liste
    est écrite sur disque : le corrigé formateur reprend LA MÊME. */
 const SELECTION = {};
+
+/* Une question, ses choix remis dans l'ordre décidé. */
+const reordonner = (q, sel) => ({
+  ...q, choix: sel.ordre.map((i) => q.choix[i]), bonne: sel.bonne,
+});
+
+/* ------------------------------------------------------------------
+   RÉPARTIR LE RANG DE LA BONNE RÉPONSE.
+   Dans la banque, la bonne réponse est en B trois fois sur quatre : un
+   candidat qui coche B partout obtient 68 %. Le livret ne peut pas
+   imprimer ça. On fait donc TOURNER les choix de chaque question, d'une
+   rotation circulaire qui amène la bonne réponse au rang voulu — A, B,
+   C, D, A… à tour de rôle. La rotation garde l'ordre relatif des
+   distracteurs : on ne mélange pas, on décale.
+
+   Exception : les choix manifestement ORDONNÉS (des valeurs qui
+   croissent — « 1 cm/s, 5 cm/s, 10 cm/s… ») ne bougent pas. Les
+   remettre dans le désordre serait un piège, pas une question.
+
+   L'ordre retenu est écrit dans questions-choisies.gen.json : le
+   livret, le corrigé et les réponses de fin de chapitre lisent tous
+   le même — sans quoi la correction ne correspondrait plus.
+   ------------------------------------------------------------------ */
+let rangCible = 0;
+const ordonnee = (q) => q.choix.every((c) => /^\s*[\d.,]+\s*(cm|mm|m|kg|g|K|°C|bar|%|min|h|)/.test(c));
+
+const repartir = (q) => {
+  const n = q.choix.length;
+  if (ordonnee(q)) return { id: q.id, ordre: q.choix.map((_, i) => i), bonne: q.bonne };
+  const cible = rangCible++ % n;
+  /* Rotation r telle que (bonne + r) % n === cible. */
+  const r = (cible - q.bonne + n) % n;
+  const ordre = q.choix.map((_, i) => (i - r + n) % n);   // ordre[nouveau] = ancien
+  return { id: q.id, ordre, bonne: cible };
+};
 /* Une explication qui ne dit rien de plus que « retenez la formulation »
    n'apprend rien sur papier : à question égale, on prend celle qui
    explique vraiment. (25 des 180 questions de la banque sont dans ce
@@ -263,7 +298,7 @@ const choisirQuestions = (ch) => {
     if (prises.length >= 6) break;
     if (!prises.includes(q)) prises.push(q);
   }
-  SELECTION[ch.num] = prises.map((q) => q.id);
+  SELECTION[ch.num] = prises.map((q) => repartir(q));
   return prises;
 };
 
@@ -440,7 +475,7 @@ const construire = async () => {
       /* 2. Les questions AVANT la lecture : chacun se juge d'abord —
          inutile de tout relire quand on sait déjà. Corrections en fin
          de chapitre. */
-      const questions = choisirQuestions(c);
+      const questions = choisirQuestions(c).map((q, i) => reordonner(q, SELECTION[ch.num][i]));
       enfants.push(
         titre(`Testez-vous d'abord — ${questions.length} questions`, 2),
         para(`Répondez <b>avant</b> de lire : vous saurez tout de suite ce que vous savez déjà, et ce qui ` +
