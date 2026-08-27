@@ -22,14 +22,23 @@ ORANGE = (0xFF / 255, 0x6B / 255, 0x35 / 255)
 MUT = (0x5A / 255, 0x6B / 255, 0x7D / 255)
 LIGNE = (0xD6 / 255, 0xDE / 255, 0xE7 / 255)
 
+import json
+import os
+
 MM = 72 / 25.4          # 1 mm en points
-MARGE = 19 * MM         # marge latérale, celle du CSS (reliure KDP)
-HAUT = 13 * MM          # ligne de base du bandeau, dans la marge du haut
+
+# Les réglages viennent du même fichier que le CSS : bandeau et pied se
+# posent exactement dans les marges que la mise en page a réservées.
+_R = json.load(open(os.path.join(os.path.dirname(__file__), '..', 'reglages.json'),
+                    encoding='utf-8'))
+GOUTTIERE = _R['gouttiere_mm'] * MM
+EXTERIEUR = _R['exterieur_mm'] * MM
+HAUT = (_R['haut_mm'] - 5) * MM   # ligne de base du bandeau, dans la marge haute
 
 # Le filet du pied se calcule sur la HAUTEUR RÉELLE de la page, jamais en
 # dur : le livret est passé de l'A5 au 6 x 9 et un pied figé se serait
 # retrouvé au milieu du texte.
-BAS_CONTENU = 16        # marge basse du CSS, en mm
+BAS_CONTENU = _R['bas_mm']   # marge basse du CSS, en mm
 def pied_de(hauteur_pt):
     return hauteur_pt - (BAS_CONTENU - 3.4) * MM
 
@@ -78,36 +87,42 @@ def finir(chemin):
     numero = 0
     nues = 0
 
-    for page, (genre, info) in zip(doc, contextes):
+    for i, (page, (genre, info)) in enumerate(zip(doc, contextes)):
         if genre == 'nue':
             nues += 1
             continue
         numero += 1
 
+        # Page de droite (recto, indice pair) : reliure à gauche.
+        # Page de gauche (verso, indice impair) : reliure à droite.
+        recto = (i % 2 == 0)
+        MARGE_G = GOUTTIERE if recto else EXTERIEUR
+        MARGE_D = EXTERIEUR if recto else GOUTTIERE
+
         if genre == 'ch':
             partie, num = info
-            page.draw_line(fitz.Point(MARGE, HAUT + 2 * MM),
-                           fitz.Point(largeur - MARGE, HAUT + 2 * MM),
+            page.draw_line(fitz.Point(MARGE_G, HAUT + 2 * MM),
+                           fitz.Point(largeur - MARGE_D, HAUT + 2 * MM),
                            color=ORANGE, width=1.6)
             page.insert_text(
-                fitz.Point(MARGE, HAUT),
+                fitz.Point(MARGE_G, HAUT),
                 'Partie %s · %s' % (partie, PARTIES.get(partie, '').upper()),
                 fontname='hebo', fontsize=7.4, color=BLEU)
             libelle = 'Chapitre %s' % num
             page.insert_text(
-                fitz.Point(largeur - MARGE - fitz.get_text_length(
+                fitz.Point(largeur - MARGE_D - fitz.get_text_length(
                     libelle, fontname='hebo', fontsize=7.4), HAUT),
                 libelle, fontname='hebo', fontsize=7.4, color=ORANGE)
 
         # Le pied, sur toutes les pages numérotées
-        page.draw_line(fitz.Point(MARGE, PIED), fitz.Point(largeur - MARGE, PIED),
+        page.draw_line(fitz.Point(MARGE_G, PIED), fitz.Point(largeur - MARGE_D, PIED),
                        color=LIGNE, width=0.6)
         # Pas de tiret cadratin ici : les polices de base du PDF ne le
         # portent pas et il ressort en point médian. On l'écrit tel quel.
-        page.insert_text(fitz.Point(MARGE, PIED + 4 * MM),
+        page.insert_text(fitz.Point(MARGE_G, PIED + 4 * MM),
                          'inerweb.fr · HabFluide, tome 1 · la théorie',
                          fontname='helv', fontsize=6.8, color=MUT)
-        centre = fitz.Point(largeur - MARGE - 3.2 * MM, PIED + 3.2 * MM)
+        centre = fitz.Point(largeur - MARGE_D - 3.2 * MM, PIED + 3.2 * MM)
         page.draw_circle(centre, 3.2 * MM, color=BLEU, fill=BLEU)
         etiquette = str(numero)
         page.insert_text(

@@ -202,7 +202,10 @@ export const construireFlux = () => {
       /* Le QCM tient d'un seul tenant, sur sa propre page : autrement on
          ne voit ni combien de questions il y a, ni où il s'arrête — et
          se tester devient impossible (remarque de F. Henninot). */
-      const court = (q) => q.choix.every((x) => x.length <= 46);
+      /* Deux colonnes seulement si chaque choix tient sur UNE ligne en
+   demi-largeur : au-delà, il repasse à la ligne et la question devient
+   plus haute qu'en pleine largeur. À 14 pt, la bascule est vers 30. */
+  const court = (q) => q.choix.every((x) => x.length <= 30);
       pousse(`<section class="qcm">
         <h3 class="sect-t"><span class="sect-num">1</span>Testez-vous d’abord —
           ${questions.length} questions</h3>

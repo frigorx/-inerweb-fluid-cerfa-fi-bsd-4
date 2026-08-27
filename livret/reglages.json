@@ -1,0 +1,21 @@
+{
+ "_doc": "Les réglages de densité du livre. Modifiables ici à la main, ou au curseur dans curseurs.html puis recopiés. `npm run html` les relit à chaque fabrication.",
+ "corps_pt": 14,
+ "_corps_pt": "Taille du texte lu. Plancher de la charte inerWeb pour un document élève : 14. Ne pas descendre.",
+ "interligne": 1.38,
+ "_interligne": "Hauteur de ligne. 1.55 respire beaucoup, 1.35 serre. En dessous de 1.3, la lecture DYS souffre.",
+ "air": 0.82,
+ "_air": "Multiplicateur de TOUS les blancs entre blocs. 1 = réglage de référence, 0.7 = dense, 1.3 = aéré.",
+ "gouttiere_mm": 19,
+ "_gouttiere_mm": "Marge côté reliure. Exigence Amazon KDP pour 300 à 500 pages : 19 mm. Ne pas descendre.",
+ "exterieur_mm": 13,
+ "_exterieur_mm": "Marge côté tranche. Minimum KDP : 6,35 mm. En dessous de 10, le pouce cache le texte.",
+ "haut_mm": 15,
+ "bas_mm": 13,
+ "_marges_verticales": "Elles réservent la place du bandeau et du pied, dessinés à la finition.",
+ "planche_h_mm": 104,
+ "_planche_h_mm": "Hauteur maximale d'une planche technique. Plus grand = plus lisible, mais chasse le texte.",
+ "planche_haute_h_mm": 118,
+ "appoint_pc": 56,
+ "_appoint_pc": "Largeur d'une illustration d'ambiance qui accompagne une planche, en % de la justification."
+}
