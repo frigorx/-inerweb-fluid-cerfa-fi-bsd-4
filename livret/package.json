@@ -11,6 +11,8 @@
     "visuels": "node build/visuels.mjs",
     "qr": "node build/qr.mjs",
     "livret": "node build/build-livret.mjs",
+    "html": "node build/build-html.mjs",
+    "maquette": "node build/maquette.mjs",
     "corrige": "node build/build-corrige.mjs",
     "tout": "node build/tout.mjs"
   },

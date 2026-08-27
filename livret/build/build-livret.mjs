@@ -15,8 +15,9 @@
    · charte inerWeb : Trebuchet MS pour les titres, Calibri pour le
      corps, bleu #1B3A63, orange #FF6B35 — logo « Fluide » (§ 3.4).
 
-   Sorties : dist/inerWeb-Habilitation-Fluide-Tome1-Livret-eleve-A5.docx
-             (+ .pdf via LibreOffice headless), questions-choisies.gen.json
+   Sortie : dist/inerWeb-Habilitation-Fluide-Tome1-Livret-eleve-A5.docx
+            (le Word ÉDITABLE ; le PDF d'impression vient du gabarit A5,
+            build-html.mjs) + questions-choisies.gen.json
    ===================================================================== */
 
 import fs from 'node:fs';
@@ -618,19 +619,15 @@ const construire = async () => {
   fs.writeFileSync(docx, await Packer.toBuffer(doc));
   fs.writeFileSync(path.join(LIVRET, 'questions-choisies.gen.json'), JSON.stringify(SELECTION, null, 1), 'utf8');
 
-  /* PDF, si LibreOffice est là. */
-  const soffice = 'C:/Program Files/LibreOffice/program/soffice.exe';
-  let pdf = '(LibreOffice absent : pas de PDF)';
-  if (fs.existsSync(soffice)) {
-    execFileSync(soffice, ['--headless', '--convert-to', 'pdf', '--outdir', DIST, docx], { stdio: 'ignore', timeout: 180000 });
-    pdf = docx.replace(/\.docx$/, '.pdf');
-  }
+  /* Pas de conversion PDF ici : le PDF de référence est celui du
+     gabarit A5 (`build-html.mjs`), au même nom de fichier. Ce Word est
+     la sortie ÉDITABLE — celle qu'on ouvre pour retoucher un mot avant
+     une séance, pas celle qu'on envoie à l'imprimeur. */
 
-  console.log('Livret élève — tome 1\n');
+  console.log('Livret élève — tome 1 (Word, sortie éditable)\n');
   console.log(`  ${CHAPITRES.length} chapitres · ${LIMINAIRES.length} liminaires · ${FIN.length} pages de fin · planche centrale`);
   console.log(`  questions élève : ${Object.values(SELECTION).flat().length} (6 max/chapitre, liste écrite pour le corrigé)`);
   console.log(`\n✔ ${path.relative(process.cwd(), docx)}`);
-  console.log(`✔ ${typeof pdf === 'string' && pdf.endsWith('.pdf') ? path.relative(process.cwd(), pdf) : pdf}`);
 };
 
 await construire();
