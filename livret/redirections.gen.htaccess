@@ -1,0 +1,24 @@
+# Table de redirections du livret « Habilitation Fluide » — tome 1
+# Générée par livret/build/qr.mjs — à poser à la racine de inerweb.fr
+# (ou à fusionner dans le .htaccess existant). Un alias par chapitre :
+# le QR papier ne change jamais, seule cette table bouge.
+
+Redirect 302 /f/securite https://inerweb.fr/packs/fluides/res/capsules/index.html?c=s1
+Redirect 302 /f/classes https://inerweb.fr/?carte=cl1
+Redirect 302 /f/loi https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g0
+Redirect 302 /f/categories https://inerweb.fr/?carte=c00
+Redirect 302 /f/thermo https://inerweb.fr/?carte=g1a
+Redirect 302 /f/logph https://inerweb.fr/?carte=g1b
+Redirect 302 /f/surchauffe https://inerweb.fr/?carte=g1e
+Redirect 302 /f/fluides https://inerweb.fr/?carte=g1c
+Redirect 302 /f/compresseur https://inerweb.fr/?carte=g6
+Redirect 302 /f/condenseur https://inerweb.fr/?carte=g7
+Redirect 302 /f/evaporateur https://inerweb.fr/?carte=g8
+Redirect 302 /f/detendeur https://inerweb.fr/?carte=g9
+Redirect 302 /f/mise-en-service https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g3
+Redirect 302 /f/etancheite https://inerweb.fr/?carte=g4a
+Redirect 302 /f/recuperation https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g5a
+Redirect 302 /f/brasage https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g10
+Redirect 302 /f/efficacite https://inerweb.fr/?carte=g11
+Redirect 302 /f/hydrocarbures https://inerweb.fr/?carte=g12
+Redirect 302 /f/co2-nh3 https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g13

@@ -1,0 +1,154 @@
+[
+ {
+  "chapitre": 1,
+  "titre": "Ce qui peut vous blesser",
+  "slug": "securite",
+  "alias": "https://inerweb.fr/f/securite",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=s1",
+  "fichier": "securite.png"
+ },
+ {
+  "chapitre": 2,
+  "titre": "Lire une classe de sécurité",
+  "slug": "classes",
+  "alias": "https://inerweb.fr/f/classes",
+  "cible": "https://inerweb.fr/?carte=cl1",
+  "fichier": "classes.png"
+ },
+ {
+  "chapitre": 3,
+  "titre": "Ce que la loi vous impose",
+  "slug": "loi",
+  "alias": "https://inerweb.fr/f/loi",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g0",
+  "fichier": "loi.png"
+ },
+ {
+  "chapitre": 4,
+  "titre": "Les sept catégories, et la bascule de 2027",
+  "slug": "categories",
+  "alias": "https://inerweb.fr/f/categories",
+  "cible": "https://inerweb.fr/?carte=c00",
+  "fichier": "categories.png"
+ },
+ {
+  "chapitre": 5,
+  "titre": "Thermodynamique utile",
+  "slug": "thermo",
+  "alias": "https://inerweb.fr/f/thermo",
+  "cible": "https://inerweb.fr/?carte=g1a",
+  "fichier": "thermo.png"
+ },
+ {
+  "chapitre": 6,
+  "titre": "Lire un log p-h et une table de saturation",
+  "slug": "logph",
+  "alias": "https://inerweb.fr/f/logph",
+  "cible": "https://inerweb.fr/?carte=g1b",
+  "fichier": "logph.png"
+ },
+ {
+  "chapitre": 7,
+  "titre": "Surchauffe et sous-refroidissement",
+  "slug": "surchauffe",
+  "alias": "https://inerweb.fr/f/surchauffe",
+  "cible": "https://inerweb.fr/?carte=g1e",
+  "fichier": "surchauffe.png"
+ },
+ {
+  "chapitre": 8,
+  "titre": "Les familles de fluides et leurs codes",
+  "slug": "fluides",
+  "alias": "https://inerweb.fr/f/fluides",
+  "cible": "https://inerweb.fr/?carte=g1c",
+  "fichier": "fluides.png"
+ },
+ {
+  "chapitre": 9,
+  "titre": "Le compresseur",
+  "slug": "compresseur",
+  "alias": "https://inerweb.fr/f/compresseur",
+  "cible": "https://inerweb.fr/?carte=g6",
+  "fichier": "compresseur.png"
+ },
+ {
+  "chapitre": 10,
+  "titre": "Le condenseur",
+  "slug": "condenseur",
+  "alias": "https://inerweb.fr/f/condenseur",
+  "cible": "https://inerweb.fr/?carte=g7",
+  "fichier": "condenseur.png"
+ },
+ {
+  "chapitre": 11,
+  "titre": "L évaporateur",
+  "slug": "evaporateur",
+  "alias": "https://inerweb.fr/f/evaporateur",
+  "cible": "https://inerweb.fr/?carte=g8",
+  "fichier": "evaporateur.png"
+ },
+ {
+  "chapitre": 12,
+  "titre": "Le détendeur et les organes annexes",
+  "slug": "detendeur",
+  "alias": "https://inerweb.fr/f/detendeur",
+  "cible": "https://inerweb.fr/?carte=g9",
+  "fichier": "detendeur.png"
+ },
+ {
+  "chapitre": 13,
+  "titre": "Contrôles avant mise en service",
+  "slug": "mise-en-service",
+  "alias": "https://inerweb.fr/f/mise-en-service",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g3",
+  "fichier": "mise-en-service.png"
+ },
+ {
+  "chapitre": 14,
+  "titre": "Les contrôles d étanchéité",
+  "slug": "etancheite",
+  "alias": "https://inerweb.fr/f/etancheite",
+  "cible": "https://inerweb.fr/?carte=g4a",
+  "fichier": "etancheite.png"
+ },
+ {
+  "chapitre": 15,
+  "titre": "Récupérer sans émettre, peser, tracer",
+  "slug": "recuperation",
+  "alias": "https://inerweb.fr/f/recuperation",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g5a",
+  "fichier": "recuperation.png"
+ },
+ {
+  "chapitre": 16,
+  "titre": "Tuyauterie et brasage sous azote",
+  "slug": "brasage",
+  "alias": "https://inerweb.fr/f/brasage",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g10",
+  "fichier": "brasage.png"
+ },
+ {
+  "chapitre": 17,
+  "titre": "Substitution et efficacité énergétique",
+  "slug": "efficacite",
+  "alias": "https://inerweb.fr/f/efficacite",
+  "cible": "https://inerweb.fr/?carte=g11",
+  "fichier": "efficacite.png"
+ },
+ {
+  "chapitre": 18,
+  "titre": "Hydrocarbures — le spécifique A1 et A2",
+  "slug": "hydrocarbures",
+  "alias": "https://inerweb.fr/f/hydrocarbures",
+  "cible": "https://inerweb.fr/?carte=g12",
+  "fichier": "hydrocarbures.png"
+ },
+ {
+  "chapitre": 19,
+  "titre": "CO₂ et NH₃ — reconnaître, ne pas intervenir",
+  "slug": "co2-nh3",
+  "alias": "https://inerweb.fr/f/co2-nh3",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g13",
+  "fichier": "co2-nh3.png"
+ }
+]
