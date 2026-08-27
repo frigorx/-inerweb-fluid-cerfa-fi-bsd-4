@@ -1,0 +1,736 @@
+/* =====================================================================
+   LIVRET « HABILITATION FLUIDE » — TOME 1 : LA THÉORIE
+   Plan éditorial — la structure du livret, page par page.
+   ---------------------------------------------------------------------
+   Ce fichier ne contient AUCUN texte de cours : il dit seulement, pour
+   chaque page, d'où le texte vient et quelles planches l'illustrent.
+   Le texte, lui, est extrait de la source éditoriale du pack
+   « Habilitation fluides frigorigènes » (`packs/fluides/cartes.js` du
+   dépôt frigorx/pilote-fluides), écrite par F. Henninot.
+
+   RÈGLE TENUE PAR CE FICHIER — une page, une illustration au moins.
+   `build/build-livret.mjs` échoue si une seule page en manque.
+
+   Référence des visuels :
+     svg:<nom>   → packs/fluides/res/svg/<nom>.svg          (46 planches
+                   techniques dessinées à la main, animées en CSS)
+     illu:<id>   → packs/fluides/res/bibliotheque/illu-<id>.webp
+                   (43 illustrations d'ambiance, livraison du 31/07/2026,
+                   manifeste et prompts conservés)
+     amb:<id>    → packs/fluides/res/bibliotheque/amb-<id>.webp
+     sym:<nom>   → packs/fluides/res/symboles/<nom>.svg
+
+   ÉCARTÉ VOLONTAIREMENT : `res/illustrations/bib-*` — ces fichiers
+   viennent de documents pédagogiques TIERS (relevés dans la base indexée
+   de F. Henninot : supports AFPA, TP d'autres enseignants, documentation
+   constructeur). Ils sont hors de question dans un livret destiné à un
+   usage commercial. Voir README.md § Droits.
+   ===================================================================== */
+
+/* Les six parties du livret. L'ordre est celui du parcours de formation
+   déjà validé (`packs/fluides/parcours.js`) : on se protège d'abord, on
+   comprend ensuite, on intervient en dernier. */
+export const PARTIES = [
+  { id: 'A', titre: 'Se protéger', sous: 'ce qui peut vous blesser, avant tout le reste' },
+  { id: 'B', titre: 'Le cadre', sous: 'ce que la loi impose, et qui a le droit de faire quoi' },
+  { id: 'C', titre: 'Savoir', sous: 'le fluide, la machine, et les grandeurs qu on lit' },
+  { id: 'D', titre: 'Les organes', sous: 'les quatre coins de la croix du frigoriste' },
+  { id: 'E', titre: 'Les opérations', sous: 'contrôler, récupérer, assembler' },
+  { id: 'F', titre: 'Fluides à risque et avenir', sous: 'substituer, et savoir s arrêter' },
+];
+
+/* Le domaine des alias de QR. Un QR imprimé est gravé pour la durée de vie
+   du papier : il ne porte JAMAIS l'adresse réelle d'une ressource, mais un
+   alias court que l'on redirige. C'est la spécification écrite pour le
+   livret H0 (`STORYBOARDS-ANIMATIONS.md`) et jamais mise en œuvre. */
+export const QR_BASE = 'https://inerweb.fr/f/';
+
+export const CHAPITRES = [
+  /* =================== PARTIE A — SE PROTÉGER =================== */
+  {
+    num: 1, partie: 'A', qr: 'securite',
+    titre: 'Ce qui peut vous blesser',
+    objectif: 'Nommer les cinq risques d une intervention sur un circuit frigorifique, et le premier geste qui protège de chacun.',
+    codes: ['12.02', '12.13', '11.03', '3.01'],
+    groupesQ: ['Sécurité', 'G12', 'G11'],
+    codesQ: ['12.02', '12.13', '11.03', '12.04'],
+    lecons: [
+      { t: 'L air qui manque — l asphyxie', src: 's1', paras: 'tous', blocs: [0, 1],
+        visuels: ['svg:secu-espace-clos', 'illu:s1'],
+        legendes: ['Le fluide chasse l air par le bas', 'Un local en contrebas'] },
+      { t: 'Le froid brûle — projections et gelures', src: 's2', paras: 'tous', blocs: [0, 1],
+        visuels: ['svg:secu-projection', 'illu:s2'],
+        legendes: ['La détente projette du liquide', 'Lunettes et gants adaptés'] },
+      { t: 'La flamme interdite — décomposition du fluide', src: 's3', paras: 'tous', blocs: [0, 1],
+        visuels: ['svg:secu-decomposition-ari', 'illu:s3'],
+        legendes: ['Le fluide chauffé se décompose', 'Ce que la flamme fabrique'] },
+      { t: 'Ce qui éclate — la pression', src: 's4', paras: 'tous', blocs: [0, 1],
+        visuels: ['svg:secu-bouteille', 'illu:s4'],
+        legendes: ['Jamais à ras, jamais chauffée', 'La bouteille sous contrainte'] },
+      { t: 'Consigner avant de toucher — le risque électrique', src: 's5', paras: 'tous', blocs: [0, 1],
+        visuels: ['svg:secu-consignation', 'illu:s5'],
+        legendes: ['Séparer, condamner, vérifier', 'Le cadenas est à vous'] },
+    ],
+    activite: {
+      t: 'Préparer le chantier avant d ouvrir la caisse', src: 'p7',
+      visuels: ['svg:prepa-chantier', 'illu:p7'],
+      legendes: ['La zone avant le geste', 'EPI et balisage'],
+      lignes: [
+        'Les trois risques que je vois sur cette installation',
+        'L EPI que je mets en premier, et pourquoi',
+        'La personne que je préviens avant de commencer',
+        'Ce qui me ferait arrêter immédiatement',
+      ],
+      voixHaute: 'Avant de toucher, je nomme le risque. Si je ne peux pas le nommer, je ne touche pas.',
+    },
+  },
+  {
+    num: 2, partie: 'A', qr: 'classes',
+    titre: 'Lire une classe de sécurité',
+    objectif: 'Décoder les deux lettres d une classe NF EN 378 et en tirer les précautions réelles à prendre.',
+    codes: ['1.08', '11.03', '12.02', '12.04', '13.14'],
+    groupesQ: ['G11', 'G1', 'Sécurité'],
+    codesQ: ['1.08', '11.03', '12.02'],
+    lecons: [
+      { t: 'Deux lettres, deux dangers', src: 'cl1', paras: [0, 1, 2, 3, 4], blocs: [0],
+        visuels: ['svg:classes-securite', 'sym:manometres'],
+        legendes: ['La matrice NF EN 378', 'Ce qu on lit sur la machine'] },
+      { t: 'Le piège du R-290', src: 'cl1', paras: [5, 6, 7, 8, 9], blocs: [1],
+        visuels: ['svg:familles-fluides', 'illu:g1c'],
+        legendes: ['Un hydrocarbure est A3, jamais A2L', 'Les familles et leurs codes'] },
+      { t: 'Explosif avant d être perceptible — la LIE', src: 'cl2', paras: 'tous', blocs: [0, 1],
+        visuels: ['svg:lie-domaine', 'illu:cl2'],
+        legendes: ['Le domaine d explosivité', 'On ne sent rien à la LIE'] },
+      { t: 'CO₂ : la pression et l air qu il vous prend', src: 'cl3', paras: [0, 1, 2, 3, 4, 5, 6], blocs: [0, 1],
+        visuels: ['svg:co2-point-bas', 'svg:co2-nh3-compare'],
+        legendes: ['Le CO₂ s accumule en point bas', 'CO₂ et ammoniac comparés'] },
+      { t: 'Se protéger du CO₂ — détection, EPC et EPI', src: 'cl4', paras: 'tous', blocs: [0, 1],
+        visuels: ['svg:co2-protection', 'sym:sonde_temperature'],
+        legendes: ['Capteur bas, alarme dehors', 'La détection fixe'] },
+    ],
+    activite: {
+      t: 'Classer quatre fluides et en tirer les conséquences',
+      visuels: ['svg:classes-securite', 'svg:prp-echelle'],
+      legendes: ['La matrice à remplir', 'Ce que pèse chaque fluide'],
+      lignes: [
+        'R-744 — classe : ______ — le risque que la classe ne dit pas : ______',
+        'R-290 — classe : ______ — la précaution qui en découle : ______',
+        'R-32 — classe : ______ — ce que je change dans ma préparation : ______',
+        'R-717 — classe : ______ — pourquoi je n interviens pas : ______',
+      ],
+      voixHaute: 'La classe donne le danger. Elle ne donne jamais l autorisation.',
+    },
+  },
+
+  /* =================== PARTIE B — LE CADRE =================== */
+  {
+    num: 3, partie: 'B', qr: 'loi',
+    titre: 'Ce que la loi vous impose',
+    objectif: 'Distinguer l aptitude de la personne et la capacité de l entreprise, et citer les obligations qui pèsent sur une intervention.',
+    codes: ['1.00', '2.01', '2.02'],
+    groupesQ: ['G1', 'G2'],
+    codesQ: ['1.00', '2.01', '2.02'],
+    lecons: [
+      { t: 'Deux étages de règles, et deux papiers', src: 'g0', paras: [0, 1, 2, 3], blocs: [0],
+        visuels: ['svg:aptitude-capacite', 'illu:g0'],
+        legendes: ['Aptitude et capacité', 'Deux papiers, deux titulaires'] },
+      { t: 'Le registre, les déchets, l écoconception', src: 'g0', paras: [4, 5, 6, 7], blocs: [1],
+        visuels: ['sym:vanne_isolement', 'illu:g0'],
+        legendes: ['Ce qui se trace', 'Ce que le règlement exige'] },
+      { t: 'Quarante ans d histoire : de l ozone au climat', src: 'g2a', paras: 'tous', blocs: [0, 1],
+        visuels: ['svg:frise-histoire', 'illu:g2a'],
+        legendes: ['La frise des accords', 'Deux problèmes, pas un'] },
+      { t: 'Impact environnemental et F-Gas', src: 'g2', paras: 'tous', blocs: [0, 1],
+        visuels: ['svg:prp-echelle', 'illu:g2'],
+        legendes: ['Le PRP comparé', 'Le calcul en tonnes équivalent CO₂'] },
+    ],
+    activite: {
+      t: 'Deux installations, deux impacts', src: 'x1',
+      visuels: ['svg:prp-echelle', 'illu:g2'],
+      legendes: ['La même charge, deux fluides', 'Ce que ça change'],
+      lignes: [
+        'Installation A — fluide, charge, PRP : ______',
+        'Équivalent CO₂ calculé : ______',
+        'Installation B — équivalent CO₂ : ______',
+        'Celle qui déclenche le contrôle périodique, et pourquoi : ______',
+      ],
+      voixHaute: 'Ce n est pas la quantité de fluide qui compte, c est ce qu elle pèse pour le climat.',
+    },
+  },
+  {
+    num: 4, partie: 'B', qr: 'categories',
+    titre: 'Les sept catégories, et la bascule de 2027',
+    objectif: 'Situer sa propre catégorie d attestation, dire ce qu elle autorise, et connaître la date qui la fait expirer.',
+    codes: ['1.00'],
+    groupesQ: ['G1', 'G2'],
+    codesQ: ['1.00'],
+    /* Ce chapitre n a pas de fiche source : son contenu vient du
+       référentiel lui-même (`packs/fluides/referentiel-2025.json`,
+       transcription verbatim de l arrêté du 21/11/2025) et des cartes
+       menus m-a1 / m-a2 / m-d / m-e. Il est rédigé par
+       `build/contenu-categories.mjs`, qui lit le JSON du référentiel :
+       aucune valeur n est recopiée à la main. */
+    genere: 'categories',
+    activite: {
+      t: 'Ma catégorie, mon champ, ma date',
+      visuels: ['svg:aptitude-capacite', 'illu:examen'],
+      legendes: ['Les sept catégories', 'Ce que l épreuve vérifie'],
+      lignes: [
+        'La catégorie que je prépare : ______',
+        'Les activités qu elle autorise : ______',
+        'La limite de charge, s il y en a une : ______',
+        'Ce qu elle ne me permet PAS de faire : ______',
+        'Si je détiens déjà une attestation I à IV, ma date butoir : ______',
+      ],
+      voixHaute: 'Mon attestation dit ce que j ai le droit de faire. Elle ne dit pas ce que je sais faire.',
+    },
+  },
+
+  /* =================== PARTIE C — SAVOIR =================== */
+  {
+    num: 5, partie: 'C', qr: 'thermo',
+    titre: 'Thermodynamique utile',
+    objectif: 'Nommer les quatre organes de la croix du frigoriste et expliquer ce que le fluide y devient.',
+    codes: ['1.01', '1.02', '1.04'],
+    groupesQ: ['G1'],
+    codesQ: ['1.01', '1.02', '1.04'],
+    lecons: [
+      { t: 'La croix du frigoriste', src: 'g1a', paras: [0, 1, 2], blocs: [0],
+        visuels: ['svg:croix-frigoriste', 'illu:g1a'],
+        legendes: ['Détendeur à gauche, compresseur à droite', 'Les quatre organes'] },
+      { t: 'Pression relative, pression absolue', src: 'g1a', paras: [3, 4], blocs: [1, 2],
+        visuels: ['svg:pression-absolue-relative', 'sym:manometres'],
+        legendes: ['Un écart d environ 1 bar', 'Ce que le manomètre affiche'] },
+      { t: 'Chaleur sensible et chaleur latente', src: 'g1s', paras: [0, 1, 2, 3], blocs: [0],
+        visuels: ['svg:chaleur-sensible-latente', 'illu:g1s'],
+        legendes: ['La température monte, puis s arrête', 'Les cinq mots dans l ordre'] },
+      { t: 'Le palier, et pourquoi il n est pas plat', src: 'g1s', paras: [4, 5, 6], blocs: [1, 2],
+        visuels: ['svg:bulle-rosee', 'svg:familles-fluides'],
+        legendes: ['Bulle et rosée', 'Le glissement des mélanges'] },
+    ],
+    activite: {
+      t: 'Refaire la croix de mémoire',
+      visuels: ['svg:croix-frigoriste', 'svg:nomenclature'],
+      legendes: ['Le schéma à replacer', 'La nomenclature'],
+      lignes: [
+        'En haut : ______ — ce que le fluide y devient : ______',
+        'À droite : ______ — ce que le fluide y devient : ______',
+        'En bas : ______ — ce que le fluide y devient : ______',
+        'À gauche : ______ — ce que le fluide y devient : ______',
+      ],
+      voixHaute: 'Le compresseur élève la pression. Le détendeur l abaisse. Entre les deux, le fluide change d état.',
+    },
+  },
+  {
+    num: 6, partie: 'C', qr: 'logph',
+    titre: 'Lire un log p-h et une table de saturation',
+    objectif: 'Passer d une pression lue au manomètre à une température de saturation, et inversement.',
+    codes: ['1.03'],
+    groupesQ: ['G1'],
+    codesQ: ['1.03'],
+    lecons: [
+      { t: 'Le diagramme, et ce qu il montre', src: 'g1b', paras: [0, 1, 2, 3], blocs: [0],
+        visuels: ['svg:diagramme-logph', 'illu:g1b'],
+        legendes: ['La cloche et les zones', 'La méthode en trois gestes'] },
+      { t: 'L échelle des pressions n est pas une règle graduée', src: 'g1b', paras: [4, 5, 6], blocs: [1],
+        visuels: ['svg:diagramme-logph', 'svg:pression-absolue-relative'],
+        legendes: ['Une échelle logarithmique', 'Relatif ou absolu'] },
+      { t: 'Un fluide, une table', src: 'g1b', paras: [7, 8, 9], blocs: [2, 3],
+        visuels: ['svg:lecture-table', 'illu:g1b'],
+        legendes: ['La lecture croisée', 'Jamais la table d un autre fluide'] },
+    ],
+    activite: {
+      t: 'La lecture croisée, sur une machine réelle',
+      visuels: ['svg:lecture-table', 'sym:manometres'],
+      legendes: ['Manomètre, table, sonde', 'Les trois lectures'],
+      lignes: [
+        'Fluide de l installation : ______',
+        'Pression relative lue au manomètre BP : ______ bar',
+        'Pression absolue correspondante : ______ bar',
+        'Température de saturation lue dans la table : ______ °C',
+        'Température mesurée à la sonde de contact : ______ °C — écart : ______ K',
+      ],
+      voixHaute: 'Je lis une pression, je la convertis, je la compare. Sans les trois, je ne conclus rien.',
+    },
+  },
+  {
+    num: 7, partie: 'C', qr: 'surchauffe',
+    titre: 'Surchauffe et sous-refroidissement',
+    objectif: 'Calculer une surchauffe et un sous-refroidissement, et dire ce que la valeur trouvée signale.',
+    codes: ['1.02', '5.05'],
+    groupesQ: ['G1', 'G8'],
+    codesQ: ['1.02', '5.05'],
+    lecons: [
+      { t: 'Deux mesures, deux extrémités du circuit', src: 'g1e', paras: [0, 1, 2], blocs: [0],
+        visuels: ['svg:mesure-surchauffe', 'illu:g1e'],
+        legendes: ['Les deux points de mesure', 'Ce que la valeur vous dit'] },
+      { t: 'Une surchauffe ne se lit pas sur un thermomètre', src: 'g1e', paras: [3, 4, 5], blocs: [1],
+        visuels: ['svg:surchauffe-utile-totale', 'svg:lecture-table'],
+        legendes: ['Utile ou totale', 'On la calcule, on ne la lit pas'] },
+      { t: 'Ce qu une valeur hors plage annonce', src: 'g1e', paras: [6, 7, 8], blocs: [2],
+        visuels: ['svg:mesure-surchauffe', 'svg:points-de-fuite'],
+        legendes: ['5 à 10 K, 4 à 8 K', 'Le manque de charge se voit ici'] },
+    ],
+    activite: {
+      t: 'Deux relevés, deux diagnostics',
+      visuels: ['svg:surchauffe-utile-totale', 'illu:g1e'],
+      legendes: ['La formule à appliquer', 'Le relevé de terrain'],
+      lignes: [
+        'Relevé 1 — T sortie évaporateur : ______ °C, T saturation BP : ______ °C, surchauffe : ______ K',
+        'Ce que je soupçonne : ______',
+        'Relevé 2 — T sortie condenseur : ______ °C, T saturation HP : ______ °C, sous-refroidissement : ______ K',
+        'Ce que je soupçonne : ______',
+      ],
+      voixHaute: 'Une surchauffe qui grimpe et un sous-refroidissement qui s effondre disent la même chose : il manque du fluide.',
+    },
+  },
+  {
+    num: 8, partie: 'C', qr: 'fluides',
+    titre: 'Les familles de fluides et leurs codes',
+    objectif: 'Décoder un numéro de fluide, situer sa famille, et repérer les organes qui trahissent une fuite.',
+    codes: ['1.05', '1.06', '1.07'],
+    groupesQ: ['G1'],
+    codesQ: ['1.05', '1.06', '1.07'],
+    lecons: [
+      { t: 'Le code dit la molécule', src: 'g1c', paras: [0, 1, 2], blocs: [0],
+        visuels: ['svg:familles-fluides', 'illu:g1c'],
+        legendes: ['Les familles', 'L astuce du + 90'] },
+      { t: 'Le code ne dit pas le danger', src: 'g1c', paras: [3, 4], blocs: [1, 2],
+        visuels: ['svg:classes-securite', 'svg:prp-echelle'],
+        legendes: ['La classe est ailleurs', 'Le PRP aussi'] },
+      { t: 'Les organes qui trahissent une fuite', src: 'g1d', paras: 'tous', blocs: [0, 1],
+        visuels: ['svg:points-de-fuite', 'illu:g1d'],
+        legendes: ['Six familles de points de fuite', 'Où regarder d abord'] },
+    ],
+    activite: {
+      t: 'Décoder quatre fluides',
+      visuels: ['svg:familles-fluides', 'svg:prp-echelle'],
+      legendes: ['Le décodage', 'Ce que chacun pèse'],
+      lignes: [
+        'R-32 — famille : ______ — classe : ______',
+        'R-290 — famille : ______ — classe : ______',
+        'R-744 — famille : ______ — classe : ______',
+        'R-1234yf — famille : ______ — classe : ______',
+      ],
+      voixHaute: 'Le numéro dit la molécule. La classe dit le danger. Le PRP dit le poids climatique. Trois choses différentes.',
+    },
+  },
+
+  /* =================== PARTIE D — LES ORGANES =================== */
+  {
+    num: 9, partie: 'D', qr: 'compresseur',
+    titre: 'Le compresseur',
+    objectif: 'Expliquer ce que fait un compresseur, où il fuit, et ce qu une température de refoulement annonce.',
+    codes: ['6.01', '6.02', '6.03', '6.04', '6.05', '6.06', '6.07', '6.08'],
+    groupesQ: ['G6'],
+    lecons: [
+      { t: 'Ce qu il fait, et où il fuit', src: 'g6', paras: [0, 1, 2, 3], blocs: [],
+        visuels: ['svg:compresseurs', 'illu:g6'],
+        legendes: ['La coupe animée', 'Les technologies'] },
+      { t: 'Ce que dit une température de refoulement', src: 'g6', paras: [4, 5, 6, 7], blocs: [0, 1],
+        visuels: ['sym:compresseur_piston', 'sym:compresseur_scroll'],
+        legendes: ['Piston', 'Scroll'] },
+      { t: 'L huile, et le rapport d état', src: 'g6', paras: [8, 9, 10], blocs: [2],
+        visuels: ['sym:separateur_huile', 'illu:g6'],
+        legendes: ['Le séparateur d huile', 'Ce que le rapport contient'] },
+      { t: 'Installer sans fuite, régler les sécurités', src: 'g6b', paras: [0, 1, 2, 3, 4], blocs: [0, 1],
+        visuels: ['sym:pressostat', 'illu:g6b'],
+        legendes: ['Le pressostat de sécurité', 'Le test avant mise en service'] },
+      { t: 'La valeur plaque, jamais un chiffre inventé', src: 'g6b', paras: [5, 6, 7, 8, 9], blocs: [2],
+        visuels: ['sym:compresseur_vis', 'sym:compresseur_rotatif'],
+        legendes: ['Vis', 'Rotatif'] },
+    ],
+    activite: {
+      t: 'Le compresseur qui chauffe',
+      visuels: ['svg:compresseurs', 'svg:coup-de-liquide-piston'],
+      legendes: ['La coupe', 'Le coup de liquide'],
+      lignes: [
+        'Température de refoulement relevée : ______ °C',
+        'Trois causes possibles : ______',
+        'La mesure que je fais ensuite : ______',
+        'Ce que je note sur le rapport : ______',
+      ],
+      voixHaute: 'Un compresseur comprime du gaz, jamais du liquide. Le reste en découle.',
+    },
+  },
+  {
+    num: 10, partie: 'D', qr: 'condenseur',
+    titre: 'Le condenseur',
+    objectif: 'Expliquer la condensation, distinguer les deux pressostats, et dire ce que la propreté coûte en énergie.',
+    codes: ['7.01', '7.02', '7.03', '7.04', '7.05', '7.06', '7.07', '7.08', '7.09', '7.10'],
+    groupesQ: ['G7'],
+    lecons: [
+      { t: 'Ce qu il fait, et où il fuit', src: 'g7', paras: [0, 1, 2], blocs: [],
+        visuels: ['svg:echangeur-air', 'illu:g7'],
+        legendes: ['La batterie traversée par l air', 'Le condenseur'] },
+      { t: 'Deux pressostats, deux fonctions', src: 'g7', paras: [3, 4], blocs: [0, 1],
+        visuels: ['sym:pressostat_hp', 'sym:ventilateur'],
+        legendes: ['Sécurité haute pression', 'Régulation par le ventilateur'] },
+      { t: 'Installer l unité extérieure, régler la pression', src: 'g7b', paras: [0, 1, 2], blocs: [0, 1],
+        visuels: ['sym:echangeur_a_air', 'illu:g7b'],
+        legendes: ['L échangeur à air', 'Le régulateur de pression'] },
+      { t: 'Un régulateur ne coupe rien', src: 'g7b', paras: [3, 4, 5], blocs: [2, 3],
+        visuels: ['svg:regulateurs-pression', 'sym:vanne_securite'],
+        legendes: ['Réguler n est pas protéger', 'La soupape, elle, coupe'] },
+      { t: 'Purger, mesurer, rendre compte', src: 'g7b', paras: [6, 7], blocs: [4, 5, 6],
+        visuels: ['sym:echangeur_a_plaques', 'illu:g7b'],
+        legendes: ['Condenseur à plaques', 'Le rapport d état'] },
+    ],
+    activite: {
+      t: 'La haute pression qui monte',
+      visuels: ['svg:echangeur-air', 'svg:regulateurs-pression'],
+      legendes: ['La batterie encrassée', 'Ce qui régule'],
+      lignes: [
+        'HP relevée : ______ bar — température de condensation correspondante : ______ °C',
+        'Température de l air entrant : ______ °C — écart : ______ K',
+        'Trois causes possibles : ______',
+        'Le geste que je fais en premier : ______',
+      ],
+      voixHaute: 'Un condenseur sale coûte de la haute pression, et la haute pression coûte du courant.',
+    },
+  },
+  {
+    num: 11, partie: 'D', qr: 'evaporateur',
+    titre: 'L évaporateur',
+    objectif: 'Lire une surchauffe à l évaporateur, expliquer le dégivrage, et distinguer les organes qu on confond.',
+    codes: ['8.01', '8.02', '8.03', '8.04', '8.05', '8.06', '8.07', '8.08', '8.09', '8.10', '8.11'],
+    groupesQ: ['G8'],
+    lecons: [
+      { t: 'Ce qu il fait, et où il fuit', src: 'g8', paras: [0, 1, 2], blocs: [],
+        visuels: ['svg:mesure-surchauffe', 'illu:g8'],
+        legendes: ['Les points de mesure', 'L évaporateur'] },
+      { t: 'Lire la surchauffe, et les deux organes qu on confond', src: 'g8', paras: [3, 4, 5, 6], blocs: [0, 1, 2],
+        visuels: ['sym:detendeur_thermo_ext', 'sym:pressostat_bp'],
+        legendes: ['Le détendeur thermostatique', 'Le pressostat BP'] },
+      { t: 'Le givre et le dégivrage', src: 'g8b', paras: [0, 1, 2], blocs: [0],
+        visuels: ['svg:givre-degivrage', 'sym:resistance_evaporation'],
+        legendes: ['Pourquoi le givre isole', 'La résistance de dégivrage'] },
+      { t: 'Qui protège quoi', src: 'g8b', paras: [3, 4, 5], blocs: [1],
+        visuels: ['sym:thermostat_froid', 'illu:g8b'],
+        legendes: ['Le thermostat régule', 'Les sécurités'] },
+      { t: 'Démarrer, mesurer, rendre compte', src: 'g8b', paras: [6, 7], blocs: [2],
+        visuels: ['sym:echangeur_a_air', 'illu:g8'],
+        legendes: ['La batterie', 'Ce que le rapport contient'] },
+    ],
+    activite: {
+      t: 'La machine ne fait plus de froid', src: 'x2',
+      visuels: ['svg:croix-frigoriste', 'svg:mesure-surchauffe'],
+      legendes: ['Le circuit à interroger', 'Les mesures à croiser'],
+      lignes: [
+        'BP relevée : ______ bar — T saturation : ______ °C',
+        'HP relevée : ______ bar — T saturation : ______ °C',
+        'Surchauffe : ______ K — sous-refroidissement : ______ K',
+        'Mon hypothèse, et la mesure qui la confirmerait : ______',
+      ],
+      voixHaute: 'Je ne remplace rien avant d avoir mesuré. Un diagnostic sans relevé est une supposition.',
+    },
+  },
+  {
+    num: 12, partie: 'D', qr: 'detendeur',
+    titre: 'Le détendeur et les organes annexes',
+    objectif: 'Expliquer le rôle du détendeur, situer les organes de la ligne liquide, et dire ce qu on règle sans y toucher au hasard.',
+    codes: ['9.01', '9.02', '9.03', '9.04', '9.05', '9.06', '9.07', '9.08', '9.09', '9.10'],
+    groupesQ: ['G9'],
+    lecons: [
+      { t: 'Ce qu il fait, et les trois technologies', src: 'g9', paras: [0, 1, 2, 3], blocs: [],
+        visuels: ['svg:detendeurs-ligne', 'illu:g9'],
+        legendes: ['La ligne liquide complète', 'Les détendeurs'] },
+      { t: 'Sécurité électrique, sécurité mécanique', src: 'g9', paras: [4, 5, 6, 7], blocs: [0, 1],
+        visuels: ['sym:detendeur_electronique', 'sym:electrovanne_frigo'],
+        legendes: ['Le détendeur électronique', 'L électrovanne'] },
+      { t: 'La ligne liquide, organe par organe', src: 'g9b', paras: [0, 1, 2, 3], blocs: [],
+        visuels: ['sym:filtre_deshydrateur', 'sym:voyant_liquide'],
+        legendes: ['Le filtre déshydrateur', 'Le voyant liquide'] },
+      { t: 'Un bon réglage, c est de l énergie économisée', src: 'g9b', paras: [4, 5, 6], blocs: [0],
+        visuels: ['svg:detendeur-regulation', 'illu:g9b'],
+        legendes: ['Ce que le réglage change', 'Le pupitre'] },
+      { t: 'Avant de toucher un réglage électrique', src: 'g9b', paras: [7, 8, 9], blocs: [1],
+        visuels: ['svg:secu-consignation', 'sym:tube_capillaire'],
+        legendes: ['Consigner d abord', 'Le capillaire'] },
+    ],
+    activite: {
+      t: 'Replacer la ligne liquide dans l ordre',
+      visuels: ['svg:detendeurs-ligne', 'svg:nomenclature'],
+      legendes: ['La ligne à reconstituer', 'Les symboles'],
+      lignes: [
+        'Du condenseur au détendeur, dans l ordre : ______',
+        'L organe qui dit s il manque du fluide : ______',
+        'L organe qui retient l humidité : ______',
+        'Ce qui se passe si on inverse deux organes : ______',
+      ],
+      voixHaute: 'Chaque organe de la ligne liquide est là pour une raison. Si je ne sais pas laquelle, je ne le débranche pas.',
+    },
+  },
+
+  /* =================== PARTIE E — LES OPÉRATIONS =================== */
+  {
+    num: 13, partie: 'E', qr: 'mise-en-service',
+    titre: 'Contrôles avant mise en service',
+    objectif: 'Conduire une épreuve de pression et un tirage au vide, avec l azote comme seul gaz d épreuve.',
+    codes: ['3.01', '3.02', '3.03', '3.04', '3.05'],
+    groupesQ: ['G3'],
+    lecons: [
+      { t: 'Deux épreuves, deux buts', src: 'g3', paras: [0, 1, 2], blocs: [0],
+        visuels: ['svg:epreuve-azote', 'illu:g3'],
+        legendes: ['L azote, seul', 'Résistance puis étanchéité'] },
+      { t: 'La bouteille d azote et son mano-détendeur', src: 'p4', paras: 'tous', blocs: [0, 1],
+        visuels: ['sym:manometres', 'illu:p4'],
+        legendes: ['Deux cadrans, deux informations', 'Le mano-détendeur'] },
+      { t: 'Le manifold — lire, brancher, ne pas polluer', src: 'p1', paras: 'tous', blocs: [0, 1],
+        visuels: ['svg:manifold-lecture', 'illu:p1'],
+        legendes: ['Ce que chaque cadran dit', 'Fermé avant, fermé après'] },
+      { t: 'Pompe à vide et vacuomètre', src: 'p3', paras: 'tous', blocs: [0, 1],
+        visuels: ['svg:tirage-au-vide', 'illu:p3'],
+        legendes: ['Le montage', 'Le vacuomètre, pas le manomètre'] },
+      { t: 'Le vide qui remonte, et la fuite qu on localise', src: 'g3', paras: [3, 4, 5], blocs: [1, 2],
+        visuels: ['svg:tirage-au-vide', 'svg:points-de-fuite'],
+        legendes: ['La remontée trahit', 'L eau savonneuse'] },
+    ],
+    activite: {
+      t: 'L ordre des opérations avant la première charge',
+      visuels: ['svg:epreuve-azote', 'svg:tirage-au-vide'],
+      legendes: ['L épreuve', 'Le vide'],
+      lignes: [
+        'Les étapes dans l ordre, de l assemblage à la charge : ______',
+        'Le gaz d épreuve, et ceux qui sont interdits : ______',
+        'Ce que je fais si le vide remonte : ______',
+        'Ce que je consigne dans le rapport d essais : ______',
+      ],
+      voixHaute: 'Azote et rien d autre. Jamais d oxygène, jamais d air comprimé, jamais une discussion là-dessus.',
+    },
+  },
+  {
+    num: 14, partie: 'E', qr: 'etancheite',
+    titre: 'Les contrôles d étanchéité',
+    objectif: 'Choisir entre méthode directe et indirecte, conduire le contrôle, et consigner ce qu il faut au registre.',
+    codes: ['4.01', '4.02', '4.03', '4.04', '4.05', '4.06', '4.07', '4.08', '4.09'],
+    groupesQ: ['G4'],
+    lecons: [
+      { t: 'Où fuit une installation', src: 'g4a', paras: [0, 1, 2], blocs: [0],
+        visuels: ['svg:points-de-fuite', 'illu:g4a'],
+        legendes: ['Six familles de points', 'L ordre ne s invente pas'] },
+      { t: 'Consulter le registre avant de commencer', src: 'g4a', paras: [3, 4], blocs: [1],
+        visuels: ['sym:vanne_isolement', 'illu:g4a'],
+        legendes: ['La trace d huile', 'Ce que le registre dit déjà'] },
+      { t: 'Méthode indirecte — mesurer et interpréter', src: 'g4b', paras: 'tous', blocs: [0, 1, 2],
+        visuels: ['svg:lecture-table', 'illu:g4b'],
+        legendes: ['La lecture croisée', 'Trois instruments'] },
+      { t: 'Méthode directe — le détecteur', src: 'g4c', paras: [0, 1, 2], blocs: [0],
+        visuels: ['svg:balayage-detecteur', 'illu:g4c'],
+        legendes: ['La sonde balaie le raccord', 'Une alerte se confirme'] },
+      { t: 'L instrument aussi se contrôle, et le registre se remplit', src: 'g4c', paras: [3, 4], blocs: [1],
+        visuels: ['svg:balayage-detecteur', 'illu:g4c'],
+        legendes: ['L étalonnage du détecteur', 'La consignation'] },
+    ],
+    activite: {
+      t: 'Le contrôle qui tourne mal', src: 'x4',
+      visuels: ['svg:points-de-fuite', 'svg:balayage-detecteur'],
+      legendes: ['Où chercher', 'Comment confirmer'],
+      lignes: [
+        'Les indices dont je dispose : ______',
+        'Celui qui contredit les autres : ______',
+        'La méthode que je choisis, et pourquoi : ______',
+        'Ce que j écris au registre : ______',
+      ],
+      voixHaute: 'La méthode indirecte soupçonne. Seule la méthode directe localise.',
+    },
+  },
+  {
+    num: 15, partie: 'E', qr: 'recuperation',
+    titre: 'Récupérer sans émettre, peser, tracer',
+    objectif: 'Conduire une récupération complète, peser avant et après, et distinguer récupéré, recyclé et régénéré.',
+    codes: ['5.01', '5.02', '5.03', '5.04', '5.05', '5.06', '5.07', '5.08', '5.09'],
+    groupesQ: ['G5'],
+    lecons: [
+      { t: 'Récupérer sans émettre', src: 'g5a', paras: [0, 1, 2], blocs: [0],
+        visuels: ['svg:recuperation', 'illu:g5a'],
+        legendes: ['Le montage de récupération', 'Récupéré, recyclé, régénéré'] },
+      { t: 'La station de récupération', src: 'p2', paras: 'tous', blocs: [0, 1],
+        visuels: ['sym:pompe', 'illu:p2'],
+        legendes: ['Le groupe', 'Un cylindre, un seul fluide'] },
+      { t: 'L ordre des vannes', src: 'p5', paras: 'tous', blocs: [0, 1],
+        visuels: ['svg:ordre-vannes', 'illu:p5'],
+        legendes: ['La chorégraphie', 'Elle ne change jamais'] },
+      { t: 'La balance et la pesée', src: 'p6', paras: 'tous', blocs: [0, 1],
+        visuels: ['svg:pesee-charge', 'illu:p6'],
+        legendes: ['Deux pesées, jamais une', 'La balance prime'] },
+      { t: 'Stocker, transporter, tracer', src: 'g5b', paras: [0, 1, 2, 3], blocs: [0, 1, 2],
+        visuels: ['sym:bouteille_liquide', 'illu:g5b'],
+        legendes: ['La bouteille de récupération', 'Réemploi n est pas retraitement'] },
+    ],
+    activite: {
+      t: 'La bouteille de récupération', src: 'x3',
+      visuels: ['svg:recuperation', 'svg:pesee-charge'],
+      legendes: ['Le montage', 'La double pesée'],
+      lignes: [
+        'Masse de la bouteille avant : ______ kg',
+        'Masse après récupération : ______ kg — quantité récupérée : ______ kg',
+        'Le taux de remplissage à ne pas dépasser : ______',
+        'Ce que je note, et sur quel document : ______',
+      ],
+      voixHaute: 'Ce qui n est pas pesé n existe pas. Ce qui n est pas écrit n a pas eu lieu.',
+    },
+  },
+  {
+    num: 16, partie: 'E', qr: 'brasage',
+    titre: 'Tuyauterie et brasage sous azote',
+    objectif: 'Expliquer pourquoi on braise sous balayage d azote et ce que le support de tuyauterie empêche.',
+    codes: ['10.01', '10.02'],
+    groupesQ: ['G10', 'G3'],
+    lecons: [
+      { t: 'Deux opérations à l azote, à ne pas confondre', src: 'g10', paras: [0, 1], blocs: [0],
+        visuels: ['svg:balayage-azote', 'illu:g10'],
+        legendes: ['Le balayage pendant le brasage', 'Balayer n est pas éprouver'] },
+      { t: 'Ce que la flamme fabrique sans azote', src: 'g10', paras: [2], blocs: [],
+        visuels: ['svg:secu-flamme', 'svg:secu-decomposition-ari'],
+        legendes: ['La flamme et le fluide', 'Ce qui se décompose'] },
+      { t: 'Le support compte autant que le joint', src: 'g10', paras: [3], blocs: [1],
+        visuels: ['svg:balayage-azote', 'illu:g10'],
+        legendes: ['La sortie doit rester libre', 'Le support de tuyauterie'] },
+    ],
+    activite: {
+      t: 'Préparer un brasage',
+      visuels: ['svg:balayage-azote', 'svg:secu-flamme'],
+      legendes: ['Le montage du balayage', 'Le risque de la flamme'],
+      lignes: [
+        'Pourquoi l azote circule pendant le brasage : ______',
+        'Ce qui se passe si la sortie est bouchée : ______',
+        'Les EPI que je porte : ______',
+        'Ce que je vérifie avant d allumer : ______',
+      ],
+      voixHaute: 'Sans azote, l intérieur du tube s oxyde et les calamines partent dans le circuit.',
+    },
+  },
+
+  /* =================== PARTIE F — RISQUE ET AVENIR =================== */
+  {
+    num: 17, partie: 'F', qr: 'efficacite',
+    titre: 'Substitution et efficacité énergétique',
+    objectif: 'Choisir un fluide de substitution en justifiant le choix, et citer ce qui fait consommer une installation.',
+    codes: ['1.08', '11.01', '11.02', '11.03', '11.04', '11.05'],
+    groupesQ: ['G11'],
+    lecons: [
+      { t: 'Drop-in ou retrofit', src: 'g11', paras: [0, 1, 2, 3], blocs: [0, 1],
+        visuels: ['svg:familles-fluides', 'illu:g11'],
+        legendes: ['Les candidats', 'Le piège de l année'] },
+      { t: 'Ce qui fait consommer une installation', src: 'g11', paras: [4, 5, 6], blocs: [2],
+        visuels: ['svg:bilan-energie', 'illu:g11'],
+        legendes: ['Le bilan énergétique', 'Ce qui se règle'] },
+      { t: 'Hydrocarbures : une machine pas comme les autres', src: 'g11', paras: [7, 8, 9], blocs: [3],
+        visuels: ['svg:charge-limite-local', 'svg:classes-securite'],
+        legendes: ['La charge limite selon le local', 'Ce que la classe impose'] },
+    ],
+    activite: {
+      t: 'Justifier un remplacement de fluide',
+      visuels: ['svg:prp-echelle', 'svg:charge-limite-local'],
+      legendes: ['Le poids climatique', 'La limite de charge'],
+      lignes: [
+        'Fluide en place : ______ — PRP : ______ — pourquoi il pose problème : ______',
+        'Candidat retenu : ______ — classe : ______ — PRP : ______',
+        'Ce que je dois changer sur la machine : ______',
+        'Ce qui m interdirait ce choix : ______',
+      ],
+      voixHaute: 'Un fluide à faible PRP n est pas un fluide sans contrainte. Il déplace le problème vers la sécurité.',
+    },
+  },
+  {
+    num: 18, partie: 'F', qr: 'hydrocarbures',
+    titre: 'Hydrocarbures — le spécifique A1 et A2',
+    objectif: 'Conduire une intervention sur un circuit hydrocarbure : analyse de risques, charge admissible, gestes interdits.',
+    codes: ['12.01', '12.02', '12.03', '12.04', '12.05', '12.06', '12.07', '12.08', '12.09', '12.10', '12.11', '12.12', '12.13', '12.14'],
+    groupesQ: ['G12'],
+    lecons: [
+      { t: 'Étiquetage et deux confusions qui coûtent cher', src: 'g12', paras: [0, 1, 2, 3], blocs: [0],
+        visuels: ['svg:classes-securite', 'illu:g12'],
+        legendes: ['A3, jamais A2L', 'L étiquetage'] },
+      { t: 'Avant toute flamme', src: 'g12', paras: [4, 5, 6], blocs: [1],
+        visuels: ['svg:lie-domaine', 'svg:secu-flamme'],
+        legendes: ['Le domaine d explosivité', 'La flamme interdite'] },
+      { t: 'Charge maximale : jamais estimée', src: 'g12', paras: [7, 8, 9], blocs: [2],
+        visuels: ['svg:charge-limite-local', 'illu:g12'],
+        legendes: ['Elle se calcule', 'Selon la surface du local'] },
+      { t: 'Récupérer et remplir à l azote', src: 'g12b', paras: [0, 1], blocs: [0],
+        visuels: ['svg:recuperation', 'svg:epreuve-azote'],
+        legendes: ['La récupération', 'Le remplissage à l azote'] },
+      { t: 'Le fil rouge de l intervention', src: 'g12b', paras: [2, 3], blocs: [1],
+        visuels: ['svg:prepa-chantier', 'illu:g12b'],
+        legendes: ['La zone préparée', 'L ordre des opérations'] },
+    ],
+    activite: {
+      t: 'Intervention sur monobloc R-290', src: 'x5',
+      visuels: ['svg:charge-limite-local', 'svg:lie-domaine'],
+      legendes: ['La charge et le local', 'La limite inférieure d explosivité'],
+      lignes: [
+        'Charge annoncée sur la plaque : ______ g',
+        'Surface du local : ______ m² — charge admissible : ______',
+        'Les sources d ignition que j élimine : ______',
+        'L ordre de mes opérations : ______',
+      ],
+      voixHaute: 'Avec un hydrocarbure, la première opération n est pas technique : c est l analyse de risques.',
+    },
+  },
+  {
+    num: 19, partie: 'F', qr: 'co2-nh3',
+    titre: 'CO₂ et NH₃ — reconnaître, ne pas intervenir',
+    objectif: 'Reconnaître une installation au CO₂ ou à l ammoniac, et savoir que l attestation A1 ou A2 n y donne aucun droit.',
+    codes: ['1.09', '13.01', '13.04', '14.01', '13.14'],
+    groupesQ: ['G13'],
+    lecons: [
+      { t: '« A1 » ne veut pas dire « sans danger »', src: 'g13', paras: [0, 1, 2], blocs: [0],
+        visuels: ['svg:co2-nh3-compare', 'illu:g13'],
+        legendes: ['Deux fluides, deux dangers', 'Le CO₂ et l ammoniac'] },
+      { t: 'La règle des catégories', src: 'g13', paras: [3, 4, 5], blocs: [1],
+        visuels: ['svg:aptitude-capacite', 'illu:g13'],
+        legendes: ['B pour le CO₂, C pour l ammoniac', 'Aucune équivalence'] },
+      { t: 'La glace carbonique, et le réflexe d arrivée sur site', src: 'g13', paras: [6, 7], blocs: [2, 3],
+        visuels: ['svg:co2-point-bas', 'svg:co2-protection'],
+        legendes: ['Le CO₂ s accumule en bas', 'Détection et alarme'] },
+    ],
+    activite: {
+      t: 'J arrive sur une installation que je ne connais pas',
+      visuels: ['svg:co2-nh3-compare', 'svg:co2-protection'],
+      legendes: ['Reconnaître le fluide', 'Ce qui doit être en place'],
+      lignes: [
+        'Ce que je lis sur la plaque : ______',
+        'La catégorie que cette installation exige : ______',
+        'Ce que je fais si je ne l ai pas : ______',
+        'Les protections que je vérifie avant d entrer : ______',
+      ],
+      voixHaute: 'Reconnaître, c est déjà du métier. Intervenir sans la catégorie, c est une faute.',
+    },
+  },
+];
+
+/* Le sommaire des pages liminaires et de fin. Chacune porte son visuel :
+   la règle « une illustration par page » vaut aussi pour elles. */
+export const LIMINAIRES = [
+  { id: 'couverture', t: 'Habilitation fluide — Livret élève', visuels: ['amb:jour1'], legendes: [''] },
+  { id: 'a-quoi-sert', t: 'À quoi sert ce livret', visuels: ['illu:g0', 'ico:attestation'], legendes: ['Le cadre', 'L attestation visée'] },
+  { id: 'lire-qr', t: 'Lire les QR codes de ce livret', visuels: ['ico:cles', 'illu:examen'], legendes: ['Un code par notion', 'Ce qui vous attend à l écran'] },
+  { id: 'parcours', t: 'Le cheminement', visuels: ['amb:jour2', 'amb:jour3'], legendes: ['Se protéger, comprendre', 'Puis intervenir'] },
+  { id: 'statut', t: 'Statut et limites de ce document', visuels: ['ico:registre', 'ico:attestation'], legendes: ['Ce livret prépare', 'Il ne délivre rien'] },
+  { id: 'sommaire', t: 'Sommaire', visuels: ['amb:jour4'], legendes: [''] },
+  { id: 'point-depart', t: 'Mon point de départ', visuels: ['ico:role-question', 'illu:examen'], legendes: ['Ce que je sais déjà', 'Ce que je viens chercher'] },
+  { id: 'categories-coup-oeil', t: 'Les sept catégories en un coup d œil', visuels: ['svg:aptitude-capacite'], legendes: ['Aptitude et capacité'] },
+];
+
+export const FIN = [
+  { id: 'bilan', t: 'Bilan — mes dix-neuf notes', visuels: ['ico:role-competence', 'illu:examen'], legendes: ['Chapitre par chapitre', 'Où je dois reprendre'] },
+  { id: 'lexique-1', t: 'Lexique — le fluide et la machine', visuels: ['svg:croix-frigoriste'], legendes: ['Les quatre organes'] },
+  { id: 'lexique-2', t: 'Lexique — les opérations', visuels: ['svg:recuperation'], legendes: ['Récupérer, contrôler'] },
+  { id: 'lexique-3', t: 'Lexique — le cadre réglementaire', visuels: ['svg:aptitude-capacite'], legendes: ['Les mots du droit'] },
+  { id: 'diplome', t: 'Ce livret dans mon diplôme', visuels: ['ico:role-competence', 'ico:attestation'], legendes: ['Les compétences visées', 'L attestation'] },
+  { id: 'index-codes', t: 'Index des codes du référentiel', visuels: ['ico:registre'], legendes: ['Les 136 codes'] },
+  { id: 'index-qr', t: 'Index des QR codes', visuels: ['ico:cles'], legendes: ['Toutes les adresses en clair'] },
+  { id: 'sources', t: 'Sources et cadre de référence', visuels: ['ico:registre', 'ico:cerfa'], legendes: ['Les textes', 'Les formulaires'] },
+  { id: 'credits', t: 'Crédits, licences et droits d usage', visuels: ['ico:attestation'], legendes: ['Ce que vous pouvez faire de ce livret'] },
+  { id: 'engagement', t: 'Mon engagement', visuels: ['ico:role-juste', 'amb:fin'], legendes: ['Ce que je m engage à faire', 'La fin du parcours'] },
+];
+
+/* La planche centrale : le schéma d installation complet à 22 repères,
+   corrigé d un côté, « fantôme » de l autre. Reprise du parcours
+   « Le Circuit Fantôme » (`pedagogie/symboles-frigo/atelier-circuit.js`). */
+export const PLANCHE_CENTRALE = {
+  corrige: { t: 'Le circuit complet — la planche de référence', visuels: ['svg:circuit-complet-manifold'], legendes: ['Vingt-deux organes à leur place'] },
+  fantome: { t: 'Le circuit complet — à vous de le remplir', visuels: ['svg:nomenclature'], legendes: ['Les symboles à replacer'] },
+};
