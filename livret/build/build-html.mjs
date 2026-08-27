@@ -45,7 +45,7 @@ const SOURCE_PACK = process.env.PILOTE_FLUIDES || 'C:/git/pilote-fluides';
 const DYS = process.env.EDITION === 'dys';
 /* Le livre s'appelle « inerweb.fr HabFluide » — la marque du livre est
    le SITE, pas le logiciel : c'est lui qu'il fait connaître. */
-const NOM = 'inerweb.fr-HabFluide-Tome1-Livret-eleve-A5' + (DYS ? '-DYS' : '');
+const NOM = 'inerweb.fr-HabFluide-Tome1-Livret-eleve-6x9' + (DYS ? '-DYS' : '');
 
 const LEXEND = path.join(SOURCE_PACK, 'moteur', 'polices', 'Lexend-variable.woff2');
 const POLICE_DYS = fs.existsSync(LEXEND)
@@ -57,9 +57,12 @@ if (DYS && !POLICE_DYS) {
   process.exit(1);
 }
 
-/* Corps de texte et interligne, par édition. */
-const CORPS_PT = DYS ? 12 : 10.6;
-const INTERLIGNE = DYS ? 1.72 : 1.52;
+/* Corps de texte et interligne, par édition.
+   14 pt en standard : c'est le plancher que la charte inerWeb fixe pour
+   tout document élève — « Calibri 14 pt MINIMUM, partout, tableaux
+   compris, aucune tolérance ». Le livre est plus épais ; il se lit. */
+const CORPS_PT = DYS ? 15 : 14;
+const INTERLIGNE = DYS ? 1.72 : 1.55;
 const FAMILLE = DYS
   ? `'Lexend',Calibri,"Segoe UI",system-ui,sans-serif`
   : `Calibri,"Segoe UI",system-ui,sans-serif`;
@@ -70,9 +73,10 @@ ${POLICE_DYS && DYS ? POLICE_DYS : ''}
   --bleu:#1B3A63; --bleu2:#2f5689; --orange:#FF6B35; --logo:#e8914a;
   --txt:#1d2a38; --mut:#5a6b7d; --ligne:#d6dee7; --pale:#F4F7FA;
   --ok:#1e7e54; --ko:#c0392b;
-  --page-h:210mm; --page-l:148mm;
-  --marge-h:12mm; --marge-haut:11mm; --marge-bas:9mm;
-  --bandeau-h:9mm; --pied-h:8mm;
+  /* Format Amazon KDP 6 × 9 pouces. */
+  --page-h:228.6mm; --page-l:152.4mm;
+  /* Une planche peut monter plus haut sur du 6 x 9 que sur de l A5. */
+  --planche-h:92mm;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -81,41 +85,41 @@ body{background:#e7ecf1;color:var(--txt);
   -webkit-print-color-adjust:exact;print-color-adjust:exact}
 
 /* ---------- Le flux (écran) ---------- */
-#livret{max-width:148mm;margin:0 auto;background:#fff;padding:14mm 12mm;
+#livret{max-width:152.4mm;margin:0 auto;background:#fff;padding:14mm 16mm;
   box-shadow:0 3px 14px rgba(27,58,99,.16)}
 .marq{font-size:1pt;line-height:0;color:#fff}
 
 /* Rien ne se coupe au milieu : ni une planche, ni un encadré,
    ni une question et ses réponses, ni un bloc « À l'écran ». */
-figure,.duo,.encadre,.q,.rep,.ecran,.tbl,.ch-tete,.ref,.note,.voix,.som-partie,
+figure,.duo,.encadre,.q,.rep,.ecran,.tbl,.ch-tete,.note,.voix,.som-partie,
 .remplir>.rl,.remplir>.trait{break-inside:avoid;page-break-inside:avoid}
 h2,h3,h4,.sect-t,.lecon-t,.page-t,.sect-intro{break-after:avoid;page-break-after:avoid}
 .rupture{break-before:page;page-break-before:always}
 .seul{break-before:page;break-after:page;page-break-before:always;page-break-after:always}
 
 /* ---------- Titres et texte ---------- */
-.page-t{font:700 19pt/1.12 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:0 0 5mm}
+.page-t{font:700 25pt/1.1 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:0 0 5mm}
 /* Jamais justifié : la charte l'interdit, et les rivières de blanc du
    texte justifié gênent la lecture dyslexique. Drapeau à droite. */
 .txt{margin:0 0 2.6mm;text-align:left;hyphens:none}
-.txt.petit{font-size:8.4pt;color:var(--mut);margin-bottom:1.4mm}
+.txt.petit{font-size:1em;color:var(--mut);margin-bottom:1.8mm}
 .txt.attente{color:var(--mut)}
 
 .ch-tete{display:flex;gap:4.4mm;align-items:flex-start;margin-bottom:5mm}
-.ch-num{font:700 40pt/.82 "Trebuchet MS",Calibri,sans-serif;color:var(--orange)}
-.ch-titre{font:700 18pt/1.12 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:0 0 2.4mm}
-.ch-objectif{margin:0;font-style:italic;font-size:8.8pt}
+.ch-num{font:700 52pt/.82 "Trebuchet MS",Calibri,sans-serif;color:var(--orange)}
+.ch-titre{font:700 24pt/1.1 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:0 0 2.4mm}
+.ch-objectif{margin:0;font-style:italic;font-size:1em}
 
 .ref{border-left:2.4pt solid var(--bleu);background:var(--pale);
   padding:3.4mm 4.4mm;margin:0 0 5mm;border-radius:0 3px 3px 0}
-.ref h3{font:700 9.4pt/1 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:0 0 2.6mm}
-.ref-l{margin:0 0 1.8mm;font-size:8pt;line-height:1.4;color:#2a3a4a}
-.ref-code{display:inline-block;background:var(--bleu);color:#fff;font-weight:700;font-size:7pt;
+.ref h3{font:700 13pt/1 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:0 0 2.6mm}
+.ref-l{break-inside:avoid;page-break-inside:avoid;margin:0 0 2.2mm;font-size:1em;line-height:1.42;color:#2a3a4a}
+.ref-code{display:inline-block;background:var(--bleu);color:#fff;font-weight:700;font-size:9pt;
   padding:.3mm 1.4mm;border-radius:2px;margin-right:1.4mm;vertical-align:.3mm}
-.ref-intro{margin:0 0 2.4mm;font-size:7.4pt;color:var(--mut);font-style:italic}
+.ref-intro{margin:0 0 3mm;font-size:10pt;color:var(--mut);font-style:italic}
 .ref-cats{white-space:nowrap}
 .ref-cat{display:inline-block;border:.5pt solid var(--bleu2);color:var(--bleu2);
-  font-size:6.4pt;font-weight:700;padding:.2mm 1.2mm;border-radius:2px;margin-left:1mm;
+  font-size:9pt;font-weight:700;padding:.2mm 1.2mm;border-radius:2px;margin-left:1mm;
   vertical-align:.3mm}
 .ref-cat.prat{border-color:var(--mut);color:var(--mut);font-weight:400;font-style:italic}
 
@@ -127,36 +131,36 @@ h2,h3,h4,.sect-t,.lecon-t,.page-t,.sect-intro{break-after:avoid;page-break-after
 .q-c.deux{display:grid;grid-template-columns:1fr 1fr;column-gap:3mm}
 
 .sect-t{display:flex;align-items:center;gap:2.6mm;
-  font:700 12.6pt/1.1 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:0 0 2.6mm}
-.sect-num{display:inline-flex;align-items:center;justify-content:center;width:6.4mm;height:6.4mm;
-  border-radius:50%;background:var(--orange);color:#fff;font-size:8.4pt;flex:none}
-.sect-intro{margin:0 0 3.4mm;color:var(--mut);font-size:8.4pt}
+  font:700 17pt/1.1 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:0 0 2.6mm}
+.sect-num{display:inline-flex;align-items:center;justify-content:center;width:8mm;height:8mm;
+  border-radius:50%;background:var(--orange);color:#fff;font-size:11pt;flex:none}
+.sect-intro{margin:0 0 3.4mm;color:var(--mut);font-size:1em}
 
 .lecon-t{display:flex;align-items:baseline;gap:2.6mm;
-  font:700 12pt/1.15 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:3mm 0 2.4mm}
-.lecon-n{color:var(--orange);font-size:10pt}
+  font:700 16pt/1.15 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:3mm 0 2.4mm}
+.lecon-n{color:var(--orange);font-size:13pt}
 
 /* ---------- Images ---------- */
 /* Une planche est plafonnée en HAUTEUR, pas en largeur : au-delà, elle
    mangerait la moitié de la page et pousserait le texte plus loin qu'il
    ne faut. À 74 mm elle reste large et parfaitement lisible en A5. */
 figure{margin:0 0 3.4mm}
-figure img{width:100%;max-height:74mm;object-fit:contain;display:block;margin:0 auto;
+figure img{width:100%;max-height:var(--planche-h);object-fit:contain;display:block;margin:0 auto;
   border:.6pt solid var(--ligne);border-radius:3px}
-figure figcaption{margin-top:1.2mm;text-align:center;font-style:italic;font-size:7.6pt;color:var(--mut)}
-.planche.haute img{width:auto;max-height:82mm}
+figure figcaption{margin-top:1.6mm;text-align:center;font-style:italic;font-size:10pt;color:var(--mut)}
+.planche.haute img{width:auto;max-height:104mm}
 .appoint{width:52%;margin-left:auto;margin-right:auto}
-.appoint img{max-height:44mm}
+.appoint img{max-height:52mm}
 .duo{display:flex;gap:4mm;margin:0 0 3.4mm}
 .duo figure{margin:0;flex:1}
-.duo img{max-height:56mm}
+.duo img{max-height:64mm}
 
 /* ---------- Encadrés ---------- */
 .encadre{border-left:2.4pt solid var(--bleu);background:var(--pale);
   padding:3mm 4mm;margin:0 0 4mm;border-radius:0 3px 3px 0}
-.encadre h4{font:700 9.2pt/1 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:0 0 1.8mm}
-.encadre p{margin:0 0 1.4mm;font-size:8.6pt}
-.encadre ol{margin:0;padding-left:4.6mm;font-size:8.6pt}
+.encadre h4{font:700 13pt/1 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:0 0 1.8mm}
+.encadre p{margin:0 0 1.8mm;font-size:1em}
+.encadre ol{margin:0;padding-left:5.4mm;font-size:1em}
 .encadre li{margin-bottom:1mm}
 .encadre.piege{border-left-color:var(--ko);background:#fbe7e4}
 .encadre.piege h4{color:var(--ko)}
@@ -164,63 +168,63 @@ figure figcaption{margin-top:1.2mm;text-align:center;font-style:italic;font-size
 /* ---------- Questions ---------- */
 .q{margin-bottom:3.4mm}
 .q-e{margin:0 0 1.4mm;font-weight:600}
-.q-n{display:inline-flex;align-items:center;justify-content:center;width:4.6mm;height:4.6mm;
-  border:1pt solid var(--bleu);border-radius:50%;color:var(--bleu);font-size:7.2pt;font-weight:700;
+.q-n{display:inline-flex;align-items:center;justify-content:center;width:6mm;height:6mm;
+  border:1pt solid var(--bleu);border-radius:50%;color:var(--bleu);font-size:10pt;font-weight:700;
   margin-right:2mm;vertical-align:.3mm}
 .q-c{list-style:none;margin:0;padding:0 0 0 6.6mm}
-.q-c li{display:flex;align-items:flex-start;gap:1.8mm;margin-bottom:.9mm;font-size:8.8pt}
-.case{flex:none;width:2.8mm;height:2.8mm;border:.8pt solid var(--mut);border-radius:1.5px;margin-top:.8mm}
+.q-c li{display:flex;align-items:flex-start;gap:1.8mm;margin-bottom:1.4mm;font-size:1em}
+.case{flex:none;width:3.6mm;height:3.6mm;border:.8pt solid var(--mut);border-radius:1.5px;margin-top:.8mm}
 .lettre{flex:none;font-weight:700;color:var(--bleu);width:3.2mm}
 
 .rep{margin-bottom:2.8mm}
-.rep-l{margin:0 0 .8mm;font-size:8.8pt}
-.rep-n{display:inline-flex;align-items:center;justify-content:center;width:4.6mm;height:4.6mm;
-  border-radius:50%;background:var(--ok);color:#fff;font-size:7.2pt;font-weight:700;
+.rep-l{margin:0 0 1.2mm;font-size:1em}
+.rep-n{display:inline-flex;align-items:center;justify-content:center;width:6mm;height:6mm;
+  border-radius:50%;background:var(--ok);color:#fff;font-size:10pt;font-weight:700;
   margin-right:2mm;vertical-align:.3mm}
 .rep-lettre{font-weight:700;color:var(--ok);margin-right:1.6mm}
-.rep-x{margin:0 0 0 6.6mm;font-size:8pt;color:var(--mut)}
+.rep-x{margin:0 0 0 6.6mm;font-size:1em;color:var(--mut)}
 
 .note{margin:4mm 0;border-top:.6pt solid var(--ligne);padding-top:2.4mm;
-  font:700 9.6pt "Trebuchet MS",Calibri,sans-serif;color:var(--bleu)}
+  font:700 13pt "Trebuchet MS",Calibri,sans-serif;color:var(--bleu)}
 .note-case{display:inline-block;width:11mm;border-bottom:1pt dotted var(--mut);margin:0 1.2mm}
-.note-desc{font:italic 7.8pt Calibri,sans-serif;color:var(--mut);margin-left:2.4mm}
+.note-desc{font:italic 10pt Calibri,sans-serif;color:var(--mut);margin-left:2.4mm}
 
 /* ---------- À l'écran ---------- */
 .ecran{display:flex;gap:3mm;align-items:center;background:#fff;
   border:.6pt solid var(--ligne);border-left:2.4pt solid var(--orange);
   border-radius:0 3px 3px 0;padding:2.2mm 3mm;margin:0 0 4mm}
-.ecran-qr{width:14mm;height:14mm;flex:none}
+.ecran-qr{width:19mm;height:19mm;flex:none}
 .ecran-txt{display:flex;flex-direction:column;gap:.4mm}
-.ecran-eti{font:700 6.6pt/1 "Trebuchet MS",Calibri,sans-serif;color:var(--orange);
+.ecran-eti{font:700 8.6pt/1 "Trebuchet MS",Calibri,sans-serif;color:var(--orange);
   letter-spacing:.7px;text-transform:uppercase}
-.ecran-url{font-weight:700;color:var(--bleu);font-size:9pt}
-.ecran-desc{font-size:7.6pt;color:var(--mut)}
+.ecran-url{font-weight:700;color:var(--bleu);font-size:1em}
+.ecran-desc{font-size:10pt;color:var(--mut)}
 
 /* ---------- À remplir ---------- */
 .remplir{margin:0 0 3mm}
-.rl{margin:2.4mm 0 .8mm;font-size:9pt}
-.trait{margin:0 0 1.4mm;border-bottom:.8pt dotted var(--mut);height:4.4mm}
-.voix{margin:3mm 0 4mm;font-style:italic;font-size:9.2pt}
+.rl{margin:3mm 0 1mm;font-size:1em}
+.trait{margin:0 0 1.8mm;border-bottom:.8pt dotted var(--mut);height:6mm}
+.voix{margin:3mm 0 4mm;font-style:italic;font-size:1em}
 .voix span{display:block;font:700 7.4pt/1 "Trebuchet MS",Calibri,sans-serif;color:var(--orange);
   letter-spacing:.7px;text-transform:uppercase;margin-bottom:1mm;font-style:normal}
 
 /* ---------- Tableaux ---------- */
 .tbl{margin:0 0 4mm}
-.tbl h4{font:700 9.4pt/1 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:0 0 2mm}
-table{width:100%;border-collapse:collapse;font-size:8pt}
+.tbl h4{font:700 13pt/1 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:0 0 2mm}
+table{width:100%;border-collapse:collapse;font-size:1em}
 th{background:var(--bleu);color:#fff;text-align:left;padding:1.4mm 2mm;font-weight:700}
 td{padding:1.2mm 2mm;border-bottom:.5pt solid var(--ligne);vertical-align:top}
 tbody tr:nth-child(even) td{background:#F7FAFC}
 
 /* ---------- Sommaire ---------- */
 .som-partie{margin-bottom:4mm}
-.som-p{margin:0 0 1.6mm;font-size:9.6pt}
+.som-p{margin:0 0 2mm;font-size:13pt}
 .som-p b{font-family:"Trebuchet MS",Calibri,sans-serif;color:var(--bleu)}
 .som-p span{color:var(--mut);font-style:italic;font-size:8.4pt;margin-left:2mm}
-.som-ch{display:flex;align-items:baseline;gap:2mm;margin:0 0 .9mm 4mm;font-size:9pt}
+.som-ch{display:flex;align-items:baseline;gap:2mm;margin:0 0 1.4mm 4mm;font-size:1em}
 .som-n{display:inline-flex;align-items:center;justify-content:center;width:4.6mm;height:4.6mm;flex:none;
   border-radius:50%;background:var(--pale);color:var(--bleu);font-size:7pt;font-weight:700}
-.som-url{margin-left:auto;font-size:7.4pt;color:var(--mut)}
+.som-url{margin-left:auto;font-size:10pt;color:var(--mut)}
 
 /* ---------- Ouvertures ---------- */
 .ouverture{height:172mm;display:flex;flex-direction:column;justify-content:center;
@@ -255,9 +259,17 @@ tbody tr:nth-child(even) td{background:#F7FAFC}
 .couv-auteur{margin:0;font-size:8.8pt}
 
 /* ---------- Impression ----------
-   Les marges du haut et du bas sont plus larges que nécessaire : elles
-   réservent la place du bandeau et du pied, dessinés à la finition. */
-@page{size:148mm 210mm;margin:19mm 12mm 15mm}
+   Format Amazon KDP 6 × 9 pouces (152,4 × 228,6 mm).
+
+   Les marges du haut et du bas réservent la place du bandeau et du pied,
+   dessinés à la finition. Les marges latérales tiennent compte de la
+   RELIURE : KDP exige 19 mm côté intérieur pour un livre de 300 à 500
+   pages — sans quoi le texte disparaît dans le pli. Marges miroir : le
+   côté intérieur change de bord selon que la page est paire ou impaire.
+   Elles sont symétriques ici (19 mm partout) parce que Chrome n'applique
+   pas @page:left / @page:right de façon fiable ; on perd un peu de
+   largeur utile, on ne perd jamais une ligne dans le pli. */
+@page{size:152.4mm 228.6mm;margin:20mm 19mm 16mm}
 @media print{
   body{background:#fff}
   #livret{max-width:none;margin:0;padding:0;box-shadow:none}
