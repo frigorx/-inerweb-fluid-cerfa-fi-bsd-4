@@ -23,9 +23,15 @@ MUT = (0x5A / 255, 0x6B / 255, 0x7D / 255)
 LIGNE = (0xD6 / 255, 0xDE / 255, 0xE7 / 255)
 
 MM = 72 / 25.4          # 1 mm en points
-MARGE = 12 * MM         # marge latérale, celle du CSS
-HAUT = 13 * MM          # ligne de base du bandeau
-PIED = 197 * MM         # filet du pied
+MARGE = 19 * MM         # marge latérale, celle du CSS (reliure KDP)
+HAUT = 13 * MM          # ligne de base du bandeau, dans la marge du haut
+
+# Le filet du pied se calcule sur la HAUTEUR RÉELLE de la page, jamais en
+# dur : le livret est passé de l'A5 au 6 x 9 et un pied figé se serait
+# retrouvé au milieu du texte.
+BAS_CONTENU = 16        # marge basse du CSS, en mm
+def pied_de(hauteur_pt):
+    return hauteur_pt - (BAS_CONTENU - 3.4) * MM
 
 PARTIES = {
     'A': 'Se protéger', 'B': 'Le cadre', 'C': 'Savoir',
@@ -68,6 +74,7 @@ def finir(chemin):
     doc = fitz.open(chemin)
     contextes = contexte_des_pages(doc)
     largeur = doc[0].rect.width
+    PIED = pied_de(doc[0].rect.height)
     numero = 0
     nues = 0
 

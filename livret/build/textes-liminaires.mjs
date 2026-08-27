@@ -11,6 +11,26 @@
    ===================================================================== */
 
 export const TEXTES_LIMINAIRES = {
+  /* Page de copyright — la page technique de tout livre édité. Le millésime
+     et l'ISBN se remplissent au dépôt Amazon ; le reste est définitif. */
+  'copyright': [
+    `<b>inerweb.fr HabFluide — tome 1 : la théorie</b>`,
+    `Préparation à l'épreuve théorique de l'attestation d'aptitude à la manipulation des fluides ` +
+    `frigorigènes, catégories A1, A2, D et E.`,
+    `Auteur : Franck Henninot, enseignant en filière froid et climatisation.`,
+    `Édition : inerWeb — <b>inerweb.fr</b> — contact : inerweb.fh@gmail.com`,
+    `© 2026 Franck Henninot. Tous droits réservés. Aucune partie de cet ouvrage ne peut être ` +
+    `reproduite, diffusée ou revendue, sous quelque forme que ce soit, sans l'accord écrit de l'auteur.`,
+    `Schémas techniques, illustrations et QR codes : bibliothèque inerWeb. Cet ouvrage ne contient ` +
+    `aucun document pédagogique tiers.`,
+    `Textes réglementaires cités : arrêté du 21 novembre 2025 (NOR TECP2532494A) et règlement (UE) ` +
+    `2024/573. Ce sont des textes officiels, librement consultables ; leur citation ici ne vaut pas ` +
+    `publication officielle. <b>En cas de divergence, le texte officiel fait foi.</b>`,
+    `Ouvrage conçu, dirigé et vérifié par l'auteur. Fabrication assistée par intelligence ` +
+    `artificielle (Claude, Anthropic), sous sa relecture.`,
+    `<i>ISBN et dépôt légal : voir la quatrième de couverture.</i>`,
+  ],
+
   'a-quoi-sert': [
     `Ce livret prépare à l'<b>attestation d'aptitude fluides frigorigènes</b>. Il rassemble, ` +
     `sur papier, la théorie qui se présente à l'épreuve : dix-neuf chapitres, du risque au fluide, ` +

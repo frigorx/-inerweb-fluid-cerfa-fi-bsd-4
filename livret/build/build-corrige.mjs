@@ -137,7 +137,7 @@ const doc = new Document({
 });
 
 fs.mkdirSync(DIST, { recursive: true });
-const docx = path.join(DIST, 'inerWeb-Habilitation-Fluide-Tome1-Corrige-formateur-A5.docx');
+const docx = path.join(DIST, 'inerweb.fr-HabFluide-Tome1-Corrige-formateur-A5.docx');
 fs.writeFileSync(docx, await Packer.toBuffer(doc));
 
 const soffice = 'C:/Program Files/LibreOffice/program/soffice.exe';

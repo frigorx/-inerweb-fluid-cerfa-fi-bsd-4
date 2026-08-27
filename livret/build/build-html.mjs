@@ -104,6 +104,11 @@ h2,h3,h4,.sect-t,.lecon-t,.page-t,.sect-intro{break-after:avoid;page-break-after
 .txt{margin:0 0 2.6mm;text-align:left;hyphens:none}
 .txt.petit{font-size:1em;color:var(--mut);margin-bottom:1.8mm}
 .txt.attente{color:var(--mut)}
+/* Lexique : le terme en vedette, la définition en retrait dessous. */
+.lex{margin:0 0 3mm;break-inside:avoid;page-break-inside:avoid}
+.lex b{display:block;color:var(--bleu);font-family:"Trebuchet MS",Calibri,sans-serif}
+.lex span{display:block;padding-left:5mm;border-left:1.5pt solid var(--ligne);margin-top:.8mm}
+.lex-chapeau{color:var(--mut);font-style:italic}
 
 .ch-tete{display:flex;gap:4.4mm;align-items:flex-start;margin-bottom:5mm}
 .ch-num{font:700 52pt/.82 "Trebuchet MS",Calibri,sans-serif;color:var(--orange)}

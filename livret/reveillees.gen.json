@@ -1,0 +1,24 @@
+{
+ "a_relire": [
+  "svg:charge-limite-local",
+  "svg:co2-nh3-compare",
+  "svg:co2-protection",
+  "svg:compresseurs",
+  "svg:coup-de-liquide-piston",
+  "svg:echangeur-air",
+  "svg:givre-degivrage",
+  "svg:lie-domaine",
+  "svg:manifold-lecture",
+  "svg:nomenclature",
+  "svg:ordre-vannes",
+  "svg:pesee-charge",
+  "svg:points-de-fuite",
+  "svg:secu-bouteille",
+  "svg:secu-consignation",
+  "svg:secu-decomposition-ari",
+  "svg:secu-flamme",
+  "svg:secu-projection",
+  "svg:surchauffe-utile-totale",
+  "svg:tirage-au-vide"
+ ]
+}

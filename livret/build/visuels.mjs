@@ -106,6 +106,25 @@ if (erreurs.length) {
   process.exit(1);
 }
 
+/* ------------------------------------------------------------------
+   LE PAPIER NE VOIT QUE L'INSTANT ZÉRO.
+   37 des 46 planches sont animées, et 20 contiennent des éléments qui
+   naissent invisibles (`opacity="0"`) pour apparaître ensuite. Rastérisées
+   telles quelles, elles perdent leur fin : le double accident perd sa
+   seconde victime, la décomposition perd son nuage.
+
+   On rastérise donc l'état FINAL, celui que l'animation atteint : chaque
+   élément initialement invisible est rendu visible, et les animations
+   d'opacité sont retirées pour ne pas le recacher. Le reste du dessin —
+   positions, couleurs, textes — n'est pas touché.
+   ------------------------------------------------------------------ */
+const etatFinal = (svg) => svg
+  .replace(/<animate\b[^>]*attributeName="opacity"[^>]*\/>/g, '')
+  .replace(/\sopacity="0(?:\.0+)?"/g, ' opacity="1"')
+  .replace(/([;"\s])opacity\s*:\s*0(?:\.0+)?\s*([;"])/g, '$1opacity:1$2');
+
+const reveillees = [];
+
 /* ---------------- Conversion pour le papier ---------------- */
 fs.mkdirSync(DEHORS, { recursive: true });
 const manifeste = {};
@@ -113,9 +132,15 @@ for (const { ref, famille, nom, chemin } of aConvertir) {
   const sortie = path.join(DEHORS, `${famille}-${nom.replace(/[^a-z0-9_-]/gi, '_')}.png`);
   /* Les SVG se rastérisent en haute densité ; les bitmaps se réduisent
      à la largeur cible sans jamais être agrandis. */
+  let source = chemin;
+  if (famille === 'svg' || famille === 'sym') {
+    const brut = fs.readFileSync(chemin, 'utf8');
+    const fini = etatFinal(brut);
+    if (fini !== brut) { reveillees.push(ref); source = Buffer.from(fini); }
+  }
   const img = famille === 'svg' || famille === 'sym'
-    ? sharp(chemin, { density: 300 }).resize({ width: LARGEUR, withoutEnlargement: false })
-    : sharp(chemin).resize({ width: LARGEUR, withoutEnlargement: true });
+    ? sharp(source, { density: 300 }).resize({ width: LARGEUR, withoutEnlargement: false })
+    : sharp(source).resize({ width: LARGEUR, withoutEnlargement: true });
   const info = await img.png({ compressionLevel: 9 }).toFile(sortie);
   manifeste[ref] = {
     fichier: path.basename(sortie),
@@ -127,10 +152,17 @@ for (const { ref, famille, nom, chemin } of aConvertir) {
 }
 
 fs.writeFileSync(MANIFESTE, JSON.stringify(manifeste, null, 1), 'utf8');
+/* Les planches dont on a force l'etat final : elles demandent un coup
+   d'oeil de F. Henninot, un element revele pouvant en recouvrir un autre. */
+fs.writeFileSync(path.join(ICI, '..', 'reveillees.gen.json'),
+  JSON.stringify({ a_relire: reveillees.sort() }, null, 1), 'utf8');
 
 const parFamille = {};
 for (const { famille } of aConvertir) parFamille[famille] = (parFamille[famille] || 0) + 1;
 console.log('Visuels du livret — tome 1\n');
 console.log(`  ${refs.size} références sur ${[...refs.values()].reduce((s, e) => s + e.length, 0)} emplacements — toutes résolues`);
 console.log(`  converties : ${Object.entries(parFamille).map(([f, n]) => `${n} ${f}`).join(' · ')}`);
+console.log(`  planches rendues à leur état final (sinon amputées) : ${reveillees.length}`);
+console.log('  ⚠ à relire : tout révéler d’un coup peut superposer des éléments');
+console.log('    que l’animation montrait l’un après l’autre. Liste : reveillees.gen.json');
 console.log(`\n✔ ${aConvertir.length} fichiers dans visuels.gen/ · manifeste : visuels.gen.json`);

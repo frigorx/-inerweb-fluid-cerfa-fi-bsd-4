@@ -709,6 +709,9 @@ export const CHAPITRES = [
    la règle « une illustration par page » vaut aussi pour elles. */
 export const LIMINAIRES = [
   { id: 'couverture', t: 'Habilitation fluide — Livret élève', visuels: ['amb:jour1'], legendes: [''] },
+  /* La page de copyright, exigee par toute edition : elle vient juste
+     apres la couverture, avant tout le reste. */
+  { id: 'copyright', t: '', visuels: ['ico:attestation'], legendes: [''] },
   { id: 'a-quoi-sert', t: 'À quoi sert ce livret', visuels: ['illu:g0', 'ico:attestation'], legendes: ['Le cadre', 'L attestation visée'] },
   { id: 'lire-qr', t: 'Lire les QR codes de ce livret', visuels: ['ico:cles', 'illu:examen'], legendes: ['Un code par notion', 'Ce qui vous attend à l écran'] },
   { id: 'parcours', t: 'Le cheminement', visuels: ['amb:jour2', 'amb:jour3'], legendes: ['Se protéger, comprendre', 'Puis intervenir'] },

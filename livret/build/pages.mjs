@@ -14,6 +14,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CHAPITRES, PARTIES, LIMINAIRES, FIN, PLANCHE_CENTRALE } from './plan-chapitres.mjs';
 import { TEXTES_LIMINAIRES, TEXTES_FIN, LIGNES_FIN } from './textes-liminaires.mjs';
+import { LEXIQUE } from './lexique.mjs';
 
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const LIVRET = path.join(ICI, '..');
@@ -310,9 +311,13 @@ export const construireFlux = () => {
         <p class="txt">Application élève et capsules : <b>inerweb.fr</b>. Source éditoriale :
         pack « Habilitation fluides frigorigènes », commit ${CONTENU.source.commit}.</p>`, { nue: true });
     }
-    if (p.id.startsWith('lexique')) {
-      pousse(`<p class="txt attente"><i>Page préparée pour la relecture : le lexique se remplit
-        avec F. Henninot au bon à tirer.</i></p>`, { nue: true });
+    if (LEXIQUE[p.id]) {
+      const lex = LEXIQUE[p.id];
+      pousse(`<p class="txt lex-chapeau">${ech(lex.titre)} — les mots du métier, expliqués avec
+        des mots plus simples qu'eux.</p>`, { nue: true });
+      for (const [terme, def] of lex.entrees) {
+        pousse(`<p class="lex"><b>${ech(terme)}</b><span>${ech(def)}</span></p>`, { nue: true });
+      }
     }
     if (LIGNES_FIN[p.id]) pousse(lignes(LIGNES_FIN[p.id]), { nue: true });
     pousse(figure(p.visuels, p.legendes), { nue: true });
