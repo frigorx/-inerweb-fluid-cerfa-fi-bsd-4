@@ -310,7 +310,7 @@ const libelleCode = (() => {
 })();
 
 const construire = async () => {
-  const logo = await logoPng('Fluide');
+  const logo = await logoPng('HabFluide');
   const enfants = [];
 
   /* ---------- Couverture ---------- */

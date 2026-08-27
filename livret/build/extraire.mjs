@@ -80,7 +80,17 @@ for (const g of REF.groupes) for (const c of g.codes || []) {
 const referentielDe = (ou, codes) => codes.map((code) => {
   const e = IDX_REF.get(code);
   if (!e) { erreurs.push(`${ou} : code « ${code} » inconnu du référentiel`); return null; }
-  return { code, libelle: e.libelle, groupe: e.groupe, theorie: CATEGORIES.some((k) => e.cat[k] === 'T') };
+  /* Le référentiel n'exige PAS la même chose de chaque catégorie : le
+     livret doit dire, code par code, qui est concerné et à quel titre
+     (T = épreuve théorique, P = épreuve pratique, donc tome 2). */
+  const parCat = {};
+  for (const k of CATEGORIES) if (e.cat[k] && e.cat[k] !== '—') parCat[k] = e.cat[k];
+  return {
+    code, libelle: e.libelle, groupe: e.groupe,
+    theorie: CATEGORIES.some((k) => e.cat[k] === 'T'),
+    cats: parCat,
+    catsT: CATEGORIES.filter((k) => e.cat[k] === 'T'),
+  };
 }).filter(Boolean);
 
 /* ------------------------------------------------------------------

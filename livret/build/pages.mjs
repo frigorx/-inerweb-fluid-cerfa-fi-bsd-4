@@ -128,8 +128,8 @@ export const construireFlux = () => {
   /* ---- Couverture ---- */
   const couv = LIMINAIRES.find((p) => p.id === 'couverture');
   pousse(`<div class="couverture">
-    <div class="couv-marque"><span class="flocon">❄</span><span class="iner">iner</span><span class="web">Web</span><span class="cartouche">Fluide</span></div>
-    <div class="couv-titre"><h1>Habilitation<br>Fluide</h1>
+    <div class="couv-marque"><span class="flocon">❄</span><span class="iner">iner</span><span class="web">Web</span><span class="cartouche">HabFluide</span></div>
+    <div class="couv-titre"><h1>HabFluide</h1>
       <p class="couv-sous">Livret élève — tome 1 : la théorie</p></div>
     <img class="couv-illu" src="${visuel(couv.visuels[0])}" alt="">
     <div class="couv-bas">
@@ -180,21 +180,37 @@ export const construireFlux = () => {
       { ...meta, rupture: true, garde: true });
 
       if (c.referentiel?.length) {
-        pousse(`<section class="ref"><h3>Ce que le référentiel exige ici</h3>
-          ${c.referentiel.map((r) => `<p class="ref-l"><span class="ref-code">${r.code}</span>${ech(r.libelle)}${
-            r.theorie ? '' : ' <i class="ref-p">(évalué en pratique — tome 2)</i>'}</p>`).join('')}
+        /* Qui est concerné, code par code : le référentiel n'exige pas
+           la même chose de A1, A2, D et E. */
+        const cats = (r) => {
+          if (!r.catsT.length) return '<span class="ref-cat prat">épreuve pratique — tome 2</span>';
+          if (r.catsT.length === CONTENU.categories.length) return '<span class="ref-cat">toutes catégories</span>';
+          return r.catsT.map((k) => `<span class="ref-cat">${k}</span>`).join('');
+        };
+        pousse(`<section class="ref">
+          <h3>Ce que le référentiel exige ici</h3>
+          <p class="ref-intro">Attestation d’aptitude fluides frigorigènes, épreuve théorique —
+            catégories ${CONTENU.categories.join(', ')}. Chaque code indique les catégories qu’il concerne.</p>
+          ${c.referentiel.map((r) => `<p class="ref-l"><span class="ref-code">${r.code}</span>${ech(r.libelle)}
+            <span class="ref-cats">${cats(r)}</span></p>`).join('')}
         </section>`, meta);
       }
 
       /* 1 — Testez-vous */
       const questions = (CHOISIES[ch.num] || []).map((id) => c.questions.find((q) => q.id === id)).filter(Boolean);
-      pousse(`<h3 class="sect-t"><span class="sect-num">1</span>Testez-vous d’abord</h3>
+      /* Le QCM tient d'un seul tenant, sur sa propre page : autrement on
+         ne voit ni combien de questions il y a, ni où il s'arrête — et
+         se tester devient impossible (remarque de F. Henninot). */
+      const court = (q) => q.choix.every((x) => x.length <= 46);
+      pousse(`<section class="qcm">
+        <h3 class="sect-t"><span class="sect-num">1</span>Testez-vous d’abord —
+          ${questions.length} questions</h3>
         <p class="sect-intro">Répondez <b>avant</b> de lire : vous saurez tout de suite ce que vous savez déjà,
-        et ce qui mérite votre lecture. Les corrections sont en fin de chapitre.</p>`, { ...meta, garde: true });
-      for (const [i, q] of questions.entries()) {
-        pousse(`<div class="q"><p class="q-e"><span class="q-n">${i + 1}</span>${ech(q.enonce)}</p>
-          <ul class="q-c">${q.choix.map((ch2, j) => `<li><span class="case"></span><span class="lettre">${String.fromCharCode(65 + j)}</span>${ech(ch2)}</li>`).join('')}</ul></div>`, meta);
-      }
+        et ce qui mérite votre lecture. Les corrections sont en fin de chapitre.</p>
+        ${questions.map((q, i) => `<div class="q"><p class="q-e"><span class="q-n">${i + 1}</span>${ech(q.enonce)}</p>
+          <ul class="q-c${court(q) ? ' deux' : ''}">${q.choix.map((ch2, j) => `<li><span class="case"></span><span class="lettre">${String.fromCharCode(65 + j)}</span>${ech(ch2)}</li>`).join('')}</ul></div>`).join('')}
+      </section>`, meta); /* la rupture de page est portée par .qcm, pas ici :
+                             deux ruptures d'affilée feraient une page blanche */
 
       /* 2 — Les leçons */
       pousse(`<h3 class="sect-t"><span class="sect-num">2</span>Comprendre</h3>`, { ...meta, garde: true });

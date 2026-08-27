@@ -33,9 +33,39 @@ import { construireFlux, TITRES_PARTIES, TITRES_CHAPITRES } from './pages.mjs';
 
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.join(ICI, '..', 'dist');
-const NOM = 'inerWeb-Habilitation-Fluide-Tome1-Livret-eleve-A5';
+const SOURCE_PACK = process.env.PILOTE_FLUIDES || 'C:/git/pilote-fluides';
+
+/* ------------------------------------------------------------------
+   DEUX ÉDITIONS, UN SEUL GABARIT — `EDITION=dys npm run html`.
+   La charte inerWeb impose la lisibilité DYS : police Lexend (la seule
+   police embarquée admise, OFL), corps plus grand, interligne ouvert,
+   et JAMAIS de texte justifié (les rivières de blanc du texte justifié
+   sont l'un des pièges connus de la lecture dyslexique).
+   ------------------------------------------------------------------ */
+const DYS = process.env.EDITION === 'dys';
+/* Le livre s'appelle « inerweb.fr HabFluide » — la marque du livre est
+   le SITE, pas le logiciel : c'est lui qu'il fait connaître. */
+const NOM = 'inerweb.fr-HabFluide-Tome1-Livret-eleve-A5' + (DYS ? '-DYS' : '');
+
+const LEXEND = path.join(SOURCE_PACK, 'moteur', 'polices', 'Lexend-variable.woff2');
+const POLICE_DYS = fs.existsSync(LEXEND)
+  ? `@font-face{font-family:'Lexend';font-weight:100 900;font-display:block;
+      src:url(data:font/woff2;base64,${fs.readFileSync(LEXEND).toString('base64')}) format('woff2')}`
+  : '';
+if (DYS && !POLICE_DYS) {
+  console.error(`Lexend introuvable : ${LEXEND}\nL'édition DYS l'exige (charte inerWeb).`);
+  process.exit(1);
+}
+
+/* Corps de texte et interligne, par édition. */
+const CORPS_PT = DYS ? 12 : 10.6;
+const INTERLIGNE = DYS ? 1.72 : 1.52;
+const FAMILLE = DYS
+  ? `'Lexend',Calibri,"Segoe UI",system-ui,sans-serif`
+  : `Calibri,"Segoe UI",system-ui,sans-serif`;
 
 const CSS = `
+${POLICE_DYS && DYS ? POLICE_DYS : ''}
 :root{
   --bleu:#1B3A63; --bleu2:#2f5689; --orange:#FF6B35; --logo:#e8914a;
   --txt:#1d2a38; --mut:#5a6b7d; --ligne:#d6dee7; --pale:#F4F7FA;
@@ -47,7 +77,7 @@ const CSS = `
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{background:#e7ecf1;color:var(--txt);
-  font:9.6pt/1.5 Calibri,"Segoe UI",system-ui,sans-serif;
+  font:${CORPS_PT}pt/${INTERLIGNE} ${FAMILLE};
   -webkit-print-color-adjust:exact;print-color-adjust:exact}
 
 /* ---------- Le flux (écran) ---------- */
@@ -65,7 +95,9 @@ h2,h3,h4,.sect-t,.lecon-t,.page-t,.sect-intro{break-after:avoid;page-break-after
 
 /* ---------- Titres et texte ---------- */
 .page-t{font:700 19pt/1.12 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:0 0 5mm}
-.txt{margin:0 0 2.6mm;text-align:justify;hyphens:auto}
+/* Jamais justifié : la charte l'interdit, et les rivières de blanc du
+   texte justifié gênent la lecture dyslexique. Drapeau à droite. */
+.txt{margin:0 0 2.6mm;text-align:left;hyphens:none}
 .txt.petit{font-size:8.4pt;color:var(--mut);margin-bottom:1.4mm}
 .txt.attente{color:var(--mut)}
 
@@ -80,7 +112,19 @@ h2,h3,h4,.sect-t,.lecon-t,.page-t,.sect-intro{break-after:avoid;page-break-after
 .ref-l{margin:0 0 1.8mm;font-size:8pt;line-height:1.4;color:#2a3a4a}
 .ref-code{display:inline-block;background:var(--bleu);color:#fff;font-weight:700;font-size:7pt;
   padding:.3mm 1.4mm;border-radius:2px;margin-right:1.4mm;vertical-align:.3mm}
-.ref-p{color:var(--mut);font-size:7.4pt}
+.ref-intro{margin:0 0 2.4mm;font-size:7.4pt;color:var(--mut);font-style:italic}
+.ref-cats{white-space:nowrap}
+.ref-cat{display:inline-block;border:.5pt solid var(--bleu2);color:var(--bleu2);
+  font-size:6.4pt;font-weight:700;padding:.2mm 1.2mm;border-radius:2px;margin-left:1mm;
+  vertical-align:.3mm}
+.ref-cat.prat{border-color:var(--mut);color:var(--mut);font-weight:400;font-style:italic}
+
+/* Le QCM d'ouverture commence toujours en haut d'une page — on le voit
+   alors comme un tout. On ne lui interdit PAS de couler sur la page
+   suivante : le lui interdire laisserait une page blanche derrière lui
+   dès qu'il dépasse d'une ligne. Chaque question, elle, reste entière. */
+.qcm{break-before:page;page-break-before:always}
+.q-c.deux{display:grid;grid-template-columns:1fr 1fr;column-gap:3mm}
 
 .sect-t{display:flex;align-items:center;gap:2.6mm;
   font:700 12.6pt/1.1 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:0 0 2.6mm}

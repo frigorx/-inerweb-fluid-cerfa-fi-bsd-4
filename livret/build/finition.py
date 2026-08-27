@@ -98,7 +98,7 @@ def finir(chemin):
         # Pas de tiret cadratin ici : les polices de base du PDF ne le
         # portent pas et il ressort en point médian. On l'écrit tel quel.
         page.insert_text(fitz.Point(MARGE, PIED + 4 * MM),
-                         'inerWeb Fluide · Habilitation, tome 1 · la théorie',
+                         'inerweb.fr · HabFluide, tome 1 · la théorie',
                          fontname='helv', fontsize=6.8, color=MUT)
         centre = fitz.Point(largeur - MARGE - 3.2 * MM, PIED + 3.2 * MM)
         page.draw_circle(centre, 3.2 * MM, color=BLEU, fill=BLEU)
