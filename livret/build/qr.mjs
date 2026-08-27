@@ -35,8 +35,8 @@
        par URL que le moteur sait ouvrir — moteur.js) ;
      · le chapitre généré (les catégories) mène à l'accueil des
        parcours (`?carte=c00`), où l'on choisit sa catégorie.
-   Changer une cible plus tard = changer UNE ligne du .htaccess ;
-   le papier, lui, ne bouge pas.
+   Changer une cible plus tard = rééditer UN fichier dans
+   `redirections-pages/` ; le papier, lui, ne bouge pas.
    ===================================================================== */
 
 import fs from 'node:fs';
