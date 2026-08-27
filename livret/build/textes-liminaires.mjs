@@ -16,8 +16,10 @@ export const TEXTES_LIMINAIRES = {
     `sur papier, la théorie qui se présente à l'épreuve : dix-neuf chapitres, du risque au fluide, ` +
     `du fluide à la machine, de la machine aux opérations.`,
     `Il se lit <b>avant</b> la formation pour arriver préparé, <b>pendant</b> pour garder une trace, ` +
-    `et <b>après</b> pour réviser jusqu'à l'épreuve. Chaque chapitre se termine par une activité ` +
-    `à remplir et des questions d'entraînement : ce livret s'écrit autant qu'il se lit.`,
+    `et <b>après</b> pour réviser jusqu'à l'épreuve. Chaque chapitre commence par ce que le ` +
+    `<b>référentiel officiel</b> exige, puis par des <b>questions type examen</b> — répondez-y avant de ` +
+    `lire : vous saurez tout de suite ce que vous savez déjà. Les corrections sont en fin de chapitre. ` +
+    `Ce livret s'écrit autant qu'il se lit.`,
     `Le geste professionnel — manipuler, braser, récupérer en atelier — fait l'objet du <b>tome 2</b>. ` +
     `Ici, on comprend ; là-bas, on fait.`,
   ],
@@ -43,6 +45,11 @@ export const TEXTES_LIMINAIRES = {
   'statut': [
     `Ce livret <b>prépare</b> à l'attestation d'aptitude. Il <b>ne la délivre pas</b> : seul un ` +
     `organisme évaluateur certifié fait passer l'épreuve et délivre l'attestation.`,
+    `Il couvre l'<b>épreuve théorique</b> des catégories <b>A1, A2, D et E</b> — chaque code théorique ` +
+    `exigé par le référentiel pour ces catégories est traité, la vérification est refaite à chaque ` +
+    `édition. La catégorie V (climatisation automobile) et les catégories B (CO₂) et C (ammoniac) ne ` +
+    `sont pas préparées ici ; CO₂ et ammoniac sont abordés en information, pour savoir les reconnaître. ` +
+    `La partie <b>pratique</b> — gestes, manipulations, atelier — fait l'objet du tome 2.`,
     `Les valeurs réglementaires citées (catégories, durées d'épreuve, dates) sont extraites de ` +
     `l'arrêté du 21 novembre 2025 et vérifiables en fin de livret, page « Sources ». En cas de ` +
     `doute entre ce livret et un texte officiel, <b>le texte officiel a toujours raison</b>.`,

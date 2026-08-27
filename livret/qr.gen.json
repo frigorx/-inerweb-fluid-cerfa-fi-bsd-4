@@ -8,6 +8,51 @@
   "fichier": "securite.png"
  },
  {
+  "chapitre": 1,
+  "lecon": 1,
+  "titre": "L air qui manque — l asphyxie",
+  "slug": "securite-1",
+  "alias": "https://inerweb.fr/f/securite-1",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=s1",
+  "fichier": "securite-1.png"
+ },
+ {
+  "chapitre": 1,
+  "lecon": 2,
+  "titre": "Le froid brûle — projections et gelures",
+  "slug": "securite-2",
+  "alias": "https://inerweb.fr/f/securite-2",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=s2",
+  "fichier": "securite-2.png"
+ },
+ {
+  "chapitre": 1,
+  "lecon": 3,
+  "titre": "La flamme interdite — décomposition du fluide",
+  "slug": "securite-3",
+  "alias": "https://inerweb.fr/f/securite-3",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=s3",
+  "fichier": "securite-3.png"
+ },
+ {
+  "chapitre": 1,
+  "lecon": 4,
+  "titre": "Ce qui éclate — la pression",
+  "slug": "securite-4",
+  "alias": "https://inerweb.fr/f/securite-4",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=s4",
+  "fichier": "securite-4.png"
+ },
+ {
+  "chapitre": 1,
+  "lecon": 5,
+  "titre": "Consigner avant de toucher — le risque électrique",
+  "slug": "securite-5",
+  "alias": "https://inerweb.fr/f/securite-5",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=s5",
+  "fichier": "securite-5.png"
+ },
+ {
   "chapitre": 2,
   "titre": "Lire une classe de sécurité",
   "slug": "classes",
@@ -16,12 +61,93 @@
   "fichier": "classes.png"
  },
  {
+  "chapitre": 2,
+  "lecon": 1,
+  "titre": "Deux lettres, deux dangers",
+  "slug": "classes-1",
+  "alias": "https://inerweb.fr/f/classes-1",
+  "cible": "https://inerweb.fr/?carte=cl1",
+  "fichier": "classes-1.png"
+ },
+ {
+  "chapitre": 2,
+  "lecon": 2,
+  "titre": "Le piège du R-290",
+  "slug": "classes-2",
+  "alias": "https://inerweb.fr/f/classes-2",
+  "cible": "https://inerweb.fr/?carte=cl1",
+  "fichier": "classes-2.png"
+ },
+ {
+  "chapitre": 2,
+  "lecon": 3,
+  "titre": "Explosif avant d être perceptible — la LIE",
+  "slug": "classes-3",
+  "alias": "https://inerweb.fr/f/classes-3",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=cl2",
+  "fichier": "classes-3.png"
+ },
+ {
+  "chapitre": 2,
+  "lecon": 4,
+  "titre": "CO₂ : la pression et l air qu il vous prend",
+  "slug": "classes-4",
+  "alias": "https://inerweb.fr/f/classes-4",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=cl3",
+  "fichier": "classes-4.png"
+ },
+ {
+  "chapitre": 2,
+  "lecon": 5,
+  "titre": "Se protéger du CO₂ — détection, EPC et EPI",
+  "slug": "classes-5",
+  "alias": "https://inerweb.fr/f/classes-5",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=cl4",
+  "fichier": "classes-5.png"
+ },
+ {
   "chapitre": 3,
   "titre": "Ce que la loi vous impose",
   "slug": "loi",
   "alias": "https://inerweb.fr/f/loi",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g0",
   "fichier": "loi.png"
+ },
+ {
+  "chapitre": 3,
+  "lecon": 1,
+  "titre": "Deux étages de règles, et deux papiers",
+  "slug": "loi-1",
+  "alias": "https://inerweb.fr/f/loi-1",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g0",
+  "fichier": "loi-1.png"
+ },
+ {
+  "chapitre": 3,
+  "lecon": 2,
+  "titre": "Le registre, les déchets, l écoconception",
+  "slug": "loi-2",
+  "alias": "https://inerweb.fr/f/loi-2",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g0",
+  "fichier": "loi-2.png"
+ },
+ {
+  "chapitre": 3,
+  "lecon": 3,
+  "titre": "Quarante ans d histoire : de l ozone au climat",
+  "slug": "loi-3",
+  "alias": "https://inerweb.fr/f/loi-3",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g2a",
+  "fichier": "loi-3.png"
+ },
+ {
+  "chapitre": 3,
+  "lecon": 4,
+  "titre": "Impact environnemental et F-Gas",
+  "slug": "loi-4",
+  "alias": "https://inerweb.fr/f/loi-4",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g2",
+  "fichier": "loi-4.png"
  },
  {
   "chapitre": 4,
@@ -40,12 +166,75 @@
   "fichier": "thermo.png"
  },
  {
+  "chapitre": 5,
+  "lecon": 1,
+  "titre": "La croix du frigoriste",
+  "slug": "thermo-1",
+  "alias": "https://inerweb.fr/f/thermo-1",
+  "cible": "https://inerweb.fr/?carte=g1a",
+  "fichier": "thermo-1.png"
+ },
+ {
+  "chapitre": 5,
+  "lecon": 2,
+  "titre": "Pression relative, pression absolue",
+  "slug": "thermo-2",
+  "alias": "https://inerweb.fr/f/thermo-2",
+  "cible": "https://inerweb.fr/?carte=g1a",
+  "fichier": "thermo-2.png"
+ },
+ {
+  "chapitre": 5,
+  "lecon": 3,
+  "titre": "Chaleur sensible et chaleur latente",
+  "slug": "thermo-3",
+  "alias": "https://inerweb.fr/f/thermo-3",
+  "cible": "https://inerweb.fr/?carte=g1s",
+  "fichier": "thermo-3.png"
+ },
+ {
+  "chapitre": 5,
+  "lecon": 4,
+  "titre": "Le palier, et pourquoi il n est pas plat",
+  "slug": "thermo-4",
+  "alias": "https://inerweb.fr/f/thermo-4",
+  "cible": "https://inerweb.fr/?carte=g1s",
+  "fichier": "thermo-4.png"
+ },
+ {
   "chapitre": 6,
   "titre": "Lire un log p-h et une table de saturation",
   "slug": "logph",
   "alias": "https://inerweb.fr/f/logph",
   "cible": "https://inerweb.fr/?carte=g1b",
   "fichier": "logph.png"
+ },
+ {
+  "chapitre": 6,
+  "lecon": 1,
+  "titre": "Le diagramme, et ce qu il montre",
+  "slug": "logph-1",
+  "alias": "https://inerweb.fr/f/logph-1",
+  "cible": "https://inerweb.fr/?carte=g1b",
+  "fichier": "logph-1.png"
+ },
+ {
+  "chapitre": 6,
+  "lecon": 2,
+  "titre": "L échelle des pressions n est pas une règle graduée",
+  "slug": "logph-2",
+  "alias": "https://inerweb.fr/f/logph-2",
+  "cible": "https://inerweb.fr/?carte=g1b",
+  "fichier": "logph-2.png"
+ },
+ {
+  "chapitre": 6,
+  "lecon": 3,
+  "titre": "Un fluide, une table",
+  "slug": "logph-3",
+  "alias": "https://inerweb.fr/f/logph-3",
+  "cible": "https://inerweb.fr/?carte=g1b",
+  "fichier": "logph-3.png"
  },
  {
   "chapitre": 7,
@@ -56,12 +245,66 @@
   "fichier": "surchauffe.png"
  },
  {
+  "chapitre": 7,
+  "lecon": 1,
+  "titre": "Deux mesures, deux extrémités du circuit",
+  "slug": "surchauffe-1",
+  "alias": "https://inerweb.fr/f/surchauffe-1",
+  "cible": "https://inerweb.fr/?carte=g1e",
+  "fichier": "surchauffe-1.png"
+ },
+ {
+  "chapitre": 7,
+  "lecon": 2,
+  "titre": "Une surchauffe ne se lit pas sur un thermomètre",
+  "slug": "surchauffe-2",
+  "alias": "https://inerweb.fr/f/surchauffe-2",
+  "cible": "https://inerweb.fr/?carte=g1e",
+  "fichier": "surchauffe-2.png"
+ },
+ {
+  "chapitre": 7,
+  "lecon": 3,
+  "titre": "Ce qu une valeur hors plage annonce",
+  "slug": "surchauffe-3",
+  "alias": "https://inerweb.fr/f/surchauffe-3",
+  "cible": "https://inerweb.fr/?carte=g1e",
+  "fichier": "surchauffe-3.png"
+ },
+ {
   "chapitre": 8,
   "titre": "Les familles de fluides et leurs codes",
   "slug": "fluides",
   "alias": "https://inerweb.fr/f/fluides",
   "cible": "https://inerweb.fr/?carte=g1c",
   "fichier": "fluides.png"
+ },
+ {
+  "chapitre": 8,
+  "lecon": 1,
+  "titre": "Le code dit la molécule",
+  "slug": "fluides-1",
+  "alias": "https://inerweb.fr/f/fluides-1",
+  "cible": "https://inerweb.fr/?carte=g1c",
+  "fichier": "fluides-1.png"
+ },
+ {
+  "chapitre": 8,
+  "lecon": 2,
+  "titre": "Le code ne dit pas le danger",
+  "slug": "fluides-2",
+  "alias": "https://inerweb.fr/f/fluides-2",
+  "cible": "https://inerweb.fr/?carte=g1c",
+  "fichier": "fluides-2.png"
+ },
+ {
+  "chapitre": 8,
+  "lecon": 3,
+  "titre": "Les organes qui trahissent une fuite",
+  "slug": "fluides-3",
+  "alias": "https://inerweb.fr/f/fluides-3",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g1d",
+  "fichier": "fluides-3.png"
  },
  {
   "chapitre": 9,
@@ -72,12 +315,102 @@
   "fichier": "compresseur.png"
  },
  {
+  "chapitre": 9,
+  "lecon": 1,
+  "titre": "Ce qu il fait, et où il fuit",
+  "slug": "compresseur-1",
+  "alias": "https://inerweb.fr/f/compresseur-1",
+  "cible": "https://inerweb.fr/?carte=g6",
+  "fichier": "compresseur-1.png"
+ },
+ {
+  "chapitre": 9,
+  "lecon": 2,
+  "titre": "Ce que dit une température de refoulement",
+  "slug": "compresseur-2",
+  "alias": "https://inerweb.fr/f/compresseur-2",
+  "cible": "https://inerweb.fr/?carte=g6",
+  "fichier": "compresseur-2.png"
+ },
+ {
+  "chapitre": 9,
+  "lecon": 3,
+  "titre": "L huile, et le rapport d état",
+  "slug": "compresseur-3",
+  "alias": "https://inerweb.fr/f/compresseur-3",
+  "cible": "https://inerweb.fr/?carte=g6",
+  "fichier": "compresseur-3.png"
+ },
+ {
+  "chapitre": 9,
+  "lecon": 4,
+  "titre": "Installer sans fuite, régler les sécurités",
+  "slug": "compresseur-4",
+  "alias": "https://inerweb.fr/f/compresseur-4",
+  "cible": "https://inerweb.fr/?carte=g6b",
+  "fichier": "compresseur-4.png"
+ },
+ {
+  "chapitre": 9,
+  "lecon": 5,
+  "titre": "La valeur plaque, jamais un chiffre inventé",
+  "slug": "compresseur-5",
+  "alias": "https://inerweb.fr/f/compresseur-5",
+  "cible": "https://inerweb.fr/?carte=g6b",
+  "fichier": "compresseur-5.png"
+ },
+ {
   "chapitre": 10,
   "titre": "Le condenseur",
   "slug": "condenseur",
   "alias": "https://inerweb.fr/f/condenseur",
   "cible": "https://inerweb.fr/?carte=g7",
   "fichier": "condenseur.png"
+ },
+ {
+  "chapitre": 10,
+  "lecon": 1,
+  "titre": "Ce qu il fait, et où il fuit",
+  "slug": "condenseur-1",
+  "alias": "https://inerweb.fr/f/condenseur-1",
+  "cible": "https://inerweb.fr/?carte=g7",
+  "fichier": "condenseur-1.png"
+ },
+ {
+  "chapitre": 10,
+  "lecon": 2,
+  "titre": "Deux pressostats, deux fonctions",
+  "slug": "condenseur-2",
+  "alias": "https://inerweb.fr/f/condenseur-2",
+  "cible": "https://inerweb.fr/?carte=g7",
+  "fichier": "condenseur-2.png"
+ },
+ {
+  "chapitre": 10,
+  "lecon": 3,
+  "titre": "Installer l unité extérieure, régler la pression",
+  "slug": "condenseur-3",
+  "alias": "https://inerweb.fr/f/condenseur-3",
+  "cible": "https://inerweb.fr/?carte=g7b",
+  "fichier": "condenseur-3.png"
+ },
+ {
+  "chapitre": 10,
+  "lecon": 4,
+  "titre": "Un régulateur ne coupe rien",
+  "slug": "condenseur-4",
+  "alias": "https://inerweb.fr/f/condenseur-4",
+  "cible": "https://inerweb.fr/?carte=g7b",
+  "fichier": "condenseur-4.png"
+ },
+ {
+  "chapitre": 10,
+  "lecon": 5,
+  "titre": "Purger, mesurer, rendre compte",
+  "slug": "condenseur-5",
+  "alias": "https://inerweb.fr/f/condenseur-5",
+  "cible": "https://inerweb.fr/?carte=g7b",
+  "fichier": "condenseur-5.png"
  },
  {
   "chapitre": 11,
@@ -88,12 +421,102 @@
   "fichier": "evaporateur.png"
  },
  {
+  "chapitre": 11,
+  "lecon": 1,
+  "titre": "Ce qu il fait, et où il fuit",
+  "slug": "evaporateur-1",
+  "alias": "https://inerweb.fr/f/evaporateur-1",
+  "cible": "https://inerweb.fr/?carte=g8",
+  "fichier": "evaporateur-1.png"
+ },
+ {
+  "chapitre": 11,
+  "lecon": 2,
+  "titre": "Lire la surchauffe, et les deux organes qu on confond",
+  "slug": "evaporateur-2",
+  "alias": "https://inerweb.fr/f/evaporateur-2",
+  "cible": "https://inerweb.fr/?carte=g8",
+  "fichier": "evaporateur-2.png"
+ },
+ {
+  "chapitre": 11,
+  "lecon": 3,
+  "titre": "Le givre et le dégivrage",
+  "slug": "evaporateur-3",
+  "alias": "https://inerweb.fr/f/evaporateur-3",
+  "cible": "https://inerweb.fr/?carte=g8b",
+  "fichier": "evaporateur-3.png"
+ },
+ {
+  "chapitre": 11,
+  "lecon": 4,
+  "titre": "Qui protège quoi",
+  "slug": "evaporateur-4",
+  "alias": "https://inerweb.fr/f/evaporateur-4",
+  "cible": "https://inerweb.fr/?carte=g8b",
+  "fichier": "evaporateur-4.png"
+ },
+ {
+  "chapitre": 11,
+  "lecon": 5,
+  "titre": "Démarrer, mesurer, rendre compte",
+  "slug": "evaporateur-5",
+  "alias": "https://inerweb.fr/f/evaporateur-5",
+  "cible": "https://inerweb.fr/?carte=g8b",
+  "fichier": "evaporateur-5.png"
+ },
+ {
   "chapitre": 12,
   "titre": "Le détendeur et les organes annexes",
   "slug": "detendeur",
   "alias": "https://inerweb.fr/f/detendeur",
   "cible": "https://inerweb.fr/?carte=g9",
   "fichier": "detendeur.png"
+ },
+ {
+  "chapitre": 12,
+  "lecon": 1,
+  "titre": "Ce qu il fait, et les trois technologies",
+  "slug": "detendeur-1",
+  "alias": "https://inerweb.fr/f/detendeur-1",
+  "cible": "https://inerweb.fr/?carte=g9",
+  "fichier": "detendeur-1.png"
+ },
+ {
+  "chapitre": 12,
+  "lecon": 2,
+  "titre": "Sécurité électrique, sécurité mécanique",
+  "slug": "detendeur-2",
+  "alias": "https://inerweb.fr/f/detendeur-2",
+  "cible": "https://inerweb.fr/?carte=g9",
+  "fichier": "detendeur-2.png"
+ },
+ {
+  "chapitre": 12,
+  "lecon": 3,
+  "titre": "La ligne liquide, organe par organe",
+  "slug": "detendeur-3",
+  "alias": "https://inerweb.fr/f/detendeur-3",
+  "cible": "https://inerweb.fr/?carte=g9b",
+  "fichier": "detendeur-3.png"
+ },
+ {
+  "chapitre": 12,
+  "lecon": 4,
+  "titre": "Un bon réglage, c est de l énergie économisée",
+  "slug": "detendeur-4",
+  "alias": "https://inerweb.fr/f/detendeur-4",
+  "cible": "https://inerweb.fr/?carte=g9b",
+  "fichier": "detendeur-4.png"
+ },
+ {
+  "chapitre": 12,
+  "lecon": 5,
+  "titre": "Avant de toucher un réglage électrique",
+  "slug": "detendeur-5",
+  "alias": "https://inerweb.fr/f/detendeur-5",
+  "cible": "https://inerweb.fr/?carte=g9b",
+  "fichier": "detendeur-5.png"
  },
  {
   "chapitre": 13,
@@ -104,12 +527,102 @@
   "fichier": "mise-en-service.png"
  },
  {
+  "chapitre": 13,
+  "lecon": 1,
+  "titre": "Deux épreuves, deux buts",
+  "slug": "mise-en-service-1",
+  "alias": "https://inerweb.fr/f/mise-en-service-1",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g3",
+  "fichier": "mise-en-service-1.png"
+ },
+ {
+  "chapitre": 13,
+  "lecon": 2,
+  "titre": "La bouteille d azote et son mano-détendeur",
+  "slug": "mise-en-service-2",
+  "alias": "https://inerweb.fr/f/mise-en-service-2",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=p4",
+  "fichier": "mise-en-service-2.png"
+ },
+ {
+  "chapitre": 13,
+  "lecon": 3,
+  "titre": "Le manifold — lire, brancher, ne pas polluer",
+  "slug": "mise-en-service-3",
+  "alias": "https://inerweb.fr/f/mise-en-service-3",
+  "cible": "https://inerweb.fr/?carte=p1",
+  "fichier": "mise-en-service-3.png"
+ },
+ {
+  "chapitre": 13,
+  "lecon": 4,
+  "titre": "Pompe à vide et vacuomètre",
+  "slug": "mise-en-service-4",
+  "alias": "https://inerweb.fr/f/mise-en-service-4",
+  "cible": "https://inerweb.fr/?carte=p3",
+  "fichier": "mise-en-service-4.png"
+ },
+ {
+  "chapitre": 13,
+  "lecon": 5,
+  "titre": "Le vide qui remonte, et la fuite qu on localise",
+  "slug": "mise-en-service-5",
+  "alias": "https://inerweb.fr/f/mise-en-service-5",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g3",
+  "fichier": "mise-en-service-5.png"
+ },
+ {
   "chapitre": 14,
   "titre": "Les contrôles d étanchéité",
   "slug": "etancheite",
   "alias": "https://inerweb.fr/f/etancheite",
   "cible": "https://inerweb.fr/?carte=g4a",
   "fichier": "etancheite.png"
+ },
+ {
+  "chapitre": 14,
+  "lecon": 1,
+  "titre": "Où fuit une installation",
+  "slug": "etancheite-1",
+  "alias": "https://inerweb.fr/f/etancheite-1",
+  "cible": "https://inerweb.fr/?carte=g4a",
+  "fichier": "etancheite-1.png"
+ },
+ {
+  "chapitre": 14,
+  "lecon": 2,
+  "titre": "Consulter le registre avant de commencer",
+  "slug": "etancheite-2",
+  "alias": "https://inerweb.fr/f/etancheite-2",
+  "cible": "https://inerweb.fr/?carte=g4a",
+  "fichier": "etancheite-2.png"
+ },
+ {
+  "chapitre": 14,
+  "lecon": 3,
+  "titre": "Méthode indirecte — mesurer et interpréter",
+  "slug": "etancheite-3",
+  "alias": "https://inerweb.fr/f/etancheite-3",
+  "cible": "https://inerweb.fr/?carte=g4b",
+  "fichier": "etancheite-3.png"
+ },
+ {
+  "chapitre": 14,
+  "lecon": 4,
+  "titre": "Méthode directe — le détecteur",
+  "slug": "etancheite-4",
+  "alias": "https://inerweb.fr/f/etancheite-4",
+  "cible": "https://inerweb.fr/?carte=g4c",
+  "fichier": "etancheite-4.png"
+ },
+ {
+  "chapitre": 14,
+  "lecon": 5,
+  "titre": "L instrument aussi se contrôle, et le registre se remplit",
+  "slug": "etancheite-5",
+  "alias": "https://inerweb.fr/f/etancheite-5",
+  "cible": "https://inerweb.fr/?carte=g4c",
+  "fichier": "etancheite-5.png"
  },
  {
   "chapitre": 15,
@@ -120,12 +633,84 @@
   "fichier": "recuperation.png"
  },
  {
+  "chapitre": 15,
+  "lecon": 1,
+  "titre": "Récupérer sans émettre",
+  "slug": "recuperation-1",
+  "alias": "https://inerweb.fr/f/recuperation-1",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g5a",
+  "fichier": "recuperation-1.png"
+ },
+ {
+  "chapitre": 15,
+  "lecon": 2,
+  "titre": "La station de récupération",
+  "slug": "recuperation-2",
+  "alias": "https://inerweb.fr/f/recuperation-2",
+  "cible": "https://inerweb.fr/?carte=p2",
+  "fichier": "recuperation-2.png"
+ },
+ {
+  "chapitre": 15,
+  "lecon": 3,
+  "titre": "L ordre des vannes",
+  "slug": "recuperation-3",
+  "alias": "https://inerweb.fr/f/recuperation-3",
+  "cible": "https://inerweb.fr/?carte=p5",
+  "fichier": "recuperation-3.png"
+ },
+ {
+  "chapitre": 15,
+  "lecon": 4,
+  "titre": "La balance et la pesée",
+  "slug": "recuperation-4",
+  "alias": "https://inerweb.fr/f/recuperation-4",
+  "cible": "https://inerweb.fr/?carte=p6",
+  "fichier": "recuperation-4.png"
+ },
+ {
+  "chapitre": 15,
+  "lecon": 5,
+  "titre": "Stocker, transporter, tracer",
+  "slug": "recuperation-5",
+  "alias": "https://inerweb.fr/f/recuperation-5",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g5b",
+  "fichier": "recuperation-5.png"
+ },
+ {
   "chapitre": 16,
   "titre": "Tuyauterie et brasage sous azote",
   "slug": "brasage",
   "alias": "https://inerweb.fr/f/brasage",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g10",
   "fichier": "brasage.png"
+ },
+ {
+  "chapitre": 16,
+  "lecon": 1,
+  "titre": "Deux opérations à l azote, à ne pas confondre",
+  "slug": "brasage-1",
+  "alias": "https://inerweb.fr/f/brasage-1",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g10",
+  "fichier": "brasage-1.png"
+ },
+ {
+  "chapitre": 16,
+  "lecon": 2,
+  "titre": "Ce que la flamme fabrique sans azote",
+  "slug": "brasage-2",
+  "alias": "https://inerweb.fr/f/brasage-2",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g10",
+  "fichier": "brasage-2.png"
+ },
+ {
+  "chapitre": 16,
+  "lecon": 3,
+  "titre": "Le support compte autant que le joint",
+  "slug": "brasage-3",
+  "alias": "https://inerweb.fr/f/brasage-3",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g10",
+  "fichier": "brasage-3.png"
  },
  {
   "chapitre": 17,
@@ -136,6 +721,33 @@
   "fichier": "efficacite.png"
  },
  {
+  "chapitre": 17,
+  "lecon": 1,
+  "titre": "Drop-in ou retrofit",
+  "slug": "efficacite-1",
+  "alias": "https://inerweb.fr/f/efficacite-1",
+  "cible": "https://inerweb.fr/?carte=g11",
+  "fichier": "efficacite-1.png"
+ },
+ {
+  "chapitre": 17,
+  "lecon": 2,
+  "titre": "Ce qui fait consommer une installation",
+  "slug": "efficacite-2",
+  "alias": "https://inerweb.fr/f/efficacite-2",
+  "cible": "https://inerweb.fr/?carte=g11",
+  "fichier": "efficacite-2.png"
+ },
+ {
+  "chapitre": 17,
+  "lecon": 3,
+  "titre": "Hydrocarbures : une machine pas comme les autres",
+  "slug": "efficacite-3",
+  "alias": "https://inerweb.fr/f/efficacite-3",
+  "cible": "https://inerweb.fr/?carte=g11",
+  "fichier": "efficacite-3.png"
+ },
+ {
   "chapitre": 18,
   "titre": "Hydrocarbures — le spécifique A1 et A2",
   "slug": "hydrocarbures",
@@ -144,11 +756,83 @@
   "fichier": "hydrocarbures.png"
  },
  {
+  "chapitre": 18,
+  "lecon": 1,
+  "titre": "Étiquetage et deux confusions qui coûtent cher",
+  "slug": "hydrocarbures-1",
+  "alias": "https://inerweb.fr/f/hydrocarbures-1",
+  "cible": "https://inerweb.fr/?carte=g12",
+  "fichier": "hydrocarbures-1.png"
+ },
+ {
+  "chapitre": 18,
+  "lecon": 2,
+  "titre": "Avant toute flamme",
+  "slug": "hydrocarbures-2",
+  "alias": "https://inerweb.fr/f/hydrocarbures-2",
+  "cible": "https://inerweb.fr/?carte=g12",
+  "fichier": "hydrocarbures-2.png"
+ },
+ {
+  "chapitre": 18,
+  "lecon": 3,
+  "titre": "Charge maximale : jamais estimée",
+  "slug": "hydrocarbures-3",
+  "alias": "https://inerweb.fr/f/hydrocarbures-3",
+  "cible": "https://inerweb.fr/?carte=g12",
+  "fichier": "hydrocarbures-3.png"
+ },
+ {
+  "chapitre": 18,
+  "lecon": 4,
+  "titre": "Récupérer et remplir à l azote",
+  "slug": "hydrocarbures-4",
+  "alias": "https://inerweb.fr/f/hydrocarbures-4",
+  "cible": "https://inerweb.fr/?carte=g12b",
+  "fichier": "hydrocarbures-4.png"
+ },
+ {
+  "chapitre": 18,
+  "lecon": 5,
+  "titre": "Le fil rouge de l intervention",
+  "slug": "hydrocarbures-5",
+  "alias": "https://inerweb.fr/f/hydrocarbures-5",
+  "cible": "https://inerweb.fr/?carte=g12b",
+  "fichier": "hydrocarbures-5.png"
+ },
+ {
   "chapitre": 19,
   "titre": "CO₂ et NH₃ — reconnaître, ne pas intervenir",
   "slug": "co2-nh3",
   "alias": "https://inerweb.fr/f/co2-nh3",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g13",
   "fichier": "co2-nh3.png"
+ },
+ {
+  "chapitre": 19,
+  "lecon": 1,
+  "titre": "« A1 » ne veut pas dire « sans danger »",
+  "slug": "co2-nh3-1",
+  "alias": "https://inerweb.fr/f/co2-nh3-1",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g13",
+  "fichier": "co2-nh3-1.png"
+ },
+ {
+  "chapitre": 19,
+  "lecon": 2,
+  "titre": "La règle des catégories",
+  "slug": "co2-nh3-2",
+  "alias": "https://inerweb.fr/f/co2-nh3-2",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g13",
+  "fichier": "co2-nh3-2.png"
+ },
+ {
+  "chapitre": 19,
+  "lecon": 3,
+  "titre": "La glace carbonique, et le réflexe d arrivée sur site",
+  "slug": "co2-nh3-3",
+  "alias": "https://inerweb.fr/f/co2-nh3-3",
+  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g13",
+  "fichier": "co2-nh3-3.png"
  }
 ]

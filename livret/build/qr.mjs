@@ -45,18 +45,28 @@ const CAPSULES = path.join(SOURCE, 'packs', 'fluides', 'res', 'capsules', 'donne
 const erreurs = [];
 const entrees = [];
 
+/* La meilleure cible d'une fiche : sa capsule narrée si elle existe
+   (animations + voix), sinon la fiche interactive dans l'appli. */
+const cibleDe = (src) => fs.existsSync(path.join(CAPSULES, `${src}.js`))
+  ? `${APPLI}packs/fluides/res/capsules/index.html?c=${src}`
+  : `${APPLI}?carte=${src}`;
+
 for (const ch of CHAPITRES) {
   if (!ch.qr) { erreurs.push(`ch ${ch.num} « ${ch.titre} » : pas d'alias qr`); continue; }
-  let cible;
-  if (ch.genere) {
-    cible = `${APPLI}?carte=c00`;
-  } else {
-    const premiere = ch.lecons[0].src;
-    cible = fs.existsSync(path.join(CAPSULES, `${premiere}.js`))
-      ? `${APPLI}packs/fluides/res/capsules/index.html?c=${premiere}`
-      : `${APPLI}?carte=${premiere}`;
+  /* L'alias du chapitre... */
+  entrees.push({
+    chapitre: ch.num, titre: ch.titre, slug: ch.qr, alias: QR_BASE + ch.qr,
+    cible: ch.genere ? `${APPLI}?carte=c00` : cibleDe(ch.lecons[0].src),
+  });
+  /* ...et un alias PAR LEÇON : sous chaque leçon du papier, le code qui
+     ouvre son pendant interactif — l'animation, la voix, la correction.
+     Le livret est aussi le sommaire de la formation en ligne. */
+  for (const [i, l] of (ch.lecons || []).entries()) {
+    entrees.push({
+      chapitre: ch.num, lecon: i + 1, titre: l.t, slug: `${ch.qr}-${i + 1}`,
+      alias: `${QR_BASE}${ch.qr}-${i + 1}`, cible: cibleDe(l.src),
+    });
   }
-  entrees.push({ chapitre: ch.num, titre: ch.titre, slug: ch.qr, alias: QR_BASE + ch.qr, cible });
 }
 
 const doublons = entrees.map((e) => e.slug).filter((s, i, t) => t.indexOf(s) !== i);
@@ -97,9 +107,7 @@ const lignes = [
 fs.writeFileSync(HTACCESS, lignes.join('\n'), 'utf8');
 
 const capsules = entrees.filter((e) => e.cible.includes('capsules')).length;
+const parChapitre = entrees.filter((e) => !e.lecon).length;
 console.log('QR codes du livret — tome 1\n');
-for (const e of entrees) {
-  const type = e.cible.includes('capsules') ? 'capsule' : e.cible.includes('carte=c00') ? 'accueil' : 'fiche  ';
-  console.log(`  ch ${String(e.chapitre).padStart(2)} — /f/${e.slug.padEnd(12)} → ${type}`);
-}
-console.log(`\n✔ ${entrees.length} codes (${capsules} capsules narrées) · qr.gen.json · redirections.gen.htaccess`);
+console.log(`  ${parChapitre} alias de chapitre + ${entrees.length - parChapitre} alias de leçon`);
+console.log(`\n✔ ${entrees.length} codes (${capsules} vers une capsule narrée) · qr.gen.json · redirections.gen.htaccess`);

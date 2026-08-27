@@ -66,6 +66,24 @@ const parId = new Map(CARTES.map((c) => [c.id, c]));
 const erreurs = [];
 
 /* ------------------------------------------------------------------
+   Le référentiel, code par code. Le tome 1 prépare l'épreuve THÉORIQUE
+   des catégories que le centre valide : A1, A2, D, E — pas la V
+   (automobile), pas B/C (CO₂ et NH₃, traités en information). Son
+   périmètre exact est donc : les codes marqués « T » pour au moins
+   une de ces quatre catégories.
+   ------------------------------------------------------------------ */
+const CATEGORIES = ['A1', 'A2', 'D', 'E'];
+const IDX_REF = new Map();
+for (const g of REF.groupes) for (const c of g.codes || []) {
+  IDX_REF.set(c.code, { libelle: c.libelle, groupe: g.id, groupe_titre: g.titre, cat: c.cat || {} });
+}
+const referentielDe = (ou, codes) => codes.map((code) => {
+  const e = IDX_REF.get(code);
+  if (!e) { erreurs.push(`${ou} : code « ${code} » inconnu du référentiel`); return null; }
+  return { code, libelle: e.libelle, groupe: e.groupe, theorie: CATEGORIES.some((k) => e.cat[k] === 'T') };
+}).filter(Boolean);
+
+/* ------------------------------------------------------------------
    Le corps d'une fiche est du HTML concaténé : boutons-capsules,
    schémas, photos, puis les paragraphes de cours. Le livret ne veut
    que ces derniers — les visuels, le plan les désigne lui-même, et
@@ -123,8 +141,10 @@ const chapitres = CHAPITRES.map((ch) => {
   const questions = questionsDe(ch);
   if (!questions.length) erreurs.push(`${ou} : aucune question dans la banque pour ${JSON.stringify(ch.groupesQ)}`);
 
+  const referentiel = referentielDe(ou, ch.codes || []);
+
   if (ch.genere === 'categories') {
-    return { num: ch.num, genere: ch.genere, lecons: leconsCategories(REF), questions };
+    return { num: ch.num, genere: ch.genere, referentiel, lecons: leconsCategories(REF), questions };
   }
   if (ch.genere) {
     erreurs.push(`${ou} : générateur « ${ch.genere} » inconnu`);
@@ -143,8 +163,17 @@ const chapitres = CHAPITRES.map((ch) => {
     ? extraire(`${ou}, activité « ${ch.activite.t} »`, { src: ch.activite.src })
     : null;
 
-  return { num: ch.num, lecons, activite, questions };
+  return { num: ch.num, referentiel, lecons, activite, questions };
 });
+
+/* Être sûr de ne rien oublier : chaque code exigé en théorie pour
+   A1/A2/D/E doit être couvert par au moins un chapitre. Un manque
+   arrête la chaîne — c'est la raison d'être du livret. */
+const exiges = [...IDX_REF.entries()].filter(([, e]) => CATEGORIES.some((k) => e.cat[k] === 'T'));
+const couverts = new Set(CHAPITRES.flatMap((c) => c.codes || []));
+for (const [code, e] of exiges) {
+  if (!couverts.has(code)) erreurs.push(`couverture : code théorique « ${code} » (${e.groupe}) couvert par aucun chapitre`);
+}
 
 /* Verrou : aucune question officielle (ids `pk-*`) ne doit s'être
    glissée dans l'extraction, d'où qu'elle vienne. */
@@ -160,6 +189,8 @@ if (erreurs.length) {
 
 fs.writeFileSync(SORTIE, JSON.stringify({
   source: { depot: 'frigorx/pilote-fluides', commit: sourceCommit },
+  categories: CATEGORIES,
+  codes_theorie_exiges: exiges.length,
   chapitres,
 }, null, 1), 'utf8');
 

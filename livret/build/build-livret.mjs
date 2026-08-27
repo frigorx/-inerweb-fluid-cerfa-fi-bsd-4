@@ -114,9 +114,18 @@ const legende = (texte) => new Paragraph({
   spacing: { after: 160 },
 });
 
-/* Un ou deux visuels avec leurs légendes. Deux → côte à côte. */
+/* Un ou deux visuels avec leurs légendes. Deux → côte à côte — SAUF si
+   l'un est une planche technique (`svg:`) : une diapositive dense en
+   demi-largeur est illisible, elle passe donc toujours pleine page. */
 const visuels = (refs, legendes = []) => {
   const sortie = [];
+  if (refs.length >= 2 && refs.some((r) => r.startsWith('svg:'))) {
+    for (const [i, r] of refs.entries()) {
+      sortie.push(new Paragraph({ children: [image(r, r.startsWith('svg:') ? LARGEUR_PX : Math.round(LARGEUR_PX * 0.55))], alignment: AlignmentType.CENTER, keepNext: true }));
+      if (legendes[i]) sortie.push(legende(legendes[i]));
+    }
+    return sortie;
+  }
   if (refs.length >= 2) {
     const cellule = (i) => new TableCell({
       children: [
@@ -132,7 +141,7 @@ const visuels = (refs, legendes = []) => {
     }));
     sortie.push(new Paragraph({ spacing: { after: 60 } }));
   } else if (refs.length === 1) {
-    sortie.push(new Paragraph({ children: [image(refs[0], LARGEUR_PX)], alignment: AlignmentType.CENTER }));
+    sortie.push(new Paragraph({ children: [image(refs[0], LARGEUR_PX)], alignment: AlignmentType.CENTER, keepNext: true }));
     if (legendes[0]) sortie.push(legende(legendes[0]));
   }
   return sortie;
@@ -164,6 +173,7 @@ const encadre = (bloc) => {
   }
   return [new Table({
     rows: [new TableRow({
+      cantSplit: true,
       children: [new TableCell({
         children: enfants,
         shading: { type: ShadingType.CLEAR, fill: piege ? FOND_PIEGE : FOND_CLE },
@@ -186,6 +196,7 @@ const tableauDe = (tb) => {
     })),
   });
   const lignes = tb.lignes.map((l, i) => new TableRow({
+    cantSplit: true,
     children: l.map((c) => new TableCell({
       children: [new Paragraph({ children: runsDe(String(c), { size: 19 }) })],
       shading: i % 2 ? { type: ShadingType.CLEAR, fill: 'F4F7FA' } : undefined,
@@ -248,7 +259,37 @@ const choisirQuestions = (ch) => {
 };
 
 /* ------------------------- Les pages ------------------------- */
-const qrDe = (num) => QR.find((e) => e.chapitre === num);
+const qrDe = (num) => QR.find((e) => e.chapitre === num && !e.lecon);
+const qrLeconDe = (num, lecon) => QR.find((e) => e.chapitre === num && e.lecon === lecon);
+
+/* La ligne « voir à l'écran » d'une leçon : petit QR + adresse en clair.
+   Insécable, collée à ce qui précède. */
+const ligneEcran = (qr) => new Table({
+  rows: [new TableRow({
+    cantSplit: true,
+    children: [
+      new TableCell({
+        children: [new Paragraph({
+          children: [new ImageRun({ type: 'png', data: fs.readFileSync(path.join(LIVRET, 'qr.gen', qr.fichier)), transformation: { width: 52, height: 52 } })],
+        })],
+        borders: SANS_BORD, width: { size: 64, type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER,
+      }),
+      new TableCell({
+        children: [
+          new Paragraph({
+            children: [
+              t('À l’écran : ', { size: 18, color: MUT }),
+              t(qr.alias.replace('https://', ''), { bold: true, size: 18, color: BLEU }),
+              t(qr.cible.includes('capsule') ? '  —  cette leçon animée et racontée à voix haute.' : '  —  la fiche interactive, avec sa question corrigée.', { size: 18, color: MUT }),
+            ],
+          }),
+        ],
+        borders: SANS_BORD, verticalAlign: VerticalAlign.CENTER, margins: { left: 120 },
+      }),
+    ],
+  })],
+  width: { size: 100, type: WidthType.PERCENTAGE },
+});
 const contenuDe = (num) => CONTENU.chapitres.find((c) => c.num === num);
 const chapitresDe = (partie) => CHAPITRES.filter((c) => c.partie === partie);
 
@@ -280,7 +321,11 @@ const construire = async () => {
     }),
     new Paragraph({ children: [image(couv.visuels[0], Math.round(LARGEUR_PX * 0.9))], alignment: AlignmentType.CENTER, spacing: { after: 400 } }),
     new Paragraph({
-      children: [t('Préparation à l\u2019attestation d\u2019aptitude fluides frigorigènes', { size: 22, color: MUT })],
+      children: [t('Préparation à l\u2019épreuve théorique de l\u2019attestation d\u2019aptitude fluides frigorigènes', { size: 22, color: MUT })],
+      alignment: AlignmentType.CENTER, spacing: { after: 60 },
+    }),
+    new Paragraph({
+      children: [t(`Catégories ${CONTENU.categories.join(' · ')}`, { font: TITRES, bold: true, size: 24, color: BLEU })],
       alignment: AlignmentType.CENTER, spacing: { after: 60 },
     }),
     new Paragraph({
@@ -352,14 +397,62 @@ const construire = async () => {
         }),
         titre(ch.titre, 1),
         para(`<b>Objectif :</b> ${typo(ch.objectif)}`, { runs: { italics: true, size: 20 } }),
-        new Paragraph({
-          children: [t(`Codes du référentiel : ${ch.codes.join(' · ')}`, { size: 18, color: MUT })],
-          spacing: { after: 200 },
-          border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: LIGNE } },
-        }),
       );
 
-      /* Les leçons. */
+      /* 1. Ce que le référentiel exige — le texte officiel, code par
+         code. La raison d'être du livret : ne rien oublier. */
+      if (c.referentiel?.length) {
+        enfants.push(new Table({
+          rows: [new TableRow({
+            children: [new TableCell({
+              children: [
+                new Paragraph({
+                  children: [t('Ce que le référentiel exige ici', { font: TITRES, bold: true, size: 20, color: BLEU })],
+                  spacing: { after: 70 },
+                }),
+                ...c.referentiel.map((r) => new Paragraph({
+                  children: [
+                    t(`${r.code}  `, { bold: true, size: 18, color: BLEU }),
+                    ...runsDe(r.libelle, { size: 18 }),
+                    t(r.theorie ? '' : '   (évalué en pratique — tome 2 ; expliqué ici en théorie)', { size: 16, color: MUT, italics: true }),
+                  ],
+                  spacing: { after: 50 },
+                })),
+              ],
+              shading: { type: ShadingType.CLEAR, fill: 'F4F7FA' },
+              margins: { top: 120, bottom: 90, left: 150, right: 150 },
+              borders: SANS_BORD,
+            })],
+          })],
+          width: { size: 100, type: WidthType.PERCENTAGE },
+        }), new Paragraph({ spacing: { after: 140 } }));
+      }
+
+      /* 2. Les questions AVANT la lecture : chacun se juge d'abord —
+         inutile de tout relire quand on sait déjà. Corrections en fin
+         de chapitre. */
+      const questions = choisirQuestions(c);
+      enfants.push(
+        titre(`Testez-vous d'abord — ${questions.length} questions`, 2),
+        para(`Répondez <b>avant</b> de lire : vous saurez tout de suite ce que vous savez déjà, et ce qui ` +
+          `mérite votre lecture. Les corrections sont en fin de chapitre.`, { runs: { size: 20, color: MUT } }),
+      );
+      for (const [qi, q] of questions.entries()) {
+        enfants.push(new Paragraph({
+          children: [t(`${qi + 1}. `, { bold: true }), ...runsDe(q.enonce)],
+          spacing: { before: 120, after: 60 }, keepNext: true, keepLines: true,
+        }));
+        for (const [ci, choix] of q.choix.entries()) {
+          enfants.push(new Paragraph({
+            children: [t(`☐  ${String.fromCharCode(65 + ci)}.  `, { size: 20 }), ...runsDe(choix, { size: 20 })],
+            indent: { left: 280 }, spacing: { after: 30 }, keepLines: true,
+            keepNext: ci < q.choix.length - 1,
+          }));
+        }
+      }
+
+      /* 3. Les leçons — chacune se termine par son QR vers la version
+         interactive : l'animation, la voix, la correction. */
       for (const [i, l] of (ch.lecons || (c.lecons.map((x) => ({ t: x.t })))).entries()) {
         const lc = c.lecons[i];
         enfants.push(titre(`${ch.num}.${i + 1} — ${lc.t}`, 2));
@@ -367,9 +460,11 @@ const construire = async () => {
         for (const p of lc.paras) enfants.push(para(p));
         if (lc.tableau) enfants.push(...tableauDe(lc.tableau));
         for (const b of lc.blocs) enfants.push(...encadre(b));
+        const qrl = qrLeconDe(ch.num, i + 1);
+        if (qrl) enfants.push(ligneEcran(qrl), new Paragraph({ spacing: { after: 100 } }));
       }
 
-      /* L'activité. */
+      /* 4. L'activité. */
       const act = ch.activite;
       enfants.push(titre(`À vous — ${act.t}`, 2));
       enfants.push(...visuels(act.visuels, act.legendes));
@@ -381,18 +476,20 @@ const construire = async () => {
         spacing: { before: 160, after: 200 },
       }));
 
-      /* Les questions d'entraînement — jamais la réponse ici. */
-      const questions = choisirQuestions(c);
-      enfants.push(titre(`S'entraîner — ${questions.length} questions`, 2));
+      /* 5. Les corrections des questions du début. */
+      enfants.push(titre('Les réponses — corrigez-vous', 2));
       for (const [qi, q] of questions.entries()) {
         enfants.push(new Paragraph({
-          children: [t(`${qi + 1}. `, { bold: true }), ...runsDe(q.enonce)],
-          spacing: { before: 120, after: 60 }, keepNext: true,
+          children: [
+            t(`${qi + 1} → ${String.fromCharCode(65 + q.bonne)}.  `, { bold: true, size: 20, color: '1E7E54' }),
+            ...runsDe(q.choix[q.bonne], { size: 20, bold: true }),
+          ],
+          spacing: { before: 90, after: 40 }, keepNext: !!q.explication, keepLines: true,
         }));
-        for (const [ci, choix] of q.choix.entries()) {
+        if (q.explication) {
           enfants.push(new Paragraph({
-            children: [t(`☐  ${String.fromCharCode(65 + ci)}.  `, { size: 20 }), ...runsDe(choix, { size: 20 })],
-            indent: { left: 280 }, spacing: { after: 30 },
+            children: runsDe(q.explication, { size: 18, color: MUT }),
+            indent: { left: 280 }, spacing: { after: 60 },
           }));
         }
       }
@@ -405,6 +502,7 @@ const construire = async () => {
       const qr = qrDe(ch.num);
       enfants.push(new Table({
         rows: [new TableRow({
+          cantSplit: true,
           children: [
             new TableCell({
               children: [new Paragraph({
