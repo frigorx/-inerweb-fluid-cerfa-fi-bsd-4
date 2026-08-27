@@ -205,8 +205,8 @@ export const CHAPITRES = [
         visuels: ['svg:chaleur-sensible-latente', 'illu:g1s'],
         legendes: ['La température monte, puis s arrête', 'Les cinq mots dans l ordre'] },
       { t: 'Le palier, et pourquoi il n est pas plat', src: 'g1s', paras: [4, 5], blocs: [1, 2],
-        visuels: ['svg:bulle-rosee', 'svg:familles-fluides'],
-        legendes: ['Bulle et rosée', 'Le glissement des mélanges'] },
+        visuels: ['svg:diagramme-logph', 'svg:familles-fluides'],
+        legendes: ['Bulle et rosée : les deux flancs de la cloche', 'Le glissement des mélanges'] },
     ],
     activite: {
       t: 'Refaire la croix de mémoire',
@@ -614,8 +614,12 @@ export const CHAPITRES = [
         visuels: ['svg:familles-fluides', 'illu:g11'],
         legendes: ['Les candidats', 'Le piège de l année'] },
       { t: 'Ce qui fait consommer une installation', src: 'g11', paras: [4, 5, 6], blocs: [2],
-        visuels: ['svg:bilan-energie', 'illu:g11'],
-        legendes: ['Le bilan énergétique', 'Ce qui se règle'] },
+        /* Pas encore de planche « bilan énergétique » dans la bibliothèque :
+           la croix porte l'histoire (l'énergie entre au compresseur, le froid
+           sort à l'évaporateur). Une planche dédiée se dessinera un jour côté
+           pilote-fluides, jamais ici. */
+        visuels: ['svg:croix-frigoriste', 'illu:g11'],
+        legendes: ['L énergie entre à droite, le froid sort en bas', 'Ce qui se règle'] },
       { t: 'Hydrocarbures : une machine pas comme les autres', src: 'g11', paras: [7, 8], blocs: [3],
         visuels: ['svg:charge-limite-local', 'svg:classes-securite'],
         legendes: ['La charge limite selon le local', 'Ce que la classe impose'] },

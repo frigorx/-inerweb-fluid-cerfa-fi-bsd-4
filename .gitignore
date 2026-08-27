@@ -44,3 +44,6 @@ exports/
 # explicitement du suivi git.
 /docs/DOSSIER-TECHNIQUE.md
 /docs/AUDIT-COMPLET-2026-07-15.md
+
+# Livret : PNG derives, regeneres par npm run visuels (le manifeste, lui, est suivi)
+livret/visuels.gen/
