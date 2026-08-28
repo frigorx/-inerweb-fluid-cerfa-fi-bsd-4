@@ -135,7 +135,15 @@ const encadre = (b) => {
   const piege = b.type === 'piege';
   const corps = String(b.html);
   const items = corps.match(/<li>[\s\S]*?<\/li>/g) || [];
-  const paras = corps.replace(/<[ou]l>[\s\S]*?<\/[ou]l>/g, '').match(/<p>[\s\S]*?<\/p>/g) || [];
+  let paras = corps.replace(/<[ou]l>[\s\S]*?<\/[ou]l>/g, '').match(/<p>[\s\S]*?<\/p>/g) || [];
+  /* La source n'enveloppe pas toujours son texte dans un <p> : 81 encadrés
+     sur 109 n'en portaient aucun et s'imprimaient RÉDUITS À LEUR TITRE —
+     3 639 mots perdus, dont « le piège des manomètres ». Ce qui reste une
+     fois les listes ôtées est du texte : on l'imprime. */
+  if (!paras.length && !items.length) {
+    const reste = corps.replace(/<\/?p>/g, '').trim();
+    if (reste) paras = [reste];
+  }
   return `<aside class="encadre ${piege ? 'piege' : 'cle'}">
     <h4>${piege ? PICTO_PIEGE : ''}${ech(b.t)}</h4>
     ${paras.map((p) => `<p>${ech(p.replace(/<\/?p>/g, ''))}</p>`).join('')}

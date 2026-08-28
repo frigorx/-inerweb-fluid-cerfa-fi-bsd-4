@@ -349,12 +349,12 @@
   "source": "packs/fluides/res/svg/coup-de-liquide-piston.svg",
   "citations": 1
  },
- "svg:echangeur-air": {
-  "fichier": "svg-echangeur-air.png",
+ "svg:condenseur-trois-zones": {
+  "fichier": "svg-condenseur-trois-zones.png",
   "largeur": 2400,
-  "hauteur": 1067,
-  "source": "packs/fluides/res/svg/echangeur-air.svg",
-  "citations": 2
+  "hauteur": 1440,
+  "source": "packs/fluides/res/svg/condenseur-trois-zones.svg",
+  "citations": 1
  },
  "illu:g7": {
   "fichier": "illu-g7.png",
@@ -410,6 +410,13 @@
   "largeur": 2400,
   "hauteur": 2400,
   "source": "packs/fluides/res/symboles/echangeur_a_plaques.svg",
+  "citations": 1
+ },
+ "svg:echangeur-air": {
+  "fichier": "svg-echangeur-air.png",
+  "largeur": 2400,
+  "hauteur": 1067,
+  "source": "packs/fluides/res/svg/echangeur-air.svg",
   "citations": 1
  },
  "illu:g8": {
@@ -489,18 +496,18 @@
   "source": "packs/fluides/res/symboles/electrovanne_frigo.svg",
   "citations": 1
  },
+ "svg:regulateurs-kv-places": {
+  "fichier": "svg-regulateurs-kv-places.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "packs/fluides/res/svg/regulateurs-kv-places.svg",
+  "citations": 1
+ },
  "sym:filtre_deshydrateur": {
   "fichier": "sym-filtre_deshydrateur.png",
   "largeur": 2400,
   "hauteur": 1200,
   "source": "packs/fluides/res/symboles/filtre_deshydrateur.svg",
-  "citations": 1
- },
- "sym:voyant_liquide": {
-  "fichier": "sym-voyant_liquide.png",
-  "largeur": 2400,
-  "hauteur": 960,
-  "source": "packs/fluides/res/symboles/voyant_liquide.svg",
   "citations": 1
  },
  "svg:detendeur-regulation": {
