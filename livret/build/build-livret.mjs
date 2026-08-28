@@ -295,37 +295,109 @@ const creuse = (q) => /Retenez la notion-clé/.test(q.explication || '') || !q.e
 const enoncesVus = new Set();
 const cleEnonce = (q) => String(q.enonce || '').toLowerCase().replace(/\W+/g, ' ').trim();
 
-const choisirQuestions = (ch) => {
-  const pool = [...ch.questions].sort((a, b) =>
-    (creuse(a) - creuse(b))
-    || String(a.code || '').localeCompare(String(b.code || ''))
-    || String(a.id).localeCompare(String(b.id)));
-  const prises = []; const codesVus = new Set();
-  const libre = (q) => !enoncesVus.has(cleEnonce(q));
-  for (const q of pool) {
-    if (prises.length >= 6) break;
-    if (!libre(q)) continue;
-    if (q.code && codesVus.has(q.code)) continue;
-    prises.push(q); enoncesVus.add(cleEnonce(q)); if (q.code) codesVus.add(q.code);
-  }
-  for (const q of pool) {
-    if (prises.length >= 6) break;
-    if (!prises.includes(q) && libre(q)) { prises.push(q); enoncesVus.add(cleEnonce(q)); }
-  }
-  SELECTION[ch.num] = prises.map((q) => repartir(q));
-  /* Ce que le chapitre n'a pas pris part à la banque de révision : la source
-     porte 252 questions, un chapitre en pose six. Les autres ne sont pas de
-     trop — elles sont l'entraînement d'après, quand tout le livre est lu. */
-  RESERVE[ch.num] = pool
-    /* Une banque de révision doit apprendre quelque chose à chaque
-       correction : les questions dont l'explication ne dit rien de plus
-       que « retenez la formulation » n'y entrent pas. */
-    .filter((q) => !creuse(q))
-    .filter((q) => !prises.includes(q) && !enoncesVus.has(cleEnonce(q)))
-    .filter((q) => { if (enoncesVus.has(cleEnonce(q))) return false; enoncesVus.add(cleEnonce(q)); return true; })
-    .map((q) => repartir(q));
-  return prises;
+const rangGroupeDe = (ch) => {
+  const plan = CHAPITRES.find((x) => x.num === ch.num) || {};
+  return (q) => {
+    const i = (plan.groupesQ || []).indexOf(q.dc);
+    return i < 0 ? 99 : i;
+  };
 };
+
+/* ------------------------------------------------------------------
+   LA RÉPARTITION DES QUESTIONS, EN DEUX PASSES.
+
+   Une question appartient au chapitre où elle est LA PLUS pertinente,
+   pas au premier qui la croise. En une seule passe, le chapitre 1 prenait
+   les questions sur les classes de sécurité et le chapitre 2 — « Lire une
+   classe de sécurité » — se retrouvait avec six questions de nomenclature,
+   R410A et R12, sans une seule sur son sujet.
+
+   Passe 1 : chaque chapitre réserve les questions du groupe qu'il cite EN
+   PREMIER dans son plan (`groupesQ`), c'est-à-dire son sujet propre.
+   Passe 2 : on complète à six avec les groupes suivants, puis le reste.
+   Le surplus part à la banque de révision de fin d'ouvrage.
+   ------------------------------------------------------------------ */
+const repartirLesQuestions = (chapitres) => {
+  const pris = new Map();          // num de chapitre -> questions retenues
+  for (const ch of chapitres) pris.set(ch.num, []);
+
+  /* `varier` : n'accepter qu'une question par code du référentiel. On s'en
+     tient à cette règle tant qu'on sert les chapitres sur leur sujet ; on
+     la lève pour compléter, sinon des chapitres restent à trois questions
+     alors que leur pool en offre vingt. */
+  /* Les chapitres se servent du PLUS PAUVRE au plus riche. La source ne
+     porte que 180 énoncés distincts pour 252 questions, et cinq chapitres
+     n'en ont aucun qui leur soit propre : servis en dernier, ils
+     repartaient avec une seule question quand le chapitre 3, qui en a
+     dix-neuf rien qu'à lui, s'était servi le premier. */
+  const ordre = [...chapitres].sort((a, b) => a.questions.length - b.questions.length);
+
+  const passe = (rangMax, varier) => {
+    for (const ch of ordre) {
+      const prises = pris.get(ch.num);
+      if (prises.length >= 6) continue;
+      const rang = rangGroupeDe(ch);
+      const pool = [...ch.questions].sort((a, b) =>
+        (rang(a) - rang(b))
+        || (creuse(a) - creuse(b))
+        || String(a.code || '').localeCompare(String(b.code || ''))
+        || String(a.id).localeCompare(String(b.id)));
+      const codesVus = new Set(prises.map((q) => q.code).filter(Boolean));
+      for (const q of pool) {
+        if (prises.length >= 6) break;
+        if (rang(q) > rangMax) continue;
+        if (enoncesVus.has(cleEnonce(q))) continue;
+        if (varier && q.code && codesVus.has(q.code)) continue;
+        prises.push(q); enoncesVus.add(cleEnonce(q));
+        if (q.code) codesVus.add(q.code);
+      }
+    }
+  };
+
+  passe(0, true);      // d'abord, à chacun son sujet, un code par question
+  passe(99, true);     // puis les groupes suivants, même règle
+  passe(99, false);    // on complète à six, quitte à répéter un code
+
+  /* Dernier recours. Cinq chapitres n'ont AUCUNE question qui leur soit
+     propre : une fois les énoncés partagés distribués, ils restaient à une
+     ou deux questions. Un chapitre qui ouvre sur une seule question n'ouvre
+     pas. On autorise donc, pour ceux-là seulement, de reprendre un énoncé
+     déjà posé ailleurs — jusqu'à quatre. Le doublon est ici le moindre mal,
+     et il reste tracé : la source manque de questions sur ces sujets. */
+  const MINIMUM = 4;
+  const repetes = [];
+  for (const ch of ordre) {
+    const prises = pris.get(ch.num);
+    if (prises.length >= MINIMUM) continue;
+    const rang = rangGroupeDe(ch);
+    const pool = [...ch.questions].sort((a, b) => (rang(a) - rang(b)) || (creuse(a) - creuse(b)));
+    for (const q of pool) {
+      if (prises.length >= MINIMUM) break;
+      if (prises.includes(q)) continue;
+      prises.push(q); repetes.push(`ch ${ch.num}`);
+    }
+  }
+  if (repetes.length) {
+    console.log(`  ${repetes.length} question(s) reprises d'un autre chapitre, faute de questions propres : ${[...new Set(repetes)].join(', ')}`);
+  }
+
+  for (const ch of chapitres) {
+    const prises = pris.get(ch.num);
+    SELECTION[ch.num] = prises.map((q) => repartir(q));
+    /* Ce que le chapitre n'a pas pris part à la banque de révision : la
+       source porte 252 questions, un chapitre en pose six. Les autres ne
+       sont pas de trop — c'est l'entraînement d'après, le livre lu. */
+    RESERVE[ch.num] = ch.questions
+      .filter((q) => !creuse(q))
+      .filter((q) => !prises.includes(q))
+      .filter((q) => { if (enoncesVus.has(cleEnonce(q))) return false; enoncesVus.add(cleEnonce(q)); return true; })
+      .map((q) => repartir(q));
+  }
+  return pris;
+};
+
+const QUESTIONS_PAR_CHAPITRE = repartirLesQuestions(CONTENU.chapitres);
+const choisirQuestions = (ch) => QUESTIONS_PAR_CHAPITRE.get(ch.num) || [];
 
 /* ------------------------- Les pages ------------------------- */
 const qrDe = (num) => QR.find((e) => e.chapitre === num && !e.lecon);
