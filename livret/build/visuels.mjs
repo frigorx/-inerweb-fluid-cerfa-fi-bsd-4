@@ -40,10 +40,12 @@ const RES = path.join(SOURCE, 'packs', 'fluides', 'res');
 const DEHORS = path.join(ICI, '..', 'visuels.gen');
 const MANIFESTE = path.join(ICI, '..', 'visuels.gen.json');
 
-/* Largeur cible : pleine page A5 à 300 dpi (14,8 cm ≈ 1750 px), un peu
-   au-delà pour garder de la marge de recadrage. On ne grossit jamais
-   une image bitmap au-delà de sa taille d'origine. */
-const LARGEUR = 1800;
+/* Largeur cible. La planche centrale se lit COUCHÉE : elle s'étale sur
+   les 200 mm de la hauteur de page, et 300 points par pouce y réclament
+   2400 pixels — à 1800 elle tombait à 185 ppp, sous le seuil d'Amazon.
+   Les SVG n'y perdent rien, ils se rastérisent à la demande ; les
+   bitmaps ne sont jamais agrandis au-delà de leur taille d'origine. */
+const LARGEUR = 2400;
 
 const FAMILLES = {
   svg: (n) => path.join(RES, 'svg', `${n}.svg`),
@@ -117,11 +119,80 @@ if (erreurs.length) {
    élément initialement invisible est rendu visible, et les animations
    d'opacité sont retirées pour ne pas le recacher. Le reste du dessin —
    positions, couleurs, textes — n'est pas touché.
+
+   MAIS toutes les animations ne finissent pas visibles. Certaines font
+   APPARAÎTRE puis DISPARAÎTRE un élément (`values="0;0;1;1;0;0"`) : un
+   libellé qui cède la place au suivant. Tout révéler d'un coup les
+   empilait l'un sur l'autre — « alarme d'évacuation » par-dessus
+   « alarme intérieure » sur la planche CO₂. On lit donc où chaque
+   animation FINIT, et on s'y tient.
+
+   Sauf sur une planche EN BOUCLE : là, tout s'efface à la fin pour que
+   le cycle reparte, et respecter les fins rendrait une page blanche —
+   le coup de liquide y avait perdu son piston, son choc et sa morale.
+   Le partage se fait au compte : si la plupart des animations finissent
+   invisibles, c'est une boucle, et on révèle tout comme avant.
    ------------------------------------------------------------------ */
-const etatFinal = (svg) => svg
-  .replace(/<animate\b[^>]*attributeName="opacity"[^>]*\/>/g, '')
-  .replace(/\sopacity="0(?:\.0+)?"/g, ' opacity="1"')
-  .replace(/([;"\s])opacity\s*:\s*0(?:\.0+)?\s*([;"])/g, '$1opacity:1$2');
+/* Le balisage se parcourt avec une pile, pas avec une expression
+   régulière : l'animation n'est pas toujours le premier enfant de
+   l'élément qu'elle anime, et chercher « la balise juste avant » cassait
+   dix planches sur quarante-six. */
+const etatFinal = (svg) => {
+  const BALISE = /<!--[\s\S]*?-->|<\?[\s\S]*?\?>|<!\[CDATA\[[\s\S]*?\]\]>|<!DOCTYPE[^>]*>|<\/([\w:-]+)\s*>|<([\w:-]+)((?:"[^"]*"|'[^']*'|[^>"'])*?)(\/?)>/g;
+  const pile = [];         // les éléments ouverts à cet instant du parcours
+  const elements = [];     // tous ceux rencontrés, pour la passe finale
+  const retouches = [];    // { debut, fin, texte }, appliquées de la fin vers le début
+  const compte = { total: 0, eteintes: 0 };
+  let m;
+  while ((m = BALISE.exec(svg)) !== null) {
+    const [tout, ferme, ouvre, attrs, auto] = m;
+    if (ferme) { pile.pop(); continue; }
+    if (!ouvre) continue;                       // commentaire, instruction, CDATA
+
+    if (ouvre === 'animate' && /attributeName\s*=\s*"opacity"/.test(attrs)) {
+      /* Où finit-elle ? La dernière valeur de la liste, ou le `to`. */
+      const vals = /values="([^"]*)"/.exec(attrs);
+      const to = /\bto="([^"]*)"/.exec(attrs);
+      const derniere = vals ? vals[1].split(';').pop() : (to ? to[1] : '1');
+      const anime = pile[pile.length - 1];
+      if (anime) {
+        /* Un élément qui finit invisible porte une marque, pour que
+           l'étape suivante ne le révèle pas avec les autres. */
+        anime.opacite = parseFloat(derniere) > 0.01 ? '1' : '@CACHE@';
+        compte.total += 1;
+        if (anime.opacite === '@CACHE@') compte.eteintes += 1;
+      }
+      retouches.push({ debut: m.index, fin: m.index + tout.length, texte: '' });
+      continue;
+    }
+    if (!auto) {
+      const e = { debut: m.index, fin: m.index + tout.length, tag: ouvre, attrs };
+      pile.push(e);
+      elements.push(e);
+    }
+  }
+
+  /* Planche en boucle : tout s'y éteint à la fin pour que le cycle
+     reparte. On ne respecte alors aucune fin, on révèle. */
+  const enBoucle = compte.total > 0 && compte.eteintes * 2 > compte.total;
+  for (const e of elements) {
+    if (!e.opacite) continue;
+    if (enBoucle) e.opacite = '1';
+    const nets = e.attrs.replace(/\sopacity\s*=\s*"[^"]*"/g, '')
+      .replace(/([;"\s])opacity\s*:\s*[\d.]+\s*;?/g, '$1');
+    retouches.push({ debut: e.debut, fin: e.fin, texte: `<${e.tag}${nets} opacity="${e.opacite}">` });
+  }
+
+  let s = svg;
+  for (const r of retouches.sort((a, b) => b.debut - a.debut)) {
+    s = s.slice(0, r.debut) + r.texte + s.slice(r.fin);
+  }
+  /* Ce qui naît invisible SANS animation est un élément que le dessin
+     révèle plus tard : celui-là, on le montre. */
+  s = s.replace(/\sopacity="0(?:\.0+)?"/g, ' opacity="1"')
+    .replace(/([;"\s])opacity\s*:\s*0(?:\.0+)?\s*([;"])/g, '$1opacity:1$2');
+  return s.replace(/@CACHE@/g, '0');
+};
 
 const reveillees = [];
 
@@ -139,7 +210,7 @@ for (const { ref, famille, nom, chemin } of aConvertir) {
     if (fini !== brut) { reveillees.push(ref); source = Buffer.from(fini); }
   }
   const img = famille === 'svg' || famille === 'sym'
-    ? sharp(source, { density: 300 }).resize({ width: LARGEUR, withoutEnlargement: false })
+    ? sharp(source, { density: 500 }).resize({ width: LARGEUR, withoutEnlargement: false })
     : sharp(source).resize({ width: LARGEUR, withoutEnlargement: true });
   const info = await img.png({ compressionLevel: 9 }).toFile(sortie);
   manifeste[ref] = {

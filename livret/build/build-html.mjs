@@ -107,6 +107,25 @@ h2,h3,h4,.sect-t,.lecon-t,.page-t,.sect-intro{break-after:avoid;page-break-after
 .rupture{break-before:page;page-break-before:always}
 .seul{break-before:page;break-after:page;page-break-before:always;page-break-after:always}
 
+/* ---------- La page couchée ----------
+   Amazon n'accepte qu'un seul format de page dans un intérieur : on ne
+   peut pas glisser une feuille paysage. On couche donc le CONTENU d'un
+   quart de tour dans une page ordinaire — le lecteur tourne le livre.
+   Sens conventionnel en édition : le haut de la planche part vers la
+   gauche, on tourne l'ouvrage dans le sens des aiguilles.
+   Les cotes se déduisent des marges réglées, jamais écrites en dur. */
+.paysage{height:${(228.6 - R.haut_mm - R.bas_mm).toFixed(1)}mm;position:relative}
+.paysage-in{position:absolute;top:50%;left:50%;transform-origin:center center;
+  transform:translate(-50%,-50%) rotate(-90deg);
+  width:${(228.6 - R.haut_mm - R.bas_mm).toFixed(1)}mm;
+  height:${(152.4 - R.gouttiere_mm - R.exterieur_mm).toFixed(1)}mm;
+  display:flex;flex-direction:column}
+/* Titre resserré : chaque millimètre rendu ici passe dans la planche. */
+.paysage-in .page-t{font-size:16pt;margin:0 0 3mm}
+.paysage-in figure{margin:0;flex:1;min-height:0;display:flex;flex-direction:column}
+/* La planche prend TOUT le cadre couché, sans déformer ses proportions. */
+.paysage-in figure img{max-height:none;width:100%;height:100%;flex:1;min-height:0;object-fit:contain}
+
 /* ---------- Titres et texte ---------- */
 .page-t{font:700 25pt/1.1 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:0 0 5mm}
 /* Jamais justifié : la charte l'interdit, et les rivières de blanc du
@@ -179,7 +198,10 @@ figure figcaption{margin-top:1.6mm;text-align:center;font-style:italic;font-size
 .encadre ol{margin:0;padding-left:5.4mm;font-size:1em}
 .encadre li{margin-bottom:1mm}
 .encadre.piege{border-left-color:var(--ko);background:#fbe7e4}
-.encadre.piege h4{color:var(--ko)}
+.encadre.piege h4{color:var(--ko);display:flex;align-items:center;gap:1.8mm}
+/* Le triangle d'avertissement, dessiné : il remplace l'emoji ⚠, que le
+   navigateur rendait en bitmap couleur — invendable sur un tirage N&B. */
+.picto-piege{width:4.6mm;height:4.2mm;flex:none}
 
 /* ---------- Questions ---------- */
 .q{margin-bottom:calc(var(--air) * 3.4mm)}
@@ -326,11 +348,16 @@ const CHROME = process.env.CHROME || 'C:/Program Files/Google/Chrome/Application
 let pdf = '(Chrome absent : pas de PDF)';
 if (fs.existsSync(CHROME)) {
   const cible = path.join(DIST, `${NOM}.pdf`);
+  /* Le budget de temps virtuel est un PLAFOND, pas une attente : Chrome
+     imprime dès que le rendu est stable. À 30 s il coupait avant d'avoir
+     décodé les 22 Mo d'images embarquées, et le livre perdait cent pages
+     d'une fabrication à l'autre — une pagination qui bouge, c'est un dos
+     de couverture faux. Large, la fabrication redevient reproductible. */
   execFileSync(CHROME, [
     '--headless', '--disable-gpu', '--no-pdf-header-footer',
-    `--print-to-pdf=${cible}`, '--virtual-time-budget=30000',
+    `--print-to-pdf=${cible}`, '--virtual-time-budget=600000',
     'file:///' + fichierHtml.replace(/\\/g, '/'),
-  ], { stdio: 'ignore', timeout: 300000 });
+  ], { stdio: 'ignore', timeout: 900000 });
   /* Bandeaux, pieds et numéros : ce que le navigateur ne sait pas poser. */
   try {
     execFileSync('python', [path.join(ICI, 'finition.py'), cible], { stdio: 'inherit', timeout: 180000 });

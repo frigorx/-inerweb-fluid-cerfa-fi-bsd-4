@@ -37,11 +37,49 @@ const dataUri = (dossier, fichier) => {
 };
 export const visuel = (ref) => dataUri('visuels.gen', VISUELS[ref].fichier);
 const ratio = (ref) => VISUELS[ref].hauteur / VISUELS[ref].largeur;
+
+/* Les cotes de l'image, écrites dans la balise. Sans elles, le navigateur
+   doit DÉCODER chaque image pour connaître sa forme et savoir quelle
+   hauteur lui réserver : la mise en page dépend alors de l'ordre dans
+   lequel 314 images de 22 Mo finissent de se décoder, et le livre change
+   de pagination d'une fabrication à l'autre — on l'a vu passer de 383 à
+   272 pages sans qu'une ligne de contenu ait bougé. Cotes déclarées, la
+   place est réservée avant tout décodage, et le livre est reproductible. */
+const cotes = (ref) => ` width="${VISUELS[ref].largeur}" height="${VISUELS[ref].hauteur}"`;
 const qrImg = (slug) => dataUri('qr.gen', QR.find((e) => e.slug === slug).fichier);
 
 const ech = (s) => String(s)
   .replace(/&(?![a-zA-Z]+;|#\d+;)/g, '&amp;')
-  .replace(/<(?!\/?(?:b|i)>)/g, '&lt;');
+  .replace(/<(?!\/?(?:b|i)>)/g, '&lt;')
+  /* Le panneau ⚠ que la source glisse au fil du texte : le navigateur va
+     le chercher dans la police d'emoji, en COULEUR et en bitmap (Type 3).
+     Sur un tirage noir et blanc, il ressort en pâté. Dans une phrase il
+     tenait de toute façon la place d'un mot ; on écrit le mot. */
+  .replace(/⚠️?\s*/g, 'À éviter : ')
+  /* Typographie d'imprimerie. L'apostrophe droite du clavier n'existe pas
+     dans un livre : la source en portait 1719, mêlées à 452 courbes, sur
+     227 pages — ça se voit au premier coup d'œil sur papier.
+     1. entre deux lettres, c'est une apostrophe : l'eau → l’eau ;
+     2. par paire autour d'un mot, ce sont des guillemets : on met des
+        chevrons et des espaces insécables, comme le veut le français ;
+     3. ce qui reste est une apostrophe isolée. */
+  .replace(/(\p{L})'(\p{L})/gu, '$1’$2')
+  .replace(/'([^'\n]{1,60})'/g, '« $1 »')
+  .replace(/'/g, '’')
+  /* Le français veut une espace avant les signes doubles, et elle doit
+     être INSÉCABLE : sinon la ligne se coupe là, et le livre imprime un
+     chevron ou un point-virgule tout seul en tête de ligne. */
+  .replace(/«[ 	 ]*/g, '« ')
+  .replace(/[ 	 ]*»/g, ' »')
+  .replace(/[  ]+([;:!?])(?=\s|$)/g, ' $1');
+
+/* Le même avertissement, mais en tête d'encadré : là c'est un signal, pas
+   un mot. On le dessine — un tracé s'imprime net à toute taille, et il
+   passe en gris franc sur une presse noir et blanc. */
+const PICTO_PIEGE = `<svg class="picto-piege" viewBox="0 0 20 18" aria-hidden="true">
+  <path d="M10 1.7 19.1 16.5H0.9z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>
+  <path d="M10 6.9v4.4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+  <circle cx="10" cy="14.1" r="1.05" fill="currentColor"/></svg>`;
 /* Le plan écrit ses chaînes sans apostrophes ; on les restitue. */
 export const apos = (s) => String(s).replace(
   /\b(jusqu|lorsqu|puisqu|quelqu|aujourd|[qQ]u|[dcjlmnstDCJLMNST])\s(?=[aeiouyhéèêëàâîïôûAEIOUYHÉÈÊÀÂÎÔ])/g, '$1’');
@@ -62,7 +100,7 @@ const figure = (refs, legendes = []) => {
   const technique = refs.some(estTechnique);
   if (refs.length >= 2 && !technique) {
     return `<div class="duo">${refs.map((r, i) => `
-      <figure><img src="${visuel(r)}" alt="">${legendes[i] ? `<figcaption>${ech(apos(legendes[i]))}</figcaption>` : ''}</figure>`).join('')}</div>`;
+      <figure><img src="${visuel(r)}"${cotes(r)} alt="">${legendes[i] ? `<figcaption>${ech(apos(legendes[i]))}</figcaption>` : ''}</figure>`).join('')}</div>`;
   }
   /* Une planche accompagnée d'une illustration d'ambiance : la planche
      explique et prend la largeur, l'illustration accompagne et se range
@@ -72,7 +110,7 @@ const figure = (refs, legendes = []) => {
   return refs.map((r, i) => {
     const appoint = appointPossible && !estTechnique(r);
     return `<figure class="${appoint ? 'appoint' : 'planche'}${!appoint && ratio(r) > 1.15 ? ' haute' : ''}">
-      <img src="${visuel(r)}" alt="">
+      <img src="${visuel(r)}"${cotes(r)} alt="">
       ${legendes[i] ? `<figcaption>${ech(apos(legendes[i]))}</figcaption>` : ''}
     </figure>`;
   }).join('');
@@ -96,7 +134,7 @@ const encadre = (b) => {
   const items = corps.match(/<li>[\s\S]*?<\/li>/g) || [];
   const paras = corps.replace(/<[ou]l>[\s\S]*?<\/[ou]l>/g, '').match(/<p>[\s\S]*?<\/p>/g) || [];
   return `<aside class="encadre ${piege ? 'piege' : 'cle'}">
-    <h4>${piege ? '⚠ ' : ''}${ech(b.t)}</h4>
+    <h4>${piege ? PICTO_PIEGE : ''}${ech(b.t)}</h4>
     ${paras.map((p) => `<p>${ech(p.replace(/<\/?p>/g, ''))}</p>`).join('')}
     ${items.length ? `<ol>${items.map((li) => `<li>${ech(li.replace(/<\/?li>/g, ''))}</li>`).join('')}</ol>` : ''}
   </aside>`;
@@ -132,7 +170,7 @@ export const construireFlux = () => {
     <div class="couv-marque"><span class="flocon">❄</span><span class="iner">iner</span><span class="web">Web</span><span class="cartouche">HabFluide</span></div>
     <div class="couv-titre"><h1>HabFluide</h1>
       <p class="couv-sous">Livret élève — tome 1 : la théorie</p></div>
-    <img class="couv-illu" src="${visuel(couv.visuels[0])}" alt="">
+    <img class="couv-illu" src="${visuel(couv.visuels[0])}"${cotes(couv.visuels[0])} alt="">
     <div class="couv-bas">
       <p class="couv-epreuve">Préparation à l’épreuve <b>théorique</b><br>de l’attestation d’aptitude fluides frigorigènes</p>
       <p class="couv-cats">${CONTENU.categories.map((c) => `<span>${c}</span>`).join('')}</p>
@@ -254,7 +292,7 @@ export const construireFlux = () => {
       if (act.visuels) pousse(figure(act.visuels, act.legendes), meta);
       if (c.activite) for (const p of c.activite.paras) pousse(`<p class="txt">${ech(p)}</p>`, meta);
       pousse(lignes(act.lignes), meta);
-      pousse(`<p class="voix"><span>À voix haute</span>« ${ech(apos(act.voixHaute))} »</p>`, meta);
+      pousse(`<p class="voix"><span>À voix haute</span>« ${ech(apos(act.voixHaute))} »</p>`, meta);
 
       /* 4 — Les réponses */
       pousse(`<h3 class="sect-t"><span class="sect-num">4</span>Les réponses — corrigez-vous</h3>`,
@@ -272,11 +310,15 @@ export const construireFlux = () => {
     : 'Le chapitre en version interactive, avec ses questions corrigées.')}`, meta);
     }
 
-    /* La planche centrale, après la partie C. */
+    /* La planche centrale, après la partie C. Couchée d'un quart de tour :
+       le circuit est large (rapport 1,6), il butait sur les 120 mm de
+       justification alors que la page en offre 200 dans l'autre sens. Le
+       lecteur tourne le livre, la planche gagne 38 % de taille. */
     if (partie.id === 'C') {
       for (const face of [PLANCHE_CENTRALE.corrige, PLANCHE_CENTRALE.fantome]) {
-        pousse(`<h2 class="page-t">${ech(apos(face.t))}</h2>${figure(face.visuels, face.legendes)}`,
-          { seul: true, partie: partie.id });
+        pousse(`<div class="paysage"><div class="paysage-in">
+          <h2 class="page-t">${ech(apos(face.t))}</h2>${figure(face.visuels, face.legendes)}
+          </div></div>`, { seul: true, partie: partie.id });
       }
     }
   }
@@ -322,7 +364,7 @@ export const construireFlux = () => {
     if (LEXIQUE[p.id]) {
       const lex = LEXIQUE[p.id];
       pousse(`<p class="txt lex-chapeau">${ech(lex.titre)} — les mots du métier, expliqués avec
-        des mots plus simples qu'eux.</p>`, { nue: true });
+        des mots plus simples qu’eux.</p>`, { nue: true });
       for (const [terme, def] of lex.entrees) {
         pousse(`<p class="lex"><b>${ech(terme)}</b><span>${ech(def)}</span></p>`, { nue: true });
       }

@@ -1,27 +1,66 @@
-<!doctype html>
+/* =====================================================================
+   LIVRET « inerweb.fr HabFluide » — LA COUVERTURE AMAZON KDP
+   ---------------------------------------------------------------------
+   4e de couverture · dos · 1re, d'un seul tenant, aux cotes exactes du
+   téléversement.
+
+   Elle était écrite à la main, et c'est ainsi qu'elle a porté un dos de
+   390 pages pendant que la fiche en annonçait 406 et que le livre en
+   faisait 290 : trois chiffres pour un même ouvrage, et un dos faux de
+   près de six millimètres. Elle se calcule donc, ici, sur `kdp.gen.json`
+   — écrit par la finition à partir du PDF réel. Une seule source.
+
+   Sorties : couverture-kdp.html          (pour l'écran et Claude Design)
+             dist/…-Couverture-6x9.pdf    (le fichier à téléverser)
+
+   `node build/couverture.mjs`
+   ===================================================================== */
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
+const ICI = path.dirname(fileURLToPath(import.meta.url));
+const LIVRET = path.join(ICI, '..');
+const DIST = path.join(LIVRET, 'dist');
+const KDP = JSON.parse(fs.readFileSync(path.join(LIVRET, 'kdp.gen.json'), 'utf8'));
+
+const [LARGEUR, HAUTEUR] = KDP.couverture_mm;
+const DOS = KDP.dos_mm;
+const NOM = 'inerweb.fr-HabFluide-Tome1-Couverture-6x9';
+
+/* Un livre français écrit ses décimales avec une virgule. */
+const fr = (n) => String(n).replace('.', ',');
+
+/* Le dos ne porte de texte qu'à partir de 100 pages (règle Amazon), et
+   il faut de la place : sous 9 mm, on n'y met que le flocon. */
+const DOS_ECRIT = KDP.pages >= 100 && DOS >= 9;
+
+const html = `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8">
 <title>inerweb.fr HabFluide — couverture Amazon KDP</title>
 <style>
   :root{
     --bleu:#1B3A63; --bleu2:#2f5689; --orange:#FF6B35; --logo:#e8914a;
     --mut:#5a6b7d; --pale:#F4F7FA; --ligne:#d6dee7;
-    /* Cotes calculées sur 290 pages, papier blanc, intérieur
-       noir et blanc. Dos = 290 × 0,002252 pouce. */
-    --fp:3.175mm; --page-l:152.4mm; --page-h:228.6mm; --dos:16.59mm;
+    /* Cotes calculées sur ${KDP.pages} pages, papier blanc, intérieur
+       noir et blanc. Dos = ${KDP.pages} × 0,002252 pouce. */
+    --fp:3.175mm; --page-l:152.4mm; --page-h:228.6mm; --dos:${DOS}mm;
     --marge:14mm;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:#dfe5ec;font:14px/1.5 Calibri,"Segoe UI",system-ui,sans-serif;
     padding:24px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 
-  .note{max-width:327.74mm;margin:0 auto 16px;background:#fff;border-radius:10px;
+  .note{max-width:${LARGEUR}mm;margin:0 auto 16px;background:#fff;border-radius:10px;
     padding:16px 20px;box-shadow:0 2px 10px rgba(27,58,99,.12);color:#1d2a38}
   .note h1{font:700 19px/1.3 "Trebuchet MS",sans-serif;color:var(--bleu);margin-bottom:6px}
   .note p{margin-bottom:6px;max-width:100ch}
   .note b{color:var(--bleu)}
 
   /* La couverture complète : 4e — dos — 1re, fonds perdus compris. */
-  .couverture{width:327.74mm;height:234.95mm;display:flex;margin:0 auto;
+  .couverture{width:${LARGEUR}mm;height:${HAUTEUR}mm;display:flex;margin:0 auto;
     background:#fff;box-shadow:0 6px 24px rgba(27,58,99,.24);overflow:hidden}
   /* Le fond perdu prolonge la couleur du plat qu'il borde — sinon la
      coupe, qui tombe toujours un peu à côté, laisse une bande étrangère
@@ -59,10 +98,10 @@
   .dos{width:var(--dos);flex:none;background:var(--bleu);color:#fff;
     display:flex;flex-direction:column;align-items:center;justify-content:space-between;
     padding:calc(var(--marge) + var(--fp)) 0 var(--marge)}
-  .dos-haut{writing-mode:vertical-rl;font:700 13pt "Trebuchet MS",sans-serif;
+  .dos-haut{writing-mode:vertical-rl;font:700 ${DOS >= 14 ? 13 : 10.5}pt "Trebuchet MS",sans-serif;
     letter-spacing:.04em;white-space:nowrap}
   .dos-haut i{font-style:normal;color:var(--orange)}
-  .dos-bas{font:700 10pt "Trebuchet MS",sans-serif;color:#cfdcea;writing-mode:vertical-rl}
+  .dos-bas{font:700 ${DOS >= 14 ? 10 : 8.5}pt "Trebuchet MS",sans-serif;color:#cfdcea;writing-mode:vertical-rl}
   .dos-floc{font-size:13pt;color:var(--logo)}
 
   /* ---------------- 4e de couverture ---------------- */
@@ -91,7 +130,7 @@
 
   /* ---------------- Le fichier qu'on téléverse ---------------- */
   /* Une seule page, aux cotes exactes, sans la notice ni les ombres. */
-  @page{size:327.74mm 234.95mm;margin:0}
+  @page{size:${LARGEUR}mm ${HAUTEUR}mm;margin:0}
   @media print{
     body{background:#fff;padding:0}
     .note{display:none}
@@ -103,10 +142,10 @@
 
 <div class="note">
   <h1>Couverture Amazon KDP — inerweb.fr HabFluide, tome 1</h1>
-  <p>Format exact, prêt pour le téléversement : <b>327,74 × 234,95 mm</b>
-     (12,903 × 9,25 pouces), fonds perdus de 3,175 mm compris.
-     Dos de <b>16,59 mm</b>, calculé sur <b>290 pages</b> en papier blanc noir et blanc
-     (290 × 0,002252 pouce). Cette page est <b>générée</b> : si la pagination bouge,
+  <p>Format exact, prêt pour le téléversement : <b>${fr(LARGEUR)} × ${fr(HAUTEUR)} mm</b>
+     (${fr((LARGEUR / 25.4).toFixed(3))} × ${fr((HAUTEUR / 25.4).toFixed(2))} pouces), fonds perdus de 3,175 mm compris.
+     Dos de <b>${fr(DOS)} mm</b>, calculé sur <b>${KDP.pages} pages</b> en papier blanc noir et blanc
+     (${KDP.pages} × 0,002252 pouce). Cette page est <b>générée</b> : si la pagination bouge,
      <code>npm run couverture</code> la refait juste.</p>
   <p>Le rectangle en bas de la 4e de couverture est la <b>zone réservée au code-barres ISBN</b> :
      Amazon l'imprime lui-même, rien ne doit s'y trouver. Son cadre ne s'imprime pas.</p>
@@ -155,9 +194,11 @@
 
   <!-- ============ DOS ============ -->
   <div class="dos">
-    <div class="dos-haut">HabFluide <i>· tome 1 : la théorie</i></div>
+    ${DOS_ECRIT
+    ? `<div class="dos-haut">HabFluide <i>· tome 1 : la théorie</i></div>
     <div class="dos-floc">❄</div>
-    <div class="dos-bas">F. Henninot</div>
+    <div class="dos-bas">F. Henninot</div>`
+    : `<div class="dos-floc">❄</div>`}
   </div>
 
   <!-- ============ 1re DE COUVERTURE ============ -->
@@ -200,4 +241,27 @@
 
   <div class="fp cote-un"></div>
 </div>
-</body></html>
+</body></html>`;
+
+const fichier = path.join(LIVRET, 'couverture-kdp.html');
+fs.writeFileSync(fichier, html, 'utf8');
+
+/* ---- Le PDF de téléversement, par le même moteur que l'intérieur ---- */
+fs.mkdirSync(DIST, { recursive: true });
+const CHROME = process.env.CHROME || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
+let pdf = '(Chrome absent : pas de PDF)';
+if (fs.existsSync(CHROME)) {
+  const cible = path.join(DIST, `${NOM}.pdf`);
+  execFileSync(CHROME, [
+    '--headless', '--disable-gpu', '--no-pdf-header-footer',
+    `--print-to-pdf=${cible}`, '--virtual-time-budget=60000',
+    'file:///' + fichier.replace(/\\/g, '/'),
+  ], { stdio: 'ignore', timeout: 300000 });
+  pdf = path.relative(process.cwd(), cible);
+}
+
+console.log('Couverture Amazon KDP');
+console.log(`  ${KDP.pages} pages · dos ${DOS} mm · ${LARGEUR} x ${HAUTEUR} mm, fonds perdus compris`);
+console.log(`  dos ${DOS_ECRIT ? 'titré' : 'nu (trop étroit pour du texte)'}`);
+console.log(`✔ ${path.relative(process.cwd(), fichier)}`);
+console.log(`✔ ${pdf}`);

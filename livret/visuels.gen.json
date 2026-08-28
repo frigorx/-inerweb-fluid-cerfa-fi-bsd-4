@@ -1,8 +1,8 @@
 {
  "svg:secu-espace-clos": {
   "fichier": "svg-secu-espace-clos.png",
-  "largeur": 1800,
-  "hauteur": 760,
+  "largeur": 2400,
+  "hauteur": 1013,
   "source": "packs/fluides/res/svg/secu-espace-clos.svg",
   "citations": 1
  },
@@ -15,8 +15,8 @@
  },
  "svg:secu-projection": {
   "fichier": "svg-secu-projection.png",
-  "largeur": 1800,
-  "hauteur": 620,
+  "largeur": 2400,
+  "hauteur": 827,
   "source": "packs/fluides/res/svg/secu-projection.svg",
   "citations": 1
  },
@@ -29,8 +29,8 @@
  },
  "svg:secu-decomposition-ari": {
   "fichier": "svg-secu-decomposition-ari.png",
-  "largeur": 1800,
-  "hauteur": 640,
+  "largeur": 2400,
+  "hauteur": 853,
   "source": "packs/fluides/res/svg/secu-decomposition-ari.svg",
   "citations": 2
  },
@@ -43,8 +43,8 @@
  },
  "svg:secu-bouteille": {
   "fichier": "svg-secu-bouteille.png",
-  "largeur": 1800,
-  "hauteur": 660,
+  "largeur": 2400,
+  "hauteur": 880,
   "source": "packs/fluides/res/svg/secu-bouteille.svg",
   "citations": 1
  },
@@ -57,8 +57,8 @@
  },
  "svg:secu-consignation": {
   "fichier": "svg-secu-consignation.png",
-  "largeur": 1800,
-  "hauteur": 600,
+  "largeur": 2400,
+  "hauteur": 800,
   "source": "packs/fluides/res/svg/secu-consignation.svg",
   "citations": 2
  },
@@ -71,8 +71,8 @@
  },
  "svg:prepa-chantier": {
   "fichier": "svg-prepa-chantier.png",
-  "largeur": 1800,
-  "hauteur": 614,
+  "largeur": 2400,
+  "hauteur": 818,
   "source": "packs/fluides/res/svg/prepa-chantier.svg",
   "citations": 2
  },
@@ -85,22 +85,22 @@
  },
  "svg:classes-securite": {
   "fichier": "svg-classes-securite.png",
-  "largeur": 1800,
-  "hauteur": 727,
+  "largeur": 2400,
+  "hauteur": 969,
   "source": "packs/fluides/res/svg/classes-securite.svg",
   "citations": 5
  },
  "sym:manometres": {
   "fichier": "sym-manometres.png",
-  "largeur": 1800,
-  "hauteur": 1440,
+  "largeur": 2400,
+  "hauteur": 1919,
   "source": "packs/fluides/res/symboles/manometres.svg",
   "citations": 4
  },
  "svg:familles-fluides": {
   "fichier": "svg-familles-fluides.png",
-  "largeur": 1800,
-  "hauteur": 1040,
+  "largeur": 2400,
+  "hauteur": 1387,
   "source": "packs/fluides/res/svg/familles-fluides.svg",
   "citations": 5
  },
@@ -113,8 +113,8 @@
  },
  "svg:lie-domaine": {
   "fichier": "svg-lie-domaine.png",
-  "largeur": 1800,
-  "hauteur": 695,
+  "largeur": 2400,
+  "hauteur": 927,
   "source": "packs/fluides/res/svg/lie-domaine.svg",
   "citations": 3
  },
@@ -127,43 +127,43 @@
  },
  "svg:co2-point-bas": {
   "fichier": "svg-co2-point-bas.png",
-  "largeur": 1800,
-  "hauteur": 777,
+  "largeur": 2400,
+  "hauteur": 1036,
   "source": "packs/fluides/res/svg/co2-point-bas.svg",
   "citations": 2
  },
  "svg:co2-nh3-compare": {
   "fichier": "svg-co2-nh3-compare.png",
-  "largeur": 1800,
-  "hauteur": 716,
+  "largeur": 2400,
+  "hauteur": 955,
   "source": "packs/fluides/res/svg/co2-nh3-compare.svg",
   "citations": 3
  },
  "svg:co2-protection": {
   "fichier": "svg-co2-protection.png",
-  "largeur": 1800,
-  "hauteur": 736,
+  "largeur": 2400,
+  "hauteur": 982,
   "source": "packs/fluides/res/svg/co2-protection.svg",
   "citations": 3
  },
  "sym:sonde_temperature": {
   "fichier": "sym-sonde_temperature.png",
-  "largeur": 1800,
-  "hauteur": 1200,
+  "largeur": 2400,
+  "hauteur": 1600,
   "source": "packs/fluides/res/symboles/sonde_temperature.svg",
   "citations": 1
  },
  "svg:prp-echelle": {
   "fichier": "svg-prp-echelle.png",
-  "largeur": 1800,
-  "hauteur": 660,
+  "largeur": 2400,
+  "hauteur": 880,
   "source": "packs/fluides/res/svg/prp-echelle.svg",
   "citations": 6
  },
  "svg:aptitude-capacite": {
   "fichier": "svg-aptitude-capacite.png",
-  "largeur": 1800,
-  "hauteur": 654,
+  "largeur": 2400,
+  "hauteur": 873,
   "source": "packs/fluides/res/svg/aptitude-capacite.svg",
   "citations": 5
  },
@@ -176,15 +176,15 @@
  },
  "sym:vanne_isolement": {
   "fichier": "sym-vanne_isolement.png",
-  "largeur": 1800,
-  "hauteur": 900,
+  "largeur": 2400,
+  "hauteur": 1200,
   "source": "packs/fluides/res/symboles/vanne_isolement.svg",
   "citations": 2
  },
  "svg:frise-histoire": {
   "fichier": "svg-frise-histoire.png",
-  "largeur": 1800,
-  "hauteur": 1120,
+  "largeur": 2400,
+  "hauteur": 1493,
   "source": "packs/fluides/res/svg/frise-histoire.svg",
   "citations": 1
  },
@@ -211,8 +211,8 @@
  },
  "svg:croix-frigoriste": {
   "fichier": "svg-croix-frigoriste.png",
-  "largeur": 1800,
-  "hauteur": 1250,
+  "largeur": 2400,
+  "hauteur": 1667,
   "source": "packs/fluides/res/svg/croix-frigoriste.svg",
   "citations": 5
  },
@@ -225,15 +225,15 @@
  },
  "svg:pression-absolue-relative": {
   "fichier": "svg-pression-absolue-relative.png",
-  "largeur": 1800,
-  "hauteur": 932,
+  "largeur": 2400,
+  "hauteur": 1243,
   "source": "packs/fluides/res/svg/pression-absolue-relative.svg",
   "citations": 2
  },
  "svg:chaleur-sensible-latente": {
   "fichier": "svg-chaleur-sensible-latente.png",
-  "largeur": 1800,
-  "hauteur": 949,
+  "largeur": 2400,
+  "hauteur": 1265,
   "source": "packs/fluides/res/svg/chaleur-sensible-latente.svg",
   "citations": 1
  },
@@ -246,15 +246,15 @@
  },
  "svg:diagramme-logph": {
   "fichier": "svg-diagramme-logph.png",
-  "largeur": 1800,
-  "hauteur": 961,
+  "largeur": 2400,
+  "hauteur": 1282,
   "source": "packs/fluides/res/svg/diagramme-logph.svg",
   "citations": 3
  },
  "svg:nomenclature": {
   "fichier": "svg-nomenclature.png",
-  "largeur": 1800,
-  "hauteur": 1020,
+  "largeur": 2400,
+  "hauteur": 1360,
   "source": "packs/fluides/res/svg/nomenclature.svg",
   "citations": 3
  },
@@ -267,15 +267,15 @@
  },
  "svg:lecture-table": {
   "fichier": "svg-lecture-table.png",
-  "largeur": 1800,
-  "hauteur": 840,
+  "largeur": 2400,
+  "hauteur": 1120,
   "source": "packs/fluides/res/svg/lecture-table.svg",
   "citations": 4
  },
  "svg:mesure-surchauffe": {
   "fichier": "svg-mesure-surchauffe.png",
-  "largeur": 1800,
-  "hauteur": 720,
+  "largeur": 2400,
+  "hauteur": 960,
   "source": "packs/fluides/res/svg/mesure-surchauffe.svg",
   "citations": 4
  },
@@ -288,15 +288,15 @@
  },
  "svg:surchauffe-utile-totale": {
   "fichier": "svg-surchauffe-utile-totale.png",
-  "largeur": 1800,
-  "hauteur": 880,
+  "largeur": 2400,
+  "hauteur": 1173,
   "source": "packs/fluides/res/svg/surchauffe-utile-totale.svg",
   "citations": 2
  },
  "svg:points-de-fuite": {
   "fichier": "svg-points-de-fuite.png",
-  "largeur": 1800,
-  "hauteur": 1560,
+  "largeur": 2400,
+  "hauteur": 2080,
   "source": "packs/fluides/res/svg/points-de-fuite.svg",
   "citations": 5
  },
@@ -309,8 +309,8 @@
  },
  "svg:compresseurs": {
   "fichier": "svg-compresseurs.png",
-  "largeur": 1800,
-  "hauteur": 860,
+  "largeur": 2400,
+  "hauteur": 1147,
   "source": "packs/fluides/res/svg/compresseurs.svg",
   "citations": 2
  },
@@ -323,29 +323,29 @@
  },
  "sym:compresseur_piston": {
   "fichier": "sym-compresseur_piston.png",
-  "largeur": 1800,
-  "hauteur": 1440,
+  "largeur": 2400,
+  "hauteur": 1919,
   "source": "packs/fluides/res/symboles/compresseur_piston.svg",
   "citations": 1
  },
  "sym:compresseur_scroll": {
   "fichier": "sym-compresseur_scroll.png",
-  "largeur": 1800,
-  "hauteur": 1440,
+  "largeur": 2400,
+  "hauteur": 1919,
   "source": "packs/fluides/res/symboles/compresseur_scroll.svg",
   "citations": 1
  },
  "sym:separateur_huile": {
   "fichier": "sym-separateur_huile.png",
-  "largeur": 1800,
-  "hauteur": 2400,
+  "largeur": 2400,
+  "hauteur": 3200,
   "source": "packs/fluides/res/symboles/separateur_huile.svg",
   "citations": 1
  },
  "sym:pressostat": {
   "fichier": "sym-pressostat.png",
-  "largeur": 1800,
-  "hauteur": 2159,
+  "largeur": 2400,
+  "hauteur": 2880,
   "source": "packs/fluides/res/symboles/pressostat.svg",
   "citations": 1
  },
@@ -358,29 +358,29 @@
  },
  "sym:compresseur_vis": {
   "fichier": "sym-compresseur_vis.png",
-  "largeur": 1800,
-  "hauteur": 1440,
+  "largeur": 2400,
+  "hauteur": 1919,
   "source": "packs/fluides/res/symboles/compresseur_vis.svg",
   "citations": 1
  },
  "sym:compresseur_rotatif": {
   "fichier": "sym-compresseur_rotatif.png",
-  "largeur": 1800,
-  "hauteur": 1440,
+  "largeur": 2400,
+  "hauteur": 1919,
   "source": "packs/fluides/res/symboles/compresseur_rotatif.svg",
   "citations": 1
  },
  "svg:coup-de-liquide-piston": {
   "fichier": "svg-coup-de-liquide-piston.png",
-  "largeur": 1800,
-  "hauteur": 1013,
+  "largeur": 2400,
+  "hauteur": 1350,
   "source": "packs/fluides/res/svg/coup-de-liquide-piston.svg",
   "citations": 1
  },
  "svg:echangeur-air": {
   "fichier": "svg-echangeur-air.png",
-  "largeur": 1800,
-  "hauteur": 800,
+  "largeur": 2400,
+  "hauteur": 1067,
   "source": "packs/fluides/res/svg/echangeur-air.svg",
   "citations": 2
  },
@@ -393,22 +393,22 @@
  },
  "sym:pressostat_hp": {
   "fichier": "sym-pressostat_hp.png",
-  "largeur": 1800,
-  "hauteur": 1800,
+  "largeur": 2400,
+  "hauteur": 2400,
   "source": "packs/fluides/res/symboles/pressostat_hp.svg",
   "citations": 1
  },
  "sym:ventilateur": {
   "fichier": "sym-ventilateur.png",
-  "largeur": 1800,
-  "hauteur": 1440,
+  "largeur": 2400,
+  "hauteur": 1919,
   "source": "packs/fluides/res/symboles/ventilateur.svg",
   "citations": 1
  },
  "sym:echangeur_a_air": {
   "fichier": "sym-echangeur_a_air.png",
-  "largeur": 1800,
-  "hauteur": 1800,
+  "largeur": 2400,
+  "hauteur": 2400,
   "source": "packs/fluides/res/symboles/echangeur_a_air.svg",
   "citations": 2
  },
@@ -421,22 +421,22 @@
  },
  "svg:regulateurs-pression": {
   "fichier": "svg-regulateurs-pression.png",
-  "largeur": 1800,
-  "hauteur": 1160,
+  "largeur": 2400,
+  "hauteur": 1547,
   "source": "packs/fluides/res/svg/regulateurs-pression.svg",
   "citations": 2
  },
  "sym:vanne_securite": {
   "fichier": "sym-vanne_securite.png",
-  "largeur": 1800,
-  "hauteur": 3600,
+  "largeur": 2400,
+  "hauteur": 4800,
   "source": "packs/fluides/res/symboles/vanne_securite.svg",
   "citations": 1
  },
  "sym:echangeur_a_plaques": {
   "fichier": "sym-echangeur_a_plaques.png",
-  "largeur": 1800,
-  "hauteur": 1800,
+  "largeur": 2400,
+  "hauteur": 2400,
   "source": "packs/fluides/res/symboles/echangeur_a_plaques.svg",
   "citations": 1
  },
@@ -449,36 +449,36 @@
  },
  "sym:detendeur_thermo_ext": {
   "fichier": "sym-detendeur_thermo_ext.png",
-  "largeur": 1800,
-  "hauteur": 1800,
+  "largeur": 2400,
+  "hauteur": 2400,
   "source": "packs/fluides/res/symboles/detendeur_thermo_ext.svg",
   "citations": 1
  },
  "sym:pressostat_bp": {
   "fichier": "sym-pressostat_bp.png",
-  "largeur": 1800,
-  "hauteur": 1800,
+  "largeur": 2400,
+  "hauteur": 2400,
   "source": "packs/fluides/res/symboles/pressostat_bp.svg",
   "citations": 1
  },
  "svg:givre-degivrage": {
   "fichier": "svg-givre-degivrage.png",
-  "largeur": 1800,
-  "hauteur": 940,
+  "largeur": 2400,
+  "hauteur": 1253,
   "source": "packs/fluides/res/svg/givre-degivrage.svg",
   "citations": 1
  },
  "sym:resistance_evaporation": {
   "fichier": "sym-resistance_evaporation.png",
-  "largeur": 1800,
-  "hauteur": 515,
+  "largeur": 2400,
+  "hauteur": 686,
   "source": "packs/fluides/res/symboles/resistance_evaporation.svg",
   "citations": 1
  },
  "sym:thermostat_froid": {
   "fichier": "sym-thermostat_froid.png",
-  "largeur": 1800,
-  "hauteur": 1800,
+  "largeur": 2400,
+  "hauteur": 2400,
   "source": "packs/fluides/res/symboles/thermostat_froid.svg",
   "citations": 1
  },
@@ -491,8 +491,8 @@
  },
  "svg:detendeurs-ligne": {
   "fichier": "svg-detendeurs-ligne.png",
-  "largeur": 1800,
-  "hauteur": 940,
+  "largeur": 2400,
+  "hauteur": 1253,
   "source": "packs/fluides/res/svg/detendeurs-ligne.svg",
   "citations": 2
  },
@@ -505,36 +505,36 @@
  },
  "sym:detendeur_electronique": {
   "fichier": "sym-detendeur_electronique.png",
-  "largeur": 1800,
-  "hauteur": 1350,
+  "largeur": 2400,
+  "hauteur": 1801,
   "source": "packs/fluides/res/symboles/detendeur_electronique.svg",
   "citations": 1
  },
  "sym:electrovanne_frigo": {
   "fichier": "sym-electrovanne_frigo.png",
-  "largeur": 1800,
-  "hauteur": 1350,
+  "largeur": 2400,
+  "hauteur": 1801,
   "source": "packs/fluides/res/symboles/electrovanne_frigo.svg",
   "citations": 1
  },
  "sym:filtre_deshydrateur": {
   "fichier": "sym-filtre_deshydrateur.png",
-  "largeur": 1800,
-  "hauteur": 900,
+  "largeur": 2400,
+  "hauteur": 1200,
   "source": "packs/fluides/res/symboles/filtre_deshydrateur.svg",
   "citations": 1
  },
  "sym:voyant_liquide": {
   "fichier": "sym-voyant_liquide.png",
-  "largeur": 1800,
-  "hauteur": 720,
+  "largeur": 2400,
+  "hauteur": 960,
   "source": "packs/fluides/res/symboles/voyant_liquide.svg",
   "citations": 1
  },
  "svg:detendeur-regulation": {
   "fichier": "svg-detendeur-regulation.png",
-  "largeur": 1800,
-  "hauteur": 940,
+  "largeur": 2400,
+  "hauteur": 1253,
   "source": "packs/fluides/res/svg/detendeur-regulation.svg",
   "citations": 1
  },
@@ -547,15 +547,15 @@
  },
  "sym:tube_capillaire": {
   "fichier": "sym-tube_capillaire.png",
-  "largeur": 1800,
-  "hauteur": 720,
+  "largeur": 2400,
+  "hauteur": 960,
   "source": "packs/fluides/res/symboles/tube_capillaire.svg",
   "citations": 1
  },
  "svg:epreuve-azote": {
   "fichier": "svg-epreuve-azote.png",
-  "largeur": 1800,
-  "hauteur": 760,
+  "largeur": 2400,
+  "hauteur": 1013,
   "source": "packs/fluides/res/svg/epreuve-azote.svg",
   "citations": 3
  },
@@ -575,8 +575,8 @@
  },
  "svg:manifold-lecture": {
   "fichier": "svg-manifold-lecture.png",
-  "largeur": 1800,
-  "hauteur": 940,
+  "largeur": 2400,
+  "hauteur": 1253,
   "source": "packs/fluides/res/svg/manifold-lecture.svg",
   "citations": 1
  },
@@ -589,8 +589,8 @@
  },
  "svg:tirage-au-vide": {
   "fichier": "svg-tirage-au-vide.png",
-  "largeur": 1800,
-  "hauteur": 880,
+  "largeur": 2400,
+  "hauteur": 1173,
   "source": "packs/fluides/res/svg/tirage-au-vide.svg",
   "citations": 3
  },
@@ -617,8 +617,8 @@
  },
  "svg:balayage-detecteur": {
   "fichier": "svg-balayage-detecteur.png",
-  "largeur": 1800,
-  "hauteur": 600,
+  "largeur": 2400,
+  "hauteur": 800,
   "source": "packs/fluides/res/svg/balayage-detecteur.svg",
   "citations": 3
  },
@@ -631,8 +631,8 @@
  },
  "svg:recuperation": {
   "fichier": "svg-recuperation.png",
-  "largeur": 1800,
-  "hauteur": 760,
+  "largeur": 2400,
+  "hauteur": 1013,
   "source": "packs/fluides/res/svg/recuperation.svg",
   "citations": 4
  },
@@ -645,8 +645,8 @@
  },
  "sym:pompe": {
   "fichier": "sym-pompe.png",
-  "largeur": 1800,
-  "hauteur": 1440,
+  "largeur": 2400,
+  "hauteur": 1919,
   "source": "packs/fluides/res/symboles/pompe.svg",
   "citations": 1
  },
@@ -659,8 +659,8 @@
  },
  "svg:ordre-vannes": {
   "fichier": "svg-ordre-vannes.png",
-  "largeur": 1800,
-  "hauteur": 940,
+  "largeur": 2400,
+  "hauteur": 1253,
   "source": "packs/fluides/res/svg/ordre-vannes.svg",
   "citations": 1
  },
@@ -673,8 +673,8 @@
  },
  "svg:pesee-charge": {
   "fichier": "svg-pesee-charge.png",
-  "largeur": 1800,
-  "hauteur": 932,
+  "largeur": 2400,
+  "hauteur": 1243,
   "source": "packs/fluides/res/svg/pesee-charge.svg",
   "citations": 2
  },
@@ -687,8 +687,8 @@
  },
  "sym:bouteille_liquide": {
   "fichier": "sym-bouteille_liquide.png",
-  "largeur": 1800,
-  "hauteur": 1080,
+  "largeur": 2400,
+  "hauteur": 1440,
   "source": "packs/fluides/res/symboles/bouteille_liquide.svg",
   "citations": 1
  },
@@ -701,8 +701,8 @@
  },
  "svg:balayage-azote": {
   "fichier": "svg-balayage-azote.png",
-  "largeur": 1800,
-  "hauteur": 680,
+  "largeur": 2400,
+  "hauteur": 907,
   "source": "packs/fluides/res/svg/balayage-azote.svg",
   "citations": 3
  },
@@ -715,8 +715,8 @@
  },
  "svg:secu-flamme": {
   "fichier": "svg-secu-flamme.png",
-  "largeur": 1800,
-  "hauteur": 640,
+  "largeur": 2400,
+  "hauteur": 853,
   "source": "packs/fluides/res/svg/secu-flamme.svg",
   "citations": 3
  },
@@ -729,8 +729,8 @@
  },
  "svg:charge-limite-local": {
   "fichier": "svg-charge-limite-local.png",
-  "largeur": 1800,
-  "hauteur": 940,
+  "largeur": 2400,
+  "hauteur": 1253,
   "source": "packs/fluides/res/svg/charge-limite-local.svg",
   "citations": 4
  },
@@ -841,8 +841,8 @@
  },
  "svg:circuit-complet-manifold": {
   "fichier": "svg-circuit-complet-manifold.png",
-  "largeur": 1800,
-  "hauteur": 1147,
+  "largeur": 2400,
+  "hauteur": 1530,
   "source": "packs/fluides/res/svg/circuit-complet-manifold.svg",
   "citations": 1
  }
