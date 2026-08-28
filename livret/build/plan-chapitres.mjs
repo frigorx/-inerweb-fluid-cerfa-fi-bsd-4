@@ -12,6 +12,10 @@
    `build/build-livret.mjs` échoue si une seule page en manque.
 
    Référence des visuels :
+     pack:<nom>  → livret/illustrations-interieures-v2/svg/<nom>.svg
+                   (5 planches sécurité v2, construites par OpenAI Codex
+                   sous direction de F. Henninot — elles remplacent les
+                   originaux à défaut de placement relevés à la relecture)
      svg:<nom>   → packs/fluides/res/svg/<nom>.svg          (46 planches
                    techniques dessinées à la main, animées en CSS)
      illu:<id>   → packs/fluides/res/bibliotheque/illu-<id>.webp
@@ -56,17 +60,17 @@ export const CHAPITRES = [
     codesQ: ['12.02', '12.13', '11.03', '12.04'],
     lecons: [
       { t: 'L air qui manque — l asphyxie', src: 's1', paras: 'tous', blocs: [0, 1],
-        visuels: ['svg:secu-espace-clos', 'illu:s1'],
-        legendes: ['Le fluide chasse l air par le bas', 'Un local en contrebas'] },
+        visuels: ['pack:securite-espace-clos'],
+        legendes: ['Ventiler, mesurer, ne pas descendre'] },
       { t: 'Le froid brûle — projections et gelures', src: 's2', paras: 'tous', blocs: [0, 1],
-        visuels: ['svg:secu-projection', 'illu:s2'],
-        legendes: ['La détente projette du liquide', 'Lunettes et gants adaptés'] },
+        visuels: ['pack:securite-projection-fluide'],
+        legendes: ['Lire la pression, s équiper, sortir de l axe'] },
       { t: 'La flamme interdite — décomposition du fluide', src: 's3', paras: 'tous', blocs: [0, 1],
-        visuels: ['svg:secu-decomposition-ari', 'illu:s3'],
-        legendes: ['Le fluide chauffé se décompose', 'Ce que la flamme fabrique'] },
+        visuels: ['pack:securite-decomposition-fluide'],
+        legendes: ['Récupérer et inerter avant la flamme'] },
       { t: 'Ce qui éclate — la pression', src: 's4', paras: 'tous', blocs: [0, 1],
-        visuels: ['svg:secu-bouteille', 'illu:s4'],
-        legendes: ['Jamais à ras, jamais chauffée', 'La bouteille sous contrainte'] },
+        visuels: ['pack:securite-pression-residuelle'],
+        legendes: ['À l arrêt, le circuit reste sous pression'] },
       { t: 'Consigner avant de toucher — le risque électrique', src: 's5', paras: 'tous', blocs: [0, 1],
         visuels: ['svg:secu-consignation', 'illu:s5'],
         legendes: ['Séparer, condamner, vérifier', 'Le cadenas est à vous'] },
@@ -105,7 +109,7 @@ export const CHAPITRES = [
         visuels: ['svg:co2-point-bas', 'svg:co2-nh3-compare'],
         legendes: ['Le CO₂ s accumule en point bas', 'CO₂ et ammoniac comparés'] },
       { t: 'Se protéger du CO₂ — détection, EPC et EPI', src: 'cl4', paras: 'tous', blocs: [0, 1],
-        visuels: ['svg:co2-protection', 'sym:sonde_temperature'],
+        visuels: ['pack:co2-local-protege', 'sym:sonde_temperature'],
         legendes: ['Capteur bas, alarme dehors', 'La détection fixe'] },
     ],
     activite: {
@@ -687,12 +691,12 @@ export const CHAPITRES = [
         visuels: ['svg:aptitude-capacite', 'illu:g13'],
         legendes: ['B pour le CO₂, C pour l ammoniac', 'Aucune équivalence'] },
       { t: 'La glace carbonique, et le réflexe d arrivée sur site', src: 'g13', paras: [], blocs: [2, 3],
-        visuels: ['svg:co2-point-bas', 'svg:co2-protection'],
+        visuels: ['svg:co2-point-bas', 'pack:co2-local-protege'],
         legendes: ['Le CO₂ s accumule en bas', 'Détection et alarme'] },
     ],
     activite: {
       t: 'J arrive sur une installation que je ne connais pas',
-      visuels: ['svg:co2-nh3-compare', 'svg:co2-protection'],
+      visuels: ['svg:co2-nh3-compare', 'pack:co2-local-protege'],
       legendes: ['Reconnaître le fluide', 'Ce qui doit être en place'],
       lignes: [
         'Ce que je lis sur la plaque : ______',

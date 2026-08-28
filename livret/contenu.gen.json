@@ -1,7 +1,7 @@
 {
  "source": {
   "depot": "frigorx/pilote-fluides",
-  "commit": "729aefc"
+  "commit": "dc0ea59"
  },
  "categories": [
   "A1",
@@ -773,7 +773,7 @@
       {
        "type": "cle",
        "t": "Ce qu'il faut retenir",
-       "html": "<ul><li><b>EPC d'abord, EPI ensuite</b> : le collectif protège tout le monde en permanence, l'individuel ne protège que celui qui le porte.</li><li><b>Détection de gaz obligatoire</b> en local CO₂, par capteur <b>fixe</b>, placé <b>en partie basse</b>.</li><li>Alarmes sonores et visuelles <b>dedans et dehors</b> — celle de dehors prévient avant d'ouvrir la porte. Deux niveaux : préalarme, puis évacuation.</li><li>Le détecteur affiche des <b>ppm</b> : une part pour un million. L'air normal en contient déjà.</li><li>Les <b>seuils</b> se lisent sur l'appareil, sa documentation et la FDS — <b>jamais de mémoire d'un site à l'autre</b>.</li><li>Un capteur se <b>vérifie et se remplace</b> : une cellule morte reste allumée.</li><li>Signalisation à jour, <b>issues de secours dégagées</b>, ventilation adaptée : contrôlées en arrivant.</li><li><b>Un masque à cartouche ne protège ni du CO₂, ni du manque d'oxygène.</b> La vraie protection, c'est de ne pas entrer.</li><li>Et les règles qui ne changent jamais : <b>ventiler et mesurer avant d'entrer</b>, <b>jamais seul</b>, et devant une personne au sol : alerter, ventiler, <b>ne pas descendre</b>.</li></ul>"
+       "html": "<ul><li><b>EPC d'abord, EPI ensuite</b> : le collectif protège tout le monde en permanence, l'individuel ne protège que celui qui le porte.</li><li><b>Détection de gaz dès que la norme l'impose</b> — selon la charge et le type de local — par capteur <b>fixe</b>, placé <b>en partie basse</b>. Si elle manque là où elle devrait être : signalement.</li><li>Alarmes sonores et visuelles <b>dedans et dehors</b> — celle de dehors prévient avant d'ouvrir la porte. Deux niveaux : préalarme, puis évacuation.</li><li>Le détecteur affiche des <b>ppm</b> : une part pour un million. L'air normal en contient déjà.</li><li>Les <b>seuils</b> se lisent sur l'appareil, sa documentation et la FDS — <b>jamais de mémoire d'un site à l'autre</b>.</li><li>Un capteur se <b>vérifie et se remplace</b> : une cellule morte reste allumée.</li><li>Signalisation à jour, <b>issues de secours dégagées</b>, ventilation adaptée : contrôlées en arrivant.</li><li><b>Un masque à cartouche ne protège ni du CO₂, ni du manque d'oxygène.</b> La vraie protection, c'est de ne pas entrer.</li><li>Et les règles qui ne changent jamais : <b>ventiler et mesurer avant d'entrer</b>, <b>jamais seul</b>, et devant une personne au sol : alerter, ventiler, <b>ne pas descendre</b>.</li></ul>"
       },
       {
        "type": "piege",
@@ -1288,7 +1288,7 @@
       "Les fluides frigorigènes peuvent réchauffer le climat s'ils s'échappent dans l'air. Deux niveaux de loi encadrent votre métier : le niveau européen et le niveau français.",
       "Au niveau européen, le texte de base est le <b>règlement (UE) 2024/573</b>. C'est un <b>règlement</b>, jamais une « directive » : il s'applique directement dans tous les pays de l'Union, sans loi française pour le recopier. Il a remplacé l'ancien règlement 517/2014.",
       "Au niveau français, l'<b>arrêté du 21 novembre 2025</b> — un texte signé par un ministre — précise comment appliquer ce règlement sur le terrain.",
-      "Pour intervenir sur les fluides, il vous faut une <b>attestation d'aptitude</b> personnelle. Votre entreprise, elle, doit avoir une <b>attestation de capacité</b>. Ce sont deux papiers obligatoires, et ce n'est pas le même."
+      "Pour réaliser les <b>opérations réglementées</b> sur ces fluides — mise en service, entretien, contrôle d'étanchéité, récupération —, il vous faut une <b>attestation d'aptitude</b> personnelle. Votre entreprise, elle, doit avoir une <b>attestation de capacité</b>. Ce sont deux papiers obligatoires, et ce n'est pas le même."
      ],
      "blocs": [
       {
@@ -2793,7 +2793,7 @@
       {
        "type": "cle",
        "t": "À retenir",
-       "html": "<b>Surchauffe</b> : le fluide sort de l'évaporateur un peu plus chaud que sa température d'évaporation — elle protège le compresseur du liquide. Repère : <b>5 à 10 K</b>.<br><b>Sous-refroidissement</b> : le liquide sort du condenseur un peu plus froid que sa température de condensation — il garantit du liquide pur au détendeur. Repère : <b>4 à 8 K</b>."
+       "html": "<b>Surchauffe</b> : le fluide sort de l'évaporateur un peu plus chaud que sa température d'évaporation — elle protège le compresseur du liquide. Repère d'apprentissage : <b>5 à 10 K</b>.<br><b>Sous-refroidissement</b> : le liquide sort du condenseur un peu plus froid que sa température de condensation — il garantit du liquide pur au détendeur. Repère d'apprentissage : <b>4 à 8 K</b>.<br>Ces repères servent à comprendre, <b>jamais à régler</b> : sur une machine réelle, seules les valeurs du constructeur font foi."
       }
      ],
      "question": {
@@ -8448,7 +8448,7 @@
      "titre_source": "Le manifold — lire, brancher, ne pas polluer",
      "paras": [
       "Le <b>manifold</b> (ensemble manométrique) réunit deux manomètres — <b>BP en bleu</b>, <b>HP en rouge</b> — et deux vannes, une par côté, qui commandent le passage vers le <b>flexible central jaune</b> : celui qui part vers la pompe à vide, la bouteille de récupération, ou une bouteille d'azote équipée de son <b>mano-détendeur</b>.",
-      "Le manomètre affiche une <b>pression relative</b> : pour obtenir la pression absolue, on ajoute environ <b>1 bar</b>. La pince de température et le multimètre servent à la <b>méthode indirecte</b> de contrôle d'étanchéité : on compare les valeurs mesurées — surchauffe (plage normale <b>5 à 10 K</b>), sous-refroidissement (plage normale <b>4 à 8 K</b>), intensité absorbée — à celles attendues sur la fiche constructeur. Un écart qui se creuse alerte, sans avoir ouvert le circuit."
+      "Le manomètre affiche une <b>pression relative</b> : pour obtenir la pression absolue, on ajoute environ <b>1 bar</b>. La pince de température et le multimètre servent à la <b>méthode indirecte</b> de contrôle d'étanchéité : on compare les valeurs mesurées — surchauffe (plage indicative <b>5 à 10 K</b>), sous-refroidissement (plage indicative <b>4 à 8 K</b>), intensité absorbée — à celles attendues sur la fiche constructeur. Un écart qui se creuse alerte, sans avoir ouvert le circuit."
      ],
      "blocs": [
       {

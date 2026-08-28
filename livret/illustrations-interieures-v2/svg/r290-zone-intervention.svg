@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">R-290 : préparer la zone avant le geste</title><desc id="desc">Zone d’intervention sur hydrocarbure : plaque et FDS lues, ventilation active, détecteur hydrocarbures, sources d’ignition supprimées, balisage, outillage et récupération compatibles.</desc>
+  <metadata><dc:title>R-290 : préparer la zone avant le geste</dc:title><dc:description>Zone d’intervention sur hydrocarbure : plaque et FDS lues, ventilation active, détecteur hydrocarbures, sources d’ignition supprimées, balisage, outillage et récupération compatibles.</dc:description><dc:creator>F. Henninot (direction métier) et OpenAI Codex (dessin SVG original)</dc:creator><dc:source>Création originale inerWeb, pack HabFluide intérieur v2</dc:source><dc:rights>© 2026 Franck Henninot, inerWeb. Tous droits réservés.</dc:rights></metadata>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#3D7FCA"/></marker><pattern id="gas" width="38" height="38" patternUnits="userSpaceOnUse"><circle cx="7" cy="8" r="4" fill="#84B7EC"/><circle cx="28" cy="25" r="5" fill="#3D7FCA" opacity=".45"/></pattern></defs>
+  <style>
+  .title{font:700 54px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .subtitle{font:600 32px Calibri,Arial,sans-serif;fill:#10233C}
+  .body{font:600 36px Calibri,Arial,sans-serif;fill:#10233C}
+  .small{font:600 30px Calibri,Arial,sans-serif;fill:#10233C}
+  .tiny{font:600 25px Calibri,Arial,sans-serif;fill:#10233C}
+  .panel-title{font:700 34px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .equip{font:700 27px Calibri,Arial,sans-serif;fill:#1B3A63}
+  .badge-text{font:700 27px Calibri,Arial,sans-serif;fill:white}
+  .stop-text{font:700 25px Calibri,Arial,sans-serif;fill:#C0392B}
+  .panel{fill:white;stroke:#1B3A63;stroke-width:4}
+  .panel.danger{stroke:#C0392B;stroke-width:6;stroke-dasharray:18 12}
+  .panel.safe{stroke:#1E7E54;stroke-width:7;stroke-dasharray:3 8}
+  .badge.navy{fill:#1B3A63} .badge.orange{fill:#C9451A} .badge.green{fill:#1E7E54}
+  .pipe{fill:none;stroke:#1B3A63;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .thin{fill:none;stroke:#1B3A63;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+  .accent{fill:none;stroke:#C9451A;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .flow{fill:none;stroke:#3D7FCA;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .danger-line{fill:none;stroke:#C0392B;stroke-width:8;stroke-dasharray:18 12}
+  .safe-line{fill:none;stroke:#1E7E54;stroke-width:8;stroke-dasharray:3 11}
+  .device{fill:white;stroke:#1B3A63;stroke-width:6}
+  .screen{fill:#F3F7FB;stroke:#3D7FCA;stroke-width:4}
+  .person{fill:white;stroke:#1B3A63;stroke-width:6}
+  .person-line{fill:none;stroke:#1B3A63;stroke-width:12;stroke-linecap:round}
+  .helmet{fill:#F3F7FB;stroke:#1B3A63;stroke-width:5}
+  .stop{fill:white;stroke:#C0392B;stroke-width:7;stroke-dasharray:16 9}
+  .step{fill:white;stroke:#1B3A63;stroke-width:5}
+  .step-safe{fill:white;stroke:#1E7E54;stroke-width:7;stroke-dasharray:3 9}
+  .warn{fill:white;stroke:#C9451A;stroke-width:6;stroke-dasharray:16 9}
+</style><rect width="1200" height="720" fill="white"/>
+  <text x="50" y="72" class="title" text-anchor="start" style="font-size:50px">R-290 : préparer la zone avant le geste</text><g><rect x="430" y="250" width="320" height="220" rx="16" class="device"/><circle cx="692" cy="328" r="42" class="thin"/><path d="M 692 292 L 705 328 L 667 315 Z M 692 364 L 680 328 L 718 341 Z" fill="#84B7EC" stroke="#1B3A63" stroke-width="3"/><text x="448" y="452" class="equip" text-anchor="start">MONOBLOC R-290</text></g><g transform="translate(105 280)"><rect x="0" y="20" width="72" height="126" rx="14" class="device"/><rect x="16" y="43" width="40" height="28" rx="4" class="screen"/><path d="M 36 20 C 40 -20, 92 -26, 112 4" class="pipe" fill="none"/><circle cx="114" cy="5" r="8" fill="#C9451A"/><text x="36" y="178" class="small" text-anchor="middle">Détecteur HC</text></g><g transform="translate(940 300)"><circle cx="0" cy="0" r="30" class="person"/><path d="M -36 -6 Q 0 -42 36 -6" class="helmet"/><line x1="-40" y1="-4" x2="40" y2="-4" class="accent"/><path d="M -23 0 H -3 M 3 0 H 23 M -3 0 H 3" class="thin"/><path d="M -45 80 Q 0 38 45 80 V 180 H -45 Z" class="person"/><line x1="-45" y1="88" x2="-90" y2="140" class="person-line"/><line x1="45" y1="88" x2="90" y2="140" class="person-line"/></g><path d="M 385 205 H 795 V 550 H 385 Z" fill="none" stroke="#C0392B" stroke-width="7" stroke-dasharray="22 14"/><text x="590" y="590" class="panel-title" text-anchor="middle">ZONE BALISÉE</text><line x1="430" y1="500" x2="265" y2="500" class="flow" marker-end="url(#arrow)"/><text x="105" y="575" class="small" text-anchor="start">Ventilation active</text><g><path d="M 827 170 H 875 L 897 192 V 240 L 875 262 H 827 L 805 240 V 192 Z" class="stop"/><text x="851" y="228" class="stop-text" text-anchor="middle">FEU</text></g><g><rect x="55" y="125" width="292" height="50" rx="25" class="badge navy"/><text x="73" y="160" class="badge-text" text-anchor="start">PLAQUE + FDS</text></g><g><rect x="405" y="125" width="292" height="50" rx="25" class="badge green"/><text x="423" y="160" class="badge-text" text-anchor="start">OUTILLAGE HC</text></g><g><rect x="765" y="125" width="314" height="50" rx="25" class="badge orange"/><text x="783" y="160" class="badge-text" text-anchor="start">ZÉRO IGNITION</text></g><text x="600" y="680" class="body" text-anchor="middle">Si la zone n’est pas conforme : décision STOP</text>
+</svg>

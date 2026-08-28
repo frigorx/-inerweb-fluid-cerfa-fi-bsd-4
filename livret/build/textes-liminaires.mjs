@@ -17,10 +17,21 @@ export const TEXTES_LIMINAIRES = {
     `<b>inerweb.fr HabFluide — tome 1 : la théorie</b>`,
     `Préparation à l'épreuve théorique de l'attestation d'aptitude à la manipulation des fluides ` +
     `frigorigènes, catégories A1, A2, D et E.`,
+    `Support de révision indépendant : cet ouvrage ne remplace ni une formation, ni l'évaluation ` +
+    `par un organisme certifié — seul un organisme évaluateur certifié délivre l'attestation, ` +
+    `après réussite de l'évaluation (arrêté du 21 novembre 2025, art. 1).`,
     `Auteur : Franck Henninot, enseignant en filière froid et climatisation.`,
     `Édition : inerWeb — <b>inerweb.fr</b> — contact : inerweb.fh@gmail.com`,
-    `© 2026 Franck Henninot. Tous droits réservés. Aucune partie de cet ouvrage ne peut être ` +
-    `reproduite, diffusée ou revendue, sous quelque forme que ce soit, sans l'accord écrit de l'auteur.`,
+    /* La clause protège ce que le droit permet de protéger : la copie, la
+       diffusion numérique, la modification. PAS la revente de l'exemplaire
+       acheté — le droit de distribution s'épuise à la première vente dans
+       l'EEE (CPI, art. L122-3-1) : interdire la revente d'occasion d'un
+       livre papier serait sans effet et décrédibiliserait la page. */
+    `© 2026 Franck Henninot. Tous droits réservés. Toute reproduction, représentation, ` +
+    `traduction ou adaptation, intégrale ou partielle, ainsi que toute diffusion sous forme ` +
+    `numérique de cet ouvrage, sont interdites sans l'accord écrit de l'auteur ` +
+    `(Code de la propriété intellectuelle, art. L122-4). La revente de l'exemplaire papier ` +
+    `acquis n'est pas concernée.`,
     `Schémas techniques, illustrations et QR codes : bibliothèque inerWeb. Cet ouvrage ne contient ` +
     `aucun document pédagogique tiers.`,
     `Textes réglementaires cités : arrêté du 21 novembre 2025 (NOR TECP2532494A) et règlement (UE) ` +
@@ -83,7 +94,10 @@ export const TEXTES_LIMINAIRES = {
   'categories-coup-oeil': [
     `Sept catégories d'attestation existent. Repérez la vôtre dès maintenant : le chapitre 4 ` +
     `les détaille, et votre catégorie décide de ce que l'épreuve vous demandera.`,
-    `<b>A1</b> : tout, sans limite. <b>A2</b> : tout, en petite charge. <b>B</b> : le CO₂. ` +
+    /* Même en coup d'œil, A1 ne peut pas se résumer « tout, sans limite » :
+       lu isolément, ça laisse croire qu'A1 couvre le CO₂ et l'ammoniac. */
+    `<b>A1</b> : toutes les opérations sur les fluides <b>fluorés et les hydrocarbures</b>, sans ` +
+    `limite de charge — jamais le CO₂ ni l'ammoniac. <b>A2</b> : les mêmes, en petite charge. <b>B</b> : le CO₂. ` +
     `<b>C</b> : l'ammoniac. <b>D</b> : récupérer seulement. <b>E</b> : contrôler l'étanchéité ` +
     `sans ouvrir. <b>V</b> : la climatisation des véhicules.`,
   ],
@@ -114,7 +128,13 @@ export const TEXTES_FIN = {
     `Fabrication assistée par intelligence artificielle (Claude, Anthropic), sous sa relecture.`,
     `Les schémas techniques et illustrations proviennent de la bibliothèque inerWeb. ` +
     `Ce livret ne contient aucun document pédagogique tiers.`,
-    `Ce document ne peut être ni revendu, ni modifié, ni diffusé sans l'accord écrit de l'auteur.`,
+    /* Attribution exigée par la licence CC BY 3.0 — le registre des droits
+       (registre-visuels.mjs) FAIT ÉCHOUER la fabrication si elle manque. */
+    `Certains symboles fluidiques sont issus de la collection QElectroTech ` +
+    `(github.com/qelectrotech/qelectrotech-elements), sous licence CC BY 3.0 ; sélection, ` +
+    `mise à la charte inerWeb et repères de bornes par F. Henninot.`,
+    `Toute reproduction, modification ou diffusion numérique de cet ouvrage est interdite sans ` +
+    `l'accord écrit de l'auteur. La revente de l'exemplaire papier acquis n'est pas concernée.`,
   ],
   'engagement': [
     `La théorie est lue ; reste à la tenir. Trois engagements, à écrire de votre main — on tient ` +

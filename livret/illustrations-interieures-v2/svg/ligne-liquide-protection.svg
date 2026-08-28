@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">La ligne liquide : chaque organe protège le suivant</title><desc id="desc">De la sortie du condenseur au détendeur : réservoir, filtre déshydrateur, voyant liquide, électrovanne puis détendeur. L’ordre fonctionnel est explicité.</desc>
+  <metadata><dc:title>La ligne liquide : chaque organe protège le suivant</dc:title><dc:description>De la sortie du condenseur au détendeur : réservoir, filtre déshydrateur, voyant liquide, électrovanne puis détendeur. L’ordre fonctionnel est explicité.</dc:description><dc:creator>F. Henninot (direction métier) et OpenAI Codex (dessin SVG original)</dc:creator><dc:source>Création originale inerWeb, pack HabFluide intérieur v2</dc:source><dc:rights>© 2026 Franck Henninot, inerWeb. Tous droits réservés.</dc:rights></metadata>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#3D7FCA"/></marker><pattern id="gas" width="38" height="38" patternUnits="userSpaceOnUse"><circle cx="7" cy="8" r="4" fill="#84B7EC"/><circle cx="28" cy="25" r="5" fill="#3D7FCA" opacity=".45"/></pattern></defs>
+  <style>
+  .title{font:700 54px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .subtitle{font:600 32px Calibri,Arial,sans-serif;fill:#10233C}
+  .body{font:600 36px Calibri,Arial,sans-serif;fill:#10233C}
+  .small{font:600 30px Calibri,Arial,sans-serif;fill:#10233C}
+  .tiny{font:600 25px Calibri,Arial,sans-serif;fill:#10233C}
+  .panel-title{font:700 34px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .equip{font:700 27px Calibri,Arial,sans-serif;fill:#1B3A63}
+  .badge-text{font:700 27px Calibri,Arial,sans-serif;fill:white}
+  .stop-text{font:700 25px Calibri,Arial,sans-serif;fill:#C0392B}
+  .panel{fill:white;stroke:#1B3A63;stroke-width:4}
+  .panel.danger{stroke:#C0392B;stroke-width:6;stroke-dasharray:18 12}
+  .panel.safe{stroke:#1E7E54;stroke-width:7;stroke-dasharray:3 8}
+  .badge.navy{fill:#1B3A63} .badge.orange{fill:#C9451A} .badge.green{fill:#1E7E54}
+  .pipe{fill:none;stroke:#1B3A63;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .thin{fill:none;stroke:#1B3A63;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+  .accent{fill:none;stroke:#C9451A;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .flow{fill:none;stroke:#3D7FCA;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .danger-line{fill:none;stroke:#C0392B;stroke-width:8;stroke-dasharray:18 12}
+  .safe-line{fill:none;stroke:#1E7E54;stroke-width:8;stroke-dasharray:3 11}
+  .device{fill:white;stroke:#1B3A63;stroke-width:6}
+  .screen{fill:#F3F7FB;stroke:#3D7FCA;stroke-width:4}
+  .person{fill:white;stroke:#1B3A63;stroke-width:6}
+  .person-line{fill:none;stroke:#1B3A63;stroke-width:12;stroke-linecap:round}
+  .helmet{fill:#F3F7FB;stroke:#1B3A63;stroke-width:5}
+  .stop{fill:white;stroke:#C0392B;stroke-width:7;stroke-dasharray:16 9}
+  .step{fill:white;stroke:#1B3A63;stroke-width:5}
+  .step-safe{fill:white;stroke:#1E7E54;stroke-width:7;stroke-dasharray:3 9}
+  .warn{fill:white;stroke:#C9451A;stroke-width:6;stroke-dasharray:16 9}
+</style><rect width="1200" height="720" fill="white"/>
+  <text x="50" y="72" class="title" text-anchor="start" style="font-size:38px">La ligne liquide : chaque organe protège le suivant</text><text x="80" y="150" class="small" text-anchor="start">SORTIE CONDENSEUR</text><line x1="80" y1="330" x2="1110" y2="330" class="flow" marker-end="url(#arrow)"/><g><rect x="85" y="245" width="150" height="170" rx="18" class="device"/><text x="160" y="300" class="tiny" text-anchor="middle">RÉSERVOIR</text><text x="160" y="465" class="tiny" text-anchor="middle">stocker</text></g><g><rect x="305" y="245" width="150" height="170" rx="18" class="device"/><text x="380" y="300" class="tiny" text-anchor="middle">FILTRE</text><text x="380" y="465" class="tiny" text-anchor="middle" style="font-size:21px">retient humidité</text></g><g><rect x="525" y="245" width="150" height="170" rx="18" class="device"/><text x="600" y="300" class="tiny" text-anchor="middle">VOYANT</text><text x="600" y="465" class="tiny" text-anchor="middle">observer</text></g><g><rect x="745" y="245" width="150" height="170" rx="18" class="device"/><text x="820" y="300" class="tiny" text-anchor="middle">ÉLECTRO-</text><text x="820" y="335" class="tiny" text-anchor="middle">VANNE</text><text x="820" y="465" class="tiny" text-anchor="middle">fermer</text></g><g><rect x="965" y="245" width="150" height="170" rx="18" class="device"/><text x="1040" y="300" class="tiny" text-anchor="middle">DÉTENDEUR</text><text x="1040" y="465" class="tiny" text-anchor="middle" style="font-size:21px">abaisse pression</text></g><g><rect x="385" y="555" width="402" height="50" rx="25" class="badge green"/><text x="403" y="590" class="badge-text" text-anchor="start">ORDRE FONCTIONNEL</text></g><text x="600" y="665" class="body" text-anchor="middle" style="font-size:29px">Débrancher un organe sans comprendre son rôle = diagnostic perdu</text>
+</svg>

@@ -1,10 +1,10 @@
 # inerweb.fr HabFluide — tome 1 : la théorie · compte de reprise
 
 > Pour reprendre le chantier à froid, dans une session neuve, sans relire aucun
-> historique. État au 28/08/2026, branche `claude/livret-habilitation-fluide-d5n1yt`,
+> historique. État au 28/08/2026 (relecture éditoriale intégrée), branche `claude/livret-habilitation-fluide-d5n1yt`,
 > [PR #33](https://github.com/frigorx/-inerweb-fluid-cerfa-fi-bsd-4/pull/33).
 
-**Le livre part en autoédition Amazon KDP.** Format 6 × 9 pouces, **290 pages**
+**Le livre part en autoédition Amazon KDP.** Format 6 × 9 pouces, **288 pages**
 (pas 383 : voir l'encadré pagination), noir et blanc. Il prépare l'**épreuve
 théorique** de l'attestation d'aptitude fluides frigorigènes, **catégories A1,
 A2, D et E**. La pratique fera le tome 2.
@@ -24,7 +24,7 @@ même livre sortait à 383, 272 ou 231 pages selon l'humeur du décodage. Le
 « 383 pages » des reprises précédentes était un artefact.
 
 Réparé dans `pages.mjs` (fonction `cotes()`, `width`/`height` sur chaque
-image). **Trois fabrications successives : 290 pages, à l'identique.** Si un
+image). **La pagination est stable d'une fabrication à l'autre (288 pages au dernier tirage — elle ne bouge plus qu'avec le contenu).** Si un
 jour la pagination bouge entre deux `npm run tout` sans changement de contenu,
 c'est cette régression-là qui revient.
 
@@ -38,7 +38,7 @@ c'est cette régression-là qui revient.
 | `contenu-categories.mjs` | Chapitre 4 (les sept catégories) depuis `referentiel-2025.json`. |
 | `visuels.mjs` | 121 visuels à 2400 px. Force l'**état final** des planches animées en respectant où chaque animation FINIT (un libellé qui disparaît reste caché) ; une planche **en boucle** (majorité d'animations finissant éteintes) est au contraire révélée entière. |
 | `qr.mjs` | 95 alias `inerweb.fr/f/<slug>` + pages de redirection statiques. |
-| `build-livret.mjs` | Word éditable ; tirage des 113 questions, **rang des bonnes réponses réparti**. |
+| `build-livret.mjs` | Word éditable ; tirage des questions (95 uniques après déduplication), **rang des bonnes réponses réparti**. |
 | `build-html.mjs` + `pages.mjs` + `finition.py` | Le 6 × 9 : HTML autonome + PDF. La finition pose bandeaux/pieds en **polices intégrées** (Trebuchet/Calibri du système — jamais helv/hebo, KDP les refuse), force le **compte pair**, et écrit `kdp.gen.json` sur la pagination réelle. |
 | `couverture.mjs` | **La couverture est maintenant générée** depuis `kdp.gen.json` (elle était écrite à la main : dos calé sur 390 pages pour un livre de 290). 4e + dos + 1re, PDF prêt à téléverser. |
 | `build-corrige.mjs` | Corrigé formateur, mêmes tirages que l'élève. |
@@ -74,10 +74,41 @@ Autres commandes : `npm run couverture` · `npm run verifier` ·
 4. **Décisions d'édition** (fiche `dist/kdp/A-LIRE-…` § « à décider ») :
    ISBN gratuit KDP ou acheté AFNIL ; prix (conseillé 24,90 €, coût 4,08 €).
 5. **Épreuve imprimée** avant mise en vente : gris des planches, QR scannés
-   (dont un depuis une photocopie), dos dans les plis. Attribution
-   QElectroTech si des symboles en viennent (`symboles/LICENCE.md`).
+   (dont un depuis une photocopie), dos dans les plis. (L'attribution
+   QElectroTech est TRANCHÉE : 2 symboles en viennent, le crédit est imprimé
+   et vérifié par le registre.)
 6. 9 icônes bitmap 512 px restent sous 300 ppp (l'une à 268) — accepté par
    KDP, à re-exporter en grand un jour depuis la bibliothèque.
+
+
+## Relecture éditoriale du 28/08 — intégrée
+
+Verdict reçu : « excellent brouillon, pas prêt à vendre tel quel ». Tout le
+bloquant est corrigé, dans la source (`pilote-fluides`, commit `dc0ea59`) et
+dans le livret :
+
+- **Formulations absolues** : détection CO₂ « dès que la norme l'impose » ;
+  « A1 : fluides FLUORÉS, jamais CO₂/NH₃ » (coup d'œil + lexique) ;
+  attestation rattachée aux opérations réglementées ; surchauffe/sous-refr.
+  en repères d'apprentissage (« plage indicative », garde du ch. 7).
+- **Promesse prudente** : « support de révision indépendant » en sous-titre
+  KDP, description Amazon et page copyright.
+- **Page juridique refaite** : la revente de l'exemplaire papier n'est plus
+  « interdite » (épuisement du droit, CPI L122-3-1) ; reste protégée la
+  reproduction/diffusion numérique/modification.
+- **Droits d'images prouvés** : `registre-visuels.mjs` génère
+  `dist/kdp/registre-visuels.md` depuis les métadonnées Dublin Core des
+  fichiers. 2 symboles QElectroTech (CC BY 3.0) → attribution imprimée en
+  crédits, la fabrication ÉCHOUE si elle disparaît.
+- **Déclaration IA KDP** : section dédiée dans la fiche (« Oui » texte et
+  images, justification écrite).
+- **37 doublons d'énoncé supprimés** (le R410A était posé 7 fois) : le tirage
+  n'imprime plus jamais deux fois le même énoncé (dédup globale dans
+  `build-livret.mjs`). 288 pages au lieu de 290.
+
+**Resterait à trancher par F. Henninot** : la « banque finale de révision »
+proposée par le relecteur (déplacer les questions de nomenclature répétables
+en fin d'ouvrage) — restructuration éditoriale, non lancée.
 
 ## Les règles que ce livre ne peut pas enfreindre
 
@@ -87,7 +118,7 @@ Autres commandes : `npm run couverture` · `npm run verifier` ·
   haut, évaporateur bas.
 - **Aucun texte ne chevauche un tracé.**
 - **Rang des bonnes réponses réparti** — échec au-delà de 40 % sur une lettre.
-  (Actuel : A 29 · B 27 · C 30 · D 27.)
+  (Actuel : A 24 · B 23 · C 26 · D 22.)
 
 ## Où vivent les choses
 
@@ -96,7 +127,7 @@ Autres commandes : `npm run couverture` · `npm run verifier` ·
 | Source éditoriale (44 fiches, 269 questions, capsules) | `frigorx/pilote-fluides`, `packs/fluides/` — variable `PILOTE_FLUIDES` |
 | Référentiel officiel (136 codes, verbatim JO) | `packs/fluides/referentiel-2025.json` |
 | Questions officielles chiffrées — NE JAMAIS IMPRIMER | `frigorx/habilitation-fluide/evaluation/data/*.enc` |
-| Projet Claude Design (couverture + gabarit, **synchronisé 290 p le 28/08**) | `claude.ai/design/p/cd323c8c-77ba-4f07-a98d-bf9d4e9800f4` |
+| Projet Claude Design (couverture + gabarit, **synchronisé le 28/08** (recaler si le dos bouge encore)) | `claude.ai/design/p/cd323c8c-77ba-4f07-a98d-bf9d4e9800f4` |
 | **Paquet Amazon prêt** | `livret/dist/kdp/` (2 PDF + fiche) |
 | Livrables régénérables, non commités | `livret/dist/`, `qr.gen/`, `visuels.gen/`, `curseurs.html`, `couverture-kdp.html` |
 

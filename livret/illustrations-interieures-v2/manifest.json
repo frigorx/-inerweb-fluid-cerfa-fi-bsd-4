@@ -1,0 +1,176 @@
+{
+  "nom": "Packaging illustrations intérieures HabFluide v2",
+  "statut": "BROUILLON — validation métier et BAT papier requis",
+  "couverture": "hors périmètre",
+  "doctrine": "SVG originaux, fond blanc, palette inerWeb, couleur jamais seule, aucun média tiers",
+  "count": 18,
+  "assets": [
+    {
+      "id": "securite-espace-clos",
+      "fichier": "svg/securite-espace-clos.svg",
+      "titre": "Espace clos : mesurer avant d’entrer",
+      "description": "Un local en contrebas contient une nappe de gaz. Le technicien reste dehors, ventile, mesure l’atmosphère et alerte. Il ne descend pas secourir sans protection adaptée.",
+      "usages": [
+        "Chapitre 1, leçon 1"
+      ]
+    },
+    {
+      "id": "securite-projection-fluide",
+      "fichier": "svg/securite-projection-fluide.svg",
+      "titre": "Projection de fluide : sortir de l’axe",
+      "description": "Un raccord sous pression projette du fluide dans son axe. Le technicien porte gants et lunettes, vérifie la pression et se place sur le côté avant de desserrer.",
+      "usages": [
+        "Chapitre 1, leçon 2"
+      ]
+    },
+    {
+      "id": "securite-decomposition-fluide",
+      "fichier": "svg/securite-decomposition-fluide.svg",
+      "titre": "Flamme : fluide récupéré avant brasage",
+      "description": "La planche oppose le geste interdit, chauffer un circuit contenant du fluide, et le geste sûr : récupérer, inerter à l’azote sec, garder la sortie ouverte puis braser.",
+      "usages": [
+        "Chapitre 1, leçon 3"
+      ]
+    },
+    {
+      "id": "securite-pression-residuelle",
+      "fichier": "svg/securite-pression-residuelle.svg",
+      "titre": "À l’arrêt, le circuit reste sous pression",
+      "description": "Une installation arrêtée reste sous pression. La température ambiante peut augmenter la pression. Avant ouverture : isoler, mesurer, récupérer et vérifier.",
+      "usages": [
+        "Chapitre 1, leçon 4"
+      ]
+    },
+    {
+      "id": "consignation-cinq-etapes",
+      "fichier": "svg/consignation-cinq-etapes.svg",
+      "titre": "Consignation : cinq étapes dans l’ordre",
+      "description": "Séparer, condamner, identifier, vérifier l’absence de tension avec un VAT contrôlé avant et après, puis mettre à la terre si nécessaire.",
+      "usages": [
+        "Chapitre 1, leçon 5",
+        "Chapitre 12, sécurité électrique"
+      ]
+    },
+    {
+      "id": "co2-local-protege",
+      "fichier": "svg/co2-local-protege.svg",
+      "titre": "Local CO₂ : voir l’alarme avant d’entrer",
+      "description": "Le technicien reste à l’extérieur. La signalisation et l’alarme sont visibles avant ouverture. La ventilation, la détection et l’implantation du capteur sont vérifiées selon l’installation et la norme applicable.",
+      "usages": [
+        "Chapitre 2, leçons 4 et 5",
+        "Chapitre 19, arrivée sur site"
+      ]
+    },
+    {
+      "id": "categories-champs",
+      "fichier": "svg/categories-champs.svg",
+      "titre": "Une catégorie = un fluide et un champ d’activité",
+      "description": "Les catégories A1 et A2 concernent les fluides fluorés et les hydrocarbures, B le CO2, C l’ammoniac, D la récupération, E le contrôle d’étanchéité sans ouvrir et V la climatisation des véhicules.",
+      "usages": [
+        "Chapitre 4, activité"
+      ]
+    },
+    {
+      "id": "croix-frigoriste-etats",
+      "fichier": "svg/croix-frigoriste-etats.svg",
+      "titre": "Croix du frigoriste : organes, états et énergie",
+      "description": "Circuit frigorifique conventionnel : condenseur en haut, compresseur à droite, évaporateur en bas, détendeur à gauche. Les états vapeur et liquide et les échanges de chaleur sont indiqués.",
+      "usages": [
+        "Chapitre 5, croix du frigoriste",
+        "Chapitre 5, activité"
+      ]
+    },
+    {
+      "id": "logph-lecture",
+      "fichier": "svg/logph-lecture.svg",
+      "titre": "Diagramme log p-h : lire sans inventer",
+      "description": "Le diagramme log p-h montre la pression en ordonnée logarithmique et l’enthalpie en abscisse. Les zones liquide, mélange et vapeur sont séparées par les courbes de bulle et de rosée.",
+      "usages": [
+        "Chapitre 6, leçons 1 et 2"
+      ]
+    },
+    {
+      "id": "mesures-surchauffe-sous-refroidissement",
+      "fichier": "svg/mesures-surchauffe-sous-refroidissement.svg",
+      "titre": "Deux écarts, deux points de mesure",
+      "description": "La surchauffe est mesurée en sortie d’évaporateur côté aspiration avec pression et température. Le sous-refroidissement est mesuré en sortie de condenseur côté liquide. Les valeurs constructeur font foi.",
+      "usages": [
+        "Chapitre 7, leçons et activité"
+      ]
+    },
+    {
+      "id": "compresseurs-comparatif",
+      "fichier": "svg/compresseurs-comparatif.svg",
+      "titre": "Quatre compresseurs, une même fonction",
+      "description": "Comparaison schématique de quatre technologies de compresseur : piston, scroll, vis et rotatif. Tous aspirent une vapeur basse pression et refoulent une vapeur haute pression.",
+      "usages": [
+        "Chapitre 9, technologies et activité"
+      ]
+    },
+    {
+      "id": "ligne-liquide-protection",
+      "fichier": "svg/ligne-liquide-protection.svg",
+      "titre": "La ligne liquide : chaque organe protège le suivant",
+      "description": "De la sortie du condenseur au détendeur : réservoir, filtre déshydrateur, voyant liquide, électrovanne puis détendeur. L’ordre fonctionnel est explicité.",
+      "usages": [
+        "Chapitre 12, ligne liquide",
+        "Chapitre 12, activité"
+      ]
+    },
+    {
+      "id": "sequence-mise-en-service",
+      "fichier": "svg/sequence-mise-en-service.svg",
+      "titre": "Avant la première charge : l’ordre est verrouillé",
+      "description": "Séquence d’intervention : assemblage contrôlé, épreuve à l’azote sec selon la documentation, contrôle d’étanchéité, tirage au vide avec vacuomètre, tenue du vide puis charge pesée.",
+      "usages": [
+        "Chapitre 13, leçons et activité"
+      ]
+    },
+    {
+      "id": "recherche-fuite-geste",
+      "fichier": "svg/recherche-fuite-geste.svg",
+      "titre": "Détecteur : contrôler, balayer, confirmer",
+      "description": "Le détecteur est testé avant utilisation. La sonde passe lentement autour du raccord et en partie basse. Une alerte se confirme et le résultat est consigné.",
+      "usages": [
+        "Chapitre 14, méthode directe et activité"
+      ]
+    },
+    {
+      "id": "recuperation-securisee",
+      "fichier": "svg/recuperation-securisee.svg",
+      "titre": "Récupération : circuit fermé, bouteille pesée",
+      "description": "Le fluide circule de l’installation vers une station compatible puis une bouteille de récupération posée sur une balance. La bouteille est identifiée et pesée avant et après.",
+      "usages": [
+        "Chapitre 15, leçons et activité"
+      ]
+    },
+    {
+      "id": "brasage-balayage-azote",
+      "fichier": "svg/brasage-balayage-azote.svg",
+      "titre": "Brasage sous balayage d’azote sec",
+      "description": "Avant brasage le fluide est récupéré. Un faible débit d’azote sec traverse le tube, la sortie reste ouverte et la flamme chauffe le joint. Ce balayage n’est pas une épreuve de pression.",
+      "usages": [
+        "Chapitre 16, leçons et activité"
+      ]
+    },
+    {
+      "id": "r290-zone-intervention",
+      "fichier": "svg/r290-zone-intervention.svg",
+      "titre": "R-290 : préparer la zone avant le geste",
+      "description": "Zone d’intervention sur hydrocarbure : plaque et FDS lues, ventilation active, détecteur hydrocarbures, sources d’ignition supprimées, balisage, outillage et récupération compatibles.",
+      "usages": [
+        "Chapitre 1, activité",
+        "Chapitre 18, leçons et activité"
+      ]
+    },
+    {
+      "id": "co2-nh3-deux-risques",
+      "fichier": "svg/co2-nh3-deux-risques.svg",
+      "titre": "CO₂ et NH₃ : reconnaître, puis s’arrêter",
+      "description": "Deux colonnes distinguent le CO2 R744, catégorie B, haute pression et danger respiratoire, de l’ammoniac R717, catégorie C, toxique et légèrement inflammable. A1 et A2 ne donnent aucune équivalence.",
+      "usages": [
+        "Chapitre 19, leçons et activité"
+      ]
+    }
+  ]
+}

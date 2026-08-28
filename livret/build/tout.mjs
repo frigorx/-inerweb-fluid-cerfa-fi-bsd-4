@@ -14,7 +14,8 @@ const ICI = path.dirname(fileURLToPath(import.meta.url));
 /* La couverture vient APRÈS le livre : son dos se calcule sur la
    pagination réelle, que seule la fabrication du PDF connaît. */
 const maillons = ['extraire.mjs', 'visuels.mjs', 'qr.mjs', 'build-livret.mjs',
-  'build-html.mjs', 'build-corrige.mjs', 'couverture.mjs', 'paquet-kdp.mjs'];
+  'build-html.mjs', 'build-corrige.mjs', 'couverture.mjs', 'paquet-kdp.mjs',
+  'registre-visuels.mjs'];
 
 for (const m of maillons) {
   console.log(`\n━━━ ${m} ━━━`);

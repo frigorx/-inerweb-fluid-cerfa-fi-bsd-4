@@ -104,12 +104,16 @@ livre de poche. À 19,90 € la redevance tomberait à ${redevance(19.9).toFixed
 ## Les métadonnées, écran par écran
 
 **Titre** — inerweb.fr HabFluide
-**Sous-titre** — Tome 1 : la théorie de l'attestation d'aptitude fluides frigorigènes (catégories A1, A2, D et E)
+**Sous-titre** — Tome 1 : la théorie de l'attestation d'aptitude fluides frigorigènes (catégories A1, A2, D et E) — support de révision indépendant
 **Auteur** — F. Henninot
 **Mention** — Enseignant en filière froid et climatisation
 
 **Description** (à coller telle quelle) :
 
+> **Support de révision indépendant** : ce livre ne remplace ni une formation,
+> ni l'évaluation par un organisme certifié — seul un organisme évaluateur
+> certifié délivre l'attestation, après réussite de l'évaluation.
+>
 > Toute la théorie de l'attestation d'aptitude à la manipulation des fluides
 > frigorigènes, pour les catégories A1, A2, D et E, selon l'arrêté du
 > 21 novembre 2025 et le règlement (UE) 2024/573.
@@ -146,6 +150,32 @@ climatisation · réglementation F-Gas · frigoriste · préparation examen
 n'a pas d'effet sur un broché.
 
 ---
+
+## La déclaration de contenu IA (écran « Contenu du livre »)
+
+KDP demande si le livre contient du contenu **généré par IA** (texte, images),
+même substantiellement retravaillé. Les faits, pour répondre honnêtement :
+
+- **Texte** : conçu, dirigé et vérifié par F. Henninot ; la rédaction est
+  produite par IA sous sa direction, à partir de ses choix pédagogiques et du
+  référentiel officiel. Au sens KDP, c'est du contenu **généré par IA avec
+  révision substantielle** → répondre **« Oui »** pour le texte.
+- **Images** : les planches techniques sont dessinées sous direction de
+  F. Henninot ; les illustrations de la bibliothèque sont des images générées
+  par IA sous sa direction → répondre **« Oui »** pour les images.
+
+Cette déclaration est interne à Amazon (elle n'apparaît pas sur la fiche) et
+n'empêche pas la publication. La mention imprimée en page crédits
+(« fabrication assistée par intelligence artificielle, sous sa relecture »)
+dit la même chose au lecteur.
+
+## Les droits d'images : la preuve est jointe
+
+\`registre-visuels.md\` (dans ce dossier) liste **chaque visuel du livre** avec
+son fichier source, son auteur et sa licence — lu dans les métadonnées des
+fichiers, régénéré à chaque fabrication. Deux symboles viennent de la
+collection QElectroTech (CC BY 3.0) : leur attribution est imprimée en page
+crédits, et la fabrication échoue si elle en disparaît.
 
 ## Avant de cliquer sur « Publier »
 

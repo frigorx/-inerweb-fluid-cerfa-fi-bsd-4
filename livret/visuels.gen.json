@@ -1,58 +1,30 @@
 {
- "svg:secu-espace-clos": {
-  "fichier": "svg-secu-espace-clos.png",
+ "pack:securite-espace-clos": {
+  "fichier": "pack-securite-espace-clos.png",
   "largeur": 2400,
-  "hauteur": 1013,
-  "source": "packs/fluides/res/svg/secu-espace-clos.svg",
+  "hauteur": 1440,
+  "source": "../inerweb-fluide/livret/illustrations-interieures-v2/svg/securite-espace-clos.svg",
   "citations": 1
  },
- "illu:s1": {
-  "fichier": "illu-s1.png",
-  "largeur": 1024,
-  "hauteur": 1024,
-  "source": "packs/fluides/res/bibliotheque/illu-s1.webp",
-  "citations": 1
- },
- "svg:secu-projection": {
-  "fichier": "svg-secu-projection.png",
+ "pack:securite-projection-fluide": {
+  "fichier": "pack-securite-projection-fluide.png",
   "largeur": 2400,
-  "hauteur": 827,
-  "source": "packs/fluides/res/svg/secu-projection.svg",
+  "hauteur": 1440,
+  "source": "../inerweb-fluide/livret/illustrations-interieures-v2/svg/securite-projection-fluide.svg",
   "citations": 1
  },
- "illu:s2": {
-  "fichier": "illu-s2.png",
-  "largeur": 1024,
-  "hauteur": 1024,
-  "source": "packs/fluides/res/bibliotheque/illu-s2.webp",
-  "citations": 1
- },
- "svg:secu-decomposition-ari": {
-  "fichier": "svg-secu-decomposition-ari.png",
+ "pack:securite-decomposition-fluide": {
+  "fichier": "pack-securite-decomposition-fluide.png",
   "largeur": 2400,
-  "hauteur": 853,
-  "source": "packs/fluides/res/svg/secu-decomposition-ari.svg",
-  "citations": 2
- },
- "illu:s3": {
-  "fichier": "illu-s3.png",
-  "largeur": 1024,
-  "hauteur": 1024,
-  "source": "packs/fluides/res/bibliotheque/illu-s3.webp",
+  "hauteur": 1440,
+  "source": "../inerweb-fluide/livret/illustrations-interieures-v2/svg/securite-decomposition-fluide.svg",
   "citations": 1
  },
- "svg:secu-bouteille": {
-  "fichier": "svg-secu-bouteille.png",
+ "pack:securite-pression-residuelle": {
+  "fichier": "pack-securite-pression-residuelle.png",
   "largeur": 2400,
-  "hauteur": 880,
-  "source": "packs/fluides/res/svg/secu-bouteille.svg",
-  "citations": 1
- },
- "illu:s4": {
-  "fichier": "illu-s4.png",
-  "largeur": 1024,
-  "hauteur": 1024,
-  "source": "packs/fluides/res/bibliotheque/illu-s4.webp",
+  "hauteur": 1440,
+  "source": "../inerweb-fluide/livret/illustrations-interieures-v2/svg/securite-pression-residuelle.svg",
   "citations": 1
  },
  "svg:secu-consignation": {
@@ -139,11 +111,11 @@
   "source": "packs/fluides/res/svg/co2-nh3-compare.svg",
   "citations": 3
  },
- "svg:co2-protection": {
-  "fichier": "svg-co2-protection.png",
+ "pack:co2-local-protege": {
+  "fichier": "pack-co2-local-protege.png",
   "largeur": 2400,
-  "hauteur": 982,
-  "source": "packs/fluides/res/svg/co2-protection.svg",
+  "hauteur": 1440,
+  "source": "../inerweb-fluide/livret/illustrations-interieures-v2/svg/co2-local-protege.svg",
   "citations": 3
  },
  "sym:sonde_temperature": {
@@ -719,6 +691,13 @@
   "hauteur": 853,
   "source": "packs/fluides/res/svg/secu-flamme.svg",
   "citations": 3
+ },
+ "svg:secu-decomposition-ari": {
+  "fichier": "svg-secu-decomposition-ari.png",
+  "largeur": 2400,
+  "hauteur": 853,
+  "source": "packs/fluides/res/svg/secu-decomposition-ari.svg",
+  "citations": 1
  },
  "illu:g11": {
   "fichier": "illu-g11.png",

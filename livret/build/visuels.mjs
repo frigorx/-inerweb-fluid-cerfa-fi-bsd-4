@@ -37,6 +37,7 @@ import { CHAPITRES, LIMINAIRES, FIN, PLANCHE_CENTRALE } from './plan-chapitres.m
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const SOURCE = process.env.PILOTE_FLUIDES || 'C:/git/pilote-fluides';
 const RES = path.join(SOURCE, 'packs', 'fluides', 'res');
+const PACK_LOCAL = path.join(ICI, '..', 'illustrations-interieures-v2', 'svg');
 const DEHORS = path.join(ICI, '..', 'visuels.gen');
 const MANIFESTE = path.join(ICI, '..', 'visuels.gen.json');
 
@@ -48,6 +49,7 @@ const MANIFESTE = path.join(ICI, '..', 'visuels.gen.json');
 const LARGEUR = 2400;
 
 const FAMILLES = {
+  pack: (n) => path.join(PACK_LOCAL, `${n}.svg`),
   svg: (n) => path.join(RES, 'svg', `${n}.svg`),
   illu: (n) => path.join(RES, 'bibliotheque', `illu-${n}.webp`),
   amb: (n) => path.join(RES, 'bibliotheque', `amb-${n}.webp`),
@@ -204,12 +206,12 @@ for (const { ref, famille, nom, chemin } of aConvertir) {
   /* Les SVG se rastérisent en haute densité ; les bitmaps se réduisent
      à la largeur cible sans jamais être agrandis. */
   let source = chemin;
-  if (famille === 'svg' || famille === 'sym') {
+  if (famille === 'svg' || famille === 'sym' || famille === 'pack') {
     const brut = fs.readFileSync(chemin, 'utf8');
     const fini = etatFinal(brut);
     if (fini !== brut) { reveillees.push(ref); source = Buffer.from(fini); }
   }
-  const img = famille === 'svg' || famille === 'sym'
+  const img = famille === 'svg' || famille === 'sym' || famille === 'pack'
     ? sharp(source, { density: 500 }).resize({ width: LARGEUR, withoutEnlargement: false })
     : sharp(source).resize({ width: LARGEUR, withoutEnlargement: true });
   const info = await img.png({ compressionLevel: 9 }).toFile(sortie);

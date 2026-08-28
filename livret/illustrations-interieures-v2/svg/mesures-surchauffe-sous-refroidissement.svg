@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Deux écarts, deux points de mesure</title><desc id="desc">La surchauffe est mesurée en sortie d’évaporateur côté aspiration avec pression et température. Le sous-refroidissement est mesuré en sortie de condenseur côté liquide. Les valeurs constructeur font foi.</desc>
+  <metadata><dc:title>Deux écarts, deux points de mesure</dc:title><dc:description>La surchauffe est mesurée en sortie d’évaporateur côté aspiration avec pression et température. Le sous-refroidissement est mesuré en sortie de condenseur côté liquide. Les valeurs constructeur font foi.</dc:description><dc:creator>F. Henninot (direction métier) et OpenAI Codex (dessin SVG original)</dc:creator><dc:source>Création originale inerWeb, pack HabFluide intérieur v2</dc:source><dc:rights>© 2026 Franck Henninot, inerWeb. Tous droits réservés.</dc:rights></metadata>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#3D7FCA"/></marker><pattern id="gas" width="38" height="38" patternUnits="userSpaceOnUse"><circle cx="7" cy="8" r="4" fill="#84B7EC"/><circle cx="28" cy="25" r="5" fill="#3D7FCA" opacity=".45"/></pattern></defs>
+  <style>
+  .title{font:700 54px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .subtitle{font:600 32px Calibri,Arial,sans-serif;fill:#10233C}
+  .body{font:600 36px Calibri,Arial,sans-serif;fill:#10233C}
+  .small{font:600 30px Calibri,Arial,sans-serif;fill:#10233C}
+  .tiny{font:600 25px Calibri,Arial,sans-serif;fill:#10233C}
+  .panel-title{font:700 34px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .equip{font:700 27px Calibri,Arial,sans-serif;fill:#1B3A63}
+  .badge-text{font:700 27px Calibri,Arial,sans-serif;fill:white}
+  .stop-text{font:700 25px Calibri,Arial,sans-serif;fill:#C0392B}
+  .panel{fill:white;stroke:#1B3A63;stroke-width:4}
+  .panel.danger{stroke:#C0392B;stroke-width:6;stroke-dasharray:18 12}
+  .panel.safe{stroke:#1E7E54;stroke-width:7;stroke-dasharray:3 8}
+  .badge.navy{fill:#1B3A63} .badge.orange{fill:#C9451A} .badge.green{fill:#1E7E54}
+  .pipe{fill:none;stroke:#1B3A63;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .thin{fill:none;stroke:#1B3A63;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+  .accent{fill:none;stroke:#C9451A;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .flow{fill:none;stroke:#3D7FCA;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .danger-line{fill:none;stroke:#C0392B;stroke-width:8;stroke-dasharray:18 12}
+  .safe-line{fill:none;stroke:#1E7E54;stroke-width:8;stroke-dasharray:3 11}
+  .device{fill:white;stroke:#1B3A63;stroke-width:6}
+  .screen{fill:#F3F7FB;stroke:#3D7FCA;stroke-width:4}
+  .person{fill:white;stroke:#1B3A63;stroke-width:6}
+  .person-line{fill:none;stroke:#1B3A63;stroke-width:12;stroke-linecap:round}
+  .helmet{fill:#F3F7FB;stroke:#1B3A63;stroke-width:5}
+  .stop{fill:white;stroke:#C0392B;stroke-width:7;stroke-dasharray:16 9}
+  .step{fill:white;stroke:#1B3A63;stroke-width:5}
+  .step-safe{fill:white;stroke:#1E7E54;stroke-width:7;stroke-dasharray:3 9}
+  .warn{fill:white;stroke:#C9451A;stroke-width:6;stroke-dasharray:16 9}
+</style><rect width="1200" height="720" fill="white"/>
+  <text x="50" y="72" class="title" text-anchor="start">Deux écarts, deux points de mesure</text><g><rect x="65" y="250" width="330" height="220" rx="16" class="device"/><circle cx="337" cy="328" r="42" class="thin"/><path d="M 337 292 L 350 328 L 312 315 Z M 337 364 L 325 328 L 363 341 Z" fill="#84B7EC" stroke="#1B3A63" stroke-width="3"/><text x="83" y="452" class="equip" text-anchor="start">ÉVAPORATEUR</text></g><path d="M 395 360 H 610" class="pipe"/><g transform="translate(485 245)"><circle cx="0" cy="0" r="48" class="device"/><path d="M -30 12 A 33 33 0 0 1 30 12" class="thin"/><line x1="0" y1="0" x2="24" y2="-20" class="accent"/><circle cx="0" cy="0" r="6" fill="#1B3A63"/><text x="0" y="78" class="small" text-anchor="middle">Pression BP</text></g><rect x="620" y="300" width="65" height="120" rx="10" class="device"/><text x="652" y="370" class="body" text-anchor="middle">T°</text><g><rect x="700" y="135" width="430" height="235" rx="18" class="panel safe"/><text x="724" y="181" class="panel-title" text-anchor="start">SURCHAUFFE</text><text x="724" y="223" class="small" text-anchor="start" style="font-size:25px">T tube − T saturation rosée</text></g><g><rect x="65" y="500" width="330" height="160" rx="16" class="device"/><circle cx="337" cy="578" r="42" class="thin"/><path d="M 337 542 L 350 578 L 312 565 Z M 337 614 L 325 578 L 363 591 Z" fill="#84B7EC" stroke="#1B3A63" stroke-width="3"/><text x="83" y="642" class="equip" text-anchor="start">CONDENSEUR</text></g><path d="M 395 580 H 610" class="pipe"/><g transform="translate(485 505)"><circle cx="0" cy="0" r="48" class="device"/><path d="M -30 12 A 33 33 0 0 1 30 12" class="thin"/><line x1="0" y1="0" x2="24" y2="-20" class="accent"/><circle cx="0" cy="0" r="6" fill="#1B3A63"/><text x="0" y="78" class="small" text-anchor="middle">Pression HP</text></g><rect x="620" y="540" width="65" height="120" rx="10" class="device"/><text x="652" y="610" class="body" text-anchor="middle">T°</text><g><rect x="700" y="410" width="430" height="235" rx="18" class="panel"/><text x="724" y="456" class="panel-title" text-anchor="start">SOUS-REFROIDISSEMENT</text><text x="724" y="498" class="small" text-anchor="start" style="font-size:25px">T saturation bulle − T tube</text></g><g><rect x="760" y="655" width="468" height="50" rx="25" class="badge orange"/><text x="778" y="690" class="badge-text" text-anchor="start">VALEURS CONSTRUCTEUR</text></g>
+</svg>

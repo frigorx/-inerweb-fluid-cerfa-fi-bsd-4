@@ -1,0 +1,209 @@
+{
+  "pdf": "C:\\git\\inerweb-fluide\\livret\\dist\\inerweb.fr-HabFluide-Tome1-Livret-eleve-6x9.pdf",
+  "pages": 272,
+  "format_points": [
+    432,
+    648
+  ],
+  "planches_uniques": 18,
+  "emplacements": 39,
+  "pages_concernees": [
+    15,
+    17,
+    19,
+    21,
+    24,
+    26,
+    40,
+    43,
+    66,
+    71,
+    78,
+    82,
+    83,
+    90,
+    92,
+    95,
+    111,
+    113,
+    118,
+    156,
+    160,
+    166,
+    173,
+    184,
+    185,
+    186,
+    192,
+    200,
+    205,
+    207,
+    208,
+    224,
+    231,
+    232,
+    237,
+    238,
+    240,
+    241
+  ],
+  "placements": [
+    {
+      "page": 15,
+      "fichier": "pack-securite-espace-clos.png"
+    },
+    {
+      "page": 17,
+      "fichier": "pack-securite-projection-fluide.png"
+    },
+    {
+      "page": 19,
+      "fichier": "pack-securite-decomposition-fluide.png"
+    },
+    {
+      "page": 21,
+      "fichier": "pack-securite-pression-residuelle.png"
+    },
+    {
+      "page": 24,
+      "fichier": "pack-consignation-cinq-etapes.png"
+    },
+    {
+      "page": 26,
+      "fichier": "pack-r290-zone-intervention.png"
+    },
+    {
+      "page": 40,
+      "fichier": "pack-co2-local-protege.png"
+    },
+    {
+      "page": 43,
+      "fichier": "pack-co2-local-protege.png"
+    },
+    {
+      "page": 66,
+      "fichier": "pack-categories-champs.png"
+    },
+    {
+      "page": 71,
+      "fichier": "pack-croix-frigoriste-etats.png"
+    },
+    {
+      "page": 78,
+      "fichier": "pack-croix-frigoriste-etats.png"
+    },
+    {
+      "page": 82,
+      "fichier": "pack-logph-lecture.png"
+    },
+    {
+      "page": 83,
+      "fichier": "pack-logph-lecture.png"
+    },
+    {
+      "page": 90,
+      "fichier": "pack-mesures-surchauffe-sous-refroidissement.png"
+    },
+    {
+      "page": 92,
+      "fichier": "pack-mesures-surchauffe-sous-refroidissement.png"
+    },
+    {
+      "page": 95,
+      "fichier": "pack-mesures-surchauffe-sous-refroidissement.png"
+    },
+    {
+      "page": 111,
+      "fichier": "pack-compresseurs-comparatif.png"
+    },
+    {
+      "page": 113,
+      "fichier": "pack-compresseurs-comparatif.png"
+    },
+    {
+      "page": 118,
+      "fichier": "pack-compresseurs-comparatif.png"
+    },
+    {
+      "page": 156,
+      "fichier": "pack-ligne-liquide-protection.png"
+    },
+    {
+      "page": 160,
+      "fichier": "pack-ligne-liquide-protection.png"
+    },
+    {
+      "page": 166,
+      "fichier": "pack-sequence-mise-en-service.png"
+    },
+    {
+      "page": 173,
+      "fichier": "pack-sequence-mise-en-service.png"
+    },
+    {
+      "page": 184,
+      "fichier": "pack-recherche-fuite-geste.png"
+    },
+    {
+      "page": 185,
+      "fichier": "pack-recherche-fuite-geste.png"
+    },
+    {
+      "page": 186,
+      "fichier": "pack-recherche-fuite-geste.png"
+    },
+    {
+      "page": 192,
+      "fichier": "pack-recuperation-securisee.png"
+    },
+    {
+      "page": 200,
+      "fichier": "pack-recuperation-securisee.png"
+    },
+    {
+      "page": 205,
+      "fichier": "pack-brasage-balayage-azote.png"
+    },
+    {
+      "page": 207,
+      "fichier": "pack-brasage-balayage-azote.png"
+    },
+    {
+      "page": 208,
+      "fichier": "pack-brasage-balayage-azote.png"
+    },
+    {
+      "page": 224,
+      "fichier": "pack-r290-zone-intervention.png"
+    },
+    {
+      "page": 231,
+      "fichier": "pack-r290-zone-intervention.png"
+    },
+    {
+      "page": 232,
+      "fichier": "pack-r290-zone-intervention.png"
+    },
+    {
+      "page": 237,
+      "fichier": "pack-co2-nh3-deux-risques.png"
+    },
+    {
+      "page": 238,
+      "fichier": "pack-co2-nh3-deux-risques.png"
+    },
+    {
+      "page": 240,
+      "fichier": "pack-co2-local-protege.png"
+    },
+    {
+      "page": 241,
+      "fichier": "pack-co2-local-protege.png"
+    },
+    {
+      "page": 241,
+      "fichier": "pack-co2-nh3-deux-risques.png"
+    }
+  ],
+  "echecs": []
+}

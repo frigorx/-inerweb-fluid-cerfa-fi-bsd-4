@@ -283,20 +283,32 @@ const repartir = (q) => {
    explique vraiment. (25 des 180 questions de la banque sont dans ce
    cas — signalé à F. Henninot pour la source.) */
 const creuse = (q) => /Retenez la notion-clé/.test(q.explication || '') || !q.explication;
+
+/* Le même énoncé ne s'imprime qu'UNE fois dans tout le livre. La source
+   glisse ses questions de nomenclature dans le pool de plusieurs chapitres
+   (utile à l'écran, où chaque chapitre se travaille seul) : sur papier, le
+   tirage posait « Le R410A est un mélange de… » SEPT fois — 37 doublons
+   sur 113 questions, relevés à la relecture. Le premier chapitre qui tire
+   un énoncé le garde ; les suivants prennent d'autres questions du leur. */
+const enoncesVus = new Set();
+const cleEnonce = (q) => String(q.enonce || '').toLowerCase().replace(/\W+/g, ' ').trim();
+
 const choisirQuestions = (ch) => {
   const pool = [...ch.questions].sort((a, b) =>
     (creuse(a) - creuse(b))
     || String(a.code || '').localeCompare(String(b.code || ''))
     || String(a.id).localeCompare(String(b.id)));
   const prises = []; const codesVus = new Set();
+  const libre = (q) => !enoncesVus.has(cleEnonce(q));
   for (const q of pool) {
     if (prises.length >= 6) break;
+    if (!libre(q)) continue;
     if (q.code && codesVus.has(q.code)) continue;
-    prises.push(q); if (q.code) codesVus.add(q.code);
+    prises.push(q); enoncesVus.add(cleEnonce(q)); if (q.code) codesVus.add(q.code);
   }
   for (const q of pool) {
     if (prises.length >= 6) break;
-    if (!prises.includes(q)) prises.push(q);
+    if (!prises.includes(q) && libre(q)) { prises.push(q); enoncesVus.add(cleEnonce(q)); }
   }
   SELECTION[ch.num] = prises.map((q) => repartir(q));
   return prises;
