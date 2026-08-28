@@ -57,6 +57,31 @@ Autres commandes : `npm run couverture` · `npm run verifier` ·
 - La planche centrale (22 repères) est **couchée** (page paysage dans une
   page portrait, classe `.paysage`) : +72 % de surface.
 
+## Le référentiel est tracé page par page
+
+Chaque page du livre porte en pied, à côté du numéro, les **codes de
+l'arrêté qu'elle travaille** : « Référentiel : 12.02 · 12.13 ». 284 pages
+sur 353 en portent. Le rattachement n'est pas deviné : il vient du champ
+`dc` des cartes source, écrit par l'auteur du cours (« G8 · codes 8.01 ·
+8.05 », intervalles « 5.05 → 5.09 » développés à l'extraction).
+
+De là découlent trois choses, toutes régénérées à chaque fabrication :
+
+| Pièce | Ce qu'elle dit |
+|---|---|
+| pied de page | les compétences travaillées **sur cette page** |
+| « Index des codes », en fin de livre | pour un code, **les chapitres** où le retrouver |
+| `dist/kdp/audit-referentiel.md` (`npm run audit`) | l'inventaire exhaustif : combien de pages par code, du plus vu au moins vu, et **ce qui manque** |
+
+**Audit au 28/08 : 39 codes théoriques sur 39 vus, aucun sur une seule
+page, aucun absent.** Fréquence de 4 à 39 pages par code, médiane 12 — le
+déséquilibre se lit dans le tableau et se corrige en ajoutant ou en
+allégeant une leçon. `audit-referentiel.mjs` **fait échouer la chaîne** si
+un code théorique disparaît ou si un code inconnu du référentiel est marqué.
+
+Le périmètre reste la THÉORIE : les 55 codes évalués en atelier sont
+comptés à part, leur absence n'est pas une faute.
+
 ## Ce qui reste
 
 1. **Relecture métier du lexique** — 61 entrées dans `build/lexique.mjs`,

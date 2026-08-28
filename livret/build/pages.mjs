@@ -164,6 +164,17 @@ const lignes = (liste) => `<div class="remplir">${liste.map((l) => {
   return `<p class="rl">${ech(libelle)}</p><p class="trait"></p>`;
 }).join('')}</div>`;
 
+/* Un libellé d'arrêté fait parfois trois lignes : on le coupe au dernier
+   mot entier, jamais au milieu d'un mot — « thermodynamique élémentaire
+   (terminologie, p » n'apprend rien à personne. */
+const raccourcir = (texte, n) => {
+  const t = String(texte);
+  if (t.length <= n) return t;
+  const bout = t.slice(0, n);
+  const espace = bout.lastIndexOf(' ');
+  return `${(espace > n * 0.6 ? bout.slice(0, espace) : bout).replace(/[ ,;:(]+$/, '')}…`;
+};
+
 const libelleCode = (() => {
   const idx = new Map();
   for (const g of REF.groupes) for (const c of g.codes || []) idx.set(c.code, c.libelle);
@@ -274,6 +285,10 @@ export const construireFlux = () => {
       pousse(`<h3 class="sect-t"><span class="sect-num">2</span>Comprendre</h3>`, { ...meta, garde: true });
       for (const [i, lp] of (ch.lecons || []).entries()) {
         const lc = c.lecons[i];
+        /* Chaque bloc emporte les codes que sa carte source DÉCLARE
+           traiter : le pied de page les imprimera, et l'audit comptera
+           sur quelles pages chaque compétence est réellement vue. */
+        const meta = { partie: partie.id, chapitre: ch.num, codes: lc.codes || [] };
         pousse(`<h4 class="lecon-t"><span class="lecon-n">${ch.num}.${i + 1}</span>${ech(apos(lc.t))}</h4>`,
           { ...meta, garde: true });
         if (lp.visuels) pousse(figure(lp.visuels, lp.legendes), meta);
@@ -382,16 +397,27 @@ export const construireFlux = () => {
       }
     }
     if (p.id === 'index-codes') {
+      /* L'index dit où RETROUVER un code, et il le dit d'après la même
+         source que les pieds de page : les codes que chaque leçon déclare
+         traiter. Auparavant il recopiait les codes annoncés en tête de
+         chapitre — une intention, pas un relevé. */
       const parCode = new Map();
-      for (const ch of CHAPITRES) for (const code of ch.codes) {
-        if (!parCode.has(code)) parCode.set(code, []);
-        parCode.get(code).push(ch.num);
+      for (const c of CONTENU.chapitres) {
+        for (const l of c.lecons || []) {
+          for (const code of l.codes || []) {
+            if (!parCode.has(code)) parCode.set(code, new Set());
+            parCode.get(code).add(c.num);
+          }
+        }
       }
+      pousse(`<p class="txt">Chaque page du livre porte en pied les codes qu’elle travaille.
+        Ce tableau fait le chemin inverse : pour un code, les chapitres où il est traité.</p>`,
+      { nue: true });
       pousse(tableau({
-        titre: 'Code → chapitre(s) du livret',
+        titre: 'Code du référentiel → chapitre(s) du livre',
         entetes: ['Code', 'Ce qu’il exige', 'Chapitre(s)'],
         lignes: [...parCode.entries()].sort((a, b) => a[0].localeCompare(b[0], 'fr', { numeric: true }))
-          .map(([code, nums]) => [code, libelleCode(code).slice(0, 110), nums.join(', ')]),
+          .map(([code, nums]) => [code, raccourcir(libelleCode(code), 108), [...nums].sort((x, y) => x - y).join(', ')]),
       }), { nue: true });
     }
     if (p.id === 'index-qr') {

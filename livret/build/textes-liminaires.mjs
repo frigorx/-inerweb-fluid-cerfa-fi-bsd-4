@@ -72,6 +72,11 @@ export const TEXTES_LIMINAIRES = {
     `Chaque chapitre suit le même chemin : des leçons courtes, une activité à remplir, une phrase ` +
     `à dire à voix haute, des questions. La dernière page de chaque chapitre vous donne une note ` +
     `sur six — reportez-la au bilan de fin de livret pour voir où revenir.`,
+    `<b>En bas de chaque page, à côté du numéro, vous lisez « Référentiel : » suivi de codes.</b> ` +
+    `Ce sont les compétences de l'arrêté du 21 novembre 2025 que la page travaille — celles-là ` +
+    `mêmes que l'épreuve peut vous demander. Elles ne sont pas décoratives : la page « Index des ` +
+    `codes du référentiel », en fin de livret, dit pour chaque code où le retrouver. Un code que ` +
+    `vous ne comprenez pas encore est une page à relire, et vous savez laquelle.`,
   ],
   'statut': [
     `Ce livret <b>prépare</b> à l'attestation d'aptitude. Il <b>ne la délivre pas</b> : seul un ` +

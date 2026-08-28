@@ -123,9 +123,33 @@ const extraire = (ou, { src, paras = 'tous', blocs = [] }) => {
   if (blocsManquants.length) {
     erreurs.push(`${ou} : fiche « ${src} » n'a pas de bloc ${blocsManquants.join(', ')}`);
   }
+  /* Les codes que la carte source DÉCLARE traiter (son champ `dc` :
+     « G8 · codes 8.01 · 8.05 »). C'est la seule source honnête d'un
+     rattachement page → référentiel : elle est écrite par l'auteur du
+     cours, pas devinée après coup. Le livre les imprimera en pied de
+     page, et l'audit comptera ce qui est réellement vu. */
+  const dc = String(carte.dc || '');
+  const codesDeclares = [];
+  /* Le `dc` écrit ses codes un à un (« 4.06 · 4.07 ») ou par INTERVALLE
+     (« codes 5.05 → 5.09 »). Ne lire que les nombres laissait tomber tout
+     ce qui est entre les bornes : 5.06, 5.07 et 5.08 n'étaient marqués
+     nulle part alors que le chapitre les traite. On développe. */
+  const reste = dc.replace(/(\d{1,2})\.(\d{2})\s*(?:→|->|à)\s*(\d{1,2})\.(\d{2})/g,
+    (tout, g1, d1, g2, d2) => {
+      if (g1 !== g2) return tout;
+      const sortie = [];
+      for (let n = Number(d1); n <= Number(d2); n += 1) {
+        sortie.push(`${g1}.${String(n).padStart(2, '0')}`);
+      }
+      codesDeclares.push(...sortie);
+      return '';
+    });
+  codesDeclares.push(...(reste.match(/\d{1,2}\.\d{2}/g) || []));
+
   return {
     src,
     titre_source: carte.titre,
+    codes: [...new Set(codesDeclares)],
     paras: indices.filter((i) => i >= 0 && i < tous.length).map((i) => tous[i]),
     blocs: blocs.map((i) => (carte.blocs || [])[i]).filter(Boolean),
     question: carte.question || null,

@@ -328,7 +328,11 @@ tbody tr:nth-child(even) td{background:#F7FAFC}
 const marqueur = (b) => {
   if (b.seul) return '<span class="marq">@@NUE@@</span>';
   if (!b.chapitre) return '<span class="marq">@@LIM@@</span>';
-  return `<span class="marq">@@${b.partie}|${b.chapitre}@@</span>`;
+  /* Les codes du référentiel voyagent avec le bloc, séparés du chapitre
+     par un point-virgule : la finition les imprimera en pied de la page
+     où ils tombent, et l'audit les comptera page par page. */
+  const codes = (b.codes || []).join(',');
+  return `<span class="marq">@@${b.partie}|${b.chapitre}${codes ? ';' + codes : ''}@@</span>`;
 };
 
 const flux = construireFlux().filter((b) => b.html && b.html.trim());

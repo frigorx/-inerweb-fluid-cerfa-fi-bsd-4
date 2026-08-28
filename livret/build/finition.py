@@ -77,35 +77,52 @@ PARTIES = {
     'D': 'Les organes', 'E': 'Les opérations', 'F': 'Fluides à risque et avenir',
 }
 
-MARQUEUR = re.compile(r'@@(NUE|LIM|([A-F])\|(\d+))@@')
+# Le marqueur porte la partie, le chapitre, et les codes du référentiel
+# que la leçon déclare traiter : « @@D|11;8.01,8.05@@ ».
+MARQUEUR = re.compile(r'@@(NUE|LIM|([A-F])\|(\d+)(?:;([\d.,]+))?)@@')
 
 
 def contexte_des_pages(doc):
-    """Pour chaque page : ('nue', None) | ('lim', None) | ('ch', (partie, num)).
+    """Pour chaque page : (genre, info, codes).
+
+    genre vaut 'nue', 'lim' ou 'ch'. `codes` est la liste des codes du
+    référentiel que les leçons de CETTE page déclarent traiter — tous les
+    marqueurs de la page comptent, pas seulement le premier : une page
+    porte souvent la fin d'une leçon et le début de la suivante.
 
     Un marqueur vaut jusqu'au suivant : une page sans marqueur hérite du
     contexte de la précédente — c'est le cas d'une page de pur texte."""
     courant = ('lim', None)
+    codes_courants = []
     sortie = []
     for page in doc:
         texte = page.get_text()
         trouves = MARQUEUR.findall(texte)
+        codes_page = []
+        for _tag, _partie, _num, liste in trouves:
+            for code in (liste or '').split(','):
+                if code and code not in codes_page:
+                    codes_page.append(code)
         if trouves:
-            # Le PREMIER marqueur de la page décide : c'est lui qui est
-            # en tête, donc celui dont le bandeau doit parler.
-            tag, partie, num = trouves[0]
+            # Le PREMIER marqueur décide du bandeau : c'est lui qui est en
+            # tête de page, donc celui dont le lecteur voit le titre.
+            tag, partie, num, _liste = trouves[0]
             if tag == 'NUE':
                 courant_page = ('nue', None)
-                courant = courant_page
             elif tag == 'LIM':
                 courant_page = ('lim', None)
-                courant = courant_page
             else:
                 courant_page = ('ch', (partie, num))
-                courant = courant_page
+            courant = courant_page
+            # Une page sans code propre garde ceux de la leçon en cours.
+            if codes_page:
+                codes_courants = codes_page
+            elif courant_page[0] != 'ch':
+                codes_courants = []
         else:
             courant_page = courant
-        sortie.append(courant_page)
+        sortie.append((courant_page[0], courant_page[1],
+                       codes_page or (codes_courants if courant_page[0] == 'ch' else [])))
     return sortie
 
 
@@ -117,7 +134,9 @@ def finir(chemin):
     numero = 0
     nues = 0
 
-    for i, (page, (genre, info)) in enumerate(zip(doc, contextes)):
+    inventaire = {}            # code du référentiel -> [pages où il est vu]
+
+    for i, (page, (genre, info, codes)) in enumerate(zip(doc, contextes)):
         if genre == 'nue':
             nues += 1
             continue
@@ -159,6 +178,21 @@ def finir(chemin):
         page.insert_text(fitz.Point(MARGE_G, PIED + 3.2 * MM),
                          'inerweb.fr · HabFluide, tome 1 — la théorie',
                          fontname='tcorps', fontsize=6.8, color=MUT)
+
+        # Les compétences du référentiel travaillées SUR CETTE PAGE. Elles
+        # s'écrivent en clair : le lecteur sait ce qu'il vient de couvrir,
+        # et le formateur peut pointer sa progression code par code.
+        if genre == 'ch' and codes:
+            for code in codes:
+                inventaire.setdefault(code, []).append(numero)
+            libelle_codes = 'Référentiel : ' + ' · '.join(codes)
+            largeur_codes = largeur_de(libelle_codes, 'tcorps', 6.8)
+            # Le numéro occupe la droite : les codes s'arrêtent avant lui.
+            place = largeur - MARGE_D - 9 * MM - largeur_codes
+            if place > MARGE_G + largeur_de('inerweb.fr · HabFluide, tome 1 — la théorie',
+                                            'tcorps', 6.8) + 6 * MM:
+                page.insert_text(fitz.Point(place, PIED + 3.2 * MM),
+                                 libelle_codes, fontname='tcorps', fontsize=6.8, color=BLEU)
         RAYON = 2.6 * MM
         centre = fitz.Point(largeur - MARGE_D - RAYON, PIED + 2.9 * MM)
         page.draw_circle(centre, RAYON, color=BLEU, fill=BLEU)
@@ -184,6 +218,11 @@ def finir(chemin):
     doc.close()
     os.replace(chemin + '.tmp', chemin)
 
+    with open(os.path.join(os.path.dirname(__file__), '..', 'inventaire-pages.gen.json'),
+              'w', encoding='utf-8') as f:
+        json.dump({c: sorted(set(p)) for c, p in sorted(inventaire.items())},
+                  f, ensure_ascii=False, indent=1)
+    print('  référentiel : %d codes marqués en pied de page' % len(inventaire))
     print('  finition : %d pages numérotées, %d nues%s'
           % (numero, nues, ', 1 blanche de fin (compte pair)' if ajoutee else ''))
     # L'édition DYS est plus aérée, donc plus longue : elle ne doit pas

@@ -73,6 +73,10 @@
      "t": "L air qui manque — l asphyxie",
      "src": "s1",
      "titre_source": "L'air qui manque — l'asphyxie",
+     "codes": [
+      "12.02",
+      "12.13"
+     ],
      "paras": [
       "Respirer, c'est faire entrer de l'oxygène dans le corps. Un local fermé peut se remplir d'un autre gaz : de l'azote utilisé pour mettre un circuit en pression, ou du fluide frigorigène qui a fui. Ce gaz prend la place de l'oxygène dans l'air. C'est une <b>asphyxie par manque d'oxygène</b> : vous ne respirez plus assez d'oxygène, non pas parce qu'un produit vous empoisonne, mais parce qu'il a chassé l'air respirable.",
       "Face à l'<b>azote</b> et aux <b>fluides fluorés</b>, le corps ne donne <b>aucune alerte</b>. Normalement, l'envie de respirer plus fort vient d'un excès de gaz carbonique dans le sang, pas d'un manque d'oxygène. Dans un local pauvre en oxygène, vous ne suffoquez donc pas peu à peu : vous pouvez perdre connaissance <b>en quelques instants, sans gêne ressentie avant</b>. L'azote est incolore et inodore. La plupart des fluides fluorés le sont aussi ; l'ammoniac, lui, a une odeur forte. Mais tous les fluides ne se comportent pas pareil : se fier à l'odeur reste dangereux.",
@@ -110,6 +114,9 @@
      "t": "Le froid brûle — projections et gelures",
      "src": "s2",
      "titre_source": "Le froid brûle — projections et gelures",
+     "codes": [
+      "12.02"
+     ],
      "paras": [
       "Un fluide frigorigène liquide est sous pression. Dès qu'il retrouve la pression de l'air ambiant, il s'évapore d'un coup. Cette évaporation absorbe une grande quantité de chaleur autour de lui, y compris sur la peau qu'il touche. Ce contact provoque une <b>brûlure froide</b>, aussi appelée <b>gelure</b> : les tissus gèlent presque instantanément. C'est le même résultat qu'une brûlure classique, mais par le froid plutôt que par la chaleur.",
       "Les yeux sont particulièrement exposés : un jet de liquide est souvent invisible et rapide, et l'œil n'a pas de réflexe de protection efficace contre lui. Un contact avec de l'ammoniac liquide ajoute une <b>brûlure chimique</b> à la brûlure froide : ce fluide n'appartient pas à la même famille que les fluides fluorés, et ne se comporte pas comme eux.",
@@ -145,6 +152,9 @@
      "t": "La flamme interdite — décomposition du fluide",
      "src": "s3",
      "titre_source": "La flamme interdite — décomposition du fluide",
+     "codes": [
+      "11.03"
+     ],
      "paras": [
       "Un fluide frigorigène fluoré est stable à température normale. Il ne l'est plus face à une flamme. Chauffé au contact d'une flamme ou d'une surface très chaude, il ne brûle pas comme un carburant : il se <b>décompose</b>. Sa molécule se casse et forme d'autres substances, absentes du fluide d'origine — des gaz toxiques et corrosifs.",
       "Certains fluides ajoutent un second risque. Selon la norme NF EN 378, les fluides classés <b>A2L</b> (légèrement inflammables, comme le R-32 ou le R-1234yf) ou <b>A3</b> (très inflammables, comme le R-290 ou le R-600a) peuvent eux-mêmes s'enflammer au contact d'une flamme ou d'une étincelle. La classe du fluide utilisé se lit sur sa FDS (fiche de données de sécurité).",
@@ -181,6 +191,10 @@
      "t": "Ce qui éclate — la pression",
      "src": "s4",
      "titre_source": "Ce qui éclate — la pression",
+     "codes": [
+      "11.03",
+      "3.01"
+     ],
      "paras": [
       "<b>Ce qui arrive.</b> Un circuit frigorifique contient du fluide sous pression en permanence. Cette pression existe même quand la machine est à l'arrêt. Elle existe même quand il fait chaud dehors, alors que rien ne fonctionne. Une règle simple : plus la température monte, plus la pression à l'intérieur du circuit monte aussi. Une paroi — bouteille, flexible, raccord, tuyauterie — résiste à une certaine pression. Au-delà, elle cède : elle se déforme, se fissure, ou éclate d'un coup. Ce n'est pas une réaction chimique, c'est une question de force. La pression pousse de l'intérieur ; la paroi résiste de l'extérieur. Quand la pression gagne, la paroi perd.",
       "Ce qui peut céder :",
@@ -219,6 +233,7 @@
      "t": "Consigner avant de toucher — le risque électrique",
      "src": "s5",
      "titre_source": "Consigner avant de toucher — le risque électrique",
+     "codes": [],
      "paras": [
       "<b>Ce qui arrive.</b> Ce risque ne figure dans aucun code du référentiel d'examen fluides. Il n'en est pas moins réel : le risque électrique tue des professionnels chaque année, sur les installations de froid et de climatisation comme sur toute autre installation électrique.",
       "Le passage du courant électrique dans le corps humain porte un nom : l'<b>électrisation</b>. Ses effets vont de la simple secousse à des blessures graves — brûlures internes, troubles du cœur. Quand une électrisation entraîne la mort, on parle d'<b>électrocution</b>. C'est le même phénomène ; seule la gravité change.",
@@ -258,6 +273,10 @@
    "activite": {
     "src": "p7",
     "titre_source": "Préparation de chantier — risques, EPI, zone de travail",
+    "codes": [
+     "12.04",
+     "12.05"
+    ],
     "paras": [
      "Avant de sortir le moindre outil, deux choses se préparent : l'<b>analyse de risques</b> et la <b>zone de travail</b>. Ce n'est pas une formalité à cocher après coup. C'est la première étape du chantier, avant le premier geste technique.",
      "<b>L'analyse de risques</b> se fait dans cet ordre :",
@@ -616,6 +635,10 @@
      "t": "Deux lettres, deux dangers",
      "src": "cl1",
      "titre_source": "Lire une classe — deux lettres, deux dangers",
+     "codes": [
+      "1.08",
+      "11.03"
+     ],
      "paras": [
       "<b>Ce que c'est.</b> La norme NF EN 378 (et la norme américaine ASHRAE 34, qui suit la même logique) attribue à chaque fluide frigorigène une <b>classe de sécurité</b> : A1, A2L, B2L, A3… Ce n'est pas un classement du plus dangereux au moins dangereux. C'est une <b>combinaison de deux informations distinctes</b>, et c'est pour cela qu'une classe s'écrit avec une lettre <i>et</i> un chiffre.",
       "<b>La lettre dit la toxicité.</b> <b>A</b> = toxicité faible. <b>B</b> = toxicité plus élevée. Attention au contresens : « A » ne signifie pas inoffensif. Un fluide de classe A peut vous asphyxier en chassant l'oxygène d'un local, ou se décomposer en gaz toxiques au contact d'une flamme. La frontière entre A et B se fixe sur une <b>valeur limite d'exposition</b> définie par la norme : la lettre parle donc de la toxicité <b>propre</b> du produit, pas de tous les dangers qu'il présente.",
@@ -652,6 +675,10 @@
      "t": "Le piège du R-290",
      "src": "cl1",
      "titre_source": "Lire une classe — deux lettres, deux dangers",
+     "codes": [
+      "1.08",
+      "11.03"
+     ],
      "paras": [
       "<b>Ce que c'est.</b> La norme NF EN 378 (et la norme américaine ASHRAE 34, qui suit la même logique) attribue à chaque fluide frigorigène une <b>classe de sécurité</b> : A1, A2L, B2L, A3… Ce n'est pas un classement du plus dangereux au moins dangereux. C'est une <b>combinaison de deux informations distinctes</b>, et c'est pour cela qu'une classe s'écrit avec une lettre <i>et</i> un chiffre.",
       "<b>La lettre dit la toxicité.</b> <b>A</b> = toxicité faible. <b>B</b> = toxicité plus élevée. Attention au contresens : « A » ne signifie pas inoffensif. Un fluide de classe A peut vous asphyxier en chassant l'oxygène d'un local, ou se décomposer en gaz toxiques au contact d'une flamme. La frontière entre A et B se fixe sur une <b>valeur limite d'exposition</b> définie par la norme : la lettre parle donc de la toxicité <b>propre</b> du produit, pas de tous les dangers qu'il présente.",
@@ -688,6 +715,10 @@
      "t": "Explosif avant d être perceptible — la LIE",
      "src": "cl2",
      "titre_source": "Explosif avant d'être perceptible — la LIE",
+     "codes": [
+      "12.02",
+      "12.04"
+     ],
      "paras": [
       "<b>Ce qui arrive.</b> Un gaz inflammable ne s'enflamme pas à n'importe quelle concentration dans l'air. Il lui faut un dosage : assez de gaz pour brûler, et assez d'air pour entretenir la combustion. En dessous d'une certaine concentration, le mélange est trop pauvre en gaz — une étincelle ne déclenche rien. Au-dessus d'une autre, il est trop riche : il n'y a plus assez d'oxygène. <b>Entre les deux</b>, le mélange s'enflamme, et il le fait d'un coup, dans tout le volume.",
       "Ces deux bornes portent un nom. La <b>LIE</b> — limite inférieure d'explosivité — est la concentration en dessous de laquelle le mélange ne s'enflamme pas. La <b>LSE</b> — limite supérieure d'explosivité — est celle au-dessus de laquelle il ne s'enflamme plus non plus. L'intervalle entre les deux s'appelle le <b>domaine d'explosivité</b>. Chaque gaz a le sien : les valeurs sont propres au fluide et figurent sur sa <b>fiche de données de sécurité</b>. Elles ne se retiennent pas de tête et ne se déduisent d'aucune règle générale.",
@@ -727,6 +758,9 @@
      "t": "CO₂ : la pression et l air qu il vous prend",
      "src": "cl3",
      "titre_source": "CO₂ : deux dangers mortels — la pression et l'air qu'il vous prend",
+     "codes": [
+      "11.03"
+     ],
      "paras": [
       "<b>Ce qui arrive.</b> Le CO₂ — le R-744 — est classé <b>A1</b> : toxicité faible, non inflammable, PRP de 1. C'est la case la plus rassurante de toute la matrice. Et c'est exactement ce qui le rend dangereux : <b>sa classe n'annonce aucun des deux risques qui tuent réellement sur ces installations</b> — la <b>pression</b>, et l'<b>anoxie</b>. Qui retient « CO₂ = A1 = tranquille » a retenu quelque chose de faux.",
       "Ce fluide entre aujourd'hui dans le parc : froid commercial, supermarchés, chambres froides. Vous en rencontrerez. Ce n'est plus un sujet de culture générale.",
@@ -771,6 +805,10 @@
      "t": "Se protéger du CO₂ — détection, EPC et EPI",
      "src": "cl4",
      "titre_source": "Se protéger du CO₂ — détection, EPC et EPI",
+     "codes": [
+      "12.02",
+      "13.14"
+     ],
      "paras": [
       "<b>Ce qui protège, dans l'ordre.</b> La règle générale de la prévention est la même partout : on protège <b>d'abord le collectif</b>, ensuite l'individu. Un équipement de <b>protection collective</b> (EPC) protège tout le monde dans le local, en permanence, sans que personne ait à y penser. Un équipement de <b>protection individuelle</b> (EPI) ne protège que celui qui le porte, et seulement s'il le porte correctement. L'EPI ne remplace jamais l'EPC : il vient <b>après</b>, pour ce que l'EPC ne couvre pas.",
       "<b>La détection : ce n'est pas une option.</b> Dans un local abritant une installation au CO₂, la <b>détection de gaz est exigée</b> dès que la norme l'impose — selon la charge et le type de local — et c'est l'EPC principal. Sa présence et son état se vérifient à l'arrivée : si elle manque là où elle devrait être, c'est un signalement à faire, pas un détail. Le détecteur est <b>fixe, à poste</b> : il mesure en permanence, y compris la nuit et quand personne n'est là, et c'est précisément ce qui manque à un appareil portatif resté dans le camion. On le place <b>en partie basse</b>, là où le CO₂ s'accumule : un capteur au plafond ne verra rien.",
@@ -1298,6 +1336,9 @@
      "t": "Deux étages de règles, et deux papiers",
      "src": "g0",
      "titre_source": "Ce que la loi vous impose",
+     "codes": [
+      "1.00"
+     ],
      "paras": [
       "Les fluides frigorigènes peuvent réchauffer le climat s'ils s'échappent dans l'air. Deux niveaux de loi encadrent votre métier : le niveau européen et le niveau français.",
       "Au niveau européen, le texte de base est le <b>règlement (UE) 2024/573</b>. C'est un <b>règlement</b>, jamais une « directive » : il s'applique directement dans tous les pays de l'Union, sans loi française pour le recopier. Il a remplacé l'ancien règlement 517/2014.",
@@ -1332,6 +1373,9 @@
      "t": "Le registre, les déchets, l écoconception",
      "src": "g0",
      "titre_source": "Ce que la loi vous impose",
+     "codes": [
+      "1.00"
+     ],
      "paras": [
       "Les fluides frigorigènes peuvent réchauffer le climat s'ils s'échappent dans l'air. Deux niveaux de loi encadrent votre métier : le niveau européen et le niveau français.",
       "Au niveau européen, le texte de base est le <b>règlement (UE) 2024/573</b>. C'est un <b>règlement</b>, jamais une « directive » : il s'applique directement dans tous les pays de l'Union, sans loi française pour le recopier. Il a remplacé l'ancien règlement 517/2014.",
@@ -1366,6 +1410,9 @@
      "t": "Quarante ans d histoire : de l ozone au climat",
      "src": "g2a",
      "titre_source": "Quarante ans d'histoire : de l'ozone au climat",
+     "codes": [
+      "2.01"
+     ],
      "paras": [
       "Dans les années 1930, les <b>CFC</b> sont des fluides « miracle » : stables, ni toxiques, ni inflammables. Cinquante ans plus tard, la facture arrive : en <b>1985</b>, on découvre le <b>trou dans la couche d'ozone</b> au-dessus de l'Antarctique — le chlore des CFC casse l'ozone qui filtre les <b>UV-B</b>. En <b>1987</b>, le <b>protocole de Montréal</b> organise leur sortie, puis celle des HCFC : la couche se répare, c'est le plus grand succès environnemental mondial.",
       "Mais les remplaçants, les <b>HFC</b>, inoffensifs pour l'ozone, sont de puissants gaz à effet de serre. Le combat change de terrain : <b>Kyoto</b> (1997) les inscrit parmi les six gaz visés, l'<b>accord de Paris</b> (2015) fixe le cap des +1,5 °C, et l'<b>amendement de Kigali</b> (2016) fait entrer les HFC… dans le protocole de Montréal. En Europe, le règlement <b>F-Gas</b> traduit tout cela en quotas, interdictions et obligations — celles de ton métier."
@@ -1400,6 +1447,10 @@
      "t": "Impact environnemental et F-Gas",
      "src": "g2",
      "titre_source": "Impact environnemental et F-Gas",
+     "codes": [
+      "2.01",
+      "2.02"
+     ],
      "paras": [
       "Deux accords internationaux, deux problèmes différents. Le <b>protocole de Montréal</b> (1987) visait la <b>couche d'ozone</b> : il a fait disparaître les CFC puis les HCFC. La <b>convention climat</b> (Kyoto, Paris) vise le <b>réchauffement</b> : c'est elle qui s'attaque aux HFC, dont l'action sur l'ozone est nulle mais l'effet de serre considérable.",
       "Le <b>PRP</b> (potentiel de réchauffement planétaire, ou GWP) mesure cet effet, <b>par kilogramme</b>, en prenant le <b>CO₂ comme étalon : PRP = 1</b>. L'impact réel d'une installation, lui, dépend aussi de la charge : c'est la <b>tonne équivalent CO₂</b>.",
@@ -1435,6 +1486,7 @@
    "activite": {
     "src": "x1",
     "titre_source": "Exercice — deux installations, deux impacts",
+    "codes": [],
     "paras": [
      "Tu interviens sur deux machines dans le même bâtiment.",
      "Même charge, même bâtiment, même exploitant. Calcule la charge en tonnes équivalent CO₂ de chacune avant de répondre."
@@ -2805,6 +2857,11 @@
      "t": "La croix du frigoriste",
      "src": "g1a",
      "titre_source": "Unités, pression, thermodynamique utile",
+     "codes": [
+      "1.01",
+      "1.02",
+      "1.04"
+     ],
      "paras": [
       "Tout le métier tient sur un couple : <b>pression et température vont ensemble</b>. Chauffer un fluide enfermé fait monter sa pression ; abaisser sa pression le fait bouillir plus froid. C'est cette relation qu'on exploite d'un bout à l'autre du circuit.",
       "Quatre organes, dans l'ordre du cycle : le <b>compresseur</b> aspire la vapeur basse pression et la refoule en haute pression ; le <b>condenseur</b> évacue la chaleur et liquéfie ; le <b>détendeur</b> fait chuter la pression ; l'<b>évaporateur</b> absorbe la chaleur du milieu à refroidir. Basse pression du côté froid, haute pression du côté chaud.",
@@ -2836,6 +2893,11 @@
      "t": "Pression relative, pression absolue",
      "src": "g1a",
      "titre_source": "Unités, pression, thermodynamique utile",
+     "codes": [
+      "1.01",
+      "1.02",
+      "1.04"
+     ],
      "paras": [
       "Tout le métier tient sur un couple : <b>pression et température vont ensemble</b>. Chauffer un fluide enfermé fait monter sa pression ; abaisser sa pression le fait bouillir plus froid. C'est cette relation qu'on exploite d'un bout à l'autre du circuit.",
       "Quatre organes, dans l'ordre du cycle : le <b>compresseur</b> aspire la vapeur basse pression et la refoule en haute pression ; le <b>condenseur</b> évacue la chaleur et liquéfie ; le <b>détendeur</b> fait chuter la pression ; l'<b>évaporateur</b> absorbe la chaleur du milieu à refroidir. Basse pression du côté froid, haute pression du côté chaud.",
@@ -2872,6 +2934,9 @@
      "t": "Chaleur sensible et chaleur latente",
      "src": "g1s",
      "titre_source": "Chaleur sensible et chaleur latente",
+     "codes": [
+      "1.02"
+     ],
      "paras": [
       "Chauffez de l'eau dans une casserole. Le thermomètre monte, régulièrement. Cette chaleur-là, l'appareil la « sent » : on l'appelle la <b>chaleur sensible</b>. Elle fait changer la <b>température</b>, elle ne fait pas changer l'état.",
       "Continuez à chauffer. L'eau se met à bouillir — et là, quelque chose d'étonnant se produit : <b>le thermomètre s'arrête</b>. Vous chauffez toujours, la température ne monte plus. Toute la chaleur apportée sert à transformer le liquide en vapeur, et rien d'autre. C'est la <b>chaleur latente</b>. Le mot vient du latin <i>latens</i>, « caché » : cette chaleur est bien là, elle est même considérable, mais le thermomètre ne la voit pas.",
@@ -2905,6 +2970,9 @@
      "t": "Le palier, et pourquoi il n est pas plat",
      "src": "g1s",
      "titre_source": "Chaleur sensible et chaleur latente",
+     "codes": [
+      "1.02"
+     ],
      "paras": [
       "Chauffez de l'eau dans une casserole. Le thermomètre monte, régulièrement. Cette chaleur-là, l'appareil la « sent » : on l'appelle la <b>chaleur sensible</b>. Elle fait changer la <b>température</b>, elle ne fait pas changer l'état.",
       "Continuez à chauffer. L'eau se met à bouillir — et là, quelque chose d'étonnant se produit : <b>le thermomètre s'arrête</b>. Vous chauffez toujours, la température ne monte plus. Toute la chaleur apportée sert à transformer le liquide en vapeur, et rien d'autre. C'est la <b>chaleur latente</b>. Le mot vient du latin <i>latens</i>, « caché » : cette chaleur est bien là, elle est même considérable, mais le thermomètre ne la voit pas.",
@@ -3726,6 +3794,9 @@
      "t": "Le diagramme, et ce qu il montre",
      "src": "g1b",
      "titre_source": "Lire un log p-h et une table de saturation",
+     "codes": [
+      "1.03"
+     ],
      "paras": [
       "Le <b>diagramme log p-h</b> raconte en image ce que la fiche précédente a raconté en mots. Deux axes seulement. En <b>ordonnée</b>, la <b>pression</b>. En <b>abscisse</b>, l'<b>enthalpie</b> : l'énergie contenue dans un kilo de fluide.",
       "La pression y est portée sur une <b>échelle logarithmique</b> — c'est ce que veut dire le « log » du nom. Sur une règle ordinaire, la basse pression serait écrasée tout en bas de la feuille et illisible. Sur cette échelle-là, les petites pressions sont autant étalées que les grandes : les deux côtés du circuit se lisent aussi bien.",
@@ -3762,6 +3833,9 @@
      "t": "L échelle des pressions n est pas une règle graduée",
      "src": "g1b",
      "titre_source": "Lire un log p-h et une table de saturation",
+     "codes": [
+      "1.03"
+     ],
      "paras": [
       "Le <b>diagramme log p-h</b> raconte en image ce que la fiche précédente a raconté en mots. Deux axes seulement. En <b>ordonnée</b>, la <b>pression</b>. En <b>abscisse</b>, l'<b>enthalpie</b> : l'énergie contenue dans un kilo de fluide.",
       "La pression y est portée sur une <b>échelle logarithmique</b> — c'est ce que veut dire le « log » du nom. Sur une règle ordinaire, la basse pression serait écrasée tout en bas de la feuille et illisible. Sur cette échelle-là, les petites pressions sont autant étalées que les grandes : les deux côtés du circuit se lisent aussi bien.",
@@ -3798,6 +3872,9 @@
      "t": "Un fluide, une table",
      "src": "g1b",
      "titre_source": "Lire un log p-h et une table de saturation",
+     "codes": [
+      "1.03"
+     ],
      "paras": [
       "Le <b>diagramme log p-h</b> raconte en image ce que la fiche précédente a raconté en mots. Deux axes seulement. En <b>ordonnée</b>, la <b>pression</b>. En <b>abscisse</b>, l'<b>enthalpie</b> : l'énergie contenue dans un kilo de fluide.",
       "La pression y est portée sur une <b>échelle logarithmique</b> — c'est ce que veut dire le « log » du nom. Sur une règle ordinaire, la basse pression serait écrasée tout en bas de la feuille et illisible. Sur cette échelle-là, les petites pressions sont autant étalées que les grandes : les deux côtés du circuit se lisent aussi bien.",
@@ -4282,6 +4359,10 @@
      "t": "Deux mesures, deux extrémités du circuit",
      "src": "g1e",
      "titre_source": "Surchauffe et sous-refroidissement",
+     "codes": [
+      "1.02",
+      "5.05"
+     ],
      "paras": [
       "Voici les deux mots que vous entendrez le plus souvent sur un chantier. Et la première chose à comprendre est la plus importante : <b>ce sont des différences, jamais des températures</b>. On ne dit pas « la surchauffe est de 12 degrés » comme on dirait « il fait 12 degrés ». On dit : le fluide est <b>12 kelvins au-dessus</b> de sa température de changement d'état, à la pression où il se trouve.",
       "La <b>surchauffe</b> se prend là où le fluide est devenu vapeur : après le point de rosée, donc en sortie d'évaporateur et sur la ligne d'aspiration. Le <b>sous-refroidissement</b> se prend là où le fluide est devenu liquide : après le point de bulle, donc en sortie de condenseur. Chacun de son côté du circuit.",
@@ -4316,6 +4397,10 @@
      "t": "Une surchauffe ne se lit pas sur un thermomètre",
      "src": "g1e",
      "titre_source": "Surchauffe et sous-refroidissement",
+     "codes": [
+      "1.02",
+      "5.05"
+     ],
      "paras": [
       "Voici les deux mots que vous entendrez le plus souvent sur un chantier. Et la première chose à comprendre est la plus importante : <b>ce sont des différences, jamais des températures</b>. On ne dit pas « la surchauffe est de 12 degrés » comme on dirait « il fait 12 degrés ». On dit : le fluide est <b>12 kelvins au-dessus</b> de sa température de changement d'état, à la pression où il se trouve.",
       "La <b>surchauffe</b> se prend là où le fluide est devenu vapeur : après le point de rosée, donc en sortie d'évaporateur et sur la ligne d'aspiration. Le <b>sous-refroidissement</b> se prend là où le fluide est devenu liquide : après le point de bulle, donc en sortie de condenseur. Chacun de son côté du circuit.",
@@ -4350,6 +4435,10 @@
      "t": "Ce qu une valeur hors plage annonce",
      "src": "g1e",
      "titre_source": "Surchauffe et sous-refroidissement",
+     "codes": [
+      "1.02",
+      "5.05"
+     ],
      "paras": [
       "Voici les deux mots que vous entendrez le plus souvent sur un chantier. Et la première chose à comprendre est la plus importante : <b>ce sont des différences, jamais des températures</b>. On ne dit pas « la surchauffe est de 12 degrés » comme on dirait « il fait 12 degrés ». On dit : le fluide est <b>12 kelvins au-dessus</b> de sa température de changement d'état, à la pression où il se trouve.",
       "La <b>surchauffe</b> se prend là où le fluide est devenu vapeur : après le point de rosée, donc en sortie d'évaporateur et sur la ligne d'aspiration. Le <b>sous-refroidissement</b> se prend là où le fluide est devenu liquide : après le point de bulle, donc en sortie de condenseur. Chacun de son côté du circuit.",
@@ -4898,6 +4987,10 @@
      "t": "Le code dit la molécule",
      "src": "g1c",
      "titre_source": "Les familles de fluides et leurs codes",
+     "codes": [
+      "1.06",
+      "1.07"
+     ],
      "paras": [
       "Derrière chaque code se cache une <b>molécule</b>, et trois atomes y décident de tout : le <b>chlore</b> détruit l'ozone — c'est lui qui a condamné les CFC puis les HCFC ; le <b>fluor</b> rend la molécule stable, donc durable dans l'atmosphère, donc à fort effet de serre ; l'<b>hydrogène</b> raccourcit la durée de vie. Les <b>HFC</b> ont éliminé le chlore (ozone sauvé), gardé le fluor (climat pénalisé). Les <b>HFO</b> ajoutent une double liaison fragile : la molécule casse en quelques jours, PRP ≈ 1. Les <b>naturels</b> — propane, isobutane, ammoniac, CO₂ — existent sans chimie de synthèse, chacun avec son revers : inflammabilité, toxicité ou pression.",
       "Et le numéro n'est pas un matricule : il <b>décrit la molécule</b>. Centaines + 1 = carbone, dizaines − 1 = hydrogène, unités = fluor — les liaisons restantes sont du chlore. Les mélanges et les fluides inorganiques ont leurs séries : 4xx, 5xx, 6xx, 7xx.",
@@ -4929,6 +5022,10 @@
      "t": "Le code ne dit pas le danger",
      "src": "g1c",
      "titre_source": "Les familles de fluides et leurs codes",
+     "codes": [
+      "1.06",
+      "1.07"
+     ],
      "paras": [
       "Derrière chaque code se cache une <b>molécule</b>, et trois atomes y décident de tout : le <b>chlore</b> détruit l'ozone — c'est lui qui a condamné les CFC puis les HCFC ; le <b>fluor</b> rend la molécule stable, donc durable dans l'atmosphère, donc à fort effet de serre ; l'<b>hydrogène</b> raccourcit la durée de vie. Les <b>HFC</b> ont éliminé le chlore (ozone sauvé), gardé le fluor (climat pénalisé). Les <b>HFO</b> ajoutent une double liaison fragile : la molécule casse en quelques jours, PRP ≈ 1. Les <b>naturels</b> — propane, isobutane, ammoniac, CO₂ — existent sans chimie de synthèse, chacun avec son revers : inflammabilité, toxicité ou pression.",
       "Et le numéro n'est pas un matricule : il <b>décrit la molécule</b>. Centaines + 1 = carbone, dizaines − 1 = hydrogène, unités = fluor — les liaisons restantes sont du chlore. Les mélanges et les fluides inorganiques ont leurs séries : 4xx, 5xx, 6xx, 7xx.",
@@ -4965,6 +5062,9 @@
      "t": "Les organes qui trahissent une fuite",
      "src": "g1d",
      "titre_source": "Les organes qui trahissent une fuite",
+     "codes": [
+      "1.05"
+     ],
      "paras": [
       "Une fuite ne se voit pas toujours de face. Mais plusieurs organes du circuit la <b>trahissent</b> : ils changent d'aspect, se mettent en sécurité, ou limitent les dégâts. Les repérer, c'est déjà commencer le diagnostic.",
       "Sur les fluides très inflammables ou toxiques (hydrocarbures, ammoniac) et sur le CO₂, qui travaille à haute pression, ces mêmes organes existent mais avec des exigences renforcées propres à chaque fluide."
@@ -5394,6 +5494,12 @@
      "t": "Ce qu il fait, et où il fuit",
      "src": "g6",
      "titre_source": "Le compresseur",
+     "codes": [
+      "6.01",
+      "6.03",
+      "6.05",
+      "6.07"
+     ],
      "paras": [
       "Le compresseur est le <b>seul organe actif</b> du cycle : il aspire la vapeur basse pression et la refoule en haute pression. Tout le reste est passif.",
       "Ses points de fuite privilégiés : <b>raccords, vannes de service, presse-étoupe, bornes de traversée</b> sur les hermétiques. Ses sécurités — pressostats HP et BP, protection thermique — se règlent <b>selon la fiche constructeur</b>, jamais à l'estime.",
@@ -5422,6 +5528,12 @@
      "t": "Ce que dit une température de refoulement",
      "src": "g6",
      "titre_source": "Le compresseur",
+     "codes": [
+      "6.01",
+      "6.03",
+      "6.05",
+      "6.07"
+     ],
      "paras": [
       "Le compresseur est le <b>seul organe actif</b> du cycle : il aspire la vapeur basse pression et la refoule en haute pression. Tout le reste est passif.",
       "Ses points de fuite privilégiés : <b>raccords, vannes de service, presse-étoupe, bornes de traversée</b> sur les hermétiques. Ses sécurités — pressostats HP et BP, protection thermique — se règlent <b>selon la fiche constructeur</b>, jamais à l'estime.",
@@ -5461,6 +5573,12 @@
      "t": "L huile, et le rapport d état",
      "src": "g6",
      "titre_source": "Le compresseur",
+     "codes": [
+      "6.01",
+      "6.03",
+      "6.05",
+      "6.07"
+     ],
      "paras": [
       "Le compresseur est le <b>seul organe actif</b> du cycle : il aspire la vapeur basse pression et la refoule en haute pression. Tout le reste est passif.",
       "Ses points de fuite privilégiés : <b>raccords, vannes de service, presse-étoupe, bornes de traversée</b> sur les hermétiques. Ses sécurités — pressostats HP et BP, protection thermique — se règlent <b>selon la fiche constructeur</b>, jamais à l'estime.",
@@ -5495,6 +5613,12 @@
      "t": "Installer sans fuite, régler les sécurités",
      "src": "g6b",
      "titre_source": "Compresseur — installer, régler, vérifier",
+     "codes": [
+      "6.02",
+      "6.04",
+      "6.06",
+      "6.08"
+     ],
      "paras": [
       "Ce cours prolonge la fiche sur le compresseur. Il explique le geste : comment on l'<b>installe</b>, comment on <b>règle</b> ses soupapes, comment on le <b>démarre</b>, l'<b>arrête</b> et le <b>contrôle</b>.",
       "Une fois en marche, l'installation ne doit provoquer <b>aucune fuite</b>. Avant la toute première mise en service, on teste l'étanchéité de tout le circuit à l'<b>azote</b> — jamais à l'oxygène, jamais à l'air comprimé — à la pression indiquée par la norme applicable. Les appareils de contrôle et de sécurité (ils surveillent le compresseur et le coupent en cas d'anomalie) s'installent <b>en même temps</b> que lui, pas après coup.",
@@ -5535,6 +5659,12 @@
      "t": "La valeur plaque, jamais un chiffre inventé",
      "src": "g6b",
      "titre_source": "Compresseur — installer, régler, vérifier",
+     "codes": [
+      "6.02",
+      "6.04",
+      "6.06",
+      "6.08"
+     ],
      "paras": [
       "Ce cours prolonge la fiche sur le compresseur. Il explique le geste : comment on l'<b>installe</b>, comment on <b>règle</b> ses soupapes, comment on le <b>démarre</b>, l'<b>arrête</b> et le <b>contrôle</b>.",
       "Une fois en marche, l'installation ne doit provoquer <b>aucune fuite</b>. Avant la toute première mise en service, on teste l'étanchéité de tout le circuit à l'<b>azote</b> — jamais à l'oxygène, jamais à l'air comprimé — à la pression indiquée par la norme applicable. Les appareils de contrôle et de sécurité (ils surveillent le compresseur et le coupent en cas d'anomalie) s'installent <b>en même temps</b> que lui, pas après coup.",
@@ -6498,6 +6628,12 @@
      "t": "Ce qu il fait, et où il fuit",
      "src": "g7",
      "titre_source": "Le condenseur",
+     "codes": [
+      "7.01",
+      "7.04",
+      "7.06",
+      "7.08"
+     ],
      "paras": [
       "Le condenseur <b>évacue vers l'extérieur</b> la chaleur prise dans l'évaporateur, plus celle apportée par la compression. La vapeur haute pression s'y refroidit, se liquéfie, puis se <b>sous-refroidit</b> : <b>4 à 8 K</b> en sortie, pour garantir du liquide pur au détendeur.",
       "Sur un condenseur à air, les <b>ventilateurs</b> forcent l'air à travers la batterie. Une batterie encrassée, un ventilateur à l'arrêt, et la haute pression monte : la machine consomme plus, et le pressostat HP finit par couper.",
@@ -6532,6 +6668,12 @@
      "t": "Deux pressostats, deux fonctions",
      "src": "g7",
      "titre_source": "Le condenseur",
+     "codes": [
+      "7.01",
+      "7.04",
+      "7.06",
+      "7.08"
+     ],
      "paras": [
       "Le condenseur <b>évacue vers l'extérieur</b> la chaleur prise dans l'évaporateur, plus celle apportée par la compression. La vapeur haute pression s'y refroidit, se liquéfie, puis se <b>sous-refroidit</b> : <b>4 à 8 K</b> en sortie, pour garantir du liquide pur au détendeur.",
       "Sur un condenseur à air, les <b>ventilateurs</b> forcent l'air à travers la batterie. Une batterie encrassée, un ventilateur à l'arrêt, et la haute pression monte : la machine consomme plus, et le pressostat HP finit par couper.",
@@ -6566,6 +6708,14 @@
      "t": "Installer l unité extérieure, régler la pression",
      "src": "g7b",
      "titre_source": "Condenseur — installer, régler, vérifier",
+     "codes": [
+      "7.02",
+      "7.03",
+      "7.05",
+      "7.07",
+      "7.09",
+      "7.10"
+     ],
      "paras": [
       "Le <b>condenseur</b> transforme le gaz chaud venu du compresseur en <b>liquide</b>. Il rejette la chaleur du local vers l'air extérieur. Sur un climatiseur split, il se trouve dans l'<b>unité extérieure</b>, la partie posée dehors.",
       "Sur la croix du frigoriste, le condenseur est toujours en <b>haut</b> : le compresseur à droite, le détendeur à gauche, l'évaporateur en bas.",
@@ -6605,6 +6755,14 @@
      "t": "Un régulateur ne coupe rien",
      "src": "g7b",
      "titre_source": "Condenseur — installer, régler, vérifier",
+     "codes": [
+      "7.02",
+      "7.03",
+      "7.05",
+      "7.07",
+      "7.09",
+      "7.10"
+     ],
      "paras": [
       "Le <b>condenseur</b> transforme le gaz chaud venu du compresseur en <b>liquide</b>. Il rejette la chaleur du local vers l'air extérieur. Sur un climatiseur split, il se trouve dans l'<b>unité extérieure</b>, la partie posée dehors.",
       "Sur la croix du frigoriste, le condenseur est toujours en <b>haut</b> : le compresseur à droite, le détendeur à gauche, l'évaporateur en bas.",
@@ -6644,6 +6802,14 @@
      "t": "Purger, mesurer, rendre compte",
      "src": "g7b",
      "titre_source": "Condenseur — installer, régler, vérifier",
+     "codes": [
+      "7.02",
+      "7.03",
+      "7.05",
+      "7.07",
+      "7.09",
+      "7.10"
+     ],
      "paras": [
       "Le <b>condenseur</b> transforme le gaz chaud venu du compresseur en <b>liquide</b>. Il rejette la chaleur du local vers l'air extérieur. Sur un climatiseur split, il se trouve dans l'<b>unité extérieure</b>, la partie posée dehors.",
       "Sur la croix du frigoriste, le condenseur est toujours en <b>haut</b> : le compresseur à droite, le détendeur à gauche, l'évaporateur en bas.",
@@ -7098,6 +7264,12 @@
      "t": "Ce qu il fait, et où il fuit",
      "src": "g8",
      "titre_source": "L'évaporateur",
+     "codes": [
+      "8.01",
+      "8.05",
+      "8.08",
+      "8.09"
+     ],
      "paras": [
       "C'est le point <b>froid</b> du circuit : le fluide y absorbe la chaleur du milieu à refroidir et se vaporise. En sortie, il doit être <b>entièrement vapeur</b>, avec une <b>surchauffe de 5 à 10 K</b> — c'est ce qui protège le compresseur du coup de liquide.",
       "Le <b>givre</b> est normal en froid négatif ; installé durablement, il isole la batterie et fait chuter l'échange. D'où les cycles de <b>dégivrage</b> (air, résistance électrique, gaz chauds). Un évaporateur qui givre <b>complètement</b> en fonctionnement signale d'abord un problème de <b>débit d'air</b> : filtre encrassé, ventilateur arrêté.",
@@ -7124,6 +7296,12 @@
      "t": "Lire la surchauffe, et les deux organes qu on confond",
      "src": "g8",
      "titre_source": "L'évaporateur",
+     "codes": [
+      "8.01",
+      "8.05",
+      "8.08",
+      "8.09"
+     ],
      "paras": [
       "C'est le point <b>froid</b> du circuit : le fluide y absorbe la chaleur du milieu à refroidir et se vaporise. En sortie, il doit être <b>entièrement vapeur</b>, avec une <b>surchauffe de 5 à 10 K</b> — c'est ce qui protège le compresseur du coup de liquide.",
       "Le <b>givre</b> est normal en froid négatif ; installé durablement, il isole la batterie et fait chuter l'échange. D'où les cycles de <b>dégivrage</b> (air, résistance électrique, gaz chauds). Un évaporateur qui givre <b>complètement</b> en fonctionnement signale d'abord un problème de <b>débit d'air</b> : filtre encrassé, ventilateur arrêté.",
@@ -7166,6 +7344,15 @@
      "t": "Le givre et le dégivrage",
      "src": "g8b",
      "titre_source": "Évaporateur — installer, régler, vérifier",
+     "codes": [
+      "8.02",
+      "8.03",
+      "8.04",
+      "8.06",
+      "8.07",
+      "8.10",
+      "8.11"
+     ],
      "paras": [
       "Sur la <b>croix du frigoriste</b>, l'évaporateur occupe la position <b>basse</b>. Une fois installé, il doit fonctionner <b>sans aucune fuite ni émission</b> — c'est vrai pour le tube, mais aussi pour tout le matériel de contrôle et de sécurité posé avec lui.",
       "Deux organes se règlent, pour deux raisons différentes. Le <b>régulateur de pression d'évaporation</b> — que le référentiel appelle aussi la <b>soupape de régulation</b> de la pression d'évaporation — est une soupape mécanique. Elle maintient une pression minimale dans l'évaporateur — par exemple pour empêcher un produit de geler, ou pour équilibrer plusieurs évaporateurs sur un seul compresseur. Sa mise en service et son réglage suivent <b>toujours la fiche constructeur</b>.",
@@ -7200,6 +7387,15 @@
      "t": "Qui protège quoi",
      "src": "g8b",
      "titre_source": "Évaporateur — installer, régler, vérifier",
+     "codes": [
+      "8.02",
+      "8.03",
+      "8.04",
+      "8.06",
+      "8.07",
+      "8.10",
+      "8.11"
+     ],
      "paras": [
       "Sur la <b>croix du frigoriste</b>, l'évaporateur occupe la position <b>basse</b>. Une fois installé, il doit fonctionner <b>sans aucune fuite ni émission</b> — c'est vrai pour le tube, mais aussi pour tout le matériel de contrôle et de sécurité posé avec lui.",
       "Deux organes se règlent, pour deux raisons différentes. Le <b>régulateur de pression d'évaporation</b> — que le référentiel appelle aussi la <b>soupape de régulation</b> de la pression d'évaporation — est une soupape mécanique. Elle maintient une pression minimale dans l'évaporateur — par exemple pour empêcher un produit de geler, ou pour équilibrer plusieurs évaporateurs sur un seul compresseur. Sa mise en service et son réglage suivent <b>toujours la fiche constructeur</b>.",
@@ -7234,6 +7430,15 @@
      "t": "Démarrer, mesurer, rendre compte",
      "src": "g8b",
      "titre_source": "Évaporateur — installer, régler, vérifier",
+     "codes": [
+      "8.02",
+      "8.03",
+      "8.04",
+      "8.06",
+      "8.07",
+      "8.10",
+      "8.11"
+     ],
      "paras": [
       "Sur la <b>croix du frigoriste</b>, l'évaporateur occupe la position <b>basse</b>. Une fois installé, il doit fonctionner <b>sans aucune fuite ni émission</b> — c'est vrai pour le tube, mais aussi pour tout le matériel de contrôle et de sécurité posé avec lui.",
       "Deux organes se règlent, pour deux raisons différentes. Le <b>régulateur de pression d'évaporation</b> — que le référentiel appelle aussi la <b>soupape de régulation</b> de la pression d'évaporation — est une soupape mécanique. Elle maintient une pression minimale dans l'évaporateur — par exemple pour empêcher un produit de geler, ou pour équilibrer plusieurs évaporateurs sur un seul compresseur. Sa mise en service et son réglage suivent <b>toujours la fiche constructeur</b>.",
@@ -7268,6 +7473,7 @@
    "activite": {
     "src": "x2",
     "titre_source": "Exercice — la machine ne fait plus de froid",
+    "codes": [],
     "paras": [
      "Chambre froide positive. Le compresseur tourne, mais la température de la chambre ne descend plus. Tu relèves :",
      "Rappels : surchauffe attendue 5 à 10 K, sous-refroidissement attendu 4 à 8 K."
@@ -7755,6 +7961,12 @@
      "t": "Ce qu il fait, et les trois technologies",
      "src": "g9",
      "titre_source": "Le détendeur et les organes annexes",
+     "codes": [
+      "9.01",
+      "9.02",
+      "9.03",
+      "9.08"
+     ],
      "paras": [
       "Le détendeur fait chuter la pression et <b>dose le débit de liquide</b> envoyé à l'évaporateur. Le <b>détendeur thermostatique</b> régule sur la <b>surchauffe</b> : son bulbe, fixé sur la ligne d'aspiration, sent la température du gaz et ouvre ou ferme en conséquence. Le <b>détendeur électronique</b> fait la même chose avec une sonde et un régulateur : plus précis, plus rapide. Le <b>capillaire</b>, lui, est un tube calibré fixe, sans réglage — on le trouve sur les petits appareils.",
       "Autour du détendeur, la ligne liquide porte le <b>filtre déshydrateur</b> (tamis moléculaire, monté <b>dans le sens de la flèche</b>) et le <b>voyant</b>, qui renseigne sur deux choses : la présence de bulles et, par sa pastille, l'humidité du circuit.",
@@ -7782,6 +7994,12 @@
      "t": "Sécurité électrique, sécurité mécanique",
      "src": "g9",
      "titre_source": "Le détendeur et les organes annexes",
+     "codes": [
+      "9.01",
+      "9.02",
+      "9.03",
+      "9.08"
+     ],
      "paras": [
       "Le détendeur fait chuter la pression et <b>dose le débit de liquide</b> envoyé à l'évaporateur. Le <b>détendeur thermostatique</b> régule sur la <b>surchauffe</b> : son bulbe, fixé sur la ligne d'aspiration, sent la température du gaz et ouvre ou ferme en conséquence. Le <b>détendeur électronique</b> fait la même chose avec une sonde et un régulateur : plus précis, plus rapide. Le <b>capillaire</b>, lui, est un tube calibré fixe, sans réglage — on le trouve sur les petits appareils.",
       "Autour du détendeur, la ligne liquide porte le <b>filtre déshydrateur</b> (tamis moléculaire, monté <b>dans le sens de la flèche</b>) et le <b>voyant</b>, qui renseigne sur deux choses : la présence de bulles et, par sa pastille, l'humidité du circuit.",
@@ -7820,6 +8038,14 @@
      "t": "La ligne liquide, organe par organe",
      "src": "g9b",
      "titre_source": "Régler et contrôler les organes annexes",
+     "codes": [
+      "9.04",
+      "9.05",
+      "9.06",
+      "9.07",
+      "9.09",
+      "9.10"
+     ],
      "paras": [
       "Autour du détendeur, d'autres organes se <b>règlent</b> et se <b>contrôlent</b>. Ils ne dosent pas le fluide. Ils protègent l'installation et lui évitent de gaspiller de l'énergie. Cette fiche en présente quatre : les thermostats, la soupape de régulation de pression, les limiteurs de pression, et le séparateur d'huile.",
       "Le <b>thermostat</b> commande un organe (compresseur, vanne) selon une <b>température</b>. Le thermostat <b>mécanique</b> utilise un bulbe relié par un tube fin à des contacts électriques : simple et robuste. Le thermostat <b>électronique</b> utilise une sonde reliée à un régulateur numérique : plus précis, et plus simple à régler. Dans les deux cas, le point de consigne se règle <b>selon la fiche constructeur</b>, jamais à l'estime.",
@@ -7854,6 +8080,14 @@
      "t": "Un bon réglage, c est de l énergie économisée",
      "src": "g9b",
      "titre_source": "Régler et contrôler les organes annexes",
+     "codes": [
+      "9.04",
+      "9.05",
+      "9.06",
+      "9.07",
+      "9.09",
+      "9.10"
+     ],
      "paras": [
       "Autour du détendeur, d'autres organes se <b>règlent</b> et se <b>contrôlent</b>. Ils ne dosent pas le fluide. Ils protègent l'installation et lui évitent de gaspiller de l'énergie. Cette fiche en présente quatre : les thermostats, la soupape de régulation de pression, les limiteurs de pression, et le séparateur d'huile.",
       "Le <b>thermostat</b> commande un organe (compresseur, vanne) selon une <b>température</b>. Le thermostat <b>mécanique</b> utilise un bulbe relié par un tube fin à des contacts électriques : simple et robuste. Le thermostat <b>électronique</b> utilise une sonde reliée à un régulateur numérique : plus précis, et plus simple à régler. Dans les deux cas, le point de consigne se règle <b>selon la fiche constructeur</b>, jamais à l'estime.",
@@ -7894,6 +8128,14 @@
      "t": "Avant de toucher un réglage électrique",
      "src": "g9b",
      "titre_source": "Régler et contrôler les organes annexes",
+     "codes": [
+      "9.04",
+      "9.05",
+      "9.06",
+      "9.07",
+      "9.09",
+      "9.10"
+     ],
      "paras": [
       "Autour du détendeur, d'autres organes se <b>règlent</b> et se <b>contrôlent</b>. Ils ne dosent pas le fluide. Ils protègent l'installation et lui évitent de gaspiller de l'énergie. Cette fiche en présente quatre : les thermostats, la soupape de régulation de pression, les limiteurs de pression, et le séparateur d'huile.",
       "Le <b>thermostat</b> commande un organe (compresseur, vanne) selon une <b>température</b>. Le thermostat <b>mécanique</b> utilise un bulbe relié par un tube fin à des contacts électriques : simple et robuste. Le thermostat <b>électronique</b> utilise une sonde reliée à un régulateur numérique : plus précis, et plus simple à régler. Dans les deux cas, le point de consigne se règle <b>selon la fiche constructeur</b>, jamais à l'estime.",
@@ -8563,6 +8805,13 @@
      "t": "Deux épreuves, deux buts",
      "src": "g3",
      "titre_source": "Contrôles avant mise en service",
+     "codes": [
+      "3.01",
+      "3.02",
+      "3.03",
+      "3.04",
+      "3.05"
+     ],
      "paras": [
       "Deux épreuves, deux buts, souvent enchaînées. L'<b>épreuve de résistance</b> vérifie que l'assemblage tient mécaniquement. L'<b>épreuve d'étanchéité</b> vérifie qu'il ne laisse rien passer. Les pressions d'épreuve se prennent <b>sur la documentation constructeur</b> et la norme applicable — jamais à l'estime.",
       "Vient ensuite le <b>tirage au vide</b>. Il ne sert pas à « faire propre » : il extrait l'<b>air</b> (incondensable, qui fait monter la haute pression) et l'<b>humidité</b> (qui gèle au détendeur et attaque l'huile). Sous vide, l'eau bout à température ambiante — c'est exactement ce qu'on cherche.",
@@ -8595,6 +8844,10 @@
      "t": "La bouteille d azote et son mano-détendeur",
      "src": "p4",
      "titre_source": "La bouteille d'azote et son mano-détendeur",
+     "codes": [
+      "3.01",
+      "3.02"
+     ],
      "paras": [
       "Une bouteille d'azote ne se branche jamais directement sur un circuit. Entre les deux, il y a toujours un <b>mano-détendeur</b>. Il lit la pression de la bouteille. Il règle la pression envoyée dans le circuit. Sans lui, toute la pression de la bouteille part d'un coup — largement de quoi faire éclater un circuit.",
       "Le mano-détendeur porte <b>deux cadrans</b>. Le premier indique ce qu'il reste dans la bouteille. Le second indique la pression réglée en sortie, celle qui part vers le circuit. On lit toujours les deux."
@@ -8629,6 +8882,10 @@
      "t": "Le manifold — lire, brancher, ne pas polluer",
      "src": "p1",
      "titre_source": "Le manifold — lire, brancher, ne pas polluer",
+     "codes": [
+      "5.01",
+      "4.05"
+     ],
      "paras": [
       "Le <b>manifold</b> (ensemble manométrique) réunit deux manomètres — <b>BP en bleu</b>, <b>HP en rouge</b> — et deux vannes, une par côté, qui commandent le passage vers le <b>flexible central jaune</b> : celui qui part vers la pompe à vide, la bouteille de récupération, ou une bouteille d'azote équipée de son <b>mano-détendeur</b>.",
       "Le manomètre affiche une <b>pression relative</b> : pour obtenir la pression absolue, on ajoute environ <b>1 bar</b>. La pince de température et le multimètre servent à la <b>méthode indirecte</b> de contrôle d'étanchéité : on compare les valeurs mesurées — surchauffe (plage indicative <b>5 à 10 K</b>), sous-refroidissement (plage indicative <b>4 à 8 K</b>), intensité absorbée — à celles attendues sur la fiche constructeur. Un écart qui se creuse alerte, sans avoir ouvert le circuit."
@@ -8663,6 +8920,10 @@
      "t": "Pompe à vide et vacuomètre",
      "src": "p3",
      "titre_source": "Pompe à vide et vacuomètre — monter, tirer, lire",
+     "codes": [
+      "3.03",
+      "3.04"
+     ],
      "paras": [
       "Le <b>tirage au vide</b> retire l'air et l'humidité du circuit avant charge — ce n'est pas du fluide qu'on évacue ici, mais de l'air et de la vapeur d'eau : la question du rejet à l'atmosphère ne se pose pas à ce stade. La <b>pompe à vide</b> aspire ; le <b>vacuomètre</b> électronique indique jusqu'où on est descendu, bien plus finement qu'un manomètre.",
       "L'ordre du neuvième geste protège le circuit : si la pompe s'arrête avant que la vanne soit fermée, l'huile de la pompe peut être aspirée en sens inverse vers le circuit qu'on vient de mettre sous vide."
@@ -8697,6 +8958,13 @@
      "t": "Le vide qui remonte, et la fuite qu on localise",
      "src": "g3",
      "titre_source": "Contrôles avant mise en service",
+     "codes": [
+      "3.01",
+      "3.02",
+      "3.03",
+      "3.04",
+      "3.05"
+     ],
      "paras": [
       "Deux épreuves, deux buts, souvent enchaînées. L'<b>épreuve de résistance</b> vérifie que l'assemblage tient mécaniquement. L'<b>épreuve d'étanchéité</b> vérifie qu'il ne laisse rien passer. Les pressions d'épreuve se prennent <b>sur la documentation constructeur</b> et la norme applicable — jamais à l'estime.",
       "Vient ensuite le <b>tirage au vide</b>. Il ne sert pas à « faire propre » : il extrait l'<b>air</b> (incondensable, qui fait monter la haute pression) et l'<b>humidité</b> (qui gèle au détendeur et attaque l'huile). Sous vide, l'eau bout à température ambiante — c'est exactement ce qu'on cherche.",
@@ -9027,6 +9295,11 @@
      "t": "Où fuit une installation",
      "src": "g4a",
      "titre_source": "Où fuit une installation ?",
+     "codes": [
+      "4.01",
+      "4.02",
+      "4.03"
+     ],
      "paras": [
       "Une fuite ne sort pas d'un tube plein. Elle sort d'un <b>point d'assemblage</b> ou d'une <b>pièce en mouvement</b> : raccords mécaniques (flare, à visser), brasures poreuses ou mal pénétrées, presse-étoupes de vannes, joints, raccords vissés des voyants, filtres et pressostats, et tout ce qui <b>vibre</b> — compresseur, tuyauteries mal fixées.",
       "Avant de sortir le moindre instrument, on <b>lit le registre</b> : quelle charge, quel fluide, quelles fuites déjà détectées, qu'a-t-on réparé et quand. Un point déjà réparé est un point <b>à recontrôler en priorité</b>, pas un point clos.",
@@ -9060,6 +9333,11 @@
      "t": "Consulter le registre avant de commencer",
      "src": "g4a",
      "titre_source": "Où fuit une installation ?",
+     "codes": [
+      "4.01",
+      "4.02",
+      "4.03"
+     ],
      "paras": [
       "Une fuite ne sort pas d'un tube plein. Elle sort d'un <b>point d'assemblage</b> ou d'une <b>pièce en mouvement</b> : raccords mécaniques (flare, à visser), brasures poreuses ou mal pénétrées, presse-étoupes de vannes, joints, raccords vissés des voyants, filtres et pressostats, et tout ce qui <b>vibre</b> — compresseur, tuyauteries mal fixées.",
       "Avant de sortir le moindre instrument, on <b>lit le registre</b> : quelle charge, quel fluide, quelles fuites déjà détectées, qu'a-t-on réparé et quand. Un point déjà réparé est un point <b>à recontrôler en priorité</b>, pas un point clos.",
@@ -9093,6 +9371,10 @@
      "t": "Méthode indirecte — mesurer et interpréter",
      "src": "g4b",
      "titre_source": "Méthode indirecte — mesurer et interpréter",
+     "codes": [
+      "4.04",
+      "4.05"
+     ],
      "paras": [
       "La méthode indirecte <b>ne détecte pas la fuite</b> : elle détecte un <b>fonctionnement anormal</b> qui la trahit. On relève les <b>pressions</b> (BP et HP) au manomètre et les <b>températures</b> au thermomètre de contact, puis on compare à la <b>table de saturation</b> du fluide présent.",
       "Une pression plus basse que la valeur théorique attendue, une <b>surchauffe</b> qui grimpe au-delà des 5 à 10 K habituels, un <b>sous-refroidissement</b> qui s'effondre sous les 4 à 8 K : autant d'indices convergents d'un manque de charge. Le multimètre complète le tableau (intensité absorbée, cohérence électrique)."
@@ -9131,6 +9413,12 @@
      "t": "Méthode directe — le détecteur",
      "src": "g4c",
      "titre_source": "Méthode directe et consignation",
+     "codes": [
+      "4.06",
+      "4.07",
+      "4.08",
+      "4.09"
+     ],
      "paras": [
       "La méthode directe <b>localise physiquement</b> la fuite. Pour la catégorie E, elle se pratique <b>sans accéder au circuit</b> : c'est le code <b>4.07</b>. Le code 4.06, qui suppose d'intervenir dans le circuit, n'est pas dans le champ de la catégorie E.",
       "Le code <b>4.06</b> distingue les méthodes directes qui supposent d'<b>intervenir dans le circuit</b>. Le code <b>4.07</b> vise celles qui n'exigent pas cette intervention. Le référentiel 2024/2215 rattache encore ces mots au règlement 1516/2007, mais ce texte a été <b>abrogé le 23 juillet 2026</b> sans remplacement. La méthode réellement autorisée dépend donc de la procédure actuelle, de l'installation et du périmètre de certification.",
@@ -9162,6 +9450,12 @@
      "t": "L instrument aussi se contrôle, et le registre se remplit",
      "src": "g4c",
      "titre_source": "Méthode directe et consignation",
+     "codes": [
+      "4.06",
+      "4.07",
+      "4.08",
+      "4.09"
+     ],
      "paras": [
       "La méthode directe <b>localise physiquement</b> la fuite. Pour la catégorie E, elle se pratique <b>sans accéder au circuit</b> : c'est le code <b>4.07</b>. Le code 4.06, qui suppose d'intervenir dans le circuit, n'est pas dans le champ de la catégorie E.",
       "Le code <b>4.06</b> distingue les méthodes directes qui supposent d'<b>intervenir dans le circuit</b>. Le code <b>4.07</b> vise celles qui n'exigent pas cette intervention. Le référentiel 2024/2215 rattache encore ces mots au règlement 1516/2007, mais ce texte a été <b>abrogé le 23 juillet 2026</b> sans remplacement. La méthode réellement autorisée dépend donc de la procédure actuelle, de l'installation et du périmètre de certification.",
@@ -9193,6 +9487,7 @@
    "activite": {
     "src": "x4",
     "titre_source": "Détective — le contrôle qui tourne mal",
+    "codes": [],
     "paras": [
      "Contrôle périodique d'étanchéité chez un client. Le <b>registre</b> t'apprend qu'une fuite a été réparée il y a trois mois sur un raccord flare de la ligne liquide."
     ],
@@ -9774,6 +10069,12 @@
      "t": "Récupérer sans émettre",
      "src": "g5a",
      "titre_source": "Récupérer sans émettre",
+     "codes": [
+      "5.01",
+      "5.02",
+      "5.03",
+      "5.04"
+     ],
      "paras": [
       "Chaque connexion et chaque déconnexion est un <b>point de fuite</b> : le geste est lent, contrôlé, flexibles purgés. Avant de récupérer, on <b>arrête et on isole</b> le système.",
       "Le <b>groupe de récupération</b> transfère le fluide vers un cylindre prévu pour, en phase gazeuse ou liquide selon la situation. Le cylindre respecte un <b>taux de remplissage maximal</b> — jamais rempli à ras : le liquide se dilate avec la température, et un cylindre plein est un danger. On <b>pèse avant</b>, sinon on ne saura jamais combien on a réellement récupéré.",
@@ -9806,6 +10107,9 @@
      "t": "La station de récupération",
      "src": "p2",
      "titre_source": "La station de récupération — ce que c'est, comment on la branche",
+     "codes": [
+      "5.03"
+     ],
      "paras": [
       "La <b>station de récupération</b> est un appareil autonome : elle aspire le fluide de l'installation et le transfère vers un <b>cylindre dédié</b>, posé sur une balance. Avant tout branchement, l'installation est <b>à l'arrêt et isolée</b>.",
       "Le cylindre respecte le <b>taux de remplissage maximal</b> indiqué sur son étiquette : jamais rempli à ras. Le liquide se dilate avec la température — un cylindre trop plein est un danger."
@@ -9840,6 +10144,10 @@
      "t": "L ordre des vannes",
      "src": "p5",
      "titre_source": "L'ordre des vannes — la chorégraphie de l'intervention",
+     "codes": [
+      "5.01",
+      "5.02"
+     ],
      "paras": [
       "Un manifold, ce sont des <b>vannes</b>. Les ouvrir et les fermer dans le bon ordre n'est pas un détail. Un mauvais ordre peut lâcher un nuage de fluide au visage, ou libérer un flexible sous pression.",
       "À la <b>connexion</b>, l'ordre est simple : vannes fermées, on raccorde les flexibles, on chasse l'air resté à l'intérieur par une ouverture brève, puis on ouvre progressivement.",
@@ -9876,6 +10184,10 @@
      "t": "La balance et la pesée",
      "src": "p6",
      "titre_source": "La balance et la pesée — avant, après, ce qu'on note",
+     "codes": [
+      "5.05",
+      "5.06"
+     ],
      "paras": [
       "La quantité de fluide qui entre ou sort d'un circuit se lit sur une <b>balance</b>, jamais sur un manomètre. Le manomètre dit comment la machine se comporte. La balance dit <b>combien</b> il y a de fluide.",
       "Avant toute pesée, on choisit une balance <b>adaptée</b> à la quantité attendue. On la pose à plat, stable, vérifiée. Une balance douteuse ne sert à rien : son résultat n'est pas fiable.",
@@ -9911,6 +10223,13 @@
      "t": "Stocker, transporter, tracer",
      "src": "g5b",
      "titre_source": "Peser, charger, stocker, tracer",
+     "codes": [
+      "5.05",
+      "5.06",
+      "5.07",
+      "5.08",
+      "5.09"
+     ],
      "paras": [
       "Pour charger, on détermine d'abord l'<b>état du fluide</b> et la <b>quantité prévue</b> (plaque signalétique, doc constructeur). La charge se contrôle à la <b>balance</b>, jamais « au manomètre » : le manomètre dit comment la machine se comporte, la balance dit combien on a mis.",
       "Cas particulier des <b>mélanges zéotropes</b> : ils se chargent en <b>phase liquide</b>, faute de quoi les composants se séparent et la composition du circuit dérive.",
@@ -9955,6 +10274,7 @@
    "activite": {
     "src": "x3",
     "titre_source": "Détective — la bouteille de récupération",
+    "codes": [],
     "paras": [
      "Récupération sur une chambre froide avant remplacement d'un composant. Tu as pesé la bouteille <b>avant</b> de commencer — bon réflexe. La récupération avance, et la balance approche du <b>niveau maximal admissible</b> de la bouteille… mais il reste visiblement du fluide dans le circuit.",
      "Sur l'étagère du fourgon : une bouteille de récupération <b>vide</b>, et une bouteille <b>entamée</b> qui contient déjà un autre fluide."
@@ -10843,6 +11163,10 @@
      "t": "Deux opérations à l azote, à ne pas confondre",
      "src": "g10",
      "titre_source": "Tuyauterie et brasage sous azote",
+     "codes": [
+      "10.01",
+      "10.02"
+     ],
      "paras": [
       "Braser un circuit frigorifique, ce n'est pas braser une tuyauterie d'eau. À la flamme, l'intérieur du cuivre s'oxyde et forme une <b>calamine</b> noire qui se détache plus tard, circule, et bouche le déshydrateur ou abîme le compresseur — des mois après, loin de la cause.",
       "D'où le <b>balayage à l'azote</b> pendant toute la chauffe : un débit léger et continu chasse l'oxygène du tube. Pour le cuivre sur cuivre, l'alliage d'apport est généralement du type <b>cuivre-phosphore</b>.",
@@ -10873,6 +11197,10 @@
      "t": "Ce que la flamme fabrique sans azote",
      "src": "g10",
      "titre_source": "Tuyauterie et brasage sous azote",
+     "codes": [
+      "10.01",
+      "10.02"
+     ],
      "paras": [
       "Braser un circuit frigorifique, ce n'est pas braser une tuyauterie d'eau. À la flamme, l'intérieur du cuivre s'oxyde et forme une <b>calamine</b> noire qui se détache plus tard, circule, et bouche le déshydrateur ou abîme le compresseur — des mois après, loin de la cause.",
       "D'où le <b>balayage à l'azote</b> pendant toute la chauffe : un débit léger et continu chasse l'oxygène du tube. Pour le cuivre sur cuivre, l'alliage d'apport est généralement du type <b>cuivre-phosphore</b>.",
@@ -10897,6 +11225,10 @@
      "t": "Le support compte autant que le joint",
      "src": "g10",
      "titre_source": "Tuyauterie et brasage sous azote",
+     "codes": [
+      "10.01",
+      "10.02"
+     ],
      "paras": [
       "Braser un circuit frigorifique, ce n'est pas braser une tuyauterie d'eau. À la flamme, l'intérieur du cuivre s'oxyde et forme une <b>calamine</b> noire qui se détache plus tard, circule, et bouche le déshydrateur ou abîme le compresseur — des mois après, loin de la cause.",
       "D'où le <b>balayage à l'azote</b> pendant toute la chauffe : un débit léger et continu chasse l'oxygène du tube. Pour le cuivre sur cuivre, l'alliage d'apport est généralement du type <b>cuivre-phosphore</b>.",
@@ -11362,6 +11694,14 @@
      "t": "Drop-in ou retrofit",
      "src": "g11",
      "titre_source": "Substitution et efficacité énergétique",
+     "codes": [
+      "11.01",
+      "11.02",
+      "11.03",
+      "11.04",
+      "11.05",
+      "1.08"
+     ],
      "paras": [
       "Remplacer un fluide à fort PRP se fait dans deux directions : les <b>fluides naturels</b> (CO₂, ammoniac, hydrocarbures) et les fluides de synthèse à faible PRP (<b>HFO</b>, HFC bas PRP). Il n'existe <b>pas de fluide universel</b> : le choix dépend de l'application, du climat, et de la sécurité du site.",
       "La <b>classe de sécurité NF EN 378</b> commande tout le reste — EPI, zonage, détection, charge admissible dans le local : <b>A1</b> (CO₂), <b>A2L</b> (R-32, R-1234yf), <b>A3</b> (R-290), <b>B2L</b> (NH₃).",
@@ -11403,6 +11743,14 @@
      "t": "Ce qui fait consommer une installation",
      "src": "g11",
      "titre_source": "Substitution et efficacité énergétique",
+     "codes": [
+      "11.01",
+      "11.02",
+      "11.03",
+      "11.04",
+      "11.05",
+      "1.08"
+     ],
      "paras": [
       "Remplacer un fluide à fort PRP se fait dans deux directions : les <b>fluides naturels</b> (CO₂, ammoniac, hydrocarbures) et les fluides de synthèse à faible PRP (<b>HFO</b>, HFC bas PRP). Il n'existe <b>pas de fluide universel</b> : le choix dépend de l'application, du climat, et de la sécurité du site.",
       "La <b>classe de sécurité NF EN 378</b> commande tout le reste — EPI, zonage, détection, charge admissible dans le local : <b>A1</b> (CO₂), <b>A2L</b> (R-32, R-1234yf), <b>A3</b> (R-290), <b>B2L</b> (NH₃).",
@@ -11438,6 +11786,14 @@
      "t": "Hydrocarbures : une machine pas comme les autres",
      "src": "g11",
      "titre_source": "Substitution et efficacité énergétique",
+     "codes": [
+      "11.01",
+      "11.02",
+      "11.03",
+      "11.04",
+      "11.05",
+      "1.08"
+     ],
      "paras": [
       "Remplacer un fluide à fort PRP se fait dans deux directions : les <b>fluides naturels</b> (CO₂, ammoniac, hydrocarbures) et les fluides de synthèse à faible PRP (<b>HFO</b>, HFC bas PRP). Il n'existe <b>pas de fluide universel</b> : le choix dépend de l'application, du climat, et de la sécurité du site.",
       "La <b>classe de sécurité NF EN 378</b> commande tout le reste — EPI, zonage, détection, charge admissible dans le local : <b>A1</b> (CO₂), <b>A2L</b> (R-32, R-1234yf), <b>A3</b> (R-290), <b>B2L</b> (NH₃).",
@@ -11975,6 +12331,15 @@
      "t": "Étiquetage et deux confusions qui coûtent cher",
      "src": "g12",
      "titre_source": "Hydrocarbures — le spécifique A1 et A2",
+     "codes": [
+      "12.01",
+      "12.02",
+      "12.03",
+      "12.04",
+      "12.06",
+      "12.13",
+      "12.14"
+     ],
      "paras": [
       "Les hydrocarbures — <b>R-290</b> (propane), <b>R-600a</b> (isobutane) — sont classés <b>A3</b> : très inflammables. Ils s'imposent pourtant, parce que leur PRP est très bas et leurs performances excellentes : on les trouve dans les réfrigérateurs domestiques, les monoblocs, les vitrines, et de plus en plus dans les pompes à chaleur.",
       "<b>L'étiquetage : ce qui doit être lu avant même d'ouvrir la machine.</b> Un équipement contenant un réfrigérant inflammable porte une <b>plaque signalétique</b> et un <b>marquage de danger</b> visibles : le fluide et sa quantité, le pictogramme de flamme, et la mention avertissant du risque. Sur les appareils concernés, un marquage rappelle que l'entretien revient à une personne formée et que la machine ne doit être ni percée ni brûlée. Cette lecture est le <b>premier geste</b> de l'intervention : elle décide de l'outillage, du balisage et de la ventilation.",
@@ -12014,6 +12379,15 @@
      "t": "Avant toute flamme",
      "src": "g12",
      "titre_source": "Hydrocarbures — le spécifique A1 et A2",
+     "codes": [
+      "12.01",
+      "12.02",
+      "12.03",
+      "12.04",
+      "12.06",
+      "12.13",
+      "12.14"
+     ],
      "paras": [
       "Les hydrocarbures — <b>R-290</b> (propane), <b>R-600a</b> (isobutane) — sont classés <b>A3</b> : très inflammables. Ils s'imposent pourtant, parce que leur PRP est très bas et leurs performances excellentes : on les trouve dans les réfrigérateurs domestiques, les monoblocs, les vitrines, et de plus en plus dans les pompes à chaleur.",
       "<b>L'étiquetage : ce qui doit être lu avant même d'ouvrir la machine.</b> Un équipement contenant un réfrigérant inflammable porte une <b>plaque signalétique</b> et un <b>marquage de danger</b> visibles : le fluide et sa quantité, le pictogramme de flamme, et la mention avertissant du risque. Sur les appareils concernés, un marquage rappelle que l'entretien revient à une personne formée et que la machine ne doit être ni percée ni brûlée. Cette lecture est le <b>premier geste</b> de l'intervention : elle décide de l'outillage, du balisage et de la ventilation.",
@@ -12053,6 +12427,15 @@
      "t": "Charge maximale : jamais estimée",
      "src": "g12",
      "titre_source": "Hydrocarbures — le spécifique A1 et A2",
+     "codes": [
+      "12.01",
+      "12.02",
+      "12.03",
+      "12.04",
+      "12.06",
+      "12.13",
+      "12.14"
+     ],
      "paras": [
       "Les hydrocarbures — <b>R-290</b> (propane), <b>R-600a</b> (isobutane) — sont classés <b>A3</b> : très inflammables. Ils s'imposent pourtant, parce que leur PRP est très bas et leurs performances excellentes : on les trouve dans les réfrigérateurs domestiques, les monoblocs, les vitrines, et de plus en plus dans les pompes à chaleur.",
       "<b>L'étiquetage : ce qui doit être lu avant même d'ouvrir la machine.</b> Un équipement contenant un réfrigérant inflammable porte une <b>plaque signalétique</b> et un <b>marquage de danger</b> visibles : le fluide et sa quantité, le pictogramme de flamme, et la mention avertissant du risque. Sur les appareils concernés, un marquage rappelle que l'entretien revient à une personne formée et que la machine ne doit être ni percée ni brûlée. Cette lecture est le <b>premier geste</b> de l'intervention : elle décide de l'outillage, du balisage et de la ventilation.",
@@ -12092,6 +12475,14 @@
      "t": "Récupérer et remplir à l azote",
      "src": "g12b",
      "titre_source": "Intervenir sur un circuit hydrocarbure",
+     "codes": [
+      "12.07",
+      "12.08",
+      "12.09",
+      "12.10",
+      "12.11",
+      "12.12"
+     ],
      "paras": [
       "Le circuit est déjà <b>récupéré</b> et <b>inerté à l'azote</b> : plus d'hydrocarbure ni d'air à l'intérieur. La zone est prête : <b>ventilée</b>, balisée, sans source d'inflammation, détecteur de gaz et extincteur à portée, outillage adapté.",
       "Reste une dernière vérification avant le chalumeau : la <b>consignation électrique</b> de l'installation. Le <b>R-290 est A3</b>, très inflammable — pas un A2L comme le R-32. Tant que l'inertage n'est pas confirmé : <b>aucune flamme</b>.",
@@ -12122,6 +12513,14 @@
      "t": "Le fil rouge de l intervention",
      "src": "g12b",
      "titre_source": "Intervenir sur un circuit hydrocarbure",
+     "codes": [
+      "12.07",
+      "12.08",
+      "12.09",
+      "12.10",
+      "12.11",
+      "12.12"
+     ],
      "paras": [
       "Le circuit est déjà <b>récupéré</b> et <b>inerté à l'azote</b> : plus d'hydrocarbure ni d'air à l'intérieur. La zone est prête : <b>ventilée</b>, balisée, sans source d'inflammation, détecteur de gaz et extincteur à portée, outillage adapté.",
       "Reste une dernière vérification avant le chalumeau : la <b>consignation électrique</b> de l'installation. Le <b>R-290 est A3</b>, très inflammable — pas un A2L comme le R-32. Tant que l'inertage n'est pas confirmé : <b>aucune flamme</b>.",
@@ -12152,6 +12551,7 @@
    "activite": {
     "src": "x5",
     "titre_source": "Détective — intervention sur monobloc R-290",
+    "codes": [],
     "paras": [
      "Une vitrine réfrigérée au <b>R-290</b> à remplacer de compresseur, dans l'arrière-boutique d'une boulangerie : local <b>petit</b>, <b>sans ventilation</b>, un four à quelques mètres.",
      "Ton collègue propose de « faire vite » : récupérer, ouvrir, braser le nouveau compresseur, recharger — comme sur un circuit HFC classique, « vu la petite charge »."
@@ -12450,6 +12850,7 @@
      "t": "« A1 » ne veut pas dire « sans danger »",
      "src": "g13",
      "titre_source": "CO₂ et NH₃ — reconnaître, ne pas intervenir",
+     "codes": [],
      "paras": [
       "Ce module <b>informe</b>, il ne qualifie pas. Une attestation A1 ou A2 ne donne <b>aucun droit d'intervention</b> sur une installation au CO₂ (catégorie B) ou à l'ammoniac (catégorie C). Ce qu'on attend ici : <b>reconnaître</b> et <b>ne pas toucher</b>.",
       "<b>CO₂ (R-744)</b> — classé <b>A1</b> : toxicité <b>faible</b>, non inflammable, <b>PRP = 1</b>. Cette classe n'annonce aucun de ses vrais dangers : la <b>pression</b>, très élevée, l'<b>atmosphère irrespirable</b> en local fermé (il est plus lourd que l'air, s'accumule en point bas, et agit sur la respiration — voir « CO₂ : deux dangers mortels »), et le risque de <b>neige carbonique</b> à la détente (brûlure par le froid, obstruction). En transcritique, le condenseur laisse la place à un <b>refroidisseur de gaz</b>. Les cylindres, à double vanne, ne se raccordent pas au matériel courant.",
@@ -12483,6 +12884,7 @@
      "t": "La règle des catégories",
      "src": "g13",
      "titre_source": "CO₂ et NH₃ — reconnaître, ne pas intervenir",
+     "codes": [],
      "paras": [
       "Ce module <b>informe</b>, il ne qualifie pas. Une attestation A1 ou A2 ne donne <b>aucun droit d'intervention</b> sur une installation au CO₂ (catégorie B) ou à l'ammoniac (catégorie C). Ce qu'on attend ici : <b>reconnaître</b> et <b>ne pas toucher</b>.",
       "<b>CO₂ (R-744)</b> — classé <b>A1</b> : toxicité <b>faible</b>, non inflammable, <b>PRP = 1</b>. Cette classe n'annonce aucun de ses vrais dangers : la <b>pression</b>, très élevée, l'<b>atmosphère irrespirable</b> en local fermé (il est plus lourd que l'air, s'accumule en point bas, et agit sur la respiration — voir « CO₂ : deux dangers mortels »), et le risque de <b>neige carbonique</b> à la détente (brûlure par le froid, obstruction). En transcritique, le condenseur laisse la place à un <b>refroidisseur de gaz</b>. Les cylindres, à double vanne, ne se raccordent pas au matériel courant.",
@@ -12516,6 +12918,7 @@
      "t": "La glace carbonique, et le réflexe d arrivée sur site",
      "src": "g13",
      "titre_source": "CO₂ et NH₃ — reconnaître, ne pas intervenir",
+     "codes": [],
      "paras": [
       "Ce module <b>informe</b>, il ne qualifie pas. Une attestation A1 ou A2 ne donne <b>aucun droit d'intervention</b> sur une installation au CO₂ (catégorie B) ou à l'ammoniac (catégorie C). Ce qu'on attend ici : <b>reconnaître</b> et <b>ne pas toucher</b>.",
       "<b>CO₂ (R-744)</b> — classé <b>A1</b> : toxicité <b>faible</b>, non inflammable, <b>PRP = 1</b>. Cette classe n'annonce aucun de ses vrais dangers : la <b>pression</b>, très élevée, l'<b>atmosphère irrespirable</b> en local fermé (il est plus lourd que l'air, s'accumule en point bas, et agit sur la respiration — voir « CO₂ : deux dangers mortels »), et le risque de <b>neige carbonique</b> à la détente (brûlure par le froid, obstruction). En transcritique, le condenseur laisse la place à un <b>refroidisseur de gaz</b>. Les cylindres, à double vanne, ne se raccordent pas au matériel courant.",

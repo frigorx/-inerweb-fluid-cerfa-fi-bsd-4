@@ -17,7 +17,8 @@
     "tout": "node build/tout.mjs",
     "couverture": "node build/couverture.mjs",
     "verifier": "python build/verifier-kdp.py dist/inerweb.fr-HabFluide-Tome1-Livret-eleve-6x9.pdf dist/inerweb.fr-HabFluide-Tome1-Couverture-6x9.pdf",
-    "matrice": "node build/matrice-referentiel.mjs"
+    "matrice": "node build/matrice-referentiel.mjs",
+    "audit": "node build/audit-referentiel.mjs"
   },
   "dependencies": {
     "docx": "^9.7.1",
