@@ -185,6 +185,11 @@ figure img{width:100%;max-height:var(--planche-h);object-fit:contain;display:blo
 figure figcaption{margin-top:1.6mm;text-align:center;font-style:italic;font-size:10pt;color:var(--mut)}
 .planche.haute img{width:auto;max-height:${R.planche_haute_h_mm}mm}
 .appoint{width:${R.appoint_pc}%;margin-left:auto;margin-right:auto}
+/* Un SYMBOLE normalisé porte peu d'information et beaucoup de blanc :
+   à pleine largeur il mangeait 40 % d'une page pour un pictogramme.
+   Il se pose donc en vignette, comme dans une nomenclature. */
+.symbole{width:46%;margin-left:auto;margin-right:auto}
+.symbole img{max-height:38mm}
 .appoint img{max-height:52mm}
 .duo{display:flex;gap:4mm;margin:0 0 3.4mm}
 .duo figure{margin:0;flex:1}

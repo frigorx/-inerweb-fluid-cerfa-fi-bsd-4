@@ -243,6 +243,8 @@ const logoPng = async (mot) => {
    chapitre, puis on complète dans l'ordre des identifiants. La liste
    est écrite sur disque : le corrigé formateur reprend LA MÊME. */
 const SELECTION = {};
+/* Les questions laissées de côté par les chapitres, pour la banque finale. */
+const RESERVE = {};
 
 /* Une question, ses choix remis dans l'ordre décidé. */
 const reordonner = (q, sel) => ({
@@ -311,6 +313,17 @@ const choisirQuestions = (ch) => {
     if (!prises.includes(q) && libre(q)) { prises.push(q); enoncesVus.add(cleEnonce(q)); }
   }
   SELECTION[ch.num] = prises.map((q) => repartir(q));
+  /* Ce que le chapitre n'a pas pris part à la banque de révision : la source
+     porte 252 questions, un chapitre en pose six. Les autres ne sont pas de
+     trop — elles sont l'entraînement d'après, quand tout le livre est lu. */
+  RESERVE[ch.num] = pool
+    /* Une banque de révision doit apprendre quelque chose à chaque
+       correction : les questions dont l'explication ne dit rien de plus
+       que « retenez la formulation » n'y entrent pas. */
+    .filter((q) => !creuse(q))
+    .filter((q) => !prises.includes(q) && !enoncesVus.has(cleEnonce(q)))
+    .filter((q) => { if (enoncesVus.has(cleEnonce(q))) return false; enoncesVus.add(cleEnonce(q)); return true; })
+    .map((q) => repartir(q));
   return prises;
 };
 
@@ -665,6 +678,7 @@ const construire = async () => {
   const docx = path.join(DIST, 'inerweb.fr-HabFluide-Tome1-Livret-eleve-6x9.docx');
   fs.writeFileSync(docx, await Packer.toBuffer(doc));
   fs.writeFileSync(path.join(LIVRET, 'questions-choisies.gen.json'), JSON.stringify(SELECTION, null, 1), 'utf8');
+  fs.writeFileSync(path.join(LIVRET, 'questions-reserve.gen.json'), JSON.stringify(RESERVE, null, 1), 'utf8');
 
   /* Pas de conversion PDF ici : le PDF de référence est celui du
      gabarit A5 (`build-html.mjs`), au même nom de fichier. Ce Word est

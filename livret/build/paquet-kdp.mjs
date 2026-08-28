@@ -48,6 +48,8 @@ const conseille = 24.90;
 const redevance = (p) => (p * 0.6 - cout);
 
 const nbQuestions = Object.values(CHOISIES).reduce((n, l) => n + l.length, 0);
+const RESERVE = JSON.parse(fs.readFileSync(path.join(LIVRET, 'questions-reserve.gen.json'), 'utf8'));
+const nbReserve = Object.values(RESERVE).reduce((n, l) => n + l.length, 0);
 
 const fiche = `# inerweb.fr HabFluide, tome 1 — à téléverser sur Amazon KDP
 
@@ -122,11 +124,19 @@ livre de poche. À 19,90 € la redevance tomberait à ${redevance(19.9).toFixed
 > de la machine aux opérations. Chaque chapitre s'ouvre sur ce que le
 > référentiel exige — code par code, catégorie par catégorie — puis pose des
 > questions type examen AVANT la lecture : on se situe d'abord, on lit
-> ensuite, on se corrige à la fin. ${nbQuestions} questions corrigées en tout.
+> ensuite, on se corrige à la fin. ${nbQuestions} questions corrigées dans les
+> chapitres, et ${nbReserve} de plus dans la banque de révision finale.
+>
+> La technologie y est traitée pour elle-même : compresseurs, condenseurs,
+> évaporateurs, détendeurs et leur réglage — pose du bulbe, égalisation
+> interne ou externe, électrovanne et arrêt par tirage au vide, régulateurs
+> de pression KVP, KVL, KVR et KVC, séparateur d'huile, bouteille anti-coup
+> de liquide.
 >
 > Plus de cent schémas techniques, des encadrés « à retenir » et « geste
 > interdit », des pages à remplir, un lexique de 61 mots du métier expliqués
-> avec des mots plus simples qu'eux.
+> avec des mots plus simples qu'eux, et une **banque de révision finale** qui
+> reprend tout le livre dans le désordre, comme le fait l'épreuve.
 >
 > ${QR.length} QR codes ouvrent les cours animés et racontés à voix haute
 > d'inerweb.fr : schémas en mouvement, questions corrigées, capsules audio.

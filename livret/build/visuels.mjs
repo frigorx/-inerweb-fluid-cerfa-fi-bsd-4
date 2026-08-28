@@ -122,18 +122,17 @@ if (erreurs.length) {
    d'opacité sont retirées pour ne pas le recacher. Le reste du dessin —
    positions, couleurs, textes — n'est pas touché.
 
-   MAIS toutes les animations ne finissent pas visibles. Certaines font
-   APPARAÎTRE puis DISPARAÎTRE un élément (`values="0;0;1;1;0;0"`) : un
-   libellé qui cède la place au suivant. Tout révéler d'un coup les
-   empilait l'un sur l'autre — « alarme d'évacuation » par-dessus
-   « alarme intérieure » sur la planche CO₂. On lit donc où chaque
-   animation FINIT, et on s'y tient.
+   Mais quel état ? Ni le premier ni le dernier. Tout révéler empilait
+   les libellés qui se remplacent — « alarme d'évacuation » par-dessus
+   « alarme intérieure » sur la planche CO₂. Ne garder que la fin vidait
+   les planches EN BOUCLE, où tout s'éteint pour que le cycle reparte :
+   le coup de liquide y perdait son piston, son choc et sa morale.
 
-   Sauf sur une planche EN BOUCLE : là, tout s'efface à la fin pour que
-   le cycle reparte, et respecter les fins rendrait une page blanche —
-   le coup de liquide y avait perdu son piston, son choc et sa morale.
-   Le partage se fait au compte : si la plupart des animations finissent
-   invisibles, c'est une boucle, et on révèle tout comme avant.
+   On cherche donc L'INSTANT LE PLUS RICHE : le moment de l'animation où
+   le plus d'éléments sont visibles ENSEMBLE. C'est l'image qu'un
+   photographe garderait du dessin animé, et elle tombe juste dans les
+   deux cas — la boucle est saisie pleine, le libellé remplacé est saisi
+   seul.
    ------------------------------------------------------------------ */
 /* Le balisage se parcourt avec une pile, pas avec une expression
    régulière : l'animation n'est pas toujours le premier enfant de
@@ -144,7 +143,7 @@ const etatFinal = (svg) => {
   const pile = [];         // les éléments ouverts à cet instant du parcours
   const elements = [];     // tous ceux rencontrés, pour la passe finale
   const retouches = [];    // { debut, fin, texte }, appliquées de la fin vers le début
-  const compte = { total: 0, eteintes: 0 };
+
   let m;
   while ((m = BALISE.exec(svg)) !== null) {
     const [tout, ferme, ouvre, attrs, auto] = m;
@@ -152,18 +151,17 @@ const etatFinal = (svg) => {
     if (!ouvre) continue;                       // commentaire, instruction, CDATA
 
     if (ouvre === 'animate' && /attributeName\s*=\s*"opacity"/.test(attrs)) {
-      /* Où finit-elle ? La dernière valeur de la liste, ou le `to`. */
+      /* On retient la COURBE entière, pas seulement sa fin : c'est elle
+         qui dira, plus bas, à quel instant la planche montre le plus. */
       const vals = /values="([^"]*)"/.exec(attrs);
+      const kt = /keyTimes="([^"]*)"/.exec(attrs);
       const to = /\bto="([^"]*)"/.exec(attrs);
-      const derniere = vals ? vals[1].split(';').pop() : (to ? to[1] : '1');
+      const suite = vals ? vals[1].split(';').map((x) => parseFloat(x))
+        : [parseFloat(to ? to[1] : '1')];
+      const temps = kt ? kt[1].split(';').map((x) => parseFloat(x))
+        : suite.map((_, i) => (suite.length > 1 ? i / (suite.length - 1) : 1));
       const anime = pile[pile.length - 1];
-      if (anime) {
-        /* Un élément qui finit invisible porte une marque, pour que
-           l'étape suivante ne le révèle pas avec les autres. */
-        anime.opacite = parseFloat(derniere) > 0.01 ? '1' : '@CACHE@';
-        compte.total += 1;
-        if (anime.opacite === '@CACHE@') compte.eteintes += 1;
-      }
+      if (anime) anime.courbe = { suite, temps };
       retouches.push({ debut: m.index, fin: m.index + tout.length, texte: '' });
       continue;
     }
@@ -174,15 +172,40 @@ const etatFinal = (svg) => {
     }
   }
 
-  /* Planche en boucle : tout s'y éteint à la fin pour que le cycle
-     reparte. On ne respecte alors aucune fin, on révèle. */
-  const enBoucle = compte.total > 0 && compte.eteintes * 2 > compte.total;
+  /* L'INSTANT LE PLUS RICHE.
+     Ni le début — la planche y est vide — ni la fin : une boucle s'y
+     éteint, et un libellé remplacé y revient par-dessus son remplaçant.
+     On cherche donc le moment où le PLUS d'éléments sont visibles
+     ENSEMBLE : c'est l'image qu'un photographe garderait, et celle que
+     le papier doit figer. À égalité, on prend l'instant le plus tardif,
+     le plus proche de la conclusion du dessin. */
+  const animes = elements.filter((e) => e.courbe);
+  const aInstant = ({ suite, temps }, t) => {
+    if (suite.length === 1) return suite[0];
+    for (let i = 1; i < temps.length; i += 1) {
+      if (t <= temps[i]) {
+        const large = temps[i] - temps[i - 1];
+        const part = large > 0 ? (t - temps[i - 1]) / large : 1;
+        return suite[i - 1] + (suite[i] - suite[i - 1]) * part;
+      }
+    }
+    return suite[suite.length - 1];
+  };
+  let meilleur = 1;
+  if (animes.length) {
+    let record = -1;
+    for (let pas = 0; pas <= 100; pas += 1) {
+      const t = pas / 100;
+      const vus = animes.filter((e) => aInstant(e.courbe, t) > 0.5).length;
+      if (vus >= record) { record = vus; meilleur = t; }
+    }
+  }
   for (const e of elements) {
-    if (!e.opacite) continue;
-    if (enBoucle) e.opacite = '1';
+    if (!e.courbe) continue;
+    const visible = aInstant(e.courbe, meilleur) > 0.5;
     const nets = e.attrs.replace(/\sopacity\s*=\s*"[^"]*"/g, '')
       .replace(/([;"\s])opacity\s*:\s*[\d.]+\s*;?/g, '$1');
-    retouches.push({ debut: e.debut, fin: e.fin, texte: `<${e.tag}${nets} opacity="${e.opacite}">` });
+    retouches.push({ debut: e.debut, fin: e.fin, texte: `<${e.tag}${nets} opacity="${visible ? '1' : '@CACHE@'}">` });
   }
 
   let s = svg;

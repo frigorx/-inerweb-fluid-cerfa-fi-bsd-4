@@ -1,14 +1,14 @@
 {
  "_doc": "Écrit par build/finition.py à chaque fabrication, jamais à la main. C'est cette fiche qui donne son dos à la couverture.",
- "pages": 288,
- "dos_mm": 16.47,
+ "pages": 348,
+ "dos_mm": 19.91,
  "couverture_mm": [
-  327.62,
+  331.06,
   234.95
  ],
  "format": "6 x 9 pouces",
- "reliure_exigee_mm": 12.7,
+ "reliure_exigee_mm": 15.88,
  "reliure_reglee_mm": 19,
- "cout_impression_estime_eur": 4.06,
- "prix_minimum_eur": 6.77
+ "cout_impression_estime_eur": 4.78,
+ "prix_minimum_eur": 7.96
 }

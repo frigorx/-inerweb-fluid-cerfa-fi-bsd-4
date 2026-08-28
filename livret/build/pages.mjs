@@ -22,6 +22,8 @@ const CONTENU = JSON.parse(fs.readFileSync(path.join(LIVRET, 'contenu.gen.json')
 const VISUELS = JSON.parse(fs.readFileSync(path.join(LIVRET, 'visuels.gen.json'), 'utf8'));
 const QR = JSON.parse(fs.readFileSync(path.join(LIVRET, 'qr.gen.json'), 'utf8'));
 const CHOISIES = JSON.parse(fs.readFileSync(path.join(LIVRET, 'questions-choisies.gen.json'), 'utf8'));
+/* Les questions que les chapitres n'ont pas prises : la banque de révision. */
+const RESERVE = JSON.parse(fs.readFileSync(path.join(LIVRET, 'questions-reserve.gen.json'), 'utf8'));
 const SOURCE = process.env.PILOTE_FLUIDES || 'C:/git/pilote-fluides';
 const REF = JSON.parse(fs.readFileSync(path.join(SOURCE, 'packs', 'fluides', 'referentiel-2025.json'), 'utf8'));
 
@@ -109,7 +111,8 @@ const figure = (refs, legendes = []) => {
   const appointPossible = technique && refs.length >= 2;
   return refs.map((r, i) => {
     const appoint = appointPossible && !estTechnique(r);
-    return `<figure class="${appoint ? 'appoint' : 'planche'}${!appoint && ratio(r) > 1.15 ? ' haute' : ''}">
+    const symbole = r.startsWith('sym:');
+    return `<figure class="${symbole ? 'symbole' : appoint ? 'appoint' : 'planche'}${!appoint && !symbole && ratio(r) > 1.15 ? ' haute' : ''}">
       <img src="${visuel(r)}"${cotes(r)} alt="">
       ${legendes[i] ? `<figcaption>${ech(apos(legendes[i]))}</figcaption>` : ''}
     </figure>`;
@@ -334,6 +337,41 @@ export const construireFlux = () => {
         entetes: ['Ch.', 'Titre', 'Ma note', 'À reprendre ?'],
         lignes: CHAPITRES.map((ch) => [String(ch.num), ch.titre, '__ / 6', '']),
       }), { nue: true });
+    }
+    /* La banque : les 89 questions laissées de côté par les chapitres,
+       posées dans l'ordre du livre, chacune marquée de son chapitre. */
+    if (p.id === 'banque' || p.id === 'banque-corrige') {
+      const corrige = p.id === 'banque-corrige';
+      let n = 0;
+      /* Entrelacées, pas rangées par chapitre : l'épreuve ne prévient pas
+         de quel chapitre tombe la question suivante, la révision non plus.
+         Le tour de rôle est déterministe — le livre reste reproductible. */
+      const files = Object.entries(RESERVE).map(([num, liste]) => ({ num, liste: [...liste] }));
+      const melange = [];
+      for (let rang = 0; files.some((f) => f.liste.length); rang += 1) {
+        for (const f of files) if (f.liste.length) melange.push([f.num, f.liste.shift()]);
+      }
+      for (const [num, sel] of melange) {
+        const contenu = contenuDe(Number(num));
+        {
+          const brute = contenu?.questions.find((q) => q.id === sel.id);
+          if (!brute) continue;
+          n += 1;
+          const choix = sel.ordre.map((i) => brute.choix[i]);
+          if (corrige) {
+            pousse(`<div class="rep"><p class="rep-l"><span class="rep-n">${n}</span>
+              <span class="rep-lettre">${String.fromCharCode(65 + sel.bonne)}</span><b>${ech(choix[sel.bonne])}</b>
+              <span class="note-desc">ch. ${num}</span></p>
+              ${brute.explication ? `<p class="rep-x">${ech(brute.explication)}</p>` : ''}</div>`, { nue: true });
+          } else {
+            pousse(`<div class="q"><p class="q-e"><span class="q-n">${n}</span>
+              <span class="note-desc">ch. ${num}</span> ${ech(brute.enonce)}</p>
+              <ol class="q-c">${choix.map((c, i) => `<li><span class="case"></span>
+                <span class="lettre">${String.fromCharCode(65 + i)}</span>${ech(c)}</li>`).join('')}</ol></div>`,
+            { nue: true });
+          }
+        }
+      }
     }
     if (p.id === 'index-codes') {
       const parCode = new Map();

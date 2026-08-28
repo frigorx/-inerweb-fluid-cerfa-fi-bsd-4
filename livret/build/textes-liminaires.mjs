@@ -104,6 +104,19 @@ export const TEXTES_LIMINAIRES = {
 };
 
 export const TEXTES_FIN = {
+  'banque': [
+    `Les questions des chapitres se posaient AVANT la lecture, pour vous situer. ` +
+    `Celles-ci se posent APRÈS : elles balaient tout le livre, dans le désordre, ` +
+    `comme le fait l'épreuve. Quatre-vingt-neuf questions, tirées de la même source ` +
+    `que les précédentes et jamais déjà posées ailleurs dans ce livre.`,
+    `Le numéro de chapitre est indiqué devant chaque question : une erreur vous dit ` +
+    `immédiatement quelle page relire. Les réponses sont sur les pages suivantes.`,
+  ],
+  'banque-corrige': [
+    `Corrigez-vous question par question. Une seule règle : notez le CHAPITRE des ` +
+    `questions manquées, pas seulement le nombre de fautes. Trois erreurs dans le ` +
+    `même chapitre valent plus qu'une erreur dans trois chapitres différents.`,
+  ],
   'bilan': [
     `Reportez ici la note de fin de chaque chapitre. Trois notes faibles dans la même partie ? ` +
     `C'est la partie à relire — pas seulement les chapitres un par un.`,

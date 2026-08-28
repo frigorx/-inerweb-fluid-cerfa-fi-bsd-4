@@ -753,7 +753,7 @@
   "largeur": 512,
   "hauteur": 512,
   "source": "packs/fluides/res/bibliotheque/icones/ico-cles.png",
-  "citations": 2
+  "citations": 3
  },
  "amb:jour2": {
   "fichier": "amb-jour2.png",
@@ -795,7 +795,7 @@
   "largeur": 512,
   "hauteur": 512,
   "source": "packs/fluides/res/bibliotheque/icones/role-competence.png",
-  "citations": 2
+  "citations": 3
  },
  "ico:cerfa": {
   "fichier": "ico-cerfa.png",

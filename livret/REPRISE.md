@@ -81,6 +81,43 @@ Autres commandes : `npm run couverture` · `npm run verifier` ·
    KDP, à re-exporter en grand un jour depuis la bibliothèque.
 
 
+## Densification du 28/08 — le livre couvre enfin son référentiel
+
+Une **matrice de couverture** (`npm run matrice`, sortie dans `dist/kdp/`)
+croise les 136 codes de l'arrêté avec ce que le livre imprime, et compte les
+MOTS consacrés à chacun. Elle a montré le vrai défaut : sur les 39 codes
+théoriques du périmètre A1/A2/D/E, **18 seulement étaient traités** et 21
+expédiés en moins de 150 mots — les organes à 66-98 mots.
+
+Quatre leviers, dans cet ordre :
+
+1. **Les filtres de paragraphes levés.** Le plan ne retenait que 51 % du texte
+   des cartes source (`paras: [0,2,5]`). Toutes les leçons prennent désormais
+   `paras: 'tous'` : 213 → 500 paragraphes. **+30 pages, sans une ligne neuve.**
+2. **La technologie écrite dans la SOURCE** (`pilote-fluides`, commit `2bac781`,
+   donc en ligne aussi) : pose du bulbe, égalisation interne/externe,
+   électrovanne et pump down ; les régulateurs **enfin nommés — KVP, KVL, KVR,
+   KVC** — leur règle de réglage, la bouteille anti-coup, le pressostat
+   différentiel d'huile ; les trois familles et les trois zones du condenseur ;
+   le contenu du registre ; l'étiquetage des inflammables.
+3. **La banque de révision** en fin d'ouvrage : les 75 questions que les
+   chapitres n'avaient pas prises (la source en porte 252, un chapitre en pose
+   six), entrelacées entre chapitres comme le fait l'épreuve, chacune marquée
+   de son chapitre d'origine, avec son corrigé. **168 questions corrigées** en
+   tout, contre 95.
+4. **Les symboles en vignette** (`.symbole`, 46 % de largeur) : un pictogramme
+   normalisé prenait 40 % d'une page pour rien.
+
+**Résultat mesuré : 39 codes théoriques sur 39 traités, zéro effleuré.**
+
+### L'instant le plus riche
+
+Le rendu des planches animées ne fige plus « la fin » mais **le moment où le
+plus d'éléments sont visibles ensemble** (`etatFinal`, `visuels.mjs`). C'est ce
+qui règle d'un coup les deux cas contraires : la planche en boucle est saisie
+pleine, le libellé remplacé est saisi seul. Ne pas revenir en arrière : figer
+la fin vidait les boucles, tout révéler empilait les libellés.
+
 ## Relecture éditoriale du 28/08 — intégrée
 
 Verdict reçu : « excellent brouillon, pas prêt à vendre tel quel ». Tout le
