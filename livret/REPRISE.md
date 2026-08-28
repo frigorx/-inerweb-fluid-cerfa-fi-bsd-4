@@ -109,6 +109,23 @@ Quatre leviers, dans cet ordre :
    normalisé prenait 40 % d'une page pour rien.
 
 **Résultat mesuré : 39 codes théoriques sur 39 traités, zéro effleuré.**
+**362 pages, 193 mots/page** (288 pages et 146 mots/page le matin).
+
+### Deux défauts de fond corrigés au passage
+
+**81 encadrés sur 109 s'imprimaient réduits à leur titre.** La source
+n'enveloppe pas toujours son texte dans un `<p>`, et le rendu ne cherchait
+que ceux-là : 3 639 mots n'arrivaient jamais au papier, dont « le piège des
+manomètres ». Réparé dans `encadre()` (`pages.mjs`).
+
+**27 questions sur 93 étaient hors des codes de leur chapitre.** Le chapitre
+« Lire une classe de sécurité » ouvrait sur six questions de nomenclature.
+La répartition se fait maintenant en passes (`repartirLesQuestions`,
+`build-livret.mjs`) : l'ordre des `groupesQ` du plan fait foi, et les
+chapitres se servent **du plus pauvre au plus riche** — la source ne porte
+que 180 énoncés distincts pour 252 questions, et cinq chapitres n'en ont
+aucun en propre. En dernier recours un chapitre trop pauvre reprend un
+énoncé posé ailleurs, jusqu'à quatre, **et la chaîne l'annonce**.
 
 ### L'instant le plus riche
 
