@@ -51,6 +51,14 @@ const cotes = (ref) => ` width="${VISUELS[ref].largeur}" height="${VISUELS[ref].
 const qrImg = (slug) => dataUri('qr.gen', QR.find((e) => e.slug === slug).fichier);
 
 const ech = (s) => String(s)
+  /* Filet de sécurité : aucune balise de mise en page ne doit atteindre le
+     papier. L'extraction les retire déjà à la source, mais une source qui
+     change, un bloc qui passe par un autre chemin, et « <iframe src=… »
+     s'imprime en toutes lettres au milieu d'un encadré — c'est arrivé sur
+     dix-huit pages. Seuls <b> et <i> survivent ici. */
+  .replace(/<(?:img|iframe|figure|source|video|audio|script|style)\b[^>]*>[\s\S]*?<\/(?:iframe|figure|video|audio|script|style)>/gi, '')
+  .replace(/<(?:img|iframe|source|br|hr)\b[^>]*\/?>/gi, ' ')
+  .replace(/<\/?(?:p|div|span|ul|ol|li|table|tbody|tr|td|th|figcaption|a)\b[^>]*>/gi, ' ')
   .replace(/&(?![a-zA-Z]+;|#\d+;)/g, '&amp;')
   .replace(/<(?!\/?(?:b|i)>)/g, '&lt;')
   /* Le panneau ⚠ que la source glisse au fil du texte : le navigateur va
@@ -210,7 +218,7 @@ export const construireFlux = () => {
           <p class="som-p"><b>Partie ${partie.id} — ${ech(partie.titre)}</b><span>${ech(apos(partie.sous))}</span></p>
           ${CHAPITRES.filter((c) => c.partie === partie.id).map((ch) => `
             <p class="som-ch"><span class="som-n">${ch.num}</span>${ech(apos(ch.titre))}
-              <span class="som-url">inerweb.fr/f/${ch.qr}</span></p>`).join('')}
+              <span class="som-url">inerweb.fr/f/${ch.qr}</span><span class="marq">@@SOM|${ch.num}@@</span></p>`).join('')}
         </div>`, { nue: true });
       }
       continue;
@@ -244,7 +252,26 @@ export const construireFlux = () => {
         /* Qui est concerné, code par code : le référentiel n'exige pas
            la même chose de A1, A2, D et E. */
         const cats = (r) => {
-          if (!r.catsT.length) return '<span class="ref-cat prat">épreuve pratique — tome 2</span>';
+          if (!r.catsT.length) {
+            /* Deux raisons TRÈS différentes de n'avoir aucune catégorie
+               théorique ici, et les confondre est une faute : le code est
+               évalué en atelier (tome 2), OU il est théorique mais pour
+               une catégorie que ce livre ne prépare pas — le CO₂ pour B,
+               l'ammoniac pour C. Le code 1.09 était annoncé « épreuve
+               pratique » alors qu'il est théorique en catégorie B. */
+            /* Le contenu ne retient que les catégories du périmètre : un
+               code théorique en B ou C y arrive donc SANS catégorie. On
+               va lire le référentiel officiel pour savoir laquelle. */
+            const officiel = REF.groupes.flatMap((g) => g.codes || [])
+              .find((x) => x.code === r.code);
+            const autres = Object.entries((officiel && officiel.cat) || {})
+              .filter(([k, v]) => v === 'T' && !CONTENU.categories.includes(k))
+              .map(([k]) => k);
+            if (autres.length) {
+              return `<span class="ref-cat hors">hors périmètre — catégorie ${autres.join(' et ')}</span>`;
+            }
+            return '<span class="ref-cat prat">épreuve pratique — tome 2</span>';
+          }
           if (r.catsT.length === CONTENU.categories.length) return '<span class="ref-cat">toutes catégories</span>';
           return r.catsT.map((k) => `<span class="ref-cat">${k}</span>`).join('');
         };

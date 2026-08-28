@@ -644,11 +644,7 @@
       "<b>La lettre dit la toxicité.</b> <b>A</b> = toxicité faible. <b>B</b> = toxicité plus élevée. Attention au contresens : « A » ne signifie pas inoffensif. Un fluide de classe A peut vous asphyxier en chassant l'oxygène d'un local, ou se décomposer en gaz toxiques au contact d'une flamme. La frontière entre A et B se fixe sur une <b>valeur limite d'exposition</b> définie par la norme : la lettre parle donc de la toxicité <b>propre</b> du produit, pas de tous les dangers qu'il présente.",
       "<b>Le chiffre dit l'inflammabilité.</b> <b>1</b> = le fluide ne propage pas de flamme. <b>2L</b> = faiblement inflammable, la flamme se propage lentement. <b>2</b> = inflammable. <b>3</b> = très inflammable. Le « L » de 2L vient de l'anglais <i>lower</i> : c'est une sous-catégorie du 2, créée pour distinguer les fluides dont la flamme se propage assez lentement pour changer les mesures de prévention.",
       "<b>Pourquoi deux axes et non un seul ?</b> Parce qu'un fluide peut être dangereux d'une manière sans l'être de l'autre, et que les protections ne sont pas les mêmes. Contre la toxicité, on ventile et on protège les voies respiratoires. Contre l'inflammabilité, on supprime les sources d'étincelle et on limite la quantité de fluide présente. Un fluide qui cumule les deux — l'ammoniac, classé B2L — exige les deux dispositifs à la fois. Un classement en une seule note ne permettrait pas de savoir <b>lequel</b> mettre en place.",
-      "<b>La matrice complète.</b> Deux axes croisés donnent huit cases :",
-      "<b>Ce que la classe commande.</b> C'est là qu'est l'enjeu réel : la classe n'est pas une étiquette, c'est ce qui détermine tout le dispositif de sécurité autour de l'installation.",
-      "Se tromper de classe, ce n'est donc pas se tromper d'étiquette : c'est se tromper de <b>tout le dispositif de sécurité</b> — installer du matériel électrique inadapté, sous-dimensionner une ventilation, choisir un détecteur qui ne verra rien, ou charger un local au-delà de ce qu'il admet.",
-      "<b>Le piège à ne jamais commettre.</b> Le <b>R-290 est de classe A3</b>, pas A2L. C'est du propane : un hydrocarbure, très inflammable. La confusion avec les A2L est fréquente, y compris dans des documents mal rédigés, et elle conduit à appliquer des précautions insuffisantes. Un repère simple et fiable : si le fluide est un <b>hydrocarbure</b> (propane, isobutane, propylène), il est <b>A3</b>. Les A2L sont des HFC comme le R-32, ou des HFO comme le R-1234yf.",
-      "<b>Où lire la classe.</b> Jamais de mémoire, et jamais par déduction à partir du nom commercial : la classe de sécurité figure sur la <b>fiche de données de sécurité (FDS)</b> du fluide, que le fournisseur doit vous remettre. Les valeurs qui en découlent — charges limites selon le local, seuils de détection — se lisent dans la <b>NF EN 378</b> et dans la documentation du constructeur. Savoir aller les chercher est une compétence en soi ; les réciter de tête est une source d'accident."
+      "<b>La matrice complète.</b> Deux axes croisés donnent huit cases :"
      ],
      "blocs": [
       {
@@ -680,11 +676,6 @@
       "11.03"
      ],
      "paras": [
-      "<b>Ce que c'est.</b> La norme NF EN 378 (et la norme américaine ASHRAE 34, qui suit la même logique) attribue à chaque fluide frigorigène une <b>classe de sécurité</b> : A1, A2L, B2L, A3… Ce n'est pas un classement du plus dangereux au moins dangereux. C'est une <b>combinaison de deux informations distinctes</b>, et c'est pour cela qu'une classe s'écrit avec une lettre <i>et</i> un chiffre.",
-      "<b>La lettre dit la toxicité.</b> <b>A</b> = toxicité faible. <b>B</b> = toxicité plus élevée. Attention au contresens : « A » ne signifie pas inoffensif. Un fluide de classe A peut vous asphyxier en chassant l'oxygène d'un local, ou se décomposer en gaz toxiques au contact d'une flamme. La frontière entre A et B se fixe sur une <b>valeur limite d'exposition</b> définie par la norme : la lettre parle donc de la toxicité <b>propre</b> du produit, pas de tous les dangers qu'il présente.",
-      "<b>Le chiffre dit l'inflammabilité.</b> <b>1</b> = le fluide ne propage pas de flamme. <b>2L</b> = faiblement inflammable, la flamme se propage lentement. <b>2</b> = inflammable. <b>3</b> = très inflammable. Le « L » de 2L vient de l'anglais <i>lower</i> : c'est une sous-catégorie du 2, créée pour distinguer les fluides dont la flamme se propage assez lentement pour changer les mesures de prévention.",
-      "<b>Pourquoi deux axes et non un seul ?</b> Parce qu'un fluide peut être dangereux d'une manière sans l'être de l'autre, et que les protections ne sont pas les mêmes. Contre la toxicité, on ventile et on protège les voies respiratoires. Contre l'inflammabilité, on supprime les sources d'étincelle et on limite la quantité de fluide présente. Un fluide qui cumule les deux — l'ammoniac, classé B2L — exige les deux dispositifs à la fois. Un classement en une seule note ne permettrait pas de savoir <b>lequel</b> mettre en place.",
-      "<b>La matrice complète.</b> Deux axes croisés donnent huit cases :",
       "<b>Ce que la classe commande.</b> C'est là qu'est l'enjeu réel : la classe n'est pas une étiquette, c'est ce qui détermine tout le dispositif de sécurité autour de l'installation.",
       "Se tromper de classe, ce n'est donc pas se tromper d'étiquette : c'est se tromper de <b>tout le dispositif de sécurité</b> — installer du matériel électrique inadapté, sous-dimensionner une ventilation, choisir un détecteur qui ne verra rien, ou charger un local au-delà de ce qu'il admet.",
       "<b>Le piège à ne jamais commettre.</b> Le <b>R-290 est de classe A3</b>, pas A2L. C'est du propane : un hydrocarbure, très inflammable. La confusion avec les A2L est fréquente, y compris dans des documents mal rédigés, et elle conduit à appliquer des précautions insuffisantes. Un repère simple et fiable : si le fluide est un <b>hydrocarbure</b> (propane, isobutane, propylène), il est <b>A3</b>. Les A2L sont des HFC comme le R-32, ou des HFO comme le R-1234yf.",
@@ -1343,10 +1334,7 @@
       "Les fluides frigorigènes peuvent réchauffer le climat s'ils s'échappent dans l'air. Deux niveaux de loi encadrent votre métier : le niveau européen et le niveau français.",
       "Au niveau européen, le texte de base est le <b>règlement (UE) 2024/573</b>. C'est un <b>règlement</b>, jamais une « directive » : il s'applique directement dans tous les pays de l'Union, sans loi française pour le recopier. Il a remplacé l'ancien règlement 517/2014.",
       "Au niveau français, l'<b>arrêté du 21 novembre 2025</b> — un texte signé par un ministre — précise comment appliquer ce règlement sur le terrain.",
-      "Pour réaliser les <b>opérations réglementées</b> sur ces fluides — mise en service, entretien, contrôle d'étanchéité, récupération —, il vous faut une <b>attestation d'aptitude</b> personnelle. Votre entreprise, elle, doit avoir une <b>attestation de capacité</b>. Ce sont deux papiers obligatoires, et ce n'est pas le même.",
-      "Chaque équipement a un <b>registre</b> : un carnet qui garde la trace de chaque intervention (charge, contrôle, fuite, réparation). C'est l'<b>exploitant</b> (le propriétaire ou l'utilisateur de la machine) qui doit le tenir à jour, sur papier ou sur ordinateur.",
-      "Quand l'équipement est trop vieux ou cassé, il part dans la filière <b>DEEE</b> (déchets d'équipements électriques et électroniques). Cette filière s'occupe de la carcasse de la machine, pas du fluide : vous devez le récupérer avant, à part.",
-      "Enfin, l'<b>écoconception</b> : dès la fabrication, les constructeurs doivent concevoir des appareils qui durent plus longtemps et qui polluent moins."
+      "Pour réaliser les <b>opérations réglementées</b> sur ces fluides — mise en service, entretien, contrôle d'étanchéité, récupération —, il vous faut une <b>attestation d'aptitude</b> personnelle. Votre entreprise, elle, doit avoir une <b>attestation de capacité</b>. Ce sont deux papiers obligatoires, et ce n'est pas le même."
      ],
      "blocs": [
       {
@@ -1377,10 +1365,6 @@
       "1.00"
      ],
      "paras": [
-      "Les fluides frigorigènes peuvent réchauffer le climat s'ils s'échappent dans l'air. Deux niveaux de loi encadrent votre métier : le niveau européen et le niveau français.",
-      "Au niveau européen, le texte de base est le <b>règlement (UE) 2024/573</b>. C'est un <b>règlement</b>, jamais une « directive » : il s'applique directement dans tous les pays de l'Union, sans loi française pour le recopier. Il a remplacé l'ancien règlement 517/2014.",
-      "Au niveau français, l'<b>arrêté du 21 novembre 2025</b> — un texte signé par un ministre — précise comment appliquer ce règlement sur le terrain.",
-      "Pour réaliser les <b>opérations réglementées</b> sur ces fluides — mise en service, entretien, contrôle d'étanchéité, récupération —, il vous faut une <b>attestation d'aptitude</b> personnelle. Votre entreprise, elle, doit avoir une <b>attestation de capacité</b>. Ce sont deux papiers obligatoires, et ce n'est pas le même.",
       "Chaque équipement a un <b>registre</b> : un carnet qui garde la trace de chaque intervention (charge, contrôle, fuite, réparation). C'est l'<b>exploitant</b> (le propriétaire ou l'utilisateur de la machine) qui doit le tenir à jour, sur papier ou sur ordinateur.",
       "Quand l'équipement est trop vieux ou cassé, il part dans la filière <b>DEEE</b> (déchets d'équipements électriques et électroniques). Cette filière s'occupe de la carcasse de la machine, pas du fluide : vous devez le récupérer avant, à part.",
       "Enfin, l'<b>écoconception</b> : dès la fabrication, les constructeurs doivent concevoir des appareils qui durent plus longtemps et qui polluent moins."
@@ -1460,7 +1444,7 @@
       {
        "type": "cle",
        "t": "Le calcul qui sert tous les jours",
-       "html": "<b>tonnes éq. CO₂ = charge (kg) × PRP ÷ 1000</b><br>C'est cette valeur — pas le poids de fluide — qui déclenche une partie des obligations. Deux installations de même charge n'ont pas les mêmes contraintes si les fluides diffèrent."
+       "html": "<b>tonnes éq. CO₂ = charge (kg) × PRP ÷ 1000</b></p><p>C'est cette valeur — pas le poids de fluide — qui déclenche une partie des obligations. Deux installations de même charge n'ont pas les mêmes contraintes si les fluides diffèrent."
       },
       {
        "type": "piege",
@@ -2538,263 +2522,94 @@
    ],
    "questions": [
     {
-     "id": "q-g1-31",
-     "dc": "G1",
-     "niveau": 1,
+     "id": "q-cat-perimetre-a1",
      "type": "qcm",
-     "enonce": "Que signifie HFC ?",
+     "dc": "Catégories",
+     "code": "1.00",
+     "enonce": "La catégorie A1 autorise à intervenir sur :",
      "choix": [
-      "Hydro-Fluoro-Carbone",
-      "Haute-Fluoro-Compression",
-      "Hydro-Fluide-Climatique",
-      "Hydro-Frigorigène-Commercial"
+      "Tous les fluides, y compris le CO₂ et l’ammoniac",
+      "Les gaz à effet de serre fluorés et les hydrocarbures, sans limite de charge",
+      "Les seuls fluides fluorés, sous 3 kg de charge",
+      "Le contrôle d’étanchéité uniquement"
+     ],
+     "bonne": 1,
+     "explication": "L’arrêté écrit : « Toutes les activités de l'article 4, pour les gaz à effet de serre fluorés et les hydrocarbures ». Le CO₂ relève de la catégorie B et l’ammoniac de la catégorie C : une attestation A1 n’y donne aucun droit."
+    },
+    {
+     "id": "q-cat-charge-a2",
+     "type": "qcm",
+     "dc": "Catégories",
+     "code": "1.00",
+     "enonce": "La catégorie A2 est limitée aux équipements dont la charge est inférieure à :",
+     "choix": [
+      "3 kg, ou 6 kg pour un hermétique scellé et étiqueté",
+      "3 kg dans tous les cas, sans exception",
+      "10 kg, quel que soit l’équipement",
+      "Il n’y a pas de limite de charge en A2"
      ],
      "bonne": 0,
-     "explication": "Retenez la notion-clé demandée et la formulation exacte. ⚠ se faire piéger par une proposition trop absolue ('toujours', 'jamais').",
-     "aide": "Indice : relisez le mot-clé central de la question et éliminez les propositions trop générales ou absolues.",
-     "remediation_vers": "g1c",
-     "hors_ref": "nomenclature des fluides : savoir-outil indispensable, mais non listé comme compétence à l'annexe II.B",
-     "chapitre": "01",
-     "chapitre_titre": "Législation & thermodynamique élémentaire",
-     "chapitre_fichier": "CONTENU-01-G1-legislation-thermo.md",
-     "illustration": "illustrations/sup-contexte-g1-F6773E86.png",
-     "pose_niveau": "contexte",
-     "ressources": [
-      {
-       "type": "page",
-       "libelle": "Nomenclature interactive",
-       "chemin": "nomenclature-interactive/index.html"
-      }
-     ]
+     "explication": "Le texte prévoit deux seuils : 3 kg en règle générale, et 6 kg pour les systèmes hermétiquement scellés, étiquetés comme tels. La plaque signalétique tranche, jamais l’estimation."
     },
     {
-     "id": "q-g1-33",
-     "dc": "G1",
-     "niveau": 1,
+     "id": "q-cat-categorie-d",
      "type": "qcm",
-     "enonce": "Dans la nomenclature R134a, que signifie le 'a' ?",
+     "dc": "Catégories",
+     "code": "1.00",
+     "enonce": "La catégorie D autorise :",
      "choix": [
-      "Une amélioration",
-      "Un isomère",
-      "Un azéotrope",
-      "Un additif"
+      "Toutes les opérations, sans limite",
+      "La récupération du fluide, sur des équipements de faible charge",
+      "Le contrôle d’étanchéité sans ouvrir le circuit",
+      "La climatisation des véhicules"
      ],
      "bonne": 1,
-     "explication": "Retenez la notion-clé demandée et la formulation exacte. ⚠ se faire piéger par une proposition trop absolue ('toujours', 'jamais').",
-     "aide": "Indice : relisez le mot-clé central de la question et éliminez les propositions trop générales ou absolues.",
-     "remediation_vers": "g1c",
-     "hors_ref": "nomenclature des fluides : savoir-outil indispensable, mais non listé comme compétence à l'annexe II.B",
-     "chapitre": "01",
-     "chapitre_titre": "Législation & thermodynamique élémentaire",
-     "chapitre_fichier": "CONTENU-01-G1-legislation-thermo.md",
-     "illustration": "illustrations/sup-contexte-g1-F6773E86.png",
-     "pose_niveau": "contexte",
-     "ressources": [
-      {
-       "type": "page",
-       "libelle": "Nomenclature interactive",
-       "chemin": "nomenclature-interactive/index.html"
-      },
-      {
-       "type": "image",
-       "libelle": "Nomenclature",
-       "chemin": "illustrations/nomenclature.svg"
-      }
-     ]
+     "explication": "La catégorie D couvre la récupération seule. Le contrôle d’étanchéité sans accéder au circuit est la catégorie E ; les véhicules relèvent de la catégorie V."
     },
     {
-     "id": "q-g1-36",
-     "dc": "G1",
-     "niveau": 2,
+     "id": "q-cat-co2-nh3",
      "type": "qcm",
-     "enonce": "Quelle est la composition du R410A ?",
+     "dc": "Catégories",
+     "code": "1.00",
+     "enonce": "Pour intervenir sur une installation au CO₂ (R-744), il faut :",
      "choix": [
-      "50% R32 / 50% R125",
-      "45% R32 / 55% R125",
-      "75% R134a / 25% R32",
-      "100% R32 pur"
-     ],
-     "bonne": 0,
-     "explication": "Retenez la notion-clé demandée et la formulation exacte. ⚠ se faire piéger par une proposition trop absolue ('toujours', 'jamais').",
-     "aide": "Indice : relisez le mot-clé central de la question et éliminez les propositions trop générales ou absolues.",
-     "remediation_vers": "g1c",
-     "hors_ref": "nomenclature des fluides : savoir-outil indispensable, mais non listé comme compétence à l'annexe II.B",
-     "chapitre": "01",
-     "chapitre_titre": "Législation & thermodynamique élémentaire",
-     "chapitre_fichier": "CONTENU-01-G1-legislation-thermo.md",
-     "illustration": "illustrations/sup-contexte-g1-F6773E86.png",
-     "pose_niveau": "contexte",
-     "ressources": [
-      {
-       "type": "page",
-       "libelle": "Nomenclature interactive",
-       "chemin": "nomenclature-interactive/index.html"
-      }
-     ]
-    },
-    {
-     "id": "q-g1-41",
-     "dc": "G1",
-     "niveau": 1,
-     "type": "qcm",
-     "enonce": "Le R22 appartient à quelle famille ?",
-     "choix": [
-      "CFC",
-      "HCFC",
-      "HFC",
-      "HFO"
+      "Une attestation A1, qui couvre tous les fluides",
+      "Une attestation de catégorie B",
+      "Une attestation de catégorie C",
+      "Aucune attestation, le CO₂ n’est pas un gaz fluoré"
      ],
      "bonne": 1,
-     "explication": "Retenez la notion-clé demandée et la formulation exacte. ⚠ se faire piéger par une proposition trop absolue ('toujours', 'jamais').",
-     "aide": "Indice : relisez le mot-clé central de la question et éliminez les propositions trop générales ou absolues.",
-     "remediation_vers": "g1c",
-     "hors_ref": "nomenclature des fluides : savoir-outil indispensable, mais non listé comme compétence à l'annexe II.B",
-     "chapitre": "01",
-     "chapitre_titre": "Législation & thermodynamique élémentaire",
-     "chapitre_fichier": "CONTENU-01-G1-legislation-thermo.md",
-     "illustration": "illustrations/sup-contexte-g1-F6773E86.png",
-     "pose_niveau": "contexte",
-     "ressources": [
-      {
-       "type": "page",
-       "libelle": "Nomenclature interactive",
-       "chemin": "nomenclature-interactive/index.html"
-      }
-     ]
+     "explication": "Le CO₂ relève de la catégorie B, l’ammoniac de la catégorie C. Ce sont des catégories dédiées, que ni A1 ni A2 ne remplacent — c’est précisément le piège de ce chapitre."
     },
     {
-     "id": "q-g1-51",
-     "dc": "G1",
-     "niveau": 2,
+     "id": "q-cat-correspondance",
      "type": "qcm",
-     "enonce": "Le R407C est composé de :",
+     "dc": "Catégories",
+     "code": "1.00",
+     "enonce": "Une attestation de l’ancienne catégorie I correspond, dans le nouveau régime, à :",
      "choix": [
-      "R32 / R125 / R134a",
-      "R32 / R125",
-      "R125 / R143a / R134a",
-      "100% R32"
-     ],
-     "bonne": 0,
-     "explication": "Retenez la notion-clé demandée et la formulation exacte. ⚠ se faire piéger par une proposition trop absolue ('toujours', 'jamais').",
-     "aide": "Indice : relisez le mot-clé central de la question et éliminez les propositions trop générales ou absolues.",
-     "remediation_vers": "g1c",
-     "hors_ref": "nomenclature des fluides : savoir-outil indispensable, mais non listé comme compétence à l'annexe II.B",
-     "chapitre": "01",
-     "chapitre_titre": "Législation & thermodynamique élémentaire",
-     "chapitre_fichier": "CONTENU-01-G1-legislation-thermo.md",
-     "illustration": "illustrations/sup-contexte-g1-F6773E86.png",
-     "pose_niveau": "contexte",
-     "ressources": [
-      {
-       "type": "page",
-       "libelle": "Nomenclature interactive",
-       "chemin": "nomenclature-interactive/index.html"
-      }
-     ]
-    },
-    {
-     "id": "q-g1-v6_031",
-     "dc": "G1",
-     "niveau": 2,
-     "type": "qcm",
-     "enonce": "Dans la nomenclature Rxyz, le chiffre des dizaines (y) correspond à :",
-     "choix": [
-      "Le nombre d'atomes de carbone moins 1",
-      "Nombre d'atomes d'hydrogène + 1",
-      "Le nombre total d'atomes de fluor",
-      "Le nombre d'atomes de chlore"
+      "La catégorie A2",
+      "La catégorie A1",
+      "La catégorie B",
+      "Aucune : il faut tout repasser"
      ],
      "bonne": 1,
-     "explication": "H + 1 (atomes d'hydrogène + 1) — Règle de nomenclature : centaines = C−1, dizaines = H+1, unités = F. Ex: R134a → C=1+1=2, H=3−1=2, F=4.",
-     "aide": "La formule mnémotechnique est : C−1, H+1, F pour les trois chiffres.",
-     "remed": {
-      "texte": "Règle de nomenclature : centaines = C−1, dizaines = H+1, unités = F. Ex: R134a → C=1+1=2, H=3−1=2, F=4."
-     },
-     "remediation_vers": "g1c",
-     "hors_ref": "nomenclature des fluides : savoir-outil indispensable, mais non listé comme compétence à l'annexe II.B",
-     "chapitre": "01",
-     "chapitre_titre": "Législation & thermodynamique élémentaire",
-     "chapitre_fichier": "CONTENU-01-G1-legislation-thermo.md",
-     "illustration": "illustrations/sup-contexte-g1-F6773E86.png",
-     "pose_niveau": "contexte",
-     "ressources": [
-      {
-       "type": "page",
-       "libelle": "Nomenclature interactive",
-       "chemin": "nomenclature-interactive/index.html"
-      },
-      {
-       "type": "image",
-       "libelle": "Nomenclature",
-       "chemin": "illustrations/nomenclature.svg"
-      }
-     ]
+     "explication": "L’ancienne catégorie I devient A1, la II devient A2, la III devient D et la IV devient E. Le passage se fait par une remise à niveau ponctuelle avant le 12/03/2029."
     },
     {
-     "id": "q-g1-v6_132",
-     "dc": "G1",
-     "niveau": 1,
+     "id": "q-cat-duree-epreuve",
      "type": "qcm",
-     "enonce": "Le R410A est un mélange de :",
+     "dc": "Catégories",
+     "code": "1.00",
+     "enonce": "Pour la catégorie A1, l’épreuve théorique dure :",
      "choix": [
-      "R134a + R125",
-      "R32 + R125",
-      "R32 + R134a",
-      "R290 + R600a"
+      "60 minutes de tronc commun seulement",
+      "60 minutes de tronc commun, plus 15 minutes de partie spécifique",
+      "15 minutes en tout",
+      "Il n’y a pas de durée fixée par l’arrêté"
      ],
      "bonne": 1,
-     "explication": "R32 + R125 — Le R410A est un mélange quasi-azéotrope de R32 (50%) + R125 (50%). Ses hautes pressions le distinguent.",
-     "aide": "C'est le fluide le plus courant en climatisation résidentielle.",
-     "remed": {
-      "texte": "Le R410A est un mélange quasi-azéotrope de R32 (50%) + R125 (50%). Ses hautes pressions le distinguent."
-     },
-     "remediation_vers": "g1c",
-     "hors_ref": "nomenclature des fluides : savoir-outil indispensable, mais non listé comme compétence à l'annexe II.B",
-     "chapitre": "01",
-     "chapitre_titre": "Législation & thermodynamique élémentaire",
-     "chapitre_fichier": "CONTENU-01-G1-legislation-thermo.md",
-     "illustration": "illustrations/sup-contexte-g1-F6773E86.png",
-     "pose_niveau": "contexte",
-     "ressources": [
-      {
-       "type": "page",
-       "libelle": "Nomenclature interactive",
-       "chemin": "nomenclature-interactive/index.html"
-      }
-     ]
-    },
-    {
-     "id": "q-g1-v6_137",
-     "dc": "G1",
-     "niveau": 1,
-     "type": "qcm",
-     "enonce": "Le R12 est un :",
-     "choix": [
-      "HFC",
-      "HCFC",
-      "CFC",
-      "HFO"
-     ],
-     "bonne": 2,
-     "explication": "CFC — Le R12 (dichlorodifluorométhane) est un CFC interdit depuis 1995. Il détruit la couche d'ozone (ODP élevé).",
-     "aide": "Le R12 est le CFC historique des anciens frigos.",
-     "remed": {
-      "texte": "Le R12 (dichlorodifluorométhane) est un CFC interdit depuis 1995. Il détruit la couche d'ozone (ODP élevé)."
-     },
-     "remediation_vers": "g1c",
-     "hors_ref": "nomenclature des fluides : savoir-outil indispensable, mais non listé comme compétence à l'annexe II.B",
-     "chapitre": "01",
-     "chapitre_titre": "Législation & thermodynamique élémentaire",
-     "chapitre_fichier": "CONTENU-01-G1-legislation-thermo.md",
-     "illustration": "illustrations/sup-contexte-g1-F6773E86.png",
-     "pose_niveau": "contexte",
-     "ressources": [
-      {
-       "type": "page",
-       "libelle": "Nomenclature interactive",
-       "chemin": "nomenclature-interactive/index.html"
-      }
-     ]
+     "explication": "Le tronc commun théorique dure 60 minutes pour A1, A2, B et C, suivi de 15 minutes propres à la catégorie. La pratique s’ajoute à cela."
     }
    ]
   },
@@ -2864,15 +2679,13 @@
      ],
      "paras": [
       "Tout le métier tient sur un couple : <b>pression et température vont ensemble</b>. Chauffer un fluide enfermé fait monter sa pression ; abaisser sa pression le fait bouillir plus froid. C'est cette relation qu'on exploite d'un bout à l'autre du circuit.",
-      "Quatre organes, dans l'ordre du cycle : le <b>compresseur</b> aspire la vapeur basse pression et la refoule en haute pression ; le <b>condenseur</b> évacue la chaleur et liquéfie ; le <b>détendeur</b> fait chuter la pression ; l'<b>évaporateur</b> absorbe la chaleur du milieu à refroidir. Basse pression du côté froid, haute pression du côté chaud.",
-      "Une autre grandeur sert tous les jours au frigoriste : la <b>masse volumique</b> (on dit aussi <b>densité</b>). C'est la masse contenue dans un volume donné, en <b>kg/m³</b>. Pour un même fluide, la vapeur et le liquide n'ont pas du tout la même masse volumique : un litre de liquide pèse beaucoup plus lourd qu'un litre de vapeur. C'est pour ça qu'on charge un circuit en <b>phase liquide</b> plutôt qu'en vapeur : on fait entrer beaucoup plus de matière pour le même volume de bouteille, et le dimensionnement des tuyauteries en tient compte.",
-      "Sur le diagramme du fluide, la grandeur qu'on lit en abscisse s'appelle l'<b>enthalpie</b>. C'est l'énergie contenue dans un kilo de fluide, en <b>kJ/kg</b> (kilojoule par kilo). Elle sert à calculer ce que l'évaporateur absorbe et ce que le condenseur évacue : plus l'écart d'enthalpie entre l'entrée et la sortie est grand, plus l'échange de chaleur est important."
+      "Quatre organes, dans l'ordre du cycle : le <b>compresseur</b> aspire la vapeur basse pression et la refoule en haute pression ; le <b>condenseur</b> évacue la chaleur et liquéfie ; le <b>détendeur</b> fait chuter la pression ; l'<b>évaporateur</b> absorbe la chaleur du milieu à refroidir. Basse pression du côté froid, haute pression du côté chaud."
      ],
      "blocs": [
       {
        "type": "cle",
        "t": "À retenir",
-       "html": "<b>Surchauffe</b> : le fluide sort de l'évaporateur un peu plus chaud que sa température d'évaporation — elle protège le compresseur du liquide. Repère d'apprentissage : <b>5 à 10 K</b>.<br><b>Sous-refroidissement</b> : le liquide sort du condenseur un peu plus froid que sa température de condensation — il garantit du liquide pur au détendeur. Repère d'apprentissage : <b>4 à 8 K</b>.<br>Ces repères servent à comprendre, <b>jamais à régler</b> : sur une machine réelle, seules les valeurs du constructeur font foi."
+       "html": "<b>Surchauffe</b> : le fluide sort de l'évaporateur un peu plus chaud que sa température d'évaporation — elle protège le compresseur du liquide. Repère d'apprentissage : <b>5 à 10 K</b>.</p><p><b>Sous-refroidissement</b> : le liquide sort du condenseur un peu plus froid que sa température de condensation — il garantit du liquide pur au détendeur. Repère d'apprentissage : <b>4 à 8 K</b>.</p><p>Ces repères servent à comprendre, <b>jamais à régler</b> : sur une machine réelle, seules les valeurs du constructeur font foi."
       }
      ],
      "question": {
@@ -2899,8 +2712,6 @@
       "1.04"
      ],
      "paras": [
-      "Tout le métier tient sur un couple : <b>pression et température vont ensemble</b>. Chauffer un fluide enfermé fait monter sa pression ; abaisser sa pression le fait bouillir plus froid. C'est cette relation qu'on exploite d'un bout à l'autre du circuit.",
-      "Quatre organes, dans l'ordre du cycle : le <b>compresseur</b> aspire la vapeur basse pression et la refoule en haute pression ; le <b>condenseur</b> évacue la chaleur et liquéfie ; le <b>détendeur</b> fait chuter la pression ; l'<b>évaporateur</b> absorbe la chaleur du milieu à refroidir. Basse pression du côté froid, haute pression du côté chaud.",
       "Une autre grandeur sert tous les jours au frigoriste : la <b>masse volumique</b> (on dit aussi <b>densité</b>). C'est la masse contenue dans un volume donné, en <b>kg/m³</b>. Pour un même fluide, la vapeur et le liquide n'ont pas du tout la même masse volumique : un litre de liquide pèse beaucoup plus lourd qu'un litre de vapeur. C'est pour ça qu'on charge un circuit en <b>phase liquide</b> plutôt qu'en vapeur : on fait entrer beaucoup plus de matière pour le même volume de bouteille, et le dimensionnement des tuyauteries en tient compte.",
       "Sur le diagramme du fluide, la grandeur qu'on lit en abscisse s'appelle l'<b>enthalpie</b>. C'est l'énergie contenue dans un kilo de fluide, en <b>kJ/kg</b> (kilojoule par kilo). Elle sert à calculer ce que l'évaporateur absorbe et ce que le condenseur évacue : plus l'écart d'enthalpie entre l'entrée et la sortie est grand, plus l'échange de chaleur est important."
      ],
@@ -2940,16 +2751,13 @@
      "paras": [
       "Chauffez de l'eau dans une casserole. Le thermomètre monte, régulièrement. Cette chaleur-là, l'appareil la « sent » : on l'appelle la <b>chaleur sensible</b>. Elle fait changer la <b>température</b>, elle ne fait pas changer l'état.",
       "Continuez à chauffer. L'eau se met à bouillir — et là, quelque chose d'étonnant se produit : <b>le thermomètre s'arrête</b>. Vous chauffez toujours, la température ne monte plus. Toute la chaleur apportée sert à transformer le liquide en vapeur, et rien d'autre. C'est la <b>chaleur latente</b>. Le mot vient du latin <i>latens</i>, « caché » : cette chaleur est bien là, elle est même considérable, mais le thermomètre ne la voit pas.",
-      "Sur la courbe, ce moment forme un <b>palier</b>, une ligne plate. Il commence quand la première bulle se forme : c'est le <b>point de bulle</b>. Il finit quand la dernière goutte disparaît : c'est le <b>point de rosée</b>. Entre les deux, du liquide et de la vapeur cohabitent dans le même tube — on dit que le fluide est <b>saturé</b>.",
-      "Voilà pourquoi une machine frigorifique ne travaille pas avec de l'air, mais avec un fluide qui <b>change d'état</b>. Sur le palier, le fluide encaisse beaucoup de chaleur sans s'échauffer : c'est exactement ce qu'on cherche. L'<b>évaporateur</b> fait bouillir le fluide, donc il <b>prend</b> de la chaleur au local. Le <b>condenseur</b> le liquéfie, donc il <b>rend</b> cette chaleur dehors. Toute la machine tient dans ces deux phrases.",
-      "Deux mots du référentiel se posent ici, une fois pour toutes. La chaleur que l'évaporateur prend au local, rapportée à un kilo de fluide, s'appelle l'<b>effet de réfrigération</b> : c'est le froid produit, et c'est ce que l'on cherche à rendre le plus grand possible. Le compresseur, lui, ajoute au fluide sa propre chaleur en le comprimant : c'est la <b>chaleur de compression</b>. Le condenseur devra donc évacuer les deux — la chaleur prise au local <b>et</b> celle ajoutée par le compresseur. C'est pour cette raison qu'un condenseur évacue toujours plus de chaleur qu'un évaporateur n'en absorbe.",
-      "Reste une question : à quelle température se produit la <b>vaporisation</b>, donc le palier ? Elle dépend de la <b>pression</b>. Plus la pression est basse, plus le fluide bout froid. C'est précisément ce que fait le <b>détendeur</b> : il fait chuter la pression pour que le fluide puisse bouillir à une température plus basse que le local à refroidir. La relation pression-température vue à la fiche précédente, c'est la <b>hauteur du palier</b>."
+      "Sur la courbe, ce moment forme un <b>palier</b>, une ligne plate. Il commence quand la première bulle se forme : c'est le <b>point de bulle</b>. Il finit quand la dernière goutte disparaît : c'est le <b>point de rosée</b>. Entre les deux, du liquide et de la vapeur cohabitent dans le même tube — on dit que le fluide est <b>saturé</b>."
      ],
      "blocs": [
       {
        "type": "cle",
        "t": "Les cinq mots, dans l'ordre",
-       "html": "<b>1. Liquide sous-refroidi</b> — que du liquide, plus froid que son point d'ébullition.<br><b>2. Point de bulle</b> — la première bulle apparaît, le palier commence.<br><b>3. Saturé</b> — liquide et vapeur ensemble, la température ne bouge plus.<br><b>4. Point de rosée</b> — la dernière goutte s'évapore, le palier finit.<br><b>5. Vapeur surchauffée</b> — que de la vapeur, et la température peut repartir.<br>Ce que la vapeur gagne après le point de rosée s'appelle la <b>surchauffe</b>. Ce que le liquide perd avant le point de bulle s'appelle le <b>sous-refroidissement</b>. Ces deux mots reviendront à chaque mesure du métier."
+       "html": "<b>1. Liquide sous-refroidi</b> — que du liquide, plus froid que son point d'ébullition.</p><p><b>2. Point de bulle</b> — la première bulle apparaît, le palier commence.</p><p><b>3. Saturé</b> — liquide et vapeur ensemble, la température ne bouge plus.</p><p><b>4. Point de rosée</b> — la dernière goutte s'évapore, le palier finit.</p><p><b>5. Vapeur surchauffée</b> — que de la vapeur, et la température peut repartir.</p><p>Ce que la vapeur gagne après le point de rosée s'appelle la <b>surchauffe</b>. Ce que le liquide perd avant le point de bulle s'appelle le <b>sous-refroidissement</b>. Ces deux mots reviendront à chaque mesure du métier."
       }
      ],
      "question": {
@@ -2974,9 +2782,6 @@
       "1.02"
      ],
      "paras": [
-      "Chauffez de l'eau dans une casserole. Le thermomètre monte, régulièrement. Cette chaleur-là, l'appareil la « sent » : on l'appelle la <b>chaleur sensible</b>. Elle fait changer la <b>température</b>, elle ne fait pas changer l'état.",
-      "Continuez à chauffer. L'eau se met à bouillir — et là, quelque chose d'étonnant se produit : <b>le thermomètre s'arrête</b>. Vous chauffez toujours, la température ne monte plus. Toute la chaleur apportée sert à transformer le liquide en vapeur, et rien d'autre. C'est la <b>chaleur latente</b>. Le mot vient du latin <i>latens</i>, « caché » : cette chaleur est bien là, elle est même considérable, mais le thermomètre ne la voit pas.",
-      "Sur la courbe, ce moment forme un <b>palier</b>, une ligne plate. Il commence quand la première bulle se forme : c'est le <b>point de bulle</b>. Il finit quand la dernière goutte disparaît : c'est le <b>point de rosée</b>. Entre les deux, du liquide et de la vapeur cohabitent dans le même tube — on dit que le fluide est <b>saturé</b>.",
       "Voilà pourquoi une machine frigorifique ne travaille pas avec de l'air, mais avec un fluide qui <b>change d'état</b>. Sur le palier, le fluide encaisse beaucoup de chaleur sans s'échauffer : c'est exactement ce qu'on cherche. L'<b>évaporateur</b> fait bouillir le fluide, donc il <b>prend</b> de la chaleur au local. Le <b>condenseur</b> le liquéfie, donc il <b>rend</b> cette chaleur dehors. Toute la machine tient dans ces deux phrases.",
       "Deux mots du référentiel se posent ici, une fois pour toutes. La chaleur que l'évaporateur prend au local, rapportée à un kilo de fluide, s'appelle l'<b>effet de réfrigération</b> : c'est le froid produit, et c'est ce que l'on cherche à rendre le plus grand possible. Le compresseur, lui, ajoute au fluide sa propre chaleur en le comprimant : c'est la <b>chaleur de compression</b>. Le condenseur devra donc évacuer les deux — la chaleur prise au local <b>et</b> celle ajoutée par le compresseur. C'est pour cette raison qu'un condenseur évacue toujours plus de chaleur qu'un évaporateur n'en absorbe.",
       "Reste une question : à quelle température se produit la <b>vaporisation</b>, donc le palier ? Elle dépend de la <b>pression</b>. Plus la pression est basse, plus le fluide bout froid. C'est précisément ce que fait le <b>détendeur</b> : il fait chuter la pression pour que le fluide puisse bouillir à une température plus basse que le local à refroidir. La relation pression-température vue à la fiche précédente, c'est la <b>hauteur du palier</b>."
@@ -3800,19 +3605,13 @@
      "paras": [
       "Le <b>diagramme log p-h</b> raconte en image ce que la fiche précédente a raconté en mots. Deux axes seulement. En <b>ordonnée</b>, la <b>pression</b>. En <b>abscisse</b>, l'<b>enthalpie</b> : l'énergie contenue dans un kilo de fluide.",
       "La pression y est portée sur une <b>échelle logarithmique</b> — c'est ce que veut dire le « log » du nom. Sur une règle ordinaire, la basse pression serait écrasée tout en bas de la feuille et illisible. Sur cette échelle-là, les petites pressions sont autant étalées que les grandes : les deux côtés du circuit se lisent aussi bien.",
-      "Au milieu du diagramme, une <b>courbe en cloche</b> partage la feuille en trois. À <b>gauche</b> de la cloche, le fluide est entièrement <b>liquide</b>. <b>Sous</b> la cloche, c'est le <b>mélange</b> liquide + vapeur : le palier. À <b>droite</b>, c'est de la <b>vapeur surchauffée</b>. Le sommet de la cloche s'appelle le <b>point critique</b> : au-dessus, le fluide ne se sépare plus en liquide et vapeur.",
-      "Les deux flancs de la cloche portent les noms déjà rencontrés : le flanc de gauche est la <b>courbe de bulle</b>, le flanc de droite la <b>courbe de rosée</b>. La cloche du diagramme et le palier de la courbe de chauffe sont la même chose, vue autrement.",
-      "Le <b>cycle frigorifique</b> simple à compression se trace alors en <b>quatre transformations</b>, qui dessinent un rectangle. Le trait <b>montant de droite</b> : la <b>compression</b>. Le trait <b>horizontal du haut</b> : la <b>condensation</b>, à haute pression. Le trait <b>descendant de gauche</b> : la <b>détente</b>. Le trait <b>horizontal du bas</b> : l'<b>évaporation</b>, à basse pression. Compresseur à droite, condenseur en haut, détendeur à gauche, évaporateur en bas : <b>c'est la croix du frigoriste</b>. Le diagramme n'invente rien, il met le circuit à plat.",
-      "Et c'est là que le diagramme devient un outil de terrain. Sur le trait du <b>bas</b>, ce qui dépasse à droite de la courbe de rosée, c'est la <b>surchauffe</b>. Sur le trait du <b>haut</b>, ce qui dépasse à gauche de la courbe de bulle, c'est le <b>sous-refroidissement</b>. Deux longueurs qui se voient d'un coup d'œil.",
-      "Un diagramme de constructeur porte d'autres réseaux de courbes que celui dessiné ici. Sous la cloche, des courbes obliques donnent le <b>titre de vapeur</b> : la part du fluide déjà passée à l'état vapeur, de 0 sur la courbe de bulle à 1 sur la courbe de rosée. Il n'est pas nécessaire de les exploiter pour l'épreuve, mais il faut savoir les reconnaître pour ne pas les confondre avec les frontières de la cloche.",
-      "La <b>table de saturation</b> dit exactement la même chose, en chiffres. Elle donne, pour un fluide donné, la correspondance entre pression et température d'équilibre. Elle se lit dans les deux sens : je mesure une pression, j'en déduis une température ; je mesure une température, j'en déduis une pression. La colonne « température de saturation » de la table, c'est la cloche du diagramme.",
-      "C'est l'outil de la <b>méthode indirecte</b> : sans ouvrir le circuit, on compare ce qu'on mesure à ce que la table annonce."
+      "Au milieu du diagramme, une <b>courbe en cloche</b> partage la feuille en trois. À <b>gauche</b> de la cloche, le fluide est entièrement <b>liquide</b>. <b>Sous</b> la cloche, c'est le <b>mélange</b> liquide + vapeur : le palier. À <b>droite</b>, c'est de la <b>vapeur surchauffée</b>. Le sommet de la cloche s'appelle le <b>point critique</b> : au-dessus, le fluide ne se sépare plus en liquide et vapeur."
      ],
      "blocs": [
       {
        "type": "cle",
        "t": "La méthode en trois gestes",
-       "html": "1. Relever la <b>pression</b> au manomètre (et la convertir en absolu si besoin).<br>2. Lire la <b>température de saturation</b> correspondante dans la table du fluide.<br>3. Comparer à la <b>température réellement mesurée</b> sur le tube : l'écart, c'est la surchauffe (à l'aspiration) ou le sous-refroidissement (en sortie de condenseur)."
+       "html": "1. Relever la <b>pression</b> au manomètre (et la convertir en absolu si besoin).</p><p>2. Lire la <b>température de saturation</b> correspondante dans la table du fluide.</p><p>3. Comparer à la <b>température réellement mesurée</b> sur le tube : l'écart, c'est la surchauffe (à l'aspiration) ou le sous-refroidissement (en sortie de condenseur)."
       }
      ],
      "question": {
@@ -3837,15 +3636,9 @@
       "1.03"
      ],
      "paras": [
-      "Le <b>diagramme log p-h</b> raconte en image ce que la fiche précédente a raconté en mots. Deux axes seulement. En <b>ordonnée</b>, la <b>pression</b>. En <b>abscisse</b>, l'<b>enthalpie</b> : l'énergie contenue dans un kilo de fluide.",
-      "La pression y est portée sur une <b>échelle logarithmique</b> — c'est ce que veut dire le « log » du nom. Sur une règle ordinaire, la basse pression serait écrasée tout en bas de la feuille et illisible. Sur cette échelle-là, les petites pressions sont autant étalées que les grandes : les deux côtés du circuit se lisent aussi bien.",
-      "Au milieu du diagramme, une <b>courbe en cloche</b> partage la feuille en trois. À <b>gauche</b> de la cloche, le fluide est entièrement <b>liquide</b>. <b>Sous</b> la cloche, c'est le <b>mélange</b> liquide + vapeur : le palier. À <b>droite</b>, c'est de la <b>vapeur surchauffée</b>. Le sommet de la cloche s'appelle le <b>point critique</b> : au-dessus, le fluide ne se sépare plus en liquide et vapeur.",
       "Les deux flancs de la cloche portent les noms déjà rencontrés : le flanc de gauche est la <b>courbe de bulle</b>, le flanc de droite la <b>courbe de rosée</b>. La cloche du diagramme et le palier de la courbe de chauffe sont la même chose, vue autrement.",
       "Le <b>cycle frigorifique</b> simple à compression se trace alors en <b>quatre transformations</b>, qui dessinent un rectangle. Le trait <b>montant de droite</b> : la <b>compression</b>. Le trait <b>horizontal du haut</b> : la <b>condensation</b>, à haute pression. Le trait <b>descendant de gauche</b> : la <b>détente</b>. Le trait <b>horizontal du bas</b> : l'<b>évaporation</b>, à basse pression. Compresseur à droite, condenseur en haut, détendeur à gauche, évaporateur en bas : <b>c'est la croix du frigoriste</b>. Le diagramme n'invente rien, il met le circuit à plat.",
-      "Et c'est là que le diagramme devient un outil de terrain. Sur le trait du <b>bas</b>, ce qui dépasse à droite de la courbe de rosée, c'est la <b>surchauffe</b>. Sur le trait du <b>haut</b>, ce qui dépasse à gauche de la courbe de bulle, c'est le <b>sous-refroidissement</b>. Deux longueurs qui se voient d'un coup d'œil.",
-      "Un diagramme de constructeur porte d'autres réseaux de courbes que celui dessiné ici. Sous la cloche, des courbes obliques donnent le <b>titre de vapeur</b> : la part du fluide déjà passée à l'état vapeur, de 0 sur la courbe de bulle à 1 sur la courbe de rosée. Il n'est pas nécessaire de les exploiter pour l'épreuve, mais il faut savoir les reconnaître pour ne pas les confondre avec les frontières de la cloche.",
-      "La <b>table de saturation</b> dit exactement la même chose, en chiffres. Elle donne, pour un fluide donné, la correspondance entre pression et température d'équilibre. Elle se lit dans les deux sens : je mesure une pression, j'en déduis une température ; je mesure une température, j'en déduis une pression. La colonne « température de saturation » de la table, c'est la cloche du diagramme.",
-      "C'est l'outil de la <b>méthode indirecte</b> : sans ouvrir le circuit, on compare ce qu'on mesure à ce que la table annonce."
+      "Et c'est là que le diagramme devient un outil de terrain. Sur le trait du <b>bas</b>, ce qui dépasse à droite de la courbe de rosée, c'est la <b>surchauffe</b>. Sur le trait du <b>haut</b>, ce qui dépasse à gauche de la courbe de bulle, c'est le <b>sous-refroidissement</b>. Deux longueurs qui se voient d'un coup d'œil."
      ],
      "blocs": [
       {
@@ -3876,12 +3669,6 @@
       "1.03"
      ],
      "paras": [
-      "Le <b>diagramme log p-h</b> raconte en image ce que la fiche précédente a raconté en mots. Deux axes seulement. En <b>ordonnée</b>, la <b>pression</b>. En <b>abscisse</b>, l'<b>enthalpie</b> : l'énergie contenue dans un kilo de fluide.",
-      "La pression y est portée sur une <b>échelle logarithmique</b> — c'est ce que veut dire le « log » du nom. Sur une règle ordinaire, la basse pression serait écrasée tout en bas de la feuille et illisible. Sur cette échelle-là, les petites pressions sont autant étalées que les grandes : les deux côtés du circuit se lisent aussi bien.",
-      "Au milieu du diagramme, une <b>courbe en cloche</b> partage la feuille en trois. À <b>gauche</b> de la cloche, le fluide est entièrement <b>liquide</b>. <b>Sous</b> la cloche, c'est le <b>mélange</b> liquide + vapeur : le palier. À <b>droite</b>, c'est de la <b>vapeur surchauffée</b>. Le sommet de la cloche s'appelle le <b>point critique</b> : au-dessus, le fluide ne se sépare plus en liquide et vapeur.",
-      "Les deux flancs de la cloche portent les noms déjà rencontrés : le flanc de gauche est la <b>courbe de bulle</b>, le flanc de droite la <b>courbe de rosée</b>. La cloche du diagramme et le palier de la courbe de chauffe sont la même chose, vue autrement.",
-      "Le <b>cycle frigorifique</b> simple à compression se trace alors en <b>quatre transformations</b>, qui dessinent un rectangle. Le trait <b>montant de droite</b> : la <b>compression</b>. Le trait <b>horizontal du haut</b> : la <b>condensation</b>, à haute pression. Le trait <b>descendant de gauche</b> : la <b>détente</b>. Le trait <b>horizontal du bas</b> : l'<b>évaporation</b>, à basse pression. Compresseur à droite, condenseur en haut, détendeur à gauche, évaporateur en bas : <b>c'est la croix du frigoriste</b>. Le diagramme n'invente rien, il met le circuit à plat.",
-      "Et c'est là que le diagramme devient un outil de terrain. Sur le trait du <b>bas</b>, ce qui dépasse à droite de la courbe de rosée, c'est la <b>surchauffe</b>. Sur le trait du <b>haut</b>, ce qui dépasse à gauche de la courbe de bulle, c'est le <b>sous-refroidissement</b>. Deux longueurs qui se voient d'un coup d'œil.",
       "Un diagramme de constructeur porte d'autres réseaux de courbes que celui dessiné ici. Sous la cloche, des courbes obliques donnent le <b>titre de vapeur</b> : la part du fluide déjà passée à l'état vapeur, de 0 sur la courbe de bulle à 1 sur la courbe de rosée. Il n'est pas nécessaire de les exploiter pour l'épreuve, mais il faut savoir les reconnaître pour ne pas les confondre avec les frontières de la cloche.",
       "La <b>table de saturation</b> dit exactement la même chose, en chiffres. Elle donne, pour un fluide donné, la correspondance entre pression et température d'équilibre. Elle se lit dans les deux sens : je mesure une pression, j'en déduis une température ; je mesure une température, j'en déduis une pression. La colonne « température de saturation » de la table, c'est la cloche du diagramme.",
       "C'est l'outil de la <b>méthode indirecte</b> : sans ouvrir le circuit, on compare ce qu'on mesure à ce que la table annonce."
@@ -3894,7 +3681,7 @@
       },
       {
        "t": "À vous : la réglette P ↔ T",
-       "html": "<p style=\"margin:0 0 10px\">Choisissez un fluide, réglez la pression lue au manomètre, entrez la température du tube : la surchauffe se calcule sous vos yeux. C est exactement le geste de la méthode indirecte.</p><iframe src=\"packs/fluides/res/outils/reglette.html\" title=\"Réglette pression-température interactive\" style=\"width:100%;height:445px;border:0;background:#fff;border-radius:6px\" loading=\"lazy\"></iframe>"
+       "html": "<p>Choisissez un fluide, réglez la pression lue au manomètre, entrez la température du tube : la surchauffe se calcule sous vos yeux. C est exactement le geste de la méthode indirecte.</p>"
       }
      ],
      "question": {
@@ -4365,18 +4152,13 @@
      ],
      "paras": [
       "Voici les deux mots que vous entendrez le plus souvent sur un chantier. Et la première chose à comprendre est la plus importante : <b>ce sont des différences, jamais des températures</b>. On ne dit pas « la surchauffe est de 12 degrés » comme on dirait « il fait 12 degrés ». On dit : le fluide est <b>12 kelvins au-dessus</b> de sa température de changement d'état, à la pression où il se trouve.",
-      "La <b>surchauffe</b> se prend là où le fluide est devenu vapeur : après le point de rosée, donc en sortie d'évaporateur et sur la ligne d'aspiration. Le <b>sous-refroidissement</b> se prend là où le fluide est devenu liquide : après le point de bulle, donc en sortie de condenseur. Chacun de son côté du circuit.",
-      "La mesure est toujours la même, et elle demande <b>deux instruments</b>. Le <b>manomètre</b> donne la pression ; la <b>table de saturation</b> du fluide traduit cette pression en température de changement d'état. Le <b>thermomètre de contact</b> donne la température réelle du tube. La différence entre les deux, c'est la valeur cherchée. Un seul instrument ne suffit jamais.",
-      "La surchauffe se prend en deux endroits, et cela porte deux noms. La <b>surchauffe utile</b> est celle que la vapeur gagne <b>à l'intérieur même de l'évaporateur</b> : elle a servi à refroidir le local, d'où son nom. La <b>surchauffe totale</b> ajoute à celle-ci ce que la <b>ligne d'aspiration</b> apporte entre la sortie de l'évaporateur et le compresseur. Une ligne mal isolée, qui traverse un local chaud, augmente la surchauffe totale sans rien apporter au froid.",
-      "Pourquoi la règle-t-on ? Pour deux raisons opposées, et il faut passer entre les deux. Une surchauffe <b>trop faible</b>, et du liquide arrive au compresseur : le liquide ne se comprime pas, la casse est immédiate. Une surchauffe <b>trop forte</b>, et le compresseur s'échauffe pendant que l'évaporateur travaille mal : le rendement chute. Repère usuel : <b>5 à 10 K</b>.",
-      "Le <b>sous-refroidissement</b>, lui, garantit qu'il arrive du <b>liquide pur</b> au détendeur. S'il n'y en a pas assez, des bulles de vapeur se forment dans la ligne liquide et le détendeur n'alimente plus correctement. Repère usuel : <b>4 à 8 K</b>. Ces deux repères se <b>recalent toujours</b> sur la documentation du constructeur : ils orientent, ils ne remplacent pas la fiche technique de la machine.",
-      "Enfin, ces deux valeurs répondent à une question que l'on se pose <b>avant de charger</b> : dans quel état est le fluide à cet endroit du circuit — liquide sous-refroidi, saturé, ou vapeur surchauffée ? C'est ce diagnostic qui commande la méthode de remplissage, et c'est pour cela qu'il figure au référentiel avant même le geste de charge."
+      "La <b>surchauffe</b> se prend là où le fluide est devenu vapeur : après le point de rosée, donc en sortie d'évaporateur et sur la ligne d'aspiration. Le <b>sous-refroidissement</b> se prend là où le fluide est devenu liquide : après le point de bulle, donc en sortie de condenseur. Chacun de son côté du circuit."
      ],
      "blocs": [
       {
        "type": "cle",
        "t": "Ce que la valeur vous dit",
-       "html": "<b>Surchauffe nulle</b>, ligne d'aspiration givrée → du liquide part vers le compresseur. On agit <b>tout de suite</b>.<br><b>Surchauffe élevée</b> → l'évaporateur est mal alimenté : détendeur trop fermé, ou charge insuffisante.<br><b>Sous-refroidissement effondré</b> → il manque du fluide, ou de la vapeur passe dans la ligne liquide.<br><b>Sous-refroidissement anormalement élevé</b> → du liquide s'accumule dans le condenseur : charge excessive, ou sortie de condenseur gênée.<br>Aucune de ces lectures ne conclut seule : c'est la <b>convergence</b> des indices qui oriente le diagnostic."
+       "html": "<b>Surchauffe nulle</b>, ligne d'aspiration givrée → du liquide part vers le compresseur. On agit <b>tout de suite</b>.</p><p><b>Surchauffe élevée</b> → l'évaporateur est mal alimenté : détendeur trop fermé, ou charge insuffisante.</p><p><b>Sous-refroidissement effondré</b> → il manque du fluide, ou de la vapeur passe dans la ligne liquide.</p><p><b>Sous-refroidissement anormalement élevé</b> → du liquide s'accumule dans le condenseur : charge excessive, ou sortie de condenseur gênée.</p><p>Aucune de ces lectures ne conclut seule : c'est la <b>convergence</b> des indices qui oriente le diagnostic."
       }
      ],
      "question": {
@@ -4402,13 +4184,9 @@
       "5.05"
      ],
      "paras": [
-      "Voici les deux mots que vous entendrez le plus souvent sur un chantier. Et la première chose à comprendre est la plus importante : <b>ce sont des différences, jamais des températures</b>. On ne dit pas « la surchauffe est de 12 degrés » comme on dirait « il fait 12 degrés ». On dit : le fluide est <b>12 kelvins au-dessus</b> de sa température de changement d'état, à la pression où il se trouve.",
-      "La <b>surchauffe</b> se prend là où le fluide est devenu vapeur : après le point de rosée, donc en sortie d'évaporateur et sur la ligne d'aspiration. Le <b>sous-refroidissement</b> se prend là où le fluide est devenu liquide : après le point de bulle, donc en sortie de condenseur. Chacun de son côté du circuit.",
       "La mesure est toujours la même, et elle demande <b>deux instruments</b>. Le <b>manomètre</b> donne la pression ; la <b>table de saturation</b> du fluide traduit cette pression en température de changement d'état. Le <b>thermomètre de contact</b> donne la température réelle du tube. La différence entre les deux, c'est la valeur cherchée. Un seul instrument ne suffit jamais.",
       "La surchauffe se prend en deux endroits, et cela porte deux noms. La <b>surchauffe utile</b> est celle que la vapeur gagne <b>à l'intérieur même de l'évaporateur</b> : elle a servi à refroidir le local, d'où son nom. La <b>surchauffe totale</b> ajoute à celle-ci ce que la <b>ligne d'aspiration</b> apporte entre la sortie de l'évaporateur et le compresseur. Une ligne mal isolée, qui traverse un local chaud, augmente la surchauffe totale sans rien apporter au froid.",
-      "Pourquoi la règle-t-on ? Pour deux raisons opposées, et il faut passer entre les deux. Une surchauffe <b>trop faible</b>, et du liquide arrive au compresseur : le liquide ne se comprime pas, la casse est immédiate. Une surchauffe <b>trop forte</b>, et le compresseur s'échauffe pendant que l'évaporateur travaille mal : le rendement chute. Repère usuel : <b>5 à 10 K</b>.",
-      "Le <b>sous-refroidissement</b>, lui, garantit qu'il arrive du <b>liquide pur</b> au détendeur. S'il n'y en a pas assez, des bulles de vapeur se forment dans la ligne liquide et le détendeur n'alimente plus correctement. Repère usuel : <b>4 à 8 K</b>. Ces deux repères se <b>recalent toujours</b> sur la documentation du constructeur : ils orientent, ils ne remplacent pas la fiche technique de la machine.",
-      "Enfin, ces deux valeurs répondent à une question que l'on se pose <b>avant de charger</b> : dans quel état est le fluide à cet endroit du circuit — liquide sous-refroidi, saturé, ou vapeur surchauffée ? C'est ce diagnostic qui commande la méthode de remplissage, et c'est pour cela qu'il figure au référentiel avant même le geste de charge."
+      "Pourquoi la règle-t-on ? Pour deux raisons opposées, et il faut passer entre les deux. Une surchauffe <b>trop faible</b>, et du liquide arrive au compresseur : le liquide ne se comprime pas, la casse est immédiate. Une surchauffe <b>trop forte</b>, et le compresseur s'échauffe pendant que l'évaporateur travaille mal : le rendement chute. Repère usuel : <b>5 à 10 K</b>."
      ],
      "blocs": [
       {
@@ -4440,11 +4218,6 @@
       "5.05"
      ],
      "paras": [
-      "Voici les deux mots que vous entendrez le plus souvent sur un chantier. Et la première chose à comprendre est la plus importante : <b>ce sont des différences, jamais des températures</b>. On ne dit pas « la surchauffe est de 12 degrés » comme on dirait « il fait 12 degrés ». On dit : le fluide est <b>12 kelvins au-dessus</b> de sa température de changement d'état, à la pression où il se trouve.",
-      "La <b>surchauffe</b> se prend là où le fluide est devenu vapeur : après le point de rosée, donc en sortie d'évaporateur et sur la ligne d'aspiration. Le <b>sous-refroidissement</b> se prend là où le fluide est devenu liquide : après le point de bulle, donc en sortie de condenseur. Chacun de son côté du circuit.",
-      "La mesure est toujours la même, et elle demande <b>deux instruments</b>. Le <b>manomètre</b> donne la pression ; la <b>table de saturation</b> du fluide traduit cette pression en température de changement d'état. Le <b>thermomètre de contact</b> donne la température réelle du tube. La différence entre les deux, c'est la valeur cherchée. Un seul instrument ne suffit jamais.",
-      "La surchauffe se prend en deux endroits, et cela porte deux noms. La <b>surchauffe utile</b> est celle que la vapeur gagne <b>à l'intérieur même de l'évaporateur</b> : elle a servi à refroidir le local, d'où son nom. La <b>surchauffe totale</b> ajoute à celle-ci ce que la <b>ligne d'aspiration</b> apporte entre la sortie de l'évaporateur et le compresseur. Une ligne mal isolée, qui traverse un local chaud, augmente la surchauffe totale sans rien apporter au froid.",
-      "Pourquoi la règle-t-on ? Pour deux raisons opposées, et il faut passer entre les deux. Une surchauffe <b>trop faible</b>, et du liquide arrive au compresseur : le liquide ne se comprime pas, la casse est immédiate. Une surchauffe <b>trop forte</b>, et le compresseur s'échauffe pendant que l'évaporateur travaille mal : le rendement chute. Repère usuel : <b>5 à 10 K</b>.",
       "Le <b>sous-refroidissement</b>, lui, garantit qu'il arrive du <b>liquide pur</b> au détendeur. S'il n'y en a pas assez, des bulles de vapeur se forment dans la ligne liquide et le détendeur n'alimente plus correctement. Repère usuel : <b>4 à 8 K</b>. Ces deux repères se <b>recalent toujours</b> sur la documentation du constructeur : ils orientent, ils ne remplacent pas la fiche technique de la machine.",
       "Enfin, ces deux valeurs répondent à une question que l'on se pose <b>avant de charger</b> : dans quel état est le fluide à cet endroit du circuit — liquide sous-refroidi, saturé, ou vapeur surchauffée ? C'est ce diagnostic qui commande la méthode de remplissage, et c'est pour cela qu'il figure au référentiel avant même le geste de charge."
      ],
@@ -4993,9 +4766,7 @@
      ],
      "paras": [
       "Derrière chaque code se cache une <b>molécule</b>, et trois atomes y décident de tout : le <b>chlore</b> détruit l'ozone — c'est lui qui a condamné les CFC puis les HCFC ; le <b>fluor</b> rend la molécule stable, donc durable dans l'atmosphère, donc à fort effet de serre ; l'<b>hydrogène</b> raccourcit la durée de vie. Les <b>HFC</b> ont éliminé le chlore (ozone sauvé), gardé le fluor (climat pénalisé). Les <b>HFO</b> ajoutent une double liaison fragile : la molécule casse en quelques jours, PRP ≈ 1. Les <b>naturels</b> — propane, isobutane, ammoniac, CO₂ — existent sans chimie de synthèse, chacun avec son revers : inflammabilité, toxicité ou pression.",
-      "Et le numéro n'est pas un matricule : il <b>décrit la molécule</b>. Centaines + 1 = carbone, dizaines − 1 = hydrogène, unités = fluor — les liaisons restantes sont du chlore. Les mélanges et les fluides inorganiques ont leurs séries : 4xx, 5xx, 6xx, 7xx.",
-      "Un fluide de substitution ne se charge pas forcément « comme l'ancien ». On distingue deux cas. Le <b>drop-in</b> : le nouveau fluide est compatible avec l'huile et les composants déjà en place, la machine ne change pas, on vidange, on tire au vide, on recharge. Le <b>retrofit</b> : le nouveau fluide n'est pas compatible tel quel, il impose d'adapter la machine — huile, joints, détendeur — selon la <b>documentation constructeur</b>, avant toute recharge.",
-      "Cette distinction n'est pas un détail administratif : un fluide de substitution ne se comporte pas forcément comme l'ancien sur chaque composant du circuit. Le <b>détendeur</b> a été calé pour une courbe de pression donnée ; avec un autre fluide, il peut ne plus détendre au bon point. Les <b>joints</b> ont été choisis pour une huile donnée ; une huile incompatible les fait gonfler ou durcir. C'est pour cela que seule la documentation constructeur dit si un couple machine/fluide est un simple drop-in ou impose un retrofit — jamais l'habitude ou le « ça a l'air pareil »."
+      "Et le numéro n'est pas un matricule : il <b>décrit la molécule</b>. Centaines + 1 = carbone, dizaines − 1 = hydrogène, unités = fluor — les liaisons restantes sont du chlore. Les mélanges et les fluides inorganiques ont leurs séries : 4xx, 5xx, 6xx, 7xx."
      ],
      "blocs": [
       {
@@ -5027,8 +4798,6 @@
       "1.07"
      ],
      "paras": [
-      "Derrière chaque code se cache une <b>molécule</b>, et trois atomes y décident de tout : le <b>chlore</b> détruit l'ozone — c'est lui qui a condamné les CFC puis les HCFC ; le <b>fluor</b> rend la molécule stable, donc durable dans l'atmosphère, donc à fort effet de serre ; l'<b>hydrogène</b> raccourcit la durée de vie. Les <b>HFC</b> ont éliminé le chlore (ozone sauvé), gardé le fluor (climat pénalisé). Les <b>HFO</b> ajoutent une double liaison fragile : la molécule casse en quelques jours, PRP ≈ 1. Les <b>naturels</b> — propane, isobutane, ammoniac, CO₂ — existent sans chimie de synthèse, chacun avec son revers : inflammabilité, toxicité ou pression.",
-      "Et le numéro n'est pas un matricule : il <b>décrit la molécule</b>. Centaines + 1 = carbone, dizaines − 1 = hydrogène, unités = fluor — les liaisons restantes sont du chlore. Les mélanges et les fluides inorganiques ont leurs séries : 4xx, 5xx, 6xx, 7xx.",
       "Un fluide de substitution ne se charge pas forcément « comme l'ancien ». On distingue deux cas. Le <b>drop-in</b> : le nouveau fluide est compatible avec l'huile et les composants déjà en place, la machine ne change pas, on vidange, on tire au vide, on recharge. Le <b>retrofit</b> : le nouveau fluide n'est pas compatible tel quel, il impose d'adapter la machine — huile, joints, détendeur — selon la <b>documentation constructeur</b>, avant toute recharge.",
       "Cette distinction n'est pas un détail administratif : un fluide de substitution ne se comporte pas forcément comme l'ancien sur chaque composant du circuit. Le <b>détendeur</b> a été calé pour une courbe de pression donnée ; avec un autre fluide, il peut ne plus détendre au bon point. Les <b>joints</b> ont été choisis pour une huile donnée ; une huile incompatible les fait gonfler ou durcir. C'est pour cela que seule la documentation constructeur dit si un couple machine/fluide est un simple drop-in ou impose un retrofit — jamais l'habitude ou le « ça a l'air pareil »."
      ],
@@ -5502,12 +5271,7 @@
      ],
      "paras": [
       "Le compresseur est le <b>seul organe actif</b> du cycle : il aspire la vapeur basse pression et la refoule en haute pression. Tout le reste est passif.",
-      "Ses points de fuite privilégiés : <b>raccords, vannes de service, presse-étoupe, bornes de traversée</b> sur les hermétiques. Ses sécurités — pressostats HP et BP, protection thermique — se règlent <b>selon la fiche constructeur</b>, jamais à l'estime.",
-      "L'<b>huile</b> lubrifie, refroidit et assure l'étanchéité interne. Elle circule avec le fluide et doit <b>revenir</b> : un retour d'huile défaillant est une cause fréquente de panne prématurée, et souvent le premier signe visible d'un problème de conception des lignes.",
-      "On distingue plusieurs <b>types</b> de compresseur, selon la façon dont la vapeur est comprimée. Le compresseur à <b>piston</b> comprime par un mouvement de va-et-vient, comme une pompe à vélo. Le compresseur <b>scroll</b> (deux spirales imbriquées, une fixe et une mobile qui tourne à l'intérieur) comprime en continu, sans à-coups : c'est la technologie la plus répandue en climatisation. Le compresseur à <b>vis</b> comprime la vapeur entre deux rotors qui s'engrènent ; on le trouve sur les grosses puissances.",
-      "Il existe aussi trois <b>architectures</b>, selon la manière dont le moteur électrique entraîne le compresseur. En <b>hermétique</b>, le moteur et le compresseur sont enfermés ensemble dans une coque soudée : aucun arbre ne sort à l'extérieur, donc aucune fuite possible à cet endroit, mais la coque ne s'ouvre pas et le compresseur n'est pas réparable. En <b>semi-hermétique</b>, la coque est boulonnée : on peut l'ouvrir pour intervenir à l'intérieur, en refaisant les joints au remontage. En <b>ouvert</b>, le moteur est séparé du compresseur et l'entraîne par un arbre qui traverse la coque de part en part ; cet arbre passe par une <b>garniture</b> (un joint tournant), qui est un point de fuite classique à surveiller sur ce type de machine.",
-      "Pour vérifier que le retour d'huile fonctionne bien, on contrôle le <b>niveau d'huile</b> au <b>voyant d'huile</b> : un petit hublot placé sur le carter du compresseur. On regarde ce voyant <b>machine en marche stabilisée</b> (après quelques minutes de fonctionnement, pas juste au démarrage) : le niveau doit rester visible dans la zone du voyant, sans descendre en dessous. La zone exacte à respecter est donnée par la <b>documentation constructeur</b>, à faire valider avant de conclure sur un manque ou un excès d'huile.",
-      "Après toute intervention sur un compresseur, on rédige un <b>rapport</b>. Il rassemble trois choses : ce qu'on a <b>observé</b> (bruits anormaux, niveau d'huile au voyant, valeurs relevées comme les pressions ou la température de refoulement), ce qu'on a <b>fait</b> (pièce changée, réglage effectué, essai réalisé), et tout <b>problème restant</b> qui pourrait, plus tard, entraîner une panne ou une fuite. Ce rapport est <b>daté et signé</b> : c'est ce qui permet au prochain intervenant de savoir où en est la machine, sans tout redécouvrir."
+      "Ses points de fuite privilégiés : <b>raccords, vannes de service, presse-étoupe, bornes de traversée</b> sur les hermétiques. Ses sécurités — pressostats HP et BP, protection thermique — se règlent <b>selon la fiche constructeur</b>, jamais à l'estime."
      ],
      "blocs": [],
      "question": {
@@ -5535,13 +5299,9 @@
       "6.07"
      ],
      "paras": [
-      "Le compresseur est le <b>seul organe actif</b> du cycle : il aspire la vapeur basse pression et la refoule en haute pression. Tout le reste est passif.",
-      "Ses points de fuite privilégiés : <b>raccords, vannes de service, presse-étoupe, bornes de traversée</b> sur les hermétiques. Ses sécurités — pressostats HP et BP, protection thermique — se règlent <b>selon la fiche constructeur</b>, jamais à l'estime.",
       "L'<b>huile</b> lubrifie, refroidit et assure l'étanchéité interne. Elle circule avec le fluide et doit <b>revenir</b> : un retour d'huile défaillant est une cause fréquente de panne prématurée, et souvent le premier signe visible d'un problème de conception des lignes.",
       "On distingue plusieurs <b>types</b> de compresseur, selon la façon dont la vapeur est comprimée. Le compresseur à <b>piston</b> comprime par un mouvement de va-et-vient, comme une pompe à vélo. Le compresseur <b>scroll</b> (deux spirales imbriquées, une fixe et une mobile qui tourne à l'intérieur) comprime en continu, sans à-coups : c'est la technologie la plus répandue en climatisation. Le compresseur à <b>vis</b> comprime la vapeur entre deux rotors qui s'engrènent ; on le trouve sur les grosses puissances.",
-      "Il existe aussi trois <b>architectures</b>, selon la manière dont le moteur électrique entraîne le compresseur. En <b>hermétique</b>, le moteur et le compresseur sont enfermés ensemble dans une coque soudée : aucun arbre ne sort à l'extérieur, donc aucune fuite possible à cet endroit, mais la coque ne s'ouvre pas et le compresseur n'est pas réparable. En <b>semi-hermétique</b>, la coque est boulonnée : on peut l'ouvrir pour intervenir à l'intérieur, en refaisant les joints au remontage. En <b>ouvert</b>, le moteur est séparé du compresseur et l'entraîne par un arbre qui traverse la coque de part en part ; cet arbre passe par une <b>garniture</b> (un joint tournant), qui est un point de fuite classique à surveiller sur ce type de machine.",
-      "Pour vérifier que le retour d'huile fonctionne bien, on contrôle le <b>niveau d'huile</b> au <b>voyant d'huile</b> : un petit hublot placé sur le carter du compresseur. On regarde ce voyant <b>machine en marche stabilisée</b> (après quelques minutes de fonctionnement, pas juste au démarrage) : le niveau doit rester visible dans la zone du voyant, sans descendre en dessous. La zone exacte à respecter est donnée par la <b>documentation constructeur</b>, à faire valider avant de conclure sur un manque ou un excès d'huile.",
-      "Après toute intervention sur un compresseur, on rédige un <b>rapport</b>. Il rassemble trois choses : ce qu'on a <b>observé</b> (bruits anormaux, niveau d'huile au voyant, valeurs relevées comme les pressions ou la température de refoulement), ce qu'on a <b>fait</b> (pièce changée, réglage effectué, essai réalisé), et tout <b>problème restant</b> qui pourrait, plus tard, entraîner une panne ou une fuite. Ce rapport est <b>daté et signé</b> : c'est ce qui permet au prochain intervenant de savoir où en est la machine, sans tout redécouvrir."
+      "Il existe aussi trois <b>architectures</b>, selon la manière dont le moteur électrique entraîne le compresseur. En <b>hermétique</b>, le moteur et le compresseur sont enfermés ensemble dans une coque soudée : aucun arbre ne sort à l'extérieur, donc aucune fuite possible à cet endroit, mais la coque ne s'ouvre pas et le compresseur n'est pas réparable. En <b>semi-hermétique</b>, la coque est boulonnée : on peut l'ouvrir pour intervenir à l'intérieur, en refaisant les joints au remontage. En <b>ouvert</b>, le moteur est séparé du compresseur et l'entraîne par un arbre qui traverse la coque de part en part ; cet arbre passe par une <b>garniture</b> (un joint tournant), qui est un point de fuite classique à surveiller sur ce type de machine."
      ],
      "blocs": [
       {
@@ -5580,11 +5340,6 @@
       "6.07"
      ],
      "paras": [
-      "Le compresseur est le <b>seul organe actif</b> du cycle : il aspire la vapeur basse pression et la refoule en haute pression. Tout le reste est passif.",
-      "Ses points de fuite privilégiés : <b>raccords, vannes de service, presse-étoupe, bornes de traversée</b> sur les hermétiques. Ses sécurités — pressostats HP et BP, protection thermique — se règlent <b>selon la fiche constructeur</b>, jamais à l'estime.",
-      "L'<b>huile</b> lubrifie, refroidit et assure l'étanchéité interne. Elle circule avec le fluide et doit <b>revenir</b> : un retour d'huile défaillant est une cause fréquente de panne prématurée, et souvent le premier signe visible d'un problème de conception des lignes.",
-      "On distingue plusieurs <b>types</b> de compresseur, selon la façon dont la vapeur est comprimée. Le compresseur à <b>piston</b> comprime par un mouvement de va-et-vient, comme une pompe à vélo. Le compresseur <b>scroll</b> (deux spirales imbriquées, une fixe et une mobile qui tourne à l'intérieur) comprime en continu, sans à-coups : c'est la technologie la plus répandue en climatisation. Le compresseur à <b>vis</b> comprime la vapeur entre deux rotors qui s'engrènent ; on le trouve sur les grosses puissances.",
-      "Il existe aussi trois <b>architectures</b>, selon la manière dont le moteur électrique entraîne le compresseur. En <b>hermétique</b>, le moteur et le compresseur sont enfermés ensemble dans une coque soudée : aucun arbre ne sort à l'extérieur, donc aucune fuite possible à cet endroit, mais la coque ne s'ouvre pas et le compresseur n'est pas réparable. En <b>semi-hermétique</b>, la coque est boulonnée : on peut l'ouvrir pour intervenir à l'intérieur, en refaisant les joints au remontage. En <b>ouvert</b>, le moteur est séparé du compresseur et l'entraîne par un arbre qui traverse la coque de part en part ; cet arbre passe par une <b>garniture</b> (un joint tournant), qui est un point de fuite classique à surveiller sur ce type de machine.",
       "Pour vérifier que le retour d'huile fonctionne bien, on contrôle le <b>niveau d'huile</b> au <b>voyant d'huile</b> : un petit hublot placé sur le carter du compresseur. On regarde ce voyant <b>machine en marche stabilisée</b> (après quelques minutes de fonctionnement, pas juste au démarrage) : le niveau doit rester visible dans la zone du voyant, sans descendre en dessous. La zone exacte à respecter est donnée par la <b>documentation constructeur</b>, à faire valider avant de conclure sur un manque ou un excès d'huile.",
       "Après toute intervention sur un compresseur, on rédige un <b>rapport</b>. Il rassemble trois choses : ce qu'on a <b>observé</b> (bruits anormaux, niveau d'huile au voyant, valeurs relevées comme les pressions ou la température de refoulement), ce qu'on a <b>fait</b> (pièce changée, réglage effectué, essai réalisé), et tout <b>problème restant</b> qui pourrait, plus tard, entraîner une panne ou une fuite. Ce rapport est <b>daté et signé</b> : c'est ce qui permet au prochain intervenant de savoir où en est la machine, sans tout redécouvrir."
      ],
@@ -5623,11 +5378,7 @@
       "Ce cours prolonge la fiche sur le compresseur. Il explique le geste : comment on l'<b>installe</b>, comment on <b>règle</b> ses soupapes, comment on le <b>démarre</b>, l'<b>arrête</b> et le <b>contrôle</b>.",
       "Une fois en marche, l'installation ne doit provoquer <b>aucune fuite</b>. Avant la toute première mise en service, on teste l'étanchéité de tout le circuit à l'<b>azote</b> — jamais à l'oxygène, jamais à l'air comprimé — à la pression indiquée par la norme applicable. Les appareils de contrôle et de sécurité (ils surveillent le compresseur et le coupent en cas d'anomalie) s'installent <b>en même temps</b> que lui, pas après coup.",
       "La <b>soupape d'aspiration</b> est le clapet qui laisse entrer la vapeur basse pression dans le compresseur à chaque cycle. Son réglage suit <b>toujours</b> la fiche constructeur : une soupape mal réglée fait perdre de la puissance, ou abîme le compresseur.",
-      "Au <b>démarrage</b>, on vérifie le niveau d'huile et les vannes, puis on met sous tension. Pendant que le compresseur tourne, on relève les pressions, la <b>surchauffe</b> (repère : 5 à 10 K) et le <b>sous-refroidissement</b> (repère : 4 à 8 K). À l'<b>arrêt</b>, on suit la procédure inverse, sans geste brusque.",
-      "Ces bons gestes sont aussi des gestes d'<b>efficacité énergétique</b> : un compresseur bien installé, bien réglé et bien entretenu consomme moins et dure plus longtemps.",
-      "Le compresseur ne se pose jamais directement sur son châssis ou sur le sol. On le fixe sur des <b>plots antivibratiles</b> (des « silent-blocs ») : des cales en caoutchouc qui absorbent les vibrations pendant qu'il tourne. Sans eux, la vibration se transmet à toute la tuyauterie qui y est raccordée. Une tuyauterie qui vibre en permanence, ou montée en contrainte (tordue pour rejoindre un piquage), finit tôt ou tard par se fissurer : c'est une cause classique de fuite, qu'on évite dès l'installation.",
-      "Le compresseur porte aussi des <b>vannes de service</b>, une côté aspiration et une côté refoulement. Elles ont plusieurs positions : <b>ouverte en arrière</b> pour le fonctionnement normal, une <b>position intermédiaire</b> qui permet de brancher un manomètre sans isoler le compresseur, et <b>fermée</b> pour le couper complètement du reste du circuit, par exemple avant une intervention. On manœuvre chaque vanne selon la documentation constructeur : le nombre de tours et le sens de manœuvre ne sont pas les mêmes d'un modèle à l'autre.",
-      "Au démarrage, on ne se contente pas de regarder le compresseur tourner : on <b>mesure</b>. On relève l'<b>intensité</b> absorbée par le moteur (le courant électrique qu'il consomme) et on la compare à la valeur inscrite sur la <b>plaque signalétique</b> du compresseur — jamais à un chiffre appris par cœur ou approximatif. Une intensité trop haute annonce un défaut (moteur qui force, réglage à revoir). On vérifie en même temps que les pressions se stabilisent dans les plages attendues, toujours selon la documentation constructeur."
+      "Au <b>démarrage</b>, on vérifie le niveau d'huile et les vannes, puis on met sous tension. Pendant que le compresseur tourne, on relève les pressions, la <b>surchauffe</b> (repère : 5 à 10 K) et le <b>sous-refroidissement</b> (repère : 4 à 8 K). À l'<b>arrêt</b>, on suit la procédure inverse, sans geste brusque."
      ],
      "blocs": [
       {
@@ -5666,10 +5417,6 @@
       "6.08"
      ],
      "paras": [
-      "Ce cours prolonge la fiche sur le compresseur. Il explique le geste : comment on l'<b>installe</b>, comment on <b>règle</b> ses soupapes, comment on le <b>démarre</b>, l'<b>arrête</b> et le <b>contrôle</b>.",
-      "Une fois en marche, l'installation ne doit provoquer <b>aucune fuite</b>. Avant la toute première mise en service, on teste l'étanchéité de tout le circuit à l'<b>azote</b> — jamais à l'oxygène, jamais à l'air comprimé — à la pression indiquée par la norme applicable. Les appareils de contrôle et de sécurité (ils surveillent le compresseur et le coupent en cas d'anomalie) s'installent <b>en même temps</b> que lui, pas après coup.",
-      "La <b>soupape d'aspiration</b> est le clapet qui laisse entrer la vapeur basse pression dans le compresseur à chaque cycle. Son réglage suit <b>toujours</b> la fiche constructeur : une soupape mal réglée fait perdre de la puissance, ou abîme le compresseur.",
-      "Au <b>démarrage</b>, on vérifie le niveau d'huile et les vannes, puis on met sous tension. Pendant que le compresseur tourne, on relève les pressions, la <b>surchauffe</b> (repère : 5 à 10 K) et le <b>sous-refroidissement</b> (repère : 4 à 8 K). À l'<b>arrêt</b>, on suit la procédure inverse, sans geste brusque.",
       "Ces bons gestes sont aussi des gestes d'<b>efficacité énergétique</b> : un compresseur bien installé, bien réglé et bien entretenu consomme moins et dure plus longtemps.",
       "Le compresseur ne se pose jamais directement sur son châssis ou sur le sol. On le fixe sur des <b>plots antivibratiles</b> (des « silent-blocs ») : des cales en caoutchouc qui absorbent les vibrations pendant qu'il tourne. Sans eux, la vibration se transmet à toute la tuyauterie qui y est raccordée. Une tuyauterie qui vibre en permanence, ou montée en contrainte (tordue pour rejoindre un piquage), finit tôt ou tard par se fissurer : c'est une cause classique de fuite, qu'on évite dès l'installation.",
       "Le compresseur porte aussi des <b>vannes de service</b>, une côté aspiration et une côté refoulement. Elles ont plusieurs positions : <b>ouverte en arrière</b> pour le fonctionnement normal, une <b>position intermédiaire</b> qui permet de brancher un manomètre sans isoler le compresseur, et <b>fermée</b> pour le couper complètement du reste du circuit, par exemple avant une intervention. On manœuvre chaque vanne selon la documentation constructeur : le nombre de tours et le sens de manœuvre ne sont pas les mêmes d'un modèle à l'autre.",
@@ -6638,10 +6385,7 @@
       "Le condenseur <b>évacue vers l'extérieur</b> la chaleur prise dans l'évaporateur, plus celle apportée par la compression. La vapeur haute pression s'y refroidit, se liquéfie, puis se <b>sous-refroidit</b> : <b>4 à 8 K</b> en sortie, pour garantir du liquide pur au détendeur.",
       "Sur un condenseur à air, les <b>ventilateurs</b> forcent l'air à travers la batterie. Une batterie encrassée, un ventilateur à l'arrêt, et la haute pression monte : la machine consomme plus, et le pressostat HP finit par couper.",
       "<b>Trois familles de condenseurs, trois façons d'évacuer la même chaleur.</b> Le condenseur <b>à air</b> souffle l'air ambiant à travers une batterie à ailettes : c'est le plus répandu, le plus simple, et celui dont la haute pression suit la température extérieure. Le condenseur <b>à eau</b> échange avec un circuit d'eau, à plaques ou multitubulaire : plus compact, moins bruyant, il tient une haute pression stable mais demande un circuit d'eau et se prend l'entartrage. Le condenseur <b>évaporatif</b> combine les deux en arrosant la batterie : très performant par temps chaud, il impose en contrepartie un traitement d'eau et une surveillance sanitaire.",
-      "<b>La condensation se fait en trois temps, sur la même batterie.</b> À l'entrée, la vapeur arrive <b>surchauffée</b> et perd d'abord cette surchauffe. Au milieu, elle se <b>liquéfie</b> à température constante : c'est là que le condenseur travaille le plus, et cette zone occupe la plus grande part de la surface. À la sortie, le liquide se <b>sous-refroidit</b>. Ce partage explique tout le reste : une batterie encrassée réduit la zone utile de liquéfaction, la pression monte pour compenser, et le compresseur consomme davantage pour le même froid.",
-      "<b>Ce que la haute pression raconte.</b> Sur un condenseur à air, la pression de condensation suit la température de l'air entrant, à quelques kelvins près. Une pression anormalement haute par temps frais ne vient donc pas de la météo : batterie sale, ventilateur arrêté ou tournant à l'envers, air qui court-circuite entre l'entrée et la sortie, ou incondensables dans le circuit. Chacune de ces causes se vérifie à l'œil ou à la main avant de brancher quoi que ce soit.",
-      "<b>Le rapport écrit, et l'énergie qu'il économise.</b> L'état du condenseur se consigne : propreté de la batterie, état et sens des ventilateurs, températures d'air entrant et sortant, pression de condensation, sous-refroidissement mesuré. Un écart noté à temps se corrige par un nettoyage ; ignoré, il devient une surchauffe du compresseur, une coupure au pressostat haute pression, puis une casse. <b>Tenir le condenseur propre et l'air libre est le geste d'efficacité énergétique le plus rentable de l'installation</b> — et celui qui protège le mieux de la fuite, car une machine qui travaille en surpression permanente fatigue ses joints et ses brasures.",
-      "Les <b>incondensables</b> (air entré lors d'une intervention mal faite) se purgent <b>à l'arrêt</b>, installation froide, avec récupération — jamais fluide en mouvement."
+      "<b>La condensation se fait en trois temps, sur la même batterie.</b> À l'entrée, la vapeur arrive <b>surchauffée</b> et perd d'abord cette surchauffe. Au milieu, elle se <b>liquéfie</b> à température constante : c'est là que le condenseur travaille le plus, et cette zone occupe la plus grande part de la surface. À la sortie, le liquide se <b>sous-refroidit</b>. Ce partage explique tout le reste : une batterie encrassée réduit la zone utile de liquéfaction, la pression monte pour compenser, et le compresseur consomme davantage pour le même froid."
      ],
      "blocs": [
       {
@@ -6675,10 +6419,6 @@
       "7.08"
      ],
      "paras": [
-      "Le condenseur <b>évacue vers l'extérieur</b> la chaleur prise dans l'évaporateur, plus celle apportée par la compression. La vapeur haute pression s'y refroidit, se liquéfie, puis se <b>sous-refroidit</b> : <b>4 à 8 K</b> en sortie, pour garantir du liquide pur au détendeur.",
-      "Sur un condenseur à air, les <b>ventilateurs</b> forcent l'air à travers la batterie. Une batterie encrassée, un ventilateur à l'arrêt, et la haute pression monte : la machine consomme plus, et le pressostat HP finit par couper.",
-      "<b>Trois familles de condenseurs, trois façons d'évacuer la même chaleur.</b> Le condenseur <b>à air</b> souffle l'air ambiant à travers une batterie à ailettes : c'est le plus répandu, le plus simple, et celui dont la haute pression suit la température extérieure. Le condenseur <b>à eau</b> échange avec un circuit d'eau, à plaques ou multitubulaire : plus compact, moins bruyant, il tient une haute pression stable mais demande un circuit d'eau et se prend l'entartrage. Le condenseur <b>évaporatif</b> combine les deux en arrosant la batterie : très performant par temps chaud, il impose en contrepartie un traitement d'eau et une surveillance sanitaire.",
-      "<b>La condensation se fait en trois temps, sur la même batterie.</b> À l'entrée, la vapeur arrive <b>surchauffée</b> et perd d'abord cette surchauffe. Au milieu, elle se <b>liquéfie</b> à température constante : c'est là que le condenseur travaille le plus, et cette zone occupe la plus grande part de la surface. À la sortie, le liquide se <b>sous-refroidit</b>. Ce partage explique tout le reste : une batterie encrassée réduit la zone utile de liquéfaction, la pression monte pour compenser, et le compresseur consomme davantage pour le même froid.",
       "<b>Ce que la haute pression raconte.</b> Sur un condenseur à air, la pression de condensation suit la température de l'air entrant, à quelques kelvins près. Une pression anormalement haute par temps frais ne vient donc pas de la météo : batterie sale, ventilateur arrêté ou tournant à l'envers, air qui court-circuite entre l'entrée et la sortie, ou incondensables dans le circuit. Chacune de ces causes se vérifie à l'œil ou à la main avant de brancher quoi que ce soit.",
       "<b>Le rapport écrit, et l'énergie qu'il économise.</b> L'état du condenseur se consigne : propreté de la batterie, état et sens des ventilateurs, températures d'air entrant et sortant, pression de condensation, sous-refroidissement mesuré. Un écart noté à temps se corrige par un nettoyage ; ignoré, il devient une surchauffe du compresseur, une coupure au pressostat haute pression, puis une casse. <b>Tenir le condenseur propre et l'air libre est le geste d'efficacité énergétique le plus rentable de l'installation</b> — et celui qui protège le mieux de la fuite, car une machine qui travaille en surpression permanente fatigue ses joints et ses brasures.",
       "Les <b>incondensables</b> (air entré lors d'une intervention mal faite) se purgent <b>à l'arrêt</b>, installation froide, avec récupération — jamais fluide en mouvement."
@@ -6718,12 +6458,7 @@
      ],
      "paras": [
       "Le <b>condenseur</b> transforme le gaz chaud venu du compresseur en <b>liquide</b>. Il rejette la chaleur du local vers l'air extérieur. Sur un climatiseur split, il se trouve dans l'<b>unité extérieure</b>, la partie posée dehors.",
-      "Sur la croix du frigoriste, le condenseur est toujours en <b>haut</b> : le compresseur à droite, le détendeur à gauche, l'évaporateur en bas.",
-      "C'est un condenseur <b>à air</b> : un ventilateur souffle sur des <b>ailettes</b>, de petites lames en métal qui évacuent la chaleur. Il n'y a jamais de tour de refroidissement sur ce type d'appareil.",
-      "Installer, régler et vérifier un condenseur, c'est protéger tout le circuit contre les <b>fuites</b>, dès le premier jour et pendant toute sa vie.",
-      "Un organe mérite qu'on s'y arrête, parce que le référentiel le demande nommément : le <b>régulateur de pression de sortie du condenseur</b>. Sur le terrain, on l'appelle couramment un <b>KVR</b> — c'est une référence commerciale, pas le nom de la fonction.",
-      "À quoi sert-il ? Quand il fait <b>froid dehors</b>, le condenseur évacue la chaleur trop facilement et la haute pression descend. Or le <b>détendeur</b> a besoin d'un écart de pression suffisant entre l'entrée et la sortie pour alimenter correctement l'évaporateur. Si la haute pression tombe trop bas, cet écart disparaît, le détendeur n'alimente plus, et l'installation ne fait plus de froid alors que rien n'est cassé. Le régulateur <b>retient</b> la pression de condensation au-dessus d'une valeur réglée : c'est tout son rôle.",
-      "Il ne faut le confondre avec aucun des deux autres régulateurs du circuit. Celui-ci agit sur la <b>haute</b> pression, en sortie de condenseur. Les deux autres — pression d'évaporation et pression de carter — agissent du côté <b>basse</b> pression, et se voient à la fiche de l'évaporateur."
+      "Sur la croix du frigoriste, le condenseur est toujours en <b>haut</b> : le compresseur à droite, le détendeur à gauche, l'évaporateur en bas."
      ],
      "blocs": [
       {
@@ -6764,13 +6499,9 @@
       "7.10"
      ],
      "paras": [
-      "Le <b>condenseur</b> transforme le gaz chaud venu du compresseur en <b>liquide</b>. Il rejette la chaleur du local vers l'air extérieur. Sur un climatiseur split, il se trouve dans l'<b>unité extérieure</b>, la partie posée dehors.",
-      "Sur la croix du frigoriste, le condenseur est toujours en <b>haut</b> : le compresseur à droite, le détendeur à gauche, l'évaporateur en bas.",
       "C'est un condenseur <b>à air</b> : un ventilateur souffle sur des <b>ailettes</b>, de petites lames en métal qui évacuent la chaleur. Il n'y a jamais de tour de refroidissement sur ce type d'appareil.",
       "Installer, régler et vérifier un condenseur, c'est protéger tout le circuit contre les <b>fuites</b>, dès le premier jour et pendant toute sa vie.",
-      "Un organe mérite qu'on s'y arrête, parce que le référentiel le demande nommément : le <b>régulateur de pression de sortie du condenseur</b>. Sur le terrain, on l'appelle couramment un <b>KVR</b> — c'est une référence commerciale, pas le nom de la fonction.",
-      "À quoi sert-il ? Quand il fait <b>froid dehors</b>, le condenseur évacue la chaleur trop facilement et la haute pression descend. Or le <b>détendeur</b> a besoin d'un écart de pression suffisant entre l'entrée et la sortie pour alimenter correctement l'évaporateur. Si la haute pression tombe trop bas, cet écart disparaît, le détendeur n'alimente plus, et l'installation ne fait plus de froid alors que rien n'est cassé. Le régulateur <b>retient</b> la pression de condensation au-dessus d'une valeur réglée : c'est tout son rôle.",
-      "Il ne faut le confondre avec aucun des deux autres régulateurs du circuit. Celui-ci agit sur la <b>haute</b> pression, en sortie de condenseur. Les deux autres — pression d'évaporation et pression de carter — agissent du côté <b>basse</b> pression, et se voient à la fiche de l'évaporateur."
+      "Un organe mérite qu'on s'y arrête, parce que le référentiel le demande nommément : le <b>régulateur de pression de sortie du condenseur</b>. Sur le terrain, on l'appelle couramment un <b>KVR</b> — c'est une référence commerciale, pas le nom de la fonction."
      ],
      "blocs": [
       {
@@ -6811,11 +6542,6 @@
       "7.10"
      ],
      "paras": [
-      "Le <b>condenseur</b> transforme le gaz chaud venu du compresseur en <b>liquide</b>. Il rejette la chaleur du local vers l'air extérieur. Sur un climatiseur split, il se trouve dans l'<b>unité extérieure</b>, la partie posée dehors.",
-      "Sur la croix du frigoriste, le condenseur est toujours en <b>haut</b> : le compresseur à droite, le détendeur à gauche, l'évaporateur en bas.",
-      "C'est un condenseur <b>à air</b> : un ventilateur souffle sur des <b>ailettes</b>, de petites lames en métal qui évacuent la chaleur. Il n'y a jamais de tour de refroidissement sur ce type d'appareil.",
-      "Installer, régler et vérifier un condenseur, c'est protéger tout le circuit contre les <b>fuites</b>, dès le premier jour et pendant toute sa vie.",
-      "Un organe mérite qu'on s'y arrête, parce que le référentiel le demande nommément : le <b>régulateur de pression de sortie du condenseur</b>. Sur le terrain, on l'appelle couramment un <b>KVR</b> — c'est une référence commerciale, pas le nom de la fonction.",
       "À quoi sert-il ? Quand il fait <b>froid dehors</b>, le condenseur évacue la chaleur trop facilement et la haute pression descend. Or le <b>détendeur</b> a besoin d'un écart de pression suffisant entre l'entrée et la sortie pour alimenter correctement l'évaporateur. Si la haute pression tombe trop bas, cet écart disparaît, le détendeur n'alimente plus, et l'installation ne fait plus de froid alors que rien n'est cassé. Le régulateur <b>retient</b> la pression de condensation au-dessus d'une valeur réglée : c'est tout son rôle.",
       "Il ne faut le confondre avec aucun des deux autres régulateurs du circuit. Celui-ci agit sur la <b>haute</b> pression, en sortie de condenseur. Les deux autres — pression d'évaporation et pression de carter — agissent du côté <b>basse</b> pression, et se voient à la fiche de l'évaporateur."
      ],
@@ -7273,9 +6999,7 @@
      "paras": [
       "C'est le point <b>froid</b> du circuit : le fluide y absorbe la chaleur du milieu à refroidir et se vaporise. En sortie, il doit être <b>entièrement vapeur</b>, avec une <b>surchauffe de 5 à 10 K</b> — c'est ce qui protège le compresseur du coup de liquide.",
       "Le <b>givre</b> est normal en froid négatif ; installé durablement, il isole la batterie et fait chuter l'échange. D'où les cycles de <b>dégivrage</b> (air, résistance électrique, gaz chauds). Un évaporateur qui givre <b>complètement</b> en fonctionnement signale d'abord un problème de <b>débit d'air</b> : filtre encrassé, ventilateur arrêté.",
-      "Points de vigilance propres : corrosion, condensats, et le <b>bac</b> — une fuite peut s'y dissimuler sous l'eau de dégivrage.",
-      "La conduite d'<b>aspiration</b> relie l'évaporateur au compresseur. Elle transporte le fluide en vapeur, mais cette vapeur emporte toujours un peu d'<b>huile</b>, celle qui lubrifie le compresseur. Pour que l'huile revienne avec le gaz, on pose cette conduite en légère <b>pente</b>, inclinée vers le compresseur. Ainsi, l'huile glisse avec le fluide au lieu de stagner dans un creux du tube.",
-      "Parfois, le tracé oblige la conduite d'aspiration à remonter. Par exemple, le compresseur est placé plus haut que l'évaporateur. Dans ce cas, la pente seule ne suffit plus : au ralenti, le gaz n'a pas toujours assez de vitesse pour porter l'huile vers le haut. On pose alors un <b>siphon</b> en pied de cette colonne montante. C'est un petit coude en U qui retient un peu d'huile le temps qu'elle s'accumule. Puis il la relance d'un coup vers le haut, dès que le gaz reprend de la vitesse."
+      "Points de vigilance propres : corrosion, condensats, et le <b>bac</b> — une fuite peut s'y dissimuler sous l'eau de dégivrage."
      ],
      "blocs": [],
      "question": {
@@ -7303,9 +7027,6 @@
       "8.09"
      ],
      "paras": [
-      "C'est le point <b>froid</b> du circuit : le fluide y absorbe la chaleur du milieu à refroidir et se vaporise. En sortie, il doit être <b>entièrement vapeur</b>, avec une <b>surchauffe de 5 à 10 K</b> — c'est ce qui protège le compresseur du coup de liquide.",
-      "Le <b>givre</b> est normal en froid négatif ; installé durablement, il isole la batterie et fait chuter l'échange. D'où les cycles de <b>dégivrage</b> (air, résistance électrique, gaz chauds). Un évaporateur qui givre <b>complètement</b> en fonctionnement signale d'abord un problème de <b>débit d'air</b> : filtre encrassé, ventilateur arrêté.",
-      "Points de vigilance propres : corrosion, condensats, et le <b>bac</b> — une fuite peut s'y dissimuler sous l'eau de dégivrage.",
       "La conduite d'<b>aspiration</b> relie l'évaporateur au compresseur. Elle transporte le fluide en vapeur, mais cette vapeur emporte toujours un peu d'<b>huile</b>, celle qui lubrifie le compresseur. Pour que l'huile revienne avec le gaz, on pose cette conduite en légère <b>pente</b>, inclinée vers le compresseur. Ainsi, l'huile glisse avec le fluide au lieu de stagner dans un creux du tube.",
       "Parfois, le tracé oblige la conduite d'aspiration à remonter. Par exemple, le compresseur est placé plus haut que l'évaporateur. Dans ce cas, la pente seule ne suffit plus : au ralenti, le gaz n'a pas toujours assez de vitesse pour porter l'huile vers le haut. On pose alors un <b>siphon</b> en pied de cette colonne montante. C'est un petit coude en U qui retient un peu d'huile le temps qu'elle s'accumule. Puis il la relance d'un coup vers le haut, dès que le gaz reprend de la vitesse."
      ],
@@ -7313,7 +7034,7 @@
       {
        "type": "cle",
        "t": "Lire la surchauffe",
-       "html": "<b>Surchauffe = température du gaz à l'aspiration − température d'évaporation</b> (celle que la table donne pour la BP mesurée).<br>Trop élevée → le détendeur n'alimente pas assez, ou il manque du fluide.<br>Nulle ou négative, ligne d'aspiration givrée → <b>risque de coup de liquide</b>, on agit tout de suite."
+       "html": "<b>Surchauffe = température du gaz à l'aspiration − température d'évaporation</b> (celle que la table donne pour la BP mesurée).</p><p>Trop élevée → le détendeur n'alimente pas assez, ou il manque du fluide.</p><p>Nulle ou négative, ligne d'aspiration givrée → <b>risque de coup de liquide</b>, on agit tout de suite."
       },
       {
        "type": "piege",
@@ -7355,12 +7076,7 @@
      ],
      "paras": [
       "Sur la <b>croix du frigoriste</b>, l'évaporateur occupe la position <b>basse</b>. Une fois installé, il doit fonctionner <b>sans aucune fuite ni émission</b> — c'est vrai pour le tube, mais aussi pour tout le matériel de contrôle et de sécurité posé avec lui.",
-      "Deux organes se règlent, pour deux raisons différentes. Le <b>régulateur de pression d'évaporation</b> — que le référentiel appelle aussi la <b>soupape de régulation</b> de la pression d'évaporation — est une soupape mécanique. Elle maintient une pression minimale dans l'évaporateur — par exemple pour empêcher un produit de geler, ou pour équilibrer plusieurs évaporateurs sur un seul compresseur. Sa mise en service et son réglage suivent <b>toujours la fiche constructeur</b>.",
-      "Cet organe se monte <b>en sortie d'évaporateur</b>, sur le départ de la ligne d'aspiration. Sur le terrain, on l'appelle couramment un <b>KVP</b> — c'est une référence commerciale, pas le nom de la fonction. Son intérêt se comprend mieux sur un cas concret : plusieurs chambres à des températures différentes, un seul compresseur. Sans lui, toutes les chambres descendraient à la pression de la plus froide. Avec lui, chaque évaporateur garde la pression — donc la température — que son produit demande.",
-      "Un troisième régulateur existe, et il ne faut pas le confondre avec celui-ci : le <b>régulateur de pression de carter</b>, couramment appelé <b>KVL</b>. Il se monte sur la ligne d'aspiration, juste <b>avant le compresseur</b>. Il ne protège ni le produit ni l'évaporateur : il protège le <b>moteur du compresseur</b>, en limitant la pression d'aspiration. Le cas typique est le <b>redémarrage après un arrêt long</b> : la pression est alors remontée dans tout le circuit, et sans lui le compresseur devrait avaler d'un coup beaucoup trop de vapeur. Trois régulateurs, trois endroits, trois raisons — et aucun des trois ne coupe quoi que ce soit.",
-      "Les <b>interrupteurs de sécurité et de contrôle</b> — les pressostats — protègent la machine, pas le produit. Ils coupent l'alimentation électrique du compresseur si la pression sort de la plage prévue. Deux organes, deux fonctions, deux réglages : on ne les confond pas.",
-      "Le dégivrage évite que le givre n'isole la batterie. Il peut se faire à l'air, par résistance électrique ou par gaz chauds. Quand il se fait <b>à l'air chaud</b>, le conduit qui transporte cet air s'inspecte à chaque visite : étanchéité, isolation, écoulement des condensats.",
-      "Toute visite se termine par un <b>rapport écrit</b> sur l'état de l'évaporateur : anomalies observées, risque pour le système, ce qui pourrait à terme provoquer une fuite. Une batterie propre, un bon débit d'air et une surchauffe de <b>5 à 10 K</b> préservent aussi l'<b>efficacité énergétique</b> de l'équipement."
+      "Deux organes se règlent, pour deux raisons différentes. Le <b>régulateur de pression d'évaporation</b> — que le référentiel appelle aussi la <b>soupape de régulation</b> de la pression d'évaporation — est une soupape mécanique. Elle maintient une pression minimale dans l'évaporateur — par exemple pour empêcher un produit de geler, ou pour équilibrer plusieurs évaporateurs sur un seul compresseur. Sa mise en service et son réglage suivent <b>toujours la fiche constructeur</b>."
      ],
      "blocs": [
       {
@@ -7397,19 +7113,15 @@
       "8.11"
      ],
      "paras": [
-      "Sur la <b>croix du frigoriste</b>, l'évaporateur occupe la position <b>basse</b>. Une fois installé, il doit fonctionner <b>sans aucune fuite ni émission</b> — c'est vrai pour le tube, mais aussi pour tout le matériel de contrôle et de sécurité posé avec lui.",
-      "Deux organes se règlent, pour deux raisons différentes. Le <b>régulateur de pression d'évaporation</b> — que le référentiel appelle aussi la <b>soupape de régulation</b> de la pression d'évaporation — est une soupape mécanique. Elle maintient une pression minimale dans l'évaporateur — par exemple pour empêcher un produit de geler, ou pour équilibrer plusieurs évaporateurs sur un seul compresseur. Sa mise en service et son réglage suivent <b>toujours la fiche constructeur</b>.",
       "Cet organe se monte <b>en sortie d'évaporateur</b>, sur le départ de la ligne d'aspiration. Sur le terrain, on l'appelle couramment un <b>KVP</b> — c'est une référence commerciale, pas le nom de la fonction. Son intérêt se comprend mieux sur un cas concret : plusieurs chambres à des températures différentes, un seul compresseur. Sans lui, toutes les chambres descendraient à la pression de la plus froide. Avec lui, chaque évaporateur garde la pression — donc la température — que son produit demande.",
       "Un troisième régulateur existe, et il ne faut pas le confondre avec celui-ci : le <b>régulateur de pression de carter</b>, couramment appelé <b>KVL</b>. Il se monte sur la ligne d'aspiration, juste <b>avant le compresseur</b>. Il ne protège ni le produit ni l'évaporateur : il protège le <b>moteur du compresseur</b>, en limitant la pression d'aspiration. Le cas typique est le <b>redémarrage après un arrêt long</b> : la pression est alors remontée dans tout le circuit, et sans lui le compresseur devrait avaler d'un coup beaucoup trop de vapeur. Trois régulateurs, trois endroits, trois raisons — et aucun des trois ne coupe quoi que ce soit.",
-      "Les <b>interrupteurs de sécurité et de contrôle</b> — les pressostats — protègent la machine, pas le produit. Ils coupent l'alimentation électrique du compresseur si la pression sort de la plage prévue. Deux organes, deux fonctions, deux réglages : on ne les confond pas.",
-      "Le dégivrage évite que le givre n'isole la batterie. Il peut se faire à l'air, par résistance électrique ou par gaz chauds. Quand il se fait <b>à l'air chaud</b>, le conduit qui transporte cet air s'inspecte à chaque visite : étanchéité, isolation, écoulement des condensats.",
-      "Toute visite se termine par un <b>rapport écrit</b> sur l'état de l'évaporateur : anomalies observées, risque pour le système, ce qui pourrait à terme provoquer une fuite. Une batterie propre, un bon débit d'air et une surchauffe de <b>5 à 10 K</b> préservent aussi l'<b>efficacité énergétique</b> de l'équipement."
+      "Les <b>interrupteurs de sécurité et de contrôle</b> — les pressostats — protègent la machine, pas le produit. Ils coupent l'alimentation électrique du compresseur si la pression sort de la plage prévue. Deux organes, deux fonctions, deux réglages : on ne les confond pas."
      ],
      "blocs": [
       {
        "type": "cle",
        "t": "Qui protège quoi ?",
-       "html": "<b>Pressostat</b> (interrupteur de sécurité) → protège la <b>machine</b> : il coupe le compresseur.<br><b>Régulateur de pression d'évaporation</b> (« KVP »), en sortie d'évaporateur → protège le <b>produit</b>, ou l'équilibre entre évaporateurs : il ne coupe rien, il maintient une pression.<br><b>Régulateur de pression de carter</b> (« KVL »), avant le compresseur → protège le <b>moteur du compresseur</b> : il limite la pression d'aspiration.<br>Un seul des trois coupe le courant, et c'est le pressostat. Dans tous les cas, la valeur de réglage vient de la <b>fiche constructeur</b>, jamais de l'estime."
+       "html": "<b>Pressostat</b> (interrupteur de sécurité) → protège la <b>machine</b> : il coupe le compresseur.</p><p><b>Régulateur de pression d'évaporation</b> (« KVP »), en sortie d'évaporateur → protège le <b>produit</b>, ou l'équilibre entre évaporateurs : il ne coupe rien, il maintient une pression.</p><p><b>Régulateur de pression de carter</b> (« KVL »), avant le compresseur → protège le <b>moteur du compresseur</b> : il limite la pression d'aspiration.</p><p>Un seul des trois coupe le courant, et c'est le pressostat. Dans tous les cas, la valeur de réglage vient de la <b>fiche constructeur</b>, jamais de l'estime."
       }
      ],
      "question": {
@@ -7440,11 +7152,6 @@
       "8.11"
      ],
      "paras": [
-      "Sur la <b>croix du frigoriste</b>, l'évaporateur occupe la position <b>basse</b>. Une fois installé, il doit fonctionner <b>sans aucune fuite ni émission</b> — c'est vrai pour le tube, mais aussi pour tout le matériel de contrôle et de sécurité posé avec lui.",
-      "Deux organes se règlent, pour deux raisons différentes. Le <b>régulateur de pression d'évaporation</b> — que le référentiel appelle aussi la <b>soupape de régulation</b> de la pression d'évaporation — est une soupape mécanique. Elle maintient une pression minimale dans l'évaporateur — par exemple pour empêcher un produit de geler, ou pour équilibrer plusieurs évaporateurs sur un seul compresseur. Sa mise en service et son réglage suivent <b>toujours la fiche constructeur</b>.",
-      "Cet organe se monte <b>en sortie d'évaporateur</b>, sur le départ de la ligne d'aspiration. Sur le terrain, on l'appelle couramment un <b>KVP</b> — c'est une référence commerciale, pas le nom de la fonction. Son intérêt se comprend mieux sur un cas concret : plusieurs chambres à des températures différentes, un seul compresseur. Sans lui, toutes les chambres descendraient à la pression de la plus froide. Avec lui, chaque évaporateur garde la pression — donc la température — que son produit demande.",
-      "Un troisième régulateur existe, et il ne faut pas le confondre avec celui-ci : le <b>régulateur de pression de carter</b>, couramment appelé <b>KVL</b>. Il se monte sur la ligne d'aspiration, juste <b>avant le compresseur</b>. Il ne protège ni le produit ni l'évaporateur : il protège le <b>moteur du compresseur</b>, en limitant la pression d'aspiration. Le cas typique est le <b>redémarrage après un arrêt long</b> : la pression est alors remontée dans tout le circuit, et sans lui le compresseur devrait avaler d'un coup beaucoup trop de vapeur. Trois régulateurs, trois endroits, trois raisons — et aucun des trois ne coupe quoi que ce soit.",
-      "Les <b>interrupteurs de sécurité et de contrôle</b> — les pressostats — protègent la machine, pas le produit. Ils coupent l'alimentation électrique du compresseur si la pression sort de la plage prévue. Deux organes, deux fonctions, deux réglages : on ne les confond pas.",
       "Le dégivrage évite que le givre n'isole la batterie. Il peut se faire à l'air, par résistance électrique ou par gaz chauds. Quand il se fait <b>à l'air chaud</b>, le conduit qui transporte cet air s'inspecte à chaque visite : étanchéité, isolation, écoulement des condensats.",
       "Toute visite se termine par un <b>rapport écrit</b> sur l'état de l'évaporateur : anomalies observées, risque pour le système, ce qui pourrait à terme provoquer une fuite. Une batterie propre, un bon débit d'air et une surchauffe de <b>5 à 10 K</b> préservent aussi l'<b>efficacité énergétique</b> de l'équipement."
      ],
@@ -7970,10 +7677,7 @@
      "paras": [
       "Le détendeur fait chuter la pression et <b>dose le débit de liquide</b> envoyé à l'évaporateur. Le <b>détendeur thermostatique</b> régule sur la <b>surchauffe</b> : son bulbe, fixé sur la ligne d'aspiration, sent la température du gaz et ouvre ou ferme en conséquence. Le <b>détendeur électronique</b> fait la même chose avec une sonde et un régulateur : plus précis, plus rapide. Le <b>capillaire</b>, lui, est un tube calibré fixe, sans réglage — on le trouve sur les petits appareils.",
       "Autour du détendeur, la ligne liquide porte le <b>filtre déshydrateur</b> (tamis moléculaire, monté <b>dans le sens de la flèche</b>) et le <b>voyant</b>, qui renseigne sur deux choses : la présence de bulles et, par sa pastille, l'humidité du circuit.",
-      "<b>Le bulbe : où il est posé décide de ce que le détendeur voit.</b> Le bulbe se fixe sur la ligne d'aspiration, <b>en sortie d'évaporateur</b>, sur une partie horizontale et <b>propre</b> — jamais sur une soudure, jamais sur un point bas où l'huile s'accumule. Il se serre avec son collier métallique, contact franc sur le tube, puis <b>s'isole</b> : sans isolant, il sent la température du local et non celle du fluide, et le détendeur régule sur une information fausse. Sur un tube de faible diamètre, il se pose à midi ; sur un gros tube, à quatre ou huit heures, jamais dessous.",
-      "<b>Égalisation interne ou externe : la même vanne, deux montages.</b> Pour doser, le détendeur compare la pression du bulbe à la pression qui règne dans l'évaporateur. En <b>égalisation interne</b>, il prend cette pression à l'entrée de l'évaporateur, par un passage percé dans le corps de la vanne : simple, et suffisant tant que l'évaporateur ne fait pas perdre trop de pression entre son entrée et sa sortie. En <b>égalisation externe</b>, un petit tube capillaire va chercher la pression <b>à la sortie</b> de l'évaporateur, juste à côté du bulbe. C'est ce montage qu'imposent les évaporateurs à forte perte de charge et ceux équipés d'un distributeur de liquide : sans lui, la vanne croit la pression plus haute qu'elle n'est, ferme trop, et l'évaporateur est sous-alimenté. Un détendeur à égalisation externe monté sans raccorder ce tube ne régule plus du tout.",
-      "<b>L'électrovanne : elle ne dose pas, elle ouvre ou elle ferme.</b> Placée sur la ligne liquide, juste avant le détendeur, c'est une vanne <b>tout ou rien</b> commandée par une bobine électrique. Elle ne remplace pas le détendeur et ne règle aucun débit : elle autorise ou interdit le passage du liquide. Elle porte une <b>flèche de sens</b>, et sa bobine se vérifie hors tension.",
-      "Son usage le plus courant est l'<b>arrêt par tirage au vide</b> (<i>pump down</i>) : à l'arrêt, l'électrovanne se ferme la première ; le compresseur continue de tourner et aspire le fluide resté dans l'évaporateur jusqu'à ce que le <b>pressostat basse pression</b> le coupe. Le fluide se retrouve rassemblé côté haute pression, dans le condenseur et la bouteille. Intérêt : au redémarrage, plus de liquide dans l'évaporateur, donc <b>pas de coup de liquide</b> au compresseur. Un compresseur qui repart en courts-cycles avec une électrovanne collée ouverte, c'est exactement ce que ce montage évite."
+      "<b>Le bulbe : où il est posé décide de ce que le détendeur voit.</b> Le bulbe se fixe sur la ligne d'aspiration, <b>en sortie d'évaporateur</b>, sur une partie horizontale et <b>propre</b> — jamais sur une soudure, jamais sur un point bas où l'huile s'accumule. Il se serre avec son collier métallique, contact franc sur le tube, puis <b>s'isole</b> : sans isolant, il sent la température du local et non celle du fluide, et le détendeur régule sur une information fausse. Sur un tube de faible diamètre, il se pose à midi ; sur un gros tube, à quatre ou huit heures, jamais dessous."
      ],
      "blocs": [],
      "question": {
@@ -8001,9 +7705,6 @@
       "9.08"
      ],
      "paras": [
-      "Le détendeur fait chuter la pression et <b>dose le débit de liquide</b> envoyé à l'évaporateur. Le <b>détendeur thermostatique</b> régule sur la <b>surchauffe</b> : son bulbe, fixé sur la ligne d'aspiration, sent la température du gaz et ouvre ou ferme en conséquence. Le <b>détendeur électronique</b> fait la même chose avec une sonde et un régulateur : plus précis, plus rapide. Le <b>capillaire</b>, lui, est un tube calibré fixe, sans réglage — on le trouve sur les petits appareils.",
-      "Autour du détendeur, la ligne liquide porte le <b>filtre déshydrateur</b> (tamis moléculaire, monté <b>dans le sens de la flèche</b>) et le <b>voyant</b>, qui renseigne sur deux choses : la présence de bulles et, par sa pastille, l'humidité du circuit.",
-      "<b>Le bulbe : où il est posé décide de ce que le détendeur voit.</b> Le bulbe se fixe sur la ligne d'aspiration, <b>en sortie d'évaporateur</b>, sur une partie horizontale et <b>propre</b> — jamais sur une soudure, jamais sur un point bas où l'huile s'accumule. Il se serre avec son collier métallique, contact franc sur le tube, puis <b>s'isole</b> : sans isolant, il sent la température du local et non celle du fluide, et le détendeur régule sur une information fausse. Sur un tube de faible diamètre, il se pose à midi ; sur un gros tube, à quatre ou huit heures, jamais dessous.",
       "<b>Égalisation interne ou externe : la même vanne, deux montages.</b> Pour doser, le détendeur compare la pression du bulbe à la pression qui règne dans l'évaporateur. En <b>égalisation interne</b>, il prend cette pression à l'entrée de l'évaporateur, par un passage percé dans le corps de la vanne : simple, et suffisant tant que l'évaporateur ne fait pas perdre trop de pression entre son entrée et sa sortie. En <b>égalisation externe</b>, un petit tube capillaire va chercher la pression <b>à la sortie</b> de l'évaporateur, juste à côté du bulbe. C'est ce montage qu'imposent les évaporateurs à forte perte de charge et ceux équipés d'un distributeur de liquide : sans lui, la vanne croit la pression plus haute qu'elle n'est, ferme trop, et l'évaporateur est sous-alimenté. Un détendeur à égalisation externe monté sans raccorder ce tube ne régule plus du tout.",
       "<b>L'électrovanne : elle ne dose pas, elle ouvre ou elle ferme.</b> Placée sur la ligne liquide, juste avant le détendeur, c'est une vanne <b>tout ou rien</b> commandée par une bobine électrique. Elle ne remplace pas le détendeur et ne règle aucun débit : elle autorise ou interdit le passage du liquide. Elle porte une <b>flèche de sens</b>, et sa bobine se vérifie hors tension.",
       "Son usage le plus courant est l'<b>arrêt par tirage au vide</b> (<i>pump down</i>) : à l'arrêt, l'électrovanne se ferme la première ; le compresseur continue de tourner et aspire le fluide resté dans l'évaporateur jusqu'à ce que le <b>pressostat basse pression</b> le coupe. Le fluide se retrouve rassemblé côté haute pression, dans le condenseur et la bouteille. Intérêt : au redémarrage, plus de liquide dans l'évaporateur, donc <b>pas de coup de liquide</b> au compresseur. Un compresseur qui repart en courts-cycles avec une électrovanne collée ouverte, c'est exactement ce que ce montage évite."
@@ -8050,16 +7751,7 @@
       "Autour du détendeur, d'autres organes se <b>règlent</b> et se <b>contrôlent</b>. Ils ne dosent pas le fluide. Ils protègent l'installation et lui évitent de gaspiller de l'énergie. Cette fiche en présente quatre : les thermostats, la soupape de régulation de pression, les limiteurs de pression, et le séparateur d'huile.",
       "Le <b>thermostat</b> commande un organe (compresseur, vanne) selon une <b>température</b>. Le thermostat <b>mécanique</b> utilise un bulbe relié par un tube fin à des contacts électriques : simple et robuste. Le thermostat <b>électronique</b> utilise une sonde reliée à un régulateur numérique : plus précis, et plus simple à régler. Dans les deux cas, le point de consigne se règle <b>selon la fiche constructeur</b>, jamais à l'estime.",
       "La <b>soupape de régulation de pression</b> ne coupe rien : elle <b>module en continu</b> pour maintenir une pression stable à un point du circuit. Le <b>limiteur de pression</b> est différent : c'est une sécurité. Mécanique, il est réglé par un ressort. Électronique, il utilise un capteur relié à un module. Dans les deux cas, il <b>coupe le circuit</b> — le plus souvent le compresseur — dès qu'un seuil de pression est franchi, en haute comme en basse pression. Une régulation qui module, une sécurité qui coupe : deux logiques, deux réglages.",
-      "<b>Les régulateurs de pression, chacun à sa place.</b> Sur le terrain, ces vannes portent des repères de catalogue — la série <b>KV</b> est la plus répandue — et chacune tient une pression <b>à un endroit précis du circuit</b>. Les confondre, c'est régler la mauvaise vanne.",
-      "<b>KVP — régulateur de pression d'évaporation.</b> Il se monte <b>à la sortie de l'évaporateur</b>, sur l'aspiration. Il empêche la pression d'évaporation de descendre sous une valeur choisie, donc la température de descendre trop bas. C'est lui qui tient une chambre à 0 °C sans geler la marchandise, et lui qui permet à plusieurs évaporateurs réglés à des températures différentes de travailler sur un même compresseur.",
-      "<b>KVL — régulateur de pression de carter.</b> Il se monte sur l'aspiration, <b>juste avant le compresseur</b>. Il limite la pression qui arrive au compresseur au démarrage ou après un dégivrage, quand l'évaporateur est encore chaud. Sans lui, le moteur force et peut disjoncter : il protège le compresseur, il ne règle pas la chambre.",
-      "<b>KVR — régulateur de pression de condensation.</b> Il se monte <b>à la sortie du condenseur</b>, souvent avec une vanne de mise en pression de la bouteille. Quand il fait froid dehors, la haute pression tombe et le détendeur n'a plus assez d'écart pour alimenter l'évaporateur. Le KVR retient le liquide dans le condenseur pour <b>maintenir la haute pression</b> et rendre au détendeur sa pression de travail. C'est le remède classique d'une installation qui fonctionne l'été et se dérègle l'hiver.",
-      "<b>KVC — régulateur de capacité, ou vanne de by-pass des gaz chauds.</b> Il relie le refoulement à l'aspiration. Quand la demande de froid tombe très bas, il renvoie une part des gaz chauds vers l'aspiration pour que le compresseur garde du débit au lieu de s'arrêter et de repartir sans cesse. Il <b>évite les courts-cycles</b> ; en revanche il consomme, et il ne se monte que là où le constructeur le prévoit.",
-      "<b>La règle de réglage est la même pour toutes.</b> On raccorde le manomètre sur la prise de la vanne, on tourne la vis <b>par petites touches</b>, et on <b>attend la stabilisation</b> avant de lire — une installation frigorifique ne répond jamais instantanément. Le sens de rotation et la plage se lisent sur la notice : aucune de ces vannes ne se règle à l'oreille, et une vanne réglée sans manomètre n'est pas réglée.",
-      "<b>La bouteille anti-coup de liquide</b> se place sur l'aspiration, avant le compresseur. Elle recueille le liquide qui n'a pas fini de s'évaporer et ne laisse repartir que de la vapeur, en réadmettant l'huile petit à petit par un orifice calibré. On la trouve là où la charge varie brutalement, et sur les installations à dégivrage par gaz chauds.",
-      "<b>Le pressostat différentiel d'huile</b> ne surveille pas une pression, mais un <b>écart</b> : celui entre la pression d'huile de la pompe du compresseur et la pression du carter. Si cet écart ne s'établit pas dans le délai prévu par le constructeur, le compresseur n'est pas lubrifié et l'appareil coupe. Sur les compresseurs qui en sont équipés, il se réarme <b>à la main</b>, et jamais sans avoir cherché pourquoi il a coupé.",
-      "Le <b>séparateur d'huile</b> se place juste après le compresseur (à droite), avant le condenseur (en haut). C'est là que passe en premier la vapeur chaude chargée d'huile. Il retient cette huile puis la renvoie au carter du compresseur, automatiquement, dès que le niveau monte. <b>Vérifier son fonctionnement</b>, c'est contrôler que ce retour se fait bien : une huile qui s'accumule plus loin dans le circuit réduit l'échange de chaleur, et finit par manquer au compresseur.",
-      "Après ces réglages et ce contrôle, on <b>rédige un rapport</b> sur l'état de chaque organe. Un thermostat qui dérive, un limiteur qui ne coupe plus, un séparateur qui laisse passer l'huile : non signalés, ces défauts finissent par endommager le système. À terme, faute de mesure, cela provoque une fuite ou une émission de réfrigérant. Le rapport écrit permet d'agir <b>avant</b> ce stade."
+      "<b>Les régulateurs de pression, chacun à sa place.</b> Sur le terrain, ces vannes portent des repères de catalogue — la série <b>KV</b> est la plus répandue — et chacune tient une pression <b>à un endroit précis du circuit</b>. Les confondre, c'est régler la mauvaise vanne."
      ],
      "blocs": [],
      "question": {
@@ -8089,19 +7781,11 @@
       "9.10"
      ],
      "paras": [
-      "Autour du détendeur, d'autres organes se <b>règlent</b> et se <b>contrôlent</b>. Ils ne dosent pas le fluide. Ils protègent l'installation et lui évitent de gaspiller de l'énergie. Cette fiche en présente quatre : les thermostats, la soupape de régulation de pression, les limiteurs de pression, et le séparateur d'huile.",
-      "Le <b>thermostat</b> commande un organe (compresseur, vanne) selon une <b>température</b>. Le thermostat <b>mécanique</b> utilise un bulbe relié par un tube fin à des contacts électriques : simple et robuste. Le thermostat <b>électronique</b> utilise une sonde reliée à un régulateur numérique : plus précis, et plus simple à régler. Dans les deux cas, le point de consigne se règle <b>selon la fiche constructeur</b>, jamais à l'estime.",
-      "La <b>soupape de régulation de pression</b> ne coupe rien : elle <b>module en continu</b> pour maintenir une pression stable à un point du circuit. Le <b>limiteur de pression</b> est différent : c'est une sécurité. Mécanique, il est réglé par un ressort. Électronique, il utilise un capteur relié à un module. Dans les deux cas, il <b>coupe le circuit</b> — le plus souvent le compresseur — dès qu'un seuil de pression est franchi, en haute comme en basse pression. Une régulation qui module, une sécurité qui coupe : deux logiques, deux réglages.",
-      "<b>Les régulateurs de pression, chacun à sa place.</b> Sur le terrain, ces vannes portent des repères de catalogue — la série <b>KV</b> est la plus répandue — et chacune tient une pression <b>à un endroit précis du circuit</b>. Les confondre, c'est régler la mauvaise vanne.",
       "<b>KVP — régulateur de pression d'évaporation.</b> Il se monte <b>à la sortie de l'évaporateur</b>, sur l'aspiration. Il empêche la pression d'évaporation de descendre sous une valeur choisie, donc la température de descendre trop bas. C'est lui qui tient une chambre à 0 °C sans geler la marchandise, et lui qui permet à plusieurs évaporateurs réglés à des températures différentes de travailler sur un même compresseur.",
       "<b>KVL — régulateur de pression de carter.</b> Il se monte sur l'aspiration, <b>juste avant le compresseur</b>. Il limite la pression qui arrive au compresseur au démarrage ou après un dégivrage, quand l'évaporateur est encore chaud. Sans lui, le moteur force et peut disjoncter : il protège le compresseur, il ne règle pas la chambre.",
       "<b>KVR — régulateur de pression de condensation.</b> Il se monte <b>à la sortie du condenseur</b>, souvent avec une vanne de mise en pression de la bouteille. Quand il fait froid dehors, la haute pression tombe et le détendeur n'a plus assez d'écart pour alimenter l'évaporateur. Le KVR retient le liquide dans le condenseur pour <b>maintenir la haute pression</b> et rendre au détendeur sa pression de travail. C'est le remède classique d'une installation qui fonctionne l'été et se dérègle l'hiver.",
       "<b>KVC — régulateur de capacité, ou vanne de by-pass des gaz chauds.</b> Il relie le refoulement à l'aspiration. Quand la demande de froid tombe très bas, il renvoie une part des gaz chauds vers l'aspiration pour que le compresseur garde du débit au lieu de s'arrêter et de repartir sans cesse. Il <b>évite les courts-cycles</b> ; en revanche il consomme, et il ne se monte que là où le constructeur le prévoit.",
-      "<b>La règle de réglage est la même pour toutes.</b> On raccorde le manomètre sur la prise de la vanne, on tourne la vis <b>par petites touches</b>, et on <b>attend la stabilisation</b> avant de lire — une installation frigorifique ne répond jamais instantanément. Le sens de rotation et la plage se lisent sur la notice : aucune de ces vannes ne se règle à l'oreille, et une vanne réglée sans manomètre n'est pas réglée.",
-      "<b>La bouteille anti-coup de liquide</b> se place sur l'aspiration, avant le compresseur. Elle recueille le liquide qui n'a pas fini de s'évaporer et ne laisse repartir que de la vapeur, en réadmettant l'huile petit à petit par un orifice calibré. On la trouve là où la charge varie brutalement, et sur les installations à dégivrage par gaz chauds.",
-      "<b>Le pressostat différentiel d'huile</b> ne surveille pas une pression, mais un <b>écart</b> : celui entre la pression d'huile de la pompe du compresseur et la pression du carter. Si cet écart ne s'établit pas dans le délai prévu par le constructeur, le compresseur n'est pas lubrifié et l'appareil coupe. Sur les compresseurs qui en sont équipés, il se réarme <b>à la main</b>, et jamais sans avoir cherché pourquoi il a coupé.",
-      "Le <b>séparateur d'huile</b> se place juste après le compresseur (à droite), avant le condenseur (en haut). C'est là que passe en premier la vapeur chaude chargée d'huile. Il retient cette huile puis la renvoie au carter du compresseur, automatiquement, dès que le niveau monte. <b>Vérifier son fonctionnement</b>, c'est contrôler que ce retour se fait bien : une huile qui s'accumule plus loin dans le circuit réduit l'échange de chaleur, et finit par manquer au compresseur.",
-      "Après ces réglages et ce contrôle, on <b>rédige un rapport</b> sur l'état de chaque organe. Un thermostat qui dérive, un limiteur qui ne coupe plus, un séparateur qui laisse passer l'huile : non signalés, ces défauts finissent par endommager le système. À terme, faute de mesure, cela provoque une fuite ou une émission de réfrigérant. Le rapport écrit permet d'agir <b>avant</b> ce stade."
+      "<b>La règle de réglage est la même pour toutes.</b> On raccorde le manomètre sur la prise de la vanne, on tourne la vis <b>par petites touches</b>, et on <b>attend la stabilisation</b> avant de lire — une installation frigorifique ne répond jamais instantanément. Le sens de rotation et la plage se lisent sur la notice : aucune de ces vannes ne se règle à l'oreille, et une vanne réglée sans manomètre n'est pas réglée."
      ],
      "blocs": [
       {
@@ -8137,15 +7821,6 @@
       "9.10"
      ],
      "paras": [
-      "Autour du détendeur, d'autres organes se <b>règlent</b> et se <b>contrôlent</b>. Ils ne dosent pas le fluide. Ils protègent l'installation et lui évitent de gaspiller de l'énergie. Cette fiche en présente quatre : les thermostats, la soupape de régulation de pression, les limiteurs de pression, et le séparateur d'huile.",
-      "Le <b>thermostat</b> commande un organe (compresseur, vanne) selon une <b>température</b>. Le thermostat <b>mécanique</b> utilise un bulbe relié par un tube fin à des contacts électriques : simple et robuste. Le thermostat <b>électronique</b> utilise une sonde reliée à un régulateur numérique : plus précis, et plus simple à régler. Dans les deux cas, le point de consigne se règle <b>selon la fiche constructeur</b>, jamais à l'estime.",
-      "La <b>soupape de régulation de pression</b> ne coupe rien : elle <b>module en continu</b> pour maintenir une pression stable à un point du circuit. Le <b>limiteur de pression</b> est différent : c'est une sécurité. Mécanique, il est réglé par un ressort. Électronique, il utilise un capteur relié à un module. Dans les deux cas, il <b>coupe le circuit</b> — le plus souvent le compresseur — dès qu'un seuil de pression est franchi, en haute comme en basse pression. Une régulation qui module, une sécurité qui coupe : deux logiques, deux réglages.",
-      "<b>Les régulateurs de pression, chacun à sa place.</b> Sur le terrain, ces vannes portent des repères de catalogue — la série <b>KV</b> est la plus répandue — et chacune tient une pression <b>à un endroit précis du circuit</b>. Les confondre, c'est régler la mauvaise vanne.",
-      "<b>KVP — régulateur de pression d'évaporation.</b> Il se monte <b>à la sortie de l'évaporateur</b>, sur l'aspiration. Il empêche la pression d'évaporation de descendre sous une valeur choisie, donc la température de descendre trop bas. C'est lui qui tient une chambre à 0 °C sans geler la marchandise, et lui qui permet à plusieurs évaporateurs réglés à des températures différentes de travailler sur un même compresseur.",
-      "<b>KVL — régulateur de pression de carter.</b> Il se monte sur l'aspiration, <b>juste avant le compresseur</b>. Il limite la pression qui arrive au compresseur au démarrage ou après un dégivrage, quand l'évaporateur est encore chaud. Sans lui, le moteur force et peut disjoncter : il protège le compresseur, il ne règle pas la chambre.",
-      "<b>KVR — régulateur de pression de condensation.</b> Il se monte <b>à la sortie du condenseur</b>, souvent avec une vanne de mise en pression de la bouteille. Quand il fait froid dehors, la haute pression tombe et le détendeur n'a plus assez d'écart pour alimenter l'évaporateur. Le KVR retient le liquide dans le condenseur pour <b>maintenir la haute pression</b> et rendre au détendeur sa pression de travail. C'est le remède classique d'une installation qui fonctionne l'été et se dérègle l'hiver.",
-      "<b>KVC — régulateur de capacité, ou vanne de by-pass des gaz chauds.</b> Il relie le refoulement à l'aspiration. Quand la demande de froid tombe très bas, il renvoie une part des gaz chauds vers l'aspiration pour que le compresseur garde du débit au lieu de s'arrêter et de repartir sans cesse. Il <b>évite les courts-cycles</b> ; en revanche il consomme, et il ne se monte que là où le constructeur le prévoit.",
-      "<b>La règle de réglage est la même pour toutes.</b> On raccorde le manomètre sur la prise de la vanne, on tourne la vis <b>par petites touches</b>, et on <b>attend la stabilisation</b> avant de lire — une installation frigorifique ne répond jamais instantanément. Le sens de rotation et la plage se lisent sur la notice : aucune de ces vannes ne se règle à l'oreille, et une vanne réglée sans manomètre n'est pas réglée.",
       "<b>La bouteille anti-coup de liquide</b> se place sur l'aspiration, avant le compresseur. Elle recueille le liquide qui n'a pas fini de s'évaporer et ne laisse repartir que de la vapeur, en réadmettant l'huile petit à petit par un orifice calibré. On la trouve là où la charge varie brutalement, et sur les installations à dégivrage par gaz chauds.",
       "<b>Le pressostat différentiel d'huile</b> ne surveille pas une pression, mais un <b>écart</b> : celui entre la pression d'huile de la pompe du compresseur et la pression du carter. Si cet écart ne s'établit pas dans le délai prévu par le constructeur, le compresseur n'est pas lubrifié et l'appareil coupe. Sur les compresseurs qui en sont équipés, il se réarme <b>à la main</b>, et jamais sans avoir cherché pourquoi il a coupé.",
       "Le <b>séparateur d'huile</b> se place juste après le compresseur (à droite), avant le condenseur (en haut). C'est là que passe en premier la vapeur chaude chargée d'huile. Il retient cette huile puis la renvoie au carter du compresseur, automatiquement, dès que le niveau monte. <b>Vérifier son fonctionnement</b>, c'est contrôler que ce retour se fait bien : une huile qui s'accumule plus loin dans le circuit réduit l'échange de chaleur, et finit par manquer au compresseur.",
@@ -8815,9 +8490,7 @@
      "paras": [
       "Deux épreuves, deux buts, souvent enchaînées. L'<b>épreuve de résistance</b> vérifie que l'assemblage tient mécaniquement. L'<b>épreuve d'étanchéité</b> vérifie qu'il ne laisse rien passer. Les pressions d'épreuve se prennent <b>sur la documentation constructeur</b> et la norme applicable — jamais à l'estime.",
       "Vient ensuite le <b>tirage au vide</b>. Il ne sert pas à « faire propre » : il extrait l'<b>air</b> (incondensable, qui fait monter la haute pression) et l'<b>humidité</b> (qui gèle au détendeur et attaque l'huile). Sous vide, l'eau bout à température ambiante — c'est exactement ce qu'on cherche.",
-      "Enfin, on <b>consigne</b> : registre et rapport d'essais font partie du geste professionnel.",
-      "Comment conclut-on l'épreuve d'étanchéité ? On relève la pression d'azote au <b>manomètre</b> (l'appareil qui mesure la pression) au début de l'essai, puis on attend la durée prévue — selon la documentation constructeur, à faire valider. Si la pression reste <b>stable</b> (ou « stabilisée ») pendant toute cette durée, le circuit est déclaré étanche. À l'inverse, une <b>chute de pression</b> signale une fuite quelque part dans le circuit, même si elle est minime.",
-      "Un piège classique : la température de l'atelier fait elle aussi varier la pression, sans qu'il y ait de fuite. Dans un circuit fermé, la pression de l'azote <b>augmente</b> un peu quand l'air ambiant se réchauffe, et <b>diminue</b> un peu quand il refroidit. On regarde donc la tendance sur toute la durée de l'épreuve, pas un seul chiffre isolé, et on corrige qualitativement une petite variation liée à la température avant de conclure trop vite à une fuite."
+      "Enfin, on <b>consigne</b> : registre et rapport d'essais font partie du geste professionnel."
      ],
      "blocs": [
       {
@@ -8966,9 +8639,6 @@
       "3.05"
      ],
      "paras": [
-      "Deux épreuves, deux buts, souvent enchaînées. L'<b>épreuve de résistance</b> vérifie que l'assemblage tient mécaniquement. L'<b>épreuve d'étanchéité</b> vérifie qu'il ne laisse rien passer. Les pressions d'épreuve se prennent <b>sur la documentation constructeur</b> et la norme applicable — jamais à l'estime.",
-      "Vient ensuite le <b>tirage au vide</b>. Il ne sert pas à « faire propre » : il extrait l'<b>air</b> (incondensable, qui fait monter la haute pression) et l'<b>humidité</b> (qui gèle au détendeur et attaque l'huile). Sous vide, l'eau bout à température ambiante — c'est exactement ce qu'on cherche.",
-      "Enfin, on <b>consigne</b> : registre et rapport d'essais font partie du geste professionnel.",
       "Comment conclut-on l'épreuve d'étanchéité ? On relève la pression d'azote au <b>manomètre</b> (l'appareil qui mesure la pression) au début de l'essai, puis on attend la durée prévue — selon la documentation constructeur, à faire valider. Si la pression reste <b>stable</b> (ou « stabilisée ») pendant toute cette durée, le circuit est déclaré étanche. À l'inverse, une <b>chute de pression</b> signale une fuite quelque part dans le circuit, même si elle est minime.",
       "Un piège classique : la température de l'atelier fait elle aussi varier la pression, sans qu'il y ait de fuite. Dans un circuit fermé, la pression de l'azote <b>augmente</b> un peu quand l'air ambiant se réchauffe, et <b>diminue</b> un peu quand il refroidit. On regarde donc la tendance sur toute la durée de l'épreuve, pas un seul chiffre isolé, et on corrige qualitativement une petite variation liée à la température avant de conclure trop vite à une fuite."
      ],
@@ -9303,16 +8973,13 @@
      "paras": [
       "Une fuite ne sort pas d'un tube plein. Elle sort d'un <b>point d'assemblage</b> ou d'une <b>pièce en mouvement</b> : raccords mécaniques (flare, à visser), brasures poreuses ou mal pénétrées, presse-étoupes de vannes, joints, raccords vissés des voyants, filtres et pressostats, et tout ce qui <b>vibre</b> — compresseur, tuyauteries mal fixées.",
       "Avant de sortir le moindre instrument, on <b>lit le registre</b> : quelle charge, quel fluide, quelles fuites déjà détectées, qu'a-t-on réparé et quand. Un point déjà réparé est un point <b>à recontrôler en priorité</b>, pas un point clos.",
-      "<b>Ce que le registre contient, et ce qu'on y écrit en repartant.</b> Le registre est le carnet de santé de l'équipement, tenu par l'<b>exploitant</b>. On y trouve l'identification de la machine, le <b>fluide</b> et la <b>charge nominale</b>, la date et le résultat de chaque contrôle d'étanchéité, les quantités <b>ajoutées</b> et <b>récupérées</b> avec leur date, les fuites détectées et les réparations faites, et l'identité de l'intervenant et de son entreprise avec leurs attestations. Sur une installation qu'on ne connaît pas, ces lignes disent en trois minutes ce qu'une heure de mesures ne dirait pas : une machine qui a déjà fui deux fois au même endroit ne se contrôle pas comme une machine saine.",
-      "En repartant, on écrit <b>ce qu'on a fait, pas ce qu'on a cru</b> : la date, la méthode de contrôle employée, le résultat, la quantité exacte manipulée pesée à la balance, et la nature de la réparation. Une charge d'appoint sans quantité notée, une réparation sans recontrôle mentionné, et le registre ne prouve plus rien — ni pour le client, ni devant un contrôle.",
-      "Vient ensuite le <b>contrôle visuel et manuel</b>, sans électronique : traces d'huile (le fluide entraîne l'huile en fuyant), corrosion, givre anormal, serrage des raccords accessibles, état des fixations.",
-      "<b>Actualité au 1er août 2026.</b> Le référentiel 2024/2215 cite encore le règlement (CE) n° 1516/2007 pour les compétences 4.03 à 4.07. Ce texte a été <b>abrogé le 23 juillet 2026</b> par le règlement 2026/1444, sans remplacement. Les distinctions directe et indirecte restent évaluées par le référentiel ; sur le terrain, la procédure actuelle du site, la notice et les consignes validées priment."
+      "<b>Ce que le registre contient, et ce qu'on y écrit en repartant.</b> Le registre est le carnet de santé de l'équipement, tenu par l'<b>exploitant</b>. On y trouve l'identification de la machine, le <b>fluide</b> et la <b>charge nominale</b>, la date et le résultat de chaque contrôle d'étanchéité, les quantités <b>ajoutées</b> et <b>récupérées</b> avec leur date, les fuites détectées et les réparations faites, et l'identité de l'intervenant et de son entreprise avec leurs attestations. Sur une installation qu'on ne connaît pas, ces lignes disent en trois minutes ce qu'une heure de mesures ne dirait pas : une machine qui a déjà fui deux fois au même endroit ne se contrôle pas comme une machine saine."
      ],
      "blocs": [
       {
        "type": "cle",
        "t": "L'ordre ne s'invente pas",
-       "html": "<b>Registre → visuel et manuel → méthode indirecte → méthode directe.</b><br>Chaque étape oriente la suivante. On ne contrôle jamais à l'aveugle : le registre oriente le contrôle avant même d'ouvrir la porte du local technique."
+       "html": "<b>Registre → visuel et manuel → méthode indirecte → méthode directe.</b></p><p>Chaque étape oriente la suivante. On ne contrôle jamais à l'aveugle : le registre oriente le contrôle avant même d'ouvrir la porte du local technique."
       }
      ],
      "question": {
@@ -9339,9 +9006,6 @@
       "4.03"
      ],
      "paras": [
-      "Une fuite ne sort pas d'un tube plein. Elle sort d'un <b>point d'assemblage</b> ou d'une <b>pièce en mouvement</b> : raccords mécaniques (flare, à visser), brasures poreuses ou mal pénétrées, presse-étoupes de vannes, joints, raccords vissés des voyants, filtres et pressostats, et tout ce qui <b>vibre</b> — compresseur, tuyauteries mal fixées.",
-      "Avant de sortir le moindre instrument, on <b>lit le registre</b> : quelle charge, quel fluide, quelles fuites déjà détectées, qu'a-t-on réparé et quand. Un point déjà réparé est un point <b>à recontrôler en priorité</b>, pas un point clos.",
-      "<b>Ce que le registre contient, et ce qu'on y écrit en repartant.</b> Le registre est le carnet de santé de l'équipement, tenu par l'<b>exploitant</b>. On y trouve l'identification de la machine, le <b>fluide</b> et la <b>charge nominale</b>, la date et le résultat de chaque contrôle d'étanchéité, les quantités <b>ajoutées</b> et <b>récupérées</b> avec leur date, les fuites détectées et les réparations faites, et l'identité de l'intervenant et de son entreprise avec leurs attestations. Sur une installation qu'on ne connaît pas, ces lignes disent en trois minutes ce qu'une heure de mesures ne dirait pas : une machine qui a déjà fui deux fois au même endroit ne se contrôle pas comme une machine saine.",
       "En repartant, on écrit <b>ce qu'on a fait, pas ce qu'on a cru</b> : la date, la méthode de contrôle employée, le résultat, la quantité exacte manipulée pesée à la balance, et la nature de la réparation. Une charge d'appoint sans quantité notée, une réparation sans recontrôle mentionné, et le registre ne prouve plus rien — ni pour le client, ni devant un contrôle.",
       "Vient ensuite le <b>contrôle visuel et manuel</b>, sans électronique : traces d'huile (le fluide entraîne l'huile en fuyant), corrosion, givre anormal, serrage des raccords accessibles, état des fixations.",
       "<b>Actualité au 1er août 2026.</b> Le référentiel 2024/2215 cite encore le règlement (CE) n° 1516/2007 pour les compétences 4.03 à 4.07. Ce texte a été <b>abrogé le 23 juillet 2026</b> par le règlement 2026/1444, sans remplacement. Les distinctions directe et indirecte restent évaluées par le référentiel ; sur le terrain, la procédure actuelle du site, la notice et les consignes validées priment."
@@ -9383,7 +9047,7 @@
       {
        "type": "cle",
        "t": "Trois instruments, trois informations",
-       "html": "<b>Manomètre</b> (BP/HP) → écart avec la table de saturation.<br><b>Thermomètre de contact</b> → surchauffe et sous-refroidissement.<br><b>Multimètre</b> → cohérence électrique du compresseur.<br>Un seul indice ne conclut rien ; c'est leur <b>convergence</b> qui oriente."
+       "html": "<b>Manomètre</b> (BP/HP) → écart avec la table de saturation.</p><p><b>Thermomètre de contact</b> → surchauffe et sous-refroidissement.</p><p><b>Multimètre</b> → cohérence électrique du compresseur.</p><p>Un seul indice ne conclut rien ; c'est leur <b>convergence</b> qui oriente."
       },
       {
        "type": "piege",
@@ -9392,7 +9056,7 @@
       },
       {
        "t": "À toi : refais la lecture croisée",
-       "html": "<p style=\"margin:0 0 10px\">Reprends la réglette : pression relative, conversion en absolu, température de saturation, écart avec la mesure. Hors plage → on soupçonne.</p><iframe src=\"packs/fluides/res/outils/reglette.html\" title=\"Réglette pression-température interactive\" style=\"width:100%;height:445px;border:0;background:#fff;border-radius:6px\" loading=\"lazy\"></iframe>"
+       "html": "<p>Reprends la réglette : pression relative, conversion en absolu, température de saturation, écart avec la mesure. Hors plage → on soupçonne.</p>"
       }
      ],
      "question": {
@@ -9421,9 +9085,7 @@
      ],
      "paras": [
       "La méthode directe <b>localise physiquement</b> la fuite. Pour la catégorie E, elle se pratique <b>sans accéder au circuit</b> : c'est le code <b>4.07</b>. Le code 4.06, qui suppose d'intervenir dans le circuit, n'est pas dans le champ de la catégorie E.",
-      "Le code <b>4.06</b> distingue les méthodes directes qui supposent d'<b>intervenir dans le circuit</b>. Le code <b>4.07</b> vise celles qui n'exigent pas cette intervention. Le référentiel 2024/2215 rattache encore ces mots au règlement 1516/2007, mais ce texte a été <b>abrogé le 23 juillet 2026</b> sans remplacement. La méthode réellement autorisée dépend donc de la procédure actuelle, de l'installation et du périmètre de certification.",
-      "Le <b>détecteur électronique</b> réagit à la présence de molécules de fluide dans l'air : on balaie la sonde <b>lentement</b>, le long des points repérés à l'étape visuelle. L'<b>eau savonneuse</b> localise par les bulles ; le <b>traceur UV</b> révèle les fuites intermittentes ou d'accès difficile. Sensibilité et étalonnage : selon doc constructeur, à faire valider.",
-      "Le code <b>4.09</b> exige de consigner le contrôle. On note : date, méthode, points contrôlés, résultat, et en cas de fuite la localisation précise et la suite donnée."
+      "Le code <b>4.06</b> distingue les méthodes directes qui supposent d'<b>intervenir dans le circuit</b>. Le code <b>4.07</b> vise celles qui n'exigent pas cette intervention. Le référentiel 2024/2215 rattache encore ces mots au règlement 1516/2007, mais ce texte a été <b>abrogé le 23 juillet 2026</b> sans remplacement. La méthode réellement autorisée dépend donc de la procédure actuelle, de l'installation et du périmètre de certification."
      ],
      "blocs": [
       {
@@ -9457,8 +9119,6 @@
       "4.09"
      ],
      "paras": [
-      "La méthode directe <b>localise physiquement</b> la fuite. Pour la catégorie E, elle se pratique <b>sans accéder au circuit</b> : c'est le code <b>4.07</b>. Le code 4.06, qui suppose d'intervenir dans le circuit, n'est pas dans le champ de la catégorie E.",
-      "Le code <b>4.06</b> distingue les méthodes directes qui supposent d'<b>intervenir dans le circuit</b>. Le code <b>4.07</b> vise celles qui n'exigent pas cette intervention. Le référentiel 2024/2215 rattache encore ces mots au règlement 1516/2007, mais ce texte a été <b>abrogé le 23 juillet 2026</b> sans remplacement. La méthode réellement autorisée dépend donc de la procédure actuelle, de l'installation et du périmètre de certification.",
       "Le <b>détecteur électronique</b> réagit à la présence de molécules de fluide dans l'air : on balaie la sonde <b>lentement</b>, le long des points repérés à l'étape visuelle. L'<b>eau savonneuse</b> localise par les bulles ; le <b>traceur UV</b> révèle les fuites intermittentes ou d'accès difficile. Sensibilité et étalonnage : selon doc constructeur, à faire valider.",
       "Le code <b>4.09</b> exige de consigner le contrôle. On note : date, méthode, points contrôlés, résultat, et en cas de fuite la localisation précise et la suite donnée."
      ],
@@ -10086,7 +9746,7 @@
       {
        "type": "cle",
        "t": "Récupéré, recyclé, régénéré",
-       "html": "<b>Récupéré</b> : sorti de la machine — c'est un déchet tant qu'il n'a pas été traité.<br><b>Recyclé</b> : nettoyé sommairement — réemploi limité, typiquement sur la même installation ou le même exploitant.<br><b>Régénéré</b> : ramené aux spécifications d'un fluide neuf par une filière agréée — réutilisable comme du neuf."
+       "html": "<b>Récupéré</b> : sorti de la machine — c'est un déchet tant qu'il n'a pas été traité.</p><p><b>Recyclé</b> : nettoyé sommairement — réemploi limité, typiquement sur la même installation ou le même exploitant.</p><p><b>Régénéré</b> : ramené aux spécifications d'un fluide neuf par une filière agréée — réutilisable comme du neuf."
       }
      ],
      "question": {
@@ -11168,15 +10828,13 @@
       "10.02"
      ],
      "paras": [
-      "Braser un circuit frigorifique, ce n'est pas braser une tuyauterie d'eau. À la flamme, l'intérieur du cuivre s'oxyde et forme une <b>calamine</b> noire qui se détache plus tard, circule, et bouche le déshydrateur ou abîme le compresseur — des mois après, loin de la cause.",
-      "D'où le <b>balayage à l'azote</b> pendant toute la chauffe : un débit léger et continu chasse l'oxygène du tube. Pour le cuivre sur cuivre, l'alliage d'apport est généralement du type <b>cuivre-phosphore</b>.",
-      "On ne brase <b>jamais</b> un circuit contenant du fluide : récupération, puis inertage à l'azote. <b>EPI systématiques</b> au poste : lunettes, gants. Les tubes se cintrent <b>à froid, à la cintreuse</b>, se coupent au coupe-tube et s'<b>ébavurent</b> — une bavure part avec le fluide et finit dans le compresseur."
+      "Braser un circuit frigorifique, ce n'est pas braser une tuyauterie d'eau. À la flamme, l'intérieur du cuivre s'oxyde et forme une <b>calamine</b> noire qui se détache plus tard, circule, et bouche le déshydrateur ou abîme le compresseur — des mois après, loin de la cause."
      ],
      "blocs": [
       {
        "type": "cle",
        "t": "Deux opérations à l'azote, à ne pas confondre",
-       "html": "<b>Balayage</b> : pendant le brasage, débit léger, pour éviter l'oxydation.<br><b>Épreuve</b> : après le brasage, sous pression, pour vérifier l'étanchéité.<br>Même gaz, deux gestes, deux moments."
+       "html": "<b>Balayage</b> : pendant le brasage, débit léger, pour éviter l'oxydation.</p><p><b>Épreuve</b> : après le brasage, sous pression, pour vérifier l'étanchéité.</p><p>Même gaz, deux gestes, deux moments."
       }
      ],
      "question": {
@@ -11202,9 +10860,7 @@
       "10.02"
      ],
      "paras": [
-      "Braser un circuit frigorifique, ce n'est pas braser une tuyauterie d'eau. À la flamme, l'intérieur du cuivre s'oxyde et forme une <b>calamine</b> noire qui se détache plus tard, circule, et bouche le déshydrateur ou abîme le compresseur — des mois après, loin de la cause.",
-      "D'où le <b>balayage à l'azote</b> pendant toute la chauffe : un débit léger et continu chasse l'oxygène du tube. Pour le cuivre sur cuivre, l'alliage d'apport est généralement du type <b>cuivre-phosphore</b>.",
-      "On ne brase <b>jamais</b> un circuit contenant du fluide : récupération, puis inertage à l'azote. <b>EPI systématiques</b> au poste : lunettes, gants. Les tubes se cintrent <b>à froid, à la cintreuse</b>, se coupent au coupe-tube et s'<b>ébavurent</b> — une bavure part avec le fluide et finit dans le compresseur."
+      "D'où le <b>balayage à l'azote</b> pendant toute la chauffe : un débit léger et continu chasse l'oxygène du tube. Pour le cuivre sur cuivre, l'alliage d'apport est généralement du type <b>cuivre-phosphore</b>."
      ],
      "blocs": [],
      "question": {
@@ -11230,8 +10886,6 @@
       "10.02"
      ],
      "paras": [
-      "Braser un circuit frigorifique, ce n'est pas braser une tuyauterie d'eau. À la flamme, l'intérieur du cuivre s'oxyde et forme une <b>calamine</b> noire qui se détache plus tard, circule, et bouche le déshydrateur ou abîme le compresseur — des mois après, loin de la cause.",
-      "D'où le <b>balayage à l'azote</b> pendant toute la chauffe : un débit léger et continu chasse l'oxygène du tube. Pour le cuivre sur cuivre, l'alliage d'apport est généralement du type <b>cuivre-phosphore</b>.",
       "On ne brase <b>jamais</b> un circuit contenant du fluide : récupération, puis inertage à l'azote. <b>EPI systématiques</b> au poste : lunettes, gants. Les tubes se cintrent <b>à froid, à la cintreuse</b>, se coupent au coupe-tube et s'<b>ébavurent</b> — une bavure part avec le fluide et finit dans le compresseur."
      ],
      "blocs": [
@@ -11705,19 +11359,13 @@
      "paras": [
       "Remplacer un fluide à fort PRP se fait dans deux directions : les <b>fluides naturels</b> (CO₂, ammoniac, hydrocarbures) et les fluides de synthèse à faible PRP (<b>HFO</b>, HFC bas PRP). Il n'existe <b>pas de fluide universel</b> : le choix dépend de l'application, du climat, et de la sécurité du site.",
       "La <b>classe de sécurité NF EN 378</b> commande tout le reste — EPI, zonage, détection, charge admissible dans le local : <b>A1</b> (CO₂), <b>A2L</b> (R-32, R-1234yf), <b>A3</b> (R-290), <b>B2L</b> (NH₃).",
-      "Une classe ne dit pas seulement « ça brûle ou non ». Elle décrit la <b>combustibilité</b> et la <b>propagation de la flamme</b> : un <b>A2L</b> brûle difficilement et la flamme se propage lentement, un <b>A3</b> s'enflamme facilement et la flamme court vite. De là découlent une <b>charge maximale</b> admissible et des <b>limites d'occupation</b> du local — plus le local est petit ou recevant du public, plus la charge autorisée est faible. Ces valeurs se déterminent selon la <b>NF EN 378</b> et la doc constructeur, <b>jamais à l'estime</b>.",
-      "Le stockage et le transport des fluides <b>inflammables</b>, <b>toxiques</b> ou à <b>haute pression</b> obéissent chacun à des règles propres. Et lorsqu'un site ne peut pas respecter les exigences de l'<b>annexe IV du règlement (UE) 2024/573</b> pour des raisons de <b>sécurité</b>, des équipements dérogatoires restent permis : c'est une exception encadrée, qui se justifie par écrit, pas un passe-droit.",
-      "Côté énergie, le <b>COP</b> est le rapport de la puissance frigorifique produite à la puissance électrique consommée. On l'améliore en <b>rapprochant</b> la température de condensation de celle d'évaporation : condenseur propre, échangeurs bien dimensionnés, réglages justes. Réduire la charge, enfin, améliore à la fois la sécurité et le rendement.",
-      "Pour réduire la charge de fluide frigorigène, on peut aussi changer la <b>conception</b> du système. Dans un système à <b>boucle secondaire</b>, le fluide frigorigène reste confiné dans la machinerie, avec une charge réduite. Un fluide caloporteur — de l'<b>eau glacée</b> ou de l'<b>eau glycolée</b> — circule ensuite dans les postes (vitrines, centrales de traitement d'air) pour transporter le froid jusqu'à eux. Le fluide frigorigène ne quitte jamais la salle des machines.",
-      "Le système en <b>cascade</b> pousse cette logique plus loin : deux circuits frigorifiques séparés sont montés en série, chacun avec sa propre charge, réduite elle aussi. Le circuit basse température évacue sa chaleur dans le circuit haute température, qui la rejette à l'extérieur. Chaque circuit reste petit, donc plus facile à confiner en cas de fuite.",
-      "Chaque fluide de substitution a ses <b>avantages</b> et ses <b>inconvénients</b>, selon l'application et le <b>climat</b>. Le <b>CO₂</b> est performant en froid commercial, mais son efficacité baisse quand l'air extérieur est très chaud. Les <b>hydrocarbures</b> sont efficaces, mais leur inflammabilité limite la charge autorisée. L'<b>ammoniac</b> est réservé aux installations industrielles, à cause de sa toxicité. Il n'y a pas de meilleur fluide dans l'absolu : le choix se fait selon l'application, le climat du site, et la documentation constructeur, à faire valider avant tout choix.",
-      "Une machine aux <b>hydrocarbures</b> n'est pas construite comme les autres. Tous les composants électriques en contact possible avec le gaz — relais, thermostats, ventilateurs — sont <b>antidéflagrants</b> ou <b>non étincelants</b> : ils sont conçus pour ne jamais produire d'étincelle qui pourrait enflammer le gaz. La charge de fluide est aussi limitée dès la conception. Enfin, l'implantation prévoit une <b>ventilation</b> adaptée : le propane est plus lourd que l'air, il s'accumule donc en bas, près du sol, en cas de fuite."
+      "Une classe ne dit pas seulement « ça brûle ou non ». Elle décrit la <b>combustibilité</b> et la <b>propagation de la flamme</b> : un <b>A2L</b> brûle difficilement et la flamme se propage lentement, un <b>A3</b> s'enflamme facilement et la flamme court vite. De là découlent une <b>charge maximale</b> admissible et des <b>limites d'occupation</b> du local — plus le local est petit ou recevant du public, plus la charge autorisée est faible. Ces valeurs se déterminent selon la <b>NF EN 378</b> et la doc constructeur, <b>jamais à l'estime</b>."
      ],
      "blocs": [
       {
        "type": "cle",
        "t": "Drop-in ou retrofit ?",
-       "html": "<b>Drop-in</b> : on change le fluide sans modifier l'installation.<br><b>Retrofit</b> : on change le fluide <b>et</b> ce qu'il faut adapter — huile, détendeur, joints. Annoncer un drop-in là où il faut un retrofit, c'est préparer une panne."
+       "html": "<b>Drop-in</b> : on change le fluide sans modifier l'installation.</p><p><b>Retrofit</b> : on change le fluide <b>et</b> ce qu'il faut adapter — huile, détendeur, joints. Annoncer un drop-in là où il faut un retrofit, c'est préparer une panne."
       },
       {
        "type": "piege",
@@ -11752,20 +11400,14 @@
       "1.08"
      ],
      "paras": [
-      "Remplacer un fluide à fort PRP se fait dans deux directions : les <b>fluides naturels</b> (CO₂, ammoniac, hydrocarbures) et les fluides de synthèse à faible PRP (<b>HFO</b>, HFC bas PRP). Il n'existe <b>pas de fluide universel</b> : le choix dépend de l'application, du climat, et de la sécurité du site.",
-      "La <b>classe de sécurité NF EN 378</b> commande tout le reste — EPI, zonage, détection, charge admissible dans le local : <b>A1</b> (CO₂), <b>A2L</b> (R-32, R-1234yf), <b>A3</b> (R-290), <b>B2L</b> (NH₃).",
-      "Une classe ne dit pas seulement « ça brûle ou non ». Elle décrit la <b>combustibilité</b> et la <b>propagation de la flamme</b> : un <b>A2L</b> brûle difficilement et la flamme se propage lentement, un <b>A3</b> s'enflamme facilement et la flamme court vite. De là découlent une <b>charge maximale</b> admissible et des <b>limites d'occupation</b> du local — plus le local est petit ou recevant du public, plus la charge autorisée est faible. Ces valeurs se déterminent selon la <b>NF EN 378</b> et la doc constructeur, <b>jamais à l'estime</b>.",
       "Le stockage et le transport des fluides <b>inflammables</b>, <b>toxiques</b> ou à <b>haute pression</b> obéissent chacun à des règles propres. Et lorsqu'un site ne peut pas respecter les exigences de l'<b>annexe IV du règlement (UE) 2024/573</b> pour des raisons de <b>sécurité</b>, des équipements dérogatoires restent permis : c'est une exception encadrée, qui se justifie par écrit, pas un passe-droit.",
       "Côté énergie, le <b>COP</b> est le rapport de la puissance frigorifique produite à la puissance électrique consommée. On l'améliore en <b>rapprochant</b> la température de condensation de celle d'évaporation : condenseur propre, échangeurs bien dimensionnés, réglages justes. Réduire la charge, enfin, améliore à la fois la sécurité et le rendement.",
-      "Pour réduire la charge de fluide frigorigène, on peut aussi changer la <b>conception</b> du système. Dans un système à <b>boucle secondaire</b>, le fluide frigorigène reste confiné dans la machinerie, avec une charge réduite. Un fluide caloporteur — de l'<b>eau glacée</b> ou de l'<b>eau glycolée</b> — circule ensuite dans les postes (vitrines, centrales de traitement d'air) pour transporter le froid jusqu'à eux. Le fluide frigorigène ne quitte jamais la salle des machines.",
-      "Le système en <b>cascade</b> pousse cette logique plus loin : deux circuits frigorifiques séparés sont montés en série, chacun avec sa propre charge, réduite elle aussi. Le circuit basse température évacue sa chaleur dans le circuit haute température, qui la rejette à l'extérieur. Chaque circuit reste petit, donc plus facile à confiner en cas de fuite.",
-      "Chaque fluide de substitution a ses <b>avantages</b> et ses <b>inconvénients</b>, selon l'application et le <b>climat</b>. Le <b>CO₂</b> est performant en froid commercial, mais son efficacité baisse quand l'air extérieur est très chaud. Les <b>hydrocarbures</b> sont efficaces, mais leur inflammabilité limite la charge autorisée. L'<b>ammoniac</b> est réservé aux installations industrielles, à cause de sa toxicité. Il n'y a pas de meilleur fluide dans l'absolu : le choix se fait selon l'application, le climat du site, et la documentation constructeur, à faire valider avant tout choix.",
-      "Une machine aux <b>hydrocarbures</b> n'est pas construite comme les autres. Tous les composants électriques en contact possible avec le gaz — relais, thermostats, ventilateurs — sont <b>antidéflagrants</b> ou <b>non étincelants</b> : ils sont conçus pour ne jamais produire d'étincelle qui pourrait enflammer le gaz. La charge de fluide est aussi limitée dès la conception. Enfin, l'implantation prévoit une <b>ventilation</b> adaptée : le propane est plus lourd que l'air, il s'accumule donc en bas, près du sol, en cas de fuite."
+      "Pour réduire la charge de fluide frigorigène, on peut aussi changer la <b>conception</b> du système. Dans un système à <b>boucle secondaire</b>, le fluide frigorigène reste confiné dans la machinerie, avec une charge réduite. Un fluide caloporteur — de l'<b>eau glacée</b> ou de l'<b>eau glycolée</b> — circule ensuite dans les postes (vitrines, centrales de traitement d'air) pour transporter le froid jusqu'à eux. Le fluide frigorigène ne quitte jamais la salle des machines."
      ],
      "blocs": [
       {
        "t": "À toi : compare les candidats à la substitution",
-       "html": "<p style=\"margin:0 0 10px\">Passe en revue R-290, R-1234yf, R-744, R-32 : classe de sécurité, PRP, glide. Le fluide « parfait » n existe pas — c est tout l objet de ce groupe.</p><iframe src=\"packs/fluides/res/outils/fiche-fluide.html\" title=\"Carte d identité du fluide interactive\" style=\"width:100%;height:415px;border:0;background:#fff;border-radius:6px\" loading=\"lazy\"></iframe>"
+       "html": "<p>Passe en revue R-290, R-1234yf, R-744, R-32 : classe de sécurité, PRP, glide. Le fluide « parfait » n existe pas — c est tout l objet de ce groupe.</p>"
       }
      ],
      "question": {
@@ -11795,12 +11437,6 @@
       "1.08"
      ],
      "paras": [
-      "Remplacer un fluide à fort PRP se fait dans deux directions : les <b>fluides naturels</b> (CO₂, ammoniac, hydrocarbures) et les fluides de synthèse à faible PRP (<b>HFO</b>, HFC bas PRP). Il n'existe <b>pas de fluide universel</b> : le choix dépend de l'application, du climat, et de la sécurité du site.",
-      "La <b>classe de sécurité NF EN 378</b> commande tout le reste — EPI, zonage, détection, charge admissible dans le local : <b>A1</b> (CO₂), <b>A2L</b> (R-32, R-1234yf), <b>A3</b> (R-290), <b>B2L</b> (NH₃).",
-      "Une classe ne dit pas seulement « ça brûle ou non ». Elle décrit la <b>combustibilité</b> et la <b>propagation de la flamme</b> : un <b>A2L</b> brûle difficilement et la flamme se propage lentement, un <b>A3</b> s'enflamme facilement et la flamme court vite. De là découlent une <b>charge maximale</b> admissible et des <b>limites d'occupation</b> du local — plus le local est petit ou recevant du public, plus la charge autorisée est faible. Ces valeurs se déterminent selon la <b>NF EN 378</b> et la doc constructeur, <b>jamais à l'estime</b>.",
-      "Le stockage et le transport des fluides <b>inflammables</b>, <b>toxiques</b> ou à <b>haute pression</b> obéissent chacun à des règles propres. Et lorsqu'un site ne peut pas respecter les exigences de l'<b>annexe IV du règlement (UE) 2024/573</b> pour des raisons de <b>sécurité</b>, des équipements dérogatoires restent permis : c'est une exception encadrée, qui se justifie par écrit, pas un passe-droit.",
-      "Côté énergie, le <b>COP</b> est le rapport de la puissance frigorifique produite à la puissance électrique consommée. On l'améliore en <b>rapprochant</b> la température de condensation de celle d'évaporation : condenseur propre, échangeurs bien dimensionnés, réglages justes. Réduire la charge, enfin, améliore à la fois la sécurité et le rendement.",
-      "Pour réduire la charge de fluide frigorigène, on peut aussi changer la <b>conception</b> du système. Dans un système à <b>boucle secondaire</b>, le fluide frigorigène reste confiné dans la machinerie, avec une charge réduite. Un fluide caloporteur — de l'<b>eau glacée</b> ou de l'<b>eau glycolée</b> — circule ensuite dans les postes (vitrines, centrales de traitement d'air) pour transporter le froid jusqu'à eux. Le fluide frigorigène ne quitte jamais la salle des machines.",
       "Le système en <b>cascade</b> pousse cette logique plus loin : deux circuits frigorifiques séparés sont montés en série, chacun avec sa propre charge, réduite elle aussi. Le circuit basse température évacue sa chaleur dans le circuit haute température, qui la rejette à l'extérieur. Chaque circuit reste petit, donc plus facile à confiner en cas de fuite.",
       "Chaque fluide de substitution a ses <b>avantages</b> et ses <b>inconvénients</b>, selon l'application et le <b>climat</b>. Le <b>CO₂</b> est performant en froid commercial, mais son efficacité baisse quand l'air extérieur est très chaud. Les <b>hydrocarbures</b> sont efficaces, mais leur inflammabilité limite la charge autorisée. L'<b>ammoniac</b> est réservé aux installations industrielles, à cause de sa toxicité. Il n'y a pas de meilleur fluide dans l'absolu : le choix se fait selon l'application, le climat du site, et la documentation constructeur, à faire valider avant tout choix.",
       "Une machine aux <b>hydrocarbures</b> n'est pas construite comme les autres. Tous les composants électriques en contact possible avec le gaz — relais, thermostats, ventilateurs — sont <b>antidéflagrants</b> ou <b>non étincelants</b> : ils sont conçus pour ne jamais produire d'étincelle qui pourrait enflammer le gaz. La charge de fluide est aussi limitée dès la conception. Enfin, l'implantation prévoit une <b>ventilation</b> adaptée : le propane est plus lourd que l'air, il s'accumule donc en bas, près du sol, en cas de fuite."
@@ -12344,21 +11980,13 @@
       "Les hydrocarbures — <b>R-290</b> (propane), <b>R-600a</b> (isobutane) — sont classés <b>A3</b> : très inflammables. Ils s'imposent pourtant, parce que leur PRP est très bas et leurs performances excellentes : on les trouve dans les réfrigérateurs domestiques, les monoblocs, les vitrines, et de plus en plus dans les pompes à chaleur.",
       "<b>L'étiquetage : ce qui doit être lu avant même d'ouvrir la machine.</b> Un équipement contenant un réfrigérant inflammable porte une <b>plaque signalétique</b> et un <b>marquage de danger</b> visibles : le fluide et sa quantité, le pictogramme de flamme, et la mention avertissant du risque. Sur les appareils concernés, un marquage rappelle que l'entretien revient à une personne formée et que la machine ne doit être ni percée ni brûlée. Cette lecture est le <b>premier geste</b> de l'intervention : elle décide de l'outillage, du balisage et de la ventilation.",
       "Si la plaque manque ou reste illisible, on ne devine pas : l'identification se cherche dans la documentation de la machine et dans le registre, jamais à l'odeur ni à la couleur d'une bouteille. Intervenir sur un fluide qu'on n'a pas identifié, c'est risquer de braser sur un hydrocarbure.",
-      "<b>Efficacité énergétique : sur ces machines, elle se joue à la charge.</b> Les équipements aux hydrocarbures fonctionnent avec des charges <b>volontairement faibles</b>, et sont conçus pour cela. Une charge d'appoint approximative, un échangeur encrassé ou un dégivrage mal réglé pèsent donc bien plus lourd qu'ailleurs sur la consommation. Charger à la <b>balance</b>, selon la quantité inscrite sur la plaque, tenir les échangeurs propres et vérifier les réglages : sur ces installations, c'est autant une mesure d'énergie qu'une mesure de sécurité.",
-      "Travailler dessus impose une <b>préparation dédiée</b> : analyse de risques avant intervention, suppression de toute source d'ignition, <b>ventilation active</b>, outillage et matériel électrique adaptés, détecteur de gaz. La charge admissible dépend du <b>volume du local</b> et de la classe de sécurité : elle se détermine selon la <b>NF EN 378</b> et la plaque signalétique — <b>jamais estimée</b>.",
-      "Sur le circuit : récupération, puis <b>inertage à l'azote</b> avant toute flamme. Épreuve de pression à l'azote, essai sous vide, charge de la quantité exacte, contrôle direct, rapport.",
-      "Tout est <b>étiqueté</b>, et l'étiquette se lit avant de toucher : l'équipement porte la mention du fluide et le pictogramme <b>inflammable</b>, la bouteille aussi. Les bouteilles d'hydrocarbure ont un <b>raccord spécifique</b> et un <b>filetage à gauche</b> — c'est une sécurité, jamais un obstacle à contourner avec un adaptateur.",
-      "Avant d'intervenir, on vérifie que le <b>site</b> lui-même est en règle : <b>signalisation</b> du risque, <b>issues de secours</b> dégagées, <b>capteurs de gaz</b> et <b>alarmes</b> présents et en service, ventilation opérante. Si ces mesures manquent, on ne commence pas : on le signale.",
-      "Enfin, bien travailler économise l'énergie. Une charge <b>juste</b> — et les charges hydrocarbures sont faibles —, des échangeurs propres et des réglages exacts font qu'une machine au R-290 tient ses performances. Une charge approximative dégrade le rendement <b>et</b> la sécurité en même temps.",
-      "Un hydrocarbure récupéré qu'on ne peut pas réutiliser ne part <b>jamais</b> à l'atmosphère, et jamais à l'égout : il part en <b>élimination</b>. C'est une filière agréée qui détruit le fluide dans des conditions contrôlées, comme pour tout déchet dangereux. La bouteille envoyée en <b>destruction</b> est accompagnée d'un bordereau qui trace le mouvement, du technicien jusqu'au centre de traitement. On garde ce bordereau : c'est la preuve que le fluide a bien été éliminé, pas relâché.",
-      "Calculer la <b>charge maximale</b> admissible d'un fluide inflammable, ce n'est pas la deviner. Ce calcul dépend du <b>volume de la pièce</b> desservie et de la <b>limite pratique</b> du fluide, c'est-à-dire la quantité maximale tolérée dans l'air ambiant sans risque. Plus la pièce est petite, moins on a le droit de charge : un même compresseur au R-290 n'a pas la même charge autorisée dans un grand local et dans une pièce exiguë. La méthode et les valeurs à utiliser se trouvent dans la norme <b>NF EN 378</b> et dans la documentation du constructeur — on les <b>lit</b>, on ne les invente jamais, et le résultat du calcul se fait <b>valider</b> avant toute mise en service.",
-      "Sur un équipement à fluide inflammable, l'<b>efficacité énergétique</b> se travaille avec les mêmes gestes que sur toutes les machines. La différence, c'est que la charge exacte compte double : ces circuits sont conçus avec une charge volontairement petite, alors le moindre écart — un peu trop, un peu pas assez — dérègle vite l'échange et fait chuter la performance, bien avant que ça n'arrive sur une machine à grosse charge."
+      "<b>Efficacité énergétique : sur ces machines, elle se joue à la charge.</b> Les équipements aux hydrocarbures fonctionnent avec des charges <b>volontairement faibles</b>, et sont conçus pour cela. Une charge d'appoint approximative, un échangeur encrassé ou un dégivrage mal réglé pèsent donc bien plus lourd qu'ailleurs sur la consommation. Charger à la <b>balance</b>, selon la quantité inscrite sur la plaque, tenir les échangeurs propres et vérifier les réglages : sur ces installations, c'est autant une mesure d'énergie qu'une mesure de sécurité."
      ],
      "blocs": [
       {
        "type": "piege",
        "t": "Deux confusions qui coûtent cher",
-       "html": "<b>1.</b> Croire que le R-290 est A2L comme le R-32. Il est <b>A3</b> — la propagation de flamme n'a rien à voir.<br><b>2.</b> Forcer un <b>raccord de bouteille</b> hydrocarbure sur un circuit HFC (ou l'inverse) : les raccords sont spécifiques précisément pour empêcher la charge croisée."
+       "html": "<b>1.</b> Croire que le R-290 est A2L comme le R-32. Il est <b>A3</b> — la propagation de flamme n'a rien à voir.</p><p><b>2.</b> Forcer un <b>raccord de bouteille</b> hydrocarbure sur un circuit HFC (ou l'inverse) : les raccords sont spécifiques précisément pour empêcher la charge croisée."
       }
      ],
      "question": {
@@ -12389,18 +12017,10 @@
       "12.14"
      ],
      "paras": [
-      "Les hydrocarbures — <b>R-290</b> (propane), <b>R-600a</b> (isobutane) — sont classés <b>A3</b> : très inflammables. Ils s'imposent pourtant, parce que leur PRP est très bas et leurs performances excellentes : on les trouve dans les réfrigérateurs domestiques, les monoblocs, les vitrines, et de plus en plus dans les pompes à chaleur.",
-      "<b>L'étiquetage : ce qui doit être lu avant même d'ouvrir la machine.</b> Un équipement contenant un réfrigérant inflammable porte une <b>plaque signalétique</b> et un <b>marquage de danger</b> visibles : le fluide et sa quantité, le pictogramme de flamme, et la mention avertissant du risque. Sur les appareils concernés, un marquage rappelle que l'entretien revient à une personne formée et que la machine ne doit être ni percée ni brûlée. Cette lecture est le <b>premier geste</b> de l'intervention : elle décide de l'outillage, du balisage et de la ventilation.",
-      "Si la plaque manque ou reste illisible, on ne devine pas : l'identification se cherche dans la documentation de la machine et dans le registre, jamais à l'odeur ni à la couleur d'une bouteille. Intervenir sur un fluide qu'on n'a pas identifié, c'est risquer de braser sur un hydrocarbure.",
-      "<b>Efficacité énergétique : sur ces machines, elle se joue à la charge.</b> Les équipements aux hydrocarbures fonctionnent avec des charges <b>volontairement faibles</b>, et sont conçus pour cela. Une charge d'appoint approximative, un échangeur encrassé ou un dégivrage mal réglé pèsent donc bien plus lourd qu'ailleurs sur la consommation. Charger à la <b>balance</b>, selon la quantité inscrite sur la plaque, tenir les échangeurs propres et vérifier les réglages : sur ces installations, c'est autant une mesure d'énergie qu'une mesure de sécurité.",
       "Travailler dessus impose une <b>préparation dédiée</b> : analyse de risques avant intervention, suppression de toute source d'ignition, <b>ventilation active</b>, outillage et matériel électrique adaptés, détecteur de gaz. La charge admissible dépend du <b>volume du local</b> et de la classe de sécurité : elle se détermine selon la <b>NF EN 378</b> et la plaque signalétique — <b>jamais estimée</b>.",
       "Sur le circuit : récupération, puis <b>inertage à l'azote</b> avant toute flamme. Épreuve de pression à l'azote, essai sous vide, charge de la quantité exacte, contrôle direct, rapport.",
       "Tout est <b>étiqueté</b>, et l'étiquette se lit avant de toucher : l'équipement porte la mention du fluide et le pictogramme <b>inflammable</b>, la bouteille aussi. Les bouteilles d'hydrocarbure ont un <b>raccord spécifique</b> et un <b>filetage à gauche</b> — c'est une sécurité, jamais un obstacle à contourner avec un adaptateur.",
-      "Avant d'intervenir, on vérifie que le <b>site</b> lui-même est en règle : <b>signalisation</b> du risque, <b>issues de secours</b> dégagées, <b>capteurs de gaz</b> et <b>alarmes</b> présents et en service, ventilation opérante. Si ces mesures manquent, on ne commence pas : on le signale.",
-      "Enfin, bien travailler économise l'énergie. Une charge <b>juste</b> — et les charges hydrocarbures sont faibles —, des échangeurs propres et des réglages exacts font qu'une machine au R-290 tient ses performances. Une charge approximative dégrade le rendement <b>et</b> la sécurité en même temps.",
-      "Un hydrocarbure récupéré qu'on ne peut pas réutiliser ne part <b>jamais</b> à l'atmosphère, et jamais à l'égout : il part en <b>élimination</b>. C'est une filière agréée qui détruit le fluide dans des conditions contrôlées, comme pour tout déchet dangereux. La bouteille envoyée en <b>destruction</b> est accompagnée d'un bordereau qui trace le mouvement, du technicien jusqu'au centre de traitement. On garde ce bordereau : c'est la preuve que le fluide a bien été éliminé, pas relâché.",
-      "Calculer la <b>charge maximale</b> admissible d'un fluide inflammable, ce n'est pas la deviner. Ce calcul dépend du <b>volume de la pièce</b> desservie et de la <b>limite pratique</b> du fluide, c'est-à-dire la quantité maximale tolérée dans l'air ambiant sans risque. Plus la pièce est petite, moins on a le droit de charge : un même compresseur au R-290 n'a pas la même charge autorisée dans un grand local et dans une pièce exiguë. La méthode et les valeurs à utiliser se trouvent dans la norme <b>NF EN 378</b> et dans la documentation du constructeur — on les <b>lit</b>, on ne les invente jamais, et le résultat du calcul se fait <b>valider</b> avant toute mise en service.",
-      "Sur un équipement à fluide inflammable, l'<b>efficacité énergétique</b> se travaille avec les mêmes gestes que sur toutes les machines. La différence, c'est que la charge exacte compte double : ces circuits sont conçus avec une charge volontairement petite, alors le moindre écart — un peu trop, un peu pas assez — dérègle vite l'échange et fait chuter la performance, bien avant que ça n'arrive sur une machine à grosse charge."
+      "Avant d'intervenir, on vérifie que le <b>site</b> lui-même est en règle : <b>signalisation</b> du risque, <b>issues de secours</b> dégagées, <b>capteurs de gaz</b> et <b>alarmes</b> présents et en service, ventilation opérante. Si ces mesures manquent, on ne commence pas : on le signale."
      ],
      "blocs": [
       {
@@ -12437,14 +12057,6 @@
       "12.14"
      ],
      "paras": [
-      "Les hydrocarbures — <b>R-290</b> (propane), <b>R-600a</b> (isobutane) — sont classés <b>A3</b> : très inflammables. Ils s'imposent pourtant, parce que leur PRP est très bas et leurs performances excellentes : on les trouve dans les réfrigérateurs domestiques, les monoblocs, les vitrines, et de plus en plus dans les pompes à chaleur.",
-      "<b>L'étiquetage : ce qui doit être lu avant même d'ouvrir la machine.</b> Un équipement contenant un réfrigérant inflammable porte une <b>plaque signalétique</b> et un <b>marquage de danger</b> visibles : le fluide et sa quantité, le pictogramme de flamme, et la mention avertissant du risque. Sur les appareils concernés, un marquage rappelle que l'entretien revient à une personne formée et que la machine ne doit être ni percée ni brûlée. Cette lecture est le <b>premier geste</b> de l'intervention : elle décide de l'outillage, du balisage et de la ventilation.",
-      "Si la plaque manque ou reste illisible, on ne devine pas : l'identification se cherche dans la documentation de la machine et dans le registre, jamais à l'odeur ni à la couleur d'une bouteille. Intervenir sur un fluide qu'on n'a pas identifié, c'est risquer de braser sur un hydrocarbure.",
-      "<b>Efficacité énergétique : sur ces machines, elle se joue à la charge.</b> Les équipements aux hydrocarbures fonctionnent avec des charges <b>volontairement faibles</b>, et sont conçus pour cela. Une charge d'appoint approximative, un échangeur encrassé ou un dégivrage mal réglé pèsent donc bien plus lourd qu'ailleurs sur la consommation. Charger à la <b>balance</b>, selon la quantité inscrite sur la plaque, tenir les échangeurs propres et vérifier les réglages : sur ces installations, c'est autant une mesure d'énergie qu'une mesure de sécurité.",
-      "Travailler dessus impose une <b>préparation dédiée</b> : analyse de risques avant intervention, suppression de toute source d'ignition, <b>ventilation active</b>, outillage et matériel électrique adaptés, détecteur de gaz. La charge admissible dépend du <b>volume du local</b> et de la classe de sécurité : elle se détermine selon la <b>NF EN 378</b> et la plaque signalétique — <b>jamais estimée</b>.",
-      "Sur le circuit : récupération, puis <b>inertage à l'azote</b> avant toute flamme. Épreuve de pression à l'azote, essai sous vide, charge de la quantité exacte, contrôle direct, rapport.",
-      "Tout est <b>étiqueté</b>, et l'étiquette se lit avant de toucher : l'équipement porte la mention du fluide et le pictogramme <b>inflammable</b>, la bouteille aussi. Les bouteilles d'hydrocarbure ont un <b>raccord spécifique</b> et un <b>filetage à gauche</b> — c'est une sécurité, jamais un obstacle à contourner avec un adaptateur.",
-      "Avant d'intervenir, on vérifie que le <b>site</b> lui-même est en règle : <b>signalisation</b> du risque, <b>issues de secours</b> dégagées, <b>capteurs de gaz</b> et <b>alarmes</b> présents et en service, ventilation opérante. Si ces mesures manquent, on ne commence pas : on le signale.",
       "Enfin, bien travailler économise l'énergie. Une charge <b>juste</b> — et les charges hydrocarbures sont faibles —, des échangeurs propres et des réglages exacts font qu'une machine au R-290 tient ses performances. Une charge approximative dégrade le rendement <b>et</b> la sécurité en même temps.",
       "Un hydrocarbure récupéré qu'on ne peut pas réutiliser ne part <b>jamais</b> à l'atmosphère, et jamais à l'égout : il part en <b>élimination</b>. C'est une filière agréée qui détruit le fluide dans des conditions contrôlées, comme pour tout déchet dangereux. La bouteille envoyée en <b>destruction</b> est accompagnée d'un bordereau qui trace le mouvement, du technicien jusqu'au centre de traitement. On garde ce bordereau : c'est la preuve que le fluide a bien été éliminé, pas relâché.",
       "Calculer la <b>charge maximale</b> admissible d'un fluide inflammable, ce n'est pas la deviner. Ce calcul dépend du <b>volume de la pièce</b> desservie et de la <b>limite pratique</b> du fluide, c'est-à-dire la quantité maximale tolérée dans l'air ambiant sans risque. Plus la pièce est petite, moins on a le droit de charge : un même compresseur au R-290 n'a pas la même charge autorisée dans un grand local et dans une pièce exiguë. La méthode et les valeurs à utiliser se trouvent dans la norme <b>NF EN 378</b> et dans la documentation du constructeur — on les <b>lit</b>, on ne les invente jamais, et le résultat du calcul se fait <b>valider</b> avant toute mise en service.",
@@ -12485,8 +12097,7 @@
      ],
      "paras": [
       "Le circuit est déjà <b>récupéré</b> et <b>inerté à l'azote</b> : plus d'hydrocarbure ni d'air à l'intérieur. La zone est prête : <b>ventilée</b>, balisée, sans source d'inflammation, détecteur de gaz et extincteur à portée, outillage adapté.",
-      "Reste une dernière vérification avant le chalumeau : la <b>consignation électrique</b> de l'installation. Le <b>R-290 est A3</b>, très inflammable — pas un A2L comme le R-32. Tant que l'inertage n'est pas confirmé : <b>aucune flamme</b>.",
-      "Le mode opératoire suit ensuite toujours le même ordre :"
+      "Reste une dernière vérification avant le chalumeau : la <b>consignation électrique</b> de l'installation. Le <b>R-290 est A3</b>, très inflammable — pas un A2L comme le R-32. Tant que l'inertage n'est pas confirmé : <b>aucune flamme</b>."
      ],
      "blocs": [
       {
@@ -12522,15 +12133,13 @@
       "12.12"
      ],
      "paras": [
-      "Le circuit est déjà <b>récupéré</b> et <b>inerté à l'azote</b> : plus d'hydrocarbure ni d'air à l'intérieur. La zone est prête : <b>ventilée</b>, balisée, sans source d'inflammation, détecteur de gaz et extincteur à portée, outillage adapté.",
-      "Reste une dernière vérification avant le chalumeau : la <b>consignation électrique</b> de l'installation. Le <b>R-290 est A3</b>, très inflammable — pas un A2L comme le R-32. Tant que l'inertage n'est pas confirmé : <b>aucune flamme</b>.",
       "Le mode opératoire suit ensuite toujours le même ordre :"
      ],
      "blocs": [
       {
        "type": "cle",
        "t": "Le fil rouge de l'intervention",
-       "html": "Récupérer → inerter à l'azote → ouvrir et remplacer → épreuve à l'azote → vide → charge → contrôle direct → rapport.<br>Chaque étape verrouille la suivante : pas de charge sans épreuve concluante, pas de contrôle sans vide correct."
+       "html": "Récupérer → inerter à l'azote → ouvrir et remplacer → épreuve à l'azote → vide → charge → contrôle direct → rapport.</p><p>Chaque étape verrouille la suivante : pas de charge sans épreuve concluante, pas de contrôle sans vide correct."
       }
      ],
      "question": {
@@ -12853,11 +12462,7 @@
      "codes": [],
      "paras": [
       "Ce module <b>informe</b>, il ne qualifie pas. Une attestation A1 ou A2 ne donne <b>aucun droit d'intervention</b> sur une installation au CO₂ (catégorie B) ou à l'ammoniac (catégorie C). Ce qu'on attend ici : <b>reconnaître</b> et <b>ne pas toucher</b>.",
-      "<b>CO₂ (R-744)</b> — classé <b>A1</b> : toxicité <b>faible</b>, non inflammable, <b>PRP = 1</b>. Cette classe n'annonce aucun de ses vrais dangers : la <b>pression</b>, très élevée, l'<b>atmosphère irrespirable</b> en local fermé (il est plus lourd que l'air, s'accumule en point bas, et agit sur la respiration — voir « CO₂ : deux dangers mortels »), et le risque de <b>neige carbonique</b> à la détente (brûlure par le froid, obstruction). En transcritique, le condenseur laisse la place à un <b>refroidisseur de gaz</b>. Les cylindres, à double vanne, ne se raccordent pas au matériel courant.",
-      "<b>Ammoniac (R-717)</b> — classé <b>B2L</b> : <b>toxique</b> et faiblement inflammable. Fluide du froid industriel (agroalimentaire, entrepôts), jamais du résidentiel. Son odeur piquante se perçoit très tôt — mais elle <b>ne remplace aucune mesure</b>, et elle s'émousse à forte concentration : on ne se fie jamais à son nez pour décider. En cas de fuite : <b>alerter, évacuer, ne jamais intervenir seul</b>.",
-      "Sur le terrain, le CO₂ ne se manipule pas avec le matériel courant : ses pressions de travail sont bien plus élevées que celles des fluides classiques. Manifold, flexibles, vannes — tout doit être <b>dédié au CO₂</b>. Les valeurs exactes dépendent du point de fonctionnement et se lisent toujours dans la <b>documentation constructeur</b>, à faire valider.",
-      "Le diagramme <b>log p/h</b> (pression selon l'enthalpie) et les <b>tables de saturation</b> du CO₂ se lisent comme ceux de tout autre fluide — mêmes repères de bulle et de rosée — mais dans un domaine de pression qui lui est propre. C'est ce domaine particulier qui explique un comportement que les autres fluides n'ont pas : la formation de glace carbonique.",
-      "Avant de commencer une intervention sur un site au CO₂ ou à l'ammoniac, on prend un instant pour vérifier ce qui est déjà en place. La <b>signalisation</b> à l'entrée du local doit être visible et à jour. Les <b>issues de secours</b> doivent rester dégagées, jamais encombrées, pour permettre une évacuation rapide en cas de fuite. On contrôle aussi que les <b>capteurs</b> de gaz et les <b>alarmes</b> qui leur sont associées sont en état de marche, pas seulement présents dans le local."
+      "<b>CO₂ (R-744)</b> — classé <b>A1</b> : toxicité <b>faible</b>, non inflammable, <b>PRP = 1</b>. Cette classe n'annonce aucun de ses vrais dangers : la <b>pression</b>, très élevée, l'<b>atmosphère irrespirable</b> en local fermé (il est plus lourd que l'air, s'accumule en point bas, et agit sur la respiration — voir « CO₂ : deux dangers mortels »), et le risque de <b>neige carbonique</b> à la détente (brûlure par le froid, obstruction). En transcritique, le condenseur laisse la place à un <b>refroidisseur de gaz</b>. Les cylindres, à double vanne, ne se raccordent pas au matériel courant."
      ],
      "blocs": [
       {
@@ -12886,12 +12491,8 @@
      "titre_source": "CO₂ et NH₃ — reconnaître, ne pas intervenir",
      "codes": [],
      "paras": [
-      "Ce module <b>informe</b>, il ne qualifie pas. Une attestation A1 ou A2 ne donne <b>aucun droit d'intervention</b> sur une installation au CO₂ (catégorie B) ou à l'ammoniac (catégorie C). Ce qu'on attend ici : <b>reconnaître</b> et <b>ne pas toucher</b>.",
-      "<b>CO₂ (R-744)</b> — classé <b>A1</b> : toxicité <b>faible</b>, non inflammable, <b>PRP = 1</b>. Cette classe n'annonce aucun de ses vrais dangers : la <b>pression</b>, très élevée, l'<b>atmosphère irrespirable</b> en local fermé (il est plus lourd que l'air, s'accumule en point bas, et agit sur la respiration — voir « CO₂ : deux dangers mortels »), et le risque de <b>neige carbonique</b> à la détente (brûlure par le froid, obstruction). En transcritique, le condenseur laisse la place à un <b>refroidisseur de gaz</b>. Les cylindres, à double vanne, ne se raccordent pas au matériel courant.",
       "<b>Ammoniac (R-717)</b> — classé <b>B2L</b> : <b>toxique</b> et faiblement inflammable. Fluide du froid industriel (agroalimentaire, entrepôts), jamais du résidentiel. Son odeur piquante se perçoit très tôt — mais elle <b>ne remplace aucune mesure</b>, et elle s'émousse à forte concentration : on ne se fie jamais à son nez pour décider. En cas de fuite : <b>alerter, évacuer, ne jamais intervenir seul</b>.",
-      "Sur le terrain, le CO₂ ne se manipule pas avec le matériel courant : ses pressions de travail sont bien plus élevées que celles des fluides classiques. Manifold, flexibles, vannes — tout doit être <b>dédié au CO₂</b>. Les valeurs exactes dépendent du point de fonctionnement et se lisent toujours dans la <b>documentation constructeur</b>, à faire valider.",
-      "Le diagramme <b>log p/h</b> (pression selon l'enthalpie) et les <b>tables de saturation</b> du CO₂ se lisent comme ceux de tout autre fluide — mêmes repères de bulle et de rosée — mais dans un domaine de pression qui lui est propre. C'est ce domaine particulier qui explique un comportement que les autres fluides n'ont pas : la formation de glace carbonique.",
-      "Avant de commencer une intervention sur un site au CO₂ ou à l'ammoniac, on prend un instant pour vérifier ce qui est déjà en place. La <b>signalisation</b> à l'entrée du local doit être visible et à jour. Les <b>issues de secours</b> doivent rester dégagées, jamais encombrées, pour permettre une évacuation rapide en cas de fuite. On contrôle aussi que les <b>capteurs</b> de gaz et les <b>alarmes</b> qui leur sont associées sont en état de marche, pas seulement présents dans le local."
+      "Sur le terrain, le CO₂ ne se manipule pas avec le matériel courant : ses pressions de travail sont bien plus élevées que celles des fluides classiques. Manifold, flexibles, vannes — tout doit être <b>dédié au CO₂</b>. Les valeurs exactes dépendent du point de fonctionnement et se lisent toujours dans la <b>documentation constructeur</b>, à faire valider."
      ],
      "blocs": [
       {
@@ -12920,10 +12521,6 @@
      "titre_source": "CO₂ et NH₃ — reconnaître, ne pas intervenir",
      "codes": [],
      "paras": [
-      "Ce module <b>informe</b>, il ne qualifie pas. Une attestation A1 ou A2 ne donne <b>aucun droit d'intervention</b> sur une installation au CO₂ (catégorie B) ou à l'ammoniac (catégorie C). Ce qu'on attend ici : <b>reconnaître</b> et <b>ne pas toucher</b>.",
-      "<b>CO₂ (R-744)</b> — classé <b>A1</b> : toxicité <b>faible</b>, non inflammable, <b>PRP = 1</b>. Cette classe n'annonce aucun de ses vrais dangers : la <b>pression</b>, très élevée, l'<b>atmosphère irrespirable</b> en local fermé (il est plus lourd que l'air, s'accumule en point bas, et agit sur la respiration — voir « CO₂ : deux dangers mortels »), et le risque de <b>neige carbonique</b> à la détente (brûlure par le froid, obstruction). En transcritique, le condenseur laisse la place à un <b>refroidisseur de gaz</b>. Les cylindres, à double vanne, ne se raccordent pas au matériel courant.",
-      "<b>Ammoniac (R-717)</b> — classé <b>B2L</b> : <b>toxique</b> et faiblement inflammable. Fluide du froid industriel (agroalimentaire, entrepôts), jamais du résidentiel. Son odeur piquante se perçoit très tôt — mais elle <b>ne remplace aucune mesure</b>, et elle s'émousse à forte concentration : on ne se fie jamais à son nez pour décider. En cas de fuite : <b>alerter, évacuer, ne jamais intervenir seul</b>.",
-      "Sur le terrain, le CO₂ ne se manipule pas avec le matériel courant : ses pressions de travail sont bien plus élevées que celles des fluides classiques. Manifold, flexibles, vannes — tout doit être <b>dédié au CO₂</b>. Les valeurs exactes dépendent du point de fonctionnement et se lisent toujours dans la <b>documentation constructeur</b>, à faire valider.",
       "Le diagramme <b>log p/h</b> (pression selon l'enthalpie) et les <b>tables de saturation</b> du CO₂ se lisent comme ceux de tout autre fluide — mêmes repères de bulle et de rosée — mais dans un domaine de pression qui lui est propre. C'est ce domaine particulier qui explique un comportement que les autres fluides n'ont pas : la formation de glace carbonique.",
       "Avant de commencer une intervention sur un site au CO₂ ou à l'ammoniac, on prend un instant pour vérifier ce qui est déjà en place. La <b>signalisation</b> à l'entrée du local doit être visible et à jour. Les <b>issues de secours</b> doivent rester dégagées, jamais encombrées, pour permettre une évacuation rapide en cas de fuite. On contrôle aussi que les <b>capteurs</b> de gaz et les <b>alarmes</b> qui leur sont associées sont en état de marche, pas seulement présents dans le local."
      ],

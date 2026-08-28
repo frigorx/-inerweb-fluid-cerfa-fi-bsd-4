@@ -156,6 +156,9 @@ h2,h3,h4,.sect-t,.lecon-t,.page-t,.sect-intro{break-after:avoid;page-break-after
   font-size:9pt;font-weight:700;padding:.2mm 1.2mm;border-radius:2px;margin-left:1mm;
   vertical-align:.3mm}
 .ref-cat.prat{border-color:var(--mut);color:var(--mut);font-weight:400;font-style:italic}
+/* Hors périmètre pour une AUTRE catégorie (B pour le CO₂, C pour
+   l'ammoniac) : ce n'est ni de la pratique, ni un oubli. */
+.ref-cat.hors{border-color:var(--mut);color:var(--mut);font-weight:400;font-style:italic}
 
 /* Le QCM d'ouverture commence toujours en haut d'une page — on le voit
    alors comme un tout. On ne lui interdit PAS de couler sur la page
@@ -265,6 +268,10 @@ tbody tr:nth-child(even) td{background:#F7FAFC}
 .som-p b{font-family:"Trebuchet MS",Calibri,sans-serif;color:var(--bleu)}
 .som-p span{color:var(--mut);font-style:italic;font-size:8.4pt;margin-left:2mm}
 .som-ch{display:flex;align-items:baseline;gap:2mm;margin:0 0 1.4mm 4mm;font-size:1em}
+/* La place du numéro de page, que la finition écrira : elle seule le
+   connaît. Le trait de conduite mène l'œil jusqu'à lui. */
+.som-ch{position:relative}
+.som-ch::after{content:'';flex:1;border-bottom:.5pt dotted var(--ligne);margin:0 12mm .8mm 1mm}
 .som-n{display:inline-flex;align-items:center;justify-content:center;width:4.6mm;height:4.6mm;flex:none;
   border-radius:50%;background:var(--pale);color:var(--bleu);font-size:7pt;font-weight:700}
 .som-url{margin-left:auto;font-size:10pt;color:var(--mut)}
@@ -321,6 +328,27 @@ tbody tr:nth-child(even) td{background:#F7FAFC}
 }`;
 
 /* ------------------------------------------------------------------
+   LE POINT TYPOGRAPHIQUE, RÉTABLI.
+
+   Chrome, en imprimant, rend la page dans son repère de pixels (96 par
+   pouce) puis la met à l'échelle du PDF (72 par pouce). Les longueurs en
+   MILLIMÈTRES traversent ce passage intactes — la justification mesure
+   bien ses 120 mm. Les tailles en POINTS, elles, sont traitées comme des
+   pixels et ressortent au trois quarts : le réglage disait 14 pt, le
+   livre imprimait 10,7. Le corps du texte, les légendes, les tableaux :
+   tout était un quart trop petit, et le réglage mentait à qui le lisait.
+
+   On rétablit donc l'échelle ici, une fois, sur toutes les valeurs en
+   `pt` du CSS. `reglages.json` redevient vrai : 12 pt écrits, 12 pt
+   imprimés, mesurables au réglet sur le tirage.
+   ------------------------------------------------------------------ */
+const ECHELLE_PT = 96 / 72;
+const cssImprimable = (css) => css.replace(
+  /(\d+(?:\.\d+)?)pt(?![a-z])/g,
+  (tout, valeur) => `${(Number(valeur) * ECHELLE_PT).toFixed(2)}pt`,
+);
+
+/* ------------------------------------------------------------------
    Le marqueur invisible que `finition.py` relit : la partie et le
    chapitre auxquels ce bloc appartient, ou NUE pour les pages qui ne
    veulent ni bandeau ni pied (couverture, ouvertures de partie).
@@ -341,7 +369,7 @@ const classes = (b) => [b.seul ? 'seul' : '', b.rupture ? 'rupture' : ''].filter
 const html = `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8">
 <title>Habilitation Fluide — livret élève, tome 1</title>
-<style>${CSS}</style></head>
+<style>${cssImprimable(CSS)}</style></head>
 <body>
 <div id="livret">
 ${flux.map((b) => `<div class="${classes(b)}">${marqueur(b)}${b.html}</div>`).join('\n')}

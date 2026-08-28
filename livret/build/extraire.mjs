@@ -34,7 +34,7 @@ import path from 'node:path';
 import { execSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { CHAPITRES } from './plan-chapitres.mjs';
-import { leconsCategories } from './contenu-categories.mjs';
+import { leconsCategories, questionsCategories } from './contenu-categories.mjs';
 
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const SORTIE = path.join(ICI, '..', 'contenu.gen.json');
@@ -99,21 +99,38 @@ const referentielDe = (ou, codes) => codes.map((code) => {
    que ces derniers — les visuels, le plan les désigne lui-même, et
    les capsules audio deviennent des QR codes.
    ------------------------------------------------------------------ */
-const paragraphes = (corps) => {
-  const texte = (corps || '')
-    .replace(/<p class="lien-experience"[\s\S]*?<\/p>/g, '')
-    .replace(/<figure[\s\S]*?<\/figure>/g, '')
-    .replace(/<img [^>]*>/g, '');
-  return (texte.match(/<p[^>]*>[\s\S]*?<\/p>/g) || [])
-    .map((p) => p.replace(/^<p[^>]*>/, '').replace(/<\/p>$/, '').trim());
-};
+/* Ce que l'écran affiche et que le papier ne peut pas montrer : une
+   réglette interactive dans un `<iframe>`, une animation `<img>`, un
+   `<figure>`. Ces balises s'imprimaient EN TOUTES LETTRES sur dix-huit
+   pages — « <iframe src="…reglette.html" » au milieu d'un encadré. On les
+   retire, et le `<br>` devient ce qu'il est sur papier : un alinéa. */
+const pourLePapier = (html) => String(html || '')
+  .replace(/<p class="lien-experience"[\s\S]*?<\/p>/g, '')
+  .replace(/<figure[\s\S]*?<\/figure>/g, '')
+  .replace(/<iframe[\s\S]*?<\/iframe>/g, '')
+  .replace(/<iframe[^>]*>/g, '')
+  .replace(/<img[^>]*>/g, '')
+  .replace(/<p[^>]*>/g, '<p>')
+  .replace(/<br\s*\/?>/g, '</p><p>')
+  .replace(/<p>\s*<\/p>/g, '');
+
+const paragraphes = (corps) => (pourLePapier(corps).match(/<p>[\s\S]*?<\/p>/g) || [])
+  .map((p) => p.replace(/^<p>/, '').replace(/<\/p>$/, '').trim())
+  .filter(Boolean);
 
 /* Une désignation du plan (src + paras + blocs) devient un extrait. */
-const extraire = (ou, { src, paras = 'tous', blocs = [] }) => {
+const extraire = (ou, { src, paras = 'tous', blocs = [], tranche = null }) => {
   const carte = parId.get(src);
   if (!carte) { erreurs.push(`${ou} : fiche « ${src} » introuvable dans cartes.js`); return null; }
   const tous = paragraphes(carte.corps);
-  const indices = paras === 'tous' ? tous.map((_, i) => i) : paras;
+  let indices = paras === 'tous' ? tous.map((_, i) => i) : paras;
+  /* La part de cette leçon dans une carte partagée : une tranche
+     consécutive, calculée pour que rien ne se perde ni ne se répète. */
+  if (tranche && paras === 'tous') {
+    const debut = Math.round((tranche.rang * tous.length) / tranche.sur);
+    const fin = Math.round(((tranche.rang + 1) * tous.length) / tranche.sur);
+    indices = indices.slice(debut, fin);
+  }
   const horsLimite = indices.filter((i) => i < 0 || i >= tous.length);
   if (horsLimite.length) {
     erreurs.push(`${ou} : fiche « ${src} » a ${tous.length} paragraphes (0–${tous.length - 1}), ` +
@@ -151,7 +168,10 @@ const extraire = (ou, { src, paras = 'tous', blocs = [] }) => {
     titre_source: carte.titre,
     codes: [...new Set(codesDeclares)],
     paras: indices.filter((i) => i >= 0 && i < tous.length).map((i) => tous[i]),
-    blocs: blocs.map((i) => (carte.blocs || [])[i]).filter(Boolean),
+    /* Les encadrés passent par le même nettoyage que le texte courant :
+       c'est là que se cachaient les iframes de réglette. */
+    blocs: blocs.map((i) => (carte.blocs || [])[i]).filter(Boolean)
+      .map((b) => ({ ...b, html: pourLePapier(b.html) })),
     question: carte.question || null,
   };
 };
@@ -178,15 +198,41 @@ const chapitres = CHAPITRES.map((ch) => {
   const referentiel = referentielDe(ou, ch.codes || []);
 
   if (ch.genere === 'categories') {
-    return { num: ch.num, genere: ch.genere, referentiel, lecons: leconsCategories(REF), questions };
+    /* Ce chapitre n'a pas de fiche source : ses questions venaient donc
+       du groupe G1 de la banque — la nomenclature des fluides — dans un
+       chapitre qui parle des catégories. Elles se génèrent comme son
+       texte, depuis le référentiel. */
+    return { num: ch.num, genere: ch.genere, referentiel,
+      lecons: leconsCategories(REF), questions: questionsCategories(REF) };
   }
   if (ch.genere) {
     erreurs.push(`${ou} : générateur « ${ch.genere} » inconnu`);
     return { num: ch.num, genere: ch.genere, lecons: [], questions };
   }
 
+  /* Plusieurs leçons d'un même chapitre puisent souvent dans la MÊME
+     carte. Depuis que chacune prend « tous » les paragraphes, elles
+     réimprimaient toutes le même texte : sept paires de pages jumelles
+     dans le livre. On répartit donc la carte entre ses leçons, en
+     tranches consécutives — le contenu reste entier, l'ordre est tenu,
+     et rien ne paraît deux fois. Une leçon qui désigne ses paragraphes à
+     la main (`paras: [0, 2]`) garde évidemment son choix. */
+  const partages = new Map();
+  for (const l of ch.lecons || []) {
+    if (l.paras && l.paras !== 'tous') continue;
+    partages.set(l.src, (partages.get(l.src) || 0) + 1);
+  }
+  const rangDansLaCarte = new Map();
+
   const lecons = (ch.lecons || []).map((l, i) => {
-    const e = extraire(`${ou}, leçon ${i + 1} « ${l.t} »`, l);
+    let demande = l;
+    const combien = partages.get(l.src) || 0;
+    if (combien > 1 && (!l.paras || l.paras === 'tous')) {
+      const rang = rangDansLaCarte.get(l.src) || 0;
+      rangDansLaCarte.set(l.src, rang + 1);
+      demande = { ...l, tranche: { rang, sur: combien } };
+    }
+    const e = extraire(`${ou}, leçon ${i + 1} « ${l.t} »`, demande);
     return e && { t: l.t, ...e };
   }).filter(Boolean);
 

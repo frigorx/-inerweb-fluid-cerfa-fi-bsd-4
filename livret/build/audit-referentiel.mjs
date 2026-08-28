@@ -60,10 +60,33 @@ const absentsT = theoriques.filter((c) => !c.pages.length);
 const mincesT = theoriques.filter((c) => c.pages.length && c.pages.length < MINCE);
 const vusT = theoriques.filter((c) => c.pages.length >= MINCE);
 
-const ligne = (c) => `| \`${c.code}\` | ${c.libelle.replace(/\|/g, '/').slice(0, 120)} | ${c.groupe} | ${c.pages.length} | ${c.pages.length ? c.pages.join(', ') : '—'} |`;
+/* Combien de LEÇONS distinctes déclarent ce code, et combien de mots
+   elles portent. C'est la mesure honnête de la profondeur : « vu sur
+   39 pages » ne veut pas dire expliqué trente-neuf fois — un code
+   déclaré par une leçon marque toutes les pages de cette leçon. */
+const CONTENU = JSON.parse(fs.readFileSync(path.join(LIVRET, 'contenu.gen.json'), 'utf8'));
+const mots = (t) => String(t).replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length;
+const profondeur = new Map();
+for (const ch of CONTENU.chapitres) {
+  for (const l of ch.lecons || []) {
+    const poids = (l.paras || []).reduce((n, p) => n + mots(p), 0)
+      + (l.blocs || []).reduce((n, b) => n + mots(b.html), 0);
+    for (const code of l.codes || []) {
+      const e = profondeur.get(code) || { lecons: 0, mots: 0, chapitres: new Set() };
+      e.lecons += 1; e.mots += poids; e.chapitres.add(ch.num);
+      profondeur.set(code, e);
+    }
+  }
+}
+const prof = (code) => profondeur.get(code) || { lecons: 0, mots: 0, chapitres: new Set() };
+
+const ligne = (c) => {
+  const p = prof(c.code);
+  return `| \`${c.code}\` | ${c.libelle.replace(/\|/g, '/').slice(0, 96)} | ${p.lecons} | ${p.mots} | ${c.pages.length} | ${[...p.chapitres].sort((a, b) => a - b).join(', ') || '—'} |`;
+};
 
 /* Le classement par fréquence : ce qui est martelé, ce qui est effleuré. */
-const parFrequence = [...theoriques].sort((a, b) => b.pages.length - a.pages.length);
+const parFrequence = [...theoriques].sort((a, b) => prof(b.code).mots - prof(a.code).mots);
 
 /* Les codes marqués en pied de page qui n'appartiennent PAS au référentiel
    théorique du tome : ni faute ni oubli, mais il faut savoir qu'ils sont là. */
@@ -103,12 +126,23 @@ ${mincesT.length ? `### ⚠ Codes théoriques vus sur une seule page\n\n${minces
 
 ## 2. Combien de fois chaque compétence est-elle vue ?
 
-Du plus travaillé au moins travaillé. La colonne « pages » donne le nombre
-de pages qui portent le code en pied ; le déséquilibre se lit d'un coup
-d'œil, et se corrige en ajoutant ou en allégeant une leçon.
+Du plus travaillé au moins travaillé. **Lire ces colonnes dans le bon
+ordre :**
 
-| Code | Ce que l'arrêté exige | Groupe | Pages | Où |
-|---|---|---|---|---|
+- **Leçons** — combien de leçons distinctes déclarent ce code. C'est la
+  mesure la plus honnête : deux leçons valent mieux qu'une longue.
+- **Mots** — le texte que ces leçons portent. C'est la profondeur réelle.
+- **Pages** — combien de pages portent le code en pied. Cette colonne
+  **surestime** : un code déclaré par une leçon marque TOUTES les pages
+  de cette leçon. « Vu sur 39 pages » ne veut donc pas dire « expliqué
+  trente-neuf fois », mais « présent dans des leçons qui occupent
+  39 pages ». Elle sert à retrouver le code dans le livre, pas à prouver
+  qu'il est traité en profondeur.
+
+Le classement ci-dessous se fait sur les MOTS, pas sur les pages.
+
+| Code | Ce que l'arrêté exige | Leçons | Mots | Pages | Chapitres |
+|---|---|---|---|---|---|
 ${parFrequence.map(ligne).join('\n')}
 
 ---

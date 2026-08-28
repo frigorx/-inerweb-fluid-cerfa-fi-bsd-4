@@ -80,6 +80,8 @@ PARTIES = {
 # Le marqueur porte la partie, le chapitre, et les codes du référentiel
 # que la leçon déclare traiter : « @@D|11;8.01,8.05@@ ».
 MARQUEUR = re.compile(r'@@(NUE|LIM|([A-F])\|(\d+)(?:;([\d.,]+))?)@@')
+# Chaque ligne du sommaire porte la sienne : « @@SOM|4@@ ».
+MARQUEUR_SOM = re.compile(r'@@SOM\|(\d+)@@')
 
 
 def contexte_des_pages(doc):
@@ -135,6 +137,8 @@ def finir(chemin):
     nues = 0
 
     inventaire = {}            # code du référentiel -> [pages où il est vu]
+    debuts = {}               # numéro de chapitre -> page où il commence
+    zones_marqueurs = []      # (index de page, rectangles à effacer)
 
     for i, (page, (genre, info, codes)) in enumerate(zip(doc, contextes)):
         if genre == 'nue':
@@ -155,17 +159,21 @@ def finir(chemin):
 
         if genre == 'ch':
             partie, num = info
+            # La première page où paraît un chapitre est celle que le
+            # sommaire doit annoncer, et celle que le signet doit viser.
+            if num not in debuts:
+                debuts[num] = (numero, i, partie)
             page.draw_line(fitz.Point(MARGE_G, HAUT + 2 * MM),
                            fitz.Point(largeur - MARGE_D, HAUT + 2 * MM),
                            color=ORANGE, width=1.6)
             page.insert_text(
                 fitz.Point(MARGE_G, HAUT),
                 'Partie %s · %s' % (partie, PARTIES.get(partie, '').upper()),
-                fontname='ttitre', fontsize=7.4, color=BLEU)
+                fontname='ttitre', fontsize=8, color=BLEU)
             libelle = 'Chapitre %s' % num
             page.insert_text(
-                fitz.Point(largeur - MARGE_D - largeur_de(libelle, 'ttitre', 7.4), HAUT),
-                libelle, fontname='ttitre', fontsize=7.4, color=ORANGE)
+                fitz.Point(largeur - MARGE_D - largeur_de(libelle, 'ttitre', 8), HAUT),
+                libelle, fontname='ttitre', fontsize=8, color=ORANGE)
 
         # Le pied, sur toutes les pages numérotées
         page.draw_line(fitz.Point(MARGE_G, PIED), fitz.Point(largeur - MARGE_D, PIED),
@@ -177,7 +185,7 @@ def finir(chemin):
         # de page. Elle descendait à 3,2 mm — hors zone imprimable.
         page.insert_text(fitz.Point(MARGE_G, PIED + 3.2 * MM),
                          'inerweb.fr · HabFluide, tome 1 — la théorie',
-                         fontname='tcorps', fontsize=6.8, color=MUT)
+                         fontname='tcorps', fontsize=7.6, color=MUT)
 
         # Les compétences du référentiel travaillées SUR CETTE PAGE. Elles
         # s'écrivent en clair : le lecteur sait ce qu'il vient de couvrir,
@@ -186,13 +194,13 @@ def finir(chemin):
             for code in codes:
                 inventaire.setdefault(code, []).append(numero)
             libelle_codes = 'Référentiel : ' + ' · '.join(codes)
-            largeur_codes = largeur_de(libelle_codes, 'tcorps', 6.8)
+            largeur_codes = largeur_de(libelle_codes, 'tcorps', 7.6)
             # Le numéro occupe la droite : les codes s'arrêtent avant lui.
             place = largeur - MARGE_D - 9 * MM - largeur_codes
             if place > MARGE_G + largeur_de('inerweb.fr · HabFluide, tome 1 — la théorie',
-                                            'tcorps', 6.8) + 6 * MM:
+                                            'tcorps', 7.6) + 6 * MM:
                 page.insert_text(fitz.Point(place, PIED + 3.2 * MM),
-                                 libelle_codes, fontname='tcorps', fontsize=6.8, color=BLEU)
+                                 libelle_codes, fontname='tcorps', fontsize=7.6, color=BLEU)
         RAYON = 2.6 * MM
         centre = fitz.Point(largeur - MARGE_D - RAYON, PIED + 2.9 * MM)
         page.draw_circle(centre, RAYON, color=BLEU, fill=BLEU)
@@ -201,6 +209,78 @@ def finir(chemin):
             fitz.Point(centre.x - largeur_de(etiquette, 'ttitre', 7) / 2,
                        centre.y + 0.9 * MM),
             etiquette, fontname='ttitre', fontsize=7, color=(1, 1, 1))
+
+    # ---- Le sommaire reçoit ses numéros de page --------------------
+    # Ils n'existaient nulle part avant maintenant : la pagination est
+    # celle du navigateur, et le sommaire est imprimé bien avant que le
+    # premier chapitre ne tombe sur sa page. On les écrit ici, alignés à
+    # droite, au bout du trait de conduite.
+    poses = 0
+    for page in doc:
+        texte = page.get_text()
+        if '@@SOM|' not in texte:
+            continue
+        for num in MARQUEUR_SOM.findall(texte):
+            if num not in debuts:
+                continue
+            imprime = debuts[num][0]
+            zones = page.search_for('@@SOM|%s@@' % num)
+            if not zones:
+                continue
+            ligne = zones[0]
+            # Le numéro se pose à droite de la justification, sur la même
+            # ligne de base que le titre du chapitre.
+            recto = (page.number % 2 == 0)
+            marge_d = EXTERIEUR if recto else GOUTTIERE
+            libelle = str(imprime)
+            page.insert_font(fontname='ttitre', fontfile=POLICES['ttitre'])
+            page.insert_text(
+                fitz.Point(page.rect.width - marge_d - largeur_de(libelle, 'ttitre', 10),
+                           ligne.y1 - 0.6),
+                libelle, fontname='ttitre', fontsize=10, color=BLEU)
+            poses += 1
+
+    # ---- Les marqueurs internes quittent la couche texte -----------
+    # Ils ont servi : la partie, le chapitre et les codes sont posés. Ils
+    # restaient pourtant dans le PDF — invisibles à l'œil (1 pt, blanc sur
+    # blanc) mais bien présents à la recherche, au copier-coller et à la
+    # synthèse vocale. « @@D|11;8.01@@ » n'a rien à faire dans un livre.
+    efface = 0
+    for page in doc:
+        zones = page.search_for('@@')
+        if not zones:
+            continue
+        # Une paire de « @@ » encadre le marqueur : on efface d'un bout
+        # à l'autre, en élargissant à peine pour prendre les caractères.
+        for j in range(0, len(zones) - 1, 2):
+            boite = zones[j] | zones[j + 1]
+            boite.x1 = min(boite.x1 + 2, page.rect.x1)
+            page.add_redact_annot(boite)
+            efface += 1
+        page.apply_redactions(images=fitz.PDF_REDACT_IMAGE_NONE,
+                              graphics=fitz.PDF_REDACT_LINE_ART_NONE)
+
+    # ---- Les signets : un livre de trois cents pages en a besoin ----
+    # Le lecteur d'un PDF navigue par le panneau des signets ; sans eux,
+    # il fait défiler. Un signet par chapitre, dans l'ordre des pages.
+    if debuts:
+        toc = []
+        for num in sorted(debuts, key=lambda n: debuts[n][0]):
+            imprime, index, partie = debuts[num]
+            titre = 'Chapitre %s' % num
+            toc.append([1, titre, index + 1])
+        doc.set_toc(toc)
+
+    # ---- Ce que le lecteur voit dans les propriétés du fichier ------
+    doc.set_metadata({
+        'title': 'inerweb.fr HabFluide — tome 1 : la théorie',
+        'author': 'F. Henninot',
+        'subject': "Préparation à l'épreuve théorique de l'attestation d'aptitude "
+                   'fluides frigorigènes — catégories A1, A2, D et E',
+        'keywords': 'fluides frigorigènes, attestation d\'aptitude, A1, A2, D, E, '
+                    'froid, climatisation, F-Gas, arrêté du 21 novembre 2025',
+        'creator': 'inerWeb — chaîne de fabrication livret/build',
+    })
 
     # ---- Le compte doit être PAIR ----------------------------------
     # Une feuille imprimée porte deux pages. Sur un compte impair, Amazon
@@ -223,6 +303,9 @@ def finir(chemin):
         json.dump({c: sorted(set(p)) for c, p in sorted(inventaire.items())},
                   f, ensure_ascii=False, indent=1)
     print('  référentiel : %d codes marqués en pied de page' % len(inventaire))
+    print('  nettoyage : %d marqueurs internes effacés · %d signets posés'
+          % (efface, len(debuts)))
+    print('  sommaire : %d numéros de page écrits' % poses)
     print('  finition : %d pages numérotées, %d nues%s'
           % (numero, nues, ', 1 blanche de fin (compte pair)' if ajoutee else ''))
     # L'édition DYS est plus aérée, donc plus longue : elle ne doit pas

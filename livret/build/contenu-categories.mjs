@@ -140,3 +140,91 @@ export const leconsCategories = (ref) => {
 /* La majoration handicap, telle que l'arrêté la formule. */
 const ponctOuTiers = (ref) =>
   ref.durees_epreuves.amenagement_handicap.majoration_maximale;
+
+/* ------------------------------------------------------------------
+   LES QUESTIONS DU CHAPITRE, ELLES AUSSI TIRÉES DU RÉFÉRENTIEL.
+
+   Ce chapitre n'a pas de fiche source : ses questions venaient donc du
+   groupe G1 de la banque, c'est-à-dire de la NOMENCLATURE des fluides —
+   « Le R410A est un mélange de… » dans un chapitre qui parle des
+   catégories d'attestation. Six questions se construisent ici sur des
+   faits que l'arrêté écrit noir sur blanc : le périmètre de chaque
+   catégorie, les charges limites, les correspondances avec l'ancien
+   régime, les durées d'épreuve. Aucune valeur n'est saisie à la main.
+   ------------------------------------------------------------------ */
+export const questionsCategories = (ref) => {
+  const cat = (id) => ref.categories.find((c) => c.id === id) || {};
+  const dur = ref.durees_epreuves;
+  const a2 = cat('A2').limite_charge || {};
+  const ponct = ref.remise_a_niveau_ponctuelle || {};
+  const period = ref.remise_a_niveau_periodique || {};
+  const annee = (d) => String(d || '').slice(0, 4);
+
+  const q = (id, enonce, choix, bonne, explication) => ({
+    id: `q-cat-${id}`, type: 'qcm', dc: 'Catégories', code: '1.00',
+    enonce, choix, bonne, explication,
+  });
+
+  return [
+    q('perimetre-a1',
+      'La catégorie A1 autorise à intervenir sur :',
+      ['Tous les fluides, y compris le CO₂ et l’ammoniac',
+        'Les gaz à effet de serre fluorés et les hydrocarbures, sans limite de charge',
+        'Les seuls fluides fluorés, sous 3 kg de charge',
+        'Le contrôle d’étanchéité uniquement'],
+      1,
+      `L’arrêté écrit : « ${cat('A1').perimetre} ». Le CO₂ relève de la catégorie B ` +
+      'et l’ammoniac de la catégorie C : une attestation A1 n’y donne aucun droit.'),
+
+    q('charge-a2',
+      `La catégorie A2 est limitée aux équipements dont la charge est inférieure à :`,
+      [`${a2.standard_kg} kg, ou ${a2.hermetique_scelle_etiquete_kg} kg pour un hermétique scellé et étiqueté`,
+        `${a2.standard_kg} kg dans tous les cas, sans exception`,
+        '10 kg, quel que soit l’équipement',
+        'Il n’y a pas de limite de charge en A2'],
+      0,
+      `Le texte prévoit deux seuils : ${a2.standard_kg} kg en règle générale, et ` +
+      `${a2.hermetique_scelle_etiquete_kg} kg pour les systèmes hermétiquement scellés, étiquetés comme tels. ` +
+      'La plaque signalétique tranche, jamais l’estimation.'),
+
+    q('categorie-d',
+      'La catégorie D autorise :',
+      ['Toutes les opérations, sans limite',
+        'La récupération du fluide, sur des équipements de faible charge',
+        'Le contrôle d’étanchéité sans ouvrir le circuit',
+        'La climatisation des véhicules'],
+      1,
+      'La catégorie D couvre la récupération seule. Le contrôle d’étanchéité sans ' +
+      'accéder au circuit est la catégorie E ; les véhicules relèvent de la catégorie V.'),
+
+    q('co2-nh3',
+      'Pour intervenir sur une installation au CO₂ (R-744), il faut :',
+      ['Une attestation A1, qui couvre tous les fluides',
+        'Une attestation de catégorie B',
+        'Une attestation de catégorie C',
+        'Aucune attestation, le CO₂ n’est pas un gaz fluoré'],
+      1,
+      'Le CO₂ relève de la catégorie B, l’ammoniac de la catégorie C. Ce sont des ' +
+      'catégories dédiées, que ni A1 ni A2 ne remplacent — c’est précisément le ' +
+      'piège de ce chapitre.'),
+
+    q('correspondance',
+      `Une attestation de l’ancienne catégorie I correspond, dans le nouveau régime, à :`,
+      ['La catégorie A2', `La catégorie ${['A1', 'A2', 'D', 'E'].find((k) => cat(k).correspondance_2008 === 'I')}`,
+        'La catégorie B', 'Aucune : il faut tout repasser'],
+      1,
+      `L’ancienne catégorie I devient ${['A1', 'A2', 'D', 'E'].find((k) => cat(k).correspondance_2008 === 'I')}, ` +
+      `la II devient A2, la III devient D et la IV devient E. Le passage se fait par une ` +
+      `remise à niveau ponctuelle avant le ${String(ponct.echeance || '').split('-').reverse().join('/')}.`),
+
+    q('duree-epreuve',
+      `Pour la catégorie A1, l’épreuve théorique dure :`,
+      [`${dur.tronc_commun_A1_A2_B_C.theorique} minutes de tronc commun seulement`,
+        `${dur.tronc_commun_A1_A2_B_C.theorique} minutes de tronc commun, plus ${dur.A1.theorique_specifique} minutes de partie spécifique`,
+        `${dur.A1.theorique_specifique} minutes en tout`,
+        'Il n’y a pas de durée fixée par l’arrêté'],
+      1,
+      `Le tronc commun théorique dure ${dur.tronc_commun_A1_A2_B_C.theorique} minutes pour A1, A2, B et C, ` +
+      `suivi de ${dur.A1.theorique_specifique} minutes propres à la catégorie. La pratique s’ajoute à cela.`),
+  ];
+};
