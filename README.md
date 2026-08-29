@@ -60,6 +60,18 @@ le logiciel ne peut pas être pris pour un registre à valeur probante par accid
   contient que la v8.
 - L'architecture se lit en une page : [`docs/CARTE-CODE.md`](docs/CARTE-CODE.md).
 
+## Modules pédagogiques
+
+Le dépôt embarque des modules d'enseignement **autonomes et hors ligne** : ni
+compte, ni installation, ni requête réseau. Ils vivent dans `pedagogie/` et ne
+dépendent pas du logiciel.
+
+| Module | Ce que c'est | État |
+|---|---|---|
+| [`pedagogie/enregistreur-temperature/`](pedagogie/enregistreur-temperature/) | **Fabriquer, mettre en service et exploiter un enregistreur de 6 températures.** 16 h, 4 modules, schéma complet, 11 programmes ESP32-C3, site compagnon et outil d'acquisition Bluetooth | brouillon — **prototype à réaliser** |
+| [`pedagogie/co2-r744/`](pedagogie/co2-r744/) | La ligne CO₂ / R744 en treize escales, 171 narrations enregistrées | relecture métier à finir |
+| [`pedagogie/symboles-frigo/`](pedagogie/symboles-frigo/) | « Le Circuit Fantôme » — les symboles normalisés en auto-apprentissage | en service |
+
 ## Guides
 
 - **[Guide interactif — prendre en main inerWeb Fluide](https://frigorx.github.io/-inerweb-fluid-cerfa-fi-bsd-4/guide.html)** (écran par écran, avec captures)

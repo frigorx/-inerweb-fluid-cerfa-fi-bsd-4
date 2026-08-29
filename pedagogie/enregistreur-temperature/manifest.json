@@ -1,0 +1,22 @@
+{
+  "product": "inerWeb Édu — Enregistreur de températures 6 voies",
+  "version": "1.0.0-brouillon",
+  "status": "Prototype à réaliser",
+  "generatedOn": "2026-08-29",
+  "offline": true,
+  "entrypoint": "site/index.html",
+  "outil": "site/exploitation.html",
+  "intrant": "00_Dossier_maitre.md",
+  "duree": "16 h — 4 modules de 4 h, sécables en 2 × 2 h",
+  "effectif": "10 élèves, 5 binômes, 6 appareils",
+  "budget": { "parAppareil": 45, "lancementClasse": 355, "devise": "EUR" },
+  "programmes": 11,
+  "illustrations": { "faites": 7, "aPhotographier": 33, "aDessiner": 10 },
+  "controles": {
+    "logiqueEmbarquee": "outils/verifier-logique.mjs",
+    "moduleComplet": "outils/verifier-module.mjs",
+    "tableNTC": "outils/table-ntc.mjs",
+    "bilanEnergie": "outils/bilan-energie.mjs"
+  },
+  "reserve": "Aucun prototype monté, aucun programme téléversé dans un ESP32-C3 réel. Voir POINTS-OUVERTS.md § B1."
+}

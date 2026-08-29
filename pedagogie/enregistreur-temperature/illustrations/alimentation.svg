@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 600" role="img"
+     aria-labelledby="t d" font-family="Trebuchet MS, Tahoma, Verdana, sans-serif">
+  <title id="t">Le schéma d'alimentation PILES – 0 – USB</title>
+  <desc id="d">Le porte-piles de trois éléments AA traverse un fusible réarmable de 200
+    milliampères puis le sélecteur à trois positions. En position PILES, le convertisseur
+    abaisseur-élévateur fabrique 3,55 volts qu'une diode Schottky ramène à 3,30 volts sur le
+    rail ; cette diode interdit tout retour de courant vers les piles. La prise USB-C alimente
+    l'ESP32-C3, dont le régulateur fournit le même rail. Un diviseur par deux, câblé après le
+    sélecteur, mesure la tension des piles sur la voie A3 du second convertisseur.</desc>
+  <rect width="1040" height="600" fill="#ffffff"/>
+  <text x="520" y="34" text-anchor="middle" font-size="22" font-weight="bold" fill="#1b3a63">
+    PILES – 0 – USB : le sélecteur pose la règle, la diode tient l'interdit</text>
+
+  <!-- ══ porte-piles ══ -->
+  <rect x="24" y="96" width="150" height="86" rx="6" fill="#f5f5f0" stroke="#1b3a63" stroke-width="2"/>
+  <g stroke="#1b3a63" stroke-width="2">
+    <line x1="44" y1="116" x2="44" y2="162"/><line x1="54" y1="126" x2="54" y2="152"/>
+    <line x1="84" y1="116" x2="84" y2="162"/><line x1="94" y1="126" x2="94" y2="152"/>
+    <line x1="124" y1="116" x2="124" y2="162"/><line x1="134" y1="126" x2="134" y2="152"/>
+  </g>
+  <text x="99" y="88" text-anchor="middle" font-size="15" font-weight="bold" fill="#1b3a63">B1 — 3 × AA</text>
+  <text x="99" y="200" text-anchor="middle" font-size="13" fill="#5a6472">4,8 V neuves</text>
+  <text x="99" y="216" text-anchor="middle" font-size="13" fill="#5a6472">2,7 V vides</text>
+
+  <!-- ══ fusible ══ -->
+  <line x1="174" y1="122" x2="196" y2="122" stroke="#dc2626" stroke-width="3"/>
+  <rect x="196" y="110" width="52" height="24" rx="4" fill="#ffffff" stroke="#dc2626" stroke-width="2"/>
+  <line x1="248" y1="122" x2="272" y2="122" stroke="#dc2626" stroke-width="3"/>
+  <text x="222" y="100" text-anchor="middle" font-size="14" font-weight="bold" fill="#dc2626">F1</text>
+  <text x="222" y="154" text-anchor="middle" font-size="13" fill="#5a6472">200 mA</text>
+  <text x="222" y="170" text-anchor="middle" font-size="13" fill="#5a6472">réarmable</text>
+
+  <!-- ══ sélecteur ══ -->
+  <rect x="272" y="82" width="164" height="118" rx="8" fill="#ffffff" stroke="#1b3a63" stroke-width="2.5"/>
+  <text x="354" y="72" text-anchor="middle" font-size="15" font-weight="bold" fill="#1b3a63">S1 — 3 positions</text>
+  <circle cx="300" cy="108" r="6" fill="#16a34a"/>
+  <text x="316" y="113" font-size="14" font-weight="bold" fill="#16a34a">PILES</text>
+  <circle cx="300" cy="140" r="6" fill="#ffffff" stroke="#5a6472" stroke-width="2"/>
+  <text x="316" y="145" font-size="14" fill="#5a6472">0 — ARRÊT</text>
+  <circle cx="300" cy="172" r="6" fill="#ffffff" stroke="#5a6472" stroke-width="2"/>
+  <text x="316" y="177" font-size="14" fill="#5a6472">USB (non relié)</text>
+  <line x1="272" y1="122" x2="294" y2="110" stroke="#1b3a63" stroke-width="3"/>
+  <line x1="436" y1="108" x2="520" y2="108" stroke="#1b3a63" stroke-width="3"/>
+
+  <!-- ══ nœud « pack commuté » ══ -->
+  <circle cx="520" cy="108" r="5" fill="#1b3a63"/>
+  <text x="520" y="70" text-anchor="middle" font-size="13" font-weight="bold" fill="#1b3a63">nœud</text>
+  <text x="520" y="86" text-anchor="middle" font-size="13" font-weight="bold" fill="#1b3a63">« pack commuté »</text>
+
+  <!-- ══ diviseur de mesure des piles ══ -->
+  <line x1="520" y1="108" x2="520" y2="150" stroke="#1b3a63" stroke-width="2.5"/>
+  <rect x="500" y="150" width="40" height="46" rx="4" fill="#ffffff" stroke="#1b3a63" stroke-width="2"/>
+  <line x1="520" y1="196" x2="520" y2="222" stroke="#1b3a63" stroke-width="2.5"/>
+  <rect x="500" y="222" width="40" height="46" rx="4" fill="#ffffff" stroke="#1b3a63" stroke-width="2"/>
+  <text x="548" y="178" font-size="13" font-weight="bold" fill="#1b3a63">R9 100 kΩ</text>
+  <text x="548" y="250" font-size="13" font-weight="bold" fill="#1b3a63">R10 100 kΩ</text>
+  <circle cx="520" cy="209" r="5" fill="#1b3a63"/>
+  <path d="M520,209 L470,209 L470,268" fill="none" stroke="#16a34a" stroke-width="2.5"/>
+  <text x="464" y="288" text-anchor="end" font-size="13" font-weight="bold" fill="#16a34a">→ A3, voie A3</text>
+  <text x="464" y="306" text-anchor="end" font-size="12" fill="#5a6472">mesure des piles</text>
+  <!-- la branche descend vers la masse, en ENJAMBANT la ligne du rail USB -->
+  <path d="M520,268 L520,352 A9,9 0 0 1 520,370 L520,506" fill="none" stroke="#1b3a63" stroke-width="2.5"/>
+
+  <!-- ══ convertisseur ══ -->
+  <line x1="520" y1="108" x2="640" y2="108" stroke="#1b3a63" stroke-width="3"/>
+  <rect x="640" y="76" width="152" height="64" rx="8" fill="#ffffff" stroke="#1b3a63" stroke-width="2.5"/>
+  <text x="716" y="102" text-anchor="middle" font-size="15" font-weight="bold" fill="#1b3a63">U1</text>
+  <text x="716" y="122" text-anchor="middle" font-size="13" fill="#5a6472">abaisseur-élévateur</text>
+  <text x="716" y="160" text-anchor="middle" font-size="14" font-weight="bold" fill="#c9451a">réglé à 3,55 V</text>
+
+  <!-- ══ diode Schottky ══ -->
+  <line x1="792" y1="108" x2="822" y2="108" stroke="#1b3a63" stroke-width="3"/>
+  <path d="M822,94 L822,122 L850,108 z" fill="#ff6b35" stroke="#c9451a" stroke-width="2"/>
+  <line x1="850" y1="92" x2="850" y2="124" stroke="#c9451a" stroke-width="4"/>
+  <line x1="850" y1="108" x2="890" y2="108" stroke="#1b3a63" stroke-width="3"/>
+  <text x="838" y="72" text-anchor="middle" font-size="15" font-weight="bold" fill="#c9451a">D1 Schottky</text>
+  <text x="838" y="150" text-anchor="middle" font-size="13" fill="#5a6472">chute 0,25 V</text>
+
+  <!-- ══ USB ══ -->
+  <rect x="24" y="332" width="150" height="60" rx="8" fill="#ffffff" stroke="#2d5688" stroke-width="2"/>
+  <text x="99" y="358" text-anchor="middle" font-size="15" font-weight="bold" fill="#1b3a63">USB-C façade</text>
+  <text x="99" y="378" text-anchor="middle" font-size="13" fill="#5a6472">5 V + données</text>
+  <line x1="174" y1="362" x2="222" y2="362" stroke="#2d5688" stroke-width="3"/>
+  <rect x="222" y="332" width="220" height="60" rx="8" fill="#ffffff" stroke="#2d5688" stroke-width="2"/>
+  <text x="332" y="356" text-anchor="middle" font-size="15" font-weight="bold" fill="#1b3a63">ESP32-C3</text>
+  <text x="332" y="376" text-anchor="middle" font-size="13" fill="#5a6472">régulateur de carte → 3,3 V</text>
+  <line x1="442" y1="362" x2="890" y2="362" stroke="#2d5688" stroke-width="3"/>
+
+  <!-- ══ le rail ══ -->
+  <line x1="890" y1="108" x2="890" y2="362" stroke="#dc2626" stroke-width="4"/>
+  <circle cx="890" cy="362" r="5" fill="#dc2626"/>
+  <line x1="890" y1="235" x2="912" y2="235" stroke="#dc2626" stroke-width="4"/>
+  <rect x="912" y="192" width="118" height="86" rx="8" fill="#fdf2f2" stroke="#dc2626" stroke-width="2"/>
+  <text x="971" y="216" text-anchor="middle" font-size="15" font-weight="bold" fill="#dc2626">RAIL 3,30 V</text>
+  <text x="971" y="236" text-anchor="middle" font-size="12" fill="#5a6472">ESP32-C3</text>
+  <text x="971" y="252" text-anchor="middle" font-size="12" fill="#5a6472">2 × ADS1115</text>
+  <text x="971" y="268" text-anchor="middle" font-size="12" fill="#5a6472">écran · 6 ponts</text>
+
+  <!-- ══ masse ══ -->
+  <path d="M99,182 L99,250 L14,250 L14,506" fill="none" stroke="#2b2b2b" stroke-width="3"/>
+  <line x1="14" y1="506" x2="960" y2="506" stroke="#2b2b2b" stroke-width="3"/>
+  <line x1="99" y1="392" x2="99" y2="506" stroke="#2b2b2b" stroke-width="3"/>
+  <g stroke="#2b2b2b" stroke-width="3">
+    <line x1="480" y1="516" x2="520" y2="516"/>
+    <line x1="488" y1="524" x2="512" y2="524"/>
+    <line x1="496" y1="532" x2="504" y2="532"/>
+  </g>
+  <line x1="500" y1="506" x2="500" y2="512" stroke="#2b2b2b" stroke-width="3"/>
+  <text x="540" y="524" font-size="14" font-weight="bold" fill="#2b2b2b">MASSE COMMUNE</text>
+  <text x="640" y="384" font-size="12" fill="#5a6472">le demi-cercle = deux fils qui se croisent SANS se toucher</text>
+
+  <!-- ══ l'encadré ══ -->
+  <rect x="24" y="546" width="1000" height="46" rx="8" fill="#fdf2f2" stroke="#dc2626"/>
+  <text x="44" y="566" font-size="15" font-weight="bold" fill="#dc2626">
+    D1 garantit, quoi qu'il arrive, qu'aucun courant ne remonte vers les piles.</text>
+  <text x="44" y="584" font-size="14" fill="#1b3a63">
+    Le sélecteur, lui, tient la règle d'usage : PILES pour l'autonomie, USB pour programmer. Les deux à la fois ne casse rien, mais ce n'est pas le mode normal.</text>
+</svg>

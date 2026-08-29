@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Enregistreur de températures 6 voies — inerWeb Édu</title>
+<meta name="description" content="Site compagnon du module transversal : réaliser, mettre en service et exploiter un enregistreur autonome de 6 températures. inerWeb Édu — F. Henninot.">
+<meta name="theme-color" content="#1b3a63">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="styles.css">
+<!-- Tout est servi par le module lui-même : aucun script, aucune police,
+     aucune image ne vient d'ailleurs, et la page n'envoie rien nulle part.
+     'unsafe-inline' n'est autorisé que pour les styles, jamais pour les
+     scripts. frame-ancestors n'y figure pas : la directive n'a aucun effet
+     en <meta>, elle ne vaut qu'en en-tête HTTP. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; manifest-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+</head>
+<body>
+
+<header>
+  <span class="flocon">❄</span>
+  <h1>Enregistreur de températures — 6 voies</h1>
+  <span class="edu">Édu</span>
+  <span class="signature">inerWeb · par F. Henninot</span>
+</header>
+
+<nav class="onglets" role="tablist" aria-label="Sections du site">
+  <button role="tab" data-vers="accueil"        aria-selected="true">Accueil</button>
+  <button role="tab" data-vers="materiel"       aria-selected="false">Matériel</button>
+  <button role="tab" data-vers="montage"        aria-selected="false">Montage</button>
+  <button role="tab" data-vers="programmes"     aria-selected="false">Programmes</button>
+  <button role="tab" data-vers="exploitation"   aria-selected="false">Exploitation</button>
+  <button role="tab" data-vers="depannage"      aria-selected="false">Dépannage</button>
+  <button role="tab" data-vers="telechargements" aria-selected="false">Téléchargements</button>
+</nav>
+
+<main>
+
+<!-- ═══════════════════════════════════════════════════════ ACCUEIL -->
+<section class="ecran actif" id="ec-accueil" role="tabpanel">
+  <h2>Un appareil de mesure, fabriqué puis utilisé</h2>
+  <p class="intro">
+    Six sondes de température, un écran, une prise USB, du Bluetooth, trois piles.
+    Vous allez le <strong>construire</strong>, le <strong>contrôler</strong>, le
+    <strong>mettre en service</strong>, puis vous en <strong>servir</strong> sur une
+    machine réelle. À la fin, ce n'est pas une maquette : c'est un instrument
+    d'atelier.
+  </p>
+
+  <figure>
+    <img src="../illustrations/chaine-acquisition.svg"
+         alt="La chaîne d'acquisition : température, NTC, résistance, pont diviseur, tension, ADS1115, valeur numérique, ESP32, affichage, USB et Bluetooth.">
+    <figcaption>La chaîne complète. Chaque flèche est une transformation, et chacune
+      se mesure. C'est le fil de tout le module.</figcaption>
+  </figure>
+
+  <div class="note">
+    <strong>La question du module, et elle tient en une ligne :</strong>
+    comment une grandeur physique — de la chaleur — devient-elle un nombre sur un écran,
+    puis une courbe sur un ordinateur ?
+  </div>
+
+  <h3>Les quatre modules</h3>
+  <div class="tableau-large">
+  <table>
+    <tr><th>Module</th><th>Durée</th><th>Ce qu'on y fait</th><th>Ce qu'on en ressort</th></tr>
+    <tr><td><strong>1</strong></td><td>4 h</td>
+        <td>Comprendre la chaîne d'acquisition</td>
+        <td>Je sais pourquoi une résistance sert à mesurer une température</td></tr>
+    <tr><td><strong>2</strong></td><td>4 h</td>
+        <td>Percer, découper, souder, câbler</td>
+        <td>L'appareil existe et il est contrôlé</td></tr>
+    <tr><td><strong>3</strong></td><td>4 h</td>
+        <td>Programmer, contrôler, étalonner, connecter</td>
+        <td>L'appareil mesure juste, et il le prouve</td></tr>
+    <tr><td><strong>4</strong></td><td>4 h</td>
+        <td>Poser les sondes sur une machine, enregistrer, lire</td>
+        <td>Je sais ce que les courbes disent de la machine</td></tr>
+  </table>
+  </div>
+
+  <h3>Ce que l'appareil sait faire</h3>
+  <ul>
+    <li>mesurer <strong>six températures à la fois</strong>, entre −37 °C et +105 °C
+        (la limite haute, c'est le câble de la sonde, pas l'électronique) ;</li>
+    <li>les <strong>afficher</strong> sur son écran, sans aucun câble ;</li>
+    <li>les <strong>envoyer</strong> par USB et par Bluetooth, dans le même format ;</li>
+    <li>fonctionner <strong>sur piles</strong> pendant environ deux jours ;</li>
+    <li>dire s'il est sur piles ou sur USB, et à quel niveau sont les piles ;</li>
+    <li>signaler une <strong>sonde débranchée</strong> au lieu d'inventer une valeur ;</li>
+    <li>garder son <strong>étalonnage</strong> en mémoire, même débranché.</li>
+  </ul>
+
+  <div class="note attente">
+    <strong>Ce qu'il n'est pas.</strong> Ce n'est pas un appareil de métrologie
+    certifié, et le dossier ne le prétend nulle part. C'est un instrument
+    <em>comparatif</em> : excellent pour voir un écart, une évolution, un
+    démarrage de machine. Pour un procès-verbal réglementaire, il faut un
+    appareil raccordé à un étalon.
+  </div>
+
+  <h3>Commencer</h3>
+  <div class="barre-actions">
+    <button class="b" data-vers="materiel">Voir le matériel</button>
+    <button class="b" data-vers="montage">Suivre le montage</button>
+    <button class="b accent" data-vers="exploitation">Ouvrir l'outil d'acquisition</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ MATÉRIEL -->
+<section class="ecran" id="ec-materiel" role="tabpanel">
+  <h2>Le matériel d'un appareil</h2>
+  <p class="intro">Vingt-cinq lignes, environ 45 € par appareil terminé. Chaque ligne
+    a une raison d'être ; les trois qui font les pannes portent un avertissement.</p>
+
+  <h3>L'électronique</h3>
+  <div class="tableau-large">
+  <table>
+    <tr><th>Repère</th><th>Désignation</th><th class="nombre">Qté</th><th>Ce qu'il fait</th></tr>
+    <tr><td>A1</td><td>ESP32-C3 SuperMini USB-C</td><td class="nombre">1</td><td>calcule, affiche, transmet</td></tr>
+    <tr><td>A2, A3</td><td>ADS1115 — 16 bits, 4 voies</td><td class="nombre">2</td><td>transforment les tensions en nombres</td></tr>
+    <tr><td>A4</td><td>Écran OLED 1,3" 128 × 64 I²C</td><td class="nombre">1</td><td>affiche sur place</td></tr>
+    <tr><td>R1…R6</td><td>Résistance 10 kΩ <strong>0,1 %</strong></td><td class="nombre">6</td><td>ponts diviseurs des sondes</td></tr>
+    <tr><td>R7, R8</td><td>Résistance 10 kΩ <strong>0,1 %</strong></td><td class="nombre">2</td><td>mesure de la tension d'excitation</td></tr>
+    <tr><td>R9, R10</td><td>Résistance 100 kΩ 1 %</td><td class="nombre">2</td><td>mesure des piles</td></tr>
+    <tr><td>C3…C8</td><td>Condensateur 100 nF</td><td class="nombre">6</td><td>filtrent le bruit sur chaque voie</td></tr>
+    <tr><td>D1</td><td>Diode Schottky 1N5819</td><td class="nombre">1</td><td><strong>l'anti-retour</strong> — rien ne remonte vers les piles</td></tr>
+    <tr><td>F1</td><td>Fusible réarmable 200 mA</td><td class="nombre">1</td><td>protège <strong>les piles</strong> d'un court-circuit</td></tr>
+    <tr><td>U1</td><td>Convertisseur abaisseur-élévateur</td><td class="nombre">1</td><td>fabrique du 3,3 V à partir des piles</td></tr>
+    <tr><td>S1</td><td>Inverseur 3 positions</td><td class="nombre">1</td><td>PILES – 0 – USB</td></tr>
+  </table>
+  </div>
+
+  <h3>Les sondes et la connectique</h3>
+  <div class="tableau-large">
+  <table>
+    <tr><th>Désignation</th><th class="nombre">Qté</th><th>Point de vigilance</th></tr>
+    <tr><td>Sonde NTC 10 kΩ B3950, gaine inox étanche</td><td class="nombre">6</td>
+        <td>vérifier que le câble est donné pour 105 °C</td></tr>
+    <tr><td>Embase jack 3,5 mm mono, de panneau (J1…J6)</td><td class="nombre">6</td>
+        <td>mesurer le diamètre du <em>filetage</em>, pas du corps</td></tr>
+    <tr><td>Fiche jack 3,5 mm mono</td><td class="nombre">6</td>
+        <td>modèle à visser, démontable — les moulées ne se réparent pas</td></tr>
+    <tr><td>Rallonge USB-C de façade</td><td class="nombre">1</td>
+        <td><strong>elle doit transporter les données</strong>, pas seulement la charge</td></tr>
+    <tr><td>Porte-piles 3 × AA avec fils</td><td class="nombre">1</td><td>—</td></tr>
+    <tr><td>Boîtier ABS ≈ 120 × 90 × 60 mm</td><td class="nombre">1</td>
+        <td>couvercle plat de préférence : l'écran s'y encastre mieux</td></tr>
+    <tr><td>Plaque à pastilles</td><td class="nombre">1</td><td>—</td></tr>
+  </table>
+  </div>
+
+  <div class="note securite">
+    <strong>Les trois pièges d'achat qui coûtent une séance.</strong>
+    <ol>
+      <li><strong>L'écran de 1,3 pouce n'a pas le même contrôleur que celui de
+        0,96 pouce.</strong> Le 1,3" est presque toujours un <em>SH1106</em>, le
+        0,96" un <em>SSD1306</em>. Se tromper de contrôleur donne une image
+        décalée de deux pixels — le programme 02 sert à trancher.</li>
+      <li><strong>Un câble USB-C « charge seulement » ne programme rien.</strong>
+        C'est la panne la plus fréquente et la plus déroutante : la carte
+        s'allume et n'apparaît nulle part.</li>
+      <li><strong>Une résistance à 1 % au lieu de 0,1 %</strong> coûte 0,2 K
+        d'erreur qu'aucun étalonnage ne rattrape complètement.</li>
+    </ol>
+  </div>
+
+  <p>La nomenclature complète, avec les quantités pour une classe de 10 élèves et le
+    chiffrage, est dans <code>03_Nomenclature_et_achats.md</code>.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ MONTAGE -->
+<section class="ecran" id="ec-montage" role="tabpanel">
+  <h2>Le montage, en cinq étapes</h2>
+  <p class="intro">Chaque étape se termine par un contrôle. On ne passe jamais à la
+    suivante sans que le contrôle soit passé — c'est ce qui évite de chercher, à la
+    fin, une faute commise au début.</p>
+
+  <h3>01 — Le boîtier</h3>
+  <ol class="etapes">
+    <li>Imprimer <code>gabarit-percage.svg</code> <strong>à l'échelle 1:1</strong>
+      (« Taille réelle », jamais « Ajuster à la page »).</li>
+    <li><strong>Vérifier le carré de contrôle au réglet : il doit faire 50,0 mm.</strong>
+      S'il ne les fait pas, l'imprimante a redimensionné et tout le gabarit est faux.</li>
+    <li>Mesurer le boîtier réel au pied à coulisse et comparer au gabarit. Les
+      boîtiers ABS ont des congés de moulage et des colonnettes d'angle.</li>
+    <li>Coller le gabarit au ruban de masquage, pointer chaque perçage au pointeau.</li>
+    <li>Percer <strong>en montant en diamètre</strong> : 3 mm d'abord, puis la cote.
+      Un foret étagé est idéal pour le plastique.</li>
+    <li>Découper la fenêtre de l'écran à l'outil rotatif, <strong>en restant à
+      l'intérieur du trait</strong> : on peut toujours limer, jamais rajouter.</li>
+    <li>Ébavurer toutes les ouvertures.</li>
+    <li class="controle">Montage à blanc : tout entre, rien ne force, le couvercle
+      ferme. <strong>Aucune soudure avant que ce contrôle soit passé.</strong></li>
+  </ol>
+
+  <div class="note securite">
+    <strong>Point sécurité — perçage.</strong> Lunettes obligatoires. La pièce est
+    <em>bridée</em>, jamais tenue à la main : un boîtier ABS qui accroche le foret
+    part en toupie et coupe. Cheveux attachés, manches serrées.
+  </div>
+
+  <h3>02 — Les six embases</h3>
+  <ol class="etapes">
+    <li>Poser les six embases, écrous serrés à la main puis d'un quart de tour.</li>
+    <li>Étiqueter <strong>T1 à T6</strong> tout de suite, à l'extérieur.
+      Trois embases identiques non repérées, et le dépannage est fini.</li>
+    <li>Relier les six <strong>corps</strong> de jack entre eux par un seul fil
+      <strong>noir</strong>, en chaîne. C'est la masse commune.</li>
+    <li>Souder un fil sur chaque <strong>broche</strong> : <strong>jaune</strong> pour
+      T1 à T4, <strong>blanc</strong> pour T5 et T6.</li>
+    <li>Numéroter chaque fil à l'étiquette avant de le lâcher.</li>
+    <li class="controle">Continuité de chaque broche vers son fil : <strong>moins de
+      2 Ω</strong>. Isolement broche ↔ corps, sans sonde : <strong>infini</strong>.</li>
+  </ol>
+
+  <div class="note">
+    <strong>Pourquoi deux couleurs pour six fils.</strong> Six fils jaunes identiques
+    dans un boîtier de 120 mm ne se dépannent pas. Quatre jaunes numérotés et deux
+    blancs numérotés se retrouvent en dix secondes.
+  </div>
+
+  <h3>03 — La soudure</h3>
+  <figure>
+    <img src="../illustrations/cablage-une-voie.svg"
+         alt="Câblage d'une voie : la sonde, l'embase jack, la résistance de 10 kΩ vers le 3,3 V, le condensateur de 100 nF et l'entrée du convertisseur.">
+    <figcaption>Une voie complète, de la sonde à l'entrée du convertisseur. Les cinq
+      autres sont identiques.</figcaption>
+  </figure>
+  <ol class="etapes">
+    <li>Couper le fil à la longueur, <strong>enfiler la gaine thermo AVANT</strong>
+      de souder. Oubliée, il faut tout dessouder.</li>
+    <li>Dénuder 5 mm. Torsader légèrement.</li>
+    <li>Étamer le conducteur : l'étain doit <em>mouiller</em> les brins, pas former
+      une boule.</li>
+    <li>Chauffer <strong>en même temps</strong> la pastille et le fil, deux secondes,
+      puis amener l'étain <strong>sur la zone chauffée</strong> — jamais sur la panne.</li>
+    <li>Retirer l'étain, puis le fer. <strong>Ne plus bouger</strong> pendant le
+      refroidissement.</li>
+    <li>Contrôler à l'œil : une bonne soudure est brillante et forme un petit cône.
+      Terne et bombée = soudure froide, à refaire.</li>
+    <li>Positionner la gaine et la rétracter au pistolet à air chaud.</li>
+    <li class="controle">Continuité au multimètre, systématiquement.
+      <strong>L'œil se trompe, l'ohmmètre non.</strong></li>
+  </ol>
+
+  <h3>04 — Les cartes</h3>
+  <ol class="etapes">
+    <li>Souder les <strong>barrettes femelles</strong> sur la plaque, pas les modules
+      directement : une carte grillée se remplace alors sans fer à souder.</li>
+    <li>Poser les six résistances de 10 kΩ 0,1 %, chacune entre le rail 3,3 V et le
+      point milieu de sa voie.</li>
+    <li>Poser R7-R8 (mesure de la tension d'excitation) et R9-R10 (mesure des piles).</li>
+    <li>Poser les six condensateurs de 100 nF, du point milieu à la masse.</li>
+    <li>Câbler le bus : <strong>vert = SDA vers GPIO5</strong>,
+      <strong>bleu = SCL vers GPIO6</strong>, au plus court, contre le fond.</li>
+    <li><strong>ADDR de A2 à la masse. ADDR de A3 au 3,3 V.</strong> C'est ce qui donne
+      deux adresses différentes ; interverties, un seul convertisseur est visible.</li>
+    <li>Câbler l'alimentation : porte-piles → fusible → sélecteur → convertisseur →
+      <strong>diode D1 dans le bon sens</strong> → rail 3,3 V.</li>
+    <li class="controle">Les 19 contrôles ci-dessous, tous, avant toute mise sous tension.</li>
+  </ol>
+
+  <figure>
+    <img src="../illustrations/alimentation.svg"
+         alt="Schéma d'alimentation : porte-piles, fusible, sélecteur PILES-0-USB, convertisseur, diode Schottky anti-retour, rail 3,3 V, et la voie de mesure des piles.">
+    <figcaption>L'alimentation. La diode D1 est le seul composant qui garantit,
+      quoi qu'il arrive, qu'aucun courant ne remonte vers les piles.</figcaption>
+  </figure>
+
+  <h3>05 — Les contrôles avant la première mise sous tension</h3>
+  <p>Appareil hors tension, sélecteur sur <strong>0</strong>, piles <strong>retirées</strong>.
+    Un contrôle sans valeur attendue n'est pas un contrôle.</p>
+  <div class="tableau-large">
+  <table>
+    <tr><th class="nombre">#</th><th>Contrôle</th><th>Valeur attendue</th></tr>
+    <tr><td class="nombre">1</td><td>Court-circuit rail / masse</td><td>&gt; 1 kΩ — <strong>jamais 0 Ω</strong></td></tr>
+    <tr><td class="nombre">2</td><td>Polarité du porte-piles</td><td>+4,5 à +4,8 V, rouge au +</td></tr>
+    <tr><td class="nombre">3–4</td><td>Continuité T1 à T6 vers les entrées</td><td>&lt; 2 Ω chacune</td></tr>
+    <tr><td class="nombre">5</td><td>Masse commune des 6 jacks</td><td>&lt; 2 Ω</td></tr>
+    <tr><td class="nombre">6–7</td><td>Chaque pont : rail → point milieu</td><td>10,0 kΩ ± 0,1</td></tr>
+    <tr><td class="nombre">8–9</td><td>SDA et SCL vers les 3 modules</td><td>&lt; 2 Ω</td></tr>
+    <tr><td class="nombre">10</td><td>SDA et SCL non croisés (entre eux)</td><td>&gt; 1 kΩ</td></tr>
+    <tr><td class="nombre">11–13</td><td>Alimentation de A2, A3, A4</td><td>&lt; 2 Ω vers le rail</td></tr>
+    <tr><td class="nombre">14</td><td>ADDR de A2 à la masse, ADDR de A3 au rail</td><td>&lt; 2 Ω vers la bonne cible</td></tr>
+    <tr><td class="nombre">15</td><td>Sens de D1 (multimètre en mode diode)</td><td>0,2–0,4 V dans un sens, infini dans l'autre</td></tr>
+    <tr><td class="nombre">16</td><td>Sélecteur, position par position</td><td>continuité en <strong>PILES</strong> seulement</td></tr>
+    <tr><td class="nombre">17</td><td><strong>Aucune liaison piles ↔ broche 5V</strong></td><td><strong>infini dans les 3 positions</strong></td></tr>
+    <tr><td class="nombre">18–19</td><td>Fixations, aucun cuivre apparent</td><td>rien ne bouge, rien ne brille</td></tr>
+  </table>
+  </div>
+
+  <div class="note securite">
+    <strong>Le contrôle n° 17 est celui qui autorise la mise sous tension.</strong>
+    Aucune alimentation avant qu'un enseignant l'ait visé. Ce n'est pas une formalité :
+    c'est ce qui garantit qu'on ne recharge jamais trois piles alcalines par l'USB.
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════ PROGRAMMES -->
+<section class="ecran" id="ec-programmes" role="tabpanel">
+  <h2>Les onze programmes</h2>
+  <p class="intro">On ne reçoit jamais le programme final d'un coup. Chaque programme
+    prouve <strong>une chose et une seule</strong>. Une panne se trouve alors toute
+    seule : elle est apparue entre deux programmes.</p>
+
+  <div class="tableau-large">
+  <table>
+    <tr><th class="nombre">#</th><th>Programme</th><th>Ce qu'il prouve</th><th>Ce qu'on doit voir</th></tr>
+    <tr><td class="nombre">01</td><td><code>01-test-carte</code></td>
+        <td>la carte est vue et programmée</td><td>la LED clignote, le moniteur parle</td></tr>
+    <tr><td class="nombre">02</td><td><code>02-test-oled</code></td>
+        <td>le bus existe, l'écran répond</td><td>un cadre net, sans décalage</td></tr>
+    <tr><td class="nombre">03</td><td><code>03-scanner-i2c</code></td>
+        <td>trois circuits, trois adresses</td><td><code>0x3C</code>, <code>0x48</code>, <code>0x49</code></td></tr>
+    <tr><td class="nombre">04</td><td><code>04-lire-une-voie</code></td>
+        <td>le convertisseur convertit</td><td>des <strong>volts</strong>, vérifiés au multimètre</td></tr>
+    <tr><td class="nombre">05</td><td><code>05-lire-une-ntc</code></td>
+        <td><strong>la première température</strong></td><td>la valeur monte quand on serre la sonde</td></tr>
+    <tr><td class="nombre">06</td><td><code>06-lire-six-sondes</code></td>
+        <td>les six voies</td><td>« sonde absente » sur les voies vides</td></tr>
+    <tr><td class="nombre">07</td><td><code>07-afficher</code></td>
+        <td>l'appareil se suffit à lui-même</td><td>six valeurs à l'écran, colonnes stables</td></tr>
+    <tr><td class="nombre">08</td><td><code>08-niveau-piles</code></td>
+        <td>la 8ᵉ voie</td><td>un pourcentage sur piles, « USB » sinon</td></tr>
+    <tr><td class="nombre">09</td><td><code>09-trame-usb</code></td>
+        <td>la trame du § 26</td><td>une ligne par seconde dans le moniteur</td></tr>
+    <tr><td class="nombre">10</td><td><code>10-bluetooth-ble</code></td>
+        <td>la même trame, sans fil</td><td>l'appareil apparaît sous son nom</td></tr>
+    <tr><td class="nombre">11</td><td><code>11-version-finale</code></td>
+        <td>étalonnage, extrema, pannes</td><td>l'étalonnage survit à la coupure</td></tr>
+  </table>
+  </div>
+
+  <h3>Les réglages de l'IDE Arduino</h3>
+  <div class="tableau-large">
+  <table>
+    <tr><th>Réglage</th><th>Valeur</th><th>Ce qui arrive sinon</th></tr>
+    <tr><td>Carte</td><td>ESP32C3 Dev Module</td><td>—</td></tr>
+    <tr><td>USB CDC On Boot</td><td><strong>Enabled</strong></td><td>le moniteur série reste muet</td></tr>
+    <tr><td>Schéma de partition</td><td><strong>Huge APP (3MB No OTA)</strong></td>
+        <td>à partir du programme 10 : « <em>text section exceeds available space</em> »</td></tr>
+    <tr><td>Moniteur série</td><td>115200 bauds</td><td>des caractères illisibles</td></tr>
+  </table>
+  </div>
+
+  <h3>Bibliothèques</h3>
+  <ul>
+    <li><strong>U8g2</strong> (Oliver Kraus) — à partir du programme 02 ;</li>
+    <li><strong>Adafruit ADS1X15</strong> — à partir du programme 04 ;</li>
+    <li>le Bluetooth n'a <strong>rien</strong> à installer.</li>
+  </ul>
+
+  <h3>Les commandes de l'appareil</h3>
+  <p>À taper dans le moniteur série, ou à envoyer depuis l'outil d'acquisition.</p>
+  <div class="tableau-large">
+  <table>
+    <tr><th>Commande</th><th>Effet</th></tr>
+    <tr><td><code>?</code></td><td>l'appareil se présente</td></tr>
+    <tr><td><code>H=14:05:30</code></td><td>règle l'horloge</td></tr>
+    <tr><td><code>I=5</code></td><td>un relevé toutes les 5 secondes (1 à 3600)</td></tr>
+    <tr><td><code>ZC3=0.0</code></td><td><strong>étalonne la voie 3</strong> : « en ce moment, elle voit 0,0 »</td></tr>
+    <tr><td><code>Z3=-0.4</code></td><td>impose directement un décalage à la voie 3</td></tr>
+    <tr><td><code>Z?</code> · <code>ZR</code></td><td>liste · efface les six décalages</td></tr>
+    <tr><td><code>M?</code> · <code>MR</code></td><td>mini et maxi de chaque voie · remise à zéro</td></tr>
+  </table>
+  </div>
+
+  <div class="note reussite">
+    <strong>L'étalonnage en classe, en deux minutes par sonde.</strong>
+    Un bain d'eau glacée fondante — de la glace en excès, de l'eau, on remue — vaut
+    <strong>0,0 °C à un dixième près</strong>. C'est le seul point fixe qu'un lycée
+    possède sans rien acheter. Sonde dedans, attendre une minute que la lecture se
+    stabilise, envoyer <code>ZC1=0.0</code>. L'appareil calcule l'écart et le retient,
+    même débranché.
+  </div>
+</section>
+
+<!-- ═════════════════════════════════════════════════ EXPLOITATION -->
+<section class="ecran" id="ec-exploitation" role="tabpanel">
+  <h2>Enregistrer et exploiter</h2>
+  <p class="intro">L'outil d'acquisition est une <strong>page web</strong>, pas une
+    application à installer. Elle se connecte à l'appareil en Bluetooth ou par le
+    câble USB, trace les six courbes, et écrit un fichier CSV.</p>
+
+  <div class="barre-actions">
+    <a class="b accent" href="exploitation.html" style="text-decoration:none;display:inline-block">
+      Ouvrir l'outil d'acquisition</a>
+  </div>
+
+  <h3>Ce qu'il faut pour que ça marche</h3>
+  <div class="tableau-large">
+  <table>
+    <tr><th>Appareil</th><th>Bluetooth</th><th>Câble USB</th></tr>
+    <tr><td>PC Windows ou Linux, <strong>Chrome</strong> ou Edge</td><td>oui</td><td>oui</td></tr>
+    <tr><td>Téléphone ou tablette <strong>Android</strong>, Chrome</td><td>oui</td><td>non</td></tr>
+    <tr><td>Mac, Chrome</td><td>oui</td><td>oui</td></tr>
+    <tr><td>iPhone / iPad</td><td><strong>non</strong></td><td>non</td></tr>
+  </table>
+  </div>
+  <p>Firefox et Safari n'ont pas le Bluetooth web. Ce n'est pas une panne de la page :
+    c'est un choix de ces navigateurs. Sur iPhone, il faut une application tierce
+    (nRF Connect, par exemple) — l'appareil, lui, est visible par tout le monde.</p>
+
+  <h3>La trame</h3>
+  <p>Une ligne par relevé, séparateurs point-virgule — celui d'un tableur français :</p>
+  <pre><code>12:31:05;T1=4.8;T2=-3.2;T3=8.7;T4=52.1;T5=31.4;T6=24.8;BAT=78</code></pre>
+  <p>Une <strong>seule règle</strong> à retenir : un champ <strong>vide</strong> veut
+    dire « pas de mesure valable ».</p>
+  <pre><code>12:31:05;T1=4.8;<strong>T2=</strong>;T3=8.7;T4=52.1;T5=31.4;T6=24.8;<strong>BAT=</strong>
+             ↑ sonde 2 absente ou coupée         ↑ appareil sur USB</code></pre>
+  <p>Les lignes qui commencent par <code>#</code> sont des commentaires : l'appareil
+    s'y présente. Un tableur les ignore, un élève les lit.</p>
+
+  <h3>L'horloge — et c'est un vrai sujet</h3>
+  <div class="note">
+    Cet appareil n'a pas de pile d'horloge. À la mise sous tension, <strong>il ne sait
+    pas quelle heure il est</strong> : il compte le temps écoulé depuis le démarrage, à
+    partir de 00:00:00. Un enregistreur autonome connaît des <strong>durées</strong>,
+    pas des dates. C'est le PC ou le téléphone, lui qui connaît l'heure, qui la lui
+    donne en se connectant — et c'est lui qui date le fichier CSV.
+  </div>
+
+  <h3>Ce qu'on va regarder sur une machine frigorifique</h3>
+  <div class="tableau-large">
+  <table>
+    <tr><th>Voie</th><th>Où on pose la sonde</th><th>Ce qu'on en tire</th></tr>
+    <tr><td>T1</td><td>air à l'entrée de l'évaporateur</td><td rowspan="2">ΔT air évaporateur : <strong>6 à 10 K</strong> en régime établi</td></tr>
+    <tr><td>T2</td><td>air à la sortie de l'évaporateur</td></tr>
+    <tr><td>T3</td><td>air à l'entrée du condenseur</td><td rowspan="2">ΔT air condenseur, et l'encrassement se voit</td></tr>
+    <tr><td>T4</td><td>air à la sortie du condenseur</td></tr>
+    <tr><td>T5</td><td>tube d'aspiration, isolé</td><td>avec la BP : <strong>surchauffe</strong> (normale 5 à 10 K)</td></tr>
+    <tr><td>T6</td><td>ligne liquide, isolée</td><td>avec la HP : <strong>sous-refroidissement</strong> (normal 4 à 8 K)</td></tr>
+  </table>
+  </div>
+
+  <div class="note securite">
+    <strong>Une sonde posée sur un tube ne mesure rien</strong> si elle n'est pas
+    <em>plaquée</em> et <em>isolée</em>. Contact métal contre métal, collier serré,
+    puis un morceau d'isolant par-dessus. Sans isolant, la sonde mesure la moyenne
+    entre le tube et l'air de la salle — et l'écart peut dépasser 5 K.
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ DÉPANNAGE -->
+<section class="ecran" id="ec-depannage" role="tabpanel">
+  <h2>Dépannage</h2>
+  <div class="note">
+    <strong>La méthode, et on ne s'en écarte pas.</strong>
+    constater → formuler une hypothèse → mesurer → identifier → corriger →
+    <strong>valider</strong>. Changer une pièce au hasard n'est pas un dépannage :
+    c'est une dépense.
+  </div>
+
+  <h3>Le symptôme est dans la colonne de gauche</h3>
+  <div class="tableau-large">
+  <table>
+    <tr><th>Ce qu'on constate</th><th>Hypothèses, dans l'ordre</th><th>Ce qu'on mesure</th></tr>
+    <tr><td>La carte n'apparaît nulle part sur le PC</td>
+        <td>1. câble USB « charge seulement »<br>2. sélecteur pas sur USB<br>3. pilote</td>
+        <td>essayer un autre câble <strong>en premier</strong> — c'est la cause la plus fréquente</td></tr>
+    <tr><td>Le moniteur série reste vide</td>
+        <td>1. « USB CDC On Boot » désactivé<br>2. mauvaise vitesse</td>
+        <td>115200 bauds, et le réglage de l'IDE</td></tr>
+    <tr><td>La compilation échoue : <em>text section exceeds available space</em></td>
+        <td>schéma de partition par défaut</td>
+        <td>passer en « Huge APP » — ce n'est pas une faute de programme</td></tr>
+    <tr><td>Le scanner I²C ne trouve <strong>rien</strong></td>
+        <td>1. SDA et SCL croisés<br>2. modules non alimentés<br>3. masse non reliée</td>
+        <td>contrôles 8, 9, 10, puis 11 à 13</td></tr>
+    <tr><td>Le scanner trouve <strong>un seul</strong> ADS1115</td>
+        <td>les deux broches ADDR au même potentiel</td>
+        <td>contrôle 14 : ADDR de A2 à la masse, ADDR de A3 au rail</td></tr>
+    <tr><td>L'écran s'allume mais l'image est <strong>décalée de 2 pixels</strong></td>
+        <td>mauvais contrôleur dans le programme</td>
+        <td>commuter SH1106 ↔ SSD1306 en tête du programme</td></tr>
+    <tr><td>L'écran reste noir, le reste marche</td>
+        <td>1. adresse 0x3D<br>2. alimentation de l'écran</td>
+        <td>programme 03, puis contrôle 13</td></tr>
+    <tr><td>Une voie affiche <code>----</code> avec une sonde branchée</td>
+        <td>1. fil coupé dans le câble de sonde<br>2. soudure froide sur la broche<br>3. fiche mal enfoncée</td>
+        <td>ohmmètre aux bornes de la fiche : <strong>≈ 10 kΩ à 25 °C</strong></td></tr>
+    <tr><td>Une voie affiche <code>-CC</code></td>
+        <td>1. fiche mal enfoncée<br>2. brins qui se touchent dans la fiche</td>
+        <td>ohmmètre aux bornes de la fiche : 0 Ω = court-circuit confirmé</td></tr>
+    <tr><td><strong>Toutes</strong> les voies affichent <code>----</code></td>
+        <td>la tension d'excitation est fausse (R7-R8, ou le rail)</td>
+        <td>page « système » de l'écran : V<sub>exc</sub> doit être entre 3,25 et 3,35 V</td></tr>
+    <tr><td>Une voie lit 2 à 5 K à côté des autres</td>
+        <td>1. résistance de pont hors valeur<br>2. sonde d'un autre lot</td>
+        <td>contrôle 6, puis étalonner cette voie (<code>ZC<em>n</em>=</code>)</td></tr>
+    <tr><td>Les valeurs sautent de plusieurs dixièmes</td>
+        <td>1. condensateur 100 nF oublié<br>2. fil de sonde le long du bus</td>
+        <td>contrôle visuel, puis écarter les fils</td></tr>
+    <tr><td>L'appareil s'éteint dès qu'on passe sur PILES</td>
+        <td>1. piles usées<br>2. D1 montée à l'envers<br>3. convertisseur mal réglé</td>
+        <td>contrôle 15 (sens de D1), puis tension en sortie de U1 : <strong>3,55 V</strong></td></tr>
+    <tr><td>L'écran affiche « USB » alors qu'on est sur piles</td>
+        <td>le pont R9-R10 n'est pas relié après le sélecteur</td>
+        <td>tension au point milieu R9-R10 : <strong>≈ 2,4 V</strong> piles neuves</td></tr>
+    <tr><td>L'appareil n'apparaît pas en Bluetooth</td>
+        <td>1. programme 09 encore chargé<br>2. déjà connecté à un autre poste<br>3. Bluetooth du PC éteint</td>
+        <td>l'écran indique le nom <code>ENR-T6-…</code> : s'il n'y est pas, c'est le programme</td></tr>
+    <tr><td>La trame reçue est <strong>coupée</strong> au milieu</td>
+        <td>récepteur qui ne recolle pas les morceaux</td>
+        <td>une notification BLE fait 20 octets, la trame en fait 61 — l'outil du site recolle</td></tr>
+  </table>
+  </div>
+
+  <h3>Les pannes à provoquer volontairement</h3>
+  <p>En fin de module 3, l'enseignant introduit une panne et l'élève la cherche.
+    Toutes celles-ci sont réversibles en trente secondes et sans risque.</p>
+  <ul>
+    <li>débrancher une sonde ;</li>
+    <li>intervertir les deux fils ADDR des convertisseurs ;</li>
+    <li>débrancher SDA, ou SCL ;</li>
+    <li>remplacer une résistance de pont par une 4,7 kΩ ;</li>
+    <li>laisser le sélecteur sur 0 ;</li>
+    <li>changer le contrôleur d'écran dans le programme ;</li>
+    <li>mettre des piles usées ;</li>
+    <li>donner un câble USB « charge seulement ».</li>
+  </ul>
+</section>
+
+<!-- ═════════════════════════════════════════════════ TÉLÉCHARGEMENTS -->
+<section class="ecran" id="ec-telechargements" role="tabpanel">
+  <h2>Les documents du module</h2>
+  <p class="intro">Tout est dans le dossier <code>pedagogie/enregistreur-temperature/</code>
+    du dépôt. Rien n'est hébergé ailleurs, rien ne se télécharge depuis un service
+    extérieur.</p>
+
+  <h3>Les dossiers</h3>
+  <div class="tableau-large">
+  <table>
+    <tr><th>Fichier</th><th>Pour qui</th></tr>
+    <tr><td><code>00_Dossier_maitre.md</code></td><td>l'intrant de cadrage, archivé sans retouche</td></tr>
+    <tr><td><code>01_Dossier_professeur.md</code></td><td>les 4 modules déroulés, corrigés, pannes à provoquer</td></tr>
+    <tr><td><code>02_Dossier_eleve.md</code></td><td>les fiches activité, à imprimer</td></tr>
+    <tr><td><code>03_Nomenclature_et_achats.md</code></td><td>ce qu'on commande, et les pièges</td></tr>
+    <tr><td><code>04_Outillage_et_consommables.md</code></td><td>les 5 postes et le stock de départ</td></tr>
+    <tr><td><code>05_Plans_et_schema.md</code></td><td><strong>le schéma et les calculs</strong></td></tr>
+    <tr><td><code>06_Programmes_et_telechargements.md</code></td><td>la chaîne des 11 programmes</td></tr>
+    <tr><td><code>07_Adaptations_par_filiere.md</code></td><td>une page par filière, codes officiels</td></tr>
+    <tr><td><code>08_Evaluation.md</code></td><td>grille, auto-positionnement, chef-d'œuvre</td></tr>
+    <tr><td><code>09_Exploitation_froid_clim.md</code></td><td>la séance sur machine</td></tr>
+    <tr><td><code>10_Cahier_des_illustrations.md</code></td><td>les 50 illustrations : faites, à faire</td></tr>
+    <tr><td><code>POINTS-OUVERTS.md</code></td><td><strong>ce qui n'est pas tranché</strong></td></tr>
+  </table>
+  </div>
+
+  <h3>À imprimer</h3>
+  <ul>
+    <li><a href="../illustrations/gabarit-percage.svg">Le gabarit de perçage</a> —
+      <strong>à l'échelle 1:1 sur A4</strong>, avec un carré de contrôle de 50 mm ;</li>
+    <li><a href="../illustrations/face-avant.svg">L'étiquette de façade</a> —
+      repérage T1 à T6, positions du sélecteur, emplacement du nom Bluetooth ;</li>
+    <li><a href="../illustrations/schema-general.svg">Le schéma général</a> ;</li>
+    <li><a href="../illustrations/pont-diviseur.svg">Le pont diviseur</a> — la planche du module 1.</li>
+  </ul>
+
+  <div class="note attente">
+    <strong>Avant de lancer ce module devant une classe.</strong>
+    Aucun de ces programmes n'a encore tourné dans un vrai ESP32-C3, et aucun
+    prototype n'a été monté. Les calculs sont vérifiés, la logique du firmware est
+    exécutée et contrôlée par <code>outils/verifier-logique.mjs</code> — mais
+    « vérifié » n'est pas « éprouvé ». Montez l'appareil professeur d'abord : c'est
+    exactement à cela qu'il sert.
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p><strong>❄ inerWeb Édu</strong> — Enregistreur de températures 6 voies ·
+     par F. Henninot, LP Privé Jacques Raynaud, Campus ÉQUATIO.</p>
+  <p>Ce site fonctionne <strong>hors ligne</strong>. Il n'envoie rien nulle part,
+     ne dépose aucun traceur, et ne demande aucun compte.</p>
+</footer>
+
+<script src="site.js"></script>
+</body>
+</html>
