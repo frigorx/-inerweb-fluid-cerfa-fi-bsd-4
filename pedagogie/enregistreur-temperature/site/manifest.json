@@ -1,0 +1,10 @@
+{
+  "name": "Enregistreur de températures 6 voies — inerWeb Édu",
+  "short_name": "Enregistreur T6",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#f5f5f0",
+  "theme_color": "#1b3a63",
+  "lang": "fr",
+  "description": "Site compagnon du module transversal : réaliser, mettre en service et exploiter un enregistreur autonome de 6 températures."
+}

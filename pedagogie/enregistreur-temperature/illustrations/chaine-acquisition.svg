@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 420" role="img"
+     aria-labelledby="titre desc" font-family="Trebuchet MS, Tahoma, Verdana, sans-serif">
+  <title id="titre">La chaîne d'acquisition, de la chaleur à la courbe</title>
+  <desc id="desc">Neuf étapes reliées : une température agit sur une sonde NTC dont la
+    résistance varie ; un pont diviseur transforme cette résistance en tension ; un
+    convertisseur ADS1115 seize bits transforme la tension en nombre ; l'ESP32-C3 calcule
+    la température et la distribue vers l'écran, l'USB et le Bluetooth ; l'ordinateur ou
+    le téléphone l'enregistre et la trace.</desc>
+
+  <rect width="1000" height="420" fill="#ffffff"/>
+
+  <!-- ── ce qui est physique, ce qui est électrique, ce qui est numérique ── -->
+  <rect x="14"  y="60" width="196" height="250" rx="10" fill="#fff6f2" stroke="#ffd9c8"/>
+  <rect x="218" y="60" width="300" height="250" rx="10" fill="#eef4fb" stroke="#cfe0f2"/>
+  <rect x="526" y="60" width="460" height="250" rx="10" fill="#f2f7f4" stroke="#cfe4d8"/>
+  <text x="112" y="82" text-anchor="middle" font-size="15" font-weight="bold" fill="#c9451a">LE MONDE PHYSIQUE</text>
+  <text x="368" y="82" text-anchor="middle" font-size="15" font-weight="bold" fill="#1b3a63">L'ÉLECTRICITÉ</text>
+  <text x="756" y="82" text-anchor="middle" font-size="15" font-weight="bold" fill="#14663a">LE NUMÉRIQUE</text>
+
+  <text x="500" y="32" text-anchor="middle" font-size="23" font-weight="bold" fill="#1b3a63">
+    De la chaleur à la courbe — neuf étapes, et chacune se mesure</text>
+
+  <g font-size="15" fill="#1b3a63">
+    <!-- 1. température -->
+    <rect x="34" y="110" width="156" height="66" rx="8" fill="#ffffff" stroke="#ff6b35" stroke-width="2"/>
+    <text x="112" y="139" text-anchor="middle" font-size="17" font-weight="bold">TEMPÉRATURE</text>
+    <text x="112" y="160" text-anchor="middle" font-size="14" fill="#5a6472">la grandeur à connaître</text>
+
+    <!-- 2. NTC -->
+    <rect x="34" y="212" width="156" height="66" rx="8" fill="#ffffff" stroke="#ff6b35" stroke-width="2"/>
+    <text x="112" y="241" text-anchor="middle" font-size="17" font-weight="bold">SONDE NTC</text>
+    <text x="112" y="262" text-anchor="middle" font-size="14" fill="#5a6472">sa résistance change</text>
+
+    <!-- 3. pont -->
+    <rect x="240" y="110" width="120" height="66" rx="8" fill="#ffffff" stroke="#2d5688" stroke-width="2"/>
+    <text x="300" y="133" text-anchor="middle" font-size="16" font-weight="bold">RÉSISTANCE</text>
+    <text x="300" y="153" text-anchor="middle" font-size="14" fill="#5a6472">10 kΩ à 25 °C</text>
+    <text x="300" y="169" text-anchor="middle" font-size="14" fill="#5a6472">200 kΩ à −30 °C</text>
+
+    <rect x="240" y="212" width="120" height="66" rx="8" fill="#ffffff" stroke="#2d5688" stroke-width="2"/>
+    <text x="300" y="240" text-anchor="middle" font-size="16" font-weight="bold">PONT</text>
+    <text x="300" y="259" text-anchor="middle" font-size="16" font-weight="bold">DIVISEUR</text>
+
+    <rect x="382" y="160" width="120" height="66" rx="8" fill="#ffffff" stroke="#2d5688" stroke-width="2"/>
+    <text x="442" y="188" text-anchor="middle" font-size="17" font-weight="bold">TENSION</text>
+    <text x="442" y="209" text-anchor="middle" font-size="14" fill="#5a6472">1,650 V à 25 °C</text>
+
+    <!-- 4. ADS -->
+    <rect x="548" y="110" width="132" height="66" rx="8" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+    <text x="614" y="134" text-anchor="middle" font-size="16" font-weight="bold">ADS1115</text>
+    <text x="614" y="153" text-anchor="middle" font-size="14" fill="#5a6472">16 bits</text>
+    <text x="614" y="169" text-anchor="middle" font-size="14" fill="#5a6472">1 pas = 125 µV</text>
+
+    <rect x="548" y="212" width="132" height="66" rx="8" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+    <text x="614" y="236" text-anchor="middle" font-size="16" font-weight="bold">UN NOMBRE</text>
+    <text x="614" y="257" text-anchor="middle" font-size="15" fill="#5a6472" font-family="Consolas, monospace">13 200</text>
+
+    <rect x="702" y="160" width="132" height="66" rx="8" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+    <text x="768" y="185" text-anchor="middle" font-size="16" font-weight="bold">ESP32-C3</text>
+    <text x="768" y="207" text-anchor="middle" font-size="14" fill="#5a6472">il refait le calcul</text>
+
+    <!-- 5. sorties -->
+    <rect x="856" y="102" width="112" height="46" rx="8" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+    <text x="912" y="131" text-anchor="middle" font-size="16" font-weight="bold">ÉCRAN</text>
+    <rect x="856" y="170" width="112" height="46" rx="8" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+    <text x="912" y="199" text-anchor="middle" font-size="16" font-weight="bold">USB</text>
+    <rect x="856" y="238" width="112" height="46" rx="8" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+    <text x="912" y="267" text-anchor="middle" font-size="16" font-weight="bold">BLUETOOTH</text>
+  </g>
+
+  <!-- ── les flèches ─────────────────────────────────────────────────── -->
+  <defs>
+    <marker id="f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5a6472"/>
+    </marker>
+  </defs>
+  <g stroke="#5a6472" stroke-width="2" fill="none" marker-end="url(#f)">
+    <path d="M112,180 L112,206"/>
+    <path d="M194,245 L194,143 L236,143"/>
+    <path d="M300,180 L300,208"/>
+    <path d="M364,245 L376,245 L376,196 L378,196"/>
+    <path d="M506,193 L522,193 L522,143 L544,143"/>
+    <path d="M614,180 L614,208"/>
+    <path d="M684,245 L696,245 L696,196 L698,196"/>
+    <path d="M838,193 L848,193 L848,125 L852,125"/>
+    <path d="M838,193 L852,193"/>
+    <path d="M838,193 L848,193 L848,261 L852,261"/>
+  </g>
+
+  <!-- ── le rappel du bas ────────────────────────────────────────────── -->
+  <rect x="14" y="330" width="972" height="76" rx="8" fill="#fff1eb" stroke="#ff6b35"/>
+  <text x="34" y="356" font-size="16" font-weight="bold" fill="#c9451a">Ce qu'il faut retenir</text>
+  <text x="34" y="379" font-size="15" fill="#1b3a63">
+    Aucune de ces étapes ne mesure une température : chacune traduit la précédente. La sonde ne « connaît » pas les degrés,</text>
+  <text x="34" y="398" font-size="15" fill="#1b3a63">
+    elle change de résistance. Le convertisseur ne connaît pas les volts, il compte des pas. Les degrés n'apparaissent qu'à la fin.</text>
+</svg>

@@ -5,6 +5,42 @@
 > conservé par l'auteur hors de ce dépôt ; l'historique git du dépôt reste,
 > lui, complet et non réécrit.
 
+## 2026-08-29 — l'enregistreur de températures : d'un cadrage à un dossier complet
+
+- **Un module transversal `pedagogie/enregistreur-temperature/`** : 16 heures,
+  quatre modules, six sondes NTC, deux ADS1115, un ESP32-C3, du Bluetooth. Le
+  dossier de cadrage du 29/08 fixait le concept ; ce lot produit ce qui
+  manquait — **le schéma, les onze programmes, le site compagnon et l'outil
+  d'acquisition**.
+- **Le schéma tranche trois choses que le cadrage laissait ouvertes.** La NTC va
+  du côté de la masse, pour que la broche du jack ne porte jamais le 3,3 V. Les
+  deux voies libres de l'ADS1115 mesurent la tension d'excitation et les piles —
+  mesurer l'excitation avec le même convertisseur que la sonde **annule son
+  erreur de gain** et divise l'erreur de mesure par dix, sans un composant de
+  plus. Et le sélecteur PILES–0–USB ne tient que la règle d'usage : c'est une
+  diode Schottky qui tient l'interdit, inconditionnellement.
+- **Onze programmes progressifs**, un fichier chacun, du clignotement de LED à
+  la version finale avec étalonnage en mémoire flash, extrema et reprise après
+  panne d'un convertisseur.
+- **Un outil d'acquisition qui est une page web**, pas une application :
+  Bluetooth (service NUS) ou câble, six courbes, export CSV au format français.
+  Il embarque un **mode démonstration** qui rejoue un démarrage de machine
+  frigorifique — de quoi préparer la séance et faire lire des courbes avant que
+  les appareils existent.
+- **Deux planches s'impriment à l'échelle 1:1** : le gabarit de perçage et les
+  étiquettes, chacune avec son carré de contrôle de 50 mm.
+- **Les chiffres sont calculés, pas recopiés** : `outils/table-ntc.mjs` produit
+  le tableau R(T) du dossier, `outils/bilan-energie.mjs` l'autonomie — avec le
+  statut de chaque hypothèse. Deux filets les tiennent :
+  `verifier-logique.mjs` **découpe les fonctions du firmware, les compile et les
+  exécute** contre le modèle ; `verifier-module.mjs` passe 70 contrôles
+  (constantes partagées, trame identique aux trois endroits, liens, charte,
+  analyseur de la page confronté à ce que le firmware émet).
+- ⚠️ **Aucun prototype n'a été monté, aucun programme n'a tourné dans un vrai
+  ESP32-C3.** Le module porte le statut `Prototype à réaliser`, et
+  `pedagogie/enregistreur-temperature/POINTS-OUVERTS.md` liste ce qui bloque,
+  ce qui reste à mesurer et ce qui attend une décision.
+
 ## 2026-08-20 — la ligne CO₂ / R744 dans le logiciel, et sa relecture métier
 
 - **Un module CO₂ / R744 embarqué et autonome** (`pedagogie/co2-r744/`) : treize

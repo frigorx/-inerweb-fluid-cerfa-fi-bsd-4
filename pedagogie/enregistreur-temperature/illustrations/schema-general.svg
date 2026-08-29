@@ -1,0 +1,148 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" role="img"
+     aria-labelledby="t d" font-family="Trebuchet MS, Tahoma, Verdana, sans-serif">
+  <title id="t">Schéma général de l'enregistreur six voies</title>
+  <desc id="d">Six ponts diviseurs identiques : une résistance de 10 kilohms du rail 3,3 volts
+    vers le point milieu, une sonde NTC du point milieu vers la masse, un condensateur de
+    100 nanofarads en parallèle sur la sonde. Les points milieux de T1 à T4 rejoignent les
+    quatre entrées du convertisseur ADS1115 d'adresse 0x48 ; ceux de T5 et T6 rejoignent les
+    deux premières entrées du convertisseur d'adresse 0x49, dont les deux entrées restantes
+    mesurent la moitié de la tension d'excitation et la moitié de la tension des piles. Les
+    deux convertisseurs et l'écran OLED d'adresse 0x3C partagent le bus I²C de l'ESP32-C3,
+    sur les broches GPIO5 pour SDA et GPIO6 pour SCL.</desc>
+  <rect width="1200" height="700" fill="#ffffff"/>
+  <text x="600" y="32" text-anchor="middle" font-size="23" font-weight="bold" fill="#1b3a63">
+    Schéma général — six voies, huit entrées, trois adresses</text>
+  <line x1="50" y1="76" x2="620" y2="76" stroke="#dc2626" stroke-width="4"/>
+  <text x="50" y="66" font-size="14" font-weight="bold" fill="#dc2626">RAIL 3,30 V — c'est aussi la tension d'excitation des six ponts</text>
+  <line x1="50" y1="600" x2="1170" y2="600" stroke="#2b2b2b" stroke-width="3"/>
+  <text x="50" y="624" font-size="14" font-weight="bold" fill="#2b2b2b">MASSE COMMUNE — un seul fil noir fait le tour des six embases</text>
+  <g>
+    <line x1="110" y1="76" x2="110" y2="110" stroke="#1b3a63" stroke-width="2"/>
+    <rect x="94" y="110" width="32" height="58" rx="3" fill="#ffffff" stroke="#1b3a63" stroke-width="2"/>
+    <line x1="110" y1="168" x2="110" y2="400" stroke="#1b3a63" stroke-width="2"/>
+    <circle cx="110" cy="210" r="4.5" fill="#1b3a63"/>
+    <rect x="94" y="400" width="32" height="58" rx="3" fill="#fff1eb" stroke="#ff6b35" stroke-width="2"/>
+    <line x1="110" y1="458" x2="110" y2="600" stroke="#1b3a63" stroke-width="2"/>
+    <text x="110" y="480" text-anchor="middle" font-size="14" font-weight="bold" fill="#c9451a">T1</text>
+    <text x="110" y="496" text-anchor="middle" font-size="12" fill="#5a6472">J1</text>
+  </g>
+  <g>
+    <line x1="185" y1="76" x2="185" y2="110" stroke="#1b3a63" stroke-width="2"/>
+    <rect x="169" y="110" width="32" height="58" rx="3" fill="#ffffff" stroke="#1b3a63" stroke-width="2"/>
+    <line x1="185" y1="168" x2="185" y2="400" stroke="#1b3a63" stroke-width="2"/>
+    <circle cx="185" cy="228" r="4.5" fill="#1b3a63"/>
+    <rect x="169" y="400" width="32" height="58" rx="3" fill="#fff1eb" stroke="#ff6b35" stroke-width="2"/>
+    <line x1="185" y1="458" x2="185" y2="600" stroke="#1b3a63" stroke-width="2"/>
+    <text x="185" y="480" text-anchor="middle" font-size="14" font-weight="bold" fill="#c9451a">T2</text>
+    <text x="185" y="496" text-anchor="middle" font-size="12" fill="#5a6472">J2</text>
+  </g>
+  <g>
+    <line x1="260" y1="76" x2="260" y2="110" stroke="#1b3a63" stroke-width="2"/>
+    <rect x="244" y="110" width="32" height="58" rx="3" fill="#ffffff" stroke="#1b3a63" stroke-width="2"/>
+    <line x1="260" y1="168" x2="260" y2="400" stroke="#1b3a63" stroke-width="2"/>
+    <circle cx="260" cy="246" r="4.5" fill="#1b3a63"/>
+    <rect x="244" y="400" width="32" height="58" rx="3" fill="#fff1eb" stroke="#ff6b35" stroke-width="2"/>
+    <line x1="260" y1="458" x2="260" y2="600" stroke="#1b3a63" stroke-width="2"/>
+    <text x="260" y="480" text-anchor="middle" font-size="14" font-weight="bold" fill="#c9451a">T3</text>
+    <text x="260" y="496" text-anchor="middle" font-size="12" fill="#5a6472">J3</text>
+  </g>
+  <g>
+    <line x1="335" y1="76" x2="335" y2="110" stroke="#1b3a63" stroke-width="2"/>
+    <rect x="319" y="110" width="32" height="58" rx="3" fill="#ffffff" stroke="#1b3a63" stroke-width="2"/>
+    <line x1="335" y1="168" x2="335" y2="400" stroke="#1b3a63" stroke-width="2"/>
+    <circle cx="335" cy="264" r="4.5" fill="#1b3a63"/>
+    <rect x="319" y="400" width="32" height="58" rx="3" fill="#fff1eb" stroke="#ff6b35" stroke-width="2"/>
+    <line x1="335" y1="458" x2="335" y2="600" stroke="#1b3a63" stroke-width="2"/>
+    <text x="335" y="480" text-anchor="middle" font-size="14" font-weight="bold" fill="#c9451a">T4</text>
+    <text x="335" y="496" text-anchor="middle" font-size="12" fill="#5a6472">J4</text>
+  </g>
+  <g>
+    <line x1="410" y1="76" x2="410" y2="110" stroke="#1b3a63" stroke-width="2"/>
+    <rect x="394" y="110" width="32" height="58" rx="3" fill="#ffffff" stroke="#1b3a63" stroke-width="2"/>
+    <line x1="410" y1="168" x2="410" y2="400" stroke="#1b3a63" stroke-width="2"/>
+    <circle cx="410" cy="282" r="4.5" fill="#1b3a63"/>
+    <rect x="394" y="400" width="32" height="58" rx="3" fill="#fff1eb" stroke="#ff6b35" stroke-width="2"/>
+    <line x1="410" y1="458" x2="410" y2="600" stroke="#1b3a63" stroke-width="2"/>
+    <text x="410" y="480" text-anchor="middle" font-size="14" font-weight="bold" fill="#c9451a">T5</text>
+    <text x="410" y="496" text-anchor="middle" font-size="12" fill="#5a6472">J5</text>
+  </g>
+  <g>
+    <line x1="485" y1="76" x2="485" y2="110" stroke="#1b3a63" stroke-width="2"/>
+    <rect x="469" y="110" width="32" height="58" rx="3" fill="#ffffff" stroke="#1b3a63" stroke-width="2"/>
+    <line x1="485" y1="168" x2="485" y2="400" stroke="#1b3a63" stroke-width="2"/>
+    <circle cx="485" cy="300" r="4.5" fill="#1b3a63"/>
+    <rect x="469" y="400" width="32" height="58" rx="3" fill="#fff1eb" stroke="#ff6b35" stroke-width="2"/>
+    <line x1="485" y1="458" x2="485" y2="600" stroke="#1b3a63" stroke-width="2"/>
+    <text x="485" y="480" text-anchor="middle" font-size="14" font-weight="bold" fill="#c9451a">T6</text>
+    <text x="485" y="496" text-anchor="middle" font-size="12" fill="#5a6472">J6</text>
+  </g>
+  <text x="110" y="102" text-anchor="middle" font-size="12" fill="#5a6472">10 k</text>
+  <line x1="110" y1="330" x2="72" y2="330" stroke="#1b3a63" stroke-width="1.8"/>
+  <line x1="72" y1="330" x2="72" y2="340" stroke="#1b3a63" stroke-width="1.8"/>
+  <line x1="56" y1="340" x2="88" y2="340" stroke="#1b3a63" stroke-width="3"/>
+  <line x1="56" y1="349" x2="88" y2="349" stroke="#1b3a63" stroke-width="3"/>
+  <line x1="72" y1="349" x2="72" y2="600" stroke="#1b3a63" stroke-width="1.8"/>
+  <text x="52" y="372" font-size="12" fill="#5a6472">C3</text>
+  <text x="52" y="386" font-size="12" fill="#5a6472">100 nF</text>
+  <path d="M110,210 L551,210 A9,9 0 0 1 569,210 L640,210" fill="none" stroke="#1b3a63" stroke-width="1.8"/>
+  <path d="M185,228 L551,228 A9,9 0 0 1 569,228 L640,228" fill="none" stroke="#1b3a63" stroke-width="1.8"/>
+  <path d="M260,246 L551,246 A9,9 0 0 1 569,246 L640,246" fill="none" stroke="#1b3a63" stroke-width="1.8"/>
+  <path d="M335,264 L551,264 A9,9 0 0 1 569,264 L640,264" fill="none" stroke="#1b3a63" stroke-width="1.8"/>
+  <path d="M410,282 L551,282 A9,9 0 0 1 569,282 L610,282 L610,372 L650,372" fill="none" stroke="#1b3a63" stroke-width="1.8"/>
+  <path d="M485,300 L551,300 A9,9 0 0 1 569,300 L610,300 L610,392 L650,392" fill="none" stroke="#1b3a63" stroke-width="1.8"/>
+  <line x1="560" y1="76" x2="560" y2="330" stroke="#dc2626" stroke-width="2"/>
+  <rect x="544" y="330" width="32" height="48" rx="3" fill="#ffffff" stroke="#1b3a63" stroke-width="2"/>
+  <line x1="560" y1="378" x2="560" y2="412" stroke="#1b3a63" stroke-width="2"/>
+  <rect x="544" y="412" width="32" height="48" rx="3" fill="#ffffff" stroke="#1b3a63" stroke-width="2"/>
+  <line x1="560" y1="460" x2="560" y2="600" stroke="#1b3a63" stroke-width="2"/>
+  <circle cx="560" cy="395" r="4.5" fill="#c9451a"/>
+  <path d="M560,395 L628,395 L628,412 L650,412" fill="none" stroke="#c9451a" stroke-width="2"/>
+  <text x="536" y="356" text-anchor="end" font-size="12" font-weight="bold" fill="#1b3a63">R7</text>
+  <text x="536" y="440" text-anchor="end" font-size="12" font-weight="bold" fill="#1b3a63">R8</text>
+  <text x="584" y="392" font-size="12" font-weight="bold" fill="#c9451a">V_exc / 2</text>
+  <text x="584" y="452" font-size="12" fill="#5a6472">10 kΩ 0,1 %</text>
+  <rect x="650" y="185" width="196" height="112" rx="8" fill="#ffffff" stroke="#16a34a" stroke-width="2.5"/>
+  <text x="748" y="210" text-anchor="middle" font-size="16" font-weight="bold" fill="#1b3a63">A2 — ADS1115</text>
+  <text x="748" y="232" text-anchor="middle" font-size="16" font-weight="bold" fill="#16a34a">0x48</text>
+  <text x="748" y="252" text-anchor="middle" font-size="13" fill="#5a6472">ADDR relié à la MASSE</text>
+  <text x="748" y="272" text-anchor="middle" font-size="13" fill="#1b3a63">A0 A1 A2 A3 = T1 T2 T3 T4</text>
+  <text x="748" y="290" text-anchor="middle" font-size="12" fill="#5a6472">calibre ±4,096 V · 128 éch./s</text>
+  <rect x="650" y="330" width="196" height="132" rx="8" fill="#ffffff" stroke="#16a34a" stroke-width="2.5"/>
+  <text x="748" y="352" text-anchor="middle" font-size="16" font-weight="bold" fill="#1b3a63">A3 — ADS1115</text>
+  <text x="748" y="374" text-anchor="middle" font-size="16" font-weight="bold" fill="#16a34a">0x49</text>
+  <text x="748" y="394" text-anchor="middle" font-size="13" fill="#5a6472">ADDR relié au RAIL 3,3 V</text>
+  <text x="748" y="414" text-anchor="middle" font-size="13" fill="#1b3a63">A0 A1 = T5 T6</text>
+  <text x="748" y="432" text-anchor="middle" font-size="13" font-weight="bold" fill="#c9451a">A2 = V_exc / 2</text>
+  <text x="748" y="450" text-anchor="middle" font-size="13" font-weight="bold" fill="#c9451a">A3 = V_piles / 2</text>
+  <path d="M650,442 L634,442 L634,500 L700,500" fill="none" stroke="#c9451a" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="706" y="504" font-size="12" fill="#c9451a">R9-R10 → voir alimentation.svg</text>
+  <line x1="886" y1="150" x2="886" y2="520" stroke="#16a34a" stroke-width="3"/>
+  <line x1="908" y1="150" x2="908" y2="520" stroke="#2a78d6" stroke-width="3"/>
+  <text x="878" y="142" text-anchor="end" font-size="14" font-weight="bold" fill="#16a34a">SDA</text>
+  <text x="916" y="142" font-size="14" font-weight="bold" fill="#2a78d6">SCL</text>
+  <line x1="846" y1="222" x2="886" y2="222" stroke="#16a34a" stroke-width="2"/>
+  <line x1="846" y1="244" x2="908" y2="244" stroke="#2a78d6" stroke-width="2"/>
+  <line x1="846" y1="372" x2="886" y2="372" stroke="#16a34a" stroke-width="2"/>
+  <line x1="846" y1="394" x2="908" y2="394" stroke="#2a78d6" stroke-width="2"/>
+  <rect x="950" y="170" width="220" height="122" rx="8" fill="#ffffff" stroke="#1b3a63" stroke-width="2.5"/>
+  <text x="1060" y="196" text-anchor="middle" font-size="16" font-weight="bold" fill="#1b3a63">A4 — écran OLED</text>
+  <text x="1060" y="218" text-anchor="middle" font-size="16" font-weight="bold" fill="#16a34a">0x3C</text>
+  <text x="1060" y="238" text-anchor="middle" font-size="13" fill="#5a6472">1,3 pouce · 128 × 64</text>
+  <text x="1060" y="260" text-anchor="middle" font-size="13" font-weight="bold" fill="#c9451a">contrôleur SH1106</text>
+  <text x="1060" y="278" text-anchor="middle" font-size="12" fill="#5a6472">(le 0,96 pouce est un SSD1306)</text>
+  <line x1="886" y1="200" x2="950" y2="200" stroke="#16a34a" stroke-width="2"/>
+  <line x1="908" y1="222" x2="950" y2="222" stroke="#2a78d6" stroke-width="2"/>
+  <rect x="950" y="400" width="220" height="152" rx="8" fill="#ffffff" stroke="#1b3a63" stroke-width="2.5"/>
+  <text x="1060" y="426" text-anchor="middle" font-size="16" font-weight="bold" fill="#1b3a63">A1 — ESP32-C3</text>
+  <text x="1060" y="446" text-anchor="middle" font-size="13" fill="#5a6472">SuperMini USB-C</text>
+  <text x="1060" y="472" text-anchor="middle" font-size="14" font-weight="bold" fill="#16a34a">GPIO5 = SDA</text>
+  <text x="1060" y="492" text-anchor="middle" font-size="14" font-weight="bold" fill="#2a78d6">GPIO6 = SCL</text>
+  <text x="1060" y="516" text-anchor="middle" font-size="12" fill="#c9451a">jamais GPIO8 ni GPIO9 :</text>
+  <text x="1060" y="532" text-anchor="middle" font-size="12" fill="#c9451a">ce sont les broches de démarrage</text>
+  <text x="1060" y="548" text-anchor="middle" font-size="12" fill="#5a6472">USB-C natif · Bluetooth BLE</text>
+  <line x1="886" y1="450" x2="950" y2="450" stroke="#16a34a" stroke-width="2"/>
+  <line x1="908" y1="472" x2="950" y2="472" stroke="#2a78d6" stroke-width="2"/>
+  <rect x="50" y="640" width="1120" height="44" rx="8" fill="#eef4fb" stroke="#cfe0f2"/>
+  <text x="70" y="660" font-size="14" fill="#1b3a63"><tspan font-weight="bold">Six ponts identiques</tspan> — R1 à R6 en 10 kΩ 0,1 %, C3 à C8 en 100 nF (le condensateur n'est dessiné que sur T1, les cinq autres sont pareils).</text>
+  <text x="70" y="678" font-size="14" fill="#1b3a63"><tspan font-weight="bold">Trois circuits, trois adresses, deux fils.</tspan> C'est tout le bus I²C. Un demi-cercle sur un fil = il en croise un autre SANS le toucher.</text>
+</svg>

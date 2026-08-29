@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 460" role="img"
+     aria-labelledby="t d" font-family="Trebuchet MS, Tahoma, Verdana, sans-serif">
+  <title id="t">Câblage complet d'une voie, de la sonde à l'entrée du convertisseur</title>
+  <desc id="d">La sonde NTC se termine par une fiche jack. Son corps porte la masse, sa
+    broche porte le point milieu. Dans le boîtier, l'embase reçoit un fil de couleur vers la
+    plaque, où la résistance de dix kilohms rejoint le rail 3,3 volts et le condensateur de
+    100 nanofarads rejoint la masse. Le point milieu part vers l'entrée du convertisseur.</desc>
+  <rect width="1000" height="460" fill="#ffffff"/>
+  <text x="500" y="32" text-anchor="middle" font-size="22" font-weight="bold" fill="#1b3a63">
+    Une voie, de bout en bout — les cinq autres sont identiques</text>
+
+  <!-- ── la sonde ──────────────────────────────────────────────────── -->
+  <rect x="20" y="120" width="120" height="34" rx="6" fill="#e8ecf1" stroke="#5a6472" stroke-width="2"/>
+  <text x="80" y="142" text-anchor="middle" font-size="14" font-weight="bold" fill="#1b3a63">gaine inox</text>
+  <text x="80" y="100" text-anchor="middle" font-size="15" font-weight="bold" fill="#c9451a">SONDE NTC</text>
+  <text x="80" y="172" text-anchor="middle" font-size="13" fill="#5a6472">10 kΩ B3950</text>
+  <path d="M140,137 C180,137 180,120 220,120 C250,120 250,137 268,137" stroke="#5a6472" stroke-width="4" fill="none"/>
+  <text x="215" y="86" text-anchor="middle" font-size="13" fill="#5a6472">câble 2 conducteurs, 1 à 3 m</text>
+
+  <!-- ── la fiche jack ─────────────────────────────────────────────── -->
+  <rect x="268" y="124" width="46" height="26" fill="#c8ccd2" stroke="#5a6472" stroke-width="2"/>
+  <rect x="314" y="130" width="30" height="14" fill="#9aa3ae" stroke="#5a6472" stroke-width="2"/>
+  <rect x="344" y="132" width="18" height="10" rx="4" fill="#5a6472"/>
+  <text x="291" y="172" text-anchor="middle" font-size="13" fill="#5a6472">corps</text>
+  <text x="353" y="172" text-anchor="middle" font-size="13" fill="#5a6472">broche</text>
+  <text x="310" y="196" text-anchor="middle" font-size="14" font-weight="bold" fill="#1b3a63">fiche jack 3,5 mm</text>
+
+  <!-- ── le boîtier ────────────────────────────────────────────────── -->
+  <rect x="392" y="52" width="588" height="330" rx="10" fill="#fbfcfd" stroke="#1b3a63" stroke-width="2" stroke-dasharray="0"/>
+  <text x="686" y="74" text-anchor="middle" font-size="15" font-weight="bold" fill="#1b3a63">INTÉRIEUR DU BOÎTIER</text>
+
+  <!-- embase -->
+  <rect x="392" y="112" width="26" height="50" fill="#e8ecf1" stroke="#1b3a63" stroke-width="2"/>
+  <text x="392" y="186" font-size="14" font-weight="bold" fill="#1b3a63">embase J1</text>
+  <circle cx="418" cy="126" r="4" fill="#1b3a63"/>
+  <circle cx="418" cy="150" r="4" fill="#1b3a63"/>
+  <text x="426" y="120" font-size="12" fill="#5a6472">broche</text>
+  <text x="426" y="168" font-size="12" fill="#5a6472">corps</text>
+
+  <!-- fils -->
+  <path d="M418,126 L520,126 L520,180" stroke="#eda100" stroke-width="4" fill="none"/>
+  <path d="M418,150 L470,150 L470,330 L900,330" stroke="#2b2b2b" stroke-width="4" fill="none"/>
+  <text x="556" y="122" font-size="14" font-weight="bold" fill="#b45309">fil JAUNE</text>
+  <text x="556" y="140" font-size="13" fill="#5a6472">(BLANC pour T5 et T6)</text>
+  <text x="640" y="352" font-size="14" font-weight="bold" fill="#2b2b2b">fil NOIR — masse commune des 6 embases</text>
+
+  <!-- rail 3,3 V -->
+  <line x1="470" y1="96" x2="940" y2="96" stroke="#dc2626" stroke-width="4"/>
+  <text x="700" y="90" text-anchor="middle" font-size="14" font-weight="bold" fill="#dc2626">RAIL 3,3 V — fil ROUGE</text>
+
+  <!-- résistance -->
+  <line x1="520" y1="96" x2="520" y2="136" stroke="#1b3a63" stroke-width="2.5"/>
+  <rect x="500" y="136" width="40" height="66" rx="4" fill="#ffffff" stroke="#1b3a63" stroke-width="2.5"/>
+  <text x="552" y="166" font-size="14" font-weight="bold" fill="#1b3a63">R1 = 10 kΩ</text>
+  <text x="552" y="184" font-size="13" fill="#5a6472">0,1 %</text>
+  <line x1="520" y1="202" x2="520" y2="262" stroke="#1b3a63" stroke-width="2.5"/>
+  <circle cx="520" cy="232" r="5" fill="#1b3a63"/>
+  <text x="660" y="224" text-anchor="middle" font-size="14" font-weight="bold" fill="#c9451a">point milieu</text>
+
+  <!-- condensateur -->
+  <line x1="520" y1="262" x2="520" y2="286" stroke="#1b3a63" stroke-width="2.5"/>
+  <line x1="500" y1="286" x2="540" y2="286" stroke="#1b3a63" stroke-width="3"/>
+  <line x1="500" y1="296" x2="540" y2="296" stroke="#1b3a63" stroke-width="3"/>
+  <line x1="520" y1="296" x2="520" y2="330" stroke="#1b3a63" stroke-width="2.5"/>
+  <text x="552" y="296" font-size="14" font-weight="bold" fill="#1b3a63">C3 = 100 nF</text>
+  <text x="552" y="314" font-size="13" fill="#5a6472">filtre + réservoir de charge</text>
+
+  <!-- vers l'ADS -->
+  <line x1="520" y1="232" x2="790" y2="232" stroke="#1b3a63" stroke-width="2.5"/>
+  <rect x="790" y="204" width="160" height="56" rx="8" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+  <text x="870" y="228" text-anchor="middle" font-size="15" font-weight="bold" fill="#1b3a63">ADS1115 « A2 »</text>
+  <text x="870" y="248" text-anchor="middle" font-size="14" fill="#5a6472">entrée A0 — voie T1</text>
+  <line x1="900" y1="260" x2="900" y2="330" stroke="#2b2b2b" stroke-width="3"/>
+
+  <!-- ── l'avertissement ───────────────────────────────────────────── -->
+  <rect x="20" y="396" width="960" height="52" rx="8" fill="#fff1eb" stroke="#ff6b35"/>
+  <text x="40" y="419" font-size="15" font-weight="bold" fill="#c9451a">
+    La broche du jack porte le point milieu. Le corps porte la MASSE. Jamais l'inverse.</text>
+  <text x="40" y="439" font-size="14" fill="#1b3a63">
+    Une fiche enfoncée de biais met alors le point milieu à la masse : il ne se passe rien. Dans l'autre sens, elle mettrait le 3,3 V à la masse.</text>
+</svg>

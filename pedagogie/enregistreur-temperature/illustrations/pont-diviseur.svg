@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 520" role="img"
+     aria-labelledby="t d" font-family="Trebuchet MS, Tahoma, Verdana, sans-serif">
+  <title id="t">Le pont diviseur d'une voie de mesure</title>
+  <desc id="d">Une résistance fixe de 10 kilohms relie le 3,3 volts au point milieu ; la
+    sonde NTC relie le point milieu à la masse. La tension du point milieu, mesurée par le
+    convertisseur, dépend de la résistance de la sonde donc de sa température. Trois cas sont
+    illustrés : sonde froide, sonde à 25 degrés, sonde chaude.</desc>
+  <rect width="1000" height="520" fill="#ffffff"/>
+  <text x="500" y="34" text-anchor="middle" font-size="23" font-weight="bold" fill="#1b3a63">
+    Le pont diviseur — deux résistances en série, et une tension qui parle</text>
+
+  <!-- ── le schéma ─────────────────────────────────────────────────── -->
+  <g stroke="#1b3a63" stroke-width="2.5" fill="none">
+    <line x1="180" y1="90" x2="180" y2="130"/>
+    <rect x="158" y="130" width="44" height="86" rx="4" fill="#ffffff"/>
+    <line x1="180" y1="216" x2="180" y2="300"/>
+    <rect x="158" y="300" width="44" height="86" rx="4" fill="#fff1eb" stroke="#ff6b35"/>
+    <line x1="180" y1="386" x2="180" y2="430"/>
+    <line x1="140" y1="430" x2="220" y2="430"/>
+    <line x1="152" y1="440" x2="208" y2="440"/>
+    <line x1="164" y1="450" x2="196" y2="450"/>
+    <line x1="180" y1="258" x2="360" y2="258"/>
+  </g>
+  <circle cx="180" cy="258" r="5" fill="#1b3a63"/>
+  <line x1="140" y1="90" x2="220" y2="90" stroke="#1b3a63" stroke-width="3"/>
+
+  <text x="180" y="76" text-anchor="middle" font-size="17" font-weight="bold" fill="#1b3a63">3,30 V</text>
+  <text x="180" y="60" text-anchor="middle" font-size="14" fill="#5a6472">V d'excitation, mesurée</text>
+  <text x="216" y="170" font-size="16" font-weight="bold" fill="#1b3a63">R = 10 kΩ</text>
+  <text x="216" y="190" font-size="14" fill="#5a6472">précision 0,1 %</text>
+  <text x="216" y="207" font-size="14" fill="#5a6472">elle ne bouge pas</text>
+  <text x="216" y="340" font-size="16" font-weight="bold" fill="#c9451a">NTC</text>
+  <text x="216" y="360" font-size="14" fill="#5a6472">10 kΩ à 25 °C</text>
+  <text x="216" y="377" font-size="14" fill="#5a6472">elle, elle bouge</text>
+  <text x="180" y="478" text-anchor="middle" font-size="15" fill="#5a6472">masse (0 V)</text>
+  <text x="252" y="248" font-size="15" font-weight="bold" fill="#1b3a63">point milieu</text>
+
+  <rect x="360" y="228" width="150" height="60" rx="8" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+  <text x="435" y="253" text-anchor="middle" font-size="15" font-weight="bold" fill="#1b3a63">vers l'ADS1115</text>
+  <text x="435" y="274" text-anchor="middle" font-size="14" fill="#5a6472">entrée A0 … A3</text>
+
+  <!-- ── la formule ────────────────────────────────────────────────── -->
+  <rect x="330" y="60" width="640" height="132" rx="8" fill="#eef4fb" stroke="#cfe0f2"/>
+  <text x="350" y="88" font-size="16" font-weight="bold" fill="#1b3a63">Ce que dit le pont</text>
+  <text x="350" y="118" font-size="20" fill="#1b3a63" font-family="Consolas, monospace">
+    V = 3,30 × R_NTC / (R_NTC + 10 000)</text>
+  <text x="350" y="148" font-size="16" font-weight="bold" fill="#1b3a63">Ce qu'on en tire, en renversant</text>
+  <text x="350" y="176" font-size="20" fill="#c9451a" font-family="Consolas, monospace">
+    R_NTC = 10 000 × V / (3,30 − V)</text>
+
+  <!-- ── les trois cas ─────────────────────────────────────────────── -->
+  <g font-size="15" fill="#1b3a63">
+    <rect x="330" y="320" width="200" height="130" rx="8" fill="#ffffff" stroke="#2a78d6" stroke-width="2"/>
+    <text x="430" y="346" text-anchor="middle" font-size="17" font-weight="bold" fill="#2a78d6">SONDE FROIDE</text>
+    <text x="430" y="370" text-anchor="middle">0 °C</text>
+    <text x="430" y="394" text-anchor="middle" font-family="Consolas, monospace">R = 33,6 kΩ</text>
+    <text x="430" y="418" text-anchor="middle" font-family="Consolas, monospace" font-weight="bold">V = 2,543 V</text>
+    <text x="430" y="440" text-anchor="middle" font-size="14" fill="#5a6472">la tension MONTE</text>
+
+    <rect x="548" y="320" width="200" height="130" rx="8" fill="#ffffff" stroke="#5a6472" stroke-width="2"/>
+    <text x="648" y="346" text-anchor="middle" font-size="17" font-weight="bold" fill="#5a6472">À L'ÉQUILIBRE</text>
+    <text x="648" y="370" text-anchor="middle">25 °C</text>
+    <text x="648" y="394" text-anchor="middle" font-family="Consolas, monospace">R = 10,0 kΩ</text>
+    <text x="648" y="418" text-anchor="middle" font-family="Consolas, monospace" font-weight="bold">V = 1,650 V</text>
+    <text x="648" y="440" text-anchor="middle" font-size="14" fill="#5a6472">exactement la moitié</text>
+
+    <rect x="766" y="320" width="200" height="130" rx="8" fill="#ffffff" stroke="#ff6b35" stroke-width="2"/>
+    <text x="866" y="346" text-anchor="middle" font-size="17" font-weight="bold" fill="#c9451a">SONDE CHAUDE</text>
+    <text x="866" y="370" text-anchor="middle">50 °C</text>
+    <text x="866" y="394" text-anchor="middle" font-family="Consolas, monospace">R = 3,59 kΩ</text>
+    <text x="866" y="418" text-anchor="middle" font-family="Consolas, monospace" font-weight="bold">V = 0,871 V</text>
+    <text x="866" y="440" text-anchor="middle" font-size="14" fill="#5a6472">la tension DESCEND</text>
+  </g>
+
+  <rect x="330" y="462" width="640" height="46" rx="8" fill="#fff1eb" stroke="#ff6b35"/>
+  <text x="350" y="484" font-size="15" font-weight="bold" fill="#c9451a">Plus il fait chaud, plus la tension descend.</text>
+  <text x="350" y="502" font-size="15" fill="#1b3a63">C'est l'inverse de l'intuition — et c'est parce que la NTC est du côté de la MASSE.</text>
+</svg>
