@@ -90,10 +90,12 @@ comptés à part, leur absence n'est pas une faute.
    en ligne aussi) : `co2-protection` (« avant d'ouvrir » derrière un
    rectangle, texte tronqué à droite), `secu-bouteille`, `secu-projection`,
    `secu-decomposition-ari`. À corriger dans l'atelier pilote-fluides.
-3. **Déployer les redirections** — copier `livret/redirections-pages/f/` à la
-   racine de `frigorx/pilote-fluides`, commit, Pages redéploie. **Tant que ce
-   n'est pas fait, les 95 QR imprimés mènent à une 404.** Vérif : `curl -L`
-   sur les 95 alias de `qr.gen.json`, 200 partout.
+3. ~~Déployer les redirections~~ — **FAIT le 29/08** : `f/` est sur `main` de
+   `frigorx/pilote-fluides`, et la boucle `curl -L` sur les 95 alias de
+   `qr.gen.json` donne **200 partout** (cible déployée = table courante,
+   contrôlé sur pièce). La PR pilote-fluides #4, devenue sans objet, est
+   fermée. Si une cible change un jour : rééditer le `index.html` de l'alias
+   dans `pilote-fluides/f/`, jamais le livret.
 4. **Décisions d'édition** (fiche `dist/kdp/A-LIRE-…` § « à décider ») :
    ISBN gratuit KDP ou acheté AFNIL ; prix (coût d'impression **5,26 €**, plancher Amazon 8,77 €, conseillé 24,90 €).
 5. **Épreuve imprimée** avant mise en vente : gris des planches, QR scannés
