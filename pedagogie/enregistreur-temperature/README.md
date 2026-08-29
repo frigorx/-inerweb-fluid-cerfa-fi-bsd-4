@@ -82,6 +82,10 @@ l'USB, rien ne casse — c'était le cahier des charges.
 La liste complète de ce qui attend le fer à souder est dans
 [`POINTS-OUVERTS.md`](POINTS-OUVERTS.md).
 
+> **Vous reprenez ce travail sur une autre machine ?**
+> Commencez par [`REPRISE.md`](REPRISE.md) : où en est le module, comment le
+> récupérer, et quoi faire dans quel ordre.
+
 ## Les documents
 
 | Fichier | Pour qui, pour quoi |
@@ -98,6 +102,7 @@ La liste complète de ce qui attend le fer à souder est dans
 | [`09_Exploitation_froid_clim.md`](09_Exploitation_froid_clim.md) | Ce qu'on va mesurer sur une machine, et comment on le lit |
 | [`10_Cahier_des_illustrations.md`](10_Cahier_des_illustrations.md) | Les 50 illustrations : faites, à photographier, à dessiner |
 | [`POINTS-OUVERTS.md`](POINTS-OUVERTS.md) | Ce qui n'est pas tranché, et qui décide |
+| [`REPRISE.md`](REPRISE.md) | **Reprendre le travail sur une autre machine** : récupération, ordre des étapes, contrôles |
 
 ## Le code
 
