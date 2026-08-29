@@ -36,6 +36,22 @@
 // (PLAN-LOTS §L3/§L5 « énoncé d'origine », PROMPT-REPRISE). Réécrire un
 // bloc daté serait faire dire à hier ce qu'on sait aujourd'hui.
 //
+// EST AUSSI HORS PÉRIMÈTRE, depuis le 29/08/2026 : `pedagogie/`. Ce sont
+// des modules d'enseignement autonomes, sans aucun rapport avec
+// l'ouverture du mode Officiel — la règle gardée ici n'y vit pas. Le
+// périmètre annoncé en tête (« server/, v8/js/, outils/, pages HTML de la
+// racine ») les excluait déjà en intention ; l'inventaire, lui, prenait
+// tout le dépôt, parce qu'au moment où cette suite a été écrite il n'y
+// avait rien d'autre à prendre. L'écart s'est vu le jour où un module a
+// nommé ses six voies de température T1 à T6 : douze mentions de « T3 »
+// qui ne parlent pas du visa, et un filet rouge pour un homonyme.
+//
+// C'est le même choix que pour `docs/` : on exclut un arbre entier quand
+// ce n'est pas la surface vivante du logiciel. Ce que l'exclusion ne doit
+// PAS faire, c'est se mettre à couvrir du code livré sans qu'on le voie —
+// d'où les contre-épreuves du § B : les surfaces du logiciel restent
+// nommément dans l'inventaire, et `pedagogie/` en est nommément absent.
+//
 // Exécution : node outils/test-visa-abandonne.mjs
 // ============================================================
 
@@ -47,7 +63,10 @@ const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..');
 const EXCLUS_PARTOUT = new Set(['.git', 'node_modules', '.claude']);
 // Mêmes exclusions de racine que le lanceur (dossiers de l'utilisateur).
 const EXCLUS_RACINE = new Set([
-  'data', 'documents', 'backups', 'exports', 'img', 'css', 'apps-script', 'docs'
+  'data', 'documents', 'backups', 'exports', 'img', 'css', 'apps-script', 'docs',
+  // Les modules d'enseignement : autonomes, hors du logiciel, et sans
+  // rapport avec le visa. Voir l'en-tête, § PÉRIMÈTRE.
+  'pedagogie'
 ]);
 // Les seuls fichiers du dépôt que nous n'avons pas écrits.
 const DOSSIER_TIERS = 'v8/js/lib';
@@ -147,6 +166,27 @@ const temoin = fichiers.find((f) => f.relatif === TEMOIN_LECTURE);
 verifier('les fichiers sont réellement lus (témoin)',
   !!temoin && readFileSync(temoin.chemin, 'utf8').includes('EXEMPTION_HERMETIQUE_ACTIVE'),
   TEMOIN_LECTURE);
+
+// Une exclusion d'arbre entier ne se contrôle pas toute seule : elle peut
+// se mettre à avaler du code livré sans que personne ne le voie. Les deux
+// contrôles suivants la tiennent des deux côtés.
+const SURFACES_LOGICIEL = ['server/api.js', 'v8/js/app.js', 'index.html', 'outils/plan-tests.mjs'];
+const manquantes = SURFACES_LOGICIEL.filter((f) => !fichiers.some((x) => x.relatif === f));
+verifier('les surfaces du logiciel sont toujours dans le périmètre',
+  manquantes.length === 0, manquantes.join(', '));
+
+const dansPedagogie = fichiers.filter((f) => f.relatif.startsWith('pedagogie/'));
+verifier('`pedagogie/` est bien hors périmètre',
+  dansPedagogie.length === 0, dansPedagogie.slice(0, 3).map((f) => f.relatif).join(', '));
+
+// Et l'exclusion doit encore servir à quelque chose : le jour où
+// `pedagogie/` disparaîtrait, cette ligne dirait qu'elle est devenue morte
+// plutôt que de la laisser rassurer pour rien.
+if (existsSync(join(RACINE, 'pedagogie'))) {
+  console.log('  --  `pedagogie/` existe : l\'exclusion porte sur du réel.');
+} else {
+  console.log('  --  `pedagogie/` a disparu : l\'exclusion est devenue morte, la retirer.');
+}
 
 // ============================================================
 // C. Plus aucune condition ne pend à un visa qui ne viendra pas
