@@ -1,11 +1,10 @@
 # inerweb.fr HabFluide — tome 1 : la théorie · compte de reprise
 
 > Pour reprendre le chantier à froid, dans une session neuve, sans relire aucun
-> historique. État au 28/08/2026 (relecture éditoriale intégrée), branche `claude/livret-habilitation-fluide-d5n1yt`,
+> historique. État au 29/08/2026 (relecture éditoriale et passe de finition intégrées), branche `claude/livret-habilitation-fluide-d5n1yt`,
 > [PR #33](https://github.com/frigorx/-inerweb-fluid-cerfa-fi-bsd-4/pull/33).
 
-**Le livre part en autoédition Amazon KDP.** Format 6 × 9 pouces, **288 pages**
-(pas 383 : voir l'encadré pagination), noir et blanc. Il prépare l'**épreuve
+**Le livre part en autoédition Amazon KDP.** Format 6 × 9 pouces, **388 pages**, noir et blanc. Il prépare l'**épreuve
 théorique** de l'attestation d'aptitude fluides frigorigènes, **catégories A1,
 A2, D et E**. La pratique fera le tome 2.
 
@@ -24,7 +23,7 @@ même livre sortait à 383, 272 ou 231 pages selon l'humeur du décodage. Le
 « 383 pages » des reprises précédentes était un artefact.
 
 Réparé dans `pages.mjs` (fonction `cotes()`, `width`/`height` sur chaque
-image). **La pagination est stable d'une fabrication à l'autre (288 pages au dernier tirage — elle ne bouge plus qu'avec le contenu).** Si un
+image). **La pagination est stable d'une fabrication à l'autre (388 pages au dernier tirage — elle ne bouge plus qu'avec le contenu).** Si un
 jour la pagination bouge entre deux `npm run tout` sans changement de contenu,
 c'est cette régression-là qui revient.
 
@@ -60,8 +59,7 @@ Autres commandes : `npm run couverture` · `npm run verifier` ·
 ## Le référentiel est tracé page par page
 
 Chaque page du livre porte en pied, à côté du numéro, les **codes de
-l'arrêté qu'elle travaille** : « Référentiel : 12.02 · 12.13 ». 284 pages
-sur 353 en portent. Le rattachement n'est pas deviné : il vient du champ
+l'arrêté qu'elle travaille** : « Référentiel : 12.02 · 12.13 ». Le rattachement n'est pas deviné : il vient du champ
 `dc` des cartes source, écrit par l'auteur du cours (« G8 · codes 8.01 ·
 8.05 », intervalles « 5.05 → 5.09 » développés à l'extraction).
 
@@ -97,7 +95,7 @@ comptés à part, leur absence n'est pas une faute.
    n'est pas fait, les 95 QR imprimés mènent à une 404.** Vérif : `curl -L`
    sur les 95 alias de `qr.gen.json`, 200 partout.
 4. **Décisions d'édition** (fiche `dist/kdp/A-LIRE-…` § « à décider ») :
-   ISBN gratuit KDP ou acheté AFNIL ; prix (conseillé 24,90 €, coût 4,08 €).
+   ISBN gratuit KDP ou acheté AFNIL ; prix (coût d'impression **5,26 €**, plancher Amazon 8,77 €, conseillé 24,90 €).
 5. **Épreuve imprimée** avant mise en vente : gris des planches, QR scannés
    (dont un depuis une photocopie), dos dans les plis. (L'attribution
    QElectroTech est TRANCHÉE : 2 symboles en viennent, le crédit est imprimé
@@ -134,7 +132,7 @@ Quatre leviers, dans cet ordre :
    normalisé prenait 40 % d'une page pour rien.
 
 **Résultat mesuré : 39 codes théoriques sur 39 traités, zéro effleuré.**
-**362 pages, 193 mots/page** (288 pages et 146 mots/page le matin).
+**388 pages** (288 le matin du 28/08).
 
 ### Deux défauts de fond corrigés au passage
 
@@ -188,6 +186,47 @@ dans le livret :
 **Resterait à trancher par F. Henninot** : la « banque finale de révision »
 proposée par le relecteur (déplacer les questions de nomenclature répétables
 en fin d'ouvrage) — restructuration éditoriale, non lancée.
+
+
+## Passe de finition du 29/08 — les huit points d'une relecture externe
+
+Une relecture a listé huit blocages avant Amazon. Tous traités ; **deux
+étaient des régressions de la densification de la veille**, ne pas les
+refaire :
+
+1. **HTML imprimé sur 18 pages** (`<br>`, `<iframe>` de réglette, `<img>`).
+   Nettoyé à l'extraction (`pourLePapier`) ET au rendu (`ech`) : défense en
+   profondeur, aucune balise ne peut atteindre le papier.
+2. **⚠ RÉGRESSION — sept paires de pages jumelles.** En donnant à chaque
+   leçon « tous » les paragraphes, plusieurs leçons d'un même chapitre
+   partageant une carte réimprimaient le même texte. La carte se **répartit**
+   entre ses leçons en tranches consécutives (`extraire.mjs`, `tranche`).
+3. **Chapitre 4 hors sujet** : il interrogeait sur la nomenclature des
+   fluides. Ses questions se **génèrent** maintenant depuis le référentiel
+   (`questionsCategories`) : périmètres, charges limites, correspondances
+   2008, durées d'épreuve.
+4. **Codes CO₂/NH₃ mal étiquetés** « épreuve pratique — tome 2 » alors
+   qu'ils sont THÉORIQUES en catégorie B ou C → « hors périmètre —
+   catégorie B ».
+5. **L'audit surestimait** : un code déclaré par une leçon marque toutes
+   ses pages. Il compte désormais les **leçons** et les **mots**, classe sur
+   les mots, et le dit explicitement.
+6. **⚠ RÉGLAGE QUI MENTAIT — le corps mesurait 10,7 pt pour un réglage de 14.**
+   Chrome rend la page dans son repère de pixels (96 ppp) puis la met à
+   l'échelle du PDF (72) : les **mm passent intacts, les pt ressortent au
+   trois quarts**. `cssImprimable()` (dans `build-html.mjs`) rétablit
+   l'échelle une fois pour toutes. **Ne pas la retirer** : sans elle tout le
+   livre rapetisse d'un quart sans prévenir. Corps **12,4 pt réels**,
+   bandeau 8, pied 7,6. Monter à 14 est possible (`reglages.json`) mais
+   pousse le livre vers 440 pages.
+7. **Sommaire sans numéros, PDF sans signets** : la finition écrit les deux
+   (elle seule connaît la pagination). 19 signets, 19 numéros, traits de
+   conduite.
+8. **Marqueurs internes `@@D|11;8.01@@` dans la couche texte** sur 336 pages :
+   1 224 effacés par rédaction après lecture. Titre et auteur du PDF posés.
+
+Marge basse portée à 15 mm : à 13, un accent orphelin descendait à 5,98 mm
+du bord et le contrôle KDP bloquait (limite 6,35).
 
 ## Les règles que ce livre ne peut pas enfreindre
 
