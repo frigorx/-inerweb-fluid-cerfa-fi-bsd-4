@@ -113,14 +113,33 @@ const collecte = (o, chQr) => {
 };
 for (const ch of CHAPITRES) collecte(ch, ch.qr);
 collecte(PLANCHE_CENTRALE); collecte(LIMINAIRES); collecte(FIN);
+/* Les planches du comblement aussi : chaque planche posée dans un blanc
+   porte son QR, comme toute planche du livre. Le chapitre vient de la
+   clé d'ancre (« 9-4 » → chapitre 9). */
+const CHEMIN_COMBLE = path.join(ICI, '..', 'comblement.gen.json');
+if (fs.existsSync(CHEMIN_COMBLE)) {
+  const table = JSON.parse(fs.readFileSync(CHEMIN_COMBLE, 'utf8'));
+  for (const [ancre, c] of Object.entries(table)) {
+    const num = Number(ancre.split('-')[0]);
+    const ch = CHAPITRES.find((x) => x.num === num);
+    collecte(c.ref, ch ? ch.qr : undefined);
+  }
+}
+/* TOUTES les planches du pack ont leur alias, les fixes comprises : la
+   feuille de route du projet anime le pack planche après planche
+   (37 sur 48 le sont déjà), et un QR imprimé doit survivre à cette
+   montée — quand la planche s'anime au site, le code déjà en marge la
+   montre en mouvement SANS réimprimer. En attendant, la visionneuse
+   la sert en grand, et le renvoi de marge dit ce qui est vrai
+   aujourd'hui. */
 for (const nom of [...planches].sort()) {
   const chemin = path.join(SVG_PACK, `${nom}.svg`);
   if (!fs.existsSync(chemin)) { erreurs.push(`planche « ${nom} » absente du pack`); continue; }
   const svg = fs.readFileSync(chemin, 'utf8');
-  if (!/<animate(Motion|Transform)?[\s>]/.test(svg)) continue; /* planche fixe : pas d'alias */
+  const animee = /<animate(Motion|Transform)?[\s>]/.test(svg);
   const titre = ((svg.match(/<title>([^<]+)<\/title>/) || [])[1] || nom).trim();
   entrees.push({
-    genre: 'animation', titre, slug: `a-${nom}`, alias: `${QR_BASE}a-${nom}`,
+    genre: 'animation', animee, titre, slug: `a-${nom}`, alias: `${QR_BASE}a-${nom}`,
     cible: `${APPLI}packs/fluides/res/svg/${nom}.svg`,
     retour: chapitreDePlanche.has(nom) ? `${QR_BASE}${chapitreDePlanche.get(nom)}` : APPLI,
   });
@@ -172,8 +191,11 @@ entrees.push({
 for (const e of entrees) {
   const capsule = e.cible.includes('capsules');
   if (e.genre === 'animation') {
-    e.renvoi = { genre: 'animation', titre: 'La planche en mouvement',
-      quoi: 'Ci-contre figée. En ligne, elle se joue du début à la fin.' };
+    e.renvoi = e.animee
+      ? { genre: 'animation', titre: 'La planche en mouvement',
+          quoi: 'Ci-contre figée. En ligne, elle se joue du début à la fin.' }
+      : { genre: 'la planche', titre: 'La planche en grand',
+          quoi: 'Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site.' };
   } else if (e.genre === 'entrainement') {
     e.renvoi = { genre: 'des questions ?', titre: '10 questions, niveau examen',
       quoi: 'La série du chapitre, corrigée et expliquée question par question.' };
@@ -280,12 +302,13 @@ footer a{color:var(--mut)}
 </style>
 </head>
 <body>
-<header><span class="hab">❄</span> inerWeb · HabFluide — la planche en mouvement</header>
+<header><span class="hab">❄</span> inerWeb · HabFluide — ${e.animee ? 'la planche en mouvement' : 'la planche en grand'}</header>
 <main>
 <h1>${echapper(e.titre)}</h1>
-<div id="scene"><p class="attente">Chargement de l’animation…</p></div>
+${e.animee ? '' : `<p class="note-fixe">Cette planche s’animera au fil des mises à jour du site — la voici en pleine taille.</p>`}
+<div id="scene"><p class="attente">Chargement de la planche…</p></div>
 <div class="actions">
-<button id="revoir" type="button">↻ Revoir l’animation</button>
+${e.animee ? '<button id="revoir" type="button">↻ Revoir l’animation</button>' : ''}
 <a href="${echapper(e.retour)}">La leçon complète →</a>
 </div>
 </main>

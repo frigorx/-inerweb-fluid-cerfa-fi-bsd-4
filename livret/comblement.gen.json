@@ -1,96 +1,96 @@
 {
  "1-1": {
-  "ref": "pack:consignation-cinq-etapes",
+  "ref": "svg:consignation-cinq-etapes",
   "h": 75,
   "legende": "À dérouler avant de toucher au circuit — l’ordre ne s’inverse pas."
  },
  "2-1": {
-  "ref": "pack:classe-lettre-chiffre",
+  "ref": "svg:classe-lettre-chiffre",
   "h": 75,
   "legende": "La lettre d’abord, le chiffre ensuite — deux dangers distincts."
  },
  "3-1": {
-  "ref": "pack:deux-etages-deux-papiers",
+  "ref": "svg:deux-etages-deux-papiers",
   "h": 75,
   "legende": "Du règlement européen à vos deux attestations."
  },
  "4-6": {
-  "ref": "pack:categories-champs",
+  "ref": "svg:categories-champs",
   "h": 75,
   "legende": "Repérez votre colonne : elle dit ce que votre attestation couvre."
  },
  "5-7": {
-  "ref": "pack:croix-frigoriste-etats",
+  "ref": "svg:croix-frigoriste-etats",
   "h": 75,
   "legende": "La croix se lit organe par organe — l’état du fluide à chaque coin."
  },
  "6-6": {
-  "ref": "pack:logph-lecture",
+  "ref": "svg:logph-lecture",
   "h": 75,
   "legende": "Le cycle se lit sur le diagramme, jamais de mémoire."
  },
  "7-6": {
-  "ref": "pack:mesures-surchauffe-sous-refroidissement",
+  "ref": "svg:mesures-surchauffe-sous-refroidissement",
   "h": 75,
   "legende": "Deux écarts qui se mesurent — jamais ne se devinent."
  },
  "8-1": {
-  "ref": "pack:code-nomme-classe-previent",
+  "ref": "svg:code-nomme-classe-previent",
   "h": 75,
   "legende": "Cinq étiquettes, un réflexe : la classe se vérifie sur la FDS."
  },
- "9-8": {
-  "ref": "pack:compresseurs-comparatif",
+ "9-1": {
+  "ref": "svg:compresseurs-comparatif",
   "h": 75,
   "legende": "Quatre technologies sur le terrain, la fonction ne change pas."
  },
  "10-8": {
-  "ref": "pack:condenseur-ecart-encrassement",
+  "ref": "svg:condenseur-ecart-encrassement",
   "h": 75,
   "legende": "Le même condenseur, propre puis encrassé : l’écart raconte tout."
  },
  "11-8": {
-  "ref": "pack:givre-isole-machine-force",
+  "ref": "svg:givre-isole-machine-force",
   "h": 75,
   "legende": "Une batterie sous givre n’échange plus — la machine paie."
  },
- "12-1": {
-  "ref": "pack:ligne-liquide-protection",
+ "12-8": {
+  "ref": "svg:ligne-liquide-protection",
   "h": 75,
   "legende": "Du réservoir au détendeur, chaque organe veille sur le suivant."
  },
  "13-8": {
-  "ref": "pack:sequence-mise-en-service",
+  "ref": "svg:sequence-mise-en-service",
   "h": 75,
   "legende": "L’ordre des opérations avant la première charge."
  },
  "14-8": {
-  "ref": "pack:recherche-fuite-geste",
+  "ref": "svg:recherche-fuite-geste",
   "h": 75,
   "legende": "Le geste du contrôle : lent, près du raccord, confirmé."
  },
  "15-1": {
-  "ref": "pack:recuperation-securisee",
+  "ref": "svg:recuperation-securisee",
   "h": 75,
   "legende": "Rien ne part à l’air : le fluide rejoint la bouteille, pesé."
  },
  "16-6": {
-  "ref": "pack:brasage-balayage-azote",
+  "ref": "svg:brasage-balayage-azote",
   "h": 75,
   "legende": "L’azote balaie l’intérieur du tube pendant toute la chauffe."
  },
  "17-6": {
-  "ref": "pack:quatre-leviers-energie",
+  "ref": "svg:quatre-leviers-energie",
   "h": 75,
   "legende": "Quatre choix de conception qui se voient sur la facture."
  },
  "18-8": {
-  "ref": "pack:r290-zone-intervention",
+  "ref": "svg:r290-zone-intervention",
   "h": 75,
   "legende": "Le propane impose sa zone : balisée, ventilée, sans flamme."
  },
  "19-1": {
-  "ref": "pack:co2-nh3-deux-risques",
+  "ref": "svg:co2-nh3-deux-risques",
   "h": 75,
   "legende": "Deux fluides naturels, deux dangers — un même réflexe : s’arrêter."
  }

@@ -100,7 +100,7 @@ const PICTO_PIEGE = `<svg class="picto-piege" viewBox="0 0 20 18" aria-hidden="t
   <circle cx="10" cy="14.1" r="1.05" fill="currentColor"/></svg>`;
 /* Le plan écrit ses chaînes sans apostrophes ; on les restitue. */
 export const apos = (s) => String(s).replace(
-  /\b(jusqu|lorsqu|puisqu|quelqu|aujourd|[qQ]u|[dcjlmnstDCJLMNST])\s(?=[aeiouyhéèêëàâîïôûAEIOUYHÉÈÊÀÂÎÔ])/g, '$1’');
+  /\b(jusqu|lorsqu|puisqu|quelqu|aujourd|[qQ]u|[dcjlmnstDCJLMNST])\s(?=[aeiouyhéèêëàâîïôûAEIOUYHÉÈÊÀÂÎÔœŒæÆ])/g, '$1’');
 
 const qrDe = (num) => QR.find((e) => e.chapitre === num && !e.lecon && !e.genre);
 /* La série d'entraînement du chapitre : son premier groupe G-numéroté. */
@@ -134,7 +134,7 @@ const figure = (refs, legendes = []) => {
     const appoint = appointPossible && !estTechnique(r);
     const symbole = r.startsWith('sym:');
     return `<figure class="${symbole ? 'symbole' : appoint ? 'appoint' : 'planche'}${!appoint && !symbole && ratio(r) > 1.15 ? ' haute' : ''}">
-      ${r.startsWith('svg:') && VISUELS[r].animee ? qrm('a-' + r.slice(4), 'a') : ''}<img src="${visuel(r)}"${cotes(r)} alt="">
+      ${r.startsWith('svg:') ? qrm('a-' + r.slice(4), 'a') : ''}<img src="${visuel(r)}"${cotes(r)} alt="">
       ${legendes[i] ? `<figcaption>${ech(apos(legendes[i]))}</figcaption>` : ''}
     </figure>`;
   }).join('');
@@ -173,7 +173,7 @@ const ancre = (chNum) => {
   const cle = `${chNum}-${n}`;
   const c = COMBLE[cle];
   const planche = c ? `<figure class="planche comble">
-      <img src="${visuel(c.ref)}"${cotes(c.ref)} style="max-height:${c.h}mm" alt="">
+      ${c.ref.startsWith('svg:') ? qrm('a-' + c.ref.slice(4), 'a') : ''}<img src="${visuel(c.ref)}"${cotes(c.ref)} style="max-height:${c.h}mm" alt="">
       ${c.legende ? `<figcaption>${ech(apos(c.legende))}</figcaption>` : ''}
     </figure>` : '';
   /* `vide` dit au bloc de s'écraser à hauteur nulle : sans planche, une

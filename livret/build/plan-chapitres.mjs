@@ -60,16 +60,16 @@ export const CHAPITRES = [
     codesQ: ['12.02', '12.13', '11.03', '12.04'],
     lecons: [
       { t: 'L air qui manque — l asphyxie', src: 's1', paras: 'tous', blocs: [0, 1],
-        visuels: ['pack:securite-espace-clos'],
+        visuels: ['svg:securite-espace-clos'],
         legendes: ['Ventiler, mesurer, ne pas descendre'] },
       { t: 'Le froid brûle — projections et gelures', src: 's2', paras: 'tous', blocs: [0, 1],
-        visuels: ['pack:securite-projection-fluide'],
+        visuels: ['svg:securite-projection-fluide'],
         legendes: ['Lire la pression, s équiper, sortir de l axe'] },
       { t: 'La flamme interdite — décomposition du fluide', src: 's3', paras: 'tous', blocs: [0, 1],
-        visuels: ['pack:securite-decomposition-fluide'],
+        visuels: ['svg:securite-decomposition-fluide'],
         legendes: ['Récupérer et inerter avant la flamme'] },
       { t: 'Ce qui éclate — la pression', src: 's4', paras: 'tous', blocs: [0, 1],
-        visuels: ['pack:securite-pression-residuelle'],
+        visuels: ['svg:securite-pression-residuelle'],
         legendes: ['À l arrêt, le circuit reste sous pression'] },
       { t: 'Consigner avant de toucher — le risque électrique', src: 's5', paras: 'tous', blocs: [0, 1],
         visuels: ['svg:secu-consignation', 'illu:s5'],
@@ -722,7 +722,7 @@ export const LIMINAIRES = [
   { id: 'statut', t: 'Statut et limites de ce document', visuels: ['ico:registre', 'ico:attestation'], legendes: ['Ce livret prépare', 'Il ne délivre rien'] },
   { id: 'sommaire', t: 'Sommaire', visuels: ['amb:jour4'], legendes: [''] },
   { id: 'point-depart', t: 'Mon point de départ', visuels: ['ico:role-question', 'illu:examen'], legendes: ['Ce que je sais déjà', 'Ce que je viens chercher'] },
-  { id: 'categories-coup-oeil', t: 'Les sept catégories en un coup d œil', visuels: ['svg:aptitude-capacite'], legendes: ['Aptitude et capacité'] },
+  { id: 'categories-coup-oeil', t: 'Sept catégories, un coup d œil', visuels: ['svg:aptitude-capacite'], legendes: ['Aptitude et capacité'] },
 ];
 
 export const FIN = [

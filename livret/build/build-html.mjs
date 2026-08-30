@@ -99,6 +99,13 @@ body{background:#e7ecf1;color:var(--txt);
 #livret{max-width:${R.page_l_mm}mm;margin:0 auto;background:#fff;padding:14mm 16mm;
   box-shadow:0 3px 14px rgba(27,58,99,.16)}
 .marq{font-size:1pt;line-height:0;color:#fff}
+/* Dans une FIGURE, le marqueur devient un bloc de hauteur nulle : en
+   inline devant l'image, il créait une ligne de strut de 5,8 mm par
+   planche marquée — deux pages pour quarante planches. En bloc à
+   hauteur nulle il ne pèse rien, et son glyphe d'un point reste isolé
+   sur sa propre ligne (l'effacement par motif entier ne craint plus
+   les voisinages). */
+figure .marq{display:block;height:0;line-height:0}
 /* Une ANCRE de comblement sans planche pèse UN POINT de haut — pas le
    strut de ligne d'un bloc ordinaire (5,8 mm, soit deux pages pour cent
    ancres), et pas zéro non plus : un glyphe qui déborde d'un bloc à

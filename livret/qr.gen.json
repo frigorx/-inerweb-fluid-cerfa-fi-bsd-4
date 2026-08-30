@@ -1312,6 +1312,82 @@
  },
  {
   "genre": "animation",
+  "animee": false,
+  "titre": "Aptitude et capacité : la personne et l'entreprise",
+  "slug": "a-aptitude-capacite",
+  "alias": "https://inerweb.fr/f/a-aptitude-capacite",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/aptitude-capacite.svg",
+  "retour": "https://inerweb.fr/f/loi",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-aptitude-capacite.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "Braser sous balayage d'azote",
+  "slug": "a-balayage-azote",
+  "alias": "https://inerweb.fr/f/a-balayage-azote",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/balayage-azote.svg",
+  "retour": "https://inerweb.fr/f/brasage",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-balayage-azote.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "Le balayage au détecteur électronique",
+  "slug": "a-balayage-detecteur",
+  "alias": "https://inerweb.fr/f/a-balayage-detecteur",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/balayage-detecteur.svg",
+  "retour": "https://inerweb.fr/f/etancheite",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-balayage-detecteur.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "brasage-balayage-azote",
+  "slug": "a-brasage-balayage-azote",
+  "alias": "https://inerweb.fr/f/a-brasage-balayage-azote",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/brasage-balayage-azote.svg",
+  "retour": "https://inerweb.fr/f/brasage",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-brasage-balayage-azote.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "categories-champs",
+  "slug": "a-categories-champs",
+  "alias": "https://inerweb.fr/f/a-categories-champs",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/categories-champs.svg",
+  "retour": "https://inerweb.fr/f/categories",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-categories-champs.png"
+ },
+ {
+  "genre": "animation",
+  "animee": true,
   "titre": "Chaleur sensible et chaleur latente : la courbe de chauffe et son palier",
   "slug": "a-chaleur-sensible-latente",
   "alias": "https://inerweb.fr/f/a-chaleur-sensible-latente",
@@ -1326,6 +1402,7 @@
  },
  {
   "genre": "animation",
+  "animee": true,
   "titre": "Fluide inflammable : ce que le volume du local commande",
   "slug": "a-charge-limite-local",
   "alias": "https://inerweb.fr/f/a-charge-limite-local",
@@ -1340,6 +1417,7 @@
  },
  {
   "genre": "animation",
+  "animee": true,
   "titre": "Le poste de récupération : circuit complet et manifold branché",
   "slug": "a-circuit-complet-manifold",
   "alias": "https://inerweb.fr/f/a-circuit-complet-manifold",
@@ -1354,6 +1432,37 @@
  },
  {
   "genre": "animation",
+  "animee": false,
+  "titre": "classe-lettre-chiffre",
+  "slug": "a-classe-lettre-chiffre",
+  "alias": "https://inerweb.fr/f/a-classe-lettre-chiffre",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/classe-lettre-chiffre.svg",
+  "retour": "https://inerweb.fr/f/classes",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-classe-lettre-chiffre.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "Classes de sécurité NF EN 378 — les huit cases",
+  "slug": "a-classes-securite",
+  "alias": "https://inerweb.fr/f/a-classes-securite",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/classes-securite.svg",
+  "retour": "https://inerweb.fr/f/classes",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-classes-securite.png"
+ },
+ {
+  "genre": "animation",
+  "animee": true,
   "titre": "CO₂ et ammoniac : deux fluides, deux comportements inverses",
   "slug": "a-co2-nh3-compare",
   "alias": "https://inerweb.fr/f/a-co2-nh3-compare",
@@ -1368,6 +1477,22 @@
  },
  {
   "genre": "animation",
+  "animee": false,
+  "titre": "co2-nh3-deux-risques",
+  "slug": "a-co2-nh3-deux-risques",
+  "alias": "https://inerweb.fr/f/a-co2-nh3-deux-risques",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/co2-nh3-deux-risques.svg",
+  "retour": "https://inerweb.fr/f/co2-nh3",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-co2-nh3-deux-risques.png"
+ },
+ {
+  "genre": "animation",
+  "animee": true,
   "titre": "Le CO₂ s'accumule en point bas — on descend dedans sans le voir",
   "slug": "a-co2-point-bas",
   "alias": "https://inerweb.fr/f/a-co2-point-bas",
@@ -1382,6 +1507,97 @@
  },
  {
   "genre": "animation",
+  "animee": false,
+  "titre": "code-nomme-classe-previent",
+  "slug": "a-code-nomme-classe-previent",
+  "alias": "https://inerweb.fr/f/a-code-nomme-classe-previent",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/code-nomme-classe-previent.svg",
+  "retour": "https://inerweb.fr/f/fluides",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-code-nomme-classe-previent.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "Le compresseur — principe et technologies",
+  "slug": "a-compresseurs",
+  "alias": "https://inerweb.fr/f/a-compresseurs",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/compresseurs.svg",
+  "retour": "https://inerweb.fr/f/compresseur",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-compresseurs.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "compresseurs-comparatif",
+  "slug": "a-compresseurs-comparatif",
+  "alias": "https://inerweb.fr/f/a-compresseurs-comparatif",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/compresseurs-comparatif.svg",
+  "retour": "https://inerweb.fr/f/compresseur",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-compresseurs-comparatif.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "condenseur-ecart-encrassement",
+  "slug": "a-condenseur-ecart-encrassement",
+  "alias": "https://inerweb.fr/f/a-condenseur-ecart-encrassement",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/condenseur-ecart-encrassement.svg",
+  "retour": "https://inerweb.fr/f/condenseur",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-condenseur-ecart-encrassement.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "condenseur-trois-zones",
+  "slug": "a-condenseur-trois-zones",
+  "alias": "https://inerweb.fr/f/a-condenseur-trois-zones",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/condenseur-trois-zones.svg",
+  "retour": "https://inerweb.fr/f/condenseur",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-condenseur-trois-zones.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "consignation-cinq-etapes",
+  "slug": "a-consignation-cinq-etapes",
+  "alias": "https://inerweb.fr/f/a-consignation-cinq-etapes",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/consignation-cinq-etapes.svg",
+  "retour": "https://inerweb.fr/f/securite",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-consignation-cinq-etapes.png"
+ },
+ {
+  "genre": "animation",
+  "animee": true,
   "titre": "coup-de-liquide-piston",
   "slug": "a-coup-de-liquide-piston",
   "alias": "https://inerweb.fr/f/a-coup-de-liquide-piston",
@@ -1396,6 +1612,37 @@
  },
  {
   "genre": "animation",
+  "animee": false,
+  "titre": "La croix du frigoriste",
+  "slug": "a-croix-frigoriste",
+  "alias": "https://inerweb.fr/f/a-croix-frigoriste",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/croix-frigoriste.svg",
+  "retour": "https://inerweb.fr/f/thermo",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-croix-frigoriste.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "croix-frigoriste-etats",
+  "slug": "a-croix-frigoriste-etats",
+  "alias": "https://inerweb.fr/f/a-croix-frigoriste-etats",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/croix-frigoriste-etats.svg",
+  "retour": "https://inerweb.fr/f/thermo",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-croix-frigoriste-etats.png"
+ },
+ {
+  "genre": "animation",
+  "animee": true,
   "titre": "Le détendeur thermostatique : une boucle qui se corrige toute seule",
   "slug": "a-detendeur-regulation",
   "alias": "https://inerweb.fr/f/a-detendeur-regulation",
@@ -1410,6 +1657,37 @@
  },
  {
   "genre": "animation",
+  "animee": false,
+  "titre": "Détendeurs et ligne liquide",
+  "slug": "a-detendeurs-ligne",
+  "alias": "https://inerweb.fr/f/a-detendeurs-ligne",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/detendeurs-ligne.svg",
+  "retour": "https://inerweb.fr/f/detendeur",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-detendeurs-ligne.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "deux-etages-deux-papiers",
+  "slug": "a-deux-etages-deux-papiers",
+  "alias": "https://inerweb.fr/f/a-deux-etages-deux-papiers",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/deux-etages-deux-papiers.svg",
+  "retour": "https://inerweb.fr/f/loi",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-deux-etages-deux-papiers.png"
+ },
+ {
+  "genre": "animation",
+  "animee": true,
   "titre": "Le diagramme log p-h : trois zones, deux frontières, un cycle en quatre transformations",
   "slug": "a-diagramme-logph",
   "alias": "https://inerweb.fr/f/a-diagramme-logph",
@@ -1424,6 +1702,67 @@
  },
  {
   "genre": "animation",
+  "animee": false,
+  "titre": "Le condenseur à air : l'air emporte la chaleur",
+  "slug": "a-echangeur-air",
+  "alias": "https://inerweb.fr/f/a-echangeur-air",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/echangeur-air.svg",
+  "retour": "https://inerweb.fr/f/condenseur",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-echangeur-air.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "L'épreuve de pression, à l'azote seul",
+  "slug": "a-epreuve-azote",
+  "alias": "https://inerweb.fr/f/a-epreuve-azote",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/epreuve-azote.svg",
+  "retour": "https://inerweb.fr/f/mise-en-service",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-epreuve-azote.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "Les familles de fluides — trois atomes décident de tout",
+  "slug": "a-familles-fluides",
+  "alias": "https://inerweb.fr/f/a-familles-fluides",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/familles-fluides.svg",
+  "retour": "https://inerweb.fr/f/classes",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-familles-fluides.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "Quarante ans d'histoire — de l'ozone au climat",
+  "slug": "a-frise-histoire",
+  "alias": "https://inerweb.fr/f/a-frise-histoire",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/frise-histoire.svg",
+  "retour": "https://inerweb.fr/f/loi",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-frise-histoire.png"
+ },
+ {
+  "genre": "animation",
+  "animee": true,
   "titre": "Le givre étouffe l'échange — le dégivrage le libère",
   "slug": "a-givre-degivrage",
   "alias": "https://inerweb.fr/f/a-givre-degivrage",
@@ -1438,6 +1777,37 @@
  },
  {
   "genre": "animation",
+  "animee": false,
+  "titre": "givre-isole-machine-force",
+  "slug": "a-givre-isole-machine-force",
+  "alias": "https://inerweb.fr/f/a-givre-isole-machine-force",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/givre-isole-machine-force.svg",
+  "retour": "https://inerweb.fr/f/evaporateur",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-givre-isole-machine-force.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "La lecture croisée : manomètre, table, thermomètre",
+  "slug": "a-lecture-table",
+  "alias": "https://inerweb.fr/f/a-lecture-table",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/lecture-table.svg",
+  "retour": "https://inerweb.fr/f/logph",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-lecture-table.png"
+ },
+ {
+  "genre": "animation",
+  "animee": true,
   "titre": "LIE et LSE : le domaine d'explosivité, et ce qu'affiche l'explosimètre",
   "slug": "a-lie-domaine",
   "alias": "https://inerweb.fr/f/a-lie-domaine",
@@ -1452,6 +1822,37 @@
  },
  {
   "genre": "animation",
+  "animee": false,
+  "titre": "ligne-liquide-protection",
+  "slug": "a-ligne-liquide-protection",
+  "alias": "https://inerweb.fr/f/a-ligne-liquide-protection",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/ligne-liquide-protection.svg",
+  "retour": "https://inerweb.fr/f/detendeur",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-ligne-liquide-protection.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "logph-lecture",
+  "slug": "a-logph-lecture",
+  "alias": "https://inerweb.fr/f/a-logph-lecture",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/logph-lecture.svg",
+  "retour": "https://inerweb.fr/f/logph",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-logph-lecture.png"
+ },
+ {
+  "genre": "animation",
+  "animee": true,
   "titre": "Le manifold : quelle vanne ouvre quoi",
   "slug": "a-manifold-lecture",
   "alias": "https://inerweb.fr/f/a-manifold-lecture",
@@ -1466,6 +1867,37 @@
  },
  {
   "genre": "animation",
+  "animee": false,
+  "titre": "Mesurer la surchauffe",
+  "slug": "a-mesure-surchauffe",
+  "alias": "https://inerweb.fr/f/a-mesure-surchauffe",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/mesure-surchauffe.svg",
+  "retour": "https://inerweb.fr/f/surchauffe",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-mesure-surchauffe.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "mesures-surchauffe-sous-refroidissement",
+  "slug": "a-mesures-surchauffe-sous-refroidissement",
+  "alias": "https://inerweb.fr/f/a-mesures-surchauffe-sous-refroidissement",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/mesures-surchauffe-sous-refroidissement.svg",
+  "retour": "https://inerweb.fr/f/surchauffe",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-mesures-surchauffe-sous-refroidissement.png"
+ },
+ {
+  "genre": "animation",
+  "animee": true,
   "titre": "Décoder un code fluide, chiffre par chiffre",
   "slug": "a-nomenclature",
   "alias": "https://inerweb.fr/f/a-nomenclature",
@@ -1480,6 +1912,7 @@
  },
  {
   "genre": "animation",
+  "animee": true,
   "titre": "L'ordre des vannes : une chorégraphie, jamais une improvisation",
   "slug": "a-ordre-vannes",
   "alias": "https://inerweb.fr/f/a-ordre-vannes",
@@ -1494,6 +1927,7 @@
  },
  {
   "genre": "animation",
+  "animee": true,
   "titre": "La pesée : ce qui est parti dans la machine, c'est ce que la balance a perdu",
   "slug": "a-pesee-charge",
   "alias": "https://inerweb.fr/f/a-pesee-charge",
@@ -1508,6 +1942,7 @@
  },
  {
   "genre": "animation",
+  "animee": true,
   "titre": "Où fuit une installation ?",
   "slug": "a-points-de-fuite",
   "alias": "https://inerweb.fr/f/a-points-de-fuite",
@@ -1522,6 +1957,22 @@
  },
  {
   "genre": "animation",
+  "animee": false,
+  "titre": "Préparation de chantier : quatre temps avant de toucher",
+  "slug": "a-prepa-chantier",
+  "alias": "https://inerweb.fr/f/a-prepa-chantier",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/prepa-chantier.svg",
+  "retour": "https://inerweb.fr/f/securite",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-prepa-chantier.png"
+ },
+ {
+  "genre": "animation",
+  "animee": true,
   "titre": "Pression absolue et pression relative : deux échelles décalées de 1 bar",
   "slug": "a-pression-absolue-relative",
   "alias": "https://inerweb.fr/f/a-pression-absolue-relative",
@@ -1536,6 +1987,127 @@
  },
  {
   "genre": "animation",
+  "animee": false,
+  "titre": "Un kilogramme n'égale pas un kilogramme",
+  "slug": "a-prp-echelle",
+  "alias": "https://inerweb.fr/f/a-prp-echelle",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/prp-echelle.svg",
+  "retour": "https://inerweb.fr/f/classes",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-prp-echelle.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "quatre-leviers-energie",
+  "slug": "a-quatre-leviers-energie",
+  "alias": "https://inerweb.fr/f/a-quatre-leviers-energie",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/quatre-leviers-energie.svg",
+  "retour": "https://inerweb.fr/f/efficacite",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-quatre-leviers-energie.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "r290-zone-intervention",
+  "slug": "a-r290-zone-intervention",
+  "alias": "https://inerweb.fr/f/a-r290-zone-intervention",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/r290-zone-intervention.svg",
+  "retour": "https://inerweb.fr/f/hydrocarbures",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-r290-zone-intervention.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "recherche-fuite-geste",
+  "slug": "a-recherche-fuite-geste",
+  "alias": "https://inerweb.fr/f/a-recherche-fuite-geste",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/recherche-fuite-geste.svg",
+  "retour": "https://inerweb.fr/f/etancheite",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-recherche-fuite-geste.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "Le montage de récupération",
+  "slug": "a-recuperation",
+  "alias": "https://inerweb.fr/f/a-recuperation",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/recuperation.svg",
+  "retour": "https://inerweb.fr/f/recuperation",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-recuperation.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "recuperation-securisee",
+  "slug": "a-recuperation-securisee",
+  "alias": "https://inerweb.fr/f/a-recuperation-securisee",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/recuperation-securisee.svg",
+  "retour": "https://inerweb.fr/f/recuperation",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-recuperation-securisee.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "regulateurs-kv-places",
+  "slug": "a-regulateurs-kv-places",
+  "alias": "https://inerweb.fr/f/a-regulateurs-kv-places",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/regulateurs-kv-places.svg",
+  "retour": "https://inerweb.fr/f/detendeur",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-regulateurs-kv-places.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "Les trois régulateurs de pression : où ils se montent, ce qu'ils protègent",
+  "slug": "a-regulateurs-pression",
+  "alias": "https://inerweb.fr/f/a-regulateurs-pression",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/regulateurs-pression.svg",
+  "retour": "https://inerweb.fr/f/condenseur",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-regulateurs-pression.png"
+ },
+ {
+  "genre": "animation",
+  "animee": true,
   "titre": "La consignation électrique en cinq étapes",
   "slug": "a-secu-consignation",
   "alias": "https://inerweb.fr/f/a-secu-consignation",
@@ -1550,6 +2122,7 @@
  },
  {
   "genre": "animation",
+  "animee": true,
   "titre": "Fumées de décomposition : l'ARI protège l'intervenant formé, pas le chantier",
   "slug": "a-secu-decomposition-ari",
   "alias": "https://inerweb.fr/f/a-secu-decomposition-ari",
@@ -1564,6 +2137,7 @@
  },
  {
   "genre": "animation",
+  "animee": true,
   "titre": "Brasage : récupérer et balayer, jamais chauffer du fluide",
   "slug": "a-secu-flamme",
   "alias": "https://inerweb.fr/f/a-secu-flamme",
@@ -1578,6 +2152,82 @@
  },
  {
   "genre": "animation",
+  "animee": false,
+  "titre": "securite-decomposition-fluide",
+  "slug": "a-securite-decomposition-fluide",
+  "alias": "https://inerweb.fr/f/a-securite-decomposition-fluide",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/securite-decomposition-fluide.svg",
+  "retour": "https://inerweb.fr/f/securite",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-securite-decomposition-fluide.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "securite-espace-clos",
+  "slug": "a-securite-espace-clos",
+  "alias": "https://inerweb.fr/f/a-securite-espace-clos",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/securite-espace-clos.svg",
+  "retour": "https://inerweb.fr/f/securite",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-securite-espace-clos.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "securite-pression-residuelle",
+  "slug": "a-securite-pression-residuelle",
+  "alias": "https://inerweb.fr/f/a-securite-pression-residuelle",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/securite-pression-residuelle.svg",
+  "retour": "https://inerweb.fr/f/securite",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-securite-pression-residuelle.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "securite-projection-fluide",
+  "slug": "a-securite-projection-fluide",
+  "alias": "https://inerweb.fr/f/a-securite-projection-fluide",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/securite-projection-fluide.svg",
+  "retour": "https://inerweb.fr/f/securite",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-securite-projection-fluide.png"
+ },
+ {
+  "genre": "animation",
+  "animee": false,
+  "titre": "sequence-mise-en-service",
+  "slug": "a-sequence-mise-en-service",
+  "alias": "https://inerweb.fr/f/a-sequence-mise-en-service",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/sequence-mise-en-service.svg",
+  "retour": "https://inerweb.fr/f/mise-en-service",
+  "renvoi": {
+   "genre": "la planche",
+   "titre": "La planche en grand",
+   "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
+  },
+  "fichier": "a-sequence-mise-en-service.png"
+ },
+ {
+  "genre": "animation",
+  "animee": true,
   "titre": "Surchauffe utile et surchauffe totale : où elles se prennent, comment on les mesure",
   "slug": "a-surchauffe-utile-totale",
   "alias": "https://inerweb.fr/f/a-surchauffe-utile-totale",
@@ -1592,6 +2242,7 @@
  },
  {
   "genre": "animation",
+  "animee": true,
   "titre": "Le tirage au vide : la courbe qui descend, le palier, et la remontée qui accuse",
   "slug": "a-tirage-au-vide",
   "alias": "https://inerweb.fr/f/a-tirage-au-vide",
