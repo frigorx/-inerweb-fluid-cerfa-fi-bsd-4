@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Projection de fluide : sortir de l’axe</title><desc id="desc">Un raccord sous pression projette du fluide dans son axe. Le technicien porte gants et lunettes, vérifie la pression et se place sur le côté avant de desserrer.</desc>
+  <metadata><dc:title>Projection de fluide : sortir de l’axe</dc:title><dc:description>Un raccord sous pression projette du fluide dans son axe. Le technicien porte gants et lunettes, vérifie la pression et se place sur le côté avant de desserrer.</dc:description><dc:creator>F. Henninot (direction métier) et OpenAI Codex (dessin SVG original)</dc:creator><dc:source>Création originale inerWeb, pack HabFluide intérieur v2</dc:source><dc:rights>© 2026 Franck Henninot, inerWeb. Tous droits réservés.</dc:rights></metadata>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#3D7FCA"/></marker><pattern id="gas" width="38" height="38" patternUnits="userSpaceOnUse"><circle cx="7" cy="8" r="4" fill="#84B7EC"/><circle cx="28" cy="25" r="5" fill="#3D7FCA" opacity=".45"/></pattern></defs>
+  <style>
+  .title{font:700 54px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .subtitle{font:600 32px Calibri,Arial,sans-serif;fill:#10233C}
+  .body{font:600 36px Calibri,Arial,sans-serif;fill:#10233C}
+  .small{font:600 30px Calibri,Arial,sans-serif;fill:#10233C}
+  .tiny{font:600 25px Calibri,Arial,sans-serif;fill:#10233C}
+  .panel-title{font:700 34px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .equip{font:700 27px Calibri,Arial,sans-serif;fill:#1B3A63}
+  .badge-text{font:700 27px Calibri,Arial,sans-serif;fill:white}
+  .stop-text{font:700 25px Calibri,Arial,sans-serif;fill:#C0392B}
+  .panel{fill:white;stroke:#1B3A63;stroke-width:4}
+  .panel.danger{stroke:#C0392B;stroke-width:6;stroke-dasharray:18 12}
+  .panel.safe{stroke:#1E7E54;stroke-width:7;stroke-dasharray:3 8}
+  .badge.navy{fill:#1B3A63} .badge.orange{fill:#C9451A} .badge.green{fill:#1E7E54}
+  .pipe{fill:none;stroke:#1B3A63;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .thin{fill:none;stroke:#1B3A63;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+  .accent{fill:none;stroke:#C9451A;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .flow{fill:none;stroke:#3D7FCA;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .danger-line{fill:none;stroke:#C0392B;stroke-width:8;stroke-dasharray:18 12}
+  .safe-line{fill:none;stroke:#1E7E54;stroke-width:8;stroke-dasharray:3 11}
+  .device{fill:white;stroke:#1B3A63;stroke-width:6}
+  .screen{fill:#F3F7FB;stroke:#3D7FCA;stroke-width:4}
+  .person{fill:white;stroke:#1B3A63;stroke-width:6}
+  .person-line{fill:none;stroke:#1B3A63;stroke-width:12;stroke-linecap:round}
+  .helmet{fill:#F3F7FB;stroke:#1B3A63;stroke-width:5}
+  .stop{fill:white;stroke:#C0392B;stroke-width:7;stroke-dasharray:16 9}
+  .step{fill:white;stroke:#1B3A63;stroke-width:5}
+  .step-safe{fill:white;stroke:#1E7E54;stroke-width:7;stroke-dasharray:3 9}
+  .warn{fill:white;stroke:#C9451A;stroke-width:6;stroke-dasharray:16 9}
+</style><rect width="1200" height="720" fill="white"/>
+  <text x="50" y="72" class="title" text-anchor="start" style="font-size:51px">Projection de fluide : sortir de l’axe</text><g><rect x="70" y="245" width="310" height="220" rx="16" class="device"/><circle cx="322" cy="323" r="42" class="thin"/><path d="M 322 287 L 335 323 L 297 310 Z M 322 359 L 310 323 L 348 336 Z" fill="#84B7EC" stroke="#1B3A63" stroke-width="3"/><text x="88" y="447" class="equip" text-anchor="start">CIRCUIT SOUS PRESSION</text></g><path d="M 380 350 H 630" class="pipe"/><path d="M 630 350 l 38 -34 v 68 z" class="device"/><line x1="670" y1="350" x2="860" y2="350" class="danger-line" marker-end="url(#arrow)"/><g transform="translate(1010 260)"><circle cx="0" cy="0" r="30" class="person"/><path d="M -36 -6 Q 0 -42 36 -6" class="helmet"/><line x1="-40" y1="-4" x2="40" y2="-4" class="accent"/><path d="M -23 0 H -3 M 3 0 H 23 M -3 0 H 3" class="thin"/><path d="M -45 80 Q 0 38 45 80 V 180 H -45 Z" class="person"/><line x1="-45" y1="88" x2="-90" y2="140" class="person-line"/><line x1="45" y1="88" x2="90" y2="140" class="person-line"/></g><text x="715" y="310" class="panel-title" text-anchor="start">AXE DU JET</text><g><rect x="70" y="120" width="310" height="90" rx="18" class="panel safe"/><text x="94" y="166" class="panel-title" text-anchor="start" style="font-size:24px">1  Lire la pression</text></g><g><rect x="445" y="120" width="310" height="90" rx="18" class="panel safe"/><text x="469" y="166" class="panel-title" text-anchor="start" style="font-size:27px">2  Mettre les EPI</text></g><g><rect x="820" y="120" width="310" height="90" rx="18" class="panel safe"/><text x="844" y="166" class="panel-title" text-anchor="start">3  Se décaler</text></g><g transform="translate(225 545)"><circle cx="0" cy="0" r="48" class="device"/><path d="M -30 12 A 33 33 0 0 1 30 12" class="thin"/><line x1="0" y1="0" x2="24" y2="-20" class="accent"/><circle cx="0" cy="0" r="6" fill="#1B3A63"/><text x="0" y="78" class="small" text-anchor="middle">Manomètre relu</text></g><g><rect x="455" y="540" width="138" height="50" rx="25" class="badge navy"/><text x="473" y="575" class="badge-text" text-anchor="start">GANTS</text></g><g><rect x="455" y="610" width="204" height="50" rx="25" class="badge navy"/><text x="473" y="645" class="badge-text" text-anchor="start">LUNETTES</text></g><g><path d="M 867 515 H 915 L 937 537 V 585 L 915 607 H 867 L 845 585 V 537 Z" class="stop"/><text x="891" y="573" class="stop-text" text-anchor="middle">AXE</text></g>
+</svg>

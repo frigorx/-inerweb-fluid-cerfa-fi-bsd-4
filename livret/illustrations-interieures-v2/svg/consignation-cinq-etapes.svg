@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Consignation : cinq étapes dans l’ordre</title><desc id="desc">Séparer, condamner, identifier, vérifier l’absence de tension avec un VAT contrôlé avant et après, puis mettre à la terre si nécessaire.</desc>
+  <metadata><dc:title>Consignation : cinq étapes dans l’ordre</dc:title><dc:description>Séparer, condamner, identifier, vérifier l’absence de tension avec un VAT contrôlé avant et après, puis mettre à la terre si nécessaire.</dc:description><dc:creator>F. Henninot (direction métier) et OpenAI Codex (dessin SVG original)</dc:creator><dc:source>Création originale inerWeb, pack HabFluide intérieur v2</dc:source><dc:rights>© 2026 Franck Henninot, inerWeb. Tous droits réservés.</dc:rights></metadata>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#3D7FCA"/></marker><pattern id="gas" width="38" height="38" patternUnits="userSpaceOnUse"><circle cx="7" cy="8" r="4" fill="#84B7EC"/><circle cx="28" cy="25" r="5" fill="#3D7FCA" opacity=".45"/></pattern></defs>
+  <style>
+  .title{font:700 54px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .subtitle{font:600 32px Calibri,Arial,sans-serif;fill:#10233C}
+  .body{font:600 36px Calibri,Arial,sans-serif;fill:#10233C}
+  .small{font:600 30px Calibri,Arial,sans-serif;fill:#10233C}
+  .tiny{font:600 25px Calibri,Arial,sans-serif;fill:#10233C}
+  .panel-title{font:700 34px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .equip{font:700 27px Calibri,Arial,sans-serif;fill:#1B3A63}
+  .badge-text{font:700 27px Calibri,Arial,sans-serif;fill:white}
+  .stop-text{font:700 25px Calibri,Arial,sans-serif;fill:#C0392B}
+  .panel{fill:white;stroke:#1B3A63;stroke-width:4}
+  .panel.danger{stroke:#C0392B;stroke-width:6;stroke-dasharray:18 12}
+  .panel.safe{stroke:#1E7E54;stroke-width:7;stroke-dasharray:3 8}
+  .badge.navy{fill:#1B3A63} .badge.orange{fill:#C9451A} .badge.green{fill:#1E7E54}
+  .pipe{fill:none;stroke:#1B3A63;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .thin{fill:none;stroke:#1B3A63;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+  .accent{fill:none;stroke:#C9451A;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .flow{fill:none;stroke:#3D7FCA;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .danger-line{fill:none;stroke:#C0392B;stroke-width:8;stroke-dasharray:18 12}
+  .safe-line{fill:none;stroke:#1E7E54;stroke-width:8;stroke-dasharray:3 11}
+  .device{fill:white;stroke:#1B3A63;stroke-width:6}
+  .screen{fill:#F3F7FB;stroke:#3D7FCA;stroke-width:4}
+  .person{fill:white;stroke:#1B3A63;stroke-width:6}
+  .person-line{fill:none;stroke:#1B3A63;stroke-width:12;stroke-linecap:round}
+  .helmet{fill:#F3F7FB;stroke:#1B3A63;stroke-width:5}
+  .stop{fill:white;stroke:#C0392B;stroke-width:7;stroke-dasharray:16 9}
+  .step{fill:white;stroke:#1B3A63;stroke-width:5}
+  .step-safe{fill:white;stroke:#1E7E54;stroke-width:7;stroke-dasharray:3 9}
+  .warn{fill:white;stroke:#C9451A;stroke-width:6;stroke-dasharray:16 9}
+</style><rect width="1200" height="720" fill="white"/>
+  <text x="50" y="72" class="title" text-anchor="start" style="font-size:50px">Consignation : cinq étapes dans l’ordre</text><g><circle cx="124" cy="210" r="58" class="step"/><text x="124" y="225" class="title" text-anchor="middle">1</text><text x="124" y="325" class="tiny" text-anchor="middle">SÉPARER</text><line x1="187" y1="210" x2="262" y2="210" class="flow" marker-end="url(#arrow)"/></g><g><circle cx="356" cy="210" r="58" class="step"/><text x="356" y="225" class="title" text-anchor="middle">2</text><text x="356" y="325" class="tiny" text-anchor="middle">CONDAMNER</text><line x1="419" y1="210" x2="494" y2="210" class="flow" marker-end="url(#arrow)"/></g><g><circle cx="588" cy="210" r="58" class="step"/><text x="588" y="225" class="title" text-anchor="middle">3</text><text x="588" y="325" class="tiny" text-anchor="middle">IDENTIFIER</text><line x1="651" y1="210" x2="726" y2="210" class="flow" marker-end="url(#arrow)"/></g><g><circle cx="820" cy="210" r="58" class="step-safe"/><text x="820" y="225" class="title" text-anchor="middle">4</text><text x="820" y="325" class="tiny" text-anchor="middle">VÉRIFIER</text><line x1="883" y1="210" x2="958" y2="210" class="flow" marker-end="url(#arrow)"/></g><g><circle cx="1052" cy="210" r="58" class="step"/><text x="1052" y="225" class="title" text-anchor="middle">5</text><text x="1052" y="325" class="tiny" text-anchor="middle">MISE À LA TERRE</text><text x="1052" y="360" class="tiny" text-anchor="middle">SI NÉCESSAIRE</text></g><path d="M 710 455 H 1010" class="pipe"/><g transform="translate(710 455)"><circle cx="0" cy="0" r="48" class="device"/><path d="M -30 12 A 33 33 0 0 1 30 12" class="thin"/><line x1="0" y1="0" x2="24" y2="-20" class="accent"/><circle cx="0" cy="0" r="6" fill="#1B3A63"/><text x="0" y="78" class="small" text-anchor="middle">Source connue AVANT</text></g><g transform="translate(1010 455)"><circle cx="0" cy="0" r="48" class="device"/><path d="M -30 12 A 33 33 0 0 1 30 12" class="thin"/><line x1="0" y1="0" x2="24" y2="-20" class="accent"/><circle cx="0" cy="0" r="6" fill="#1B3A63"/><text x="0" y="78" class="small" text-anchor="middle">Source connue APRÈS</text></g><g><rect x="785" y="565" width="534" height="50" rx="25" class="badge green"/><text x="803" y="600" class="badge-text" text-anchor="start">VAT SUR LES DEUX BORNES</text></g><text x="600" y="675" class="body" text-anchor="middle">Une coupure ne prouve jamais l’absence de tension</text>
+</svg>

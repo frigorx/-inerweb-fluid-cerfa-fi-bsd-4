@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Diagramme log p-h : lire sans inventer</title><desc id="desc">Le diagramme log p-h montre la pression en ordonnée logarithmique et l’enthalpie en abscisse. Les zones liquide, mélange et vapeur sont séparées par les courbes de bulle et de rosée.</desc>
+  <metadata><dc:title>Diagramme log p-h : lire sans inventer</dc:title><dc:description>Le diagramme log p-h montre la pression en ordonnée logarithmique et l’enthalpie en abscisse. Les zones liquide, mélange et vapeur sont séparées par les courbes de bulle et de rosée.</dc:description><dc:creator>F. Henninot (direction métier) et OpenAI Codex (dessin SVG original)</dc:creator><dc:source>Création originale inerWeb, pack HabFluide intérieur v2</dc:source><dc:rights>© 2026 Franck Henninot, inerWeb. Tous droits réservés.</dc:rights></metadata>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#3D7FCA"/></marker><pattern id="gas" width="38" height="38" patternUnits="userSpaceOnUse"><circle cx="7" cy="8" r="4" fill="#84B7EC"/><circle cx="28" cy="25" r="5" fill="#3D7FCA" opacity=".45"/></pattern></defs>
+  <style>
+  .title{font:700 54px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .subtitle{font:600 32px Calibri,Arial,sans-serif;fill:#10233C}
+  .body{font:600 36px Calibri,Arial,sans-serif;fill:#10233C}
+  .small{font:600 30px Calibri,Arial,sans-serif;fill:#10233C}
+  .tiny{font:600 25px Calibri,Arial,sans-serif;fill:#10233C}
+  .panel-title{font:700 34px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .equip{font:700 27px Calibri,Arial,sans-serif;fill:#1B3A63}
+  .badge-text{font:700 27px Calibri,Arial,sans-serif;fill:white}
+  .stop-text{font:700 25px Calibri,Arial,sans-serif;fill:#C0392B}
+  .panel{fill:white;stroke:#1B3A63;stroke-width:4}
+  .panel.danger{stroke:#C0392B;stroke-width:6;stroke-dasharray:18 12}
+  .panel.safe{stroke:#1E7E54;stroke-width:7;stroke-dasharray:3 8}
+  .badge.navy{fill:#1B3A63} .badge.orange{fill:#C9451A} .badge.green{fill:#1E7E54}
+  .pipe{fill:none;stroke:#1B3A63;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .thin{fill:none;stroke:#1B3A63;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+  .accent{fill:none;stroke:#C9451A;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .flow{fill:none;stroke:#3D7FCA;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .danger-line{fill:none;stroke:#C0392B;stroke-width:8;stroke-dasharray:18 12}
+  .safe-line{fill:none;stroke:#1E7E54;stroke-width:8;stroke-dasharray:3 11}
+  .device{fill:white;stroke:#1B3A63;stroke-width:6}
+  .screen{fill:#F3F7FB;stroke:#3D7FCA;stroke-width:4}
+  .person{fill:white;stroke:#1B3A63;stroke-width:6}
+  .person-line{fill:none;stroke:#1B3A63;stroke-width:12;stroke-linecap:round}
+  .helmet{fill:#F3F7FB;stroke:#1B3A63;stroke-width:5}
+  .stop{fill:white;stroke:#C0392B;stroke-width:7;stroke-dasharray:16 9}
+  .step{fill:white;stroke:#1B3A63;stroke-width:5}
+  .step-safe{fill:white;stroke:#1E7E54;stroke-width:7;stroke-dasharray:3 9}
+  .warn{fill:white;stroke:#C9451A;stroke-width:6;stroke-dasharray:16 9}
+</style><rect width="1200" height="720" fill="white"/>
+  <text x="50" y="72" class="title" text-anchor="start" style="font-size:51px">Diagramme log p-h : lire sans inventer</text><line x1="125" y1="600" x2="1080" y2="600" class="pipe"/><line x1="125" y1="600" x2="125" y2="135" class="pipe"/><text x="600" y="675" class="body" text-anchor="middle">ENTHALPIE h (kJ/kg)</text><text x="55" y="380" class="body" text-anchor="middle">log p</text><path d="M 360 580 C 385 470 420 280 565 170 C 710 280 748 470 780 580" fill="none" stroke="#1B3A63" stroke-width="8"/><path d="M 240 500 H 900 L 1020 295" class="accent"/><path d="M 1018 295 V 230 H 850" class="accent"/><path d="M 850 230 H 345" class="accent"/><path d="M 345 230 L 240 500" class="accent"/><text x="285" y="390" class="panel-title" text-anchor="middle">LIQUIDE</text><text x="565" y="430" class="panel-title" text-anchor="middle">MÉLANGE</text><text x="900" y="430" class="panel-title" text-anchor="middle">VAPEUR</text><text x="405" y="205" class="tiny" text-anchor="middle">BULLE</text><text x="715" y="205" class="tiny" text-anchor="middle">ROSÉE</text><g><rect x="845" y="120" width="380" height="50" rx="25" class="badge orange"/><text x="863" y="155" class="badge-text" text-anchor="start">PRESSION ABSOLUE</text></g>
+</svg>

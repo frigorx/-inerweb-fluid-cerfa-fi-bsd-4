@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Récupération : circuit fermé, bouteille pesée</title><desc id="desc">Le fluide circule de l’installation vers une station compatible puis une bouteille de récupération posée sur une balance. La bouteille est identifiée et pesée avant et après.</desc>
+  <metadata><dc:title>Récupération : circuit fermé, bouteille pesée</dc:title><dc:description>Le fluide circule de l’installation vers une station compatible puis une bouteille de récupération posée sur une balance. La bouteille est identifiée et pesée avant et après.</dc:description><dc:creator>F. Henninot (direction métier) et OpenAI Codex (dessin SVG original)</dc:creator><dc:source>Création originale inerWeb, pack HabFluide intérieur v2</dc:source><dc:rights>© 2026 Franck Henninot, inerWeb. Tous droits réservés.</dc:rights></metadata>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#3D7FCA"/></marker><pattern id="gas" width="38" height="38" patternUnits="userSpaceOnUse"><circle cx="7" cy="8" r="4" fill="#84B7EC"/><circle cx="28" cy="25" r="5" fill="#3D7FCA" opacity=".45"/></pattern></defs>
+  <style>
+  .title{font:700 54px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .subtitle{font:600 32px Calibri,Arial,sans-serif;fill:#10233C}
+  .body{font:600 36px Calibri,Arial,sans-serif;fill:#10233C}
+  .small{font:600 30px Calibri,Arial,sans-serif;fill:#10233C}
+  .tiny{font:600 25px Calibri,Arial,sans-serif;fill:#10233C}
+  .panel-title{font:700 34px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .equip{font:700 27px Calibri,Arial,sans-serif;fill:#1B3A63}
+  .badge-text{font:700 27px Calibri,Arial,sans-serif;fill:white}
+  .stop-text{font:700 25px Calibri,Arial,sans-serif;fill:#C0392B}
+  .panel{fill:white;stroke:#1B3A63;stroke-width:4}
+  .panel.danger{stroke:#C0392B;stroke-width:6;stroke-dasharray:18 12}
+  .panel.safe{stroke:#1E7E54;stroke-width:7;stroke-dasharray:3 8}
+  .badge.navy{fill:#1B3A63} .badge.orange{fill:#C9451A} .badge.green{fill:#1E7E54}
+  .pipe{fill:none;stroke:#1B3A63;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .thin{fill:none;stroke:#1B3A63;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+  .accent{fill:none;stroke:#C9451A;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .flow{fill:none;stroke:#3D7FCA;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .danger-line{fill:none;stroke:#C0392B;stroke-width:8;stroke-dasharray:18 12}
+  .safe-line{fill:none;stroke:#1E7E54;stroke-width:8;stroke-dasharray:3 11}
+  .device{fill:white;stroke:#1B3A63;stroke-width:6}
+  .screen{fill:#F3F7FB;stroke:#3D7FCA;stroke-width:4}
+  .person{fill:white;stroke:#1B3A63;stroke-width:6}
+  .person-line{fill:none;stroke:#1B3A63;stroke-width:12;stroke-linecap:round}
+  .helmet{fill:#F3F7FB;stroke:#1B3A63;stroke-width:5}
+  .stop{fill:white;stroke:#C0392B;stroke-width:7;stroke-dasharray:16 9}
+  .step{fill:white;stroke:#1B3A63;stroke-width:5}
+  .step-safe{fill:white;stroke:#1E7E54;stroke-width:7;stroke-dasharray:3 9}
+  .warn{fill:white;stroke:#C9451A;stroke-width:6;stroke-dasharray:16 9}
+</style><rect width="1200" height="720" fill="white"/>
+  <text x="50" y="72" class="title" text-anchor="start" style="font-size:43px">Récupération : circuit fermé, bouteille pesée</text><g><rect x="55" y="270" width="260" height="200" rx="16" class="device"/><circle cx="257" cy="348" r="42" class="thin"/><path d="M 257 312 L 270 348 L 232 335 Z M 257 384 L 245 348 L 283 361 Z" fill="#84B7EC" stroke="#1B3A63" stroke-width="3"/><text x="73" y="452" class="equip" text-anchor="start">INSTALLATION</text></g><rect x="440" y="265" width="260" height="210" rx="18" class="device"/><text x="570" y="350" class="panel-title" text-anchor="middle">STATION</text><text x="570" y="405" class="small" text-anchor="middle">COMPATIBLE</text><g transform="translate(845 250)"><rect x="18" y="18" width="70" height="164" rx="28" fill="white" stroke="#C9451A" stroke-width="6"/><rect x="36" y="0" width="34" height="28" rx="5" fill="white" stroke="#C9451A" stroke-width="6"/><line x1="53" y1="0" x2="53" y2="-15" stroke="#C9451A" stroke-width="6"/><text x="53" y="105" class="equip" text-anchor="middle">RÉCUP.</text></g><rect x="805" y="455" width="160" height="42" rx="8" class="device"/><text x="885" y="545" class="small" text-anchor="middle">BALANCE</text><line x1="315" y1="370" x2="430" y2="370" class="flow" marker-end="url(#arrow)"/><line x1="710" y1="370" x2="835" y2="370" class="flow" marker-end="url(#arrow)"/><g><rect x="70" y="145" width="336" height="50" rx="25" class="badge navy"/><text x="88" y="180" class="badge-text" text-anchor="start">1  PESER AVANT</text></g><g><rect x="440" y="145" width="380" height="50" rx="25" class="badge green"/><text x="458" y="180" class="badge-text" text-anchor="start">2  CIRCUIT FERMÉ</text></g><g><rect x="805" y="145" width="336" height="50" rx="25" class="badge navy"/><text x="823" y="180" class="badge-text" text-anchor="start">3  PESER APRÈS</text></g><text x="600" y="650" class="body" text-anchor="middle">Un fluide par bouteille — identification et traçabilité</text>
+</svg>

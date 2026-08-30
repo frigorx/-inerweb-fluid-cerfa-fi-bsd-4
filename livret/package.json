@@ -1,0 +1,28 @@
+{
+  "name": "fluide-livret",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Livret « Habilitation Fluide » — Tome 1 : la théorie. Support de formation papier illustré, avec QR codes vers les ressources inerWeb.",
+  "author": "Franck Henninot <inerweb.fh@gmail.com>",
+  "license": "SEE LICENSE IN ../LICENSE",
+  "type": "module",
+  "scripts": {
+    "extraire": "node build/extraire.mjs",
+    "visuels": "node build/visuels.mjs",
+    "qr": "node build/qr.mjs",
+    "livret": "node build/build-livret.mjs",
+    "html": "node build/build-html.mjs",
+    "maquette": "node build/maquette.mjs",
+    "corrige": "node build/build-corrige.mjs",
+    "tout": "node build/tout.mjs",
+    "couverture": "node build/couverture.mjs",
+    "verifier": "node build/verifier.mjs",
+    "matrice": "node build/matrice-referentiel.mjs",
+    "audit": "node build/audit-referentiel.mjs"
+  },
+  "dependencies": {
+    "docx": "^9.7.1",
+    "qrcode": "^1.5.4",
+    "sharp": "^0.35.3"
+  }
+}

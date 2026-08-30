@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Local CO₂ : voir l’alarme avant d’entrer</title><desc id="desc">Le technicien reste à l’extérieur. La signalisation et l’alarme sont visibles avant ouverture. La ventilation, la détection et l’implantation du capteur sont vérifiées selon l’installation et la norme applicable.</desc>
+  <metadata><dc:title>Local CO₂ : voir l’alarme avant d’entrer</dc:title><dc:description>Le technicien reste à l’extérieur. La signalisation et l’alarme sont visibles avant ouverture. La ventilation, la détection et l’implantation du capteur sont vérifiées selon l’installation et la norme applicable.</dc:description><dc:creator>F. Henninot (direction métier) et OpenAI Codex (dessin SVG original)</dc:creator><dc:source>Création originale inerWeb, pack HabFluide intérieur v2</dc:source><dc:rights>© 2026 Franck Henninot, inerWeb. Tous droits réservés.</dc:rights></metadata>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#3D7FCA"/></marker><pattern id="gas" width="38" height="38" patternUnits="userSpaceOnUse"><circle cx="7" cy="8" r="4" fill="#84B7EC"/><circle cx="28" cy="25" r="5" fill="#3D7FCA" opacity=".45"/></pattern></defs>
+  <style>
+  .title{font:700 54px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .subtitle{font:600 32px Calibri,Arial,sans-serif;fill:#10233C}
+  .body{font:600 36px Calibri,Arial,sans-serif;fill:#10233C}
+  .small{font:600 30px Calibri,Arial,sans-serif;fill:#10233C}
+  .tiny{font:600 25px Calibri,Arial,sans-serif;fill:#10233C}
+  .panel-title{font:700 34px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .equip{font:700 27px Calibri,Arial,sans-serif;fill:#1B3A63}
+  .badge-text{font:700 27px Calibri,Arial,sans-serif;fill:white}
+  .stop-text{font:700 25px Calibri,Arial,sans-serif;fill:#C0392B}
+  .panel{fill:white;stroke:#1B3A63;stroke-width:4}
+  .panel.danger{stroke:#C0392B;stroke-width:6;stroke-dasharray:18 12}
+  .panel.safe{stroke:#1E7E54;stroke-width:7;stroke-dasharray:3 8}
+  .badge.navy{fill:#1B3A63} .badge.orange{fill:#C9451A} .badge.green{fill:#1E7E54}
+  .pipe{fill:none;stroke:#1B3A63;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .thin{fill:none;stroke:#1B3A63;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+  .accent{fill:none;stroke:#C9451A;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .flow{fill:none;stroke:#3D7FCA;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+  .danger-line{fill:none;stroke:#C0392B;stroke-width:8;stroke-dasharray:18 12}
+  .safe-line{fill:none;stroke:#1E7E54;stroke-width:8;stroke-dasharray:3 11}
+  .device{fill:white;stroke:#1B3A63;stroke-width:6}
+  .screen{fill:#F3F7FB;stroke:#3D7FCA;stroke-width:4}
+  .person{fill:white;stroke:#1B3A63;stroke-width:6}
+  .person-line{fill:none;stroke:#1B3A63;stroke-width:12;stroke-linecap:round}
+  .helmet{fill:#F3F7FB;stroke:#1B3A63;stroke-width:5}
+  .stop{fill:white;stroke:#C0392B;stroke-width:7;stroke-dasharray:16 9}
+  .step{fill:white;stroke:#1B3A63;stroke-width:5}
+  .step-safe{fill:white;stroke:#1E7E54;stroke-width:7;stroke-dasharray:3 9}
+  .warn{fill:white;stroke:#C9451A;stroke-width:6;stroke-dasharray:16 9}
+</style><rect width="1200" height="720" fill="white"/>
+  <text x="50" y="72" class="title" text-anchor="start" style="font-size:49px">Local CO₂ : voir l’alarme avant d’entrer</text><rect x="80" y="135" width="690" height="470" rx="18" class="device"/><rect x="575" y="245" width="140" height="260" class="device"/><text x="645" y="380" class="small" text-anchor="middle">PORTE</text><rect x="110" y="430" width="430" height="150" fill="url(#gas)" stroke="#3D7FCA" stroke-width="4"/><g transform="translate(160 300)"><rect x="0" y="20" width="72" height="126" rx="14" class="device"/><rect x="16" y="43" width="40" height="28" rx="4" class="screen"/><path d="M 36 20 C 40 -20, 92 -26, 112 4" class="pipe" fill="none"/><circle cx="114" cy="5" r="8" fill="#C9451A"/><rect x="-95" y="152" width="262" height="38" rx="8" fill="white" opacity="0.9"/><text x="36" y="178" class="small" text-anchor="middle">Capteur selon étude</text></g><line x1="410" y1="500" x2="690" y2="500" class="flow" marker-end="url(#arrow)"/><text x="430" y="545" class="small" text-anchor="middle">Ventilation adaptée</text><g transform="translate(600 150)"><circle cx="70" cy="50" r="42" fill="white" stroke="#C0392B" stroke-width="7" stroke-dasharray="15 9"/><text x="70" y="60" class="tiny" text-anchor="middle" style="font-size:18px">ALARME</text></g><g transform="translate(930 285)"><circle cx="0" cy="0" r="30" class="person"/><path d="M -36 -6 Q 0 -42 36 -6" class="helmet"/><line x1="-40" y1="-4" x2="40" y2="-4" class="accent"/><path d="M -23 0 H -3 M 3 0 H 23 M -3 0 H 3" class="thin"/><path d="M -45 80 Q 0 38 45 80 V 180 H -45 Z" class="person"/><line x1="-45" y1="88" x2="-90" y2="140" class="person-line"/><line x1="45" y1="88" x2="90" y2="140" class="person-line"/></g><g><path d="M 1072 145 H 1120 L 1142 167 V 215 L 1120 237 H 1072 L 1050 215 V 167 Z" class="stop"/><text x="1096" y="203" class="stop-text" text-anchor="middle">STOP</text></g><text x="830" y="555" class="body" text-anchor="start">Lire dehors.</text><text x="830" y="600" class="body" text-anchor="start">Ne pas entrer.</text><text x="80" y="680" class="small" text-anchor="start" style="font-size:22px">Détection fixe lorsque la norme l’impose — jamais une règle universelle sans étude</text>
+</svg>

@@ -1,0 +1,438 @@
+<meta charset="utf-8">
+<title>inerweb.fr HabFluide — gabarit intérieur</title>
+<style>
+
+
+:root{
+  --bleu:#1B3A63; --bleu2:#2f5689; --orange:#FF6B35; --logo:#e8914a;
+  --txt:#1d2a38; --mut:#5a6b7d; --ligne:#d6dee7; --pale:#F4F7FA;
+  --ok:#1e7e54; --ko:#c0392b;
+  /* Format Amazon KDP 6 × 9 pouces. */
+  --page-h:228.6mm; --page-l:152.4mm;
+  /* Une planche peut monter plus haut sur du 6 x 9 que sur de l A5. */
+  --planche-h:92mm;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:#e7ecf1;color:var(--txt);
+  font:14pt/1.55 Calibri,"Segoe UI",system-ui,sans-serif;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+
+/* ---------- Le flux (écran) ---------- */
+#livret{max-width:152.4mm;margin:0 auto;background:#fff;padding:14mm 16mm;
+  box-shadow:0 3px 14px rgba(27,58,99,.16)}
+.marq{font-size:1pt;line-height:0;color:#fff}
+
+/* Rien ne se coupe au milieu : ni une planche, ni un encadré,
+   ni une question et ses réponses, ni un bloc « À l'écran ». */
+figure,.duo,.encadre,.q,.rep,.ecran,.tbl,.ch-tete,.note,.voix,.som-partie,
+.remplir>.rl,.remplir>.trait{break-inside:avoid;page-break-inside:avoid}
+h2,h3,h4,.sect-t,.lecon-t,.page-t,.sect-intro{break-after:avoid;page-break-after:avoid}
+.rupture{break-before:page;page-break-before:always}
+.seul{break-before:page;break-after:page;page-break-before:always;page-break-after:always}
+
+/* ---------- Titres et texte ---------- */
+.page-t{font:700 25pt/1.1 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:0 0 5mm}
+/* Jamais justifié : la charte l'interdit, et les rivières de blanc du
+   texte justifié gênent la lecture dyslexique. Drapeau à droite. */
+.txt{margin:0 0 2.6mm;text-align:left;hyphens:none}
+.txt.petit{font-size:1em;color:var(--mut);margin-bottom:1.8mm}
+.txt.attente{color:var(--mut)}
+/* Lexique : le terme en vedette, la définition en retrait dessous. */
+.lex{margin:0 0 3mm;break-inside:avoid;page-break-inside:avoid}
+.lex b{display:block;color:var(--bleu);font-family:"Trebuchet MS",Calibri,sans-serif}
+.lex span{display:block;padding-left:5mm;border-left:1.5pt solid var(--ligne);margin-top:.8mm}
+.lex-chapeau{color:var(--mut);font-style:italic}
+
+.ch-tete{display:flex;gap:4.4mm;align-items:flex-start;margin-bottom:5mm}
+.ch-num{font:700 52pt/.82 "Trebuchet MS",Calibri,sans-serif;color:var(--orange)}
+.ch-titre{font:700 24pt/1.1 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:0 0 2.4mm}
+.ch-objectif{margin:0;font-style:italic;font-size:1em}
+
+.ref{border-left:2.4pt solid var(--bleu);background:var(--pale);
+  padding:3.4mm 4.4mm;margin:0 0 5mm;border-radius:0 3px 3px 0}
+.ref h3{font:700 13pt/1 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:0 0 2.6mm}
+.ref-l{break-inside:avoid;page-break-inside:avoid;margin:0 0 2.2mm;font-size:1em;line-height:1.42;color:#2a3a4a}
+.ref-code{display:inline-block;background:var(--bleu);color:#fff;font-weight:700;font-size:9pt;
+  padding:.3mm 1.4mm;border-radius:2px;margin-right:1.4mm;vertical-align:.3mm}
+.ref-intro{margin:0 0 3mm;font-size:10pt;color:var(--mut);font-style:italic}
+.ref-cats{white-space:nowrap}
+.ref-cat{display:inline-block;border:.5pt solid var(--bleu2);color:var(--bleu2);
+  font-size:9pt;font-weight:700;padding:.2mm 1.2mm;border-radius:2px;margin-left:1mm;
+  vertical-align:.3mm}
+.ref-cat.prat{border-color:var(--mut);color:var(--mut);font-weight:400;font-style:italic}
+
+/* Le QCM d'ouverture commence toujours en haut d'une page — on le voit
+   alors comme un tout. On ne lui interdit PAS de couler sur la page
+   suivante : le lui interdire laisserait une page blanche derrière lui
+   dès qu'il dépasse d'une ligne. Chaque question, elle, reste entière. */
+.qcm{break-before:page;page-break-before:always}
+.q-c.deux{display:grid;grid-template-columns:1fr 1fr;column-gap:3mm}
+
+.sect-t{display:flex;align-items:center;gap:2.6mm;
+  font:700 17pt/1.1 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:0 0 2.6mm}
+.sect-num{display:inline-flex;align-items:center;justify-content:center;width:8mm;height:8mm;
+  border-radius:50%;background:var(--orange);color:#fff;font-size:11pt;flex:none}
+.sect-intro{margin:0 0 3.4mm;color:var(--mut);font-size:1em}
+
+.lecon-t{display:flex;align-items:baseline;gap:2.6mm;
+  font:700 16pt/1.15 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:3mm 0 2.4mm}
+.lecon-n{color:var(--orange);font-size:13pt}
+
+/* ---------- Images ---------- */
+/* Une planche est plafonnée en HAUTEUR, pas en largeur : au-delà, elle
+   mangerait la moitié de la page et pousserait le texte plus loin qu'il
+   ne faut. À 74 mm elle reste large et parfaitement lisible en A5. */
+figure{margin:0 0 3.4mm}
+figure img{width:100%;max-height:var(--planche-h);object-fit:contain;display:block;margin:0 auto;
+  border:.6pt solid var(--ligne);border-radius:3px}
+figure figcaption{margin-top:1.6mm;text-align:center;font-style:italic;font-size:10pt;color:var(--mut)}
+.planche.haute img{width:auto;max-height:104mm}
+.appoint{width:52%;margin-left:auto;margin-right:auto}
+.appoint img{max-height:52mm}
+.duo{display:flex;gap:4mm;margin:0 0 3.4mm}
+.duo figure{margin:0;flex:1}
+.duo img{max-height:64mm}
+
+/* ---------- Encadrés ---------- */
+.encadre{border-left:2.4pt solid var(--bleu);background:var(--pale);
+  padding:3mm 4mm;margin:0 0 4mm;border-radius:0 3px 3px 0}
+.encadre h4{font:700 13pt/1 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:0 0 1.8mm}
+.encadre p{margin:0 0 1.8mm;font-size:1em}
+.encadre ol{margin:0;padding-left:5.4mm;font-size:1em}
+.encadre li{margin-bottom:1mm}
+.encadre.piege{border-left-color:var(--ko);background:#fbe7e4}
+.encadre.piege h4{color:var(--ko)}
+
+/* ---------- Questions ---------- */
+.q{margin-bottom:3.4mm}
+.q-e{margin:0 0 1.4mm;font-weight:600}
+.q-n{display:inline-flex;align-items:center;justify-content:center;width:6mm;height:6mm;
+  border:1pt solid var(--bleu);border-radius:50%;color:var(--bleu);font-size:10pt;font-weight:700;
+  margin-right:2mm;vertical-align:.3mm}
+.q-c{list-style:none;margin:0;padding:0 0 0 6.6mm}
+.q-c li{display:flex;align-items:flex-start;gap:1.8mm;margin-bottom:1.4mm;font-size:1em}
+.case{flex:none;width:3.6mm;height:3.6mm;border:.8pt solid var(--mut);border-radius:1.5px;margin-top:.8mm}
+.lettre{flex:none;font-weight:700;color:var(--bleu);width:3.2mm}
+
+.rep{margin-bottom:2.8mm}
+.rep-l{margin:0 0 1.2mm;font-size:1em}
+.rep-n{display:inline-flex;align-items:center;justify-content:center;width:6mm;height:6mm;
+  border-radius:50%;background:var(--ok);color:#fff;font-size:10pt;font-weight:700;
+  margin-right:2mm;vertical-align:.3mm}
+.rep-lettre{font-weight:700;color:var(--ok);margin-right:1.6mm}
+.rep-x{margin:0 0 0 6.6mm;font-size:1em;color:var(--mut)}
+
+.note{margin:4mm 0;border-top:.6pt solid var(--ligne);padding-top:2.4mm;
+  font:700 13pt "Trebuchet MS",Calibri,sans-serif;color:var(--bleu)}
+.note-case{display:inline-block;width:11mm;border-bottom:1pt dotted var(--mut);margin:0 1.2mm}
+.note-desc{font:italic 10pt Calibri,sans-serif;color:var(--mut);margin-left:2.4mm}
+
+/* ---------- À l'écran ---------- */
+.ecran{display:flex;gap:3mm;align-items:center;background:#fff;
+  border:.6pt solid var(--ligne);border-left:2.4pt solid var(--orange);
+  border-radius:0 3px 3px 0;padding:2.2mm 3mm;margin:0 0 4mm}
+.ecran-qr{width:19mm;height:19mm;flex:none}
+.ecran-txt{display:flex;flex-direction:column;gap:.4mm}
+.ecran-eti{font:700 8.6pt/1 "Trebuchet MS",Calibri,sans-serif;color:var(--orange);
+  letter-spacing:.7px;text-transform:uppercase}
+.ecran-url{font-weight:700;color:var(--bleu);font-size:1em}
+.ecran-desc{font-size:10pt;color:var(--mut)}
+
+/* ---------- À remplir ---------- */
+.remplir{margin:0 0 3mm}
+.rl{margin:3mm 0 1mm;font-size:1em}
+.trait{margin:0 0 1.8mm;border-bottom:.8pt dotted var(--mut);height:6mm}
+.voix{margin:3mm 0 4mm;font-style:italic;font-size:1em}
+.voix span{display:block;font:700 7.4pt/1 "Trebuchet MS",Calibri,sans-serif;color:var(--orange);
+  letter-spacing:.7px;text-transform:uppercase;margin-bottom:1mm;font-style:normal}
+
+/* ---------- Tableaux ---------- */
+.tbl{margin:0 0 4mm}
+.tbl h4{font:700 13pt/1 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:0 0 2mm}
+table{width:100%;border-collapse:collapse;font-size:1em}
+th{background:var(--bleu);color:#fff;text-align:left;padding:1.4mm 2mm;font-weight:700}
+td{padding:1.2mm 2mm;border-bottom:.5pt solid var(--ligne);vertical-align:top}
+tbody tr:nth-child(even) td{background:#F7FAFC}
+
+/* ---------- Sommaire ---------- */
+.som-partie{margin-bottom:4mm}
+.som-p{margin:0 0 2mm;font-size:13pt}
+.som-p b{font-family:"Trebuchet MS",Calibri,sans-serif;color:var(--bleu)}
+.som-p span{color:var(--mut);font-style:italic;font-size:8.4pt;margin-left:2mm}
+.som-ch{display:flex;align-items:baseline;gap:2mm;margin:0 0 1.4mm 4mm;font-size:1em}
+.som-n{display:inline-flex;align-items:center;justify-content:center;width:4.6mm;height:4.6mm;flex:none;
+  border-radius:50%;background:var(--pale);color:var(--bleu);font-size:7pt;font-weight:700}
+.som-url{margin-left:auto;font-size:10pt;color:var(--mut)}
+
+/* ---------- Ouvertures ---------- */
+.ouverture{height:172mm;display:flex;flex-direction:column;justify-content:center;
+  align-items:center;text-align:center;padding:0 8mm}
+.ouv-eti{font:700 11pt "Trebuchet MS",Calibri,sans-serif;color:var(--orange);letter-spacing:2px;
+  text-transform:uppercase}
+.ouv-t{font:700 30pt/1.1 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:3mm 0 2mm}
+.ouv-s{font-style:italic;color:var(--mut);font-size:11pt;margin:0 0 10mm}
+.ouv-liste{display:flex;flex-direction:column;gap:2mm;font-size:9.4pt;color:var(--txt)}
+.ouv-liste b{color:var(--orange);margin-right:1.4mm}
+
+/* ---------- Couverture ---------- */
+.couverture{height:172mm;display:flex;flex-direction:column;align-items:center;text-align:center;
+  padding-top:4mm}
+.couv-marque{display:flex;align-items:center;gap:1.6mm;margin-bottom:12mm}
+.flocon{color:var(--bleu);font-size:14pt}
+.iner{font:700 20pt "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);
+  border-bottom:1.6pt solid var(--logo)}
+.web{font:20pt "Segoe Script","Brush Script MT",cursive;color:var(--bleu);
+  border-bottom:1.6pt solid var(--logo);margin-left:-1mm}
+.cartouche{background:var(--logo);color:#fff;font:700 10.4pt "Segoe UI",sans-serif;
+  padding:1.6mm 3.4mm;border-radius:18px;margin-left:1.6mm}
+.couv-titre h1{font:700 33pt/1.02 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);margin:0}
+.couv-sous{font:700 12.6pt "Trebuchet MS",Calibri,sans-serif;color:var(--orange);margin:3mm 0 0}
+.couv-illu{width:86%;margin:8mm 0;border-radius:5px}
+.couv-bas{margin-top:auto;padding-bottom:6mm}
+.couv-epreuve{margin:0 0 3.4mm;font-size:9.2pt;color:var(--mut);line-height:1.45}
+.couv-cats{display:flex;gap:2mm;justify-content:center;margin:0 0 3.4mm}
+.couv-cats span{background:var(--bleu);color:#fff;font:700 9.6pt "Trebuchet MS",Calibri,sans-serif;
+  padding:1.2mm 3.2mm;border-radius:3px}
+.couv-ref{margin:0 0 4mm;font-size:7.8pt;color:var(--mut)}
+.couv-auteur{margin:0;font-size:8.8pt}
+
+/* ---------- Impression ----------
+   Format Amazon KDP 6 × 9 pouces (152,4 × 228,6 mm).
+
+   Les marges du haut et du bas réservent la place du bandeau et du pied,
+   dessinés à la finition. Les marges latérales tiennent compte de la
+   RELIURE : KDP exige 19 mm côté intérieur pour un livre de 300 à 500
+   pages — sans quoi le texte disparaît dans le pli. Marges miroir : le
+   côté intérieur change de bord selon que la page est paire ou impaire.
+   Elles sont symétriques ici (19 mm partout) parce que Chrome n'applique
+   pas @page:left / @page:right de façon fiable ; on perd un peu de
+   largeur utile, on ne perd jamais une ligne dans le pli. */
+
+
+/* ---- Habillage du gabarit (n'existe pas dans le livre) ---- */
+body{background:#e7ecf1;padding:26px;font-size:14px}
+.entete{max-width:1180px;margin:0 auto 24px;background:#fff;border-radius:12px;padding:22px 26px;
+  box-shadow:0 2px 12px rgba(27,58,99,.12)}
+.entete h1{font:700 24px/1.25 "Trebuchet MS",sans-serif;color:var(--bleu);margin:0 0 8px}
+.entete h2{font:700 15px/1.3 "Trebuchet MS",sans-serif;color:var(--orange);margin:16px 0 6px;
+  text-transform:uppercase;letter-spacing:.5px}
+.entete p{margin:0 0 8px;max-width:96ch;font-size:14px;line-height:1.55}
+.entete ul{margin:0 0 8px;padding-left:20px;max-width:96ch}
+.entete li{margin-bottom:5px;font-size:14px;line-height:1.5}
+.entete b{color:var(--bleu)}
+.grille{display:flex;flex-wrap:wrap;gap:26px;justify-content:center;max-width:1180px;margin:0 auto}
+.planche-gabarit{margin:0}
+.planche-gabarit figcaption{font:700 12px/1.3 "Trebuchet MS",sans-serif;color:var(--mut);
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;text-align:center;max-width:152.4mm}
+/* La page, au format 6 x 9 exact. */
+.page{width:152.4mm;height:228.6mm;background:#fff;position:relative;overflow:hidden;
+  padding:13mm 19mm 16mm;box-shadow:0 4px 18px rgba(27,58,99,.2);display:flex;flex-direction:column}
+.page .corps{flex:1;overflow:hidden}
+.bandeau{display:flex;justify-content:space-between;align-items:baseline;
+  border-bottom:1.6pt solid var(--orange);padding-bottom:1.4mm;margin-bottom:6mm}
+.bandeau b{font:700 7.4pt/1 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);letter-spacing:.9px}
+.bandeau span{font:700 7.4pt/1 "Trebuchet MS",Calibri,sans-serif;color:var(--orange)}
+.pied{display:flex;justify-content:space-between;align-items:center;
+  border-top:.6pt solid var(--ligne);padding-top:2mm;margin-top:auto}
+.pied-m{font-size:6.8pt;color:var(--mut)}
+.pied-n{display:inline-flex;align-items:center;justify-content:center;width:6.4mm;height:6.4mm;
+  border-radius:50%;background:var(--bleu);color:#fff;font:700 7.6pt "Trebuchet MS",sans-serif}
+.page.nue .corps{display:flex;align-items:center}
+.ouverture{height:auto;width:100%}
+.cadre{border:1.2pt dashed var(--ligne);border-radius:3px;background:#fafcfe;
+  display:flex;align-items:center;justify-content:center;width:100%}
+.cadre span{font:9pt/1.4 Calibri,sans-serif;color:#adbcc9;text-align:center}
+.cadre i{font-size:8pt}
+.ecran-qr.cadre{width:19mm;height:19mm;flex:none}
+</style>
+
+<div class="entete">
+  <h1>inerweb.fr HabFluide — gabarit intérieur à habiller</h1>
+  <p>Huit pages types au format <b>6 × 9 pouces exact</b> (152,4 × 228,6 mm), avec le vrai contenu
+     et les vraies planches. Elles décident de l’habillage des <b>406 pages</b> du livre :
+     ce qui est réglé ici est reporté dans le générateur, qui refabrique le livre entier.
+     Le livre part en autoédition <b>Amazon KDP</b>.</p>
+
+  <h2>Ce qui est figé — ne pas y toucher</h2>
+  <ul>
+    <li><b>Charte inerWeb</b> : bleu <code>#1B3A63</code>, orange <code>#FF6B35</code>,
+        titres Trebuchet MS, corps Calibri. <b>Jamais de serif.</b></li>
+    <li><b>Corps à 14 pt minimum</b>, tableaux compris — règle de la charte pour tout document
+        élève, aucune tolérance. Le public est FLE, DYS et lecture fragile.</li>
+    <li><b>Jamais de texte justifié</b> : les rivières de blanc gênent la lecture dyslexique.</li>
+    <li><b>Aucun texte ne chevauche un tracé</b>, sur aucun schéma.</li>
+    <li><b>Croix du frigoriste</b> : détendeur à gauche, compresseur à droite, condenseur en haut,
+        évaporateur en bas.</li>
+    <li>Marges latérales de <b>19 mm</b> : exigence de reliure KDP au-delà de 300 pages.</li>
+    <li>Aucun thème sombre. L’impression se fait en noir et blanc.</li>
+  </ul>
+
+  <h2>Ce qui est ouvert — ce qu’on attend</h2>
+  <ul>
+    <li>La <b>grille et la respiration</b> : hiérarchie des titres, blancs, rythme de page.</li>
+    <li>Le traitement des <b>quatre blocs récurrents</b> : le référentiel, les encadrés
+        « à retenir » et « geste interdit », le bloc « À l’écran », les lignes à remplir.</li>
+    <li>La <b>signalétique des sections</b> (pastilles numérotées) et du bandeau de repère.</li>
+    <li>Le traitement des <b>planches techniques</b> : cadre, légende, place dans la page.</li>
+  </ul>
+</div>
+
+<div class="grille">
+
+<figure class="planche-gabarit">
+  <figcaption>1 · Ouverture de chapitre — le référentiel, catégorie par catégorie</figcaption>
+  <div class="page">
+    <header class="bandeau">
+  <b>Partie A · SE PROTÉGER</b><span>Chapitre 2</span></header>
+    <div class="corps">
+      <div class="ch-tete"><span class="ch-num">2</span>
+        <div><h2 class="ch-titre">Lire une classe de sécurité</h2>
+        <p class="ch-objectif">Décoder les deux lettres d’une classe NF EN 378 et en tirer les précautions réelles à prendre.</p></div></div>
+      <section class="ref"><h3>Ce que le référentiel exige ici</h3>
+        <p class="ref-intro">Attestation d’aptitude fluides frigorigènes, épreuve théorique —
+          catégories A1, A2, D, E. Chaque code indique les catégories qu’il concerne.</p>
+        <p class="ref-l"><span class="ref-code">1.08</span>Connaître la combustibilité, la propagation des flammes, les restrictions relatives à la capacité de charge, les limites d'occupation pour les HFC, H(C)FO et hydrocarbures
+          <span class="ref-cats"><span class="ref-cat">A1</span><span class="ref-cat">A2</span><span class="ref-cat">D</span><span class="ref-cat">E</span></span></p><p class="ref-l"><span class="ref-code">11.03</span>Connaître les réglementations et les normes de sécurité applicables pour l'utilisation, le stockage et le transport des réfrigérants inflammables ou toxiques ou des réfrigérants nécessitant une pression de fonctionnement plus élevée. Comprendre les conditions spécifiques liées au site dans lesquelles il est permis d'utiliser des équipements ne satisfaisant pas aux exigences énoncées à l'annexe IV du règlement (UE) 2024/573 en raison d'impératifs de sécurité
+          <span class="ref-cats"><span class="ref-cat">A1</span><span class="ref-cat">A2</span></span></p><p class="ref-l"><span class="ref-code">12.02</span>Connaître les prescriptions en matière de sécurité pour les outils d'entretien et les équipements, tels que la détection de gaz, la détection des fuites, la ventilation, les équipements de protection individuelle, les pompes à vide, les unités de récupération ; les prescriptions relatives à l'élimination des gaz récupérés
+          <span class="ref-cats"><span class="ref-cat">A1</span><span class="ref-cat">A2</span></span></p>
+      </section></div>
+    <footer class="pied">
+  <span class="pied-m">inerweb.fr · HabFluide, tome 1 · la théorie</span>
+  <span class="pied-n">26</span></footer>
+  </div>
+</figure>
+
+<figure class="planche-gabarit">
+  <figcaption>2 · « Testez-vous d’abord » — le QCM, en haut de page, d’un seul tenant</figcaption>
+  <div class="page">
+    <header class="bandeau">
+  <b>Partie A · SE PROTÉGER</b><span>Chapitre 2</span></header>
+    <div class="corps">
+      <h3 class="sect-t"><span class="sect-num">1</span>Testez-vous d’abord — 6 questions</h3>
+      <p class="sect-intro">Répondez <b>avant</b> de lire : vous saurez tout de suite ce que vous savez déjà,
+        et ce qui mérite votre lecture. Les corrections sont en fin de chapitre.</p>
+      <div class="q"><p class="q-e"><span class="q-n">1</span>Dans la nomenclature Rxyz, le chiffre des dizaines (y) correspond à :</p>
+        <ul class="q-c deux"><li><span class="case"></span><span class="lettre">A</span>Le nombre d'atomes de carbone moins 1</li><li><span class="case"></span><span class="lettre">B</span>Nombre d'atomes d'hydrogène + 1</li><li><span class="case"></span><span class="lettre">C</span>Le nombre total d'atomes de fluor</li><li><span class="case"></span><span class="lettre">D</span>Le nombre d'atomes de chlore</li></ul></div><div class="q"><p class="q-e"><span class="q-n">2</span>Le R410A est un mélange de :</p>
+        <ul class="q-c deux"><li><span class="case"></span><span class="lettre">A</span>R134a + R125</li><li><span class="case"></span><span class="lettre">B</span>R32 + R125</li><li><span class="case"></span><span class="lettre">C</span>R32 + R134a</li><li><span class="case"></span><span class="lettre">D</span>R290 + R600a</li></ul></div><div class="q"><p class="q-e"><span class="q-n">3</span>Le R12 est un :</p>
+        <ul class="q-c deux"><li><span class="case"></span><span class="lettre">A</span>HFC</li><li><span class="case"></span><span class="lettre">B</span>HCFC</li><li><span class="case"></span><span class="lettre">C</span>CFC</li><li><span class="case"></span><span class="lettre">D</span>HFO</li></ul></div></div>
+    <footer class="pied">
+  <span class="pied-m">inerweb.fr · HabFluide, tome 1 · la théorie</span>
+  <span class="pied-n">27</span></footer>
+  </div>
+</figure>
+
+<figure class="planche-gabarit">
+  <figcaption>3 · Une leçon — planche pleine largeur, texte, puis le lien vers l’écran</figcaption>
+  <div class="page">
+    <header class="bandeau">
+  <b>Partie A · SE PROTÉGER</b><span>Chapitre 2</span></header>
+    <div class="corps">
+      <h4 class="lecon-t"><span class="lecon-n">2.3</span>Explosif avant d’être perceptible — la LIE</h4>
+      <figure class="planche"><div class="cadre" style="aspect-ratio:1800/695">
+         <span>svg:lie-domaine<br><i>1800 × 695</i></span></div>
+    <figcaption>Le domaine d’explosivité</figcaption></figure>
+      <p class="txt"><b>Ce qui arrive.</b> Un gaz inflammable ne s'enflamme pas à n'importe quelle concentration dans l'air. Il lui faut un dosage : assez de gaz pour brûler, et assez d'air pour entretenir la combustion. En dessous d'une certaine concentration, le mélange est trop pauvre en gaz — une étincelle ne déclenche rien. Au-dessus d'une autre, il est trop riche : il n'y a plus assez d'oxygène. <b>Entre les deux</b>, le mélange s'enflamme, et il le fait d'un coup, dans tout le volume.</p>
+      <div class="ecran"><div class="ecran-qr cadre"><span>QR</span></div>
+        <div class="ecran-txt"><span class="ecran-eti">À l’écran</span>
+          <span class="ecran-url">inerweb.fr/f/classes-3</span>
+          <span class="ecran-desc">Cette leçon animée et racontée à voix haute.</span></div></div></div>
+    <footer class="pied">
+  <span class="pied-m">inerweb.fr · HabFluide, tome 1 · la théorie</span>
+  <span class="pied-n">34</span></footer>
+  </div>
+</figure>
+
+<figure class="planche-gabarit">
+  <figcaption>4 · Les deux encadrés — « à retenir » et « geste interdit »</figcaption>
+  <div class="page">
+    <header class="bandeau">
+  <b>Partie A · SE PROTÉGER</b><span>Chapitre 2</span></header>
+    <div class="corps">
+      <figure class="appoint"><div class="cadre" style="aspect-ratio:1024/1024">
+         <span>illu:cl2<br><i>1024 × 1024</i></span></div>
+    <figcaption>On ne sent rien à la LIE</figcaption></figure>
+      <aside class="encadre cle"><h4>Ce qu'il faut retenir</h4>
+        <p>Un gaz inflammable ne brûle qu'entre deux bornes : <b>LIE</b> (limite inférieure) et <b>LSE</b> (limite supérieure). Entre les deux, une étincelle suffit.</p><p>Les valeurs sont <b>propres à chaque fluide</b> et se lisent sur sa FDS.</p></aside>
+      <aside class="encadre piege"><h4>⚠ Le geste interdit</h4>
+        <p>Entrer dans un local où une fuite de fluide inflammable est possible et y <b>actionner un interrupteur, brancher une lampe ou utiliser un outil électroportatif</b>, sans avoir contrôlé l'atmosphère à l'explosimètre.</p></aside></div>
+    <footer class="pied">
+  <span class="pied-m">inerweb.fr · HabFluide, tome 1 · la théorie</span>
+  <span class="pied-n">35</span></footer>
+  </div>
+</figure>
+
+<figure class="planche-gabarit">
+  <figcaption>5 · « À vous » — l’activité à remplir et la phrase à dire à voix haute</figcaption>
+  <div class="page">
+    <header class="bandeau">
+  <b>Partie A · SE PROTÉGER</b><span>Chapitre 2</span></header>
+    <div class="corps">
+      <h3 class="sect-t"><span class="sect-num">3</span>À vous — Classer quatre fluides et en tirer les conséquences</h3>
+      <figure class="planche"><div class="cadre" style="aspect-ratio:1800/660">
+         <span>svg:prp-echelle<br><i>1800 × 660</i></span></div>
+    <figcaption>Ce que pèse chaque fluide</figcaption></figure>
+      <div class="remplir"><p class="rl">R-744 — classe : … — le risque que la classe ne dit pas</p><p class="trait"></p><p class="rl">R-290 — classe : … — la précaution qui en découle</p><p class="trait"></p><p class="rl">R-32 — classe : … — ce que je change dans ma préparation</p><p class="trait"></p></div>
+      <p class="voix"><span>À voix haute</span>« La classe donne le danger. Elle ne donne jamais l’autorisation. »</p></div>
+    <footer class="pied">
+  <span class="pied-m">inerweb.fr · HabFluide, tome 1 · la théorie</span>
+  <span class="pied-n">38</span></footer>
+  </div>
+</figure>
+
+<figure class="planche-gabarit">
+  <figcaption>6 · « Les réponses » — la correction, en fin de chapitre</figcaption>
+  <div class="page">
+    <header class="bandeau">
+  <b>Partie A · SE PROTÉGER</b><span>Chapitre 2</span></header>
+    <div class="corps">
+      <h3 class="sect-t"><span class="sect-num">4</span>Les réponses — corrigez-vous</h3>
+      <div class="rep">
+        <p class="rep-l"><span class="rep-n">1</span>
+        <span class="rep-lettre">B</span><b>Nombre d'atomes d'hydrogène + 1</b></p>
+        <p class="rep-x">H + 1 (atomes d'hydrogène + 1) — Règle de nomenclature : centaines = C−1, dizaines = H+1, unités = F. Ex: R134a → C=1+1=2, H=3−1=2, F=4.</p></div><div class="rep">
+        <p class="rep-l"><span class="rep-n">2</span>
+        <span class="rep-lettre">B</span><b>R32 + R125</b></p>
+        <p class="rep-x">R32 + R125 — Le R410A est un mélange quasi-azéotrope de R32 (50%) + R125 (50%). Ses hautes pressions le distinguent.</p></div><div class="rep">
+        <p class="rep-l"><span class="rep-n">3</span>
+        <span class="rep-lettre">C</span><b>CFC</b></p>
+        <p class="rep-x">CFC — Le R12 (dichlorodifluorométhane) est un CFC interdit depuis 1995. Il détruit la couche d'ozone (ODP élevé).</p></div><div class="rep">
+        <p class="rep-l"><span class="rep-n">4</span>
+        <span class="rep-lettre">B</span><b>Légèrement inflammable, faible toxicité</b></p>
+        <p class="rep-x">Légèrement inflammable, faible toxicité — A = faible toxicité, 2L = légèrement inflammable (vitesse de flamme &lt; 10 cm/s). Ex: R32, R1234yf.</p></div>
+      <div class="note">Ma note <span class="note-case"></span> / 6
+        <span class="note-desc">à reporter au bilan, en fin de livret</span></div></div>
+    <footer class="pied">
+  <span class="pied-m">inerweb.fr · HabFluide, tome 1 · la théorie</span>
+  <span class="pied-n">40</span></footer>
+  </div>
+</figure>
+
+<figure class="planche-gabarit">
+  <figcaption>7 · Le lexique — terme en vedette, définition en retrait</figcaption>
+  <div class="page">
+    <header class="bandeau">
+  <b>Partie A · SE PROTÉGER</b><span>Chapitre 2</span></header>
+    <div class="corps">
+      <h2 class="page-t">Lexique — le fluide et la machine</h2>
+      <p class="lex"><b>Fluide frigorigène</b><span>Le liquide-gaz qui circule en boucle fermée dans la machine. Il prend la chaleur à un endroit et la rejette à un autre, en changeant d’état. Il ne se consomme pas : s’il baisse, c’est qu’il fuit.</span></p><p class="lex"><b>Croix du frigoriste</b><span>La façon de dessiner le circuit qui fait convention : détendeur à gauche, compresseur à droite, condenseur en haut, évaporateur en bas. Toujours dans cet ordre, sur tous les schémas du métier.</span></p><p class="lex"><b>Compresseur</b><span>Le seul organe actif du cycle. Il aspire la vapeur basse pression et la refoule à haute pression. C’est lui qui fait circuler le fluide.</span></p><p class="lex"><b>Condenseur</b><span>L’échangeur du haut. Il évacue vers l’extérieur la chaleur prise dans l’évaporateur : la vapeur chaude y redevient liquide.</span></p></div>
+    <footer class="pied">
+  <span class="pied-m">inerweb.fr · HabFluide, tome 1 · la théorie</span>
+  <span class="pied-n">353</span></footer>
+  </div>
+</figure>
+
+<figure class="planche-gabarit">
+  <figcaption>8 · Ouverture de partie — page nue, sans bandeau ni pied</figcaption>
+  <div class="page nue">
+    
+    <div class="corps">
+      <div class="ouverture"><span class="ouv-eti">Partie A</span>
+        <h1 class="ouv-t">Se protéger</h1>
+        <p class="ouv-s">ce qui peut vous blesser, avant tout le reste</p>
+        <div class="ouv-liste"><span><b>1</b> Ce qui peut vous blesser</span>
+          <span><b>2</b> Lire une classe de sécurité</span></div></div></div>
+    
+  </div>
+</figure>
+</div>
