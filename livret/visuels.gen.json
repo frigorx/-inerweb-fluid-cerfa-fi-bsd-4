@@ -950,5 +950,109 @@
   "source": "packs/fluides/res/svg/circuit-complet-manifold.svg",
   "citations": 1,
   "animee": true
+ },
+ "pack:consignation-cinq-etapes": {
+  "fichier": "pack-consignation-cinq-etapes.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/consignation-cinq-etapes.svg",
+  "citations": 1,
+  "animee": false
+ },
+ "pack:categories-champs": {
+  "fichier": "pack-categories-champs.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/categories-champs.svg",
+  "citations": 1,
+  "animee": false
+ },
+ "pack:croix-frigoriste-etats": {
+  "fichier": "pack-croix-frigoriste-etats.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/croix-frigoriste-etats.svg",
+  "citations": 1,
+  "animee": false
+ },
+ "pack:logph-lecture": {
+  "fichier": "pack-logph-lecture.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/logph-lecture.svg",
+  "citations": 1,
+  "animee": false
+ },
+ "pack:mesures-surchauffe-sous-refroidissement": {
+  "fichier": "pack-mesures-surchauffe-sous-refroidissement.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/mesures-surchauffe-sous-refroidissement.svg",
+  "citations": 1,
+  "animee": false
+ },
+ "pack:compresseurs-comparatif": {
+  "fichier": "pack-compresseurs-comparatif.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/compresseurs-comparatif.svg",
+  "citations": 1,
+  "animee": false
+ },
+ "pack:ligne-liquide-protection": {
+  "fichier": "pack-ligne-liquide-protection.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/ligne-liquide-protection.svg",
+  "citations": 1,
+  "animee": false
+ },
+ "pack:sequence-mise-en-service": {
+  "fichier": "pack-sequence-mise-en-service.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/sequence-mise-en-service.svg",
+  "citations": 1,
+  "animee": false
+ },
+ "pack:recherche-fuite-geste": {
+  "fichier": "pack-recherche-fuite-geste.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/recherche-fuite-geste.svg",
+  "citations": 1,
+  "animee": false
+ },
+ "pack:recuperation-securisee": {
+  "fichier": "pack-recuperation-securisee.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/recuperation-securisee.svg",
+  "citations": 1,
+  "animee": false
+ },
+ "pack:brasage-balayage-azote": {
+  "fichier": "pack-brasage-balayage-azote.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/brasage-balayage-azote.svg",
+  "citations": 1,
+  "animee": false
+ },
+ "pack:r290-zone-intervention": {
+  "fichier": "pack-r290-zone-intervention.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/r290-zone-intervention.svg",
+  "citations": 1,
+  "animee": false
+ },
+ "pack:co2-nh3-deux-risques": {
+  "fichier": "pack-co2-nh3-deux-risques.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/co2-nh3-deux-risques.svg",
+  "citations": 1,
+  "animee": false
  }
 }

@@ -24,6 +24,14 @@ const QR = JSON.parse(fs.readFileSync(path.join(LIVRET, 'qr.gen.json'), 'utf8'))
 const CHOISIES = JSON.parse(fs.readFileSync(path.join(LIVRET, 'questions-choisies.gen.json'), 'utf8'));
 /* Les questions que les chapitres n'ont pas prises : la banque de révision. */
 const RESERVE = JSON.parse(fs.readFileSync(path.join(LIVRET, 'questions-reserve.gen.json'), 'utf8'));
+/* Le comblement (« aucune page ne se termine sur du vide », maquette du
+   30/08) : `npm run combler` mesure les pieds de page vides et affecte à
+   chacun une planche de la réserve, par sujet de chapitre. Sa table donne,
+   par ancre @@P|…@@, la planche à glisser dans le blanc. Absente, le livre
+   se fabrique sans comblement — la table se régénère quand le texte bouge. */
+const COMBLE = fs.existsSync(path.join(LIVRET, 'comblement.gen.json'))
+  ? JSON.parse(fs.readFileSync(path.join(LIVRET, 'comblement.gen.json'), 'utf8'))
+  : {};
 const SOURCE = process.env.PILOTE_FLUIDES || 'C:/git/pilote-fluides';
 const REF = JSON.parse(fs.readFileSync(path.join(SOURCE, 'packs', 'fluides', 'referentiel-2025.json'), 'utf8'));
 
@@ -150,6 +158,29 @@ const ecran = (slug, texte) => {
    choisit le libellé imprimé : c chapitre, l leçon, a animation, q quiz. */
 const qrm = (slug, type) => QR.some((x) => x.slug === slug)
   ? `<span class="marq">@@QR|${slug}|${type}@@</span>` : '';
+
+/* L'ANCRE de comblement — un repère invisible en fin de bloc éditorial
+   (fin de leçon, d'activité, de chapitre, d'ouverture). finition.py note,
+   page par page, la dernière ancre vue et le blanc qui reste au pied ;
+   combler.mjs choisit alors où glisser une planche de la réserve. Quand
+   la table a retenu une ancre, la planche s'imprime juste après elle —
+   plafonnée à la hauteur mesurée, elle ne déplace jamais la pagination.
+   Comme tout marqueur, l'ancre se place EN FIN d'élément : l'effacement
+   de finition mange le caractère qui suivrait sur la même ligne. */
+const compteurAncres = {};
+const ancre = (chNum) => {
+  const n = (compteurAncres[chNum] = (compteurAncres[chNum] || 0) + 1);
+  const cle = `${chNum}-${n}`;
+  const c = COMBLE[cle];
+  const planche = c ? `<figure class="planche comble">
+      <img src="${visuel(c.ref)}"${cotes(c.ref)} style="max-height:${c.h}mm" alt="">
+      ${c.legende ? `<figcaption>${ech(apos(c.legende))}</figcaption>` : ''}
+    </figure>` : '';
+  /* `vide` dit au bloc de s'écraser à hauteur nulle : sans planche, une
+     ancre ne doit pas peser un strut de ligne — cent ancres pèseraient
+     deux pages. Avec planche, le bloc reprend sa hauteur naturelle. */
+  return { html: `<span class="marq">@@P|${cle}@@</span>${planche}`, vide: !c };
+};
 
 
 const encadre = (b) => {
@@ -304,6 +335,7 @@ export const construireFlux = () => {
         pousse(`<div class="sommaire-ch"><p class="sommaire-t">Dans ce chapitre</p>
           <ol>${titresLecons.map((t2) => `<li>${ech(apos(t2))}</li>`).join('')}</ol></div>`, meta);
       }
+      { const a = ancre(ch.num); pousse(a.html, { ...meta, ancre: a.vide }); } /* fin d'ouverture — le QCM rompt derrière */
 
       /* 1 — Testez-vous */
       /* L'ordre des choix vient de la sélection, pas de la banque : la
@@ -345,6 +377,7 @@ export const construireFlux = () => {
         for (const p of lc.paras) pousse(`<p class="txt">${ech(p)}</p>`, meta);
         if (lc.tableau) pousse(tableau(lc.tableau), meta);
         for (const b of lc.blocs) pousse(encadre(b), meta);
+        { const a = ancre(ch.num); pousse(a.html, { ...meta, ancre: a.vide }); } /* fin de leçon */
       }
       /* Le chapitre généré n'a pas de leçons du plan : ses leçons sont dans le contenu. */
       if (!ch.lecons) {
@@ -354,6 +387,7 @@ export const construireFlux = () => {
           for (const p of lc.paras) pousse(`<p class="txt">${ech(p)}</p>`, meta);
           if (lc.tableau) pousse(tableau(lc.tableau), meta);
           for (const b of lc.blocs) pousse(encadre(b), meta);
+          { const a = ancre(ch.num); pousse(a.html, { ...meta, ancre: a.vide }); } /* fin de leçon */
         }
       }
 
@@ -366,6 +400,8 @@ export const construireFlux = () => {
       pousse(lignes(act.lignes), meta);
       pousse(`<p class="voix"><span>À voix haute</span>« ${ech(apos(act.voixHaute))} »</p>`, meta);
 
+      { const a = ancre(ch.num); pousse(a.html, { ...meta, ancre: a.vide }); } /* fin d'activité */
+
       /* 4 — S'entraîner en ligne. Les pages de corrigé ont quitté le
          papier (décision de la maquette du 30/08) : la correction vit en
          ligne, question par question, dans la série du chapitre. */
@@ -376,6 +412,7 @@ export const construireFlux = () => {
         { ...meta, garde: true });
       pousse(`<div class="note">Ma note à la série en ligne <span class="note-case"></span> / 10
         <span class="note-desc">à reporter au bilan, en fin de livret</span>${qc ? qrm(qc.slug, 'c') : ''}</div>`, meta);
+      { const a = ancre(ch.num); pousse(a.html, { ...meta, ancre: a.vide }); } /* fin de chapitre */
     }
 
     /* La planche centrale, après la partie C. Couchée d'un quart de tour :

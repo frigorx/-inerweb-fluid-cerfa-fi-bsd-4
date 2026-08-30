@@ -1,0 +1,67 @@
+{
+ "1-1": {
+  "ref": "pack:consignation-cinq-etapes",
+  "h": 75,
+  "legende": "À dérouler avant de toucher au circuit — l’ordre ne s’inverse pas."
+ },
+ "4-6": {
+  "ref": "pack:categories-champs",
+  "h": 75,
+  "legende": "Repérez votre colonne : elle dit ce que votre attestation couvre."
+ },
+ "5-7": {
+  "ref": "pack:croix-frigoriste-etats",
+  "h": 75,
+  "legende": "La croix se lit organe par organe — l’état du fluide à chaque coin."
+ },
+ "6-6": {
+  "ref": "pack:logph-lecture",
+  "h": 75,
+  "legende": "Le cycle se lit sur le diagramme, jamais de mémoire."
+ },
+ "7-6": {
+  "ref": "pack:mesures-surchauffe-sous-refroidissement",
+  "h": 75,
+  "legende": "Deux écarts qui se mesurent — jamais ne se devinent."
+ },
+ "9-8": {
+  "ref": "pack:compresseurs-comparatif",
+  "h": 75,
+  "legende": "Quatre technologies sur le terrain, la fonction ne change pas."
+ },
+ "12-1": {
+  "ref": "pack:ligne-liquide-protection",
+  "h": 75,
+  "legende": "Du réservoir au détendeur, chaque organe veille sur le suivant."
+ },
+ "13-8": {
+  "ref": "pack:sequence-mise-en-service",
+  "h": 75,
+  "legende": "L’ordre des opérations avant la première charge."
+ },
+ "14-8": {
+  "ref": "pack:recherche-fuite-geste",
+  "h": 75,
+  "legende": "Le geste du contrôle : lent, près du raccord, confirmé."
+ },
+ "15-1": {
+  "ref": "pack:recuperation-securisee",
+  "h": 75,
+  "legende": "Rien ne part à l’air : le fluide rejoint la bouteille, pesé."
+ },
+ "16-6": {
+  "ref": "pack:brasage-balayage-azote",
+  "h": 75,
+  "legende": "L’azote balaie l’intérieur du tube pendant toute la chauffe."
+ },
+ "18-8": {
+  "ref": "pack:r290-zone-intervention",
+  "h": 75,
+  "legende": "Le propane impose sa zone : balisée, ventilée, sans flamme."
+ },
+ "19-1": {
+  "ref": "pack:co2-nh3-deux-risques",
+  "h": 75,
+  "legende": "Deux fluides naturels, deux dangers — un même réflexe : s’arrêter."
+ }
+}

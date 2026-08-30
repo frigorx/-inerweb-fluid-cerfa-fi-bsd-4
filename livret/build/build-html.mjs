@@ -99,6 +99,13 @@ body{background:#e7ecf1;color:var(--txt);
 #livret{max-width:${R.page_l_mm}mm;margin:0 auto;background:#fff;padding:14mm 16mm;
   box-shadow:0 3px 14px rgba(27,58,99,.16)}
 .marq{font-size:1pt;line-height:0;color:#fff}
+/* Une ANCRE de comblement sans planche pèse UN POINT de haut — pas le
+   strut de ligne d'un bloc ordinaire (5,8 mm, soit deux pages pour cent
+   ancres), et pas zéro non plus : un glyphe qui déborde d'un bloc à
+   hauteur nulle se superpose au bloc suivant, et l'effacement des
+   marqueurs, qui apparie les « @@ » deux à deux dans l'ordre du dessin,
+   se décale alors et en laisse dans le livre. Vu sur pièce. */
+.ancre{line-height:1;font-size:1pt;margin:0;padding:0}
 
 /* Rien ne se coupe au milieu : ni une planche, ni un encadré,
    ni une question et ses réponses, ni un bloc « À l'écran ». */
@@ -188,6 +195,11 @@ figure img{width:100%;max-height:var(--planche-h);object-fit:contain;display:blo
   border:.6pt solid var(--ligne);border-radius:3px}
 figure figcaption{margin-top:1.6mm;text-align:center;font-style:italic;font-size:10pt;color:var(--mut)}
 .planche.haute img{width:auto;max-height:${R.planche_haute_h_mm}mm}
+/* Le COMBLEMENT (maquette du 30/08 : « aucune page ne se termine sur du
+   vide ») : une planche de la réserve, plafonnée par un style en ligne à
+   la hauteur du blanc qu'elle vient remplir — elle ne déplace donc jamais
+   la pagination. Dans le tirage, une planche comme une autre. */
+.comble img{width:auto;max-width:100%}
 .appoint{width:${R.appoint_pc}%;margin-left:auto;margin-right:auto}
 /* Un SYMBOLE normalisé porte peu d'information et beaucoup de blanc :
    à pleine largeur il mangeait 40 % d'une page pour un pictogramme.
@@ -376,7 +388,7 @@ const marqueur = (b) => {
 };
 
 const flux = construireFlux().filter((b) => b.html && b.html.trim());
-const classes = (b) => [b.seul ? 'seul' : '', b.rupture ? 'rupture' : ''].filter(Boolean).join(' ');
+const classes = (b) => [b.seul ? 'seul' : '', b.rupture ? 'rupture' : '', b.ancre ? 'ancre' : ''].filter(Boolean).join(' ');
 
 const html = `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8">

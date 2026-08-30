@@ -384,23 +384,76 @@ def finir(chemin):
             occupes.append((y, fin))
             qr_poses += 1
 
+    # ---- Les blancs de pied, notés pour le comblement ---------------
+    # La maquette du 30/08 veut qu'aucune page ne se termine sur du
+    # vide. Avant d'effacer les marqueurs, on note donc, page par page
+    # de contenu, le blanc entre le dernier élément de la colonne de
+    # texte et le pied, et la dernière ancre @@P|ch-n@@ visible.
+    # combler.mjs lira ce relevé pour poser une planche de la réserve
+    # à la prochaine fabrication — par sujet, jamais pour boucher.
+    MARQUEUR_P = re.compile(r'@@P\|(\d+-\d+)@@')
+    blancs = []
+    for page, (genre, _info, _codes) in zip(doc, contextes):
+        if genre == 'nue':
+            continue
+        pied_y = pied_de(page.rect.height) - 2 * MM
+        recto = (page.number % 2 == 0)
+        if recto:
+            x0t, x1t = GOUTTIERE, page.rect.width - EXTERIEUR_TEXTE
+        else:
+            x0t, x1t = EXTERIEUR_TEXTE, page.rect.width - GOUTTIERE
+        bas = None
+        for b in page.get_text('blocks'):
+            r = fitz.Rect(b[:4])
+            if r.x1 < x0t + 2 or r.x0 > x1t - 2 or r.y1 > pied_y + 2:
+                continue
+            bas = r.y1 if bas is None else max(bas, r.y1)
+        for info_img in page.get_image_info():
+            r = fitz.Rect(info_img['bbox'])
+            if r.x1 < x0t + 2 or r.x0 > x1t - 2 or r.y1 > pied_y + 2:
+                continue
+            bas = r.y1 if bas is None else max(bas, r.y1)
+        if bas is None:
+            continue
+        derniere, y_derniere = None, -1
+        for cle in set(MARQUEUR_P.findall(page.get_text())):
+            zones = page.search_for('@@P|%s@@' % cle)
+            if zones and zones[0].y0 > y_derniere:
+                derniere, y_derniere = cle, zones[0].y0
+        blancs.append({'page': page.number + 1,
+                       'blanc_mm': round((pied_y - bas) / MM, 1),
+                       'ancre': derniere})
+    with open(os.path.join(os.path.dirname(__file__), '..', 'blancs.gen.json'),
+              'w', encoding='utf-8') as f:
+        json.dump(blancs, f, ensure_ascii=False, indent=1)
+
     # ---- Les marqueurs internes quittent la couche texte -----------
     # Ils ont servi : la partie, le chapitre et les codes sont posés. Ils
     # restaient pourtant dans le PDF — invisibles à l'œil (1 pt, blanc sur
     # blanc) mais bien présents à la recherche, au copier-coller et à la
     # synthèse vocale. « @@D|11;8.01@@ » n'a rien à faire dans un livre.
+    # L'effacement cherche chaque marqueur COMPLET, jamais des « @@ »
+    # appariés deux à deux : à 1 pt, deux marqueurs voisins se touchent,
+    # l'ordre géométrique s'embrouille, et l'appariement laissait dix-sept
+    # « @@ » orphelins dans le livre. Un motif entier ne s'embrouille pas.
+    # Le motif tolère un saut de ligne AU MILIEU du marqueur : en fin de
+    # titre, le slug d'un renvoi se césure à son tiret (« securite-⏎3 »),
+    # et douze marqueurs restaient dans le livre. search_for cherche à
+    # travers les sauts ; on lui redonne alors le texte d'une traite.
+    MOTIF_MARQUEUR = re.compile(r'@@[^@]{1,90}@@')
     efface = 0
     for page in doc:
-        zones = page.search_for('@@')
-        if not zones:
+        cibles = set(MOTIF_MARQUEUR.findall(page.get_text()))
+        if not cibles:
             continue
-        # Une paire de « @@ » encadre le marqueur : on efface d'un bout
-        # à l'autre, en élargissant à peine pour prendre les caractères.
-        for j in range(0, len(zones) - 1, 2):
-            boite = zones[j] | zones[j + 1]
-            boite.x1 = min(boite.x1 + 2, page.rect.x1)
-            page.add_redact_annot(boite)
-            efface += 1
+        for m in cibles:
+            zones = page.search_for(m)
+            if not zones and '\n' in m:
+                zones = page.search_for(m.replace('\n', ''))
+            for boite in zones:
+                boite.x1 = min(boite.x1 + 2, page.rect.x1)
+                page.add_redact_annot(boite)
+                efface += 1
         page.apply_redactions(images=fitz.PDF_REDACT_IMAGE_NONE,
                               graphics=fitz.PDF_REDACT_LINE_ART_NONE)
 

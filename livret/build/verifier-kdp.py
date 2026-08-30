@@ -86,6 +86,17 @@ def controler_interieur(chemin):
         reserve('%d police(s) Type 3 (glyphes dessinés dans le fichier) : '
                 'embarquées, mais souvent issues d’un emoji couleur — à regarder' % len(type3))
 
+    # ---- 3 bis. Aucun marqueur de fabrication dans la couche texte ----
+    # Les « @@…@@ » guident bandeaux, renvois et comblement, puis la
+    # finition les efface. Invisibles à l'œil (1 pt, blanc), ils restent
+    # lisibles à la recherche et à la synthèse vocale : douze ont déjà
+    # survécu à une césure de slug. On refuse le fichier qui en garde un.
+    restes = sum(len(p.search_for('@@')) for p in doc)
+    if restes:
+        bloque('%d marqueur(s) de fabrication « @@ » restés dans la couche texte' % restes)
+    else:
+        print('  marqueurs : couche texte propre')
+
     # ---- 4. Rien ne sort de la zone imprimable ----
     # Sans fond perdu, KDP exige 0,25 pouce de blanc sur les trois bords
     # extérieurs. On mesure la boîte de ce qui est réellement dessiné.

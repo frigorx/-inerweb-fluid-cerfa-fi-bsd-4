@@ -88,6 +88,17 @@ for (const p of FIN) releve(`fin « ${p.t} »`, p.visuels, p.legendes);
 releve(`planche centrale (corrigé)`, PLANCHE_CENTRALE.corrige.visuels, PLANCHE_CENTRALE.corrige.legendes);
 releve(`planche centrale (fantôme)`, PLANCHE_CENTRALE.fantome.visuels, PLANCHE_CENTRALE.fantome.legendes);
 
+/* Les planches du COMBLEMENT (comblement.gen.json, quand combler.mjs a
+   tourné) : la réserve posée dans les pieds de page vides entre au
+   manifeste comme n'importe quel visuel du plan. */
+const COMBLEMENT = path.join(ICI, '..', 'comblement.gen.json');
+if (fs.existsSync(COMBLEMENT)) {
+  const table = JSON.parse(fs.readFileSync(COMBLEMENT, 'utf8'));
+  for (const [ancre, c] of Object.entries(table)) {
+    releve(`comblement ${ancre}`, [c.ref], [c.legende]);
+  }
+}
+
 /* ---------------- Résolution sur le disque ---------------- */
 const aConvertir = [];
 for (const [ref, emplacements] of refs) {
