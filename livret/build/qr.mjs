@@ -165,7 +165,7 @@ fs.writeFileSync(path.join(PAGES, 'LISEZMOI.md'), [
 
 /* ---------------- L'archive Apache (ne sert pas aujourd'hui) ---------------- */
 const lignes = [
-  '# Table de redirections du livret « Habilitation Fluide » — tome 1',
+  '# Table de redirections du livret « Habilitation Fluide » — partie théorique',
   '# Générée par livret/build/qr.mjs.',
   '#',
   '# ⚠️ ARCHIVE : inerweb.fr est servi par GitHub Pages, qui IGNORE les',
@@ -181,6 +181,6 @@ fs.writeFileSync(HTACCESS, lignes.join('\n'), 'utf8');
 
 const capsules = entrees.filter((e) => e.cible.includes('capsules')).length;
 const parChapitre = entrees.filter((e) => !e.lecon).length;
-console.log('QR codes du livret — tome 1\n');
+console.log('QR codes du livret — partie théorique\n');
 console.log(`  ${parChapitre} alias de chapitre + ${entrees.length - parChapitre} alias de leçon`);
 console.log(`\n✔ ${entrees.length} codes (${capsules} vers une capsule narrée) · qr.gen.json · redirections-pages/ (${entrees.length} pages GitHub Pages) · redirections.gen.htaccess (archive)`);

@@ -457,7 +457,7 @@ const construire = async () => {
       alignment: AlignmentType.CENTER, spacing: { after: 100 },
     }),
     new Paragraph({
-      children: [t('Livret élève — tome 1 : la théorie', { font: TITRES, size: 30, color: ORANGE, bold: true })],
+      children: [t('Livre sur l\'habilitation des fluides — partie théorique', { font: TITRES, size: 30, color: ORANGE, bold: true })],
       alignment: AlignmentType.CENTER, spacing: { after: 400 },
     }),
     new Paragraph({ children: [image(couv.visuels[0], Math.round(LARGEUR_PX * 0.9))], alignment: AlignmentType.CENTER, spacing: { after: 400 } }),
@@ -555,7 +555,7 @@ const construire = async () => {
                   children: [
                     t(`${r.code}  `, { bold: true, size: 18, color: BLEU }),
                     ...runsDe(r.libelle, { size: 18 }),
-                    t(r.theorie ? '' : '   (évalué en pratique — tome 2 ; expliqué ici en théorie)', { size: 16, color: MUT, italics: true }),
+                    t(r.theorie ? '' : '   (évalué en pratique — prochain livre ; expliqué ici en théorie)', { size: 16, color: MUT, italics: true }),
                   ],
                   spacing: { after: 50 },
                 })),
@@ -723,7 +723,7 @@ const construire = async () => {
   /* ---------- Le document ---------- */
   const doc = new Document({
     creator: 'F. Henninot — inerWeb',
-    title: 'Habilitation Fluide — livret élève, tome 1 : la théorie',
+    title: 'HAB-FLUIDE — livre sur l\'habilitation des fluides, partie théorique',
     styles: { default: { document: { run: { font: CORPS, size: 21 } } } },
     sections: [{
       properties: {
@@ -733,7 +733,7 @@ const construire = async () => {
         default: new Footer({
           children: [new Paragraph({
             children: [
-              t('inerWeb Fluide — Habilitation, tome 1', { size: 15, color: MUT }),
+              t('inerweb.fr — HAB-FLUIDE, partie théorique', { size: 15, color: MUT }),
               t('        ', { size: 15 }),
               new TextRun({ children: [PageNumber.CURRENT], font: CORPS, size: 15, color: MUT }),
             ],
@@ -757,7 +757,7 @@ const construire = async () => {
      la sortie ÉDITABLE — celle qu'on ouvre pour retoucher un mot avant
      une séance, pas celle qu'on envoie à l'imprimeur. */
 
-  console.log('Livret élève — tome 1 (Word, sortie éditable)\n');
+  console.log('Livre élève — partie théorique (Word, sortie éditable)\n');
   console.log(`  ${CHAPITRES.length} chapitres · ${LIMINAIRES.length} liminaires · ${FIN.length} pages de fin · planche centrale`);
   console.log(`  questions élève : ${Object.values(SELECTION).flat().length} (6 max/chapitre, liste écrite pour le corrigé)`);
   console.log(`\n✔ ${path.relative(process.cwd(), docx)}`);

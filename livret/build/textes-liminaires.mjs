@@ -14,7 +14,7 @@ export const TEXTES_LIMINAIRES = {
   /* Page de copyright — la page technique de tout livre édité. Le millésime
      et l'ISBN se remplissent au dépôt Amazon ; le reste est définitif. */
   'copyright': [
-    `<b>inerweb.fr HabFluide — tome 1 : la théorie</b>`,
+    `<b>inerweb.fr HAB-FLUIDE — partie théorique</b>`,
     `Préparation à l'épreuve théorique de l'attestation d'aptitude à la manipulation des fluides ` +
     `frigorigènes, catégories A1, A2, D et E.`,
     `Support de révision indépendant : cet ouvrage ne remplace ni une formation, ni l'évaluation ` +
@@ -51,7 +51,7 @@ export const TEXTES_LIMINAIRES = {
     `<b>référentiel officiel</b> exige, puis par des <b>questions type examen</b> — répondez-y avant de ` +
     `lire : vous saurez tout de suite ce que vous savez déjà. Les corrections sont en fin de chapitre. ` +
     `Ce livret s'écrit autant qu'il se lit.`,
-    `Le geste professionnel — manipuler, braser, récupérer en atelier — fait l'objet du <b>tome 2</b>. ` +
+    `Le geste professionnel — manipuler, braser, récupérer en atelier — fera l'objet du <b>prochain livre, consacré à la partie pratique</b>. ` +
     `Ici, on comprend ; là-bas, on fait.`,
   ],
   'lire-qr': [
@@ -85,7 +85,7 @@ export const TEXTES_LIMINAIRES = {
     `exigé par le référentiel pour ces catégories est traité, la vérification est refaite à chaque ` +
     `édition. La catégorie V (climatisation automobile) et les catégories B (CO₂) et C (ammoniac) ne ` +
     `sont pas préparées ici ; CO₂ et ammoniac sont abordés en information, pour savoir les reconnaître. ` +
-    `La partie <b>pratique</b> — gestes, manipulations, atelier — fait l'objet du tome 2.`,
+    `La partie <b>pratique</b> — gestes, manipulations, atelier — fera l'objet du prochain livre, consacré à la partie pratique.`,
     `Les valeurs réglementaires citées (catégories, durées d'épreuve, dates) sont extraites de ` +
     `l'arrêté du 21 novembre 2025 et vérifiables en fin de livret, page « Sources ». En cas de ` +
     `doute entre ce livret et un texte officiel, <b>le texte officiel a toujours raison</b>.`,
@@ -140,7 +140,7 @@ export const TEXTES_FIN = {
     `constructeur ou norme, à faire valider ».`,
   ],
   'credits': [
-    `<b>Habilitation Fluide — livret élève, tome 1 : la théorie.</b>`,
+    `<b>HAB-FLUIDE — livre sur l'habilitation des fluides, partie théorique.</b>`,
     `© 2026 Franck Henninot — inerWeb. Tous droits réservés. Contact : inerweb.fh@gmail.com.`,
     `Conçu, dirigé et vérifié par F. Henninot, enseignant en filière froid et climatisation. ` +
     `Fabrication assistée par intelligence artificielle (Claude, Anthropic), sous sa relecture.`,

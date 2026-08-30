@@ -368,7 +368,7 @@ const classes = (b) => [b.seul ? 'seul' : '', b.rupture ? 'rupture' : ''].filter
 
 const html = `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8">
-<title>Habilitation Fluide — livret élève, tome 1</title>
+<title>HAB-FLUIDE — livre sur l'habilitation des fluides, partie théorique</title>
 <style>${cssImprimable(CSS)}</style></head>
 <body>
 <div id="livret">

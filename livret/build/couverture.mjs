@@ -20,11 +20,42 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import QRCode from 'qrcode';
 
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const LIVRET = path.join(ICI, '..');
 const DIST = path.join(LIVRET, 'dist');
 const KDP = JSON.parse(fs.readFileSync(path.join(LIVRET, 'kdp.gen.json'), 'utf8'));
+
+/* ------------------------------------------------------------------
+   LES SYMBOLES NORMALISÉS DE LA BIBLIOTHÈQUE — jamais un redessin.
+   Verdict de la relecture couverture (29/08) : un croquis maison n'a
+   rien à faire sur le plat d'un livre de frigoristes. Le circuit de
+   couverture embarque les fichiers de la bibliothèque du pack
+   (pilote-fluides), recolorés pour le fond marine : traits blancs,
+   intérieurs au bleu du plat.
+   ------------------------------------------------------------------ */
+const SOURCE = process.env.PILOTE_FLUIDES || 'C:/git/pilote-fluides';
+const SYMBOLES = path.join(SOURCE, 'packs', 'fluides', 'res', 'symboles');
+
+function symbole(nom) {
+  const brut = fs.readFileSync(path.join(SYMBOLES, `${nom}.svg`), 'utf8')
+    .replace(/<metadata>[\s\S]*?<\/metadata>/, '')
+    .replace(/stroke="#1b3a63"/g, 'stroke="#ffffff"')
+    .replace(/fill="#1b3a63"/g, 'fill="#ffffff"')
+    .replace(/fill="white"/g, 'fill="#1B3A63"');
+  const [, vb] = brut.match(/viewBox="([^"]+)"/);
+  const corps = brut.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
+  return { vb: vb.split(/\s+/).map(Number), corps };
+}
+
+/* Pose un symbole : centre cible + échelle, dans le repère du circuit. */
+function pose(nom, cx, cy, echelle, rotation = 0) {
+  const s = symbole(nom);
+  const [x, y, w, h] = s.vb;
+  const centre = [x + w / 2, y + h / 2];
+  return `<g transform="translate(${cx},${cy}) rotate(${rotation}) scale(${echelle}) translate(${-centre[0]},${-centre[1]})">${s.corps}</g>`;
+}
 
 const [LARGEUR, HAUTEUR] = KDP.couverture_mm;
 const DOS = KDP.dos_mm;
@@ -36,6 +67,59 @@ const fr = (n) => String(n).replace('.', ',');
 /* Le dos ne porte de texte qu'à partir de 100 pages (règle Amazon), et
    il faut de la place : sous 9 mm, on n'y met que le flocon. */
 const DOS_ECRIT = KDP.pages >= 100 && DOS >= 9;
+
+/* Le QR de couverture : la porte d'entrée du livre interactif. Il mène à
+   l'accueil d'inerweb.fr — jamais à une page profonde : la couverture
+   vit plus longtemps que n'importe quelle URL interne. Sombre sur blanc,
+   correction Q : il sera photographié sur un livre, pas scanné à plat. */
+const QR_ACCUEIL = await QRCode.toDataURL('https://inerweb.fr/', {
+  errorCorrectionLevel: 'Q', width: 600, margin: 2,
+  color: { dark: '#1B3A63', light: '#ffffff' },
+});
+
+/* ------------------------------------------------------------------
+   LE CIRCUIT DE COUVERTURE — la croix du frigoriste, en symboles
+   normalisés de la bibliothèque, dans le bon sens : détendeur à
+   GAUCHE, compresseur à DROITE, condenseur en HAUT, évaporateur en
+   BAS. HP en orange (refoulement → condenseur → liquide), BP en blanc
+   (détente → évaporateur → aspiration). Même lecture que la planche
+   croix-frigoriste.svg du pack, réduite au format du plat.
+   ------------------------------------------------------------------ */
+const CIRCUIT = `
+<svg viewBox="0 0 380 224" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- HP (orange) : refoulement -> condenseur -> ligne liquide -> détendeur -->
+    <path stroke="#FF6B35" d="M296 88 L296 44 L207 44"/>
+    <path stroke="#FF6B35" d="M173 44 L84 44 L84 76"/>
+    <!-- BP (blanc) : sortie détendeur -> évaporateur -> aspiration -->
+    <path stroke="#ffffff" d="M84 120 L84 170 L173 170"/>
+    <path stroke="#ffffff" d="M207 170 L296 170 L296 122"/>
+    <!-- sens de circulation : vers le condenseur, vers le bas, vers l'évaporateur, vers le haut -->
+    <path stroke="#FF6B35" d="M256 39 L247 44 L256 49" fill="none"/>
+    <path stroke="#FF6B35" d="M79 60 L84 69 L89 60" fill="none"/>
+    <path stroke="#ffffff" d="M124 165 L133 170 L124 175" fill="none"/>
+    <path stroke="#ffffff" d="M291 146 L296 137 L301 146" fill="none"/>
+  </g>
+  <!-- Échangeurs DEBOUT, ailettes vers le bas : l'orientation de la
+       bibliothèque, celle des folios. Les conduites entrent sur leurs
+       flancs, à la hauteur du corps. -->
+  ${pose('echangeur_a_air', 190, 40, 0.86)}
+  ${pose('echangeur_a_air', 190, 166, 0.86)}
+  <!-- Détendeur sur la jambe verticale : conduites hautes et basses,
+       bulbe vers la gauche. -->
+  ${pose('detendeur_thermo_ext', 84, 98, 1.05, -90)}
+  <!-- Compresseur : le cercle aux deux biellettes de la planche de
+       référence, débit montant. -->
+  ${pose('compresseur_general', 296, 105, 1.1, 90)}
+  <g font-family="Calibri, sans-serif" font-size="8.5" fill="#cfdcea" letter-spacing=".5">
+    <text x="190" y="10" text-anchor="middle">CONDENSEUR</text>
+    <text x="190" y="220" text-anchor="middle">ÉVAPORATEUR</text>
+    <text x="64" y="101" text-anchor="end">DÉTENDEUR</text>
+    <text x="316" y="101" text-anchor="start">COMPRESSEUR</text>
+    <text x="120" y="36" text-anchor="middle" fill="#FF6B35" font-weight="700">HP</text>
+    <text x="250" y="186" text-anchor="middle" font-weight="700">BP</text>
+  </g>
+</svg>`;
 
 const html = `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8">
@@ -72,16 +156,18 @@ const html = `<!doctype html>
 
   /* ---------------- 1re de couverture ---------------- */
   .un{background:var(--bleu);color:#fff;padding:calc(var(--marge) + var(--fp)) var(--marge) var(--marge)}
-  .marque{display:flex;align-items:center;gap:2mm;margin-bottom:10mm}
-  .marque .floc{font-size:17pt}
-  .marque .iner{font:700 22pt "Trebuchet MS",sans-serif;border-bottom:2px solid var(--logo)}
-  .marque .web{font:22pt "Segoe Script","Brush Script MT",cursive;
-    border-bottom:2px solid var(--logo);margin-left:-1mm}
+  /* La marque en toutes lettres, dans une police que toute machine de
+     fabrication possede : plus jamais de script de substitution. */
+  .marque{display:flex;align-items:center;gap:2mm;margin-bottom:8mm}
+  .marque .floc{font-size:15pt;color:var(--logo)}
+  .marque .iner{font:700 16pt "Trebuchet MS",sans-serif;border-bottom:2px solid var(--logo)}
 
-  .titre{font:700 47pt/.96 "Trebuchet MS",Calibri,sans-serif;letter-spacing:-.02em}
-  .titre em{display:block;font-style:normal;color:var(--orange)}
-  .accroche{margin-top:5mm;font-size:12.5pt;line-height:1.4;color:#cfdcea;max-width:30ch}
-  .accroche b{color:#fff}
+  .titre{font:700 44pt/.96 "Trebuchet MS",Calibri,sans-serif;letter-spacing:-.01em}
+  .titre em{font-style:normal;color:var(--orange)}
+  .soustitre{margin-top:4mm;font:700 15pt/1.25 "Trebuchet MS",sans-serif;color:#fff}
+  .version{margin-top:1.6mm;font-size:12pt;color:var(--orange);font-weight:700}
+  .interactif{font-size:10.5pt;line-height:1.4;color:#cfdcea;max-width:44ch;margin-bottom:4mm}
+  .interactif b{color:#fff}
 
   .croix{margin:auto 0;padding:4mm 0}
   .croix svg{width:100%;height:auto;display:block}
@@ -89,8 +175,6 @@ const html = `<!doctype html>
   .cats{display:flex;gap:2.4mm;margin-bottom:5mm}
   .cats span{border:1.5px solid var(--orange);color:var(--orange);font:700 13pt "Trebuchet MS",sans-serif;
     padding:1.6mm 4mm;border-radius:3px}
-  .tome{font:700 11.5pt "Trebuchet MS",sans-serif;color:#fff;background:var(--orange);
-    align-self:flex-start;padding:1.4mm 3.6mm;border-radius:3px;margin-bottom:4mm}
   .auteur{font-size:10.5pt;color:#cfdcea;border-top:1px solid rgba(255,255,255,.28);padding-top:3.4mm}
   .auteur b{color:#fff;display:block;font-size:12.5pt;margin-bottom:.8mm}
 
@@ -116,6 +200,10 @@ const html = `<!doctype html>
     background:var(--orange);border-radius:50%}
   .encart{background:#fff;border-left:3px solid var(--orange);border-radius:0 4px 4px 0;
     padding:3.4mm 4mm;margin-bottom:4mm}
+  .encart-qr{display:flex;gap:4mm;align-items:center}
+  .qr-accueil{flex:none;margin:0;text-align:center}
+  .qr-accueil img{width:21mm;height:21mm;display:block}
+  .qr-accueil figcaption{font:700 8.5pt "Trebuchet MS",sans-serif;color:var(--bleu);margin-top:1mm}
   .encart h3{font:700 11pt "Trebuchet MS",sans-serif;color:var(--bleu);margin-bottom:1.6mm}
   .encart p{font-size:10pt;margin:0;color:var(--mut);max-width:none}
   .avert{font-size:9pt;color:var(--mut);line-height:1.4;margin-bottom:auto}
@@ -141,7 +229,7 @@ const html = `<!doctype html>
 </style></head><body>
 
 <div class="note">
-  <h1>Couverture Amazon KDP — inerweb.fr HabFluide, tome 1</h1>
+  <h1>Couverture Amazon KDP — inerweb.fr HAB-FLUIDE, partie théorique</h1>
   <p>Format exact, prêt pour le téléversement : <b>${fr(LARGEUR)} × ${fr(HAUTEUR)} mm</b>
      (${fr((LARGEUR / 25.4).toFixed(3))} × ${fr((HAUTEUR / 25.4).toFixed(2))} pouces), fonds perdus de 3,175 mm compris.
      Dos de <b>${fr(DOS)} mm</b>, calculé sur <b>${KDP.pages} pages</b> en papier blanc noir et blanc
@@ -173,16 +261,22 @@ const html = `<!doctype html>
           et «&nbsp;geste interdit&nbsp;», des pages à remplir.</li>
     </ul>
 
-    <div class="encart">
-      <h3>Le papier ouvre l’écran</h3>
-      <p>Quatre-vingt-quinze QR codes mènent aux cours animés et racontés à voix haute
-         d’<b>inerweb.fr</b> — schémas en mouvement, questions corrigées, capsules audio.
-         Les adresses sont aussi écrites en clair : un navigateur suffit.</p>
+    <div class="encart encart-qr">
+      <div>
+        <h3>Un livre interactif : le papier ouvre l’écran</h3>
+        <p>Quatre-vingt-quinze QR codes mènent aux cours animés et racontés à voix haute
+           d’<b>inerweb.fr</b> — schémas en mouvement, questions corrigées, capsules audio.
+           Les adresses sont aussi écrites en clair : un navigateur suffit.</p>
+      </div>
+      <figure class="qr-accueil">
+        <img src="${QR_ACCUEIL}" alt="QR code vers inerweb.fr">
+        <figcaption>inerweb.fr</figcaption>
+      </figure>
     </div>
 
     <p class="avert">Ce livre prépare l’épreuve théorique ; il ne délivre aucune attestation —
        seul un organisme évaluateur certifié le fait. Les gestes professionnels et l’épreuve
-       pratique font l’objet du tome 2. Aucune question officielle d’examen ne figure dans cet ouvrage.</p>
+       pratique feront l’objet du prochain livre, consacré à la partie pratique. Aucune question officielle d’examen ne figure dans cet ouvrage.</p>
 
     <div class="pied4">
       <div class="site">inerweb.fr
@@ -195,7 +289,7 @@ const html = `<!doctype html>
   <!-- ============ DOS ============ -->
   <div class="dos">
     ${DOS_ECRIT
-    ? `<div class="dos-haut">HabFluide <i>· tome 1 : la théorie</i></div>
+    ? `<div class="dos-haut">HAB-FLUIDE <i>· partie théorique</i></div>
     <div class="dos-floc">❄</div>
     <div class="dos-bas">F. Henninot</div>`
     : `<div class="dos-floc">❄</div>`}
@@ -203,37 +297,16 @@ const html = `<!doctype html>
 
   <!-- ============ 1re DE COUVERTURE ============ -->
   <div class="plat un">
-    <div class="marque">
-      <span class="floc">❄</span><span class="iner">iner</span><span class="web">Web</span>
-    </div>
+    <div class="marque"><span class="floc">❄</span><span class="iner">inerweb.fr</span></div>
 
-    <h1 class="titre">Hab<em>Fluide</em></h1>
-    <p class="accroche">Toute la <b>théorie</b> de l’attestation d’aptitude
-       fluides frigorigènes, du risque à la récupération.</p>
+    <h1 class="titre">HAB<em>-FLUIDE</em></h1>
+    <p class="soustitre">Livre sur l’habilitation des fluides</p>
+    <p class="version">Partie théorique · préparation à l’évaluation théorique</p>
 
-    <div class="croix">
-      <!-- La croix du frigoriste : détendeur à gauche, compresseur à droite,
-           condenseur en haut, évaporateur en bas. Convention non négociable. -->
-      <svg viewBox="0 0 380 196" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <g fill="none" stroke-width="2.6" stroke-linecap="round">
-          <path stroke="#FF6B35" d="M290 105 L290 60 L230 60 M150 60 L90 60 L90 105"/>
-          <rect stroke="#FF6B35" x="150" y="44" width="80" height="32" rx="4"/>
-          <path stroke="#ffffff" d="M90 105 L90 150 L150 150 M230 150 L290 150 L290 105"/>
-          <rect stroke="#ffffff" x="150" y="134" width="80" height="32" rx="4"/>
-          <path stroke="#FF6B35" d="M79 95 L101 115 L101 95 L79 115 Z"/>
-          <circle stroke="#ffffff" cx="290" cy="105" r="14"/>
-        </g>
-        <path d="M290 92 L302 105 L278 105 Z" fill="#ffffff"/>
-        <g font-family="Calibri, sans-serif" font-size="9.5" fill="#cfdcea" letter-spacing=".5">
-          <text x="190" y="34" text-anchor="middle">CONDENSEUR</text>
-          <text x="190" y="186" text-anchor="middle">ÉVAPORATEUR</text>
-          <text x="72" y="108" text-anchor="end">DÉTENDEUR</text>
-          <text x="312" y="108" text-anchor="start">COMPRESSEUR</text>
-        </g>
-      </svg>
-    </div>
+    <div class="croix">${CIRCUIT}</div>
 
-    <span class="tome">Tome 1 · La théorie</span>
+    <p class="interactif"><b>Livre interactif</b> — 95 QR codes ouvrent les cours
+       animés et racontés d’inerweb.fr : schémas en mouvement, voix, corrections.</p>
     <div class="cats"><span>A1</span><span>A2</span><span>D</span><span>E</span></div>
     <p class="auteur"><b>F. Henninot</b>
       Enseignant en filière froid et climatisation</p>

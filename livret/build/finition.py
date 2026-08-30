@@ -201,7 +201,7 @@ def finir(chemin):
         # pastille a été resserrée pour que son bord reste à 7 mm du bord
         # de page. Elle descendait à 3,2 mm — hors zone imprimable.
         page.insert_text(fitz.Point(MARGE_G, PIED + 3.2 * MM),
-                         'inerweb.fr · HabFluide, tome 1 — la théorie',
+                         'inerweb.fr · HAB-FLUIDE — partie théorique',
                          fontname='tcorps', fontsize=7.6, color=MUT)
 
         # Les compétences du référentiel travaillées SUR CETTE PAGE. Elles
@@ -214,7 +214,7 @@ def finir(chemin):
             largeur_codes = largeur_de(libelle_codes, 'tcorps', 7.6)
             # Le numéro occupe la droite : les codes s'arrêtent avant lui.
             place = largeur - MARGE_D - 9 * MM - largeur_codes
-            if place > MARGE_G + largeur_de('inerweb.fr · HabFluide, tome 1 — la théorie',
+            if place > MARGE_G + largeur_de('inerweb.fr · HAB-FLUIDE — partie théorique',
                                             'tcorps', 7.6) + 6 * MM:
                 page.insert_text(fitz.Point(place, PIED + 3.2 * MM),
                                  libelle_codes, fontname='tcorps', fontsize=7.6, color=BLEU)
@@ -290,7 +290,7 @@ def finir(chemin):
 
     # ---- Ce que le lecteur voit dans les propriétés du fichier ------
     doc.set_metadata({
-        'title': 'inerweb.fr HabFluide — tome 1 : la théorie',
+        'title': 'inerweb.fr HAB-FLUIDE — partie théorique',
         'author': 'F. Henninot',
         'subject': "Préparation à l'épreuve théorique de l'attestation d'aptitude "
                    'fluides frigorigènes — catégories A1, A2, D et E',

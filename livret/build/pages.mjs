@@ -199,7 +199,7 @@ export const construireFlux = () => {
   pousse(`<div class="couverture">
     <div class="couv-marque"><span class="flocon">❄</span><span class="iner">iner</span><span class="web">Web</span><span class="cartouche">HabFluide</span></div>
     <div class="couv-titre"><h1>HabFluide</h1>
-      <p class="couv-sous">Livret élève — tome 1 : la théorie</p></div>
+      <p class="couv-sous">Livre sur l'habilitation des fluides — partie théorique</p></div>
     <img class="couv-illu" src="${visuel(couv.visuels[0])}"${cotes(couv.visuels[0])} alt="">
     <div class="couv-bas">
       <p class="couv-epreuve">Préparation à l’épreuve <b>théorique</b><br>de l’attestation d’aptitude fluides frigorigènes</p>
@@ -255,7 +255,7 @@ export const construireFlux = () => {
           if (!r.catsT.length) {
             /* Deux raisons TRÈS différentes de n'avoir aucune catégorie
                théorique ici, et les confondre est une faute : le code est
-               évalué en atelier (tome 2), OU il est théorique mais pour
+               évalué en atelier (partie pratique, prochain livre), OU il est théorique mais pour
                une catégorie que ce livre ne prépare pas — le CO₂ pour B,
                l'ammoniac pour C. Le code 1.09 était annoncé « épreuve
                pratique » alors qu'il est théorique en catégorie B. */
@@ -270,7 +270,7 @@ export const construireFlux = () => {
             if (autres.length) {
               return `<span class="ref-cat hors">hors périmètre — catégorie ${autres.join(' et ')}</span>`;
             }
-            return '<span class="ref-cat prat">épreuve pratique — tome 2</span>';
+            return '<span class="ref-cat prat">épreuve pratique — prochain livre</span>';
           }
           if (r.catsT.length === CONTENU.categories.length) return '<span class="ref-cat">toutes catégories</span>';
           return r.catsT.map((k) => `<span class="ref-cat">${k}</span>`).join('');

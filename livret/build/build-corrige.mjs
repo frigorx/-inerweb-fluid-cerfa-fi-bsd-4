@@ -53,7 +53,7 @@ const runsDe = (html, opts = {}) => {
 
 const enfants = [
   new Paragraph({
-    children: [t('Habilitation Fluide — tome 1', { font: TITRES, bold: true, size: 40, color: BLEU })],
+    children: [t('HAB-FLUIDE — partie théorique', { font: TITRES, bold: true, size: 40, color: BLEU })],
     alignment: AlignmentType.CENTER, spacing: { before: 400, after: 100 },
   }),
   new Paragraph({
@@ -120,7 +120,7 @@ for (const ch of CHAPITRES) {
 
 const doc = new Document({
   creator: 'F. Henninot — inerWeb',
-  title: 'Habilitation Fluide — corrigé formateur, tome 1',
+  title: 'HAB-FLUIDE — corrigé formateur, partie théorique',
   styles: { default: { document: { run: { font: CORPS, size: 21 } } } },
   sections: [{
     properties: { page: { size: PAGE, margin: { top: MARGE, bottom: MARGE, left: MARGE, right: MARGE } } },

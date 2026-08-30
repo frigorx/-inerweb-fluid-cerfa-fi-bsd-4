@@ -183,7 +183,7 @@ const E = (id) => document.getElementById(id);
 
 /* Les deux aperçus, en contenu réel. */
 const BANDEAU = '<header class="bandeau"><b>Partie A · SE PROTÉGER</b><span>Chapitre 2</span></header>';
-const PIED = '<footer class="pied"><span class="pied-m">inerweb.fr · HabFluide, tome 1 · la théorie</span><span class="pied-n">34</span></footer>';
+const PIED = '<footer class="pied"><span class="pied-m">inerweb.fr · HAB-FLUIDE · partie théorique</span><span class="pied-n">34</span></footer>';
 
 E('p1').innerHTML = BANDEAU + '<div class="corps">' +
   '<h4 class="lecon-t"><span class="lecon-n">2.3</span>Explosif avant d\\u2019être perceptible — la LIE</h4>' +

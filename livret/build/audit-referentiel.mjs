@@ -31,7 +31,7 @@ if (!fs.existsSync(fichierInv)) {
 }
 const INV = JSON.parse(fs.readFileSync(fichierInv, 'utf8'));
 
-const PREPAREES = ['A1', 'A2', 'D', 'E'];   // les catégories que ce tome prépare
+const PREPAREES = ['A1', 'A2', 'D', 'E'];   // les catégories que ce livre prépare
 
 const codes = [];
 for (const g of REF.groupes) {
@@ -89,7 +89,7 @@ const ligne = (c) => {
 const parFrequence = [...theoriques].sort((a, b) => prof(b.code).mots - prof(a.code).mots);
 
 /* Les codes marqués en pied de page qui n'appartiennent PAS au référentiel
-   théorique du tome : ni faute ni oubli, mais il faut savoir qu'ils sont là. */
+   théorique du livre : ni faute ni oubli, mais il faut savoir qu'ils sont là. */
 const marquesHorsTheorie = Object.keys(INV)
   .filter((code) => {
     const c = codes.find((x) => x.code === code);
@@ -97,7 +97,7 @@ const marquesHorsTheorie = Object.keys(INV)
   })
   .map((code) => ({ code, pages: INV[code].length, connu: !!codes.find((x) => x.code === code) }));
 
-const md = `# Audit du référentiel — inerweb.fr HabFluide, tome 1
+const md = `# Audit du référentiel — inerweb.fr HAB-FLUIDE, partie théorique
 
 Inventaire exhaustif, page par page. La source n'est pas une déclaration
 d'intention : ce sont les **codes réellement imprimés en pied de page** du
@@ -117,7 +117,7 @@ aucun livre ne peut les faire acquérir, et leur absence n'est pas une faute.
 | **Théorie exigée, vue sur ${MINCE} pages ou plus** | **${vusT.length}** / ${theoriques.length} | ${vusT.length === theoriques.length ? '✔ complet' : ''} |
 | Théorie exigée, vue sur 1 seule page | ${mincesT.length} | ${mincesT.length ? '⚠ à renforcer' : '✔ aucun'} |
 | **Théorie exigée, ABSENTE** | **${absentsT.length}** | ${absentsT.length ? '✖ à traiter' : '✔ aucune'} |
-| Pratique (épreuve en atelier) | ${pratiques.length} | hors périmètre du tome |
+| Pratique (épreuve en atelier) | ${pratiques.length} | hors périmètre de la partie théorique |
 | Catégories B (CO₂) et C (NH₃) | ${hors.length} | autre attestation, autre public |
 
 ${absentsT.length ? `### ✖ Codes théoriques absents du livre\n\n${absentsT.map((c) => `- \`${c.code}\` — ${c.libelle.slice(0, 130)}`).join('\n')}\n` : ''}

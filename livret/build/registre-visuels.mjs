@@ -81,7 +81,7 @@ for (const ref of Object.keys(VISUELS)) {
   compte[f] = (compte[f] || 0) + 1;
 }
 
-const md = `# Registre des droits d'images — inerweb.fr HabFluide, tome 1
+const md = `# Registre des droits d'images — inerweb.fr HAB-FLUIDE, partie théorique
 
 Généré à chaque fabrication par \`build/registre-visuels.mjs\`, à partir des
 **métadonnées Dublin Core** embarquées dans les fichiers sources — jamais
