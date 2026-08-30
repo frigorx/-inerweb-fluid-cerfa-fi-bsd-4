@@ -1316,6 +1316,7 @@
   "slug": "a-chaleur-sensible-latente",
   "alias": "https://inerweb.fr/f/a-chaleur-sensible-latente",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/chaleur-sensible-latente.svg",
+  "retour": "https://inerweb.fr/f/thermo",
   "renvoi": {
    "genre": "animation",
    "titre": "La planche en mouvement",
@@ -1329,6 +1330,7 @@
   "slug": "a-charge-limite-local",
   "alias": "https://inerweb.fr/f/a-charge-limite-local",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/charge-limite-local.svg",
+  "retour": "https://inerweb.fr/f/efficacite",
   "renvoi": {
    "genre": "animation",
    "titre": "La planche en mouvement",
@@ -1342,6 +1344,7 @@
   "slug": "a-circuit-complet-manifold",
   "alias": "https://inerweb.fr/f/a-circuit-complet-manifold",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/circuit-complet-manifold.svg",
+  "retour": "https://inerweb.fr/",
   "renvoi": {
    "genre": "animation",
    "titre": "La planche en mouvement",
@@ -1355,6 +1358,7 @@
   "slug": "a-co2-nh3-compare",
   "alias": "https://inerweb.fr/f/a-co2-nh3-compare",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/co2-nh3-compare.svg",
+  "retour": "https://inerweb.fr/f/classes",
   "renvoi": {
    "genre": "animation",
    "titre": "La planche en mouvement",
@@ -1368,6 +1372,7 @@
   "slug": "a-co2-point-bas",
   "alias": "https://inerweb.fr/f/a-co2-point-bas",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/co2-point-bas.svg",
+  "retour": "https://inerweb.fr/f/classes",
   "renvoi": {
    "genre": "animation",
    "titre": "La planche en mouvement",
@@ -1381,6 +1386,7 @@
   "slug": "a-coup-de-liquide-piston",
   "alias": "https://inerweb.fr/f/a-coup-de-liquide-piston",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/coup-de-liquide-piston.svg",
+  "retour": "https://inerweb.fr/f/compresseur",
   "renvoi": {
    "genre": "animation",
    "titre": "La planche en mouvement",
@@ -1394,6 +1400,7 @@
   "slug": "a-detendeur-regulation",
   "alias": "https://inerweb.fr/f/a-detendeur-regulation",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/detendeur-regulation.svg",
+  "retour": "https://inerweb.fr/f/detendeur",
   "renvoi": {
    "genre": "animation",
    "titre": "La planche en mouvement",
@@ -1407,6 +1414,7 @@
   "slug": "a-diagramme-logph",
   "alias": "https://inerweb.fr/f/a-diagramme-logph",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/diagramme-logph.svg",
+  "retour": "https://inerweb.fr/f/thermo",
   "renvoi": {
    "genre": "animation",
    "titre": "La planche en mouvement",
@@ -1420,6 +1428,7 @@
   "slug": "a-givre-degivrage",
   "alias": "https://inerweb.fr/f/a-givre-degivrage",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/givre-degivrage.svg",
+  "retour": "https://inerweb.fr/f/evaporateur",
   "renvoi": {
    "genre": "animation",
    "titre": "La planche en mouvement",
@@ -1433,6 +1442,7 @@
   "slug": "a-lie-domaine",
   "alias": "https://inerweb.fr/f/a-lie-domaine",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/lie-domaine.svg",
+  "retour": "https://inerweb.fr/f/classes",
   "renvoi": {
    "genre": "animation",
    "titre": "La planche en mouvement",
@@ -1446,6 +1456,7 @@
   "slug": "a-manifold-lecture",
   "alias": "https://inerweb.fr/f/a-manifold-lecture",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/manifold-lecture.svg",
+  "retour": "https://inerweb.fr/f/mise-en-service",
   "renvoi": {
    "genre": "animation",
    "titre": "La planche en mouvement",
@@ -1459,6 +1470,7 @@
   "slug": "a-nomenclature",
   "alias": "https://inerweb.fr/f/a-nomenclature",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/nomenclature.svg",
+  "retour": "https://inerweb.fr/f/thermo",
   "renvoi": {
    "genre": "animation",
    "titre": "La planche en mouvement",
@@ -1472,6 +1484,7 @@
   "slug": "a-ordre-vannes",
   "alias": "https://inerweb.fr/f/a-ordre-vannes",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/ordre-vannes.svg",
+  "retour": "https://inerweb.fr/f/recuperation",
   "renvoi": {
    "genre": "animation",
    "titre": "La planche en mouvement",
@@ -1485,6 +1498,7 @@
   "slug": "a-pesee-charge",
   "alias": "https://inerweb.fr/f/a-pesee-charge",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/pesee-charge.svg",
+  "retour": "https://inerweb.fr/f/recuperation",
   "renvoi": {
    "genre": "animation",
    "titre": "La planche en mouvement",
@@ -1498,6 +1512,7 @@
   "slug": "a-points-de-fuite",
   "alias": "https://inerweb.fr/f/a-points-de-fuite",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/points-de-fuite.svg",
+  "retour": "https://inerweb.fr/f/surchauffe",
   "renvoi": {
    "genre": "animation",
    "titre": "La planche en mouvement",
@@ -1511,6 +1526,7 @@
   "slug": "a-pression-absolue-relative",
   "alias": "https://inerweb.fr/f/a-pression-absolue-relative",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/pression-absolue-relative.svg",
+  "retour": "https://inerweb.fr/f/thermo",
   "renvoi": {
    "genre": "animation",
    "titre": "La planche en mouvement",
@@ -1524,6 +1540,7 @@
   "slug": "a-secu-consignation",
   "alias": "https://inerweb.fr/f/a-secu-consignation",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/secu-consignation.svg",
+  "retour": "https://inerweb.fr/f/securite",
   "renvoi": {
    "genre": "animation",
    "titre": "La planche en mouvement",
@@ -1537,6 +1554,7 @@
   "slug": "a-secu-decomposition-ari",
   "alias": "https://inerweb.fr/f/a-secu-decomposition-ari",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/secu-decomposition-ari.svg",
+  "retour": "https://inerweb.fr/f/brasage",
   "renvoi": {
    "genre": "animation",
    "titre": "La planche en mouvement",
@@ -1550,6 +1568,7 @@
   "slug": "a-secu-flamme",
   "alias": "https://inerweb.fr/f/a-secu-flamme",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/secu-flamme.svg",
+  "retour": "https://inerweb.fr/f/brasage",
   "renvoi": {
    "genre": "animation",
    "titre": "La planche en mouvement",
@@ -1563,6 +1582,7 @@
   "slug": "a-surchauffe-utile-totale",
   "alias": "https://inerweb.fr/f/a-surchauffe-utile-totale",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/surchauffe-utile-totale.svg",
+  "retour": "https://inerweb.fr/f/surchauffe",
   "renvoi": {
    "genre": "animation",
    "titre": "La planche en mouvement",
@@ -1576,6 +1596,7 @@
   "slug": "a-tirage-au-vide",
   "alias": "https://inerweb.fr/f/a-tirage-au-vide",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/tirage-au-vide.svg",
+  "retour": "https://inerweb.fr/f/mise-en-service",
   "renvoi": {
    "genre": "animation",
    "titre": "La planche en mouvement",

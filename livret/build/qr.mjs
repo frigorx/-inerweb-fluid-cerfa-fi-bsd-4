@@ -93,12 +93,26 @@ for (const ch of CHAPITRES) {
    visionneuse habillée, sans réimprimer : c'est le rôle des alias. ---- */
 const SVG_PACK = path.join(SOURCE, 'packs', 'fluides', 'res', 'svg');
 const planches = new Set();
-const collecte = (o) => {
-  if (typeof o === 'string') { if (o.startsWith('svg:')) planches.add(o.slice(4)); return; }
-  if (Array.isArray(o)) { o.forEach(collecte); return; }
-  if (o && typeof o === 'object') Object.values(o).forEach(collecte);
+/* Le chapitre qui utilise chaque planche : la visionneuse propose « la
+   leçon complète » et ce lien passe par l'alias de la STATION du
+   chapitre (/f/<ch.qr>) — une indirection de plus, recâblable elle
+   aussi sans réimprimer. Une planche hors chapitre (liminaires,
+   planche centrale) renvoie à l'accueil de l'appli. */
+const chapitreDePlanche = new Map();
+const collecte = (o, chQr) => {
+  if (typeof o === 'string') {
+    if (o.startsWith('svg:')) {
+      const nom = o.slice(4);
+      planches.add(nom);
+      if (chQr && !chapitreDePlanche.has(nom)) chapitreDePlanche.set(nom, chQr);
+    }
+    return;
+  }
+  if (Array.isArray(o)) { o.forEach((x) => collecte(x, chQr)); return; }
+  if (o && typeof o === 'object') Object.values(o).forEach((x) => collecte(x, chQr));
 };
-collecte(CHAPITRES); collecte(PLANCHE_CENTRALE); collecte(LIMINAIRES); collecte(FIN);
+for (const ch of CHAPITRES) collecte(ch, ch.qr);
+collecte(PLANCHE_CENTRALE); collecte(LIMINAIRES); collecte(FIN);
 for (const nom of [...planches].sort()) {
   const chemin = path.join(SVG_PACK, `${nom}.svg`);
   if (!fs.existsSync(chemin)) { erreurs.push(`planche « ${nom} » absente du pack`); continue; }
@@ -108,6 +122,7 @@ for (const nom of [...planches].sort()) {
   entrees.push({
     genre: 'animation', titre, slug: `a-${nom}`, alias: `${QR_BASE}a-${nom}`,
     cible: `${APPLI}packs/fluides/res/svg/${nom}.svg`,
+    retour: chapitreDePlanche.has(nom) ? `${QR_BASE}${chapitreDePlanche.get(nom)}` : APPLI,
   });
 }
 
@@ -212,11 +227,73 @@ const pageRedirection = (e) => `<!doctype html>
 </html>
 `;
 
+/* La VISIONNEUSE des animations : au lieu de rediriger vers le SVG brut,
+   la page l'injecte inline — le SMIL se joue à l'insertion, et se rejoue
+   à chaque réinjection : c'est tout le mécanisme du bouton « Revoir ».
+   Même origine (inerweb.fr) : le fetch passe sans détour. Si le réseau
+   ou le script manquent, le lien direct vers le SVG reste au bas de la
+   page — un téléphone de chantier ne doit jamais tomber sur du vide. */
+const pageVisionneuse = (e) => `<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>${echapper(e.titre)} — inerWeb HabFluide</title>
+<style>
+:root{--bleu:#1b3a63;--orange:#ff6b35;--mut:#5a6472;--ligne:#d6dee7}
+body{font-family:Calibri,Carlito,'Segoe UI',sans-serif;color:var(--bleu);background:#f4f7fa;margin:0;min-height:100vh;display:flex;flex-direction:column}
+header{background:#fff;border-bottom:2px solid var(--orange);padding:10px 16px;font-weight:700}
+header .hab{color:var(--orange)}
+main{flex:1;max-width:860px;width:100%;margin:0 auto;padding:16px;box-sizing:border-box}
+h1{font-size:1.15rem;line-height:1.3;margin:6px 0 14px}
+#scene{background:#fff;border:1px solid var(--ligne);border-radius:10px;padding:10px;min-height:200px}
+#scene svg{width:100%;height:auto;display:block}
+#scene .attente{color:var(--mut);text-align:center;padding:60px 12px;margin:0}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+.actions button,.actions a{font:inherit;font-weight:700;border-radius:8px;padding:10px 16px;cursor:pointer;text-decoration:none;text-align:center}
+.actions button{background:var(--bleu);color:#fff;border:none}
+.actions a{background:#fff;color:var(--bleu);border:1.5px solid var(--bleu)}
+footer{color:var(--mut);font-size:.82rem;padding:10px 16px;text-align:center}
+footer a{color:var(--mut)}
+</style>
+</head>
+<body>
+<header><span class="hab">❄</span> inerWeb · HabFluide — la planche en mouvement</header>
+<main>
+<h1>${echapper(e.titre)}</h1>
+<div id="scene"><p class="attente">Chargement de l’animation…</p></div>
+<div class="actions">
+<button id="revoir" type="button">↻ Revoir l’animation</button>
+<a href="${echapper(e.retour)}">La leçon complète →</a>
+</div>
+</main>
+<footer>Du livre « HAB-FLUIDE — partie théorique » · <a href="${echapper(e.cible)}">ouvrir la planche seule</a></footer>
+<script>
+(function () {
+  var scene = document.getElementById('scene');
+  var texte = null;
+  function montrer() { if (texte !== null) { scene.innerHTML = texte; } }
+  fetch(${JSON.stringify(e.cible)}).then(function (r) {
+    if (!r.ok) throw new Error(r.status);
+    return r.text();
+  }).then(function (t) { texte = t; montrer(); }).catch(function () {
+    scene.innerHTML = '<p class="attente">L’animation n’a pas pu se charger ici — ' +
+      '<a href="${echapper(e.cible)}">l’ouvrir directement<\\/a>.</p>';
+  });
+  document.getElementById('revoir').addEventListener('click', montrer);
+})();
+</script>
+</body>
+</html>
+`;
+
 fs.rmSync(PAGES, { recursive: true, force: true });
 for (const e of entrees) {
   const dossier = path.join(PAGES, 'f', e.slug);
   fs.mkdirSync(dossier, { recursive: true });
-  fs.writeFileSync(path.join(dossier, 'index.html'), pageRedirection(e), 'utf8');
+  fs.writeFileSync(path.join(dossier, 'index.html'),
+    e.genre === 'animation' ? pageVisionneuse(e) : pageRedirection(e), 'utf8');
 }
 fs.writeFileSync(path.join(PAGES, 'LISEZMOI.md'), [
   '# Redirections du livret « Habilitation Fluide » — à déployer',
