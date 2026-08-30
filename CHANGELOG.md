@@ -5,6 +5,20 @@
 > conservé par l'auteur hors de ce dépôt ; l'historique git du dépôt reste,
 > lui, complet et non réécrit.
 
+## 2026-08-30 — le livre HabFluide quitte ce dépôt
+
+- **Le livre vit désormais dans `C:\git\livre-habfluide`**, dépôt autonome, avec
+  ses 29 commits d'historique. Ce dépôt-ci ne contient plus `livret/`.
+- **Pourquoi** : deux produits partageaient une racine — l'application fluide et
+  un livre de 388 pages. Le livre travaillait de surcroît sur une branche
+  d'agent (`claude/livret-habilitation-fluide-d5n1yt`) que `main` ne voyait pas :
+  ouvert sur `main`, ce dépôt donnait à croire que le livre n'existait pas.
+- **Avant le retrait** : les 28 commits de la branche ont été fusionnés dans
+  `main`, et la fabrication complète a été rejouée depuis le nouveau dépôt
+  (livret élève 7×10, couverture, corrigé formateur, paquet KDP).
+- Les 17 branches d'agents de ce dépôt ont été refermées : leur travail était
+  déjà dans `main` ou poussé sur `origin`.
+
 ## 2026-08-20 — la ligne CO₂ / R744 dans le logiciel, et sa relecture métier
 
 - **Un module CO₂ / R744 embarqué et autonome** (`pedagogie/co2-r744/`) : treize
