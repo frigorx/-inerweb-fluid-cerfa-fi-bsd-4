@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Une classe : une lettre, puis un chiffre</title><desc id="desc">La lettre dit la toxicité, A faible ou B plus élevée. Le chiffre dit l’inflammabilité, de 1 (aucune propagation de flamme) à 3 (très inflammable), avec 2L pour une flamme lente. Rappel : A ne veut pas dire inoffensif.</desc>
+  <metadata><dc:title>Une classe : une lettre, puis un chiffre</dc:title><dc:description>La lettre dit la toxicité (A faible, B plus élevée), le chiffre dit l’inflammabilité (1, 2L, 2, 3).</dc:description><dc:creator>F. Henninot (direction métier), chaîne inerWeb (dessin SVG original)</dc:creator><dc:source>Création originale inerWeb, pack HabFluide intérieur v2</dc:source><dc:rights>© 2026 Franck Henninot, inerWeb. Tous droits réservés.</dc:rights></metadata>
+  <style>
+  .title{font:700 40px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .panel-title{font:700 34px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .body{font:600 30px Calibri,Arial,sans-serif;fill:#10233C}
+  .small{font:600 26px Calibri,Arial,sans-serif;fill:#10233C}
+  .tiny{font:600 23px Calibri,Arial,sans-serif;fill:#10233C}
+  .big{font:700 88px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .badge-text{font:700 26px Calibri,Arial,sans-serif;fill:white}
+  .panel{fill:white;stroke:#1B3A63;stroke-width:4}
+  .panel.danger{stroke:#C0392B;stroke-width:6;stroke-dasharray:18 12}
+  .badge.orange{fill:#C9451A}
+  .grad{fill:white;stroke:#1B3A63;stroke-width:5}
+  </style><rect width="1200" height="720" fill="white"/>
+  <text x="50" y="72" class="title">Une classe : une lettre, puis un chiffre</text>
+
+  <!-- Colonne lettre = toxicité -->
+  <g><rect x="50" y="120" width="500" height="440" rx="18" class="panel"/>
+    <text x="80" y="172" class="panel-title">La lettre : la toxicité</text>
+    <text x="120" y="300" class="big">A</text>
+    <text x="200" y="270" class="body">toxicité faible</text>
+    <text x="200" y="308" class="tiny">selon la valeur limite de la norme</text>
+    <text x="120" y="460" class="big">B</text>
+    <text x="200" y="430" class="body">toxicité plus élevée</text>
+    <text x="200" y="468" class="tiny">l’ammoniac est un B</text>
+  </g>
+
+  <!-- Colonne chiffre = inflammabilité -->
+  <g><rect x="600" y="120" width="550" height="440" rx="18" class="panel"/>
+    <text x="630" y="172" class="panel-title">Le chiffre : l’inflammabilité</text>
+    <g>
+      <rect x="640" y="205" width="90" height="70" rx="10" class="grad"/>
+      <text x="668" y="253" class="panel-title">1</text>
+      <text x="755" y="250" class="small">ne propage pas de flamme</text>
+      <rect x="640" y="290" width="90" height="70" rx="10" class="grad"/>
+      <text x="655" y="338" class="panel-title">2L</text>
+      <text x="755" y="335" class="small">flamme lente (L : lower)</text>
+      <rect x="640" y="375" width="90" height="70" rx="10" class="grad"/>
+      <text x="668" y="423" class="panel-title">2</text>
+      <text x="755" y="420" class="small">inflammable</text>
+      <rect x="640" y="460" width="90" height="70" rx="10" class="panel danger"/>
+      <text x="668" y="508" class="panel-title">3</text>
+      <text x="755" y="505" class="small">très inflammable — tout hydrocarbure</text>
+    </g>
+  </g>
+
+  <g><rect x="50" y="605" width="640" height="52" rx="26" class="badge orange"/>
+    <text x="76" y="640" class="badge-text">« A » ne veut pas dire inoffensif</text></g>
+  <text x="720" y="640" class="tiny">asphyxie et décomposition ne s’y lisent pas</text>
+</svg>

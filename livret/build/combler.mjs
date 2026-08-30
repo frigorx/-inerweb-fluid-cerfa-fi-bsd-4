@@ -48,16 +48,22 @@ const LIVRET = path.join(ICI, '..');
    ------------------------------------------------------------------ */
 const RESERVE = {
   1: [{ ref: 'pack:consignation-cinq-etapes', legende: 'À dérouler avant de toucher au circuit — l’ordre ne s’inverse pas.' }],
+  2: [{ ref: 'pack:classe-lettre-chiffre', legende: 'La lettre d’abord, le chiffre ensuite — deux dangers distincts.' }],
+  3: [{ ref: 'pack:deux-etages-deux-papiers', legende: 'Du règlement européen à vos deux attestations.' }],
   4: [{ ref: 'pack:categories-champs', legende: 'Repérez votre colonne : elle dit ce que votre attestation couvre.' }],
   5: [{ ref: 'pack:croix-frigoriste-etats', legende: 'La croix se lit organe par organe — l’état du fluide à chaque coin.' }],
   6: [{ ref: 'pack:logph-lecture', legende: 'Le cycle se lit sur le diagramme, jamais de mémoire.' }],
   7: [{ ref: 'pack:mesures-surchauffe-sous-refroidissement', legende: 'Deux écarts qui se mesurent — jamais ne se devinent.' }],
+  8: [{ ref: 'pack:code-nomme-classe-previent', legende: 'Cinq étiquettes, un réflexe : la classe se vérifie sur la FDS.' }],
   9: [{ ref: 'pack:compresseurs-comparatif', legende: 'Quatre technologies sur le terrain, la fonction ne change pas.' }],
+  10: [{ ref: 'pack:condenseur-ecart-encrassement', legende: 'Le même condenseur, propre puis encrassé : l’écart raconte tout.' }],
+  11: [{ ref: 'pack:givre-isole-machine-force', legende: 'Une batterie sous givre n’échange plus — la machine paie.' }],
   12: [{ ref: 'pack:ligne-liquide-protection', legende: 'Du réservoir au détendeur, chaque organe veille sur le suivant.' }],
   13: [{ ref: 'pack:sequence-mise-en-service', legende: 'L’ordre des opérations avant la première charge.' }],
   14: [{ ref: 'pack:recherche-fuite-geste', legende: 'Le geste du contrôle : lent, près du raccord, confirmé.' }],
   15: [{ ref: 'pack:recuperation-securisee', legende: 'Rien ne part à l’air : le fluide rejoint la bouteille, pesé.' }],
   16: [{ ref: 'pack:brasage-balayage-azote', legende: 'L’azote balaie l’intérieur du tube pendant toute la chauffe.' }],
+  17: [{ ref: 'pack:quatre-leviers-energie', legende: 'Quatre choix de conception qui se voient sur la facture.' }],
   18: [{ ref: 'pack:r290-zone-intervention', legende: 'Le propane impose sa zone : balisée, ventilée, sans flamme.' }],
   19: [{ ref: 'pack:co2-nh3-deux-risques', legende: 'Deux fluides naturels, deux dangers — un même réflexe : s’arrêter.' }],
 };

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Quatre leviers d’énergie, avant tout réglage</title><desc id="desc">La condensation flottante laisse la haute pression descendre quand l’air est froid, à condition que le détendeur suive. La variation de vitesse colle la puissance au besoin et supprime les démarrages répétés. Un sous-refroidissement soigné donne plus de froid pour la même compression. Un désurchauffeur reprend la chaleur rejetée pour l’eau chaude.</desc>
+  <metadata><dc:title>Quatre leviers d’énergie, avant tout réglage</dc:title><dc:description>Condensation flottante, variation de vitesse, sous-refroidissement soigné, récupération de chaleur : les quatre leviers de la fiche efficacité.</dc:description><dc:creator>F. Henninot (direction métier), chaîne inerWeb (dessin SVG original)</dc:creator><dc:source>Création originale inerWeb, pack HabFluide intérieur v2</dc:source><dc:rights>© 2026 Franck Henninot, inerWeb. Tous droits réservés.</dc:rights></metadata>
+  <style>
+  .title{font:700 40px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .panel-title{font:700 30px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .small{font:600 24px Calibri,Arial,sans-serif;fill:#10233C}
+  .tiny{font:600 21px Calibri,Arial,sans-serif;fill:#10233C}
+  .num{font:700 44px 'Trebuchet MS',Arial,sans-serif;fill:white}
+  .panel{fill:white;stroke:#1B3A63;stroke-width:4}
+  .rond{fill:#1B3A63}
+  .accent{fill:none;stroke:#C9451A;stroke-width:6;stroke-linecap:round}
+  .flow{fill:none;stroke:#3D7FCA;stroke-width:6;stroke-linecap:round}
+  .vert{fill:none;stroke:#1E7E54;stroke-width:6;stroke-linecap:round}
+  </style><rect width="1200" height="720" fill="white"/>
+  <text x="50" y="72" class="title">Quatre leviers d’énergie, avant tout réglage</text>
+
+  <g><rect x="55" y="115" width="530" height="270" rx="18" class="panel"/>
+    <circle cx="115" cy="175" r="32" class="rond"/><text x="100" y="191" class="num">1</text>
+    <text x="170" y="165" class="panel-title">Condensation flottante</text>
+    <path d="M 170 205 C 260 205 300 250 380 250" class="flow"/>
+    <path d="M 385 215 L 385 285" class="accent"/><text x="400" y="255" class="tiny">HP qui descend</text>
+    <text x="170" y="300" class="small">l’air froid dehors fait baisser la HP —</text>
+    <text x="170" y="335" class="small">à condition que le détendeur suive</text>
+    <text x="170" y="368" class="tiny">un électronique suit ; pas le thermostatique</text>
+  </g>
+
+  <g><rect x="615" y="115" width="530" height="270" rx="18" class="panel"/>
+    <circle cx="675" cy="175" r="32" class="rond"/><text x="660" y="191" class="num">2</text>
+    <text x="730" y="165" class="panel-title">Vitesse variable</text>
+    <path d="M 730 220 L 790 220 M 810 220 L 850 220 M 870 220 L 890 220" class="vert"/>
+    <text x="890" y="228" class="tiny">la puissance suit le besoin</text>
+    <text x="730" y="300" class="small">compresseur et ventilateurs modulent :</text>
+    <text x="730" y="335" class="small">plus de démarrages à répétition</text>
+  </g>
+
+  <g><rect x="55" y="405" width="530" height="270" rx="18" class="panel"/>
+    <circle cx="115" cy="465" r="32" class="rond"/><text x="100" y="481" class="num">3</text>
+    <text x="170" y="455" class="panel-title" style="font-size:27px">Sous-refroidissement soigné</text>
+    <path d="M 170 510 L 380 510" class="flow"/><path d="M 380 510 L 440 510" class="vert"/>
+    <text x="170" y="580" class="small">quelques kelvins de mieux au liquide :</text>
+    <text x="170" y="615" class="small">plus de froid pour la même compression</text>
+  </g>
+
+  <g><rect x="615" y="405" width="530" height="270" rx="18" class="panel"/>
+    <circle cx="675" cy="465" r="32" class="rond"/><text x="660" y="481" class="num">4</text>
+    <text x="730" y="455" class="panel-title">Chaleur récupérée</text>
+    <path d="M 730 515 C 800 515 820 490 880 490" class="accent"/>
+    <text x="900" y="498" class="tiny">vers l’eau chaude</text>
+    <text x="730" y="580" class="small">un désurchauffeur reprend la chaleur</text>
+    <text x="730" y="615" class="small">rejetée au condenseur — rien ne se perd</text>
+  </g>
+</svg>

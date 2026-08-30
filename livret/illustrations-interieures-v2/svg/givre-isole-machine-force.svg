@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Le givre isole — et la machine force</title><desc id="desc">Batterie propre : l’air traverse, l’échange se fait. Batterie givrée : le givre isole les ailettes, la basse pression tombe, le compresseur force pour rien. Le dégivrage se règle entre deux excès : trop fréquent il se paie deux fois, trop rare il laisse le givre s’installer.</desc>
+  <metadata><dc:title>Le givre isole — et la machine force</dc:title><dc:description>Le givre installé isole la batterie, fait tomber la BP et fait forcer le compresseur ; le réglage du dégivrage évite les deux excès.</dc:description><dc:creator>F. Henninot (direction métier), chaîne inerWeb (dessin SVG original)</dc:creator><dc:source>Création originale inerWeb, pack HabFluide intérieur v2</dc:source><dc:rights>© 2026 Franck Henninot, inerWeb. Tous droits réservés.</dc:rights></metadata>
+  <defs><marker id="fg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#3D7FCA"/></marker></defs>
+  <style>
+  .title{font:700 40px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .panel-title{font:700 31px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .body{font:600 28px Calibri,Arial,sans-serif;fill:#10233C}
+  .small{font:600 25px Calibri,Arial,sans-serif;fill:#10233C}
+  .tiny{font:600 22px Calibri,Arial,sans-serif;fill:#10233C}
+  .val{font:700 30px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .val.rouge{fill:#C0392B}
+  .badge-text{font:700 25px Calibri,Arial,sans-serif;fill:white}
+  .panel{fill:white;stroke:#1B3A63;stroke-width:4}
+  .panel.danger{stroke:#C0392B;stroke-width:6;stroke-dasharray:18 12}
+  .batt{fill:none;stroke:#1B3A63;stroke-width:5}
+  .ail{fill:none;stroke:#1B3A63;stroke-width:3}
+  .givre{fill:#F3F7FB;stroke:#84B7EC;stroke-width:4}
+  .flow{fill:none;stroke:#3D7FCA;stroke-width:6;stroke-linecap:round}
+  .flow.bloque{stroke-dasharray:3 14}
+  .badge.orange{fill:#C9451A}
+  </style><rect width="1200" height="720" fill="white"/>
+  <text x="50" y="72" class="title">Le givre isole — et la machine force</text>
+
+  <!-- Propre -->
+  <g><rect x="55" y="120" width="530" height="360" rx="18" class="panel"/>
+    <text x="85" y="170" class="panel-title">Batterie propre</text>
+    <rect x="110" y="205" width="170" height="190" class="batt"/>
+    <line x1="140" y1="205" x2="140" y2="395" class="ail"/><line x1="170" y1="205" x2="170" y2="395" class="ail"/>
+    <line x1="200" y1="205" x2="200" y2="395" class="ail"/><line x1="230" y1="205" x2="230" y2="395" class="ail"/>
+    <path d="M 45 240 L 100 240" class="flow" marker-end="url(#fg)"/>
+    <path d="M 45 300 L 100 300" class="flow" marker-end="url(#fg)"/>
+    <path d="M 45 360 L 100 360" class="flow" marker-end="url(#fg)"/>
+    <path d="M 290 240 L 345 240" class="flow" marker-end="url(#fg)"/>
+    <path d="M 290 300 L 345 300" class="flow" marker-end="url(#fg)"/>
+    <path d="M 290 360 L 345 360" class="flow" marker-end="url(#fg)"/>
+    <text x="380" y="285" class="small">l’air traverse,</text>
+    <text x="380" y="320" class="small">l’échange se fait</text>
+    <text x="85" y="445" class="body">BP en place : <tspan class="val">normale</tspan></text>
+  </g>
+
+  <!-- Givrée -->
+  <g><rect x="615" y="120" width="530" height="360" rx="18" class="panel danger"/>
+    <text x="645" y="170" class="panel-title">Batterie givrée</text>
+    <rect x="670" y="205" width="170" height="190" class="batt"/>
+    <rect x="662" y="198" width="186" height="204" rx="14" class="givre" opacity="0.85"/>
+    <text x="700" y="315" class="val" fill="#3D7FCA">❄ ❄ ❄</text>
+    <path d="M 605 240 L 660 240" class="flow bloque"/>
+    <path d="M 605 300 L 660 300" class="flow bloque"/>
+    <path d="M 605 360 L 660 360" class="flow bloque"/>
+    <text x="880" y="270" class="small">le givre isole,</text>
+    <text x="880" y="305" class="small">l’air ne passe plus,</text>
+    <text x="880" y="340" class="small">l’échange s’étouffe</text>
+    <text x="645" y="445" class="body">la BP tombe : <tspan class="val rouge">le compresseur force</tspan></text>
+  </g>
+
+  <g><rect x="55" y="530" width="1090" height="120" rx="18" class="panel"/>
+    <text x="85" y="578" class="panel-title">Le dégivrage se règle entre deux excès</text>
+    <text x="85" y="620" class="small">trop fréquent : il se paie deux fois — en chauffe, puis en froid à refaire · trop rare : le givre s’installe</text>
+  </g>
+</svg>

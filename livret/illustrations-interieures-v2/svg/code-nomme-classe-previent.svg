@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Le code nomme, la classe prévient</title><desc id="desc">Cinq fluides et leur classe : R-134a A1, R-32 A2L, R-290 A3, R-717 B2L, R-744 A1. Le numéro R ne dit rien du danger : la classe se lit sur la fiche de données de sécurité.</desc>
+  <metadata><dc:title>Le code nomme, la classe prévient</dc:title><dc:description>R-134a A1, R-32 A2L, R-290 A3, R-717 B2L, R-744 A1 : le numéro ne dit pas le danger, la classe se lit sur la FDS.</dc:description><dc:creator>F. Henninot (direction métier), chaîne inerWeb (dessin SVG original)</dc:creator><dc:source>Création originale inerWeb, pack HabFluide intérieur v2</dc:source><dc:rights>© 2026 Franck Henninot, inerWeb. Tous droits réservés.</dc:rights></metadata>
+  <style>
+  .title{font:700 40px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .code{font:700 40px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .classe{font:700 44px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .classe.rouge{fill:#C0392B}
+  .small{font:600 25px Calibri,Arial,sans-serif;fill:#10233C}
+  .tiny{font:600 22px Calibri,Arial,sans-serif;fill:#10233C}
+  .badge-text{font:700 26px Calibri,Arial,sans-serif;fill:white}
+  .etq{fill:white;stroke:#1B3A63;stroke-width:4}
+  .etq.danger{stroke:#C0392B;stroke-width:6;stroke-dasharray:18 12}
+  .badge.orange{fill:#C9451A}
+  .sep{fill:none;stroke:#D6DEE7;stroke-width:3}
+  </style><rect width="1200" height="720" fill="white"/>
+  <text x="50" y="72" class="title">Le code nomme, la classe prévient</text>
+
+  <!-- 5 étiquettes de bouteille : code → classe -->
+  <g><rect x="55" y="130" width="205" height="330" rx="16" class="etq"/>
+    <text x="85" y="205" class="code">R-134a</text><line x1="85" y1="255" x2="230" y2="255" class="sep"/>
+    <text x="85" y="330" class="classe">A1</text>
+    <text x="85" y="410" class="tiny">fluoré courant</text></g>
+  <g><rect x="278" y="130" width="205" height="330" rx="16" class="etq"/>
+    <text x="308" y="205" class="code">R-32</text><line x1="308" y1="255" x2="453" y2="255" class="sep"/>
+    <text x="308" y="330" class="classe">A2L</text>
+    <text x="308" y="410" class="tiny">flamme lente</text></g>
+  <g><rect x="501" y="130" width="205" height="330" rx="16" class="etq danger"/>
+    <text x="531" y="205" class="code">R-290</text><line x1="531" y1="255" x2="676" y2="255" class="sep"/>
+    <text x="531" y="330" class="classe rouge">A3</text>
+    <text x="531" y="410" class="tiny">le piège : pas A2L</text></g>
+  <g><rect x="724" y="130" width="205" height="330" rx="16" class="etq"/>
+    <text x="754" y="205" class="code">R-717</text><line x1="754" y1="255" x2="899" y2="255" class="sep"/>
+    <text x="754" y="330" class="classe">B2L</text>
+    <text x="754" y="410" class="tiny">ammoniac — toxique</text></g>
+  <g><rect x="947" y="130" width="205" height="330" rx="16" class="etq"/>
+    <text x="977" y="205" class="code">R-744</text><line x1="977" y1="255" x2="1122" y2="255" class="sep"/>
+    <text x="977" y="330" class="classe">A1</text>
+    <text x="977" y="410" class="tiny">CO₂ — pression, anoxie</text></g>
+
+  <text x="60" y="530" class="small">Le numéro R ne classe rien : deux A1 n’ont pas les mêmes dangers.</text>
+  <g><rect x="55" y="575" width="700" height="52" rx="26" class="badge orange"/>
+    <text x="81" y="610" class="badge-text">La classe se lit sur la FDS — jamais par analogie</text></g>
+</svg>

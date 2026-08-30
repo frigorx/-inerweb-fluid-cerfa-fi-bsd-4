@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Deux étages de règles, deux papiers</title><desc id="desc">Le règlement européen (UE) 2024/573 s’applique directement ; l’arrêté français du 21 novembre 2025 précise son application. En bas, deux papiers distincts : l’attestation d’aptitude pour la personne, l’attestation de capacité pour l’entreprise.</desc>
+  <metadata><dc:title>Deux étages de règles, deux papiers</dc:title><dc:description>Règlement (UE) 2024/573 puis arrêté du 21 novembre 2025 ; attestation d’aptitude (la personne) et attestation de capacité (l’entreprise).</dc:description><dc:creator>F. Henninot (direction métier), chaîne inerWeb (dessin SVG original)</dc:creator><dc:source>Création originale inerWeb, pack HabFluide intérieur v2</dc:source><dc:rights>© 2026 Franck Henninot, inerWeb. Tous droits réservés.</dc:rights></metadata>
+  <defs><marker id="fl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#3D7FCA"/></marker></defs>
+  <style>
+  .title{font:700 40px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .panel-title{font:700 33px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .body{font:600 29px Calibri,Arial,sans-serif;fill:#10233C}
+  .small{font:600 25px Calibri,Arial,sans-serif;fill:#10233C}
+  .tiny{font:600 22px Calibri,Arial,sans-serif;fill:#10233C}
+  .badge-text{font:700 25px Calibri,Arial,sans-serif;fill:white}
+  .panel{fill:white;stroke:#1B3A63;stroke-width:4}
+  .euro{fill:#F3F7FB;stroke:#1B3A63;stroke-width:5}
+  .flow{fill:none;stroke:#3D7FCA;stroke-width:7;stroke-linecap:round}
+  .badge.navy{fill:#1B3A63}.badge.orange{fill:#C9451A}
+  </style><rect width="1200" height="720" fill="white"/>
+  <text x="50" y="72" class="title">Deux étages de règles, deux papiers</text>
+
+  <!-- Étage européen -->
+  <g><rect x="150" y="115" width="900" height="120" rx="18" class="euro"/>
+    <text x="185" y="165" class="panel-title">Règlement (UE) 2024/573</text>
+    <text x="185" y="207" class="small">un règlement, pas une directive : il s’applique directement, dans toute l’Union</text>
+  </g>
+  <path d="M 600 235 L 600 285" class="flow" marker-end="url(#fl)"/>
+
+  <!-- Étage français -->
+  <g><rect x="150" y="290" width="900" height="120" rx="18" class="panel"/>
+    <text x="185" y="340" class="panel-title">Arrêté du 21 novembre 2025</text>
+    <text x="185" y="382" class="small">le texte français : comment appliquer le règlement sur le terrain</text>
+  </g>
+  <path d="M 420 410 L 340 470" class="flow" marker-end="url(#fl)"/>
+  <path d="M 780 410 L 860 470" class="flow" marker-end="url(#fl)"/>
+
+  <!-- Les deux papiers -->
+  <g><rect x="80" y="480" width="490" height="160" rx="18" class="panel"/>
+    <text x="112" y="532" class="panel-title">Attestation d’aptitude</text>
+    <text x="112" y="574" class="body">pour VOUS, la personne</text>
+    <text x="112" y="612" class="tiny">exigée pour les opérations réglementées</text>
+  </g>
+  <g><rect x="630" y="480" width="490" height="160" rx="18" class="panel"/>
+    <text x="662" y="532" class="panel-title">Attestation de capacité</text>
+    <text x="662" y="574" class="body">pour l’ENTREPRISE</text>
+    <text x="662" y="612" class="tiny">l’un ne remplace pas l’autre</text>
+  </g>
+</svg>

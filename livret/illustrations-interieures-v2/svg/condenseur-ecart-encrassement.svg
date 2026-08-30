@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">L’écart qui annonce l’encrassement</title><desc id="desc">Deux relevés du même condenseur à air : batterie propre, l’écart entre la température de condensation et l’air d’entrée reste stable ; batterie encrassée, l’écart grandit à charge égale, bien avant que le pressostat ne coupe. Chaque kelvin gagné sur la condensation vaut environ 2 à 3 % de consommation.</desc>
+  <metadata><dc:title>L’écart qui annonce l’encrassement</dc:title><dc:description>Un écart température de condensation / air d’entrée qui grandit à charge égale annonce l’encrassement ; chaque kelvin vaut 2 à 3 % de consommation.</dc:description><dc:creator>F. Henninot (direction métier), chaîne inerWeb (dessin SVG original)</dc:creator><dc:source>Création originale inerWeb, pack HabFluide intérieur v2</dc:source><dc:rights>© 2026 Franck Henninot, inerWeb. Tous droits réservés.</dc:rights></metadata>
+  <defs><marker id="fc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#3D7FCA"/></marker></defs>
+  <style>
+  .title{font:700 40px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .panel-title{font:700 31px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .body{font:600 28px Calibri,Arial,sans-serif;fill:#10233C}
+  .small{font:600 25px Calibri,Arial,sans-serif;fill:#10233C}
+  .tiny{font:600 22px Calibri,Arial,sans-serif;fill:#10233C}
+  .val{font:700 32px 'Trebuchet MS',Arial,sans-serif;fill:#1B3A63}
+  .val.rouge{fill:#C0392B}
+  .badge-text{font:700 26px Calibri,Arial,sans-serif;fill:white}
+  .panel{fill:white;stroke:#1B3A63;stroke-width:4}
+  .panel.danger{stroke:#C0392B;stroke-width:6;stroke-dasharray:18 12}
+  .batt{fill:none;stroke:#1B3A63;stroke-width:5}
+  .ail{fill:none;stroke:#1B3A63;stroke-width:3}
+  .ail.sale{stroke:#C9451A;stroke-width:5}
+  .flow{fill:none;stroke:#3D7FCA;stroke-width:6;stroke-linecap:round}
+  .flow.faible{stroke-dasharray:4 12}
+  .badge.green{fill:#1E7E54}.badge.orange{fill:#C9451A}
+  </style><rect width="1200" height="720" fill="white"/>
+  <text x="50" y="72" class="title">L’écart qui annonce l’encrassement</text>
+
+  <!-- Batterie propre -->
+  <g><rect x="55" y="120" width="530" height="380" rx="18" class="panel"/>
+    <text x="85" y="170" class="panel-title">Batterie propre</text>
+    <rect x="105" y="205" width="180" height="200" class="batt"/>
+    <line x1="130" y1="205" x2="130" y2="405" class="ail"/><line x1="160" y1="205" x2="160" y2="405" class="ail"/>
+    <line x1="190" y1="205" x2="190" y2="405" class="ail"/><line x1="220" y1="205" x2="220" y2="405" class="ail"/>
+    <line x1="250" y1="205" x2="250" y2="405" class="ail"/>
+    <path d="M 40 250 L 95 250" class="flow" marker-end="url(#fc)"/>
+    <path d="M 40 310 L 95 310" class="flow" marker-end="url(#fc)"/>
+    <path d="M 40 370 L 95 370" class="flow" marker-end="url(#fc)"/>
+    <text x="320" y="250" class="small">air d’entrée</text>
+    <text x="320" y="288" class="val">32 °C</text>
+    <text x="320" y="345" class="small">condensation</text>
+    <text x="320" y="383" class="val">44 °C</text>
+    <text x="85" y="465" class="body">écart stable : <tspan class="val">12 K</tspan></text>
+  </g>
+
+  <!-- Batterie encrassée -->
+  <g><rect x="615" y="120" width="530" height="380" rx="18" class="panel danger"/>
+    <text x="645" y="170" class="panel-title">Batterie encrassée — même charge</text>
+    <rect x="665" y="205" width="180" height="200" class="batt"/>
+    <line x1="690" y1="205" x2="690" y2="405" class="ail sale"/><line x1="720" y1="205" x2="720" y2="405" class="ail sale"/>
+    <line x1="750" y1="205" x2="750" y2="405" class="ail sale"/><line x1="780" y1="205" x2="780" y2="405" class="ail sale"/>
+    <line x1="810" y1="205" x2="810" y2="405" class="ail sale"/>
+    <path d="M 600 250 L 655 250" class="flow faible" marker-end="url(#fc)"/>
+    <path d="M 600 310 L 655 310" class="flow faible" marker-end="url(#fc)"/>
+    <path d="M 600 370 L 655 370" class="flow faible" marker-end="url(#fc)"/>
+    <text x="880" y="250" class="small">air d’entrée</text>
+    <text x="880" y="288" class="val">32 °C</text>
+    <text x="880" y="345" class="small">condensation</text>
+    <text x="880" y="383" class="val rouge">51 °C</text>
+    <text x="645" y="465" class="body">l’écart grandit : <tspan class="val rouge">19 K</tspan></text>
+  </g>
+
+  <text x="60" y="555" class="small">À charge égale, un écart qui grandit d’un relevé à l’autre annonce l’encrassement.</text>
+  <g><rect x="55" y="590" width="740" height="52" rx="26" class="badge green"/>
+    <text x="81" y="625" class="badge-text">Chaque kelvin gagné ≈ 2 à 3 % de consommation en moins</text></g>
+  <text x="60" y="688" class="tiny">Valeurs d’exemple pour lire l’écart — le rapport d’état note toujours la mesure ET ses conditions.</text>
+</svg>

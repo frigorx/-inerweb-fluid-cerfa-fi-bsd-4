@@ -959,6 +959,22 @@
   "citations": 1,
   "animee": false
  },
+ "pack:classe-lettre-chiffre": {
+  "fichier": "pack-classe-lettre-chiffre.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/classe-lettre-chiffre.svg",
+  "citations": 1,
+  "animee": false
+ },
+ "pack:deux-etages-deux-papiers": {
+  "fichier": "pack-deux-etages-deux-papiers.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/deux-etages-deux-papiers.svg",
+  "citations": 1,
+  "animee": false
+ },
  "pack:categories-champs": {
   "fichier": "pack-categories-champs.png",
   "largeur": 2400,
@@ -991,11 +1007,35 @@
   "citations": 1,
   "animee": false
  },
+ "pack:code-nomme-classe-previent": {
+  "fichier": "pack-code-nomme-classe-previent.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/code-nomme-classe-previent.svg",
+  "citations": 1,
+  "animee": false
+ },
  "pack:compresseurs-comparatif": {
   "fichier": "pack-compresseurs-comparatif.png",
   "largeur": 2400,
   "hauteur": 1440,
   "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/compresseurs-comparatif.svg",
+  "citations": 1,
+  "animee": false
+ },
+ "pack:condenseur-ecart-encrassement": {
+  "fichier": "pack-condenseur-ecart-encrassement.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/condenseur-ecart-encrassement.svg",
+  "citations": 1,
+  "animee": false
+ },
+ "pack:givre-isole-machine-force": {
+  "fichier": "pack-givre-isole-machine-force.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/givre-isole-machine-force.svg",
   "citations": 1,
   "animee": false
  },
@@ -1036,6 +1076,14 @@
   "largeur": 2400,
   "hauteur": 1440,
   "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/brasage-balayage-azote.svg",
+  "citations": 1,
+  "animee": false
+ },
+ "pack:quatre-leviers-energie": {
+  "fichier": "pack-quatre-leviers-energie.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/quatre-leviers-energie.svg",
   "citations": 1,
   "animee": false
  },

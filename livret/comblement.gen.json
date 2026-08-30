@@ -4,6 +4,16 @@
   "h": 75,
   "legende": "À dérouler avant de toucher au circuit — l’ordre ne s’inverse pas."
  },
+ "2-1": {
+  "ref": "pack:classe-lettre-chiffre",
+  "h": 75,
+  "legende": "La lettre d’abord, le chiffre ensuite — deux dangers distincts."
+ },
+ "3-1": {
+  "ref": "pack:deux-etages-deux-papiers",
+  "h": 75,
+  "legende": "Du règlement européen à vos deux attestations."
+ },
  "4-6": {
   "ref": "pack:categories-champs",
   "h": 75,
@@ -24,10 +34,25 @@
   "h": 75,
   "legende": "Deux écarts qui se mesurent — jamais ne se devinent."
  },
+ "8-1": {
+  "ref": "pack:code-nomme-classe-previent",
+  "h": 75,
+  "legende": "Cinq étiquettes, un réflexe : la classe se vérifie sur la FDS."
+ },
  "9-8": {
   "ref": "pack:compresseurs-comparatif",
   "h": 75,
   "legende": "Quatre technologies sur le terrain, la fonction ne change pas."
+ },
+ "10-8": {
+  "ref": "pack:condenseur-ecart-encrassement",
+  "h": 75,
+  "legende": "Le même condenseur, propre puis encrassé : l’écart raconte tout."
+ },
+ "11-8": {
+  "ref": "pack:givre-isole-machine-force",
+  "h": 75,
+  "legende": "Une batterie sous givre n’échange plus — la machine paie."
  },
  "12-1": {
   "ref": "pack:ligne-liquide-protection",
@@ -53,6 +78,11 @@
   "ref": "pack:brasage-balayage-azote",
   "h": 75,
   "legende": "L’azote balaie l’intérieur du tube pendant toute la chauffe."
+ },
+ "17-6": {
+  "ref": "pack:quatre-leviers-energie",
+  "h": 75,
+  "legende": "Quatre choix de conception qui se voient sur la facture."
  },
  "18-8": {
   "ref": "pack:r290-zone-intervention",
