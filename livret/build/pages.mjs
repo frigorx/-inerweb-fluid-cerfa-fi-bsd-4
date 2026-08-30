@@ -94,6 +94,12 @@ const ech = (s) => String(s)
 /* Le même avertissement, mais en tête d'encadré : là c'est un signal, pas
    un mot. On le dessine — un tracé s'imprime net à toute taille, et il
    passe en gris franc sur une presse noir et blanc. */
+/* Le badge du QCM : une case cochée, dessinée — le signal que Franck
+   réclamait pour qu'un QCM se reconnaisse d'un coup d'œil. */
+const PICTO_QCM = `<svg class="picto-qcm" viewBox="0 0 20 20" aria-hidden="true">
+  <rect x="1.4" y="1.4" width="17.2" height="17.2" rx="3.2" fill="none" stroke="currentColor" stroke-width="2.1"/>
+  <path d="M5.2 10.4 8.6 13.8 14.9 6.6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
 const PICTO_PIEGE = `<svg class="picto-piege" viewBox="0 0 20 18" aria-hidden="true">
   <path d="M10 1.7 19.1 16.5H0.9z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>
   <path d="M10 6.9v4.4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
@@ -351,14 +357,26 @@ export const construireFlux = () => {
    demi-largeur : au-delà, il repasse à la ligne et la question devient
    plus haute qu'en pleine largeur. À 14 pt, la bascule est vers 30. */
   const court = (q) => q.choix.every((x) => x.length <= 30);
+      /* Le QCM se VOIT (remarque de F. Henninot, 30/08 soir) : un cadre
+         bleu sur fond pâle, un badge QCM, chaque question dans sa carte
+         blanche, des cases à cocher franches. Et la correspondance
+         papier/numérique : le QR DANS le cadre ouvre LES MÊMES
+         questions, corrigées à la validation — la série complète du
+         chapitre reste en marge, comme marche au-dessus. */
+      const slugQcm = QR.some((x) => x.slug === `q-${ch.qr}`) ? `q-${ch.qr}` : '';
       pousse(`<section class="qcm">
-        <h3 class="sect-t"><span class="sect-num">1</span>Testez-vous d’abord —
-          ${questions.length} questions${qrm(revDe(ch), 'e')}</h3>
-        <p class="sect-intro">Répondez <b>avant</b> de lire : vous saurez tout de suite ce que vous savez déjà,
-        et ce qui mérite votre lecture. Pour vous corriger et vous entraîner, la série en ligne
-        du chapitre vous attend — le code est en marge.</p>
+        <div class="qcm-tete">
+          <div>
+            <h3 class="sect-t"><span class="sect-num">1</span>${PICTO_QCM}QCM — Testez-vous d’abord${qrm(revDe(ch), 'e')}</h3>
+            <p class="sect-intro">Cochez <b>avant</b> de lire : vous saurez ce qui mérite votre lecture.
+            Le code ci-contre corrige ce QCM sur votre téléphone ; la série complète du chapitre est en marge.</p>
+          </div>
+          ${slugQcm ? `<div class="qcm-qr"><img src="${qrImg(slugQcm)}" alt="" width="600" height="600">
+            <span class="qcm-qr-txt"><b>Ce QCM, corrigé</b>en ligne<span class="qcm-qr-url">inerweb.fr/f/<br>${slugQcm}</span></span></div>` : ''}
+        </div>
         ${questions.map((q, i) => `<div class="q"><p class="q-e"><span class="q-n">${i + 1}</span>${ech(q.enonce)}</p>
           <ul class="q-c${court(q) ? ' deux' : ''}">${q.choix.map((ch2, j) => `<li><span class="case"></span><span class="lettre">${String.fromCharCode(65 + j)}</span>${ech(ch2)}</li>`).join('')}</ul></div>`).join('')}
+        <div class="qcm-note">Ma note à ce QCM <span class="note-case"></span> / ${questions.length}</div>
       </section>`, meta); /* la rupture de page est portée par .qcm, pas ici :
                              deux ruptures d'affilée feraient une page blanche */
 

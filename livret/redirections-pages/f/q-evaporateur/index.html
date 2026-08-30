@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>QCM du chapitre 11 — L évaporateur — inerWeb HabFluide</title>
+<style>
+:root{--bleu:#1b3a63;--orange:#ff6b35;--mut:#5a6472;--ligne:#d6dee7;--vert:#2e7d4f;--rouge:#c9451a;--pale:#f4f7fa}
+body{font-family:Calibri,Carlito,'Segoe UI',sans-serif;color:var(--bleu);background:var(--pale);margin:0;min-height:100vh;display:flex;flex-direction:column}
+header{background:#fff;border-bottom:2px solid var(--orange);padding:10px 16px;font-weight:700}
+header .hab{color:var(--orange)}
+main{flex:1;max-width:720px;width:100%;margin:0 auto;padding:16px;box-sizing:border-box}
+h1{font-size:1.15rem;line-height:1.3;margin:6px 0 4px}
+.note-page{color:var(--mut);font-size:.9rem;margin:0 0 14px}
+.q{background:#fff;border:1px solid var(--ligne);border-radius:10px;padding:12px 14px;margin:0 0 12px}
+.q.juste{border-color:var(--vert);border-width:2px}
+.q.faux{border-color:var(--rouge);border-width:2px}
+.q-e{font-weight:700;margin:0 0 10px}
+.q-e .n{display:inline-grid;place-items:center;width:1.5em;height:1.5em;background:var(--orange);color:#fff;border-radius:50%;margin-right:8px;font-size:.9em}
+label{display:flex;gap:10px;align-items:flex-start;padding:7px 8px;border-radius:8px;cursor:pointer}
+label:hover{background:var(--pale)}
+input[type=radio]{width:1.15em;height:1.15em;margin:2px 0 0;accent-color:var(--bleu);flex:none}
+.verdict{font-weight:700;margin:8px 0 0;display:none}
+.q.juste .verdict.ok{display:block;color:var(--vert)}
+.q.faux .verdict.ko{display:block;color:var(--rouge)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+.actions button,.actions a{font:inherit;font-weight:700;border-radius:8px;padding:11px 18px;cursor:pointer;text-decoration:none;text-align:center}
+.actions button{background:var(--bleu);color:#fff;border:none}
+.actions a{background:#fff;color:var(--bleu);border:1.5px solid var(--bleu)}
+#score{font-size:1.2rem;font-weight:700;margin:8px 0;display:none}
+footer{color:var(--mut);font-size:.82rem;padding:10px 16px;text-align:center}
+footer a{color:var(--mut)}
+</style>
+</head>
+<body>
+<header><span class="hab">❄</span> inerWeb · HabFluide — le QCM du livre</header>
+<main>
+<h1>QCM du chapitre 11 — L évaporateur</h1>
+<p class="note-page">Les mêmes questions que dans le livre, dans le même ordre. Répondez, puis corrigez — votre note reste sur cet appareil.</p>
+<form id="f">
+<div class="q" data-b="2">
+<p class="q-e"><span class="n">1</span>Un pressostat basse pression (BP) déclenche et arrête le compresseur. Quelle peut être la cause ?</p>
+<label><input type="radio" name="q0" value="0"><span><b>A</b> — Compresseur trop puissant pour l'installation en place</span></label>
+<label><input type="radio" name="q0" value="1"><span><b>B</b> — Excès de fluide frigorigène accumulé dans la bouteille</span></label>
+<label><input type="radio" name="q0" value="2"><span><b>C</b> — Manque de fluide, évaporateur givré, ou filtre bouché</span></label>
+<label><input type="radio" name="q0" value="3"><span><b>D</b> — Condenseur encrassé qui ferait chuter la basse pression</span></label>
+<p class="verdict ok">✔ Juste.</p>
+<p class="verdict ko">✘ La bonne réponse était <b class="rep"></b>.</p>
+</div>
+<div class="q" data-b="3">
+<p class="q-e"><span class="n">2</span>Dans quel organe le fluide absorbe-t-il la chaleur de l'espace à refroidir ?</p>
+<label><input type="radio" name="q1" value="0"><span><b>A</b> — Le compresseur</span></label>
+<label><input type="radio" name="q1" value="1"><span><b>B</b> — Le condenseur</span></label>
+<label><input type="radio" name="q1" value="2"><span><b>C</b> — Le détendeur</span></label>
+<label><input type="radio" name="q1" value="3"><span><b>D</b> — L'évaporateur</span></label>
+<p class="verdict ok">✔ Juste.</p>
+<p class="verdict ko">✘ La bonne réponse était <b class="rep"></b>.</p>
+</div>
+<div class="q" data-b="0">
+<p class="q-e"><span class="n">3</span>Sur une installation en fonctionnement, vous constatez que la ligne d'aspiration est chaude. Qu'est-ce que cela peut indiquer ?</p>
+<label><input type="radio" name="q2" value="0"><span><b>A</b> — Manque de fluide frigorigène ou problème de détendeur (surchauffe trop importante)</span></label>
+<label><input type="radio" name="q2" value="1"><span><b>B</b> — Excès de fluide frigorigène : le condenseur renvoie du liquide chaud à l'aspiration</span></label>
+<label><input type="radio" name="q2" value="2"><span><b>C</b> — Compresseur défectueux dont les clapets réchauffent le gaz aspiré</span></label>
+<label><input type="radio" name="q2" value="3"><span><b>D</b> — L'installation fonctionne correctement : c'est le signe d'une surchauffe bien réglée</span></label>
+<p class="verdict ok">✔ Juste.</p>
+<p class="verdict ko">✘ La bonne réponse était <b class="rep"></b>.</p>
+</div>
+<div class="q" data-b="1">
+<p class="q-e"><span class="n">4</span>Vous constatez que l'évaporateur givre complètement en fonctionnement. Quelle peut être la cause ?</p>
+<label><input type="radio" name="q3" value="0"><span><b>A</b> — Excès de fluide frigorigène dans le circuit basse pression</span></label>
+<label><input type="radio" name="q3" value="1"><span><b>B</b> — Manque de débit d'air, filtre à air encrassé, ou ventilateurs arrêtés</span></label>
+<label><input type="radio" name="q3" value="2"><span><b>C</b> — Compresseur trop puissant par rapport au volume de la chambre à refroidir</span></label>
+<label><input type="radio" name="q3" value="3"><span><b>D</b> — Condenseur encrassé qui fait monter la haute pression</span></label>
+<p class="verdict ok">✔ Juste.</p>
+<p class="verdict ko">✘ La bonne réponse était <b class="rep"></b>.</p>
+</div>
+<div class="q" data-b="2">
+<p class="q-e"><span class="n">5</span>Une surchauffe insuffisante à l'aspiration du compresseur risque de provoquer :</p>
+<label><input type="radio" name="q4" value="0"><span><b>A</b> — Un bruit de cavitation</span></label>
+<label><input type="radio" name="q4" value="1"><span><b>B</b> — Un manque de puissance</span></label>
+<label><input type="radio" name="q4" value="2"><span><b>C</b> — Des coups de liquide</span></label>
+<label><input type="radio" name="q4" value="3"><span><b>D</b> — Une surchauffe du moteur</span></label>
+<p class="verdict ok">✔ Juste.</p>
+<p class="verdict ko">✘ La bonne réponse était <b class="rep"></b>.</p>
+</div>
+<div class="q" data-b="3">
+<p class="q-e"><span class="n">6</span>Vous observez du givre sur la ligne d'aspiration jusqu'au compresseur. Que peut indiquer ce symptôme ?</p>
+<label><input type="radio" name="q5" value="0"><span><b>A</b> — Manque de fluide frigorigène dans tout le circuit</span></label>
+<label><input type="radio" name="q5" value="1"><span><b>B</b> — Condenseur encrassé du côté de l'air extérieur</span></label>
+<label><input type="radio" name="q5" value="2"><span><b>C</b> — L'installation fonctionne parfaitement ainsi</span></label>
+<label><input type="radio" name="q5" value="3"><span><b>D</b> — Retour de liquide au compresseur (surchauffe insuffisante)</span></label>
+<p class="verdict ok">✔ Juste.</p>
+<p class="verdict ko">✘ La bonne réponse était <b class="rep"></b>.</p>
+</div>
+</form>
+<p id="score"></p>
+<div class="actions">
+<button id="corriger" type="button">Corriger mes réponses</button>
+<a href="https://inerweb.fr/f/rev-g8">10 questions de plus, niveau examen →</a>
+</div>
+</main>
+<footer>Du livre « HAB-FLUIDE — partie théorique » · <a href="https://inerweb.fr/f/mes-resultats">mes résultats</a></footer>
+<script>
+(function () {
+  var qs = Array.prototype.slice.call(document.querySelectorAll('.q'));
+  document.getElementById('corriger').addEventListener('click', function () {
+    var bons = 0;
+    qs.forEach(function (q, i) {
+      var b = Number(q.getAttribute('data-b'));
+      var coche = q.querySelector('input:checked');
+      var v = coche ? Number(coche.value) : -1;
+      q.classList.remove('juste', 'faux');
+      q.classList.add(v === b ? 'juste' : 'faux');
+      if (v === b) { bons++; }
+      else {
+        var lab = q.querySelectorAll('label')[b];
+        q.querySelector('.rep').textContent = lab ? lab.textContent.trim() : '';
+      }
+    });
+    var s = document.getElementById('score');
+    s.style.display = 'block';
+    s.textContent = 'Votre note : ' + bons + ' / ' + qs.length +
+      ' — à reporter sur la page du livre.';
+    try {
+      var k = 'inerweb_qcm_papier';
+      var o = JSON.parse(localStorage.getItem(k) || '{}');
+      o["q-evaporateur"] = { bons: bons, sur: qs.length, chapitre: 11 };
+      localStorage.setItem(k, JSON.stringify(o));
+    } catch (err) { /* navigation privée : pas de mémoire, la note s'affiche quand même */ }
+  });
+})();
+</script>
+</body>
+</html>

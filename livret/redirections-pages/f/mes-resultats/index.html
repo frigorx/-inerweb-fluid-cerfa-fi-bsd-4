@@ -39,6 +39,11 @@ footer a{color:var(--mut)}
 <table id="series"><tr><th>Chapitre</th><th style="text-align:right">Note</th></tr></table>
 </section>
 <section>
+<h2>Les QCM du livre</h2>
+<p class="note-page">Les « Testez-vous » de chaque chapitre, joués depuis leur QR.</p>
+<div id="qcm"><p class="rien">Aucun QCM du livre joué sur cet appareil pour l’instant.</p></div>
+</section>
+<section>
 <h2>Mes compétences</h2>
 <p class="note-page">Code par code, d’après vos réponses : acquise, fragile, ou à revoir.</p>
 <div id="comp"><p class="rien">Aucune question corrigée sur cet appareil pour l’instant — lancez une série depuis un QR « des questions ? » du livre.</p></div>
@@ -51,6 +56,8 @@ footer a{color:var(--mut)}
   var hist = {}, comp = {};
   try { hist = JSON.parse(localStorage.getItem('pilote_hist_fluides-habilitation') || '{}'); } catch (e) {}
   try { comp = JSON.parse(localStorage.getItem('pilote_comp_fluides-habilitation') || '{}'); } catch (e) {}
+  var qcm = {};
+  try { qcm = JSON.parse(localStorage.getItem('inerweb_qcm_papier') || '{}'); } catch (e) {}
   var t = document.getElementById('series');
   SERIES.forEach(function (s) {
     var tr = document.createElement('tr');
@@ -61,6 +68,18 @@ footer a{color:var(--mut)}
       '<td class="note">' + note + '</td>';
     t.appendChild(tr);
   });
+  var slugsQcm = Object.keys(qcm);
+  if (slugsQcm.length) {
+    var hq = '<table><tr><th>Chapitre</th><th style="text-align:right">Note</th></tr>';
+    slugsQcm.map(function (s) { return qcm[s]; })
+      .sort(function (a, b) { return (a.chapitre || 0) - (b.chapitre || 0); })
+      .forEach(function (r) {
+        hq += '<tr><td><span class="num">' + (r.chapitre || '?') + '</span> Testez-vous</td>' +
+          '<td class="note">' + r.bons + ' / ' + r.sur + '</td></tr>';
+      });
+    hq += '</table>';
+    document.getElementById('qcm').innerHTML = hq;
+  }
   var codes = Object.keys(comp).sort(function (a, b) {
     return a.localeCompare(b, 'fr', { numeric: true });
   });

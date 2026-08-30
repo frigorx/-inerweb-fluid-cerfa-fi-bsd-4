@@ -110,7 +110,10 @@ MARQUEUR_SOM = re.compile(r'@@SOM\|(\d+)@@')
 # La marge de renvois : « @@QR|surchauffe-2|l@@ » — le slug de l'alias
 # et un type (c chapitre, l leçon, a animation, e entraînement) ; le
 # CONTENU du renvoi, lui, vit dans le manifeste qr.gen.json.
-MARQUEUR_QR = re.compile(r'@@QR\|([a-z0-9-]+)\|([clae])@@')
+# Le slug peut arriver CÉSURÉ à son tiret (« rev-⏎g12 » en fin de titre) :
+# le motif tolère le saut de ligne, la pose recolle avant de chercher —
+# sans quoi dix-neuf renvois de QCM disparaissaient sans un mot.
+MARQUEUR_QR = re.compile(r'@@QR\|([a-z0-9\n-]+)\|([clae])@@')
 
 
 def contexte_des_pages(doc):
@@ -311,8 +314,12 @@ def finir(chemin):
         occupes = []          # les intervalles déjà posés, pour le repli
         # Chaque marqueur de la page, une fois, trié par hauteur.
         a_poser = []
-        for slug, type_ in dict.fromkeys(MARQUEUR_QR.findall(texte)):
+        for brut, type_ in dict.fromkeys(MARQUEUR_QR.findall(texte)):
+            slug = brut.replace('\n', '')
             zones = page.search_for('@@QR|%s|%s@@' % (slug, type_))
+            if not zones and '\n' in brut:
+                # rendu césuré : la needle doit porter le saut tel quel
+                zones = page.search_for('@@QR|%s|%s@@' % (brut, type_))
             if zones:
                 a_poser.append((zones[0].y0, slug))
         a_poser.sort()

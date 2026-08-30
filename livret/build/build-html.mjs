@@ -179,7 +179,22 @@ h2,h3,h4,.sect-t,.lecon-t,.page-t,.sect-intro{break-after:avoid;page-break-after
    alors comme un tout. On ne lui interdit PAS de couler sur la page
    suivante : le lui interdire laisserait une page blanche derrière lui
    dès qu'il dépasse d'une ligne. Chaque question, elle, reste entière. */
-.qcm{break-before:page;page-break-before:always}
+/* Le QCM se VOIT : cadre bleu sur fond pâle, badge case-cochée, chaque
+   question dans sa carte blanche, cases franches. (Remarque de
+   F. Henninot, 30/08 soir : « ça ne saute pas aux yeux que c'est un
+   QCM » — maintenant si.) */
+.qcm{break-before:page;page-break-before:always;border:1.4pt solid var(--bleu);
+  border-radius:2.5mm;background:var(--pale);padding:4mm 4.5mm 3.4mm}
+.qcm-tete{display:flex;justify-content:space-between;align-items:flex-start;gap:4mm}
+.qcm-tete .sect-intro{margin-bottom:2.6mm}
+.qcm-qr{flex:none;display:flex;gap:2.2mm;align-items:flex-start;background:#fff;
+  border:.7pt solid var(--ligne);border-radius:1.6mm;padding:2mm}
+.qcm-qr img{width:16mm;height:16mm;display:block}
+.qcm-qr-txt{font-size:.68em;line-height:1.4;color:var(--txt);display:flex;flex-direction:column}
+.qcm-qr-url{color:var(--bleu);font-weight:700;margin-top:.8mm}
+.picto-qcm{width:.95em;height:.95em;color:var(--orange);margin-right:1.6mm;vertical-align:-.12em}
+.qcm-note{text-align:right;font-weight:700;margin-top:1mm}
+.qcm-note .note-case{display:inline-block;width:9mm;border-bottom:1pt solid var(--bleu);height:1em;vertical-align:-.2em}
 .q-c.deux{display:grid;grid-template-columns:1fr 1fr;column-gap:3mm}
 
 .sect-t{display:flex;align-items:center;gap:2.6mm;
@@ -249,14 +264,14 @@ figure figcaption{margin-top:1.6mm;text-align:center;font-style:italic;font-size
 .picto-piege{width:4.6mm;height:4.2mm;flex:none}
 
 /* ---------- Questions ---------- */
-.q{margin-bottom:calc(var(--air) * 3.4mm)}
+.q{margin-bottom:calc(var(--air) * 2.6mm);background:#fff;border:.7pt solid var(--ligne);border-radius:1.6mm;padding:2.6mm 3mm 2mm}
 .q-e{margin:0 0 1.4mm;font-weight:600}
 .q-n{display:inline-flex;align-items:center;justify-content:center;width:6mm;height:6mm;
   border:1pt solid var(--bleu);border-radius:50%;color:var(--bleu);font-size:10pt;font-weight:700;
   margin-right:2mm;vertical-align:.3mm}
 .q-c{list-style:none;margin:0;padding:0 0 0 6.6mm}
 .q-c li{display:flex;align-items:flex-start;gap:1.8mm;margin-bottom:calc(var(--air) * 1.4mm);font-size:1em}
-.case{flex:none;width:3.6mm;height:3.6mm;border:.8pt solid var(--mut);border-radius:1.5px;margin-top:.8mm}
+.case{flex:none;width:4.2mm;height:4.2mm;border:1.3pt solid var(--bleu);border-radius:.8mm;background:#fff;margin-top:.5mm}
 .lettre{flex:none;font-weight:700;color:var(--bleu);width:3.2mm}
 
 .rep{margin-bottom:calc(var(--air) * 2.8mm)}

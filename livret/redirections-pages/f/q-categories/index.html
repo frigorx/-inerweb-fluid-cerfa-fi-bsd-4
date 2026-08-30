@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>QCM du chapitre 4 — Les sept catégories, et la bascule de 2027 — inerWeb HabFluide</title>
+<style>
+:root{--bleu:#1b3a63;--orange:#ff6b35;--mut:#5a6472;--ligne:#d6dee7;--vert:#2e7d4f;--rouge:#c9451a;--pale:#f4f7fa}
+body{font-family:Calibri,Carlito,'Segoe UI',sans-serif;color:var(--bleu);background:var(--pale);margin:0;min-height:100vh;display:flex;flex-direction:column}
+header{background:#fff;border-bottom:2px solid var(--orange);padding:10px 16px;font-weight:700}
+header .hab{color:var(--orange)}
+main{flex:1;max-width:720px;width:100%;margin:0 auto;padding:16px;box-sizing:border-box}
+h1{font-size:1.15rem;line-height:1.3;margin:6px 0 4px}
+.note-page{color:var(--mut);font-size:.9rem;margin:0 0 14px}
+.q{background:#fff;border:1px solid var(--ligne);border-radius:10px;padding:12px 14px;margin:0 0 12px}
+.q.juste{border-color:var(--vert);border-width:2px}
+.q.faux{border-color:var(--rouge);border-width:2px}
+.q-e{font-weight:700;margin:0 0 10px}
+.q-e .n{display:inline-grid;place-items:center;width:1.5em;height:1.5em;background:var(--orange);color:#fff;border-radius:50%;margin-right:8px;font-size:.9em}
+label{display:flex;gap:10px;align-items:flex-start;padding:7px 8px;border-radius:8px;cursor:pointer}
+label:hover{background:var(--pale)}
+input[type=radio]{width:1.15em;height:1.15em;margin:2px 0 0;accent-color:var(--bleu);flex:none}
+.verdict{font-weight:700;margin:8px 0 0;display:none}
+.q.juste .verdict.ok{display:block;color:var(--vert)}
+.q.faux .verdict.ko{display:block;color:var(--rouge)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+.actions button,.actions a{font:inherit;font-weight:700;border-radius:8px;padding:11px 18px;cursor:pointer;text-decoration:none;text-align:center}
+.actions button{background:var(--bleu);color:#fff;border:none}
+.actions a{background:#fff;color:var(--bleu);border:1.5px solid var(--bleu)}
+#score{font-size:1.2rem;font-weight:700;margin:8px 0;display:none}
+footer{color:var(--mut);font-size:.82rem;padding:10px 16px;text-align:center}
+footer a{color:var(--mut)}
+</style>
+</head>
+<body>
+<header><span class="hab">❄</span> inerWeb · HabFluide — le QCM du livre</header>
+<main>
+<h1>QCM du chapitre 4 — Les sept catégories, et la bascule de 2027</h1>
+<p class="note-page">Les mêmes questions que dans le livre, dans le même ordre. Répondez, puis corrigez — votre note reste sur cet appareil.</p>
+<form id="f">
+<div class="q" data-b="3">
+<p class="q-e"><span class="n">1</span>La catégorie D autorise :</p>
+<label><input type="radio" name="q0" value="0"><span><b>A</b> — Le contrôle d’étanchéité sans ouvrir le circuit</span></label>
+<label><input type="radio" name="q0" value="1"><span><b>B</b> — La climatisation des véhicules</span></label>
+<label><input type="radio" name="q0" value="2"><span><b>C</b> — Toutes les opérations, sans limite</span></label>
+<label><input type="radio" name="q0" value="3"><span><b>D</b> — La récupération du fluide, sur des équipements de faible charge</span></label>
+<p class="verdict ok">✔ Juste.</p>
+<p class="verdict ko">✘ La bonne réponse était <b class="rep"></b>.</p>
+</div>
+<div class="q" data-b="0">
+<p class="q-e"><span class="n">2</span>La catégorie A2 est limitée aux équipements dont la charge est inférieure à :</p>
+<label><input type="radio" name="q1" value="0"><span><b>A</b> — 3 kg, ou 6 kg pour un hermétique scellé et étiqueté</span></label>
+<label><input type="radio" name="q1" value="1"><span><b>B</b> — 3 kg dans tous les cas, sans exception</span></label>
+<label><input type="radio" name="q1" value="2"><span><b>C</b> — 10 kg, quel que soit l’équipement</span></label>
+<label><input type="radio" name="q1" value="3"><span><b>D</b> — Il n’y a pas de limite de charge en A2</span></label>
+<p class="verdict ok">✔ Juste.</p>
+<p class="verdict ko">✘ La bonne réponse était <b class="rep"></b>.</p>
+</div>
+<div class="q" data-b="1">
+<p class="q-e"><span class="n">3</span>Pour intervenir sur une installation au CO₂ (R-744), il faut :</p>
+<label><input type="radio" name="q2" value="0"><span><b>A</b> — Une attestation A1, qui couvre tous les fluides</span></label>
+<label><input type="radio" name="q2" value="1"><span><b>B</b> — Une attestation de catégorie B</span></label>
+<label><input type="radio" name="q2" value="2"><span><b>C</b> — Une attestation de catégorie C</span></label>
+<label><input type="radio" name="q2" value="3"><span><b>D</b> — Aucune attestation, le CO₂ n’est pas un gaz fluoré</span></label>
+<p class="verdict ok">✔ Juste.</p>
+<p class="verdict ko">✘ La bonne réponse était <b class="rep"></b>.</p>
+</div>
+<div class="q" data-b="2">
+<p class="q-e"><span class="n">4</span>Une attestation de l’ancienne catégorie I correspond, dans le nouveau régime, à :</p>
+<label><input type="radio" name="q3" value="0"><span><b>A</b> — Aucune : il faut tout repasser</span></label>
+<label><input type="radio" name="q3" value="1"><span><b>B</b> — La catégorie A2</span></label>
+<label><input type="radio" name="q3" value="2"><span><b>C</b> — La catégorie A1</span></label>
+<label><input type="radio" name="q3" value="3"><span><b>D</b> — La catégorie B</span></label>
+<p class="verdict ok">✔ Juste.</p>
+<p class="verdict ko">✘ La bonne réponse était <b class="rep"></b>.</p>
+</div>
+<div class="q" data-b="3">
+<p class="q-e"><span class="n">5</span>Pour la catégorie A1, l’épreuve théorique dure :</p>
+<label><input type="radio" name="q4" value="0"><span><b>A</b> — 15 minutes en tout</span></label>
+<label><input type="radio" name="q4" value="1"><span><b>B</b> — Il n’y a pas de durée fixée par l’arrêté</span></label>
+<label><input type="radio" name="q4" value="2"><span><b>C</b> — 60 minutes de tronc commun seulement</span></label>
+<label><input type="radio" name="q4" value="3"><span><b>D</b> — 60 minutes de tronc commun, plus 15 minutes de partie spécifique</span></label>
+<p class="verdict ok">✔ Juste.</p>
+<p class="verdict ko">✘ La bonne réponse était <b class="rep"></b>.</p>
+</div>
+<div class="q" data-b="0">
+<p class="q-e"><span class="n">6</span>La catégorie A1 autorise à intervenir sur :</p>
+<label><input type="radio" name="q5" value="0"><span><b>A</b> — Les gaz à effet de serre fluorés et les hydrocarbures, sans limite de charge</span></label>
+<label><input type="radio" name="q5" value="1"><span><b>B</b> — Les seuls fluides fluorés, sous 3 kg de charge</span></label>
+<label><input type="radio" name="q5" value="2"><span><b>C</b> — Le contrôle d’étanchéité uniquement</span></label>
+<label><input type="radio" name="q5" value="3"><span><b>D</b> — Tous les fluides, y compris le CO₂ et l’ammoniac</span></label>
+<p class="verdict ok">✔ Juste.</p>
+<p class="verdict ko">✘ La bonne réponse était <b class="rep"></b>.</p>
+</div>
+</form>
+<p id="score"></p>
+<div class="actions">
+<button id="corriger" type="button">Corriger mes réponses</button>
+<a href="https://inerweb.fr/f/rev-g1">10 questions de plus, niveau examen →</a>
+</div>
+</main>
+<footer>Du livre « HAB-FLUIDE — partie théorique » · <a href="https://inerweb.fr/f/mes-resultats">mes résultats</a></footer>
+<script>
+(function () {
+  var qs = Array.prototype.slice.call(document.querySelectorAll('.q'));
+  document.getElementById('corriger').addEventListener('click', function () {
+    var bons = 0;
+    qs.forEach(function (q, i) {
+      var b = Number(q.getAttribute('data-b'));
+      var coche = q.querySelector('input:checked');
+      var v = coche ? Number(coche.value) : -1;
+      q.classList.remove('juste', 'faux');
+      q.classList.add(v === b ? 'juste' : 'faux');
+      if (v === b) { bons++; }
+      else {
+        var lab = q.querySelectorAll('label')[b];
+        q.querySelector('.rep').textContent = lab ? lab.textContent.trim() : '';
+      }
+    });
+    var s = document.getElementById('score');
+    s.style.display = 'block';
+    s.textContent = 'Votre note : ' + bons + ' / ' + qs.length +
+      ' — à reporter sur la page du livre.';
+    try {
+      var k = 'inerweb_qcm_papier';
+      var o = JSON.parse(localStorage.getItem(k) || '{}');
+      o["q-categories"] = { bons: bons, sur: qs.length, chapitre: 4 };
+      localStorage.setItem(k, JSON.stringify(o));
+    } catch (err) { /* navigation privée : pas de mémoire, la note s'affiche quand même */ }
+  });
+})();
+</script>
+</body>
+</html>

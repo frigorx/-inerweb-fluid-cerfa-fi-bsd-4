@@ -2412,6 +2412,291 @@
   "fichier": "rev-g9.png"
  },
  {
+  "genre": "qcm",
+  "chapitre_num": 1,
+  "titre": "QCM du chapitre 1 — Ce qui peut vous blesser",
+  "slug": "q-securite",
+  "alias": "https://inerweb.fr/f/q-securite",
+  "cible": "https://inerweb.fr/",
+  "suite": "https://inerweb.fr/f/rev-g12",
+  "renvoi": {
+   "genre": "ce qcm",
+   "titre": "Les mêmes questions, corrigées",
+   "quoi": "Le QCM de cette page sur votre téléphone, corrigé à la validation."
+  },
+  "fichier": "q-securite.png"
+ },
+ {
+  "genre": "qcm",
+  "chapitre_num": 2,
+  "titre": "QCM du chapitre 2 — Lire une classe de sécurité",
+  "slug": "q-classes",
+  "alias": "https://inerweb.fr/f/q-classes",
+  "cible": "https://inerweb.fr/",
+  "suite": "https://inerweb.fr/f/rev-g11",
+  "renvoi": {
+   "genre": "ce qcm",
+   "titre": "Les mêmes questions, corrigées",
+   "quoi": "Le QCM de cette page sur votre téléphone, corrigé à la validation."
+  },
+  "fichier": "q-classes.png"
+ },
+ {
+  "genre": "qcm",
+  "chapitre_num": 3,
+  "titre": "QCM du chapitre 3 — Ce que la loi vous impose",
+  "slug": "q-loi",
+  "alias": "https://inerweb.fr/f/q-loi",
+  "cible": "https://inerweb.fr/",
+  "suite": "https://inerweb.fr/f/rev-g1",
+  "renvoi": {
+   "genre": "ce qcm",
+   "titre": "Les mêmes questions, corrigées",
+   "quoi": "Le QCM de cette page sur votre téléphone, corrigé à la validation."
+  },
+  "fichier": "q-loi.png"
+ },
+ {
+  "genre": "qcm",
+  "chapitre_num": 4,
+  "titre": "QCM du chapitre 4 — Les sept catégories, et la bascule de 2027",
+  "slug": "q-categories",
+  "alias": "https://inerweb.fr/f/q-categories",
+  "cible": "https://inerweb.fr/",
+  "suite": "https://inerweb.fr/f/rev-g1",
+  "renvoi": {
+   "genre": "ce qcm",
+   "titre": "Les mêmes questions, corrigées",
+   "quoi": "Le QCM de cette page sur votre téléphone, corrigé à la validation."
+  },
+  "fichier": "q-categories.png"
+ },
+ {
+  "genre": "qcm",
+  "chapitre_num": 5,
+  "titre": "QCM du chapitre 5 — Thermodynamique utile",
+  "slug": "q-thermo",
+  "alias": "https://inerweb.fr/f/q-thermo",
+  "cible": "https://inerweb.fr/",
+  "suite": "https://inerweb.fr/f/rev-g1",
+  "renvoi": {
+   "genre": "ce qcm",
+   "titre": "Les mêmes questions, corrigées",
+   "quoi": "Le QCM de cette page sur votre téléphone, corrigé à la validation."
+  },
+  "fichier": "q-thermo.png"
+ },
+ {
+  "genre": "qcm",
+  "chapitre_num": 6,
+  "titre": "QCM du chapitre 6 — Lire un log p-h et une table de saturation",
+  "slug": "q-logph",
+  "alias": "https://inerweb.fr/f/q-logph",
+  "cible": "https://inerweb.fr/",
+  "suite": "https://inerweb.fr/f/rev-g1",
+  "renvoi": {
+   "genre": "ce qcm",
+   "titre": "Les mêmes questions, corrigées",
+   "quoi": "Le QCM de cette page sur votre téléphone, corrigé à la validation."
+  },
+  "fichier": "q-logph.png"
+ },
+ {
+  "genre": "qcm",
+  "chapitre_num": 7,
+  "titre": "QCM du chapitre 7 — Surchauffe et sous-refroidissement",
+  "slug": "q-surchauffe",
+  "alias": "https://inerweb.fr/f/q-surchauffe",
+  "cible": "https://inerweb.fr/",
+  "suite": "https://inerweb.fr/f/rev-g1",
+  "renvoi": {
+   "genre": "ce qcm",
+   "titre": "Les mêmes questions, corrigées",
+   "quoi": "Le QCM de cette page sur votre téléphone, corrigé à la validation."
+  },
+  "fichier": "q-surchauffe.png"
+ },
+ {
+  "genre": "qcm",
+  "chapitre_num": 8,
+  "titre": "QCM du chapitre 8 — Les familles de fluides et leurs codes",
+  "slug": "q-fluides",
+  "alias": "https://inerweb.fr/f/q-fluides",
+  "cible": "https://inerweb.fr/",
+  "suite": "https://inerweb.fr/f/rev-g1",
+  "renvoi": {
+   "genre": "ce qcm",
+   "titre": "Les mêmes questions, corrigées",
+   "quoi": "Le QCM de cette page sur votre téléphone, corrigé à la validation."
+  },
+  "fichier": "q-fluides.png"
+ },
+ {
+  "genre": "qcm",
+  "chapitre_num": 9,
+  "titre": "QCM du chapitre 9 — Le compresseur",
+  "slug": "q-compresseur",
+  "alias": "https://inerweb.fr/f/q-compresseur",
+  "cible": "https://inerweb.fr/",
+  "suite": "https://inerweb.fr/f/rev-g6",
+  "renvoi": {
+   "genre": "ce qcm",
+   "titre": "Les mêmes questions, corrigées",
+   "quoi": "Le QCM de cette page sur votre téléphone, corrigé à la validation."
+  },
+  "fichier": "q-compresseur.png"
+ },
+ {
+  "genre": "qcm",
+  "chapitre_num": 10,
+  "titre": "QCM du chapitre 10 — Le condenseur",
+  "slug": "q-condenseur",
+  "alias": "https://inerweb.fr/f/q-condenseur",
+  "cible": "https://inerweb.fr/",
+  "suite": "https://inerweb.fr/f/rev-g7",
+  "renvoi": {
+   "genre": "ce qcm",
+   "titre": "Les mêmes questions, corrigées",
+   "quoi": "Le QCM de cette page sur votre téléphone, corrigé à la validation."
+  },
+  "fichier": "q-condenseur.png"
+ },
+ {
+  "genre": "qcm",
+  "chapitre_num": 11,
+  "titre": "QCM du chapitre 11 — L évaporateur",
+  "slug": "q-evaporateur",
+  "alias": "https://inerweb.fr/f/q-evaporateur",
+  "cible": "https://inerweb.fr/",
+  "suite": "https://inerweb.fr/f/rev-g8",
+  "renvoi": {
+   "genre": "ce qcm",
+   "titre": "Les mêmes questions, corrigées",
+   "quoi": "Le QCM de cette page sur votre téléphone, corrigé à la validation."
+  },
+  "fichier": "q-evaporateur.png"
+ },
+ {
+  "genre": "qcm",
+  "chapitre_num": 12,
+  "titre": "QCM du chapitre 12 — Le détendeur et les organes annexes",
+  "slug": "q-detendeur",
+  "alias": "https://inerweb.fr/f/q-detendeur",
+  "cible": "https://inerweb.fr/",
+  "suite": "https://inerweb.fr/f/rev-g9",
+  "renvoi": {
+   "genre": "ce qcm",
+   "titre": "Les mêmes questions, corrigées",
+   "quoi": "Le QCM de cette page sur votre téléphone, corrigé à la validation."
+  },
+  "fichier": "q-detendeur.png"
+ },
+ {
+  "genre": "qcm",
+  "chapitre_num": 13,
+  "titre": "QCM du chapitre 13 — Contrôles avant mise en service",
+  "slug": "q-mise-en-service",
+  "alias": "https://inerweb.fr/f/q-mise-en-service",
+  "cible": "https://inerweb.fr/",
+  "suite": "https://inerweb.fr/f/rev-g3",
+  "renvoi": {
+   "genre": "ce qcm",
+   "titre": "Les mêmes questions, corrigées",
+   "quoi": "Le QCM de cette page sur votre téléphone, corrigé à la validation."
+  },
+  "fichier": "q-mise-en-service.png"
+ },
+ {
+  "genre": "qcm",
+  "chapitre_num": 14,
+  "titre": "QCM du chapitre 14 — Les contrôles d étanchéité",
+  "slug": "q-etancheite",
+  "alias": "https://inerweb.fr/f/q-etancheite",
+  "cible": "https://inerweb.fr/",
+  "suite": "https://inerweb.fr/f/rev-g4",
+  "renvoi": {
+   "genre": "ce qcm",
+   "titre": "Les mêmes questions, corrigées",
+   "quoi": "Le QCM de cette page sur votre téléphone, corrigé à la validation."
+  },
+  "fichier": "q-etancheite.png"
+ },
+ {
+  "genre": "qcm",
+  "chapitre_num": 15,
+  "titre": "QCM du chapitre 15 — Récupérer sans émettre, peser, tracer",
+  "slug": "q-recuperation",
+  "alias": "https://inerweb.fr/f/q-recuperation",
+  "cible": "https://inerweb.fr/",
+  "suite": "https://inerweb.fr/f/rev-g5",
+  "renvoi": {
+   "genre": "ce qcm",
+   "titre": "Les mêmes questions, corrigées",
+   "quoi": "Le QCM de cette page sur votre téléphone, corrigé à la validation."
+  },
+  "fichier": "q-recuperation.png"
+ },
+ {
+  "genre": "qcm",
+  "chapitre_num": 16,
+  "titre": "QCM du chapitre 16 — Tuyauterie et brasage sous azote",
+  "slug": "q-brasage",
+  "alias": "https://inerweb.fr/f/q-brasage",
+  "cible": "https://inerweb.fr/",
+  "suite": "https://inerweb.fr/f/rev-g10",
+  "renvoi": {
+   "genre": "ce qcm",
+   "titre": "Les mêmes questions, corrigées",
+   "quoi": "Le QCM de cette page sur votre téléphone, corrigé à la validation."
+  },
+  "fichier": "q-brasage.png"
+ },
+ {
+  "genre": "qcm",
+  "chapitre_num": 17,
+  "titre": "QCM du chapitre 17 — Substitution et efficacité énergétique",
+  "slug": "q-efficacite",
+  "alias": "https://inerweb.fr/f/q-efficacite",
+  "cible": "https://inerweb.fr/",
+  "suite": "https://inerweb.fr/f/rev-g11",
+  "renvoi": {
+   "genre": "ce qcm",
+   "titre": "Les mêmes questions, corrigées",
+   "quoi": "Le QCM de cette page sur votre téléphone, corrigé à la validation."
+  },
+  "fichier": "q-efficacite.png"
+ },
+ {
+  "genre": "qcm",
+  "chapitre_num": 18,
+  "titre": "QCM du chapitre 18 — Hydrocarbures — le spécifique A1 et A2",
+  "slug": "q-hydrocarbures",
+  "alias": "https://inerweb.fr/f/q-hydrocarbures",
+  "cible": "https://inerweb.fr/",
+  "suite": "https://inerweb.fr/f/rev-g12",
+  "renvoi": {
+   "genre": "ce qcm",
+   "titre": "Les mêmes questions, corrigées",
+   "quoi": "Le QCM de cette page sur votre téléphone, corrigé à la validation."
+  },
+  "fichier": "q-hydrocarbures.png"
+ },
+ {
+  "genre": "qcm",
+  "chapitre_num": 19,
+  "titre": "QCM du chapitre 19 — CO₂ et NH₃ — reconnaître, ne pas intervenir",
+  "slug": "q-co2-nh3",
+  "alias": "https://inerweb.fr/f/q-co2-nh3",
+  "cible": "https://inerweb.fr/",
+  "suite": "https://inerweb.fr/f/rev-g13",
+  "renvoi": {
+   "genre": "ce qcm",
+   "titre": "Les mêmes questions, corrigées",
+   "quoi": "Le QCM de cette page sur votre téléphone, corrigé à la validation."
+  },
+  "fichier": "q-co2-nh3.png"
+ },
+ {
   "genre": "bilan",
   "titre": "Mes résultats — séries et compétences",
   "slug": "mes-resultats",

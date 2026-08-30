@@ -166,6 +166,34 @@ for (const g of [...groupes].sort()) {
   });
 }
 
+/* ---- Les alias de QCM : la CORRESPONDANCE papier/numérique, QCM par
+   QCM (règle de Franck, 30/08 soir). Chaque chapitre imprime ses
+   questions « Testez-vous » ; la page /f/q-<chapitre> joue LES MÊMES,
+   dans le même ordre, corrigées à la validation — c'est là que vit la
+   correction depuis que les corrigés ont quitté le papier. Le score
+   se garde sur l'appareil (clé propre au livre) et « mes résultats »
+   l'affiche. Les dix questions niveau examen restent la marche
+   au-dessus : la page y mène. ---- */
+const CHOISIES_QCM = JSON.parse(fs.readFileSync(path.join(ICI, '..', 'questions-choisies.gen.json'), 'utf8'));
+const CONTENU_QCM = JSON.parse(fs.readFileSync(path.join(ICI, '..', 'contenu.gen.json'), 'utf8'));
+for (const ch of CHAPITRES) {
+  const selection = CHOISIES_QCM[ch.num] || [];
+  const c = CONTENU_QCM.chapitres.find((x) => x.num === ch.num);
+  if (!selection.length || !c) continue;
+  const questions = selection.map((sel) => {
+    const q = (c.questions || []).find((x) => x.id === sel.id);
+    return q && { enonce: q.enonce, choix: sel.ordre.map((i) => q.choix[i]), bonne: sel.bonne };
+  }).filter(Boolean);
+  if (!questions.length) continue;
+  const g = (ch.groupesQ || []).find((x) => /^G\d+$/.test(x));
+  entrees.push({
+    genre: 'qcm', chapitre_num: ch.num, titre: `QCM du chapitre ${ch.num} — ${ch.titre}`,
+    slug: `q-${ch.qr}`, alias: `${QR_BASE}q-${ch.qr}`, cible: APPLI,
+    suite: g ? `${QR_BASE}rev-${g.toLowerCase()}` : '',
+    questions, /* consommées par la page, retirées du manifeste */
+  });
+}
+
 /* ---- L'alias du BILAN : la page « mes résultats ». Le moteur de
    l'appli note déjà chaque série finie (pilote_hist_*) et chaque
    compétence rencontrée (pilote_comp_*), dans le navigateur du
@@ -202,6 +230,9 @@ for (const e of entrees) {
   } else if (e.genre === 'bilan') {
     e.renvoi = { genre: 'vos résultats', titre: 'Vos notes, vos compétences',
       quoi: 'Ce que votre téléphone a retenu de vos séries — rien ne quitte l’appareil.' };
+  } else if (e.genre === 'qcm') {
+    e.renvoi = { genre: 'ce qcm', titre: 'Les mêmes questions, corrigées',
+      quoi: 'Le QCM de cette page sur votre téléphone, corrigé à la validation.' };
   } else if (e.lecon) {
     e.renvoi = { genre: capsule ? 'leçon narrée' : 'fiche',
       titre: e.titre.length > 46 ? e.titre.slice(0, 43) + '…' : e.titre,
@@ -237,7 +268,10 @@ for (const e of entrees) {
   e.fichier = `${e.slug}.png`;
 }
 
-fs.writeFileSync(MANIFESTE, JSON.stringify(entrees, null, 1), 'utf8');
+/* Le manifeste omet les questions des pages QCM : elles sont gravées
+   dans chaque page, le livre n'en a pas besoin. */
+fs.writeFileSync(MANIFESTE,
+  JSON.stringify(entrees, (k, v) => (k === 'questions' ? undefined : v), 1), 'utf8');
 
 /* ---------------- Les pages de redirection (GitHub Pages) ----------------
    La table qui fonctionne réellement : un dossier `f/<slug>/` par alias,
@@ -377,6 +411,11 @@ footer a{color:var(--mut)}
 <table id="series"><tr><th>Chapitre</th><th style="text-align:right">Note</th></tr></table>
 </section>
 <section>
+<h2>Les QCM du livre</h2>
+<p class="note-page">Les « Testez-vous » de chaque chapitre, joués depuis leur QR.</p>
+<div id="qcm"><p class="rien">Aucun QCM du livre joué sur cet appareil pour l’instant.</p></div>
+</section>
+<section>
 <h2>Mes compétences</h2>
 <p class="note-page">Code par code, d’après vos réponses : acquise, fragile, ou à revoir.</p>
 <div id="comp"><p class="rien">Aucune question corrigée sur cet appareil pour l’instant — lancez une série depuis un QR « des questions ? » du livre.</p></div>
@@ -389,6 +428,8 @@ footer a{color:var(--mut)}
   var hist = {}, comp = {};
   try { hist = JSON.parse(localStorage.getItem('pilote_hist_fluides-habilitation') || '{}'); } catch (e) {}
   try { comp = JSON.parse(localStorage.getItem('pilote_comp_fluides-habilitation') || '{}'); } catch (e) {}
+  var qcm = {};
+  try { qcm = JSON.parse(localStorage.getItem('inerweb_qcm_papier') || '{}'); } catch (e) {}
   var t = document.getElementById('series');
   SERIES.forEach(function (s) {
     var tr = document.createElement('tr');
@@ -399,6 +440,18 @@ footer a{color:var(--mut)}
       '<td class="note">' + note + '</td>';
     t.appendChild(tr);
   });
+  var slugsQcm = Object.keys(qcm);
+  if (slugsQcm.length) {
+    var hq = '<table><tr><th>Chapitre</th><th style="text-align:right">Note</th></tr>';
+    slugsQcm.map(function (s) { return qcm[s]; })
+      .sort(function (a, b) { return (a.chapitre || 0) - (b.chapitre || 0); })
+      .forEach(function (r) {
+        hq += '<tr><td><span class="num">' + (r.chapitre || '?') + '</span> Testez-vous</td>' +
+          '<td class="note">' + r.bons + ' / ' + r.sur + '</td></tr>';
+      });
+    hq += '</table>';
+    document.getElementById('qcm').innerHTML = hq;
+  }
   var codes = Object.keys(comp).sort(function (a, b) {
     return a.localeCompare(b, 'fr', { numeric: true });
   });
@@ -423,6 +476,98 @@ footer a{color:var(--mut)}
 </html>
 `;
 
+/* La page QCM : les questions du papier, jouables et corrigées. Tout
+   est gravé dans la page à la génération — aucune requête, le QCM
+   marche dès que la page charge. Le score reste sur l'appareil. */
+const pageQcm = (e) => `<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>${echapper(e.titre)} — inerWeb HabFluide</title>
+<style>
+:root{--bleu:#1b3a63;--orange:#ff6b35;--mut:#5a6472;--ligne:#d6dee7;--vert:#2e7d4f;--rouge:#c9451a;--pale:#f4f7fa}
+body{font-family:Calibri,Carlito,'Segoe UI',sans-serif;color:var(--bleu);background:var(--pale);margin:0;min-height:100vh;display:flex;flex-direction:column}
+header{background:#fff;border-bottom:2px solid var(--orange);padding:10px 16px;font-weight:700}
+header .hab{color:var(--orange)}
+main{flex:1;max-width:720px;width:100%;margin:0 auto;padding:16px;box-sizing:border-box}
+h1{font-size:1.15rem;line-height:1.3;margin:6px 0 4px}
+.note-page{color:var(--mut);font-size:.9rem;margin:0 0 14px}
+.q{background:#fff;border:1px solid var(--ligne);border-radius:10px;padding:12px 14px;margin:0 0 12px}
+.q.juste{border-color:var(--vert);border-width:2px}
+.q.faux{border-color:var(--rouge);border-width:2px}
+.q-e{font-weight:700;margin:0 0 10px}
+.q-e .n{display:inline-grid;place-items:center;width:1.5em;height:1.5em;background:var(--orange);color:#fff;border-radius:50%;margin-right:8px;font-size:.9em}
+label{display:flex;gap:10px;align-items:flex-start;padding:7px 8px;border-radius:8px;cursor:pointer}
+label:hover{background:var(--pale)}
+input[type=radio]{width:1.15em;height:1.15em;margin:2px 0 0;accent-color:var(--bleu);flex:none}
+.verdict{font-weight:700;margin:8px 0 0;display:none}
+.q.juste .verdict.ok{display:block;color:var(--vert)}
+.q.faux .verdict.ko{display:block;color:var(--rouge)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+.actions button,.actions a{font:inherit;font-weight:700;border-radius:8px;padding:11px 18px;cursor:pointer;text-decoration:none;text-align:center}
+.actions button{background:var(--bleu);color:#fff;border:none}
+.actions a{background:#fff;color:var(--bleu);border:1.5px solid var(--bleu)}
+#score{font-size:1.2rem;font-weight:700;margin:8px 0;display:none}
+footer{color:var(--mut);font-size:.82rem;padding:10px 16px;text-align:center}
+footer a{color:var(--mut)}
+</style>
+</head>
+<body>
+<header><span class="hab">❄</span> inerWeb · HabFluide — le QCM du livre</header>
+<main>
+<h1>${echapper(e.titre)}</h1>
+<p class="note-page">Les mêmes questions que dans le livre, dans le même ordre. Répondez, puis corrigez — votre note reste sur cet appareil.</p>
+<form id="f">
+${e.questions.map((q, i) => `<div class="q" data-b="${q.bonne}">
+<p class="q-e"><span class="n">${i + 1}</span>${echapper(q.enonce)}</p>
+${q.choix.map((c, j) => `<label><input type="radio" name="q${i}" value="${j}"><span><b>${'ABCD'[j]}</b> — ${echapper(c)}</span></label>`).join('\n')}
+<p class="verdict ok">✔ Juste.</p>
+<p class="verdict ko">✘ La bonne réponse était <b class="rep"></b>.</p>
+</div>`).join('\n')}
+</form>
+<p id="score"></p>
+<div class="actions">
+<button id="corriger" type="button">Corriger mes réponses</button>
+${e.suite ? `<a href="${echapper(e.suite)}">10 questions de plus, niveau examen →</a>` : ''}
+</div>
+</main>
+<footer>Du livre « HAB-FLUIDE — partie théorique » · <a href="${echapper(QR_BASE)}mes-resultats">mes résultats</a></footer>
+<script>
+(function () {
+  var qs = Array.prototype.slice.call(document.querySelectorAll('.q'));
+  document.getElementById('corriger').addEventListener('click', function () {
+    var bons = 0;
+    qs.forEach(function (q, i) {
+      var b = Number(q.getAttribute('data-b'));
+      var coche = q.querySelector('input:checked');
+      var v = coche ? Number(coche.value) : -1;
+      q.classList.remove('juste', 'faux');
+      q.classList.add(v === b ? 'juste' : 'faux');
+      if (v === b) { bons++; }
+      else {
+        var lab = q.querySelectorAll('label')[b];
+        q.querySelector('.rep').textContent = lab ? lab.textContent.trim() : '';
+      }
+    });
+    var s = document.getElementById('score');
+    s.style.display = 'block';
+    s.textContent = 'Votre note : ' + bons + ' / ' + qs.length +
+      ' — à reporter sur la page du livre.';
+    try {
+      var k = 'inerweb_qcm_papier';
+      var o = JSON.parse(localStorage.getItem(k) || '{}');
+      o[${JSON.stringify(e.slug)}] = { bons: bons, sur: qs.length, chapitre: ${e.chapitre_num} };
+      localStorage.setItem(k, JSON.stringify(o));
+    } catch (err) { /* navigation privée : pas de mémoire, la note s'affiche quand même */ }
+  });
+})();
+</script>
+</body>
+</html>
+`;
+
 fs.rmSync(PAGES, { recursive: true, force: true });
 for (const e of entrees) {
   const dossier = path.join(PAGES, 'f', e.slug);
@@ -430,7 +575,8 @@ for (const e of entrees) {
   fs.writeFileSync(path.join(dossier, 'index.html'),
     e.genre === 'animation' ? pageVisionneuse(e)
       : e.genre === 'bilan' ? pageResultats(e)
-        : pageRedirection(e), 'utf8');
+        : e.genre === 'qcm' ? pageQcm(e)
+          : pageRedirection(e), 'utf8');
 }
 fs.writeFileSync(path.join(PAGES, 'LISEZMOI.md'), [
   '# Redirections du livret « Habilitation Fluide » — à déployer',
