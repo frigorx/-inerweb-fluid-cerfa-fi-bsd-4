@@ -52,3 +52,4 @@ livret/dist/
 livret/maquette-mise-en-page.html
 livret/gabarit-interieur.html
 livret/curseurs.html
+__pycache__/
