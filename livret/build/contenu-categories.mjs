@@ -84,7 +84,7 @@ export const leconsCategories = (ref) => {
         `L'épreuve porte toujours sur les groupes ${compo.groupes_obligatoires.map((g) => g.replace('G', '')).join(', ')} — ` +
         `et sur <b>au moins un</b> des groupes ${compo.groupes_tirage_au_sort.parmi.map((g) => g.replace('G', '')).join(', ')}, ` +
         `<b>tiré au sort le jour de l'épreuve</b>. ${compo.groupes_tirage_au_sort.libelle_source.split('.')[1]?.trim() || ''}. ` +
-        `Conséquence simple : les quatre groupes d'organes s'apprennent tous.`,
+        `Il faut donc apprendre les quatre groupes d'organes.`,
       ],
       tableau: {
         titre: 'Les durées d’épreuve (réglementaires)',

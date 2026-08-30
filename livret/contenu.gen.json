@@ -81,7 +81,7 @@
       "Respirer, c'est faire entrer de l'oxygène dans le corps. Un local fermé peut se remplir d'un autre gaz : de l'azote utilisé pour mettre un circuit en pression, ou du fluide frigorigène qui a fui. Ce gaz prend la place de l'oxygène dans l'air. C'est une <b>asphyxie par manque d'oxygène</b> : le produit ne vous empoisonne pas, il a chassé l'air respirable.",
       "Face à l'<b>azote</b> et aux <b>fluides fluorés</b>, le corps ne donne <b>aucune alerte</b>. Normalement, l'envie de respirer plus fort vient d'un excès de gaz carbonique dans le sang, pas d'un manque d'oxygène. Dans un local pauvre en oxygène, vous ne suffoquez donc pas peu à peu : vous pouvez perdre connaissance <b>en quelques instants, sans gêne ressentie avant</b>. L'azote est incolore et inodore. La plupart des fluides fluorés le sont aussi ; l'ammoniac, lui, a une odeur forte. Mais tous les fluides ne se comportent pas pareil : se fier à l'odeur reste dangereux.",
       "<b>Une exception importante : le CO₂ (R-744).</b> Lui vous <b>prévient</b> (essoufflement, mal de tête, vertiges), parce qu'il agit sur la commande de la respiration. C'est une chance, mais tardive : ces signes n'arrivent qu'une fois dans le gaz. Et pour la même raison, un détecteur d'oxygène seul ne suffit pas à le surveiller. Ce fluide a sa fiche : « CO₂ : deux dangers mortels ».",
-      "<b>Ce danger n'a pas de code dans le référentiel d'examen</b> : l'épreuve ne vous interrogera pas dessus. Il figure pourtant dans ce module, parce qu'il peut vous tuer.",
+      "<b>Ce danger n'a pas de code dans le référentiel d'examen</b> : l'épreuve ne vous interrogera pas dessus. Il est pourtant traité ici, et en premier : personne ne devrait entrer dans un local technique sans l'avoir en tête.",
       "C'est le scénario du schéma ci-dessus, et c'est le plus fréquent de ce type d'accident : un local resté fermé, quelqu'un qui entre sans rien sentir, puis un collègue qui se précipite pour le secourir sans se protéger ni ventiler : il respire le même air appauvri et s'effondre à son tour. <b>Deux victimes au lieu d'une.</b>"
      ],
      "blocs": [
@@ -196,10 +196,10 @@
       "3.01"
      ],
      "paras": [
-      "<b>Ce qui arrive.</b> Un circuit frigorifique contient du fluide sous pression en permanence. Cette pression existe même quand la machine est à l'arrêt, et une règle simple la gouverne : plus la température monte, plus la pression à l'intérieur du circuit monte aussi. Une paroi (bouteille, flexible, raccord, tuyauterie) résiste jusqu'à une certaine pression. Au-delà, elle cède : elle se déforme, se fissure, ou éclate d'un coup. Il n'y a là aucune réaction chimique, juste un rapport de force entre la pression qui pousse et la paroi qui retient.",
+      "<b>Ce qui arrive.</b> Un circuit frigorifique contient du fluide sous pression en permanence. Cette pression existe même quand la machine est à l'arrêt, et elle suit la température : plus le circuit chauffe, plus elle monte. Une paroi (bouteille, flexible, raccord, tuyauterie) résiste jusqu'à une certaine pression. Au-delà, elle cède : elle se déforme, se fissure, ou éclate d'un coup. Il n'y a là aucune réaction chimique, juste un rapport de force entre la pression qui pousse et la paroi qui retient.",
       "Ce qui peut céder :",
       "Le schéma du haut explique pourquoi une bouteille ne se remplit <b>jamais</b> à ras : un liquide qui chauffe se dilate, et s'il n'a pas de volume libre au-dessus de lui, la pression grimpe très vite. Le taux de remplissage à respecter figure sur la plaque de la bouteille ou dans la documentation du fournisseur ; les propriétés du fluide, dans sa fiche de données de sécurité (FDS).",
-      "<b>Comment ça arrive vraiment.</b> Sur un chantier, une bouteille de fluide oubliée dans un véhicule en plein été, vitres fermées, en est un exemple courant : l'habitacle chauffe fortement, la bouteille avec. Autre situation : un flexible de manifold ancien, jamais contrôlé, qui cède au moment où l'on ouvre une vanne. Autre situation encore : un tronçon de tuyauterie en toiture, isolé par deux vannes fermées pendant une réparation, laissé en plein soleil sans protection ni vérification avant de reprendre le travail dessus.",
+      "<b>Comment ça arrive vraiment.</b> Sur un chantier, une bouteille de fluide oubliée dans un véhicule en plein été, vitres fermées, en est un exemple courant : l'habitacle chauffe fortement, la bouteille avec. Un flexible de manifold ancien, jamais contrôlé, peut céder au moment où l'on ouvre une vanne. Et un tronçon de tuyauterie en toiture, isolé par deux vannes fermées pendant une réparation, chauffe en plein soleil jusqu'à ce qu'on revienne travailler dessus sans l'avoir vérifié.",
       "Un compresseur à l'arrêt n'est pas forcément une machine sans danger. Un circuit peut rester sous pression longtemps après l'arrêt d'une installation, sans qu'aucune fuite ne se produise. Rien à l'extérieur ne signale cette pression : ni bruit, ni mouvement, ni tiédeur. Un technicien qui desserre un raccord en se disant « de toute façon, c'est arrêté depuis longtemps » peut se retrouver face à une projection de fluide et de pièces.",
       "<b>Ce qui protège.</b> Dans l'ordre où on l'applique :"
      ],
@@ -239,7 +239,7 @@
       "Le passage du courant électrique dans le corps humain porte un nom : l'<b>électrisation</b>. Ses effets vont de la simple secousse à des blessures graves : brûlures internes, troubles du cœur. Quand une électrisation entraîne la mort, on parle d'<b>électrocution</b>. C'est le même phénomène ; seule la gravité change.",
       "Un autre danger ne demande aucun contact : l'<b>arc électrique</b>. C'est une décharge qui jaillit dans l'air entre deux points sous tension, ou entre un point sous tension et une masse, sans qu'il soit nécessaire de toucher quoi que ce soit. Un arc électrique brûle par la chaleur et la lumière qu'il dégage, et peut projeter des matières en fusion. On peut donc se blesser gravement sans avoir touché aucun fil.",
       "Un dernier piège : couper l'alimentation ne vide pas forcément tous les composants de leur énergie. Un <b>condensateur</b> est un composant qui stocke de l'énergie électrique ; on en trouve par exemple dans les circuits de démarrage de certains moteurs. Il peut rester chargé après la coupure du courant. Il reste alors dangereux tant qu'il n'a pas été déchargé selon la méthode indiquée par la documentation constructeur de l'équipement.",
-      "<b>Comment ça arrive vraiment.</b> Un technicien pressé ouvre une armoire électrique pour un dépannage rapide. Le disjoncteur qui semble commander cette armoire est coupé, alors il touche directement un bornier, la barrette où arrivent les fils. Mais personne n'a vérifié que ce disjoncteur coupait bien cette armoire précise : un autre circuit, resté sous tension, y arrive aussi. Autre situation fréquente : un condensateur de moteur touché juste après la coupure du courant, alors qu'il est encore chargé. Autre situation encore : un outil métallique approché trop près de bornes sous tension dans une armoire électrique, sans contact direct, qui déclenche un arc électrique.",
+      "<b>Comment ça arrive vraiment.</b> Un technicien pressé ouvre une armoire électrique pour un dépannage rapide. Le disjoncteur qui semble commander cette armoire est coupé, alors il touche directement un bornier, la barrette où arrivent les fils. Mais personne n'a vérifié que ce disjoncteur coupait bien cette armoire précise : un autre circuit, resté sous tension, y arrive aussi. Un condensateur de moteur touché juste après la coupure, encore chargé, blesse de la même façon. Et un outil métallique approché trop près de bornes sous tension peut déclencher un arc, sans le moindre contact.",
       "<b>Ce qui protège.</b> Avant de toucher un circuit ou un équipement électrique, la <b>consignation électrique</b> se déroule dans un ordre précis, en cinq étapes :",
       "Le VAT lui-même doit être digne de confiance. On le contrôle sur une source que l'on sait sous tension <b>avant</b> de l'utiliser sur le circuit à vérifier, puis on refait le même contrôle sur cette source connue <b>après</b>. Si l'appareil fonctionnait au premier essai mais plus au second, tout ce qu'il a mesuré entre les deux doit être considéré comme non fiable."
      ],
@@ -753,18 +753,18 @@
       "11.03"
      ],
      "paras": [
-      "<b>Ce qui arrive.</b> Le CO₂, le R-744, est classé <b>A1</b> : toxicité faible, non inflammable, PRP de 1. C'est la case la plus rassurante de toute la matrice, et c'est bien le problème : <b>sa classe n'annonce aucun des deux risques qui tuent réellement sur ces installations</b>, la <b>pression</b> et l'<b>anoxie</b>. Qui retient « CO₂ = A1 = tranquille » a retenu quelque chose de faux.",
-      "Ce fluide entre aujourd'hui dans le parc : froid commercial, supermarchés, chambres froides. Vous en rencontrerez : ce n'est plus un sujet de culture générale.",
+      "<b>Ce qui arrive.</b> Le CO₂, le R-744, est classé <b>A1</b> : toxicité faible, non inflammable, PRP de 1. Sur le papier, c'est la case la plus rassurante de toute la matrice. <b>Sa classe n'annonce pourtant aucun des deux risques qui tuent réellement sur ces installations</b> : la <b>pression</b>, et l'<b>anoxie</b>. Méfiez-vous du raccourci « CO₂ = A1 = tranquille » : il est faux.",
+      "Ce fluide entre aujourd'hui dans le parc : froid commercial, supermarchés, chambres froides. Vous en rencontrerez dès vos premiers chantiers.",
       "<b>Premier danger : la pression.</b> Une installation au CO₂ travaille à des pressions <b>bien plus élevées</b> que celles des fluides que vous connaissez, sans commune mesure. Cela change tout le matériel : manifold, flexibles, vannes, tout doit être <b>dédié au CO₂</b>. Brancher un manifold ordinaire sur une installation au CO₂, c'est le faire éclater dans les mains. Pour fixer l'ordre de grandeur : côté haute pression, une centrale transcritique travaille couramment <b>jusqu'à 120 bar environ</b>. La valeur exacte dépend du point de fonctionnement et se lit sur la <b>plaque de l'installation</b> et dans la documentation du constructeur, jamais dans un cours. Et ce chiffre ne change rien à la règle : <b>aucun réflexe acquis sur un R-134a ou un R-410A ne se transpose ici</b>.",
       "Cette pression garde son danger <b>machine à l'arrêt</b>. Une installation au CO₂ arrêtée continue de monter en pression si elle se réchauffe : c'est pour cela qu'elle possède des dispositifs de sécurité qui lui sont propres. Une installation au CO₂ laissée sans surveillance après une coupure n'est pas une installation au repos.",
       "À la détente à l'air libre, le CO₂ peut passer directement à l'état solide : c'est la <b>glace carbonique</b> (ou neige carbonique). Double conséquence : une <b>brûlure par le froid</b> au contact de la peau, et un <b>bouchon solide</b> qui obstrue une vanne ou une tuyauterie. Et ce bouchon finit par fondre : le gaz qu'il libère alimente alors le second danger.",
-      "<b>Second danger : l'air qu'il vous prend.</b> Le mot <b>anoxie</b> désigne le manque d'oxygène dans l'organisme. Vous avez rencontré ce danger dans la fiche « L'air qui manque » : un gaz prend la place de l'air respirable. Le CO₂ fait cela, <b>mais pas seulement</b>, et c'est toute la différence.",
-      "<b>Deux mécanismes, pas un seul.</b> L'azote agit uniquement par <b>déplacement</b> : il est inerte, il prend la place de l'oxygène sans réagir avec l'organisme. Le CO₂, lui, agit <b>en plus par lui-même</b> : il n'est pas inerte, il intervient dans la régulation de la respiration et devient nocif à des concentrations où l'oxygène restant serait encore suffisant. Le CO₂ peut donc vous mettre en danger <b>avant</b> d'avoir chassé assez d'oxygène pour qu'un contrôle du seul taux d'oxygène s'en alarme. C'est pourquoi, sur une installation au CO₂, <b>un détecteur d'oxygène seul ne suffit pas</b> : il faut une mesure du CO₂ lui-même.",
-      "N'en concluez pas que les fluides fluorés sont inoffensifs : à forte concentration, ils agissent eux aussi sur l'organisme : effet sur le rythme du cœur, effet endormant. Leur fiche de données de sécurité le mentionne. « A » n'a jamais voulu dire inoffensif.",
-      "<b>Ce que vous ressentirez, et pourquoi c'est déjà tard.</b> Contrairement à l'azote, qui ne prévient pas du tout, le CO₂ <b>donne des signes</b> : souffle court puis <b>essoufflement violent</b>, <b>maux de tête</b>, <b>vertiges</b>, bourdonnements, sueurs. La raison est celle vue en fiche « L'air qui manque » : c'est l'excès de gaz carbonique dans le sang qui commande l'envie de respirer. Ces signes sont votre <b>seule chance</b>, mais ils arrivent alors que vous êtes <b>déjà dans la nappe</b>, et à forte concentration la perte de connaissance suit en quelques instants. La règle est simple : <b>essoufflement brutal ou mal de tête soudain dans un local technique, vous ressortez immédiatement</b>. On ne cherche pas à comprendre sur place, on ne finit pas le geste en cours.",
-      "<b>Pourquoi on entre sans le savoir.</b> Le CO₂ est <b>incolore</b>, <b>inodore</b>, et <b>plus lourd que l'air</b>. Il ne monte pas : il s'écoule et <b>s'accumule dans les points bas</b> : fosse, cave, sous-sol, local en contrebas, bas d'une chambre froide. Une zone peut être parfaitement respirable à hauteur de visage et déjà mortelle au niveau du sol, ou en bas de quelques marches. Descendre, c'est entrer dans la nappe. La répartition réelle dépend de la fuite et du local : un jet sous pression brasse le gaz, une ventilation le dilue. La nappe au point bas reste le cas défavorable, celui qu'on suppose tant qu'une <b>mesure</b> n'a pas dit le contraire.",
+      "<b>Second danger : l'air qu'il vous prend.</b> Le mot <b>anoxie</b> désigne le manque d'oxygène dans l'organisme. Vous avez rencontré ce danger dans la fiche « L'air qui manque » : un gaz prend la place de l'air respirable. Le CO₂ fait cela, <b>et il fait plus</b>.",
+      "<b>L'azote et le CO₂ n'agissent pas de la même façon.</b> L'azote agit uniquement par <b>déplacement</b> : il est inerte, il prend la place de l'oxygène sans réagir avec l'organisme. Le CO₂, lui, agit <b>en plus par lui-même</b> : il n'est pas inerte, il intervient dans la régulation de la respiration et devient nocif à des concentrations où l'oxygène restant serait encore suffisant. Le CO₂ peut donc vous mettre en danger <b>avant</b> d'avoir chassé assez d'oxygène pour qu'un contrôle du seul taux d'oxygène s'en alarme. C'est pourquoi, sur une installation au CO₂, <b>un détecteur d'oxygène seul ne suffit pas</b> : il faut une mesure du CO₂ lui-même.",
+      "N'en concluez pas que les fluides fluorés sont inoffensifs : à forte concentration, ils agissent eux aussi sur l'organisme : effet sur le rythme du cœur, effet endormant. Leur fiche de données de sécurité le mentionne — là encore, « A » ne veut pas dire inoffensif.",
+      "<b>Ce que vous ressentirez, et pourquoi c'est déjà tard.</b> Contrairement à l'azote, qui ne prévient pas du tout, le CO₂ <b>donne des signes</b> : souffle court puis <b>essoufflement violent</b>, <b>maux de tête</b>, <b>vertiges</b>, bourdonnements, sueurs. La raison est celle vue en fiche « L'air qui manque » : c'est l'excès de gaz carbonique dans le sang qui commande l'envie de respirer. Ces signes sont votre <b>seule chance</b>, mais ils arrivent alors que vous êtes <b>déjà dans la nappe</b>, et à forte concentration la perte de connaissance suit en quelques instants. <b>Essoufflement brutal ou mal de tête soudain dans un local technique : vous ressortez immédiatement</b>. On ne cherche pas à comprendre sur place, on ne finit pas le geste en cours.",
+      "<b>Pourquoi on entre sans le savoir.</b> Le CO₂ est <b>incolore</b>, <b>inodore</b>, et <b>plus lourd que l'air</b>. Il ne monte pas : il s'écoule et <b>s'accumule dans les points bas</b> : fosse, cave, sous-sol, local en contrebas, bas d'une chambre froide. Une zone peut être parfaitement respirable à hauteur de visage et déjà mortelle au niveau du sol, ou en bas de quelques marches. La répartition réelle dépend de la fuite et du local : un jet sous pression brasse le gaz, une ventilation le dilue. La nappe au point bas reste le cas défavorable, celui qu'on suppose tant qu'une <b>mesure</b> n'a pas dit le contraire.",
       "<b>Attention à ne pas généraliser cette règle.</b> « Plus lourd que l'air » vaut pour le CO₂ et pour la plupart des fluides fluorés, mais <b>pas pour l'ammoniac</b> (R-717), plus léger que l'air : lui, il monte. Le comportement d'un fluide se lit sur sa FDS, il ne se suppose jamais par analogie avec le fluide précédent.",
-      "<b>Comment ça arrive vraiment.</b> Une installation au CO₂ en local technique enterré, une fuite lente pendant la nuit, porte fermée. Le gaz remplit le volume par le bas. Au matin, un technicien descend relever un paramètre. À mi-escalier, il a mal à la tête et le souffle court. Il met cela sur le compte de la fatigue et continue : il n'en a que pour deux minutes. Il ne remonte pas. Puis vient le second accident, celui qui tue le plus souvent dans cette famille d'accidents : un collègue le voit au sol et descend le chercher, sans protection. La nappe est toujours là. <b>Deux victimes au lieu d'une.</b>"
+      "<b>Comment ça arrive vraiment.</b> Une installation au CO₂ en local technique enterré, une fuite lente pendant la nuit, porte fermée. Le gaz remplit le volume par le bas. Au matin, un technicien descend relever un paramètre. À mi-escalier, il a mal à la tête et le souffle court. Il met cela sur le compte de la fatigue et continue : il n'en a que pour deux minutes. Il ne remonte pas. Puis un collègue le voit au sol et descend le chercher, sans protection : la nappe est toujours là. La plupart de ces accidents font leur seconde victime à cet instant précis."
      ],
      "blocs": [
       {
@@ -1334,7 +1334,7 @@
       "Les fluides frigorigènes peuvent réchauffer le climat s'ils s'échappent dans l'air. Deux niveaux de loi encadrent votre métier : le niveau européen et le niveau français.",
       "Au niveau européen, le texte de base est le <b>règlement (UE) 2024/573</b>. C'est un <b>règlement</b>, jamais une « directive » : il s'applique directement dans tous les pays de l'Union, sans loi française pour le recopier. Il a remplacé l'ancien règlement 517/2014.",
       "Au niveau français, l'<b>arrêté du 21 novembre 2025</b>, un texte signé par un ministre, précise comment appliquer ce règlement sur le terrain.",
-      "Pour réaliser les <b>opérations réglementées</b> sur ces fluides (mise en service, entretien, contrôle d'étanchéité, récupération), il vous faut une <b>attestation d'aptitude</b> personnelle. Votre entreprise, elle, doit avoir une <b>attestation de capacité</b>. Ce sont deux papiers obligatoires, et ce n'est pas le même."
+      "Pour réaliser les <b>opérations réglementées</b> sur ces fluides (mise en service, entretien, contrôle d'étanchéité, récupération), il vous faut une <b>attestation d'aptitude</b> personnelle. Votre entreprise, elle, doit avoir une <b>attestation de capacité</b>. Les deux sont obligatoires, et l'un ne remplace pas l'autre."
      ],
      "blocs": [
       {
@@ -2449,7 +2449,7 @@
      "titre_source": "Annexe II — Modalités d'évaluation des compétences et des connaissances",
      "paras": [
       "Pour les catégories A1, A2, B et C, l'épreuve commence par un <b>tronc commun</b> : 1 h de théorie et 2 h de pratique, puis une partie spécifique à la catégorie. Les catégories D et E ont leur épreuve propre, plus courte.",
-      "L'épreuve porte toujours sur les groupes 1, 2, 3, 4, 5, 10, 11 — et sur <b>au moins un</b> des groupes 6, 7, 8, 9, <b>tiré au sort le jour de l'épreuve</b>. Le candidat ne sait pas, avant l'évaluation, sur lequel de ces quatre groupes il sera évalué. Conséquence simple : les quatre groupes d'organes s'apprennent tous."
+      "L'épreuve porte toujours sur les groupes 1, 2, 3, 4, 5, 10, 11 — et sur <b>au moins un</b> des groupes 6, 7, 8, 9, <b>tiré au sort le jour de l'épreuve</b>. Le candidat ne sait pas, avant l'évaluation, sur lequel de ces quatre groupes il sera évalué. Il faut donc apprendre les quatre groupes d'organes."
      ],
      "tableau": {
       "titre": "Les durées d’épreuve (réglementaires)",
@@ -2724,7 +2724,7 @@
       {
        "type": "piege",
        "t": "Mélanges zéotropes : le glissement",
-       "html": "<p><p>Certains fluides sont des <b>mélanges zéotropes</b> : plusieurs fluides purs mélangés dont les composants ne s'évaporent pas ensemble. Résultat, pendant tout le changement d'état, la température n'est pas constante : elle <b>glisse</b>, on parle de <b>glissement</b>. Conséquence pratique : on charge et on soutire toujours ces mélanges en <b>phase liquide</b>, jamais en phase vapeur, sinon la composition change et le fluide qui reste dans la bouteille n'est plus le même.</p></p>"
+       "html": "<p><p>Certains fluides sont des <b>mélanges zéotropes</b> : plusieurs fluides purs mélangés dont les composants ne s'évaporent pas ensemble. Résultat, pendant tout le changement d'état, la température n'est pas constante : elle <b>glisse</b>, on parle de <b>glissement</b>. Voilà pourquoi on charge et on soutire toujours ces mélanges en <b>phase liquide</b>, jamais en phase vapeur, sinon la composition change et le fluide qui reste dans la bouteille n'est plus le même.</p></p>"
       }
      ],
      "question": {
@@ -2782,8 +2782,8 @@
       "1.02"
      ],
      "paras": [
-      "Voilà pourquoi une machine frigorifique ne travaille pas avec de l'air, mais avec un fluide qui <b>change d'état</b>. Sur le palier, le fluide encaisse beaucoup de chaleur sans s'échauffer : c'est exactement ce qu'on cherche. L'<b>évaporateur</b> fait bouillir le fluide, donc il <b>prend</b> de la chaleur au local. Le <b>condenseur</b> le liquéfie, donc il <b>rend</b> cette chaleur dehors. Toute la machine tient dans ces deux phrases.",
-      "Deux mots du référentiel se posent ici, une fois pour toutes. La chaleur que l'évaporateur prend au local, rapportée à un kilo de fluide, s'appelle l'<b>effet de réfrigération</b> : c'est le froid produit, et c'est ce que l'on cherche à rendre le plus grand possible. Le compresseur, lui, ajoute au fluide sa propre chaleur en le comprimant : c'est la <b>chaleur de compression</b>. Le condenseur devra donc évacuer les deux : la chaleur prise au local <b>et</b> celle ajoutée par le compresseur. C'est pour cette raison qu'un condenseur évacue toujours plus de chaleur qu'un évaporateur n'en absorbe.",
+      "Voilà pourquoi une machine frigorifique ne travaille pas avec de l'air, mais avec un fluide qui <b>change d'état</b>. Sur le palier, le fluide encaisse beaucoup de chaleur sans s'échauffer : c'est exactement ce qu'on cherche. L'<b>évaporateur</b> fait bouillir le fluide, donc il <b>prend</b> de la chaleur au local. Le <b>condenseur</b> le liquéfie, donc il <b>rend</b> cette chaleur dehors. Compresseur et détendeur, eux, entretiennent l'écart de pression qui rend ces deux échanges possibles.",
+      "Deux mots du référentiel trouvent leur place ici. La chaleur que l'évaporateur prend au local, rapportée à un kilo de fluide, s'appelle l'<b>effet de réfrigération</b> : c'est le froid produit, et c'est ce que l'on cherche à rendre le plus grand possible. Le compresseur, lui, ajoute au fluide sa propre chaleur en le comprimant : c'est la <b>chaleur de compression</b>. Le condenseur devra donc évacuer les deux : la chaleur prise au local <b>et</b> celle ajoutée par le compresseur. C'est pour cette raison qu'un condenseur évacue toujours plus de chaleur qu'un évaporateur n'en absorbe.",
       "Reste une question : à quelle température se produit la <b>vaporisation</b>, donc le palier ? Elle dépend de la <b>pression</b>. Plus la pression est basse, plus le fluide bout froid. C'est précisément ce que fait le <b>détendeur</b> : il fait chuter la pression pour que le fluide puisse bouillir à une température plus basse que le local à refroidir. La relation pression-température vue à la fiche précédente, c'est la <b>hauteur du palier</b>."
      ],
      "blocs": [
@@ -3645,7 +3645,7 @@
       {
        "type": "piege",
        "t": "L'échelle des pressions n'est pas une règle graduée",
-       "html": "<p>Sur une échelle <b>logarithmique</b>, ce qui est constant n'est pas l'écart entre deux graduations, c'est le <b>rapport</b>. La même distance sépare 1 et 10, puis 10 et 100. Conséquence pratique : <b>on ne mesure pas une pression à la règle sur ce diagramme</b>, on lit la graduation. Les valeurs, elles, se prennent au manomètre et dans la table.</p>"
+       "html": "<p>Sur une échelle <b>logarithmique</b>, ce qui est constant n'est pas l'écart entre deux graduations, c'est le <b>rapport</b>. La même distance sépare 1 et 10, puis 10 et 100. Sur ce diagramme, <b>on ne mesure donc pas une pression à la règle</b>, on lit la graduation. Les valeurs, elles, se prennent au manomètre et dans la table.</p>"
       }
      ],
      "question": {
@@ -4185,9 +4185,9 @@
       "5.05"
      ],
      "paras": [
-      "La mesure est toujours la même, et elle demande <b>deux instruments</b>. Le <b>manomètre</b> donne la pression ; la <b>table de saturation</b> du fluide traduit cette pression en température de changement d'état. Le <b>thermomètre de contact</b> donne la température réelle du tube. La différence entre les deux, c'est la valeur cherchée. Un seul instrument ne suffit jamais.",
+      "La mesure est toujours la même, et elle demande <b>deux instruments</b>. Le <b>manomètre</b> donne la pression ; la <b>table de saturation</b> du fluide traduit cette pression en température de changement d'état. Le <b>thermomètre de contact</b> donne la température réelle du tube. La valeur cherchée est la différence entre les deux. Avec un seul instrument, on obtient une température ou une pression — pas une surchauffe.",
       "La surchauffe se prend en deux endroits, et cela porte deux noms. La <b>surchauffe utile</b> est celle que la vapeur gagne <b>à l'intérieur même de l'évaporateur</b> : elle a servi à refroidir le local, d'où son nom. La <b>surchauffe totale</b> ajoute à celle-ci ce que la <b>ligne d'aspiration</b> apporte entre la sortie de l'évaporateur et le compresseur. Une ligne mal isolée, qui traverse un local chaud, augmente la surchauffe totale sans rien apporter au froid.",
-      "Pourquoi la règle-t-on ? Pour deux raisons opposées, et il faut passer entre les deux. Une surchauffe <b>trop faible</b>, et du liquide arrive au compresseur : le liquide ne se comprime pas, la casse est immédiate. Une surchauffe <b>trop forte</b>, et le compresseur s'échauffe pendant que l'évaporateur travaille mal : le rendement chute. Repère usuel : <b>5 à 10 K</b>."
+      "La surchauffe se règle entre deux dérives opposées. Une surchauffe <b>trop faible</b>, et du liquide arrive au compresseur : le liquide ne se comprime pas, la casse est immédiate. Une surchauffe <b>trop forte</b>, et le compresseur s'échauffe pendant que l'évaporateur travaille mal : le rendement chute. Repère usuel : <b>5 à 10 K</b>."
      ],
      "blocs": [
       {
@@ -5271,7 +5271,7 @@
       "6.07"
      ],
      "paras": [
-      "Le compresseur est le <b>seul organe actif</b> du cycle : il aspire la vapeur basse pression et la refoule en haute pression. Tout le reste est passif.",
+      "Le compresseur est le <b>seul organe actif</b> du cycle : il aspire la vapeur basse pression et la refoule en haute pression. Condenseur, détendeur et évaporateur ne font que subir ce mouvement.",
       "Ses points de fuite privilégiés : <b>raccords, vannes de service, presse-étoupe, bornes de traversée</b> sur les hermétiques. Ses sécurités (pressostats HP et BP, protection thermique) se règlent <b>selon la fiche constructeur</b>, jamais à l'estime."
      ],
      "blocs": [],
@@ -6509,7 +6509,7 @@
       {
        "type": "piege",
        "t": "Un régulateur ne coupe rien",
-       "html": "<p>Le <b>pressostat HP</b> est une sécurité : il <b>coupe</b> l'alimentation électrique du compresseur quand la pression devient dangereuse. Le <b>régulateur de pression de condensation</b> ne coupe rien du tout : c'est une vanne, elle <b>maintient</b> une pression. Deux organes, deux fonctions, deux réglages, et l'un ne remplace jamais l'autre.</p>"
+       "html": "<p>Le <b>pressostat HP</b> est une sécurité : il <b>coupe</b> l'alimentation électrique du compresseur quand la pression devient dangereuse. Le <b>régulateur de pression de condensation</b> ne coupe rien du tout : c'est une vanne, elle <b>maintient</b> une pression. Le pressostat coupe, la vanne maintient : l'un ne remplace jamais l'autre.</p>"
       },
       {
        "type": "piege",
@@ -7119,8 +7119,8 @@
       "8.11"
      ],
      "paras": [
-      "Un troisième régulateur existe, et il ne faut pas le confondre avec celui-ci : le <b>régulateur de pression de carter</b>, couramment appelé <b>KVL</b>. Il se monte sur la ligne d'aspiration, juste <b>avant le compresseur</b>. Il ne protège ni le produit ni l'évaporateur : il protège le <b>moteur du compresseur</b>, en limitant la pression d'aspiration. Le cas typique est le <b>redémarrage après un arrêt long</b> : la pression est alors remontée dans tout le circuit, et sans lui le compresseur devrait avaler d'un coup beaucoup trop de vapeur. Trois régulateurs, trois endroits, trois raisons ; et aucun des trois ne coupe quoi que ce soit.",
-      "Les <b>interrupteurs de sécurité et de contrôle</b>, les pressostats, protègent la machine, pas le produit. Ils coupent l'alimentation électrique du compresseur si la pression sort de la plage prévue. Deux organes, deux fonctions, deux réglages : on ne les confond pas.",
+      "Un troisième régulateur existe, et il ne faut pas le confondre avec celui-ci : le <b>régulateur de pression de carter</b>, couramment appelé <b>KVL</b>. Il se monte sur la ligne d'aspiration, juste <b>avant le compresseur</b>. Il ne protège ni le produit ni l'évaporateur : il protège le <b>moteur du compresseur</b>, en limitant la pression d'aspiration. Le cas typique est le <b>redémarrage après un arrêt long</b> : la pression est alors remontée dans tout le circuit, et sans lui le compresseur devrait avaler d'un coup beaucoup trop de vapeur. Chacun des trois tient une pression à un endroit différent du circuit, et aucun ne coupe quoi que ce soit : couper est le travail du pressostat.",
+      "Les <b>interrupteurs de sécurité et de contrôle</b>, les pressostats, protègent la machine, pas le produit. Ils coupent l'alimentation électrique du compresseur si la pression sort de la plage prévue. Régulateur et pressostat n'ont ni la même fonction ni le même réglage : on ne les confond pas.",
       "Le dégivrage évite que le givre n'isole la batterie. Il peut se faire à l'air, par résistance électrique ou par gaz chauds. Quand il se fait <b>à l'air chaud</b>, le conduit qui transporte cet air s'inspecte à chaque visite : étanchéité, isolation, écoulement des condensats."
      ],
      "blocs": [
@@ -7757,8 +7757,8 @@
      "paras": [
       "Autour du détendeur, d'autres organes se <b>règlent</b> et se <b>contrôlent</b>. Ils ne dosent pas le fluide. Ils protègent l'installation et lui évitent de gaspiller de l'énergie. Cette fiche en présente quatre : les thermostats, la soupape de régulation de pression, les limiteurs de pression, et le séparateur d'huile.",
       "Le <b>thermostat</b> commande un organe (compresseur, vanne) selon une <b>température</b>. Le thermostat <b>mécanique</b> utilise un bulbe relié par un tube fin à des contacts électriques : simple et robuste. Le thermostat <b>électronique</b> utilise une sonde reliée à un régulateur numérique : plus précis, et plus simple à régler. Dans les deux cas, le point de consigne se règle <b>selon la fiche constructeur</b>, jamais à l'estime.",
-      "La <b>soupape de régulation de pression</b> ne coupe rien : elle <b>module en continu</b> pour maintenir une pression stable à un point du circuit. Le <b>limiteur de pression</b> est différent : c'est une sécurité. Mécanique, il est réglé par un ressort. Électronique, il utilise un capteur relié à un module. Dans les deux cas, il <b>coupe le circuit</b>, le plus souvent le compresseur, dès qu'un seuil de pression est franchi, en haute comme en basse pression. Une régulation qui module, une sécurité qui coupe : deux logiques, deux réglages.",
-      "<b>Les régulateurs de pression, chacun à sa place.</b> Sur le terrain, ces vannes portent des repères de catalogue (la série <b>KV</b> est la plus répandue) et chacune tient une pression <b>à un endroit précis du circuit</b>. Les confondre, c'est régler la mauvaise vanne."
+      "La <b>soupape de régulation de pression</b> ne coupe rien : elle <b>module en continu</b> pour maintenir une pression stable à un point du circuit. Le <b>limiteur de pression</b> est différent : c'est une sécurité. Mécanique, il est réglé par un ressort. Électronique, il utilise un capteur relié à un module. Dans les deux cas, il <b>coupe le circuit</b>, le plus souvent le compresseur, dès qu'un seuil de pression est franchi, en haute comme en basse pression. La régulation module, la sécurité coupe ; leurs réglages ne se confondent pas.",
+      "<b>Les régulateurs de pression, chacun à sa place.</b> Sur le terrain, ces vannes portent des repères de catalogue (la série <b>KV</b> est la plus répandue) et chacune tient une pression <b>à un endroit précis du circuit</b>. Un repère mal lu, et l'on règle la mauvaise vanne."
      ],
      "blocs": [],
      "question": {
@@ -8568,7 +8568,7 @@
      ],
      "paras": [
       "Le <b>manifold</b> (ensemble manométrique) réunit deux manomètres (<b>BP en bleu</b>, <b>HP en rouge</b>) et deux vannes, une par côté, qui commandent le passage vers le <b>flexible central jaune</b> : celui qui part vers la pompe à vide, la bouteille de récupération, ou une bouteille d'azote équipée de son <b>mano-détendeur</b>.",
-      "Le manomètre affiche une <b>pression relative</b> : pour obtenir la pression absolue, on ajoute environ <b>1 bar</b>. La pince de température et le multimètre servent à la <b>méthode indirecte</b> de contrôle d'étanchéité : on compare les valeurs mesurées à celles attendues sur la fiche constructeur : surchauffe (plage indicative <b>5 à 10 K</b>), sous-refroidissement (plage indicative <b>4 à 8 K</b>), intensité absorbée. Un écart qui se creuse alerte, sans avoir ouvert le circuit."
+      "Le manomètre affiche une <b>pression relative</b> : pour obtenir la pression absolue, on ajoute environ <b>1 bar</b>. La pince de température et le multimètre servent à la <b>méthode indirecte</b> de contrôle d'étanchéité : on compare les valeurs mesurées à celles attendues sur la fiche constructeur : surchauffe (plage indicative <b>5 à 10 K</b>), sous-refroidissement (plage indicative <b>4 à 8 K</b>), intensité absorbée. Un écart qui se creuse d'une visite à l'autre alerte, sans qu'on ait ouvert le circuit."
      ],
      "blocs": [
       {
@@ -9856,8 +9856,8 @@
       "5.06"
      ],
      "paras": [
-      "La quantité de fluide qui entre ou sort d'un circuit se lit sur une <b>balance</b>, jamais sur un manomètre. Le manomètre dit comment la machine se comporte. La balance dit <b>combien</b> il y a de fluide.",
-      "Avant toute pesée, on choisit une balance <b>adaptée</b> à la quantité attendue. On la pose à plat, stable, vérifiée. Une balance douteuse ne sert à rien : son résultat n'est pas fiable.",
+      "La quantité de fluide qui entre ou sort d'un circuit se lit sur une <b>balance</b>, jamais sur un manomètre. Le manomètre renseigne sur le comportement de la machine ; la balance, elle, dit <b>combien</b> il y a de fluide.",
+      "Avant toute pesée, on choisit une balance <b>adaptée</b> à la quantité attendue. On la pose à plat, stable, vérifiée. Une balance douteuse fausse tout le geste : mieux vaut en changer avant de commencer.",
       "Cas particulier : un fluide <b>zéotrope</b>, composé de plusieurs corps, se <b>soutire toujours de la bouteille en phase liquide</b> : le sortir en phase gazeuse changerait sa composition en cours de route. Le mode d'introduction dans le circuit, lui, suit l'opération et la documentation constructeur."
      ],
      "blocs": [
@@ -11373,12 +11373,12 @@
       {
        "type": "cle",
        "t": "Drop-in ou retrofit ?",
-       "html": "<p><b>Drop-in</b> : on change le fluide sans modifier l'installation.</p><p><b>Retrofit</b> : on change le fluide <b>et</b> ce qu'il faut adapter : huile, détendeur, joints. Annoncer un drop-in là où il faut un retrofit, c'est préparer une panne.</p>"
+       "html": "<p><b>Drop-in</b> : on change le fluide sans modifier l'installation.</p><p><b>Retrofit</b> : on change le fluide <b>et</b> ce qu'il faut adapter : huile, détendeur, joints. Annoncer un drop-in là où il faut un retrofit prépare une panne.</p>"
       },
       {
        "type": "piege",
        "t": "Le piège de l'année",
-       "html": "<p><b>Le R-290 est A3</b>, pas A2L. Tout hydrocarbure est très inflammable. Se tromper de classe, c'est se tromper d'EPI, de matériel électrique et de charge admissible. À l'inverse, le <b>CO₂ est A1</b> : toxicité faible, non inflammable, mais cette classe n'annonce ni sa <b>pression</b>, ni l'<b>atmosphère irrespirable</b> qu'une fuite crée en local fermé.</p>"
+       "html": "<p><b>Le R-290 est A3</b>, pas A2L. Tout hydrocarbure est très inflammable. Une erreur de classe entraîne toutes les autres : EPI, matériel électrique, charge admissible. À l'inverse, le <b>CO₂ est A1</b> : toxicité faible, non inflammable, mais cette classe n'annonce ni sa <b>pression</b>, ni l'<b>atmosphère irrespirable</b> qu'une fuite crée en local fermé.</p>"
       }
      ],
      "question": {
