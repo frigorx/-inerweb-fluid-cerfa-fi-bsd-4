@@ -1,7 +1,7 @@
 {
  "source": {
   "depot": "frigorx/pilote-fluides",
-  "commit": "de63b71"
+  "commit": "0ac4e96"
  },
  "categories": [
   "A1",
@@ -6459,7 +6459,8 @@
      ],
      "paras": [
       "Le <b>condenseur</b> transforme le gaz chaud venu du compresseur en <b>liquide</b>. Il rejette la chaleur du local vers l'air extérieur. Sur un climatiseur split, il se trouve dans l'<b>unité extérieure</b>, la partie posée dehors.",
-      "Sur la croix du frigoriste, le condenseur est toujours en <b>haut</b> : le compresseur à droite, le détendeur à gauche, l'évaporateur en bas."
+      "Sur la croix du frigoriste, le condenseur est toujours en <b>haut</b> : le compresseur à droite, le détendeur à gauche, l'évaporateur en bas.",
+      "C'est un condenseur <b>à air</b> : un ventilateur souffle sur des <b>ailettes</b>, de petites lames en métal qui évacuent la chaleur. Il n'y a jamais de tour de refroidissement sur ce type d'appareil."
      ],
      "blocs": [
       {
@@ -6500,9 +6501,9 @@
       "7.10"
      ],
      "paras": [
-      "C'est un condenseur <b>à air</b> : un ventilateur souffle sur des <b>ailettes</b>, de petites lames en métal qui évacuent la chaleur. Il n'y a jamais de tour de refroidissement sur ce type d'appareil.",
       "Installer, régler et vérifier un condenseur, c'est protéger tout le circuit contre les <b>fuites</b>, dès le premier jour et pendant toute sa vie.",
-      "Un organe mérite qu'on s'y arrête, parce que le référentiel le demande nommément : le <b>régulateur de pression de sortie du condenseur</b>. Sur le terrain, on l'appelle couramment un <b>KVR</b> ; c'est une référence commerciale, pas le nom de la fonction."
+      "Un organe mérite qu'on s'y arrête, parce que le référentiel le demande nommément : le <b>régulateur de pression de sortie du condenseur</b>. Sur le terrain, on l'appelle couramment un <b>KVR</b> ; c'est une référence commerciale, pas le nom de la fonction.",
+      "À quoi sert-il ? Quand il fait <b>froid dehors</b>, le condenseur évacue la chaleur trop facilement et la haute pression descend. Or le <b>détendeur</b> a besoin d'un écart de pression suffisant entre l'entrée et la sortie pour alimenter correctement l'évaporateur. Si la haute pression tombe trop bas, cet écart disparaît, le détendeur n'alimente plus, et l'installation ne fait plus de froid alors que rien n'est cassé. Le régulateur <b>retient</b> la pression de condensation au-dessus d'une valeur réglée : c'est tout son rôle."
      ],
      "blocs": [
       {
@@ -6543,8 +6544,9 @@
       "7.10"
      ],
      "paras": [
-      "À quoi sert-il ? Quand il fait <b>froid dehors</b>, le condenseur évacue la chaleur trop facilement et la haute pression descend. Or le <b>détendeur</b> a besoin d'un écart de pression suffisant entre l'entrée et la sortie pour alimenter correctement l'évaporateur. Si la haute pression tombe trop bas, cet écart disparaît, le détendeur n'alimente plus, et l'installation ne fait plus de froid alors que rien n'est cassé. Le régulateur <b>retient</b> la pression de condensation au-dessus d'une valeur réglée : c'est tout son rôle.",
-      "Il ne faut le confondre avec aucun des deux autres régulateurs du circuit. Celui-ci agit sur la <b>haute</b> pression, en sortie de condenseur. Les deux autres (pression d'évaporation et pression de carter) agissent du côté <b>basse</b> pression, et se voient à la fiche de l'évaporateur."
+      "Il ne faut le confondre avec aucun des deux autres régulateurs du circuit. Celui-ci agit sur la <b>haute</b> pression, en sortie de condenseur. Les deux autres (pression d'évaporation et pression de carter) agissent du côté <b>basse</b> pression, et se voient à la fiche de l'évaporateur.",
+      "Le <b>rapport d'état</b> ne vaut que par ce qu'il permet de comparer. On y note donc les mesures ET leurs conditions : la <b>haute pression</b> relevée et la température de condensation qui lui correspond, la <b>température de l'air</b> à l'entrée de la batterie, l'écart entre les deux, le <b>sous-refroidissement</b>. On décrit ensuite ce que l'on a vu — ailettes couchées ou encrassées, ventilateur bruyant, trace d'huile, accès qui interdit tout nettoyage. Un relevé sans sa température extérieure ne se compare à rien : six mois plus tard, personne ne saura si la machine allait mieux ou plus mal.",
+      "Le condenseur est l'organe où l'<b>énergie</b> se gagne ou se perd. À l'installation, l'emplacement décide de tout : de l'air libre à l'aspiration comme au refoulement, les distances du constructeur respectées, aucun <b>recyclage</b> de l'air chaud rejeté vers l'entrée, et un accès qui permette encore de nettoyer dans cinq ans. À l'entretien, une batterie propre tient la <b>pression de condensation</b> basse — et chaque kelvin gagné sur la condensation vaut environ <b>2 à 3 %</b> de consommation en moins. Un écart qui grandit entre la température de condensation et celle de l'air d'entrée, à charge égale, annonce l'encrassement bien avant que le pressostat ne coupe."
      ],
      "blocs": [
       {
@@ -6999,8 +7001,9 @@
      ],
      "paras": [
       "C'est le point <b>froid</b> du circuit : le fluide y absorbe la chaleur du milieu à refroidir et se vaporise. En sortie, il doit être <b>entièrement vapeur</b>, avec une <b>surchauffe de 5 à 10 K</b> : c'est ce qui protège le compresseur du coup de liquide.",
-      "Le <b>givre</b> est normal en froid négatif ; installé durablement, il isole la batterie et fait chuter l'échange. Les cycles de <b>dégivrage</b> (air, résistance électrique, gaz chauds) sont là pour l'enlever. Un évaporateur qui givre <b>complètement</b> en fonctionnement signale d'abord un problème de <b>débit d'air</b> : filtre encrassé, ventilateur arrêté.",
-      "Points de vigilance propres : corrosion, condensats, et le <b>bac</b> : une fuite peut s'y dissimuler sous l'eau de dégivrage."
+      "Dans le détail : le fluide arrive en <b>mélange liquide-vapeur</b>, détendu et froid. Il traverse la batterie en prenant la chaleur du milieu — l'air d'une chambre, l'eau d'un circuit — et se vaporise peu à peu. La dernière goutte disparaît avant la sortie ; au-delà, la vapeur continue de se réchauffer, et c'est cette <b>surchauffe</b> qui garantit qu'aucun liquide n'atteindra le compresseur. Tant que le fluide change d'état, sa température reste presque constante : c'est le <b>palier</b> d'évaporation, celui que le manomètre BP permet de lire à travers la table du fluide.",
+      "Un évaporateur <b>fuit</b> là où on l'assemble et là où il souffre : raccords d'entrée et de sortie, coudes, soudures reprises après un choc, et perçages du bac. Le <b>dégivrage</b> ajoute sa part de fatigue — chauffe puis refroidissement, plusieurs fois par jour, sur les mêmes soudures. Une trace d'huile au bas d'une batterie ou dans le bac se lit donc comme un signe, jamais comme une salissure ordinaire.",
+      "Le <b>givre</b> est normal en froid négatif ; installé durablement, il isole la batterie et fait chuter l'échange. Les cycles de <b>dégivrage</b> (air, résistance électrique, gaz chauds) sont là pour l'enlever. Un évaporateur qui givre <b>complètement</b> en fonctionnement signale d'abord un problème de <b>débit d'air</b> : filtre encrassé, ventilateur arrêté."
      ],
      "blocs": [],
      "question": {
@@ -7028,6 +7031,7 @@
       "8.09"
      ],
      "paras": [
+      "Points de vigilance propres : corrosion, condensats, et le <b>bac</b> : une fuite peut s'y dissimuler sous l'eau de dégivrage.",
       "La conduite d'<b>aspiration</b> relie l'évaporateur au compresseur. Elle transporte le fluide en vapeur, mais cette vapeur emporte toujours un peu d'<b>huile</b>, celle qui lubrifie le compresseur. Pour que l'huile revienne avec le gaz, on pose cette conduite en légère <b>pente</b>, inclinée vers le compresseur. Ainsi, l'huile glisse avec le fluide au lieu de stagner dans un creux du tube.",
       "Parfois, le tracé oblige la conduite d'aspiration à remonter. Par exemple, le compresseur est placé plus haut que l'évaporateur. Dans ce cas, la pente seule ne suffit plus : au ralenti, le gaz n'a pas toujours assez de vitesse pour porter l'huile vers le haut. On pose alors un <b>siphon</b> en pied de cette colonne montante. C'est un petit coude en U qui retient un peu d'huile le temps qu'elle s'accumule. Puis il la relance d'un coup vers le haut, dès que le gaz reprend de la vitesse."
      ],
@@ -7077,7 +7081,8 @@
      ],
      "paras": [
       "Sur la <b>croix du frigoriste</b>, l'évaporateur occupe la position <b>basse</b>. Une fois installé, il doit fonctionner <b>sans aucune fuite ni émission</b> : c'est vrai pour le tube, mais aussi pour tout le matériel de contrôle et de sécurité posé avec lui.",
-      "Deux organes se règlent, pour deux raisons différentes. Le <b>régulateur de pression d'évaporation</b> (que le référentiel appelle aussi la <b>soupape de régulation</b> de la pression d'évaporation) est une soupape mécanique. Elle maintient une pression minimale dans l'évaporateur : par exemple pour empêcher un produit de geler, ou pour équilibrer plusieurs évaporateurs sur un seul compresseur. Sa mise en service et son réglage suivent <b>toujours la fiche constructeur</b>."
+      "Deux organes se règlent, pour deux raisons différentes. Le <b>régulateur de pression d'évaporation</b> (que le référentiel appelle aussi la <b>soupape de régulation</b> de la pression d'évaporation) est une soupape mécanique. Elle maintient une pression minimale dans l'évaporateur : par exemple pour empêcher un produit de geler, ou pour équilibrer plusieurs évaporateurs sur un seul compresseur. Sa mise en service et son réglage suivent <b>toujours la fiche constructeur</b>.",
+      "Cet organe se monte <b>en sortie d'évaporateur</b>, sur le départ de la ligne d'aspiration. Sur le terrain, on l'appelle couramment un <b>KVP</b> ; c'est une référence commerciale, pas le nom de la fonction. Son intérêt se comprend mieux sur un cas concret : plusieurs chambres à des températures différentes, un seul compresseur. Sans lui, toutes les chambres descendraient à la pression de la plus froide. Avec lui, chaque évaporateur garde la pression, donc la température, que son produit demande."
      ],
      "blocs": [
       {
@@ -7114,9 +7119,9 @@
       "8.11"
      ],
      "paras": [
-      "Cet organe se monte <b>en sortie d'évaporateur</b>, sur le départ de la ligne d'aspiration. Sur le terrain, on l'appelle couramment un <b>KVP</b> ; c'est une référence commerciale, pas le nom de la fonction. Son intérêt se comprend mieux sur un cas concret : plusieurs chambres à des températures différentes, un seul compresseur. Sans lui, toutes les chambres descendraient à la pression de la plus froide. Avec lui, chaque évaporateur garde la pression, donc la température, que son produit demande.",
       "Un troisième régulateur existe, et il ne faut pas le confondre avec celui-ci : le <b>régulateur de pression de carter</b>, couramment appelé <b>KVL</b>. Il se monte sur la ligne d'aspiration, juste <b>avant le compresseur</b>. Il ne protège ni le produit ni l'évaporateur : il protège le <b>moteur du compresseur</b>, en limitant la pression d'aspiration. Le cas typique est le <b>redémarrage après un arrêt long</b> : la pression est alors remontée dans tout le circuit, et sans lui le compresseur devrait avaler d'un coup beaucoup trop de vapeur. Trois régulateurs, trois endroits, trois raisons ; et aucun des trois ne coupe quoi que ce soit.",
-      "Les <b>interrupteurs de sécurité et de contrôle</b>, les pressostats, protègent la machine, pas le produit. Ils coupent l'alimentation électrique du compresseur si la pression sort de la plage prévue. Deux organes, deux fonctions, deux réglages : on ne les confond pas."
+      "Les <b>interrupteurs de sécurité et de contrôle</b>, les pressostats, protègent la machine, pas le produit. Ils coupent l'alimentation électrique du compresseur si la pression sort de la plage prévue. Deux organes, deux fonctions, deux réglages : on ne les confond pas.",
+      "Le dégivrage évite que le givre n'isole la batterie. Il peut se faire à l'air, par résistance électrique ou par gaz chauds. Quand il se fait <b>à l'air chaud</b>, le conduit qui transporte cet air s'inspecte à chaque visite : étanchéité, isolation, écoulement des condensats."
      ],
      "blocs": [
       {
@@ -7153,8 +7158,9 @@
       "8.11"
      ],
      "paras": [
-      "Le dégivrage évite que le givre n'isole la batterie. Il peut se faire à l'air, par résistance électrique ou par gaz chauds. Quand il se fait <b>à l'air chaud</b>, le conduit qui transporte cet air s'inspecte à chaque visite : étanchéité, isolation, écoulement des condensats.",
-      "Toute visite se termine par un <b>rapport écrit</b> sur l'état de l'évaporateur : anomalies observées, risque pour le système, ce qui pourrait à terme provoquer une fuite. Une batterie propre, un bon débit d'air et une surchauffe de <b>5 à 10 K</b> préservent aussi l'<b>efficacité énergétique</b> de l'équipement."
+      "Toute visite se termine par un <b>rapport écrit</b> sur l'état de l'évaporateur : anomalies observées, risque pour le système, ce qui pourrait à terme provoquer une fuite. Une batterie propre, un bon débit d'air et une surchauffe de <b>5 à 10 K</b> préservent aussi l'<b>efficacité énergétique</b> de l'équipement.",
+      "Le <b>rapport d'état</b> de l'évaporateur suit la même règle que celui du condenseur : les mesures avec leurs conditions. On y porte la <b>basse pression</b> et la température d'évaporation qui lui correspond, la <b>température de l'air</b> à l'entrée et à la sortie de la batterie, la <b>surchauffe</b> relevée. On décrit ensuite ce qui se voit : givre là où il ne devrait pas être, ailettes bouchées, ventilateur à l'arrêt, bac de condensats plein, écoulement gelé. Un dégivrage qui se déclenche sans dégivrer se lit dans le rapport bien avant de se voir dans la chambre.",
+      "Côté <b>énergie</b>, l'évaporateur travaille d'autant mieux que sa température est <b>haute</b> : chaque kelvin gagné sur l'évaporation vaut lui aussi quelques pour cent de consommation. Un givre épais isole la batterie et fait tomber la BP ; le compresseur force alors pour rien. Le réglage du <b>dégivrage</b> décide donc autant que la propreté : trop fréquent, il se paie deux fois — en résistance chauffante, puis en froid à refaire ; trop rare, il laisse le givre s'installer. À l'installation, on laisse devant la batterie la place que le constructeur demande : aucun réglage ne rattrape un manque d'air."
      ],
      "blocs": [
       {
@@ -11360,7 +11366,8 @@
      "paras": [
       "Remplacer un fluide à fort PRP se fait dans deux directions : les <b>fluides naturels</b> (CO₂, ammoniac, hydrocarbures) et les fluides de synthèse à faible PRP (<b>HFO</b>, HFC bas PRP). Il n'existe <b>pas de fluide universel</b> : le choix dépend de l'application, du climat, et de la sécurité du site.",
       "La <b>classe de sécurité NF EN 378</b> commande tout le reste (EPI, zonage, détection, charge admissible dans le local) : <b>A1</b> (CO₂), <b>A2L</b> (R-32, R-1234yf), <b>A3</b> (R-290), <b>B2L</b> (NH₃).",
-      "Une classe ne dit pas seulement « ça brûle ou non ». Elle décrit la <b>combustibilité</b> et la <b>propagation de la flamme</b> : un <b>A2L</b> brûle difficilement et la flamme se propage lentement, un <b>A3</b> s'enflamme facilement et la flamme court vite. De là découlent une <b>charge maximale</b> admissible et des <b>limites d'occupation</b> du local : plus le local est petit ou recevant du public, plus la charge autorisée est faible. Ces valeurs se déterminent selon la <b>NF EN 378</b> et la doc constructeur, <b>jamais à l'estime</b>."
+      "Une classe ne dit pas seulement « ça brûle ou non ». Elle décrit la <b>combustibilité</b> et la <b>propagation de la flamme</b> : un <b>A2L</b> brûle difficilement et la flamme se propage lentement, un <b>A3</b> s'enflamme facilement et la flamme court vite. De là découlent une <b>charge maximale</b> admissible et des <b>limites d'occupation</b> du local : plus le local est petit ou recevant du public, plus la charge autorisée est faible. Ces valeurs se déterminent selon la <b>NF EN 378</b> et la doc constructeur, <b>jamais à l'estime</b>.",
+      "Le stockage et le transport des fluides <b>inflammables</b>, <b>toxiques</b> ou à <b>haute pression</b> obéissent chacun à des règles propres. Et lorsqu'un site ne peut pas respecter les exigences de l'<b>annexe IV du règlement (UE) 2024/573</b> pour des raisons de <b>sécurité</b>, des équipements dérogatoires restent permis : c'est une exception encadrée, qui se justifie par écrit, pas un passe-droit."
      ],
      "blocs": [
       {
@@ -11401,9 +11408,9 @@
       "1.08"
      ],
      "paras": [
-      "Le stockage et le transport des fluides <b>inflammables</b>, <b>toxiques</b> ou à <b>haute pression</b> obéissent chacun à des règles propres. Et lorsqu'un site ne peut pas respecter les exigences de l'<b>annexe IV du règlement (UE) 2024/573</b> pour des raisons de <b>sécurité</b>, des équipements dérogatoires restent permis : c'est une exception encadrée, qui se justifie par écrit, pas un passe-droit.",
       "Côté énergie, le <b>COP</b> est le rapport de la puissance frigorifique produite à la puissance électrique consommée. On l'améliore en <b>rapprochant</b> la température de condensation de celle d'évaporation : condenseur propre, échangeurs bien dimensionnés, réglages justes. Réduire la charge, enfin, améliore à la fois la sécurité et le rendement.",
-      "Pour réduire la charge de fluide frigorigène, on peut aussi changer la <b>conception</b> du système. Dans un système à <b>boucle secondaire</b>, le fluide frigorigène reste confiné dans la machinerie, avec une charge réduite. Un fluide caloporteur — de l'<b>eau glacée</b> ou de l'<b>eau glycolée</b> — circule ensuite dans les postes (vitrines, centrales de traitement d'air) pour transporter le froid jusqu'à eux. Le fluide frigorigène ne quitte jamais la salle des machines."
+      "Le rendement se joue aussi <b>à la conception</b>, avant tout réglage. Laisser la haute pression <b>descendre</b> quand l'air extérieur est froid — la <b>condensation flottante</b> — fait gagner beaucoup au compresseur, à condition que le détendeur suive : un thermostatique a besoin d'un écart de pression minimal, un <b>détendeur électronique</b> non. Faire <b>varier la vitesse</b> du compresseur et des ventilateurs colle la puissance au besoin réel et supprime les démarrages à répétition. Un <b>sous-refroidissement</b> soigné donne plus de froid pour la même compression. Enfin la chaleur rejetée au condenseur n'est pas perdue : un <b>désurchauffeur</b> peut la reprendre pour l'eau chaude.",
+      "La <b>charge</b>, elle, se réduit d'abord par le choix des composants. Un échangeur à <b>plaques brasées</b> contient bien moins de fluide qu'un multitubulaire de même puissance ; un condenseur à <b>microcanaux</b> en contient moins qu'une batterie à tubes et ailettes. Chaque mètre de <b>ligne liquide</b> compte aussi, car le liquide est dense : rapprocher le groupe des postes, et choisir le diamètre juste plutôt que le plus large, retire des kilos à la machine. Une <b>bouteille</b> surdimensionnée, enfin, ne fait que stocker du fluide qui ne travaille pas."
      ],
      "blocs": [
       {
@@ -11438,6 +11445,7 @@
       "1.08"
      ],
      "paras": [
+      "Pour réduire la charge de fluide frigorigène, on peut aussi changer la <b>conception</b> du système. Dans un système à <b>boucle secondaire</b>, le fluide frigorigène reste confiné dans la machinerie, avec une charge réduite. Un fluide caloporteur — de l'<b>eau glacée</b> ou de l'<b>eau glycolée</b> — circule ensuite dans les postes (vitrines, centrales de traitement d'air) pour transporter le froid jusqu'à eux. Le fluide frigorigène ne quitte jamais la salle des machines.",
       "Le système en <b>cascade</b> pousse cette logique plus loin : deux circuits frigorifiques séparés sont montés en série, chacun avec sa propre charge, réduite elle aussi. Le circuit basse température évacue sa chaleur dans le circuit haute température, qui la rejette à l'extérieur. Chaque circuit reste petit, donc plus facile à confiner en cas de fuite.",
       "Chaque fluide de substitution a ses <b>avantages</b> et ses <b>inconvénients</b>, selon l'application et le <b>climat</b>. Le <b>CO₂</b> est performant en froid commercial, mais son efficacité baisse quand l'air extérieur est très chaud. Les <b>hydrocarbures</b> sont efficaces, mais leur inflammabilité limite la charge autorisée. L'<b>ammoniac</b> est réservé aux installations industrielles, à cause de sa toxicité. Il n'y a pas de meilleur fluide dans l'absolu : le choix se fait selon l'application, le climat du site, et la documentation constructeur, à faire valider avant tout choix.",
       "Une machine aux <b>hydrocarbures</b> n'est pas construite comme les autres. Tous les composants électriques en contact possible avec le gaz — relais, thermostats, ventilateurs — sont <b>antidéflagrants</b> ou <b>non étincelants</b> : ils sont conçus pour ne jamais produire d'étincelle qui pourrait enflammer le gaz. La charge de fluide est aussi limitée dès la conception. Enfin, l'implantation prévoit une <b>ventilation</b> adaptée : le propane est plus lourd que l'air, il s'accumule donc en bas, près du sol, en cas de fuite."
