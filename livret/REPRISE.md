@@ -1,12 +1,12 @@
-# inerweb.fr HabFluide — tome 1 : la théorie · compte de reprise
+# inerweb.fr HabFluide — partie théorique · compte de reprise
 
 > Pour reprendre le chantier à froid, dans une session neuve, sans relire aucun
-> historique. État au 29/08/2026 (relecture éditoriale et passe de finition intégrées), branche `claude/livret-habilitation-fluide-d5n1yt`,
+> historique. État au 30/08/2026 (relecture métier intégrée, encadrés recousus), branche `claude/livret-habilitation-fluide-d5n1yt`,
 > [PR #33](https://github.com/frigorx/-inerweb-fluid-cerfa-fi-bsd-4/pull/33).
 
-**Le livre part en autoédition Amazon KDP.** Format 6 × 9 pouces, **388 pages**, noir et blanc. Il prépare l'**épreuve
+**Le livre part en autoédition Amazon KDP.** Format 6 × 9 pouces, **390 pages**, noir et blanc. Il prépare l'**épreuve
 théorique** de l'attestation d'aptitude fluides frigorigènes, **catégories A1,
-A2, D et E**. La pratique fera le tome 2.
+A2, D et E**. La pratique fera l'objet du second livre.
 
 **Le paquet à téléverser est prêt : `livret/dist/kdp/`** — l'intérieur, la
 couverture, et la fiche `A-LIRE-AVANT-DE-TELEVERSER.md` qui donne les valeurs
@@ -23,7 +23,7 @@ même livre sortait à 383, 272 ou 231 pages selon l'humeur du décodage. Le
 « 383 pages » des reprises précédentes était un artefact.
 
 Réparé dans `pages.mjs` (fonction `cotes()`, `width`/`height` sur chaque
-image). **La pagination est stable d'une fabrication à l'autre (388 pages au dernier tirage — elle ne bouge plus qu'avec le contenu).** Si un
+image). **La pagination est stable d'une fabrication à l'autre (390 pages au dernier tirage — elle ne bouge plus qu'avec le contenu).** Si un
 jour la pagination bouge entre deux `npm run tout` sans changement de contenu,
 c'est cette régression-là qui revient.
 
@@ -84,12 +84,13 @@ comptés à part, leur absence n'est pas une faute.
 
 1. **Relecture métier du lexique** — 61 entrées dans `build/lexique.mjs`,
    rédigées et non extraites. **Seule main de F. Henninot.**
-2. **Relecture des planches réveillées** — liste dans `reveillees.gen.json`.
-   Correction faite : plus de superposition mécanique. Restent **4 planches
-   dont le défaut est dans le SVG source** (`pilote-fluides`, donc visibles
-   en ligne aussi) : `co2-protection` (« avant d'ouvrir » derrière un
-   rectangle, texte tronqué à droite), `secu-bouteille`, `secu-projection`,
-   `secu-decomposition-ari`. À corriger dans l'atelier pilote-fluides.
+2. ~~Relecture des planches réveillées~~ — **FAIT le 30/08** : les 4 planches
+   dont le défaut était dans le SVG source (`co2-protection`,
+   `secu-bouteille`, `secu-projection`, `secu-decomposition-ari`) sont
+   corrigées à la source et vérifiées au rendu — géométrie seule, aucun mot
+   changé. [PR pilote-fluides #5](https://github.com/frigorx/pilote-fluides/pull/5)
+   (avec la relecture métier), en attente de fusion ; revérifier en ligne
+   après le déploiement Pages.
 3. ~~Déployer les redirections~~ — **FAIT le 29/08** : `f/` est sur `main` de
    `frigorx/pilote-fluides`, et la boucle `curl -L` sur les 95 alias de
    `qr.gen.json` donne **200 partout** (cible déployée = table courante,
@@ -97,7 +98,7 @@ comptés à part, leur absence n'est pas une faute.
    fermée. Si une cible change un jour : rééditer le `index.html` de l'alias
    dans `pilote-fluides/f/`, jamais le livret.
 4. **Décisions d'édition** (fiche `dist/kdp/A-LIRE-…` § « à décider ») :
-   ISBN gratuit KDP ou acheté AFNIL ; prix (coût d'impression **5,26 €**, plancher Amazon 8,77 €, conseillé 24,90 €).
+   ISBN gratuit KDP ou acheté AFNIL ; prix (coût d'impression **5,28 €**, plancher Amazon 8,80 €, conseillé 24,90 €).
 5. **Épreuve imprimée** avant mise en vente : gris des planches, QR scannés
    (dont un depuis une photocopie), dos dans les plis. (L'attribution
    QElectroTech est TRANCHÉE : 2 symboles en viennent, le crédit est imprimé
@@ -238,7 +239,29 @@ du bord et le contrôle KDP bloquait (limite 6,35).
   haut, évaporateur bas.
 - **Aucun texte ne chevauche un tracé.**
 - **Rang des bonnes réponses réparti** — échec au-delà de 40 % sur une lettre.
-  (Actuel : A 24 · B 23 · C 26 · D 22.)
+  (Actuel : A 28 · B 23 · C 28 · D 28.)
+
+## Relecture métier du 30/08 — intégrée
+
+Six corrections de F. Henninot sur épreuve PDF, **appliquées à la source**
+(`pilote-fluides` : `cartes.js`, banque, table `CORRECTIONS` de `convert.mjs`
+— [PR #5](https://github.com/frigorx/pilote-fluides/pull/5)) puis reprises
+ici par refabrication : registre lié au contrôle d'étanchéité · mode de
+charge = procédure constructeur, zéotrope soutiré liquide · glissement
+d'ampleur variable · rectangle du log p-h = cycle idéal · diagnostic en
+hypothèse à départager · NH₃/CO₂/GWP nuancés. Trois raccourcis propres au
+livret corrigés dans `plan-chapitres.mjs` (voix haute du ch. 7, légende
+« Premier indice d'un manque de charge », activité « fait soupçonner »).
+
+**Et un bug de fabrication trouvé en vérifiant** : 14 encadrés sur 109
+perdaient leur premier ET leur dernier alinéa à l'impression (`<br>` devenus
+`</p><p>` sans clôture — l'enveloppe est posée dans `extraire.mjs`, ne pas
+défaire). C'est ce qui cachait « aucune de ces lectures ne conclut seule »,
+pourtant à la source. 386 → 390 pages, dos 22,31 mm.
+
+**Signalé, à la main de F. Henninot** : corps du texte ≈ 12,4 pt, sous le
+minimum 14 pt de la charte lisibilité inerWeb (FLE/DYS) — à juger sur
+l'épreuve imprimée ; passer à 14 pt = repagination massive.
 
 ## Où vivent les choses
 
@@ -257,5 +280,7 @@ du bord et le contrôle KDP bloquait (limite 6,35).
 cd livret && npm install && PILOTE_FLUIDES=C:/git/pilote-fluides npm run tout
 ```
 
-(Il faut Chrome, Python + pymupdf, et les polices Windows Trebuchet/Calibri —
-`finition.py` lit `C:/Windows/Fonts/`.)
+(Il faut Chrome — variable `CHROME` vers le binaire —, Python + pymupdf, et
+des polices : `finition.py` essaie `C:/Windows/Fonts/` puis retombe sur
+Carlito, métriquement compatible — `apt-get install fonts-crosextra-carlito`
+sur Linux.)
