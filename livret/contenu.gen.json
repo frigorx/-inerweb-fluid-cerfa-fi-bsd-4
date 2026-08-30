@@ -1,7 +1,7 @@
 {
  "source": {
   "depot": "frigorx/pilote-fluides",
-  "commit": "36559e8"
+  "commit": "790f311"
  },
  "categories": [
   "A1",
@@ -88,12 +88,12 @@
       {
        "type": "cle",
        "t": "Ce qu'il faut retenir",
-       "html": "<ol><li><b>Ventilez</b> le local avant d'entrer : ouvrez, aérez, laissez l'air circuler.</li><li><b>Contrôlez l'air</b> avec un détecteur d'oxygène avant d'entrer — pas seulement un détecteur de fuite de fluide, ce n'est pas le même appareil. Le seuil d'alerte se règle selon la FDS (fiche de données de sécurité) du fluide concerné. <b>Devant une installation au CO₂, un détecteur d'oxygène ne suffit pas</b> : il faut mesurer le CO₂ lui-même.</li><li><b>N'entrez jamais seul</b> dans un espace clos suspect : prévenez quelqu'un, travaillez à deux.</li><li>Si un collègue est au sol dans un espace clos : <b>ne vous précipitez pas sans protection</b>. Donnez l'alerte, ventilez, faites intervenir les secours.</li></ol>"
+       "html": "<p><ol><li><b>Ventilez</b> le local avant d'entrer : ouvrez, aérez, laissez l'air circuler.</li><li><b>Contrôlez l'air</b> avec un détecteur d'oxygène avant d'entrer — pas seulement un détecteur de fuite de fluide, ce n'est pas le même appareil. Le seuil d'alerte se règle selon la FDS (fiche de données de sécurité) du fluide concerné. <b>Devant une installation au CO₂, un détecteur d'oxygène ne suffit pas</b> : il faut mesurer le CO₂ lui-même.</li><li><b>N'entrez jamais seul</b> dans un espace clos suspect : prévenez quelqu'un, travaillez à deux.</li><li>Si un collègue est au sol dans un espace clos : <b>ne vous précipitez pas sans protection</b>. Donnez l'alerte, ventilez, faites intervenir les secours.</li></ol></p>"
       },
       {
        "type": "piege",
        "t": "Le geste interdit",
-       "html": "<p>Entrer seul dans un local fermé, une chambre froide ou une fosse, après une mise en pression à l'azote ou une fuite suspectée, <b>sans ventiler ni contrôler l'air</b>.</p><p>Conséquence : avec l'azote ou un fluide fluoré, perte de connaissance sans signe avant-coureur. Avec le CO₂, des signes arrivent — essoufflement, mal de tête — mais quand vous êtes déjà dans le gaz. Risque mortel dans les deux cas, pour vous et pour quiconque tenterait de vous secourir sans précaution.</p>"
+       "html": "<p><p>Entrer seul dans un local fermé, une chambre froide ou une fosse, après une mise en pression à l'azote ou une fuite suspectée, <b>sans ventiler ni contrôler l'air</b>.</p><p>Conséquence : avec l'azote ou un fluide fluoré, perte de connaissance sans signe avant-coureur. Avec le CO₂, des signes arrivent — essoufflement, mal de tête — mais quand vous êtes déjà dans le gaz. Risque mortel dans les deux cas, pour vous et pour quiconque tenterait de vous secourir sans précaution.</p></p>"
       }
      ],
      "question": {
@@ -126,12 +126,12 @@
       {
        "type": "cle",
        "t": "Ce qu'il faut retenir",
-       "html": "<ol><li>Mettez vos <b>EPI</b> (équipements de protection individuelle) — ici, gants et lunettes — avant toute manipulation d'un circuit sous pression.</li><li><b>Vérifiez au manomètre</b> que la pression est nulle, et que la vanne est fermée, avant de débrancher un flexible ou de desserrer un raccord.</li><li><b>Desserrez progressivement</b>, jamais d'un coup, et restez hors de la trajectoire d'un éventuel jet.</li><li>En cas de projection sur la peau ou les yeux : rincez sans frotter, et consultez. La conduite à tenir précise figure sur la <b>FDS</b> (fiche de données de sécurité) du fluide utilisé.</li></ol>"
+       "html": "<p><ol><li>Mettez vos <b>EPI</b> (équipements de protection individuelle) — ici, gants et lunettes — avant toute manipulation d'un circuit sous pression.</li><li><b>Vérifiez au manomètre</b> que la pression est nulle, et que la vanne est fermée, avant de débrancher un flexible ou de desserrer un raccord.</li><li><b>Desserrez progressivement</b>, jamais d'un coup, et restez hors de la trajectoire d'un éventuel jet.</li><li>En cas de projection sur la peau ou les yeux : rincez sans frotter, et consultez. La conduite à tenir précise figure sur la <b>FDS</b> (fiche de données de sécurité) du fluide utilisé.</li></ol></p>"
       },
       {
        "type": "piege",
        "t": "Le geste interdit",
-       "html": "<p>Débrancher un flexible ou desserrer un raccord sous pression <b>sans vérifier au manomètre</b> qu'il est vide, ou le faire sans gants ni lunettes.</p><p>Conséquence : projection de liquide qui gèle la peau ou les yeux au contact. Risque de lésion oculaire grave.</p>"
+       "html": "<p><p>Débrancher un flexible ou desserrer un raccord sous pression <b>sans vérifier au manomètre</b> qu'il est vide, ou le faire sans gants ni lunettes.</p><p>Conséquence : projection de liquide qui gèle la peau ou les yeux au contact. Risque de lésion oculaire grave.</p></p>"
       }
      ],
      "question": {
@@ -165,12 +165,12 @@
       {
        "type": "cle",
        "t": "Ce qu'il faut retenir",
-       "html": "<ol><li><b>Récupérez</b> entièrement le fluide du tronçon à chauffer avant toute opération de brasage : jamais de brasage sur un circuit encore chargé.</li><li>Ne recherchez <b>jamais une fuite avec une flamme</b> : utilisez un détecteur électronique.</li><li>Faites circuler de l'azote à l'intérieur du tube pendant le brasage, avec un mano-détendeur, pour en chasser l'air et les résidus : c'est le <b>balayage</b>.</li><li><b>Ventilez</b> la zone de travail, et ne restez pas penché directement au-dessus de la flamme.</li><li>Des fumées déjà présentes : <b>éloignement d'abord</b>, ARI réservé à une personne formée.</li></ol>"
+       "html": "<p><ol><li><b>Récupérez</b> entièrement le fluide du tronçon à chauffer avant toute opération de brasage : jamais de brasage sur un circuit encore chargé.</li><li>Ne recherchez <b>jamais une fuite avec une flamme</b> : utilisez un détecteur électronique.</li><li>Faites circuler de l'azote à l'intérieur du tube pendant le brasage, avec un mano-détendeur, pour en chasser l'air et les résidus : c'est le <b>balayage</b>.</li><li><b>Ventilez</b> la zone de travail, et ne restez pas penché directement au-dessus de la flamme.</li><li>Des fumées déjà présentes : <b>éloignement d'abord</b>, ARI réservé à une personne formée.</li></ol></p>"
       },
       {
        "type": "piege",
        "t": "Le geste interdit",
-       "html": "<p>Chauffer ou braser un tronçon de circuit sans avoir récupéré et vérifié l'absence de fluide, ou rechercher une fuite avec une flamme.</p><p>Conséquence : dégagement de gaz toxiques et corrosifs, inhalés à bout portant. Risque d'incendie en plus, si le fluide est inflammable (classe A2L ou A3).</p><p>Interdit aussi : entrer dans des fumées déjà présentes sans protection respiratoire isolante, ou croire qu'un masque à cartouche suffit.</p>"
+       "html": "<p><p>Chauffer ou braser un tronçon de circuit sans avoir récupéré et vérifié l'absence de fluide, ou rechercher une fuite avec une flamme.</p><p>Conséquence : dégagement de gaz toxiques et corrosifs, inhalés à bout portant. Risque d'incendie en plus, si le fluide est inflammable (classe A2L ou A3).</p><p>Interdit aussi : entrer dans des fumées déjà présentes sans protection respiratoire isolante, ou croire qu'un masque à cartouche suffit.</p></p>"
       }
      ],
      "question": {
@@ -207,12 +207,12 @@
       {
        "type": "cle",
        "t": "Ce qu'il faut retenir",
-       "html": "<ul><li>Un circuit reste sous pression même à l'arrêt et même par forte chaleur.</li><li>Une bouteille de fluide ne se chauffe jamais et ne se remplit jamais à ras.</li><li>Toute mise en pression se fait à l'azote seul, jamais à l'oxygène ni à l'air comprimé, toujours avec un mano-détendeur réglé selon la documentation constructeur.</li><li>Avant de toucher un raccord, vérifier la pression au manomètre, même sur une machine arrêtée depuis longtemps.</li></ul>"
+       "html": "<p><ul><li>Un circuit reste sous pression même à l'arrêt et même par forte chaleur.</li><li>Une bouteille de fluide ne se chauffe jamais et ne se remplit jamais à ras.</li><li>Toute mise en pression se fait à l'azote seul, jamais à l'oxygène ni à l'air comprimé, toujours avec un mano-détendeur réglé selon la documentation constructeur.</li><li>Avant de toucher un raccord, vérifier la pression au manomètre, même sur une machine arrêtée depuis longtemps.</li></ul></p>"
       },
       {
        "type": "piege",
        "t": "Le geste interdit",
-       "html": "<p>On ne chauffe <b>jamais</b> une bouteille de fluide pour accélérer un transfert ou une charge — ni flamme, ni eau chaude, ni radiateur. On ne met <b>jamais</b> un circuit sous pression avec de l'oxygène ou de l'air comprimé, et on n'utilise <b>jamais</b> une bouteille d'azote sans mano-détendeur. Conséquence : la bouteille ou le circuit peut éclater et projeter du fluide et des fragments sur la personne présente.</p>"
+       "html": "<p><p>On ne chauffe <b>jamais</b> une bouteille de fluide pour accélérer un transfert ou une charge — ni flamme, ni eau chaude, ni radiateur. On ne met <b>jamais</b> un circuit sous pression avec de l'oxygène ou de l'air comprimé, et on n'utilise <b>jamais</b> une bouteille d'azote sans mano-détendeur. Conséquence : la bouteille ou le circuit peut éclater et projeter du fluide et des fragments sur la personne présente.</p></p>"
       }
      ],
      "question": {
@@ -247,12 +247,12 @@
       {
        "type": "cle",
        "t": "Ce qu'il faut retenir",
-       "html": "<ul><li>Électrisation : le courant traverse le corps. Électrocution : une électrisation qui tue.</li><li>Un arc électrique brûle sans aucun contact.</li><li>Consignation en cinq étapes : séparer, condamner, identifier, vérifier l'absence de tension, mettre à la terre si besoin.</li><li>Un condensateur peut rester chargé après la coupure du courant.</li><li>Le VAT se contrôle avant et après usage, sur une source connue.</li></ul>"
+       "html": "<p><ul><li>Électrisation : le courant traverse le corps. Électrocution : une électrisation qui tue.</li><li>Un arc électrique brûle sans aucun contact.</li><li>Consignation en cinq étapes : séparer, condamner, identifier, vérifier l'absence de tension, mettre à la terre si besoin.</li><li>Un condensateur peut rester chargé après la coupure du courant.</li><li>Le VAT se contrôle avant et après usage, sur une source connue.</li></ul></p>"
       },
       {
        "type": "piege",
        "t": "Le geste interdit",
-       "html": "<p>On ne travaille <b>jamais</b> sur une installation électrique sans avoir réalisé les cinq étapes de la consignation, même pour « juste vérifier » ou « deux secondes ». On ne fait <b>jamais</b> confiance à un simple arrêt visuel de la machine : seule une vérification d'absence de tension avec un VAT contrôlé fait foi. Conséquence : électrisation, électrocution, brûlure par arc électrique — ce risque tue chaque année.</p>"
+       "html": "<p><p>On ne travaille <b>jamais</b> sur une installation électrique sans avoir réalisé les cinq étapes de la consignation, même pour « juste vérifier » ou « deux secondes ». On ne fait <b>jamais</b> confiance à un simple arrêt visuel de la machine : seule une vérification d'absence de tension avec un VAT contrôlé fait foi. Conséquence : électrisation, électrocution, brûlure par arc électrique — ce risque tue chaque année.</p></p>"
       }
      ],
      "question": {
@@ -650,7 +650,7 @@
       {
        "type": "cle",
        "t": "Ce qu'il faut retenir",
-       "html": "<ul><li>La <b>lettre</b> dit la toxicité : A faible, B plus élevée. « A » ne veut pas dire inoffensif.</li><li>Le <b>chiffre</b> dit l'inflammabilité : 1 aucune propagation, 2L faible, 2 inflammable, 3 très inflammable.</li><li>Huit cases au total : A1 · A2L · A2 · A3 · B1 · B2L · B2 · B3.</li><li>La classe <b>commande</b> les EPI, le matériel électrique, la ventilation, la détection, la charge maximale et l'occupation du local.</li><li><b>R-290 = A3</b>, jamais A2L. Tout hydrocarbure est A3.</li><li>La classe se lit sur la <b>FDS</b> ; les valeurs associées, dans la NF EN 378.</li></ul>"
+       "html": "<p><ul><li>La <b>lettre</b> dit la toxicité : A faible, B plus élevée. « A » ne veut pas dire inoffensif.</li><li>Le <b>chiffre</b> dit l'inflammabilité : 1 aucune propagation, 2L faible, 2 inflammable, 3 très inflammable.</li><li>Huit cases au total : A1 · A2L · A2 · A3 · B1 · B2L · B2 · B3.</li><li>La classe <b>commande</b> les EPI, le matériel électrique, la ventilation, la détection, la charge maximale et l'occupation du local.</li><li><b>R-290 = A3</b>, jamais A2L. Tout hydrocarbure est A3.</li><li>La classe se lit sur la <b>FDS</b> ; les valeurs associées, dans la NF EN 378.</li></ul></p>"
       }
      ],
      "question": {
@@ -685,7 +685,7 @@
       {
        "type": "piege",
        "t": "Le geste interdit",
-       "html": "<p>Intervenir sur une installation, ou choisir un matériel, <b>sans avoir vérifié la classe du fluide sur sa FDS</b> — en la supposant d'après le nom du fluide ou d'après l'installation précédente.</p><p>Conséquence : un fluide A3 traité comme un A2L, c'est un local ventilé trop faiblement, un matériel électrique qui peut produire une étincelle, un détecteur inadapté et une charge excessive. L'atmosphère devient explosive sans que rien ne l'ait signalé.</p>"
+       "html": "<p><p>Intervenir sur une installation, ou choisir un matériel, <b>sans avoir vérifié la classe du fluide sur sa FDS</b> — en la supposant d'après le nom du fluide ou d'après l'installation précédente.</p><p>Conséquence : un fluide A3 traité comme un A2L, c'est un local ventilé trop faiblement, un matériel électrique qui peut produire une étincelle, un détecteur inadapté et une charge excessive. L'atmosphère devient explosive sans que rien ne l'ait signalé.</p></p>"
       }
      ],
      "question": {
@@ -723,12 +723,12 @@
       {
        "type": "cle",
        "t": "Ce qu'il faut retenir",
-       "html": "<ul><li>Un gaz inflammable ne brûle qu'entre deux bornes : <b>LIE</b> (limite inférieure) et <b>LSE</b> (limite supérieure). Entre les deux, une étincelle suffit.</li><li>Les valeurs sont <b>propres à chaque fluide</b> et se lisent sur sa FDS.</li><li>Un <b>explosimètre</b> affiche un pourcentage de la LIE : une marge restante, pas une quantité.</li><li>Il se règle <b>pour un gaz donné</b>, et ne remplace ni un détecteur de fuite, ni un détecteur d'oxygène.</li><li>Le <b>R-290 du froid n'est pas odorisé</b> : le nez n'avertit de rien.</li><li><b>ATEX</b> : dans une zone à atmosphère explosive, seul le matériel <b>prévu pour ces zones</b> peut entrer — y compris celui qu'on apporte. Il est contraint sur l'étincelle <b>et</b> sur sa température de surface.</li></ul>"
+       "html": "<p><ul><li>Un gaz inflammable ne brûle qu'entre deux bornes : <b>LIE</b> (limite inférieure) et <b>LSE</b> (limite supérieure). Entre les deux, une étincelle suffit.</li><li>Les valeurs sont <b>propres à chaque fluide</b> et se lisent sur sa FDS.</li><li>Un <b>explosimètre</b> affiche un pourcentage de la LIE : une marge restante, pas une quantité.</li><li>Il se règle <b>pour un gaz donné</b>, et ne remplace ni un détecteur de fuite, ni un détecteur d'oxygène.</li><li>Le <b>R-290 du froid n'est pas odorisé</b> : le nez n'avertit de rien.</li><li><b>ATEX</b> : dans une zone à atmosphère explosive, seul le matériel <b>prévu pour ces zones</b> peut entrer — y compris celui qu'on apporte. Il est contraint sur l'étincelle <b>et</b> sur sa température de surface.</li></ul></p>"
       },
       {
        "type": "piege",
        "t": "Le geste interdit",
-       "html": "<p>Entrer dans un local où une fuite de fluide inflammable est possible et y <b>actionner un interrupteur, brancher une lampe ou utiliser un outil électroportatif</b>, sans avoir contrôlé l'atmosphère à l'explosimètre.</p><p>Se fier à son odorat en est la variante la plus courante : le R-290 utilisé en froid ne contient pas l'odorisant du gaz domestique, et aucune odeur ne renseigne sur la distance à la LIE.</p><p>Conséquence : inflammation de tout le volume, sans aucun signe avant-coureur.</p>"
+       "html": "<p><p>Entrer dans un local où une fuite de fluide inflammable est possible et y <b>actionner un interrupteur, brancher une lampe ou utiliser un outil électroportatif</b>, sans avoir contrôlé l'atmosphère à l'explosimètre.</p><p>Se fier à son odorat en est la variante la plus courante : le R-290 utilisé en froid ne contient pas l'odorisant du gaz domestique, et aucune odeur ne renseigne sur la distance à la LIE.</p><p>Conséquence : inflammation de tout le volume, sans aucun signe avant-coureur.</p></p>"
       }
      ],
      "question": {
@@ -762,7 +762,7 @@
       "<b>Deux mécanismes, pas un seul.</b> L'azote agit uniquement par <b>déplacement</b> : il est inerte, il prend la place de l'oxygène sans réagir avec l'organisme. Le CO₂, lui, agit <b>en plus par lui-même</b> : il n'est pas inerte, il intervient dans la régulation de la respiration et devient nocif à des concentrations où l'oxygène restant serait encore suffisant. Autrement dit, le CO₂ peut vous mettre en danger <b>avant</b> d'avoir chassé assez d'oxygène pour qu'un contrôle du seul taux d'oxygène s'en alarme. C'est pourquoi, sur une installation au CO₂, <b>un détecteur d'oxygène seul ne suffit pas</b> : il faut une mesure du CO₂ lui-même.",
       "N'en concluez pas que les fluides fluorés sont inoffensifs : à forte concentration, ils agissent eux aussi sur l'organisme — effet sur le rythme du cœur, effet endormant. Leur fiche de données de sécurité le mentionne. « A » n'a jamais voulu dire inoffensif.",
       "<b>Ce que vous ressentirez — et pourquoi c'est déjà tard.</b> Contrairement à l'azote, qui ne prévient pas du tout, le CO₂ <b>donne des signes</b> : souffle court puis <b>essoufflement violent</b>, <b>maux de tête</b>, <b>vertiges</b>, bourdonnements, sueurs. La raison est celle vue en fiche « L'air qui manque » : c'est l'excès de gaz carbonique dans le sang qui commande l'envie de respirer. Ces signes sont votre <b>seule chance</b> — mais ils arrivent alors que vous êtes <b>déjà dans la nappe</b>, et à forte concentration la perte de connaissance suit en quelques instants. D'où une règle simple : <b>essoufflement brutal ou mal de tête soudain dans un local technique, vous ressortez immédiatement</b>. On ne cherche pas à comprendre sur place, on ne finit pas le geste en cours.",
-      "<b>Pourquoi on entre sans le savoir.</b> Le CO₂ est <b>incolore</b>, <b>inodore</b>, et <b>plus lourd que l'air</b>. Il ne monte pas : il s'écoule et <b>s'accumule dans les points bas</b> — fosse, cave, sous-sol, local en contrebas, bas d'une chambre froide. Une zone peut être parfaitement respirable à hauteur de visage et déjà mortelle au niveau du sol, ou en bas de quelques marches. Descendre, c'est entrer dans la nappe.",
+      "<b>Pourquoi on entre sans le savoir.</b> Le CO₂ est <b>incolore</b>, <b>inodore</b>, et <b>plus lourd que l'air</b>. Il ne monte pas : il s'écoule et <b>s'accumule dans les points bas</b> — fosse, cave, sous-sol, local en contrebas, bas d'une chambre froide. Une zone peut être parfaitement respirable à hauteur de visage et déjà mortelle au niveau du sol, ou en bas de quelques marches. Descendre, c'est entrer dans la nappe. La répartition réelle dépend de la fuite et du local — un jet sous pression brasse le gaz, une ventilation le dilue : la nappe au point bas est le cas défavorable, celui qu'on suppose toujours tant qu'une <b>mesure</b> n'a pas dit le contraire.",
       "<b>Attention à ne pas généraliser cette règle.</b> « Plus lourd que l'air » vaut pour le CO₂ et pour la plupart des fluides fluorés — mais <b>pas pour l'ammoniac</b> (R-717), plus léger que l'air, qui se comporte à l'inverse : il monte. Le comportement d'un fluide se lit sur sa FDS, il ne se suppose jamais par analogie avec le fluide précédent.",
       "<b>Comment ça arrive vraiment.</b> Une installation au CO₂ en local technique enterré, une fuite lente pendant la nuit, porte fermée. Le gaz remplit le volume par le bas. Au matin, un technicien descend relever un paramètre. Rien ne se voit, rien ne se sent. À mi-escalier, il a mal à la tête et le souffle court — il met cela sur le compte de la fatigue et continue, parce qu'il n'en a que pour deux minutes. Il ne remonte pas. Puis vient le second accident, celui qui tue le plus souvent dans cette famille d'accidents : un collègue le voit au sol et descend le chercher, sans protection. La nappe est toujours là. <b>Deux victimes au lieu d'une.</b>"
      ],
@@ -770,12 +770,12 @@
       {
        "type": "cle",
        "t": "Ce qu'il faut retenir",
-       "html": "<ul><li>Le CO₂ est <b>A1</b>, et pourtant il tue de <b>deux</b> façons : la <b>pression</b> et l'<b>anoxie</b>. Sa classe n'annonce ni l'une ni l'autre.</li><li>Pressions <b>sans commune mesure</b> avec les fluides courants — <b>jusqu'à 120 bar environ</b> en haute pression transcritique : matériel <b>dédié au CO₂</b>, jamais un manifold ordinaire.</li><li>Une installation au CO₂ <b>à l'arrêt reste sous pression</b>, et remonte en pression si elle se réchauffe.</li><li>Glace carbonique à la détente : <b>brûlure par le froid</b> et <b>bouchon</b>.</li><li>Le CO₂ <b>déplace</b> l'oxygène <b>et agit par lui-même</b> — l'azote, lui, est inerte. Un <b>détecteur d'oxygène seul ne suffit pas</b>.</li><li><b>Essoufflement brutal, mal de tête, vertiges : on ressort tout de suite.</b> Ces signes arrivent quand on est déjà dans la nappe.</li><li>Incolore, inodore, <b>plus lourd que l'air</b> : il s'accumule en <b>point bas</b>. Pas vrai pour l'ammoniac.</li></ul>"
+       "html": "<p><ul><li>Le CO₂ est <b>A1</b>, et pourtant il tue de <b>deux</b> façons : la <b>pression</b> et l'<b>anoxie</b>. Sa classe n'annonce ni l'une ni l'autre.</li><li>Pressions <b>sans commune mesure</b> avec les fluides courants — <b>jusqu'à 120 bar environ</b> en haute pression transcritique : matériel <b>dédié au CO₂</b>, jamais un manifold ordinaire.</li><li>Une installation au CO₂ <b>à l'arrêt reste sous pression</b>, et remonte en pression si elle se réchauffe.</li><li>Glace carbonique à la détente : <b>brûlure par le froid</b> et <b>bouchon</b>.</li><li>Le CO₂ <b>déplace</b> l'oxygène <b>et agit par lui-même</b> — l'azote, lui, est inerte. Un <b>détecteur d'oxygène seul ne suffit pas</b>.</li><li><b>Essoufflement brutal, mal de tête, vertiges : on ressort tout de suite.</b> Ces signes arrivent quand on est déjà dans la nappe.</li><li>Incolore, inodore, <b>plus lourd que l'air</b> : il s'accumule en <b>point bas</b>. Pas vrai pour l'ammoniac.</li></ul></p>"
       },
       {
        "type": "piege",
        "t": "Le geste interdit",
-       "html": "<p>Descendre dans une fosse, une cave, un sous-sol ou tout local en contrebas abritant une installation au CO₂ après une fuite possible, <b>sans avoir ventilé et mesuré</b>. Et, si un collègue est au sol : <b>descendre le chercher sans protection</b>.</p><p>Conséquence : vous entrez dans la nappe. Les signes que vous ressentirez — souffle coupé, mal de tête — arriveront trop tard pour remonter un escalier, et le sauveteur improvisé devient la seconde victime. C'est le scénario le plus fréquent de ces accidents.</p><p>Interdit aussi : brancher du <b>matériel non dédié au CO₂</b> sur une installation au CO₂. Sa pression n'a rien à voir avec ce que vous connaissez.</p>"
+       "html": "<p><p>Descendre dans une fosse, une cave, un sous-sol ou tout local en contrebas abritant une installation au CO₂ après une fuite possible, <b>sans avoir ventilé et mesuré</b>. Et, si un collègue est au sol : <b>descendre le chercher sans protection</b>.</p><p>Conséquence : vous entrez dans la nappe. Les signes que vous ressentirez — souffle coupé, mal de tête — arriveront trop tard pour remonter un escalier, et le sauveteur improvisé devient la seconde victime. C'est le scénario le plus fréquent de ces accidents.</p><p>Interdit aussi : brancher du <b>matériel non dédié au CO₂</b> sur une installation au CO₂. Sa pression n'a rien à voir avec ce que vous connaissez.</p></p>"
       }
      ],
      "question": {
@@ -816,12 +816,12 @@
       {
        "type": "cle",
        "t": "Ce qu'il faut retenir",
-       "html": "<ul><li><b>EPC d'abord, EPI ensuite</b> : le collectif protège tout le monde en permanence, l'individuel ne protège que celui qui le porte.</li><li><b>Détection de gaz dès que la norme l'impose</b> — selon la charge et le type de local — par capteur <b>fixe</b>, placé <b>en partie basse</b>. Si elle manque là où elle devrait être : signalement.</li><li>Alarmes sonores et visuelles <b>dedans et dehors</b> — celle de dehors prévient avant d'ouvrir la porte. Deux niveaux : préalarme, puis évacuation.</li><li>Le détecteur affiche des <b>ppm</b> : une part pour un million. L'air normal en contient déjà.</li><li>Les <b>seuils</b> se lisent sur l'appareil, sa documentation et la FDS — <b>jamais de mémoire d'un site à l'autre</b>.</li><li>Un capteur se <b>vérifie et se remplace</b> : une cellule morte reste allumée.</li><li>Signalisation à jour, <b>issues de secours dégagées</b>, ventilation adaptée : contrôlées en arrivant.</li><li><b>Un masque à cartouche ne protège ni du CO₂, ni du manque d'oxygène.</b> La vraie protection, c'est de ne pas entrer.</li><li>Et les règles qui ne changent jamais : <b>ventiler et mesurer avant d'entrer</b>, <b>jamais seul</b>, et devant une personne au sol : alerter, ventiler, <b>ne pas descendre</b>.</li></ul>"
+       "html": "<p><ul><li><b>EPC d'abord, EPI ensuite</b> : le collectif protège tout le monde en permanence, l'individuel ne protège que celui qui le porte.</li><li><b>Détection de gaz dès que la norme l'impose</b> — selon la charge et le type de local — par capteur <b>fixe</b>, placé <b>en partie basse</b>. Si elle manque là où elle devrait être : signalement.</li><li>Alarmes sonores et visuelles <b>dedans et dehors</b> — celle de dehors prévient avant d'ouvrir la porte. Deux niveaux : préalarme, puis évacuation.</li><li>Le détecteur affiche des <b>ppm</b> : une part pour un million. L'air normal en contient déjà.</li><li>Les <b>seuils</b> se lisent sur l'appareil, sa documentation et la FDS — <b>jamais de mémoire d'un site à l'autre</b>.</li><li>Un capteur se <b>vérifie et se remplace</b> : une cellule morte reste allumée.</li><li>Signalisation à jour, <b>issues de secours dégagées</b>, ventilation adaptée : contrôlées en arrivant.</li><li><b>Un masque à cartouche ne protège ni du CO₂, ni du manque d'oxygène.</b> La vraie protection, c'est de ne pas entrer.</li><li>Et les règles qui ne changent jamais : <b>ventiler et mesurer avant d'entrer</b>, <b>jamais seul</b>, et devant une personne au sol : alerter, ventiler, <b>ne pas descendre</b>.</li></ul></p>"
       },
       {
        "type": "piege",
        "t": "Le geste interdit",
-       "html": "<p>Entrer dans un local CO₂ en se croyant protégé par un <b>masque à cartouche</b>, ou entrer alors que l'alarme extérieure est déclenchée.</p><p>Interdit aussi : considérer un détecteur comme fiable <b>parce que son voyant est allumé</b>. Une cellule usée continue de s'allumer sans plus rien mesurer : elle se vérifie et se remplace selon la documentation du fabricant.</p><p>Conséquence : on entre dans une atmosphère mortelle avec la certitude d'être protégé. C'est la configuration où l'on ne ressort pas.</p>"
+       "html": "<p><p>Entrer dans un local CO₂ en se croyant protégé par un <b>masque à cartouche</b>, ou entrer alors que l'alarme extérieure est déclenchée.</p><p>Interdit aussi : considérer un détecteur comme fiable <b>parce que son voyant est allumé</b>. Une cellule usée continue de s'allumer sans plus rien mesurer : elle se vérifie et se remplace selon la documentation du fabricant.</p><p>Conséquence : on entre dans une atmosphère mortelle avec la certitude d'être protégé. C'est la configuration où l'on ne ressort pas.</p></p>"
       }
      ],
      "question": {
@@ -1340,7 +1340,7 @@
       {
        "type": "cle",
        "t": "Ce qu'il faut retenir",
-       "html": "<ul><li>Le texte européen est un <b>règlement</b> — (UE) 2024/573 — jamais une « directive ».</li><li><b>Attestation d'aptitude</b> : c'est pour vous, la personne.</li><li><b>Attestation de capacité</b> : c'est pour l'entreprise.</li><li><b>Registre</b> de l'équipement : tenu par l'exploitant, papier ou électronique.</li><li><b>DEEE</b> : la filière de fin de vie de la machine, pas du fluide.</li></ul>"
+       "html": "<p><ul><li>Le texte européen est un <b>règlement</b> — (UE) 2024/573 — jamais une « directive ».</li><li><b>Attestation d'aptitude</b> : c'est pour vous, la personne.</li><li><b>Attestation de capacité</b> : c'est pour l'entreprise.</li><li><b>Registre</b> : pour tout équipement soumis au contrôle d'étanchéité — tenu par l'exploitant, papier ou électronique.</li><li><b>DEEE</b> : la filière de fin de vie de la machine, pas du fluide.</li></ul></p>"
       }
      ],
      "question": {
@@ -1365,7 +1365,7 @@
       "1.00"
      ],
      "paras": [
-      "Chaque équipement a un <b>registre</b> : un carnet qui garde la trace de chaque intervention (charge, contrôle, fuite, réparation). C'est l'<b>exploitant</b> (le propriétaire ou l'utilisateur de la machine) qui doit le tenir à jour, sur papier ou sur ordinateur.",
+      "Lorsqu'un équipement est <b>soumis au contrôle d'étanchéité</b>, il doit avoir un <b>registre</b> : un carnet qui garde la trace de chaque intervention (charge, contrôle, fuite, réparation). C'est l'<b>exploitant</b> (le propriétaire ou l'utilisateur de la machine) qui doit le tenir à jour, sur papier ou sur ordinateur.",
       "Quand l'équipement est trop vieux ou cassé, il part dans la filière <b>DEEE</b> (déchets d'équipements électriques et électroniques). Cette filière s'occupe de la carcasse de la machine, pas du fluide : vous devez le récupérer avant, à part.",
       "Enfin, l'<b>écoconception</b> : dès la fabrication, les constructeurs doivent concevoir des appareils qui durent plus longtemps et qui polluent moins."
      ],
@@ -1373,7 +1373,7 @@
       {
        "type": "piege",
        "t": "L'erreur classique",
-       "html": "<p>Apprendre par cœur un chiffre précis (seuil, date, délai) vu dans une ancienne fiche. Le régime des fluides a changé avec le <b>règlement (UE) 2024/573</b> et l'<b>arrêté du 21 novembre 2025</b>. Face à un chiffre, réflexe unique : vérifier le texte en vigueur, jamais le deviner.</p>"
+       "html": "<p><p>Apprendre par cœur un chiffre précis (seuil, date, délai) vu dans une ancienne fiche. Le régime des fluides a changé avec le <b>règlement (UE) 2024/573</b> et l'<b>arrêté du 21 novembre 2025</b>. Face à un chiffre, réflexe unique : vérifier le texte en vigueur, jamais le deviner.</p></p>"
       }
      ],
      "question": {
@@ -1405,12 +1405,12 @@
       {
        "type": "cle",
        "t": "L'effet de serre en deux phrases",
-       "html": "Le rayonnement solaire entre, la Terre renvoie de l'infrarouge, et certains gaz (CO₂, vapeur d'eau, méthane…) retiennent cette chaleur. Cet effet est <b>vital</b> — sans lui, il ferait environ <b>−18 °C</b> au lieu de +15 : c'est son <b>renforcement</b> par nos émissions qui pose problème."
+       "html": "<p>Le rayonnement solaire entre, la Terre renvoie de l'infrarouge, et certains gaz (CO₂, vapeur d'eau, méthane…) retiennent cette chaleur. Cet effet est <b>vital</b> — sans lui, il ferait environ <b>−18 °C</b> au lieu de +15 : c'est son <b>renforcement</b> par nos émissions qui pose problème.</p>"
       },
       {
        "type": "piege",
        "t": "Ozone et climat : deux problèmes, pas un",
-       "html": "L'<b>ODP</b> mesure l'attaque de l'ozone (affaire de <b>chlore et de brome</b>) ; le <b>PRP</b> mesure l'effet de serre. Un HFC a un ODP <b>nul</b> et un PRP <b>énorme</b> : excellent élève d'un côté, cancre de l'autre. Ne jamais confondre les deux bulletins."
+       "html": "<p>L'<b>ODP</b> mesure l'attaque de l'ozone (affaire de <b>chlore et de brome</b>) ; le <b>PRP</b> mesure l'effet de serre. Un HFC a un ODP <b>nul</b> et un PRP <b>énorme</b> : excellent élève d'un côté, cancre de l'autre. Ne jamais confondre les deux bulletins.</p>"
       }
      ],
      "question": {
@@ -1444,12 +1444,12 @@
       {
        "type": "cle",
        "t": "Le calcul qui sert tous les jours",
-       "html": "<b>tonnes éq. CO₂ = charge (kg) × PRP ÷ 1000</b></p><p>C'est cette valeur — pas le poids de fluide — qui déclenche une partie des obligations. Deux installations de même charge n'ont pas les mêmes contraintes si les fluides diffèrent."
+       "html": "<p><b>tonnes éq. CO₂ = charge (kg) × PRP ÷ 1000</b></p><p>C'est cette valeur — pas le poids de fluide — qui déclenche une partie des obligations. Deux installations de même charge n'ont pas les mêmes contraintes si les fluides diffèrent.</p>"
       },
       {
        "type": "piege",
        "t": "ODP et PRP ne se confondent pas",
-       "html": "Un HFC a un <b>ODP nul</b> (il ne détruit pas l'ozone) et pourtant un <b>PRP fort</b>. Dire « il ne touche pas l'ozone, donc il est propre » est faux. Et un PRP bas ne veut pas dire zéro impact : la question des <b>PFAS</b> se pose désormais sur certains fluides à bas PRP."
+       "html": "<p>Un HFC a un <b>ODP nul</b> (il ne détruit pas l'ozone) et pourtant un <b>PRP fort</b>. Dire « il ne touche pas l'ozone, donc il est propre » est faux. Et un PRP bas ne veut pas dire zéro impact : la question des <b>PFAS</b> se pose désormais sur certains fluides à bas PRP.</p>"
       }
      ],
      "question": {
@@ -2685,7 +2685,7 @@
       {
        "type": "cle",
        "t": "À retenir",
-       "html": "<b>Surchauffe</b> : le fluide sort de l'évaporateur un peu plus chaud que sa température d'évaporation — elle protège le compresseur du liquide. Repère d'apprentissage : <b>5 à 10 K</b>.</p><p><b>Sous-refroidissement</b> : le liquide sort du condenseur un peu plus froid que sa température de condensation — il garantit du liquide pur au détendeur. Repère d'apprentissage : <b>4 à 8 K</b>.</p><p>Ces repères servent à comprendre, <b>jamais à régler</b> : sur une machine réelle, seules les valeurs du constructeur font foi."
+       "html": "<p><b>Surchauffe</b> : le fluide sort de l'évaporateur un peu plus chaud que sa température d'évaporation — elle protège le compresseur du liquide. Repère d'apprentissage : <b>5 à 10 K</b>.</p><p><b>Sous-refroidissement</b> : le liquide sort du condenseur un peu plus froid que sa température de condensation — il garantit du liquide pur au détendeur. Repère d'apprentissage : <b>4 à 8 K</b>.</p><p>Ces repères servent à comprendre, <b>jamais à régler</b> : sur une machine réelle, seules les valeurs du constructeur font foi.</p>"
       }
      ],
      "question": {
@@ -2712,19 +2712,19 @@
       "1.04"
      ],
      "paras": [
-      "Une autre grandeur sert tous les jours au frigoriste : la <b>masse volumique</b> (on dit aussi <b>densité</b>). C'est la masse contenue dans un volume donné, en <b>kg/m³</b>. Pour un même fluide, la vapeur et le liquide n'ont pas du tout la même masse volumique : un litre de liquide pèse beaucoup plus lourd qu'un litre de vapeur. C'est pour ça qu'on charge un circuit en <b>phase liquide</b> plutôt qu'en vapeur : on fait entrer beaucoup plus de matière pour le même volume de bouteille, et le dimensionnement des tuyauteries en tient compte.",
+      "Une autre grandeur sert tous les jours au frigoriste : la <b>masse volumique</b> (on dit aussi <b>densité</b>). C'est la masse contenue dans un volume donné, en <b>kg/m³</b>. Pour un même fluide, la vapeur et le liquide n'ont pas du tout la même masse volumique : un litre de liquide pèse beaucoup plus lourd qu'un litre de vapeur. Cette différence se retrouve dans le dimensionnement des tuyauteries. Pour charger un circuit, en revanche, elle ne décide de rien : le <b>mode d'introduction</b> du fluide, en phase liquide ou en phase vapeur, suit la <b>procédure du constructeur</b>. Une règle s'y ajoute pour les <b>mélanges zéotropes</b> : on les <b>soutire toujours de la bouteille en phase liquide</b>, car les sortir en vapeur changerait leur composition en route.",
       "Sur le diagramme du fluide, la grandeur qu'on lit en abscisse s'appelle l'<b>enthalpie</b>. C'est l'énergie contenue dans un kilo de fluide, en <b>kJ/kg</b> (kilojoule par kilo). Elle sert à calculer ce que l'évaporateur absorbe et ce que le condenseur évacue : plus l'écart d'enthalpie entre l'entrée et la sortie est grand, plus l'échange de chaleur est important."
      ],
      "blocs": [
       {
        "type": "piege",
        "t": "Le piège des manomètres",
-       "html": "<img src=\"packs/fluides/res/svg/pression-absolue-relative.svg\" alt=\"Animation : deux échelles verticales côte à côte, la relative du manomètre et l'absolue des tables, décalées de 1 bar — un curseur monte le long des deux en même temps, et le manomètre à zéro est déjà à 1 bar absolu.\" style=\"width:100%;height:auto;display:block;margin:0 0 18px;border:1px solid #d7e0e8;border-radius:8px\"><b>Pression absolue = pression relative + environ 1 bar.</b> Un manomètre de service lit en relatif ; les tables de saturation, elles, sont souvent en absolu. Se tromper d'un bar, c'est se tromper de plusieurs kelvins sur la température de saturation — et diagnostiquer une fuite qui n'existe pas."
+       "html": "<p><img src=\"packs/fluides/res/svg/pression-absolue-relative.svg\" alt=\"Animation : deux échelles verticales côte à côte, la relative du manomètre et l'absolue des tables, décalées de 1 bar — un curseur monte le long des deux en même temps, et le manomètre à zéro est déjà à 1 bar absolu.\" style=\"width:100%;height:auto;display:block;margin:0 0 18px;border:1px solid #d7e0e8;border-radius:8px\"><b>Pression absolue = pression relative + environ 1 bar.</b> Un manomètre de service lit en relatif ; les tables de saturation, elles, sont souvent en absolu. Se tromper d'un bar, c'est se tromper de plusieurs kelvins sur la température de saturation — et diagnostiquer une fuite qui n'existe pas.</p>"
       },
       {
        "type": "piege",
        "t": "Mélanges zéotropes : le glissement",
-       "html": "<p>Certains fluides sont des <b>mélanges zéotropes</b> : plusieurs fluides purs mélangés dont les composants ne s'évaporent pas ensemble. Résultat, pendant tout le changement d'état, la température n'est pas constante : elle <b>glisse</b>, on parle de <b>glissement</b>. Conséquence pratique : on charge et on soutire toujours ces mélanges en <b>phase liquide</b>, jamais en phase vapeur, sinon la composition change et le fluide qui reste dans la bouteille n'est plus le même.</p>"
+       "html": "<p><p>Certains fluides sont des <b>mélanges zéotropes</b> : plusieurs fluides purs mélangés dont les composants ne s'évaporent pas ensemble. Résultat, pendant tout le changement d'état, la température n'est pas constante : elle <b>glisse</b>, on parle de <b>glissement</b>. Conséquence pratique : on charge et on soutire toujours ces mélanges en <b>phase liquide</b>, jamais en phase vapeur, sinon la composition change et le fluide qui reste dans la bouteille n'est plus le même.</p></p>"
       }
      ],
      "question": {
@@ -2757,7 +2757,7 @@
       {
        "type": "cle",
        "t": "Les cinq mots, dans l'ordre",
-       "html": "<b>1. Liquide sous-refroidi</b> — que du liquide, plus froid que son point d'ébullition.</p><p><b>2. Point de bulle</b> — la première bulle apparaît, le palier commence.</p><p><b>3. Saturé</b> — liquide et vapeur ensemble, la température ne bouge plus.</p><p><b>4. Point de rosée</b> — la dernière goutte s'évapore, le palier finit.</p><p><b>5. Vapeur surchauffée</b> — que de la vapeur, et la température peut repartir.</p><p>Ce que la vapeur gagne après le point de rosée s'appelle la <b>surchauffe</b>. Ce que le liquide perd avant le point de bulle s'appelle le <b>sous-refroidissement</b>. Ces deux mots reviendront à chaque mesure du métier."
+       "html": "<p><b>1. Liquide sous-refroidi</b> — que du liquide, plus froid que son point d'ébullition.</p><p><b>2. Point de bulle</b> — la première bulle apparaît, le palier commence.</p><p><b>3. Saturé</b> — liquide et vapeur ensemble, la température ne bouge plus.</p><p><b>4. Point de rosée</b> — la dernière goutte s'évapore, le palier finit.</p><p><b>5. Vapeur surchauffée</b> — que de la vapeur, et la température peut repartir.</p><p>Ce que la vapeur gagne après le point de rosée s'appelle la <b>surchauffe</b>. Ce que le liquide perd avant le point de bulle s'appelle le <b>sous-refroidissement</b>. Ces deux mots reviendront à chaque mesure du métier.</p>"
       }
      ],
      "question": {
@@ -2790,12 +2790,12 @@
       {
        "type": "piege",
        "t": "Un palier n'est pas une pause",
-       "html": "Sur le palier, la température ne bouge pas — et beaucoup en concluent qu'il ne se passe rien. C'est l'inverse : <b>c'est le moment où le fluide échange le plus de chaleur</b>. Un stagiaire qui croit qu'un palier est un temps mort ne comprendra jamais à quoi sert un évaporateur."
+       "html": "<p>Sur le palier, la température ne bouge pas — et beaucoup en concluent qu'il ne se passe rien. C'est l'inverse : <b>c'est le moment où le fluide échange le plus de chaleur</b>. Un stagiaire qui croit qu'un palier est un temps mort ne comprendra jamais à quoi sert un évaporateur.</p>"
       },
       {
        "type": "piege",
        "t": "Le palier des mélanges n'est pas plat",
-       "html": "Ce qui vient d'être dit vaut pour un <b>corps pur</b>. Dans un <b>mélange zéotrope</b> (les R-4xx), les composants ne bouillent pas tous à la même température : pendant le changement d'état, la température <b>monte lentement</b> au lieu de rester fixe. C'est le <b>glissement</b>. Conséquence directe : le point de bulle et le point de rosée ne sont plus à la même température, et il faut savoir <b>lequel des deux</b> la table de saturation vous donne avant de calculer quoi que ce soit."
+       "html": "<p>Ce qui vient d'être dit vaut pour un <b>corps pur</b>. Dans un <b>mélange zéotrope</b> (nombre de mélanges de la série R-4xx), les composants ne bouillent pas tous à la même température : pendant le changement d'état, la température <b>monte lentement</b> au lieu de rester fixe. C'est le <b>glissement</b> — marqué sur certains mélanges, quasi nul sur d'autres. Conséquence directe : le point de bulle et le point de rosée ne sont plus à la même température, et il faut savoir <b>lequel des deux</b> la table de saturation vous donne avant de calculer quoi que ce soit.</p>"
       }
      ],
      "question": {
@@ -3611,7 +3611,7 @@
       {
        "type": "cle",
        "t": "La méthode en trois gestes",
-       "html": "1. Relever la <b>pression</b> au manomètre (et la convertir en absolu si besoin).</p><p>2. Lire la <b>température de saturation</b> correspondante dans la table du fluide.</p><p>3. Comparer à la <b>température réellement mesurée</b> sur le tube : l'écart, c'est la surchauffe (à l'aspiration) ou le sous-refroidissement (en sortie de condenseur)."
+       "html": "<p>1. Relever la <b>pression</b> au manomètre (et la convertir en absolu si besoin).</p><p>2. Lire la <b>température de saturation</b> correspondante dans la table du fluide.</p><p>3. Comparer à la <b>température réellement mesurée</b> sur le tube : l'écart, c'est la surchauffe (à l'aspiration) ou le sous-refroidissement (en sortie de condenseur).</p>"
       }
      ],
      "question": {
@@ -3624,7 +3624,7 @@
        "L'évaporation"
       ],
       "bonne": 3,
-      "explication": "Le trait du bas est celui de la basse pression : c'est l'évaporation. Le trait du haut, à haute pression, est la condensation ; le trait montant de droite est la compression ; le trait descendant de gauche est la détente. C'est la croix du frigoriste, mise à plat.",
+      "explication": "Le trait du bas est celui de la basse pression : c'est l'évaporation. Le trait du haut, à haute pression, est la condensation ; le trait montant de droite est la compression ; le trait descendant de gauche est la détente. C'est la croix du frigoriste, mise à plat. Ce rectangle est celui du cycle idéal — détente isenthalpique, paliers isobares : sur une machine réelle, pertes de charge et compression non idéale le déforment un peu.",
       "remediation_vers": "g1b"
      }
     },
@@ -3638,13 +3638,14 @@
      "paras": [
       "Les deux flancs de la cloche portent les noms déjà rencontrés : le flanc de gauche est la <b>courbe de bulle</b>, le flanc de droite la <b>courbe de rosée</b>. La cloche du diagramme et le palier de la courbe de chauffe sont la même chose, vue autrement.",
       "Le <b>cycle frigorifique</b> simple à compression se trace alors en <b>quatre transformations</b>, qui dessinent un rectangle. Le trait <b>montant de droite</b> : la <b>compression</b>. Le trait <b>horizontal du haut</b> : la <b>condensation</b>, à haute pression. Le trait <b>descendant de gauche</b> : la <b>détente</b>. Le trait <b>horizontal du bas</b> : l'<b>évaporation</b>, à basse pression. Compresseur à droite, condenseur en haut, détendeur à gauche, évaporateur en bas : <b>c'est la croix du frigoriste</b>. Le diagramme n'invente rien, il met le circuit à plat.",
+      "Ce rectangle bien net est celui du <b>cycle idéal</b> : la détente y est supposée <b>isenthalpique</b> — à enthalpie constante, le trait tombe droit —, l'évaporation et la condensation <b>isobares</b> — à pression constante, les traits restent horizontaux —, et la compression sans pertes. Sur une machine réelle, les <b>pertes de charge</b> inclinent légèrement les paliers et la compression s'écarte du tracé idéal : le rectangle se déforme un peu.",
       "Et c'est là que le diagramme devient un outil de terrain. Sur le trait du <b>bas</b>, ce qui dépasse à droite de la courbe de rosée, c'est la <b>surchauffe</b>. Sur le trait du <b>haut</b>, ce qui dépasse à gauche de la courbe de bulle, c'est le <b>sous-refroidissement</b>. Deux longueurs qui se voient d'un coup d'œil."
      ],
      "blocs": [
       {
        "type": "piege",
        "t": "L'échelle des pressions n'est pas une règle graduée",
-       "html": "Sur une échelle <b>logarithmique</b>, ce qui est constant n'est pas l'écart entre deux graduations, c'est le <b>rapport</b>. La même distance sépare 1 et 10, puis 10 et 100. Conséquence pratique : <b>on ne mesure pas une pression à la règle sur ce diagramme</b>, on lit la graduation. Les valeurs, elles, se prennent au manomètre et dans la table."
+       "html": "<p>Sur une échelle <b>logarithmique</b>, ce qui est constant n'est pas l'écart entre deux graduations, c'est le <b>rapport</b>. La même distance sépare 1 et 10, puis 10 et 100. Conséquence pratique : <b>on ne mesure pas une pression à la règle sur ce diagramme</b>, on lit la graduation. Les valeurs, elles, se prennent au manomètre et dans la table.</p>"
       }
      ],
      "question": {
@@ -3657,7 +3658,7 @@
        "L'évaporation"
       ],
       "bonne": 3,
-      "explication": "Le trait du bas est celui de la basse pression : c'est l'évaporation. Le trait du haut, à haute pression, est la condensation ; le trait montant de droite est la compression ; le trait descendant de gauche est la détente. C'est la croix du frigoriste, mise à plat.",
+      "explication": "Le trait du bas est celui de la basse pression : c'est l'évaporation. Le trait du haut, à haute pression, est la condensation ; le trait montant de droite est la compression ; le trait descendant de gauche est la détente. C'est la croix du frigoriste, mise à plat. Ce rectangle est celui du cycle idéal — détente isenthalpique, paliers isobares : sur une machine réelle, pertes de charge et compression non idéale le déforment un peu.",
       "remediation_vers": "g1b"
      }
     },
@@ -3677,11 +3678,11 @@
       {
        "type": "piege",
        "t": "Un fluide, une table",
-       "html": "Chaque fluide a sa propre table : la pression lue ne veut rien dire tant qu'on ne sait pas <b>quel fluide</b> est dans le circuit. On le vérifie sur la plaque signalétique et dans le registre, jamais « à la couleur de la bouteille »."
+       "html": "<p>Chaque fluide a sa propre table : la pression lue ne veut rien dire tant qu'on ne sait pas <b>quel fluide</b> est dans le circuit. On le vérifie sur la plaque signalétique et dans le registre, jamais « à la couleur de la bouteille ».</p>"
       },
       {
        "t": "À vous : la réglette P ↔ T",
-       "html": "<p>Choisissez un fluide, réglez la pression lue au manomètre, entrez la température du tube : la surchauffe se calcule sous vos yeux. C est exactement le geste de la méthode indirecte.</p>"
+       "html": "<p><p>Choisissez un fluide, réglez la pression lue au manomètre, entrez la température du tube : la surchauffe se calcule sous vos yeux. C est exactement le geste de la méthode indirecte.</p></p>"
       }
      ],
      "question": {
@@ -3694,7 +3695,7 @@
        "L'évaporation"
       ],
       "bonne": 3,
-      "explication": "Le trait du bas est celui de la basse pression : c'est l'évaporation. Le trait du haut, à haute pression, est la condensation ; le trait montant de droite est la compression ; le trait descendant de gauche est la détente. C'est la croix du frigoriste, mise à plat.",
+      "explication": "Le trait du bas est celui de la basse pression : c'est l'évaporation. Le trait du haut, à haute pression, est la condensation ; le trait montant de droite est la compression ; le trait descendant de gauche est la détente. C'est la croix du frigoriste, mise à plat. Ce rectangle est celui du cycle idéal — détente isenthalpique, paliers isobares : sur une machine réelle, pertes de charge et compression non idéale le déforment un peu.",
       "remediation_vers": "g1b"
      }
     }
@@ -4158,7 +4159,7 @@
       {
        "type": "cle",
        "t": "Ce que la valeur vous dit",
-       "html": "<b>Surchauffe nulle</b>, ligne d'aspiration givrée → du liquide part vers le compresseur. On agit <b>tout de suite</b>.</p><p><b>Surchauffe élevée</b> → l'évaporateur est mal alimenté : détendeur trop fermé, ou charge insuffisante.</p><p><b>Sous-refroidissement effondré</b> → il manque du fluide, ou de la vapeur passe dans la ligne liquide.</p><p><b>Sous-refroidissement anormalement élevé</b> → du liquide s'accumule dans le condenseur : charge excessive, ou sortie de condenseur gênée.</p><p>Aucune de ces lectures ne conclut seule : c'est la <b>convergence</b> des indices qui oriente le diagnostic."
+       "html": "<p><b>Surchauffe nulle</b>, ligne d'aspiration givrée → du liquide part vers le compresseur. On agit <b>tout de suite</b>.</p><p><b>Surchauffe élevée</b> → l'évaporateur est mal alimenté : détendeur trop fermé ou déréglé, filtre encrassé, ou charge insuffisante.</p><p><b>Sous-refroidissement effondré</b> → il manque du fluide, ou de la vapeur passe dans la ligne liquide.</p><p><b>Sous-refroidissement anormalement élevé</b> → du liquide s'accumule dans le condenseur : charge excessive, ou sortie de condenseur gênée.</p><p>Aucune de ces lectures ne conclut seule — une même valeur peut venir du circuit, de l'échange (débit d'air ou d'eau, charge thermique inhabituelle) ou de la <b>mesure elle-même</b> (sonde, manomètre) : c'est la <b>convergence</b> des indices qui oriente le diagnostic.</p>"
       }
      ],
      "question": {
@@ -4192,7 +4193,7 @@
       {
        "type": "piege",
        "t": "Une surchauffe ne se lit pas sur un thermomètre",
-       "html": "L'erreur la plus fréquente : relever la température de l'aspiration et l'annoncer comme « la surchauffe ». <b>C'est une température, pas une surchauffe.</b> Sans la pression, et sans la table du fluide qui est réellement dans le circuit, ce nombre ne veut rien dire. Et rappel du piège de base : le manomètre lit en <b>relatif</b>, la table est souvent en <b>absolu</b> — environ 1 bar d'écart, donc plusieurs kelvins d'erreur."
+       "html": "<p>L'erreur la plus fréquente : relever la température de l'aspiration et l'annoncer comme « la surchauffe ». <b>C'est une température, pas une surchauffe.</b> Sans la pression, et sans la table du fluide qui est réellement dans le circuit, ce nombre ne veut rien dire. Et rappel du piège de base : le manomètre lit en <b>relatif</b>, la table est souvent en <b>absolu</b> — environ 1 bar d'écart, donc plusieurs kelvins d'erreur.</p>"
       }
      ],
      "question": {
@@ -4225,7 +4226,7 @@
       {
        "type": "piege",
        "t": "Utile ou totale : ce n'est pas la même valeur",
-       "html": "Comparer une surchauffe <b>utile</b> à une consigne donnée en <b>totale</b> — ou l'inverse — conduit à dérégler une machine qui allait bien. Avant de comparer une mesure à une valeur de référence, vérifiez <b>où</b> la référence a été prise : en sortie d'évaporateur, ou à l'entrée du compresseur."
+       "html": "<p>Comparer une surchauffe <b>utile</b> à une consigne donnée en <b>totale</b> — ou l'inverse — conduit à dérégler une machine qui allait bien. Avant de comparer une mesure à une valeur de référence, vérifiez <b>où</b> la référence a été prise : en sortie d'évaporateur, ou à l'entrée du compresseur.</p>"
       }
      ],
      "question": {
@@ -4772,7 +4773,7 @@
       {
        "type": "cle",
        "t": "L'astuce du + 90",
-       "html": "Ajoute 90 au code, et tu lis directement C, H, F : <b>134 + 90 = 224</b> → C₂H₂F₄ (R-134a). <b>22 + 90 = 112</b> → C·H·F₂… plus un <b>chlore</b> pour compléter : CHClF₂ — voilà pourquoi le R-22 est un HCFC interdit. <b>290 + 90 = 380</b> → C₃H₈ : le propane, zéro fluor, zéro chlore."
+       "html": "<p>Ajoute 90 au code, et tu lis directement C, H, F : <b>134 + 90 = 224</b> → C₂H₂F₄ (R-134a). <b>22 + 90 = 112</b> → C·H·F₂… plus un <b>chlore</b> pour compléter : CHClF₂ — voilà pourquoi le R-22 est un HCFC interdit. <b>290 + 90 = 380</b> → C₃H₈ : le propane, zéro fluor, zéro chlore.</p>"
       }
      ],
      "question": {
@@ -4785,7 +4786,7 @@
        "Un fluide contenant du chlore"
       ],
       "bonne": 1,
-      "explication": "La série R-4xx désigne les mélanges zéotropes : plusieurs fluides assemblés, avec un glissement de température. La lettre majuscule finale (A, B, C) distingue les proportions du mélange.",
+      "explication": "La série R-4xx désigne les mélanges zéotropes : plusieurs fluides assemblés, avec un glissement de température dont l'ampleur varie d'un mélange à l'autre — quasi nul sur certains, plusieurs kelvins sur d'autres. La lettre majuscule finale (A, B, C) distingue les proportions du mélange.",
       "remediation_vers": "g1c"
      }
     },
@@ -4805,12 +4806,12 @@
       {
        "type": "piege",
        "t": "Le code dit la molécule, pas le danger",
-       "html": "R-32 et R-290 se ressemblent sur l'étiquette — l'un est A2L, l'autre A3. La famille chimique dit l'<b>impact environnemental</b> ; la classe NF EN 378 dit le <b>risque de manipulation</b>. Il faut les deux lectures, à chaque fois."
+       "html": "<p>R-32 et R-290 se ressemblent sur l'étiquette — l'un est A2L, l'autre A3. La famille chimique dit l'<b>impact environnemental</b> ; la classe NF EN 378 dit le <b>risque de manipulation</b>. Il faut les deux lectures, à chaque fois.</p>"
       },
       {
        "type": "piege",
        "t": "Drop-in ou retrofit : ne pas deviner",
-       "html": "<p>Un fluide vendu comme « remplacement direct » n'est pas automatiquement un <b>drop-in</b> sur toutes les machines. Sans vérifier la documentation constructeur, on peut charger un fluide de substitution dans une machine qui aurait exigé un <b>retrofit</b> — huile non changée, détendeur non réglé. Le fluide tourne, mais la machine ne fonctionne plus comme prévu. Toujours vérifier avant de charger, jamais deviner.</p>"
+       "html": "<p><p>Un fluide vendu comme « remplacement direct » n'est pas automatiquement un <b>drop-in</b> sur toutes les machines. Sans vérifier la documentation constructeur, on peut charger un fluide de substitution dans une machine qui aurait exigé un <b>retrofit</b> — huile non changée, détendeur non réglé. Le fluide tourne, mais la machine ne fonctionne plus comme prévu. Toujours vérifier avant de charger, jamais deviner.</p></p>"
       }
      ],
      "question": {
@@ -4823,7 +4824,7 @@
        "Un fluide contenant du chlore"
       ],
       "bonne": 1,
-      "explication": "La série R-4xx désigne les mélanges zéotropes : plusieurs fluides assemblés, avec un glissement de température. La lettre majuscule finale (A, B, C) distingue les proportions du mélange.",
+      "explication": "La série R-4xx désigne les mélanges zéotropes : plusieurs fluides assemblés, avec un glissement de température dont l'ampleur varie d'un mélange à l'autre — quasi nul sur certains, plusieurs kelvins sur d'autres. La lettre majuscule finale (A, B, C) distingue les proportions du mélange.",
       "remediation_vers": "g1c"
      }
     },
@@ -4842,12 +4843,12 @@
       {
        "type": "cle",
        "t": "Où les trouver sur la croix du frigoriste",
-       "html": "Détendeur à gauche, compresseur à droite, condenseur en haut, évaporateur en bas. Le <b>séparateur d'huile</b> se loge juste à la sortie du compresseur, côté droit, sur le refoulement. Le <b>réservoir</b> et le <b>voyant liquide</b> se trouvent sur la ligne liquide, entre le condenseur (haut) et le détendeur (gauche) — juste avant le détendeur. Le <b>séparateur de liquide</b> se loge juste avant l'entrée du compresseur, côté droit, sur l'aspiration."
+       "html": "<p>Détendeur à gauche, compresseur à droite, condenseur en haut, évaporateur en bas. Le <b>séparateur d'huile</b> se loge juste à la sortie du compresseur, côté droit, sur le refoulement. Le <b>réservoir</b> et le <b>voyant liquide</b> se trouvent sur la ligne liquide, entre le condenseur (haut) et le détendeur (gauche) — juste avant le détendeur. Le <b>séparateur de liquide</b> se loge juste avant l'entrée du compresseur, côté droit, sur l'aspiration.</p>"
       },
       {
        "type": "piege",
        "t": "Deux pressostats, pas un",
-       "html": "Le <b>pressostat de régulation</b> pilote le fonctionnement normal : il coupe et relance le compresseur. Le <b>pressostat de sécurité</b> protège contre une pression anormale ; il n'est pas fait pour cycler en continu. Les confondre désactive une protection sans que ça se voie. Et avant toute intervention sur une vanne solénoïde, un thermostat ou un pressostat : <b>consignation électrique</b>, ce sont des organes électriques."
+       "html": "<p>Le <b>pressostat de régulation</b> pilote le fonctionnement normal : il coupe et relance le compresseur. Le <b>pressostat de sécurité</b> protège contre une pression anormale ; il n'est pas fait pour cycler en continu. Les confondre désactive une protection sans que ça se voie. Et avant toute intervention sur une vanne solénoïde, un thermostat ou un pressostat : <b>consignation électrique</b>, ce sont des organes électriques.</p>"
       }
      ],
      "question": {
@@ -5307,12 +5308,12 @@
       {
        "type": "cle",
        "t": "Ce que dit une température de refoulement",
-       "html": "Un refoulement anormalement chaud oriente vers un <b>manque de fluide</b>, une <b>surchauffe excessive</b> ou un <b>mauvais retour d'huile</b>. Trois causes, un seul symptôme : on croise avec les autres relevés avant de conclure."
+       "html": "<p>Un refoulement anormalement chaud oriente vers un <b>manque de fluide</b>, une <b>surchauffe excessive</b> ou un <b>mauvais retour d'huile</b>. Trois causes, un seul symptôme : on croise avec les autres relevés avant de conclure.</p>"
       },
       {
        "type": "piege",
        "t": "Geste interdit",
-       "html": "<b>Consignation électrique</b> avant toute intervention sur les sécurités ou les raccords du compresseur. Et un compresseur à l'arrêt peut rester <b>sous pression</b> longtemps : on ne le dépose jamais sans avoir vérifié."
+       "html": "<p><b>Consignation électrique</b> avant toute intervention sur les sécurités ou les raccords du compresseur. Et un compresseur à l'arrêt peut rester <b>sous pression</b> longtemps : on ne le dépose jamais sans avoir vérifié.</p>"
       }
      ],
      "question": {
@@ -5347,7 +5348,7 @@
       {
        "type": "cle",
        "t": "À quoi sert le rapport",
-       "html": "Un <b>rapport</b> n'est pas une formalité administrative : c'est la mémoire de la machine. Un problème noté mais non résolu (par exemple un bruit anormal ou une trace d'huile suspecte) doit être signalé dans le rapport même s'il n'empêche pas la machine de tourner aujourd'hui."
+       "html": "<p>Un <b>rapport</b> n'est pas une formalité administrative : c'est la mémoire de la machine. Un problème noté mais non résolu (par exemple un bruit anormal ou une trace d'huile suspecte) doit être signalé dans le rapport même s'il n'empêche pas la machine de tourner aujourd'hui.</p>"
       }
      ],
      "question": {
@@ -5384,12 +5385,12 @@
       {
        "type": "cle",
        "t": "Le test qui doit précéder la mise en service",
-       "html": "Avant de mettre un compresseur neuf sous tension, on vérifie que le circuit ne fuit pas, avec un essai à l'<b>azote</b>. Ce n'est qu'après ce contrôle que l'installation répond au code 6.02 : « aucune fuite ni aucune émission »."
+       "html": "<p>Avant de mettre un compresseur neuf sous tension, on vérifie que le circuit ne fuit pas, avec un essai à l'<b>azote</b>. Ce n'est qu'après ce contrôle que l'installation répond au code 6.02 : « aucune fuite ni aucune émission ».</p>"
       },
       {
        "type": "piege",
        "t": "Geste interdit",
-       "html": "<b>Consignation électrique</b> (couper et verrouiller l'alimentation) avant toute intervention sur les soupapes ou les sécurités. Un réglage de soupape ne s'improvise jamais : toujours <b>selon la fiche constructeur</b>, jamais « à l'oreille »."
+       "html": "<p><b>Consignation électrique</b> (couper et verrouiller l'alimentation) avant toute intervention sur les soupapes ou les sécurités. Un réglage de soupape ne s'improvise jamais : toujours <b>selon la fiche constructeur</b>, jamais « à l'oreille ».</p>"
       }
      ],
      "question": {
@@ -5426,7 +5427,7 @@
       {
        "type": "cle",
        "t": "La valeur plaque, jamais un chiffre inventé",
-       "html": "<p>Pour juger si un compresseur fonctionne normalement, on compare toujours ce qu'on mesure (intensité, pression) à la <b>valeur plaque</b> : celle inscrite sur la plaque signalétique de l'appareil, ou celle donnée par la documentation constructeur. On ne compare jamais à un chiffre retenu de mémoire ou à vue de nez : chaque compresseur a ses propres valeurs de référence.</p>"
+       "html": "<p><p>Pour juger si un compresseur fonctionne normalement, on compare toujours ce qu'on mesure (intensité, pression) à la <b>valeur plaque</b> : celle inscrite sur la plaque signalétique de l'appareil, ou celle donnée par la documentation constructeur. On ne compare jamais à un chiffre retenu de mémoire ou à vue de nez : chaque compresseur a ses propres valeurs de référence.</p></p>"
       }
      ],
      "question": {
@@ -6391,7 +6392,7 @@
       {
        "type": "piege",
        "t": "Propreté = énergie",
-       "html": "Une batterie sale n'est pas un problème esthétique : c'est une haute pression plus élevée, un compresseur qui force et une facture qui monte. L'inspection visuelle de la surface fait partie du contrôle, pas de l'entretien optionnel."
+       "html": "<p>Une batterie sale n'est pas un problème esthétique : c'est une haute pression plus élevée, un compresseur qui force et une facture qui monte. L'inspection visuelle de la surface fait partie du contrôle, pas de l'entretien optionnel.</p>"
       }
      ],
      "question": {
@@ -6427,7 +6428,7 @@
       {
        "type": "cle",
        "t": "Deux pressostats, deux fonctions",
-       "html": "Le pressostat de <b>sécurité</b> coupe le compresseur pour protéger l'installation. Le pressostat de <b>régulation</b> pilote le ventilateur pour tenir la pression de condensation. Deux rôles, deux réglages — et les valeurs se prennent sur la doc constructeur."
+       "html": "<p>Le pressostat de <b>sécurité</b> coupe le compresseur pour protéger l'installation. Le pressostat de <b>régulation</b> pilote le ventilateur pour tenir la pression de condensation. Deux rôles, deux réglages — et les valeurs se prennent sur la doc constructeur.</p>"
       }
      ],
      "question": {
@@ -6464,12 +6465,12 @@
       {
        "type": "cle",
        "t": "Bien installer l'unité extérieure",
-       "html": "L'unité extérieure se fixe <b>solidement et de niveau</b>, avec de l'espace autour pour que l'air circule. Le matériel de réglage et de sécurité — pressostats, vannes — doit être en place et accessible. Avant la mise en service, on contrôle l'étanchéité du circuit sous <b>azote</b> (un gaz neutre) — jamais à l'oxygène, jamais à l'air comprimé. Tous les raccords sont vérifiés : zéro fuite dès le démarrage."
+       "html": "<p>L'unité extérieure se fixe <b>solidement et de niveau</b>, avec de l'espace autour pour que l'air circule. Le matériel de réglage et de sécurité — pressostats, vannes — doit être en place et accessible. Avant la mise en service, on contrôle l'étanchéité du circuit sous <b>azote</b> (un gaz neutre) — jamais à l'oxygène, jamais à l'air comprimé. Tous les raccords sont vérifiés : zéro fuite dès le démarrage.</p>"
       },
       {
        "type": "cle",
        "t": "Régler le régulateur de pression",
-       "html": "Le régulateur de pression de sortie du condenseur maintient une pression de condensation correcte, même par temps froid. Il se règle <b>selon la fiche constructeur</b>, jamais à l'estime."
+       "html": "<p>Le régulateur de pression de sortie du condenseur maintient une pression de condensation correcte, même par temps froid. Il se règle <b>selon la fiche constructeur</b>, jamais à l'estime.</p>"
       }
      ],
      "question": {
@@ -6507,12 +6508,12 @@
       {
        "type": "piege",
        "t": "Un régulateur ne coupe rien",
-       "html": "Le <b>pressostat HP</b> est une sécurité : il <b>coupe</b> l'alimentation électrique du compresseur quand la pression devient dangereuse. Le <b>régulateur de pression de condensation</b> ne coupe rien du tout : c'est une vanne, elle <b>maintient</b> une pression. Deux organes, deux fonctions, deux réglages — et l'un ne remplace jamais l'autre."
+       "html": "<p>Le <b>pressostat HP</b> est une sécurité : il <b>coupe</b> l'alimentation électrique du compresseur quand la pression devient dangereuse. Le <b>régulateur de pression de condensation</b> ne coupe rien du tout : c'est une vanne, elle <b>maintient</b> une pression. Deux organes, deux fonctions, deux réglages — et l'un ne remplace jamais l'autre.</p>"
       },
       {
        "type": "piege",
        "t": "Avant de toucher aux conduites",
-       "html": "La conduite de <b>refoulement</b> (le tube de gaz chaud entre le compresseur et le condenseur) et la conduite de <b>liquide</b> (juste après le condenseur) s'inspectent après une <b>consignation électrique</b> systématique : couper puis verrouiller l'alimentation. On cherche des traces d'huile, de la corrosion, un isolant abîmé."
+       "html": "<p>La conduite de <b>refoulement</b> (le tube de gaz chaud entre le compresseur et le condenseur) et la conduite de <b>liquide</b> (juste après le condenseur) s'inspectent après une <b>consignation électrique</b> systématique : couper puis verrouiller l'alimentation. On cherche des traces d'huile, de la corrosion, un isolant abîmé.</p>"
       }
      ],
      "question": {
@@ -6549,17 +6550,17 @@
       {
        "type": "cle",
        "t": "Démarrer, mesurer, arrêter",
-       "html": "Au démarrage, le ventilateur tourne et la pression monte normalement. En fonctionnement, on mesure le <b>sous-refroidissement</b> (entre 4 et 8 K) : hors de cette plage, il signale un défaut de charge. À l'arrêt, on respecte <b>l'ordre donné par la fiche constructeur</b>."
+       "html": "<p>Au démarrage, le ventilateur tourne et la pression monte normalement. En fonctionnement, on mesure le <b>sous-refroidissement</b> (entre 4 et 8 K) : hors de cette plage, il signale un défaut de charge. À l'arrêt, on respecte <b>l'ordre donné par la fiche constructeur</b>.</p>"
       },
       {
        "type": "cle",
        "t": "Rédiger le rapport d'état",
-       "html": "Chaque visite se termine par un <b>rapport écrit</b> : ailettes encrassées, ventilateur bruyant, trace d'huile, pression anormale. Un problème noté tôt évite une fuite demain."
+       "html": "<p>Chaque visite se termine par un <b>rapport écrit</b> : ailettes encrassées, ventilateur bruyant, trace d'huile, pression anormale. Un problème noté tôt évite une fuite demain.</p>"
       },
       {
        "type": "cle",
        "t": "Entretenir pour économiser l'énergie",
-       "html": "Des <b>ailettes propres</b> et un ventilateur en bon état font consommer moins d'électricité. Un condenseur encrassé fait travailler le compresseur plus fort pour le même résultat."
+       "html": "<p>Des <b>ailettes propres</b> et un ventilateur en bon état font consommer moins d'électricité. Un condenseur encrassé fait travailler le compresseur plus fort pour le même résultat.</p>"
       }
      ],
      "question": {
@@ -7034,17 +7035,17 @@
       {
        "type": "cle",
        "t": "Lire la surchauffe",
-       "html": "<b>Surchauffe = température du gaz à l'aspiration − température d'évaporation</b> (celle que la table donne pour la BP mesurée).</p><p>Trop élevée → le détendeur n'alimente pas assez, ou il manque du fluide.</p><p>Nulle ou négative, ligne d'aspiration givrée → <b>risque de coup de liquide</b>, on agit tout de suite."
+       "html": "<p><b>Surchauffe = température du gaz à l'aspiration − température d'évaporation</b> (celle que la table donne pour la BP mesurée).</p><p>Trop élevée → le détendeur n'alimente pas assez, ou il manque du fluide.</p><p>Nulle ou négative, ligne d'aspiration givrée → <b>risque de coup de liquide</b>, on agit tout de suite.</p>"
       },
       {
        "type": "piege",
        "t": "Deux organes qu'on confond",
-       "html": "Le <b>régulateur de pression d'évaporation</b> protège le produit (il empêche l'évaporateur de descendre trop bas). Le <b>pressostat BP</b> protège le compresseur. Fonctions différentes, réglages différents."
+       "html": "<p>Le <b>régulateur de pression d'évaporation</b> protège le produit (il empêche l'évaporateur de descendre trop bas). Le <b>pressostat BP</b> protège le compresseur. Fonctions différentes, réglages différents.</p>"
       },
       {
        "type": "piege",
        "t": "Conduite mal posée = huile piégée",
-       "html": "<p>Une conduite d'aspiration posée à plat, en contre-pente, ou une colonne montante sans <b>siphon</b> : l'huile ne circule plus, elle reste bloquée dans les points bas. Le compresseur tourne alors avec de moins en moins d'huile, jusqu'au <b>grippage</b> : les pièces internes, plus assez lubrifiées, se bloquent et le compresseur casse. C'est exactement ce que contrôle le code <b>8.05</b> : vérifier que les conduites de liquide et d'aspiration sont dans la bonne position, avec la <b>pente</b> et le <b>siphon</b> là où il faut.</p>"
+       "html": "<p><p>Une conduite d'aspiration posée à plat, en contre-pente, ou une colonne montante sans <b>siphon</b> : l'huile ne circule plus, elle reste bloquée dans les points bas. Le compresseur tourne alors avec de moins en moins d'huile, jusqu'au <b>grippage</b> : les pièces internes, plus assez lubrifiées, se bloquent et le compresseur casse. C'est exactement ce que contrôle le code <b>8.05</b> : vérifier que les conduites de liquide et d'aspiration sont dans la bonne position, avec la <b>pente</b> et le <b>siphon</b> là où il faut.</p></p>"
       }
      ],
      "question": {
@@ -7082,7 +7083,7 @@
       {
        "type": "piege",
        "t": "Avant toute mise en service",
-       "html": "Pour vérifier que l'évaporateur ne fuit pas, la mise en pression se fait à l'<b>azote SEUL</b> — jamais à l'oxygène, jamais à l'air comprimé : avec de l'huile dans le circuit, ce mélange est explosif. Et avant toute intervention sur l'évaporateur ou ses sécurités, on coupe et on <b>consigne l'alimentation électrique</b>."
+       "html": "<p>Pour vérifier que l'évaporateur ne fuit pas, la mise en pression se fait à l'<b>azote SEUL</b> — jamais à l'oxygène, jamais à l'air comprimé : avec de l'huile dans le circuit, ce mélange est explosif. Et avant toute intervention sur l'évaporateur ou ses sécurités, on coupe et on <b>consigne l'alimentation électrique</b>.</p>"
       }
      ],
      "question": {
@@ -7121,7 +7122,7 @@
       {
        "type": "cle",
        "t": "Qui protège quoi ?",
-       "html": "<b>Pressostat</b> (interrupteur de sécurité) → protège la <b>machine</b> : il coupe le compresseur.</p><p><b>Régulateur de pression d'évaporation</b> (« KVP »), en sortie d'évaporateur → protège le <b>produit</b>, ou l'équilibre entre évaporateurs : il ne coupe rien, il maintient une pression.</p><p><b>Régulateur de pression de carter</b> (« KVL »), avant le compresseur → protège le <b>moteur du compresseur</b> : il limite la pression d'aspiration.</p><p>Un seul des trois coupe le courant, et c'est le pressostat. Dans tous les cas, la valeur de réglage vient de la <b>fiche constructeur</b>, jamais de l'estime."
+       "html": "<p><b>Pressostat</b> (interrupteur de sécurité) → protège la <b>machine</b> : il coupe le compresseur.</p><p><b>Régulateur de pression d'évaporation</b> (« KVP »), en sortie d'évaporateur → protège le <b>produit</b>, ou l'équilibre entre évaporateurs : il ne coupe rien, il maintient une pression.</p><p><b>Régulateur de pression de carter</b> (« KVL »), avant le compresseur → protège le <b>moteur du compresseur</b> : il limite la pression d'aspiration.</p><p>Un seul des trois coupe le courant, et c'est le pressostat. Dans tous les cas, la valeur de réglage vient de la <b>fiche constructeur</b>, jamais de l'estime.</p>"
       }
      ],
      "question": {
@@ -7159,7 +7160,7 @@
       {
        "type": "cle",
        "t": "Ce qu'un bon rapport contient",
-       "html": "Un rapport d'état utile <b>décrit ce qui ne va pas</b> : corrosion, fixation desserrée, bac de condensats sale, conduit de dégivrage abîmé — tout ce qui, laissé tel quel, finit en fuite ou en émission. C'est aussi ce qui coûte le plus cher en énergie : une batterie sale ou un mauvais débit d'air font tourner le compresseur plus longtemps pour le même résultat."
+       "html": "<p>Un rapport d'état utile <b>décrit ce qui ne va pas</b> : corrosion, fixation desserrée, bac de condensats sale, conduit de dégivrage abîmé — tout ce qui, laissé tel quel, finit en fuite ou en émission. C'est aussi ce qui coûte le plus cher en énergie : une batterie sale ou un mauvais débit d'air font tourner le compresseur plus longtemps pour le même résultat.</p>"
       }
      ],
      "question": {
@@ -7196,7 +7197,7 @@
       "Un compresseur en fin de vie"
      ],
      "bonne": 1,
-     "explication": "BP basse + surchauffe élevée + sous-refroidissement effondré + bulles au voyant : le circuit manque de fluide. C'est un diagnostic par méthode indirecte — il reste à localiser la fuite par méthode directe, puis à consigner.",
+     "explication": "BP basse + surchauffe élevée + sous-refroidissement effondré + bulles au voyant : le manque de fluide est l'hypothèse qui explique les quatre relevés à la fois. Avant de conclure, on écarte ce qui en imiterait une partie — restriction ou filtre encrassé, détendeur déréglé, charge thermique inhabituelle, débit d'air ou d'eau réduit, sonde ou manomètre en défaut. Ce tri fait, la méthode indirecte a dit son dernier mot : il reste à localiser la fuite par méthode directe, puis à consigner.",
      "remediation_vers": "g4b"
     }
    },
@@ -7713,12 +7714,12 @@
       {
        "type": "cle",
        "t": "Sécurité électrique, sécurité mécanique",
-       "html": "Le <b>pressostat</b> est électrique et réglable : il coupe avant l'incident. La <b>soupape de sécurité</b> est mécanique, tarée par le constructeur : c'est le dernier recours. On ne remplace jamais l'une par l'autre, et on ne retouche pas un tarage."
+       "html": "<p>Le <b>pressostat</b> est électrique et réglable : il coupe avant l'incident. La <b>soupape de sécurité</b> est mécanique, tarée par le constructeur : c'est le dernier recours. On ne remplace jamais l'une par l'autre, et on ne retouche pas un tarage.</p>"
       },
       {
        "type": "piege",
        "t": "Trois erreurs de montage",
-       "html": "Monter une vanne ou un déshydrateur <b>à l'envers</b> (erreur irréversible sans découpe) ; poser le <b>bulbe</b> au mauvais endroit ou mal serré ; retoucher le réglage <b>sans laisser l'installation se stabiliser</b> entre deux actions — la mesure suivante ne veut alors plus rien dire."
+       "html": "<p>Monter une vanne ou un déshydrateur <b>à l'envers</b> (erreur irréversible sans découpe) ; poser le <b>bulbe</b> au mauvais endroit ou mal serré ; retoucher le réglage <b>sans laisser l'installation se stabiliser</b> entre deux actions — la mesure suivante ne veut alors plus rien dire.</p>"
       }
      ],
      "question": {
@@ -7791,7 +7792,7 @@
       {
        "type": "cle",
        "t": "Un bon réglage, c'est de l'énergie économisée",
-       "html": "Un thermostat qui démarre et arrête le compresseur trop souvent, un limiteur qui coupe pour rien, un séparateur d'huile qui laisse l'huile encrasser les échangeurs : à chaque fois, le compresseur travaille plus pour le même résultat. <b>Bien régler et bien entretenir ces organes, à l'installation comme en maintenance, c'est aussi ce qui maintient l'efficacité énergétique</b> de l'installation."
+       "html": "<p>Un thermostat qui démarre et arrête le compresseur trop souvent, un limiteur qui coupe pour rien, un séparateur d'huile qui laisse l'huile encrasser les échangeurs : à chaque fois, le compresseur travaille plus pour le même résultat. <b>Bien régler et bien entretenir ces organes, à l'installation comme en maintenance, c'est aussi ce qui maintient l'efficacité énergétique</b> de l'installation.</p>"
       }
      ],
      "question": {
@@ -7830,7 +7831,7 @@
       {
        "type": "piege",
        "t": "Avant de toucher un réglage électrique",
-       "html": "Un thermostat électronique, un limiteur de pression électrique : ce sont des <b>organes électriques</b>. <b>Consignation électrique</b> systématique avant toute intervention. Et un limiteur de sécurité ne se retouche jamais « pour voir » : son seuil se règle selon la fiche constructeur, comme tous les autres réglages de cette fiche."
+       "html": "<p>Un thermostat électronique, un limiteur de pression électrique : ce sont des <b>organes électriques</b>. <b>Consignation électrique</b> systématique avant toute intervention. Et un limiteur de sécurité ne se retouche jamais « pour voir » : son seuil se règle selon la fiche constructeur, comme tous les autres réglages de cette fiche.</p>"
       }
      ],
      "question": {
@@ -8496,7 +8497,7 @@
       {
        "type": "piege",
        "t": "Geste interdit — sans discussion",
-       "html": "Toute mise en pression se fait à l'<b>azote</b>, et à l'azote seulement. <b>Jamais d'oxygène</b> — au contact de l'huile du circuit, le mélange est explosif. <b>Jamais d'air comprimé</b> — il apporte de l'humidité et contient de l'oxygène. Ce geste ne se discute pas et ne se découvre pas : il s'impose."
+       "html": "<p>Toute mise en pression se fait à l'<b>azote</b>, et à l'azote seulement. <b>Jamais d'oxygène</b> — au contact de l'huile du circuit, le mélange est explosif. <b>Jamais d'air comprimé</b> — il apporte de l'humidité et contient de l'oxygène. Ce geste ne se discute pas et ne se découvre pas : il s'impose.</p>"
       }
      ],
      "question": {
@@ -8529,12 +8530,12 @@
       {
        "type": "piege",
        "t": "Geste interdit — sans discussion",
-       "html": "Une bouteille d'azote <b>ne se branche jamais en direct</b> sur un circuit, mano-détendeur absent. La mise en pression se fait <b>à l'azote sec, seul</b>. Jamais d'oxygène — explosif au contact de l'huile. Jamais d'air comprimé — humide, chargé en oxygène."
+       "html": "<p>Une bouteille d'azote <b>ne se branche jamais en direct</b> sur un circuit, mano-détendeur absent. La mise en pression se fait <b>à l'azote sec, seul</b>. Jamais d'oxygène — explosif au contact de l'huile. Jamais d'air comprimé — humide, chargé en oxygène.</p>"
       },
       {
        "type": "cle",
        "t": "Deux cadrans, deux informations",
-       "html": "Cadran <b>bouteille</b> : ce qu'il reste dedans. Cadran <b>sortie</b> : ce que vous envoyez dans le circuit. Un cadran de sortie qui ne tient pas sa pression signale une fuite au raccord — à vérifier avant d'aller plus loin."
+       "html": "<p>Cadran <b>bouteille</b> : ce qu'il reste dedans. Cadran <b>sortie</b> : ce que vous envoyez dans le circuit. Un cadran de sortie qui ne tient pas sa pression signale une fuite au raccord — à vérifier avant d'aller plus loin.</p>"
       }
      ],
      "question": {
@@ -8567,12 +8568,12 @@
       {
        "type": "cle",
        "t": "Fermé avant, fermé après",
-       "html": "Les deux vannes du manifold restent <b>fermées</b> à chaque branchement et à chaque débranchement. Elles ne s'ouvrent qu'une fois les deux flexibles vissés et vérifiés, et se referment avant toute déconnexion. C'est ce qui évite le rejet au moment du geste."
+       "html": "<p>Les deux vannes du manifold restent <b>fermées</b> à chaque branchement et à chaque débranchement. Elles ne s'ouvrent qu'une fois les deux flexibles vissés et vérifiés, et se referment avant toute déconnexion. C'est ce qui évite le rejet au moment du geste.</p>"
       },
       {
        "type": "piege",
        "t": "Les deux vannes ouvertes en même temps",
-       "html": "Ouvrir BP et HP <b>ensemble</b> fait communiquer les deux côtés du circuit et fausse la lecture. On ouvre <b>une vanne à la fois</b>, on lit, puis l'autre."
+       "html": "<p>Ouvrir BP et HP <b>ensemble</b> fait communiquer les deux côtés du circuit et fausse la lecture. On ouvre <b>une vanne à la fois</b>, on lit, puis l'autre.</p>"
       }
      ],
      "question": {
@@ -8605,12 +8606,12 @@
       {
        "type": "cle",
        "t": "Isoler avant d'arrêter",
-       "html": "On ferme toujours la vanne côté circuit <b>avant</b> d'arrêter la pompe, jamais l'inverse. C'est l'ordre qui protège le circuit d'un retour d'huile."
+       "html": "<p>On ferme toujours la vanne côté circuit <b>avant</b> d'arrêter la pompe, jamais l'inverse. C'est l'ordre qui protège le circuit d'un retour d'huile.</p>"
       },
       {
        "type": "piege",
        "t": "Vacuomètre collé à la pompe",
-       "html": "Une lecture prise juste à la sortie de la pompe ne dit rien du vide réel dans le circuit. Le vacuomètre se monte du <b>côté circuit</b>."
+       "html": "<p>Une lecture prise juste à la sortie de la pompe ne dit rien du vide réel dans le circuit. Le vacuomètre se monte du <b>côté circuit</b>.</p>"
       }
      ],
      "question": {
@@ -8646,12 +8647,12 @@
       {
        "type": "cle",
        "t": "Le vide qui remonte",
-       "html": "Après avoir isolé la pompe, on <b>surveille</b> : si le vide remonte, il y a une fuite ou de l'humidité résiduelle. Un tirage au vide réussi, c'est un vide qui <b>tient</b>. Valeurs cibles et durées : selon doc constructeur, à faire valider."
+       "html": "<p>Après avoir isolé la pompe, on <b>surveille</b> : si le vide remonte, il y a une fuite ou de l'humidité résiduelle. Un tirage au vide réussi, c'est un vide qui <b>tient</b>. Valeurs cibles et durées : selon doc constructeur, à faire valider.</p>"
       },
       {
        "type": "cle",
        "t": "Localiser la fuite : l'eau savonneuse",
-       "html": "<p>Si la pression chute, on cherche la fuite <b>raccord par raccord et brasure par brasure</b>, en badigeonnant de l'<b>eau savonneuse</b> au pinceau ou au pulvérisateur. Une <b>bulle</b> qui apparaît et grossit indique l'endroit exact de la fuite. Ce geste simple, sans appareil, vient <b>après</b> le contrôle de stabilité de la pression : il sert à localiser précisément une fuite déjà détectée.</p>"
+       "html": "<p><p>Si la pression chute, on cherche la fuite <b>raccord par raccord et brasure par brasure</b>, en badigeonnant de l'<b>eau savonneuse</b> au pinceau ou au pulvérisateur. Une <b>bulle</b> qui apparaît et grossit indique l'endroit exact de la fuite. Ce geste simple, sans appareil, vient <b>après</b> le contrôle de stabilité de la pression : il sert à localiser précisément une fuite déjà détectée.</p></p>"
       }
      ],
      "question": {
@@ -8979,7 +8980,7 @@
       {
        "type": "cle",
        "t": "L'ordre ne s'invente pas",
-       "html": "<b>Registre → visuel et manuel → méthode indirecte → méthode directe.</b></p><p>Chaque étape oriente la suivante. On ne contrôle jamais à l'aveugle : le registre oriente le contrôle avant même d'ouvrir la porte du local technique."
+       "html": "<p><b>Registre → visuel et manuel → méthode indirecte → méthode directe.</b></p><p>Chaque étape oriente la suivante. On ne contrôle jamais à l'aveugle : le registre oriente le contrôle avant même d'ouvrir la porte du local technique.</p>"
       }
      ],
      "question": {
@@ -9014,7 +9015,7 @@
       {
        "type": "piege",
        "t": "La trace d'huile",
-       "html": "Une trace d'huile sous un raccord n'est pas une salissure : c'est la <b>signature d'une fuite</b>. Le fluide s'échappe, l'huile miscible reste. Inversement, un bac de condensats bouché peut <b>masquer</b> une fuite pendant des semaines."
+       "html": "<p>Une trace d'huile sous un raccord n'est pas une salissure : c'est la <b>signature d'une fuite</b>. Le fluide s'échappe, l'huile miscible reste. Inversement, un bac de condensats bouché peut <b>masquer</b> une fuite pendant des semaines.</p>"
       }
      ],
      "question": {
@@ -9047,16 +9048,16 @@
       {
        "type": "cle",
        "t": "Trois instruments, trois informations",
-       "html": "<b>Manomètre</b> (BP/HP) → écart avec la table de saturation.</p><p><b>Thermomètre de contact</b> → surchauffe et sous-refroidissement.</p><p><b>Multimètre</b> → cohérence électrique du compresseur.</p><p>Un seul indice ne conclut rien ; c'est leur <b>convergence</b> qui oriente."
+       "html": "<p><b>Manomètre</b> (BP/HP) → écart avec la table de saturation.</p><p><b>Thermomètre de contact</b> → surchauffe et sous-refroidissement.</p><p><b>Multimètre</b> → cohérence électrique du compresseur.</p><p>Un seul indice ne conclut rien ; c'est leur <b>convergence</b> qui oriente.</p>"
       },
       {
        "type": "piege",
        "t": "Relatif ou absolu ?",
-       "html": "Toujours le même piège : ne pas confondre pression <b>relative</b> (lue au manomètre) et pression <b>absolue</b> (souvent utilisée dans les tables). Écart : environ 1 bar. Et un fluide n'a jamais la table d'un autre."
+       "html": "<p>Toujours le même piège : ne pas confondre pression <b>relative</b> (lue au manomètre) et pression <b>absolue</b> (souvent utilisée dans les tables). Écart : environ 1 bar. Et un fluide n'a jamais la table d'un autre.</p>"
       },
       {
        "t": "À toi : refais la lecture croisée",
-       "html": "<p>Reprends la réglette : pression relative, conversion en absolu, température de saturation, écart avec la mesure. Hors plage → on soupçonne.</p>"
+       "html": "<p><p>Reprends la réglette : pression relative, conversion en absolu, température de saturation, écart avec la mesure. Hors plage → on soupçonne.</p></p>"
       }
      ],
      "question": {
@@ -9091,7 +9092,7 @@
       {
        "type": "cle",
        "t": "Une alerte se confirme",
-       "html": "Le détecteur qui siffle ne conclut rien tout seul. On <b>repasse</b>, ventilateurs à l'arrêt si possible — l'air brassé disperse le nuage de fluide et fait sonner l'appareil à côté de la vraie fuite. Deux passages concordants, sinon on ne conclut pas."
+       "html": "<p>Le détecteur qui siffle ne conclut rien tout seul. On <b>repasse</b>, ventilateurs à l'arrêt si possible — l'air brassé disperse le nuage de fluide et fait sonner l'appareil à côté de la vraie fuite. Deux passages concordants, sinon on ne conclut pas.</p>"
       }
      ],
      "question": {
@@ -9126,7 +9127,7 @@
       {
        "type": "piege",
        "t": "L'instrument aussi se contrôle",
-       "html": "Un détecteur non étalonné donne une conformité qui ne vaut rien. Étalonnage périodique selon la réglementation applicable, et <b>vérification au gaz de référence avant utilisation</b>. Le registre doit pouvoir dire avec quel appareil le contrôle a été fait."
+       "html": "<p>Un détecteur non étalonné donne une conformité qui ne vaut rien. Étalonnage périodique selon la réglementation applicable, et <b>vérification au gaz de référence avant utilisation</b>. Le registre doit pouvoir dire avec quel appareil le contrôle a été fait.</p>"
       }
      ],
      "question": {
@@ -9746,7 +9747,7 @@
       {
        "type": "cle",
        "t": "Récupéré, recyclé, régénéré",
-       "html": "<b>Récupéré</b> : sorti de la machine — c'est un déchet tant qu'il n'a pas été traité.</p><p><b>Recyclé</b> : nettoyé sommairement — réemploi limité, typiquement sur la même installation ou le même exploitant.</p><p><b>Régénéré</b> : ramené aux spécifications d'un fluide neuf par une filière agréée — réutilisable comme du neuf."
+       "html": "<p><b>Récupéré</b> : sorti de la machine — c'est un déchet tant qu'il n'a pas été traité.</p><p><b>Recyclé</b> : nettoyé sommairement — réemploi limité, typiquement sur la même installation ou le même exploitant.</p><p><b>Régénéré</b> : ramené aux spécifications d'un fluide neuf par une filière agréée — réutilisable comme du neuf.</p>"
       }
      ],
      "question": {
@@ -9778,12 +9779,12 @@
       {
        "type": "cle",
        "t": "Peser avant, peser après",
-       "html": "La différence entre la masse de départ et la masse d'arrivée est la <b>seule preuve fiable</b> de ce qui a été récupéré. Sans pesée avant, ce nombre n'existe pas."
+       "html": "<p>La différence entre la masse de départ et la masse d'arrivée est la <b>seule preuve fiable</b> de ce qui a été récupéré. Sans pesée avant, ce nombre n'existe pas.</p>"
       },
       {
        "type": "piege",
        "t": "Un cylindre, un seul fluide",
-       "html": "Une étiquette qui ne correspond pas exactement au fluide de l'installation : on ne branche pas. Mélanger deux fluides rend le contenu du cylindre inutilisable pour le recyclage ou la régénération."
+       "html": "<p>Une étiquette qui ne correspond pas exactement au fluide de l'installation : on ne branche pas. Mélanger deux fluides rend le contenu du cylindre inutilisable pour le recyclage ou la régénération.</p>"
       }
      ],
      "question": {
@@ -9818,12 +9819,12 @@
       {
        "type": "cle",
        "t": "La chorégraphie qui ne change jamais",
-       "html": "<b>Fermer → laisser stabiliser → desserrer lentement.</b> Ce triptyque revient à chaque déconnexion, quel que soit l'appareil branché. C'est le geste central de tout ce module : une fois automatique, il protège dans toutes les situations."
+       "html": "<p><b>Fermer → laisser stabiliser → desserrer lentement.</b> Ce triptyque revient à chaque déconnexion, quel que soit l'appareil branché. C'est le geste central de tout ce module : une fois automatique, il protège dans toutes les situations.</p>"
       },
       {
        "type": "piege",
        "t": "Le geste interdit",
-       "html": "Desserrer un raccord <b>encore sous pression</b>, d'un coup. Purger le résidu d'un flexible <b>à l'air libre</b> pour aller plus vite. Chaque émission compte, même petite : l'objectif est toujours le <b>minimum d'émission</b>, jamais zéro effort."
+       "html": "<p>Desserrer un raccord <b>encore sous pression</b>, d'un coup. Purger le résidu d'un flexible <b>à l'air libre</b> pour aller plus vite. Chaque émission compte, même petite : l'objectif est toujours le <b>minimum d'émission</b>, jamais zéro effort.</p>"
       }
      ],
      "question": {
@@ -9851,18 +9852,18 @@
      "paras": [
       "La quantité de fluide qui entre ou sort d'un circuit se lit sur une <b>balance</b>, jamais sur un manomètre. Le manomètre dit comment la machine se comporte. La balance dit <b>combien</b> il y a de fluide.",
       "Avant toute pesée, on choisit une balance <b>adaptée</b> à la quantité attendue. On la pose à plat, stable, vérifiée. Une balance douteuse ne sert à rien : son résultat n'est pas fiable.",
-      "Cas particulier : un fluide <b>zéotrope</b>, composé de plusieurs corps, se charge toujours en <b>phase liquide</b>. Le sortir en phase gazeuse changerait sa composition en cours de route."
+      "Cas particulier : un fluide <b>zéotrope</b>, composé de plusieurs corps, se <b>soutire toujours de la bouteille en phase liquide</b> : le sortir en phase gazeuse changerait sa composition en cours de route. Le mode d'introduction dans le circuit, lui, suit l'opération et la documentation constructeur."
      ],
      "blocs": [
       {
        "type": "cle",
        "t": "Deux pesées, jamais une",
-       "html": "On pèse <b>avant</b> et <b>après</b>. Sans pesée de départ, le chiffre obtenu n'est qu'une <b>estimation</b>. Une estimation ne se consigne pas dans un registre."
+       "html": "<p>On pèse <b>avant</b> et <b>après</b>. Sans pesée de départ, le chiffre obtenu n'est qu'une <b>estimation</b>. Une estimation ne se consigne pas dans un registre.</p>"
       },
       {
        "type": "piege",
        "t": "Peser seulement à la fin",
-       "html": "Peser une seule fois, à la fin, et déduire la quantité à vue de nez : c'est le réflexe à corriger en premier. Lire une quantité chargée sur un manomètre plutôt que sur la balance ne donne jamais un chiffre exploitable non plus."
+       "html": "<p>Peser une seule fois, à la fin, et déduire la quantité à vue de nez : c'est le réflexe à corriger en premier. Lire une quantité chargée sur un manomètre plutôt que sur la balance ne donne jamais un chiffre exploitable non plus.</p>"
       }
      ],
      "question": {
@@ -9903,17 +9904,17 @@
       {
        "type": "cle",
        "t": "La balance prime",
-       "html": "On pèse <b>avant</b> et <b>après</b>. Sans pesée initiale, la quantité récupérée ou ajoutée n'est qu'une estimation — et une estimation ne se consigne pas dans un registre."
+       "html": "<p>On pèse <b>avant</b> et <b>après</b>. Sans pesée initiale, la quantité récupérée ou ajoutée n'est qu'une estimation — et une estimation ne se consigne pas dans un registre.</p>"
       },
       {
        "type": "piege",
        "t": "Stockage et transport",
-       "html": "Cylindres arrimés, debout, étiquetés, à l'abri de la chaleur ; les fluides <b>inflammables</b> (hydrocarbures, A2L) obéissent en plus aux règles de leur classe. Conditions détaillées : selon la réglementation applicable et la fiche de données de sécurité, à faire valider."
+       "html": "<p>Cylindres arrimés, debout, étiquetés, à l'abri de la chaleur ; les fluides <b>inflammables</b> (hydrocarbures, A2L) obéissent en plus aux règles de leur classe. Conditions détaillées : selon la réglementation applicable et la fiche de données de sécurité, à faire valider.</p>"
       },
       {
        "type": "piege",
        "t": "Réemploi n'est pas retraitement",
-       "html": "On pourrait croire qu'un fluide récupéré doit toujours passer par le recyclage ou la régénération avant de resservir. C'est faux : réutiliser le fluide récupéré sur <b>sa machine d'origine</b>, chez le <b>même détenteur</b> (celui qui possède ou utilise cette machine), est légal et ne demande aucun retraitement."
+       "html": "<p>On pourrait croire qu'un fluide récupéré doit toujours passer par le recyclage ou la régénération avant de resservir. C'est faux : réutiliser le fluide récupéré sur <b>sa machine d'origine</b>, chez le <b>même détenteur</b> (celui qui possède ou utilise cette machine), est légal et ne demande aucun retraitement.</p>"
       }
      ],
      "question": {
@@ -10834,7 +10835,7 @@
       {
        "type": "cle",
        "t": "Deux opérations à l'azote, à ne pas confondre",
-       "html": "<b>Balayage</b> : pendant le brasage, débit léger, pour éviter l'oxydation.</p><p><b>Épreuve</b> : après le brasage, sous pression, pour vérifier l'étanchéité.</p><p>Même gaz, deux gestes, deux moments."
+       "html": "<p><b>Balayage</b> : pendant le brasage, débit léger, pour éviter l'oxydation.</p><p><b>Épreuve</b> : après le brasage, sous pression, pour vérifier l'étanchéité.</p><p>Même gaz, deux gestes, deux moments.</p>"
       }
      ],
      "question": {
@@ -10892,7 +10893,7 @@
       {
        "type": "piege",
        "t": "Le support compte autant que le joint",
-       "html": "Un support mal posé, trop serré, ou un point dur sur le tube transmet les vibrations du compresseur au joint brasé. Le joint peut être parfait au départ et rompre par fatigue des mois plus tard."
+       "html": "<p>Un support mal posé, trop serré, ou un point dur sur le tube transmet les vibrations du compresseur au joint brasé. Le joint peut être parfait au départ et rompre par fatigue des mois plus tard.</p>"
       }
      ],
      "question": {
@@ -11365,12 +11366,12 @@
       {
        "type": "cle",
        "t": "Drop-in ou retrofit ?",
-       "html": "<b>Drop-in</b> : on change le fluide sans modifier l'installation.</p><p><b>Retrofit</b> : on change le fluide <b>et</b> ce qu'il faut adapter — huile, détendeur, joints. Annoncer un drop-in là où il faut un retrofit, c'est préparer une panne."
+       "html": "<p><b>Drop-in</b> : on change le fluide sans modifier l'installation.</p><p><b>Retrofit</b> : on change le fluide <b>et</b> ce qu'il faut adapter — huile, détendeur, joints. Annoncer un drop-in là où il faut un retrofit, c'est préparer une panne.</p>"
       },
       {
        "type": "piege",
        "t": "Le piège de l'année",
-       "html": "<b>Le R-290 est A3</b>, pas A2L. Tout hydrocarbure est très inflammable. Se tromper de classe, c'est se tromper d'EPI, de matériel électrique et de charge admissible. À l'inverse, le <b>CO₂ est A1</b> : toxicité faible, non inflammable — mais cette classe n'annonce ni sa <b>pression</b>, ni l'<b>atmosphère irrespirable</b> qu'une fuite crée en local fermé."
+       "html": "<p><b>Le R-290 est A3</b>, pas A2L. Tout hydrocarbure est très inflammable. Se tromper de classe, c'est se tromper d'EPI, de matériel électrique et de charge admissible. À l'inverse, le <b>CO₂ est A1</b> : toxicité faible, non inflammable — mais cette classe n'annonce ni sa <b>pression</b>, ni l'<b>atmosphère irrespirable</b> qu'une fuite crée en local fermé.</p>"
       }
      ],
      "question": {
@@ -11407,7 +11408,7 @@
      "blocs": [
       {
        "t": "À toi : compare les candidats à la substitution",
-       "html": "<p>Passe en revue R-290, R-1234yf, R-744, R-32 : classe de sécurité, PRP, glide. Le fluide « parfait » n existe pas — c est tout l objet de ce groupe.</p>"
+       "html": "<p><p>Passe en revue R-290, R-1234yf, R-744, R-32 : classe de sécurité, PRP, glide. Le fluide « parfait » n existe pas — c est tout l objet de ce groupe.</p></p>"
       }
      ],
      "question": {
@@ -11445,7 +11446,7 @@
       {
        "type": "cle",
        "t": "Hydrocarbures : une machine pas comme les autres",
-       "html": "<b>Antidéflagrant</b> ou <b>non étincelant</b> : sur une machine aux hydrocarbures, tout composant électrique proche du gaz doit respecter cette règle, pour ne jamais produire d'étincelle. Et comme le propane est plus lourd que l'air, il s'accumule en bas en cas de fuite — la <b>ventilation</b> du local en tient compte dès la conception."
+       "html": "<p><b>Antidéflagrant</b> ou <b>non étincelant</b> : sur une machine aux hydrocarbures, tout composant électrique proche du gaz doit respecter cette règle, pour ne jamais produire d'étincelle. Et comme le propane est plus lourd que l'air, il s'accumule en bas en cas de fuite — la <b>ventilation</b> du local en tient compte dès la conception.</p>"
       }
      ],
      "question": {
@@ -11986,7 +11987,7 @@
       {
        "type": "piege",
        "t": "Deux confusions qui coûtent cher",
-       "html": "<b>1.</b> Croire que le R-290 est A2L comme le R-32. Il est <b>A3</b> — la propagation de flamme n'a rien à voir.</p><p><b>2.</b> Forcer un <b>raccord de bouteille</b> hydrocarbure sur un circuit HFC (ou l'inverse) : les raccords sont spécifiques précisément pour empêcher la charge croisée."
+       "html": "<p><b>1.</b> Croire que le R-290 est A2L comme le R-32. Il est <b>A3</b> — la propagation de flamme n'a rien à voir.</p><p><b>2.</b> Forcer un <b>raccord de bouteille</b> hydrocarbure sur un circuit HFC (ou l'inverse) : les raccords sont spécifiques précisément pour empêcher la charge croisée.</p>"
       }
      ],
      "question": {
@@ -12026,7 +12027,7 @@
       {
        "type": "cle",
        "t": "Avant toute flamme",
-       "html": "Récupérer → inerter à l'<b>azote</b> → ventiler → supprimer les sources d'ignition → détecteur en place. Jamais d'oxygène, jamais d'air comprimé, jamais de flamme sur un circuit non inerté."
+       "html": "<p>Récupérer → inerter à l'<b>azote</b> → ventiler → supprimer les sources d'ignition → détecteur en place. Jamais d'oxygène, jamais d'air comprimé, jamais de flamme sur un circuit non inerté.</p>"
       }
      ],
      "question": {
@@ -12066,7 +12067,7 @@
       {
        "type": "cle",
        "t": "Charge maximale : jamais estimée",
-       "html": "Le <b>calcul</b> de la charge maximale dépend du <b>volume de la pièce</b> et de la limite pratique du fluide. Il se fait avec la <b>NF EN 378</b> et la documentation constructeur, jamais de mémoire. Petite pièce = charge autorisée plus faible."
+       "html": "<p>Le <b>calcul</b> de la charge maximale dépend du <b>volume de la pièce</b> et de la limite pratique du fluide. Il se fait avec la <b>NF EN 378</b> et la documentation constructeur, jamais de mémoire. Petite pièce = charge autorisée plus faible.</p>"
       }
      ],
      "question": {
@@ -12103,7 +12104,7 @@
       {
        "type": "piege",
        "t": "Geste interdit",
-       "html": "Mise en pression : <b>azote sec seulement</b>, jamais d'oxygène ni d'air comprimé, toujours au travers d'un <b>mano-détendeur</b> — une bouteille en direct peut faire éclater le circuit. <b>Consignation électrique</b> systématique avant d'ouvrir. Et tant que l'inertage n'est pas confirmé : <b>pas de chalumeau</b>, le R-290 est A3, très inflammable."
+       "html": "<p>Mise en pression : <b>azote sec seulement</b>, jamais d'oxygène ni d'air comprimé, toujours au travers d'un <b>mano-détendeur</b> — une bouteille en direct peut faire éclater le circuit. <b>Consignation électrique</b> systématique avant d'ouvrir. Et tant que l'inertage n'est pas confirmé : <b>pas de chalumeau</b>, le R-290 est A3, très inflammable.</p>"
       }
      ],
      "question": {
@@ -12139,7 +12140,7 @@
       {
        "type": "cle",
        "t": "Le fil rouge de l'intervention",
-       "html": "Récupérer → inerter à l'azote → ouvrir et remplacer → épreuve à l'azote → vide → charge → contrôle direct → rapport.</p><p>Chaque étape verrouille la suivante : pas de charge sans épreuve concluante, pas de contrôle sans vide correct."
+       "html": "<p>Récupérer → inerter à l'azote → ouvrir et remplacer → épreuve à l'azote → vide → charge → contrôle direct → rapport.</p><p>Chaque étape verrouille la suivante : pas de charge sans épreuve concluante, pas de contrôle sans vide correct.</p>"
       }
      ],
      "question": {
@@ -12468,7 +12469,7 @@
       {
        "type": "piege",
        "t": "« A1 » ne veut pas dire « sans danger »",
-       "html": "Le CO₂ est A1 du point de vue toxicité et inflammabilité — cela ne dit rien de ses deux vrais risques : la <b>pression</b>, et l'<b>anoxie</b> en local fermé (voir la fiche « CO₂ : deux dangers mortels »). Et le <b>B</b> de B2L signifie <b>toxique</b> : ne pas relâcher la vigilance sur l'ammoniac sous prétexte que son inflammabilité est faible."
+       "html": "<p>Le CO₂ est A1 du point de vue toxicité et inflammabilité — cela ne dit rien de ses deux vrais risques : la <b>pression</b>, et l'<b>anoxie</b> en local fermé (voir la fiche « CO₂ : deux dangers mortels »). Et le <b>B</b> de B2L signifie <b>toxique</b> : ne pas relâcher la vigilance sur l'ammoniac sous prétexte que son inflammabilité est faible.</p>"
       }
      ],
      "question": {
@@ -12491,14 +12492,14 @@
      "titre_source": "CO₂ et NH₃ — reconnaître, ne pas intervenir",
      "codes": [],
      "paras": [
-      "<b>Ammoniac (R-717)</b> — classé <b>B2L</b> : <b>toxique</b> et faiblement inflammable. Fluide du froid industriel (agroalimentaire, entrepôts), jamais du résidentiel. Son odeur piquante se perçoit très tôt — mais elle <b>ne remplace aucune mesure</b>, et elle s'émousse à forte concentration : on ne se fie jamais à son nez pour décider. En cas de fuite : <b>alerter, évacuer, ne jamais intervenir seul</b>.",
+      "<b>Ammoniac (R-717)</b> — classé <b>B2L</b> : <b>toxique</b> et faiblement inflammable. Fluide très majoritairement du froid industriel (agroalimentaire, entrepôts) — pas d'usage résidentiel en pratique. Son odeur piquante se perçoit très tôt — mais elle <b>ne remplace aucune mesure</b>, et elle s'émousse à forte concentration : on ne se fie jamais à son nez pour décider. En cas de fuite : <b>alerter, évacuer, ne jamais intervenir seul</b>.",
       "Sur le terrain, le CO₂ ne se manipule pas avec le matériel courant : ses pressions de travail sont bien plus élevées que celles des fluides classiques. Manifold, flexibles, vannes — tout doit être <b>dédié au CO₂</b>. Les valeurs exactes dépendent du point de fonctionnement et se lisent toujours dans la <b>documentation constructeur</b>, à faire valider."
      ],
      "blocs": [
       {
        "type": "cle",
        "t": "La règle des catégories",
-       "html": "Les catégories ne se remplacent pas les unes les autres. « Je suis A1, donc je peux donner un coup de main sur une fuite d'ammoniac » est <b>faux</b> : il faut la catégorie C, sans exception."
+       "html": "<p>Les catégories ne se remplacent pas les unes les autres. « Je suis A1, donc je peux donner un coup de main sur une fuite d'ammoniac » est <b>faux</b> : il faut la catégorie C, sans exception.</p>"
       }
      ],
      "question": {
@@ -12528,12 +12529,12 @@
       {
        "type": "piege",
        "t": "La glace carbonique, un double danger",
-       "html": "<p>La fiche l'a déjà signalé : le CO₂ peut se solidifier à la détente. Ce solide a un nom : c'est la <b>glace carbonique</b>, aussi appelée <b>neige carbonique</b>. Elle se forme quand le CO₂ passe directement de l'état gazeux à l'état solide, à la détente à l'air libre. C'est le domaine de pression propre au CO₂, visible sur son diagramme log p/h, qui explique ce comportement que les fluides courants n'ont pas. On garde en tête le double danger à chaque détente de CO₂ à l'air libre : la <b>brûlure par le froid</b> au contact de la peau, et le <b>bouchon solide</b> qui peut obstruer une vanne ou une tuyauterie.</p>"
+       "html": "<p><p>La fiche l'a déjà signalé : le CO₂ peut se solidifier à la détente. Ce solide a un nom : c'est la <b>glace carbonique</b>, aussi appelée <b>neige carbonique</b>. Elle se forme quand le CO₂ passe directement de l'état gazeux à l'état solide, à la détente à l'air libre. C'est le domaine de pression propre au CO₂, visible sur son diagramme log p/h, qui explique ce comportement que les fluides courants n'ont pas. On garde en tête le double danger à chaque détente de CO₂ à l'air libre : la <b>brûlure par le froid</b> au contact de la peau, et le <b>bouchon solide</b> qui peut obstruer une vanne ou une tuyauterie.</p></p>"
       },
       {
        "type": "cle",
        "t": "Le réflexe d'arrivée sur site",
-       "html": "<p>Sur un site CO₂ ou ammoniac, on ne commence jamais le travail sans ce contrôle rapide : <b>signalisation</b> en place, <b>issues de secours</b> dégagées, <b>capteurs</b> et <b>alarmes</b> fonctionnels. Ce réflexe fait partie du travail, au même titre que le port du matériel de protection.</p>"
+       "html": "<p><p>Sur un site CO₂ ou ammoniac, on ne commence jamais le travail sans ce contrôle rapide : <b>signalisation</b> en place, <b>issues de secours</b> dégagées, <b>capteurs</b> et <b>alarmes</b> fonctionnels. Ce réflexe fait partie du travail, au même titre que le port du matériel de protection.</p></p>"
       }
      ],
      "question": {
@@ -12625,11 +12626,8 @@
       "Sa couleur verte"
      ],
      "bonne": 1,
-     "explication": "Son GWP de 1 — Le CO₂ a le GWP de référence (1). Même en cas de fuite totale, l'impact climatique est négligeable par rapport aux HFC.",
+     "explication": "GWP = 1 : la référence de l'échelle. Kilo pour kilo, une fuite de CO₂ pèse des milliers de fois moins qu'un HFC — c'est l'impact direct ; le bilan complet dépend aussi de l'efficacité de l'installation.",
      "aide": "GWP = 1 = impact minimal. C'est la référence même du calcul.",
-     "remed": {
-      "texte": "Le CO₂ a le GWP de référence (1). Même en cas de fuite totale, l'impact climatique est négligeable par rapport aux HFC."
-     },
      "remediation_vers": "g13",
      "code": "2.02",
      "chapitre": "13",

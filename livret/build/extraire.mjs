@@ -169,9 +169,16 @@ const extraire = (ou, { src, paras = 'tous', blocs = [], tranche = null }) => {
     codes: [...new Set(codesDeclares)],
     paras: indices.filter((i) => i >= 0 && i < tous.length).map((i) => tous[i]),
     /* Les encadrés passent par le même nettoyage que le texte courant :
-       c'est là que se cachaient les iframes de réglette. */
+       c'est là que se cachaient les iframes de réglette.
+       Beaucoup sont écrits d'un seul tenant, alinéas au <br> : une fois
+       les <br> devenus </p><p>, le premier et le dernier alinéa
+       restaient sans balise et l'imprimeur d'encadrés les PERDAIT —
+       14 encadrés sur 109 amputés de leur ouverture et de leur chute,
+       dont « Ce que la valeur vous dit » (relecture du 30/08).
+       L'enveloppe referme la clôture ; un <p> redoublé est nettoyé
+       en aval, un <p></p> vide l'est déjà ici. */
     blocs: blocs.map((i) => (carte.blocs || [])[i]).filter(Boolean)
-      .map((b) => ({ ...b, html: pourLePapier(b.html) })),
+      .map((b) => ({ ...b, html: pourLePapier('<p>' + String(b.html || '') + '</p>') })),
     question: carte.question || null,
   };
 };

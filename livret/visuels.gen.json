@@ -3,28 +3,28 @@
   "fichier": "pack-securite-espace-clos.png",
   "largeur": 2400,
   "hauteur": 1440,
-  "source": "../inerweb-fluide/livret/illustrations-interieures-v2/svg/securite-espace-clos.svg",
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/securite-espace-clos.svg",
   "citations": 1
  },
  "pack:securite-projection-fluide": {
   "fichier": "pack-securite-projection-fluide.png",
   "largeur": 2400,
   "hauteur": 1440,
-  "source": "../inerweb-fluide/livret/illustrations-interieures-v2/svg/securite-projection-fluide.svg",
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/securite-projection-fluide.svg",
   "citations": 1
  },
  "pack:securite-decomposition-fluide": {
   "fichier": "pack-securite-decomposition-fluide.png",
   "largeur": 2400,
   "hauteur": 1440,
-  "source": "../inerweb-fluide/livret/illustrations-interieures-v2/svg/securite-decomposition-fluide.svg",
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/securite-decomposition-fluide.svg",
   "citations": 1
  },
  "pack:securite-pression-residuelle": {
   "fichier": "pack-securite-pression-residuelle.png",
   "largeur": 2400,
   "hauteur": 1440,
-  "source": "../inerweb-fluide/livret/illustrations-interieures-v2/svg/securite-pression-residuelle.svg",
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/securite-pression-residuelle.svg",
   "citations": 1
  },
  "svg:secu-consignation": {
@@ -115,7 +115,7 @@
   "fichier": "pack-co2-local-protege.png",
   "largeur": 2400,
   "hauteur": 1440,
-  "source": "../inerweb-fluide/livret/illustrations-interieures-v2/svg/co2-local-protege.svg",
+  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/co2-local-protege.svg",
   "citations": 3
  },
  "sym:sonde_temperature": {

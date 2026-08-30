@@ -5,23 +5,23 @@
   :root{
     --bleu:#1B3A63; --bleu2:#2f5689; --orange:#FF6B35; --logo:#e8914a;
     --mut:#5a6b7d; --pale:#F4F7FA; --ligne:#d6dee7;
-    /* Cotes calculées sur 388 pages, papier blanc, intérieur
-       noir et blanc. Dos = 388 × 0,002252 pouce. */
-    --fp:3.175mm; --page-l:152.4mm; --page-h:228.6mm; --dos:22.19mm;
+    /* Cotes calculées sur 390 pages, papier blanc, intérieur
+       noir et blanc. Dos = 390 × 0,002252 pouce. */
+    --fp:3.175mm; --page-l:152.4mm; --page-h:228.6mm; --dos:22.31mm;
     --marge:14mm;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:#dfe5ec;font:14px/1.5 Calibri,"Segoe UI",system-ui,sans-serif;
     padding:24px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 
-  .note{max-width:333.34mm;margin:0 auto 16px;background:#fff;border-radius:10px;
+  .note{max-width:333.46mm;margin:0 auto 16px;background:#fff;border-radius:10px;
     padding:16px 20px;box-shadow:0 2px 10px rgba(27,58,99,.12);color:#1d2a38}
   .note h1{font:700 19px/1.3 "Trebuchet MS",sans-serif;color:var(--bleu);margin-bottom:6px}
   .note p{margin-bottom:6px;max-width:100ch}
   .note b{color:var(--bleu)}
 
   /* La couverture complète : 4e — dos — 1re, fonds perdus compris. */
-  .couverture{width:333.34mm;height:234.95mm;display:flex;margin:0 auto;
+  .couverture{width:333.46mm;height:234.95mm;display:flex;margin:0 auto;
     background:#fff;box-shadow:0 6px 24px rgba(27,58,99,.24);overflow:hidden}
   /* Le fond perdu prolonge la couleur du plat qu'il borde — sinon la
      coupe, qui tombe toujours un peu à côté, laisse une bande étrangère
@@ -33,16 +33,18 @@
 
   /* ---------------- 1re de couverture ---------------- */
   .un{background:var(--bleu);color:#fff;padding:calc(var(--marge) + var(--fp)) var(--marge) var(--marge)}
-  .marque{display:flex;align-items:center;gap:2mm;margin-bottom:10mm}
-  .marque .floc{font-size:17pt}
-  .marque .iner{font:700 22pt "Trebuchet MS",sans-serif;border-bottom:2px solid var(--logo)}
-  .marque .web{font:22pt "Segoe Script","Brush Script MT",cursive;
-    border-bottom:2px solid var(--logo);margin-left:-1mm}
+  /* La marque en toutes lettres, dans une police que toute machine de
+     fabrication possede : plus jamais de script de substitution. */
+  .marque{display:flex;align-items:center;gap:2mm;margin-bottom:8mm}
+  .marque .floc{font-size:15pt;color:var(--logo)}
+  .marque .iner{font:700 16pt "Trebuchet MS",sans-serif;border-bottom:2px solid var(--logo)}
 
-  .titre{font:700 47pt/.96 "Trebuchet MS",Calibri,sans-serif;letter-spacing:-.02em}
-  .titre em{display:block;font-style:normal;color:var(--orange)}
-  .accroche{margin-top:5mm;font-size:12.5pt;line-height:1.4;color:#cfdcea;max-width:30ch}
-  .accroche b{color:#fff}
+  .titre{font:700 44pt/.96 "Trebuchet MS",Calibri,sans-serif;letter-spacing:-.01em}
+  .titre em{font-style:normal;color:var(--orange)}
+  .soustitre{margin-top:4mm;font:700 15pt/1.25 "Trebuchet MS",sans-serif;color:#fff}
+  .version{margin-top:1.6mm;font-size:12pt;color:var(--orange);font-weight:700}
+  .interactif{font-size:10.5pt;line-height:1.4;color:#cfdcea;max-width:44ch;margin-bottom:4mm}
+  .interactif b{color:#fff}
 
   .croix{margin:auto 0;padding:4mm 0}
   .croix svg{width:100%;height:auto;display:block}
@@ -50,8 +52,6 @@
   .cats{display:flex;gap:2.4mm;margin-bottom:5mm}
   .cats span{border:1.5px solid var(--orange);color:var(--orange);font:700 13pt "Trebuchet MS",sans-serif;
     padding:1.6mm 4mm;border-radius:3px}
-  .tome{font:700 11.5pt "Trebuchet MS",sans-serif;color:#fff;background:var(--orange);
-    align-self:flex-start;padding:1.4mm 3.6mm;border-radius:3px;margin-bottom:4mm}
   .auteur{font-size:10.5pt;color:#cfdcea;border-top:1px solid rgba(255,255,255,.28);padding-top:3.4mm}
   .auteur b{color:#fff;display:block;font-size:12.5pt;margin-bottom:.8mm}
 
@@ -77,6 +77,10 @@
     background:var(--orange);border-radius:50%}
   .encart{background:#fff;border-left:3px solid var(--orange);border-radius:0 4px 4px 0;
     padding:3.4mm 4mm;margin-bottom:4mm}
+  .encart-qr{display:flex;gap:4mm;align-items:center}
+  .qr-accueil{flex:none;margin:0;text-align:center}
+  .qr-accueil img{width:21mm;height:21mm;display:block}
+  .qr-accueil figcaption{font:700 8.5pt "Trebuchet MS",sans-serif;color:var(--bleu);margin-top:1mm}
   .encart h3{font:700 11pt "Trebuchet MS",sans-serif;color:var(--bleu);margin-bottom:1.6mm}
   .encart p{font-size:10pt;margin:0;color:var(--mut);max-width:none}
   .avert{font-size:9pt;color:var(--mut);line-height:1.4;margin-bottom:auto}
@@ -91,7 +95,7 @@
 
   /* ---------------- Le fichier qu'on téléverse ---------------- */
   /* Une seule page, aux cotes exactes, sans la notice ni les ombres. */
-  @page{size:333.34mm 234.95mm;margin:0}
+  @page{size:333.46mm 234.95mm;margin:0}
   @media print{
     body{background:#fff;padding:0}
     .note{display:none}
@@ -102,11 +106,11 @@
 </style></head><body>
 
 <div class="note">
-  <h1>Couverture Amazon KDP — inerweb.fr HabFluide, tome 1</h1>
-  <p>Format exact, prêt pour le téléversement : <b>333,34 × 234,95 mm</b>
-     (13,124 × 9,25 pouces), fonds perdus de 3,175 mm compris.
-     Dos de <b>22,19 mm</b>, calculé sur <b>388 pages</b> en papier blanc noir et blanc
-     (388 × 0,002252 pouce). Cette page est <b>générée</b> : si la pagination bouge,
+  <h1>Couverture Amazon KDP — inerweb.fr HAB-FLUIDE, partie théorique</h1>
+  <p>Format exact, prêt pour le téléversement : <b>333,46 × 234,95 mm</b>
+     (13,128 × 9,25 pouces), fonds perdus de 3,175 mm compris.
+     Dos de <b>22,31 mm</b>, calculé sur <b>390 pages</b> en papier blanc noir et blanc
+     (390 × 0,002252 pouce). Cette page est <b>générée</b> : si la pagination bouge,
      <code>npm run couverture</code> la refait juste.</p>
   <p>Le rectangle en bas de la 4e de couverture est la <b>zone réservée au code-barres ISBN</b> :
      Amazon l'imprime lui-même, rien ne doit s'y trouver. Son cadre ne s'imprime pas.</p>
@@ -134,16 +138,22 @@
           et «&nbsp;geste interdit&nbsp;», des pages à remplir.</li>
     </ul>
 
-    <div class="encart">
-      <h3>Le papier ouvre l’écran</h3>
-      <p>Quatre-vingt-quinze QR codes mènent aux cours animés et racontés à voix haute
-         d’<b>inerweb.fr</b> — schémas en mouvement, questions corrigées, capsules audio.
-         Les adresses sont aussi écrites en clair : un navigateur suffit.</p>
+    <div class="encart encart-qr">
+      <div>
+        <h3>Un livre interactif : le papier ouvre l’écran</h3>
+        <p>Quatre-vingt-quinze QR codes mènent aux cours animés et racontés à voix haute
+           d’<b>inerweb.fr</b> — schémas en mouvement, questions corrigées, capsules audio.
+           Les adresses sont aussi écrites en clair : un navigateur suffit.</p>
+      </div>
+      <figure class="qr-accueil">
+        <img src="data:image/png;base64,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" alt="QR code vers inerweb.fr">
+        <figcaption>inerweb.fr</figcaption>
+      </figure>
     </div>
 
     <p class="avert">Ce livre prépare l’épreuve théorique ; il ne délivre aucune attestation —
        seul un organisme évaluateur certifié le fait. Les gestes professionnels et l’épreuve
-       pratique font l’objet du tome 2. Aucune question officielle d’examen ne figure dans cet ouvrage.</p>
+       pratique feront l’objet du prochain livre, consacré à la partie pratique. Aucune question officielle d’examen ne figure dans cet ouvrage.</p>
 
     <div class="pied4">
       <div class="site">inerweb.fr
@@ -155,44 +165,119 @@
 
   <!-- ============ DOS ============ -->
   <div class="dos">
-    <div class="dos-haut">HabFluide <i>· tome 1 : la théorie</i></div>
+    <div class="dos-haut">HAB-FLUIDE <i>· partie théorique</i></div>
     <div class="dos-floc">❄</div>
     <div class="dos-bas">F. Henninot</div>
   </div>
 
   <!-- ============ 1re DE COUVERTURE ============ -->
   <div class="plat un">
-    <div class="marque">
-      <span class="floc">❄</span><span class="iner">iner</span><span class="web">Web</span>
-    </div>
+    <div class="marque"><span class="floc">❄</span><span class="iner">inerweb.fr</span></div>
 
-    <h1 class="titre">Hab<em>Fluide</em></h1>
-    <p class="accroche">Toute la <b>théorie</b> de l’attestation d’aptitude
-       fluides frigorigènes, du risque à la récupération.</p>
+    <h1 class="titre">HAB<em>-FLUIDE</em></h1>
+    <p class="soustitre">Livre sur l’habilitation des fluides</p>
+    <p class="version">Partie théorique · préparation à l’évaluation théorique</p>
 
     <div class="croix">
-      <!-- La croix du frigoriste : détendeur à gauche, compresseur à droite,
-           condenseur en haut, évaporateur en bas. Convention non négociable. -->
-      <svg viewBox="0 0 380 196" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <g fill="none" stroke-width="2.6" stroke-linecap="round">
-          <path stroke="#FF6B35" d="M290 105 L290 60 L230 60 M150 60 L90 60 L90 105"/>
-          <rect stroke="#FF6B35" x="150" y="44" width="80" height="32" rx="4"/>
-          <path stroke="#ffffff" d="M90 105 L90 150 L150 150 M230 150 L290 150 L290 105"/>
-          <rect stroke="#ffffff" x="150" y="134" width="80" height="32" rx="4"/>
-          <path stroke="#FF6B35" d="M79 95 L101 115 L101 95 L79 115 Z"/>
-          <circle stroke="#ffffff" cx="290" cy="105" r="14"/>
-        </g>
-        <path d="M290 92 L302 105 L278 105 Z" fill="#ffffff"/>
-        <g font-family="Calibri, sans-serif" font-size="9.5" fill="#cfdcea" letter-spacing=".5">
-          <text x="190" y="34" text-anchor="middle">CONDENSEUR</text>
-          <text x="190" y="186" text-anchor="middle">ÉVAPORATEUR</text>
-          <text x="72" y="108" text-anchor="end">DÉTENDEUR</text>
-          <text x="312" y="108" text-anchor="start">COMPRESSEUR</text>
-        </g>
-      </svg>
-    </div>
+<svg viewBox="0 0 380 224" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- HP (orange) : refoulement -> condenseur -> ligne liquide -> détendeur -->
+    <path stroke="#FF6B35" d="M296 88 L296 44 L207 44"/>
+    <path stroke="#FF6B35" d="M173 44 L84 44 L84 76"/>
+    <!-- BP (blanc) : sortie détendeur -> évaporateur -> aspiration -->
+    <path stroke="#ffffff" d="M84 120 L84 170 L173 170"/>
+    <path stroke="#ffffff" d="M207 170 L296 170 L296 122"/>
+    <!-- sens de circulation : vers le condenseur, vers le bas, vers l'évaporateur, vers le haut -->
+    <path stroke="#FF6B35" d="M256 39 L247 44 L256 49" fill="none"/>
+    <path stroke="#FF6B35" d="M79 60 L84 69 L89 60" fill="none"/>
+    <path stroke="#ffffff" d="M124 165 L133 170 L124 175" fill="none"/>
+    <path stroke="#ffffff" d="M291 146 L296 137 L301 146" fill="none"/>
+  </g>
+  <!-- Échangeurs DEBOUT, ailettes vers le bas : l'orientation de la
+       bibliothèque, celle des folios. Les conduites entrent sur leurs
+       flancs, à la hauteur du corps. -->
+  <g transform="translate(190,40) rotate(0) scale(0.86) translate(-5,-5)"><rect x="-18" y="-20" width="36" height="48" fill="none" stroke="#ffffff" stroke-width="1"/>
+<line x1="-14" y1="16" x2="-14" y2="24" stroke="#ffffff" stroke-width="1"/>
+<line x1="7" y1="16" x2="7" y2="24" stroke="#ffffff" stroke-width="1"/>
+<line x1="14" y1="16" x2="14" y2="24" stroke="#ffffff" stroke-width="1"/>
+<line x1="-7" y1="16" x2="-7" y2="24" stroke="#ffffff" stroke-width="1"/>
+<line x1="0" y1="16" x2="0" y2="24" stroke="#ffffff" stroke-width="1"/>
+<line x1="-19" y1="20" x2="19" y2="20" stroke="#ffffff" stroke-width="1"/>
+<circle cx="0.0" cy="-2.0" r="15.0" fill="none" stroke="#ffffff" stroke-width="1"/>
+<line x1="7" y1="-15" x2="13" y2="5" stroke="#ffffff" stroke-width="1"/>
+<path d="M -1.00 -2.00 A 1.00 1.00 0 0 1 0.00 -1.00" fill="none" stroke="#ffffff" stroke-width="1"/>
+<line x1="-7" y1="-15" x2="-13" y2="5" stroke="#ffffff" stroke-width="1"/>
+<path d="M 6.00 5.00 A 6.00 6.00 0 0 1 0.00 -1.00" fill="none" stroke="#ffffff" stroke-width="1"/>
+<path d="M -7.00 4.00 A 6.00 6.00 0 0 1 -1.00 -2.00" fill="none" stroke="#ffffff" stroke-width="1"/>
+<path d="M 0.00 -1.00 A 6.00 6.00 0 0 1 -6.00 5.00" fill="none" stroke="#ffffff" stroke-width="1"/>
+<path d="M -6.00 5.00 A 1.00 1.00 0 0 1 -7.00 4.00" fill="none" stroke="#ffffff" stroke-width="1"/>
+<path d="M 1.00 -2.00 A 6.00 6.00 0 0 1 7.00 4.00" fill="none" stroke="#ffffff" stroke-width="1"/>
+<path d="M 0.00 -1.00 A 1.00 1.00 0 0 1 1.00 -2.00" fill="none" stroke="#ffffff" stroke-width="1"/>
+<path d="M 7.00 4.00 A 1.00 1.00 0 0 1 6.00 5.00" fill="none" stroke="#ffffff" stroke-width="1"/>
+<ellipse cx="0.0" cy="-7.0" rx="2.5" ry="4.5" fill="none" stroke="#ffffff" stroke-width="1"/>
+<circle cx="-19" cy="20" r="1.5" fill="#ffffff"/>
+<circle cx="19" cy="20" r="1.5" fill="#ffffff"/>
+</g>
+  <g transform="translate(190,166) rotate(0) scale(0.86) translate(-5,-5)"><rect x="-18" y="-20" width="36" height="48" fill="none" stroke="#ffffff" stroke-width="1"/>
+<line x1="-14" y1="16" x2="-14" y2="24" stroke="#ffffff" stroke-width="1"/>
+<line x1="7" y1="16" x2="7" y2="24" stroke="#ffffff" stroke-width="1"/>
+<line x1="14" y1="16" x2="14" y2="24" stroke="#ffffff" stroke-width="1"/>
+<line x1="-7" y1="16" x2="-7" y2="24" stroke="#ffffff" stroke-width="1"/>
+<line x1="0" y1="16" x2="0" y2="24" stroke="#ffffff" stroke-width="1"/>
+<line x1="-19" y1="20" x2="19" y2="20" stroke="#ffffff" stroke-width="1"/>
+<circle cx="0.0" cy="-2.0" r="15.0" fill="none" stroke="#ffffff" stroke-width="1"/>
+<line x1="7" y1="-15" x2="13" y2="5" stroke="#ffffff" stroke-width="1"/>
+<path d="M -1.00 -2.00 A 1.00 1.00 0 0 1 0.00 -1.00" fill="none" stroke="#ffffff" stroke-width="1"/>
+<line x1="-7" y1="-15" x2="-13" y2="5" stroke="#ffffff" stroke-width="1"/>
+<path d="M 6.00 5.00 A 6.00 6.00 0 0 1 0.00 -1.00" fill="none" stroke="#ffffff" stroke-width="1"/>
+<path d="M -7.00 4.00 A 6.00 6.00 0 0 1 -1.00 -2.00" fill="none" stroke="#ffffff" stroke-width="1"/>
+<path d="M 0.00 -1.00 A 6.00 6.00 0 0 1 -6.00 5.00" fill="none" stroke="#ffffff" stroke-width="1"/>
+<path d="M -6.00 5.00 A 1.00 1.00 0 0 1 -7.00 4.00" fill="none" stroke="#ffffff" stroke-width="1"/>
+<path d="M 1.00 -2.00 A 6.00 6.00 0 0 1 7.00 4.00" fill="none" stroke="#ffffff" stroke-width="1"/>
+<path d="M 0.00 -1.00 A 1.00 1.00 0 0 1 1.00 -2.00" fill="none" stroke="#ffffff" stroke-width="1"/>
+<path d="M 7.00 4.00 A 1.00 1.00 0 0 1 6.00 5.00" fill="none" stroke="#ffffff" stroke-width="1"/>
+<ellipse cx="0.0" cy="-7.0" rx="2.5" ry="4.5" fill="none" stroke="#ffffff" stroke-width="1"/>
+<circle cx="-19" cy="20" r="1.5" fill="#ffffff"/>
+<circle cx="19" cy="20" r="1.5" fill="#ffffff"/>
+</g>
+  <!-- Détendeur sur la jambe verticale : conduites hautes et basses,
+       bulbe vers la gauche. -->
+  <g transform="translate(84,98) rotate(-90) scale(1.05) translate(-1,8)"><circle cx="0.0" cy="-12.00005" r="5.83095" fill="#1B3A63" stroke="#ffffff" stroke-width="1"/>
+<line x1="0" y1="-18" x2="0" y2="-20" stroke="#ffffff" stroke-width="1"/>
+<polygon points="2,1 0,3 -2,1 -10,5 -10,-5 10,5 10,-5 -2,1 0,0 0,0" fill="#1B3A63" stroke="#ffffff" stroke-width="1"/>
+<line x1="0" y1="0" x2="0" y2="-6" stroke="#ffffff" stroke-width="1"/>
+<line x1="10" y1="0" x2="11" y2="0" stroke="#ffffff" stroke-width="1"/>
+<line x1="-10" y1="0" x2="-11" y2="0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="0" cy="-20" r="1.5" fill="#ffffff"/>
+<circle cx="11" cy="0" r="1.5" fill="#ffffff"/>
+<circle cx="-11" cy="0" r="1.5" fill="#ffffff"/>
+<text x="-5" y="-9.66667" font-family="sans-serif" font-size="6" fill="#333">TC</text></g>
+  <!-- Compresseur : le cercle aux deux biellettes de la planche de
+       référence, débit montant. -->
+  <g transform="translate(296,105) rotate(90) scale(1.1) translate(-1,0)"><circle cx="0.0" cy="0.0" r="15.0" fill="#1B3A63" stroke="#ffffff" stroke-width="1"/>
+<line x1="-15" y1="0" x2="-16" y2="0" stroke="#ffffff" stroke-width="1"/>
+<line x1="15" y1="0" x2="16" y2="0" stroke="#ffffff" stroke-width="1"/>
+<line x1="-7" y1="-13" x2="13" y2="-7" stroke="#ffffff" stroke-width="1"/>
+<line x1="-7" y1="13" x2="13" y2="7" stroke="#ffffff" stroke-width="1"/>
+<circle cx="-16" cy="0" r="1.5" fill="#ffffff"/>
+<circle cx="16" cy="0" r="1.5" fill="#ffffff"/>
+<circle cx="-10" cy="10" r="1.5" fill="#ffffff"/>
+<circle cx="2" cy="11" r="1.5" fill="#ffffff"/>
+<circle cx="2" cy="11" r="1.5" fill="#ffffff"/>
+<circle cx="-10" cy="-10" r="1.5" fill="#ffffff"/>
+</g>
+  <g font-family="Calibri, sans-serif" font-size="8.5" fill="#cfdcea" letter-spacing=".5">
+    <text x="190" y="10" text-anchor="middle">CONDENSEUR</text>
+    <text x="190" y="220" text-anchor="middle">ÉVAPORATEUR</text>
+    <text x="64" y="101" text-anchor="end">DÉTENDEUR</text>
+    <text x="316" y="101" text-anchor="start">COMPRESSEUR</text>
+    <text x="120" y="36" text-anchor="middle" fill="#FF6B35" font-weight="700">HP</text>
+    <text x="250" y="186" text-anchor="middle" font-weight="700">BP</text>
+  </g>
+</svg></div>
 
-    <span class="tome">Tome 1 · La théorie</span>
+    <p class="interactif"><b>Livre interactif</b> — 95 QR codes ouvrent les cours
+       animés et racontés d’inerweb.fr : schémas en mouvement, voix, corrections.</p>
     <div class="cats"><span>A1</span><span>A2</span><span>D</span><span>E</span></div>
     <p class="auteur"><b>F. Henninot</b>
       Enseignant en filière froid et climatisation</p>

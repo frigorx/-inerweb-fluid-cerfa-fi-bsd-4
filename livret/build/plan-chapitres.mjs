@@ -273,7 +273,7 @@ export const CHAPITRES = [
         legendes: ['Utile ou totale', 'On la calcule, on ne la lit pas'] },
       { t: 'Ce qu une valeur hors plage annonce', src: 'g1e', paras: 'tous', blocs: [2],
         visuels: ['svg:mesure-surchauffe', 'svg:points-de-fuite'],
-        legendes: ['5 à 10 K, 4 à 8 K', 'Le manque de charge se voit ici'] },
+        legendes: ['5 à 10 K, 4 à 8 K', 'Premier indice d un manque de charge'] },
     ],
     activite: {
       t: 'Deux relevés, deux diagnostics',
@@ -285,7 +285,7 @@ export const CHAPITRES = [
         'Relevé 2 — T sortie condenseur : ______ °C, T saturation HP : ______ °C, sous-refroidissement : ______ K',
         'Ce que je soupçonne : ______',
       ],
-      voixHaute: 'Une surchauffe qui grimpe et un sous-refroidissement qui s effondre disent la même chose : il manque du fluide.',
+      voixHaute: 'Surchauffe qui grimpe, sous-refroidissement qui s effondre : les deux orientent vers un manque de fluide. On écarte les autres causes — détendeur, filtre, débit, mesure — avant de conclure.',
     },
   },
   {
@@ -458,7 +458,7 @@ export const CHAPITRES = [
       legendes: ['La ligne à reconstituer', 'Les symboles'],
       lignes: [
         'Du condenseur au détendeur, dans l ordre : ______',
-        'L organe qui dit s il manque du fluide : ______',
+        'L organe qui fait soupçonner un manque de fluide : ______',
         'L organe qui retient l humidité : ______',
         'Ce qui se passe si on inverse deux organes : ______',
       ],
