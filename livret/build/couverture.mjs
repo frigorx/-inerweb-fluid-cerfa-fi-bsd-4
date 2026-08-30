@@ -11,7 +11,7 @@
    — écrit par la finition à partir du PDF réel. Une seule source.
 
    Sorties : couverture-kdp.html          (pour l'écran et Claude Design)
-             dist/…-Couverture-6x9.pdf    (le fichier à téléverser)
+             dist/…-Couverture-<format>.pdf (le fichier à téléverser)
 
    `node build/couverture.mjs`
    ===================================================================== */
@@ -20,6 +20,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+/* Le format et les noms de fichiers viennent de reglages.json, via format.mjs. */
+import * as F from './format.mjs';
+
 
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const LIVRET = path.join(ICI, '..');
@@ -28,7 +31,12 @@ const KDP = JSON.parse(fs.readFileSync(path.join(LIVRET, 'kdp.gen.json'), 'utf8'
 
 const [LARGEUR, HAUTEUR] = KDP.couverture_mm;
 const DOS = KDP.dos_mm;
-const NOM = 'inerweb.fr-HabFluide-Tome1-Couverture-6x9';
+const NOM = F.NOM_COUVERTURE;
+
+/* Le nombre de renvois se COMPTE sur le manifeste : c'est l'argument de la
+   couverture, il ne peut pas être approximatif ni figé. */
+const QR = JSON.parse(fs.readFileSync(path.join(ICI, '..', 'qr.gen.json'), 'utf8'));
+const RENVOIS = QR.length;
 
 /* Un livre français écrit ses décimales avec une virgule. */
 const fr = (n) => String(n).replace('.', ',');
@@ -46,7 +54,7 @@ const html = `<!doctype html>
     --mut:#5a6b7d; --pale:#F4F7FA; --ligne:#d6dee7;
     /* Cotes calculées sur ${KDP.pages} pages, papier blanc, intérieur
        noir et blanc. Dos = ${KDP.pages} × 0,002252 pouce. */
-    --fp:3.175mm; --page-l:152.4mm; --page-h:228.6mm; --dos:${DOS}mm;
+    --fp:3.175mm; --page-l:${F.PAGE_L}mm; --page-h:${F.PAGE_H}mm; --dos:${DOS}mm;
     --marge:14mm;
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -82,6 +90,12 @@ const html = `<!doctype html>
   .titre em{display:block;font-style:normal;color:var(--orange)}
   .accroche{margin-top:5mm;font-size:12.5pt;line-height:1.4;color:#cfdcea;max-width:30ch}
   .accroche b{color:#fff}
+  /* L'argument qui n'existe nulle part ailleurs : le livre ouvre sur le
+     site. Il se lit avant le prix, donc il tient sur deux lignes. */
+  .interactif{margin-top:6mm;padding:3mm 4mm;border:1.2pt solid var(--orange);
+    border-radius:2mm;font-size:10.5pt;line-height:1.35;color:var(--orange);max-width:34ch}
+  .interactif b{display:block;font-family:"Trebuchet MS",sans-serif;font-size:11.5pt}
+  .interactif span{display:block;margin-top:1mm;color:#cfdcea;font-size:9.5pt}
 
   .croix{margin:auto 0;padding:4mm 0}
   .croix svg{width:100%;height:auto;display:block}
@@ -182,7 +196,7 @@ const html = `<!doctype html>
 
     <p class="avert">Ce livre prépare l’épreuve théorique ; il ne délivre aucune attestation —
        seul un organisme évaluateur certifié le fait. Les gestes professionnels et l’épreuve
-       pratique font l’objet du tome 2. Aucune question officielle d’examen ne figure dans cet ouvrage.</p>
+       pratique feront l’objet d’un tome 2. Aucune question officielle d’examen ne figure dans cet ouvrage.</p>
 
     <div class="pied4">
       <div class="site">inerweb.fr
@@ -208,8 +222,9 @@ const html = `<!doctype html>
     </div>
 
     <h1 class="titre">Hab<em>Fluide</em></h1>
-    <p class="accroche">Toute la <b>théorie</b> de l’attestation d’aptitude
-       fluides frigorigènes, du risque à la récupération.</p>
+    <p class="accroche"><b>Habilitation à la manipulation</b> des fluides
+       frigorigènes. Préparation à l’épreuve <b>théorique</b>, à jour de
+       l’<b>arrêté du 21 novembre 2025</b>.</p>
 
     <div class="croix">
       <!-- La croix du frigoriste : détendeur à gauche, compresseur à droite,
@@ -235,6 +250,9 @@ const html = `<!doctype html>
 
     <span class="tome">Tome 1 · La théorie</span>
     <div class="cats"><span>A1</span><span>A2</span><span>D</span><span>E</span></div>
+    <p class="interactif"><b>Le livre interactif relié à inerweb.fr</b>
+      <span>${RENVOIS} codes vers les animations, les leçons racontées
+      et l’entraînement</span></p>
     <p class="auteur"><b>F. Henninot</b>
       Enseignant en filière froid et climatisation</p>
   </div>

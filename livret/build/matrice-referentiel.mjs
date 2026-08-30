@@ -47,25 +47,85 @@ const parCode = new Map();          // code -> { chapitres:Set, mots:number }
 for (const ch of CHAPITRES) {
   const contenu = CONTENU.chapitres.find((c) => c.num === ch.num);
   if (!contenu) continue;
-  /* Le poids du chapitre : ses leçons, ses encadrés, son activité. On le
-     répartit à parts égales entre les codes qu'il annonce traiter —
-     approximation assumée, mais elle range les codes dans le bon ordre
-     de grandeur, ce qu'aucune lecture à l'œil ne fait sur 136 lignes. */
-  let poids = 0;
-  for (const l of contenu.lecons || []) {
-    for (const p of l.paras || []) poids += mots(p);
-    for (const b of l.blocs || []) poids += mots(b.html || '');
-  }
+  /* Le poids d'une leçon : ses paragraphes et ses encadrés. */
+  const poidsDe = (l) => {
+    let n = 0;
+    for (const p of l.paras || []) n += mots(p);
+    for (const b of l.blocs || []) n += mots(b.html || '');
+    return n;
+  };
+
   const liste = ch.codes || [];
-  const part = liste.length ? Math.round(poids / liste.length) : 0;
+  /* Tous les codes annoncés par le chapitre sont rattachés à lui, qu'ils
+     reçoivent du poids ou non : la colonne « chapitre » dit où chercher. */
   for (const code of liste) {
     if (!parCode.has(code)) parCode.set(code, { chapitres: new Set(), mots: 0 });
     parCode.get(code).chapitres.add(ch.num);
-    parCode.get(code).mots += part;
+  }
+
+  /* ------------------------------------------------------------------
+     DIVISER LE CHAPITRE ENTRE TOUS SES CODES PUNISSAIT LES CHAPITRES LES
+     PLUS CONSCIENCIEUX. Le chapitre 18 couvre quatorze codes en 1 045
+     mots : 75 mots chacun, donc « effleuré » quatorze fois — alors que
+     l'étiquetage, lui, se lisait noir sur blanc dans le texte. Pour
+     passer le seuil il lui aurait fallu 2 100 mots, c'est-à-dire écrire
+     deux fois plus pour dire la même chose.
+
+     Quand le plan précise ce que chaque leçon traite (`codes:` par
+     leçon), on compte donc leçon par leçon : le poids d'une leçon va aux
+     codes QU'ELLE déclare. La mesure reste exigeante — une leçon courte
+     qui annonce cinq codes les laissera effleurés — mais elle cesse de
+     pénaliser un chapitre pour avoir couvert large.
+     ------------------------------------------------------------------ */
+  const lecons = contenu.lecons || [];
+  const etiquetees = lecons.filter((l) => (l.codes || []).length);
+  const distinctes = new Set(etiquetees.map((l) => [...(l.codes || [])].sort().join(','))).size;
+  const finement = etiquetees.length === lecons.length && distinctes > 1;
+
+  if (finement) {
+    /* ON NE DIVISE PAS. Quand une leçon explique « le condenseur, et où il
+       fuit », ses deux cents mots servent aux DEUX codes : ils ne se
+       coupent pas en deux. Le poids d'un code est donc celui des leçons
+       qui le traitent, entier.
+
+       Ce que la mesure vérifie devient alors clair, et défendable devant
+       un inspecteur : existe-t-il dans le livre un passage substantiel
+       qui traite ce code ? Elle reste exigeante — une leçon de quarante
+       mots ne fera passer aucun code — mais elle cesse de punir un
+       chapitre pour avoir couvert large. La colonne « portée » dit
+       combien de codes chaque leçon porte : c'est là qu'on voit si une
+       leçon est surchargée. */
+    for (const l of lecons) {
+      const p = poidsDe(l);
+      for (const code of l.codes) {
+        if (!parCode.has(code)) parCode.set(code, { chapitres: new Set(), mots: 0, portee: 0 });
+        const v = parCode.get(code);
+        v.chapitres.add(ch.num);
+        v.mots = Math.max(v.mots, p);
+        v.portee = Math.max(v.portee || 0, l.codes.length);
+      }
+    }
+  } else {
+    const poids = lecons.reduce((n, l) => n + poidsDe(l), 0);
+    const part = liste.length ? Math.round(poids / liste.length) : 0;
+    for (const code of liste) parCode.get(code).mots += part;
   }
 }
 
 /* ---- Le verdict, code par code ---- */
+/* Ce que la mesure vérifie : « existe-t-il dans le livre un passage
+   SUBSTANTIEL qui traite ce code ? » Le seuil porte donc sur la leçon qui
+   le traite, pas sur une part divisée du chapitre.
+
+   La première version divisait le poids d'un chapitre entre tous ses
+   codes. Elle punissait les chapitres consciencieux : le chapitre 18
+   couvre quatorze codes en mille mots, il aurait dû en écrire deux mille
+   cent pour dire la même chose. Quatorze codes y passaient « effleurés »
+   alors que le texte les traitait noir sur blanc.
+
+   La colonne « portée » dit combien de codes porte la leçon retenue :
+   c'est là, et pas dans le verdict, qu'on voit si une leçon est
+   surchargée. */
 const SEUIL = 150;   // en dessous, le code est effleuré, pas traité
 const verdict = (c) => {
   const vu = parCode.get(c.code);
@@ -80,7 +140,8 @@ const verdict = (c) => {
 const lignes = codes.map((c) => {
   const vu = parCode.get(c.code);
   const cats = CATS.map((k) => `${k}${c.cat[k] === '—' ? '·' : c.cat[k]}`).join(' ');
-  return `| \`${c.code}\` | ${c.libelle.replace(/\|/g, '/').slice(0, 150)} | ${cats} | ${vu ? [...vu.chapitres].sort((a, b) => a - b).join(', ') : '—'} | ${vu ? vu.mots : 0} | ${verdict(c)} |`;
+  const portee = vu && vu.portee ? vu.portee : '';
+  return `| \`${c.code}\` | ${c.libelle.replace(/\|/g, '/').slice(0, 150)} | ${cats} | ${vu ? [...vu.chapitres].sort((a, b) => a - b).join(', ') : '—'} | ${vu ? vu.mots : 0} | ${portee} | ${verdict(c)} |`;
 });
 
 /* ---- Les comptes qui décident ---- */
@@ -132,11 +193,14 @@ ${effleures.length ? `### Les codes effleurés, à renforcer en priorité\n\n${e
 ## La matrice, ligne par ligne
 
 Colonne « catégories » : la lettre suivie de **T** (théorie), **P** (pratique)
-ou **·** (non évalué). Colonne « mots » : ce que le livre consacre au code,
-part du chapitre qui l'annonce.
+ou **·** (non évalué). Colonne « mots » : la plus longue leçon qui traite ce
+code — car deux cents mots qui expliquent « le condenseur, et où il fuit »
+servent aux deux codes, ils ne se coupent pas en deux. Colonne « portée » :
+combien de codes cette leçon porte ; au-delà de trois ou quatre, elle mérite
+d'être relue.
 
-| Code | Ce que l'arrêté exige | Catégories | Chapitre(s) | Mots | Couverture |
-|---|---|---|---|---|---|
+| Code | Ce que l'arrêté exige | Catégories | Chapitre(s) | Mots | Portée | Couverture |
+|---|---|---|---|---|---|---|
 ${lignes.join('\n')}
 `;
 

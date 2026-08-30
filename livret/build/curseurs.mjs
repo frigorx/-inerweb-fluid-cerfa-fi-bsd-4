@@ -23,6 +23,7 @@ import { fileURLToPath } from 'node:url';
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const LIVRET = path.join(ICI, '..');
 const R = JSON.parse(fs.readFileSync(path.join(LIVRET, 'reglages.json'), 'utf8'));
+const PAGE_L = R.page_l_mm, PAGE_H = R.page_h_mm;
 const KDP = JSON.parse(fs.readFileSync(path.join(LIVRET, 'kdp.gen.json'), 'utf8'));
 
 /* Le CSS du livre, tel quel : ce qu'on règle ici est ce qui s'appliquera. */
@@ -77,7 +78,7 @@ button.sec{background:#fff;color:var(--bleu);border:1.5px solid var(--ligne)}
 .apercus figcaption{font:700 11px/1.3 "Trebuchet MS",sans-serif;color:var(--mut);
   text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px;text-align:center}
 .apercus figure{margin:0}
-.page{width:152.4mm;height:228.6mm;background:#fff;overflow:hidden;display:flex;flex-direction:column;
+.page{width:${PAGE_L}mm;height:${PAGE_H}mm;background:#fff;overflow:hidden;display:flex;flex-direction:column;
   padding:var(--haut) var(--ext) var(--bas) var(--gout);
   box-shadow:0 4px 18px rgba(27,58,99,.2)}
 .page .corps{flex:1;overflow:hidden;position:relative}
@@ -243,8 +244,8 @@ function appliquer() {
 
   /* Estimation : la surface utile et la hauteur de ligne décident du
      nombre de lignes par page ; les blancs mangent le reste. */
-  const utile = (228.6 - vert - (vert - 2)) * (152.4 - 19 - ext);
-  const utileRef = (228.6 - DEFAUTS.haut_mm - (DEFAUTS.haut_mm - 2)) * (152.4 - 19 - DEFAUTS.exterieur_mm);
+  const utile = (PAGE_H - vert - (vert - 2)) * (PAGE_L - 19 - ext);
+  const utileRef = (PAGE_H - DEFAUTS.haut_mm - (DEFAUTS.haut_mm - 2)) * (PAGE_L - 19 - DEFAUTS.exterieur_mm);
   const densite = (DEFAUTS.interligne / inter) * (DEFAUTS.air / air) ** 0.45
     * (utile / utileRef) * (DEFAUTS.planche_h_mm / planche) ** 0.18;
   const pages = Math.max(60, Math.round(PAGES_REF / densite / 2) * 2);

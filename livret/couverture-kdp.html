@@ -5,23 +5,23 @@
   :root{
     --bleu:#1B3A63; --bleu2:#2f5689; --orange:#FF6B35; --logo:#e8914a;
     --mut:#5a6b7d; --pale:#F4F7FA; --ligne:#d6dee7;
-    /* Cotes calculées sur 388 pages, papier blanc, intérieur
-       noir et blanc. Dos = 388 × 0,002252 pouce. */
-    --fp:3.175mm; --page-l:152.4mm; --page-h:228.6mm; --dos:22.19mm;
+    /* Cotes calculées sur 308 pages, papier blanc, intérieur
+       noir et blanc. Dos = 308 × 0,002252 pouce. */
+    --fp:3.175mm; --page-l:177.8mm; --page-h:254mm; --dos:17.62mm;
     --marge:14mm;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:#dfe5ec;font:14px/1.5 Calibri,"Segoe UI",system-ui,sans-serif;
     padding:24px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 
-  .note{max-width:333.34mm;margin:0 auto 16px;background:#fff;border-radius:10px;
+  .note{max-width:379.57mm;margin:0 auto 16px;background:#fff;border-radius:10px;
     padding:16px 20px;box-shadow:0 2px 10px rgba(27,58,99,.12);color:#1d2a38}
   .note h1{font:700 19px/1.3 "Trebuchet MS",sans-serif;color:var(--bleu);margin-bottom:6px}
   .note p{margin-bottom:6px;max-width:100ch}
   .note b{color:var(--bleu)}
 
   /* La couverture complète : 4e — dos — 1re, fonds perdus compris. */
-  .couverture{width:333.34mm;height:234.95mm;display:flex;margin:0 auto;
+  .couverture{width:379.57mm;height:260.35mm;display:flex;margin:0 auto;
     background:#fff;box-shadow:0 6px 24px rgba(27,58,99,.24);overflow:hidden}
   /* Le fond perdu prolonge la couleur du plat qu'il borde — sinon la
      coupe, qui tombe toujours un peu à côté, laisse une bande étrangère
@@ -43,6 +43,12 @@
   .titre em{display:block;font-style:normal;color:var(--orange)}
   .accroche{margin-top:5mm;font-size:12.5pt;line-height:1.4;color:#cfdcea;max-width:30ch}
   .accroche b{color:#fff}
+  /* L'argument qui n'existe nulle part ailleurs : le livre ouvre sur le
+     site. Il se lit avant le prix, donc il tient sur deux lignes. */
+  .interactif{margin-top:6mm;padding:3mm 4mm;border:1.2pt solid var(--orange);
+    border-radius:2mm;font-size:10.5pt;line-height:1.35;color:var(--orange);max-width:34ch}
+  .interactif b{display:block;font-family:"Trebuchet MS",sans-serif;font-size:11.5pt}
+  .interactif span{display:block;margin-top:1mm;color:#cfdcea;font-size:9.5pt}
 
   .croix{margin:auto 0;padding:4mm 0}
   .croix svg{width:100%;height:auto;display:block}
@@ -91,7 +97,7 @@
 
   /* ---------------- Le fichier qu'on téléverse ---------------- */
   /* Une seule page, aux cotes exactes, sans la notice ni les ombres. */
-  @page{size:333.34mm 234.95mm;margin:0}
+  @page{size:379.57mm 260.35mm;margin:0}
   @media print{
     body{background:#fff;padding:0}
     .note{display:none}
@@ -103,10 +109,10 @@
 
 <div class="note">
   <h1>Couverture Amazon KDP — inerweb.fr HabFluide, tome 1</h1>
-  <p>Format exact, prêt pour le téléversement : <b>333,34 × 234,95 mm</b>
-     (13,124 × 9,25 pouces), fonds perdus de 3,175 mm compris.
-     Dos de <b>22,19 mm</b>, calculé sur <b>388 pages</b> en papier blanc noir et blanc
-     (388 × 0,002252 pouce). Cette page est <b>générée</b> : si la pagination bouge,
+  <p>Format exact, prêt pour le téléversement : <b>379,57 × 260,35 mm</b>
+     (14,944 × 10,25 pouces), fonds perdus de 3,175 mm compris.
+     Dos de <b>17,62 mm</b>, calculé sur <b>308 pages</b> en papier blanc noir et blanc
+     (308 × 0,002252 pouce). Cette page est <b>générée</b> : si la pagination bouge,
      <code>npm run couverture</code> la refait juste.</p>
   <p>Le rectangle en bas de la 4e de couverture est la <b>zone réservée au code-barres ISBN</b> :
      Amazon l'imprime lui-même, rien ne doit s'y trouver. Son cadre ne s'imprime pas.</p>
@@ -143,7 +149,7 @@
 
     <p class="avert">Ce livre prépare l’épreuve théorique ; il ne délivre aucune attestation —
        seul un organisme évaluateur certifié le fait. Les gestes professionnels et l’épreuve
-       pratique font l’objet du tome 2. Aucune question officielle d’examen ne figure dans cet ouvrage.</p>
+       pratique feront l’objet d’un tome 2. Aucune question officielle d’examen ne figure dans cet ouvrage.</p>
 
     <div class="pied4">
       <div class="site">inerweb.fr
@@ -167,8 +173,9 @@
     </div>
 
     <h1 class="titre">Hab<em>Fluide</em></h1>
-    <p class="accroche">Toute la <b>théorie</b> de l’attestation d’aptitude
-       fluides frigorigènes, du risque à la récupération.</p>
+    <p class="accroche"><b>Habilitation à la manipulation</b> des fluides
+       frigorigènes. Préparation à l’épreuve <b>théorique</b>, à jour de
+       l’<b>arrêté du 21 novembre 2025</b>.</p>
 
     <div class="croix">
       <!-- La croix du frigoriste : détendeur à gauche, compresseur à droite,
@@ -194,6 +201,9 @@
 
     <span class="tome">Tome 1 · La théorie</span>
     <div class="cats"><span>A1</span><span>A2</span><span>D</span><span>E</span></div>
+    <p class="interactif"><b>Le livre interactif relié à inerweb.fr</b>
+      <span>157 codes vers les animations, les leçons racontées
+      et l’entraînement</span></p>
     <p class="auteur"><b>F. Henninot</b>
       Enseignant en filière froid et climatisation</p>
   </div>

@@ -28,6 +28,14 @@ except Exception:
 MM = 72 / 25.4
 PO = 72.0
 
+# Le format attendu vient de `reglages.json` — la meme source que la mise en
+# page. Ecrit en dur, ce controle validait un 6 x 9 pendant que la chaine
+# fabriquait autre chose : il aurait laisse passer le mauvais fichier.
+_R = json.load(open(os.path.join(os.path.dirname(__file__), '..', 'reglages.json'),
+                    encoding='utf-8'))
+ATTENDU_L_PO = round(_R['page_l_mm'] / 25.4, 2)
+ATTENDU_H_PO = round(_R['page_h_mm'] / 25.4, 2)
+
 # Les fontes « base 14 » du PDF ne sont jamais embarquées : le lecteur va
 # les chercher dans le système. KDP les refuse.
 BASE14 = {'Helvetica', 'Courier', 'Times-Roman', 'Symbol', 'ZapfDingbats'}
@@ -57,8 +65,8 @@ def controler_interieur(chemin):
     l, h = doc[0].rect.width, doc[0].rect.height
     print('  format  : %.4f x %.4f pouces (%.1f x %.1f mm)'
           % (l / PO, h / PO, l / MM, h / MM))
-    if abs(l / PO - 6) > 0.01 or abs(h / PO - 9) > 0.01:
-        bloque('le format n’est pas 6 x 9 pouces')
+    if abs(l / PO - ATTENDU_L_PO) > 0.01 or abs(h / PO - ATTENDU_H_PO) > 0.01:
+        bloque('le format n’est pas %g x %g pouces' % (ATTENDU_L_PO, ATTENDU_H_PO))
 
     # ---- 2. Pagination ----
     print('  pages   : %d' % pages)

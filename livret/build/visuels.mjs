@@ -138,7 +138,11 @@ if (erreurs.length) {
    régulière : l'animation n'est pas toujours le premier enfant de
    l'élément qu'elle anime, et chercher « la balise juste avant » cassait
    dix planches sur quarante-six. */
-const etatFinal = (svg) => {
+/* Exportee : `reserve.mjs` rasterise lui aussi des planches animees, et
+   sans ce traitement elles sortaient BLANCHES — une legende flottait alors
+   seule au milieu du vide qu'elle etait censee combler. Une seule logique
+   d'etat final pour toute la chaine. */
+export const etatFinal = (svg) => {
   const BALISE = /<!--[\s\S]*?-->|<\?[\s\S]*?\?>|<!\[CDATA\[[\s\S]*?\]\]>|<!DOCTYPE[^>]*>|<\/([\w:-]+)\s*>|<([\w:-]+)((?:"[^"]*"|'[^']*'|[^>"'])*?)(\/?)>/g;
   const pile = [];         // les éléments ouverts à cet instant du parcours
   const elements = [];     // tous ceux rencontrés, pour la passe finale

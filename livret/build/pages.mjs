@@ -94,8 +94,11 @@ const PICTO_PIEGE = `<svg class="picto-piege" viewBox="0 0 20 18" aria-hidden="t
 export const apos = (s) => String(s).replace(
   /\b(jusqu|lorsqu|puisqu|quelqu|aujourd|[qQ]u|[dcjlmnstDCJLMNST])\s(?=[aeiouyhéèêëàâîïôûAEIOUYHÉÈÊÀÂÎÔ])/g, '$1’');
 
-const qrDe = (num) => QR.find((e) => e.chapitre === num && !e.lecon);
-const qrLeconDe = (num, i) => QR.find((e) => e.chapitre === num && e.lecon === i);
+const qrDe = (num) => QR.find((e) => e.chapitre === num && e.genre === 'station');
+const qrLeconDe = (num, i) => QR.find((e) => e.chapitre === num && e.lecon === i && e.genre === 'lecon');
+const qrAnimDe = (num, i) => QR.find((e) => e.chapitre === num && e.lecon === i && e.genre === 'animation');
+const qrEntrainDe = (num) => QR.find((e) => e.chapitre === num && e.genre === 'entrainement');
+const qrCorrectionDe = (num) => QR.find((e) => e.chapitre === num && e.genre === 'correction');
 const contenuDe = (num) => CONTENU.chapitres.find((c) => c.num === num);
 
 /* Un bloc du flux. `seul` = il occupe sa page à lui tout seul. */
@@ -126,6 +129,17 @@ const figure = (refs, legendes = []) => {
     </figure>`;
   }).join('');
 };
+
+/* Un renvoi ne s'imprime plus dans le fil du texte : il part dans la
+   MARGE. Mais seule la finition sait, une fois la pagination faite, si
+   une page est de droite ou de gauche — donc de quel cote poser le code.
+   On laisse ici un marqueur invisible (1 pt, blanc) a la hauteur voulue ;
+   `finition.py` le retrouve, dessine le renvoi dans la marge exterieure,
+   puis efface le marqueur de la couche texte.
+
+   Poser le marqueur sur le TITRE plutot qu'en fin de bloc aligne le code
+   sur ce qu'il prolonge : on lit le titre, on voit le code en face. */
+const renvoi = (slug) => slug ? `<span class="marq">@@QR|${slug}@@</span>` : '';
 
 const ecran = (slug, texte) => {
   const e = QR.find((x) => x.slug === slug);
@@ -159,8 +173,14 @@ const encadre = (b) => {
   </aside>`;
 };
 
+/* Un tableau court ne se coupe pas : le lire en deux morceaux fait perdre
+   l'entete et la comparaison. Mais les INDEX de fin d'ouvrage font des
+   dizaines de lignes et ne tiennent dans aucune page : interdits de couper,
+   ils basculaient entiers a la page suivante et laissaient leur titre seul
+   sur 200 mm de vide. Au-dela de douze lignes, on laisse donc courir — en
+   gardant chaque LIGNE insecable. */
 const tableau = (tb) => `
-  <div class="tbl">
+  <div class="tbl${(tb.lignes || []).length > 12 ? ' long' : ''}">
     <h4>${ech(apos(tb.titre))}</h4>
     <table><thead><tr>${tb.entetes.map((e) => `<th>${ech(e)}</th>`).join('')}</tr></thead>
     <tbody>${tb.lignes.map((l) => `<tr>${l.map((c) => `<td>${ech(apos(String(c)))}</td>`).join('')}</tr>`).join('')}
@@ -243,9 +263,14 @@ export const construireFlux = () => {
       const c = contenuDe(ch.num);
       const meta = { partie: partie.id, chapitre: ch.num };
 
+      const qSta = qrDe(ch.num);
+      const qEnt = qrEntrainDe(ch.num);
+      /* Les marqueurs se posent APRES la tete de chapitre, pas dans son
+         <h2> : a l'interieur d'un titre de 24 pt, Chrome ne les rendait
+         pas et 38 renvois disparaissaient sans bruit. */
       pousse(`<div class="ch-tete"><span class="ch-num">${ch.num}</span>
         <div><h2 class="ch-titre">${ech(apos(ch.titre))}</h2>
-        <p class="ch-objectif">${ech(apos(ch.objectif))}</p></div></div>`,
+        <p class="ch-objectif">${ech(apos(ch.objectif))}</p></div></div>${renvoi(qSta && qSta.slug)}${renvoi(qEnt && qEnt.slug)}`,
       { ...meta, rupture: true, garde: true });
 
       if (c.referentiel?.length) {
@@ -316,16 +341,25 @@ export const construireFlux = () => {
            traiter : le pied de page les imprimera, et l'audit comptera
            sur quelles pages chaque compétence est réellement vue. */
         const meta = { partie: partie.id, chapitre: ch.num, codes: lc.codes || [] };
+        const qrl = qrLeconDe(ch.num, i + 1);
+        const qra = qrAnimDe(ch.num, i + 1);
+        /* Le marqueur voyage dans SON PROPRE bloc, jamais a l'interieur
+           d'un titre : place dans un <h4>, Chrome en avalait quarante et
+           un a l'impression. Le motif retenu est celui des marqueurs de
+           contexte, qui passent sans faute depuis le debut. `garde` colle
+           le bloc au titre qui suit, donc le code reste en face de sa
+           lecon. */
+        if (qrl || qra) {
+          pousse(`${renvoi(qrl && qrl.slug)}${renvoi(qra && qra.slug)}`,
+            { ...meta, garde: true });
+        }
         pousse(`<h4 class="lecon-t"><span class="lecon-n">${ch.num}.${i + 1}</span>${ech(apos(lc.t))}</h4>`,
           { ...meta, garde: true });
         if (lp.visuels) pousse(figure(lp.visuels, lp.legendes), meta);
         for (const p of lc.paras) pousse(`<p class="txt">${ech(p)}</p>`, meta);
         if (lc.tableau) pousse(tableau(lc.tableau), meta);
         for (const b of lc.blocs) pousse(encadre(b), meta);
-        const qrl = qrLeconDe(ch.num, i + 1);
-        if (qrl) pousse(ecran(qrl.slug, qrl.cible.includes('capsule')
-          ? 'Cette leçon animée et racontée à voix haute.'
-          : 'La fiche interactive, avec sa question corrigée.'), meta);
+
       }
       /* Le chapitre généré n'a pas de leçons du plan : ses leçons sont dans le contenu. */
       if (!ch.lecons) {
@@ -348,19 +382,23 @@ export const construireFlux = () => {
       pousse(`<p class="voix"><span>À voix haute</span>« ${ech(apos(act.voixHaute))} »</p>`, meta);
 
       /* 4 — Les réponses */
-      pousse(`<h3 class="sect-t"><span class="sect-num">4</span>Les réponses — corrigez-vous</h3>`,
-        { ...meta, garde: true });
-      for (const [i, q] of questions.entries()) {
-        pousse(`<div class="rep"><p class="rep-l"><span class="rep-n">${i + 1}</span>
-          <span class="rep-lettre">${String.fromCharCode(65 + q.bonne)}</span><b>${ech(q.choix[q.bonne])}</b></p>
-          ${q.explication ? `<p class="rep-x">${ech(q.explication)}</p>` : ''}</div>`, meta);
-      }
-      const qc = qrDe(ch.num);
-      pousse(`<div class="note">Ma note <span class="note-case"></span> / ${questions.length}
-        <span class="note-desc">à reporter au bilan, en fin de livret</span></div>
-        ${ecran(qc.slug, qc.cible.includes('capsule')
-    ? 'Tout le chapitre, raconté à voix haute.'
-    : 'Le chapitre en version interactive, avec ses questions corrigées.')}`, meta);
+      /* LA CORRECTION A QUITTE LE PAPIER (decision du 29/08/2026). Elle y
+         occupait 37 pages, et surtout elle s'y lisait AVANT d'avoir
+         repondu : une reponse imprimee a trois pages de sa question est
+         une reponse deja lue. En ligne, elle explique et renvoie vers ce
+         qui la fonde — la page du livre, ou la lecon interactive.
+         Le bloc « A l'ecran » de fin de chapitre a disparu de meme : son
+         code est dans la marge, en tete de chapitre. Seul sur sa page, il
+         laissait 173 mm de vide. */
+      const qCor = qrCorrectionDe(ch.num);
+      /* Le marqueur va DANS le bloc, pas devant : place avant, il tombait
+         en fin de page pendant que le bloc basculait a la suivante, et le
+         code de correction se retrouvait dans la marge d'une autre page.
+         Le bloc est insecable, ils voyagent donc ensemble. */
+      pousse(`<div class="note">${renvoi(qCor && qCor.slug)}Ma note <span class="note-case"></span> / ${questions.length}
+        <span class="note-desc">à reporter au bilan, en fin de livret</span>
+        <span class="note-corr">La correction est en ligne : le code ci-contre l’ouvre,
+        chaque réponse expliquée et renvoyant à ce qui la fonde.</span></div>`, meta);
     }
 
     /* La planche centrale, après la partie C. Couchée d'un quart de tour :

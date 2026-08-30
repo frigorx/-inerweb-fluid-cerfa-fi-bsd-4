@@ -2,7 +2,7 @@
    LIVRET « inerweb.fr HabFluide » — LE GABARIT, POUR CLAUDE DESIGN
    ---------------------------------------------------------------------
    Ce que Claude Design doit recevoir : pas les 406 pages, mais les SEPT
-   pages types qui décident de tout le reste, au format 6 × 9 exact, avec
+   pages types qui décident de tout le reste, au format exact du livre, avec
    le vrai contenu et les vraies planches.
 
    Ce qu'on lui demande est écrit dans la page elle-même : ce qui est
@@ -18,6 +18,7 @@
    ===================================================================== */
 
 import fs from 'node:fs';
+import * as F from './format.mjs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
@@ -214,9 +215,9 @@ body{background:#e7ecf1;padding:26px;font-size:14px}
 .grille{display:flex;flex-wrap:wrap;gap:26px;justify-content:center;max-width:1180px;margin:0 auto}
 .planche-gabarit{margin:0}
 .planche-gabarit figcaption{font:700 12px/1.3 "Trebuchet MS",sans-serif;color:var(--mut);
-  text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;text-align:center;max-width:152.4mm}
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;text-align:center;max-width:${F.PAGE_L}mm}
 /* La page, au format 6 x 9 exact. */
-.page{width:152.4mm;height:228.6mm;background:#fff;position:relative;overflow:hidden;
+.page{width:${F.PAGE_L}mm;height:${F.PAGE_H}mm;background:#fff;position:relative;overflow:hidden;
   padding:13mm 19mm 16mm;box-shadow:0 4px 18px rgba(27,58,99,.2);display:flex;flex-direction:column}
 .page .corps{flex:1;overflow:hidden}
 .bandeau{display:flex;justify-content:space-between;align-items:baseline;
@@ -239,7 +240,7 @@ body{background:#e7ecf1;padding:26px;font-size:14px}
 
 <div class="entete">
   <h1>inerweb.fr HabFluide — gabarit intérieur à habiller</h1>
-  <p>Huit pages types au format <b>6 × 9 pouces exact</b> (152,4 × 228,6 mm), avec le vrai contenu
+  <p>Huit pages types au format <b>${F.FORMAT_LISIBLE} exact</b> (${F.COTES_LISIBLES}), avec le vrai contenu
      et les vraies planches. Elles décident de l’habillage des <b>${KDP.pages} pages</b> du livre :
      ce qui est réglé ici est reporté dans le générateur, qui refabrique le livre entier.
      Le livre part en autoédition <b>Amazon KDP</b>.</p>
@@ -277,4 +278,4 @@ ${pages.join('\n')}
 const sortie = path.join(LIVRET, 'gabarit-interieur.html');
 fs.writeFileSync(sortie, await construire(), 'utf8');
 const ko = (fs.statSync(sortie).size / 1024).toFixed(0);
-console.log(`✔ ${path.relative(process.cwd(), sortie)} — ${ko} Ko, 8 pages types au format 6 × 9`);
+console.log(`✔ ${path.relative(process.cwd(), sortie)} — ${ko} Ko, 8 pages types au format ${F.FORMAT_LISIBLE}`);

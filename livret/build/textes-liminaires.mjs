@@ -10,6 +10,18 @@
    Les paragraphes acceptent <b> et <i>, rien d'autre.
    ===================================================================== */
 
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+/* Le nombre de renvois imprimés, compté sur le manifeste — le même chiffre
+   que la couverture annonce. Écrit en dur, il mentirait dès le premier
+   chapitre ajouté. */
+const _ICI = path.dirname(fileURLToPath(import.meta.url));
+const _QR = path.join(_ICI, '..', 'qr.gen.json');
+const RENVOIS = fs.existsSync(_QR)
+  ? JSON.parse(fs.readFileSync(_QR, 'utf8')).length : 0;
+
 export const TEXTES_LIMINAIRES = {
   /* Page de copyright — la page technique de tout livre édité. Le millésime
      et l'ISBN se remplissent au dépôt Amazon ; le reste est définitif. */
@@ -37,9 +49,45 @@ export const TEXTES_LIMINAIRES = {
     `Textes réglementaires cités : arrêté du 21 novembre 2025 (NOR TECP2532494A) et règlement (UE) ` +
     `2024/573. Ce sont des textes officiels, librement consultables ; leur citation ici ne vaut pas ` +
     `publication officielle. <b>En cas de divergence, le texte officiel fait foi.</b>`,
-    `Ouvrage conçu, dirigé et vérifié par l'auteur. Fabrication assistée par intelligence ` +
-    `artificielle (Claude, Anthropic), sous sa relecture.`,
+    `Ouvrage conçu, dirigé et vérifié par l'auteur. Fabrication assistée par des outils ` +
+    `d'intelligence artificielle grand public, sous sa relecture. Voir l'avant-propos.`,
     `<i>ISBN et dépôt légal : voir la quatrième de couverture.</i>`,
+  ],
+
+  /* L'avant-propos est de la main de F. Henninot : c'est sa voix, elle ne
+     se reformule pas. Seules la typographie et la signature suivent le
+     reste du livre. */
+  'avant-propos': [
+    `Bienvenue dans ce parcours consacré à la manipulation des fluides frigorigènes.`,
+    `Cet ouvrage est né d'une conviction simple : pour apprendre durablement, il faut pouvoir ` +
+    `lire, comprendre, voir, essayer et se questionner. Il associe donc les notions théoriques ` +
+    `essentielles à des schémas, des animations, des modules interactifs et des corrections ` +
+    `détaillées, accessibles par <b>${RENVOIS} QR codes</b> sur <b>inerweb.fr</b>.`,
+    `Mon expérience professionnelle d'ancien technicien, puis mon regard actuel d'enseignant ` +
+    `dans la filière froid et climatisation, m'ont montré que le métier évolue rapidement. Les ` +
+    `réglementations changent, de nouveaux fluides et de nouvelles technologies apparaissent, ` +
+    `et les exigences de sécurité restent essentielles.`,
+    `Face à ces évolutions, il m'a paru important de reprendre les fondamentaux : comprendre le ` +
+    `circuit, lire une étiquette, mesurer les risques, maîtriser les gestes et savoir pourquoi ` +
+    `chaque étape compte. Ce livre ne cherche donc pas seulement à préparer une épreuve ; il ` +
+    `propose de remettre les connaissances à plat afin de mieux s'adapter aux réalités actuelles ` +
+    `et futures du métier.`,
+    `J'ai cherché à rendre ce parcours aussi clair et accessible que possible. Les explications ` +
+    `vont à l'essentiel, les mots techniques sont repris et les situations sont illustrées pour ` +
+    `permettre à chacun de comprendre progressivement. Quel que soit votre niveau de départ, ` +
+    `votre diplôme ou votre expérience, l'objectif est de vous accompagner vers les connaissances ` +
+    `nécessaires à la réussite de l'évaluation théorique liée à la manipulation des fluides ` +
+    `frigorigènes.`,
+    `Ce livre a été conçu avec l'aide d'<b>outils d'intelligence artificielle grand public</b>. ` +
+    `Ils m'ont aidé à organiser, ` +
+    `synthétiser, reformuler et enrichir certaines étapes de conception. Les choix pédagogiques, ` +
+    `les vérifications métier et la responsabilité du contenu restent toutefois humains.`,
+    `Ce livre ne remplace ni la pratique accompagnée, ni les consignes de sécurité, ni ` +
+    `l'évaluation officielle. Il a vocation à vous aider à comprendre, à vous préparer et à ` +
+    `progresser.`,
+    `Je vous souhaite une excellente lecture, de bonnes explorations interactives, et beaucoup ` +
+    `de réussite dans votre parcours professionnel.`,
+    `<b>F. Henninot</b><br>Enseignant en filière froid et climatisation`,
   ],
 
   'a-quoi-sert': [
@@ -49,9 +97,11 @@ export const TEXTES_LIMINAIRES = {
     `Il se lit <b>avant</b> la formation pour arriver préparé, <b>pendant</b> pour garder une trace, ` +
     `et <b>après</b> pour réviser jusqu'à l'épreuve. Chaque chapitre commence par ce que le ` +
     `<b>référentiel officiel</b> exige, puis par des <b>questions type examen</b> — répondez-y avant de ` +
-    `lire : vous saurez tout de suite ce que vous savez déjà. Les corrections sont en fin de chapitre. ` +
+    `lire : vous saurez tout de suite ce que vous savez déjà. La <b>correction est en ligne</b>, ` +
+    `derrière le code de fin de chapitre : chaque réponse y est expliquée, et renvoie vers la page ` +
+    `ou la leçon qui la fonde. ` +
     `Ce livret s'écrit autant qu'il se lit.`,
-    `Le geste professionnel — manipuler, braser, récupérer en atelier — fait l'objet du <b>tome 2</b>. ` +
+    `Le geste professionnel — manipuler, braser, récupérer en atelier — fera l'objet d'un <b>tome 2</b>. ` +
     `Ici, on comprend ; là-bas, on fait.`,
   ],
   'lire-qr': [
@@ -85,7 +135,7 @@ export const TEXTES_LIMINAIRES = {
     `exigé par le référentiel pour ces catégories est traité, la vérification est refaite à chaque ` +
     `édition. La catégorie V (climatisation automobile) et les catégories B (CO₂) et C (ammoniac) ne ` +
     `sont pas préparées ici ; CO₂ et ammoniac sont abordés en information, pour savoir les reconnaître. ` +
-    `La partie <b>pratique</b> — gestes, manipulations, atelier — fait l'objet du tome 2.`,
+    `La partie <b>pratique</b> — gestes, manipulations, atelier — fera l'objet d'un tome 2.`,
     `Les valeurs réglementaires citées (catégories, durées d'épreuve, dates) sont extraites de ` +
     `l'arrêté du 21 novembre 2025 et vérifiables en fin de livret, page « Sources ». En cas de ` +
     `doute entre ce livret et un texte officiel, <b>le texte officiel a toujours raison</b>.`,
@@ -140,10 +190,12 @@ export const TEXTES_FIN = {
     `constructeur ou norme, à faire valider ».`,
   ],
   'credits': [
-    `<b>Habilitation Fluide — livret élève, tome 1 : la théorie.</b>`,
+    `<b>HabFluide — Habilitation à la manipulation des fluides frigorigènes.</b> ` +
+    `Tome 1 : la théorie.`,
     `© 2026 Franck Henninot — inerWeb. Tous droits réservés. Contact : inerweb.fh@gmail.com.`,
     `Conçu, dirigé et vérifié par F. Henninot, enseignant en filière froid et climatisation. ` +
-    `Fabrication assistée par intelligence artificielle (Claude, Anthropic), sous sa relecture.`,
+    `Fabrication assistée par des outils d'intelligence artificielle grand public, sous la ` +
+    `relecture de l'auteur. Voir l'avant-propos.`,
     `Les schémas techniques et illustrations proviennent de la bibliothèque inerWeb. ` +
     `Ce livret ne contient aucun document pédagogique tiers.`,
     /* Attribution exigée par la licence CC BY 3.0 — le registre des droits

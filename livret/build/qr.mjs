@@ -62,27 +62,215 @@ const CAPSULES = path.join(SOURCE, 'packs', 'fluides', 'res', 'capsules', 'donne
 const erreurs = [];
 const entrees = [];
 
+/* ------------------------------------------------------------------
+   TROIS INDEX, CONSTRUITS UNE FOIS.
+
+   1. Les ECRANS de chaque capsule. Le parametre `e` de capsule.js est un
+      RANG, pas un identifiant : il faut donc l'ordre reel des ecrans.
+   2. Les planches ANIMEES a la source. Le papier les fige ; le renvoi
+      redonne le mouvement. On ne les devine pas : on lit le SVG.
+   3. Qui JOUE chaque planche. Un QR d'animation doit ouvrir une page ou
+      l'animation tourne vraiment — sinon on grave un renvoi vers rien.
+   ------------------------------------------------------------------ */
+const RES = path.join(SOURCE, 'packs', 'fluides', 'res');
+
+const ecransDeCapsule = (fiche) => {
+  const f = path.join(CAPSULES, `${fiche}.js`);
+  if (!fs.existsSync(f)) return null;
+  const t = fs.readFileSync(f, 'utf8');
+  const bloc = t.slice(t.indexOf('ecrans:'));
+  const ids = [...bloc.matchAll(/^\s{4,6}id:\s*"([^"]+)"/gm)].map((m) => m[1]);
+  const titres = [...bloc.matchAll(/^\s{4,6}titre:\s*"([^"]+)"/gm)].map((m) => m[1]);
+  return ids.map((id, i) => ({ rang: i + 1, id, titre: titres[i] || id }));
+};
+
+const VISUELS = JSON.parse(fs.readFileSync(path.join(ICI, '..', 'visuels.gen.json'), 'utf8'));
+
+/* Une planche est animee si son SVG porte une animation. */
+const anime = new Map();
+for (const [ref, o] of Object.entries(VISUELS)) {
+  const p = path.resolve(SOURCE, o.source);
+  anime.set(ref, fs.existsSync(p) && !fs.statSync(p).isDirectory()
+    && /<animate|<animateTransform/.test(fs.readFileSync(p, 'utf8')));
+}
+
+/* Qui joue quoi : on lit une fois le code de chaque module et de chaque
+   capsule, et on note quels fichiers SVG y sont cites. */
+const joueurs = [];
+const ramasser = (dossier, url, titre) => {
+  let texte = '';
+  for (const f of ['app.js', 'index.html', 'animations.js', 'capsule.js']) {
+    const p = path.join(dossier, f);
+    if (fs.existsSync(p)) texte += fs.readFileSync(p, 'utf8');
+  }
+  if (texte) joueurs.push({ url, titre, texte });
+};
+if (fs.existsSync(RES)) {
+  for (const d of fs.readdirSync(RES)) {
+    const dossier = path.join(RES, d);
+    if (!fs.statSync(dossier).isDirectory() || d.startsWith('_')) continue;
+    if (!fs.existsSync(path.join(dossier, 'index.html'))) continue;
+    ramasser(dossier, `${APPLI}packs/fluides/res/${d}/index.html`, d);
+  }
+}
+
+/* Les capsules citent leurs planches dans `donnees/<id>.js`, pas dans leur
+   index. Sans les lire, onze planches animees passaient pour injouables
+   alors qu'une capsule les deroule — et le livre les aurait figees sans
+   renvoi. Une capsule est un joueur comme un autre, avec sa propre URL. */
+if (fs.existsSync(CAPSULES)) {
+  for (const f of fs.readdirSync(CAPSULES)) {
+    if (!f.endsWith('.js') || f.startsWith('_')) continue;
+    const id = f.replace(/\.js$/, '');
+    joueurs.push({
+      url: `${APPLI}packs/fluides/res/capsules/index.html?c=${id}`,
+      titre: `capsule ${id}`,
+      texte: fs.readFileSync(path.join(CAPSULES, f), 'utf8'),
+    });
+  }
+}
+
+/* La page ou l'animation d'une planche tourne reellement, ou rien. */
+const ouAnime = (ref) => {
+  const o = VISUELS[ref];
+  if (!o) return null;
+  const nom = path.basename(o.source);
+  const trouve = joueurs.find((j) => j.texte.includes(nom));
+  return trouve ? trouve : null;
+};
+
+/* Le groupe d'entrainement d'un chapitre : `groupesQ` porte deja
+   « G5 », et la serie `rev-g5` existe sur inerweb.fr. */
+/* Le libelle et le volume de chaque serie sont ecrits dans `cartes.js`
+   (« Recuperation, charge, tracabilite ... 10 questions »). On les lit
+   plutot que de les recopier : le jour ou une serie grossit, la marge
+   du livre le dira. */
+const SERIES = new Map();
+{
+  const src = fs.readFileSync(path.join(SOURCE, 'packs', 'fluides', 'cartes.js'), 'utf8');
+  for (const m of src.matchAll(/vers:\s*"(rev-g\d{1,2})"[^}]*?titre:\s*"([^"]+)"[^}]*?desc:\s*"([^"]*)"/g)) {
+    const n = /(\d+)\s+questions/.exec(m[3]);
+    SERIES.set(m[1], { titre: m[2], questions: n ? +n[1] : null });
+  }
+}
+
+const serieDe = (ch) => {
+  for (const g of ch.groupesQ || []) {
+    const m = /^G(\d{1,2})$/.exec(g);
+    if (m && +m[1] >= 1 && +m[1] <= 13) return `rev-g${m[1]}`;
+  }
+  return null;
+};
+
+/* Apparier une lecon a l'ecran de capsule qui la traite. On ne devine
+   pas : sans mots communs francs, le renvoi ouvre la capsule au debut,
+   ce qui reste juste. Mieux vaut un renvoi large qu'un renvoi faux. */
+const VIDES = new Set(['le', 'la', 'les', 'un', 'une', 'des', 'du', 'de', 'et', 'ou',
+  'a', 'au', 'aux', 'en', 'dans', 'sur', 'pour', 'par', 'ce', 'ce', 'qui', 'que',
+  'son', 'sa', 'ses', 'il', 'elle', 'on', 'ne', 'pas', 'plus', 'toujours', 'jamais']);
+const mots = (t) => String(t).toLowerCase()
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .split(/[^a-z0-9]+/).filter((m) => m.length > 2 && !VIDES.has(m));
+
+const ecranPour = (ecrans, titreLecon) => {
+  if (!ecrans || !ecrans.length) return null;
+  const cible = new Set(mots(titreLecon));
+  let meilleur = null;
+  for (const e of ecrans) {
+    const communs = mots(e.titre).filter((m) => cible.has(m)).length;
+    if (communs >= 2 && (!meilleur || communs > meilleur.communs)) meilleur = { ...e, communs };
+  }
+  return meilleur;
+};
+
 /* La meilleure cible d'une fiche : sa capsule narrée si elle existe
    (animations + voix), sinon la fiche interactive dans l'appli. */
 const cibleDe = (src) => fs.existsSync(path.join(CAPSULES, `${src}.js`))
   ? `${APPLI}packs/fluides/res/capsules/index.html?c=${src}`
   : `${APPLI}?carte=${src}`;
 
+/* ------------------------------------------------------------------
+   QUATRE GENRES DE RENVOI, une promesse par code.
+
+     station      le chapitre entier dans l'appli — un par chapitre
+     lecon        la capsule narree OUVERTE SUR SON ECRAN quand on sait
+                  lequel, sinon la fiche interactive
+     animation    la page ou la planche que le papier fige tourne
+                  vraiment — seulement si elle existe
+     entrainement la serie de questions niveau examen du groupe
+
+   Chaque entree porte de quoi etre DESSINEE dans la marge : un genre,
+   un titre court, une phrase. La finition n'a plus qu'a les poser.
+   ------------------------------------------------------------------ */
+let ancres = 0, animations = 0, series = 0;
+
 for (const ch of CHAPITRES) {
   if (!ch.qr) { erreurs.push(`ch ${ch.num} « ${ch.titre} » : pas d'alias qr`); continue; }
-  /* L'alias du chapitre... */
+
   entrees.push({
-    chapitre: ch.num, titre: ch.titre, slug: ch.qr, alias: QR_BASE + ch.qr,
+    genre: 'station', chapitre: ch.num, titre: 'Le chapitre en entier',
+    phrase: 'La station dans l’appli : les leçons, les animations, l’entraînement.',
+    slug: ch.qr, alias: QR_BASE + ch.qr,
     cible: ch.genere ? `${APPLI}?carte=c00` : cibleDe(ch.lecons[0].src),
   });
-  /* ...et un alias PAR LEÇON : sous chaque leçon du papier, le code qui
-     ouvre son pendant interactif — l'animation, la voix, la correction.
-     Le livret est aussi le sommaire de la formation en ligne. */
-  for (const [i, l] of (ch.lecons || []).entries()) {
+
+  /* La correction du chapitre. Elle a quitte le papier : 37 pages ou la
+     reponse se lisait a trois pages de sa question. En ligne, elle fait
+     ce que le papier ne peut pas — renvoyer, apres chaque reponse, vers
+     ce qui l'explique. Les pages sont ecrites par `correction.mjs`. */
+  entrees.push({
+    genre: 'correction', chapitre: ch.num, titre: 'La correction',
+    phrase: 'Les réponses du chapitre, expliquées, avec le renvoi vers la page ou la leçon qui les fonde.',
+    slug: `${ch.qr}-c`, alias: `${QR_BASE}${ch.qr}-c`,
+    cible: `${APPLI}corriges/${ch.qr}/`,
+  });
+
+  /* L'entrainement : la serie du groupe, deja en ligne. Pas de serie
+     identifiable, pas de code — on n'invente pas une cible. */
+  const serie = serieDe(ch);
+  if (serie) {
+    series++;
     entrees.push({
-      chapitre: ch.num, lecon: i + 1, titre: l.t, slug: `${ch.qr}-${i + 1}`,
-      alias: `${QR_BASE}${ch.qr}-${i + 1}`, cible: cibleDe(l.src),
+      genre: 'entrainement', chapitre: ch.num,
+      titre: SERIES.get(serie)?.titre || 'Se tester sur ce chapitre',
+      phrase: `${SERIES.get(serie)?.questions ? SERIES.get(serie).questions + ' questions' : 'Des questions'} niveau examen, corrigées, chaque réponse renvoyant à ce qui l’explique.`,
+      slug: `${ch.qr}-q`, alias: `${QR_BASE}${ch.qr}-q`,
+      cible: `${APPLI}formation.html?carte=${serie}`,
     });
+  }
+
+  for (const [i, l] of (ch.lecons || []).entries()) {
+    const ecrans = ecransDeCapsule(l.src);
+    const e = ecrans ? ecranPour(ecrans, l.t) : null;
+    if (e) ancres++;
+
+    entrees.push({
+      genre: 'lecon', chapitre: ch.num, lecon: i + 1,
+      titre: e ? e.titre : l.t,
+      phrase: ecrans
+        ? (e ? `Expliqué à voix haute, écran ${e.rang} de la capsule.`
+             : 'Le chapitre expliqué à voix haute, avec ses animations.')
+        : 'La fiche interactive, avec sa question corrigée.',
+      slug: `${ch.qr}-${i + 1}`, alias: `${QR_BASE}${ch.qr}-${i + 1}`,
+      cible: ecrans && e
+        ? `${APPLI}packs/fluides/res/capsules/index.html?c=${l.src}&e=${e.rang}`
+        : cibleDe(l.src),
+    });
+
+    /* L'animation : seulement si UNE planche de cette lecon bouge a la
+       source ET qu'une page la joue. Le papier montre un instant ; le
+       code rend le mouvement. */
+    const planche = (l.visuels || []).find((v) => anime.get(v) && ouAnime(v));
+    if (planche) {
+      animations++;
+      entrees.push({
+        genre: 'animation', chapitre: ch.num, lecon: i + 1,
+        titre: 'La planche en mouvement',
+        phrase: 'Ci-contre, elle est figée. En ligne, elle se déroule.',
+        slug: `${ch.qr}-${i + 1}a`, alias: `${QR_BASE}${ch.qr}-${i + 1}a`,
+        cible: ouAnime(planche).url,
+      });
+    }
   }
 }
 
@@ -180,7 +368,12 @@ const lignes = [
 fs.writeFileSync(HTACCESS, lignes.join('\n'), 'utf8');
 
 const capsules = entrees.filter((e) => e.cible.includes('capsules')).length;
-const parChapitre = entrees.filter((e) => !e.lecon).length;
+const parGenre = entrees.reduce((a, e) => { a[e.genre] = (a[e.genre] || 0) + 1; return a; }, {});
 console.log('QR codes du livret — tome 1\n');
-console.log(`  ${parChapitre} alias de chapitre + ${entrees.length - parChapitre} alias de leçon`);
+for (const g of ['station', 'lecon', 'animation', 'entrainement', 'correction']) {
+  if (parGenre[g]) console.log(`  ${String(parGenre[g]).padStart(3)} ${g}`);
+}
+console.log(`\n  ${ancres} leçons ouvrent la capsule SUR LEUR ÉCRAN (les autres à son début)`);
+console.log(`  ${animations} planches animées ont une page où elles tournent`);
+console.log(`  ${series} chapitres ont une série d'entraînement`);
 console.log(`\n✔ ${entrees.length} codes (${capsules} vers une capsule narrée) · qr.gen.json · redirections-pages/ (${entrees.length} pages GitHub Pages) · redirections.gen.htaccess (archive)`);

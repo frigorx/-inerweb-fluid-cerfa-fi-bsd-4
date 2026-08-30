@@ -233,7 +233,12 @@ const chapitres = CHAPITRES.map((ch) => {
       demande = { ...l, tranche: { rang, sur: combien } };
     }
     const e = extraire(`${ou}, leçon ${i + 1} « ${l.t} »`, demande);
-    return e && { t: l.t, ...e };
+    /* Le `dc` d'une carte annonce TOUS les codes qu'elle couvre : découpée
+       en trois leçons, chacune héritait des mêmes quatorze codes. Le plan
+       peut donc préciser ce que CETTE leçon-ci traite vraiment. C'est un
+       jugement d'enseignant, verifiable en lisant la leçon — et la matrice
+       s'en sert pour compter juste. */
+    return e && { t: l.t, ...e, ...(l.codes ? { codes: l.codes } : {}) };
   }).filter(Boolean);
 
   /* L'activité de fin de chapitre peut s'appuyer sur une fiche

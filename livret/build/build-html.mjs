@@ -30,6 +30,9 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { construireFlux, TITRES_PARTIES, TITRES_CHAPITRES } from './pages.mjs';
+/* Le format et les noms de fichiers viennent de `build/format.mjs`, qui les
+   derive de `reglages.json` : ils ne sont plus ecrits en dur ici. */
+import * as F from './format.mjs';
 
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.join(ICI, '..', 'dist');
@@ -45,7 +48,7 @@ const SOURCE_PACK = process.env.PILOTE_FLUIDES || 'C:/git/pilote-fluides';
 const DYS = process.env.EDITION === 'dys';
 /* Le livre s'appelle « inerweb.fr HabFluide » — la marque du livre est
    le SITE, pas le logiciel : c'est lui qu'il fait connaître. */
-const NOM = 'inerweb.fr-HabFluide-Tome1-Livret-eleve-6x9' + (DYS ? '-DYS' : '');
+const NOM = F.NOM_INTERIEUR + (DYS ? '-DYS' : '');
 
 const LEXEND = path.join(SOURCE_PACK, 'moteur', 'polices', 'Lexend-variable.woff2');
 const POLICE_DYS = fs.existsSync(LEXEND)
@@ -64,6 +67,12 @@ if (DYS && !POLICE_DYS) {
    ------------------------------------------------------------------ */
 const R = JSON.parse(fs.readFileSync(path.join(ICI, '..', 'reglages.json'), 'utf8'));
 
+/* Le blanc exterieur reserve d'un coup la tranche, la colonne de renvois et
+   sa gouttiere : le texte coule dans la justification, la bande reste libre
+   pour les QR. A marge_renvois_mm = 0, on retrouve l'ancien livre. */
+const EXT_TOTAL = +(R.exterieur_mm + (R.marge_renvois_mm || 0)
+  + (R.separation_mm || 0)).toFixed(1);
+
 /* Corps de texte et interligne, par édition.
    14 pt en standard : c'est le plancher que la charte inerWeb fixe pour
    tout document élève — « Calibri 14 pt MINIMUM, partout, tableaux
@@ -80,8 +89,8 @@ ${POLICE_DYS && DYS ? POLICE_DYS : ''}
   --bleu:#1B3A63; --bleu2:#2f5689; --orange:#FF6B35; --logo:#e8914a;
   --txt:#1d2a38; --mut:#5a6b7d; --ligne:#d6dee7; --pale:#F4F7FA;
   --ok:#1e7e54; --ko:#c0392b;
-  /* Format Amazon KDP 6 × 9 pouces. */
-  --page-h:228.6mm; --page-l:152.4mm;
+  /* Format Amazon KDP — voir reglages.json. */
+  --page-h:${F.PAGE_H}mm; --page-l:${F.PAGE_L}mm;
   /* Réglages de densité — voir reglages.json. la variable --air multiplie tous les
      blancs entre blocs : c'est le curseur qui décide si la page respire
      ou si elle porte. */
@@ -95,12 +104,14 @@ body{background:#e7ecf1;color:var(--txt);
   -webkit-print-color-adjust:exact;print-color-adjust:exact}
 
 /* ---------- Le flux (écran) ---------- */
-#livret{max-width:152.4mm;margin:0 auto;background:#fff;padding:14mm 16mm;
+#livret{max-width:${F.PAGE_L}mm;margin:0 auto;background:#fff;padding:14mm 16mm;
   box-shadow:0 3px 14px rgba(27,58,99,.16)}
 .marq{font-size:1pt;line-height:0;color:#fff}
 
 /* Rien ne se coupe au milieu : ni une planche, ni un encadré,
    ni une question et ses réponses, ni un bloc « À l'écran ». */
+.tbl.long{break-inside:auto;page-break-inside:auto}
+.tbl.long tr{break-inside:avoid;page-break-inside:avoid}
 figure,.duo,.encadre,.q,.rep,.ecran,.tbl,.ch-tete,.note,.voix,.som-partie,
 .remplir>.rl,.remplir>.trait{break-inside:avoid;page-break-inside:avoid}
 h2,h3,h4,.sect-t,.lecon-t,.page-t,.sect-intro{break-after:avoid;page-break-after:avoid}
@@ -114,11 +125,11 @@ h2,h3,h4,.sect-t,.lecon-t,.page-t,.sect-intro{break-after:avoid;page-break-after
    Sens conventionnel en édition : le haut de la planche part vers la
    gauche, on tourne l'ouvrage dans le sens des aiguilles.
    Les cotes se déduisent des marges réglées, jamais écrites en dur. */
-.paysage{height:${(228.6 - R.haut_mm - R.bas_mm).toFixed(1)}mm;position:relative}
+.paysage{height:${F.HAUTEUR_UTILE}mm;position:relative}
 .paysage-in{position:absolute;top:50%;left:50%;transform-origin:center center;
   transform:translate(-50%,-50%) rotate(-90deg);
-  width:${(228.6 - R.haut_mm - R.bas_mm).toFixed(1)}mm;
-  height:${(152.4 - R.gouttiere_mm - R.exterieur_mm).toFixed(1)}mm;
+  width:${F.HAUTEUR_UTILE}mm;
+  height:${F.JUSTIFICATION}mm;
   display:flex;flex-direction:column}
 /* Titre resserré : chaque millimètre rendu ici passe dans la planche. */
 .paysage-in .page-t{font-size:16pt;margin:0 0 3mm}
@@ -234,6 +245,10 @@ figure figcaption{margin-top:1.6mm;text-align:center;font-style:italic;font-size
   font:700 13pt "Trebuchet MS",Calibri,sans-serif;color:var(--bleu)}
 .note-case{display:inline-block;width:11mm;border-bottom:1pt dotted var(--mut);margin:0 1.2mm}
 .note-desc{font:italic 10pt Calibri,sans-serif;color:var(--mut);margin-left:2.4mm}
+/* La correction a quitte le papier : le bloc de note dit ou elle est, et
+   le QR qui l'ouvre est en face, dans la marge. */
+.note-corr{display:block;font:italic 9.5pt Calibri,sans-serif;color:var(--mut);
+  margin-top:1.6mm;line-height:1.4}
 
 /* ---------- À l'écran ---------- */
 .ecran{display:flex;gap:3mm;align-items:center;background:#fff;
@@ -309,19 +324,19 @@ tbody tr:nth-child(even) td{background:#F7FAFC}
 .couv-auteur{margin:0;font-size:8.8pt}
 
 /* ---------- Impression ----------
-   Format Amazon KDP 6 × 9 pouces (152,4 × 228,6 mm).
+   Format Amazon KDP ${F.FORMAT_LISIBLE} (${F.COTES_LISIBLES}).
 
    Les marges du haut et du bas réservent la place du bandeau et du pied,
    dessinés à la finition. Les marges latérales tiennent compte de la
    RELIURE : KDP exige 19 mm côté intérieur pour un livre de 300 à 500
    pages — sans quoi le texte disparaît dans le pli. */
-@page{size:152.4mm 228.6mm;margin:${R.haut_mm}mm ${R.exterieur_mm}mm ${R.bas_mm}mm}
+@page{size:${F.PAGE_L}mm ${F.PAGE_H}mm;margin:${R.haut_mm}mm ${EXT_TOTAL}mm ${R.bas_mm}mm}
 /* Marges MIROIR : la reliure mange le bord intérieur, qui change de côté
    selon que la page est de droite (recto) ou de gauche (verso). Chrome
    applique bien @page:left / @page:right — vérifié sur pièce le
    27/08/2026 — ce qui rend 6 mm de largeur utile au texte. */
-@page:right{margin-left:${R.gouttiere_mm}mm;margin-right:${R.exterieur_mm}mm}
-@page:left{margin-left:${R.exterieur_mm}mm;margin-right:${R.gouttiere_mm}mm}
+@page:right{margin-left:${R.gouttiere_mm}mm;margin-right:${EXT_TOTAL}mm}
+@page:left{margin-left:${EXT_TOTAL}mm;margin-right:${R.gouttiere_mm}mm}
 @media print{
   body{background:#fff}
   #livret{max-width:none;margin:0;padding:0;box-shadow:none}
