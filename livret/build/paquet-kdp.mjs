@@ -175,9 +175,9 @@ même substantiellement retravaillé. Les faits, pour répondre honnêtement :
   par IA sous sa direction → répondre **« Oui »** pour les images.
 
 Cette déclaration est interne à Amazon (elle n'apparaît pas sur la fiche) et
-n'empêche pas la publication. La mention imprimée en page crédits
-(« fabrication assistée par intelligence artificielle, sous sa relecture »)
-dit la même chose au lecteur.
+n'empêche pas la publication. Le livre, lui, n'imprime pas de mention d'outil
+(choix de la relecture du 30/08) : sa page crédits dit que l'ouvrage est conçu
+et dirigé par l'auteur, qui en a vérifié chaque page — ce qui est exact.
 
 ## Les droits d'images : la preuve est jointe
 

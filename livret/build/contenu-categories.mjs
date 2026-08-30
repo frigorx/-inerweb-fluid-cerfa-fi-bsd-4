@@ -205,7 +205,7 @@ export const questionsCategories = (ref) => {
         'Aucune attestation, le CO₂ n’est pas un gaz fluoré'],
       1,
       'Le CO₂ relève de la catégorie B, l’ammoniac de la catégorie C. Ce sont des ' +
-      'catégories dédiées, que ni A1 ni A2 ne remplacent — c’est précisément le ' +
+      'catégories dédiées, que ni A1 ni A2 ne remplacent : c’est précisément le ' +
       'piège de ce chapitre.'),
 
     q('correspondance',

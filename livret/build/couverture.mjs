@@ -244,15 +244,15 @@ const html = `<!doctype html>
 
   <!-- ============ 4e DE COUVERTURE ============ -->
   <div class="plat quatre">
-    <h2>Passer l’épreuve théorique sans rien laisser au hasard</h2>
+    <h2>Toute la théorie de l’épreuve, dans l’ordre du métier</h2>
 
     <p>Ce livre couvre <b>l’intégralité du programme théorique</b> de l’attestation d’aptitude
        à la manipulation des fluides frigorigènes, pour les catégories <b>A1, A2, D et E</b>,
        selon l’arrêté du 21 novembre 2025 et le règlement (UE) 2024/573.</p>
 
     <ul class="liste">
-      <li><b>Dix-neuf chapitres</b>, du risque au fluide, du fluide à la machine, de la machine aux opérations.</li>
-      <li>Chaque chapitre s’ouvre sur <b>ce que le référentiel exige</b> — code par code, catégorie par catégorie.</li>
+      <li><b>Dix-neuf chapitres</b>, de la sécurité aux opérations, en passant par le fluide et la machine.</li>
+      <li>Chaque chapitre s’ouvre sur <b>ce que le référentiel exige</b>, code par code.</li>
       <li>Des <b>questions type examen posées avant la lecture</b> : on se situe d’abord, on lit ensuite,
           on se corrige en fin de chapitre.</li>
       <!-- Espaces insécables dans les guillemets : sans elles, le chevron
@@ -263,9 +263,9 @@ const html = `<!doctype html>
 
     <div class="encart encart-qr">
       <div>
-        <h3>Un livre interactif : le papier ouvre l’écran</h3>
-        <p>Quatre-vingt-quinze QR codes mènent aux cours animés et racontés à voix haute
-           d’<b>inerweb.fr</b> — schémas en mouvement, questions corrigées, capsules audio.
+        <h3>Un livre relié aux cours animés d’inerweb.fr</h3>
+        <p>Quatre-vingt-quinze QR codes mènent aux cours du site, animés et racontés
+           à voix haute : schémas en mouvement, questions corrigées, capsules audio.
            Les adresses sont aussi écrites en clair : un navigateur suffit.</p>
       </div>
       <figure class="qr-accueil">
@@ -274,7 +274,7 @@ const html = `<!doctype html>
       </figure>
     </div>
 
-    <p class="avert">Ce livre prépare l’épreuve théorique ; il ne délivre aucune attestation —
+    <p class="avert">Ce livre prépare l’épreuve théorique ; il ne délivre aucune attestation :
        seul un organisme évaluateur certifié le fait. Les gestes professionnels et l’épreuve
        pratique feront l’objet du prochain livre, consacré à la partie pratique. Aucune question officielle d’examen ne figure dans cet ouvrage.</p>
 
@@ -331,6 +331,18 @@ if (fs.existsSync(CHROME)) {
     'file:///' + fichier.replace(/\\/g, '/'),
   ], { stdio: 'ignore', timeout: 300000 });
   pdf = path.relative(process.cwd(), cible);
+  /* Chrome signe le PDF « HeadlessChrome » et laisse l'auteur vide : on
+     repasse des métadonnées d'édition propres. Polish non bloquant —
+     verifier-kdp.py reste le gendarme. */
+  try {
+    execFileSync('python', ['-c', [
+      'import pymupdf, sys',
+      'd = pymupdf.open(sys.argv[1])',
+      'd.set_metadata({"title": "inerweb.fr HAB-FLUIDE — partie théorique (couverture)",',
+      ' "author": "F. Henninot", "creator": "inerWeb — chaîne de fabrication livret/build"})',
+      'd.saveIncr()',
+    ].join('\n'), cible], { stdio: 'ignore', timeout: 60000 });
+  } catch { console.log('  (métadonnées de couverture non posées — python/pymupdf indisponible)'); }
 }
 
 console.log('Couverture Amazon KDP');

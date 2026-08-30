@@ -37,64 +37,63 @@ export const TEXTES_LIMINAIRES = {
     `Textes réglementaires cités : arrêté du 21 novembre 2025 (NOR TECP2532494A) et règlement (UE) ` +
     `2024/573. Ce sont des textes officiels, librement consultables ; leur citation ici ne vaut pas ` +
     `publication officielle. <b>En cas de divergence, le texte officiel fait foi.</b>`,
-    `Ouvrage conçu, dirigé et vérifié par l'auteur. Fabrication assistée par intelligence ` +
-    `artificielle (Claude, Anthropic), sous sa relecture.`,
+    `Ouvrage conçu et dirigé par l'auteur, qui en a vérifié chaque page. ` +
+    `Maquette et composition : inerWeb.`,
     `<i>ISBN et dépôt légal : voir la quatrième de couverture.</i>`,
   ],
 
   'a-quoi-sert': [
     `Ce livret prépare à l'<b>attestation d'aptitude fluides frigorigènes</b>. Il rassemble, ` +
-    `sur papier, la théorie qui se présente à l'épreuve : dix-neuf chapitres, du risque au fluide, ` +
-    `du fluide à la machine, de la machine aux opérations.`,
+    `sur papier, la théorie qui se présente à l'épreuve : dix-neuf chapitres, qui vont de la ` +
+    `sécurité aux opérations en passant par le fluide et la machine.`,
     `Il se lit <b>avant</b> la formation pour arriver préparé, <b>pendant</b> pour garder une trace, ` +
     `et <b>après</b> pour réviser jusqu'à l'épreuve. Chaque chapitre commence par ce que le ` +
     `<b>référentiel officiel</b> exige, puis par des <b>questions type examen</b> — répondez-y avant de ` +
     `lire : vous saurez tout de suite ce que vous savez déjà. Les corrections sont en fin de chapitre. ` +
-    `Ce livret s'écrit autant qu'il se lit.`,
-    `Le geste professionnel — manipuler, braser, récupérer en atelier — fera l'objet du <b>prochain livre, consacré à la partie pratique</b>. ` +
-    `Ici, on comprend ; là-bas, on fait.`,
+    `Prévoyez un crayon : les activités et les bilans se remplissent au fil des pages.`,
+    `Le geste professionnel (manipuler, braser, récupérer en atelier) fera l'objet du ` +
+    `<b>prochain livre, consacré à la partie pratique</b>.`,
   ],
   'lire-qr': [
     `Chaque chapitre porte un <b>QR code</b>. Scannez-le avec l'appareil photo du téléphone : ` +
-    `il ouvre la version interactive du chapitre sur <b>inerweb.fr</b> — le cours raconté à voix ` +
-    `haute quand il existe, les schémas animés, les questions corrigées.`,
+    `il ouvre la version interactive du chapitre sur <b>inerweb.fr</b> : le cours raconté à voix ` +
+    `haute quand il existe, les schémas animés et les questions corrigées.`,
     `L'adresse est aussi écrite <b>en toutes lettres</b> sous chaque code (par exemple ` +
     `<b>inerweb.fr/f/securite</b>) : sans téléphone, tapez-la simplement dans un navigateur. ` +
     `L'index complet des adresses se trouve en fin de livret.`,
-    `Rien d'obligatoire : le livret se suffit. L'écran ajoute le son, le mouvement et la correction ` +
-    `automatique — trois choses que le papier ne sait pas faire.`,
+    `Rien d'obligatoire : le livret se suffit à lui-même. L'écran ajoute simplement le son, ` +
+    `le mouvement et la correction automatique.`,
   ],
   'parcours': [
-    `L'ordre des chapitres n'est pas celui d'un catalogue : c'est celui du métier. ` +
+    `Les chapitres suivent l'ordre du métier. ` +
     `<b>On se protège d'abord</b> (partie A), on apprend le cadre légal (B), on comprend le fluide ` +
     `et la machine (C et D), on étudie les opérations (E), et on finit par les fluides qui ` +
     `demandent plus que les autres (F).`,
     `Chaque chapitre suit le même chemin : des leçons courtes, une activité à remplir, une phrase ` +
     `à dire à voix haute, des questions. La dernière page de chaque chapitre vous donne une note ` +
-    `sur six — reportez-la au bilan de fin de livret pour voir où revenir.`,
+    `sur six. Reportez-la au bilan de fin de livret : vous verrez où revenir.`,
     `<b>En bas de chaque page, à côté du numéro, vous lisez « Référentiel : » suivi de codes.</b> ` +
-    `Ce sont les compétences de l'arrêté du 21 novembre 2025 que la page travaille — celles-là ` +
-    `mêmes que l'épreuve peut vous demander. Elles ne sont pas décoratives : la page « Index des ` +
-    `codes du référentiel », en fin de livret, dit pour chaque code où le retrouver. Un code que ` +
-    `vous ne comprenez pas encore est une page à relire, et vous savez laquelle.`,
+    `Ce sont les compétences de l'arrêté du 21 novembre 2025 que la page travaille, celles que ` +
+    `l'épreuve peut vous demander. La page « Index des codes du référentiel », en fin de livret, ` +
+    `dit où retrouver chaque code. Si un code vous échappe encore, vous savez donc quelle page relire.`,
   ],
   'statut': [
     `Ce livret <b>prépare</b> à l'attestation d'aptitude. Il <b>ne la délivre pas</b> : seul un ` +
     `organisme évaluateur certifié fait passer l'épreuve et délivre l'attestation.`,
-    `Il couvre l'<b>épreuve théorique</b> des catégories <b>A1, A2, D et E</b> — chaque code théorique ` +
-    `exigé par le référentiel pour ces catégories est traité, la vérification est refaite à chaque ` +
+    `Il couvre l'<b>épreuve théorique</b> des catégories <b>A1, A2, D et E</b> : chaque code théorique ` +
+    `exigé par le référentiel pour ces catégories est traité, et la vérification est refaite à chaque ` +
     `édition. La catégorie V (climatisation automobile) et les catégories B (CO₂) et C (ammoniac) ne ` +
     `sont pas préparées ici ; CO₂ et ammoniac sont abordés en information, pour savoir les reconnaître. ` +
     `La partie <b>pratique</b> — gestes, manipulations, atelier — fera l'objet du prochain livre, consacré à la partie pratique.`,
     `Les valeurs réglementaires citées (catégories, durées d'épreuve, dates) sont extraites de ` +
     `l'arrêté du 21 novembre 2025 et vérifiables en fin de livret, page « Sources ». En cas de ` +
     `doute entre ce livret et un texte officiel, <b>le texte officiel a toujours raison</b>.`,
-    `Les questions d'entraînement de ce livret sont des questions <b>d'entraînement</b> : aucune ` +
-    `question officielle d'examen n'y figure.`,
+    `Les questions de ce livret sont des questions <b>d'entraînement</b> : aucune question ` +
+    `officielle d'examen n'y figure.`,
   ],
   'point-depart': [
     `Avant le premier chapitre, posez-vous trois minutes. Personne ne corrige cette page : ` +
-    `elle est à vous. Vous y reviendrez à la fin — c'est là qu'on mesure le chemin.`,
+    `elle est à vous. Vous y reviendrez à la fin, pour mesurer le chemin parcouru.`,
   ],
   'categories-coup-oeil': [
     `Sept catégories d'attestation existent. Repérez la vôtre dès maintenant : le chapitre 4 ` +
@@ -102,7 +101,7 @@ export const TEXTES_LIMINAIRES = {
     /* Même en coup d'œil, A1 ne peut pas se résumer « tout, sans limite » :
        lu isolément, ça laisse croire qu'A1 couvre le CO₂ et l'ammoniac. */
     `<b>A1</b> : toutes les opérations sur les fluides <b>fluorés et les hydrocarbures</b>, sans ` +
-    `limite de charge — jamais le CO₂ ni l'ammoniac. <b>A2</b> : les mêmes, en petite charge. <b>B</b> : le CO₂. ` +
+    `limite de charge, mais ni le CO₂ ni l'ammoniac. <b>A2</b> : les mêmes, en petite charge. <b>B</b> : le CO₂. ` +
     `<b>C</b> : l'ammoniac. <b>D</b> : récupérer seulement. <b>E</b> : contrôler l'étanchéité ` +
     `sans ouvrir. <b>V</b> : la climatisation des véhicules.`,
   ],
@@ -113,7 +112,7 @@ export const TEXTES_FIN = {
     `Les questions des chapitres se posaient AVANT la lecture, pour vous situer. ` +
     `Celles-ci se posent APRÈS : elles balaient tout le livre, dans le désordre, ` +
     `comme le fait l'épreuve. Quatre-vingt-neuf questions, tirées de la même source ` +
-    `que les précédentes et jamais déjà posées ailleurs dans ce livre.`,
+    `que les précédentes, sans reprendre aucune question des chapitres.`,
     `Le numéro de chapitre est indiqué devant chaque question : une erreur vous dit ` +
     `immédiatement quelle page relire. Les réponses sont sur les pages suivantes.`,
   ],
@@ -124,7 +123,7 @@ export const TEXTES_FIN = {
   ],
   'bilan': [
     `Reportez ici la note de fin de chaque chapitre. Trois notes faibles dans la même partie ? ` +
-    `C'est la partie à relire — pas seulement les chapitres un par un.`,
+    `C'est alors la partie entière qu'il faut relire, pas seulement un chapitre.`,
   ],
   'diplome': [
     `Ce livret prépare une attestation professionnelle, mais son contenu croise largement les ` +
@@ -142,8 +141,8 @@ export const TEXTES_FIN = {
   'credits': [
     `<b>HAB-FLUIDE — livre sur l'habilitation des fluides, partie théorique.</b>`,
     `© 2026 Franck Henninot — inerWeb. Tous droits réservés. Contact : inerweb.fh@gmail.com.`,
-    `Conçu, dirigé et vérifié par F. Henninot, enseignant en filière froid et climatisation. ` +
-    `Fabrication assistée par intelligence artificielle (Claude, Anthropic), sous sa relecture.`,
+    `Conçu et dirigé par F. Henninot, enseignant en filière froid et climatisation, ` +
+    `qui en a vérifié chaque page. Maquette et composition : inerWeb.`,
     `Les schémas techniques et illustrations proviennent de la bibliothèque inerWeb. ` +
     `Ce livret ne contient aucun document pédagogique tiers.`,
     /* Attribution exigée par la licence CC BY 3.0 — le registre des droits
@@ -155,8 +154,8 @@ export const TEXTES_FIN = {
     `l'accord écrit de l'auteur. La revente de l'exemplaire papier acquis n'est pas concernée.`,
   ],
   'engagement': [
-    `La théorie est lue ; reste à la tenir. Trois engagements, à écrire de votre main — on tient ` +
-    `mieux ce qu'on a écrit soi-même.`,
+    `Vous avez lu la théorie ; reste à la tenir sur le terrain. Trois engagements, à écrire ` +
+    `de votre main : on tient mieux ce qu'on a écrit soi-même.`,
   ],
 };
 

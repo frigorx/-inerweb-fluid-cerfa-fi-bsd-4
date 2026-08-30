@@ -285,7 +285,7 @@ export const CHAPITRES = [
         'Relevé 2 — T sortie condenseur : ______ °C, T saturation HP : ______ °C, sous-refroidissement : ______ K',
         'Ce que je soupçonne : ______',
       ],
-      voixHaute: 'Surchauffe qui grimpe, sous-refroidissement qui s effondre : les deux orientent vers un manque de fluide. On écarte les autres causes — détendeur, filtre, débit, mesure — avant de conclure.',
+      voixHaute: 'Surchauffe qui grimpe, sous-refroidissement qui s effondre : les deux orientent vers un manque de fluide. On écarte les autres causes avant de conclure : détendeur, filtre, débit, mesure.',
     },
   },
   {
@@ -316,7 +316,7 @@ export const CHAPITRES = [
         'R-744 — famille : ______ — classe : ______',
         'R-1234yf — famille : ______ — classe : ______',
       ],
-      voixHaute: 'Le numéro dit la molécule. La classe dit le danger. Le PRP dit le poids climatique. Trois choses différentes.',
+      voixHaute: 'Le numéro dit la molécule. La classe dit le danger. Le PRP dit le poids climatique.',
     },
   },
 
@@ -354,13 +354,13 @@ export const CHAPITRES = [
         'La mesure que je fais ensuite : ______',
         'Ce que je note sur le rapport : ______',
       ],
-      voixHaute: 'Un compresseur comprime du gaz, jamais du liquide. Le reste en découle.',
+      voixHaute: 'Un compresseur comprime du gaz, jamais du liquide.',
     },
   },
   {
     num: 10, partie: 'D', qr: 'condenseur',
     titre: 'Le condenseur',
-    objectif: 'Expliquer la condensation, distinguer les deux pressostats, et dire ce que la propreté coûte en énergie.',
+    objectif: 'Expliquer la condensation, distinguer les deux pressostats, et dire ce que l encrassement coûte en énergie.',
     codes: ['7.01', '7.02', '7.03', '7.04', '7.05', '7.06', '7.07', '7.08', '7.09', '7.10'],
     groupesQ: ['G7'],
     lecons: [
@@ -572,7 +572,7 @@ export const CHAPITRES = [
         'Le taux de remplissage à ne pas dépasser : ______',
         'Ce que je note, et sur quel document : ______',
       ],
-      voixHaute: 'Ce qui n est pas pesé n existe pas. Ce qui n est pas écrit n a pas eu lieu.',
+      voixHaute: 'Je pèse avant, je pèse après, et j écris au registre : ce qui n est pas écrit n a pas eu lieu.',
     },
   },
   {
