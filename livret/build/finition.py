@@ -281,7 +281,7 @@ def finir(chemin):
               encoding='utf-8') as f:
         RENVOIS = {e['slug']: e for e in json.load(f)}
     QR_TAILLE = 20 * MM
-    qr_poses, qr_manques = 0, 0
+    qr_poses, qr_manques, qr_detail = 0, 0, []
     for page, (genre, _info, _codes) in zip(doc, contextes):
         if genre == 'nue':
             continue
@@ -308,6 +308,7 @@ def finir(chemin):
         page.draw_line(fitz.Point(x0, haut_util + 3.9 * MM),
                        fitz.Point(x1, haut_util + 3.9 * MM), color=ORANGE, width=1.2)
         curseur = haut_util + 6.5 * MM
+        occupes = []          # les intervalles déjà posés, pour le repli
         # Chaque marqueur de la page, une fois, trié par hauteur.
         a_poser = []
         for slug, type_ in dict.fromkeys(MARQUEUR_QR.findall(texte)):
@@ -320,8 +321,11 @@ def finir(chemin):
             fichier = os.path.join(QR_DIR, slug + '.png')
             if not e or not os.path.exists(fichier):
                 qr_manques += 1
+                qr_detail.append('%s (p.%d, %s)' % (
+                    slug, page.number + 1, 'sans entrée' if not e else 'sans image'))
                 continue
             r = e.get('renvoi', {})
+            repli = False
             y = max(y_marqueur - 1 * MM, curseur)
             # Le bloc : QR, genre, titre (2 lignes max), quoi (4 lignes
             # max), adresse (2 lignes). Les textbox disent la place prise.
@@ -329,8 +333,24 @@ def finir(chemin):
             if y + h_max > bas_util:
                 y = bas_util - h_max
                 if y < curseur:
-                    qr_manques += 1   # plus de place dans la marge
-                    continue
+                    # Le bas de la marge est plein — cas des fins de
+                    # chapitre, où « Entraînez-vous » et le rappel de la
+                    # station se disputent le pied. Le bloc se replie dans
+                    # le dernier creux assez grand plus haut : moins en
+                    # regard, mais présent.
+                    y = None
+                    bornes = [haut_util + 6.5 * MM]
+                    for d, f_ in sorted(occupes):
+                        bornes += [d, f_]
+                    bornes.append(bas_util)
+                    for k in range(0, len(bornes) - 1, 2):
+                        if bornes[k + 1] - bornes[k] >= h_max:
+                            y = bornes[k + 1] - h_max
+                    if y is None:
+                        qr_manques += 1   # plus de place dans la marge
+                        qr_detail.append('%s (p.%d, sans place)' % (slug, page.number + 1))
+                        continue
+                    repli = True
             page.insert_image(fitz.Rect(x0, y, x0 + QR_TAILLE, y + QR_TAILLE),
                               filename=fichier)
             y2 = y + QR_TAILLE + 1.6 * MM
@@ -358,7 +378,10 @@ def finir(chemin):
                 fs = fs * MARGE_RENVOIS / largeur_de(slug, 'ttitre', fs)
             page.insert_text(fitz.Point(x0, y2 + 3.9 * MM), slug,
                              fontname='ttitre', fontsize=fs, color=BLEU)
-            curseur = y2 + 6 * MM + 2 * MM
+            fin = y2 + 6 * MM + 2 * MM
+            if not repli:
+                curseur = fin
+            occupes.append((y, fin))
             qr_poses += 1
 
     # ---- Les marqueurs internes quittent la couche texte -----------
@@ -429,6 +452,8 @@ def finir(chemin):
     print('  sommaire : %d numéros de page écrits' % poses)
     print('  colonne numérique : %d QR posés en marge%s'
           % (qr_poses, ' · %d sans place ou sans image' % qr_manques if qr_manques else ''))
+    for d in qr_detail:
+        print('    renvoi sauté : %s' % d)
     print('  finition : %d pages numérotées, %d nues%s'
           % (numero, nues, ', 1 blanche de fin (compte pair)' if ajoutee else ''))
     # L'édition DYS est plus aérée, donc plus longue : elle ne doit pas
