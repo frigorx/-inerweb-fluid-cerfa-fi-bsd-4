@@ -135,3 +135,4 @@ Redirect 302 /f/rev-g6 https://inerweb.fr/?carte=rev-g6
 Redirect 302 /f/rev-g7 https://inerweb.fr/?carte=rev-g7
 Redirect 302 /f/rev-g8 https://inerweb.fr/?carte=rev-g8
 Redirect 302 /f/rev-g9 https://inerweb.fr/?carte=rev-g9
+Redirect 302 /f/mes-resultats https://inerweb.fr/

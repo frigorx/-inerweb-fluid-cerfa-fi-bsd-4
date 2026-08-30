@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Mes résultats — séries et compétences — inerWeb HabFluide</title>
+<style>
+:root{--bleu:#1b3a63;--orange:#ff6b35;--mut:#5a6472;--ligne:#d6dee7;--vert:#2e7d4f;--rouge:#c9451a}
+body{font-family:Calibri,Carlito,'Segoe UI',sans-serif;color:var(--bleu);background:#f4f7fa;margin:0;min-height:100vh;display:flex;flex-direction:column}
+header{background:#fff;border-bottom:2px solid var(--orange);padding:10px 16px;font-weight:700}
+header .hab{color:var(--orange)}
+main{flex:1;max-width:760px;width:100%;margin:0 auto;padding:16px;box-sizing:border-box}
+h1{font-size:1.2rem;margin:6px 0 4px}
+.note-page{color:var(--mut);font-size:.9rem;margin:0 0 16px}
+section{background:#fff;border:1px solid var(--ligne);border-radius:10px;padding:14px 16px;margin:0 0 16px}
+h2{font-size:1rem;margin:0 0 10px;border-bottom:2px solid var(--orange);padding-bottom:6px}
+table{width:100%;border-collapse:collapse;font-size:.95rem}
+td,th{text-align:left;padding:7px 6px;border-bottom:1px solid var(--ligne);vertical-align:top}
+th{color:var(--mut);font-weight:700;font-size:.82rem;text-transform:uppercase;letter-spacing:.4px}
+.num{color:var(--orange);font-weight:700;padding-right:2px}
+.note{font-weight:700;white-space:nowrap;text-align:right}
+.vide{color:var(--mut);font-weight:400}
+.etat{font-weight:700;white-space:nowrap}
+.etat.acquis{color:var(--vert)}.etat.fragile{color:var(--orange)}.etat.revoir{color:var(--rouge)}
+.rien{color:var(--mut);margin:6px 0}
+footer{color:var(--mut);font-size:.82rem;padding:10px 16px;text-align:center}
+footer a{color:var(--mut)}
+</style>
+</head>
+<body>
+<header><span class="hab">❄</span> inerWeb · HabFluide — mes résultats</header>
+<main>
+<h1>Où j’en suis</h1>
+<p class="note-page">Ce que ce téléphone a retenu de vos séries. Tout reste sur l’appareil : rien ne remonte, rien ne s’envoie.</p>
+<section>
+<h2>Mes séries, chapitre par chapitre</h2>
+<p class="note-page">La note à reporter sur la page Bilan du livre.</p>
+<table id="series"><tr><th>Chapitre</th><th style="text-align:right">Note</th></tr></table>
+</section>
+<section>
+<h2>Mes compétences</h2>
+<p class="note-page">Code par code, d’après vos réponses : acquise, fragile, ou à revoir.</p>
+<div id="comp"><p class="rien">Aucune question corrigée sur cet appareil pour l’instant — lancez une série depuis un QR « des questions ? » du livre.</p></div>
+</section>
+</main>
+<footer>Du livre « HAB-FLUIDE — partie théorique » · <a href="https://inerweb.fr/">ouvrir l’appli</a></footer>
+<script>
+(function () {
+  var SERIES = [{"serie":"rev-g12","num":1,"titre":"Ce qui peut vous blesser"},{"serie":"rev-g11","num":2,"titre":"Lire une classe de sécurité"},{"serie":"rev-g1","num":3,"titre":"Ce que la loi vous impose"},{"serie":"rev-g1","num":4,"titre":"Les sept catégories, et la bascule de 2027"},{"serie":"rev-g1","num":5,"titre":"Thermodynamique utile"},{"serie":"rev-g1","num":6,"titre":"Lire un log p-h et une table de saturation"},{"serie":"rev-g1","num":7,"titre":"Surchauffe et sous-refroidissement"},{"serie":"rev-g1","num":8,"titre":"Les familles de fluides et leurs codes"},{"serie":"rev-g6","num":9,"titre":"Le compresseur"},{"serie":"rev-g7","num":10,"titre":"Le condenseur"},{"serie":"rev-g8","num":11,"titre":"L évaporateur"},{"serie":"rev-g9","num":12,"titre":"Le détendeur et les organes annexes"},{"serie":"rev-g3","num":13,"titre":"Contrôles avant mise en service"},{"serie":"rev-g4","num":14,"titre":"Les contrôles d étanchéité"},{"serie":"rev-g5","num":15,"titre":"Récupérer sans émettre, peser, tracer"},{"serie":"rev-g10","num":16,"titre":"Tuyauterie et brasage sous azote"},{"serie":"rev-g11","num":17,"titre":"Substitution et efficacité énergétique"},{"serie":"rev-g12","num":18,"titre":"Hydrocarbures — le spécifique A1 et A2"},{"serie":"rev-g13","num":19,"titre":"CO₂ et NH₃ — reconnaître, ne pas intervenir"}];
+  var hist = {}, comp = {};
+  try { hist = JSON.parse(localStorage.getItem('pilote_hist_fluides-habilitation') || '{}'); } catch (e) {}
+  try { comp = JSON.parse(localStorage.getItem('pilote_comp_fluides-habilitation') || '{}'); } catch (e) {}
+  var t = document.getElementById('series');
+  SERIES.forEach(function (s) {
+    var tr = document.createElement('tr');
+    var pct = hist[s.serie];
+    var note = (pct == null) ? '<span class="vide">— pas encore jouée</span>'
+      : (Math.round(pct / 10) + ' / 10');
+    tr.innerHTML = '<td><span class="num">' + s.num + '</span> ' + s.titre + '</td>' +
+      '<td class="note">' + note + '</td>';
+    t.appendChild(tr);
+  });
+  var codes = Object.keys(comp).sort(function (a, b) {
+    return a.localeCompare(b, 'fr', { numeric: true });
+  });
+  if (codes.length) {
+    var ETATS = { acquis: 'acquise', fragile: 'fragile', revoir: 'à revoir' };
+    var h = '<table><tr><th>Code</th><th>Réponses</th><th>État</th></tr>';
+    codes.forEach(function (c) {
+      var e = comp[c] || {};
+      var etat = (!e.ok && !e.ko) ? 'vierge'
+        : (e.dernier === 1 && !e.ko) ? 'acquis'
+        : (e.dernier === 1) ? 'fragile' : 'revoir';
+      if (etat === 'vierge') return;
+      h += '<tr><td><b>' + c + '</b></td><td>' + (e.ok || 0) + ' justes · ' + (e.ko || 0) + ' fausses</td>' +
+        '<td class="etat ' + etat + '">' + ETATS[etat] + '</td></tr>';
+    });
+    h += '</table>';
+    document.getElementById('comp').innerHTML = h;
+  }
+})();
+</script>
+</body>
+</html>

@@ -200,6 +200,14 @@ figure figcaption{margin-top:1.6mm;text-align:center;font-style:italic;font-size
    la hauteur du blanc qu'elle vient remplir — elle ne déplace donc jamais
    la pagination. Dans le tirage, une planche comme une autre. */
 .comble img{width:auto;max-width:100%}
+/* Le QR du bilan : la page Bilan est nue (pas de marge de renvois), le
+   code s'imprime donc dans la page, comme un bloc du bilan. */
+.bilan-qr{display:flex;gap:6mm;align-items:flex-start;border:.6pt solid var(--ligne);
+  border-left:2.4pt solid var(--orange);padding:4mm 5mm;margin:calc(var(--air) * 4mm) 0 0;
+  break-inside:avoid;page-break-inside:avoid}
+.bilan-qr-img{width:26mm;height:26mm;flex:none}
+.bilan-qr-txt{display:flex;flex-direction:column;gap:1.6mm;font-size:.86em;line-height:1.4}
+.bilan-qr-url{color:var(--bleu);font-weight:700}
 .appoint{width:${R.appoint_pc}%;margin-left:auto;margin-right:auto}
 /* Un SYMBOLE normalisé porte peu d'information et beaucoup de blanc :
    à pleine largeur il mangeait 40 % d'une page pour un pictogramme.

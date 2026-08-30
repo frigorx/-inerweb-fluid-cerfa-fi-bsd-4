@@ -1759,5 +1759,18 @@
    "quoi": "La série du chapitre, corrigée et expliquée question par question."
   },
   "fichier": "rev-g9.png"
+ },
+ {
+  "genre": "bilan",
+  "titre": "Mes résultats — séries et compétences",
+  "slug": "mes-resultats",
+  "alias": "https://inerweb.fr/f/mes-resultats",
+  "cible": "https://inerweb.fr/",
+  "renvoi": {
+   "genre": "vos résultats",
+   "titre": "Vos notes, vos compétences",
+   "quoi": "Ce que votre téléphone a retenu de vos séries — rien ne quitte l’appareil."
+  },
+  "fichier": "mes-resultats.png"
  }
 ]

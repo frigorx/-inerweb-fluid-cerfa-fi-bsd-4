@@ -147,6 +147,24 @@ for (const g of [...groupes].sort()) {
   });
 }
 
+/* ---- L'alias du BILAN : la page « mes résultats ». Le moteur de
+   l'appli note déjà chaque série finie (pilote_hist_*) et chaque
+   compétence rencontrée (pilote_comp_*), dans le navigateur du
+   stagiaire, sans que rien ne remonte. Cette page lit ces deux
+   mémoires — même origine inerweb.fr — et les met en face du bilan
+   papier : la note de chaque série, chapitre par chapitre, et l'état
+   de chaque compétence. Le QR vit sur la page Bilan du livre. ---- */
+const SERIES_CHAPITRES = CHAPITRES
+  .map((ch) => {
+    const g = (ch.groupesQ || []).find((x) => /^G\d+$/.test(x));
+    return g ? { serie: `rev-${g.toLowerCase()}`, num: ch.num, titre: ch.titre } : null;
+  })
+  .filter(Boolean);
+entrees.push({
+  genre: 'bilan', titre: 'Mes résultats — séries et compétences',
+  slug: 'mes-resultats', alias: `${QR_BASE}mes-resultats`, cible: APPLI,
+});
+
 /* ---- Le RENVOI de chaque alias : ce que la marge imprime. Genre,
    titre et description voyagent dans le manifeste — finition.py ne
    fait que dessiner. Retoucher un libellé = rééditer ICI, jamais le
@@ -159,6 +177,9 @@ for (const e of entrees) {
   } else if (e.genre === 'entrainement') {
     e.renvoi = { genre: 'des questions ?', titre: '10 questions, niveau examen',
       quoi: 'La série du chapitre, corrigée et expliquée question par question.' };
+  } else if (e.genre === 'bilan') {
+    e.renvoi = { genre: 'vos résultats', titre: 'Vos notes, vos compétences',
+      quoi: 'Ce que votre téléphone a retenu de vos séries — rien ne quitte l’appareil.' };
   } else if (e.lecon) {
     e.renvoi = { genre: capsule ? 'leçon narrée' : 'fiche',
       titre: e.titre.length > 46 ? e.titre.slice(0, 43) + '…' : e.titre,
@@ -288,12 +309,105 @@ footer a{color:var(--mut)}
 </html>
 `;
 
+/* La page MES RÉSULTATS : lecture seule des deux mémoires locales du
+   moteur (elle n'écrit ni n'efface jamais rien). Le tableau des séries
+   est gravé à la génération depuis le plan du livre — chaque série en
+   face de son chapitre, comme sur la page Bilan du papier. */
+const pageResultats = (e) => `<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>${echapper(e.titre)} — inerWeb HabFluide</title>
+<style>
+:root{--bleu:#1b3a63;--orange:#ff6b35;--mut:#5a6472;--ligne:#d6dee7;--vert:#2e7d4f;--rouge:#c9451a}
+body{font-family:Calibri,Carlito,'Segoe UI',sans-serif;color:var(--bleu);background:#f4f7fa;margin:0;min-height:100vh;display:flex;flex-direction:column}
+header{background:#fff;border-bottom:2px solid var(--orange);padding:10px 16px;font-weight:700}
+header .hab{color:var(--orange)}
+main{flex:1;max-width:760px;width:100%;margin:0 auto;padding:16px;box-sizing:border-box}
+h1{font-size:1.2rem;margin:6px 0 4px}
+.note-page{color:var(--mut);font-size:.9rem;margin:0 0 16px}
+section{background:#fff;border:1px solid var(--ligne);border-radius:10px;padding:14px 16px;margin:0 0 16px}
+h2{font-size:1rem;margin:0 0 10px;border-bottom:2px solid var(--orange);padding-bottom:6px}
+table{width:100%;border-collapse:collapse;font-size:.95rem}
+td,th{text-align:left;padding:7px 6px;border-bottom:1px solid var(--ligne);vertical-align:top}
+th{color:var(--mut);font-weight:700;font-size:.82rem;text-transform:uppercase;letter-spacing:.4px}
+.num{color:var(--orange);font-weight:700;padding-right:2px}
+.note{font-weight:700;white-space:nowrap;text-align:right}
+.vide{color:var(--mut);font-weight:400}
+.etat{font-weight:700;white-space:nowrap}
+.etat.acquis{color:var(--vert)}.etat.fragile{color:var(--orange)}.etat.revoir{color:var(--rouge)}
+.rien{color:var(--mut);margin:6px 0}
+footer{color:var(--mut);font-size:.82rem;padding:10px 16px;text-align:center}
+footer a{color:var(--mut)}
+</style>
+</head>
+<body>
+<header><span class="hab">❄</span> inerWeb · HabFluide — mes résultats</header>
+<main>
+<h1>Où j’en suis</h1>
+<p class="note-page">Ce que ce téléphone a retenu de vos séries. Tout reste sur l’appareil : rien ne remonte, rien ne s’envoie.</p>
+<section>
+<h2>Mes séries, chapitre par chapitre</h2>
+<p class="note-page">La note à reporter sur la page Bilan du livre.</p>
+<table id="series"><tr><th>Chapitre</th><th style="text-align:right">Note</th></tr></table>
+</section>
+<section>
+<h2>Mes compétences</h2>
+<p class="note-page">Code par code, d’après vos réponses : acquise, fragile, ou à revoir.</p>
+<div id="comp"><p class="rien">Aucune question corrigée sur cet appareil pour l’instant — lancez une série depuis un QR « des questions ? » du livre.</p></div>
+</section>
+</main>
+<footer>Du livre « HAB-FLUIDE — partie théorique » · <a href="${echapper(APPLI)}">ouvrir l’appli</a></footer>
+<script>
+(function () {
+  var SERIES = ${JSON.stringify(SERIES_CHAPITRES)};
+  var hist = {}, comp = {};
+  try { hist = JSON.parse(localStorage.getItem('pilote_hist_fluides-habilitation') || '{}'); } catch (e) {}
+  try { comp = JSON.parse(localStorage.getItem('pilote_comp_fluides-habilitation') || '{}'); } catch (e) {}
+  var t = document.getElementById('series');
+  SERIES.forEach(function (s) {
+    var tr = document.createElement('tr');
+    var pct = hist[s.serie];
+    var note = (pct == null) ? '<span class="vide">— pas encore jouée</span>'
+      : (Math.round(pct / 10) + ' / 10');
+    tr.innerHTML = '<td><span class="num">' + s.num + '</span> ' + s.titre + '</td>' +
+      '<td class="note">' + note + '</td>';
+    t.appendChild(tr);
+  });
+  var codes = Object.keys(comp).sort(function (a, b) {
+    return a.localeCompare(b, 'fr', { numeric: true });
+  });
+  if (codes.length) {
+    var ETATS = { acquis: 'acquise', fragile: 'fragile', revoir: 'à revoir' };
+    var h = '<table><tr><th>Code</th><th>Réponses</th><th>État</th></tr>';
+    codes.forEach(function (c) {
+      var e = comp[c] || {};
+      var etat = (!e.ok && !e.ko) ? 'vierge'
+        : (e.dernier === 1 && !e.ko) ? 'acquis'
+        : (e.dernier === 1) ? 'fragile' : 'revoir';
+      if (etat === 'vierge') return;
+      h += '<tr><td><b>' + c + '</b></td><td>' + (e.ok || 0) + ' justes · ' + (e.ko || 0) + ' fausses</td>' +
+        '<td class="etat ' + etat + '">' + ETATS[etat] + '</td></tr>';
+    });
+    h += '</table>';
+    document.getElementById('comp').innerHTML = h;
+  }
+})();
+</script>
+</body>
+</html>
+`;
+
 fs.rmSync(PAGES, { recursive: true, force: true });
 for (const e of entrees) {
   const dossier = path.join(PAGES, 'f', e.slug);
   fs.mkdirSync(dossier, { recursive: true });
   fs.writeFileSync(path.join(dossier, 'index.html'),
-    e.genre === 'animation' ? pageVisionneuse(e) : pageRedirection(e), 'utf8');
+    e.genre === 'animation' ? pageVisionneuse(e)
+      : e.genre === 'bilan' ? pageResultats(e)
+        : pageRedirection(e), 'utf8');
 }
 fs.writeFileSync(path.join(PAGES, 'LISEZMOI.md'), [
   '# Redirections du livret « Habilitation Fluide » — à déployer',

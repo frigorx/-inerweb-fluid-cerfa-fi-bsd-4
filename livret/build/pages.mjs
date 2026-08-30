@@ -439,6 +439,21 @@ export const construireFlux = () => {
         entetes: ['Ch.', 'Titre', 'Ma note', 'À reprendre ?'],
         lignes: CHAPITRES.map((ch) => [String(ch.num), ch.titre, '__ / 10', '']),
       }), { nue: true });
+      /* Le pendant numérique du bilan : la page « mes résultats » lit ce
+         que le téléphone a retenu des séries — notes et compétences. La
+         page Bilan est nue (sans marge de renvois), le QR vit donc dans
+         la page même, comme un bloc du bilan. */
+      if (QR.some((x) => x.slug === 'mes-resultats')) {
+        pousse(`<div class="bilan-qr">
+          <img class="bilan-qr-img" src="${qrImg('mes-resultats')}" alt="" width="600" height="600">
+          <div class="bilan-qr-txt">
+            <b>Vos notes, déjà remplies</b>
+            <span>Ce code ouvre « mes résultats » : la note de chaque série jouée sur votre
+            téléphone, et l'état de chaque compétence — acquise, fragile, à revoir.
+            Rien ne quitte l'appareil.</span>
+            <span class="bilan-qr-url">inerweb.fr/f/mes-resultats</span>
+          </div></div>`, { nue: true });
+      }
     }
     /* La banque : les 89 questions laissées de côté par les chapitres,
        posées dans l'ordre du livre, chacune marquée de son chapitre. */
