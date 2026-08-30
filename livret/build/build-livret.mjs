@@ -15,7 +15,7 @@
    · charte inerWeb : Trebuchet MS pour les titres, Calibri pour le
      corps, bleu #1B3A63, orange #FF6B35 — logo « Fluide » (§ 3.4).
 
-   Sortie : dist/inerweb.fr-HabFluide-Tome1-Livret-eleve-6x9.docx
+   Sortie : dist/inerweb.fr-HabFluide-Tome1-Livret-eleve-7x10.docx
             (le Word ÉDITABLE ; le PDF d'impression vient du gabarit A5,
             build-html.mjs) + questions-choisies.gen.json
    ===================================================================== */
@@ -747,7 +747,7 @@ const construire = async () => {
   });
 
   fs.mkdirSync(DIST, { recursive: true });
-  const docx = path.join(DIST, 'inerweb.fr-HabFluide-Tome1-Livret-eleve-6x9.docx');
+  const docx = path.join(DIST, 'inerweb.fr-HabFluide-Tome1-Livret-eleve-7x10.docx');
   fs.writeFileSync(docx, await Packer.toBuffer(doc));
   fs.writeFileSync(path.join(LIVRET, 'questions-choisies.gen.json'), JSON.stringify(SELECTION, null, 1), 'utf8');
   fs.writeFileSync(path.join(LIVRET, 'questions-reserve.gen.json'), JSON.stringify(RESERVE, null, 1), 'utf8');

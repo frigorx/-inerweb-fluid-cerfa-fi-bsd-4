@@ -94,7 +94,12 @@ const PICTO_PIEGE = `<svg class="picto-piege" viewBox="0 0 20 18" aria-hidden="t
 export const apos = (s) => String(s).replace(
   /\b(jusqu|lorsqu|puisqu|quelqu|aujourd|[qQ]u|[dcjlmnstDCJLMNST])\s(?=[aeiouyhéèêëàâîïôûAEIOUYHÉÈÊÀÂÎÔ])/g, '$1’');
 
-const qrDe = (num) => QR.find((e) => e.chapitre === num && !e.lecon);
+const qrDe = (num) => QR.find((e) => e.chapitre === num && !e.lecon && !e.genre);
+/* La série d'entraînement du chapitre : son premier groupe G-numéroté. */
+const revDe = (ch) => {
+  const g = (ch.groupesQ || []).find((x) => /^G\d+$/.test(x));
+  return g ? 'rev-' + g.toLowerCase() : '';
+};
 const qrLeconDe = (num, i) => QR.find((e) => e.chapitre === num && e.lecon === i);
 const contenuDe = (num) => CONTENU.chapitres.find((c) => c.num === num);
 
@@ -121,7 +126,7 @@ const figure = (refs, legendes = []) => {
     const appoint = appointPossible && !estTechnique(r);
     const symbole = r.startsWith('sym:');
     return `<figure class="${symbole ? 'symbole' : appoint ? 'appoint' : 'planche'}${!appoint && !symbole && ratio(r) > 1.15 ? ' haute' : ''}">
-      <img src="${visuel(r)}"${cotes(r)} alt="">
+      ${r.startsWith('svg:') && VISUELS[r].animee ? qrm('a-' + r.slice(4), 'a') : ''}<img src="${visuel(r)}"${cotes(r)} alt="">
       ${legendes[i] ? `<figcaption>${ech(apos(legendes[i]))}</figcaption>` : ''}
     </figure>`;
   }).join('');
@@ -138,6 +143,14 @@ const ecran = (slug, texte) => {
       <span class="ecran-desc">${texte}</span>
     </div></div>`;
 };
+
+/* Le QR de MARGE — la colonne numérique du livre. Un marqueur invisible
+   que finition.py relit page à page pour poser le code en regard, dans
+   la marge extérieure, à la hauteur exacte du bloc qui le porte. Le type
+   choisit le libellé imprimé : c chapitre, l leçon, a animation, q quiz. */
+const qrm = (slug, type) => QR.some((x) => x.slug === slug)
+  ? `<span class="marq">@@QR|${slug}|${type}@@</span>` : '';
+
 
 const encadre = (b) => {
   const piege = b.type === 'piege';
@@ -245,7 +258,7 @@ export const construireFlux = () => {
 
       pousse(`<div class="ch-tete"><span class="ch-num">${ch.num}</span>
         <div><h2 class="ch-titre">${ech(apos(ch.titre))}</h2>
-        <p class="ch-objectif">${ech(apos(ch.objectif))}</p></div></div>`,
+        <p class="ch-objectif">${ech(apos(ch.objectif))}${qrm(ch.qr, 'c')}</p></div></div>`,
       { ...meta, rupture: true, garde: true });
 
       if (c.referentiel?.length) {
@@ -284,6 +297,14 @@ export const construireFlux = () => {
         </section>`, meta);
       }
 
+      /* Le sommaire du chapitre, sous le référentiel : la maquette du
+         30/08 le pose en ouverture — on sait où l'on va avant de partir. */
+      const titresLecons = (ch.lecons || c.lecons || []).map((l) => l.t);
+      if (titresLecons.length) {
+        pousse(`<div class="sommaire-ch"><p class="sommaire-t">Dans ce chapitre</p>
+          <ol>${titresLecons.map((t2) => `<li>${ech(apos(t2))}</li>`).join('')}</ol></div>`, meta);
+      }
+
       /* 1 — Testez-vous */
       /* L'ordre des choix vient de la sélection, pas de la banque : la
          bonne réponse y a été répartie sur les quatre rangs. */
@@ -300,9 +321,10 @@ export const construireFlux = () => {
   const court = (q) => q.choix.every((x) => x.length <= 30);
       pousse(`<section class="qcm">
         <h3 class="sect-t"><span class="sect-num">1</span>Testez-vous d’abord —
-          ${questions.length} questions</h3>
+          ${questions.length} questions${qrm(revDe(ch), 'e')}</h3>
         <p class="sect-intro">Répondez <b>avant</b> de lire : vous saurez tout de suite ce que vous savez déjà,
-        et ce qui mérite votre lecture. Les corrections sont en fin de chapitre.</p>
+        et ce qui mérite votre lecture. Pour vous corriger et vous entraîner, la série en ligne
+        du chapitre vous attend — le code est en marge.</p>
         ${questions.map((q, i) => `<div class="q"><p class="q-e"><span class="q-n">${i + 1}</span>${ech(q.enonce)}</p>
           <ul class="q-c${court(q) ? ' deux' : ''}">${q.choix.map((ch2, j) => `<li><span class="case"></span><span class="lettre">${String.fromCharCode(65 + j)}</span>${ech(ch2)}</li>`).join('')}</ul></div>`).join('')}
       </section>`, meta); /* la rupture de page est portée par .qcm, pas ici :
@@ -316,16 +338,13 @@ export const construireFlux = () => {
            traiter : le pied de page les imprimera, et l'audit comptera
            sur quelles pages chaque compétence est réellement vue. */
         const meta = { partie: partie.id, chapitre: ch.num, codes: lc.codes || [] };
-        pousse(`<h4 class="lecon-t"><span class="lecon-n">${ch.num}.${i + 1}</span>${ech(apos(lc.t))}</h4>`,
+        const qrl = qrLeconDe(ch.num, i + 1);
+        pousse(`<h4 class="lecon-t"><span class="lecon-n">${ch.num}.${i + 1}</span>${ech(apos(lc.t))}${qrl ? qrm(qrl.slug, 'l') : ''}</h4>`,
           { ...meta, garde: true });
         if (lp.visuels) pousse(figure(lp.visuels, lp.legendes), meta);
         for (const p of lc.paras) pousse(`<p class="txt">${ech(p)}</p>`, meta);
         if (lc.tableau) pousse(tableau(lc.tableau), meta);
         for (const b of lc.blocs) pousse(encadre(b), meta);
-        const qrl = qrLeconDe(ch.num, i + 1);
-        if (qrl) pousse(ecran(qrl.slug, qrl.cible.includes('capsule')
-          ? 'Cette leçon animée et racontée à voix haute.'
-          : 'La fiche interactive, avec sa question corrigée.'), meta);
       }
       /* Le chapitre généré n'a pas de leçons du plan : ses leçons sont dans le contenu. */
       if (!ch.lecons) {
@@ -347,20 +366,16 @@ export const construireFlux = () => {
       pousse(lignes(act.lignes), meta);
       pousse(`<p class="voix"><span>À voix haute</span>« ${ech(apos(act.voixHaute))} »</p>`, meta);
 
-      /* 4 — Les réponses */
-      pousse(`<h3 class="sect-t"><span class="sect-num">4</span>Les réponses — corrigez-vous</h3>`,
-        { ...meta, garde: true });
-      for (const [i, q] of questions.entries()) {
-        pousse(`<div class="rep"><p class="rep-l"><span class="rep-n">${i + 1}</span>
-          <span class="rep-lettre">${String.fromCharCode(65 + q.bonne)}</span><b>${ech(q.choix[q.bonne])}</b></p>
-          ${q.explication ? `<p class="rep-x">${ech(q.explication)}</p>` : ''}</div>`, meta);
-      }
+      /* 4 — S'entraîner en ligne. Les pages de corrigé ont quitté le
+         papier (décision de la maquette du 30/08) : la correction vit en
+         ligne, question par question, dans la série du chapitre. */
       const qc = qrDe(ch.num);
-      pousse(`<div class="note">Ma note <span class="note-case"></span> / ${questions.length}
-        <span class="note-desc">à reporter au bilan, en fin de livret</span></div>
-        ${ecran(qc.slug, qc.cible.includes('capsule')
-    ? 'Tout le chapitre, raconté à voix haute.'
-    : 'Le chapitre en version interactive, avec ses questions corrigées.')}`, meta);
+      pousse(`<h3 class="sect-t"><span class="sect-num">4</span>Entraînez-vous — la suite est en ligne${qrm(revDe(ch), 'e')}</h3>
+        <p class="sect-intro">La série du chapitre vous attend : dix questions niveau examen,
+        corrigées et expliquées une à une. Le code est en marge — l'adresse aussi.</p>`,
+        { ...meta, garde: true });
+      pousse(`<div class="note">Ma note à la série en ligne <span class="note-case"></span> / 10
+        <span class="note-desc">à reporter au bilan, en fin de livret</span>${qc ? qrm(qc.slug, 'c') : ''}</div>`, meta);
     }
 
     /* La planche centrale, après la partie C. Couchée d'un quart de tour :
@@ -385,13 +400,13 @@ export const construireFlux = () => {
       pousse(tableau({
         titre: 'Chapitre par chapitre',
         entetes: ['Ch.', 'Titre', 'Ma note', 'À reprendre ?'],
-        lignes: CHAPITRES.map((ch) => [String(ch.num), ch.titre, '__ / 6', '']),
+        lignes: CHAPITRES.map((ch) => [String(ch.num), ch.titre, '__ / 10', '']),
       }), { nue: true });
     }
     /* La banque : les 89 questions laissées de côté par les chapitres,
        posées dans l'ordre du livre, chacune marquée de son chapitre. */
-    if (p.id === 'banque' || p.id === 'banque-corrige') {
-      const corrige = p.id === 'banque-corrige';
+    if (p.id === 'banque') {
+      const corrige = false;
       let n = 0;
       /* Entrelacées, pas rangées par chapitre : l'épreuve ne prévient pas
          de quel chapitre tombe la question suivante, la révision non plus.
@@ -451,7 +466,13 @@ export const construireFlux = () => {
       pousse(tableau({
         titre: 'Toutes les adresses, en clair',
         entetes: ['Chapitre', 'Adresse à taper'],
-        lignes: QR.filter((e) => !e.lecon).map((e) => [`${e.chapitre}. ${e.titre}`, e.alias.replace('https://', '')]),
+        lignes: QR.filter((e) => !e.lecon && e.genre !== 'animation').map((e) => [`${e.chapitre}. ${e.titre}`, e.alias.replace('https://', '')]),
+      }), { nue: true });
+      pousse(tableau({
+        titre: 'Les animations du livre',
+        entetes: ['Planche animée', 'Adresse à taper'],
+        lignes: QR.filter((e) => e.genre === 'animation').map((e) => [
+          e.titre.length > 64 ? e.titre.slice(0, 61) + '…' : e.titre, e.alias.replace('https://', '')]),
       }), { nue: true });
     }
     if (p.id === 'sources') {

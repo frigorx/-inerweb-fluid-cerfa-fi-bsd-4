@@ -4,832 +4,951 @@
   "largeur": 2400,
   "hauteur": 1440,
   "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/securite-espace-clos.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "pack:securite-projection-fluide": {
   "fichier": "pack-securite-projection-fluide.png",
   "largeur": 2400,
   "hauteur": 1440,
   "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/securite-projection-fluide.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "pack:securite-decomposition-fluide": {
   "fichier": "pack-securite-decomposition-fluide.png",
   "largeur": 2400,
   "hauteur": 1440,
   "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/securite-decomposition-fluide.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "pack:securite-pression-residuelle": {
   "fichier": "pack-securite-pression-residuelle.png",
   "largeur": 2400,
   "hauteur": 1440,
   "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/securite-pression-residuelle.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "svg:secu-consignation": {
   "fichier": "svg-secu-consignation.png",
   "largeur": 2400,
   "hauteur": 800,
   "source": "packs/fluides/res/svg/secu-consignation.svg",
-  "citations": 2
+  "citations": 2,
+  "animee": true
  },
  "illu:s5": {
   "fichier": "illu-s5.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-s5.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "svg:prepa-chantier": {
   "fichier": "svg-prepa-chantier.png",
   "largeur": 2400,
   "hauteur": 818,
   "source": "packs/fluides/res/svg/prepa-chantier.svg",
-  "citations": 2
+  "citations": 2,
+  "animee": false
  },
  "illu:p7": {
   "fichier": "illu-p7.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-p7.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "svg:classes-securite": {
   "fichier": "svg-classes-securite.png",
   "largeur": 2400,
   "hauteur": 969,
   "source": "packs/fluides/res/svg/classes-securite.svg",
-  "citations": 5
+  "citations": 5,
+  "animee": false
  },
  "sym:manometres": {
   "fichier": "sym-manometres.png",
   "largeur": 2400,
   "hauteur": 1919,
   "source": "packs/fluides/res/symboles/manometres.svg",
-  "citations": 4
+  "citations": 4,
+  "animee": false
  },
  "svg:familles-fluides": {
   "fichier": "svg-familles-fluides.png",
   "largeur": 2400,
   "hauteur": 1387,
   "source": "packs/fluides/res/svg/familles-fluides.svg",
-  "citations": 5
+  "citations": 5,
+  "animee": false
  },
  "illu:g1c": {
   "fichier": "illu-g1c.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g1c.webp",
-  "citations": 2
+  "citations": 2,
+  "animee": false
  },
  "svg:lie-domaine": {
   "fichier": "svg-lie-domaine.png",
   "largeur": 2400,
   "hauteur": 927,
   "source": "packs/fluides/res/svg/lie-domaine.svg",
-  "citations": 3
+  "citations": 3,
+  "animee": true
  },
  "illu:cl2": {
   "fichier": "illu-cl2.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-cl2.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "svg:co2-point-bas": {
   "fichier": "svg-co2-point-bas.png",
   "largeur": 2400,
   "hauteur": 1036,
   "source": "packs/fluides/res/svg/co2-point-bas.svg",
-  "citations": 2
+  "citations": 2,
+  "animee": true
  },
  "svg:co2-nh3-compare": {
   "fichier": "svg-co2-nh3-compare.png",
   "largeur": 2400,
   "hauteur": 955,
   "source": "packs/fluides/res/svg/co2-nh3-compare.svg",
-  "citations": 3
+  "citations": 3,
+  "animee": true
  },
  "pack:co2-local-protege": {
   "fichier": "pack-co2-local-protege.png",
   "largeur": 2400,
   "hauteur": 1440,
   "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/co2-local-protege.svg",
-  "citations": 3
+  "citations": 3,
+  "animee": false
  },
  "sym:sonde_temperature": {
   "fichier": "sym-sonde_temperature.png",
   "largeur": 2400,
   "hauteur": 1600,
   "source": "packs/fluides/res/symboles/sonde_temperature.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "svg:prp-echelle": {
   "fichier": "svg-prp-echelle.png",
   "largeur": 2400,
   "hauteur": 880,
   "source": "packs/fluides/res/svg/prp-echelle.svg",
-  "citations": 6
+  "citations": 6,
+  "animee": false
  },
  "svg:aptitude-capacite": {
   "fichier": "svg-aptitude-capacite.png",
   "largeur": 2400,
   "hauteur": 873,
   "source": "packs/fluides/res/svg/aptitude-capacite.svg",
-  "citations": 5
+  "citations": 5,
+  "animee": false
  },
  "illu:g0": {
   "fichier": "illu-g0.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g0.webp",
-  "citations": 3
+  "citations": 3,
+  "animee": false
  },
  "sym:vanne_isolement": {
   "fichier": "sym-vanne_isolement.png",
   "largeur": 2400,
   "hauteur": 1200,
   "source": "packs/fluides/res/symboles/vanne_isolement.svg",
-  "citations": 2
+  "citations": 2,
+  "animee": false
  },
  "svg:frise-histoire": {
   "fichier": "svg-frise-histoire.png",
   "largeur": 2400,
   "hauteur": 1493,
   "source": "packs/fluides/res/svg/frise-histoire.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "illu:g2a": {
   "fichier": "illu-g2a.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g2a.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "illu:g2": {
   "fichier": "illu-g2.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g2.webp",
-  "citations": 2
+  "citations": 2,
+  "animee": false
  },
  "illu:examen": {
   "fichier": "illu-examen.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-examen.webp",
-  "citations": 4
+  "citations": 4,
+  "animee": false
  },
  "svg:croix-frigoriste": {
   "fichier": "svg-croix-frigoriste.png",
   "largeur": 2400,
   "hauteur": 1667,
   "source": "packs/fluides/res/svg/croix-frigoriste.svg",
-  "citations": 5
+  "citations": 5,
+  "animee": false
  },
  "illu:g1a": {
   "fichier": "illu-g1a.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g1a.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "svg:pression-absolue-relative": {
   "fichier": "svg-pression-absolue-relative.png",
   "largeur": 2400,
   "hauteur": 1243,
   "source": "packs/fluides/res/svg/pression-absolue-relative.svg",
-  "citations": 2
+  "citations": 2,
+  "animee": true
  },
  "svg:chaleur-sensible-latente": {
   "fichier": "svg-chaleur-sensible-latente.png",
   "largeur": 2400,
   "hauteur": 1265,
   "source": "packs/fluides/res/svg/chaleur-sensible-latente.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": true
  },
  "illu:g1s": {
   "fichier": "illu-g1s.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g1s.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "svg:diagramme-logph": {
   "fichier": "svg-diagramme-logph.png",
   "largeur": 2400,
   "hauteur": 1282,
   "source": "packs/fluides/res/svg/diagramme-logph.svg",
-  "citations": 3
+  "citations": 3,
+  "animee": true
  },
  "svg:nomenclature": {
   "fichier": "svg-nomenclature.png",
   "largeur": 2400,
   "hauteur": 1360,
   "source": "packs/fluides/res/svg/nomenclature.svg",
-  "citations": 3
+  "citations": 3,
+  "animee": true
  },
  "illu:g1b": {
   "fichier": "illu-g1b.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g1b.webp",
-  "citations": 2
+  "citations": 2,
+  "animee": false
  },
  "svg:lecture-table": {
   "fichier": "svg-lecture-table.png",
   "largeur": 2400,
   "hauteur": 1120,
   "source": "packs/fluides/res/svg/lecture-table.svg",
-  "citations": 4
+  "citations": 4,
+  "animee": false
  },
  "svg:mesure-surchauffe": {
   "fichier": "svg-mesure-surchauffe.png",
   "largeur": 2400,
   "hauteur": 960,
   "source": "packs/fluides/res/svg/mesure-surchauffe.svg",
-  "citations": 4
+  "citations": 4,
+  "animee": false
  },
  "illu:g1e": {
   "fichier": "illu-g1e.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g1e.webp",
-  "citations": 2
+  "citations": 2,
+  "animee": false
  },
  "svg:surchauffe-utile-totale": {
   "fichier": "svg-surchauffe-utile-totale.png",
   "largeur": 2400,
   "hauteur": 1173,
   "source": "packs/fluides/res/svg/surchauffe-utile-totale.svg",
-  "citations": 2
+  "citations": 2,
+  "animee": true
  },
  "svg:points-de-fuite": {
   "fichier": "svg-points-de-fuite.png",
   "largeur": 2400,
   "hauteur": 2080,
   "source": "packs/fluides/res/svg/points-de-fuite.svg",
-  "citations": 5
+  "citations": 5,
+  "animee": true
  },
  "illu:g1d": {
   "fichier": "illu-g1d.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g1d.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "svg:compresseurs": {
   "fichier": "svg-compresseurs.png",
   "largeur": 2400,
   "hauteur": 1147,
   "source": "packs/fluides/res/svg/compresseurs.svg",
-  "citations": 2
+  "citations": 2,
+  "animee": false
  },
  "illu:g6": {
   "fichier": "illu-g6.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g6.webp",
-  "citations": 2
+  "citations": 2,
+  "animee": false
  },
  "sym:compresseur_piston": {
   "fichier": "sym-compresseur_piston.png",
   "largeur": 2400,
   "hauteur": 1919,
   "source": "packs/fluides/res/symboles/compresseur_piston.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "sym:compresseur_scroll": {
   "fichier": "sym-compresseur_scroll.png",
   "largeur": 2400,
   "hauteur": 1919,
   "source": "packs/fluides/res/symboles/compresseur_scroll.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "sym:separateur_huile": {
   "fichier": "sym-separateur_huile.png",
   "largeur": 2400,
   "hauteur": 3200,
   "source": "packs/fluides/res/symboles/separateur_huile.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "sym:pressostat": {
   "fichier": "sym-pressostat.png",
   "largeur": 2400,
   "hauteur": 2880,
   "source": "packs/fluides/res/symboles/pressostat.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "illu:g6b": {
   "fichier": "illu-g6b.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g6b.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "sym:compresseur_vis": {
   "fichier": "sym-compresseur_vis.png",
   "largeur": 2400,
   "hauteur": 1919,
   "source": "packs/fluides/res/symboles/compresseur_vis.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "sym:compresseur_rotatif": {
   "fichier": "sym-compresseur_rotatif.png",
   "largeur": 2400,
   "hauteur": 1919,
   "source": "packs/fluides/res/symboles/compresseur_rotatif.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "svg:coup-de-liquide-piston": {
   "fichier": "svg-coup-de-liquide-piston.png",
   "largeur": 2400,
   "hauteur": 1350,
   "source": "packs/fluides/res/svg/coup-de-liquide-piston.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": true
  },
  "svg:condenseur-trois-zones": {
   "fichier": "svg-condenseur-trois-zones.png",
   "largeur": 2400,
   "hauteur": 1440,
   "source": "packs/fluides/res/svg/condenseur-trois-zones.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "illu:g7": {
   "fichier": "illu-g7.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g7.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "sym:pressostat_hp": {
   "fichier": "sym-pressostat_hp.png",
   "largeur": 2400,
   "hauteur": 2400,
   "source": "packs/fluides/res/symboles/pressostat_hp.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "sym:ventilateur": {
   "fichier": "sym-ventilateur.png",
   "largeur": 2400,
   "hauteur": 1919,
   "source": "packs/fluides/res/symboles/ventilateur.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "sym:echangeur_a_air": {
   "fichier": "sym-echangeur_a_air.png",
   "largeur": 2400,
   "hauteur": 2400,
   "source": "packs/fluides/res/symboles/echangeur_a_air.svg",
-  "citations": 2
+  "citations": 2,
+  "animee": false
  },
  "illu:g7b": {
   "fichier": "illu-g7b.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g7b.webp",
-  "citations": 2
+  "citations": 2,
+  "animee": false
  },
  "svg:regulateurs-pression": {
   "fichier": "svg-regulateurs-pression.png",
   "largeur": 2400,
   "hauteur": 1547,
   "source": "packs/fluides/res/svg/regulateurs-pression.svg",
-  "citations": 2
+  "citations": 2,
+  "animee": false
  },
  "sym:vanne_securite": {
   "fichier": "sym-vanne_securite.png",
   "largeur": 2400,
   "hauteur": 4800,
   "source": "packs/fluides/res/symboles/vanne_securite.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "sym:echangeur_a_plaques": {
   "fichier": "sym-echangeur_a_plaques.png",
   "largeur": 2400,
   "hauteur": 2400,
   "source": "packs/fluides/res/symboles/echangeur_a_plaques.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "svg:echangeur-air": {
   "fichier": "svg-echangeur-air.png",
   "largeur": 2400,
   "hauteur": 1067,
   "source": "packs/fluides/res/svg/echangeur-air.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "illu:g8": {
   "fichier": "illu-g8.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g8.webp",
-  "citations": 2
+  "citations": 2,
+  "animee": false
  },
  "sym:detendeur_thermo_ext": {
   "fichier": "sym-detendeur_thermo_ext.png",
   "largeur": 2400,
   "hauteur": 2400,
   "source": "packs/fluides/res/symboles/detendeur_thermo_ext.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "sym:pressostat_bp": {
   "fichier": "sym-pressostat_bp.png",
   "largeur": 2400,
   "hauteur": 2400,
   "source": "packs/fluides/res/symboles/pressostat_bp.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "svg:givre-degivrage": {
   "fichier": "svg-givre-degivrage.png",
   "largeur": 2400,
   "hauteur": 1253,
   "source": "packs/fluides/res/svg/givre-degivrage.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": true
  },
  "sym:resistance_evaporation": {
   "fichier": "sym-resistance_evaporation.png",
   "largeur": 2400,
   "hauteur": 686,
   "source": "packs/fluides/res/symboles/resistance_evaporation.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "sym:thermostat_froid": {
   "fichier": "sym-thermostat_froid.png",
   "largeur": 2400,
   "hauteur": 2400,
   "source": "packs/fluides/res/symboles/thermostat_froid.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "illu:g8b": {
   "fichier": "illu-g8b.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g8b.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "svg:detendeurs-ligne": {
   "fichier": "svg-detendeurs-ligne.png",
   "largeur": 2400,
   "hauteur": 1253,
   "source": "packs/fluides/res/svg/detendeurs-ligne.svg",
-  "citations": 2
+  "citations": 2,
+  "animee": false
  },
  "illu:g9": {
   "fichier": "illu-g9.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g9.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "sym:detendeur_electronique": {
   "fichier": "sym-detendeur_electronique.png",
   "largeur": 2400,
   "hauteur": 1801,
   "source": "packs/fluides/res/symboles/detendeur_electronique.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "sym:electrovanne_frigo": {
   "fichier": "sym-electrovanne_frigo.png",
   "largeur": 2400,
   "hauteur": 1801,
   "source": "packs/fluides/res/symboles/electrovanne_frigo.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "svg:regulateurs-kv-places": {
   "fichier": "svg-regulateurs-kv-places.png",
   "largeur": 2400,
   "hauteur": 1440,
   "source": "packs/fluides/res/svg/regulateurs-kv-places.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "sym:filtre_deshydrateur": {
   "fichier": "sym-filtre_deshydrateur.png",
   "largeur": 2400,
   "hauteur": 1200,
   "source": "packs/fluides/res/symboles/filtre_deshydrateur.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "svg:detendeur-regulation": {
   "fichier": "svg-detendeur-regulation.png",
   "largeur": 2400,
   "hauteur": 1253,
   "source": "packs/fluides/res/svg/detendeur-regulation.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": true
  },
  "illu:g9b": {
   "fichier": "illu-g9b.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g9b.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "sym:tube_capillaire": {
   "fichier": "sym-tube_capillaire.png",
   "largeur": 2400,
   "hauteur": 960,
   "source": "packs/fluides/res/symboles/tube_capillaire.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "svg:epreuve-azote": {
   "fichier": "svg-epreuve-azote.png",
   "largeur": 2400,
   "hauteur": 1013,
   "source": "packs/fluides/res/svg/epreuve-azote.svg",
-  "citations": 3
+  "citations": 3,
+  "animee": false
  },
  "illu:g3": {
   "fichier": "illu-g3.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g3.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "illu:p4": {
   "fichier": "illu-p4.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-p4.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "svg:manifold-lecture": {
   "fichier": "svg-manifold-lecture.png",
   "largeur": 2400,
   "hauteur": 1253,
   "source": "packs/fluides/res/svg/manifold-lecture.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": true
  },
  "illu:p1": {
   "fichier": "illu-p1.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-p1.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "svg:tirage-au-vide": {
   "fichier": "svg-tirage-au-vide.png",
   "largeur": 2400,
   "hauteur": 1173,
   "source": "packs/fluides/res/svg/tirage-au-vide.svg",
-  "citations": 3
+  "citations": 3,
+  "animee": true
  },
  "illu:p3": {
   "fichier": "illu-p3.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-p3.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "illu:g4a": {
   "fichier": "illu-g4a.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g4a.webp",
-  "citations": 2
+  "citations": 2,
+  "animee": false
  },
  "illu:g4b": {
   "fichier": "illu-g4b.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g4b.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "svg:balayage-detecteur": {
   "fichier": "svg-balayage-detecteur.png",
   "largeur": 2400,
   "hauteur": 800,
   "source": "packs/fluides/res/svg/balayage-detecteur.svg",
-  "citations": 3
+  "citations": 3,
+  "animee": false
  },
  "illu:g4c": {
   "fichier": "illu-g4c.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g4c.webp",
-  "citations": 2
+  "citations": 2,
+  "animee": false
  },
  "svg:recuperation": {
   "fichier": "svg-recuperation.png",
   "largeur": 2400,
   "hauteur": 1013,
   "source": "packs/fluides/res/svg/recuperation.svg",
-  "citations": 4
+  "citations": 4,
+  "animee": false
  },
  "illu:g5a": {
   "fichier": "illu-g5a.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g5a.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "sym:pompe": {
   "fichier": "sym-pompe.png",
   "largeur": 2400,
   "hauteur": 1919,
   "source": "packs/fluides/res/symboles/pompe.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "illu:p2": {
   "fichier": "illu-p2.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-p2.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "svg:ordre-vannes": {
   "fichier": "svg-ordre-vannes.png",
   "largeur": 2400,
   "hauteur": 1253,
   "source": "packs/fluides/res/svg/ordre-vannes.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": true
  },
  "illu:p5": {
   "fichier": "illu-p5.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-p5.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "svg:pesee-charge": {
   "fichier": "svg-pesee-charge.png",
   "largeur": 2400,
   "hauteur": 1243,
   "source": "packs/fluides/res/svg/pesee-charge.svg",
-  "citations": 2
+  "citations": 2,
+  "animee": true
  },
  "illu:p6": {
   "fichier": "illu-p6.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-p6.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "sym:bouteille_liquide": {
   "fichier": "sym-bouteille_liquide.png",
   "largeur": 2400,
   "hauteur": 1440,
   "source": "packs/fluides/res/symboles/bouteille_liquide.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "illu:g5b": {
   "fichier": "illu-g5b.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g5b.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "svg:balayage-azote": {
   "fichier": "svg-balayage-azote.png",
   "largeur": 2400,
   "hauteur": 907,
   "source": "packs/fluides/res/svg/balayage-azote.svg",
-  "citations": 3
+  "citations": 3,
+  "animee": false
  },
  "illu:g10": {
   "fichier": "illu-g10.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g10.webp",
-  "citations": 2
+  "citations": 2,
+  "animee": false
  },
  "svg:secu-flamme": {
   "fichier": "svg-secu-flamme.png",
   "largeur": 2400,
   "hauteur": 853,
   "source": "packs/fluides/res/svg/secu-flamme.svg",
-  "citations": 3
+  "citations": 3,
+  "animee": true
  },
  "svg:secu-decomposition-ari": {
   "fichier": "svg-secu-decomposition-ari.png",
   "largeur": 2400,
   "hauteur": 853,
   "source": "packs/fluides/res/svg/secu-decomposition-ari.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": true
  },
  "illu:g11": {
   "fichier": "illu-g11.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g11.webp",
-  "citations": 2
+  "citations": 2,
+  "animee": false
  },
  "svg:charge-limite-local": {
   "fichier": "svg-charge-limite-local.png",
   "largeur": 2400,
   "hauteur": 1253,
   "source": "packs/fluides/res/svg/charge-limite-local.svg",
-  "citations": 4
+  "citations": 4,
+  "animee": true
  },
  "illu:g12": {
   "fichier": "illu-g12.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g12.webp",
-  "citations": 2
+  "citations": 2,
+  "animee": false
  },
  "illu:g12b": {
   "fichier": "illu-g12b.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g12b.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "illu:g13": {
   "fichier": "illu-g13.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g13.webp",
-  "citations": 2
+  "citations": 2,
+  "animee": false
  },
  "amb:jour1": {
   "fichier": "amb-jour1.png",
   "largeur": 1792,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/amb-jour1.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "ico:attestation": {
   "fichier": "ico-attestation.png",
   "largeur": 512,
   "hauteur": 512,
   "source": "packs/fluides/res/bibliotheque/icones/ico-attestation.png",
-  "citations": 5
+  "citations": 5,
+  "animee": false
  },
  "ico:cles": {
   "fichier": "ico-cles.png",
   "largeur": 512,
   "hauteur": 512,
   "source": "packs/fluides/res/bibliotheque/icones/ico-cles.png",
-  "citations": 3
+  "citations": 2,
+  "animee": false
  },
  "amb:jour2": {
   "fichier": "amb-jour2.png",
   "largeur": 1792,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/amb-jour2.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "amb:jour3": {
   "fichier": "amb-jour3.png",
   "largeur": 1792,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/amb-jour3.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "ico:registre": {
   "fichier": "ico-registre.png",
   "largeur": 512,
   "hauteur": 512,
   "source": "packs/fluides/res/bibliotheque/icones/ico-registre.png",
-  "citations": 3
+  "citations": 3,
+  "animee": false
  },
  "amb:jour4": {
   "fichier": "amb-jour4.png",
   "largeur": 1792,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/amb-jour4.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "ico:role-question": {
   "fichier": "ico-role-question.png",
   "largeur": 512,
   "hauteur": 512,
   "source": "packs/fluides/res/bibliotheque/icones/role-question.png",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "ico:role-competence": {
   "fichier": "ico-role-competence.png",
   "largeur": 512,
   "hauteur": 512,
   "source": "packs/fluides/res/bibliotheque/icones/role-competence.png",
-  "citations": 3
+  "citations": 3,
+  "animee": false
  },
  "ico:cerfa": {
   "fichier": "ico-cerfa.png",
   "largeur": 512,
   "hauteur": 512,
   "source": "packs/fluides/res/bibliotheque/icones/ico-cerfa.png",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "ico:role-juste": {
   "fichier": "ico-role-juste.png",
   "largeur": 512,
   "hauteur": 512,
   "source": "packs/fluides/res/bibliotheque/icones/role-juste.png",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "amb:fin": {
   "fichier": "amb-fin.png",
   "largeur": 1792,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/amb-fin.webp",
-  "citations": 1
+  "citations": 1,
+  "animee": false
  },
  "svg:circuit-complet-manifold": {
   "fichier": "svg-circuit-complet-manifold.png",
   "largeur": 2400,
   "hauteur": 1530,
   "source": "packs/fluides/res/svg/circuit-complet-manifold.svg",
-  "citations": 1
+  "citations": 1,
+  "animee": true
  }
 }

@@ -28,8 +28,8 @@ console.log('\n━━━ verifier-kdp.py ━━━');
 const kdp = (f) => path.join(ICI, '..', 'dist', 'kdp', f);
 try {
   execFileSync('python', [path.join(ICI, 'verifier-kdp.py'),
-    kdp('inerweb.fr-HabFluide-Tome1-Livret-eleve-6x9.pdf'),
-    kdp('inerweb.fr-HabFluide-Tome1-Couverture-6x9.pdf')], { stdio: 'inherit' });
+    kdp('inerweb.fr-HabFluide-Tome1-Livret-eleve-7x10.pdf'),
+    kdp('inerweb.fr-HabFluide-Tome1-Couverture-7x10.pdf')], { stdio: 'inherit' });
 } catch {
   console.error('\n✖ Le paquet ne passe pas le contrôle : ne rien téléverser en l’état.');
   process.exit(1);

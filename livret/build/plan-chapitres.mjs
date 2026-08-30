@@ -727,7 +727,6 @@ export const LIMINAIRES = [
 
 export const FIN = [
   { id: 'banque', t: 'Banque de révision — tout le livre', visuels: ['ico:role-competence'], legendes: ['S entrainer une fois le livre lu'] },
-  { id: 'banque-corrige', t: 'Banque de révision — les réponses', visuels: ['ico:cles'], legendes: ['Se corriger, et savoir ou revenir'] },
   { id: 'bilan', t: 'Bilan — mes dix-neuf notes', visuels: ['ico:role-competence', 'illu:examen'], legendes: ['Chapitre par chapitre', 'Où je dois reprendre'] },
   { id: 'lexique-1', t: 'Lexique — le fluide et la machine', visuels: ['svg:croix-frigoriste'], legendes: ['Les quatre organes'] },
   { id: 'lexique-2', t: 'Lexique — les opérations', visuels: ['svg:recuperation'], legendes: ['Récupérer, contrôler'] },

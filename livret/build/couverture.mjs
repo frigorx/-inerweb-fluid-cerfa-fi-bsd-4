@@ -11,7 +11,7 @@
    — écrit par la finition à partir du PDF réel. Une seule source.
 
    Sorties : couverture-kdp.html          (pour l'écran et Claude Design)
-             dist/…-Couverture-6x9.pdf    (le fichier à téléverser)
+             dist/…-Couverture-7x10.pdf    (le fichier à téléverser)
 
    `node build/couverture.mjs`
    ===================================================================== */
@@ -26,6 +26,9 @@ const ICI = path.dirname(fileURLToPath(import.meta.url));
 const LIVRET = path.join(ICI, '..');
 const DIST = path.join(LIVRET, 'dist');
 const KDP = JSON.parse(fs.readFileSync(path.join(LIVRET, 'kdp.gen.json'), 'utf8'));
+const REG = JSON.parse(fs.readFileSync(path.join(LIVRET, 'reglages.json'), 'utf8'));
+/* Le compte réel des portes numériques du livre : la 4e l'annonce. */
+const NB_QR = JSON.parse(fs.readFileSync(path.join(LIVRET, 'qr.gen.json'), 'utf8')).length;
 
 /* ------------------------------------------------------------------
    LES SYMBOLES NORMALISÉS DE LA BIBLIOTHÈQUE — jamais un redessin.
@@ -59,7 +62,7 @@ function pose(nom, cx, cy, echelle, rotation = 0) {
 
 const [LARGEUR, HAUTEUR] = KDP.couverture_mm;
 const DOS = KDP.dos_mm;
-const NOM = 'inerweb.fr-HabFluide-Tome1-Couverture-6x9';
+const NOM = 'inerweb.fr-HabFluide-Tome1-Couverture-7x10';
 
 /* Un livre français écrit ses décimales avec une virgule. */
 const fr = (n) => String(n).replace('.', ',');
@@ -130,7 +133,7 @@ const html = `<!doctype html>
     --mut:#5a6b7d; --pale:#F4F7FA; --ligne:#d6dee7;
     /* Cotes calculées sur ${KDP.pages} pages, papier blanc, intérieur
        noir et blanc. Dos = ${KDP.pages} × 0,002252 pouce. */
-    --fp:3.175mm; --page-l:152.4mm; --page-h:228.6mm; --dos:${DOS}mm;
+    --fp:3.175mm; --page-l:${REG.page_l_mm}mm; --page-h:${REG.page_h_mm}mm; --dos:${DOS}mm;
     --marge:14mm;
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -254,19 +257,21 @@ const html = `<!doctype html>
       <li><b>Dix-neuf chapitres</b>, de la sécurité aux opérations, en passant par le fluide et la machine.</li>
       <li>Chaque chapitre s’ouvre sur <b>ce que le référentiel exige</b>, code par code.</li>
       <li>Des <b>questions type examen posées avant la lecture</b> : on se situe d’abord, on lit ensuite,
-          on se corrige en fin de chapitre.</li>
+          on se corrige en fin de chapitre — ou en ligne, corrigé immédiat.</li>
       <!-- Espaces insécables dans les guillemets : sans elles, le chevron
            fermant part seul en tête de ligne. -->
       <li>Plus de cent schémas techniques, des encadrés «&nbsp;à retenir&nbsp;»
-          et «&nbsp;geste interdit&nbsp;», des pages à remplir.</li>
+          et «&nbsp;geste interdit&nbsp;», des pages à remplir — et dans la marge,
+          le QR de chaque leçon, animation et quiz.</li>
     </ul>
 
     <div class="encart encart-qr">
       <div>
-        <h3>Un livre relié aux cours animés d’inerweb.fr</h3>
-        <p>Quatre-vingt-quinze QR codes mènent aux cours du site, animés et racontés
-           à voix haute : schémas en mouvement, questions corrigées, capsules audio.
-           Les adresses sont aussi écrites en clair : un navigateur suffit.</p>
+        <h3>Le fil conducteur d’une formation en ligne complète</h3>
+        <p>${NB_QR} QR codes, posés dans la marge des pages, ouvrent les animations,
+           les cours racontés à voix haute et les quiz corrigés d’inerweb.fr.
+           Le papier guide, l’écran entraîne — et les adresses sont aussi écrites
+           en clair : un navigateur suffit.</p>
       </div>
       <figure class="qr-accueil">
         <img src="${QR_ACCUEIL}" alt="QR code vers inerweb.fr">

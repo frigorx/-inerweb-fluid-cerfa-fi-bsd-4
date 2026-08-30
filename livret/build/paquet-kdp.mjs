@@ -24,8 +24,8 @@ const K = JSON.parse(fs.readFileSync(path.join(LIVRET, 'kdp.gen.json'), 'utf8'))
 const QR = JSON.parse(fs.readFileSync(path.join(LIVRET, 'qr.gen.json'), 'utf8'));
 const CHOISIES = JSON.parse(fs.readFileSync(path.join(LIVRET, 'questions-choisies.gen.json'), 'utf8'));
 
-const INTERIEUR = 'inerweb.fr-HabFluide-Tome1-Livret-eleve-6x9.pdf';
-const COUVERTURE = 'inerweb.fr-HabFluide-Tome1-Couverture-6x9.pdf';
+const INTERIEUR = 'inerweb.fr-HabFluide-Tome1-Livret-eleve-7x10.pdf';
+const COUVERTURE = 'inerweb.fr-HabFluide-Tome1-Couverture-7x10.pdf';
 
 for (const f of [INTERIEUR, COUVERTURE]) {
   if (!fs.existsSync(path.join(DIST, f))) {
@@ -67,7 +67,7 @@ Ce dossier ne contient QUE les deux fichiers qu'Amazon demande.
 
 | Réglage Amazon | Valeur | Pourquoi |
 |---|---|---|
-| Format | **6 × 9 pouces** (15,24 × 22,86 cm) | le fichier est à cette taille exacte, sur ses ${K.pages} pages |
+| Format | **${K.format.replace(' x ', ' × ')} pouces** | le fichier est à cette taille exacte, sur ses ${K.pages} pages |
 | Type de papier | **Blanc** | le dos et le coût sont calculés dessus |
 | Intérieur | **Noir et blanc** | aucune couleur n'est nécessaire à la lecture |
 | Fond perdu | **Sans fond perdu** pour l'intérieur, **avec** pour la couverture | rien ne touche le bord dans l'intérieur |

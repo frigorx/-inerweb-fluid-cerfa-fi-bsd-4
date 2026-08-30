@@ -244,6 +244,9 @@ for (const { ref, famille, nom, chemin } of aConvertir) {
     hauteur: info.height,
     source: path.relative(SOURCE, chemin).replace(/\\/g, '/'),
     citations: refs.get(ref).length,
+    /* Une planche animée a sa jumelle vivante en ligne : le livre pose
+       alors un QR d'animation dans la marge (pages.mjs + finition.py). */
+    animee: /\.svg$/i.test(chemin) && /<animate(Motion|Transform)?[\s>]/.test(fs.readFileSync(chemin, 'utf8')),
   };
 }
 

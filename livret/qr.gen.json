@@ -5,6 +5,11 @@
   "slug": "securite",
   "alias": "https://inerweb.fr/f/securite",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=s1",
+  "renvoi": {
+   "genre": "station",
+   "titre": "Le chapitre en entier",
+   "quoi": "Le chapitre raconté à voix haute, avec ses animations."
+  },
   "fichier": "securite.png"
  },
  {
@@ -14,6 +19,11 @@
   "slug": "securite-1",
   "alias": "https://inerweb.fr/f/securite-1",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=s1",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "L air qui manque — l asphyxie",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "securite-1.png"
  },
  {
@@ -23,6 +33,11 @@
   "slug": "securite-2",
   "alias": "https://inerweb.fr/f/securite-2",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=s2",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "Le froid brûle — projections et gelures",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "securite-2.png"
  },
  {
@@ -32,6 +47,11 @@
   "slug": "securite-3",
   "alias": "https://inerweb.fr/f/securite-3",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=s3",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "La flamme interdite — décomposition du fluide",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "securite-3.png"
  },
  {
@@ -41,6 +61,11 @@
   "slug": "securite-4",
   "alias": "https://inerweb.fr/f/securite-4",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=s4",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "Ce qui éclate — la pression",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "securite-4.png"
  },
  {
@@ -50,6 +75,11 @@
   "slug": "securite-5",
   "alias": "https://inerweb.fr/f/securite-5",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=s5",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "Consigner avant de toucher — le risque élec…",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "securite-5.png"
  },
  {
@@ -58,6 +88,11 @@
   "slug": "classes",
   "alias": "https://inerweb.fr/f/classes",
   "cible": "https://inerweb.fr/?carte=cl1",
+  "renvoi": {
+   "genre": "station",
+   "titre": "Le chapitre en entier",
+   "quoi": "Le chapitre dans l'appli : les leçons, les animations, l'entraînement."
+  },
   "fichier": "classes.png"
  },
  {
@@ -67,6 +102,11 @@
   "slug": "classes-1",
   "alias": "https://inerweb.fr/f/classes-1",
   "cible": "https://inerweb.fr/?carte=cl1",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Deux lettres, deux dangers",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "classes-1.png"
  },
  {
@@ -76,6 +116,11 @@
   "slug": "classes-2",
   "alias": "https://inerweb.fr/f/classes-2",
   "cible": "https://inerweb.fr/?carte=cl1",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Le piège du R-290",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "classes-2.png"
  },
  {
@@ -85,6 +130,11 @@
   "slug": "classes-3",
   "alias": "https://inerweb.fr/f/classes-3",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=cl2",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "Explosif avant d être perceptible — la LIE",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "classes-3.png"
  },
  {
@@ -94,6 +144,11 @@
   "slug": "classes-4",
   "alias": "https://inerweb.fr/f/classes-4",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=cl3",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "CO₂ : la pression et l air qu il vous prend",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "classes-4.png"
  },
  {
@@ -103,6 +158,11 @@
   "slug": "classes-5",
   "alias": "https://inerweb.fr/f/classes-5",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=cl4",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "Se protéger du CO₂ — détection, EPC et EPI",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "classes-5.png"
  },
  {
@@ -111,6 +171,11 @@
   "slug": "loi",
   "alias": "https://inerweb.fr/f/loi",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g0",
+  "renvoi": {
+   "genre": "station",
+   "titre": "Le chapitre en entier",
+   "quoi": "Le chapitre raconté à voix haute, avec ses animations."
+  },
   "fichier": "loi.png"
  },
  {
@@ -120,6 +185,11 @@
   "slug": "loi-1",
   "alias": "https://inerweb.fr/f/loi-1",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g0",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "Deux étages de règles, et deux papiers",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "loi-1.png"
  },
  {
@@ -129,6 +199,11 @@
   "slug": "loi-2",
   "alias": "https://inerweb.fr/f/loi-2",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g0",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "Le registre, les déchets, l écoconception",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "loi-2.png"
  },
  {
@@ -138,6 +213,11 @@
   "slug": "loi-3",
   "alias": "https://inerweb.fr/f/loi-3",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g2a",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "Quarante ans d histoire : de l ozone au climat",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "loi-3.png"
  },
  {
@@ -147,6 +227,11 @@
   "slug": "loi-4",
   "alias": "https://inerweb.fr/f/loi-4",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g2",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "Impact environnemental et F-Gas",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "loi-4.png"
  },
  {
@@ -155,6 +240,11 @@
   "slug": "categories",
   "alias": "https://inerweb.fr/f/categories",
   "cible": "https://inerweb.fr/?carte=c00",
+  "renvoi": {
+   "genre": "station",
+   "titre": "Le chapitre en entier",
+   "quoi": "Le chapitre dans l'appli : les leçons, les animations, l'entraînement."
+  },
   "fichier": "categories.png"
  },
  {
@@ -163,6 +253,11 @@
   "slug": "thermo",
   "alias": "https://inerweb.fr/f/thermo",
   "cible": "https://inerweb.fr/?carte=g1a",
+  "renvoi": {
+   "genre": "station",
+   "titre": "Le chapitre en entier",
+   "quoi": "Le chapitre dans l'appli : les leçons, les animations, l'entraînement."
+  },
   "fichier": "thermo.png"
  },
  {
@@ -172,6 +267,11 @@
   "slug": "thermo-1",
   "alias": "https://inerweb.fr/f/thermo-1",
   "cible": "https://inerweb.fr/?carte=g1a",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "La croix du frigoriste",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "thermo-1.png"
  },
  {
@@ -181,6 +281,11 @@
   "slug": "thermo-2",
   "alias": "https://inerweb.fr/f/thermo-2",
   "cible": "https://inerweb.fr/?carte=g1a",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Pression relative, pression absolue",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "thermo-2.png"
  },
  {
@@ -190,6 +295,11 @@
   "slug": "thermo-3",
   "alias": "https://inerweb.fr/f/thermo-3",
   "cible": "https://inerweb.fr/?carte=g1s",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Chaleur sensible et chaleur latente",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "thermo-3.png"
  },
  {
@@ -199,6 +309,11 @@
   "slug": "thermo-4",
   "alias": "https://inerweb.fr/f/thermo-4",
   "cible": "https://inerweb.fr/?carte=g1s",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Le palier, et pourquoi il n est pas plat",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "thermo-4.png"
  },
  {
@@ -207,6 +322,11 @@
   "slug": "logph",
   "alias": "https://inerweb.fr/f/logph",
   "cible": "https://inerweb.fr/?carte=g1b",
+  "renvoi": {
+   "genre": "station",
+   "titre": "Le chapitre en entier",
+   "quoi": "Le chapitre dans l'appli : les leçons, les animations, l'entraînement."
+  },
   "fichier": "logph.png"
  },
  {
@@ -216,6 +336,11 @@
   "slug": "logph-1",
   "alias": "https://inerweb.fr/f/logph-1",
   "cible": "https://inerweb.fr/?carte=g1b",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Le diagramme, et ce qu il montre",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "logph-1.png"
  },
  {
@@ -225,6 +350,11 @@
   "slug": "logph-2",
   "alias": "https://inerweb.fr/f/logph-2",
   "cible": "https://inerweb.fr/?carte=g1b",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "L échelle des pressions n est pas une règle…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "logph-2.png"
  },
  {
@@ -234,6 +364,11 @@
   "slug": "logph-3",
   "alias": "https://inerweb.fr/f/logph-3",
   "cible": "https://inerweb.fr/?carte=g1b",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Un fluide, une table",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "logph-3.png"
  },
  {
@@ -242,6 +377,11 @@
   "slug": "surchauffe",
   "alias": "https://inerweb.fr/f/surchauffe",
   "cible": "https://inerweb.fr/?carte=g1e",
+  "renvoi": {
+   "genre": "station",
+   "titre": "Le chapitre en entier",
+   "quoi": "Le chapitre dans l'appli : les leçons, les animations, l'entraînement."
+  },
   "fichier": "surchauffe.png"
  },
  {
@@ -251,6 +391,11 @@
   "slug": "surchauffe-1",
   "alias": "https://inerweb.fr/f/surchauffe-1",
   "cible": "https://inerweb.fr/?carte=g1e",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Deux mesures, deux extrémités du circuit",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "surchauffe-1.png"
  },
  {
@@ -260,6 +405,11 @@
   "slug": "surchauffe-2",
   "alias": "https://inerweb.fr/f/surchauffe-2",
   "cible": "https://inerweb.fr/?carte=g1e",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Une surchauffe ne se lit pas sur un thermom…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "surchauffe-2.png"
  },
  {
@@ -269,6 +419,11 @@
   "slug": "surchauffe-3",
   "alias": "https://inerweb.fr/f/surchauffe-3",
   "cible": "https://inerweb.fr/?carte=g1e",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Ce qu une valeur hors plage annonce",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "surchauffe-3.png"
  },
  {
@@ -277,6 +432,11 @@
   "slug": "fluides",
   "alias": "https://inerweb.fr/f/fluides",
   "cible": "https://inerweb.fr/?carte=g1c",
+  "renvoi": {
+   "genre": "station",
+   "titre": "Le chapitre en entier",
+   "quoi": "Le chapitre dans l'appli : les leçons, les animations, l'entraînement."
+  },
   "fichier": "fluides.png"
  },
  {
@@ -286,6 +446,11 @@
   "slug": "fluides-1",
   "alias": "https://inerweb.fr/f/fluides-1",
   "cible": "https://inerweb.fr/?carte=g1c",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Le code dit la molécule",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "fluides-1.png"
  },
  {
@@ -295,6 +460,11 @@
   "slug": "fluides-2",
   "alias": "https://inerweb.fr/f/fluides-2",
   "cible": "https://inerweb.fr/?carte=g1c",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Le code ne dit pas le danger",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "fluides-2.png"
  },
  {
@@ -304,6 +474,11 @@
   "slug": "fluides-3",
   "alias": "https://inerweb.fr/f/fluides-3",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g1d",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "Les organes qui trahissent une fuite",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "fluides-3.png"
  },
  {
@@ -312,6 +487,11 @@
   "slug": "compresseur",
   "alias": "https://inerweb.fr/f/compresseur",
   "cible": "https://inerweb.fr/?carte=g6",
+  "renvoi": {
+   "genre": "station",
+   "titre": "Le chapitre en entier",
+   "quoi": "Le chapitre dans l'appli : les leçons, les animations, l'entraînement."
+  },
   "fichier": "compresseur.png"
  },
  {
@@ -321,6 +501,11 @@
   "slug": "compresseur-1",
   "alias": "https://inerweb.fr/f/compresseur-1",
   "cible": "https://inerweb.fr/?carte=g6",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Ce qu il fait, et où il fuit",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "compresseur-1.png"
  },
  {
@@ -330,6 +515,11 @@
   "slug": "compresseur-2",
   "alias": "https://inerweb.fr/f/compresseur-2",
   "cible": "https://inerweb.fr/?carte=g6",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Ce que dit une température de refoulement",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "compresseur-2.png"
  },
  {
@@ -339,6 +529,11 @@
   "slug": "compresseur-3",
   "alias": "https://inerweb.fr/f/compresseur-3",
   "cible": "https://inerweb.fr/?carte=g6",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "L huile, et le rapport d état",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "compresseur-3.png"
  },
  {
@@ -348,6 +543,11 @@
   "slug": "compresseur-4",
   "alias": "https://inerweb.fr/f/compresseur-4",
   "cible": "https://inerweb.fr/?carte=g6b",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Installer sans fuite, régler les sécurités",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "compresseur-4.png"
  },
  {
@@ -357,6 +557,11 @@
   "slug": "compresseur-5",
   "alias": "https://inerweb.fr/f/compresseur-5",
   "cible": "https://inerweb.fr/?carte=g6b",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "La valeur plaque, jamais un chiffre inventé",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "compresseur-5.png"
  },
  {
@@ -365,6 +570,11 @@
   "slug": "condenseur",
   "alias": "https://inerweb.fr/f/condenseur",
   "cible": "https://inerweb.fr/?carte=g7",
+  "renvoi": {
+   "genre": "station",
+   "titre": "Le chapitre en entier",
+   "quoi": "Le chapitre dans l'appli : les leçons, les animations, l'entraînement."
+  },
   "fichier": "condenseur.png"
  },
  {
@@ -374,6 +584,11 @@
   "slug": "condenseur-1",
   "alias": "https://inerweb.fr/f/condenseur-1",
   "cible": "https://inerweb.fr/?carte=g7",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Ce qu il fait, et où il fuit",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "condenseur-1.png"
  },
  {
@@ -383,6 +598,11 @@
   "slug": "condenseur-2",
   "alias": "https://inerweb.fr/f/condenseur-2",
   "cible": "https://inerweb.fr/?carte=g7",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Deux pressostats, deux fonctions",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "condenseur-2.png"
  },
  {
@@ -392,6 +612,11 @@
   "slug": "condenseur-3",
   "alias": "https://inerweb.fr/f/condenseur-3",
   "cible": "https://inerweb.fr/?carte=g7b",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Installer l unité extérieure, régler la pre…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "condenseur-3.png"
  },
  {
@@ -401,6 +626,11 @@
   "slug": "condenseur-4",
   "alias": "https://inerweb.fr/f/condenseur-4",
   "cible": "https://inerweb.fr/?carte=g7b",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Un régulateur ne coupe rien",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "condenseur-4.png"
  },
  {
@@ -410,6 +640,11 @@
   "slug": "condenseur-5",
   "alias": "https://inerweb.fr/f/condenseur-5",
   "cible": "https://inerweb.fr/?carte=g7b",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Purger, mesurer, rendre compte",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "condenseur-5.png"
  },
  {
@@ -418,6 +653,11 @@
   "slug": "evaporateur",
   "alias": "https://inerweb.fr/f/evaporateur",
   "cible": "https://inerweb.fr/?carte=g8",
+  "renvoi": {
+   "genre": "station",
+   "titre": "Le chapitre en entier",
+   "quoi": "Le chapitre dans l'appli : les leçons, les animations, l'entraînement."
+  },
   "fichier": "evaporateur.png"
  },
  {
@@ -427,6 +667,11 @@
   "slug": "evaporateur-1",
   "alias": "https://inerweb.fr/f/evaporateur-1",
   "cible": "https://inerweb.fr/?carte=g8",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Ce qu il fait, et où il fuit",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "evaporateur-1.png"
  },
  {
@@ -436,6 +681,11 @@
   "slug": "evaporateur-2",
   "alias": "https://inerweb.fr/f/evaporateur-2",
   "cible": "https://inerweb.fr/?carte=g8",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Lire la surchauffe, et les deux organes qu …",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "evaporateur-2.png"
  },
  {
@@ -445,6 +695,11 @@
   "slug": "evaporateur-3",
   "alias": "https://inerweb.fr/f/evaporateur-3",
   "cible": "https://inerweb.fr/?carte=g8b",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Le givre et le dégivrage",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "evaporateur-3.png"
  },
  {
@@ -454,6 +709,11 @@
   "slug": "evaporateur-4",
   "alias": "https://inerweb.fr/f/evaporateur-4",
   "cible": "https://inerweb.fr/?carte=g8b",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Qui protège quoi",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "evaporateur-4.png"
  },
  {
@@ -463,6 +723,11 @@
   "slug": "evaporateur-5",
   "alias": "https://inerweb.fr/f/evaporateur-5",
   "cible": "https://inerweb.fr/?carte=g8b",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Démarrer, mesurer, rendre compte",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "evaporateur-5.png"
  },
  {
@@ -471,6 +736,11 @@
   "slug": "detendeur",
   "alias": "https://inerweb.fr/f/detendeur",
   "cible": "https://inerweb.fr/?carte=g9",
+  "renvoi": {
+   "genre": "station",
+   "titre": "Le chapitre en entier",
+   "quoi": "Le chapitre dans l'appli : les leçons, les animations, l'entraînement."
+  },
   "fichier": "detendeur.png"
  },
  {
@@ -480,6 +750,11 @@
   "slug": "detendeur-1",
   "alias": "https://inerweb.fr/f/detendeur-1",
   "cible": "https://inerweb.fr/?carte=g9",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Ce qu il fait, et les trois technologies",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "detendeur-1.png"
  },
  {
@@ -489,6 +764,11 @@
   "slug": "detendeur-2",
   "alias": "https://inerweb.fr/f/detendeur-2",
   "cible": "https://inerweb.fr/?carte=g9",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Sécurité électrique, sécurité mécanique",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "detendeur-2.png"
  },
  {
@@ -498,6 +778,11 @@
   "slug": "detendeur-3",
   "alias": "https://inerweb.fr/f/detendeur-3",
   "cible": "https://inerweb.fr/?carte=g9b",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "La ligne liquide, organe par organe",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "detendeur-3.png"
  },
  {
@@ -507,6 +792,11 @@
   "slug": "detendeur-4",
   "alias": "https://inerweb.fr/f/detendeur-4",
   "cible": "https://inerweb.fr/?carte=g9b",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Un bon réglage, c est de l énergie économisée",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "detendeur-4.png"
  },
  {
@@ -516,6 +806,11 @@
   "slug": "detendeur-5",
   "alias": "https://inerweb.fr/f/detendeur-5",
   "cible": "https://inerweb.fr/?carte=g9b",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Avant de toucher un réglage électrique",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "detendeur-5.png"
  },
  {
@@ -524,6 +819,11 @@
   "slug": "mise-en-service",
   "alias": "https://inerweb.fr/f/mise-en-service",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g3",
+  "renvoi": {
+   "genre": "station",
+   "titre": "Le chapitre en entier",
+   "quoi": "Le chapitre raconté à voix haute, avec ses animations."
+  },
   "fichier": "mise-en-service.png"
  },
  {
@@ -533,6 +833,11 @@
   "slug": "mise-en-service-1",
   "alias": "https://inerweb.fr/f/mise-en-service-1",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g3",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "Deux épreuves, deux buts",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "mise-en-service-1.png"
  },
  {
@@ -542,6 +847,11 @@
   "slug": "mise-en-service-2",
   "alias": "https://inerweb.fr/f/mise-en-service-2",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=p4",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "La bouteille d azote et son mano-détendeur",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "mise-en-service-2.png"
  },
  {
@@ -551,6 +861,11 @@
   "slug": "mise-en-service-3",
   "alias": "https://inerweb.fr/f/mise-en-service-3",
   "cible": "https://inerweb.fr/?carte=p1",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Le manifold — lire, brancher, ne pas polluer",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "mise-en-service-3.png"
  },
  {
@@ -560,6 +875,11 @@
   "slug": "mise-en-service-4",
   "alias": "https://inerweb.fr/f/mise-en-service-4",
   "cible": "https://inerweb.fr/?carte=p3",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Pompe à vide et vacuomètre",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "mise-en-service-4.png"
  },
  {
@@ -569,6 +889,11 @@
   "slug": "mise-en-service-5",
   "alias": "https://inerweb.fr/f/mise-en-service-5",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g3",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "Le vide qui remonte, et la fuite qu on loca…",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "mise-en-service-5.png"
  },
  {
@@ -577,6 +902,11 @@
   "slug": "etancheite",
   "alias": "https://inerweb.fr/f/etancheite",
   "cible": "https://inerweb.fr/?carte=g4a",
+  "renvoi": {
+   "genre": "station",
+   "titre": "Le chapitre en entier",
+   "quoi": "Le chapitre dans l'appli : les leçons, les animations, l'entraînement."
+  },
   "fichier": "etancheite.png"
  },
  {
@@ -586,6 +916,11 @@
   "slug": "etancheite-1",
   "alias": "https://inerweb.fr/f/etancheite-1",
   "cible": "https://inerweb.fr/?carte=g4a",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Où fuit une installation",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "etancheite-1.png"
  },
  {
@@ -595,6 +930,11 @@
   "slug": "etancheite-2",
   "alias": "https://inerweb.fr/f/etancheite-2",
   "cible": "https://inerweb.fr/?carte=g4a",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Consulter le registre avant de commencer",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "etancheite-2.png"
  },
  {
@@ -604,6 +944,11 @@
   "slug": "etancheite-3",
   "alias": "https://inerweb.fr/f/etancheite-3",
   "cible": "https://inerweb.fr/?carte=g4b",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Méthode indirecte — mesurer et interpréter",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "etancheite-3.png"
  },
  {
@@ -613,6 +958,11 @@
   "slug": "etancheite-4",
   "alias": "https://inerweb.fr/f/etancheite-4",
   "cible": "https://inerweb.fr/?carte=g4c",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Méthode directe — le détecteur",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "etancheite-4.png"
  },
  {
@@ -622,6 +972,11 @@
   "slug": "etancheite-5",
   "alias": "https://inerweb.fr/f/etancheite-5",
   "cible": "https://inerweb.fr/?carte=g4c",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "L instrument aussi se contrôle, et le regis…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "etancheite-5.png"
  },
  {
@@ -630,6 +985,11 @@
   "slug": "recuperation",
   "alias": "https://inerweb.fr/f/recuperation",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g5a",
+  "renvoi": {
+   "genre": "station",
+   "titre": "Le chapitre en entier",
+   "quoi": "Le chapitre raconté à voix haute, avec ses animations."
+  },
   "fichier": "recuperation.png"
  },
  {
@@ -639,6 +999,11 @@
   "slug": "recuperation-1",
   "alias": "https://inerweb.fr/f/recuperation-1",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g5a",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "Récupérer sans émettre",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "recuperation-1.png"
  },
  {
@@ -648,6 +1013,11 @@
   "slug": "recuperation-2",
   "alias": "https://inerweb.fr/f/recuperation-2",
   "cible": "https://inerweb.fr/?carte=p2",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "La station de récupération",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "recuperation-2.png"
  },
  {
@@ -657,6 +1027,11 @@
   "slug": "recuperation-3",
   "alias": "https://inerweb.fr/f/recuperation-3",
   "cible": "https://inerweb.fr/?carte=p5",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "L ordre des vannes",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "recuperation-3.png"
  },
  {
@@ -666,6 +1041,11 @@
   "slug": "recuperation-4",
   "alias": "https://inerweb.fr/f/recuperation-4",
   "cible": "https://inerweb.fr/?carte=p6",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "La balance et la pesée",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "recuperation-4.png"
  },
  {
@@ -675,6 +1055,11 @@
   "slug": "recuperation-5",
   "alias": "https://inerweb.fr/f/recuperation-5",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g5b",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "Stocker, transporter, tracer",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "recuperation-5.png"
  },
  {
@@ -683,6 +1068,11 @@
   "slug": "brasage",
   "alias": "https://inerweb.fr/f/brasage",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g10",
+  "renvoi": {
+   "genre": "station",
+   "titre": "Le chapitre en entier",
+   "quoi": "Le chapitre raconté à voix haute, avec ses animations."
+  },
   "fichier": "brasage.png"
  },
  {
@@ -692,6 +1082,11 @@
   "slug": "brasage-1",
   "alias": "https://inerweb.fr/f/brasage-1",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g10",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "Deux opérations à l azote, à ne pas confondre",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "brasage-1.png"
  },
  {
@@ -701,6 +1096,11 @@
   "slug": "brasage-2",
   "alias": "https://inerweb.fr/f/brasage-2",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g10",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "Ce que la flamme fabrique sans azote",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "brasage-2.png"
  },
  {
@@ -710,6 +1110,11 @@
   "slug": "brasage-3",
   "alias": "https://inerweb.fr/f/brasage-3",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g10",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "Le support compte autant que le joint",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "brasage-3.png"
  },
  {
@@ -718,6 +1123,11 @@
   "slug": "efficacite",
   "alias": "https://inerweb.fr/f/efficacite",
   "cible": "https://inerweb.fr/?carte=g11",
+  "renvoi": {
+   "genre": "station",
+   "titre": "Le chapitre en entier",
+   "quoi": "Le chapitre dans l'appli : les leçons, les animations, l'entraînement."
+  },
   "fichier": "efficacite.png"
  },
  {
@@ -727,6 +1137,11 @@
   "slug": "efficacite-1",
   "alias": "https://inerweb.fr/f/efficacite-1",
   "cible": "https://inerweb.fr/?carte=g11",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Drop-in ou retrofit",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "efficacite-1.png"
  },
  {
@@ -736,6 +1151,11 @@
   "slug": "efficacite-2",
   "alias": "https://inerweb.fr/f/efficacite-2",
   "cible": "https://inerweb.fr/?carte=g11",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Ce qui fait consommer une installation",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "efficacite-2.png"
  },
  {
@@ -745,6 +1165,11 @@
   "slug": "efficacite-3",
   "alias": "https://inerweb.fr/f/efficacite-3",
   "cible": "https://inerweb.fr/?carte=g11",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Hydrocarbures : une machine pas comme les a…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "efficacite-3.png"
  },
  {
@@ -753,6 +1178,11 @@
   "slug": "hydrocarbures",
   "alias": "https://inerweb.fr/f/hydrocarbures",
   "cible": "https://inerweb.fr/?carte=g12",
+  "renvoi": {
+   "genre": "station",
+   "titre": "Le chapitre en entier",
+   "quoi": "Le chapitre dans l'appli : les leçons, les animations, l'entraînement."
+  },
   "fichier": "hydrocarbures.png"
  },
  {
@@ -762,6 +1192,11 @@
   "slug": "hydrocarbures-1",
   "alias": "https://inerweb.fr/f/hydrocarbures-1",
   "cible": "https://inerweb.fr/?carte=g12",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Étiquetage et deux confusions qui coûtent cher",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "hydrocarbures-1.png"
  },
  {
@@ -771,6 +1206,11 @@
   "slug": "hydrocarbures-2",
   "alias": "https://inerweb.fr/f/hydrocarbures-2",
   "cible": "https://inerweb.fr/?carte=g12",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Avant toute flamme",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "hydrocarbures-2.png"
  },
  {
@@ -780,6 +1220,11 @@
   "slug": "hydrocarbures-3",
   "alias": "https://inerweb.fr/f/hydrocarbures-3",
   "cible": "https://inerweb.fr/?carte=g12",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Charge maximale : jamais estimée",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "hydrocarbures-3.png"
  },
  {
@@ -789,6 +1234,11 @@
   "slug": "hydrocarbures-4",
   "alias": "https://inerweb.fr/f/hydrocarbures-4",
   "cible": "https://inerweb.fr/?carte=g12b",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Récupérer et remplir à l azote",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "hydrocarbures-4.png"
  },
  {
@@ -798,6 +1248,11 @@
   "slug": "hydrocarbures-5",
   "alias": "https://inerweb.fr/f/hydrocarbures-5",
   "cible": "https://inerweb.fr/?carte=g12b",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Le fil rouge de l intervention",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
   "fichier": "hydrocarbures-5.png"
  },
  {
@@ -806,6 +1261,11 @@
   "slug": "co2-nh3",
   "alias": "https://inerweb.fr/f/co2-nh3",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g13",
+  "renvoi": {
+   "genre": "station",
+   "titre": "Le chapitre en entier",
+   "quoi": "Le chapitre raconté à voix haute, avec ses animations."
+  },
   "fichier": "co2-nh3.png"
  },
  {
@@ -815,6 +1275,11 @@
   "slug": "co2-nh3-1",
   "alias": "https://inerweb.fr/f/co2-nh3-1",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g13",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "« A1 » ne veut pas dire « sans danger »",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "co2-nh3-1.png"
  },
  {
@@ -824,6 +1289,11 @@
   "slug": "co2-nh3-2",
   "alias": "https://inerweb.fr/f/co2-nh3-2",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g13",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "La règle des catégories",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "co2-nh3-2.png"
  },
  {
@@ -833,6 +1303,440 @@
   "slug": "co2-nh3-3",
   "alias": "https://inerweb.fr/f/co2-nh3-3",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g13",
+  "renvoi": {
+   "genre": "leçon narrée",
+   "titre": "La glace carbonique, et le réflexe d arrivé…",
+   "quoi": "Cette leçon animée et racontée à voix haute."
+  },
   "fichier": "co2-nh3-3.png"
+ },
+ {
+  "genre": "animation",
+  "titre": "Chaleur sensible et chaleur latente : la courbe de chauffe et son palier",
+  "slug": "a-chaleur-sensible-latente",
+  "alias": "https://inerweb.fr/f/a-chaleur-sensible-latente",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/chaleur-sensible-latente.svg",
+  "renvoi": {
+   "genre": "animation",
+   "titre": "La planche en mouvement",
+   "quoi": "Ci-contre figée. En ligne, elle se joue du début à la fin."
+  },
+  "fichier": "a-chaleur-sensible-latente.png"
+ },
+ {
+  "genre": "animation",
+  "titre": "Fluide inflammable : ce que le volume du local commande",
+  "slug": "a-charge-limite-local",
+  "alias": "https://inerweb.fr/f/a-charge-limite-local",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/charge-limite-local.svg",
+  "renvoi": {
+   "genre": "animation",
+   "titre": "La planche en mouvement",
+   "quoi": "Ci-contre figée. En ligne, elle se joue du début à la fin."
+  },
+  "fichier": "a-charge-limite-local.png"
+ },
+ {
+  "genre": "animation",
+  "titre": "Le poste de récupération : circuit complet et manifold branché",
+  "slug": "a-circuit-complet-manifold",
+  "alias": "https://inerweb.fr/f/a-circuit-complet-manifold",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/circuit-complet-manifold.svg",
+  "renvoi": {
+   "genre": "animation",
+   "titre": "La planche en mouvement",
+   "quoi": "Ci-contre figée. En ligne, elle se joue du début à la fin."
+  },
+  "fichier": "a-circuit-complet-manifold.png"
+ },
+ {
+  "genre": "animation",
+  "titre": "CO₂ et ammoniac : deux fluides, deux comportements inverses",
+  "slug": "a-co2-nh3-compare",
+  "alias": "https://inerweb.fr/f/a-co2-nh3-compare",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/co2-nh3-compare.svg",
+  "renvoi": {
+   "genre": "animation",
+   "titre": "La planche en mouvement",
+   "quoi": "Ci-contre figée. En ligne, elle se joue du début à la fin."
+  },
+  "fichier": "a-co2-nh3-compare.png"
+ },
+ {
+  "genre": "animation",
+  "titre": "Le CO₂ s'accumule en point bas — on descend dedans sans le voir",
+  "slug": "a-co2-point-bas",
+  "alias": "https://inerweb.fr/f/a-co2-point-bas",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/co2-point-bas.svg",
+  "renvoi": {
+   "genre": "animation",
+   "titre": "La planche en mouvement",
+   "quoi": "Ci-contre figée. En ligne, elle se joue du début à la fin."
+  },
+  "fichier": "a-co2-point-bas.png"
+ },
+ {
+  "genre": "animation",
+  "titre": "coup-de-liquide-piston",
+  "slug": "a-coup-de-liquide-piston",
+  "alias": "https://inerweb.fr/f/a-coup-de-liquide-piston",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/coup-de-liquide-piston.svg",
+  "renvoi": {
+   "genre": "animation",
+   "titre": "La planche en mouvement",
+   "quoi": "Ci-contre figée. En ligne, elle se joue du début à la fin."
+  },
+  "fichier": "a-coup-de-liquide-piston.png"
+ },
+ {
+  "genre": "animation",
+  "titre": "Le détendeur thermostatique : une boucle qui se corrige toute seule",
+  "slug": "a-detendeur-regulation",
+  "alias": "https://inerweb.fr/f/a-detendeur-regulation",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/detendeur-regulation.svg",
+  "renvoi": {
+   "genre": "animation",
+   "titre": "La planche en mouvement",
+   "quoi": "Ci-contre figée. En ligne, elle se joue du début à la fin."
+  },
+  "fichier": "a-detendeur-regulation.png"
+ },
+ {
+  "genre": "animation",
+  "titre": "Le diagramme log p-h : trois zones, deux frontières, un cycle en quatre transformations",
+  "slug": "a-diagramme-logph",
+  "alias": "https://inerweb.fr/f/a-diagramme-logph",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/diagramme-logph.svg",
+  "renvoi": {
+   "genre": "animation",
+   "titre": "La planche en mouvement",
+   "quoi": "Ci-contre figée. En ligne, elle se joue du début à la fin."
+  },
+  "fichier": "a-diagramme-logph.png"
+ },
+ {
+  "genre": "animation",
+  "titre": "Le givre étouffe l'échange — le dégivrage le libère",
+  "slug": "a-givre-degivrage",
+  "alias": "https://inerweb.fr/f/a-givre-degivrage",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/givre-degivrage.svg",
+  "renvoi": {
+   "genre": "animation",
+   "titre": "La planche en mouvement",
+   "quoi": "Ci-contre figée. En ligne, elle se joue du début à la fin."
+  },
+  "fichier": "a-givre-degivrage.png"
+ },
+ {
+  "genre": "animation",
+  "titre": "LIE et LSE : le domaine d'explosivité, et ce qu'affiche l'explosimètre",
+  "slug": "a-lie-domaine",
+  "alias": "https://inerweb.fr/f/a-lie-domaine",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/lie-domaine.svg",
+  "renvoi": {
+   "genre": "animation",
+   "titre": "La planche en mouvement",
+   "quoi": "Ci-contre figée. En ligne, elle se joue du début à la fin."
+  },
+  "fichier": "a-lie-domaine.png"
+ },
+ {
+  "genre": "animation",
+  "titre": "Le manifold : quelle vanne ouvre quoi",
+  "slug": "a-manifold-lecture",
+  "alias": "https://inerweb.fr/f/a-manifold-lecture",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/manifold-lecture.svg",
+  "renvoi": {
+   "genre": "animation",
+   "titre": "La planche en mouvement",
+   "quoi": "Ci-contre figée. En ligne, elle se joue du début à la fin."
+  },
+  "fichier": "a-manifold-lecture.png"
+ },
+ {
+  "genre": "animation",
+  "titre": "Décoder un code fluide, chiffre par chiffre",
+  "slug": "a-nomenclature",
+  "alias": "https://inerweb.fr/f/a-nomenclature",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/nomenclature.svg",
+  "renvoi": {
+   "genre": "animation",
+   "titre": "La planche en mouvement",
+   "quoi": "Ci-contre figée. En ligne, elle se joue du début à la fin."
+  },
+  "fichier": "a-nomenclature.png"
+ },
+ {
+  "genre": "animation",
+  "titre": "L'ordre des vannes : une chorégraphie, jamais une improvisation",
+  "slug": "a-ordre-vannes",
+  "alias": "https://inerweb.fr/f/a-ordre-vannes",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/ordre-vannes.svg",
+  "renvoi": {
+   "genre": "animation",
+   "titre": "La planche en mouvement",
+   "quoi": "Ci-contre figée. En ligne, elle se joue du début à la fin."
+  },
+  "fichier": "a-ordre-vannes.png"
+ },
+ {
+  "genre": "animation",
+  "titre": "La pesée : ce qui est parti dans la machine, c'est ce que la balance a perdu",
+  "slug": "a-pesee-charge",
+  "alias": "https://inerweb.fr/f/a-pesee-charge",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/pesee-charge.svg",
+  "renvoi": {
+   "genre": "animation",
+   "titre": "La planche en mouvement",
+   "quoi": "Ci-contre figée. En ligne, elle se joue du début à la fin."
+  },
+  "fichier": "a-pesee-charge.png"
+ },
+ {
+  "genre": "animation",
+  "titre": "Où fuit une installation ?",
+  "slug": "a-points-de-fuite",
+  "alias": "https://inerweb.fr/f/a-points-de-fuite",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/points-de-fuite.svg",
+  "renvoi": {
+   "genre": "animation",
+   "titre": "La planche en mouvement",
+   "quoi": "Ci-contre figée. En ligne, elle se joue du début à la fin."
+  },
+  "fichier": "a-points-de-fuite.png"
+ },
+ {
+  "genre": "animation",
+  "titre": "Pression absolue et pression relative : deux échelles décalées de 1 bar",
+  "slug": "a-pression-absolue-relative",
+  "alias": "https://inerweb.fr/f/a-pression-absolue-relative",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/pression-absolue-relative.svg",
+  "renvoi": {
+   "genre": "animation",
+   "titre": "La planche en mouvement",
+   "quoi": "Ci-contre figée. En ligne, elle se joue du début à la fin."
+  },
+  "fichier": "a-pression-absolue-relative.png"
+ },
+ {
+  "genre": "animation",
+  "titre": "La consignation électrique en cinq étapes",
+  "slug": "a-secu-consignation",
+  "alias": "https://inerweb.fr/f/a-secu-consignation",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/secu-consignation.svg",
+  "renvoi": {
+   "genre": "animation",
+   "titre": "La planche en mouvement",
+   "quoi": "Ci-contre figée. En ligne, elle se joue du début à la fin."
+  },
+  "fichier": "a-secu-consignation.png"
+ },
+ {
+  "genre": "animation",
+  "titre": "Fumées de décomposition : l'ARI protège l'intervenant formé, pas le chantier",
+  "slug": "a-secu-decomposition-ari",
+  "alias": "https://inerweb.fr/f/a-secu-decomposition-ari",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/secu-decomposition-ari.svg",
+  "renvoi": {
+   "genre": "animation",
+   "titre": "La planche en mouvement",
+   "quoi": "Ci-contre figée. En ligne, elle se joue du début à la fin."
+  },
+  "fichier": "a-secu-decomposition-ari.png"
+ },
+ {
+  "genre": "animation",
+  "titre": "Brasage : récupérer et balayer, jamais chauffer du fluide",
+  "slug": "a-secu-flamme",
+  "alias": "https://inerweb.fr/f/a-secu-flamme",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/secu-flamme.svg",
+  "renvoi": {
+   "genre": "animation",
+   "titre": "La planche en mouvement",
+   "quoi": "Ci-contre figée. En ligne, elle se joue du début à la fin."
+  },
+  "fichier": "a-secu-flamme.png"
+ },
+ {
+  "genre": "animation",
+  "titre": "Surchauffe utile et surchauffe totale : où elles se prennent, comment on les mesure",
+  "slug": "a-surchauffe-utile-totale",
+  "alias": "https://inerweb.fr/f/a-surchauffe-utile-totale",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/surchauffe-utile-totale.svg",
+  "renvoi": {
+   "genre": "animation",
+   "titre": "La planche en mouvement",
+   "quoi": "Ci-contre figée. En ligne, elle se joue du début à la fin."
+  },
+  "fichier": "a-surchauffe-utile-totale.png"
+ },
+ {
+  "genre": "animation",
+  "titre": "Le tirage au vide : la courbe qui descend, le palier, et la remontée qui accuse",
+  "slug": "a-tirage-au-vide",
+  "alias": "https://inerweb.fr/f/a-tirage-au-vide",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/tirage-au-vide.svg",
+  "renvoi": {
+   "genre": "animation",
+   "titre": "La planche en mouvement",
+   "quoi": "Ci-contre figée. En ligne, elle se joue du début à la fin."
+  },
+  "fichier": "a-tirage-au-vide.png"
+ },
+ {
+  "genre": "entrainement",
+  "titre": "Série de révision G1",
+  "slug": "rev-g1",
+  "alias": "https://inerweb.fr/f/rev-g1",
+  "cible": "https://inerweb.fr/?carte=rev-g1",
+  "renvoi": {
+   "genre": "des questions ?",
+   "titre": "10 questions, niveau examen",
+   "quoi": "La série du chapitre, corrigée et expliquée question par question."
+  },
+  "fichier": "rev-g1.png"
+ },
+ {
+  "genre": "entrainement",
+  "titre": "Série de révision G10",
+  "slug": "rev-g10",
+  "alias": "https://inerweb.fr/f/rev-g10",
+  "cible": "https://inerweb.fr/?carte=rev-g10",
+  "renvoi": {
+   "genre": "des questions ?",
+   "titre": "10 questions, niveau examen",
+   "quoi": "La série du chapitre, corrigée et expliquée question par question."
+  },
+  "fichier": "rev-g10.png"
+ },
+ {
+  "genre": "entrainement",
+  "titre": "Série de révision G11",
+  "slug": "rev-g11",
+  "alias": "https://inerweb.fr/f/rev-g11",
+  "cible": "https://inerweb.fr/?carte=rev-g11",
+  "renvoi": {
+   "genre": "des questions ?",
+   "titre": "10 questions, niveau examen",
+   "quoi": "La série du chapitre, corrigée et expliquée question par question."
+  },
+  "fichier": "rev-g11.png"
+ },
+ {
+  "genre": "entrainement",
+  "titre": "Série de révision G12",
+  "slug": "rev-g12",
+  "alias": "https://inerweb.fr/f/rev-g12",
+  "cible": "https://inerweb.fr/?carte=rev-g12",
+  "renvoi": {
+   "genre": "des questions ?",
+   "titre": "10 questions, niveau examen",
+   "quoi": "La série du chapitre, corrigée et expliquée question par question."
+  },
+  "fichier": "rev-g12.png"
+ },
+ {
+  "genre": "entrainement",
+  "titre": "Série de révision G13",
+  "slug": "rev-g13",
+  "alias": "https://inerweb.fr/f/rev-g13",
+  "cible": "https://inerweb.fr/?carte=rev-g13",
+  "renvoi": {
+   "genre": "des questions ?",
+   "titre": "10 questions, niveau examen",
+   "quoi": "La série du chapitre, corrigée et expliquée question par question."
+  },
+  "fichier": "rev-g13.png"
+ },
+ {
+  "genre": "entrainement",
+  "titre": "Série de révision G3",
+  "slug": "rev-g3",
+  "alias": "https://inerweb.fr/f/rev-g3",
+  "cible": "https://inerweb.fr/?carte=rev-g3",
+  "renvoi": {
+   "genre": "des questions ?",
+   "titre": "10 questions, niveau examen",
+   "quoi": "La série du chapitre, corrigée et expliquée question par question."
+  },
+  "fichier": "rev-g3.png"
+ },
+ {
+  "genre": "entrainement",
+  "titre": "Série de révision G4",
+  "slug": "rev-g4",
+  "alias": "https://inerweb.fr/f/rev-g4",
+  "cible": "https://inerweb.fr/?carte=rev-g4",
+  "renvoi": {
+   "genre": "des questions ?",
+   "titre": "10 questions, niveau examen",
+   "quoi": "La série du chapitre, corrigée et expliquée question par question."
+  },
+  "fichier": "rev-g4.png"
+ },
+ {
+  "genre": "entrainement",
+  "titre": "Série de révision G5",
+  "slug": "rev-g5",
+  "alias": "https://inerweb.fr/f/rev-g5",
+  "cible": "https://inerweb.fr/?carte=rev-g5",
+  "renvoi": {
+   "genre": "des questions ?",
+   "titre": "10 questions, niveau examen",
+   "quoi": "La série du chapitre, corrigée et expliquée question par question."
+  },
+  "fichier": "rev-g5.png"
+ },
+ {
+  "genre": "entrainement",
+  "titre": "Série de révision G6",
+  "slug": "rev-g6",
+  "alias": "https://inerweb.fr/f/rev-g6",
+  "cible": "https://inerweb.fr/?carte=rev-g6",
+  "renvoi": {
+   "genre": "des questions ?",
+   "titre": "10 questions, niveau examen",
+   "quoi": "La série du chapitre, corrigée et expliquée question par question."
+  },
+  "fichier": "rev-g6.png"
+ },
+ {
+  "genre": "entrainement",
+  "titre": "Série de révision G7",
+  "slug": "rev-g7",
+  "alias": "https://inerweb.fr/f/rev-g7",
+  "cible": "https://inerweb.fr/?carte=rev-g7",
+  "renvoi": {
+   "genre": "des questions ?",
+   "titre": "10 questions, niveau examen",
+   "quoi": "La série du chapitre, corrigée et expliquée question par question."
+  },
+  "fichier": "rev-g7.png"
+ },
+ {
+  "genre": "entrainement",
+  "titre": "Série de révision G8",
+  "slug": "rev-g8",
+  "alias": "https://inerweb.fr/f/rev-g8",
+  "cible": "https://inerweb.fr/?carte=rev-g8",
+  "renvoi": {
+   "genre": "des questions ?",
+   "titre": "10 questions, niveau examen",
+   "quoi": "La série du chapitre, corrigée et expliquée question par question."
+  },
+  "fichier": "rev-g8.png"
+ },
+ {
+  "genre": "entrainement",
+  "titre": "Série de révision G9",
+  "slug": "rev-g9",
+  "alias": "https://inerweb.fr/f/rev-g9",
+  "cible": "https://inerweb.fr/?carte=rev-g9",
+  "renvoi": {
+   "genre": "des questions ?",
+   "titre": "10 questions, niveau examen",
+   "quoi": "La série du chapitre, corrigée et expliquée question par question."
+  },
+  "fichier": "rev-g9.png"
  }
 ]

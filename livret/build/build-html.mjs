@@ -45,7 +45,7 @@ const SOURCE_PACK = process.env.PILOTE_FLUIDES || 'C:/git/pilote-fluides';
 const DYS = process.env.EDITION === 'dys';
 /* Le livre s'appelle « inerweb.fr HabFluide » — la marque du livre est
    le SITE, pas le logiciel : c'est lui qu'il fait connaître. */
-const NOM = 'inerweb.fr-HabFluide-Tome1-Livret-eleve-6x9' + (DYS ? '-DYS' : '');
+const NOM = 'inerweb.fr-HabFluide-Tome1-Livret-eleve-7x10' + (DYS ? '-DYS' : '');
 
 const LEXEND = path.join(SOURCE_PACK, 'moteur', 'polices', 'Lexend-variable.woff2');
 const POLICE_DYS = fs.existsSync(LEXEND)
@@ -80,8 +80,9 @@ ${POLICE_DYS && DYS ? POLICE_DYS : ''}
   --bleu:#1B3A63; --bleu2:#2f5689; --orange:#FF6B35; --logo:#e8914a;
   --txt:#1d2a38; --mut:#5a6b7d; --ligne:#d6dee7; --pale:#F4F7FA;
   --ok:#1e7e54; --ko:#c0392b;
-  /* Format Amazon KDP 6 × 9 pouces. */
-  --page-h:228.6mm; --page-l:152.4mm;
+  /* Format Amazon KDP — cotes dans reglages.json (7 × 10 : maquette
+     à marge de renvois du 30/08). */
+  --page-h:${R.page_h_mm}mm; --page-l:${R.page_l_mm}mm;
   /* Réglages de densité — voir reglages.json. la variable --air multiplie tous les
      blancs entre blocs : c'est le curseur qui décide si la page respire
      ou si elle porte. */
@@ -95,7 +96,7 @@ body{background:#e7ecf1;color:var(--txt);
   -webkit-print-color-adjust:exact;print-color-adjust:exact}
 
 /* ---------- Le flux (écran) ---------- */
-#livret{max-width:152.4mm;margin:0 auto;background:#fff;padding:14mm 16mm;
+#livret{max-width:${R.page_l_mm}mm;margin:0 auto;background:#fff;padding:14mm 16mm;
   box-shadow:0 3px 14px rgba(27,58,99,.16)}
 .marq{font-size:1pt;line-height:0;color:#fff}
 
@@ -114,11 +115,11 @@ h2,h3,h4,.sect-t,.lecon-t,.page-t,.sect-intro{break-after:avoid;page-break-after
    Sens conventionnel en édition : le haut de la planche part vers la
    gauche, on tourne l'ouvrage dans le sens des aiguilles.
    Les cotes se déduisent des marges réglées, jamais écrites en dur. */
-.paysage{height:${(228.6 - R.haut_mm - R.bas_mm).toFixed(1)}mm;position:relative}
+.paysage{height:${(R.page_h_mm - R.haut_mm - R.bas_mm).toFixed(1)}mm;position:relative}
 .paysage-in{position:absolute;top:50%;left:50%;transform-origin:center center;
   transform:translate(-50%,-50%) rotate(-90deg);
-  width:${(228.6 - R.haut_mm - R.bas_mm).toFixed(1)}mm;
-  height:${(152.4 - R.gouttiere_mm - R.exterieur_mm).toFixed(1)}mm;
+  width:${(R.page_h_mm - R.haut_mm - R.bas_mm).toFixed(1)}mm;
+  height:${(R.page_l_mm - R.gouttiere_mm - R.exterieur_mm - R.marge_renvois_mm - R.separation_mm).toFixed(1)}mm;
   display:flex;flex-direction:column}
 /* Titre resserré : chaque millimètre rendu ici passe dans la planche. */
 .paysage-in .page-t{font-size:16pt;margin:0 0 3mm}
@@ -197,6 +198,15 @@ figure figcaption{margin-top:1.6mm;text-align:center;font-style:italic;font-size
 .duo{display:flex;gap:4mm;margin:0 0 3.4mm}
 .duo figure{margin:0;flex:1}
 .duo img{max-height:64mm}
+
+/* ---------- Le sommaire du chapitre (maquette du 30/08) ---------- */
+.sommaire-ch{border:.6pt solid var(--ligne);background:var(--pale);
+  padding:calc(var(--air) * 2.5mm) 3mm;margin:0 0 calc(var(--air) * 4mm);
+  break-inside:avoid;page-break-inside:avoid}
+.sommaire-t{font:700 10pt/1.2 "Trebuchet MS",Calibri,sans-serif;color:var(--bleu);
+  text-transform:uppercase;letter-spacing:.4px;margin:0 0 1.5mm}
+.sommaire-ch ol{margin:0;padding-left:5.5mm}
+.sommaire-ch li{font-size:11pt;line-height:1.4;margin-bottom:.6mm}
 
 /* ---------- Encadrés ---------- */
 .encadre{border-left:2.4pt solid var(--bleu);background:var(--pale);
@@ -314,14 +324,16 @@ tbody tr:nth-child(even) td{background:#F7FAFC}
    Les marges du haut et du bas réservent la place du bandeau et du pied,
    dessinés à la finition. Les marges latérales tiennent compte de la
    RELIURE : KDP exige 19 mm côté intérieur pour un livre de 300 à 500
-   pages — sans quoi le texte disparaît dans le pli. */
-@page{size:152.4mm 228.6mm;margin:${R.haut_mm}mm ${R.exterieur_mm}mm ${R.bas_mm}mm}
+   pages — sans quoi le texte disparaît dans le pli. La marge extérieure
+   réserve en plus la MARGE DE RENVOIS (la colonne numérique) et sa
+   séparation : finition.py y pose les QR, en regard du texte. */
+@page{size:${R.page_l_mm}mm ${R.page_h_mm}mm;margin:${R.haut_mm}mm ${R.exterieur_mm + R.marge_renvois_mm + R.separation_mm}mm ${R.bas_mm}mm}
 /* Marges MIROIR : la reliure mange le bord intérieur, qui change de côté
    selon que la page est de droite (recto) ou de gauche (verso). Chrome
    applique bien @page:left / @page:right — vérifié sur pièce le
-   27/08/2026 — ce qui rend 6 mm de largeur utile au texte. */
-@page:right{margin-left:${R.gouttiere_mm}mm;margin-right:${R.exterieur_mm}mm}
-@page:left{margin-left:${R.exterieur_mm}mm;margin-right:${R.gouttiere_mm}mm}
+   27/08/2026. */
+@page:right{margin-left:${R.gouttiere_mm}mm;margin-right:${(R.exterieur_mm + R.marge_renvois_mm + R.separation_mm)}mm}
+@page:left{margin-left:${(R.exterieur_mm + R.marge_renvois_mm + R.separation_mm)}mm;margin-right:${R.gouttiere_mm}mm}
 @media print{
   body{background:#fff}
   #livret{max-width:none;margin:0;padding:0;box-shadow:none}

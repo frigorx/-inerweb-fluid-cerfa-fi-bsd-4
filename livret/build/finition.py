@@ -38,7 +38,15 @@ _R = json.load(open(os.path.join(os.path.dirname(__file__), '..', 'reglages.json
                     encoding='utf-8'))
 GOUTTIERE = _R['gouttiere_mm'] * MM
 EXTERIEUR = _R['exterieur_mm'] * MM
-HAUT = (_R['haut_mm'] - 5) * MM   # ligne de base du bandeau, dans la marge haute
+MARGE_RENVOIS = _R['marge_renvois_mm'] * MM
+SEPARATION = _R['separation_mm'] * MM
+# Le bord du TEXTE côté tranche : marge extérieure + renvois + séparation.
+EXTERIEUR_TEXTE = EXTERIEUR + MARGE_RENVOIS + SEPARATION
+# Ligne de base du bandeau, dans la marge haute. À haut_mm − 3 : le sommet
+# des capitales reste au-delà des 6,35 mm exigés par KDP, le filet tombe à
+# haut_mm − 1, juste au-dessus du texte. (À − 5, le bandeau montait à
+# 5,3 mm du bord avec la marge haute de 13 mm : contrôle bloquant.)
+HAUT = (_R['haut_mm'] - 3) * MM
 
 # Le filet du pied se calcule sur la HAUTEUR RÉELLE de la page, jamais en
 # dur : le livret est passé de l'A5 au 6 x 9 et un pied figé se serait
@@ -99,6 +107,10 @@ PARTIES = {
 MARQUEUR = re.compile(r'@@(NUE|LIM|([A-F])\|(\d+)(?:;([\d.,]+))?)@@')
 # Chaque ligne du sommaire porte la sienne : « @@SOM|4@@ ».
 MARQUEUR_SOM = re.compile(r'@@SOM\|(\d+)@@')
+# La marge de renvois : « @@QR|surchauffe-2|l@@ » — le slug de l'alias
+# et un type (c chapitre, l leçon, a animation, e entraînement) ; le
+# CONTENU du renvoi, lui, vit dans le manifeste qr.gen.json.
+MARQUEUR_QR = re.compile(r'@@QR\|([a-z0-9-]+)\|([clae])@@')
 
 
 def contexte_des_pages(doc):
@@ -171,8 +183,8 @@ def finir(chemin):
         # Page de droite (recto, indice pair) : reliure à gauche.
         # Page de gauche (verso, indice impair) : reliure à droite.
         recto = (i % 2 == 0)
-        MARGE_G = GOUTTIERE if recto else EXTERIEUR
-        MARGE_D = EXTERIEUR if recto else GOUTTIERE
+        MARGE_G = GOUTTIERE if recto else EXTERIEUR_TEXTE
+        MARGE_D = EXTERIEUR_TEXTE if recto else GOUTTIERE
 
         if genre == 'ch':
             partie, num = info
@@ -248,7 +260,7 @@ def finir(chemin):
             # Le numéro se pose à droite de la justification, sur la même
             # ligne de base que le titre du chapitre.
             recto = (page.number % 2 == 0)
-            marge_d = EXTERIEUR if recto else GOUTTIERE
+            marge_d = EXTERIEUR_TEXTE if recto else GOUTTIERE
             libelle = str(imprime)
             page.insert_font(fontname='ttitre', fontfile=POLICES['ttitre'])
             page.insert_text(
@@ -256,6 +268,98 @@ def finir(chemin):
                            ligne.y1 - 0.6),
                 libelle, fontname='ttitre', fontsize=10, color=BLEU)
             poses += 1
+
+    # ---- La MARGE DE RENVOIS : la colonne numérique du livre --------
+    # Le flux sème des marqueurs @@QR|slug|type@@ ; chacun devient un
+    # RENVOI posé en regard dans la marge extérieure : le QR (20 mm),
+    # le genre (station, leçon narrée, fiche, animation, des questions ?),
+    # un titre, une ligne qui dit ce qu'on va trouver, et l'adresse en
+    # clair. Les textes viennent du manifeste qr.gen.json — retoucher un
+    # libellé se fait là-bas, jamais ici. Maquette 7 × 10 du 30/08.
+    QR_DIR = os.path.join(os.path.dirname(__file__), '..', 'qr.gen')
+    with open(os.path.join(os.path.dirname(__file__), '..', 'qr.gen.json'),
+              encoding='utf-8') as f:
+        RENVOIS = {e['slug']: e for e in json.load(f)}
+    QR_TAILLE = 20 * MM
+    qr_poses, qr_manques = 0, 0
+    for page, (genre, _info, _codes) in zip(doc, contextes):
+        if genre == 'nue':
+            continue
+        texte = page.get_text()
+        if '@@QR|' not in texte:
+            continue
+        page.insert_font(fontname='ttitre', fontfile=POLICES['ttitre'])
+        page.insert_font(fontname='tcorps', fontfile=POLICES['tcorps'])
+        recto = (page.number % 2 == 0)
+        if recto:
+            x0 = page.rect.width - EXTERIEUR - MARGE_RENVOIS
+            x_filet = x0 - SEPARATION / 2
+        else:
+            x0 = EXTERIEUR
+            x_filet = x0 + MARGE_RENVOIS + SEPARATION / 2
+        x1 = x0 + MARGE_RENVOIS
+        haut_util = HAUT + 4 * MM
+        bas_util = pied_de(page.rect.height) - 2 * MM
+        # Le filet de séparation et l'invite, une fois par page à renvois.
+        page.draw_line(fitz.Point(x_filet, haut_util),
+                       fitz.Point(x_filet, bas_util), color=LIGNE, width=0.6)
+        page.insert_text(fitz.Point(x0, haut_util + 2.6 * MM), 'VOUS VOULEZ',
+                         fontname='ttitre', fontsize=6.4, color=ORANGE)
+        page.draw_line(fitz.Point(x0, haut_util + 3.9 * MM),
+                       fitz.Point(x1, haut_util + 3.9 * MM), color=ORANGE, width=1.2)
+        curseur = haut_util + 6.5 * MM
+        # Chaque marqueur de la page, une fois, trié par hauteur.
+        a_poser = []
+        for slug, type_ in dict.fromkeys(MARQUEUR_QR.findall(texte)):
+            zones = page.search_for('@@QR|%s|%s@@' % (slug, type_))
+            if zones:
+                a_poser.append((zones[0].y0, slug))
+        a_poser.sort()
+        for y_marqueur, slug in a_poser:
+            e = RENVOIS.get(slug)
+            fichier = os.path.join(QR_DIR, slug + '.png')
+            if not e or not os.path.exists(fichier):
+                qr_manques += 1
+                continue
+            r = e.get('renvoi', {})
+            y = max(y_marqueur - 1 * MM, curseur)
+            # Le bloc : QR, genre, titre (2 lignes max), quoi (4 lignes
+            # max), adresse (2 lignes). Les textbox disent la place prise.
+            h_max = QR_TAILLE + 26 * MM
+            if y + h_max > bas_util:
+                y = bas_util - h_max
+                if y < curseur:
+                    qr_manques += 1   # plus de place dans la marge
+                    continue
+            page.insert_image(fitz.Rect(x0, y, x0 + QR_TAILLE, y + QR_TAILLE),
+                              filename=fichier)
+            y2 = y + QR_TAILLE + 1.6 * MM
+            genre_r = (r.get('genre') or 'en ligne').upper()
+            page.draw_line(fitz.Point(x0 + 0.3 * MM, y2 - 1.7 * MM),
+                           fitz.Point(x0 + 0.3 * MM, y2 + 0.3 * MM),
+                           color=ORANGE, width=1.6)
+            page.insert_text(fitz.Point(x0 + 1.8 * MM, y2), genre_r,
+                             fontname='ttitre', fontsize=6, color=BLEU)
+            y2 += 1.2 * MM
+            boite = fitz.Rect(x0, y2, x1, y2 + 8 * MM)
+            reste = page.insert_textbox(boite, r.get('titre', e.get('titre', '')),
+                                        fontname='ttitre', fontsize=7, color=BLEU,
+                                        lineheight=1.22)
+            y2 += (boite.height - max(reste, 0)) + 0.6 * MM
+            boite = fitz.Rect(x0, y2, x1, y2 + 12 * MM)
+            reste = page.insert_textbox(boite, r.get('quoi', ''),
+                                        fontname='tcorps', fontsize=6.5, color=MUT,
+                                        lineheight=1.3)
+            y2 += (boite.height - max(reste, 0)) + 0.6 * MM
+            page.insert_text(fitz.Point(x0, y2 + 1.6 * MM), 'inerweb.fr/f/',
+                             fontname='tcorps', fontsize=5.5, color=MUT)
+            fs = 5.5
+            if largeur_de(slug, 'ttitre', fs) > MARGE_RENVOIS:
+                fs = fs * MARGE_RENVOIS / largeur_de(slug, 'ttitre', fs)
+            page.insert_text(fitz.Point(x0, y2 + 3.9 * MM), slug,
+                             fontname='ttitre', fontsize=fs, color=BLEU)
+            curseur = y2 + 6 * MM + 2 * MM
+            qr_poses += 1
 
     # ---- Les marqueurs internes quittent la couche texte -----------
     # Ils ont servi : la partie, le chapitre et les codes sont posés. Ils
@@ -323,6 +427,8 @@ def finir(chemin):
     print('  nettoyage : %d marqueurs internes effacés · %d signets posés'
           % (efface, len(debuts)))
     print('  sommaire : %d numéros de page écrits' % poses)
+    print('  colonne numérique : %d QR posés en marge%s'
+          % (qr_poses, ' · %d sans place ou sans image' % qr_manques if qr_manques else ''))
     print('  finition : %d pages numérotées, %d nues%s'
           % (numero, nues, ', 1 blanche de fin (compte pair)' if ajoutee else ''))
     # L'édition DYS est plus aérée, donc plus longue : elle ne doit pas

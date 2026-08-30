@@ -57,8 +57,11 @@ def controler_interieur(chemin):
     l, h = doc[0].rect.width, doc[0].rect.height
     print('  format  : %.4f x %.4f pouces (%.1f x %.1f mm)'
           % (l / PO, h / PO, l / MM, h / MM))
-    if abs(l / PO - 6) > 0.01 or abs(h / PO - 9) > 0.01:
-        bloque('le format n’est pas 6 x 9 pouces')
+    _r = json.load(open(os.path.join(os.path.dirname(__file__), '..', 'reglages.json'),
+                       encoding='utf-8'))
+    attendu_l, attendu_h = _r['page_l_mm'] / 25.4, _r['page_h_mm'] / 25.4
+    if abs(l / PO - attendu_l) > 0.01 or abs(h / PO - attendu_h) > 0.01:
+        bloque('le format n’est pas %g x %g pouces' % (attendu_l, attendu_h))
 
     # ---- 2. Pagination ----
     print('  pages   : %d' % pages)

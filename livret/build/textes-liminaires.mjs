@@ -43,26 +43,30 @@ export const TEXTES_LIMINAIRES = {
   ],
 
   'a-quoi-sert': [
-    `Ce livret prépare à l'<b>attestation d'aptitude fluides frigorigènes</b>. Il rassemble, ` +
-    `sur papier, la théorie qui se présente à l'épreuve : dix-neuf chapitres, qui vont de la ` +
-    `sécurité aux opérations en passant par le fluide et la machine.`,
+    `Ce livret prépare à l'<b>attestation d'aptitude fluides frigorigènes</b>, et il ne ` +
+    `travaille pas seul : il est le <b>fil conducteur</b> de la formation en ligne ` +
+    `<b>inerweb.fr</b>. Le papier pose la théorie, dix-neuf chapitres qui vont de la sécurité ` +
+    `aux opérations ; l'écran y ajoute les animations, les cours racontés à voix haute et les ` +
+    `corrections immédiates — les QR codes de la marge font le lien, page après page.`,
     `Il se lit <b>avant</b> la formation pour arriver préparé, <b>pendant</b> pour garder une trace, ` +
     `et <b>après</b> pour réviser jusqu'à l'épreuve. Chaque chapitre commence par ce que le ` +
     `<b>référentiel officiel</b> exige, puis par des <b>questions type examen</b> — répondez-y avant de ` +
-    `lire : vous saurez tout de suite ce que vous savez déjà. Les corrections sont en fin de chapitre. ` +
-    `Prévoyez un crayon : les activités et les bilans se remplissent au fil des pages.`,
+    `lire : vous saurez tout de suite ce que vous savez déjà. Les corrections sont en fin de ` +
+    `chapitre, et en ligne, corrigées sous vos yeux. Prévoyez un crayon : les activités et les ` +
+    `bilans se remplissent au fil des pages.`,
     `Le geste professionnel (manipuler, braser, récupérer en atelier) fera l'objet du ` +
     `<b>prochain livre, consacré à la partie pratique</b>.`,
   ],
   'lire-qr': [
-    `Chaque chapitre porte un <b>QR code</b>. Scannez-le avec l'appareil photo du téléphone : ` +
-    `il ouvre la version interactive du chapitre sur <b>inerweb.fr</b> : le cours raconté à voix ` +
-    `haute quand il existe, les schémas animés et les questions corrigées.`,
+    `Regardez la <b>marge</b> des pages : c'est la <b>colonne numérique</b> du livre. Chaque ` +
+    `QR code y est posé en face de ce qu'il prolonge — le chapitre, la leçon, l'animation de ` +
+    `la planche, le quiz. Scannez-le avec l'appareil photo du téléphone : la version vivante ` +
+    `s'ouvre sur <b>inerweb.fr</b>, animée, racontée à voix haute, corrigée.`,
     `L'adresse est aussi écrite <b>en toutes lettres</b> sous chaque code (par exemple ` +
     `<b>inerweb.fr/f/securite</b>) : sans téléphone, tapez-la simplement dans un navigateur. ` +
     `L'index complet des adresses se trouve en fin de livret.`,
-    `Rien d'obligatoire : le livret se suffit à lui-même. L'écran ajoute simplement le son, ` +
-    `le mouvement et la correction automatique.`,
+    `La formation vit à l'écran ; le papier en est le <b>fil conducteur</b>. Le livre reste ` +
+    `complet sans téléphone, mais chaque page vous tend une porte vers la suite.`,
   ],
   'parcours': [
     `Les chapitres suivent l'ordre du métier. ` +
@@ -114,12 +118,9 @@ export const TEXTES_FIN = {
     `comme le fait l'épreuve. Quatre-vingt-neuf questions, tirées de la même source ` +
     `que les précédentes, sans reprendre aucune question des chapitres.`,
     `Le numéro de chapitre est indiqué devant chaque question : une erreur vous dit ` +
-    `immédiatement quelle page relire. Les réponses sont sur les pages suivantes.`,
-  ],
-  'banque-corrige': [
-    `Corrigez-vous question par question. Une seule règle : notez le CHAPITRE des ` +
-    `questions manquées, pas seulement le nombre de fautes. Trois erreurs dans le ` +
-    `même chapitre valent plus qu'une erreur dans trois chapitres différents.`,
+    `immédiatement quelle page relire. La correction vit en ligne, dans les séries de ` +
+    `révision — les codes en marge des chapitres. Une seule règle en vous corrigeant : ` +
+    `notez le CHAPITRE des questions manquées, pas seulement le nombre de fautes.`,
   ],
   'bilan': [
     `Reportez ici la note de fin de chaque chapitre. Trois notes faibles dans la même partie ? ` +

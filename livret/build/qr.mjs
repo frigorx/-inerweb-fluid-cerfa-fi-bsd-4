@@ -43,7 +43,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import QRCode from 'qrcode';
-import { CHAPITRES, QR_BASE } from './plan-chapitres.mjs';
+import { CHAPITRES, LIMINAIRES, FIN, PLANCHE_CENTRALE, QR_BASE } from './plan-chapitres.mjs';
 
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const SOURCE = process.env.PILOTE_FLUIDES || 'C:/git/pilote-fluides';
@@ -83,6 +83,76 @@ for (const ch of CHAPITRES) {
       chapitre: ch.num, lecon: i + 1, titre: l.t, slug: `${ch.qr}-${i + 1}`,
       alias: `${QR_BASE}${ch.qr}-${i + 1}`, cible: cibleDe(l.src),
     });
+  }
+}
+
+/* ---- Les alias d'ANIMATION : un par planche animée que le livre
+   imprime. Le papier fige l'état final ; le QR, posé en marge, rejoue
+   l'animation elle-même — le SVG servi par inerweb.fr s'anime tel quel
+   dans le navigateur du téléphone. Retargetable plus tard vers une
+   visionneuse habillée, sans réimprimer : c'est le rôle des alias. ---- */
+const SVG_PACK = path.join(SOURCE, 'packs', 'fluides', 'res', 'svg');
+const planches = new Set();
+const collecte = (o) => {
+  if (typeof o === 'string') { if (o.startsWith('svg:')) planches.add(o.slice(4)); return; }
+  if (Array.isArray(o)) { o.forEach(collecte); return; }
+  if (o && typeof o === 'object') Object.values(o).forEach(collecte);
+};
+collecte(CHAPITRES); collecte(PLANCHE_CENTRALE); collecte(LIMINAIRES); collecte(FIN);
+for (const nom of [...planches].sort()) {
+  const chemin = path.join(SVG_PACK, `${nom}.svg`);
+  if (!fs.existsSync(chemin)) { erreurs.push(`planche « ${nom} » absente du pack`); continue; }
+  const svg = fs.readFileSync(chemin, 'utf8');
+  if (!/<animate(Motion|Transform)?[\s>]/.test(svg)) continue; /* planche fixe : pas d'alias */
+  const titre = ((svg.match(/<title>([^<]+)<\/title>/) || [])[1] || nom).trim();
+  entrees.push({
+    genre: 'animation', titre, slug: `a-${nom}`, alias: `${QR_BASE}a-${nom}`,
+    cible: `${APPLI}packs/fluides/res/svg/${nom}.svg`,
+  });
+}
+
+/* ---- Les alias d'ENTRAÎNEMENT : la série de révision du chapitre.
+   Les treize séries rev-g1 à rev-g13 existent dans l'appli ; chaque
+   chapitre déclare son groupe, la cible se calcule. Le renvoi « des
+   questions ? » de la marge y mène : dix questions niveau examen,
+   corrigées et expliquées — c'est là que vit la correction, depuis que
+   les pages de corrigé ont quitté le papier (maquette du 30/08). ---- */
+const CARTES_TEXTE = fs.readFileSync(path.join(SOURCE, 'packs', 'fluides', 'cartes.js'), 'utf8');
+const groupes = new Set();
+for (const ch of CHAPITRES) {
+  const g = (ch.groupesQ || []).find((x) => /^G\d+$/.test(x));
+  if (g) groupes.add(g.toLowerCase().replace('g', 'g'));
+}
+for (const g of [...groupes].sort()) {
+  const id = `rev-${g.toLowerCase()}`;
+  if (!CARTES_TEXTE.includes(`id: "${id}"`)) { erreurs.push(`série ${id} absente de cartes.js`); continue; }
+  entrees.push({
+    genre: 'entrainement', titre: `Série de révision ${g.toUpperCase()}`,
+    slug: id, alias: QR_BASE + id, cible: `${APPLI}?carte=${id}`,
+  });
+}
+
+/* ---- Le RENVOI de chaque alias : ce que la marge imprime. Genre,
+   titre et description voyagent dans le manifeste — finition.py ne
+   fait que dessiner. Retoucher un libellé = rééditer ICI, jamais le
+   script de finition. ---- */
+for (const e of entrees) {
+  const capsule = e.cible.includes('capsules');
+  if (e.genre === 'animation') {
+    e.renvoi = { genre: 'animation', titre: 'La planche en mouvement',
+      quoi: 'Ci-contre figée. En ligne, elle se joue du début à la fin.' };
+  } else if (e.genre === 'entrainement') {
+    e.renvoi = { genre: 'des questions ?', titre: '10 questions, niveau examen',
+      quoi: 'La série du chapitre, corrigée et expliquée question par question.' };
+  } else if (e.lecon) {
+    e.renvoi = { genre: capsule ? 'leçon narrée' : 'fiche',
+      titre: e.titre.length > 46 ? e.titre.slice(0, 43) + '…' : e.titre,
+      quoi: capsule ? 'Cette leçon animée et racontée à voix haute.'
+                    : 'La fiche interactive, avec sa question corrigée.' };
+  } else {
+    e.renvoi = { genre: 'station', titre: 'Le chapitre en entier',
+      quoi: capsule ? 'Le chapitre raconté à voix haute, avec ses animations.'
+                    : "Le chapitre dans l'appli : les leçons, les animations, l'entraînement." };
   }
 }
 
@@ -180,7 +250,9 @@ const lignes = [
 fs.writeFileSync(HTACCESS, lignes.join('\n'), 'utf8');
 
 const capsules = entrees.filter((e) => e.cible.includes('capsules')).length;
-const parChapitre = entrees.filter((e) => !e.lecon).length;
+const animations = entrees.filter((e) => e.genre === 'animation').length;
+const series = entrees.filter((e) => e.genre === 'entrainement').length;
+const parChapitre = entrees.filter((e) => !e.lecon && !e.genre).length;
 console.log('QR codes du livret — partie théorique\n');
-console.log(`  ${parChapitre} alias de chapitre + ${entrees.length - parChapitre} alias de leçon`);
+console.log(`  ${parChapitre} chapitres + ${entrees.length - parChapitre - animations - series} leçons + ${animations} animations + ${series} séries d'entraînement`);
 console.log(`\n✔ ${entrees.length} codes (${capsules} vers une capsule narrée) · qr.gen.json · redirections-pages/ (${entrees.length} pages GitHub Pages) · redirections.gen.htaccess (archive)`);

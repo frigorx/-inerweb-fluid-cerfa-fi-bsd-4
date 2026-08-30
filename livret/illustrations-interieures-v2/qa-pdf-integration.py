@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parent
 LIVRET = ROOT.parent
-PDF = LIVRET / "dist" / "inerweb.fr-HabFluide-Tome1-Livret-eleve-6x9.pdf"
+PDF = LIVRET / "dist" / "inerweb.fr-HabFluide-Tome1-Livret-eleve-7x10.pdf"
 VISUELS = LIVRET / "visuels.gen"
 TMP = LIVRET / "tmp" / "pdfs"
 TMP.mkdir(parents=True, exist_ok=True)
