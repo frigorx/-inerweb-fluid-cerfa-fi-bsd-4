@@ -59,10 +59,27 @@ def pied_de(hauteur_pt):
 # avec elles — 374 pages sur 383 auraient fait rejeter le fichier.
 # On charge donc les vrais fichiers, ceux-là mêmes que le navigateur
 # intègre déjà pour le corps du texte : même charte, une seule fonte.
-POLICES = {
-    'ttitre': 'C:/Windows/Fonts/trebucbd.ttf',   # Trebuchet MS Bold — titres, charte inerWeb
-    'tcorps': 'C:/Windows/Fonts/calibri.ttf',    # Calibri — texte courant
+# Chaque rôle liste ses candidats du plus fidèle au repli : la machine de
+# l'auteur (Windows, vraies Trebuchet/Calibri) d'abord, puis Carlito — le
+# clone métrique libre de Calibri (paquet fonts-crosextra-carlito) — pour
+# toute machine Linux de fabrication. Sans lui, la finition plantait en
+# silence : pas de bandeaux, compte impair, kdp.gen.json jamais réécrit.
+_CARLITO = '/usr/share/fonts/truetype/crosextra'
+_CANDIDATS = {
+    'ttitre': ['C:/Windows/Fonts/trebucbd.ttf', f'{_CARLITO}/Carlito-Bold.ttf'],
+    'tcorps': ['C:/Windows/Fonts/calibri.ttf',  f'{_CARLITO}/Carlito-Regular.ttf'],
 }
+
+def _premier_chemin(candidats):
+    for f in candidats:
+        if os.path.exists(f):
+            return f
+    raise SystemExit('finition : aucune police trouvée parmi ' + ', '.join(candidats)
+                     + ' — installer fonts-crosextra-carlito.')
+
+# POLICES garde sa forme d'origine — nom → chemin — car le reste du script
+# passe ces chemins tels quels à insert_font().
+POLICES = {n: _premier_chemin(c) for n, c in _CANDIDATS.items()}
 _FONTES = {n: fitz.Font(fontfile=f) for n, f in POLICES.items()}
 
 
