@@ -31,6 +31,14 @@
    usage commercial. Voir README.md § Droits.
    ===================================================================== */
 
+/* Ce plan écrit ses chaînes SANS apostrophes (« L air qui manque ») :
+   la convention évite d'échapper des centaines de quotes dans le
+   fichier. Quiconque IMPRIME ou AFFICHE un titre du plan doit les
+   restituer par cette fonction — le papier comme les pages /f/. Elle
+   vit ici, à côté de la convention qu'elle répare. */
+export const apos = (s) => String(s).replace(
+  /\b(jusqu|lorsqu|puisqu|quelqu|aujourd|[qQ]u|[dcjlmnstDCJLMNST])\s(?=[aeiouyhéèêëàâîïôûAEIOUYHÉÈÊÀÂÎÔœŒæÆ])/g, '$1’');
+
 /* Les six parties du livret. L'ordre est celui du parcours de formation
    déjà validé (`packs/fluides/parcours.js`) : on se protège d'abord, on
    comprend ensuite, on intervient en dernier. */

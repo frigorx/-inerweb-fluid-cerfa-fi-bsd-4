@@ -41,7 +41,7 @@
  },
  {
   "page": 10,
-  "blanc_mm": 66.1,
+  "blanc_mm": 14.9,
   "ancre": null
  },
  {
@@ -1221,72 +1221,72 @@
  },
  {
   "page": 254,
-  "blanc_mm": 17.7,
+  "blanc_mm": 20.8,
   "ancre": null
  },
  {
   "page": 255,
-  "blanc_mm": 12.8,
+  "blanc_mm": 30.1,
   "ancre": null
  },
  {
   "page": 256,
-  "blanc_mm": 26.6,
-  "ancre": null
- },
- {
-  "page": 257,
   "blanc_mm": 9.0,
   "ancre": null
  },
  {
+  "page": 257,
+  "blanc_mm": 14.9,
+  "ancre": null
+ },
+ {
   "page": 258,
-  "blanc_mm": 2.5,
+  "blanc_mm": 26.6,
   "ancre": null
  },
  {
   "page": 259,
-  "blanc_mm": 11.2,
+  "blanc_mm": 9.0,
   "ancre": null
  },
  {
   "page": 260,
-  "blanc_mm": 6.2,
-  "ancre": null
- },
- {
-  "page": 261,
-  "blanc_mm": 45.9,
-  "ancre": null
- },
- {
-  "page": 262,
-  "blanc_mm": 3.3,
-  "ancre": null
- },
- {
-  "page": 263,
-  "blanc_mm": 14.9,
-  "ancre": null
- },
- {
-  "page": 264,
-  "blanc_mm": 32.3,
-  "ancre": null
- },
- {
-  "page": 265,
-  "blanc_mm": 14.9,
-  "ancre": null
- },
- {
-  "page": 266,
   "blanc_mm": 59.1,
   "ancre": null
  },
  {
+  "page": 261,
+  "blanc_mm": 36.0,
+  "ancre": null
+ },
+ {
+  "page": 262,
+  "blanc_mm": 30.1,
+  "ancre": null
+ },
+ {
+  "page": 263,
+  "blanc_mm": 3.3,
+  "ancre": null
+ },
+ {
+  "page": 264,
+  "blanc_mm": 2.5,
+  "ancre": null
+ },
+ {
+  "page": 265,
+  "blanc_mm": 13.4,
+  "ancre": null
+ },
+ {
+  "page": 266,
+  "blanc_mm": 32.3,
+  "ancre": null
+ },
+ {
   "page": 267,
-  "blanc_mm": 65.0,
+  "blanc_mm": 36.0,
   "ancre": null
  },
  {
@@ -1296,27 +1296,27 @@
  },
  {
   "page": 269,
-  "blanc_mm": 14.9,
+  "blanc_mm": 9.0,
   "ancre": null
  },
  {
   "page": 270,
-  "blanc_mm": 36.0,
+  "blanc_mm": 41.7,
   "ancre": null
  },
  {
   "page": 271,
-  "blanc_mm": 12.8,
+  "blanc_mm": 36.0,
   "ancre": null
  },
  {
   "page": 272,
-  "blanc_mm": 30.1,
+  "blanc_mm": 7.1,
   "ancre": null
  },
  {
   "page": 273,
-  "blanc_mm": 91.9,
+  "blanc_mm": 41.9,
   "ancre": null
  },
  {
@@ -1451,17 +1451,17 @@
  },
  {
   "page": 300,
-  "blanc_mm": 7.2,
+  "blanc_mm": 5.4,
   "ancre": null
  },
  {
   "page": 301,
-  "blanc_mm": -0.1,
+  "blanc_mm": 1.7,
   "ancre": null
  },
  {
   "page": 302,
-  "blanc_mm": 66.0,
+  "blanc_mm": 33.5,
   "ancre": null
  },
  {

@@ -44,6 +44,11 @@ footer a{color:var(--mut)}
 <div id="qcm"><p class="rien">Aucun QCM du livre joué sur cet appareil pour l’instant.</p></div>
 </section>
 <section>
+<h2>Le test d’entrée et l’examen blanc</h2>
+<p class="note-page">Vos passages — dernier score, meilleur score. Le tirage change à chaque fois.</p>
+<div id="examens"><p class="rien">Aucun passage sur cet appareil pour l’instant — les deux QR vivent aux pages « Mon point de départ » et « Banque de révision » du livre.</p></div>
+</section>
+<section>
 <h2>Mes compétences</h2>
 <p class="note-page">Code par code, d’après vos réponses : acquise, fragile, ou à revoir.</p>
 <div id="comp"><p class="rien">Aucune question corrigée sur cet appareil pour l’instant — lancez une série depuis un QR « des questions ? » du livre.</p></div>
@@ -52,7 +57,7 @@ footer a{color:var(--mut)}
 <footer>Du livre « HAB-FLUIDE — partie théorique » · <a href="https://inerweb.fr/">ouvrir l’appli</a></footer>
 <script>
 (function () {
-  var SERIES = [{"serie":"rev-g12","num":1,"titre":"Ce qui peut vous blesser"},{"serie":"rev-g11","num":2,"titre":"Lire une classe de sécurité"},{"serie":"rev-g1","num":3,"titre":"Ce que la loi vous impose"},{"serie":"rev-g1","num":4,"titre":"Les sept catégories, et la bascule de 2027"},{"serie":"rev-g1","num":5,"titre":"Thermodynamique utile"},{"serie":"rev-g1","num":6,"titre":"Lire un log p-h et une table de saturation"},{"serie":"rev-g1","num":7,"titre":"Surchauffe et sous-refroidissement"},{"serie":"rev-g1","num":8,"titre":"Les familles de fluides et leurs codes"},{"serie":"rev-g6","num":9,"titre":"Le compresseur"},{"serie":"rev-g7","num":10,"titre":"Le condenseur"},{"serie":"rev-g8","num":11,"titre":"L évaporateur"},{"serie":"rev-g9","num":12,"titre":"Le détendeur et les organes annexes"},{"serie":"rev-g3","num":13,"titre":"Contrôles avant mise en service"},{"serie":"rev-g4","num":14,"titre":"Les contrôles d étanchéité"},{"serie":"rev-g5","num":15,"titre":"Récupérer sans émettre, peser, tracer"},{"serie":"rev-g10","num":16,"titre":"Tuyauterie et brasage sous azote"},{"serie":"rev-g11","num":17,"titre":"Substitution et efficacité énergétique"},{"serie":"rev-g12","num":18,"titre":"Hydrocarbures — le spécifique A1 et A2"},{"serie":"rev-g13","num":19,"titre":"CO₂ et NH₃ — reconnaître, ne pas intervenir"}];
+  var SERIES = [{"serie":"rev-g12","num":1,"titre":"Ce qui peut vous blesser"},{"serie":"rev-g11","num":2,"titre":"Lire une classe de sécurité"},{"serie":"rev-g1","num":3,"titre":"Ce que la loi vous impose"},{"serie":"rev-g1","num":4,"titre":"Les sept catégories, et la bascule de 2027"},{"serie":"rev-g1","num":5,"titre":"Thermodynamique utile"},{"serie":"rev-g1","num":6,"titre":"Lire un log p-h et une table de saturation"},{"serie":"rev-g1","num":7,"titre":"Surchauffe et sous-refroidissement"},{"serie":"rev-g1","num":8,"titre":"Les familles de fluides et leurs codes"},{"serie":"rev-g6","num":9,"titre":"Le compresseur"},{"serie":"rev-g7","num":10,"titre":"Le condenseur"},{"serie":"rev-g8","num":11,"titre":"L’évaporateur"},{"serie":"rev-g9","num":12,"titre":"Le détendeur et les organes annexes"},{"serie":"rev-g3","num":13,"titre":"Contrôles avant mise en service"},{"serie":"rev-g4","num":14,"titre":"Les contrôles d’étanchéité"},{"serie":"rev-g5","num":15,"titre":"Récupérer sans émettre, peser, tracer"},{"serie":"rev-g10","num":16,"titre":"Tuyauterie et brasage sous azote"},{"serie":"rev-g11","num":17,"titre":"Substitution et efficacité énergétique"},{"serie":"rev-g12","num":18,"titre":"Hydrocarbures — le spécifique A1 et A2"},{"serie":"rev-g13","num":19,"titre":"CO₂ et NH₃ — reconnaître, ne pas intervenir"}];
   var hist = {}, comp = {};
   try { hist = JSON.parse(localStorage.getItem('pilote_hist_fluides-habilitation') || '{}'); } catch (e) {}
   try { comp = JSON.parse(localStorage.getItem('pilote_comp_fluides-habilitation') || '{}'); } catch (e) {}
@@ -68,6 +73,24 @@ footer a{color:var(--mut)}
       '<td class="note">' + note + '</td>';
     t.appendChild(tr);
   });
+  var examens = {};
+  try { examens = JSON.parse(localStorage.getItem('inerweb_examens') || '{}'); } catch (e) {}
+  var lignes = [
+    ['positionnement', 'Le test d’entrée'],
+    ['examen-blanc', 'L’examen blanc'],
+  ].filter(function (x) { return examens[x[0]]; });
+  if (lignes.length) {
+    var hx = '<table><tr><th>Test</th><th>Dernier</th><th style="text-align:right">Meilleur</th></tr>';
+    lignes.forEach(function (x) {
+      var d = examens[x[0]];
+      hx += '<tr><td>' + x[1] + (d.quand ? ' <span class="vide">(' + d.quand +
+        (d.essais > 1 ? ' · ' + d.essais + ' essais' : '') + ')</span>' : '') + '</td>' +
+        '<td class="note" style="text-align:left">' + d.bons + ' / ' + d.sur + '</td>' +
+        '<td class="note">' + (d.meilleur || d.bons) + ' / ' + d.sur + '</td></tr>';
+    });
+    hx += '</table>';
+    document.getElementById('examens').innerHTML = hx;
+  }
   var slugsQcm = Object.keys(qcm);
   if (slugsQcm.length) {
     var hq = '<table><tr><th>Chapitre</th><th style="text-align:right">Note</th></tr>';

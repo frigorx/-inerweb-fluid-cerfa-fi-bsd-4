@@ -170,6 +170,7 @@ def finir(chemin):
 
     inventaire = {}            # code du référentiel -> [pages où il est vu]
     debuts = {}               # numéro de chapitre -> page où il commence
+    fins = {}                 # numéro de chapitre -> dernière page vue
     zones_marqueurs = []      # (index de page, rectangles à effacer)
 
     for i, (page, (genre, info, codes)) in enumerate(zip(doc, contextes)):
@@ -195,6 +196,7 @@ def finir(chemin):
             # sommaire doit annoncer, et celle que le signet doit viser.
             if num not in debuts:
                 debuts[num] = (numero, i, partie)
+            fins[num] = numero
             page.draw_line(fitz.Point(MARGE_G, HAUT + 2 * MM),
                            fitz.Point(largeur - MARGE_D, HAUT + 2 * MM),
                            color=ORANGE, width=1.6)
@@ -505,6 +507,14 @@ def finir(chemin):
     with open(os.path.join(os.path.dirname(__file__), '..', 'inventaire-pages.gen.json'),
               'w', encoding='utf-8') as f:
         json.dump({c: sorted(set(p)) for c, p in sorted(inventaire.items())},
+                  f, ensure_ascii=False, indent=1)
+    # L'étendue de chaque chapitre, de sa première à sa dernière page vue :
+    # la remédiation de l'examen blanc (pages /f/) s'en sert pour dire
+    # « à revoir : chapitre 7, pages 96 à 104 » — d'après le tirage réel,
+    # jamais d'après une intention.
+    with open(os.path.join(os.path.dirname(__file__), '..', 'chapitres-pages.gen.json'),
+              'w', encoding='utf-8') as f:
+        json.dump({n: [debuts[n][0], fins[n]] for n in sorted(debuts, key=int)},
                   f, ensure_ascii=False, indent=1)
     print('  référentiel : %d codes marqués en pied de page' % len(inventaire))
     print('  nettoyage : %d marqueurs internes effacés · %d signets posés'

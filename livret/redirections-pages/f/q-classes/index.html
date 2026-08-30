@@ -24,6 +24,8 @@ input[type=radio]{width:1.15em;height:1.15em;margin:2px 0 0;accent-color:var(--b
 .verdict{font-weight:700;margin:8px 0 0;display:none}
 .q.juste .verdict.ok{display:block;color:var(--vert)}
 .q.faux .verdict.ko{display:block;color:var(--rouge)}
+.q-illu{display:block;background:#fff;border:1px solid var(--ligne);border-radius:8px;padding:6px;margin:0 0 10px}
+.q-illu img{display:block;width:100%;height:auto;max-height:190px;object-fit:contain}
 .actions{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
 .actions button,.actions a{font:inherit;font-weight:700;border-radius:8px;padding:11px 18px;cursor:pointer;text-decoration:none;text-align:center}
 .actions button{background:var(--bleu);color:#fff;border:none}
@@ -41,6 +43,7 @@ footer a{color:var(--mut)}
 <form id="f">
 <div class="q" data-b="3">
 <p class="q-e"><span class="n">1</span>La norme EN 378 définit entre autres :</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-securite-decomposition-fluide" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/securite-decomposition-fluide.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q0" value="0"><span><b>A</b> — Les horaires autorisés pour intervenir sur une installation</span></label>
 <label><input type="radio" name="q0" value="1"><span><b>B</b> — Les salaires minimaux applicables aux techniciens frigoristes qualifiés</span></label>
 <label><input type="radio" name="q0" value="2"><span><b>C</b> — Les prix maximaux pratiqués pour les fluides frigorigènes</span></label>
@@ -50,6 +53,7 @@ footer a{color:var(--mut)}
 </div>
 <div class="q" data-b="0">
 <p class="q-e"><span class="n">2</span>Un fluide classé A2L est :</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-classes-securite" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/classes-securite.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q1" value="0"><span><b>A</b> — Légèrement inflammable, faible toxicité</span></label>
 <label><input type="radio" name="q1" value="1"><span><b>B</b> — Très inflammable, faible toxicité</span></label>
 <label><input type="radio" name="q1" value="2"><span><b>C</b> — Légèrement inflammable, toxicité élevée</span></label>
@@ -59,6 +63,7 @@ footer a{color:var(--mut)}
 </div>
 <div class="q" data-b="2">
 <p class="q-e"><span class="n">3</span>La vitesse de flamme maximale pour un fluide classé A2L est de :</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-classes-securite" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/classes-securite.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q2" value="0"><span><b>A</b> — 1 cm/s</span></label>
 <label><input type="radio" name="q2" value="1"><span><b>B</b> — 5 cm/s</span></label>
 <label><input type="radio" name="q2" value="2"><span><b>C</b> — 10 cm/s</span></label>
@@ -68,6 +73,7 @@ footer a{color:var(--mut)}
 </div>
 <div class="q" data-b="1">
 <p class="q-e"><span class="n">4</span>La norme EN 378 classe les locaux en :</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-securite-decomposition-fluide" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/securite-decomposition-fluide.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q3" value="0"><span><b>A</b> — 2 catégories, selon la charge admise</span></label>
 <label><input type="radio" name="q3" value="1"><span><b>B</b> — 3 catégories (a, b, c) selon l'occupation</span></label>
 <label><input type="radio" name="q3" value="2"><span><b>C</b> — 5 catégories, selon la classe du fluide</span></label>

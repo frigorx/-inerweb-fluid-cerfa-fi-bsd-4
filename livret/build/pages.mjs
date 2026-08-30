@@ -12,7 +12,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CHAPITRES, PARTIES, LIMINAIRES, FIN, PLANCHE_CENTRALE } from './plan-chapitres.mjs';
+import { CHAPITRES, PARTIES, LIMINAIRES, FIN, PLANCHE_CENTRALE, apos } from './plan-chapitres.mjs';
 import { TEXTES_LIMINAIRES, TEXTES_FIN, LIGNES_FIN } from './textes-liminaires.mjs';
 import { LEXIQUE } from './lexique.mjs';
 
@@ -104,9 +104,8 @@ const PICTO_PIEGE = `<svg class="picto-piege" viewBox="0 0 20 18" aria-hidden="t
   <path d="M10 1.7 19.1 16.5H0.9z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>
   <path d="M10 6.9v4.4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
   <circle cx="10" cy="14.1" r="1.05" fill="currentColor"/></svg>`;
-/* Le plan écrit ses chaînes sans apostrophes ; on les restitue. */
-export const apos = (s) => String(s).replace(
-  /\b(jusqu|lorsqu|puisqu|quelqu|aujourd|[qQ]u|[dcjlmnstDCJLMNST])\s(?=[aeiouyhéèêëàâîïôûAEIOUYHÉÈÊÀÂÎÔœŒæÆ])/g, '$1’');
+/* Le plan écrit ses chaînes sans apostrophes ; `apos` (importée du plan,
+   comme la convention) les restitue partout où un titre s'affiche. */
 
 const qrDe = (num) => QR.find((e) => e.chapitre === num && !e.lecon && !e.genre);
 /* La série d'entraînement du chapitre : son premier groupe G-numéroté. */
@@ -277,6 +276,20 @@ export const construireFlux = () => {
     for (const texte of TEXTES_LIMINAIRES[p.id] || []) pousse(`<p class="txt">${ech(texte)}</p>`, { nue: true });
     pousse(figure(p.visuels, p.legendes), { nue: true });
     if (LIGNES_FIN[p.id]) pousse(lignes(LIGNES_FIN[p.id]), { nue: true });
+    /* Sous les lignes du point de départ, le test qui l'objective : vingt
+       questions en ligne, et le parcours qui en sort — par quels chapitres
+       commencer. Le QR vit dans la page, comme celui du bilan. */
+    if (p.id === 'point-depart' && QR.some((x) => x.slug === 'positionnement')) {
+      pousse(`<div class="bilan-qr">
+        <img class="bilan-qr-img" src="${qrImg('positionnement')}" alt="" width="600" height="600">
+        <div class="bilan-qr-txt">
+          <b>Vingt questions avant d'ouvrir le livre</b>
+          <span>Ce code lance le test d'entrée : un tirage dans tous les chapitres,
+          corrigé sur votre téléphone. À la fin, votre parcours — les chapitres à
+          travailler d'abord, ceux que vous pouvez survoler.</span>
+          <span class="bilan-qr-url">inerweb.fr/f/positionnement</span>
+        </div></div>`, { nue: true });
+    }
   }
 
   /* ---- Parties et chapitres ---- */
@@ -476,6 +489,22 @@ export const construireFlux = () => {
     /* La banque : les 89 questions laissées de côté par les chapitres,
        posées dans l'ordre du livre, chacune marquée de son chapitre. */
     if (p.id === 'banque') {
+      /* En tête, l'examen blanc : la banque s'ouvre au moment où le livre
+         est lu — c'est là qu'on se teste en conditions réelles. Quarante
+         questions en ligne, un tirage neuf à chaque passage, et la
+         remédiation en sortie : les chapitres où reprendre, pages à
+         l'appui. Le papier n'imprime que le QR. */
+      if (QR.some((x) => x.slug === 'examen-blanc')) {
+        pousse(`<div class="bilan-qr">
+          <img class="bilan-qr-img" src="${qrImg('examen-blanc')}" alt="" width="600" height="600">
+          <div class="bilan-qr-txt">
+            <b>L'examen blanc, quand vous vous sentez prêt</b>
+            <span>Quarante questions tirées de tous les chapitres, dans le désordre,
+            corrigées sur votre téléphone. Le tirage change à chaque passage. À la
+            fin : votre note, et les chapitres où reprendre, pages à l'appui.</span>
+            <span class="bilan-qr-url">inerweb.fr/f/examen-blanc</span>
+          </div></div>`, { nue: true });
+      }
       const corrige = false;
       let n = 0;
       /* Entrelacées, pas rangées par chapitre : l'épreuve ne prévient pas

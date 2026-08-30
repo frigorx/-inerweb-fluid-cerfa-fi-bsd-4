@@ -15,13 +15,13 @@
  {
   "chapitre": 1,
   "lecon": 1,
-  "titre": "L air qui manque — l asphyxie",
+  "titre": "L’air qui manque — l’asphyxie",
   "slug": "securite-1",
   "alias": "https://inerweb.fr/f/securite-1",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=s1",
   "renvoi": {
    "genre": "leçon narrée",
-   "titre": "L air qui manque — l asphyxie",
+   "titre": "L’air qui manque — l’asphyxie",
    "quoi": "Cette leçon animée et racontée à voix haute."
   },
   "fichier": "securite-1.png"
@@ -126,13 +126,13 @@
  {
   "chapitre": 2,
   "lecon": 3,
-  "titre": "Explosif avant d être perceptible — la LIE",
+  "titre": "Explosif avant d’être perceptible — la LIE",
   "slug": "classes-3",
   "alias": "https://inerweb.fr/f/classes-3",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=cl2",
   "renvoi": {
    "genre": "leçon narrée",
-   "titre": "Explosif avant d être perceptible — la LIE",
+   "titre": "Explosif avant d’être perceptible — la LIE",
    "quoi": "Cette leçon animée et racontée à voix haute."
   },
   "fichier": "classes-3.png"
@@ -140,13 +140,13 @@
  {
   "chapitre": 2,
   "lecon": 4,
-  "titre": "CO₂ : la pression et l air qu il vous prend",
+  "titre": "CO₂ : la pression et l’air qu’il vous prend",
   "slug": "classes-4",
   "alias": "https://inerweb.fr/f/classes-4",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=cl3",
   "renvoi": {
    "genre": "leçon narrée",
-   "titre": "CO₂ : la pression et l air qu il vous prend",
+   "titre": "CO₂ : la pression et l’air qu’il vous prend",
    "quoi": "Cette leçon animée et racontée à voix haute."
   },
   "fichier": "classes-4.png"
@@ -195,13 +195,13 @@
  {
   "chapitre": 3,
   "lecon": 2,
-  "titre": "Le registre, les déchets, l écoconception",
+  "titre": "Le registre, les déchets, l’écoconception",
   "slug": "loi-2",
   "alias": "https://inerweb.fr/f/loi-2",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g0",
   "renvoi": {
    "genre": "leçon narrée",
-   "titre": "Le registre, les déchets, l écoconception",
+   "titre": "Le registre, les déchets, l’écoconception",
    "quoi": "Cette leçon animée et racontée à voix haute."
   },
   "fichier": "loi-2.png"
@@ -209,13 +209,13 @@
  {
   "chapitre": 3,
   "lecon": 3,
-  "titre": "Quarante ans d histoire : de l ozone au climat",
+  "titre": "Quarante ans d’histoire : de l’ozone au climat",
   "slug": "loi-3",
   "alias": "https://inerweb.fr/f/loi-3",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g2a",
   "renvoi": {
    "genre": "leçon narrée",
-   "titre": "Quarante ans d histoire : de l ozone au climat",
+   "titre": "Quarante ans d’histoire : de l’ozone au climat",
    "quoi": "Cette leçon animée et racontée à voix haute."
   },
   "fichier": "loi-3.png"
@@ -305,13 +305,13 @@
  {
   "chapitre": 5,
   "lecon": 4,
-  "titre": "Le palier, et pourquoi il n est pas plat",
+  "titre": "Le palier, et pourquoi il n’est pas plat",
   "slug": "thermo-4",
   "alias": "https://inerweb.fr/f/thermo-4",
   "cible": "https://inerweb.fr/?carte=g1s",
   "renvoi": {
    "genre": "fiche",
-   "titre": "Le palier, et pourquoi il n est pas plat",
+   "titre": "Le palier, et pourquoi il n’est pas plat",
    "quoi": "La fiche interactive, avec sa question corrigée."
   },
   "fichier": "thermo-4.png"
@@ -332,13 +332,13 @@
  {
   "chapitre": 6,
   "lecon": 1,
-  "titre": "Le diagramme, et ce qu il montre",
+  "titre": "Le diagramme, et ce qu’il montre",
   "slug": "logph-1",
   "alias": "https://inerweb.fr/f/logph-1",
   "cible": "https://inerweb.fr/?carte=g1b",
   "renvoi": {
    "genre": "fiche",
-   "titre": "Le diagramme, et ce qu il montre",
+   "titre": "Le diagramme, et ce qu’il montre",
    "quoi": "La fiche interactive, avec sa question corrigée."
   },
   "fichier": "logph-1.png"
@@ -346,13 +346,13 @@
  {
   "chapitre": 6,
   "lecon": 2,
-  "titre": "L échelle des pressions n est pas une règle graduée",
+  "titre": "L’échelle des pressions n’est pas une règle graduée",
   "slug": "logph-2",
   "alias": "https://inerweb.fr/f/logph-2",
   "cible": "https://inerweb.fr/?carte=g1b",
   "renvoi": {
    "genre": "fiche",
-   "titre": "L échelle des pressions n est pas une règle…",
+   "titre": "L’échelle des pressions n’est pas une règle…",
    "quoi": "La fiche interactive, avec sa question corrigée."
   },
   "fichier": "logph-2.png"
@@ -415,13 +415,13 @@
  {
   "chapitre": 7,
   "lecon": 3,
-  "titre": "Ce qu une valeur hors plage annonce",
+  "titre": "Ce qu’une valeur hors plage annonce",
   "slug": "surchauffe-3",
   "alias": "https://inerweb.fr/f/surchauffe-3",
   "cible": "https://inerweb.fr/?carte=g1e",
   "renvoi": {
    "genre": "fiche",
-   "titre": "Ce qu une valeur hors plage annonce",
+   "titre": "Ce qu’une valeur hors plage annonce",
    "quoi": "La fiche interactive, avec sa question corrigée."
   },
   "fichier": "surchauffe-3.png"
@@ -497,13 +497,13 @@
  {
   "chapitre": 9,
   "lecon": 1,
-  "titre": "Ce qu il fait, et où il fuit",
+  "titre": "Ce qu’il fait, et où il fuit",
   "slug": "compresseur-1",
   "alias": "https://inerweb.fr/f/compresseur-1",
   "cible": "https://inerweb.fr/?carte=g6",
   "renvoi": {
    "genre": "fiche",
-   "titre": "Ce qu il fait, et où il fuit",
+   "titre": "Ce qu’il fait, et où il fuit",
    "quoi": "La fiche interactive, avec sa question corrigée."
   },
   "fichier": "compresseur-1.png"
@@ -525,13 +525,13 @@
  {
   "chapitre": 9,
   "lecon": 3,
-  "titre": "L huile, et le rapport d état",
+  "titre": "L’huile, et le rapport d’état",
   "slug": "compresseur-3",
   "alias": "https://inerweb.fr/f/compresseur-3",
   "cible": "https://inerweb.fr/?carte=g6",
   "renvoi": {
    "genre": "fiche",
-   "titre": "L huile, et le rapport d état",
+   "titre": "L’huile, et le rapport d’état",
    "quoi": "La fiche interactive, avec sa question corrigée."
   },
   "fichier": "compresseur-3.png"
@@ -580,13 +580,13 @@
  {
   "chapitre": 10,
   "lecon": 1,
-  "titre": "Ce qu il fait, et où il fuit",
+  "titre": "Ce qu’il fait, et où il fuit",
   "slug": "condenseur-1",
   "alias": "https://inerweb.fr/f/condenseur-1",
   "cible": "https://inerweb.fr/?carte=g7",
   "renvoi": {
    "genre": "fiche",
-   "titre": "Ce qu il fait, et où il fuit",
+   "titre": "Ce qu’il fait, et où il fuit",
    "quoi": "La fiche interactive, avec sa question corrigée."
   },
   "fichier": "condenseur-1.png"
@@ -608,13 +608,13 @@
  {
   "chapitre": 10,
   "lecon": 3,
-  "titre": "Installer l unité extérieure, régler la pression",
+  "titre": "Installer l’unité extérieure, régler la pression",
   "slug": "condenseur-3",
   "alias": "https://inerweb.fr/f/condenseur-3",
   "cible": "https://inerweb.fr/?carte=g7b",
   "renvoi": {
    "genre": "fiche",
-   "titre": "Installer l unité extérieure, régler la pre…",
+   "titre": "Installer l’unité extérieure, régler la pre…",
    "quoi": "La fiche interactive, avec sa question corrigée."
   },
   "fichier": "condenseur-3.png"
@@ -649,7 +649,7 @@
  },
  {
   "chapitre": 11,
-  "titre": "L évaporateur",
+  "titre": "L’évaporateur",
   "slug": "evaporateur",
   "alias": "https://inerweb.fr/f/evaporateur",
   "cible": "https://inerweb.fr/?carte=g8",
@@ -663,13 +663,13 @@
  {
   "chapitre": 11,
   "lecon": 1,
-  "titre": "Ce qu il fait, et où il fuit",
+  "titre": "Ce qu’il fait, et où il fuit",
   "slug": "evaporateur-1",
   "alias": "https://inerweb.fr/f/evaporateur-1",
   "cible": "https://inerweb.fr/?carte=g8",
   "renvoi": {
    "genre": "fiche",
-   "titre": "Ce qu il fait, et où il fuit",
+   "titre": "Ce qu’il fait, et où il fuit",
    "quoi": "La fiche interactive, avec sa question corrigée."
   },
   "fichier": "evaporateur-1.png"
@@ -677,13 +677,13 @@
  {
   "chapitre": 11,
   "lecon": 2,
-  "titre": "Lire la surchauffe, et les deux organes qu on confond",
+  "titre": "Lire la surchauffe, et les deux organes qu’on confond",
   "slug": "evaporateur-2",
   "alias": "https://inerweb.fr/f/evaporateur-2",
   "cible": "https://inerweb.fr/?carte=g8",
   "renvoi": {
    "genre": "fiche",
-   "titre": "Lire la surchauffe, et les deux organes qu …",
+   "titre": "Lire la surchauffe, et les deux organes qu’…",
    "quoi": "La fiche interactive, avec sa question corrigée."
   },
   "fichier": "evaporateur-2.png"
@@ -746,13 +746,13 @@
  {
   "chapitre": 12,
   "lecon": 1,
-  "titre": "Ce qu il fait, et les trois technologies",
+  "titre": "Ce qu’il fait, et les trois technologies",
   "slug": "detendeur-1",
   "alias": "https://inerweb.fr/f/detendeur-1",
   "cible": "https://inerweb.fr/?carte=g9",
   "renvoi": {
    "genre": "fiche",
-   "titre": "Ce qu il fait, et les trois technologies",
+   "titre": "Ce qu’il fait, et les trois technologies",
    "quoi": "La fiche interactive, avec sa question corrigée."
   },
   "fichier": "detendeur-1.png"
@@ -788,13 +788,13 @@
  {
   "chapitre": 12,
   "lecon": 4,
-  "titre": "Un bon réglage, c est de l énergie économisée",
+  "titre": "Un bon réglage, c’est de l’énergie économisée",
   "slug": "detendeur-4",
   "alias": "https://inerweb.fr/f/detendeur-4",
   "cible": "https://inerweb.fr/?carte=g9b",
   "renvoi": {
    "genre": "fiche",
-   "titre": "Un bon réglage, c est de l énergie économisée",
+   "titre": "Un bon réglage, c’est de l’énergie économisée",
    "quoi": "La fiche interactive, avec sa question corrigée."
   },
   "fichier": "detendeur-4.png"
@@ -843,13 +843,13 @@
  {
   "chapitre": 13,
   "lecon": 2,
-  "titre": "La bouteille d azote et son mano-détendeur",
+  "titre": "La bouteille d’azote et son mano-détendeur",
   "slug": "mise-en-service-2",
   "alias": "https://inerweb.fr/f/mise-en-service-2",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=p4",
   "renvoi": {
    "genre": "leçon narrée",
-   "titre": "La bouteille d azote et son mano-détendeur",
+   "titre": "La bouteille d’azote et son mano-détendeur",
    "quoi": "Cette leçon animée et racontée à voix haute."
   },
   "fichier": "mise-en-service-2.png"
@@ -885,20 +885,20 @@
  {
   "chapitre": 13,
   "lecon": 5,
-  "titre": "Le vide qui remonte, et la fuite qu on localise",
+  "titre": "Le vide qui remonte, et la fuite qu’on localise",
   "slug": "mise-en-service-5",
   "alias": "https://inerweb.fr/f/mise-en-service-5",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g3",
   "renvoi": {
    "genre": "leçon narrée",
-   "titre": "Le vide qui remonte, et la fuite qu on loca…",
+   "titre": "Le vide qui remonte, et la fuite qu’on loca…",
    "quoi": "Cette leçon animée et racontée à voix haute."
   },
   "fichier": "mise-en-service-5.png"
  },
  {
   "chapitre": 14,
-  "titre": "Les contrôles d étanchéité",
+  "titre": "Les contrôles d’étanchéité",
   "slug": "etancheite",
   "alias": "https://inerweb.fr/f/etancheite",
   "cible": "https://inerweb.fr/?carte=g4a",
@@ -968,13 +968,13 @@
  {
   "chapitre": 14,
   "lecon": 5,
-  "titre": "L instrument aussi se contrôle, et le registre se remplit",
+  "titre": "L’instrument aussi se contrôle, et le registre se remplit",
   "slug": "etancheite-5",
   "alias": "https://inerweb.fr/f/etancheite-5",
   "cible": "https://inerweb.fr/?carte=g4c",
   "renvoi": {
    "genre": "fiche",
-   "titre": "L instrument aussi se contrôle, et le regis…",
+   "titre": "L’instrument aussi se contrôle, et le regis…",
    "quoi": "La fiche interactive, avec sa question corrigée."
   },
   "fichier": "etancheite-5.png"
@@ -1023,13 +1023,13 @@
  {
   "chapitre": 15,
   "lecon": 3,
-  "titre": "L ordre des vannes",
+  "titre": "L’ordre des vannes",
   "slug": "recuperation-3",
   "alias": "https://inerweb.fr/f/recuperation-3",
   "cible": "https://inerweb.fr/?carte=p5",
   "renvoi": {
    "genre": "fiche",
-   "titre": "L ordre des vannes",
+   "titre": "L’ordre des vannes",
    "quoi": "La fiche interactive, avec sa question corrigée."
   },
   "fichier": "recuperation-3.png"
@@ -1078,13 +1078,13 @@
  {
   "chapitre": 16,
   "lecon": 1,
-  "titre": "Deux opérations à l azote, à ne pas confondre",
+  "titre": "Deux opérations à l’azote, à ne pas confondre",
   "slug": "brasage-1",
   "alias": "https://inerweb.fr/f/brasage-1",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g10",
   "renvoi": {
    "genre": "leçon narrée",
-   "titre": "Deux opérations à l azote, à ne pas confondre",
+   "titre": "Deux opérations à l’azote, à ne pas confondre",
    "quoi": "Cette leçon animée et racontée à voix haute."
   },
   "fichier": "brasage-1.png"
@@ -1230,13 +1230,13 @@
  {
   "chapitre": 18,
   "lecon": 4,
-  "titre": "Récupérer et remplir à l azote",
+  "titre": "Récupérer et remplir à l’azote",
   "slug": "hydrocarbures-4",
   "alias": "https://inerweb.fr/f/hydrocarbures-4",
   "cible": "https://inerweb.fr/?carte=g12b",
   "renvoi": {
    "genre": "fiche",
-   "titre": "Récupérer et remplir à l azote",
+   "titre": "Récupérer et remplir à l’azote",
    "quoi": "La fiche interactive, avec sa question corrigée."
   },
   "fichier": "hydrocarbures-4.png"
@@ -1244,13 +1244,13 @@
  {
   "chapitre": 18,
   "lecon": 5,
-  "titre": "Le fil rouge de l intervention",
+  "titre": "Le fil rouge de l’intervention",
   "slug": "hydrocarbures-5",
   "alias": "https://inerweb.fr/f/hydrocarbures-5",
   "cible": "https://inerweb.fr/?carte=g12b",
   "renvoi": {
    "genre": "fiche",
-   "titre": "Le fil rouge de l intervention",
+   "titre": "Le fil rouge de l’intervention",
    "quoi": "La fiche interactive, avec sa question corrigée."
   },
   "fichier": "hydrocarbures-5.png"
@@ -1299,13 +1299,13 @@
  {
   "chapitre": 19,
   "lecon": 3,
-  "titre": "La glace carbonique, et le réflexe d arrivée sur site",
+  "titre": "La glace carbonique, et le réflexe d’arrivée sur site",
   "slug": "co2-nh3-3",
   "alias": "https://inerweb.fr/f/co2-nh3-3",
   "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g13",
   "renvoi": {
    "genre": "leçon narrée",
-   "titre": "La glace carbonique, et le réflexe d arrivé…",
+   "titre": "La glace carbonique, et le réflexe d’arrivé…",
    "quoi": "Cette leçon animée et racontée à voix haute."
   },
   "fichier": "co2-nh3-3.png"
@@ -2564,7 +2564,7 @@
  {
   "genre": "qcm",
   "chapitre_num": 11,
-  "titre": "QCM du chapitre 11 — L évaporateur",
+  "titre": "QCM du chapitre 11 — L’évaporateur",
   "slug": "q-evaporateur",
   "alias": "https://inerweb.fr/f/q-evaporateur",
   "cible": "https://inerweb.fr/",
@@ -2609,7 +2609,7 @@
  {
   "genre": "qcm",
   "chapitre_num": 14,
-  "titre": "QCM du chapitre 14 — Les contrôles d étanchéité",
+  "titre": "QCM du chapitre 14 — Les contrôles d’étanchéité",
   "slug": "q-etancheite",
   "alias": "https://inerweb.fr/f/q-etancheite",
   "cible": "https://inerweb.fr/",
@@ -2708,5 +2708,37 @@
    "quoi": "Ce que votre téléphone a retenu de vos séries — rien ne quitte l’appareil."
   },
   "fichier": "mes-resultats.png"
+ },
+ {
+  "genre": "examen",
+  "mode": "examen",
+  "slug": "examen-blanc",
+  "titre": "L’examen blanc — 40 questions",
+  "alias": "https://inerweb.fr/f/examen-blanc",
+  "cible": "https://inerweb.fr/",
+  "tirage": 40,
+  "parChapitre": 2,
+  "renvoi": {
+   "genre": "l’examen blanc",
+   "titre": "40 questions, comme le jour J",
+   "quoi": "Un tirage différent à chaque passage, corrigé, avec les chapitres à revoir."
+  },
+  "fichier": "examen-blanc.png"
+ },
+ {
+  "genre": "examen",
+  "mode": "entree",
+  "slug": "positionnement",
+  "titre": "Par où commencer ? — le test d’entrée",
+  "alias": "https://inerweb.fr/f/positionnement",
+  "cible": "https://inerweb.fr/",
+  "tirage": 20,
+  "parChapitre": 1,
+  "renvoi": {
+   "genre": "par où commencer ?",
+   "titre": "Le test d’entrée : 20 questions",
+   "quoi": "Votre parcours : les chapitres à travailler d’abord, ceux à survoler."
+  },
+  "fichier": "positionnement.png"
  }
 ]

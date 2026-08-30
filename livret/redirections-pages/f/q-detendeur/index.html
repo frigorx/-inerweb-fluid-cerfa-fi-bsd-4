@@ -24,6 +24,8 @@ input[type=radio]{width:1.15em;height:1.15em;margin:2px 0 0;accent-color:var(--b
 .verdict{font-weight:700;margin:8px 0 0;display:none}
 .q.juste .verdict.ok{display:block;color:var(--vert)}
 .q.faux .verdict.ko{display:block;color:var(--rouge)}
+.q-illu{display:block;background:#fff;border:1px solid var(--ligne);border-radius:8px;padding:6px;margin:0 0 10px}
+.q-illu img{display:block;width:100%;height:auto;max-height:190px;object-fit:contain}
 .actions{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
 .actions button,.actions a{font:inherit;font-weight:700;border-radius:8px;padding:11px 18px;cursor:pointer;text-decoration:none;text-align:center}
 .actions button{background:var(--bleu);color:#fff;border:none}
@@ -41,6 +43,7 @@ footer a{color:var(--mut)}
 <form id="f">
 <div class="q" data-b="3">
 <p class="q-e"><span class="n">1</span>À quoi sert un voyant liquide dans un circuit frigorifique ?</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-points-de-fuite" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/points-de-fuite.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q0" value="0"><span><b>A</b> — À régler la pression de la ligne liquide à la sortie du condenseur</span></label>
 <label><input type="radio" name="q0" value="1"><span><b>B</b> — À couper le compresseur si le débit de liquide devient insuffisant</span></label>
 <label><input type="radio" name="q0" value="2"><span><b>C</b> — À mesurer la température du liquide juste avant l'entrée du détendeur</span></label>
@@ -50,6 +53,7 @@ footer a{color:var(--mut)}
 </div>
 <div class="q" data-b="0">
 <p class="q-e"><span class="n">2</span>Que peut indiquer un bruit de bullage dans le détendeur thermostatique en fonctionnement ?</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-detendeurs-ligne" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/detendeurs-ligne.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q1" value="0"><span><b>A</b> — Flash-gas dans la ligne liquide (manque de sous-refroidissement)</span></label>
 <label><input type="radio" name="q1" value="1"><span><b>B</b> — Excès de fluide frigorigène : le liquide arrive jusqu'au détendeur en surplus</span></label>
 <label><input type="radio" name="q1" value="2"><span><b>C</b> — Compresseur usé dont les clapets laissent passer le gaz</span></label>
@@ -59,6 +63,7 @@ footer a{color:var(--mut)}
 </div>
 <div class="q" data-b="1">
 <p class="q-e"><span class="n">3</span>Quel accessoire permet de retenir l'humidité dans un circuit frigorifique ?</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-detendeurs-ligne" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/detendeurs-ligne.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q2" value="0"><span><b>A</b> — Le voyant de ligne liquide</span></label>
 <label><input type="radio" name="q2" value="1"><span><b>B</b> — Le filtre déshydrateur</span></label>
 <label><input type="radio" name="q2" value="2"><span><b>C</b> — Le pressostat différentiel</span></label>
@@ -68,6 +73,7 @@ footer a{color:var(--mut)}
 </div>
 <div class="q" data-b="2">
 <p class="q-e"><span class="n">4</span>Vous remarquez des bulles dans le voyant liquide en fonctionnement stable. Qu'est-ce que cela signifie généralement ?</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-points-de-fuite" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/points-de-fuite.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q3" value="0"><span><b>A</b> — Problème d'huile : elle mousse et se voit dans le voyant</span></label>
 <label><input type="radio" name="q3" value="1"><span><b>B</b> — Le circuit fonctionne correctement, ces bulles sont normales</span></label>
 <label><input type="radio" name="q3" value="2"><span><b>C</b> — Manque de fluide frigorigène ou sous-refroidissement insuffisant</span></label>
@@ -77,6 +83,7 @@ footer a{color:var(--mut)}
 </div>
 <div class="q" data-b="3">
 <p class="q-e"><span class="n">5</span>Le pressostat BP peut servir à :</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-points-de-fuite" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/points-de-fuite.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q4" value="0"><span><b>A</b> — Protéger le condenseur contre les fortes surpressions</span></label>
 <label><input type="radio" name="q4" value="1"><span><b>B</b> — Augmenter la charge en fluide de l'installation frigorifique</span></label>
 <label><input type="radio" name="q4" value="2"><span><b>C</b> — Mesurer le COP de la machine en fonctionnement réel</span></label>
@@ -86,6 +93,7 @@ footer a{color:var(--mut)}
 </div>
 <div class="q" data-b="0">
 <p class="q-e"><span class="n">6</span>La vanne 4 voies permet :</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-ordre-vannes" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/ordre-vannes.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q5" value="0"><span><b>A</b> — D'inverser le sens du cycle (mode chaud/froid)</span></label>
 <label><input type="radio" name="q5" value="1"><span><b>B</b> — De purger l'huile du carter du compresseur</span></label>
 <label><input type="radio" name="q5" value="2"><span><b>C</b> — De contourner le compresseur pendant l'arrêt</span></label>

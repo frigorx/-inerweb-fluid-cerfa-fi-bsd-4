@@ -24,6 +24,8 @@ input[type=radio]{width:1.15em;height:1.15em;margin:2px 0 0;accent-color:var(--b
 .verdict{font-weight:700;margin:8px 0 0;display:none}
 .q.juste .verdict.ok{display:block;color:var(--vert)}
 .q.faux .verdict.ko{display:block;color:var(--rouge)}
+.q-illu{display:block;background:#fff;border:1px solid var(--ligne);border-radius:8px;padding:6px;margin:0 0 10px}
+.q-illu img{display:block;width:100%;height:auto;max-height:190px;object-fit:contain}
 .actions{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
 .actions button,.actions a{font:inherit;font-weight:700;border-radius:8px;padding:11px 18px;cursor:pointer;text-decoration:none;text-align:center}
 .actions button{background:var(--bleu);color:#fff;border:none}
@@ -41,6 +43,7 @@ footer a{color:var(--mut)}
 <form id="f">
 <div class="q" data-b="3">
 <p class="q-e"><span class="n">1</span>Le R600a (isobutane) est utilisé principalement dans :</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-r290-zone-intervention" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/r290-zone-intervention.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q0" value="0"><span><b>A</b> — Les climatiseurs split installés en résidentiel</span></label>
 <label><input type="radio" name="q0" value="1"><span><b>B</b> — Les pompes à chaleur air-eau domestiques</span></label>
 <label><input type="radio" name="q0" value="2"><span><b>C</b> — Les grandes centrales frigorifiques industrielles</span></label>
@@ -50,6 +53,7 @@ footer a{color:var(--mut)}
 </div>
 <div class="q" data-b="0">
 <p class="q-e"><span class="n">2</span>Quelle est la différence entre un fluide A2L (R-32) et un fluide A3 (R-290) ?</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-classes-securite" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/classes-securite.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q1" value="0"><span><b>A</b> — A3 est hautement inflammable (propagation rapide) ; A2L l'est faiblement (propagation lente)</span></label>
 <label><input type="radio" name="q1" value="1"><span><b>B</b> — A2L est un fluide toxique alors que A3 ne présente aucune toxicité</span></label>
 <label><input type="radio" name="q1" value="2"><span><b>C</b> — A3 produit plus de froid, d'où la limitation de charge imposée</span></label>
@@ -59,6 +63,7 @@ footer a{color:var(--mut)}
 </div>
 <div class="q" data-b="1">
 <p class="q-e"><span class="n">3</span>Les fluides A2L comme le R32 nécessitent :</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-classes-securite" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/classes-securite.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q2" value="0"><span><b>A</b> — Aucune précaution particulière lors de l'intervention</span></label>
 <label><input type="radio" name="q2" value="1"><span><b>B</b> — Un outillage adapté et une formation spécifique</span></label>
 <label><input type="radio" name="q2" value="2"><span><b>C</b> — Un local ATEX systématique pour toute intervention</span></label>
@@ -68,6 +73,7 @@ footer a{color:var(--mut)}
 </div>
 <div class="q" data-b="2">
 <p class="q-e"><span class="n">4</span>La charge maximale en R290 (propane) dans un local accessible au public est très limitée car :</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-r290-zone-intervention" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/r290-zone-intervention.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q3" value="0"><span><b>A</b> — Il corrode le cuivre des tubes du circuit</span></label>
 <label><input type="radio" name="q3" value="1"><span><b>B</b> — Son pouvoir de réchauffement est élevé</span></label>
 <label><input type="radio" name="q3" value="2"><span><b>C</b> — Il est très inflammable (classe A3)</span></label>
@@ -77,6 +83,7 @@ footer a{color:var(--mut)}
 </div>
 <div class="q" data-b="3">
 <p class="q-e"><span class="n">5</span>Pourquoi ne doit-on jamais approcher une flamme d'un circuit contenant un fluide A2L ou A3 non inerté ?</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-classes-securite" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/classes-securite.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q4" value="0"><span><b>A</b> — Parce que la fumée salit l'installation et les échangeurs</span></label>
 <label><input type="radio" name="q4" value="1"><span><b>B</b> — Parce que l'odeur dégagée est désagréable pour l'occupant</span></label>
 <label><input type="radio" name="q4" value="2"><span><b>C</b> — Parce qu'il est formellement interdit de fumer sur un chantier de ce type</span></label>
@@ -86,6 +93,7 @@ footer a{color:var(--mut)}
 </div>
 <div class="q" data-b="0">
 <p class="q-e"><span class="n">6</span>Vous devez braser sur un circuit au R-32 (A2L). Quelles précautions prenez-vous avant d'allumer le chalumeau ?</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-brasage-balayage-azote" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/brasage-balayage-azote.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q5" value="0"><span><b>A</b> — Récupérer le fluide, inerter à l'azote, ventiler, supprimer toute source d'ignition</span></label>
 <label><input type="radio" name="q5" value="1"><span><b>B</b> — Ouvrir une fenêtre et braser rapidement pour limiter l'exposition</span></label>
 <label><input type="radio" name="q5" value="2"><span><b>C</b> — Braser directement : le circuit est fermé et sous pression</span></label>

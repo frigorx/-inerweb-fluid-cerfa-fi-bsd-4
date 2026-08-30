@@ -24,6 +24,8 @@ input[type=radio]{width:1.15em;height:1.15em;margin:2px 0 0;accent-color:var(--b
 .verdict{font-weight:700;margin:8px 0 0;display:none}
 .q.juste .verdict.ok{display:block;color:var(--vert)}
 .q.faux .verdict.ko{display:block;color:var(--rouge)}
+.q-illu{display:block;background:#fff;border:1px solid var(--ligne);border-radius:8px;padding:6px;margin:0 0 10px}
+.q-illu img{display:block;width:100%;height:auto;max-height:190px;object-fit:contain}
 .actions{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
 .actions button,.actions a{font:inherit;font-weight:700;border-radius:8px;padding:11px 18px;cursor:pointer;text-decoration:none;text-align:center}
 .actions button{background:var(--bleu);color:#fff;border:none}
@@ -41,6 +43,7 @@ footer a{color:var(--mut)}
 <form id="f">
 <div class="q" data-b="3">
 <p class="q-e"><span class="n">1</span>Sur le diagramme de Mollier (log P/h), l'axe horizontal représente :</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-lie-domaine" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/lie-domaine.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q0" value="0"><span><b>A</b> — Le volume</span></label>
 <label><input type="radio" name="q0" value="1"><span><b>B</b> — La température</span></label>
 <label><input type="radio" name="q0" value="2"><span><b>C</b> — La pression</span></label>
@@ -50,6 +53,7 @@ footer a{color:var(--mut)}
 </div>
 <div class="q" data-b="0">
 <p class="q-e"><span class="n">2</span>Le R22 appartient à quelle famille ?</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-frise-histoire" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/frise-histoire.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q1" value="0"><span><b>A</b> — HCFC</span></label>
 <label><input type="radio" name="q1" value="1"><span><b>B</b> — HFC</span></label>
 <label><input type="radio" name="q1" value="2"><span><b>C</b> — HFO</span></label>
@@ -59,6 +63,7 @@ footer a{color:var(--mut)}
 </div>
 <div class="q" data-b="1">
 <p class="q-e"><span class="n">3</span>Le R407C est composé de :</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-familles-fluides" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/familles-fluides.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q2" value="0"><span><b>A</b> — 100% R32</span></label>
 <label><input type="radio" name="q2" value="1"><span><b>B</b> — R32 / R125 / R134a</span></label>
 <label><input type="radio" name="q2" value="2"><span><b>C</b> — R32 / R125</span></label>
@@ -68,6 +73,7 @@ footer a{color:var(--mut)}
 </div>
 <div class="q" data-b="2">
 <p class="q-e"><span class="n">4</span>Dans la zone diphasique (sous la cloche), le fluide est :</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-diagramme-logph" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/diagramme-logph.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q3" value="0"><span><b>A</b> — Entièrement liquide, sous-refroidi</span></label>
 <label><input type="radio" name="q3" value="1"><span><b>B</b> — Entièrement gazeux, surchauffé</span></label>
 <label><input type="radio" name="q3" value="2"><span><b>C</b> — Un mélange liquide + vapeur</span></label>
@@ -77,6 +83,7 @@ footer a{color:var(--mut)}
 </div>
 <div class="q" data-b="3">
 <p class="q-e"><span class="n">5</span>Sur le diagramme de Mollier, la condensation et l'évaporation sont des transformations :</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-condenseur-trois-zones" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/condenseur-trois-zones.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q4" value="0"><span><b>A</b> — Isothermes</span></label>
 <label><input type="radio" name="q4" value="1"><span><b>B</b> — Isenthalpiques</span></label>
 <label><input type="radio" name="q4" value="2"><span><b>C</b> — Isentropiques</span></label>
@@ -86,6 +93,7 @@ footer a{color:var(--mut)}
 </div>
 <div class="q" data-b="0">
 <p class="q-e"><span class="n">6</span>La cloche de saturation sur le diagramme de Mollier sépare :</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-lie-domaine" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/lie-domaine.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q5" value="0"><span><b>A</b> — Les zones liquide, diphasique et vapeur</span></label>
 <label><input type="radio" name="q5" value="1"><span><b>B</b> — Les hautes et les basses températures</span></label>
 <label><input type="radio" name="q5" value="2"><span><b>C</b> — Les fluides naturels et synthétiques</span></label>

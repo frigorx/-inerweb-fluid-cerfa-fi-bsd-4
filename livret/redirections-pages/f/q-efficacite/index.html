@@ -24,6 +24,8 @@ input[type=radio]{width:1.15em;height:1.15em;margin:2px 0 0;accent-color:var(--b
 .verdict{font-weight:700;margin:8px 0 0;display:none}
 .q.juste .verdict.ok{display:block;color:var(--vert)}
 .q.faux .verdict.ko{display:block;color:var(--rouge)}
+.q-illu{display:block;background:#fff;border:1px solid var(--ligne);border-radius:8px;padding:6px;margin:0 0 10px}
+.q-illu img{display:block;width:100%;height:auto;max-height:190px;object-fit:contain}
 .actions{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
 .actions button,.actions a{font:inherit;font-weight:700;border-radius:8px;padding:11px 18px;cursor:pointer;text-decoration:none;text-align:center}
 .actions button{background:var(--bleu);color:#fff;border:none}
@@ -41,6 +43,7 @@ footer a{color:var(--mut)}
 <form id="f">
 <div class="q" data-b="1">
 <p class="q-e"><span class="n">1</span>Le COP d'une installation frigorifique se calcule par :</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-quatre-leviers-energie" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/quatre-leviers-energie.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q0" value="0"><span><b>A</b> — COP = P_élec / P_frigo</span></label>
 <label><input type="radio" name="q0" value="1"><span><b>B</b> — COP = P_frigo / P_élec</span></label>
 <label><input type="radio" name="q0" value="2"><span><b>C</b> — COP = P_frigo × P_élec</span></label>
@@ -50,6 +53,7 @@ footer a{color:var(--mut)}
 </div>
 <div class="q" data-b="2">
 <p class="q-e"><span class="n">2</span>Les HFO (hydrofluoro-oléfines) se caractérisent par :</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-nomenclature" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/nomenclature.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q1" value="0"><span><b>A</b> — Un GWP très élevé</span></label>
 <label><input type="radio" name="q1" value="1"><span><b>B</b> — Un ODP élevé</span></label>
 <label><input type="radio" name="q1" value="2"><span><b>C</b> — Un GWP très bas (&lt;10)</span></label>
@@ -59,6 +63,7 @@ footer a{color:var(--mut)}
 </div>
 <div class="q" data-b="3">
 <p class="q-e"><span class="n">3</span>Comment optimiser le COP (Coefficient de Performance) d'une installation frigorifique ?</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-quatre-leviers-energie" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/quatre-leviers-energie.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q2" value="0"><span><b>A</b> — Augmenter la surchauffe jusqu'au maximum admissible à l'aspiration</span></label>
 <label><input type="radio" name="q2" value="1"><span><b>B</b> — Diminuer le débit d'air soufflé sur la batterie du condenseur</span></label>
 <label><input type="radio" name="q2" value="2"><span><b>C</b> — Augmenter la haute pression jusqu'au maximum admissible par la machine</span></label>
@@ -68,6 +73,7 @@ footer a{color:var(--mut)}
 </div>
 <div class="q" data-b="0">
 <p class="q-e"><span class="n">4</span>Un fluide classé A2L est :</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-classes-securite" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/classes-securite.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q3" value="0"><span><b>A</b> — Légèrement inflammable, faible toxicité</span></label>
 <label><input type="radio" name="q3" value="1"><span><b>B</b> — Très inflammable, faible toxicité</span></label>
 <label><input type="radio" name="q3" value="2"><span><b>C</b> — Légèrement inflammable, toxicité élevée</span></label>
@@ -77,6 +83,7 @@ footer a{color:var(--mut)}
 </div>
 <div class="q" data-b="1">
 <p class="q-e"><span class="n">5</span>La puissance calorifique au condenseur est égale à :</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-condenseur-trois-zones" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/condenseur-trois-zones.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q4" value="0"><span><b>A</b> — P_élec uniquement</span></label>
 <label><input type="radio" name="q4" value="1"><span><b>B</b> — P_frigo + P_élec</span></label>
 <label><input type="radio" name="q4" value="2"><span><b>C</b> — P_frigo − P_élec</span></label>
@@ -86,6 +93,7 @@ footer a{color:var(--mut)}
 </div>
 <div class="q" data-b="2">
 <p class="q-e"><span class="n">6</span>Un remplacement 'drop-in' signifie :</p>
+<a class="q-illu" href="https://inerweb.fr/f/a-familles-fluides" target="_blank" rel="noopener"><img src="https://inerweb.fr/packs/fluides/res/svg/familles-fluides.svg" alt="La planche du sujet" loading="lazy"></a>
 <label><input type="radio" name="q5" value="0"><span><b>A</b> — Modifier le détendeur et changer l'huile</span></label>
 <label><input type="radio" name="q5" value="1"><span><b>B</b> — Remplacer entièrement le circuit frigorifique</span></label>
 <label><input type="radio" name="q5" value="2"><span><b>C</b> — Changer le fluide sans modifier l'installation</span></label>
