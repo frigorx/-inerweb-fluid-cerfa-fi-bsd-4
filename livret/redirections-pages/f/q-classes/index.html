@@ -8,8 +8,9 @@
 <style>
 :root{--bleu:#1b3a63;--orange:#ff6b35;--mut:#5a6472;--ligne:#d6dee7;--vert:#2e7d4f;--rouge:#c9451a;--pale:#f4f7fa}
 body{font-family:Calibri,Carlito,'Segoe UI',sans-serif;color:var(--bleu);background:var(--pale);margin:0;min-height:100vh;display:flex;flex-direction:column}
-header{background:#fff;border-bottom:2px solid var(--orange);padding:10px 16px;font-weight:700}
-header .hab{color:var(--orange)}
+header{background:#fff;border-bottom:2px solid var(--orange);padding:8px 16px;display:flex;align-items:center;gap:10px}
+header svg{display:block;height:26px;width:auto;flex:none}
+header .sous{color:var(--mut);font-weight:700;font-size:.95rem}
 main{flex:1;max-width:720px;width:100%;margin:0 auto;padding:16px;box-sizing:border-box}
 h1{font-size:1.15rem;line-height:1.3;margin:6px 0 4px}
 .note-page{color:var(--mut);font-size:.9rem;margin:0 0 14px}
@@ -36,7 +37,14 @@ footer a{color:var(--mut)}
 </style>
 </head>
 <body>
-<header><span class="hab">❄</span> inerWeb · HabFluide — le QCM du livre</header>
+<header><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 243.2 50" role="img" aria-label="inerWeb HabFluide">
+<text fill="#1b3a63" font-size="30px" x="2" y="36">&#10052;</text>
+<text fill="#1b3a63" font-family="Trebuchet MS, Trebuchet, sans-serif" font-size="26px" font-weight="bold" x="44" y="32">iner</text>
+<text fill="#1b3a63" font-family="Segoe Script, Brush Script MT, cursive" font-size="26px" x="94" y="32">Web</text>
+<line stroke="#e8914a" stroke-width="2" x1="44" x2="150" y1="35" y2="35"></line>
+<rect fill="#e8914a" x="155" y="10" rx="5" ry="5" width="84.2" height="24"></rect>
+<text fill="#ffffff" font-family="Segoe UI, Carlito, Calibri, Helvetica, sans-serif" font-size="14px" font-weight="bold" x="197.1" y="27" text-anchor="middle">HabFluide</text>
+</svg><span class="sous">— le QCM du livre</span></header>
 <main>
 <h1>QCM du chapitre 2 — Lire une classe de sécurité</h1>
 <p class="note-page">Les mêmes questions que dans le livre, dans le même ordre. Répondez, puis corrigez — votre note reste sur cet appareil.</p>

@@ -165,6 +165,14 @@ def finir(chemin):
     contextes = contexte_des_pages(doc)
     largeur = doc[0].rect.width
     PIED = pied_de(doc[0].rect.height)
+    # Le LOGO de la marque, pour le pied de CHAQUE page (règle de
+    # F. Henninot, 31/08 : une photocopie doit montrer la marque, pas
+    # « inerweb.fr » en typo courante). Le PDF vectoriel est préparé par
+    # build-html avec les fontes de marque de la machine (marque.mjs) ;
+    # show_pdf_page n'embarque qu'UN objet, réutilisé sur tout le livre.
+    # Sans lui, le pied garde son ancien texte — la chaîne ne casse pas.
+    _logo_chemin = os.path.join(os.path.dirname(chemin), 'logo-pied.pdf')
+    logo = fitz.open(_logo_chemin) if os.path.exists(_logo_chemin) else None
     numero = 0
     nues = 0
 
@@ -217,9 +225,20 @@ def finir(chemin):
         # Tout ce qui suit tient entre le filet et la limite d'Amazon : la
         # pastille a été resserrée pour que son bord reste à 7 mm du bord
         # de page. Elle descendait à 3,2 mm — hors zone imprimable.
-        page.insert_text(fitz.Point(MARGE_G, PIED + 3.2 * MM),
-                         'inerweb.fr · HAB-FLUIDE — partie théorique',
-                         fontname='tcorps', fontsize=7.6, color=MUT)
+        if logo:
+            l_h = 3.6 * MM
+            l_w = l_h * logo[0].rect.width / logo[0].rect.height
+            page.show_pdf_page(fitz.Rect(MARGE_G, PIED + 0.7 * MM,
+                                         MARGE_G + l_w, PIED + 0.7 * MM + l_h), logo, 0)
+            page.insert_text(fitz.Point(MARGE_G + l_w + 1.6 * MM, PIED + 3.2 * MM),
+                             '— partie théorique',
+                             fontname='tcorps', fontsize=7.6, color=MUT)
+            pied_gauche = l_w + 1.6 * MM + largeur_de('— partie théorique', 'tcorps', 7.6)
+        else:
+            page.insert_text(fitz.Point(MARGE_G, PIED + 3.2 * MM),
+                             'inerweb.fr · HAB-FLUIDE — partie théorique',
+                             fontname='tcorps', fontsize=7.6, color=MUT)
+            pied_gauche = largeur_de('inerweb.fr · HAB-FLUIDE — partie théorique', 'tcorps', 7.6)
 
         # Les compétences du référentiel travaillées SUR CETTE PAGE. Elles
         # s'écrivent en clair : le lecteur sait ce qu'il vient de couvrir,
@@ -231,8 +250,7 @@ def finir(chemin):
             largeur_codes = largeur_de(libelle_codes, 'tcorps', 7.6)
             # Le numéro occupe la droite : les codes s'arrêtent avant lui.
             place = largeur - MARGE_D - 9 * MM - largeur_codes
-            if place > MARGE_G + largeur_de('inerweb.fr · HAB-FLUIDE — partie théorique',
-                                            'tcorps', 7.6) + 6 * MM:
+            if place > MARGE_G + pied_gauche + 6 * MM:
                 page.insert_text(fitz.Point(place, PIED + 3.2 * MM),
                                  libelle_codes, fontname='tcorps', fontsize=7.6, color=BLEU)
         RAYON = 2.6 * MM
@@ -327,6 +345,16 @@ def finir(chemin):
         a_poser.sort()
         for y_marqueur, slug in a_poser:
             e = RENVOIS.get(slug)
+            if not e:
+                # Césure au tiret : l'extraction du PDF peut PERDRE le tiret
+                # de fin de ligne (« etancheite-⏎5 » lu « etancheite\n5 »,
+                # recollé « etancheite5 »). On rapproche par forme sans
+                # tirets — seulement si UNE entrée correspond.
+                plat = slug.replace('-', '')
+                candidats = [k for k in RENVOIS if k.replace('-', '') == plat]
+                if len(candidats) == 1:
+                    slug = candidats[0]
+                    e = RENVOIS[slug]
             fichier = os.path.join(QR_DIR, slug + '.png')
             if not e or not os.path.exists(fichier):
                 qr_manques += 1
@@ -502,6 +530,8 @@ def finir(chemin):
     # des objets, et le nettoyage rend au passage une bonne part du poids.
     doc.save(chemin + '.tmp', garbage=3, deflate=True)
     doc.close()
+    if logo:
+        logo.close()
     os.replace(chemin + '.tmp', chemin)
 
     with open(os.path.join(os.path.dirname(__file__), '..', 'inventaire-pages.gen.json'),

@@ -2,26 +2,31 @@
 <html lang="fr"><head><meta charset="utf-8">
 <title>inerweb.fr HabFluide — couverture Amazon KDP</title>
 <style>
+  /* Les fontes de la MARQUE (charte § 3.4, voir build/marque.mjs) :
+     déclarées sous leurs noms de charte, elles rendent le logo et les
+     titres Trebuchet à l'identique sur toute machine de fabrication. */
+  @font-face{font-family:"Trebuchet MS";src:url("file:///home/user/-inerweb-fluid-cerfa-fi-bsd-4/livret/fontes-locales/Trebucbd.ttf");font-weight:bold}
+@font-face{font-family:"Segoe Script";src:url("file:///home/user/-inerweb-fluid-cerfa-fi-bsd-4/livret/fontes/DancingScript.ttf")}
   :root{
     --bleu:#1B3A63; --bleu2:#2f5689; --orange:#FF6B35; --logo:#e8914a;
     --mut:#5a6b7d; --pale:#F4F7FA; --ligne:#d6dee7;
-    /* Cotes calculées sur 312 pages, papier blanc, intérieur
-       noir et blanc. Dos = 312 × 0,002252 pouce. */
-    --fp:3.175mm; --page-l:177.8mm; --page-h:254mm; --dos:17.85mm;
+    /* Cotes calculées sur 326 pages, papier blanc, intérieur
+       noir et blanc. Dos = 326 × 0,002252 pouce. */
+    --fp:3.175mm; --page-l:177.8mm; --page-h:254mm; --dos:18.65mm;
     --marge:14mm;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:#dfe5ec;font:14px/1.5 Calibri,"Segoe UI",system-ui,sans-serif;
     padding:24px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 
-  .note{max-width:379.8mm;margin:0 auto 16px;background:#fff;border-radius:10px;
+  .note{max-width:380.6mm;margin:0 auto 16px;background:#fff;border-radius:10px;
     padding:16px 20px;box-shadow:0 2px 10px rgba(27,58,99,.12);color:#1d2a38}
   .note h1{font:700 19px/1.3 "Trebuchet MS",sans-serif;color:var(--bleu);margin-bottom:6px}
   .note p{margin-bottom:6px;max-width:100ch}
   .note b{color:var(--bleu)}
 
   /* La couverture complète : 4e — dos — 1re, fonds perdus compris. */
-  .couverture{width:379.8mm;height:260.35mm;display:flex;margin:0 auto;
+  .couverture{width:380.6mm;height:260.35mm;display:flex;margin:0 auto;
     background:#fff;box-shadow:0 6px 24px rgba(27,58,99,.24);overflow:hidden}
   /* Le fond perdu prolonge la couleur du plat qu'il borde — sinon la
      coupe, qui tombe toujours un peu à côté, laisse une bande étrangère
@@ -33,11 +38,13 @@
 
   /* ---------------- 1re de couverture ---------------- */
   .un{background:var(--bleu);color:#fff;padding:calc(var(--marge) + var(--fp)) var(--marge) var(--marge)}
-  /* La marque en toutes lettres, dans une police que toute machine de
-     fabrication possede : plus jamais de script de substitution. */
-  .marque{display:flex;align-items:center;gap:2mm;margin-bottom:8mm}
-  .marque .floc{font-size:15pt;color:var(--logo)}
-  .marque .iner{font:700 16pt "Trebuchet MS",sans-serif;border-bottom:2px solid var(--logo)}
+  /* La marque : le VRAI logo (règle de F. Henninot, 31/08 — partout où
+     inerWeb s'écrit, c'est le dessin de la charte, jamais le mot en typo
+     courante). Les fontes viennent de marque.mjs, l'URL l'accompagne en
+     clair : la couverture doit donner l'adresse. */
+  .marque{display:flex;align-items:baseline;gap:4mm;margin-bottom:8mm}
+  .marque svg{display:block;flex:none;align-self:center}
+  .marque-url{font:700 11pt "Trebuchet MS",Calibri,sans-serif;color:var(--logo)}
 
   .titre{font:700 44pt/.96 "Trebuchet MS",Calibri,sans-serif;letter-spacing:-.01em}
   .titre em{font-style:normal;color:var(--orange)}
@@ -85,8 +92,9 @@
   .encart p{font-size:10pt;margin:0;color:var(--mut);max-width:none}
   .avert{font-size:9pt;color:var(--mut);line-height:1.4;margin-bottom:auto}
   .pied4{margin-top:auto;display:flex;align-items:flex-end;justify-content:space-between;gap:4mm}
-  .pied4 .site{font:700 13pt "Trebuchet MS",sans-serif;color:var(--bleu)}
-  .pied4 .site small{display:block;font:400 9pt Calibri,sans-serif;color:var(--mut);margin-top:1mm}
+  .pied4 .site svg{display:block}
+  .pied4 .site small{display:block;font:400 9pt Calibri,sans-serif;color:var(--mut);margin-top:1.4mm}
+  .pied4 .site small b{color:var(--bleu)}
   /* Zone réservée au code-barres ISBN : KDP l'imprime lui-même. Elle doit
      rester blanche et libre — 2 x 1,2 pouces minimum. */
   .isbn{width:50.8mm;height:30.5mm;background:#fff;border:1px dashed var(--ligne);
@@ -95,7 +103,7 @@
 
   /* ---------------- Le fichier qu'on téléverse ---------------- */
   /* Une seule page, aux cotes exactes, sans la notice ni les ombres. */
-  @page{size:379.8mm 260.35mm;margin:0}
+  @page{size:380.6mm 260.35mm;margin:0}
   @media print{
     body{background:#fff;padding:0}
     .note{display:none}
@@ -107,10 +115,10 @@
 
 <div class="note">
   <h1>Couverture Amazon KDP — inerweb.fr HAB-FLUIDE, partie théorique</h1>
-  <p>Format exact, prêt pour le téléversement : <b>379,8 × 260,35 mm</b>
-     (14,953 × 10,25 pouces), fonds perdus de 3,175 mm compris.
-     Dos de <b>17,85 mm</b>, calculé sur <b>312 pages</b> en papier blanc noir et blanc
-     (312 × 0,002252 pouce). Cette page est <b>générée</b> : si la pagination bouge,
+  <p>Format exact, prêt pour le téléversement : <b>380,6 × 260,35 mm</b>
+     (14,984 × 10,25 pouces), fonds perdus de 3,175 mm compris.
+     Dos de <b>18,65 mm</b>, calculé sur <b>326 pages</b> en papier blanc noir et blanc
+     (326 × 0,002252 pouce). Cette page est <b>générée</b> : si la pagination bouge,
      <code>npm run couverture</code> la refait juste.</p>
   <p>Le rectangle en bas de la 4e de couverture est la <b>zone réservée au code-barres ISBN</b> :
      Amazon l'imprime lui-même, rien ne doit s'y trouver. Son cadre ne s'imprime pas.</p>
@@ -158,8 +166,15 @@
        pratique feront l’objet du prochain livre, consacré à la partie pratique. Aucune question officielle d’examen ne figure dans cet ouvrage.</p>
 
     <div class="pied4">
-      <div class="site">inerweb.fr
-        <small>Ressources, cours animés<br>et simulateurs en accès libre</small>
+      <div class="site"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 243.2 50" height="7mm" width="34.05mm" role="img" aria-label="inerWeb HabFluide">
+<text fill="#1b3a63" font-size="30px" x="2" y="36">&#10052;</text>
+<text fill="#1b3a63" font-family="Trebuchet MS, Trebuchet, sans-serif" font-size="26px" font-weight="bold" x="44" y="32">iner</text>
+<text fill="#1b3a63" font-family="Segoe Script, Brush Script MT, cursive" font-size="26px" x="94" y="32">Web</text>
+<line stroke="#e8914a" stroke-width="2" x1="44" x2="150" y1="35" y2="35"></line>
+<rect fill="#e8914a" x="155" y="10" rx="5" ry="5" width="84.2" height="24"></rect>
+<text fill="#ffffff" font-family="Segoe UI, Carlito, Calibri, Helvetica, sans-serif" font-size="14px" font-weight="bold" x="197.1" y="27" text-anchor="middle">HabFluide</text>
+</svg>
+        <small><b>inerweb.fr</b> — ressources, cours animés<br>et simulateurs en accès libre</small>
       </div>
       <div class="isbn"><span>Zone réservée<br>au code-barres<br>ISBN</span></div>
     </div>
@@ -174,7 +189,14 @@
 
   <!-- ============ 1re DE COUVERTURE ============ -->
   <div class="plat un">
-    <div class="marque"><span class="floc">❄</span><span class="iner">inerweb.fr</span></div>
+    <div class="marque"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 243.2 50" height="8mm" width="38.91mm" role="img" aria-label="inerWeb HabFluide">
+<text fill="#ffffff" font-size="30px" x="2" y="36">&#10052;</text>
+<text fill="#ffffff" font-family="Trebuchet MS, Trebuchet, sans-serif" font-size="26px" font-weight="bold" x="44" y="32">iner</text>
+<text fill="#ffffff" font-family="Segoe Script, Brush Script MT, cursive" font-size="26px" x="94" y="32">Web</text>
+<line stroke="#e8914a" stroke-width="2" x1="44" x2="150" y1="35" y2="35"></line>
+<rect fill="#e8914a" x="155" y="10" rx="5" ry="5" width="84.2" height="24"></rect>
+<text fill="#ffffff" font-family="Segoe UI, Carlito, Calibri, Helvetica, sans-serif" font-size="14px" font-weight="bold" x="197.1" y="27" text-anchor="middle">HabFluide</text>
+</svg><span class="marque-url">inerweb.fr</span></div>
 
     <h1 class="titre">HAB<em>-FLUIDE</em></h1>
     <p class="soustitre">Livre sur l’habilitation des fluides</p>

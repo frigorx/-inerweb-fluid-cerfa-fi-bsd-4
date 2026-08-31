@@ -30,6 +30,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { construireFlux, TITRES_PARTIES, TITRES_CHAPITRES } from './pages.mjs';
+import { fontFaceMarque, svgMarque } from './marque.mjs';
 
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.join(ICI, '..', 'dist');
@@ -75,6 +76,10 @@ const FAMILLE = DYS
   : `Calibri,"Segoe UI",system-ui,sans-serif`;
 
 const CSS = `
+/* Les fontes de la MARQUE (charte § 3.4), déclarées sous leurs noms de
+   charte : le CSS du logo ci-dessous rend enfin juste sur toute machine
+   de fabrication — voir build/marque.mjs pour les étages de candidats. */
+${fontFaceMarque()}
 ${POLICE_DYS && DYS ? POLICE_DYS : ''}
 :root{
   --bleu:#1B3A63; --bleu2:#2f5689; --orange:#FF6B35; --logo:#e8914a;
@@ -121,6 +126,16 @@ figure,.duo,.encadre,.q,.rep,.ecran,.tbl,.ch-tete,.note,.voix,.som-partie,
 h2,h3,h4,.sect-t,.lecon-t,.page-t,.sect-intro{break-after:avoid;page-break-after:avoid}
 .rupture{break-before:page;page-break-before:always}
 .seul{break-before:page;break-after:page;page-break-before:always;page-break-after:always}
+/* La GARDE d'un titre : jamais seul en pied de page, il part avec le
+   début de ce qu'il annonce. Le plan la déclarait (meta \`garde\`) sans
+   que ce gabarit la traduise — le titre « 1.1 L'air qui manque »
+   restait orphelin au bas de la page 13 (relevé F. Henninot, 31/08).
+   Blink IGNORE break-after:avoid à l'impression (vérifié sur pièce) :
+   la garde qui MARCHE est le groupe insécable — les blocs gardés
+   voyagent avec le bloc suivant. Une rupture forcée à l'intérieur
+   (un titre de page liminaire) reste prioritaire, c'est la spec. */
+.garde{break-after:avoid-page;page-break-after:avoid}
+.groupe-garde{break-inside:avoid;page-break-inside:avoid}
 
 /* ---------- La page couchée ----------
    Amazon n'accepte qu'un seul format de page dans un intérieur : on ne
@@ -418,7 +433,8 @@ const marqueur = (b) => {
 };
 
 const flux = construireFlux().filter((b) => b.html && b.html.trim());
-const classes = (b) => [b.seul ? 'seul' : '', b.rupture ? 'rupture' : '', b.ancre ? 'ancre' : ''].filter(Boolean).join(' ');
+const classes = (b) => [b.seul ? 'seul' : '', b.rupture ? 'rupture' : '', b.ancre ? 'ancre' : '',
+  b.garde ? 'garde' : ''].filter(Boolean).join(' ');
 
 const html = `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8">
@@ -426,7 +442,21 @@ const html = `<!doctype html>
 <style>${cssImprimable(CSS)}</style></head>
 <body>
 <div id="livret">
-${flux.map((b) => `<div class="${classes(b)}">${marqueur(b)}${b.html}</div>`).join('\n')}
+${(() => {
+    /* Les blocs gardés s'enveloppent avec le bloc qu'ils annoncent :
+       une suite de gardes (« 2 Comprendre » puis « 1.1 … ») et son
+       premier bloc de contenu forment UN groupe insécable. */
+    const morceaux = [];
+    let ouverts = 0;
+    for (const b of flux) {
+      if (b.garde && !ouverts) morceaux.push('<div class="groupe-garde">');
+      morceaux.push(`<div class="${classes(b)}">${marqueur(b)}${b.html}</div>`);
+      if (b.garde) ouverts += 1;
+      else if (ouverts) { morceaux.push('</div>'); ouverts = 0; }
+    }
+    if (ouverts) morceaux.push('</div>');
+    return morceaux.join('\n');
+  })()}
 </div>
 </body></html>`;
 
@@ -449,6 +479,37 @@ if (fs.existsSync(CHROME)) {
     `--print-to-pdf=${cible}`, '--virtual-time-budget=600000',
     'file:///' + fichierHtml.replace(/\\/g, '/'),
   ], { stdio: 'ignore', timeout: 900000 });
+  /* Le LOGO du pied de page, en PDF vectoriel : la finition le pose sur
+     chaque page (règle de F. Henninot, 31/08 — une photocopie doit
+     montrer la marque, pas « inerweb.fr » en typo courante). Chrome
+     l'imprime avec les fontes de marque trouvées sur CETTE machine
+     (marque.mjs) ; sans lui, la finition retombe sur l'ancien texte. */
+  {
+    const logoHtml = path.join(DIST, 'logo-pied.html');
+    const logoPdf = path.join(DIST, 'logo-pied.pdf');
+    const logoSvg = svgMarque('HabFluide', 12);
+    /* La page du PDF épouse exactement le SVG : pas de blanc parasite
+       quand la finition étire la page dans le rectangle du pied. */
+    const logoLarg = logoSvg.match(/width="([\d.]+)mm"/)[1];
+    fs.writeFileSync(logoHtml, `<!doctype html>
+<html><head><meta charset="utf-8"><style>
+${fontFaceMarque()}
+@page{size:${logoLarg}mm 12mm;margin:0}
+body{margin:0}
+svg{display:block}
+</style></head>
+<body>${logoSvg}</body></html>`, 'utf8');
+    try {
+      execFileSync(CHROME, [
+        '--headless', '--disable-gpu', '--no-pdf-header-footer',
+        `--print-to-pdf=${logoPdf}`, '--virtual-time-budget=20000',
+        'file:///' + logoHtml.replace(/\\/g, '/'),
+      ], { stdio: 'ignore', timeout: 120000 });
+    } catch {
+      fs.rmSync(logoPdf, { force: true });
+      console.warn('  (logo du pied non généré : la finition gardera le texte)');
+    }
+  }
   /* Bandeaux, pieds et numéros : ce que le navigateur ne sait pas poser. */
   try {
     execFileSync('python', [path.join(ICI, 'finition.py'), cible], { stdio: 'inherit', timeout: 180000 });

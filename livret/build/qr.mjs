@@ -44,6 +44,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import QRCode from 'qrcode';
 import { CHAPITRES, LIMINAIRES, FIN, PLANCHE_CENTRALE, QR_BASE, apos } from './plan-chapitres.mjs';
+import { svgMarque } from './marque.mjs';
 
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const SOURCE = process.env.PILOTE_FLUIDES || 'C:/git/pilote-fluides';
@@ -521,8 +522,9 @@ const pageVisionneuse = (e) => `<!doctype html>
 <style>
 :root{--bleu:#1b3a63;--orange:#ff6b35;--mut:#5a6472;--ligne:#d6dee7}
 body{font-family:Calibri,Carlito,'Segoe UI',sans-serif;color:var(--bleu);background:#f4f7fa;margin:0;min-height:100vh;display:flex;flex-direction:column}
-header{background:#fff;border-bottom:2px solid var(--orange);padding:10px 16px;font-weight:700}
-header .hab{color:var(--orange)}
+header{background:#fff;border-bottom:2px solid var(--orange);padding:8px 16px;display:flex;align-items:center;gap:10px}
+header svg{display:block;height:26px;width:auto;flex:none}
+header .sous{color:var(--mut);font-weight:700;font-size:.95rem}
 main{flex:1;max-width:860px;width:100%;margin:0 auto;padding:16px;box-sizing:border-box}
 h1{font-size:1.15rem;line-height:1.3;margin:6px 0 14px}
 #scene{background:#fff;border:1px solid var(--ligne);border-radius:10px;padding:10px;min-height:200px}
@@ -537,7 +539,7 @@ footer a{color:var(--mut)}
 </style>
 </head>
 <body>
-<header><span class="hab">❄</span> inerWeb · HabFluide — ${e.animee ? 'la planche en mouvement' : 'la planche en grand'}</header>
+<header>${svgMarque('HabFluide')}<span class="sous">— ${e.animee ? 'la planche en mouvement' : 'la planche en grand'}</span></header>
 <main>
 <h1>${echapper(e.titre)}</h1>
 ${e.animee ? '' : `<p class="note-fixe">Cette planche s’animera au fil des mises à jour du site — la voici en pleine taille.</p>`}
@@ -581,8 +583,9 @@ const pageResultats = (e) => `<!doctype html>
 <style>
 :root{--bleu:#1b3a63;--orange:#ff6b35;--mut:#5a6472;--ligne:#d6dee7;--vert:#2e7d4f;--rouge:#c9451a}
 body{font-family:Calibri,Carlito,'Segoe UI',sans-serif;color:var(--bleu);background:#f4f7fa;margin:0;min-height:100vh;display:flex;flex-direction:column}
-header{background:#fff;border-bottom:2px solid var(--orange);padding:10px 16px;font-weight:700}
-header .hab{color:var(--orange)}
+header{background:#fff;border-bottom:2px solid var(--orange);padding:8px 16px;display:flex;align-items:center;gap:10px}
+header svg{display:block;height:26px;width:auto;flex:none}
+header .sous{color:var(--mut);font-weight:700;font-size:.95rem}
 main{flex:1;max-width:760px;width:100%;margin:0 auto;padding:16px;box-sizing:border-box}
 h1{font-size:1.2rem;margin:6px 0 4px}
 .note-page{color:var(--mut);font-size:.9rem;margin:0 0 16px}
@@ -602,7 +605,7 @@ footer a{color:var(--mut)}
 </style>
 </head>
 <body>
-<header><span class="hab">❄</span> inerWeb · HabFluide — mes résultats</header>
+<header>${svgMarque('HabFluide')}<span class="sous">— mes résultats</span></header>
 <main>
 <h1>Où j’en suis</h1>
 <p class="note-page">Ce que ce téléphone a retenu de vos séries. Tout reste sur l’appareil : rien ne remonte, rien ne s’envoie.</p>
@@ -713,8 +716,9 @@ const pageQcm = (e) => `<!doctype html>
 <style>
 :root{--bleu:#1b3a63;--orange:#ff6b35;--mut:#5a6472;--ligne:#d6dee7;--vert:#2e7d4f;--rouge:#c9451a;--pale:#f4f7fa}
 body{font-family:Calibri,Carlito,'Segoe UI',sans-serif;color:var(--bleu);background:var(--pale);margin:0;min-height:100vh;display:flex;flex-direction:column}
-header{background:#fff;border-bottom:2px solid var(--orange);padding:10px 16px;font-weight:700}
-header .hab{color:var(--orange)}
+header{background:#fff;border-bottom:2px solid var(--orange);padding:8px 16px;display:flex;align-items:center;gap:10px}
+header svg{display:block;height:26px;width:auto;flex:none}
+header .sous{color:var(--mut);font-weight:700;font-size:.95rem}
 main{flex:1;max-width:720px;width:100%;margin:0 auto;padding:16px;box-sizing:border-box}
 h1{font-size:1.15rem;line-height:1.3;margin:6px 0 4px}
 .note-page{color:var(--mut);font-size:.9rem;margin:0 0 14px}
@@ -741,7 +745,7 @@ footer a{color:var(--mut)}
 </style>
 </head>
 <body>
-<header><span class="hab">❄</span> inerWeb · HabFluide — le QCM du livre</header>
+<header>${svgMarque('HabFluide')}<span class="sous">— le QCM du livre</span></header>
 <main>
 <h1>${echapper(e.titre)}</h1>
 <p class="note-page">Les mêmes questions que dans le livre, dans le même ordre. Répondez, puis corrigez — votre note reste sur cet appareil.</p>
@@ -816,8 +820,9 @@ const pageExamen = (e) => {
 <style>
 :root{--bleu:#1b3a63;--orange:#ff6b35;--mut:#5a6472;--ligne:#d6dee7;--vert:#2e7d4f;--rouge:#c9451a;--pale:#f4f7fa}
 body{font-family:Calibri,Carlito,'Segoe UI',sans-serif;color:var(--bleu);background:var(--pale);margin:0;min-height:100vh;display:flex;flex-direction:column}
-header{background:#fff;border-bottom:2px solid var(--orange);padding:10px 16px;font-weight:700}
-header .hab{color:var(--orange)}
+header{background:#fff;border-bottom:2px solid var(--orange);padding:8px 16px;display:flex;align-items:center;gap:10px}
+header svg{display:block;height:26px;width:auto;flex:none}
+header .sous{color:var(--mut);font-weight:700;font-size:.95rem}
 main{flex:1;max-width:720px;width:100%;margin:0 auto;padding:16px;box-sizing:border-box}
 h1{font-size:1.15rem;line-height:1.3;margin:6px 0 4px}
 .note-page{color:var(--mut);font-size:.9rem;margin:0 0 14px}
@@ -860,7 +865,7 @@ footer a{color:var(--mut)}
 </style>
 </head>
 <body>
-<header><span class="hab">❄</span> inerWeb · HabFluide — ${sortie ? 'l’examen blanc' : 'le test d’entrée'}</header>
+<header>${svgMarque('HabFluide')}<span class="sous">— ${sortie ? 'l’examen blanc' : 'le test d’entrée'}</span></header>
 <main>
 <h1>${echapper(e.titre)}</h1>
 ${sortie

@@ -53,3 +53,9 @@ livret/maquette-mise-en-page.html
 livret/gabarit-interieur.html
 livret/curseurs.html
 __pycache__/
+
+# --- Fontes de marque extraites localement (corefonts Microsoft) ---
+# Redistribuables uniquement dans leur archive d'origine : on les extrait
+# sur la machine de fabrication, on ne les commet jamais. Le dépôt ne
+# porte que les substituts libres (livret/fontes/, licence OFL jointe).
+livret/fontes-locales/

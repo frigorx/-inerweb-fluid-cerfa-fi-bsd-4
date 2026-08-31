@@ -21,6 +21,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import QRCode from 'qrcode';
+import { fontFaceMarque, svgMarque, svgMarqueClaire } from './marque.mjs';
 
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const LIVRET = path.join(ICI, '..');
@@ -128,6 +129,10 @@ const html = `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8">
 <title>inerweb.fr HabFluide — couverture Amazon KDP</title>
 <style>
+  /* Les fontes de la MARQUE (charte § 3.4, voir build/marque.mjs) :
+     déclarées sous leurs noms de charte, elles rendent le logo et les
+     titres Trebuchet à l'identique sur toute machine de fabrication. */
+  ${fontFaceMarque()}
   :root{
     --bleu:#1B3A63; --bleu2:#2f5689; --orange:#FF6B35; --logo:#e8914a;
     --mut:#5a6b7d; --pale:#F4F7FA; --ligne:#d6dee7;
@@ -159,11 +164,13 @@ const html = `<!doctype html>
 
   /* ---------------- 1re de couverture ---------------- */
   .un{background:var(--bleu);color:#fff;padding:calc(var(--marge) + var(--fp)) var(--marge) var(--marge)}
-  /* La marque en toutes lettres, dans une police que toute machine de
-     fabrication possede : plus jamais de script de substitution. */
-  .marque{display:flex;align-items:center;gap:2mm;margin-bottom:8mm}
-  .marque .floc{font-size:15pt;color:var(--logo)}
-  .marque .iner{font:700 16pt "Trebuchet MS",sans-serif;border-bottom:2px solid var(--logo)}
+  /* La marque : le VRAI logo (règle de F. Henninot, 31/08 — partout où
+     inerWeb s'écrit, c'est le dessin de la charte, jamais le mot en typo
+     courante). Les fontes viennent de marque.mjs, l'URL l'accompagne en
+     clair : la couverture doit donner l'adresse. */
+  .marque{display:flex;align-items:baseline;gap:4mm;margin-bottom:8mm}
+  .marque svg{display:block;flex:none;align-self:center}
+  .marque-url{font:700 11pt "Trebuchet MS",Calibri,sans-serif;color:var(--logo)}
 
   .titre{font:700 44pt/.96 "Trebuchet MS",Calibri,sans-serif;letter-spacing:-.01em}
   .titre em{font-style:normal;color:var(--orange)}
@@ -211,8 +218,9 @@ const html = `<!doctype html>
   .encart p{font-size:10pt;margin:0;color:var(--mut);max-width:none}
   .avert{font-size:9pt;color:var(--mut);line-height:1.4;margin-bottom:auto}
   .pied4{margin-top:auto;display:flex;align-items:flex-end;justify-content:space-between;gap:4mm}
-  .pied4 .site{font:700 13pt "Trebuchet MS",sans-serif;color:var(--bleu)}
-  .pied4 .site small{display:block;font:400 9pt Calibri,sans-serif;color:var(--mut);margin-top:1mm}
+  .pied4 .site svg{display:block}
+  .pied4 .site small{display:block;font:400 9pt Calibri,sans-serif;color:var(--mut);margin-top:1.4mm}
+  .pied4 .site small b{color:var(--bleu)}
   /* Zone réservée au code-barres ISBN : KDP l'imprime lui-même. Elle doit
      rester blanche et libre — 2 x 1,2 pouces minimum. */
   .isbn{width:50.8mm;height:30.5mm;background:#fff;border:1px dashed var(--ligne);
@@ -284,8 +292,8 @@ const html = `<!doctype html>
        pratique feront l’objet du prochain livre, consacré à la partie pratique. Aucune question officielle d’examen ne figure dans cet ouvrage.</p>
 
     <div class="pied4">
-      <div class="site">inerweb.fr
-        <small>Ressources, cours animés<br>et simulateurs en accès libre</small>
+      <div class="site">${svgMarque('HabFluide', 7)}
+        <small><b>inerweb.fr</b> — ressources, cours animés<br>et simulateurs en accès libre</small>
       </div>
       <div class="isbn"><span>Zone réservée<br>au code-barres<br>ISBN</span></div>
     </div>
@@ -302,7 +310,7 @@ const html = `<!doctype html>
 
   <!-- ============ 1re DE COUVERTURE ============ -->
   <div class="plat un">
-    <div class="marque"><span class="floc">❄</span><span class="iner">inerweb.fr</span></div>
+    <div class="marque">${svgMarqueClaire('HabFluide', 8)}<span class="marque-url">inerweb.fr</span></div>
 
     <h1 class="titre">HAB<em>-FLUIDE</em></h1>
     <p class="soustitre">Livre sur l’habilitation des fluides</p>
