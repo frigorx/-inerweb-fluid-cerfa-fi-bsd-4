@@ -131,7 +131,7 @@
   "fichier": "pack-co2-local-protege.png",
   "largeur": 2400,
   "hauteur": 1440,
-  "source": "../-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/co2-local-protege.svg",
+  "source": "../../Users/henni/-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/co2-local-protege.svg",
   "citations": 3,
   "animee": false
  },
@@ -151,52 +151,140 @@
   "citations": 6,
   "animee": false
  },
- "svg:aptitude-capacite": {
-  "fichier": "svg-aptitude-capacite.png",
-  "largeur": 2400,
-  "hauteur": 873,
-  "source": "packs/fluides/res/svg/aptitude-capacite.svg",
-  "citations": 5,
-  "animee": false
- },
- "illu:g0": {
-  "fichier": "illu-g0.png",
-  "largeur": 1024,
-  "hauteur": 1024,
-  "source": "packs/fluides/res/bibliotheque/illu-g0.webp",
-  "citations": 3,
-  "animee": false
- },
- "sym:vanne_isolement": {
-  "fichier": "sym-vanne_isolement.png",
-  "largeur": 2400,
-  "hauteur": 1200,
-  "source": "packs/fluides/res/symboles/vanne_isolement.svg",
-  "citations": 2,
-  "animee": false
- },
- "svg:frise-histoire": {
-  "fichier": "svg-frise-histoire.png",
-  "largeur": 2400,
-  "hauteur": 1493,
-  "source": "packs/fluides/res/svg/frise-histoire.svg",
+ "leg:impact-montreal-kigali/ozone-vers-climat": {
+  "fichier": "leg-impact-montreal-kigali_ozone-vers-climat.png",
+  "largeur": 900,
+  "hauteur": 410,
+  "source": "legislation/stations/impact-montreal-kigali/svg/ozone-vers-climat.svg",
   "citations": 1,
   "animee": false
  },
- "illu:g2a": {
-  "fichier": "illu-g2a.png",
-  "largeur": 1024,
-  "hauteur": 1024,
-  "source": "packs/fluides/res/bibliotheque/illu-g2a.webp",
+ "leg:impact-prp-odp/deux-echelles": {
+  "fichier": "leg-impact-prp-odp_deux-echelles.png",
+  "largeur": 900,
+  "hauteur": 340,
+  "source": "legislation/stations/impact-prp-odp/svg/deux-echelles.svg",
   "citations": 1,
   "animee": false
+ },
+ "leg:impact-prp-odp/mecanisme-odp": {
+  "fichier": "leg-impact-prp-odp_mecanisme-odp.png",
+  "largeur": 900,
+  "hauteur": 380,
+  "source": "legislation/stations/impact-prp-odp/svg/mecanisme-odp.svg",
+  "citations": 1,
+  "animee": true
+ },
+ "leg:impact-prp-odp/piege-odp-nul": {
+  "fichier": "leg-impact-prp-odp_piege-odp-nul.png",
+  "largeur": 900,
+  "hauteur": 340,
+  "source": "legislation/stations/impact-prp-odp/svg/piege-odp-nul.svg",
+  "citations": 1,
+  "animee": false
+ },
+ "leg:impact-prp-odp/mecanisme-prp": {
+  "fichier": "leg-impact-prp-odp_mecanisme-prp.png",
+  "largeur": 900,
+  "hauteur": 400,
+  "source": "legislation/stations/impact-prp-odp/svg/mecanisme-prp.svg",
+  "citations": 1,
+  "animee": true
+ },
+ "leg:impact-prp-odp/cas-chambre-froide": {
+  "fichier": "leg-impact-prp-odp_cas-chambre-froide.png",
+  "largeur": 900,
+  "hauteur": 400,
+  "source": "legislation/stations/impact-prp-odp/svg/cas-chambre-froide.svg",
+  "citations": 1,
+  "animee": true
+ },
+ "leg:impact-prp-odp/repere-deux-axes": {
+  "fichier": "leg-impact-prp-odp_repere-deux-axes.png",
+  "largeur": 900,
+  "hauteur": 420,
+  "source": "legislation/stations/impact-prp-odp/svg/repere-deux-axes.svg",
+  "citations": 1,
+  "animee": true
+ },
+ "leg:impact-prp-odp/quatre-situations": {
+  "fichier": "leg-impact-prp-odp_quatre-situations.png",
+  "largeur": 900,
+  "hauteur": 320,
+  "source": "legislation/stations/impact-prp-odp/svg/quatre-situations.svg",
+  "citations": 1,
+  "animee": false
+ },
+ "leg:impact-montreal-kigali/nouveau-probleme-prp": {
+  "fichier": "leg-impact-montreal-kigali_nouveau-probleme-prp.png",
+  "largeur": 900,
+  "hauteur": 380,
+  "source": "legislation/stations/impact-montreal-kigali/svg/nouveau-probleme-prp.svg",
+  "citations": 1,
+  "animee": true
  },
  "illu:g2": {
   "fichier": "illu-g2.png",
   "largeur": 1024,
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g2.webp",
+  "citations": 1,
+  "animee": false
+ },
+ "svg:deux-etages-deux-papiers": {
+  "fichier": "svg-deux-etages-deux-papiers.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "packs/fluides/res/svg/deux-etages-deux-papiers.svg",
   "citations": 2,
+  "animee": false
+ },
+ "leg:aptitude-capacite/deux-papiers": {
+  "fichier": "leg-aptitude-capacite_deux-papiers.png",
+  "largeur": 900,
+  "hauteur": 340,
+  "source": "legislation/stations/aptitude-capacite/svg/deux-papiers.svg",
+  "citations": 1,
+  "animee": false
+ },
+ "leg:dechets-sept-flux/rangee-bennes-matiere": {
+  "fichier": "leg-dechets-sept-flux_rangee-bennes-matiere.png",
+  "largeur": 1000,
+  "hauteur": 460,
+  "source": "legislation/stations/dechets-sept-flux/svg/rangee-bennes-matiere.svg",
+  "citations": 1,
+  "animee": false
+ },
+ "leg:dechets-responsabilites/chaine-producteur-detenteur": {
+  "fichier": "leg-dechets-responsabilites_chaine-producteur-detenteur.png",
+  "largeur": 900,
+  "hauteur": 340,
+  "source": "legislation/stations/dechets-responsabilites/svg/chaine-producteur-detenteur.svg",
+  "citations": 1,
+  "animee": false
+ },
+ "leg:impact-ecoconception/concevoir-pour-durer": {
+  "fichier": "leg-impact-ecoconception_concevoir-pour-durer.png",
+  "largeur": 900,
+  "hauteur": 380,
+  "source": "legislation/stations/impact-ecoconception/svg/concevoir-pour-durer.svg",
+  "citations": 1,
+  "animee": true
+ },
+ "leg:impact-ecoconception/etiquette-energie": {
+  "fichier": "leg-impact-ecoconception_etiquette-energie.png",
+  "largeur": 900,
+  "hauteur": 380,
+  "source": "legislation/stations/impact-ecoconception/svg/etiquette-energie.svg",
+  "citations": 1,
+  "animee": false
+ },
+ "svg:aptitude-capacite": {
+  "fichier": "svg-aptitude-capacite.png",
+  "largeur": 2400,
+  "hauteur": 873,
+  "source": "packs/fluides/res/svg/aptitude-capacite.svg",
+  "citations": 4,
   "animee": false
  },
  "illu:examen": {
@@ -260,7 +348,7 @@
   "largeur": 2400,
   "hauteur": 1360,
   "source": "packs/fluides/res/svg/nomenclature.svg",
-  "citations": 3,
+  "citations": 4,
   "animee": true
  },
  "illu:g1b": {
@@ -308,7 +396,7 @@
   "largeur": 2400,
   "hauteur": 2080,
   "source": "packs/fluides/res/svg/points-de-fuite.svg",
-  "citations": 5,
+  "citations": 6,
   "animee": true
  },
  "illu:g1d": {
@@ -452,7 +540,7 @@
   "largeur": 2400,
   "hauteur": 1547,
   "source": "packs/fluides/res/svg/regulateurs-pression.svg",
-  "citations": 2,
+  "citations": 3,
   "animee": false
  },
  "sym:vanne_securite": {
@@ -607,6 +695,14 @@
   "citations": 1,
   "animee": false
  },
+ "svg:co2-protection": {
+  "fichier": "svg-co2-protection.png",
+  "largeur": 2400,
+  "hauteur": 982,
+  "source": "packs/fluides/res/svg/co2-protection.svg",
+  "citations": 1,
+  "animee": true
+ },
  "svg:epreuve-azote": {
   "fichier": "svg-epreuve-azote.png",
   "largeur": 2400,
@@ -669,6 +765,14 @@
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g4a.webp",
   "citations": 2,
+  "animee": false
+ },
+ "sym:vanne_isolement": {
+  "fichier": "sym-vanne_isolement.png",
+  "largeur": 2400,
+  "hauteur": 1200,
+  "source": "packs/fluides/res/symboles/vanne_isolement.svg",
+  "citations": 1,
   "animee": false
  },
  "illu:g4b": {
@@ -863,6 +967,14 @@
   "citations": 5,
   "animee": false
  },
+ "illu:g0": {
+  "fichier": "illu-g0.png",
+  "largeur": 1024,
+  "hauteur": 1024,
+  "source": "packs/fluides/res/bibliotheque/illu-g0.webp",
+  "citations": 1,
+  "animee": false
+ },
  "ico:cles": {
   "fichier": "ico-cles.png",
   "largeur": 512,
@@ -964,14 +1076,6 @@
   "largeur": 2400,
   "hauteur": 1440,
   "source": "packs/fluides/res/svg/classe-lettre-chiffre.svg",
-  "citations": 1,
-  "animee": false
- },
- "svg:deux-etages-deux-papiers": {
-  "fichier": "svg-deux-etages-deux-papiers.png",
-  "largeur": 2400,
-  "hauteur": 1440,
-  "source": "packs/fluides/res/svg/deux-etages-deux-papiers.svg",
   "citations": 1,
   "animee": false
  },

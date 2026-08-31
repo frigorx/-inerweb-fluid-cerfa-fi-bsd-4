@@ -53,8 +53,10 @@ const POLICE_DYS = fs.existsSync(LEXEND)
   ? `@font-face{font-family:'Lexend';font-weight:100 900;font-display:block;
       src:url(data:font/woff2;base64,${fs.readFileSync(LEXEND).toString('base64')}) format('woff2')}`
   : '';
-if (DYS && !POLICE_DYS) {
-  console.error(`Lexend introuvable : ${LEXEND}\nL'édition DYS l'exige (charte inerWeb).`);
+if (!POLICE_DYS) {
+  console.error(`Lexend introuvable : ${LEXEND}\n` +
+    `C'est la police du livre depuis le 31/08/2026, plus seulement celle de l'édition DYS.\n` +
+    `Vérifier PILOTE_FLUIDES : le fichier vit dans le pack, pas dans le livret.`);
   process.exit(1);
 }
 
@@ -71,18 +73,24 @@ const R = JSON.parse(fs.readFileSync(path.join(ICI, '..', 'reglages.json'), 'utf
    compris, aucune tolérance ». Le livre est plus épais ; il se lit. */
 const CORPS_PT = DYS ? R.corps_pt + 1 : R.corps_pt;
 const INTERLIGNE = DYS ? R.interligne + 0.3 : R.interligne;
-const FAMILLE = DYS
-  ? `'Lexend',Calibri,"Segoe UI",system-ui,sans-serif`
-  : `Calibri,"Segoe UI",system-ui,sans-serif`;
+/* LEXEND EST LA POLICE DU LIVRE — décision de F. Henninot, 31/08/2026.
+   Elle était réservée à une « édition DYS » séparée. Mesuré sur le livre
+   entier, à corps et interligne égaux : Calibri 328 pages, Lexend 354,
+   soit +8 %. Le passage au corps 14 réclamé par la charte des documents
+   A4 coûtait +19 % — trop cher à l'impression pour le bénéfice. Lexend à
+   12 pt donne l'essentiel du gain de lisibilité (son œil est plus grand
+   que celui du Calibri) pour le tiers du prix. Une seule édition : le
+   lecteur dyslexique n'a plus de version spéciale à réclamer. */
+const FAMILLE = `'Lexend',Calibri,"Segoe UI",system-ui,sans-serif`;
 
 const CSS = `
 /* Les fontes de la MARQUE (charte § 3.4), déclarées sous leurs noms de
    charte : le CSS du logo ci-dessous rend enfin juste sur toute machine
    de fabrication — voir build/marque.mjs pour les étages de candidats. */
 ${fontFaceMarque()}
-${POLICE_DYS && DYS ? POLICE_DYS : ''}
+${POLICE_DYS}
 :root{
-  --bleu:#1B3A63; --bleu2:#2f5689; --orange:#FF6B35; --logo:#e8914a;
+  --bleu:#1B3A63; --bleu2:#2f5689; --orange:#C9451A; --logo:#e8914a;
   --txt:#1d2a38; --mut:#5a6b7d; --ligne:#d6dee7; --pale:#F4F7FA;
   --ok:#1e7e54; --ko:#c0392b;
   /* Format Amazon KDP — cotes dans reglages.json (7 × 10 : maquette
@@ -327,7 +335,9 @@ figure figcaption{margin-top:1.6mm;text-align:center;font-style:italic;font-size
 table{width:100%;border-collapse:collapse;font-size:1em}
 th{background:var(--bleu);color:#fff;text-align:left;padding:1.4mm 2mm;font-weight:700}
 td{padding:1.2mm 2mm;border-bottom:.5pt solid var(--ligne);vertical-align:top}
-tbody tr:nth-child(even) td{background:#F7FAFC}
+/* Zebrure de tableau SUPPRIMEE : le cadrage du 31/08/2026 l'interdit sur
+   papier (elle disparait en photocopie et fatigue la lecture DYS). La
+   lecture de ligne est portee par l'interligne et le filet, pas par un fond. */
 
 /* ---------- Sommaire ---------- */
 .som-partie{margin-bottom:4mm}

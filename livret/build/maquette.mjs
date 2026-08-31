@@ -163,7 +163,7 @@ const html = `<!doctype html>
 <title>Maquette — livret Habilitation Fluide, tome 1</title>
 <style>
   :root{
-    --bleu:#1B3A63; --bleu2:#2f5689; --orange:#FF6B35; --logo:#e8914a;
+    --bleu:#1B3A63; --bleu2:#2f5689; --orange:#C9451A; --logo:#e8914a;
     --txt:#1d2a38; --mut:#5a6b7d; --ligne:#d6dee7; --pale:#F4F7FA;
     --ok:#1e7e54; --ko:#c0392b;
   }

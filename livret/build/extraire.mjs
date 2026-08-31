@@ -209,8 +209,19 @@ const chapitres = CHAPITRES.map((ch) => {
        du groupe G1 de la banque — la nomenclature des fluides — dans un
        chapitre qui parle des catégories. Elles se génèrent comme son
        texte, depuis le référentiel. */
+    /* Les leçons ÉCRITES du plan précèdent les leçons générées : la
+       refonte ajoute ici le code 1.00 (législation, DEEE, écoconception),
+       que le générateur de catégories ne produit pas et que les cartes du
+       pack ne couvraient qu'en 27 mots. Le générateur garde la main sur
+       le tableau des catégories, qui doit rester dérivé du référentiel. */
+    const ecrites = (ch.lecons || []).filter((l) => l.ecrit).map((l) => ({
+      t: l.t, src: l.src || `ecrit:${ch.num}`, titre_source: l.t,
+      codes: [...new Set(l.codes || [])], paras: l.paras.slice(),
+      blocs: (l.blocs || []).map((b) => ({ ...b, html: String(b.html || '') })),
+      question: l.question || null,
+    }));
     return { num: ch.num, genere: ch.genere, referentiel,
-      lecons: leconsCategories(REF), questions: questionsCategories(REF) };
+      lecons: [...ecrites, ...leconsCategories(REF)], questions: questionsCategories(REF) };
   }
   if (ch.genere) {
     erreurs.push(`${ou} : générateur « ${ch.genere} » inconnu`);
@@ -226,12 +237,33 @@ const chapitres = CHAPITRES.map((ch) => {
      la main (`paras: [0, 2]`) garde évidemment son choix. */
   const partages = new Map();
   for (const l of ch.lecons || []) {
+    if (l.ecrit || !l.src) continue;
     if (l.paras && l.paras !== 'tous') continue;
     partages.set(l.src, (partages.get(l.src) || 0) + 1);
   }
   const rangDansLaCarte = new Map();
 
   const lecons = (ch.lecons || []).map((l, i) => {
+    /* LEÇON ÉCRITE DANS LE PLAN — `ecrit: true`. La refonte 2026 approfondit
+       des codes que les cartes du pack ne couvrent pas (écoconception, PFAS,
+       efficacité énergétique, comptes rendus). Leur texte vit ici, dans le
+       plan, et non dans `cartes.js` : le site et le livre n'ont pas le même
+       découpage, et une carte de site n'est pas toujours un chapitre de livre.
+       La forme de retour est celle d'`extraire()`, pour que rien en aval ne
+       sache faire la différence. */
+    if (l.ecrit) {
+      if (!l.paras || !l.paras.length) {
+        erreurs.push(`${ou}, leçon ${i + 1} « ${l.t} » : déclarée écrite, mais sans texte`);
+        return null;
+      }
+      return {
+        t: l.t, src: l.src || `ecrit:${ch.num}-${i + 1}`,
+        titre_source: l.t, codes: [...new Set(l.codes || [])],
+        paras: l.paras.slice(),
+        blocs: (l.blocs || []).map((b) => ({ ...b, html: String(b.html || '') })),
+        question: l.question || null,
+      };
+    }
     let demande = l;
     const combien = partages.get(l.src) || 0;
     if (combien > 1 && (!l.paras || l.paras === 'tous')) {
@@ -257,9 +289,52 @@ const chapitres = CHAPITRES.map((ch) => {
    A1/A2/D/E doit être couvert par au moins un chapitre. Un manque
    arrête la chaîne — c'est la raison d'être du livret. */
 const exiges = [...IDX_REF.entries()].filter(([, e]) => CATEGORIES.some((k) => e.cat[k] === 'T'));
+/* COUVERTURE ET PROFONDEUR — le contrôle qui compte.
+   Jusqu'ici on vérifiait qu'un code figurait dans le tableau `codes:` du
+   plan, écrit à la main. Un chapitre pouvait donc ANNONCER un code sans
+   qu'une seule ligne ne le traite, et la chaîne passait au vert. Le
+   cadrage éditorial du 31/08/2026 refuse cela mot pour mot : « un code
+   imprimé en tête d'un chapitre ne constitue pas une preuve de
+   couverture ». On mesure donc ce que le livre écrit RÉELLEMENT sous
+   chaque code, et un code sous le plancher arrête la fabrication. */
+const PLANCHER_MOTS = 250;
+const compteMots = (s) => (String(s || '').replace(/<[^>]+>/g, ' ')
+  .match(/[A-Za-zÀ-ÿ0-9'’-]+/g) || []).length;
+
+const motsParCode = new Map();
+for (const c of chapitres) {
+  for (const l of c.lecons || []) {
+    const m = compteMots(l.paras.join(' ')) +
+      compteMots((l.blocs || []).map((b) => b.html).join(' '));
+    for (const code of l.codes || []) {
+      motsParCode.set(code, (motsParCode.get(code) || 0) + m);
+    }
+  }
+}
+
 const couverts = new Set(CHAPITRES.flatMap((c) => c.codes || []));
+const maigres = [];
 for (const [code, e] of exiges) {
-  if (!couverts.has(code)) erreurs.push(`couverture : code théorique « ${code} » (${e.groupe}) couvert par aucun chapitre`);
+  if (!couverts.has(code)) {
+    erreurs.push(`couverture : code théorique « ${code} » (${e.groupe}) couvert par aucun chapitre`);
+    continue;
+  }
+  const m = motsParCode.get(code) || 0;
+  if (m < PLANCHER_MOTS) maigres.push(`${code} (${e.groupe}) — ${m} mot(s) écrits sous ce code`);
+}
+if (maigres.length) {
+  const message = `profondeur : ${maigres.length} code(s) théorique(s) sous le plancher de ` +
+    `${PLANCHER_MOTS} mots :\n      ${maigres.join('\n      ')}`;
+  /* Pendant la refonte, le livre est par construction incomplet : le
+     verrou avertit au lieu d'arrêter. Il redevient bloquant dès que
+     REFONTE n'est plus posé — c'est-à-dire pour toute fabrication
+     destinée au téléversement. Le compte est imprimé dans les deux cas :
+     personne ne peut prétendre ne pas l'avoir vu. */
+  if (process.env.REFONTE) {
+    console.warn(`\n⚠ ${message}\n  (REFONTE posé : avertissement. Sans REFONTE, ceci arrête la chaîne.)`);
+  } else {
+    erreurs.push(message);
+  }
 }
 
 /* Verrou : aucune question officielle (ids `pk-*`) ne doit s'être

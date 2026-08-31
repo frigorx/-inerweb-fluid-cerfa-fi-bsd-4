@@ -4,19 +4,19 @@
   "h": 75,
   "legende": "À dérouler avant de toucher au circuit — l’ordre ne s’inverse pas."
  },
- "2-1": {
+ "2-6": {
   "ref": "svg:classe-lettre-chiffre",
   "h": 75,
   "legende": "La lettre d’abord, le chiffre ensuite — deux dangers distincts."
  },
- "3-1": {
+ "3-3": {
   "ref": "svg:deux-etages-deux-papiers",
   "h": 75,
   "legende": "Du règlement européen à vos deux attestations."
  },
- "4-6": {
+ "4-3": {
   "ref": "svg:categories-champs",
-  "h": 75,
+  "h": 71,
   "legende": "Repérez votre colonne : elle dit ce que votre attestation couvre."
  },
  "5-5": {
@@ -44,17 +44,17 @@
   "h": 75,
   "legende": "Quatre technologies sur le terrain, la fonction ne change pas."
  },
- "10-6": {
+ "10-1": {
   "ref": "svg:condenseur-ecart-encrassement",
   "h": 75,
   "legende": "Le même condenseur, propre puis encrassé : l’écart raconte tout."
  },
- "11-1": {
+ "11-6": {
   "ref": "svg:givre-isole-machine-force",
   "h": 75,
   "legende": "Une batterie sous givre n’échange plus — la machine paie."
  },
- "12-1": {
+ "12-6": {
   "ref": "svg:ligne-liquide-protection",
   "h": 75,
   "legende": "Du réservoir au détendeur, chaque organe veille sur le suivant."
@@ -64,27 +64,27 @@
   "h": 75,
   "legende": "L’ordre des opérations avant la première charge."
  },
- "14-1": {
+ "14-3": {
   "ref": "svg:recherche-fuite-geste",
   "h": 75,
   "legende": "Le geste du contrôle : lent, près du raccord, confirmé."
  },
- "15-1": {
+ "15-6": {
   "ref": "svg:recuperation-securisee",
   "h": 75,
   "legende": "Rien ne part à l’air : le fluide rejoint la bouteille, pesé."
  },
- "16-2": {
+ "16-4": {
   "ref": "svg:brasage-balayage-azote",
   "h": 75,
   "legende": "L’azote balaie l’intérieur du tube pendant toute la chauffe."
  },
- "17-1": {
+ "17-4": {
   "ref": "svg:quatre-leviers-energie",
   "h": 75,
   "legende": "Quatre choix de conception qui se voient sur la facture."
  },
- "18-5": {
+ "18-1": {
   "ref": "svg:r290-zone-intervention",
   "h": 75,
   "legende": "Le propane impose sa zone : balisée, ventilée, sans flamme."

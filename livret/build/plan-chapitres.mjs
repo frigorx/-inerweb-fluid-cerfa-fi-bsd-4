@@ -57,6 +57,10 @@ export const PARTIES = [
    livret H0 (`STORYBOARDS-ANIMATIONS.md`) et jamais mise en œuvre. */
 export const QR_BASE = 'https://inerweb.fr/f/';
 
+/* Le texte écrit pour la refonte, quand les cartes du site ne couvrent
+   pas ce que le référentiel exige. Voir `contenu-refonte.mjs`. */
+import { LECONS_OZONE_CLIMAT, LECONS_LEGISLATION, LECONS_ORGANES_ANNEXES } from './contenu-refonte.mjs';
+
 export const CHAPITRES = [
   /* =================== PARTIE A — SE PROTÉGER =================== */
   {
@@ -137,25 +141,22 @@ export const CHAPITRES = [
   /* =================== PARTIE B — LE CADRE =================== */
   {
     num: 3, partie: 'B', qr: 'loi',
-    titre: 'Ce que la loi vous impose',
-    objectif: 'Distinguer l aptitude de la personne et la capacité de l entreprise, et citer les obligations qui pèsent sur une intervention.',
+    titre: 'Ozone, effet de serre, ODP et PRP',
+    objectif: 'Distinguer l atteinte a la couche d ozone de l effet sur le climat, lire un ODP et un PRP, et calculer la tonne equivalent CO2 d une installation.',
     codes: ['1.00', '2.01', '2.02'],
     groupesQ: ['G1', 'G2'],
     codesQ: ['1.00', '2.01', '2.02'],
-    lecons: [
-      { t: 'Deux étages de règles, et deux papiers', src: 'g0', paras: 'tous', blocs: [0],
-        visuels: ['svg:aptitude-capacite', 'illu:g0'],
-        legendes: ['Aptitude et capacité', 'Deux papiers, deux titulaires'] },
-      { t: 'Le registre, les déchets, l écoconception', src: 'g0', paras: 'tous', blocs: [1],
-        visuels: ['sym:vanne_isolement', 'illu:g0'],
-        legendes: ['Ce qui se trace', 'Ce que le règlement exige'] },
-      { t: 'Quarante ans d histoire : de l ozone au climat', src: 'g2a', paras: 'tous', blocs: [0, 1],
-        visuels: ['svg:frise-histoire', 'illu:g2a'],
-        legendes: ['La frise des accords', 'Deux problèmes, pas un'] },
-      { t: 'Impact environnemental et F-Gas', src: 'g2', paras: 'tous', blocs: [0, 1],
-        visuels: ['svg:prp-echelle', 'illu:g2'],
-        legendes: ['Le PRP comparé', 'Le calcul en tonnes équivalent CO₂'] },
-    ],
+    /* REFONTE 31/08/2026 — le chapitre portait tout le volet réglementaire
+       et environnemental en douze pages, et le code 2.02 (exigé pour les
+       QUATRE catégories) n'y pesait que 206 mots : l'ODP en deux phrases,
+       la tonne équivalent CO₂ en une, les PFAS en une. Le cadrage éditorial
+       en fait un chapitre à part entière et l'un de ses deux chapitres
+       témoins. Les cinq leçons sont écrites ici (`contenu-refonte.mjs`) ;
+       les deux leçons d'aptitude et de capacité rejoignent le chapitre 4,
+       où elles étaient déjà mieux à leur place. Les planches viennent des
+       stations `impact-prp-odp` et `impact-montreal-kigali`, inutilisées
+       jusqu'ici faute d'une famille pour les nommer. */
+    lecons: LECONS_OZONE_CLIMAT,
     activite: {
       t: 'Deux installations, deux impacts', src: 'x1',
       visuels: ['svg:prp-echelle', 'illu:g2'],
@@ -183,6 +184,12 @@ export const CHAPITRES = [
        `build/contenu-categories.mjs`, qui lit le JSON du référentiel :
        aucune valeur n est recopiée à la main. */
     genere: 'categories',
+    /* REFONTE — les trois leçons du code 1.00 (deux étages de règles,
+       les déchets et la chaîne de responsabilité, l'écoconception) sont
+       écrites et précèdent le tableau des catégories, qui reste dérivé du
+       référentiel. Elles reprennent la matière que le chapitre 3 portait
+       en 27 mots avant qu'il ne devienne le chapitre ozone et climat. */
+    lecons: LECONS_LEGISLATION,
     activite: {
       t: 'Ma catégorie, mon champ, ma date',
       visuels: ['svg:aptitude-capacite', 'illu:examen'],
@@ -441,7 +448,7 @@ export const CHAPITRES = [
     num: 12, partie: 'D', qr: 'detendeur',
     titre: 'Le détendeur et les organes annexes',
     objectif: 'Expliquer le rôle du détendeur, situer les organes de la ligne liquide, et dire ce qu on règle sans y toucher au hasard.',
-    codes: ['9.01', '9.02', '9.03', '9.04', '9.05', '9.06', '9.07', '9.08', '9.09', '9.10'],
+    codes: ['1.05', '9.01', '9.02', '9.03', '9.04', '9.05', '9.06', '9.07', '9.08', '9.09', '9.10'],
     groupesQ: ['G9'],
     lecons: [
       { t: 'Ce qu il fait, et les trois technologies', src: 'g9', paras: 'tous', blocs: [],
@@ -459,6 +466,7 @@ export const CHAPITRES = [
       { t: 'Avant de toucher un réglage électrique', src: 'g9b', paras: 'tous', blocs: [1],
         visuels: ['svg:secu-consignation', 'sym:tube_capillaire'],
         legendes: ['Consigner d abord', 'Le capillaire'] },
+      ...LECONS_ORGANES_ANNEXES,
     ],
     activite: {
       t: 'Replacer la ligne liquide dans l ordre',

@@ -60,6 +60,38 @@ const FAMILLES = {
     return fs.existsSync(a) ? a : path.join(RES, 'bibliotheque', 'icones', `${n}.png`);
   },
   sym: (n) => path.join(RES, 'symboles', `${n}.svg`),
+  /* LES PLANCHES DES STATIONS — `leg:<station>/<planche>`.
+     Vingt-neuf stations de huit planches chacune, soit 232 dessins, dans
+     `legislation/stations/`. Elles couvrent précisément ce que le livre
+     traitait le plus mal : Montréal et Kigali, ODP et PRP, le TEWI,
+     l'écoconception, les sept flux de déchets, la REP bâtiment, ATEX, le
+     DUERP, les neuf principes de prévention. Elles étaient hors d'atteinte
+     du livre faute d'une famille pour les nommer. */
+  leg: (n) => {
+    const [station, planche] = String(n).split('/');
+    return path.join(SOURCE, 'legislation', 'stations', station, 'svg', `${planche}.svg`);
+  },
+};
+
+/* LES INTERDITS, EN DUR — jusqu'ici de simples commentaires.
+   Le résultat était conforme, mais uniquement parce que personne n'avait
+   écrit ces références à la main : rien dans le code ne les empêchait de
+   revenir. Une refonte qui rebrasse tous les visuels ne peut pas reposer
+   sur cette discipline. Deux familles d'interdits :
+   — `bib-*` et le dossier `res/illustrations/` : captures de documents
+     tiers (sujets d'examen, supports de formation, photos de marque). Le
+     catalogue du pack signale lui-même qu'ils ne sont pas publiables ;
+   — trois planches écartées pour défauts constatés à la relecture. */
+const PLANCHES_BANNIES = new Set([
+  'intro-securite', 's1-double-accident', 'coup-de-liquide-principe',
+]);
+const interdit = (ref) => {
+  const [famille, nom = ''] = String(ref).split(':');
+  if (/^bib[-_]/i.test(nom)) return 'image `bib-*` : capture de document tiers, jamais dans le livre';
+  if (/illustrations?\//i.test(nom)) return 'dossier `res/illustrations/` : droits non établis';
+  if (PLANCHES_BANNIES.has(nom)) return 'planche bannie pour défauts constatés à la relecture';
+  if (famille === 'photo' || /^photo[-_]/i.test(nom)) return 'photographie de matériel : marque tierce possible';
+  return null;
 };
 
 const erreurs = [];
@@ -67,6 +99,10 @@ const refs = new Map(); // 'svg:croix-frigoriste' -> [emplacements]
 
 const releve = (ou, visuels, legendes) => {
   if (!visuels || !visuels.length) { erreurs.push(`${ou} : aucun visuel — la règle du plan l'interdit`); return; }
+  for (const v of visuels) {
+    const motif = interdit(v);
+    if (motif) erreurs.push(`${ou} : visuel « ${v} » INTERDIT — ${motif}`);
+  }
   if (legendes && legendes.length !== visuels.length) {
     erreurs.push(`${ou} : ${visuels.length} visuel(s) mais ${legendes.length} légende(s)`);
   }

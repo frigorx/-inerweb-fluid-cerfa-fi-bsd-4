@@ -134,7 +134,7 @@ const html = `<!doctype html>
      titres Trebuchet à l'identique sur toute machine de fabrication. */
   ${fontFaceMarque()}
   :root{
-    --bleu:#1B3A63; --bleu2:#2f5689; --orange:#FF6B35; --logo:#e8914a;
+    --bleu:#1B3A63; --bleu2:#2f5689; --orange:#C9451A; --logo:#e8914a;
     --mut:#5a6b7d; --pale:#F4F7FA; --ligne:#d6dee7;
     /* Cotes calculées sur ${KDP.pages} pages, papier blanc, intérieur
        noir et blanc. Dos = ${KDP.pages} × 0,002252 pouce. */

@@ -167,72 +167,86 @@
  },
  {
   "chapitre": 3,
-  "titre": "Ce que la loi vous impose",
+  "titre": "Ozone, effet de serre, ODP et PRP",
   "slug": "loi",
   "alias": "https://inerweb.fr/f/loi",
-  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g0",
+  "cible": "https://inerweb.fr/?carte=undefined",
   "renvoi": {
    "genre": "station",
    "titre": "Le chapitre en entier",
-   "quoi": "Le chapitre raconté à voix haute, avec ses animations."
+   "quoi": "Le chapitre dans l'appli : les leçons, les animations, l'entraînement."
   },
   "fichier": "loi.png"
  },
  {
   "chapitre": 3,
   "lecon": 1,
-  "titre": "Deux étages de règles, et deux papiers",
+  "titre": "Deux problèmes, et non un seul",
   "slug": "loi-1",
   "alias": "https://inerweb.fr/f/loi-1",
-  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g0",
+  "cible": "https://inerweb.fr/?carte=undefined",
   "renvoi": {
-   "genre": "leçon narrée",
-   "titre": "Deux étages de règles, et deux papiers",
-   "quoi": "Cette leçon animée et racontée à voix haute."
+   "genre": "fiche",
+   "titre": "Deux problèmes, et non un seul",
+   "quoi": "La fiche interactive, avec sa question corrigée."
   },
   "fichier": "loi-1.png"
  },
  {
   "chapitre": 3,
   "lecon": 2,
-  "titre": "Le registre, les déchets, l’écoconception",
+  "titre": "La couche d'ozone, et ce que mesure l'ODP",
   "slug": "loi-2",
   "alias": "https://inerweb.fr/f/loi-2",
-  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g0",
+  "cible": "https://inerweb.fr/?carte=undefined",
   "renvoi": {
-   "genre": "leçon narrée",
-   "titre": "Le registre, les déchets, l’écoconception",
-   "quoi": "Cette leçon animée et racontée à voix haute."
+   "genre": "fiche",
+   "titre": "La couche d'ozone, et ce que mesure l'ODP",
+   "quoi": "La fiche interactive, avec sa question corrigée."
   },
   "fichier": "loi-2.png"
  },
  {
   "chapitre": 3,
   "lecon": 3,
-  "titre": "Quarante ans d’histoire : de l’ozone au climat",
+  "titre": "L'effet de serre, et ce que mesure le PRP",
   "slug": "loi-3",
   "alias": "https://inerweb.fr/f/loi-3",
-  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g2a",
+  "cible": "https://inerweb.fr/?carte=undefined",
   "renvoi": {
-   "genre": "leçon narrée",
-   "titre": "Quarante ans d’histoire : de l’ozone au climat",
-   "quoi": "Cette leçon animée et racontée à voix haute."
+   "genre": "fiche",
+   "titre": "L'effet de serre, et ce que mesure le PRP",
+   "quoi": "La fiche interactive, avec sa question corrigée."
   },
   "fichier": "loi-3.png"
  },
  {
   "chapitre": 3,
   "lecon": 4,
-  "titre": "Impact environnemental et F-Gas",
+  "titre": "La tonne équivalent CO₂ : le calcul qui déclenche vos obligations",
   "slug": "loi-4",
   "alias": "https://inerweb.fr/f/loi-4",
-  "cible": "https://inerweb.fr/packs/fluides/res/capsules/index.html?c=g2",
+  "cible": "https://inerweb.fr/?carte=undefined",
   "renvoi": {
-   "genre": "leçon narrée",
-   "titre": "Impact environnemental et F-Gas",
-   "quoi": "Cette leçon animée et racontée à voix haute."
+   "genre": "fiche",
+   "titre": "La tonne équivalent CO₂ : le calcul qui déc…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
   },
   "fichier": "loi-4.png"
+ },
+ {
+  "chapitre": 3,
+  "lecon": 5,
+  "titre": "Ce que le PRP ne dit pas : décomposition et PFAS",
+  "slug": "loi-5",
+  "alias": "https://inerweb.fr/f/loi-5",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Ce que le PRP ne dit pas : décomposition et…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "loi-5.png"
  },
  {
   "chapitre": 4,
@@ -246,6 +260,48 @@
    "quoi": "Le chapitre dans l'appli : les leçons, les animations, l'entraînement."
   },
   "fichier": "categories.png"
+ },
+ {
+  "chapitre": 4,
+  "lecon": 1,
+  "titre": "Deux étages de règles, et deux papiers",
+  "slug": "categories-1",
+  "alias": "https://inerweb.fr/f/categories-1",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Deux étages de règles, et deux papiers",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "categories-1.png"
+ },
+ {
+  "chapitre": 4,
+  "lecon": 2,
+  "titre": "Les déchets : sept flux, et une chaîne de responsabilité",
+  "slug": "categories-2",
+  "alias": "https://inerweb.fr/f/categories-2",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Les déchets : sept flux, et une chaîne de r…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "categories-2.png"
+ },
+ {
+  "chapitre": 4,
+  "lecon": 3,
+  "titre": "L'écoconception : ce qu'elle demande au fabricant, ce qu'elle change pour vous",
+  "slug": "categories-3",
+  "alias": "https://inerweb.fr/f/categories-3",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "L'écoconception : ce qu'elle demande au fab…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "categories-3.png"
  },
  {
   "chapitre": 5,
@@ -814,6 +870,34 @@
   "fichier": "detendeur-5.png"
  },
  {
+  "chapitre": 12,
+  "lecon": 6,
+  "titre": "Neuf familles d'organes, une seule question : par où ça fuit ?",
+  "slug": "detendeur-6",
+  "alias": "https://inerweb.fr/f/detendeur-6",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Neuf familles d'organes, une seule question…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "detendeur-6.png"
+ },
+ {
+  "chapitre": 12,
+  "lecon": 7,
+  "titre": "Les organes face aux fluides à risque",
+  "slug": "detendeur-7",
+  "alias": "https://inerweb.fr/f/detendeur-7",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Les organes face aux fluides à risque",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "detendeur-7.png"
+ },
+ {
   "chapitre": 13,
   "titre": "Contrôles avant mise en service",
   "slug": "mise-en-service",
@@ -1317,7 +1401,7 @@
   "slug": "a-aptitude-capacite",
   "alias": "https://inerweb.fr/f/a-aptitude-capacite",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/aptitude-capacite.svg",
-  "retour": "https://inerweb.fr/f/loi",
+  "retour": "https://inerweb.fr/f/categories",
   "renvoi": {
    "genre": "la planche",
    "titre": "La planche en grand",
@@ -1507,6 +1591,21 @@
  },
  {
   "genre": "animation",
+  "animee": true,
+  "titre": "Préalarme, alarme, et celle qui prévient AVANT d'ouvrir la porte",
+  "slug": "a-co2-protection",
+  "alias": "https://inerweb.fr/f/a-co2-protection",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/co2-protection.svg",
+  "retour": "https://inerweb.fr/f/detendeur",
+  "renvoi": {
+   "genre": "animation",
+   "titre": "La planche en mouvement",
+   "quoi": "Ci-contre figée. En ligne, elle se joue du début à la fin."
+  },
+  "fichier": "a-co2-protection.png"
+ },
+ {
+  "genre": "animation",
   "animee": false,
   "titre": "code-nomme-classe-previent",
   "slug": "a-code-nomme-classe-previent",
@@ -1677,7 +1776,7 @@
   "slug": "a-deux-etages-deux-papiers",
   "alias": "https://inerweb.fr/f/a-deux-etages-deux-papiers",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/deux-etages-deux-papiers.svg",
-  "retour": "https://inerweb.fr/f/loi",
+  "retour": "https://inerweb.fr/f/categories",
   "renvoi": {
    "genre": "la planche",
    "titre": "La planche en grand",
@@ -1752,7 +1851,7 @@
   "slug": "a-frise-histoire",
   "alias": "https://inerweb.fr/f/a-frise-histoire",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/frise-histoire.svg",
-  "retour": "https://inerweb.fr/f/loi",
+  "retour": "https://inerweb.fr/",
   "renvoi": {
    "genre": "la planche",
    "titre": "La planche en grand",
@@ -2444,7 +2543,7 @@
  {
   "genre": "qcm",
   "chapitre_num": 3,
-  "titre": "QCM du chapitre 3 — Ce que la loi vous impose",
+  "titre": "QCM du chapitre 3 — Ozone, effet de serre, ODP et PRP",
   "slug": "q-loi",
   "alias": "https://inerweb.fr/f/q-loi",
   "cible": "https://inerweb.fr/",
