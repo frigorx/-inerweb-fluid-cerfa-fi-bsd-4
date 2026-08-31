@@ -1,7 +1,7 @@
 # inerweb.fr HabFluide — partie théorique · compte de reprise
 
 > Pour reprendre le chantier à froid, dans une session neuve, sans relire
-> aucun historique. **État au 31/08/2026.** Branche
+> aucun historique. **État au 31/08/2026, après la refonte éditoriale.** Branche
 > `claude/livret-habilitation-fluide-d5n1yt`
 > ([PR #33](https://github.com/frigorx/-inerweb-fluid-cerfa-fi-bsd-4/pull/33),
 > verte, prête à fusionner) ; côté site, branche `claude/relecture-bat` de
@@ -9,8 +9,8 @@
 > ([PR #5](https://github.com/frigorx/pilote-fluides/pull/5), idem).
 
 **Le livre part en autoédition Amazon KDP.** Format **7 × 10 pouces**
-(177,8 × 254 mm), **326 pages**, dos 18,65 mm, noir et blanc, corps 12 pt
-(`reglages.json`). Il prépare l'**épreuve théorique** de l'attestation
+(177,8 × 254 mm), **418 pages**, dos 23,91 mm, noir et blanc, corps 12 pt
+en **Lexend** (`reglages.json` + `livret/fontes/Lexend-400|700.woff2`). Il prépare l'**épreuve théorique** de l'attestation
 d'aptitude fluides frigorigènes, **catégories A1, A2, D et E**. La pratique
 fera l'objet du prochain livre.
 
@@ -27,6 +27,61 @@ a son QR `inerweb.fr/f/<slug>` ; le papier reste autonome sans Internet ;
 UNIQUEMENT les animations et illustrations des deux projets ; partout où
 « inerWeb » s'écrit, c'est le LOGO de la charte, jamais le mot en typo
 courante.
+
+---
+
+## La refonte éditoriale du 31/08 — ce qui a changé
+
+Décision de F. Henninot : **un seul volume**, pas deux tomes. Le budget mesuré
+le montre (`livret/refonte/BUDGET-PAGES.md`) : la coupure du cadrage donnerait
+172 et 237 pages, déséquilibrées, plus chères à produire, et imposerait deux
+achats alors que les 39 codes sont répartis sur les deux. Règle de conduite :
+**un volume tant que la pagination reste sous 500 pages.**
+
+**Lexend est la police du livre**, plus seulement celle d'une édition DYS
+séparée. Mesuré à corps et interligne égaux : Calibri 328 p, Lexend 354 p,
+soit +8 %. Le corps 14 pt de la charte des documents A4 coûtait +19 % — trop
+cher à l'impression pour le bénéfice. **Piège à ne pas rouvrir** : le pack ne
+fournit Lexend qu'en fonte VARIABLE, que Chrome instancie en polices Type 3 à
+l'impression (25 polices, tout le corps du livre). Les instances statiques sont
+produites par `build/lexend-statique.py` et commises dans `livret/fontes/` ; il
+faut `updateFontNames=True`, sans quoi les deux instances portent le même nom
+PostScript et Chrome replie tout le texte sur Calibri.
+
+**Trois verrous BLOQUANTS, nouveaux, à ne pas désarmer :**
+- **profondeur** (`extraire.mjs`) — un code théorique sous **800 mots** de cours
+  arrête la fabrication. Le plancher a été monté par paliers (250, 400, 600,
+  800) au fil de l'écriture. `REFONTE=1` le passait en avertissement pendant le
+  chantier ; il n'est plus nécessaire ;
+- **preuve par la question** — un code sans question rattachée arrête la
+  fabrication. Les questions de la banque portent un GROUPE (`dc: 'G1'`), jamais
+  un code : 39 questions ont été écrites pour ça (`build/questions-refonte.mjs`) ;
+- **images interdites** (`visuels.mjs`) — `bib-*`, `res/illustrations/`, famille
+  `photo`, et les trois planches bannies. C'étaient de simples commentaires.
+
+**Deux voies nouvelles dans la chaîne :**
+- `ecrit: true` sur une leçon du plan — son texte vit dans
+  `build/contenu-refonte.mjs` au lieu de venir des cartes du site. Le site et le
+  livre n'ont pas le même découpage ;
+- famille de visuels **`leg:<station>/<planche>`** — les 232 planches des
+  29 stations de `legislation/`, jusque-là hors d'atteinte faute d'un nom pour
+  les désigner. Elles couvrent ce que le livre traitait le plus mal.
+
+**Le cours est passé de 22 077 à 32 775 mots.** Sept blocs écrits : ozone et
+climat (chapitre témoin), législation-DEEE-écoconception, organes annexes,
+efficacité énergétique (7 codes qui tenaient en une phrase), registre et
+comptes rendus (7 codes), raisonnement de diagnostic (second chapitre témoin),
+unités ISO, familles de fluides, croix du frigoriste, récupération, étanchéité,
+traités internationaux.
+
+**Les livrables du cadrage sont dans `livret/refonte/`** : matrice des 39 codes,
+budget de pages, registre des visuels, sources réglementaires, rapport de
+couverture et de profondeur, rapport de QA.
+
+**Six légendes d'illustration mentaient** sur ce que l'image montre (« Le
+vacuomètre » sur une pompe à vide, « Les quatre organes » sur un manomètre…).
+Corrigées après examen à l'œil des 43 images. Le gisement graphique est sain ;
+c'était l'appariement qui était faux.
 
 ---
 
@@ -51,6 +106,12 @@ courante.
 
 `PILOTE_FLUIDES` pointe le clone de `frigorx/pilote-fluides` ;
 `CHROME` un Chrome/Chromium (sur Linux, un wrapper `--no-sandbox`).
+
+**Attention** : `main` de pilote-fluides ne suffit PAS — il y manque 24 des
+72 planches, dont les 19 de la réserve de comblement. Elles vivent sur
+`claude/relecture-bat` (la PR #5). Poser un worktree plutôt que de déplacer le
+clone de Franck :
+`git worktree add /c/git/pilote-fluides-bat origin/claude/relecture-bat`
 
 | Maillon | Ce qu'il fait |
 |---|---|
@@ -141,17 +202,24 @@ Rien ne quitte jamais l'appareil.
 
 ## En attente de F. Henninot
 
-1. **Relecture annotée** du PDF LIVRE-COMPLET (méthode convenue : PDF annoté,
-   toute forme d'annotation ; une annotation = un point).
-2. **Refonte de la maquette** : un document de remise en forme (préparé avec
-   un autre outil) arrive — c'est le cahier des charges de la FORME ; les
-   interdits et mécanismes ci-dessus restent au-dessus.
-3. **Niveau du pool de questions** : 129 N1 / 57 N2 (69 % restitution).
-   Leviers proposés, EN ATTENTE d'accord : tirage de l'examen blanc pondéré
-   vers N2 ; puis étoffer la banque en questions niveau examen (chantier
-   éditorial, jamais depuis les 89 officielles) ; enfin `examen.niveau: 2`
-   sur les séries du site.
-4. Fusion des PR, ISBN/prix KDP, épreuve papier.
+1. **Le bon à tirer métier et pédagogique.** Rien n'a été relu par personne
+   d'autre que son auteur. Les ~10 000 mots écrits pendant la refonte, en
+   particulier, n'ont eu aucune relecture technique.
+2. **Vérification sur pièce des valeurs réglementaires** — les ordres de
+   grandeur de PRP cités, contre l'annexe I du règlement (UE) 2024/573 dans sa
+   version consolidée à la date du bon à tirer.
+3. **Deux réserves de droits**, listées dans `refonte/RAPPORT-QA.md` : 39
+   planches du pack portent une licence `cc:license` CC BY-NC-ND contradictoire
+   avec leur `dc:rights` (à nettoyer côté `pilote-fluides`) ; et la mention
+   QElectroTech CC BY 3.0 imprimée aux crédits semble orpheline — à trancher sur
+   vérification, jamais à retirer sans elle.
+4. **L'architecture en 27 chapitres** du cadrage n'a pas été appliquée : le
+   livre en compte 19. Elle reste adoptable dans un volume unique, en huit
+   parties, pour environ 32 pages de plus. Décision ouverte.
+5. **Niveau du pool de questions** : 225 questions au pool de l'examen blanc,
+   dont les 39 écrites de niveau 2. Le rééquilibrage N1/N2 des séries reste en
+   attente d'accord.
+6. Fusion des PR, ISBN/prix KDP, épreuve papier.
 
 ## Méthode de travail demandée
 
