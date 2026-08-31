@@ -318,7 +318,7 @@ const html = `<!doctype html>
 
     <div class="croix">${CIRCUIT}</div>
 
-    <p class="interactif"><b>Livre interactif</b> — 95 QR codes ouvrent les cours
+    <p class="interactif"><b>Livre interactif</b> — ${NB_QR} QR codes ouvrent les cours
        animés et racontés d’inerweb.fr : schémas en mouvement, voix, corrections.</p>
     <div class="cats"><span>A1</span><span>A2</span><span>D</span><span>E</span></div>
     <p class="auteur"><b>F. Henninot</b>
