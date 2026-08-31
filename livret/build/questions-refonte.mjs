@@ -1,0 +1,438 @@
+/* =====================================================================
+   QUESTIONS RATTACHÉES AUX CODES — refonte du 31/08/2026
+   ---------------------------------------------------------------------
+   La matrice des 39 codes a relevé un défaut de preuve : les questions
+   d'entraînement portent un GROUPE (`dc: 'G1'`), jamais un code. La
+   colonne « au moins une question pertinente par code » exigée par le
+   cadrage était donc impossible à remplir — on pouvait affirmer qu'un
+   groupe était couvert, jamais qu'un code l'était.
+
+   Ces questions-ci portent leur code. Une au minimum par code théorique
+   des catégories A1, A2, D et E.
+
+   NIVEAU. Elles sont écrites au niveau 2 : elles demandent un
+   raisonnement, une lecture croisée ou une décision, pas la restitution
+   d'une définition. C'est le niveau auquel l'épreuve sépare le candidat
+   qui a appris des symptômes de celui qui sait conduire un raisonnement.
+   Les distracteurs sont des erreurs réellement commises sur le terrain,
+   pas des absurdités : une réponse fausse doit être tentante.
+
+   INTERDIT ABSOLU — aucune de ces questions ne provient des 89 questions
+   officielles chiffrées (`pk-*`). Elles sont écrites pour ce livre.
+   ===================================================================== */
+
+const q = (code, id, enonce, choix, bonne, explication, aide) => ({
+  id: `q-ref-${id}`, dc: code, code, niveau: 2, type: 'qcm',
+  enonce, choix, bonne, explication, aide,
+});
+
+export const QUESTIONS_CODES = [
+  /* ---------------- G1 — législation et thermodynamique ------------- */
+  q('1.00', '100a',
+    'Un fabricant vous affirme qu\'une pièce détachée n\'est plus disponible pour une machine commercialisée il y a trois ans. Sur quel fondement pouvez-vous contester ?',
+    ['L\'écoconception impose la disponibilité des pièces pendant une durée minimale après la fin de commercialisation',
+     'Le règlement (UE) 2024/573, qui traite de la disponibilité des pièces',
+     'La norme NF EN 378, qui l\'impose à tous les fabricants',
+     'Aucun : la disponibilité des pièces relève du contrat commercial'],
+    0,
+    'La disponibilité des pièces détachées et de la documentation relève des exigences d\'écoconception, pas du règlement F-Gas — qui traite des gaz fluorés — ni de la NF EN 378, qui est une norme de sécurité et n\'a pas cet objet.',
+    'Demandez-vous quel corpus traite de la conception du produit, et non du fluide qu\'il contient.'),
+
+  q('1.01', '101a',
+    'Un manomètre indique 2 bar sur la basse pression. Vous lisez la table de saturation à 2 bar et vous en tirez une surchauffe. Quelle est l\'erreur ?',
+    ['La table travaille en pression absolue : il faut lire à environ 3 bar',
+     'Aucune erreur, les tables sont établies en pression relative',
+     'Il faut retirer 1 bar avant de lire la table',
+     'Il faut convertir en pascals avant toute lecture'],
+    0,
+    'Un manomètre ordinaire affiche la pression relative, c\'est-à-dire l\'écart avec l\'atmosphère. Les tables de saturation sont établies en pression absolue. On ajoute donc environ 1 bar. Lire à 2 bar au lieu de 3 donne une température de saturation trop basse, et une surchauffe faussée d\'autant.',
+    'Zéro au manomètre ne signifie pas le vide, mais la pression atmosphérique.'),
+
+  q('1.02', '102a',
+    'Sur un cycle, l\'écart entre la température de condensation et celle d\'évaporation augmente de 10 K. Que se passe-t-il, et pourquoi ?',
+    ['Le COP chute : le compresseur fournit plus de travail pour le même effet frigorifique',
+     'Le COP augmente : l\'écart de température améliore l\'échange',
+     'Le COP ne change pas : il ne dépend que du fluide',
+     'La puissance frigorifique augmente, la consommation aussi'],
+    0,
+    'Un écart plus grand impose au compresseur un taux de compression plus élevé, donc plus de travail, tandis que l\'effet frigorifique ne s\'améliore pas. Le repère professionnel usuel situe la perte autour de deux à trois pour cent de COP par kelvin, la valeur exacte dépendant du fluide et du point de fonctionnement.',
+    'Regardez ce que devient le palier haut du cycle quand la condensation monte.'),
+
+  q('1.03', '103a',
+    'Sur une installation au R-407C, vous calculez le sous-refroidissement. Quelle température de la table utilisez-vous ?',
+    ['Le point de bulle', 'Le point de rosée',
+     'La moyenne des deux', 'Indifféremment, l\'écart est négligeable'],
+    0,
+    'Le sous-refroidissement se mesure côté liquide : la référence est le point de bulle, température à laquelle la première bulle de vapeur apparaîtrait. La rosée sert à la surchauffe, côté vapeur. Sur un zéotrope comme le R-407C, se tromper de colonne fausse le résultat de la valeur entière du glissement.',
+    'Bulle du côté du liquide, rosée du côté de la vapeur.'),
+
+  q('1.04', '104a',
+    'Où, dans le circuit, la chaleur est-elle réellement prise au milieu à refroidir ?',
+    ['À l\'évaporateur, pendant le changement d\'état du fluide',
+     'Au compresseur, qui aspire le froid',
+     'Au détendeur, où la pression chute',
+     'Au condenseur, qui rejette la chaleur'],
+    0,
+    'L\'effet frigorifique se produit à l\'évaporateur, et nulle part ailleurs. Le détendeur refroidit le fluide par détente mais n\'échange pas avec l\'extérieur ; le compresseur crée l\'écart de pression et ajoute sa propre chaleur ; le condenseur évacue.',
+    'Suivez la croix : quel organe est en contact avec le milieu à refroidir ?'),
+
+  q('1.05', '105a',
+    'Le voyant liquide montre des bulles sur une installation en régime stabilisé. Quelle conclusion pouvez-vous tirer ?',
+    ['Aucune à elle seule : plusieurs causes sont possibles, il faut un contrôle discriminant',
+     'La charge est insuffisante, il faut compléter',
+     'Le filtre déshydrateur est colmaté',
+     'Le détendeur est mal réglé'],
+    0,
+    'Des bulles au voyant sont une observation, pas un diagnostic. Manque de charge, filtre colmaté, sous-refroidissement insuffisant, perte de charge sur la ligne liquide produisent le même signe. Le sous-refroidissement mesuré départage. Recharger sans avoir cherché revient à émettre du fluide en connaissance de cause.',
+    'Combien d\'hypothèses expliquent ce signe ? S\'il n\'y en a qu\'une, cherchez encore.'),
+
+  q('1.06', '106a',
+    'Une installation au R-404A a subi une fuite importante. Le client demande un simple complément de charge. Que répondez-vous ?',
+    ['La composition du mélange a pu changer : on ne complète pas sans statuer, et la fuite doit être trouvée d\'abord',
+     'On complète en phase vapeur, c\'est plus rapide',
+     'On complète en phase liquide, la composition est conservée',
+     'Le R-404A est un azéotrope : compléter ne pose aucun problème'],
+    0,
+    'Le R-404A est un mélange zéotrope. Une fuite importante n\'emporte pas les composants dans la même proportion : le fluide restant n\'a plus la composition d\'origine, et compléter ne la rétablit pas. S\'y ajoute l\'interdiction de recharger sans avoir recherché la fuite.',
+    'Un mélange zéotrope fuit-il de façon homogène ?'),
+
+  q('1.07', '107a',
+    'Vous intervenez dans un local technique équipé au CO₂ et dans un autre équipé au NH₃. Où placez-vous la détection dans chacun ?',
+    ['CO₂ en partie basse, NH₃ en partie haute',
+     'En partie basse dans les deux cas',
+     'En partie haute dans les deux cas',
+     'CO₂ en partie haute, NH₃ en partie basse'],
+    0,
+    'Le CO₂ est plus lourd que l\'air et s\'accumule en point bas ; l\'ammoniac est plus léger et gagne la partie haute. Placer un capteur au mauvais niveau revient à ne pas en avoir. Ces deux fluides relèvent des catégories B et C : on doit savoir les reconnaître et s\'arrêter.',
+    'Comparez la masse volumique de chaque gaz à celle de l\'air.'),
+
+  q('1.08', '108a',
+    'Un fluide est classé A2L. Que pouvez-vous en déduire, et que ne pouvez-vous pas en déduire ?',
+    ['Faible toxicité et inflammabilité faible à propagation lente ; la classe ne dit rien du PRP ni de la charge admissible dans ce local',
+     'Qu\'il est ininflammable en pratique et sans restriction de charge',
+     'Qu\'il a un PRP faible, puisque les A2L sont les fluides récents',
+     'Qu\'il peut remplacer un A1 sans modification de l\'installation'],
+    0,
+    'La classe de sécurité croise toxicité et inflammabilité : A pour la faible toxicité, 2L pour une inflammabilité faible à vitesse de propagation lente. Elle ne renseigne ni sur le PRP, ni sur la charge admissible — qui dépend du volume et de l\'occupation du local —, ni sur la compatibilité avec une machine existante.',
+    'La classe décrit un danger, pas un impact climatique ni une autorisation.'),
+
+  /* ---------------- G2 — environnement ------------------------------ */
+  q('2.01', '201a',
+    'Le protocole de Montréal a réglé le problème de l\'ozone. Pourquoi a-t-il fallu ensuite l\'amendement de Kigali ?',
+    ['Parce que les HFC qui ont remplacé les CFC ne détruisent pas l\'ozone mais réchauffent fortement le climat',
+     'Parce que Montréal n\'avait pas été ratifié par tous les États',
+     'Parce que les HCFC détruisaient encore l\'ozone malgré Montréal',
+     'Parce que Kigali a remplacé Montréal, devenu obsolète'],
+    0,
+    'Montréal a organisé la sortie des substances qui appauvrissent la couche d\'ozone. L\'industrie s\'est tournée vers les HFC, d\'ODP nul mais à fort effet de serre : le premier problème a été résolu en aggravant le second. Kigali, amendement à Montréal, organise la réduction des HFC.',
+    'Qu\'est-ce que les CFC ont été remplacés par, et quel effet cela a-t-il eu ?'),
+
+  q('2.02', '202a',
+    'Deux installations contiennent chacune 5 kg de fluide : l\'une du R-404A (PRP ≈ 3 900), l\'autre du R-134a (PRP ≈ 1 400). Que peut-on en dire ?',
+    ['La première pèse environ 19,5 teqCO₂, la seconde environ 7 : elles peuvent relever de régimes de contrôle différents',
+     'Elles relèvent du même régime, puisqu\'elles contiennent la même masse de fluide',
+     'La première pèse 3 900 teqCO₂ et la seconde 1 400',
+     'On ne peut rien dire sans connaître la puissance des installations'],
+    0,
+    'La tonne équivalent CO₂ se calcule en multipliant la charge en tonnes par le PRP : 0,005 × 3 900 ≈ 19,5 et 0,005 × 1 400 = 7. C\'est cette valeur, et non la masse de fluide, qui détermine la périodicité des contrôles. Les seuils sont fixés par le texte en vigueur au jour de l\'intervention.',
+    'Convertissez d\'abord les kilogrammes en tonnes.'),
+
+  /* ---------------- G3 — contrôles avant mise en service ------------ */
+  q('3.05', '305a',
+    'Quelle mention, souvent omise, rend un enregistrement de mise en service réellement exploitable ?',
+    ['La méthode employée et l\'instrument utilisé, en plus du résultat',
+     'Le nom du client et l\'adresse du chantier',
+     'La marque et le modèle du compresseur',
+     'L\'heure exacte de fin d\'intervention'],
+    0,
+    'Un résultat sans sa méthode n\'est pas vérifiable. « Étanchéité contrôlée : conforme » ne dit ni comment, ni avec quoi, ni à quelle pression. Un enregistrement utile porte la date, l\'intervenant, la nature de l\'opération, la méthode, l\'instrument, le résultat et les quantités pesées.',
+    'Un autre technicien pourrait-il refaire votre contrôle à partir de ce que vous avez écrit ?'),
+
+  /* ---------------- G4 — contrôles d'étanchéité --------------------- */
+  q('4.01', '401a',
+    'Sur un évaporateur en chambre froide, quels facteurs expliquent qu\'il soit un point de fuite privilégié ?',
+    ['Zone humide, chocs de manutention, sollicitation thermique du dégivrage, condensats corrosifs',
+     'Sa basse pression, qui fatigue les assemblages',
+     'Son éloignement du compresseur',
+     'La faible épaisseur du cuivre, imposée par l\'échange'],
+    0,
+    'L\'évaporateur cumule les agressions : humidité permanente, chocs lors des manutentions dans l\'enceinte, cycles thermiques du dégivrage qui font travailler les assemblages, et condensats parfois acides. Il est de surcroît le plus difficile à inspecter visuellement.',
+    'Pensez à l\'environnement de l\'organe, pas à sa pression.'),
+
+  q('4.02', '402a',
+    'Le registre indique trois ajouts de 2 kg au cours des trois dernières années. Que change cette information avant votre contrôle ?',
+    ['Elle établit une fuite récurrente et oriente la recherche vers les parties déjà problématiques',
+     'Elle prouve que la machine consomme du fluide, ce qui est normal',
+     'Elle n\'a pas d\'incidence : le contrôle se conduit de la même façon',
+     'Elle impose de remplacer l\'installation'],
+    0,
+    'Une installation ne consomme pas de fluide : si l\'on recharge régulièrement, elle fuit. Le registre transforme des interventions isolées en un diagnostic qu\'aucune visite unique ne permettait. C\'est précisément ce que le code 4.02 demande de relever avant tout contrôle.',
+    'Une machine peut-elle consommer du fluide comme un moteur consomme de l\'huile ?'),
+
+  q('4.09', '409a',
+    'Après réparation d\'une fuite, quelle mention est indispensable au registre et souvent oubliée ?',
+    ['Le contrôle de vérification effectué après la réparation, avec sa méthode et son résultat',
+     'Le temps passé sur l\'intervention',
+     'Le nom du fournisseur de la pièce',
+     'La température ambiante au moment de la réparation'],
+    0,
+    'Réparer sans consigner la vérification qui a suivi laisse le dossier incomplet : rien ne prouve que la fuite est arrêtée. Le contrôle après réparation fait partie de l\'obligation, et son absence est ce qu\'un contrôleur relèvera en premier.',
+    'Qu\'est-ce qui prouve que la réparation a fonctionné ?'),
+
+  /* ---------------- G5 — gestion écologique ------------------------- */
+  q('5.07', '507a',
+    'Vous avez récupéré du fluide puis rechargé. Que consignez-vous exactement ?',
+    ['Les quantités pesées, récupérée et ajoutée, la nature du fluide, et la destination du fluide récupéré',
+     'La quantité ajoutée seulement, la récupération étant une opération interne',
+     'Une estimation des quantités, la pesée n\'étant pas exigible',
+     'La seule mention « appoint de charge »'],
+    0,
+    'On consigne ce que la balance a mesuré, dans les deux sens, avec la nature du fluide et le devenir de ce qui a été récupéré — recyclé, régénéré ou destiné au traitement. Une charge « au manomètre » n\'est pas une donnée de registre.',
+    'Quel instrument fait foi pour une quantité de fluide ?'),
+
+  q('5.08', '508a',
+    'Une bouteille de récupération a servi à plusieurs fluides différents sans être identifiée. Quel est son statut ?',
+    ['Son contenu est de composition inconnue : il ne peut pas être remis en service et part au traitement',
+     'Il peut être régénéré puisqu\'il s\'agit de fluides frigorigènes',
+     'Il peut être recyclé sur le parc du même client',
+     'Il suffit de l\'analyser puis de le compléter au fluide majoritaire'],
+    0,
+    'Recyclé suppose un nettoyage de base et un réemploi sur le même parc ; régénéré suppose un retraitement en installation dédiée. Un mélange de composition inconnue ne relève ni de l\'un ni de l\'autre : le doute impose le traitement. C\'est pourquoi une bouteille de récupération se dédie et s\'étiquette dès la première utilisation.',
+    'Que signifient exactement recyclé, régénéré et traitement ?'),
+
+  q('5.09', '509a',
+    'Une huile de vidange issue d\'un circuit au R-290 attend son enlèvement. Quelle précaution s\'impose, qui ne vaudrait pas pour une huile de circuit fluoré ?',
+    ['Le contenant doit rester fermé : l\'huile retient de l\'hydrocarbure dissous et peut dégazer',
+     'Aucune : une huile usagée se traite de la même façon quel que soit le fluide',
+     'Elle doit être stockée à l\'extérieur, sans autre précaution',
+     'Elle peut rejoindre le bidon d\'huile de vidange courante'],
+    0,
+    'Une huile ayant circulé avec un hydrocarbure en retient une part dissoute, qui peut dégazer à l\'air libre et former une atmosphère inflammable. Elle se manipule en contenant fermé et part en déchet dangereux, comme les huiles fluorées mais avec le risque d\'inflammation en plus.',
+    'Que devient l\'hydrocarbure dissous quand le contenant reste ouvert ?'),
+
+  /* ---------------- G6 à G9 — les organes --------------------------- */
+  q('6.01', '601a',
+    'Une huile qui ne revient pas au compresseur produit deux effets simultanés. Lesquels ?',
+    ['Le compresseur s\'use faute de lubrification, et l\'huile déposée dans les échangeurs dégrade l\'échange',
+     'Le compresseur chauffe, et la pression de condensation baisse',
+     'Le détendeur se bloque, et la surchauffe s\'effondre',
+     'La charge de fluide augmente, et la haute pression monte'],
+    0,
+    'L\'huile circule avec le fluide et doit revenir. Piégée dans un évaporateur ou une remontée mal dimensionnée, elle manque là où elle est nécessaire et forme ailleurs un film isolant qui diminue l\'échange. Les deux effets se cumulent et se renforcent.',
+    'Où l\'huile manque-t-elle, et où se trouve-t-elle à la place ?'),
+
+  q('6.07', '607a',
+    'Quelle formulation appartient à un compte rendu d\'état de compresseur conforme à ce que le référentiel demande ?',
+    ['« Retour d\'huile insuffisant constaté ; sans intervention, l\'usure conduira à une fuite au presse-étoupe. Contrôle du séparateur à programmer. »',
+     '« Compresseur bruyant, à surveiller. »',
+     '« Compresseur HS, à remplacer. »',
+     '« RAS sur le compresseur. »'],
+    0,
+    'Le libellé officiel demande d\'indiquer tout problème susceptible d\'endommager le système et d\'entraîner à terme, faute de mesure, des fuites ou des émissions. Il faut donc le fait constaté, la conséquence à terme, et la mesure proposée. Les trois autres formulations n\'en donnent aucune.',
+    'Le référentiel demande d\'anticiper : que manque-t-il aux trois autres réponses ?'),
+
+  q('6.08', '608a',
+    'Un compresseur qui démarre et s\'arrête très fréquemment pose un problème d\'efficacité. Quelle est la réponse la plus pertinente ?',
+    ['Adapter la puissance à la demande : variation de vitesse, étagement ou mise en cascade',
+     'Abaisser la consigne de la chambre pour allonger les cycles',
+     'Augmenter la charge de fluide pour stabiliser les pressions',
+     'Réduire le débit d\'air au condenseur'],
+    0,
+    'Chaque démarrage consomme sans produire de froid utile et fatigue les organes. La réponse est de suivre la charge réelle plutôt que de fonctionner en tout ou rien. Abaisser la consigne dégraderait le COP en faisant baisser l\'évaporation, et les deux autres propositions aggravent la situation.',
+    'Le problème est-il la température de consigne, ou l\'écart entre la puissance de la machine et le besoin ?'),
+
+  q('7.01', '701a',
+    'Quelles sont les trois zones successives d\'un condenseur, dans l\'ordre du parcours du fluide ?',
+    ['Désurchauffe, condensation, sous-refroidissement',
+     'Condensation, désurchauffe, sous-refroidissement',
+     'Sous-refroidissement, condensation, désurchauffe',
+     'Détente, condensation, surchauffe'],
+    0,
+    'La vapeur arrive surchauffée : elle perd d\'abord sa surchauffe sans changer d\'état, c\'est la désurchauffe. Elle se condense ensuite, à température constante pour un corps pur. Le liquide obtenu descend enfin de quelques kelvins sous la température de condensation : c\'est le sous-refroidissement, qui garantit l\'alimentation du détendeur en liquide pur.',
+    'Dans quel état le fluide arrive-t-il au condenseur ?'),
+
+  q('7.09', '709a',
+    'La haute pression est anormalement élevée. Avant d\'incriminer les incondensables, quelles hypothèses devez-vous écarter ?',
+    ['Encrassement du condenseur, ventilateur arrêté, surcharge de fluide, ambiance trop chaude',
+     'Aucune : une haute pression élevée signe la présence d\'incondensables',
+     'Un détendeur trop ouvert et une surchauffe faible',
+     'Un manque de charge et un filtre colmaté'],
+    0,
+    'Plusieurs causes produisent le même symptôme. Purger « pour voir » libère du fluide dans l\'atmosphère — ce qui est interdit — et ne traite généralement pas la cause. On départage d\'abord par le sous-refroidissement, l\'écart entre la température de condensation et l\'ambiance, et l\'état de l\'échangeur.',
+    'Combien de causes peuvent faire monter la pression de condensation ?'),
+
+  q('7.10', '710a',
+    'Dans quelles conditions la condensation flottante améliore-t-elle l\'efficacité, et quelle limite ne peut-on pas franchir ?',
+    ['Elle abaisse la condensation quand l\'ambiance le permet, dans la limite du différentiel dont le détendeur a besoin',
+     'Elle s\'applique sans limite : plus la condensation est basse, mieux c\'est',
+     'Elle n\'a d\'intérêt qu\'en climat chaud',
+     'Elle impose de fixer une haute pression constante toute l\'année'],
+    0,
+    'Une consigne de haute pression fixe oblige à condenser haut même quand l\'air extérieur permettrait mieux. Laisser la pression descendre récupère un gain important sur l\'année. Mais le détendeur a besoin d\'une pression différentielle suffisante pour alimenter l\'évaporateur : le point bas se règle selon le détendeur et la documentation constructeur.',
+    'Qu\'est-ce qui a besoin d\'une différence de pression pour fonctionner ?'),
+
+  q('8.01', '801a',
+    'Un dégivrage déclenché trop souvent est-il sans conséquence puisqu\'il évite le givre ?',
+    ['Non : chaque dégivrage apporte de la chaleur dans l\'enceinte, que la machine devra ensuite retirer',
+     'Oui : le givre est le seul problème, dégivrer davantage est toujours favorable',
+     'Non, parce que les résistances s\'usent plus vite, sans autre effet',
+     'Oui, à condition que le drainage soit assuré'],
+    0,
+    'Un dégivrage trop rare laisse la glace isoler la batterie et fait chuter l\'évaporation ; trop fréquent, il injecte de la chaleur dans l\'enceinte, que la machine doit ensuite évacuer. Le réglage juste déclenche selon le besoin réel, et non selon une horloge posée une fois pour toutes.',
+    'Où part la chaleur des résistances de dégivrage ?'),
+
+  q('8.10', '810a',
+    'Sur un compte rendu d\'évaporateur, laquelle de ces observations annonce une fuite à terme ?',
+    ['Traces de corrosion aux collets, en zone de condensats, avec chocs visibles sur les ailettes',
+     'Givre uniforme sur toute la batterie en fin de cycle',
+     'Surchauffe mesurée à 7 K, conforme au constructeur',
+     'Ventilateurs légèrement bruyants au démarrage'],
+    0,
+    'Le référentiel demande de signaler ce qui mènera à une fuite faute de mesure. La corrosion aux collets, en atmosphère humide et sur une batterie déjà éprouvée mécaniquement, en est l\'annonce typique. Les trois autres observations méritent d\'être notées mais n\'annoncent pas une perte de fluide.',
+    'Laquelle de ces observations concerne l\'intégrité du circuit lui-même ?'),
+
+  q('8.11', '811a',
+    'Quel geste améliore le plus sûrement l\'efficacité d\'un évaporateur en exploitation ?',
+    ['Rétablir l\'échange : ailettes propres, ventilation assurée, dégivrage réglé sur le besoin',
+     'Abaisser la consigne de la chambre pour forcer la machine',
+     'Augmenter la charge de fluide',
+     'Réduire la surchauffe au minimum possible'],
+    0,
+    'Toute perte d\'échange fait descendre la température d\'évaporation, donc chuter le COP. La propreté et la ventilation sont les leviers au meilleur rapport temps/gain. Abaisser la consigne dégrade le rendement, et réduire la surchauffe au minimum expose le compresseur au retour de liquide.',
+    'Qu\'est-ce qui fait baisser la température d\'évaporation sans que rien ne soit en panne ?'),
+
+  q('9.01', '901a',
+    'Quand l\'égalisation externe d\'un détendeur thermostatique devient-elle nécessaire ?',
+    ['Dès que la perte de charge dans l\'évaporateur devient sensible',
+     'Dès que le fluide est un mélange zéotrope',
+     'Uniquement sur les installations à basse température',
+     'Jamais : l\'égalisation interne suffit toujours'],
+    0,
+    'L\'égalisation interne prend la pression à l\'entrée de l\'évaporateur. Si la perte de charge dans la batterie est notable, la pression réelle en sortie est plus basse, et la régulation travaille sur une information fausse. L\'égalisation externe prend la pression là où le bulbe mesure la température.',
+    'Où l\'égalisation interne prend-elle sa pression, et où le bulbe mesure-t-il ?'),
+
+  q('9.09', '909a',
+    'Un bulbe a été desserré lors d\'une intervention puis remis en place approximativement. Quelle conséquence signalez-vous ?',
+    ['La régulation travaille sur une température fausse : la surchauffe dérive et l\'on cherchera la panne ailleurs',
+     'Aucune : le bulbe mesure la même chose quelle que soit sa position',
+     'Le détendeur se bloquera en position ouverte',
+     'La haute pression montera immédiatement'],
+    0,
+    'Un bulbe mal repositionné — mauvais contact, mauvaise place sur la circonférence, isolation oubliée — donne une température erronée. Le détendeur régule alors sur une information fausse. Le symptôme apparaîtra loin de sa cause, ce qui en fait un piège de diagnostic classique.',
+    'Sur quelle grandeur le détendeur thermostatique régule-t-il ?'),
+
+  q('9.10', '910a',
+    'Pourquoi un détendeur électronique permet-il un gain d\'efficacité par rapport à un thermostatique ?',
+    ['Il tient une surchauffe plus basse et plus stable, ce qui utilise mieux la surface d\'évaporateur',
+     'Il ouvre davantage, ce qui augmente le débit de fluide',
+     'Il supprime le besoin de sous-refroidissement',
+     'Il permet de se passer de régulation de la haute pression'],
+    0,
+    'Un détendeur trop fermé laisse une partie de la batterie inutilisée et fait chuter l\'évaporation ; trop ouvert, il laisse passer du liquide. L\'électronique mesure pression et température par sondes et tient une consigne plus basse et plus stable : toute la surface travaille, l\'évaporation remonte, le COP avec.',
+    'Que se passe-t-il sur la surface de l\'évaporateur quand la surchauffe est trop élevée ?'),
+
+  /* ---------------- G11 — technologies de substitution -------------- */
+  q('11.01', '1101a',
+    'Un fournisseur propose un fluide « de remplacement direct » pour votre installation. Que vérifiez-vous avant d\'accepter ?',
+    ['Pression, température de refoulement, glissement, huile et matériaux, classe de sécurité, charge admissible — et la validation écrite du constructeur',
+     'Le seul PRP, puisque c\'est lui que la réglementation vise',
+     'La compatibilité du raccordement des bouteilles',
+     'Rien : la mention « remplacement direct » engage le fournisseur'],
+    0,
+    'Un remplacement direct reste un changement de point de fonctionnement. Tout est à revérifier, et la seule validation qui protège est celle du constructeur de la machine, écrite. Sans elle, vous engagez votre responsabilité sur une installation que vous avez modifiée.',
+    'Qu\'est-ce qui change réellement dans la machine quand le fluide change ?'),
+
+  q('11.02', '1102a',
+    'Quelle mesure de conception réduit à la fois la charge de fluide et améliore l\'efficacité ?',
+    ['Rapprocher la production du besoin et réduire les longueurs de tuyauterie',
+     'Augmenter le volume du réservoir de liquide pour sécuriser l\'alimentation',
+     'Surdimensionner le compresseur pour disposer d\'une réserve de puissance',
+     'Fixer une haute pression de consigne élevée toute l\'année'],
+    0,
+    'Des lignes plus courtes contiennent moins de fluide et présentent moins de pertes de charge : la charge baisse et le rendement monte. Un gros réservoir augmente la charge, donc la teqCO₂ et les obligations ; un compresseur surdimensionné multiplie les cycles ; une haute pression fixe interdit la condensation flottante.',
+    'Quelle proposition agit dans le même sens sur les deux objectifs ?'),
+
+  q('11.03', '1103a',
+    'Vous devez installer une machine au R-290 dans un local de faible volume. Qu\'est-ce qui détermine la charge admissible ?',
+    ['Le volume du local et son occupation, selon les règles applicables',
+     'La puissance frigorifique demandée',
+     'Le PRP du fluide',
+     'La longueur des lignes'],
+    0,
+    'La charge admissible d\'un fluide inflammable dépend du volume du local et de son occupation : il s\'agit d\'éviter qu\'une fuite totale atteigne une concentration dangereuse. C\'est pourquoi les machines aux hydrocarbures sont conçues à faible charge, souvent compactes et monoblocs.',
+    'Contre quel scénario la limite de charge protège-t-elle ?'),
+
+  q('11.04', '1104a',
+    'Un fluide affiche un PRP très bas mais impose, dans votre application, une machine sensiblement moins efficace. Comment tranchez-vous ?',
+    ['On compare les deux parts du TEWI : le gain sur les émissions directes peut être annulé par la consommation supplémentaire',
+     'Le PRP le plus bas l\'emporte toujours, c\'est l\'objectif réglementaire',
+     'L\'efficacité l\'emporte toujours, le fluide n\'ayant d\'effet qu\'en cas de fuite',
+     'On choisit selon le prix du fluide au kilogramme'],
+    0,
+    'L\'impact d\'une installation se divise en une part directe — les fuites — et une part indirecte — l\'électricité consommée sur toute sa vie. Sur beaucoup d\'installations, la seconde domine. On ne choisit pas un fluide seul : on choisit un couple fluide-machine pour une application et un climat.',
+    'Qu\'additionne le TEWI ?'),
+
+  q('11.05', '1105a',
+    'En quoi la conception d\'une machine aux hydrocarbures diffère-t-elle, au-delà du fluide lui-même ?',
+    ['Composants adaptés aux zones à risque, charge réduite, volumes limités, ventilation et détection intégrées',
+     'Elle ne diffère pas : seul le fluide change',
+     'Elle impose uniquement une signalisation extérieure',
+     'Elle exige des pressions de service plus élevées'],
+    0,
+    'La conception est repensée : chaque organe électrique devient une source d\'ignition potentielle et doit être adapté ; la charge admissible étant limitée, on réduit les volumes — un gros réservoir devient un problème et non une sécurité ; ventilation et détection font partie de l\'installation.',
+    'Qu\'est-ce qui, dans une machine, peut enflammer un mélange air-hydrocarbure ?'),
+
+  /* ---------------- G12 — hydrocarbures ----------------------------- */
+  q('12.01', '1201a',
+    'Le raccord d\'une bouteille de fluide inflammable présente un filetage à gauche. Pourquoi ?',
+    ['C\'est un détrompeur : il empêche de raccorder un matériel non prévu pour ces fluides',
+     'Pour faciliter le serrage avec les clés courantes',
+     'Pour résister à des pressions plus élevées',
+     'C\'est une convention sans portée de sécurité'],
+    0,
+    'Le filetage à gauche des gaz inflammables est une prescription spéciale de raccordement : il rend physiquement impossible le branchement d\'un équipement destiné à un autre type de gaz. C\'est une barrière de sécurité, pas une particularité mécanique.',
+    'Que se passerait-il si tous les raccords étaient identiques ?'),
+
+  q('12.02', '1202a',
+    'Vous devez rechercher une fuite sur une installation au R-290. Quel détecteur utilisez-vous ?',
+    ['Un détecteur adapté aux hydrocarbures, vérifié avant emploi',
+     'Le détecteur à fluides fluorés habituel, qui réagit à tous les gaz',
+     'Un détecteur d\'oxygène, qui signale la baisse d\'O₂',
+     'Aucun : la recherche se fait à l\'eau savonneuse uniquement'],
+    0,
+    'Un détecteur ne répond qu\'aux gaz pour lesquels il est conçu : un appareil à fluides fluorés ne verra pas un hydrocarbure. Un détecteur d\'oxygène surveille l\'asphyxie, pas la fuite. Et l\'instrument doit être vérifié avant emploi, faute de quoi un résultat négatif ne prouve rien.',
+    'Un détecteur détecte-t-il tous les gaz, ou ceux pour lesquels il est étalonné ?'),
+
+  q('12.13', '1213a',
+    'Sur un site équipé au R-290, quels éléments vérifiez-vous au titre des mesures de santé et sécurité ?',
+    ['Signalisation, issues de secours dégagées, capteurs de gaz et alarmes en état',
+     'La seule présence d\'un extincteur',
+     'La conformité électrique du tableau général',
+     'La date du dernier contrôle d\'étanchéité'],
+    0,
+    'Le code 12.13 vise les mesures propres à l\'emplacement du système : panneaux de signalisation, issues de secours, capteurs de gaz, alarmes. Ce sont les dispositifs qui protègent les personnes présentes, indépendamment de l\'état de la machine elle-même.',
+    'Ces mesures protègent-elles la machine, ou les personnes autour ?'),
+
+  q('12.14', '1214a',
+    'Pourquoi l\'entretien courant compte-t-il davantage sur une machine aux hydrocarbures que sur une machine équivalente aux fluorés ?',
+    ['La charge est plus faible : toute perte d\'échange se paie plus cher, et chaque intervention obéit à des règles qui imposent de la planifier',
+     'Parce que les hydrocarbures encrassent davantage les échangeurs',
+     'Parce que la réglementation impose une visite mensuelle',
+     'Parce que le fluide se dégrade plus vite'],
+    0,
+    'Une charge limitée laisse moins de marge : un condenseur encrassé y coûte proportionnellement plus qu\'ailleurs. Et comme chaque intervention doit se conduire selon les règles propres aux inflammables — zone, ventilation, outillage —, l\'entretien se planifie au lieu d\'être subi.',
+    'Que change une charge de fluide plus faible sur la sensibilité de la machine ?'),
+];
+
+/* Les questions à ajouter à un chapitre : celles dont le code figure
+   parmi les codes que ce chapitre PORTE. Un même code n'apparaît qu'une
+   fois dans le livre, au chapitre qui l'enseigne. */
+const dejaPlacees = new Set();
+export const questionsEcritesDe = (codesDuChapitre = []) => {
+  const set = new Set(codesDuChapitre);
+  return QUESTIONS_CODES.filter((qq) => {
+    if (!set.has(qq.code) || dejaPlacees.has(qq.id)) return false;
+    dejaPlacees.add(qq.id);
+    return true;
+  });
+};

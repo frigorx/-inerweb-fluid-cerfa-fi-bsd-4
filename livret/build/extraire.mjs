@@ -35,6 +35,7 @@ import { execSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { CHAPITRES } from './plan-chapitres.mjs';
 import { leconsCategories, questionsCategories } from './contenu-categories.mjs';
+import { questionsEcritesDe, QUESTIONS_CODES } from './questions-refonte.mjs';
 
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const SORTIE = path.join(ICI, '..', 'contenu.gen.json');
@@ -199,7 +200,12 @@ const questionsDe = (ch) => {
 /* ------------------------------------------------------------------ */
 const chapitres = CHAPITRES.map((ch) => {
   const ou = `chapitre ${ch.num} « ${ch.titre} »`;
-  const questions = questionsDe(ch);
+  /* Les questions de la banque (tirees par GROUPE) et celles ecrites
+     pour la refonte (rattachees a un CODE). La banque ne sait pas dire
+     quel code une question travaille : elle ne connait que le groupe.
+     Les secondes portent leur code, et ce sont elles qui font la preuve
+     exigee par le cadrage — « au moins une question par code ». */
+  const questions = [...questionsEcritesDe(ch.codes || []), ...questionsDe(ch)];
   if (!questions.length) erreurs.push(`${ou} : aucune question dans la banque pour ${JSON.stringify(ch.groupesQ)}`);
 
   const referentiel = referentielDe(ou, ch.codes || []);
@@ -335,6 +341,21 @@ if (maigres.length) {
   } else {
     erreurs.push(message);
   }
+}
+
+/* PREUVE PAR LA QUESTION — le cadrage exige, pour chaque code, « au
+   moins une question d'entrainement pertinente ». Les questions de la
+   banque portent un GROUPE, jamais un code : elles ne peuvent pas faire
+   cette preuve. Celles de `questions-refonte.mjs` portent leur code.
+   On verifie ici que chacun des codes theoriques en a une, et qu'elle a
+   bien ete PLACEE dans un chapitre — une question ecrite mais jamais
+   imprimee ne prouverait rien. */
+const codesQuestionnes = new Set(
+  chapitres.flatMap((c) => c.questions).map((q) => q.code).filter(Boolean));
+const sansQuestion = exiges.map(([code]) => code).filter((code) => !codesQuestionnes.has(code));
+if (sansQuestion.length) {
+  erreurs.push(`preuve : ${sansQuestion.length} code(s) theorique(s) sans question rattachee : ` +
+    sansQuestion.join(', '));
 }
 
 /* Verrou : aucune question officielle (ids `pk-*`) ne doit s'être

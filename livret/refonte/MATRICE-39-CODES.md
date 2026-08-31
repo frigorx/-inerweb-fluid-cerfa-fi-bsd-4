@@ -4,9 +4,13 @@
 > Établie contre `referentiel-2025.json`, transcription verbatim de l'annexe II de l'arrêté du
 > 21 novembre 2025 (NOR TECP2532494A, JORF du 10 décembre 2025).
 >
-> **Statut : proposition soumise à validation de F. Henninot. Aucune rédaction n'a commencé.**
+> **Statut : brouillon. Le contenu est écrit et fabriqué ; il attend le bon à tirer métier
+> et pédagogique de F. Henninot. Aucune valeur réglementaire n'est réputée validée.**
 
 ## Ce que la matrice établit
+
+Chaque code porte désormais **au moins une question d'entraînement qui lui est rattachée**, et
+la chaîne refuse de fabriquer si l'un d'eux passe sous 600 mots de cours.
 
 Les **39 codes** exigés au titre théorique (`T`) pour l'union des catégories **A1, A2, D et E**.
 Ils ne sont écrits en dur nulle part : ils sont obtenus par filtrage du référentiel, ce qui est
@@ -16,28 +20,31 @@ sain — un changement d'arrêté les recalcule.
 12.02, 12.13, 12.14. Un tiers du référentiel. C'est là que le livre est le plus faible, et c'est
 logique : il a été écrit sur le régime précédent.
 
-### Les trois défauts de méthode que cette matrice corrige
+### Les trois défauts de méthode, et ce qui les remplace
 
-**1. La couverture était déclarative.** Le contrôle actuel (`extraire.mjs:259`) vérifie qu'un code
-figure dans le tableau `codes:` écrit à la main dans le plan. Un chapitre peut annoncer un code
-sans qu'une seule ligne ne le traite : la chaîne passe au vert. C'est ce que le cadrage refuse.
+**1. La couverture était déclarative.** Le contrôle vérifiait qu'un code figurait dans le tableau
+`codes:` écrit à la main dans le plan : un chapitre pouvait annoncer un code sans qu'une ligne ne
+le traite, et la chaîne passait au vert. Désormais `extraire.mjs` **mesure ce qui est réellement
+écrit sous chaque code** et refuse de fabriquer sous 600 mots.
 
-**2. La profondeur n'était pas mesurée.** Elle l'est ici, en mots de leçon. Réserve honnête :
-l'attribution se fait par leçon, pas par phrase — une leçon qui déclare quatre codes voit ses mots
-comptés quatre fois. **Les chiffres ci-dessous sont des plafonds, pas des mesures.** Un code
-annoncé à 600 mots en vaut souvent 200 réels.
+**2. La profondeur n'était pas mesurée.** Elle l'est, en mots de leçon. Réserve honnête et
+maintenue : l'attribution se fait par leçon, pas par phrase — une leçon qui déclare quatre codes
+voit ses mots comptés quatre fois. **Les chiffres ci-dessous sont des plafonds, pas des mesures.**
+Le plancher de 600 mots tient compte de cette générosité.
 
-**3. Aucune question n'est rattachée à un code.** Les questions portent un *groupe* (`G1`, `G2`…),
-jamais un code. La colonne « au moins une question d'entraînement pertinente » exigée par le
-cadrage est donc **impossible à remplir en l'état**. Il faut créer ce rattachement.
+**3. Aucune question n'était rattachée à un code.** Les questions de la banque portent un *groupe*
+(`G1`, `G2`…), jamais un code : elles ne pouvaient pas faire la preuve exigée. Trente-neuf
+questions ont été écrites pour ce livre, **une par code au minimum**, de niveau 2 — elles demandent
+un raisonnement ou une décision, pas la restitution d'une définition. Un contrôle refuse la
+fabrication si un code théorique perd sa question.
 
 ## Verdict de profondeur
 
 | Verdict | Codes | Sens |
 |---|---:|---|
-| **À ÉCRIRE** | 12 | moins de 500 mots — matière insuffisante, à produire |
-| **À ÉTOFFER** | 22 | 500 à 1 000 mots — amorce présente, à approfondir |
-| **À REPRENDRE** | 5 | plus de 1 000 mots — matière réutilisable, à réorganiser |
+| **SOUS PLANCHER** | 0 | moins de 600 mots — la chaîne refuse de fabriquer |
+| **COUVERT** | 7 | 600 à 1 000 mots — traité, sans réserve |
+| **APPROFONDI** | 32 | plus de 1 000 mots |
 
 ## La matrice
 
@@ -48,95 +55,95 @@ Le chapitre **porteur** enseigne le code ; les **rappels** le remobilisent sans 
 
 | Code | Cat. | Chapitre porteur | Rappels | Aujourd'hui | Mots | Verdict |
 |---|---|---|---|---|---:|---|
-| **1.00** ✦ | A1/A2/D/E | T1-4 · Qui fait quoi : aptitude, capacité, responsabilités | T1-1, T1-5 | ch. 3 · 4 p | 348 | À ÉCRIRE |
-| **1.01** | A1/A2/D/E | T1-10 · Thermodynamique utile | — | ch. 5 · 4 p | 474 | À ÉCRIRE |
-| **1.02** | A1/A2/D | T1-10 · Thermodynamique utile | T1-12 | ch. 5,7 · 24 p | 1797 | À REPRENDRE |
-| **1.03** | A1/A2/E | T1-11 · Lire un diagramme log p-h et une table de saturation | T2-9 | ch. 6 · 10 p | 757 | À ÉTOFFER |
-| **1.04** | A1/A2/D | T1-10 · Thermodynamique utile | T2-1 | ch. 5 · 4 p | 474 | À ÉCRIRE |
-| **1.05** | A1/A2 | T2-6 · Les organes annexes et la prévention des fuites | — | ch. 8 · 4 p | 213 | À ÉCRIRE |
-| **1.06** | A1/A2/D/E | T1-8 · Familles, nomenclature et propriétés | — | ch. 8 · 4 p | 472 | À ÉCRIRE |
-| **1.07** ✦ | A1/A2/D/E | T1-8 · Familles, nomenclature et propriétés | T2-15 | ch. 8 · 4 p | 472 | À ÉCRIRE |
-| **1.08** ✦ | A1/A2/D/E | T1-6 · Lire une classe de sécurité | — | ch. 2,17 · 20 p | 1589 | À REPRENDRE |
+| **1.00** ✦ | A1/A2/D/E | T1-4 · Qui fait quoi : aptitude, capacité, responsabilités | T1-1, T1-5 | ch. 4 · 9 p | 1254 | APPROFONDI |
+| **1.01** | A1/A2/D/E | T1-10 · Thermodynamique utile | — | ch. 5 · 11 p | 978 | COUVERT |
+| **1.02** | A1/A2/D | T1-10 · Thermodynamique utile | T1-12 | ch. 5,7,8,9 · 32 p | 3784 | APPROFONDI |
+| **1.03** | A1/A2/E | T1-11 · Lire un diagramme log p-h et une table de saturation | T2-9 | ch. 6,7 · 22 p | 1693 | APPROFONDI |
+| **1.04** | A1/A2/D | T1-10 · Thermodynamique utile | T2-1 | ch. 5,9 · 8 p | 1083 | APPROFONDI |
+| **1.05** | A1/A2 | T2-6 · Les organes annexes et la prévention des fuites | — | ch. 8,12 · 11 p | 1119 | APPROFONDI |
+| **1.06** | A1/A2/D/E | T1-8 · Familles, nomenclature et propriétés | — | ch. 8 · 13 p | 1446 | APPROFONDI |
+| **1.07** ✦ | A1/A2/D/E | T1-8 · Familles, nomenclature et propriétés | T2-15 | ch. 8 · 10 p | 1022 | APPROFONDI |
+| **1.08** ✦ | A1/A2/D/E | T1-6 · Lire une classe de sécurité | — | ch. 2,17 · 20 p | 1589 | APPROFONDI |
 
 ### G2 — Incidence sur l'environnement des réfrigérants et réglementations pertinentes en matière d'environnement
 
 | Code | Cat. | Chapitre porteur | Rappels | Aujourd'hui | Mots | Verdict |
 |---|---|---|---|---|---:|---|
-| **2.01** | A1/A2/D/E | T1-3 · De Montréal à F-Gas III | T1-1 | ch. 3 · 16 p | 476 | À ÉCRIRE |
-| **2.02** | A1/A2/D/E | T1-2 · Ozone, effet de serre, ODP et PRP/GWP | T1-3 | ch. 3 · 14 p | 228 | À ÉCRIRE |
+| **2.01** | A1/A2/D/E | T1-3 · De Montréal à F-Gas III | T1-1 | ch. 3 · 5 p | 764 | COUVERT |
+| **2.02** | A1/A2/D/E | T1-2 · Ozone, effet de serre, ODP et PRP/GWP | T1-3 | ch. 3 · 17 p | 2078 | APPROFONDI |
 
 ### G3 — Contrôles à effectuer préalablement à la mise en service d'un équipement, après une longue période d'interruption, après un entretien ou une réparation, ou contrôles durant le fonctionnement
 
 | Code | Cat. | Chapitre porteur | Rappels | Aujourd'hui | Mots | Verdict |
 |---|---|---|---|---|---:|---|
-| **3.05** | A1/A2 | T2-7 · Préparer une mise en service | T2-12 | ch. 13 · 10 p | 418 | À ÉCRIRE |
+| **3.05** | A1/A2 | T2-7 · Préparer une mise en service | T2-12 | ch. 13,14 · 13 p | 875 | COUVERT |
 
 ### G4 — Contrôles d'étanchéité
 
 | Code | Cat. | Chapitre porteur | Rappels | Aujourd'hui | Mots | Verdict |
 |---|---|---|---|---|---:|---|
-| **4.01** | A1/A2/E | T2-8 · Rechercher une fuite | T2-6 | ch. 14 · 4 p | 434 | À ÉCRIRE |
-| **4.02** | A1/A2/E | T2-8 · Rechercher une fuite | — | ch. 14 · 4 p | 434 | À ÉCRIRE |
-| **4.09** | A1/A2/E | T2-8 · Rechercher une fuite | — | ch. 14 · 9 p | 284 | À ÉCRIRE |
+| **4.01** | A1/A2/E | T2-8 · Rechercher une fuite | T2-6 | ch. 7,14 · 12 p | 920 | COUVERT |
+| **4.02** | A1/A2/E | T2-8 · Rechercher une fuite | — | ch. 14 · 7 p | 891 | COUVERT |
+| **4.09** | A1/A2/E | T2-8 · Rechercher une fuite | — | ch. 14 · 6 p | 741 | COUVERT |
 
 ### G5 — Gestion écologique du système et du réfrigérant lors de l'installation, de la maintenance, de l'entretien ou de la récupération
 
 | Code | Cat. | Chapitre porteur | Rappels | Aujourd'hui | Mots | Verdict |
 |---|---|---|---|---|---:|---|
-| **5.07** | A1/A2/D | T2-10 · Récupérer, peser, stocker et tracer | T2-12 | ch. 15 · 9 p | 590 | À ÉTOFFER |
-| **5.08** | A1/A2/D | T2-10 · Récupérer, peser, stocker et tracer | — | ch. 15 · 9 p | 590 | À ÉTOFFER |
-| **5.09** ✦ | A1/A2/D | T2-10 · Récupérer, peser, stocker et tracer | — | ch. 15 · 9 p | 590 | À ÉTOFFER |
+| **5.07** | A1/A2/D | T2-10 · Récupérer, peser, stocker et tracer | T2-12 | ch. 14,15 · 10 p | 1554 | APPROFONDI |
+| **5.08** | A1/A2/D | T2-10 · Récupérer, peser, stocker et tracer | — | ch. 15 · 7 p | 1097 | APPROFONDI |
+| **5.09** ✦ | A1/A2/D | T2-10 · Récupérer, peser, stocker et tracer | — | ch. 15 · 12 p | 1016 | APPROFONDI |
 
 ### G6 — Composant : installation, mise en service et maintenance de compresseurs à piston alternatif, à vis et à spirales, à un ou deux étages
 
 | Code | Cat. | Chapitre porteur | Rappels | Aujourd'hui | Mots | Verdict |
 |---|---|---|---|---|---:|---|
-| **6.01** | A1/A2 | T2-2 · Le compresseur et la lubrification | — | ch. 9 · 5 p | 590 | À ÉTOFFER |
-| **6.07** | A1/A2 | T2-2 · Le compresseur et la lubrification | T2-9 | ch. 9 · 5 p | 590 | À ÉTOFFER |
-| **6.08** ✦ | A1/A2 | T2-2 · Le compresseur et la lubrification | T2-13 | ch. 9 · 11 p | 613 | À ÉTOFFER |
+| **6.01** | A1/A2 | T2-2 · Le compresseur et la lubrification | — | ch. 9 · 16 p | 1184 | APPROFONDI |
+| **6.07** | A1/A2 | T2-2 · Le compresseur et la lubrification | T2-9 | ch. 9,14 · 14 p | 1088 | APPROFONDI |
+| **6.08** ✦ | A1/A2 | T2-2 · Le compresseur et la lubrification | T2-13 | ch. 9,17 · 15 p | 2163 | APPROFONDI |
 
 ### G7 — Composant : installation, mise en service et maintenance de condenseurs à air froid et à eau froide
 
 | Code | Cat. | Chapitre porteur | Rappels | Aujourd'hui | Mots | Verdict |
 |---|---|---|---|---|---:|---|
-| **7.01** | A1/A2 | T2-3 · Le condenseur | — | ch. 10 · 4 p | 542 | À ÉTOFFER |
-| **7.09** | A1/A2 | T2-3 · Le condenseur | T2-9 | ch. 10 · 13 p | 805 | À ÉTOFFER |
-| **7.10** ✦ | A1/A2 | T2-3 · Le condenseur | T2-13 | ch. 10 · 13 p | 805 | À ÉTOFFER |
+| **7.01** | A1/A2 | T2-3 · Le condenseur | — | ch. 9,10 · 15 p | 1136 | APPROFONDI |
+| **7.09** | A1/A2 | T2-3 · Le condenseur | T2-9 | ch. 10,14 · 21 p | 1303 | APPROFONDI |
+| **7.10** ✦ | A1/A2 | T2-3 · Le condenseur | T2-13 | ch. 10,17 · 20 p | 1937 | APPROFONDI |
 
 ### G8 — Composant : installation, mise en service et maintenance d'évaporateurs à refroidissement par air et à refroidissement par liquide
 
 | Code | Cat. | Chapitre porteur | Rappels | Aujourd'hui | Mots | Verdict |
 |---|---|---|---|---|---:|---|
-| **8.01** | A1/A2 | T2-4 · L'évaporateur et le dégivrage | — | ch. 11 · 4 p | 588 | À ÉTOFFER |
-| **8.10** | A1/A2 | T2-4 · L'évaporateur et le dégivrage | T2-9 | ch. 11 · 12 p | 833 | À ÉTOFFER |
-| **8.11** ✦ | A1/A2 | T2-4 · L'évaporateur et le dégivrage | T2-13 | ch. 11 · 12 p | 833 | À ÉTOFFER |
+| **8.01** | A1/A2 | T2-4 · L'évaporateur et le dégivrage | — | ch. 9,11 · 15 p | 1182 | APPROFONDI |
+| **8.10** | A1/A2 | T2-4 · L'évaporateur et le dégivrage | T2-9 | ch. 11,14 · 21 p | 1331 | APPROFONDI |
+| **8.11** ✦ | A1/A2 | T2-4 · L'évaporateur et le dégivrage | T2-13 | ch. 11,17 · 20 p | 1965 | APPROFONDI |
 
 ### G9 — Composant : installation, mise en service et entretien des détendeurs thermostatiques et autres composants
 
 | Code | Cat. | Chapitre porteur | Rappels | Aujourd'hui | Mots | Verdict |
 |---|---|---|---|---|---:|---|
-| **9.01** | A1/A2 | T2-5 · Les détendeurs | — | ch. 12 · 4 p | 587 | À ÉTOFFER |
-| **9.09** | A1/A2 | T2-5 · Les détendeurs | T2-9 | ch. 12 · 9 p | 965 | À ÉTOFFER |
-| **9.10** ✦ | A1/A2 | T2-5 · Les détendeurs | T2-13 | ch. 12 · 9 p | 965 | À ÉTOFFER |
+| **9.01** | A1/A2 | T2-5 · Les détendeurs | — | ch. 9,12 · 15 p | 1181 | APPROFONDI |
+| **9.09** | A1/A2 | T2-5 · Les détendeurs | T2-9 | ch. 12,14 · 16 p | 1463 | APPROFONDI |
+| **9.10** ✦ | A1/A2 | T2-5 · Les détendeurs | T2-13 | ch. 12,17 · 11 p | 1568 | APPROFONDI |
 
 ### G11 — Informations sur les technologies pertinentes permettant de remplacer les gaz à effet de serre fluorés ou d'en réduire l'utilisation, et sur leur manipulation sans danger
 
 | Code | Cat. | Chapitre porteur | Rappels | Aujourd'hui | Mots | Verdict |
 |---|---|---|---|---|---:|---|
-| **11.01** | A1/A2/D/E | T1-9 · Choisir un fluide de substitution | — | ch. 17 · 15 p | 932 | À ÉTOFFER |
-| **11.02** | A1/A2 | T2-13 · Maintenir l'efficacité énergétique | T1-9 | ch. 17 · 15 p | 932 | À ÉTOFFER |
-| **11.03** | A1/A2 | T1-7 · Se protéger avant de toucher | T1-6, T2-15 | ch. 1,2,17 · 39 p | 3565 | À REPRENDRE |
-| **11.04** | A1/A2 | T1-9 · Choisir un fluide de substitution | T2-13 | ch. 17 · 15 p | 932 | À ÉTOFFER |
-| **11.05** ✦ | A1/A2/D | T1-9 · Choisir un fluide de substitution | T2-14 | ch. 17 · 15 p | 932 | À ÉTOFFER |
+| **11.01** | A1/A2/D/E | T1-9 · Choisir un fluide de substitution | — | ch. 17 · 18 p | 1410 | APPROFONDI |
+| **11.02** | A1/A2 | T2-13 · Maintenir l'efficacité énergétique | T1-9 | ch. 17 · 25 p | 2357 | APPROFONDI |
+| **11.03** | A1/A2 | T1-7 · Se protéger avant de toucher | T1-6, T2-15 | ch. 1,2,17 · 39 p | 3565 | APPROFONDI |
+| **11.04** | A1/A2 | T1-9 · Choisir un fluide de substitution | T2-13 | ch. 17 · 18 p | 1410 | APPROFONDI |
+| **11.05** ✦ | A1/A2/D | T1-9 · Choisir un fluide de substitution | T2-14 | ch. 12,15,17 · 28 p | 1755 | APPROFONDI |
 
 ### G12 — Installation et bonne pratique d'entretien des équipements et des systèmes tributaires des hydrocarbures
 
 | Code | Cat. | Chapitre porteur | Rappels | Aujourd'hui | Mots | Verdict |
 |---|---|---|---|---|---:|---|
-| **12.01** ✦ | A1/A2 | T2-14 · Hydrocarbures : le spécifique A1 et A2 | — | ch. 18 · 6 p | 855 | À ÉTOFFER |
-| **12.02** ✦ | A1/A2 | T1-7 · Se protéger avant de toucher | T2-14 | ch. 1,2,18 · 22 p | 3486 | À REPRENDRE |
-| **12.13** ✦ | A1/A2 | T1-7 · Se protéger avant de toucher | T2-14 | ch. 1,18 · 9 p | 1347 | À REPRENDRE |
-| **12.14** ✦ | A1/A2 | T2-14 · Hydrocarbures : le spécifique A1 et A2 | T2-13 | ch. 18 · 6 p | 855 | À ÉTOFFER |
+| **12.01** ✦ | A1/A2 | T2-14 · Hydrocarbures : le spécifique A1 et A2 | — | ch. 15,18 · 14 p | 1281 | APPROFONDI |
+| **12.02** ✦ | A1/A2 | T1-7 · Se protéger avant de toucher | T2-14 | ch. 1,2,18 · 22 p | 3486 | APPROFONDI |
+| **12.13** ✦ | A1/A2 | T1-7 · Se protéger avant de toucher | T2-14 | ch. 1,18 · 9 p | 1347 | APPROFONDI |
+| **12.14** ✦ | A1/A2 | T2-14 · Hydrocarbures : le spécifique A1 et A2 | T2-13 | ch. 18 · 6 p | 855 | COUVERT |
 
 ✦ = code nouveau en 2025.
 
@@ -184,34 +191,38 @@ Verbatim de l'annexe II. Ils font foi : aucune reformulation n'est admise là o�
 - **12.13** — Vérifier que les mesures de santé et de sécurité conformes aux règles applicables sont appliquées à l'emplacement du système (par exemple, panneaux de signalisation, issues de secours, capteurs de gaz, alarmes au gaz, etc.)
 - **12.14** — Connaître les mesures d'amélioration ou de maintien de l'efficacité énergétique des équipements lors de l'installation ou de la maintenance avec des réfrigérants inflammables
 
-## Les trous à combler, par ordre de gravité
+## Ce qui a été comblé
 
-### 1. L'efficacité énergétique — sept codes, une phrase dans le livre
+Le cours est passé de 22 077 à 31 437 mots. Sept blocs ont été écrits, sur les trous que la
+première version de cette matrice avait relevés.
 
-Les codes **6.08, 7.10, 8.11, 9.10, 12.14** (tous nouveaux en 2025) et **11.02, 11.04** exigent de
-connaître les mesures d'amélioration ou de maintien de l'efficacité énergétique, composant par
-composant. Le livre définit le COP en une phrase et n'écrit jamais « coefficient de performance »
-en toutes lettres. **Sept codes sur trente-neuf reposent sur une notion traitée en une ligne.**
-C'est le trou le plus grave.
+**L'efficacité énergétique** — sept codes (6.08, 7.10, 8.11, 9.10, 12.14, 11.02, 11.04), dont cinq
+nouveaux en 2025, reposaient sur une phrase. Quatre leçons les portent : le COP et l'EER avec
+leurs conditions de mesure, l'écart condensation-évaporation comme levier principal et la
+condensation flottante avec sa limite au détendeur, les mesures organe par organe, et le choix
+d'un fluide selon l'application et le climat au regard des deux parts du TEWI.
 
-### 2. Les comptes rendus et le registre — sept codes de restitution écrite
+**Le registre et les comptes rendus** — sept codes (3.05, 4.09, 5.07, 6.07, 7.09, 8.10, 9.09).
+Le registre consulté avant et consigné après ; un gabarit de compte rendu qui sépare le fait,
+l'hypothèse et la conclusion, et qui nomme la conséquence à terme — ce que le libellé officiel
+demande réellement.
 
-**3.05, 4.09, 5.07** (consigner au registre) et **6.07, 7.09, 8.10, 9.09** (rédiger un rapport
-d'état). Ce sont des compétences d'écriture professionnelle, évaluables, et le livre les traite en
-annexe. Le chapitre T2-9 « Raisonner sans diagnostiquer trop vite » devient leur lieu de synthèse :
-distinguer le fait, l'hypothèse et la conclusion, c'est exactement ce que ces sept codes demandent.
+**Le raisonnement de diagnostic** — le second chapitre témoin exigé par le cadrage, qui n'existait
+pas. Les quatre temps du raisonnement, les trois pièges de lecture d'une table, et le tableau à
+deux entrées surchauffe / sous-refroidissement qui départage cinq hypothèses.
 
-### 3. Le code 1.00 — législation, DEEE et écoconception
+**Le code 1.00** — législation, DEEE, écoconception : l'écoconception tenait en 27 mots.
+**Le code 1.05** — le plus faible du référentiel à 193 mots, dont le libellé énumère neuf familles
+d'organes. **Les codes 1.01, 1.02, 1.04** — unités ISO, relatif et absolu, croix du frigoriste et
+transformations du fluide. **Les codes 1.06 et 1.07** — corps purs, azéotropes, zéotropes et
+glissement ; caractéristiques des hydrocarbures, du CO2 et du NH3. **Les codes 5.08 et 5.09** —
+la chaîne récupération, stockage, transport, et le cas des hydrocarbures.
 
-Exigé pour **les quatre catégories**, nouveau en 2025, et parmi les plus faibles du livre :
-l'écoconception y tient en 27 mots. Le dépôt `pilote-fluides` contient pourtant huit planches
-dédiées à l'écoconception et quarante sur les déchets, toutes inutilisées.
+### Ce qui reste ouvert
 
-### 4. Le rattachement question / code
-
-186 questions rattachées à 11 groupes. À plat, cela ferait de 2,5 questions par code (G12) à 10
-(G3) — mais ce sont des moyennes, pas des rattachements. **Aucun code ne peut prouver qu'il a sa
-question.** Deux chantiers : rattacher l'existant code par code, puis compléter les découverts.
+Les visuels des chapitres refondus viennent des stations `legislation/`, jusque-là inutilisées.
+Les 43 illustrations de la bibliothèque n'ont pas encore été réappariées : plusieurs portent une
+légende qui ne décrit pas ce qu'elles montrent, et c'est un chantier à part entière.
 
 ## Ce qui reste à décider
 
