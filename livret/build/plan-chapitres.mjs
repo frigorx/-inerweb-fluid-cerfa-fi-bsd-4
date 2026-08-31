@@ -62,7 +62,7 @@ export const QR_BASE = 'https://inerweb.fr/f/';
 import { LECONS_OZONE_CLIMAT, LECONS_LEGISLATION, LECONS_ORGANES_ANNEXES,
          LECONS_EFFICACITE, LECONS_REGISTRE, LECONS_DIAGNOSTIC,
          LECONS_UNITES, LECONS_FLUIDES, LECONS_CROIX,
-         LECONS_RECUPERATION } from './contenu-refonte.mjs';
+         LECONS_RECUPERATION, LECONS_ETANCHEITE, LECONS_TRAITES } from './contenu-refonte.mjs';
 
 export const CHAPITRES = [
   /* =================== PARTIE A — SE PROTÉGER =================== */
@@ -159,7 +159,7 @@ export const CHAPITRES = [
        où elles étaient déjà mieux à leur place. Les planches viennent des
        stations `impact-prp-odp` et `impact-montreal-kigali`, inutilisées
        jusqu'ici faute d'une famille pour les nommer. */
-    lecons: LECONS_OZONE_CLIMAT,
+    lecons: [...LECONS_OZONE_CLIMAT, ...LECONS_TRAITES],
     activite: {
       t: 'Deux installations, deux impacts', src: 'x1',
       visuels: ['svg:prp-echelle', 'illu:g2'],
@@ -549,6 +549,7 @@ export const CHAPITRES = [
         visuels: ['svg:balayage-detecteur', 'illu:g4c'],
         legendes: ['L étalonnage du détecteur', 'La consignation'] },
       ...LECONS_REGISTRE,
+      ...LECONS_ETANCHEITE,
     ],
     activite: {
       t: 'Le contrôle qui tourne mal', src: 'x4',

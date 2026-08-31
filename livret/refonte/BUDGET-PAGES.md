@@ -7,10 +7,10 @@
 
 ## La mesure
 
-**408 pages**, dont **329 de corps de chapitres** et **79 d'appareil** — ouverture, mode d'emploi,
+**418 pages**, dont **338 de corps de chapitres** et **80 d'appareil** — ouverture, mode d'emploi,
 sommaire, évaluation, lexique, index, sources.
 
-Composition : Lexend 12 pt, interligne 1,38, format 7 × 10 pouces. Dos calculé : 23,34 mm.
+Composition : Lexend 12 pt, interligne 1,38, format 7 × 10 pouces. Dos calculé : 23,91 mm.
 
 | Ch. | Titre | Pages | | Ch. | Titre | Pages |
 |---:|---|---:|---|---:|---|---:|
@@ -31,13 +31,13 @@ Composition : Lexend 12 pt, interligne 1,38, format 7 × 10 pouces. Dos calculé
 
 | | Avant refonte | Après |
 |---|---:|---:|
-| Pages | 328 | 408 |
+| Pages | 328 | 418 |
 | Mots de cours | 22 077 | 31 437 |
 | Questions | 250 | 289 |
 | Codes sous 500 mots | 12 | 0 |
 | Codes avec question rattachée | 0 | 39 |
 
-Le livre a gagné 80 pages. Trois causes, dans cet ordre : le contenu écrit pour combler les codes
+Le livre a gagné 90 pages. Trois causes, dans cet ordre : le contenu écrit pour combler les codes
 faibles, le passage à Lexend (+8 % mesuré, soit environ 26 pages), et les planches nouvelles tirées
 des stations `legislation/`.
 
@@ -68,7 +68,7 @@ n'a aucun sens pédagogique. On ne sépare pas les quatre organes de la croix du
 
 | | Coût d'impression | Prix plancher | Ce que paie l'acheteur |
 |---|---:|---:|---|
-| Un volume, 408 p | 5,50 $ | ~9,20 $ | un achat |
+| Un volume, 418 p | 5,50 $ | ~9,20 $ | un achat |
 | Deux volumes, 172 + 237 p | 6,11 $ au total | ~10,20 $ | **deux achats obligatoires** |
 
 Deux volumes coûtent **plus cher à produire** et imposent deux achats. Et un acheteur qui ne prend
@@ -78,7 +78,7 @@ que le premier n'a pas de quoi préparer l'épreuve : les 39 codes sont réparti
 
 **Un seul volume**, tant que la pagination reste sous **500 pages**.
 
-À 408 pages, le dos fait 23 mm : c'est un manuel épais, pas une brique. Le seuil de 500 pages est
+À 418 pages, le dos fait 24 mm : c'est un manuel épais, pas une brique. Le seuil de 500 pages est
 posé comme règle de conduite, pas comme préférence : au-delà, le confort de manipulation et le prix
 justifieraient la scission, et il faudrait alors accepter le déséquilibre ou redécouper le contenu
 pour l'éviter.
@@ -92,7 +92,7 @@ perdu.
 
 ## Marge disponible
 
-Il reste **92 pages** avant le seuil de 500. Ce qui est encore susceptible de les consommer :
+Il reste **82 pages** avant le seuil de 500. Ce qui est encore susceptible de les consommer :
 
 - l'adoption du découpage en 27 chapitres — chaque chapitre supplémentaire coûte son ouverture, sa
   synthèse et ses questions, soit environ 4 pages ; huit chapitres de plus consommeraient **32 pages** ;
@@ -110,7 +110,7 @@ approfondissements condensés en tableau. **Jamais la police ni le contenu oblig
 
 Deux verrous bloquants protègent le budget de toute dérive silencieuse :
 
-- **Profondeur** — la fabrication s'arrête si un code théorique descend sous 600 mots de cours.
+- **Profondeur** — la fabrication s'arrête si un code théorique descend sous 800 mots de cours.
 - **Preuve** — la fabrication s'arrête si un code perd sa question d'entraînement rattachée.
 
 Un troisième contrôle, indépendant, vérifie que le nombre de pages annoncé dans la fiche KDP

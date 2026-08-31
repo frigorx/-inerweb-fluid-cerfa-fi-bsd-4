@@ -249,6 +249,20 @@
   "fichier": "loi-5.png"
  },
  {
+  "chapitre": 3,
+  "lecon": 6,
+  "titre": "Deux traités, deux problèmes : pourquoi Montréal et la CCNUCC coexistent",
+  "slug": "loi-6",
+  "alias": "https://inerweb.fr/f/loi-6",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Deux traités, deux problèmes : pourquoi Mon…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "loi-6.png"
+ },
+ {
   "chapitre": 4,
   "titre": "Les sept catégories, et la bascule de 2027",
   "slug": "categories",
@@ -1188,6 +1202,34 @@
    "quoi": "La fiche interactive, avec sa question corrigée."
   },
   "fichier": "etancheite-7.png"
+ },
+ {
+  "chapitre": 14,
+  "lecon": 8,
+  "titre": "Méthode indirecte, méthode directe : deux outils, deux moments",
+  "slug": "etancheite-8",
+  "alias": "https://inerweb.fr/f/etancheite-8",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Méthode indirecte, méthode directe : deux o…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "etancheite-8.png"
+ },
+ {
+  "chapitre": 14,
+  "lecon": 9,
+  "titre": "Ce que le registre doit contenir, et ce qu'un contrôleur y cherche",
+  "slug": "etancheite-9",
+  "alias": "https://inerweb.fr/f/etancheite-9",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Ce que le registre doit contenir, et ce qu'…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "etancheite-9.png"
  },
  {
   "chapitre": 15,
@@ -2361,7 +2403,7 @@
   "slug": "a-recuperation",
   "alias": "https://inerweb.fr/f/a-recuperation",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/recuperation.svg",
-  "retour": "https://inerweb.fr/f/recuperation",
+  "retour": "https://inerweb.fr/f/etancheite",
   "renvoi": {
    "genre": "la planche",
    "titre": "La planche en grand",

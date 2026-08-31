@@ -10,23 +10,23 @@
   :root{
     --bleu:#1B3A63; --bleu2:#2f5689; --orange:#C9451A; --logo:#e8914a;
     --mut:#5a6b7d; --pale:#F4F7FA; --ligne:#d6dee7;
-    /* Cotes calculées sur 408 pages, papier blanc, intérieur
-       noir et blanc. Dos = 408 × 0,002252 pouce. */
-    --fp:3.175mm; --page-l:177.8mm; --page-h:254mm; --dos:23.34mm;
+    /* Cotes calculées sur 418 pages, papier blanc, intérieur
+       noir et blanc. Dos = 418 × 0,002252 pouce. */
+    --fp:3.175mm; --page-l:177.8mm; --page-h:254mm; --dos:23.91mm;
     --marge:14mm;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:#dfe5ec;font:14px/1.5 Calibri,"Segoe UI",system-ui,sans-serif;
     padding:24px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 
-  .note{max-width:385.29mm;margin:0 auto 16px;background:#fff;border-radius:10px;
+  .note{max-width:385.86mm;margin:0 auto 16px;background:#fff;border-radius:10px;
     padding:16px 20px;box-shadow:0 2px 10px rgba(27,58,99,.12);color:#1d2a38}
   .note h1{font:700 19px/1.3 "Trebuchet MS",sans-serif;color:var(--bleu);margin-bottom:6px}
   .note p{margin-bottom:6px;max-width:100ch}
   .note b{color:var(--bleu)}
 
   /* La couverture complète : 4e — dos — 1re, fonds perdus compris. */
-  .couverture{width:385.29mm;height:260.35mm;display:flex;margin:0 auto;
+  .couverture{width:385.86mm;height:260.35mm;display:flex;margin:0 auto;
     background:#fff;box-shadow:0 6px 24px rgba(27,58,99,.24);overflow:hidden}
   /* Le fond perdu prolonge la couleur du plat qu'il borde — sinon la
      coupe, qui tombe toujours un peu à côté, laisse une bande étrangère
@@ -103,7 +103,7 @@
 
   /* ---------------- Le fichier qu'on téléverse ---------------- */
   /* Une seule page, aux cotes exactes, sans la notice ni les ombres. */
-  @page{size:385.29mm 260.35mm;margin:0}
+  @page{size:385.86mm 260.35mm;margin:0}
   @media print{
     body{background:#fff;padding:0}
     .note{display:none}
@@ -115,10 +115,10 @@
 
 <div class="note">
   <h1>Couverture Amazon KDP — inerweb.fr HAB-FLUIDE, partie théorique</h1>
-  <p>Format exact, prêt pour le téléversement : <b>385,29 × 260,35 mm</b>
-     (15,169 × 10,25 pouces), fonds perdus de 3,175 mm compris.
-     Dos de <b>23,34 mm</b>, calculé sur <b>408 pages</b> en papier blanc noir et blanc
-     (408 × 0,002252 pouce). Cette page est <b>générée</b> : si la pagination bouge,
+  <p>Format exact, prêt pour le téléversement : <b>385,86 × 260,35 mm</b>
+     (15,191 × 10,25 pouces), fonds perdus de 3,175 mm compris.
+     Dos de <b>23,91 mm</b>, calculé sur <b>418 pages</b> en papier blanc noir et blanc
+     (418 × 0,002252 pouce). Cette page est <b>générée</b> : si la pagination bouge,
      <code>npm run couverture</code> la refait juste.</p>
   <p>Le rectangle en bas de la 4e de couverture est la <b>zone réservée au code-barres ISBN</b> :
      Amazon l'imprime lui-même, rien ne doit s'y trouver. Son cadre ne s'imprime pas.</p>
@@ -150,7 +150,7 @@
     <div class="encart encart-qr">
       <div>
         <h3>Le fil conducteur d’une formation en ligne complète</h3>
-        <p>215 QR codes, posés dans la marge des pages, ouvrent les animations,
+        <p>218 QR codes, posés dans la marge des pages, ouvrent les animations,
            les cours racontés à voix haute et les quiz corrigés d’inerweb.fr.
            Le papier guide, l’écran entraîne — et les adresses sont aussi écrites
            en clair : un navigateur suffit.</p>
@@ -300,7 +300,7 @@
   </g>
 </svg></div>
 
-    <p class="interactif"><b>Livre interactif</b> — 215 QR codes ouvrent les cours
+    <p class="interactif"><b>Livre interactif</b> — 218 QR codes ouvrent les cours
        animés et racontés d’inerweb.fr : schémas en mouvement, voix, corrections.</p>
     <div class="cats"><span>A1</span><span>A2</span><span>D</span><span>E</span></div>
     <p class="auteur"><b>F. Henninot</b>

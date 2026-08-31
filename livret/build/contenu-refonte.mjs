@@ -702,3 +702,91 @@ export const LECONS_RECUPERATION = [
     ],
   },
 ];
+
+/* ------------------------------------------------------------------
+   LA RECHERCHE DE FUITE — codes 4.01, 4.02, 4.09 et 3.05.
+   Quatre des six codes les moins dotés du livre après la première passe
+   de refonte. Ils forment pourtant un ensemble cohérent : consulter,
+   chercher, vérifier, consigner. C'est le cycle complet d'un contrôle
+   d'étanchéité, et l'épreuve l'attend dans cet ordre.
+   ------------------------------------------------------------------ */
+export const LECONS_ETANCHEITE = [
+  {
+    t: 'Méthode indirecte, méthode directe : deux outils, deux moments',
+    ecrit: true,
+    codes: ['4.01', '4.02'],
+    visuels: ['svg:points-de-fuite', 'svg:balayage-detecteur'],
+    legendes: ['Les points de fuite les plus frequents', 'Le balayage, lentement et au bon endroit'],
+    paras: [
+      'Chercher une fuite ne commence pas avec un détecteur à la main. Cela commence par le registre, puis par une méthode qui a un nom, un ordre et des limites.',
+      'La <b>méthode indirecte</b> consiste à déduire l\'existence d\'une fuite sans la localiser. On observe les paramètres de fonctionnement : pressions, températures, sous-refroidissement, niveau au voyant, courant absorbé, déclenchements de sécurités. On compare aux valeurs attendues et à l\'historique.',
+      'Son intérêt est qu\'elle s\'applique sans ouvrir ni approcher : elle dit « cette installation a perdu du fluide » avant que l\'on sache où. Sa limite est symétrique : elle ne localise rien, et plusieurs causes autres qu\'une fuite produisent les mêmes écarts.',
+      'La <b>méthode directe</b> localise. Détecteur électronique adapté au fluide, solution moussante, traceur fluorescent selon le cas. C\'est elle qui désigne le point à réparer.',
+      'L\'ordre logique est donc : le registre, puis l\'indirect qui oriente, puis le direct qui localise. Commencer par balayer une installation entière au détecteur sans avoir rien lu ni rien déduit revient à chercher une aiguille sans savoir dans quelle botte.',
+      'Le <b>choix de l\'instrument</b> n\'est pas indifférent. Un détecteur répond aux gaz pour lesquels il est conçu : un appareil à fluides fluorés ne verra pas un hydrocarbure, et un détecteur d\'oxygène surveille l\'asphyxie, pas la fuite. L\'appareil doit en outre être <b>vérifié avant emploi</b> — sur une source connue —, faute de quoi un résultat négatif ne prouve rien du tout.',
+      'Le <b>geste</b> compte autant que l\'appareil. On balaye lentement, sonde proche de la surface, en suivant les points de fuite probables : raccords mécaniques, brasures, presse-étoupe, prises de pression, vannes de service, points soumis aux vibrations et à la corrosion. On progresse du bas vers le haut pour les fluides plus lourds que l\'air, et l\'on se méfie des courants d\'air qui dispersent le gaz.',
+      'Une dernière exigence, souvent négligée et pourtant décisive : le <b>contrôle après réparation</b>. Une fuite réparée n\'est pas une fuite prouvée arrêtée. Le contrôle qui suit la réparation fait partie de l\'obligation, et son absence est ce qu\'un contrôleur relèvera en premier.',
+    ],
+    blocs: [
+      { type: 'cle', t: 'L\'ordre qui ne change pas',
+        html: '<p><ol><li><b>Le registre</b> — problèmes récurrents, parties déjà problématiques, quantités déjà ajoutées.</li><li><b>L\'indirect</b> — les paramètres de fonctionnement disent s\'il manque du fluide.</li><li><b>Le direct</b> — le détecteur adapté, vérifié, localise le point.</li><li><b>La réparation</b>, puis <b>le contrôle qui la vérifie</b>.</li><li><b>Le registre</b>, de nouveau : méthode, instrument, résultat, quantités.</li></ol></p>' },
+      { type: 'piege', t: 'Le détecteur qui ne dit rien',
+        html: '<p>Un détecteur non vérifié, mal réglé en sensibilité, ou passé trop vite ne trouve rien — et l\'on conclut qu\'il n\'y a pas de fuite. C\'est une conclusion tirée d\'une absence de preuve, pas d\'une preuve d\'absence. Si l\'indirect dit qu\'il manque du fluide et que le direct ne trouve rien, c\'est le direct qu\'il faut refaire, pas la conclusion qu\'il faut inverser.</p>' },
+    ],
+  },
+  {
+    t: 'Ce que le registre doit contenir, et ce qu\'un contrôleur y cherche',
+    ecrit: true,
+    codes: ['4.09', '3.05', '4.02'],
+    visuels: ['leg:dechets-responsabilites/registre-producteur', 'svg:recuperation'],
+    legendes: ['Ce que la trace ecrite doit porter', 'La quantite qui sort se pese'],
+    paras: [
+      'Trois codes du référentiel demandent de consigner : après un contrôle d\'étanchéité, après un essai de mise en service, après un mouvement de fluide. Ils n\'attendent pas la même chose, mais ils partagent une exigence : que l\'écrit permette de <b>refaire le raisonnement</b> sans avoir été là.',
+      'Un enregistrement complet porte huit éléments. La <b>date</b>. L\'<b>intervenant</b> et son entreprise. L\'<b>identification de l\'équipement</b> — sans elle, tout le reste flotte. La <b>nature de l\'opération</b>. La <b>méthode</b> et l\'<b>instrument</b> employés. Le <b>résultat</b>. Les <b>quantités</b>, pesées, ajoutées ou récupérées, avec la nature du fluide. Et la <b>suite donnée</b> : réparation, contrôle de vérification, ou prochaine échéance.',
+      'Arrêtons-nous sur deux d\'entre eux, parce que ce sont ceux qui manquent le plus souvent.',
+      'La <b>méthode et l\'instrument</b>. « Étanchéité contrôlée : conforme » ne dit ni comment, ni avec quoi, ni à quelle sensibilité. Un autre technicien ne peut pas savoir si le contrôle valait quelque chose. Écrire « contrôle direct au détecteur électronique, vérifié sur source de référence avant emploi » prend dix secondes et rend l\'enregistrement opposable.',
+      'Les <b>quantités</b>. On écrit ce que la balance a mesuré, pas ce que l\'on estime avoir mis. Une charge appréciée au manomètre n\'est pas une donnée de registre, et une ligne « appoint de fluide » sans quantité ni nature ne prouve rien — elle laisse même penser que l\'on a rechargé une installation qui fuit sans chercher d\'où.',
+      'Ce qu\'un contrôleur regarde, ensuite, tient en trois questions. La <b>continuité</b> : y a-t-il des trous dans l\'historique, des interventions sans trace ? La <b>cohérence</b> : les quantités ajoutées correspondent-elles aux fuites déclarées et réparées ? Et la <b>boucle fermée</b> : chaque fuite trouvée a-t-elle sa réparation, et chaque réparation son contrôle de vérification ?',
+      'C\'est cette troisième question qui piège le plus. Un registre peut être parfaitement tenu et rester incomplet parce que les vérifications après réparation n\'y figurent pas. La fuite est alors documentée, la réparation aussi, et rien ne prouve que l\'installation est étanche.',
+      'Un mot enfin sur ce que le registre vous apporte à vous. Le jour où l\'on vous demandera ce que vous avez fait sur cette machine il y a dix-huit mois, votre mémoire ne vaudra rien et votre écriture vaudra tout. Le registre n\'est pas une contrainte administrative : c\'est la seule pièce qui vous protège.',
+    ],
+    blocs: [
+      { type: 'cle', t: 'Les huit éléments d\'un enregistrement complet',
+        html: '<p><ol><li>Date.</li><li>Intervenant et entreprise.</li><li>Identification de l\'équipement.</li><li>Nature de l\'opération.</li><li>Méthode et instrument.</li><li>Résultat.</li><li>Quantités pesées et nature du fluide.</li><li>Suite donnée : réparation, contrôle de vérification, prochaine échéance.</li></ol></p>' },
+      { type: 'piege', t: 'Le registre parfait mais sans boucle fermée',
+        html: '<p>Fuite consignée, réparation consignée, et rien après. C\'est le défaut le plus fréquent et le plus facile à éviter : il manque la ligne qui dit que le contrôle postérieur a été fait et qu\'il était négatif. Sans elle, le dossier montre une fuite traitée, pas une installation étanche.</p>' },
+    ],
+  },
+];
+
+/* ------------------------------------------------------------------
+   LA POLITIQUE INTERNATIONALE — code 2.01.
+   CCNUCC, Montréal, Kyoto, Paris, Kigali. Le livre les traitait en
+   quelques lignes chacun, sans dire ce qui les distingue ni pourquoi
+   deux traités coexistent sur des sujets voisins.
+   ------------------------------------------------------------------ */
+export const LECONS_TRAITES = [
+  {
+    t: 'Deux traités, deux problèmes : pourquoi Montréal et la CCNUCC coexistent',
+    ecrit: true,
+    codes: ['2.01'],
+    visuels: ['leg:impact-montreal-kigali/frise-trois-temps', 'leg:impact-montreal-kigali/montreal-1987'],
+    legendes: ['Trois temps, trois reponses', 'Ce que Montreal a organise'],
+    paras: [
+      'Deux constructions juridiques internationales encadrent votre métier, et l\'on croit souvent qu\'il n\'y en a qu\'une. Elles ne traitent pas du même problème et n\'ont pas eu le même succès.',
+      'La première est le <b>protocole de Montréal</b>, signé en 1987. Son objet est la <b>couche d\'ozone</b>. Il organise l\'élimination progressive des substances qui l\'appauvrissent : d\'abord les CFC, puis les HCFC, avec des calendriers différenciés selon les pays.',
+      'Montréal est considéré comme l\'accord environnemental international le plus efficace jamais conclu. Deux raisons à cela, et elles sont instructives. Le problème était clairement attribuable à quelques familles de molécules produites par un petit nombre d\'industriels. Et des substituts techniquement praticables existaient.',
+      'La seconde construction est la <b>CCNUCC</b>, convention-cadre des Nations unies sur les changements climatiques, adoptée en 1992. Son objet est le <b>climat</b>. Une convention-cadre pose des principes ; ce sont les textes pris sous son autorité qui fixent les obligations.',
+      'Le <b>protocole de Kyoto</b>, en 1997, en est le premier : il impose des objectifs chiffrés de réduction à un ensemble de pays industrialisés, et inscrit les HFC parmi les gaz visés. L\'<b>accord de Paris</b>, en 2015, change de logique : chaque État annonce sa contribution, avec un mécanisme de révision périodique.',
+      'Reste à comprendre pourquoi les HFC ont fini par revenir dans le giron de Montréal alors qu\'ils relèvent du climat. C\'est l\'objet de l\'<b>amendement de Kigali</b>, adopté en 2016.',
+      'La raison est pragmatique. Les HFC n\'existent massivement que parce que Montréal a fait sortir les CFC et les HCFC : ils sont le produit direct de son succès. Et Montréal disposait déjà de ce qui manquait ailleurs — un mécanisme de réduction par étapes, un secteur industriel identifié, une institution qui fonctionne. Kigali greffe donc la réduction des HFC sur un dispositif éprouvé, plutôt que d\'en créer un autre.',
+      'C\'est ce que traduit la réglementation européenne que vous appliquez. Le règlement sur les gaz fluorés met en œuvre ces engagements par des quotas, des interdictions de mise sur le marché et des obligations de confinement. Quand vous consignez une charge au registre, vous êtes au bout de cette chaîne : une décision internationale devenue un geste de terrain.',
+    ],
+    blocs: [
+      { type: 'cle', t: 'Les cinq textes, et ce que chacun fait',
+        html: '<p><ol><li><b>Montréal (1987)</b> — couche d\'ozone : élimination des CFC puis des HCFC.</li><li><b>CCNUCC (1992)</b> — convention-cadre climat : pose les principes.</li><li><b>Kyoto (1997)</b> — objectifs chiffrés pour les pays industrialisés ; les HFC y figurent.</li><li><b>Paris (2015)</b> — contributions nationales, révisées périodiquement.</li><li><b>Kigali (2016)</b> — amendement à Montréal : réduction des HFC, greffée sur le dispositif qui marche.</li></ol></p>' },
+      { type: 'piege', t: 'Confondre l\'ozone et le climat dans les traités',
+        html: '<p>Montréal traite l\'ozone, la CCNUCC traite le climat. Kigali est l\'exception qui déroute : c\'est un amendement à Montréal — traité de l\'ozone — dont l\'objet est climatique. Ce n\'est pas une incohérence, c\'est un choix d\'efficacité : on a utilisé l\'outil qui fonctionnait plutôt que d\'en construire un nouveau.</p>' },
+    ],
+  },
+];

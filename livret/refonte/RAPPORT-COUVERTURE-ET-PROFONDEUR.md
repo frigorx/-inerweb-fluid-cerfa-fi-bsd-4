@@ -11,9 +11,9 @@
 | Codes couverts | **39** |
 | Codes sous le plancher de 600 mots | **0** |
 | Codes sans question rattachée | **0** |
-| Mots de cours | **31437** |
+| Mots de cours | **32775** |
 | Questions imprimables | **289** |
-| Pages | **408** |
+| Pages | **418** |
 
 Les deux lignes qui comptent sont les deux zéros. Ce ne sont pas des affirmations : ce sont les
 conditions que `build/extraire.mjs` vérifie avant de laisser la fabrication continuer. Un code qui
@@ -40,26 +40,26 @@ PDF fini.
 | **1.06** | A1/A2/D/E | 4 | 1377 | 13 | 1 |  |
 | **1.07** | A1/A2/D/E | 3 | 971 | 10 | 3 | ✦ |
 | **1.08** | A1/A2/D/E | 5 | 1538 | 20 | 2 | ✦ |
-| **2.01** | A1/A2/D/E | 2 | 723 | 5 | 12 |  |
-| **2.02** | A1/A2/D/E | 5 | 1972 | 16 | 10 |  |
-| **3.05** | A1/A2 | 3 | 831 | 13 | 1 |  |
-| **4.01** | A1/A2/E | 3 | 885 | 12 | 1 |  |
-| **4.02** | A1/A2/E | 3 | 857 | 7 | 1 |  |
-| **4.09** | A1/A2/E | 3 | 706 | 6 | 1 |  |
+| **2.01** | A1/A2/D/E | 3 | 1173 | 13 | 12 |  |
+| **2.02** | A1/A2/D/E | 5 | 1972 | 12 | 10 |  |
+| **3.05** | A1/A2 | 4 | 1277 | 22 | 1 |  |
+| **4.01** | A1/A2/E | 4 | 1327 | 15 | 1 |  |
+| **4.02** | A1/A2/E | 5 | 1745 | 19 | 1 |  |
+| **4.09** | A1/A2/E | 4 | 1152 | 15 | 1 |  |
 | **5.07** | A1/A2/D | 3 | 1492 | 10 | 3 |  |
 | **5.08** | A1/A2/D | 2 | 1054 | 7 | 14 |  |
 | **5.09** | A1/A2/D | 2 | 972 | 12 | 1 | ✦ |
 | **6.01** | A1/A2 | 4 | 1138 | 16 | 10 |  |
-| **6.07** | A1/A2 | 4 | 1038 | 14 | 4 |  |
+| **6.07** | A1/A2 | 4 | 1038 | 8 | 4 |  |
 | **6.08** | A1/A2 | 5 | 2064 | 14 | 1 | ✦ |
 | **7.01** | A1/A2 | 3 | 1102 | 15 | 4 |  |
-| **7.09** | A1/A2 | 4 | 1221 | 21 | 1 |  |
+| **7.09** | A1/A2 | 4 | 1221 | 15 | 1 |  |
 | **7.10** | A1/A2 | 5 | 1831 | 19 | 1 | ✦ |
 | **8.01** | A1/A2 | 3 | 1138 | 15 | 3 |  |
-| **8.10** | A1/A2 | 4 | 1282 | 21 | 1 |  |
+| **8.10** | A1/A2 | 4 | 1282 | 15 | 1 |  |
 | **8.11** | A1/A2 | 5 | 1892 | 19 | 1 | ✦ |
 | **9.01** | A1/A2 | 3 | 1145 | 15 | 7 |  |
-| **9.09** | A1/A2 | 4 | 1418 | 16 | 1 |  |
+| **9.09** | A1/A2 | 4 | 1418 | 10 | 1 |  |
 | **9.10** | A1/A2 | 4 | 1524 | 11 | 1 | ✦ |
 | **11.01** | A1/A2/D/E | 4 | 1352 | 18 | 3 |  |
 | **11.02** | A1/A2 | 6 | 2253 | 24 | 2 |  |
@@ -80,13 +80,13 @@ pages le permet.
 
 | Code | Mots | Libellé |
 |---|---:|---|
-| **4.09** | 706 | Consigner les données dans le registre de l'équipement |
-| **2.01** | 723 | Avoir une connaissance élémentaire de la politique de l'UE et internationale en matière  |
 | **12.14** | 831 | Connaître les mesures d'amélioration ou de maintien de l'efficacité énergétique des équi |
-| **3.05** | 831 | Consigner les données dans le registre de l'équipement et rédiger un rapport portant sur |
-| **4.02** | 857 | Consulter le registre de l'équipement avant tout contrôle d'étanchéité et relever les in |
-| **4.01** | 885 | Connaître les points de fuite potentiels des équipements de réfrigération, de climatisat |
 | **1.01** | 934 | Connaître les unités normalisées ISO pour la température, la pression, la masse, la dens |
+| **1.07** | 971 | Connaître les caractéristiques des hydrocarbures, du CO2, et du NH3 et des autres réfrig |
+| **5.09** | 972 | Connaître les prescriptions et les procédures de gestion, de remplissage, de récupératio |
+| **6.07** | 1038 | Rédiger un rapport sur l'état du compresseur en indiquant tout problème de fonctionnemen |
+| **1.04** | 1040 | Décrire la fonction des principales composantes du système (compresseur, évaporateur, co |
+| **1.05** | 1052 | Connaître le fonctionnement élémentaire des composantes suivantes utilisées dans un syst |
 
 ## Les treize codes nouveaux de 2025
 
@@ -109,7 +109,7 @@ le plus faible, puisqu'il avait été écrit sur le régime précédent. État a
 | **12.13** | 1308 | 1 | Vérifier que les mesures de santé et de sécurité conformes aux règles applic |
 | **12.14** | 831 | 1 | Connaître les mesures d'amélioration ou de maintien de l'efficacité énergéti |
 
-Moyenne des codes nouveaux : **1571 mots**. Moyenne des autres : **1387 mots**.
+Moyenne des codes nouveaux : **1571 mots**. Moyenne des autres : **1489 mots**.
 
 ## Ce que ce rapport ne prouve pas
 

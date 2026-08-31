@@ -223,6 +223,22 @@
   "citations": 1,
   "animee": true
  },
+ "leg:impact-montreal-kigali/frise-trois-temps": {
+  "fichier": "leg-impact-montreal-kigali_frise-trois-temps.png",
+  "largeur": 900,
+  "hauteur": 340,
+  "source": "legislation/stations/impact-montreal-kigali/svg/frise-trois-temps.svg",
+  "citations": 1,
+  "animee": true
+ },
+ "leg:impact-montreal-kigali/montreal-1987": {
+  "fichier": "leg-impact-montreal-kigali_montreal-1987.png",
+  "largeur": 900,
+  "hauteur": 360,
+  "source": "legislation/stations/impact-montreal-kigali/svg/montreal-1987.svg",
+  "citations": 1,
+  "animee": true
+ },
  "illu:g2": {
   "fichier": "illu-g2.png",
   "largeur": 1024,
@@ -396,7 +412,7 @@
   "largeur": 2400,
   "hauteur": 2080,
   "source": "packs/fluides/res/svg/points-de-fuite.svg",
-  "citations": 8,
+  "citations": 9,
   "animee": true
  },
  "svg:manifold-lecture": {
@@ -812,7 +828,7 @@
   "largeur": 2400,
   "hauteur": 800,
   "source": "packs/fluides/res/svg/balayage-detecteur.svg",
-  "citations": 3,
+  "citations": 4,
   "animee": false
  },
  "illu:g4c": {
@@ -828,7 +844,7 @@
   "largeur": 900,
   "hauteur": 380,
   "source": "legislation/stations/dechets-responsabilites/svg/registre-producteur.svg",
-  "citations": 1,
+  "citations": 2,
   "animee": false
  },
  "svg:recuperation": {
@@ -836,7 +852,7 @@
   "largeur": 2400,
   "hauteur": 1013,
   "source": "packs/fluides/res/svg/recuperation.svg",
-  "citations": 4,
+  "citations": 5,
   "animee": false
  },
  "illu:g5a": {

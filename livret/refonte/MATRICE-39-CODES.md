@@ -43,8 +43,8 @@ fabrication si un code théorique perd sa question.
 | Verdict | Codes | Sens |
 |---|---:|---|
 | **SOUS PLANCHER** | 0 | moins de 600 mots — la chaîne refuse de fabriquer |
-| **COUVERT** | 7 | 600 à 1 000 mots — traité, sans réserve |
-| **APPROFONDI** | 32 | plus de 1 000 mots |
+| **COUVERT** | 2 | 600 à 1 000 mots — traité, sans réserve |
+| **APPROFONDI** | 37 | plus de 1 000 mots |
 
 ## La matrice
 
@@ -69,22 +69,22 @@ Le chapitre **porteur** enseigne le code ; les **rappels** le remobilisent sans 
 
 | Code | Cat. | Chapitre porteur | Rappels | Aujourd'hui | Mots | Verdict |
 |---|---|---|---|---|---:|---|
-| **2.01** | A1/A2/D/E | T1-3 · De Montréal à F-Gas III | T1-1 | ch. 3 · 5 p | 764 | COUVERT |
-| **2.02** | A1/A2/D/E | T1-2 · Ozone, effet de serre, ODP et PRP/GWP | T1-3 | ch. 3 · 16 p | 2078 | APPROFONDI |
+| **2.01** | A1/A2/D/E | T1-3 · De Montréal à F-Gas III | T1-1 | ch. 3 · 13 p | 1238 | APPROFONDI |
+| **2.02** | A1/A2/D/E | T1-2 · Ozone, effet de serre, ODP et PRP/GWP | T1-3 | ch. 3 · 12 p | 2078 | APPROFONDI |
 
 ### G3 — Contrôles à effectuer préalablement à la mise en service d'un équipement, après une longue période d'interruption, après un entretien ou une réparation, ou contrôles durant le fonctionnement
 
 | Code | Cat. | Chapitre porteur | Rappels | Aujourd'hui | Mots | Verdict |
 |---|---|---|---|---|---:|---|
-| **3.05** | A1/A2 | T2-7 · Préparer une mise en service | T2-12 | ch. 13,14 · 13 p | 875 | COUVERT |
+| **3.05** | A1/A2 | T2-7 · Préparer une mise en service | T2-12 | ch. 13,14 · 22 p | 1342 | APPROFONDI |
 
 ### G4 — Contrôles d'étanchéité
 
 | Code | Cat. | Chapitre porteur | Rappels | Aujourd'hui | Mots | Verdict |
 |---|---|---|---|---|---:|---|
-| **4.01** | A1/A2/E | T2-8 · Rechercher une fuite | T2-6 | ch. 7,14 · 12 p | 920 | COUVERT |
-| **4.02** | A1/A2/E | T2-8 · Rechercher une fuite | — | ch. 14 · 7 p | 891 | COUVERT |
-| **4.09** | A1/A2/E | T2-8 · Rechercher une fuite | — | ch. 14 · 6 p | 741 | COUVERT |
+| **4.01** | A1/A2/E | T2-8 · Rechercher une fuite | T2-6 | ch. 7,14 · 15 p | 1381 | APPROFONDI |
+| **4.02** | A1/A2/E | T2-8 · Rechercher une fuite | — | ch. 14 · 19 p | 1819 | APPROFONDI |
+| **4.09** | A1/A2/E | T2-8 · Rechercher une fuite | — | ch. 14 · 15 p | 1208 | APPROFONDI |
 
 ### G5 — Gestion écologique du système et du réfrigérant lors de l'installation, de la maintenance, de l'entretien ou de la récupération
 
@@ -99,7 +99,7 @@ Le chapitre **porteur** enseigne le code ; les **rappels** le remobilisent sans 
 | Code | Cat. | Chapitre porteur | Rappels | Aujourd'hui | Mots | Verdict |
 |---|---|---|---|---|---:|---|
 | **6.01** | A1/A2 | T2-2 · Le compresseur et la lubrification | — | ch. 9 · 16 p | 1184 | APPROFONDI |
-| **6.07** | A1/A2 | T2-2 · Le compresseur et la lubrification | T2-9 | ch. 9,14 · 14 p | 1088 | APPROFONDI |
+| **6.07** | A1/A2 | T2-2 · Le compresseur et la lubrification | T2-9 | ch. 9,14 · 8 p | 1088 | APPROFONDI |
 | **6.08** ✦ | A1/A2 | T2-2 · Le compresseur et la lubrification | T2-13 | ch. 9,17 · 14 p | 2163 | APPROFONDI |
 
 ### G7 — Composant : installation, mise en service et maintenance de condenseurs à air froid et à eau froide
@@ -107,7 +107,7 @@ Le chapitre **porteur** enseigne le code ; les **rappels** le remobilisent sans 
 | Code | Cat. | Chapitre porteur | Rappels | Aujourd'hui | Mots | Verdict |
 |---|---|---|---|---|---:|---|
 | **7.01** | A1/A2 | T2-3 · Le condenseur | — | ch. 9,10 · 15 p | 1136 | APPROFONDI |
-| **7.09** | A1/A2 | T2-3 · Le condenseur | T2-9 | ch. 10,14 · 21 p | 1303 | APPROFONDI |
+| **7.09** | A1/A2 | T2-3 · Le condenseur | T2-9 | ch. 10,14 · 15 p | 1303 | APPROFONDI |
 | **7.10** ✦ | A1/A2 | T2-3 · Le condenseur | T2-13 | ch. 10,17 · 19 p | 1937 | APPROFONDI |
 
 ### G8 — Composant : installation, mise en service et maintenance d'évaporateurs à refroidissement par air et à refroidissement par liquide
@@ -115,7 +115,7 @@ Le chapitre **porteur** enseigne le code ; les **rappels** le remobilisent sans 
 | Code | Cat. | Chapitre porteur | Rappels | Aujourd'hui | Mots | Verdict |
 |---|---|---|---|---|---:|---|
 | **8.01** | A1/A2 | T2-4 · L'évaporateur et le dégivrage | — | ch. 9,11 · 15 p | 1182 | APPROFONDI |
-| **8.10** | A1/A2 | T2-4 · L'évaporateur et le dégivrage | T2-9 | ch. 11,14 · 21 p | 1331 | APPROFONDI |
+| **8.10** | A1/A2 | T2-4 · L'évaporateur et le dégivrage | T2-9 | ch. 11,14 · 15 p | 1331 | APPROFONDI |
 | **8.11** ✦ | A1/A2 | T2-4 · L'évaporateur et le dégivrage | T2-13 | ch. 11,17 · 19 p | 1965 | APPROFONDI |
 
 ### G9 — Composant : installation, mise en service et entretien des détendeurs thermostatiques et autres composants
@@ -123,7 +123,7 @@ Le chapitre **porteur** enseigne le code ; les **rappels** le remobilisent sans 
 | Code | Cat. | Chapitre porteur | Rappels | Aujourd'hui | Mots | Verdict |
 |---|---|---|---|---|---:|---|
 | **9.01** | A1/A2 | T2-5 · Les détendeurs | — | ch. 9,12 · 15 p | 1181 | APPROFONDI |
-| **9.09** | A1/A2 | T2-5 · Les détendeurs | T2-9 | ch. 12,14 · 16 p | 1463 | APPROFONDI |
+| **9.09** | A1/A2 | T2-5 · Les détendeurs | T2-9 | ch. 12,14 · 10 p | 1463 | APPROFONDI |
 | **9.10** ✦ | A1/A2 | T2-5 · Les détendeurs | T2-13 | ch. 12,17 · 11 p | 1568 | APPROFONDI |
 
 ### G11 — Informations sur les technologies pertinentes permettant de remplacer les gaz à effet de serre fluorés ou d'en réduire l'utilisation, et sur leur manipulation sans danger

@@ -9,14 +9,14 @@
 
 ## Ce que le livre imprime
 
-**157 références**, pour 278 citations dans les pages.
+**159 références**, pour 284 citations dans les pages.
 
 | Type | Nombre |
 |---|---:|
 | Planche vectorielle dessinée | 64 |
 | Illustration | 37 |
 | Symbole normalisé | 24 |
-| Planche de station réglementaire | 19 |
+| Planche de station réglementaire | 21 |
 | Icône | 7 |
 | Ambiance | 5 |
 | Planche vectorielle (jeu v2) | 1 |
@@ -129,11 +129,13 @@ figée à l'impression.
 | `illu:s5` | Illustration | Image générée par IA sous direction de F. Henninot | © inerWeb — tous droits réservés | Génération dirigée, prompts conservés | 1 | `packs/fluides/res/bibliotheque/illu-s5.webp` |
 | `leg:aptitude-capacite/deux-papiers` | Planche de station réglementaire | F. Henninot (inerWeb) | © inerWeb — tous droits réservés | Dessin original SVG | 1 | `legislation/stations/aptitude-capacite/svg/deux-papiers.svg` |
 | `leg:dechets-responsabilites/chaine-producteur-detenteur` | Planche de station réglementaire | F. Henninot (inerWeb) | © inerWeb — tous droits réservés | Dessin original SVG | 1 | `legislation/stations/dechets-responsabilites/svg/chaine-producteur-detenteur.svg` |
-| `leg:dechets-responsabilites/registre-producteur` | Planche de station réglementaire | F. Henninot (inerWeb) | © inerWeb — tous droits réservés | Dessin original SVG | 1 | `legislation/stations/dechets-responsabilites/svg/registre-producteur.svg` |
+| `leg:dechets-responsabilites/registre-producteur` | Planche de station réglementaire | F. Henninot (inerWeb) | © inerWeb — tous droits réservés | Dessin original SVG | 2 | `legislation/stations/dechets-responsabilites/svg/registre-producteur.svg` |
 | `leg:dechets-sept-flux/dechets-dangereux-a-part` | Planche de station réglementaire | F. Henninot (inerWeb) | © inerWeb — tous droits réservés | Dessin original SVG | 1 | `legislation/stations/dechets-sept-flux/svg/dechets-dangereux-a-part.svg` |
 | `leg:dechets-sept-flux/rangee-bennes-matiere` | Planche de station réglementaire | F. Henninot (inerWeb) | © inerWeb — tous droits réservés | Dessin original SVG | 1 | `legislation/stations/dechets-sept-flux/svg/rangee-bennes-matiere.svg` |
 | `leg:impact-ecoconception/concevoir-pour-durer` ★ | Planche de station réglementaire | F. Henninot (inerWeb) | © inerWeb — tous droits réservés | Dessin original SVG | 1 | `legislation/stations/impact-ecoconception/svg/concevoir-pour-durer.svg` |
 | `leg:impact-ecoconception/etiquette-energie` | Planche de station réglementaire | F. Henninot (inerWeb) | © inerWeb — tous droits réservés | Dessin original SVG | 1 | `legislation/stations/impact-ecoconception/svg/etiquette-energie.svg` |
+| `leg:impact-montreal-kigali/frise-trois-temps` ★ | Planche de station réglementaire | F. Henninot (inerWeb) | © inerWeb — tous droits réservés | Dessin original SVG | 1 | `legislation/stations/impact-montreal-kigali/svg/frise-trois-temps.svg` |
+| `leg:impact-montreal-kigali/montreal-1987` ★ | Planche de station réglementaire | F. Henninot (inerWeb) | © inerWeb — tous droits réservés | Dessin original SVG | 1 | `legislation/stations/impact-montreal-kigali/svg/montreal-1987.svg` |
 | `leg:impact-montreal-kigali/nouveau-probleme-prp` ★ | Planche de station réglementaire | F. Henninot (inerWeb) | © inerWeb — tous droits réservés | Dessin original SVG | 1 | `legislation/stations/impact-montreal-kigali/svg/nouveau-probleme-prp.svg` |
 | `leg:impact-montreal-kigali/ozone-vers-climat` | Planche de station réglementaire | F. Henninot (inerWeb) | © inerWeb — tous droits réservés | Dessin original SVG | 1 | `legislation/stations/impact-montreal-kigali/svg/ozone-vers-climat.svg` |
 | `leg:impact-prp-odp/cas-chambre-froide` ★ | Planche de station réglementaire | F. Henninot (inerWeb) | © inerWeb — tous droits réservés | Dessin original SVG | 1 | `legislation/stations/impact-prp-odp/svg/cas-chambre-froide.svg` |
@@ -149,7 +151,7 @@ figée à l'impression.
 | `pack:co2-local-protege` | Planche vectorielle (jeu v2) | F. Henninot (direction métier) et OpenAI Codex (dessin SVG original) | © 2026 Franck Henninot, inerWeb. Tous droits réservés. | Dessin original SVG | 3 | `../../Users/henni/-inerweb-fluid-cerfa-fi-bsd-4/livret/illustrations-interieures-v2/svg/co2-local-protege.svg` |
 | `svg:aptitude-capacite` | Planche vectorielle dessinée | inerWeb — F. Henninot | © 2026 inerWeb — F. Henninot — tous droits réservés sur l’illustration | Dessin original SVG | 4 | `packs/fluides/res/svg/aptitude-capacite.svg` |
 | `svg:balayage-azote` | Planche vectorielle dessinée | inerWeb — F. Henninot | © 2026 inerWeb — F. Henninot — tous droits réservés sur l’illustration | Dessin original SVG | 3 | `packs/fluides/res/svg/balayage-azote.svg` |
-| `svg:balayage-detecteur` | Planche vectorielle dessinée | inerWeb — F. Henninot | © 2026 inerWeb — F. Henninot — tous droits réservés sur l’illustration | Dessin original SVG | 3 | `packs/fluides/res/svg/balayage-detecteur.svg` |
+| `svg:balayage-detecteur` | Planche vectorielle dessinée | inerWeb — F. Henninot | © 2026 inerWeb — F. Henninot — tous droits réservés sur l’illustration | Dessin original SVG | 4 | `packs/fluides/res/svg/balayage-detecteur.svg` |
 | `svg:brasage-balayage-azote` | Planche vectorielle dessinée | F. Henninot (direction métier) et OpenAI Codex (dessin SVG original) | © 2026 Franck Henninot, inerWeb. Tous droits réservés. | Dessin original SVG | 1 | `packs/fluides/res/svg/brasage-balayage-azote.svg` |
 | `svg:categories-champs` | Planche vectorielle dessinée | F. Henninot (direction métier) et OpenAI Codex (dessin SVG original) | © 2026 Franck Henninot, inerWeb. Tous droits réservés. | Dessin original SVG | 1 | `packs/fluides/res/svg/categories-champs.svg` |
 | `svg:chaleur-sensible-latente` ★ | Planche vectorielle dessinée | inerWeb — F. Henninot | © 2026 inerWeb — F. Henninot — tous droits réservés sur l’illustration | Dessin original SVG | 1 | `packs/fluides/res/svg/chaleur-sensible-latente.svg` |
@@ -189,14 +191,14 @@ figée à l'impression.
 | `svg:nomenclature` ★ | Planche vectorielle dessinée | inerWeb — F. Henninot | © 2026 inerWeb — F. Henninot — tous droits réservés sur l’illustration | Dessin original SVG | 4 | `packs/fluides/res/svg/nomenclature.svg` |
 | `svg:ordre-vannes` ★ | Planche vectorielle dessinée | inerWeb — F. Henninot | © 2026 inerWeb — F. Henninot — tous droits réservés sur l’illustration | Dessin original SVG | 1 | `packs/fluides/res/svg/ordre-vannes.svg` |
 | `svg:pesee-charge` ★ | Planche vectorielle dessinée | inerWeb — F. Henninot | © 2026 inerWeb — F. Henninot — tous droits réservés sur l’illustration | Dessin original SVG | 2 | `packs/fluides/res/svg/pesee-charge.svg` |
-| `svg:points-de-fuite` ★ | Planche vectorielle dessinée | inerWeb — F. Henninot | © 2026 inerWeb — F. Henninot — tous droits réservés sur l’illustration | Dessin original SVG | 8 | `packs/fluides/res/svg/points-de-fuite.svg` |
+| `svg:points-de-fuite` ★ | Planche vectorielle dessinée | inerWeb — F. Henninot | © 2026 inerWeb — F. Henninot — tous droits réservés sur l’illustration | Dessin original SVG | 9 | `packs/fluides/res/svg/points-de-fuite.svg` |
 | `svg:prepa-chantier` | Planche vectorielle dessinée | inerWeb — F. Henninot | © 2026 inerWeb — F. Henninot — tous droits réservés sur l’illustration | Dessin original SVG | 2 | `packs/fluides/res/svg/prepa-chantier.svg` |
 | `svg:pression-absolue-relative` ★ | Planche vectorielle dessinée | inerWeb — F. Henninot | © 2026 inerWeb — F. Henninot — tous droits réservés sur l’illustration | Dessin original SVG | 3 | `packs/fluides/res/svg/pression-absolue-relative.svg` |
 | `svg:prp-echelle` | Planche vectorielle dessinée | inerWeb — F. Henninot | © 2026 inerWeb — F. Henninot — tous droits réservés sur l’illustration | Dessin original SVG | 6 | `packs/fluides/res/svg/prp-echelle.svg` |
 | `svg:quatre-leviers-energie` | Planche vectorielle dessinée | F. Henninot (direction métier), chaîne inerWeb (dessin SVG original) | © 2026 Franck Henninot, inerWeb. Tous droits réservés. | Dessin original SVG | 2 | `packs/fluides/res/svg/quatre-leviers-energie.svg` |
 | `svg:r290-zone-intervention` | Planche vectorielle dessinée | F. Henninot (direction métier) et OpenAI Codex (dessin SVG original) | © 2026 Franck Henninot, inerWeb. Tous droits réservés. | Dessin original SVG | 2 | `packs/fluides/res/svg/r290-zone-intervention.svg` |
 | `svg:recherche-fuite-geste` | Planche vectorielle dessinée | F. Henninot (direction métier) et OpenAI Codex (dessin SVG original) | © 2026 Franck Henninot, inerWeb. Tous droits réservés. | Dessin original SVG | 1 | `packs/fluides/res/svg/recherche-fuite-geste.svg` |
-| `svg:recuperation` | Planche vectorielle dessinée | inerWeb — F. Henninot | © 2026 inerWeb — F. Henninot — tous droits réservés sur l’illustration | Dessin original SVG | 4 | `packs/fluides/res/svg/recuperation.svg` |
+| `svg:recuperation` | Planche vectorielle dessinée | inerWeb — F. Henninot | © 2026 inerWeb — F. Henninot — tous droits réservés sur l’illustration | Dessin original SVG | 5 | `packs/fluides/res/svg/recuperation.svg` |
 | `svg:recuperation-securisee` | Planche vectorielle dessinée | F. Henninot (direction métier) et OpenAI Codex (dessin SVG original) | © 2026 Franck Henninot, inerWeb. Tous droits réservés. | Dessin original SVG | 2 | `packs/fluides/res/svg/recuperation-securisee.svg` |
 | `svg:regulateurs-kv-places` | Planche vectorielle dessinée | F. Henninot (direction métier) et Claude (tracé SVG) | © inerWeb, tous droits réservés | Dessin original SVG | 1 | `packs/fluides/res/svg/regulateurs-kv-places.svg` |
 | `svg:regulateurs-pression` | Planche vectorielle dessinée | inerWeb — F. Henninot | © 2026 inerWeb — F. Henninot — tous droits réservés sur l’illustration | Dessin original SVG | 3 | `packs/fluides/res/svg/regulateurs-pression.svg` |
