@@ -48,17 +48,28 @@ const DYS = process.env.EDITION === 'dys';
    le SITE, pas le logiciel : c'est lui qu'il fait connaître. */
 const NOM = 'inerweb.fr-HabFluide-Tome1-Livret-eleve-7x10' + (DYS ? '-DYS' : '');
 
-const LEXEND = path.join(SOURCE_PACK, 'moteur', 'polices', 'Lexend-variable.woff2');
-const POLICE_DYS = fs.existsSync(LEXEND)
-  ? `@font-face{font-family:'Lexend';font-weight:100 900;font-display:block;
-      src:url(data:font/woff2;base64,${fs.readFileSync(LEXEND).toString('base64')}) format('woff2')}`
-  : '';
-if (!POLICE_DYS) {
-  console.error(`Lexend introuvable : ${LEXEND}\n` +
-    `C'est la police du livre depuis le 31/08/2026, plus seulement celle de l'édition DYS.\n` +
-    `Vérifier PILOTE_FLUIDES : le fichier vit dans le pack, pas dans le livret.`);
+/* LEXEND EN INSTANCES STATIQUES, PAS EN FONTE VARIABLE.
+   Le pack ne fournit Lexend qu'en variable (axe wght 100–900). À l'écran
+   Chrome la gère ; à l'impression il l'instancie glyphe par glyphe et
+   écrit tout le corps du livre en polices de TYPE 3 — des dessins
+   vectoriels dupliqués au lieu d'une police embarquée. Mesuré sur pièce :
+   1 058 caractères de Type 3 sur une seule page de texte courant.
+   Amazon les accepte, l'impression les supporte mal.
+   Les deux instances statiques sont produites par `build/lexend-statique.py`
+   et commises dans `livret/fontes/`. Licence SIL OFL, qui autorise
+   l'instanciation et la redistribution. */
+const LEXEND_400 = path.join(ICI, '..', 'fontes', 'Lexend-400.woff2');
+const LEXEND_700 = path.join(ICI, '..', 'fontes', 'Lexend-700.woff2');
+if (!fs.existsSync(LEXEND_400) || !fs.existsSync(LEXEND_700)) {
+  console.error(`Instances statiques de Lexend absentes de livret/fontes/.\n` +
+    `Les produire une fois :  python build/lexend-statique.py\n` +
+    `(elles dérivent de Lexend-variable.woff2, dans le pack pilote-fluides.)`);
   process.exit(1);
 }
+const face = (f, poids) => `@font-face{font-family:'Lexend';font-style:normal;` +
+  `font-weight:${poids};font-display:block;` +
+  `src:url(data:font/woff2;base64,${fs.readFileSync(f).toString('base64')}) format('woff2')}`;
+const POLICE_DYS = face(LEXEND_400, 400) + '\n' + face(LEXEND_700, 700);
 
 /* ------------------------------------------------------------------
    LES RÉGLAGES DE DENSITÉ — `reglages.json`, à côté du livre.
@@ -240,6 +251,14 @@ figure img{width:100%;max-height:var(--planche-h);object-fit:contain;display:blo
   border:.6pt solid var(--ligne);border-radius:3px}
 figure figcaption{margin-top:1.6mm;text-align:center;font-style:italic;font-size:10pt;color:var(--mut)}
 .planche.haute img{width:auto;max-height:${R.planche_haute_h_mm}mm}
+/* Une ICÔNE fait 512 px de large en natif. Au-delà de 43 mm de large,
+   elle passe sous les 300 points par pouce qu'une impression nette
+   réclame — 512 px ÷ 300 ppp = 1,71 pouce = 43,4 mm. On plafonne à
+   40 mm : la marge couvre les arrondis de rendu, et une icône n'a de
+   toute façon pas vocation à occuper la largeur d'une planche. */
+figure.icone img{width:auto;max-width:40mm;max-height:40mm;border:none}
+figure.icone{text-align:center}
+figure.icone figcaption{margin-top:1.2mm}
 /* Le COMBLEMENT (maquette du 30/08 : « aucune page ne se termine sur du
    vide ») : une planche de la réserve, plafonnée par un style en ligne à
    la hauteur du blanc qu'elle vient remplir — elle ne déplace donc jamais

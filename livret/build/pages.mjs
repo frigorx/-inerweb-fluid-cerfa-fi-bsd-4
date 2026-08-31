@@ -128,7 +128,7 @@ const figure = (refs, legendes = []) => {
   const technique = refs.some(estTechnique);
   if (refs.length >= 2 && !technique) {
     return `<div class="duo">${refs.map((r, i) => `
-      <figure><img src="${visuel(r)}"${cotes(r)} alt="">${legendes[i] ? `<figcaption>${ech(apos(legendes[i]))}</figcaption>` : ''}</figure>`).join('')}</div>`;
+      <figure${r.startsWith('ico:') ? ' class="icone"' : ''}><img src="${visuel(r)}"${cotes(r)} alt="">${legendes[i] ? `<figcaption>${ech(apos(legendes[i]))}</figcaption>` : ''}</figure>`).join('')}</div>`;
   }
   /* Une planche accompagnée d'une illustration d'ambiance : la planche
      explique et prend la largeur, l'illustration accompagne et se range
@@ -138,7 +138,14 @@ const figure = (refs, legendes = []) => {
   return refs.map((r, i) => {
     const appoint = appointPossible && !estTechnique(r);
     const symbole = r.startsWith('sym:');
-    return `<figure class="${symbole ? 'symbole' : appoint ? 'appoint' : 'planche'}${!appoint && !symbole && ratio(r) > 1.15 ? ' haute' : ''}">
+    /* Les ICÔNES sont natives en 512 px. Étalées sur la largeur de la
+       justification, elles tombaient à 168 points par pouce — sous le
+       seuil de 300 que réclame une impression nette, et le contrôle KDP
+       les signalait page après page. Une icône n'a de toute façon rien
+       à faire à la taille d'une planche : on la plafonne, et la
+       définition remonte au-dessus du seuil. */
+    const icone = r.startsWith('ico:');
+    return `<figure class="${icone ? 'icone' : symbole ? 'symbole' : appoint ? 'appoint' : 'planche'}${!appoint && !symbole && !icone && ratio(r) > 1.15 ? ' haute' : ''}">
       ${r.startsWith('svg:') ? qrm('a-' + r.slice(4), 'a') : ''}<img src="${visuel(r)}"${cotes(r)} alt="">
       ${legendes[i] ? `<figcaption>${ech(apos(legendes[i]))}</figcaption>` : ''}
     </figure>`;

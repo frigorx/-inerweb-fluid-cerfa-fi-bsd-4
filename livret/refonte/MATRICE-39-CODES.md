@@ -57,10 +57,10 @@ Le chapitre **porteur** enseigne le code ; les **rappels** le remobilisent sans 
 |---|---|---|---|---|---:|---|
 | **1.00** ✦ | A1/A2/D/E | T1-4 · Qui fait quoi : aptitude, capacité, responsabilités | T1-1, T1-5 | ch. 4 · 9 p | 1254 | APPROFONDI |
 | **1.01** | A1/A2/D/E | T1-10 · Thermodynamique utile | — | ch. 5 · 11 p | 978 | COUVERT |
-| **1.02** | A1/A2/D | T1-10 · Thermodynamique utile | T1-12 | ch. 5,7,8,9 · 32 p | 3784 | APPROFONDI |
+| **1.02** | A1/A2/D | T1-10 · Thermodynamique utile | T1-12 | ch. 5,7,8,9 · 31 p | 3784 | APPROFONDI |
 | **1.03** | A1/A2/E | T1-11 · Lire un diagramme log p-h et une table de saturation | T2-9 | ch. 6,7 · 22 p | 1693 | APPROFONDI |
 | **1.04** | A1/A2/D | T1-10 · Thermodynamique utile | T2-1 | ch. 5,9 · 8 p | 1083 | APPROFONDI |
-| **1.05** | A1/A2 | T2-6 · Les organes annexes et la prévention des fuites | — | ch. 8,12 · 11 p | 1119 | APPROFONDI |
+| **1.05** | A1/A2 | T2-6 · Les organes annexes et la prévention des fuites | — | ch. 8,12 · 10 p | 1119 | APPROFONDI |
 | **1.06** | A1/A2/D/E | T1-8 · Familles, nomenclature et propriétés | — | ch. 8 · 13 p | 1446 | APPROFONDI |
 | **1.07** ✦ | A1/A2/D/E | T1-8 · Familles, nomenclature et propriétés | T2-15 | ch. 8 · 10 p | 1022 | APPROFONDI |
 | **1.08** ✦ | A1/A2/D/E | T1-6 · Lire une classe de sécurité | — | ch. 2,17 · 20 p | 1589 | APPROFONDI |
@@ -70,7 +70,7 @@ Le chapitre **porteur** enseigne le code ; les **rappels** le remobilisent sans 
 | Code | Cat. | Chapitre porteur | Rappels | Aujourd'hui | Mots | Verdict |
 |---|---|---|---|---|---:|---|
 | **2.01** | A1/A2/D/E | T1-3 · De Montréal à F-Gas III | T1-1 | ch. 3 · 5 p | 764 | COUVERT |
-| **2.02** | A1/A2/D/E | T1-2 · Ozone, effet de serre, ODP et PRP/GWP | T1-3 | ch. 3 · 17 p | 2078 | APPROFONDI |
+| **2.02** | A1/A2/D/E | T1-2 · Ozone, effet de serre, ODP et PRP/GWP | T1-3 | ch. 3 · 16 p | 2078 | APPROFONDI |
 
 ### G3 — Contrôles à effectuer préalablement à la mise en service d'un équipement, après une longue période d'interruption, après un entretien ou une réparation, ou contrôles durant le fonctionnement
 
@@ -100,7 +100,7 @@ Le chapitre **porteur** enseigne le code ; les **rappels** le remobilisent sans 
 |---|---|---|---|---|---:|---|
 | **6.01** | A1/A2 | T2-2 · Le compresseur et la lubrification | — | ch. 9 · 16 p | 1184 | APPROFONDI |
 | **6.07** | A1/A2 | T2-2 · Le compresseur et la lubrification | T2-9 | ch. 9,14 · 14 p | 1088 | APPROFONDI |
-| **6.08** ✦ | A1/A2 | T2-2 · Le compresseur et la lubrification | T2-13 | ch. 9,17 · 15 p | 2163 | APPROFONDI |
+| **6.08** ✦ | A1/A2 | T2-2 · Le compresseur et la lubrification | T2-13 | ch. 9,17 · 14 p | 2163 | APPROFONDI |
 
 ### G7 — Composant : installation, mise en service et maintenance de condenseurs à air froid et à eau froide
 
@@ -108,7 +108,7 @@ Le chapitre **porteur** enseigne le code ; les **rappels** le remobilisent sans 
 |---|---|---|---|---|---:|---|
 | **7.01** | A1/A2 | T2-3 · Le condenseur | — | ch. 9,10 · 15 p | 1136 | APPROFONDI |
 | **7.09** | A1/A2 | T2-3 · Le condenseur | T2-9 | ch. 10,14 · 21 p | 1303 | APPROFONDI |
-| **7.10** ✦ | A1/A2 | T2-3 · Le condenseur | T2-13 | ch. 10,17 · 20 p | 1937 | APPROFONDI |
+| **7.10** ✦ | A1/A2 | T2-3 · Le condenseur | T2-13 | ch. 10,17 · 19 p | 1937 | APPROFONDI |
 
 ### G8 — Composant : installation, mise en service et maintenance d'évaporateurs à refroidissement par air et à refroidissement par liquide
 
@@ -116,7 +116,7 @@ Le chapitre **porteur** enseigne le code ; les **rappels** le remobilisent sans 
 |---|---|---|---|---|---:|---|
 | **8.01** | A1/A2 | T2-4 · L'évaporateur et le dégivrage | — | ch. 9,11 · 15 p | 1182 | APPROFONDI |
 | **8.10** | A1/A2 | T2-4 · L'évaporateur et le dégivrage | T2-9 | ch. 11,14 · 21 p | 1331 | APPROFONDI |
-| **8.11** ✦ | A1/A2 | T2-4 · L'évaporateur et le dégivrage | T2-13 | ch. 11,17 · 20 p | 1965 | APPROFONDI |
+| **8.11** ✦ | A1/A2 | T2-4 · L'évaporateur et le dégivrage | T2-13 | ch. 11,17 · 19 p | 1965 | APPROFONDI |
 
 ### G9 — Composant : installation, mise en service et entretien des détendeurs thermostatiques et autres composants
 
@@ -131,7 +131,7 @@ Le chapitre **porteur** enseigne le code ; les **rappels** le remobilisent sans 
 | Code | Cat. | Chapitre porteur | Rappels | Aujourd'hui | Mots | Verdict |
 |---|---|---|---|---|---:|---|
 | **11.01** | A1/A2/D/E | T1-9 · Choisir un fluide de substitution | — | ch. 17 · 18 p | 1410 | APPROFONDI |
-| **11.02** | A1/A2 | T2-13 · Maintenir l'efficacité énergétique | T1-9 | ch. 17 · 25 p | 2357 | APPROFONDI |
+| **11.02** | A1/A2 | T2-13 · Maintenir l'efficacité énergétique | T1-9 | ch. 17 · 24 p | 2357 | APPROFONDI |
 | **11.03** | A1/A2 | T1-7 · Se protéger avant de toucher | T1-6, T2-15 | ch. 1,2,17 · 39 p | 3565 | APPROFONDI |
 | **11.04** | A1/A2 | T1-9 · Choisir un fluide de substitution | T2-13 | ch. 17 · 18 p | 1410 | APPROFONDI |
 | **11.05** ✦ | A1/A2/D | T1-9 · Choisir un fluide de substitution | T2-14 | ch. 12,15,17 · 28 p | 1755 | APPROFONDI |

@@ -9,17 +9,17 @@
   "h": 75,
   "legende": "La lettre d’abord, le chiffre ensuite — deux dangers distincts."
  },
- "3-3": {
+ "3-1": {
   "ref": "svg:deux-etages-deux-papiers",
   "h": 75,
   "legende": "Du règlement européen à vos deux attestations."
  },
- "4-3": {
+ "4-6": {
   "ref": "svg:categories-champs",
-  "h": 71,
+  "h": 75,
   "legende": "Repérez votre colonne : elle dit ce que votre attestation couvre."
  },
- "5-5": {
+ "5-2": {
   "ref": "svg:croix-frigoriste-etats",
   "h": 75,
   "legende": "La croix se lit organe par organe — l’état du fluide à chaque coin."
@@ -29,12 +29,12 @@
   "h": 75,
   "legende": "Le cycle se lit sur le diagramme, jamais de mémoire."
  },
- "7-1": {
+ "7-8": {
   "ref": "svg:mesures-surchauffe-sous-refroidissement",
   "h": 75,
   "legende": "Deux écarts qui se mesurent — jamais ne se devinent."
  },
- "8-6": {
+ "8-1": {
   "ref": "svg:code-nomme-classe-previent",
   "h": 75,
   "legende": "Cinq étiquettes, un réflexe : la classe se vérifie sur la FDS."
@@ -49,7 +49,7 @@
   "h": 75,
   "legende": "Le même condenseur, propre puis encrassé : l’écart raconte tout."
  },
- "11-6": {
+ "11-5": {
   "ref": "svg:givre-isole-machine-force",
   "h": 75,
   "legende": "Une batterie sous givre n’échange plus — la machine paie."
@@ -64,7 +64,7 @@
   "h": 75,
   "legende": "L’ordre des opérations avant la première charge."
  },
- "14-3": {
+ "14-5": {
   "ref": "svg:recherche-fuite-geste",
   "h": 75,
   "legende": "Le geste du contrôle : lent, près du raccord, confirmé."
@@ -79,7 +79,7 @@
   "h": 75,
   "legende": "L’azote balaie l’intérieur du tube pendant toute la chauffe."
  },
- "17-1": {
+ "17-8": {
   "ref": "svg:quatre-leviers-energie",
   "h": 75,
   "legende": "Quatre choix de conception qui se voient sur la facture."
