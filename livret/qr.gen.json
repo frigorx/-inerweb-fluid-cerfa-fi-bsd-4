@@ -373,6 +373,20 @@
   "fichier": "thermo-4.png"
  },
  {
+  "chapitre": 5,
+  "lecon": 5,
+  "titre": "Les unités que l'on vous demandera de manier sans hésiter",
+  "slug": "thermo-5",
+  "alias": "https://inerweb.fr/f/thermo-5",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Les unités que l'on vous demandera de manie…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "thermo-5.png"
+ },
+ {
   "chapitre": 6,
   "titre": "Lire un log p-h et une table de saturation",
   "slug": "logph",
@@ -483,6 +497,34 @@
   "fichier": "surchauffe-3.png"
  },
  {
+  "chapitre": 7,
+  "lecon": 4,
+  "titre": "Une mesure produit des hypothèses, jamais une certitude",
+  "slug": "surchauffe-4",
+  "alias": "https://inerweb.fr/f/surchauffe-4",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Une mesure produit des hypothèses, jamais u…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "surchauffe-4.png"
+ },
+ {
+  "chapitre": 7,
+  "lecon": 5,
+  "titre": "Le contrôle discriminant : celui qui élimine une hypothèse",
+  "slug": "surchauffe-5",
+  "alias": "https://inerweb.fr/f/surchauffe-5",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Le contrôle discriminant : celui qui élimin…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "surchauffe-5.png"
+ },
+ {
   "chapitre": 8,
   "titre": "Les familles de fluides et leurs codes",
   "slug": "fluides",
@@ -536,6 +578,34 @@
    "quoi": "Cette leçon animée et racontée à voix haute."
   },
   "fichier": "fluides-3.png"
+ },
+ {
+  "chapitre": 8,
+  "lecon": 4,
+  "titre": "Corps purs, azéotropes, zéotropes : ce que le glissement change",
+  "slug": "fluides-4",
+  "alias": "https://inerweb.fr/f/fluides-4",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Corps purs, azéotropes, zéotropes : ce que …",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "fluides-4.png"
+ },
+ {
+  "chapitre": 8,
+  "lecon": 5,
+  "titre": "Hydrocarbures, CO₂, NH₃ : ce qui les sépare des fluorés",
+  "slug": "fluides-5",
+  "alias": "https://inerweb.fr/f/fluides-5",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Hydrocarbures, CO₂, NH₃ : ce qui les sépare…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "fluides-5.png"
  },
  {
   "chapitre": 9,
@@ -619,6 +689,34 @@
    "quoi": "La fiche interactive, avec sa question corrigée."
   },
   "fichier": "compresseur-5.png"
+ },
+ {
+  "chapitre": 9,
+  "lecon": 6,
+  "titre": "Quatre organes, quatre lignes, et ce que le fluide devient",
+  "slug": "compresseur-6",
+  "alias": "https://inerweb.fr/f/compresseur-6",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Quatre organes, quatre lignes, et ce que le…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "compresseur-6.png"
+ },
+ {
+  "chapitre": 9,
+  "lecon": 7,
+  "titre": "Les quatre organes, ce qui les use et ce qui les fait fuir",
+  "slug": "compresseur-7",
+  "alias": "https://inerweb.fr/f/compresseur-7",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Les quatre organes, ce qui les use et ce qu…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "compresseur-7.png"
  },
  {
   "chapitre": 10,
@@ -1064,6 +1162,34 @@
   "fichier": "etancheite-5.png"
  },
  {
+  "chapitre": 14,
+  "lecon": 6,
+  "titre": "Le registre : ce qui s'écrit, quand, et pourquoi cela vous protège",
+  "slug": "etancheite-6",
+  "alias": "https://inerweb.fr/f/etancheite-6",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Le registre : ce qui s'écrit, quand, et pou…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "etancheite-6.png"
+ },
+ {
+  "chapitre": 14,
+  "lecon": 7,
+  "titre": "Rédiger un compte rendu d'état : fait, hypothèse, conclusion",
+  "slug": "etancheite-7",
+  "alias": "https://inerweb.fr/f/etancheite-7",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Rédiger un compte rendu d'état : fait, hypo…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "etancheite-7.png"
+ },
+ {
   "chapitre": 15,
   "titre": "Récupérer sans émettre, peser, tracer",
   "slug": "recuperation",
@@ -1145,6 +1271,34 @@
    "quoi": "Cette leçon animée et racontée à voix haute."
   },
   "fichier": "recuperation-5.png"
+ },
+ {
+  "chapitre": 15,
+  "lecon": 6,
+  "titre": "Récupérer, stocker, transporter : la chaîne complète du fluide",
+  "slug": "recuperation-6",
+  "alias": "https://inerweb.fr/f/recuperation-6",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Récupérer, stocker, transporter : la chaîne…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "recuperation-6.png"
+ },
+ {
+  "chapitre": 15,
+  "lecon": 7,
+  "titre": "Le cas des hydrocarbures : ce que le code 5.09 ajoute",
+  "slug": "recuperation-7",
+  "alias": "https://inerweb.fr/f/recuperation-7",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Le cas des hydrocarbures : ce que le code 5…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "recuperation-7.png"
  },
  {
   "chapitre": 16,
@@ -1245,16 +1399,72 @@
  {
   "chapitre": 17,
   "lecon": 3,
-  "titre": "Hydrocarbures : une machine pas comme les autres",
+  "titre": "COP, EER : ce que le chiffre dit, et à quelles conditions",
   "slug": "efficacite-3",
   "alias": "https://inerweb.fr/f/efficacite-3",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "COP, EER : ce que le chiffre dit, et à quel…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "efficacite-3.png"
+ },
+ {
+  "chapitre": 17,
+  "lecon": 4,
+  "titre": "Le levier principal : l'écart entre condensation et évaporation",
+  "slug": "efficacite-4",
+  "alias": "https://inerweb.fr/f/efficacite-4",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Le levier principal : l'écart entre condens…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "efficacite-4.png"
+ },
+ {
+  "chapitre": 17,
+  "lecon": 5,
+  "titre": "Organe par organe : ce que le référentiel attend de vous",
+  "slug": "efficacite-5",
+  "alias": "https://inerweb.fr/f/efficacite-5",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Organe par organe : ce que le référentiel a…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "efficacite-5.png"
+ },
+ {
+  "chapitre": 17,
+  "lecon": 6,
+  "titre": "Choisir un fluide : ce que l'application et le climat imposent",
+  "slug": "efficacite-6",
+  "alias": "https://inerweb.fr/f/efficacite-6",
+  "cible": "https://inerweb.fr/?carte=undefined",
+  "renvoi": {
+   "genre": "fiche",
+   "titre": "Choisir un fluide : ce que l'application et…",
+   "quoi": "La fiche interactive, avec sa question corrigée."
+  },
+  "fichier": "efficacite-6.png"
+ },
+ {
+  "chapitre": 17,
+  "lecon": 7,
+  "titre": "Hydrocarbures : une machine pas comme les autres",
+  "slug": "efficacite-7",
+  "alias": "https://inerweb.fr/f/efficacite-7",
   "cible": "https://inerweb.fr/?carte=g11",
   "renvoi": {
    "genre": "fiche",
    "titre": "Hydrocarbures : une machine pas comme les a…",
    "quoi": "La fiche interactive, avec sa question corrigée."
   },
-  "fichier": "efficacite-3.png"
+  "fichier": "efficacite-7.png"
  },
  {
   "chapitre": 18,
@@ -1506,7 +1716,7 @@
   "slug": "a-circuit-complet-manifold",
   "alias": "https://inerweb.fr/f/a-circuit-complet-manifold",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/circuit-complet-manifold.svg",
-  "retour": "https://inerweb.fr/",
+  "retour": "https://inerweb.fr/f/compresseur",
   "renvoi": {
    "genre": "animation",
    "titre": "La planche en mouvement",
@@ -1641,7 +1851,7 @@
   "slug": "a-compresseurs-comparatif",
   "alias": "https://inerweb.fr/f/a-compresseurs-comparatif",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/compresseurs-comparatif.svg",
-  "retour": "https://inerweb.fr/f/compresseur",
+  "retour": "https://inerweb.fr/f/efficacite",
   "renvoi": {
    "genre": "la planche",
    "titre": "La planche en grand",
@@ -1656,7 +1866,7 @@
   "slug": "a-condenseur-ecart-encrassement",
   "alias": "https://inerweb.fr/f/a-condenseur-ecart-encrassement",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/condenseur-ecart-encrassement.svg",
-  "retour": "https://inerweb.fr/f/condenseur",
+  "retour": "https://inerweb.fr/f/efficacite",
   "renvoi": {
    "genre": "la planche",
    "titre": "La planche en grand",
@@ -1671,7 +1881,7 @@
   "slug": "a-condenseur-trois-zones",
   "alias": "https://inerweb.fr/f/a-condenseur-trois-zones",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/condenseur-trois-zones.svg",
-  "retour": "https://inerweb.fr/f/condenseur",
+  "retour": "https://inerweb.fr/f/compresseur",
   "renvoi": {
    "genre": "la planche",
    "titre": "La planche en grand",
@@ -1731,7 +1941,7 @@
   "slug": "a-croix-frigoriste-etats",
   "alias": "https://inerweb.fr/f/a-croix-frigoriste-etats",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/croix-frigoriste-etats.svg",
-  "retour": "https://inerweb.fr/f/thermo",
+  "retour": "https://inerweb.fr/f/compresseur",
   "renvoi": {
    "genre": "la planche",
    "titre": "La planche en grand",
@@ -1881,7 +2091,7 @@
   "slug": "a-givre-isole-machine-force",
   "alias": "https://inerweb.fr/f/a-givre-isole-machine-force",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/givre-isole-machine-force.svg",
-  "retour": "https://inerweb.fr/f/evaporateur",
+  "retour": "https://inerweb.fr/f/efficacite",
   "renvoi": {
    "genre": "la planche",
    "titre": "La planche en grand",
@@ -1956,7 +2166,7 @@
   "slug": "a-manifold-lecture",
   "alias": "https://inerweb.fr/f/a-manifold-lecture",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/manifold-lecture.svg",
-  "retour": "https://inerweb.fr/f/mise-en-service",
+  "retour": "https://inerweb.fr/f/surchauffe",
   "renvoi": {
    "genre": "animation",
    "titre": "La planche en mouvement",
@@ -2121,7 +2331,7 @@
   "slug": "a-r290-zone-intervention",
   "alias": "https://inerweb.fr/f/a-r290-zone-intervention",
   "cible": "https://inerweb.fr/packs/fluides/res/svg/r290-zone-intervention.svg",
-  "retour": "https://inerweb.fr/f/hydrocarbures",
+  "retour": "https://inerweb.fr/f/recuperation",
   "renvoi": {
    "genre": "la planche",
    "titre": "La planche en grand",
@@ -2203,6 +2413,21 @@
    "quoi": "Sur votre écran, en pleine taille. Elle s’animera au fil des mises à jour du site."
   },
   "fichier": "a-regulateurs-pression.png"
+ },
+ {
+  "genre": "animation",
+  "animee": true,
+  "titre": "La bouteille : jamais à ras, jamais chauffée",
+  "slug": "a-secu-bouteille",
+  "alias": "https://inerweb.fr/f/a-secu-bouteille",
+  "cible": "https://inerweb.fr/packs/fluides/res/svg/secu-bouteille.svg",
+  "retour": "https://inerweb.fr/f/recuperation",
+  "renvoi": {
+   "genre": "animation",
+   "titre": "La planche en mouvement",
+   "quoi": "Ci-contre figée. En ligne, elle se joue du début à la fin."
+  },
+  "fichier": "a-secu-bouteille.png"
  },
  {
   "genre": "animation",

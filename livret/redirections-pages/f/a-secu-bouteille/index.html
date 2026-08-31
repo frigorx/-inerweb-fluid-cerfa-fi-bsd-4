@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>r290-zone-intervention — inerWeb HabFluide</title>
+<title>La bouteille : jamais à ras, jamais chauffée — inerWeb HabFluide</title>
 <style>
 :root{--bleu:#1b3a63;--orange:#ff6b35;--mut:#5a6472;--ligne:#d6dee7}
 body{font-family:Calibri,Carlito,'Segoe UI',sans-serif;color:var(--bleu);background:#f4f7fa;margin:0;min-height:100vh;display:flex;flex-direction:column}
@@ -32,28 +32,28 @@ footer a{color:var(--mut)}
 <line stroke="#e8914a" stroke-width="2" x1="44" x2="150" y1="35" y2="35"></line>
 <rect fill="#e8914a" x="155" y="10" rx="5" ry="5" width="84.2" height="24"></rect>
 <text fill="#ffffff" font-family="Segoe UI, Carlito, Calibri, Helvetica, sans-serif" font-size="14px" font-weight="bold" x="197.1" y="27" text-anchor="middle">HabFluide</text>
-</svg><span class="sous">— la planche en grand</span></header>
+</svg><span class="sous">— la planche en mouvement</span></header>
 <main>
-<h1>r290-zone-intervention</h1>
-<p class="note-fixe">Cette planche s’animera au fil des mises à jour du site — la voici en pleine taille.</p>
+<h1>La bouteille : jamais à ras, jamais chauffée</h1>
+
 <div id="scene"><p class="attente">Chargement de la planche…</p></div>
 <div class="actions">
-
+<button id="revoir" type="button">↻ Revoir l’animation</button>
 <a href="https://inerweb.fr/f/recuperation">La leçon complète →</a>
 </div>
 </main>
-<footer>Du livre « HAB-FLUIDE — partie théorique » · <a href="https://inerweb.fr/packs/fluides/res/svg/r290-zone-intervention.svg">ouvrir la planche seule</a></footer>
+<footer>Du livre « HAB-FLUIDE — partie théorique » · <a href="https://inerweb.fr/packs/fluides/res/svg/secu-bouteille.svg">ouvrir la planche seule</a></footer>
 <script>
 (function () {
   var scene = document.getElementById('scene');
   var texte = null;
   function montrer() { if (texte !== null) { scene.innerHTML = texte; } }
-  fetch("https://inerweb.fr/packs/fluides/res/svg/r290-zone-intervention.svg").then(function (r) {
+  fetch("https://inerweb.fr/packs/fluides/res/svg/secu-bouteille.svg").then(function (r) {
     if (!r.ok) throw new Error(r.status);
     return r.text();
   }).then(function (t) { texte = t; montrer(); }).catch(function () {
     scene.innerHTML = '<p class="attente">L’animation n’a pas pu se charger ici — ' +
-      '<a href="https://inerweb.fr/packs/fluides/res/svg/r290-zone-intervention.svg">l’ouvrir directement<\/a>.</p>';
+      '<a href="https://inerweb.fr/packs/fluides/res/svg/secu-bouteille.svg">l’ouvrir directement<\/a>.</p>';
   });
   document.getElementById('revoir').addEventListener('click', montrer);
 })();

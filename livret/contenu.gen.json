@@ -1,7 +1,7 @@
 {
  "source": {
   "depot": "frigorx/pilote-fluides",
-  "commit": "37b4ddf7"
+  "commit": "52d81d50"
  },
  "categories": [
   "A1",
@@ -2912,6 +2912,38 @@
       "explication": "Pendant le changement d'état, la chaleur apportée est de la chaleur latente : elle transforme le liquide en vapeur sans faire monter la température. C'est le palier — et c'est là que l'évaporateur prend l'essentiel de la chaleur du local.",
       "remediation_vers": "g1s"
      }
+    },
+    {
+     "t": "Les unités que l'on vous demandera de manier sans hésiter",
+     "src": "ecrit:5-5",
+     "titre_source": "Les unités que l'on vous demandera de manier sans hésiter",
+     "codes": [
+      "1.01",
+      "1.02"
+     ],
+     "paras": [
+      "Le référentiel ouvre la partie théorique par les unités, et ce n'est pas une formalité. La plupart des erreurs de calcul en épreuve viennent d'une unité mal convertie, pas d'un raisonnement faux.",
+      "La <b>température</b> se mesure en kelvins (K) dans le système international, en degrés Celsius (°C) dans l'usage. Un écart de un kelvin vaut un écart de un degré Celsius : c'est l'origine qui change, pas la graduation. Le zéro absolu est à environ −273,15 °C.",
+      "De là une règle d'écriture que les correcteurs relèvent : une <b>température</b> s'exprime en °C, un <b>écart</b> de température s'exprime en K. Une surchauffe de 8 K, une évaporation à −10 °C. Ce n'est pas du purisme : cela évite d'additionner ce qui ne s'additionne pas.",
+      "La <b>pression</b> se mesure en pascals (Pa) dans le système international, mais la profession travaille en <b>bars</b>. Un bar vaut cent mille pascals, soit 100 kPa. Un mégapascal vaut dix bars.",
+      "Le point qui coûte le plus de points à l'examen est ailleurs : la distinction entre pression <b>absolue</b> et pression <b>relative</b>. Un manomètre ordinaire indique la pression relative, c'est-à-dire l'écart avec l'atmosphère. Zéro au manomètre ne signifie pas le vide : cela signifie la pression atmosphérique.",
+      "Pour passer de l'une à l'autre, on ajoute environ un bar à la pression relative pour obtenir l'absolue. On écrit souvent bar(g) pour la relative et bar(a) pour l'absolue. <b>Les tables de saturation travaillent en absolu</b> : lire une table avec une valeur relative fausse la température de saturation, donc la surchauffe, donc le diagnostic.",
+      "La <b>masse</b> se mesure en kilogrammes (kg). C'est l'unité de la charge d'une installation, et c'est la seule qui compte pour le registre et pour le calcul en tonnes équivalent CO₂. La <b>masse volumique</b> se mesure en kilogrammes par mètre cube (kg/m³) : elle explique pourquoi un fluide plus lourd que l'air s'accumule en point bas.",
+      "L'<b>énergie</b> se mesure en joules (J), et la <b>puissance</b> en watts (W), un watt valant un joule par seconde. Le kilowattheure (kWh) est une énergie, pas une puissance : c'est ce que consomme un appareil de 1 kW pendant une heure. L'<b>enthalpie massique</b>, elle, se lit en kilojoules par kilogramme (kJ/kg) — c'est l'axe horizontal du diagramme."
+     ],
+     "blocs": [
+      {
+       "type": "cle",
+       "t": "Les conversions à connaître par cœur",
+       "html": "<p><ol><li>1 bar = 100 000 Pa = 100 kPa = 0,1 MPa.</li><li>Pression absolue ≈ pression relative + 1 bar.</li><li>Un écart de 1 K = un écart de 1 °C.</li><li>1 kW pendant 1 h = 1 kWh.</li><li>L'enthalpie massique se lit en kJ/kg ; multipliée par un débit en kg/s, elle donne une puissance en kW.</li></ol></p>"
+      },
+      {
+       "type": "piege",
+       "t": "Lire une table avec une pression relative",
+       "html": "<p>C'est l'erreur la plus fréquente, et elle est invisible : le résultat reste plausible. Un manomètre affichant 2 bar(g) correspond à environ 3 bar(a). Lire la table à 2 bar donne une température de saturation trop basse d'environ six kelvins selon le fluide — et une surchauffe calculée fausse d'autant. Vérifiez toujours ce que votre manomètre affiche et ce que votre table attend.</p>"
+      }
+     ],
+     "question": null
     }
    ],
    "activite": null,
@@ -4343,6 +4375,69 @@
       "explication": "La surchauffe est une différence. Il faut la température de changement d'état, que seule la pression lue au manomètre donne, par la table de saturation du fluide présent. Une température seule ne dit rien.",
       "remediation_vers": "g1e"
      }
+    },
+    {
+     "t": "Une mesure produit des hypothèses, jamais une certitude",
+     "src": "ecrit:7-4",
+     "titre_source": "Une mesure produit des hypothèses, jamais une certitude",
+     "codes": [
+      "1.03",
+      "1.02"
+     ],
+     "paras": [
+      "Un technicien pressé regarde une basse pression trop faible et annonce un manque de fluide. Il a raison une fois sur trois, et les deux autres fois il recharge une installation qui n'en avait pas besoin, ou il laisse une fuite continuer.",
+      "La méthode professionnelle tient en quatre temps, et l'ordre compte : <b>observer</b>, <b>mesurer</b>, <b>formuler plusieurs hypothèses</b>, puis <b>choisir le contrôle qui les départage</b>. La conclusion ne vient qu'après.",
+      "L'<b>observation</b> précède la mesure. Avant de brancher quoi que ce soit : que fait la machine ? Depuis quand ? Le compresseur tourne-t-il en continu ou cycle-t-il ? Y a-t-il du givre là où il ne devrait pas y en avoir ? Le condenseur est-il propre ? Que dit le registre des interventions précédentes ?",
+      "Vient la <b>mesure</b>, et elle n'a de valeur qu'à trois conditions. Que la machine ait atteint un régime stabilisé — une mesure prise deux minutes après le démarrage ne veut rien dire. Que l'instrument soit adapté et vérifié. Et que le point de mesure soit le bon, car une surchauffe se lit au bulbe, pas au hasard de la ligne.",
+      "Le manomètre affiche une <b>pression</b>. Pour raisonner, il vous faut une <b>température</b> : celle de saturation correspondante. C'est le rôle de la table du fluide, et c'est là qu'intervient le code 1.03 du référentiel.",
+      "Trois pièges guettent ici, et chacun fausse tout ce qui suit. Le premier : <b>un fluide, une table</b>. La table du R-134a ne dit rien du R-404A. Le second : <b>pression relative ou absolue</b>, il faut savoir laquelle la table utilise, l'écart est d'environ un bar. Le troisième, pour les mélanges zéotropes : <b>bulle ou rosée</b>. On lit au point de <b>bulle</b> pour le sous-refroidissement au condenseur, au point de <b>rosée</b> pour la surchauffe à l'évaporateur. Se tromper de colonne fausse le résultat du <b>glissement</b> entier.",
+      "Alors seulement viennent les <b>hypothèses</b>. Et la règle est simple : s'il ne vous en vient qu'une, c'est que vous n'avez pas cherché. Une basse pression faible admet au minimum cinq explications : manque de charge, détendeur sous-alimentant, filtre déshydrateur colmaté, charge thermique insuffisante à l'évaporateur, ou sonde et réglage en cause."
+     ],
+     "blocs": [
+      {
+       "type": "cle",
+       "t": "Les quatre temps, dans l'ordre",
+       "html": "<p><ol><li><b>J'observe</b> — l'installation, son comportement, son registre.</li><li><b>Je mesure</b> — régime stabilisé, instrument vérifié, point de mesure juste.</li><li><b>Je formule</b> — plusieurs hypothèses, jamais une seule.</li><li><b>Je départage</b> — le contrôle qui élimine, puis la conclusion.</li></ol></p>"
+      },
+      {
+       "type": "piege",
+       "t": "La mesure prise trop tôt",
+       "html": "<p>Une installation qui vient de démarrer, qui sort d'un dégivrage ou dont la chambre est encore chaude ne donne aucune valeur exploitable. Attendre la stabilisation n'est pas une perte de temps : c'est ce qui rend la mesure lisible. Notez d'ailleurs le temps de fonctionnement dans votre compte rendu — un lecteur saura ce que vaut votre chiffre.</p>"
+      }
+     ],
+     "question": null
+    },
+    {
+     "t": "Le contrôle discriminant : celui qui élimine une hypothèse",
+     "src": "ecrit:7-5",
+     "titre_source": "Le contrôle discriminant : celui qui élimine une hypothèse",
+     "codes": [
+      "1.03",
+      "4.01"
+     ],
+     "paras": [
+      "Un bon contrôle n'est pas celui qui confirme ce que vous pensez. C'est celui dont le résultat <b>change</b> selon l'hypothèse vraie. On l'appelle un contrôle discriminant, et savoir le choisir est le cœur du métier.",
+      "Prenons le cas d'école : la basse pression est trop faible. Les cinq hypothèses citées ont toutes le même symptôme. Deux mesures suffisent pourtant à les trier.",
+      "La première est le <b>sous-refroidissement</b>, en sortie de condenseur. S'il est faible ou nul, il manque du fluide dans la partie haute : l'hypothèse du manque de charge remonte fortement. S'il est normal ou élevé, le fluide est là, et le problème se situe en aval.",
+      "La seconde est la <b>surchauffe</b>, en sortie d'évaporateur. Élevée, elle dit que l'évaporateur est mal alimenté. Basse ou nulle, elle dit qu'il l'est trop, et l'hypothèse du manque de charge s'effondre.",
+      "Croisez les deux et le tableau se lit presque seul. Sous-refroidissement faible et surchauffe élevée : la charge manque, et il faut chercher la fuite avant de recharger. Sous-refroidissement normal et surchauffe élevée : la charge est là mais n'arrive pas — détendeur, filtre, ligne liquide. Sous-refroidissement élevé et surchauffe basse : on est plutôt du côté de la surcharge ou d'un condenseur qui n'évacue pas.",
+      "Un troisième contrôle sépare le détendeur du filtre colmaté : la <b>température de part et d'autre du filtre déshydrateur</b>. Un filtre qui se refroidit à sa sortie crée une détente parasite ; c'est une perte de charge, et elle se voit au toucher comme au thermomètre.",
+      "Et pour la charge thermique, la question est presque triviale mais on l'oublie : que demande-t-on à cette machine en ce moment ? Une chambre vide, une porte fermée depuis huit heures, un local froid : la machine n'a plus rien à retirer, l'évaporation descend, et rien n'est en panne.",
+      "Deux avertissements pour finir. D'abord, une valeur repère n'est pas une norme : les plages de surchauffe et de sous-refroidissement <b>dépendent de l'installation</b>, et la valeur du constructeur prime toujours sur toute règle apprise. Ensuite, si vos hypothèses restent à égalité après vos contrôles, ne tranchez pas : écrivez-le. Un compte rendu qui dit « deux causes restent possibles, voici le contrôle qui reste à faire » vaut infiniment mieux qu'une conclusion inventée."
+     ],
+     "blocs": [
+      {
+       "type": "cle",
+       "t": "Le tableau à deux entrées qu'il faut savoir refaire",
+       "html": "<p><ol><li><b>Sous-refroidissement faible + surchauffe élevée</b> → manque de charge. Chercher la fuite, ne pas recharger sans cela.</li><li><b>Sous-refroidissement normal + surchauffe élevée</b> → alimentation entravée : détendeur, filtre, ligne liquide.</li><li><b>Sous-refroidissement élevé + surchauffe basse</b> → surcharge, ou condensation qui n'évacue pas.</li><li><b>Tout normal, évaporation basse</b> → charge thermique insuffisante : la machine n'a rien à faire.</li></ol></p>"
+      },
+      {
+       "type": "piege",
+       "t": "Recharger pour voir",
+       "html": "<p>Ajouter du fluide pour observer si « ça va mieux » est le contraire d'un contrôle discriminant : cela modifie l'installation avant d'avoir compris, cela masque le symptôme quelques semaines, et si la machine fuyait, le fluide ajouté part dans l'atmosphère. C'est un geste interdit dans son principe même : recharger sans avoir recherché la fuite, c'est émettre en connaissance de cause.</p>"
+      }
+     ],
+     "question": null
     }
    ],
    "activite": null,
@@ -4965,6 +5060,72 @@
       "explication": "En régime stable, un voyant liquide propre montre du liquide plein tube, sans bulle. Des bulles qui persistent trahissent un mélange liquide + vapeur, donc un manque de charge, souvent une fuite. Quelques bulles transitoires au démarrage ou après un dégivrage sont normales ; c'est leur persistance en régime stable qui doit alerter.",
       "remediation_vers": "g1d"
      }
+    },
+    {
+     "t": "Corps purs, azéotropes, zéotropes : ce que le glissement change",
+     "src": "ecrit:8-4",
+     "titre_source": "Corps purs, azéotropes, zéotropes : ce que le glissement change",
+     "codes": [
+      "1.06",
+      "1.02"
+     ],
+     "paras": [
+      "Un fluide frigorigène peut être un <b>corps pur</b> — une seule molécule, comme le R-134a ou le R-32 — ou un <b>mélange</b> de plusieurs corps purs. Cette distinction commande une grande partie du comportement de l'installation.",
+      "Un corps pur change d'état à température constante sous une pression donnée. Vous lisez une pression, la table vous donne une température, et c'est la même à l'entrée et à la sortie de l'échangeur.",
+      "Un mélange <b>azéotropique</b> se comporte à peu près comme un corps pur : ses composants s'évaporent ensemble. La série des R-5xx en compte plusieurs. Pour le technicien, la lecture reste simple.",
+      "Un mélange <b>zéotropique</b> — la série des R-4xx, dont le R-407C et le R-404A — se comporte autrement. Ses composants n'ont pas la même volatilité : le plus volatil s'évapore en premier. La température monte donc pendant l'évaporation, à pression constante.",
+      "Cet écart s'appelle le <b>glissement</b>. Il conduit à distinguer deux températures pour une même pression : le point de <b>bulle</b>, où la première bulle de vapeur apparaît dans le liquide, et le point de <b>rosée</b>, où la dernière goutte de liquide disparaît.",
+      "Trois conséquences pratiques en découlent, et l'examen les attend. Pour le <b>sous-refroidissement</b>, on lit au point de bulle. Pour la <b>surchauffe</b>, on lit au point de rosée. Se tromper de colonne fausse le calcul de la valeur entière du glissement.",
+      "Deuxième conséquence : un mélange zéotrope se charge <b>en phase liquide</b>. Prélever en phase vapeur dans la bouteille appauvrit le mélange en composant volatil, et ce qui entre dans la machine n'a plus la composition annoncée. Une fuite importante produit le même effet dans l'installation : le fluide restant n'a plus la bonne composition, et compléter ne le répare pas.",
+      "Troisième conséquence : le glissement gêne certaines applications. Sur un échangeur à contre-courant bien conçu, il peut être exploité. Sur d'autres montages, il dégrade l'échange et complique la régulation de surchauffe."
+     ],
+     "blocs": [
+      {
+       "type": "cle",
+       "t": "Le réflexe devant un mélange",
+       "html": "<p><ol><li>Quel type — corps pur, azéotrope, zéotrope ?</li><li>Quel <b>glissement</b>, selon la documentation du fluide ?</li><li><b>Bulle</b> pour le sous-refroidissement, <b>rosée</b> pour la surchauffe.</li><li>Charge en <b>phase liquide</b>.</li><li>Après une fuite importante : la composition a changé, on ne complète pas, on statue avec le constructeur.</li></ol></p>"
+      },
+      {
+       "type": "piege",
+       "t": "Déduire le comportement du numéro",
+       "html": "<p>Le nombre qui nomme un fluide décrit sa molécule ou sa famille, jamais son comportement en machine. Un R-4xx est un mélange, mais son glissement peut aller de quasi nul à plusieurs kelvins. Aucune règle mentale ne remplace la lecture de la fiche du fluide : ni pour le glissement, ni pour la compatibilité de l'huile, ni pour le PRP.</p>"
+      }
+     ],
+     "question": null
+    },
+    {
+     "t": "Hydrocarbures, CO₂, NH₃ : ce qui les sépare des fluorés",
+     "src": "ecrit:8-5",
+     "titre_source": "Hydrocarbures, CO₂, NH₃ : ce qui les sépare des fluorés",
+     "codes": [
+      "1.07",
+      "1.06"
+     ],
+     "paras": [
+      "Le code 1.07 est nouveau en 2025, et il demande précisément ce que les fluides non fluorés ont de différent. Ce n'est pas une question de culture générale : ces fluides sont ceux vers lesquels le marché se déplace.",
+      "Les <b>hydrocarbures</b> — propane R-290, isobutane R-600a, propylène R-1270 — ont d'excellentes propriétés thermodynamiques et un PRP de l'ordre de quelques unités. Leur défaut est unique et majeur : ils sont <b>inflammables</b>, classés A3. Il ne s'agit pas d'une inflammabilité marginale mais franche.",
+      "Deux notions commandent alors la sécurité. La <b>LIE</b>, limite inférieure d'explosivité, est la concentration en dessous de laquelle le mélange avec l'air ne s'enflamme pas. La <b>LSE</b>, limite supérieure, celle au-dessus de laquelle il est trop riche pour brûler. Entre les deux, une source d'ignition suffit.",
+      "La conséquence dimensionne tout le reste : la <b>charge admissible</b> dans un local dépend de son volume et de son occupation, et c'est pour cela que les machines aux hydrocarbures sont conçues à faible charge, souvent compactes et monoblocs.",
+      "Le <b>CO₂</b>, R-744, a un PRP de 1 et aucune inflammabilité. Ce qui le distingue, ce sont ses <b>pressions</b>, sans commune mesure avec celles des fluorés, y compris à l'arrêt : une installation hors tension voit sa pression monter avec la température ambiante, ce qui impose des dispositions de maintien à l'arrêt.",
+      "Son second caractère est thermodynamique : son point critique est bas, ce qui conduit à des cycles <b>transcritiques</b> où le fluide n'est plus condensé mais refroidi à l'état supercritique. Le raisonnement change, et le diagramme aussi.",
+      "Son risque propre enfin : le CO₂ est <b>plus lourd que l'air</b> et s'accumule en point bas. Il n'a ni odeur ni couleur. À concentration élevée, il agit comme un asphyxiant et un toxique, et la détection fixe en partie basse n'est pas un luxe mais la seule alerte disponible.",
+      "L'<b>ammoniac</b>, R-717, a un PRP nul et des performances remarquables. Son caractère dominant est la <b>toxicité</b>, classée B, et une inflammabilité faible mais réelle. Son odeur perçante est perceptible très en dessous des concentrations dangereuses : c'est une alerte que les fluorés n'offrent pas.",
+      "Deux points achèvent de le distinguer : il <b>attaque le cuivre</b> et ses alliages, ce qui impose l'acier pour toute la tuyauterie et une robinetterie spécifique ; et il est <b>plus léger que l'air</b>, donc il s'accumule en partie haute — l'inverse du CO₂.",
+      "Une dernière chose, et elle est réglementaire. Le CO₂ relève de la catégorie B, l'ammoniac de la catégorie C. Ce que vous apprenez ici sert à les <b>reconnaître</b>, à comprendre leurs caractéristiques générales et à savoir vous arrêter. Ce n'est pas une préparation à intervenir sur ces installations."
+     ],
+     "blocs": [
+      {
+       "type": "cle",
+       "t": "Trois fluides, trois risques dominants",
+       "html": "<p><ol><li><b>Hydrocarbures</b> — inflammabilité franche (A3), charge admissible limitée, sources d'ignition à maîtriser.</li><li><b>CO₂ (R-744)</b> — pressions élevées y compris à l'arrêt, cycles transcritiques, accumulation en <b>point bas</b>, asphyxie et toxicité.</li><li><b>NH₃ (R-717)</b> — toxicité (classe B), incompatible avec le cuivre, accumulation en <b>partie haute</b>, odeur d'alerte.</li></ol></p>"
+      },
+      {
+       "type": "piege",
+       "t": "Croire qu'un fluide naturel est un fluide sans risque",
+       "html": "<p>« Naturel » qualifie l'origine, jamais la dangerosité. Le propane est excellent pour le climat et franchement inflammable. L'ammoniac est excellent pour le climat et toxique. Le CO₂ est le gaz de référence du PRP et il asphyxie en point bas. Un fluide à faible impact climatique demande souvent <b>plus</b> de précautions qu'un fluoré, pas moins.</p>"
+      }
+     ],
+     "question": null
     }
    ],
    "activite": null,
@@ -5544,6 +5705,75 @@
       "explication": "Une installation correcte (code 6.02) ne doit provoquer aucune fuite une fois en marche. Le seul moyen de le vérifier avant la mise en service est un essai d'étanchéité à l'azote sur tout le circuit — jamais à l'oxygène, jamais à l'air comprimé.",
       "remediation_vers": "g6b"
      }
+    },
+    {
+     "t": "Quatre organes, quatre lignes, et ce que le fluide devient",
+     "src": "ecrit:9-6",
+     "titre_source": "Quatre organes, quatre lignes, et ce que le fluide devient",
+     "codes": [
+      "1.04",
+      "1.02"
+     ],
+     "paras": [
+      "La croix du frigoriste est la carte du métier. Elle place quatre organes toujours au même endroit, et cette convention n'est pas décorative : elle vous permet de raisonner sur n'importe quelle installation, quelle que soit la façon dont elle est câblée dans son local.",
+      "Le <b>compresseur</b> est à droite. Le <b>condenseur</b> est en haut. Le <b>détendeur</b> est à gauche. L'<b>évaporateur</b> est en bas. Le fluide tourne dans le sens des aiguilles d'une montre.",
+      "Cette disposition sépare la machine en deux moitiés qu'il faut avoir constamment en tête. La moitié <b>haute</b> est du côté de la haute pression : elle va du refoulement du compresseur jusqu'au détendeur. La moitié <b>basse</b> est du côté de la basse pression : elle va de la sortie du détendeur jusqu'à l'aspiration.",
+      "Les quatre lignes portent des noms qu'il faut employer avec exactitude. Le <b>refoulement</b> va du compresseur au condenseur : le fluide y est vapeur, chaude, à haute pression. La <b>ligne liquide</b> va du condenseur au détendeur : liquide, haute pression. L'<b>alimentation de l'évaporateur</b> va du détendeur à l'évaporateur : mélange liquide et vapeur, basse pression. L'<b>aspiration</b> revient à droite : vapeur, basse pression.",
+      "Suivons maintenant le fluide, parce que c'est ce que le code 1.04 demande vraiment : la fonction des organes <b>et</b> les transformations du fluide.",
+      "Au <b>compresseur</b>, la vapeur basse pression est comprimée. Sa pression monte, sa température monte fortement — c'est la chaleur de compression. Le compresseur ne fabrique pas de froid : il crée l'écart de pression qui permet au fluide de prendre la chaleur en bas et de la rendre en haut.",
+      "Au <b>condenseur</b>, la vapeur chaude cède sa chaleur à l'air ou à l'eau. Trois zones s'y succèdent : la désurchauffe, où la vapeur refroidit sans changer d'état ; la condensation proprement dite, à température constante pour un corps pur ; puis le sous-refroidissement, où le liquide descend encore de quelques kelvins. Ce sous-refroidissement n'est pas un détail : il garantit que le détendeur est alimenté en liquide pur.",
+      "Au <b>détendeur</b>, le liquide haute pression traverse un passage étroit. Sa pression chute brutalement. Une petite partie s'évapore aussitôt et refroidit le reste : c'est ce qui produit le mélange froid qui entre dans l'évaporateur. Aucune chaleur n'est échangée avec l'extérieur pendant cette détente.",
+      "À l'<b>évaporateur</b>, le liquide restant s'évapore en prenant de la chaleur au milieu à refroidir. C'est là, et seulement là, que se produit l'effet frigorifique. En fin de parcours, la vapeur se réchauffe encore un peu au-dessus de sa température d'évaporation : c'est la surchauffe, et elle protège le compresseur du retour de liquide.",
+      "Le cycle est bouclé. Une dernière précision, qui sépare l'école du terrain : ce que l'on vient de décrire est le <b>cycle idéalisé</b>. La machine réelle subit des pertes de charge dans les lignes, des échanges parasites avec l'ambiance, une compression qui n'est pas parfaite. Le cycle réel est toujours moins bon que le modèle, et connaître le modèle sert justement à mesurer l'écart."
+     ],
+     "blocs": [
+      {
+       "type": "cle",
+       "t": "Ce que vous devez pouvoir dessiner de mémoire",
+       "html": "<p><ol><li><b>Compresseur à droite</b> — la vapeur monte en pression et en température.</li><li><b>Condenseur en haut</b> — désurchauffe, condensation, sous-refroidissement ; la chaleur part.</li><li><b>Détendeur à gauche</b> — la pression chute, une partie s'évapore et refroidit le reste.</li><li><b>Évaporateur en bas</b> — le liquide s'évapore en prenant la chaleur ; puis la surchauffe.</li></ol></p>"
+      },
+      {
+       "type": "piege",
+       "t": "« Le compresseur fabrique le froid »",
+       "html": "<p>Il ne fabrique rien du tout : il déplace. Le froid apparaît à l'évaporateur, où le fluide prend de la chaleur ; le compresseur ne fait que créer les conditions de pression qui rendent ce transfert possible, et il ajoute au passage sa propre chaleur de compression, qu'il faudra évacuer au condenseur. Cette confusion mène à chercher les pannes au mauvais endroit.</p>"
+      }
+     ],
+     "question": null
+    },
+    {
+     "t": "Les quatre organes, ce qui les use et ce qui les fait fuir",
+     "src": "ecrit:9-7",
+     "titre_source": "Les quatre organes, ce qui les use et ce qui les fait fuir",
+     "codes": [
+      "6.01",
+      "7.01",
+      "8.01",
+      "9.01"
+     ],
+     "paras": [
+      "Quatre codes du référentiel demandent, pour chaque organe, d'expliquer son principe de fonctionnement <b>et les risques de fuite qui y sont associés</b>. Les deux moitiés de la phrase comptent autant.",
+      "Le <b>compresseur</b> (6.01) aspire, comprime, refoule. Les technologies diffèrent par la manière : le piston alternatif par un mouvement de va-et-vient, la vis par deux rotors qui réduisent progressivement le volume, la spirale par deux volutes dont l'une décrit un mouvement orbital. Le référentiel demande aussi le <b>réglage de la puissance</b> et le <b>circuit de lubrification</b>.",
+      "La lubrification mérite qu'on s'y arrête. L'huile circule avec le fluide dans tout le circuit et doit revenir au compresseur. Si elle reste piégée dans un évaporateur ou une remontée mal dimensionnée, deux choses arrivent ensemble : le compresseur manque d'huile et s'use, et l'huile déposée dans l'échangeur diminue l'échange.",
+      "Les points de fuite du compresseur sont connus : le presse-étoupe des machines ouvertes, les joints de culasse et de plaque à clapets, les raccords des vannes de service, et les prises de pression des pressostats. Une usure interne ne fuit pas directement, mais elle mène à la casse, et la casse, elle, libère la charge.",
+      "Le <b>condenseur</b> (7.01) évacue la chaleur. À air, il dépend de la propreté des ailettes et du bon fonctionnement des ventilateurs ; à eau, du débit, de l'entartrage et de la qualité de l'eau. Ses fuites viennent des collets, des coudes soumis aux vibrations, des points de corrosion — le sel en bord de mer, les condensats acides en toiture — et des raccords de la ligne liquide.",
+      "L'<b>évaporateur</b> (8.01) produit le froid, et le référentiel y adjoint expressément le <b>dégivrage</b>. Le givre se forme dès que la surface passe sous zéro et que l'air contient de l'humidité. Il isole, réduit le passage de l'air, fait chuter l'évaporation. Le dégivrage le retire : à l'air ambiant quand la température le permet, par résistances électriques, ou par inversion de cycle en gaz chaud.",
+      "Les fuites d'évaporateur sont particulières : la batterie est souvent en zone humide, exposée aux chocs de manutention, aux résistances de dégivrage qui la font travailler thermiquement, et à la corrosion par les condensats. C'est aussi l'organe le plus difficile à contrôler visuellement, souvent caché dans une enceinte.",
+      "Le <b>détendeur</b> (9.01) règle le débit. Le <b>capillaire</b> est un tube calibré, sans réglage : simple, mais il n'admet ni variation de charge ni variation de conditions. Le <b>thermostatique</b> module le débit selon la surchauffe mesurée par un bulbe placé sur l'aspiration ; son égalisation peut être interne ou externe, l'externe étant nécessaire dès que la perte de charge dans l'évaporateur devient sensible. L'<b>électronique</b> mesure pression et température par sondes et pilote une vanne : il tient une surchauffe plus basse et plus stable.",
+      "Ses fuites viennent des raccords, du passage du bulbe et de son capillaire — fragile, souvent plié ou pincé lors d'une intervention — et de l'égalisation externe, une ligne de petit diamètre que l'on oublie facilement."
+     ],
+     "blocs": [
+      {
+       "type": "cle",
+       "t": "Où regarder, organe par organe",
+       "html": "<p><ol><li><b>Compresseur</b> — presse-étoupe, joints de culasse, vannes de service, prises de pression.</li><li><b>Condenseur</b> — collets, coudes vibrants, corrosion, raccords de ligne liquide.</li><li><b>Évaporateur</b> — zone humide, chocs, résistances de dégivrage, condensats corrosifs.</li><li><b>Détendeur</b> — raccords, capillaire du bulbe, ligne d'égalisation externe.</li></ol></p>"
+      },
+      {
+       "type": "piege",
+       "t": "Le bulbe déplacé « pour passer la clé »",
+       "html": "<p>Un bulbe desserré puis remis approximativement ne mesure plus la bonne température : mauvais contact, mauvaise position sur la circonférence du tube, isolation oubliée. Le détendeur régule alors sur une information fausse, la surchauffe dérive, et l'on cherchera la panne partout sauf là. Repositionner un bulbe est un geste précis, pas un remontage.</p>"
+      }
+     ],
+     "question": null
     }
    ],
    "activite": null,
@@ -9328,6 +9558,74 @@
       "explication": "Une alerte se confirme avant d'être conclue. L'air brassé disperse le fluide et peut faire sonner l'appareil loin de la fuite réelle : on repasse dans des conditions plus calmes.",
       "remediation_vers": "g4c"
      }
+    },
+    {
+     "t": "Le registre : ce qui s'écrit, quand, et pourquoi cela vous protège",
+     "src": "ecrit:14-6",
+     "titre_source": "Le registre : ce qui s'écrit, quand, et pourquoi cela vous protège",
+     "codes": [
+      "3.05",
+      "4.09",
+      "5.07",
+      "4.02"
+     ],
+     "paras": [
+      "Le registre de l'équipement n'est pas un cahier de politesse administrative. C'est la mémoire de l'installation, et c'est la seule pièce qui prouve ce que vous avez fait.",
+      "Quatre codes du référentiel portent sur lui, et ils décrivent un cycle complet. Le code <b>4.02</b> demande de le <b>consulter avant</b> tout contrôle d'étanchéité. Les codes <b>3.05</b>, <b>4.09</b> et <b>5.07</b> demandent d'y <b>consigner après</b> : les essais et contrôles effectués, le résultat du contrôle d'étanchéité, le fluide récupéré ou ajouté.",
+      "Commençons par la consultation, parce que c'est l'étape que l'on saute. Ouvrir le registre avant d'intervenir vous apprend trois choses qu'aucune mesure ne vous donnera : les <b>problèmes récurrents</b>, les <b>parties du système qui ont déjà fui</b>, et les <b>quantités ajoutées</b> lors des interventions précédentes.",
+      "Cette dernière information est la plus parlante. Une installation qu'on recharge de deux kilogrammes chaque année ne consomme pas du fluide : elle fuit. Le registre transforme une série d'interventions isolées en un diagnostic que personne ne pouvait faire sur une seule visite.",
+      "Vient ensuite ce que l'on écrit. Un enregistrement utile porte au minimum : la <b>date</b>, l'<b>identité</b> de l'intervenant et de l'entreprise, la <b>nature</b> de l'opération, la <b>méthode</b> employée et l'instrument utilisé, le <b>résultat</b>, et les <b>quantités</b> de fluide ajoutées ou récupérées avec leur nature.",
+      "Sur les quantités, une exigence de rigueur : on écrit ce que la <b>balance</b> a mesuré, pas ce que l'on estime avoir mis. Une charge « au manomètre » n'est pas une donnée de registre.",
+      "Deux mentions sont trop souvent oubliées. La première est le <b>contrôle après réparation</b> : réparer une fuite sans consigner la vérification qui a suivi laisse le dossier incomplet. La seconde est la <b>destination du fluide récupéré</b> — recyclé, régénéré ou destiné au traitement — avec la trace de sa remise.",
+      "Enfin, la question de fond : à quoi cela sert-il ? Le registre sert au client, qui suit son parc. Il sert au contrôleur, qui vérifie la conformité. Et il vous sert, vous, le jour où l'on vous demandera ce que vous avez fait sur cette machine il y a dix-huit mois. Ce jour-là, votre mémoire ne vaudra rien ; votre écriture vaudra tout."
+     ],
+     "blocs": [
+      {
+       "type": "cle",
+       "t": "Avant, pendant, après",
+       "html": "<p><ol><li><b>Avant</b> — consulter : historique des fuites, parties problématiques, quantités déjà ajoutées.</li><li><b>Pendant</b> — noter au fil de l'intervention, pas de mémoire le soir venu.</li><li><b>Après</b> — consigner : date, intervenant, opération, méthode et instrument, résultat, quantités pesées, destination du fluide récupéré, contrôle après réparation.</li></ol></p>"
+      },
+      {
+       "type": "piege",
+       "t": "« J'ai complété la charge » n'est pas un enregistrement",
+       "html": "<p>Une ligne qui dit « appoint de fluide » sans quantité, sans nature de fluide et sans mention de recherche de fuite ne prouve rien et n'aide personne. Elle laisse même penser que l'on a rechargé une installation qui fuit sans chercher d'où. C'est exactement ce qu'un contrôleur relèvera.</p>"
+      }
+     ],
+     "question": null
+    },
+    {
+     "t": "Rédiger un compte rendu d'état : fait, hypothèse, conclusion",
+     "src": "ecrit:14-7",
+     "titre_source": "Rédiger un compte rendu d'état : fait, hypothèse, conclusion",
+     "codes": [
+      "6.07",
+      "7.09",
+      "8.10",
+      "9.09"
+     ],
+     "paras": [
+      "Quatre codes du référentiel — un par organe principal — vous demandent la même chose dans les mêmes termes : rédiger un rapport sur l'état de l'organe, <b>en indiquant tout problème de fonctionnement susceptible d'endommager le système et d'entraîner à terme, faute de mesure, des fuites ou des émissions</b>.",
+      "Lisez bien cette formulation. On ne vous demande pas de dire si l'organe est bon ou mauvais. On vous demande d'anticiper : ce qui, aujourd'hui, n'est pas encore une fuite, mais le deviendra si personne n'agit.",
+      "Un compte rendu qui tient cette exigence se construit en trois étages, et le principal défaut des comptes rendus de terrain est de les mélanger.",
+      "Le premier étage est le <b>fait</b>. C'est ce que vous avez observé ou mesuré, avec sa valeur, son unité, son point de mesure et son instrument. « Surchauffe mesurée à 12 K en sortie d'évaporateur, sonde de contact, après trente minutes de fonctionnement stabilisé. » Un fait est vérifiable par un autre technicien.",
+      "Le deuxième étage est l'<b>hypothèse</b>. C'est ce que le fait suggère, et il en suggère presque toujours plusieurs. « Cette surchauffe élevée peut venir d'une sous-alimentation par le détendeur, d'un manque de charge, ou d'une perte de charge sur la ligne liquide. » Une hypothèse s'écrit au conditionnel et elle n'est jamais seule.",
+      "Le troisième étage est la <b>conclusion</b>, et elle ne vient qu'après un contrôle qui a départagé les hypothèses. « Le sous-refroidissement mesuré à 2 K et les bulles au voyant écartent l'hypothèse du réglage seul et orientent vers un manque de charge, à confirmer par une recherche de fuite. »",
+      "Ce qui sépare un technicien d'un exécutant tient dans cette discipline. Écrire « manque de gaz » en tête d'un compte rendu, c'est présenter une hypothèse comme un fait. Le client rechargera, la fuite continuera, et la responsabilité sera partagée avec celui qui l'a écrit.",
+      "Terminez toujours par ce que le référentiel réclame vraiment : la <b>conséquence à terme</b> et la <b>mesure à prendre</b>. « En l'état, le compresseur fonctionne avec un retour d'huile insuffisant ; sans intervention, l'usure conduira à une fuite au niveau du presse-étoupe. Contrôle du séparateur d'huile et de la vitesse dans la ligne d'aspiration à programmer. »"
+     ],
+     "blocs": [
+      {
+       "type": "cle",
+       "t": "Le gabarit qui tient devant n'importe quel lecteur",
+       "html": "<p><ol><li><b>Ce que j'ai relevé</b> — valeurs, unités, points de mesure, instruments, conditions.</li><li><b>Ce que cela peut signifier</b> — deux ou trois hypothèses, au conditionnel.</li><li><b>Ce qui les départage</b> — le contrôle discriminant réalisé, et son résultat.</li><li><b>Ce que je conclus</b> — la cause retenue, et ce qui reste à confirmer.</li><li><b>Ce qui arrivera sans intervention</b> — le risque de fuite ou de casse, et la mesure proposée.</li></ol></p>"
+      },
+      {
+       "type": "piege",
+       "t": "Le compte rendu qui rassure au lieu d'informer",
+       "html": "<p>« RAS, installation conforme » sur une machine dont on n'a mesuré que la basse pression n'est pas un compte rendu : c'est une signature au bas d'une page blanche. S'il n'y a rien à signaler, écrivez ce que vous avez contrôlé pour pouvoir le dire. Un compte rendu se juge à ce qu'il permet de vérifier, pas à ce qu'il affirme.</p>"
+      }
+     ],
+     "question": null
     }
    ],
    "activite": {
@@ -10115,6 +10413,72 @@
       "explication": "La charge se mesure au poids, avec une balance. Les pressions renseignent sur le fonctionnement, pas sur la quantité de fluide présente dans le circuit.",
       "remediation_vers": "g5b"
      }
+    },
+    {
+     "t": "Récupérer, stocker, transporter : la chaîne complète du fluide",
+     "src": "ecrit:15-6",
+     "titre_source": "Récupérer, stocker, transporter : la chaîne complète du fluide",
+     "codes": [
+      "5.08",
+      "5.07"
+     ],
+     "paras": [
+      "Le code 5.08 demande les prescriptions et procédures de <b>gestion, réutilisation, récupération, stockage et transport</b> des réfrigérants et des huiles fluorés, <b>y compris lorsqu'ils sont contaminés</b>. C'est une chaîne complète, et chaque maillon a ses règles.",
+      "Le principe qui commande tout : <b>aucun rejet volontaire dans l'atmosphère</b>. Ce n'est pas une recommandation de bonne pratique, c'est une interdiction. Toute opération qui ouvre un circuit commence donc par la récupération.",
+      "La <b>récupération</b> se fait avec une station dédiée, vers une bouteille prévue pour cela. Trois exigences en découlent. La bouteille doit être <b>adaptée au fluide</b> — on ne récupère pas dans n'importe quel contenant. Elle doit être <b>identifiée</b> : un fluide récupéré dans une bouteille mal étiquetée devient un mélange inconnu, donc un déchet, alors qu'il aurait pu être régénéré. Et elle ne doit jamais être <b>remplie au-delà du taux admissible</b> selon les prescriptions applicables, car un liquide qui se dilate dans un volume plein fait éclater le contenant.",
+      "C'est pourquoi l'on pèse. La <b>balance</b> est l'instrument de la récupération comme elle est celui de la charge : elle dit ce qui est sorti, ce qui reste, et ce que l'on inscrira au registre.",
+      "Vient ensuite le devenir du fluide, et il faut employer les bons mots. Un fluide <b>recyclé</b> a subi un nettoyage de base et peut être remis sur la même installation ou le même parc. Un fluide <b>régénéré</b> a été retraité pour retrouver des caractéristiques équivalentes au neuf, dans une installation prévue à cet effet. Un fluide <b>destiné au traitement</b> est un déchet : il part en destruction.",
+      "Un fluide dont on ne connaît pas la composition — mélange de récupérations successives, contamination — ne peut pas être remis en service. Le doute impose le traitement.",
+      "Les <b>huiles</b> suivent le même raisonnement. Une huile qui a circulé avec un fluide fluoré est une huile contaminée : elle relève des déchets dangereux, avec contenant dédié, étiquetage et bordereau. On ne la verse pas au bidon d'huile de vidange.",
+      "Le <b>stockage</b> obéit à des règles simples et strictes : bouteilles arrimées et debout, local ventilé, à l'abri des sources de chaleur et du rayonnement solaire, séparation des pleines et des vides, robinets protégés par leur chapeau.",
+      "Le <b>transport</b>, enfin, relève de la réglementation des marchandises dangereuses. Les bouteilles voyagent arrimées, dans un véhicule ventilé, avec les documents exigés. Une bouteille qui roule libre dans un fourgon est un projectile, et son robinet la première chose qui cède."
+     ],
+     "blocs": [
+      {
+       "type": "cle",
+       "t": "Les mots à ne pas confondre",
+       "html": "<p><ol><li><b>Recyclé</b> — nettoyage de base, réemploi sur le même parc.</li><li><b>Régénéré</b> — retraité en installation dédiée, caractéristiques équivalentes au neuf.</li><li><b>Traitement</b> — le fluide est un déchet, il part en destruction.</li><li><b>Contaminé ou de composition inconnue</b> — jamais remis en service : traitement.</li></ol></p>"
+      },
+      {
+       "type": "piege",
+       "t": "La bouteille « qui traîne » dans le camion",
+       "html": "<p>Une bouteille non identifiée, remplie de récupérations successives, est le pire scénario : son contenu n'est plus un fluide mais un mélange inconnu, invendable, non régénérable, et coûteux à détruire. Une bouteille de récupération se dédie à un fluide, s'étiquette dès la première utilisation et se pèse à chaque opération.</p>"
+      }
+     ],
+     "question": null
+    },
+    {
+     "t": "Le cas des hydrocarbures : ce que le code 5.09 ajoute",
+     "src": "ecrit:15-7",
+     "titre_source": "Le cas des hydrocarbures : ce que le code 5.09 ajoute",
+     "codes": [
+      "5.09",
+      "12.01",
+      "11.05"
+     ],
+     "paras": [
+      "Le code 5.09 est nouveau en 2025. Il reprend les mêmes verbes que le 5.08 — gestion, remplissage, récupération, stockage, transport — mais pour les <b>hydrocarbures</b> et leurs huiles, et il y ajoute l'installation des équipements qui en dépendent.",
+      "Tout ce qui vaut pour les fluorés continue de valoir. Ce qui change, c'est qu'une atmosphère explosive peut se former, et cela reconfigure chaque geste.",
+      "Le <b>remplissage</b> et la récupération se conduisent avec un matériel adapté à ces fluides : station qualifiée, flexibles compatibles, absence de source d'ignition dans le périmètre. Un matériel prévu pour les fluorés n'est pas transposable par principe.",
+      "La <b>zone d'intervention</b> se délimite avant de commencer. On écarte les sources d'ignition — flammes, meuleuses, appareils électriques non adaptés, téléphones —, on ventile, et l'on s'assure qu'aucun point bas ne peut piéger le gaz, car les hydrocarbures usuels sont plus lourds que l'air.",
+      "Le <b>stockage</b> ajoute ses propres exigences : local ventilé, absence de source d'ignition, séparation d'avec les comburants, signalisation. Les quantités stockées sont surveillées, car elles conditionnent le classement du local.",
+      "L'<b>étiquetage</b> (code 12.01) devient une information de sécurité à part entière. La machine porte les marquages qui préviennent de la présence d'un fluide inflammable ; les bouteilles portent les leurs, et leur raccordement obéit à des prescriptions spéciales — le filetage à gauche des gaz inflammables n'est pas une curiosité, c'est un détrompeur.",
+      "Les <b>huiles</b> ayant circulé avec un hydrocarbure retiennent du fluide dissous. Une huile de vidange ouverte à l'air peut dégazer : elle se manipule comme un produit inflammable, dans un contenant fermé, et elle part en déchet dangereux.",
+      "La règle qui tient tout ensemble, et qu'il faut savoir énoncer : <b>le livre explique et prépare, l'atelier démontre et évalue le geste</b>. Aucune de ces procédures ne s'apprend en lisant. Ce que vous devez savoir ici, c'est ce qui les commande, pourquoi elles diffèrent, et à quel moment il faut s'arrêter pour demander."
+     ],
+     "blocs": [
+      {
+       "type": "cle",
+       "t": "Ce qui change avec un hydrocarbure",
+       "html": "<p><ol><li><b>Matériel</b> — station, flexibles et détecteurs adaptés aux inflammables.</li><li><b>Zone</b> — délimitée, ventilée, sans source d'ignition, points bas surveillés.</li><li><b>Stockage</b> — local ventilé, séparation, signalisation, quantités suivies.</li><li><b>Étiquetage</b> — marquage de la machine, raccords détrompés des bouteilles.</li><li><b>Huiles</b> — dégazage possible : contenant fermé, déchet dangereux.</li></ol></p>"
+      },
+      {
+       "type": "piege",
+       "t": "Utiliser sa station habituelle « juste pour cette fois »",
+       "html": "<p>Une station de récupération non qualifiée pour les fluides inflammables contient des composants électriques qui peuvent devenir des sources d'ignition, et son circuit interne n'est pas prévu pour ces fluides. Le raccordement se fera sans obstacle et l'opération semblera se dérouler normalement. C'est précisément ce qui rend ce raccourci dangereux.</p>"
+      }
+     ],
+     "question": null
     }
    ],
    "activite": {
@@ -11527,6 +11891,62 @@
       "A2",
       "D"
      ]
+    },
+    {
+     "code": "6.08",
+     "libelle": "Connaître les mesures d'amélioration ou de maintien de l'efficacité énergétique des équipements lors de l'installation ou de la maintenance des compresseurs",
+     "groupe": "G6",
+     "theorie": true,
+     "cats": {
+      "A1": "T",
+      "A2": "T"
+     },
+     "catsT": [
+      "A1",
+      "A2"
+     ]
+    },
+    {
+     "code": "7.10",
+     "libelle": "Connaître les mesures d'amélioration ou de maintien de l'efficacité énergétique des équipements lors de l'installation ou de la maintenance des condenseurs",
+     "groupe": "G7",
+     "theorie": true,
+     "cats": {
+      "A1": "T",
+      "A2": "T"
+     },
+     "catsT": [
+      "A1",
+      "A2"
+     ]
+    },
+    {
+     "code": "8.11",
+     "libelle": "Connaître les mesures pour améliorer ou maintenir l'efficacité énergétique de l'équipement pendant l'installation ou la maintenance des évaporateurs",
+     "groupe": "G8",
+     "theorie": true,
+     "cats": {
+      "A1": "T",
+      "A2": "T"
+     },
+     "catsT": [
+      "A1",
+      "A2"
+     ]
+    },
+    {
+     "code": "9.10",
+     "libelle": "Connaître les mesures pour améliorer ou maintenir l'efficacité énergétique de l'équipement pendant l'installation ou la maintenance des détendeurs thermostatiques et d'autres composants",
+     "groupe": "G9",
+     "theorie": true,
+     "cats": {
+      "A1": "T",
+      "A2": "T"
+     },
+     "catsT": [
+      "A1",
+      "A2"
+     ]
     }
    ],
    "lecons": [
@@ -11610,6 +12030,137 @@
       "explication": "Plus l'écart entre condensation et évaporation est faible, moins le compresseur travaille pour un même effet frigorifique. Condenseur propre, échangeurs corrects, réglages justes : le rendement est d'abord une affaire d'entretien.",
       "remediation_vers": "g11"
      }
+    },
+    {
+     "t": "COP, EER : ce que le chiffre dit, et à quelles conditions",
+     "src": "ecrit:17-3",
+     "titre_source": "COP, EER : ce que le chiffre dit, et à quelles conditions",
+     "codes": [
+      "11.02",
+      "6.08"
+     ],
+     "paras": [
+      "Une machine frigorifique ne fabrique pas de froid : elle déplace de la chaleur d'un endroit froid vers un endroit chaud. Ce déplacement coûte du travail, fourni par le compresseur. L'efficacité mesure le rapport entre ce que l'on obtient et ce que l'on paie.",
+      "Le <b>COP</b> — <i>coefficient of performance</i>, coefficient de performance — est ce rapport. On divise la puissance utile par la puissance absorbée. Les deux sont en watts, le résultat n'a donc pas d'unité.",
+      "Un COP de 3 signifie que la machine déplace trois kilowatts de chaleur en consommant un kilowatt électrique. Ce n'est pas un rendement au sens habituel : il dépasse 1, et c'est normal, puisque l'énergie utile n'est pas produite mais transportée.",
+      "L'usage réserve souvent le mot <b>COP</b> au fonctionnement en pompe à chaleur, où l'utile est la chaleur rejetée au condenseur, et le mot <b>EER</b> — <i>energy efficiency ratio</i> — au fonctionnement en froid, où l'utile est la chaleur prise à l'évaporateur. Le calcul est le même ; ce qui change, c'est ce que l'on compte comme utile.",
+      "Un chiffre d'efficacité ne veut rien dire sans ses <b>conditions</b>. Une même machine annoncée à 3,5 peut fonctionner à 2,1 sur site. Le COP dépend d'abord des températures de fonctionnement, et celles-ci changent avec la saison, la charge et l'état de l'installation.",
+      "C'est pourquoi les valeurs saisonnières existent. Le <b>SEER</b> et le <b>SCOP</b> intègrent le fonctionnement sur toute une saison, à charge variable, et non un point unique de laboratoire. Ils sont plus proches de la réalité et servent aux étiquettes énergie.",
+      "Retenez la position professionnelle : un COP se cite toujours avec ses températures. « COP de 3,2 » ne veut rien dire. « COP de 3,2 pour une évaporation à −10 °C et une condensation à +45 °C » est une information."
+     ],
+     "blocs": [
+      {
+       "type": "cle",
+       "t": "Le calcul, et ce qu'il faut dire avec",
+       "html": "<p>COP = puissance utile ÷ puissance absorbée. Exemple : un groupe absorbe 4 kW et enlève 12 kW à la chambre froide. L'EER vaut 12 ÷ 4 = 3. Complétez toujours par les conditions : le fluide, la température d'évaporation, la température de condensation, et le point de mesure de la puissance absorbée — compresseur seul, ou machine complète avec ventilateurs et dégivrage.</p>"
+      },
+      {
+       "type": "piege",
+       "t": "Comparer deux COP mesurés autrement",
+       "html": "<p>Un COP « compresseur seul » et un COP « machine complète » ne se comparent pas : le second inclut les ventilateurs, les résistances de dégivrage, les auxiliaires. L'écart peut dépasser vingt pour cent. Quand un catalogue annonce un chiffre flatteur, la question n'est pas « est-il vrai » mais « qu'a-t-on mis au dénominateur ».</p>"
+      }
+     ],
+     "question": null
+    },
+    {
+     "t": "Le levier principal : l'écart entre condensation et évaporation",
+     "src": "ecrit:17-4",
+     "titre_source": "Le levier principal : l'écart entre condensation et évaporation",
+     "codes": [
+      "11.02",
+      "6.08",
+      "7.10",
+      "8.11"
+     ],
+     "paras": [
+      "Si vous ne deviez retenir qu'une chose de tout ce chapitre, ce serait celle-ci : <b>l'efficacité d'une machine frigorifique dépend avant tout de l'écart entre sa température de condensation et sa température d'évaporation</b>. Plus cet écart est grand, plus le compresseur travaille, plus le COP chute.",
+      "Regardez-le sur le diagramme. Quand la condensation monte, le palier haut du cycle se déplace vers le haut : le compresseur doit atteindre une pression de refoulement plus élevée, donc fournir davantage de travail pour le même effet frigorifique. Quand l'évaporation baisse, le palier bas descend : le fluide aspiré est moins dense, le compresseur avale moins de masse à chaque tour, et sa puissance frigorifique s'effondre.",
+      "Les ordres de grandeur usuels dans la profession situent le gain autour de <b>deux à trois pour cent de COP par kelvin</b> gagné, dans un sens comme dans l'autre. Traitez cette fourchette comme un repère de raisonnement, pas comme une constante : la valeur exacte dépend du fluide, du compresseur et du point de fonctionnement, et la documentation constructeur prime toujours.",
+      "Ce repère suffit pourtant à hiérarchiser vos gestes. Un condenseur encrassé qui fait monter la condensation de dix kelvins coûte de l'ordre de vingt à trente pour cent de performance. Aucun réglage fin ne rattrapera cela.",
+      "Du côté de l'évaporation, la logique est la même en sens inverse. Un évaporateur givré, un débit d'air réduit, un dégivrage insuffisant font descendre la température d'évaporation. La machine tourne plus longtemps pour le même service et consomme davantage.",
+      "De là découle la règle de conduite : <b>ne jamais faire travailler la machine avec plus d'écart que nécessaire</b>. Le premier levier n'est pas un réglage savant, c'est la propreté des échangeurs et le débit du fluide caloporteur, air ou eau.",
+      "Le second levier est la <b>condensation flottante</b>. Une régulation à haute pression fixe oblige la machine à condenser à une température élevée même quand il fait froid dehors, alors que l'air disponible permettrait de condenser bien plus bas. Laisser la pression de condensation descendre avec la température extérieure récupère un gain important sur l'année.",
+      "Cette liberté a une limite, et elle est physique : le détendeur a besoin d'une pression différentielle suffisante pour alimenter correctement l'évaporateur. Descendre trop bas fait manquer d'alimentation. Le point de consigne minimal se règle donc selon le détendeur, la ligne liquide et la documentation constructeur, jamais au jugé."
+     ],
+     "blocs": [
+      {
+       "type": "cle",
+       "t": "Les quatre gestes qui rendent le plus",
+       "html": "<p><ol><li><b>Nettoyer le condenseur</b> et rétablir le débit d'air ou d'eau : c'est le geste au meilleur rapport temps/gain.</li><li><b>Rétablir l'échange à l'évaporateur</b> : dégivrage réglé, ailettes propres, ventilateurs sains.</li><li><b>Abaisser la condensation quand l'ambiance le permet</b> — condensation flottante, dans les limites du détendeur.</li><li><b>Vérifier la charge</b> : ni manque, qui fait chuter l'évaporation, ni excès, qui noie le condenseur et fait monter la haute pression.</li></ol></p>"
+      },
+      {
+       "type": "piege",
+       "t": "Baisser la consigne de la chambre « pour aller plus vite »",
+       "html": "<p>Abaisser la consigne d'une chambre froide pour descendre plus vite en température fait baisser l'évaporation, donc le COP, donc allonge le temps de fonctionnement et augmente la facture. Le froid n'arrive pas plus vite : la machine est simplement moins efficace. Le seul gain de temps réel vient d'un échange rétabli, pas d'une consigne abaissée.</p>"
+      }
+     ],
+     "question": null
+    },
+    {
+     "t": "Organe par organe : ce que le référentiel attend de vous",
+     "src": "ecrit:17-5",
+     "titre_source": "Organe par organe : ce que le référentiel attend de vous",
+     "codes": [
+      "6.08",
+      "7.10",
+      "8.11",
+      "9.10"
+     ],
+     "paras": [
+      "Le référentiel ne demande pas une culture générale sur l'énergie. Il demande, pour <b>chaque organe</b>, les mesures d'amélioration ou de maintien de l'efficacité lors de l'installation et de la maintenance. Voici ce que cela recouvre, organe par organe.",
+      "Au <b>compresseur</b> (code 6.08), l'efficacité se joue sur l'adaptation de la puissance à la demande. Un compresseur qui démarre et s'arrête sans cesse consomme en pure perte à chaque démarrage et fatigue ses organes. La variation de vitesse, l'étagement, la mise en cascade de plusieurs machines permettent de suivre la charge réelle plutôt que de fonctionner en tout ou rien.",
+      "S'y ajoutent la surchauffe à l'aspiration, qui ne doit être ni insuffisante — risque de retour liquide — ni excessive, car elle élève la température de refoulement et dégrade le rendement, et le bon retour d'huile, une huile qui reste dans le circuit isolant les échangeurs et diminuant l'échange.",
+      "Au <b>condenseur</b> (code 7.10), tout se joue sur l'échange et sur les incondensables. Un échangeur propre, un débit d'air ou d'eau conforme, des ventilateurs en bon état maintiennent la condensation basse. La présence d'<b>incondensables</b> — de l'air entré par une fuite ou un tirage au vide bâclé — occupe une partie du volume, fait monter la pression de condensation et pénalise directement le COP.",
+      "À l'<b>évaporateur</b> (code 8.11), l'ennemi est le givre et le mauvais échange. Un dégivrage déclenché trop rarement laisse la glace isoler la batterie ; déclenché trop souvent, il apporte de la chaleur dans l'enceinte que la machine devra ensuite retirer. Le réglage juste est celui qui dégivre quand c'est nécessaire, et pas selon une horloge posée une fois pour toutes.",
+      "Au <b>détendeur</b> (code 9.10), l'efficacité tient à la qualité de l'alimentation. Un détendeur bien réglé maintient une surchauffe stable et utilise toute la surface de l'évaporateur. Trop fermé, il sous-alimente : une partie de la batterie ne sert plus, l'évaporation chute. Trop ouvert, il laisse passer du liquide vers le compresseur. Le détendeur électronique tient une surchauffe plus basse et plus stable qu'un thermostatique, et c'est là que se trouve son gain.",
+      "Avec les <b>fluides inflammables</b> (code 12.14), les mêmes leviers valent, mais deux contraintes s'ajoutent. La charge admissible étant limitée, la machine dispose de moins de fluide pour le même service : elle est plus sensible à toute perte d'échange, et un condenseur encrassé y coûte plus cher qu'ailleurs. Et chaque intervention devant être conduite selon les règles propres à ces fluides, l'entretien courant doit être planifié plutôt que subi.",
+      "Un mot enfin sur la <b>récupération de chaleur</b>. La chaleur rejetée au condenseur n'est pas un déchet : elle peut préchauffer de l'eau sanitaire ou un local. Ce n'est pas une amélioration du COP de la machine — elle continue de consommer autant — mais une valorisation de ce qu'elle rejette, et le bilan global du site s'en trouve amélioré."
+     ],
+     "blocs": [
+      {
+       "type": "cle",
+       "t": "Ce qu'on vous demandera de savoir dire",
+       "html": "<p><ol><li><b>Compresseur</b> — adapter la puissance à la demande ; surchauffe juste ; retour d'huile assuré.</li><li><b>Condenseur</b> — échange propre, débit conforme, pas d'incondensables, condensation aussi basse que le détendeur l'autorise.</li><li><b>Évaporateur</b> — dégivrage réglé sur le besoin réel, ailettes propres, ventilation assurée.</li><li><b>Détendeur</b> — surchauffe stable, toute la batterie alimentée, réglage conforme au constructeur.</li></ol></p>"
+      },
+      {
+       "type": "piege",
+       "t": "Les incondensables ne se purgent pas au hasard",
+       "html": "<p>Une haute pression anormale peut venir d'incondensables, mais aussi d'un condenseur encrassé, d'un ventilateur arrêté, d'une surcharge de fluide ou d'une ambiance trop chaude. Purger « pour voir » libère du fluide dans l'atmosphère — ce qui est interdit — et ne traite souvent pas la cause. Départagez d'abord les hypothèses par la mesure : sous-refroidissement, écart entre la température de condensation lue et l'ambiance, état de l'échangeur.</p>"
+      }
+     ],
+     "question": null
+    },
+    {
+     "t": "Choisir un fluide : ce que l'application et le climat imposent",
+     "src": "ecrit:17-6",
+     "titre_source": "Choisir un fluide : ce que l'application et le climat imposent",
+     "codes": [
+      "11.04",
+      "11.01",
+      "11.02"
+     ],
+     "paras": [
+      "Le code 11.04 vous demande de comprendre les avantages et les inconvénients des fluides de substitution <b>en fonction de l'application prévue et des conditions climatiques</b>. Ce n'est pas une question de préférence : c'est une question de point de fonctionnement.",
+      "Un fluide n'a pas une efficacité en soi. Il a une efficacité <b>à un régime donné</b>. Le même fluide peut être excellent en climatisation, où l'évaporation reste haute et l'écart modéré, et médiocre en froid négatif, où l'écart devient considérable.",
+      "Trois grandeurs commandent ce comportement. La <b>pression de fonctionnement</b> décide de la mécanique nécessaire et de la densité du fluide aspiré. La <b>température de refoulement</b> limite le taux de compression admissible : un fluide qui chauffe trop au refoulement ne peut pas descendre bas sans injection ou sans étagement. Le <b>glissement</b> des mélanges zéotropes complique le réglage et la charge, et il interdit de compléter une installation en phase vapeur.",
+      "Le climat entre ensuite. Sous climat chaud, la condensation est haute une grande partie de l'année : un fluide dont la température de refoulement s'emballe y sera pénalisé, et le gain annoncé en laboratoire tempéré ne se retrouvera pas. Sous climat froid, la condensation flottante devient un levier majeur, et le fluide doit permettre d'en profiter.",
+      "C'est ici que se noue le raisonnement complet, et c'est ce que l'épreuve attend d'un candidat sérieux. Le fluide au PRP le plus bas n'est pas automatiquement le meilleur choix : s'il impose une machine moins efficace dans l'application visée, la part indirecte augmentera plus que la part directe n'aura diminué.",
+      "L'inverse est tout aussi vrai. Une machine très efficace chargée d'un fluide à PRP élevé peut voir tout son bénéfice annulé par une seule fuite. C'est le sens des deux plateaux du <b>TEWI</b> : la part directe des émissions de fluide, la part indirecte de l'énergie consommée.",
+      "La conclusion professionnelle est donc une conclusion prudente : <b>on ne choisit pas un fluide, on choisit un couple fluide-machine pour une application et un climat</b>, et l'on vérifie ce choix auprès du constructeur. Aucun remplacement direct ne se décide sur la seule comparaison de deux PRP."
+     ],
+     "blocs": [
+      {
+       "type": "cle",
+       "t": "Les six questions avant de valider un fluide",
+       "html": "<p><ol><li>Quelle <b>application</b> — climatisation, froid positif, froid négatif, pompe à chaleur ?</li><li>Quel <b>climat</b>, et donc quelle plage de condensation sur l'année ?</li><li>Quelle <b>pression de fonctionnement</b>, et la machine est-elle dimensionnée pour ?</li><li>Quelle <b>température de refoulement</b> au régime le plus défavorable ?</li><li>Y a-t-il un <b>glissement</b>, et l'installation le supporte-t-elle ?</li><li>Quelle <b>classe de sécurité</b>, quelle charge admissible dans ce local ?</li></ol></p>"
+      },
+      {
+       "type": "piege",
+       "t": "Le remplacement direct qui n'existe pas",
+       "html": "<p>Un fluide présenté comme substitut direct d'un autre reste un changement de point de fonctionnement. Huile, joints, réglage du détendeur, pressostats, charge : tout est à revérifier. La seule validation qui vous protège est celle du constructeur de la machine, écrite. Sans elle, vous engagez votre responsabilité sur une installation que vous avez modifiée.</p>"
+      }
+     ],
+     "question": null
     },
     {
      "t": "Hydrocarbures : une machine pas comme les autres",

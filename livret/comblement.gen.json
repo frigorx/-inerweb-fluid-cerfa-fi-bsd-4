@@ -29,17 +29,17 @@
   "h": 75,
   "legende": "Le cycle se lit sur le diagramme, jamais de mémoire."
  },
- "7-6": {
+ "7-1": {
   "ref": "svg:mesures-surchauffe-sous-refroidissement",
   "h": 75,
   "legende": "Deux écarts qui se mesurent — jamais ne se devinent."
  },
- "8-1": {
+ "8-6": {
   "ref": "svg:code-nomme-classe-previent",
   "h": 75,
   "legende": "Cinq étiquettes, un réflexe : la classe se vérifie sur la FDS."
  },
- "9-1": {
+ "9-8": {
   "ref": "svg:compresseurs-comparatif",
   "h": 75,
   "legende": "Quatre technologies sur le terrain, la fonction ne change pas."
@@ -79,7 +79,7 @@
   "h": 75,
   "legende": "L’azote balaie l’intérieur du tube pendant toute la chauffe."
  },
- "17-4": {
+ "17-1": {
   "ref": "svg:quatre-leviers-energie",
   "h": 75,
   "legende": "Quatre choix de conception qui se voient sur la facture."

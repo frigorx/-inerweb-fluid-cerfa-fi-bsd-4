@@ -76,7 +76,7 @@
   "largeur": 2400,
   "hauteur": 1919,
   "source": "packs/fluides/res/symboles/manometres.svg",
-  "citations": 4,
+  "citations": 5,
   "animee": false
  },
  "svg:familles-fluides": {
@@ -84,7 +84,7 @@
   "largeur": 2400,
   "hauteur": 1387,
   "source": "packs/fluides/res/svg/familles-fluides.svg",
-  "citations": 5,
+  "citations": 6,
   "animee": false
  },
  "illu:g1c": {
@@ -100,7 +100,7 @@
   "largeur": 2400,
   "hauteur": 927,
   "source": "packs/fluides/res/svg/lie-domaine.svg",
-  "citations": 3,
+  "citations": 4,
   "animee": true
  },
  "illu:cl2": {
@@ -124,7 +124,7 @@
   "largeur": 2400,
   "hauteur": 955,
   "source": "packs/fluides/res/svg/co2-nh3-compare.svg",
-  "citations": 3,
+  "citations": 4,
   "animee": true
  },
  "pack:co2-local-protege": {
@@ -316,7 +316,7 @@
   "largeur": 2400,
   "hauteur": 1243,
   "source": "packs/fluides/res/svg/pression-absolue-relative.svg",
-  "citations": 2,
+  "citations": 3,
   "animee": true
  },
  "svg:chaleur-sensible-latente": {
@@ -340,7 +340,7 @@
   "largeur": 2400,
   "hauteur": 1282,
   "source": "packs/fluides/res/svg/diagramme-logph.svg",
-  "citations": 3,
+  "citations": 4,
   "animee": true
  },
  "svg:nomenclature": {
@@ -364,7 +364,7 @@
   "largeur": 2400,
   "hauteur": 1120,
   "source": "packs/fluides/res/svg/lecture-table.svg",
-  "citations": 4,
+  "citations": 6,
   "animee": false
  },
  "svg:mesure-surchauffe": {
@@ -396,8 +396,24 @@
   "largeur": 2400,
   "hauteur": 2080,
   "source": "packs/fluides/res/svg/points-de-fuite.svg",
-  "citations": 6,
+  "citations": 8,
   "animee": true
+ },
+ "svg:manifold-lecture": {
+  "fichier": "svg-manifold-lecture.png",
+  "largeur": 2400,
+  "hauteur": 1253,
+  "source": "packs/fluides/res/svg/manifold-lecture.svg",
+  "citations": 3,
+  "animee": true
+ },
+ "svg:mesures-surchauffe-sous-refroidissement": {
+  "fichier": "svg-mesures-surchauffe-sous-refroidissement.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "packs/fluides/res/svg/mesures-surchauffe-sous-refroidissement.svg",
+  "citations": 3,
+  "animee": false
  },
  "illu:g1d": {
   "fichier": "illu-g1d.png",
@@ -412,7 +428,7 @@
   "largeur": 2400,
   "hauteur": 1147,
   "source": "packs/fluides/res/svg/compresseurs.svg",
-  "citations": 2,
+  "citations": 3,
   "animee": false
  },
  "illu:g6": {
@@ -479,12 +495,20 @@
   "citations": 1,
   "animee": false
  },
- "svg:coup-de-liquide-piston": {
-  "fichier": "svg-coup-de-liquide-piston.png",
+ "svg:croix-frigoriste-etats": {
+  "fichier": "svg-croix-frigoriste-etats.png",
   "largeur": 2400,
-  "hauteur": 1350,
-  "source": "packs/fluides/res/svg/coup-de-liquide-piston.svg",
-  "citations": 1,
+  "hauteur": 1440,
+  "source": "packs/fluides/res/svg/croix-frigoriste-etats.svg",
+  "citations": 2,
+  "animee": false
+ },
+ "svg:circuit-complet-manifold": {
+  "fichier": "svg-circuit-complet-manifold.png",
+  "largeur": 2400,
+  "hauteur": 1530,
+  "source": "packs/fluides/res/svg/circuit-complet-manifold.svg",
+  "citations": 2,
   "animee": true
  },
  "svg:condenseur-trois-zones": {
@@ -492,8 +516,16 @@
   "largeur": 2400,
   "hauteur": 1440,
   "source": "packs/fluides/res/svg/condenseur-trois-zones.svg",
-  "citations": 1,
+  "citations": 2,
   "animee": false
+ },
+ "svg:coup-de-liquide-piston": {
+  "fichier": "svg-coup-de-liquide-piston.png",
+  "largeur": 2400,
+  "hauteur": 1350,
+  "source": "packs/fluides/res/svg/coup-de-liquide-piston.svg",
+  "citations": 1,
+  "animee": true
  },
  "illu:g7": {
   "fichier": "illu-g7.png",
@@ -727,14 +759,6 @@
   "citations": 1,
   "animee": false
  },
- "svg:manifold-lecture": {
-  "fichier": "svg-manifold-lecture.png",
-  "largeur": 2400,
-  "hauteur": 1253,
-  "source": "packs/fluides/res/svg/manifold-lecture.svg",
-  "citations": 1,
-  "animee": true
- },
  "illu:p1": {
   "fichier": "illu-p1.png",
   "largeur": 1024,
@@ -797,6 +821,14 @@
   "hauteur": 1024,
   "source": "packs/fluides/res/bibliotheque/illu-g4c.webp",
   "citations": 2,
+  "animee": false
+ },
+ "leg:dechets-responsabilites/registre-producteur": {
+  "fichier": "leg-dechets-responsabilites_registre-producteur.png",
+  "largeur": 900,
+  "hauteur": 380,
+  "source": "legislation/stations/dechets-responsabilites/svg/registre-producteur.svg",
+  "citations": 1,
   "animee": false
  },
  "svg:recuperation": {
@@ -879,6 +911,38 @@
   "citations": 1,
   "animee": false
  },
+ "svg:recuperation-securisee": {
+  "fichier": "svg-recuperation-securisee.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "packs/fluides/res/svg/recuperation-securisee.svg",
+  "citations": 2,
+  "animee": false
+ },
+ "svg:secu-bouteille": {
+  "fichier": "svg-secu-bouteille.png",
+  "largeur": 2400,
+  "hauteur": 880,
+  "source": "packs/fluides/res/svg/secu-bouteille.svg",
+  "citations": 1,
+  "animee": true
+ },
+ "svg:r290-zone-intervention": {
+  "fichier": "svg-r290-zone-intervention.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "packs/fluides/res/svg/r290-zone-intervention.svg",
+  "citations": 2,
+  "animee": false
+ },
+ "leg:dechets-sept-flux/dechets-dangereux-a-part": {
+  "fichier": "leg-dechets-sept-flux_dechets-dangereux-a-part.png",
+  "largeur": 900,
+  "hauteur": 320,
+  "source": "legislation/stations/dechets-sept-flux/svg/dechets-dangereux-a-part.svg",
+  "citations": 1,
+  "animee": false
+ },
  "svg:balayage-azote": {
   "fichier": "svg-balayage-azote.png",
   "largeur": 2400,
@@ -918,6 +982,62 @@
   "source": "packs/fluides/res/bibliotheque/illu-g11.webp",
   "citations": 2,
   "animee": false
+ },
+ "svg:quatre-leviers-energie": {
+  "fichier": "svg-quatre-leviers-energie.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "packs/fluides/res/svg/quatre-leviers-energie.svg",
+  "citations": 2,
+  "animee": false
+ },
+ "leg:impact-tewi/part-indirecte": {
+  "fichier": "leg-impact-tewi_part-indirecte.png",
+  "largeur": 900,
+  "hauteur": 340,
+  "source": "legislation/stations/impact-tewi/svg/part-indirecte.svg",
+  "citations": 1,
+  "animee": true
+ },
+ "svg:condenseur-ecart-encrassement": {
+  "fichier": "svg-condenseur-ecart-encrassement.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "packs/fluides/res/svg/condenseur-ecart-encrassement.svg",
+  "citations": 2,
+  "animee": false
+ },
+ "svg:compresseurs-comparatif": {
+  "fichier": "svg-compresseurs-comparatif.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "packs/fluides/res/svg/compresseurs-comparatif.svg",
+  "citations": 2,
+  "animee": false
+ },
+ "svg:givre-isole-machine-force": {
+  "fichier": "svg-givre-isole-machine-force.png",
+  "largeur": 2400,
+  "hauteur": 1440,
+  "source": "packs/fluides/res/svg/givre-isole-machine-force.svg",
+  "citations": 2,
+  "animee": false
+ },
+ "leg:impact-tewi/balance-tewi": {
+  "fichier": "leg-impact-tewi_balance-tewi.png",
+  "largeur": 900,
+  "hauteur": 380,
+  "source": "legislation/stations/impact-tewi/svg/balance-tewi.svg",
+  "citations": 1,
+  "animee": true
+ },
+ "leg:impact-tewi/piege-machine-gourmande": {
+  "fichier": "leg-impact-tewi_piege-machine-gourmande.png",
+  "largeur": 900,
+  "hauteur": 400,
+  "source": "legislation/stations/impact-tewi/svg/piege-machine-gourmande.svg",
+  "citations": 1,
+  "animee": true
  },
  "svg:charge-limite-local": {
   "fichier": "svg-charge-limite-local.png",
@@ -1055,14 +1175,6 @@
   "citations": 1,
   "animee": false
  },
- "svg:circuit-complet-manifold": {
-  "fichier": "svg-circuit-complet-manifold.png",
-  "largeur": 2400,
-  "hauteur": 1530,
-  "source": "packs/fluides/res/svg/circuit-complet-manifold.svg",
-  "citations": 1,
-  "animee": true
- },
  "svg:consignation-cinq-etapes": {
   "fichier": "svg-consignation-cinq-etapes.png",
   "largeur": 2400,
@@ -1087,14 +1199,6 @@
   "citations": 1,
   "animee": false
  },
- "svg:croix-frigoriste-etats": {
-  "fichier": "svg-croix-frigoriste-etats.png",
-  "largeur": 2400,
-  "hauteur": 1440,
-  "source": "packs/fluides/res/svg/croix-frigoriste-etats.svg",
-  "citations": 1,
-  "animee": false
- },
  "svg:logph-lecture": {
   "fichier": "svg-logph-lecture.png",
   "largeur": 2400,
@@ -1103,43 +1207,11 @@
   "citations": 1,
   "animee": false
  },
- "svg:mesures-surchauffe-sous-refroidissement": {
-  "fichier": "svg-mesures-surchauffe-sous-refroidissement.png",
-  "largeur": 2400,
-  "hauteur": 1440,
-  "source": "packs/fluides/res/svg/mesures-surchauffe-sous-refroidissement.svg",
-  "citations": 1,
-  "animee": false
- },
  "svg:code-nomme-classe-previent": {
   "fichier": "svg-code-nomme-classe-previent.png",
   "largeur": 2400,
   "hauteur": 1440,
   "source": "packs/fluides/res/svg/code-nomme-classe-previent.svg",
-  "citations": 1,
-  "animee": false
- },
- "svg:compresseurs-comparatif": {
-  "fichier": "svg-compresseurs-comparatif.png",
-  "largeur": 2400,
-  "hauteur": 1440,
-  "source": "packs/fluides/res/svg/compresseurs-comparatif.svg",
-  "citations": 1,
-  "animee": false
- },
- "svg:condenseur-ecart-encrassement": {
-  "fichier": "svg-condenseur-ecart-encrassement.png",
-  "largeur": 2400,
-  "hauteur": 1440,
-  "source": "packs/fluides/res/svg/condenseur-ecart-encrassement.svg",
-  "citations": 1,
-  "animee": false
- },
- "svg:givre-isole-machine-force": {
-  "fichier": "svg-givre-isole-machine-force.png",
-  "largeur": 2400,
-  "hauteur": 1440,
-  "source": "packs/fluides/res/svg/givre-isole-machine-force.svg",
   "citations": 1,
   "animee": false
  },
@@ -1167,35 +1239,11 @@
   "citations": 1,
   "animee": false
  },
- "svg:recuperation-securisee": {
-  "fichier": "svg-recuperation-securisee.png",
-  "largeur": 2400,
-  "hauteur": 1440,
-  "source": "packs/fluides/res/svg/recuperation-securisee.svg",
-  "citations": 1,
-  "animee": false
- },
  "svg:brasage-balayage-azote": {
   "fichier": "svg-brasage-balayage-azote.png",
   "largeur": 2400,
   "hauteur": 1440,
   "source": "packs/fluides/res/svg/brasage-balayage-azote.svg",
-  "citations": 1,
-  "animee": false
- },
- "svg:quatre-leviers-energie": {
-  "fichier": "svg-quatre-leviers-energie.png",
-  "largeur": 2400,
-  "hauteur": 1440,
-  "source": "packs/fluides/res/svg/quatre-leviers-energie.svg",
-  "citations": 1,
-  "animee": false
- },
- "svg:r290-zone-intervention": {
-  "fichier": "svg-r290-zone-intervention.png",
-  "largeur": 2400,
-  "hauteur": 1440,
-  "source": "packs/fluides/res/svg/r290-zone-intervention.svg",
   "citations": 1,
   "animee": false
  },

@@ -59,7 +59,10 @@ export const QR_BASE = 'https://inerweb.fr/f/';
 
 /* Le texte écrit pour la refonte, quand les cartes du site ne couvrent
    pas ce que le référentiel exige. Voir `contenu-refonte.mjs`. */
-import { LECONS_OZONE_CLIMAT, LECONS_LEGISLATION, LECONS_ORGANES_ANNEXES } from './contenu-refonte.mjs';
+import { LECONS_OZONE_CLIMAT, LECONS_LEGISLATION, LECONS_ORGANES_ANNEXES,
+         LECONS_EFFICACITE, LECONS_REGISTRE, LECONS_DIAGNOSTIC,
+         LECONS_UNITES, LECONS_FLUIDES, LECONS_CROIX,
+         LECONS_RECUPERATION } from './contenu-refonte.mjs';
 
 export const CHAPITRES = [
   /* =================== PARTIE A — SE PROTÉGER =================== */
@@ -226,6 +229,7 @@ export const CHAPITRES = [
       { t: 'Le palier, et pourquoi il n est pas plat', src: 'g1s', paras: 'tous', blocs: [1, 2],
         visuels: ['svg:diagramme-logph', 'svg:familles-fluides'],
         legendes: ['Bulle et rosée : les deux flancs de la cloche', 'Le glissement des mélanges'] },
+      ...LECONS_UNITES,
     ],
     activite: {
       t: 'Refaire la croix de mémoire',
@@ -289,6 +293,7 @@ export const CHAPITRES = [
       { t: 'Ce qu une valeur hors plage annonce', src: 'g1e', paras: 'tous', blocs: [2],
         visuels: ['svg:mesure-surchauffe', 'svg:points-de-fuite'],
         legendes: ['5 à 10 K, 4 à 8 K', 'Premier indice d un manque de charge'] },
+      ...LECONS_DIAGNOSTIC,
     ],
     activite: {
       t: 'Deux relevés, deux diagnostics',
@@ -320,6 +325,7 @@ export const CHAPITRES = [
       { t: 'Les organes qui trahissent une fuite', src: 'g1d', paras: 'tous', blocs: [0, 1],
         visuels: ['svg:points-de-fuite', 'illu:g1d'],
         legendes: ['Six familles de points de fuite', 'Où regarder d abord'] },
+      ...LECONS_FLUIDES,
     ],
     activite: {
       t: 'Décoder quatre fluides',
@@ -358,6 +364,7 @@ export const CHAPITRES = [
       { t: 'La valeur plaque, jamais un chiffre inventé', src: 'g6b', paras: 'tous', blocs: [2],
         visuels: ['sym:compresseur_vis', 'sym:compresseur_rotatif'],
         legendes: ['Vis', 'Rotatif'] },
+      ...LECONS_CROIX,
     ],
     activite: {
       t: 'Le compresseur qui chauffe',
@@ -541,6 +548,7 @@ export const CHAPITRES = [
       { t: 'L instrument aussi se contrôle, et le registre se remplit', src: 'g4c', paras: 'tous', blocs: [1],
         visuels: ['svg:balayage-detecteur', 'illu:g4c'],
         legendes: ['L étalonnage du détecteur', 'La consignation'] },
+      ...LECONS_REGISTRE,
     ],
     activite: {
       t: 'Le contrôle qui tourne mal', src: 'x4',
@@ -577,6 +585,7 @@ export const CHAPITRES = [
       { t: 'Stocker, transporter, tracer', src: 'g5b', paras: 'tous', blocs: [0, 1, 2],
         visuels: ['sym:bouteille_liquide', 'illu:g5b'],
         legendes: ['La bouteille de récupération', 'Réemploi n est pas retraitement'] },
+      ...LECONS_RECUPERATION,
     ],
     activite: {
       t: 'La bouteille de récupération', src: 'x3',
@@ -627,7 +636,7 @@ export const CHAPITRES = [
     num: 17, partie: 'F', qr: 'efficacite',
     titre: 'Substitution et efficacité énergétique',
     objectif: 'Choisir un fluide de substitution en justifiant le choix, et citer ce qui fait consommer une installation.',
-    codes: ['1.08', '11.01', '11.02', '11.03', '11.04', '11.05'],
+    codes: ['1.08', '11.01', '11.02', '11.03', '11.04', '11.05', '6.08', '7.10', '8.11', '9.10'],
     groupesQ: ['G11'],
     lecons: [
       { t: 'Drop-in ou retrofit', src: 'g11', paras: 'tous', blocs: [0, 1],
@@ -640,6 +649,7 @@ export const CHAPITRES = [
            pilote-fluides, jamais ici. */
         visuels: ['svg:croix-frigoriste', 'illu:g11'],
         legendes: ['L énergie entre à droite, le froid sort en bas', 'Ce qui se règle'] },
+      ...LECONS_EFFICACITE,
       { t: 'Hydrocarbures : une machine pas comme les autres', src: 'g11', paras: 'tous', blocs: [3],
         visuels: ['svg:charge-limite-local', 'svg:classes-securite'],
         legendes: ['La charge limite selon le local', 'Ce que la classe impose'] },

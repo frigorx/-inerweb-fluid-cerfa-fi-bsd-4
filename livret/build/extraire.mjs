@@ -297,7 +297,7 @@ const exiges = [...IDX_REF.entries()].filter(([, e]) => CATEGORIES.some((k) => e
    imprimé en tête d'un chapitre ne constitue pas une preuve de
    couverture ». On mesure donc ce que le livre écrit RÉELLEMENT sous
    chaque code, et un code sous le plancher arrête la fabrication. */
-const PLANCHER_MOTS = 250;
+const PLANCHER_MOTS = 600;
 const compteMots = (s) => (String(s || '').replace(/<[^>]+>/g, ' ')
   .match(/[A-Za-zÀ-ÿ0-9'’-]+/g) || []).length;
 
