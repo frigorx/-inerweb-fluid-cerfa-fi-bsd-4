@@ -1936,106 +1936,116 @@
  },
  {
   "page": 397,
-  "blanc_mm": 0.0,
+  "blanc_mm": 3.5,
   "ancre": null
  },
  {
   "page": 398,
-  "blanc_mm": 10.0,
+  "blanc_mm": 3.0,
   "ancre": null
  },
  {
   "page": 399,
-  "blanc_mm": 10.0,
+  "blanc_mm": 2.0,
   "ancre": null
  },
  {
   "page": 400,
-  "blanc_mm": 2.4,
+  "blanc_mm": 1.0,
   "ancre": null
  },
  {
   "page": 401,
-  "blanc_mm": 1.6,
+  "blanc_mm": 7.7,
   "ancre": null
  },
  {
   "page": 402,
-  "blanc_mm": 2.4,
+  "blanc_mm": 7.7,
   "ancre": null
  },
  {
   "page": 403,
-  "blanc_mm": 0.2,
+  "blanc_mm": 11.8,
   "ancre": null
  },
  {
   "page": 404,
-  "blanc_mm": 16.3,
+  "blanc_mm": 7.7,
   "ancre": null
  },
  {
   "page": 405,
-  "blanc_mm": 199.9,
+  "blanc_mm": 3.0,
   "ancre": null
  },
  {
   "page": 406,
-  "blanc_mm": 12.4,
+  "blanc_mm": 20.9,
   "ancre": null
  },
  {
   "page": 407,
-  "blanc_mm": 4.7,
+  "blanc_mm": 199.9,
   "ancre": null
  },
  {
   "page": 408,
-  "blanc_mm": 0.2,
+  "blanc_mm": 12.4,
   "ancre": null
  },
  {
   "page": 409,
-  "blanc_mm": 3.9,
+  "blanc_mm": 4.7,
   "ancre": null
  },
  {
   "page": 410,
-  "blanc_mm": 7.9,
+  "blanc_mm": 0.2,
   "ancre": null
  },
  {
   "page": 411,
-  "blanc_mm": 6.5,
+  "blanc_mm": 3.9,
   "ancre": null
  },
  {
   "page": 412,
-  "blanc_mm": 12.2,
+  "blanc_mm": 7.9,
   "ancre": null
  },
  {
   "page": 413,
-  "blanc_mm": 0.6,
+  "blanc_mm": 6.5,
   "ancre": null
  },
  {
   "page": 414,
-  "blanc_mm": 20.3,
+  "blanc_mm": 12.2,
   "ancre": null
  },
  {
   "page": 415,
-  "blanc_mm": 29.7,
+  "blanc_mm": 0.6,
   "ancre": null
  },
  {
   "page": 416,
-  "blanc_mm": 10.6,
+  "blanc_mm": 20.3,
   "ancre": null
  },
  {
   "page": 417,
+  "blanc_mm": 29.7,
+  "ancre": null
+ },
+ {
+  "page": 418,
+  "blanc_mm": 10.6,
+  "ancre": null
+ },
+ {
+  "page": 419,
   "blanc_mm": 60.8,
   "ancre": null
  }

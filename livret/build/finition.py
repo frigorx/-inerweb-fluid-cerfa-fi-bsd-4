@@ -147,11 +147,24 @@ def contexte_des_pages(doc):
                 courant_page = ('lim', None)
             else:
                 courant_page = ('ch', (partie, num))
+            # CHANGEMENT DE CHAPITRE : on oublie les codes du précédent.
+            # Sans cette remise à zéro, la page d'ouverture d'un chapitre —
+            # qui porte le tableau « Ce que le référentiel exige ici » mais
+            # aucune leçon, donc aucun code dans son marqueur — héritait des
+            # codes de la dernière leçon du chapitre PRÉCÉDENT. Le chapitre 8
+            # « Les familles de fluides » annonçait ainsi 1.05, 1.06 et 1.07
+            # en tête, et imprimait « Référentiel : 1.03 ∙ 4.01 » en pied.
+            # Sept chapitres sur dix-neuf étaient touchés, et l'inventaire
+            # page-par-page du référentiel comptait ces pages à tort.
+            # Relevé par F. Henninot au chapitre 8.
+            chapitre_change = (courant[0] == 'ch' and courant_page[0] == 'ch'
+                               and courant[1] != courant_page[1])
             courant = courant_page
-            # Une page sans code propre garde ceux de la leçon en cours.
+            # Une page sans code propre garde ceux de la leçon en cours,
+            # mais jamais au-delà de la frontière d'un chapitre.
             if codes_page:
                 codes_courants = codes_page
-            elif courant_page[0] != 'ch':
+            elif courant_page[0] != 'ch' or chapitre_change:
                 codes_courants = []
         else:
             courant_page = courant

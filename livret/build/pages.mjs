@@ -32,6 +32,31 @@ const RESERVE = JSON.parse(fs.readFileSync(path.join(LIVRET, 'questions-reserve.
 const COMBLE = fs.existsSync(path.join(LIVRET, 'comblement.gen.json'))
   ? JSON.parse(fs.readFileSync(path.join(LIVRET, 'comblement.gen.json'), 'utf8'))
   : {};
+/* L'INVENTAIRE DE LA PASSE PRÉCÉDENTE — les pages où chaque code a été
+   relevé. Il n'existe qu'après la finition : au premier passage il est
+   absent, et l'index n'affiche alors que les chapitres. Le cycle de
+   comblement fabriquant DEUX fois, la passe finale l'a toujours sous la
+   main et fraîchement écrit. C'est le mécanisme que `qr.mjs` emploie déjà
+   pour la remédiation de l'examen blanc. Demande de F. Henninot, 31/08 :
+   « mettre la page, ou les pages ». */
+const INVENTAIRE = fs.existsSync(path.join(LIVRET, 'inventaire-pages.gen.json'))
+  ? JSON.parse(fs.readFileSync(path.join(LIVRET, 'inventaire-pages.gen.json'), 'utf8'))
+  : {};
+/* Les plages consécutives se contractent — « 128-134 » plutôt que sept
+   nombres : la colonne reste lisible et le tableau ne s'allonge pas. */
+const plagesDe = (nums) => {
+  const t = [...new Set(nums || [])].sort((a, b) => a - b);
+  if (!t.length) return '';
+  const out = []; let debut = t[0], prec = t[0];
+  for (const n of [...t.slice(1), null]) {
+    if (n === prec + 1) { prec = n; continue; }
+    out.push(debut === prec ? String(debut) : `${debut}-${prec}`);
+    if (n === null) break;
+    debut = prec = n;
+  }
+  return out.join(', ');
+};
+
 const SOURCE = process.env.PILOTE_FLUIDES || 'C:/git/pilote-fluides';
 const REF = JSON.parse(fs.readFileSync(path.join(SOURCE, 'packs', 'fluides', 'referentiel-2025.json'), 'utf8'));
 
@@ -561,11 +586,19 @@ export const construireFlux = () => {
       pousse(`<p class="txt">Chaque page du livre porte en pied les codes qu’elle travaille.
         Ce tableau fait le chemin inverse : pour un code, les chapitres où il est traité.</p>`,
       { nue: true });
+      /* La colonne PAGES ne peut pas être remplie ici : au moment où
+         l'index s'imprime, la pagination n'existe pas encore. On sème un
+         marqueur par code, et `finition.py` y écrit les pages réellement
+         relevées — les mêmes que celles des pieds de page. Les plages
+         consécutives y sont contractées pour ne pas alourdir la colonne.
+         Demande de F. Henninot, 31/08. */
       pousse(tableau({
-        titre: 'Code du référentiel → chapitre(s) du livre',
-        entetes: ['Code', 'Ce qu’il exige', 'Chapitre(s)'],
+        titre: 'Code du référentiel → chapitres et pages',
+        entetes: ['Code', 'Ce qu’il exige', 'Chapitre(s)', 'Page(s)'],
         lignes: [...parCode.entries()].sort((a, b) => a[0].localeCompare(b[0], 'fr', { numeric: true }))
-          .map(([code, nums]) => [code, raccourcir(libelleCode(code), 108), [...nums].sort((x, y) => x - y).join(', ')]),
+          .map(([code, nums]) => [code, raccourcir(libelleCode(code), 92),
+            [...nums].sort((x, y) => x - y).join(', '),
+            plagesDe(INVENTAIRE[code])]),
       }), { nue: true });
     }
     if (p.id === 'index-qr') {
