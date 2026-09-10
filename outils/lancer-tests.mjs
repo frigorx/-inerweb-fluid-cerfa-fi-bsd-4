@@ -32,6 +32,7 @@ console.log(`Lanceur de tests — ${plan.length} exécutions (${toutJouer ? 'bil
 
 const debut = Date.now();
 const echecs = [];
+const suspendues = [];
 
 for (const { chemin, args, libelle } of plan) {
   const top = Date.now();
@@ -41,7 +42,13 @@ for (const { chemin, args, libelle } of plan) {
   const duree = ((Date.now() - top) / 1000).toFixed(1);
 
   if (resultat.status === 0) {
-    console.log(`  VERT   ${libelle} (${duree} s)`);
+    if (/^SUSPENDU\s+[—-]/m.test(resultat.stdout ?? '')) {
+      suspendues.push(libelle);
+      console.log(`  SUSPENDU  ${libelle} (${duree} s)`);
+      console.log(resultat.stdout.trim());
+    } else {
+      console.log(`  VERT   ${libelle} (${duree} s)`);
+    }
   } else {
     console.error(`  ROUGE  ${libelle} (${duree} s) — code ${resultat.status}`);
     console.error('--- sortie de la suite en échec ---');
@@ -55,7 +62,9 @@ for (const { chemin, args, libelle } of plan) {
 
 const total = ((Date.now() - debut) / 1000).toFixed(1);
 if (echecs.length === 0) {
-  console.log(`\nTOUT VERT — ${plan.length} exécutions en ${total} s.`);
+  console.log(suspendues.length
+    ? `\nAUCUN ÉCHEC — ${plan.length - suspendues.length} exécutions réussies, ${suspendues.length} suspendue(s) en ${total} s.\nNon couvert : ${suspendues.join(', ')}`
+    : `\nTOUT VERT — ${plan.length} exécutions en ${total} s.`);
 } else {
   console.error(`\n${echecs.length} ÉCHEC(S) en ${total} s : ${echecs.join(', ')}`);
   process.exit(1);

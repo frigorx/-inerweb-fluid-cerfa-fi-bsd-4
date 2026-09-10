@@ -1,5 +1,7 @@
 # inerWeb Fluide
 
+> Mise à jour du 10/09/2026 : le plan comprend 140 exécutions, dont la suite du parcours Officiel complet actuellement suspendue par le verrou. Les anciens bilans « TOUT VERT » ci-dessous incluaient cette suspension. Le lanceur distingue désormais les réussites et les suspensions ; voir [la préparation du mode Officiel](docs/PREPARATION-OFFICIEL-2026-09-10.md).
+
 **Traçabilité des fluides frigorigènes et CERFA 15497\*04 pour les lycées professionnels — utilisable aussi par des professionnels.**
 
 inerWeb Fluide organise le suivi des fluides frigorigènes (F-Gas), les pièces justificatives et la balance matière. Les indicateurs portent sur les données saisies : ils ne certifient pas la conformité juridique de l'établissement. Objectif : *« en un clic, je sors le dossier annuel complet de traçabilité fluides »*.

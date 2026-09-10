@@ -1,5 +1,7 @@
 # Limite de responsabilité — inerWeb Fluide
 
+> Mise à jour du 10/09/2026 : le plan comprend 140 exécutions, dont la suite du parcours Officiel complet actuellement suspendue par le verrou. Les anciens bilans « TOUT VERT » ci-dessous incluaient cette suspension. Le lanceur distingue désormais les réussites et les suspensions ; voir [la préparation du mode Officiel](docs/PREPARATION-OFFICIEL-2026-09-10.md).
+
 > **État historique — ne pas utiliser comme état courant.** La revue du 10 septembre 2026 a modifié le marquage des imprimés, la présentation des alertes et la notice RGPD. Les inventaires et comptes de lignes ci-dessous décrivent la version antérieure. Consulter [la revue actuelle](docs/REVUE-2026-09-10.md). La conservation des traces de formation reste une limite à traiter, pas une conformité acquise.
 
 

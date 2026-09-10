@@ -522,6 +522,36 @@ const codes = (r) => r.blocages.map((b) => b.code).join(',');
     messageRefusOfficiel(blocages) === miroir.messageRefusOfficiel(blocages));
 }
 
+// Régression 10/09 : contrôle seul sans quantité inventée, résultat obligatoire.
+for (const type of ['CONTROLE_PERIODIQUE', 'CONTROLE_NON_PERIODIQUE']) {
+  for (const moment of ['SOUMISSION', 'VALIDATION']) {
+    for (const statut of ['CONFORME', 'FUITE', 'SANS_OBJET', null, 'INCONNU']) {
+      const cadre = { moment, verrouLivraison: true, fiche: ficheSaine({
+        type, peseeAvantKg: null, peseeApresKg: null, controleStatut: statut
+      }) };
+      const r = evaluerBlocagesOfficiel(cadre);
+      const resultatValide = statut === 'CONFORME' || statut === 'FUITE';
+      verifier(`${type}/${moment}/${statut} : aucune pesée exigée, résultat contrôlé, verrou maintenu`,
+        !r.blocages.some(b => b.code === 'COMPLETUDE') &&
+        r.blocages.some(b => b.code === 'CONTROLE') === !resultatValide &&
+        r.blocages.some(b => b.code === 'VERROU_LIVRAISON') && !r.ok);
+      verifier(`${type}/${moment}/${statut} : parité intégrale des moteurs`,
+        JSON.stringify(r) === JSON.stringify(miroir.evaluerBlocagesOfficiel(cadre)));
+    }
+  }
+}
+for (const type of ['CHARGE_APPOINT', 'MISE_EN_SERVICE', 'RECUPERATION', 'TRANSFERT', 'INCONNU']) {
+  for (const [av, ap] of [[null, null], [10, 10], [10, NaN]]) {
+    const cadre = { moment: 'SOUMISSION', fiche: ficheSaine({
+      type, peseeAvantKg: av, peseeApresKg: ap
+    }) };
+    const r = evaluerBlocagesOfficiel(cadre);
+    verifier(`${type}/${av}/${ap} : pesées toujours exigées et moteurs identiques`,
+      r.blocages.some(b => b.code === 'COMPLETUDE' && b.motif.includes('pesées')) &&
+      JSON.stringify(r) === JSON.stringify(miroir.evaluerBlocagesOfficiel(cadre)));
+  }
+}
+
 console.log(`\n${nbOk} vérifications réussies, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);
 console.log('Moteur de blocage Officiel : limites couvertes, parité ESM ↔ serveur stricte.');

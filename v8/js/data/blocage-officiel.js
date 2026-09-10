@@ -114,7 +114,7 @@ export function evaluerBlocagesOfficiel(cadre) {
     // le CO2 (R-744), les hydrocarbures (R-290) ni l'ammoniac (R-717).
     // Fait précalculé sur la fiche réglementaire EXPLICITE du fluide
     // (categorieCadre7 = 'AUCUNE') ; la traçabilité volontaire passe par
-    // le mode Formation — c'est lui, la « fiche interne distincte ».
+    // un bon d’intervention interne pour les interventions réelles.
     if (fiche.fluideHorsPerimetreFluore) {
       poser('HORS_PERIMETRE_FLUORE',
         `Fluide ${fiche.fluide} hors du périmètre du CERFA (non fluoré) : ` +
@@ -124,10 +124,17 @@ export function evaluerBlocagesOfficiel(cadre) {
     }
     const av = fiche.peseeAvantKg;
     const ap = fiche.peseeApresKg;
-    if (!Number.isFinite(av) || !Number.isFinite(ap) || av === ap) {
+    // Un contrôle seul ne déplace pas de fluide (notice CERFA, cadres 4/11).
+    // Seuls ces deux types sont dispensés : les autres gardent leurs pesées.
+    const controleSeul = fiche.type === 'CONTROLE_PERIODIQUE' ||
+      fiche.type === 'CONTROLE_NON_PERIODIQUE';
+    if (!controleSeul && (!Number.isFinite(av) || !Number.isFinite(ap) || av === ap)) {
       poser('COMPLETUDE',
         'Fiche incomplète : pesées avant et après obligatoires (et ' +
         'différentes) pour établir la quantité.');
+    }
+    if (controleSeul && fiche.controleStatut !== 'CONFORME' && fiche.controleStatut !== 'FUITE') {
+      poser('CONTROLE', 'Un contrôle d’étanchéité exige un résultat : CONFORME ou FUITE.');
     }
     if (fiche.type === 'CHARGE_APPOINT' && !fiche.causePresente) {
       poser('COMPLETUDE',

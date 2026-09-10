@@ -2833,6 +2833,11 @@ verifier('l’état importé est fidèle (nos mouvements sont là)',
     controle: { statutControle: 'CONFORME', detecteurId: null }
   });
   await store.soumettreMouvement(ctrlPerio.id);
+  const simPerio = await store.simulerValidationOfficielle(ctrlPerio.id);
+  verifier('contrôle périodique : simulation sans pesées, verrou officiel maintenu',
+    !simPerio.blocages.some(b => b.code === 'COMPLETUDE' && b.motif.includes('pesées')) &&
+    !simPerio.blocages.some(b => b.code === 'CONTROLE') &&
+    simPerio.blocages.some(b => b.code === 'VERROU_LIVRAISON') && !simPerio.ok);
   const ctrlValide = await store.validerMouvement(ctrlPerio.id, enseignant.id);
   verifier('P7-a : un mouvement CONTROLE_PERIODIQUE se valide sans pesées (quantité 0)',
     ctrlValide.statut === 'VALIDE' && ctrlValide.quantiteKg === 0,
@@ -2852,6 +2857,10 @@ verifier('l’état importé est fidèle (nos mouvements sont là)',
     technicien: 'Testeur Contrat'
   });
   await store.soumettreMouvement(ctrlVide.id);
+  const simVide = await store.simulerValidationOfficielle(ctrlVide.id);
+  verifier('contrôle vide : simulation signale le résultat manquant sans exiger de pesées',
+    simVide.blocages.some(b => b.code === 'CONTROLE' && b.motif.includes('résultat')) &&
+    !simVide.blocages.some(b => b.code === 'COMPLETUDE' && b.motif.includes('pesées')));
   await verifierRejet('P7-b : un mouvement CONTROLE sans résultat est refusé à la validation',
     store.validerMouvement(ctrlVide.id, enseignant.id),
     'exige un résultat');
@@ -2870,6 +2879,11 @@ verifier('l’état importé est fidèle (nos mouvements sont là)',
       localisationFuite: 'Raccord évaporateur' }
   });
   await store.soumettreMouvement(ctrlFuite.id);
+  const simFuite = await store.simulerValidationOfficielle(ctrlFuite.id);
+  verifier('contrôle non périodique FUITE : simulation sans pesées, verrou maintenu',
+    !simFuite.blocages.some(b => b.code === 'COMPLETUDE' && b.motif.includes('pesées')) &&
+    !simFuite.blocages.some(b => b.code === 'CONTROLE') &&
+    simFuite.blocages.some(b => b.code === 'VERROU_LIVRAISON') && !simFuite.ok);
   const ctrlFuiteValide = await store.validerMouvement(ctrlFuite.id, enseignant.id);
   const mFuite = (await store.getMachines()).find((m) => m.id === machineCtrl.id);
   verifier('P7-d : un mouvement CONTROLE FUITE passe la machine en statut FUITE',

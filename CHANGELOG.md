@@ -7,6 +7,12 @@
 
 ## 2026-09-10 — portée des alertes et documents, transparence RGPD
 
+### Suite : simulation des contrôles et bilan des tests
+
+- Les contrôles seuls ne demandent plus de pesées fictives dans le moteur Officiel ; leur résultat reste obligatoire. Charge, mise en service, récupération et transfert gardent leurs contrôles de pesées.
+- Le lanceur distingue maintenant la suite Officiel suspendue des tests réussis. Les précédents chiffres de 140 réussites incluaient cette suspension.
+- Le verrou reste actif. [Preuves, référence CERFA et limites](docs/PREPARATION-OFFICIEL-2026-09-10.md).
+
 - Statuts explicites sur huit familles de documents imprimables et leurs planches ; portée des alertes et verrou du mode Officiel rendus visibles.
 - Notices RGPD corrigées et bilan de conservation en lecture seule ; aucune purge automatique des historiques.
 - Lisibilité et adaptation mobile améliorées. Les 140 exécutions de tests passent.

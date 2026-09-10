@@ -1,5 +1,7 @@
 # CARTE DU CODE — inerWeb Fluide v8/v9
 
+> Mise à jour du 10/09/2026 : le plan comprend 140 exécutions, dont la suite du parcours Officiel complet actuellement suspendue par le verrou. Les anciens bilans « TOUT VERT » ci-dessous incluaient cette suspension. Le lanceur distingue désormais les réussites et les suspensions ; voir [la préparation du mode Officiel](PREPARATION-OFFICIEL-2026-09-10.md).
+
 > **À lire AVANT toute exploration** (doctrine sobriété tokens, 14/07/2026).
 > Elle remplace 90 % des grep/lectures. Mise à jour : une ligne par module
 > ajouté/retiré, à CHAQUE incrément (comme le CHANGELOG).
