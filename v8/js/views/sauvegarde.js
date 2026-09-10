@@ -22,6 +22,8 @@
 
 import { enteteVue, tableau, toast, modale, chipStatut, ICONES } from './communs.js';
 import { activer as activerModeExercice } from '../data/mode-exercice.js';
+import { estSeanceFictive } from '../data/seance-fictive.js';
+import { carteSeanceFictive } from './seance-fictive.js';
 import { esc, fmtNombre } from '../core/utils.js';
 
 export const titre = 'Sauvegarde';
@@ -248,7 +250,10 @@ function rendreModeDemo(conteneur, ctx) {
       sousTitre: 'Coffre-fort de sauvegarde et de restauration des données'
     })
     + '<div class="encart-aide">'
-    + '<strong>Vous êtes en mode démonstration.</strong> '
+    + (estSeanceFictive() ? '<strong>Séance temporaire : données et pièces jointes en mémoire.</strong> '
+      + 'Une actualisation repart du parc fictif fourni. Un fichier importé reste en mémoire ; '
+      + 'un fichier téléchargé reste sur disque. L’export JSON ne contient pas les fichiers joints : '
+      + 'conservez-les séparément si nécessaire. ' : '<strong>Vous êtes en mode démonstration.</strong> ')
     + 'Le coffre-fort de sauvegarde — fichier .zip horodaté, chiffrement '
     + 'facultatif et restauration en un clic — n’est disponible qu’en '
     + '<strong>mode Local</strong>, sur le poste où les données sont '
@@ -305,6 +310,11 @@ function rendreModeDemo(conteneur, ctx) {
       const texte = await fichier.text();
       const reussi = await ctx.store.importerJSON(texte);
       if (reussi) {
+        if (estSeanceFictive()) {
+          toast('Fichier chargé en mémoire pour cette séance uniquement.', 'succes');
+          rendreModeDemo(conteneur, ctx);
+          return;
+        }
         toast('Données restaurées. Rechargement…', 'succes');
         setTimeout(() => window.location.reload(), 900);
       } else {
@@ -508,13 +518,13 @@ function construireHtmlLocal(liste, reglages) {
    ============================================================ */
 
 function sectionModeExercice() {
-  return '<section class="carte" style="padding:20px; margin-top:18px" id="carte-exercice">'
+  return carteSeanceFictive() + '<section class="carte" style="padding:20px; margin-top:18px" id="carte-exercice">'
     + '<h3 style="margin-top:0">Mode exercice (bac à sable pédagogique)</h3>'
     + '<p>Travailler sur une <strong>photo des données réelles</strong> sans '
     + 'rien écrire au registre : CERFA de démonstration, manipulations, '
     + 'exercices de formation — tout est effaçable, et l’exercice se '
-    + 'sauvegarde en fichier jusqu’à l’effacement. Le registre certifié '
-    + 'conforme n’est jamais touché.</p>'
+    + 'sauvegarde en fichier jusqu’à l’effacement. Le registre réel '
+    + 'n’est jamais touché. Cette copie peut contenir des données personnelles.</p>'
     + '<p id="exo-etat" class="texte-secondaire">Lecture de l’état…</p>'
     + '<div class="barre-actions" style="align-items:center">'
     + '<input type="password" id="exo-code" placeholder="Code de déblocage" '

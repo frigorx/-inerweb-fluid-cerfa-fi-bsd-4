@@ -36,6 +36,7 @@
 // ============================================================
 
 import { ICONES } from '../core/icones.js';
+import { estSeanceFictive } from '../data/seance-fictive.js';
 import { esc } from '../core/utils.js';
 import { modale, toast } from '../views/communs.js';
 import {
@@ -54,7 +55,7 @@ export const CLE_MEMOIRE_VISITE = 'inerweb-fluide-v8-visite-guidee';
  * @returns {boolean}
  */
 export function visiteDisponible(store) {
-  return Boolean(store && store.modeLabel !== 'LOCAL');
+  return Boolean(store && store.modeLabel !== 'LOCAL' && !estSeanceFictive());
 }
 
 /* ============================================================

@@ -97,7 +97,7 @@ export const CLE_STOCKAGE = 'inerweb-fluide-v8-demo';
 export const VERSION_SEMIS = 2;
 
 /** Base IndexedDB des contenus de pièces jointes (repli mémoire sous Node). */
-const NOM_BASE_PJ = 'inerweb-fluide-v8-pj';
+export const NOM_BASE_PJ = 'inerweb-fluide-v8-pj';
 
 /** Taille maximale d'une pièce jointe : 5 Mo. */
 const PJ_TAILLE_MAX = 5 * 1024 * 1024;
@@ -698,6 +698,24 @@ const LIBELLES_MOIS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin',
 
 const pjContenusMemoire = new Map();
 
+/** Efface les contenus persistants du bac, avec résultat confirmé par IndexedDB.
+ * Ne touche pas aux Map privées des séances temporaires ni aux fichiers téléchargés.
+ */
+export async function effacerPiecesDemo(base = globalThis.indexedDB) {
+  if (base) {
+    await new Promise((resoudre, rejeter) => {
+      const demande = base.deleteDatabase(NOM_BASE_PJ);
+      const delai = setTimeout(() => rejeter(new Error(
+        'Effacement des pièces non confirmé. Fermez les autres onglets de ce logiciel puis réessayez.')), 5000);
+      demande.onsuccess = () => { clearTimeout(delai); resoudre(); };
+      demande.onerror = () => { clearTimeout(delai); rejeter(new Error('Effacement des pièces jointes refusé par le navigateur.')); };
+      demande.onblocked = () => { clearTimeout(delai); rejeter(new Error(
+        'Effacement des pièces bloqué par un autre onglet. Fermez-le puis réessayez.')); };
+    });
+  }
+  pjContenusMemoire.clear();
+}
+
 /** Ouvre (et crée au besoin) la base IndexedDB des pièces jointes. */
 function ouvrirBasePj() {
   return new Promise((resoudre, rejeter) => {
@@ -723,7 +741,7 @@ async function transactionPj(mode, operation) {
   });
 }
 
-async function ecrireContenuPj(id, contenu) {
+async function ecrireContenuPjPersistant(id, contenu) {
   if (typeof indexedDB === 'undefined') {
     pjContenusMemoire.set(id, contenu);
     return;
@@ -735,7 +753,7 @@ async function ecrireContenuPj(id, contenu) {
   }
 }
 
-async function lireContenuPj(id) {
+async function lireContenuPjPersistant(id) {
   if (typeof indexedDB !== 'undefined') {
     try {
       const contenu = await transactionPj('readonly', (magasin) => magasin.get(id));
@@ -747,7 +765,7 @@ async function lireContenuPj(id) {
   return pjContenusMemoire.get(id);
 }
 
-async function supprimerContenuPj(id) {
+async function supprimerContenuPjPersistant(id) {
   pjContenusMemoire.delete(id);
   if (typeof indexedDB === 'undefined') return;
   try {
@@ -819,10 +837,20 @@ async function empreinteListeSignatures(signatures) {
  * Crée le magasin de démonstration conforme aux contrats Phases A + B.
  * @returns {object} store
  */
-export function creerDemoStore() {
+export function creerDemoStore({ persistant = true } = {}) {
+
+  // Séance fictive : jamais de lecture du bac ancien, ni d'accès à IndexedDB.
+  // La Map appartient à CETTE instance ; aucun partage avec une autre séance.
+  const piecesEnMemoire = new Map();
+  const ecrireContenuPj = persistant ? ecrireContenuPjPersistant
+    : async (id, contenu) => { piecesEnMemoire.set(id, contenu); };
+  const lireContenuPj = persistant ? lireContenuPjPersistant
+    : async (id) => piecesEnMemoire.get(id);
+  const supprimerContenuPj = persistant ? supprimerContenuPjPersistant
+    : async (id) => { piecesEnMemoire.delete(id); };
 
   // État interne : sauvegarde locale si présente, sinon copie du monde de démo
-  let donnees = chargerDepuisStockage() || copier(DEMO);
+  let donnees = (persistant ? chargerDepuisStockage() : null) || copier(DEMO);
 
   // Lot C (C1) : collection des signatures réelles — absente du monde de
   // démo comme des sauvegardes antérieures, TOUJOURS amorcée à vide (la
@@ -871,7 +899,7 @@ export function creerDemoStore() {
   }
 
   function persisterEtNotifier() {
-    persister(donnees);
+    if (persistant) persister(donnees);
     notifierChangement();
   }
 

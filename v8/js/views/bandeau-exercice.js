@@ -12,8 +12,9 @@
 // ============================================================
 
 import {
-  estActif, dateExercice, reinitialiser, terminerEtToutEffacer
+  estActif, dateExercice, reinitialiser, terminerExerciceComplet
 } from '../data/mode-exercice.js';
+import { estSeanceFictive } from '../data/seance-fictive.js';
 
 const STYLE_ID = 'style-bandeau-exercice';
 
@@ -84,6 +85,7 @@ function telechargerTexte(nomFichier, texte) {
  * @param {object} store - magasin conforme au contrat (le bac à sable)
  */
 export function poserBandeauExercice(store) {
+  if (estSeanceFictive()) return;
   if (!estActif()) return;
   assurerStyle();
 
@@ -104,7 +106,8 @@ export function poserBandeauExercice(store) {
     + '<button type="button" data-geste="sauvegarder">Sauvegarder l’exercice</button>'
     + '<button type="button" data-geste="reinitialiser">Réinitialiser</button>'
     + '<button type="button" class="bandeau-exercice__danger" '
-    + 'data-geste="terminer">Terminer et tout effacer</button>';
+    + 'data-geste="terminer">Terminer et effacer le bac</button>'
+    + '<span data-erreur-exercice role="alert"></span>';
 
   bandeau.addEventListener('click', async (evt) => {
     const geste = evt.target?.dataset?.geste;
@@ -126,17 +129,27 @@ export function poserBandeauExercice(store) {
     }
     if (geste === 'terminer') {
       const ok = window.confirm(
-        'Terminer le mode exercice ?\n\nTOUT le bac à sable sera effacé : '
-        + 'exercices, photo d’origine, la totalité. Toute trace sera '
-        + 'détruite (les fichiers d’exercice déjà téléchargés, eux, '
-        + 'restent sur le disque).');
+        'Terminer le mode exercice ?\n\nLes données, la photo d’origine et les pièces '
+        + 'jointes du bac gérées dans ce navigateur seront supprimées. Les fichiers '
+        + 'téléchargés, impressions et copies système restent en dehors de cet effacement.');
       if (!ok) return;
       const confirme = window.confirm(
         'Dernière confirmation : effacer DÉFINITIVEMENT le bac à sable et '
         + 'revenir au registre réel ?');
       if (!confirme) return;
-      terminerEtToutEffacer();
-      window.location.reload();
+      const boutons = [...bandeau.querySelectorAll('button')];
+      const zones = [...document.body.children].filter(e => e !== bandeau)
+        .map(e => [e, e.inert]);
+      boutons.forEach(b => { b.disabled = true; });
+      zones.forEach(([e]) => { e.inert = true; });
+      try {
+        await terminerExerciceComplet();
+        window.location.reload();
+      } catch (e) {
+        bandeau.querySelector('[data-erreur-exercice]').textContent = e.message;
+        boutons.forEach(b => { b.disabled = false; });
+        zones.forEach(([e, ancien]) => { e.inert = ancien; });
+      }
     }
   });
 

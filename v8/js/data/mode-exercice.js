@@ -22,7 +22,7 @@
 // quand aucun stockage n'existe (patron de la persistance du DemoStore).
 // ============================================================
 
-import { CLE_STOCKAGE as CLE_BAC } from './demo-store.js';
+import { CLE_STOCKAGE as CLE_BAC, effacerPiecesDemo } from './demo-store.js';
 
 export const CLE_DRAPEAU = 'inerweb-fluide-v8-exercice';
 export const CLE_PHOTO = 'inerweb-fluide-v8-exercice-photo';
@@ -103,10 +103,9 @@ export function reinitialiser(stockage = stockageParDefaut()) {
 }
 
 /**
- * Termine le mode exercice et DÉTRUIT TOUT : le bac, la photo d'origine,
- * la date, le marqueur, le drapeau. « Toute trace a été détruite » —
- * décision du propriétaire (13/08). Le prochain chargement retrouve le
- * registre réel (LocalStore).
+ * Efface les CLÉS du cycle : bac, photo, date, marqueur et drapeau.
+ * L'interface doit utiliser terminerExerciceComplet pour attendre AUSSI
+ * l'effacement d'IndexedDB. Ne garantit pas l'effacement des copies externes.
  */
 export function terminerEtToutEffacer(stockage = stockageParDefaut()) {
   if (!stockage) return false;
@@ -115,5 +114,18 @@ export function terminerEtToutEffacer(stockage = stockageParDefaut()) {
   stockage.removeItem(CLE_DATE);
   stockage.removeItem(CLE_A_SEMER);
   stockage.removeItem(CLE_DRAPEAU);
+  return true;
+}
+
+/** Geste de l'interface : attend aussi la suppression des fichiers IndexedDB.
+ * Une erreur laisse un état de nettoyage incomplet, jamais un succès annoncé.
+ */
+export async function terminerExerciceComplet(stockage = stockageParDefaut(), base = globalThis.indexedDB) {
+  if (!stockage) throw new Error('Stockage du navigateur inaccessible : effacement non confirmé.');
+  await effacerPiecesDemo(base);
+  terminerEtToutEffacer(stockage);
+  for (const cle of [CLE_BAC, CLE_PHOTO, CLE_DATE, CLE_A_SEMER, CLE_DRAPEAU]) {
+    if (stockage.getItem(cle) !== null) throw new Error('Effacement incomplet du stockage de l’exercice. Réessayez.');
+  }
   return true;
 }

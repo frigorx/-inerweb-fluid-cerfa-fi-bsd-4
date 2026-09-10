@@ -103,3 +103,9 @@ brouillons de formation sélectionnés, après aperçu et confirmation sur le po
 Voir [le fonctionnement et les limites du nettoyage](docs/NETTOYAGE-FORMATION-2026-09-10.md).
 Le coffre n'est pas une anonymisation ; une procédure de conservation et de
 traitement des traces scellées reste à formaliser avec le responsable et le DPD.
+
+Pour les cours, le tableau de bord local propose aussi une **séance fictive temporaire** :
+parc fictif neuf, données et pièces jointes en mémoire, sans copie du registre ni de
+l'ancien bac du navigateur. Une actualisation recommence la séance. Le mode exercice
+historique sur photo réelle reste disponible séparément.
+Voir [les séances temporaires et la fin d'exercice](docs/SEANCES-TEMPORAIRES-2026-09-10.md).

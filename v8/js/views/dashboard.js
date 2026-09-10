@@ -12,6 +12,7 @@ import { ouvrirCerfa } from '../cerfa/visualiseur.js';
 import { collecterConformite } from '../data/feu-tricolore.js';
 import { LIBELLES_SUIVI, etatActivationOfficiel, natureAlerte } from '../data/portee-suivi.js';
 import { estContreEcriture } from '../documents/regularisation.js';
+import { carteSeanceFictive } from './seance-fictive.js';
 import { ouvrirJustificatifRegularisation }
   from '../documents/regularisation-apercu.js';
 
@@ -747,6 +748,7 @@ export async function render(conteneur, ctx) {
   // ---- Insertion unique dans le conteneur ----
   conteneur.innerHTML = STYLES_VUE
     + entete
+    + (store.modeLabel === 'LOCAL' ? carteSeanceFictive() : '')
     + rangeeKpi
     + carteConformite(conformite)
     + (baseVide ? encartAccueil(dossierAConfigurer) : '')

@@ -193,6 +193,13 @@ ce dossier de conformité.
 
 ## 10. Documents liés
 
+- [Séances temporaires et effacement du bac](docs/SEANCES-TEMPORAIRES-2026-09-10.md) :
+  alternative de formation sur données fictives, sans persistance applicative des
+  données et pièces. Une importation ou une saisie volontaire peut toutefois contenir
+  des données personnelles : utiliser des identités fictives. Les exports et impressions
+  restent hors de la mémoire de la séance. La fin de l'ancien mode exercice attend
+  désormais la confirmation de suppression de sa base de pièces jointes IndexedDB.
+
 - `docs/SPEC-V8.md` — spécification (modèle de données, modes, règles réglementaires) ;
 - `SECURITE.md` — mesures de sécurité ;
 - `SAUVEGARDE.md` — sauvegardes et restauration.

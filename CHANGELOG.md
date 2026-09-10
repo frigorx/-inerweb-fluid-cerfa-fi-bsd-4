@@ -19,6 +19,12 @@
 - Contrat DataStore v14 (98 méthodes). Suite complète : 140 exécutions réussies ; parcours local testé sur données fictives.
 - [Utilisation et limites](docs/NETTOYAGE-FORMATION-2026-09-10.md) ; [préparation du mode Officiel](docs/PREPARATION-OFFICIEL-2026-09-10.md).
 
+### Suite : séances fictives temporaires et pièces jointes du bac
+
+- Nouvelle séance en mémoire depuis le tableau de bord local ou Sauvegarde : ni copie du registre, ni lecture de l'ancien bac, ni écriture des pièces dans IndexedDB. Recommencer retrouve le parc fictif fourni.
+- La fin du mode exercice historique attend aussi l'effacement de ses pièces jointes ; un blocage par un autre onglet est signalé.
+- 140 exécutions réussies (134,7 s), dont tests d'isolement et de fin d'exercice. [Fonctionnement et limites](docs/SEANCES-TEMPORAIRES-2026-09-10.md).
+
 ## 2026-08-30 — le livre HabFluide quitte ce dépôt
 
 - **Le livre vit désormais dans `C:\git\livre-habfluide`**, dépôt autonome, avec

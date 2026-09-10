@@ -153,6 +153,83 @@ function stockageFactice() {
       .some((m) => m.designation.includes('EXERCICE')));
 }
 
+// Séance temporaire : aucune lecture/écriture persistante, fichiers compris.
+{
+  const assert = (await import('node:assert/strict')).default;
+  const { creerDemoStore } = await import('./demo-store.js');
+  const { creerStore } = await import('./datastore.js');
+  const { estSeanceFictive } = await import('./seance-fictive.js');
+  const { visiteDisponible } = await import('../composants/visite-guidee.js');
+  const avant = Object.fromEntries(['localStorage', 'indexedDB', 'location', 'fetch']
+    .map(k => [k, Object.getOwnPropertyDescriptor(globalThis, k)]));
+  let accesStockage = 0, accesFichiers = 0, accesReseau = 0;
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: {
+    getItem() { accesStockage++; throw new Error('Ancien bac interdit'); },
+    setItem() { accesStockage++; throw new Error('Persistance interdite'); },
+    removeItem() { accesStockage++; throw new Error('Ancien bac à conserver'); }
+  } });
+  Object.defineProperty(globalThis, 'indexedDB', { configurable: true, value: {
+    open() { accesFichiers++; throw new Error('IndexedDB interdit'); },
+    deleteDatabase() { accesFichiers++; throw new Error('Anciennes pièces à conserver'); }
+  } });
+  Object.defineProperty(globalThis, 'fetch', { configurable: true, value: async () => {
+    accesReseau++; throw new Error('Registre réel interdit');
+  } });
+  Object.defineProperty(globalThis, 'location', { configurable: true, value: { search: '?seance=fictive' } });
+  try {
+    assert.ok(estSeanceFictive());
+    assert.equal(estSeanceFictive({search:'?seance=reelle'}), false);
+    const seance = await creerStore();
+    assert.equal(visiteDisponible(seance), false);
+    const nombreInitial = (await seance.getMachines()).length;
+    const machine = await seance.createMachine({ designation: 'Création uniquement en mémoire',
+      fluide: 'R-134a', chargeNominaleKg: 2 });
+    const pj = await seance.ajouterPieceJointe({ entiteType: 'MACHINE', entiteId: machine.id,
+      categorie: 'AUTRE', nomFichier: 'fichier-fictif.pdf', mimeType: 'application/pdf',
+      base64: 'JVBERi0xLjQK' });
+    assert.ok((await seance.obtenirPieceJointe(pj.id)).blob);
+    const exporte = await seance.exporterJSON();
+    const seconde = creerDemoStore({ persistant: false }); await seconde.init();
+    assert.equal((await seconde.getMachines()).length, nombreInitial);
+    assert.ok(await seconde.importerJSON(exporte));
+    // Un import de métadonnées ne retrouve jamais les octets d'une autre instance.
+    await assert.rejects(seconde.obtenirPieceJointe(pj.id), /introuvable/);
+    await seance.supprimerPieceJointe(pj.id);
+    assert.equal((await seance.listerPiecesJointes('MACHINE', machine.id)).length, 0);
+    assert.deepEqual([accesStockage, accesFichiers, accesReseau], [0, 0, 0]);
+    verifier('séance temporaire : zéro accès au registre, localStorage et IndexedDB, même avec une pièce jointe', true);
+    verifier('séances indépendantes : pas de partage des données ou des octets, import en mémoire', true);
+  } finally {
+    for (const [k, d] of Object.entries(avant)) {
+      if (d) Object.defineProperty(globalThis, k, d); else delete globalThis[k];
+    }
+  }
+}
+
+// Fin de l'ancien exercice : aucune réussite sans confirmation d'IndexedDB.
+{
+  const assert = (await import('node:assert/strict')).default;
+  const { terminerExerciceComplet } = await import('./mode-exercice.js');
+  const { NOM_BASE_PJ } = await import('./demo-store.js');
+  const stock = stockageFactice();
+  activer('{"photo":"fictive"}', '2026-09-10', stock);
+  let requete;
+  const base = { deleteDatabase(nom) { assert.equal(nom, NOM_BASE_PJ); requete = {}; return requete; } };
+  let fin = terminerExerciceComplet(stock, base);
+  assert.ok(estActif(stock));
+  requete.onblocked();
+  await assert.rejects(fin, /bloqué/);
+  assert.ok(estActif(stock));
+  fin = terminerExerciceComplet(stock, base);
+  requete.onerror();
+  await assert.rejects(fin, /refusé/);
+  assert.ok(estActif(stock));
+  fin = terminerExerciceComplet(stock, base);
+  requete.onsuccess();
+  assert.equal(await fin, true); assert.equal(stock.taille, 0);
+  verifier('fin d’exercice : blocage et erreur des pièces signalés, état conservé, succès attendu avant effacement des clés', true);
+}
+
 // ============================================================
 // Verdict
 // ============================================================

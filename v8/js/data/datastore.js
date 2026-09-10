@@ -14,6 +14,7 @@
 
 import { creerDemoStore } from './demo-store.js';
 import * as modeExercice from './mode-exercice.js';
+import { estSeanceFictive } from './seance-fictive.js';
 
 /** Sonde le serveur local : true si /api/ping répond « mode local ». */
 async function serveurLocalPresent() {
@@ -35,6 +36,13 @@ async function serveurLocalPresent() {
  * @returns {Promise<object>} store conforme au contrat DataStore
  */
 export async function creerStore() {
+  // Priorité à la séance isolée, même si un ancien exercice réel est présent.
+  // Aucun ping, aucune photo du registre et aucune lecture de localStorage.
+  if (estSeanceFictive()) {
+    const seance = creerDemoStore({ persistant: false });
+    await seance.init();
+    return seance;
+  }
   // MODE EXERCICE (13/08, plan docs/PLAN-MODE-EXERCICE.md) : le drapeau
   // posé force le BAC À SABLE (DemoStore) MÊME quand le serveur répond —
   // c'est toute la fonction : travailler sur la photo du réel sans jamais

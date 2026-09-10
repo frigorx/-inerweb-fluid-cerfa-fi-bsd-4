@@ -8,6 +8,8 @@
 import { creerStore } from './data/datastore.js';
 import { estActif as modeExerciceActif } from './data/mode-exercice.js';
 import { poserBandeauExercice } from './views/bandeau-exercice.js';
+import { estSeanceFictive } from './data/seance-fictive.js';
+import { poserBandeauSeanceFictive } from './views/seance-fictive.js';
 import { creerTransportHttp, EVENEMENT_SESSION_REQUISE } from './data/transport-http.js';
 import { creerRouteur } from './core/routeur.js';
 import { ICONES } from './core/icones.js';
@@ -504,6 +506,11 @@ async function restaurerSauvegarde(fichier) {
     const texte = await fichier.text();
     const reussi = await store.importerJSON(texte);
     if (reussi) {
+      if (estSeanceFictive()) {
+        toast('Fichier chargé en mémoire pour cette séance uniquement.', 'succes');
+        afficherVue(routeur.idCourant(), routeur.paramCourant());
+        return;
+      }
       toast('Données restaurées. Rechargement…', 'succes');
       setTimeout(function () { window.location.reload(); }, 900);
     } else {
@@ -532,6 +539,7 @@ function ouvrirModaleSauvegarde() {
       + ICONES.telecharger
       + '<span class="option-titre">Exporter une sauvegarde</span>'
       + '<span class="option-detail">Télécharge un fichier .json contenant toutes vos données.</span>'
+      + (estSeanceFictive() ? '<span class="option-detail">Séance temporaire : le JSON ne contient pas les fichiers joints. Conservez-les séparément si nécessaire.</span>' : '')
       + '</button>'
       + '<button id="option-restaurer" class="option-sauvegarde" type="button">'
       + ICONES.televerser
@@ -578,6 +586,7 @@ function ouvrirModaleSauvegarde() {
       danger: true
     });
     if (!confirme) return;
+    if (estSeanceFictive()) { window.location.reload(); return; }
     try { localStorage.removeItem('inerweb-fluide-v8-demo'); } catch (e) { /* stockage indisponible */ }
     const suppression = indexedDB.deleteDatabase('inerweb-fluide-v8-pj');
     const recharger = function () { window.location.reload(); };
@@ -667,8 +676,9 @@ async function demarrer() {
   // EXERCICE (13/08), le bac est un DemoStore mais le badge dit EXERCICE —
   // et le bandeau dédié (posé ci-dessous) porte le cycle de vie complet.
   document.getElementById('badge-mode').textContent =
-    (modeExerciceActif() ? 'EXERCICE' : store.modeLabel) + ' / FORMATION';
+    (estSeanceFictive() ? 'SÉANCE TEMPORAIRE' : modeExerciceActif() ? 'EXERCICE' : store.modeLabel) + ' / FORMATION';
   poserBandeauExercice(store);
+  poserBandeauSeanceFictive();
 
   // Session (V9-E5) : uniquement en Mode Local (store HTTP, back par
   // sessions). Le Mode Démo n'a ni serveur ni cookie — rien à écouter.
