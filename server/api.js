@@ -4277,11 +4277,8 @@ const HANDLERS = {
     }
     const revision = mouvement.revisionBrouillon ?? 0;
     if (s.role === 'DETENTEUR') {
-      const techValide = db.get(
-        `SELECT id FROM signatures_mouvement
-         WHERE mouvement_id = ? AND role = 'TECHNICIEN'
-           AND version_document = ?`,
-        [mouvement.id, revision]);
+      // Une image illisible importée ne vaut pas signature, même à jour.
+      const techValide = etatSignatureReelle(mouvement, 'TECHNICIEN') === true;
       if (!techValide) {
         throw new Error('Signature du détenteur refusée : le technicien ' +
           'signe en premier (signature du technicien absente ou périmée).');

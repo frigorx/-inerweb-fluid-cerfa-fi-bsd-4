@@ -17,6 +17,16 @@ La page historique `CONDITIONS-BLOCANTES-OFFICIEL.md` rassemble plusieurs étape
 
 ## Critère de clôture du chantier
 
+### Suite : ordre des signatures et lien avec le PDF final
+
+Correction du 10/09 : après import d'un tracé technicien illisible, le détenteur pouvait signer parce que le contrôle préalable vérifiait seulement le rôle et la révision. La validation officielle considérait déjà le tracé technicien comme absent, mais le parcours de signature était incohérent. Les deux stores utilisent maintenant `etatSignatureReelle` avant la signature du détenteur : le tracé doit être recevable et la révision courante. Le test commun reproduit le défaut avant correction (signature acceptée à tort, ligne supplémentaire créée), puis vérifie le refus sans nouvelle signature sur les deux stores.
+
+**Obstacle confirmé avant ouverture : correspondance du PDF reçu et du document signé.** `verifierOctetsPdfFinal` contrôle les quatre octets `%PDF` et la taille maximale ; la chaîne de texte `%PDF texte sans structure ni signature` reçoit actuellement `{ok:true}`. Ce constat concerne ce filtre, pas une validation officielle réussie : le verrou global bloque toujours la suite. À la signature, `sha256Document` porte sur l'objet logique du mouvement ; à la validation, les octets du PDF sont fournis par le client. Le contrôle d'entrée ne compare pas ce PDF avec un document de référence présenté aux signataires. La conservation et le hash ultérieurs prouvent l'intégrité des octets conservés, pas cette correspondance initiale.
+
+Le générateur normal exige les deux signatures valides, mais cette exigence côté génération ne remplace pas une vérification serveur. Avant ouverture, définir un document de référence figé, lier explicitement les consentements à cette version et vérifier le document final à partir de cette référence. Ajouter un test de substitution par un autre PDF parfaitement lisible : renforcer seulement l'en-tête ou la syntaxe PDF ne suffirait pas. Rejouer ensuite le parcours signé complet sur une installation de test isolée. Aucune prétention de signature qualifiée ni de conformité globale n'est déduite du tracé ou du hash.
+
+Validation de cette suite : 139 exécutions réussies, une suspendue, aucun échec en 157,6 s. Le contrat commun vérifie la régression en démonstration et sur le serveur SQLite temporaire. Le contrôle de syntaxe et `git diff --check` passent également. Aucune base réelle ni règle de déverrouillage modifiée.
+
 ### Correction vérifiée : contrôles sans manipulation de fluide
 
 Le moteur de simulation demandait des pesées différentes pour tous les types de fiche, alors que les parcours `CONTROLE_PERIODIQUE` et `CONTROLE_NON_PERIODIQUE` se valident déjà sans déplacement de fluide (quantité nulle). Cette contradiction est corrigée dans les deux moteurs. Ces deux types demandent désormais explicitement un résultat `CONFORME` ou `FUITE` dès la soumission simulée. Les autres types conservent l'exigence de pesées ; cette correction ne permet pas de déclarer une charge ou une récupération comme un contrôle seul.

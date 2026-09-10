@@ -4326,9 +4326,8 @@ export function creerDemoStore({ persistant = true } = {}) {
       }
       const revision = mouvement.revisionBrouillon ?? 0;
       if (s.role === 'DETENTEUR') {
-        const techValide = (donnees.signaturesMouvement ?? []).some((sig) =>
-          sig.mouvementId === mouvement.id && sig.role === 'TECHNICIEN' &&
-          (sig.versionDocument ?? 0) === revision);
+        // Une image illisible importée ne vaut pas signature, même à jour.
+        const techValide = etatSignatureReelle(mouvement, 'TECHNICIEN') === true;
         if (!techValide) {
           throw new Error('Signature du détenteur refusée : le technicien ' +
             'signe en premier (signature du technicien absente ou périmée).');

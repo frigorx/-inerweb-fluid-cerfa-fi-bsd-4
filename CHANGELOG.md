@@ -7,6 +7,12 @@
 
 ## 2026-09-10 — portée des alertes et documents, transparence RGPD
 
+### Suite : contrôle de la signature préalable après import
+
+- Le détenteur ne peut plus signer après une signature technicien importée dont l'image est illisible, même si sa révision est courante. Contrôle identique en démonstration et sur le serveur.
+- Le défaut est reproduit dans le contrat de tests avant correction ; le refus doit laisser le nombre de signatures inchangé.
+- Le dossier de préparation explicite un obstacle restant : la correspondance entre PDF transmis et document signé n'est pas prouvée par le contrôle d'en-tête et de taille. Le mode Officiel reste verrouillé.
+
 ### Suite : simulation des contrôles et bilan des tests
 
 - Les contrôles seuls ne demandent plus de pesées fictives dans le moteur Officiel ; leur résultat reste obligatoire. Charge, mise en service, récupération et transfert gardent leurs contrôles de pesées.

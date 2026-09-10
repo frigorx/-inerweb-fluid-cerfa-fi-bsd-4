@@ -2327,6 +2327,12 @@ function imagePngTest(taille = 1200) {
       importe === true);
 
     const apresImport = await store.getSignaturesMouvement(brouillonSig.id);
+    await verifierRejet('signature du détenteur refusée après import d’un tracé technicien illisible',
+      store.signerMouvement(brouillonSig.id, { role: 'DETENTEUR',
+        nom: 'Dupont', prenom: 'Marie', imagePng: imagePngTest() }),
+      'technicien signe en premier');
+    verifier('le refus ne crée aucune signature supplémentaire',
+      (await store.getSignaturesMouvement(brouillonSig.id)).length === apresImport.length);
     verifier('⭐ une signature à l’image illisible n’est PLUS déclarée valide',
       apresImport.length === avantAttaque.length
       && apresImport.every((s) => s.valide === false),
