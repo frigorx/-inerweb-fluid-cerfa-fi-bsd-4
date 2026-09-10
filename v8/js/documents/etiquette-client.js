@@ -1,3 +1,4 @@
+import { mentionStatutDocument } from './statut-document.js';
 // inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — étiquette QR d'un client / détenteur (référence client)
@@ -62,9 +63,10 @@ function genererQRDansConteneur(conteneur, texte) {
  * @param {string} suffixeId - distingue la zone QR d'une case à l'autre.
  * @returns {string} HTML
  */
-function gabaritEtiquetteQR(client, suffixeId) {
+function gabaritEtiquetteQR(client, suffixeId, store) {
   const idQR = 'etiquette-qr-client' + suffixeId;
   return '<div class="etiquette-qr-machine">'
+    + mentionStatutDocument(store)
     + '<div class="etiquette-qr-entete">DÉTENTEUR — inerWeb Fluide</div>'
     + '<div class="etiquette-qr-corps">'
     + '<div class="etiquette-qr-zone" id="' + esc(idQR) + '"></div>'
@@ -157,7 +159,7 @@ function assurerStyleEtiquette() {
     }
     .etiquette-qr-machine {
       width: 50mm; aspect-ratio: 5 / 7; border: 1px solid var(--bordure);
-      border-radius: var(--rayon-chip); background: #ffffff; overflow: hidden;
+      border-radius: 4px; /* Une étiquette rectangulaire ne doit pas rogner son statut. */ background: #ffffff; overflow: hidden;
       display: flex; flex-direction: column;
     }
     .etiquette-qr-entete {
@@ -238,13 +240,13 @@ export async function ouvrirEtiquetteClient(ctx, clientId) {
   function rendreApercu() {
     if (!modePlanche) {
       zoneContenu.innerHTML = '<div class="etiquette-qr-apercu">'
-        + gabaritEtiquetteQR(client, '') + '</div>';
+        + gabaritEtiquetteQR(client, '', ctx.store) + '</div>';
       genererQRDansConteneur(
         zoneContenu.querySelector('#etiquette-qr-client'),
         contenuQR(client.codePublic));
     } else {
       const cases = Array.from({ length: 9 }, (_, i) =>
-        gabaritEtiquetteQR(client, '-planche-' + i)).join('');
+        gabaritEtiquetteQR(client, '-planche-' + i, ctx.store)).join('');
       zoneContenu.innerHTML = '<div class="etiquette-qr-planche">'
         + gabaritBandeauPlanche() + cases + '</div>';
       for (let i = 0; i < 9; i += 1) {

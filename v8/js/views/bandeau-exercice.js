@@ -99,6 +99,8 @@ export function poserBandeauExercice(store) {
         + quand + ')</span>'
       : '')
     + '</span>'
+    + '<span class="bandeau-exercice__texte">Cette copie peut contenir des données personnelles. '
+    + 'Terminer l’exercice efface le bac de ce navigateur, pas les fichiers téléchargés.</span>'
     + '<button type="button" data-geste="sauvegarder">Sauvegarder l’exercice</button>'
     + '<button type="button" data-geste="reinitialiser">Réinitialiser</button>'
     + '<button type="button" class="bandeau-exercice__danger" '

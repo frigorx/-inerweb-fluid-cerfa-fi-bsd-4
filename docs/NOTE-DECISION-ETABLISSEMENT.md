@@ -1,5 +1,8 @@
 # Note de décision de l'établissement — mise en service d'inerWeb Fluide
 
+> **État historique — ne pas utiliser comme état courant.** La revue du 10 septembre 2026 a modifié le marquage des imprimés, la présentation des alertes et la notice RGPD. Les inventaires et comptes de lignes ci-dessous décrivent la version antérieure. Consulter [la revue actuelle](REVUE-2026-09-10.md). La conservation des traces de formation reste une limite à traiter, pas une conformité acquise.
+
+
 > **Document à compléter et à signer par l'établissement.** Il n'est pas rempli d'avance :
 > les champs de décision sont laissés vides à dessein. Aucune décision n'est prise ici à la
 > place de la direction.

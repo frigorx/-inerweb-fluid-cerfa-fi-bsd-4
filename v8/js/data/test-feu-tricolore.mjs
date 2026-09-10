@@ -21,6 +21,47 @@
 import { DOMAINES, evaluerConformite, collecterConformite }
   from './feu-tricolore.js';
 
+import assert from 'node:assert/strict';
+import { etatActivationOfficiel, natureAlerte, precisionControle } from './portee-suivi.js';
+import { bilanConservationFormation } from './conservation-formation.js';
+import { libelleStatutDocument, mentionStatutDocument } from '../documents/statut-document.js';
+
+// Régressions de la revue : la configuration ne doit jamais masquer le verrou.
+{
+  const config = { ok: true, motifs: [] };
+  assert.equal(etatActivationOfficiel(config).ok, false);
+  assert.equal(config.motifs.length, 0, 'le calcul ne modifie pas son entrée');
+  assert.equal(etatActivationOfficiel(config, false).ok, true);
+  assert.equal(etatActivationOfficiel({ok: false, motifs: ['manquant']}, false).ok, false);
+  assert.equal(etatActivationOfficiel(null, false).ok, false);
+  assert.equal(natureAlerte({id: 'alr-brouillon-1'}), 'Suivi interne');
+  assert.equal(natureAlerte({id: 'inconnu'}), 'Fondement et situation à vérifier');
+  const machine = {chargeNominaleKg: 5, hermetiqueScelle: true, hermetiqueEtiquete: true};
+  assert.match(precisionControle(machine, {famille:'HFC', gwpAr4:1430}), /PRÉCAUTION/);
+  assert.doesNotMatch(precisionControle({...machine, hermetiqueEtiquete:false}, {famille:'HFC',gwpAr4:1430}), /PRÉCAUTION/);
+  assert.match(precisionControle(machine, {categorieCadre7:'AUCUNE'}), /intervention réelle/);
+  assert.match(precisionControle(machine, null), /inconnu/);
+  const mvs = [
+    {mode:'FORMATION',date:'2024-09-01',technicien:'Exercice'},
+    {mode:'FORMATION',date:'2025-09-01'},
+    {mode:'FORMATION',date:'2026-02-30'},
+    {mode:'OFFICIEL',date:'2020-01-01'}
+  ];
+  const copie = JSON.stringify(mvs);
+  assert.deepEqual(bilanConservationFormation(mvs, '2026-09-01'),
+    {total:3,aRevoir:1,datesManquantes:1,tracesNominatives:1});
+  assert.equal(bilanConservationFormation(mvs, '2026-08-31').aRevoir, 0);
+  assert.throws(()=>bilanConservationFormation(mvs,'2026-02-30'));
+  assert.equal(JSON.stringify(mvs),copie,'aucune mutation ni purge implicite');
+  assert.match(libelleStatutDocument(), /FORMATION/);
+  assert.match(libelleStatutDocument({modeLabel:'DÉMO'}), /FORMATION/);
+  assert.match(libelleStatutDocument({modeLabel:'LOCAL'}, {mode:'FORMATION'}), /FORMATION/);
+  assert.match(libelleStatutDocument({modeLabel:'LOCAL'}), /INTERNE/);
+  assert.match(libelleStatutDocument({modeLabel:'LOCAL'}, {mode:'OFFICIEL'}), /INTERNE/);
+  assert.match(mentionStatutDocument({modeLabel:'LOCAL'}, {mode:'FORMATION'}), /DOCUMENT NON OFFICIEL/);
+  console.log('  OK  Régressions portée, statut documentaire et revue de conservation');
+}
+
 const NOM_STORE = process.argv[2] ?? 'demo';
 
 async function fabriquerStore(nom) {

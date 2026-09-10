@@ -1,3 +1,4 @@
+import { mentionStatutDocument } from './statut-document.js';
 // inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — étiquette QR d'un équipement (V9.1, vague 3)
@@ -88,9 +89,10 @@ function genererQRDansConteneur(conteneur, texte) {
  *   dans la planche (ex. « -planche-3 ») ; vide pour l'aperçu unique.
  * @returns {string} HTML
  */
-function gabaritEtiquetteQR(machine, suffixeId) {
+function gabaritEtiquetteQR(machine, suffixeId, store) {
   const idQR = 'etiquette-qr' + suffixeId;
   return '<div class="etiquette-qr-machine">'
+    + mentionStatutDocument(store)
     + '<div class="etiquette-qr-entete">ÉQUIPEMENT SUIVI — inerWeb Fluide</div>'
     + '<div class="etiquette-qr-corps">'
     + '<div class="etiquette-qr-zone" id="' + esc(idQR) + '"></div>'
@@ -137,7 +139,7 @@ function assurerStyleEtiquette() {
       width: 50mm;
       aspect-ratio: 5 / 7;
       border: 1px solid var(--bordure);
-      border-radius: var(--rayon-chip);
+      border-radius: 4px; /* Une étiquette rectangulaire ne doit pas rogner son statut. */
       background: #ffffff;
       overflow: hidden;
       display: flex;
@@ -274,13 +276,13 @@ export async function ouvrirEtiquette(ctx, machineId) {
   function rendreApercu() {
     if (!modePlanche) {
       zoneContenu.innerHTML = '<div class="etiquette-qr-apercu">'
-        + gabaritEtiquetteQR(machine, '') + '</div>';
+        + gabaritEtiquetteQR(machine, '', ctx.store) + '</div>';
       genererQRDansConteneur(
         zoneContenu.querySelector('#etiquette-qr'),
         contenuQR(machine.codePublic));
     } else {
       const cases = Array.from({ length: 9 }, (_, i) =>
-        gabaritEtiquetteQR(machine, '-planche-' + i)).join('');
+        gabaritEtiquetteQR(machine, '-planche-' + i, ctx.store)).join('');
       zoneContenu.innerHTML = '<div class="etiquette-qr-planche">' + cases + '</div>';
       for (let i = 0; i < 9; i += 1) {
         genererQRDansConteneur(

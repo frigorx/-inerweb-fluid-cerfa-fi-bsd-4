@@ -108,7 +108,7 @@
   /* ---- Texte (échelle slate) ---- */
   --texte:        #1e293b;
   --texte-2:      #475569;
-  --texte-3:      #64748b;
+  --texte-3:      #526276;
   --texte-faible: #66768d;  /* IM-21 : #94a3b8 (2,56:1) trop clair sur blanc, remonté à 4,6:1 AA */
 
   /* ---- Accent (turquoise) ---- */
@@ -120,7 +120,7 @@
   --accent-halo:   #a5e9f1;  /* halos */
 
   /* ---- Sémantique ---- */
-  --succes:         #16a34a;
+  --succes:         #1e7e54;
   --succes-fond:    #dcfce7;
   --danger:         #dc2626;
   --danger-2:       #e11d48;

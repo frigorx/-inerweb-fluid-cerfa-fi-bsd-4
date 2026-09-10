@@ -1,5 +1,8 @@
 # Points de friction — inventaire des limites connues d'inerWeb Fluide
 
+> **État historique — ne pas utiliser comme état courant.** La revue du 10 septembre 2026 a modifié le marquage des imprimés, la présentation des alertes et la notice RGPD. Les inventaires et comptes de lignes ci-dessous décrivent la version antérieure. Consulter [la revue actuelle](REVUE-2026-09-10.md). La conservation des traces de formation reste une limite à traiter, pas une conformité acquise.
+
+
 > **Établi le 26/07/2026** sur le dépôt `C:\git\inerweb-fluide`, branche `main`.
 > **Dernier commit modifiant le code livré** : `2ca4aa0` (à revérifier par
 > `git log -1 --format=%h -- server v8 outils`). Le numéro du dernier commit du dépôt

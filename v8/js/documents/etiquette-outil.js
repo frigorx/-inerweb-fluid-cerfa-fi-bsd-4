@@ -1,3 +1,4 @@
+import { mentionStatutDocument } from './statut-document.js';
 // inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — étiquette QR d'un outil réglementaire (QR outillage)
@@ -68,11 +69,12 @@ function genererQRDansConteneur(conteneur, texte) {
   return '';
 }
 
-function gabaritEtiquetteQR(outil, suffixeId) {
+function gabaritEtiquetteQR(outil, suffixeId, store) {
   const idQR = 'etiquette-qr-outil' + suffixeId;
   const type = LIBELLES_TYPE_OUTIL[outil.typeOutil] || outil.typeOutil || 'Outil';
   const marqueModele = [outil.marque, outil.modele].filter(Boolean).join(' ');
   return '<div class="etiquette-qr-machine">'
+    + mentionStatutDocument(store)
     + '<div class="etiquette-qr-entete">OUTIL VÉRIFIÉ — inerWeb Fluide</div>'
     + '<div class="etiquette-qr-corps">'
     + '<div class="etiquette-qr-zone" id="' + esc(idQR) + '"></div>'
@@ -154,7 +156,7 @@ function assurerStyleEtiquette() {
     }
     .etiquette-qr-machine {
       width: 50mm; aspect-ratio: 5 / 7; border: 1px solid var(--bordure);
-      border-radius: var(--rayon-chip); background: #ffffff; overflow: hidden;
+      border-radius: 4px; /* Une étiquette rectangulaire ne doit pas rogner son statut. */ background: #ffffff; overflow: hidden;
       display: flex; flex-direction: column;
     }
     .etiquette-qr-entete {
@@ -237,13 +239,13 @@ export async function ouvrirEtiquetteOutil(ctx, outilId) {
   function rendreApercu() {
     if (!modePlanche) {
       zoneContenu.innerHTML = '<div class="etiquette-qr-apercu">'
-        + gabaritEtiquetteQR(outil, '') + '</div>';
+        + gabaritEtiquetteQR(outil, '', ctx.store) + '</div>';
       genererQRDansConteneur(
         zoneContenu.querySelector('#etiquette-qr-outil'),
         contenuQR(outil.codePublic));
     } else {
       const cases = Array.from({ length: 9 }, (_, i) =>
-        gabaritEtiquetteQR(outil, '-planche-' + i)).join('');
+        gabaritEtiquetteQR(outil, '-planche-' + i, ctx.store)).join('');
       zoneContenu.innerHTML = '<div class="etiquette-qr-planche">'
         + gabaritBandeauPlanche() + cases + '</div>';
       for (let i = 0; i < 9; i += 1) {

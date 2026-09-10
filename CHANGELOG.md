@@ -5,6 +5,20 @@
 > conservé par l'auteur hors de ce dépôt ; l'historique git du dépôt reste,
 > lui, complet et non réécrit.
 
+## 2026-09-10 — portée des alertes et documents, transparence RGPD
+
+- Statuts explicites sur huit familles de documents imprimables et leurs planches ; portée des alertes et verrou du mode Officiel rendus visibles.
+- Notices RGPD corrigées et bilan de conservation en lecture seule ; aucune purge automatique des historiques.
+- Lisibilité et adaptation mobile améliorées. Les 140 exécutions de tests passent.
+- [Bilan, sauvegarde et limites restantes](docs/REVUE-2026-09-10.md).
+
+### Suite : nettoyage contrôlé des brouillons de formation
+
+- Aperçu par date, sélection explicite, pièces et signatures comptées ; suppression locale réservée au référent/administrateur, avec refus des états périmés et reprise des fichiers verrouillés.
+- Les traces scellées, journaux et sauvegardes restent à traiter séparément. Aucun effacement global n'est annoncé.
+- Contrat DataStore v14 (98 méthodes). Suite complète : 140 exécutions réussies ; parcours local testé sur données fictives.
+- [Utilisation et limites](docs/NETTOYAGE-FORMATION-2026-09-10.md) ; [préparation du mode Officiel](docs/PREPARATION-OFFICIEL-2026-09-10.md).
+
 ## 2026-08-30 — le livre HabFluide quitte ce dépôt
 
 - **Le livre vit désormais dans `C:\git\livre-habfluide`**, dépôt autonome, avec

@@ -31,9 +31,9 @@ de ce document n'est pas implémenté ; mention retirée le 23/07, P2-5). Chaque
 | Interventions et registre | Fiches d'intervention (CERFA), mouvements de fluides, contrôles d'étanchéité, avec identité du technicien et du validateur | Personnel intervenant |
 | Comptes et journal | Identifiants de connexion (mot de passe haché, jamais en clair), journal d'audit (qui, quoi, quand, poste) | Utilisateurs de l'application |
 
-**Aucune donnée sensible** au sens de l'article 9 du RGPD (santé, opinions, biométrie…)
-n'est traitée. Les données sont limitées à ce qu'exige la réglementation F-Gas et au
-fonctionnement de l'application (principe de minimisation).
+Le logiciel n'a pas vocation à recevoir des données sensibles au sens de l'article 9
+du RGPD (santé, opinions…). Ne pas en saisir dans les champs libres ou les pièces
+jointes. L'établissement limite les données au nécessaire pour la finalité déclarée.
 
 ## 3. Finalités
 
@@ -56,16 +56,52 @@ fonctionnement de l'application (principe de minimisation).
 
 | Données | Durée | Fondement |
 |---|---|---|
-| Fiches d'intervention (CERFA) et registre des mouvements | **5 ans minimum** à compter de leur établissement | Obligation F-Gas (Code de l'environnement) |
+| Fiches d'intervention et registres réglementaires réels concernés | **5 ans minimum** à compter de leur établissement | Obligation F-Gas (Code de l'environnement) |
 | Registre du personnel, attestations d'aptitude | Durée d'activité de la personne + durée de conservation du registre auquel elles se rattachent | Justification des interventions passées |
 | Comptes utilisateurs | **Désactivés** dès le départ de la personne (l'historique reste attribué), puis **purgés** lorsque plus aucun enregistrement conservé ne s'y réfère | Minimisation |
 | Journal d'audit | Conservé avec le registre (même durée), non modifiable depuis l'application | Intégrité et valeur probante du registre |
-| Identité de la fiche d'un élève parti | Année scolaire en cours + l'année suivante au plus, puis **mise à l'abri chiffrée** (pseudonymisation réversible — voir §7 bis) | Pas d'obligation réglementaire ; minimisation sans destruction de la capacité de réponse à une demande légale |
-| Écritures d'intervention du mode formation | Conservées **sans limite** avec le registre (elles partagent sa chaîne d'intégrité), sous **pseudonyme à l'affichage** | Intégrité du registre : une écriture scellée n'est ni modifiable ni effaçable |
+| Identité de la fiche d'un élève parti | Durée à formaliser ; repère de revue : fin de l'année scolaire suivante. La mise au coffre protège sans effacer | La pseudonymisation réversible reste soumise au RGPD ; prévoir une issue à la conservation |
+| Écritures d'intervention du mode formation | Durée limitée à définir par l'établissement ; repère de revue : fin de l'année scolaire suivante. Pas de purge automatique actuelle des écritures scellées. | La chaîne d'intégrité ne justifie pas une conservation illimitée ; le coffre ne constitue pas un effacement |
 
 > ⚠️ Les écritures validées du registre officiel ne sont ni modifiables ni effaçables
 > (contre-écritures uniquement, cf. `docs/SPEC-V8.md`) : c'est une exigence d'intégrité
-> du registre réglementaire, compatible avec le RGPD au titre de l'obligation légale.
+> technique du logiciel. Elle ne dispense pas d'organiser les durées de conservation et le sort final des données avec le DPD et, le cas échéant, le service des archives.
+
+
+### Limite technique et action requise — revue du 10 septembre 2026
+
+Le bouton **Examiner et nettoyer les anciens brouillons** permet au référent ou à
+l'administrateur, sur le poste local, de choisir une date et des brouillons de formation
+à supprimer. Aucune ligne n'est précochée. L'aperçu compte les pièces et signatures
+associées et distingue les traces protégées. La confirmation exige un motif et un nombre.
+Le serveur refuse un aperçu périmé et supprime le lot en transaction ; les fichiers
+sont retirés après validation de cette transaction, avec reprise au démarrage si nécessaire.
+Le résultat indique les fichiers encore en attente. Cette fonction ne constitue pas un
+effacement global : journaux, coffre, fiches personnelles, sauvegardes et exports restent
+à examiner. Les sauvegardes gérées sont inventoriées sans être détruites ; une restauration
+peut réintroduire les données. Aucun effacement forensique du support n'est promis.
+Voir [le mode d'emploi et les limites](docs/NETTOYAGE-FORMATION-2026-09-10.md).
+
+Les écritures de formation scellées **ne sont pas purgées automatiquement**. Des noms,
+liens vers le personnel, signatures et pièces jointes peuvent y subsister, y compris
+après mise au coffre. La pseudonymisation réversible reste un traitement de données
+personnelles. Le logiciel ne prétend donc pas résoudre leur effacement.
+
+L'écran Protection des données fournit un repérage des écritures de formation à
+revoir après la fin de l'année scolaire suivante. Ce délai est un **repère de revue**,
+pas une durée légale universelle. Une date manquante n'est jamais présumée récente.
+La liste des candidats au coffre se fonde sur le statut désactivé de l'élève : aucune
+date de départ n'est enregistrée et cette liste ne prouve pas une échéance dépassée.
+
+Avant de saisir de nouvelles données nominatives de formation, l'établissement doit
+formaliser avec son DPD une durée, les accès, le sort final et une procédure pour les
+traces déjà scellées. Privilégier les données fictives pour les exercices. Une copie
+du registre réel dans le mode Exercice **n'est pas anonyme** ; elle contient les
+informations exportées et peut persister dans le navigateur. La suppression du bac
+n'efface ni les exports téléchargés ni les archives du poste.
+
+Sources consultées : [CNIL, durées de conservation](https://www.cnil.fr/fr/cnil-direct/question/dois-je-fixer-une-duree-de-conservation-des-donnees-dans-mon-fichier),
+[CNIL, information des personnes](https://www.cnil.fr/fr/conformite-rgpd-information-des-personnes-et-transparence).
 
 ## 6. Hébergement et localisation selon le mode
 
@@ -92,7 +128,7 @@ Dans l'application, l'administrateur ou le référent dispose des outils nécess
 - **Effacement / limitation** : désactivation du compte (la personne n'apparaît plus dans
   les écrans courants), puis **mise à l'abri chiffrée de l'identité** lorsque la durée
   annoncée est échue (coffre des identités, §7 bis) — pseudonymisation réversible,
-  compatible avec les obligations légales de conservation du registre.
+  qui ne constitue pas un effacement et n'autorise aucune conservation illimitée.
 
 ## 7 bis. Le coffre des identités (minimisation réversible)
 
@@ -149,15 +185,11 @@ ce dossier de conformité.
 
 ## 9. Cas particulier des élèves
 
-- Les élèves n'utilisent que le **mode formation** : ils ne peuvent jamais produire de
-  document d'apparence officielle, et toute écriture est validée par un enseignant.
+- Les élèves n'utilisent que le **mode formation** : les CERFA de formation sont marqués comme non officiels, et toute écriture est validée par un enseignant.
 - Les données d'élèves enregistrées sont **minimales** : nom, prénom, compte applicatif,
   et le cas échéant n° d'attestation d'aptitude préparée en formation. Aucune note,
   aucune évaluation, aucune donnée de vie scolaire.
-- **L'information des familles est recommandée** (mention dans le carnet de liaison ou le
-  règlement de l'atelier) : l'usage du logiciel s'inscrit dans les activités pédagogiques
-  normales de la formation, mais une information claire des élèves et de leurs responsables
-  légaux relève des bonnes pratiques et des recommandations de la CNIL en milieu scolaire.
+- **L'information des personnes concernées est obligatoire** (articles 12 à 14 du RGPD). L'établissement remet une notice claire, accessible aux élèves, et organise l'information des responsables légaux selon le cadre applicable. Cette information doit préciser le responsable, les finalités, bases légales, destinataires, durées, droits et contact du DPD. Elle ne se confond pas avec une demande de consentement.
 
 ## 10. Documents liés
 

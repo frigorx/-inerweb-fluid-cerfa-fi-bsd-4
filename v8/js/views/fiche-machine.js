@@ -21,6 +21,7 @@ import { detectionEffective, mobileListe, LIBELLE_SOUS_TYPE,
   from '../data/equipement.js';
 import { ouvrirEtiquette } from '../documents/etiquette-machine.js';
 import { ouvrirBonIntervention } from '../documents/bon-intervention.js';
+import { precisionControle } from '../data/portee-suivi.js';
 import { ouvrirFicheIdentification } from '../documents/fiche-identification-machine.js';
 import { ouvrirFeuilleMiseEnService, peutOuvrirFeuilleMiseEnService }
   from '../documents/feuille-mise-en-service.js';
@@ -440,7 +441,8 @@ function blocDonneesTechniques(machine, fluide, client) {
     ligneDetail('Fréquence de contrôle', libelleFrequence),
     // ⭐ Une fréquence doit toujours être EXPLICABLE : on écrit pourquoi
     // elle vaut ce qu'elle vaut.
-    ligneDetail('Motif de la fréquence', motifFrequence)
+    ligneDetail('Motif de la fréquence', motifFrequence),
+    ligneDetail('Portée du suivi', precisionControle(machine, fluide))
   ].join('');
 
   return '<div class="fiche-section">'

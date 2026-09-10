@@ -1,5 +1,8 @@
 # Registre des arbitrages réglementaires — inerWeb Fluide v8
 
+> **État historique — ne pas utiliser comme état courant.** La revue du 10 septembre 2026 a modifié le marquage des imprimés, la présentation des alertes et la notice RGPD. Les inventaires et comptes de lignes ci-dessous décrivent la version antérieure. Consulter [la revue actuelle](REVUE-2026-09-10.md). La conservation des traces de formation reste une limite à traiter, pas une conformité acquise.
+
+
 > **Établi le 26/07/2026.** Il recense **toutes les valeurs et règles à portée
 > réglementaire codées dans le logiciel**, et pour chacune : où elle se trouve
 > dans le code, sur quoi elle repose, avec quel degré de certitude, et ce qu'on

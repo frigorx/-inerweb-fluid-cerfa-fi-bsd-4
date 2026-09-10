@@ -19,6 +19,7 @@ import { debutInterdictionVierge, LIBELLE_USAGE_THERMIQUE }
 import { verdictPourIntervenant, encartConseil, injecterStylesConseil,
   dateDuJour } from '../composants/conseil-intervenant.js';
 import { LIBELLES_TYPE_OUTIL } from '../views/outillage.js';
+import { etatActivationOfficiel } from '../data/portee-suivi.js';
 
 /** Rôles autorisés à valider une écriture (contrat Phase B). */
 const ROLES_VALIDEURS = ['REFERENT', 'ENSEIGNANT', 'ADMIN'];
@@ -425,7 +426,7 @@ export async function ouvrirWizard(ctx, options = {}) {
   let officielMotifs = [];
   if (store.modeLabel !== 'DÉMO') {
     try {
-      const verdictOfficiel = await store.peutPasserEnOfficiel();
+      const verdictOfficiel = etatActivationOfficiel(await store.peutPasserEnOfficiel());
       officielEligible = verdictOfficiel.ok === true;
       officielMotifs = verdictOfficiel.motifs ?? [];
     } catch {
@@ -1898,6 +1899,9 @@ export async function ouvrirWizard(ctx, options = {}) {
     // Brique C5 : mode de la fiche — FORMATION par défaut (zéro friction),
     // OFFICIEL proposé seulement si les prérequis sont réunis (mode réel).
     const blocMode = '<div class="wizard-bloc champ">'
+      + '<p class="encart-aide">Formation = exercice, sans valeur de justificatif pour une intervention réelle. '
+      + 'Utilisez des identités et signatures d’exercice. Les écritures de formation validées '
+      + 'ne disposent pas d’un effacement automatique.</p>'
       + '<label for="wizard-mode">Mode de la fiche</label>'
       + '<select id="wizard-mode">'
       + '<option value="FORMATION"'

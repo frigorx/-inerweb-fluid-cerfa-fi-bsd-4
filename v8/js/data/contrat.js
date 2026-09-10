@@ -37,7 +37,7 @@
 // ============================================================
 
 /** Version du contrat (à incrémenter à chaque évolution de surface). */
-export const VERSION_CONTRAT = 13;
+export const VERSION_CONTRAT = 14;
 
 /**
  * Message canonique opposé à toute tentative de modification d'une
@@ -118,6 +118,10 @@ export const PROPRIETES_CONTRAT = ['modeLabel', 'registreAltere'];
  * décrite ici en une ligne et VÉRIFIÉE dans test-contrat.mjs.
  */
 export const METHODES_CONTRAT = {
+  previsualiserNettoyageFormation: { genre: 'lecture',
+    description: '(avant AAAA-MM-JJ) Aperçu des traces FORMATION antérieures à une date choisie : lignes sans noms, admissibilité, nombres de pièces/signatures, empreinte de l’état et inventaire des sauvegardes gérées (null si indisponible). Local : REFERENT/ADMIN, poste local. Démo : aperçu seulement, sans empreinte.' },
+  nettoyerBrouillonsFormation: { genre: 'mutation',
+    description: '({avant, ids, empreinte, confirmation, motif, copiesExternes}) Local uniquement, REFERENT/ADMIN : supprime atomiquement 1 à 200 BROUILLONS FORMATION admissibles et leurs pièces/signatures/liens. Refuse aperçu périmé, écritures scellées/soumises/officielles et liens protégés. Confirmation SUPPRIMER N et motif requis. Fichiers supprimés après commit avec reprise persistante ; retourne supprimes, pieces, signatures, fichiersEnAttente. Journaux et sauvegardes conservés, aucun effacement global ni anonymisation promis. Démo : refus explicite.' },
   // --- signal de changement et initialisation -----------------
   surChangement: { genre: 'abonnement',
     description: 'Abonne un rappel appelé après chaque mutation réussie ; retourne la fonction de désabonnement. SYNCHRONE.' },

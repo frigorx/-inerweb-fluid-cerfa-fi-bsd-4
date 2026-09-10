@@ -507,17 +507,21 @@ export function construireCertificatHtml(
     </dl>
     <div class="consignes">
       <p><strong>Conservez ce certificat hors du dossier</strong> (impression,
-      courriel, coffre) : il fait foi. Un fichier .zip dont l'empreinte SHA-256
+      courriel, coffre). Si cette empreinte de référence est conservée de manière fiable,
+      un fichier .zip dont l'empreinte SHA-256
       recalculée est identique à celle ci-dessus est, octet pour octet, le
       dossier scellé d'origine.</p>
+      <p>Cette comparaison ne certifie ni l’exactitude métier du contenu, ni sa conformité,
+      ni l’identité des signataires. La date ci-dessus provient du poste et ne constitue
+      pas un horodatage qualifié. Un document de formation reste non officiel.</p>
       <p><strong>Pour vérifier</strong> : ouvrez le fichier
       <span class="mono">99-VERIFICATEUR.html</span> contenu dans l'archive
       (double-clic, aucune installation) et déposez-y le .zip — ou recalculez
       l'empreinte avec un outil standard, par exemple sous Windows&nbsp;:
       <span class="mono">Get-FileHash dossier.zip -Algorithm SHA256</span>.</p>
     </div>
-    <footer>Certificat généré par inerWeb Fluide. Ce document ne contient
-    aucune donnée nominative.</footer>
+    <footer>Document de vérification généré par inerWeb Fluide.
+    Le titre et le nom de fichier peuvent contenir des données personnelles.</footer>
   </div>
 </main>
 </body>

@@ -2,7 +2,7 @@
 
 **Traçabilité des fluides frigorigènes et CERFA 15497\*04 pour les lycées professionnels — utilisable aussi par des professionnels.**
 
-inerWeb Fluide permet de tenir un registre réglementaire complet des fluides frigorigènes (F-Gas) : traçable, justifiable, vérifiable et exportable, avec pièces justificatives et balance matière. Objectif : *« en un clic, je sors le dossier annuel complet de traçabilité fluides »*.
+inerWeb Fluide organise le suivi des fluides frigorigènes (F-Gas), les pièces justificatives et la balance matière. Les indicateurs portent sur les données saisies : ils ne certifient pas la conformité juridique de l'établissement. Objectif : *« en un clic, je sors le dossier annuel complet de traçabilité fluides »*.
 
 **➡️ [Essayer la démonstration en ligne](https://frigorx.github.io/-inerweb-fluid-cerfa-fi-bsd-4/v8/)** — aucun compte, aucune installation, un clic.
 **➡️ [Guide pas à pas](https://frigorx.github.io/-inerweb-fluid-cerfa-fi-bsd-4/guide.html)** — écran par écran, de l'installation au dossier d'audit.
@@ -35,7 +35,7 @@ parcours complet existe (double signature réelle, PDF final conservé et haché
 écriture scellée en chaîne, contre-écriture, conditions de blocage
 réglementaires). Un verrou de livraison unique (`VERROU_LIVRAISON`) le
 maintient fermé le temps de solder les corrections issues de l'audit externe du
-20/07/2026 ; sa réouverture est une décision, pas un développement.
+20/07/2026 ; sa réouverture exige de traiter les limites restantes et une décision explicite d’exploitation.
 
 En attendant, toute fiche produite porte le filigrane « DÉMO / FORMATION » :
 le logiciel ne peut pas être pris pour un registre à valeur probante par accident.
@@ -46,7 +46,7 @@ le logiciel ne peut pas être pris pour un registre à valeur probante par accid
 - **Balance matière annuelle par fluide** : stock théorique calculé (achats, récupérations, charges, cessions, retours, destructions) comparé au stock réel pesé au 31/12 ; tout écart exige une justification.
 - **CERFA officiel rempli (PDF)** : le formulaire 15497\*04 officiel est rempli automatiquement, avec un aperçu à l'écran fidèle au document ; la référence imprimée et archivée est toujours le PDF officiel.
 - **Dossier audit annuel en un clic** : export ZIP complet (attestations, registres du personnel et de l'outillage, inventaires, mouvements, CERFA, contrôles d'étanchéité, BSFF, balance matière, journal d'audit) et vue « audit en 5 minutes ».
-- **Modes Formation et Officiel strictement séparés** : numérotation distincte, filigrane massif sur tout document de formation, validation enseignant obligatoire ; un élève ne peut jamais produire un document d'apparence officielle.
+- **Modes Formation et Officiel strictement séparés** : numérotation distincte, CERFA de formation filigranés, principaux imprimés marqués dans leur contenu, validation enseignant obligatoire. Les sommaires des dossiers précisent la portée des pièces ; les pièces jointes importées restent dans leur état d’origine.
 - **Alertes réglementaires** : attestations expirées, étalonnages dépassés, contrôles d'étanchéité dus, délais de garde des fluides récupérés… Les alertes critiques bloquent le mode Officiel pour l'opération concernée. L'application intègre la transition réglementaire des arrêtés du 21 novembre 2025 (nouvelle grille de catégories d'aptitude obligatoire au 1ᵉʳ janvier 2027 ; les arrêtés de 2008 — 13 octobre pour l'aptitude des personnes, 30 juin pour la capacité des entreprises — sont abrogés au 31 décembre 2026).
 
 ## État du produit
@@ -54,8 +54,7 @@ le logiciel ne peut pas être pris pour un registre à valeur probante par accid
 - **Version candidate — bêta Formation nominative.** Le moteur est complet (96 méthodes de
   contrat, prouvées sur les deux modes), le filet de tests passe TOUT VERT en contrôle
   continu, et le paquet portable se délivre nominativement (voir « Licence et auteur »).
-- **Le mode Officiel reste fermé** : sa réouverture est une décision
-  d'exploitation (validation métier F-Gas, DPD), pas un chantier de code.
+- **Le mode Officiel reste fermé** : sa réouverture exige le traitement des limites restantes, notamment la conservation des données de formation, et une décision explicite d’exploitation.
 - L'ancienne v7 est **abandonnée et retirée** depuis le 25/07/2026 ; le présent dépôt ne
   contient que la v8.
 - L'architecture se lit en une page : [`docs/CARTE-CODE.md`](docs/CARTE-CODE.md).
@@ -91,3 +90,16 @@ qrcodejs) restent sous **leur propre licence** : voir [LICENCES-TIERCES.md](LICE
 
 **Franck Henninot** — Lycée professionnel Antoine Vidal, Nîmes.
 Contact : inerweb.fh@gmail.com — <https://inerweb.ovh>
+
+## Revue du 10 septembre 2026
+
+Les écrans distinguent désormais absence d'alerte, disponibilité du mode Officiel
+et portée juridique. Le statut « En service » n'est plus appelé « Conforme ».
+Les documents internes ne deviennent pas officiels par leur génération ou leur scellement.
+Voir [le bilan des corrections et limites](docs/REVUE-2026-09-10.md).
+
+La revue RGPD permet d'examiner les anciennes écritures et de nettoyer les
+brouillons de formation sélectionnés, après aperçu et confirmation sur le poste local.
+Voir [le fonctionnement et les limites du nettoyage](docs/NETTOYAGE-FORMATION-2026-09-10.md).
+Le coffre n'est pas une anonymisation ; une procédure de conservation et de
+traitement des traces scellées reste à formaliser avec le responsable et le DPD.

@@ -29,6 +29,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const db = require('./db.js');
 const mapping = require('./mapping.js');
+const { preparerRevueFormation, verifierSelectionFormation } = require('./revue-formation.js');
 const { hasherMouvement, empreinteListeTriee, chaineCanoniqueSignature } =
   require('./hash-mouvement.js');
 const { FICHE_REGLEMENTAIRE_FLUIDES, corrigerPrpFgas3 } = require('./migrations.js');
@@ -636,6 +637,7 @@ const ROLES_MUTATION = {
   soumettreMouvement: OPERATEUR,
   rejeterMouvement: OPERATEUR,
   supprimerMouvement: OPERATEUR,
+  nettoyerBrouillonsFormation: REFERENT_ADMIN,
   // Lot C (C1) : l'élève-technicien signe son travail ; au lycée le
   // professeur signe détenteur PAR DÉLÉGATION sous sa propre session
   // (décision Franck 16/07) — l'identité de session est captée en témoin.
@@ -681,6 +683,7 @@ const ROLES_MUTATION = {
 // du personnel. garderRole consulte cette table APRÈS ROLES_MUTATION.
 // ------------------------------------------------------------
 const ROLES_LECTURE_SENSIBLE = {
+  previsualiserNettoyageFormation: REFERENT_ADMIN,
   exporterDonneesPersonne: VALIDEUR,
   // ⭐ L2 (25/07) — L'EXPORT COMPLET EST UNE LECTURE SENSIBLE, et c'était
   // la plus large de toutes. `getJournalAudit` est réservé au niveau
@@ -1237,6 +1240,59 @@ function lireSentinelleTriee() {
 // ------------------------------------------------------------
 
 const HANDLERS = {
+  previsualiserNettoyageFormation(params) {
+    verifierPosteLocalCoffre();
+    const revue = lireRevueNettoyageFormation(params.avant);
+    // Inventaire des copies gérées, sans les ouvrir ni présumer leur contenu.
+    try {
+      revue.sauvegardes = sauvegardeCoffre.listerSauvegardes().map(s => ({
+        fichier: s.fichier, date: s.horodatage || '', valide: s.valide
+      }));
+    } catch { revue.sauvegardes = null; }
+    return revue;
+  },
+
+  nettoyerBrouillonsFormation(params) {
+    verifierPosteLocalCoffre();
+    const chemins = [];
+    const resultat = muter(() => {
+      const revue = lireRevueNettoyageFormation(params.avant);
+      if (!params.empreinte || params.empreinte !== revue.empreinte) {
+        throw new Error('Les données ont changé : refaites l’aperçu avant de confirmer.');
+      }
+      verifierSelectionFormation(revue, params.ids, params.confirmation, params.motif, params.copiesExternes);
+      let pieces = 0, signatures = 0;
+      for (const id of params.ids) {
+        const pj = db.all("SELECT * FROM pieces_jointes WHERE entite_type = 'MOUVEMENT' AND entite_id = ?", [id]);
+        for (const p of pj) {
+          // Chemin dérivé de l'ID, jamais de la colonne chemin importable.
+          const chemin = cheminPieceJointe(p.id);
+          if ((fs.existsSync(chemin) && fs.lstatSync(chemin).isSymbolicLink())
+            || fs.lstatSync(path.dirname(chemin)).isSymbolicLink()) {
+            throw new Error('Pièce jointe sur un lien symbolique : nettoyage refusé.');
+          }
+          db.run('DELETE FROM pieces_jointes WHERE id = ?', [p.id]);
+          db.run('INSERT INTO coffre_purge_en_attente (id, chemin) VALUES (?, ?)',
+            [db.generateId('PUR'), chemin]);
+          chemins.push(chemin);
+          pieces++;
+        }
+        signatures += db.get('SELECT count(*) AS n FROM signatures_mouvement WHERE mouvement_id = ?', [id]).n;
+        db.run('DELETE FROM signatures_mouvement WHERE mouvement_id = ?', [id]);
+        db.run('DELETE FROM mouvement_outillage WHERE mouvement_id = ?', [id]);
+        db.run('DELETE FROM mouvements WHERE id = ?', [id]);
+      }
+      // Pas de noms d'élèves ni contenu des fiches dans cette nouvelle trace.
+      journaliser(null, 'NETTOYAGE_BROUILLONS_FORMATION', 'formation',
+        `${params.ids.length} brouillon(s), ${pieces} pièce(s), ${signatures} signature(s) ; avant ${params.avant} ; motif : ${params.motif.trim()}`);
+      return { supprimes: params.ids.length, pieces, signatures };
+    });
+    // Le disque n'est touché qu'après COMMIT ; reprise au démarrage si échec.
+    purgerFichiersCoffre(chemins);
+    resultat.fichiersEnAttente = chemins.filter(c => db.get(
+      'SELECT id FROM coffre_purge_en_attente WHERE chemin = ?', [c])).length;
+    return resultat;
+  },
 
   // === initialisation =======================================
   init() {
@@ -5709,6 +5765,18 @@ function lireTablePlate(nomTable, sqlTable, tri) {
  * getBouteilles…) : formes camelCase strictement identiques au contrat.
  */
 /** Lecture BRUTE des mouvements (tri du contrat), sans substitution coffre. */
+function lireRevueNettoyageFormation(avant) {
+  const tables = ['mouvements', 'pieces_jointes', 'signatures_mouvement', 'controles', 'mouvement_outillage'];
+  const sources = Object.fromEntries(tables.map(t => [t, db.all(`SELECT * FROM ${t} ORDER BY rowid`)]));
+  const revue = preparerRevueFormation(lireMouvementsBruts(), avant, aujourdHui(),
+    sources.pieces_jointes.map(p => mapping.versFront('pieces_jointes', p)),
+    sources.signatures_mouvement.map(s => ({ mouvementId: s.mouvement_id })),
+    sources.controles.map(c => ({ mouvementId: c.mouvement_id })));
+  // Lie l'aperçu à l'état complet des fiches ET de leurs dépendances.
+  revue.empreinte = crypto.createHash('sha256').update(JSON.stringify({ avant, sources })).digest('hex');
+  return revue;
+}
+
 function lireMouvementsBruts() {
   const lignes = db.all(
     `SELECT * FROM mouvements

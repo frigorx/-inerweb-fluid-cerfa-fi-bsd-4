@@ -1,3 +1,4 @@
+import { mentionStatutDocument } from './statut-document.js';
 // inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — fiche d'identification machine (A4) (V9.2)
@@ -104,7 +105,7 @@ function ligneTableau(libelle, valeur) {
  * @param {object|null} client
  * @returns {string} HTML
  */
-function gabaritFiche(machine, fluide, client) {
+function gabaritFiche(machine, fluide, client, store) {
   const dateGeneration = new Date().toLocaleDateString('fr-FR');
   const frequence = calculerFrequenceControle(machine, fluide);
   const libelleFrequence = frequence.frequenceMois
@@ -132,6 +133,7 @@ function gabaritFiche(machine, fluide, client) {
   ].join('');
 
   return '<div class="fim-document">'
+    + mentionStatutDocument(store)
 
     + enteteDocument()
 
@@ -394,7 +396,7 @@ export async function ouvrirFicheIdentification(ctx, machineId) {
 
   const { fermer, racine } = modale({
     titre: 'Fiche d\'identification — ' + machine.designation,
-    contenuHtml: '<div class="fim-doc-apercu">' + gabaritFiche(machine, fluide, client) + '</div>',
+    contenuHtml: '<div class="fim-doc-apercu">' + gabaritFiche(machine, fluide, client, ctx.store) + '</div>',
     actionsHtml:
       '<button type="button" id="fim-fermer" class="btn btn-secondaire no-print">Fermer</button>'
       + '<button type="button" id="fim-imprimer" class="btn btn-marine no-print">'

@@ -62,7 +62,7 @@ export function carteKpi({ libelle, valeur, sousTexte = '', icone = '', teinte =
 // Correspondance code métier → libellé + classe de teinte
 const CHIPS_STATUT = {
   // Statuts machine
-  EN_SERVICE:  { libelle: 'Conforme',        classe: 'chip-vert' },
+  EN_SERVICE:  { libelle: 'En service',      classe: 'chip-vert' },
   FUITE:       { libelle: 'Fuite',           classe: 'chip-rouge' },
   CONTROLE_DU: { libelle: 'Contrôle dû',     classe: 'chip-ambre' },
   ARRETEE:     { libelle: 'Arrêtée',         classe: 'chip-gris' },

@@ -32,7 +32,7 @@
 // Exécution : node outils/test-inventaire-documents-sans-marque.mjs
 // ============================================================
 
-import { readdirSync, readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -203,69 +203,52 @@ for (const piece of PIECES) {
 }
 
 // ---------------------------------------------------------------
-// 4. La contre-épreuve citée au § 5.3 dit encore vrai.
-//    Reproduction en Node de la commande écrite dans le document.
-// ---------------------------------------------------------------
-
-const MOTIF_MENTION = /MENTION_FORMATION|MODE FORMATION|NON OFFICIEL|non officiel/;
-
-function lignesQuiPortentLaMention(dossier, prefixe, resultat) {
-  for (const entree of readdirSync(dossier, { withFileTypes: true })) {
-    const relatif = prefixe ? `${prefixe}/${entree.name}` : entree.name;
-    if (entree.isDirectory()) {
-      lignesQuiPortentLaMention(join(dossier, entree.name), relatif, resultat);
-    } else if (entree.name.endsWith('.js') || entree.name.endsWith('.mjs')) {
-      const lignes = readFileSync(join(dossier, entree.name), 'utf8').split('\n');
-      for (const ligne of lignes) {
-        if (MOTIF_MENTION.test(ligne)) resultat.push(relatif);
-      }
+// 4. Le marquage courant est vérifié sur les documents RENDUS.
+// L'ancien comptage de lignes prouvait l'absence de marque ; l'exiger
+// après correction aurait empêché de corriger le défaut qu'il décrivait.
+for (const piece of PIECES) {
+  verifier(`${piece} est explicitement historique et renvoie à la revue actuelle`,
+    readFileSync(join(RACINE,piece),'utf8').includes('État historique — ne pas utiliser comme état courant.'));
+}
+const { installerDocumentFactice } = await import('../v8/js/core/shim-dom-tests.mjs');
+const objet = {id:'objet-1',code:'TEST',codePublic:'ABC123X',designation:'Exercice',
+  fluide:'R134a',chargeNominaleKg:2,clientId:'objet-1',raisonSociale:'Détenteur fictif',
+  typeOutil:'BALANCE',marque:'Test',modele:'Test',type:'NEUVE'};
+const cas = [
+  ['plaque-fgas','ouvrirPlaque','.plaque-etiquette'],
+  ['fiche-identification-machine','ouvrirFicheIdentification','.fim-document'],
+  ['bon-intervention','ouvrirBonIntervention','.bi-document'],
+  ['feuille-mise-en-service','ouvrirFeuilleMiseEnService','.fmes-feuille'],
+  ['etiquette-machine','ouvrirEtiquette','.etiquette-qr-machine'],
+  ['etiquette-bouteille','ouvrirEtiquette','.etiquette-qr-machine'],
+  ['etiquette-client','ouvrirEtiquetteClient','.etiquette-qr-machine'],
+  ['etiquette-outil','ouvrirEtiquetteOutil','.etiquette-qr-machine']
+];
+for (const modeLabel of ['DÉMO','LOCAL']) {
+  for (const [fichier,fonction,classe] of cas) {
+    installerDocumentFactice();
+    const store = {modeLabel,
+      getMachines:async()=>[objet], getBouteilles:async()=>[objet],
+      getClients:async()=>[objet], getOutillage:async()=>[objet],
+      getEtablissement:async()=>({raisonSociale:'Établissement fictif'}),
+      getFluides:async()=>[{code:'R134a',famille:'HFC',gwpAr4:1430}],
+      getMouvements:async()=>[{id:'objet-1',machineId:'objet-1',type:'MISE_EN_SERVICE',
+        statut:'VALIDE',mode:'FORMATION',date:'2026-09-10'}]
+    };
+    const module = await import(`../v8/js/documents/${fichier}.js`);
+    await module[fonction]({store},objet.id);
+    const marque = document.querySelector(classe+' .statut-document');
+    const attendu = modeLabel==='DÉMO' || fichier==='feuille-mise-en-service' ? 'FORMATION' : 'DOCUMENT INTERNE';
+    verifier(`${fichier} (${modeLabel}) : statut porté DANS la zone imprimée`,
+      Boolean(marque) && marque.textContent.includes(attendu));
+    const planche = document.querySelector('#etiquette-qr-planche');
+    if (planche) {
+      planche.declencher('click');
+      const etiquettes = document.querySelectorAll(classe);
+      verifier(`${fichier} (${modeLabel}) : chaque étiquette de la planche porte son statut`,
+        etiquettes.length===9 && etiquettes.every(e=>e.querySelector('.statut-document')?.textContent.includes(attendu)));
     }
   }
-  return resultat;
-}
-
-// ⚠ LOT 1 BRANCHE A (27/07/2026) — L'EXCEPTION EST NOMMÉE, PAS ÉLARGIE.
-// Jusqu'à ce jour, un SEUL document du logiciel portait la mention de
-// non-officialité : la fiche CERFA. Le justificatif de régularisation
-// (v8/js/documents/regularisation.js), créé pour remplacer le CERFA d'une
-// écriture d'annulation, la porte lui aussi — et c'est le RÉSULTAT VOULU :
-// s'il en était sorti sans, il serait devenu le VINGT-DEUXIÈME document de
-// l'inventaire ci-dessus, et la dette du dossier aurait grandi.
-// L'exception est donc NOMMÉE fichier par fichier : tout AUTRE module qui
-// se mettrait à porter la mention ferait rougir cette suite, comme avant.
-// ⭐ REVUE DU 27/07 : l'exception était le FRAGMENT de chemin
-// « regularisation » — tout futur fichier dont le chemin contient ce mot
-// obtenait un laissez-passer sans que personne ne l'ait décidé. Une
-// exception qui s'élargit toute seule n'est plus une exception. Les
-// chemins sont donc EXACTS ; les trois fichiers concernés sont ceux que
-// cite le § 5.3 de docs/NOTE-DECISION-ETABLISSEMENT.md.
-const CHEMINS_MARQUES_EXACTS = new Set([
-  'documents/regularisation.js',
-  'documents/regularisation-apercu.js',
-  'documents/test-justificatif-regularisation.mjs'
-]);
-const DOCUMENTS_MARQUES = [
-  (chemin) => chemin.startsWith('cerfa/'),
-  (chemin) => CHEMINS_MARQUES_EXACTS.has(chemin)
-];
-const porteuses = lignesQuiPortentLaMention(join(RACINE, 'v8', 'js'), '', []);
-const horsMarques = porteuses.filter(
-  (c) => !DOCUMENTS_MARQUES.some((estMarque) => estMarque(c)));
-verifier('hors des deux documents MARQUÉS, aucune ligne ne porte la mention '
-  + 'de formation (commande du § 5.3)',
-horsMarques.length === 0, [...new Set(horsMarques)].join(', '));
-
-// Le document annonce le nombre de lignes que rend la contre-épreuve.
-const compteLignes = porteuses.length;
-const motLignes = enToutesLettres(compteLignes);
-const texteNote = texteCourant(readFileSync(join(RACINE, 'docs/NOTE-DECISION-ETABLISSEMENT.md'), 'utf8'));
-const annonceLignes = texteNote.match(new RegExp(`\\brend\\s+${ALTERNANCE}\\s+lignes\\b`));
-verifier('le § 5.3 annonce le nombre de lignes de sa contre-épreuve', annonceLignes !== null);
-if (annonceLignes) {
-  const dit = annonceLignes[0].replace(/^rend\s+/, '').replace(/\s+lignes$/, '').trim();
-  verifier(`le § 5.3 annonce le bon nombre de lignes (« ${motLignes} » = ${compteLignes})`,
-    dit === normaliser(motLignes ?? '') || dit === String(compteLignes),
-    `le document dit « ${dit} », la commande rend ${compteLignes}`);
 }
 
 console.log(`\n${nbOk} OK, ${nbEchecs} échec(s).`);

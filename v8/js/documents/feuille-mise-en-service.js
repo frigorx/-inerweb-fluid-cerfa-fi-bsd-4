@@ -1,3 +1,4 @@
+import { mentionStatutDocument } from './statut-document.js';
 // inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — feuille de mise en service (V9.2)
@@ -138,6 +139,7 @@ function gabaritFeuille(donnees) {
   const genereLe = jour + '/' + mois + '/' + maintenant.getFullYear();
 
   return '<div class="fmes-feuille">'
+    + mentionStatutDocument(donnees.store, donnees.mouvement)
 
     + enteteLogo()
 
@@ -544,6 +546,7 @@ export async function ouvrirFeuilleMiseEnService(ctx, mouvementId) {
   assurerStyle();
 
   const html = gabaritFeuille({
+    store: ctx.store, mouvement,
     etablissement,
     machine,
     dateMouvement: mouvement.date,

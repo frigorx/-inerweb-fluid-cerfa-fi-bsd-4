@@ -1,3 +1,5 @@
+import { mentionStatutDocument } from './statut-document.js';
+import { precisionControle } from '../data/portee-suivi.js';
 // inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — plaque F-Gas (Phase D)
@@ -64,7 +66,7 @@ function libelleFrequence(mois) {
  * @param {object} etablissement
  * @returns {string} HTML
  */
-function gabaritEtiquette(machine, fluide, frequence, etablissement) {
+function gabaritEtiquette(machine, fluide, frequence, etablissement, store) {
   const codeFluide = machine.fluide || '—';
   const famille = fluide ? fluide.famille : '—';
   const classeSecurite = fluide && fluide.classeSecurite ? fluide.classeSecurite : '—';
@@ -72,8 +74,9 @@ function gabaritEtiquette(machine, fluide, frequence, etablissement) {
   const detection = machine.detectionPermanente ? 'Oui' : 'Non';
 
   return '<div class="plaque-etiquette">'
+    + mentionStatutDocument(store)
 
-    + '<div class="plaque-bandeau">ÉQUIPEMENT SOUMIS À LA RÉGLEMENTATION F-GAS</div>'
+    + '<div class="plaque-bandeau">IDENTIFICATION DU FLUIDE — SUIVI INTERNE</div>'
 
     + '<div class="plaque-corps">'
 
@@ -102,7 +105,7 @@ function gabaritEtiquette(machine, fluide, frequence, etablissement) {
     + '<span class="plaque-valeur">' + esc(detection) + '</span>'
     + '</div>'
     + '<div class="plaque-cellule">'
-    + '<span class="plaque-libelle">Fréquence de contrôle</span>'
+    + '<span class="plaque-libelle">Fréquence calculée par le logiciel</span>'
     + '<span class="plaque-valeur">' + esc(libelleFrequence(frequence.frequenceMois)) + '</span>'
     + '</div>'
     + '</div>'
@@ -120,6 +123,7 @@ function gabaritEtiquette(machine, fluide, frequence, etablissement) {
 
     + '</div>'
 
+    + '<div class="plaque-pied">' + esc(precisionControle(machine, fluide)) + '</div>'
     + '<div class="plaque-pied">' + esc(etablissement && etablissement.raisonSociale || '') + '</div>'
 
     + '</div>';
@@ -325,7 +329,7 @@ export async function ouvrirPlaque(ctx, machineId) {
   const { fermer, racine } = modale({
     titre: 'Plaque F-Gas — ' + machine.designation,
     contenuHtml: '<div class="plaque-apercu">'
-      + gabaritEtiquette(machine, fluide, frequence, etablissement)
+      + gabaritEtiquette(machine, fluide, frequence, etablissement, ctx.store)
       + '</div>',
     actionsHtml:
       '<button type="button" id="plaque-fermer" class="btn btn-secondaire no-print">Fermer</button>'

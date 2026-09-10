@@ -118,8 +118,9 @@ export function evaluerBlocagesOfficiel(cadre) {
     if (fiche.fluideHorsPerimetreFluore) {
       poser('HORS_PERIMETRE_FLUORE',
         `Fluide ${fiche.fluide} hors du périmètre du CERFA (non fluoré) : ` +
-        'pas de fiche officielle pour ce fluide — le mode Formation sert ' +
-        'de trace volontaire.');
+        'pas de CERFA officiel pour ce fluide. Pour une intervention réelle, ' +
+        'utilisez le bon d’intervention interne de la fiche machine, ' +
+        'à compléter, signer et archiver ; le mode Formation reste réservé aux exercices.');
     }
     const av = fiche.peseeAvantKg;
     const ap = fiche.peseeApresKg;
@@ -269,9 +270,9 @@ export function evaluerBlocagesOfficiel(cadre) {
   // Condition 13 — verrou de livraison (lots C et D du plan).
   if (c.verrouLivraison) {
     poser('VERROU_LIVRAISON',
-      'Le mode Officiel n’est pas encore ouvert : double signature du ' +
-      'détenteur et conservation du PDF scellé (conditions 3 et 4 du plan ' +
-      'audit-proof) en cours de livraison.');
+      'Le mode Officiel est verrouillé dans cette version. Les fonctions ' +
+      'de signature et de conservation existent, mais leur présence ne vaut ' +
+      'pas autorisation de validation officielle.');
   }
 
   return { ok: blocages.length === 0, blocages };

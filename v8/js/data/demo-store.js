@@ -11,6 +11,7 @@
 // ============================================================
 
 import { DEMO } from './demo-donnees.js';
+import { preparerRevueFormation } from './revue-formation.js';
 import { teqCO2, fmtDate, fmtNombre, fmtKgSigne, genId, hasherEcriture,
   genererCodePublic, empreinteListeTriee, chaineCanoniqueSignature }
   from '../core/utils.js';
@@ -4197,6 +4198,14 @@ export function creerDemoStore() {
      * wizard, erreur de saisie). Un brouillon n'a AUCUN effet sur les
      * stocks ni sur la chaîne d'intégrité : sa suppression est sûre.
      */
+    async previsualiserNettoyageFormation(avant) {
+      return { ...preparerRevueFormation(donnees.mouvements, avant, aujourdHui(),
+        donnees.piecesJointes || [], donnees.signaturesMouvement || [], donnees.controles || []),
+        sauvegardes: null, empreinte: null, demonstration: true };
+    },
+    async nettoyerBrouillonsFormation() {
+      throw new Error('Le nettoyage est disponible uniquement sur le poste local. La démonstration permet de consulter l’aperçu.');
+    },
     async supprimerMouvement(id, operateur) {
       const mouvement = trouverMouvement(id);
       if (mouvement.statut === 'VALIDE' || mouvement.statut === 'ANNULE') {

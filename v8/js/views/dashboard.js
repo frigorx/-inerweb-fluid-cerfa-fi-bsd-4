@@ -10,6 +10,7 @@ import { esc, fmtNombre, fmtKgSigne, fmtDate } from '../core/utils.js';
 import { ouvrirWizard } from '../wizard/wizard.js';
 import { ouvrirCerfa } from '../cerfa/visualiseur.js';
 import { collecterConformite } from '../data/feu-tricolore.js';
+import { LIBELLES_SUIVI, etatActivationOfficiel, natureAlerte } from '../data/portee-suivi.js';
 import { estContreEcriture } from '../documents/regularisation.js';
 import { ouvrirJustificatifRegularisation }
   from '../documents/regularisation-apercu.js';
@@ -66,7 +67,7 @@ const STYLES_VUE = `
     padding: 0;
     border: none;
     background: none;
-    font-size: 12.5px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--accent-fort);
     cursor: pointer;
@@ -104,7 +105,7 @@ const STYLES_VUE = `
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .tdb-mouvement-detail { margin-top: 2px; font-size: 11.5px; color: var(--texte-3); }
+  .tdb-mouvement-detail { margin-top: 2px; font-size: 13px; color: var(--texte-3); }
   .tdb-mouvement-quantites { flex: none; text-align: right; }
   .tdb-quantite {
     font-family: var(--police-mono);
@@ -152,8 +153,8 @@ const STYLES_VUE = `
   }
   .tdb-point-critique  { background: var(--danger); }
   .tdb-point-important { background: var(--avert-icone); }
-  .tdb-alerte-titre  { font-size: 12.5px; font-weight: 600; color: var(--texte); }
-  .tdb-alerte-detail { margin-top: 2px; font-size: 11.5px; color: var(--texte-3); }
+  .tdb-alerte-titre  { font-size: 14px; font-weight: 600; color: var(--texte); }
+  .tdb-alerte-detail { margin-top: 2px; font-size: 13px; color: var(--texte-3); }
   /* Sentinelle : « active depuis le … » + prise de connaissance */
   .tdb-alerte-meta {
     display: flex;
@@ -218,7 +219,7 @@ const STYLES_VUE = `
     border-radius: var(--rayon-bouton);
     background: var(--succes-fond);
     color: var(--succes);
-    font-size: 12.5px;
+    font-size: 14px;
     font-weight: 600;
   }
   .tdb-officiel-ok svg { width: 15px; height: 15px; flex: none; }
@@ -235,7 +236,7 @@ const STYLES_VUE = `
   }
   .tdb-accueil-texte {
     margin-top: 4px;
-    font-size: 12.5px;
+    font-size: 14px;
     color: var(--texte-3);
   }
   .tdb-accueil-etapes {
@@ -274,7 +275,7 @@ const STYLES_VUE = `
     border-radius: var(--rayon-chip);
     background: var(--accent-fond);
     color: var(--accent-fort);
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 700;
     font-family: var(--police-mono);
   }
@@ -285,7 +286,7 @@ const STYLES_VUE = `
   }
   .tdb-accueil-etape-detail {
     margin-top: 2px;
-    font-size: 11.5px;
+    font-size: 13px;
     color: var(--texte-3);
   }
 
@@ -321,7 +322,7 @@ const STYLES_VUE = `
   }
   .tdb-conformite-compteurs {
     margin-top: 1px;
-    font-size: 11.5px;
+    font-size: 13px;
     color: var(--texte-3);
   }
   .tdb-conformite-domaines {
@@ -336,7 +337,7 @@ const STYLES_VUE = `
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--texte-2);
     white-space: nowrap;
   }
@@ -353,11 +354,7 @@ const STYLES_VUE = `
 </style>`;
 
 /** Libellés du feu global, repris de la vue Conformité (même sémantique). */
-const LIBELLES_CONFORMITE_GLOBAL = {
-  VERT: 'Conforme',
-  ORANGE: 'À surveiller',
-  ROUGE: 'Non conforme'
-};
+const LIBELLES_CONFORMITE_GLOBAL = LIBELLES_SUIVI;
 
 /**
  * Brique 3 : nom de l'exécutant d'un mouvement — résolu depuis le rôle réel
@@ -433,7 +430,7 @@ function peutAfficherCerfa(mouvement) {
  * Bandeau « Mode Officiel » (CR-6) : rend visible et testable, dès la Démo,
  * le contrat de blocage §7.2 — sinon `peutPasserEnOfficiel()` n'est qu'une
  * donnée calculée dans le vide, jamais montrée à l'écran.
- * IM-2 : pas de doublon visuel avec la carte « Alertes réglementaires »
+ * IM-2 : pas de doublon visuel avec la carte « Alertes de suivi »
  * malgré un recoupement de fond assumé (ex. écart de balance matière non
  * justifié peut apparaître dans les deux) — les deux blocs répondent à une
  * question différente : « que faut-il traiter maintenant » (alertes,
@@ -444,11 +441,12 @@ function peutAfficherCerfa(mouvement) {
  * @returns {string} HTML
  */
 function bandeauModeOfficiel(etatOfficiel) {
+  etatOfficiel = etatActivationOfficiel(etatOfficiel);
   if (etatOfficiel.ok) {
     // Même clarification que la carte de l'écran Conformité (revue du
     // 14/08) : configuration d'activation, pas conformité métier.
     return '<div class="tdb-officiel-ok">' + ICONES.coche
-      + '<span>Configuration minimale du mode Officiel renseignée.</span></div>';
+      + '<span>Configuration renseignée. Chaque intervention reste soumise aux contrôles de validation.</span></div>';
   }
   const motifs = etatOfficiel.motifs.map((motif) => '<li>' + esc(motif) + '</li>').join('');
   return '<div class="bandeau-avertissement tdb-officiel">'
@@ -456,8 +454,7 @@ function bandeauModeOfficiel(etatOfficiel) {
     + '<div>'
     + '<strong>Mode Officiel indisponible</strong>'
     + '<ul class="tdb-officiel-motifs">' + motifs + '</ul>'
-    + '<p class="tdb-officiel-note">En mode démonstration, tout reste en FORMATION ; '
-    + 'ces verrous s’appliqueront au mode réel.</p>'
+    + '<p class="tdb-officiel-note">Un document de formation ne justifie pas une intervention réelle.</p>'
     + '</div>'
     + '</div>';
 }
@@ -467,7 +464,7 @@ function bandeauModeOfficiel(etatOfficiel) {
  * (moteur pur feu-tricolore.js), pleine largeur, sous les 4 KPI. Ne
  * RECALCULE rien : reprend tel quel le verdict de collecterConformite().
  * IM-2 (même logique que bandeauModeOfficiel ci-dessus) : ne double pas la
- * carte « Alertes réglementaires », elle en donne la synthèse par domaine.
+ * carte « Alertes de suivi », elle en donne la synthèse par domaine.
  * @param {ReturnType<typeof import('../data/feu-tricolore.js').evaluerConformite>} conformite
  * @returns {string} HTML
  */
@@ -546,6 +543,7 @@ function ligneAlerte(alerte, episode, peutAcquitter) {
     + '<span class="tdb-point ' + classePoint + '" aria-hidden="true"></span>'
     + '<div>'
     + '<div class="tdb-alerte-titre">' + esc(alerte.titre) + '</div>'
+    + '<div class="tdb-alerte-detail"><strong>' + esc(natureAlerte(alerte)) + '</strong></div>'
     + '<div class="tdb-alerte-detail">' + esc(alerte.detail) + '</div>'
     + meta
     + '</div>'
@@ -722,14 +720,14 @@ export async function render(conteneur, ctx) {
     + listeMouvements
     + '</section>';
 
-  // ---- Carte « Alertes réglementaires » (colonne 1/3) ----
+  // ---- Carte « Alertes de suivi » (colonne 1/3) ----
   const listeAlertes = alertes.length
     ? alertes.map((a) => ligneAlerte(a, episodeParAlerte.get(a.id), peutAcquitter)).join('')
     : '<div class="etat-vide">' + ICONES.coche + '<p>Aucune alerte en cours.</p></div>';
 
-  const carteAlertes = '<section class="carte" aria-label="Alertes réglementaires">'
+  const carteAlertes = '<section class="carte" aria-label="Alertes de suivi">'
     + '<div class="tdb-carte-entete">'
-    + '<h3 class="tdb-carte-titre">Alertes réglementaires'
+    + '<h3 class="tdb-carte-titre">Alertes de suivi'
     + (alertes.length ? '<span class="badge-rouge">' + alertes.length + '</span>' : '')
     + '</h3>'
     + '</div>'

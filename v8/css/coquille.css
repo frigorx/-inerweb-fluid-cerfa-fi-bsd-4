@@ -407,3 +407,15 @@
     background: #ffffff;
   }
 }
+
+/* Revue de lisibilité du 10/09/2026 : l’en-tête reste utilisable à 360 px. */
+@media (max-width: 650px) {
+  #entete .avatar { display: none; }
+  #entete { flex-wrap: wrap; gap: 8px; }
+  .entete-titres { min-width: 0; flex: 1; }
+  #titre-page { overflow-wrap: anywhere; }
+  .bouton-visite-entete { order: 4; flex-basis: 100%; justify-content: center; }
+}
+@media (min-width: 651px) {
+  .bouton-visite-entete { font-size: 13px; padding: 8px 14px; box-shadow: none; }
+}

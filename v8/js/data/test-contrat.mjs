@@ -121,8 +121,8 @@ verifier('aucune méthode intruse hors contrat (anti-dérive v7)',
 verifier('les propriétés du contrat sont présentes',
   surface.proprietesManquantes.length === 0,
   `manquent : ${surface.proprietesManquantes.join(', ')}`);
-verifier('le contrat compte bien 96 méthodes',
-  Object.keys(METHODES_CONTRAT).length === 96,
+verifier('le contrat compte bien 98 méthodes',
+  Object.keys(METHODES_CONTRAT).length === 98,
   `compté : ${Object.keys(METHODES_CONTRAT).length}`);
 verifier('modeLabel est une chaîne non vide',
   typeof store.modeLabel === 'string' && store.modeLabel.length > 0);
@@ -386,7 +386,7 @@ await verifierRejet('creerMouvement refuse une demande en mode OFFICIEL (motivé
   } catch (erreur) { messageRefusOff = erreur.message; }
   verifier('le refus OFFICIEL cite le verrou de livraison (T1 : refermé)',
     messageRefusOff.startsWith('Mode Officiel refusé')
-    && messageRefusOff.includes('pas encore ouvert'),
+    && messageRefusOff.includes('verrouillé dans cette version'),
     messageRefusOff);
 }
 

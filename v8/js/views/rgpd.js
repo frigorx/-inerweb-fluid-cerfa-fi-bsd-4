@@ -17,6 +17,8 @@
 
 import { enteteVue, ICONES, modale, toast } from './communs.js';
 import { esc } from '../core/utils.js';
+import { bilanConservationFormation } from '../data/conservation-formation.js';
+import { ouvrirNettoyageFormation } from './nettoyage-formation.js';
 
 export const titre = 'Protection des données';
 
@@ -36,8 +38,8 @@ function gabaritCoffre(etat, enDemo) {
     : '';
   const bandeauCandidats = etat.candidats.length > 0
     ? '<p class="encart-aide rgpd-note">' + etat.candidats.length
-      + ' fiche(s) d\'élève(s) désactivée(s) attendent la mise à l\'abri '
-      + '(durée annoncée : année scolaire en cours + la suivante).</p>'
+      + ' fiche(s) d\'élève(s) désactivée(s) sont à examiner. La date de départ '
+      + 'n’est pas enregistrée : cette liste ne prouve pas qu’un délai est échu.</p>'
     : '';
   const lignes = etat.identites.map((i) =>
     '<tr><td>' + esc(i.pseudonyme) + '</td>'
@@ -55,6 +57,10 @@ function gabaritCoffre(etat, enDemo) {
     + '(« Élève 2026-01 »), et votre code la rouvre en cas de besoin légal — '
     + 'chaque ouverture est consignée dans un journal chaîné qui permet de '
     + 'détecter toute altération au sein de l\'application.</p>'
+    + '<p class="encart-aide rgpd-note"><strong>Le coffre ne supprime pas les données.</strong> '
+    + 'Des noms, signatures, pièces jointes et PDF peuvent rester dans les écritures, '
+    + 'les journaux et les anciennes sauvegardes. Une pseudonymisation réversible '
+    + 'reste soumise au RGPD et ne justifie pas une conservation illimitée.</p>'
     + bandeauDemo + bandeauCandidats
     + '<p><strong>' + etat.nombreAuCoffre + '</strong> identité(s) au coffre'
     + (etat.coffreCree ? '' : ' — le coffre sera créé au premier geste (une '
@@ -376,6 +382,25 @@ export async function render(conteneur, ctx) {
     etatCoffre = null;
   }
   const enDemo = String(ctx.store.modeLabel || '').toUpperCase() !== 'LOCAL';
+  let revueFormation = '';
+  if (etatCoffre) {
+    try {
+      const b = bilanConservationFormation(await ctx.store.getMouvements(), new Date().toISOString().slice(0, 10));
+      revueFormation = '<section class="rgpd-section"><h3 class="rgpd-titre">Revue des données de formation</h3>'
+        + '<p>' + b.total + ' écriture(s) de formation ; <strong>' + b.aRevoir
+        + ' à revoir</strong> après la fin de l’année scolaire suivante ; '
+        + b.datesManquantes + ' date(s) absente(s) ou invalide(s).</p>'
+        + '<p>' + b.tracesNominatives + ' écriture(s) contiennent un nom, un lien vers un intervenant ou une signature. '
+        + 'Ce repérage ne couvre pas tous les champs libres, pièces jointes, PDF, journaux et sauvegardes.</p>'
+        + '<p>Repère de revue, pas durée légale universelle. Le responsable et le DPD déterminent '
+        + 'les durées, les éventuelles obligations d’archives et le traitement des traces anciennes. '
+        + '<strong>Aucun effacement automatique des écritures scellées n’est disponible.</strong></p>'
+        + '<button type="button" id="rgpd-nettoyage" class="btn btn-secondaire">Examiner et nettoyer les anciens brouillons…</button>'
+        + '<p>Nettoyage réservé au référent ou à l’administrateur sur le poste local. Aucun choix n’est précoché.</p></section>';
+    } catch {
+      revueFormation = '<p class="encart-aide">Revue de conservation indisponible : les écritures de formation n’ont pas pu être examinées.</p>';
+    }
+  }
   const sectionCoffre = etatCoffre
     ? gabaritCoffre(etatCoffre, enDemo)
     : '<section class="rgpd-section"><h3 class="rgpd-titre">Coffre des '
@@ -393,6 +418,7 @@ export async function render(conteneur, ctx) {
     })
     + '<div class="rgpd-notice">'
     + sectionCoffre
+    + revueFormation
 
     + '<p class="rgpd-intro">inerWeb Fluide est un logiciel <strong>local</strong> '
     + 'de traçabilité des fluides frigorigènes (réglementation F-Gas). Il ne '
@@ -427,10 +453,10 @@ export async function render(conteneur, ctx) {
             'Identifiants de connexion (mot de passe haché, jamais en clair), '
             + 'journal d’audit (qui, quoi, quand).']
         ])
-      + '<p class="encart-aide rgpd-note">Aucune donnée sensible au sens de l’article 9 du '
-      + 'RGPD (santé, opinions, biométrie…) n’est traitée. Les données se '
-      + 'limitent à ce qu’exige la réglementation F-Gas et le fonctionnement de '
-      + 'l’application (principe de minimisation).</p>')
+      + '<p class="encart-aide rgpd-note">Le logiciel n’a pas vocation à recevoir des données '
+      + 'sensibles au sens de l’article 9 du RGPD (santé, opinions…). N’en saisissez '
+      + 'pas dans les champs libres ou les pièces jointes. Limitez les données '
+      + 'à ce qui est nécessaire à la finalité déclarée.</p>')
 
     + section('3. Pourquoi (finalités)',
       '<ul>'
@@ -453,7 +479,7 @@ export async function render(conteneur, ctx) {
       tableauDeux(
         ['Données', 'Durée de conservation'],
         [
-          ['Fiches d’intervention (CERFA) et mouvements',
+          ['Fiches et mouvements réglementaires réels concernés',
             '5 ans minimum à compter de leur établissement (obligation F-Gas).'],
           ['Registre du personnel, attestations',
             'Durée d’activité de la personne, puis conservation avec le registre '
@@ -464,18 +490,19 @@ export async function render(conteneur, ctx) {
           ['Journal d’audit',
             'Conservé avec le registre (même durée), non modifiable.'],
           ['Identité de la fiche d’un élève parti',
-            'Année scolaire en cours et l’année suivante au plus, puis MISE '
-            + 'À L’ABRI CHIFFRÉE : la fiche n’affiche plus qu’un pseudonyme, '
-            + 'l’identité reste rouvrable en cas de besoin légal (chaque '
-            + 'ouverture est journalisée).'],
+            'Durée à formaliser par l’établissement. Repère de revue : fin de l’année '
+            + 'scolaire suivante. Le coffre protège la fiche de manière réversible ; '
+            + 'il ne supprime pas l’identité ni toutes ses traces.'],
           ['Écritures d’intervention du mode formation',
-            'Conservées avec le registre (elles partagent sa chaîne '
-            + 'd’intégrité), sous pseudonyme à l’affichage.']
+            'Durée limitée à définir et documenter par l’établissement selon la finalité. '
+            + 'Les écritures scellées restent actuellement conservées sans purge automatique ; '
+            + 'le coffre ne les efface pas. Cette limite doit être traitée avec le DPD.']
         ])
       + '<p class="encart-aide rgpd-note">Les écritures validées du registre officiel ne sont '
       + 'ni modifiables ni effaçables (corrections par contre-écriture '
-      + 'uniquement) : c’est une exigence d’intégrité du registre réglementaire, '
-      + 'compatible avec le RGPD au titre de l’obligation légale.</p>')
+      + 'uniquement). Cette protection technique ne dispense pas de définir '
+      + 'les durées et le sort des données à leur échéance. Les exercices pédagogiques '
+      + 'ne bénéficient pas automatiquement de la durée des registres réglementaires réels.</p>')
 
     // A18 (26/07) — la notice annonçait « ou, en mode Cloud, dans un hébergement
     // situé dans l'Union européenne ». Ce mode N'EXISTE PAS : la promesse a été
@@ -507,10 +534,10 @@ export async function render(conteneur, ctx) {
       + '<li><strong>Rectification</strong> : correction de votre fiche depuis '
       + 'l’écran Personnel ; les écritures validées sont corrigées par '
       + 'contre-écriture.</li>'
-      + '<li><strong>Effacement / limitation</strong> : désactivation du compte, '
-      + 'puis MISE À L’ABRI CHIFFRÉE de l’identité une fois la durée annoncée '
-      + 'échue (coffre des identités, ci-dessus) — pseudonymisation réversible, '
-      + 'compatible avec les obligations légales de conservation du registre.</li>'
+      + '<li><strong>Effacement / limitation</strong> : adressez la demande au responsable '
+      + 'ou au DPD. Désactiver un compte ou placer son identité au coffre ne l’efface pas. '
+      + 'Le responsable examine les obligations de conservation, les traces scellées et '
+      + 'les sauvegardes avant de déterminer la réponse appropriée.</li>'
       + '</ul>'
       + '<p>Vous exercez ces droits auprès de <strong>' + responsable + '</strong> '
       + '(chef d’établissement ou délégué à la protection des données — ses '
@@ -522,14 +549,15 @@ export async function render(conteneur, ctx) {
     + section('8. Cas particulier des élèves',
       '<ul>'
       + '<li>Les élèves n’utilisent que le <strong>mode formation</strong> : '
-      + 'ils ne peuvent jamais produire de document d’apparence officielle, et '
+      + 'le CERFA de formation est marqué comme non officiel, et '
       + 'toute écriture est validée par un enseignant.</li>'
       + '<li>Les données d’élèves sont <strong>minimales</strong> : nom, prénom, '
       + 'compte, et le cas échéant numéro d’attestation préparée en formation. '
       + 'Aucune note, aucune donnée de vie scolaire.</li>'
-      + '<li>L’<strong>information des familles</strong> est recommandée '
-      + '(règlement de l’atelier, carnet de liaison), conformément aux '
-      + 'recommandations de la CNIL en milieu scolaire.</li>'
+      + '<li>Les personnes concernées doivent être informées de manière claire '
+      + 'et accessible. Pour les élèves mineurs, l’établissement organise une '
+      + 'information adaptée et celle des responsables légaux selon le cadre applicable '
+      + '(notice remise aux familles, règlement de l’atelier).</li>'
       + '</ul>')
 
     + '<p class="rgpd-pied">Pour toute question relative à vos données, '
@@ -539,6 +567,8 @@ export async function render(conteneur, ctx) {
     + '</div>';
 
   const boutonImprimer = conteneur.querySelector('#rgpd-imprimer');
+  conteneur.querySelector('#rgpd-nettoyage')?.addEventListener('click', () =>
+    ouvrirNettoyageFormation(ctx, () => render(conteneur, ctx)));
   if (boutonImprimer) {
     boutonImprimer.addEventListener('click', function () { window.print(); });
   }

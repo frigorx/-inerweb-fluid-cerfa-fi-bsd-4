@@ -12,15 +12,12 @@
 import { enteteVue, ICONES } from './communs.js';
 import { esc, fmtDate } from '../core/utils.js';
 import { collecterConformite } from '../data/feu-tricolore.js';
+import { LIBELLES_SUIVI, NOTE_PORTEE, etatActivationOfficiel, natureAlerte } from '../data/portee-suivi.js';
 
 export const titre = 'Conformité';
 
 /* Libellés du feu global. */
-const LIBELLES_GLOBAL = {
-  VERT: 'Conforme — prêt pour un audit',
-  ORANGE: 'Points à surveiller avant un audit',
-  ROUGE: 'Non-conformités à traiter'
-};
+const LIBELLES_GLOBAL = LIBELLES_SUIVI;
 
 const STYLE_VUE = `<style>
   .vue-conformite .feu-bandeau {
@@ -42,7 +39,7 @@ const STYLE_VUE = `<style>
   }
   .vue-conformite .feu-sous-titre { color: var(--texte-2); font-size: 13px; margin-top: 2px; }
   .vue-conformite .grille-domaines {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
     gap: 16px;
   }
   .vue-conformite .domaine-entete {
@@ -52,7 +49,7 @@ const STYLE_VUE = `<style>
   }
   .vue-conformite .domaine-entete:hover { background: var(--fond-2); }
   .vue-conformite .domaine-titre { font-weight: 600; }
-  .vue-conformite .domaine-detail { color: var(--texte-3); font-size: 12px; margin-top: 1px; }
+  .vue-conformite .domaine-detail { color: var(--texte-3); font-size: 14px; margin-top: 1px; }
   .vue-conformite .domaine-resume { font-size: 13px; color: var(--texte-2); margin: 10px 0 0; }
   .vue-conformite .liste-constats { list-style: none; margin: 10px 0 0; padding: 0; }
   .vue-conformite .liste-constats li {
@@ -61,7 +58,7 @@ const STYLE_VUE = `<style>
   }
   .vue-conformite .liste-constats li:hover { background: var(--fond-2); }
   .vue-conformite .constat-titre { font-size: 13px; font-weight: 600; display: flex; gap: 8px; }
-  .vue-conformite .constat-detail { font-size: 12px; color: var(--texte-3); margin-left: 22px; }
+  .vue-conformite .constat-detail { font-size: 14px; color: var(--texte-3); margin-left: 22px; }
   .vue-conformite .officiel-motifs { margin: 10px 0 0; padding-left: 18px; }
   .vue-conformite .officiel-motifs li { font-size: 13px; color: var(--texte-2); padding: 2px 0; }
   .vue-conformite .officiel-ok {
@@ -70,7 +67,7 @@ const STYLE_VUE = `<style>
   }
   .vue-conformite .histo { margin-top: 16px; }
   .vue-conformite .histo-titre { font-weight: 600; }
-  .vue-conformite .histo-detail { color: var(--texte-3); font-size: 12px; margin-top: 1px; }
+  .vue-conformite .histo-detail { color: var(--texte-3); font-size: 14px; margin-top: 1px; }
   .vue-conformite .histo-liste { list-style: none; margin: 12px 0 0; padding: 0; }
   .vue-conformite .histo-liste li {
     display: flex; align-items: flex-start; gap: 10px;
@@ -79,12 +76,12 @@ const STYLE_VUE = `<style>
   .vue-conformite .histo-corps { flex: 1; min-width: 0; }
   .vue-conformite .histo-alerte { font-size: 13px; font-weight: 600; }
   .vue-conformite .histo-periode {
-    font-size: 12px; color: var(--texte-3); margin-top: 1px;
+    font-size: 14px; color: var(--texte-3); margin-top: 1px;
     font-variant-numeric: tabular-nums;
   }
   .vue-conformite .histo-acquit {
     display: inline-flex; align-items: center; gap: 5px;
-    font-size: 12px; font-weight: 600; color: var(--succes); margin-top: 3px;
+    font-size: 14px; font-weight: 600; color: var(--succes); margin-top: 3px;
   }
   .vue-conformite .histo-acquit svg { width: 13px; height: 13px; flex: none; }
   .vue-conformite .histo-etat {
@@ -124,13 +121,14 @@ function bandeauGlobal(r, jour) {
 
 /** Carte « Mode Officiel » : les prérequis bloquants de la SPEC §7.2. */
 function carteOfficiel(officiel) {
+  officiel = etatActivationOfficiel(officiel);
   // Revue du 14/08 : « tous les prérequis réunis » sous un « Non conforme »
   // se lisait comme une contradiction. La carte parle de la CONFIGURATION
   // d'activation du mode Officiel, pas de la conformité métier — le libellé
   // le dit désormais.
   const contenu = officiel.ok
     ? '<p class="officiel-ok">' + ICONES.coche
-      + '<span>Configuration minimale du mode Officiel renseignée.</span></p>'
+      + '<span>Configuration renseignée. Chaque intervention reste soumise aux contrôles de validation.</span></p>'
     : '<ul class="officiel-motifs">'
       + officiel.motifs.map((m) => '<li>' + esc(m) + '</li>').join('')
       + '</ul>';
@@ -138,8 +136,8 @@ function carteOfficiel(officiel) {
     + '<div class="domaine-entete" style="cursor:default">'
     + pastille(officiel.ok ? 'VERT' : 'ORANGE', true)
     + '<div>'
-    + '<div class="domaine-titre">Prérequis du mode Officiel</div>'
-    + '<div class="domaine-detail">Les vérifications bloquantes avant tout passage en réel.</div>'
+    + '<div class="domaine-titre">Disponibilité du mode Officiel</div>'
+    + '<div class="domaine-detail">Le verrou de version et les informations manquantes sont distingués des alertes métier.</div>'
     + '</div>'
     + '</div>'
     + contenu
@@ -153,6 +151,7 @@ function ligneConstat(alerte) {
     + 'aria-label="' + esc(alerte.titre) + '">'
     + '<div class="constat-titre">' + pastille(alerte.niveau === 'CRITIQUE' ? 'ROUGE' : 'ORANGE', true)
     + '<span>' + esc(alerte.titre) + '</span></div>'
+    + '<div class="constat-detail"><strong>' + esc(natureAlerte(alerte)) + '</strong></div>'
     + (alerte.detail ? '<div class="constat-detail">' + esc(alerte.detail) + '</div>' : '')
     + '</li>';
 }
@@ -241,9 +240,10 @@ export async function render(conteneur, ctx) {
     + '<div class="vue-conformite">'
     + enteteVue({
       titre,
-      sousTitre: 'L’état réglementaire complet en un écran — ce qu’un auditeur vérifierait'
+      sousTitre: 'Points de suivi et pièces à vérifier à partir des données enregistrées'
     })
     + bandeauGlobal(resultat, jour)
+    + '<p class="encart-aide">' + esc(NOTE_PORTEE) + '</p>'
     + carteOfficiel(resultat.officiel)
     + '<div class="grille-domaines">'
     + resultat.domaines.map(carteDomaine).join('')

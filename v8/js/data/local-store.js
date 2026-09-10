@@ -226,6 +226,12 @@ export function creerLocalStore(transport) {
     soumettreMouvement(id) {
       return muter('soumettreMouvement', { id });
     },
+    previsualiserNettoyageFormation(avant) {
+      return lire('previsualiserNettoyageFormation', { avant });
+    },
+    nettoyerBrouillonsFormation(options) {
+      return muter('nettoyerBrouillonsFormation', options);
+    },
     supprimerMouvement(id, par) {
       return muter('supprimerMouvement', { id, par });
     },

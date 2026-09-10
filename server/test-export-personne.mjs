@@ -220,6 +220,111 @@ function sourcesFixes() {
     'introuvable');
 }
 
+// Nettoyage RGPD : base jetable, effets réels et refus avant toute écriture.
+{
+  const assert = (await import('node:assert/strict')).default;
+  const fs = require('node:fs');
+  const pur = await import('../v8/js/data/revue-formation.js');
+  const miroir = require('./revue-formation.js');
+  const mouvements = [
+    { id: 'a', mode: 'FORMATION', statut: 'BROUILLON', date: '2020-01-01' },
+    { id: 'b', mode: 'FORMATION', statut: 'VALIDE', date: '2020-01-01' },
+    { id: 'c', mode: 'OFFICIEL', statut: 'BROUILLON', date: '2020-01-01' },
+    { id: 'd', mode: 'FORMATION', statut: 'BROUILLON', date: '2020-02-30' },
+    { id: 'e', mode: 'FORMATION', statut: 'BROUILLON', date: '2021-01-01' }
+  ];
+  const r = pur.preparerRevueFormation(mouvements, '2021-01-01', '2026-09-10');
+  assert.deepEqual(r, miroir.preparerRevueFormation(mouvements, '2021-01-01', '2026-09-10'));
+  assert.equal(r.supprimables, 1); assert.equal(r.protegees, 2);
+  assert.equal(pur.preparerRevueFormation([{ ...mouvements[0], date: '2020-01-01-invalide' }],
+    '2021-01-01', '2026-09-10').supprimables, 0);
+  assert.throws(() => pur.preparerRevueFormation([], '2026-02-30', '2026-09-10'));
+  assert.throws(() => pur.preparerRevueFormation([], '2027-01-01', '2026-09-10'));
+  assert.equal(pur.preparerRevueFormation(mouvements, '2021-01-01', '2026-09-10', [], [],
+    [{ mouvementId: 'a' }]).supprimables, 0);
+  assert.throws(() => pur.verifierSelectionFormation(r, ['a', 'a'], 'SUPPRIMER 2', 'Motif suffisamment long', true));
+  assert.throws(() => pur.verifierSelectionFormation(r, ['b'], 'SUPPRIMER 1', 'Motif suffisamment long', true));
+  verifier('nettoyage : parité, dates impossibles, coupure exclusive et traces protégées', true);
+
+  const db = require('./db.js'), api = require('./api.js');
+  db.fermer();
+  const dossier = mkdtempSync(join(tmpdir(), 'inerweb-nettoyage-'));
+  db.ouvrir(join(dossier, 'test.db'));
+  const appeler = (m, p = {}) => api.appeler(m, p, { role: 'REFERENT' });
+  appeler('init');
+  const machine = appeler('createMachine', { donneesMachine: {
+    designation: 'Banc fictif nettoyage', fluide: 'R-134a', chargeNominaleKg: 8 } });
+  const creer = () => {
+    const m = appeler('creerMouvement', { donneesMouvement: {
+      type: 'CHARGE_APPOINT', mode: 'FORMATION', machineId: machine.id, technicien: 'Personne fictive' } });
+    db.run('UPDATE mouvements SET date_mouvement = ? WHERE id = ?', ['2020-01-01', m.id]);
+    return m;
+  };
+  const a = creer(), b = creer(), soumis = creer(), officiel = creer();
+  db.run("UPDATE mouvements SET statut = 'SOUMIS' WHERE id = ?", [soumis.id]);
+  db.run("UPDATE mouvements SET mode = 'OFFICIEL' WHERE id = ?", [officiel.id]);
+  const pj = appeler('ajouterPieceJointe', { donneesPj: {
+    entiteType: 'MOUVEMENT', entiteId: a.id, categorie: 'AUTRE',
+    nomFichier: 'essai.pdf', mimeType: 'application/pdf', base64: 'JVBERi0xLjQK' } });
+  const fichier = join(dossier, 'documents', pj.id);
+  const avant = '2021-01-01';
+  const apercu = () => appeler('previsualiserNettoyageFormation', { avant });
+  const options = () => ({ avant, ids: [a.id, b.id], empreinte: apercu().empreinte,
+    confirmation: 'SUPPRIMER 2', motif: 'Exercices fictifs arrivés au terme de leur utilité.', copiesExternes: true });
+  const etatAvant = JSON.parse(appeler('exporterJSON')).donnees;
+  const r0 = apercu();
+  assert.deepEqual(JSON.parse(appeler('exporterJSON')).donnees, etatAvant);
+  assert.equal(r0.supprimables, 2); assert.equal(r0.protegees, 1);
+  assert.equal(r0.lignes.find(l => l.id === a.id).pieces, 1);
+  assert.ok(!JSON.stringify(r0).includes('Personne fictive'));
+  for (const role of ['ELEVE', 'ENSEIGNANT', null]) {
+    assert.throws(() => api.appeler('previsualiserNettoyageFormation', { avant }, { role }), e => e.code === 403);
+    assert.throws(() => api.appeler('nettoyerBrouillonsFormation', options(), { role }), e => e.code === 403);
+  }
+  const env = process.env.IWF_LAN;
+  process.env.IWF_LAN = '1';
+  assert.throws(apercu);
+  assert.throws(() => appeler('nettoyerBrouillonsFormation', {}));
+  if (env === undefined) delete process.env.IWF_LAN; else process.env.IWF_LAN = env;
+  assert.throws(() => appeler('nettoyerBrouillonsFormation', { ...options(), ids: [officiel.id], confirmation: 'SUPPRIMER 1' }));
+  assert.throws(() => appeler('nettoyerBrouillonsFormation', { ...options(), copiesExternes: false }));
+  const perime = options();
+  db.run('UPDATE mouvements SET technicien = ? WHERE id = ?', ['Autre nom fictif', a.id]);
+  assert.throws(() => appeler('nettoyerBrouillonsFormation', perime), /ont changé/);
+  verifier('nettoyage : aperçu sans mutation, accès réservé, LAN, officiel, confirmation et état périmé refusés', true);
+
+  // Injecte une panne SQL après les suppressions du premier élément : tout revient,
+  // et aucun fichier n'a été effacé avant le COMMIT.
+  db.run(`CREATE TRIGGER test_refus_nettoyage BEFORE DELETE ON mouvements
+    WHEN OLD.id = '${b.id}' BEGIN SELECT RAISE(ABORT, 'panne simulée'); END;`);
+  assert.throws(() => appeler('nettoyerBrouillonsFormation', options()), /panne simulée/);
+  assert.ok(db.get('SELECT id FROM mouvements WHERE id = ?', [a.id]));
+  assert.ok(db.get('SELECT id FROM pieces_jointes WHERE id = ?', [pj.id]));
+  assert.ok(fs.existsSync(fichier));
+  assert.equal(db.get('SELECT count(*) AS n FROM coffre_purge_en_attente').n, 0);
+  db.run('DROP TRIGGER test_refus_nettoyage');
+  verifier('nettoyage : rollback global et fichier conservé si panne avant commit', true);
+
+  // Simule un fichier temporairement verrouillé sous Windows, après COMMIT.
+  const rm = fs.rmSync;
+  let resultat;
+  try {
+    fs.rmSync = function(p, ...args) { if (p === fichier) throw new Error('verrou simulé'); return rm(p, ...args); };
+    resultat = appeler('nettoyerBrouillonsFormation', options());
+  } finally { fs.rmSync = rm; }
+  assert.equal(resultat.supprimes, 2); assert.equal(resultat.pieces, 1); assert.equal(resultat.fichiersEnAttente, 1);
+  assert.ok(fs.existsSync(fichier));
+  assert.equal(db.get('SELECT count(*) AS n FROM mouvements').n, 2);
+  assert.equal(db.get('SELECT count(*) AS n FROM pieces_jointes').n, 0);
+  assert.equal(db.get('SELECT count(*) AS n FROM journal_audit WHERE action = ?', ['NETTOYAGE_BROUILLONS_FORMATION']).n, 1);
+  api.rejouerPurgeCoffre();
+  assert.ok(!fs.existsSync(fichier));
+  assert.equal(db.get('SELECT count(*) AS n FROM coffre_purge_en_attente').n, 0);
+  assert.throws(() => appeler('nettoyerBrouillonsFormation', perime));
+  verifier('nettoyage : fichiers en attente signalés puis purgés, traces protégées intactes et double envoi refusé', true);
+  db.fermer();
+}
+
 // ------------------------------------------------------------
-console.log(`\n${nbOk} OK, ${nbEchecs} échec(s) [export personne RGPD]`);
+console.log(`\n${nbOk} OK, ${nbEchecs} échec(s) [export et nettoyage RGPD]`);
 process.exit(nbEchecs === 0 ? 0 : 1);

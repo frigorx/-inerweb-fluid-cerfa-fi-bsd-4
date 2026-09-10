@@ -1,3 +1,4 @@
+import { mentionStatutDocument } from './statut-document.js';
 // inerWeb Fluide — © 2026 Franck Henninot — Tous droits réservés (voir LICENSE) — inerweb.ovh
 // ============================================================
 // inerWeb Fluide — bon d'intervention (V9.2)
@@ -103,10 +104,11 @@ function enteteDocument() {
  * @param {object|null} client
  * @returns {string} HTML
  */
-function gabaritBonIntervention(machine, client) {
+function gabaritBonIntervention(machine, client, store) {
   const dateGeneration = new Date().toLocaleDateString('fr-FR');
 
   return '<div class="bi-document">'
+    + mentionStatutDocument(store)
 
     + enteteDocument()
 
@@ -516,7 +518,7 @@ export async function ouvrirBonIntervention(ctx, machineId) {
 
   const { fermer, racine } = modale({
     titre: 'Bon d\'intervention — ' + machine.designation,
-    contenuHtml: '<div class="bi-doc-apercu">' + gabaritBonIntervention(machine, client) + '</div>',
+    contenuHtml: '<div class="bi-doc-apercu">' + gabaritBonIntervention(machine, client, ctx.store) + '</div>',
     actionsHtml:
       '<button type="button" id="bi-fermer" class="btn btn-secondaire no-print">Fermer</button>'
       + '<button type="button" id="bi-imprimer" class="btn btn-marine no-print">'
