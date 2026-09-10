@@ -42,6 +42,7 @@ import { creerLocalStore } from '../v8/js/data/local-store.js';
 import { genererDossierAudit } from '../v8/js/documents/dossier-audit.js';
 import { VERROU_LIVRAISON } from '../v8/js/data/blocage-officiel.js';
 import { pngDeTest } from './fabrique-png-test.mjs';
+import { genererPdfFinalBase64, chargerPdfLib } from '../v8/js/cerfa/generateur.js';
 
 // T1 (20/07/2026, audit externe #2) — SUITE GELÉE tant que le mode Officiel
 // est refermé. Ce parcours e2e n'est franchissable qu'avec le verrou OUVERT ;
@@ -95,10 +96,10 @@ function dateRelative(jours) {
 const octetsPng = (taille = 2048) => pngDeTest(taille);
 const imagePng = () => Buffer.from(octetsPng()).toString('base64');
 
-const octetsPdf = Buffer.from(
+let octetsPdf = Buffer.from(
   '%PDF-1.4\nCERFA final presente aux signataires (e2e C5)\n%%EOF\n');
-const pdfBase64 = octetsPdf.toString('base64');
-const shaPdf = crypto.createHash('sha256').update(octetsPdf).digest('hex');
+let pdfBase64 = octetsPdf.toString('base64');
+let shaPdf = crypto.createHash('sha256').update(octetsPdf).digest('hex');
 
 // ============================================================
 // 1. Décor : base jetable NICHÉE + TOUTES les conditions levées
@@ -114,6 +115,8 @@ api.appeler('init', {}, sansSession);
 // balance et détecteur CONFORMES, aucun écart (base neuve).
 api.appeler('updateEtablissement', { patch: {
   numAttestationCapacite: 'CAP-2026-E2E-001',
+  categoriesAutorisees: ['I'],
+  activitesAutorisees: ['MISE_EN_SERVICE', 'MAINTENANCE', 'CONTROLE', 'RECUPERATION'],
   dateEcheanceCapacite: dateRelative(365) } }, sansSession);
 api.appeler('createOutil', { donneesOutil: {
   typeOutil: 'BALANCE', marque: 'Sartorius', modele: 'E2E',
@@ -235,6 +238,18 @@ attendreRejet('VALIDATION avec un HTML déguisé : refus canonique',
   session), 'n’est pas un PDF');
 
 // LA VALIDATION OFFICIELLE — le geste que le verrou fermait depuis le lot B.
+// Le parcours nominal conserve désormais un véritable CERFA, relu avant validation.
+const storeGeneration = creerLocalStore(async (methode, params) =>
+  api.appeler(methode, params ?? {}, session));
+await storeGeneration.init();
+pdfBase64 = await genererPdfFinalBase64(storeGeneration,
+  api.appeler('getMouvements', {}, session).find(m => m.id === fiche.id));
+octetsPdf = Buffer.from(pdfBase64, 'base64');
+shaPdf = crypto.createHash('sha256').update(octetsPdf).digest('hex');
+const PDFLib = await chargerPdfLib();
+const documentRelu = await PDFLib.PDFDocument.load(octetsPdf);
+verifier('le CERFA final est un PDF lisible avec les champs officiels',
+  documentRelu.getPageCount() > 0 && documentRelu.getForm().getFields().length >= 60);
 const validee = api.appeler('validerMouvement', { id: fiche.id,
   validateurId: referent.id, pdfFinalBase64: pdfBase64 }, session);
 verifier('VALIDATION OFFICIELLE : la fiche est VALIDE',
@@ -481,6 +496,33 @@ function lireZip(zip) {
 }
 
 // ------------------------------------------------------------
+for (const type of ['CONTROLE_PERIODIQUE', 'CONTROLE_NON_PERIODIQUE']) {
+  const stocksAvant = JSON.stringify(api.appeler('getBouteilles', {}, session));
+  const chargeAvant = api.appeler('getMachines', {}, session).find(m => m.id === machine.id).chargeActuelleKg;
+  const controle = api.appeler('creerMouvement', { donneesMouvement: {
+    type, mode: 'OFFICIEL', machineId: machine.id,
+    technicien: 'Référent Officiel', executeParId: referent.id,
+    signatureDataUrl: signatureHistorique,
+    controle: { statutControle: 'CONFORME', detecteurId: detecteur.id }
+  } }, session);
+  for (const role of ['TECHNICIEN', 'DETENTEUR']) {
+    api.appeler('signerMouvement', { mouvementId: controle.id,
+      signature: { ...signatureBase, role } }, session);
+  }
+  api.appeler('soumettreMouvement', { id: controle.id }, session);
+  const soumis = api.appeler('getMouvements', {}, session).find(m => m.id === controle.id);
+  const pdf = await genererPdfFinalBase64(storeGeneration, soumis);
+  const resultat = api.appeler('validerMouvement', { id: controle.id,
+    validateurId: referent.id, pdfFinalBase64: pdf }, session);
+  verifier(`${type} : signé et validé sans pesées, quantité nulle`,
+    resultat.statut === 'VALIDE' && resultat.quantiteKg === 0);
+  verifier(`${type} : aucun effet sur les stocks ni sur la charge`,
+    JSON.stringify(api.appeler('getBouteilles', {}, session)) === stocksAvant &&
+    api.appeler('getMachines', {}, session).find(m => m.id === machine.id).chargeActuelleKg === chargeAvant);
+  verifier(`${type} : PDF conservé et chaîne intacts`,
+    api.verifierPdfFinalConserve(controle.id).ok &&
+    api.appeler('verifierChaineHash', {}, session).ok);
+}
 console.log(`\n${nbOk} vérifications réussies, ${nbEchecs} échec(s).`);
 if (nbEchecs > 0) process.exit(1);
 console.log('Parcours officiel de bout en bout : ouvert, signé, conservé, '

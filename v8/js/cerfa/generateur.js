@@ -808,8 +808,10 @@ export async function genererCerfaPdf(store, { source, id }, options = {}) {
         width: largeur,
         height: hauteur
       });
-    } catch {
-      // Signature illisible ou zone introuvable : le CERFA reste valide
+    } catch (cause) {
+      // Ne jamais produire un document annoncé signé avec un tracé absent.
+      throw new Error('PDF interrompu : impossible d’insérer une signature. ' +
+        'Aucun document final ne doit être conservé sans ce tracé.', { cause });
     }
   }
   const traceOperateur =

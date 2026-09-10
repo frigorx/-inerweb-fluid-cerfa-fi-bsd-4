@@ -7,6 +7,12 @@
 
 ## 2026-09-10 — portée des alertes et documents, transparence RGPD
 
+### Préparation de l'utilisation réelle à l'école
+
+- Un échec d'insertion d'une signature interrompt la génération du CERFA au lieu de produire silencieusement un PDF sans tracé.
+- Scénario Officiel actualisé : véritable CERFA et contrôles périodique/non périodique sans effet de stock. 52 vérifications réussies dans une copie isolée ; commande reproductible `node outils/verifier-officiel-isole.mjs`.
+- Verrou principal maintenu ; [conditions de mise en service](docs/MISE-EN-SERVICE-ECOLE-2026-09-10.md), notamment la liaison entre PDF et document signé encore à sécuriser.
+
 ### Suite : contrôle de la signature préalable après import
 
 - Le détenteur ne peut plus signer après une signature technicien importée dont l'image est illisible, même si sa révision est courante. Contrôle identique en démonstration et sur le serveur.

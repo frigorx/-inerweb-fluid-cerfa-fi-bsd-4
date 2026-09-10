@@ -908,6 +908,20 @@ const storeOfficiel = {
 // ============================================================
 // Bilan
 // ============================================================
+{
+  const storeTraceIllisible = Object.create(store);
+  storeTraceIllisible.getSignaturesMouvement = async () => [{
+    role: 'TECHNICIEN', valide: true, imageRecevable: true,
+    nom: 'Test', prenom: 'Tracé', imagePng: 'cGFzIHVuZSBpbWFnZQ=='
+  }];
+  let refuse = false;
+  try {
+    await genererCerfaPdf(storeTraceIllisible, { source: 'mouvement', id: 'mvt-0005' });
+  } catch (erreur) {
+    refuse = erreur.message.includes('impossible d’insérer une signature');
+  }
+  verifier('un échec d’insertion du tracé interrompt le PDF au lieu de le supprimer silencieusement', refuse);
+}
 console.log('');
 console.log(`Vérifications : ${nbOk} réussies, ${nbEchecs} en échec.`);
 if (nbEchecs > 0) process.exit(1);

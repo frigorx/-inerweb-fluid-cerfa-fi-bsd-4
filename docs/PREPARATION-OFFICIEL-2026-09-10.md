@@ -2,6 +2,8 @@
 
 État du 10 septembre 2026 : **verrou actif** dans les modules serveur et interface. Ce dossier organise la suite ; il n'autorise pas l'utilisation officielle et ne vaut pas certification juridique.
 
+**Suite école :** le parcours complet a désormais été rejoué sur une copie isolée avec un véritable CERFA et les contrôles sans manipulation : 52 vérifications réussies. La suite du dépôt principal reste suspendue par son verrou. Voir [la préparation du registre réel de l'atelier](MISE-EN-SERVICE-ECOLE-2026-09-10.md) pour les preuves, les données à préparer et les blocages restants. Les mentions « non rejoué » ci-dessous décrivent l'état antérieur à cet essai isolé, pas une ouverture du logiciel principal.
+
 | Sujet | État observé | Preuve ou travail encore nécessaire |
 |---|---|---|
 | Verrou global | `VERROU_LIVRAISON = true`, refus explicite dans l'interface | Décision de livraison fondée sur les points ci-dessous, puis changement contrôlé et retest |
