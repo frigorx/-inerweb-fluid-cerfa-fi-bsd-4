@@ -5,14 +5,14 @@
 > conservé par l'auteur hors de ce dépôt ; l'historique git du dépôt reste,
 > lui, complet et non réécrit.
 
-## 2026-09-20 — séance CAP IFCA « le pump-down simple »
+## 2026-09-20 — TP CAP IFCA « le pump-down le plus simple du monde »
 
 ### Nouveau dossier pédagogique `pedagogie/pump-down-cap-ifca/`
 
-- Sources HTML de la séance 2CAP26-S39-02 du 21/09/2026, à la charte inerWeb Édu : fiche de cours n° 01 (5 pages) et TP-02-B élève avec sa ressource bornier (9 pages).
-- Le cours s'arrête au **pump-down simple** : commande directe, sécurité minimum, pump-down. Le pump-down unique est annoncé aux élèves et reporté au cours suivant ; le cours passe de 1 h 20 à 1 h et le câblage retrouve ses 2 h.
-- Schéma de commande repris en vectoriel depuis le folio 1/12 du fonds établissement, lisible à l'impression, et codes QR vers les animations inerweb.fr du pack Fluides.
-- `python3 construire.py` régénère le PDF. Les documents professeur (corrigés, mention « ne pas distribuer ») restent hors dépôt.
+- Sources HTML du TP, à la charte inerWeb Édu : fiche d'activité élève (8 pages) et document professeur (déroulé, corrigés, évaluation).
+- Le TP **restitue le sujet d'origine** `cablage pump donwn le plussimpl.docx` — ses six étapes, ses consignes, ses figures — et l'augmente de deux QR codes inerWeb : on découvre le pump-down par les animations (sans sécurité, sécurité minimum), puis on identifie, on complète le schéma, on trace les fils sur le bornier, et on câble. Pas de circuit de commande ni de puissance : ils viennent aux séances suivantes.
+- Deux planches de bornier fabriquées depuis le folio 3/12 du fonds établissement : la planche élève a ses fils de couleur retirés, le corrigé garde les siens. `outils-planche-bornier.py` les régénère et replace le repère PSL, absent du folio source.
+- `python3 construire.py` régénère le PDF. Le document professeur (corrigés, mention « ne pas distribuer ») reste hors dépôt.
 
 ## 2026-09-10 — portée des alertes et documents, transparence RGPD
 

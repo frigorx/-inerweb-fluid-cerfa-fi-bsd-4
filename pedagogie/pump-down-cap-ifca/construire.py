@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Construit les deux PDF de la séance 2CAP26-S39-02 à partir des sources HTML.
+"""Construit les deux PDF du TP « pump-down le plus simple du monde ».
 
   python3 construire.py
 
 Sortie :
-  Lundi-21-09-2026-Apres-midi-ELEVE.pdf      (fiche de cours + TP-02-B + ressource)
-  Lundi-21-09-2026-Apres-midi-PROFESSEUR.pdf (fiche de séance + TP-02-B professeur)
+  TP-pump-down-le-plus-simple-ELEVE.pdf      (8 pages, fiche d'activité élève)
+  TP-pump-down-le-plus-simple-PROFESSEUR.pdf (4 pages, déroulé + corrigés)
 
 Dépendances : un Chromium/Chrome en ligne de commande + pymupdf.
 Polices attendues : Calibri (ou Carlito) et Trebuchet MS.
@@ -17,8 +17,8 @@ import pymupdf
 ICI = os.path.dirname(os.path.abspath(__file__))
 
 DOCUMENTS = {
-    "Lundi-21-09-2026-Apres-midi-ELEVE.pdf": ["fiche-cours-eleve.html", "tp-02-b-eleve.html"],
-    "Lundi-21-09-2026-Apres-midi-PROFESSEUR.pdf": ["seance-professeur.html", "tp-02-b-professeur.html"],
+    "TP-pump-down-le-plus-simple-ELEVE.pdf": ["tp-pump-down-eleve.html"],
+    "TP-pump-down-le-plus-simple-PROFESSEUR.pdf": ["tp-pump-down-professeur.html"],
 }
 
 CHROMES = [
@@ -63,8 +63,8 @@ def main():
             final.set_metadata({
                 "title": pdf.replace(".pdf", "").replace("-", " "),
                 "author": "F. Henninot — LPP Jacques Raynaud, Campus ÉQUATIO",
-                "subject": "CAP IFCA 2A · séance 2CAP26-S39-02 · le pump-down simple",
-                "keywords": "pump-down, bornier, CAP IFCA, inerWeb Édu",
+                "subject": "CAP IFCA · le pump-down le plus simple du monde · câblage du bornier",
+                "keywords": "pump-down, bornier, câblage, CAP IFCA, inerWeb Édu",
                 "creator": "inerWeb Édu",
             })
             chemin = os.path.join(ICI, pdf)

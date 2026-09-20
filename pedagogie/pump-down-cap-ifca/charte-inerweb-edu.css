@@ -168,7 +168,7 @@ table.tab tbody td.num { text-align: left; width: 42pt; }
    ============================================================ */
 body.doc-prof { color: #000; }
 body.doc-prof .page { padding: 19pt 25.4pt 0; }
-body.doc-prof p, body.doc-prof ul.puces li { font-size: 13pt; }
+body.doc-prof p, body.doc-prof ul.puces li { font-size: 12.5pt; line-height: 1.42; }
 body.doc-prof .titre-doc .t1 {
   font-family: "Trebuchet MS", sans-serif; font-weight: normal;
   font-size: 9.5pt; letter-spacing: 0; color: #5d6b7c;
@@ -176,14 +176,14 @@ body.doc-prof .titre-doc .t1 {
 body.doc-prof .titre-doc .t2 { font-size: 9.5pt; margin-top: 1.5pt; }
 body.doc-prof h2 {
   font-family: "Trebuchet MS", sans-serif; font-weight: bold; font-size: 13pt;
-  color: #1b3a63; margin: 11pt 0 5pt;
+  color: #1b3a63; margin: 9pt 0 4pt;
 }
 body.doc-prof h3 {
   font-family: "Trebuchet MS", sans-serif; font-weight: bold; font-size: 11.5pt;
   color: #5d6b7c; margin: 0 0 6pt;
 }
 body.doc-prof .chapo { font-size: 9.5pt; font-style: italic; color: #5d6b7c; margin: 9pt 0 6pt; }
-body.doc-prof .sous { font-size: 9.5pt; font-style: italic; color: #5d6b7c; margin: 6pt 0 0; }
+body.doc-prof .sous { font-size: 9.5pt; font-style: italic; color: #5d6b7c; margin: 4pt 0 0; }
 
 /* bandeau horaire de la fiche de séance */
 .bandeau-horaire {
@@ -224,16 +224,16 @@ body.doc-prof .sous { font-size: 9.5pt; font-style: italic; color: #5d6b7c; marg
   display: block; font-family: "Trebuchet MS", sans-serif; font-weight: bold;
   font-size: 9.5pt; color: #5d6b7c; letter-spacing: .7pt; margin-bottom: 4pt;
 }
-.situation p { font-size: 12.5pt; line-height: 1.45; margin: 0; }
+.situation p { font-size: 12pt; line-height: 1.4; margin: 0; }
 
 /* tableau de déroulement */
-table.deroul { width: 100%; border-collapse: collapse; font-size: 13pt; }
+table.deroul { width: 100%; border-collapse: collapse; font-size: 12pt; }
 table.deroul th {
   font-family: "Trebuchet MS", sans-serif; font-weight: bold; font-size: 9.5pt;
   color: #1b3a63; letter-spacing: .5pt; text-align: left;
   padding: 4pt 5pt; border-bottom: 1.4pt solid #1b3a63;
 }
-table.deroul td { padding: 4.6pt 5pt; border-bottom: .75pt solid #d8dee6; vertical-align: top; line-height: 1.45; }
+table.deroul td { padding: 3.6pt 5pt; border-bottom: .75pt solid #d8dee6; vertical-align: top; line-height: 1.38; }
 table.deroul td.phase { font-family: "Trebuchet MS", sans-serif; font-weight: bold; color: #1b3a63; font-size: 12pt; }
 table.deroul tr.pause td { color: #7b8a9a; font-style: italic; }
 table.deroul tr.total td { white-space: nowrap; font-family: "Trebuchet MS", sans-serif; font-weight: bold; color: #1b3a63; border-bottom: 0; }
@@ -336,3 +336,50 @@ ol.gestes li { font-size: 12.5pt; line-height: 1.5; margin-bottom: 3pt; }
   font-family: "Trebuchet MS", sans-serif; font-weight: bold; font-size: 10pt; letter-spacing: .6pt;
   margin-top: 12pt;
 }
+
+/* ============================================================
+   Fiche d'activité élève — blocs repris du sujet d'origine
+   ============================================================ */
+.bloc-admin { border: .9pt solid #1b3a63; border-radius: 3pt; margin-top: 9pt; overflow: hidden; }
+.bloc-admin .tete-bloc {
+  background: #1b3a63; color: #fff; padding: 4pt 9pt;
+  font-family: "Trebuchet MS", sans-serif; font-weight: bold; font-size: 10pt; letter-spacing: .6pt;
+}
+.bloc-admin .corps-bloc { padding: 5.5pt 9pt; font-size: 12pt; line-height: 1.4; }
+.bloc-admin .corps-bloc p { font-size: 12pt; margin: 0 0 3pt; }
+.bloc-admin .corps-bloc p:last-child { margin-bottom: 0; }
+
+.ligne-info { font-size: 12pt; line-height: 1.4; margin: 0 0 4pt; }
+.ligne-info b { color: #1b3a63; }
+
+table.aecana { width: 100%; border-collapse: collapse; margin-top: 4pt; }
+table.aecana th {
+  font-family: "Trebuchet MS", sans-serif; font-weight: bold; font-size: 9pt; letter-spacing: .4pt;
+  color: #fff; background: #1b3a63; padding: 4pt 6pt; text-align: left;
+}
+table.aecana th.col { width: 34pt; text-align: center; }
+table.aecana td { border: .75pt solid #d8dee6; padding: 3.4pt 6pt; font-size: 11.5pt; }
+table.aecana td.col { text-align: center; width: 34pt; background: #f5f8fc; }
+table.aecana td.code { font-weight: bold; color: #1b3a63; white-space: nowrap; }
+
+table.travail { width: 100%; border-collapse: collapse; margin-top: 4pt; }
+table.travail td { border: .75pt solid #d8dee6; padding: 3.4pt 7pt; font-size: 11.5pt; vertical-align: top; }
+table.travail td.n {
+  width: 26pt; text-align: center; background: #1b3a63; color: #fff;
+  font-family: "Trebuchet MS", sans-serif; font-weight: bold;
+}
+table.travail td.duree { width: 66pt; color: #5d6b7c; font-style: italic; font-size: 10.5pt; }
+
+.planche { border: .75pt solid #d8dee6; border-radius: 3pt; padding: 6pt; background: #fff; }
+.consigne-couleurs { display: flex; gap: 14pt; margin: 6pt 0 8pt; font-size: 12pt; }
+.consigne-couleurs span { display: flex; align-items: center; gap: 5pt; }
+.pastille { display: inline-block; width: 11pt; height: 11pt; border-radius: 50%; border: .6pt solid #22303f; }
+.pastille.bleu { background: #1a49d8; }
+.pastille.rouge { background: #d81a1a; }
+.pastille.vert { background: #18a83a; }
+
+.chef-oeuvre {
+  border: 1.1pt solid #ff6b35; border-radius: 4pt; background: #fff7f3;
+  padding: 8pt 11pt; margin-top: 10pt; font-size: 12.5pt; line-height: 1.45;
+}
+.chef-oeuvre b { font-family: "Trebuchet MS", sans-serif; color: #c9451a; }
