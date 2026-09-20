@@ -4,7 +4,11 @@ Le folio 3/12 (« Schéma PUMP DOWN le plus simple du monde », F. Henninot) por
 bornier câblé au complet. On en tire deux planches :
 
   assets/bornier-a-tracer.svg   les fils de couleur retirés — l'élève les trace
-  assets/bornier-corrige.svg    le folio tel quel — le corrigé du professeur
+  assets/bornier-corrige.svg    les fils gardés — le corrigé du professeur
+
+Dans les deux cas les barrettes du bornier sont délavées : économie d'encre, et
+le tracé de l'élève ressort par-dessus. Les fils du corrigé, eux, gardent leur
+couleur pleine — ce sont des traits fins, et ils doivent se lire.
 
 Le tri est fait sur la couleur du TRAIT : un fil est un tracé dont le contour est
 vert, bleu ou rouge pur. Les barrettes colorées du bornier, elles, sont des
@@ -16,6 +20,21 @@ import pymupdf
 
 SRC = '/root/.claude/uploads/d0e3a17c-1275-5586-8d7c-6b2285edd9bd/9d121f56-Sch_ma_PUMP_DOWN_le_plus_simple_du_monde_2.pdf'
 FILS = {(0.0, 1.0, 0.0), (0.0, 0.0, 1.0), (1.0, 0.0, 0.0)}   # vert, bleu, rouge purs
+
+# Économie d'encre : les barrettes du bornier sont de grands aplats saturés
+# (orange, bleu, vert, jaune, gris). On les délave vers le blanc — le code
+# couleur reste lisible, la page coûte trois fois moins, et le stylo de
+# l'élève ressort par-dessus. Le NOIR (traits, repères, textes) ne bouge pas.
+DELAVAGE = 0.72
+
+
+def delaver(c):
+    """Rapproche un remplissage du blanc, sauf s'il est noir ou déjà pâle."""
+    if c is None:
+        return None
+    if max(c) < 0.25:            # noir et gris très foncés : les traits
+        return c
+    return tuple(v + (1.0 - v) * DELAVAGE for v in c)
 
 
 def arrondi(c):
@@ -54,7 +73,8 @@ def rebatir(pno, clip, sortie, garder_fils=False):
                                    it[3] + (dx, dy), it[4] + (dx, dy))
             except Exception:
                 pass
-        sh.finish(fill=dr.get('fill'), color=dr.get('color'),
+        remplissage = delaver(dr.get('fill'))
+        sh.finish(fill=remplissage, color=dr.get('color'),
                   width=dr.get('width') or 0.6, closePath=dr.get('closePath', False),
                   even_odd=dr.get('even_odd', False), dashes=dr.get('dashes'),
                   fill_opacity=dr.get('fill_opacity') or 1,

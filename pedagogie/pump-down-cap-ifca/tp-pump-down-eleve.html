@@ -2,405 +2,262 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<title>TP — Le pump-down le plus simple du monde (document élève)</title>
+<title>TP — Le pump-down le plus simple du monde</title>
 <link rel="stylesheet" href="charte-inerweb-edu.css">
 </head>
-<body class="doc-eleve">
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="flocon" viewBox="0 0 32 32"><g stroke="#1b3a63" stroke-width="2.1" stroke-linecap="round" fill="none"><path d="M16 3V29M5.5 9.5L26.5 22.5M5.5 22.5L26.5 9.5"/><path d="M16 8.2l-3.3-3.3M16 8.2l3.3-3.3M16 23.8l-3.3 3.3M16 23.8l3.3 3.3"/><path d="M10.6 12.1l-4.5-1.2M10.6 12.1l1.2-4.5M21.4 19.9l4.5 1.2M21.4 19.9l-1.2 4.5"/><path d="M10.6 19.9l-4.5 1.2M10.6 19.9l1.2 4.5M21.4 12.1l4.5-1.2M21.4 12.1l-1.2-4.5"/></g></symbol></svg>
+<body>
 
-<!-- ===================== 1 — fiche d'activité ===================== -->
-<section class="page">
-  <header class="tete">
-    <div class="marque">
-      <div class="logo"><svg class="flocon"><use href="#flocon"/></svg><span class="mot">inerWeb</span><span class="cartouche">Édu</span></div>
-      <div class="sign">par <b>F. Henninot</b> · LPP Jacques Raynaud — Campus ÉQUATIO</div>
-    </div>
-    <div class="titre-doc">
-      <span class="t1">FICHE D'ACTIVITÉ ÉLÈVE</span>
-      <span class="t2">Le pump-down le plus simple du monde</span>
-    </div>
-  </header>
+<!-- ======================= page 1 ======================= -->
+<div class="page">
+  <div class="bandeau">
+    <span class="flocon">❄</span>
+    <h1>TP — Le pump-down le plus simple du monde</h1>
+    <span class="edu">Édu</span>
+    <span class="sign">inerWeb · par F. Henninot<br>LP Privé Jacques Raynaud — Campus ÉQUATIO</span>
+  </div>
 
-  <table class="identite">
-    <tr>
-      <td style="width:18%"><span class="lab">NIVEAU</span><span class="val fort">CAP IFCA</span></td>
-      <td style="width:28%"><span class="lab">NOM</span><div style="border-bottom:.8pt solid #22303f;height:13pt"></div></td>
-      <td style="width:28%"><span class="lab">PRÉNOM</span><div style="border-bottom:.8pt solid #22303f;height:13pt"></div></td>
-      <td style="width:26%"><span class="lab">DATE</span><div style="border-bottom:.8pt solid #22303f;height:13pt"></div></td>
-    </tr>
-    <tr>
-      <td><span class="lab">SÉQUENCE N°</span><div style="border-bottom:.8pt solid #22303f;height:13pt"></div></td>
-      <td><span class="lab">NATURE DE LA SÉANCE</span><span class="val">TP ☒ · TD ☐ · DS ☐</span></td>
-      <td><span class="lab">TEMPS PRÉVISIONNEL</span><span class="val">____ h ____ mn</span></td>
-      <td><span class="lab">NOTE</span><span class="val fort">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/ 20</span></td>
-    </tr>
+  <div class="identite">
+    <span>NOM : ________________________</span>
+    <span>Prénom : ________________</span>
+    <span>Classe : CAP IFCA</span>
+    <span>Date : ____ / ____ / ______</span>
+    <span class="note">/ 20</span>
+  </div>
+
+  <p><strong>Mise en situation :</strong> afin de mettre en service une nouvelle chambre froide,
+  vous devez réaliser le bornier de câblage de la chambre. <strong>Objectif :</strong> à la fin de
+  l'activité, l'élève sera capable de <strong>câbler un bornier</strong> et de <strong>comprendre le
+  fonctionnement d'une installation en pump-down</strong>.</p>
+
+  <h3>Suivi et évaluation des compétences</h3>
+  <table>
+    <tr><th>Compétence</th><th class="centre" style="width:46px">A</th>
+      <th class="centre" style="width:56px">ECA</th><th class="centre" style="width:46px">NA</th></tr>
+    <tr><td><strong>C3.6</strong> — câbler, repérer, connecter les liaisons électriques</td>
+      <td class="centre">☐</td><td class="centre">☐</td><td class="centre">☐</td></tr>
+    <tr><td><strong>C3.7</strong> — contrôler la mise en œuvre des équipements électriques</td>
+      <td class="centre">☐</td><td class="centre">☐</td><td class="centre">☐</td></tr>
+    <tr><td><strong>C2.2</strong> — contrôler les éléments nécessaires à la réalisation</td>
+      <td class="centre">☐</td><td class="centre">☐</td><td class="centre">☐</td></tr>
+    <tr><td><strong>Savoir-être</strong> — poste propre, sécurité respectée</td>
+      <td class="centre">☐</td><td class="centre">☐</td><td class="centre">☐</td></tr>
   </table>
 
-  <p class="ligne-info" style="margin-top:9pt"><b>Mise en situation :</b> afin de mettre en service une nouvelle
-  chambre froide, vous devez réaliser le bornier de câblage de la chambre.</p>
-  <p class="ligne-info"><b>Objectif :</b> à la fin de l'activité, l'élève sera capable de <b>câbler un bornier</b>
-  et de <b>comprendre le fonctionnement d'une installation en pump-down</b>.</p>
-
-  <div class="bloc-admin">
-    <div class="tete-bloc">SUIVI ET ÉVALUATION DES COMPÉTENCES</div>
-    <div class="corps-bloc" style="padding:0">
-      <table class="aecana" style="margin:0">
-        <thead><tr><th>COMPÉTENCE</th><th class="col">A</th><th class="col">ECA</th><th class="col">NA</th></tr></thead>
-        <tbody>
-          <tr><td><span class="code">C3.6</span> — câbler, repérer, connecter les liaisons électriques</td>
-            <td class="col">☐</td><td class="col">☐</td><td class="col">☐</td></tr>
-          <tr><td><span class="code">C3.7</span> — contrôler la mise en œuvre des équipements électriques</td>
-            <td class="col">☐</td><td class="col">☐</td><td class="col">☐</td></tr>
-          <tr><td><span class="code">C2.2</span> — contrôler les éléments nécessaires à la réalisation</td>
-            <td class="col">☐</td><td class="col">☐</td><td class="col">☐</td></tr>
-          <tr><td><span class="code">Savoir-être</span> — poste propre, sécurité respectée</td>
-            <td class="col">☐</td><td class="col">☐</td><td class="col">☐</td></tr>
-        </tbody>
-      </table>
+  <div class="duo">
+    <div>
+      <h3>On vous donne</h3>
+      <p style="font-size:12.5pt">Un poste propre et en sécurité · ce document · la documentation
+      technique, le formulaire du froid et un accès à internet · un bornier sur rail DIN et un
+      disjoncteur différentiel.</p>
+    </div>
+    <div>
+      <h3>On exige</h3>
+      <p style="font-size:12.5pt">Un travail propre et appliqué · le respect du code des couleurs ·
+      <strong>aucune mise sous tension sans le professeur</strong>.</p>
     </div>
   </div>
 
-  <div class="cols" style="gap:10pt;margin-top:9pt;align-items:stretch">
-    <div class="bloc-admin" style="margin-top:0">
-      <div class="tete-bloc">ON VOUS DONNE</div>
-      <div class="corps-bloc">
-        <p>☐ Un poste de travail propre et en sécurité</p>
-        <p>☐ Ce document de travail « Activité élève »</p>
-        <p>☐ Une documentation technique, le formulaire du froid et un accès à internet</p>
-        <p>☐ Un bornier sur rail DIN et un disjoncteur différentiel</p>
-      </div>
-    </div>
-    <div class="bloc-admin" style="margin-top:0">
-      <div class="tete-bloc">ON EXIGE</div>
-      <div class="corps-bloc">
-        <p>➢ Un travail propre et appliqué</p>
-        <p>➢ Le respect du code des couleurs</p>
-        <p>➢ Aucune mise sous tension sans le professeur</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="bloc-admin">
-    <div class="tete-bloc">VOUS DEVEZ — LE TRAVAIL À RÉALISER</div>
-    <div class="corps-bloc" style="padding:0">
-      <table class="travail" style="margin:0">
-        <tr><td class="n">1</td><td>Lire et analyser attentivement les documents mis à votre disposition</td><td class="duree">15 min</td></tr>
-        <tr><td class="n">2</td><td>Découvrir le pump-down avec les animations en ligne</td><td class="duree">20 min</td></tr>
-        <tr><td class="n">3</td><td>Identifier les éléments du schéma</td><td class="duree">15 min</td></tr>
-        <tr><td class="n">4</td><td>Compléter le schéma électrique du pump-down</td><td class="duree">25 min</td></tr>
-        <tr><td class="n">5</td><td>Tracer les fils sur le bornier</td><td class="duree">30 min</td></tr>
-        <tr><td class="n">6</td><td>Établir la liste du matériel et poser le bornier et le disjoncteur</td><td class="duree">20 min</td></tr>
-        <tr><td class="n">7</td><td>Réaliser le câblage, puis appeler le professeur pour le contrôle</td><td class="duree">1 h 15</td></tr>
-        <tr><td class="n">8</td><td>Ranger votre poste de travail et effectuer le compte rendu d'activité</td><td class="duree">20 min</td></tr>
-      </table>
-    </div>
-  </div>
-
-
-  <footer class="pied">
-    <span><span class="fl">❄</span> inerweb.fr · pack Fluides — LPP Jacques Raynaud · Campus ÉQUATIO · F. Henninot</span>
-    <span>page 1/8</span>
-  </footer>
-</section>
-
-<!-- ===================== 2 — découverte ===================== -->
-<section class="page">
-  <header class="tete">
-    <div class="marque">
-      <div class="logo"><svg class="flocon"><use href="#flocon"/></svg><span class="mot">inerWeb</span><span class="cartouche">Édu</span></div>
-      <div class="sign">par <b>F. Henninot</b> · LPP Jacques Raynaud — Campus ÉQUATIO</div>
-    </div>
-    <div class="titre-doc"><span class="t1">ÉTAPE 2</span><span class="t2">je découvre le pump-down</span></div>
-  </header>
-
-  <div class="carte">
-    <div class="bandeau b-orange"><span class="num">②</span> Je découvre : pourquoi un pump-down ?</div>
-    <div class="corps">
-      <p><b>Avant de câbler, on regarde.</b> Tu ouvres les deux animations avec ton téléphone, tu observes
-      ce qui arrive au fluide, puis tu réponds.</p>
-
-      <div class="anim">
-        <img class="qr" src="assets/qr/commande-directe.svg">
-        <div class="txt">
-          <div class="kicker">ANIMATION 1 · SCANNE LE CODE</div>
-          <div class="anim-titre">Sans sécurité — la commande directe</div>
-          <div class="anim-url">inerweb.fr/packs/fluides/res/commande-directe-thermostat/</div>
-        </div>
-      </div>
-      <div class="anim">
-        <img class="qr" src="assets/qr/pressostat-bp.svg">
-        <div class="txt">
-          <div class="kicker">ANIMATION 2 · SCANNE LE CODE</div>
-          <div class="anim-titre">La sécurité minimum — le pressostat BP</div>
-          <div class="anim-url">inerweb.fr/packs/fluides/res/pressostat-bp-kp1/</div>
-        </div>
-      </div>
-
-      <p class="atoi" style="margin-top:12pt"><b>a.</b> Quand la machine s'arrête, où part le fluide ?</p>
-      <div class="lignes"><div></div></div>
-
-      <p class="atoi" style="margin-top:9pt"><b>b.</b> Sur le montage <b>sans sécurité</b>, qu'est-ce qui manque ?</p>
-      <div class="lignes"><div></div><div></div></div>
-
-      <p class="atoi" style="margin-top:9pt"><b>c.</b> Avec la <b>sécurité minimum</b>, qu'est-ce qui coupe le
-      compresseur, et quand ?</p>
-      <div class="lignes"><div></div><div></div></div>
-
-      <div class="note bleu" style="margin-top:11pt"><b>Et le pump-down, alors ?</b> Il répond exactement à ça :
-      <b style="font-family:'Calibri','Carlito',sans-serif">avant d'arrêter le compresseur, on vide l'évaporateur
-      de son fluide</b>. Le fluide ne peut plus migrer, le compresseur ne risque plus le coup de liquide au
-      redémarrage. C'est le montage que tu vas câbler aujourd'hui.</div>
-    </div>
-  </div>
-
-  <footer class="pied">
-    <span><span class="fl">❄</span> inerweb.fr · pack Fluides — LPP Jacques Raynaud · Campus ÉQUATIO · F. Henninot</span>
-    <span>page 2/8</span>
-  </footer>
-</section>
-
-<!-- ===================== 3 — identifier ===================== -->
-<section class="page">
-  <header class="tete">
-    <div class="marque">
-      <div class="logo"><svg class="flocon"><use href="#flocon"/></svg><span class="mot">inerWeb</span><span class="cartouche">Édu</span></div>
-      <div class="sign">par <b>F. Henninot</b> · LPP Jacques Raynaud — Campus ÉQUATIO</div>
-    </div>
-    <div class="titre-doc"><span class="t1">ÉTAPE 3</span><span class="t2">identifier les éléments</span></div>
-  </header>
-
-  <div class="part" style="margin-top:12pt">
-    <div class="part-tete"><span class="lettre">3</span><span class="nom">J'identifie les éléments suivants</span><span class="points">3 points</span></div>
-    <div class="part-corps">
-      <p class="etape-chapo">On passe d'un système de <b>sécurité minimum</b> à une <b>régulation par pump-down</b>.
-      Avant de câbler, je nomme ce que je vais raccorder.</p>
-      <table class="tab" style="font-size:12.5pt">
-        <thead><tr><th style="width:42%">REPRÉSENTATION GRAPHIQUE</th><th>NOM DE L'ÉLÉMENT</th></tr></thead>
-        <tbody>
-          <tr><td style="text-align:center"><img src="assets/sym-th.png" style="height:44pt"></td><td class="vide"></td></tr>
-          <tr><td style="text-align:center"><img src="assets/sym-contact.png" style="height:30pt"></td><td class="vide"></td></tr>
-          <tr><td style="text-align:center"><img src="assets/sym-psl.png" style="height:44pt"></td><td class="vide"></td></tr>
-          <tr><td style="text-align:center"><img src="assets/sym-pzh.png" style="height:46pt"></td><td class="vide"></td></tr>
-          <tr><td style="text-align:center"><img src="assets/sym-vem.png" style="height:30pt"></td><td class="vide"></td></tr>
-          <tr><td style="text-align:center"><img src="assets/sym-bornes.png" style="height:26pt"></td><td class="vide"></td></tr>
-          <tr><td style="text-align:center"><img src="assets/sym-moteur.png" style="height:40pt"></td><td class="vide"></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <footer class="pied">
-    <span><span class="fl">❄</span> inerweb.fr · pack Fluides — LPP Jacques Raynaud · Campus ÉQUATIO · F. Henninot</span>
-    <span>page 3/8</span>
-  </footer>
-</section>
-
-<!-- ===================== 4 — compléter le schéma ===================== -->
-<section class="page">
-  <header class="tete">
-    <div class="marque">
-      <div class="logo"><svg class="flocon"><use href="#flocon"/></svg><span class="mot">inerWeb</span><span class="cartouche">Édu</span></div>
-      <div class="sign">par <b>F. Henninot</b> · LPP Jacques Raynaud — Campus ÉQUATIO</div>
-    </div>
-    <div class="titre-doc"><span class="t1">ÉTAPE 4</span><span class="t2">compléter le schéma</span></div>
-  </header>
-
-  <div class="part" style="margin-top:12pt">
-    <div class="part-tete"><span class="lettre">4</span><span class="nom">Je complète le schéma de droite d'après celui de gauche</span><span class="points">5 points</span></div>
-    <div class="part-corps">
-      <p class="etape-chapo">À gauche, l'installation <b>en sécurité minimum</b> : elle fonctionne.
-      À droite, le <b>pump-down le plus simple du monde</b> : les appareils sont là, les liaisons manquent.
-      Je les trace au crayon.</p>
-      <div class="cols" style="gap:12pt;align-items:flex-start">
-        <div style="flex:1;text-align:center">
-          <img src="assets/schema-securite-minimum.png" style="width:100%;max-height:520pt;object-fit:contain">
-          <div class="legende" style="margin-top:3pt">Le modèle — sécurité minimum</div>
-        </div>
-        <div style="flex:1;text-align:center">
-          <img src="assets/schema-a-completer.png" style="width:100%;max-height:520pt;object-fit:contain">
-          <div class="legende" style="margin-top:3pt">À compléter — le pump-down</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <footer class="pied">
-    <span><span class="fl">❄</span> inerweb.fr · pack Fluides — LPP Jacques Raynaud · Campus ÉQUATIO · F. Henninot</span>
-    <span>page 4/8</span>
-  </footer>
-</section>
-
-<!-- ===================== 5 — tracer sur le bornier ===================== -->
-<section class="page">
-  <header class="tete">
-    <div class="marque">
-      <div class="logo"><svg class="flocon"><use href="#flocon"/></svg><span class="mot">inerWeb</span><span class="cartouche">Édu</span></div>
-      <div class="sign">par <b>F. Henninot</b> · LPP Jacques Raynaud — Campus ÉQUATIO</div>
-    </div>
-    <div class="titre-doc"><span class="t1">ÉTAPE 5</span><span class="t2">tracer les fils sur le bornier</span></div>
-  </header>
-
-  <div class="part" style="margin-top:12pt">
-    <div class="part-tete"><span class="lettre">5</span><span class="nom">Je trace tous les câbles, comme si je les posais</span><span class="points">6 points</span></div>
-    <div class="part-corps">
-      <p class="etape-chapo" style="margin-bottom:3pt">D'après le schéma que je viens de compléter, je trace
-      <b>tous les câbles électriques</b> entre le bornier et chaque appareil.</p>
-      <div class="consigne-couleurs">
-        <span><i class="pastille bleu"></i> stylo <b>bleu</b> = le neutre</span>
-        <span><i class="pastille rouge"></i> stylo <b>rouge</b> = la phase</span>
-        <span><i class="pastille vert"></i> stylo <b>vert</b> = la terre</span>
-      </div>
-      <div class="planche">
-        <img src="assets/bornier-a-tracer.svg" style="width:100%;height:auto">
-      </div>
-      <p class="legende" style="text-align:left;margin:5pt 0 0">Un fil par borne. Les liaisons entre bornes
-      voisines (les ponts) se tracent aussi.</p>
-    </div>
-  </div>
-
-  <footer class="pied">
-    <span><span class="fl">❄</span> inerweb.fr · pack Fluides — LPP Jacques Raynaud · Campus ÉQUATIO · F. Henninot</span>
-    <span>page 5/8</span>
-  </footer>
-</section>
-
-<!-- ===================== 6 — matériel et implantation ===================== -->
-<section class="page">
-  <header class="tete">
-    <div class="marque">
-      <div class="logo"><svg class="flocon"><use href="#flocon"/></svg><span class="mot">inerWeb</span><span class="cartouche">Édu</span></div>
-      <div class="sign">par <b>F. Henninot</b> · LPP Jacques Raynaud — Campus ÉQUATIO</div>
-    </div>
-    <div class="titre-doc"><span class="t1">ÉTAPE 6</span><span class="t2">le matériel, puis la pose</span></div>
-  </header>
-
-  <div class="part" style="margin-top:12pt">
-    <div class="part-tete"><span class="lettre">6a</span><span class="nom">J'établis la liste du matériel</span><span class="points">2 points</span></div>
-    <div class="part-corps">
-      <p class="etape-chapo">Hors câble électrique et hors récepteur — ce qu'il me faut pour réaliser le câblage.</p>
-      <table class="tab">
-        <tbody>
-          <tr><td class="vide" style="height:26pt"></td><td class="vide"></td><td class="vide"></td></tr>
-          <tr><td class="vide" style="height:26pt"></td><td class="vide"></td><td class="vide"></td></tr>
-          <tr><td class="vide" style="height:26pt"></td><td class="vide"></td><td class="vide"></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="part">
-    <div class="part-tete"><span class="lettre">6b</span><span class="nom">Je pose le bornier et le disjoncteur</span><span class="points">2 points</span></div>
-    <div class="part-corps">
-      <p class="etape-chapo">Mise en place de tous les borniers et du disjoncteur, suivant le plan d'implantation.</p>
-      <div class="figure"><img src="assets/plan-implantation.png" style="width:330pt"></div>
-      <div class="legende">Le plan d'implantation — bornier sur rail DIN et disjoncteur différentiel.</div>
-    </div>
-  </div>
-
-  <footer class="pied">
-    <span><span class="fl">❄</span> inerweb.fr · pack Fluides — LPP Jacques Raynaud · Campus ÉQUATIO · F. Henninot</span>
-    <span>page 6/8</span>
-  </footer>
-</section>
-
-<!-- ===================== 7 — câbler ===================== -->
-<section class="page">
-  <header class="tete">
-    <div class="marque">
-      <div class="logo"><svg class="flocon"><use href="#flocon"/></svg><span class="mot">inerWeb</span><span class="cartouche">Édu</span></div>
-      <div class="sign">par <b>F. Henninot</b> · LPP Jacques Raynaud — Campus ÉQUATIO</div>
-    </div>
-    <div class="titre-doc"><span class="t1">ÉTAPE 7</span><span class="t2">réaliser le câblage</span></div>
-  </header>
-
-  <div class="part" style="margin-top:12pt">
-    <div class="part-tete"><span class="lettre">7</span><span class="nom">Je câble le bornier</span><span class="points">6 points</span></div>
-    <div class="part-corps">
-      <p class="etape-chapo" style="margin-bottom:5pt">Je réalise le câblage en respectant les codes et les
-      connexions électriques de l'installation ci-dessous, sur le bornier que je viens de poser.
-      <b>Toujours hors tension.</b></p>
-      <div class="cols" style="gap:14pt;align-items:flex-start">
-        <div style="flex:0 0 232pt">
-          <img src="assets/bornier-a-cabler.png" style="width:232pt">
-        </div>
-        <div style="flex:1">
-          <div class="case" style="font-size:12.5pt">
-            <p style="font-size:12.5pt;margin:0 0 5pt"><span>☐</span> un seul fil par borne</p>
-            <p style="font-size:12.5pt;margin:0 0 5pt"><span>☐</span> embouts sertis, aucun brin nu qui dépasse</p>
-            <p style="font-size:12.5pt;margin:0 0 5pt"><span>☐</span> chaque vis serrée, je tire pour vérifier</p>
-            <p style="font-size:12.5pt;margin:0 0 5pt"><span>☐</span> le code des couleurs est respecté</p>
-            <p style="font-size:12.5pt;margin:0 0 5pt"><span>☐</span> les terres sont posées, jamais pontées</p>
-            <p style="font-size:12.5pt;margin:0"><span>☐</span> mon poste est rangé</p>
-          </div>
-          <div class="visa" style="margin-top:12pt"><b>J'appelle le professeur.</b><br>
-            Contrôle visuel : ______________<br><br>
-            Mise sous tension par le professeur : ______________</div>
-          <div class="chef-oeuvre"><b>Les plus beaux câblages seront gardés</b> pour les projets
-          chef-d'œuvre et les maquettes pédagogiques de l'atelier.</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <footer class="pied">
-    <span><span class="fl">❄</span> inerweb.fr · pack Fluides — LPP Jacques Raynaud · Campus ÉQUATIO · F. Henninot</span>
-    <span>page 7/8</span>
-  </footer>
-</section>
-
-<!-- ===================== 8 — compte rendu ===================== -->
-<section class="page">
-  <header class="tete">
-    <div class="marque">
-      <div class="logo"><svg class="flocon"><use href="#flocon"/></svg><span class="mot">inerWeb</span><span class="cartouche">Édu</span></div>
-      <div class="sign">par <b>F. Henninot</b> · LPP Jacques Raynaud — Campus ÉQUATIO</div>
-    </div>
-    <div class="titre-doc"><span class="t1">ÉTAPE 8</span><span class="t2">compte rendu d'activité</span></div>
-  </header>
-
-  <div class="etape-titre">Mon compte rendu</div>
-  <p class="etape-chapo">Barème : identification 3 · schéma 5 · tracé 6 · matériel et pose 4 · câblage 6 —
-  ramené sur 20. Je me positionne avant le professeur.</p>
-
-  <table class="aecana">
-    <thead><tr><th>COMPÉTENCE</th><th class="col">A</th><th class="col">ECA</th><th class="col">NA</th>
-      <th class="col">PROF</th></tr></thead>
-    <tbody>
-      <tr><td><span class="code">C3.6</span> — je câble et je repère sur la bonne borne</td>
-        <td class="col">☐</td><td class="col">☐</td><td class="col">☐</td><td class="col"></td></tr>
-      <tr><td><span class="code">C3.7</span> — je contrôle mon câblage avant d'appeler</td>
-        <td class="col">☐</td><td class="col">☐</td><td class="col">☐</td><td class="col"></td></tr>
-      <tr><td><span class="code">C2.2</span> — je lis le schéma et je trace juste</td>
-        <td class="col">☐</td><td class="col">☐</td><td class="col">☐</td><td class="col"></td></tr>
-      <tr><td><span class="code">Savoir-être</span> — sécurité, poste rangé, travail appliqué</td>
-        <td class="col">☐</td><td class="col">☐</td><td class="col">☐</td><td class="col"></td></tr>
-    </tbody>
+  <h3>Vous devez — le travail à réaliser</h3>
+  <table>
+    <tr><th style="width:34px">N°</th><th>Travail</th><th style="width:74px">Durée</th></tr>
+    <tr><td class="centre">1</td><td>Lire et analyser attentivement les documents mis à votre disposition</td><td>15 min</td></tr>
+    <tr><td class="centre">2</td><td>Découvrir le pump-down avec les animations en ligne</td><td>20 min</td></tr>
+    <tr><td class="centre">3</td><td>Identifier les éléments du schéma</td><td>15 min</td></tr>
+    <tr><td class="centre">4</td><td>Compléter le schéma électrique du pump-down</td><td>25 min</td></tr>
+    <tr><td class="centre">5</td><td>Tracer les fils sur le bornier</td><td>30 min</td></tr>
+    <tr><td class="centre">6</td><td>Établir la liste du matériel, poser le bornier et le disjoncteur</td><td>20 min</td></tr>
+    <tr><td class="centre">7</td><td>Réaliser le câblage, puis appeler le professeur pour le contrôle</td><td>1 h 15</td></tr>
+    <tr><td class="centre">8</td><td>Ranger votre poste de travail et effectuer le compte rendu</td><td>20 min</td></tr>
   </table>
-  <p class="etape-chapo">A = acquis · ECA = en cours d'acquisition · NA = non acquis</p>
 
-  <p class="atoi" style="margin-top:10pt"><b>Explique avec tes mots à quoi sert le pump-down :</b></p>
-  <div class="lignes"><div></div><div></div><div></div></div>
+  <div class="pied"><span>inerWeb Édu — F. Henninot — LP Privé Jacques Raynaud, Campus ÉQUATIO</span><span>page 1/8</span></div>
+</div>
 
-  <p class="atoi" style="margin-top:10pt"><b>J'ai réussi :</b></p>
-  <div class="lignes"><div></div></div>
-  <p class="atoi" style="margin-top:9pt"><b>À retravailler :</b></p>
-  <div class="lignes"><div></div></div>
+<!-- ======================= page 2 ======================= -->
+<div class="page">
+  <h2>2 — Je découvre : pourquoi un pump-down ?</h2>
+  <div class="consigne"><strong>Avant de câbler, on regarde.</strong> Ouvre les deux animations avec
+  ton téléphone, observe ce qui arrive au fluide, puis réponds.</div>
 
-  <div class="ressource-titre">Pour revoir le montage à la maison</div>
-  <div class="anim">
-    <img class="qr" src="assets/qr/pump-down-automatique.svg">
-    <div class="txt">
-      <div class="kicker">ANIMATION · SCANNE LE CODE</div>
-      <div class="anim-titre">Le pump-down en fonctionnement</div>
-      <div class="anim-url">inerweb.fr/packs/fluides/res/pump-down-automatique/</div>
+  <div class="lien">
+    <img src="assets/qr/commande-directe.svg" alt="">
+    <div><div class="titre">Animation 1 — sans sécurité, la commande directe</div>
+    <div class="url">inerweb.fr/packs/fluides/res/commande-directe-thermostat/</div></div>
+  </div>
+  <div class="lien">
+    <img src="assets/qr/pressostat-bp.svg" alt="">
+    <div><div class="titre">Animation 2 — la sécurité minimum, le pressostat BP</div>
+    <div class="url">inerweb.fr/packs/fluides/res/pressostat-bp-kp1/</div></div>
+  </div>
+
+  <h3>a. Quand la machine s'arrête, où part le fluide ?</h3>
+  <div class="lg"></div>
+
+  <h3>b. Sur le montage sans sécurité, qu'est-ce qui manque ?</h3>
+  <div class="lg"></div>
+  <div class="lg"></div>
+
+  <h3>c. Avec la sécurité minimum, qu'est-ce qui coupe le compresseur, et quand ?</h3>
+  <div class="lg"></div>
+  <div class="lg"></div>
+
+  <div class="consigne orange"><strong>Et le pump-down, alors ?</strong> Il répond exactement à ça :
+  <strong>avant d'arrêter le compresseur, on vide l'évaporateur de son fluide</strong>. Le fluide ne
+  peut plus migrer, le compresseur ne risque plus le coup de liquide au redémarrage. C'est le montage
+  que tu vas câbler aujourd'hui.</div>
+
+  <div class="pied"><span>inerWeb Édu — F. Henninot — LP Privé Jacques Raynaud, Campus ÉQUATIO</span><span>page 2/8</span></div>
+</div>
+
+<!-- ======================= page 3 ======================= -->
+<div class="page">
+  <h2>3 — J'identifie les éléments <span class="pts">3 points</span></h2>
+  <div class="consigne">On passe d'un système de <strong>sécurité minimum</strong> à une
+  <strong>régulation par pump-down</strong>. Avant de câbler, je nomme ce que je vais raccorder.</div>
+
+  <table>
+    <tr><th style="width:44%">Représentation graphique</th><th>Nom de l'élément</th></tr>
+    <tr><td class="symbole"><img src="assets/sym-th.png" style="height:58px"></td><td class="vide"></td></tr>
+    <tr><td class="symbole"><img src="assets/sym-contact.png" style="height:40px"></td><td class="vide"></td></tr>
+    <tr><td class="symbole"><img src="assets/sym-psl.png" style="height:58px"></td><td class="vide"></td></tr>
+    <tr><td class="symbole"><img src="assets/sym-pzh.png" style="height:60px"></td><td class="vide"></td></tr>
+    <tr><td class="symbole"><img src="assets/sym-vem.png" style="height:40px"></td><td class="vide"></td></tr>
+    <tr><td class="symbole"><img src="assets/sym-bornes.png" style="height:34px"></td><td class="vide"></td></tr>
+    <tr><td class="symbole"><img src="assets/sym-moteur.png" style="height:52px"></td><td class="vide"></td></tr>
+  </table>
+
+  <div class="pied"><span>inerWeb Édu — F. Henninot — LP Privé Jacques Raynaud, Campus ÉQUATIO</span><span>page 3/8</span></div>
+</div>
+
+<!-- ======================= page 4 ======================= -->
+<div class="page">
+  <h2>4 — Je complète le schéma <span class="pts">5 points</span></h2>
+  <div class="consigne">À gauche, l'installation <strong>en sécurité minimum</strong> : elle
+  fonctionne. À droite, le <strong>pump-down le plus simple du monde</strong> : les appareils sont là,
+  les liaisons manquent. Je les trace au crayon, d'après le schéma de gauche.</div>
+
+  <div class="duo">
+    <div>
+      <img src="assets/schema-securite-minimum.png" style="width:100%;max-height:560px;object-fit:contain">
+      <div class="legende">Le modèle — la sécurité minimum.</div>
+    </div>
+    <div>
+      <img src="assets/schema-a-completer.png" style="width:100%;max-height:560px;object-fit:contain">
+      <div class="legende">À compléter — le pump-down.</div>
     </div>
   </div>
 
-  <footer class="pied">
-    <span><span class="fl">❄</span> inerweb.fr · pack Fluides — LPP Jacques Raynaud · Campus ÉQUATIO · F. Henninot</span>
-    <span>page 8/8 · © F. Henninot 2026</span>
-  </footer>
-</section>
+  <div class="pied"><span>inerWeb Édu — F. Henninot — LP Privé Jacques Raynaud, Campus ÉQUATIO</span><span>page 4/8</span></div>
+</div>
+
+<!-- ======================= page 5 ======================= -->
+<div class="page">
+  <h2>5 — Je trace les fils sur le bornier <span class="pts">6 points</span></h2>
+  <div class="consigne">D'après le schéma que je viens de compléter, je trace <strong>tous les câbles
+  électriques</strong> entre le bornier et chaque appareil, comme si je les posais.</div>
+
+  <div class="couleurs">
+    <span><i class="pastille bleu"></i> stylo <strong>bleu</strong> = le neutre</span>
+    <span><i class="pastille rouge"></i> stylo <strong>rouge</strong> = la phase</span>
+    <span><i class="pastille vert"></i> stylo <strong>vert</strong> = la terre</span>
+  </div>
+
+  <div class="planche"><img src="assets/bornier-a-tracer.svg" alt=""></div>
+  <div class="legende">Un fil par borne. Les liaisons entre bornes voisines — les ponts — se tracent aussi.</div>
+
+  <div class="pied"><span>inerWeb Édu — F. Henninot — LP Privé Jacques Raynaud, Campus ÉQUATIO</span><span>page 5/8</span></div>
+</div>
+
+<!-- ======================= page 6 ======================= -->
+<div class="page">
+  <h2>6 — Le matériel, puis la pose <span class="pts">4 points</span></h2>
+
+  <h3>a. J'établis la liste du matériel</h3>
+  <div class="consigne">Hors câble électrique et hors récepteur — ce qu'il me faut pour réaliser le câblage.</div>
+  <table>
+    <tr><td class="vide"></td><td class="vide"></td><td class="vide"></td></tr>
+    <tr><td class="vide"></td><td class="vide"></td><td class="vide"></td></tr>
+    <tr><td class="vide"></td><td class="vide"></td><td class="vide"></td></tr>
+  </table>
+
+  <h3>b. Je pose le bornier et le disjoncteur</h3>
+  <div class="consigne">Mise en place de tous les borniers et du disjoncteur, suivant le plan d'implantation.</div>
+  <div class="planche"><img src="assets/plan-implantation.png" style="width:74%;margin:0 auto"></div>
+  <div class="legende">Le plan d'implantation — bornier sur rail DIN et disjoncteur différentiel.</div>
+
+  <div class="pied"><span>inerWeb Édu — F. Henninot — LP Privé Jacques Raynaud, Campus ÉQUATIO</span><span>page 6/8</span></div>
+</div>
+
+<!-- ======================= page 7 ======================= -->
+<div class="page">
+  <h2>7 — Je câble le bornier <span class="pts">6 points</span></h2>
+  <div class="consigne">Je réalise le câblage en respectant les codes et les connexions électriques de
+  l'installation ci-dessous, sur le bornier que je viens de poser. <strong>Toujours hors tension.</strong></div>
+
+  <div class="duo" style="grid-template-columns:1.25fr 1fr">
+    <div class="planche"><img src="assets/bornier-a-cabler.png" alt=""></div>
+    <div>
+      <h3>Mon autocontrôle</h3>
+      <p style="font-size:12.5pt">
+        ☐ un seul fil par borne<br>
+        ☐ embouts sertis, aucun brin nu qui dépasse<br>
+        ☐ chaque vis serrée, je tire pour vérifier<br>
+        ☐ le code des couleurs est respecté<br>
+        ☐ les terres sont posées, jamais pontées<br>
+        ☐ mon poste est rangé
+      </p>
+      <div class="case">
+        <strong>J'appelle le professeur.</strong>
+        <div style="font-size:12pt;margin-top:6px">Contrôle visuel :</div><div class="lg"></div>
+        <div style="font-size:12pt">Mise sous tension par le professeur :</div><div class="lg"></div>
+      </div>
+      <div class="consigne orange" style="margin-top:10px"><strong>Les plus beaux câblages seront
+      gardés</strong> pour les projets chef-d'œuvre et les maquettes pédagogiques de l'atelier.</div>
+    </div>
+  </div>
+
+  <div class="pied"><span>inerWeb Édu — F. Henninot — LP Privé Jacques Raynaud, Campus ÉQUATIO</span><span>page 7/8</span></div>
+</div>
+
+<!-- ======================= page 8 ======================= -->
+<div class="page">
+  <h2>8 — Mon compte rendu d'activité</h2>
+  <div class="consigne">Barème : identification 3 · schéma 5 · tracé 6 · matériel et pose 4 ·
+  câblage 6, ramené sur 20. Je me positionne avant le professeur.</div>
+
+  <table>
+    <tr><th>Compétence</th><th class="centre" style="width:46px">A</th>
+      <th class="centre" style="width:56px">ECA</th><th class="centre" style="width:46px">NA</th>
+      <th class="centre" style="width:62px">Prof</th></tr>
+    <tr><td><strong>C3.6</strong> — je câble et je repère sur la bonne borne</td>
+      <td class="centre">☐</td><td class="centre">☐</td><td class="centre">☐</td><td></td></tr>
+    <tr><td><strong>C3.7</strong> — je contrôle mon câblage avant d'appeler</td>
+      <td class="centre">☐</td><td class="centre">☐</td><td class="centre">☐</td><td></td></tr>
+    <tr><td><strong>C2.2</strong> — je lis le schéma et je trace juste</td>
+      <td class="centre">☐</td><td class="centre">☐</td><td class="centre">☐</td><td></td></tr>
+    <tr><td><strong>Savoir-être</strong> — sécurité, poste rangé, travail appliqué</td>
+      <td class="centre">☐</td><td class="centre">☐</td><td class="centre">☐</td><td></td></tr>
+  </table>
+  <p style="font-size:11pt;color:#5a6472">A = acquis · ECA = en cours d'acquisition · NA = non acquis</p>
+
+  <h3>Explique avec tes mots à quoi sert le pump-down</h3>
+  <div class="lg"></div><div class="lg"></div><div class="lg"></div>
+
+  <h3>J'ai réussi</h3>
+  <div class="lg"></div>
+
+  <h3>À retravailler</h3>
+  <div class="lg"></div>
+
+  <h3>Pour revoir le montage à la maison</h3>
+  <div class="lien">
+    <img src="assets/qr/pump-down-automatique.svg" alt="">
+    <div><div class="titre">Le pump-down en fonctionnement</div>
+    <div class="url">inerweb.fr/packs/fluides/res/pump-down-automatique/</div></div>
+  </div>
+
+  <div class="pied"><span>inerWeb Édu — F. Henninot — LP Privé Jacques Raynaud, Campus ÉQUATIO</span><span>page 8/8</span></div>
+</div>
 
 </body>
 </html>

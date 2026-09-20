@@ -1,7 +1,13 @@
 # TP — Le pump-down le plus simple du monde (CAP IFCA)
 
-Sources HTML du TP, mises en page à la **charte inerWeb Édu** (Calibri 14 pt élève,
-Trebuchet MS bold en titres, bleu `#1b3a63`, orange `#ff6b35`, fond clair uniquement).
+Sources HTML du TP. **La mise en page reprend celle des documents imprimables du TP
+BAC PRO MFER 1re année** (`pedagogie/symboles-frigo/` : `carnet-eleve.html`,
+`interrogation.html`, `memo-frigoriste.html`) : mêmes polices, mêmes corps, mêmes classes,
+mêmes couleurs. Un document de ce dossier doit pouvoir être posé à côté d'un document
+symboles-frigo sans qu'on voie la couture.
+
+Calibri 14 pt (12 pt à l'impression), Trebuchet MS bold en titres, texte en `#1b3a63`,
+accent `#ff6b35`, fond clair.
 
 ## Ce que fait la séance
 
@@ -28,6 +34,26 @@ six étapes, ses consignes, ses figures — remis à la charte et augmenté des 
 Les planches de bornier viennent du jeu de folios **« Schéma PUMP DOWN le plus simple du monde »**
 (F. Henninot, 12 folios).
 
+## Économie d'encre — la règle du dossier
+
+Ces documents sont tirés en seize exemplaires, plusieurs fois par an.
+
+Ce que la charte MFER apporte déjà : texte en `#1b3a63` plutôt qu'en noir, lignes à écrire
+en **pointillé** plutôt qu'en cadre plein, en-têtes de tableau en `#eef4f9`, filets `#b9c2cc`
+de 1 px. Tout cela est repris tel quel.
+
+**Un seul écart assumé avec symboles-frigo :** là-bas le `h2` est un bandeau *plein* (fond
+`#1b3a63`, texte blanc). Sur huit pages en seize exemplaires, c'est l'élément qui coûte le
+plus cher. Ici il garde sa forme et son rythme, mais au trait : fond blanc, texte bleu, barre
+de gauche épaisse. À dire si tu le veux plein comme dans symboles-frigo — c'est une ligne de CSS.
+
+Les planches tirées du fonds suivent la même règle : les barrettes du bornier sont **délavées**
+(`outils-planche-bornier.py` pour le vectoriel, `outils-alleger-encre.py` pour les captures).
+Le code couleur reste lisible, et le stylo de l'élève ressort par-dessus le dessin.
+
+Mesure sur la fiche élève : **2,6 % de couverture d'encre en moyenne par page**, contre 4,0 %
+pour la version précédente — un tiers de moins.
+
 ## Fichiers
 
 | Fichier | Rôle |
@@ -37,6 +63,7 @@ Les planches de bornier viennent du jeu de folios **« Schéma PUMP DOWN le plus
 | `tp-pump-down-professeur.html` | déroulé, corrigés, évaluation, 5 pages — **non versionné** |
 | `construire.py` | assemble les PDF (Chromium + pymupdf) |
 | `outils-planche-bornier.py` | fabrique les deux planches de bornier depuis le folio 3/12 |
+| `outils-alleger-encre.py` | délave les captures couleur du sujet d'origine |
 | `assets/` | figures du sujet d'origine, planches de bornier, codes QR |
 
 ### Document professeur non versionné
