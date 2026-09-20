@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>TP n° 2 (B) — Câbler le bornier du pump-down (document élève)</title>
+<link rel="stylesheet" href="charte-inerweb-edu.css">
+</head>
+<body class="doc-eleve">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="flocon" viewBox="0 0 32 32"><g stroke="#1b3a63" stroke-width="2.1" stroke-linecap="round" fill="none"><path d="M16 3V29M5.5 9.5L26.5 22.5M5.5 22.5L26.5 9.5"/><path d="M16 8.2l-3.3-3.3M16 8.2l3.3-3.3M16 23.8l-3.3 3.3M16 23.8l3.3 3.3"/><path d="M10.6 12.1l-4.5-1.2M10.6 12.1l1.2-4.5M21.4 19.9l4.5 1.2M21.4 19.9l-1.2 4.5"/><path d="M10.6 19.9l-4.5 1.2M10.6 19.9l1.2 4.5M21.4 12.1l4.5-1.2M21.4 12.1l-1.2-4.5"/></g></symbol></svg>
+
+<!-- ======================= TP page 1 — couverture ======================= -->
+<section class="page">
+  <header class="tete">
+    <div class="marque">
+      <div class="logo"><svg class="flocon"><use href="#flocon"/></svg><span class="mot">inerWeb</span><span class="cartouche">Édu</span></div>
+      <div class="sign">par <b>F. Henninot</b> · LPP Jacques Raynaud — Campus ÉQUATIO</div>
+    </div>
+    <img src="assets/equatio.png" style="width:114pt;height:36pt">
+  </header>
+
+  <table class="identite">
+    <tr>
+      <td style="width:22%"><span class="lab">NIVEAU</span><span class="val fort">2e année CAP IFCA</span></td>
+      <td style="width:42%"><span class="lab">TP N° 2</span><span class="val"><b>B — Câbler le bornier du pump-down</b></span></td>
+      <td style="width:14%"><span class="lab">SÉQUENCE</span><span class="val">S11</span></td>
+      <td style="width:22%"><span class="lab">DURÉE</span><span class="val">2 h — lundi 21/09/2026</span></td>
+    </tr>
+    <tr>
+      <td><span class="lab">NOM</span><div style="border-bottom:.8pt solid #22303f;height:14pt"></div></td>
+      <td><span class="lab">PRÉNOM</span><div style="border-bottom:.8pt solid #22303f;height:14pt"></div></td>
+      <td><span class="lab">BINÔME</span><div style="border-bottom:.8pt solid #22303f;height:14pt"></div></td>
+      <td><span class="lab">BORNIER N°</span><div style="border-bottom:.8pt solid #22303f;height:14pt"></div></td>
+    </tr>
+  </table>
+
+  <div class="carte">
+    <div class="bandeau b-bleu"><span class="num">✦</span> Ma mission</div>
+    <div class="corps">
+      <p>Le bornier attend ses fils. <b>Je câble chaque appareil sur sa bonne borne, je pose les ponts.</b></p>
+      <p style="font-size:13pt;color:#5d6b7c;margin:0">C'est le montage du <b>pump-down simple</b> vu ce matin
+      en cours : thermostat, pressostat BP, pressostat HP, puis la vanne, le compresseur et le condenseur.</p>
+    </div>
+  </div>
+
+  <div class="carte">
+    <div class="bandeau b-orange"><span class="num">⚠</span> Sécurité — je coche (2 points)</div>
+    <div class="corps">
+      <div class="cols">
+        <div class="case"><b>Risque —</b> <span>☐</span> électrisation &nbsp;&nbsp; <span>☐</span> court-circuit</div>
+        <div class="case"><b>EPI —</b> <span>☐</span> chaussures &nbsp;&nbsp; <span>☐</span> outils isolés</div>
+      </div>
+      <div class="interdit"><b>Je ne fais jamais.</b> Je ne mets jamais sous tension — c'est le professeur qui le
+      fait. Je ne touche jamais une borne avant son visa.</div>
+    </div>
+  </div>
+
+  <div class="carte">
+    <div class="bandeau b-bleu"><span class="num">✓</span> Ce que je vais savoir faire</div>
+    <div class="corps">
+      <ul class="puces" style="margin-bottom:0">
+        <li>Lire un schéma de bornier.</li>
+        <li>Câbler sur la bonne borne.</li>
+        <li>Poser un pont.</li>
+      </ul>
+    </div>
+  </div>
+
+  <footer class="pied">
+    <span><span class="fl">❄</span> inerweb.fr · pack Fluides — LPP Jacques Raynaud · Campus ÉQUATIO · F. Henninot</span>
+    <span>TP-02-B · créé le 20/09/2026 · © F. Henninot 2026</span>
+  </footer>
+</section>
+
+<!-- ======================= TP page 2 — poste et partie A ======================= -->
+<section class="page">
+  <header class="tete">
+    <div class="marque">
+      <div class="logo"><svg class="flocon"><use href="#flocon"/></svg><span class="mot">inerWeb</span><span class="cartouche">Édu</span></div>
+      <div class="sign">par <b>F. Henninot</b> · LPP Jacques Raynaud — Campus ÉQUATIO</div>
+    </div>
+    <div class="titre-doc"><span class="t1">TP2-B</span><span class="t2">poste et partie A</span></div>
+  </header>
+
+  <div class="etape-titre">Étape 0 — je prépare mon poste</div>
+  <p class="etape-chapo">Je cherche dans le bac, je coche.</p>
+  <table class="coche">
+    <thead><tr><th>MATÉRIEL</th><th style="width:66pt;white-space:nowrap">TROUVÉ ✔</th><th style="width:62pt">MANQUE</th></tr></thead>
+    <tbody>
+      <tr><td>Bornier sur rail DIN</td><td class="box">☐</td><td class="box">☐</td></tr>
+      <tr><td>Fils 1,5 mm² rouge (commande)</td><td class="box">☐</td><td class="box">☐</td></tr>
+      <tr><td>Fils 1,5 mm² bleu (commande)</td><td class="box">☐</td><td class="box">☐</td></tr>
+      <tr><td>Fils 2,5 mm² noir (puissance)</td><td class="box">☐</td><td class="box">☐</td></tr>
+      <tr><td>Fil vert/jaune (terre)</td><td class="box">☐</td><td class="box">☐</td></tr>
+      <tr><td>Pince à dénuder, pince à sertir</td><td class="box">☐</td><td class="box">☐</td></tr>
+      <tr><td>Tournevis, embouts</td><td class="box">☐</td><td class="box">☐</td></tr>
+    </tbody>
+  </table>
+
+  <div class="part">
+    <div class="part-tete"><span class="lettre">A</span><span class="nom">Je lis le schéma</span><span class="points">3 points</span></div>
+    <div class="part-corps">
+      <p class="etape-chapo" style="margin-bottom:4pt">Je regarde le schéma des raccordements. Je réponds.</p>
+      <div class="cols" style="gap:16pt">
+        <div style="flex:0 0 176pt">
+          <img src="assets/schema-pump-down-simple.svg" style="width:176pt;height:313pt">
+          <div class="legende" style="margin-top:4pt">Schéma des raccordements (F. Henninot, folio 1/12).</div>
+        </div>
+        <div style="flex:1">
+          <div class="question">Le bornier a combien de bornes numérotées (sans N ni L1) ?</div>
+          <div class="reponse court"></div>
+          <div class="question">Quels appareils ont un commun (une borne qui sert deux fois) ?</div>
+          <div class="reponse"></div>
+          <div class="question">Quel appareil est commandé par le thermostat seul ?</div>
+          <div class="reponse"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="pied">
+    <span><span class="fl">❄</span> inerweb.fr · pack Fluides — LPP Jacques Raynaud · Campus ÉQUATIO · F. Henninot</span>
+    <span>TP-02-B · créé le 20/09/2026 · © F. Henninot 2026</span>
+  </footer>
+</section>
+
+<!-- ======================= TP page 3 — partie B1 ======================= -->
+<section class="page">
+  <header class="tete">
+    <div class="marque">
+      <div class="logo"><svg class="flocon"><use href="#flocon"/></svg><span class="mot">inerWeb</span><span class="cartouche">Édu</span></div>
+      <div class="sign">par <b>F. Henninot</b> · LPP Jacques Raynaud — Campus ÉQUATIO</div>
+    </div>
+    <div class="titre-doc"><span class="t1">TP2-B</span><span class="t2">partie B1</span></div>
+  </header>
+
+  <div class="part" style="margin-top:14pt">
+    <div class="part-tete"><span class="lettre">B1</span><span class="nom">Je remplis le tableau de repérage</span><span class="points">5 points</span></div>
+    <div class="part-corps">
+      <p class="etape-chapo">Sur le schéma (page précédente) et sur le bornier, je note les bornes de chaque
+      départ et la couleur du fil que je vais poser.</p>
+      <table class="tab">
+        <thead><tr><th style="width:30%">DÉPART</th><th style="width:40%">SES BORNES SUR LE BORNIER</th><th>COULEUR DU FIL</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Arrivée (réseau)</td><td class="vide"></td><td class="vide"></td></tr>
+          <tr><td class="k">THERMOSTAT</td><td class="vide"></td><td class="vide"></td></tr>
+          <tr><td class="k">VEM</td><td class="vide"></td><td class="vide"></td></tr>
+          <tr><td class="k">PSL</td><td class="vide"></td><td class="vide"></td></tr>
+          <tr><td class="k">PZH</td><td class="vide"></td><td class="vide"></td></tr>
+          <tr><td class="k">CMP</td><td class="vide"></td><td class="vide"></td></tr>
+          <tr><td class="k">COND</td><td class="vide"></td><td class="vide"></td></tr>
+          <tr><td class="k">EVAP</td><td class="vide"></td><td class="vide"></td></tr>
+        </tbody>
+      </table>
+      <p class="etape-chapo" style="margin:0">Commande = fil 1,5 mm² rouge ou bleu · Puissance = fil 2,5 mm² noir.</p>
+    </div>
+  </div>
+
+  <div class="note bleu" style="margin-top:14pt"><b>Aide.</b> La table des bornes est sur la fiche ressource
+  (dernières pages) — je la garde ouverte au poste, je n'écris pas dessus.</div>
+
+  <footer class="pied">
+    <span><span class="fl">❄</span> inerweb.fr · pack Fluides — LPP Jacques Raynaud · Campus ÉQUATIO · F. Henninot</span>
+    <span>TP-02-B · créé le 20/09/2026 · © F. Henninot 2026</span>
+  </footer>
+</section>
+
+<!-- ======================= TP page 4 — partie B2 ======================= -->
+<section class="page">
+  <header class="tete">
+    <div class="marque">
+      <div class="logo"><svg class="flocon"><use href="#flocon"/></svg><span class="mot">inerWeb</span><span class="cartouche">Édu</span></div>
+      <div class="sign">par <b>F. Henninot</b> · LPP Jacques Raynaud — Campus ÉQUATIO</div>
+    </div>
+    <div class="titre-doc"><span class="t1">TP2-B</span><span class="t2">partie B2</span></div>
+  </header>
+
+  <div class="part" style="margin-top:14pt">
+    <div class="part-tete"><span class="lettre">B2</span><span class="nom">Je pose les ponts</span><span class="points">4 points</span></div>
+    <div class="part-corps">
+      <p style="font-size:13pt"><b>Un pont, c'est quoi ?</b> Un pont relie deux bornes voisines du bornier.
+      Elles doivent porter le même courant. Un pont remplace un fil que je n'ai pas besoin de tirer jusqu'à
+      un appareil.</p>
+      <div class="figure"><img src="assets/bornier-ponts.png" style="width:300pt"></div>
+      <div class="legende">Le même bornier, ponts déjà posés — je les repère.</div>
+      <table class="tab">
+        <thead><tr><th style="width:42%">ENTRE QUELLE BORNE ET QUELLE BORNE</th><th>POURQUOI</th></tr></thead>
+        <tbody>
+          <tr><td class="vide" style="height:30pt"></td><td class="vide"></td></tr>
+          <tr><td class="vide" style="height:30pt"></td><td class="vide"></td></tr>
+          <tr><td class="vide" style="height:30pt"></td><td class="vide"></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer class="pied">
+    <span><span class="fl">❄</span> inerweb.fr · pack Fluides — LPP Jacques Raynaud · Campus ÉQUATIO · F. Henninot</span>
+    <span>TP-02-B · créé le 20/09/2026 · © F. Henninot 2026</span>
+  </footer>
+</section>
+
+<!-- ======================= TP page 5 — partie C ======================= -->
+<section class="page">
+  <header class="tete">
+    <div class="marque">
+      <div class="logo"><svg class="flocon"><use href="#flocon"/></svg><span class="mot">inerWeb</span><span class="cartouche">Édu</span></div>
+      <div class="sign">par <b>F. Henninot</b> · LPP Jacques Raynaud — Campus ÉQUATIO</div>
+    </div>
+    <div class="titre-doc"><span class="t1">TP2-B</span><span class="t2">partie C</span></div>
+  </header>
+
+  <div class="part" style="margin-top:14pt">
+    <div class="part-tete"><span class="lettre">C</span><span class="nom">Je câble</span><span class="points">4 points</span></div>
+    <div class="part-corps">
+      <p style="font-size:13pt;margin-bottom:6pt"><b>Toujours hors tension.</b> Je câble dans cet ordre :</p>
+      <ol class="gestes">
+        <li>Je vérifie que tout est hors tension.</li>
+        <li>Je dénude le fil à la bonne longueur.</li>
+        <li>Je pose l'embout, je sertis.</li>
+        <li>Un seul fil par borne.</li>
+        <li>Je serre la vis.</li>
+        <li>Je tire doucement pour vérifier.</li>
+      </ol>
+      <p class="etape-chapo" style="margin:10pt 0 5pt">Je coche chaque départ quand il est câblé, puis quand je l'ai vérifié.</p>
+      <table class="coche">
+        <thead><tr><th>DÉPART</th><th style="width:70pt">CÂBLÉ</th><th style="width:70pt">VÉRIFIÉ</th></tr></thead>
+        <tbody>
+          <tr><td>THERMOSTAT</td><td class="box">☐</td><td class="box">☐</td></tr>
+          <tr><td>VEM</td><td class="box">☐</td><td class="box">☐</td></tr>
+          <tr><td>PSL</td><td class="box">☐</td><td class="box">☐</td></tr>
+          <tr><td>PZH</td><td class="box">☐</td><td class="box">☐</td></tr>
+          <tr><td>CMP</td><td class="box">☐</td><td class="box">☐</td></tr>
+          <tr><td>COND</td><td class="box">☐</td><td class="box">☐</td></tr>
+          <tr><td>EVAP</td><td class="box">☐</td><td class="box">☐</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="part">
+    <div class="part-tete"><span class="lettre">✔</span><span class="nom">Autocontrôle</span><span class="points">2 points</span></div>
+    <div class="part-corps">
+      <div class="case">
+        <span>☐</span> aucun fil nu qui dépasse &nbsp;&nbsp; <span>☐</span> chaque borne serrée &nbsp;&nbsp;
+        <span>☐</span> ponts posés comme sur le schéma
+      </div>
+      <div class="visa"><b>J'appelle le professeur pour la mise sous tension.</b> &nbsp; Visa : ______________</div>
+    </div>
+  </div>
+
+  <footer class="pied">
+    <span><span class="fl">❄</span> inerweb.fr · pack Fluides — LPP Jacques Raynaud · Campus ÉQUATIO · F. Henninot</span>
+    <span>TP-02-B · créé le 20/09/2026 · © F. Henninot 2026</span>
+  </footer>
+</section>
+
+<!-- ======================= TP page 6 — compte-rendu ======================= -->
+<section class="page">
+  <header class="tete">
+    <div class="marque">
+      <div class="logo"><svg class="flocon"><use href="#flocon"/></svg><span class="mot">inerWeb</span><span class="cartouche">Édu</span></div>
+      <div class="sign">par <b>F. Henninot</b> · LPP Jacques Raynaud — Campus ÉQUATIO</div>
+    </div>
+    <div class="titre-doc"><span class="t1">TP2-B</span><span class="t2">compte-rendu</span></div>
+  </header>
+
+  <div class="etape-titre">Ma fiche compte-rendu</div>
+  <p class="etape-chapo">Barème : Sécurité 2 · A 3 · B1 5 · B2 4 · C 4 · Autocontrôle 2 = 20.
+  Je colorie mon niveau.</p>
+
+  <table class="tab" style="font-size:11.5pt">
+    <thead><tr><th style="width:26%">COMPÉTENCE</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th></tr></thead>
+    <tbody>
+      <tr><td class="k">C3.6 · T10 · S5.6</td><td>—</td><td>Erreur borne</td><td>Aidé</td><td>Seul, conforme</td><td>Explique</td></tr>
+      <tr><td class="k">C3.7 · T11 · S6.2</td><td>—</td><td>Interdit</td><td>Rappel</td><td>Seul</td><td>Anticipe</td></tr>
+      <tr><td class="k">C2.2 · S2.1</td><td>—</td><td>Mal lu</td><td>Aidé</td><td>Juste, seul</td><td>Justifie</td></tr>
+      <tr><td class="k">Savoir-être</td><td>—</td><td>Interdit</td><td>Rappel</td><td>Rangé seul</td><td>Entraide</td></tr>
+    </tbody>
+  </table>
+  <p class="etape-chapo">0 → NE · 1 → NA · 2 → EC · 3 → M · 4 → PM — NE non évalué · NA non acquis ·
+  EC en cours · M maîtrisé · PM parfaitement maîtrisé</p>
+
+  <table class="tab">
+    <thead><tr><th style="width:34%">POSITIONNEMENT</th><th>MOI</th><th>PROFESSEUR</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Compétence</td><td>0☐ 1☐ 2☐ 3☐ 4☐</td><td>0☐ 1☐ 2☐ 3☐ 4☐</td></tr>
+      <tr><td class="k">Savoir-être</td><td>0☐ 1☐ 2☐ 3☐ 4☐</td><td>0☐ 1☐ 2☐ 3☐ 4☐</td></tr>
+    </tbody>
+  </table>
+
+  <p class="atoi" style="margin-top:10pt"><b>J'ai réussi :</b></p>
+  <div class="lignes"><div></div><div></div></div>
+  <p class="atoi" style="margin-top:9pt"><b>À retravailler :</b></p>
+  <div class="lignes"><div></div><div></div></div>
+
+  <div class="ressource-titre">Réviser à la maison sur inerweb.fr</div>
+  <div class="anim">
+    <img class="qr" src="assets/qr/pump-down-automatique.svg">
+    <div class="txt">
+      <div class="kicker">ANIMATION EN LIGNE · SCANNE LE CODE</div>
+      <div class="anim-titre">Le pump-down automatique</div>
+      <div class="anim-url">inerweb.fr/packs/fluides/res/pump-down-automatique/</div>
+    </div>
+  </div>
+
+  <footer class="pied">
+    <span><span class="fl">❄</span> inerweb.fr · pack Fluides — LPP Jacques Raynaud · Campus ÉQUATIO · F. Henninot</span>
+    <span>TP-02-B · créé le 20/09/2026 · © F. Henninot 2026</span>
+  </footer>
+</section>
+
+<!-- ======================= Ressource 1/3 ======================= -->
+<section class="page">
+  <header class="tete">
+    <div class="marque">
+      <div class="logo"><svg class="flocon"><use href="#flocon"/></svg><span class="mot">inerWeb</span><span class="cartouche">Édu</span></div>
+      <div class="sign">par <b>F. Henninot</b> · LPP Jacques Raynaud — Campus ÉQUATIO</div>
+    </div>
+    <div class="titre-doc"><span class="t1">RESSOURCE BORNIER</span><span class="t2">1/3</span></div>
+  </header>
+
+  <div class="ressource-bandeau">RESSOURCE — CÂBLER LE BORNIER DU PUMP-DOWN</div>
+  <p class="etape-chapo" style="margin-top:7pt">À garder au poste, à consulter, à ne jamais écrire dessus.
+  Un exemplaire par binôme.</p>
+
+  <h3 style="font-family:'Trebuchet MS',sans-serif;font-weight:bold;font-size:12pt;color:#1b3a63;margin:10pt 0 6pt">
+    Les trois commandes — chacune a un commun (1) et deux sorties (2 et 4)</h3>
+  <div class="cols" style="gap:10pt;align-items:flex-end">
+    <div style="text-align:center"><img src="assets/symbole-th.png" style="height:112pt">
+      <div class="legende" style="margin:3pt 0 0">TH — thermostat</div></div>
+    <div style="text-align:center"><img src="assets/symbole-psl.png" style="height:80pt">
+      <div class="legende" style="margin:3pt 0 0">PSL — pressostat BP</div></div>
+    <div style="text-align:center"><img src="assets/symbole-pzh.png" style="height:80pt">
+      <div class="legende" style="margin:3pt 0 0">PZH — pressostat HP</div></div>
+  </div>
+
+  <h3 style="font-family:'Trebuchet MS',sans-serif;font-weight:bold;font-size:12pt;color:#1b3a63;margin:12pt 0 6pt">
+    La table des bornes du bornier</h3>
+  <table class="tab">
+    <thead><tr><th style="width:42%">DÉPART</th><th>SES BORNES</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Arrivée réseau</td><td>N · L1</td></tr>
+      <tr><td class="k">Sortie disjoncteur</td><td>N1 · 2</td></tr>
+      <tr><td class="k">THERMOSTAT (TH)</td><td>3 (commun) · 4 · 5</td></tr>
+      <tr><td class="k">VEM (vanne)</td><td>N6 · 7</td></tr>
+      <tr><td class="k">PSL (pressostat BP)</td><td>8 (commun) · 9 · 10</td></tr>
+      <tr><td class="k">PZH (pressostat HP)</td><td>11 (commun) · 12 · 13</td></tr>
+      <tr><td class="k">CMP (compresseur)</td><td>N14 · 15</td></tr>
+      <tr><td class="k">COND (condenseur)</td><td>N16 · 17</td></tr>
+      <tr><td class="k">EVAP (évaporateur)</td><td>N18 · 19</td></tr>
+    </tbody>
+  </table>
+  <p class="etape-chapo" style="margin:0">Une borne de terre (vert/jaune) sépare chaque groupe.
+  Les numéros qui commencent par N sont les neutres.</p>
+
+  <footer class="pied">
+    <span><span class="fl">❄</span> inerweb.fr · pack Fluides — LPP Jacques Raynaud · Campus ÉQUATIO · F. Henninot</span>
+    <span>document ressource — à garder, ne pas écrire dessus</span>
+  </footer>
+</section>
+
+<!-- ======================= Ressource 2/3 ======================= -->
+<section class="page">
+  <header class="tete">
+    <div class="marque">
+      <div class="logo"><svg class="flocon"><use href="#flocon"/></svg><span class="mot">inerWeb</span><span class="cartouche">Édu</span></div>
+      <div class="sign">par <b>F. Henninot</b> · LPP Jacques Raynaud — Campus ÉQUATIO</div>
+    </div>
+    <div class="titre-doc"><span class="t1">RESSOURCE BORNIER</span><span class="t2">2/3</span></div>
+  </header>
+
+  <h3 style="font-family:'Trebuchet MS',sans-serif;font-weight:bold;font-size:12pt;color:#1b3a63;margin:14pt 0 6pt">
+    Les fils — section et couleur</h3>
+  <table class="tab">
+    <thead><tr><th style="width:34%">FIL</th><th style="width:33%">SECTION</th><th>COULEUR</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Commande</td><td>1,5 mm² (H07VK)</td><td>rouge et bleu</td></tr>
+      <tr><td class="k">Puissance</td><td>2,5 mm² (H07VK)</td><td>noir</td></tr>
+      <tr><td class="k">Terre</td><td>—</td><td>vert et jaune</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:13pt">La commande alimente les thermostats et pressostats (petit courant). La puissance
+  alimente le compresseur, le condenseur et l'évaporateur (gros courant). La terre n'est jamais coupée,
+  jamais pontée.</p>
+
+  <div class="interdit"><b>Toujours hors tension.</b> Je ne câble jamais sous tension. La mise sous tension est
+  faite par le professeur seul, après visa.</div>
+
+  <h3 style="font-family:'Trebuchet MS',sans-serif;font-weight:bold;font-size:12pt;color:#1b3a63;margin:14pt 0 6pt">
+    Sertir un embout — la méthode en 4 gestes</h3>
+  <ol class="gestes">
+    <li>Je dénude le fil sur la longueur de l'embout, pas plus.</li>
+    <li>J'insère le fil dans l'embout, jusqu'au fond, aucun brin ne dépasse.</li>
+    <li>Je sertis avec la pince adaptée, une seule fois, bien au milieu.</li>
+    <li>Je tire doucement sur le fil : l'embout ne doit pas bouger.</li>
+  </ol>
+
+  <div class="note"><b>Erreur fréquente.</b> Un embout trop serti se casse. Un embout mal inséré laisse un brin
+  nu qui touche la borne voisine.</div>
+
+  <footer class="pied">
+    <span><span class="fl">❄</span> inerweb.fr · pack Fluides — LPP Jacques Raynaud · Campus ÉQUATIO · F. Henninot</span>
+    <span>document ressource — à garder, ne pas écrire dessus</span>
+  </footer>
+</section>
+
+<!-- ======================= Ressource 3/3 ======================= -->
+<section class="page">
+  <header class="tete">
+    <div class="marque">
+      <div class="logo"><svg class="flocon"><use href="#flocon"/></svg><span class="mot">inerWeb</span><span class="cartouche">Édu</span></div>
+      <div class="sign">par <b>F. Henninot</b> · LPP Jacques Raynaud — Campus ÉQUATIO</div>
+    </div>
+    <div class="titre-doc"><span class="t1">RESSOURCE BORNIER</span><span class="t2">3/3</span></div>
+  </header>
+
+  <h3 style="font-family:'Trebuchet MS',sans-serif;font-weight:bold;font-size:12pt;color:#1b3a63;margin:14pt 0 6pt">
+    Le bornier au complet — ma référence de câblage</h3>
+  <div class="figure"><img src="assets/bornier-complet.png" style="width:330pt"></div>
+  <div class="legende">Le bornier complet, avec les fils déjà tirés — c'est ce que mon binôme et moi devons obtenir.</div>
+
+  <div class="anim large" style="margin-top:14pt">
+    <img class="qr" src="assets/qr/inerweb.svg">
+    <div class="txt">
+      <div class="kicker">TOUT LE PACK FLUIDES · À LA MAISON COMME EN ATELIER</div>
+      <div class="anim-titre">inerWeb Édu — les animations de la filière froid</div>
+      <div class="anim-url">inerweb.fr</div>
+    </div>
+  </div>
+
+  <footer class="pied">
+    <span><span class="fl">❄</span> inerweb.fr · pack Fluides — LPP Jacques Raynaud · Campus ÉQUATIO · F. Henninot</span>
+    <span>document ressource — à garder, ne pas écrire dessus</span>
+  </footer>
+</section>
+
+</body>
+</html>

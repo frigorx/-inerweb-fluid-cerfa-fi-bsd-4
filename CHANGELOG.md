@@ -5,6 +5,15 @@
 > conservé par l'auteur hors de ce dépôt ; l'historique git du dépôt reste,
 > lui, complet et non réécrit.
 
+## 2026-09-20 — séance CAP IFCA « le pump-down simple »
+
+### Nouveau dossier pédagogique `pedagogie/pump-down-cap-ifca/`
+
+- Sources HTML de la séance 2CAP26-S39-02 du 21/09/2026, à la charte inerWeb Édu : fiche de cours n° 01 (5 pages) et TP-02-B élève avec sa ressource bornier (9 pages).
+- Le cours s'arrête au **pump-down simple** : commande directe, sécurité minimum, pump-down. Le pump-down unique est annoncé aux élèves et reporté au cours suivant ; le cours passe de 1 h 20 à 1 h et le câblage retrouve ses 2 h.
+- Schéma de commande repris en vectoriel depuis le folio 1/12 du fonds établissement, lisible à l'impression, et codes QR vers les animations inerweb.fr du pack Fluides.
+- `python3 construire.py` régénère le PDF. Les documents professeur (corrigés, mention « ne pas distribuer ») restent hors dépôt.
+
 ## 2026-09-10 — portée des alertes et documents, transparence RGPD
 
 ### Préparation de l'utilisation réelle à l'école
