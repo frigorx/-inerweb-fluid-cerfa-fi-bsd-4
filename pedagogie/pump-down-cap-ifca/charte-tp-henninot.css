@@ -1,0 +1,104 @@
+/* ============================================================
+   Feuille de style des TP — F. Henninot, LP Privé Jacques Raynaud
+
+   Elle ne cherche pas à faire joli. Elle reproduit la mise en page
+   des TP Word de l'atelier : cadre épais, angles DROITS, filets noirs
+   fins, titres d'exercice « 3 / Tracer … », cases à remplir.
+   Référence : cablage pump donwn le plussimpl.docx.
+
+   TROIS RÈGLES, dans cet ordre :
+   1. Calibri 14 pt pour le corps. Jamais moins de 13 pt dans un tableau.
+   2. NOIR ET BLANC. Aucune couleur : le document doit sortir identique
+      d'une photocopieuse. Pas de texte clair sur fond sombre.
+   3. Économie d'encre. Aucun aplat, sauf le gris très clair #f2f2f2 des
+      lignes de titre. Les planches du fonds sont délavées par les deux
+      outils du dossier.
+
+   Ce qu'on ne fait PAS ici, volontairement : pas d'angles arrondis, pas
+   de barre de couleur à gauche des encadrés, pas de pavé teinté, pas de
+   petites capitales espacées, pas de cartes. Ce sont les tics d'une mise
+   en page générée ; un TP de l'atelier n'en a pas.
+   ============================================================ */
+
+@page { size: A4 portrait; margin: 11mm 11mm 9mm; }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Calibri, Carlito, "Segoe UI", sans-serif;
+  font-size: 14pt;
+  line-height: 1.35;
+  color: #000;
+  background: #fff;
+  text-align: left;
+}
+
+.page { page-break-after: always; }
+.page:last-child { page-break-after: auto; }
+
+p { margin-bottom: 7pt; }
+p:last-child { margin-bottom: 0; }
+ul, ol { margin: 0 0 7pt 19pt; }
+li { margin-bottom: 2pt; }
+
+/* --- en-tête des pages de suite : une ligne, pas de logo ----------------
+   Les logos ne sont qu'en page de garde : répétés sur huit pages, ce sont
+   deux images couleur à chaque tirage. Ici, un filet et deux mots. */
+.tete-suite {
+  display: flex; align-items: baseline; justify-content: space-between;
+  border-bottom: .75pt solid #000; padding-bottom: 2pt; margin-bottom: 9pt;
+}
+.tete-suite .titre-court { font-weight: bold; font-size: 12pt; }
+.tete-suite .classe { font-size: 11pt; }
+
+/* --- cadre d'identité, comme le Word ----------------------------------- */
+table { border-collapse: collapse; width: 100%; }
+table.cadre { border: 1.4pt solid #000; margin-bottom: 9pt; }
+table.cadre td { border: .75pt solid #000; padding: 2.5pt 7pt; vertical-align: middle; font-size: 13pt; }
+.logos { width: 88pt; text-align: center; padding: 3pt !important; }
+.logos img { display: block; margin: 0 auto 4pt; }
+.logos img.lycee { width: 76pt; }
+.logos img.badge { width: 60pt; margin-bottom: 0; }
+.lab { font-weight: bold; text-decoration: underline; }
+.bande { text-align: center; font-weight: bold; font-size: 15pt; background: #f2f2f2; }
+.note-20 { text-align: center; font-size: 15pt; font-weight: bold; }
+
+/* --- titres d'exercice : « 3 / Tracer … » ------------------------------- */
+h2 { font-size: 14pt; font-weight: normal; line-height: 1.3; margin: 10pt 0 5pt; }
+h2:first-child { margin-top: 0; }
+h2 b { font-weight: bold; }
+h2 .pts { float: right; font-weight: bold; font-size: 13pt; }
+h3 { font-size: 14pt; font-weight: bold; margin: 7pt 0 3pt; }
+
+/* --- tableaux de travail ------------------------------------------------ */
+table.travail { border: .75pt solid #000; margin-bottom: 8pt; }
+table.travail th, table.travail td {
+  border: .75pt solid #000; padding: 2.7pt 7pt; font-size: 13pt;
+  text-align: left; vertical-align: top;
+}
+table.travail th { font-weight: bold; background: #f2f2f2; }
+table.travail td.c, table.travail th.c { text-align: center; }
+table.travail td.vide { height: 26pt; }
+table.travail td.symbole { text-align: center; padding: 3pt; }
+
+/* --- lignes à écrire ----------------------------------------------------- */
+.lg { border-bottom: .75pt solid #000; height: 21pt; }
+
+/* --- encadré : un simple filet, angles droits --------------------------- */
+.encadre { border: .75pt solid #000; padding: 6pt 9pt; margin: 8pt 0; font-size: 13pt; }
+.encadre.gras { border-width: 1.2pt; }
+.encadre p { margin-bottom: 5pt; font-size: 13pt; }
+
+/* --- deux colonnes ------------------------------------------------------- */
+.colonnes { display: grid; grid-template-columns: 1fr 1fr; gap: 10pt; align-items: start; }
+
+/* --- figures ------------------------------------------------------------- */
+.planche { border: .75pt solid #000; padding: 4pt; margin-bottom: 5pt; }
+.planche img { width: 100%; height: auto; display: block; }
+.legende { font-size: 11.5pt; font-style: italic; margin-bottom: 8pt; }
+
+/* --- pied de page --------------------------------------------------------- */
+.pied {
+  margin-top: 9pt; border-top: .75pt solid #000; padding-top: 3pt;
+  font-size: 9.5pt; display: flex; justify-content: space-between;
+}

@@ -1,13 +1,29 @@
 # TP — Le pump-down le plus simple du monde (CAP IFCA)
 
-Sources HTML du TP. **La mise en page reprend celle des documents imprimables du TP
-BAC PRO MFER 1re année** (`pedagogie/symboles-frigo/` : `carnet-eleve.html`,
-`interrogation.html`, `memo-frigoriste.html`) : mêmes polices, mêmes corps, mêmes classes,
-mêmes couleurs. Un document de ce dossier doit pouvoir être posé à côté d'un document
-symboles-frigo sans qu'on voie la couture.
+Sources HTML du TP.
 
-Calibri 14 pt (12 pt à l'impression), Trebuchet MS bold en titres, texte en `#1b3a63`,
-accent `#ff6b35`, fond clair.
+## La mise en page
+
+Elle reproduit **tes TP Word de l'atelier**, pas une charte inventée : le modèle est
+`cablage pump donwn le plussimpl.docx`. Cadre épais autour du bloc d'identité, **angles droits**,
+filets noirs fins, titres d'exercice de la forme « **5 / Tracer** en représentant tous les
+câbles… », cases à remplir, numéro de page seul en pied.
+
+Trois règles, dans cet ordre :
+
+1. **Calibri 14 pt** pour le corps. Jamais moins de 13 pt dans un tableau.
+2. **Noir et blanc.** Aucune couleur : le document doit sortir identique d'une photocopieuse.
+   Pas de texte clair sur fond sombre.
+3. **Économie d'encre.** Aucun aplat, sauf le gris très clair `#f2f2f2` des lignes de titre.
+   Les logos sont en niveaux de gris et n'apparaissent qu'en page de garde. Les planches du
+   fonds sont délavées par les deux outils du dossier.
+
+Ce qu'on ne fait **pas** ici, volontairement : pas d'angles arrondis, pas de barre de couleur à
+gauche des encadrés, pas de pavé teinté, pas de petites capitales espacées, pas de cartes. Ce
+sont les tics d'une mise en page générée ; un TP de l'atelier n'en a pas.
+
+Couverture d'encre mesurée sur la fiche élève : **3,7 % par page**, la page de garde et ses
+cinq tableaux comptant pour le double du reste.
 
 ## Ce que fait la séance
 
@@ -34,31 +50,11 @@ six étapes, ses consignes, ses figures — remis à la charte et augmenté des 
 Les planches de bornier viennent du jeu de folios **« Schéma PUMP DOWN le plus simple du monde »**
 (F. Henninot, 12 folios).
 
-## Économie d'encre — la règle du dossier
-
-Ces documents sont tirés en seize exemplaires, plusieurs fois par an.
-
-Ce que la charte MFER apporte déjà : texte en `#1b3a63` plutôt qu'en noir, lignes à écrire
-en **pointillé** plutôt qu'en cadre plein, en-têtes de tableau en `#eef4f9`, filets `#b9c2cc`
-de 1 px. Tout cela est repris tel quel.
-
-**Un seul écart assumé avec symboles-frigo :** là-bas le `h2` est un bandeau *plein* (fond
-`#1b3a63`, texte blanc). Sur huit pages en seize exemplaires, c'est l'élément qui coûte le
-plus cher. Ici il garde sa forme et son rythme, mais au trait : fond blanc, texte bleu, barre
-de gauche épaisse. À dire si tu le veux plein comme dans symboles-frigo — c'est une ligne de CSS.
-
-Les planches tirées du fonds suivent la même règle : les barrettes du bornier sont **délavées**
-(`outils-planche-bornier.py` pour le vectoriel, `outils-alleger-encre.py` pour les captures).
-Le code couleur reste lisible, et le stylo de l'élève ressort par-dessus le dessin.
-
-Mesure sur la fiche élève : **2,6 % de couverture d'encre en moyenne par page**, contre 4,0 %
-pour la version précédente — un tiers de moins.
-
 ## Fichiers
 
 | Fichier | Rôle |
 |---|---|
-| `charte-inerweb-edu.css` | feuille de style commune |
+| `charte-tp-henninot.css` | feuille de style commune |
 | `tp-pump-down-eleve.html` | fiche d'activité élève, 8 pages |
 | `tp-pump-down-professeur.html` | déroulé, corrigés, évaluation, 5 pages — **non versionné** |
 | `construire.py` | assemble les PDF (Chromium + pymupdf) |
