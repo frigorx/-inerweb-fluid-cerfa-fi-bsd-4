@@ -1,0 +1,153 @@
+{
+ "titre": "21 septembre - CAP IFCA - Pump-down simple, câblage du bornier",
+ "formationNom": "CAP Installateur en froid et conditionnement d’air",
+ "formationId": "CAP_IFCA",
+ "date": "2026-09-21",
+ "modele": "Critères du TP E2 « le pump-down le plus simple du monde », poste électrotechnique en binômes formés d’après le test de niveau du 14/09",
+ "sourceDocuments": [
+  "TP-pump-down-le-plus-simple-ELEVE.pdf",
+  "TP-pump-down-le-plus-simple-PROFESSEUR.pdf"
+ ],
+ "competences": [
+  {
+   "code": "C3.6",
+   "libelle": "Câbler, repérer, connecter les liaisons électriques et électroniques",
+   "criteres": [
+    {
+     "critere": "Repérer les appareils et les bornes du bornier",
+     "reussite": "Repère seul les appareils et leurs bornes, commun compris",
+     "niveauxSource": {
+      "NA": "Ne repère pas les bornes malgré le guidage",
+      "EC": "Repère avec aide ou confond encore commun et sorties d’un contact",
+      "M": "Repère seul les appareils et leurs bornes, commun compris",
+      "PM": "Explique ses repérages et détecte une numérotation fautive sur le folio",
+      "NE": "Non évalué : critère exclu du calcul, jamais zéro."
+     },
+     "_notes": {}
+    },
+    {
+     "critere": "Tracer et expliquer le câblage du bornier avant de poser un fil",
+     "reussite": "Trace seul tous les fils au code des couleurs et explique les trois liaisons entre bornes",
+     "niveauxSource": {
+      "NA": "Tracé non exploitable malgré les indices",
+      "EC": "Tracé correct avec indices ou corrections guidées",
+      "M": "Trace seul tous les fils au code des couleurs et explique les trois liaisons entre bornes",
+      "PM": "Explique aussi pourquoi une borne reste en attente et ce que changerait une liaison déplacée",
+      "NE": "Non évalué : critère exclu du calcul, jamais zéro."
+     },
+     "_notes": {}
+    },
+    {
+     "critere": "Réaliser son câblage conforme au tracé visé",
+     "reussite": "Câble seul conformément à son tracé visé, un fil par borne, embouts sertis",
+     "niveauxSource": {
+      "NA": "Câblage non conforme malgré l’accompagnement",
+      "EC": "Réalisation partielle ou corrections guidées nécessaires",
+      "M": "Câble seul conformément à son tracé visé, un fil par borne, embouts sertis",
+      "PM": "Contrôle sa progression et corrige seul une erreur avant présentation",
+      "NE": "Non évalué : critère exclu du calcul, jamais zéro."
+     },
+     "_notes": {}
+    }
+   ],
+   "savoirsPrerequis": [],
+   "savoirsNouveaux": [],
+   "savoirsEvalues": [],
+   "savoirsRenforces": []
+  },
+  {
+   "code": "C3.7",
+   "libelle": "Contrôler la mise en œuvre des équipements électriques et fluidiques",
+   "criteres": [
+    {
+     "critere": "Effectuer les contrôles demandés hors tension",
+     "reussite": "Réalise seul les contrôles autorisés et demandés, dans le régime établi par le professeur",
+     "niveauxSource": {
+      "NA": "N’effectue pas de contrôle exploitable malgré le guidage",
+      "EC": "Réalise les contrôles avec démonstration ou aide",
+      "M": "Réalise seul les contrôles autorisés et demandés, dans le régime établi par le professeur",
+      "PM": "Explique ce que chaque contrôle permet de vérifier et ses limites",
+      "NE": "Non évalué : critère exclu du calcul, jamais zéro."
+     },
+     "_notes": {}
+    },
+    {
+     "critere": "Consigner et interpréter ses observations",
+     "reussite": "Note ses observations et les confronte aux attentes du montage",
+     "niveauxSource": {
+      "NA": "Aucune observation exploitable malgré le guidage",
+      "EC": "Observations partielles ou interprétation avec aide",
+      "M": "Note ses observations et les confronte aux attentes du montage",
+      "PM": "Signale spontanément un écart et propose une vérification adaptée avant l’essai",
+      "NE": "Non évalué : critère exclu du calcul, jamais zéro."
+     },
+     "_notes": {}
+    }
+   ],
+   "savoirsPrerequis": [],
+   "savoirsNouveaux": [],
+   "savoirsEvalues": [],
+   "savoirsRenforces": []
+  }
+ ],
+ "savoirEtre": [
+  {
+   "critere": "Respecter le régime de travail et demander les validations",
+   "reussite": "Attend le visa du tracé, reste dans les opérations autorisées et appelle le professeur avant essai",
+   "niveauxSource": {
+    "NA": "Ne respecte pas une consigne de sécurité observée : activité interrompue et reprise accompagnée",
+    "EC": "Respecte les consignes après rappel",
+    "M": "Attend le visa du tracé, reste dans les opérations autorisées et appelle le professeur avant essai",
+    "PM": "Respecte les consignes et signale spontanément une situation anormale",
+    "NE": "Non évalué : critère exclu du calcul, jamais zéro."
+   },
+   "_notes": {}
+  },
+  {
+   "critere": "Porter les équipements prévus et organiser son poste",
+   "reussite": "Tenue et poste conformes aux consignes, sans rappel",
+   "niveauxSource": {
+    "NA": "Poste ou tenue non conformes malgré les rappels",
+    "EC": "Conformité obtenue après rappel",
+    "M": "Tenue et poste conformes aux consignes, sans rappel",
+    "PM": "Anticipe l’organisation et repère un élément manquant avant de commencer",
+    "NE": "Non évalué : critère exclu du calcul, jamais zéro."
+   },
+   "_notes": {}
+  },
+  {
+   "critere": "Monter son poste à l’étape 0 et travailler avec méthode",
+   "reussite": "Rassemble son matériel à l’armoire, monte son poste et demande une aide ciblée en cas de blocage",
+   "niveauxSource": {
+    "NA": "N’engage pas le travail malgré les consignes accessibles et l’accompagnement",
+    "EC": "Avance avec relances ou aide fréquente",
+    "M": "Rassemble son matériel à l’armoire, monte son poste et demande une aide ciblée en cas de blocage",
+    "PM": "Vérifie sa démarche et explique précisément son blocage sans faire faire à sa place",
+    "NE": "Non évalué : critère exclu du calcul, jamais zéro."
+   },
+   "_notes": {}
+  },
+  {
+   "critere": "Démonter, ranger et restituer le matériel",
+   "reussite": "Démonte, trie, range et restitue son matériel selon la consigne",
+   "niveauxSource": {
+    "NA": "Rangement non réalisé malgré les rappels",
+    "EC": "Rangement réalisé avec rappels ou tri à reprendre",
+    "M": "Démonte, trie, range et restitue son matériel selon la consigne",
+    "PM": "Vérifie son poste et signale un matériel défectueux ou manquant",
+    "NE": "Non évalué : critère exclu du calcul, jamais zéro."
+   },
+   "_notes": {}
+  }
+ ],
+ "comportement": [
+  "Grille vierge : aucune note, aucune présence, aucune acquisition n’est créée par la préparation.",
+  "Niveaux source HAL : NA=1, EC=2, M=3, PM=4 ; NE exclu du calcul. Aucune conversion en note sur 20 imposée par ce document.",
+  "C3.6 est confortée : elle a déjà été travaillée le 14/09 sur l’auto-maintien. C3.7 est approfondie, deuxième contrôle seul avant tension. Une première réussite ne prouve pas une maîtrise durable.",
+  "Séance 02, poste E2 électrotechnique, premier groupe. Le TP est joué deux lundis, 21/09 et 28/09, identique les deux fois : chaque élève ne le vit qu’une seule fois, et n’est donc évalué que sur une des deux dates.",
+  "Le tracé du bornier est visé par le professeur avant tout câblage. Un élève qui câble sans visa n’est pas évalué sur C3.6 « réaliser » : le critère est NE, pas NA.",
+  "Mise sous tension et essais faits par le professeur seul, élèves non habilités. Ce que l’élève ne peut pas faire n’est pas un manque de compétence : NE.",
+  "Les aménagements et une reformulation de consigne ne sont pas des fautes. Ne pas déduire un niveau d’une absence, d’un manque de temps ou d’un incident de matériel.",
+  "Le folio source 3/12 porte deux fois le repère 9 : la seconde sortie du pressostat BP est la borne 10. Un élève qui suit le folio à la lettre n’est pas en faute sur ce point."
+ ]
+}

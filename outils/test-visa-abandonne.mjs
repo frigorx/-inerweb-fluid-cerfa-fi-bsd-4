@@ -36,6 +36,16 @@
 // (PLAN-LOTS §L3/§L5 « énoncé d'origine », PROMPT-REPRISE). Réécrire un
 // bloc daté serait faire dire à hier ce qu'on sait aujourd'hui.
 //
+// HORS PÉRIMÈTRE AUSSI, et pour une autre raison : les fiches de classe
+// de pedagogie/pump-down-cap-ifca. Ce sont des documents imprimés pour
+// l'atelier, pas du code livré, et « visa » y est le mot du métier — la
+// signature du professeur sur le montage d'un élève avant mise sous
+// tension, « trois visas obligatoires par binôme ». Rien à voir avec le
+// visa T3, et une consigne de sécurité ne se reformule pas pour arranger
+// un détecteur. L'exclusion est étroite (ce seul dossier, pas tout
+// pedagogie/) et la suite vérifie qu'elle ne cache aucun script : la
+// garde reste entière sur le produit.
+//
 // Exécution : node outils/test-visa-abandonne.mjs
 // ============================================================
 
@@ -53,6 +63,9 @@ const EXCLUS_RACINE = new Set([
 const DOSSIER_TIERS = 'v8/js/lib';
 // Le document qui se déclare « état COURANT ».
 const DOC_ETAT_COURANT = 'docs/CARTE-CODE.md';
+// Les fiches de classe : documents imprimés, « visa » y est le mot du
+// métier (voir l'en-tête). Exclusion étroite, gardée par la section B.
+const DOSSIER_CLASSE = 'pedagogie/pump-down-cap-ifca';
 // La suite s'exclut d'elle-même : ses échantillons SONT les tournures
 // interdites, elle se déclarerait fautive au premier passage.
 const MOI = 'outils/test-visa-abandonne.mjs';
@@ -87,6 +100,7 @@ function inventorier(dossier, fichiers) {
       if (EXCLUS_PARTOUT.has(entree.name)) continue;
       if (dossier === RACINE && EXCLUS_RACINE.has(entree.name)) continue;
       if (relatif === DOSSIER_TIERS) continue;
+      if (relatif === DOSSIER_CLASSE) continue;
       inventorier(chemin, fichiers);
       continue;
     }
@@ -147,6 +161,18 @@ const temoin = fichiers.find((f) => f.relatif === TEMOIN_LECTURE);
 verifier('les fichiers sont réellement lus (témoin)',
   !!temoin && readFileSync(temoin.chemin, 'utf8').includes('EXEMPTION_HERMETIQUE_ACTIVE'),
   TEMOIN_LECTURE);
+// L'exclusion des fiches de classe ne vaut que tant qu'elle ne couvre
+// aucun script : un .js qui s'y glisserait sortirait de la garde sans
+// que personne ne le voie. Le dossier est donc recompté, pas déclaré.
+const scriptsClasse = existsSync(join(RACINE, DOSSIER_CLASSE))
+  ? readdirSync(join(RACINE, DOSSIER_CLASSE), { recursive: true })
+    .map((nom) => String(nom).split('\\').join('/'))
+    .filter((nom) => /\.(js|mjs)$/.test(nom))
+  : [];
+verifier(`les fiches de classe ne cachent aucun script (${DOSSIER_CLASSE})`,
+  scriptsClasse.length === 0, scriptsClasse.join(', '));
+verifier('les fiches de classe sont bien hors périmètre',
+  !fichiers.some((f) => f.relatif.startsWith(`${DOSSIER_CLASSE}/`)));
 
 // ============================================================
 // C. Plus aucune condition ne pend à un visa qui ne viendra pas

@@ -1,0 +1,152 @@
+{
+ "titre": "28 septembre - CAP IFCA - Sécurité minimum notée, puis transformation en pump-down",
+ "formationNom": "CAP Installateur en froid et conditionnement d’air",
+ "formationId": "CAP_IFCA",
+ "date": "2026-09-28",
+ "modele": "Reprise du TP E2 en deux temps : câbler le modèle « sécurité minimum », noté, puis transformer ce câblage en pump-down en déplaçant les ponts. Forme du sujet EP2 2023.",
+ "sourceDocuments": [
+  "TP-pump-down-le-plus-simple-ELEVE.pdf",
+  "TP-pump-down-le-plus-simple-PROFESSEUR.pdf"
+ ],
+ "competences": [
+  {
+   "code": "C3.6",
+   "libelle": "Câbler, repérer, connecter les liaisons électriques et électroniques",
+   "criteres": [
+    {
+     "critere": "Repérer les bornes et lire le câblage existant de la sécurité minimum",
+     "reussite": "Repère seul les bornes utilisées et dit à quoi sert chaque liaison du montage",
+     "niveauxSource": {
+      "NA": "Ne repère pas les bornes du montage existant malgré le guidage",
+      "EC": "Repère avec aide ou confond encore commun et sorties d’un contact",
+      "M": "Repère seul les bornes utilisées et dit à quoi sert chaque liaison du montage",
+      "PM": "Explique ses repérages et détecte une numérotation fautive sur le folio",
+      "NE": "Non évalué : critère exclu du calcul, jamais zéro."
+     },
+     "_notes": {}
+    },
+    {
+     "critere": "Câbler le modèle « sécurité minimum » d’après le schéma — partie notée",
+     "reussite": "Câble seul la sécurité minimum conformément au schéma, un fil par borne, embouts sertis",
+     "niveauxSource": {
+      "NA": "Câblage non conforme malgré l’accompagnement",
+      "EC": "Réalisation partielle ou corrections guidées nécessaires",
+      "M": "Câble seul la sécurité minimum conformément au schéma, un fil par borne, embouts sertis",
+      "PM": "Contrôle sa progression et corrige seul une erreur avant présentation",
+      "NE": "Non évalué : critère exclu du calcul, jamais zéro."
+     },
+     "_notes": {}
+    },
+    {
+     "critere": "Transformer le câblage en pump-down en ne déplaçant que ce qu’il faut",
+     "reussite": "Identifie seul les ponts à déplacer, les déplace et laisse le reste du câblage en place",
+     "niveauxSource": {
+      "NA": "Ne voit pas ce qui sépare les deux montages ; décâble tout ou n’intervient pas",
+      "EC": "Trouve les ponts à déplacer avec des indices, ou refait plus que nécessaire",
+      "M": "Identifie seul les ponts à déplacer, les déplace et laisse le reste du câblage en place",
+      "PM": "Justifie chaque pont déplacé et dit ce que ferait la machine si on en oubliait un",
+      "NE": "Non évalué : critère exclu du calcul, jamais zéro."
+     },
+     "_notes": {}
+    }
+   ],
+   "savoirsPrerequis": [],
+   "savoirsNouveaux": [],
+   "savoirsEvalues": [],
+   "savoirsRenforces": []
+  },
+  {
+   "code": "C3.7",
+   "libelle": "Contrôler la mise en œuvre des équipements électriques et fluidiques",
+   "criteres": [
+    {
+     "critere": "Effectuer les contrôles demandés hors tension",
+     "reussite": "Réalise seul les contrôles autorisés et demandés, dans le régime établi par le professeur",
+     "niveauxSource": {
+      "NA": "N’effectue pas de contrôle exploitable malgré le guidage",
+      "EC": "Réalise les contrôles avec démonstration ou aide",
+      "M": "Réalise seul les contrôles autorisés et demandés, dans le régime établi par le professeur",
+      "PM": "Explique ce que chaque contrôle permet de vérifier et ses limites",
+      "NE": "Non évalué : critère exclu du calcul, jamais zéro."
+     },
+     "_notes": {}
+    },
+    {
+     "critere": "Consigner et interpréter ses observations",
+     "reussite": "Note ses observations et les confronte aux attentes du montage",
+     "niveauxSource": {
+      "NA": "Aucune observation exploitable malgré le guidage",
+      "EC": "Observations partielles ou interprétation avec aide",
+      "M": "Note ses observations et les confronte aux attentes du montage",
+      "PM": "Signale spontanément un écart et propose une vérification adaptée avant l’essai",
+      "NE": "Non évalué : critère exclu du calcul, jamais zéro."
+     },
+     "_notes": {}
+    }
+   ],
+   "savoirsPrerequis": [],
+   "savoirsNouveaux": [],
+   "savoirsEvalues": [],
+   "savoirsRenforces": []
+  }
+ ],
+ "savoirEtre": [
+  {
+   "critere": "Respecter le régime de travail et demander les validations",
+   "reussite": "Attend le visa du tracé, reste dans les opérations autorisées et appelle le professeur avant essai",
+   "niveauxSource": {
+    "NA": "Ne respecte pas une consigne de sécurité observée : activité interrompue et reprise accompagnée",
+    "EC": "Respecte les consignes après rappel",
+    "M": "Attend le visa du tracé, reste dans les opérations autorisées et appelle le professeur avant essai",
+    "PM": "Respecte les consignes et signale spontanément une situation anormale",
+    "NE": "Non évalué : critère exclu du calcul, jamais zéro."
+   },
+   "_notes": {}
+  },
+  {
+   "critere": "Porter les équipements prévus et organiser son poste",
+   "reussite": "Tenue et poste conformes aux consignes, sans rappel",
+   "niveauxSource": {
+    "NA": "Poste ou tenue non conformes malgré les rappels",
+    "EC": "Conformité obtenue après rappel",
+    "M": "Tenue et poste conformes aux consignes, sans rappel",
+    "PM": "Anticipe l’organisation et repère un élément manquant avant de commencer",
+    "NE": "Non évalué : critère exclu du calcul, jamais zéro."
+   },
+   "_notes": {}
+  },
+  {
+   "critere": "Monter son poste à l’étape 0 et travailler avec méthode",
+   "reussite": "Rassemble son matériel à l’armoire, monte son poste et demande une aide ciblée en cas de blocage",
+   "niveauxSource": {
+    "NA": "N’engage pas le travail malgré les consignes accessibles et l’accompagnement",
+    "EC": "Avance avec relances ou aide fréquente",
+    "M": "Rassemble son matériel à l’armoire, monte son poste et demande une aide ciblée en cas de blocage",
+    "PM": "Vérifie sa démarche et explique précisément son blocage sans faire faire à sa place",
+    "NE": "Non évalué : critère exclu du calcul, jamais zéro."
+   },
+   "_notes": {}
+  },
+  {
+   "critere": "Démonter, ranger et restituer le matériel",
+   "reussite": "Démonte, trie, range et restitue son matériel selon la consigne",
+   "niveauxSource": {
+    "NA": "Rangement non réalisé malgré les rappels",
+    "EC": "Rangement réalisé avec rappels ou tri à reprendre",
+    "M": "Démonte, trie, range et restitue son matériel selon la consigne",
+    "PM": "Vérifie son poste et signale un matériel défectueux ou manquant",
+    "NE": "Non évalué : critère exclu du calcul, jamais zéro."
+   },
+   "_notes": {}
+  }
+ ],
+ "comportement": [
+  "Grille vierge : aucune note, aucune présence, aucune acquisition n’est créée par la préparation.",
+  "Niveaux source HAL : NA=1, EC=2, M=3, PM=4 ; NE exclu du calcul. Aucune conversion en note sur 20 imposée par ce document.",
+  "Séance du 28/09 : reprise du TP E2 après la séance du 21/09, écourtée par une convocation Mission locale. Les élèves n’ont pas tous le même vécu du pump-down — en tenir compte avant de lire un écart comme un manque.",
+  "Le TP se joue en deux temps : la sécurité minimum est câblée et NOTÉE, puis transformée en pump-down. Les deux temps s’évaluent séparément : un élève peut réussir le câblage et échouer la transformation, et l’inverse.",
+  "La transformation est le cœur de la séance et la forme du sujet EP2 2023. Un élève qui décâble tout pour recâbler à neuf n’a pas commis de faute technique, mais il n’a pas fait l’exercice : c’est EC, pas M.",
+  "Mise sous tension et essais faits par le professeur seul, élèves non habilités. Ce que l’élève n’a pas le droit de faire ne peut pas lui être compté en manque de compétence : NE.",
+  "Le folio source 3/12 porte deux fois le repère 9 : la seconde sortie du pressostat BP est la borne 10. Un élève qui suit le folio à la lettre n’est pas en faute sur ce point."
+ ]
+}
