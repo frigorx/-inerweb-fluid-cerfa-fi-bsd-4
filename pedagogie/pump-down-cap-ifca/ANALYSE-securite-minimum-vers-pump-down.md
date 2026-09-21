@@ -79,10 +79,29 @@ décâble tout n'a rien compris ; celui qui ne touche à rien non plus.
 
 C'est la seule question à poser, et elle contient tout le TP.
 
+## 4 bis. Ce qui a été corrigé le 21/09, une fois la numérotation tranchée
+
+Franck a tranché : **7 · 15 · 17 font foi**, ceux du bornier réel et du folio pump-down.
+
+Le fichier `assets/schema-securite-minimum.png` a donc été réétiqueté : `6 → 7`,
+`14 → 15`, `16 → 17`, `N5 → N6`, `N13 → N14`, `N15 → N16`. **Seules les étiquettes de
+bornes ont changé ; aucun trait, aucun symbole, aucune liaison n'a été touché.**
+
+Deux remarques honnêtes sur cette retouche :
+
+- La police des nouveaux repères n'est pas exactement celle du folio d'origine — aucune
+  police du poste ne correspondait à cette largeur. Les repères sont nets et lisibles, mais
+  un œil attentif verra qu'ils ont été refaits. **Une ré-exportation propre depuis le projet
+  QElectroTech d'origine donnerait mieux**, quand tu auras cinq minutes.
+- Le PNG était aussi **rogné à droite** : les repères du troisième récepteur (`16` et `N15`)
+  étaient coupés en plein glyphe, et ce depuis le TP distribué le 21/09. C'est réparé, les
+  six repères sont désormais entiers.
+
+`assets/schema-a-completer.png` a été vérifié : il portait déjà 15 · 17 · N14 · N16. Les
+deux figures de la page 4 du TP sont donc maintenant d'accord entre elles.
+
 ## 5. Ce qu'il reste à vérifier avant la séance
 
-- [ ] La numérotation qui fait foi pour les récepteurs : **7 · 15 · 17** (bornier et folio
-      pump-down) ou **6 · 14 · 16** (folio sécurité minimum) ?
 - [ ] La borne 10, notée 9 par erreur sur les deux folios, confirmée sur le bornier réel.
 - [ ] **PSL** ou **PZL** pour le pressostat BP — les deux folios se contredisent, comme
       PZH/PZL ailleurs dans le fonds.
