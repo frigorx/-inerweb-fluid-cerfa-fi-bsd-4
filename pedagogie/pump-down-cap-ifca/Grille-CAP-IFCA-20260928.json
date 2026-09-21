@@ -1,9 +1,9 @@
 {
- "titre": "28 septembre - CAP IFCA - Pump-down simple, câblage du bornier",
+ "titre": "28 septembre - CAP IFCA - Sécurité minimum notée, puis transformation en pump-down",
  "formationNom": "CAP Installateur en froid et conditionnement d’air",
  "formationId": "CAP_IFCA",
  "date": "2026-09-28",
- "modele": "Critères du TP E2 « le pump-down le plus simple du monde », poste électrotechnique en binômes formés d’après le test de niveau du 14/09",
+ "modele": "Reprise du TP E2 en deux temps : câbler le modèle « sécurité minimum », noté, puis transformer ce câblage en pump-down en déplaçant les ponts. Forme du sujet EP2 2023.",
  "sourceDocuments": [
   "TP-pump-down-le-plus-simple-ELEVE.pdf",
   "TP-pump-down-le-plus-simple-PROFESSEUR.pdf"
@@ -14,37 +14,37 @@
    "libelle": "Câbler, repérer, connecter les liaisons électriques et électroniques",
    "criteres": [
     {
-     "critere": "Repérer les appareils et les bornes du bornier",
-     "reussite": "Repère seul les appareils et leurs bornes, commun compris",
+     "critere": "Repérer les bornes et lire le câblage existant de la sécurité minimum",
+     "reussite": "Repère seul les bornes utilisées et dit à quoi sert chaque liaison du montage",
      "niveauxSource": {
-      "NA": "Ne repère pas les bornes malgré le guidage",
+      "NA": "Ne repère pas les bornes du montage existant malgré le guidage",
       "EC": "Repère avec aide ou confond encore commun et sorties d’un contact",
-      "M": "Repère seul les appareils et leurs bornes, commun compris",
+      "M": "Repère seul les bornes utilisées et dit à quoi sert chaque liaison du montage",
       "PM": "Explique ses repérages et détecte une numérotation fautive sur le folio",
       "NE": "Non évalué : critère exclu du calcul, jamais zéro."
      },
      "_notes": {}
     },
     {
-     "critere": "Tracer et expliquer le câblage du bornier avant de poser un fil",
-     "reussite": "Trace seul tous les fils au code des couleurs et explique les trois liaisons entre bornes",
+     "critere": "Câbler le modèle « sécurité minimum » d’après le schéma — partie notée",
+     "reussite": "Câble seul la sécurité minimum conformément au schéma, un fil par borne, embouts sertis",
      "niveauxSource": {
-      "NA": "Tracé non exploitable malgré les indices",
-      "EC": "Tracé correct avec indices ou corrections guidées",
-      "M": "Trace seul tous les fils au code des couleurs et explique les trois liaisons entre bornes",
-      "PM": "Explique aussi pourquoi une borne reste en attente et ce que changerait une liaison déplacée",
+      "NA": "Câblage non conforme malgré l’accompagnement",
+      "EC": "Réalisation partielle ou corrections guidées nécessaires",
+      "M": "Câble seul la sécurité minimum conformément au schéma, un fil par borne, embouts sertis",
+      "PM": "Contrôle sa progression et corrige seul une erreur avant présentation",
       "NE": "Non évalué : critère exclu du calcul, jamais zéro."
      },
      "_notes": {}
     },
     {
-     "critere": "Réaliser son câblage conforme au tracé visé",
-     "reussite": "Câble seul conformément à son tracé visé, un fil par borne, embouts sertis",
+     "critere": "Transformer le câblage en pump-down en ne déplaçant que ce qu’il faut",
+     "reussite": "Identifie seul les ponts à déplacer, les déplace et laisse le reste du câblage en place",
      "niveauxSource": {
-      "NA": "Câblage non conforme malgré l’accompagnement",
-      "EC": "Réalisation partielle ou corrections guidées nécessaires",
-      "M": "Câble seul conformément à son tracé visé, un fil par borne, embouts sertis",
-      "PM": "Contrôle sa progression et corrige seul une erreur avant présentation",
+      "NA": "Ne voit pas ce qui sépare les deux montages ; décâble tout ou n’intervient pas",
+      "EC": "Trouve les ponts à déplacer avec des indices, ou refait plus que nécessaire",
+      "M": "Identifie seul les ponts à déplacer, les déplace et laisse le reste du câblage en place",
+      "PM": "Justifie chaque pont déplacé et dit ce que ferait la machine si on en oubliait un",
       "NE": "Non évalué : critère exclu du calcul, jamais zéro."
      },
      "_notes": {}
@@ -143,11 +143,10 @@
  "comportement": [
   "Grille vierge : aucune note, aucune présence, aucune acquisition n’est créée par la préparation.",
   "Niveaux source HAL : NA=1, EC=2, M=3, PM=4 ; NE exclu du calcul. Aucune conversion en note sur 20 imposée par ce document.",
-  "C3.6 est confortée : elle a déjà été travaillée le 14/09 sur l’auto-maintien. C3.7 est approfondie, deuxième contrôle seul avant tension. Une première réussite ne prouve pas une maîtrise durable.",
-  "Séance 02, poste E2 électrotechnique, second groupe, permutation. Le TP est joué deux lundis, 21/09 et 28/09, identique les deux fois : chaque élève ne le vit qu’une seule fois, et n’est donc évalué que sur une des deux dates.",
-  "Le tracé du bornier est visé par le professeur avant tout câblage. Un élève qui câble sans visa n’est pas évalué sur C3.6 « réaliser » : le critère est NE, pas NA.",
-  "Mise sous tension et essais faits par le professeur seul, élèves non habilités. Ce que l’élève ne peut pas faire n’est pas un manque de compétence : NE.",
-  "Les aménagements et une reformulation de consigne ne sont pas des fautes. Ne pas déduire un niveau d’une absence, d’un manque de temps ou d’un incident de matériel.",
+  "Séance du 28/09 : reprise du TP E2 après la séance du 21/09, écourtée par une convocation Mission locale. Les élèves n’ont pas tous le même vécu du pump-down — en tenir compte avant de lire un écart comme un manque.",
+  "Le TP se joue en deux temps : la sécurité minimum est câblée et NOTÉE, puis transformée en pump-down. Les deux temps s’évaluent séparément : un élève peut réussir le câblage et échouer la transformation, et l’inverse.",
+  "La transformation est le cœur de la séance et la forme du sujet EP2 2023. Un élève qui décâble tout pour recâbler à neuf n’a pas commis de faute technique, mais il n’a pas fait l’exercice : c’est EC, pas M.",
+  "Mise sous tension et essais faits par le professeur seul, élèves non habilités. Ce que l’élève n’a pas le droit de faire ne peut pas lui être compté en manque de compétence : NE.",
   "Le folio source 3/12 porte deux fois le repère 9 : la seconde sortie du pressostat BP est la borne 10. Un élève qui suit le folio à la lettre n’est pas en faute sur ce point."
  ]
 }

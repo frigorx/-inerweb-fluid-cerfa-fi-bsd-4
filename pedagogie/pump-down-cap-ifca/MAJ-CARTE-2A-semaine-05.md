@@ -1,70 +1,92 @@
 # Carte 2A CAP IFCA — delta de la semaine 5
 
-**Séance 03 · lundi 28/09/2026 · poste E2 · TP n° 2, second passage**
-Même document que le 21/09, groupes permutés. Chaque élève ne vit le TP qu'une fois.
+**Séance 03 · lundi 28/09/2026 · poste E2 · reprise du TP n° 2, version enrichie**
+
+Ce fichier remplace la version écrite le 21/09 au matin, qui annonçait un second passage à
+l'identique. La séance du 21/09 ne s'est pas déroulée comme prévu, et le 28/09 change de
+nature.
 
 ---
 
-## 1. Ce que la carte du 16/08 dit pour la semaine 5
+## 1. Ce qui s'est réellement passé le 21/09
+
+Une partie des élèves était convoquée par la **Mission locale pour l'emploi**. Moins d'un
+quart de la classe était présent. La séance a été écourtée, **le TP n'a pas été évalué** et
+aucun câblage n'a été réalisé.
+
+Le temps a été employé en **remédiation** : identification des éléments du schéma, repérage
+des bornes, distinction entre un fil et un pont, logique du vidage de l'évaporateur.
+
+Conséquence directe : **la grille HAL du 21/09 reste vierge**. Rien à saisir, et surtout
+rien à saisir en `NA` — l'absence d'évaluation n'est pas un niveau. Si des positionnements
+doivent être portés pour les quelques présents, c'est `NE` partout sauf sur ce qui a été
+réellement observé en remédiation.
+
+## 2. Ce que devient le 28/09 — dicté par Franck le 21/09
+
+On reprend le même TP, avec **une étape de plus, placée avant** :
+
+1. **Câbler le modèle « sécurité minimum »** — le montage déjà connu, thermostat et
+   pressostat BP. **Cette partie est notée.**
+2. **Puis transformer ce câblage en pump-down** — sans tout refaire : repérer les bornes
+   concernées et **déplacer les ponts** qu'il faut déplacer.
+
+C'est un changement de nature, pas un ajout de longueur. L'élève ne part plus d'un bornier
+nu : il part d'un montage qui marche, et doit le **modifier**. Le geste évalué n'est plus
+seulement « câbler d'après un schéma », c'est « lire un câblage existant, comprendre ce qui
+le sépare de la cible, et n'intervenir que là où il faut ».
+
+## 3. Pourquoi c'est mieux que la version du 21/09
+
+Cette forme est **exactement celle du sujet EP2 2023** : *passer une régulation
+thermostatique en pump-down d'après le schéma fourni*. Le TP cesse d'être un exercice
+d'école et devient une répétition de l'épreuve.
+
+Elle règle aussi un défaut de la version précédente : le tracé sur planche était le verrou
+de la séance, mais rien ne garantissait que l'élève **comprenne** le schéma — il pouvait le
+recopier. Partir d'un montage existant rend la recopie impossible : il faut avoir identifié
+ce qui change.
+
+## 4. Ce que la carte du 16/08 dit pour la semaine 5
 
 | Colonne | Contenu porté par la carte |
 |---|---|
 | Sem. 5 · s. 2640 · 28/09 → 02/10 · séquence **S11** | |
-| TP Froid / MES | Façonnage complexe • pose des manomètres |
 | **TP Élec / M&S** | **EL12 • Horloge de dégivrage** |
 | Codes du référentiel | C3.4 · C4.5 — T10 · T11 — S2.1 · S5.2 |
 
-## 2. Ce qui est réellement joué — tranché par Franck le 21/09
+L'horloge de dégivrage **n'est pas jouée le 28/09**. Elle reste en E4, le 09/11, avec le
+régulateur Carel MasterCella.
 
-**Le poste E refait le pump-down**, à l'identique, pour le second groupe. Ce n'est pas
-l'horloge de dégivrage.
-
-La raison est structurelle, pas circonstancielle : **un TP dure 4 h et se joue deux lundis
-de suite, identique les deux fois**, parce que les postes E et M tournent. Un document sert
-donc deux semaines, et la carte ne peut pas porter deux objets différents sur ces deux
-lignes.
+## 5. Ce qui est réellement joué
 
 | | |
 |---|---|
-| Poste E2, 8 élèves (l'autre moitié) | Le pump-down le plus simple du monde — câblage du bornier |
+| Poste E2 | Câblage de la sécurité minimum **noté**, puis transformation en pump-down |
 | Compétences | **C3.6** · **C3.7** |
 | Tâches | **T10** · **T11** |
 | Savoirs | **S5.6** · **S6.2** |
-| Grille HAL | `Grille-CAP-IFCA-20260928.json` — jumelle de celle du 21/09, seule la date change |
+| Grille HAL | `Grille-CAP-IFCA-20260928.json` — refaite pour la version transformation |
 
-**L'horloge de dégivrage n'est pas perdue : elle est en E4, le 09/11**, avec le régulateur
-Carel MasterCella.
+## 6. À porter dans la carte
 
-## 3. À porter dans la carte
+Deux choses, dont une déjà signalée en semaine 4 :
 
-La carte porte, pour la colonne TP Élec, un objet **différent chaque semaine** — EL10, EL11,
-EL12… — alors que le dispositif réel en joue **un pour deux semaines**. C'est un défaut de
-structure, pas une erreur de saisie : il produira le même écart à chaque couple de lundis.
+- **Le défaut de structure.** La carte porte un objet de TP Élec différent chaque semaine,
+  alors que le dispositif réel en joue un pour deux semaines, puisque les postes E et M
+  tournent. Il se reproduira sur chacun des couples restants tant que la colonne ne fusionne
+  pas les deux lignes du couple, ou ne marque pas explicitement le second passage.
+- **La fragilité de l'effectif.** Une convocation extérieure a suffi à annuler une séance de
+  4 h. La carte suppose que chaque lundi est joué ; il faut au moins un repère « séance non
+  tenue, à replacer », sinon la progression affichée diverge de la progression réelle dès la
+  première semaine.
 
-Deux façons de le régler, à choisir une fois pour toutes :
-
-- **soit** la colonne TP Élec fusionne les deux lignes du couple, avec la mention
-  « 1er passage / 2e passage » ;
-- **soit** elle garde une ligne par semaine et la seconde porte explicitement
-  « E2 — second passage, groupes permutés ».
-
-Tant que ce n'est pas tranché, la carte annoncera un TP que la moitié de la classe ne fera
-jamais, et en cachera un que l'autre moitié fera deux fois.
-
-## 4. Conséquence sur le reste de l'année
-
-L'ordre de la colonne E reste celui vérifié en semaine 4 : E1 auto-maintien · **E2
-pump-down (21/09 + 28/09)** · E3 triphasé et démarrage direct · E4 horloge et régulateur
-(09/11) · E5 inversion et étoile-triangle (25/01) · E6 dégivrage, pump-down amélioré,
-sécurités en série.
-
-Il y a **8 couples de TP à écrire pour l'année, pas 34**. Le décalage de la carte se
-reproduira sur chacun des sept couples restants tant que le point 3 n'est pas réglé.
-
-## 5. À remplir après la séance
+## 7. À remplir après la séance du 28/09
 
 | Question | Réponse |
 |---|---|
-| Le second groupe a-t-il mis le même temps que le premier ? | |
-| Les corrections tirées du 21/09 ont-elles servi ? Lesquelles ? | |
-| Le document a-t-il tenu tel quel, ou a-t-il fallu l'adapter entre les deux passages ? | |
+| La sécurité minimum a-t-elle été câblée dans le temps prévu ? | |
+| Combien d'élèves ont trouvé seuls quels ponts déplacer ? | |
+| La transformation a-t-elle été faite sans tout décâbler ? | |
+| La note sur le premier câblage a-t-elle été lisible, ou faut-il deux notes ? | |
+| Les absents du 21/09 ont-ils suivi, ou faut-il une remédiation séparée ? | |
