@@ -24,7 +24,10 @@ réellement observé en remédiation.
 
 ## 2. Ce que devient le 28/09 — dicté par Franck le 21/09
 
-On reprend le même TP, avec **une étape de plus, placée avant** :
+On reprend le même TP, avec **une étape de plus, placée avant**. Et comme l'ensemble ne
+tient pas en 4 h, **Franck a tranché : on ne sacrifie rien, le TP est scindé sur deux
+lundis** — la sécurité minimum notée le **28/09**, la transformation en pump-down le
+**05/10**. La colonne E décale d'une semaine.
 
 1. **Câbler le modèle « sécurité minimum »** — le montage déjà connu, thermostat et
    pressostat BP. **Cette partie est notée.**
@@ -62,7 +65,8 @@ régulateur Carel MasterCella.
 
 | | |
 |---|---|
-| Poste E2 | Câblage de la sécurité minimum **noté**, puis transformation en pump-down |
+| Poste E2, temps 1 — **28/09** | Câblage du modèle sécurité minimum, **noté** |
+| Poste E2, temps 2 — **05/10** | Transformation du câblage en pump-down, ponts déplacés |
 | Compétences | **C3.6** · **C3.7** |
 | Tâches | **T10** · **T11** |
 | Savoirs | **S5.6** · **S6.2** |
