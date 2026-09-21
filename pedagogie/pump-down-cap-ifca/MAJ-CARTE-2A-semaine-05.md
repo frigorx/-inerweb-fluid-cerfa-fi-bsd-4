@@ -67,6 +67,7 @@ régulateur Carel MasterCella.
 |---|---|
 | Poste E2, temps 1 — **28/09** | Câblage du modèle sécurité minimum, **noté** |
 | Poste E2, temps 2 — **05/10** | Transformation du câblage en pump-down, ponts déplacés |
+| **Rotation E/M** | **Suspendue ces deux lundis** : toute la classe au poste E, 16 élèves en câblage. Chacun transforme son propre montage. Le poste M reprend après l'évaluation sommative de la semaine 7. |
 | Compétences | **C3.6** · **C3.7** |
 | Tâches | **T10** · **T11** |
 | Savoirs | **S5.6** · **S6.2** |
@@ -84,6 +85,18 @@ Deux choses, dont une déjà signalée en semaine 4 :
   4 h. La carte suppose que chaque lundi est joué ; il faut au moins un repère « séance non
   tenue, à replacer », sinon la progression affichée diverge de la progression réelle dès la
   première semaine.
+
+## 6 bis. Un blocage technique trouvé en préparant
+
+Les deux folios **ne numérotent pas les mêmes bornes de la même façon** : le folio sécurité
+minimum appelle la vanne « 6 », les moteurs « 14 » et « 16 », là où le bornier réel et le
+folio pump-down disent **7, 15, 17**. Un décalage d'une borne sur tous les récepteurs.
+
+Sur un TP dont tout l'objet est de repérer les bornes et de déplacer les bons ponts, c'est
+bloquant : l'élève verrait des écarts qui n'existent pas. **À trancher avant le 28/09.**
+
+Détail complet, les deux montages lus borne par borne et les trois gestes de la
+transformation : `ANALYSE-securite-minimum-vers-pump-down.md`.
 
 ## 7. À remplir après la séance du 28/09
 
