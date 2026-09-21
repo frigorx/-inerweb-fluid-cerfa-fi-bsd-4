@@ -26,7 +26,7 @@ chaud, on écrit ce qu'elle doit devenir.
 | Poste E2, 8 élèves | Le pump-down le plus simple du monde — **câblage du bornier seul** |
 | Poste M1, 8 élèves | Mesure (document séparé) |
 | Compétences | **C3.6** câbler, repérer, connecter ; **C3.7** contrôler la mise en œuvre |
-| Tâches | **T10** repérer, raccorder, assembler ; **T13** contrôler sous tension (essais par le professeur) |
+| Tâches | **T10** repérer, raccorder, assembler ; **T11** contrôler les circuits hors fonctionnement |
 | Savoirs | **S5.6** réseaux, matériels électriques et de régulation ; **S6.2** risques et prévention |
 
 ## 3. L'écart, et pourquoi il n'est pas une erreur
@@ -43,6 +43,16 @@ raccordement des organes). `S5.1` et `S6.1` vont avec. Le poste E2 ne les touche
 **À porter dans la carte :** la colonne « Codes du référentiel » doit se dédoubler, une ligne
 de codes par poste, ou la colonne TP Élec doit porter ses codes en propre. Tant que les deux
 postes partagent une seule liste, l'erreur revient chaque semaine.
+
+## 3 bis. T11, pas T13 — tranché par Franck le 21/09
+
+La séance 01 portait `T13` *tirer au vide, charger et contrôler l'installation sous tension*,
+avec la glose « essais faits par le professeur ». Sur ce TP, **tout le contrôle de l'élève se
+fait hors tension** : c'est `T11` *contrôler les circuits hors fonctionnement*, comme sur la
+carte 2A et sur l'évaluation sommative S10-S11. `T13` est retiré.
+
+**À porter dans la carte :** vérifier que les autres postes E n'ont pas hérité du même `T13`
+par recopie de la séance 01.
 
 ## 4. Ce que la séance 01 avait annoncé, et qui est tenu
 
