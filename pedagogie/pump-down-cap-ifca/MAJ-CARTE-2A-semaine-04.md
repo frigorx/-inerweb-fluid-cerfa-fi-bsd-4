@@ -101,6 +101,7 @@ recodage. Classe `2CAP-IFCA`, formation `cap2`.
 
 - La carte du 16/08 place l'évaluation sommative S10-S11 en semaine 7 (12 → 16/10). Ce TP
   en est une brique : la grille HAL du 21/09 doit s'y reverser.
-- Le second passage du 28/09 tombe sur la ligne « EL12 • Horloge de dégivrage » de la carte.
-  L'horloge est en E4 (09/11) : la ligne de la carte est à décaler, ou à lire comme la ligne
-  de semaine et non comme le poste.
+- Le second passage du 28/09 tombait sur la ligne « EL12 • Horloge de dégivrage » de la
+  carte. **Tranché par Franck le 21/09 : le 28/09 est bien le second passage du pump-down.**
+  L'horloge reste en E4, le 09/11. Voir `MAJ-CARTE-2A-semaine-05.md`, qui pose le défaut de
+  structure : la carte porte un objet par semaine là où le dispositif en joue un pour deux.
