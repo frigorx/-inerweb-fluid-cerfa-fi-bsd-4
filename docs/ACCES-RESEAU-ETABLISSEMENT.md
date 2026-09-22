@@ -142,7 +142,8 @@ d'accueil, un réseau, une station et un module : ni `fetch`, ni
 Copiées telles quelles dans un dossier, elles s'ouvrent d'un double-clic,
 **sans installation, sans droits d'administrateur et sans connexion**.
 
-    node outils/fabriquer-inernoweb.mjs --zip      (ou : npm run inernoweb)
+    npm run inernoweb        (archive complète, narrations comprises)
+    node outils/fabriquer-inernoweb.mjs --zip      (sans les narrations)
 
 L'outil (`outils/fabriquer-inernoweb.mjs`) parcourt le site publié, prend tout
 ce qui lui appartient, réécrit les liens pour le protocole `file://`, écrit un
@@ -163,33 +164,47 @@ Le registre réglementaire, lui, est déjà dans ce cas depuis toujours :
 `lancer-inerweb.bat` sert son interface depuis le poste et n'a jamais eu
 besoin d'Internet (voir `INSTALLATION_SIMPLE.md`).
 
-### Ce qu'a donné la première fabrication, le 22/09/2026
+### Ce que donne la fabrication, au 22/09/2026
 
 | Point | Mesure |
 |---|---|
-| Pris | 1 163 fichiers, 32 Mo sur disque, archive déflatée de 19 Mo |
-| Adresses hors du site | recensées et annoncées ; elles resteront hors ligne |
-| Références locales sans cible | **39**, toutes de même origine (voir ci-dessous) |
-| Téléchargements en échec | **36**, même origine |
+| Pris | 1 294 fichiers, 32,8 Mo sur disque, archive déflatée de 19,4 Mo |
+| Images assemblées en JavaScript | **263 retrouvées**, 127 pistes écartées |
+| Téléchargements en échec | **0** |
+| Références locales sans cible | **0** |
+| Adresses hors du site | 46, recensées et annoncées |
+| Fonds de narration (option `--voix`) | 5 705 fichiers, 484 Mo, hors de l'archive par défaut |
 
-Les 39 et les 36 ne sont pas des fichiers oubliés : ce sont des adresses que
-l'analyse a **cru** lire dans du JavaScript écrit en clair dans les pages —
-des gabarits du genre `${ASSET}${file}`, ou des bouts d'expression comme
-`' + esc(s.href) + '`. L'outil a tenté de les télécharger, le serveur a
-répondu 404, et le contrôle les signale. C'est bruyant mais sain : le
-contrôle préfère crier pour rien que taire un vrai manque.
+**Vérifié dans un vrai navigateur, pas seulement sur le papier.** Trois pages
+du dossier produit ont été ouvertes en `file://` avec Chromium, leurs
+commandes actionnées une à une, puis relevées : images rendues, requêtes en
+échec, erreurs JavaScript. Résultat : **aucune image cassée, aucune erreur
+JavaScript**. C'est ce contrôle-là qui autorise à dire que la copie marche —
+l'analyse statique, seule, ne voit pas ce que le JavaScript fabrique.
 
-En revanche, ce que cela révèle est réel et doit être dit : **les pages qui
-fabriquent l'adresse de leurs images en JavaScript n'emportent pas ces
-images.** Concrètement, dans les packs fluides — pressostats BP/HP/combiné,
-diagramme enthalpique, module compresseur — des illustrations manqueront hors
-ligne. Les pages s'ouvriront, le texte et la navigation tiendront, mais
-certains schémas seront vides.
+### Ce que la première passe avait cassé, et qui est réparé
 
-À traiter à la prochaine passe : résoudre ces gabarits en interrogeant les
-fichiers de données que les pages chargent, plutôt qu'en lisant le HTML. Tant
-que ce n'est pas fait, **vérifier ces stations-là avant de les mettre devant
-une classe** — le reste du kit a été pris tel quel et ne pose pas ce problème.
+La version du 22/09 au matin réécrivait **aussi l'intérieur des `<script>`**.
+Or `src="${ASSET}${file}"` n'y est pas une adresse : c'est un gabarit. La
+réécriture en faisait `src="${ASSET}${file}/index.html"` — du JavaScript
+corrompu, hors ligne **comme en ligne** si on avait republié ces pages. Le
+contenu des `<script>` est désormais rendu tel quel, sans exception.
+
+Le même aveuglement expliquait les images manquantes : ces adresses-là ne se
+lisent pas dans le marquage. L'outil lit maintenant les scripts **sans rien y
+changer**, pour y relever les noms de fichiers écrits en clair et les
+constantes de chemin, puis essaie les combinaisons. Une piste qui ne répond
+pas est une supposition écartée, pas un manque — elle n'alarme plus et ne
+fait plus échouer la fabrication.
+
+### Ce qui ne marche toujours pas hors ligne, et pourquoi
+
+| Point | État |
+|---|---|
+| Vidéos YouTube et liens externes | Hors du site : ils resteront hors ligne. Recensés et annoncés. |
+| Formulaires d'accès et d'activation | Ils parlent à un serveur. Sans réseau, ils ne répondent pas. |
+| Décodage des courriels | Cloudflare injecte un script qui rappelle `/cdn-cgi/…` en chemin **absolu**. Le fichier est bien dans la copie, mais `file://` n'a pas de racine : les adresses de contact restent masquées. Cosmétique, et ce n'est pas le site qui l'écrit. |
+| Narrations enregistrées | Hors de l'archive sauf `--voix`. **Le bouton de lecture fonctionne quand même** : `moteur/voix.js` retombe sur la synthèse vocale du navigateur — « le cours ne dépend donc jamais du lot audio ». Le fonds apporte la qualité, pas la fonction. |
 
 ### Les dépannages d'appoint
 

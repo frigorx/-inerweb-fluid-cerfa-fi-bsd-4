@@ -26,9 +26,13 @@
 //
 //   node outils/fabriquer-inernoweb.mjs            (dossier seul)
 //   node outils/fabriquer-inernoweb.mjs --zip      (dossier + inerNoWeb.zip)
+//   npm run inernoweb                              (archive complète, voix comprises)
 //
-// Options : --source <url> (défaut https://inerweb.fr), --sortie <dossier>,
-//           --max <n> pages (défaut 4000), --verbeux.
+// Options : --source <url> (défaut https://inerweb.fr — une adresse plus
+//           précise n'emporte que cette branche), --sortie <dossier>, --zip,
+//           --zip-seulement (refaire l'archive sans reparcourir), --voix
+//           (emporter le fonds de narration, plusieurs centaines de Mo),
+//           --max <n> fichiers (défaut 4000), --verbeux.
 //
 // POUR METTRE À JOUR. Rejouer la même commande : le dossier et le ZIP sont
 // refabriqués depuis le site en ligne, donc à jour. C'est l'usage prévu —
@@ -73,6 +77,7 @@ function lireArguments(argv) {
     max: 4000,
     verbeux: false,
     zipSeulement: false,
+    voix: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i];
@@ -81,9 +86,10 @@ function lireArguments(argv) {
     else if (a === '--zip') opts.zip = true;
     else if (a === '--zip-seulement') { opts.zip = true; opts.zipSeulement = true; }
     else if (a === '--max') opts.max = Number(argv[++i]);
+    else if (a === '--voix') opts.voix = true;
     else if (a === '--verbeux') opts.verbeux = true;
     else if (a === '--aide' || a === '-h') {
-      console.log('node outils/fabriquer-inernoweb.mjs [--source <url>] [--sortie <dossier>] [--zip] [--max <n>] [--verbeux]');
+      console.log('node outils/fabriquer-inernoweb.mjs [--source <url>] [--sortie <dossier>] [--zip] [--voix] [--max <n>] [--verbeux]');
       process.exit(0);
     } else {
       console.error(`Argument inconnu : ${a}`);
@@ -174,7 +180,74 @@ function reecrireReference(brut, pageUrl, fichierPage, origine, contexte) {
   return relatif(fichierPage, fichierCible) + requete + cible.hash;
 }
 
+const BLOC_SCRIPT = /<script\b[^>]*>[\s\S]*?<\/script>/gi;
+
+// Dans un script, une adresse d'image est souvent assemblée à l'exécution :
+//   const ASSET = "assets/symboles/";  …  <img src="${ASSET}${file}">
+// Deux conséquences, tirées de la relecture du 22/09/2026.
+//
+// 1. RÉÉCRIRE CE TEXTE LE CASSE. « ${ASSET}${file} » n'est pas une adresse :
+//    c'est un gabarit. La première version de cet outil en a fait
+//    « ${ASSET}${file}/index.html » — du JavaScript corrompu, en ligne comme
+//    hors ligne. Le contenu des <script> est donc rendu TEL QUEL, sans
+//    exception.
+// 2. MAIS IL FAUT QUAND MÊME EMPORTER CES IMAGES. On lit le script pour y
+//    relever, sans rien y changer, les noms de fichiers écrits en clair et
+//    les constantes de chemin, et on essaie les combinaisons. Ce sont des
+//    PISTES : celle qui ne répond pas n'est pas un échec, juste une
+//    supposition écartée.
+const BASE_CHEMIN = /(?:const|let|var)\s+[A-Za-z_$][\w$]*\s*=\s*(['"])([^'"\n]*\/)\1/g;
+// La chaîne de requête fait partie du littéral (« moteur/voix.js?v=20260902-1 »)
+// et doit être tolérée, sinon la piste est manquée — constaté en ouvrant une
+// station dans un vrai navigateur : cinq scripts injectés à l'exécution
+// portaient tous un ?v=, et aucun n'avait été emporté.
+const LITTERAL_FICHIER = /(['"])([\w./-]+\.(?:svg|png|jpe?g|webp|gif|avif|mp3|mp4|webm|ogg|pdf|woff2?|css|js))(?:\?[^'"\n]*)?\1/gi;
+
+function scannerScript(script, pageUrl, contexte) {
+  const bases = new Set(['']);
+  for (const m of script.matchAll(BASE_CHEMIN)) bases.add(m[2]);
+
+  const page = new URL(pageUrl);
+  const racine = new URL('/', page);
+
+  for (const m of script.matchAll(LITTERAL_FICHIER)) {
+    const nom = m[2];
+    for (const base of bases) {
+      // Une base ne s'applique qu'à un nom nu : « a/b.svg » se suffit.
+      if (base !== '' && nom.includes('/')) continue;
+      // Deux points de départ, parce qu'un script résout tantôt depuis sa
+      // page, tantôt depuis la racine du site : on essaie les deux et on
+      // garde ce qui répond.
+      for (const depuis of [page, racine]) {
+        let cible;
+        try {
+          cible = new URL(base + nom, depuis);
+        } catch {
+          continue;
+        }
+        if (cible.host !== page.host) continue;
+        contexte.pistes.push({ url: cible.origin + cible.pathname, fichier: cheminLocal(cible) });
+      }
+    }
+  }
+}
+
 function reecrireHtml(texte, pageUrl, fichierPage, origine, contexte) {
+  let sortie = '';
+  let curseur = 0;
+  BLOC_SCRIPT.lastIndex = 0;
+  let bloc;
+  while ((bloc = BLOC_SCRIPT.exec(texte)) !== null) {
+    sortie += reecrireMarquage(texte.slice(curseur, bloc.index), pageUrl, fichierPage, origine, contexte);
+    scannerScript(bloc[0], pageUrl, contexte);
+    sortie += bloc[0];
+    curseur = bloc.index + bloc[0].length;
+  }
+  sortie += reecrireMarquage(texte.slice(curseur), pageUrl, fichierPage, origine, contexte);
+  return sortie;
+}
+
+function reecrireMarquage(texte, pageUrl, fichierPage, origine, contexte) {
   let sortie = texte.replace(ATTRIBUTS, (tout, avant, guillemets, doubles, simples) => {
     const valeur = doubles !== undefined ? doubles : simples;
     const q = guillemets[0];
@@ -222,12 +295,20 @@ async function telecharger(url, essais = 4) {
   for (let i = 0; i < essais; i += 1) {
     try {
       const reponse = await fetch(url, { redirect: 'follow' });
-      if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
+      if (!reponse.ok) {
+        const erreur = new Error(`HTTP ${reponse.status}`);
+        // Un 4xx est une réponse, pas une panne : la réessayer quatre fois
+        // ne ferait que perdre du temps — et les pistes du § scannerScript
+        // en produisent beaucoup.
+        if (reponse.status >= 400 && reponse.status < 500) erreur.definitif = true;
+        throw erreur;
+      }
       const type = (reponse.headers.get('content-type') || '').toLowerCase();
       const octets = Buffer.from(await reponse.arrayBuffer());
       return { type, octets, urlFinale: reponse.url || url };
     } catch (erreur) {
       derniere = erreur;
+      if (erreur.definitif) break;
       if (i < essais - 1) await new Promise((r) => setTimeout(r, 1000 * 2 ** i));
     }
   }
@@ -246,12 +327,17 @@ function ecrire(racineSortie, fichier, octets) {
 
 async function parcourir(opts) {
   const origine = new URL(opts.source);
-  const depart = new URL('/', origine);
+  // On part de l'adresse DONNÉE, pas de la racine : « --source
+  // https://inerweb.fr/packs/fluides/res/pressostat-bp-kp1/ » doit emporter
+  // cette station-là, et elle seule. La racine reste le défaut.
+  const depart = origine;
 
   const file = [{ url: depart.href, fichier: cheminLocal(depart) }];
   const vus = new Map(); // fichier local -> url prise
-  const contexte = { externes: new Set(), aPrendre: [] };
+  const contexte = { externes: new Set(), aPrendre: [], pistes: [] };
   const echecs = [];
+  let pistesRetenues = 0;
+  let pistesEcartees = 0;
   let octetsTotal = 0;
 
   while (file.length > 0) {
@@ -260,7 +346,7 @@ async function parcourir(opts) {
       break;
     }
 
-    const { url, fichier } = file.shift();
+    const { url, fichier, piste } = file.shift();
     if (vus.has(fichier)) continue;
     vus.set(fichier, url);
 
@@ -268,9 +354,13 @@ async function parcourir(opts) {
     try {
       recu = await telecharger(url);
     } catch (erreur) {
-      echecs.push({ url, raison: String(erreur.message || erreur) });
+      // Une piste qui ne répond pas est une supposition écartée, pas un
+      // manque : elle ne doit ni alarmer ni faire échouer la fabrication.
+      if (piste) pistesEcartees += 1;
+      else echecs.push({ url, raison: String(erreur.message || erreur) });
       continue;
     }
+    if (piste) pistesRetenues += 1;
 
     const estHtml = recu.type.includes('text/html');
     const estCss = recu.type.includes('text/css');
@@ -279,11 +369,15 @@ async function parcourir(opts) {
     if (estHtml || estCss) {
       const texte = octets.toString('utf8');
       contexte.aPrendre = [];
+      contexte.pistes = [];
       const reecrit = estHtml
         ? reecrireHtml(texte, url, fichier, origine, contexte)
         : reecrireCss(texte, url, fichier, origine, contexte);
       for (const suite of contexte.aPrendre) {
         if (!vus.has(suite.fichier)) file.push(suite);
+      }
+      for (const suite of contexte.pistes) {
+        if (!vus.has(suite.fichier)) file.push({ ...suite, piste: true });
       }
       octets = Buffer.from(reecrit, 'utf8');
     }
@@ -295,7 +389,94 @@ async function parcourir(opts) {
     else if (vus.size % 25 === 0) process.stdout.write('.');
   }
 
-  return { vus, externes: contexte.externes, echecs, octetsTotal };
+  return { vus, externes: contexte.externes, echecs, octetsTotal, pistesRetenues, pistesEcartees };
+}
+
+// ------------------------------------------------------------
+// Le fonds de narration (option --voix)
+// ------------------------------------------------------------
+
+// Les cours se lisent à voix haute. Deux sources : le fonds audio fabriqué
+// (Piper / Microsoft Neural), indexé par moteur/voix-index.js, et, à défaut,
+// la synthèse vocale du navigateur — moteur/voix.js dit lui-même que « le
+// cours ne dépend donc jamais du lot audio ». Emporter le fonds n'ajoute donc
+// pas la fonction : il en apporte la QUALITÉ, celle qu'entendent les élèves
+// en classe. Il pèse plusieurs centaines de Mo : c'est un choix, pas un
+// défaut, d'où l'option.
+//
+// Le dossier n'est pas écrit en dur ici : on le lit dans voix.js, qui le
+// calcule par `new URL("…", scriptUrl)`. Si le site déplace ses voix, cet
+// outil suit.
+const BASE_VOIX = /new URL\(\s*(['"])([^'"]+)\1\s*,\s*scriptUrl\s*\)/;
+const ENTREE_VOIX = /"fichier"\s*:\s*"([^"]+)"/g;
+
+async function emporterVoix(opts, vus, racineSortie) {
+  const trouver = (suffixe) => {
+    for (const [fichier, url] of vus) if (fichier.endsWith(suffixe)) return { fichier, url };
+    return null;
+  };
+
+  const voixJs = trouver('moteur/voix.js');
+  const indexJs = trouver('moteur/voix-index.js');
+  if (!voixJs || !indexJs) {
+    console.log('  (aucun fonds de narration trouvé sur ce site — rien à emporter)');
+    return { pris: 0, octets: 0, rates: 0 };
+  }
+
+  const texteVoix = fs.readFileSync(path.join(racineSortie, voixJs.fichier), 'utf8');
+  const base = texteVoix.match(BASE_VOIX);
+  if (!base) {
+    console.log('  (le dossier des voix n\'a pas pu être lu dans voix.js — rien à emporter)');
+    return { pris: 0, octets: 0, rates: 0 };
+  }
+  const racineAudio = new URL(base[2], voixJs.url);
+
+  const texteIndex = fs.readFileSync(path.join(racineSortie, indexJs.fichier), 'utf8');
+  const entrees = [...new Set([...texteIndex.matchAll(ENTREE_VOIX)].map((m) => m[1]))];
+
+  console.log(`\n  Fonds de narration : ${entrees.length} fichier(s) depuis ${racineAudio.href}`);
+
+  const aFaire = entrees
+    .map((relatif) => {
+      try {
+        const url = new URL(relatif, racineAudio);
+        return url.host === racineAudio.host ? { url: url.origin + url.pathname, fichier: cheminLocal(url) } : null;
+      } catch {
+        return null;
+      }
+    })
+    .filter((e) => e !== null && !vus.has(e.fichier))
+    .slice(0, Math.max(0, opts.max - vus.size));
+
+  let pris = 0;
+  let octets = 0;
+  let rates = 0;
+  let suivant = 0;
+
+  // Huit de front : le fonds compte des milliers de fichiers, un par un cela
+  // prendrait une heure. Au-delà, on fatigue l'hébergeur pour rien.
+  const ouvriers = Array.from({ length: 8 }, async () => {
+    for (;;) {
+      const i = suivant;
+      suivant += 1;
+      if (i >= aFaire.length) return;
+      const { url, fichier } = aFaire[i];
+      try {
+        const recu = await telecharger(url, 3);
+        ecrire(racineSortie, fichier, recu.octets);
+        vus.set(fichier, url);
+        pris += 1;
+        octets += recu.octets.length;
+      } catch {
+        rates += 1;
+      }
+      if ((i + 1) % 100 === 0) process.stdout.write('.');
+    }
+  });
+  await Promise.all(ouvriers);
+  console.log('');
+
+  return { pris, octets, rates };
 }
 
 // ------------------------------------------------------------
@@ -323,12 +504,24 @@ function controler(racineSortie, fichiers) {
 
   for (const fichier of fichiers) {
     if (!/\.(html?|css)$/i.test(fichier)) continue;
-    const texte = fs.readFileSync(path.join(racineSortie, fichier), 'utf8');
+    let texte = fs.readFileSync(path.join(racineSortie, fichier), 'utf8');
+    // Le contenu des <script> n'est pas du marquage : « src="${ASSET}${file}" »
+    // y est un gabarit, pas une adresse. Le juger comme une référence ferait
+    // crier le contrôle à chaque page interactive, et ce bruit finirait par
+    // couvrir les vrais manques.
+    if (/\.html?$/i.test(fichier)) texte = texte.replace(BLOC_SCRIPT, '');
     const references = new Set();
 
-    for (const m of texte.matchAll(ATTRIBUTS)) references.add(m[3] !== undefined ? m[3] : m[4]);
+    // Les attributs href/src n'ont de sens que dans du HTML. Les chercher
+    // dans une feuille de style fait prendre pour une référence un exemple
+    // écrit en commentaire — « href="…/moteur/impression.css" » — et le
+    // contrôle accuse alors un manque qui n'existe pas.
+    const estHtml = /\.html?$/i.test(fichier);
+    if (estHtml) {
+      for (const m of texte.matchAll(ATTRIBUTS)) references.add(m[3] !== undefined ? m[3] : m[4]);
+    }
     for (const m of texte.matchAll(CSS_URL)) references.add(m[2]);
-    for (const m of texte.matchAll(SRCSET)) {
+    if (estHtml) for (const m of texte.matchAll(SRCSET)) {
       const valeur = m[3] !== undefined ? m[3] : m[4];
       for (const morceau of valeur.split(',')) {
         const t = morceau.trim();
@@ -382,6 +575,10 @@ exterieure(s) recensee(s) dans cette copie.
 
 Les formulaires qui demandent un acces ou activent une licence parlent a
 un serveur : ils ne fonctionnent pas non plus depuis la cle.
+
+LA LECTURE A VOIX HAUTE
+-----------------------
+${resume.voix}
 
 METTRE A JOUR
 -------------
@@ -516,8 +713,12 @@ async function principal() {
   fs.mkdirSync(opts.sortie, { recursive: true });
 
   const debut = Date.now();
-  const { vus, externes, echecs, octetsTotal } = await parcourir(opts);
+  const { vus, externes, echecs, octetsTotal, pistesRetenues, pistesEcartees } = await parcourir(opts);
   console.log('');
+
+  let voix = { pris: 0, octets: 0, rates: 0 };
+  if (opts.voix) voix = await emporterVoix(opts, vus, opts.sortie);
+  const octetsAvecVoix = octetsTotal + voix.octets;
 
   const fichiers = listerFichiers(opts.sortie);
 
@@ -525,14 +726,24 @@ async function principal() {
     date: new Date().toISOString().slice(0, 10),
     source: opts.source,
     fichiers: fichiers.length,
-    taille: lisible(octetsTotal),
+    taille: lisible(octetsAvecVoix),
     externes: externes.size,
+    voix: opts.voix
+      ? `${voix.pris} narration(s) enregistree(s) sont dans cette copie : la
+lecture a voix haute garde la voix du site, sans Internet.`
+      : `Le fonds audio n'est PAS dans cette copie. Le bouton de lecture
+fonctionne quand meme : il passe a la synthese vocale du navigateur,
+plus mecanique mais disponible hors ligne. Pour emporter les vraies
+voix : refaire la copie avec l'option --voix (plusieurs centaines de Mo).`,
   });
 
   const manquants = controler(opts.sortie, listerFichiers(opts.sortie));
 
-  console.log(`  ${vus.size} adresse(s) prise(s), ${lisible(octetsTotal)}, en ${((Date.now() - debut) / 1000).toFixed(1)} s`);
+  console.log(`  ${vus.size} adresse(s) prise(s), ${lisible(octetsAvecVoix)}, en ${((Date.now() - debut) / 1000).toFixed(1)} s`);
   console.log(`  ${externes.size} adresse(s) hors du site (elles resteront hors ligne)`);
+  console.log(`  ${pistesRetenues} image(s) assemblée(s) en JavaScript retrouvée(s) — ${pistesEcartees} piste(s) écartée(s)`);
+  if (opts.voix) console.log(`  ${voix.pris} narration(s) emportée(s) (${lisible(voix.octets)})${voix.rates ? ` — ${voix.rates} en échec` : ''}`);
+  else console.log('  narrations NON emportées (option --voix) : hors ligne, la lecture à voix haute passera par la synthèse du navigateur');
 
   if (echecs.length > 0) {
     console.log(`\n  ⚠ ${echecs.length} téléchargement(s) en échec :`);
