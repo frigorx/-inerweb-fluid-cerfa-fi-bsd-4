@@ -13,6 +13,7 @@
     "test:securite": "node server/test-securite-negative.mjs",
     "check": "node --check server/serveur.js",
     "start": "node server/serveur.js",
-    "paquet": "node outils/fabriquer-paquet.mjs"
+    "paquet": "node outils/fabriquer-paquet.mjs",
+    "inernoweb": "node outils/fabriquer-inernoweb.mjs --zip"
   }
 }

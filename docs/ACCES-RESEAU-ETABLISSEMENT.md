@@ -130,24 +130,81 @@ reprendre tel quel :
 >
 > Je reste disponible pour tout élément complémentaire.
 
-## 6. Ce qui fonctionne en attendant
+## 6. inerNoWeb — la copie qui n'a besoin de personne
+
+C'est la voie retenue, et la seule des trois qui ne dépende ni de la DSI, ni
+de l'antivirus, ni de l'humeur du réseau ce matin-là.
+
+Les ressources publiées sont des pages statiques : HTML, CSS, JavaScript,
+images. Aucune n'appelle de serveur — vérifié le 22/09/2026 sur la page
+d'accueil, un réseau, une station et un module : ni `fetch`, ni
+`XMLHttpRequest`, ni module ES, ni fichier JSON chargé à l'exécution.
+Copiées telles quelles dans un dossier, elles s'ouvrent d'un double-clic,
+**sans installation, sans droits d'administrateur et sans connexion**.
+
+    node outils/fabriquer-inernoweb.mjs --zip      (ou : npm run inernoweb)
+
+L'outil (`outils/fabriquer-inernoweb.mjs`) parcourt le site publié, prend tout
+ce qui lui appartient, réécrit les liens pour le protocole `file://`, écrit un
+LISEZ-MOI, puis **relit le dossier produit et signale toute référence locale
+qui ne pointe sur rien**. C'est ce contrôle, et non la réécriture, qui dit si
+la copie tient debout ; il rend un code de sortie non nul si elle ne tient pas.
+
+Ce qu'il ne peut pas emporter, et qu'il annonce au lieu de le taire : les
+vidéos YouTube et tout ce qui vit sur un autre domaine restent des liens vers
+Internet. Les formulaires qui demandent un accès ou activent une licence
+parlent à un serveur : ils ne répondront pas depuis la clé.
+
+Pour mettre à jour, rejouer la même commande depuis un poste connecté : le
+dossier et l'archive sont refaits à neuf, et l'ancienne copie de la clé est
+écrasée par la nouvelle. Le site évolue, la copie se régénère.
+
+Le registre réglementaire, lui, est déjà dans ce cas depuis toujours :
+`lancer-inerweb.bat` sert son interface depuis le poste et n'a jamais eu
+besoin d'Internet (voir `INSTALLATION_SIMPLE.md`).
+
+### Ce qu'a donné la première fabrication, le 22/09/2026
+
+| Point | Mesure |
+|---|---|
+| Pris | 1 163 fichiers, 32 Mo sur disque, archive déflatée de 19 Mo |
+| Adresses hors du site | recensées et annoncées ; elles resteront hors ligne |
+| Références locales sans cible | **39**, toutes de même origine (voir ci-dessous) |
+| Téléchargements en échec | **36**, même origine |
+
+Les 39 et les 36 ne sont pas des fichiers oubliés : ce sont des adresses que
+l'analyse a **cru** lire dans du JavaScript écrit en clair dans les pages —
+des gabarits du genre `${ASSET}${file}`, ou des bouts d'expression comme
+`' + esc(s.href) + '`. L'outil a tenté de les télécharger, le serveur a
+répondu 404, et le contrôle les signale. C'est bruyant mais sain : le
+contrôle préfère crier pour rien que taire un vrai manque.
+
+En revanche, ce que cela révèle est réel et doit être dit : **les pages qui
+fabriquent l'adresse de leurs images en JavaScript n'emportent pas ces
+images.** Concrètement, dans les packs fluides — pressostats BP/HP/combiné,
+diagramme enthalpique, module compresseur — des illustrations manqueront hors
+ligne. Les pages s'ouvriront, le texte et la navigation tiendront, mais
+certains schémas seront vides.
+
+À traiter à la prochaine passe : résoudre ces gabarits en interrogeant les
+fichiers de données que les pages chargent, plutôt qu'en lisant le HTML. Tant
+que ce n'est pas fait, **vérifier ces stations-là avant de les mettre devant
+une classe** — le reste du kit a été pris tel quel et ne pose pas ce problème.
+
+### Les dépannages d'appoint
+
+À n'utiliser que le temps d'une séance, si la clé n'est pas là.
 
 | Ressource | Adresse | État vérifié le 22/09/2026 |
 |---|---|---|
-| Station « pressostats » | `https://frigorx.github.io/inerweb-pressostats/` | `HTTP 200` — autre nom de domaine, certificat GitHub. |
+| Station « pressostats » | `https://frigorx.github.io/inerweb-pressostats/` | `HTTP 200` — autre nom de domaine. |
 | Module F-Gaz | `https://frigorx.github.io/inerweb-fgaz/` | `HTTP 200`. |
 | Démonstration de l'application CERFA (v8) | `https://frigorx.github.io/-inerweb-fluid-cerfa-fi-bsd-4/v8/` | `HTTP 200`. |
-| L'application elle-même | `lancer-inerweb.bat`, en local sur le poste | Ne demande aucun accès Internet : elle sert son interface depuis le poste. Voir `INSTALLATION_SIMPLE.md`. |
 
-Attention à ne pas se tromper d'espoir : **la majeure partie des séquences
-(aerorezo, electrorezo, hydrometro, hocourant, formation, galerie) est servie
-par `inerweb.fr` lui-même**, pas par `frigorx.github.io`. Le contournement
-ci-dessus couvre trois modules, pas le site. Si `github.io` est autorisé alors
-que `inerweb.fr` ne l'est pas, c'est un dépannage pour une séance, pas une
-solution.
-
-Le registre réglementaire, lui, n'est pas concerné : il tourne en local sur le
-poste et n'a jamais eu besoin d'Internet.
+Sans se tromper d'espoir : **la majeure partie des séquences (aerorezo,
+electrorezo, hydrometro, hocourant, formation, galerie) est servie par
+`inerweb.fr` lui-même**, pas par `frigorx.github.io`. Ces trois adresses
+couvrent trois modules, pas le site.
 
 ## 6 bis. Si le test dit la cause A, un levier existe côté site
 
