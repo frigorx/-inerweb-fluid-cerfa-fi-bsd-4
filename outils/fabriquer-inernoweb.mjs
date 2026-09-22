@@ -32,7 +32,8 @@
 //           précise n'emporte que cette branche), --sortie <dossier>, --zip,
 //           --zip-seulement (refaire l'archive sans reparcourir), --voix
 //           (emporter le fonds de narration, plusieurs centaines de Mo),
-//           --max <n> fichiers (défaut 4000), --verbeux.
+//           --navigateur (embarquer Firefox ESR 115, la dernière lignée
+//           Windows 7, ~215 Mo), --max <n> fichiers (défaut 4000), --verbeux.
 //
 // POUR METTRE À JOUR. Rejouer la même commande : le dossier et le ZIP sont
 // refabriqués depuis le site en ligne, donc à jour. C'est l'usage prévu —
@@ -58,6 +59,7 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import zlib from 'node:zlib';
+import { spawnSync } from 'node:child_process';
 
 const require = createRequire(import.meta.url);
 const { crc32 } = require('../server/zip-node.js');
@@ -78,6 +80,7 @@ function lireArguments(argv) {
     verbeux: false,
     zipSeulement: false,
     voix: false,
+    navigateur: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i];
@@ -87,6 +90,7 @@ function lireArguments(argv) {
     else if (a === '--zip-seulement') { opts.zip = true; opts.zipSeulement = true; }
     else if (a === '--max') opts.max = Number(argv[++i]);
     else if (a === '--voix') opts.voix = true;
+    else if (a === '--navigateur') opts.navigateur = true;
     else if (a === '--verbeux') opts.verbeux = true;
     else if (a === '--aide' || a === '-h') {
       console.log('node outils/fabriquer-inernoweb.mjs [--source <url>] [--sortie <dossier>] [--zip] [--voix] [--max <n>] [--verbeux]');
@@ -546,6 +550,241 @@ function controler(racineSortie, fichiers) {
 }
 
 // ------------------------------------------------------------
+// Le navigateur embarqué (option --navigateur)
+// ------------------------------------------------------------
+
+// POURQUOI. Les postes visés tournent sous Windows 7. Or les pages
+// utilisent l'accès optionnel (« a?.b », relevé dans 541 fichiers de la
+// copie) et Array.at (55 fichiers) : Internet Explorer 11, seul navigateur
+// garanti sur un Windows 7 d'origine, rend une page blanche. Il faut au
+// moins Chrome 92 ou Firefox 90.
+//
+// CE QU'ON EMBARQUE. Firefox ESR 115 — la dernière lignée que Mozilla
+// maintient pour Windows 7, et elle vit toujours. Mozilla ne publie AUCUNE
+// version portable : seulement un .exe et un .msi. Mais l'installeur est une
+// archive 7-Zip auto-extractible ; ouverte, elle rend un dossier « core »
+// qui se lance tel quel, sans installation ni droits d'administrateur. C'est
+// cette ouverture que l'on fait ici, à la fabrication, une fois pour toutes.
+// Les binaires ne sont pas modifiés : Mozilla autorise la redistribution de
+// Firefox non modifié.
+//
+// À SAVOIR AVANT DE S'EN SERVIR. Lancer un navigateur depuis une clé USB sur
+// un poste d'établissement est très souvent BLOQUÉ, et à bon droit : c'est
+// le schéma classique d'une attaque. Sur un parc verrouillé après un
+// rançongiciel, il faut s'attendre à ce que la stratégie d'application ou
+// l'antivirus le refuse — et à ce que la tentative laisse une trace au nom
+// de celui qui l'a faite. La page EST-CE-QUE-CA-MARCHE.html est à essayer
+// EN PREMIER : si le navigateur déjà présent sur le poste convient, ce
+// dossier-ci ne sert à rien.
+const VERSIONS_ESR = /115\.\d+\.\d+esr/g;
+
+async function derniereEsr115() {
+  const reponse = await fetch('https://ftp.mozilla.org/pub/firefox/releases/');
+  if (!reponse.ok) throw new Error(`HTTP ${reponse.status} en listant les versions`);
+  const texte = await reponse.text();
+  const versions = [...new Set(texte.match(VERSIONS_ESR) || [])];
+  if (versions.length === 0) throw new Error('aucune version ESR 115 trouvée');
+  versions.sort((a, b) => {
+    const na = a.replace('esr', '').split('.').map(Number);
+    const nb = b.replace('esr', '').split('.').map(Number);
+    for (let i = 0; i < 3; i += 1) if (na[i] !== nb[i]) return na[i] - nb[i];
+    return 0;
+  });
+  return versions[versions.length - 1];
+}
+
+function septZipDisponible() {
+  for (const outil of ['7z', '7za']) {
+    const essai = spawnSync(outil, ['i'], { stdio: 'ignore' });
+    if (!essai.error) return outil;
+  }
+  return null;
+}
+
+function ecrireLanceur(racineSortie) {
+  // Sans accent et en CRLF : un .bat est lu par l'invite de commandes de
+  // Windows, qui n'est pas en UTF-8 et afficherait des caracteres abimes.
+  const lignes = [
+    '@echo off',
+    'setlocal',
+    'set "RACINE=%~dp0"',
+    'set "URL=%RACINE:\\=/%"',
+    'if not exist "%RACINE%navigateur\\Firefox\\firefox.exe" (',
+    '  echo.',
+    '  echo Le navigateur embarque n est pas dans cette copie.',
+    '  echo Ouvrez index.html avec le navigateur du poste,',
+    '  echo ou lisez d abord EST-CE-QUE-CA-MARCHE.html',
+    '  echo.',
+    '  pause',
+    '  exit /b 1',
+    ')',
+    'if not exist "%RACINE%navigateur\\profil" mkdir "%RACINE%navigateur\\profil"',
+    'start "" "%RACINE%navigateur\\Firefox\\firefox.exe" -profile "%RACINE%navigateur\\profil" -no-remote "file:///%URL%index.html"',
+  ];
+  fs.writeFileSync(path.join(racineSortie, 'OUVRIR-INERNOWEB.bat'), lignes.join('\r\n') + '\r\n', 'latin1');
+}
+
+async function emporterNavigateur(racineSortie) {
+  const version = await derniereEsr115();
+  const nom = `Firefox Setup ${version}.exe`;
+  const adresse = `https://ftp.mozilla.org/pub/firefox/releases/${version}/win32/fr/${encodeURIComponent(nom)}`;
+
+  console.log(`\n  Navigateur : Firefox ESR ${version} (win32, fr) — dernière lignée Windows 7`);
+
+  const dossier = path.join(racineSortie, 'navigateur');
+  fs.mkdirSync(dossier, { recursive: true });
+  const installeur = path.join(dossier, nom);
+
+  const recu = await telecharger(adresse, 3);
+  fs.writeFileSync(installeur, recu.octets);
+  console.log(`  Téléchargé : ${lisible(recu.octets.length)}`);
+
+  const outil = septZipDisponible();
+  if (!outil) {
+    console.log('  ⚠ 7-Zip absent de cette machine : l\'installeur est laissé tel quel.');
+    console.log('    Installer 7-Zip (7-zip.org) puis rejouer la commande rend le dossier');
+    console.log('    prêt à l\'emploi. Sans cela, il faudra ouvrir l\'installeur à la main.');
+    ecrireLanceur(racineSortie);
+    return { version, octets: recu.octets.length, portable: false };
+  }
+
+  const temporaire = path.join(dossier, '_ouverture');
+  fs.rmSync(temporaire, { recursive: true, force: true });
+  const extraction = spawnSync(outil, ['x', '-y', `-o${temporaire}`, installeur], { stdio: 'ignore' });
+  const coeur = path.join(temporaire, 'core');
+  if (extraction.status !== 0 || !fs.existsSync(coeur)) {
+    console.log('  ⚠ L\'ouverture de l\'installeur a échoué : il est laissé tel quel.');
+    fs.rmSync(temporaire, { recursive: true, force: true });
+    ecrireLanceur(racineSortie);
+    return { version, octets: recu.octets.length, portable: false };
+  }
+
+  const cible = path.join(dossier, 'Firefox');
+  fs.rmSync(cible, { recursive: true, force: true });
+  fs.renameSync(coeur, cible);
+  fs.rmSync(temporaire, { recursive: true, force: true });
+  fs.rmSync(installeur, { force: true });
+  fs.mkdirSync(path.join(dossier, 'profil'), { recursive: true });
+  ecrireLanceur(racineSortie);
+
+  let poids = 0;
+  for (const f of listerFichiers(cible)) poids += fs.statSync(path.join(cible, f)).size;
+  console.log(`  Ouvert et prêt : navigateur/Firefox/firefox.exe (${lisible(poids)})`);
+  return { version, octets: poids, portable: true };
+}
+
+// ------------------------------------------------------------
+// La page qui dit si CE poste peut lire le kit
+// ------------------------------------------------------------
+
+// Écrite en JavaScript de 2010 — var, function, pas de fléchée, pas de
+// gabarit — pour une raison précise : elle doit s'afficher MÊME sur le
+// navigateur qu'elle va recaler. Une page de diagnostic écrite en syntaxe
+// moderne ne s'ouvre pas sur un vieux navigateur : elle rend une page
+// blanche, et l'enseignant reste sans réponse devant sa classe.
+//
+// Ce qu'elle teste est ce que le site utilise vraiment, relevé dans la
+// copie : l'accès optionnel (« ?. », 541 fichiers), le coalescent « ?? »,
+// Array.at (55 fichiers), String.replaceAll, et la grille CSS.
+function ecrirePageDiagnostic(racineSortie) {
+  const html = `<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Est-ce que ce PC peut lire inerNoWeb ?</title>
+<style>
+  body { font-family: Segoe UI, Tahoma, Arial, sans-serif; margin: 0; padding: 24px;
+         background: #f4f6f8; color: #14212b; line-height: 1.5; }
+  .carte { max-width: 720px; margin: 0 auto; background: #fff; border-radius: 10px;
+           padding: 28px; box-shadow: 0 2px 12px rgba(0,0,0,.12); }
+  h1 { font-size: 22px; margin: 0 0 18px; }
+  #verdict { font-size: 26px; font-weight: 700; padding: 20px; border-radius: 8px;
+             text-align: center; margin: 0 0 20px; }
+  .oui { background: #e3f6e9; color: #14612f; border: 2px solid #2e9e57; }
+  .non { background: #fdeaea; color: #8c1c1c; border: 2px solid #c93b3b; }
+  table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 15px; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid #e1e6ea; }
+  .ok { color: #14612f; font-weight: 700; }
+  .ko { color: #8c1c1c; font-weight: 700; }
+  .ua { font-size: 12px; color: #5a6b78; word-break: break-all;
+        background: #f0f3f5; padding: 10px; border-radius: 6px; }
+  p.suite { font-size: 15px; }
+</style>
+</head>
+<body>
+<div class="carte">
+  <h1>Est-ce que ce PC peut lire inerNoWeb ?</h1>
+  <div id="verdict" class="non">Test en cours&hellip;</div>
+  <table id="details"><tbody></tbody></table>
+  <p class="suite" id="suite"></p>
+  <p class="ua" id="ua"></p>
+</div>
+<script>
+(function () {
+  function essayer(code) {
+    try { eval(code); return true; } catch (e) { return false; }
+  }
+
+  var tests = [
+    { nom: "Acces optionnel ( a?.b )", ok: essayer("var o={}; o?.b") },
+    { nom: "Operateur ?? ", ok: essayer("var v = null ?? 1") },
+    { nom: "Array.at()", ok: typeof Array.prototype.at === "function" },
+    { nom: "String.replaceAll()", ok: typeof String.prototype.replaceAll === "function" },
+    { nom: "Grille CSS", ok: !!(window.CSS && CSS.supports && CSS.supports("display", "grid")) },
+    { nom: "Lecture audio", ok: !!window.Audio },
+    { nom: "Synthese vocale (lecture a voix haute)", ok: !!window.speechSynthesis }
+  ];
+
+  var corps = document.getElementById("details").getElementsByTagName("tbody")[0];
+  var bloquants = 0;
+  var confort = [];
+
+  for (var i = 0; i < tests.length; i++) {
+    var t = tests[i];
+    // Les deux derniers sont du confort : leur absence ne recale pas le poste.
+    var estConfort = i >= 5;
+    if (!t.ok) { if (estConfort) { confort.push(t.nom); } else { bloquants++; } }
+    var tr = document.createElement("tr");
+    var td1 = document.createElement("td");
+    td1.appendChild(document.createTextNode(t.nom));
+    var td2 = document.createElement("td");
+    td2.className = t.ok ? "ok" : "ko";
+    td2.appendChild(document.createTextNode(t.ok ? "OK" : (estConfort ? "absent" : "MANQUE")));
+    tr.appendChild(td1); tr.appendChild(td2); corps.appendChild(tr);
+  }
+
+  var verdict = document.getElementById("verdict");
+  var suite = document.getElementById("suite");
+
+  if (bloquants === 0) {
+    verdict.className = "oui";
+    verdict.innerHTML = "OUI — ce PC lit inerNoWeb";
+    var mot = "Ouvrez index.html a la racine de la cle : tout doit fonctionner.";
+    if (confort.length) {
+      mot += " Manquent seulement, sans gravite : " + confort.join(", ") + ".";
+    }
+    suite.innerHTML = mot;
+  } else {
+    verdict.className = "non";
+    verdict.innerHTML = "NON — le navigateur de ce PC est trop ancien";
+    suite.innerHTML = "Il manque " + bloquants + " element(s) indispensable(s)."
+      + " Les pages s'ouvriront mais resteront vides ou figees."
+      + " Il faut un navigateur plus recent sur ce poste :"
+      + " Chrome 92 ou plus, ou Firefox 90 ou plus."
+      + " Sous Windows 7, la derniere version utilisable est Firefox ESR 115.";
+  }
+
+  document.getElementById("ua").innerHTML = "Navigateur declare : " + navigator.userAgent;
+})();
+</script>
+</body>
+</html>
+`;
+  fs.writeFileSync(path.join(racineSortie, 'EST-CE-QUE-CA-MARCHE.html'), html, 'utf8');
+}
+
+// ------------------------------------------------------------
 // LISEZ-MOI et ZIP
 // ------------------------------------------------------------
 
@@ -556,12 +795,24 @@ function ecrireLisezMoi(racineSortie, resume) {
 Fabriqué le ${resume.date} depuis ${resume.source}.
 ${resume.fichiers} fichiers, ${resume.taille}.
 
+A FAIRE EN PREMIER, SUR CHAQUE PC
+---------------------------------
+Ouvrir « EST-CE-QUE-CA-MARCHE.html ». Cette page dit en cinq secondes si
+le navigateur de CE poste sait lire inerNoWeb. Elle s'affiche meme sur un
+navigateur trop vieux — c'est fait pour.
+
+Il faut au minimum Chrome 92 ou Firefox 90. Internet Explorer 11, seul
+navigateur garanti sur un Windows 7 d'origine, NE CONVIENT PAS : les
+pages s'ouvriront vides.
+
 COMMENT S'EN SERVIR
 -------------------
 Copier ce dossier entier sur une cle USB, puis ouvrir « index.html »
 d'un double-clic. C'est tout : aucune installation, aucun droit
 d'administrateur, aucune connexion. Les pages s'ouvrent dans le
 navigateur depuis la cle.
+
+${resume.navigateur}
 
 Garder le dossier ENTIER. Deplacer ou renommer un sous-dossier casse les
 liens entre les pages : c'est un site, pas une collection de fichiers
@@ -718,7 +969,17 @@ async function principal() {
 
   let voix = { pris: 0, octets: 0, rates: 0 };
   if (opts.voix) voix = await emporterVoix(opts, vus, opts.sortie);
-  const octetsAvecVoix = octetsTotal + voix.octets;
+
+  let navigateur = null;
+  if (opts.navigateur) {
+    try {
+      navigateur = await emporterNavigateur(opts.sortie);
+    } catch (erreur) {
+      console.log(`  ⚠ Navigateur non emporté : ${erreur.message}`);
+    }
+  }
+
+  const octetsAvecVoix = octetsTotal + voix.octets + (navigateur ? navigateur.octets : 0);
 
   const fichiers = listerFichiers(opts.sortie);
 
@@ -728,6 +989,9 @@ async function principal() {
     fichiers: fichiers.length,
     taille: lisible(octetsAvecVoix),
     externes: externes.size,
+    navigateur: navigateur && navigateur.portable
+      ? `SI LE PC N'A PAS DE NAVIGATEUR ASSEZ RECENT\n------------------------------------------\nUn Firefox ESR ${navigateur.version} est embarque dans cette copie\n(dossier « navigateur »). Le lancer par « OUVRIR-INERNOWEB.bat » : il\ns'ouvre directement sur le kit, avec son propre profil range dans la\ncle, et n'ecrit rien dans le PC.\n\nA SAVOIR AVANT D'ESSAYER : lancer un navigateur depuis une cle USB est\ntres souvent BLOQUE sur un poste d'etablissement, et a bon droit —\nc'est le schema classique d'une attaque. Sur un parc verrouille apres\nun rancongiciel, il faut s'attendre a un refus de l'antivirus ou de la\nstrategie d'application, et a ce que la tentative laisse une trace au\nnom de celui qui l'a faite. Essayer d'abord le navigateur du poste.`
+      : `SI LE PC N'A PAS DE NAVIGATEUR ASSEZ RECENT\n------------------------------------------\nAucun navigateur n'est embarque dans cette copie. Pour en ajouter un :\nrefaire la copie avec l'option --navigateur (Firefox ESR 115, la\nderniere lignee qui tourne sous Windows 7, environ 215 Mo).`,
     voix: opts.voix
       ? `${voix.pris} narration(s) enregistree(s) sont dans cette copie : la
 lecture a voix haute garde la voix du site, sans Internet.`
@@ -737,6 +1001,8 @@ plus mecanique mais disponible hors ligne. Pour emporter les vraies
 voix : refaire la copie avec l'option --voix (plusieurs centaines de Mo).`,
   });
 
+  ecrirePageDiagnostic(opts.sortie);
+
   const manquants = controler(opts.sortie, listerFichiers(opts.sortie));
 
   console.log(`  ${vus.size} adresse(s) prise(s), ${lisible(octetsAvecVoix)}, en ${((Date.now() - debut) / 1000).toFixed(1)} s`);
@@ -744,6 +1010,8 @@ voix : refaire la copie avec l'option --voix (plusieurs centaines de Mo).`,
   console.log(`  ${pistesRetenues} image(s) assemblée(s) en JavaScript retrouvée(s) — ${pistesEcartees} piste(s) écartée(s)`);
   if (opts.voix) console.log(`  ${voix.pris} narration(s) emportée(s) (${lisible(voix.octets)})${voix.rates ? ` — ${voix.rates} en échec` : ''}`);
   else console.log('  narrations NON emportées (option --voix) : hors ligne, la lecture à voix haute passera par la synthèse du navigateur');
+  if (navigateur && navigateur.portable) console.log(`  navigateur embarqué : Firefox ESR ${navigateur.version}, lancé par OUVRIR-INERNOWEB.bat`);
+  else if (navigateur) console.log(`  navigateur : installeur Firefox ESR ${navigateur.version} déposé, à ouvrir à la main`);
 
   if (echecs.length > 0) {
     console.log(`\n  ⚠ ${echecs.length} téléchargement(s) en échec :`);

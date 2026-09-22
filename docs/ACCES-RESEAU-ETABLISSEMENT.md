@@ -164,6 +164,47 @@ Le registre réglementaire, lui, est déjà dans ce cas depuis toujours :
 `lancer-inerweb.bat` sert son interface depuis le poste et n'a jamais eu
 besoin d'Internet (voir `INSTALLATION_SIMPLE.md`).
 
+### Le navigateur du poste : la question qui vient avant tout le reste
+
+Les postes visés tournent sous **Windows 7**. Or la copie hors ligne ne
+demande pas seulement un dossier : elle demande un navigateur capable de la
+lire. Relevé dans la copie elle-même : **541 fichiers utilisent l'accès
+optionnel (`a?.b`)** et **55 utilisent `Array.at()`**. Il faut donc au moins
+**Chrome 92 ou Firefox 90**. **Internet Explorer 11 — seul navigateur garanti
+sur un Windows 7 d'origine — ne convient pas** : les pages s'ouvriront vides.
+
+Chaque copie porte désormais **`EST-CE-QUE-CA-MARCHE.html`**, à ouvrir en
+premier sur chaque poste. Elle répond en cinq secondes. Elle est écrite en
+JavaScript de 2010 — ni fonction fléchée, ni `const`, ni gabarit — pour une
+raison précise : **elle doit s'afficher même sur le navigateur qu'elle va
+recaler**. Une page de diagnostic écrite en syntaxe moderne rend une page
+blanche sur un vieux navigateur, et laisse l'enseignant sans réponse devant
+sa classe.
+
+### Le navigateur embarqué (`--navigateur`)
+
+Si le poste n'a rien d'assez récent, l'option emporte **Firefox ESR 115** — la
+dernière lignée que Mozilla maintient pour Windows 7, et elle vit toujours
+(115.41.0esr au 22/09/2026). Mozilla ne publie **aucune version portable** :
+seulement un `.exe` et un `.msi`. Mais l'installeur est une archive 7-Zip
+auto-extractible ; ouverte à la fabrication, elle rend un dossier qui se
+lance tel quel, **sans installation ni droits d'administrateur**. Les
+binaires ne sont pas modifiés — Mozilla autorise la redistribution de Firefox
+non modifié. Compter **~215 Mo**, et 7-Zip présent sur la machine qui
+fabrique (pas sur celles qui s'en servent).
+
+`OUVRIR-INERNOWEB.bat` le lance sur la copie, avec un profil rangé **dans la
+clé** : rien n'est écrit dans le PC.
+
+**À savoir avant de s'en servir, et ce n'est pas un détail.** Lancer un
+navigateur depuis une clé USB sur un poste d'établissement est très souvent
+bloqué, et à bon droit : c'est le schéma classique d'une attaque. Sur un parc
+verrouillé six mois après un rançongiciel, il faut s'attendre à un refus de
+la stratégie d'application ou de l'antivirus — et à ce que la tentative
+laisse une trace au nom de celui qui l'a faite. **Essayer d'abord le
+navigateur du poste**, page de diagnostic à l'appui. Le navigateur embarqué
+est le dernier recours, pas le premier geste.
+
 ### Ce que donne la fabrication, au 22/09/2026
 
 | Point | Mesure |
