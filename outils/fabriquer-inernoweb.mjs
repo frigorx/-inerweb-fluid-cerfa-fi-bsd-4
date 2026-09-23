@@ -33,7 +33,9 @@
 //           --zip-seulement (refaire l'archive sans reparcourir), --voix
 //           (emporter le fonds de narration, plusieurs centaines de Mo),
 //           --navigateur (embarquer Firefox ESR 115, la dernière lignée
-//           Windows 7, ~215 Mo), --max <n> fichiers (défaut 4000), --verbeux.
+//           Windows 7, ~215 Mo), --dezippeur (embarquer 7-Zip, ~6 Mo — inutile
+//           pour lire cette copie, qui est un dossier, mais commode sur la même
+//           clé), --max <n> fichiers (défaut 4000), --verbeux.
 //
 // POUR METTRE À JOUR. Rejouer la même commande : le dossier et le ZIP sont
 // refabriqués depuis le site en ligne, donc à jour. C'est l'usage prévu —
@@ -81,6 +83,7 @@ function lireArguments(argv) {
     zipSeulement: false,
     voix: false,
     navigateur: false,
+    dezippeur: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i];
@@ -91,6 +94,7 @@ function lireArguments(argv) {
     else if (a === '--max') opts.max = Number(argv[++i]);
     else if (a === '--voix') opts.voix = true;
     else if (a === '--navigateur') opts.navigateur = true;
+    else if (a === '--dezippeur') opts.dezippeur = true;
     else if (a === '--verbeux') opts.verbeux = true;
     else if (a === '--aide' || a === '-h') {
       console.log('node outils/fabriquer-inernoweb.mjs [--source <url>] [--sortie <dossier>] [--zip] [--voix] [--max <n>] [--verbeux]');
@@ -729,6 +733,111 @@ async function emporterNavigateur(racineSortie) {
 }
 
 // ------------------------------------------------------------
+// Le dézippeur embarqué (option --dezippeur)
+// ------------------------------------------------------------
+
+// À DIRE D'ABORD, PARCE QUE ÇA ÉVITE UN TÉLÉCHARGEMENT INUTILE : cette copie
+// n'est PAS une archive. C'est un dossier, qui s'ouvre sans rien dézipper. Et
+// Windows 7 ouvre déjà les .zip tout seul, par un clic droit « Extraire tout ».
+// Cette option ne sert donc pas à lire inerNoWeb : elle sert à avoir, sur la
+// même clé, de quoi ouvrir les .7z et les .rar que Windows ne sait pas lire —
+// et de quoi installer 7-Zip sur un poste qui ne l'a pas.
+//
+// 7-Zip est libre (LGPL) et redistribuable. Comme pour Firefox, l'installeur
+// est une archive auto-extractible : ouverte ici, elle rend un dossier avec le
+// gestionnaire de fichiers 7zFM.exe, qui se lance sans installation. Version
+// 32 bits : elle tourne sur les Windows 32 ET 64 bits, donc sur tout le parc.
+const VERSIONS_7ZIP = /7z(\d{4})\.exe/g;
+
+async function derniere7Zip() {
+  const reponse = await fetch('https://www.7-zip.org/download.html');
+  if (!reponse.ok) throw new Error(`HTTP ${reponse.status} en listant les versions`);
+  const texte = await reponse.text();
+  const versions = [...new Set([...texte.matchAll(VERSIONS_7ZIP)].map((m) => m[1]))];
+  if (versions.length === 0) throw new Error('aucune version de 7-Zip trouvée');
+  versions.sort();
+  return versions[versions.length - 1];
+}
+
+function ecrireLanceursDezippeur(racineSortie, nomInstalleur) {
+  const bs = '\\';
+  const fm = '"%RACINE%outils' + bs + '7-Zip' + bs + '7zFM.exe"';
+
+  const ouvrir = [
+    '@echo off',
+    'setlocal',
+    'set "RACINE=%~dp0"',
+    'if not exist ' + fm + ' (',
+    '  echo.',
+    '  echo   Le dezippeur n est pas ouvert dans cette copie.',
+    '  echo   Lancez d abord INSTALLER-LE-DEZIPPEUR.bat',
+    '  echo.',
+    '  pause',
+    '  exit /b 1',
+    ')',
+    'start "" ' + fm,
+  ];
+  fs.writeFileSync(path.join(racineSortie, 'OUVRIR-LE-DEZIPPEUR.bat'), ouvrir.join('\r\n') + '\r\n', 'latin1');
+
+  const installer = [
+    '@echo off',
+    'setlocal',
+    'set "RACINE=%~dp0"',
+    'echo.',
+    'echo   Depot de 7-Zip dans la cle. Quelques secondes.',
+    'echo   Aucun droit d administrateur n est demande.',
+    'echo.',
+    '"%RACINE%outils' + bs + nomInstalleur + '" /S /D=%RACINE%outils' + bs + '7-Zip',
+    'if exist ' + fm + ' (',
+    '  echo   Termine. Lancez maintenant OUVRIR-LE-DEZIPPEUR.bat',
+    ') else (',
+    '  echo   Echec. Ouvrez l installeur du dossier outils a la main.',
+    ')',
+    'echo.',
+    'pause',
+  ];
+  fs.writeFileSync(path.join(racineSortie, 'INSTALLER-LE-DEZIPPEUR.bat'), installer.join('\r\n') + '\r\n', 'latin1');
+}
+
+async function emporterDezippeur(racineSortie) {
+  const version = await derniere7Zip();
+  const nom = `7z${version}.exe`;
+  const adresse = `https://www.7-zip.org/a/${nom}`;
+
+  console.log(`\n  Dézippeur : 7-Zip ${version.slice(0, 2)}.${version.slice(2)} (32 bits, tourne aussi sur les Windows 64 bits)`);
+
+  const dossier = path.join(racineSortie, 'outils');
+  fs.mkdirSync(dossier, { recursive: true });
+  const installeur = path.join(dossier, nom);
+
+  const recu = await telecharger(adresse, 3);
+  fs.writeFileSync(installeur, recu.octets);
+
+  const outil = septZipDisponible();
+  if (!outil) {
+    console.log(`  Téléchargé : ${lisible(recu.octets.length)} — non ouvert ici (7-Zip absent de cette machine).`);
+    console.log('    INSTALLER-LE-DEZIPPEUR.bat le déposera dans la clé au premier usage.');
+    ecrireLanceursDezippeur(racineSortie, nom);
+    return { version, octets: recu.octets.length, portable: false };
+  }
+
+  const cible = path.join(dossier, '7-Zip');
+  fs.rmSync(cible, { recursive: true, force: true });
+  const extraction = spawnSync(outil, ['x', '-y', `-o${cible}`, installeur], { stdio: 'ignore' });
+  if (extraction.status !== 0 || !fs.existsSync(path.join(cible, '7zFM.exe'))) {
+    console.log('  ⚠ L\'ouverture de l\'installeur a échoué : il est laissé tel quel.');
+    ecrireLanceursDezippeur(racineSortie, nom);
+    return { version, octets: recu.octets.length, portable: false };
+  }
+
+  ecrireLanceursDezippeur(racineSortie, nom);
+  let poids = recu.octets.length;
+  for (const f of listerFichiers(cible)) poids += fs.statSync(path.join(cible, f)).size;
+  console.log(`  Ouvert et prêt : outils/7-Zip/7zFM.exe (${lisible(poids)} avec l'installeur)`);
+  return { version, octets: poids, portable: true };
+}
+
+// ------------------------------------------------------------
 // La page qui dit si CE poste peut lire le kit
 // ------------------------------------------------------------
 
@@ -868,6 +977,8 @@ d'administrateur, aucune connexion. Les pages s'ouvrent dans le
 navigateur depuis la cle.
 
 ${resume.navigateur}
+
+${resume.dezippeur}
 
 Garder le dossier ENTIER. Deplacer ou renommer un sous-dossier casse les
 liens entre les pages : c'est un site, pas une collection de fichiers
@@ -1046,6 +1157,15 @@ async function principal() {
   let voix = { pris: 0, octets: 0, rates: 0 };
   if (opts.voix) voix = await emporterVoix(opts, vus, opts.sortie);
 
+  let dezippeur = null;
+  if (opts.dezippeur) {
+    try {
+      dezippeur = await emporterDezippeur(opts.sortie);
+    } catch (erreur) {
+      console.log(`  ⚠ Dézippeur non emporté : ${erreur.message}`);
+    }
+  }
+
   let navigateur = null;
   if (opts.navigateur) {
     try {
@@ -1055,7 +1175,7 @@ async function principal() {
     }
   }
 
-  const octetsAvecVoix = octetsTotal + voix.octets + (navigateur ? navigateur.octets : 0);
+  const octetsAvecVoix = octetsTotal + voix.octets + (navigateur ? navigateur.octets : 0) + (dezippeur ? dezippeur.octets : 0);
 
   const fichiers = listerFichiers(opts.sortie);
 
@@ -1068,6 +1188,9 @@ async function principal() {
     navigateur: navigateur
       ? `SI LE PC N'A PAS DE NAVIGATEUR ASSEZ RECENT\n------------------------------------------\nFirefox ESR ${navigateur.version} est dans cette copie (dossier « navigateur »).\nC'est la derniere lignee qui tourne sous Windows 7. Deux routes.\n\n1. LE POSTE EST A VOUS, ET N'A PLUS DE NAVIGATEUR (Internet Explorer\n   seul, par exemple) : lancez INSTALLER-LE-NAVIGATEUR.bat. Firefox\n   s'installe pour l'utilisateur courant, SANS droits d'administrateur.\n   Sur une machine qu'on administre, c'est la bonne route : le poste\n   garde son navigateur meme quand la cle repart.\n\n2. VOUS NE FAITES QUE PASSER : ${navigateur.portable ? 'lancez OUVRIR-INERNOWEB.bat. Firefox\n   part de la cle, avec son profil range dedans, et n ecrit rien dans le\n   PC.' : 'jouez d abord INSTALLER-LE-NAVIGATEUR.bat,\n   puis OUVRIR-INERNOWEB.bat.'}\n\nSUR UN POSTE GERE PAR L'ETABLISSEMENT, c'est autre chose : lancer un\nnavigateur depuis une cle USB y est souvent bloque, et a bon droit —\nc'est le schema classique d'une attaque. Sur un parc verrouille apres un\nrancongiciel, attendez-vous a un refus, et a une trace au nom de celui\nqui a essaye. La, on demande d'abord, on essaie ensuite.`
       : `SI LE PC N'A PAS DE NAVIGATEUR ASSEZ RECENT\n------------------------------------------\nAucun navigateur n'est embarque dans cette copie. Pour en ajouter un :\nrefaire la copie avec l'option --navigateur (Firefox ESR 115, la\nderniere lignee qui tourne sous Windows 7, environ 215 Mo).`,
+    dezippeur: dezippeur
+      ? `IL N'Y A RIEN A DEZIPPER ICI\n----------------------------\nCette copie est un DOSSIER, pas une archive : on l'ouvre tel quel.\nEt Windows 7 ouvre deja les .zip tout seul (clic droit, « Extraire\ntout »). Aucun dezippeur n'est necessaire pour s'en servir.\n\n7-Zip ${dezippeur.version} est quand meme dans la cle (dossier « outils »), pour les\n.7z et les .rar que Windows ne sait pas lire${dezippeur.portable ? ' : OUVRIR-LE-DEZIPPEUR.bat' : '.\nLancez INSTALLER-LE-DEZIPPEUR.bat pour le deposer'}. Sur un poste qui ne l'a\npas et que vous administrez, INSTALLER-LE-DEZIPPEUR.bat l'y depose\nsans droits d'administrateur. Version 32 bits : elle tourne aussi sur\nles Windows 64 bits.`
+      : `IL N'Y A RIEN A DEZIPPER ICI\n----------------------------\nCette copie est un DOSSIER, pas une archive : on l'ouvre tel quel.\nEt Windows 7 ouvre deja les .zip tout seul (clic droit, « Extraire\ntout »). Aucun dezippeur n'est necessaire pour s'en servir.\n\nPour en emporter un quand meme (7-Zip, environ 6 Mo, utile pour les\n.7z et les .rar) : refaire la copie avec l'option --dezippeur.`,
     voix: opts.voix
       ? `${voix.pris} narration(s) enregistree(s) sont dans cette copie : la
 lecture a voix haute garde la voix du site, sans Internet.`
@@ -1088,6 +1211,7 @@ voix : refaire la copie avec l'option --voix (plusieurs centaines de Mo).`,
   else console.log('  narrations NON emportées (option --voix) : hors ligne, la lecture à voix haute passera par la synthèse du navigateur');
   if (navigateur && navigateur.portable) console.log(`  navigateur embarqué : Firefox ESR ${navigateur.version}, lancé par OUVRIR-INERNOWEB.bat`);
   else if (navigateur) console.log(`  navigateur : installeur Firefox ESR ${navigateur.version} déposé, à ouvrir à la main`);
+  if (dezippeur) console.log(`  dézippeur : 7-Zip ${dezippeur.version}${dezippeur.portable ? ', lancé par OUVRIR-LE-DEZIPPEUR.bat' : ' (installeur déposé)'}`);
 
   if (echecs.length > 0) {
     console.log(`\n  ⚠ ${echecs.length} téléchargement(s) en échec :`);

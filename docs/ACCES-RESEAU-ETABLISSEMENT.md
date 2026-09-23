@@ -200,6 +200,23 @@ l'utilisateur courant, sans droits d'administrateur : c'est ce que fait
 le `PATH` **et** là où Windows l'installe — ne regarder que le `PATH`, c'est
 le déclarer absent chez la plupart de ceux qui l'ont.
 
+### Le dézippeur (`--dezippeur`) — et pourquoi il ne sert pas à lire la copie
+
+Dit d'abord, parce que cela évite un téléchargement inutile : **la copie n'est
+pas une archive.** C'est un dossier, qui s'ouvre tel quel. Et **Windows 7 ouvre
+déjà les `.zip` tout seul**, par un clic droit « Extraire tout ». Aucun
+dézippeur n'est nécessaire pour se servir d'inerNoWeb. L'option `--zip` de
+l'outil ne sert qu'à transporter la copie par un canal qui veut un seul
+fichier ; en visant directement une clé, on s'en passe.
+
+L'option existe pour autre chose : avoir sur la même clé de quoi ouvrir les
+`.7z` et les `.rar`, que Windows ne sait pas lire, et de quoi **installer
+7-Zip sur un poste qui ne l'a pas**. 7-Zip est libre (LGPL) et redistribuable ;
+son installeur s'ouvre comme celui de Firefox et rend un `7zFM.exe` qui se
+lance sans installation. La version 32 bits est emportée : elle tourne sur les
+Windows 32 **et** 64 bits. Compter **~6 Mo**, installeur compris. La version
+n'est pas écrite en dur : l'outil relève la dernière publiée.
+
 ### Deux situations, deux conduites — et elles ne se confondent pas
 
 | Le poste | Ce qu'il faut faire |
