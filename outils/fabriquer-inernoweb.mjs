@@ -652,9 +652,16 @@ function septZipDisponible() {
 function decouperZip(archive, tailleMo) {
   const octets = fs.readFileSync(archive);
   const pas = Math.round(tailleMo * 1024 * 1024);
+  const total = Math.ceil(octets.length / pas);
+  const base = path.basename(archive, '.zip');
   const noms = [];
   for (let debut = 0, n = 1; debut < octets.length; debut += pas, n += 1) {
-    const nom = `${path.basename(archive)}.${String(n).padStart(3, '0')}`;
+    // Les morceaux gardent l'extension .zip. Nommes « .001 », « .002 », ils
+    // se faisaient refuser au telechargement par les navigateurs et les
+    // antivirus, qui ne connaissent pas ces extensions — l'enseignant s'est
+    // retrouve devant un telechargement qui ne partait pas. Le nom dit
+    // « partie 1 sur 2 » pour qu'on n'essaie pas de les ouvrir un par un.
+    const nom = `${base}.partie-${n}-sur-${total}.zip`;
     fs.writeFileSync(path.join(path.dirname(archive), nom), octets.subarray(debut, debut + pas));
     noms.push(nom);
   }
