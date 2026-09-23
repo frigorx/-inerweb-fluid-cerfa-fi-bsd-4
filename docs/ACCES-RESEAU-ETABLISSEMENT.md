@@ -164,6 +164,77 @@ Le registre réglementaire, lui, est déjà dans ce cas depuis toujours :
 `lancer-inerweb.bat` sert son interface depuis le poste et n'a jamais eu
 besoin d'Internet (voir `INSTALLATION_SIMPLE.md`).
 
+### Quand l'archive est trop grosse pour le canal (`--tranches`)
+
+La copie complète pèse 41,9 Mo au 23/09/2026. Certaines messageries, certains
+dépôts de fichiers s'arrêtent avant. L'option coupe l'archive en morceaux et
+écrit de quoi la recoller :
+
+    node outils/fabriquer-inernoweb.mjs --zip --tranches 22
+
+Produit `inerNoWeb.zip.001`, `inerNoWeb.zip.002`… et `RECOLLER-LE-ZIP.bat`.
+On met tous les morceaux **dans un même dossier**, on double-clique le `.bat`,
+il reconstitue `inerNoWeb.zip` — à l'octet près, vérifié — et dit quoi faire
+ensuite. Il s'appuie sur `copy /b`, présent dans Windows depuis toujours : ni
+7-Zip ni quoi que ce soit d'autre n'est requis pour cette étape.
+
+`--tranches` marche aussi avec `--zip-seulement`, pour recouper une archive
+déjà faite sans reparcourir le site.
+
+### Où l'on clique — la question qui a coûté une semaine
+
+Le 23/09/2026, l'enseignant a reçu la copie, installé Firefox, installé le
+dézippeur… et n'a pas pu ouvrir ses réseaux. Le contenu était bon : ce sont
+le lanceur et la notice qui ne disaient pas où cliquer. Le chemin, désormais
+écrit noir sur blanc dans le `LISEZ-MOI.txt` de la clé :
+
+1. Copier le dossier `inerNoWeb` **entier**, sur la clé ou sur le Bureau.
+2. Ouvrir le dossier, double-cliquer sur **`OUVRIR-LES-RESEAUX.bat`**.
+3. Si Windows se méfie du `.bat` : clic droit sur `index.html`, « Ouvrir
+   avec », Firefox. Même résultat.
+
+Et chaque réseau a son fichier, pour aller droit au but :
+
+| Réseau | Fichier |
+| --- | --- |
+| Le réseau thermo-techno — **le principal** | `plan.html` |
+| Législation — habilitation fluides | `legislation\index.html` |
+| HoCourant — habilitation électrique | `hocourant\index.html` |
+| ÉlectroRézo — électrotechnique | `electrorezo\index.html` |
+| HydroMétro — hydraulique | `hydrometro\index.html` |
+| AéroRézo — aéraulique | `aerorezo\index.html` |
+| AquiBlue — acquisition de données | `aquiblue\index.html` |
+
+Le logiciel inerWeb Fluide est un **autre** programme, dans un autre dossier :
+il n'a rien à voir avec ces réseaux, et on n'en a pas besoin pour les ouvrir.
+
+### Trois défauts corrigés le 23/09/2026
+
+**Le lanceur refusait d'ouvrir.** Sa première version exigeait le Firefox
+*embarqué* et s'arrêtait sinon, avec un message et rien d'autre. Sur le
+terrain, Firefox était installé normalement : le lanceur se taisait et les
+réseaux restaient fermés. Il cherche maintenant, dans l'ordre, le Firefox de
+la clé, celui du poste (`%ProgramFiles%` puis `%ProgramFiles(x86)%`), puis à
+défaut le navigateur par défaut — et au Firefox du poste il ne passe que
+l'adresse, sans `-profile` ni `-no-remote`, sinon un Firefox déjà ouvert
+refuse de démarrer une seconde fois. **Ouvrir quelque chose vaut toujours
+mieux que se taire.**
+
+**Les `.js` externes n'étaient pas lus.** Seuls le HTML et le CSS étaient
+analysés. Or les stations d'ÉlectroRézo rangent leurs photos dans un
+`contenu.js` voisin (`src: 'assets/biblio/…​.jpeg'`) : des centaines d'images
+manquaient sans que rien ne le signale, puisque aucune page HTML ne les
+nommait. Les `.js` sont désormais **lus** — jamais réécrits, on ne touche pas
+à du code — exactement comme un `<script>` en ligne.
+
+**Les suppositions noyaient le parcours.** Lire les `.js` a produit près de
+3 000 pistes devinées, dont la plupart ne répondent pas. Mêlées aux adresses
+certaines, elles ont consommé le plafond de fichiers et coupé le parcours
+avant la moitié des vraies pages. Deux files désormais : les adresses lues
+dans un `href`, un `src` ou un `url()` passent **toutes** d'abord, les
+suppositions ensuite. Et le plafond compte les fichiers réellement emportés,
+pas les tentatives — un 404 deviné ne coûte rien à la copie.
+
 ### Fabriquer la clé sans taper une ligne
 
 `FABRIQUER-INERNOWEB-SUR-CLE.bat`, à la racine du dépôt. Double-clic, il
@@ -238,7 +309,7 @@ n'est pas écrite en dur : l'outil relève la dernière publiée.
 | **Vous l'administrez**, et il n'a plus de navigateur lisible (Internet Explorer seul, par exemple) | `INSTALLER-LE-NAVIGATEUR.bat` : Firefox s'installe pour l'utilisateur courant. Le poste garde son navigateur quand la clé repart. Ici le navigateur embarqué n'est pas un contournement — **c'est la seule façon d'ouvrir ces pages**, IE11 ne sachant pas lire `a?.b`. |
 | **Il est géré par l'établissement** | Autre chose. Lancer un navigateur depuis une clé USB y est souvent bloqué, et à bon droit : c'est le schéma classique d'une attaque. Sur un parc verrouillé après un rançongiciel, attendez un refus de la stratégie d'application ou de l'antivirus, et une trace au nom de celui qui a essayé. On demande d'abord, on essaie ensuite. |
 
-`OUVRIR-INERNOWEB.bat` lance le navigateur sur la copie, avec un profil rangé
+`OUVRIR-LES-RESEAUX.bat` lance le navigateur sur la copie, avec un profil rangé
 **dans la clé** : rien n'est écrit dans le PC.
 
 ### Ce que donne la fabrication, au 22/09/2026

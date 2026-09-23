@@ -35,7 +35,7 @@
 //           --navigateur (embarquer Firefox ESR 115, la dernière lignée
 //           Windows 7, ~215 Mo), --dezippeur (embarquer 7-Zip, ~6 Mo — inutile
 //           pour lire cette copie, qui est un dossier, mais commode sur la même
-//           clé), --max <n> fichiers (défaut 4000), --verbeux.
+//           clé), --max <n> fichiers (défaut 20000), --verbeux.
 //
 // POUR METTRE À JOUR. Rejouer la même commande : le dossier et le ZIP sont
 // refabriqués depuis le site en ligne, donc à jour. C'est l'usage prévu —
@@ -78,7 +78,7 @@ function lireArguments(argv) {
     source: 'https://inerweb.fr',
     sortie: path.join(RACINE, 'output', 'inerNoWeb'),
     zip: false,
-    max: 4000,
+    max: 20000,
     verbeux: false,
     zipSeulement: false,
     voix: false,
@@ -95,9 +95,10 @@ function lireArguments(argv) {
     else if (a === '--voix') opts.voix = true;
     else if (a === '--navigateur') opts.navigateur = true;
     else if (a === '--dezippeur') opts.dezippeur = true;
+    else if (a === '--tranches') opts.tranches = Number(argv[++i]);
     else if (a === '--verbeux') opts.verbeux = true;
     else if (a === '--aide' || a === '-h') {
-      console.log('node outils/fabriquer-inernoweb.mjs [--source <url>] [--sortie <dossier>] [--zip] [--voix] [--max <n>] [--verbeux]');
+      console.log('node outils/fabriquer-inernoweb.mjs [--source <url>] [--sortie <dossier>] [--zip] [--tranches <Mo>] [--voix] [--max <n>] [--verbeux]');
       process.exit(0);
     } else {
       console.error(`Argument inconnu : ${a}`);
@@ -340,7 +341,14 @@ async function parcourir(opts) {
   // cette station-là, et elle seule. La racine reste le défaut.
   const depart = origine;
 
+  // Deux files, et l'ordre compte. « file » tient les adresses CERTAINES,
+  // lues dans un href, un src ou un url() ; « suppositions » tient les
+  // pistes devinées dans du JavaScript, dont beaucoup ne répondront pas.
+  // Les mélanger a déjà coûté cher : 2 959 suppositions mortes avaient
+  // consommé le plafond et coupé le parcours avant la moitié des vraies
+  // pages. Les certaines passent donc toutes d'abord.
   const file = [{ url: depart.href, fichier: cheminLocal(depart) }];
+  const suppositions = [];
   const vus = new Map(); // fichier local -> url prise
   const contexte = { externes: new Set(), aPrendre: [], pistes: [] };
   const echecs = [];
@@ -348,13 +356,18 @@ async function parcourir(opts) {
   let pistesEcartees = 0;
   let octetsTotal = 0;
 
-  while (file.length > 0) {
-    if (vus.size >= opts.max) {
+  // Le plafond compte les fichiers REELLEMENT emportés, pas les tentatives :
+  // une supposition qui répond 404 ne coûte rien à la copie, elle ne doit
+  // donc pas grignoter le budget.
+  let pris = 0;
+
+  while (file.length > 0 || suppositions.length > 0) {
+    if (pris >= opts.max) {
       console.warn(`\n⚠ Plafond de ${opts.max} fichiers atteint — parcours interrompu. Relancer avec --max plus grand.`);
       break;
     }
 
-    const { url, fichier, piste } = file.shift();
+    const { url, fichier, piste } = file.length > 0 ? file.shift() : suppositions.shift();
     if (vus.has(fichier)) continue;
     vus.set(fichier, url);
 
@@ -372,32 +385,41 @@ async function parcourir(opts) {
 
     const estHtml = recu.type.includes('text/html');
     const estCss = recu.type.includes('text/css');
+    // Un .js EXTERNE se lit aussi. Il ne se réécrit jamais — on ne touche
+    // pas à du code — mais on le lit, exactement comme un <script> inline.
+    // Oubli coûteux : les stations d'ÉlectroRézo rangent leurs photos dans
+    // un « contenu.js » voisin, et 500 images manquaient à la copie sans
+    // que rien ne le signale, puisque aucune page HTML ne les nommait.
+    const estScript = /\.m?js$/i.test(new URL(url).pathname)
+      || recu.type.includes('javascript') || recu.type.includes('ecmascript');
 
     let octets = recu.octets;
-    if (estHtml || estCss) {
+    if (estHtml || estCss || estScript) {
       const texte = octets.toString('utf8');
       contexte.aPrendre = [];
       contexte.pistes = [];
-      const reecrit = estHtml
-        ? reecrireHtml(texte, url, fichier, origine, contexte)
-        : reecrireCss(texte, url, fichier, origine, contexte);
+      let reecrit = texte;
+      if (estHtml) reecrit = reecrireHtml(texte, url, fichier, origine, contexte);
+      else if (estCss) reecrit = reecrireCss(texte, url, fichier, origine, contexte);
+      else scannerScript(texte, url, contexte);
       for (const suite of contexte.aPrendre) {
         if (!vus.has(suite.fichier)) file.push(suite);
       }
       for (const suite of contexte.pistes) {
-        if (!vus.has(suite.fichier)) file.push({ ...suite, piste: true });
+        if (!vus.has(suite.fichier)) suppositions.push({ ...suite, piste: true });
       }
-      octets = Buffer.from(reecrit, 'utf8');
+      if (estHtml || estCss) octets = Buffer.from(reecrit, 'utf8');
     }
 
     ecrire(opts.sortie, fichier, octets);
     octetsTotal += octets.length;
+    pris += 1;
 
     if (opts.verbeux) console.log(`  ${fichier} (${octets.length} o)`);
     else if (vus.size % 25 === 0) process.stdout.write('.');
   }
 
-  return { vus, externes: contexte.externes, echecs, octetsTotal, pistesRetenues, pistesEcartees };
+  return { vus, pris, externes: contexte.externes, echecs, octetsTotal, pistesRetenues, pistesEcartees };
 }
 
 // ------------------------------------------------------------
@@ -622,34 +644,98 @@ function septZipDisponible() {
 // second lanceur, qui ne demande rien d'autre que ce qui est déjà dans la
 // clé. C'est aussi la bonne route pour installer POUR DE BON un navigateur
 // sur un poste qu'on administre et qui n'en a pas.
+// Une archive de 42 Mo ne passe pas toujours le canal par lequel elle doit
+// voyager — messagerie d'établissement, dépôt de fichiers, conversation.
+// On la coupe alors en tranches, et on livre de quoi la recoller SANS RIEN
+// INSTALLER : « copy /b » est dans Windows depuis toujours, y compris sur
+// un Windows 7 sorti d'usine. C'est la seule route qui ne suppose rien.
+function decouperZip(archive, tailleMo) {
+  const octets = fs.readFileSync(archive);
+  const pas = Math.round(tailleMo * 1024 * 1024);
+  const noms = [];
+  for (let debut = 0, n = 1; debut < octets.length; debut += pas, n += 1) {
+    const nom = `${path.basename(archive)}.${String(n).padStart(3, '0')}`;
+    fs.writeFileSync(path.join(path.dirname(archive), nom), octets.subarray(debut, debut + pas));
+    noms.push(nom);
+  }
+  const lignes = [
+    '@echo off',
+    'setlocal',
+    'cd /d "%~dp0"',
+    'echo.',
+    'echo   Recollage des ' + noms.length + ' morceaux...',
+    'rem Sans cet effacement, copy demande s il peut ecraser, et le .bat',
+    'rem reste en attente d une reponse que personne ne voit passer.',
+    'if exist inerNoWeb.zip del /q inerNoWeb.zip',
+    'copy /b ' + noms.join('+') + ' inerNoWeb.zip',
+    'if not exist inerNoWeb.zip (',
+    '  echo   Echec. Les ' + noms.length + ' morceaux doivent etre dans CE dossier.',
+    '  pause',
+    '  exit /b 1',
+    ')',
+    'echo.',
+    'echo   inerNoWeb.zip est recolle. Clic droit dessus, Extraire tout.',
+    'echo   Puis ouvrez le dossier et lancez OUVRIR-LES-RESEAUX.bat',
+    'echo.',
+    'pause',
+  ];
+  fs.writeFileSync(path.join(path.dirname(archive), 'RECOLLER-LE-ZIP.bat'), lignes.join('\r\n') + '\r\n', 'latin1');
+  console.log(`  Coupé en ${noms.length} morceau(x) de ${tailleMo} Mo — RECOLLER-LE-ZIP.bat les rassemble`);
+}
+
 function ecrireLanceur(racineSortie) {
-  // Sans accent et en CRLF : un .bat est lu par l'invite de commandes de
-  // Windows, qui n'est pas en UTF-8 et afficherait des caracteres abimes.
-  // Antislashs assembles par concatenation, jamais par gabarit (voir la note
-  // de ecrireInstalleurNavigateur).
+  // CE LANCEUR NE DOIT JAMAIS REFUSER D'OUVRIR LE PLAN.
+  // Sa premiere version exigeait le Firefox EMBARQUE et s'arretait sinon.
+  // Resultat sur le terrain : l'enseignant avait installe Firefox
+  // normalement, le lanceur affichait un message et ne faisait rien, et les
+  // reseaux restaient inaccessibles. On cherche donc, dans l'ordre : le
+  // Firefox de la cle, celui du poste, puis a defaut le navigateur par
+  // defaut. Ouvrir quelque chose vaut toujours mieux que se taire.
   const bs = '\\';
-  const nav = '"%RACINE%navigateur' + bs + 'Firefox' + bs + 'firefox.exe"';
+  const embarque = '"%RACINE%navigateur' + bs + 'Firefox' + bs + 'firefox.exe"';
   const profil = '"%RACINE%navigateur' + bs + 'profil"';
   const lignes = [
     '@echo off',
     'setlocal',
     'set "RACINE=%~dp0"',
     'set "URL=%RACINE:' + bs + '=/%"',
-    'if not exist ' + nav + ' (',
-    '  echo.',
-    '  echo   Le navigateur embarque n est pas dans cette copie.',
-    '  echo   Ouvrez index.html avec le navigateur du poste,',
-    '  echo   ou lisez d abord EST-CE-QUE-CA-MARCHE.html',
-    '  echo.',
-    '  pause',
-    '  exit /b 1',
+    '',
+    'rem Program Files (x86) porte des parentheses : on le range dans une',
+    'rem variable AVANT tout bloc, sinon cmd.exe casse l analyse.',
+    'set "PF=%ProgramFiles%"',
+    'set "PF86=%ProgramFiles(x86)%"',
+    '',
+    'rem 1. Le Firefox de la cle, s il y est : profil range dans la cle, et',
+    'rem    rien d ecrit dans le PC.',
+    'if exist ' + embarque + ' (',
+    '  if not exist ' + profil + ' mkdir ' + profil,
+    '  start "" ' + embarque + ' -profile ' + profil + ' -no-remote "file:///%URL%index.html"',
+    '  exit /b 0',
     ')',
-    'if not exist ' + profil + ' mkdir ' + profil,
-    'start "" ' + nav + ' -profile ' + profil + ' -no-remote "file:///%URL%index.html"',
+    '',
+    'rem 2. Le Firefox du poste. On lui passe seulement l adresse : ni profil',
+    'rem    impose ni -no-remote, sinon un Firefox deja ouvert refuse de',
+    'rem    demarrer une seconde fois.',
+    'set "FF="',
+    'if exist "%PF%' + bs + 'Mozilla Firefox' + bs + 'firefox.exe" set "FF=%PF%' + bs + 'Mozilla Firefox' + bs + 'firefox.exe"',
+    'if not defined FF if exist "%PF86%' + bs + 'Mozilla Firefox' + bs + 'firefox.exe" set "FF=%PF86%' + bs + 'Mozilla Firefox' + bs + 'firefox.exe"',
+    'if defined FF (',
+    '  start "" "%FF%" "file:///%URL%index.html"',
+    '  exit /b 0',
+    ')',
+    '',
+    'rem 3. Faute de mieux, le navigateur par defaut. Meme trop vieux, il',
+    'rem    affichera au moins la page de diagnostic.',
+    'echo.',
+    'echo   Aucun Firefox trouve. J ouvre avec le navigateur par defaut.',
+    'echo   Si la page reste blanche ou figee, ce navigateur est trop',
+    'echo   ancien : lisez EST-CE-QUE-CA-MARCHE.html, puis lancez',
+    'echo   INSTALLER-LE-NAVIGATEUR.bat',
+    'echo.',
+    'start "" "%RACINE%index.html"',
   ];
-  fs.writeFileSync(path.join(racineSortie, 'OUVRIR-INERNOWEB.bat'), lignes.join('\r\n') + '\r\n', 'latin1');
+  fs.writeFileSync(path.join(racineSortie, 'OUVRIR-LES-RESEAUX.bat'), lignes.join('\r\n') + '\r\n', 'latin1');
 }
-
 function ecrireInstalleurNavigateur(racineSortie) {
   // L'installeur n'est PAS nomme en dur : le .bat prend le premier
   // « Firefox Setup*.exe » qu'il trouve. Ainsi la cle reste completable a la
@@ -680,7 +766,7 @@ function ecrireInstalleurNavigateur(racineSortie) {
     'echo.',
     '"%INST%" -ms /InstallDirectoryPath="%RACINE%navigateur' + bs + 'Firefox"',
     'if exist ' + ff + ' (',
-    '  echo   Termine. Lancez maintenant OUVRIR-INERNOWEB.bat',
+    '  echo   Termine. Lancez maintenant OUVRIR-LES-RESEAUX.bat',
     ') else (',
     '  echo   Echec. Ouvrez l installeur a la main, en choisissant',
     '  echo   comme dossier : %RACINE%navigateur' + bs + 'Firefox',
@@ -724,7 +810,7 @@ de la copie, lancer INSTALLER-LE-NAVIGATEUR.bat : il prend le premier
 « Firefox Setup*.exe » qu il trouve ici, quelle que soit sa version, et
 l installe pour l utilisateur courant, sans droits d administrateur.
 
-Ensuite : OUVRIR-INERNOWEB.bat, ou simplement index.html.
+Ensuite : OUVRIR-LES-RESEAUX.bat, ou simplement index.html.
 `;
   fs.writeFileSync(path.join(dossier, 'OU-TROUVER-FIREFOX.txt'), texte, 'utf8');
 }
@@ -1019,12 +1105,36 @@ Il faut au minimum Chrome 92 ou Firefox 90. Internet Explorer 11, seul
 navigateur garanti sur un Windows 7 d'origine, NE CONVIENT PAS : les
 pages s'ouvriront vides.
 
-COMMENT S'EN SERVIR
--------------------
-Copier ce dossier entier sur une cle USB, puis ouvrir « index.html »
-d'un double-clic. C'est tout : aucune installation, aucun droit
-d'administrateur, aucune connexion. Les pages s'ouvrent dans le
-navigateur depuis la cle.
+COMMENT S'EN SERVIR — OU EXACTEMENT ON CLIQUE
+---------------------------------------------
+1. Copier le dossier « inerNoWeb » ENTIER sur la cle USB, ou sur le
+   Bureau du PC. Il se deplace d'un poste a l'autre tel quel.
+2. Ouvrir le dossier, et double-cliquer sur OUVRIR-LES-RESEAUX.bat.
+   Le navigateur s'ouvre sur l'accueil. C'est tout.
+
+Si Windows se mefie du .bat, ou s'il ne se passe rien : clic droit sur
+« index.html », « Ouvrir avec », Firefox ou Chrome. Meme resultat.
+
+LES RESEAUX, ET LE FICHIER DE CHACUN
+------------------------------------
+Depuis l'accueil, tout est a un clic. Pour aller droit au but, chaque
+reseau a son propre fichier, qu'on ouvre de la meme facon (clic droit,
+« Ouvrir avec », Firefox) :
+
+  Le reseau thermo-techno — LE PRINCIPAL ... plan.html
+  Legislation — habilitation fluides ...... legislation\\index.html
+  HoCourant — habilitation electrique ..... hocourant\\index.html
+  ElectroRezo — electrotechnique .......... electrorezo\\index.html
+  HydroMetro — hydraulique ................ hydrometro\\index.html
+  AeroRezo — aeraulique ................... aerorezo\\index.html
+  AquiBlue — acquisition de donnees ....... aquiblue\\index.html
+
+RIEN N'EST A TELECHARGER ENSUITE
+--------------------------------
+Aucune installation, aucun droit d'administrateur, AUCUNE CONNEXION.
+Il n'y a aucun serveur a lancer : les pages, les images, les scripts et
+les feuilles de style sont tous dans le dossier. Un PC qui n'a jamais vu
+Internet les ouvre exactement pareil.
 
 ${resume.navigateur}
 
@@ -1173,6 +1283,7 @@ async function principal() {
     const cible = path.join(path.dirname(opts.sortie), 'inerNoWeb.zip');
     const poids = fabriquerZip(opts.sortie, fichiersDeja, cible);
     console.log(`  ZIP refait depuis le dossier existant : ${cible} (${lisible(poids)}, ${fichiersDeja.length} fichiers)`);
+    if (opts.tranches > 0) decouperZip(cible, opts.tranches);
     return;
   }
 
@@ -1201,7 +1312,7 @@ async function principal() {
   fs.mkdirSync(opts.sortie, { recursive: true });
 
   const debut = Date.now();
-  const { vus, externes, echecs, octetsTotal, pistesRetenues, pistesEcartees } = await parcourir(opts);
+  const { vus, pris, externes, echecs, octetsTotal, pistesRetenues, pistesEcartees } = await parcourir(opts);
   console.log('');
 
   let voix = { pris: 0, octets: 0, rates: 0 };
@@ -1236,7 +1347,7 @@ async function principal() {
     taille: lisible(octetsAvecVoix),
     externes: externes.size,
     navigateur: navigateur
-      ? `SI LE PC N'A PAS DE NAVIGATEUR ASSEZ RECENT\n------------------------------------------\nFirefox ESR ${navigateur.version} est dans cette copie (dossier « navigateur »).\nC'est la derniere lignee qui tourne sous Windows 7. Deux routes.\n\n1. LE POSTE EST A VOUS, ET N'A PLUS DE NAVIGATEUR (Internet Explorer\n   seul, par exemple) : lancez INSTALLER-LE-NAVIGATEUR.bat. Firefox\n   s'installe pour l'utilisateur courant, SANS droits d'administrateur.\n   Sur une machine qu'on administre, c'est la bonne route : le poste\n   garde son navigateur meme quand la cle repart.\n\n2. VOUS NE FAITES QUE PASSER : ${navigateur.portable ? 'lancez OUVRIR-INERNOWEB.bat. Firefox\n   part de la cle, avec son profil range dedans, et n ecrit rien dans le\n   PC.' : 'jouez d abord INSTALLER-LE-NAVIGATEUR.bat,\n   puis OUVRIR-INERNOWEB.bat.'}\n\nSUR UN POSTE GERE PAR L'ETABLISSEMENT, c'est autre chose : lancer un\nnavigateur depuis une cle USB y est souvent bloque, et a bon droit —\nc'est le schema classique d'une attaque. Sur un parc verrouille apres un\nrancongiciel, attendez-vous a un refus, et a une trace au nom de celui\nqui a essaye. La, on demande d'abord, on essaie ensuite.`
+      ? `SI LE PC N'A PAS DE NAVIGATEUR ASSEZ RECENT\n------------------------------------------\nFirefox ESR ${navigateur.version} est dans cette copie (dossier « navigateur »).\nC'est la derniere lignee qui tourne sous Windows 7. Deux routes.\n\n1. LE POSTE EST A VOUS, ET N'A PLUS DE NAVIGATEUR (Internet Explorer\n   seul, par exemple) : lancez INSTALLER-LE-NAVIGATEUR.bat. Firefox\n   s'installe pour l'utilisateur courant, SANS droits d'administrateur.\n   Sur une machine qu'on administre, c'est la bonne route : le poste\n   garde son navigateur meme quand la cle repart.\n\n2. VOUS NE FAITES QUE PASSER : ${navigateur.portable ? 'lancez OUVRIR-LES-RESEAUX.bat. Firefox\n   part de la cle, avec son profil range dedans, et n ecrit rien dans le\n   PC.' : 'jouez d abord INSTALLER-LE-NAVIGATEUR.bat,\n   puis OUVRIR-LES-RESEAUX.bat.'}\n\nSUR UN POSTE GERE PAR L'ETABLISSEMENT, c'est autre chose : lancer un\nnavigateur depuis une cle USB y est souvent bloque, et a bon droit —\nc'est le schema classique d'une attaque. Sur un parc verrouille apres un\nrancongiciel, attendez-vous a un refus, et a une trace au nom de celui\nqui a essaye. La, on demande d'abord, on essaie ensuite.`
       : `SI LE PC N'A PAS DE NAVIGATEUR ASSEZ RECENT\n------------------------------------------\nAucun navigateur n'est embarque dans cette copie. Pour en ajouter un :\nrefaire la copie avec l'option --navigateur (Firefox ESR 115, la\nderniere lignee qui tourne sous Windows 7, environ 215 Mo).`,
     dezippeur: dezippeur
       ? `IL N'Y A RIEN A DEZIPPER ICI\n----------------------------\nCette copie est un DOSSIER, pas une archive : on l'ouvre tel quel.\nEt Windows 7 ouvre deja les .zip tout seul (clic droit, « Extraire\ntout »). Aucun dezippeur n'est necessaire pour s'en servir.\n\n7-Zip ${dezippeur.version} est quand meme dans la cle (dossier « outils »), pour les\n.7z et les .rar que Windows ne sait pas lire${dezippeur.portable ? ' : OUVRIR-LE-DEZIPPEUR.bat' : '.\nLancez INSTALLER-LE-DEZIPPEUR.bat pour le deposer'}. Sur un poste qui ne l'a\npas et que vous administrez, INSTALLER-LE-DEZIPPEUR.bat l'y depose\nsans droits d'administrateur. Version 32 bits : elle tourne aussi sur\nles Windows 64 bits.`
@@ -1262,12 +1373,15 @@ voix : refaire la copie avec l'option --voix (plusieurs centaines de Mo).`,
 
   const manquants = controler(opts.sortie, listerFichiers(opts.sortie));
 
-  console.log(`  ${vus.size} adresse(s) prise(s), ${lisible(octetsAvecVoix)}, en ${((Date.now() - debut) / 1000).toFixed(1)} s`);
+  // « vus » compte les TENTATIVES, suppositions mortes comprises ; « pris »
+  // compte les fichiers réellement écrits. Annoncer le premier gonflait le
+  // chiffre d'un facteur dix et ne voulait plus rien dire.
+  console.log(`  ${pris} fichier(s) emporté(s), ${lisible(octetsAvecVoix)}, en ${((Date.now() - debut) / 1000).toFixed(1)} s`);
   console.log(`  ${externes.size} adresse(s) hors du site (elles resteront hors ligne)`);
   console.log(`  ${pistesRetenues} image(s) assemblée(s) en JavaScript retrouvée(s) — ${pistesEcartees} piste(s) écartée(s)`);
   if (opts.voix) console.log(`  ${voix.pris} narration(s) emportée(s) (${lisible(voix.octets)})${voix.rates ? ` — ${voix.rates} en échec` : ''}`);
   else console.log('  narrations NON emportées (option --voix) : hors ligne, la lecture à voix haute passera par la synthèse du navigateur');
-  if (navigateur && navigateur.portable) console.log(`  navigateur embarqué : Firefox ESR ${navigateur.version}, lancé par OUVRIR-INERNOWEB.bat`);
+  if (navigateur && navigateur.portable) console.log(`  navigateur embarqué : Firefox ESR ${navigateur.version}, lancé par OUVRIR-LES-RESEAUX.bat`);
   else if (navigateur) console.log(`  navigateur : installeur Firefox ESR ${navigateur.version} déposé, à ouvrir à la main`);
   if (dezippeur) console.log(`  dézippeur : 7-Zip ${dezippeur.version}${dezippeur.portable ? ', lancé par OUVRIR-LE-DEZIPPEUR.bat' : ' (installeur déposé)'}`);
 
@@ -1289,6 +1403,7 @@ voix : refaire la copie avec l'option --voix (plusieurs centaines de Mo).`,
     const destination = path.join(path.dirname(opts.sortie), 'inerNoWeb.zip');
     const taille = fabriquerZip(opts.sortie, listerFichiers(opts.sortie), destination);
     console.log(`\n  ZIP : ${destination} (${lisible(taille)})`);
+    if (opts.tranches > 0) decouperZip(destination, opts.tranches);
   }
 
   console.log(`\n  Dossier prêt : ${opts.sortie}`);

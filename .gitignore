@@ -59,3 +59,5 @@ livret/curseurs.html
 # sortie.
 /output/inerNoWeb/
 /output/inerNoWeb.zip
+/output/inerNoWeb.zip.*
+/output/RECOLLER-LE-ZIP.bat

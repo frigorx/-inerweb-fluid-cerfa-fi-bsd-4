@@ -25,7 +25,12 @@ const EXCLUS_PARTOUT = new Set(['.git', 'node_modules', '.claude']);
 // Mêmes exclusions que le lanceur : à la RACINE seulement (v8/js/data et
 // v8/js/documents sont du code, data/ et documents/ sont à l'utilisateur).
 const EXCLUS_RACINE = new Set([
-  'data', 'documents', 'backups', 'exports', 'img', 'css', 'apps-script'
+  'data', 'documents', 'backups', 'exports', 'img', 'css', 'apps-script',
+  // « output » est fabriqué, jamais écrit à la main : les PDF de démonstration
+  // et la copie hors ligne inerNoWeb, qui est un MIROIR du site publié. Le
+  // parcourir revient à auditer inerweb.fr au lieu de ce dépôt — et ses
+  // scripts citent des suites qui n'existent que côté site.
+  'output'
 ]);
 
 let nbOk = 0;
