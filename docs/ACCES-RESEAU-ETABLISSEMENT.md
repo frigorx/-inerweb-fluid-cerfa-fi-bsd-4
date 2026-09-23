@@ -185,25 +185,30 @@ sa classe.
 
 Si le poste n'a rien d'assez récent, l'option emporte **Firefox ESR 115** — la
 dernière lignée que Mozilla maintient pour Windows 7, et elle vit toujours
-(115.41.0esr au 22/09/2026). Mozilla ne publie **aucune version portable** :
+(115.41.0esr au 23/09/2026). Mozilla ne publie **aucune version portable** :
 seulement un `.exe` et un `.msi`. Mais l'installeur est une archive 7-Zip
-auto-extractible ; ouverte à la fabrication, elle rend un dossier qui se
-lance tel quel, **sans installation ni droits d'administrateur**. Les
-binaires ne sont pas modifiés — Mozilla autorise la redistribution de Firefox
-non modifié. Compter **~215 Mo**, et 7-Zip présent sur la machine qui
-fabrique (pas sur celles qui s'en servent).
+auto-extractible ; ouverte à la fabrication, elle rend un dossier qui se lance
+tel quel, **sans installation ni droits d'administrateur**. Les binaires ne
+sont pas modifiés — Mozilla autorise la redistribution de Firefox non modifié.
+Compter **~215 Mo**, plus 55 Mo pour l'installeur, qui **reste dans la copie**
+(voir la route 1 ci-dessous).
 
-`OUVRIR-INERNOWEB.bat` le lance sur la copie, avec un profil rangé **dans la
-clé** : rien n'est écrit dans le PC.
+**Si 7-Zip manque sur la machine qui fabrique, ce n'est pas bloquant.**
+L'installeur de Firefox sait se déposer lui-même où on lui dit, pour
+l'utilisateur courant, sans droits d'administrateur : c'est ce que fait
+`INSTALLER-LE-NAVIGATEUR.bat`, écrit dans chaque copie. 7-Zip est cherché dans
+le `PATH` **et** là où Windows l'installe — ne regarder que le `PATH`, c'est
+le déclarer absent chez la plupart de ceux qui l'ont.
 
-**À savoir avant de s'en servir, et ce n'est pas un détail.** Lancer un
-navigateur depuis une clé USB sur un poste d'établissement est très souvent
-bloqué, et à bon droit : c'est le schéma classique d'une attaque. Sur un parc
-verrouillé six mois après un rançongiciel, il faut s'attendre à un refus de
-la stratégie d'application ou de l'antivirus — et à ce que la tentative
-laisse une trace au nom de celui qui l'a faite. **Essayer d'abord le
-navigateur du poste**, page de diagnostic à l'appui. Le navigateur embarqué
-est le dernier recours, pas le premier geste.
+### Deux situations, deux conduites — et elles ne se confondent pas
+
+| Le poste | Ce qu'il faut faire |
+|---|---|
+| **Vous l'administrez**, et il n'a plus de navigateur lisible (Internet Explorer seul, par exemple) | `INSTALLER-LE-NAVIGATEUR.bat` : Firefox s'installe pour l'utilisateur courant. Le poste garde son navigateur quand la clé repart. Ici le navigateur embarqué n'est pas un contournement — **c'est la seule façon d'ouvrir ces pages**, IE11 ne sachant pas lire `a?.b`. |
+| **Il est géré par l'établissement** | Autre chose. Lancer un navigateur depuis une clé USB y est souvent bloqué, et à bon droit : c'est le schéma classique d'une attaque. Sur un parc verrouillé après un rançongiciel, attendez un refus de la stratégie d'application ou de l'antivirus, et une trace au nom de celui qui a essayé. On demande d'abord, on essaie ensuite. |
+
+`OUVRIR-INERNOWEB.bat` lance le navigateur sur la copie, avec un profil rangé
+**dans la clé** : rien n'est écrit dans le PC.
 
 ### Ce que donne la fabrication, au 22/09/2026
 

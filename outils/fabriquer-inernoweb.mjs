@@ -594,34 +594,84 @@ async function derniereEsr115() {
 }
 
 function septZipDisponible() {
-  for (const outil of ['7z', '7za']) {
+  // Sous Windows, 7-Zip s'installe dans « Program Files » SANS se mettre dans
+  // le PATH : ne chercher que dans le PATH, c'est le déclarer absent chez la
+  // plupart de ceux qui l'ont. On regarde donc aussi où il se range.
+  const candidats = ['7z', '7za'];
+  for (const dossier of [process.env.ProgramFiles, process.env['ProgramFiles(x86)'], 'C:\\Program Files', 'C:\\Program Files (x86)']) {
+    if (!dossier) continue;
+    for (const nom of ['7-Zip', 'NanaZip']) {
+      candidats.push(path.join(dossier, nom, '7z.exe'));
+    }
+  }
+  for (const outil of candidats) {
     const essai = spawnSync(outil, ['i'], { stdio: 'ignore' });
     if (!essai.error) return outil;
   }
   return null;
 }
 
+// Le chemin de secours quand 7-Zip manque : l'installeur de Firefox sait
+// lui-même se déposer où on lui dit, pour l'utilisateur courant, SANS droits
+// d'administrateur (« -ms » silencieux et « /InstallDirectoryPath= », deux
+// options que Mozilla documente pour les déploiements). On écrit donc un
+// second lanceur, qui ne demande rien d'autre que ce qui est déjà dans la
+// clé. C'est aussi la bonne route pour installer POUR DE BON un navigateur
+// sur un poste qu'on administre et qui n'en a pas.
 function ecrireLanceur(racineSortie) {
   // Sans accent et en CRLF : un .bat est lu par l'invite de commandes de
   // Windows, qui n'est pas en UTF-8 et afficherait des caracteres abimes.
+  // Antislashs assembles par concatenation, jamais par gabarit (voir la note
+  // de ecrireInstalleurNavigateur).
+  const bs = '\\';
+  const nav = '"%RACINE%navigateur' + bs + 'Firefox' + bs + 'firefox.exe"';
+  const profil = '"%RACINE%navigateur' + bs + 'profil"';
   const lignes = [
     '@echo off',
     'setlocal',
     'set "RACINE=%~dp0"',
-    'set "URL=%RACINE:\\=/%"',
-    'if not exist "%RACINE%navigateur\\Firefox\\firefox.exe" (',
+    'set "URL=%RACINE:' + bs + '=/%"',
+    'if not exist ' + nav + ' (',
     '  echo.',
-    '  echo Le navigateur embarque n est pas dans cette copie.',
-    '  echo Ouvrez index.html avec le navigateur du poste,',
-    '  echo ou lisez d abord EST-CE-QUE-CA-MARCHE.html',
+    '  echo   Le navigateur embarque n est pas dans cette copie.',
+    '  echo   Ouvrez index.html avec le navigateur du poste,',
+    '  echo   ou lisez d abord EST-CE-QUE-CA-MARCHE.html',
     '  echo.',
     '  pause',
     '  exit /b 1',
     ')',
-    'if not exist "%RACINE%navigateur\\profil" mkdir "%RACINE%navigateur\\profil"',
-    'start "" "%RACINE%navigateur\\Firefox\\firefox.exe" -profile "%RACINE%navigateur\\profil" -no-remote "file:///%URL%index.html"',
+    'if not exist ' + profil + ' mkdir ' + profil,
+    'start "" ' + nav + ' -profile ' + profil + ' -no-remote "file:///%URL%index.html"',
   ];
   fs.writeFileSync(path.join(racineSortie, 'OUVRIR-INERNOWEB.bat'), lignes.join('\r\n') + '\r\n', 'latin1');
+}
+
+function ecrireInstalleurNavigateur(racineSortie, nomInstalleur) {
+  // Concaténation et non gabarit : ces lignes sont pleines d'antislashs de
+  // chemins Windows, et un gabarit y lirait « \F » comme une échappée. La
+  // première version de ce lanceur est sortie avec « navigateurFirefox » et
+  // un saut de page au milieu du chemin — illisible par cmd.exe.
+  const bs = '\\';
+  const ff = '"%RACINE%navigateur' + bs + 'Firefox' + bs + 'firefox.exe"';
+  const lignes = [
+    '@echo off',
+    'setlocal',
+    'set "RACINE=%~dp0"',
+    'echo.',
+    'echo   Depot de Firefox dans la cle. Cela prend une minute.',
+    'echo   Aucun droit d administrateur n est demande.',
+    'echo.',
+    '"%RACINE%navigateur' + bs + nomInstalleur + '" -ms /InstallDirectoryPath="%RACINE%navigateur' + bs + 'Firefox"',
+    'if exist ' + ff + ' (',
+    '  echo   Termine. Lancez maintenant OUVRIR-INERNOWEB.bat',
+    ') else (',
+    '  echo   Echec. Autre route : installer 7-Zip sur le poste qui FABRIQUE',
+    '  echo   la copie, puis rejouer la fabrication avec --navigateur.',
+    ')',
+    'echo.',
+    'pause',
+  ];
+  fs.writeFileSync(path.join(racineSortie, 'INSTALLER-LE-NAVIGATEUR.bat'), lignes.join('\r\n') + '\r\n', 'latin1');
 }
 
 async function emporterNavigateur(racineSortie) {
@@ -641,10 +691,11 @@ async function emporterNavigateur(racineSortie) {
 
   const outil = septZipDisponible();
   if (!outil) {
-    console.log('  ⚠ 7-Zip absent de cette machine : l\'installeur est laissé tel quel.');
-    console.log('    Installer 7-Zip (7-zip.org) puis rejouer la commande rend le dossier');
-    console.log('    prêt à l\'emploi. Sans cela, il faudra ouvrir l\'installeur à la main.');
+    console.log('  ⚠ 7-Zip introuvable sur cette machine : le dossier n\'est pas ouvert ici.');
+    console.log('    Ce n\'est PAS bloquant — INSTALLER-LE-NAVIGATEUR.bat, écrit dans la copie,');
+    console.log('    le dépose lui-même dans la clé, sans droits d\'administrateur.');
     ecrireLanceur(racineSortie);
+    ecrireInstalleurNavigateur(racineSortie, nom);
     return { version, octets: recu.octets.length, portable: false };
   }
 
@@ -663,9 +714,13 @@ async function emporterNavigateur(racineSortie) {
   fs.rmSync(cible, { recursive: true, force: true });
   fs.renameSync(coeur, cible);
   fs.rmSync(temporaire, { recursive: true, force: true });
-  fs.rmSync(installeur, { force: true });
   fs.mkdirSync(path.join(dossier, 'profil'), { recursive: true });
   ecrireLanceur(racineSortie);
+  // L'installeur RESTE dans la copie, même quand l'ouverture a réussi : sur un
+  // poste qu'on administre et qui n'a plus de navigateur, l'installer pour de
+  // bon vaut mieux que le lancer depuis une clé. Cinquante-cinq mégaoctets
+  // pour garder cette porte ouverte, c'est bon marché.
+  ecrireInstalleurNavigateur(racineSortie, nom);
 
   let poids = 0;
   for (const f of listerFichiers(cible)) poids += fs.statSync(path.join(cible, f)).size;
@@ -960,7 +1015,28 @@ async function principal() {
     return;
   }
 
-  if (fs.existsSync(opts.sortie)) fs.rmSync(opts.sortie, { recursive: true, force: true });
+  // GARDE-FOU. La ligne suivante EFFACE le dossier de sortie. C'est voulu — une
+  // copie se refait à neuf — mais cet outil est fait pour viser directement une
+  // clé USB (« --sortie E:\\inerNoWeb »). Une lettre de trop, « --sortie E:\\ »,
+  // et on efface la clé entière. Deux refus, donc, avant d'effacer quoi que ce
+  // soit.
+  if (path.dirname(opts.sortie) === opts.sortie) {
+    console.error(`\n  REFUS : « ${opts.sortie} » est la racine d'un disque.`);
+    console.error('  Cet outil efface son dossier de sortie avant de le refaire.');
+    console.error('  Donnez-lui un sous-dossier, par exemple E:\\inerNoWeb.');
+    process.exit(2);
+  }
+  if (fs.existsSync(opts.sortie)) {
+    const deja = listerFichiers(opts.sortie);
+    const estUneCopie = deja.some((f) => f === 'LISEZ-MOI.txt' || f === 'index.html');
+    if (deja.length > 0 && !estUneCopie) {
+      console.error(`\n  REFUS : « ${opts.sortie} » contient ${deja.length} fichier(s) et ne ressemble`);
+      console.error('  pas à une copie inerNoWeb (ni LISEZ-MOI.txt, ni index.html).');
+      console.error('  Cet outil effacerait ce dossier. Visez un dossier vide ou un nom neuf.');
+      process.exit(2);
+    }
+    fs.rmSync(opts.sortie, { recursive: true, force: true });
+  }
   fs.mkdirSync(opts.sortie, { recursive: true });
 
   const debut = Date.now();
@@ -989,8 +1065,8 @@ async function principal() {
     fichiers: fichiers.length,
     taille: lisible(octetsAvecVoix),
     externes: externes.size,
-    navigateur: navigateur && navigateur.portable
-      ? `SI LE PC N'A PAS DE NAVIGATEUR ASSEZ RECENT\n------------------------------------------\nUn Firefox ESR ${navigateur.version} est embarque dans cette copie\n(dossier « navigateur »). Le lancer par « OUVRIR-INERNOWEB.bat » : il\ns'ouvre directement sur le kit, avec son propre profil range dans la\ncle, et n'ecrit rien dans le PC.\n\nA SAVOIR AVANT D'ESSAYER : lancer un navigateur depuis une cle USB est\ntres souvent BLOQUE sur un poste d'etablissement, et a bon droit —\nc'est le schema classique d'une attaque. Sur un parc verrouille apres\nun rancongiciel, il faut s'attendre a un refus de l'antivirus ou de la\nstrategie d'application, et a ce que la tentative laisse une trace au\nnom de celui qui l'a faite. Essayer d'abord le navigateur du poste.`
+    navigateur: navigateur
+      ? `SI LE PC N'A PAS DE NAVIGATEUR ASSEZ RECENT\n------------------------------------------\nFirefox ESR ${navigateur.version} est dans cette copie (dossier « navigateur »).\nC'est la derniere lignee qui tourne sous Windows 7. Deux routes.\n\n1. LE POSTE EST A VOUS, ET N'A PLUS DE NAVIGATEUR (Internet Explorer\n   seul, par exemple) : lancez INSTALLER-LE-NAVIGATEUR.bat. Firefox\n   s'installe pour l'utilisateur courant, SANS droits d'administrateur.\n   Sur une machine qu'on administre, c'est la bonne route : le poste\n   garde son navigateur meme quand la cle repart.\n\n2. VOUS NE FAITES QUE PASSER : ${navigateur.portable ? 'lancez OUVRIR-INERNOWEB.bat. Firefox\n   part de la cle, avec son profil range dedans, et n ecrit rien dans le\n   PC.' : 'jouez d abord INSTALLER-LE-NAVIGATEUR.bat,\n   puis OUVRIR-INERNOWEB.bat.'}\n\nSUR UN POSTE GERE PAR L'ETABLISSEMENT, c'est autre chose : lancer un\nnavigateur depuis une cle USB y est souvent bloque, et a bon droit —\nc'est le schema classique d'une attaque. Sur un parc verrouille apres un\nrancongiciel, attendez-vous a un refus, et a une trace au nom de celui\nqui a essaye. La, on demande d'abord, on essaie ensuite.`
       : `SI LE PC N'A PAS DE NAVIGATEUR ASSEZ RECENT\n------------------------------------------\nAucun navigateur n'est embarque dans cette copie. Pour en ajouter un :\nrefaire la copie avec l'option --navigateur (Firefox ESR 115, la\nderniere lignee qui tourne sous Windows 7, environ 215 Mo).`,
     voix: opts.voix
       ? `${voix.pris} narration(s) enregistree(s) sont dans cette copie : la
