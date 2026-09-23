@@ -1,0 +1,97 @@
+<!-- Copie de index.html sans politique de sécurité, pour que le harnais puisse s'y greffer. Ouvrir par un serveur local : http://…/outils/test-ateliers.html#test — le résultat s'écrit en bas de page. -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le contacteur qui se souvient — Auto-maintien — inerWeb Édu</title>
+<meta name="description" content="TP interactif : le circuit de commande à auto-maintien d'un contacteur. Observer, relier la platine au schéma, dépanner, compléter pour un compresseur. inerWeb Édu — F. Henninot.">
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#1b3a63">
+<link rel="stylesheet" href="../styles.css">
+<!-- Politique de sécurité du contenu : tout est servi par le module lui-même,
+     aucun script inline, rien n'est envoyé nulle part. Même règle que le
+     Circuit Fantôme. -->
+
+<meta name="referrer" content="no-referrer">
+</head>
+<body>
+
+<header>
+  <span class="flocon">❄</span>
+  <h1>Le contacteur qui se souvient</h1>
+  <span class="edu">Édu</span>
+  <button class="retour" id="btn-retour" hidden>← Retour au parcours</button>
+  <span class="signature">inerWeb · par F. Henninot</span>
+</header>
+
+<main>
+
+  <!-- ============================================================ HUB -->
+  <section class="ecran actif" id="ec-hub">
+    <h2 style="font-size:26px;margin-bottom:6px">Un bouton, une impulsion — et le contacteur reste collé. Pourquoi ?</h2>
+    <p class="intro">
+      Tu appuies sur <strong>Marche</strong>, tu relâches, et le moteur continue de tourner.
+      Tu appuies sur <strong>Arrêt</strong>, il s'arrête. Entre les deux, le contacteur a
+      <strong>gardé en mémoire</strong> ton ordre. Ce TP te fait trouver comment, sur la platine et
+      sur le schéma, puis te fait réparer quatre platines mal câblées.
+    </p>
+
+    <div class="note">
+      <strong>Ta boussole :</strong> tout tient dans <strong>un seul contact</strong>, le
+      <strong>13-14 de KM1</strong>. Il est commandé par le contacteur lui-même, et il est câblé
+      <strong>en parallèle du bouton Marche</strong>. Quand tu auras compris pourquoi il est là,
+      et pourquoi l'Arrêt est en <strong>série</strong> et pas en parallèle, tu sauras lire et
+      câbler n'importe quel circuit de commande à auto-maintien.
+    </div>
+
+    <div class="note securite">
+      <strong>Point sécurité.</strong> Ici, tout est simulé : rien n'est sous tension. Sur la
+      platine réelle de l'atelier, le câblage se fait <strong>hors tension, disjoncteur Q1
+      coupé et cadenassé</strong>, et la mise sous tension se fait <strong>uniquement</strong>
+      après vérification par le professeur. Voir la fiche élève, page 1.
+    </div>
+
+    <div class="progression">
+      <div class="jauge"><span id="jauge-globale" style="width:0%"></span></div>
+      <span class="compteur" id="compteur-global">0 / 4 ateliers validés</span>
+    </div>
+
+    <div class="grille-ateliers" id="ateliers"></div>
+
+    <div class="carte" style="margin-top:22px">
+      <h3>Les documents du TP</h3>
+      <p style="color:var(--texte-2);margin-bottom:12px">
+        La fiche élève à imprimer (schémas à compléter, tableau de dépannage, grille
+        d'auto-positionnement) et, pour l'enseignant, le TP complet avec son corrigé.
+      </p>
+      <div class="barre-actions">
+        <a class="b" href="fiche-eleve.html">Ouvrir la fiche élève (A4)</a>
+        <a class="b secondaire" href="TP-CONTACTEUR-AUTOMAINTIEN.md">Le TP enseignant (Markdown)</a>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h3>Remise à zéro</h3>
+      <p style="font-size:16px;color:var(--texte-2)">
+        Ta progression est enregistrée <strong>sur cet appareil uniquement</strong>. Aucune donnée n'est envoyée nulle part.
+      </p>
+      <div class="barre-actions">
+        <button class="b secondaire" id="btn-raz">Effacer ma progression</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================== ATELIERS -->
+  <section class="ecran" id="ec-observer"></section>
+  <section class="ecran" id="ec-relier"></section>
+  <section class="ecran" id="ec-depanner"></section>
+  <section class="ecran" id="ec-completer"></section>
+
+</main>
+
+<script src="../simulation.js"></script>
+<script src="../schemas.js"></script>
+<script src="../app.js"></script><script src="harnais.js"></script>
+</body>
+</html>

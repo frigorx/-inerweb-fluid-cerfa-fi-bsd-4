@@ -1,0 +1,218 @@
+/* inerWeb Édu — Le contacteur qui se souvient
+   Charte inerWeb Édu : Calibri 14 pt mini, titres Trebuchet MS, fond clair.
+   Aucun mode sombre : la feuille ne définit volontairement aucune règle
+   prefers-color-scheme. Reprend la grammaire visuelle du Circuit Fantôme. */
+
+:root {
+  --marine: #1b3a63;
+  --marine-clair: #2d5688;
+  --orange: #ff6b35;
+  --orange-pale: #fff1eb;
+  --fond: #f5f5f0;
+  --carte: #ffffff;
+  --bordure: #d9d9d2;
+  --texte: #1b3a63;
+  --texte-2: #5a6472;
+  --vert: #16a34a;
+  --vert-fond: #eafaf1;
+  --rouge: #dc2626;
+  --rouge-fond: #fdf2f2;
+  --ambre: #b45309;
+  --ambre-fond: #fef3c7;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: Calibri, Carlito, "Segoe UI", sans-serif;
+  font-size: 18px;
+  line-height: 1.55;
+  background: var(--fond);
+  color: var(--texte);
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+h1, h2, h3, h4 { font-family: "Trebuchet MS", Tahoma, sans-serif; font-weight: 700; line-height: 1.25; }
+
+/* ---------------------------------------------------------------- en-tête */
+header {
+  background: var(--marine);
+  color: #fff;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+header .flocon { font-size: 22px; }
+header h1 { font-size: 19px; }
+header .edu {
+  background: var(--orange); color: #fff; font-size: 13px; padding: 2px 9px;
+  border-radius: 4px; font-weight: 700; font-family: "Trebuchet MS", sans-serif;
+}
+header .signature { font-size: 13px; opacity: .65; margin-left: auto; }
+header button.retour {
+  background: rgba(255, 255, 255, .16); color: #fff; border: 1px solid rgba(255, 255, 255, .4);
+  border-radius: 8px; padding: 6px 14px; font-size: 16px; font-family: inherit; cursor: pointer;
+}
+header button.retour:hover { background: rgba(255, 255, 255, .28); }
+
+main { max-width: 1120px; margin: 0 auto; padding: 20px 16px 60px; }
+
+/* -------------------------------------------------------------- écrans */
+.ecran { display: none; }
+.ecran.actif { display: block; animation: apparait .25s ease-out; }
+@keyframes apparait { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.intro { font-size: 18px; color: var(--texte-2); margin: 6px 0 20px; max-width: 64ch; }
+
+/* --------------------------------------------------------------- cartes */
+.carte { background: var(--carte); border: 2px solid var(--bordure); border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
+.carte h3 { font-size: 19px; margin-bottom: 8px; }
+.carte p { font-size: 17px; }
+
+.grille-ateliers { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.tuile {
+  background: var(--carte); border: 2px solid var(--bordure); border-left: 7px solid var(--marine);
+  border-radius: 12px; padding: 16px 18px; cursor: pointer; text-align: left; font-family: inherit;
+  font-size: 17px; color: var(--texte); display: block; width: 100%; transition: .15s;
+}
+.tuile:hover { border-color: var(--orange); border-left-color: var(--orange); transform: translateY(-2px); }
+.tuile h3 { font-size: 19px; margin-bottom: 4px; }
+.tuile .duree { display: inline-block; background: #eef4f9; color: var(--marine); font-size: 14px; font-weight: 700; padding: 1px 10px; border-radius: 999px; margin-bottom: 6px; }
+.tuile p { font-size: 16px; color: var(--texte-2); }
+.tuile .etat { margin-top: 10px; font-size: 15px; font-weight: 700; }
+.tuile.fait { border-left-color: var(--vert); }
+.tuile.fait .etat { color: var(--vert); }
+.tuile .etat.encours { color: var(--ambre); }
+
+/* --------------------------------------------------------------- boutons */
+button.b {
+  font-family: inherit; font-size: 17px; font-weight: 700; border: none; border-radius: 10px;
+  padding: 11px 22px; cursor: pointer; background: var(--orange); color: #fff;
+}
+button.b:hover { background: #e85a24; }
+button.b.secondaire { background: #e8ebef; color: var(--marine); }
+button.b.secondaire:hover { background: #d8dde3; }
+button.b:disabled { background: #cfd4da; color: #8a9099; cursor: default; }
+.barre-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+a.b { display: inline-block; text-decoration: none; }
+
+/* ------------------------------------------------------------ questions */
+.question { background: var(--carte); border: 2px solid var(--bordure); border-radius: 12px; padding: 20px; margin-bottom: 14px; }
+.consigne { font-size: 20px; font-weight: 700; font-family: "Trebuchet MS", sans-serif; margin-bottom: 12px; }
+.choix { display: grid; gap: 10px; }
+button.reponse {
+  font-family: inherit; font-size: 17px; text-align: left; background: var(--carte);
+  border: 2px solid var(--bordure); border-radius: 10px; padding: 13px 16px; cursor: pointer; color: var(--texte); transition: .12s;
+}
+button.reponse:hover { border-color: var(--orange); background: var(--orange-pale); }
+button.reponse.juste { border-color: var(--vert); background: var(--vert-fond); font-weight: 700; }
+button.reponse.faux { border-color: var(--rouge); background: var(--rouge-fond); }
+button.reponse:disabled { cursor: default; }
+
+.retour-info { border-radius: 10px; padding: 14px 16px; margin-top: 14px; font-size: 17px; border-left: 6px solid var(--marine); background: #eef4f9; }
+.retour-info.ok { border-left-color: var(--vert); background: var(--vert-fond); }
+.retour-info.ko { border-left-color: var(--rouge); background: var(--rouge-fond); }
+.retour-info strong { display: block; margin-bottom: 4px; }
+
+/* ------------------------------------------------------------ progression */
+.progression { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.jauge { flex: 1; min-width: 160px; height: 10px; background: #e0e0da; border-radius: 6px; overflow: hidden; }
+.jauge span { display: block; height: 100%; background: var(--orange); transition: width .3s; }
+.compteur { font-size: 16px; font-weight: 700; color: var(--texte-2); white-space: nowrap; }
+
+/* --------------------------------------------------------------- messages */
+.note { background: #eef4f9; border-left: 6px solid var(--marine-clair); border-radius: 8px; padding: 12px 15px; font-size: 16px; margin: 14px 0; }
+.note.attention { background: var(--ambre-fond); border-left-color: var(--ambre); }
+.note.securite { background: var(--orange-pale); border-left-color: var(--orange); }
+ul.puces { margin: 8px 0 8px 22px; }
+ul.puces li { margin-bottom: 5px; }
+ul.puces li.vu { color: var(--vert); font-weight: 700; }
+ul.puces li.vu::marker { content: "✔ "; }
+
+.pastille { display: inline-block; padding: 2px 11px; border-radius: 999px; font-size: 15px; font-weight: 700; }
+.pastille.ok { background: var(--vert-fond); color: var(--vert); }
+.pastille.moyen { background: var(--ambre-fond); color: var(--ambre); }
+.pastille.ko { background: var(--rouge-fond); color: var(--rouge); }
+
+table.bilan { width: 100%; border-collapse: collapse; font-size: 17px; margin-top: 10px; }
+table.bilan th, table.bilan td { border-bottom: 1px solid var(--bordure); padding: 9px 8px; text-align: left; }
+table.bilan th { font-family: "Trebuchet MS", sans-serif; color: var(--texte-2); font-size: 15px; text-transform: uppercase; letter-spacing: .03em; }
+
+/* ============================================================ le simulateur */
+.simulateur { background: var(--carte); border: 2px solid var(--bordure); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+.duo-schemas { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+.duo-schemas > div { border: 1.5px solid var(--bordure); border-radius: 10px; padding: 8px; background: #fff; }
+.duo-schemas h4 { font-size: 15px; color: var(--texte-2); text-transform: uppercase; letter-spacing: .03em; margin: 0 4px 6px; }
+.duo-schemas.seul { grid-template-columns: 1fr; }
+svg.schema { width: 100%; height: auto; display: block; overflow: visible; user-select: none; }
+svg.platine { max-width: 560px; margin: 0 auto; }
+svg.developpe { max-width: 560px; margin: 0 auto; }
+
+/* le courant : un pointillé qui avance sur le segment sous tension */
+.flux { stroke-dasharray: 8 6; animation: avance .7s linear infinite; }
+@keyframes avance { to { stroke-dashoffset: -14; } }
+
+/* organes manipulables sur la platine */
+[data-organe] { cursor: pointer; }
+[data-organe]:hover rect:first-child { stroke: var(--orange); stroke-width: 3; }
+.km.bat rect:nth-of-type(4) { animation: claque .16s steps(2) infinite; }
+@keyframes claque { to { transform: translateY(12px); } }
+
+/* bornes : cliquables dans l'atelier « relier » */
+.borne.cliquable { cursor: pointer; }
+.borne.cliquable:hover circle { fill: var(--orange-pale); stroke: var(--orange); stroke-width: 3; }
+.borne.juste circle { fill: var(--vert-fond); stroke: var(--vert); stroke-width: 3.5; }
+.borne.faux circle { fill: var(--rouge-fond); stroke: var(--rouge); stroke-width: 3.5; }
+.borne.cible circle { fill: var(--orange-pale); stroke: var(--orange); stroke-width: 3.5; animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { r: 12; } }
+
+/* le pupitre : trois gros boutons sous les dessins */
+.pupitre { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
+.pupitre button {
+  font-family: "Trebuchet MS", sans-serif; font-weight: 700; font-size: 17px; border-radius: 12px;
+  padding: 14px 20px; cursor: pointer; border: 3px solid var(--marine); background: #fff; color: var(--marine);
+  min-width: 150px; user-select: none; touch-action: none;
+}
+.pupitre button.q1.on { background: var(--marine); color: #fff; }
+.pupitre button.arret { border-color: #c8102e; color: #c8102e; }
+.pupitre button.arret.appuye { background: #c8102e; color: #fff; transform: translateY(2px); }
+.pupitre button.marche { border-color: var(--vert); color: var(--vert); }
+.pupitre button.marche.appuye { background: var(--vert); color: #fff; transform: translateY(2px); }
+.pupitre .aide { font-size: 15px; color: var(--texte-2); }
+.pupitre label { font-size: 16px; display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.pupitre input[type=checkbox] { width: 20px; height: 20px; }
+
+.temoin { display: inline-flex; align-items: center; gap: 8px; font-family: "Trebuchet MS", sans-serif; font-weight: 700; font-size: 17px; padding: 8px 14px; border-radius: 999px; background: #eef4f9; }
+.temoin i { width: 16px; height: 16px; border-radius: 50%; background: #b0b8c0; display: inline-block; }
+.temoin.colle { background: var(--orange-pale); color: #c9420d; }
+.temoin.colle i { background: var(--orange); box-shadow: 0 0 0 4px rgba(255, 107, 53, .25); }
+.temoin.bat i { animation: clignote .16s steps(2) infinite; background: var(--rouge); }
+@keyframes clignote { to { opacity: .2; } }
+
+.journal { font-size: 15px; color: var(--texte-2); margin-top: 10px; max-height: 120px; overflow-y: auto; border-top: 1px dashed var(--bordure); padding-top: 6px; }
+.journal div { padding: 2px 0; }
+.journal div:first-child { color: var(--texte); font-weight: 700; }
+
+/* ----------------------------------------------------------------- mobile */
+@media (max-width: 760px) {
+  body { font-size: 17px; }
+  header h1 { font-size: 17px; }
+  header .signature { display: none; }
+  main { padding: 14px 12px 50px; }
+  .duo-schemas { grid-template-columns: 1fr; }
+  .pupitre button { min-width: 0; flex: 1; }
+  .pupitre label { margin-left: 0; width: 100%; }
+}
+
+/* -------------------------------------------------------------- impression */
+@media print {
+  header, .barre-actions, button, .pupitre { display: none !important; }
+  body { background: #fff; font-size: 12pt; }
+  .carte, .question { break-inside: avoid; border-color: #999; }
+  .ecran { display: block !important; }
+}

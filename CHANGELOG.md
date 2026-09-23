@@ -5,6 +5,20 @@
 > conservé par l'auteur hors de ce dépôt ; l'historique git du dépôt reste,
 > lui, complet et non réécrit.
 
+## 2026-09-23 — TP « Le contacteur qui se souvient » (auto-maintien)
+
+- **Nouveau module pédagogique** `pedagogie/contacteur-automaintien/` : le circuit de commande à
+  auto-maintien d'un contacteur, en quatre ateliers (observer, relier, dépanner, compléter) autour
+  d'un simulateur dont les dessins — platine et schéma développé — sont régénérés à chaque manœuvre.
+  Sept câblages, dont six fautifs, pour l'atelier de dépannage ; le circuit de puissance en grisé ;
+  le piège du thermostat qui renvoie au pump down du Circuit Fantôme.
+- Fiche élève imprimable (3 pages A4) et TP enseignant complet (déroulé minute par minute, grille par
+  compétence CAP IFCA, corrigé, adaptations MFER, TNE, TDAH/DYS).
+- Deux vérifications reproductibles : `node controle-simulation.mjs` (le moteur) et
+  `outils/test-ateliers.html#test` (les ateliers, dans un navigateur).
+- Le module est référencé dans le guide (parcours et support). Aucune image tierce : l'idée vient
+  d'une illustration vue en ligne, tout a été redessiné.
+
 ## 2026-09-10 — portée des alertes et documents, transparence RGPD
 
 ### Préparation de l'utilisation réelle à l'école
