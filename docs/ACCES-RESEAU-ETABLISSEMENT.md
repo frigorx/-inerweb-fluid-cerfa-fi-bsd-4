@@ -164,6 +164,20 @@ Le registre réglementaire, lui, est déjà dans ce cas depuis toujours :
 `lancer-inerweb.bat` sert son interface depuis le poste et n'a jamais eu
 besoin d'Internet (voir `INSTALLATION_SIMPLE.md`).
 
+### Fabriquer la clé sans taper une ligne
+
+`FABRIQUER-INERNOWEB-SUR-CLE.bat`, à la racine du dépôt. Double-clic, il
+demande la lettre de la clé — en listant d'abord les lecteurs branchés — et
+écrit `inerNoWeb` dessus, narrations, navigateur et dézippeur compris.
+
+Il vérifie **avant** de faire patienter : que le fabricant est bien à côté de
+lui, que Node est installé, que le lecteur existe. Et il annonce la
+destination avant d'écrire, parce que l'outil refait ce dossier à neuf.
+
+En ligne de commande, l'équivalent :
+
+    node outils/fabriquer-inernoweb.mjs --voix --navigateur --dezippeur --sortie E:\inerNoWeb
+
 ### Le navigateur du poste : la question qui vient avant tout le reste
 
 Les postes visés tournent sous **Windows 7**. Or la copie hors ligne ne

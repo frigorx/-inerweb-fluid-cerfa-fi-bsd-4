@@ -650,27 +650,40 @@ function ecrireLanceur(racineSortie) {
   fs.writeFileSync(path.join(racineSortie, 'OUVRIR-INERNOWEB.bat'), lignes.join('\r\n') + '\r\n', 'latin1');
 }
 
-function ecrireInstalleurNavigateur(racineSortie, nomInstalleur) {
-  // Concaténation et non gabarit : ces lignes sont pleines d'antislashs de
-  // chemins Windows, et un gabarit y lirait « \F » comme une échappée. La
-  // première version de ce lanceur est sortie avec « navigateurFirefox » et
-  // un saut de page au milieu du chemin — illisible par cmd.exe.
+function ecrireInstalleurNavigateur(racineSortie) {
+  // L'installeur n'est PAS nomme en dur : le .bat prend le premier
+  // « Firefox Setup*.exe » qu'il trouve. Ainsi la cle reste completable a la
+  // main — on telecharge Firefox ESR chez Mozilla, on le depose dans le
+  // dossier navigateur, et ce lanceur fait le reste, quelle que soit la
+  // version. C'est la route quand la copie a voyage par un canal trop etroit
+  // pour 215 Mo de navigateur.
   const bs = '\\';
   const ff = '"%RACINE%navigateur' + bs + 'Firefox' + bs + 'firefox.exe"';
   const lignes = [
     '@echo off',
     'setlocal',
     'set "RACINE=%~dp0"',
+    'set "INST="',
+    'for %%F in ("%RACINE%navigateur' + bs + 'Firefox Setup*.exe") do set "INST=%%~fF"',
+    'if not defined INST (',
+    '  echo.',
+    '  echo   Aucun installeur Firefox dans le dossier navigateur.',
+    '  echo   Lisez navigateur' + bs + 'OU-TROUVER-FIREFOX.txt : il donne',
+    '  echo   l adresse exacte et le nom du fichier a deposer.',
+    '  echo.',
+    '  pause',
+    '  exit /b 1',
+    ')',
     'echo.',
     'echo   Depot de Firefox dans la cle. Cela prend une minute.',
     'echo   Aucun droit d administrateur n est demande.',
     'echo.',
-    '"%RACINE%navigateur' + bs + nomInstalleur + '" -ms /InstallDirectoryPath="%RACINE%navigateur' + bs + 'Firefox"',
+    '"%INST%" -ms /InstallDirectoryPath="%RACINE%navigateur' + bs + 'Firefox"',
     'if exist ' + ff + ' (',
     '  echo   Termine. Lancez maintenant OUVRIR-INERNOWEB.bat',
     ') else (',
-    '  echo   Echec. Autre route : installer 7-Zip sur le poste qui FABRIQUE',
-    '  echo   la copie, puis rejouer la fabrication avec --navigateur.',
+    '  echo   Echec. Ouvrez l installeur a la main, en choisissant',
+    '  echo   comme dossier : %RACINE%navigateur' + bs + 'Firefox',
     ')',
     'echo.',
     'pause',
@@ -678,6 +691,43 @@ function ecrireInstalleurNavigateur(racineSortie, nomInstalleur) {
   fs.writeFileSync(path.join(racineSortie, 'INSTALLER-LE-NAVIGATEUR.bat'), lignes.join('\r\n') + '\r\n', 'latin1');
 }
 
+// Ce mot d'accompagnement est ecrit MEME quand le navigateur n'est pas
+// embarque : il dit ou le prendre. Une copie arrivee par un canal etroit se
+// complete ainsi en un telechargement, sans rien savoir de la ligne de
+// commande.
+function ecrireOuTrouverFirefox(racineSortie) {
+  const dossier = path.join(racineSortie, 'navigateur');
+  fs.mkdirSync(dossier, { recursive: true });
+  const texte = `OU TROUVER FIREFOX POUR WINDOWS 7
+=================================
+
+Les pages de cette copie demandent un navigateur recent : au moins
+Chrome 92 ou Firefox 90. Internet Explorer 11 ne convient pas, il
+ouvrirait des pages vides.
+
+Sous Windows 7, la derniere lignee utilisable est Firefox ESR 115, que
+Mozilla maintient encore. Adresse du dossier officiel :
+
+    https://ftp.mozilla.org/pub/firefox/releases/
+
+Y entrer dans le dernier dossier dont le nom finit par « esr » (par
+exemple 115.41.0esr), puis win32, puis fr, et prendre le fichier
+« Firefox Setup <version>esr.exe » — environ 55 Mo.
+
+La version win32 est la bonne meme sur un Windows 64 bits : elle tourne
+partout.
+
+CE QU ON EN FAIT
+----------------
+Deposer ce fichier DANS CE DOSSIER, a cote de ce mot. Puis, a la racine
+de la copie, lancer INSTALLER-LE-NAVIGATEUR.bat : il prend le premier
+« Firefox Setup*.exe » qu il trouve ici, quelle que soit sa version, et
+l installe pour l utilisateur courant, sans droits d administrateur.
+
+Ensuite : OUVRIR-INERNOWEB.bat, ou simplement index.html.
+`;
+  fs.writeFileSync(path.join(dossier, 'OU-TROUVER-FIREFOX.txt'), texte, 'utf8');
+}
 async function emporterNavigateur(racineSortie) {
   const version = await derniereEsr115();
   const nom = `Firefox Setup ${version}.exe`;
@@ -699,7 +749,7 @@ async function emporterNavigateur(racineSortie) {
     console.log('    Ce n\'est PAS bloquant — INSTALLER-LE-NAVIGATEUR.bat, écrit dans la copie,');
     console.log('    le dépose lui-même dans la clé, sans droits d\'administrateur.');
     ecrireLanceur(racineSortie);
-    ecrireInstalleurNavigateur(racineSortie, nom);
+    ecrireInstalleurNavigateur(racineSortie);
     return { version, octets: recu.octets.length, portable: false };
   }
 
@@ -724,7 +774,7 @@ async function emporterNavigateur(racineSortie) {
   // poste qu'on administre et qui n'a plus de navigateur, l'installer pour de
   // bon vaut mieux que le lancer depuis une clé. Cinquante-cinq mégaoctets
   // pour garder cette porte ouverte, c'est bon marché.
-  ecrireInstalleurNavigateur(racineSortie, nom);
+  ecrireInstalleurNavigateur(racineSortie);
 
   let poids = 0;
   for (const f of listerFichiers(cible)) poids += fs.statSync(path.join(cible, f)).size;
@@ -1201,6 +1251,14 @@ voix : refaire la copie avec l'option --voix (plusieurs centaines de Mo).`,
   });
 
   ecrirePageDiagnostic(opts.sortie);
+
+  // Meme sans --navigateur : la copie part avec de quoi se completer a la
+  // main. Elle peut avoir voyage par un canal trop etroit pour 215 Mo.
+  if (!navigateur) {
+    ecrireLanceur(opts.sortie);
+    ecrireInstalleurNavigateur(opts.sortie);
+    ecrireOuTrouverFirefox(opts.sortie);
+  }
 
   const manquants = controler(opts.sortie, listerFichiers(opts.sortie));
 
