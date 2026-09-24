@@ -654,6 +654,7 @@ function decouperZip(archive, tailleMo) {
   const pas = Math.round(tailleMo * 1024 * 1024);
   const total = Math.ceil(octets.length / pas);
   const base = path.basename(archive, '.zip');
+  const archiveNom = path.basename(archive);
   const noms = [];
   for (let debut = 0, n = 1; debut < octets.length; debut += pas, n += 1) {
     // Les morceaux gardent l'extension .zip. Nommes « .001 », « .002 », ils
@@ -673,15 +674,15 @@ function decouperZip(archive, tailleMo) {
     'echo   Recollage des ' + noms.length + ' morceaux...',
     'rem Sans cet effacement, copy demande s il peut ecraser, et le .bat',
     'rem reste en attente d une reponse que personne ne voit passer.',
-    'if exist inerNoWeb.zip del /q inerNoWeb.zip',
-    'copy /b ' + noms.join('+') + ' inerNoWeb.zip',
-    'if not exist inerNoWeb.zip (',
+    'if exist ' + archiveNom + ' del /q ' + archiveNom,
+    'copy /b ' + noms.join('+') + ' ' + archiveNom,
+    'if not exist ' + archiveNom + ' (',
     '  echo   Echec. Les ' + noms.length + ' morceaux doivent etre dans CE dossier.',
     '  pause',
     '  exit /b 1',
     ')',
     'echo.',
-    'echo   inerNoWeb.zip est recolle. Clic droit dessus, Extraire tout.',
+    'echo   ' + archiveNom + ' est recolle. Clic droit dessus, Extraire tout.',
     'echo   Puis ouvrez le dossier et lancez OUVRIR-LES-RESEAUX.bat',
     'echo.',
     'pause',
@@ -1201,12 +1202,16 @@ const BIT_UTF8 = 0x0800;
 
 function fabriquerZip(racineSortie, fichiers, destination, horodatage = new Date()) {
   const { dateDos, heureDos } = versDateDos(horodatage);
+  // Le dossier RANGE DANS l'archive porte le nom du dossier de sortie. Ecrit
+  // en dur, « inerNoWeb » ressortait a l'extraction alors que l'archive, elle,
+  // s'appelait autrement — de quoi ne plus rien reconnaitre sur le Bureau.
+  const dossier = path.basename(racineSortie);
   const corps = [];
   const repertoire = [];
   let decalage = 0;
 
   for (const fichier of fichiers) {
-    const nom = Buffer.from(`inerNoWeb/${fichier}`, 'utf8');
+    const nom = Buffer.from(`${dossier}/${fichier}`, 'utf8');
     const brut = fs.readFileSync(path.join(racineSortie, fichier));
     const comprime = zlib.deflateRawSync(brut, { level: 9 });
     const crc = crc32(brut);
@@ -1287,7 +1292,9 @@ async function principal() {
     // Refaire l'archive depuis un dossier déjà construit, sans reparcourir
     // le site : utile quand seule la forme de l'archive change.
     const fichiersDeja = listerFichiers(opts.sortie);
-    const cible = path.join(path.dirname(opts.sortie), 'inerNoWeb.zip');
+    // L'archive porte le nom du DOSSIER de sortie. Ecrit en dur, « inerNoWeb »
+    // survivait a --sortie E:\\inerWeb et rendait une archive mal nommee.
+    const cible = path.join(path.dirname(opts.sortie), path.basename(opts.sortie) + '.zip');
     const poids = fabriquerZip(opts.sortie, fichiersDeja, cible);
     console.log(`  ZIP refait depuis le dossier existant : ${cible} (${lisible(poids)}, ${fichiersDeja.length} fichiers)`);
     if (opts.tranches > 0) decouperZip(cible, opts.tranches);
@@ -1407,7 +1414,7 @@ voix : refaire la copie avec l'option --voix (plusieurs centaines de Mo).`,
   }
 
   if (opts.zip) {
-    const destination = path.join(path.dirname(opts.sortie), 'inerNoWeb.zip');
+    const destination = path.join(path.dirname(opts.sortie), path.basename(opts.sortie) + '.zip');
     const taille = fabriquerZip(opts.sortie, listerFichiers(opts.sortie), destination);
     console.log(`\n  ZIP : ${destination} (${lisible(taille)})`);
     if (opts.tranches > 0) decouperZip(destination, opts.tranches);

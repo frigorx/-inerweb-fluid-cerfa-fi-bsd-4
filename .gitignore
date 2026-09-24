@@ -58,6 +58,9 @@ livret/curseurs.html
 # publié, qui se refabriquent d'une commande. Le dépôt garde l'outil, pas sa
 # sortie.
 /output/inerNoWeb/
+/output/inerWeb/
 /output/inerNoWeb.zip
+/output/inerWeb.zip
 /output/inerNoWeb.partie-*.zip
+/output/inerWeb.partie-*.zip
 /output/RECOLLER-LE-ZIP.bat
