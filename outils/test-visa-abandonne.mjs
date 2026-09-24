@@ -70,8 +70,10 @@ function verifier(libelle, condition, detail = '') {
 
 // « visa » / « visas » et « T3 » isolés. Ni « visait », ni « visé », ni
 // les identifiants de jeu d'essai (UTI-T3, MVT-T3), ni le nom du dossier
-// T3-DOSSIER-RELECTURE-EXTERNE.md : un tiret collé disqualifie.
-const MOTIF_MENTION = /(?<![\w-])(?:visas?|T3)(?![\w-])/gi;
+// T3-DOSSIER-RELECTURE-EXTERNE.md : un tiret collé disqualifie. Une barre
+// oblique collée aussi : « 6/T3 » est le marquage normalisé de la borne
+// de puissance d'un contacteur (1/L1 … 6/T3), rien à voir avec un visa.
+const MOTIF_MENTION = /(?<![\w\/-])(?:visas?|T3)(?![\w-])/gi;
 const MOTIF_ABANDON = /abandonn/i;
 // Portée de phrase. Volontairement courte EN ARRIÈRE : un « abandonné »
 // écrit trois puces plus haut ne dit rien de la puce qu'on lit.
@@ -118,14 +120,14 @@ const ECHANTILLON_FAUTIF = 'derrière EXEMPTION_HERMETIQUE_ACTIVE = false — fe
 const ECHANTILLON_JUSTE = 'fermé tant que les trois conditions qui remplacent le visa T3 '
   + '(abandonné le 26/07/2026) ne sont pas réunies.';
 const ECHANTILLON_INNOCENT = 'la garde visait le fichier UTI-T3 cité dans '
-  + 'docs/T3-DOSSIER-RELECTURE-EXTERNE.md, hors sujet.';
+  + 'docs/T3-DOSSIER-RELECTURE-EXTERNE.md, hors sujet ; la borne 6/T3 du contacteur.';
 // Deux mentions par phrase : « visa » et « T3 » comptent chacune.
 verifier('une condition posée sur le visa est REFUSÉE',
   mentionsOrphelines(ECHANTILLON_FAUTIF, 'echantillon').orphelines.length === 2);
 verifier('la même phrase disant l\'abandon est ACCEPTÉE',
   mentionsOrphelines(ECHANTILLON_JUSTE, 'echantillon').orphelines.length === 0
   && mentionsOrphelines(ECHANTILLON_JUSTE, 'echantillon').acceptees === 2);
-verifier('« visait », « UTI-T3 » et « T3-DOSSIER-… » ne sont PAS des mentions',
+verifier('« visait », « UTI-T3 », « T3-DOSSIER-… » et la borne « 6/T3 » ne sont PAS des mentions',
   mentionsOrphelines(ECHANTILLON_INNOCENT, 'echantillon').orphelines.length === 0
   && mentionsOrphelines(ECHANTILLON_INNOCENT, 'echantillon').acceptees === 0);
 

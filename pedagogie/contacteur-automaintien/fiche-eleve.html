@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fiche élève — Le contacteur qui se souvient — inerWeb Édu</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Calibri,Carlito,'Segoe UI',sans-serif;font-size:14pt;line-height:1.5;color:#1b3a63;background:#fff;text-align:left;max-width:19cm;margin:0 auto;padding:14px}
+h1,h2,h3{font-family:'Trebuchet MS',Tahoma,sans-serif;font-weight:700;line-height:1.25}
+h1{font-size:19pt}
+h2{font-size:15pt;margin:20px 0 10px;padding:6px 10px;background:#1b3a63;color:#fff;border-radius:6px}
+h3{font-size:13pt;margin:14px 0 6px}
+.bandeau{display:flex;align-items:center;gap:10px;border-bottom:3px solid #1b3a63;padding-bottom:8px;margin-bottom:12px}
+.edu{background:#ff6b35;color:#fff;font-size:10pt;padding:2px 9px;border-radius:4px;font-weight:700;font-family:'Trebuchet MS',sans-serif}
+.sign{margin-left:auto;font-size:10pt;color:#5a6472}
+.identite{border:2px solid #1b3a63;border-radius:8px;padding:10px 14px;margin-bottom:14px;display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;font-size:12pt}
+.identite span{border-bottom:1px dotted #1b3a63;display:inline-block;min-width:60%}
+.consigne{background:#eef4f9;border-left:6px solid #1b3a63;border-radius:6px;padding:9px 13px;margin-bottom:12px;font-size:12pt}
+.securite{background:#fff1eb;border-left:6px solid #ff6b35;border-radius:6px;padding:9px 13px;margin-bottom:12px;font-size:12pt}
+.securite b{display:block;font-family:'Trebuchet MS',sans-serif}
+.pts{float:right;font-weight:700;color:#ff6b35;font-family:'Trebuchet MS',sans-serif}
+table{width:100%;border-collapse:collapse;font-size:12pt;margin-bottom:10px}
+th,td{border:1px solid #b9c2cc;padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#eef4f9;font-family:'Trebuchet MS',sans-serif;font-size:11pt}
+td.vide{height:2.3em}
+td.grand{height:3.4em}
+.schema-boite{border:1.5px solid #b9c2cc;border-radius:8px;padding:6px;margin-bottom:10px;background:#fff}
+.schema-boite svg{width:100%;height:auto;display:block;overflow:visible}
+.deux{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.lg{border-bottom:1px dotted #1b3a63;min-height:1.9em;margin:5px 0}
+ol,ul{margin:6px 0 10px 22px}
+li{margin-bottom:3px}
+.case{display:inline-block;width:14px;height:14px;border:1.5px solid #1b3a63;border-radius:3px;vertical-align:middle;margin-right:4px}
+.saut{break-before:page;page-break-before:always}
+.pied{margin-top:18px;border-top:1px solid #b9c2cc;padding-top:6px;font-size:10pt;color:#5a6472}
+.noprint{margin-bottom:12px}
+.noprint button{font-family:inherit;font-size:13pt;font-weight:700;background:#ff6b35;color:#fff;border:none;border-radius:8px;padding:8px 18px;cursor:pointer}
+@media print{body{padding:0;font-size:12pt}.noprint{display:none}h2{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+
+<div class="noprint"><a href="index.html" style="color:#1b3a63">← Retour au TP interactif</a> · Imprimer cette fiche : Ctrl + P, recto-verso, 3 feuilles.</div>
+
+<!-- ============================================================ PAGE 1 -->
+<div class="bandeau"><span style="font-size:20pt">❄</span><h1>inerWeb</h1><span class="edu">Édu</span>
+  <span class="sign">par F. Henninot — LP Privé Jacques Raynaud, Campus ÉQUATIO</span></div>
+
+<h1 style="margin-bottom:4px">Fiche élève — Le contacteur qui se souvient</h1>
+<p style="font-size:12pt;color:#5a6472;margin-bottom:10px">Circuit de commande à auto-maintien · CAP IFCA · C3.6 Câbler ; C3.7 Contrôler ; C2.2 Contrôler les éléments ; C1.3 Rendre compte</p>
+
+<div class="identite">
+  <div>Nom : <span></span></div><div>Classe : <span></span></div>
+  <div>Binôme : <span></span></div><div>Date : <span></span></div>
+  <div>Platine n° : <span></span></div><div>Contrôle prof avant mise sous tension : <span></span></div>
+</div>
+
+<div class="securite"><b>⚠ Point sécurité — on câble hors tension, toujours</b>
+  Q1 coupé et cadenassé avant de toucher un fil. Absence de tension vérifiée au VAT. Mise sous tension
+  <strong>uniquement</strong> par le professeur, après contrôle visuel et à l'ohmmètre. Tournevis isolés, chaussures de sécurité,
+  pas de bijoux aux mains. En cas d'incident : couper l'arrêt d'urgence de l'atelier, ne pas toucher la personne avant, alerter.</div>
+
+<h2>A — Observer <span class="pts">au pupitre, atelier 1</span></h2>
+<div class="consigne">Fais chaque manœuvre sur le simulateur. Écris ce que fait KM1 : <em>collé</em>, <em>au repos</em>, ou <em>il bat</em>. Puis, dans la dernière colonne, par où passe le courant qui alimente la bobine.</div>
+<table>
+  <tr><th style="width:36%">Manœuvre</th><th style="width:22%">KM1 ?</th><th>Par où passe le courant vers A1 ?</th></tr>
+  <tr><td>1. J'enclenche Q1, je ne touche à rien</td><td class="vide"></td><td></td></tr>
+  <tr><td>2. J'appuie sur Marche et je tiens</td><td class="vide"></td><td></td></tr>
+  <tr><td>3. Je relâche Marche</td><td class="vide"></td><td></td></tr>
+  <tr><td>4. J'appuie sur Arrêt</td><td class="vide"></td><td></td></tr>
+  <tr><td>5. Je relâche Arrêt</td><td class="vide"></td><td></td></tr>
+  <tr><td>6. Marche, puis je coupe Q1, puis je le réarme</td><td class="vide"></td><td></td></tr>
+</table>
+<p style="font-size:12pt"><strong>La phrase à retenir</strong> — complète : quand KM1 colle, il ferme son contact <span class="lg" style="display:inline-block;width:60px"></span>, câblé en <span class="lg" style="display:inline-block;width:110px"></span> du bouton Marche. C'est l'<span class="lg" style="display:inline-block;width:150px"></span>.</p>
+
+<h2>B — Nommer <span class="pts">atelier 2</span></h2>
+<div class="consigne">Complète les repères (Q1, S1, S2, KM1) et les numéros de bornes sur le schéma développé. Puis reporte A1, A2, 13, 14 et les bornes 1-2 / 3-4 des boutons sur la platine.</div>
+<div class="deux">
+  <div class="schema-boite" data-schema="developpe-vierge"></div>
+  <div class="schema-boite" data-schema="platine-vierge"></div>
+</div>
+
+<!-- ============================================================ PAGE 2 -->
+<div class="saut"></div>
+<h2>C — Câbler la platine réelle <span class="pts">binôme, hors tension</span></h2>
+<div class="consigne">Avant le premier fil, coche. Puis remplis le tableau <strong>au fur et à mesure</strong> : un fil, une ligne. Le fil rouge = commande, le bleu = neutre.</div>
+<p style="font-size:12pt">
+  <span class="case"></span> Q1 coupé et cadenassé &nbsp;
+  <span class="case"></span> VAT passé sur les bornes de Q1 &nbsp;
+  <span class="case"></span> Schéma B complété et validé &nbsp;
+  <span class="case"></span> Fils dénudés 8 mm, embouts sertis
+</p>
+<table>
+  <tr><th style="width:8%">Fil</th><th style="width:30%">De (organe · borne)</th><th style="width:30%">Vers (organe · borne)</th><th>Couleur · vérifié à l'ohmmètre ?</th></tr>
+  <tr><td>1</td><td class="vide"></td><td></td><td></td></tr>
+  <tr><td>2</td><td class="vide"></td><td></td><td></td></tr>
+  <tr><td>3</td><td class="vide"></td><td></td><td></td></tr>
+  <tr><td>4</td><td class="vide"></td><td></td><td></td></tr>
+  <tr><td>5</td><td class="vide"></td><td></td><td></td></tr>
+  <tr><td>6</td><td class="vide"></td><td></td><td></td></tr>
+  <tr><td>7</td><td class="vide"></td><td></td><td></td></tr>
+  <tr><td>8</td><td class="vide"></td><td></td><td></td></tr>
+</table>
+<h3>Contrôles hors tension, avant d'appeler le professeur</h3>
+<table>
+  <tr><th style="width:50%">Mesure à l'ohmmètre</th><th style="width:25%">Valeur lue</th><th>Attendu</th></tr>
+  <tr><td>Entre 13 et 14, KM1 au repos</td><td class="vide"></td><td>∞ (contact ouvert)</td></tr>
+  <tr><td>Entre 13 et 14, armature enfoncée à la main</td><td class="vide"></td><td>0 Ω</td></tr>
+  <tr><td>Entre A1 et A2 (la bobine)</td><td class="vide"></td><td>quelques centaines d'Ω — valeur doc constructeur : ________</td></tr>
+  <tr><td>Entre S1 borne 1 et S1 borne 2, au repos</td><td class="vide"></td><td>0 Ω (NC)</td></tr>
+  <tr><td>Entre S2 borne 3 et S2 borne 4, au repos</td><td class="vide"></td><td>∞ (NO)</td></tr>
+</table>
+<p style="font-size:12pt">Mise sous tension par le professeur, puis les six manœuvres du tableau A <strong>sur le réel</strong>. Écart avec le simulateur ? <span class="lg" style="display:inline-block;width:55%"></span></p>
+
+<h2>D — Dépanner <span class="pts">atelier 3, puis une panne réelle</span></h2>
+<div class="consigne">Pour chaque platine du simulateur : ce que tu observes, ton diagnostic, comment tu le vérifierais à l'ohmmètre ou en suivant le fil.</div>
+<table>
+  <tr><th style="width:6%">N°</th><th style="width:32%">Ce que fait KM1</th><th style="width:32%">Diagnostic</th><th>Vérification</th></tr>
+  <tr><td>1</td><td class="vide"></td><td></td><td></td></tr>
+  <tr><td>2</td><td class="vide"></td><td></td><td></td></tr>
+  <tr><td>3</td><td class="vide"></td><td></td><td></td></tr>
+  <tr><td>4</td><td class="vide"></td><td></td><td></td></tr>
+  <tr><td>5</td><td class="vide"></td><td></td><td></td></tr>
+  <tr><td>6</td><td class="vide"></td><td></td><td></td></tr>
+  <tr><td>7</td><td class="vide"></td><td></td><td></td></tr>
+  <tr><td><strong>Réel</strong></td><td class="grand"></td><td></td><td></td></tr>
+</table>
+
+<!-- ============================================================ PAGE 3 -->
+<div class="saut"></div>
+<h2>E — Compléter pour un compresseur <span class="pts">atelier 4</span></h2>
+<div class="consigne">Voici le circuit de base. Pour chaque organe, écris où il se câble : <em>en série dans la ligne d'arrêt</em>, <em>en parallèle de Marche</em>, <em>en parallèle de la bobine</em>, ou <em>pas dans cette ligne</em>. Puis dessine-les sur le schéma.</div>
+<div class="deux">
+  <div class="schema-boite" data-schema="developpe-base"></div>
+  <table>
+    <tr><th>Organe</th><th>Où ?</th></tr>
+    <tr><td>F1 relais thermique, 95-96</td><td class="vide"></td></tr>
+    <tr><td>Pressostat HP de sécurité</td><td class="vide"></td></tr>
+    <tr><td>S3, second bouton Arrêt</td><td class="vide"></td></tr>
+    <tr><td>S4, second bouton Marche</td><td class="vide"></td></tr>
+    <tr><td>H1, voyant « en marche »</td><td class="vide"></td></tr>
+    <tr><td>Thermostat de la chambre</td><td class="vide"></td></tr>
+  </table>
+</div>
+<p style="font-size:12pt"><strong>Le piège du thermostat</strong> — explique en une phrase pourquoi il ne va pas dans la ligne maintenue, et ce qu'il commande à la place :</p>
+<div class="lg"></div><div class="lg"></div>
+
+<h2>F — Je me positionne <span class="pts">A = moi · B = le professeur</span></h2>
+<table>
+  <tr><th style="width:26%">Compétence</th><th>Ce que je sais faire</th><th style="width:12%">A</th><th style="width:12%">B</th></tr>
+  <tr><td>C2.2 Contrôler les éléments</td><td>Je retrouve sur la platine les 8 bornes nommées sur le schéma (A1, A2, 13, 14, 1-2, 3-4, Q1).</td><td>☐ ☐ ☐</td><td>☐ ☐ ☐</td></tr>
+  <tr><td>C3.6 Câbler</td><td>Je câble le circuit conforme au schéma, hors tension, fils repérés, embouts sertis, sans reprise après contrôle.</td><td>☐ ☐ ☐</td><td>☐ ☐ ☐</td></tr>
+  <tr><td>C3.7 Contrôler</td><td>Je vérifie à l'ohmmètre 13-14, A1-A2 et les deux boutons avant d'appeler pour la mise sous tension.</td><td>☐ ☐ ☐</td><td>☐ ☐ ☐</td></tr>
+  <tr><td>C5.1 Remplacer des composants</td><td>Sur 7 platines simulées, au moins 5 diagnostics justes ; sur la panne réelle, je localise le défaut avec méthode.</td><td>☐ ☐ ☐</td><td>☐ ☐ ☐</td></tr>
+  <tr><td>C1.3 Rendre compte</td><td>Ma synthèse nomme l'auto-maintien, le rôle du 13-14, et pourquoi les sécurités vont en série.</td><td>☐ ☐ ☐</td><td>☐ ☐ ☐</td></tr>
+</table>
+<p style="font-size:11pt;color:#5a6472">Trois cases : Acquis · En cours · Non acquis.</p>
+
+<h3>Ma synthèse — 5 lignes</h3>
+<p style="font-size:12pt;color:#5a6472">Ce que fait le contact 13-14, pourquoi l'Arrêt est en série, ce qui se passe après une coupure de courant, et où vont les sécurités.</p>
+<div class="lg"></div><div class="lg"></div><div class="lg"></div><div class="lg"></div><div class="lg"></div>
+
+<div class="pied">inerWeb Édu — F. Henninot — Le contacteur qui se souvient · fiche élève · à rendre avec le tableau de câblage et le relevé de dépannage</div>
+
+<script src="simulation.js"></script>
+<script src="schemas.js"></script>
+<script src="fiche.js"></script>
+</body>
+</html>
