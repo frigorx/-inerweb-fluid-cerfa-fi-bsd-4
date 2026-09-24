@@ -47,7 +47,11 @@ const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..');
 const EXCLUS_PARTOUT = new Set(['.git', 'node_modules', '.claude']);
 // Mêmes exclusions de racine que le lanceur (dossiers de l'utilisateur).
 const EXCLUS_RACINE = new Set([
-  'data', 'documents', 'backups', 'exports', 'img', 'css', 'apps-script', 'docs'
+  'data', 'documents', 'backups', 'exports', 'img', 'css', 'apps-script', 'docs',
+  // « output » est fabriqué, jamais écrit à la main : les PDF de démonstration
+  // et la copie hors ligne inerNoWeb, qui est un MIROIR du site publié. Sa
+  // prose est celle d'inerweb.fr, pas la nôtre ; l'auditer ici n'a pas de sens.
+  'output'
 ]);
 // Les seuls fichiers du dépôt que nous n'avons pas écrits.
 const DOSSIER_TIERS = 'v8/js/lib';

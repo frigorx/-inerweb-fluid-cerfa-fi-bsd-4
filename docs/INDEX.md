@@ -39,6 +39,7 @@
 | [POINTS-DE-FRICTION.md](POINTS-DE-FRICTION.md) | Les limites CONNUES du logiciel, dites avant qu'un auditeur les trouve. |
 | [ROADMAP.md](ROADMAP.md) | La feuille de route. |
 | [PUBLICATION.md](PUBLICATION.md) | La procédure de délivrance d'un paquet nominatif, de la licence à l'envoi. |
+| [ACCES-RESEAU-ETABLISSEMENT.md](ACCES-RESEAU-ETABLISSEMENT.md) | L'accès aux ressources depuis un poste du lycée : ce qui bloque, le test qui tranche, la demande à la DSI. |
 
 À la racine : `README.md` (présentation), `LICENSE` (licence du dépôt),
 `LICENCE-EVALUATION.txt` (contrat des paquets), `LICENSES/` (licences
