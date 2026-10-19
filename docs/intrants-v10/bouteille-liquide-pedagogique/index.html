@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#F7F1E7">
+  <meta name="description" content="Parcours interactif pour comprendre la bouteille liquide frigorifique, son tube plongeur et sa vanne de départ liquide.">
+  <link rel="icon" href="data:,">
+  <title>Comprendre la bouteille liquide · inerWeb Édu</title>
+  <link rel="stylesheet" href="styles.css?v=20260804-6">
+  <link rel="stylesheet" href="impression.css?v=20260804-6" media="print">
+</head>
+<body>
+  <a class="skip-link" href="#lesson-title">Aller à l’explication</a>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand" aria-label="inerWeb Édu">
+        <span class="brand-mark" aria-hidden="true">iW</span>
+        <span class="brand-copy"><strong>inerWeb Édu</strong><span>TECHNOLOGIE DES ORGANES</span></span>
+      </div>
+      <div class="module-name">
+        <strong>La bouteille liquide</strong>
+        <span>stocker · alimenter · isoler</span>
+      </div>
+      <div class="top-tools">
+        <div class="voice-tools" aria-label="Lecture vocale">
+          <button type="button" id="voice-button" class="tool-button" aria-label="Écouter l’écran">▶ <span>Écouter</span></button>
+          <label class="speed-control" for="voice-rate"><span class="sr-only">Vitesse de lecture</span>
+            <select id="voice-rate" aria-label="Vitesse de lecture">
+              <option value="0.8">0,80×</option>
+              <option value="0.95" selected>0,95×</option>
+              <option value="1.1">1,10×</option>
+              <option value="1.25">1,25×</option>
+            </select>
+          </label>
+        </div>
+        <div class="reading-tools" aria-label="Taille du texte">
+          <button type="button" data-font-action="decrease" aria-label="Réduire la taille du texte">A−</button>
+          <button type="button" data-font-action="reset" aria-label="Rétablir la taille du texte">100 %</button>
+          <button type="button" data-font-action="increase" aria-label="Augmenter la taille du texte">A+</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="course-grid">
+      <nav class="stepper" id="stepper" aria-label="Étapes du parcours"></nav>
+
+      <main class="lesson" id="main-content">
+        <section class="lesson-copy" aria-live="polite" aria-atomic="false">
+          <p class="kicker" id="lesson-kicker"></p>
+          <h1 id="lesson-title"></h1>
+          <p class="lesson-intro" id="lesson-intro"></p>
+          <div class="lesson-detail" id="lesson-detail"></div>
+          <p class="takeaway" id="lesson-takeaway"></p>
+        </section>
+
+        <section class="visual-card" aria-labelledby="visual-title">
+          <div class="visual-heading">
+            <div><h2 id="visual-title"></h2><p id="visual-hint"></p></div>
+            <button type="button" class="source-button" id="source-button" aria-haspopup="dialog">Sources</button>
+          </div>
+          <div class="visual-controls" id="visual-controls"></div>
+          <div class="visual-root" id="visual-root"></div>
+          <p class="visual-caption" id="visual-caption"></p>
+        </section>
+      </main>
+    </div>
+
+    <footer class="bottom-nav">
+      <button type="button" class="nav-button secondary" id="previous-button" disabled>← Retour</button>
+      <div class="progress-copy" aria-live="polite">
+        <span id="progress-label"></span>
+        <div class="progress-track" aria-hidden="true"><span id="progress-bar"></span></div>
+      </div>
+      <button type="button" class="nav-button primary" id="next-button">Continuer →</button>
+    </footer>
+  </div>
+
+  <dialog class="sources-dialog" id="sources-dialog" aria-labelledby="sources-title">
+    <form method="dialog">
+      <div class="dialog-heading">
+        <div><p class="kicker">Traçabilité</p><h2 id="sources-title">Sources et droits</h2></div>
+        <button type="submit" class="close-button" aria-label="Fermer">×</button>
+      </div>
+      <p>Les coupes de la bouteille sont des SVG originaux inerWeb. Les schémas fluidiques réutilisent directement les symboles validés de la bibliothèque inerWeb.</p>
+      <ul>
+        <li><strong>Symboles de bibliothèque :</strong> condenseur, bouteille, filtre, voyant, électrovanne, détendeur, compresseur, pressostat BP et soupape.</li>
+        <li><strong>Vanne de départ :</strong> représentation compacte de type Rotalock, reprise du module inerWeb validé consacré à cette vanne ; le symbole générique de vanne d’isolement n’est plus employé ici.</li>
+        <li><strong>Réservoir et tube plongeur :</strong> faits croisés dans les manuels Copeland et les documentations BITZER.</li>
+        <li><strong>Vanne de départ et pump-down :</strong> principes décrits par Copeland ; positions de service présentées comme dépendantes du modèle.</li>
+        <li><strong>DESP et sécurité :</strong> directive 2014/68/UE, réglementation française de suivi en service et documentations Danfoss/Copeland.</li>
+        <li><strong>Plaque d’identification :</strong> infographie originale fondée sur les champs de marquage prévus par la DESP, sans valeur de réglage inventée.</li>
+        <li><strong>Faits techniques :</strong> liens et périmètre détaillés dans <code>SOURCES-TECHNIQUES.md</code>.</li>
+        <li><strong>Images :</strong> registre complet dans <code>SOURCES-IMAGES.md</code>.</li>
+      </ul>
+      <p class="rights-rule"><strong>Règle :</strong> le schéma pédagogique ne remplace jamais la notice du matériel ni une procédure d’intervention.</p>
+    </form>
+  </dialog>
+
+  <div class="sr-only" id="reading-status" aria-live="polite"></div>
+  <div class="sr-only" id="app-status" aria-live="polite"></div>
+
+  <script src="app.js?v=20260804-6"></script>
+  <script src="lisibilite.js?v=20260804-6"></script>
+</body>
+</html>

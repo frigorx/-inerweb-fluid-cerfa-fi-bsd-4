@@ -1,0 +1,13 @@
+@page { size: A4 landscape; margin: 15mm; }
+html, body { width: auto !important; height: auto !important; overflow: visible !important; background: #fff !important; color: #000 !important; }
+.app-shell, .course-grid, .lesson { display: block !important; width: auto !important; height: auto !important; overflow: visible !important; }
+.topbar, .stepper, .bottom-nav, .visual-controls, .source-button, .sources-dialog, .skip-link { display: none !important; }
+.lesson { display: grid !important; grid-template-columns: 35% 65% !important; gap: 8mm !important; }
+.lesson-copy, .visual-card, .visual-root, .fact, .key-box, .warning-box, .neutral-box, .mini-card, .quiz-choice, .quiz-feedback { break-inside: avoid !important; background: #fff !important; box-shadow: none !important; }
+.lesson-copy, .visual-card { min-height: 160mm; padding: 6mm !important; border: 1.5pt solid #1b3a63 !important; border-radius: 0 !important; }
+.visual-root { min-height: 120mm; border: 1pt solid #1b3a63 !important; }
+.lesson-copy h1, .visual-heading h2, .mini-card strong { color: #1b3a63 !important; }
+.lesson-intro, .lesson-detail, .visual-heading p, .visual-caption, .mini-card small { color: #000 !important; }
+.takeaway, .key-box, .mini-card.key { border-style: double !important; border-color: #1e7e54 !important; background: #fff !important; color: #000 !important; }
+.warning-box, .mini-card.warning, .quiz-choice.bad { border-style: dashed !important; border-color: #c0392b !important; background: #fff !important; color: #000 !important; }
+.mobile, .flow-dot, .flow-trace { display: none !important; }

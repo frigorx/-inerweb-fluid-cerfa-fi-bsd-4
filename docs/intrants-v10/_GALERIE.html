@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La bibliothèque inerWeb — habilitation fluide</title>
+<style>
+/* Charte inerWeb Édu : fond clair TOUJOURS (jamais de mode sombre),
+   Calibri corps / Trebuchet MS titres, bleu #1b3a63, orange #ff6b35. */
+:root {
+  --navy: #1b3a63;
+  --orange: #ff6b35;
+  --orange-deep: #d8511e;
+  --paper: #ffffff;
+  --pale: #f2f5f9;
+  --line2: #d5dee8;
+  --ink: #10233c;
+  --muted: #5a6b80;
+  --ok: #1c7c46;
+  --ok-fond: #e7f5ec;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--pale);
+  color: var(--ink);
+  font-family: Calibri, "Segoe UI", system-ui, Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.5;
+}
+h1, h2, h3 { font-family: "Trebuchet MS", Calibri, Arial, sans-serif; color: var(--navy); text-wrap: balance; margin: 0; }
+.page { max-width: 1100px; margin: 0 auto; padding: 0 20px 60px; }
+
+/* --- en-tête ------------------------------------------------------ */
+header.bandeau {
+  background: var(--paper);
+  border-bottom: 4px solid var(--navy);
+}
+.bandeau-inner {
+  max-width: 1100px; margin: 0 auto; padding: 22px 20px;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.logo {
+  width: 52px; height: 52px; border-radius: 14px;
+  background: var(--navy); color: #fff;
+  display: grid; place-items: center;
+  font-family: "Trebuchet MS", Arial, sans-serif; font-weight: 700; font-size: 22px;
+  flex: none;
+}
+.marque { display: flex; flex-direction: column; }
+.marque strong { font-family: "Trebuchet MS", Arial, sans-serif; font-size: 21px; color: var(--navy); }
+.marque strong .edu {
+  background: var(--orange); color: #fff; border-radius: 6px;
+  padding: 1px 7px; margin-left: 6px; font-size: 15px; vertical-align: 2px;
+}
+.marque span { color: var(--muted); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+.signature { margin-left: auto; color: var(--muted); font-size: 14px; text-align: right; }
+
+/* --- objectif ----------------------------------------------------- */
+.objectif {
+  margin: 26px 0 8px;
+  background: var(--paper);
+  border-left: 6px solid var(--orange);
+  border-radius: 0 12px 12px 0;
+  padding: 18px 22px;
+  box-shadow: 0 1px 3px rgba(16, 35, 60, .07);
+}
+.objectif h1 { font-size: clamp(1.5em, 3vw, 2em); margin-bottom: 6px; }
+.objectif p { margin: 4px 0 0; max-width: 62ch; }
+.objectif .fil { color: var(--muted); font-size: 15px; }
+
+/* --- sections ----------------------------------------------------- */
+section { margin-top: 34px; }
+.entete-section { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.entete-section h2 { font-size: 1.35em; }
+.entete-section .compte { color: var(--muted); font-size: 14px; }
+
+/* --- cartes ------------------------------------------------------- */
+.grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; margin-top: 14px; }
+.carte {
+  background: var(--paper);
+  border: 1px solid var(--line2);
+  border-radius: 14px;
+  padding: 18px 20px 16px;
+  display: flex; flex-direction: column; gap: 10px;
+  box-shadow: 0 1px 3px rgba(16, 35, 60, .06);
+}
+.carte .sur-titre {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  font-size: 12.5px; letter-spacing: .06em; text-transform: uppercase; font-weight: 700;
+}
+.type { color: var(--orange-deep); }
+.date { color: var(--muted); font-weight: 400; letter-spacing: 0; text-transform: none; font-size: 13.5px; }
+.carte h3 { font-size: 1.18em; }
+.carte p { margin: 0; font-size: 15.5px; }
+.etat {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--ok-fond); color: var(--ok);
+  border-radius: 999px; padding: 2px 12px; font-size: 13.5px; font-weight: 700;
+  width: fit-content;
+}
+.etat.attente { background: #fdf0e7; color: var(--orange-deep); }
+.actions { display: flex; gap: 10px; margin-top: auto; padding-top: 6px; flex-wrap: wrap; }
+.btn {
+  font-family: inherit; font-size: 15px; font-weight: 700;
+  border-radius: 10px; padding: 8px 16px; cursor: pointer;
+  border: 2px solid var(--navy); background: var(--navy); color: #fff;
+  text-decoration: none; display: inline-block;
+}
+.btn.secondaire { background: var(--paper); color: var(--navy); }
+.btn:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+.note-outil { color: var(--muted); font-size: 13.5px; }
+
+/* --- aperçu ------------------------------------------------------- */
+.apercu { display: none; margin-top: 16px; }
+.apercu.ouvert { display: block; }
+.apercu iframe {
+  width: 100%; height: min(720px, 78vh);
+  border: 2px solid var(--navy); border-radius: 12px; background: #fff;
+}
+.apercu .fermer { margin-top: 8px; }
+
+/* --- frise des symboles ------------------------------------------- */
+.frise {
+  background: var(--paper); border: 1px solid var(--line2); border-radius: 14px;
+  padding: 16px 20px; margin-top: 14px;
+  display: flex; gap: 18px; flex-wrap: wrap; align-items: center;
+}
+.frise figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 86px; }
+.frise img { width: 56px; height: 56px; }
+.frise figcaption { font-size: 12px; color: var(--muted); text-align: center; line-height: 1.15; }
+
+/* --- pied --------------------------------------------------------- */
+.mode-emploi {
+  margin-top: 36px; background: var(--paper);
+  border: 1px dashed var(--navy); border-radius: 12px; padding: 16px 20px;
+}
+.mode-emploi h2 { font-size: 1.1em; margin-bottom: 6px; }
+.mode-emploi ul { margin: 6px 0 0; padding-left: 22px; }
+.mode-emploi li { margin: 3px 0; font-size: 15.5px; }
+footer.fin { margin-top: 28px; color: var(--muted); font-size: 13.5px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header class="bandeau">
+  <div class="bandeau-inner">
+    <div class="logo" aria-hidden="true">iW</div>
+    <div class="marque">
+      <strong>inerWeb<span class="edu">Édu</span></strong>
+      <span>La bibliothèque · habilitation fluide</span>
+    </div>
+    <div class="signature">par F. Henninot<br>LP Jacques Raynaud — Marseille</div>
+  </div>
+</header>
+
+<div class="page">
+
+  <div class="objectif">
+    <h1>Tout ce qui prépare à l’habilitation fluide, au même endroit</h1>
+    <p>Cette page est l’<strong>archive visuelle</strong> des supports produits par Franck :
+    chaque remise est conservée telle quelle, revue, puis ajoutée ici. Elle sert de
+    <strong>démonstrateur</strong> à partager aux collègues — leurs retours nourrissent la suite —
+    et de <strong>bibliothèque de référence</strong> pour préparer l’attestation d’aptitude à la
+    manipulation des fluides frigorigènes.</p>
+    <p class="fil">Les dessins et symboles sont réalisés et validés par Franck ; les modules les
+    réutilisent tels quels, jamais de dessin généré.</p>
+  </div>
+
+  <section aria-labelledby="titre-modules">
+    <div class="entete-section">
+      <h2 id="titre-modules">Modules pédagogiques</h2>
+      <span class="compte">parcours autonomes, hors ligne, à idée unique par écran</span>
+    </div>
+    <div class="grille">
+
+      <article class="carte" data-item="bouteille">
+        <div class="sur-titre"><span class="type">Module · 14 écrans</span><span class="date">remis le 04/08/2026</span></div>
+        <h3>La bouteille liquide</h3>
+        <p>Réservoir de liquide, tube plongeur, vanne de départ Rotalock (P/P1), pump-down,
+        variations de niveau, dimensionnement, plaque DESP. Quiz final 6 situations (seuil 5/6),
+        lecture vocale facultative, version imprimable.</p>
+        <span class="etat">Revu le 04/08 — QA verte sur 4 formats</span>
+        <div class="actions">
+          <a class="btn" href="bouteille-liquide-pedagogique/index.html" target="_blank" rel="noopener">Ouvrir le module</a>
+          <button class="btn secondaire" type="button" data-apercu="bouteille-liquide-pedagogique/index.html">Aperçu ici</button>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <section aria-labelledby="titre-outils">
+    <div class="entete-section">
+      <h2 id="titre-outils">Outils</h2>
+      <span class="compte">instruments autonomes, zéro dépendance</span>
+    </div>
+    <div class="grille">
+
+      <article class="carte" data-item="frigolo">
+        <div class="sur-titre"><span class="type">Outil · diagramme</span><span class="date">remis le 04/07/2026</span></div>
+        <h3>FRIGOLO Mollier v3 PRO</h3>
+        <p>Traceur de diagramme enthalpique log(p)-h : 6 fluides (R-32, R-410A, R-134a, R-404A,
+        R-290, R-22), cycle construit depuis BP/HP/surchauffe/sous-refroidissement, COP et taux de
+        compression, jeux d’exercices intégrés.</p>
+        <span class="etat">Archivé — source vivante : frigorx.github.io/inerweb-frigolo</span>
+        <div class="actions">
+          <a class="btn" href="frigolo-mollier.html" target="_blank" rel="noopener">Ouvrir l’outil</a>
+          <button class="btn secondaire" type="button" data-apercu="frigolo-mollier.html">Aperçu ici</button>
+        </div>
+      </article>
+
+      <article class="carte" data-item="testo">
+        <div class="sur-titre"><span class="type">Outil · atelier connecté</span><span class="date">remis le 04/07/2026</span></div>
+        <h3>Testo BLE Discovery</h3>
+        <p>Reconnaissance GATT des sondes Testo 549i (pression) et 115i (température) en Web
+        Bluetooth : services, characteristics, trames en direct. L’intrant qui permettra les
+        relevés automatiques dans la feuille de mesures.</p>
+        <span class="etat attente">À utiliser sur poste — Chrome/Edge + sondes réelles</span>
+        <div class="actions">
+          <a class="btn" href="testo-ble-discovery.html" target="_blank" rel="noopener">Ouvrir l’outil</a>
+        </div>
+        <span class="note-outil">Pas d’aperçu intégré : le Bluetooth exige une page de premier
+        niveau et le matériel à portée.</span>
+      </article>
+
+    </div>
+  </section>
+
+  <section aria-labelledby="titre-symboles">
+    <div class="entete-section">
+      <h2 id="titre-symboles">Bibliothèque de symboles validés</h2>
+      <span class="compte">dessinés par Franck — réutilisés tels quels dans tous les modules</span>
+    </div>
+    <div class="frise" id="frise-symboles">
+      <figure><img src="bouteille-liquide-pedagogique/assets/symboles/bouteille_liquide.svg" alt="Symbole bouteille liquide"><figcaption>Bouteille liquide</figcaption></figure>
+      <figure><img src="bouteille-liquide-pedagogique/assets/symboles/compresseur_general.svg" alt="Symbole compresseur"><figcaption>Compresseur</figcaption></figure>
+      <figure><img src="bouteille-liquide-pedagogique/assets/symboles/detendeur_thermo_ext.svg" alt="Symbole détendeur thermostatique"><figcaption>Détendeur thermo.</figcaption></figure>
+      <figure><img src="bouteille-liquide-pedagogique/assets/symboles/echangeur_a_air.svg" alt="Symbole échangeur à air"><figcaption>Échangeur à air</figcaption></figure>
+      <figure><img src="bouteille-liquide-pedagogique/assets/symboles/electrovanne_frigo.svg" alt="Symbole électrovanne"><figcaption>Électrovanne</figcaption></figure>
+      <figure><img src="bouteille-liquide-pedagogique/assets/symboles/filtre_deshydrateur.svg" alt="Symbole filtre déshydrateur"><figcaption>Filtre déshydrateur</figcaption></figure>
+      <figure><img src="bouteille-liquide-pedagogique/assets/symboles/pressostat_bp.svg" alt="Symbole pressostat BP"><figcaption>Pressostat BP</figcaption></figure>
+      <figure><img src="bouteille-liquide-pedagogique/assets/symboles/vanne_depart_rotalock.svg" alt="Symbole vanne de départ Rotalock"><figcaption>Vanne Rotalock</figcaption></figure>
+      <figure><img src="bouteille-liquide-pedagogique/assets/symboles/vanne_isolement.svg" alt="Symbole vanne d’isolement"><figcaption>Vanne d’isolement</figcaption></figure>
+      <figure><img src="bouteille-liquide-pedagogique/assets/symboles/vanne_securite.svg" alt="Symbole vanne de sécurité"><figcaption>Vanne de sécurité</figcaption></figure>
+      <figure><img src="bouteille-liquide-pedagogique/assets/symboles/voyant_liquide.svg" alt="Symbole voyant liquide"><figcaption>Voyant liquide</figcaption></figure>
+    </div>
+  </section>
+
+  <div class="mode-emploi">
+    <h2>Comment ça s’alimente</h2>
+    <ul>
+      <li><strong>Franck dépose</strong> un module ou un outil (zip ou fichier) dans une session Claude.</li>
+      <li><strong>Claude archive</strong> la copie de référence dans <code>docs/intrants-v10/</code>, la
+      passe en revue (QA sur 4 formats, charte, contenu métier) et consigne le verdict au
+      <code>LISEZMOI.md</code>.</li>
+      <li><strong>Cette page est mise à jour</strong> à chaque remise : une carte par support, rien ne se perd.</li>
+      <li><strong>Les collègues regardent et commentent</strong> — les retours reviennent à Franck et
+      alimentent les versions suivantes.</li>
+    </ul>
+  </div>
+
+  <footer class="fin">
+    Archive de référence — la source vivante de chaque support reste chez son auteur.
+    Page maintenue à chaque remise · dernière mise à jour : 04/08/2026.
+  </footer>
+
+</div>
+
+<div class="apercu" id="zone-apercu" role="region" aria-label="Aperçu du support sélectionné"></div>
+
+<script>
+// Aperçu intégré : la version dépôt charge le fichier voisin dans un cadre ;
+// la version Artefact (générée) fournit des gabarits incorporés à la place.
+(function () {
+  var zone = document.getElementById("zone-apercu");
+  function fermer() { zone.className = "apercu"; zone.innerHTML = ""; }
+  document.querySelectorAll("[data-apercu]").forEach(function (bouton) {
+    bouton.addEventListener("click", function () {
+      var carte = bouton.closest(".carte");
+      fermer();
+      var iframe = document.createElement("iframe");
+      iframe.title = "Aperçu : " + carte.querySelector("h3").textContent;
+      var cle = carte.getAttribute("data-item");
+      var gabarit = document.getElementById("gabarit-" + cle);
+      if (gabarit) {
+        // Gabarit incorporé (version Artefact) : base64 d'octets UTF-8 —
+        // aucun échappement HTML/JS à gérer.
+        var octets = Uint8Array.from(atob(gabarit.textContent.trim()),
+          function (c) { return c.charCodeAt(0); });
+        iframe.srcdoc = new TextDecoder().decode(octets);
+      } else { iframe.src = bouton.getAttribute("data-apercu"); }
+      zone.appendChild(iframe);
+      var f = document.createElement("button");
+      f.type = "button"; f.className = "btn secondaire fermer"; f.textContent = "Fermer l’aperçu";
+      f.addEventListener("click", fermer);
+      zone.appendChild(f);
+      zone.className = "apercu ouvert";
+      carte.after(zone);
+      iframe.focus();
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
