@@ -1,0 +1,339 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:">
+<title>TP — Récupération de fluide frigorigène sur MINIMAX-E</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Calibri,Carlito,'Segoe UI',sans-serif;font-size:14pt;line-height:1.5;
+     color:#1b3a63;background:#fff;text-align:left;max-width:19cm;margin:0 auto;padding:14px}
+h1,h2,h3{font-family:'Trebuchet MS',Tahoma,sans-serif;font-weight:700;line-height:1.25}
+h1{font-size:18pt}
+h2{font-size:14pt;margin:20px 0 10px;padding:6px 10px;background:#1b3a63;color:#fff;border-radius:6px}
+h3{font-size:12.5pt;margin:14px 0 6px;color:#1b3a63}
+p{margin-bottom:8px}
+.bandeau{display:flex;align-items:center;gap:10px;border-bottom:3px solid #1b3a63;padding-bottom:8px;margin-bottom:12px;flex-wrap:wrap}
+.edu{background:#ff6b35;color:#fff;font-size:10pt;padding:2px 9px;border-radius:4px;font-weight:700;font-family:'Trebuchet MS',sans-serif}
+.sign{margin-left:auto;font-size:10pt;color:#5a6472}
+.identite{border:2px solid #1b3a63;border-radius:8px;padding:10px 14px;margin-bottom:14px;
+          display:flex;flex-wrap:wrap;gap:16px;align-items:center;font-size:12.5pt}
+.consigne{background:#eef4f9;border-left:6px solid #1b3a63;border-radius:6px;padding:9px 13px;margin-bottom:12px;font-size:12pt}
+.secu{background:#fff1eb;border-left:6px solid #ff6b35;border-radius:6px;padding:9px 13px;margin-bottom:10px;font-size:12pt;break-inside:avoid}
+.secu strong{font-family:'Trebuchet MS',sans-serif}
+.notion{border:2.5px solid #ff6b35;border-radius:8px;padding:12px 15px;margin:14px 0;background:#fff8f5;
+        font-size:13pt;font-family:'Trebuchet MS',sans-serif;font-weight:700;text-align:center}
+.lg{border-bottom:1px dotted #1b3a63;min-height:1.9em;margin:5px 0}
+.q{break-inside:avoid;margin-bottom:12px}
+.q .num{font-family:'Trebuchet MS',sans-serif;font-weight:700;color:#ff6b35}
+table{width:100%;border-collapse:collapse;font-size:11.5pt;margin-bottom:12px}
+th,td{border:1px solid #b9c2cc;padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#eef4f9;font-family:'Trebuchet MS',sans-serif;font-size:10.5pt}
+td.vide{height:2.2em}
+.calc{font-family:Consolas,'Courier New',monospace;font-size:11pt;background:#f7f9fb;
+      border:1px solid #b9c2cc;border-radius:6px;padding:8px 10px;white-space:pre-wrap;margin-bottom:10px}
+.schema{width:100%;height:auto;display:block;border:1.5px solid #b9c2cc;border-radius:8px;background:#fff;margin-bottom:6px}
+.legende{font-size:10.5pt;color:#5a6472;margin-bottom:12px}
+ol,ul{margin:6px 0 10px 22px}
+li{margin-bottom:4px}
+.saut{break-before:page;page-break-before:always}
+.corrige h2{background:#16a34a}
+.corrige .notion{border-color:#16a34a;background:#f2fbf5}
+.pied{margin-top:20px;border-top:1px solid #b9c2cc;padding-top:6px;font-size:10pt;color:#5a6472}
+@media print{body{padding:0;font-size:12pt}}
+</style></head><body>
+
+<div class="bandeau"><span style="font-size:20pt">❄</span><h1>TP — Récupérer un fluide et le prouver</h1><span class="edu">Édu</span><span class="sign">inerWeb · par F. Henninot</span></div>
+
+<div class="identite"><span>NOM : ____________________</span><span>Prénom : ______________</span><span>Classe : __________</span><span>Poste : A · B · C</span><span>Date : ____ / ____ / ______</span></div>
+
+<div class="consigne"><strong>4 heures. Trinôme. Rotation sur 3 postes.</strong>
+La notice de la station est posée sur ton poste : <strong>elle est autorisée, elle est même obligatoire.</strong>
+Rôles à tenir, à changer à chaque rotation : <strong>opérateur</strong> · <strong>sécurité / notice</strong> · <strong>scribe</strong>.
+Seul le rôle « sécurité / notice » a le droit de dire <strong>STOP</strong>. Il l'exerce sans demander l'avis de personne.</div>
+
+<div class="notion">Récupérer, ce n'est pas « vider une machine ».<br>
+C'est déplacer une masse de fluide — et prouver au gramme près où elle est passée.</div>
+
+<h2>1 · Sécurité — à lire avant de toucher quoi que ce soit</h2>
+
+<div class="secu"><strong>Froid.</strong> Le fluide qui se détend à l'air libre brûle la peau et l'œil.
+Lunettes et gants pendant toute la manipulation, <strong>y compris pour dévisser un flexible que tu crois vide.</strong></div>
+
+<div class="secu"><strong>Pression.</strong> La station est protégée par un pressostat haute pression à réarmement manuel taré à <strong>38,5 bar</strong>.
+S'il coupe pendant un remplissage, c'est un signal de danger : la bouteille est probablement trop pleine.
+On arrête, on cherche la cause. <strong>On ne réarme jamais « pour voir ».</strong></div>
+
+<div class="secu"><strong>Remplissage.</strong> Une bouteille remplie à 100 % de liquide n'a plus de volume d'expansion : elle peut éclater si la température monte.
+<strong>Maximum 80 % en liquide.</strong> La balance n'est pas un accessoire, c'est l'instrument de sécurité de l'opération.</div>
+
+<div class="secu"><strong>Fluide et machine.</strong> Avant tout raccordement : <strong>lis la plaque et la notice de TA station</strong> et vérifie que ton fluide y figure.
+Aucun R32, R454B, R1234yf ou R290 sur ce poste sans validation écrite de l'enseignant.</div>
+
+<div class="secu"><strong>Incident.</strong> Projection dans l'œil → lave-œil 15 min, alerte enseignant, appel du 15.
+Fuite importante → arrêt, évacuation, ventilation. Trousse de secours : mur nord.</div>
+
+<h2>2 · Observation — avant de brancher</h2>
+
+<p><strong>Sans ouvrir la notice</strong>, écris ta phrase :</p>
+<p>« Pour moi, récupérer un fluide, c'est …</p>
+<div class="lg"></div><div class="lg"></div>
+
+<p><strong>Maintenant ouvre la notice</strong> et trouve ces quatre informations.</p>
+
+<table>
+<tr><th style="width:47%">À trouver</th><th style="width:23%">Page / partie</th><th>Ce que j'ai relevé</th></tr>
+<tr><td>La liste des fluides admis par la machine</td><td class="vide"></td><td class="vide"></td></tr>
+<tr><td>Le tarage du pressostat haute pression</td><td class="vide"></td><td class="vide"></td></tr>
+<tr><td>Le taux de remplissage maximal d'une bouteille</td><td class="vide"></td><td class="vide"></td></tr>
+<tr><td>Ce qu'il faut faire <strong>avant</strong> de basculer l'inverseur noir</td><td class="vide"></td><td class="vide"></td></tr>
+</table>
+
+<h2>3 · Schéma de raccordement</h2>
+
+<svg class="schema" viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Schéma de raccordement de la station de récupération">
+  <rect x="8" y="60" width="150" height="150" rx="8" fill="#fff" stroke="#1b3a63" stroke-width="2"/>
+  <text x="83" y="120" text-anchor="middle" font-family="Trebuchet MS,sans-serif" font-size="14" font-weight="700" fill="#1b3a63">INSTALLATION</text>
+  <text x="83" y="140" text-anchor="middle" font-family="Trebuchet MS,sans-serif" font-size="14" font-weight="700" fill="#1b3a63">À VIDER</text>
+  <text x="83" y="166" text-anchor="middle" font-family="Calibri,sans-serif" font-size="11" fill="#5a6472">charge de plaque :</text>
+  <text x="83" y="182" text-anchor="middle" font-family="Calibri,sans-serif" font-size="11" fill="#5a6472">............ kg</text>
+
+  <rect x="285" y="80" width="160" height="110" rx="8" fill="#fff" stroke="#1b3a63" stroke-width="2.5"/>
+  <text x="365" y="108" text-anchor="middle" font-family="Trebuchet MS,sans-serif" font-size="15" font-weight="700" fill="#1b3a63">MINIMAX-E</text>
+  <circle cx="322" cy="140" r="11" fill="#dbeafe" stroke="#1b3a63" stroke-width="2"/>
+  <text x="322" y="145" text-anchor="middle" font-family="Trebuchet MS,sans-serif" font-size="12" font-weight="700" fill="#1b3a63">E</text>
+  <circle cx="365" cy="140" r="11" fill="#3f3f46" stroke="#1b3a63" stroke-width="2"/>
+  <text x="365" y="145" text-anchor="middle" font-family="Trebuchet MS,sans-serif" font-size="12" font-weight="700" fill="#fff">I</text>
+  <circle cx="408" cy="140" r="11" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+  <text x="408" y="145" text-anchor="middle" font-family="Trebuchet MS,sans-serif" font-size="12" font-weight="700" fill="#dc2626">S</text>
+  <text x="322" y="172" text-anchor="middle" font-family="Calibri,sans-serif" font-size="11" fill="#5a6472">entrée</text>
+  <text x="365" y="172" text-anchor="middle" font-family="Calibri,sans-serif" font-size="11" fill="#5a6472">inverseur</text>
+  <text x="408" y="172" text-anchor="middle" font-family="Calibri,sans-serif" font-size="11" fill="#5a6472">sortie</text>
+
+  <rect x="560" y="45" width="90" height="150" rx="26" fill="#fff" stroke="#1b3a63" stroke-width="2"/>
+  <text x="605" y="110" text-anchor="middle" font-family="Trebuchet MS,sans-serif" font-size="13" font-weight="700" fill="#1b3a63">BOUTEILLE</text>
+  <text x="605" y="128" text-anchor="middle" font-family="Trebuchet MS,sans-serif" font-size="13" font-weight="700" fill="#1b3a63">RÉCUP. 12 L</text>
+  <line x1="586" y1="45" x2="586" y2="30" stroke="#1b3a63" stroke-width="2"/>
+  <line x1="624" y1="45" x2="624" y2="30" stroke="#1b3a63" stroke-width="2"/>
+  <text x="570" y="24" text-anchor="middle" font-family="Calibri,sans-serif" font-size="11" fill="#5a6472">vapeur</text>
+  <text x="644" y="24" text-anchor="middle" font-family="Calibri,sans-serif" font-size="11" fill="#5a6472">liquide</text>
+  <rect x="540" y="200" width="130" height="26" rx="5" fill="#f7f9fb" stroke="#1b3a63" stroke-width="2"/>
+  <text x="605" y="218" text-anchor="middle" font-family="Trebuchet MS,sans-serif" font-size="12" font-weight="700" fill="#1b3a63">BALANCE</text>
+  <line x1="605" y1="195" x2="605" y2="200" stroke="#1b3a63" stroke-width="2"/>
+
+  <path d="M158 120 H 240 V 140 H 311" fill="none" stroke="#333" stroke-width="2.4"/>
+  <path d="M158 165 H 220 V 140" fill="none" stroke="#333" stroke-width="2.4"/>
+  <text x="196" y="112" text-anchor="middle" font-family="Calibri,sans-serif" font-size="11" fill="#5a6472">liquide</text>
+  <text x="188" y="182" text-anchor="middle" font-family="Calibri,sans-serif" font-size="11" fill="#5a6472">vapeur</text>
+  <path d="M419 140 H 500 V 60 H 624 V 30" fill="none" stroke="#333" stroke-width="2.4"/>
+
+  <polyline points="235,134 235,146 243,140 251,146 251,134 243,140 235,134" fill="none" stroke="#333" stroke-width="1.8"/>
+  <polyline points="470,134 470,146 478,140 486,146 486,134 478,140 470,134" fill="none" stroke="#333" stroke-width="1.8"/>
+
+  <text x="365" y="255" text-anchor="middle" font-family="Calibri,sans-serif" font-size="12" fill="#5a6472">Aspiration : flexible 3/8" court · obus Schrader retirés · filtre d'entrée en place</text>
+  <text x="365" y="275" text-anchor="middle" font-family="Calibri,sans-serif" font-size="12" fill="#5a6472">Refoulement : vers la vanne LIQUIDE de la bouteille, posée sur la balance</text>
+</svg>
+<p class="legende"><strong>E</strong> = vanne d'entrée bleue · <strong>I</strong> = inverseur noir (RÉCUPÉRATION / VIDANGE) · <strong>S</strong> = vanne de sortie rouge.
+Schéma de principe : reporte-toi à la notice de ta station pour le raccordement exact.</p>
+
+<h2>4 · Feuille de relevés</h2>
+
+<h3>4.1 — Identification</h3>
+<table>
+<tr><th style="width:42%">Fluide de l'installation</th><td class="vide"></td><th style="width:22%">Classe NF EN 378</th><td class="vide"></td></tr>
+<tr><th>Charge nominale de plaque (kg)</th><td class="vide"></td><th>N° de bouteille</th><td class="vide"></td></tr>
+<tr><th>Filtre d'entrée repéré au fluide ?</th><td class="vide"></td><th>Température ambiante (°C)</th><td class="vide"></td></tr>
+</table>
+
+<h3>4.2 — Pesées</h3>
+<table>
+<tr><th style="width:60%">Mesure</th><th>Valeur (kg)</th></tr>
+<tr><td>Tare de la bouteille (étiquette)</td><td class="vide"></td></tr>
+<tr><td>Masse brute AVANT opération</td><td class="vide"></td></tr>
+<tr><td>Masse nette AVANT = brute avant − tare</td><td class="vide"></td></tr>
+<tr><td>Masse brute APRÈS opération</td><td class="vide"></td></tr>
+<tr><td>Masse nette APRÈS = brute après − tare</td><td class="vide"></td></tr>
+<tr><td><strong>Quantité récupérée = nette après − nette avant</strong></td><td class="vide"></td></tr>
+</table>
+
+<h3>4.3 — Suivi en cours de récupération (un point toutes les 2 min)</h3>
+<table>
+<tr><th>Heure</th><th>BP (bar)</th><th>HP (bar)</th><th>Masse brute (kg)</th><th>Bruit du compresseur</th></tr>
+<tr><td class="vide"></td><td class="vide"></td><td class="vide"></td><td class="vide"></td><td class="vide"></td></tr>
+<tr><td class="vide"></td><td class="vide"></td><td class="vide"></td><td class="vide"></td><td class="vide"></td></tr>
+<tr><td class="vide"></td><td class="vide"></td><td class="vide"></td><td class="vide"></td><td class="vide"></td></tr>
+<tr><td class="vide"></td><td class="vide"></td><td class="vide"></td><td class="vide"></td><td class="vide"></td></tr>
+<tr><td class="vide"></td><td class="vide"></td><td class="vide"></td><td class="vide"></td><td class="vide"></td></tr>
+<tr><td class="vide"></td><td class="vide"></td><td class="vide"></td><td class="vide"></td><td class="vide"></td></tr>
+</table>
+
+<h3>4.4 — Vidange de la station : coche dans l'ordre où tu l'as fait</h3>
+<ul>
+<li>☐ Fermer les vannes de l'installation</li>
+<li>☐ Fermer la vanne d'entrée bleue (CLOSED)</li>
+<li>☐ Arrêter la machine</li>
+<li>☐ Basculer l'inverseur noir sur VIDANGE</li>
+<li>☐ Redémarrer, descendre au vide voulu</li>
+<li>☐ Fermer les vannes de la bouteille, arrêter, fermer la vanne rouge</li>
+<li>☐ Remettre l'inverseur sur RÉCUPÉRATION, déposer les flexibles, bouchons neufs</li>
+</ul>
+
+<h2 class="saut">5 · Questions</h2>
+
+<div class="q"><span class="num">Q1.</span> Quels fluides la notice de <strong>ta</strong> station admet-elle ? Recopie la liste.
+<div class="lg"></div><div class="lg"></div><div class="lg"></div></div>
+
+<div class="q"><span class="num">Q2.</span> Peut-on récupérer du R32 avec cette station ? Justifie avec la classe de sécurité du R32 <strong>et</strong> avec ce qu'écrit la notice.
+<div class="lg"></div><div class="lg"></div><div class="lg"></div></div>
+
+<div class="q"><span class="num">Q3.</span> Pourquoi retire-t-on les obus Schrader, et pourquoi un flexible court et gros à l'aspiration ?
+<div class="lg"></div><div class="lg"></div></div>
+
+<div class="q"><span class="num">Q4.</span> Pourquoi un filtre à l'entrée de la station — et pourquoi <strong>un filtre par fluide</strong> ?
+<div class="lg"></div><div class="lg"></div></div>
+
+<div class="q"><span class="num">Q5.</span> Qu'as-tu entendu quand la vanne bleue était trop ouverte ? Qu'est-ce que cela signifie physiquement ? Qu'as-tu fait ?
+<div class="lg"></div><div class="lg"></div><div class="lg"></div></div>
+
+<div class="q"><span class="num">Q6.</span> Quel niveau de vide faut-il atteindre ? <strong>Cite ta source</strong> (document, page). Une valeur sans source ne compte pas.
+<div class="lg"></div><div class="lg"></div></div>
+
+<div class="q"><span class="num">Q7.</span> Pourquoi faut-il arrêter la machine <strong>avant</strong> de basculer l'inverseur noir sur VIDANGE ?
+<div class="lg"></div><div class="lg"></div></div>
+
+<div class="q"><span class="num">Q8.</span> La pression lue dans la bouteille au repos est-elle cohérente avec la table pression / température à la température ambiante ? Que conclus-tu ? Que fais-tu ?
+<div class="lg"></div><div class="lg"></div><div class="lg"></div></div>
+
+<div class="q"><span class="num">Q9.</span> Quelle masse de fluide as-tu récupérée ? Pose le calcul.
+<div class="calc">Masse nette AVANT  = ............ − ............ = ............ kg
+Masse nette APRÈS  = ............ − ............ = ............ kg
+Quantité récupérée = ............ − ............ = ............ kg</div></div>
+
+<div class="q"><span class="num">Q10.</span> Quel est le taux de remplissage de la bouteille ? Est-il acceptable ?
+<p style="font-size:11.5pt;color:#5a6472">Donnée : masse volumique du liquide R134a à 25 °C ≈ 1 206 kg/m³ (à confirmer sur la fiche de données de sécurité du fournisseur).</p>
+<div class="calc">Volume utile à 80 %   = 12 L × 0,80        = ............ L
+Masse maximale admise = ............ × 1,206  = ............ kg
+Taux de remplissage   = ............ / ............ = ............ %</div>
+<div class="lg"></div></div>
+
+<div class="q"><span class="num">Q11.</span> Quelle case du cadre 4 du CERFA 15497*04 ce mouvement alimente-t-il ? Pourquoi <strong>pas</strong> la case « Démantèlement » ?
+<div class="lg"></div><div class="lg"></div></div>
+
+<div class="q"><span class="num">Q12.</span> Écart entre la quantité récupérée et la charge de plaque : combien, et pourquoi ? Donne <strong>deux</strong> explications.
+<div class="lg"></div><div class="lg"></div><div class="lg"></div></div>
+
+<h2>6 · Synthèse — 5 à 10 lignes</h2>
+<div class="consigne">Si l'enseignant te demandait <strong>demain</strong> de prouver où sont passés les kilos récupérés aujourd'hui, que montrerais-tu ?</div>
+<div class="lg"></div><div class="lg"></div><div class="lg"></div><div class="lg"></div><div class="lg"></div><div class="lg"></div><div class="lg"></div><div class="lg"></div>
+
+<h2>7 · Auto-positionnement — je coche avant la correction</h2>
+<table>
+<tr><th style="width:64%">Ce que je sais faire</th><th>Acquis</th><th>En cours</th><th>Non acquis</th></tr>
+<tr><td>J'ai vérifié la compatibilité fluide / machine dans la notice avant de brancher</td><td class="vide"></td><td class="vide"></td><td class="vide"></td></tr>
+<tr><td>J'ai gardé mes EPI du début à la fin</td><td class="vide"></td><td class="vide"></td><td class="vide"></td></tr>
+<tr><td>Je n'ai laissé échapper aucun gramme de fluide à l'atmosphère</td><td class="vide"></td><td class="vide"></td><td class="vide"></td></tr>
+<tr><td>J'ai respecté l'ordre d'ouverture des vannes</td><td class="vide"></td><td class="vide"></td><td class="vide"></td></tr>
+<tr><td>J'ai exécuté la vidange de la station dans l'ordre imposé</td><td class="vide"></td><td class="vide"></td><td class="vide"></td></tr>
+<tr><td>J'ai calculé la quantité récupérée et le taux de remplissage</td><td class="vide"></td><td class="vide"></td><td class="vide"></td></tr>
+<tr><td>J'ai saisi le mouvement dans le registre, avec sa pièce jointe</td><td class="vide"></td><td class="vide"></td><td class="vide"></td></tr>
+<tr><td>Je sais dire quelle case du CERFA est alimentée, et pourquoi</td><td class="vide"></td><td class="vide"></td><td class="vide"></td></tr>
+</table>
+
+<div class="pied">inerWeb Édu — F. Henninot — LP Privé Jacques Raynaud, Campus ÉQUATIO · TP Récupération MINIMAX-E</div>
+
+<!-- ================= CORRIGÉ ENSEIGNANT — NE PAS IMPRIMER POUR LES ÉLÈVES ================= -->
+<div class="corrige saut">
+<div class="bandeau"><span style="font-size:20pt">❄</span><h1>Corrigé enseignant</h1><span class="edu">Édu</span><span class="sign">inerWeb · par F. Henninot</span></div>
+
+<div class="consigne"><strong>Ne pas distribuer.</strong> Les valeurs numériques correspondent au jeu de données de référence
+(groupe froid positif R134a, charge de plaque 1,20 kg, bouteille 12 L, tare 12,000 kg). À ajuster au matériel réel.</div>
+
+<div class="notion">Le critère central de correction :<br>l'élève sait-il dire <em>combien</em>, et <em>où c'est écrit</em> ?</div>
+
+<h2>Réponses attendues</h2>
+
+<p><strong>Q1.</strong> Liste recopiée <em>de la notice posée sur le poste</em>. La notice en atelier (rév. 2008) ne liste que des
+fluides <strong>A1</strong> : R11, R12, R22, R13B1, R123, R134a, R141b, R401A/B, R402A/B, R404A, R407A/B/C, R408A, R409A,
+R410A, R500, R502, R503, R507. Recopie partielle acceptée si l'emplacement est cité.</p>
+
+<p><strong>Q2.</strong> Non. Le R32 est <strong>A2L</strong> (faiblement inflammable), la notice interdit les gaz inflammables et le R32
+n'est pas dans la liste. <em>Vigilance :</em> des versions récentes de cette machine sont annoncées A1/A2/A2L. La bonne réponse
+n'est donc pas « cette machine ne fait jamais d'A2L » mais « la machine de <strong>ce</strong> poste, telle que sa notice la décrit,
+ne le fait pas ». Valoriser l'élève qui va vérifier la plaque plutôt que celui qui récite.</p>
+
+<p><strong>Q3.</strong> Obus Schrader et flexible long et fin = <strong>perte de charge</strong> qui effondre le débit. Notice :
+3/8" ou plus, le plus court possible (≈ 90 cm). Conséquence concrète : une récupération de quelques minutes peut passer à
+plusieurs heures.</p>
+
+<p><strong>Q4.</strong> Le filtre protège le compresseur de la station des corps étrangers ; son absence annule la garantie.
+Un filtre <strong>par fluide</strong>, repéré, évite le mélange — un fluide mélangé n'est plus identifiable ni exploitable.
+Compresseur grillé : deux filtres antiacide en série, puis rinçage et tirage au vide de la station.</p>
+
+<p><strong>Q5.</strong> Bruit métallique / régime qui change = <strong>entrée de liquide en excès</strong> (coup de liquide) ou
+pression en bouteille inférieure à la pression d'entrée. Geste attendu : refermer <em>lentement</em> la vanne bleue jusqu'au
+retour d'un bruit normal. Ne jamais ouvrir à fond en phase liquide.</p>
+
+<p><strong>Q6.</strong> Attendu : <strong>une valeur citée avec sa source</strong> (notice et/ou texte réglementaire consulté en séance).
+Une réponse sans source est comptée « En cours », même si le chiffre est juste — c'est l'objet de la question.
+Le critère de terrain (descendre jusqu'à stabilisation de la BP, vérifier au vacuomètre) est accepté <em>en complément</em>.</p>
+
+<p><strong>Q7.</strong> Basculer l'inverseur machine en marche met brutalement la HP en communication et provoque une
+<strong>coupure du pressostat 38,5 bar</strong>. Ordre imposé : vanne bleue fermée → arrêt → inverseur → redémarrage.
+« Pour ne pas casser la machine » = En cours ; réponse citant la sécurité HP = Acquis.</p>
+
+<p><strong>Q8.</strong> Bouteille au repos 24 h → lecture de la pression → mesure de la température ambiante → comparaison à la
+table P/T. Si la pression lue est nettement supérieure à celle de la table : <strong>incondensables</strong>. Purge très lente par la
+vanne vapeur jusqu'à la valeur de table majorée de <strong>0,3 à 0,35 bar</strong>, repos 10 min, nouvelle mesure, répéter si besoin.
+Faire verbaliser : ce n'est pas un dégazage de fluide, et cela ne sert jamais de prétexte à en faire un.</p>
+
+<p><strong>Q9.</strong></p>
+<div class="calc">Tare bouteille ............................. 12,000 kg
+Masse brute AVANT .......................... 13,400 kg
+Masse nette AVANT ..... 13,400 − 12,000 =    1,400 kg
+Masse brute APRÈS .......................... 14,550 kg
+Masse nette APRÈS ..... 14,550 − 12,000 =    2,550 kg
+Quantité récupérée .... 2,550 − 1,400   =    1,150 kg</div>
+<p>Erreur fréquente : oublier la masse nette <em>avant</em> et annoncer 2,55 kg. La traiter comme une erreur de <strong>registre</strong>,
+pas de calcul — c'est exactement ce qui fausse une balance matière annuelle.</p>
+
+<p><strong>Q10.</strong></p>
+<div class="calc">Volume utile à 80 % ... 12 L × 0,80      =  9,6 L
+Masse maximale admise . 9,6 × 1,206      ≈ 11,6 kg
+Taux de remplissage ... 2,550 / 11,6     ≈ 22 %</div>
+<p>Conclusion : très en dessous de la limite, la bouteille peut recevoir d'autres récupérations de R134a.
+À faire ressortir : le taux se calcule sur la <strong>masse admissible</strong>, pas sur le volume. La limite des 80 % existe parce que
+le liquide se dilate : une bouteille remplie à 80 % à 16 °C est à 94 % à 66 °C ; remplie à 90 % à 16 °C, elle atteint
+<strong>100 % dès 54 °C</strong>.</p>
+
+<p><strong>Q11.</strong> Cadre 4, case <strong>« Entretien / réparation (récupération) »</strong> — type interne
+<code>RECUPERATION_MAINTENANCE</code> dans inerWeb Fluide. Pas « Démantèlement » : l'équipement reste en service et sera rechargé.</p>
+
+<p><strong>Q12.</strong> Écart attendu : 1,200 − 1,150 = <strong>0,050 kg (50 g)</strong>. Au moins deux explications parmi :
+fluide dissous dans l'<strong>huile</strong> ; fluide resté dans les flexibles et le manifold ; niveau de vide final non atteint ;
+charge réelle différente de la charge de plaque (appoints antérieurs non tracés).
+<strong>Non recevable :</strong> « la balance est fausse » — la réponse professionnelle est de vérifier sa date d'étalonnage dans le
+registre de l'outillage, ce que l'application signale par une alerte bloquante quand elle est expirée.</p>
+
+<p><strong>Synthèse.</strong> Attendu : la fiche de mouvement du registre, l'étiquette de bouteille, la photo de pesée en pièce jointe,
+et le fait que l'écriture est validée par l'enseignant référent puis scellée par empreinte. L'élève qui répond « la bouteille » a
+la moitié de la réponse : la bouteille prouve qu'il y a du fluide, pas d'où il vient.</p>
+
+<h2>Grille de positionnement</h2>
+<table>
+<tr><th style="width:24%">Compétence</th><th>Indicateur observable</th><th>A</th><th>EC</th><th>NA</th></tr>
+<tr><td>C4 Organiser et sécuriser</td><td>EPI portés du début à la fin, sans rappel</td><td class="vide"></td><td></td><td></td></tr>
+<tr><td>C4 Organiser et sécuriser</td><td>Compatibilité fluide / machine vérifiée <em>dans la notice</em> avant raccordement</td><td class="vide"></td><td></td><td></td></tr>
+<tr><td>C6 Réaliser de manière éco-responsable</td><td>Aucun rejet à l'atmosphère, y compris à la dépose des flexibles</td><td class="vide"></td><td></td><td></td></tr>
+<tr><td>C6 Réaliser de manière éco-responsable</td><td>Filtre d'entrée présent et repéré au bon fluide</td><td class="vide"></td><td></td><td></td></tr>
+<tr><td>C9 Maintenance préventive</td><td>Ordre d'ouverture des vannes respecté, ouverture progressive</td><td class="vide"></td><td></td><td></td></tr>
+<tr><td>C9 Maintenance préventive</td><td>Vidange exécutée dans l'ordre imposé (vanne → arrêt → inverseur)</td><td class="vide"></td><td></td><td></td></tr>
+<tr><td>C9 Maintenance préventive</td><td>Taux de remplissage calculé et comparé aux 80 %</td><td class="vide"></td><td></td><td></td></tr>
+<tr><td>C11 Consigner</td><td>Mouvement saisi dans le registre, complet, avec pièce jointe</td><td class="vide"></td><td></td><td></td></tr>
+<tr><td>C11 Consigner</td><td>Case CERFA correctement identifiée et justifiée</td><td class="vide"></td><td></td><td></td></tr>
+<tr><td>C12 Communiquer</td><td>Écart quantité / charge de plaque annoncé et expliqué en synthèse</td><td class="vide"></td><td></td><td></td></tr>
+</table>
+
+<div class="secu"><strong>Éliminatoire de séance</strong> (reprise obligatoire, sans note punitive) : rejet volontaire de fluide à
+l'atmosphère · réarmement du pressostat HP sans recherche de cause · bouteille laissée sur la balance au-delà de 80 %.</div>
+
+<div class="pied">Corrigé — inerWeb Édu — F. Henninot — LP Privé Jacques Raynaud, Campus ÉQUATIO</div>
+</div>
+
+</body></html>
