@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S12 — Interro : diagramme enthalpique & surchauffe</title>
+<link rel="stylesheet" href="assets/style-seq.css">
+</head>
+<body>
+<div class="no-print">Interro S12 (1 h) · <b>Ctrl+P</b> pour imprimer · <a href="index.html">← séquence</a></div>
+
+<!-- ============ PAGE 1 ============ -->
+<div class="page">
+  <div class="marque">
+    <div class="logo">iner<span>Web</span> Edu</div>
+    <div class="fil">Filière Froid &amp; Climatisation — F. Henninot<br>LP Privé Jacques Raynaud — Campus EQUATIO, Marseille</div>
+  </div>
+
+  <table class="entete">
+    <tr><td class="k">NOM :</td><td><span class="champ">&nbsp;</span></td><td class="k">CAP IFCA</td><td>Froid — MES</td></tr>
+    <tr><td class="k">DATE :</td><td><span class="champ">&nbsp;</span></td><td class="k">SÉQUENCE 12</td><td>Séance : Interro — cycle &amp; surchauffe</td></tr>
+    <tr><td class="k">Nature</td><td>TP ☐ &nbsp; TD ☐ &nbsp; <b>DS ☒</b></td><td class="k">Temps prévisionnel</td><td><b>1 h</b></td></tr>
+  </table>
+
+  <p><b>Objectif :</b> lire un diagramme enthalpique, distinguer HP/BP et calculer une surchauffe / un sous-refroidissement.</p>
+
+  <h3>Compétences évaluées</h3>
+  <table class="grille comp">
+    <tr><th>Compétence</th><th class="niv">NM</th><th class="niv">IM</th><th class="niv">M</th><th class="niv">PM</th></tr>
+    <tr><td>C1.1 — Lire / interpréter un diagramme enthalpique</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>C4.5 — Mesurer, comparer des grandeurs (surchauffe, sous-refroidissement)</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>C1.3 — Compléter, transmettre une information technique</td><td></td><td></td><td></td><td></td></tr>
+  </table>
+  <p class="sous">NM = Non Maîtrisé · IM = en Instance de Maîtrise · M = Maîtrisé · PM = Parfaitement Maîtrisé</p>
+
+  <table class="grille">
+    <tr>
+      <td style="width:50%"><b>On demande :</b> d'effectuer les 2 exercices ci-après : lecture du cycle et calculs.</td>
+      <td><b>On donne :</b> cette fiche, le diagramme enthalpique, la table P/T. <b>On exige :</b> tous les exercices traités, unités indiquées, schémas au crayon, travail propre et lisible.</td>
+    </tr>
+  </table>
+
+  <h2>Exercice 1 — Lecture du cycle sur diagramme enthalpique</h2>
+  <p>On donne le cycle d'une installation R‑449A tracé ci-dessous.</p>
+  <figure>
+  <svg viewBox="0 0 600 360" role="img" aria-label="Cycle sur diagramme enthalpique">
+    <line x1="70" y1="320" x2="560" y2="320" stroke="#333" stroke-width="1.6"/>
+    <line x1="70" y1="320" x2="70" y2="30" stroke="#333" stroke-width="1.6"/>
+    <text x="315" y="352" text-anchor="middle" font-size="12">Enthalpie h (kJ/kg)</text>
+    <text x="24" y="175" text-anchor="middle" font-size="12" transform="rotate(-90 24 175)">Pression P (bar) — log</text>
+    <path d="M150,312 C160,175 250,66 320,62 C400,58 470,145 500,312" fill="none" stroke="#5d6d7e" stroke-width="2"/>
+    <!-- cycle -->
+    <line x1="175" y1="262" x2="455" y2="262" stroke="#2471a3" stroke-width="3"/>
+    <path d="M455,262 C505,225 525,165 500,116" fill="none" stroke="#7d3c98" stroke-width="3"/>
+    <line x1="500" y1="116" x2="230" y2="116" stroke="#c0392b" stroke-width="3"/>
+    <line x1="230" y1="116" x2="175" y2="116" stroke="#c0392b" stroke-width="3"/>
+    <line x1="175" y1="116" x2="175" y2="262" stroke="#333" stroke-width="2.2" stroke-dasharray="6 4"/>
+    <g font-size="12" font-weight="800">
+      <circle cx="455" cy="262" r="9" fill="#fff" stroke="#2471a3" stroke-width="2"/><text x="468" y="282">1</text>
+      <circle cx="500" cy="116" r="9" fill="#fff" stroke="#7d3c98" stroke-width="2"/><text x="512" y="110">2</text>
+      <circle cx="230" cy="116" r="9" fill="#fff" stroke="#c0392b" stroke-width="2"/><text x="226" y="104">3</text>
+      <circle cx="175" cy="262" r="9" fill="#fff" stroke="#333" stroke-width="2"/><text x="150" y="282">4</text>
+    </g>
+    <text x="86" y="120" font-size="10" fill="#c0392b">PK</text>
+    <text x="86" y="266" font-size="10" fill="#2471a3">P0</text>
+  </svg>
+  <figcaption>Cycle frigorifique R‑449A (points 1 à 4).</figcaption>
+  </figure>
+
+  <div class="pied"><span>inerWeb Edu — F. Henninot — CAP IFCA</span><span>S12 · Interro · 1/2</span></div>
+</div>
+
+<!-- ============ PAGE 2 ============ -->
+<div class="page">
+  <p><b>1.1</b> — Associe chaque point à sa transformation :</p>
+  <table class="grille">
+    <tr><th>Segment</th><th>Transformation (compression · condensation · détente · évaporation)</th></tr>
+    <tr><td class="center">1 → 2</td><td>&nbsp;</td></tr>
+    <tr><td class="center">2 → 3</td><td>&nbsp;</td></tr>
+    <tr><td class="center">3 → 4</td><td>&nbsp;</td></tr>
+    <tr><td class="center">4 → 1</td><td>&nbsp;</td></tr>
+  </table>
+  <p><b>1.2</b> — Colorie <span style="color:#c0392b;font-weight:700">la partie HP en rouge</span> et <span style="color:#2471a3;font-weight:700">la partie BP en bleu</span> sur le diagramme.</p>
+  <p><b>1.3</b> — Sur quel segment se situe la surchauffe ? <span class="champ" style="min-width:120px">&nbsp;</span> &nbsp; Le sous-refroidissement ? <span class="champ" style="min-width:120px">&nbsp;</span></p>
+  <p><b>1.4</b> — La détente 3→4 se fait à <b>enthalpie constante</b> : que peux-tu dire de la ligne 3→4 sur le diagramme ?</p>
+  <span class="rep"></span>
+
+  <h2>Exercice 2 — Calculs</h2>
+  <p>Relevés sur l'installation : <b>BP = 3,0 bar → T0 = −12 °C</b> · <b>HP = 17 bar → Tk = 44 °C</b> ·
+     T° sortie évaporateur = <b>−5 °C</b> · T° ligne liquide = <b>38 °C</b>.</p>
+  <div class="enc astuce"><span class="t">Formules</span>
+    Surchauffe = T°sortie évap − T0 &nbsp;(cible 4–8 K) · Sous-refroidissement = Tk − T°ligne liquide &nbsp;(cible 4–7 K)</div>
+  <p><b>2.1</b> — Surchauffe = <span class="champ" style="min-width:220px">&nbsp;</span> = <b>____ K</b></p>
+  <p><b>2.2</b> — Ce résultat est-il conforme ? &nbsp; OUI ☐ &nbsp; NON ☐ — que faut-il faire sinon ?</p>
+  <span class="rep"></span>
+  <p><b>2.3</b> — Sous-refroidissement = <span class="champ" style="min-width:220px">&nbsp;</span> = <b>____ K</b> — conforme ? OUI ☐ NON ☐</p>
+  <p><b>2.4</b> — Une surchauffe de <b>2 K</b> a été mesurée sur une autre machine. Quel risque pour le compresseur ?</p>
+  <span class="rep"></span>
+
+  <h2 style="background:#5d6d7e">Corrigé — réservé enseignant</h2>
+  <table class="grille">
+    <tr><td><b>Ex 1 :</b> 1→2 compression · 2→3 condensation · 3→4 détente · 4→1 évaporation. HP = ligne haute (2→3), BP = ligne basse (4→1). Surchauffe : fin du segment 4→1 (à droite de la vapeur saturée, avant 1). Sous-refroidissement : fin du segment 2→3 (avant 3, à gauche du liquide saturé). 3→4 : trait <b>vertical</b> (h constante).</td></tr>
+    <tr><td><b>Ex 2 :</b> 2.1 = (−5) − (−12) = <b>7 K</b> → conforme. 2.3 = 44 − 38 = <b>6 K</b> → conforme. 2.4 : surchauffe trop faible (&lt; 4 K) → risque de <b>coup de liquide</b> (retour de liquide à l'aspiration) et détérioration du compresseur.</td></tr>
+  </table>
+
+  <div class="pied"><span>inerWeb Edu — F. Henninot — CAP IFCA</span><span>S12 · Interro · 2/2</span></div>
+</div>
+</body>
+</html>
